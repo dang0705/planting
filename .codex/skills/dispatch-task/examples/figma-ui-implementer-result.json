@@ -1,8 +1,5 @@
 {
-  "agent_identity": {
-    "agent_type": "implementer_fast",
-    "dispatch_run_id": "example-ui-001"
-  },
+  "implementation_owner": "main",
   "status": "completed",
   "changed_files": [
     "src/pages/example/index.vue",
@@ -25,7 +22,7 @@
   ],
   "figma_fetch_evidence": {
     "status": "success",
-    "acquired_by": "implementer",
+    "acquired_by": "main",
     "acquired_before_first_ui_edit": true,
     "source_link": "https://figma.com/design/example/file?node-id=1-2",
     "node_id": "1:2",
@@ -66,13 +63,13 @@
     "unit_tests": {
       "result": "not_applicable",
       "commands": [],
-      "evidence_ref": "",
+      "evidence_ref": "evidence/unit.txt",
       "reason": "纯展示组件无独立单测入口"
     },
     "lint": {
       "result": "not_applicable",
       "commands": [],
-      "evidence_ref": "",
+      "evidence_ref": "evidence/lint.txt",
       "reason": "仓库未定义独立 lint script"
     },
     "typecheck": {
@@ -140,5 +137,9 @@
     ],
     "install_dependency_checked": true,
     "easycom_policy": "easycom"
+  },
+  "selection_to_consumer": {
+    "not_applicable": true,
+    "reason": "该示例只实现展示卡片，不新增用户可选值"
   }
 }

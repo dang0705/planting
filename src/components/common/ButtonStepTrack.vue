@@ -1,8 +1,21 @@
 <template>
-  <view :id="id" class="relative min-h-0 flex-1 overflow-hidden">
-    <view class="h-full min-h-0 overflow-hidden" :class="viewportClass" :style="viewportStyle">
+  <view
+    :id="id"
+    class="relative min-h-0"
+    :class="[
+      fill ? 'flex-1' : 'flex-none',
+      rootClass,
+      footerPosition === 'fixed' ? 'overflow-visible' : 'overflow-hidden'
+    ]"
+  >
+    <view
+      class="min-h-0 overflow-hidden"
+      :class="[fill ? 'h-full' : 'h-auto', viewportClass]"
+      :style="viewportStyle"
+    >
       <view
-        class="flex h-full min-h-0 w-full transition-transform duration-300 ease-in-out will-change-transform"
+        class="flex min-h-0 w-full transition-transform duration-300 ease-in-out will-change-transform"
+        :class="fill ? 'h-full' : 'h-auto'"
         :style="trackStyle"
       >
         <view
@@ -21,7 +34,13 @@
       </view>
     </view>
 
-    <view class="absolute bottom-0 left-0 right-0 z-30">
+    <view
+      :class="
+        footerPosition === 'fixed'
+          ? 'fixed bottom-0 left-0 right-0 z-[100]'
+          : 'absolute bottom-0 left-0 right-0 z-30'
+      "
+    >
       <slot name="footer" :index="safeActiveIndex" :item="items[safeActiveIndex]" />
     </view>
   </view>
@@ -41,12 +60,15 @@ const props = defineProps({
   items: { type: Array, default: () => [] },
   viewportClass: { type: [String, Array, Object], default: '' },
   viewportStyle: { type: [String, Object, Array], default: '' },
+  rootClass: { type: [String, Array, Object], default: '' },
+  fill: { type: Boolean, default: true },
   itemClass: { type: [String, Array, Object], default: '' },
   activeItemClass: { type: [String, Array, Object], default: '' },
   inactiveItemClass: {
     type: [String, Array, Object],
     default: 'pointer-events-none h-0 overflow-hidden'
-  }
+  },
+  footerPosition: { type: String, default: 'absolute' }
 })
 
 const resolvedStepCount = computed(() =>

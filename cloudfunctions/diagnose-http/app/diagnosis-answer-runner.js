@@ -32,6 +32,10 @@ const { attachTerminalQuestionPackage } = require('./diagnosis-answer-package-fi
 const { buildAnswerRunnerResult } = require('./diagnosis-answer-result-builder')
 const { buildSpecificPestQuestionPackage } = require('./pest-question-package')
 const { PEST_MODE_KEYS } = require('../domain/diagnosis-mode-registry')
+const {
+  ensurePackageVersionTwo,
+  validateAirEnvironmentPackageSidecar
+} = require('./air-environment-package')
 
 function getSessionQuestionRowRuntime() {
   return require('./session-question-row-runtime')
@@ -270,6 +274,13 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   isTerminalQuestionPackageSubmit = hasSpecificPestQuestionPackageSnapshot
     ? completeQuestionPackageSnapshotSubmit
     : payloadQuestionPackageSubmit || completeQuestionPackageSnapshotSubmit
+  let airEnvironmentPackageRuntime = {
+    byQuestionId: {},
+    snapshotsByQuestionId: {},
+    sourceByQuestionId: {},
+    routeAnswers: [],
+    evidence: null
+  }
   let runtimeAnswerOptionMappings = []
   let runtimeRouteAnswerEffects = []
   let retakeAuthorizationRuntime = null
@@ -456,10 +467,22 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     runtimeAskedQuestionRows = []
   }
 
-  const routeRuntimeAnswers = buildRouteAnswersFromRuntimeEnvironmentCarePayload({
-    answers: runtimeAnswers,
-    runtimeEnvironmentCarePayload: runtimeCarePayload
-  })
+  if (isTerminalQuestionPackageSubmit || isAnswerRevision) {
+    ensurePackageVersionTwo(questionPackageSnapshot)
+    airEnvironmentPackageRuntime = validateAirEnvironmentPackageSidecar({
+      payload,
+      answers: runtimeAnswers,
+      questionPackageSnapshot
+    })
+  }
+
+  const routeRuntimeAnswers = [
+    ...buildRouteAnswersFromRuntimeEnvironmentCarePayload({
+      answers: runtimeAnswers,
+      runtimeEnvironmentCarePayload: runtimeCarePayload
+    }),
+    ...airEnvironmentPackageRuntime.routeAnswers
+  ]
   const round = answerRound + 1
 
   timing.mark('round-starting', {
@@ -553,6 +576,14 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   }
   if (runtimeCarePayload.environmentCareContext) {
     roundResult.environmentCareContext = runtimeCarePayload.environmentCareContext
+  }
+  if (Object.keys(airEnvironmentPackageRuntime.byQuestionId).length) {
+    roundResult.airEnvironmentByQuestionId = airEnvironmentPackageRuntime.byQuestionId
+    roundResult.airEnvironmentSnapshotsByQuestionId =
+      airEnvironmentPackageRuntime.snapshotsByQuestionId
+    roundResult.airEnvironmentSnapshotSourceByQuestionId =
+      airEnvironmentPackageRuntime.sourceByQuestionId
+    roundResult.airEnvironmentEvidence = airEnvironmentPackageRuntime.evidence || null
   }
   attachTerminalQuestionPackage({
     roundResult,

@@ -142,10 +142,10 @@ function validateFigmaFetch(resultObject, context) {
     /AGENTS\.md/i.test(evidence.screenshot_policy_skip.policy_ref) &&
     /GLM|screenshot|截图|skip|跳过/i.test(evidence.screenshot_policy_skip.policy_ref)
   for (const tool of ['get_metadata', 'get_design_context']) {
-    need(calls.includes(tool), `implementer must directly call ${tool}`)
+    need(calls.includes(tool), `implementation owner must directly call ${tool}`)
   }
   if (!screenshotPolicySkip) {
-    need(calls.includes('get_screenshot'), 'implementer must directly call get_screenshot')
+    need(calls.includes('get_screenshot'), 'implementation owner must directly call get_screenshot')
   }
   need(nonEmptyArray(evidence.nodes_read), 'figma_fetch_evidence.nodes_read is required')
   if (!screenshotPolicySkip) {

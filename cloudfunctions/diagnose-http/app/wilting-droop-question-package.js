@@ -1,6 +1,7 @@
 'use strict'
 
 const { toOptionId } = require('../mappers/public-id-mapper')
+const { createAirEnvironmentPackageQuestion } = require('./air-environment-question-contract')
 const {
   WATERING_FREQUENCY_CONTEXT_TOPIC,
   loadRegisteredPackageQuestion
@@ -8,7 +9,7 @@ const {
 
 const WILTING_DROOP_PACKAGE_MODE = 'wilting_droop'
 const WILTING_DROOP_PACKAGE_SOURCE_MODE = 'manual_wilting_droop_route_package'
-const WILTING_DROOP_PACKAGE_QUESTION_COUNT = 5
+const WILTING_DROOP_PACKAGE_QUESTION_COUNT = 6
 const WILTING_DROOP_CLASS_KEY = 'wilting_droop_mode'
 
 const WILTING_DROOP_STATIC_ITEM = Object.freeze({
@@ -48,11 +49,11 @@ const RAW_WILTING_DROOP_PACKAGE_QUESTIONS = Object.freeze([
     options: [
       { optionKey: 'daytime_recovers', text: '白天明显，晚上 / 早晨缓解' },
       { optionKey: 'strong_window_west_heat', text: '靠近强光窗边、西晒、高温玻璃后' },
-      { optionKey: 'ac_heater_fan_direct', text: '空调、暖气、风扇直吹' },
       { optionKey: 'all_day_wilt', text: '全天都蔫' },
       { optionKey: 'unknown', text: '不确定', isDefault: true }
     ]
   },
+  createAirEnvironmentPackageQuestion({ mode: 'wilting_droop', routeKey: 'wilting_droop' }),
   {
     questionKey: 'q_wilting_droop__recent_stress',
     packageTopic: 'recent_stress',
@@ -111,7 +112,8 @@ function mapWiltingDroopQuestion(question = {}) {
     renderMode: question.renderMode || '',
     routePackageRole: question.routePackageRole || '',
     packageEffect: 'route_outcome',
-    type: question.questionType || question.answerType || 'single_choice',
+    questionType: question.questionType || '',
+    type: question.type || question.answerType || 'single_choice',
     text: question.text || question.questionText || '',
     questionText: question.questionText || question.text || '',
     helpText: question.helpText || '',
@@ -126,19 +128,19 @@ function mapWiltingDroopQuestion(question = {}) {
   }
 }
 
-async function buildWiltingDroopPackageQuestions({
-  repository = null
-} = {}) {
+async function buildWiltingDroopPackageQuestions({ repository = null } = {}) {
   const questions = []
   for (const question of RAW_WILTING_DROOP_PACKAGE_QUESTIONS) {
     if (question.registeredPackageTopic) {
-      questions.push(await loadRegisteredPackageQuestion({
-        packageTopic: question.registeredPackageTopic,
-        repository,
-        selectionSource: 'data_repository_question_package',
-        routeKey: 'wilting_droop',
-        targetSymptomKey: WILTING_DROOP_STATIC_ITEM.symptomKey
-      }))
+      questions.push(
+        await loadRegisteredPackageQuestion({
+          packageTopic: question.registeredPackageTopic,
+          repository,
+          selectionSource: 'data_repository_question_package',
+          routeKey: 'wilting_droop',
+          targetSymptomKey: WILTING_DROOP_STATIC_ITEM.symptomKey
+        })
+      )
       continue
     }
     questions.push(mapWiltingDroopQuestion(question))

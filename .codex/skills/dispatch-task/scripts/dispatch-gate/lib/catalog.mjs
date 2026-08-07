@@ -1,7 +1,14 @@
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
+import { executionBundleFingerprint } from './execution-bundle.mjs'
 import { repoRoot, writeJsonAtomic, stateDir } from './state.mjs'
+
+export {
+  executionBundleFingerprint,
+  resolveExecutionBundle,
+  staticEsmSpecifiers
+} from './execution-bundle.mjs'
 
 export const catalogPath = path.join(repoRoot, 'test', 'e2e', 'automator', 'catalog.json')
 const idPolicyPath = path.join(repoRoot, 'docs', 'ai-rules', 'frontend-automation-id-policy.md')
@@ -108,9 +115,15 @@ export function validateCatalog() {
     const abs = path.join(repoRoot, script)
     require(fs.existsSync(abs), `catalog script does not exist: ${script}`, errors)
     if (fs.existsSync(abs)) {
-      const actualHash = sha256File(abs)
-      require(entry.script_sha256 ===
-        actualHash, `script hash mismatch for ${entry.id}: expected ${entry.script_sha256}, got ${actualHash}`, errors)
+      try {
+        const bundle = executionBundleFingerprint(abs, {
+          additionalFiles: entry.integrity_files ?? []
+        })
+        require(entry.script_sha256 ===
+          bundle.hash, `script hash mismatch for ${entry.id}: expected ${entry.script_sha256}, got ${bundle.hash}`, errors)
+      } catch (error) {
+        errors.push(`execution bundle resolution failed for ${entry.id}: ${error.message}`)
+      }
     }
     require(Array.isArray(
       entry.reusable_scenarios
@@ -201,10 +214,10 @@ export function createQaSkeleton({ dispatchRunId, handoff = {}, postflight = nul
     requirements: [
       'select an exact catalog leaf id',
       'validate docs/ai-rules/frontend-automation-id-policy.md refs',
-      'verify script_sha256',
+      'verify script_sha256 execution bundle fingerprint',
       'provide a non-empty execution_id before LAN/DevTools/automator',
       'complete qa-preflight for projectPath, LAN, 9420/WS, page data, screenshot, and wx.request',
-      'freeze the script hash, serialize 9420 access, and persist a terminal qa-run record before claiming acceptance'
+      'freeze the local execution bundle fingerprint, serialize 9420 access, and persist a terminal qa-run record before claiming acceptance'
     ],
     postflight_status: postflight?.status ?? null,
     created_at: new Date().toISOString()

@@ -6,8 +6,8 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: 'var(--primary-color)',
-        secondary: 'var(--secondary-color)',
+        primary: '#2d7a4f',
+        secondary: '#f8f6f0',
         // 品牌绿色阶：主绿 / 深绿 / 极深绿 / 浅绿底 / 边框绿，对应 Figma 设计系统
         brand: {
           DEFAULT: '#00a63e',

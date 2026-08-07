@@ -29,6 +29,7 @@ function buildQuestionPackageSnapshot(response = {}) {
     mode: questionPackage.mode || '',
     route: questionPackage.route || '',
     sourceMode: questionPackage.sourceMode || '',
+    packageVersion: Number(questionPackage.packageVersion || 1),
     answerSubmitMode: questionPackage.answerSubmitMode || '',
     questionDisplayMode: questionPackage.questionDisplayMode || '',
     fixedQuestionPackage: Boolean(questionPackage.fixedQuestionPackage),

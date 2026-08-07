@@ -31,6 +31,7 @@ function pickMinimalQuestions(items = []) {
       return {
         questionId: String(item?.questionId || item?.questionKey || '').trim(),
         questionKey: String(item?.questionKey || item?.questionId || '').trim(),
+        questionType: String(item?.questionType || item?.type || '').trim(),
         targetSymptomKey: String(item?.targetSymptomKey || '').trim(),
         packageTopic: String(item?.packageTopic || '').trim(),
         questionGroupKey: String(item?.questionGroupKey || '').trim(),

@@ -12,6 +12,7 @@ function pickMinimalPackageQuestions(items = [], options = {}) {
 
       return {
         questionKey: String(item?.questionKey || item?.questionId || '').trim(),
+        questionType: String(item?.questionType || item?.type || '').trim(),
         packageTopic: String(item?.packageTopic || '').trim(),
         defaultOptionKey: String(item?.defaultOptionKey || '').trim(),
         defaultOptionId: String(item?.defaultOptionId || '').trim(),

@@ -29,6 +29,7 @@ import {
 import { estimateQuestionSwiperHeight } from './question-display.js'
 import { useEnvironmentWeatherWindow } from './question-weather-window.js'
 import { submitQuestionPackageAnswers } from './question-submit.js'
+import { useQuestionAirEnvironment } from './question-air-environment.js'
 
 function normalizeText(value = '') {
   return String(value || '').trim()
@@ -38,6 +39,15 @@ function isPackageResult(value = {}) {
     value?.uiHints?.answerSubmitMode === 'package' ||
     value?.uiHints?.questionDisplayMode === 'package' ||
     value?.questionPackage?.answerSubmitMode === 'package'
+  )
+}
+
+function requiresAirEnvironmentPackageRestart(value = {}) {
+  const mode = normalizeText(value?.questionPackage?.mode)
+  return (
+    ['yellow_leaf', 'wilting_droop'].includes(mode) &&
+    Number(value?.questionPackage?.packageVersion || 1) < 2 &&
+    Boolean(value?.hasActiveQuestions)
   )
 }
 
@@ -60,6 +70,12 @@ export function useQuestionPackageFlow({
   const lightEnvironmentByQuestionId = ref({})
   const suppressedTimelineAnswerByQuestionId = ref({})
   const isSubmittingQuestionAnswer = ref(false)
+  const packageRestartRequired = ref(false)
+  const airEnvironment = useQuestionAirEnvironment({
+    result,
+    plantStore,
+    setQuestionAnswer
+  })
   const {
     environmentWeatherWindow,
     environmentWeatherWindowLoading,
@@ -113,6 +129,17 @@ export function useQuestionPackageFlow({
   }
 
   function resetQuestionState(questions = []) {
+    packageRestartRequired.value = requiresAirEnvironmentPackageRestart(result.value)
+    if (packageRestartRequired.value) {
+      questionStack.value = []
+      activeQuestionIndex.value = 0
+      questionAnswers.value = {}
+      careBehaviorTimelineByQuestionId.value = {}
+      lightEnvironmentByQuestionId.value = {}
+      suppressedTimelineAnswerByQuestionId.value = {}
+      airEnvironment.reset([])
+      return
+    }
     const nextQuestions = dedupeQuestionsById(
       Array.isArray(questions) ? questions.filter(item => getQuestionId(item)) : []
     )
@@ -125,6 +152,7 @@ export function useQuestionPackageFlow({
       lightEnvironmentByQuestionId.value
     )
     suppressedTimelineAnswerByQuestionId.value = {}
+    airEnvironment.reset(nextQuestions)
     refreshEnvironmentWeatherWindowForCareBehavior(nextQuestions, careBehaviorTimelineByQuestionId)
   }
   function getCareBehaviorTimelineByQuestion(question = {}) {
@@ -291,6 +319,10 @@ export function useQuestionPackageFlow({
     if (!questionId || !optionId) {
       return
     }
+    if (airEnvironment.isAirEnvironmentQuestion(question)) {
+      airEnvironment.selectUnknown(question)
+      return
+    }
     suppressTimelineAnswerSync(
       questionId,
       isCareBehaviorWateringTimelineQuestion(question) &&
@@ -334,6 +366,9 @@ export function useQuestionPackageFlow({
         Boolean(lightEnvironmentByQuestionId.value[questionId])
       )
     }
+    if (airEnvironment.isAirEnvironmentQuestion(question)) {
+      return airEnvironment.isAnswered(question, questionAnswers.value[questionId])
+    }
     return Boolean(questionAnswers.value[questionId])
   }
 
@@ -367,6 +402,8 @@ export function useQuestionPackageFlow({
     }
     isSubmittingQuestionAnswer.value = true
     try {
+      const frozenAirEnvironment = airEnvironment.freezeForSubmit(questionStack.value)
+      airEnvironment.saveInBackground(questionStack.value, frozenAirEnvironment)
       await submitQuestionPackageAnswers({
         result,
         images: images.value,
@@ -377,6 +414,8 @@ export function useQuestionPackageFlow({
         isQuestionPackageMode: isQuestionPackageMode.value,
         careBehaviorTimelineByQuestionId: careBehaviorTimelineByQuestionId.value,
         lightEnvironmentByQuestionId: lightEnvironmentByQuestionId.value,
+        airEnvironmentByQuestionId: frozenAirEnvironment.byQuestionId,
+        airEnvironmentSnapshotsByQuestionId: frozenAirEnvironment.snapshotsByQuestionId,
         environmentWeatherWindow: environmentWeatherWindow.value,
         diagnosisAnswerMutation,
         diagnoseStore,
@@ -427,6 +466,7 @@ export function useQuestionPackageFlow({
     questionProgressText,
     nextButtonText,
     isSubmittingQuestionAnswer,
+    packageRestartRequired,
     environmentWeatherWindowLoading,
     environmentWeatherWindowError,
     resetQuestionState,
@@ -437,6 +477,12 @@ export function useQuestionPackageFlow({
     getVisibleCareBehaviorOptions,
     isCareBehaviorWateringTimelineQuestion,
     isLightEnvironmentQuestion,
+    isAirEnvironmentQuestion: airEnvironment.isAirEnvironmentQuestion,
+    airEnvironmentUi: airEnvironment,
+    openAirEnvironmentEditor: airEnvironment.openEditor,
+    confirmAirEnvironmentLocation: airEnvironment.confirmSavedProfile,
+    handleAirEnvironmentChange: airEnvironment.change,
+    selectAirEnvironmentUnknown: airEnvironment.selectUnknown,
     selectQuestionOption,
     isSelectedQuestionOption,
     getSelectedQuestionOptionId,

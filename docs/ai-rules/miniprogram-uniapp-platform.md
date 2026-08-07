@@ -24,7 +24,7 @@
 
 1. 滚动、吸顶、IntersectionObserver、骨架屏、远程字体、OSS 静态资源等小程序端能力需按项目既有方案处理。
 2. 不要引入依赖浏览器 DOM 的实现。
-3. 涉及构建产物和 uni-app vite 逻辑时，优先让 `code_explorer` 定位现有插件并探索npm/github上成熟的第三方插件。
+3. 涉及构建产物和 uni-app vite 逻辑时，由 main agent 定位现有插件并探索 npm/GitHub 上成熟的第三方插件。
 
 ## 5. 前端自动化定位入口
 

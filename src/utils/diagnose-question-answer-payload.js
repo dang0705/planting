@@ -7,6 +7,9 @@ import {
 } from './care-behavior-timeline.js'
 import { resolveDefaultQuestionOptionId } from './diagnose-flow-shared.js'
 import { getQuestionIdentity } from './diagnose-question-identity.js'
+import { isAirEnvironmentAnswerReady, isAirEnvironmentQuestion } from './air-environment.js'
+
+const AIR_ENVIRONMENT_RECORDED_OPTION_KEY = 'air_environment_recorded'
 
 export function createQuestionAnswerMap(questions = []) {
   const entries = {}
@@ -94,6 +97,31 @@ export function buildQuestionAnswerPayload(result, answerMap = {}, options = {})
             Object.values(options.lightEnvironmentByQuestionId).find(Boolean) || null
         }
       : {})
+  }
+
+  const airEnvironmentByQuestionId = Object.fromEntries(
+    Object.entries(options?.airEnvironmentByQuestionId || {}).filter(([questionId, value]) => {
+      const question = questions.find(entry => getQuestionIdentity(entry) === questionId)
+      return (
+        Boolean(question) &&
+        (isAirEnvironmentQuestion(question) || questionId.includes('air_environment')) &&
+        String(answerMap[questionId] || '').trim() === AIR_ENVIRONMENT_RECORDED_OPTION_KEY &&
+        isAirEnvironmentAnswerReady(value)
+      )
+    })
+  )
+  const airEnvironmentSnapshotsByQuestionId = Object.fromEntries(
+    Object.entries(options?.airEnvironmentSnapshotsByQuestionId || {}).filter(
+      ([questionId, snapshot]) =>
+        Object.prototype.hasOwnProperty.call(airEnvironmentByQuestionId, questionId) &&
+        snapshot &&
+        typeof snapshot === 'object'
+    )
+  )
+
+  if (Object.keys(airEnvironmentByQuestionId).length) {
+    basePayload.airEnvironmentByQuestionId = airEnvironmentByQuestionId
+    basePayload.airEnvironmentSnapshotsByQuestionId = airEnvironmentSnapshotsByQuestionId
   }
 
   return appendCareBehaviorSidecar(basePayload, {

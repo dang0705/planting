@@ -22,19 +22,20 @@ inclusion: always
 
 ## 2. 全局行为硬规则
 
-1. 迭代过程中的业务逻辑、数据结构变动，如 ```{a:{b:1}}``` 改为 ```{a:[1]}``` 这种结构性调整的，优先采取最彻底的解决方案，避免使用保守策略如兼容、兜底代码应对此类变动从而导致无谓的代码膨胀。
+1. 迭代过程中的业务逻辑、数据结构变动，如 `{a:{b:1}}` 改为 `{a:[1]}` 这种结构性调整的，优先采取最彻底的解决方案，避免使用保守策略如兼容、兜底代码应对此类变动从而导致无谓的代码膨胀。
 2. 计划模式和实际开发过程中必须遵循 `如无必要、勿增实体` 的开发原则。以合理复用、扩展已有的表结构、字段、功能模块、组件为优先。确认以上实体或相似度超过80%的实体不存在、无法复用和扩展该实体或此类操作对原有实体存在污染风险的才考虑新增。
 3. 开发过程中涉及到的文件超过 500 行的必须解耦拆分模块，拆分遵循高内聚、低耦合的设计思路，以提高维护性和复用性为最终目的。要求命名和目录划分合理并保证加载的性能。
 4. 新增或重构复杂功能的，优先探索并复用现有组件或模块，现有不满足的需联网探索 `npm`/ `github` 上成熟的插件。避免复杂组件/模块手搓，其为最末位兜底。
 5. 如需依赖新插件，必须考证其适配微信小程序、包体积、npm / GitHub 状态、周下载量、star 数和最近 3 年 release 记录，并提供简短介绍，征得用户同意。
 6. 所有端上验收如果本轮代码未部署到云端，必须先成功跑通 `js npm run dev:mp-weixin:local-functions:lan` 的完整 LAN 本地函数 flow，并让小程序运行时命中新代码；只启动 scoped/local 单函数 gateway、backend curl、Node HTTP 或 gateway health，不得算端上验收完成。
-7. 除非用户显式要求，否则 subagent 在条件允许的情况下优先考虑线程复用。
+7. 除非用户明确要求外部桥接，否则不得创建、派发或复用任何内部 subagent；所有工作由 main agent 完成。
 8. 当运行时模型为 GLM 系列时，调用 `mcp__Figma_Desktop__get_design_context`、`get_metadata`、`get_variable_defs` 等 Figma 读取类工具后，禁止/跳过调用 `get_screenshot`；除非用户在当前会话中明确要求查看截图。
 9. 对于任何的需求、任务、用户决策，严禁主观认为一定正确，必须有强烈的风险意识。当识别到任务有较大地风险或用户的决策方向存在严重错误时必须第一时间暂停开发并提供多个解决方案给用户，同时给出推荐顺序，由用户决定最后的实施方向。
-10. 具备完整开发生命周期或明显涉及业务逻辑的开发任务必须经 `$dispatch-task` 触发，再由其内部判断不同的 `dispatch-tier` 执行各自工作流。
+10. 具备完整开发生命周期或明显涉及业务逻辑的开发任务必须由 `main agent` 触发 `$dispatch-task` ，再由其内部判断不同的 `dispatch-tier` 执行各自工作流。已经处于 `$dispatch-task` 的任务严禁在后续的多轮会话中嵌套调用该skill。任何 `subagent` 严禁触发该 skill。
 11. 客户端显示的文案必须从用户角度出发并符合常识，严禁将内部讨论用语、计算公式，拗口或难理解的文案暴露在界面中。必须遵循用户友好、利于用户操作的思想设计出最优的展示文案。
-12. 输出的文案、用语减少专业词汇，尤其在 plan 模式或用户显式要求 planning时，要注重用词以通俗易懂的白话结合举例代替专业词汇。 
-13. Web/云端 external implementer 即使运行时自称 main/root，也必须在本项目中承担 implementer 角色：只按 handoff 修改代码，完成后执行实现者自检和 unit tests；有 `figma_link` 的 UI 任务必须直接使用可用的 Figma 插件 / MCP / 工具读取设计并对齐 UI，不能依赖 Codex main 的转述。
+12. 输出的文案、用语减少专业词汇，尤其在 plan 模式或用户显式要求 planning时，要注重用词以通俗易懂的白话结合举例代替专业词汇。
+13. Web/云端 external implementer 即使运行时自称 main/root，也必须在本项目中承担 external implementer 角色：只按 handoff 修改代码，完成后执行实现者自检和 unit tests；有 `figma_link` 的 UI 任务必须直接使用可用的 Figma 插件 / MCP / 工具读取设计并对齐 UI，不能依赖 main 的转述。外部桥接失败不得自动改派内部 subagent。
+14. 严禁任何可能的黑箱行为，所有的设计方案都必须可视、可审计、可追溯、可回放。
 
 ## 3. 前端行为硬约束
 
@@ -66,7 +67,7 @@ inclusion: always
 
 1. 使用端上 `miniprogram-automator` / `9420` 做诊断相关自动化测试时，先读取 `docs/ai-rules/frontend-automation-id-policy.md` 的“第三点 元素 id 映射”，并按该映射执行入口定位与关键断言。
 2. `miniprogram-automator` 的目的若为了验证UI，必须对比截图。
-3. 端上验收启动或连接 DevTools 前，必须先读取当前活跃进程的 PID、控制端口和当前项目路径：目标项目（青花植）且已有 `9420` 时直接复用；目标项目但端口不是 `9420` 时复用同一进程并把端口切到 `9420`，切换前后 PID/项目路径必须不变；当前项目不是目标项目时才允许另开目标项目进程；没有活跃进程时才允许首次打开。不得先 `quit`、`open` 或无条件 `auto`。
+3. `9420` 只属于用户交互调试会话：正式 catalog `qa-run` / `qa-preflight` 不得连接、重配、关闭或以其为 fallback。正式 QA 必须先验证 LAN watcher lease、目标 `dist/dev/mp-weixin`、测试专属 persistent profile、test-owned DevTools owner 与官方 IDE plugin，再仅通过隔离控制端口启用 test-owned `9421` 并用真实 PNG、项目 identity、page data 和运行时 `wx.request` 验证。用户调试会话仍应先读取 PID、控制端口和项目路径；不得为正式 QA 复用、切换或关闭该进程。
 4. QA 不运行 unit tests；QA 负责运行时、端上、UI/Figma、E2E 和用户可观察行为验证。
 5. automator QA 必须通过 `test/e2e/automator/catalog.json` 精确选择叶子脚本，并在 LAN/DevTools/automator 前校验 automation id policy、脚本 hash 和 execution id；直接裸跑 automator 脚本只能作为排障，不能作为验收证据。
 6. dispatch-task flow 中 QA owner 为 main；main 执行 QA 不授权其修改业务代码。发现产品问题必须退回原 implementer 或 external implementer；只有经 `dispatch-task` §1.3 判定为受限 maintenance patch 的格式、lint/build、typo 或机械冲突修复，main 才可在终态后处理。

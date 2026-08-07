@@ -10,7 +10,7 @@
  *   MP_PROJECT_PATH              小程序构建目录（默认 dist/dev/mp-weixin）
  *   E2E_ARTIFACT_DIR             截图和报告目录
  *   WATERING_TRANSPIRATION_MODE  shadow | active（期望的后端模式，实际模式以响应为准）
- *   MINIPROGRAM_AUTOMATOR_WS     ws://127.0.0.1:9420
+ *   MINIPROGRAM_AUTOMATOR_WS     QA 验证的测试专属 WebSocket 端点
  *
  * 模式语义（P0 修复）：
  *   --watering-transpiration-mode 指定期望的后端运行模式，但脚本不自行启动/停止/重启 LAN worker。
@@ -47,11 +47,7 @@ import {
   timestampForFilename
 } from './lib/env.mjs'
 import { connectAutomator, AutomatorConnectError, safeDisconnect } from './lib/automator-client.mjs'
-import {
-  createReport,
-  saveReport,
-  setClassification
-} from './lib/reporter.mjs'
+import { createReport, saveReport, setClassification } from './lib/reporter.mjs'
 import { preflightProject } from './lib/project-check.mjs'
 import { runIndependentWateringScenario } from './scenarios/independent-watering.mjs'
 import { runMyPlantPlannerScenario } from './scenarios/my-plant-planner.mjs'
@@ -60,7 +56,9 @@ function parseScenario(argv) {
   for (const token of argv) {
     if (token.startsWith('--scenario=')) {
       const value = token.slice('--scenario='.length)
-      if (['all', 'independent', 'myplant'].includes(value)) {return value}
+      if (['all', 'independent', 'myplant'].includes(value)) {
+        return value
+      }
       throw new Error(`invalid --scenario: ${value}, expected all|independent|myplant`)
     }
   }
@@ -201,7 +199,9 @@ export async function runTranspirationV3({ forcedScenario = null } = {}) {
   let hasBlocked = false
   for (const r of overallResults) {
     console.log(`  ${r.scenario}: ${r.classification} (${r.reportPath})`)
-    if (r.classification === 'FAIL_PRODUCT') {hasFailure = true}
+    if (r.classification === 'FAIL_PRODUCT') {
+      hasFailure = true
+    }
     if (r.classification === 'BLOCKED_ENV' || r.classification === 'BLOCKED_FIXTURE') {
       hasBlocked = true
     }
@@ -254,7 +254,7 @@ export async function main() {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch(error => {
-  console.error('[e2e] fatal error:', error?.message || error)
-  process.exit(1)
+    console.error('[e2e] fatal error:', error?.message || error)
+    process.exit(1)
   })
 }

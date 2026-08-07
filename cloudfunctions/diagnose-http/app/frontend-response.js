@@ -37,13 +37,10 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
   // 初始 /diagnosis/start 与 answer 路径都通过 buildFrontendDiagnosisResponse 输出，
   // 这里统一处理 optionalFollowUp，避免初始响应丢失 likely 结论。
   const hasOptionalFollowUp = Boolean(
-    publicResponse?.questionPackage?.optionalFollowUp ||
-      publicResponse?.uiHints?.optionalFollowUp
+    publicResponse?.questionPackage?.optionalFollowUp || publicResponse?.uiHints?.optionalFollowUp
   )
   const hasActiveQuestionPackage =
-    Boolean(publicResponse?.questionPackage) &&
-    rawQuestions.length > 0 &&
-    !hasOptionalFollowUp
+    Boolean(publicResponse?.questionPackage) && rawQuestions.length > 0 && !hasOptionalFollowUp
   const questionPackage = hasActiveQuestionPackage
     ? buildQuestionPackage(publicResponse, rawQuestions) ||
       buildYellowingQuestionPackage(publicResponse, rawQuestions)
@@ -97,6 +94,12 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
       ...(uiPatch ? { uiPatch } : {}),
       ...(careBehaviorTimeline ? { careBehaviorTimeline } : {}),
       ...(environmentCareContext ? { environmentCareContext } : {}),
+      airEnvironmentByQuestionId: publicResponse?.airEnvironmentByQuestionId || {},
+      airEnvironmentSnapshotsByQuestionId:
+        publicResponse?.airEnvironmentSnapshotsByQuestionId || {},
+      airEnvironmentSnapshotSourceByQuestionId:
+        publicResponse?.airEnvironmentSnapshotSourceByQuestionId || {},
+      airEnvironmentEvidence: publicResponse?.airEnvironmentEvidence || null,
       ...pickActiveIntermediateFields(publicResponse),
       uiHints: buildQuestionPackageUiHints(
         publicResponse?.uiHints,
@@ -203,6 +206,11 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
     visualAggregateSummary: pickMinimalVisualAggregateSummary(
       publicResponse.visualAggregateSummary
     ),
+    airEnvironmentByQuestionId: publicResponse?.airEnvironmentByQuestionId || {},
+    airEnvironmentSnapshotsByQuestionId: publicResponse?.airEnvironmentSnapshotsByQuestionId || {},
+    airEnvironmentSnapshotSourceByQuestionId:
+      publicResponse?.airEnvironmentSnapshotSourceByQuestionId || {},
+    airEnvironmentEvidence: publicResponse?.airEnvironmentEvidence || null,
     ...pickActiveIntermediateFields(publicResponse),
     uiHints: {
       canUploadMoreImages: Boolean(publicResponse?.uiHints?.canUploadMoreImages),
@@ -239,8 +247,7 @@ function buildFrontendAnswerResponse(publicResponse = {}) {
   // 可选追问（likely result）场景：questions 非空但带有 finalResult/visibleOutcomes，
   // 不能走 buildFrontendDiagnosisResponse 的问诊包路径，否则会丢弃结论数据。
   const hasOptionalFollowUp = Boolean(
-    publicResponse?.questionPackage?.optionalFollowUp ||
-      publicResponse?.uiHints?.optionalFollowUp
+    publicResponse?.questionPackage?.optionalFollowUp || publicResponse?.uiHints?.optionalFollowUp
   )
   if (questions.length && !hasOptionalFollowUp) {
     return buildFrontendDiagnosisResponse(publicResponse)
@@ -298,7 +305,9 @@ function buildFrontendAnswerResponse(publicResponse = {}) {
   )
   const hasActiveQuestionsFlag = Boolean(
     publicResponse?.hasActiveQuestions ||
-      (hasOptionalFollowUp && Array.isArray(publicResponse?.questions) && publicResponse.questions.length > 0)
+    (hasOptionalFollowUp &&
+      Array.isArray(publicResponse?.questions) &&
+      publicResponse.questions.length > 0)
   )
   const optionalQuestions = hasOptionalFollowUp
     ? pickMinimalQuestions(resolveResponseQuestions(publicResponse))
@@ -365,6 +374,11 @@ function buildFrontendAnswerResponse(publicResponse = {}) {
     hasActiveQuestions: hasActiveQuestionsFlag,
     questions: optionalQuestions,
     ...(environmentCareContext ? { environmentCareContext } : {}),
+    airEnvironmentByQuestionId: publicResponse?.airEnvironmentByQuestionId || {},
+    airEnvironmentSnapshotsByQuestionId: publicResponse?.airEnvironmentSnapshotsByQuestionId || {},
+    airEnvironmentSnapshotSourceByQuestionId:
+      publicResponse?.airEnvironmentSnapshotSourceByQuestionId || {},
+    airEnvironmentEvidence: publicResponse?.airEnvironmentEvidence || null,
     ...pickActiveIntermediateFields(publicResponse),
     ...(packageUiHints
       ? { uiHints: packageUiHints }

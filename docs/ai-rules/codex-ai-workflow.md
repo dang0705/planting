@@ -15,29 +15,25 @@
 ```text
 Phase 0: 硬门禁
 Phase 1: ClickUp / MCP 事实读取
-Phase 2: Agent Assignment
-Phase 3: role_context_packets
+Phase 2: Main Assignment
+Phase 3: Main context packet
 Phase 4: Implementation Contract + Test Contract
-Phase 5: Subagent 执行
+Phase 5: Main 执行；仅用户明确要求时进入 external bridge
 Phase 6: QA 与证据
 Phase 7: ClickUp markdown checklist 回写 + Git commit
 ```
 
 任何 phase 未完成，不得进入下一 phase。
 
-## 3. 当前可用 subagent
+## 3. 内部实现边界
 
-| agent | 用途 |
-|---|---|
-| `code_explorer` | 可选低成本代码定位 |
-| `implementer_fast` | 低风险局部契约执行 |
-| `implementer_deep` | 高风险 / 多文件契约执行 |
+当前不启用任何内部 subagent、implementer 或 code explorer。`simple_patch`、`standard_task`、`deep_contract` 均由 main 直接完成；只有用户明确要求时，才通过 `external_implementer` bridge 交付外部 agent。
 
 ## 4. `main agent` 主导职责
 
-`main agent` 负责技术方向、Implementation Contract、Test Contract、Agent Assignment、code review、QA、docs/BRV impact、ClickUp 回写和 Git commit。
+`main agent` 负责技术方向、Implementation Contract、Test Contract、Main Assignment、代码实现、code review、QA、docs/BRV impact、ClickUp 回写和 Git commit。
 
-`main agent` 默认不得亲自写代码。
+`main agent` 默认直接写代码并负责实现、测试、review、QA、docs/BRV 和 Completion Gate。
 
 ## 5. 外置规则
 
@@ -88,7 +84,7 @@ Phase 7: ClickUp markdown checklist 回写 + Git commit
 
 1. `$dispatch-task` is phase-gated.
 2. Main agent owns technical direction, Implementation Contract, Test Contract, code review, checklist writeback, and Git commit.
-3. Code changes require implementer assignment unless a legal exception is recorded.
+3. Code changes require main implementation unless the user explicitly requests external bridge.
 4. QA does not review code diff.
 5. ClickUp markdown checklist writeback updates `markdown_description`.
 6. Skill and reference files must not contain version-number patch sections.
@@ -108,7 +104,7 @@ commit message 必须根据改动内容生成，精炼且不超过 50 个字符�
 
 ## Stable automation and QA budget
 
-端上 automator 自动化采用单一责任原则：`main agent` 默认不直接执行，implementer 只做最小自测，QA 负责正式验收。`main agent` 等待 subagent 时优先低成本观察，不频繁中断。QA 输出使用 QA Result。
+端上 automator 自动化采用单一责任原则：main 负责实现和正式验收；external provider 只按 bridge 合同做实现者自检，不能创建内部 subagent。QA 输出使用 QA Result。
 
 稳定成功模式：
 

@@ -34,7 +34,7 @@ const need = (condition, message) => {
     errors.push(message);
   }
 };
-const mode = handoff.implementation_mode ?? 'codex_subagent';
+const mode = handoff.implementation_mode ?? 'main_direct';
 const id = handoff.dispatch_run_id;
 const external = handoff.external_contract ?? handoff.zcode_contract ?? {};
 const provider = external.provider || (external.external_implementer === 'zcode_glm' ? 'zcode' : '');

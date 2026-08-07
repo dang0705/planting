@@ -14,8 +14,7 @@
 import path from 'node:path'
 import fs from 'node:fs'
 import { execSync } from 'node:child_process'
-
-const DEFAULT_WS = 'ws://127.0.0.1:9420'
+import { formalAutomatorEndpoint } from '../../../../../_shared/formal-leaf-harness.mjs'
 const DEFAULT_MODE = 'shadow'
 
 /**
@@ -74,9 +73,11 @@ function resolveMode(cliArgs) {
 }
 
 function resolveWs(cliArgs) {
-  return String(
-    cliArgs['miniprogram-automator-ws'] || process.env.MINIPROGRAM_AUTOMATOR_WS || DEFAULT_WS
-  )
+  return formalAutomatorEndpoint({
+    ...process.env,
+    MINIPROGRAM_AUTOMATOR_WS:
+      cliArgs['miniprogram-automator-ws'] || process.env.MINIPROGRAM_AUTOMATOR_WS
+  })
 }
 
 function ensureDir(dir) {

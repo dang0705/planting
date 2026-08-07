@@ -1,189 +1,272 @@
 #!/usr/bin/env node
-import fs from 'node:fs';
+import fs from 'node:fs'
+import path from 'node:path'
+import { pathToFileURL } from 'node:url'
+import { countUtf8Lines, sha256 } from './zcode-clipboard-bridge.mjs'
 
-const [handoffFile, receiptFile] = process.argv.slice(2);
-if (!handoffFile || !receiptFile) {
-  console.error('usage: validate-zcode-send-receipt.mjs <handoff.json> <send-receipt.json>');
-  process.exit(2);
-}
-
-const readJson = (file) => {
-  try {
-    return JSON.parse(fs.readFileSync(file, 'utf8'));
-  }
-  catch (error) {
-    console.error(JSON.stringify({ status: 'invalid_json', file, error: error.message }, null, 2));
-    process.exit(2);
-  }
-};
-
-const handoff = readJson(handoffFile);
-const receipt = readJson(receiptFile);
-const errors = [];
-const need = (condition, message) => {
-  if (!condition) {
-    errors.push(message);
-  }
-};
-const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
-const nonEmptyString = (value) => typeof value === 'string' && value.trim().length > 0;
-const includesAll = (array, items) => items.every((item) => array?.includes(item));
-
-const mode = handoff.implementation_mode ?? 'codex_subagent';
-const external = handoff.external_contract ?? handoff.zcode_contract ?? {};
-const provider = external.provider || (external.external_implementer === 'zcode_glm' ? 'zcode' : '');
-
-// dispatch-20260726-devtools-screenshot-recovery-zcode: 持久用户授权解析。
-// 正式 external_contract.zcode_clipboard_bridge_authorization 优先；
-// schema 落地前回退到 validation.zcode_clipboard_bridge_authorization 迁移来源。
-const clipboardBridgeAuth =
-  external.zcode_clipboard_bridge_authorization ??
-  handoff?.validation?.zcode_clipboard_bridge_authorization;
-const persistentAuthEnabled =
-  isObject(clipboardBridgeAuth) &&
-  clipboardBridgeAuth.mode === 'persistent_user_authorization' &&
-  clipboardBridgeAuth.enabled === true;
-
-need(['external_implementer', 'zcode_external'].includes(mode),
-  'validate-zcode-send-receipt requires implementation_mode=external_implementer|zcode_external');
-need(provider === 'zcode', 'validate-zcode-send-receipt requires external_contract.provider=zcode');
-need(external.computer_use_required === true,
-  'handoff external zcode contract must set computer_use_required=true');
-need(receipt.dispatch_run_id === handoff.dispatch_run_id,
-  'send receipt dispatch_run_id must match handoff');
-need(['sent', 'blocked'].includes(receipt.status), 'send receipt status must be sent|blocked');
-need(['enter', 'send_button', 'blocked'].includes(receipt.send_action),
-  'send_action must be enter|send_button|blocked');
-
-const cu = receipt.computer_use ?? {};
-const alternative = receipt.alternative_ui_automation ?? {};
-const alternativeUsed = alternative.used === true;
-const requiredActions = [
+const DISPATCH_DIRECTORY = path.resolve(process.cwd(), '.tmp/dispatch-task')
+const BLOCKERS = new Set([
+  'clipboard_write_failed',
+  'clipboard_readback_failed',
+  'input_not_unique',
+  'focus_failed',
+  'paste_delivery_failed',
+  'prompt_integrity_failed',
+  'send_delivery_failed'
+])
+const BANNED_KEYS = new Set([
+  'api_key',
+  'authorization',
+  'credential',
+  'credential_key',
+  'element_index',
+  'headless_permission_mode',
+  'old_clipboard',
+  'process',
+  'prompt_body',
+  'raw_ui_dump',
+  'request_body',
+  'session',
+  'token'
+])
+const CONTRACT_FIELDS = [
+  ['input_box_check_required', true],
+  ['send_action_required', true],
+  ['computer_use_required', true],
+  ['actual_tool_invocation_required', true],
+  ['computer_use_tool_invocation_required', true],
+  ['computer_use_action_trace_required', true],
+  ['clipboard_bridge_required', true],
+  ['clipboard_bridge_evidence_required', true],
+  ['direct_input_injection_forbidden', true],
+  ['manual_typing_forbidden', true],
+  ['shell_only_ui_automation_forbidden', true]
+]
+const REQUIRED_ACTIONS = [
   'verify_zcode_current_session',
+  'locate_unique_entry_area',
   'focus_chat_input',
-  'set_clipboard_to_prompt',
-  'paste_clipboard',
-  'verify_prompt_sentinel_in_input',
-  'send_prompt'
-];
-const validateToolInvocationEvidence = (cu, sent) => {
-  const tie = cu.tool_invocation_evidence ?? {};
-  need(isObject(tie), 'computer_use.tool_invocation_evidence is required');
-  need(tie.actual_tool_invocation_required === true, 'tool_invocation_evidence.actual_tool_invocation_required must be true');
-  if (sent) {
-    need(['@ZCode', '@Computer'].includes(tie.tool_target), 'tool_invocation_evidence.tool_target must be @ZCode|@Computer');
-    need(tie.tool_events_seen === true, 'tool_invocation_evidence.tool_events_seen must be true for sent receipts');
-    need(Number.isInteger(tie.tool_event_count) && tie.tool_event_count >= 5, 'tool_invocation_evidence.tool_event_count must be >= 5');
-    need(Array.isArray(tie.transcript_event_refs) && tie.transcript_event_refs.length >= 5 && tie.transcript_event_refs.every(nonEmptyString), 'tool_invocation_evidence.transcript_event_refs must contain >=5 non-empty tool event refs');
-    need(Array.isArray(tie.commands_issued) && tie.commands_issued.length >= 5 && tie.commands_issued.every(nonEmptyString), 'tool_invocation_evidence.commands_issued must contain >=5 commands');
-    if (Array.isArray(tie.commands_issued)) {
-      const joined = tie.commands_issued.join(' ').toLowerCase();
-      for (const token of ['zcode', 'focus', 'clipboard', 'sentinel', 'send']) {
-        need(joined.includes(token), `tool_invocation_evidence.commands_issued must include ${token}`);
-      }
-    }
+  'run_verified_clipboard_bridge',
+  'paste_clipboard_via_cmd_v',
+  'verify_paste_delivery',
+  'open_edit_menu_if_needed',
+  'paste_clipboard_via_edit_menu_if_needed',
+  'send_prompt_after_integrity_check',
+  'verify_post_send_delivery'
+]
+const isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value)
+const nonEmpty = value => typeof value === 'string' && value.trim().length > 0
+const isIso = value => nonEmpty(value) && !Number.isNaN(Date.parse(value))
+const isDigest = value => typeof value === 'string' && /^[a-f0-9]{64}$/i.test(value)
+const need = (errors, condition, message) => { if (!condition) { errors.push(message) } }
+function onlyKeys(errors, value, allowed, label) {
+  if (!isObject(value)) { return }
+  const unknown = Object.keys(value).filter(key => !allowed.includes(key))
+  need(errors, unknown.length === 0, `${label} contains unknown fields: ${unknown.join(', ')}`)
+}
+function walk(value, visit) {
+  if (Array.isArray(value)) { value.forEach(item => walk(item, visit)); return }
+  if (!isObject(value)) { return }
+  for (const [key, child] of Object.entries(value)) {
+    visit(key, child)
+    walk(child, visit)
+  }
+}
+function canonicalRegular(candidate, dispatchRunId) {
+  if (!nonEmpty(candidate)) { return false }
+  const absolute = path.resolve(candidate)
+  if (path.dirname(absolute) !== DISPATCH_DIRECTORY || !path.basename(absolute).includes(dispatchRunId)) { return false }
+  try {
+    const stat = fs.lstatSync(absolute)
+    return stat.isFile() && !stat.isSymbolicLink() && fs.realpathSync(absolute) === absolute
+  } catch {
+    return false
+  }
+}
+function exactIdentity(actual, expected) {
+  return isObject(actual) && actual.sha256 === expected.sha256 &&
+    actual.bytes === expected.bytes && actual.lines === expected.lines
+}
+function validateClipboard(errors, clipboard) {
+  need(errors, isObject(clipboard), 'receipt.clipboard is required')
+  onlyKeys(errors, clipboard, ['write_attempts', 'selected_method', 'readback_verified', 'verified_at'], 'receipt.clipboard')
+  const attempts = clipboard?.write_attempts
+  need(errors, Array.isArray(attempts) && attempts.length >= 1 && attempts.length <= 2, 'clipboard.write_attempts must contain 1-2 attempts')
+  if (Array.isArray(attempts)) {
+    const expectedMethods = ['nspasteboard', 'pbcopy']
+    attempts.forEach((attempt, index) => {
+      need(errors, isObject(attempt), `clipboard.write_attempts[${index}] must be an object`)
+      onlyKeys(errors, attempt, ['method', 'status', 'readback_verified', 'attempted_at'], `clipboard.write_attempts[${index}]`)
+      need(errors, attempt?.method === expectedMethods[index], 'clipboard methods must run nspasteboard then pbcopy')
+      need(errors, ['write_failed', 'read_failed', 'mismatch', 'method_failed', 'verified'].includes(attempt?.status), 'clipboard attempt status is unsupported')
+      need(errors, typeof attempt?.readback_verified === 'boolean', 'clipboard attempt readback_verified must be boolean')
+      need(errors, (attempt?.status === 'verified') === (attempt?.readback_verified === true), 'clipboard verified status must match readback_verified')
+      need(errors, isIso(attempt?.attempted_at), 'clipboard attempt attempted_at must be ISO-8601')
+      if (index < attempts.length - 1) { need(errors, attempt?.readback_verified === false, 'clipboard fallback must stop after verified readback') }
+    })
+  }
+  const verified = Array.isArray(attempts) ? attempts.filter(item => item?.readback_verified === true) : []
+  need(errors, clipboard?.selected_method === null || ['nspasteboard', 'pbcopy'].includes(clipboard?.selected_method), 'clipboard.selected_method is unsupported')
+  need(errors, clipboard?.readback_verified === (verified.length === 1), 'clipboard.readback_verified must match attempts')
+  need(errors, verified.length ? clipboard?.selected_method === verified[0].method : clipboard?.selected_method === null, 'clipboard.selected_method must identify the verified attempt')
+  need(errors, clipboard?.readback_verified ? isIso(clipboard?.verified_at) : clipboard?.verified_at === null, 'clipboard.verified_at must match verification')
+}
+function validateFocus(errors, focus) {
+  need(errors, isObject(focus), 'receipt.input_focus is required')
+  onlyKeys(errors, focus, ['latest_app_state_checked', 'unique_entry_area', 'clicked', 'focused_element_verified', 'element_index_persisted', 'verified_at'], 'receipt.input_focus')
+  for (const key of ['latest_app_state_checked', 'unique_entry_area', 'clicked', 'focused_element_verified']) {
+    need(errors, typeof focus?.[key] === 'boolean', `input_focus.${key} must be boolean`)
+  }
+  need(errors, focus?.element_index_persisted === false, 'input_focus.element_index_persisted must be false')
+  need(errors, focus?.focused_element_verified ? isIso(focus?.verified_at) : focus?.verified_at === null, 'input_focus.verified_at must match focused verification')
+}
+function validatePaste(errors, paste, identity, sent) {
+  need(errors, isObject(paste), 'receipt.paste_delivery is required')
+  onlyKeys(errors, paste, ['attempts', 'selected_method', 'rendering', 'pre_send_verified', 'direct_text_identity', 'attachment', 'verified_at'], 'receipt.paste_delivery')
+  const attempts = paste?.attempts
+  need(errors, Array.isArray(attempts) && attempts.length >= 1 && attempts.length <= 2, 'paste_delivery.attempts must contain 1-2 attempts')
+  if (Array.isArray(attempts)) {
+    const expectedMethods = ['cmd_v', 'edit_menu_paste']
+    attempts.forEach((attempt, index) => {
+      need(errors, isObject(attempt), `paste_delivery.attempts[${index}] must be an object`)
+      onlyKeys(errors, attempt, ['method', 'delivery_verified'], `paste_delivery.attempts[${index}]`)
+      need(errors, attempt?.method === expectedMethods[index], 'paste methods must run cmd_v then edit_menu_paste')
+      need(errors, typeof attempt?.delivery_verified === 'boolean', 'paste attempt delivery_verified must be boolean')
+      if (index < attempts.length - 1) { need(errors, attempt?.delivery_verified === false, 'paste fallback must stop after verified delivery') }
+    })
+  }
+  const verified = Array.isArray(attempts) ? attempts.filter(item => item?.delivery_verified === true) : []
+  need(errors, paste?.selected_method === null || ['cmd_v', 'edit_menu_paste'].includes(paste?.selected_method), 'paste_delivery.selected_method is unsupported')
+  need(errors, verified.length <= 1, 'only one paste attempt may be verified')
+  need(errors, verified.length ? paste?.selected_method === verified[0].method : paste?.selected_method === null, 'paste_delivery.selected_method must identify the verified attempt')
+  need(errors, ['direct_text', 'pasted_text_attachment', null].includes(paste?.rendering), 'paste_delivery.rendering is unsupported')
+  need(errors, typeof paste?.pre_send_verified === 'boolean', 'paste_delivery.pre_send_verified must be boolean')
+  if (paste?.rendering === 'direct_text') {
+    need(errors, exactIdentity(paste.direct_text_identity, identity), 'direct_text identity must equal canonical prompt')
+    need(errors, paste.attachment === null, 'direct_text rendering requires attachment=null')
+  } else if (paste?.rendering === 'pasted_text_attachment') {
+    need(errors, paste.direct_text_identity === null, 'attachment rendering requires direct_text_identity=null')
+    need(errors, isObject(paste.attachment), 'attachment rendering requires attachment evidence')
+    onlyKeys(errors, paste.attachment, ['name', 'sha256', 'bytes', 'lines', 'present_before_send', 'present_after_send'], 'paste_delivery.attachment')
+    need(errors, nonEmpty(paste.attachment?.name), 'attachment.name is required')
+    need(errors, paste.attachment?.sha256 === identity.sha256 &&
+      paste.attachment?.bytes === identity.bytes && paste.attachment?.lines === identity.lines,
+    'attachment sha256/bytes/lines must equal canonical prompt')
+    need(errors, paste.attachment?.present_before_send === true, 'attachment must be visible before send')
+    if (sent) { need(errors, paste.attachment?.present_after_send === true, 'sent attachment must remain visible after send') }
   } else {
-    need(tie.tool_events_seen === false, 'blocked computer_use_unavailable requires tool_events_seen=false');
-    need(tie.tool_event_count === 0, 'blocked computer_use_unavailable requires tool_event_count=0');
+    need(errors, paste?.direct_text_identity === null && paste?.attachment === null, 'unverified paste requires null branch evidence')
   }
-};
-
-need(isObject(cu), 'send receipt requires computer_use object');
-need(cu.shell_only_ui_automation_used === false,
-  'computer_use.shell_only_ui_automation_used must be false');
-need(cu.manual_typing_used === false,
-  'computer_use.manual_typing_used must be false');
-
-if (alternativeUsed) {
-  need(isObject(alternative), 'alternative_ui_automation must be an object when used');
-  // dispatch-20260726-devtools-screenshot-recovery-zcode rework: 持久授权覆盖
-  // alternative.used=true 的剪贴板桥接子路径。仅在 persistentAuthEnabled 且
-  // receipt.authorization_source==='persistent_user_authorization' 时，接受没有/false 的
-  // user_authorized_in_current_turn；否则保持现有当前 turn 要求。
-  // 不接受 omitted authorization_source 作为持久授权（避免未标记 receipt 被静默提升）。
-  const persistentAuthAppliesToAlternative =
-    persistentAuthEnabled &&
-    receipt.authorization_source === 'persistent_user_authorization';
-  if (!persistentAuthAppliesToAlternative) {
-    need(
-      alternative.user_authorized_in_current_turn === true,
-      'alternative_ui_automation requires explicit user authorization in the current turn (or persistent_user_authorization with authorization_source=persistent_user_authorization)'
-    );
-  }
-  need(
-    alternative.preauthorized_by_dispatch_standard !== true,
-    'alternative_ui_automation cannot rely on dispatch-standard preauthorization'
-  );
-  need(Array.isArray(alternative.tools) && alternative.tools.length >= 1 && alternative.tools.every(nonEmptyString),
-    'alternative_ui_automation.tools must contain at least one tool');
-  need(Array.isArray(alternative.safety_controls) && alternative.safety_controls.length >= 3 && alternative.safety_controls.every(nonEmptyString),
-    'alternative_ui_automation.safety_controls must contain >=3 non-empty controls');
+  need(errors, paste?.pre_send_verified === (verified.length === 1 && ['direct_text', 'pasted_text_attachment'].includes(paste?.rendering)), 'pre_send_verified must match paste delivery')
+  need(errors, paste?.pre_send_verified ? isIso(paste?.verified_at) : paste?.verified_at === null, 'paste_delivery.verified_at must match verification')
 }
-
-if (receipt.status === 'sent') {
-  need(['enter', 'send_button'].includes(receipt.send_action),
-    'sent receipt requires send_action=enter|send_button');
-  need(receipt.application_verified === 'ZCode', 'application_verified must be ZCode');
-  need(receipt.current_session_verified === true, 'current_session_verified must be true');
-  need(receipt.input_box_verified === true, 'input_box_verified must be true');
-  need(receipt.clipboard_paste_used === true, 'clipboard_paste_used must be true');
-  need(receipt.prompt_integrity_verified === true, 'prompt_integrity_verified must be true');
-  need(receipt.sentinel_start_seen_before_send === true,
-    'sentinel_start_seen_before_send must be true');
-  need(receipt.sentinel_end_seen_before_send === true,
-    'sentinel_end_seen_before_send must be true');
-  need(receipt.codex_typed_prompt_manually === false,
-    'codex_typed_prompt_manually must be false');
-  // dispatch-20260726-devtools-screenshot-recovery-zcode rework 2: 允许来源是二选一且必须显式。
-  // 1. authorization_source=persistent_user_authorization：仅在持久授权 enabled 时可用；
-  //    alternative 分支可缺少/false user_authorized_in_current_turn。
-  // 2. authorization_source=current_turn_user_authorization：无论持久授权是否启用均可用；
-  //    alternative 分支必须 user_authorized_in_current_turn=true。
-  // omitted 或未知 source 必须失败（避免未标记 receipt 被静默提升）。
-  // persistent source 在授权 disabled 时必须失败。
-  const authSource = receipt.authorization_source
-  need(
-    authSource === 'persistent_user_authorization' ||
-      authSource === 'current_turn_user_authorization',
-    'authorization_source must be explicitly persistent_user_authorization or current_turn_user_authorization (omitted/unknown not accepted)'
-  )
-  if (authSource === 'persistent_user_authorization') {
-    need(
-      persistentAuthEnabled,
-      'authorization_source=persistent_user_authorization requires persistent auth enabled'
-    )
+function validateSend(errors, delivery) {
+  need(errors, isObject(delivery), 'receipt.send_delivery is required')
+  onlyKeys(errors, delivery, ['send_clicked', 'input_submitted', 'conversation_state_changed', 'conversation_delivery_verified', 'verified_at'], 'receipt.send_delivery')
+  for (const key of ['send_clicked', 'input_submitted', 'conversation_state_changed', 'conversation_delivery_verified']) {
+    need(errors, typeof delivery?.[key] === 'boolean', `send_delivery.${key} must be boolean`)
   }
-  need(cu.tool_invoked === true, 'computer_use.tool_invoked must be true for sent receipts');
-  validateToolInvocationEvidence(cu, true);
-  need(nonEmptyString(cu.tool_family), 'computer_use.tool_family is required');
-  need(Array.isArray(cu.actions), 'computer_use.actions must be an array');
-  need(includesAll(cu.actions, requiredActions),
-    `computer_use.actions must include: ${requiredActions.join(', ')}`);
-  need(cu.clipboard_write_confirmed === true,
-    'computer_use.clipboard_write_confirmed must be true');
+  need(errors, delivery?.conversation_delivery_verified ? isIso(delivery?.verified_at) : delivery?.verified_at === null, 'send_delivery.verified_at must match verification')
 }
-
-if (receipt.status === 'blocked') {
-  need(receipt.send_action === 'blocked', 'blocked receipt requires send_action=blocked');
-  need(nonEmptyString(receipt.blocked_reason), 'blocked receipt requires blocked_reason');
-  need(receipt.no_code_changes_by_codex === true,
-    'blocked receipt must confirm no_code_changes_by_codex=true');
-  if (receipt.blocked_reason === 'computer_use_unavailable') {
-    need(cu.tool_invoked === false,
-      'computer_use_unavailable requires computer_use.tool_invoked=false');
-    validateToolInvocationEvidence(cu, false);
+function validateTimes(errors, receipt) {
+  const ordered = [
+    receipt.clipboard?.verified_at,
+    receipt.input_focus?.verified_at,
+    receipt.paste_delivery?.verified_at,
+    receipt.send_delivery?.verified_at,
+    receipt.sent_at
+  ].filter(isIso).map(Date.parse)
+  need(errors, ordered.every((value, index) => index === 0 || value >= ordered[index - 1]), 'receipt verification timestamps must be monotonic')
+  need(errors, isIso(receipt.created_at), 'receipt.created_at must be ISO-8601')
+}
+export function validateZcodeSendReceipt({ handoff, receipt }) {
+  const errors = []
+  const external = handoff?.external_contract ?? handoff?.zcode_contract ?? {}
+  const provider = external.provider || (external.external_implementer === 'zcode_glm' ? 'zcode' : '')
+  need(errors, ['external_implementer', 'zcode_external'].includes(handoff?.implementation_mode), 'ZCode receipt requires external implementation mode')
+  need(errors, provider === 'zcode', 'ZCode receipt requires provider=zcode')
+  need(errors, external.target_session === 'current_open_chat', 'ZCode target_session must be current_open_chat')
+  need(errors, external.prompt_transport === 'clipboard_paste', 'ZCode prompt_transport must be clipboard_paste')
+  for (const [key, expected] of CONTRACT_FIELDS) {
+    need(errors, external[key] === expected, `ZCode external_contract.${key} must equal ${expected}`)
   }
-  if (receipt.blocked_reason === 'alternative_ui_automation_unavailable') {
-    need(alternative.attempted === true,
-      'alternative_ui_automation_unavailable requires alternative_ui_automation.attempted=true');
-    need(Array.isArray(alternative.tools) && alternative.tools.length >= 1,
-      'alternative_ui_automation_unavailable requires attempted tool list');
+  need(errors, Array.isArray(external.required_computer_use_actions) && REQUIRED_ACTIONS.every(action => external.required_computer_use_actions.includes(action)), 'ZCode external contract lacks required visible delivery actions')
+  need(errors, isObject(receipt), 'ZCode send receipt must be an object')
+  if (!isObject(receipt)) { return errors }
+  onlyKeys(errors, receipt, ['dispatch_run_id', 'status', 'blocker', 'transport', 'prompt_identity', 'clipboard', 'input_focus', 'paste_delivery', 'send_delivery', 'redaction', 'created_at', 'sent_at'], 'receipt')
+  need(errors, receipt.dispatch_run_id === handoff?.dispatch_run_id, 'receipt dispatch_run_id must match handoff')
+  need(errors, ['sent', 'blocked'].includes(receipt.status), 'receipt status must be sent|blocked')
+  walk(receipt, (key, value) => {
+    need(errors, !BANNED_KEYS.has(key), `visible receipt forbids sensitive/headless field: ${key}`)
+    if (typeof value === 'string') {
+      need(errors, !/(?:Bearer\s+[A-Za-z0-9._-]+|enc:v1:|(?:sk|key)-[A-Za-z0-9_-]{12,})/i.test(value), `receipt contains secret-like material at ${key}`)
+    }
+  })
+  const transport = receipt.transport ?? {}
+  onlyKeys(errors, transport, ['kind', 'target_session', 'status', 'fallback', 'headless_used'], 'receipt.transport')
+  need(errors, transport.kind === 'zcode_visible_clipboard', 'transport.kind must be zcode_visible_clipboard')
+  need(errors, transport.target_session === 'current_open_chat', 'transport.target_session must be current_open_chat')
+  need(errors, ['not_started', 'clipboard_prepared', 'input_focused', 'pasted', 'sent'].includes(transport.status), 'transport.status is unsupported')
+  need(errors, transport.fallback === 'none' && transport.headless_used === false, 'transport must prohibit fallback and headless')
+  const identity = receipt.prompt_identity ?? {}
+  onlyKeys(errors, identity, ['path', 'sha256', 'bytes', 'lines', 'verified_before_after'], 'receipt.prompt_identity')
+  need(errors, canonicalRegular(identity.path, handoff?.dispatch_run_id), 'prompt_identity.path must be a canonical regular prompt file')
+  need(errors, isDigest(identity.sha256), 'prompt_identity.sha256 must be SHA-256')
+  need(errors, Number.isSafeInteger(identity.bytes) && identity.bytes > 0, 'prompt_identity.bytes must be positive')
+  need(errors, Number.isSafeInteger(identity.lines) && identity.lines > 0, 'prompt_identity.lines must be positive')
+  need(errors, typeof identity.verified_before_after === 'boolean', 'prompt_identity.verified_before_after must be boolean')
+  if (canonicalRegular(identity.path, handoff?.dispatch_run_id)) {
+    const prompt = fs.readFileSync(path.resolve(identity.path))
+    need(errors, sha256(prompt) === identity.sha256 && prompt.length === identity.bytes &&
+      countUtf8Lines(prompt.toString('utf8')) === identity.lines, 'prompt identity must match canonical file')
+    if (prompt.length >= 16) { need(errors, !JSON.stringify(receipt).includes(prompt.toString('utf8')), 'receipt must not persist prompt body') }
+  }
+  validateClipboard(errors, receipt.clipboard)
+  validateFocus(errors, receipt.input_focus)
+  validatePaste(errors, receipt.paste_delivery, identity, receipt.status === 'sent')
+  validateSend(errors, receipt.send_delivery)
+  const redaction = receipt.redaction ?? {}
+  onlyKeys(errors, redaction, ['prompt_body_persisted', 'old_clipboard_persisted', 'credential_persisted', 'raw_ui_dump_persisted', 'element_index_persisted'], 'receipt.redaction')
+  for (const key of ['prompt_body_persisted', 'old_clipboard_persisted', 'credential_persisted', 'raw_ui_dump_persisted', 'element_index_persisted']) {
+    need(errors, redaction[key] === false, `redaction.${key} must be false`)
+  }
+  validateTimes(errors, receipt)
+  const preSendReady = receipt.clipboard?.readback_verified === true &&
+    receipt.input_focus?.latest_app_state_checked === true && receipt.input_focus?.unique_entry_area === true &&
+    receipt.input_focus?.clicked === true && receipt.input_focus?.focused_element_verified === true &&
+    receipt.paste_delivery?.pre_send_verified === true && identity.verified_before_after === true
+  need(errors, receipt.send_delivery?.send_clicked !== true || preSendReady, 'send cannot be clicked before clipboard/focus/paste integrity verification')
+  if (receipt.status === 'sent') {
+    need(errors, receipt.blocker === null, 'sent receipt requires blocker=null')
+    need(errors, transport.status === 'sent', 'sent receipt requires transport.status=sent')
+    need(errors, preSendReady, 'sent receipt requires all pre-send verification')
+    need(errors, receipt.send_delivery?.send_clicked === true && receipt.send_delivery?.input_submitted === true &&
+      receipt.send_delivery?.conversation_state_changed === true &&
+      receipt.send_delivery?.conversation_delivery_verified === true, 'sent receipt requires verified post-send delivery')
+    need(errors, isIso(receipt.sent_at), 'sent receipt requires sent_at')
+  } else {
+    need(errors, BLOCKERS.has(receipt.blocker), 'blocked receipt requires a supported blocker')
+    need(errors, transport.status !== 'sent', 'blocked receipt cannot claim transport sent')
+    need(errors, receipt.sent_at === null, 'blocked receipt requires sent_at=null')
+    need(errors, receipt.send_delivery?.conversation_delivery_verified !== true, 'blocked receipt cannot claim conversation delivery')
+  }
+  return errors
+}
+const readJson = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+function main() {
+  const [handoffFile, receiptFile] = process.argv.slice(2)
+  if (!handoffFile || !receiptFile) {
+    console.error('usage: validate-zcode-send-receipt.mjs <handoff.json> <send-receipt.json>')
+    process.exitCode = 2
+    return
+  }
+  try {
+    const errors = validateZcodeSendReceipt({ handoff: readJson(handoffFile), receipt: readJson(receiptFile) })
+    console.log(JSON.stringify({ status: errors.length ? 'invalid' : 'valid', errors }, null, 2))
+    if (errors.length) { process.exitCode = 1 }
+  } catch (error) {
+    console.error(JSON.stringify({ status: 'invalid_json', error: error.message }, null, 2))
+    process.exitCode = 2
   }
 }
-
-if (errors.length) {
-  console.error(JSON.stringify({ status: 'blocked', gate: 'zcode_send_receipt', errors }, null, 2));
-  process.exit(1);
-}
-
-console.log(JSON.stringify({ status: 'passed', gate: 'zcode_send_receipt', send_action: receipt.send_action }, null, 2));
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) { main() }

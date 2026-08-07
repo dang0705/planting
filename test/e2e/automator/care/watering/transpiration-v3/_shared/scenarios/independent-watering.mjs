@@ -56,10 +56,11 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
     await installRequestCapture(mp)
     await clearCapturedRequests(mp)
     recordPage(report, ADVISOR_PAGE)
-    const page = await reLaunchTo(mp, ADVISOR_PAGE)
+    let page = await reLaunchTo(mp, ADVISOR_PAGE)
     await sleep(1500)
     recordPageData(report, ADVISOR_PAGE, await readPageDataSummary(mp))
     recordScreenshot(report, await safeScreenshot(mp, artifactDir, 'independent-01-init'))
+    page = await mp.currentPage()
 
     const searchInput = await waitForElement(page, 'watering-advisor-search-input', 5000)
     recordAssertion(report, '搜索输入框存在', !!searchInput)
@@ -81,6 +82,7 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
     await plantItem.element.tap()
     await sleep(800)
     recordScreenshot(report, await safeScreenshot(mp, artifactDir, 'independent-02-plant-selected'))
+    page = await mp.currentPage()
 
     // 点击 next-button（goToPotProfile 自动打开 PotProfileEditor）
     const nextButton = await waitForElement(page, 'watering-advisor-next-button', 5000)
@@ -104,6 +106,7 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
       report,
       await safeScreenshot(mp, artifactDir, 'independent-03-pot-editor-opened')
     )
+    page = await mp.currentPage()
     if (!potEditorSheet) {
       setClassification(report, 'BLOCKED_ENV', 'PotProfileEditor 未自动打开')
       return 'BLOCKED_ENV'
@@ -111,7 +114,7 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
 
     // P0-1: 尝试 PotCanvas 真实 touch/drag 输入盆型尺寸
     // PotCanvas 把手使用 @touchstart/@touchmove/@touchend on <view>
-    // miniprogram-automator 0.12.1 仅支持 tap/input/text/attribute/evaluate/page.data/page.callMethod
+    // miniprogram-automator 0.12.1 仅支持公开的 element/RPC 表面；本 leaf 不读取页面私有状态。
     const touchCap = await assessTouchCapability(mp, page)
     recordAssertion(
       report,
@@ -145,22 +148,17 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
     const editorStillOpen = await findViewById(page, 'pot-profile-editor-sheet')
     recordAssertion(report, '盆型编辑器已关闭', !editorStillOpen)
 
-    const potSummary = await mp
-      .evaluate(() => {
-        const pages = getCurrentPages()
-        const vm = pages[pages.length - 1]?.$vm
-        return vm?.potProfileSummary || vm?.editorSummary || null
-      })
-      .catch(() => null)
+    const potSummary = await readTextById(page, 'pot-profile-row')
     recordAssertion(
       report,
-      '页面盆型摘要不再是未填写状态',
+      '公开盆型摘要不再是未填写状态',
       !!potSummary && !/未填写|暂无|empty/i.test(potSummary)
     )
     recordScreenshot(
       report,
       await safeScreenshot(mp, artifactDir, 'independent-04-pot-profile-completed')
     )
+    page = await mp.currentPage()
 
     // 点击获取建议按钮
     const computeButton = await waitForElement(page, 'watering-advisor-compute-button', 5000)
@@ -313,7 +311,7 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
 /**
  * 评估 automator 是否支持真实 touch/drag 事件以驱动 PotCanvas 把手。
  * PotCanvas 把手使用 @touchstart/@touchmove/@touchend on <view>。
- * miniprogram-automator 0.12.1 仅支持 tap/input/text/attribute/evaluate/page.data/page.callMethod。
+ * miniprogram-automator 0.12.1 仅支持公开的 element/RPC 表面。
  *
  * 真实异步检查 #potCanvas 元素及可用的 element 级方法，不硬编码 false。
  */

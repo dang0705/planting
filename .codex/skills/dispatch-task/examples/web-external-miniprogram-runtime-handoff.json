@@ -10,12 +10,6 @@
     "qa_required": true
   },
   "target_role": "external_implementer",
-  "spawn_contract": {
-    "qa_agent_type": null,
-    "context_mode": "isolated",
-    "generic_fallback_forbidden": true,
-    "identity_receipt_required": true
-  },
   "external_contract": {
     "provider": "trae",
     "target_session": "browser_session",
@@ -65,6 +59,10 @@
     "小程序运行时 wx.request 命中新代码",
     "只修改 allowed_paths 内文件"
   ],
+  "selection_to_consumer": {
+    "required": false,
+    "not_applicable_reason": "该运行时示例不新增用户可选值"
+  },
   "project_constraints": {
     "rule_refs": ["AGENTS.md#QA行为约束", "AGENTS.md#全局行为硬规则"],
     "dependency_policy": "no_new_dependencies",

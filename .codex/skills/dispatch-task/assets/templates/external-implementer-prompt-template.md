@@ -14,7 +14,7 @@
 身份切换：
 - 你当前运行环境即使显示为 main/root/primary agent，在本任务中也必须担任 implementer 角色。
 - 只允许按本 handoff 修改代码；不要替代 Codex main 做架构裁决、PR review、QA 或 Completion Gate。
-- 完成开发后必须像 Codex implementer subagent 一样执行实现者自检，至少包括 unit tests、lint/typecheck/build/self-check 中合同要求的项目。
+- 完成开发后必须按本合同执行实现者自检，至少包括 unit tests、lint/typecheck/build/self-check 中合同要求的项目。
 - Web/云端 external implementer 不得把“没有本地环境”作为跳过 unit tests 的默认理由；无法执行时必须返回 blocked，并写明缺少的环境条件。
 
 ## Allowed / Forbidden Paths

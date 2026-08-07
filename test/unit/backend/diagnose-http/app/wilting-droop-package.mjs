@@ -68,6 +68,7 @@ function buildAnswers(optionKeys = []) {
     WATERING_FREQUENCY_CONTEXT_QUESTION_KEY,
     'q_wilting_droop__shape',
     'q_wilting_droop__rhythm_environment',
+    'q_wilting_droop__air_environment',
     'q_wilting_droop__recent_stress',
     'q_wilting_droop__high_risk'
   ]
@@ -97,14 +98,7 @@ function allResultText(result) {
 }
 
 function assertNoPriorityFields(result) {
-  const forbiddenKeys = [
-    'rank',
-    'score',
-    'confidence',
-    'probability',
-    'mainCause',
-    'main_cause'
-  ]
+  const forbiddenKeys = ['rank', 'score', 'confidence', 'probability', 'mainCause', 'main_cause']
   const visit = value => {
     if (!value || typeof value !== 'object') {
       return
@@ -126,7 +120,8 @@ async function testPackageConfigAndStart() {
   const questionPackage = getQuestionPackageByMode('wilt_droop')
   assert.equal(questionPackage.mode, 'wilting_droop')
   assert.equal(questionPackage.route, 'wilting_droop')
-  assert.equal(questionPackage.questionCount, 5)
+  assert.equal(questionPackage.questionCount, 6)
+  assert.equal(questionPackage.packageVersion, 2)
   assert.deepEqual(questionPackage.outcomePolicy, {
     allowMultipleOutcomes: true,
     preferSingleOutcome: false
@@ -145,13 +140,22 @@ async function testPackageConfigAndStart() {
     repository: buildQuestionRepositoryStub()
   })
   assert.equal(startResult.questionPackage.mode, 'wilting_droop')
-  assert.equal(startResult.questions.length, 5)
+  assert.equal(startResult.questions.length, 6)
   assert.equal(startResult.questions[0].uiVariant, 'care_behavior_timeline')
   assert.equal(startResult.questions[0].packageTopic, 'watering_frequency_context')
   assert.equal(startResult.questions[0].questionKey, WATERING_FREQUENCY_CONTEXT_QUESTION_KEY)
   assert.equal(Object.prototype.hasOwnProperty.call(startResult.questions[0], 'questionId'), false)
   assert.equal(startResult.questions[0].text, REQUIRED_WATERING_TEXT)
   assert.equal(startResult.questions[0].helpText, REQUIRED_WATERING_HELP)
+  assert.equal(startResult.questions[3].packageTopic, 'air_environment')
+  assert.equal(startResult.questions[3].uiVariant, 'air_environment')
+  assert.equal(startResult.questions[3].questionType, 'air_environment')
+  assert.equal(startResult.questions[3].type, 'single_choice')
+  assert.equal(startResult.questions[3].defaultOptionKey, 'air_environment_unknown')
+  assert.deepEqual(
+    startResult.questions[3].options.map(item => item.optionKey),
+    ['air_environment_recorded', 'air_environment_unknown']
+  )
   assert.deepEqual(
     startResult.questions[0].options.map(({ optionKey, text, isDefault }) => ({
       optionKey,
@@ -175,6 +179,7 @@ async function testPackageConfigAndStart() {
         'often_dry',
         'whole_plant_droop',
         'daytime_recovers',
+        'unknown',
         'none_unknown',
         'none_unknown'
       ]),
@@ -189,6 +194,7 @@ function testDryWaterAndHeatPressure() {
     'often_dry',
     'whole_plant_droop',
     'daytime_recovers',
+    'unknown',
     'none_unknown',
     'none_unknown'
   ])
@@ -205,6 +211,7 @@ function testWetAndRootRotBlocksWatering() {
     'often_wet',
     'whole_plant_droop',
     'all_day_wilt',
+    'unknown',
     'none_unknown',
     'black_soft_collapsed_stem_base'
   ])
@@ -220,7 +227,8 @@ function testReasonableWaterAirflowAndRepotRecovery() {
   const result = resolveCase([
     'normal_or_stable',
     'unknown',
-    'ac_heater_fan_direct',
+    'unknown',
+    'direct_airflow',
     'repot_divide_root_prune_soil_change',
     'none_unknown'
   ])
@@ -239,6 +247,7 @@ function testLocalWiltAndPestOutcomes() {
     'unknown',
     'local_branch_leaf',
     'unknown',
+    'unknown',
     'none_unknown',
     'pests_webbing_white_fuzz_spots_spreading'
   ])
@@ -253,6 +262,7 @@ function testDryTendencyAndOdorBlocksWaterReplenishment() {
     'often_dry',
     'whole_plant_droop',
     'unknown',
+    'unknown',
     'none_unknown',
     'odor_root_soil_pot_bottom'
   ])
@@ -266,6 +276,7 @@ function testDryTendencyAndOdorBlocksWaterReplenishment() {
 function testFrontendSurfaceFields() {
   const result = resolveCase([
     'often_wet',
+    'unknown',
     'unknown',
     'unknown',
     'none_unknown',

@@ -194,13 +194,15 @@ async function handleIndexPhoneLogin(event) {
   await loadUserPlants(true)
 }
 function addPlant() {
-  uni.navigateTo({ url: '/pages/add-plant/add-plant' })
+  uni.navigateTo({ url: '/pages/user-plant-detail/user-plant-detail?mode=create' })
 }
 function goWateringAdvisor() {
   uni.navigateTo({ url: '/pages/watering-advisor/watering-advisor' })
 }
 function openEditPlant(plant) {
-  uni.navigateTo({ url: `/pages/edit-plant/edit-plant?id=${plant.id}` })
+  uni.navigateTo({
+    url: `/pages/user-plant-detail/user-plant-detail?mode=edit&id=${plant.id}`
+  })
 }
 function getReminderSummary(plant) {
   const backendReminder = normalizeBackendWaterReminder(plant?.wateringReminder)

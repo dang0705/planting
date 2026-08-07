@@ -67,12 +67,51 @@ const successfulCapture = captureIsolatedPreflightScreenshot({
     return successfulWorker
   }
 })
-successfulWorker.stdout.end(JSON.stringify({ status: 'passed', path: evidencePath, bytes: pngFixture.length }))
+successfulWorker.stdout.end(
+  JSON.stringify({ status: 'passed', path: evidencePath, bytes: pngFixture.length })
+)
 successfulWorker.emit('close', 0, null)
 await successfulCapture
 assert.equal(successfulWorkerReport.checks.rpc_steps.screenshot.status, 'passed')
 assert.equal(defaultWorkerPath.includes('test/e2e/automator'), false)
 assert.equal(defaultWorkerPath.endsWith('automator-screenshot-worker.mjs'), true)
+
+const missingParentRoot = fs.mkdtempSync(path.join(repoRoot, '.tmp', 'dispatch-screenshot-parent-'))
+const missingParentEvidencePath = path.join(missingParentRoot, 'nested', 'preflight.png')
+try {
+  const missingParentReport = report()
+  const missingParentWorker = new EventEmitter()
+  missingParentWorker.stdout = new PassThrough()
+  missingParentWorker.stderr = new PassThrough()
+  missingParentWorker.kill = () => false
+  assert.equal(fs.existsSync(path.dirname(missingParentEvidencePath)), false)
+  const missingParentCapture = captureIsolatedPreflightScreenshot({
+    report: missingParentReport,
+    wsEndpoint: 'ws://127.0.0.1:9420',
+    screenshotPath: missingParentEvidencePath,
+    timeoutMs: 20,
+    spawnProcess: () => missingParentWorker
+  })
+  assert.equal(
+    fs.existsSync(path.dirname(missingParentEvidencePath)),
+    true,
+    'the isolated screenshot capture must create its own evidence directory'
+  )
+  fs.writeFileSync(missingParentEvidencePath, pngFixture)
+  missingParentWorker.stdout.end(
+    JSON.stringify({
+      status: 'passed',
+      path: missingParentEvidencePath,
+      bytes: pngFixture.length
+    })
+  )
+  missingParentWorker.emit('close', 0, null)
+  await missingParentCapture
+  assert.equal(missingParentReport.checks.rpc_steps.screenshot.status, 'passed')
+  assert.equal(fs.existsSync(missingParentEvidencePath), true)
+} finally {
+  fs.rmSync(missingParentRoot, { recursive: true, force: true })
+}
 
 const hungWorkerReport = report()
 const hungWorker = new EventEmitter()
@@ -122,8 +161,16 @@ await captureRuntimeEvidence({
     return { status: 'passed', path: target, bytes: pngFixture.length }
   }
 })
-assert.equal(mainScreenshotCalls, 0, 'preflight must never invoke screenshot on its main Automator connection')
-assert.equal(screenshotDisconnects, 1, 'main connection must disconnect before isolated screenshot capture')
+assert.equal(
+  mainScreenshotCalls,
+  0,
+  'preflight must never invoke screenshot on its main Automator connection'
+)
+assert.equal(
+  screenshotDisconnects,
+  1,
+  'main connection must disconnect before isolated screenshot capture'
+)
 assert.equal(isolatedRuntimeReport.checks.screenshot.capture_mode, 'isolated_worker')
 
 let evaluateDisconnects = 0
@@ -171,19 +218,19 @@ assert.equal(boundedOverall.status, 'failed_environment')
 assert.equal(boundedOverall.failures[0].code, 'preflight_transport_timeout')
 assert.equal(boundedOverall.checks.rpc_steps.overall_capture.status, 'timed_out')
 
-let isolatedCaptureEndpoint = ''
-const isolatedPortReport = await runQaPreflight({
+let reusedCaptureEndpoint = ''
+const reusedPortReport = await runQaPreflight({
   projectPath: expectedProjectPath,
-  wsPort: 9421,
+  wsPort: 9420,
   screenshotPath: evidencePath,
-  runtime: { ...verifiedRuntime(), automator_port: 9421 },
-  runtimeInspector: () => ({ ...verifiedRuntime(), automator_port: 9421 }),
+  runtime: verifiedRuntime(),
+  runtimeInspector: verifiedRuntime,
   lanFlowProbe: () => true,
-  portProbe: async port => port === 9421,
+  portProbe: async port => port === 9420,
   runtimeCapture: async options => {
-    isolatedCaptureEndpoint = options.wsEndpoint
+    reusedCaptureEndpoint = options.wsEndpoint
   }
 })
-assert.equal(isolatedPortReport.status, 'passed')
-assert.equal(isolatedPortReport.checks.ws.port, 9421)
-assert.equal(isolatedCaptureEndpoint, 'ws://127.0.0.1:9421')
+assert.equal(reusedPortReport.status, 'passed')
+assert.equal(reusedPortReport.checks.ws.port, 9420)
+assert.equal(reusedCaptureEndpoint, 'ws://127.0.0.1:9420')

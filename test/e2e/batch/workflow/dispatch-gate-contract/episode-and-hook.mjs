@@ -191,10 +191,7 @@ try {
   ])
   assert.notEqual(secondRework.status, 0)
   const secondReworkResult = parseJson(secondRework)
-  assert.equal(
-    secondReworkResult.reason,
-    'rework_budget_exhausted_successor_dispatch_linked'
-  )
+  assert.equal(secondReworkResult.reason, 'rework_budget_exhausted_successor_dispatch_linked')
   assert.equal(secondReworkResult.episode.circuitBreaker.tripped, true)
   assert.equal(
     secondReworkResult.episode.circuitBreaker.successor_dispatch_run_id,
@@ -233,7 +230,7 @@ try {
       'start',
       `--dispatch-run-id=${dispatchRunId}`,
       `--agent-id=${agentId}`,
-      '--agent-type=implementer_deep'
+      '--agent-type=external_implementer'
     ])
   )
   assert.equal(start.status, 'bound')
@@ -372,13 +369,22 @@ try {
     ])
     // Simulate a legacy episode by stripping the lifecycle fields from disk.
     const legacyEpisodePath = path.join(
-      '.tmp', 'dispatch-task', 'episodes',
+      '.tmp',
+      'dispatch-task',
+      'episodes',
       `${parseJson(runCli(['episode', 'trace-audit', `--dispatch-run-id=${legacyRunId}`])).episode_id ?? ''}.json`
     )
     // trace-audit returns episode_id in a field; fall back to reading the index.
-    const legacyIndex = JSON.parse(fs.readFileSync(path.join('.tmp', 'dispatch-task', 'episodes', 'index.json'), 'utf8'))
+    const legacyIndex = JSON.parse(
+      fs.readFileSync(path.join('.tmp', 'dispatch-task', 'episodes', 'index.json'), 'utf8')
+    )
     const legacyEpisodeId = legacyIndex.dispatch_runs[legacyRunId]
-    const legacyEpisodeFile = path.join('.tmp', 'dispatch-task', 'episodes', `${legacyEpisodeId}.json`)
+    const legacyEpisodeFile = path.join(
+      '.tmp',
+      'dispatch-task',
+      'episodes',
+      `${legacyEpisodeId}.json`
+    )
     const legacyEpisode = JSON.parse(fs.readFileSync(legacyEpisodeFile, 'utf8'))
     delete legacyEpisode.lifecycleStage
     delete legacyEpisode.continuation
@@ -413,23 +419,14 @@ try {
 
   // Negative: cannot skip provider_delivered and go straight to recovery.
   const skippedProvider = parseJson(
-    runCli([
-      'episode',
-      'start-recovery',
-      `--dispatch-run-id=${continuationRunId}`
-    ])
+    runCli(['episode', 'start-recovery', `--dispatch-run-id=${continuationRunId}`])
   )
   assert.notEqual(skippedProvider.status, 0)
   assert.equal(skippedProvider.reason, 'lifecycle_stage_transition_not_allowed')
 
   // Negative: cannot finish completed from implementation_running.
   const prematureFinish = parseJson(
-    runCli([
-      'episode',
-      'finish',
-      `--dispatch-run-id=${continuationRunId}`,
-      '--status=completed'
-    ])
+    runCli(['episode', 'finish', `--dispatch-run-id=${continuationRunId}`, '--status=completed'])
   )
   assert.notEqual(prematureFinish.status, 0)
   assert.equal(prematureFinish.reason, 'completion_requires_completion_ready_lifecycle_stage')
@@ -452,21 +449,13 @@ try {
 
   // Negative: provider_delivered cannot be recorded twice (transition not allowed).
   const duplicateDelivery = parseJson(
-    runCli([
-      'episode',
-      'provider-delivered',
-      `--dispatch-run-id=${continuationRunId}`
-    ])
+    runCli(['episode', 'provider-delivered', `--dispatch-run-id=${continuationRunId}`])
   )
   assert.notEqual(duplicateDelivery.status, 0)
 
   // Negative: cannot skip recovery and go to review.
   const skippedRecovery = parseJson(
-    runCli([
-      'episode',
-      'review-passed',
-      `--dispatch-run-id=${continuationRunId}`
-    ])
+    runCli(['episode', 'review-passed', `--dispatch-run-id=${continuationRunId}`])
   )
   assert.notEqual(skippedRecovery.status, 0)
   assert.equal(skippedRecovery.reason, 'lifecycle_stage_transition_not_allowed')
@@ -509,12 +498,7 @@ try {
 
   // Negative: cannot finish completed before completion_ready.
   const finishBeforeReady = parseJson(
-    runCli([
-      'episode',
-      'finish',
-      `--dispatch-run-id=${continuationRunId}`,
-      '--status=completed'
-    ])
+    runCli(['episode', 'finish', `--dispatch-run-id=${continuationRunId}`, '--status=completed'])
   )
   assert.notEqual(finishBeforeReady.status, 0)
   assert.equal(finishBeforeReady.reason, 'completion_requires_completion_ready_lifecycle_stage')
@@ -522,11 +506,7 @@ try {
   // P0-2 regression: the public CLI mark-completion-ready action must reject
   // because it cannot construct the unforgeable authorization proof.
   const cliMarkRejected = parseJson(
-    runCli([
-      'episode',
-      'mark-completion-ready',
-      `--dispatch-run-id=${continuationRunId}`
-    ])
+    runCli(['episode', 'mark-completion-ready', `--dispatch-run-id=${continuationRunId}`])
   )
   assert.notEqual(cliMarkRejected.status, 0)
   assert.equal(
@@ -538,9 +518,8 @@ try {
   // proof that validate-completion-readiness issues on success. The proof is an
   // HMAC over the validated evidence paths keyed by a shared secret; a CLI
   // caller cannot forge it.
-  const { issueCompletionReadyAuthorization, markCompletionReady } = await import(
-    '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/episode-state.mjs'
-  )
+  const { issueCompletionReadyAuthorization, markCompletionReady } =
+    await import('../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/episode-state.mjs')
   const authorizationProof = issueCompletionReadyAuthorization({
     dispatchRunId: continuationRunId,
     handoffFile: continuationHandoff,
@@ -570,14 +549,17 @@ try {
 
   // Positive: now finishEpisode(completed) is legal.
   const finished = parseJson(
-    runCli([
-      'episode',
-      'finish',
-      `--dispatch-run-id=${continuationRunId}`,
-      '--status=completed'
-    ])
+    runCli(['episode', 'finish', `--dispatch-run-id=${continuationRunId}`, '--status=completed'])
   )
   assert.equal(finished.status, 'finished')
+  const finishedAudit = parseJson(
+    runCli(['episode', 'trace-audit', `--episode-id=${finished.episode.episode_id}`])
+  )
+  assert.equal(
+    finishedAudit.status,
+    'passed',
+    'a completed lifecycle must replay from implementation_running without false regressions'
+  )
 
   // Status card renders lifecycle stage and continuation for an active episode.
   const statusRunId = `dispatch-gate-continuation-status-${Date.now()}`
@@ -603,9 +585,7 @@ try {
     assert.equal(statusCard.lifecycle_stage, 'provider_delivered')
     assert.equal(statusCard.continuation.providerDelivered, true)
     assert.equal(statusCard.continuation.recoveryRequired, true)
-    const audit = parseJson(
-      runCli(['episode', 'trace-audit', `--dispatch-run-id=${statusRunId}`])
-    )
+    const audit = parseJson(runCli(['episode', 'trace-audit', `--dispatch-run-id=${statusRunId}`]))
     assert.equal(audit.status, 'passed')
     assert.equal(audit.lifecycle_stage, 'provider_delivered')
   } finally {
@@ -616,9 +596,8 @@ try {
   // param was previously misnamed (maxRworkBatches vs maxReworkBatches) so the
   // audit never fired. A synthetic episode with two episode_rework_requested
   // trace events (exceeding MAX_REWORK_BATCHES=1) must now be flagged.
-  const { auditEpisodeTraceRecord } = await import(
-    '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/episode-reporting.mjs'
-  )
+  const { auditEpisodeTraceRecord } =
+    await import('../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/episode-reporting.mjs')
   const overflowEpisode = {
     episode_id: 'synthetic-overflow',
     lifecycleStage: 'implementation_running',
@@ -637,7 +616,10 @@ try {
   // Positive control: a single rework request does not trip the audit.
   const okAudit = auditEpisodeTraceRecord(
     { ...overflowEpisode, trace: overflowEpisode.trace.slice(0, 1) },
-    { maxReworkBatches: 1, legalEarlyCheckReasons: new Set(['terminal', 'user_scope_change', 'true_blocker']) }
+    {
+      maxReworkBatches: 1,
+      legalEarlyCheckReasons: new Set(['terminal', 'user_scope_change', 'true_blocker'])
+    }
   )
   assert.equal(okAudit.status, 'passed')
 
@@ -759,18 +741,10 @@ try {
       secondReworkWithSuccessor.episode.successorDispatch.supersedes_dispatch_run_id,
       breakerRunId
     )
-    assert.equal(
-      secondReworkWithSuccessor.episode.successorDispatch.reciprocal_verified,
-      true
-    )
+    assert.equal(secondReworkWithSuccessor.episode.successorDispatch.reciprocal_verified, true)
     // Negative: completed is forbidden while circuit breaker is tripped.
     const blockedCompletion = parseJson(
-      runCli([
-        'episode',
-        'finish',
-        `--dispatch-run-id=${breakerRunId}`,
-        '--status=completed'
-      ])
+      runCli(['episode', 'finish', `--dispatch-run-id=${breakerRunId}`, '--status=completed'])
     )
     assert.notEqual(blockedCompletion.status, 0)
     assert.equal(blockedCompletion.reason, 'circuit_breaker_tripped_cannot_complete')
@@ -818,10 +792,7 @@ try {
         '--user-decision-reason=no-known-fix-target-requires-product-direction'
       ])
     )
-    assert.equal(
-      userDecisionBlock.reason,
-      'rework_budget_exhausted_user_decision_required'
-    )
+    assert.equal(userDecisionBlock.reason, 'rework_budget_exhausted_user_decision_required')
     assert.equal(
       userDecisionBlock.episode.circuitBreaker.reason,
       'user_decision_required_no_fix_target'
@@ -847,13 +818,18 @@ try {
     e2e_catalog_validation: { status: 'passed', commands: ['c'], evidence_ref: 's', reason: '' },
     episode_state_contract: { status: 'passed', commands: ['c'], evidence_ref: 's', reason: '' },
     status_card_contract: { status: 'passed', commands: ['c'], evidence_ref: 's', reason: '' },
-    automator_preflight_contract: { status: 'passed', commands: ['c'], evidence_ref: 's', reason: '' },
+    automator_preflight_contract: {
+      status: 'passed',
+      commands: ['c'],
+      evidence_ref: 's',
+      reason: ''
+    },
     known_limitations: [],
     qa_handoff: { actual_commands: ['c'] }
   }
   // Negative: required=true but result declares not_applicable instead of values.
   writeJson(selectionResult, {
-    agent_identity: { agent_type: 'implementer_deep', dispatch_run_id: selectionRunId },
+    implementation_owner: 'main',
     status: 'completed',
     changed_files: ['test/e2e/batch/workflow/dispatch-gate-contract.mjs'],
     implementation_summary: 'synthetic selection',
@@ -871,7 +847,7 @@ try {
   })
   const rejectedNotApplicable = spawnSync(
     process.execPath,
-    [selectionValidator, 'implementer', selectionHandoff, selectionResult],
+    [selectionValidator, 'main', selectionHandoff, selectionResult],
     { cwd: repoRoot, encoding: 'utf8' }
   )
   assert.notEqual(rejectedNotApplicable.status, 0)
@@ -882,7 +858,7 @@ try {
   )
   // Positive: required=true with concrete values passes validate-result.
   writeJson(selectionResult, {
-    agent_identity: { agent_type: 'implementer_deep', dispatch_run_id: selectionRunId },
+    implementation_owner: 'main',
     status: 'completed',
     changed_files: ['test/e2e/batch/workflow/dispatch-gate-contract.mjs'],
     implementation_summary: 'synthetic selection',
@@ -911,7 +887,7 @@ try {
   })
   const acceptedSelection = spawnSync(
     process.execPath,
-    [selectionValidator, 'implementer', selectionHandoff, selectionResult],
+    [selectionValidator, 'main', selectionHandoff, selectionResult],
     { cwd: repoRoot, encoding: 'utf8' }
   )
   assert.equal(acceptedSelection.status, 0, acceptedSelection.stderr || acceptedSelection.stdout)
@@ -926,11 +902,10 @@ try {
   const omitHandoff = { ...omitBase.handoff }
   delete omitHandoff.selection_to_consumer
   writeJson(omitHandoffFile, omitHandoff)
-  const omitValidation = spawnSync(
-    process.execPath,
-    [handoffValidator, omitHandoffFile],
-    { cwd: repoRoot, encoding: 'utf8' }
-  )
+  const omitValidation = spawnSync(process.execPath, [handoffValidator, omitHandoffFile], {
+    cwd: repoRoot,
+    encoding: 'utf8'
+  })
   assert.notEqual(omitValidation.status, 0)
   const omitOutput = omitValidation.stdout || omitValidation.stderr
   assert.match(
@@ -947,7 +922,11 @@ try {
     [handoffValidator, explicitFalseHandoff],
     { cwd: repoRoot, encoding: 'utf8' }
   )
-  assert.equal(explicitFalseValidation.status, 0, explicitFalseValidation.stderr || explicitFalseValidation.stdout)
+  assert.equal(
+    explicitFalseValidation.status,
+    0,
+    explicitFalseValidation.stderr || explicitFalseValidation.stdout
+  )
   cleanupDispatchState(omitSelectionRunId)
   cleanupDispatchState(explicitFalseRunId)
 } finally {

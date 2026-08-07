@@ -1,6 +1,7 @@
 'use strict'
 
 const { models } = require('/opt/utils/cloudbase')
+const { normalizeAirEnvironmentInput } = require('./air-environment-evidence')
 const MAX_USER_PLANT_NOTES_LENGTH = 200
 
 function normalizePlantKeyword(value) {
@@ -53,6 +54,37 @@ function stringifyNullableJson(value) {
   return JSON.stringify(value)
 }
 
+function normalizeAirEnvironmentLocationBinding(value = {}) {
+  return {
+    careLocationId: normalizeNullableString(value?.careLocationId) || '',
+    locationKey: normalizeNullableString(value?.locationKey) || ''
+  }
+}
+
+function normalizeAirEnvironmentProfile(value, locationBinding = {}, updatedAt = '') {
+  if (value === null || value === undefined || value === '') {
+    return null
+  }
+  const source = value?.input ? value : { input: value, locationBinding }
+  const input = normalizeAirEnvironmentInput(source.input)
+  if (!input) {
+    return null
+  }
+  return {
+    schemaVersion: 1,
+    input,
+    locationBinding: normalizeAirEnvironmentLocationBinding(
+      source.locationBinding || locationBinding
+    ),
+    updatedAt: String(source.updatedAt || updatedAt || new Date().toISOString()).trim()
+  }
+}
+
+function parseAirEnvironmentProfile(value, updatedAt = '') {
+  const parsed = parseJsonField(value, null)
+  return normalizeAirEnvironmentProfile(parsed, parsed?.locationBinding || {}, updatedAt)
+}
+
 function hasOwnField(payload, key) {
   return Object.prototype.hasOwnProperty.call(payload || {}, key)
 }
@@ -96,7 +128,11 @@ function toNullableDecimal(value) {
 }
 
 function resolveCatalogPlantId(row = {}) {
-  return normalizeNullableString(row.session_plant_id) || normalizeNullableString(row.plant_identity_id) || ''
+  return (
+    normalizeNullableString(row.session_plant_id) ||
+    normalizeNullableString(row.plant_identity_id) ||
+    ''
+  )
 }
 
 function resolveUserPlantCatalogLookupId(row = {}) {
@@ -118,7 +154,9 @@ const USER_PLANT_DISPLAY_IDENTITY_FIELDS = [
 ]
 
 function hasDisplayableUserPlantIdentity(row = {}) {
-  return USER_PLANT_DISPLAY_IDENTITY_FIELDS.some(field => Boolean(normalizeNullableString(row[field])))
+  return USER_PLANT_DISPLAY_IDENTITY_FIELDS.some(field =>
+    Boolean(normalizeNullableString(row[field]))
+  )
 }
 
 function displayableUserPlantSqlCondition(tableAlias = 'up') {
@@ -425,6 +463,16 @@ async function createUserPlantInstance({
   plantDate = null,
   notes = null,
   lightEnvironment = null,
+  airEnvironment = null,
+  airEnvironmentLocationBinding = null,
+  potTopDiameterCm = null,
+  potBottomDiameterCm = null,
+  potHeightCm = null,
+  hasDrainageHole = 'true',
+  potMaterial = 'unknown',
+  substrateType = 'unknown',
+  potProfileSource = 'default',
+  potProfileConfidence = 'low',
   photos = null
 }) {
   let plant = null
@@ -494,17 +542,28 @@ async function createUserPlantInstance({
   const finalIdentityResolutionStatus = persistedPlantIdentityId
     ? 'matched'
     : normalizedIdentityResolutionStatus || 'unresolved'
+  const airEnvironmentProfile = normalizeAirEnvironmentProfile(
+    airEnvironment,
+    airEnvironmentLocationBinding
+  )
+  if (airEnvironment !== null && airEnvironment !== undefined && !airEnvironmentProfile) {
+    throw new Error('空气环境信息不完整')
+  }
 
   const sql = `
     INSERT INTO user_plant_instances (
       _openid, plant_id, plant_identity_id, session_plant_id, canonical_name, recognized_name,
       source_type, recognition_type, recognition_confidence, identity_resolution_status,
-      visual_call_batch_id, nickname, location, plant_date, notes, light_environment_json, photos,
+      visual_call_batch_id, nickname, location, plant_date, notes, light_environment_json, air_environment_json,
+      pot_top_diameter_cm, pot_bottom_diameter_cm, pot_height_cm, has_drainage_hole, pot_material, substrate_type,
+      pot_profile_source, pot_profile_confidence, photos,
       plant_genus, plant_family_en, plant_latin_name
     ) VALUES (
       {{openid}}, {{plantId}}, {{plantIdentityId}}, {{sessionPlantId}}, {{canonicalName}}, {{recognizedName}},
       {{sourceType}}, {{recognitionType}}, NULLIF({{recognitionConfidence}}, ''), {{identityResolutionStatus}},
-      {{visualCallBatchId}}, {{nickname}}, {{location}}, NULLIF({{plantDate}}, ''), {{notes}}, {{lightEnvironmentJson}}, {{photos}},
+      {{visualCallBatchId}}, {{nickname}}, {{location}}, NULLIF({{plantDate}}, ''), {{notes}}, {{lightEnvironmentJson}}, {{airEnvironmentJson}},
+      NULLIF({{potTopDiameterCm}}, ''), NULLIF({{potBottomDiameterCm}}, ''), NULLIF({{potHeightCm}}, ''),
+      {{hasDrainageHole}}, {{potMaterial}}, {{substrateType}}, {{potProfileSource}}, {{potProfileConfidence}}, {{photos}},
       {{plantGenus}}, {{plantFamilyEn}}, {{plantLatinName}}
     )
   `
@@ -532,6 +591,15 @@ async function createUserPlantInstance({
     plantDate: toNullableDateParam(plantDate),
     notes: normalizeUserPlantNotes(notes),
     lightEnvironmentJson: stringifyNullableJson(lightEnvironment),
+    airEnvironmentJson: stringifyNullableJson(airEnvironmentProfile),
+    potTopDiameterCm: toNullableDecimal(potTopDiameterCm),
+    potBottomDiameterCm: toNullableDecimal(potBottomDiameterCm),
+    potHeightCm: toNullableDecimal(potHeightCm),
+    hasDrainageHole: normalizeNullableString(hasDrainageHole) || 'true',
+    potMaterial: normalizeNullableString(potMaterial) || 'unknown',
+    substrateType: normalizeNullableString(substrateType) || 'unknown',
+    potProfileSource: normalizeNullableString(potProfileSource) || 'default',
+    potProfileConfidence: normalizeNullableString(potProfileConfidence) || 'low',
     photos: photos ? JSON.stringify(photos) : null,
     plantGenus,
     plantFamilyEn,
@@ -586,8 +654,10 @@ const USER_PLANT_LATEST_DIAGNOSIS_SQL = `
 `
 
 function mapUserPlantInstanceRow(row, plant = null) {
-  const plantIdentityId = plant?.plantIdentityId || normalizeNullableString(row.plant_identity_id) || ''
-  const sessionPlantId = plant?.sessionPlantId || normalizeNullableString(row.session_plant_id) || ''
+  const plantIdentityId =
+    plant?.plantIdentityId || normalizeNullableString(row.plant_identity_id) || ''
+  const sessionPlantId =
+    plant?.sessionPlantId || normalizeNullableString(row.session_plant_id) || ''
   const canonicalName =
     normalizeNullableString(row.canonical_name) ||
     plant?.canonicalName ||
@@ -621,6 +691,10 @@ function mapUserPlantInstanceRow(row, plant = null) {
     lightEnvironment: parseJsonField(
       row.light_environment_json_text ?? row.light_environment_json,
       null
+    ),
+    airEnvironment: parseAirEnvironmentProfile(
+      row.air_environment_json_text ?? row.air_environment_json,
+      row.updated_at
     ),
     imageFileId: plant?.imageFileId || '',
     lastWatered: row.last_watered || null,
@@ -703,6 +777,7 @@ async function getUserPlantInstanceById(openid, id) {
       up.plant_date,
       up.notes,
       CAST(up.light_environment_json AS CHAR) AS light_environment_json_text,
+      CAST(up.air_environment_json AS CHAR) AS air_environment_json_text,
       up.photos,
       up.last_watered,
       up.next_water,
@@ -851,6 +926,7 @@ async function listUserPlantInstances(openid, { page = 1, pageSize = 20 } = {}) 
       up.plant_date,
       up.notes,
       CAST(up.light_environment_json AS CHAR) AS light_environment_json_text,
+      CAST(up.air_environment_json AS CHAR) AS air_environment_json_text,
       up.photos,
       up.last_watered,
       up.next_water,
@@ -937,6 +1013,17 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
   if (hasOwnField(updates, 'lightEnvironment')) {
     fields.push('light_environment_json = {{lightEnvironmentJson}}')
     params.lightEnvironmentJson = stringifyNullableJson(updates.lightEnvironment)
+  }
+  if (hasOwnField(updates, 'airEnvironment')) {
+    const airEnvironmentProfile = normalizeAirEnvironmentProfile(
+      updates.airEnvironment,
+      updates.locationBinding || updates.airEnvironmentLocationBinding
+    )
+    if (updates.airEnvironment !== null && !airEnvironmentProfile) {
+      throw new Error('空气环境信息不完整')
+    }
+    fields.push('air_environment_json = {{airEnvironmentJson}}')
+    params.airEnvironmentJson = stringifyNullableJson(airEnvironmentProfile)
   }
   if (updates.lastWatered !== undefined) {
     fields.push('last_watered = {{lastWatered}}')

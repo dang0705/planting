@@ -1,4 +1,10 @@
 import { computed } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
+import {
+  DEFAULT_CACHE_KEY,
+  resolveInitialDiagnosisResult,
+  resolveQuestionPackagePayload
+} from './payload.js'
 
 function resolveQuestionPackageModeTitle(mode = '') {
   if (mode === 'specific_pest_visual') {
@@ -25,4 +31,24 @@ export function useQuestionPackageContext({ payload, result, routeOptions }) {
   })
 
   return { plantName, questionDiagnosisContextText }
+}
+
+export function bindQuestionPackagePageEntry({
+  routeOptions,
+  payload,
+  images,
+  result,
+  resetQuestionState
+}) {
+  onLoad(options => {
+    routeOptions.value = options || {}
+    const cacheKey =
+      String(
+        options?.draftKey || options?.cacheKey || options?.payloadKey || DEFAULT_CACHE_KEY
+      ).trim() || DEFAULT_CACHE_KEY
+    payload.value = resolveQuestionPackagePayload(routeOptions.value, cacheKey)
+    images.value = Array.isArray(payload.value?.images) ? payload.value.images : []
+    result.value = resolveInitialDiagnosisResult(payload.value)
+    resetQuestionState(result.value?.questions || [])
+  })
 }

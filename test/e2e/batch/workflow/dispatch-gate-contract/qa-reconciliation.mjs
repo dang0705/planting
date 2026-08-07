@@ -156,7 +156,9 @@ assert.equal(
   nameOnlyTransportReconciled.stderr || nameOnlyTransportReconciled.stdout
 )
 assert.equal(parseJson(nameOnlyTransportReconciled).classification, 'failed_product')
-const nameOnlyTransportUpdatedRecord = JSON.parse(fs.readFileSync(nameOnlyTransportRecordPath, 'utf8'))
+const nameOnlyTransportUpdatedRecord = JSON.parse(
+  fs.readFileSync(nameOnlyTransportRecordPath, 'utf8')
+)
 assert.equal(nameOnlyTransportUpdatedRecord.status, 'failed_product')
 assert.equal(
   nameOnlyTransportUpdatedRecord.classification_history[0].recomputed_classification,

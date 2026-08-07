@@ -9,12 +9,6 @@
     "qa_required": true
   },
   "target_role": "external_implementer",
-  "spawn_contract": {
-    "qa_agent_type": null,
-    "context_mode": "isolated",
-    "generic_fallback_forbidden": true,
-    "identity_receipt_required": true
-  },
   "external_contract": {
     "provider": "zcode",
     "application": "ZCode",
@@ -26,7 +20,6 @@
     "send_receipt_required": true,
     "send_action_required": true,
     "allowed_send_actions": [
-      "enter",
       "send_button",
       "blocked"
     ],
@@ -51,36 +44,40 @@
       "result_json_contract"
     ],
     "computer_use_required": true,
-    "computer_use_tool_invocation_required": true,
-    "computer_use_action_trace_required": true,
-    "clipboard_write_via_computer_use_required": true,
-    "manual_typing_forbidden": true,
-    "shell_only_ui_automation_forbidden": true,
-    "required_computer_use_actions": [
-      "verify_zcode_current_session",
-      "focus_chat_input",
-      "set_clipboard_to_prompt",
-      "paste_clipboard",
-      "verify_prompt_sentinel_in_input",
-      "send_prompt"
-    ],
     "actual_tool_invocation_required": true,
     "allowed_tool_targets": [
       "@ZCode",
       "@Computer"
     ],
     "minimum_tool_event_count": 5,
+    "computer_use_tool_invocation_required": true,
+    "computer_use_action_trace_required": true,
+    "clipboard_bridge_required": true,
+    "clipboard_bridge_evidence_required": true,
+    "direct_input_injection_forbidden": true,
+    "manual_typing_forbidden": true,
+    "shell_only_ui_automation_forbidden": true,
+    "required_computer_use_actions": [
+      "verify_zcode_current_session",
+      "locate_unique_entry_area",
+      "focus_chat_input",
+      "run_verified_clipboard_bridge",
+      "paste_clipboard_via_cmd_v",
+      "verify_paste_delivery",
+      "open_edit_menu_if_needed",
+      "paste_clipboard_via_edit_menu_if_needed",
+      "send_prompt_after_integrity_check",
+      "verify_post_send_delivery"
+    ],
     "post_send_computer_use_policy": {
+      "verify_current_chat_delivery": true,
       "disconnect_after_send_confirmed": true,
-      "first_30m_probe_interval_minutes": 5,
-      "first_30m_allowed_probes": [
-        "handoff_manual",
-        "scoped_git_status",
-        "scoped_git_diff_name_only",
-        "scoped_git_diff_stat"
-      ],
-      "ui_probe_after_30m_min_interval_minutes": 10,
       "continuous_ui_monitoring_forbidden": true
+    },
+    "zcode_clipboard_bridge_authorization": {
+      "mode": "current_turn_explicit",
+      "enabled": true,
+      "authorization_source": "user_explicit_for_dispatch"
     }
   },
   "handoff_manual": {
@@ -108,7 +105,8 @@
     "视觉、文案与交互匹配目标 Figma 节点",
     "使用项目 TailwindCSS，不新增 SCSS",
     "优先复用现有组件与 uni-ui",
-    "ZCode 只修改 allowed_paths 内文件"
+    "ZCode 只修改 allowed_paths 内文件",
+    "完整 prompt 经本机剪贴板读回、可见输入交付与发送后会话交付三层验证"
   ],
   "project_constraints": {
     "rule_refs": [
@@ -168,6 +166,10 @@
     "automator_required": false,
     "catalog_required": false
   },
+  "selection_to_consumer": {
+    "required": false,
+    "not_applicable_reason": "示例只演示外部实现者 UI handoff 合同，不新增用户可选值或业务提交分支。"
+  },
   "required_skills": {
     "main": [
       "$qa-ui-visual-baseline-policy"
@@ -176,7 +178,7 @@
   "validation": {
     "miniprogram_automator_required": false,
     "external": [
-      "ZCode prompt sentinel check",
+      "ZCode canonical prompt and verified visible clipboard receipt check",
       "git diff recovery",
       "unit/lint/typecheck/build/self-check"
     ],

@@ -31,21 +31,13 @@ export function writeGovernanceHandoff(dispatchRunId, patch = {}) {
   const handoff = {
     dispatch_run_id: dispatchRunId,
     dispatch_tier: 'deep_contract',
-    implementation_mode: 'codex_subagent',
+    implementation_mode: 'main_direct',
     task: {
       objective: 'synthetic dispatch governance contract',
       code_changes_required: true,
       ui_task: false,
       risk: 'high',
       qa_required: true
-    },
-    target_role: 'implementer_deep',
-    spawn_contract: {
-      implementer_agent_type: 'implementer_deep',
-      qa_agent_type: null,
-      context_mode: 'isolated',
-      generic_fallback_forbidden: true,
-      identity_receipt_required: true
     },
     allowed_paths: [
       '.codex/**',

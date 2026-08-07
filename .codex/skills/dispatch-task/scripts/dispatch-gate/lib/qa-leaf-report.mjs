@@ -2,7 +2,16 @@ const TERMINAL_KINDS = new Set(['failed_environment', 'failed_product', 'failed_
 export const LEAF_CLASSIFICATION_VERSION = 'qa_leaf_classification_v2'
 const TRANSPORT_MARKERS =
   /timeout|timed out|transport|websocket|\brpc\b|connection|screenshot(?:\s+channel)?|app\.callfunction|capturescreenshot/i
-const FAILURE_PAYLOAD_FIELDS = ['detail', 'message', 'error', 'stack', 'errMsg', 'reason', 'cause', 'code']
+const FAILURE_PAYLOAD_FIELDS = [
+  'detail',
+  'message',
+  'error',
+  'stack',
+  'errMsg',
+  'reason',
+  'cause',
+  'code'
+]
 
 function objectEnd(text, start) {
   let depth = 0
@@ -174,6 +183,7 @@ export function leafReportEvidence(leafReport, evidencePath) {
     source: leafReport.source,
     report_status: leafReport.report?.status ?? 'unavailable',
     failure_kind: classifyLeafReport(leafReport) ?? 'unavailable',
+    business_assertions_reached: leafReport.report?.business_assertions_reached === true,
     classification_version: LEAF_CLASSIFICATION_VERSION,
     raw_report_ref: evidencePath,
     parse_error: leafReport.parse_error ?? null

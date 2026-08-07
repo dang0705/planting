@@ -33,6 +33,41 @@ Module._load = function loadWithQuestionStartPerfStubs(request, parent, isMain) 
     }
   }
   if (
+    request === '../repositories/question-repository' &&
+    String(parent?.filename || '').endsWith(
+      '/cloudfunctions/diagnose-http/app/diagnosis-question-registry.js'
+    )
+  ) {
+    return {
+      async getQuestionsByKeys() {
+        return [
+          {
+            questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
+            questionTextUserCn: '请您选择在过去的10天内，哪几天浇了水？',
+            questionType: 'single_choice',
+            questionGroupKey: 'watering_frequency_context',
+            helpTextCn: '系统会结合天气和浇水记录判断偏干、偏湿或基本合理。'
+          }
+        ]
+      },
+      async getQuestionOptionMappings() {
+        return [
+          {
+            questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
+            optionKey: 'care_behavior_timeline',
+            optionTextUserCn: '养护记录已提供',
+            isDefault: true
+          },
+          {
+            questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
+            optionKey: 'unknown',
+            optionTextUserCn: '不确定'
+          }
+        ]
+      }
+    }
+  }
+  if (
     request === './static-cache-preloader' &&
     String(parent?.filename || '').endsWith(
       '/cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js'
@@ -65,7 +100,7 @@ Module._load = function loadWithQuestionStartPerfStubs(request, parent, isMain) 
     throw new Error('static question/start should not load diagnosis-engine')
   }
   if (
-    request === './services/round-runtime-persistence-service' &&
+    request === '../services/round-runtime-persistence-service' &&
     String(parent?.filename || '').endsWith(
       '/cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js'
     )
@@ -121,7 +156,8 @@ function assertStaticQuestionStartResult(result) {
     [
       'q_observed_probe__leaf_yellowing__watering_frequency_context',
       'q_observed_probe__leaf_yellowing__light_change_context',
-      'q_observed_probe__leaf_yellowing__fertilization_growth_context'
+      'q_observed_probe__leaf_yellowing__fertilization_growth_context',
+      'q_yellow_leaf__air_environment'
     ]
   )
   assert.equal(
@@ -133,7 +169,7 @@ function assertStaticQuestionStartResult(result) {
 
 function assertMinimalFrontendResponse(response) {
   const frontendResponse = buildFrontendDiagnosisResponse(response)
-  assert.equal(frontendResponse.questions.length, 3)
+  assert.equal(frontendResponse.questions.length, 4)
   assert.equal(frontendResponse.questionPackage.mode, 'yellow_leaf')
   assert.deepEqual(
     Object.keys(frontendResponse).filter(key => key.toLowerCase().includes('follow')),

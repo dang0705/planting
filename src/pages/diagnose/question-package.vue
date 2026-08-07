@@ -4,17 +4,13 @@
       id="diagnose-question-package-page"
       class="box-border flex h-screen min-h-screen flex-col bg-[#f8faf9]"
     >
-      <template v-if="result?.hasActiveQuestions && questionStack.length">
+      <QuestionPackageRestartRequired v-if="packageRestartRequired" @restart="returnPreviousPage" />
+      <template v-else-if="result?.hasActiveQuestions && questionStack.length">
         <view class="flex min-h-0 flex-1 flex-col pt-6">
-          <view class="mb-3 px-4">
-            <text class="block text-xl font-extrabold leading-snug text-gray-900">{{
-              questionDiagnosisContextText
-            }}</text>
-            <text class="mt-2 block text-sm font-semibold leading-5 text-[#5a7a68]">{{
-              questionProgressText
-            }}</text>
-          </view>
-
+          <QuestionPackageProgressHeader
+            :title="questionDiagnosisContextText"
+            :progress="questionProgressText"
+          />
           <ButtonStepTrack
             id="diagnose-question-package-page-swiper"
             :items="questionStack"
@@ -25,11 +21,16 @@
           >
             <template #step="{ item: question, index: questionIndex }">
               <scroll-view
-                v-if="question"
+                v-if="question && shouldRenderQuestionContent(questionIndex)"
                 :id="`diagnose-question-package-page-question-scroll-${getQuestionId(question) || questionIndex}`"
                 scroll-y
                 class="h-full"
               >
+                <view
+                  v-if="questionIndex === activeQuestionIndex"
+                  :id="`diagnose-question-package-page-active-question-${getQuestionId(question) || questionIndex}`"
+                  class="pointer-events-none absolute h-0 w-0 overflow-hidden"
+                />
                 <view
                   :id="`diagnose-question-package-page-question-shell-${getQuestionId(question) || questionIndex}`"
                   class="box-border min-h-full px-4 pb-[112px]"
@@ -47,7 +48,6 @@
                     >
                       {{ getQuestionHelpText(question) }}
                     </text>
-
                     <CareBehaviorTimeline
                       v-if="isCareBehaviorWateringTimelineQuestion(question)"
                       :question-id="getQuestionId(question)"
@@ -66,10 +66,27 @@
                       :model-value="getLightEnvironmentByQuestion(question)"
                       @change="payload => handleLightEnvironmentChange(question, payload)"
                     />
-
+                    <QuestionPackageAirEnvironmentStep
+                      v-if="isAirEnvironmentQuestion(question)"
+                      :question="question"
+                      :question-id="getQuestionId(question)"
+                      :air-environment="airEnvironmentUi"
+                      footer-position="fixed"
+                      back-label="上一题"
+                      back-id="diagnose-question-package-page-prev-button"
+                      :completion-label="nextButtonText"
+                      completion-id="diagnose-question-package-page-next-button"
+                      @change="payload => handleAirEnvironmentChange(question, payload)"
+                      @unknown="selectAirEnvironmentUnknown(question)"
+                      @edit="openAirEnvironmentEditor(question)"
+                      @confirm="confirmAirEnvironmentLocation(question)"
+                      @back="goPreviousQuestion"
+                      @complete="handleNextQuestion"
+                    />
                     <QuestionPackageOptions
                       v-if="
                         !isLightEnvironmentQuestion(question) &&
+                        !isAirEnvironmentQuestion(question) &&
                         getVisibleCareBehaviorOptions(question).length
                       "
                       :question="question"
@@ -82,9 +99,15 @@
                   </view>
                 </view>
               </scroll-view>
+              <view
+                v-else-if="question"
+                :id="`diagnose-question-package-page-question-shell-${getQuestionId(question) || questionIndex}`"
+                class="h-0 overflow-hidden"
+              />
             </template>
           </ButtonStepTrack>
           <view
+            v-if="!activeAirEnvironmentOwnsFooter"
             class="fixed bottom-0 left-0 right-0 z-30 box-border flex gap-3 border-t border-emerald-100 bg-[#f8faf9] px-4 pb-5 pt-3"
           >
             <button
@@ -110,7 +133,6 @@
           </view>
         </view>
       </template>
-
       <QuestionPackageRetake
         v-else-if="result?.retakeRequest"
         :retake-request="retakeRequest"
@@ -130,7 +152,6 @@
         @submit="submitRetakeImage"
         @restart="returnPreviousPage"
       />
-
       <scroll-view
         v-else-if="result && !result.hasActiveQuestions && !hasRouteConvergenceDetails"
         scroll-y
@@ -156,7 +177,6 @@
             >
               {{ outcomeSummaryText }}
             </text>
-
             <view
               class="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-[#f8f6f0] px-3 py-3"
             >
@@ -166,7 +186,6 @@
               }}</text>
             </view>
           </view>
-
           <view
             v-if="actionAdviceGroups.length"
             id="diagnose-question-package-outcome-action-advice"
@@ -188,7 +207,6 @@
               </text>
             </view>
           </view>
-
           <view
             v-if="avoidAdviceGroups.length"
             id="diagnose-question-package-outcome-avoid-advice"
@@ -212,7 +230,6 @@
           </view>
         </view>
       </scroll-view>
-
       <scroll-view v-else-if="hasCompletedDiagnosis" scroll-y class="h-screen">
         <view
           id="diagnose-question-package-result-shell"
@@ -232,7 +249,6 @@
             >
               {{ nonProblemOutcomeSummaryText }}
             </text>
-
             <view class="mt-4 flex gap-2.5">
               <view class="flex-1 rounded-2xl bg-emerald-50 px-3 py-3">
                 <text class="block text-[10px] font-bold text-gray-500">当前状态</text>
@@ -248,7 +264,6 @@
               </view>
             </view>
           </view>
-
           <view
             v-if="isProblematicOutcome && allOutcomeDisplays.length"
             id="diagnose-question-package-result-outcomes"
@@ -264,7 +279,6 @@
               >
             </view>
           </view>
-
           <view
             v-if="observedItems.length"
             id="diagnose-question-package-result-observed"
@@ -281,7 +295,6 @@
               </text>
             </view>
           </view>
-
           <view
             id="diagnose-question-package-result-action-advice"
             class="mt-3.5 rounded-[22px] border border-[#e7e0d1] bg-[#fffdf8] p-4 shadow-sm"
@@ -311,7 +324,6 @@
               >暂时没有更具体的行动建议，建议先保持观察并避免过度处理。</text
             >
           </view>
-
           <view
             v-if="avoidAdviceGroups.length"
             id="diagnose-question-package-result-avoid-advice"
@@ -339,7 +351,6 @@
               </view>
             </view>
           </view>
-
           <view
             v-if="showRouteDebugPanel"
             id="diagnose-question-package-debug-panel"
@@ -365,54 +376,47 @@
           </view>
         </view>
       </scroll-view>
-
       <QuestionPackageEmptyState v-else @back="returnPreviousPage" />
     </view>
   </Layout>
 </template>
-
 <script setup>
 import { computed, ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
 import Layout from '@/Layout.vue'
 import { useDiagnoseStore } from '@/store/diagnose.js'
 import { useUserStore } from '@/store/user.js'
 import ButtonStepTrack from '@/components/common/ButtonStepTrack.vue'
 import CareBehaviorTimeline from '@/components/CareBehaviorTimeline.vue'
 import LightEnvironmentPicker from '@/components/LightEnvironmentPicker.vue'
+import QuestionPackageAirEnvironmentStep from './question-package/QuestionPackageAirEnvironmentStep.vue'
 import QuestionPackageOptions from './question-package/QuestionPackageOptions.vue'
 import QuestionPackageRetake from './question-package/QuestionPackageRetake.vue'
 import { useDiagnosisAnswerMutation } from '@/vue-query/diagnose/mutations/useDiagnosisAnswerMutation.js'
 import QuestionPackageEmptyState from './question-package/QuestionPackageEmptyState.vue'
-import {
-  DEFAULT_CACHE_KEY,
-  resolveQuestionPackagePayload,
-  resolveInitialDiagnosisResult
-} from './question-package/payload.js'
+import QuestionPackageRestartRequired from './question-package/QuestionPackageRestartRequired.vue'
+import QuestionPackageProgressHeader from './question-package/QuestionPackageProgressHeader.vue'
 import { useQuestionPackageFlow } from './question-package/question-flow.js'
 import { getQuestionIdentity as getQuestionId } from '@/utils/diagnose-question-identity.js'
 import { getQuestionHelpText, getQuestionTitle } from './question-package/question-display.js'
 import { useQuestionPackageResultView } from './question-package/result-view.js'
 import { useQuestionPackageRetake } from './question-package/retake-flow.js'
-import { useQuestionPackageContext } from './question-package/page-context.js'
-
+import {
+  bindQuestionPackagePageEntry,
+  useQuestionPackageContext
+} from './question-package/page-context.js'
 const diagnoseStore = useDiagnoseStore()
 const userStore = useUserStore()
 const diagnosisAnswerMutation = useDiagnosisAnswerMutation()
-
 const routeOptions = ref({})
 const payload = ref({})
 const result = ref(null)
 const images = ref([])
-
 const returnPreviousPage = () => uni.navigateBack({ delta: 1 })
-
 const { plantName, questionDiagnosisContextText } = useQuestionPackageContext({
   payload,
   result,
   routeOptions
 })
-
 const {
   questionStack,
   activeQuestionIndex,
@@ -420,6 +424,7 @@ const {
   questionProgressText,
   nextButtonText,
   isSubmittingQuestionAnswer,
+  packageRestartRequired,
   environmentWeatherWindowLoading,
   environmentWeatherWindowError,
   resetQuestionState,
@@ -427,12 +432,18 @@ const {
   handleCareBehaviorTimelineChange,
   getLightEnvironmentByQuestion,
   handleLightEnvironmentChange,
+  openAirEnvironmentEditor,
+  confirmAirEnvironmentLocation,
+  handleAirEnvironmentChange,
   getVisibleCareBehaviorOptions,
   isCareBehaviorWateringTimelineQuestion,
   isLightEnvironmentQuestion,
+  isAirEnvironmentQuestion,
+  airEnvironmentUi,
   selectQuestionOption,
   getSelectedQuestionOptionId,
   skipQuestionRisk,
+  selectAirEnvironmentUnknown,
   canProceedQuestion,
   goPreviousQuestion,
   handleNextQuestion
@@ -444,7 +455,16 @@ const {
   diagnoseStore,
   diagnosisAnswerMutation
 })
-
+const activeAirEnvironmentOwnsFooter = computed(() => {
+  const question = questionStack.value[activeQuestionIndex.value]
+  if (!question || !isAirEnvironmentQuestion(question)) {
+    return false
+  }
+  if (getSelectedQuestionOptionId(question) === 'air_environment_unknown') {
+    return false
+  }
+  return !airEnvironmentUi.isSummaryVisible(question) || airEnvironmentUi.isEditorOpen(question)
+})
 const {
   retakeRequest,
   retakeAuthorizationState,
@@ -470,7 +490,6 @@ const {
   diagnosisAnswerMutation,
   resetQuestionState
 })
-
 const {
   hasCompletedDiagnosis,
   hasRouteConvergenceDetails: routeConvergenceDetailsVisible,
@@ -493,17 +512,13 @@ const {
 } = useQuestionPackageResultView({ result, payload, routeOptions })
 const hasRouteConvergenceDetails = computed(() => routeConvergenceDetailsVisible.value)
 
-onLoad(options => {
-  routeOptions.value = options || {}
-  const cacheKey =
-    String(
-      options?.draftKey || options?.cacheKey || options?.payloadKey || DEFAULT_CACHE_KEY
-    ).trim() || DEFAULT_CACHE_KEY
-  payload.value = resolveQuestionPackagePayload(routeOptions.value, cacheKey)
-  images.value = Array.isArray(payload.value?.images) ? payload.value.images : []
-  result.value = resolveInitialDiagnosisResult(payload.value)
-  resetQuestionState(result.value?.questions || [])
-})
-</script>
+// Keep the active card and its immediate neighbors mounted for the slide transition.
+// Older cards only need a stable shell/count marker; mounting every question at once also
+// mounts hidden scroll-views, SVG scenes, and interactive air-environment trees, which can
+// wedge the WeChat renderer during App.captureScreenshot.
+const shouldRenderQuestionContent = questionIndex =>
+  Math.abs(Number(questionIndex) - Number(activeQuestionIndex.value)) <= 1
 
+bindQuestionPackagePageEntry({ routeOptions, payload, images, result, resetQuestionState })
+</script>
 <style scoped src="./question-package.css"></style>

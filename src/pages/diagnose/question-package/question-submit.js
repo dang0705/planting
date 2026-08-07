@@ -11,6 +11,8 @@ export async function submitQuestionPackageAnswers({
   isQuestionPackageMode,
   careBehaviorTimelineByQuestionId,
   lightEnvironmentByQuestionId,
+  airEnvironmentByQuestionId,
+  airEnvironmentSnapshotsByQuestionId,
   environmentWeatherWindow,
   diagnosisAnswerMutation,
   diagnoseStore,
@@ -27,6 +29,8 @@ export async function submitQuestionPackageAnswers({
     requestMode: 'answer_submit',
     careBehaviorTimelineByQuestionId,
     lightEnvironmentByQuestionId,
+    airEnvironmentByQuestionId,
+    airEnvironmentSnapshotsByQuestionId,
     environmentWeatherWindow
   })
   const rerunResult = await diagnosisAnswerMutation.mutateAsync(payloadForSubmit)

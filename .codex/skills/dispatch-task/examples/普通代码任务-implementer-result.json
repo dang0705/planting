@@ -1,8 +1,5 @@
 {
-  "agent_identity": {
-    "agent_type": "implementer_fast",
-    "dispatch_run_id": "example-code-001"
-  },
+  "implementation_owner": "main",
   "status": "completed",
   "changed_files": [
     "src/utils/example.ts",
@@ -27,20 +24,24 @@
     "typecheck": {
       "result": "not_applicable",
       "commands": [],
-      "evidence_ref": "",
+      "evidence_ref": "evidence/typecheck.txt",
       "reason": "无独立 typecheck 入口"
     },
     "build": {
       "result": "not_applicable",
       "commands": [],
-      "evidence_ref": "",
+      "evidence_ref": "evidence/build.txt",
       "reason": "非构建路径变更"
     },
     "self_check": {
       "result": "passed",
       "commands": ["manual review"],
-      "evidence_ref": "",
+      "evidence_ref": "evidence/self-check.txt",
       "reason": ""
     }
+  },
+  "selection_to_consumer": {
+    "not_applicable": true,
+    "reason": "边界条件修复不新增用户可选值"
   }
 }

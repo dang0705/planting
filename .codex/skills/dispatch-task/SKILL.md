@@ -1,6 +1,6 @@
 ---
 name: dispatch-task
-description: 'main 只做路由、合同、等待、回收、审计与 Completion Gate；复杂代码修改由具名 implementer 或 external implementer 执行，simple_patch 与终态后的受限 maintenance patch 可由 main 直接完成。'
+description: 'main 负责完整实现、合同、验证、审计与 Completion Gate；只有用户明确要求时才通过 external implementer bridge 交给外部 agent。'
 ---
 
 # Dispatch Task
@@ -11,17 +11,15 @@ description: 'main 只做路由、合同、等待、回收、审计与 Completio
 
 强制 JSON 或 validator 的场景只有两类：
 
-1. **跨 agent 边界**：handoff、implementer|external result、send receipt、handoff manual。
+1. **外部桥接边界**：external result、send receipt、handoff manual。
 2. **机器证据**：**一个** `validate-implementation-postflight.mjs` report；且当 `runtime_acceptance_mode` 为 `automator_required` | `batch_substitute_allowed` | `batch_only` 时，额外要求 `runtime-qa-evidence.json`。
 
 其余环节（main QA、docs、BRV）由 main 按行为规则执行，**不**产出 `main-*-receipt`，**不**调用 `validate-result.mjs main_qa`。
 
-- **main**：任务归一化、项目约束、路径边界、风险路由、实现模式选择、handoff 校验、codex subagent spawn、external implementer 桥接控制、Codex Subagent Run Lock、diff-first review、返工协调、QA、docs/BRV 影响处理与 Completion Gate；
-  - 除非任务在后续 `dispatch_tier` 被定位为 `simple_patch`，或 codex subagent / external 已返回终态后命中受限 `maintenance_patch`，否则 main 只允许读取代码、生成/校验合同、查看 diff、运行 validator。
-  - **分配了 `Implementer` 时不运行单测/lint/typecheck。当处理 Figma 任务时，只允许按 `$figma-ui-implementation-policy` 进行 Lite 路由；最多使用 `get_metadata`，不得读取 design context、screenshot、variables 或 assets。**。
-  - **QA、端上 `miniprogram automator`、UI/Figma 运行态验收、docs 同步和 ByteRover 影响处理均由 main 执行；main 执行 QA/docs 不授权其修改业务代码。**
+- **main**：任务归一化、项目约束、路径边界、风险路由、实现模式选择、代码实现、handoff 校验、external implementer 桥接控制、diff-first review、返工协调、QA、docs/BRV 影响处理与 Completion Gate；
+  - `simple_patch`、`standard_task`、`deep_contract` 均由 main 直接实现；复杂度只决定合同严密度和验证范围，不产生内部子代理。
+  - main 负责实现阶段的单测/lint/typecheck/build/self-check，以及独立的端上、UI/Figma、docs/BRV 和 Completion Gate。
   - 代码类文件包括但不限于：`src/**`、`cloudfunctions/**`、测试代码、schema、配置、package/lockfile、构建脚本、迁移脚本。
-- **Codex implementer**：仅在 `implementation_mode=codex_subagent` 时修改代码；负责实现、单测/lint/typecheck/build/self-check 与结果 JSON。
 - **External implementer**：仅在 `implementation_mode=external_implementer`（兼容旧值 `zcode_external`）时替代实现阶段；按 main 生成的最小 handoff prompt 修改代码并写 handoff manual；不替代 main 架构判断、QA 或验收。ZCode、Trae、Chrome 插件驱动的云端 agent 都只是 provider/adapter。
 - **Main QA**：由 main 独立验证 e2e、端上、UI/Figma 与运行时；不运行单测，不替代 main code review，不修复业务代码。仅在 automator/batch 模式产出 `runtime-qa-evidence.json`。
 - **Main docs / BRV**：由 main 在 Completion Gate 前判断并处理 active docs 与 ByteRover 影响；不得把文档或记忆治理伪装成实现修复。
@@ -31,7 +29,7 @@ description: 'main 只做路由、合同、等待、回收、审计与 Completio
 | 流                     | 合同 / 证据                                                                                              | 实现后校验                               |
 | ---------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
 | `simple_patch`         | 无 handoff / 无 receipt                                                                                  | diff review + scoped lint/fmt            |
-| `codex_subagent`       | handoff + impl result + 一个 postflight report                                                           | `validate-implementation-postflight.mjs` |
+| `main_direct`          | main result + 一个 postflight report（simple_patch 可走最小验证）                                         | `validate-result.mjs main` + postflight    |
 | `external_implementer` | 既有 external artifacts（prompt、send receipt、handoff manual、recovery result）+ 同一 postflight report | `validate-implementation-postflight.mjs` |
 
 普通任务默认只读本文件。不得先读完整历史、完整 ClickUp、完整 Figma、全仓规则、`.codex/skills/**/references/` 或旧 INDEX。
@@ -67,10 +65,26 @@ ByteRover 的具体命令、Topic Schema、Vocabulary 和引擎行为以当前�
 implementation_mode = external_implementer
 dispatch_tier = external_implementer
 external_contract.provider = zcode | trae | chrome_cloud_agent | other
-external_contract.target_session = current_open_chat | browser_session | remote_session | manual_handoff
+external_contract.target_session = current_open_chat | headless_new_session | browser_session | remote_session | manual_handoff
 ```
 
 兼容旧任务：`implementation_mode=zcode_external`、`dispatch_tier=zcode_external`、`zcode_contract` 仍可被 validator 接受，但新 handoff 优先使用 `external_implementer` / `external_contract`。
+
+当 `external_contract.provider=zcode` 时，Gate A0 必须覆盖通用默认值并固定生成：
+
+```text
+external_contract.target_session = current_open_chat
+external_contract.prompt_transport = clipboard_paste
+external_contract.computer_use_required = true
+external_contract.actual_tool_invocation_required = true
+external_contract.clipboard_bridge_required = true
+external_contract.clipboard_bridge_evidence_required = true
+external_contract.direct_input_injection_forbidden = true
+external_contract.manual_typing_forbidden = true
+external_contract.zcode_clipboard_bridge_authorization = { enabled: true, mode: current_turn_explicit | persistent_user_authorization }
+```
+
+ZCode bridge 从 canonical prompt regular file 读取 UTF-8 正文，依次尝试 macOS NSPasteboard 与 pbcopy；每次都读回并校验 SHA-256、bytes、lines，成功即停止，全部失败才 blocked。main 只能在最新 app state 中动态定位并聚焦唯一 ZCode entry area，先尝试 Cmd+V 并验证，失败才走 Edit > Paste；发送前必须验证 direct text 完整 identity 或 pasted-text 附件 bytes/lines，发送后必须验证同一消息/附件进入当前会话。不得持久化 prompt、旧剪贴板、element index、credential 或原始 UI dump；不得自动回退 headless、新会话、逐字输入或手输。
 
 ## 3. Gate A — Intake、分级与 baseline
 
@@ -89,21 +103,21 @@ objective / dispatch_tier / code_changes_required / ui_task / figma_link / risk 
 | `dispatch_tier`        | 适用任务                                                                                                | 默认处理                                                                                             | 实现所有者           |
 | ---------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------- |
 | `simple_patch`         | 单文件/少量文件、低风险、无 Figma、无 schema/API/状态机、无 CloudBase、无外部实现者、无 subagent 必要性 | `implementation_mode=main_direct`；main 承担最小实现、最小验证、diff review 和 Completion Gate       | main                 |
-| `standard_task`        | 多文件但在既有架构内，局部功能或普通 UI                                                                 | `implementation_mode=codex_subagent`，通常派 `implementer_fast`                                      | implementer_fast     |
-| `deep_contract`        | API/schema/迁移/安全/跨系统状态机/兼容性或不可逆风险                                                    | `implementation_mode=codex_subagent`，派 `implementer_deep`，读取 `references/high-risk-workflow.md` | implementer_deep     |
+| `standard_task`        | 多文件但在既有架构内，局部功能或普通 UI                                                                 | `implementation_mode=main_direct`，main 直接实现并完成验证                                      | main                 |
+| `deep_contract`        | API/schema/迁移/安全/跨系统状态机/兼容性或不可逆风险                                                    | `implementation_mode=main_direct`，main 读取 `references/high-risk-workflow.md` 并按 strict 合同执行 | main                 |
 | `external_implementer` | 用户或配置明确要求外部 agent 写代码（ZCode、Trae、Chrome 插件驱动的云端 agent 等）                      | `implementation_mode=external_implementer`，读取 external implementer bridge references              | external implementer |
 
 ### 1.3 Main 直接小修复与终态后维护补丁
 
-`simple_patch` 是 main 在 intake 阶段直接实现的正式路由；不生成 implementer handoff、send receipt 或角色 receipt。`main_direct` 只允许以下范围：格式化、lint/build 触发的机械修复、拼写/文案/注释、稳定自动化 ID typo，以及不改变 API、schema、权限、数据结构、状态机、架构边界或用户业务行为的单点修复。
+`main_direct` 是所有非外部任务的正式实现路由。`simple_patch` 仍是无需完整实现合同的低风险快捷路由；`standard_task` 和 `deep_contract` 需要 main result、postflight 以及合同要求的 QA 证据。
 
-这里的“实现者终态”只表示 implementer/provider 已返回合同要求的最终结果：`completed` 或 `blocked`。它表示实现交付阶段结束并进入 main review，不表示整个 dispatch-task 已完成。只有 `completed` 结果且 recovery evidence 已齐备时，main 才可以在 Gate C Main Review（Web external 为 PR recovery review 子阶段）中执行一次受限 `maintenance_patch`；`blocked` 只能进入阻断处理，不授权 main 接管实现。
+这里的“实现结果”只表示 main 或 external provider 已返回合同要求的最终结果：`completed` 或 `blocked`。它表示实现交付阶段结束并进入 main review，不表示整个 dispatch-task 已完成。只有 `completed` 结果且 recovery evidence 已齐备时，main 才能进入 Completion Gate。
 
-1. 不得在 Codex Subagent / provider 仍运行时修改任何代码类文件；
+1. external provider 仍运行时，main 不得修改任何代码类文件；
 2. 变更默认不超过 3 个文件、80 行语义变更；纯格式化可扩大文件数，但必须证明无语义 diff；
 3. 只能修复已被验证的 typo、格式、lint/build 阻断或合同内的机械冲突，不得借机改变产品方向；
 4. external Web 任务只能在合同指定的 PR worktree 修改，并提交、推送到同一 PR head；不得把 PR worktree 的修复带回主工作区直接提交；
-5. 若需要新增业务判断、跨模块重构、API/schema/状态机变化，立即升级回原 implementer 或请求用户决策；不得把“大修”伪装成 maintenance patch。
+5. 若需要新增业务判断、跨模块重构、API/schema/状态机变化，main 必须按 `deep_contract` 收紧 decision lock 和验证；不得把“大修”伪装成 `simple_patch`。
 
 `maintenance_patch` 的有效窗口只在 Gate C Main Review 内：从 completed 结果和 recovery evidence 可审查时开始，到 PR merge / local base sync / Completion Gate 之前结束。它不是任务完成后的补丁入口；一旦已通过 Completion Gate，后续问题必须回到原 implementer 或新建任务，不得重新打开已完成任务直接修改。
 
@@ -113,7 +127,7 @@ maintenance patch 完成后必须重新执行 scoped diff review、oxfmt/lint/bu
 
 存在 Figma link、UI 还原、API/schema、迁移、安全、CloudBase、跨端状态机、超过 1 个业务模块或用户指定外部实现者时，不得走 `simple_patch`。
 
-`simple_patch` 一旦发现影响范围扩大，必须升级为 `standard_task` 或 `deep_contract`；升级后 main 不得继续实现。严禁 main 把非 `simple_patch` 伪装成 `simple_patch` 直接写代码。
+`simple_patch` 一旦发现影响范围扩大，必须升级为 `standard_task` 或 `deep_contract`；升级后仍由 main 实现，但必须补齐对应合同与验证。严禁把非 `simple_patch` 伪装成快捷路由。
 
 ### 3.2 Worktree baseline
 
@@ -149,10 +163,8 @@ test_commands
 ```text
 dispatch_run_id
 dispatch_tier: standard_task / deep_contract / external_implementer
-implementation_mode: codex_subagent / external_implementer
+implementation_mode: main_direct / external_implementer
 task: {objective, code_changes_required, ui_task, risk, qa_required}
-target_role
-spawn_contract
 external_contract                   # implementation_mode=external_implementer 时必填；旧 zcode_contract 兼容
 handoff_manual                      # implementation_mode=external_implementer 时必填
 allowed_paths / forbidden_paths
@@ -190,7 +202,7 @@ validation:
 output_evidence_required
 ```
 
-`standard` 只锁目标、工程规则和不可破坏的不变量；组件拆分、命名、复用落点等局部决策归实现者。只有 API/schema、迁移、安全、跨系统或不可逆任务读取 `references/high-risk-workflow.md` 并使用 `strict`，不为普通任务生成架构长文或逐文件伪代码。
+`standard` 只锁目标、工程规则和不可破坏的不变量；组件拆分、命名、复用落点等局部决策由 main 在合同内完成。只有 API/schema、迁移、安全、跨系统或不可逆任务读取 `references/high-risk-workflow.md` 并使用 `strict`，不为普通任务生成架构长文或逐文件伪代码。
 
 派发前执行：
 
@@ -200,22 +212,13 @@ node .codex/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
 
 失败不得进入实现阶段。
 
-## 6. Gate B1 — Spawn Capability Gate
+## 6. Gate B1 — Main Implementation Lock
 
-仅 `implementation_mode=codex_subagent`。Handoff 通过即授权派发 `spawn_contract.implementer_agent_type`（`implementer_fast` / `implementer_deep`）；不得再为复杂度二次征求 spawn 许可（除非 runtime 明确要求一次确认）。
+`main_direct` 不 spawn、不中转、不创建任何内部子代理。main 在自己的工作区完成实现、测试、自检、diff review 和 Completion Gate。只有 `external_implementer` 进入外部桥接；外部 provider 运行期间，main 遵守其工作区和等待锁。
 
-硬边界：
+## 7. Gate B1.5 — External Provider Run Lock / 等待与工作区所有权
 
-1. 必须显式 `agent_type`；禁止 full-history fork、generic/default/worker fallback。
-2. spawn 只传 `agent_type` + `fork_turns=none`/`fork_context=false` + minimal handoff message。
-3. 运行时 `effective_agent_type` 与 Codex Subagent `agent_identity` 必须等于 `target_role` 与本轮 `dispatch_run_id`；不可观察或不一致则 blocked。
-4. 返工回原 implementer thread，不重新 spawn generic Codex Subagent。
-
-展开步骤与 blocked code 见 `references/handoff-and-spawn-gates.md`。
-
-## 7. Gate B1.5 — Codex Subagent Run Lock / 等待与工作区所有权
-
-一旦 `implementer_fast`、`implementer_deep` 或 external implementer 被派发，main 进入 Codex Subagent Run Lock。
+只有 external implementer 被派发时，main 进入 External Provider Run Lock。
 
 本仓库启用本地 dispatch hook gate：
 
@@ -229,7 +232,7 @@ review 缺陷必须先合并成一个完整返工清单，再执行一次 `episo
 
 ### 7.1 Continuation contract - provider 交付与 dispatch 完成状态分离
 
-provider（Codex Subagent 或 external implementer）返回终态只表示实现交付阶段结束，绝不表示整个 dispatch-task 完成。episode 通过受持久化状态机和 validator 约束的 `lifecycleStage` 强制实现严格转移：
+provider（external implementer）返回终态只表示实现交付阶段结束，绝不表示整个 dispatch-task 完成。episode 通过受持久化状态机和 validator 约束的 `lifecycleStage` 强制实现严格转移：
 
 ```text
 implementation_running -> provider_delivered -> recovery_in_progress -> review_passed -> qa_passed|qa_not_required -> completion_ready -> completed
@@ -251,7 +254,7 @@ implementation_running -> provider_delivered -> recovery_in_progress -> review_p
 
 任务新增或变更用户可选值（选项、模式、开关、分支路径）时，handoff 必须声明 `selection_to_consumer.required=true`，implementer/external result 必须在 `selection_to_consumer.values` 列出每个具体 value、产生该选择的 `submit_payload`、消费该选择的 `consumer_branch`、`expected_entry` 和 `anti_fallback_assertion`，并设 `consumer_verified=true`。非选择类任务必须明确写 `selection_to_consumer.not_applicable=true` 并给出原因。`validate-handoff`、`validate-result` 和 `validate-completion-readiness` 会拒绝缺失该合同或实现者证据的任务。
 
-`SubagentStart` 只读取 handoff 提供的 main-owned recall packet，禁止执行 BRV Query。`PostToolUse` 记录真实 tool/terminal/Figma/code-edit telemetry；`SubagentStop` 只能为 forbidden-path、QA evidence forgery 等 true blocker 返回 `decision:"block"`。缺 Figma、缺 feature test、未执行 main-owned Automator、docs 或 BRV 都是普通遗漏：写入审计摘要，但不得阻断 implementer 停止或强制 continuation。`stop_hook_active=true` 必须允许停止以避免循环。
+`PostToolUse` 记录真实 tool/terminal/Figma/code-edit telemetry。内部 Subagent 生命周期不是有效 dispatch 路径；若出现内部子代理事件，必须记录为违规并阻断，不得创建 episode 绑定或继续实现。
 
 hook-self-test 只证明 CLI adapter 行为，不能证明 Desktop 原生生命周期已接通。必须用 `hook-capability`/运行态探针标明 `native_supported` 或 `cli_fallback`；native 不可用时 `.codex/hooks.json` 只保留可观测的 `PreToolUse`/`PostToolUse`，生命周期由 `episode open/start/status/finish` 显式执行，严禁继续挂载无效的 `SubagentStart`/`SubagentStop` 来制造已接通的假象。
 
@@ -265,14 +268,13 @@ hook-self-test 只证明 CLI adapter 行为，不能证明 Desktop 原生生命�
 
 硬规则：
 
-1.  main 必须等待 Codex Subagent 返回最终 JSON、handoff manual 终态，或用户明确中止；不得用 20 秒/40 秒等短轮询判定“无产出”。
-2.  Codex Subagent 正在运行时，main 不得修改、撤回、格式化、restore、checkout、apply_patch、sed 重写或自动修补任何代码类文件。
-3.  Codex Subagent 正在运行时，main 不得用 `git status` / `git diff` 的“暂时没有可见 diff”推断 Codex Subagent 失败。
-4.  Codex subagent 首次状态检查不得早于 5 分钟；之后低频检查间隔不得短于 5 分钟。检查只允许确认是否已有最终消息/结果文件，不得读取半成品 diff 后继续实现。
-5.  `deep_contract`、UI/Figma、跨模块、状态机或大文件拆分任务，首次状态检查建议不早于 10 分钟；没有最终 JSON 时默认仍在执行。
-6.  如果 main 在 Codex Subagent 仍可能写入时误写了代码类文件，必须立即停止并返回 `blocked: main_workspace_contamination`，说明触碰文件、原因和建议处理方式；不得自行撤回或继续加工。
-7.  只有在 Codex Subagent 返回 `completed|blocked` 终态后，main 才能进入 Gate C 做 diff-first review；其中只有 `completed` 且证据齐备时，才允许按 §1.3 执行受限 maintenance patch。`blocked` 不授权 main 修复；超出范围的返工必须回到原 Codex Subagent thread 或原外部实现者，main 不得亲自修复。
-8.  同一 episode 的实现沟通上限是“一次初始实现 + 一次整包返工”；第二批实现缺陷必须触发 circuit breaker，不得继续逐条 `send_message`/`followup_task`。
+1. main 必须等待 external provider 的最终结果、handoff manual 终态，或用户明确中止；不得用短轮询判定“无产出”。
+2. external provider 正在运行时，main 不得修改、撤回、格式化、restore、checkout、apply_patch、sed 重写或自动修补其工作区内的代码类文件。
+3. external provider 正在运行时，main 不得用暂时没有可见 diff 推断 provider 失败。
+4. 外部 provider 的正式状态检查遵守 5 分钟下限；短等待只用于一次性发送成功、页面已开始运行、身份探针等非实现 completion 检查。
+5. 如果 main 在 external provider 仍可能写入时误写代码类文件，必须立即停止并返回 `blocked: main_workspace_contamination`。
+6. provider 返回 `completed|blocked` 后，main 才能进入 Gate C；`blocked` 不得转为内部子代理或静默接管实现。
+7. 同一 episode 的外部实现沟通上限是“一次初始实现 + 一次整包返工”；第二批缺陷必须触发 circuit breaker。
 
 违反本节视为 Hard stop。
 
@@ -290,34 +292,34 @@ assets/templates/zcode-prompt-template.md           # ZCode 兼容 alias
 
 本文件只锁这几条硬边界：
 
-1. main 不 spawn Codex implementer，不自写业务代码；不因 external 失败自动 fallback。
+1. main 默认直接实现；只有进入 external bridge 时暂停本地实现，不因 external 失败自动 fallback 到任何子代理。
 2. 统一 external prompt + send receipt +（本地 manual 或 Web PR/worktree recovery）；聊天“完成”不算完成。
 3. Codex Desktop 运行 Web/云端 provider 时，必须用 Codex 内置浏览器打开和发送 prompt；普通 Chrome、shell 或 ambient browser 状态不能替代受控发送证据。
 4. Web/云端 external implementer 即使远端自称 main/root，也必须按 implementer 身份执行：只改合同范围代码，完成后提供 unit tests 等实现者自检；有 `figma_link` 时直接用可用 Figma 插件 / MCP / 工具取设计证据。
 5. Codex 内置浏览器发送成功后，必须显式保留 provider tab 为 `handoff`，send receipt 记录 `tab_retention`；不得依赖 Browser Use 默认生命周期保留外部会话。
-6. Web/云端 external implementer 的完成等待必须继承 Codex Subagent Run Lock：首次正式状态检查不得早于 5 分钟，之后每 5 分钟低频检查。不得用 60 秒、90 秒等短等待作为“完成/失败/无产出”判断；短等待只允许用于一次性发送成功、页面已开始运行、身份探针这类非实现 completion 检查。
-7. prompt 送达并开始运行后进入 Codex Subagent Run Lock（见 §7）；adapter 细则与 DOM/Computer 步骤只在 references。
+6. Web/云端 external implementer 的完成等待必须继承 External Provider Run Lock：首次正式状态检查不得早于 5 分钟，之后每 5 分钟低频检查。不得用 60 秒、90 秒等短等待作为“完成/失败/无产出”判断；短等待只允许用于一次性发送成功、页面已开始运行、身份探针这类非实现 completion 检查。
+7. prompt 送达并开始运行后进入 External Provider Run Lock（见 §7）；adapter 细则与 DOM/Computer 步骤只在 references。
 8. 结果回收后走同一套 Gate C/D（`validate-result.mjs external` → postflight → completion）。
 
 ## 9. Gate C — Implementation Review
 
-Codex subagent / external recovery 返回 JSON 后先校验结果合同，再做 diff-first review，并执行**一个** postflight：
+main / external recovery 返回 JSON 后先校验结果合同，再做 diff-first review，并执行**一个** postflight：
 
 ```bash
-node .codex/skills/dispatch-task/scripts/validate-result.mjs implementer <handoff.json> <result.json>
+node .codex/skills/dispatch-task/scripts/validate-result.mjs main <handoff.json> <result.json>
 # 或：validate-result.mjs external <handoff.json> <external-recovery-result.json>
 node .codex/skills/dispatch-task/scripts/validate-implementation-postflight.mjs <handoff.json> <impl-result.json> <worktree-baseline.json> > .tmp/dispatch-task/<dispatch_run_id>-postflight-report.json
 ```
 
-`completed` 结果进入 Gate C Main Review；`blocked` 结果是合法阻断结果，但不得进入 Completion Gate，也不得触发 `maintenance_patch`。因此，implementer/provider 的“完成”是 review 的起点，Completion Gate 通过才是 dispatch-task 的完成。
+`completed` 结果进入 Gate C Main Review；`blocked` 结果是合法阻断结果，但不得进入 Completion Gate。Completion Gate 通过才是 dispatch-task 的完成。
 
-所有代码修改任务都必须做 diff-first review：身份/来源、实际变更文件、路径边界、项目约束、decision lock、依赖、验证证据。UI 重点检查 Tailwind/SCSS、组件复用与 uni-ui 映射证据；Figma 任务必须存在实现者直接读取证据。失败退回原实现路径，main 不亲自修复。
+所有代码修改任务都必须做 diff-first review：实现者（main 或 external）身份/来源、实际变更文件、路径边界、项目约束、decision lock、依赖、验证证据。UI 重点检查 Tailwind/SCSS、组件复用与 uni-ui 映射证据；Figma 任务必须存在实现者直接读取证据。失败由 main 在原路径修复或重新进入 external bridge，不得创建内部子代理。
 
 postflight report 必须确认 git root 与 HEAD 未相对 baseline 变化，并覆盖 worktree scope、no-new-deps、style-stack 等实现后机器证据。`no_new_deps` 对 `package.json` 只以依赖字段相对 HEAD 的变化作为新增依赖风险；仅 scripts/config 调整可通过并记录 warning，lockfile 或依赖字段变化仍 blocked。
 
 postflight 通过后应由 dispatch gate 创建 `.tmp/dispatch-task/<dispatch_run_id>/qa-skeleton.json`，供 main QA 继续补 runtime/batch evidence。该 skeleton 只表示 QA 计划已建立，不表示端上验收已通过。
 
-`simple_patch` / `main_direct` 跳过 validate-handoff / validate-implementation-postflight / validate-completion-readiness，只执行 git diff review + scoped lint/fmt/build；若 main 在 Codex Subagent 终态后执行了 `maintenance_patch`，必须把补丁纳入原实现结果的 changed files、postflight 和最终 PR recovery evidence。
+`simple_patch` 可跳过完整 handoff/result/postflight，只执行 git diff review + scoped lint/fmt/build；`standard_task`、`deep_contract` 的 `main_direct` 必须执行 main result、postflight 和 Completion Gate。
 
 缺少 baseline 或 postflight report 时，不得进入 Completion Gate。postflight report 在 `passed` 和 `blocked` 时都必须产出 JSON；`blocked` 不授权 main 修复，必须回到原实现路径或请用户决策。
 
@@ -401,13 +403,13 @@ Completion evidence 必须区分 `provider_completed`、`pr_merged` 和 `local_b
 
 **main**
 
-- 必须/允许：使用 `$figma-ui-implementation-policy`；只解析 link/node，或最多一次 `get_metadata` 形成 Lite。
-- 禁止：`get_design_context`、`get_screenshot`、variables、assets、视觉摘要、实现切片、Drilldown。
+- 实现任务：使用 `$implementer-ui-execution-policy`，在首次 UI 编辑前直接取得 metadata + design context + screenshot；QA 仍使用 `$qa-ui-visual-baseline-policy` 独立取得视觉基准。
+- 仅外部桥接任务的 intake：使用 `$figma-ui-implementation-policy` 形成 Lite；实现事实必须由 external provider 直接取得。
 
-**Codex implementer**
+**main implementation**
 
-- 必须/允许：使用 `$implementer-ui-execution-policy`；在首次 UI 编辑前直接取得 metadata + design context + screenshot；Scope 规则在其 `references/ui-scope-policy.md` 内。
-- 禁止：依赖 main Lite 猜实现、整文件读取。
+- 必须/允许：main 在首次 UI 编辑前直接取得 metadata + design context + screenshot；遵守 `$implementer-ui-execution-policy` 的取证边界。
+- 禁止：依赖 Lite 猜实现、整文件读取。
 
 **External implementer**
 
@@ -420,18 +422,17 @@ Completion evidence 必须区分 `provider_completed`、`pr_merged` 和 `local_b
 - 必须/允许：使用 `$qa-ui-visual-baseline-policy`；独立取得 metadata + reference screenshot，并取得实际运行截图。
 - 禁止：只凭 main/实现者转述判通过、整文件读取。
 
-`codex_subagent` Figma 模式必须满足：
+`main_direct` Figma 模式必须满足：
 
 ```text
-required_skills.implementer:
-  - $implementer-ui-execution-policy
 required_skills.main:
+  - $implementer-ui-execution-policy
   - $qa-ui-visual-baseline-policy
 ```
 
 若 `project_constraints.component_library` 包含 `uni-ui`：
 
-- `codex_subagent`：handoff 必须追加 `$uni-ui-figma-component-mapper` 与 `uni_ui_mapping_evidence`。
+- `main_direct`：handoff 必须追加 `$uni-ui-figma-component-mapper` 与 `uni_ui_mapping_evidence`。
 - `external_implementer`：external handoff prompt 必须追加 `uni_ui_mapping_contract`，并要求外部实现者在首次 UI 编辑前输出最小 `Figma 区域/节点 → uni-ui 组件/备选/风险` 映射证据。
 
 main 不得读取或转述 uni-ui 组件索引、映射表、组件规则；只负责把 skill 名、prompt section 或 evidence 名写入 Contract。Lite 不是实现事实或视觉基准，Lite 不可用不授权猜测。
@@ -453,19 +454,19 @@ main 不得读取或转述 uni-ui 组件索引、映射表、组件规则；只�
 
 ## 13. Hard stops
 
-1. Codex Subagent 已派发但未返回终态时，main 继续实现、撤回草稿、格式化、restore、checkout、apply_patch、sed 重写或自动修补代码类文件。
-2. main 用 20 秒/40 秒等短轮询、临时 `git status` 或“暂无可见 diff”判定 Codex Subagent 无产出、失败或可由 main 接管。
+1. 任何内部子代理已被派发，或 main 通过 spawn/child 继续实现代码类文件。
+2. external provider 使用 20 秒/40 秒等短轮询、临时 `git status` 或“暂无可见 diff”判定无产出、失败或完成。
 3. 代码修改任务缺少 worktree baseline，baseline 与本轮变更重叠未处理，或未通过 postflight report 仍完成。
-4. `codex_subagent` 模式未显式传精确 `agent_type`，使用 full-history fork，或发生 generic/default/worker fallback。
-5. `external_implementer` 模式 spawn 了 Codex implementer、缺少 send receipt、缺少 handoff manual，或 provider 交付证据与 `external_contract.prompt_transport` 不一致。
+4. 任何内部子代理、spawn、agent_type、target_role 或 spawn_contract 出现在 `main_direct` 任务中。
+5. `external_implementer` 模式 spawn 了任何内部子代理、缺少 send receipt、缺少 handoff manual，或 provider 交付证据与 `external_contract.prompt_transport` 不一致。
 6. provider UI/会话/prompt 完整性未通过 adapter 要求，或 prompt 发送失败仍继续。
 7. 仅用 shell/脚本/自然语言声明替代声明为 required 的 UI/Computer/Chrome adapter 操作，或用“dispatch 预授权”替代用户当前明确授权。
-8. external implementer 失败后 main 自己写代码，或自动 fallback 到 Codex implementer 而未获得用户明确批准。
+8. external implementer 失败后自动 fallback 到任何子代理；未获得用户重新授权前不得改变外部桥接合同。
 9. external handoff 缺少 handoff manual，或 main 未先读取 handoff manual 就用 UI/聊天状态判定外部实现者已结束。
 10. external implementer 已收到 prompt 并开始运行后，main 仍持续盯屏、使用短轮询或在 30 分钟内读取 provider UI 进度；正式等待必须使用 5 分钟下限的 recurring wakeup。
-11. Codex Subagent `agent_identity` 与 Contract 不一致。
+11. main_direct result 缺少 `implementation_owner=main`，或外部 result 伪造内部 agent identity。
 12. UI handoff 缺少 styling system、SCSS policy、component library 或 rule refs。
-13. main 在 Figma 任务使用 `get_design_context/get_screenshot/variables/assets`，或把视觉细节塞进 handoff。
+13. main 在 Figma 任务缺少实现阶段的直接 Figma 证据，或把视觉细节塞进 handoff 代替真实取证。
 14. figma_link 存在，但实现者没有直接读取 Figma 证据，或 main QA 没有独立 baseline。
 15. `component_library` 包含 `uni-ui` 且存在 figma_link，但缺 uni-ui 映射合同或实现者缺 `uni_ui_mapping_evidence`。
 16. Tailwind 项目新增未授权 `.scss`、`<style lang="scss">` 或用 scoped style 重建常规 UI。

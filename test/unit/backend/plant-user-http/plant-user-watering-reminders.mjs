@@ -33,6 +33,12 @@ Module._load = function patchedWateringReminderLoad(request, parent, isMain) {
       }
     }
   }
+  if (request === '/opt/utils/cloudbase') {
+    return { models: { $runSQL: async () => ({ data: { executeResultList: [] } }) } }
+  }
+  if (request === '/opt/utils/air-environment-evidence') {
+    return { resolveAirEnvironmentEvidence: () => null }
+  }
   if (request === '/opt/utils/plant-knowledge') {
     return {
       createUserPlantInstance: async () => ({}),
@@ -62,6 +68,12 @@ Module._load = function patchedWateringReminderLoad(request, parent, isMain) {
   if (request === '/opt/utils/user-plant-light-environment') {
     return {
       getUserPlantLightEnvironment: async () => null
+    }
+  }
+  if (request.endsWith('/air-environment-service')) {
+    return {
+      readUserPlantAirEnvironment: async () => ({ statusCode: 200, message: 'ok', data: null }),
+      saveUserPlantAirEnvironment: async () => ({ statusCode: 200, message: 'ok', data: null })
     }
   }
   if (request.endsWith('/watering-planner-service')) {

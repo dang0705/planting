@@ -7,14 +7,6 @@
     "risk": "standard",
     "qa_required": true
   },
-  "target_role": "implementer_fast",
-  "spawn_contract": {
-    "implementer_agent_type": "implementer_fast",
-    "qa_agent_type": null,
-    "context_mode": "isolated",
-    "generic_fallback_forbidden": true,
-    "identity_receipt_required": true
-  },
   "allowed_paths": [
     "src/pages/example/**",
     "src/components/example/**"
@@ -30,6 +22,10 @@
     "优先复用现有组件与 uni-ui",
     "Figma 语义区域优先映射到可用 uni-ui 组件；无法覆盖时说明自定义原因"
   ],
+  "selection_to_consumer": {
+    "required": false,
+    "not_applicable_reason": "该示例只实现展示卡片，不新增用户可选值"
+  },
   "project_constraints": {
     "rule_refs": [
       "AGENTS.md#UI-与样式"
@@ -62,7 +58,7 @@
     "node_id": "1:2",
     "mode": "internal_mcp",
     "lite_status": "link_only",
-    "main_access": "lite_only",
+    "main_access": "main_direct",
     "main_tools_used": [],
     "implementer_fetch_required": true,
     "qa_baseline_fetch_required": true
@@ -82,17 +78,15 @@
     "catalog_required": false
   },
   "required_skills": {
-    "implementer": [
-      "$implementer-ui-execution-policy",
-      "$uni-ui-figma-component-mapper"
-    ],
     "main": [
+      "$implementer-ui-execution-policy",
+      "$uni-ui-figma-component-mapper",
       "$qa-ui-visual-baseline-policy"
     ]
   },
   "validation": {
     "miniprogram_automator_required": false,
-    "implementer": [
+    "main_execution": [
       "unit tests",
       "lint/typecheck/build",
       "UI self-check"
@@ -107,5 +101,5 @@
     "uni_ui_mapping_evidence"
   ],
   "dispatch_tier": "standard_task",
-  "implementation_mode": "codex_subagent"
+  "implementation_mode": "main_direct"
 }

@@ -46,10 +46,6 @@ function buildSyntheticObservedProbeOptionTexts(item = {}, packageTopic = '', _c
           text: '施肥或换盆',
           description: '最近长期没补肥、施肥偏多，或刚换盆换土。'
         },
-        airflow_humidity_area: {
-          text: '通风或空气湿度',
-          description: '最近环境更闷、更潮、更干燥，或空气流动变化较大。'
-        },
         unknown: {
           text: '说不清 / 没留意',
           description: '暂时看不出哪项变化最明显，继续按养护环境排查。'
@@ -89,10 +85,6 @@ function buildSyntheticObservedProbeOptionTexts(item = {}, packageTopic = '', _c
     case QUESTION_PACKAGE_TOPICS.FERTILIZATION_GROWTH_CONTEXT:
       return {
         ...CARE_CONTEXT_OPTION_COPY.fertilizationGrowth
-      }
-    case QUESTION_PACKAGE_TOPICS.AIRFLOW_HUMIDITY_CONTEXT:
-      return {
-        ...CARE_CONTEXT_OPTION_COPY.airflowHumidity
       }
     case QUESTION_PACKAGE_TOPICS.YELLOWING_PROGRESSION_SPEED:
       return {

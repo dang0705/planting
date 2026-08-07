@@ -4,7 +4,7 @@
  * miniprogram-automator 连接客户端 —— 浇水算法 v3 蒸腾间隔修正端上验收。
  *
  * 职责：
- *   - 连接已存在的 ws://127.0.0.1:9420（不自动启动/关闭 DevTools）
+ *   - 连接 QA 已验证的测试专属 Automator 会话（不启动/关闭 DevTools）
  *   - 提供 reLaunch / currentPage / evaluate / disconnect 代理
  *   - 连接失败以非零退出并报告明确 blocker
  *
@@ -12,48 +12,53 @@
  */
 
 import automator from 'miniprogram-automator'
+import {
+  connectFormalLeaf,
+  disconnectFormalLeaf,
+  withDeadline
+} from '../../../../../_shared/formal-leaf-harness.mjs'
 
 const CONNECT_TIMEOUT_MS = 15000
-const CONNECT_RETRIES = 3
-const RETRY_DELAY_MS = 1000
+const liveSessions = new WeakMap()
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms))
+function makeResumableSession(initial) {
+  let current = initial
+  const session = new Proxy(
+    {},
+    {
+      get(_target, property) {
+        const value = current?.[property]
+        return typeof value === 'function' ? value.bind(current) : value
+      }
+    }
+  )
+  liveSessions.set(session, next => {
+    current = next
+  })
+  return session
+}
+
+export function resumeAutomatorSession(session, next) {
+  const replace = liveSessions.get(session)
+  if (replace) replace(next)
+  return session
 }
 
 /**
  * 连接已运行的微信开发者工具 automator 服务。
  *
- * @param {string} wsEndpoint - ws://127.0.0.1:9420
+ * @param {string} wsEndpoint - 已验证的测试专属 WebSocket 端点
  * @returns {Promise<object>} miniProgram 实例
  * @throws 连接失败时抛出，调用方应非零退出
  */
 export async function connectAutomator(wsEndpoint) {
-  let lastError = null
-  for (let attempt = 1; attempt <= CONNECT_RETRIES; attempt++) {
-    try {
-      const mp = await withTimeout(
-        automator.connect({ wsEndpoint }),
-        CONNECT_TIMEOUT_MS,
-        `connect ${wsEndpoint} timeout`
-      )
-      return mp
-    } catch (error) {
-      lastError = error
-      if (attempt < CONNECT_RETRIES) {
-        await sleep(RETRY_DELAY_MS)
-      }
-    }
+  try {
+    return makeResumableSession(
+      (await connectFormalLeaf({ automator, wsEndpoint, timeoutMs: CONNECT_TIMEOUT_MS })).mp
+    )
+  } catch (error) {
+    throw new AutomatorConnectError(wsEndpoint, String(error?.message || error))
   }
-  const message = String(lastError?.message || lastError || 'unknown')
-  throw new AutomatorConnectError(wsEndpoint, message)
-}
-
-function withTimeout(promise, ms, label) {
-  return Promise.race([
-    promise,
-    new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} after ${ms}ms`)), ms))
-  ])
 }
 
 /**
@@ -73,11 +78,11 @@ export class AutomatorConnectError extends Error {
  * 安全断开连接，吞掉断开错误（已在 finally）。
  */
 export async function safeDisconnect(mp) {
-  if (!mp) return
+  if (!mp) return { status: 'not_needed' }
   try {
-    await mp.disconnect()
-  } catch (error) {
-    // ignore disconnect errors
+    return await disconnectFormalLeaf({ mp, timeoutMs: CONNECT_TIMEOUT_MS })
+  } catch {
+    return { status: 'failed_environment', code: 'formal_leaf_disconnect_failed' }
   }
 }
 
@@ -85,6 +90,14 @@ export async function safeDisconnect(mp) {
  * 重启到指定页面并返回 currentPage。
  */
 export async function reLaunchTo(mp, pagePath) {
-  await mp.reLaunch(pagePath)
-  return mp.currentPage()
+  await withDeadline({
+    name: 'leaf.relaunch',
+    timeoutMs: CONNECT_TIMEOUT_MS,
+    operation: () => mp.reLaunch(pagePath)
+  })
+  return withDeadline({
+    name: 'leaf.current_page',
+    timeoutMs: CONNECT_TIMEOUT_MS,
+    operation: () => mp.currentPage()
+  })
 }

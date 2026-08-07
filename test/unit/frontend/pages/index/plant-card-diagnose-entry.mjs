@@ -1,0 +1,130 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+
+// 镜像契约：首页植物卡诊断入口必须以真实、确定性的植物前置条件进入。
+// 只有 plantStore.hasPlants 为真（真实植物存在）时才渲染 PlantCard 与
+// diagnose-entry-button-<plantId>；点击后复用共享 DiagnosePopup -> DiagnoseFlow。
+// 不得改成无植物也显示匿名卡片，也不得删/弱化首页 DiagnosePopup 与共享 DiagnoseFlow 验收。
+
+const repoRoot = process.cwd()
+const indexSource = fs.readFileSync(path.join(repoRoot, 'src/pages/index/index.vue'), 'utf8')
+const plantCardSource = fs.readFileSync(
+  path.join(repoRoot, 'src/pages/index/components/PlantCard.vue'),
+  'utf8'
+)
+const diagnosePopupSource = fs.readFileSync(
+  path.join(repoRoot, 'src/components/DiagnosePopup.vue'),
+  'utf8'
+)
+const plantsStoreSource = fs.readFileSync(
+  path.join(repoRoot, 'src/store/plants.js'),
+  'utf8'
+)
+
+// 契约 1：首页必须用 plantStore.hasPlants 作为真实植物前置条件渲染植物列表区域。
+assert.match(
+  indexSource,
+  /v-else-if="!plantStore\.hasPlants"/,
+  'index must gate the empty-state on plantStore.hasPlants (no real plants => no plant card)'
+)
+assert.match(
+  indexSource,
+  /v-else id="index-plant-list"/,
+  'index must render the plant list only when hasPlants is true'
+)
+// 确保植物列表仅在已认证且有植物时渲染，未认证走登录引导，不得出现匿名植物卡。
+assert.match(
+  indexSource,
+  /<template v-if="userStore\.isAuthenticated">[\s\S]*?v-else-if="!plantStore\.hasPlants"/,
+  'plant list must stay behind isAuthenticated + hasPlants, no anonymous plant card'
+)
+
+// 契约 2：首页必须 v-for 真实 userPlants 渲染 PlantCard，并通过 @diagnose 打开共享 DiagnosePopup。
+assert.match(
+  indexSource,
+  /v-for="plant in plantStore\.userPlants"/,
+  'index must iterate the real plantStore.userPlants to render plant cards'
+)
+assert.match(
+  indexSource,
+  /<PlantCard[\s\S]*?:plant="plant"[\s\S]*?@diagnose="openDiagnose"/,
+  'index must bind @diagnose on PlantCard to openDiagnose'
+)
+assert.match(
+  indexSource,
+  /function openDiagnose\(plant\) \{[\s\S]*?currentPlantId\.value = plant\.id[\s\S]*?callComponentMethod\(diagnosePopupRef, 'open'\)/,
+  'openDiagnose must set the real plant id and open the shared DiagnosePopup'
+)
+
+// 契约 3：首页必须复用共享 DiagnosePopup 与 DiagnoseFlow，不得引入平行弹窗或长流程。
+assert.match(
+  indexSource,
+  /import DiagnosePopup from '@\/components\/DiagnosePopup\.vue'/,
+  'index must import the shared DiagnosePopup'
+)
+assert.match(
+  indexSource,
+  /<DiagnosePopup[\s\S]*?ref="diagnosePopupRef"[\s\S]*?:plant-id="currentPlantId"[\s\S]*?diagnosis-profile="full"[\s\S]*?entry-source="plant_card"/,
+  'index must mount the shared DiagnosePopup with plant_card entry source and full profile'
+)
+// 确保没有平行匿名诊断弹窗。
+assert.doesNotMatch(
+  indexSource,
+  /diagnose_tab_anonymous/,
+  'index must not introduce an anonymous diagnose_tab placeholder plant'
+)
+
+// 契约 4：PlantCard 必须为每株真实植物渲染独立的 diagnose-entry-button-<plant.id>，
+// 点击 @diagnose 向父级冒泡，不得自行打开平行诊断入口。
+assert.match(
+  plantCardSource,
+  /:id="`diagnose-entry-button-\$\{plant\.id\}`"/,
+  'PlantCard must render diagnose-entry-button-<plant.id> for each real plant'
+)
+assert.match(
+  plantCardSource,
+  /@click\.stop="\$emit\('diagnose', plant\)"/,
+  'PlantCard diagnose button must emit diagnose to parent, not open a parallel entry'
+)
+assert.match(
+  plantCardSource,
+  /defineProps\(\{[\s\S]*?plant: \{ type: Object, required: true \}/,
+  'PlantCard must require a real plant prop'
+)
+assert.match(
+  plantCardSource,
+  /defineEmits\(\['diagnose', 'history', 'edit', 'reminder'\]\)/,
+  'PlantCard must emit diagnose among its declared emits'
+)
+
+// 契约 5：共享 DiagnosePopup 必须内部挂载 DiagnoseFlow，保持 plant-card -> popup -> flow 链路。
+assert.match(
+  diagnosePopupSource,
+  /import DiagnoseFlow from '@\/components\/diagnose-flow\/DiagnoseFlow\.vue'/,
+  'DiagnosePopup must import the shared DiagnoseFlow'
+)
+assert.match(
+  diagnosePopupSource,
+  /<DiagnoseFlow[\s\S]*?:plant-id="plantId"[\s\S]*?:diagnosis-profile="diagnosisProfile"[\s\S]*?:entry-source="entrySource"/,
+  'DiagnosePopup must mount DiagnoseFlow with plant id, profile and entry source'
+)
+assert.match(
+  diagnosePopupSource,
+  /panel-id="diagnose-popup-panel"/,
+  'DiagnosePopup must expose diagnose-popup-panel id'
+)
+
+// 契约 6：plantStore.hasPlants 必须基于真实 userPlants 长度，不得有匿名兜底。
+assert.match(
+  plantsStoreSource,
+  /hasPlants: state => state\.userPlants\.length > 0/,
+  'plantStore.hasPlants must be derived from real userPlants length, no anonymous fallback'
+)
+assert.doesNotMatch(
+  plantsStoreSource,
+  /diagnose_tab_anonymous/,
+  'plantStore must not seed an anonymous diagnose_tab placeholder plant'
+)
+
+console.log('index plant card real-plant diagnose entry contract tests passed')

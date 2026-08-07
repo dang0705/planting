@@ -24,10 +24,11 @@ export function readLockOwner(lockPath) {
 export function canReclaimStaleLock({ lockPath, staleMs, nowMs = Date.now() }) {
   try {
     const stat = fs.statSync(lockPath)
-    if (nowMs - stat.mtimeMs <= staleMs) {
-      return false
+    const ownerAlive = isProcessAlive(readLockOwner(lockPath)?.pid)
+    if (!ownerAlive) {
+      return true
     }
-    return !isProcessAlive(readLockOwner(lockPath)?.pid)
+    return nowMs - stat.mtimeMs > staleMs
   } catch {
     return false
   }

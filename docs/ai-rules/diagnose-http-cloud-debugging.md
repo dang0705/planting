@@ -2,12 +2,12 @@
 
 ## 1. 定位
 
-本文件是《diagnose-http 云端调试避坑记录 v1》的**轻量索引版**，用于接入 Codex / subagent 工作流。
+本文件是《diagnose-http 云端调试避坑记录 v1》的**轻量索引版**，供 main agent 在 dispatch-task 中使用；仅在用户明确要求时才通过 external bridge 交给外部实现者。
 
 它不承载完整历史排障细节，只负责：
 
 1. 告诉 `main agent` 什么时候需要读取完整避坑文档。
-2. 告诉 subagent 应优先查哪些问题域。
+2. 告诉 main agent 应优先查哪些问题域。
 3. 避免每次云端、replay、CloudBase、H5 管理页问题都从零排查。
 4. 避免把 DNS、网关、鉴权、schema、部署、replay、前端代理问题误判为 diagnose 业务逻辑问题。
 
@@ -51,14 +51,12 @@ docs/ai-rules/diagnose-http-cloud-debugging.md
 
 ## 3. 推荐读取者
 
-| Agent | 是否建议读取 | 读取场景 |
+| Owner | 是否建议读取 | 读取场景 |
 |---|---:|---|
-| `code_explorer` | 高 | 定位 `diagnose-http`、terminal-e2e、replay、H5 管理页、schema helper、部署脚本 |
-| `implementer_deep` | 中高 | 修改 diagnose-http、replay、CloudBase、schema、H5 代理、部署脚本 |
+| main agent | 高 | 定位、修改并验证 `diagnose-http`、terminal-e2e、replay、H5 管理页、schema helper、部署脚本 |
+| external bridge | 按需 | 仅用户明确要求外部实现者时，按合同执行指定修改 |
 | main QA | 中高 | 审查 live 验收是否有效、是否拿既有 session / 错 schema / 错 wrapper 当证据 |
-| `architect_reviewer` | 中 | 涉及 route、outcome、condition、replay、schema 边界设计 |
 | main docs / BRV | 中 | 整理排障文档、同步规则、归档踩坑记录 |
-| `implementer_fast` | 低 | 仅当是小范围脚本修复且 Dispatch Plan 明确指定 |
 
 ---
 
@@ -630,12 +628,9 @@ outcome
 ```text
 Dispatch Plan:
 - 任务类型: diagnose-http 云端调试 / replay / CloudBase smoke / H5 管理页 / route-outcome 验收
-- 选择的 subagent:
-  - code_explorer: 定位相关文件、脚本、调用链
-  - architect_reviewer: 审查诊断流、route/outcome、schema 或规则边界
-  - implementer_deep: 如需高风险实现
-  - main QA: 审查 replay/live 验收是否有效
-  - release_ops: 涉及部署、网关、MCP、函数日志、schema、smoke
+- 实现 owner: main agent（高风险任务使用 `deep_contract` + strict decision lock）
+- 外部桥接: 仅用户明确要求外部实现者时启用；不得再派生内部 subagent
+- QA owner: main agent，审查 replay/live 验收是否有效
 - 需要读取的规则文件:
   - docs/ai-rules/diagnose-http-cloud-debugging.md
   - docs/ai-rules/diagnosis-replay.md（如涉及 replay）
@@ -643,18 +638,18 @@ Dispatch Plan:
   - docs/ai-rules/cloudbase-auth-database.md（如涉及 schema / SQL / 鉴权）
 - 是否需要读取 AGENTS.md: 否
 - 预期输出: 分层排障结论、证据锚点、是否需要改代码、是否需要 live 验收
-- 写入权限: 默认只读，确认后再进入 implementer_deep
+- 写入权限: main agent 按 dispatch-task 合同执行；外部桥接仅限明确授权的路径
 ```
 
 ---
 
 ## 7. 不要默认全量读取完整避坑文档
 
-完整避坑文档很长，不能作为所有 subagent 默认必读。
+完整避坑文档很长，不能作为每次任务的默认全量读取内容。
 
 正确策略：
 
 1. `main agent` 先读本索引。
 2. 根据任务命中类型，指定相关章节或归档文档路径。
-3. subagent 只读 Dispatch Plan 指定范围。
+3. main agent 只读 Dispatch Plan 指定范围；外部桥接只读取合同指定范围。
 4. 如果仍不足，再请求读取完整归档文档。

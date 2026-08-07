@@ -13,7 +13,7 @@ provider 差异只允许存在于发送 adapter（会话入口、DOM 校验、ho
 implementation_mode = external_implementer
 dispatch_tier = external_implementer
 external_contract.provider = zcode | trae | chrome_cloud_agent | other
-external_contract.target_session = current_open_chat | browser_session | remote_session | manual_handoff
+external_contract.target_session = current_open_chat | headless_new_session | browser_session | remote_session | manual_handoff
 ```
 
 旧字段兼容：`implementation_mode=zcode_external`、`dispatch_tier=zcode_external`、`zcode_contract` 仅表示 provider 为 ZCode 的旧合同格式。新任务优先使用 `external_contract`。
@@ -22,11 +22,11 @@ external_contract.target_session = current_open_chat | browser_session | remote_
 
 ## 公共边界（统一约束）
 
-1. main 不 spawn Codex implementer，不自己写代码。
+1. main 不 spawn 任何内部子代理；external bridge 只在用户明确要求时启用。
 2. external implementer 只负责按 prompt 修改代码并写 handoff manual。
 3. main 负责合同、路径边界、provider 发送 adapter、Child Run Lock、diff review、main QA 与 Completion Gate。
 4. provider 聊天或 UI 中的“完成”不是完成依据；main 必须重新读取真实 git diff、测试证据和 handoff manual。
-5. provider 失败、无 diff、越权修改、prompt 未完整发送、无法读取必要 Figma 或 adapter 不可用时，不得 silent fallback 到 main 或 Codex subagent；需要用户明确批准后才能改派。
+5. provider 失败、无 diff、越权修改、prompt 未完整发送、无法读取必要 Figma 或 adapter 不可用时，不得 silent fallback 或改派任何子代理；需要用户明确批准后才能改变 external bridge 方向。
 6. Web/云端 external implementer（TRAE Web、Chrome 插件驱动云端 agent，或 `prompt_transport=browser_plugin`）启动前必须完成 remote sync gate，确保本地要交给云端的代码已经提交并推送到同一个远端分支。
 7. 当 Codex 运行环境是 Codex Desktop，Web/云端 provider 页面必须通过 Codex 内置浏览器打开和发送 prompt；不得改用用户普通 Chrome 窗口、shell 脚本或仅凭 ambient browser 状态冒充受控发送。
 8. Web/云端 external implementer 即使远端运行时自称 main/root，也必须按 implementer 角色工作：只改合同内代码，执行 unit tests / lint / build / self-check；有 `figma_link` 时必须直接使用可用 Figma 插件 / MCP / 工具读取设计并输出 `figma_fetch_evidence`。
@@ -200,10 +200,14 @@ pr_policy: required   # Web/云端代码任务必须产出 PR；合并由 main �
 
 `prompt_transport` 示例：
 
-- `clipboard_paste`：本地 UI 聊天窗口，如 ZCode。
+- `clipboard_paste`：ZCode 唯一正式发送通道；canonical prompt 经本机 bridge 写入并读回完整验证，再由 Computer Use 交付到当前可见会话。
 - `browser_plugin`：Chrome 插件或浏览器会话中的云端 agent。
 - `manual_handoff`：用户明确要求人工外部转交时，只生成 prompt 和 receipt，不伪造工具调用。
 - `api_or_mcp`：未来若有专用 provider connector，可记录真实 connector event。
+
+ZCode 不接受 headless、新会话、手输、逐字输入或未验证的剪贴板/UI 操作作为正式发送或 fallback。
+
+当 `provider=zcode` 时必须固定 `target_session=current_open_chat`、`prompt_transport=clipboard_paste`，并要求已验证 clipboard bridge、Computer Use 动态聚焦、Cmd+V→验证→必要时 Edit > Paste→再验证、发送前 prompt integrity 与发送后当前会话 delivery。只有用户明确授权的 NSPasteboard/pbcopy/Computer Use/ZCode Edit 操作可执行；任一层失败只进入下一条受控路径或 blocked，绝不自动触发 headless。完整动作和 receipt 闭集见 [zcode-computer-use-policy.md](./zcode-computer-use-policy.md) 与 [zcode-routing.md](./zcode-routing.md)。
 
 ## TRAE Web provider
 

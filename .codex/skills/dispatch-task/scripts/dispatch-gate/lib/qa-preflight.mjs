@@ -14,6 +14,7 @@ import {
   probeWxRequest,
   withPreflightDeadline
 } from './qa-preflight-runtime.mjs'
+import { captureIsolatedRendererScreenshot } from './renderer-screenshot-readiness.mjs'
 
 export { probeWxRequest } from './qa-preflight-runtime.mjs'
 export { extractLeafReport } from './qa-leaf-report.mjs'
@@ -62,12 +63,17 @@ function emptyReport({ projectPath, wsEndpoint, wxRequestUrl, observedProjectPat
     evidence_paths: [],
     failures: [],
     not_verified: [],
-    targeted_restart: { attempted: false, reason: 'not_needed' }
+    targeted_restart: { attempted: false, reason: 'not_needed' },
+    renderer_recovery: {
+      attempted: false,
+      reason: 'no_verified_official_renderer_recovery_available'
+    }
   }
 }
 
 function probeSummary(report, extra = {}) {
   return {
+    appservice_rpc: report.checks.appservice_rpc ?? { passed: false },
     page_data: report.checks.page_data ?? { passed: false },
     screenshot: report.checks.screenshot ?? { passed: false },
     wx_request: report.checks.wx_request ?? { passed: false },
@@ -76,9 +82,45 @@ function probeSummary(report, extra = {}) {
   }
 }
 
+function isRendererScreenshotFailure(error) {
+  return error?.code === 'renderer_screenshot_unready'
+}
+
+async function captureRendererReadyRuntimeEvidence(options) {
+  try {
+    const captured = await captureRuntimeEvidence({
+      ...options,
+      screenshotCapture: screenshotOptions =>
+        captureIsolatedRendererScreenshot({
+          ...screenshotOptions,
+          runtime: screenshotOptions.report.devtools_runtime
+        })
+    })
+    options.report.checks.screenshot = {
+      ...options.report.checks.screenshot,
+      renderer_ready_signal: 'isolated_app_capture_screenshot_valid_png'
+    }
+    return captured
+  } finally {
+    const checks = options.report.checks
+    if (checks.page_data?.passed === true && checks.wx_request?.passed === true) {
+      checks.appservice_rpc = {
+        passed: true,
+        signal: 'ordinary_9420_appservice_rpc_only',
+        page_path: options.report.pagePath ?? 'unavailable',
+        page_data: checks.page_data,
+        wx_request: checks.wx_request
+      }
+    }
+  }
+}
+
 function addFailure(report, item) {
   report.failures.push(item)
   report.status = 'failed_environment'
+  report.code = item.code
+  report.message = item.message
+  report.details = item.details
   report.completed_at = now()
   return report
 }
@@ -101,11 +143,14 @@ function preflightChecks({ report, projectPath, wsPort, runtimeInspector, lanFlo
     identity_source: inspectedRuntime.project_identity_source ?? 'unavailable',
     evidence_records: inspectedRuntime.project_evidence_records ?? [],
     session_log_evidence: inspectedRuntime.session_log_evidence ?? [],
-    passed: inspectedRuntime.status === 'verified' && inspectedRuntime.project_identity_verified === true
+    passed:
+      inspectedRuntime.status === 'verified' && inspectedRuntime.project_identity_verified === true
   }
   if (!report.checks.project_identity.passed) {
     return failure(
-      inspectedRuntime.status === 'wrong_project' ? 'project_path_mismatch' : 'project_identity_unverified',
+      inspectedRuntime.status === 'wrong_project'
+        ? 'project_path_mismatch'
+        : 'project_identity_unverified',
       `target project identity must be proven from the ${wsPort} owning runtime before QA`,
       report.checks.project_identity
     )
@@ -165,7 +210,7 @@ async function runTargetedRecovery({
       { recovery }
     )
   }
-  const after = runtimeInspector({ expectedProjectPath: projectPath, wsPort })
+  const after = await runtimeInspector({ expectedProjectPath: projectPath, wsPort })
   report.targeted_restart.after = after
   report.devtools_runtime = after
   report.observed_project_path = after.observed_project_path ?? 'unavailable'
@@ -224,11 +269,12 @@ export async function runQaPreflight({
   allowTargetedRestart = false,
   preflightTimeoutMs = PREFLIGHT_CAPTURE_TIMEOUT_MS,
   runtimeInspector = inspectDevToolsRuntime,
+  preverifiedRuntime = null,
   recoveryExecutor = recoverVerifiedTargetDevTools,
   bootstrapExecutor = enableAutomatorForVerifiedTargetDevTools,
   lanFlowProbe = lanFlowRunning,
   portProbe = connectPort,
-  runtimeCapture = captureRuntimeEvidence
+  runtimeCapture = captureRendererReadyRuntimeEvidence
 }) {
   const resolvedProjectPath = normalizeRuntimePath(projectPath)
   const wsEndpoint = `ws://127.0.0.1:${wsPort}`
@@ -238,7 +284,9 @@ export async function runQaPreflight({
     wsEndpoint,
     wxRequestUrl
   })
-  let runtime = runtimeInspector({ expectedProjectPath: resolvedProjectPath, wsPort })
+  let runtime = preverifiedRuntime
+    ? preverifiedRuntime
+    : await runtimeInspector({ expectedProjectPath: resolvedProjectPath, wsPort })
   if (runtime.status === 'unavailable' && (runtime.automator_listener_pids ?? []).length === 0) {
     const bootstrap = await bootstrapExecutor({
       projectPath: resolvedProjectPath,
@@ -261,7 +309,7 @@ export async function runQaPreflight({
         )
       )
     }
-    runtime = runtimeInspector({ expectedProjectPath: resolvedProjectPath, wsPort })
+    runtime = await runtimeInspector({ expectedProjectPath: resolvedProjectPath, wsPort })
   } else {
     report.automator_bootstrap = { attempted: false, status: 'not_needed', invocations: [] }
   }
@@ -300,7 +348,21 @@ export async function runQaPreflight({
       !isRecoverableRuntimeFailure(error) ||
       !canTargetedRestart({ report, allowTargetedRestart })
     ) {
-      return addFailure(report, failure(failureCode, error.message))
+      return addFailure(
+        report,
+        failure(
+          isRendererScreenshotFailure(error) ? 'renderer_screenshot_unready' : failureCode,
+          error.message,
+          isRendererScreenshotFailure(error)
+            ? {
+                appservice_rpc: report.checks.appservice_rpc ?? { passed: false },
+                renderer_screenshot:
+                  error.renderer_screenshot ?? report.checks.renderer_screenshot ?? null,
+                renderer_recovery: report.renderer_recovery
+              }
+            : {}
+        )
+      )
     }
     report.targeted_restart.pre_recovery_probes = probeSummary(report, {
       code: failureCode,

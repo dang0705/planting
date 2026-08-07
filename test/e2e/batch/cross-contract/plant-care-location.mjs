@@ -120,13 +120,16 @@ try {
     /patchUserPlant\(payload\)[\s\S]*withCareLocation\(payload, \{ allowStorageFallback: false \}\)/
   )
 
-  const plantForm = readFileSync('src/pages/add-plant/components/PlantForm.vue', 'utf8')
+  const plantForm = readFileSync('src/pages/user-plant-detail/components/PlantForm.vue', 'utf8')
   assert.match(plantForm, /clearSelectedPlantCareLocation/)
   assert.match(
     plantForm,
     /const hasExistingCareLocation = Boolean\(selectedCareLocation\.value\)[\s\S]*if \(!hasExistingCareLocation\) \{\s*clearSelectedPlantCareLocation\(\)\s*\}/
   )
-  assert.match(plantForm, /selectedCareLocation\.value\.locationKey === city\.locationKey/)
+  assert.match(
+    plantForm,
+    /const selectedCityValue = computed\(\(\) => selectedCareLocation\.value\?\.locationKey \|\| ''\)/
+  )
   assert.doesNotMatch(plantForm, /city:guangzhou.*当前定位|广州.*当前定位/)
 } finally {
   Module._load = originalLoad

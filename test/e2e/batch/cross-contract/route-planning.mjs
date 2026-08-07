@@ -2510,7 +2510,7 @@ function testRootStressRouteUsesUserFriendlyDisplayName() {
   assert.equal(response.actionAdvice.avoidActions[0].includes('根区压力'), false)
 }
 
-async function testYellowingAirflowLeafSpotRequiresVisibleSpotEvidence() {
+async function testYellowingAirEvidenceRequiresVisibleSpotEvidence() {
   const routeRepository = createMockRouteRepository({
     routeGroups: [
       {
@@ -2522,7 +2522,7 @@ async function testYellowingAirflowLeafSpotRequiresVisibleSpotEvidence() {
     ],
     routes: [
       {
-        routeKey: 'yellowing_airflow_leaf_spot_route',
+        routeKey: 'yellowing_air_environment_leaf_spot_route',
         routeGroupKey: 'yellowing_care_split_group',
         outcomeKey: 'leaf_spot_problem',
         actionProfileKey: 'action_leaf_spot_basic',
@@ -2531,8 +2531,8 @@ async function testYellowingAirflowLeafSpotRequiresVisibleSpotEvidence() {
     ],
     conditions: [
       {
-        conditionKey: 'airflow_leaf_spot_condition',
-        routeKey: 'yellowing_airflow_leaf_spot_route',
+        conditionKey: 'air_environment_leaf_spot_condition',
+        routeKey: 'yellowing_air_environment_leaf_spot_route',
         conditionRole: 'display',
         requiredEvidence: {
           symptomKeys: ['spreading_spots'],
@@ -2546,19 +2546,19 @@ async function testYellowingAirflowLeafSpotRequiresVisibleSpotEvidence() {
         },
         requiredAnswerEffects: {
           questionOptionPairs: [
-            'q_observed_probe__leaf_yellowing__yellowing_care_area_condition:airflow_humidity_area',
+            'q_yellow_leaf__air_environment:air_environment_recorded',
             'q_observed_probe__leaf_yellowing__yellowing_progression_speed:rapid_spreading'
           ],
-          routeKeys: ['yellowing_airflow_leaf_spot_route']
+          routeKeys: ['yellowing_air_environment_leaf_spot_route']
         },
         blockerEvidence: {}
       }
     ]
   })
-  const airflowRapidAnswers = [
+  const airEnvironmentRapidAnswers = [
     {
-      questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
-      optionKey: 'airflow_humidity_area'
+      questionKey: 'q_yellow_leaf__air_environment',
+      optionKey: 'air_environment_recorded'
     },
     {
       questionKey: 'q_observed_probe__leaf_yellowing__yellowing_progression_speed',
@@ -2567,17 +2567,17 @@ async function testYellowingAirflowLeafSpotRequiresVisibleSpotEvidence() {
   ]
   const routeAnswerEffects = [
     {
-      questionKey: 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition',
-      optionKey: 'airflow_humidity_area',
+      questionKey: 'q_yellow_leaf__air_environment',
+      optionKey: 'air_environment_recorded',
       outcomeKey: 'leaf_spot_problem',
-      routeKey: 'yellowing_airflow_leaf_spot_route',
+      routeKey: 'yellowing_air_environment_leaf_spot_route',
       effectType: 'support'
     },
     {
       questionKey: 'q_observed_probe__leaf_yellowing__yellowing_progression_speed',
       optionKey: 'rapid_spreading',
       outcomeKey: 'leaf_spot_problem',
-      routeKey: 'yellowing_airflow_leaf_spot_route',
+      routeKey: 'yellowing_air_environment_leaf_spot_route',
       effectType: 'support'
     }
   ]
@@ -2586,7 +2586,7 @@ async function testYellowingAirflowLeafSpotRequiresVisibleSpotEvidence() {
     candidateOutcomeKeys: ['leaf_spot_problem'],
     routeEvidenceContext: buildRouteEvidenceContext({
       observedEvidenceSet: buildObservedEvidenceSet(['leaf_yellowing']),
-      answers: airflowRapidAnswers,
+      answers: airEnvironmentRapidAnswers,
       routeAnswerEffects,
       candidateOutcomes: [{ problemKey: 'leaf_spot_problem', evidenceOrder: 1 }]
     }),
@@ -2609,7 +2609,7 @@ async function testYellowingAirflowLeafSpotRequiresVisibleSpotEvidence() {
     candidateOutcomeKeys: ['leaf_spot_problem'],
     routeEvidenceContext: buildRouteEvidenceContext({
       observedEvidenceSet: buildObservedEvidenceSet(['leaf_yellowing', 'spreading_spots']),
-      answers: airflowRapidAnswers,
+      answers: airEnvironmentRapidAnswers,
       routeAnswerEffects,
       candidateOutcomes: [{ problemKey: 'leaf_spot_problem', evidenceOrder: 1 }]
     }),
@@ -2624,7 +2624,7 @@ async function testYellowingAirflowLeafSpotRequiresVisibleSpotEvidence() {
     routeEvidenceContext: buildRouteEvidenceContext({
       symptomClassRuntime: { currentClassKey: 'yellowing_mode' },
       observedEvidenceSet: buildObservedEvidenceSet(['leaf_yellowing', 'spreading_spots']),
-      answers: airflowRapidAnswers,
+      answers: airEnvironmentRapidAnswers,
       routeAnswerEffects,
       candidateOutcomes: [{ problemKey: 'leaf_spot_problem', evidenceOrder: 1 }]
     }),
@@ -2958,7 +2958,7 @@ function testQuestionCompletedStateUsesRouteConvergenceBranch() {
 }
 
 function testDiagnosisResultPageUsesVisibleOutcomeList() {
-  const source = readFileSync('./src/pages/diagnose/diagnose.vue', 'utf8')
+  const source = readFileSync('./src/pages/diagnose/result.vue', 'utf8')
 
   assert.match(source, /function buildOutcomeDisplayItems/)
   assert.match(source, /v-for="item in viewModel\.outcomeItems"/)
@@ -3153,14 +3153,15 @@ async function testManualQuestionStartFastPathBuildsQuestionRound() {
   assert.equal(result.questionRequired, true)
   assert.equal(result.stage, 'question_package')
   assert.equal(result.sessionStatus, 'awaiting_question_package')
-  assert.equal(result.questions.length, 3)
+  assert.equal(result.questions.length, 4)
   assert.equal(result.questions[0].selectionSource, 'route_planner')
   assert.deepEqual(
     result.questions.map(item => item.questionKey),
     [
       'q_observed_probe__leaf_yellowing__watering_frequency_context',
       'q_observed_probe__leaf_yellowing__light_change_context',
-      'q_observed_probe__leaf_yellowing__fertilization_growth_context'
+      'q_observed_probe__leaf_yellowing__fertilization_growth_context',
+      'q_yellow_leaf__air_environment'
     ]
   )
   assert.equal(
@@ -4773,7 +4774,15 @@ function testFrontendNormalizationSuitability() {
 }
 
 function testDiagnosisReviewDisplaysEnvironmentCareCalculation() {
-  const source = readFileSync('./src/pages/profile/diagnosis-review.vue', 'utf8')
+  const source = [
+    './src/pages/profile/diagnosis-review.vue',
+    './src/pages/profile/diagnosis-review/DiagnosisReviewDetailSections.vue',
+    './src/pages/profile/diagnosis-review/environment-summary.js',
+    './src/pages/profile/diagnosis-review/environment-rows.js',
+    './src/pages/profile/diagnosis-review/formula.js'
+  ]
+    .map(filePath => readFileSync(filePath, 'utf8'))
+    .join('\n')
   const detailLoaderSource = readFileSync(
     './cloudfunctions/diagnose-http/repositories/diagnosis-review/detail-loaders.js',
     'utf8'
@@ -4971,7 +4980,7 @@ async function main() {
   console.log('✓ multi-outcome conflict preserves per-outcome advice items')
   testRootStressRouteUsesUserFriendlyDisplayName()
   console.log('✓ root stress route uses user-friendly display name')
-  await testYellowingAirflowLeafSpotRequiresVisibleSpotEvidence()
+  await testYellowingAirEvidenceRequiresVisibleSpotEvidence()
   console.log('✓ yellowing airflow leaf spot requires visible spot evidence')
   await testYellowingStrongLightRouteClosesWithSunburnActionAdvice()
   console.log('✓ yellowing strong-light route closes with sunburn action advice')

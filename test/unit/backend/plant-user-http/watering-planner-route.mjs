@@ -1,34 +1,12 @@
 'use strict'
-
-/**
- * /watering-planner 路由集成测试 —— 浇水算法 v3。
- *
- * 本文件不是"仅用于加载的 mock stub"。它真正执行
- * cloudfunctions/plant-user-http/app.js 的 /watering-planner 路由
- * （不在 404 提前返回），用 spy 断言核心输入链路：
- *
- *   getUserPlantLightEnvironment → computeTranspirationIntervalFactor → buildWateringPlanner
- *
- * 断言：
- *   - getUserPlantWateringStrategy 返回有效策略（不返回 null，避免 404）
- *   - getUserPlantLightEnvironment 返回结构化对象（facing/windowType/position/hasDirectSun/distance）
- *   - computeTranspirationIntervalFactor 收到该精确对象作为 lightEnvironment
- *   - buildWateringPlanner 收到 computeTranspirationIntervalFactor 产出的 intervalFactor
- *   - 响应保留既有浇水结果字段
- *   - 独立 /watering-advisor 返回 amountRangeMl + D0 当日天气审计字段
- */
-
 import assert from 'node:assert/strict'
 import { createRequire } from 'node:module'
 import Module from 'node:module'
-
 const require = createRequire(import.meta.url)
-
 const tests = []
 function test(name, fn) {
   tests.push({ name, fn })
 }
-
 async function runAll() {
   for (const { name, fn } of tests) {
     try {
@@ -41,7 +19,6 @@ async function runAll() {
   }
   console.log('watering-planner route integration tests passed')
 }
-
 function buildLightEnvironment() {
   return {
     facing: 'south',
@@ -51,7 +28,6 @@ function buildLightEnvironment() {
     distance: 30
   }
 }
-
 function buildStrategy() {
   return {
     watering: { freq: [5, 8], way: '见干浇透' },
@@ -68,7 +44,6 @@ function buildStrategy() {
     }
   }
 }
-
 function buildPlannerResult() {
   return {
     nextWaterDate: '2026-07-08',
@@ -89,17 +64,18 @@ function buildPlannerResult() {
     transpirationIntervalFactor: 1.0
   }
 }
-
-/**
- * 用 spy 加载 app.js，返回 { app, spies }。
- * spies 包含 transpiration/planner/lightEnv/strategy 四个 spy，
- * 每个 spy 有 calls 数组和 impl 可配置返回值。
- */
 function loadAppWithSpies(overrides = {}) {
   const originalLoad = Module._load
   const appPath = require.resolve('../../../../cloudfunctions/plant-user-http/app.js')
   delete require.cache[appPath]
-
+  const airEnvironmentEvidenceSpy = {
+    calls: [],
+    impl: overrides.airEnvironmentEvidenceImpl || (() => null),
+    fn(input) {
+      airEnvironmentEvidenceSpy.calls.push(input)
+      return airEnvironmentEvidenceSpy.impl(input)
+    }
+  }
   // transpirationSpy: computeTranspirationIntervalFactor(params) — 单参数对象
   const transpirationSpy = {
     calls: [],
@@ -116,7 +92,6 @@ function loadAppWithSpies(overrides = {}) {
       return transpirationSpy.impl(params)
     }
   }
-
   // plannerSpy: buildWateringPlanner(params) — 单参数对象
   const plannerSpy = {
     calls: [],
@@ -126,7 +101,6 @@ function loadAppWithSpies(overrides = {}) {
       return plannerSpy.impl(params)
     }
   }
-
   // lightEnvSpy: getUserPlantLightEnvironment(openid, plantId) — 双参数
   const lightEnvSpy = {
     calls: [],
@@ -136,7 +110,6 @@ function loadAppWithSpies(overrides = {}) {
       return lightEnvSpy.impl(openid, plantId)
     }
   }
-
   // strategySpy: getUserPlantWateringStrategy(openid, plantId) — 双参数
   const strategySpy = {
     calls: [],
@@ -146,7 +119,6 @@ function loadAppWithSpies(overrides = {}) {
       return strategySpy.impl(openid, plantId)
     }
   }
-
   Module._load = function patchedAppLoad(request, parent, isMain) {
     if (request === '/opt/utils/http') {
       return {
@@ -197,6 +169,15 @@ function loadAppWithSpies(overrides = {}) {
     if (request === '/opt/utils/user-plant-light-environment') {
       return { getUserPlantLightEnvironment: lightEnvSpy.fn }
     }
+    if (request === '/opt/utils/air-environment-evidence') {
+      return { resolveAirEnvironmentEvidence: airEnvironmentEvidenceSpy.fn }
+    }
+    if (request.endsWith('/air-environment-service')) {
+      return {
+        readUserPlantAirEnvironment: async () => ({ statusCode: 200, message: 'ok', data: null }),
+        saveUserPlantAirEnvironment: async () => ({ statusCode: 200, message: 'ok', data: null })
+      }
+    }
     if (request.endsWith('/watering-planner-service')) {
       return {
         buildWeatherSummary: () => ({
@@ -207,7 +188,11 @@ function loadAppWithSpies(overrides = {}) {
         }),
         computeAdhocPlanner: async () => ({
           statusCode: 200,
-          data: { amountRangeMl: [80, 150], todayWeatherSource: 'missing', todayWeatherReason: 'test_mock' },
+          data: {
+            amountRangeMl: [80, 150],
+            todayWeatherSource: 'missing',
+            todayWeatherReason: 'test_mock'
+          },
           error: null
         }),
         injectD0IntoForecastDays: async ({ forecastDays = [], referenceDate = '' }) => ({
@@ -241,16 +226,21 @@ function loadAppWithSpies(overrides = {}) {
     }
     return originalLoad.call(this, request, parent, isMain)
   }
-
   try {
     const app = require('../../../../cloudfunctions/plant-user-http/app.js')
-    return { app, transpirationSpy, plannerSpy, lightEnvSpy, strategySpy }
+    return {
+      app,
+      transpirationSpy,
+      plannerSpy,
+      lightEnvSpy,
+      strategySpy,
+      airEnvironmentEvidenceSpy
+    }
   } finally {
     Module._load = originalLoad
     delete require.cache[appPath]
   }
 }
-
 async function callPlannerRoute(app, body = {}) {
   return app._test.main({
     path: '/user-plants/watering-planner',
@@ -267,11 +257,6 @@ async function callPlannerRoute(app, body = {}) {
     }
   })
 }
-
-/* ============================================================
- * 1. 路由不提前 404，核心依赖被调用
- * ============================================================ */
-
 test('/watering-planner 路由不提前 404，正确调用 getUserPlantWateringStrategy', async () => {
   const { app, strategySpy } = loadAppWithSpies()
   const response = await callPlannerRoute(app, { plantId: 42 })
@@ -280,7 +265,6 @@ test('/watering-planner 路由不提前 404，正确调用 getUserPlantWateringS
   assert.equal(strategySpy.calls[0].openid, 'openid_route_test')
   assert.equal(strategySpy.calls[0].plantId, 42)
 })
-
 test('getUserPlantLightEnvironment 被调用并传入 openid 与 plantId', async () => {
   const { app, lightEnvSpy } = loadAppWithSpies()
   await callPlannerRoute(app, { plantId: 77 })
@@ -288,11 +272,6 @@ test('getUserPlantLightEnvironment 被调用并传入 openid 与 plantId', async
   assert.equal(lightEnvSpy.calls[0].openid, 'openid_route_test')
   assert.equal(lightEnvSpy.calls[0].plantId, 77)
 })
-
-/* ============================================================
- * 2. computeTranspirationIntervalFactor 收到精确的 lightEnvironment
- * ============================================================ */
-
 test('computeTranspirationIntervalFactor 收到精确的 lightEnvironment 对象', async () => {
   const exactEnv = buildLightEnvironment()
   const { app, transpirationSpy } = loadAppWithSpies({
@@ -315,7 +294,6 @@ test('computeTranspirationIntervalFactor 收到精确的 lightEnvironment 对象
     'lightEnvironment 应包含 facing/windowType/position/hasDirectSun/distance 五个字段'
   )
 })
-
 test('lightEnvironment 为 null 时传入 null（不抛错）', async () => {
   const { app, transpirationSpy } = loadAppWithSpies({
     lightEnvImpl: () => null
@@ -324,7 +302,6 @@ test('lightEnvironment 为 null 时传入 null（不抛错）', async () => {
   assert.equal(response.statusCode, 200)
   assert.equal(transpirationSpy.calls[0].lightEnvironment, null)
 })
-
 test('transpiration 收到 weatherDays、weatherSummary、plantStrategy、shadow', async () => {
   const { app, transpirationSpy } = loadAppWithSpies()
   await callPlannerRoute(app, { plantId: 1 })
@@ -335,11 +312,6 @@ test('transpiration 收到 weatherDays、weatherSummary、plantStrategy、shadow
   assert.ok(call.plantStrategy.wateringQuantization, 'plantStrategy 应包含 wateringQuantization')
   assert.equal(call.shadow, true, '默认应为 shadow 模式')
 })
-
-/* ============================================================
- * 3. buildWateringPlanner 收到 transpiration 产出的 intervalFactor
- * ============================================================ */
-
 test('buildWateringPlanner 收到 computeTranspirationIntervalFactor 产出的 intervalFactor', async () => {
   const { app, plannerSpy } = loadAppWithSpies({
     transpirationImpl: () => ({
@@ -361,7 +333,6 @@ test('buildWateringPlanner 收到 computeTranspirationIntervalFactor 产出的 i
     'buildWateringPlanner 应收到 transpiration 产出的 intervalFactor'
   )
 })
-
 test('shadow 模式下 computedFactor != 1.0 时触发二次 buildWateringPlanner 调用', async () => {
   const { app, plannerSpy } = loadAppWithSpies({
     transpirationImpl: () => ({
@@ -388,11 +359,6 @@ test('shadow 模式下 computedFactor != 1.0 时触发二次 buildWateringPlanne
     '第二次调用应使用 computedFactor=0.88（候选结果）'
   )
 })
-
-/* ============================================================
- * 4. 响应字段断言
- * ============================================================ */
-
 test('响应保留既有浇水结果字段', async () => {
   const { app } = loadAppWithSpies()
   const response = await callPlannerRoute(app, { plantId: 1 })
@@ -419,7 +385,6 @@ test('响应保留既有浇水结果字段', async () => {
     assert.ok(key in data, `响应应包含既有字段 ${key}`)
   }
 })
-
 test('响应包含 v3 蒸腾审计字段', async () => {
   const { app } = loadAppWithSpies()
   const response = await callPlannerRoute(app, { plantId: 1 })
@@ -433,11 +398,28 @@ test('响应包含 v3 蒸腾审计字段', async () => {
   assert.ok('todayWeatherSource' in data, '响应应包含 todayWeatherSource')
   assert.ok('todayWeatherReason' in data, '响应应包含 todayWeatherReason')
 })
-
-/* ============================================================
- * 5. 独立 /watering-advisor 返回 amountRangeMl + D0 审计字段
- * ============================================================ */
-
+test('空气环境只作为影子证据，不改变浇水计算输入或结果', async () => {
+  const evidence = {
+    air_exchange_level: 'low',
+    local_airflow_present: false,
+    stagnation_risk: true,
+    direct_airflow: false
+  }
+  const { app, plannerSpy, airEnvironmentEvidenceSpy } = loadAppWithSpies({
+    airEnvironmentEvidenceImpl: () => evidence
+  })
+  const airEnvironmentOverride = { exchange: { source: 'window', direction: 'closed' } }
+  const response = await callPlannerRoute(app, { plantId: 1, airEnvironmentOverride })
+  assert.deepEqual(airEnvironmentEvidenceSpy.calls, [airEnvironmentOverride])
+  assert.deepEqual(response.payload.data.airEnvironmentShadow, {
+    evidence,
+    intervalFactor: 1,
+    shadow: true
+  })
+  assert.equal(Object.hasOwn(plannerSpy.calls[0], 'airEnvironmentOverride'), false)
+  assert.deepEqual(response.payload.data.amountRangeMl, [100, 200])
+  assert.equal(response.payload.data.transpirationIntervalFactor, 1)
+})
 test('独立 /watering-advisor：data keys 包含 amountRangeMl + D0 审计字段', async () => {
   const { app } = loadAppWithSpies()
   const response = await app._test.main({
@@ -462,11 +444,6 @@ test('独立 /watering-advisor：data keys 包含 amountRangeMl + D0 审计字�
     )}`
   )
 })
-
-/* ============================================================
- * 6. 边界条件
- * ============================================================ */
-
 test('plantId 缺失返回 400', async () => {
   const { app } = loadAppWithSpies()
   const response = await app._test.main({
@@ -479,7 +456,6 @@ test('plantId 缺失返回 400', async () => {
   assert.equal(response.statusCode, 400)
   assert.equal(response.payload.code, 400)
 })
-
 test('strategy 返回 null 时返回 404', async () => {
   const { app } = loadAppWithSpies({
     strategyImpl: () => null
@@ -488,7 +464,6 @@ test('strategy 返回 null 时返回 404', async () => {
   assert.equal(response.statusCode, 404)
   assert.equal(response.payload.code, 404)
 })
-
 test('GET 方法返回 405', async () => {
   const { app } = loadAppWithSpies()
   const response = await app._test.main({
@@ -500,5 +475,4 @@ test('GET 方法返回 405', async () => {
   })
   assert.equal(response.statusCode, 405)
 })
-
 await runAll()

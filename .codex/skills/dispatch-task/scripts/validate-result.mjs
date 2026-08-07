@@ -2,15 +2,13 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import {
-  validateComputerUseToolEvidence,
-  validateValidationEvidence
-} from './validate-result-evidence.mjs'
+import { validateValidationEvidence } from './validate-result-evidence.mjs'
 import { validateUiCompleted } from './validate-result-ui.mjs'
+import { validateZcodeSendReceipt } from './validate-zcode-send-receipt.mjs'
 
 const [role, handoffFile, resultFile] = process.argv.slice(2)
-if (!['implementer', 'external', 'main_takeover'].includes(role) || !handoffFile || !resultFile) {
-  console.error('usage: validate-result.mjs <implementer|external|main_takeover> <handoff.json> <result.json>')
+if (!['main', 'external'].includes(role) || !handoffFile || !resultFile) {
+  console.error('usage: validate-result.mjs <main|external> <handoff.json> <result.json>')
   process.exit(2)
 }
 
@@ -24,7 +22,7 @@ const readJson = file => {
 }
 const handoff = readJson(handoffFile)
 const result = readJson(resultFile)
-const handoffMode = handoff.implementation_mode ?? 'codex_subagent'
+const handoffMode = handoff.implementation_mode ?? 'main_direct'
 const handoffExternalMode = ['external_implementer', 'zcode_external'].includes(handoffMode)
 const externalContract = handoff.external_contract ?? handoff.zcode_contract ?? {}
 const externalProvider =
@@ -117,7 +115,7 @@ const matchesAny = (file, patterns = []) =>
   patterns.some(pattern => globToRegExp(pattern).test(normalize(file)))
 // validateChangedFiles enforces path boundaries. For completed results every
 // changed file must be inside allowed_paths and outside forbidden_paths. For
-// blocked results the implementer may honestly list actual out-of-scope or
+// blocked results the implementation owner may honestly list actual out-of-scope or
 // forbidden files that caused the block (e.g. a forbidden write was attempted);
 // these are recorded as blocked evidence, not as a legal completion. Blocked
 // results still require changed_files to be a string array so the field stays
@@ -148,32 +146,15 @@ const validateChangedFiles = (changedFiles, requireNonEmpty, { allowOutOfScope =
     )
   }
 }
-if (role === 'implementer' || role === 'main_takeover') {
+if (role === 'main') {
   need(
-    role === 'main_takeover'
-      ? handoff.implementation_mode === 'main_takeover'
-      : (handoff.implementation_mode ?? 'codex_subagent') === 'codex_subagent',
-    role === 'main_takeover'
-      ? 'role=main_takeover is only valid for implementation_mode=main_takeover'
-      : 'role=implementer is only valid for implementation_mode=codex_subagent'
+    handoffMode === 'main_direct',
+    'role=main is only valid for implementation_mode=main_direct'
   )
-  if (role === 'implementer') {
-    need(isObject(result.agent_identity), 'agent_identity is required')
-    need(
-      result?.agent_identity?.agent_type === handoff?.spawn_contract?.implementer_agent_type,
-      `implementer agent_identity mismatch: expected ${handoff?.spawn_contract?.implementer_agent_type}, got ${result?.agent_identity?.agent_type}`
-    )
-    need(
-      result?.agent_identity?.dispatch_run_id === handoff.dispatch_run_id,
-      'implementer agent_identity.dispatch_run_id must match handoff'
-    )
-  } else {
-    need(handoff.main_takeover_authorization === true, 'main takeover result requires explicit handoff authorization')
-    need(result.main_takeover_authorized === true, 'main takeover result requires main_takeover_authorized=true')
-  }
+  need(result.implementation_owner === 'main', 'main result requires implementation_owner=main')
   need(
     ['completed', 'blocked'].includes(result.status),
-    'implementer status must be completed|blocked'
+    'main implementation status must be completed|blocked'
   )
   validateChangedFiles(
     result.changed_files,
@@ -201,7 +182,7 @@ if (role === 'implementer' || role === 'main_takeover') {
     }
     validateUiCompleted(result, {
       handoff,
-      figmaAcquiredBy: 'implementer',
+      figmaAcquiredBy: 'main',
       uniUiPolicyName: 'uni-ui-figma-component-mapper-contract',
       need,
       isObject,
@@ -249,7 +230,7 @@ function validateDispatchGovernanceEvidence(resultObject, { need, isObject, nonE
   }
 }
 
-// Selection-to-consumer contract enforcement for implementer/external results.
+// Selection-to-consumer contract enforcement for main/external results.
 // If the handoff declares selection_to_consumer.required=true, the completed
 // result must carry concrete values, submit payload, consumer branch, expected
 // entry and anti-fallback assertion. Non-selection tasks must declare
@@ -379,35 +360,21 @@ if (role === 'external') {
   )
   const sendReceipt = result.external_send_receipt ?? result.zcode_send_receipt
   if (isObject(sendReceipt)) {
+    const zcodeReceipt = externalProvider === 'zcode' || isObject(result.zcode_send_receipt)
+    if (zcodeReceipt) {
+      for (const error of validateZcodeSendReceipt({ handoff, receipt: sendReceipt, cwd: repoRoot })) {
+        need(false, `zcode_send_receipt: ${error}`)
+      }
+    }
     if (result.status === 'completed') {
       need(
         sendReceipt.status === 'sent',
         'completed recovery requires external_send_receipt.status=sent'
       )
-      need(
-        sendReceipt.prompt_integrity_verified === true,
-        'external_send_receipt.prompt_integrity_verified must be true'
-      )
-      if (externalProvider === 'zcode' || result.zcode_send_receipt) {
+      if (!zcodeReceipt) {
         need(
-          ['enter', 'send_button'].includes(sendReceipt.send_action),
-          'completed ZCode recovery requires send_action=enter|send_button'
-        )
-        need(
-          sendReceipt.clipboard_paste_used === true,
-          'zcode_send_receipt.clipboard_paste_used must be true'
-        )
-        const cu = sendReceipt.computer_use ?? {}
-        need(isObject(cu), 'zcode_send_receipt.computer_use is required')
-        need(cu.tool_invoked === true, 'zcode_send_receipt.computer_use.tool_invoked must be true')
-        validateComputerUseToolEvidence(cu, { need, isObject, nonEmptyString })
-        need(
-          cu.shell_only_ui_automation_used === false,
-          'zcode_send_receipt.computer_use.shell_only_ui_automation_used must be false'
-        )
-        need(
-          cu.manual_typing_used === false,
-          'zcode_send_receipt.computer_use.manual_typing_used must be false'
+          sendReceipt.prompt_integrity_verified === true,
+          'external_send_receipt.prompt_integrity_verified must be true'
         )
       }
       if (webExternalProvider) {
@@ -665,7 +632,7 @@ console.log(
       role,
       gate: 'result_contract',
       result_status: result.status,
-      implementation_mode: handoff.implementation_mode ?? 'codex_subagent'
+      implementation_mode: handoff.implementation_mode ?? 'main_direct'
     },
     null,
     2

@@ -65,6 +65,7 @@ export const usePlantStore = defineStore('plants', {
           careLocation: p.careLocation || null,
           locationKey: p.locationKey || p.careLocation?.locationKey || '',
           lightEnvironment: p.lightEnvironment || null,
+          airEnvironment: p.airEnvironment || null,
           image: p.image || '',
           photos: p.photos || [],
           imageFileId: p.imageFileId || '',
@@ -115,6 +116,13 @@ export const usePlantStore = defineStore('plants', {
             this.userPlants[index].recognizedName
         }
         this.userPlants[index] = { ...this.userPlants[index], ...updates }
+      }
+    },
+
+    applyAirEnvironmentLocal(id, airEnvironment = null) {
+      this.updateUserPlantLocal(id, { airEnvironment })
+      if (this.currentPlant?.id === id) {
+        this.currentPlant = { ...this.currentPlant, airEnvironment }
       }
     },
 

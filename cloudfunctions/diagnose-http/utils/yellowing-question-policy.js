@@ -43,6 +43,7 @@ const YELLOWING_CARE_ENVIRONMENT_DIMENSIONS = new Set([
   QUESTION_PACKAGE_TOPICS.WATERING_FREQUENCY_CONTEXT,
   QUESTION_PACKAGE_TOPICS.LIGHT_CHANGE_CONTEXT,
   QUESTION_PACKAGE_TOPICS.FERTILIZATION_GROWTH_CONTEXT,
+  QUESTION_PACKAGE_TOPICS.AIR_ENVIRONMENT,
   QUESTION_PACKAGE_TOPICS.YELLOWING_PROGRESSION_SPEED,
   QUESTION_PACKAGE_TOPICS.WATERING_CONTEXT,
   QUESTION_PACKAGE_TOPICS.LIGHT_EXPOSURE,
@@ -75,7 +76,7 @@ const YELLOWING_CARE_ENVIRONMENT_KEY_DIMENSIONS = [
   QUESTION_PACKAGE_TOPICS.WATERING_FREQUENCY_CONTEXT,
   QUESTION_PACKAGE_TOPICS.LIGHT_CHANGE_CONTEXT,
   QUESTION_PACKAGE_TOPICS.FERTILIZATION_GROWTH_CONTEXT,
-  QUESTION_PACKAGE_TOPICS.AIRFLOW_HUMIDITY_CONTEXT,
+  QUESTION_PACKAGE_TOPICS.AIR_ENVIRONMENT,
   QUESTION_PACKAGE_TOPICS.YELLOWING_PROGRESSION_SPEED,
   QUESTION_PACKAGE_TOPICS.WATERING_CONTEXT,
   QUESTION_PACKAGE_TOPICS.LIGHT_EXPOSURE,
@@ -92,10 +93,14 @@ function isYellowingFlowSymptomKey(symptomKey = '') {
 
 function isYellowingQuestionLike(question = {}) {
   const questionKey = normalizeKey(question?.questionKey || question?.question_key || '')
-  const targetSymptomKey = normalizeKey(question?.targetSymptomKey || question?.target_symptom_key || '')
+  const targetSymptomKey = normalizeKey(
+    question?.targetSymptomKey || question?.target_symptom_key || ''
+  )
   const routeKey = normalizeKey(question?.routeKey || question?.route_key || '')
   const conditionKey = normalizeKey(question?.conditionKey || question?.condition_key || '')
-  const questionGroupKey = normalizeKey(question?.questionGroupKey || question?.question_group_key || '')
+  const questionGroupKey = normalizeKey(
+    question?.questionGroupKey || question?.question_group_key || ''
+  )
   return (
     isYellowingFlowSymptomKey(targetSymptomKey) ||
     /yellowing|leaf_yellow/.test(questionKey) ||
@@ -106,16 +111,16 @@ function isYellowingQuestionLike(question = {}) {
 }
 
 function isYellowingCareEnvironmentDimension(packageTopic = '') {
-  return YELLOWING_CARE_ENVIRONMENT_DIMENSIONS.has(
-    normalizeQuestionPackageTopic(packageTopic, '')
-  )
+  return YELLOWING_CARE_ENVIRONMENT_DIMENSIONS.has(normalizeQuestionPackageTopic(packageTopic, ''))
 }
 
 function inferYellowingCareEnvironmentDimensionFromKey(questionKey = '') {
   const normalizedQuestionKey = normalizeKey(questionKey)
-  return YELLOWING_CARE_ENVIRONMENT_KEY_DIMENSIONS.find(dimension =>
-    normalizedQuestionKey.includes(dimension)
-  ) || ''
+  return (
+    YELLOWING_CARE_ENVIRONMENT_KEY_DIMENSIONS.find(dimension =>
+      normalizedQuestionKey.includes(dimension)
+    ) || ''
+  )
 }
 
 function isBlockedYellowingOutcomeKey(outcomeKey = '') {
@@ -124,18 +129,23 @@ function isBlockedYellowingOutcomeKey(outcomeKey = '') {
 
 function isBlockedYellowingCareQuestion(question = {}) {
   const questionKey = normalizeKey(question?.questionKey || question?.question_key || '')
-  const packageTopic = normalizeQuestionPackageTopic(
-    question?.packageTopic ||
-      question?.package_topic ||
-      question?.evidenceDimension ||
-      question?.evidence_dimension ||
-      '',
-    ''
-  ) || inferYellowingCareEnvironmentDimensionFromKey(questionKey)
+  const packageTopic =
+    normalizeQuestionPackageTopic(
+      question?.packageTopic ||
+        question?.package_topic ||
+        question?.evidenceDimension ||
+        question?.evidence_dimension ||
+        '',
+      ''
+    ) || inferYellowingCareEnvironmentDimensionFromKey(questionKey)
   const outcomeKey = normalizeKey(question?.outcomeKey || question?.outcome_key || '')
   const routeKey = normalizeKey(question?.routeKey || question?.route_key || '')
-  const targetSymptomKey = normalizeKey(question?.targetSymptomKey || question?.target_symptom_key || '')
-  const questionGroupKey = normalizeKey(question?.questionGroupKey || question?.question_group_key || '')
+  const targetSymptomKey = normalizeKey(
+    question?.targetSymptomKey || question?.target_symptom_key || ''
+  )
+  const questionGroupKey = normalizeKey(
+    question?.questionGroupKey || question?.question_group_key || ''
+  )
   const text = [
     questionKey,
     packageTopic,
@@ -182,7 +192,9 @@ function isDisabledYellowingFlowQuestion(question = {}) {
     return false
   }
 
-  const targetSymptomKey = normalizeKey(question?.targetSymptomKey || question?.target_symptom_key || '')
+  const targetSymptomKey = normalizeKey(
+    question?.targetSymptomKey || question?.target_symptom_key || ''
+  )
   if (!targetSymptomKey || isYellowingFlowSymptomKey(targetSymptomKey)) {
     return true
   }
@@ -196,7 +208,8 @@ function isDisabledYellowingFlowQuestion(question = {}) {
       question?.question_text_cn ||
       ''
   )
-  const isYellowingQuestionKey = questionKey.includes('yellowing') || questionKey.includes('leaf_yellow')
+  const isYellowingQuestionKey =
+    questionKey.includes('yellowing') || questionKey.includes('leaf_yellow')
   return isYellowingQuestionKey && /新叶|老叶|下部叶/.test(questionText)
 }
 

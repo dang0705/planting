@@ -14,13 +14,11 @@
  */
 
 import automator from 'miniprogram-automator'
-import { spawn } from 'node:child_process'
+import { connectFormalLeaf, disconnectFormalLeaf } from '../../../_shared/formal-leaf-harness.mjs'
 
-const CLI = '/Applications/wechatwebdevtools.app/Contents/MacOS/cli'
-const PROJECT = process.cwd() + '/dist/dev/mp-weixin'
-const PORT = 9420
-
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms))
+}
 
 /**
  * 遍历页面所有 view，按 id 关键词匹配目标元素。
@@ -58,21 +56,12 @@ async function tapByText(page, targetText) {
 }
 
 async function main() {
-  console.log('[1] 启动 cli auto...')
-  const auto = spawn(CLI, ['auto', '--project', PROJECT, '--auto-port', String(PORT)], { stdio: 'ignore' })
-
   let mp = null
-  for (let i = 0; i < 20; i++) {
-    await sleep(1000)
-    try {
-      mp = await automator.connect({ wsEndpoint: `ws://127.0.0.1:${PORT}` })
-      break
-    } catch {}
-  }
-  if (!mp) {
-    console.error('✗ 未能连接 automator')
-    auto.kill()
-    process.exit(1)
+  try {
+    ;({ mp } = await connectFormalLeaf({ automator }))
+  } catch (error) {
+    console.error(`✗ 未能连接测试专属 Automator: ${error.message}`)
+    process.exit(2)
   }
   console.log('[2] connect 成功')
 
@@ -187,8 +176,7 @@ async function main() {
 
     console.log('\n=== 端上验收完成 ===')
   } finally {
-    await mp.close()
-    auto.kill()
+    await disconnectFormalLeaf({ mp }).catch(() => {})
   }
 }
 

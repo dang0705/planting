@@ -79,6 +79,9 @@ function createMockPage(elements) {
       return null
     },
     async $$(selector) {
+      if (selector === '[id]') {
+        return [...elMap.values()]
+      }
       const results = []
       for (const e of elements) {
         if (e.tag === selector) {
@@ -173,7 +176,8 @@ async function testFindViewById() {
   const page = createMockPage([
     { tag: 'view', id: '55d0b8b0--watering-advisor-search-input' },
     { tag: 'button', id: '55d0b8b0--watering-advisor-next-button' },
-    { tag: 'view', id: '21583637--pot-profile-editor-sheet' }
+    { tag: 'view', id: '21583637--pot-profile-editor-sheet' },
+    { tag: 'plant-select-card', id: '21583637--watering-advisor-my-plant-card-12' }
   ])
 
   const searchEl = await findViewById(page, 'watering-advisor-search-input')
@@ -184,6 +188,9 @@ async function testFindViewById() {
 
   const sheetEl = await findViewById(page, 'pot-profile-editor-sheet')
   check('findViewById built-prefix sheet', !!sheetEl, true)
+
+  const customComponentEl = await findViewById(page, 'watering-advisor-my-plant-card-12')
+  check('findViewById custom component root', !!customComponentEl, true)
 
   const missingEl = await findViewById(page, 'nonexistent-id')
   check('findViewById missing', missingEl, null)

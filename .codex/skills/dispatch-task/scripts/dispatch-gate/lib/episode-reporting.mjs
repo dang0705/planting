@@ -96,6 +96,7 @@ export function auditEpisodeTraceRecord(episode, { maxReworkBatches, legalEarlyC
     'review_passed',
     'qa_passed',
     'qa_not_required',
+    'qa_failed',
     'completion_ready'
   ]
   const stageIndex = new Map(LIFECYCLE_ORDER.map((stage, index) => [stage, index]))
@@ -108,14 +109,22 @@ export function auditEpisodeTraceRecord(episode, { maxReworkBatches, legalEarlyC
       'episode_completion_ready'
     ].includes(item.event)
   )
-  let highWaterMark = stageIndex.get(episode.lifecycleStage ?? 'implementation_running') ?? 0
+  // Replay must start from the initial stage. Starting from the episode's
+  // current/final stage makes every valid historical transition look like a
+  // regression once an episode reaches completion_ready.
+  let highWaterMark = stageIndex.get('implementation_running')
   for (const item of lifecycleEvents) {
     let stage = null
     if (item.event === 'episode_provider_delivered') stage = 'provider_delivered'
     else if (item.event === 'episode_recovery_started') stage = 'recovery_in_progress'
     else if (item.event === 'episode_review_passed') stage = 'review_passed'
     else if (item.event === 'episode_qa_outcome_recorded') {
-      stage = item.qa_status === 'not_required' ? 'qa_not_required' : 'qa_passed'
+      stage =
+        item.qa_status === 'not_required'
+          ? 'qa_not_required'
+          : item.qa_status === 'failed'
+            ? 'qa_failed'
+            : 'qa_passed'
     } else if (item.event === 'episode_completion_ready') stage = 'completion_ready'
     if (stage && stageIndex.has(stage)) {
       const idx = stageIndex.get(stage)

@@ -34,10 +34,7 @@ const DB_STUB_OPTIONS = [
   { optionKey: 'unknown', text: 'DB mock：不确定 / 记不清', isDefault: false }
 ]
 
-function buildQuestionRepositoryStub({
-  includeQuestion = true,
-  includeOptions = true
-} = {}) {
+function buildQuestionRepositoryStub({ includeQuestion = true, includeOptions = true } = {}) {
   return {
     async getQuestionsByKeys(questionKeys = []) {
       if (!includeQuestion || !questionKeys.includes(WATERING_FREQUENCY_CONTEXT_QUESTION_KEY)) {
@@ -88,21 +85,40 @@ function buildQuestion(index) {
 }
 
 function buildYellowingPackageQuestion(packageTopic) {
-  const questionKey = `q_observed_probe__leaf_yellowing__${packageTopic}`
-  const optionKey = `${packageTopic}_normal`
+  const isAirEnvironment = packageTopic === 'air_environment'
+  const questionKey = isAirEnvironment
+    ? 'q_yellow_leaf__air_environment'
+    : `q_observed_probe__leaf_yellowing__${packageTopic}`
+  const optionKey = isAirEnvironment ? 'air_environment_recorded' : `${packageTopic}_normal`
   return {
     questionId: toQuestionId(questionKey),
     questionKey,
     packageTopic,
     targetSymptomKey: 'leaf_yellowing',
+    ...(isAirEnvironment
+      ? {
+          questionGroupKey: 'yellow_leaf_air_environment',
+          questionType: 'air_environment',
+          defaultOptionKey: 'air_environment_unknown',
+          uiVariant: 'air_environment'
+        }
+      : {}),
     text: `黄叶题目 ${packageTopic}`,
-    options: [
-      {
-        optionId: toOptionId(optionKey),
-        optionKey,
-        text: `选项 ${packageTopic}`
-      }
-    ]
+    options: isAirEnvironment
+      ? [
+          {
+            optionId: toOptionId('air_environment_recorded'),
+            optionKey: 'air_environment_recorded',
+            text: '已填写空气环境'
+          },
+          {
+            optionId: toOptionId('air_environment_unknown'),
+            optionKey: 'air_environment_unknown',
+            text: '不确定',
+            isDefault: true
+          }
+        ]
+      : [{ optionId: toOptionId(optionKey), optionKey, text: `选项 ${packageTopic}` }]
   }
 }
 
@@ -114,29 +130,30 @@ function buildPackageResponse(overrides = {}) {
     questionPackage: {
       mode: 'yellow_leaf',
       sourceMode: 'manual_yellowing_care_environment_frontloaded',
-      questionCount: 3,
+      questionCount: 4,
       answerSubmitMode: 'package',
       questionDisplayMode: 'package'
     },
-    questions: [1, 2, 3].map(buildQuestion),
+    questions: [1, 2, 3, 4].map(buildQuestion),
     ...overrides
   }
 }
 
 function testYellowingPackageFrontendResponse() {
   const response = buildFrontendDiagnosisResponse(buildPackageResponse())
-  assert.equal(response.questions.length, 3)
+  assert.equal(response.questions.length, 4)
   assert.deepEqual(
     response.questions.map(item => item.questionKey),
     [
       'q_observed_probe__leaf_yellowing__package_1',
       'q_observed_probe__leaf_yellowing__package_2',
-      'q_observed_probe__leaf_yellowing__package_3'
+      'q_observed_probe__leaf_yellowing__package_3',
+      'q_observed_probe__leaf_yellowing__package_4'
     ]
   )
   assert.deepEqual(
     response.questions.map(item => Object.prototype.hasOwnProperty.call(item, 'questionId')),
-    [false, false, false]
+    [false, false, false, false]
   )
   assert.equal(response.questionPackage.mode, 'yellow_leaf')
   assert.equal(response.questionPackage.sourceMode, 'manual_yellowing_care_environment_frontloaded')
@@ -146,7 +163,7 @@ function testYellowingPackageFrontendResponse() {
   })
   assert.equal(response.uiHints.questionDisplayMode, 'package')
   assert.equal(response.uiHints.answerSubmitMode, 'package')
-  assert.equal(response.uiHints.maxQuestionsThisRound, 3)
+  assert.equal(response.uiHints.maxQuestionsThisRound, 4)
   assert.deepEqual(
     Object.keys(response).filter(key => key.toLowerCase().includes('follow')),
     []
@@ -157,11 +174,12 @@ function testModeToQuestionPackageMapping() {
   const questionPackage = getQuestionPackageByMode('yellow_leaf')
   assert.equal(questionPackage.mode, 'yellow_leaf')
   assert.equal(questionPackage.route, 'yellow_leaf')
-  assert.equal(questionPackage.questionCount, 3)
+  assert.equal(questionPackage.questionCount, 4)
   assert.deepEqual(questionPackage.packageTopics, [
     'watering_frequency_context',
     'light_change_context',
-    'fertilization_growth_context'
+    'fertilization_growth_context',
+    'air_environment'
   ])
   assert.equal(questionPackage.answerSubmitMode, 'package')
   assert.equal(questionPackage.questionDisplayMode, 'package')
@@ -188,7 +206,8 @@ function testPackageAnswerSubmitPayload() {
   const questions = [
     'watering_frequency_context',
     'light_change_context',
-    'fertilization_growth_context'
+    'fertilization_growth_context',
+    'air_environment'
   ].map(buildYellowingPackageQuestion)
   const payload = {
     ...buildPackageResponse({ questions }),
@@ -244,13 +263,20 @@ function testGenericPackageAnswerSubmitIsTerminalQuestioningPayload() {
 
 function testYellowingCompletePackageAnswersAreTerminalQuestioningPayload() {
   const answers = [
-    'watering_frequency_context',
-    'light_change_context',
-    'fertilization_growth_context'
-  ].map(packageTopic => ({
-    questionKey: `q_observed_probe__leaf_yellowing__${packageTopic}`,
-    optionKey: `${packageTopic}_normal`
-  }))
+    {
+      questionKey: 'q_observed_probe__leaf_yellowing__watering_frequency_context',
+      optionKey: 'watering_frequency_context_normal'
+    },
+    {
+      questionKey: 'q_observed_probe__leaf_yellowing__light_change_context',
+      optionKey: 'light_change_context_normal'
+    },
+    {
+      questionKey: 'q_observed_probe__leaf_yellowing__fertilization_growth_context',
+      optionKey: 'fertilization_growth_context_normal'
+    },
+    { questionKey: 'q_yellow_leaf__air_environment', optionKey: 'air_environment_recorded' }
+  ]
 
   assert.equal(
     isQuestionPackageAnswerSubmitPayload({
@@ -260,6 +286,40 @@ function testYellowingCompletePackageAnswersAreTerminalQuestioningPayload() {
     }),
     true
   )
+}
+
+async function testAirEnvironmentQuestionPackageContract() {
+  const repository = buildQuestionRepositoryStub()
+  const yellowQuestions = await staticQuestionPackageStartTest.buildYellowingStaticQuestions({
+    repository
+  })
+  const yellowAirQuestion = yellowQuestions.find(item => item.packageTopic === 'air_environment')
+  const wiltingQuestions = await buildWiltingDroopPackageQuestions({ repository })
+  const wiltingAirQuestion = wiltingQuestions.find(item => item.packageTopic === 'air_environment')
+  assert.deepEqual(
+    [
+      yellowAirQuestion.questionKey,
+      yellowAirQuestion.questionGroupKey,
+      yellowAirQuestion.questionType
+    ],
+    ['q_yellow_leaf__air_environment', 'yellow_leaf_air_environment', 'air_environment']
+  )
+  assert.deepEqual(
+    [
+      wiltingAirQuestion.questionKey,
+      wiltingAirQuestion.questionGroupKey,
+      wiltingAirQuestion.questionType
+    ],
+    ['q_wilting_droop__air_environment', 'wilting_droop_air_environment', 'air_environment']
+  )
+  for (const question of [yellowAirQuestion, wiltingAirQuestion]) {
+    assert.equal(question.type, 'single_choice')
+    assert.equal(question.defaultOptionKey, 'air_environment_unknown')
+    assert.deepEqual(
+      question.options.map(option => option.optionKey),
+      ['air_environment_recorded', 'air_environment_unknown']
+    )
+  }
 }
 
 function testNonPackageFourAnswerSubmitIsNotTerminalQuestioningPayload() {
@@ -280,7 +340,7 @@ function testNonPackageFourAnswerSubmitIsNotTerminalQuestioningPayload() {
 function testPackageSubmitTerminalQuestioningRuntimeWiring() {
   const runner = readFileSync('cloudfunctions/diagnose-http/app/diagnosis-answer-runner.js', 'utf8')
   const engine = readFileSync('cloudfunctions/diagnose-http/domain/diagnosis-engine.js', 'utf8')
-  assert.match(runner, /isQuestionPackageAnswerSubmitPayload/)
+  assert.match(runner, /isCompleteQuestionPackageSnapshotAnswerSubmit/)
   assert.match(runner, /terminalQuestioningState:\s*isTerminalQuestionPackageSubmit/)
   assert.match(runner, /resolvePackageAnswerOwnership/)
   assert.match(runner, /buildPackageAnswerRuntimeState/)
@@ -325,11 +385,19 @@ async function testSharedWateringQuestionRegistryAcrossPackages() {
     assert.equal(yellowWatering[field], wiltingWatering[field], field)
   }
   assert.deepEqual(
-    yellowWatering.options.map(({ optionKey, text, isDefault }) => ({ optionKey, text, isDefault })),
+    yellowWatering.options.map(({ optionKey, text, isDefault }) => ({
+      optionKey,
+      text,
+      isDefault
+    })),
     DB_STUB_OPTIONS
   )
   assert.deepEqual(
-    wiltingWatering.options.map(({ optionKey, text, isDefault }) => ({ optionKey, text, isDefault })),
+    wiltingWatering.options.map(({ optionKey, text, isDefault }) => ({
+      optionKey,
+      text,
+      isDefault
+    })),
     DB_STUB_OPTIONS
   )
   assertNoRuntimeGeneratedQuestionId(yellowWatering)
@@ -338,29 +406,27 @@ async function testSharedWateringQuestionRegistryAcrossPackages() {
 
 async function testRegisteredQuestionFailsWhenDbRowsAreMissing() {
   await assert.rejects(
-    () => loadRegisteredPackageQuestion({
-      packageTopic: WATERING_TOPIC,
-      repository: buildQuestionRepositoryStub({ includeQuestion: false })
-    }),
+    () =>
+      loadRegisteredPackageQuestion({
+        packageTopic: WATERING_TOPIC,
+        repository: buildQuestionRepositoryStub({ includeQuestion: false })
+      }),
     /缺少数据库题目定义/
   )
   await assert.rejects(
-    () => loadRegisteredPackageQuestion({
-      packageTopic: WATERING_TOPIC,
-      repository: buildQuestionRepositoryStub({ includeOptions: false })
-    }),
+    () =>
+      loadRegisteredPackageQuestion({
+        packageTopic: WATERING_TOPIC,
+        repository: buildQuestionRepositoryStub({ includeOptions: false })
+      }),
     /缺少数据库选项定义/
   )
 }
 
 async function testFrontendQuestionKeyOnlyPackageAnswerPayload() {
-  const {
-    createQuestionAnswerMap,
-    buildQuestionAnswerPayload
-  } = await import('../../../../src/utils/diagnose-question-answer-payload.js')
-  const {
-    normalizeQuestions
-  } = await import('../../../../src/utils/diagnose-result-normalizer.js')
+  const { createQuestionAnswerMap, buildQuestionAnswerPayload } =
+    await import('../../../../src/utils/diagnose-question-answer-payload.js')
+  const { normalizeQuestions } = await import('../../../../src/utils/diagnose-result-normalizer.js')
   const questions = [
     {
       questionKey: WATERING_FREQUENCY_CONTEXT_QUESTION_KEY,
@@ -403,6 +469,67 @@ async function testFrontendQuestionKeyOnlyPackageAnswerPayload() {
   assert.equal(Object.prototype.hasOwnProperty.call(normalizedQuestions[0], 'questionId'), false)
 }
 
+async function testAirEnvironmentSidecarSurvivesPackagePayloadAssembly() {
+  const { buildQuestionAnswerPayload } =
+    await import('../../../../src/utils/diagnose-question-answer-payload.js')
+  const questionKey = 'q_wilting_droop__air_environment'
+  const input = {
+    airExchange: {
+      source: 'fresh_air',
+      windowDirectionCount: null,
+      windowOpenFrequency: null
+    },
+    canopyOpenness: 'open',
+    deviceAirflow: { mode: 'direct', sources: ['fresh_air'] }
+  }
+  const snapshot = {
+    input,
+    source: 'temporary',
+    profileUpdatedAt: '',
+    locationBinding: { careLocationId: '', locationKey: '' }
+  }
+  const payload = buildQuestionAnswerPayload(
+    {
+      diagnosisSessionId: 'diag_air_sidecar',
+      roundId: 'round_1',
+      questionPackage: { mode: 'wilting_droop', packageVersion: 2 },
+      uiHints: { answerSubmitMode: 'package' }
+    },
+    { [questionKey]: 'air_environment_recorded' },
+    {
+      questionStack: [{ questionKey }],
+      airEnvironmentByQuestionId: { [questionKey]: input },
+      airEnvironmentSnapshotsByQuestionId: { [questionKey]: snapshot }
+    }
+  )
+
+  assert.deepEqual(payload.airEnvironmentByQuestionId, {
+    [questionKey]: {
+      airExchange: {
+        source: 'fresh_air',
+        windowDirectionCount: null,
+        windowOpenFrequency: null
+      },
+      canopyOpenness: 'open',
+      deviceAirflow: { mode: 'direct', sources: ['fresh_air'] }
+    }
+  })
+  assert.deepEqual(payload.airEnvironmentSnapshotsByQuestionId, {
+    [questionKey]: {
+      ...snapshot,
+      input: {
+        airExchange: {
+          source: 'fresh_air',
+          windowDirectionCount: null,
+          windowOpenFrequency: null
+        },
+        canopyOpenness: 'open',
+        deviceAirflow: { mode: 'direct', sources: ['fresh_air'] }
+      }
+    }
+  })
+}
+
 function testQuestionRegistryDoesNotOwnCopyOrRouteOutcomeWeights() {
   const registry = readFileSync(
     'cloudfunctions/diagnose-http/app/diagnosis-question-registry.js',
@@ -418,11 +545,13 @@ testQuestionsAreOnlyPackageQuestionSource()
 testPackageAnswerSubmitPayload()
 testGenericPackageAnswerSubmitIsTerminalQuestioningPayload()
 testYellowingCompletePackageAnswersAreTerminalQuestioningPayload()
+await testAirEnvironmentQuestionPackageContract()
 testNonPackageFourAnswerSubmitIsNotTerminalQuestioningPayload()
 testPackageSubmitTerminalQuestioningRuntimeWiring()
 await testSharedWateringQuestionRegistryAcrossPackages()
 await testRegisteredQuestionFailsWhenDbRowsAreMissing()
 await testFrontendQuestionKeyOnlyPackageAnswerPayload()
+await testAirEnvironmentSidecarSurvivesPackagePayloadAssembly()
 testQuestionRegistryDoesNotOwnCopyOrRouteOutcomeWeights()
 
 console.log('question package tests passed')

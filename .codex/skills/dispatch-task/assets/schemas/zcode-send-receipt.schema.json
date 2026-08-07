@@ -1,26 +1,253 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "ZCode Send Receipt",
+  "title": "ZCode Verified Visible Clipboard Send Receipt",
   "type": "object",
+  "additionalProperties": false,
   "required": [
     "dispatch_run_id",
     "status",
-    "send_action",
-    "computer_use"
+    "blocker",
+    "transport",
+    "prompt_identity",
+    "clipboard",
+    "input_focus",
+    "paste_delivery",
+    "send_delivery",
+    "redaction",
+    "created_at",
+    "sent_at"
   ],
   "properties": {
-    "status": {
+    "dispatch_run_id": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["sent", "blocked"] },
+    "blocker": {
       "enum": [
-        "sent",
-        "blocked"
+        null,
+        "clipboard_write_failed",
+        "clipboard_readback_failed",
+        "input_not_unique",
+        "focus_failed",
+        "paste_delivery_failed",
+        "prompt_integrity_failed",
+        "send_delivery_failed"
       ]
     },
-    "send_action": {
-      "enum": [
-        "enter",
-        "send_button",
-        "blocked"
-      ]
+    "transport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "target_session", "status", "fallback", "headless_used"],
+      "properties": {
+        "kind": { "const": "zcode_visible_clipboard" },
+        "target_session": { "const": "current_open_chat" },
+        "status": { "enum": ["not_started", "clipboard_prepared", "input_focused", "pasted", "sent"] },
+        "fallback": { "const": "none" },
+        "headless_used": { "const": false }
+      }
+    },
+    "prompt_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "bytes", "lines", "verified_before_after"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "lines": { "type": "integer", "minimum": 1 },
+        "verified_before_after": { "type": "boolean" }
+      }
+    },
+    "clipboard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["write_attempts", "selected_method", "readback_verified", "verified_at"],
+      "properties": {
+        "write_attempts": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["method", "status", "readback_verified", "attempted_at"],
+            "properties": {
+              "method": { "enum": ["nspasteboard", "pbcopy"] },
+              "status": { "enum": ["write_failed", "read_failed", "mismatch", "method_failed", "verified"] },
+              "readback_verified": { "type": "boolean" },
+              "attempted_at": { "type": "string", "format": "date-time" }
+            }
+          }
+        },
+        "selected_method": { "enum": ["nspasteboard", "pbcopy", null] },
+        "readback_verified": { "type": "boolean" },
+        "verified_at": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
+    "input_focus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "latest_app_state_checked",
+        "unique_entry_area",
+        "clicked",
+        "focused_element_verified",
+        "element_index_persisted",
+        "verified_at"
+      ],
+      "properties": {
+        "latest_app_state_checked": { "type": "boolean" },
+        "unique_entry_area": { "type": "boolean" },
+        "clicked": { "type": "boolean" },
+        "focused_element_verified": { "type": "boolean" },
+        "element_index_persisted": { "const": false },
+        "verified_at": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
+    "paste_delivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attempts",
+        "selected_method",
+        "rendering",
+        "pre_send_verified",
+        "direct_text_identity",
+        "attachment",
+        "verified_at"
+      ],
+      "properties": {
+        "attempts": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["method", "delivery_verified"],
+            "properties": {
+              "method": { "enum": ["cmd_v", "edit_menu_paste"] },
+              "delivery_verified": { "type": "boolean" }
+            }
+          }
+        },
+        "selected_method": { "enum": ["cmd_v", "edit_menu_paste", null] },
+        "rendering": { "enum": ["direct_text", "pasted_text_attachment", null] },
+        "pre_send_verified": { "type": "boolean" },
+        "direct_text_identity": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["sha256", "bytes", "lines"],
+          "properties": {
+            "sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+            "bytes": { "type": "integer", "minimum": 1 },
+            "lines": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "attachment": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["name", "sha256", "bytes", "lines", "present_before_send", "present_after_send"],
+          "properties": {
+            "name": { "type": "string", "minLength": 1 },
+            "sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+            "bytes": { "type": "integer", "minimum": 1 },
+            "lines": { "type": "integer", "minimum": 1 },
+            "present_before_send": { "type": "boolean" },
+            "present_after_send": { "type": "boolean" }
+          }
+        },
+        "verified_at": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
+    "send_delivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "send_clicked",
+        "input_submitted",
+        "conversation_state_changed",
+        "conversation_delivery_verified",
+        "verified_at"
+      ],
+      "properties": {
+        "send_clicked": { "type": "boolean" },
+        "input_submitted": { "type": "boolean" },
+        "conversation_state_changed": { "type": "boolean" },
+        "conversation_delivery_verified": { "type": "boolean" },
+        "verified_at": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
+    "redaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "prompt_body_persisted",
+        "old_clipboard_persisted",
+        "credential_persisted",
+        "raw_ui_dump_persisted",
+        "element_index_persisted"
+      ],
+      "properties": {
+        "prompt_body_persisted": { "const": false },
+        "old_clipboard_persisted": { "const": false },
+        "credential_persisted": { "const": false },
+        "raw_ui_dump_persisted": { "const": false },
+        "element_index_persisted": { "const": false }
+      }
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "sent_at": { "type": ["string", "null"], "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "sent" } }, "required": ["status"] },
+      "then": {
+        "properties": {
+          "blocker": { "const": null },
+          "transport": { "properties": { "status": { "const": "sent" } } },
+          "prompt_identity": { "properties": { "verified_before_after": { "const": true } } },
+          "clipboard": {
+            "properties": {
+              "selected_method": { "enum": ["nspasteboard", "pbcopy"] },
+              "readback_verified": { "const": true },
+              "verified_at": { "type": "string" }
+            }
+          },
+          "input_focus": {
+            "properties": {
+              "latest_app_state_checked": { "const": true },
+              "unique_entry_area": { "const": true },
+              "clicked": { "const": true },
+              "focused_element_verified": { "const": true },
+              "verified_at": { "type": "string" }
+            }
+          },
+          "paste_delivery": {
+            "properties": {
+              "selected_method": { "enum": ["cmd_v", "edit_menu_paste"] },
+              "rendering": { "enum": ["direct_text", "pasted_text_attachment"] },
+              "pre_send_verified": { "const": true },
+              "verified_at": { "type": "string" }
+            }
+          },
+          "send_delivery": {
+            "properties": {
+              "send_clicked": { "const": true },
+              "input_submitted": { "const": true },
+              "conversation_state_changed": { "const": true },
+              "conversation_delivery_verified": { "const": true },
+              "verified_at": { "type": "string" }
+            }
+          },
+          "sent_at": { "type": "string" }
+        }
+      },
+      "else": {
+        "properties": {
+          "blocker": { "not": { "const": null } },
+          "transport": { "properties": { "status": { "not": { "const": "sent" } } } },
+          "sent_at": { "const": null }
+        }
+      }
     }
-  }
+  ]
 }

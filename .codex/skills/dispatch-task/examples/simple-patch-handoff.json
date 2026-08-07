@@ -10,6 +10,10 @@
     "qa_required": false
   },
   "acceptance": ["只修改合同允许的单个文件", "完成定向格式检查和 lint"],
+  "selection_to_consumer": {
+    "required": false,
+    "not_applicable_reason": "仅修复自动化 ID 拼写，不新增或变更用户可选值"
+  },
   "allowed_paths": ["src/pages/example.vue"],
   "forbidden_paths": ["package.json", "cloudfunctions/**"],
   "decision_lock": {

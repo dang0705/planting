@@ -2,7 +2,10 @@
   <Layout title="养护日历" background-class="bg-[#F8F6F0]">
     <view class="min-h-screen bg-[#F8F6F0]">
       <!-- 天气预报 -->
-      <view class="bg-gradient-to-br from-[#52B788] to-primary px-4 py-6 text-white">
+      <view
+        class="px-4 py-6 text-white"
+        style="background: linear-gradient(135deg, #52b788, #2d7a4f)"
+      >
         <view class="flex items-center justify-between mb-4">
           <view>
             <text class="block text-2xl font-bold mb-1">{{ weather.current?.temp || '22' }}°C</text>

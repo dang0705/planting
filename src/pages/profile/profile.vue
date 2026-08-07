@@ -2,7 +2,7 @@
   <Layout title="我的" background-class="bg-[#F8F6F0]">
     <view class="min-h-screen bg-[#F8F6F0]">
       <!-- 用户信息卡片 -->
-      <view class="bg-gradient-to-br from-primary to-[#52B788] px-4 pt-12 pb-8">
+      <view class="px-4 pt-12 pb-8" style="background: linear-gradient(135deg, #2d7a4f, #52b788)">
         <view class="flex items-center mb-6">
           <image
             :src="userStore.avatar || '/static/logo.png'"

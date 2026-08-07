@@ -19,7 +19,7 @@ const QUESTION_PACKAGE_TOPICS = {
   WATERING_FREQUENCY_CONTEXT: 'watering_frequency_context',
   LIGHT_CHANGE_CONTEXT: 'light_change_context',
   FERTILIZATION_GROWTH_CONTEXT: 'fertilization_growth_context',
-  AIRFLOW_HUMIDITY_CONTEXT: 'airflow_humidity_context',
+  AIR_ENVIRONMENT: 'air_environment',
   YELLOWING_PROGRESSION_SPEED: 'yellowing_progression_speed',
   LESION_HALO: 'lesion_halo',
   LESION_WATER_SOAKING: 'lesion_water_soaking',
@@ -76,7 +76,7 @@ const QUESTION_PACKAGE_TOPIC_LABELS = {
   [QUESTION_PACKAGE_TOPICS.WATERING_FREQUENCY_CONTEXT]: '浇水周期/盆土干湿背景',
   [QUESTION_PACKAGE_TOPICS.LIGHT_CHANGE_CONTEXT]: '光照变化背景',
   [QUESTION_PACKAGE_TOPICS.FERTILIZATION_GROWTH_CONTEXT]: '施肥/生长背景',
-  [QUESTION_PACKAGE_TOPICS.AIRFLOW_HUMIDITY_CONTEXT]: '通风/空气湿度背景',
+  [QUESTION_PACKAGE_TOPICS.AIR_ENVIRONMENT]: '空气环境',
   [QUESTION_PACKAGE_TOPICS.YELLOWING_PROGRESSION_SPEED]: '黄叶进展速度',
   [QUESTION_PACKAGE_TOPICS.LESION_HALO]: '病斑黄晕/边缘晕圈',
   [QUESTION_PACKAGE_TOPICS.LESION_WATER_SOAKING]: '病斑边缘水渍/半透明感',
@@ -243,7 +243,10 @@ function normalizeQuestionPackageSection(
   return Object.values(QUESTION_PACKAGE_SECTIONS).includes(normalized) ? normalized : conservative
 }
 
-function normalizeRoutePackageRole(value = '', conservative = ROUTE_PACKAGE_ROLES.SYMPTOM_CONFIRMATION) {
+function normalizeRoutePackageRole(
+  value = '',
+  conservative = ROUTE_PACKAGE_ROLES.SYMPTOM_CONFIRMATION
+) {
   const normalized = normalizeText(value).toLowerCase()
   return Object.values(ROUTE_PACKAGE_ROLES).includes(normalized) ? normalized : conservative
 }
@@ -347,10 +350,8 @@ function inferObservedVisualCoveredTopics({ symptomKey = '', patternKey = '' } =
   const normalizedSymptomKey = normalizeText(symptomKey).toLowerCase()
   const normalizedPatternKey = normalizeText(patternKey).toLowerCase()
 
-  const symptomDimensions =
-    OBSERVED_VISUAL_COVERED_TOPIC_BY_SYMPTOM_KEY[normalizedSymptomKey] || []
-  const patternDimensions =
-    OBSERVED_VISUAL_COVERED_TOPIC_BY_PATTERN_KEY[normalizedPatternKey] || []
+  const symptomDimensions = OBSERVED_VISUAL_COVERED_TOPIC_BY_SYMPTOM_KEY[normalizedSymptomKey] || []
+  const patternDimensions = OBSERVED_VISUAL_COVERED_TOPIC_BY_PATTERN_KEY[normalizedPatternKey] || []
 
   for (const packageTopic of [...symptomDimensions, ...patternDimensions]) {
     coveredTopics.add(packageTopic)
@@ -361,9 +362,7 @@ function inferObservedVisualCoveredTopics({ symptomKey = '', patternKey = '' } =
 
 function resolveQuestionPackageTopicLabel(packageTopic = '') {
   const normalized = normalizeQuestionPackageTopic(packageTopic)
-  return (
-    QUESTION_PACKAGE_TOPIC_LABELS[normalized] || QUESTION_PACKAGE_TOPIC_LABELS.visual_presence
-  )
+  return QUESTION_PACKAGE_TOPIC_LABELS[normalized] || QUESTION_PACKAGE_TOPIC_LABELS.visual_presence
 }
 
 function isGenericObservedProbeDirectEvidenceDimension(packageTopic = '') {

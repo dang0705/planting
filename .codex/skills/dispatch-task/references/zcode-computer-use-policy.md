@@ -1,114 +1,53 @@
 # ZCode Computer Use Policy
 
-仅当 `external_contract.provider=zcode` 或旧 `implementation_mode=zcode_external`，且需要 Codex main 操作 ZCode UI 时读取。本文定义 ZCode provider adapter 的 UI/Computer Use 协议。
+仅用于 `external_contract.provider=zcode`、`target_session=current_open_chat`、`prompt_transport=clipboard_paste`。本文件定义可见 ZCode 会话的交付步骤；实现者不执行 UI 验收，真实 ZCode 操作由 main 按已授权范围完成。
 
-## 必须真实调用工具
+## 授权边界
 
-ZCode bridge 不是“生成 prompt 让用户复制”。Codex main 必须通过 `@ZCode` 或 `@Computer` 真实完成：聚焦 ZCode、定位输入框、剪贴板粘贴 prompt、验证 sentinel、发送消息。
+handoff 必须声明 `zcode_clipboard_bridge_authorization.enabled=true`，mode 仅允许 `current_turn_explicit` 或 `persistent_user_authorization`。授权只覆盖：
 
-不得只在 JSON 中写 `tool_invoked=true`。send receipt 必须引用真实 tool event / transcript step。
+- macOS NSPasteboard；
+- `/usr/bin/pbcopy` 与 `/usr/bin/pbpaste`；
+- Computer Use 在 ZCode 中执行 Cmd+V；
+- ZCode `Edit > Paste`；
+- 在完整性验证后点击发送并读取最新 app state 验证当前会话交付。
 
-## 固定动作序列
+不得修改系统安全设置、ZCode.app、`~/.zcode`、credential 或其他应用。不得保存旧剪贴板正文，也不得把 prompt 正文写入 receipt。
 
-```text
-verify_zcode_current_session
-focus_chat_input
-set_clipboard_to_prompt
-paste_clipboard
-verify_prompt_sentinel_in_input
-send_prompt
-```
+## 固定交付顺序
 
-## **prompt 必须一次性剪贴板粘贴；禁止逐字输入和一次性输入注入，这会导致多行内容拆成队列被发送**
+1. 验证当前前台应用是 ZCode，目标是已存在的 `current_open_chat`。
+2. 读取最新 app state，动态定位唯一 entry area。
+3. 点击该 entry area，再读取最新 app state，确认 focused UI element 正是它。
+4. 运行 `zcode-clipboard-bridge.mjs`。只有 bridge evidence 为 `prepared`，且 SHA-256、bytes、lines 读回一致，才继续。
+5. 在已聚焦的 entry area 执行系统 Cmd+V。
+6. 读取最新 app state，验证 `direct_text` 或 `pasted_text_attachment` 已完整交付。
+7. 若 Cmd+V 未交付，重新读取 app state，打开 ZCode Edit 菜单并点击 Paste，再读取 app state验证。
+8. 只有发送前完整性通过，才点击发送。
+9. 读取发送后的最新 app state，证明输入已提交、会话状态发生变化、消息或同一附件进入当前会话。
+10. 记录 `sent` 后断开 Computer Use；后续 recovery 遵循 external implementer 公共合同。
 
-## 持久用户授权（persistent_user_authorization）
+每次 app state 后取得的 element index 只在该 state 内有效。禁止跨 state 复用或把 index 写入 receipt。任一路径成功后立即停止 fallback；两种 paste 方法都失败则 blocked，不得进入 headless、新会话、手输或逐字输入。
 
-用户可永久授权 ZCode 的 dispatch-task 实现 prompt 使用剪贴板桥接，无需每轮确认。该授权只适用于以下全部条件满足时：
+## 交付分支
 
-1. `external_contract.provider=zcode`（或旧 `implementation_mode=zcode_external`）。
-2. 已验证的 external-implementer handoff（`implementation_mode=external_implementer|zcode_external`）。
-3. handoff 显式声明 `external_contract.zcode_clipboard_bridge_authorization`，其中 `mode=persistent_user_authorization`、`enabled=true`。
-4. 一次性粘贴：仍必须从剪贴板一次性粘贴 prompt，禁止逐字输入。
-5. Computer Use 核验：仍必须通过 Computer Use 核验前台应用（ZCode）、目标会话、输入框、START-END sentinel、发送结果。
+### direct_text
 
-持久授权不豁免任何 Computer Use 核验或安全控制。它只免除"用户在当前 turn 明确授权"这一要求，且仅覆盖 ZCode 的已验证 dispatch prompt 的一次性剪贴板桥接子路径（即 `alternative_ui_automation.used=true` 且 receipt 声明 `authorization_source=persistent_user_authorization` 的分支）。不覆盖任意替代自动化。
+必须从 entry area 的最新可观察文本计算 SHA-256、UTF-8 bytes 与 lines，并与 canonical prompt identity 完全相等。仅看到 START/END sentinel 不足以证明完整。
 
-receipt 必须显式声明 `authorization_source`，取值为 `persistent_user_authorization` 或 `current_turn_user_authorization` 二选一；不接受 omitted 或未知 source。
+### pasted_text_attachment
 
-- `authorization_source=persistent_user_authorization`：仅在持久授权 enabled 时可用；alternative 分支可缺少/false `user_authorized_in_current_turn`。
-- `authorization_source=current_turn_user_authorization`：无论持久授权是否启用均可用；alternative 分支必须 `user_authorized_in_current_turn=true`。
+必须记录 bridge 的 canonical SHA-256，并观察附件名称、bytes/大小和 lines；attachment 的 SHA-256/bytes/lines 必须与 prompt identity 一致。发送前附件存在，发送后同一附件仍在当前会话消息中。sentinel 不要求可见，也不得伪造其可见性。
 
-持久授权 enabled 时仍可使用 current-turn source（用户当前 turn 明确授权更严格，必须保持可用）。persistent source 在授权 disabled 时必须失败。
+## Receipt
 
-### 迁移来源
+`status=sent` 必须同时满足：
 
-在 `external_contract.zcode_clipboard_bridge_authorization` schema 字段正式落地前，同一授权可暂存于 `validation.zcode_clipboard_bridge_authorization`。`validate-zcode-send-receipt.mjs` 安全支持这一迁移来源：正式 `external_contract` 字段优先，`validation` 字段作为回退。
+- `clipboard.readback_verified=true`；
+- `input_focus` 的最新 state、唯一 entry area、点击和 focused element 全部验证；
+- `paste_delivery.pre_send_verified=true`，attempt 顺序为 Cmd+V 后必要时 Edit > Paste；
+- `prompt_identity.verified_before_after=true`；
+- `send_delivery` 的 send click、input submitted、conversation state changed、conversation delivery 全部验证；
+- 时间证据单调，`sent_at` 在发送后验证之后。
 
-### 撤销
-
-用户可明确撤销持久授权。撤销后，后续 dispatch-task 必须恢复每轮确认。handoff 中 `zcode_clipboard_bridge_authorization.enabled=false` 即视为已撤销。
-
-## 替代 UI 自动化
-
-默认禁止用 shell、AppleScript、osascript、cliclick、xdotool 或类似脚本伪装完成 UI 操作。
-
-只有在以下条件全部满足时，才能使用替代 UI 自动化：
-
-1. 用户在当前会话明确授权替代方案，或持久剪贴板桥接授权覆盖该剪贴板桥接子路径（`persistentAuthEnabled` 且 receipt `authorization_source=persistent_user_authorization`）。持久授权仅覆盖 ZCode 一次性剪贴板桥接，不覆盖任意替代自动化。
-2. Computer Use 已确认前台应用、目标会话和输入框。
-3. 仍然只从剪贴板一次性粘贴，不逐字输入。
-4. 发送后仍由 Computer Use 确认消息进入会话。
-5. send receipt 记录 `alternative_ui_automation.used=true` 与安全控制。authorization source 决定 `user_authorized_in_current_turn` 要求：`persistent_user_authorization` source（持久授权 enabled 时）可缺少/false；`current_turn_user_authorization` source 必须 `user_authorized_in_current_turn=true`。
-
-不存在“dispatch 标准预授权”。没有用户当前明确授权（或有效的持久剪贴板桥接授权）时，工具不可用就必须 `blocked: computer_use_unavailable`。
-
-## 发送后低频回收
-
-发送成功且确认 ZCode 已收到 prompt 后，必须断开持续 UI 监视。
-
-前 30 分钟只允许每 5 分钟检查：
-
-```text
-handoff_manual
-scoped_git_status
-scoped_git_diff_name_only
-scoped_git_diff_stat
-```
-
-30 分钟后才允许低频查看 ZCode UI，且间隔不得短于 10 分钟。禁止盯屏、保活 UI 观察或连续读取 app state。
-
-## Send Receipt 校验
-
-发送后执行：
-
-```bash
-node .codex/skills/dispatch-task/scripts/validate-zcode-send-receipt.mjs <handoff.json> <send-receipt.json>
-```
-
-核心字段：
-
-```json
-{
-  "status": "sent | blocked",
-  "send_action": "enter | send_button | blocked",
-  "clipboard_paste_used": true,
-  "prompt_integrity_verified": true,
-  "computer_use": {
-    "tool_invoked": true,
-    "actions": [
-      "verify_zcode_current_session",
-      "focus_chat_input",
-      "set_clipboard_to_prompt",
-      "paste_clipboard",
-      "verify_prompt_sentinel_in_input",
-      "send_prompt"
-    ],
-    "manual_typing_used": false,
-    "shell_only_ui_automation_used": false
-  }
-}
-```
-
-### 持久授权 receipt 字段
-
-当使用持久剪贴板桥接授权时，send receipt 可声明 `authorization_source=persistent_user_authorization`，无需 `user_authorized_in_current_turn=true`。validator 在 `provider=zcode` 且授权 `mode=persistent_user_authorization`、`enabled=true` 时接受此来源。
+receipt 只保存 canonical path、hash、bytes、lines、方法、布尔验证和时间；不得保存 prompt、旧剪贴板、credential、原始 UI dump 或 element index。

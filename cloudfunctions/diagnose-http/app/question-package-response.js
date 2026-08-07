@@ -9,7 +9,8 @@ const {
 
 const YELLOW_LEAF_PACKAGE_MODE = 'yellow_leaf'
 const YELLOWING_PACKAGE_SOURCE_MODE = 'manual_yellowing_care_environment_frontloaded'
-const YELLOWING_PACKAGE_QUESTION_COUNT = 3
+const YELLOWING_PACKAGE_QUESTION_COUNT = 4
+const YELLOW_LEAF_AIR_ENVIRONMENT_QUESTION_KEY = 'q_yellow_leaf__air_environment'
 const ROOT_ROT_PACKAGE_MODE = 'root_rot_package'
 const ROOT_ROT_PACKAGE_SOURCE_MODE = 'root_rot'
 const QUESTION_PACKAGE_MODE_ALIASES = new Map([
@@ -33,10 +34,12 @@ const QUESTION_PACKAGE_BY_MODE = {
     route: 'yellow_leaf',
     sourceMode: YELLOWING_PACKAGE_SOURCE_MODE,
     questionCount: YELLOWING_PACKAGE_QUESTION_COUNT,
+    packageVersion: 2,
     packageTopics: [
       'watering_frequency_context',
       'light_change_context',
-      'fertilization_growth_context'
+      'fertilization_growth_context',
+      'air_environment'
     ],
     answerSubmitMode: 'package',
     questionDisplayMode: 'package',
@@ -51,10 +54,12 @@ const QUESTION_PACKAGE_BY_MODE = {
     route: 'wilting_droop',
     sourceMode: WILTING_DROOP_PACKAGE_SOURCE_MODE,
     questionCount: WILTING_DROOP_PACKAGE_QUESTION_COUNT,
+    packageVersion: 2,
     packageTopics: [
       'watering_frequency_context',
       'wilting_shape',
       'wilting_rhythm_environment',
+      'air_environment',
       'recent_stress',
       'wilting_high_risk'
     ],
@@ -71,6 +76,7 @@ const QUESTION_PACKAGE_BY_MODE = {
     route: 'root_rot',
     sourceMode: ROOT_ROT_PACKAGE_SOURCE_MODE,
     questionCount: 0,
+    packageVersion: 1,
     packageTopics: [],
     answerSubmitMode: 'package',
     questionDisplayMode: 'package',
@@ -85,7 +91,8 @@ const QUESTION_PACKAGE_BY_MODE = {
 const YELLOWING_FRONTLOADED_CARE_CONTEXT_DIMENSIONS = new Set([
   'watering_frequency_context',
   'light_change_context',
-  'fertilization_growth_context'
+  'fertilization_growth_context',
+  'air_environment'
 ])
 
 function normalizeText(value = '') {
@@ -120,6 +127,7 @@ function cloneDynamicQuestionPackage(questionPackage = {}, questionCount = 0) {
     route: normalizeText(questionPackage.route || ''),
     sourceMode: normalizeText(questionPackage.sourceMode || questionPackage.source_mode || ''),
     questionCount: expectedCount,
+    packageVersion: Number(questionPackage.packageVersion || 1),
     packageTopics: Array.isArray(questionPackage.packageTopics)
       ? questionPackage.packageTopics.map(item => normalizeText(item)).filter(Boolean)
       : [],
@@ -153,6 +161,7 @@ function getQuestionPackageByMode(mode = '', options = {}) {
     route: normalizeText(options.route || packageConfig.route),
     sourceMode: normalizeText(options.sourceMode || packageConfig.sourceMode),
     questionCount,
+    packageVersion: Number(packageConfig.packageVersion || 1),
     packageTopics: Array.isArray(options.packageTopics)
       ? options.packageTopics.map(item => normalizeText(item)).filter(Boolean)
       : packageConfig.packageTopics.slice(),
@@ -192,6 +201,9 @@ function normalizeAnswerQuestionKey(answer = {}) {
 
 function parseYellowingFrontloadedCareQuestionKey(questionKey = '') {
   const normalizedQuestionKey = normalizeText(questionKey)
+  if (normalizedQuestionKey === YELLOW_LEAF_AIR_ENVIRONMENT_QUESTION_KEY) {
+    return 'air_environment'
+  }
   const prefix = 'q_observed_probe__leaf_yellowing__'
   if (!normalizedQuestionKey.startsWith(prefix)) {
     return ''

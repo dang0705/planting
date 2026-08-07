@@ -298,6 +298,20 @@ export function buildDiagnosisAnswerMutationPayload({
     ? normalizeCareBehaviorTimeline(sidecarFromPayload)
     : null
   const hasSidecar = normalizedSidecar && hasMeaningfulCareBehaviorTimeline(normalizedSidecar)
+  const airEnvironmentByQuestionId =
+    careBehaviorSidecar.airEnvironmentByQuestionId &&
+    typeof careBehaviorSidecar.airEnvironmentByQuestionId === 'object' &&
+    !Array.isArray(careBehaviorSidecar.airEnvironmentByQuestionId)
+      ? careBehaviorSidecar.airEnvironmentByQuestionId
+      : null
+  const airEnvironmentSnapshotsByQuestionId =
+    careBehaviorSidecar.airEnvironmentSnapshotsByQuestionId &&
+    typeof careBehaviorSidecar.airEnvironmentSnapshotsByQuestionId === 'object' &&
+    !Array.isArray(careBehaviorSidecar.airEnvironmentSnapshotsByQuestionId)
+      ? careBehaviorSidecar.airEnvironmentSnapshotsByQuestionId
+      : null
+  const hasAirEnvironmentSidecar =
+    airEnvironmentByQuestionId && Object.keys(airEnvironmentByQuestionId).length > 0
 
   return {
     diagnosisSessionId,
@@ -323,6 +337,12 @@ export function buildDiagnosisAnswerMutationPayload({
     ...(environmentWeatherWindow && typeof environmentWeatherWindow === 'object'
       ? { environmentWeatherWindow }
       : {}),
-    ...(hasSidecar ? { careBehaviorTimeline: normalizedSidecar } : {})
+    ...(hasSidecar ? { careBehaviorTimeline: normalizedSidecar } : {}),
+    ...(hasAirEnvironmentSidecar
+      ? {
+          airEnvironmentByQuestionId,
+          airEnvironmentSnapshotsByQuestionId: airEnvironmentSnapshotsByQuestionId || {}
+        }
+      : {})
   }
 }

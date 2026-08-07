@@ -1,11 +1,9 @@
 'use strict'
 
 const { toOptionId } = require('../mappers/public-id-mapper')
+const { createAirEnvironmentPackageQuestion } = require('./air-environment-question-contract')
 const outcomeRouteRepository = require('../repositories/outcome-route-repository')
-const {
-  planOutcomeRoutes,
-  buildRouteEvidenceContext
-} = require('../domain/outcome-route-planner')
+const { planOutcomeRoutes, buildRouteEvidenceContext } = require('../domain/outcome-route-planner')
 const { buildRuntimeArtifacts } = require('../domain/runtime-artifacts')
 const { buildDiagnosisDirections } = require('../utils/diagnosis-directions')
 const { buildDerivedEvidenceSet } = require('../utils/derived-evidence')
@@ -50,23 +48,25 @@ function isEnabledFeatureFlag(primaryEnvKey = '', conservativeEnvKey = '', optio
 }
 
 function resolveManualStartActiveSymptomKeys(observedEvidenceSet = [], observedSymptoms = []) {
-  const symptomKeys = Array.from(new Set([
-    ...(Array.isArray(observedEvidenceSet) ? observedEvidenceSet : [])
-      .filter(item =>
-        Number(item?.enteredRuntime ?? item?.entered_runtime ?? 1) === 1 &&
-        String(item?.currentStatus || item?.current_status || 'active').trim() !== 'superseded'
-      )
-      .map(item => String(item?.symptomKey || item?.symptom_key || '').trim())
-      .filter(Boolean),
-    ...(Array.isArray(observedSymptoms) ? observedSymptoms : [])
-      .map(item => String(item?.symptomKey || item?.symptom_key || '').trim())
-      .filter(Boolean)
-  ]))
+  const symptomKeys = Array.from(
+    new Set([
+      ...(Array.isArray(observedEvidenceSet) ? observedEvidenceSet : [])
+        .filter(
+          item =>
+            Number(item?.enteredRuntime ?? item?.entered_runtime ?? 1) === 1 &&
+            String(item?.currentStatus || item?.current_status || 'active').trim() !== 'superseded'
+        )
+        .map(item => String(item?.symptomKey || item?.symptom_key || '').trim())
+        .filter(Boolean),
+      ...(Array.isArray(observedSymptoms) ? observedSymptoms : [])
+        .map(item => String(item?.symptomKey || item?.symptom_key || '').trim())
+        .filter(Boolean)
+    ])
+  )
 
-  return Array.from(new Set([
-    ...symptomKeys,
-    ...collectBridgeTargetSymptomKeys(symptomKeys)
-  ].filter(Boolean)))
+  return Array.from(
+    new Set([...symptomKeys, ...collectBridgeTargetSymptomKeys(symptomKeys)].filter(Boolean))
+  )
 }
 
 function collectCandidateOutcomeKeysFromRouteGroups(routeGroups = [], activeSymptomKeys = []) {
@@ -75,18 +75,27 @@ function collectCandidateOutcomeKeysFromRouteGroups(routeGroups = [], activeSymp
       .map(item => String(item || '').trim())
       .filter(Boolean)
   )
-  if (!activeSymptomKeySet.size) {return []}
+  if (!activeSymptomKeySet.size) {
+    return []
+  }
 
-  const candidateOutcomeKeys = Array.from(new Set(
-    (Array.isArray(routeGroups) ? routeGroups : [])
-      .filter(group =>
-        Array.isArray(group?.entrySymptomKeys) &&
-        group.entrySymptomKeys.some(symptomKey => activeSymptomKeySet.has(String(symptomKey || '').trim()))
-      )
-      .flatMap(group => Array.isArray(group?.candidateOutcomeKeys) ? group.candidateOutcomeKeys : [])
-      .map(item => String(item || '').trim())
-      .filter(Boolean)
-  ))
+  const candidateOutcomeKeys = Array.from(
+    new Set(
+      (Array.isArray(routeGroups) ? routeGroups : [])
+        .filter(
+          group =>
+            Array.isArray(group?.entrySymptomKeys) &&
+            group.entrySymptomKeys.some(symptomKey =>
+              activeSymptomKeySet.has(String(symptomKey || '').trim())
+            )
+        )
+        .flatMap(group =>
+          Array.isArray(group?.candidateOutcomeKeys) ? group.candidateOutcomeKeys : []
+        )
+        .map(item => String(item || '').trim())
+        .filter(Boolean)
+    )
+  )
 
   return shouldUseYellowingCareEnvironmentGuard(activeSymptomKeys)
     ? filterYellowingCareEnvironmentCandidateOutcomeKeys(candidateOutcomeKeys)
@@ -117,7 +126,8 @@ function mapSyntheticQuestionToQuestion(question = {}) {
     renderMode: question.renderMode || '',
     routePackageRole: question.routePackageRole || '',
     packageEffect: question.packageEffect || '',
-    type: question.questionType || question.answerType || 'single_choice',
+    questionType: question.questionType || '',
+    type: question.type || question.answerType || 'single_choice',
     text: question.text || question.questionText || '',
     questionText: question.questionText || question.text || '',
     helpText: question.helpText || '',
@@ -145,26 +155,41 @@ async function buildManualYellowingCareStartQuestions({
   }
   const questions = []
   for (const packageTopic of YELLOWING_FRONTLOADED_CARE_CONTEXT_DIMENSIONS) {
-    if (isRegisteredPackageQuestionTopic(packageTopic)) {
-      questions.push(await loadRegisteredPackageQuestion({
-        packageTopic,
-        repository,
-        selectionSource: 'data_repository_question_package',
-        targetSymptomKey: yellowingItem.symptomKey
-      }))
+    if (packageTopic === 'air_environment') {
+      questions.push(
+        createAirEnvironmentPackageQuestion({
+          selectionSource: 'route_planner',
+          packageSection: 'context_probe'
+        })
+      )
       continue
     }
-    questions.push(...buildSyntheticObservedProbeQuestions(yellowingItem, {
+    if (isRegisteredPackageQuestionTopic(packageTopic)) {
+      questions.push(
+        await loadRegisteredPackageQuestion({
+          packageTopic,
+          repository,
+          selectionSource: 'data_repository_question_package',
+          targetSymptomKey: yellowingItem.symptomKey
+        })
+      )
+      continue
+    }
+    questions.push(
+      ...buildSyntheticObservedProbeQuestions(yellowingItem, {
         maxQuestions: 1,
         preferredTopics: [packageTopic],
         plantContext
-      }))
+      })
+    )
   }
   const uniqueQuestions = []
   const seenQuestionKeys = new Set()
   for (const question of filterDisabledYellowingFlowQuestions(questions)) {
     const questionKey = String(question?.questionKey || '').trim()
-    if (!questionKey || seenQuestionKeys.has(questionKey)) {continue}
+    if (!questionKey || seenQuestionKeys.has(questionKey)) {
+      continue
+    }
     seenQuestionKeys.add(questionKey)
     uniqueQuestions.push(question)
   }
@@ -181,8 +206,13 @@ async function buildManualStartRouteDecision({
 } = {}) {
   const activeSymptomKeys = resolveManualStartActiveSymptomKeys(observedEvidenceSet)
   const routeGroups = await routeRepository.getAllActiveOutcomeRouteGroups()
-  const candidateOutcomeKeys = collectCandidateOutcomeKeysFromRouteGroups(routeGroups, activeSymptomKeys)
-  if (!candidateOutcomeKeys.length) {return null}
+  const candidateOutcomeKeys = collectCandidateOutcomeKeysFromRouteGroups(
+    routeGroups,
+    activeSymptomKeys
+  )
+  if (!candidateOutcomeKeys.length) {
+    return null
+  }
 
   return routePlanner({
     candidateOutcomeKeys,
@@ -228,7 +258,10 @@ async function buildManualQuestionStartRoundResult({
     routeHints: [],
     round
   })
-  const activeSymptomKeys = resolveManualStartActiveSymptomKeys(observedEvidenceSet, observedSymptoms)
+  const activeSymptomKeys = resolveManualStartActiveSymptomKeys(
+    observedEvidenceSet,
+    observedSymptoms
+  )
   const useYellowingCareEnvironmentGuard = shouldUseYellowingCareEnvironmentGuard(activeSymptomKeys)
   if (useYellowingCareEnvironmentGuard) {
     const yellowingCareQuestions = await buildManualYellowingCareStartQuestions({
@@ -264,12 +297,12 @@ async function buildManualQuestionStartRoundResult({
         questionPackage,
         uiHints: buildQuestionPackageUiHints({}, questionPackage, yellowingCareQuestions.length),
         metrics: {
-            routeDecision: {
-              mode: 'manual_yellowing_care_environment_frontloaded',
-              candidateOutcomeKeys: [],
-              visibleOutcomeKeys: [],
-              requiresQuestion: false,
-              decisionCause: {
+          routeDecision: {
+            mode: 'manual_yellowing_care_environment_frontloaded',
+            candidateOutcomeKeys: [],
+            visibleOutcomeKeys: [],
+            requiresQuestion: false,
+            decisionCause: {
               decisionCauseKey: 'manual_yellowing_care_environment_guard',
               decisionCauseText: '黄叶手动入口直接前置养护/环境实题。'
             }
@@ -304,6 +337,7 @@ module.exports = {
     shouldUseYellowingCareEnvironmentGuard,
     buildManualYellowingCareStartQuestions,
     buildManualStartRouteDecision,
-    buildManualQuestionStartRoundResult
+    buildManualQuestionStartRoundResult,
+    buildAirEnvironmentQuestion: createAirEnvironmentPackageQuestion
   }
 }

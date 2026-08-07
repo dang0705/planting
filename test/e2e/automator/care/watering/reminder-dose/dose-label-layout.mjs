@@ -11,17 +11,22 @@
  * 前置条件：
  *   - devtools 已安装，cli 路径 /Applications/wechatwebdevtools.app/Contents/MacOS/cli
  *   - dist/dev/mp-weixin 已编译
- *   - 9420 端口在监听
+ *   - QA 准备的测试专属 Automator 会话处于可连接状态
  */
 
 import automator from 'miniprogram-automator'
-import { execSync } from 'node:child_process'
 import { mkdirSync } from 'node:fs'
+import {
+  connectFormalLeaf,
+  disconnectFormalLeaf,
+  handoffFormalLeafScreenshot
+} from '../../../_shared/formal-leaf-harness.mjs'
 
-const PORT = 9420
 const SCREENSHOT_DIR = 'screenshots'
 
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms))
+}
 
 async function collectTexts(page) {
   const els = await page.$$('text')
@@ -44,31 +49,12 @@ async function findButtonById(page, idKeyword) {
 
 async function main() {
   mkdirSync(SCREENSHOT_DIR, { recursive: true })
-
-  // 检测 9420
-  let alreadyListening = false
-  try {
-    execSync('lsof -nP -iTCP:9420 -sTCP:LISTEN', { stdio: 'ignore' })
-    alreadyListening = true
-    console.log('[1] 9420 已监听，复用')
-  } catch {}
-
-  if (!alreadyListening) {
-    console.error('✗ 9420 未监听，请先打开微信开发者工具')
-    process.exit(1)
-  }
-
   let mp = null
-  for (let i = 0; i < 15; i++) {
-    await sleep(1000)
-    try {
-      mp = await automator.connect({ wsEndpoint: `ws://127.0.0.1:${PORT}` })
-      break
-    } catch {}
-  }
-  if (!mp) {
-    console.error('✗ 未能连接 automator')
-    process.exit(1)
+  try {
+    ;({ mp } = await connectFormalLeaf({ automator }))
+  } catch (error) {
+    console.error(`✗ 未能连接测试专属 Automator: ${error.message}`)
+    process.exit(2)
   }
   console.log('[2] connect 成功')
 
@@ -79,10 +65,16 @@ async function main() {
     await sleep(10000)
 
     // 截图首页
-    await mp.screenshot({ path: `${SCREENSHOT_DIR}/dose-test-0-homepage.png` })
+    mp = (
+      await handoffFormalLeafScreenshot({
+        mp,
+        automator,
+        outputPath: `${SCREENSHOT_DIR}/dose-test-0-homepage.png`
+      })
+    ).mp
     console.log('  截图: dose-test-0-homepage.png')
 
-    const page = await mp.currentPage()
+    let page = await mp.currentPage()
     console.log(`[4] 当前页: ${page.path}`)
 
     // 找第一株植物的水滴按钮（任意 plantId）
@@ -129,7 +121,14 @@ async function main() {
     await sleep(3000)
 
     // 截图 sheet
-    await mp.screenshot({ path: `${SCREENSHOT_DIR}/dose-test-1-sheet-open.png` })
+    mp = (
+      await handoffFormalLeafScreenshot({
+        mp,
+        automator,
+        outputPath: `${SCREENSHOT_DIR}/dose-test-1-sheet-open.png`
+      })
+    ).mp
+    page = await mp.currentPage()
     console.log('  截图: dose-test-1-sheet-open.png')
 
     // 点上次浇水行
@@ -137,7 +136,10 @@ async function main() {
     const views = await page.$$('view')
     for (const v of views) {
       const id = await v.attribute('id')
-      if (id && id.includes('last-watering')) { await v.tap(); break }
+      if (id && id.includes('last-watering')) {
+        await v.tap()
+        break
+      }
     }
     await sleep(2000)
 
@@ -155,7 +157,14 @@ async function main() {
     }
 
     // 截图 dose list
-    await mp.screenshot({ path: `${SCREENSHOT_DIR}/dose-test-2-dose-list.png` })
+    mp = (
+      await handoffFormalLeafScreenshot({
+        mp,
+        automator,
+        outputPath: `${SCREENSHOT_DIR}/dose-test-2-dose-list.png`
+      })
+    ).mp
+    page = await mp.currentPage()
     console.log('  截图: dose-test-2-dose-list.png')
 
     // 抓取 dose list 文案
@@ -176,12 +185,22 @@ async function main() {
     const btns2 = await page.$$('button')
     for (const btn of btns2) {
       const t = await btn.text()
-      if (t && t.trim() === '确认') { await btn.tap(); break }
+      if (t && t.trim() === '确认') {
+        await btn.tap()
+        break
+      }
     }
     await sleep(5000)
 
     // 截图 planner 结果
-    await mp.screenshot({ path: `${SCREENSHOT_DIR}/dose-test-3-planner-result.png` })
+    mp = (
+      await handoffFormalLeafScreenshot({
+        mp,
+        automator,
+        outputPath: `${SCREENSHOT_DIR}/dose-test-3-planner-result.png`
+      })
+    ).mp
+    page = await mp.currentPage()
     console.log('  截图: dose-test-3-planner-result.png')
 
     // 抓取建议水量文案
@@ -192,9 +211,12 @@ async function main() {
     console.log('\n=== 截图测试完成 ===')
     console.log(`截图保存在 ${SCREENSHOT_DIR}/ 目录`)
   } finally {
-    try { await mp.disconnect() } catch {}
+    await disconnectFormalLeaf({ mp }).catch(() => {})
   }
   process.exit(0)
 }
 
-main().catch(e => { console.error('失败:', e.message); process.exit(1) })
+main().catch(e => {
+  console.error('失败:', e.message)
+  process.exit(1)
+})

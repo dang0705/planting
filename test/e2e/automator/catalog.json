@@ -1,11 +1,27 @@
 {
   "version": 2,
-  "top_domains": ["ai-vision", "diagnosis", "care", "user", "plants"],
+  "top_domains": [
+    "ai-vision",
+    "diagnosis",
+    "care",
+    "user",
+    "plants"
+  ],
   "executable_leaf_convention": {
-    "roots": ["test/e2e/automator"],
-    "extensions": [".mjs", ".cjs"],
-    "excluded_path_segments": ["_shared", "_history"],
-    "rule": "Every .mjs/.cjs file under test/e2e/automator is an executable leaf unless one path segment is _shared or _history."
+    "roots": [
+      "test/e2e/automator"
+    ],
+    "extensions": [
+      ".mjs",
+      ".cjs"
+    ],
+    "excluded_path_segments": [
+      "_shared",
+      "_history",
+      "yellowing",
+      "pest-mode-and-retake"
+    ],
+    "rule": "Every .mjs/.cjs file under test/e2e/automator is an executable leaf unless a path segment identifies shared, historical, or extracted leaf-library code."
   },
   "id_policy": {
     "source": "docs/ai-rules/frontend-automation-id-policy.md",
@@ -17,7 +33,8 @@
       "watering-reminder-",
       "watering-date-picker-",
       "care-behavior-date-",
-      "pot-profile-"
+      "pot-profile-",
+      "airflow-"
     ]
   },
   "category_tree": {
@@ -28,9 +45,18 @@
       },
       "pest": {
         "visual-mode-retake": "diagnosis.pest.visual_mode_retake"
+      },
+      "air-environment-v2": {
+        "question-packages": "diagnosis.air_environment_v2.question_packages"
       }
     },
     "care": {
+      "air_exchange": {
+        "v1": "care.air_exchange.v1"
+      },
+      "air-environment-v2": {
+        "user-plant-watering": "care.air_environment_v2.user_plant_watering"
+      },
       "watering": {
         "transpiration-v3": {
           "independent-advice": "care.watering.transpiration_v3.independent_advice",
@@ -51,36 +77,59 @@
   "entries": [
     {
       "id": "diagnosis.yellowing.no_image_quick",
-      "category_path": ["diagnosis", "yellowing", "no-image-quick"],
+      "category_path": [
+        "diagnosis",
+        "yellowing",
+        "no-image-quick"
+      ],
       "leaf_script": "test/e2e/automator/diagnosis/diagnose-yellowing-mcp.mjs",
-      "script_sha256": "a4ef17dd2733f9f26a2e8d50d297777a2b18b33a543ab56b83abee52af49ac3d",
+      "script_sha256": "7f11b0a4d48ef07e3ca07f305447ab38bb2d6a4ab8d7ae56749493eb6ae1de27",
       "reusable_scenarios": [],
       "id_policy": {
-        "sections": ["3.1", "3.3", "3.7"],
+        "sections": [
+          "3.1",
+          "3.3",
+          "3.7"
+        ],
         "refs": [
           "docs/ai-rules/frontend-automation-id-policy.md#3.1",
           "docs/ai-rules/frontend-automation-id-policy.md#3.3",
           "docs/ai-rules/frontend-automation-id-policy.md#3.7"
         ],
-        "stable_ids": ["diagnosis-yellowing-entry"],
-        "stable_id_prefixes": ["diagnosis-"]
+        "stable_ids": [
+          "diagnosis-yellowing-entry"
+        ],
+        "stable_id_prefixes": [
+          "diagnosis-"
+        ]
       },
       "requirements": {
         "screenshot": true,
-        "wx_request": ["diagnose"],
+        "wx_request": [
+          "diagnose"
+        ],
         "cache": "must_record_cache_state_if_diagnosis_cache_is_touched",
         "reentry": false,
-        "fixtures": ["logged-in or dev-mode test account with diagnosis entry visible"]
+        "fixtures": [
+          "logged-in or dev-mode test account with diagnosis entry visible"
+        ]
       }
     },
     {
       "id": "diagnosis.pest.visual_mode_retake",
-      "category_path": ["diagnosis", "pest", "visual-mode-retake"],
+      "category_path": [
+        "diagnosis",
+        "pest",
+        "visual-mode-retake"
+      ],
       "leaf_script": "test/e2e/automator/diagnosis/pest-mode-and-retake.mjs",
-      "script_sha256": "ff1b7014f194d284016362db6e033d76b7c58a8d29370ed73b3ff6e7da620518",
+      "script_sha256": "8464e0c698fb0356f63da0fcead1df63bd95667cc3282df0b9007da51e7ae522",
       "reusable_scenarios": [],
       "id_policy": {
-        "sections": ["3.3", "3.12"],
+        "sections": [
+          "3.3",
+          "3.12"
+        ],
         "refs": [
           "docs/ai-rules/frontend-automation-id-policy.md#3.3",
           "docs/ai-rules/frontend-automation-id-policy.md#3.12"
@@ -101,7 +150,10 @@
           "diagnose-retake-expired-text",
           "diagnose-retake-skipped-text"
         ],
-        "stable_id_prefixes": ["diagnose-", "diagnosis-"]
+        "stable_id_prefixes": [
+          "diagnose-",
+          "diagnosis-"
+        ]
       },
       "requirements": {
         "screenshot": true,
@@ -122,15 +174,24 @@
     },
     {
       "id": "care.watering.transpiration_v3.independent_advice",
-      "category_path": ["care", "watering", "transpiration-v3", "independent-advice"],
+      "category_path": [
+        "care",
+        "watering",
+        "transpiration-v3",
+        "independent-advice"
+      ],
       "leaf_script": "test/e2e/automator/care/watering/transpiration-v3/independent-advice.mjs",
-      "script_sha256": "10db2f3a2c9576817aaa2f869be32956da194aab001db5cd9fa439283c9d9e69",
+      "script_sha256": "bf0e16a3f01ba22d9aad1c95e22c1598a0f3c5609bdea32afd1de2d5d97bece8",
       "reusable_scenarios": [
         "test/e2e/automator/care/watering/transpiration-v3/_shared/scenarios/independent-watering.mjs"
       ],
       "id_policy": {
-        "sections": ["3.10"],
-        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.10"],
+        "sections": [
+          "3.10"
+        ],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.10"
+        ],
         "stable_ids": [
           "watering-advisor-search-input",
           "watering-advisor-next-button",
@@ -138,11 +199,16 @@
           "watering-advisor-compute-button",
           "watering-advisor-result-amount"
         ],
-        "stable_id_prefixes": ["watering-advisor-", "pot-profile-"]
+        "stable_id_prefixes": [
+          "watering-advisor-",
+          "pot-profile-"
+        ]
       },
       "requirements": {
         "screenshot": true,
-        "wx_request": ["/watering-advisor"],
+        "wx_request": [
+          "/watering-advisor"
+        ],
         "cache": false,
         "reentry": true,
         "fixtures": [
@@ -153,15 +219,24 @@
     },
     {
       "id": "care.watering.transpiration_v3.user_plant_planner",
-      "category_path": ["care", "watering", "transpiration-v3", "user-plant-planner"],
+      "category_path": [
+        "care",
+        "watering",
+        "transpiration-v3",
+        "user-plant-planner"
+      ],
       "leaf_script": "test/e2e/automator/care/watering/transpiration-v3/user-plant-planner.mjs",
-      "script_sha256": "62a2824371cbfbdaa65f195f14bde667a8121597c0923c7e7a4c3ca1f26e5c37",
+      "script_sha256": "128579cb54b5260bd99e5abde1dc892c99654a98be1788bac46fff420bab69f1",
       "reusable_scenarios": [
         "test/e2e/automator/care/watering/transpiration-v3/_shared/scenarios/my-plant-planner.mjs"
       ],
       "id_policy": {
-        "sections": ["3.10"],
-        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.10"],
+        "sections": [
+          "3.10"
+        ],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.10"
+        ],
         "stable_ids": [
           "watering-reminder-last-watering-row",
           "watering-date-picker-sheet",
@@ -176,110 +251,406 @@
       },
       "requirements": {
         "screenshot": true,
-        "wx_request": ["/user-plants/watering-planner"],
+        "wx_request": [
+          "/user-plants/watering-planner"
+        ],
         "cache": "shadow/active snapshot signature must match when active mode is used",
         "reentry": true,
-        "fixtures": ["test account has at least one user plant with a watering reminder entry"]
+        "fixtures": [
+          "test account has at least one user plant with a watering reminder entry"
+        ]
       }
     },
     {
       "id": "care.watering.reminder_dose.bottle_text",
-      "category_path": ["care", "watering", "reminder-dose", "bottle-text"],
+      "category_path": [
+        "care",
+        "watering",
+        "reminder-dose",
+        "bottle-text"
+      ],
       "leaf_script": "test/e2e/automator/care/watering/reminder-dose/bottle-text.mjs",
-      "script_sha256": "687eb3e827573163e9cb22ff7aaa4cf6bba3ee147fad92ee39c0627591f88a1a",
+      "script_sha256": "9461e0b4bfdb607b5f05b985a48003f319726327b7e9a8c03c53b5a6d1b007fc",
       "reusable_scenarios": [],
       "id_policy": {
-        "sections": ["3.10"],
-        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.10"],
-        "stable_ids": ["watering-reminder-last-watering-row", "pot-profile-row"],
-        "stable_id_prefixes": ["plant-card-reminder-", "watering-reminder-", "care-behavior-date-"]
+        "sections": [
+          "3.10"
+        ],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.10"
+        ],
+        "stable_ids": [
+          "watering-reminder-last-watering-row",
+          "pot-profile-row"
+        ],
+        "stable_id_prefixes": [
+          "plant-card-reminder-",
+          "watering-reminder-",
+          "care-behavior-date-"
+        ]
       },
       "requirements": {
         "screenshot": false,
-        "wx_request": ["/user-plants/watering-planner"],
+        "wx_request": [
+          "/user-plants/watering-planner"
+        ],
         "cache": false,
         "reentry": false,
-        "fixtures": ["user plant with watering reminder and dose options"]
+        "fixtures": [
+          "user plant with watering reminder and dose options"
+        ]
       }
     },
     {
       "id": "care.watering.reminder_dose.dose_dynamic",
-      "category_path": ["care", "watering", "reminder-dose", "dose-dynamic"],
+      "category_path": [
+        "care",
+        "watering",
+        "reminder-dose",
+        "dose-dynamic"
+      ],
       "leaf_script": "test/e2e/automator/care/watering/reminder-dose/dose-dynamic.mjs",
-      "script_sha256": "1fafb110673bd2f4cc1185fd1d3ef58296a491f4705505336626215babf49257",
+      "script_sha256": "4876b0183c06bc66c2067f75608252789aee0b5ebd5c8af26977bd4f5c095845",
       "reusable_scenarios": [],
       "id_policy": {
-        "sections": ["3.10"],
-        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.10"],
-        "stable_ids": ["watering-reminder-last-watering-row"],
-        "stable_id_prefixes": ["plant-card-reminder-", "watering-reminder-", "care-behavior-date-"]
+        "sections": [
+          "3.10"
+        ],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.10"
+        ],
+        "stable_ids": [
+          "watering-reminder-last-watering-row"
+        ],
+        "stable_id_prefixes": [
+          "plant-card-reminder-",
+          "watering-reminder-",
+          "care-behavior-date-"
+        ]
       },
       "requirements": {
         "screenshot": false,
-        "wx_request": ["/user-plants/watering-planner"],
+        "wx_request": [
+          "/user-plants/watering-planner"
+        ],
         "cache": false,
         "reentry": false,
-        "fixtures": ["plant id 14 fixture with large pot volume"]
+        "fixtures": [
+          "plant id 14 fixture with large pot volume"
+        ]
       }
     },
     {
       "id": "care.watering.reminder_dose.dose_label_layout",
-      "category_path": ["care", "watering", "reminder-dose", "dose-label-layout"],
+      "category_path": [
+        "care",
+        "watering",
+        "reminder-dose",
+        "dose-label-layout"
+      ],
       "leaf_script": "test/e2e/automator/care/watering/reminder-dose/dose-label-layout.mjs",
-      "script_sha256": "ea2309805a11a338ed15751312df3a027ee55a5bbbda512dd2c16c945f27fef2",
+      "script_sha256": "50dd7453e197cc7109b4d7179dd4564310233d29091423984ea06fa6ca55e4c5",
       "reusable_scenarios": [],
       "id_policy": {
-        "sections": ["3.10"],
-        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.10"],
-        "stable_ids": ["watering-reminder-last-watering-row"],
-        "stable_id_prefixes": ["plant-card-reminder-", "watering-reminder-", "care-behavior-date-"]
+        "sections": [
+          "3.10"
+        ],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.10"
+        ],
+        "stable_ids": [
+          "watering-reminder-last-watering-row"
+        ],
+        "stable_id_prefixes": [
+          "plant-card-reminder-",
+          "watering-reminder-",
+          "care-behavior-date-"
+        ]
       },
       "requirements": {
         "screenshot": true,
-        "wx_request": ["/user-plants/watering-planner"],
+        "wx_request": [
+          "/user-plants/watering-planner"
+        ],
         "cache": false,
         "reentry": false,
-        "fixtures": ["user plant with historical watering date entries"]
+        "fixtures": [
+          "user plant with historical watering date entries"
+        ]
       }
     },
     {
       "id": "care.watering.reminder_dose.unit_alignment_final",
-      "category_path": ["care", "watering", "reminder-dose", "unit-alignment-final"],
-      "leaf_script": "test/e2e/automator/care/watering/reminder-dose/unit-alignment-final.cjs",
-      "script_sha256": "59dc48432eb7588334bbf2f49dfb06b107f1dd71a1d2af3e5e5929fccb9d2f14",
+      "category_path": [
+        "care",
+        "watering",
+        "reminder-dose",
+        "unit-alignment-final"
+      ],
+      "leaf_script": "test/e2e/automator/care/watering/reminder-dose/unit-alignment-final.mjs",
+      "script_sha256": "cf1200f99fd1d3f111ef44479fbb66180dc9c516185c1e89f58a3fb3fb178070",
       "reusable_scenarios": [],
       "id_policy": {
-        "sections": ["3.10"],
-        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.10"],
-        "stable_ids": ["plant-card-reminder-14-water"],
-        "stable_id_prefixes": ["plant-card-reminder-", "watering-reminder-"]
+        "sections": [
+          "3.10"
+        ],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.10"
+        ],
+        "stable_ids": [
+          "plant-card-reminder-14-water"
+        ],
+        "stable_id_prefixes": [
+          "plant-card-reminder-",
+          "watering-reminder-"
+        ]
       },
       "requirements": {
         "screenshot": true,
-        "wx_request": ["/user-plants/watering-planner"],
+        "wx_request": [
+          "/user-plants/watering-planner"
+        ],
         "cache": false,
         "reentry": false,
-        "fixtures": ["plant id 14 fixture"]
+        "fixtures": [
+          "plant id 14 fixture"
+        ]
       }
     },
     {
       "id": "care.watering.reminder_dose.unit_alignment_v4",
-      "category_path": ["care", "watering", "reminder-dose", "unit-alignment-v4"],
-      "leaf_script": "test/e2e/automator/care/watering/reminder-dose/unit-alignment-v4.cjs",
-      "script_sha256": "8514f5fec688afa5e39e8028937f59a388d4297b30010852624cd896ed319858",
+      "category_path": [
+        "care",
+        "watering",
+        "reminder-dose",
+        "unit-alignment-v4"
+      ],
+      "leaf_script": "test/e2e/automator/care/watering/reminder-dose/unit-alignment-v4.mjs",
+      "script_sha256": "742f8bc9793217900923e35ac1277fb2ce5ca3cfa863628ba2e59f725ef3a62d",
       "reusable_scenarios": [],
       "id_policy": {
-        "sections": ["3.10"],
-        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.10"],
-        "stable_ids": ["plant-card-reminder-14-water"],
-        "stable_id_prefixes": ["plant-card-reminder-", "watering-reminder-", "care-behavior-date-"]
+        "sections": [
+          "3.10"
+        ],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.10"
+        ],
+        "stable_ids": [
+          "plant-card-reminder-14-water"
+        ],
+        "stable_id_prefixes": [
+          "plant-card-reminder-",
+          "watering-reminder-",
+          "care-behavior-date-"
+        ]
       },
       "requirements": {
         "screenshot": true,
-        "wx_request": ["/user-plants/watering-planner"],
+        "wx_request": [
+          "/user-plants/watering-planner"
+        ],
         "cache": false,
         "reentry": false,
-        "fixtures": ["plant id 14 fixture"]
+        "fixtures": [
+          "plant id 14 fixture"
+        ]
+      }
+    },
+    {
+      "id": "care.air_exchange.v1",
+      "category_path": [
+        "care",
+        "air-exchange",
+        "v1"
+      ],
+      "leaf_script": "test/e2e/automator/care/airflow/air-exchange-v1.mjs",
+      "script_sha256": "812e184798c2901fc0abbf43c10653b6ea6ad41f663100b44fb188f6f6ba165a",
+      "reusable_scenarios": [
+        "test/e2e/automator/care/airflow/_shared/run-air-exchange-v1.mjs"
+      ],
+      "integrity_files": [
+        "src/pages/airflow/index.vue",
+        "src/components/AirEnvironmentAssessment.vue",
+        "src/components/AirExchangeAssessment.vue",
+        "src/utils/air-environment.js",
+        "src/utils/air-exchange-evidence.js"
+      ],
+      "id_policy": {
+        "sections": [
+          "3.13"
+        ],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.13"
+        ],
+        "stable_ids": [
+          "airflow-assessment",
+          "airflow-swiper",
+          "airflow-exchange-assessment",
+          "airflow-exchange-step",
+          "airflow-exchange-source-window",
+          "airflow-exchange-source-fresh_air",
+          "airflow-exchange-source-unknown",
+          "airflow-exchange-window-direction-one",
+          "airflow-exchange-window-direction-two-or-more",
+          "airflow-exchange-window-direction-closed",
+          "airflow-exchange-window-frequency-daily",
+          "airflow-exchange-window-frequency-every-other-day",
+          "airflow-exchange-window-frequency-weekly-1-2",
+          "airflow-canopy-open",
+          "airflow-canopy-partial",
+          "airflow-canopy-enclosed",
+          "airflow-canopy-unknown",
+          "airflow-device-mode-none",
+          "airflow-device-mode-has-airflow",
+          "airflow-device-mode-circulating",
+          "airflow-device-mode-direct",
+          "airflow-device-mode-unknown",
+          "airflow-device-source-fan",
+          "airflow-device-source-air_conditioner",
+          "airflow-device-source-fresh_air",
+          "airflow-local-airflow-step",
+          "airflow-next-step",
+          "airflow-previous-step",
+          "airflow-step-complete-hint",
+          "airflow-submit-button",
+          "airflow-reset-button",
+          "airflow-result-summary"
+        ],
+        "stable_id_prefixes": [
+          "airflow-"
+        ]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": [],
+        "cache": false,
+        "reentry": true,
+        "fixtures": [
+          "built mp-weixin artifact with airflow page registered"
+        ]
+      }
+    },
+    {
+      "id": "care.air_environment_v2.user_plant_watering",
+      "category_path": [
+        "care",
+        "air-environment-v2",
+        "user-plant-watering"
+      ],
+      "leaf_script": "test/e2e/automator/care/airflow/air-environment-v2-user-plant-watering.mjs",
+      "script_sha256": "c796927c846d9cd3c6bf066d52789c5ba6bbda1bbad9b6ca45fa4b0f0a68e79f",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": [
+          "3.10"
+        ],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.10"
+        ],
+        "stable_ids": [
+          "watering-advisor-my-plants-entry",
+          "watering-advisor-my-plant-card-{plant.id}",
+          "watering-advisor-air-environment-summary",
+          "watering-advisor-air-environment-edit",
+          "watering-advisor-air-environment-confirm-location",
+          "watering-advisor-air-environment-assessment",
+          "watering-advisor-air-environment-next-step",
+          "watering-advisor-air-environment-previous-step",
+          "watering-advisor-air-environment-next",
+          "watering-advisor-air-environment-load-error",
+          "watering-advisor-air-environment-sync-status",
+          "watering-advisor-air-environment-retry-save",
+          "watering-advisor-compute-button",
+          "watering-advisor-result-amount"
+        ],
+        "stable_id_prefixes": [
+          "watering-advisor-"
+        ]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": [
+          "/user-plants/air-environment",
+          "/user-plants/watering-planner"
+        ],
+        "cache": false,
+        "reentry": true,
+        "fixtures": [
+          "saved-prefill: first user plant has a complete saved profile with a matching location binding",
+          "failure-fallback: gateway deterministically fails air-environment GET and PATCH while planner remains available",
+          "switch-draft: first and second user plants are available and second has no saved air-environment profile"
+        ]
+      }
+    },
+    {
+      "id": "diagnosis.air_environment_v2.question_packages",
+      "category_path": [
+        "diagnosis",
+        "air-environment-v2",
+        "question-packages"
+      ],
+      "leaf_script": "test/e2e/automator/diagnosis/air-environment-v2-question-packages.mjs",
+      "integrity_files": [
+        "src/components/AirEnvironmentAssessment.vue",
+        "src/components/AirExchangeAssessment.vue",
+        "src/pages/diagnose/question-package/AirEnvironmentQuestionInput.vue",
+        "src/pages/diagnose/question-package/question-submit.js",
+        "src/pages/diagnose/question-package/question-air-environment.js",
+        "src/pages/diagnose/question-package.vue",
+        "src/utils/air-environment.js",
+        "src/utils/diagnose-question-answer-payload.js",
+        "src/vue-query/diagnose/mutations/shared.js",
+        "cloudfunctions/diagnose-http/app/air-environment-package.js",
+        "cloudfunctions/layer/utils/air-environment-evidence.js",
+        "scripts/dev/local-api-env-config.mjs",
+        "test/e2e/automator/diagnosis/_shared/screenshot-worker.mjs"
+      ],
+      "script_sha256": "4aef27736c9f452d16223147ae0f04c06bbbc542fd1f94e598f8a15643b141c4",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": [
+          "3.1",
+          "3.3"
+        ],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.1",
+          "docs/ai-rules/frontend-automation-id-policy.md#3.3"
+        ],
+        "stable_ids": [
+          "diagnose-entry-button-{plant.id}",
+          "diagnose-dev-symptom-class-option-yellowing_mode",
+          "diagnose-dev-symptom-class-option-wilting_droop_mode",
+          "diagnose-question-package-page",
+          "diagnose-question-package-page-question-shell-{questionId}",
+          "diagnose-question-package-page-active-question-{questionId}",
+          "diagnose-air-environment-{questionId}-unknown",
+          "diagnose-air-environment-{questionId}-next-step",
+          "diagnose-air-environment-{questionId}-previous-step",
+          "diagnose-air-environment-{questionId}-location-confirmation",
+          "diagnose-question-package-restart-required-button",
+          "layout-left-action",
+          "diagnose-popup-close-button"
+        ],
+        "stable_id_prefixes": [
+          "diagnose-",
+          "diagnosis-"
+        ]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": [
+          "diagnose-http/diagnosis/question/start",
+          "diagnose-http/diagnosis/answer",
+          "/user-plants/air-environment"
+        ],
+        "cache": false,
+        "reentry": true,
+        "fixtures": [
+          "runtime-owned authenticated user and user-plant fixture loads plant 94021 through the real plant store; after the initial homepage launch it records authenticated state, plant ids, index-plant-list, plant-card presence and the component-scoped direct diagnose-entry-button-94021 query before restoring storage, stores, cache and request patches",
+          "yellowing_mode and wilting_droop_mode question-start requests pass through to LAN unchanged; their real responses must render the 4 and 6 v2 question packages with the exact air-environment key and unknown control",
+          "between yellowing_mode and wilting_droop_mode the active question-package uses Layout's component-scoped layout-left-action, verifies the returned homepage, and clears any residual DiagnosePopup only through diagnose-popup-close-button before reopening plant 94021",
+          "the wilting UI records a direct fresh-air sidecar and observes the unmodified LAN answer response before asserting the existing move_from_direct_airflow outcome"
+        ]
       }
     }
   ]

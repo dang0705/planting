@@ -259,6 +259,11 @@ async function getResultById(openid, { resultId = '', sessionId = '' } = {}) {
     environmentDeviationHints: Array.isArray(runtimeSnapshot?.environmentDeviationHints)
       ? runtimeSnapshot.environmentDeviationHints
       : [],
+    airEnvironmentByQuestionId: runtimeSnapshot?.airEnvironmentByQuestionId || {},
+    airEnvironmentSnapshotsByQuestionId: runtimeSnapshot?.airEnvironmentSnapshotsByQuestionId || {},
+    airEnvironmentSnapshotSourceByQuestionId:
+      runtimeSnapshot?.airEnvironmentSnapshotSourceByQuestionId || {},
+    airEnvironmentEvidence: runtimeSnapshot?.airEnvironmentEvidence || null,
     routePrimaryAction: normalizedRoutePrimaryAction,
     stopReason: closedStageRecord.stopReason,
     stopState: persistedStopState,

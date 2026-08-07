@@ -1,24 +1,23 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import crypto from 'node:crypto'
 import { execFileSync } from 'node:child_process'
+import { canonicalizeLegacyQuotedBaseline, normalizeGitPath } from './git-status.mjs'
 import {
-  canonicalizeLegacyQuotedBaseline,
-  normalizeGitPath,
-  parsePorcelainV1Z
-} from './git-status.mjs'
+  auditExternalWorkspaceArtifacts,
+  matchesExternalWorkspaceArtifact
+} from './external-workspace-artifacts.mjs'
+import {
+  changedSinceBaselineFiles,
+  currentStatusEntries,
+  currentStatusFiles,
+  fileFingerprint,
+  ignoredStatusFile,
+  sameFingerprint
+} from './worktree-state.mjs'
 
 const normalize = normalizeGitPath
 
-const ignoredStatusFile = file =>
-  file === '.tmp' ||
-  file.startsWith('.tmp/') ||
-  file === '.codex/tmp' ||
-  file.startsWith('.codex/tmp/')
-
 const uniqueSorted = items => [...new Set(items.map(normalize).filter(Boolean))].sort()
-
-const sha256 = textOrBuffer => crypto.createHash('sha256').update(textOrBuffer).digest('hex')
 
 const runGit = args => execFileSync('git', args, { encoding: 'utf8' }).replace(/\n$/, '')
 
@@ -45,50 +44,6 @@ const globToRegExp = pattern => {
 
 const matchesAny = (file, patterns = []) =>
   patterns.some(pattern => globToRegExp(pattern).test(normalize(file)))
-
-const fileFingerprint = file => {
-  const normalized = normalize(file)
-  const exists = fs.existsSync(normalized)
-  const stat = exists ? fs.statSync(normalized) : null
-  const isFile = Boolean(stat?.isFile?.())
-  return {
-    path: normalized,
-    exists,
-    is_file: isFile,
-    worktree_sha256: isFile ? sha256(fs.readFileSync(normalized)) : null,
-    unstaged_diff_sha256: sha256(safeGit(['diff', '--binary', '--', normalized])),
-    staged_diff_sha256: sha256(safeGit(['diff', '--cached', '--binary', '--', normalized]))
-  }
-}
-
-const sameFingerprint = (a, b) =>
-  a &&
-  b &&
-  a.exists === b.exists &&
-  a.is_file === b.is_file &&
-  a.worktree_sha256 === b.worktree_sha256 &&
-  a.unstaged_diff_sha256 === b.unstaged_diff_sha256 &&
-  a.staged_diff_sha256 === b.staged_diff_sha256
-
-const currentStatusEntries = () =>
-  parsePorcelainV1Z(
-    execFileSync('git', ['status', '--porcelain=v1', '-z', '--untracked-files=all'])
-  )
-
-const currentStatusFiles = () =>
-  uniqueSorted(currentStatusEntries().map(entry => entry.path)).filter(
-    file => !ignoredStatusFile(file)
-  )
-
-const currentUnsortedStatusFiles = () =>
-  [...new Set(currentStatusEntries().map(entry => entry.path))].filter(
-    file => !ignoredStatusFile(file)
-  )
-
-const changedSinceBaselineFiles = baseline => {
-  const baselineSet = new Set((baseline.status_files ?? []).map(normalize))
-  return currentUnsortedStatusFiles().filter(file => !baselineSet.has(file))
-}
 
 const PACKAGE_DEPENDENCY_SECTIONS = [
   'dependencies',
@@ -211,8 +166,36 @@ export function buildWorktreeScopeReport({ handoff, result, baseline, baselineFi
       preexistingDirtyModified.push(file)
     }
   }
+  const externalWorkspaceArtifacts = auditExternalWorkspaceArtifacts({
+    declarations: handoff?.validation?.external_workspace_artifacts,
+    baselineFiles,
+    currentFiles,
+    changedSinceBaseline,
+    preexistingDirtyModified,
+    missingBaselineFingerprints,
+    disappearedSinceBaseline
+  })
+  errors.push(...externalWorkspaceArtifacts.errors)
+  const isExternalWorkspaceArtifact = file =>
+    matchesExternalWorkspaceArtifact(file, externalWorkspaceArtifacts.valid_declarations)
+  const ownershipCheckedChangedSinceBaseline = changedSinceBaseline.filter(
+    file => !isExternalWorkspaceArtifact(file)
+  )
+  const ownershipCheckedPreexistingDirtyModified = preexistingDirtyModified.filter(
+    file => !isExternalWorkspaceArtifact(file)
+  )
+  const ownershipCheckedMissingBaselineFingerprints = missingBaselineFingerprints.filter(
+    file => !isExternalWorkspaceArtifact(file)
+  )
+  const ownershipCheckedDisappearedSinceBaseline = disappearedSinceBaseline.filter(
+    file => !isExternalWorkspaceArtifact(file)
+  )
 
   for (const file of declaredFiles) {
+    if (isExternalWorkspaceArtifact(file)) {
+      errors.push(`result.changed_files must not declare external workspace artifact: ${file}`)
+      continue
+    }
     if (!matchesAny(file, handoff.allowed_paths ?? [])) {
       errors.push(`declared changed file outside allowed_paths: ${file}`)
     }
@@ -220,7 +203,7 @@ export function buildWorktreeScopeReport({ handoff, result, baseline, baselineFi
       errors.push(`declared changed file matches forbidden_paths: ${file}`)
     }
   }
-  for (const file of changedSinceBaseline) {
+  for (const file of ownershipCheckedChangedSinceBaseline) {
     if (!matchesAny(file, handoff.allowed_paths ?? [])) {
       errors.push(`actual changed file outside allowed_paths since baseline: ${file}`)
     }
@@ -229,7 +212,9 @@ export function buildWorktreeScopeReport({ handoff, result, baseline, baselineFi
     }
   }
 
-  const undeclaredActual = changedSinceBaseline.filter(file => !declaredSet.has(file))
+  const undeclaredActual = ownershipCheckedChangedSinceBaseline.filter(
+    file => !declaredSet.has(file)
+  )
   const declaredNotVisible = declaredFiles.filter(file => !currentSet.has(file))
   if (undeclaredActual.length) {
     errors.push(
@@ -244,9 +229,9 @@ export function buildWorktreeScopeReport({ handoff, result, baseline, baselineFi
   const unsafePreexistingOverlap = uniqueSorted(
     [
       ...declaredPreexistingOverlap,
-      ...preexistingDirtyModified,
-      ...missingBaselineFingerprints,
-      ...disappearedSinceBaseline
+      ...ownershipCheckedPreexistingDirtyModified,
+      ...ownershipCheckedMissingBaselineFingerprints,
+      ...ownershipCheckedDisappearedSinceBaseline
     ].filter(
       file =>
         !matchesAny(file, handoff.allowed_paths ?? []) ||
@@ -262,8 +247,8 @@ export function buildWorktreeScopeReport({ handoff, result, baseline, baselineFi
     const ownershipProof = handoff?.validation?.preexisting_dirty_overlap_owners ?? {}
     const overlapNeedingProof = uniqueSorted([
       ...declaredPreexistingOverlap,
-      ...preexistingDirtyModified,
-      ...disappearedSinceBaseline
+      ...ownershipCheckedPreexistingDirtyModified,
+      ...ownershipCheckedDisappearedSinceBaseline
     ])
     const missingOwnershipProof = overlapNeedingProof.filter(file => {
       const proof = ownershipProof[file]
@@ -280,24 +265,24 @@ export function buildWorktreeScopeReport({ handoff, result, baseline, baselineFi
       `declared changed_files were already dirty at baseline; cannot prove child ownership: ${declaredPreexistingOverlap.join(', ')}`
     )
   }
-  if (preexistingDirtyModified.length && !overlapExplicitlyAllowed) {
+  if (ownershipCheckedPreexistingDirtyModified.length && !overlapExplicitlyAllowed) {
     errors.push(
-      `preexisting dirty files changed after baseline; cannot prove user changes were preserved: ${preexistingDirtyModified.join(', ')}`
+      `preexisting dirty files changed after baseline; cannot prove user changes were preserved: ${ownershipCheckedPreexistingDirtyModified.join(', ')}`
     )
   }
-  if (missingBaselineFingerprints.length && !overlapExplicitlyAllowed) {
+  if (ownershipCheckedMissingBaselineFingerprints.length && !overlapExplicitlyAllowed) {
     errors.push(
-      `baseline dirty files have no fingerprints; cannot prove preservation: ${missingBaselineFingerprints.join(', ')}`
+      `baseline dirty files have no fingerprints; cannot prove preservation: ${ownershipCheckedMissingBaselineFingerprints.join(', ')}`
     )
   }
-  if (disappearedSinceBaseline.length && !overlapExplicitlyAllowed) {
+  if (ownershipCheckedDisappearedSinceBaseline.length && !overlapExplicitlyAllowed) {
     errors.push(
-      `baseline dirty files disappeared; possible restore/delete of user changes: ${disappearedSinceBaseline.join(', ')}`
+      `baseline dirty files disappeared; possible restore/delete of user changes: ${ownershipCheckedDisappearedSinceBaseline.join(', ')}`
     )
   }
-  if (disappearedSinceBaseline.length && overlapExplicitlyAllowed) {
+  if (ownershipCheckedDisappearedSinceBaseline.length && overlapExplicitlyAllowed) {
     warnings.push(
-      `baseline dirty files disappeared under explicit overlap allowance: ${disappearedSinceBaseline.join(', ')}`
+      `baseline dirty files disappeared under explicit overlap allowance: ${ownershipCheckedDisappearedSinceBaseline.join(', ')}`
     )
   }
 
@@ -309,15 +294,21 @@ export function buildWorktreeScopeReport({ handoff, result, baseline, baselineFi
     baseline_dirty_files: baselineFiles,
     current_dirty_files: currentFiles,
     changed_files_since_baseline: changedSinceBaseline,
+    ownership_checked_changed_files_since_baseline: ownershipCheckedChangedSinceBaseline,
     declared_changed_files: declaredFiles,
     undeclared_actual_changed_files: undeclaredActual,
     declared_not_visible: declaredNotVisible,
     declared_preexisting_overlap: declaredPreexistingOverlap,
     preexisting_dirty_overlap_explicitly_allowed: overlapExplicitlyAllowed,
     unsafe_preexisting_overlap: unsafePreexistingOverlap,
-    preexisting_dirty_modified_since_baseline: preexistingDirtyModified,
-    missing_baseline_fingerprints: missingBaselineFingerprints,
-    disappeared_since_baseline: disappearedSinceBaseline,
+    preexisting_dirty_modified_since_baseline: ownershipCheckedPreexistingDirtyModified,
+    missing_baseline_fingerprints: ownershipCheckedMissingBaselineFingerprints,
+    disappeared_since_baseline: ownershipCheckedDisappearedSinceBaseline,
+    external_workspace_artifacts: {
+      declarations: externalWorkspaceArtifacts.declarations,
+      excluded_paths: externalWorkspaceArtifacts.excluded_paths,
+      validation_errors: externalWorkspaceArtifacts.errors
+    },
     head_changed: currentHead !== baseline.head,
     head_change_reason: handoff?.validation?.head_change_reason ?? null,
     baseline_path_canonicalizations: baselineRepair.canonicalizations,

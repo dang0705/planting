@@ -14,8 +14,8 @@
  *     形如 `55d0b8b0--watering-advisor-search-input`。
  *     精确匹配优先；精确找不到时允许匹配 `^[A-Za-z0-9]+--<稳定ID>$`。
  *     只接受完整稳定 ID，不用中文文案、坐标或宽泛 contains。
- *   - safeQueryAll 直接使用正确标签 selector（view/button/input），
- *     不先查 #view/#button（那样永远返回空数组并短路）。
+ *   - ID 收集使用 `[id]`，覆盖 view/button/input 以及带 automation id 的
+ *     自定义组件根节点（例如 plant-select-card）。
  *   - 空数组继续合法 fallback。
  *
  * 不承载业务逻辑。
@@ -29,6 +29,14 @@ const DEFAULT_POLL_INTERVAL_MS = 300
  * 前缀为 scopeId（hex 或字母数字），后跟 `--`，再跟完整稳定 ID。
  */
 const UNI_SCOPE_PREFIX_RE = /^([A-Za-z0-9]+)--(.+)$/
+const NATIVE_INTERACTIVE_TAGS = new Set([
+  'view',
+  'button',
+  'input',
+  'textarea',
+  'scroll-view',
+  'swiper'
+])
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
@@ -85,8 +93,7 @@ export function extractStableId(actualId) {
 }
 
 /**
- * 按标签 selector 查询所有匹配元素。
- * 直接使用标签名（view/button/input），不查 #view/#button。
+ * 按 selector 查询所有匹配元素。
  */
 async function safeQueryAll(page, selector) {
   try {
@@ -97,42 +104,71 @@ async function safeQueryAll(page, selector) {
 }
 
 /**
- * 收集页面所有可交互元素（view/button/input）的 id 属性。
+ * 收集页面所有带 id 的元素。
  * @returns {Promise<Array<{element: object, id: string}>>}
  */
 async function collectAllElementsWithId(page) {
-  const all = [
-    ...(await safeQueryAll(page, 'view')),
-    ...(await safeQueryAll(page, 'button')),
-    ...(await safeQueryAll(page, 'input'))
-  ]
+  const all = await safeQueryAll(page, '[id]')
   const results = []
   for (const el of all) {
     try {
       const attr = await el.attribute('id')
-      if (attr) results.push({ element: el, id: attr })
+      if (attr) {
+        results.push({ element: el, id: attr, tag: String(el.tagName || '').toLowerCase() })
+      }
     } catch (e) {}
   }
   return results
 }
 
+function isNativeInteractiveElement(element) {
+  return NATIVE_INTERACTIVE_TAGS.has(String(element?.tagName || '').toLowerCase())
+}
+
 /**
- * 按稳定 ID 定位元素。优先 page.$('#id')，回退遍历 view/button/input。
+ * 点击稳定 ID 命中的节点。自定义组件根节点通常不接收 Automator tap，
+ * 但其内部第一个原生 view 才承载 click；优先下钻到该节点，原生节点则
+ * 直接点击。
+ */
+export async function tapStableElement(element) {
+  if (!element) return false
+  if (isNativeInteractiveElement(element)) {
+    await element.tap()
+    return true
+  }
+  for (const selector of ['view', 'button']) {
+    const descendants = await element.$$(selector).catch(() => [])
+    if (descendants?.[0]) {
+      await descendants[0].tap()
+      return true
+    }
+  }
+  await element.tap()
+  return true
+}
+
+/**
+ * 按稳定 ID 定位元素。优先精确 ID；同一 ID 同时出现在自定义组件根节点
+ * 与内部原生节点时，优先返回可触发事件的原生节点。
  * 精确匹配优先；精确找不到时兼容构建前缀 `<scopeId>--<stableId>`。
  */
 export async function findViewById(page, id) {
   // 优先 page.$('#id')（精确 ID 选择器）
+  let exact = null
   try {
-    const el = await page.$(`#${id}`)
-    if (el) return el
+    exact = await page.$(`#${id}`)
+    if (exact && isNativeInteractiveElement(exact)) return exact
   } catch (e) {}
 
   // 回退：遍历所有元素，精确匹配或构建前缀匹配
   const all = await collectAllElementsWithId(page)
+  let fallback = exact
   for (const { element, id: attr } of all) {
-    if (matchesStableId(attr, id)) return element
+    if (!matchesStableId(attr, id)) continue
+    if (!fallback) fallback = element
+    if (isNativeInteractiveElement(element)) return element
   }
-  return null
+  return fallback
 }
 
 /**
@@ -142,12 +178,15 @@ export async function findViewById(page, id) {
  */
 export async function findByIdPrefix(page, prefix) {
   const all = await collectAllElementsWithId(page)
+  let fallback = null
   for (const { element, id: attr } of all) {
     if (matchesStableIdPrefix(attr, prefix)) {
-      return { element, id: attr, stableId: extractStableId(attr) }
+      const match = { element, id: attr, stableId: extractStableId(attr) }
+      if (!fallback) fallback = match
+      if (isNativeInteractiveElement(element)) return match
     }
   }
-  return null
+  return fallback
 }
 
 /**
@@ -203,7 +242,7 @@ export async function tapById(page, id) {
   if (!el) {
     throw new Error(`element not found: #${id}`)
   }
-  await el.tap()
+  await tapStableElement(el)
   return el
 }
 
@@ -234,27 +273,9 @@ export async function readTextById(page, id) {
 }
 
 /**
- * 读取当前页面 data 摘要（通过 evaluate）。
+ * 读取公开页面栈摘要；不得依赖 Vue setup/state 私有数据。
  */
 export async function readPageDataSummary(mp) {
-  return mp.evaluate(() => {
-    const pages = getCurrentPages()
-    const cp = pages[pages.length - 1]
-    const vm = cp && cp.$vm
-    if (!vm) return { hasVm: false }
-    const summary = {
-      hasVm: true,
-      route: cp.route || cp.__route__ || null,
-      dataKeys: Object.keys(cp.data || {})
-    }
-    try {
-      const store = vm.plantStore || vm.pinia?.state?.value?.plant
-      if (store) {
-        summary.storeKeys = Object.keys(store)
-        summary.hasPlants = !!store.hasPlants
-        summary.plantsCount = store.userPlants ? store.userPlants.length : 0
-      }
-    } catch (e) {}
-    return summary
-  })
+  const page = await mp.currentPage()
+  return { route: page?.path || null, source: 'public_page_path' }
 }

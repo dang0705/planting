@@ -8,7 +8,12 @@
       '--app-navbar-height': layoutStore.navBarHeight + 'px'
     }"
   >
-    <view v-if="showHeader" class="fixed left-0 right-0 top-0 z-[999]" :class="headerClass">
+    <view
+      v-if="showHeader"
+      class="fixed left-0 right-0 top-0 z-[999]"
+      :class="headerClass"
+      :style="headerStyle"
+    >
       <view :style="{ height: layoutStore.statusBarHeight + 'px' }" />
       <view
         class="grid items-center px-4"
@@ -84,7 +89,6 @@ import { useLayoutStore } from '@/store/layout.js'
 import { useUserStore } from '@/store/user.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
 
-const DIAGNOSE_PAGE_ROUTE = 'pages/diagnose/diagnose'
 const QUESTION_PACKAGE_PAGE_ROUTE = 'pages/diagnose/question-package'
 
 const props = defineProps({
@@ -92,7 +96,11 @@ const props = defineProps({
   leftAction: { type: String, default: '' },
   leftActionId: { type: String, default: 'layout-left-action' },
   showHeader: { type: Boolean, default: true },
-  headerClass: { type: String, default: 'bg-gradient-to-br from-[#2D7A4F] to-[#52B788]' },
+  headerClass: { type: String, default: '' },
+  headerStyle: {
+    type: Object,
+    default: () => ({ background: 'linear-gradient(135deg, #2D7A4F, #52B788)' })
+  },
   backgroundClass: { type: String, default: 'bg-[#F8F6F0]' },
   contentClass: { type: String, default: '' },
   contentPaddingTop: { type: Boolean, default: true }
@@ -112,21 +120,18 @@ onMounted(() => {
 })
 onBeforeUnmount(() => uni.$off('app:bottom-sheet-action', openActionSheet))
 
-function isDiagnoseQuestionPackageStack(pages) {
+function isActiveQuestionPackagePage(pages) {
   const currentRoute = pages[pages.length - 1]?.route
-  const previousRoute = pages[pages.length - 2]?.route
-  return (
-    currentRoute === QUESTION_PACKAGE_PAGE_ROUTE && previousRoute === DIAGNOSE_PAGE_ROUTE
-  )
+  return currentRoute === QUESTION_PACKAGE_PAGE_ROUTE
 }
 
 function goBack() {
-  const pages = getCurrentPages?.() || []
+  const pages = typeof getCurrentPages === 'function' ? getCurrentPages() : []
+  if (isActiveQuestionPackagePage(pages)) {
+    goHome()
+    return
+  }
   if (pages.length > 1) {
-    if (isDiagnoseQuestionPackageStack(pages)) {
-      uni.switchTab({ url: '/pages/diagnose/diagnose' })
-      return
-    }
     uni.navigateBack({
       fail: error => {
         console.warn('[Layout.goBack] navigateBack failed', error)

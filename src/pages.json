@@ -14,28 +14,19 @@
       }
     },
     {
-      "path": "pages/plant-detail/plant-detail",
+      "path": "pages/user-plant-detail/user-plant-detail",
       "style": {
         "navigationStyle": "custom",
-        "navigationBarTitleText": "植物详情",
+        "navigationBarTitleText": "植物信息",
         "navigationBarBackgroundColor": "#2D7A4F",
         "navigationBarTextStyle": "white"
       }
     },
     {
-      "path": "pages/add-plant/add-plant",
+      "path": "pages/plant-environment/light-environment",
       "style": {
         "navigationStyle": "custom",
-        "navigationBarTitleText": "添加植物",
-        "navigationBarBackgroundColor": "#2D7A4F",
-        "navigationBarTextStyle": "white"
-      }
-    },
-    {
-      "path": "pages/edit-plant/edit-plant",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": "编辑植物",
+        "navigationBarTitleText": "光照环境",
         "navigationBarBackgroundColor": "#2D7A4F",
         "navigationBarTextStyle": "white"
       }
@@ -45,6 +36,15 @@
       "style": {
         "navigationStyle": "custom",
         "navigationBarTitleText": "浇水建议",
+        "navigationBarBackgroundColor": "#2D7A4F",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/airflow/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "空气环境评估",
         "navigationBarBackgroundColor": "#2D7A4F",
         "navigationBarTextStyle": "white"
       }

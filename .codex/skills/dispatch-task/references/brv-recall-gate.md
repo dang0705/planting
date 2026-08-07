@@ -164,19 +164,9 @@ byterover_context:
 
 不得广播完整 Query JSON、无关 Topic、敏感认证信息、内部存储路径或未核验 claim。
 
-## 9. 子 Agent 查询
+## 9. 查询所有权
 
-subagent 默认不自行 Query。只有 handoff 明确提供以下字段时才允许：
-
-```text
-child_brv_allowed: true
-child_brv_space:
-child_brv_query:
-child_brv_reason:
-child_brv_scope:
-```
-
-child 不得扩大 scope，也不得执行写操作；main 已提供充分上下文时不得重复查询。
+当前 dispatch-task 不创建内部子代理，因此不存在 child BRV 查询。所有 Query、Read、来源核验和最小上下文整理均由 main 执行；handoff 中若出现 `child_brv_allowed=true` 或 child 查询字段，必须视为过期合同并阻断。
 
 ## 10. 不可用与降级
 

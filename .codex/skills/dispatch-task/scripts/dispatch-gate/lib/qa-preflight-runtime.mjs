@@ -91,6 +91,10 @@ function screenshotWorkerError(message) {
   return error
 }
 
+function ensureScreenshotParent(screenshotPath) {
+  fs.mkdirSync(path.dirname(screenshotPath), { recursive: true })
+}
+
 export function captureIsolatedPreflightScreenshot({
   report,
   wsEndpoint,
@@ -126,12 +130,36 @@ export function captureIsolatedPreflightScreenshot({
     }
 
     try {
-      child = spawnProcess(process.execPath, [workerPath, wsEndpoint, screenshotPath, String(timeoutMs)], {
-        stdio: ['ignore', 'pipe', 'pipe']
-      })
+      ensureScreenshotParent(screenshotPath)
     } catch (error) {
-      const normalized = screenshotWorkerError(`preflight screenshot worker failed to start: ${error.message}`)
-      finish(reject, normalized, { status: 'failed', code: normalized.code, message: normalized.message })
+      const normalized = screenshotWorkerError(
+        `preflight screenshot evidence directory unavailable: ${error.message}`
+      )
+      finish(reject, normalized, {
+        status: 'failed',
+        code: normalized.code,
+        message: normalized.message
+      })
+      return
+    }
+
+    try {
+      child = spawnProcess(
+        process.execPath,
+        [workerPath, wsEndpoint, screenshotPath, String(timeoutMs)],
+        {
+          stdio: ['ignore', 'pipe', 'pipe']
+        }
+      )
+    } catch (error) {
+      const normalized = screenshotWorkerError(
+        `preflight screenshot worker failed to start: ${error.message}`
+      )
+      finish(reject, normalized, {
+        status: 'failed',
+        code: normalized.code,
+        message: normalized.message
+      })
       return
     }
 
@@ -152,8 +180,14 @@ export function captureIsolatedPreflightScreenshot({
       stderr += chunk.toString()
     })
     child.on('error', error => {
-      const normalized = screenshotWorkerError(`preflight screenshot worker error: ${error.message}`)
-      finish(reject, normalized, { status: 'failed', code: normalized.code, message: normalized.message })
+      const normalized = screenshotWorkerError(
+        `preflight screenshot worker error: ${error.message}`
+      )
+      finish(reject, normalized, {
+        status: 'failed',
+        code: normalized.code,
+        message: normalized.message
+      })
     })
     child.on('close', (code, signal) => {
       if (settled) {
@@ -169,9 +203,14 @@ export function captureIsolatedPreflightScreenshot({
         finish(resolve, result, { status: 'passed', code: 'preflight_screenshot_passed' })
         return
       }
-      const detail = result?.error || stderr.trim() || `worker exited code=${code} signal=${signal ?? 'none'}`
+      const detail =
+        result?.error || stderr.trim() || `worker exited code=${code} signal=${signal ?? 'none'}`
       const normalized = screenshotWorkerError(`preflight screenshot worker failed: ${detail}`)
-      finish(reject, normalized, { status: 'failed', code: normalized.code, message: normalized.message })
+      finish(reject, normalized, {
+        status: 'failed',
+        code: normalized.code,
+        message: normalized.message
+      })
     })
   })
 }
@@ -411,7 +450,11 @@ export async function captureRuntimeEvidence({
     if (!fs.existsSync(screenshotPath)) {
       throw new Error('screenshot worker returned without creating evidence file')
     }
-    report.checks.screenshot = { passed: true, path: screenshotPath, capture_mode: 'isolated_worker' }
+    report.checks.screenshot = {
+      passed: true,
+      path: screenshotPath,
+      capture_mode: 'isolated_worker'
+    }
     report.evidence_paths.push(path.relative(repoRoot, screenshotPath))
     captureResult = {
       page_data: report.checks.page_data,

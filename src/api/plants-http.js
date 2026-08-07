@@ -23,6 +23,7 @@ import {
   requestDiagnosisFeedback
 } from '@/http-functions/diagnose/client.js'
 import { resolvePayloadCareLocation } from '@/utils/plant-care-location.js'
+import { requestHttpFunction } from '@/api/http.js'
 
 export function fetchPlantCatalog(keyword = '', page = 1, pageSize = 10) {
   return fetchPlantCatalogQuery(keyword, page, pageSize)
@@ -36,12 +37,41 @@ export function fetchUserPlants(page = 1, pageSize = 20) {
   return fetchUserPlantsQuery(page, pageSize)
 }
 
+export function fetchUserPlant(id) {
+  return requestHttpFunction('plant-user-http/user-plants', {
+    method: 'GET',
+    query: { id: Number(id) }
+  })
+}
+
 export function createUserPlant(payload) {
   return executeCreateUserPlantMutation(withCareLocation(payload, { allowStorageFallback: true }))
 }
 
 export function patchUserPlant(payload) {
   return executePatchUserPlantMutation(withCareLocation(payload, { allowStorageFallback: false }))
+}
+
+export function fetchUserPlantAirEnvironment(plantId) {
+  return requestHttpFunction('plant-user-http/user-plants/air-environment', {
+    method: 'GET',
+    query: { plantId: Number(plantId) }
+  })
+}
+
+export function patchUserPlantAirEnvironment(payload) {
+  return requestHttpFunction('plant-user-http/user-plants/air-environment', {
+    method: 'PATCH',
+    body: payload
+  })
+}
+
+export async function fetchUserPlantWateringPlanner(payload = {}) {
+  const response = await requestHttpFunction('plant-user-http/user-plants/watering-planner', {
+    method: 'POST',
+    body: payload
+  })
+  return response?.code === 200 ? response.data : null
 }
 
 function withCareLocation(payload = {}, options = {}) {

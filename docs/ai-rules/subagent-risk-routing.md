@@ -1,4 +1,10 @@
-# Subagent 风险路由规则
+# Subagent 风险路由规则（历史兼容入口）
+
+当前规则：不启用内部 implementer、subagent 或 child。所有任务由 main 实现；高风险任务使用 `deep_contract` + strict decision lock，不再改派 `implementer_fast` / `implementer_deep`。只有用户明确要求外部实现者时，才进入 `external_implementer` bridge；外部失败不得自动改派内部 subagent。
+
+下方内容仅用于解释旧 handoff，不得作为当前 dispatch 路由依据。
+
+<!-- Historical content below is not an active routing rule.
 
 使用 `implementer_fast` 的条件：
 
@@ -63,3 +69,4 @@
 8. 目标验收契约不完整，或发现 review/list、replay、DB 中间态与真实业务修复位置不一致。
 
 9. 发现任何诊断快捷路径可能绕过主链 guard，或需要判断“继续追问还是 final”。
+-->

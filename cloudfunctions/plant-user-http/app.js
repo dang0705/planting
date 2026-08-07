@@ -31,13 +31,22 @@ const {
   readWateringReminder,
   saveWateringReminder
 } = require('./watering-reminder-service')
-const { buildWeatherSummary, computeAdhocPlanner, injectD0IntoForecastDays } = require('./watering-planner-service')
+const {
+  buildWeatherSummary,
+  computeAdhocPlanner,
+  injectD0IntoForecastDays
+} = require('./watering-planner-service')
 const { saveAdvisorSession, listAdvisorSessions } = require('./watering-advisor-service')
 const {
   computeTranspirationIntervalFactor,
   resolveShadowModeFromEnv
 } = require('/opt/utils/transpiration')
 const { getUserPlantLightEnvironment } = require('/opt/utils/user-plant-light-environment')
+const {
+  readUserPlantAirEnvironment,
+  saveUserPlantAirEnvironment
+} = require('./air-environment-service')
+const { resolveAirEnvironmentEvidence } = require('/opt/utils/air-environment-evidence')
 
 async function main(event, context) {
   const request = getHttpRequestData(event, context)
@@ -58,6 +67,27 @@ async function main(event, context) {
       return jsonResponse(401, { code: 401, message: '请先登录', data: null })
     }
     const openid = userInfo.openid
+
+    if (path.includes('/air-environment')) {
+      const plantId = Number(request.body.plantId || request.query.plantId)
+      if (method === 'GET') {
+        const result = await readUserPlantAirEnvironment(openid, plantId)
+        return jsonResponse(result.statusCode, {
+          code: result.statusCode,
+          message: result.message,
+          data: result.data
+        })
+      }
+      if (method === 'PATCH') {
+        const result = await saveUserPlantAirEnvironment(openid, request.body)
+        return jsonResponse(result.statusCode, {
+          code: result.statusCode,
+          message: result.message,
+          data: result.data
+        })
+      }
+      return methodNotAllowed(method)
+    }
 
     if (path.includes('/watering-reminders')) {
       const plantId = Number(request.body.plantId || request.query.plantId)
@@ -223,6 +253,10 @@ async function main(event, context) {
       // potProfileOverride：独立浇水建议流程可从前端传入当前步骤盆型，优先于数据库 potProfile；
       // 首页浇水提醒不传此字段，回退到 strategy.potProfile（DB），保持兼容。
       const potProfileOverride = request.body.potProfile || null
+      // 空气资料只作为默认关闭的影子采集；绝不改动水量、干湿 Gate、盆型或根区湿度。
+      const airEnvironmentEvidence = resolveAirEnvironmentEvidence(
+        request.body.airEnvironmentOverride
+      )
       const plan = buildWateringPlanner({
         wateringStrategy: strategy.watering || {},
         historical,
@@ -278,6 +312,9 @@ async function main(event, context) {
           transpirationComputedFactor: transpiration.computedFactor,
           transpirationCandidateNextWaterDate: candidateNextWaterDate,
           transpirationCandidateNextWaterWindow: candidateNextWaterWindow,
+          airEnvironmentShadow: airEnvironmentEvidence
+            ? { evidence: airEnvironmentEvidence, intervalFactor: 1, shadow: true }
+            : null,
           // D0 当日天气来源审计：'day_latest_sample' | 'missing'
           todayWeatherSource,
           todayWeatherReason
@@ -329,6 +366,19 @@ async function main(event, context) {
         )
           ? request.body.lightEnvironment
           : null,
+        airEnvironment: Object.prototype.hasOwnProperty.call(request.body || {}, 'airEnvironment')
+          ? request.body.airEnvironment
+          : null,
+        airEnvironmentLocationBinding:
+          request.body.airEnvironmentLocationBinding || request.body.locationBinding || null,
+        potTopDiameterCm: request.body.potTopDiameterCm,
+        potBottomDiameterCm: request.body.potBottomDiameterCm,
+        potHeightCm: request.body.potHeightCm,
+        hasDrainageHole: request.body.hasDrainageHole,
+        potMaterial: request.body.potMaterial,
+        substrateType: request.body.substrateType,
+        potProfileSource: request.body.source,
+        potProfileConfidence: request.body.confidence,
         photos: request.body.photos || null
       })
       const careLocation = await savePlantCareLocation({

@@ -62,12 +62,6 @@ function buildOrthogonalProbeText(item = {}, packageTopic = '', _context = {}) {
         helpText: '用施肥次数和近期换盆/重肥记录营养背景，不直接把黄叶等同于缺肥。',
         packageSection: QUESTION_PACKAGE_SECTIONS.CONTEXT_PROBE
       }
-    case QUESTION_PACKAGE_TOPICS.AIRFLOW_HUMIDITY_CONTEXT:
-      return {
-        questionText: '黄叶和环境有关时，通风、湿度和直吹风都会影响叶片状态。最近 1-2 周，这盆植物周围环境更接近哪一种？',
-        helpText: '只按摆放环境选择，不需要判断对错；这题用于补齐通风和空气湿度背景。',
-        packageSection: QUESTION_PACKAGE_SECTIONS.CONTEXT_PROBE
-      }
     case QUESTION_PACKAGE_TOPICS.YELLOWING_PROGRESSION_SPEED:
       return {
         questionText: '如果前面的线索还不够明确，黄叶变化速度能帮助判断是否存在根区或急性环境压力。发黄最近变化速度如何？',

@@ -3,7 +3,6 @@ export function validateImplementationOwnerHandoff({
   tier,
   externalMode,
   externalTier,
-  mainTakeoverMode,
   codeChanges,
   external,
   mode,
@@ -27,7 +26,7 @@ export function validateImplementationOwnerHandoff({
     )
     need(isObject(data.handoff_manual), 'external_implementer requires handoff_manual')
     validateExternalContract({ data, external, need, isObject, nonEmptyString, unknownKeys })
-    validateZcodeContract({ zcode, external, need, includesAll, unknownKeys })
+    validateZcodeContract({ data, zcode, external, need, isObject, includesAll, unknownKeys })
     need(nonEmptyString(data.handoff_manual.path), 'handoff_manual.path is required')
     need(
       data.handoff_manual.path.includes(data.dispatch_run_id),
@@ -38,10 +37,7 @@ export function validateImplementationOwnerHandoff({
   if (mode === 'main_direct') {
     return
   }
-  if (mainTakeoverMode) {
-    return
-  }
-  validateCodexSubagentContract({ data, tier, need, isObject, nonEmptyString })
+  need(false, `unsupported implementation_mode: ${mode}`)
 }
 
 function validateExternalContract({ data, external, need, isObject, nonEmptyString, unknownKeys }) {
@@ -84,41 +80,6 @@ function validateExternalContract({ data, external, need, isObject, nonEmptyStri
     'external_contract.handoff_completion_status_source must be handoff_manual'
   )
   validateWebExternalContract({ data, external, provider, need, isObject, nonEmptyString })
-  validateZcodeClipboardBridgeAuthorization({ data, external, need, isObject })
-}
-
-// dispatch-20260726-devtools-screenshot-recovery-zcode: 持久用户授权校验。
-// 当 external_contract.zcode_clipboard_bridge_authorization 存在时，校验其结构。
-// 授权仅适用于 provider=zcode + external-implementer handoff。
-// 迁移来源：schema 落地前同一授权可暂存于 validation.zcode_clipboard_bridge_authorization，
-// 正式 external_contract 字段优先。
-function validateZcodeClipboardBridgeAuthorization({ data, external, need, isObject }) {
-  const auth =
-    external.zcode_clipboard_bridge_authorization ??
-    data?.validation?.zcode_clipboard_bridge_authorization
-  if (auth === undefined) {
-    return
-  }
-  need(isObject(auth), 'zcode_clipboard_bridge_authorization must be an object')
-  if (!isObject(auth)) {
-    return
-  }
-  need(
-    ['persistent_user_authorization'].includes(auth.mode),
-    'zcode_clipboard_bridge_authorization.mode must be persistent_user_authorization'
-  )
-  need(
-    auth.enabled === true || auth.enabled === false,
-    'zcode_clipboard_bridge_authorization.enabled must be boolean'
-  )
-  if (auth.enabled === true) {
-    const provider =
-      external.provider || (external.external_implementer === 'zcode_glm' ? 'zcode' : '')
-    need(
-      provider === 'zcode',
-      'zcode_clipboard_bridge_authorization requires external_contract.provider=zcode'
-    )
-  }
 }
 
 function validateWebExternalContract({ data, external, provider, need, isObject, nonEmptyString }) {
@@ -206,7 +167,7 @@ function validateWebExternalContract({ data, external, provider, need, isObject,
   )
 }
 
-function validateZcodeContract({ zcode, external, need, includesAll, unknownKeys }) {
+function validateZcodeContract({ zcode, external, need, isObject, includesAll, unknownKeys }) {
   const provider =
     external.provider || (external.external_implementer === 'zcode_glm' ? 'zcode' : '')
   const zcodeUnknown = unknownKeys(zcode, externalContractAllowedKeys())
@@ -241,117 +202,76 @@ function validateZcodeContract({ zcode, external, need, includesAll, unknownKeys
     zcode.prompt_integrity_check_required === true,
     'zcode_contract.prompt_integrity_check_required must be true'
   )
+  for (const field of [
+    'input_box_check_required',
+    'send_action_required',
+    'computer_use_required',
+    'actual_tool_invocation_required',
+    'computer_use_tool_invocation_required',
+    'computer_use_action_trace_required',
+    'clipboard_bridge_required',
+    'clipboard_bridge_evidence_required',
+    'direct_input_injection_forbidden',
+    'manual_typing_forbidden',
+    'shell_only_ui_automation_forbidden'
+  ]) {
+    need(zcode[field] === true, `zcode_contract.${field} must be true`)
+  }
   need(
-    zcode.input_box_check_required === true,
-    'zcode_contract.input_box_check_required must be true'
+    Array.isArray(zcode.allowed_send_actions) &&
+      includesAll(zcode.allowed_send_actions, ['send_button', 'blocked']) &&
+      !zcode.allowed_send_actions.includes('enter'),
+    'zcode_contract.allowed_send_actions must allow send_button|blocked and forbid enter'
   )
-  need(zcode.send_action_required === true, 'zcode_contract.send_action_required must be true')
   need(
-    includesAll(zcode.allowed_send_actions, ['enter', 'send_button', 'blocked']),
-    'zcode_contract.allowed_send_actions must include enter, send_button, blocked'
-  )
-  need(zcode.computer_use_required === true, 'zcode_contract.computer_use_required must be true')
-  need(
-    zcode.actual_tool_invocation_required === true,
-    'zcode_contract.actual_tool_invocation_required must be true'
-  )
-  need(
-    includesAll(zcode.allowed_tool_targets, ['@ZCode', '@Computer']),
+    Array.isArray(zcode.allowed_tool_targets) &&
+      includesAll(zcode.allowed_tool_targets, ['@ZCode', '@Computer']),
     'zcode_contract.allowed_tool_targets must include @ZCode and @Computer'
   )
   need(
     Number.isInteger(zcode.minimum_tool_event_count) && zcode.minimum_tool_event_count >= 5,
     'zcode_contract.minimum_tool_event_count must be >= 5'
   )
-  need(
-    zcode.computer_use_tool_invocation_required === true,
-    'zcode_contract.computer_use_tool_invocation_required must be true'
-  )
-  need(
-    zcode.computer_use_action_trace_required === true,
-    'zcode_contract.computer_use_action_trace_required must be true'
-  )
-  need(
-    zcode.clipboard_write_via_computer_use_required === true,
-    'zcode_contract.clipboard_write_via_computer_use_required must be true'
-  )
-  need(
-    zcode.manual_typing_forbidden === true,
-    'zcode_contract.manual_typing_forbidden must be true'
-  )
-  need(
-    zcode.shell_only_ui_automation_forbidden === true,
-    'zcode_contract.shell_only_ui_automation_forbidden must be true'
-  )
   const requiredActions = [
     'verify_zcode_current_session',
+    'locate_unique_entry_area',
     'focus_chat_input',
-    'set_clipboard_to_prompt',
-    'paste_clipboard',
-    'verify_prompt_sentinel_in_input',
-    'send_prompt'
+    'run_verified_clipboard_bridge',
+    'paste_clipboard_via_cmd_v',
+    'verify_paste_delivery',
+    'open_edit_menu_if_needed',
+    'paste_clipboard_via_edit_menu_if_needed',
+    'send_prompt_after_integrity_check',
+    'verify_post_send_delivery'
   ]
   need(
-    includesAll(zcode.required_computer_use_actions, requiredActions),
-    `zcode_contract.required_computer_use_actions must include: ${requiredActions.join(', ')}`
+    Array.isArray(zcode.required_computer_use_actions) &&
+      includesAll(zcode.required_computer_use_actions, requiredActions),
+    'zcode_contract.required_computer_use_actions lacks verified visible delivery actions'
   )
-  const post = zcode.post_send_computer_use_policy ?? {}
-  need(
-    post.disconnect_after_send_confirmed === true,
-    'post_send_computer_use_policy.disconnect_after_send_confirmed must be true'
-  )
-  need(
-    post.first_30m_probe_interval_minutes === 5,
-    'post_send_computer_use_policy.first_30m_probe_interval_minutes must be 5'
-  )
-  need(
-    post.ui_probe_after_30m_min_interval_minutes === 10,
-    'post_send_computer_use_policy.ui_probe_after_30m_min_interval_minutes must be 10'
-  )
-  need(
-    post.continuous_ui_monitoring_forbidden === true,
-    'post_send_computer_use_policy.continuous_ui_monitoring_forbidden must be true'
-  )
-}
-
-function validateCodexSubagentContract({ data, tier, need, isObject, nonEmptyString }) {
-  need(
-    ['simple_patch', 'standard_task', 'deep_contract'].includes(tier),
-    'codex_subagent dispatch_tier must be simple_patch|standard_task|deep_contract'
-  )
-  need(nonEmptyString(data.target_role), 'codex_subagent requires target_role')
-  need(isObject(data.spawn_contract), 'codex_subagent requires spawn_contract')
-  if (isObject(data.spawn_contract)) {
-    need(
-      data.spawn_contract.context_mode === 'isolated',
-      'spawn_contract.context_mode must be isolated'
-    )
-    need(
-      data.spawn_contract.generic_fallback_forbidden === true,
-      'spawn_contract.generic_fallback_forbidden must be true'
-    )
-    need(
-      data.spawn_contract.identity_receipt_required === true,
-      'spawn_contract.identity_receipt_required must be true'
-    )
+  const postSend = zcode.post_send_computer_use_policy
+  need(isObject(postSend), 'zcode_contract.post_send_computer_use_policy is required')
+  if (isObject(postSend)) {
+    need(postSend.verify_current_chat_delivery === true, 'post-send policy must verify current chat delivery')
+    need(postSend.disconnect_after_send_confirmed === true, 'post-send policy must disconnect after confirmed send')
+    need(postSend.continuous_ui_monitoring_forbidden === true, 'post-send policy must forbid continuous UI monitoring')
   }
+  const authorization = zcode.zcode_clipboard_bridge_authorization
   need(
-    nonEmptyString(data?.spawn_contract?.implementer_agent_type),
-    'spawn_contract.implementer_agent_type is required'
+    isObject(authorization) && authorization.enabled === true &&
+      ['current_turn_explicit', 'persistent_user_authorization'].includes(authorization.mode),
+    'zcode_contract.zcode_clipboard_bridge_authorization must be explicit and enabled'
   )
-  need(
-    data.target_role === data.spawn_contract.implementer_agent_type,
-    'target_role must equal spawn_contract.implementer_agent_type'
-  )
-  need(
-    ['implementer_fast', 'implementer_deep'].includes(data.target_role),
-    'target_role must be implementer_fast|implementer_deep'
-  )
-  if (tier === 'simple_patch') {
-    need(data.target_role === 'implementer_fast', 'simple_patch must target implementer_fast')
-  }
-  if (tier === 'deep_contract') {
-    need(data.target_role === 'implementer_deep', 'deep_contract must target implementer_deep')
+  for (const field of [
+    'headless_cli_required',
+    'canonical_prompt_file_reference_required',
+    'headless_permission_mode',
+    'credential_source',
+    'credential_persistence_forbidden',
+    'clipboard_ui_fallback_forbidden',
+    'provider_execution_receipt_required'
+  ]) {
+    need(zcode[field] === undefined, `zcode_contract.${field} is retired and forbidden for visible clipboard transport`)
   }
 }
 
@@ -387,12 +307,21 @@ function externalContractAllowedKeys() {
     'minimum_tool_event_count',
     'computer_use_tool_invocation_required',
     'computer_use_action_trace_required',
-    'clipboard_write_via_computer_use_required',
+    'clipboard_bridge_required',
+    'clipboard_bridge_evidence_required',
+    'direct_input_injection_forbidden',
     'manual_typing_forbidden',
     'shell_only_ui_automation_forbidden',
     'required_computer_use_actions',
     'post_send_computer_use_policy',
     'remote_sync',
-    'zcode_clipboard_bridge_authorization'
+    'zcode_clipboard_bridge_authorization',
+    'headless_cli_required',
+    'canonical_prompt_file_reference_required',
+    'headless_permission_mode',
+    'credential_source',
+    'credential_persistence_forbidden',
+    'clipboard_ui_fallback_forbidden',
+    'provider_execution_receipt_required'
   ]
 }

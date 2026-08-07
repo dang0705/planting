@@ -62,10 +62,9 @@ const acceptanceMentionsDispatchHookGate = (data.acceptance ?? []).some(item => 
 
 const tier = data.dispatch_tier
 const mode =
-  data.implementation_mode ?? (tier === 'simple_patch' ? 'main_direct' : 'codex_subagent')
+  data.implementation_mode ?? 'main_direct'
 const externalMode = ['external_implementer', 'zcode_external'].includes(mode)
 const externalTier = ['external_implementer', 'zcode_external'].includes(tier)
-const mainTakeoverMode = mode === 'main_takeover'
 const task = data.task ?? {}
 const codeChanges = task.code_changes_required === true
 const ui = task.ui_task === true
@@ -86,8 +85,8 @@ need(
 
 need(nonEmptyString(data.dispatch_run_id), 'dispatch_run_id is required')
 need(
-  ['main_direct', 'codex_subagent', 'main_takeover', 'external_implementer', 'zcode_external'].includes(mode),
-  'implementation_mode must be main_direct|codex_subagent|main_takeover|external_implementer|zcode_external'
+  ['main_direct', 'external_implementer', 'zcode_external'].includes(mode),
+  'implementation_mode must be main_direct|external_implementer|zcode_external'
 )
 need(
   [
@@ -389,15 +388,9 @@ if (tier === 'simple_patch') {
   need(risk === 'local', 'simple_patch requires task.risk=local')
 }
 if (mode === 'main_direct') {
-  need(tier === 'simple_patch', 'main_direct is only valid for simple_patch')
+  need(!externalTier, 'main_direct cannot be used for external_implementer')
   need(data.target_role === undefined, 'main_direct must not declare target_role')
   need(data.spawn_contract === undefined, 'main_direct must not declare spawn_contract')
-}
-if (mainTakeoverMode) {
-  need(tier === 'deep_contract', 'main_takeover requires dispatch_tier=deep_contract')
-  need(data.target_role === 'main_takeover', 'main_takeover requires target_role=main_takeover')
-  need(data.main_takeover_authorization === true, 'main_takeover requires explicit main_takeover_authorization=true')
-  need(nonEmptyString(data.main_takeover_reason), 'main_takeover_reason is required')
 }
 if (tier === 'deep_contract') {
   need(data?.decision_lock?.level === 'strict', 'deep_contract requires decision_lock.level=strict')
@@ -410,7 +403,6 @@ validateImplementationOwnerHandoff({
   tier,
   externalMode,
   externalTier,
-  mainTakeoverMode,
   codeChanges,
   external,
   mode,
@@ -450,8 +442,8 @@ if (codeChanges) {
 
 if (qaRequired) {
   need(
-    data?.spawn_contract?.qa_agent_type === null,
-    'qa_required=true is main-owned; spawn_contract.qa_agent_type must be omitted or null'
+    data?.spawn_contract === undefined || data?.spawn_contract?.qa_agent_type === null,
+    'qa_required=true is main-owned; spawn_contract must be omitted or qa_agent_type=null'
   )
 }
 
@@ -459,40 +451,45 @@ const figma = data.figma ?? {}
 if (nonEmptyString(figma.link)) {
   need(qaRequired === true, 'Figma tasks require task.qa_required=true')
   need(nonEmptyString(figma.node_id), 'figma.node_id is required when figma.link exists')
-  need(figma.main_access === 'lite_only', 'figma.main_access must be lite_only')
+  need(
+    figma.main_access === (externalMode ? 'lite_only' : 'main_direct'),
+    `figma.main_access must be ${externalMode ? 'lite_only' : 'main_direct'}`
+  )
   need(figma.implementer_fetch_required === true, 'figma.implementer_fetch_required must be true')
   need(figma.qa_baseline_fetch_required === true, 'figma.qa_baseline_fetch_required must be true')
   need(Array.isArray(figma.main_tools_used), 'figma.main_tools_used must be an array')
-  const forbiddenMainTools = [
-    'get_design_context',
-    'get_screenshot',
-    'get_variable_defs',
-    'get_code',
-    'get_assets'
-  ]
-  const usedForbidden = figma.main_tools_used.filter(tool => forbiddenMainTools.includes(tool))
-  need(usedForbidden.length === 0, `main used forbidden Figma tools: ${usedForbidden.join(', ')}`)
-
-  if (mode === 'codex_subagent') {
+  if (externalMode) {
+    const forbiddenMainTools = [
+      'get_design_context',
+      'get_screenshot',
+      'get_variable_defs',
+      'get_code',
+      'get_assets'
+    ]
+    const usedForbidden = figma.main_tools_used.filter(tool => forbiddenMainTools.includes(tool))
+    need(usedForbidden.length === 0, `main used forbidden Figma tools: ${usedForbidden.join(', ')}`)
+  }
+  if (!externalMode) {
     need(
-      data?.required_skills?.implementer?.includes('$implementer-ui-execution-policy'),
-      'Figma codex_subagent requires $implementer-ui-execution-policy'
+      data?.required_skills?.main?.includes('$implementer-ui-execution-policy'),
+      'Figma main_direct requires $implementer-ui-execution-policy'
     )
   }
+
   need(
     data?.required_skills?.main?.includes('$qa-ui-visual-baseline-policy'),
     'Figma task requires required_skills.main to include $qa-ui-visual-baseline-policy'
   )
   if (usesUniUi(pc.component_library)) {
-    if (mode === 'codex_subagent') {
-      need(
-        data?.required_skills?.implementer?.includes('$uni-ui-figma-component-mapper'),
-        'Figma + uni-ui codex_subagent requires $uni-ui-figma-component-mapper'
-      )
-    } else {
+    if (externalMode) {
       need(
         external?.required_prompt_sections?.includes('uni_ui_mapping_contract'),
         'Figma + uni-ui external_implementer requires uni_ui_mapping_contract prompt section'
+      )
+    } else {
+      need(
+        data?.required_skills?.main?.includes('$uni-ui-figma-component-mapper'),
+        'Figma + uni-ui main_direct requires $uni-ui-figma-component-mapper'
       )
     }
   }

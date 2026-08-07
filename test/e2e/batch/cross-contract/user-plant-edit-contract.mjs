@@ -109,7 +109,9 @@ assert.equal(updateCall.params.notes, '')
 
 calls.length = 0
 await mod.listUserPlantInstances('openid_edit_contract')
-const listCall = calls.find(call => /FROM\s+user_plant_instances\s+up/i.test(call.sql))
+const listCall = calls.find(
+  call => /FROM\s+user_plant_instances\s+up/i.test(call.sql) && /up\.plant_date/i.test(call.sql)
+)
 assert.match(listCall.sql, /up\.plant_date/, 'list SELECT should include plant_date')
 assert.match(listCall.sql, /up\.notes/, 'list SELECT should include notes')
 
@@ -120,7 +122,7 @@ assert.match(detailCall.sql, /up\.plant_date/, 'detail SELECT should include pla
 assert.match(detailCall.sql, /up\.notes/, 'detail SELECT should include notes')
 
 const formModelSource = fs.readFileSync(
-  'src/pages/add-plant/components/plant-form-model.js',
+  'src/pages/user-plant-detail/components/plant-form-model.js',
   'utf8'
 )
 assert.doesNotMatch(
@@ -139,11 +141,14 @@ assert.doesNotMatch(
 const mutationSource = fs.readFileSync('src/vue-query/plants/mutations/user-plants.js', 'utf8')
 assert.match(mutationSource, /invalidateUserPlantsQuery/, 'mutations should invalidate user plants')
 
-const editPageSource = fs.readFileSync('src/pages/edit-plant/edit-plant.vue', 'utf8')
+const plantPageSource = fs.readFileSync(
+  'src/pages/user-plant-detail/components/UserPlantDetailForm.vue',
+  'utf8'
+)
 assert.match(
-  editPageSource,
-  /invalidateUserPlantsQuery\(\)/,
-  'edit page should refresh stale list cache'
+  plantPageSource,
+  /isEditMode = computed\(\(\) => props\.mode === 'edit' && Boolean\(plantId\.value\)\)/,
+  'the unified plant form should switch to edit mode from the route mode parameter'
 )
 
 const migration = fs.readFileSync('scripts/sql/add-user-plant-edit-fields-20260717.sql', 'utf8')

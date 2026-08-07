@@ -7,8 +7,7 @@ import {
   inspectDevToolsRuntime,
   readCurrentSessionProjectEvidence,
   requestDevToolsControl,
-  recoverVerifiedTargetDevTools as recoverDevTools,
-  verifyDevToolsOwnerProcess
+  recoverVerifiedTargetDevTools as recoverDevTools
 } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/devtools-runtime.mjs'
 import { repoRoot } from './helpers.mjs'
 
@@ -97,6 +96,8 @@ async function captureControlRequestUrls(assertions) {
 function recoverVerifiedTargetDevTools(options = {}) {
   return recoverDevTools({
     ...options,
+    openSettleDelayMs: options.openSettleDelayMs ?? 0,
+    postAutoSettleDelayMs: options.postAutoSettleDelayMs ?? 0,
     controlRequest: options.controlRequest ?? successfulControlRequest
   })
 }
@@ -143,7 +144,7 @@ assert.equal(inspected.automation_listener_pid, 901)
 assert.equal(inspected.port_owner_pid, 901)
 assert.equal(inspected.control_port, 3799)
 assert.notEqual(inspected.control_port, inspected.automator_port)
-assert.equal(inspected.control_port_listener_pids[3799][0], 900)
+assert.deepEqual(inspected.control_port_listener_evidence.verified_listener_pids, [900])
 
 const ideHttpPrecedenceRuntime = inspectDevToolsRuntime({
   expectedProjectPath: projectPath,
@@ -153,7 +154,7 @@ const ideHttpPrecedenceRuntime = inspectDevToolsRuntime({
       if (port === '-iTCP:9420') {
         return { status: 0, stdout: '911\n', stderr: '' }
       }
-      if (port === '-iTCP:9422') {
+      if (port === '-iTCP:28434') {
         return { status: 0, stdout: '910\n', stderr: '' }
       }
       return { status: 0, stdout: '', stderr: '' }
@@ -165,7 +166,7 @@ const ideHttpPrecedenceRuntime = inspectDevToolsRuntime({
       return {
         status: 0,
         stdout:
-          '1 /Applications/wechatwebdevtools.app/Contents/MacOS/wechatdevtools package.nw --ide-http-port 9422 --remote-port 3799\n',
+          '1 /Applications/wechatwebdevtools.app/Contents/MacOS/wechatdevtools package.nw --ide-http-port 28434 --remote-port 3799\n',
         stderr: ''
       }
     }
@@ -177,7 +178,7 @@ const ideHttpPrecedenceRuntime = inspectDevToolsRuntime({
   }
 })
 assert.equal(ideHttpPrecedenceRuntime.status, 'verified')
-assert.equal(ideHttpPrecedenceRuntime.control_port, 9422)
+assert.equal(ideHttpPrecedenceRuntime.control_port, 28434)
 assert.equal(ideHttpPrecedenceRuntime.control_port_source, 'main_devtools_ide_http_port')
 assert.notEqual(ideHttpPrecedenceRuntime.control_port, 3799)
 
@@ -260,7 +261,7 @@ try {
   })
   assert.equal(sessionTopology.status, 'verified')
   assert.equal(sessionTopology.project_identity_source, 'weapp_log_current_session')
-  assert.equal(sessionTopology.project_evidence_records[0].source, 'weapp_log_current_session')
+  assert.equal(sessionTopology.session_log_evidence.status, 'verified')
 
   const staleRoot = fs.mkdtempSync(path.join(repoRoot, '.tmp', 'dispatch-session-stale-'))
   try {
@@ -382,7 +383,9 @@ try {
     const staleFuEvidence = readCurrentSessionProjectEvidence({
       mainProcess: {
         ...mainProcess,
-        command: mainProcess.command.replace(sessionLogRoot, staleFileUtilsRoot).replace(sessionId, staleFuId)
+        command: mainProcess.command
+          .replace(sessionLogRoot, staleFileUtilsRoot)
+          .replace(sessionId, staleFuId)
       },
       expectedProjectPath: projectPath,
       nowMs: sessionNow
@@ -425,7 +428,9 @@ try {
     const noAutoEvidence = readCurrentSessionProjectEvidence({
       mainProcess: {
         ...mainProcess,
-        command: mainProcess.command.replace(sessionLogRoot, noAutoRoot).replace(sessionId, noAutoId)
+        command: mainProcess.command
+          .replace(sessionLogRoot, noAutoRoot)
+          .replace(sessionId, noAutoId)
       },
       expectedProjectPath: projectPath,
       nowMs: sessionNow
@@ -460,7 +465,9 @@ try {
     'full verified: should have FileUtils record'
   )
   // projectname is supplementary metadata, may be present but not required for verified
-  const projectConfigRecords = sessionEvidence.evidence_records.filter(r => r.type === 'ProjectConfig')
+  const projectConfigRecords = sessionEvidence.evidence_records.filter(
+    r => r.type === 'ProjectConfig'
+  )
   if (projectConfigRecords.length > 0) {
     assert.ok(
       projectConfigRecords.every(r => r.project_name !== undefined),
@@ -505,7 +512,10 @@ for (const call of recoveryControlCalls) {
   assert.equal(call.projectPath, projectPath)
   assert.equal(call.controlPort, 3799, 'IDE control port must remain distinct from Automator 9420')
 }
-assert.deepEqual(recoveryControlCalls.map(call => call.action), ['close', 'open', 'auto'])
+assert.deepEqual(
+  recoveryControlCalls.map(call => call.action),
+  ['close', 'open', 'auto']
+)
 assert.equal(recoveryControlCalls.find(call => call.action === 'auto').wsPort, 9420)
 
 const falseRestart = await recoverVerifiedTargetDevTools({
@@ -519,8 +529,8 @@ const falseRestart = await recoverVerifiedTargetDevTools({
 assert.equal(falseRestart.status, 'failed_environment')
 assert.equal(falseRestart.code, 'devtools_automator_blocker')
 // rework 6: verified runtime but no restart proof (same PID, no new AUTO) =>
-// target_runtime_not_stably_restarted (two-stable-observation cannot be satisfied)
-assert.equal(falseRestart.reason, 'target_runtime_not_stably_restarted')
+// target_runtime_not_stably_reverified_after_recovery
+assert.equal(falseRestart.reason, 'target_runtime_not_stably_reverified_after_recovery')
 
 const falseControlPort = await recoverVerifiedTargetDevTools({
   projectPath,
@@ -990,39 +1000,6 @@ try {
 }
 
 // ---------------------------------------------------------------------------
-// dedicated QA launcher: a spaced unquoted profile must stop at a single-dash
-// plugin option, otherwise owner verification would consume -load-extension.
-// ---------------------------------------------------------------------------
-{
-  const isolatedProfile = '/Users/jay/Library/Application Support/青花植/isolated-automator-devtools'
-  const isolatedPlugin = `${isolatedProfile}/WeappPlugin`
-  const isolatedOwnerRunner = (command, args) => {
-    if (command === 'ps' && args.includes('94220')) {
-      return {
-        status: 0,
-        stdout: `1 /Applications/wechatwebdevtools.app/Contents/MacOS/wechatdevtools --user-data-dir=${isolatedProfile} -load-extension=${isolatedPlugin} --custom-devtools-frontend=file://${isolatedPlugin}/inspector --ide-http-port 9422 --project=${projectPath}\n`,
-        stderr: ''
-      }
-    }
-    if (command === 'lsof' && args.includes('-t')) {
-      return { status: 0, stdout: '94220\n', stderr: '' }
-    }
-    throw new Error(`unexpected dedicated profile command: ${command} ${args.join(' ')}`)
-  }
-  const isolatedOwnerVerification = verifyDevToolsOwnerProcess({
-    owner: {
-      main_devtools_pid: 94220,
-      user_data_dir: isolatedProfile,
-      control_port: 9422
-    },
-    commandRunner: isolatedOwnerRunner
-  })
-  assert.equal(isolatedOwnerVerification.verified, true)
-  assert.equal(isolatedOwnerVerification.observed_user_data_dir, isolatedProfile)
-  assert.ok(!isolatedOwnerVerification.observed_user_data_dir.includes('-load-extension'))
-}
-
-// ---------------------------------------------------------------------------
 // dispatch-20260726-devtools-screenshot-recovery-zcode rework 5:
 // 恢复成功证据允许二选一：PID 变化 OR after 有比 before 更新的 AUTO 记录。
 // 覆盖：same PID + new valid AUTO => recovered；same PID + only stale AUTO => failed；
@@ -1074,9 +1051,7 @@ function autoRecord({ timestamp, port = 9420, projectPath: pp = projectPath }) {
     autoRecords: []
   })
   const afterAutoRuntime = verifiedRuntimeWithAutoEvidence({
-    autoRecords: [
-      autoRecord({ timestamp: '2026-07-27T06:00:00.000Z' })
-    ]
+    autoRecords: [autoRecord({ timestamp: '2026-07-27T06:00:00.000Z' })]
   })
   const samePidAutoRecovered = await recoverVerifiedTargetDevTools({
     projectPath,
@@ -1086,24 +1061,16 @@ function autoRecord({ timestamp, port = 9420, projectPath: pp = projectPath }) {
     observationDelayMs: 0,
     commandRunner: () => ({ status: 0, stdout: '', stderr: '' })
   })
-  assert.equal(
-    samePidAutoRecovered.status,
-    'recovered',
-    'same PID + new valid AUTO should recover'
-  )
+  assert.equal(samePidAutoRecovered.status, 'recovered', 'same PID + new valid AUTO should recover')
 }
 
 // Case: same PID + before has stale AUTO, after has newer AUTO => recovered
 {
   const beforeWithStaleAuto = verifiedRuntimeWithAutoEvidence({
-    autoRecords: [
-      autoRecord({ timestamp: '2026-07-27T05:00:00.000Z' })
-    ]
+    autoRecords: [autoRecord({ timestamp: '2026-07-27T05:00:00.000Z' })]
   })
   const afterWithNewerAuto = verifiedRuntimeWithAutoEvidence({
-    autoRecords: [
-      autoRecord({ timestamp: '2026-07-27T06:30:00.000Z' })
-    ]
+    autoRecords: [autoRecord({ timestamp: '2026-07-27T06:30:00.000Z' })]
   })
   const samePidNewerAutoRecovered = await recoverVerifiedTargetDevTools({
     projectPath,
@@ -1144,8 +1111,8 @@ function autoRecord({ timestamp, port = 9420, projectPath: pp = projectPath }) {
   )
   assert.equal(
     samePidStaleAutoFailed.reason,
-    'target_runtime_not_stably_restarted',
-    'same PID + stale AUTO should fail with target_runtime_not_stably_restarted'
+    'target_runtime_not_stably_reverified_after_recovery',
+    'same PID + stale AUTO should fail with target_runtime_not_stably_reverified_after_recovery'
   )
 }
 
@@ -1177,8 +1144,8 @@ function autoRecord({ timestamp, port = 9420, projectPath: pp = projectPath }) {
   )
   assert.equal(
     samePidWrongProjectFailed.reason,
-    'target_runtime_not_stably_restarted',
-    'same PID + wrong-project AUTO should fail with target_runtime_not_stably_restarted'
+    'target_runtime_not_stably_reverified_after_recovery',
+    'same PID + wrong-project AUTO should fail with target_runtime_not_stably_reverified_after_recovery'
   )
 }
 
@@ -1208,8 +1175,8 @@ function autoRecord({ timestamp, port = 9420, projectPath: pp = projectPath }) {
   )
   assert.equal(
     samePidWrongPortFailed.reason,
-    'target_runtime_not_stably_restarted',
-    'same PID + wrong-port AUTO should fail with target_runtime_not_stably_restarted'
+    'target_runtime_not_stably_reverified_after_recovery',
+    'same PID + wrong-port AUTO should fail with target_runtime_not_stably_reverified_after_recovery'
   )
 }
 
@@ -1238,7 +1205,11 @@ function autoRecord({ timestamp, port = 9420, projectPath: pp = projectPath }) {
     closeSettleDelayMs: 0,
     commandRunner: (command, args) => {
       settleCalls.push({ command, args: [...args] })
-      if (command === 'lsof' && args.includes('-t') && args.some(a => String(a).startsWith('-iTCP:9420'))) {
+      if (
+        command === 'lsof' &&
+        args.includes('-t') &&
+        args.some(a => String(a).startsWith('-iTCP:9420'))
+      ) {
         lsofProbeCount += 1
         // First probe: old listener still present; subsequent: gone
         return { status: 0, stdout: lsofProbeCount === 1 ? '901\n' : '', stderr: '' }
@@ -1251,8 +1222,16 @@ function autoRecord({ timestamp, port = 9420, projectPath: pp = projectPath }) {
     }
   })
   // close must come before open/auto, and open must not appear until lsof shows listener gone
-  assert.equal(settleRecovered.status, 'recovered', 'settle recovery should succeed after listener gone')
-  assert.deepEqual(settleControlCalls, ['close', 'open', 'auto'], 'control requests must be close->open->auto in order')
+  assert.equal(
+    settleRecovered.status,
+    'recovered',
+    'settle recovery should succeed after listener gone'
+  )
+  assert.deepEqual(
+    settleControlCalls,
+    ['close', 'open', 'auto'],
+    'control requests must be close->open->auto in order'
+  )
   assert.ok(lsofProbeCount >= 2, 'close-settle must poll lsof at least twice (present then gone)')
 }
 
@@ -1271,7 +1250,11 @@ function autoRecord({ timestamp, port = 9420, projectPath: pp = projectPath }) {
     commandRunner: (command, args) => {
       timeoutCalls.push({ command, args: [...args] })
       // lsof always returns the old listener PID (never settles)
-      if (command === 'lsof' && args.includes('-t') && args.some(a => String(a).startsWith('-iTCP:9420'))) {
+      if (
+        command === 'lsof' &&
+        args.includes('-t') &&
+        args.some(a => String(a).startsWith('-iTCP:9420'))
+      ) {
         return { status: 0, stdout: '901\n', stderr: '' }
       }
       return { status: 0, stdout: `${args[0]} ok`, stderr: '' }
@@ -1283,8 +1266,16 @@ function autoRecord({ timestamp, port = 9420, projectPath: pp = projectPath }) {
   })
   assert.equal(settleTimeout.status, 'failed_environment', 'close-settle timeout should fail')
   assert.equal(settleTimeout.code, 'devtools_automator_blocker')
-  assert.equal(settleTimeout.reason, 'target_close_did_not_settle_within_window', 'distinct reason for close-settle timeout')
-  assert.deepEqual(timeoutControlCalls, ['close'], 'open/auto must NOT be invoked when close did not settle')
+  assert.equal(
+    settleTimeout.reason,
+    'target_close_did_not_settle_within_window',
+    'distinct reason for close-settle timeout'
+  )
+  assert.deepEqual(
+    timeoutControlCalls,
+    ['close'],
+    'open/auto must NOT be invoked when close did not settle'
+  )
 }
 
 // Case: one-shot post-auto verified+new-AUTO followed by unavailable => NOT recovered
@@ -1302,9 +1293,7 @@ function autoRecord({ timestamp, port = 9420, projectPath: pp = projectPath }) {
           port_owner_pid: 902,
           session_log_evidence: {
             status: 'verified',
-            evidence_records: [
-              autoRecord({ timestamp: '2026-07-27T08:00:00.000Z' })
-            ]
+            evidence_records: [autoRecord({ timestamp: '2026-07-27T08:00:00.000Z' })]
           }
         }
       }
@@ -1328,8 +1317,16 @@ function autoRecord({ timestamp, port = 9420, projectPath: pp = projectPath }) {
     observationDelayMs: 0,
     commandRunner: () => ({ status: 0, stdout: '', stderr: '' })
   })
-  assert.equal(unstableResult.status, 'failed_environment', 'one-shot stable then unavailable must NOT recover')
-  assert.equal(unstableResult.reason, 'target_runtime_not_reverified_after_recovery', 'unstable post-auto should fail with not_reverified')
+  assert.equal(
+    unstableResult.status,
+    'failed_environment',
+    'one-shot stable then unavailable must NOT recover'
+  )
+  assert.equal(
+    unstableResult.reason,
+    'target_runtime_not_reverified_after_recovery',
+    'unstable post-auto should fail with not_reverified'
+  )
 }
 
 // Case: two stable verified post-auto observations with valid same-PID fresh AUTO => recovered
@@ -1338,9 +1335,7 @@ function autoRecord({ timestamp, port = 9420, projectPath: pp = projectPath }) {
     ...inspected,
     session_log_evidence: {
       status: 'verified',
-      evidence_records: [
-        autoRecord({ timestamp: '2026-07-27T08:00:00.000Z' })
-      ]
+      evidence_records: [autoRecord({ timestamp: '2026-07-27T08:00:00.000Z' })]
     }
   }
   const twoStableRecovered = await recoverVerifiedTargetDevTools({
@@ -1351,7 +1346,11 @@ function autoRecord({ timestamp, port = 9420, projectPath: pp = projectPath }) {
     observationDelayMs: 0,
     commandRunner: () => ({ status: 0, stdout: '', stderr: '' })
   })
-  assert.equal(twoStableRecovered.status, 'recovered', 'two stable verified+new-AUTO observations should recover')
+  assert.equal(
+    twoStableRecovered.status,
+    'recovered',
+    'two stable verified+new-AUTO observations should recover'
+  )
   assert.ok(
     twoStableRecovered.observation_attempts.length >= 2,
     'recovered must have at least 2 observation attempts (two-stable requirement)'
@@ -1383,7 +1382,11 @@ function autoRecord({ timestamp, port = 9420, projectPath: pp = projectPath }) {
     closeSettleAttempts: 3,
     closeSettleDelayMs: 0,
     commandRunner: (command, args) => {
-      if (command === 'lsof' && args.includes('-t') && args.some(a => String(a).startsWith('-iTCP:9420'))) {
+      if (
+        command === 'lsof' &&
+        args.includes('-t') &&
+        args.some(a => String(a).startsWith('-iTCP:9420'))
+      ) {
         return { status: 0, stdout: '901\n', stderr: '' }
       }
       return { status: 0, stdout: `${args[0]} ok`, stderr: '' }
@@ -1392,7 +1395,10 @@ function autoRecord({ timestamp, port = 9420, projectPath: pp = projectPath }) {
   assert.equal(defaultBudgetRecovered.status, 'failed_environment')
   assert.equal(defaultBudgetRecovered.reason, 'target_close_did_not_settle_within_window')
   // close_settle_evidence should report injected budget
-  assert.ok(defaultBudgetRecovered.close_settle_evidence, 'timeout result should carry close_settle_evidence')
+  assert.ok(
+    defaultBudgetRecovered.close_settle_evidence,
+    'timeout result should carry close_settle_evidence'
+  )
   assert.equal(defaultBudgetRecovered.close_settle_evidence.budget_attempts, 3)
   assert.equal(defaultBudgetRecovered.close_settle_evidence.budget_delay_ms, 0)
   assert.equal(defaultBudgetRecovered.close_settle_evidence.attempts_used, 3)
@@ -1417,7 +1423,11 @@ function autoRecord({ timestamp, port = 9420, projectPath: pp = projectPath }) {
     commandRunner: (() => {
       let lsofCount = 0
       return (command, args) => {
-        if (command === 'lsof' && args.includes('-t') && args.some(a => String(a).startsWith('-iTCP:9420'))) {
+        if (
+          command === 'lsof' &&
+          args.includes('-t') &&
+          args.some(a => String(a).startsWith('-iTCP:9420'))
+        ) {
           lsofCount += 1
           // First probe (pre-close): listener present; after close: gone
           return { status: 0, stdout: lsofCount <= 1 ? '901\n' : '', stderr: '' }
@@ -1427,7 +1437,10 @@ function autoRecord({ timestamp, port = 9420, projectPath: pp = projectPath }) {
     })()
   })
   assert.equal(defaultWindowRecovered.status, 'recovered', 'default window recovery should succeed')
-  assert.ok(defaultWindowRecovered.close_settle_evidence, 'recovered should carry close_settle_evidence')
+  assert.ok(
+    defaultWindowRecovered.close_settle_evidence,
+    'recovered should carry close_settle_evidence'
+  )
   // Default budget: 40 attempts × 500ms = 20000ms (20-second bounded window)
   assert.equal(
     defaultWindowRecovered.close_settle_evidence.budget_attempts,
@@ -1440,7 +1453,8 @@ function autoRecord({ timestamp, port = 9420, projectPath: pp = projectPath }) {
     'default close-settle budget_delay_ms should be 500'
   )
   assert.equal(
-    defaultWindowRecovered.close_settle_evidence.budget_attempts * defaultWindowRecovered.close_settle_evidence.budget_delay_ms,
+    defaultWindowRecovered.close_settle_evidence.budget_attempts *
+      defaultWindowRecovered.close_settle_evidence.budget_delay_ms,
     20000,
     'default close-settle window should be 20000ms (20 seconds)'
   )
@@ -1570,7 +1584,9 @@ function autoRecord({ timestamp, port = 9420, projectPath: pp = projectPath }) {
     'recovery must wait for observations 36 and 37 to establish two consecutive stable snapshots'
   )
   assert.deepEqual(
-    lateStableRecovery.observation_attempts.slice(-2).map(snapshot => snapshot.automation_listener_pid),
+    lateStableRecovery.observation_attempts
+      .slice(-2)
+      .map(snapshot => snapshot.automation_listener_pid),
     [902, 902],
     'the final two snapshots must prove a stable 9420 listener'
   )

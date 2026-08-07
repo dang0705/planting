@@ -22,6 +22,12 @@ const { compactClientContextForSnapshot } = require('./session-runtime-client-co
 const SNAPSHOT_CARE_DAILY_RECORD_LIMIT = 25
 const SNAPSHOT_HISTORICAL_DAYS_LIMIT = 10
 const SNAPSHOT_FORECAST_DAYS_LIMIT = 15
+const DIAGNOSIS_AIR_ENVIRONMENT_SNAPSHOT_SOURCES = new Set([
+  'saved_profile',
+  'temporary',
+  'temporary_save_succeeded',
+  'temporary_save_failed'
+])
 
 function resolvePrivateSymptomClassRuntime(response = {}) {
   return normalizePublicSymptomClassRuntime(
@@ -140,6 +146,38 @@ function compactEnvironmentCareContextForSnapshot(value = null) {
   }
 }
 
+function compactDiagnosisAirEnvironmentSnapshots(response = {}) {
+  const inputByQuestionId = isPlainObject(response?.airEnvironmentByQuestionId)
+    ? response.airEnvironmentByQuestionId
+    : {}
+  const snapshotsByQuestionId = isPlainObject(response?.airEnvironmentSnapshotsByQuestionId)
+    ? response.airEnvironmentSnapshotsByQuestionId
+    : {}
+  const snapshots = {}
+  for (const [questionKey, input] of Object.entries(inputByQuestionId)) {
+    const sourceSnapshot = snapshotsByQuestionId[questionKey]
+    if (!isPlainObject(input) || !isPlainObject(sourceSnapshot)) {
+      continue
+    }
+    const source = String(sourceSnapshot.source || '').trim()
+    if (!DIAGNOSIS_AIR_ENVIRONMENT_SNAPSHOT_SOURCES.has(source)) {
+      continue
+    }
+    snapshots[questionKey] = {
+      input,
+      source,
+      profileUpdatedAt: String(sourceSnapshot.profileUpdatedAt || '').trim(),
+      locationBinding: isPlainObject(sourceSnapshot.locationBinding)
+        ? {
+            careLocationId: String(sourceSnapshot.locationBinding.careLocationId || '').trim(),
+            locationKey: String(sourceSnapshot.locationBinding.locationKey || '').trim()
+          }
+        : { careLocationId: '', locationKey: '' }
+    }
+  }
+  return snapshots
+}
+
 function buildSnapshotPayload({
   sessionId,
   plantContext,
@@ -184,6 +222,7 @@ function buildSnapshotPayload({
   const environmentCareContext = compactEnvironmentCareContextForSnapshot(
     response?.environmentCareContext || null
   )
+  const airEnvironmentSnapshotsByQuestionId = compactDiagnosisAirEnvironmentSnapshots(response)
 
   return {
     diagnosisSessionId: sessionId,
@@ -231,6 +270,23 @@ function buildSnapshotPayload({
     careBaselineSummary: response?.careBaselineSummary || null,
     careBehaviorTimeline,
     environmentCareContext,
+    airEnvironmentByQuestionId: Object.fromEntries(
+      Object.entries(airEnvironmentSnapshotsByQuestionId).map(([questionKey, snapshot]) => [
+        questionKey,
+        snapshot.input
+      ])
+    ),
+    airEnvironmentSnapshotsByQuestionId,
+    airEnvironmentSnapshotSourceByQuestionId: Object.fromEntries(
+      Object.entries(airEnvironmentSnapshotsByQuestionId).map(([questionKey, snapshot]) => [
+        questionKey,
+        snapshot.source
+      ])
+    ),
+    airEnvironmentEvidence:
+      response?.airEnvironmentEvidence && typeof response.airEnvironmentEvidence === 'object'
+        ? response.airEnvironmentEvidence
+        : null,
     environmentDeviationHints: Array.isArray(response?.environmentDeviationHints)
       ? response.environmentDeviationHints
       : [],
@@ -398,6 +454,7 @@ function buildRuntimeSnapshotPayload({
   const environmentCareContext = compactEnvironmentCareContextForSnapshot(
     response?.environmentCareContext || null
   )
+  const airEnvironmentSnapshotsByQuestionId = compactDiagnosisAirEnvironmentSnapshots(response)
 
   return JSON.stringify({
     diagnosisSessionId: sessionId,
@@ -457,6 +514,23 @@ function buildRuntimeSnapshotPayload({
     careBaselineSummary: isQuestionRuntimeSnapshot ? null : response?.careBaselineSummary || null,
     careBehaviorTimeline,
     environmentCareContext,
+    airEnvironmentByQuestionId: Object.fromEntries(
+      Object.entries(airEnvironmentSnapshotsByQuestionId).map(([questionKey, snapshot]) => [
+        questionKey,
+        snapshot.input
+      ])
+    ),
+    airEnvironmentSnapshotsByQuestionId,
+    airEnvironmentSnapshotSourceByQuestionId: Object.fromEntries(
+      Object.entries(airEnvironmentSnapshotsByQuestionId).map(([questionKey, snapshot]) => [
+        questionKey,
+        snapshot.source
+      ])
+    ),
+    airEnvironmentEvidence:
+      response?.airEnvironmentEvidence && typeof response.airEnvironmentEvidence === 'object'
+        ? response.airEnvironmentEvidence
+        : null,
     environmentDeviationHints: Array.isArray(response?.environmentDeviationHints)
       ? response.environmentDeviationHints
       : [],
@@ -486,6 +560,7 @@ module.exports = {
   buildPublicShadowCompareSummary,
   buildPublicVisualAggregateSummary,
   buildSnapshotPayload,
+  compactDiagnosisAirEnvironmentSnapshots,
   resolveSessionIdentityStatus,
   resolveSessionRoute,
   resolveSessionStatus,

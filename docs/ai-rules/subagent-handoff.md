@@ -1,10 +1,10 @@
-# Subagent Handoff 规则
+# Handoff 规则（External Bridge 兼容入口）
 
 ## 1. 定位
 
-handoff 用于跨 subagent、跨回合、跨线程恢复任务状态。为控制 token，本文件采用“双层结构”：
+handoff 仅用于 external bridge 或跨回合恢复任务状态。当前不创建内部 subagent；main 直接执行实现。为控制 token，本文件采用“双层结构”：
 
-1. **轻量恢复摘要**：默认传给后续 agent，用于恢复上下文。
+1. **轻量恢复摘要**：默认用于 main 或 external bridge 恢复上下文。
 2. **审计附录**：仅在排查、复盘、争议、失败归因或用户要求时读取。
 
 默认只读取轻量恢复摘要，不读取审计附录。
@@ -31,7 +31,7 @@ Handoff Resume Summary:
 - 关键决策:
 - role_context_packet:
   - `main agent`:
-  - implementer:
+  - external_implementer: only when explicitly authorized
   - QA:
   - docs:
 - 需要复用的结论:
@@ -100,7 +100,7 @@ Handoff Audit Appendix:
 只有以下情况才读取审计附录：
 
 1. 任务失败，需要排查原因。
-2. `main agent`、QA、implementer 结论冲突。
+2. `main agent`、QA、external implementer 结论冲突。
 3. 用户要求复盘。
 4. 需要证明某条验证证据。
 5. 需要恢复长任务，但轻量摘要不足。
@@ -118,16 +118,16 @@ Handoff Audit Appendix:
 - Test Contract 摘要。
 - Review Scope 摘要。
 - 技术方向裁决。
-- 给 implementer 的最小执行契约。
+- 如用户明确要求外部桥接，给 external implementer 的最小执行契约。
 - 给 QA 的测试契约摘要。
 
 不得默认输出完整代码 review 长文；长 findings 放审计附录。
 
-### 4.2 implementer_fast / implementer_deep
+### 4.2 External implementer
 
 必须输出：
 
-- Contract 执行情况。
+- External Contract 执行情况。
 - 修改文件清单。
 - 偏离契约之处。
 - 已补测试代码。
@@ -144,7 +144,7 @@ Handoff Audit Appendix:
 - 测试执行矩阵。
 - 失败归因分类。
 - 证据路径。
-- 是否需要 implementer 或 external implementer 返工。
+- 是否需要 external implementer 返工。
 - 是否需要发布 / CloudBase 证据复核流程。
 
 不得粘贴完整日志、完整 DevTools dump 或完整截图 OCR。

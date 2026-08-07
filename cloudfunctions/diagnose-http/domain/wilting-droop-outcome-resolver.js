@@ -186,7 +186,7 @@ const OPTION_OUTCOME_KEYS = Object.freeze({
   dry_crispy_curled_burnt_edge: ['dry_tissue_handling'],
   daytime_recovers: ['reduce_transpiration'],
   strong_window_west_heat: ['move_from_heat'],
-  ac_heater_fan_direct: ['move_from_direct_airflow'],
+  direct_airflow: ['move_from_direct_airflow'],
   all_day_wilt: ['persistent_wilt'],
   moved_transport: ['acclimation_stability'],
   repot_divide_root_prune_soil_change: ['repot_recovery'],

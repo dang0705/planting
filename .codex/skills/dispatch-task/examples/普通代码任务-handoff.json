@@ -7,14 +7,6 @@
     "risk": "local",
     "qa_required": false
   },
-  "target_role": "implementer_fast",
-  "spawn_contract": {
-    "implementer_agent_type": "implementer_fast",
-    "qa_agent_type": null,
-    "context_mode": "isolated",
-    "generic_fallback_forbidden": true,
-    "identity_receipt_required": true
-  },
   "allowed_paths": [
     "src/utils/example.ts",
     "src/utils/__tests__/example.test.ts"
@@ -27,6 +19,10 @@
     "边界条件被覆盖",
     "相关单测通过"
   ],
+  "selection_to_consumer": {
+    "required": false,
+    "not_applicable_reason": "边界条件修复不新增用户可选值"
+  },
   "project_constraints": {
     "rule_refs": [
       "AGENTS.md#测试"
@@ -66,7 +62,7 @@
   },
   "validation": {
     "miniprogram_automator_required": false,
-    "implementer": [
+    "main": [
       "unit tests"
     ],
     "qa": [],
@@ -76,5 +72,5 @@
     "validation_evidence"
   ],
   "dispatch_tier": "standard_task",
-  "implementation_mode": "codex_subagent"
+  "implementation_mode": "main_direct"
 }

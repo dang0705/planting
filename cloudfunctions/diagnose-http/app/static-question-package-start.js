@@ -1,6 +1,7 @@
 'use strict'
 
 const { toOptionId } = require('../mappers/public-id-mapper')
+const { createAirEnvironmentPackageQuestion } = require('./air-environment-question-contract')
 const { buildRuntimeArtifacts } = require('../domain/runtime-artifacts')
 const { buildObservedProbePackageQuestions } = require('./static-package-question-builder')
 const { filterDisabledYellowingFlowQuestions } = require('../utils/yellowing-question-policy')
@@ -72,7 +73,8 @@ function mapStaticQuestionToPackageQuestion(question = {}) {
     renderMode: question.renderMode || '',
     routePackageRole: question.routePackageRole || '',
     packageEffect: question.packageEffect || '',
-    type: question.questionType || question.answerType || 'single_choice',
+    questionType: question.questionType || '',
+    type: question.type || question.answerType || 'single_choice',
     text: question.text || question.questionText || '',
     questionText: question.questionText || question.text || '',
     helpText: question.helpText || '',
@@ -87,27 +89,33 @@ function mapStaticQuestionToPackageQuestion(question = {}) {
   }
 }
 
-async function buildYellowingStaticQuestions({
-  repository = null
-} = {}) {
+async function buildYellowingStaticQuestions({ repository = null } = {}) {
   const questionPackage = getQuestionPackageByMode(YELLOW_LEAF_PACKAGE_MODE)
   const packageTopics = questionPackage?.packageTopics || []
   const questions = []
   for (const packageTopic of packageTopics) {
-    if (isRegisteredPackageQuestionTopic(packageTopic)) {
-      questions.push(await loadRegisteredPackageQuestion({
-        packageTopic,
-        repository,
-        selectionSource: 'data_repository_question_package',
-        targetSymptomKey: YELLOWING_STATIC_ITEM.symptomKey
-      }))
+    if (packageTopic === 'air_environment') {
+      questions.push(createAirEnvironmentPackageQuestion())
       continue
     }
-    questions.push(...buildObservedProbePackageQuestions(YELLOWING_STATIC_ITEM, {
+    if (isRegisteredPackageQuestionTopic(packageTopic)) {
+      questions.push(
+        await loadRegisteredPackageQuestion({
+          packageTopic,
+          repository,
+          selectionSource: 'data_repository_question_package',
+          targetSymptomKey: YELLOWING_STATIC_ITEM.symptomKey
+        })
+      )
+      continue
+    }
+    questions.push(
+      ...buildObservedProbePackageQuestions(YELLOWING_STATIC_ITEM, {
         maxQuestions: 1,
         preferredTopics: [packageTopic],
         plantContext: {}
-      }))
+      })
+    )
   }
   const uniqueQuestions = []
   const seenQuestionKeys = new Set()
@@ -275,6 +283,7 @@ module.exports = {
     buildWiltingDroopPackageQuestions,
     buildYellowingStaticQuestions,
     buildStaticObservedSymptoms,
-    buildStaticObservedEvidenceSet
+    buildStaticObservedEvidenceSet,
+    buildAirEnvironmentPackageQuestion: createAirEnvironmentPackageQuestion
   }
 }

@@ -1,48 +1,84 @@
 {
   "dispatch_run_id": "example-zcode-ui-001",
   "status": "sent",
-  "application_verified": "ZCode",
-  "current_session_verified": true,
-  "input_box_verified": true,
-  "clipboard_paste_used": true,
-  "prompt_integrity_verified": true,
-  "sentinel_start_seen_before_send": true,
-  "sentinel_end_seen_before_send": true,
-  "send_action": "enter",
-  "codex_typed_prompt_manually": false,
-  "computer_use": {
-    "tool_invoked": true,
-    "tool_family": "computer_use_or_ui_automation",
-    "actions": [
-      "verify_zcode_current_session",
-      "focus_chat_input",
-      "set_clipboard_to_prompt",
-      "paste_clipboard",
-      "verify_prompt_sentinel_in_input",
-      "send_prompt"
+  "blocker": null,
+  "transport": {
+    "kind": "zcode_visible_clipboard",
+    "target_session": "current_open_chat",
+    "status": "sent",
+    "fallback": "none",
+    "headless_used": false
+  },
+  "prompt_identity": {
+    "path": "/Users/jay/WebstormProjects/planting/.tmp/dispatch-task/example-zcode-ui-001-prompt.txt",
+    "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    "bytes": 4096,
+    "lines": 96,
+    "verified_before_after": true
+  },
+  "clipboard": {
+    "write_attempts": [
+      {
+        "method": "nspasteboard",
+        "status": "mismatch",
+        "readback_verified": false,
+        "attempted_at": "2026-07-30T08:00:00.000Z"
+      },
+      {
+        "method": "pbcopy",
+        "status": "verified",
+        "readback_verified": true,
+        "attempted_at": "2026-07-30T08:00:01.000Z"
+      }
     ],
-    "clipboard_write_confirmed": true,
-    "shell_only_ui_automation_used": false,
-    "manual_typing_used": false,
-    "tool_invocation_evidence": {
-      "actual_tool_invocation_required": true,
-      "tool_target": "@ZCode",
-      "tool_events_seen": true,
-      "tool_event_count": 5,
-      "transcript_event_refs": [
-        "computer-use-event-1",
-        "computer-use-event-2",
-        "computer-use-event-3",
-        "computer-use-event-4",
-        "computer-use-event-5"
-      ],
-      "commands_issued": [
-        "Verify ZCode current session",
-        "Focus ZCode chat input",
-        "Set clipboard to generated handoff prompt and paste",
-        "Verify prompt sentinels in input",
-        "Send prompt and confirm message appears"
-      ]
-    }
-  }
+    "selected_method": "pbcopy",
+    "readback_verified": true,
+    "verified_at": "2026-07-30T08:00:02.000Z"
+  },
+  "input_focus": {
+    "latest_app_state_checked": true,
+    "unique_entry_area": true,
+    "clicked": true,
+    "focused_element_verified": true,
+    "element_index_persisted": false,
+    "verified_at": "2026-07-30T08:00:03.000Z"
+  },
+  "paste_delivery": {
+    "attempts": [
+      {
+        "method": "cmd_v",
+        "delivery_verified": false
+      },
+      {
+        "method": "edit_menu_paste",
+        "delivery_verified": true
+      }
+    ],
+    "selected_method": "edit_menu_paste",
+    "rendering": "direct_text",
+    "pre_send_verified": true,
+    "direct_text_identity": {
+      "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "bytes": 4096,
+      "lines": 96
+    },
+    "attachment": null,
+    "verified_at": "2026-07-30T08:00:04.000Z"
+  },
+  "send_delivery": {
+    "send_clicked": true,
+    "input_submitted": true,
+    "conversation_state_changed": true,
+    "conversation_delivery_verified": true,
+    "verified_at": "2026-07-30T08:00:05.000Z"
+  },
+  "redaction": {
+    "prompt_body_persisted": false,
+    "old_clipboard_persisted": false,
+    "credential_persisted": false,
+    "raw_ui_dump_persisted": false,
+    "element_index_persisted": false
+  },
+  "created_at": "2026-07-30T08:00:00.000Z",
+  "sent_at": "2026-07-30T08:00:06.000Z"
 }

@@ -1,7 +1,6 @@
 <template>
   <Layout title="浇水建议" left-action="back" background-class="bg-[#f8faf9]">
     <view class="flex h-screen min-h-0 flex-col bg-[#f8faf9] pb-5">
-      <!-- 步骤指示器 -->
       <view class="flex items-center justify-center gap-2 px-4 pt-4">
         <view v-for="(label, index) in stepLabels" :key="index" class="flex items-center gap-2">
           <view
@@ -19,7 +18,6 @@
           <view v-if="index < stepLabels.length - 1" class="mx-1 h-[1px] w-6 bg-[#e1e9dd]" />
         </view>
       </view>
-
       <ButtonStepTrack
         id="watering-advisor-swiper"
         :active-index="activeStep"
@@ -43,10 +41,64 @@
               @select="selectCatalogPlant"
             />
           </view>
-
-          <!-- 步骤2：输入盆型（inline 渲染共享内核，不打开 popup） -->
           <scroll-view
-            v-if="active && index === STEP_POT_PROFILE"
+            v-if="active && isUserPlant && index === AIR_ENVIRONMENT_STEP"
+            scroll-y
+            class="box-border h-full min-h-0 px-4 pt-6 pb-[112px]"
+          >
+            <view class="mb-4">
+              <text class="block text-[20px] font-bold leading-7 text-[#1f2937]">空气环境</text>
+              <text class="mt-1 block text-[13px] text-[#6b7280]">
+                这项信息仅作为养护参考，不会改变当前盆型填写
+              </text>
+            </view>
+            <AirEnvironmentSummaryCard
+              v-if="showSavedAirEnvironmentSummary"
+              id="watering-advisor-air-environment-summary"
+              edit-button-id="watering-advisor-air-environment-edit"
+              confirm-button-id="watering-advisor-air-environment-confirm-location"
+              :summary="savedAirEnvironmentSummary"
+              :needs-confirmation="airEnvironmentNeedsConfirmation"
+              @edit="openAirEnvironmentEditor"
+              @confirm="confirmAirEnvironmentLocation"
+            />
+            <view
+              v-if="airEnvironmentNeedsConfirmation && airEnvironmentEditorOpen"
+              id="watering-advisor-air-environment-location-confirmation"
+              class="mb-3 rounded-xl bg-[#fff7ed] px-3 py-2 text-xs leading-5 text-[#9a5a14]"
+            >
+              <text class="block">植物位置可能已变化，已带入旧资料；请确认或修改后再继续。</text>
+              <button
+                id="watering-advisor-air-environment-confirm-location"
+                class="mt-2 h-8 rounded-lg border border-[#b86d1b] bg-white px-3 text-xs font-semibold leading-8 text-[#9a5a14]"
+                @click="confirmAirEnvironmentLocation"
+              >
+                确认当前位置未变
+              </button>
+            </view>
+            <AirEnvironmentAssessment
+              v-if="!showSavedAirEnvironmentSummary || airEnvironmentEditorOpen"
+              id-prefix="watering-advisor-air-environment"
+              :model-value="airEnvironmentDraft"
+              footer-position="fixed"
+              back-label="上一步"
+              back-id="watering-advisor-air-environment-back"
+              completion-label="下一步：输入盆型"
+              completion-id="watering-advisor-air-environment-next"
+              @change="handleAirEnvironmentChange"
+              @back="goToSourceStep"
+              @complete="goToPotProfile"
+            />
+            <text
+              v-if="airEnvironmentLoadError"
+              id="watering-advisor-air-environment-load-error"
+              class="mt-3 block text-xs text-[#b45309]"
+            >
+              {{ airEnvironmentLoadError }}，可直接重新填写
+            </text>
+          </scroll-view>
+          <scroll-view
+            v-if="active && index === potProfileStep"
             scroll-y
             class="box-border h-full min-h-0 px-4 pt-6 pb-[112px]"
           >
@@ -56,8 +108,6 @@
                 尺寸用于估算水量，基质和排水孔影响浇水策略
               </text>
             </view>
-
-            <!-- 已选植物 -->
             <view
               class="mb-4 flex items-center gap-3 rounded-2xl border border-[#e1e9dd] bg-white p-3"
             >
@@ -77,28 +127,38 @@
                 {{ selectedCatalogPlantName }}
               </text>
             </view>
-
-            <!-- inline 共享盆型表单内核 -->
             <PotProfileFormCore
               ref="potProfileFormRef"
               :initial-profile="selectedCatalogPlantPotProfile"
               :id-prefix="'watering-advisor-pot-profile'"
-              @summary="handlePotProfileSummary"
             />
           </scroll-view>
-
-          <!-- 步骤3：展示建议 -->
           <scroll-view
-            v-if="active && index === STEP_RESULT"
+            v-if="active && index === resultStep"
             scroll-y
             class="box-border h-full min-h-0 px-4 pt-6 pb-[112px]"
           >
             <view v-if="computing" class="flex flex-col items-center justify-center py-20">
               <text class="text-[14px] text-[#9ca3af]">正在计算浇水建议...</text>
             </view>
-
             <view v-else-if="plannerResult" class="pb-6">
-              <!-- 独立浇水最终结果：矿泉水瓶/5L油桶口径，与首页一致 -->
+              <view
+                v-if="isUserPlant && airEnvironmentSyncMessage"
+                id="watering-advisor-air-environment-sync-status"
+                class="mb-3 rounded-2xl border border-[rgba(45,122,79,0.14)] bg-white px-4 py-3"
+              >
+                <text class="block text-xs leading-5 text-[#5a7a68]">{{
+                  airEnvironmentSyncMessage
+                }}</text>
+                <button
+                  v-if="airEnvironmentSyncState === 'failed'"
+                  id="watering-advisor-air-environment-retry-save"
+                  class="mt-2 h-8 rounded-lg border border-[#2d7a4f] bg-white px-3 text-xs font-semibold leading-8 text-[#2d7a4f]"
+                  @click="retryAirEnvironmentSave"
+                >
+                  重试保存
+                </button>
+              </view>
               <view
                 id="watering-advisor-result-amount"
                 class="mb-3 rounded-2xl border border-[#e1e9dd] bg-white p-6 text-center"
@@ -108,15 +168,12 @@
                 </text>
               </view>
             </view>
-
             <view v-else class="flex flex-col items-center justify-center py-20">
               <text class="text-[14px] text-[#9ca3af]">暂无建议结果</text>
             </view>
           </scroll-view>
         </template>
       </ButtonStepTrack>
-
-      <!-- 统一吸底操作区：置于步骤轨道外，避免被任一步骤的滚动容器裁剪 -->
       <view
         v-if="activeStep === STEP_SOURCE"
         class="fixed bottom-0 left-0 right-0 z-[100] box-border border-t border-[#e1e9dd] bg-[#f8faf9] px-4 pb-5 pt-3"
@@ -126,19 +183,43 @@
           class="m-0 h-[52px] w-full rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white"
           :class="{ 'opacity-50': !selectedCatalogPlant }"
           :disabled="!selectedCatalogPlant"
+          @click="goToNextStep"
+        >
+          下一步：输入盆型
+        </button>
+      </view>
+      <view
+        v-else-if="
+          activeStep === AIR_ENVIRONMENT_STEP &&
+          isUserPlant &&
+          showSavedAirEnvironmentSummary &&
+          !airEnvironmentEditorOpen
+        "
+        class="fixed bottom-0 left-0 right-0 z-[100] box-border flex gap-3 border-t border-[#e1e9dd] bg-[#f8faf9] px-4 pb-5 pt-3"
+      >
+        <button
+          id="watering-advisor-air-environment-back"
+          class="m-0 h-[52px] flex-1 rounded-2xl border border-[#2d7a4f] bg-white p-0 text-base font-bold leading-[52px] text-[#2d7a4f]"
+          @click="goToSourceStep"
+        >
+          上一步
+        </button>
+        <button
+          id="watering-advisor-air-environment-next"
+          class="m-0 h-[52px] flex-[2] rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white"
           @click="goToPotProfile"
         >
           下一步：输入盆型
         </button>
       </view>
       <view
-        v-else-if="activeStep === STEP_POT_PROFILE"
+        v-else-if="activeStep === potProfileStep"
         class="fixed bottom-0 left-0 right-0 z-[100] box-border flex gap-3 border-t border-[#e1e9dd] bg-[#f8faf9] px-4 pb-5 pt-3"
       >
         <button
           id="watering-advisor-back-1"
           class="m-0 h-[52px] flex-1 rounded-2xl border border-[#2d7a4f] bg-white p-0 text-base font-bold leading-[52px] text-[#2d7a4f]"
-          @click="goToSourceStep"
+          @click="goBackFromPotProfile"
         >
           上一步
         </button>
@@ -153,7 +234,7 @@
         </button>
       </view>
       <view
-        v-else-if="activeStep === STEP_RESULT"
+        v-else-if="activeStep === resultStep"
         class="fixed bottom-0 left-0 right-0 z-[100] box-border flex gap-3 border-t border-[#e1e9dd] bg-[#f8faf9] px-4 pb-5 pt-3"
       >
         <button
@@ -183,75 +264,94 @@
     </view>
   </Layout>
 </template>
-
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import Layout from '@/Layout.vue'
 import ButtonStepTrack from '@/components/common/ButtonStepTrack.vue'
+import AirEnvironmentAssessment from '@/components/AirEnvironmentAssessment.vue'
+import AirEnvironmentSummaryCard from '@/components/AirEnvironmentSummaryCard.vue'
 import PotProfileFormCore from '@/components/pot-profile/PotProfileFormCore.vue'
 import { useUserStore } from '@/store/user.js'
 import { usePlantStore } from '@/store/plants.js'
+import { fetchUserPlantWateringPlanner } from '@/api/plants-http.js'
 import CatalogPlantSearch from './components/CatalogPlantSearch.vue'
 import { formatMlRangeToBottleText } from '@/utils/water-volume-format.js'
 import {
   fetchAdhocPlannerResult,
-  fetchWateringPlannerResult,
-  saveAdvisorSession,
-  buildPotProfileSummary
+  normalizePlannerResultDate,
+  saveAdvisorSession
 } from '@/pages/index/components/watering-reminder-options.js'
 import { useWateringAdvisorWeather } from './useWateringAdvisorWeather.js'
-
+import { useUserPlantAirEnvironment } from '@/composables/useUserPlantAirEnvironment.js'
+import {
+  isAirEnvironmentAnswerReady,
+  sanitizeAirEnvironmentInput
+} from '@/utils/air-environment.js'
+import { useWateringAdvisorAirEnvironment } from './useWateringAdvisorAirEnvironment.js'
+import { useWateringAdvisorMyPlants } from './useWateringAdvisorMyPlants.js'
 const userStore = useUserStore()
 const plantStore = usePlantStore()
-
 const STEP_SOURCE = 0
-const STEP_POT_PROFILE = 1
-const STEP_RESULT = 2
+const AIR_ENVIRONMENT_STEP = 1
 const AMOUNT_RANGE_MIN_LENGTH = 2
-const stepLabels = ['选植物', '盆型', '建议']
 const activeStep = ref(STEP_SOURCE)
 const selectedCatalogPlant = ref(null)
 const computing = ref(false)
 const plannerResult = ref(null)
-const savedToBackend = ref(false)
 const searchRef = ref(null)
 const potProfileFormRef = ref(null)
-const editorSummary = ref('')
-const showMyPlantsList = ref(false)
-const loadingMyPlants = ref(false)
 const selectedUserPlantId = ref(null)
-const {
-  weatherDays,
-  forecastDays,
-  weatherLocationKey,
-  plannerLocationKey,
-  loadWeatherDays
-} = useWateringAdvisorWeather({ selectedCatalogPlant, plantStore, userStore })
-
+const airEnvironment = useUserPlantAirEnvironment({ plantStore })
+const { draft: airEnvironmentDraft, loadError: airEnvironmentLoadError } = airEnvironment
+const { weatherDays, forecastDays, plannerLocationKey, loadWeatherDays } =
+  useWateringAdvisorWeather({ selectedCatalogPlant, plantStore, userStore })
 const selectedCatalogPlantName = computed(
   () =>
     selectedCatalogPlant.value?.primaryDisplayName ||
     selectedCatalogPlant.value?.canonicalName ||
     '未选择植物'
 )
-
-const shouldShowMyPlantsLoading = computed(
-  () => loadingMyPlants.value && !plantStore.userPlants.length
+const {
+  showMyPlantsList,
+  shouldShowMyPlantsLoading,
+  handleScrollLower,
+  handleMyPlantsPanelToggle
+} = useWateringAdvisorMyPlants({ userStore, plantStore, searchRef })
+const isUserPlant = computed(() => Boolean(selectedCatalogPlant.value?.userPlantId))
+const {
+  airEnvironmentEditorOpen,
+  airEnvironmentNeedsConfirmation,
+  frozenAirEnvironmentOverride,
+  airEnvironmentSyncState,
+  showSavedAirEnvironmentSummary,
+  savedAirEnvironmentSummary,
+  airEnvironmentSyncMessage,
+  reset: resetWateringAirEnvironment,
+  loadForUserPlant,
+  handleChange: handleWateringAirEnvironmentChange,
+  openEditor: openAirEnvironmentEditor,
+  confirmLocation: confirmAirEnvironmentLocation,
+  freezeAndSync: freezeAndSyncAirEnvironment,
+  retrySave: retryAirEnvironmentSave
+} = useWateringAdvisorAirEnvironment({
+  airEnvironment,
+  selectedCatalogPlant,
+  isUserPlant
+})
+const potProfileStep = computed(() => (isUserPlant.value ? 2 : 1))
+const resultStep = computed(() => (isUserPlant.value ? 3 : 2))
+const stepLabels = computed(() =>
+  isUserPlant.value ? ['选植物', '空气', '盆型', '建议'] : ['选植物', '盆型', '建议']
 )
-
-// 当前选中植物（我的植物）已有的 potProfile，传给共享内核作为 initialProfile
 const selectedCatalogPlantPotProfile = computed(() => {
   const plant = selectedCatalogPlant.value
   if (!plant?.userPlantId) {
     return null
   }
-  // 我的植物路径：从 plantStore 取该植物的 potProfile
   const userPlant = plantStore.userPlants?.find(item => item.id === plant.userPlantId)
   return userPlant?.potProfile || null
 })
-
-// 统一水量文案：调用全局 formatMlRangeToBottleText，与首页 WateringReminderSheet 口径一致
 const amountText = computed(() => {
   const range = plannerResult.value?.amountRangeMl
   if (!range || !Array.isArray(range) || range.length < AMOUNT_RANGE_MIN_LENGTH) {
@@ -259,62 +359,13 @@ const amountText = computed(() => {
   }
   return formatMlRangeToBottleText(range)
 })
-
-const potProfileSummary = computed(() => {
-  const summaryText = editorSummary.value
-  if (summaryText) {
-    return summaryText
-  }
-  // 默认状态摘要：复用 buildPotProfileSummary，传入默认值
-  return buildPotProfileSummary({
-    potTopDiameterCm: '20',
-    potBottomDiameterCm: '10',
-    potHeightCm: '15',
-    hasDrainageHole: 'true',
-    substrateType: 'unknown'
-  })
-})
-
 function selectCatalogPlant(plant) {
   selectedCatalogPlant.value = plant
   selectedUserPlantId.value = null
+  airEnvironment.reset()
+  resetWateringAirEnvironment()
 }
-
-function handleScrollLower() {
-  searchRef.value?.loadNextPage()
-}
-
-async function openMyPlantsList() {
-  showMyPlantsList.value = true
-  if (!(await userStore.ensureLogin())) {
-    showMyPlantsList.value = false
-    return
-  }
-  if (plantStore.userPlants.length) {
-    await plantStore.getUserPlants()
-    return
-  }
-  loadingMyPlants.value = true
-  try {
-    await plantStore.getUserPlants()
-  } finally {
-    loadingMyPlants.value = false
-  }
-}
-
-function closeMyPlantsList() {
-  showMyPlantsList.value = false
-}
-
-async function handleMyPlantsPanelToggle(expanded) {
-  if (expanded) {
-    await openMyPlantsList()
-    return
-  }
-  closeMyPlantsList()
-}
-
-function selectUserPlant(plant) {
+async function selectUserPlant(plant) {
   selectedUserPlantId.value = plant.id
   selectedCatalogPlant.value = {
     plantIdentityId: plant.plantIdentityId || '',
@@ -324,45 +375,55 @@ function selectUserPlant(plant) {
     canonicalName: plant.canonicalName || '',
     plantGenus: plant.genus || '',
     userPlantId: plant.id,
+    careLocationId: plant.careLocationId || '',
+    locationKey: plant.locationKey || '',
     wateringEvents: plant.wateringEvents || null,
     potProfile: plant.potProfile || null
   }
+  airEnvironment.reset(plant.id)
+  await loadForUserPlant(plant.id)
 }
-
-function goToPotProfile() {
+function goToNextStep() {
   if (!selectedCatalogPlant.value) {
     uni.showToast({ title: '请先选择植物', icon: 'none' })
     return
   }
-  activeStep.value = STEP_POT_PROFILE
+  activeStep.value = isUserPlant.value ? AIR_ENVIRONMENT_STEP : potProfileStep.value
 }
-
+function goToPotProfile() {
+  if (!isAirEnvironmentAnswerReady(airEnvironment.draft.value)) {
+    uni.showToast({ title: '请完成空气环境信息', icon: 'none' })
+    return
+  }
+  if (airEnvironmentNeedsConfirmation.value) {
+    uni.showToast({ title: '请确认植物位置或修改空气环境', icon: 'none' })
+    return
+  }
+  freezeAndSyncAirEnvironment()
+  activeStep.value = potProfileStep.value
+}
 function goToSourceStep() {
   activeStep.value = STEP_SOURCE
 }
-
 function goBackToPotProfile() {
-  activeStep.value = STEP_POT_PROFILE
+  activeStep.value = potProfileStep.value
 }
-
-// 进入盆型步骤时初始化 canvas（step track 切换后 DOM 才渲染）
+function goBackFromPotProfile() {
+  activeStep.value = isUserPlant.value ? AIR_ENVIRONMENT_STEP : STEP_SOURCE
+}
+function handleAirEnvironmentChange(value) {
+  handleWateringAirEnvironmentChange(value)
+}
 watch(activeStep, step => {
-  if (step === STEP_POT_PROFILE) {
+  if (step === potProfileStep.value) {
     nextTick(() => {
       potProfileFormRef.value?.initCanvas()
     })
   }
 })
-
-function handlePotProfileSummary(value) {
-  editorSummary.value = value || ''
-}
-
 function buildPotProfilePayload() {
-  // 从共享内核取当前表单数据（默认值或用户修改值）
   return potProfileFormRef.value?.getPayload() || null
 }
-
 async function goToResult() {
   const payload = buildPotProfilePayload()
   if (!payload || !payload.potTopDiameterCm || !payload.potHeightCm) {
@@ -371,24 +432,32 @@ async function goToResult() {
   }
   computing.value = true
   plannerResult.value = null
-  savedToBackend.value = false
-  activeStep.value = STEP_RESULT
+  activeStep.value = resultStep.value
   try {
     await loadWeatherDays()
-    const isUserPlant = Boolean(selectedCatalogPlant.value?.userPlantId)
+    const selectedUserPlant = Boolean(selectedCatalogPlant.value?.userPlantId)
+    const airEnvironmentOverride = selectedUserPlant
+      ? frozenAirEnvironmentOverride.value ||
+        sanitizeAirEnvironmentInput(airEnvironment.draft.value)
+      : null
+    if (selectedUserPlant && !isAirEnvironmentAnswerReady(airEnvironmentOverride)) {
+      uni.showToast({ title: '请完成空气环境信息', icon: 'none' })
+      activeStep.value = AIR_ENVIRONMENT_STEP
+      return
+    }
     let result
-    if (isUserPlant) {
-      // 独立浇水建议：将当前步骤中的盆型（默认值或用户修改值）传给后端参与计算，
-      // 后端优先使用此 potProfile 覆盖数据库旧值；首页浇水提醒不传此字段，仍走 DB 回退
-      result = await fetchWateringPlannerResult({
+    if (selectedUserPlant) {
+      const userPlannerResult = await fetchUserPlantWateringPlanner({
         plantId: selectedCatalogPlant.value.userPlantId,
         wateringEvents: selectedCatalogPlant.value.wateringEvents,
         weatherDays: weatherDays.value,
         forecastDays: forecastDays.value,
         potProfile: payload,
+        airEnvironmentOverride,
         locationKey: plannerLocationKey.value,
         timezone: 'Asia/Shanghai'
       })
+      result = userPlannerResult ? normalizePlannerResultDate(userPlannerResult) : null
     } else {
       const catalogPlantId =
         selectedCatalogPlant.value?.plantIdentityId ||
@@ -405,7 +474,7 @@ async function goToResult() {
     }
     if (result) {
       plannerResult.value = result
-      if (!isUserPlant) {
+      if (!selectedUserPlant) {
         try {
           const catalogPlantId =
             selectedCatalogPlant.value?.plantIdentityId ||
@@ -418,27 +487,24 @@ async function goToResult() {
             weatherSummary: result.weatherSummary || {},
             plannerResult: result.plannerResult || result
           })
-          savedToBackend.value = true
         } catch {
-          // 落库失败不影响展示
+          // 保存历史仅用于下次打开时回显，不影响本次已生成的建议。
         }
       }
     } else {
       uni.showToast({ title: '计算失败，请重试', icon: 'none' })
-      activeStep.value = STEP_POT_PROFILE
+      activeStep.value = potProfileStep.value
     }
   } catch {
     uni.showToast({ title: '计算失败，请重试', icon: 'none' })
-    activeStep.value = STEP_POT_PROFILE
+    activeStep.value = potProfileStep.value
   } finally {
     computing.value = false
   }
 }
-
 function finishAdvisor() {
   uni.navigateBack()
 }
-
 onShow(() => {
   searchRef.value?.loadPlants('')
 })

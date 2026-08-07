@@ -15,14 +15,11 @@
  */
 
 import automator from 'miniprogram-automator'
-import { spawn } from 'node:child_process'
-import { execSync } from 'node:child_process'
+import { connectFormalLeaf, disconnectFormalLeaf } from '../../../_shared/formal-leaf-harness.mjs'
 
-const CLI = '/Applications/wechatwebdevtools.app/Contents/MacOS/cli'
-const PROJECT = process.cwd() + '/dist/dev/mp-weixin'
-const PORT = 9420
-
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms))
+}
 
 async function collectTexts(page) {
   const els = await page.$$('text')
@@ -44,32 +41,12 @@ async function findButtonById(page, idKeyword) {
 }
 
 async function main() {
-  // 检测 9420
-  let auto = null
-  let alreadyListening = false
-  try {
-    execSync('lsof -nP -iTCP:9420 -sTCP:LISTEN', { stdio: 'ignore' })
-    alreadyListening = true
-    console.log('[1] 9420 已监听，复用')
-  } catch {}
-
-  if (!alreadyListening) {
-    console.log('[1] 拉起 cli auto...')
-    auto = spawn(CLI, ['auto', '--project', PROJECT, '--auto-port', String(PORT)], { stdio: 'ignore' })
-  }
-
   let mp = null
-  for (let i = 0; i < 25; i++) {
-    await sleep(1000)
-    try {
-      mp = await automator.connect({ wsEndpoint: `ws://127.0.0.1:${PORT}` })
-      break
-    } catch {}
-  }
-  if (!mp) {
-    console.error('✗ 未能连接 automator')
-    if (auto) auto.kill()
-    process.exit(1)
+  try {
+    ;({ mp } = await connectFormalLeaf({ automator }))
+  } catch (error) {
+    console.error(`✗ 未能连接测试专属 Automator: ${error.message}`)
+    process.exit(2)
   }
   console.log('[2] connect 成功')
 
@@ -99,14 +76,20 @@ async function main() {
     // 点龟背竹水滴 button（id 含 reminder-14-water，编译后有哈希前缀）
     console.log('[5] 点龟背竹水滴 button...')
     const waterBtn = await findButtonById(page, 'reminder-14-water')
-    if (!waterBtn) { console.log('✗ 未找到 reminder-14-water button'); pass = false; return }
+    if (!waterBtn) {
+      console.log('✗ 未找到 reminder-14-water button')
+      pass = false
+      return
+    }
     await waterBtn.tap()
     await sleep(3000)
 
     // 确认 sheet 打开
     texts = await collectTexts(page)
     if (!texts.some(t => /添加浇水提醒|上次浇水/.test(t))) {
-      console.log('✗ sheet 未打开'); pass = false; return
+      console.log('✗ sheet 未打开')
+      pass = false
+      return
     }
     console.log('[6] sheet 打开: ✓')
 
@@ -115,7 +98,10 @@ async function main() {
     const views = await page.$$('view')
     for (const v of views) {
       const id = await v.attribute('id')
-      if (id && id.includes('last-watering')) { await v.tap(); break }
+      if (id && id.includes('last-watering')) {
+        await v.tap()
+        break
+      }
     }
     await sleep(2000)
 
@@ -137,7 +123,10 @@ async function main() {
     const buttons = await page.$$('button')
     for (const btn of buttons) {
       const t = await btn.text()
-      if (t && t.trim() === '确认') { await btn.tap(); break }
+      if (t && t.trim() === '确认') {
+        await btn.tap()
+        break
+      }
     }
     await sleep(7000)
 
@@ -152,9 +141,9 @@ async function main() {
     }
     console.log('  dose list: ✓')
 
-    const doseLabels = texts.slice(doseIdx + 1, doseIdx + 20).filter(t =>
-      /不知道|喷一喷|约.*瓶|约.*桶|半瓶|小半瓶|一瓶|两瓶/.test(t)
-    )
+    const doseLabels = texts
+      .slice(doseIdx + 1, doseIdx + 20)
+      .filter(t => /不知道|喷一喷|约.*瓶|约.*桶|半瓶|小半瓶|一瓶|两瓶/.test(t))
     console.log(`\n  录入侧瓶档 (${doseLabels.length} 个):`)
     doseLabels.forEach((t, i) => console.log(`    ${i + 1}. ${t}`))
 
@@ -169,9 +158,12 @@ async function main() {
     if (!hasBucket) pass = false
 
     if (hasBucket) {
-      const hasBig = doseLabels.filter(t => /桶/.test(t)).some(t => {
-        const m = t.match(/约(\d+)桶/); return m && parseInt(m[1]) >= 5
-      })
+      const hasBig = doseLabels
+        .filter(t => /桶/.test(t))
+        .some(t => {
+          const m = t.match(/约(\d+)桶/)
+          return m && parseInt(m[1]) >= 5
+        })
       console.log(`  存在≥5桶大水量档: ${hasBig ? '✓ 通过' : '✗ 失败'}`)
       if (!hasBig) pass = false
     }
@@ -182,10 +174,12 @@ async function main() {
 
     console.log(`\n=== 端上验收${pass ? '✓ 通过' : '✗ 失败'} ===`)
   } finally {
-    try { await mp.disconnect() } catch {}
-    if (auto) auto.kill()
+    await disconnectFormalLeaf({ mp }).catch(() => {})
   }
   process.exit(pass ? 0 : 1)
 }
 
-main().catch(e => { console.error('失败:', e.message); process.exit(1) })
+main().catch(e => {
+  console.error('失败:', e.message)
+  process.exit(1)
+})

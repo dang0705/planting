@@ -12,7 +12,7 @@ const [handoffFile, implementationResultFile, postflightReportFile, runtimeQaEvi
   process.argv.slice(2)
 if (!handoffFile || !implementationResultFile || !postflightReportFile) {
   console.error(
-    'usage: validate-completion-readiness.mjs <handoff.json> <implementer-or-external-result.json> <postflight-report.json> [runtime-qa-evidence.json]'
+    'usage: validate-completion-readiness.mjs <handoff.json> <main-or-external-result.json> <postflight-report.json> [runtime-qa-evidence.json]'
   )
   process.exit(2)
 }
@@ -92,13 +92,11 @@ const validateAutomatorProjectPath = (actualPath, label) => {
   )
 }
 const blockers = impl.deviations_or_blockers ?? impl.blockers ?? []
-const mode = handoff.implementation_mode ?? 'codex_subagent'
+const mode = handoff.implementation_mode ?? 'main_direct'
 const codeChanges = handoff?.task?.code_changes_required === true
 const resultRole =
-  mode === 'codex_subagent'
-    ? 'implementer'
-    : mode === 'main_takeover'
-      ? 'main_takeover'
+  mode === 'main_direct'
+    ? 'main'
     : mode === 'zcode_external' || mode === 'external_implementer'
       ? 'external'
       : null
@@ -130,16 +128,6 @@ need(
   impl.status === 'completed',
   `implementation result must be completed before Completion Gate, got ${impl.status}`
 )
-if (mode === 'codex_subagent') {
-  need(
-    impl?.agent_identity?.dispatch_run_id === handoff.dispatch_run_id,
-    'implementation result agent_identity.dispatch_run_id must match handoff'
-  )
-  need(
-    impl?.agent_identity?.agent_type === handoff?.spawn_contract?.implementer_agent_type,
-    'implementation result agent_identity.agent_type must match spawn_contract.implementer_agent_type'
-  )
-}
 if (mode === 'zcode_external' || mode === 'external_implementer') {
   const allowedSources = [
     'codex_recovery_after_zcode',
@@ -464,7 +452,7 @@ if (runtimeQa) {
 } else if (
   runtimeAcceptanceMode === 'automator_required' &&
   miniprogramAutomatorRequired &&
-  mode !== 'codex_subagent'
+  webExternalProvider
 ) {
   const recoveryEvidence = impl.external_recovery_evidence ?? impl.zcode_recovery_evidence ?? {}
   const prReview = recoveryEvidence.pr_review ?? {}
@@ -483,7 +471,7 @@ if (runtimeQa) {
 // submit payload that produces the selection, the consumer branch that reads it,
 // the expected entry point, and an anti-fallback assertion. Non-selection tasks
 // must explicitly declare selection_to_consumer.not_applicable=true with a reason.
-// Missing contract or implementer evidence is rejected by the Completion Gate.
+// Missing contract or implementation evidence is rejected by the Completion Gate.
 const selectionContract = handoff.selection_to_consumer ?? null
 const implSelection = impl.selection_to_consumer ?? null
 if (selectionContract && selectionContract.required === true) {

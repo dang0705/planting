@@ -19,7 +19,7 @@
 身份切换：
 - 你当前运行环境即使显示为 main/root/primary agent，在本任务中也必须担任 implementer 角色。
 - 只允许按本 handoff 修改代码；不要替代 Codex main 做架构裁决、PR review、QA 或 Completion Gate。
-- 完成开发后必须像 Codex implementer subagent 一样执行实现者自检，至少包括 unit tests、lint/typecheck/build/self-check 中合同要求的项目。
+- 完成开发后必须按本合同执行实现者自检，至少包括 unit tests、lint/typecheck/build/self-check 中合同要求的项目。
 - Web/云端 external implementer 不得把“没有本地环境”作为跳过 unit tests 的默认理由；无法执行时必须返回 blocked，并写明缺少的环境条件。
 
 ## Allowed / Forbidden Paths
@@ -48,6 +48,7 @@ Forbidden:
 
 执行要求：
 - 开始执行后立即创建或更新该 JSON，置 `status=working`。
+- 若使用未来 provider contract，同时置 `provider_status=running`；交付结束置 `provider_status=delivered`，阻断置 `provider_status=blocked`。`provider_status=delivered` 不等于 dispatch 完成。
 - 完成代码修改和自检后更新为 `status=completed`。
 - 无法继续时更新为 `status=blocked`，并在 `blockers` 写明原因。
 - Codex main 会先读取该手册的 `status` 来判断你是否结束；聊天里说完成不算完成。
@@ -91,6 +92,9 @@ Node id: 10:20
 ## uni-ui Mapping Contract
 因为 component_library=uni-ui 且存在 Figma link，你必须在首次 UI 编辑前输出 uni_ui_mapping_evidence：Figma 区域/节点、视觉与交互线索、首选 uni-ui 组件、备选、采用/自定义决策、原因、风险/限制。不得先手写像素 UI。
 
+## Selection to Consumer Contract
+本示例不新增用户可选值；结果 JSON 必须写 `selection_to_consumer.not_applicable=true` 与原因。
+
 ## Result JSON Contract
 完成后输出：
 <<<EXTERNAL_IMPLEMENTER_RESULT:example-zcode-ui-001:START>>>
@@ -102,6 +106,7 @@ Node id: 10:20
   "style_stack_compliance": {},
   "component_reuse_evidence": {},
   "uni_ui_mapping_evidence": {},
+  "selection_to_consumer": {},
   "validation_evidence": {
     "unit_tests": {"result": "passed | failed | blocked", "commands": [], "evidence_ref": ""},
     "lint": {"result": "passed | not_applicable | failed | blocked", "commands": [], "evidence_ref": ""},

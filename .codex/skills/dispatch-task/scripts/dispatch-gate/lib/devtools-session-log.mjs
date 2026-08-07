@@ -13,11 +13,27 @@ function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-function commandFlagValue(command = '', flag) {
+function commandFlagValue(command = '', flag, { singleToken = false } = {}) {
   const match = command.match(
-    new RegExp(`(?:^|\\s)${escapeRegExp(flag)}=(.*?)(?=\\s+--[a-z-]+=|$)`, 'i')
+    new RegExp(`(?:^|\\s)${escapeRegExp(flag)}(?:=|\\s+)([\\s\\S]*)`, 'i')
   )
-  return match?.[1]?.trim() ?? ''
+  const remainder = match?.[1] ?? ''
+  if (singleToken) {
+    // DevTools session ids are a single non-whitespace token. In particular, they
+    // must never absorb trailing OSLogRateLimit=, CODEX_CI=, or PWD= assignments.
+    const token = remainder.match(/^(\S+)/)?.[1] ?? ''
+    return token.includes('=') ? '' : token
+  }
+  const quoted = remainder.match(/^\s*(?:"([^"]*)"|'([^']*)')/)
+  if (quoted) {
+    return quoted[1] ?? quoted[2] ?? ''
+  }
+  // user-data-dir can be an unquoted path containing spaces. Shell-style
+  // environment assignments and subsequent options are not part of that path.
+  const unquoted = remainder.match(
+    /^\s*(.*?)(?=\s+(?:-{1,2}[a-z][\w-]*(?:=|\s|$)|[a-z_][a-z0-9_]*=)|\s*$)/i
+  )
+  return unquoted?.[1]?.trim() ?? ''
 }
 
 function timestampFromLogLine(line) {
@@ -70,7 +86,9 @@ export function readCurrentSessionProjectEvidence({
   const expected = normalizeRuntimePath(expectedProjectPath)
   const expectedProjectName = projectNameFromConfig(expected, fsModule)
   const userDataDir = commandFlagValue(mainProcess?.command, '--user-data-dir')
-  const sessionId = commandFlagValue(mainProcess?.command, '--app-session-id')
+  const sessionId = commandFlagValue(mainProcess?.command, '--app-session-id', {
+    singleToken: true
+  })
   if (!userDataDir || !sessionId) {
     return {
       status: 'unavailable',

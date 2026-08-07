@@ -62,7 +62,7 @@ export async function runMyPlantPlannerScenario(mp, report, artifactDir, mode) {
     await clearCapturedRequests(mp)
 
     recordPage(report, INDEX_PAGE)
-    const page = await reLaunchTo(mp, INDEX_PAGE)
+    let page = await reLaunchTo(mp, INDEX_PAGE)
     await sleep(2000)
 
     const pageSummary = await readPageDataSummary(mp)
@@ -70,50 +70,13 @@ export async function runMyPlantPlannerScenario(mp, report, artifactDir, mode) {
 
     const screenshotInit = await safeScreenshot(mp, artifactDir, 'myplant-01-init')
     recordScreenshot(report, screenshotInit)
+    page = await mp.currentPage()
 
-    // 读取 plantStore
-    const storeInfo = await mp.evaluate(() => {
-      const pages = getCurrentPages()
-      const cp = pages[pages.length - 1]
-      const vm = cp && cp.$vm
-      const store = vm && (vm.plantStore || vm.pinia?.state?.value?.plant)
-      if (!store) return { hasStore: false }
-      const plants = store.userPlants || []
-      return {
-        hasStore: true,
-        hasPlants: !!store.hasPlants,
-        plantsCount: plants.length,
-        plants: plants.map(p => ({ id: p.id, nickname: p.nickname || null }))
-      }
-    })
-    recordPageData(report, INDEX_PAGE, storeInfo)
-
-    recordAssertion(report, 'plantStore 存在', storeInfo.hasStore)
-    if (!storeInfo.hasStore) {
-      setClassification(report, 'BLOCKED_ENV', 'plantStore 未找到，首页可能未正确加载或未登录')
-      return 'BLOCKED_ENV'
-    }
-
-    recordAssertion(
-      report,
-      '当前账号至少有一株我的植物',
-      storeInfo.plantsCount > 0,
-      `plantsCount=${storeInfo.plantsCount}`
-    )
-    if (storeInfo.plantsCount === 0) {
-      setClassification(
-        report,
-        'BLOCKED_FIXTURE',
-        '当前账号没有可用的"我的植物"，无法触发浇水规划请求；禁止静默写数据库或伪造 fixture'
-      )
-      return 'BLOCKED_FIXTURE'
-    }
-
-    // 收集所有可用植物入口
+    // 从公开的稳定 id 收集可用植物入口，不读取 Vue/Pinia 私有状态。
     const wateringEntries = await collectWateringEntries(page)
     recordAssertion(
       report,
-      '运行时找到至少一个 plant-card-reminder-{id}-water 入口',
+      '运行时找到至少一个公开 plant-card-reminder-{id}-water 入口',
       wateringEntries.length > 0,
       `found ${wateringEntries.length} entries: ${wateringEntries.map(e => e.plantId).join(',')}`
     )
