@@ -216,8 +216,8 @@ export function createQaSkeleton({ dispatchRunId, handoff = {}, postflight = nul
       'validate docs/ai-rules/frontend-automation-id-policy.md refs',
       'verify script_sha256 execution bundle fingerprint',
       'provide a non-empty execution_id before LAN/DevTools/automator',
-      'complete qa-preflight for projectPath, LAN, 9420/WS, page data, screenshot, and wx.request',
-      'freeze the local execution bundle fingerprint, serialize 9420 access, and persist a terminal qa-run record before claiming acceptance'
+      'complete qa-preflight for projectPath, LAN, a test-owned WS endpoint, page data, screenshot, and wx.request',
+      'freeze the local execution bundle fingerprint, serialize test-owned Automator access, and persist a terminal qa-run record before claiming acceptance'
     ],
     postflight_status: postflight?.status ?? null,
     created_at: new Date().toISOString()

@@ -362,6 +362,15 @@ async function handleDiagnosisFeedback(request, context, payload) {
       feedback: payload.feedback || {}
     })
 
+    if (data?.ok === false) {
+      return jsonResponse(503, {
+        code: 503,
+        businessCode: data.errorCode || 'DIAGNOSIS_FEEDBACK_STORAGE_UNAVAILABLE',
+        message: data.message || '反馈暂未保存，请稍后重试。',
+        data: null
+      })
+    }
+
     return jsonResponse(200, { code: 200, data })
   } catch (error) {
     return jsonResponse(error.statusCode || 500, buildErrorPayload(error, '提交反馈失败'))

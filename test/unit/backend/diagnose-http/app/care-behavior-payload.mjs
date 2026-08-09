@@ -101,6 +101,30 @@ assert.equal(result.environmentCareContext.outputs.fertilizingAction, 'thin_afte
 assert.equal(result.environmentCareContext.historicalSummary10d.highHumidityDays, 5)
 assert.equal(result.environmentCareContext.forecastSummary15d.aboveGenusUvMaxDays, 3)
 
+const airOnlyResult = resolveRuntimeEnvironmentCarePayload({
+  payload: {
+    airEnvironmentOverride: {
+      airExchange: {
+        source: 'window',
+        windowDirectionCount: 'two_or_more',
+        windowOpenFrequency: 'daily'
+      },
+      canopyOpenness: 'open',
+      deviceAirflow: { mode: 'none', sources: [], directSources: [], sourceModes: {} }
+    }
+  },
+  sessionState: {},
+  plantContext
+})
+assert.equal(
+  airOnlyResult.environmentCareContext.outputs.airEnvironmentEvidence.air_exchange_level,
+  'high'
+)
+assert.notEqual(
+  airOnlyResult.environmentCareContext.outputs.transpirationIntervalFactor,
+  1
+)
+
 const duplicatedAliasResult = resolveRuntimeEnvironmentCarePayload({
   payload: {
     careBehaviorTimeline: {

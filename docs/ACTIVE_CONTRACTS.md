@@ -506,6 +506,10 @@ v2.1 算法升级：移除 `wateringCount10d` 作为核心判断，改用 `effec
 - `nextWaterDate`：下次浇水日期 'YYYY-MM-DD' 或 null（WET 阻断时为 null）
 - `nextWaterWindow`：[minDays, maxDays] 建议窗口
 - `nextWaterReason`：人类可读的推算理由
+- `soilCheck`：浇水前盆土检查指导；即使独立建议没有浇水历史也必须返回
+- `seasonalIntervalFactor`：季节策略修正因子；未配置季节策略时为基线值 `1`
+- `transpirationAirFactor`：空气环境对检查节奏的有界修正因子，不改变水量和 WET/DRY Gate
+- `airEnvironmentAudit`：已解析的空气证据与修正审计信息；无有效空气输入时为 null
 - `wateringContext`：`likely_too_wet` / `likely_too_dry` / `keep_baseline_or_check_soil`
 - `action`：对应 action 枚举
 - `amountClass`：水量等级 `unknown` / `mist` / `small` / `normal` / `thorough`
@@ -528,6 +532,12 @@ WET 阻断逻辑：
   3. 无排水孔 + 窄底盆 + 根区湿度偏高（>0.5）
   4. 根区湿度极高（>0.8）+ 近期有效浇水（≤2天）
 - `nextWaterDate` 所有分支均 clamp 到不早于 referenceDate + 1（明天）
+
+独立建议无历史约束：
+
+- 未传入有效 `wateringEvents` 时，`nextWaterDate` 和 `nextWaterWindow` 必须为 null
+- 此时 `nextWaterReason` 必须说明没有上次浇水记录，并引导用户先检查盆土
+- 用户完成本次浇水并形成事件后，后续提醒才以该事件作为上次浇水上下文
 
 盆型档案读写（折叠进 /user-plants，无独立接口）：
 
@@ -565,6 +575,13 @@ WET 阻断逻辑：
 - `POST` 会将同一植物既有 active 水提醒标记为 `superseded`，再插入新提醒，并同步 `user_plant_instances.last_watered/next_water`。
 - `GET /user-plants` 列表会附带紧凑 `wateringReminder`；若新表在旧环境缺失，列表降级为无提醒状态，不阻断植物列表加载。
 - 一次性水提醒以 `nextTime` 过期，前端不得使用 `repeat=true` 维持长期高亮。
+
+### 7.2.3 `POST /user-plants/watering-advisor`
+
+- `action=compute` 是不绑定用户植物的独立建议；可跳过浇水历史，但无历史时 `nextWaterDate` 和 `nextWaterWindow` 必须为 null。
+- 结果页必须先提示检查盆土；用户点击“我已完成浇水”后，以 `action=confirm_watered` 记录当天日期。
+- 后续同一植物种类的独立建议会读取最近一次确认日期作为上次浇水事件；未确认前不得把生成建议的日期当成已浇水日期。
+- 确认记录复用 `watering_advisor_sessions.planner_result_json`，不新增独立浇水事件表。
 
 事实源：
 

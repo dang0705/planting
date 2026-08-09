@@ -25,6 +25,27 @@ try {
 const WATERING_CONTEXTS = WATERING_CONTEXTS_SHARED
 const WATERING_ACTIONS = WATERING_ACTIONS_SHARED
 
+let computeTranspirationIntervalFactorShared
+let resolveShadowModeFromEnvShared
+let resolveAirEnvironmentEvidenceShared
+try {
+  ;({
+    computeTranspirationIntervalFactor: computeTranspirationIntervalFactorShared,
+    resolveShadowModeFromEnv: resolveShadowModeFromEnvShared
+  } = require('/opt/utils/transpiration'))
+  ;({ resolveAirEnvironmentEvidence: resolveAirEnvironmentEvidenceShared } = require(
+    '/opt/utils/air-environment-evidence'
+  ))
+} catch {
+  ;({
+    computeTranspirationIntervalFactor: computeTranspirationIntervalFactorShared,
+    resolveShadowModeFromEnv: resolveShadowModeFromEnvShared
+  } = require('../../layer/utils/transpiration'))
+  ;({ resolveAirEnvironmentEvidence: resolveAirEnvironmentEvidenceShared } = require(
+    '../../layer/utils/air-environment-evidence'
+  ))
+}
+
 // 剂量分类器同 watering-planner：部署环境通过 /opt/utils 加载，本地回退到相对路径。
 // 之前无条件相对路径 require 在 CloudBase 部署时会 MODULE_NOT_FOUND（diagnose-http 函数包不包含 layer 目录）。
 let resolveMlToDoseClassShared
@@ -97,6 +118,23 @@ function normalizeRawText(value = '') {
 
 function isPlainObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function hasMeaningfulUserLightContext(value = {}) {
+  if (!isPlainObject(value)) {
+    return false
+  }
+  return [
+    'facing',
+    'windowType',
+    'window_type',
+    'position',
+    'hasDirectSun',
+    'has_direct_sun',
+    'distance',
+    'distanceMeters',
+    'distance_meters'
+  ].some(key => value[key] !== undefined && value[key] !== null && value[key] !== '')
 }
 
 function toNumber(value) {
@@ -859,7 +897,10 @@ function buildWateringPlanner({
   historical = {},
   forecast = {},
   behaviorTimeline = {},
-  thresholds: rawThresholds = null
+  thresholds: rawThresholds = null,
+  potProfile = null,
+  wateringQuantization = null,
+  transpirationIntervalFactor = null
 } = {}) {
   // 委托给 layer 共享实现，传入 diagnose-http 自有的阈值解析器以保持配置覆盖行为一致
   return buildWateringPlannerShared({
@@ -867,6 +908,9 @@ function buildWateringPlanner({
     historical,
     forecast,
     behaviorTimeline,
+    potProfile,
+    wateringQuantization,
+    transpirationIntervalFactor,
     thresholds: rawThresholds,
     resolveThresholds: resolveCarePlannerThresholds
   })
@@ -1107,6 +1151,9 @@ function buildEnvironmentCareContextV7({
   environmentWeatherWindow = {},
   careBehaviorTimeline = {},
   userLightContext = {},
+  airEnvironmentInput = null,
+  airEnvironmentEvidence = null,
+  wateringQuantization = null,
   thresholds: rawThresholds = null
 } = {}) {
   const thresholds = resolveCarePlannerThresholds(
@@ -1151,6 +1198,31 @@ function buildEnvironmentCareContextV7({
     thresholds,
     ...bounds
   })
+  const effectiveUserLightContext =
+    hasMeaningfulUserLightContext(userLightContext)
+      ? userLightContext
+      : plantContext.userLightContext || {}
+  const resolvedAirEnvironmentEvidence =
+    airEnvironmentEvidence ||
+    resolveAirEnvironmentEvidenceShared(airEnvironmentInput) ||
+    resolveAirEnvironmentEvidenceShared(
+      plantContext.airEnvironment?.input || plantContext.airEnvironment || null
+    )
+  const transpiration = computeTranspirationIntervalFactorShared({
+    lightEnvironment: effectiveUserLightContext,
+    weatherDays: (
+      environmentWeatherWindow.historicalDays || environmentWeatherWindow.historical_days || []
+    ).slice(0, 10),
+    weatherSummary: historicalSummary10d,
+    plantStrategy: wateringQuantization || plantContext.wateringQuantization
+      ? {
+          wateringQuantization:
+            wateringQuantization || plantContext.wateringQuantization
+        }
+      : null,
+    airEnvironmentEvidence: resolvedAirEnvironmentEvidence,
+    shadow: resolveShadowModeFromEnvShared()
+  })
   const watering = buildWateringPlanner({
     wateringStrategy:
       plantContext.watering ||
@@ -1160,7 +1232,12 @@ function buildEnvironmentCareContextV7({
     historical: historicalSummary10d,
     forecast: forecastSummary15d,
     behaviorTimeline: timeline,
-    thresholds
+    thresholds,
+    potProfile: plantContext.potProfile || null,
+    wateringQuantization: wateringQuantization || plantContext.wateringQuantization || null,
+    userLightContext: effectiveUserLightContext,
+    airEnvironmentEvidence: resolvedAirEnvironmentEvidence,
+    transpirationIntervalFactor: transpiration.intervalFactor
   })
   const fertilizing = buildFertilizingPlanner({
     behaviorTimeline: timeline,
@@ -1178,7 +1255,7 @@ function buildEnvironmentCareContextV7({
     plantRequiresBrightLight: resolvePlantRequiresBrightLight(plantContext),
     behaviorTimeline: timeline,
     plantContext,
-    userLightContext,
+    userLightContext: effectiveUserLightContext,
     weatherDays: [
       ...(environmentWeatherWindow.historicalDays ||
         environmentWeatherWindow.historical_days ||
@@ -1231,7 +1308,11 @@ function buildEnvironmentCareContextV7({
       lightHealthScore: light.lightHealthScore,
       lightHealthLevel: light.lightHealthLevel,
       lightHealthReason: light.lightHealthReason,
-      lightHealthEvidence: light.lightHealthEvidence
+      lightHealthEvidence: light.lightHealthEvidence,
+      airEnvironmentEvidence: resolvedAirEnvironmentEvidence,
+      transpirationIntervalFactor: transpiration.intervalFactor,
+      transpirationComputedFactor: transpiration.computedFactor,
+      transpirationShadow: transpiration.shadow
     }
   }
 }

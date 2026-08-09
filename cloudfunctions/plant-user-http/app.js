@@ -36,7 +36,11 @@ const {
   computeAdhocPlanner,
   injectD0IntoForecastDays
 } = require('./watering-planner-service')
-const { saveAdvisorSession, listAdvisorSessions } = require('./watering-advisor-service')
+const {
+  saveAdvisorSession,
+  confirmAdvisorSessionWatered,
+  listAdvisorSessions
+} = require('./watering-advisor-service')
 const {
   computeTranspirationIntervalFactor,
   resolveShadowModeFromEnv
@@ -152,15 +156,38 @@ async function main(event, context) {
             })
           }
         }
+        if (action === 'confirm_watered') {
+          try {
+            const result = await confirmAdvisorSessionWatered(openid, request.body)
+            return jsonResponse(result.statusCode, {
+              code: result.statusCode,
+              message: result.message,
+              data: result.data
+            })
+          } catch (error) {
+            console.error('watering advisor confirm error:', error?.message || error)
+            return jsonResponse(500, {
+              code: 500,
+              message: '记录浇水失败，请稍后重试',
+              data: null
+            })
+          }
+        }
         // compute
         const result = await computeAdhocPlanner({
+          openid,
           catalogPlantId: String(request.body.catalogPlantId || '').trim(),
           potProfile: request.body.potProfile || null,
           weatherDays: Array.isArray(request.body.weatherDays) ? request.body.weatherDays : [],
           forecastDays: Array.isArray(request.body.forecastDays) ? request.body.forecastDays : [],
           referenceDate: request.body.referenceDate || '',
           locationKey: String(request.body.locationKey || '').trim(),
-          timezone: String(request.body.timezone || 'Asia/Shanghai').trim() || 'Asia/Shanghai'
+          timezone: String(request.body.timezone || 'Asia/Shanghai').trim() || 'Asia/Shanghai',
+          lightEnvironment: request.body.lightEnvironment || null,
+          airEnvironmentOverride: request.body.airEnvironmentOverride || null,
+          wateringEvents: Array.isArray(request.body.wateringEvents)
+            ? request.body.wateringEvents
+            : []
         })
         return jsonResponse(result.statusCode, {
           code: result.statusCode,
@@ -234,14 +261,19 @@ async function main(event, context) {
 
       // v3 蒸腾间隔修正：仅影响"我的植物"下次浇水间隔（BASELINE 间隔），
       // 不影响单次浇水毫升数（amountRangeMl 由 hydration-load 独立计算），
-      // 也不绕过 WET/DRY Gate 保护。默认影子运行（intervalFactor=1.0）。
+      // 也不绕过 WET/DRY Gate 保护。默认实际生效，环境变量可显式切回影子模式。
       // 结构化光照环境（facing/windowType/position/hasDirectSun/distance）由职责单一的小模块读取。
       const transpirationShadow = resolveShadowModeFromEnv(process.env)
       const lightEnvironment = await getUserPlantLightEnvironment(openid, plantId)
+      // 空气交换、局部气流和设备风先在证据层分开，再以 bounded interval factor 进入 BASELINE。
+      const airEnvironmentEvidence = resolveAirEnvironmentEvidence(
+        request.body.airEnvironmentOverride
+      )
       const transpiration = computeTranspirationIntervalFactor({
         lightEnvironment: lightEnvironment || null,
         weatherDays: weatherDays.slice(0, 10),
         weatherSummary: historical,
+        airEnvironmentEvidence,
         plantStrategy: strategy.wateringQuantization
           ? { wateringQuantization: strategy.wateringQuantization }
           : null,
@@ -249,14 +281,10 @@ async function main(event, context) {
       })
 
       // shadow 模式：intervalFactor 恒为 1.0，业务采用 legacy 间隔；
-      // WATERING_TRANSPIRATION_ENABLED=true 时 intervalFactor 生效，影响 BASELINE 间隔。
+      // 默认 intervalFactor 生效，影响 BASELINE 间隔。
       // potProfileOverride：独立浇水建议流程可从前端传入当前步骤盆型，优先于数据库 potProfile；
       // 首页浇水提醒不传此字段，回退到 strategy.potProfile（DB），保持兼容。
       const potProfileOverride = request.body.potProfile || null
-      // 空气资料只作为默认关闭的影子采集；绝不改动水量、干湿 Gate、盆型或根区湿度。
-      const airEnvironmentEvidence = resolveAirEnvironmentEvidence(
-        request.body.airEnvironmentOverride
-      )
       const plan = buildWateringPlanner({
         wateringStrategy: strategy.watering || {},
         historical,
@@ -297,6 +325,7 @@ async function main(event, context) {
           wateringContext: plan.wateringContext,
           action: plan.action,
           amountRangeMl: plan.amountRangeMl,
+          soilCheck: plan.soilCheck,
           potVolumeMl: plan.potGeometry?.potVolumeMl ?? 0,
           stopCondition: plan.stopCondition,
           confidenceLevel: plan.confidenceLevel,
@@ -310,10 +339,18 @@ async function main(event, context) {
           transpirationIntervalFactor: plan.transpirationIntervalFactor,
           transpirationShadow: transpiration.shadow,
           transpirationComputedFactor: transpiration.computedFactor,
+          transpirationAirFactor: transpiration.airFactor,
+          seasonalIntervalFactor: plan.seasonalIntervalFactor,
           transpirationCandidateNextWaterDate: candidateNextWaterDate,
           transpirationCandidateNextWaterWindow: candidateNextWaterWindow,
-          airEnvironmentShadow: airEnvironmentEvidence
-            ? { evidence: airEnvironmentEvidence, intervalFactor: 1, shadow: true }
+          airEnvironmentAudit: airEnvironmentEvidence
+            ? {
+                evidence: airEnvironmentEvidence,
+                intervalFactor: transpiration.intervalFactor,
+                airFactor: transpiration.airFactor,
+                computedFactor: transpiration.computedFactor,
+                shadow: transpiration.shadow
+              }
             : null,
           // D0 当日天气来源审计：'day_latest_sample' | 'missing'
           todayWeatherSource,
@@ -357,7 +394,8 @@ async function main(event, context) {
         identityResolutionStatus: request.body.identityResolutionStatus || null,
         visualCallBatchId: request.body.visualCallBatchId || null,
         nickname: request.body.nickname || request.body.nickName || null,
-        location: request.body.location || '阳台',
+        // generic placement is legacy-only; new forms no longer collect it.
+        location: request.body.location || null,
         plantDate: request.body.plantDate || null,
         notes: request.body.notes ?? null,
         lightEnvironment: Object.prototype.hasOwnProperty.call(

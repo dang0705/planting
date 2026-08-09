@@ -7,7 +7,6 @@ import { readCatalog } from '../../../../../.codex/skills/dispatch-task/scripts/
 import { runQaPreflight } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/qa-preflight.mjs'
 import { captureRuntimeEvidence } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/qa-preflight-runtime.mjs'
 import { createQaRunCommands } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/qa-run.mjs'
-import { FORMAL_QA_AUTOMATOR_PORT } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/formal-isolated-qa-session.mjs'
 import { runRendererScreenshotProbe } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/renderer-screenshot-probe.mjs'
 import {
   captureIsolatedRendererScreenshot,
@@ -19,6 +18,7 @@ const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00])
 const root = fs.mkdtempSync(path.join(repoRoot, '.tmp', 'renderer-readiness-contract-'))
 const screenshotPath = path.join(root, 'evidence', 'renderer.png')
 const projectPath = path.join(repoRoot, 'dist', 'dev', 'mp-weixin')
+const TEST_AUTOMATOR_PORT = 65431
 
 function report() {
   return { checks: { ws: { passed: false } }, evidence_paths: [] }
@@ -30,7 +30,7 @@ function runtime() {
     project_identity_verified: true,
     observed_project_path: projectPath,
     main_devtools_pid: 97269,
-    automator_port: 9420,
+    automator_port: TEST_AUTOMATOR_PORT,
     automator_listener_pids: [97310],
     control_port: 28434,
     control_port_verified: true,
@@ -58,15 +58,15 @@ function readyIsolatedSession({ projectPath, screenshotPath: targetPath, wxReque
   return {
     status: 'ready',
     runtime_evidence: {
-      owner: { main_devtools_pid: 97269, automator_port: FORMAL_QA_AUTOMATOR_PORT },
-      configuration: { projectPath, wsPort: FORMAL_QA_AUTOMATOR_PORT, controlPort: 3799 },
+      owner: { main_devtools_pid: 97269, automator_port: TEST_AUTOMATOR_PORT },
+      configuration: { projectPath, wsPort: TEST_AUTOMATOR_PORT, controlPort: 3799 },
       shared_target: { passed: true },
       launched: true
     },
     preflight_options: {
       projectPath,
-      wsPort: FORMAL_QA_AUTOMATOR_PORT,
-      wsEndpoint: `ws://127.0.0.1:${FORMAL_QA_AUTOMATOR_PORT}`,
+      wsPort: TEST_AUTOMATOR_PORT,
+      wsEndpoint: `ws://127.0.0.1:${TEST_AUTOMATOR_PORT}`,
       screenshotPath: targetPath,
       wxRequestUrl
     }
@@ -76,7 +76,7 @@ function readyIsolatedSession({ projectPath, screenshotPath: targetPath, wxReque
 try {
   const events = []
   const coreResult = await runRendererScreenshotProbe({
-    wsEndpoint: 'ws://127.0.0.1:9420',
+    wsEndpoint: `ws://127.0.0.1:${TEST_AUTOMATOR_PORT}`,
     outputPath: screenshotPath,
     timeoutMs: 25,
     emitEvent: event => events.push(event),
@@ -93,7 +93,7 @@ try {
 
   fs.writeFileSync(screenshotPath, 'not-a-png')
   const invalidResult = await runRendererScreenshotProbe({
-    wsEndpoint: 'ws://127.0.0.1:9420',
+    wsEndpoint: `ws://127.0.0.1:${TEST_AUTOMATOR_PORT}`,
     outputPath: screenshotPath,
     timeoutMs: 25,
     connect: async () => ({
@@ -109,7 +109,7 @@ try {
   fs.writeFileSync(screenshotPath, png)
   const successfulCapture = captureIsolatedRendererScreenshot({
     report: successfulReport,
-    wsEndpoint: 'ws://127.0.0.1:9420',
+    wsEndpoint: `ws://127.0.0.1:${TEST_AUTOMATOR_PORT}`,
     screenshotPath,
     timeoutMs: 25,
     runtime: runtime(),
@@ -144,9 +144,10 @@ try {
   const noResponseReport = report()
   const noResponse = captureIsolatedRendererScreenshot({
     report: noResponseReport,
-    wsEndpoint: 'ws://127.0.0.1:9420',
+    wsEndpoint: `ws://127.0.0.1:${TEST_AUTOMATOR_PORT}`,
     screenshotPath,
     timeoutMs: 20,
+    maxAttempts: 1,
     runtime: runtime(),
     spawnProcess: () => noResponseWorker
   })
@@ -158,6 +159,7 @@ try {
       command_started_at: '2026-08-05T00:00:00.000Z'
     })}\n`
   )
+  await new Promise(resolve => setImmediate(resolve))
   await assert.rejects(noResponse, error => error.code === 'renderer_screenshot_unready')
   assert.equal(
     noResponseReport.checks.renderer_screenshot.reason,
@@ -173,7 +175,7 @@ try {
   await assert.rejects(
     captureRuntimeEvidence({
       report: rpcReadyReport,
-      wsEndpoint: 'ws://127.0.0.1:9420',
+      wsEndpoint: `ws://127.0.0.1:${TEST_AUTOMATOR_PORT}`,
       screenshotPath,
       wxRequestUrl: 'http://127.0.0.1/health',
       rpcTimeoutMs: 20,
@@ -227,7 +229,8 @@ try {
   assert.equal(preflight.targeted_restart.attempted, false)
   assert.equal(preflight.renderer_recovery.attempted, false)
 
-  const catalogId = readCatalog().entries[0].id
+  const catalogEntry = readCatalog().entries[0]
+  const catalogId = catalogEntry.id
   const dispatchRunId = `renderer-screenshot-unready-${Date.now()}`
   const executionId = `renderer-proof-${Date.now()}`
   const args = [
@@ -255,10 +258,15 @@ try {
       return code
     },
     runtimeFactory: async input => readyIsolatedSession(input),
-    runtimeCleanup: () => ({ status: 'not_needed', code: 'reused_existing_runtime' }),
+    runtimeCleanup: () => ({ status: 'terminated', code: 'test_owned_runtime_terminated' }),
+    catalogValidator: () => ({ status: 'passed', errors: [] }),
+    bundleFingerprint: () => ({
+      hash: catalogEntry.script_sha256,
+      files: [catalogEntry.leaf_script ?? catalogEntry.script]
+    }),
     preflightRunner: async input => {
-      assert.equal(input.wsPort, FORMAL_QA_AUTOMATOR_PORT)
-      assert.equal(input.wsEndpoint, 'ws://127.0.0.1:9420')
+      assert.equal(input.wsPort, TEST_AUTOMATOR_PORT)
+      assert.equal(input.wsEndpoint, `ws://127.0.0.1:${TEST_AUTOMATOR_PORT}`)
       return preflight
     },
     leafRunner: async () => {

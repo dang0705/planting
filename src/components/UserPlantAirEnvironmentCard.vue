@@ -13,6 +13,8 @@
     <template v-else>
       <AirEnvironmentAssessment
         :id-prefix="idPrefix"
+        layout-mode="single-page"
+        height-mode="content"
         :model-value="draft"
         panel-height="650"
         :disabled="saving"

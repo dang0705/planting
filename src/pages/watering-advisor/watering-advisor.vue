@@ -49,7 +49,7 @@
             <view class="mb-4">
               <text class="block text-[20px] font-bold leading-7 text-[#1f2937]">空气环境</text>
               <text class="mt-1 block text-[13px] text-[#6b7280]">
-                这项信息仅作为养护参考，不会改变当前盆型填写
+                这项信息会帮助调整检查节奏，但不会替代盆土判断
               </text>
             </view>
             <AirEnvironmentSummaryCard
@@ -79,6 +79,8 @@
             <AirEnvironmentAssessment
               v-if="!showSavedAirEnvironmentSummary || airEnvironmentEditorOpen"
               id-prefix="watering-advisor-air-environment"
+              layout-mode="single-page"
+              height-mode="content"
               :model-value="airEnvironmentDraft"
               footer-position="fixed"
               back-label="上一步"
@@ -167,6 +169,63 @@
                   {{ amountText || '暂无建议' }}
                 </text>
               </view>
+              <view
+                v-if="plannerResult?.soilCheck?.message"
+                id="watering-advisor-result-soil-check"
+                class="mb-3 rounded-2xl border border-[#d7e6dc] bg-white px-4 py-3"
+              >
+                <text class="block text-sm font-semibold text-[#2d7a4f]">浇水前先看盆土</text>
+                <text class="mt-1 block text-xs leading-5 text-[#5a7868]">
+                  {{ plannerResult.soilCheck.message }}
+                </text>
+              </view>
+              <view
+                v-if="!plannerResult.nextWaterDate && !wateringConfirmed"
+                id="watering-advisor-result-no-history"
+                class="mb-3 rounded-2xl border border-[#f0dfbd] bg-[#fffaf0] px-4 py-3"
+              >
+                <text class="block text-sm font-semibold text-[#9a6a20]">暂不安排下一次日期</text>
+                <text class="mt-1 block text-xs leading-5 text-[#8a6b36]">
+                  当前没有上次浇水记录，建议先观察盆土；完成本次浇水后，后续提醒会从这次记录开始计算。
+                </text>
+              </view>
+              <view
+                v-if="!isUserPlant && !wateringConfirmed"
+                id="watering-advisor-result-confirm-watered"
+                class="mb-3 rounded-2xl border border-[#d7e6dc] bg-white px-4 py-3"
+              >
+                <text class="block text-sm font-semibold text-[#2d7a4f]">完成浇水后再记录</text>
+                <text class="mt-1 block text-xs leading-5 text-[#5a7868]">
+                  如果你今天已经按建议完成浇水，点这里记录；下次建议会把今天作为上次浇水日。
+                </text>
+                <button
+                  id="watering-advisor-result-confirm-watered-button"
+                  class="mt-2 h-9 rounded-lg bg-[#2d7a4f] px-3 text-xs font-semibold leading-9 text-white"
+                  @click="confirmWatered"
+                >
+                  我已完成浇水
+                </button>
+              </view>
+              <view
+                v-if="wateringConfirmed"
+                id="watering-advisor-result-confirm-watered-success"
+                class="mb-3 rounded-2xl border border-[#d7e6dc] bg-[#f2faf4] px-4 py-3"
+              >
+                <text class="block text-sm font-semibold text-[#2d7a4f]">已记录本次浇水</text>
+                <text class="mt-1 block text-xs leading-5 text-[#5a7868]">
+                  下次建议会从今天的浇水记录开始计算。
+                </text>
+              </view>
+              <view class="mb-3 rounded-2xl border border-[#e1e9dd] bg-white px-4 py-3">
+                <text class="block text-xs font-semibold text-[#53645a]">建议依据</text>
+                <text class="mt-1 block text-xs leading-5 text-[#718075]">
+                  {{
+                    plannerResult.confidenceLevel === 'low'
+                      ? '当前信息较少，建议主要以盆土实际状态为准。'
+                      : '建议主要依据植物属级资料和当前填写的盆、土、环境信息，仍请结合盆土确认。'
+                  }}
+                </text>
+              </view>
             </view>
             <view v-else class="flex flex-col items-center justify-center py-20">
               <text class="text-[14px] text-[#9ca3af]">暂无建议结果</text>
@@ -181,11 +240,11 @@
         <button
           id="watering-advisor-next-button"
           class="m-0 h-[52px] w-full rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white"
-          :class="{ 'opacity-50': !selectedCatalogPlant }"
-          :disabled="!selectedCatalogPlant"
+          :class="{ 'opacity-50': !selectedCatalogPlant || (isUserPlant && airEnvironmentLoading) }"
+          :disabled="!selectedCatalogPlant || (isUserPlant && airEnvironmentLoading)"
           @click="goToNextStep"
         >
-          下一步：输入盆型
+          {{ isUserPlant && airEnvironmentLoading ? '正在读取植物资料…' : '下一步：输入盆型' }}
         </button>
       </view>
       <view
@@ -278,9 +337,11 @@ import { fetchUserPlantWateringPlanner } from '@/api/plants-http.js'
 import CatalogPlantSearch from './components/CatalogPlantSearch.vue'
 import { formatMlRangeToBottleText } from '@/utils/water-volume-format.js'
 import {
+  confirmAdvisorSessionWatered,
   fetchAdhocPlannerResult,
   normalizePlannerResultDate,
-  saveAdvisorSession
+  saveAdvisorSession,
+  todayStr
 } from '@/pages/index/components/watering-reminder-options.js'
 import { useWateringAdvisorWeather } from './useWateringAdvisorWeather.js'
 import { useUserPlantAirEnvironment } from '@/composables/useUserPlantAirEnvironment.js'
@@ -299,11 +360,16 @@ const activeStep = ref(STEP_SOURCE)
 const selectedCatalogPlant = ref(null)
 const computing = ref(false)
 const plannerResult = ref(null)
+const wateringConfirmed = ref(false)
 const searchRef = ref(null)
 const potProfileFormRef = ref(null)
 const selectedUserPlantId = ref(null)
 const airEnvironment = useUserPlantAirEnvironment({ plantStore })
-const { draft: airEnvironmentDraft, loadError: airEnvironmentLoadError } = airEnvironment
+const {
+  draft: airEnvironmentDraft,
+  loadError: airEnvironmentLoadError,
+  loading: airEnvironmentLoading
+} = airEnvironment
 const { weatherDays, forecastDays, plannerLocationKey, loadWeatherDays } =
   useWateringAdvisorWeather({ selectedCatalogPlant, plantStore, userStore })
 const selectedCatalogPlantName = computed(
@@ -362,6 +428,7 @@ const amountText = computed(() => {
 function selectCatalogPlant(plant) {
   selectedCatalogPlant.value = plant
   selectedUserPlantId.value = null
+  wateringConfirmed.value = false
   airEnvironment.reset()
   resetWateringAirEnvironment()
 }
@@ -378,8 +445,10 @@ async function selectUserPlant(plant) {
     careLocationId: plant.careLocationId || '',
     locationKey: plant.locationKey || '',
     wateringEvents: plant.wateringEvents || null,
+    lightEnvironment: plant.lightEnvironment || null,
     potProfile: plant.potProfile || null
   }
+  wateringConfirmed.value = false
   airEnvironment.reset(plant.id)
   await loadForUserPlant(plant.id)
 }
@@ -432,6 +501,7 @@ async function goToResult() {
   }
   computing.value = true
   plannerResult.value = null
+  wateringConfirmed.value = false
   activeStep.value = resultStep.value
   try {
     await loadWeatherDays()
@@ -505,7 +575,29 @@ async function goToResult() {
 function finishAdvisor() {
   uni.navigateBack()
 }
-onShow(() => {
+async function confirmWatered() {
+  if (isUserPlant.value || wateringConfirmed.value) {
+    return
+  }
+  const catalogPlantId =
+    selectedCatalogPlant.value?.plantIdentityId || selectedCatalogPlant.value?.sessionPlantId || ''
+  if (!catalogPlantId) {
+    uni.showToast({ title: '缺少植物信息，暂时无法记录', icon: 'none' })
+    return
+  }
+  try {
+    await confirmAdvisorSessionWatered({ catalogPlantId, wateredDate: todayStr() })
+    wateringConfirmed.value = true
+  } catch (error) {
+    uni.showToast({ title: error?.message || '记录失败，请稍后重试', icon: 'none' })
+  }
+}
+function loadInitialCatalog() {
   searchRef.value?.loadPlants('')
+}
+
+onShow(() => {
+  // Refresh when returning to this page after the child ref already exists.
+  loadInitialCatalog()
 })
 </script>

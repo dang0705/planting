@@ -53,6 +53,7 @@
 | 卡片历史入口   | `src/pages/index/components/PlantCard.vue` | `index-plant-card-history-{plant.id}`  | 点击查看该植物诊断历史                 |
 | 浇水提醒入口   | `src/pages/index/components/PlantCard.vue` | `plant-card-reminder-{plant.id}-water` | 点击打开浇水提醒弹框；断言水滴提醒状态 |
 | 主页历史记录项 | `src/pages/index/index.vue`                | `index-diagnose-record-{record._id}`   | 点击查看历史结果                       |
+| 首页盆土检查指导 | `src/pages/index/components/WateringReminderSheet.vue` | `watering-reminder-soil-check-guidance` | 断言浇水提醒中显示先检查盆土的指导 |
 
 ### 3.2 用户植物只读模式
 
@@ -165,8 +166,7 @@
 | 空气换气选项     | `src/components/AirEnvironmentAssessment.vue`                         | `diagnose-air-environment-{questionId}-exchange-*`                                                           | 第一项：按换气来源和开窗情况填写                 |
 | 空气周围空间     | `src/components/AirEnvironmentAssessment.vue`                         | `diagnose-air-environment-{questionId}-canopy-*`                                                             | 第二项：选择开阔、有些遮挡、周围遮挡较多或不确定 |
 | 空气设备风父选项 | `src/components/DeviceAirflowAssessment.vue`                          | `diagnose-air-environment-{questionId}-device-mode-none` / `device-mode-has-airflow` / `device-mode-unknown` | 第二项先记录设备风是否到达植物                   |
-| 空气设备风子选项 | `src/components/DeviceAirflowAssessment.vue`                          | `diagnose-air-environment-{questionId}-device-mode-circulating` / `device-mode-direct`                       | 选择有设备风后记录是否直吹                       |
-| 空气设备风来源   | `src/components/DeviceAirflowAssessment.vue`                          | `diagnose-air-environment-{questionId}-device-source-*`                                                      | 选择子选项后记录风来自哪里                       |
+| 空气设备风判断   | `src/components/DeviceAirflowAssessment.vue`                          | `diagnose-air-environment-{questionId}-device-source-{source}-{relation}`                                    | 每种设备选择不直吹或直吹；不选择表示不到植物     |
 | 空气内部步骤导航 | `src/components/AirEnvironmentAssessment.vue`                         | `diagnose-air-environment-{questionId}-next-step` / `previous-step`                                          | 只切换上下游，不推进外层题包                     |
 | 空问题占位       | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue`     | `diagnose-question-package-empty-question`                                                                   | 断言无可继续回答的问题                           |
 | 补图区域         | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue`     | `diagnose-question-package-image-section`                                                                    | 断言补图入口可见                                 |
@@ -177,6 +177,11 @@
 | 删除补图         | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue`     | `diagnose-question-package-remove-image-{index}-button`                                                      | 删除已选补图                                     |
 | 清空补图         | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue`     | `diagnose-question-package-clear-images-button`                                                              | 清空所有补图                                     |
 | 补图被阻止       | `src/components/diagnose-flow/DiagnoseQuestionPackageSection.vue`     | `diagnose-question-package-upload-blocked`                                                                   | 断言当前阶段不能补图的原因                       |
+
+| 问诊结果反馈卡   | `src/components/DiagnosisFeedbackCard.vue` / `src/pages/diagnose/question-package.vue` | `diagnose-question-package-result-feedback-card` | 断言完成问诊后反馈入口可见 |
+| 问诊结果反馈提交 | `src/components/DiagnosisFeedbackCard.vue` | `diagnose-question-package-result-feedback-submit` | 提交反馈并断言成功状态 |
+| 问诊结论反馈卡   | `src/components/DiagnosisFeedbackCard.vue` / `src/pages/diagnose/question-package.vue` | `diagnose-question-package-outcome-feedback-card` | 断言结论卡内反馈入口可见 |
+| 问诊结论反馈提交 | `src/components/DiagnosisFeedbackCard.vue` | `diagnose-question-package-outcome-feedback-submit` | 提交反馈并断言成功状态 |
 
 ### 3.4 AIStreamDialog（诊断前确认）
 
@@ -192,6 +197,8 @@
 | -------------- | ------------------------------------------------------ | ----------------------------------- | -------------------- |
 | 弹框基础节点   | `src/pages/index/components/WateringReminderSheet.vue` | `watering-reminder-sheet`           | 断言弹框打开         |
 | 保存提醒按钮   | `src/pages/index/components/WateringReminderSheet.vue` | `watering-reminder-confirm-button`  | 点击添加到手机日历   |
+| 浇水日期取消按钮 | `src/pages/index/components/WateringReminderSheet.vue` | `watering-date-picker-cancel-button` | 关闭浇水日期选择器，不触发规划请求 |
+| 浇水日期确认按钮 | `src/pages/index/components/WateringReminderSheet.vue` | `watering-date-picker-confirm-button` | 提交浇水日期并触发规划请求 |
 | 已保存状态回显 | `src/pages/index/components/WateringReminderSheet.vue` | `watering-reminder-saved-state`     | 断言已保存提醒显示   |
 | 已保存下次浇水 | `src/pages/index/components/WateringReminderSheet.vue` | `watering-reminder-saved-next-time` | 断言下次浇水建议显示 |
 | 已保存原因说明 | `src/pages/index/components/WateringReminderSheet.vue` | `watering-reminder-saved-reason`    | 断言原因回显可见     |
@@ -231,6 +238,9 @@
 | 结果页根容器 | `src/pages/diagnose/result.vue` | `diagnosis-result-page`              | 断言只读结果页加载                |
 | 结论列表     | `src/pages/diagnose/result.vue` | `diagnosis-result-page-outcome-list` | 断言历史结果可见，允许 1-N 个结果 |
 | 空态         | `src/pages/diagnose/result.vue` | `diagnosis-result-page-empty`        | 断言无历史结果时空态可见          |
+| 诊断反馈卡   | `src/components/DiagnosisFeedbackCard.vue` / `src/pages/diagnose/result.vue` | `diagnosis-result-page-feedback-card` | 断言反馈入口随结果展示 |
+| 诊断反馈选项 | `src/components/DiagnosisFeedbackCard.vue` | `diagnosis-result-page-feedback-helpful-yes/no` / `diagnosis-result-page-feedback-accurate-yes/no` | 选择有帮助程度和判断准确程度 |
+| 提交诊断反馈 | `src/components/DiagnosisFeedbackCard.vue` | `diagnosis-result-page-feedback-submit` | 提交后断言成功状态；重复提交禁用 |
 
 ### 3.9 个人中心
 
@@ -241,63 +251,65 @@
 
 ### 3.10 独立浇水建议页
 
-| 功能模块             | 文件                                                                                              | 稳定 id                                                  | 操作 / 断言                                          |
-| -------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | ---------------------------------------------------- |
-| 步骤切换 swiper      | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-swiper`                                | 断言当前步骤；滑动切换步骤                           |
-| 从我的植物选入口     | `src/pages/watering-advisor/components/CatalogPlantSearch.vue`                                    | `watering-advisor-my-plants-entry`                       | 点击在页内打开"我的植物"列表视图                     |
-| 我的植物列表返回按钮 | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-my-plants-back`                        | 点击返回来源选择视图                                 |
-| 我的植物列表容器     | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-my-plants-list`                        | 断言我的植物列表视图可见                             |
-| 我的植物卡片项       | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-my-plant-card-{plant.id}`              | 点击选中该植物；断言选中态显示                       |
-| 我的植物确认下一步   | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-my-plants-confirm-button`              | 点击确认选中植物并进入盆型步骤                       |
-| 搜索植物输入框       | `src/pages/watering-advisor/components/CatalogPlantSearch.vue`                                    | `watering-advisor-search-input`                          | 输入 / 确认搜索植物种类                              |
-| 清空搜索             | `src/pages/watering-advisor/components/CatalogPlantSearch.vue`                                    | `watering-advisor-search-clear`                          | 点击清空搜索关键词                                   |
-| 植物结果行           | `src/pages/watering-advisor/components/CatalogPlantSearch.vue`                                    | `watering-advisor-plant-item-{id}`                       | 点击选择植物种类                                     |
-| 加载更多             | `src/pages/watering-advisor/components/CatalogPlantSearch.vue`                                    | `watering-advisor-load-more`                             | 点击加载更多搜索结果                                 |
-| 下一步：输入盆型     | `src/pages/watering-advisor/components/CatalogPlantSearch.vue`                                    | `watering-advisor-next-button`                           | 点击进入盆型步骤                                     |
-| 盆型步骤上一步       | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-back-1`                                | 点击返回选植物步骤                                   |
-| 空气环境上一步       | `src/components/AirEnvironmentAssessment.vue` / `src/pages/watering-advisor/watering-advisor.vue` | `watering-advisor-air-environment-back`                  | 编辑态由组件承载并返回选植物；已保存摘要态由页面承载 |
-| 空气环境下一步       | `src/components/AirEnvironmentAssessment.vue` / `src/pages/watering-advisor/watering-advisor.vue` | `watering-advisor-air-environment-next`                  | 编辑态由组件承载并进入盆型；已保存摘要态由页面承载   |
-| 空气环境换气选项     | `src/components/AirEnvironmentAssessment.vue`                                                     | `watering-advisor-air-environment-exchange-*`            | 填写换气来源与开窗情况                               |
-| 空气环境内部下一步   | `src/components/AirEnvironmentAssessment.vue`                                                     | `watering-advisor-air-environment-next-step`             | 从室外换气项进入室内气流项；不推进浇水主线           |
-| 空气环境内部上一步   | `src/components/AirEnvironmentAssessment.vue`                                                     | `watering-advisor-air-environment-previous-step`         | 从室内气流项返回室外换气项；不返回选植物             |
-| 空气环境设备风来源   | `src/components/DeviceAirflowAssessment.vue`                                                      | `watering-advisor-air-environment-device-source-*`       | 仅直吹或不直吹后显示；仅上游选择新风时显示新风来源   |
-| 已保存空气摘要       | `src/components/AirEnvironmentSummaryCard.vue`                                                    | `watering-advisor-air-environment-summary`               | 已保存且位置未变时可直接下一步                       |
-| 修改保存空气         | `src/components/AirEnvironmentSummaryCard.vue`                                                    | `watering-advisor-air-environment-edit`                  | 展开编辑器；迟到读取不得覆盖已编辑草稿               |
-| 位置确认提示         | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-air-environment-location-confirmation` | 位置变动时必须确认或修改                             |
-| 确认当前位置未变     | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-air-environment-confirm-location`      | 位置变动时显式确认旧资料仍可使用                     |
-| 同步状态             | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-air-environment-sync-status`           | 仅弱状态，不能阻断建议主流程                         |
-| 重试保存             | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-air-environment-retry-save`            | 保存失败后重试；不替换完成按钮                       |
-| inline 盆型基质选项  | `src/components/pot-profile/PotProfileFormCore.vue`                                               | `watering-advisor-pot-profile-substrate-{value}`         | 点击切换该基质选项选中态                             |
-| inline 排水孔选项    | `src/components/pot-profile/PotProfileFormCore.vue`                                               | `watering-advisor-pot-profile-drainage-{value}`          | 点击选择有/无排水孔                                  |
-| 获取建议按钮         | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-compute-button`                        | 点击触发浇水建议计算                                 |
-| 结果步骤重新输入     | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-back-2`                                | 点击返回盆型步骤                                     |
-| 建议水量结果         | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-result-amount`                         | 断言显示建议水量（矿泉水瓶/5L油桶口径，与首页一致）  |
-| 完成按钮             | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-done`                                  | 点击完成独立浇水建议流程                             |
-| 空态重试按钮         | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-empty-retry`                           | 点击返回重新输入                                     |
+| 功能模块             | 文件                                                                                              | 稳定 id                                                                     | 操作 / 断言                                           |
+| -------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------- |
+| 步骤切换 swiper      | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-swiper`                                                   | 断言当前步骤；滑动切换步骤                            |
+| 从我的植物选入口     | `src/pages/watering-advisor/components/CatalogPlantSearch.vue`                                    | `watering-advisor-my-plants-entry`                                          | 点击在页内打开"我的植物"列表视图                      |
+| 我的植物列表返回按钮 | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-my-plants-back`                                           | 点击返回来源选择视图                                  |
+| 我的植物列表容器     | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-my-plants-list`                                           | 断言我的植物列表视图可见                              |
+| 我的植物卡片项       | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-my-plant-card-{plant.id}`                                 | 点击选中该植物；断言选中态显示                        |
+| 我的植物确认下一步   | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-my-plants-confirm-button`                                 | 点击确认选中植物并进入盆型步骤                        |
+| 搜索植物输入框       | `src/pages/watering-advisor/components/CatalogPlantSearch.vue`                                    | `watering-advisor-search-input`                                             | 输入 / 确认搜索植物种类                               |
+| 清空搜索             | `src/pages/watering-advisor/components/CatalogPlantSearch.vue`                                    | `watering-advisor-search-clear`                                             | 点击清空搜索关键词                                    |
+| 植物结果行           | `src/pages/watering-advisor/components/CatalogPlantSearch.vue`                                    | `watering-advisor-plant-item-{id}`                                          | 点击选择植物种类                                      |
+| 加载更多             | `src/pages/watering-advisor/components/CatalogPlantSearch.vue`                                    | `watering-advisor-load-more`                                                | 点击加载更多搜索结果                                  |
+| 下一步：输入盆型     | `src/pages/watering-advisor/components/CatalogPlantSearch.vue`                                    | `watering-advisor-next-button`                                              | 点击进入盆型步骤                                      |
+| 盆型步骤上一步       | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-back-1`                                                   | 点击返回选植物步骤                                    |
+| 空气环境上一步       | `src/components/AirEnvironmentAssessment.vue` / `src/pages/watering-advisor/watering-advisor.vue` | `watering-advisor-air-environment-back`                                     | 编辑态由组件承载并返回选植物；已保存摘要态由页面承载  |
+| 空气环境下一步       | `src/components/AirEnvironmentAssessment.vue` / `src/pages/watering-advisor/watering-advisor.vue` | `watering-advisor-air-environment-next`                                     | 编辑态由组件承载并进入盆型；已保存摘要态由页面承载    |
+| 空气环境换气选项     | `src/components/AirEnvironmentSinglePageExchange.vue`                                             | `watering-advisor-air-environment-single-*`                                 | 填写换气来源与开窗情况                                |
+| 空气环境设备勾选     | `src/components/AirEnvironmentSinglePagePrototype.vue`                                            | `watering-advisor-air-environment-single-device-source-{source}-toggle`     | 勾选/取消该设备风是否到达植物；勾选后才可设置直吹关系 |
+| 空气环境设备风判断   | `src/components/AirEnvironmentSinglePagePrototype.vue`                                            | `watering-advisor-air-environment-single-device-source-{source}-{relation}` | 已勾选设备选择不直吹或直吹                            |
+| 已保存空气摘要       | `src/components/AirEnvironmentSummaryCard.vue`                                                    | `watering-advisor-air-environment-summary`                                  | 已保存且位置未变时可直接下一步                        |
+| 修改保存空气         | `src/components/AirEnvironmentSummaryCard.vue`                                                    | `watering-advisor-air-environment-edit`                                     | 展开编辑器；迟到读取不得覆盖已编辑草稿                |
+| 位置确认提示         | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-air-environment-location-confirmation`                    | 位置变动时必须确认或修改                              |
+| 确认当前位置未变     | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-air-environment-confirm-location`                         | 位置变动时显式确认旧资料仍可使用                      |
+| 同步状态             | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-air-environment-sync-status`                              | 仅弱状态，不能阻断建议主流程                          |
+| 重试保存             | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-air-environment-retry-save`                               | 保存失败后重试；不替换完成按钮                        |
+| inline 盆型基质选项  | `src/components/pot-profile/PotProfileFormCore.vue`                                               | `watering-advisor-pot-profile-substrate-{value}`                            | 点击切换该基质选项选中态                              |
+| inline 排水孔选项    | `src/components/pot-profile/PotProfileFormCore.vue`                                               | `watering-advisor-pot-profile-drainage-{value}`                             | 点击选择有/无排水孔                                   |
+| 获取建议按钮         | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-compute-button`                                           | 点击触发浇水建议计算                                  |
+| 结果步骤重新输入     | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-back-2`                                                   | 点击返回盆型步骤                                      |
+| 建议水量结果         | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-result-amount`                                            | 断言显示建议水量（矿泉水瓶/5L油桶口径，与首页一致）   |
+| 盆土检查指导         | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-result-soil-check`                                        | 断言无历史时仍提示先检查盆土，不生成虚假日期           |
+| 无历史日期说明       | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-result-no-history`                                        | 断言无上次浇水记录时明确说明暂不推导下一次日期         |
+| 独立建议确认浇水     | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-result-confirm-watered-button`                            | 用户完成本次浇水后记录当天事件，供后续建议使用         |
+| 完成按钮             | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-done`                                                     | 点击完成独立浇水建议流程                              |
+| 空态重试按钮         | `src/pages/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-empty-retry`                                              | 点击返回重新输入                                      |
 
 ### 3.11 添加植物 / 编辑植物
 
-| 功能模块       | 文件                                                            | 稳定 id                                                                        | 操作 / 断言                           |
-| -------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------- |
-| 选植物搜索框   | `src/pages/user-plant-detail/components/PlantSelectionStep.vue` | `add-plant-search-input`                                                       | 输入搜索植物                          |
-| AI 识别入口    | `src/pages/user-plant-detail/components/PlantSelectionStep.vue` | `add-plant-ai-identify-button`                                                 | 点击拍照识别                          |
-| 植物卡片项     | `src/pages/user-plant-detail/components/PlantSelectionStep.vue` | `add-plant-card-{plant.id}`                                                    | 点击选中植物                          |
-| 添加植物下一步 | `src/pages/user-plant-detail/components/PlantSelectionStep.vue` | `add-plant-next-button`                                                        | 点击进入信息填写步骤                  |
-| 信息表单根节点 | `src/pages/user-plant-detail/components/PlantForm.vue`          | `add-plant-form` / `edit-plant-form`                                           | 断言添加/编辑植物表单已渲染           |
-| 植物照片上传   | `src/pages/user-plant-detail/components/PlantForm.vue`          | `add-plant-photo-upload` / `edit-plant-photo-upload`                           | 点击上传或替换植物照片                |
-| 植物昵称输入   | `src/pages/user-plant-detail/components/PlantForm.vue`          | `add-plant-nickname-input` / `edit-plant-nickname-input`                       | 输入植物昵称                          |
-| 城市修改按钮   | `src/pages/user-plant-detail/components/PlantForm.vue`          | `add-plant-city-button` / `edit-plant-city-button`                             | 点击打开养护城市选择弹层              |
-| 城市弹层关闭   | `src/pages/user-plant-detail/components/PlantForm.vue`          | `add-plant-city-sheet-close` / `edit-plant-city-sheet-close`                   | 点击关闭城市选择弹层                  |
-| 城市选项       | `src/pages/user-plant-detail/components/PlantForm.vue`          | `add-plant-city-option-{locationKey}` / `edit-plant-city-option-{locationKey}` | 点击选择养护城市                      |
-| 光照环境控件   | `src/pages/user-plant-detail/components/PlantForm.vue`          | `add-plant-light-*` / `edit-plant-light-*`                                     | 断言光照环境选择器可见并执行对应选择  |
-| 盆型输入入口   | `src/pages/user-plant-detail/components/PlantForm.vue`          | `add-plant-pot-profile-button` / `edit-plant-pot-profile-button`               | 点击打开盆型与基质输入弹层            |
-| 盆型确认保存   | `src/pages/user-plant-detail/components/UserPlantPotProfileEditor.vue` | `add-plant-pot-profile-confirm-button` / `edit-plant-pot-profile-confirm-button` | 新增暂存到提交载荷；编辑直接保存接口 |
-| 摆放位置选项   | `src/pages/user-plant-detail/components/PlantForm.vue`          | `add-plant-location-{slot}` / `edit-plant-location-{slot}`                     | 点击切换摆放位置；`slot` 如 `balcony` |
-| 种植日期选择   | `src/pages/user-plant-detail/components/PlantForm.vue`          | `add-plant-plant-date-picker` / `edit-plant-plant-date-picker`                 | 点击选择种植日期                      |
-| 备注输入       | `src/pages/user-plant-detail/components/PlantForm.vue`          | `add-plant-notes-input` / `edit-plant-notes-input`                             | 输入备注                              |
-| 添加植物上一步 | `src/pages/user-plant-detail/components/PlantInfoStepPanel.vue` | `add-plant-back-to-selection-button`                                           | 点击返回植物选择步骤                  |
-| 添加植物提交   | `src/pages/user-plant-detail/components/PlantInfoStepPanel.vue` | `add-plant-submit-button`                                                      | 点击完成添加植物                      |
-| 编辑植物提交   | `src/pages/user-plant-detail/components/PlantInfoStepPanel.vue` | `edit-plant-submit-button`                                                     | 点击保存植物信息                      |
+| 功能模块       | 文件                                                                   | 稳定 id                                                                          | 操作 / 断言                           |
+| -------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------- |
+| 选植物搜索框   | `src/pages/user-plant-detail/components/PlantSelectionStep.vue`        | `add-plant-search-input`                                                         | 输入搜索植物                          |
+| AI 识别入口    | `src/pages/user-plant-detail/components/PlantSelectionStep.vue`        | `add-plant-ai-identify-button`                                                   | 点击拍照识别                          |
+| 植物卡片项     | `src/pages/user-plant-detail/components/PlantSelectionStep.vue`        | `add-plant-card-{plant.id}`                                                      | 点击选中植物                          |
+| 添加植物下一步 | `src/pages/user-plant-detail/components/PlantSelectionStep.vue`        | `add-plant-next-button`                                                          | 点击进入信息填写步骤                  |
+| 信息表单根节点 | `src/pages/user-plant-detail/components/PlantForm.vue`                 | `add-plant-form` / `edit-plant-form`                                             | 断言添加/编辑植物表单已渲染           |
+| 植物照片上传   | `src/pages/user-plant-detail/components/PlantForm.vue`                 | `add-plant-photo-upload` / `edit-plant-photo-upload`                             | 点击上传或替换植物照片                |
+| 植物昵称输入   | `src/pages/user-plant-detail/components/PlantForm.vue`                 | `add-plant-nickname-input` / `edit-plant-nickname-input`                         | 输入植物昵称                          |
+| 城市修改按钮   | `src/pages/user-plant-detail/components/PlantForm.vue`                 | `add-plant-city-button` / `edit-plant-city-button`                               | 点击打开养护城市选择弹层              |
+| 城市弹层关闭   | `src/pages/user-plant-detail/components/PlantForm.vue`                 | `add-plant-city-sheet-close` / `edit-plant-city-sheet-close`                     | 点击关闭城市选择弹层                  |
+| 城市选项       | `src/pages/user-plant-detail/components/PlantForm.vue`                 | `add-plant-city-option-{locationKey}` / `edit-plant-city-option-{locationKey}`   | 点击选择养护城市                      |
+| 光照环境控件   | `src/pages/user-plant-detail/components/PlantForm.vue`                 | `add-plant-light-*` / `edit-plant-light-*`                                       | 断言光照环境选择器可见并执行对应选择  |
+| 盆型输入入口   | `src/pages/user-plant-detail/components/PlantForm.vue`                 | `add-plant-pot-profile-button` / `edit-plant-pot-profile-button`                 | 点击打开盆型与基质输入弹层            |
+| 盆型确认保存   | `src/pages/user-plant-detail/components/UserPlantPotProfileEditor.vue` | `add-plant-pot-profile-confirm-button` / `edit-plant-pot-profile-confirm-button` | 新增暂存到提交载荷；编辑直接保存接口  |
+| 摆放位置选项   | `src/pages/user-plant-detail/components/PlantForm.vue`                 | `add-plant-location-{slot}` / `edit-plant-location-{slot}`                       | 点击切换摆放位置；`slot` 如 `balcony` |
+| 种植日期选择   | `src/pages/user-plant-detail/components/PlantForm.vue`                 | `add-plant-plant-date-picker` / `edit-plant-plant-date-picker`                   | 点击选择种植日期                      |
+| 备注输入       | `src/pages/user-plant-detail/components/PlantForm.vue`                 | `add-plant-notes-input` / `edit-plant-notes-input`                               | 输入备注                              |
+| 添加植物上一步 | `src/pages/user-plant-detail/components/PlantInfoStepPanel.vue`        | `add-plant-back-to-selection-button`                                             | 点击返回植物选择步骤                  |
+| 添加植物提交   | `src/pages/user-plant-detail/components/PlantInfoStepPanel.vue`        | `add-plant-submit-button`                                                        | 点击完成添加植物                      |
+| 编辑植物提交   | `src/pages/user-plant-detail/components/PlantInfoStepPanel.vue`        | `edit-plant-submit-button`                                                       | 点击保存植物信息                      |
 
 ### 3.12 诊断 tab 与提醒 tab
 
@@ -312,31 +324,37 @@
 
 ### 3.13 完整空气环境评估（独立容器页）
 
-空气环境由同一个 `AirEnvironmentAssessment` 组件承载两个连续步骤：第一项判断室内外空气交换，第二项判断植物周围的室内局部气流。独立页面 `/pages/airflow/index` 只是该组件的容器；浇水建议、诊断题包和植物详情均直接调用组件，不得拆成两个业务路由。
+空气环境由同一个 `AirEnvironmentAssessment` 组件承载，所有当前入口统一使用 `layout-mode="single-page"` 和 `height-mode="content"`，将室内外换气、周围空间和设备风放在同一页完成。浇水建议、诊断题包、独立空气环境页和植物详情均直接调用组件，不得拆成两个业务路由。
 
-| 功能模块                 | 文件                                          | 稳定 id                                                                                        | 操作 / 断言                                              |
-| ------------------------ | --------------------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| 完整评估容器             | `src/components/AirEnvironmentAssessment.vue` | `airflow-assessment`                                                                           | 断言上下游组件根节点可见                                 |
-| 通用步骤轨道             | `src/components/common/ButtonStepTrack.vue`   | `airflow-swiper`                                                                               | 断言两个步骤项由通用轨道承载                             |
-| 上游步骤                 | `src/components/AirEnvironmentAssessment.vue` | `airflow-exchange-step`                                                                        | 第一项：室内外空气交换                                   |
-| 下游步骤                 | `src/components/AirEnvironmentAssessment.vue` | `airflow-local-airflow-step`                                                                   | 第二项：植物周围室内气流                                 |
-| 换气来源：窗户情况       | `src/components/SelectableCard.vue`           | `airflow-exchange-source-window`                                                               | 点击选择窗户情况；展开单/双方向或关闭窗户补充项          |
-| 换气来源：新风系统       | `src/components/SelectableCard.vue`           | `airflow-exchange-source-fresh_air`                                                            | 点击选择新风；下游才显示新风气流来源                     |
-| 换气来源：不确定         | `src/components/SelectableCard.vue`           | `airflow-exchange-source-unknown`                                                              | 点击选择不确定；记录中须保留“不确定”                     |
-| 开窗方向：一个方向       | `src/components/AirExchangeAssessment.vue`    | `airflow-exchange-window-direction-one`                                                        | 仅 `source=window` 时可见；点击选择单方向                |
-| 开窗方向：两个及以上方向 | `src/components/AirExchangeAssessment.vue`    | `airflow-exchange-window-direction-two-or-more`                                                | 仅 `source=window` 时可见；点击选择双方向                |
-| 开窗方向：关闭窗户       | `src/components/AirExchangeAssessment.vue`    | `airflow-exchange-window-direction-closed`                                                     | 仅 `source=window` 时可见；点击选择关闭窗户              |
-| 开窗频率：每天           | `src/components/AirExchangeAssessment.vue`    | `airflow-exchange-window-frequency-daily`                                                      | 仅 `source=window` 时可见；点击选择每天                  |
-| 开窗频率：隔天           | `src/components/AirExchangeAssessment.vue`    | `airflow-exchange-window-frequency-every-other-day`                                            | 仅 `source=window` 时可见；点击选择隔天                  |
-| 开窗频率：每周 1–2 次    | `src/components/AirExchangeAssessment.vue`    | `airflow-exchange-window-frequency-weekly-1-2`                                                 | 仅 `source=window` 时可见；点击选择每周 1–2 次           |
-| 上游到下游               | `src/components/AirEnvironmentAssessment.vue` | `airflow-next-step` / `airflow-previous-step`                                                  | 只切换组件内部步骤，不提交外层流程                       |
-| 植物周围空间             | `src/components/AirEnvironmentAssessment.vue` | `airflow-canopy-*`                                                                             | 第二项选择开阔、有些遮挡、周围遮挡较多或不确定           |
-| 设备风父选项             | `src/components/DeviceAirflowAssessment.vue`  | `airflow-device-mode-none` / `airflow-device-mode-has-airflow` / `airflow-device-mode-unknown` | 先记录没有设备风、有设备风吹到植物或不确定               |
-| 设备风子选项             | `src/components/DeviceAirflowAssessment.vue`  | `airflow-device-mode-circulating` / `airflow-device-mode-direct`                               | 选择“有设备风吹到植物”后，继续记录是否直吹叶片           |
-| 设备风来源               | `src/components/DeviceAirflowAssessment.vue`  | `airflow-device-source-*`                                                                      | 选择直吹/不直吹后显示；仅上游选择新风时显示新风来源      |
-| 完成按钮                 | `src/components/AirEnvironmentAssessment.vue` | `airflow-submit-button`                                                                        | 室内气流 item 内完成；初始未答或答案不完整不可用         |
-| 结果摘要                 | `src/pages/airflow/index.vue`                 | `airflow-result-summary`                                                                       | 断言显示“记录完成”与用户已选的换气方式；不得展示等级结论 |
-| 重置按钮                 | `src/pages/airflow/index.vue`                 | `airflow-reset-button`                                                                         | 点击清空选择并回到初始未答态                             |
+| 功能模块                 | 文件                                                   | 稳定 id                                                                                                                          | 操作 / 断言                                              |
+| ------------------------ | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| 完整评估容器             | `src/components/AirEnvironmentAssessment.vue`          | `airflow-assessment`                                                                                                             | 断言上下游组件根节点可见                                 |
+| 单页原型容器             | `src/components/AirEnvironmentSinglePagePrototype.vue` | `airflow-single-page`                                                                                                            | 独立页单页通风记录入口                                   |
+| 单页换气方式             | `src/components/AirEnvironmentSinglePageExchange.vue`  | `airflow-single-exchange-window` / `airflow-single-fresh-air-switch`                                                             | 左右各半；左侧动态图例，右侧紧凑控制区                   |
+| 单页开窗补充项           | `src/components/AirEnvironmentSinglePageExchange.vue`  | `airflow-single-window-direction-one` / `airflow-single-window-direction-two_or_more` / `airflow-single-window-frequency-picker` | 选择开窗方向与频率；“几乎不开”显示关窗图例               |
+| 单页周围空间             | `src/components/AirEnvironmentSinglePagePrototype.vue` | `airflow-single-canopy-*`                                                                                                        | 选择无遮挡、有些遮挡、遮挡较多或不确定                   |
+| 单页设备风模式           | `src/components/AirEnvironmentSinglePagePrototype.vue` | `airflow-single-device-mode-none` / `has_airflow` / `unknown`                                                                    | 先记录没有设备风、有或不确定                             |
+| 单页设备风判断           | `src/components/AirEnvironmentSinglePagePrototype.vue` | `airflow-single-device-source-{source}-{relation}`                                                                               | 每种设备选择不直吹或直吹；不选择表示不到植物             |
+| 单页当前记录             | `src/components/AirEnvironmentSinglePagePrototype.vue` | `airflow-single-summary`                                                                                                         | 断言三类通风信息已汇总显示                               |
+| 单页完成按钮             | `src/components/AirEnvironmentSinglePagePrototype.vue` | `airflow-submit-button`                                                                                                          | 单页原型完成；答案不完整时不可用                         |
+| 通用步骤轨道             | `src/components/common/ButtonStepTrack.vue`            | `airflow-swiper`                                                                                                                 | 断言两个步骤项由通用轨道承载                             |
+| 上游步骤                 | `src/components/AirEnvironmentAssessment.vue`          | `airflow-exchange-step`                                                                                                          | 第一项：室内外空气交换                                   |
+| 下游步骤                 | `src/components/AirEnvironmentAssessment.vue`          | `airflow-local-airflow-step`                                                                                                     | 第二项：植物周围室内气流                                 |
+| 换气图例槽位             | `src/components/SelectableCard.vue`                    | `airflow-exchange-source-window`                                                                                                 | 唯一动态图例槽位；根据开窗频率、方向或新风状态变化       |
+| 开窗方向：一个方向       | `src/components/AirExchangeAssessment.vue`             | `airflow-exchange-window-direction-one`                                                                                          | 仅 `source=window` 时可见；点击选择单方向                |
+| 开窗方向：两个及以上方向 | `src/components/AirExchangeAssessment.vue`             | `airflow-exchange-window-direction-two-or-more`                                                                                  | 仅 `source=window` 时可见；点击选择双方向                |
+| 开窗频率：每天           | `src/components/AirExchangeAssessment.vue`             | `airflow-exchange-window-frequency-daily`                                                                                        | 仅 `source=window` 时可见；点击选择每天                  |
+| 开窗频率：隔天           | `src/components/AirExchangeAssessment.vue`             | `airflow-exchange-window-frequency-every-other-day`                                                                              | 仅 `source=window` 时可见；点击选择隔天                  |
+| 开窗频率：每周 1–2 次    | `src/components/AirExchangeAssessment.vue`             | `airflow-exchange-window-frequency-weekly-1-2`                                                                                   | 仅 `source=window` 时可见；点击选择每周 1–2 次           |
+| 开窗频率：几乎不开       | `src/components/AirExchangeAssessment.vue`             | `airflow-exchange-window-frequency-almost-never`                                                                                 | 选择后显示显式关窗图例与“开启新风”开关                   |
+| 开启新风                 | `src/components/AirExchangeAssessment.vue`             | `airflow-exchange-fresh-air-switch`                                                                                              | 仅选择“几乎不开”时可见；打开后记录 `source=fresh_air`    |
+| 上游到下游               | `src/components/AirEnvironmentAssessment.vue`          | `airflow-next-step` / `airflow-previous-step`                                                                                    | 只切换组件内部步骤，不提交外层流程                       |
+| 植物周围空间             | `src/components/AirEnvironmentAssessment.vue`          | `airflow-canopy-*`                                                                                                               | 第二项选择开阔、有些遮挡、周围遮挡较多或不确定           |
+| 设备风父选项             | `src/components/DeviceAirflowAssessment.vue`           | `airflow-device-mode-none` / `airflow-device-mode-has-airflow` / `airflow-device-mode-unknown`                                   | 先记录没有设备风、有或不确定                             |
+| 设备风判断               | `src/components/DeviceAirflowAssessment.vue`           | `airflow-device-source-{source}-{relation}`                                                                                      | 每种设备选择不直吹或直吹；不选择表示不到植物             |
+| 完成按钮                 | `src/components/AirEnvironmentAssessment.vue`          | `airflow-submit-button`                                                                                                          | 室内气流 item 内完成；初始未答或答案不完整不可用         |
+| 结果摘要                 | `src/pages/airflow/index.vue`                          | `airflow-result-summary`                                                                                                         | 断言显示“记录完成”与用户已选的换气方式；不得展示等级结论 |
+| 重置按钮                 | `src/pages/airflow/index.vue`                          | `airflow-reset-button`                                                                                                           | 点击清空选择并回到初始未答态                             |
 
 ## 4. automator catalog 映射
 

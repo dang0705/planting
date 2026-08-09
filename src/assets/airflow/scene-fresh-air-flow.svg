@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="340.123" height="107.691" viewBox="0 0 340.123 107.691">
-<g transform="translate(95.277,12.3635) scale(0.8883,0.8883)">
-<path id="left-airflow" opacity="0.65" d="M79 2 L80 29 C57 39 30 57 15 79" fill="none" stroke="#2D7A4F" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="7 10" stroke-dashoffset="15.1"><animate attributeName="stroke-dashoffset" from="17" to="0" dur="2.4s" begin="0s" repeatCount="indefinite" calcMode="linear"/><animate attributeName="opacity" values="0;0.65;0" keyTimes="0;0.5;1" dur="2.4s" begin="0s" repeatCount="indefinite"/></path>
-<path id="center-airflow" opacity="0.55" d="M85 2 L84 29 C81 43 80 59 82 79" fill="none" stroke="#2D7A4F" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="7 10" stroke-dashoffset="15.1"><animate attributeName="stroke-dashoffset" from="17" to="0" dur="2.8s" begin="0.4s" repeatCount="indefinite" calcMode="linear"/><animate attributeName="opacity" values="0;0.55;0" keyTimes="0;0.5;1" dur="2.8s" begin="0.4s" repeatCount="indefinite"/></path>
-<path id="right-airflow" opacity="0.6" d="M91 2 L90 29 C107 41 129 57 141 81" fill="none" stroke="#2D7A4F" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="7 10" stroke-dashoffset="15.1"><animate attributeName="stroke-dashoffset" from="17" to="0" dur="3.1s" begin="0.9s" repeatCount="indefinite" calcMode="linear"/><animate attributeName="opacity" values="0;0.6;0" keyTimes="0;0.5;1" dur="3.1s" begin="0.9s" repeatCount="indefinite"/></path>
+<g opacity="0.85" fill="none" stroke="#2D7A4F" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="8 8">
+<path id="left-airflow" d="M170 22 C166 38 139 52 112 84" stroke-dashoffset="16"><animate attributeName="stroke-dashoffset" from="16" to="0" dur="2.4s" begin="0s" repeatCount="indefinite" calcMode="linear"/></path>
+<path id="center-airflow" d="M170 22 C168 41 169 61 170 87" stroke-dashoffset="16"><animate attributeName="stroke-dashoffset" from="16" to="0" dur="2.8s" begin="0.4s" repeatCount="indefinite" calcMode="linear"/></path>
+<path id="right-airflow" d="M170 22 C176 38 201 53 228 85" stroke-dashoffset="16"><animate attributeName="stroke-dashoffset" from="16" to="0" dur="3.1s" begin="0.9s" repeatCount="indefinite" calcMode="linear"/></path>
 </g>
-<g transform="translate(175.447,13.3135) scale(1.0000,1.0000)">
-<path id="return-airflow" opacity="0.4" d="M60.6218 71.6218 C43.7797 43.0486 21.6744 31.3217 0.621775 24.3949 V12.5083 V0.621775" fill="none" stroke="#5A7A68" stroke-width="1.24355" stroke-linecap="round" stroke-dasharray="5.33 8.88" stroke-dashoffset="0"><animate attributeName="stroke-dashoffset" from="0" to="-14.21" dur="3.2s" repeatCount="indefinite" calcMode="linear"/></path>
+<g opacity="0.6" fill="none" stroke="#5A7A68" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="6 9">
+<path id="return-airflow" d="M236 84 C218 58 197 43 174 35 V22" stroke-dashoffset="0"><animate attributeName="stroke-dashoffset" from="0" to="-15" dur="3.2s" repeatCount="indefinite"/></path>
 </g>
 </svg>

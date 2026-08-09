@@ -5,7 +5,21 @@
     :class="{ 'pointer-events-none opacity-60': disabled }"
   >
     <view class="flex flex-col" :class="isContentHeight ? '' : 'min-h-0'" :style="panelStyle">
+      <AirEnvironmentSinglePagePrototype
+        v-if="isSinglePage"
+        :id-prefix="idPrefix"
+        :model-value="environment"
+        :disabled="disabled"
+        :back-label="backLabel"
+        :back-id="resolvedBackId"
+        :completion-label="completionLabel"
+        :completion-id="resolvedCompletionId"
+        @change="commit"
+        @back="goBack"
+        @complete="value => emit('complete', value)"
+      />
       <ButtonStepTrack
+        v-else
         :id="`${idPrefix}-swiper`"
         :fill="!isContentHeight"
         :root-class="isContentHeight ? '' : 'h-full'"
@@ -74,6 +88,7 @@
                   :description="option.description"
                   :scene="option.scene"
                   :motion-profile="option.motionProfile"
+                  :is-unknown="option.key === 'unknown'"
                   :selected="environment.canopyOpenness === option.key"
                   :show-selection-indicator="false"
                   orientation="vertical"
@@ -172,6 +187,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import ButtonStepTrack from '@/components/common/ButtonStepTrack.vue'
 import AirExchangeAssessment from '@/components/AirExchangeAssessment.vue'
 import AirEnvironmentOptionCard from '@/components/AirEnvironmentOptionCard.vue'
+import AirEnvironmentSinglePagePrototype from '@/components/AirEnvironmentSinglePagePrototype.vue'
 import DeviceAirflowAssessment from '@/components/DeviceAirflowAssessment.vue'
 import {
   createInitialAirEnvironmentInput,
@@ -184,8 +200,9 @@ import { isAirExchangeAnswerReady } from '@/utils/air-exchange-evidence.js'
 const props = defineProps({
   modelValue: { type: Object, default: () => createInitialAirEnvironmentInput() },
   idPrefix: { type: String, default: 'air-environment' },
+  layoutMode: { type: String, default: 'single-page' },
   panelHeight: { type: Number, default: 560 },
-  heightMode: { type: String, default: 'fixed' },
+  heightMode: { type: String, default: 'content' },
   disabled: { type: Boolean, default: false },
   footerPosition: { type: String, default: 'absolute' },
   backLabel: { type: String, default: '' },
@@ -198,7 +215,12 @@ const emit = defineEmits(['update:modelValue', 'change', 'step-change', 'back', 
 const AIR_EXCHANGE_STEP = 0
 const LOCAL_AIRFLOW_STEP = 1
 const STEP_COUNT = 2
+const DEFAULT_WINDOW_DIRECTION_COUNT = 'one'
+const DEFAULT_WINDOW_OPEN_FREQUENCY = 'daily'
+const DEFAULT_FRESH_AIR_SOURCE_COUNT = 1
+const FIRST_SOURCE_INDEX = 0
 const activeStep = ref(AIR_EXCHANGE_STEP)
+const isSinglePage = computed(() => props.layoutMode === 'single-page')
 const isContentHeight = computed(() => props.heightMode === 'content')
 const panelStyle = computed(() =>
   isContentHeight.value ? undefined : { height: `${props.panelHeight}px` }
@@ -235,7 +257,81 @@ const canopyOptions = Object.freeze([
     motionProfile: 'canopy-unknown'
   }
 ])
-const environment = ref(sanitizeAirEnvironmentInput(props.modelValue))
+function withAssessmentDefaults(value = {}) {
+  const input = sanitizeAirEnvironmentInput(value)
+  const source = ['window', 'fresh_air'].includes(input.airExchange.source)
+    ? input.airExchange.source
+    : 'window'
+  const airExchange = {
+    source,
+    windowDirectionCount:
+      source === 'window'
+        ? input.airExchange.windowDirectionCount || DEFAULT_WINDOW_DIRECTION_COUNT
+        : null,
+    windowOpenFrequency:
+      source === 'window'
+        ? input.airExchange.windowOpenFrequency || DEFAULT_WINDOW_OPEN_FREQUENCY
+        : null
+  }
+  const mode = input.deviceAirflow.mode || (source === 'fresh_air' ? 'circulating' : 'none')
+  return sanitizeAirEnvironmentInput({
+    ...input,
+    airExchange,
+    deviceAirflow: { ...input.deviceAirflow, mode }
+  })
+}
+
+function reconcileDeviceAirflowForExchange(airExchange, deviceAirflow, previousAirExchange) {
+  const currentSources = Array.isArray(deviceAirflow?.sources) ? deviceAirflow.sources : []
+  const currentDirectSources = Array.isArray(deviceAirflow?.directSources)
+    ? deviceAirflow.directSources
+    : []
+  const sourceModes =
+    deviceAirflow?.sourceModes && typeof deviceAirflow.sourceModes === 'object'
+      ? { ...deviceAirflow.sourceModes }
+      : Object.fromEntries(
+          currentSources.map(source => [
+            source,
+            currentDirectSources.includes(source) ? 'direct' : 'circulating'
+          ])
+        )
+  if (airExchange?.source === 'fresh_air') {
+    sourceModes.fresh_air ||= 'circulating'
+    const sources = Object.keys(sourceModes)
+    const directSources = sources.filter(source => sourceModes[source] === 'direct')
+    return {
+      mode: directSources.length ? 'direct' : 'circulating',
+      sources,
+      directSources,
+      sourceModes
+    }
+  }
+
+  const returnedFromDefaultFreshAir =
+    previousAirExchange?.source === 'fresh_air' &&
+    deviceAirflow?.mode === 'circulating' &&
+    currentSources.length === DEFAULT_FRESH_AIR_SOURCE_COUNT &&
+    currentSources[FIRST_SOURCE_INDEX] === 'fresh_air'
+  if (returnedFromDefaultFreshAir) {
+    return { mode: 'none', sources: [], directSources: [], sourceModes: {} }
+  }
+
+  delete sourceModes.fresh_air
+  const sources = Object.keys(sourceModes)
+  const directSources = sources.filter(source => sourceModes[source] === 'direct')
+  return {
+    mode: directSources.length
+      ? 'direct'
+      : sources.length
+        ? 'circulating'
+        : deviceAirflow?.mode || 'none',
+    sources,
+    directSources,
+    sourceModes
+  }
+}
+
+const environment = ref(withAssessmentDefaults(props.modelValue))
 let lastCommittedSignature = getAirEnvironmentSignature(environment.value)
 const exchangeReady = computed(() => isAirExchangeAnswerReady(environment.value.airExchange))
 const environmentReady = computed(() => isAirEnvironmentAnswerReady(environment.value))
@@ -262,7 +358,7 @@ const insightMessages = computed(() => {
 })
 
 function commit(value) {
-  environment.value = sanitizeAirEnvironmentInput(value)
+  environment.value = withAssessmentDefaults(value)
   lastCommittedSignature = getAirEnvironmentSignature(environment.value)
   emit('update:modelValue', environment.value)
   emit('change', environment.value)
@@ -313,13 +409,15 @@ function complete() {
 }
 
 function handleAirExchangeChange(airExchange) {
-  const deviceSources = environment.value.deviceAirflow.sources.filter(
-    source => source !== 'fresh_air' || airExchange?.source === 'fresh_air'
+  const deviceAirflow = reconcileDeviceAirflowForExchange(
+    airExchange,
+    environment.value.deviceAirflow,
+    environment.value.airExchange
   )
   commit({
     ...environment.value,
     airExchange,
-    deviceAirflow: { ...environment.value.deviceAirflow, sources: deviceSources }
+    deviceAirflow
   })
 }
 
@@ -336,7 +434,7 @@ function selectCanopy(canopyOpenness) {
 watch(
   () => props.modelValue,
   value => {
-    const nextEnvironment = sanitizeAirEnvironmentInput(value)
+    const nextEnvironment = withAssessmentDefaults(value)
     const nextSignature = getAirEnvironmentSignature(nextEnvironment)
     const changedOutside = nextSignature !== lastCommittedSignature
     environment.value = nextEnvironment
@@ -358,6 +456,10 @@ defineExpose({
 })
 
 onMounted(() => {
+  if (getAirEnvironmentSignature(props.modelValue) !== lastCommittedSignature) {
+    emit('update:modelValue', environment.value)
+    emit('change', environment.value)
+  }
   emit('step-change', activeStep.value)
 })
 </script>

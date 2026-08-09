@@ -84,7 +84,7 @@ export async function runMyPlantPlannerScenario(mp, report, artifactDir, mode) {
       setClassification(
         report,
         'BLOCKED_FIXTURE',
-        '运行时未找到任何 plant-card-reminder-{id}-water 入口'
+        '运行时未找到任何 plant-card-reminder-{id}-water 入口；禁止直接判定 fixture 缺失，必须先完整重跑 npm run dev:mp-weixin:local-functions:lan 并重新执行该叶子场景'
       )
       return 'BLOCKED_FIXTURE'
     }
@@ -130,7 +130,7 @@ export async function runMyPlantPlannerScenario(mp, report, artifactDir, mode) {
         setClassification(
           report,
           'BLOCKED_FIXTURE',
-          `shadow baseline 植物 plantId=${targetPlantId} 在运行时未找到`
+          `shadow baseline 植物 plantId=${targetPlantId} 在运行时未找到；禁止直接判定 fixture 缺失，必须先完整重跑 npm run dev:mp-weixin:local-functions:lan 并重新执行该叶子场景`
         )
         return 'BLOCKED_FIXTURE'
       }

@@ -186,6 +186,10 @@
               }}</text>
             </view>
           </view>
+          <DiagnosisFeedbackCard
+            :result-id="feedbackResultId"
+            id-prefix="diagnose-question-package-outcome-feedback"
+          />
           <view
             v-if="actionAdviceGroups.length"
             id="diagnose-question-package-outcome-action-advice"
@@ -351,6 +355,10 @@
               </view>
             </view>
           </view>
+          <DiagnosisFeedbackCard
+            :result-id="feedbackResultId"
+            id-prefix="diagnose-question-package-result-feedback"
+          />
           <view
             v-if="showRouteDebugPanel"
             id="diagnose-question-package-debug-panel"
@@ -383,6 +391,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import Layout from '@/Layout.vue'
+import DiagnosisFeedbackCard from '@/components/DiagnosisFeedbackCard.vue'
 import { useDiagnoseStore } from '@/store/diagnose.js'
 import { useUserStore } from '@/store/user.js'
 import ButtonStepTrack from '@/components/common/ButtonStepTrack.vue'
@@ -511,6 +520,15 @@ const {
   routeDebugGroupText
 } = useQuestionPackageResultView({ result, payload, routeOptions })
 const hasRouteConvergenceDetails = computed(() => routeConvergenceDetailsVisible.value)
+const feedbackResultId = computed(() =>
+  String(
+    result.value?.resultId ||
+      result.value?.diagnosisSessionId ||
+      payload.value?.diagnosisSessionId ||
+      routeOptions.value?.sessionId ||
+      ''
+  ).trim()
+)
 
 // Keep the active card and its immediate neighbors mounted for the slide transition.
 // Older cards only need a stable shell/count marker; mounting every question at once also

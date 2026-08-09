@@ -214,49 +214,49 @@ export function compareShadowVsActive(shadowSnapshot, activeSnapshot) {
     detail: `active.intervalFactor=${activeFactor}, shadow.computedFactor=${shadowComputed}`
   })
 
-  // 4. BASELINE 且 computedFactor 有实际修正时，active 日期/窗口与 shadow candidate 对齐
+  // 4. 正常策略且 computedFactor 有实际修正时，active 日期/窗口与 shadow candidate 对齐
   if (
-    shadowSnapshot.wateringContext === 'BASELINE' &&
+    shadowSnapshot.wateringContext === 'keep_baseline_or_check_soil' &&
     shadowSnapshot.transpirationComputedFactor !== null &&
     Math.abs(shadowSnapshot.transpirationComputedFactor - 1.0) > 0.001
   ) {
     const dateAligned =
       activeSnapshot.nextWaterDate === shadowSnapshot.transpirationCandidateNextWaterDate
     assertions.push({
-      name: 'BASELINE + computedFactor!=1.0 时 active nextWaterDate 对齐 shadow candidate',
+      name: '正常策略 + computedFactor!=1.0 时 active nextWaterDate 对齐 shadow candidate',
       passed: dateAligned,
       detail: `active.nextWaterDate=${activeSnapshot.nextWaterDate}, shadow.candidateNextWaterDate=${shadowSnapshot.transpirationCandidateNextWaterDate}`
     })
     const windowAligned =
       activeSnapshot.nextWaterWindow === shadowSnapshot.transpirationCandidateNextWaterWindow
     assertions.push({
-      name: 'BASELINE + computedFactor!=1.0 时 active nextWaterWindow 对齐 shadow candidate',
+      name: '正常策略 + computedFactor!=1.0 时 active nextWaterWindow 对齐 shadow candidate',
       passed: windowAligned,
       detail: `active.nextWaterWindow=${activeSnapshot.nextWaterWindow}, shadow.candidateNextWaterWindow=${shadowSnapshot.transpirationCandidateNextWaterWindow}`
     })
-  } else if (shadowSnapshot.wateringContext === 'BASELINE') {
+  } else if (shadowSnapshot.wateringContext === 'keep_baseline_or_check_soil') {
     const dateSame = activeSnapshot.nextWaterDate === shadowSnapshot.nextWaterDate
     assertions.push({
-      name: 'BASELINE + computedFactor=1.0 时 active nextWaterDate 等于 shadow',
+      name: '正常策略 + computedFactor=1.0 时 active nextWaterDate 等于 shadow',
       passed: dateSame,
       detail: `active=${activeSnapshot.nextWaterDate}, shadow=${shadowSnapshot.nextWaterDate}`
     })
   }
 
   // 5. WET/DRY 时 context 和保护结果不因蒸腾被绕过
-  if (shadowSnapshot.wateringContext === 'WET') {
-    const wetPreserved = activeSnapshot.wateringContext === 'WET'
+  if (shadowSnapshot.wateringContext === 'likely_too_wet') {
+    const wetPreserved = activeSnapshot.wateringContext === 'likely_too_wet'
     const dateNull = activeSnapshot.nextWaterDate === null
     assertions.push({
-      name: 'WET 时 active context 仍为 WET 且 nextWaterDate=null（不绕过湿润保护）',
+      name: '偏湿时 active context 保持偏湿且 nextWaterDate=null（不绕过湿润保护）',
       passed: wetPreserved && dateNull,
       detail: `active.context=${activeSnapshot.wateringContext}, active.nextWaterDate=${activeSnapshot.nextWaterDate}`
     })
   }
-  if (shadowSnapshot.wateringContext === 'DRY') {
-    const dryPreserved = activeSnapshot.wateringContext === 'DRY'
+  if (shadowSnapshot.wateringContext === 'likely_too_dry') {
+    const dryPreserved = activeSnapshot.wateringContext === 'likely_too_dry'
     assertions.push({
-      name: 'DRY 时 active context 仍为 DRY（不绕过干旱保护）',
+      name: '偏干时 active context 保持偏干（不绕过干旱保护）',
       passed: dryPreserved,
       detail: `active.context=${activeSnapshot.wateringContext}`
     })

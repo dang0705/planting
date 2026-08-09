@@ -108,6 +108,31 @@ export function extractLeafReport({ stdout = '', stderr = '' } = {}) {
   )
 }
 
+const MISSING_PLANT_RUNTIME_MARKERS = [
+  '未找到任何 plant-card-reminder',
+  'shadow baseline 植物',
+  'fixture has at least one user plant',
+  '未找到任何用户植物入口'
+]
+
+export function leafReportRequiresFullLanRebuild(leafReport) {
+  if (leafReport?.parse_status !== 'parsed') {
+    return false
+  }
+  const report = leafReport.report
+  if (report?.classification !== 'BLOCKED_FIXTURE') {
+    return false
+  }
+  const failedAssertions = Array.isArray(report.assertions)
+    ? report.assertions.filter(assertion => assertion?.passed === false)
+    : []
+  const text = JSON.stringify({
+    blockerReason: report.blockerReason,
+    failedAssertions
+  })
+  return MISSING_PLANT_RUNTIME_MARKERS.some(marker => text.includes(marker))
+}
+
 function failedStepOrFailureEntries(report) {
   const failedSteps = Array.isArray(report.steps)
     ? report.steps.filter(step => step?.status === 'failed')

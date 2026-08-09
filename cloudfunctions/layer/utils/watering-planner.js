@@ -25,6 +25,7 @@ const {
   resolveBaselineInterval,
   resolveNextWaterDate
 } = require('./watering-schedule')
+const { resolveSeasonalIntervalFactor } = require('./seasonal-watering')
 
 const WATERING_ACTIONS = Object.freeze({
   WET: 'delay_and_check_soil',
@@ -33,6 +34,31 @@ const WATERING_ACTIONS = Object.freeze({
 })
 
 const FORMULA_VERSION = 'watering_planner_v21'
+
+function buildSoilCheckGuidance(gateState) {
+  if (gateState === GATE_STATE.WET) {
+    return {
+      required: true,
+      beforeWatering: true,
+      message: '先检查盆土，确认还没干透前先不要浇水。',
+      reasonCode: 'CHECK_SOIL_BEFORE_WATERING'
+    }
+  }
+  if (gateState === GATE_STATE.DRY) {
+    return {
+      required: true,
+      beforeWatering: true,
+      message: '建议现在检查盆土，确认干了再一次浇透。',
+      reasonCode: 'CHECK_SOIL_BEFORE_WATERING'
+    }
+  }
+  return {
+    required: true,
+    beforeWatering: true,
+    message: '下次浇水前先检查盆土，表层干了再浇透。',
+    reasonCode: 'CHECK_SOIL_BEFORE_WATERING'
+  }
+}
 
 /* ---------- 基础工具函数（planner 专有） ---------- */
 
@@ -243,9 +269,13 @@ function buildWateringPlanner({
       : Number.isFinite(Number(transpirationIntervalFactor))
         ? Number(transpirationIntervalFactor)
         : 1.0
+  const seasonalIntervalFactor = resolveSeasonalIntervalFactor({
+    referenceDate: effectiveReferenceDate,
+    wateringQuantization
+  })
   const combinedIntervalFactor = Math.max(
     0.5,
-    Math.min(1.5, drainageIntervalFactor * transpirationFactor)
+    Math.min(1.5, drainageIntervalFactor * transpirationFactor * seasonalIntervalFactor)
   )
   const nextWater = resolveNextWaterDate(
     baseline,
@@ -277,7 +307,8 @@ function buildWateringPlanner({
         'maxConsecutiveRainyDays',
         'maxConsecutiveHotDryDays'
       ]),
-      forecast: pickNumberFields(forecast, ['hotDryDays', 'maxConsecutiveHotDryDays'])
+      forecast: pickNumberFields(forecast, ['hotDryDays', 'maxConsecutiveHotDryDays']),
+      seasonalIntervalFactor
     },
     thresholds: clonePlain(thresholds),
     formulas: [
@@ -382,6 +413,12 @@ function buildWateringPlanner({
         passed: gate.gateState === GATE_STATE.DRY
       }),
       buildPlannerFormulaStep({
+        key: 'seasonal_interval_factor',
+        expression: 'configured seasonal correction or 1 when no seasonal configuration exists',
+        inputs: { seasonalIntervalFactor },
+        result: seasonalIntervalFactor
+      }),
+      buildPlannerFormulaStep({
         key: 'dry_wet_gate',
         expression:
           'evaluateDryWetGate(moistureIndex, wetPressure, lastRootWatered, potGeometry, weather)',
@@ -426,12 +463,14 @@ function buildWateringPlanner({
     amountRangeMl: amountSuggestion.amountRangeMl,
     stopCondition: amountSuggestion.stopCondition,
     confidenceLevel: hasDoseConflict ? 'low' : amountSuggestion.confidenceLevel,
+    soilCheck: buildSoilCheckGuidance(gate.gateState),
     // 下次浇水日期
     nextWaterDate: nextWater.nextWaterDate,
     nextWaterWindow: nextWater.nextWaterWindow,
     nextWaterReason: nextWater.nextWaterReason,
     // v3 蒸腾间隔修正（仅 BASELINE 间隔生效，不影响单次毫升数）
-    transpirationIntervalFactor: transpirationFactor
+    transpirationIntervalFactor: transpirationFactor,
+    seasonalIntervalFactor
   }
 
   return result

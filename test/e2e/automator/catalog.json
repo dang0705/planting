@@ -83,7 +83,7 @@
         "no-image-quick"
       ],
       "leaf_script": "test/e2e/automator/diagnosis/diagnose-yellowing-mcp.mjs",
-      "script_sha256": "7f11b0a4d48ef07e3ca07f305447ab38bb2d6a4ab8d7ae56749493eb6ae1de27",
+      "script_sha256": "13ffdbc7f5bd2a5ba4e90413b095dfda115ee1ee0927b83b22211e3da4c9cf89",
       "reusable_scenarios": [],
       "id_policy": {
         "sections": [
@@ -123,7 +123,7 @@
         "visual-mode-retake"
       ],
       "leaf_script": "test/e2e/automator/diagnosis/pest-mode-and-retake.mjs",
-      "script_sha256": "8464e0c698fb0356f63da0fcead1df63bd95667cc3282df0b9007da51e7ae522",
+      "script_sha256": "ff45271ae6482ef6634a08cf487bccec89342f40cb560e68680417c95ef0243e",
       "reusable_scenarios": [],
       "id_policy": {
         "sections": [
@@ -181,7 +181,7 @@
         "independent-advice"
       ],
       "leaf_script": "test/e2e/automator/care/watering/transpiration-v3/independent-advice.mjs",
-      "script_sha256": "bf0e16a3f01ba22d9aad1c95e22c1598a0f3c5609bdea32afd1de2d5d97bece8",
+      "script_sha256": "bac1ed13e2bce79c418e9c0693f161fe4d5320cdb07d3f5614c09c1566813c86",
       "reusable_scenarios": [
         "test/e2e/automator/care/watering/transpiration-v3/_shared/scenarios/independent-watering.mjs"
       ],
@@ -195,7 +195,8 @@
         "stable_ids": [
           "watering-advisor-search-input",
           "watering-advisor-next-button",
-          "pot-profile-editor-sheet",
+          "watering-advisor-pot-profile-substrate-general",
+          "watering-advisor-pot-profile-drainage-true",
           "watering-advisor-compute-button",
           "watering-advisor-result-amount"
         ],
@@ -213,7 +214,7 @@
         "reentry": true,
         "fixtures": [
           "at least one searchable advisor plant",
-          "PotCanvas touch automation capability"
+          "inline PotProfileFormCore defaults"
         ]
       }
     },
@@ -226,7 +227,7 @@
         "user-plant-planner"
       ],
       "leaf_script": "test/e2e/automator/care/watering/transpiration-v3/user-plant-planner.mjs",
-      "script_sha256": "128579cb54b5260bd99e5abde1dc892c99654a98be1788bac46fff420bab69f1",
+      "script_sha256": "87cdcdbbb4a19b35846da0d4e7df46b8f7122101de3b4a77578b2cac5ca6c57d",
       "reusable_scenarios": [
         "test/e2e/automator/care/watering/transpiration-v3/_shared/scenarios/my-plant-planner.mjs"
       ],
@@ -240,6 +241,7 @@
         "stable_ids": [
           "watering-reminder-last-watering-row",
           "watering-date-picker-sheet",
+          "watering-date-picker-confirm-button",
           "watering-reminder-close-button"
         ],
         "stable_id_prefixes": [
@@ -257,7 +259,8 @@
         "cache": "shadow/active snapshot signature must match when active mode is used",
         "reentry": true,
         "fixtures": [
-          "test account has at least one user plant with a watering reminder entry"
+          "test account has at least one user plant with a watering reminder entry",
+          "at least one candidate user plant has structured light-environment data that can produce a transpiration candidate"
         ]
       }
     },
@@ -270,7 +273,7 @@
         "bottle-text"
       ],
       "leaf_script": "test/e2e/automator/care/watering/reminder-dose/bottle-text.mjs",
-      "script_sha256": "9461e0b4bfdb607b5f05b985a48003f319726327b7e9a8c03c53b5a6d1b007fc",
+      "script_sha256": "35979139acfe26ecde205ee2c040f5b00a52924cd14b2c2a45622048905c45ab",
       "reusable_scenarios": [],
       "id_policy": {
         "sections": [
@@ -310,7 +313,7 @@
         "dose-dynamic"
       ],
       "leaf_script": "test/e2e/automator/care/watering/reminder-dose/dose-dynamic.mjs",
-      "script_sha256": "4876b0183c06bc66c2067f75608252789aee0b5ebd5c8af26977bd4f5c095845",
+      "script_sha256": "71afbd004efd9aec25c3be3c9015e92603f2a5456c00563bf4a20fa03d9b472a",
       "reusable_scenarios": [],
       "id_policy": {
         "sections": [
@@ -349,7 +352,7 @@
         "dose-label-layout"
       ],
       "leaf_script": "test/e2e/automator/care/watering/reminder-dose/dose-label-layout.mjs",
-      "script_sha256": "50dd7453e197cc7109b4d7179dd4564310233d29091423984ea06fa6ca55e4c5",
+      "script_sha256": "8bd5d4e1500afe44bf0e9a5007c26588928e51d4829f4a617e6c6272948e85a2",
       "reusable_scenarios": [],
       "id_policy": {
         "sections": [
@@ -388,7 +391,7 @@
         "unit-alignment-final"
       ],
       "leaf_script": "test/e2e/automator/care/watering/reminder-dose/unit-alignment-final.mjs",
-      "script_sha256": "cf1200f99fd1d3f111ef44479fbb66180dc9c516185c1e89f58a3fb3fb178070",
+      "script_sha256": "d635e7c0eb58e0e97985595bca368fc50cf53d1f237ea84d799d5d3416a48349",
       "reusable_scenarios": [],
       "id_policy": {
         "sections": [
@@ -426,7 +429,7 @@
         "unit-alignment-v4"
       ],
       "leaf_script": "test/e2e/automator/care/watering/reminder-dose/unit-alignment-v4.mjs",
-      "script_sha256": "742f8bc9793217900923e35ac1277fb2ce5ca3cfa863628ba2e59f725ef3a62d",
+      "script_sha256": "aae4b366fa7d40954c31d4c4b4991796af00663c9107082b44b1996586953138",
       "reusable_scenarios": [],
       "id_policy": {
         "sections": [
@@ -464,7 +467,7 @@
         "v1"
       ],
       "leaf_script": "test/e2e/automator/care/airflow/air-exchange-v1.mjs",
-      "script_sha256": "812e184798c2901fc0abbf43c10653b6ea6ad41f663100b44fb188f6f6ba165a",
+      "script_sha256": "3d2bbae9e8b0d5dc029956e880203524cbec668e9650e30166df2bf323d13b87",
       "reusable_scenarios": [
         "test/e2e/automator/care/airflow/_shared/run-air-exchange-v1.mjs"
       ],
@@ -484,34 +487,22 @@
         ],
         "stable_ids": [
           "airflow-assessment",
-          "airflow-swiper",
-          "airflow-exchange-assessment",
-          "airflow-exchange-step",
-          "airflow-exchange-source-window",
-          "airflow-exchange-source-fresh_air",
-          "airflow-exchange-source-unknown",
-          "airflow-exchange-window-direction-one",
-          "airflow-exchange-window-direction-two-or-more",
-          "airflow-exchange-window-direction-closed",
-          "airflow-exchange-window-frequency-daily",
-          "airflow-exchange-window-frequency-every-other-day",
-          "airflow-exchange-window-frequency-weekly-1-2",
-          "airflow-canopy-open",
-          "airflow-canopy-partial",
-          "airflow-canopy-enclosed",
-          "airflow-canopy-unknown",
-          "airflow-device-mode-none",
-          "airflow-device-mode-has-airflow",
-          "airflow-device-mode-circulating",
-          "airflow-device-mode-direct",
-          "airflow-device-mode-unknown",
-          "airflow-device-source-fan",
-          "airflow-device-source-air_conditioner",
-          "airflow-device-source-fresh_air",
-          "airflow-local-airflow-step",
-          "airflow-next-step",
-          "airflow-previous-step",
-          "airflow-step-complete-hint",
+          "airflow-single-page",
+          "airflow-single-exchange",
+          "airflow-single-exchange-window",
+          "airflow-single-window-direction-one",
+          "airflow-single-window-direction-two_or_more",
+          "airflow-single-window-frequency-picker",
+          "airflow-single-fresh-air-switch",
+          "airflow-single-canopy-open",
+          "airflow-single-canopy-partial",
+          "airflow-single-canopy-enclosed",
+          "airflow-single-canopy-unknown",
+          "airflow-single-device-mode-none",
+          "airflow-single-device-mode-has_airflow",
+          "airflow-single-device-mode-unknown",
+          "airflow-single-device-source-*-*",
+          "airflow-single-summary",
           "airflow-submit-button",
           "airflow-reset-button",
           "airflow-result-summary"
@@ -538,7 +529,7 @@
         "user-plant-watering"
       ],
       "leaf_script": "test/e2e/automator/care/airflow/air-environment-v2-user-plant-watering.mjs",
-      "script_sha256": "c796927c846d9cd3c6bf066d52789c5ba6bbda1bbad9b6ca45fa4b0f0a68e79f",
+      "script_sha256": "6329addc39e7e19657b48baa8977efc604ec0b47b49625db75c1371930b7422f",
       "reusable_scenarios": [],
       "id_policy": {
         "sections": [
@@ -605,7 +596,7 @@
         "scripts/dev/local-api-env-config.mjs",
         "test/e2e/automator/diagnosis/_shared/screenshot-worker.mjs"
       ],
-      "script_sha256": "4aef27736c9f452d16223147ae0f04c06bbbc542fd1f94e598f8a15643b141c4",
+      "script_sha256": "a662ba2df8afc55e6e716c2bfd88a51e47a5781df2a51a7d744c89ac4dc69c55",
       "reusable_scenarios": [],
       "id_policy": {
         "sections": [
@@ -627,6 +618,7 @@
           "diagnose-air-environment-{questionId}-next-step",
           "diagnose-air-environment-{questionId}-previous-step",
           "diagnose-air-environment-{questionId}-location-confirmation",
+          "diagnose-air-environment-{questionId}-device-source-*-*",
           "diagnose-question-package-restart-required-button",
           "layout-left-action",
           "diagnose-popup-close-button"

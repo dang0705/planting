@@ -28,7 +28,7 @@ assert.equal(
   true
 )
 
-// 3. 关闭窗户、fresh_air、unknown 均可单独完成
+// 3. 历史关闭窗户值、fresh_air、unknown 均可完成；新界面不再产生前两者之外的换气类别
 assert.equal(
   isAirExchangeAnswerReady({ source: 'window', windowDirectionCount: 'closed' }),
   true,
@@ -100,7 +100,7 @@ assert.deepEqual(
   }
 )
 
-// 8. 每周 1–2 次为 low（单方向 / 双方向均 low）
+// 8. 每周 1–2 次、几乎不开为 low（单方向 / 双方向均 low）
 assert.deepEqual(
   resolveAirExchangeEvidence({
     source: 'window',
@@ -122,6 +122,19 @@ assert.deepEqual(
     level: 'low'
   }
 )
+assert.deepEqual(
+  resolveAirExchangeEvidence({
+    source: 'window',
+    windowDirectionCount: 'two_or_more',
+    windowOpenFrequency: 'almost_never'
+  }),
+  {
+    source: 'window',
+    windowDirectionCount: 'two_or_more',
+    windowOpenFrequency: 'almost_never',
+    level: 'low'
+  }
+)
 
 // 9. fresh_air 为 medium；不得产生出风口或直吹字段；两个开窗字段为 null
 const freshAirResult = resolveAirExchangeEvidence({ source: 'fresh_air' })
@@ -135,7 +148,7 @@ assert.equal('draftRisk' in freshAirResult, false, 'must not include draftRisk')
 assert.equal('directDraft' in freshAirResult, false, 'must not include directDraft')
 assert.equal('outlet' in freshAirResult, false, 'must not include outlet field')
 
-// 10. 关闭窗户为 low，不需要开窗频率
+// 10. 历史关闭窗户值迁移为“一个方向 + 几乎不开”
 assert.deepEqual(
   resolveAirExchangeEvidence({
     source: 'window',
@@ -144,8 +157,8 @@ assert.deepEqual(
   }),
   {
     source: 'window',
-    windowDirectionCount: 'closed',
-    windowOpenFrequency: null,
+    windowDirectionCount: 'one',
+    windowOpenFrequency: 'almost_never',
     level: 'low'
   }
 )
@@ -170,19 +183,23 @@ assert.deepEqual(
   { source: 'fresh_air', windowDirectionCount: null, windowOpenFrequency: null, level: 'medium' }
 )
 
-// 14. source 列表固定为 3 项且 key 唯一
+// 14. 新换气来源选项只有窗户与新风；unknown 仅保留历史数据兼容
 const sourceKeys = AIR_EXCHANGE_SOURCES.map(item => item.key)
-assert.deepEqual(sourceKeys, ['window', 'fresh_air', 'unknown'])
-assert.equal(new Set(sourceKeys).size, 3)
+assert.deepEqual(sourceKeys, ['window', 'fresh_air'])
+assert.equal(new Set(sourceKeys).size, 2)
 
 // 15. 开窗方向 / 频率选项 key 固定（对齐 automation id policy 3.13）
 assert.deepEqual(
   WINDOW_DIRECTION_COUNT_OPTIONS.map(item => item.key),
-  ['one', 'two_or_more', 'closed']
+  ['one', 'two_or_more']
 )
 assert.deepEqual(
   WINDOW_OPEN_FREQUENCY_OPTIONS.map(item => item.key),
-  ['daily', 'every_other_day', 'weekly_1_2']
+  ['daily', 'every_other_day', 'weekly_1_2', 'almost_never']
+)
+assert.equal(
+  WINDOW_OPEN_FREQUENCY_OPTIONS.find(item => item.key === 'almost_never')?.label,
+  '几乎不开（可选新风系统）'
 )
 
 // 16. 输出对象不得出现 version / confidence / score / evidence / draft / outlet / fan / AC

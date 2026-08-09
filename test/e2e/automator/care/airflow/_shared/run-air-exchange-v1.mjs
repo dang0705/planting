@@ -9,8 +9,8 @@
  *
  * 验收范围：
  *   - reLaunch 到 /pages/airflow/index 容器页，断言完整空气环境组件加载
- *   - 选择窗户情况、新风系统和不确定分别触发完成，断言结果摘要文案
- *   - unknown 不得变成关闭窗户；fresh_air 不得产生出风口/直吹字段
+ *   - 选择几乎不开、开启新风和正常开窗分别触发完成，断言结果摘要文案
+ *   - 换气只保留一个动态图例槽位；几乎不开显式展示关窗图例
  *
  * 失败语义：
  *   - 预检失败 / 连接失败 -> BLOCKED_ENV，exit 2
@@ -121,25 +121,17 @@ async function assertStableIdsPresent(mp, page, report) {
 
   const componentScopedIds = [
     'airflow-assessment',
-    'airflow-swiper',
-    'airflow-exchange-assessment',
-    'airflow-exchange-source-window',
-    'airflow-exchange-source-fresh_air',
-    'airflow-exchange-source-unknown',
-    'airflow-exchange-step',
-    'airflow-next-step'
+    'airflow-single-page',
+    'airflow-single-exchange',
+    'airflow-single-exchange-window',
+    'airflow-single-canopy-open',
+    'airflow-single-device-mode-none',
+    'airflow-submit-button'
   ]
   for (const id of componentScopedIds) {
     const element = component ? await findViewById(component, id) : null
     recordAssertion(report, `stable-id-present:${id}`, Boolean(element))
   }
-  const legacyClosedCard = component
-    ? await findViewById(component, 'airflow-exchange-source-closed_or_none')
-    : null
-  recordAssertion(report, 'legacy-closed-source-card-removed', !legacyClosedCard)
-
-  const submitEl = component ? await findViewById(component, 'airflow-submit-button') : null
-  recordAssertion(report, 'stable-id-present:airflow-submit-button', Boolean(submitEl))
 }
 
 async function assertSourceFlow(mp, page, report, env) {
@@ -158,50 +150,37 @@ async function assertSourceFlow(mp, page, report, env) {
       submitDisabled === ''
   )
 
-  // 嵌套在 AirEnvironmentAssessment 组件内的 stable id 必须经组件作用域查询/点击；
-  // airflow-submit-button 随完成动作位于组件 footer；重置和结果摘要仍在页面层级。
-  // 2. 选择 unknown -> 完成 -> 结果摘要出现，文案为中性"已记录：不确定"（不得变成关闭窗户）
-  await tapElement(component, 'airflow-exchange-source-unknown', report)
-  await tapElement(component, 'airflow-next-step', report)
-  await delay(350)
-  await assertLocalAirflowIdsPresent(component, report)
-  await tapElement(component, 'airflow-previous-step', report)
-  await delay(350)
-  recordAssertion(
-    report,
-    'previous-step-returns-to-exchange',
-    Boolean(await findViewById(component, 'airflow-exchange-step'))
-  )
-  await tapElement(component, 'airflow-next-step', report)
-  await delay(350)
-  await tapElement(component, 'airflow-canopy-open', report)
-  await tapElement(component, 'airflow-device-mode-none', report)
+  // 单页原型内的 stable id 必须经 AirEnvironmentAssessment 组件作用域查询/点击；
+  // 完成后组件被结果摘要替换，重置按钮仍在页面层级。
+  // 2. 选择“几乎不开” -> 看到显式关窗图例 -> 完成
+  await tapElement(component, 'airflow-single-exchange-window', report)
+  await selectPicker(component, 'airflow-single-window-frequency-picker', 3, report)
+  const closedScene = await findViewById(component, 'airflow-single-exchange-window')
+  recordAssertion(report, 'almost-never-keeps-single-scene-slot', Boolean(closedScene))
+  await tapElement(component, 'airflow-single-canopy-open', report)
+  await tapElement(component, 'airflow-single-device-mode-none', report)
   await waitForEnabled(component, 'airflow-submit-button', report)
-  const unknownSummary = await submitAndReadSummary(page, component, report)
+  const almostNeverSummary = await submitAndReadSummary(page, component, report)
   recordAssertion(
     report,
-    'unknown-result-text',
-    Boolean(unknownSummary) &&
-      unknownSummary.includes('换气情况不确定') &&
-      unknownSummary.includes('没有设备风')
-  )
-  recordAssertion(
-    report,
-    'unknown-not-no-window',
-    !(unknownSummary && (unknownSummary.includes('偏少') || unknownSummary.includes('关闭窗户')))
+    'almost-never-result-text',
+    Boolean(almostNeverSummary) &&
+      almostNeverSummary.includes('平时几乎不开窗') &&
+      almostNeverSummary.includes('没有设备风')
   )
 
-  // 3. 重置后选择 fresh_air -> 完成 -> 中性"已记录：新风系统"，不含出风口/直吹
+  // 3. 重置后选择几乎不开并开启新风 -> 完成 -> 新风换气
   await tapElement(page, 'airflow-reset-button', report)
   await delay(200)
-  await tapElement(component, 'airflow-exchange-source-fresh_air', report)
-  await tapElement(component, 'airflow-next-step', report)
-  await tapElement(component, 'airflow-canopy-open', report)
-  await tapElement(component, 'airflow-device-mode-has-airflow', report)
-  await tapElement(component, 'airflow-device-mode-circulating', report)
-  await tapElement(component, 'airflow-device-source-fresh_air', report)
-  await waitForEnabled(component, 'airflow-submit-button', report)
-  const freshAirSummary = await submitAndReadSummary(page, component, report)
+  const freshAirComponent = await page.$('air-environment-assessment').catch(() => null)
+  await tapElement(freshAirComponent, 'airflow-single-exchange-window', report)
+  await selectPicker(freshAirComponent, 'airflow-single-window-frequency-picker', 3, report)
+  await tapElement(freshAirComponent, 'airflow-single-fresh-air-switch', report)
+  await tapElement(freshAirComponent, 'airflow-single-canopy-open', report)
+  await tapElement(freshAirComponent, 'airflow-single-device-mode-has_airflow', report)
+  await tapElement(freshAirComponent, 'airflow-single-device-source-fresh_air-circulating', report)
+  await waitForEnabled(freshAirComponent, 'airflow-submit-button', report)
+  const freshAirSummary = await submitAndReadSummary(page, freshAirComponent, report)
   recordAssertion(
     report,
     'fresh-air-result-text',
@@ -215,68 +194,48 @@ async function assertSourceFlow(mp, page, report, env) {
     !(freshAirSummary && (freshAirSummary.includes('出风口') || freshAirSummary.includes('直吹')))
   )
 
-  // 4. 重置后选择 window + 关闭窗户 -> 完成 -> 中性"已记录：窗户情况，关闭窗户"
+  // 4. 重置后选择 window + 几乎不开 -> 保持关窗语义，不再有 closed 方向按钮
   await tapElement(page, 'airflow-reset-button', report)
   await delay(200)
-  await tapElement(component, 'airflow-exchange-source-window', report)
+  const almostNeverComponent = await page.$('air-environment-assessment').catch(() => null)
+  await tapElement(almostNeverComponent, 'airflow-single-exchange-window', report)
   await delay(200)
-  await tapElement(component, 'airflow-exchange-window-direction-closed', report)
-  await tapElement(component, 'airflow-next-step', report)
-  await tapElement(component, 'airflow-canopy-open', report)
-  await tapElement(component, 'airflow-device-mode-none', report)
-  await waitForEnabled(component, 'airflow-submit-button', report)
-  const noWindowSummary = await submitAndReadSummary(page, component, report)
+  await selectPicker(almostNeverComponent, 'airflow-single-window-frequency-picker', 3, report)
+  await tapElement(almostNeverComponent, 'airflow-single-canopy-open', report)
+  await tapElement(almostNeverComponent, 'airflow-single-device-mode-none', report)
+  await waitForEnabled(almostNeverComponent, 'airflow-submit-button', report)
+  const noWindowSummary = await submitAndReadSummary(page, almostNeverComponent, report)
   recordAssertion(
     report,
     'window-none-recorded',
-    Boolean(noWindowSummary) &&
-      noWindowSummary.includes('开窗换气') &&
-      noWindowSummary.includes('没有设备风')
+    Boolean(noWindowSummary) && noWindowSummary.includes('平时几乎不开窗')
   )
 
   // 5. 重置后选择 window + 双方向 + 每天 -> 完成 -> 中性"已记录：窗户情况，两个及以上方向，每天"
   await tapElement(page, 'airflow-reset-button', report)
   await delay(200)
-  await tapElement(component, 'airflow-exchange-source-window', report)
+  const windowComponent = await page.$('air-environment-assessment').catch(() => null)
+  await tapElement(windowComponent, 'airflow-single-exchange-window', report)
   await delay(200)
-  await tapElement(component, 'airflow-exchange-window-direction-two-or-more', report)
-  await tapElement(component, 'airflow-exchange-window-frequency-daily', report)
-  await tapElement(component, 'airflow-next-step', report)
-  await tapElement(component, 'airflow-canopy-open', report)
-  await tapElement(component, 'airflow-device-mode-has-airflow', report)
-  await tapElement(component, 'airflow-device-mode-direct', report)
-  await tapElement(component, 'airflow-device-source-fan', report)
-  // 两个连续的组件事件会经过 Vue/小程序桥异步合并；等待完成按钮
+  await tapElement(windowComponent, 'airflow-single-window-direction-two_or_more', report)
+  await selectPicker(windowComponent, 'airflow-single-window-frequency-picker', 0, report)
+  await tapElement(windowComponent, 'airflow-single-canopy-open', report)
+  await tapElement(windowComponent, 'airflow-single-device-mode-has_airflow', report)
+  await tapElement(windowComponent, 'airflow-single-device-source-fan-direct', report)
+  // 连续的组件事件会经过 Vue/小程序桥异步合并；等待完成按钮
   // 实际解除禁用后再点击，避免依赖脆弱的固定 sleep。
   await delay(500)
-  await waitForEnabled(component, 'airflow-submit-button', report)
-  const windowSummary = await submitAndReadSummary(page, component, report)
+  await waitForEnabled(windowComponent, 'airflow-submit-button', report)
+  const windowSummary = await submitAndReadSummary(page, windowComponent, report)
   recordAssertion(
     report,
     'window-double-daily-recorded',
     Boolean(windowSummary) && windowSummary.includes('开窗换气') && windowSummary.includes('有直吹')
   )
 
-  return captureScreenshot(mp, report, env, 'airflow-window-recorded')
-}
-
-async function assertLocalAirflowIdsPresent(component, report) {
-  const localIds = [
-    'airflow-local-airflow-step',
-    'airflow-canopy-open',
-    'airflow-canopy-partial',
-    'airflow-canopy-enclosed',
-    'airflow-canopy-unknown',
-    'airflow-device-mode-none',
-    'airflow-device-mode-has-airflow',
-    'airflow-device-mode-unknown',
-    'airflow-previous-step',
-    'airflow-submit-button'
-  ]
-  for (const id of localIds) {
-    const element = component ? await findViewById(component, id) : null
-    recordAssertion(report, `stable-id-present:${id}`, Boolean(element))
-  }
+  // 截图统一由外层在最终状态落地后执行一次；这里返回主会话，避免
+  // 同一最终状态连续换手两次，放大 DevTools renderer 偶发卡死概率。
+  return mp
 }
 
 async function waitForEnabled(scope, id, report, timeoutMs = 3000) {
@@ -331,6 +290,24 @@ async function tapElement(scope, selector, report) {
   }
 }
 
+async function selectPicker(scope, selector, index, report) {
+  try {
+    if (!scope) {
+      recordAssertion(report, `picker:${selector}:${index}`, false, 'scope not available')
+      return
+    }
+    const el = await findViewById(scope, selector)
+    if (!el) {
+      recordAssertion(report, `picker:${selector}:${index}`, false, 'element not found')
+      return
+    }
+    await el.trigger('change', { value: index })
+    await delay(100)
+  } catch (error) {
+    recordAssertion(report, `picker:${selector}:${index}`, false, String(error?.message || error))
+  }
+}
+
 async function readElementText(page, selector) {
   try {
     const el = await findViewById(page, selector)
@@ -365,16 +342,21 @@ async function captureScreenshot(mp, report, env, name) {
       mp,
       automator,
       wsEndpoint: env.wsEndpoint,
-      outputPath: filepath
+      outputPath: filepath,
+      projectPath: env.projectPath,
+      expectedRoute: AIRFLOW_PAGE.slice(1)
     })
     recordScreenshot(report, filepath)
     return resumed.mp
   } catch (error) {
     // 截图超时/transport 失败终态化为 BLOCKED_ENV，不静默吞掉，不误判为产品断言失败
+    report.screenshot_diagnostic = error?.screenshot || null
+    const screenshotReason =
+      error?.screenshot?.worker_result?.error || error?.screenshot?.reason || error?.message
     setClassification(
       report,
       'BLOCKED_ENV',
-      `screenshot failed: ${String(error?.message || error)}`
+      `screenshot failed: ${String(screenshotReason || error)}`
     )
     console.error(`[e2e][BLOCKED_ENV] screenshot failed: ${String(error?.message || error)}`)
     // 抛出使顶层跳过 PASS/FAIL_PRODUCT 判定；顶层 catch 已配置为不覆盖既有 BLOCKED_ENV。

@@ -153,7 +153,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useDefaultPlants } from '@/composables/useDefaultPlants.js'
 import PlantSelectCard from './PlantSelectCard.vue'
 
@@ -174,6 +174,10 @@ const myPlantsCollapseName = ref('')
 let searchTimer = null
 
 const { plants, initialLoading, loadingMore, hasMore, load, loadNextPage } = useDefaultPlants()
+
+onMounted(() => {
+  load('')
+})
 
 defineExpose({
   loadPlants: keyword => load(keyword),

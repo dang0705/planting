@@ -18,7 +18,7 @@ import {
 import { classifyQaFailure, runQaPreflight } from './qa-preflight.mjs'
 import { extractLeafReport, leafReportEvidence } from './qa-leaf-report.mjs'
 import { runFormalQaExecution, runFormalQaPreflight } from './formal-isolated-qa-execution.mjs'
-import { cleanupFormalQaSession, createFormalQaSession } from './formal-isolated-qa-session.mjs'
+import { cleanupTestOwnedQaSession, createTestOwnedQaSession } from './test-owned-qa-session.mjs'
 import { isProcessAlive } from './process-liveness.mjs'
 import { findHandoff, readJson, repoRoot, stateDir, writeJsonAtomic } from './state.mjs'
 
@@ -126,12 +126,13 @@ function terminalRecord(file, record, status, extra = {}) {
   return next
 }
 
-export function persistLeafReportEvidence(recordFile, lifecycle) {
+export function persistLeafReportEvidence(recordFile, lifecycle, attempt = 1) {
   const leafReport = extractLeafReport({ stdout: lifecycle.stdout, stderr: lifecycle.stderr })
   if (!leafReport.raw_report) {
     return leafReportEvidence(leafReport, 'unavailable')
   }
-  const evidenceFile = recordFile.replace(/\.json$/, '.leaf-report.json')
+  const suffix = attempt > 1 ? `.attempt-${attempt}` : ''
+  const evidenceFile = recordFile.replace(/\.json$/, `${suffix}.leaf-report.json`)
   writeJsonAtomic(evidenceFile, {
     gate: 'qa_leaf_report',
     captured_at: new Date().toISOString(),
@@ -171,7 +172,7 @@ function prepareQaGate({
     gate.errors.push('--execution-timeout-ms must be 1000-900000 milliseconds')
   }
   if (argValue('ws-port')) {
-    gate.errors.push('formal QA reuses the current user-owned 9420 port; --ws-port is forbidden')
+    gate.errors.push('formal QA 每次自动分配唯一 Automator 端口；--ws-port 不可指定')
   }
   return {
     catalogId,
@@ -190,8 +191,8 @@ export function createQaRunCommands({
   emit,
   preflightRunner = runQaPreflight,
   leafRunner = runLeafWithWatchdog,
-  runtimeFactory = createFormalQaSession,
-  runtimeCleanup = cleanupFormalQaSession,
+  runtimeFactory = createTestOwnedQaSession,
+  runtimeCleanup = cleanupTestOwnedQaSession,
   catalogReader,
   catalogValidator,
   bundleFingerprint

@@ -199,7 +199,7 @@ function buildCareGuidance({
     environmentDeviationHints.push(
       `当前线索更像光照偏弱或近期光位变暗，可对照属级基线“${careBaselineSummary.light}”回看最近是否移到了更阴的位置或长期缺少明亮散射光。`
     )
-    nextSteps.push('先回看最近 1-2 周的摆放位置，确认是否长期处在更阴、更远离窗边的位置。')
+    nextSteps.push('先回看最近 1-2 周的光照和离窗距离，确认是否长期处在更阴、更远离窗边的位置。')
     whatToAvoid.push('不要在没确认方向前同时猛补肥和频繁加大浇水。')
   }
 

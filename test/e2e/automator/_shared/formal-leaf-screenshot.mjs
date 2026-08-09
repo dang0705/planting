@@ -5,10 +5,14 @@ import { fileURLToPath } from 'node:url'
 
 const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
 // DevTools renderer 在页面路由切换、动画落地和截图 RPC 之间可能需要
-// 数秒；统一使用有界 60s 窗口，避免各叶子自行猜测不同的超时值。
-const DEFAULT_SCREENSHOT_TIMEOUT_MS = 60_000
+// 数秒；统一使用有界 15s 窗口，避免卡死的 renderer 让一次 QA 等待数分钟。
+const DEFAULT_SCREENSHOT_TIMEOUT_MS = 15_000
 const DEFAULT_TERMINATE_GRACE_MS = 1_000
 const DEFAULT_KILL_GRACE_MS = 1_000
+const DEFAULT_SCREENSHOT_ATTEMPTS = 2
+const DEFAULT_SCREENSHOT_RETRY_DELAY_MS = 350
+const DEFAULT_SCREENSHOT_COOLDOWN_MS = 750
+const DEFAULT_PROJECT_PATH = path.resolve(process.cwd(), 'dist/dev/mp-weixin')
 const DEFAULT_SCREENSHOT_WORKER_PATH = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
   '../diagnosis/_shared/screenshot-worker.mjs'
@@ -46,6 +50,22 @@ function parseWorkerResult(stdout) {
   return null
 }
 
+function parseWorkerEvents(stdout) {
+  return String(stdout || '')
+    .trim()
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+    .flatMap(line => {
+      try {
+        const value = JSON.parse(line)
+        return value?.type === 'screenshot_worker_event' ? [value] : []
+      } catch {
+        return []
+      }
+    })
+}
+
 function childEvidence({ child, stdout, stderr, signals, exited, exitCode, exitSignal }) {
   return {
     child_pid: child?.pid ?? 'unavailable',
@@ -58,11 +78,13 @@ function childEvidence({ child, stdout, stderr, signals, exited, exitCode, exitS
   }
 }
 
-export function captureFormalScreenshot({
+function captureFormalScreenshotAttempt({
   wsEndpoint,
   outputPath,
   workerPath = DEFAULT_SCREENSHOT_WORKER_PATH,
   timeoutMs = DEFAULT_SCREENSHOT_TIMEOUT_MS,
+  projectPath = process.env.MP_PROJECT_PATH || DEFAULT_PROJECT_PATH,
+  expectedRoute = '',
   terminateGraceMs = DEFAULT_TERMINATE_GRACE_MS,
   killGraceMs = DEFAULT_KILL_GRACE_MS,
   spawnProcess = spawn,
@@ -136,7 +158,7 @@ export function captureFormalScreenshot({
     try {
       child = spawnProcess(
         process.execPath,
-        [workerPath, wsEndpoint, outputPath, String(timeoutMs)],
+        [workerPath, wsEndpoint, outputPath, String(timeoutMs), projectPath, expectedRoute],
         { stdio: ['ignore', 'pipe', 'pipe'] }
       )
     } catch (error) {
@@ -182,11 +204,14 @@ export function captureFormalScreenshot({
         return
       }
       if (code === 0 && validPng(outputPath, fsModule)) {
+        const workerResult = parseWorkerResult(stdout)
         finish({
           status: 'passed',
           validPng: true,
           worker_exit_code: code,
           output_path: outputPath,
+          worker_result: workerResult,
+          worker_events: parseWorkerEvents(stdout),
           cleanup: childEvidence({ child, stdout, stderr, signals, exited, exitCode, exitSignal })
         })
         return
@@ -195,16 +220,53 @@ export function captureFormalScreenshot({
       const workerStatus = String(workerResult?.status || '').trim()
       finish({
         status: 'failed_environment',
-        code:
-          workerStatus === 'timeout' ? 'screenshot_worker_timeout' : 'screenshot_worker_failed',
+        code: workerStatus === 'timeout' ? 'screenshot_worker_timeout' : 'screenshot_worker_failed',
         reason:
           String(workerResult?.error || '').trim() ||
           `screenshot worker exited code=${code ?? 'unknown'} signal=${signal ?? 'none'}`,
         ws_endpoint: wsEndpoint,
         output_path: outputPath,
         worker_result: workerResult,
+        worker_events: parseWorkerEvents(stdout),
         cleanup: childEvidence({ child, stdout, stderr, signals, exited, exitCode, exitSignal })
       })
     })
   })
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+export async function captureFormalScreenshot({
+  maxAttempts = DEFAULT_SCREENSHOT_ATTEMPTS,
+  retryDelayMs = DEFAULT_SCREENSHOT_RETRY_DELAY_MS,
+  postCaptureDelayMs = DEFAULT_SCREENSHOT_COOLDOWN_MS,
+  ...options
+} = {}) {
+  const attempts = []
+  const boundedAttempts = Math.max(1, Number(maxAttempts) || DEFAULT_SCREENSHOT_ATTEMPTS)
+  let lastResult = null
+  for (let attempt = 1; attempt <= boundedAttempts; attempt += 1) {
+    lastResult = await captureFormalScreenshotAttempt(options)
+    const attemptEvidence = {
+      attempt,
+      status: lastResult.status,
+      code: lastResult.code || null,
+      reason: lastResult.reason || lastResult.worker_result?.error || null,
+      phase: lastResult.worker_result?.phase || null,
+      worker_pid: lastResult.cleanup?.child_pid || null
+    }
+    attempts.push(attemptEvidence)
+    if (lastResult.status === 'passed' && lastResult.validPng === true) {
+      if (postCaptureDelayMs > 0) {
+        await sleep(postCaptureDelayMs)
+      }
+      return { ...lastResult, attempts, successful_attempt: attempt }
+    }
+    if (attempt < boundedAttempts) {
+      await sleep(retryDelayMs)
+    }
+  }
+  return { ...(lastResult || { status: 'failed_environment' }), attempts }
 }

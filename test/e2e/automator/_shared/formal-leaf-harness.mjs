@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto'
 export { captureFormalScreenshot } from './formal-leaf-screenshot.mjs'
 import { captureFormalScreenshot } from './formal-leaf-screenshot.mjs'
+import { screenshotStabilityBudget, waitForScreenshotStability } from './screenshot-stability.mjs'
 
-export const FORMAL_AUTOMATOR_PORT = 9420
 export const FORMAL_LEAF_TIMEOUT_MS = 12_000
 const liveSessions = new WeakMap()
 
@@ -107,16 +107,21 @@ export function formalAutomatorEndpoint(env = process.env) {
   try {
     parsed = new URL(endpoint)
   } catch {
-    const error = new Error('formal catalog leaves require the existing 9420 endpoint')
+    const error = new Error(
+      'formal catalog leaves require a supervisor-provided Automator endpoint'
+    )
     error.code = 'formal_automator_endpoint_unverified'
     throw error
   }
   if (
     parsed.protocol !== 'ws:' ||
     parsed.hostname !== '127.0.0.1' ||
-    Number(parsed.port) !== FORMAL_AUTOMATOR_PORT
+    !Number.isInteger(Number(parsed.port)) ||
+    Number(parsed.port) <= 0
   ) {
-    const error = new Error('formal catalog leaves require the existing 9420 endpoint')
+    const error = new Error(
+      'formal catalog leaves require a supervisor-provided Automator endpoint'
+    )
     error.code = 'formal_automator_endpoint_unverified'
     throw error
   }
@@ -215,17 +220,45 @@ export async function handoffFormalLeafScreenshot({
   outputPath,
   workerPath,
   timeoutMs,
+  projectPath,
+  expectedRoute = '',
+  maxAttempts = 2,
+  retryDelayMs = 350,
   deadline = withDeadline
 } = {}) {
   const verifiedEndpoint = formalAutomatorEndpoint({
     MINIPROGRAM_AUTOMATOR_WS: wsEndpoint ?? process.env.MINIPROGRAM_AUTOMATOR_WS
   })
+  let preCaptureStability = { status: 'skipped', reason: 'primary_page_probe_unavailable' }
+  if (typeof mp?.currentPage === 'function') {
+    try {
+      preCaptureStability = await waitForScreenshotStability({
+        miniProgram: mp,
+        projectPath,
+        expectedRoute,
+        timeoutMs: screenshotStabilityBudget(Number(timeoutMs) || 10_000)
+      })
+    } catch (error) {
+      // The worker is the authoritative screenshot owner. A primary-session
+      // probe may fail during a reload; record it and let the fresh worker
+      // perform its own bounded stability gate instead of blocking recovery.
+      preCaptureStability = {
+        status: 'failed',
+        code: error?.code || 'screenshot_stability_failed',
+        reason: String(error?.message || error)
+      }
+    }
+  }
   await disconnectFormalLeaf({ mp, timeoutMs, deadline })
   const screenshot = await captureFormalScreenshot({
     wsEndpoint: verifiedEndpoint,
     outputPath,
     workerPath,
-    timeoutMs
+    timeoutMs,
+    projectPath,
+    expectedRoute,
+    maxAttempts,
+    retryDelayMs
   })
   if (screenshot.status !== 'passed') {
     const error = new Error(screenshot.code || 'formal screenshot worker failed')
@@ -245,7 +278,7 @@ export async function handoffFormalLeafScreenshot({
   // pre-screenshot transport. Return the fresh session for opaque wrappers;
   // retain the original facade only when this harness owns its state.
   const resumed = liveSessions.has(mp) ? resumeSession(mp, reconnected.mp) : reconnected.mp
-  return { ...screenshot, mp: resumed }
+  return { ...screenshot, pre_capture_stability: preCaptureStability, mp: resumed }
 }
 
 export function formalLeafReport({

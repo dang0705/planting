@@ -78,9 +78,14 @@ assert.equal(
     findElementById,
     controls: [
       [
-        'diagnose-air-environment-q_wilting_droop__air_environment-exchange-source-fresh_air',
-        'fresh'
+        'diagnose-air-environment-q_wilting_droop__air_environment-exchange-source-window',
+        'window'
       ],
+      [
+        'diagnose-air-environment-q_wilting_droop__air_environment-window-frequency-almost-never',
+        'almost-never'
+      ],
+      ['diagnose-air-environment-q_wilting_droop__air_environment-fresh-air-switch', 'fresh-air'],
       [
         'diagnose-air-environment-q_wilting_droop__air_environment-next-step',
         'open local-airflow step'
@@ -90,10 +95,9 @@ assert.equal(
         'diagnose-air-environment-q_wilting_droop__air_environment-device-mode-has-airflow',
         'device-airflow'
       ],
-      ['diagnose-air-environment-q_wilting_droop__air_environment-device-mode-direct', 'direct'],
       [
-        'diagnose-air-environment-q_wilting_droop__air_environment-device-source-fresh_air',
-        'fresh-air'
+        'diagnose-air-environment-q_wilting_droop__air_environment-device-source-fresh_air-direct',
+        'mark fresh-air airflow as direct'
       ],
       ['diagnose-question-package-page-next-button', 'advance air question']
     ]

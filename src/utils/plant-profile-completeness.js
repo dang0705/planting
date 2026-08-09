@@ -1,20 +1,21 @@
 import { hasMeaningfulLightEnvironment } from './light-environment.js'
+import { isAirEnvironmentAnswerReady } from './air-environment.js'
 import { normalizePlantCareLocation } from './plant-care-location.js'
 
-// 完整度权重：养护类资料共 90%，基础身份资料保留 10%。
+// 完整度只奖励当前算法真正会使用的资料；总分保持 100。
 const WEIGHTS = Object.freeze({
   identity: 10,
-  careCity: 60,
-  placementLocation: 15,
-  plantDate: 10,
-  lightEnvironment: 5
+  careCity: 45,
+  plantDate: 5,
+  lightEnvironment: 10,
+  airEnvironment: 15,
+  potProfile: 15
 })
 
 function normalizeText(value = '') {
   return String(value || '').trim()
 }
 
-// 身份/显示名：植物种类已选或自定义名称已填
 function resolveIdentityName(plant = {}) {
   return normalizeText(
     plant?.displayName ||
@@ -27,23 +28,34 @@ function resolveIdentityName(plant = {}) {
   )
 }
 
-function resolvePlacementLocation(plant = {}) {
-  return normalizeText(plant?.location || plant?.placement || plant?.placementLocation)
+function resolvePlantDate(plant = {}) {
+  // createdAt 是记录创建时间，不代表用户实际入手或种植时间。
+  return normalizeText(plant?.plantDate || plant?.plantingDate || plant?.acquiredAt)
 }
 
-function resolvePlantDate(plant = {}) {
-  return normalizeText(
-    plant?.plantDate || plant?.plantingDate || plant?.acquiredAt || plant?.createdAt
-  )
+function hasMeaningfulAirEnvironment(value) {
+  const input = value?.input || value
+  return Boolean(input && isAirEnvironmentAnswerReady(input))
+}
+
+function hasMeaningfulPotProfile(profile) {
+  if (!profile || typeof profile !== 'object') {
+    return false
+  }
+  const top = Number(profile.potTopDiameterCm)
+  const height = Number(profile.potHeightCm)
+  const substrate = normalizeText(profile.substrateType)
+  const hasDrainage = ['true', 'false'].includes(normalizeText(profile.hasDrainageHole))
+  return top > 0 && height > 0 && Boolean(substrate) && substrate !== 'unknown' && hasDrainage
 }
 
 export function getPlantProfileCompletenessDetail(plant = {}) {
   const identityName = resolveIdentityName(plant)
   const careLocation = normalizePlantCareLocation(plant?.careLocation)
-  const placementLocation = resolvePlacementLocation(plant)
   const plantDate = resolvePlantDate(plant)
-  const lightEnvironment = plant?.lightEnvironment
-  const hasLight = hasMeaningfulLightEnvironment(lightEnvironment)
+  const hasLight = hasMeaningfulLightEnvironment(plant?.lightEnvironment)
+  const hasAir = hasMeaningfulAirEnvironment(plant?.airEnvironment)
+  const hasPotProfile = hasMeaningfulPotProfile(plant?.potProfile)
 
   const items = {
     identity: {
@@ -59,17 +71,11 @@ export function getPlantProfileCompletenessDetail(plant = {}) {
       required: true,
       label: '养护城市'
     },
-    placementLocation: {
-      earned: placementLocation ? WEIGHTS.placementLocation : 0,
-      max: WEIGHTS.placementLocation,
-      satisfied: Boolean(placementLocation),
-      label: '摆放位置'
-    },
     plantDate: {
       earned: plantDate ? WEIGHTS.plantDate : 0,
       max: WEIGHTS.plantDate,
       satisfied: Boolean(plantDate),
-      label: '种植日期'
+      label: '入手或种植时间'
     },
     lightEnvironment: {
       earned: hasLight ? WEIGHTS.lightEnvironment : 0,
@@ -77,6 +83,20 @@ export function getPlantProfileCompletenessDetail(plant = {}) {
       satisfied: hasLight,
       optional: true,
       label: '光照环境'
+    },
+    airEnvironment: {
+      earned: hasAir ? WEIGHTS.airEnvironment : 0,
+      max: WEIGHTS.airEnvironment,
+      satisfied: hasAir,
+      optional: true,
+      label: '空气环境'
+    },
+    potProfile: {
+      earned: hasPotProfile ? WEIGHTS.potProfile : 0,
+      max: WEIGHTS.potProfile,
+      satisfied: hasPotProfile,
+      optional: true,
+      label: '花盆与盆土'
     }
   }
 

@@ -35,6 +35,7 @@ import {
 } from '../watering/transpiration-v3/_shared/lib/element-helpers.mjs'
 import {
   createReport,
+  emitLeafReport,
   recordPage,
   recordAssertion,
   recordScreenshot,
@@ -45,6 +46,8 @@ import {
 import { preflightProject } from './_shared/lib/project-check.mjs'
 
 const WATERING_PAGE = '/pages/watering-advisor/watering-advisor'
+const ALMOST_NEVER_PICKER_INDEX = 3
+const PICKER_SETTLE_DELAY_MS = 100
 const SCENARIOS = new Set(['saved-prefill', 'failure-fallback', 'switch-draft'])
 
 function getScenario(argv = process.argv.slice(2)) {
@@ -99,6 +102,23 @@ async function tap(element, report, assertion) {
   }
 }
 
+async function selectPicker(page, id, index, report, assertion) {
+  const picker = await findById(page, id)
+  if (!picker) {
+    recordAssertion(report, assertion, false, 'element not found')
+    return false
+  }
+  try {
+    await picker.trigger('change', { value: index })
+    await sleep(PICKER_SETTLE_DELAY_MS)
+    recordAssertion(report, assertion, true)
+    return true
+  } catch (error) {
+    recordAssertion(report, assertion, false, String(error?.message || error))
+    return false
+  }
+}
+
 async function capture(mp, report, env, name) {
   try {
     const file = path.resolve(env.artifactDir, `${name}-${timestampForFilename()}.png`)
@@ -127,16 +147,30 @@ async function enterFirstUserPlantAirStep(page, report) {
   }
   const firstPlant = await findByIdPrefix(page, 'watering-advisor-my-plant-card-')
   recordAssertion(report, 'fixture has at least one user plant', Boolean(firstPlant))
-  if (!firstPlant || !(await tap(firstPlant.element, report, 'select first user plant'))) {
+  if (!firstPlant) {
+    setClassification(
+      report,
+      'BLOCKED_FIXTURE',
+      '运行时未找到任何用户植物入口；禁止直接判定 fixture 缺失，必须先完整重跑 npm run dev:mp-weixin:local-functions:lan 并重新执行该叶子场景'
+    )
     return null
   }
+  if (!(await tap(firstPlant.element, report, 'select first user plant'))) {
+    return null
+  }
+  // 选择我的植物后，页面会异步读取空气环境资料；端上实测该请求在本地
+  // LAN flow 下可能需要数秒。先让读取完成，再点击下一步，避免把合法的
+  // “资料尚未回填”误判成 saved-prefill fixture 缺失。
+  await sleep(8000)
   const next = await findById(page, 'watering-advisor-next-button')
   if (!(await tap(next, report, 'enter air-environment step'))) {
     return null
   }
-  const summary = await findById(page, 'watering-advisor-air-environment-summary', 2500)
-  const assessment = await findById(page, 'watering-advisor-air-environment-assessment', 2500)
-  const loadError = await findById(page, 'watering-advisor-air-environment-load-error', 2500)
+  // 选择植物后，空气资料 GET 与页面步进是异步的；本地 LAN 端上实测可能在
+  // 首次 next 后约 5 秒才完成首屏渲染，2.5 秒会把“尚未加载完”误判为 fixture 缺失。
+  const summary = await findById(page, 'watering-advisor-air-environment-summary', 8000)
+  const assessment = await findById(page, 'watering-advisor-air-environment-assessment', 8000)
+  const loadError = await findById(page, 'watering-advisor-air-environment-load-error', 8000)
   recordAssertion(
     report,
     'air-environment step is actually rendered after next',
@@ -146,24 +180,44 @@ async function enterFirstUserPlantAirStep(page, report) {
 }
 
 async function completeFallbackAirEnvironment(page, report) {
-  const source = await findById(page, 'watering-advisor-air-environment-exchange-source-fresh_air')
-  if (!(await tap(source, report, 'fallback selects fresh-air exchange'))) {
+  const source = await findById(page, 'watering-advisor-air-environment-single-exchange-window')
+  if (!(await tap(source, report, 'fallback selects window exchange'))) {
     return false
   }
-  const internalNext = await findById(page, 'watering-advisor-air-environment-next-step')
-  if (!(await tap(internalNext, report, 'fallback opens local-airflow step'))) {
-    return false
-  }
-  const canopy = await findById(page, 'watering-advisor-air-environment-canopy-open')
-  const device = await findById(page, 'watering-advisor-air-environment-device-mode-none')
   if (
-    !(await tap(canopy, report, 'fallback selects open canopy')) ||
-    !(await tap(device, report, 'fallback selects no device airflow'))
+    !(await selectPicker(
+      page,
+      'watering-advisor-air-environment-single-window-frequency-picker',
+      ALMOST_NEVER_PICKER_INDEX,
+      report,
+      'fallback selects almost-never window frequency'
+    ))
   ) {
+    return false
+  }
+  const freshAirSwitch = await findById(
+    page,
+    'watering-advisor-air-environment-single-fresh-air-switch'
+  )
+  if (!(await tap(freshAirSwitch, report, 'fallback enables fresh-air exchange'))) {
+    return false
+  }
+  const canopy = await findById(page, 'watering-advisor-air-environment-single-canopy-open')
+  if (!(await tap(canopy, report, 'fallback selects open canopy'))) {
     return false
   }
   const next = await findById(page, 'watering-advisor-air-environment-next')
   return tap(next, report, 'fallback continues to pot profile without profile GET')
+}
+
+async function selectFallbackWindowFrequency(page, report) {
+  return selectPicker(
+    page,
+    'watering-advisor-air-environment-single-window-frequency-picker',
+    ALMOST_NEVER_PICKER_INDEX,
+    report,
+    'edit almost-never window frequency'
+  )
 }
 
 async function runSavedPrefill(page, report) {
@@ -236,8 +290,14 @@ async function runSwitchDraft(page, report) {
   if (edit) {
     await tap(edit, report, 'open first plant editor')
   }
-  const source = await findById(page, 'watering-advisor-air-environment-exchange-source-fresh_air')
-  await tap(source, report, 'edit first plant draft')
+  const source = await findById(page, 'watering-advisor-air-environment-single-exchange-window')
+  await tap(source, report, 'edit first plant exchange draft')
+  await selectFallbackWindowFrequency(page, report)
+  const freshAirSwitch = await findById(
+    page,
+    'watering-advisor-air-environment-single-fresh-air-switch'
+  )
+  await tap(freshAirSwitch, report, 'edit fresh-air exchange draft')
   const back = await findById(page, 'watering-advisor-air-environment-back')
   if (!(await tap(back, report, 'return to user plant selection'))) {
     return
@@ -280,6 +340,7 @@ export async function runAirEnvironmentV2UserPlantWatering() {
     )
     console.log(`[e2e] classification: ${report.classification}`)
     console.log(`[e2e] report: ${reportPath}`)
+    emitLeafReport(report)
     process.exitCode = 2
     return
   }
@@ -324,6 +385,7 @@ export async function runAirEnvironmentV2UserPlantWatering() {
     )
     console.log(`[e2e] classification: ${report.classification}`)
     console.log(`[e2e] report: ${reportPath}`)
+    emitLeafReport(report)
   }
   process.exitCode =
     report.classification === 'PASS'

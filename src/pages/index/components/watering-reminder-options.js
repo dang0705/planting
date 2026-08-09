@@ -118,8 +118,13 @@ export function buildPlannerSummaryRows({
   }
   if (plannerResult?.confidenceLevel) {
     rows.push({
-      label: '置信度',
-      value: { low: '低', normal: '中', high: '高' }[plannerResult.confidenceLevel] || '低',
+      label: '建议依据',
+      value:
+        {
+          low: '信息较少，建议结合盆土确认',
+          normal: '信息较充分，仍建议结合盆土确认',
+          high: '信息较充分，仍建议结合盆土确认'
+        }[plannerResult.confidenceLevel] || '建议结合盆土确认',
       valueClass: 'text-xs text-gray-600'
     })
   }
@@ -251,7 +256,8 @@ export function buildWateringPlannerRequestPayload({
   forecastDays,
   potProfile = null,
   locationKey = '',
-  timezone = 'Asia/Shanghai'
+  timezone = 'Asia/Shanghai',
+  airEnvironmentOverride = null
 }) {
   const payload = {
     plantId,
@@ -267,6 +273,9 @@ export function buildWateringPlannerRequestPayload({
   if (potProfile) {
     payload.potProfile = potProfile
   }
+  if (airEnvironmentOverride) {
+    payload.airEnvironmentOverride = airEnvironmentOverride
+  }
   return payload
 }
 
@@ -277,7 +286,8 @@ export async function fetchWateringPlannerResult({
   forecastDays,
   potProfile = null,
   locationKey = '',
-  timezone = 'Asia/Shanghai'
+  timezone = 'Asia/Shanghai',
+  airEnvironmentOverride = null
 }) {
   const response = await requestHttpFunction('plant-user-http/user-plants/watering-planner', {
     method: 'POST',
@@ -288,7 +298,8 @@ export async function fetchWateringPlannerResult({
       forecastDays,
       potProfile,
       locationKey,
-      timezone
+      timezone,
+      airEnvironmentOverride
     })
   })
   return response?.code === 200 ? normalizePlannerResultDate(response.data) : null
@@ -422,6 +433,21 @@ export async function saveAdvisorSession({
     }
   })
   return response?.code === 200 ? response.data : null
+}
+
+export async function confirmAdvisorSessionWatered({ catalogPlantId, wateredDate }) {
+  const response = await requestHttpFunction('plant-user-http/user-plants/watering-advisor', {
+    method: 'POST',
+    body: {
+      action: 'confirm_watered',
+      catalogPlantId,
+      wateredDate
+    }
+  })
+  if (response?.code !== 200) {
+    throw new Error(response?.message || '记录失败，请稍后重试')
+  }
+  return response.data
 }
 
 export async function fetchAdvisorSessions({ page = 1, pageSize = 20 } = {}) {

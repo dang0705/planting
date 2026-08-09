@@ -2,10 +2,11 @@
 
 const AIR_EXCHANGE_SOURCES = new Set(['window', 'fresh_air', 'unknown'])
 const WINDOW_DIRECTIONS = new Set(['one', 'two_or_more', 'closed'])
-const WINDOW_FREQUENCIES = new Set(['daily', 'every_other_day', 'weekly_1_2'])
+const WINDOW_FREQUENCIES = new Set(['daily', 'every_other_day', 'weekly_1_2', 'almost_never'])
 const CANOPY_OPENNESS = new Set(['open', 'partial', 'enclosed', 'unknown'])
 const DEVICE_AIRFLOW_MODES = new Set(['none', 'circulating', 'direct', 'unknown'])
 const DEVICE_AIRFLOW_SOURCES = new Set(['fan', 'air_conditioner', 'fresh_air'])
+const DEVICE_AIRFLOW_SOURCE_MODES = new Set(['circulating', 'direct'])
 const AIR_ENVIRONMENT_RECORDED_OPTION_KEY = 'air_environment_recorded'
 const AIR_ENVIRONMENT_UNKNOWN_OPTION_KEY = 'air_environment_unknown'
 const WILTING_DROOP_AIR_ENVIRONMENT_QUESTION_KEY = 'q_wilting_droop__air_environment'
@@ -33,7 +34,7 @@ function normalizeAirExchange(value = {}) {
     return null
   }
   if (windowDirectionCount === 'closed') {
-    return { source, windowDirectionCount, windowOpenFrequency: null }
+    return { source, windowDirectionCount: 'one', windowOpenFrequency: 'almost_never' }
   }
   const windowOpenFrequency = normalizeText(value?.windowOpenFrequency)
   if (!WINDOW_FREQUENCIES.has(windowOpenFrequency)) {
@@ -42,12 +43,12 @@ function normalizeAirExchange(value = {}) {
   return { source, windowDirectionCount, windowOpenFrequency }
 }
 
-function normalizeDeviceAirflow(value = {}, airExchange = null) {
+function normalizeDeviceAirflow(value = {}, airExchange = null, options = {}) {
   const mode = normalizeText(value?.mode)
   if (!DEVICE_AIRFLOW_MODES.has(mode)) {
     return null
   }
-  const sources = Array.from(
+  const normalizedSources = Array.from(
     new Set(
       (Array.isArray(value?.sources) ? value.sources : [])
         .map(normalizeText)
@@ -55,16 +56,77 @@ function normalizeDeviceAirflow(value = {}, airExchange = null) {
         .filter(source => source !== 'fresh_air' || airExchange?.source === 'fresh_air')
     )
   )
-  if ((mode === 'direct' || mode === 'circulating') && !sources.length) {
+  const sources =
+    airExchange?.source === 'fresh_air' && ['circulating', 'direct'].includes(mode)
+      ? Array.from(new Set(['fresh_air', ...normalizedSources]))
+      : ['none', 'unknown'].includes(mode)
+        ? []
+        : normalizedSources
+  const directSources = Array.from(
+    new Set(
+      (Array.isArray(value?.directSources) ? value.directSources : [])
+        .map(normalizeText)
+        .filter(source => sources.includes(source))
+    )
+  )
+  const rawSourceModes = value?.sourceModes
+  const hasSourceModes =
+    rawSourceModes && typeof rawSourceModes === 'object' && !Array.isArray(rawSourceModes)
+  const normalizedSourceModes = hasSourceModes
+    ? Object.fromEntries(
+        Object.entries(rawSourceModes)
+          .map(([source, sourceMode]) => [normalizeText(source), normalizeText(sourceMode)])
+          .filter(
+            ([source, sourceMode]) =>
+              DEVICE_AIRFLOW_SOURCES.has(source) &&
+              DEVICE_AIRFLOW_SOURCE_MODES.has(sourceMode) &&
+              (source !== 'fresh_air' || airExchange?.source === 'fresh_air')
+          )
+      )
+    : null
+  const sourceModes = ['none', 'unknown'].includes(mode)
+    ? {}
+    : normalizedSourceModes
+      ? airExchange?.source === 'fresh_air' && ['circulating', 'direct'].includes(mode)
+        ? { fresh_air: 'circulating', ...normalizedSourceModes }
+        : normalizedSourceModes
+      : mode === 'direct' && !directSources.length
+        ? null
+        : Object.fromEntries(
+            sources.map(source => [
+              source,
+              directSources.includes(source) ? 'direct' : 'circulating'
+            ])
+          )
+  const sourceModeKeys = sourceModes ? Object.keys(sourceModes) : []
+  const normalizedDirectSources = sourceModes
+    ? sourceModeKeys.filter(source => sourceModes[source] === 'direct')
+    : directSources
+  const derivedMode =
+    normalizedDirectSources.length > 0 ? 'direct' : sourceModeKeys.length > 0 ? 'circulating' : mode
+  const effectiveSources = sourceModes
+    ? sourceModeKeys
+    : mode === 'none' || mode === 'unknown'
+      ? []
+      : sources
+  if ((derivedMode === 'direct' || derivedMode === 'circulating') && !effectiveSources.length) {
     return null
   }
-  return { mode, sources: mode === 'none' || mode === 'unknown' ? [] : sources }
+  if (options.requireDirectSource && derivedMode === 'direct' && !normalizedDirectSources.length) {
+    return null
+  }
+  return {
+    mode: derivedMode,
+    sources: effectiveSources,
+    directSources: normalizedDirectSources,
+    sourceModes
+  }
 }
 
-function normalizeAirEnvironmentInput(value = {}) {
+function normalizeAirEnvironmentInput(value = {}, options = {}) {
   const airExchange = normalizeAirExchange(value?.airExchange)
   const canopyOpenness = normalizeText(value?.canopyOpenness)
-  const deviceAirflow = normalizeDeviceAirflow(value?.deviceAirflow, airExchange)
+  const deviceAirflow = normalizeDeviceAirflow(value?.deviceAirflow, airExchange, options)
   if (!airExchange || !CANOPY_OPENNESS.has(canopyOpenness) || !deviceAirflow) {
     return null
   }
@@ -81,7 +143,7 @@ function resolveAirExchangeLevel(airExchange = {}) {
   if (airExchange.windowDirectionCount === 'closed') {
     return 'low'
   }
-  if (airExchange.windowOpenFrequency === 'weekly_1_2') {
+  if (['weekly_1_2', 'almost_never'].includes(airExchange.windowOpenFrequency)) {
     return 'low'
   }
   if (
@@ -115,7 +177,8 @@ function resolveAirEnvironmentEvidence(value = {}) {
     air_exchange_level: resolveAirExchangeLevel(input.airExchange),
     local_airflow_present: localAirflowPresent,
     stagnation_risk: stagnationRisk,
-    direct_airflow: directAirflow
+    direct_airflow: directAirflow,
+    direct_airflow_sources: input.deviceAirflow.directSources
   }
 }
 

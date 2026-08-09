@@ -30,7 +30,7 @@ function readProfile(row = {}) {
     return null
   }
   return {
-    schemaVersion: 1,
+    schemaVersion: Number(stored?.schemaVersion || 1),
     input,
     locationBinding: normalizeLocationBinding(stored?.locationBinding),
     updatedAt: String(stored?.updatedAt || row.updated_at || '').trim()
@@ -74,7 +74,9 @@ async function readUserPlantAirEnvironment(openid, plantId) {
 
 async function saveUserPlantAirEnvironment(openid, payload = {}) {
   const plantId = Number(payload.plantId)
-  const input = normalizeAirEnvironmentInput(payload.airEnvironment)
+  const input = normalizeAirEnvironmentInput(payload.airEnvironment, {
+    requireDirectSource: true
+  })
   if (!openid || !plantId) {
     return { statusCode: 400, message: '缺少植物ID', data: null }
   }
@@ -102,7 +104,7 @@ async function saveUserPlantAirEnvironment(openid, payload = {}) {
       return { statusCode: 409, message: '空气环境已更新，请重新读取', data: current }
     }
     const profile = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       input,
       locationBinding: normalizeLocationBinding(payload.locationBinding),
       updatedAt: new Date().toISOString()

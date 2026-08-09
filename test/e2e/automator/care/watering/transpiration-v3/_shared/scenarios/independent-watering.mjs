@@ -3,8 +3,7 @@
 /**
  * 独立浇水场景 —— 浇水算法 v3 蒸腾间隔修正端上验收。
  *
- * P0-1: 点击 next-button 后等待 pot-profile-editor-sheet 自动打开，不再点击背后的 edit 按钮；
- *   尝试 PotCanvas 真实 touch 输入尺寸，automator 不支持 touch 时返回 BLOCKED_ENV。
+ * P0-1: 点击 next-button 后验证独立建议页的 inline 盆型表单已进入当前步骤。
  * P1: 结果区 allowlist 限定到第3个 swiper-item，不把前两步元素加入 allowlist。
  */
 
@@ -14,8 +13,7 @@ import {
   readCapturedRequests,
   clearCapturedRequests,
   restoreRequest,
-  findRequestByUrl,
-  collectRequestsByUrl
+  findRequestByUrl
 } from '../lib/request-capture.mjs'
 import { safeScreenshot } from '../lib/screenshot.mjs'
 import {
@@ -47,8 +45,25 @@ const FORBIDDEN_TEXT_PATTERNS = [
   { name: '蒸腾', regex: /蒸腾|transpiration/i },
   { name: '植物名', regex: /龟背竹|绿萝|吊兰|发财树|monstera|pothos|spider/i },
   { name: '策略标签', regex: /策略|strategy|见干浇透|BASELINE|WET|DRY/i },
-  { name: '瓶/桶换算', regex: /瓶|桶|bottle|bucket/i },
   { name: '水滴图标', regex: /💧|水滴/ }
+]
+
+const REQUIRED_ADVISOR_FIELDS = [
+  'action',
+  'airEnvironmentAudit',
+  'amountRangeMl',
+  'confidenceLevel',
+  'nextWaterDate',
+  'nextWaterReason',
+  'nextWaterWindow',
+  'reasonCodes',
+  'seasonalIntervalFactor',
+  'soilCheck',
+  'stopCondition',
+  'todayWeatherReason',
+  'todayWeatherSource',
+  'transpirationIntervalFactor',
+  'wateringContext'
 ]
 
 export async function runIndependentWateringScenario(mp, report, artifactDir) {
@@ -84,7 +99,7 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
     recordScreenshot(report, await safeScreenshot(mp, artifactDir, 'independent-02-plant-selected'))
     page = await mp.currentPage()
 
-    // 点击 next-button（goToPotProfile 自动打开 PotProfileEditor）
+    // 点击 next-button，独立建议页直接切换到 inline 盆型步骤。
     const nextButton = await waitForElement(page, 'watering-advisor-next-button', 5000)
     recordAssertion(report, '下一步按钮存在', !!nextButton)
     if (!nextButton) {
@@ -94,66 +109,37 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
     await tapById(page, 'watering-advisor-next-button')
     await sleep(1500)
 
-    // P0-1: 等待 pot-profile-editor-sheet 自动打开，不点击背后的 edit 按钮
-    const potEditorSheet = await waitForElement(page, 'pot-profile-editor-sheet', 5000)
+    const potSubstrateOption = await waitForElement(
+      page,
+      'watering-advisor-pot-profile-substrate-general',
+      5000
+    )
+    const potDrainageOption = await waitForElement(
+      page,
+      'watering-advisor-pot-profile-drainage-true',
+      5000
+    )
     recordAssertion(
       report,
-      '盆型编辑器 pot-profile-editor-sheet 自动打开',
-      !!potEditorSheet,
-      potEditorSheet ? 'found' : 'not found'
+      'inline 盆型表单已进入当前步骤',
+      !!potSubstrateOption,
+      potSubstrateOption ? 'found' : 'not found'
+    )
+    recordAssertion(
+      report,
+      'inline 盆型排水孔选项存在',
+      !!potDrainageOption,
+      potDrainageOption ? 'found' : 'not found'
     )
     recordScreenshot(
       report,
       await safeScreenshot(mp, artifactDir, 'independent-03-pot-editor-opened')
     )
     page = await mp.currentPage()
-    if (!potEditorSheet) {
-      setClassification(report, 'BLOCKED_ENV', 'PotProfileEditor 未自动打开')
+    if (!potSubstrateOption || !potDrainageOption) {
+      setClassification(report, 'BLOCKED_ENV', 'inline 盆型表单未进入当前步骤')
       return 'BLOCKED_ENV'
     }
-
-    // P0-1: 尝试 PotCanvas 真实 touch/drag 输入盆型尺寸
-    // PotCanvas 把手使用 @touchstart/@touchmove/@touchend on <view>
-    // miniprogram-automator 0.12.1 仅支持公开的 element/RPC 表面；本 leaf 不读取页面私有状态。
-    const touchCap = await assessTouchCapability(mp, page)
-    recordAssertion(
-      report,
-      'automator 支持真实 touch/drag 事件以驱动 PotCanvas 把手',
-      touchCap.available,
-      touchCap.detail
-    )
-    if (!touchCap.available) {
-      setClassification(
-        report,
-        'BLOCKED_ENV',
-        'miniprogram-automator 不支持 touchstart/touchmove/touchend，' +
-          '无法通过真实 UI 操作驱动 PotCanvas 把手输入盆型尺寸（potTopDiameterCm/potHeightCm）。' +
-          'goToResult() 要求尺寸非空，但唯一输入途径是 PotCanvas touch 把手。' +
-          `实际检测结果: ${touchCap.detail}。` +
-          '所需自动化表面：element.touch(start/move/end) 或 mp.swipe/drag API。' +
-          '不得 page.callMethod、不得直接改 Vue/page data、不得造后端 payload、不得擅自修改 src/**。'
-      )
-      return 'BLOCKED_ENV'
-    }
-
-    // touch 可用时：通过 PotCanvas 把手输入尺寸后保存（当前 automator 不可达此路径）
-    const filled = await fillPotProfileViaTouch(mp, page, touchCap)
-    recordAssertion(report, '通过 PotCanvas 真实 touch 输入有效盆型尺寸', filled)
-    if (!filled) {
-      setClassification(report, 'BLOCKED_ENV', 'PotCanvas touch 未能设置有效尺寸')
-      return 'BLOCKED_ENV'
-    }
-    await tapById(page, 'pot-profile-editor-confirm-button')
-    await sleep(1000)
-    const editorStillOpen = await findViewById(page, 'pot-profile-editor-sheet')
-    recordAssertion(report, '盆型编辑器已关闭', !editorStillOpen)
-
-    const potSummary = await readTextById(page, 'pot-profile-row')
-    recordAssertion(
-      report,
-      '公开盆型摘要不再是未填写状态',
-      !!potSummary && !/未填写|暂无|empty/i.test(potSummary)
-    )
     recordScreenshot(
       report,
       await safeScreenshot(mp, artifactDir, 'independent-04-pot-profile-completed')
@@ -203,13 +189,12 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
       return 'FAIL_PRODUCT'
     }
 
-    const dataKeys = Object.keys(businessData).sort()
-    const keysMatch = JSON.stringify(dataKeys) === JSON.stringify(['amountRangeMl'])
+    const missingFields = REQUIRED_ADVISOR_FIELDS.filter(field => !(field in businessData))
     recordAssertion(
       report,
-      '响应 data 业务 key 精确等于 ["amountRangeMl"]',
-      keysMatch,
-      `actual=${JSON.stringify(dataKeys)}`
+      '响应 data 包含独立建议所需业务字段',
+      missingFields.length === 0,
+      missingFields.length ? `missing=${JSON.stringify(missingFields)}` : 'required fields present'
     )
 
     // 结果区三个稳定 ID
@@ -306,81 +291,6 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
   } finally {
     await restoreRequest(mp)
   }
-}
-
-/**
- * 评估 automator 是否支持真实 touch/drag 事件以驱动 PotCanvas 把手。
- * PotCanvas 把手使用 @touchstart/@touchmove/@touchend on <view>。
- * miniprogram-automator 0.12.1 仅支持公开的 element/RPC 表面。
- *
- * 真实异步检查 #potCanvas 元素及可用的 element 级方法，不硬编码 false。
- */
-async function assessTouchCapability(mp, page) {
-  const checks = [
-    { name: 'mp.touch', exists: typeof mp.touch === 'function' },
-    { name: 'mp.swipe', exists: typeof mp.swipe === 'function' },
-    { name: 'mp.drag', exists: typeof mp.drag === 'function' }
-  ]
-
-  // 真实异步检查 #potCanvas 元素及可用方法
-  let canvasFound = false
-  const canvasMethodDetails = []
-  try {
-    const canvas = await page.$('#potCanvas')
-    if (canvas) {
-      canvasFound = true
-      const methodNames = ['touch', 'swipe', 'drag', 'tap', 'trigger', 'callMethod']
-      for (const m of methodNames) {
-        const hasMethod = typeof canvas[m] === 'function'
-        canvasMethodDetails.push(`${m}=${hasMethod}`)
-        if (hasMethod && (m === 'touch' || m === 'swipe' || m === 'drag')) {
-          checks.push({ name: `element.${m}`, exists: true })
-        }
-      }
-    } else {
-      canvasMethodDetails.push('potCanvas element not found')
-    }
-  } catch (e) {
-    canvasMethodDetails.push(`error=${e?.message || e}`)
-  }
-
-  // 如果 element 级没有 touch/swipe/drag，记录实际检测结果
-  const hasElementTouch = checks.some(c => c.name.startsWith('element.') && c.exists)
-  if (!hasElementTouch) {
-    checks.push({ name: 'element.touch/swipe/drag', exists: false })
-  }
-
-  const anyAvailable = checks.some(c => c.exists)
-  const detail = [
-    ...checks.map(c => `${c.name}=${c.exists}`),
-    `potCanvasFound=${canvasFound}`,
-    `canvasMethods=[${canvasMethodDetails.join(', ')}]`
-  ].join(', ')
-
-  return { available: anyAvailable, detail, checks, canvasFound, canvasMethodDetails }
-}
-
-/**
- * 通过 PotCanvas 真实 touch 输入盆型尺寸。
- * 当前 automator 不支持 touch，此函数仅在 touch 可用时才会被调用。
- */
-async function fillPotProfileViaTouch(mp, page, touchCap) {
-  try {
-    const canvas = await page.$('#potCanvas')
-    if (!canvas) return false
-    // 检查 element 级 touch API
-    if (typeof canvas.touch === 'function' || typeof canvas.swipe === 'function') {
-      // 未来实现：通过 canvas touch/swipe 驱动把手设置直径和高度
-      // 直径范围 10-100cm，高度范围 10-50cm
-      return false
-    }
-    // 检查 mp 级 touch API
-    if (typeof mp.touch === 'function' || typeof mp.swipe === 'function') {
-      // 未来实现：通过 mp.touch/swipe 驱动把手
-      return false
-    }
-  } catch (e) {}
-  return false
 }
 
 /**

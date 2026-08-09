@@ -21,6 +21,7 @@ assert.match(
   /import AirEnvironmentAssessment from '@\/components\/AirEnvironmentAssessment\.vue'/
 )
 assert.match(pageSource, /<AirEnvironmentAssessment/)
+assert.match(pageSource, /layout-mode="single-page"/)
 assert.match(pageSource, /createInitialAirEnvironmentInput/)
 assert.match(pageSource, /:completion-label="[\s\S]*'完成'/)
 assert.match(pageSource, /footer-position="fixed"/)

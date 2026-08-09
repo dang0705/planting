@@ -12,10 +12,7 @@ const scriptPath = path.join(
   repoRoot,
   'test/e2e/automator/diagnosis/pest-mode-and-retake/runtime-core.mjs'
 )
-const entryScriptPath = path.join(
-  repoRoot,
-  'test/e2e/automator/diagnosis/pest-mode-and-retake.mjs'
-)
+const entryScriptPath = path.join(repoRoot, 'test/e2e/automator/diagnosis/pest-mode-and-retake.mjs')
 const workerSource = fs.readFileSync(workerPath, 'utf8')
 const scriptSource = fs.readFileSync(scriptPath, 'utf8')
 const entryScriptSource = fs.readFileSync(entryScriptPath, 'utf8')
@@ -65,8 +62,12 @@ function runWorker(args, guardMs) {
       finish({ timedOut: true })
     }, guardMs)
 
-    child.stdout.on('data', chunk => { stdout += chunk })
-    child.stderr.on('data', chunk => { stderr += chunk })
+    child.stdout.on('data', chunk => {
+      stdout += chunk
+    })
+    child.stderr.on('data', chunk => {
+      stderr += chunk
+    })
     child.on('close', exitCode => finish({ timedOut: false, exitCode }))
     child.on('error', error => finish({ timedOut: false, error: String(error?.message || error) }))
   })
@@ -86,7 +87,7 @@ assert.match(
 )
 assert.match(
   workerSource,
-  /Promise\.resolve\(\)\.then\(\(\) => miniProgram\.disconnect\(\)\)/,
+  /Promise\.resolve\(\)[\s\S]*?miniProgram\.disconnect\(\)[\s\S]*?status: 'passed'/,
   'worker must await its owned disconnect attempt before handing off the endpoint'
 )
 assert.match(
@@ -140,8 +141,9 @@ assert.match(
 )
 
 // === 主连接绝不截图，且仅允许三个用户可见 checkpoint ===
-const mainScreenshotCalls = (scriptWithoutLineComments.match(/\bminiProgram\.screenshot\s*\(/g) || [])
-  .length
+const mainScreenshotCalls = (
+  scriptWithoutLineComments.match(/\bminiProgram\.screenshot\s*\(/g) || []
+).length
 assert.equal(mainScreenshotCalls, 0, 'main Automator connection must never call screenshot')
 
 const policyMatch = scriptSource.match(/SCREENSHOT_CHECKPOINT_POLICY = new Set\(\[([\s\S]*?)\]\)/)
@@ -169,7 +171,11 @@ assert.match(
 )
 
 // === 禁止 policy 外第四张 final-runtime-state 截图 ===
-assert.doesNotMatch(scriptSource, /\bcaptureFinalShot\b/, 'legacy final screenshot helper must not exist')
+assert.doesNotMatch(
+  scriptSource,
+  /\bcaptureFinalShot\b/,
+  'legacy final screenshot helper must not exist'
+)
 assert.doesNotMatch(
   scriptSource,
   /evidence\.captureScreenshot:final-runtime-state/,
@@ -223,13 +229,29 @@ assert.doesNotMatch(
     workerResult.status === 'failed' || workerResult.status === 'timeout',
     `unreachable worker must report failed or timeout, got: ${workerResult.status}`
   )
-  assert.equal(fs.existsSync(outputPath), false, 'unreachable worker must not fabricate PNG evidence')
+  assert.equal(
+    fs.existsSync(outputPath),
+    false,
+    'unreachable worker must not fabricate PNG evidence'
+  )
 }
 
 {
   const result = await runWorker(['', ''], 5000)
-  assert.equal(result.timedOut, false, 'invalid worker invocation must settle before the test guard')
+  assert.equal(
+    result.timedOut,
+    false,
+    'invalid worker invocation must settle before the test guard'
+  )
   const workerResult = parseLastJsonLine(result.stdout)
-  assert.equal(workerResult.status, 'failed', 'invalid worker invocation must emit a failure envelope')
-  assert.match(workerResult.error || '', /usage/, 'invalid worker invocation must describe its usage error')
+  assert.equal(
+    workerResult.status,
+    'failed',
+    'invalid worker invocation must emit a failure envelope'
+  )
+  assert.match(
+    workerResult.error || '',
+    /usage/,
+    'invalid worker invocation must describe its usage error'
+  )
 }

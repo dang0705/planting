@@ -6,6 +6,10 @@
 import { closeSync, existsSync, openSync, readSync, statSync } from 'node:fs'
 import { spawn } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
+import {
+  screenshotStabilityBudget,
+  waitForScreenshotStability
+} from '../../_shared/screenshot-stability.mjs'
 
 const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
 const WORKER_PATH = fileURLToPath(import.meta.url)
@@ -42,6 +46,19 @@ export function isNonEmptyPng(filePath) {
 
 function emit(result) {
   process.stdout.write(JSON.stringify(result) + '\n')
+}
+
+function now() {
+  return new Date().toISOString()
+}
+
+function emitStage(phase, detail = {}) {
+  emit({
+    type: 'screenshot_worker_event',
+    phase,
+    at: now(),
+    ...detail
+  })
 }
 
 function parseWorkerResult(stdout) {
@@ -147,12 +164,11 @@ async function disconnectOwnedSession(miniProgram, timeoutMs = DISCONNECT_TIMEOU
   let timer
   try {
     const result = await Promise.race([
-      Promise.resolve().then(() => miniProgram.disconnect()).then(() => ({ status: 'passed' })),
+      Promise.resolve()
+        .then(() => miniProgram.disconnect())
+        .then(() => ({ status: 'passed' })),
       new Promise(resolve => {
-        timer = setTimeout(
-          () => resolve({ status: 'timed_out', timeoutMs }),
-          timeoutMs
-        )
+        timer = setTimeout(() => resolve({ status: 'timed_out', timeoutMs }), timeoutMs)
       })
     ])
     return result
@@ -163,7 +179,7 @@ async function disconnectOwnedSession(miniProgram, timeoutMs = DISCONNECT_TIMEOU
   }
 }
 
-async function captureScreenshot(wsEndpoint, outputPath, timeoutMs) {
+async function captureScreenshot(wsEndpoint, outputPath, timeoutMs, projectPath, expectedRoute) {
   const automator = await loadAutomator()
   if (!automator) {
     return { status: 'failed', error: 'miniprogram-automator not available' }
@@ -171,6 +187,10 @@ async function captureScreenshot(wsEndpoint, outputPath, timeoutMs) {
   let miniProgram = null
   let settled = false
   let result = null
+  let phase = 'starting'
+  let stability = null
+  let commandStartedAt = null
+  emitStage('worker_started', { wsEndpoint, outputPath })
   const workerDeadline = setTimeout(() => {
     if (settled) {
       return
@@ -181,22 +201,84 @@ async function captureScreenshot(wsEndpoint, outputPath, timeoutMs) {
     } catch {
       // The parent will still kill a wedged process at its own deadline.
     }
-    emit({ status: 'timeout', error: `worker internal timeout after ${timeoutMs}ms` })
+    emit({
+      status: 'timeout',
+      phase,
+      error: `worker internal timeout during ${phase} after ${timeoutMs}ms`,
+      stability,
+      command: {
+        method: 'App.captureScreenshot',
+        started_at: commandStartedAt,
+        response: commandStartedAt ? 'not_received' : 'not_started'
+      }
+    })
     process.exit(0)
   }, timeoutMs)
   try {
+    phase = 'connect'
+    emitStage('connect_started')
     miniProgram = await automator.connect({ wsEndpoint })
+    emitStage('automator_connected')
+    phase = 'stability'
+    emitStage('stability_started')
+    stability = await waitForScreenshotStability({
+      miniProgram,
+      projectPath,
+      expectedRoute,
+      timeoutMs: screenshotStabilityBudget(timeoutMs)
+    })
+    emitStage('stability_passed', { stability })
+    phase = 'screenshot'
+    commandStartedAt = now()
+    emitStage('command_started', {
+      command: 'App.captureScreenshot',
+      command_started_at: commandStartedAt
+    })
     await miniProgram.screenshot({ path: outputPath })
+    phase = 'png_validation'
     if (!isNonEmptyPng(outputPath)) {
       settled = true
-      result = { status: 'failed', error: 'screenshot_file_missing_empty_or_not_png' }
+      result = {
+        status: 'failed',
+        error: 'screenshot_file_missing_empty_or_not_png',
+        phase,
+        stability,
+        command: {
+          method: 'App.captureScreenshot',
+          started_at: commandStartedAt,
+          response: 'received'
+        }
+      }
     } else {
       settled = true
-      result = { status: 'passed', path: outputPath, bytes: statSync(outputPath).size }
+      result = {
+        status: 'passed',
+        path: outputPath,
+        bytes: statSync(outputPath).size,
+        phase: 'completed',
+        stability,
+        command: {
+          method: 'App.captureScreenshot',
+          started_at: commandStartedAt,
+          response: 'received',
+          responded_at: now()
+        }
+      }
     }
   } catch (error) {
     settled = true
-    result = { status: 'failed', error: String(error?.message || error) }
+    result = {
+      status: 'failed',
+      error: String(error?.message || error),
+      code: error?.code || null,
+      phase,
+      stability: error?.stability || stability,
+      command: {
+        method: 'App.captureScreenshot',
+        started_at: commandStartedAt,
+        response: commandStartedAt ? 'failed' : 'not_started'
+      }
+    }
   } finally {
     clearTimeout(workerDeadline)
     // A normal close is awaited so the next connection cannot race it. The
@@ -210,7 +292,7 @@ async function captureScreenshot(wsEndpoint, outputPath, timeoutMs) {
 }
 
 async function main() {
-  const [, , wsEndpoint, outputPath, timeoutArg] = process.argv
+  const [, , wsEndpoint, outputPath, timeoutArg, projectPath, expectedRoute] = process.argv
   if (!wsEndpoint || !outputPath) {
     emit({
       status: 'failed',
@@ -218,7 +300,13 @@ async function main() {
     })
     return
   }
-  const result = await captureScreenshot(wsEndpoint, outputPath, Number(timeoutArg || 20000))
+  const result = await captureScreenshot(
+    wsEndpoint,
+    outputPath,
+    Number(timeoutArg || 20000),
+    projectPath,
+    expectedRoute
+  )
   emit(result)
   if (result.cleanup?.status === 'timed_out') {
     // The owned worker is disposable. Once the terminal result is flushed, force

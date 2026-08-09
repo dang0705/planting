@@ -32,7 +32,12 @@ const questionKey = 'q_yellow_leaf__air_environment'
 const input = {
   airExchange: { source: 'fresh_air', windowDirectionCount: null, windowOpenFrequency: null },
   canopyOpenness: 'partial',
-  deviceAirflow: { mode: 'circulating', sources: ['fresh_air'] }
+  deviceAirflow: {
+    mode: 'circulating',
+    sources: ['fresh_air'],
+    directSources: [],
+    sourceModes: { fresh_air: 'circulating' }
+  }
 }
 const airEnvironmentSnapshotsByQuestionId = {
   [questionKey]: {
@@ -51,7 +56,8 @@ const response = {
       air_exchange_level: 'medium',
       local_airflow_present: true,
       stagnation_risk: false,
-      direct_airflow: false
+      direct_airflow: false,
+      direct_airflow_sources: []
     }
   }
 }
@@ -75,6 +81,7 @@ assert.deepEqual(runtimeSnapshot.airEnvironmentSnapshotSourceByQuestionId, {
 assert.deepEqual(Object.keys(runtimeSnapshot.airEnvironmentEvidence[questionKey]).sort(), [
   'air_exchange_level',
   'direct_airflow',
+  'direct_airflow_sources',
   'local_airflow_present',
   'stagnation_risk'
 ])
@@ -471,7 +478,7 @@ assert.ok(
 assert.match(fixtureLeafSource, /emitLeafReport\(report\)/)
 assert.match(fixtureLeafSource, /actual LAN question-start request passed through the fixture/)
 assert.match(fixtureLeafSource, /actual LAN diagnosis endpoint/)
-assert.match(fixtureLeafSource, /device-mode-direct/)
+assert.match(fixtureLeafSource, /device-source-fresh_air-direct/)
 assert.doesNotMatch(fixtureLeafSource, /question-start request used the fixture/)
 assert.match(fixtureLeafSource, /waitForKnownHomeEntry/)
 assert.doesNotMatch(fixtureLeafSource, /findByIdPrefix/)

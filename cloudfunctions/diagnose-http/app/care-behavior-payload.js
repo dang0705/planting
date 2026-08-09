@@ -167,8 +167,23 @@ function resolveRuntimeEnvironmentCarePayload({
     hasDirectSun: pickPayloadValue(safePayload, 'hasDirectSun', 'has_direct_sun'),
     distance: pickPayloadValue(safePayload, 'distance')
   }
+  const incomingAirEnvironmentByQuestionId = pickPayloadValue(
+    safePayload,
+    'airEnvironmentByQuestionId',
+    'air_environment_by_question_id'
+  )
+  const incomingAirEnvironmentInput =
+    pickPayloadValue(safePayload, 'airEnvironmentOverride', 'air_environment_override') ||
+    (isPlainObject(incomingAirEnvironmentByQuestionId)
+      ? Object.values(incomingAirEnvironmentByQuestionId).find(
+          value => isPlainObject(value) && isPlainObject(value.airExchange)
+        )
+      : null)
   const incomingHasMeaningfulTimeline = hasMeaningfulTimeline(incomingTimeline)
   const incomingHasMeaningfulLightContext = hasMeaningfulUserLightContext(incomingUserLightContext)
+  const incomingHasMeaningfulAirEnvironment = Boolean(
+    isPlainObject(incomingAirEnvironmentInput) && incomingAirEnvironmentInput.airExchange
+  )
   const snapshotTimeline = isPlainObject(snapshot.careBehaviorTimeline)
     ? snapshot.careBehaviorTimeline
     : null
@@ -179,7 +194,8 @@ function resolveRuntimeEnvironmentCarePayload({
   if (
     !incomingHasMeaningfulTimeline &&
     !incomingWeatherWindow &&
-    !incomingHasMeaningfulLightContext
+    !incomingHasMeaningfulLightContext &&
+    !incomingHasMeaningfulAirEnvironment
   ) {
     return {
       careBehaviorTimeline: snapshotTimeline,
@@ -198,7 +214,10 @@ function resolveRuntimeEnvironmentCarePayload({
     null
 
   const environmentCareContext =
-    environmentWeatherWindow || careBehaviorTimeline || incomingHasMeaningfulLightContext
+    environmentWeatherWindow ||
+    careBehaviorTimeline ||
+    incomingHasMeaningfulLightContext ||
+    incomingHasMeaningfulAirEnvironment
       ? buildEnvironmentCareContextV7({
           diagnosisDate:
             safePayload.diagnosisDate ||
@@ -209,7 +228,10 @@ function resolveRuntimeEnvironmentCarePayload({
           plantContext,
           environmentWeatherWindow: environmentWeatherWindow || {},
           careBehaviorTimeline: careBehaviorTimeline || {},
-          userLightContext: incomingHasMeaningfulLightContext ? incomingUserLightContext : {}
+          userLightContext: incomingHasMeaningfulLightContext ? incomingUserLightContext : {},
+          airEnvironmentInput: incomingHasMeaningfulAirEnvironment
+            ? incomingAirEnvironmentInput
+            : null
         })
       : snapshotContext
 

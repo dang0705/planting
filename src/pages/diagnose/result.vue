@@ -44,6 +44,10 @@
               {{ viewModel.summary }}
             </text>
           </view>
+          <DiagnosisFeedbackCard
+            :result-id="feedbackResultId"
+            id-prefix="diagnosis-result-page-feedback"
+          />
         </view>
 
         <view v-else id="diagnosis-result-page-empty">
@@ -58,6 +62,7 @@
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import Layout from '@/Layout.vue'
+import DiagnosisFeedbackCard from '@/components/DiagnosisFeedbackCard.vue'
 import { getDiagnosisResult } from '@/api/plants-http.js'
 import { useDiagnoseStore } from '@/store/diagnose.js'
 import { normalizeDiagnosisResult } from '@/utils/diagnose-flow.js'
@@ -144,6 +149,20 @@ const viewModel = computed(() => {
       '',
     outcomeItems
   }
+})
+
+const feedbackResultId = computed(() => {
+  const diagnosis = normalizedRemoteResult.value || normalizedLocalResult.value
+  return String(
+    diagnosis?.resultId ||
+      diagnosis?.diagnosisSessionId ||
+      remoteResult.value?.resultId ||
+      remoteResult.value?.diagnosisSessionId ||
+      localRecord.value?.diagnosisSessionId ||
+      localRecord.value?.diagnosis?.diagnosisSessionId ||
+      routeId.value ||
+      ''
+  ).trim()
 })
 
 function normalizeOutcomeDisplayLabel(outcome = null) {

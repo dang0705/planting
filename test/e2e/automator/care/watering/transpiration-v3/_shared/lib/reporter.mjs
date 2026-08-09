@@ -18,6 +18,11 @@ import path from 'node:path'
 import fs from 'node:fs'
 
 const ALLOWED_CLASSIFICATIONS = new Set(['PASS', 'FAIL_PRODUCT', 'BLOCKED_ENV', 'BLOCKED_FIXTURE'])
+const STRUCTURED_FAILURE_KIND = Object.freeze({
+  FAIL_PRODUCT: 'failed_product',
+  BLOCKED_ENV: 'failed_environment',
+  BLOCKED_FIXTURE: 'failed_environment'
+})
 
 /**
  * 创建一个新的报告构建器。
@@ -41,7 +46,10 @@ export function createReport(meta) {
     assertions: [],
     screenshots: [],
     classification: null,
-    blockerReason: null
+    blockerReason: null,
+    status: 'running',
+    failure_kind: null,
+    business_assertions_reached: false
   }
 }
 
@@ -110,9 +118,24 @@ export function setClassification(report, classification, reason) {
     throw new Error(`invalid classification: ${classification}`)
   }
   report.classification = classification
+  report.status = classification === 'PASS' ? 'passed' : 'failed'
+  report.failure_kind = STRUCTURED_FAILURE_KIND[classification] ?? null
   if (reason) {
     report.blockerReason = reason
   }
+}
+
+export function emitLeafReport(report) {
+  console.log(
+    JSON.stringify({
+      status: report.status === 'passed' ? 'passed' : 'failed',
+      failure_kind: report.failure_kind,
+      business_assertions_reached: Boolean(report.business_assertions_reached),
+      assertions: report.assertions,
+      classification: report.classification,
+      blockerReason: report.blockerReason
+    })
+  )
 }
 
 /**

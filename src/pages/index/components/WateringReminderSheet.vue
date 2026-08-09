@@ -76,6 +76,16 @@
         <text v-if="plannerResult?.nextWaterReason" class="mt-1 block text-[12px] text-[#5a7868]">
           {{ plannerResult.nextWaterReason }}
         </text>
+        <view
+          v-if="plannerResult?.soilCheck?.message"
+          id="watering-reminder-soil-check-guidance"
+          class="mt-3 rounded-xl border border-[#d7e6dc] bg-white px-3 py-2"
+        >
+          <text class="block text-[12px] font-semibold text-[#2d7a4f]">浇水前先看盆土</text>
+          <text class="mt-1 block text-[12px] leading-5 text-[#5a7868]">
+            {{ plannerResult.soilCheck.message }}
+          </text>
+        </view>
         <view v-if="plannerSummaryRows.length" class="mt-2 border-t border-gray-200/50 pt-2">
           <view
             v-for="row in plannerSummaryRows"
@@ -123,6 +133,7 @@
       <template #confirm>
         <view class="flex gap-3">
           <button
+            id="watering-date-picker-cancel-button"
             class="m-0 flex-1 rounded-[10px] border border-gray-200 bg-white py-2.5 text-sm text-gray-700 after:border-0"
             hover-class="none"
             @click="closeDatePicker"
@@ -130,6 +141,7 @@
             取消
           </button>
           <button
+            id="watering-date-picker-confirm-button"
             class="m-0 flex-1 rounded-[10px] bg-[#2d7a4f] py-2.5 text-sm font-medium text-white after:border-0"
             hover-class="none"
             @click="confirmDatePicker"

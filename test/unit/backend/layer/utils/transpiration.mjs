@@ -4,7 +4,7 @@
  * 蒸腾因素 + 光照暴露共享 Layer 纯函数测试 —— 浇水算法 v3。
  *
  * 覆盖：
- *   - 默认影子运行：intervalFactor 恒为 1.0，computedFactor 仅供审计
+ *   - 默认实际运行：intervalFactor 采用 bounded computedFactor，仍可显式影子运行
  *   - 缺失光照/天气证据时返回中性 1.0（不擅自放大耗水）
  *   - 光照分量：复用 light-exposure 的 indoorEqHours，强光 → 蒸腾加快，弱光 → 蒸腾放慢
  *   - 天气分量：热干天数多 → 蒸腾加快；高湿/冷湿/雨天 → 蒸腾放慢
@@ -23,6 +23,7 @@ const {
   computeTranspirationIntervalFactor,
   resolveLightFactor,
   resolveWeatherFactor,
+  resolveAirFactor,
   applySpeciesConvergence,
   resolveShadowModeFromEnv,
   SHADOW_MODE_DEFAULT,
@@ -60,7 +61,7 @@ async function runAll() {
  * 1. 默认影子运行
  * ============================================================ */
 
-test('shadow mode default: intervalFactor 恒为 1.0，computedFactor 仅供审计', () => {
+test('显式 shadow mode: intervalFactor 恒为 1.0，computedFactor 仅供审计', () => {
   const result = computeTranspirationIntervalFactor({
     lightEnvironment: {
       facing: 'south',
@@ -78,8 +79,8 @@ test('shadow mode default: intervalFactor 恒为 1.0，computedFactor 仅供审�
   assert.ok(result.computedFactor < 1.0, 'computedFactor 应反映蒸腾加快（< 1.0），仅供审计')
 })
 
-test('shadow mode default constant is true', () => {
-  assert.equal(SHADOW_MODE_DEFAULT, true)
+test('shadow mode default constant is false', () => {
+  assert.equal(SHADOW_MODE_DEFAULT, false)
 })
 
 /* ============================================================
@@ -97,6 +98,7 @@ test('缺失光照和天气证据时返回中性 1.0', () => {
   assert.equal(result.computedFactor, 1.0)
   assert.equal(result.evidence.light, false)
   assert.equal(result.evidence.weather, false)
+  assert.equal(result.evidence.air, false)
 })
 
 test('天气摘要为空对象时返回中性', () => {
@@ -204,6 +206,22 @@ test('雨天多：蒸腾放慢（factor > 1.0）', () => {
   assert.ok(factor > 1.0, `雨天多蒸腾应放慢，got ${factor}`)
 })
 
+test('开窗换气/局部气流会产生保守的空气间隔修正', () => {
+  const factor = resolveAirFactor({
+    air_exchange_level: 'high',
+    local_airflow_present: true,
+    stagnation_risk: false,
+    direct_airflow: false
+  })
+  assert.ok(factor < 1, `高频换气的空气修正应略微缩短检查间隔，got ${factor}`)
+  assert.ok(factor >= 0.94 && factor <= 1.06)
+})
+
+test('空气证据不能把缺失输入放大成额外耗水', () => {
+  assert.equal(resolveAirFactor(null), 1)
+  assert.equal(resolveAirFactor({}), 1)
+})
+
 /* ============================================================
  * 5. 属级策略收敛
  * ============================================================ */
@@ -262,9 +280,9 @@ test('所有系数在 [0.8, 1.2] 范围内', () => {
  * 7. resolveShadowModeFromEnv
  * ============================================================ */
 
-test('WATERING_TRANSPIRATION_ENABLED 未设置 → shadow=true', () => {
-  assert.equal(resolveShadowModeFromEnv({}), true)
-  assert.equal(resolveShadowModeFromEnv({ WATERING_TRANSPIRATION_ENABLED: '' }), true)
+test('WATERING_TRANSPIRATION_ENABLED 未设置 → shadow=false', () => {
+  assert.equal(resolveShadowModeFromEnv({}), false)
+  assert.equal(resolveShadowModeFromEnv({ WATERING_TRANSPIRATION_ENABLED: '' }), false)
 })
 
 test('WATERING_TRANSPIRATION_ENABLED=false/0/off → shadow=true', () => {

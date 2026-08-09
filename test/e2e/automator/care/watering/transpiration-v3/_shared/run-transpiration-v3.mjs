@@ -47,7 +47,7 @@ import {
   timestampForFilename
 } from './lib/env.mjs'
 import { connectAutomator, AutomatorConnectError, safeDisconnect } from './lib/automator-client.mjs'
-import { createReport, saveReport, setClassification } from './lib/reporter.mjs'
+import { createReport, emitLeafReport, saveReport, setClassification } from './lib/reporter.mjs'
 import { preflightProject } from './lib/project-check.mjs'
 import { runIndependentWateringScenario } from './scenarios/independent-watering.mjs'
 import { runMyPlantPlannerScenario } from './scenarios/my-plant-planner.mjs'
@@ -161,7 +161,12 @@ export async function runTranspirationV3({ forcedScenario = null } = {}) {
       )
       console.log(`[e2e] independent watering classification: ${classification}`)
       console.log(`[e2e] report: ${reportPath}`)
-      overallResults.push({ scenario: 'independent', classification, reportPath })
+      overallResults.push({
+        scenario: 'independent',
+        classification,
+        blockerReason: reportInd.blockerReason,
+        reportPath
+      })
     }
 
     if (scenario === 'all' || scenario === 'myplant') {
@@ -187,7 +192,12 @@ export async function runTranspirationV3({ forcedScenario = null } = {}) {
       )
       console.log(`[e2e] my plant planner classification: ${classification}`)
       console.log(`[e2e] report: ${reportPath}`)
-      overallResults.push({ scenario: 'myplant', classification, reportPath })
+      overallResults.push({
+        scenario: 'myplant',
+        classification,
+        blockerReason: reportMyPlant.blockerReason,
+        reportPath
+      })
     }
   } finally {
     await safeDisconnect(mp)
@@ -206,6 +216,22 @@ export async function runTranspirationV3({ forcedScenario = null } = {}) {
       hasBlocked = true
     }
   }
+
+  const terminalResult = overallResults.find(result => result.classification !== 'PASS')
+  const terminalClassification = terminalResult?.classification ?? 'PASS'
+  emitLeafReport({
+    status: terminalClassification === 'PASS' ? 'passed' : 'failed',
+    failure_kind:
+      terminalClassification === 'FAIL_PRODUCT'
+        ? 'failed_product'
+        : terminalClassification === 'PASS'
+          ? null
+          : 'failed_environment',
+    business_assertions_reached: overallResults.length > 0,
+    assertions: [],
+    classification: terminalClassification,
+    blockerReason: terminalResult?.blockerReason ?? null
+  })
 
   // P0: 若有 BLOCKED_ENV 且涉及模式不符，打印两步验收指引
   if (hasBlocked && env.mode) {

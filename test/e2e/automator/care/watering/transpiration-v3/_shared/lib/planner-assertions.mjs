@@ -10,14 +10,19 @@
  *   - shadow 期望: transpirationShadow===true 且 intervalFactor===1.0
  *   - active 期望: transpirationShadow===false 且 intervalFactor===computedFactor（允许中性 1.0）
  *   - 若实际模式与期望模式不符，调用方应归类为 BLOCKED_ENV（LAN worker 未按对应环境变量启动），而非 FAIL_PRODUCT
- *   - 蒸腾不改变 amountRangeMl，不绕过 WET/DRY Gate
+ *   - 蒸腾不改变 amountRangeMl，不绕过浇水 Gate
  *
  * 不复制业务公式；只做字段存在性与值域断言。
  */
 
 import { recordAssertion } from './reporter.mjs'
 
-const VALID_WATERING_CONTEXTS = ['BASELINE', 'WET', 'DRY']
+// watering-planner 当前对外契约使用业务语义值，而不是内部 GateState 名称。
+const VALID_WATERING_CONTEXTS = [
+  'keep_baseline_or_check_soil',
+  'likely_too_wet',
+  'likely_too_dry'
+]
 
 const EXPECTED_EXISTING_FIELDS = [
   'planId',
@@ -163,18 +168,18 @@ export async function assertPlannerResponse(report, plannerRequest, expectedMode
     `value=${JSON.stringify(data.amountRangeMl)}`
   )
 
-  // 蒸腾不得绕过 WET/DRY Gate
+  // 蒸腾不得绕过浇水 Gate
   const contextValid = VALID_WATERING_CONTEXTS.includes(data.wateringContext)
   recordAssertion(
     report,
-    'wateringContext 为 BASELINE/WET/DRY 之一（蒸腾不绕过 Gate）',
+    'wateringContext 为当前浇水策略枚举之一（蒸腾不绕过 Gate）',
     contextValid,
     `actual=${data.wateringContext}`
   )
-  if (data.wateringContext === 'WET') {
+  if (data.wateringContext === 'likely_too_wet') {
     recordAssertion(
       report,
-      'WET 状态下 nextWaterDate 为 null（蒸腾不绕过湿润保护）',
+      '偏湿状态下 nextWaterDate 为 null（蒸腾不绕过湿润保护）',
       data.nextWaterDate === null,
       `actual=${JSON.stringify(data.nextWaterDate)}`
     )

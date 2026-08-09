@@ -1,7 +1,9 @@
 import fs from 'node:fs'
-import { spawn } from 'node:child_process'
 import path from 'node:path'
 import { repoRoot } from './state.mjs'
+import { captureIsolatedPreflightScreenshot } from './qa-preflight-screenshot.mjs'
+
+export { captureIsolatedPreflightScreenshot } from './qa-preflight-screenshot.mjs'
 
 /* eslint-disable no-var -- these callback bodies are serialized for ES5-only App.callFunction parsing. */
 
@@ -11,10 +13,6 @@ export const PREFLIGHT_DISCONNECT_TIMEOUT_MS = 3000
 export const PREFLIGHT_CAPTURE_TIMEOUT_MS = 30000
 const WX_REQUEST_TIMEOUT_MS = 10000
 const WX_REQUEST_POLL_INTERVAL_MS = 200
-const SCREENSHOT_WORKER_PATH = path.join(
-  repoRoot,
-  '.codex/skills/dispatch-task/scripts/dispatch-gate/lib/automator-screenshot-worker.mjs'
-)
 let wxRequestProbeSequence = 0
 
 function wait(ms) {
@@ -81,137 +79,6 @@ export function withPreflightDeadline({ report, step, timeoutMs, action }) {
           })
         }
       )
-  })
-}
-
-function screenshotWorkerError(message) {
-  const error = new Error(message)
-  error.code = 'preflight_screenshot_failed'
-  error.preflight_step = 'screenshot'
-  return error
-}
-
-function ensureScreenshotParent(screenshotPath) {
-  fs.mkdirSync(path.dirname(screenshotPath), { recursive: true })
-}
-
-export function captureIsolatedPreflightScreenshot({
-  report,
-  wsEndpoint,
-  screenshotPath,
-  timeoutMs,
-  workerPath = SCREENSHOT_WORKER_PATH,
-  spawnProcess = spawn
-}) {
-  const startedAt = Date.now()
-  recordStep(report, 'screenshot', { status: 'running', timeout_ms: timeoutMs, started_at: now() })
-  return new Promise((resolve, reject) => {
-    let settled = false
-    let killTimer = null
-    let stdout = ''
-    let stderr = ''
-    let child
-
-    const finish = (callback, value, evidence) => {
-      if (settled) {
-        return
-      }
-      settled = true
-      if (killTimer) {
-        clearTimeout(killTimer)
-      }
-      recordStep(report, 'screenshot', {
-        ...evidence,
-        timeout_ms: timeoutMs,
-        duration_ms: Date.now() - startedAt,
-        completed_at: now()
-      })
-      callback(value)
-    }
-
-    try {
-      ensureScreenshotParent(screenshotPath)
-    } catch (error) {
-      const normalized = screenshotWorkerError(
-        `preflight screenshot evidence directory unavailable: ${error.message}`
-      )
-      finish(reject, normalized, {
-        status: 'failed',
-        code: normalized.code,
-        message: normalized.message
-      })
-      return
-    }
-
-    try {
-      child = spawnProcess(
-        process.execPath,
-        [workerPath, wsEndpoint, screenshotPath, String(timeoutMs)],
-        {
-          stdio: ['ignore', 'pipe', 'pipe']
-        }
-      )
-    } catch (error) {
-      const normalized = screenshotWorkerError(
-        `preflight screenshot worker failed to start: ${error.message}`
-      )
-      finish(reject, normalized, {
-        status: 'failed',
-        code: normalized.code,
-        message: normalized.message
-      })
-      return
-    }
-
-    killTimer = setTimeout(() => {
-      try {
-        child.kill('SIGKILL')
-      } catch {
-        // The child may already have exited; its close handler owns the final result.
-      }
-      const error = stepError('screenshot', timeoutMs)
-      finish(reject, error, { status: 'timed_out', code: error.code, message: error.message })
-    }, timeoutMs)
-
-    child.stdout?.on('data', chunk => {
-      stdout += chunk.toString()
-    })
-    child.stderr?.on('data', chunk => {
-      stderr += chunk.toString()
-    })
-    child.on('error', error => {
-      const normalized = screenshotWorkerError(
-        `preflight screenshot worker error: ${error.message}`
-      )
-      finish(reject, normalized, {
-        status: 'failed',
-        code: normalized.code,
-        message: normalized.message
-      })
-    })
-    child.on('close', (code, signal) => {
-      if (settled) {
-        return
-      }
-      let result
-      try {
-        result = JSON.parse(stdout.trim())
-      } catch {
-        result = null
-      }
-      if (result?.status === 'passed' && fs.existsSync(screenshotPath)) {
-        finish(resolve, result, { status: 'passed', code: 'preflight_screenshot_passed' })
-        return
-      }
-      const detail =
-        result?.error || stderr.trim() || `worker exited code=${code} signal=${signal ?? 'none'}`
-      const normalized = screenshotWorkerError(`preflight screenshot worker failed: ${detail}`)
-      finish(reject, normalized, {
-        status: 'failed',
-        code: normalized.code,
-        message: normalized.message
-      })
-    })
   })
 }
 

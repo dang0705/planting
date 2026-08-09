@@ -12,6 +12,7 @@
       <AirEnvironmentAssessment
         v-else-if="!result"
         :id-prefix="isPlantEditorMode ? 'plant-air-environment' : 'airflow'"
+        layout-mode="single-page"
         :model-value="activeDraft"
         height-mode="content"
         :disabled="saving"

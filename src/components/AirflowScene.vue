@@ -71,6 +71,7 @@ import q5DeviceUnknownFlowScene from '@/assets/airflow/scene-q5-device-unknown-f
 import q5CanopyPlantScene from '@/assets/airflow/scene-q5-canopy-plant.svg'
 import q5CanopyUnknownPlantScene from '@/assets/airflow/scene-q5-canopy-unknown-plant.svg'
 import q5DevicePlantScene from '@/assets/airflow/scene-q5-device-plant.svg'
+import q5DeviceCirculatingPlantScene from '@/assets/airflow/scene-q5-device-circulating-plant.svg'
 import q5DeviceDirectPlantScene from '@/assets/airflow/scene-q5-device-direct-plant.svg'
 import q5FanNoneBaseScene from '@/assets/airflow/scene-q5-fan-none-base.svg'
 import q5FanNoneBladeScene from '@/assets/airflow/scene-q5-fan-none-blades.svg'
@@ -190,7 +191,8 @@ const MOTION_PROFILE_MAP = {
   'device-circulating': {
     baseScene: 'q5-device',
     flowScene: q5DeviceCirculatingFlowScene,
-    plantScene: q5DevicePlantScene,
+    // 循环风场景将植物放在画布右侧，与设备保持明显间距。
+    plantScene: q5DeviceCirculatingPlantScene,
     fanBaseScene: q5FanCirculatingBaseScene,
     fanBladeScene: q5FanCirculatingBladeScene,
     fanClass: 'airflow-fan-blade-layer--circulating',
@@ -312,7 +314,7 @@ const flowScene = computed(() => profile.value?.flowScene || FLOW_SCENE_MAP[prop
 
 .airflow-flow-layer--fresh-air {
   animation-name: airflow-flow-pulse;
-  animation-duration: 2.2s;
+  animation-duration: 2.4s;
 }
 
 .airflow-plant-layer {

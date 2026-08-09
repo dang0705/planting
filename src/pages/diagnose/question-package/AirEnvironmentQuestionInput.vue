@@ -29,6 +29,8 @@
     <AirEnvironmentAssessment
       v-if="!showSummary || editorOpen"
       :id-prefix="`diagnose-air-environment-${questionId}`"
+      layout-mode="single-page"
+      height-mode="content"
       :model-value="modelValue"
       :footer-position="footerPosition"
       :back-label="backLabel"

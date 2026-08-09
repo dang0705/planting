@@ -11,12 +11,18 @@
  */
 
 const { getPlantCatalogById } = require('/opt/utils/plant-knowledge')
+const { models } = require('/opt/utils/cloudbase')
 const {
   buildWateringPlanner,
   normalizeCareBehaviorTimeline
 } = require('/opt/utils/watering-planner')
 // D0 注入器已下沉到 layer 共享：plant-user-http / diagnose-http 共用同一实现。
 const { injectD0IntoForecastDays } = require('/opt/utils/weather-day-file-reader')
+const {
+  computeTranspirationIntervalFactor,
+  resolveShadowModeFromEnv
+} = require('/opt/utils/transpiration')
+const { resolveAirEnvironmentEvidence } = require('/opt/utils/air-environment-evidence')
 
 /**
  * 从前端天气日数据（environmentWeatherWindow.historicalDays）构建 planner 所需的摘要。
@@ -88,8 +94,41 @@ function buildWeatherSummary(dailyRecords = [], plantContext = {}) {
   return summary
 }
 
+async function resolveConfirmedWateringEvents({
+  openid = '',
+  catalogPlantId = '',
+  wateringEvents = []
+} = {}) {
+  if (Array.isArray(wateringEvents) && wateringEvents.length) {
+    return wateringEvents
+  }
+  if (!openid || !catalogPlantId) {
+    return []
+  }
+  try {
+    const result = await models.$runSQL(
+      `SELECT CAST(planner_result_json AS CHAR) AS planner_result_json_text
+       FROM watering_advisor_sessions
+       WHERE _openid = {{openid}} AND catalog_plant_id = {{catalogPlantId}}
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      { openid, catalogPlantId }
+    )
+    const raw = result?.data?.executeResultList?.[0]?.planner_result_json_text
+    const plannerResult = raw && typeof raw === 'string' ? JSON.parse(raw) : raw || {}
+    const confirmedDate = String(plannerResult?.confirmedWateredDate || '').trim()
+    if (/^\d{4}-\d{2}-\d{2}$/.test(confirmedDate)) {
+      return [{ date: confirmedDate, watered: true, amount: 'normal' }]
+    }
+  } catch (error) {
+    // 历史表未就绪或旧记录损坏时，保持无历史语义，不伪造日期。
+    console.warn('读取独立浇水确认记录失败:', error?.message || error)
+  }
+  return []
+}
+
 /**
- * 独立浇水建议计算（无 plantId、无浇水历史）。
+ * 独立浇水建议计算（无 plantId；未确认过浇水时无历史）。
  *
  * 通过 catalogPlantId 从植物知识库取属级浇水策略 + 温湿度 bounds，
  * 盆型由前端临时传入，天气由前端自动获取后传入。
@@ -105,16 +144,20 @@ function buildWeatherSummary(dailyRecords = [], plantContext = {}) {
  * @param {string} params.referenceDate - 参考日期 YYYY-MM-DD
  * @param {string} params.locationKey - 地点 key（用于 D0 day file 读取）
  * @param {string} params.timezone - 时区，默认 Asia/Shanghai
- * @returns {Promise<object>} planner 计算结果 + catalog 植物信息
+ * @returns {Promise<object>} planner 计算结果 + 日期/盆土/环境审计字段
  */
 async function computeAdhocPlanner({
+  openid = '',
   catalogPlantId,
   potProfile = null,
   weatherDays = [],
   forecastDays = [],
   referenceDate = '',
   locationKey = '',
-  timezone = 'Asia/Shanghai'
+  timezone = 'Asia/Shanghai',
+  lightEnvironment = null,
+  airEnvironmentOverride = null,
+  wateringEvents = []
 } = {}) {
   if (!catalogPlantId) {
     return { error: '缺少植物种类ID', statusCode: 400 }
@@ -134,6 +177,12 @@ async function computeAdhocPlanner({
     humidityMax: plant.humidityMax ?? null
   }
 
+  const resolvedWateringEvents = await resolveConfirmedWateringEvents({
+    openid,
+    catalogPlantId,
+    wateringEvents
+  })
+
   // D0 注入：前端传 D+1..D+14（14 项），后端注入 D0 latestSample 作为当日天气
   const { forecastDays: forecastWithD0, todayWeatherSource, todayWeatherReason, referenceDate: resolvedReferenceDate } =
     await injectD0IntoForecastDays({
@@ -146,10 +195,22 @@ async function computeAdhocPlanner({
   const historical = buildWeatherSummary(weatherDays.slice(0, 10), strategy)
   const forecast = buildWeatherSummary(forecastWithD0.slice(0, 15), strategy)
 
-  // 独立入口无浇水历史，传空事件集合
+  // 独立入口默认无历史；若用户曾明确确认完成浇水，则复用该确认事件。
   const timeline = normalizeCareBehaviorTimeline({
     referenceDate: resolvedReferenceDate,
-    watering_events_10d: []
+    watering_events_10d: resolvedWateringEvents
+  })
+
+  const airEnvironmentEvidence = resolveAirEnvironmentEvidence(airEnvironmentOverride)
+  const transpiration = computeTranspirationIntervalFactor({
+    lightEnvironment,
+    weatherDays: weatherDays.slice(0, 10),
+    weatherSummary: historical,
+    airEnvironmentEvidence,
+    plantStrategy: strategy.wateringQuantization
+      ? { wateringQuantization: strategy.wateringQuantization }
+      : null,
+    shadow: resolveShadowModeFromEnv(process.env)
   })
 
   const plan = buildWateringPlanner({
@@ -159,14 +220,38 @@ async function computeAdhocPlanner({
     behaviorTimeline: timeline,
     potProfile: potProfile || null,
     wateringQuantization: strategy.wateringQuantization || null,
-    referenceDate: resolvedReferenceDate
+    referenceDate: resolvedReferenceDate,
+    transpirationIntervalFactor: transpiration.intervalFactor
   })
 
-  // 独立浇水仅返回建议毫升数，不返回日期/间隔/盆土判断/蒸腾/光照文案。
+  // 无历史时 nextWaterDate 保持 null；有明确传入的 wateringEvents 时才允许推导日期。
+  const hasWateringHistory = resolvedWateringEvents.length > 0
   return {
     statusCode: 200,
     data: {
       amountRangeMl: plan.amountRangeMl,
+      nextWaterDate: hasWateringHistory ? plan.nextWaterDate : null,
+      nextWaterWindow: hasWateringHistory ? plan.nextWaterWindow : null,
+      nextWaterReason: hasWateringHistory
+        ? plan.nextWaterReason
+        : '尚无上次浇水记录，暂不推导下次浇水日期；请先检查盆土。',
+      wateringContext: plan.wateringContext,
+      action: plan.action,
+      stopCondition: plan.stopCondition,
+      confidenceLevel: plan.confidenceLevel,
+      reasonCodes: plan.reasonCodes,
+      soilCheck: plan.soilCheck,
+      transpirationIntervalFactor: plan.transpirationIntervalFactor,
+      seasonalIntervalFactor: plan.seasonalIntervalFactor,
+      airEnvironmentAudit: airEnvironmentEvidence
+        ? {
+            evidence: airEnvironmentEvidence,
+            intervalFactor: transpiration.intervalFactor,
+            airFactor: transpiration.airFactor,
+            computedFactor: transpiration.computedFactor,
+            shadow: transpiration.shadow
+          }
+        : null,
       todayWeatherSource,
       todayWeatherReason
     },
@@ -177,5 +262,6 @@ async function computeAdhocPlanner({
 module.exports = {
   buildWeatherSummary,
   computeAdhocPlanner,
-  injectD0IntoForecastDays
+  injectD0IntoForecastDays,
+  resolveConfirmedWateringEvents
 }

@@ -3,31 +3,30 @@
 // 原始输入固定为 { source, windowDirectionCount, windowOpenFrequency }，初始均为 null。
 // 公开输入只接受组件自己产生的闭集值；纯函数对未答或不完整开窗返回 null。
 
-// 换气来源选项（source）
+// 换气来源选项（source）；unknown 仅保留给历史资料，不再作为用户选项。
 export const AIR_EXCHANGE_SOURCES = Object.freeze([
   { key: 'window', label: '窗户情况' },
-  { key: 'fresh_air', label: '新风系统' },
-  { key: 'unknown', label: '不确定' }
+  { key: 'fresh_air', label: '新风系统' }
 ])
 
-// 开窗方向数量选项（仅 source === 'window' 时展示）
+// 开窗方向数量选项（仅 source === 'window' 时展示）；关闭窗户已并入频率。
 export const WINDOW_DIRECTION_COUNT_OPTIONS = Object.freeze([
   { key: 'one', label: '一个' },
-  { key: 'two_or_more', label: '两个及以上' },
-  { key: 'closed', label: '关闭窗户' }
+  { key: 'two_or_more', label: '两个及以上' }
 ])
 
 // 开窗频率选项（仅 source === 'window' 时展示）
 export const WINDOW_OPEN_FREQUENCY_OPTIONS = Object.freeze([
   { key: 'daily', label: '每天' },
   { key: 'every_other_day', label: '隔天' },
-  { key: 'weekly_1_2', label: '每周 1–2 次' }
+  { key: 'weekly_1_2', label: '每周 1–2 次' },
+  { key: 'almost_never', label: '几乎不开（可选新风系统）' }
 ])
 
 // 合法闭集值：组件只产生这些 key，纯函数据此判定
 const VALID_SOURCE_KEYS = new Set(['window', 'fresh_air', 'unknown'])
 const VALID_DIRECTION_COUNT_KEYS = new Set(['one', 'two_or_more', 'closed'])
-const VALID_FREQUENCY_KEYS = new Set(['daily', 'every_other_day', 'weekly_1_2'])
+const VALID_FREQUENCY_KEYS = new Set(['daily', 'every_other_day', 'weekly_1_2', 'almost_never'])
 
 // 初始“尚未回答”状态：所有字段均为 null（不是 unknown）
 export function createInitialAirExchangeInput() {
@@ -40,7 +39,6 @@ export function createInitialAirExchangeInput() {
 
 // 判断是否已具备可完成的完整回答
 // - 初始未答为 false
-// - source === 'window' 选择关闭窗户时可直接完成
 // - source === 'window' 选择一个 / 两个及以上方向时还需频率
 // - fresh_air、unknown 可单独完成
 export function isAirExchangeAnswerReady(value = {}) {
@@ -66,14 +64,10 @@ export function isAirExchangeAnswerReady(value = {}) {
 // - unknown 返回 level=unknown
 // - 双方向+每天为 high
 // - 单方向+每天 或 任意方向+隔天 为 medium
-// - 每周 1–2 次为 low
-// - 关闭窗户为 low
+// - 每周 1–2 次、几乎不开为 low
 // - fresh_air 为 medium
 function levelForWindow(windowDirectionCount, windowOpenFrequency) {
-  if (windowDirectionCount === 'closed') {
-    return 'low'
-  }
-  if (windowOpenFrequency === 'weekly_1_2') {
+  if (['weekly_1_2', 'almost_never'].includes(windowOpenFrequency)) {
     return 'low'
   }
   if (windowDirectionCount === 'two_or_more' && windowOpenFrequency === 'daily') {
@@ -100,11 +94,18 @@ export function resolveAirExchangeEvidence(value = {}) {
       level: levelForSource(source)
     }
   }
+  if (value.windowDirectionCount === 'closed') {
+    return {
+      source: 'window',
+      windowDirectionCount: 'one',
+      windowOpenFrequency: 'almost_never',
+      level: 'low'
+    }
+  }
   return {
     source: 'window',
     windowDirectionCount: value.windowDirectionCount,
-    windowOpenFrequency:
-      value.windowDirectionCount === 'closed' ? null : (value.windowOpenFrequency ?? null),
+    windowOpenFrequency: value.windowOpenFrequency ?? null,
     level: levelForWindow(value.windowDirectionCount, value.windowOpenFrequency)
   }
 }

@@ -57,7 +57,7 @@ const BUILTIN_LIGHT_ACTION_PROFILES = {
     threeDayActions: ['3 天内观察灼伤边界是否继续扩大'],
     sevenDayObserve: ['7 天内观察新叶是否恢复正常'],
     avoidActions: ['不要马上重肥或重药'],
-    retakeOrEscalate: ['若灼伤持续扩大，补拍叶面与摆放位置']
+    retakeOrEscalate: ['若灼伤持续扩大，补拍叶面并说明最近的光照和离窗距离变化']
   }
 }
 

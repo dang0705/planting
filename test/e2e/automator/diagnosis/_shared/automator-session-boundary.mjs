@@ -4,11 +4,13 @@ import {
   setClassification
 } from '../../care/airflow/_shared/lib/reporter.mjs'
 import { captureFormalScreenshot } from '../../_shared/formal-leaf-harness.mjs'
+import {
+  screenshotStabilityBudget,
+  waitForScreenshotStability
+} from '../../_shared/screenshot-stability.mjs'
 import { resolveWithinDeadline } from './fixture-async-deadline.mjs'
 
 const DEFAULT_OPERATION_TIMEOUT_MS = 12000
-const SCREENSHOT_RETRY_DELAY_MS = 500
-const SCREENSHOT_ATTEMPTS = 2
 const SCREENSHOT_RENDER_SETTLE_MS = 1200
 const rawSessions = new WeakMap()
 const normalizeRoute = page => String(page?.path || '').replace(/^\//, '')
@@ -128,6 +130,7 @@ export async function handoffQuestionPackageScreenshot({
   captureScreenshot = captureFormalScreenshot,
   timeoutMs,
   renderSettleMs = SCREENSHOT_RENDER_SETTLE_MS,
+  projectPath,
   setTimer,
   clearTimer
 }) {
@@ -138,12 +141,28 @@ export async function handoffQuestionPackageScreenshot({
       `expected ${expectedRoute}, got ${normalizeRoute(page)}`
     )
   }
-  // The active-question marker can become observable before the track transform,
-  // scroll-view layout, and card entrance transition have settled. Taking the
-  // renderer snapshot in that gap is a known source of App.captureScreenshot
-  // no-response failures, so the handoff has an explicit visual-stability edge.
+  // A fixed sleep is only a lower bound. The shared gate also observes the
+  // generated project quiet window and two identical page states, so a hot
+  // compile/reload cannot be mistaken for a settled renderer.
   if (renderSettleMs > 0) {
     await sleep(renderSettleMs)
+  }
+  let preCaptureStability = { status: 'skipped', reason: 'primary_page_probe_unavailable' }
+  if (typeof session?.currentPage === 'function') {
+    try {
+      preCaptureStability = await waitForScreenshotStability({
+        miniProgram: session,
+        projectPath,
+        expectedRoute,
+        timeoutMs: screenshotStabilityBudget(Number(timeoutMs) || 10_000)
+      })
+    } catch (error) {
+      preCaptureStability = {
+        status: 'failed',
+        code: error?.code || 'screenshot_stability_failed',
+        reason: String(error?.message || error)
+      }
+    }
   }
   try {
     await disconnectBoundedAutomatorSession({
@@ -156,28 +175,20 @@ export async function handoffQuestionPackageScreenshot({
   } catch (error) {
     return block(report, 'primary_session_disconnect_before_screenshot', error)
   }
-  let worker = null
-  const screenshotAttempts = []
-  for (let attempt = 1; attempt <= SCREENSHOT_ATTEMPTS; attempt += 1) {
-    worker = await captureScreenshot({ wsEndpoint, outputPath, timeoutMs }).catch(error => ({
-      status: 'failed',
-      validPng: false,
-      detail: String(error?.message || error)
-    }))
-    screenshotAttempts.push({
-      attempt,
-      status: worker.status,
-      code: worker.code || null,
-      detail: worker.detail || worker.reason || null
-    })
-    if (worker.status === 'passed' && worker.validPng === true) {
-      break
-    }
-    if (attempt < SCREENSHOT_ATTEMPTS) {
-      await sleep(SCREENSHOT_RETRY_DELAY_MS)
-    }
-  }
-  worker = { ...worker, attempts: screenshotAttempts }
+  const worker = await captureScreenshot({
+    wsEndpoint,
+    outputPath,
+    timeoutMs,
+    projectPath,
+    expectedRoute,
+    maxAttempts: 2,
+    retryDelayMs: 350
+  }).catch(error => ({
+    status: 'failed',
+    validPng: false,
+    detail: String(error?.message || error),
+    attempts: []
+  }))
   let rawSession
   let resumedSession
   let resumedPage
@@ -219,10 +230,7 @@ export async function handoffQuestionPackageScreenshot({
       report,
       'BLOCKED_ENV',
       `screenshot worker ${worker.status || 'failed'}: ${
-        worker.detail ||
-        worker.reason ||
-        worker.code ||
-        'worker did not produce a valid PNG'
+        worker.detail || worker.reason || worker.code || 'worker did not produce a valid PNG'
       }`
     )
     return {
@@ -234,7 +242,13 @@ export async function handoffQuestionPackageScreenshot({
     }
   }
   recordScreenshot(report, outputPath)
-  return { ok: true, stage: 'reacquired', worker, session: resumedSession, page: resumedPage }
+  return {
+    ok: true,
+    stage: 'reacquired',
+    worker: { ...worker, pre_capture_stability: preCaptureStability },
+    session: resumedSession,
+    page: resumedPage
+  }
 }
 
 export function recordLanRequestEvidence({

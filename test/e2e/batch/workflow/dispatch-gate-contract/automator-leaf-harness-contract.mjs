@@ -17,9 +17,13 @@ import {
 import { executionBundleFingerprint } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/execution-bundle.mjs'
 import { readCatalog } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/catalog.mjs'
 
+assert.equal(
+  formalAutomatorEndpoint({ MINIPROGRAM_AUTOMATOR_WS: 'ws://127.0.0.1:9421' }),
+  'ws://127.0.0.1:9421'
+)
 assert.throws(
-  () => formalAutomatorEndpoint({ MINIPROGRAM_AUTOMATOR_WS: 'ws://127.0.0.1:9421' }),
-  /existing 9420/
+  () => formalAutomatorEndpoint({ MINIPROGRAM_AUTOMATOR_WS: 'http://127.0.0.1:9421' }),
+  /supervisor-provided Automator endpoint/
 )
 const calls = []
 const mp = { disconnect: async () => calls.push('disconnect') }
@@ -142,6 +146,7 @@ const captureWithTimers = ({ exitOnSignal }) => {
     wsEndpoint: 'ws://127.0.0.1:9420',
     outputPath: path.join(os.tmpdir(), `formal-leaf-${exitOnSignal ? 'exit' : 'live'}.png`),
     timeoutMs: 1,
+    maxAttempts: 1,
     terminateGraceMs: 1,
     killGraceMs: 1,
     spawnProcess: () => child,
@@ -237,7 +242,11 @@ for (const entry of readCatalog().entries) {
     `${entry.id} must execute through the shared formal leaf harness`
   )
   for (const file of activeBundle.files) {
-    if (file === harnessPath || file.endsWith('/screenshot-worker.mjs')) {
+    if (
+      file === harnessPath ||
+      file.endsWith('/screenshot-worker.mjs') ||
+      file.endsWith('/screenshot-stability.mjs')
+    ) {
       continue
     }
     const source = fs.readFileSync(file, 'utf8')

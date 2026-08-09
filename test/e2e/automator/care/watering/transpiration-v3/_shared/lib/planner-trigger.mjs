@@ -13,8 +13,7 @@
  *   2. 等待 watering-reminder-sheet 出现
  *   3. 点击 watering-reminder-last-watering-row
  *   4. 等待 watering-date-picker-sheet 出现
- *   5. 在 watering-date-picker-content 容器内通过结构定位"确认"按钮并点击
- *      （该按钮无独立 ID，通过稳定容器 ID + 容器内 button 结构定位）
+ *   5. 点击 watering-date-picker-confirm-button 确认
  *   6. confirmDatePicker → fetchPlanner → /user-plants/watering-planner wx.request
  *
  * 断言无副作用：
@@ -24,7 +23,6 @@
 
 import {
   findViewById,
-  findByIdPrefixAndSuffix,
   collectByIdPrefix,
   waitForElement
 } from './element-helpers.mjs'
@@ -34,7 +32,7 @@ const WATERING_ENTRY_SUFFIX = '-water'
 const WATERING_SHEET_ID = 'watering-reminder-sheet'
 const LAST_WATERING_ROW_ID = 'watering-reminder-last-watering-row'
 const DATE_PICKER_SHEET_ID = 'watering-date-picker-sheet'
-const DATE_PICKER_CONTENT_ID = 'watering-date-picker-content'
+const DATE_PICKER_CONFIRM_BUTTON_ID = 'watering-date-picker-confirm-button'
 const WATERING_REMINDER_SAVE_API = '/watering-reminders'
 
 /**
@@ -55,50 +53,26 @@ export async function closeWateringSheet(page) {
 }
 
 /**
- * 在 watering-date-picker-content 容器内定位"确认"按钮。
+ * 定位浇水日期选择器的确认按钮。
  *
- * 该按钮无独立 ID（通过 <template #confirm> 插槽覆写），
- * 使用稳定容器 ID + 容器内 button 结构定位（不用中文文案或坐标）。
- *
- * 严格规则：只在 #watering-date-picker-content 内找到恰好 2 个 button 时
- * 选第二个（第一个是"取消"，第二个是"确认"）。button 数量不是 2 时返回
- * { button: null, ambiguous: true }，由调用方判定 BLOCKED_ENV。
- * 绝不扫描全页面按中文文案点"确认"，避免误触。
+ * 使用当前组件公开的稳定 ID，不扫描全页面文案或依赖 button 顺序，避免误触。
  *
  * @param {object} page
  * @returns {Promise<{button: object|null, ambiguous: boolean, detail: string}>}
  */
 export async function findDatePickerConfirmButton(page) {
-  const contentEl = await findViewById(page, DATE_PICKER_CONTENT_ID)
-  if (!contentEl) {
+  const confirmButton = await findViewById(page, DATE_PICKER_CONFIRM_BUTTON_ID)
+  if (confirmButton) {
     return {
-      button: null,
+      button: confirmButton,
       ambiguous: false,
-      detail: `${DATE_PICKER_CONTENT_ID} 容器未找到`
-    }
-  }
-  let buttonCount = 0
-  try {
-    const buttons = await contentEl.$$('button')
-    buttonCount = Array.isArray(buttons) ? buttons.length : 0
-    if (buttonCount === 2) {
-      return {
-        button: buttons[1],
-        ambiguous: false,
-        detail: '容器内恰好 2 个 button，选第二个（确认）'
-      }
-    }
-  } catch (e) {
-    return {
-      button: null,
-      ambiguous: true,
-      detail: `容器内 button 查询异常: ${e?.message || e}`
+      detail: `found ${DATE_PICKER_CONFIRM_BUTTON_ID}`
     }
   }
   return {
     button: null,
     ambiguous: true,
-    detail: `容器内 button 数量=${buttonCount}，需恰好 2 个（取消+确认）才能稳定定位；不点页面任意"确认"`
+    detail: `${DATE_PICKER_CONFIRM_BUTTON_ID} 未找到`
   }
 }
 

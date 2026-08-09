@@ -52,7 +52,7 @@ function buildOrthogonalProbeText(item = {}, packageTopic = '', _context = {}) {
       }
     case QUESTION_PACKAGE_TOPICS.LIGHT_CHANGE_CONTEXT:
       return {
-        questionText: '黄叶和光照有关时，先看最近摆放位置和直射情况。最近 1-2 周，这盆植物更接近哪种光照？',
+        questionText: '黄叶和光照有关时，先看最近的直射、遮阴和离窗距离。最近 1-2 周，这盆植物更接近哪种光照？',
         helpText: '直接按全日光、散光、全阴或离窗远近选择；后端会结合这类植物的养护基线判断偏强或偏弱。',
         packageSection: QUESTION_PACKAGE_SECTIONS.CONTEXT_PROBE
       }
@@ -195,8 +195,8 @@ function buildOrthogonalProbeText(item = {}, packageTopic = '', _context = {}) {
       return {
         questionText:
           locationKey === 'leaf'
-            ? '光照类问题先看摆放位置。最近 1-2 周，这盆植物更接近全日光、散光还是全阴？'
-            : '光照类问题先看摆放位置。最近 1-2 周，这个部位是否更接近全日光或靠窗强直射？',
+            ? '光照类问题先看直射、遮阴和离窗距离。最近 1-2 周，这盆植物更接近全日光、散光还是全阴？'
+            : '光照类问题先看直射、遮阴和离窗距离。最近 1-2 周，这个部位是否更接近全日光或靠窗强直射？',
         helpText: '直接按全日光、散光、全阴或离窗远近选择；后端会结合这类植物的养护基线判断是否偏强。',
         packageSection: QUESTION_PACKAGE_SECTIONS.CONTEXT_PROBE
       }

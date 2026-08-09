@@ -5,7 +5,6 @@ const { getPlantProfileCompletenessDetail, calcPlantProfileCompleteness } =
 
 const completePlant = {
   canonicalName: '绿萝',
-  location: '客厅',
   plantDate: '2026-06-23',
   careLocation: {
     locationKey: 'shanghai',
@@ -19,6 +18,26 @@ const completePlant = {
     position: 'window_side',
     hasDirectSun: true,
     distance: 1
+  },
+  airEnvironment: {
+    airExchange: {
+      source: 'window',
+      windowDirectionCount: 'one',
+      windowOpenFrequency: 'daily'
+    },
+    canopyOpenness: 'open',
+    deviceAirflow: {
+      mode: 'none',
+      sources: [],
+      directSources: [],
+      sourceModes: {}
+    }
+  },
+  potProfile: {
+    potTopDiameterCm: 18,
+    potHeightCm: 16,
+    substrateType: 'general',
+    hasDrainageHole: true
   }
 }
 
@@ -29,21 +48,19 @@ assert.equal(calcPlantProfileCompleteness(completePlant), 100)
 
 const cityMissing = getPlantProfileCompletenessDetail({
   canonicalName: '绿萝',
-  location: '客厅',
   plantDate: '2026-06-23',
   lightEnvironment: completePlant.lightEnvironment
 })
-assert.equal(cityMissing.score, 40)
+assert.equal(cityMissing.score, 25)
 assert.equal(cityMissing.requiredMissing, true)
 assert.equal(cityMissing.items.lightEnvironment.optional, true)
 
 const optionalLightMissing = getPlantProfileCompletenessDetail({
   canonicalName: '绿萝',
-  location: '客厅',
   plantDate: '2026-06-23',
   careLocation: completePlant.careLocation
 })
-assert.equal(optionalLightMissing.score, 95)
+assert.equal(optionalLightMissing.score, 60)
 assert.equal(optionalLightMissing.requiredMissing, false)
 
 const invalidLight = getPlantProfileCompletenessDetail({
@@ -54,12 +71,12 @@ const invalidLight = getPlantProfileCompletenessDetail({
     position: ''
   }
 })
-assert.equal(invalidLight.score, 95)
+assert.equal(invalidLight.score, 90)
 assert.equal(invalidLight.items.lightEnvironment.satisfied, false)
+assert.equal('location' in invalidLight.items, false)
 
 const emptyDetail = getPlantProfileCompletenessDetail({
   canonicalName: '',
-  location: '',
   plantDate: '',
   careLocation: null,
   lightEnvironment: null

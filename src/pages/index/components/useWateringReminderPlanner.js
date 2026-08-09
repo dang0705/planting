@@ -130,7 +130,8 @@ export function useWateringReminderPlanner({ props, userStore, selectedWateringE
         weatherDays: weatherDays.value,
         forecastDays: forecastDays.value,
         locationKey: plannerLocationKey.value,
-        timezone: plannerTimezone.value
+        timezone: plannerTimezone.value,
+        airEnvironmentOverride: props.plant?.airEnvironment?.input || null
       })
       if (result) {
         plannerResult.value = result

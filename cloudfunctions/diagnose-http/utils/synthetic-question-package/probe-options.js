@@ -40,7 +40,7 @@ function buildSyntheticObservedProbeOptionTexts(item = {}, packageTopic = '', _c
         },
         light_area: {
           text: '光照变化',
-          description: '最近直射、遮阴、摆放位置或离窗距离变化最明显。'
+          description: '最近直射、遮阴或离窗距离变化最明显。'
         },
         fertilization_area: {
           text: '施肥或换盆',

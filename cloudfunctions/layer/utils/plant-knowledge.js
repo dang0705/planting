@@ -66,12 +66,15 @@ function normalizeAirEnvironmentProfile(value, locationBinding = {}, updatedAt =
     return null
   }
   const source = value?.input ? value : { input: value, locationBinding }
-  const input = normalizeAirEnvironmentInput(source.input)
+  const isLegacyStoredProfile = Boolean(value?.input) && Number(source.schemaVersion || 1) < 2
+  const input = normalizeAirEnvironmentInput(source.input, {
+    requireDirectSource: !isLegacyStoredProfile
+  })
   if (!input) {
     return null
   }
   return {
-    schemaVersion: 1,
+    schemaVersion: isLegacyStoredProfile ? Number(source.schemaVersion || 1) : 2,
     input,
     locationBinding: normalizeAirEnvironmentLocationBinding(
       source.locationBinding || locationBinding

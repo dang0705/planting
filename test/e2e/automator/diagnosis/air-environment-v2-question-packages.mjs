@@ -264,12 +264,13 @@ async function verifyDirectAirflowOutcome(
     report,
     findElementById,
     controls: [
-      [`${idPrefix}-exchange-source-fresh_air`, 'select fresh-air exchange'],
+      [`${idPrefix}-exchange-source-window`, 'select window exchange'],
+      [`${idPrefix}-window-frequency-almost-never`, 'select almost-never window frequency'],
+      [`${idPrefix}-fresh-air-switch`, 'enable fresh-air exchange'],
       [`${idPrefix}-next-step`, 'open local-airflow step'],
       [`${idPrefix}-canopy-open`, 'select open plant surroundings'],
       [`${idPrefix}-device-mode-has-airflow`, 'select device airflow parent'],
-      [`${idPrefix}-device-mode-direct`, 'select direct device airflow'],
-      [`${idPrefix}-device-source-fresh_air`, 'select fresh-air device source'],
+      [`${idPrefix}-device-source-fresh_air-direct`, 'mark fresh-air airflow as direct'],
       ['diagnose-question-package-page-next-button', 'advance air question']
     ],
     questionDefinitions

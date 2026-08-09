@@ -16,11 +16,12 @@ function emitEvent(event) {
   emit(event)
 }
 
-const [, , wsEndpoint, outputPath, timeoutArg] = process.argv
+const [, , wsEndpoint, outputPath, timeoutArg, projectPath, expectedRoute] = process.argv
 if (!wsEndpoint || !outputPath) {
   emit({
     status: 'failed',
-    error: 'usage: automator-screenshot-worker <wsEndpoint> <outputPath> [timeoutMs]'
+    error:
+      'usage: automator-screenshot-worker <wsEndpoint> <outputPath> [timeoutMs] [projectPath] [expectedRoute]'
   })
 } else {
   runRendererScreenshotProbe({
@@ -28,6 +29,8 @@ if (!wsEndpoint || !outputPath) {
     wsEndpoint,
     outputPath,
     timeoutMs: Number(timeoutArg) || 20000,
+    projectPath,
+    expectedRoute,
     emitEvent
   })
     .then(emit)

@@ -311,7 +311,7 @@ const wiltingQuestionIds = [
 const wiltingInteractions = []
 let wiltingStep = 0
 const wiltingAirId = 'q_wilting_droop__air_environment'
-const wiltingAirControlId = `#diagnose-air-environment-${wiltingAirId}-exchange-source-fresh_air`
+const wiltingAirControlId = `#diagnose-air-environment-${wiltingAirId}-exchange-source-window`
 const nextWiltingStep = { tap: async () => (wiltingStep += 1) }
 const wiltingPage = {
   async $(selector) {

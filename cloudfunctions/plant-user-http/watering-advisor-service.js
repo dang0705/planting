@@ -99,6 +99,50 @@ async function saveAdvisorSession(openid, body = {}) {
   return { statusCode: 200, data: row ? mapSessionRow(row) : null, message: '保存成功' }
 }
 
+async function confirmAdvisorSessionWatered(openid, body = {}) {
+  const catalogPlantId = String(body.catalogPlantId || '').trim()
+  const wateredDate = String(body.wateredDate || '').trim()
+  if (!catalogPlantId || !/^\d{4}-\d{2}-\d{2}$/.test(wateredDate)) {
+    return { statusCode: 400, data: null, message: '缺少有效的植物种类或浇水日期' }
+  }
+
+  const latestResult = await models.$runSQL(
+    `SELECT
+       id, _openid, catalog_plant_id, catalog_plant_name,
+       CAST(pot_profile_json AS CHAR) AS pot_profile_json_text,
+       CAST(weather_summary_json AS CHAR) AS weather_summary_json_text,
+       CAST(planner_result_json AS CHAR) AS planner_result_json_text,
+       created_at, updated_at
+     FROM watering_advisor_sessions
+     WHERE _openid = {{openid}} AND catalog_plant_id = {{catalogPlantId}}
+     ORDER BY created_at DESC
+     LIMIT 1`,
+    { openid, catalogPlantId }
+  )
+  const row = latestResult?.data?.executeResultList?.[0]
+  if (!row) {
+    return { statusCode: 404, data: null, message: '未找到可更新的独立浇水建议' }
+  }
+
+  const plannerResult = parseJsonText(row.planner_result_json_text ?? row.planner_result_json, {})
+  const nextPlannerResult = {
+    ...(plannerResult && typeof plannerResult === 'object' ? plannerResult : {}),
+    confirmedWateredDate: wateredDate
+  }
+  await models.$runSQL(
+    `UPDATE watering_advisor_sessions
+     SET planner_result_json = {{plannerResultJson}}
+     WHERE id = {{id}} AND _openid = {{openid}}`,
+    { id: row.id, openid, plannerResultJson: JSON.stringify(nextPlannerResult) }
+  )
+
+  return {
+    statusCode: 200,
+    data: { id: row.id, catalogPlantId, confirmedWateredDate: wateredDate },
+    message: '已记录本次浇水'
+  }
+}
+
 /**
  * 分页查询用户历史独立浇水建议记录。
  *
@@ -146,6 +190,7 @@ async function listAdvisorSessions(openid, { page = 1, pageSize = 20 } = {}) {
 
 module.exports = {
   saveAdvisorSession,
+  confirmAdvisorSessionWatered,
   listAdvisorSessions,
   mapSessionRow
 }

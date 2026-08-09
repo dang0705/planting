@@ -84,8 +84,9 @@ function loadAppWithSpies(overrides = {}) {
       (() => ({
         intervalFactor: 1.0,
         computedFactor: 1.0,
+        airFactor: 1.0,
         shadow: true,
-        evidence: { light: false, weather: false }
+        evidence: { light: false, weather: false, air: false }
       })),
     fn(params) {
       transpirationSpy.calls.push(params)
@@ -190,6 +191,8 @@ function loadAppWithSpies(overrides = {}) {
           statusCode: 200,
           data: {
             amountRangeMl: [80, 150],
+            nextWaterDate: null,
+            soilCheck: { required: true, beforeWatering: true, message: '先检查盆土' },
             todayWeatherSource: 'missing',
             todayWeatherReason: 'test_mock'
           },
@@ -207,6 +210,11 @@ function loadAppWithSpies(overrides = {}) {
     if (request.endsWith('/watering-advisor-service')) {
       return {
         saveAdvisorSession: async () => ({ statusCode: 200, message: 'ok', data: null }),
+        confirmAdvisorSessionWatered: async () => ({
+          statusCode: 200,
+          message: '已记录本次浇水',
+          data: { confirmedWateredDate: '2026-06-18' }
+        }),
         listAdvisorSessions: async () => ({ statusCode: 200, data: { list: [], total: 0 } })
       }
     }
@@ -311,6 +319,7 @@ test('transpiration 收到 weatherDays、weatherSummary、plantStrategy、shadow
   assert.ok(call.plantStrategy, '应传入 plantStrategy')
   assert.ok(call.plantStrategy.wateringQuantization, 'plantStrategy 应包含 wateringQuantization')
   assert.equal(call.shadow, true, '默认应为 shadow 模式')
+  assert.equal(call.airEnvironmentEvidence, null, '没有空气资料时应传入 null')
 })
 test('buildWateringPlanner 收到 computeTranspirationIntervalFactor 产出的 intervalFactor', async () => {
   const { app, plannerSpy } = loadAppWithSpies({
@@ -318,7 +327,8 @@ test('buildWateringPlanner 收到 computeTranspirationIntervalFactor 产出的 i
       intervalFactor: 0.85,
       computedFactor: 1.0,
       shadow: false,
-      evidence: { light: true, weather: true }
+      evidence: { light: true, weather: true, air: false },
+      airFactor: 1
     })
   })
   await callPlannerRoute(app, { plantId: 1 })
@@ -339,7 +349,8 @@ test('shadow 模式下 computedFactor != 1.0 时触发二次 buildWateringPlanne
       intervalFactor: 1.0,
       computedFactor: 0.88,
       shadow: true,
-      evidence: { light: true, weather: false }
+      evidence: { light: true, weather: false, air: false },
+      airFactor: 1
     })
   })
   await callPlannerRoute(app, { plantId: 1 })
@@ -398,29 +409,32 @@ test('响应包含 v3 蒸腾审计字段', async () => {
   assert.ok('todayWeatherSource' in data, '响应应包含 todayWeatherSource')
   assert.ok('todayWeatherReason' in data, '响应应包含 todayWeatherReason')
 })
-test('空气环境只作为影子证据，不改变浇水计算输入或结果', async () => {
+test('空气环境证据进入蒸腾间隔修正，但不改变水量或 WET/DRY 输入', async () => {
   const evidence = {
     air_exchange_level: 'low',
     local_airflow_present: false,
     stagnation_risk: true,
     direct_airflow: false
   }
-  const { app, plannerSpy, airEnvironmentEvidenceSpy } = loadAppWithSpies({
+  const { app, plannerSpy, transpirationSpy, airEnvironmentEvidenceSpy } = loadAppWithSpies({
     airEnvironmentEvidenceImpl: () => evidence
   })
   const airEnvironmentOverride = { exchange: { source: 'window', direction: 'closed' } }
   const response = await callPlannerRoute(app, { plantId: 1, airEnvironmentOverride })
   assert.deepEqual(airEnvironmentEvidenceSpy.calls, [airEnvironmentOverride])
-  assert.deepEqual(response.payload.data.airEnvironmentShadow, {
+  assert.deepEqual(response.payload.data.airEnvironmentAudit, {
     evidence,
     intervalFactor: 1,
+    airFactor: 1,
+    computedFactor: 1,
     shadow: true
   })
+  assert.deepEqual(transpirationSpy.calls[0].airEnvironmentEvidence, evidence)
   assert.equal(Object.hasOwn(plannerSpy.calls[0], 'airEnvironmentOverride'), false)
   assert.deepEqual(response.payload.data.amountRangeMl, [100, 200])
   assert.equal(response.payload.data.transpirationIntervalFactor, 1)
 })
-test('独立 /watering-advisor：data keys 包含 amountRangeMl + D0 审计字段', async () => {
+test('独立 /watering-advisor：保留无历史不推导日期并返回盆土检查指导', async () => {
   const { app } = loadAppWithSpies()
   const response = await app._test.main({
     path: '/user-plants/watering-advisor',
@@ -436,13 +450,26 @@ test('独立 /watering-advisor：data keys 包含 amountRangeMl + D0 审计字�
     }
   })
   assert.equal(response.statusCode, 200)
-  assert.deepEqual(
-    Object.keys(response.payload.data).sort(),
-    ['amountRangeMl', 'todayWeatherReason', 'todayWeatherSource'],
-    `watering-advisor data keys 应包含 amountRangeMl + D0 审计字段，got ${JSON.stringify(
-      Object.keys(response.payload.data)
-    )}`
-  )
+  assert.ok('amountRangeMl' in response.payload.data)
+  assert.ok('soilCheck' in response.payload.data)
+  assert.ok('todayWeatherSource' in response.payload.data)
+  assert.equal(response.payload.data.nextWaterDate, null)
+})
+test('独立 /watering-advisor：确认浇水动作返回可复用的当天事件', async () => {
+  const { app } = loadAppWithSpies()
+  const response = await app._test.main({
+    path: '/user-plants/watering-advisor',
+    method: 'POST',
+    query: {},
+    headers: {},
+    body: {
+      action: 'confirm_watered',
+      catalogPlantId: 'test-1',
+      wateredDate: '2026-06-18'
+    }
+  })
+  assert.equal(response.statusCode, 200)
+  assert.equal(response.payload.data.confirmedWateredDate, '2026-06-18')
 })
 test('plantId 缺失返回 400', async () => {
   const { app } = loadAppWithSpies()

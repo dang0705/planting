@@ -106,7 +106,7 @@ async function captureRendererReadyRuntimeEvidence(options) {
     if (checks.page_data?.passed === true && checks.wx_request?.passed === true) {
       checks.appservice_rpc = {
         passed: true,
-        signal: 'ordinary_9420_appservice_rpc_only',
+        signal: 'ordinary_appservice_rpc_only',
         page_path: options.report.pagePath ?? 'unavailable',
         page_data: checks.page_data,
         wx_request: checks.wx_request

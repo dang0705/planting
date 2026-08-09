@@ -1,23 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="340.123" height="107.691" viewBox="0 0 340.123 107.691">
-<rect width="340.123" height="107.691" rx="16" fill="#F1F8F4"/>
-<g transform="translate(44.81,9.07) scale(1.0000,0.9999)">
+<g transform="translate(109.81,9.07) scale(1.0000,0.9999)">
 <path id="Vector" opacity="0.5" d="M0.566795 0V13.6031" stroke="#2D7A4F" stroke-opacity="0.15" stroke-width="1.13359"/>
 </g>
-<g transform="translate(294.18,9.07) scale(1.0000,0.9999)">
+<g transform="translate(229.18,9.07) scale(1.0000,0.9999)">
 <path id="Vector" opacity="0.5" d="M0.566795 0V13.6031" stroke="#2D7A4F" stroke-opacity="0.15" stroke-width="1.13359"/>
 </g>
 <g transform="translate(6.84,83.88) scale(0.9999,1.0005)">
 <path id="Vector" opacity="0.45" d="M323.073 0H3.40077C1.52258 0 0 1.52258 0 3.40077V14.7367C0 16.6149 1.52258 18.1374 3.40077 18.1374H323.073C324.951 18.1374 326.474 16.6149 326.474 14.7367V3.40077C326.474 1.52258 324.951 0 323.073 0Z" fill="#E8F5E9"/>
 </g>
-<g transform="translate(22.69,20.41) scale(0.9156,0.9669)">
+<g transform="translate(87.69,20.41) scale(0.9156,0.9669)">
 <path id="Vector" d="M16.7204 0.850192H3.11737C1.86524 0.850192 0.850192 1.86524 0.850192 3.11737V48.461C0.850192 49.7131 1.86524 50.7281 3.11737 50.7281H16.7204C17.9726 50.7281 18.9876 49.7131 18.9876 48.461V3.11737C18.9876 1.86524 17.9726 0.850192 16.7204 0.850192Z" fill="white" stroke="#2D7A4F" stroke-opacity="0.15" stroke-width="1.70038"/>
 </g>
-<g transform="translate(42.89,6.44) scale(1.0000,1.0000)">
+<g transform="translate(107.89,6.44) scale(1.0000,1.0000)">
 <path id="Vector" opacity="0.7" d="M0.680154 0V77.8096" stroke="white" stroke-width="1.36031"/>
 </g>
-<g transform="translate(299.27,20.41) scale(0.9156,0.9669)">
+<g transform="translate(234.27,20.41) scale(0.9156,0.9669)">
 <path id="Vector" d="M16.7204 0.850192H3.11737C1.86524 0.850192 0.850192 1.86524 0.850192 3.11737V48.461C0.850192 49.7131 1.86524 50.7281 3.11737 50.7281H16.7204C17.9726 50.7281 18.9876 49.7131 18.9876 48.461V3.11737C18.9876 1.86524 17.9726 0.850192 16.7204 0.850192Z" fill="#F1F8F4" fill-opacity="0.4" stroke="#2D7A4F" stroke-opacity="0.15" stroke-width="1.70038"/>
 </g>
+<g transform="translate(170.0615,92.5) scale(1.7) translate(-170.0615,-92.5)">
 <g transform="translate(168.36,61.21) scale(1.0001,1.0001)">
 <path id="Frame" opacity="0.75" d="M3.40077 1.70038C3.40077 0.761288 2.63948 0 1.70038 0C0.761288 0 0 0.761288 0 1.70038V18.7042C0 19.6433 0.761288 20.4046 1.70038 20.4046C2.63948 20.4046 3.40077 19.6433 3.40077 18.7042V1.70038Z" fill="#2D7A4F"/>
 </g>
@@ -36,28 +36,23 @@
 <g transform="translate(161.56,79.35) scale(1.0001,1.0016)">
 <path id="Vector" opacity="0.7" d="M15.3035 0H1.70038C0.761288 0 0 0.761288 0 1.70038V2.26718C0 3.20628 0.761288 3.96756 1.70038 3.96756H15.3035C16.2426 3.96756 17.0038 3.20628 17.0038 2.26718V1.70038C17.0038 0.761288 16.2426 0 15.3035 0Z" fill="#1B5E20"/>
 </g>
-
-
-
-<g transform="translate(31.32,20.41) scale(1.0000,0.9999)">
+</g>
+<g transform="translate(96.32,20.41) scale(1.0000,0.9999)">
 <path id="closed-left-vertical" opacity="0.7" d="M0.453436 0V49.8779" stroke="#2D7A4F" stroke-opacity="0.15" stroke-width="0.906872"/>
 </g>
-<g transform="translate(22.69,44.90) scale(1.0014,1.0000)">
+<g transform="translate(87.69,44.90) scale(1.0014,1.0000)">
 <path id="closed-left-horizontal" opacity="0.7" d="M0 0.453436H18.1374" stroke="#2D7A4F" stroke-opacity="0.15" stroke-width="0.906872"/>
 </g>
-<g transform="translate(307.90,20.41) scale(1.0000,0.9999)">
+<g transform="translate(242.90,20.41) scale(1.0000,0.9999)">
 <path id="closed-right-vertical" opacity="0.7" d="M0.453436 0V49.8779" stroke="#2D7A4F" stroke-opacity="0.15" stroke-width="0.906872"/>
 </g>
-<g transform="translate(299.27,44.90) scale(1.0014,1.0000)">
+<g transform="translate(234.27,44.90) scale(1.0014,1.0000)">
 <path id="closed-right-horizontal" opacity="0.7" d="M0 0.453436H18.1374" stroke="#2D7A4F" stroke-opacity="0.15" stroke-width="0.906872"/>
 </g>
-<g transform="translate(162.067,11.6535) scale(1.0000,1.0000)">
-<path id="Vector" d="M4.35243 0.3553H1.68768C0.951825 0.3553 0.3553 0.951825 0.3553 1.68768V9.68193C0.3553 10.4178 0.951825 11.0143 1.68768 11.0143H4.35243C5.08828 11.0143 5.6848 10.4178 5.6848 9.68193V1.68768C5.6848 0.951825 5.08828 0.3553 4.35243 0.3553Z" fill="#F1F8F4" stroke="#2D7A4F" stroke-opacity="0.15" stroke-width="0.7106"/>
-</g>
-<g transform="translate(172.727,11.6535) scale(1.0000,1.0000)">
-<path id="Vector" d="M4.35243 0.3553H1.68768C0.951825 0.3553 0.3553 0.951825 0.3553 1.68768V9.68193C0.3553 10.4178 0.951825 11.0143 1.68768 11.0143H4.35243C5.08828 11.0143 5.6848 10.4178 5.6848 9.68193V1.68768C5.6848 0.951825 5.08828 0.3553 4.35243 0.3553Z" fill="#F1F8F4" stroke="#2D7A4F" stroke-opacity="0.15" stroke-width="0.7106"/>
-</g>
-<g transform="translate(156.737,24.9735) scale(1.0000,1.0000)">
-<path id="Vector" d="M24.5157 0.53295H3.1977C1.726 0.53295 0.53295 1.726 0.53295 3.1977V10.3037C0.53295 11.7754 1.726 12.9685 3.1977 12.9685H24.5157C25.9874 12.9685 27.1805 11.7754 27.1805 10.3037V3.1977C27.1805 1.726 25.9874 0.53295 24.5157 0.53295Z" fill="#E8F5E9" stroke="#2D7A4F" stroke-opacity="0.15" stroke-width="1.0659"/>
+<g transform="translate(135,3)">
+<rect width="70" height="17" rx="4" fill="#F1F8F4" stroke="#2D7A4F" stroke-opacity="0.35" stroke-width="1.4"/>
+<rect x="10" y="6" width="43" height="5" rx="2.5" fill="#E8F5E9" stroke="#2D7A4F" stroke-opacity="0.2" stroke-width="0.8"/>
+<path d="M16 8.5H21M25 8.5H30M34 8.5H39M43 8.5H48" stroke="#2D7A4F" stroke-opacity="0.7" stroke-width="1.2" stroke-linecap="round"/>
+<circle cx="60" cy="8.5" r="2" fill="#2D7A4F" opacity="0.75"/>
 </g>
 </svg>

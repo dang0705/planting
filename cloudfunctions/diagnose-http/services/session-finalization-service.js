@@ -64,7 +64,12 @@ async function saveDiagnosisFeedback(openid, { resultId, feedback } = {}) {
       note: feedback?.note || ''
     })
   } catch (error) {
-    console.warn('写入 diagnosis_feedback 失败（已降级忽略）:', error.message)
+    console.warn('写入 diagnosis_feedback 失败:', error.message)
+    return {
+      ok: false,
+      errorCode: 'DIAGNOSIS_FEEDBACK_STORAGE_UNAVAILABLE',
+      message: '反馈暂未保存，请稍后重试。'
+    }
   }
 
   return { ok: true }

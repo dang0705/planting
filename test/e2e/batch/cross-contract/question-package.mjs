@@ -480,7 +480,12 @@ async function testAirEnvironmentSidecarSurvivesPackagePayloadAssembly() {
       windowOpenFrequency: null
     },
     canopyOpenness: 'open',
-    deviceAirflow: { mode: 'direct', sources: ['fresh_air'] }
+    deviceAirflow: {
+      mode: 'direct',
+      sources: ['fresh_air'],
+      directSources: ['fresh_air'],
+      sourceModes: { fresh_air: 'direct' }
+    }
   }
   const snapshot = {
     input,
@@ -511,7 +516,12 @@ async function testAirEnvironmentSidecarSurvivesPackagePayloadAssembly() {
         windowOpenFrequency: null
       },
       canopyOpenness: 'open',
-      deviceAirflow: { mode: 'direct', sources: ['fresh_air'] }
+      deviceAirflow: {
+        mode: 'direct',
+        sources: ['fresh_air'],
+        directSources: ['fresh_air'],
+        sourceModes: { fresh_air: 'direct' }
+      }
     }
   })
   assert.deepEqual(payload.airEnvironmentSnapshotsByQuestionId, {
@@ -524,7 +534,12 @@ async function testAirEnvironmentSidecarSurvivesPackagePayloadAssembly() {
           windowOpenFrequency: null
         },
         canopyOpenness: 'open',
-        deviceAirflow: { mode: 'direct', sources: ['fresh_air'] }
+        deviceAirflow: {
+          mode: 'direct',
+          sources: ['fresh_air'],
+          directSources: ['fresh_air'],
+          sourceModes: { fresh_air: 'direct' }
+        }
       }
     }
   })

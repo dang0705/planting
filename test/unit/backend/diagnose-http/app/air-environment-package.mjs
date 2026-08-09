@@ -25,7 +25,12 @@ const snapshot = {
 const directInput = {
   airExchange: { source: 'fresh_air' },
   canopyOpenness: 'open',
-  deviceAirflow: { mode: 'direct', sources: ['fresh_air'] }
+  deviceAirflow: {
+    mode: 'direct',
+    sources: ['fresh_air'],
+    directSources: ['fresh_air'],
+    sourceModes: { fresh_air: 'direct' }
+  }
 }
 
 const recorded = validateAirEnvironmentPackageSidecar({
@@ -58,6 +63,7 @@ assert.equal(recorded.evidence[questionKey].air_exchange_level, 'medium')
 assert.deepEqual(Object.keys(recorded.evidence[questionKey]).sort(), [
   'air_exchange_level',
   'direct_airflow',
+  'direct_airflow_sources',
   'local_airflow_present',
   'stagnation_risk'
 ])

@@ -139,9 +139,17 @@ function buildResolvedPlantContext({
     family: plant?.familyEn || userPlant?.familyEn || '',
     category: plant?.categoryCn || plant?.categoryEn || '',
     watering: normalizedPlantWatering || careProfile?.watering || null,
+    wateringQuantization:
+      plant?.wateringQuantization ||
+      userPlant?.wateringQuantization ||
+      careProfile?.wateringQuantization ||
+      careProfile?.watering?.wateringQuantization ||
+      null,
     fertilization: normalizedPlantFertilization || careProfile?.fertilization || null,
     sunning: normalizedPlantSunning || careProfile?.sunning || null,
     userLightContext: userPlant?.lightEnvironment || null,
+    airEnvironment: userPlant?.airEnvironment || null,
+    potProfile: userPlant?.potProfile || null,
     ventilation: normalizedPlantVentilation || careProfile?.ventilation || null,
     temperatureMin:
       plant?.temperatureMin === null || plant?.temperatureMin === undefined

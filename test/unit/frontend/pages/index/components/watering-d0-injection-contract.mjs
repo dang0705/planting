@@ -119,7 +119,7 @@ assert.match(
 
 /* ============================================================
  * 5. useWateringReminderPlanner.js (extracted from WateringReminderSheet.vue):
- *    传递 locationKey/timezone 给 fetchWateringPlannerResult
+ *    传递 locationKey/timezone 给用户植物 Planner，并把空气环境覆盖值一起传入
  * ============================================================ */
 
 assert.match(
@@ -138,6 +138,12 @@ assert.match(
   sheetPlannerSource,
   /fetchWateringPlannerResult\(\{[\s\S]*?locationKey: plannerLocationKey\.value,[\s\S]*?timezone: plannerTimezone\.value/,
   'useWateringReminderPlanner fetchPlanner 应传入 plannerLocationKey 和 plannerTimezone'
+)
+
+assert.match(
+  sheetPlannerSource,
+  /airEnvironmentOverride: props\.plant\?\.airEnvironment\?\.input \|\| null/,
+  'useWateringReminderPlanner fetchPlanner 应复用已保存的空气环境输入'
 )
 
 assert.match(
@@ -171,8 +177,8 @@ assert.match(
 
 assert.match(
   advisorSource,
-  /fetchWateringPlannerResult\(\{[\s\S]*?locationKey: plannerLocationKey\.value,[\s\S]*?timezone: 'Asia\/Shanghai'/,
-  'watering-advisor fetchWateringPlannerResult 应传入 locationKey 和 timezone'
+  /fetchUserPlantWateringPlanner\(\{[\s\S]*?airEnvironmentOverride,[\s\S]*?locationKey: plannerLocationKey\.value,[\s\S]*?timezone: 'Asia\/Shanghai'/,
+  'watering-advisor 用户植物 Planner 应传入空气环境、locationKey 和 timezone'
 )
 
 assert.match(
