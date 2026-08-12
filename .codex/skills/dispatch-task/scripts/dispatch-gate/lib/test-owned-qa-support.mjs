@@ -1,0 +1,881 @@
+import fs from 'node:fs'
+import crypto from 'node:crypto'
+import net from 'node:net'
+import os from 'node:os'
+import path from 'node:path'
+import { spawn, spawnSync } from 'node:child_process'
+import { localRuntimeLeasePath } from '../../../../../../scripts/dev/local-runtime-session.mjs'
+import {
+  LOCAL_RUNTIME_LEASE_ROOT,
+  MP_WEIXIN_RUNTIME_TARGET
+} from '../../../../../../scripts/dev/local-api-env-config.mjs'
+import { readCurrentSessionProjectEvidence } from './devtools-session-log.mjs'
+import {
+  ancestorsFrom,
+  controlPortListenerEvidence,
+  directControlPortEvidence,
+  listenerPids,
+  mainDevToolsProcesses,
+  normalizeRuntimePath,
+  userDataDirFromCommand
+} from './devtools-process-topology.mjs'
+import { canReclaimStaleLock } from './process-liveness.mjs'
+import { repoRoot } from './state.mjs'
+
+export const QA_RUNTIME_SESSION_ROOT = path.join(
+  repoRoot,
+  '.tmp',
+  'dispatch-task',
+  'qa-runtime-sessions'
+)
+export const QA_RUNTIME_PROFILE_PRODUCT_HASH = '50a7d9210159a32f006158795f893857'
+export const QA_RUNTIME_DEVTOOLS_CLI = '/Applications/wechatwebdevtools.app/Contents/MacOS/cli'
+export const QA_RUNTIME_PROFILE_ROOT = path.join('Library', 'Application Support', '微信开发者工具')
+// Keep the test account separate from the operator's normal DevTools profile,
+// but persist it across QA runs so a one-time QR login survives process
+// cleanup and restart.
+export const QA_RUNTIME_AUTH_HOME = path.join(os.homedir(), '.planting', 'qa-devtools-home')
+export const QA_RUNTIME_AUTH_PROFILE_ROOT = path.join(QA_RUNTIME_AUTH_HOME, QA_RUNTIME_PROFILE_ROOT)
+export const QA_RUNTIME_TARGET = MP_WEIXIN_RUNTIME_TARGET
+export const QA_RUNTIME_LEASE_ROOT = LOCAL_RUNTIME_LEASE_ROOT
+export const QA_RUNTIME_POLL_MS = 250
+export const QA_RUNTIME_CLEANUP_TIMEOUT_MS = 15_000
+const QA_PROFILE_PROJECT_LIST_KEY = 'reduxPersist:projectList'
+
+// These directories contain compiler artefacts only. Simulator storage may
+// carry the test account's authenticated mini-program state, so it must remain
+// outside this list for a QR login to survive owned-process cleanup.
+const QA_TRANSIENT_PROFILE_PATHS = Object.freeze([
+  // The IDE writes the previous session's random HTTP control port here. It is
+  // not authentication state; preserving it makes the next CLI invocation
+  // connect to a dead test-owned port instead of opening its isolated project.
+  'Default/.ide',
+  'WeappApplication',
+  'WeappCache/WeappCompileCache',
+  'WeappCache/WeappTraceFiles',
+  'WeappCache/requireCache',
+  'WeappCache/skeletonCache',
+  'WeappCache/bufferUrlCache',
+  'WeappCache/ProxyCache',
+  'WeappCache/dirCache',
+  'WeappSimulator/WeappFileSystem',
+  'WeappSimulator/WeappFileCache'
+])
+
+const QA_RUNTIME_PROFILE_LOCK = path.join(QA_RUNTIME_AUTH_HOME, '.profile.lock')
+
+export function reapStaleQaPortLocks() {
+  const lockRoot = path.join(QA_RUNTIME_SESSION_ROOT, 'locks')
+  if (!fs.existsSync(lockRoot)) {
+    return []
+  }
+  const removed = []
+  for (const file of fs.readdirSync(lockRoot)) {
+    if (!file.endsWith('.lock')) {
+      continue
+    }
+    const filePath = path.join(lockRoot, file)
+    let ownerPid = null
+    try {
+      ownerPid = JSON.parse(fs.readFileSync(filePath, 'utf8')).pid
+    } catch {
+      // A malformed lock cannot prove ownership. It is safe to reclaim only
+      // when no process is using the lock file itself.
+      try {
+        if (fs.statSync(filePath).size === 0) {
+          fs.unlinkSync(filePath)
+          removed.push(file)
+        }
+      } catch {
+        // Another cleanup pass may have removed it.
+      }
+      continue
+    }
+    if (processAlive(ownerPid)) {
+      continue
+    }
+    try {
+      fs.unlinkSync(filePath)
+      removed.push(file)
+    } catch {
+      // Another cleanup pass may have won the race.
+    }
+  }
+  return removed
+}
+
+export function processAlive(pid) {
+  if (!pid || Number(pid) <= 0) {
+    return false
+  }
+  try {
+    process.kill(Number(pid), 0)
+    const state = spawnSync('ps', ['-p', String(pid), '-o', 'state='], {
+      encoding: 'utf8'
+    }).stdout
+    return !/^\s*Z/u.test(String(state || ''))
+  } catch (error) {
+    return error?.code === 'EPERM'
+  }
+}
+
+export function processTable() {
+  const result = spawnSync('ps', ['-axo', 'pid=,ppid=,command='], { encoding: 'utf8' })
+  return result.stdout
+    .split('\n')
+    .map(line => line.trim().match(/^(\d+)\s+(\d+)\s+(.+)$/))
+    .filter(Boolean)
+    .map(match => ({ pid: Number(match[1]), parent_pid: Number(match[2]), command: match[3] }))
+}
+
+export function descendantsOf(rootPid) {
+  const children = new Map()
+  for (const item of processTable()) {
+    const list = children.get(item.parent_pid) || []
+    list.push(item)
+    children.set(item.parent_pid, list)
+  }
+  const descendants = []
+  const queue = [...(children.get(Number(rootPid)) || [])]
+  while (queue.length) {
+    const item = queue.shift()
+    descendants.push(item)
+    queue.push(...(children.get(item.pid) || []))
+  }
+  return descendants
+}
+
+export function sendSignal(pid, signal) {
+  try {
+    process.kill(Number(pid), signal)
+    return true
+  } catch (error) {
+    return error?.code === 'ESRCH'
+  }
+}
+
+function currentProcessLineage() {
+  const table = processTable()
+  const byPid = new Map(table.map(item => [Number(item.pid), item]))
+  const lineage = new Set([process.pid])
+  let current = byPid.get(Number(process.pid))
+  const visited = new Set()
+  while (current && !visited.has(Number(current.pid))) {
+    visited.add(Number(current.pid))
+    const parentPid = Number(current.parent_pid)
+    if (!parentPid || parentPid === Number(current.pid)) {
+      break
+    }
+    lineage.add(parentPid)
+    current = byPid.get(parentPid)
+  }
+  return lineage
+}
+
+export async function waitFor(predicate, timeoutMs, label) {
+  const deadline = Date.now() + timeoutMs
+  let lastError
+  while (Date.now() < deadline) {
+    try {
+      const value = await predicate()
+      if (value) {
+        return value
+      }
+    } catch (error) {
+      lastError = error
+    }
+    await new Promise(resolve => setTimeout(resolve, QA_RUNTIME_POLL_MS))
+  }
+  const error = new Error(`${label} exceeded ${timeoutMs}ms`)
+  error.code = 'qa_runtime_start_timeout'
+  error.cause = lastError
+  throw error
+}
+
+function freePort() {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer()
+    server.once('error', reject)
+    server.listen(0, '127.0.0.1', () => {
+      const port = server.address().port
+      server.close(error => (error ? reject(error) : resolve(port)))
+    })
+  })
+}
+
+function portLockPath(kind, port) {
+  return path.join(QA_RUNTIME_SESSION_ROOT, 'locks', `${kind}-${Number(port)}.lock`)
+}
+
+function acquirePortLock(kind, port) {
+  const filePath = portLockPath(kind, port)
+  fs.mkdirSync(path.dirname(filePath), { recursive: true })
+  try {
+    const fd = fs.openSync(filePath, 'wx')
+    fs.writeFileSync(
+      fd,
+      `${JSON.stringify({ pid: process.pid, acquired_at: new Date().toISOString() })}\n`
+    )
+    return {
+      status: 'acquired',
+      port: Number(port),
+      filePath,
+      release() {
+        try {
+          fs.closeSync(fd)
+        } catch {
+          // The descriptor may already be closed during failure cleanup.
+        }
+        try {
+          fs.unlinkSync(filePath)
+        } catch {
+          // The lock may already have been reclaimed by this owner.
+        }
+      }
+    }
+  } catch (error) {
+    if (error.code === 'EEXIST' && canReclaimStaleLock({ lockPath: filePath })) {
+      try {
+        fs.unlinkSync(filePath)
+        return acquirePortLock(kind, port)
+      } catch {
+        // Another owner may have won the race after stale-lock inspection.
+      }
+    }
+    return { status: 'blocked', port: Number(port), filePath, code: error.code }
+  }
+}
+
+export async function allocatePortLock(kind, { forbidden = new Set() } = {}) {
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    const port = await freePort()
+    if (forbidden.has(port)) {
+      continue
+    }
+    const lock = acquirePortLock(kind, port)
+    if (lock.status === 'acquired') {
+      return lock
+    }
+  }
+  const error = new Error(`unable to allocate unique ${kind} port`)
+  error.code = 'qa_runtime_port_allocation_failed'
+  throw error
+}
+
+function findSourceProfile() {
+  const configured = process.env.WECHAT_DEVTOOLS_PROFILE_PATH
+  if (configured && fs.existsSync(path.join(configured, 'Default', '.cli'))) {
+    return path.resolve(configured)
+  }
+  const root = path.join(os.homedir(), QA_RUNTIME_PROFILE_ROOT)
+  const candidates = fs.existsSync(root)
+    ? fs
+        .readdirSync(root, { withFileTypes: true })
+        .filter(item => item.isDirectory())
+        .map(item => path.join(root, item.name))
+        .filter(candidate => fs.existsSync(path.join(candidate, 'Default', '.cli')))
+    : []
+  const preferred = path.join(root, QA_RUNTIME_PROFILE_PRODUCT_HASH)
+  if (candidates.includes(preferred)) {
+    return preferred
+  }
+  if (candidates.length === 1) {
+    return candidates[0]
+  }
+  const error = new Error('微信开发者工具测试 profile 不可用')
+  error.code = 'qa_test_profile_unavailable'
+  throw error
+}
+
+function acquirePersistentProfileLock() {
+  fs.mkdirSync(QA_RUNTIME_AUTH_HOME, { recursive: true })
+  try {
+    const fd = fs.openSync(QA_RUNTIME_PROFILE_LOCK, 'wx')
+    fs.writeFileSync(
+      fd,
+      `${JSON.stringify({ pid: process.pid, acquired_at: new Date().toISOString() })}\n`
+    )
+    return {
+      status: 'acquired',
+      filePath: QA_RUNTIME_PROFILE_LOCK,
+      release() {
+        try {
+          fs.closeSync(fd)
+        } catch {
+          // The descriptor may already be closed during failure cleanup.
+        }
+        try {
+          fs.unlinkSync(QA_RUNTIME_PROFILE_LOCK)
+        } catch {
+          // A stale-lock recovery pass may already have removed it.
+        }
+      }
+    }
+  } catch (error) {
+    if (error.code === 'EEXIST' && canReclaimStaleLock({ lockPath: QA_RUNTIME_PROFILE_LOCK })) {
+      try {
+        fs.unlinkSync(QA_RUNTIME_PROFILE_LOCK)
+        return acquirePersistentProfileLock()
+      } catch {
+        // Another QA owner may have won the race after stale-lock inspection.
+      }
+    }
+    const blocked = new Error('QA DevTools 登录 profile 正在被另一个测试占用')
+    blocked.code = 'qa_test_profile_locked'
+    blocked.cause = error
+    throw blocked
+  }
+}
+
+function shouldCopyProfilePath(source, sourcePath) {
+  const relative = path.relative(source, sourcePath)
+  const parts = relative ? relative.split(path.sep) : []
+  const basename = path.basename(sourcePath)
+  return (
+    !parts.includes('WeappLog') &&
+    !['LOCK', 'SingletonLock', 'SingletonCookie', 'SingletonSocket'].includes(basename) &&
+    relative !== path.join('Default', '.ide')
+  )
+}
+
+export function resetTransientQaProfileState(profilePath) {
+  const profile = path.resolve(String(profilePath || ''))
+  const expectedRoot = path.resolve(QA_RUNTIME_AUTH_PROFILE_ROOT, QA_RUNTIME_PROFILE_PRODUCT_HASH)
+  if (profile !== expectedRoot) {
+    const error = new Error('QA transient cache reset refused outside the persistent QA profile')
+    error.code = 'qa_transient_profile_path_invalid'
+    throw error
+  }
+
+  const removed = []
+  for (const relativePath of QA_TRANSIENT_PROFILE_PATHS) {
+    const target = path.join(profile, relativePath)
+    if (!fs.existsSync(target)) {
+      continue
+    }
+    fs.rmSync(target, { recursive: true, force: true })
+    removed.push(relativePath)
+  }
+  return {
+    status: 'reset',
+    profile,
+    preserved: ['WeappLocalData', 'Default', 'WeappLog'],
+    removed
+  }
+}
+
+function qaProfileLocalStorageFile(profilePath, key) {
+  const profile = path.resolve(String(profilePath || ''))
+  const expectedRoot = path.resolve(QA_RUNTIME_AUTH_PROFILE_ROOT, QA_RUNTIME_PROFILE_PRODUCT_HASH)
+  if (profile !== expectedRoot) {
+    const error = new Error('QA project registration refused outside the persistent QA profile')
+    error.code = 'qa_project_list_profile_path_invalid'
+    throw error
+  }
+  const mapPath = path.join(profile, 'WeappLocalData', 'hash_key_map_2.json')
+  const map = JSON.parse(fs.readFileSync(mapPath, 'utf8'))
+  const hash = Object.entries(map).find(([, value]) => value === key)?.[0]
+  if (!hash) {
+    const error = new Error(`QA profile local-storage key is unavailable: ${key}`)
+    error.code = 'qa_project_list_key_unavailable'
+    throw error
+  }
+  return path.join(profile, 'WeappLocalData', `localstorage_${hash}.json`)
+}
+
+function qaProfileProjectStateFile(profilePath, projectPath) {
+  const profile = path.resolve(String(profilePath || ''))
+  const expectedRoot = path.resolve(QA_RUNTIME_AUTH_PROFILE_ROOT, QA_RUNTIME_PROFILE_PRODUCT_HASH)
+  if (profile !== expectedRoot) {
+    const error = new Error(
+      'QA project state registration refused outside the persistent QA profile'
+    )
+    error.code = 'qa_project_state_profile_path_invalid'
+    throw error
+  }
+  const key = `project2_${path.resolve(String(projectPath))}`
+  return {
+    key,
+    filePath: path.join(
+      profile,
+      'WeappLocalData',
+      `localstorage_${crypto.createHash('md5').update(key).digest('hex')}.json`
+    )
+  }
+}
+
+function writeQaProfileJson(filePath, content) {
+  const temporaryPath = `${filePath}.qa-tmp-${process.pid}-${Date.now()}`
+  fs.writeFileSync(temporaryPath, content)
+  fs.renameSync(temporaryPath, filePath)
+}
+
+export function buildQaProjectRuntimeState({
+  sourceState = {},
+  projectPath,
+  projectConfig = {}
+} = {}) {
+  const normalizedProjectPath = path.resolve(String(projectPath))
+  const projectSettings = projectConfig.setting || {}
+  return {
+    ...sourceState,
+    projectid: normalizedProjectPath,
+    projectpath: normalizedProjectPath,
+    projectPath: normalizedProjectPath,
+    appid: projectConfig.appid || sourceState.appid,
+    projectname: projectConfig.projectname || sourceState.projectname,
+    // DevTools stores this runtime discriminator as `weapp` even though the
+    // generated project.config.json uses the public config value
+    // `miniprogram`. Replacing the cached runtime value with the public
+    // config value makes a fresh project fail during appservice bootstrap.
+    // Keep the cached runtime discriminator when it is available.
+    compileType: sourceState.compileType || 'weapp',
+    libVersion: projectConfig.libVersion || sourceState.libVersion,
+    setting: {
+      ...(sourceState.setting || {}),
+      ...projectSettings
+    },
+    attr: sourceState.attr
+      ? {
+          ...sourceState.attr,
+          setting: {
+            ...(sourceState.attr.setting || {}),
+            ...projectSettings
+          }
+        }
+      : sourceState.attr
+  }
+}
+
+export function registerQaProjectInProfile({
+  profilePath,
+  projectPath,
+  sourceProjectPath,
+  projectConfig
+} = {}) {
+  const filePath = qaProfileLocalStorageFile(profilePath, QA_PROFILE_PROJECT_LIST_KEY)
+  const previousRaw = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : null
+  const mapPath = path.join(
+    path.resolve(String(profilePath)),
+    'WeappLocalData',
+    'hash_key_map_2.json'
+  )
+  const previousMapRaw = fs.readFileSync(mapPath, 'utf8')
+  const sourceState = (() => {
+    const candidates = []
+    const map = JSON.parse(previousMapRaw)
+    const exact = `project2_${path.resolve(String(sourceProjectPath))}`
+    if (map && Object.values(map).includes(exact)) {
+      candidates.push(exact)
+    }
+    for (const value of Object.values(map)) {
+      if (typeof value === 'string' && value.startsWith('project2_')) {
+        candidates.push(value)
+      }
+    }
+    for (const key of candidates) {
+      const sourceStateFile = qaProfileLocalStorageFile(profilePath, key)
+      try {
+        const state = JSON.parse(fs.readFileSync(sourceStateFile, 'utf8'))
+        if (state?.appid === projectConfig?.appid || state?.attr?.appid === projectConfig?.appid) {
+          return state
+        }
+      } catch {
+        // An unrelated or stale project state is ignored.
+      }
+    }
+    return null
+  })()
+  if (!sourceState) {
+    const error = new Error(
+      `QA profile has no cached project runtime state for appid ${projectConfig?.appid || 'unknown'}`
+    )
+    error.code = 'qa_project_runtime_state_unavailable'
+    throw error
+  }
+  const targetState = qaProfileProjectStateFile(profilePath, projectPath)
+  const targetStatePreviousRaw = fs.existsSync(targetState.filePath)
+    ? fs.readFileSync(targetState.filePath, 'utf8')
+    : null
+  let projectList = {}
+  try {
+    projectList = previousRaw ? JSON.parse(previousRaw) : {}
+  } catch (error) {
+    error.code = 'qa_project_list_parse_failed'
+    throw error
+  }
+  const sourceEntry =
+    projectList[sourceProjectPath] ||
+    Object.values(projectList).find(
+      entry => entry?.appId === projectConfig?.appid || entry?.appID === projectConfig?.appid
+    ) ||
+    {}
+  const normalizedProjectPath = path.resolve(String(projectPath))
+  projectList[normalizedProjectPath] = {
+    ...sourceEntry,
+    projectId: normalizedProjectPath,
+    appId: projectConfig?.appid || sourceEntry.appId,
+    projectPath: normalizedProjectPath,
+    projectName: sourceEntry.projectName || projectConfig?.projectname || 'QA snapshot',
+    compileType: sourceEntry.compileType || 'weapp',
+    isGame: false,
+    appType: Number(sourceEntry.appType || 0),
+    storage: sourceEntry.storage || {},
+    accessTime: Date.now()
+  }
+  const nextMap = { ...JSON.parse(previousMapRaw) }
+  nextMap[crypto.createHash('md5').update(targetState.key).digest('hex')] = targetState.key
+  const state = buildQaProjectRuntimeState({ sourceState, projectPath, projectConfig })
+  try {
+    writeQaProfileJson(filePath, `${JSON.stringify(projectList)}\n`)
+    writeQaProfileJson(mapPath, `${JSON.stringify(nextMap, null, 2)}\n`)
+    writeQaProfileJson(targetState.filePath, `${JSON.stringify(state)}\n`)
+  } catch (error) {
+    if (previousRaw === null) {
+      try {
+        fs.unlinkSync(filePath)
+      } catch {
+        // The file may have been removed by a concurrent profile cleanup.
+      }
+    } else {
+      writeQaProfileJson(filePath, previousRaw)
+    }
+    writeQaProfileJson(mapPath, previousMapRaw)
+    if (targetStatePreviousRaw === null) {
+      try {
+        fs.unlinkSync(targetState.filePath)
+      } catch {
+        // The file may have been removed by a concurrent profile cleanup.
+      }
+    } else {
+      writeQaProfileJson(targetState.filePath, targetStatePreviousRaw)
+    }
+    throw error
+  }
+  return {
+    status: 'registered',
+    filePath,
+    projectPath: normalizedProjectPath,
+    previousRaw,
+    mapPath,
+    previousMapRaw,
+    statePath: targetState.filePath,
+    statePreviousRaw: targetStatePreviousRaw
+  }
+}
+
+export function restoreQaProjectInProfile(registration) {
+  if (!registration?.filePath) {
+    return { status: 'not_needed' }
+  }
+  if (registration.previousRaw === null || registration.previousRaw === undefined) {
+    try {
+      fs.unlinkSync(registration.filePath)
+    } catch (error) {
+      if (error?.code !== 'ENOENT') {
+        return { status: 'blocked', error: error.message }
+      }
+    }
+  } else {
+    writeQaProfileJson(registration.filePath, registration.previousRaw)
+  }
+  if (registration.statePath) {
+    if (registration.statePreviousRaw === null || registration.statePreviousRaw === undefined) {
+      try {
+        fs.unlinkSync(registration.statePath)
+      } catch (error) {
+        if (error?.code !== 'ENOENT') {
+          return { status: 'blocked', error: error.message }
+        }
+      }
+    } else {
+      writeQaProfileJson(registration.statePath, registration.statePreviousRaw)
+    }
+  }
+  if (registration.mapPath && registration.previousMapRaw) {
+    writeQaProfileJson(registration.mapPath, registration.previousMapRaw)
+  }
+  return { status: 'restored', filePath: registration.filePath }
+}
+
+export function cloneTestProfile() {
+  const source = findSourceProfile()
+  const home = QA_RUNTIME_AUTH_HOME
+  const target = path.join(QA_RUNTIME_AUTH_PROFILE_ROOT, path.basename(source))
+  const profileLock = acquirePersistentProfileLock()
+  fs.mkdirSync(target, { recursive: true })
+  try {
+    // Initialize once from the installed user's profile. Subsequent runs retain
+    // the completed QR login and mini-program storage, while per-run IDE port
+    // markers and compiler artefacts are reset below.
+    if (!fs.existsSync(path.join(target, 'Default', '.cli'))) {
+      fs.cpSync(source, target, {
+        recursive: true,
+        filter(sourcePath) {
+          return shouldCopyProfilePath(source, sourcePath)
+        }
+      })
+    }
+    const transientState = resetTransientQaProfileState(target)
+    fs.mkdirSync(path.join(target, 'WeappLog', 'logs'), { recursive: true })
+    return { home, profile: target, profileLock, transientState }
+  } catch (error) {
+    profileLock.release()
+    throw error
+  }
+}
+
+function runtimeLease(targetPath) {
+  const filePath = localRuntimeLeasePath(targetPath, QA_RUNTIME_LEASE_ROOT)
+  try {
+    return { filePath, value: JSON.parse(fs.readFileSync(filePath, 'utf8')) }
+  } catch {
+    return { filePath, value: null }
+  }
+}
+
+export function localRuntimeOwned(lease, ownerPid, targetPath) {
+  return Boolean(
+    lease?.value?.owner_pid &&
+    Number(lease.value.owner_pid) === Number(ownerPid) &&
+    normalizeRuntimePath(lease.value.target_path) === normalizeRuntimePath(targetPath) &&
+    processAlive(ownerPid) &&
+    (!lease.value.child_pid || processAlive(lease.value.child_pid))
+  )
+}
+
+export function localRuntimeEvidence(targetPath) {
+  return runtimeLease(targetPath)
+}
+
+export function mainForSession({ profile, controlPort }) {
+  return mainDevToolsProcesses().find(item => {
+    const direct = directControlPortEvidence(item.command)
+    return (
+      normalizeRuntimePath(userDataDirFromCommand(item.command)) ===
+        normalizeRuntimePath(profile) && Number(direct.port) === Number(controlPort)
+    )
+  })
+}
+
+export function ownedRuntimeEvidence(session) {
+  const main = mainForSession(session)
+  if (!main) {
+    return {
+      status: 'unavailable',
+      code: 'qa_owned_devtools_not_found',
+      automator_port: session.wsPort,
+      control_port: session.controlPort,
+      owners: []
+    }
+  }
+  const control = controlPortListenerEvidence(session.controlPort, main.pid)
+  const wsOwners = listenerPids(session.wsPort).map(pid => ({
+    automation_listener_pid: pid,
+    main_devtools_pid: main.pid,
+    owned: ancestorsFrom(pid).some(item => Number(item.pid) === Number(main.pid))
+  }))
+  const sessionLog = readCurrentSessionProjectEvidence({
+    mainProcess: main,
+    expectedProjectPath: session.projectPath,
+    wsPort: session.wsPort,
+    requireAutomatorPort: false
+  })
+  const projectProof =
+    sessionLog.status === 'bootstrap_verified' &&
+    sessionLog.evidence_records?.some(
+      item =>
+        item.type === 'FileUtils' &&
+        normalizeRuntimePath(item.project_path) === normalizeRuntimePath(session.projectPath)
+    )
+  const wsOwner = wsOwners.filter(item => item.owned)
+  const verified = control.verified && projectProof && wsOwner.length === 1
+  return {
+    status: verified ? 'verified' : 'unavailable',
+    code: verified ? null : 'qa_owned_runtime_identity_unverified',
+    expected_project_path: normalizeRuntimePath(session.projectPath),
+    observed_project_path: projectProof ? normalizeRuntimePath(session.projectPath) : 'unavailable',
+    project_identity_verified: projectProof,
+    project_identity_source: projectProof ? 'test_owned_session_fileutils' : 'unavailable',
+    main_devtools_pid: main.pid,
+    automation_listener_pid: wsOwner[0]?.automation_listener_pid ?? null,
+    port_owner_pid: wsOwner[0]?.automation_listener_pid ?? null,
+    automator_listener_pids: wsOwners.map(item => item.automation_listener_pid),
+    automator_port: session.wsPort,
+    control_port: session.controlPort,
+    control_port_verified: control.verified,
+    user_data_dir: session.profile,
+    session_log_evidence: sessionLog,
+    owners: wsOwners
+  }
+}
+
+function appendChildOutput(child, filePath, label) {
+  const stream = fs.createWriteStream(filePath, { flags: 'a' })
+  const append = chunk => stream.write(`[${label}] ${String(chunk)}`)
+  child.stdout?.on('data', append)
+  child.stderr?.on('data', append)
+  child.once('close', () => stream.end())
+}
+
+export async function runDevToolsCli({ home, args, outputPath, timeoutMs = 30_000 }) {
+  const child = spawn(QA_RUNTIME_DEVTOOLS_CLI, args, {
+    cwd: repoRoot,
+    env: { ...process.env, HOME: home },
+    stdio: ['pipe', 'pipe', 'pipe']
+  })
+  child.stdin.end('y\n')
+  appendChildOutput(child, outputPath, 'devtools-cli')
+  return new Promise((resolve, reject) => {
+    let timedOut = false
+    const timer = setTimeout(() => {
+      timedOut = true
+      terminateProcessTree(child.pid, Math.min(timeoutMs, QA_RUNTIME_CLEANUP_TIMEOUT_MS)).then(
+        remaining =>
+          resolve({
+            pid: child.pid,
+            exitCode: null,
+            signal: 'timeout',
+            timedOut: true,
+            remaining
+          }),
+        () =>
+          resolve({
+            pid: child.pid,
+            exitCode: null,
+            signal: 'timeout',
+            timedOut: true,
+            remaining: []
+          })
+      )
+    }, timeoutMs)
+    const finish = value => {
+      clearTimeout(timer)
+      resolve(value)
+    }
+    child.once('error', error => {
+      if (timedOut) {
+        return
+      }
+      clearTimeout(timer)
+      reject(error)
+    })
+    child.once('close', (code, signal) => {
+      if (timedOut) {
+        return
+      }
+      finish({
+        pid: child.pid,
+        exitCode: code,
+        signal,
+        timedOut: false,
+        remaining: []
+      })
+    })
+  })
+}
+
+export async function terminateProcessTree(rootPid, timeoutMs = QA_RUNTIME_CLEANUP_TIMEOUT_MS) {
+  if (!rootPid || !processAlive(rootPid)) {
+    return []
+  }
+  const descendants = descendantsOf(rootPid)
+    .map(item => item.pid)
+    .reverse()
+  const pids = [...descendants, Number(rootPid)]
+  const protectedPids = currentProcessLineage()
+  if (pids.some(pid => protectedPids.has(Number(pid)))) {
+    // A cleanup target that contains the runner itself or one of its parents
+    // is never safe to terminate. This guard is intentionally below the
+    // ownership checks so a stale/incorrect port PID cannot kill the test
+    // runner and strand its profile lock.
+    return []
+  }
+  for (const pid of pids) {
+    sendSignal(pid, 'SIGTERM')
+  }
+  await waitFor(
+    () => pids.every(pid => !processAlive(pid)),
+    Math.floor(timeoutMs / 2),
+    `process tree ${rootPid} termination`
+  ).catch(() => {})
+  for (const pid of pids) {
+    if (processAlive(pid)) {
+      sendSignal(pid, 'SIGKILL')
+    }
+  }
+  await waitFor(
+    () => pids.every(pid => !processAlive(pid)),
+    Math.floor(timeoutMs / 2),
+    `process tree ${rootPid} kill`
+  ).catch(() => {})
+  return pids.filter(processAlive)
+}
+
+export async function terminateProcessIds(pids = [], timeoutMs = QA_RUNTIME_CLEANUP_TIMEOUT_MS) {
+  const unique = [...new Set(pids.map(pid => Number(pid)).filter(pid => pid > 0))]
+  const remaining = new Set()
+  for (const pid of unique) {
+    const residue = await terminateProcessTree(pid, timeoutMs)
+    residue.forEach(item => remaining.add(item))
+  }
+  return [...remaining].filter(processAlive)
+}
+
+export function cleanupEvidence(session) {
+  const lease = runtimeLease(session.runtimeTargetPath)
+  const borrowed = session.localRuntimeMode === 'borrowed'
+  return {
+    main_pid: mainForSession(session)?.pid ?? null,
+    control_listener_pids: session.controlPort ? listenerPids(session.controlPort) : [],
+    automator_listener_pids: session.wsPort ? listenerPids(session.wsPort) : [],
+    local_runtime_owner_alive: processAlive(session.localRuntimePid),
+    local_runtime_child_alive: processAlive(session.localRuntimeChildPid),
+    local_runtime_mode: session.localRuntimeMode || 'owned',
+    borrowed_local_runtime_owner_alive: borrowed
+      ? processAlive(session.borrowedLocalRuntimePid)
+      : false,
+    borrowed_local_runtime_child_alive: borrowed
+      ? processAlive(session.borrowedLocalRuntimeChildPid)
+      : false,
+    borrowed_local_runtime_preserved: borrowed,
+    auto_cli_alive: processAlive(session.auto_cli_pid),
+    session_profile_pids: sessionProfilePids(session),
+    local_runtime_lease: lease.value,
+    local_runtime_lease_path: lease.filePath
+  }
+}
+
+function sessionProfilePids(session) {
+  const rawProfile = String(session?.profile || '')
+  if (!rawProfile) {
+    return []
+  }
+  const profile = normalizeRuntimePath(rawProfile)
+  return processTable()
+    .filter(item => {
+      const command = String(item.command || '')
+      const match = command.match(
+        /--user-data-dir(?:=|\s+)(?:"([^"]+)"|'([^']+)'|(.*?)(?=\s+-{1,2}[\w-]|\s*$))/
+      )
+      const userDataDir = match ? (match[1] ?? match[2] ?? match[3]?.trim() ?? '') : ''
+      return userDataDir && normalizeRuntimePath(userDataDir).startsWith(profile)
+    })
+    .map(item => Number(item.pid))
+    .filter(pid => pid > 0)
+}
+
+export function releaseStaleLocalRuntimeLease(session) {
+  const lease = runtimeLease(session.runtimeTargetPath)
+  if (
+    lease.value &&
+    !processAlive(lease.value.owner_pid) &&
+    (!lease.value.child_pid || !processAlive(lease.value.child_pid))
+  ) {
+    try {
+      fs.unlinkSync(lease.filePath)
+    } catch {
+      // Cleanup verification reports the lease if it remains.
+    }
+  }
+}

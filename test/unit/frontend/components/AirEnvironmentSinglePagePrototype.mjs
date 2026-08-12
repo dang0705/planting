@@ -1,0 +1,136 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+
+const repoRoot = process.cwd()
+const source = fs.readFileSync(
+  path.join(repoRoot, 'src/components/AirEnvironmentSinglePagePrototype.vue'),
+  'utf8'
+)
+const exchangeSource = fs.readFileSync(
+  path.join(repoRoot, 'src/components/AirEnvironmentSinglePageExchange.vue'),
+  'utf8'
+)
+const splitChoiceSource = fs.readFileSync(
+  path.join(repoRoot, 'src/components/AirEnvironmentSinglePageSplitChoice.vue'),
+  'utf8'
+)
+
+assert.match(source, /AirEnvironmentSinglePageExchange/)
+assert.match(source, /AirEnvironmentSinglePageSplitChoice/)
+assert.match(source, /植物周围的通风情况/)
+assert.match(source, /植物周围是否有遮挡？/)
+assert.match(source, /植物附近有设备风吗？/)
+assert.match(source, /设备风（可多选）/)
+assert.match(source, /v-for="option in canopyOptions"/)
+assert.match(source, /v-for="option in deviceOptions"/)
+assert.match(source, /controlLabel: '无'/)
+assert.match(source, /controlLabel: '不直吹'/)
+assert.match(source, /option\.controlLabel/)
+assert.match(source, /whitespace-normal text-center text-\[10px\]/)
+assert.match(source, /canopyPreviewOption/)
+assert.match(source, /devicePreviewOption/)
+assert.match(source, /selectedDeviceSources/)
+assert.match(source, /:device-sources="requiresDeviceSource \? selectedDeviceSources : null"/)
+assert.match(source, /scene-aspect-ratio="1\.4444"/)
+assert.match(source, /scene-width-class="w-full"/)
+assert.match(source, /single-device-sources/)
+assert.match(source, /v-for="device in deviceSourceOptions"/)
+assert.match(source, /v-for="relation in sourceRelationOptions"/)
+assert.match(source, /single-device-source-\$\{device\.key\}-\$\{relation\.key\}/)
+assert.match(source, /single-device-source-\$\{device\.key\}-toggle/)
+assert.match(source, /v-if="device\.key !== 'fresh_air'"/)
+assert.match(source, /function toggleSourceSelection\(source\)/)
+assert.match(source, /function isSourceSelected\(source\)/)
+assert.match(source, /return props\.disabled \|\| !isSourceSelected\(source\)/)
+assert.match(source, /sourceModes\[source\] = relation/)
+assert.match(source, /flex flex-wrap gap-1/)
+assert.match(source, /whitespace-normal/)
+assert.doesNotMatch(source, /rounded-full border/)
+assert.match(source, /function selectSourceMode\(source, relation\)/)
+assert.match(source, /directSources\.length/)
+assert.match(source, /single-summary/)
+assert.match(source, /single-navigation/)
+assert.match(source, /emit\('complete', environment\.value\)/)
+assert.match(source, /isAirEnvironmentAnswerReady\(environment\.value\)/)
+assert.match(source, /rounded-lg border px-1 py-1/)
+assert.match(source, /border-\[rgba\(45,122,79,0\.12\)\] text-\[#5a7a68\]/)
+assert.match(source, /environment\.value\.airExchange\.source === 'fresh_air'/)
+assert.match(
+  source,
+  /\['circulating', 'direct'\]\.includes\(environment\.value\.deviceAirflow\.mode\)/
+)
+assert.doesNotMatch(source, /<AirflowScene/)
+assert.doesNotMatch(source, /import AirflowScene/)
+assert.match(source, /key: 'air_conditioner', label: '空调'/)
+assert.doesNotMatch(source, /空调 \/ 暖气/)
+assert.doesNotMatch(source, /source\.scene|source\.motionProfile/)
+assert.match(
+  source,
+  /key: 'none'[\s\S]*?key: 'unknown'[\s\S]*?key: 'circulating'[\s\S]*?key: 'direct'/
+)
+assert.doesNotMatch(source, /key: 'none', controlLabel: '不到植物'/)
+assert.match(source, /rememberedDeviceSourceModes/)
+assert.match(source, /function getDeviceSourceModesForSelection\(\)/)
+assert.match(source, /sourceModes\[device\.key\] = 'circulating'/)
+assert.match(source, /\[source\]: relation/)
+
+assert.match(exchangeSource, /主要靠开窗/)
+assert.match(exchangeSource, /主要靠新风/)
+assert.match(exchangeSource, /几个方向有窗/)
+assert.match(exchangeSource, /DEFAULT_WINDOW_DIRECTION_COUNT = 'one'/)
+assert.match(exchangeSource, /DEFAULT_WINDOW_OPEN_FREQUENCY = 'daily'/)
+assert.match(exchangeSource, /几乎不开/)
+assert.doesNotMatch(exchangeSource, /平时较少换气/)
+assert.doesNotMatch(exchangeSource, /key === 'closed'|windowDirectionCount === 'closed'/)
+assert.match(exchangeSource, /AirEnvironmentSinglePageSplitChoice/)
+assert.doesNotMatch(exchangeSource, /scene-selectable|selectWindowSource/)
+assert.doesNotMatch(exchangeSource, /is-unknown|exchangeOptions|option\.key === 'unknown'/)
+assert.match(exchangeSource, /:scene="windowScene"/)
+assert.match(
+  exchangeSource,
+  /const windowScene = computed\(\(\) =>[\s\S]*'fresh-air'[\s\S]*'window-closed'[\s\S]*'window-two'[\s\S]*'window-one'/
+)
+assert.doesNotMatch(exchangeSource, /import AirflowScene/)
+assert.match(exchangeSource, /single-window-direction/)
+assert.match(exchangeSource, /flex flex-wrap gap-1/)
+assert.match(exchangeSource, /whitespace-normal/)
+assert.doesNotMatch(exchangeSource, /rounded-full/)
+assert.match(exchangeSource, /single-window-frequency/)
+assert.doesNotMatch(exchangeSource, /v-if="input\.source === 'window'"/)
+assert.match(exchangeSource, /windowControlsDisabled/)
+assert.match(exchangeSource, /windowDirectionDisabled/)
+assert.match(exchangeSource, /input\.value\.windowOpenFrequency === 'almost_never'/)
+assert.match(exchangeSource, /:aria-disabled="windowDirectionDisabled"/)
+assert.match(exchangeSource, /if \(windowDirectionDisabled\.value\)/)
+assert.match(exchangeSource, /:disabled="windowControlsDisabled"/)
+assert.match(exchangeSource, /input\.source === 'fresh_air'/)
+assert.match(exchangeSource, /w-11 shrink-0 items-center justify-end overflow-hidden/)
+assert.match(exchangeSource, /几个方向有窗/)
+assert.match(exchangeSource, /compactDirectionLabel\(direction\.key\)/)
+assert.match(exchangeSource, /1个/)
+assert.match(exchangeSource, /2个\+/)
+assert.match(exchangeSource, /mode="selector"/)
+assert.match(exchangeSource, /single-window-frequency-picker/)
+assert.match(exchangeSource, /selectWindowFrequencyFromPicker/)
+assert.match(exchangeSource, /rounded-lg border px-1 py-1/)
+assert.match(exchangeSource, /border border-\[rgba\(45,122,79,0\.12\)\] bg-\[#f8faf9\]/)
+assert.doesNotMatch(exchangeSource, /门窗关闭时，使用新风设备换气/)
+assert.match(exchangeSource, /single-fresh-air-switch/)
+assert.match(exchangeSource, /@change="toggleFreshAir"/)
+assert.match(exchangeSource, /source: 'fresh_air'/)
+assert.match(exchangeSource, /source: 'window', \.\.\.lastWindowSelection\.value/)
+
+assert.match(splitChoiceSource, /AirEnvironmentSinglePageSceneChoice/)
+assert.match(splitChoiceSource, /flex items-stretch gap-2/)
+assert.match(splitChoiceSource, /sceneColumnClass/)
+assert.match(splitChoiceSource, /controlsColumnClass/)
+assert.match(splitChoiceSource, /sceneColumnClass: \{ type: String, default: 'flex-1' \}/)
+assert.match(splitChoiceSource, /controlsColumnClass: \{ type: String, default: 'flex-1' \}/)
+assert.match(splitChoiceSource, /\$\{id\}-controls/)
+assert.match(splitChoiceSource, /<slot \/>/)
+assert.match(splitChoiceSource, /sceneSelectable/)
+assert.match(source, /scene-column-class="flex-\[3\]"/)
+assert.match(source, /controls-column-class="flex-\[2\]"/)
+
+process.stdout.write('AirEnvironmentSinglePagePrototype component contract tests passed\n')
