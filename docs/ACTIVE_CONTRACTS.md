@@ -22,6 +22,9 @@ source_of_truth:
   - cloudfunctions/layer/utils/plant-knowledge.js
   - cloudfunctions/layer/utils/pot-geometry.js
   - cloudfunctions/layer/utils/hydration-load.js
+  - src/data-system/config/tables.js
+  - SQL-cvs/genus_care_profiles_light_uv_minmax_v5_FULL_REPLACE.sql
+  - SQL-cvs/genus_fertilizing_monthly_audit_v1.json
   - cloudfunctions/diagnose-http/utils/environment-context-v7.js
   - src/pages/index/components/WateringReminderSheet.vue
   - src/pages/index/components/DoseSelector.vue
@@ -471,6 +474,13 @@ cloudfunctions/weather-http/config.json
 | GET  | `/catalog/plants`          | 植物目录列表。           |
 | GET  | `/catalog/plants?plantId=` | 植物详情。               |
 
+植物目录中的施肥字段：
+
+- `fertilization`：原有属级基础施肥建议，继续返回肥料类型、基础间隔和备注。
+- `fertilizationMonthly`：可选的已审核月度表；仅当月度规则审核通过且每条展示规则有来源名时返回 `available: true`。
+- `fertilizationMonthly.rows` 的每个单元格返回 `displayText`、机器可计算的 `schedule` 和 `sourceNames`；`schedule.schemaVersion=1`，统一表达 `interval`、`annual_count`、`event`、`conditional`、`pause`、`avoid`、`constraint`、`unspecified` 规则。内部来源 URL、证据定位、原文摘录和审核状态不得下发到用户侧；前端不得解析 `displayText` 推导日期。
+- 月度表缺失、冲突、未审核或缺少来源时返回 `available: false`，不得用基础间隔推算月份，也不得用其他属的数据替代。
+
 ### 7.2 `plant-user-http`
 
 | 方法   | 路径                                          | 当前用途                                     |
@@ -547,6 +557,7 @@ WET 阻断逻辑：
 - 字段：`potTopDiameterCm`、`potBottomDiameterCm`、`potHeightCm`（可选）、`hasDrainageHole`、`potMaterial`、`substrateType`
 - `substrateType` 对应 SQL 字段 `substrate_type`，当前允许两类值：单值字符串（如 `general` / `peat` / `unknown`）或 JSON 数组字符串（多选基质 + 比例）。后端读取 JSON 数组字符串时会解析为 `substrateComposition` 返回给前端；该字段不得再用固定枚举 CHECK 阻断 JSON 数组。
 - `genus_care_profiles.watering_way_quantization_json` 是 `watering_strategy_json.way/freq` 的量化扩展，必须包含 `wayClass`、`depletionTrigger`、`targetMoistureMid`、`wetTolerance`、`dryTolerance`、`amountPolicy`、`nextActionClass`、`seasonalGate`，不替代 `watering_strategy_json` 事实源。
+- `genus_care_profiles.fertilizing_monthly_strategy_json` 是月度施肥的内部审核 JSON；只有 `reviewStatus=audited` 且规则关联有效来源时，才映射为公开的 `fertilizationMonthly`。它不替代 `fertilizing_strategy_json` 的基础属级施肥区间。
 
 天气数据流：
 
@@ -576,7 +587,22 @@ WET 阻断逻辑：
 - `GET /user-plants` 列表会附带紧凑 `wateringReminder`；若新表在旧环境缺失，列表降级为无提醒状态，不阻断植物列表加载。
 - 一次性水提醒以 `nextTime` 过期，前端不得使用 `repeat=true` 维持长期高亮。
 
-### 7.2.3 `POST /user-plants/watering-advisor`
+### 7.2.3 `user-plants/fertilization-reminders`
+
+施肥提醒是独立于浇水提醒的服务端状态机。系统先用已记录的实际施肥历史完成初检；没有可靠上次日期时，才创建“首次确认提醒”。日历日期本身不等于已施肥事实。
+
+- `GET /user-plants/fertilization-reminders?plantId=...` 返回当前用户该植物最新 `active` 提醒；即使 `nextCheckDate` 已到期也必须返回，并附带 `isDue` 与当前月份重新读取的规则判断。
+- `POST .../preview` 只接受植物和肥料类型；服务端读取该植物最近一条实际施肥事件，从已审核月度表读取当前月 `interval` 规则，生成 15 分钟有效的 `pending` 计划和规则快照。没有可靠日期时使用 `reminderKind=first_confirmation`，不把估算日期写成施肥历史。客户端不得提交或覆盖日期、周期、来源或月份规则。
+- `POST .../confirm` 只确认同一 `planId` 的未过期 `pending` 计划；日历写入成功后传入 payload，已到期计划可以不传日历 payload。重复确认必须幂等，不重新推算日期。
+- `POST .../complete` 到期后重新读取当前月规则；普通 `interval` 直接允许“今天已施肥”，首次确认、条件性/事件型规则或植物状态异常必须携带额外确认。成功后同时写入 `user_fertilization_events`，实际施肥历史不记录量计算，量字段可为空。
+- `POST .../dismiss` 以“本次跳过”结束当前提醒且不写施肥日期；`reason=reconfigure` 时标记为 `superseded`，由用户确认已删除系统日历旧事件后才能重设。
+- `POST .../cancel` 仅取消待同步的 `pending` 计划；网络失败时由 `expiresAt` 使其自然不可见，不声称已删除系统日历事件。
+- 月份表只允许 `schedule.schemaVersion=1` 且 `kind=interval` 的规则进入提醒；周按 7 天，月按自然月同日并在目标月不存在该日时取月末，区间两端分别计算后取日期中点。暂停、避免、年度次数、事件、条件和无可靠规则均不可预览。
+- 用户植物列表附带紧凑 `fertilizationReminder`；施肥 icon 只有存在 active 提醒时高亮，不能因为有月度表就假装已启用。
+- `user_fertilization_reminder_events` 独立于 `user_watering_reminder_events`；来源只在月度表底部汇总展示，提醒选项不逐条重复来源。
+- `user_fertilization_events` 独立保存实际施肥历史；提醒设置历史仍保留在提醒计划表。`GET /user-plants?id=...` 返回最近施肥事件 `fertilizationEvents`，事件包含日期、肥料类型、来源和可为空的量字段。
+
+### 7.2.4 `POST /user-plants/watering-advisor`
 
 - `action=compute` 是不绑定用户植物的独立建议；可跳过浇水历史，但无历史时 `nextWaterDate` 和 `nextWaterWindow` 必须为 null。
 - 结果页必须先提示检查盆土；用户点击“我已完成浇水”后，以 `action=confirm_watered` 记录当天日期。

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 
-const REMINDER_TYPES = new Set(['water', 'fertilize'])
+// 施肥提醒已迁移到独立的服务端状态机；本地 store 只保留旧浇水计划兼容。
+const REMINDER_TYPES = new Set(['water'])
 
 function normalizePlantId(value) {
   return value === undefined || value === null ? '' : String(value)
@@ -85,7 +86,11 @@ export const usePlantingStore = defineStore('planting', {
           return false
         }
         return plan.reminders.some(reminder => {
-          if (reminder.enabled === false || !reminder.nextTime) {
+          if (
+            !REMINDER_TYPES.has(reminder?.type) ||
+            reminder.enabled === false ||
+            !reminder.nextTime
+          ) {
             return false
           }
           const reminderDate = new Date(reminder.nextTime).toDateString()

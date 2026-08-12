@@ -9,8 +9,10 @@ import {
   executeRemoveUserPlantMutation
 } from '@/vue-query/plants/mutations/user-plants.js'
 import { executeSaveWateringReminderMutation } from '@/vue-query/plants/mutations/watering-reminders.js'
+import { executeFertilizationReminderMutation } from '@/vue-query/plants/mutations/fertilization-reminders.js'
 import { executeIdentifyPlantMutation } from '@/vue-query/plants/mutations/identify.js'
 import { fetchWateringReminderQuery } from '@/vue-query/plants/queries/watering-reminders.js'
+import { fetchFertilizationReminderQuery } from '@/vue-query/plants/queries/fertilization-reminders.js'
 import {
   fetchDiagnosisHistoryQuery,
   fetchDiagnosisDetailQuery
@@ -89,6 +91,30 @@ export function fetchWateringReminder(plantId) {
 
 export function saveWateringReminder(payload) {
   return executeSaveWateringReminderMutation(payload)
+}
+
+export function fetchFertilizationReminder(plantId) {
+  return fetchFertilizationReminderQuery(plantId)
+}
+
+export function previewFertilizationReminder(payload) {
+  return executeFertilizationReminderMutation('preview', payload)
+}
+
+export function confirmFertilizationReminder(payload) {
+  return executeFertilizationReminderMutation('confirm', payload)
+}
+
+export function completeFertilizationReminder(payload) {
+  return executeFertilizationReminderMutation('complete', payload)
+}
+
+export function dismissFertilizationReminder(payload) {
+  return executeFertilizationReminderMutation('dismiss', payload)
+}
+
+export function cancelFertilizationReminder(payload) {
+  return executeFertilizationReminderMutation('cancel', payload)
 }
 
 export function identifyPlantByImage(imageUrl) {

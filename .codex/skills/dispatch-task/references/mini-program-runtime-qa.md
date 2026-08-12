@@ -46,6 +46,8 @@ batch 模式额外：`user_approval_ref`、`end_side_status`。
 14. 手势、滚动、截图、入口点击、缓存二次进入等端上操作细节只由 runtime skill 定义；本文件只要求 evidence 能证明 Contract 中对应 required assertions 已执行。
 15. implementer 只做最小 smoke；正式矩阵由 main 执行，禁止重复完整自动化。
 16. 截图属于独立视觉证据。若 Contract 要求截图而截图不可用，必须在 evidence 的 `not_verified` 或 `failures` 中明确记录；截图不可用不得改变 required interaction 的验收要求。
+17. 测试真实性必须显式分层：unit-test 使用假数据并且不作为端上证据；服务层 batch e2e 使用真实 API/开发库但不覆盖 UI；正式 automator e2e 必须使用真实小程序、真实登录态、真实开发库和真实 `wx.request`。fixture/mock Automator 只能标记为 `fixture_diagnostic`，不得计入端上 PASS。
+18. formal QA report 及其 catalog/qa-run 记录必须能核验 `data_mode`：`automator_live_real_api` 才能满足真实端上 acceptance；`unit_fake`、`e2e_real_api` 或 `fixture_diagnostic` 必须分别计入对应层级，禁止跨层级替代。
 
 ## 具体实施方法
 

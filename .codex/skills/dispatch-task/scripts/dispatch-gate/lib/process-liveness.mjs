@@ -1,4 +1,5 @@
 import fs from 'node:fs'
+import { spawnSync } from 'node:child_process'
 
 export function isProcessAlive(pid) {
   const numericPid = Number(pid)
@@ -7,7 +8,10 @@ export function isProcessAlive(pid) {
   }
   try {
     process.kill(numericPid, 0)
-    return true
+    const state = spawnSync('ps', ['-p', String(numericPid), '-o', 'state='], {
+      encoding: 'utf8'
+    }).stdout
+    return !/^\s*Z/u.test(String(state || ''))
   } catch (error) {
     return error?.code === 'EPERM'
   }

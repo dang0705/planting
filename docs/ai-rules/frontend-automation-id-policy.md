@@ -52,6 +52,23 @@
 | 编辑植物入口   | `src/pages/index/components/PlantCard.vue` | `index-plant-card-edit-{plant.id}`     | 点击卡片主体进入编辑植物页             |
 | 卡片历史入口   | `src/pages/index/components/PlantCard.vue` | `index-plant-card-history-{plant.id}`  | 点击查看该植物诊断历史                 |
 | 浇水提醒入口   | `src/pages/index/components/PlantCard.vue` | `plant-card-reminder-{plant.id}-water` | 点击打开浇水提醒弹框；断言水滴提醒状态 |
+| 施肥时间表入口 | `src/pages/index/components/PlantCard.vue` | `plant-card-fertilization-{plant.id}` | 点击打开首页底部施肥时间表弹框 |
+| 首页施肥弹框   | `src/pages/index/components/FertilizationMonthlySheet.vue` | `plant-card-fertilization-sheet` | 断言施肥弹框已打开 |
+| 首页施肥弹框内容 | `src/pages/index/components/FertilizationMonthlySheet.vue` | `plant-card-fertilization-sheet-content` | 施肥表与提醒操作区共用的纵向滚动容器 |
+| 首页施肥月度表 | `src/components/FertilizationMonthlyTable.vue` | `plant-card-fertilization-monthly-table` | 断言月份、肥料类型和来源名称可见 |
+| 施肥提醒肥料选项 | `src/pages/index/components/FertilizationReminderSetup.vue` | `fertilization-reminder-option-liquid` / `fertilization-reminder-option-slow-release` | 选择本月固定周期对应的肥料类型 |
+| 设置下次施肥提醒 | `src/pages/index/components/FertilizationReminderSetup.vue` | `fertilization-reminder-preview-button` | 先按最新施肥历史和当前月规则请求服务端计算 pending 提醒计划 |
+| 施肥提醒计算说明入口 | `src/pages/index/components/FertilizationMonthlySheet.vue` | `fertilization-reminder-calculation-info-button` | 点击再次打开提醒日期计算 Tooltip；Tooltip 由空白点击或 10 秒后关闭 |
+| 施肥提醒计算说明 Tooltip | `src/pages/index/components/FertilizationReminderCalculationTooltip.vue` | `fertilization-reminder-calculation-tooltip` / `fertilization-reminder-calculation-tooltip-dismiss-layer` | preview 成功后自动显示；点击空白或 10 秒后关闭 |
+| 施肥日历确认/重试 | `src/pages/index/components/FertilizationMonthlySheet.vue` | `fertilization-reminder-calendar-confirm-button` | 用户确认后添加手机日历，或复用 planId 重试同步 |
+| 施肥提醒取消设置 | `src/pages/index/components/FertilizationMonthlySheet.vue` | `fertilization-reminder-cancel-button` | 取消当前 pending 计划，不写入 active 提醒 |
+| 施肥提醒已保存状态 | `src/pages/index/components/SavedFertilizationReminderState.vue` | `fertilization-reminder-saved-state` | 断言 active / 到期状态回显 |
+| 施肥提醒额外确认 | `src/pages/index/components/SavedFertilizationReminderState.vue` | `fertilization-reminder-extra-confirmation` / `fertilization-reminder-extra-confirmation-group` / `fertilization-reminder-extra-confirmation-checkbox` | 首次确认、条件/事件规则或状态异常时确认后才能记录 |
+| 施肥提醒完成 | `src/pages/index/components/SavedFertilizationReminderState.vue` | `fertilization-reminder-complete-button` | 记录今天真实施肥日期 |
+| 施肥提醒跳过 | `src/pages/index/components/SavedFertilizationReminderState.vue` | `fertilization-reminder-dismiss-button` | 本次跳过且不写施肥日期 |
+| 施肥提醒重设 | `src/pages/index/components/SavedFertilizationReminderState.vue` | `fertilization-reminder-reconfigure-button` | 打开旧日历删除确认区 |
+| 施肥提醒重设确认 | `src/pages/index/components/FertilizationMonthlySheet.vue` | `fertilization-reminder-reconfigure-ack-group` / `fertilization-reminder-reconfigure-ack` / `fertilization-reminder-reconfigure-confirm` | 用户确认已删除系统日历旧事件后结束旧计划 |
+| 施肥提醒暂不重设 | `src/pages/index/components/FertilizationMonthlySheet.vue` | `fertilization-reminder-reconfigure-cancel` | 关闭旧日历删除确认区，保留 active 提醒 |
 | 主页历史记录项 | `src/pages/index/index.vue`                | `index-diagnose-record-{record._id}`   | 点击查看历史结果                       |
 | 首页盆土检查指导 | `src/pages/index/components/WateringReminderSheet.vue` | `watering-reminder-soil-check-guidance` | 断言浇水提醒中显示先检查盆土的指导 |
 

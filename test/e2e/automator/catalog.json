@@ -30,6 +30,7 @@
       "diagnose-",
       "watering-advisor-",
       "plant-card-reminder-",
+      "plant-card-fertilization-",
       "watering-reminder-",
       "watering-date-picker-",
       "care-behavior-date-",
@@ -71,7 +72,12 @@
         }
       }
     },
-    "user": {},
+    "user": {
+      "plant-detail": {
+        "fertilization-monthly": "user.plant_detail.fertilization_monthly",
+        "fertilization-reminder-live-development": "user.plant_detail.fertilization_reminder_live_development"
+      }
+    },
     "plants": {}
   },
   "entries": [
@@ -83,7 +89,7 @@
         "no-image-quick"
       ],
       "leaf_script": "test/e2e/automator/diagnosis/diagnose-yellowing-mcp.mjs",
-      "script_sha256": "13ffdbc7f5bd2a5ba4e90413b095dfda115ee1ee0927b83b22211e3da4c9cf89",
+      "script_sha256": "ede43b3de7453a5aa39e6886f7c5e2e39baee9c609b254eb6f35c5f353ea2fd5",
       "reusable_scenarios": [],
       "id_policy": {
         "sections": [
@@ -123,7 +129,7 @@
         "visual-mode-retake"
       ],
       "leaf_script": "test/e2e/automator/diagnosis/pest-mode-and-retake.mjs",
-      "script_sha256": "ff45271ae6482ef6634a08cf487bccec89342f40cb560e68680417c95ef0243e",
+      "script_sha256": "a51a7ed4aeb94da6f721efcbc8c04f07da3460605f8ca8045695249e93c1004e",
       "reusable_scenarios": [],
       "id_policy": {
         "sections": [
@@ -181,7 +187,7 @@
         "independent-advice"
       ],
       "leaf_script": "test/e2e/automator/care/watering/transpiration-v3/independent-advice.mjs",
-      "script_sha256": "bac1ed13e2bce79c418e9c0693f161fe4d5320cdb07d3f5614c09c1566813c86",
+      "script_sha256": "7cc0dfc74e13ae2ff5f4106c428c930ef64114b06c9db74bb68d2b03be3b0650",
       "reusable_scenarios": [
         "test/e2e/automator/care/watering/transpiration-v3/_shared/scenarios/independent-watering.mjs"
       ],
@@ -227,7 +233,7 @@
         "user-plant-planner"
       ],
       "leaf_script": "test/e2e/automator/care/watering/transpiration-v3/user-plant-planner.mjs",
-      "script_sha256": "87cdcdbbb4a19b35846da0d4e7df46b8f7122101de3b4a77578b2cac5ca6c57d",
+      "script_sha256": "51a01e05b9c1aee9132a296911a063125671ceeb3f3f723e9c50c21614df7f02",
       "reusable_scenarios": [
         "test/e2e/automator/care/watering/transpiration-v3/_shared/scenarios/my-plant-planner.mjs"
       ],
@@ -273,7 +279,7 @@
         "bottle-text"
       ],
       "leaf_script": "test/e2e/automator/care/watering/reminder-dose/bottle-text.mjs",
-      "script_sha256": "35979139acfe26ecde205ee2c040f5b00a52924cd14b2c2a45622048905c45ab",
+      "script_sha256": "32a97bff7c5a4373bc16195452f6afade6b8b5ce9b3ea6f62679ccb7b2948edb",
       "reusable_scenarios": [],
       "id_policy": {
         "sections": [
@@ -313,7 +319,7 @@
         "dose-dynamic"
       ],
       "leaf_script": "test/e2e/automator/care/watering/reminder-dose/dose-dynamic.mjs",
-      "script_sha256": "71afbd004efd9aec25c3be3c9015e92603f2a5456c00563bf4a20fa03d9b472a",
+      "script_sha256": "1b0126eea18025b31dc1aa72a530394e985de5bd143f8b7d5f231ce154af8bdd",
       "reusable_scenarios": [],
       "id_policy": {
         "sections": [
@@ -352,7 +358,7 @@
         "dose-label-layout"
       ],
       "leaf_script": "test/e2e/automator/care/watering/reminder-dose/dose-label-layout.mjs",
-      "script_sha256": "8bd5d4e1500afe44bf0e9a5007c26588928e51d4829f4a617e6c6272948e85a2",
+      "script_sha256": "428e350838036295b16911a7221cfa49eb57c7767c5c07f5ae7a80c18ea92111",
       "reusable_scenarios": [],
       "id_policy": {
         "sections": [
@@ -391,7 +397,7 @@
         "unit-alignment-final"
       ],
       "leaf_script": "test/e2e/automator/care/watering/reminder-dose/unit-alignment-final.mjs",
-      "script_sha256": "d635e7c0eb58e0e97985595bca368fc50cf53d1f237ea84d799d5d3416a48349",
+      "script_sha256": "960022045b47fa960e39ad3d75de3b3d18b6d8e555aceadf5a429926afeebd67",
       "reusable_scenarios": [],
       "id_policy": {
         "sections": [
@@ -429,7 +435,7 @@
         "unit-alignment-v4"
       ],
       "leaf_script": "test/e2e/automator/care/watering/reminder-dose/unit-alignment-v4.mjs",
-      "script_sha256": "aae4b366fa7d40954c31d4c4b4991796af00663c9107082b44b1996586953138",
+      "script_sha256": "f8ca3f8f923af3f26c27450a8dc93e1a4edc5ed061168917bda13ed867ed1a97",
       "reusable_scenarios": [],
       "id_policy": {
         "sections": [
@@ -467,7 +473,7 @@
         "v1"
       ],
       "leaf_script": "test/e2e/automator/care/airflow/air-exchange-v1.mjs",
-      "script_sha256": "3d2bbae9e8b0d5dc029956e880203524cbec668e9650e30166df2bf323d13b87",
+      "script_sha256": "63a774052f6b69ac3763f426d5ab95b4959dd25258d54ada5e3b6d426b39c0e5",
       "reusable_scenarios": [
         "test/e2e/automator/care/airflow/_shared/run-air-exchange-v1.mjs"
       ],
@@ -529,7 +535,7 @@
         "user-plant-watering"
       ],
       "leaf_script": "test/e2e/automator/care/airflow/air-environment-v2-user-plant-watering.mjs",
-      "script_sha256": "6329addc39e7e19657b48baa8977efc604ec0b47b49625db75c1371930b7422f",
+      "script_sha256": "722dc79ce4f6af79af40da4fac6505b1d11afb5c6b2571b5dc7d50c0c75e77c8",
       "reusable_scenarios": [],
       "id_policy": {
         "sections": [
@@ -596,7 +602,7 @@
         "scripts/dev/local-api-env-config.mjs",
         "test/e2e/automator/diagnosis/_shared/screenshot-worker.mjs"
       ],
-      "script_sha256": "a662ba2df8afc55e6e716c2bfd88a51e47a5781df2a51a7d744c89ac4dc69c55",
+      "script_sha256": "e172b2201fe04e7f62f8d2795bf348232f5367b55ba3dc3b1bd3f1f9ca1ec090",
       "reusable_scenarios": [],
       "id_policy": {
         "sections": [
@@ -642,6 +648,278 @@
           "yellowing_mode and wilting_droop_mode question-start requests pass through to LAN unchanged; their real responses must render the 4 and 6 v2 question packages with the exact air-environment key and unknown control",
           "between yellowing_mode and wilting_droop_mode the active question-package uses Layout's component-scoped layout-left-action, verifies the returned homepage, and clears any residual DiagnosePopup only through diagnose-popup-close-button before reopening plant 94021",
           "the wilting UI records a direct fresh-air sidecar and observes the unmodified LAN answer response before asserting the existing move_from_direct_airflow outcome"
+        ]
+      }
+    },
+    {
+      "id": "user.plant_detail.fertilization_reminder_live_development",
+      "category_path": [
+        "user",
+        "plant-detail",
+        "fertilization-reminder-live-development"
+      ],
+      "leaf_script": "test/e2e/automator/user/plant-detail/fertilization-reminder-live-development.mjs",
+      "integrity_files": [
+        "src/pages/index/components/PlantCard.vue",
+        "src/pages/index/components/FertilizationMonthlySheet.vue",
+        "src/pages/index/components/FertilizationReminderCalculationTooltip.vue",
+        "src/pages/index/components/FertilizationReminderSetup.vue",
+        "src/pages/index/components/useFertilizationCalculationTooltip.js",
+        "src/pages/index/components/fertilization-reminder-options.js",
+        "src/api/plants-http.js",
+        "src/vue-query/plants/mutations/fertilization-reminders.js",
+        "cloudfunctions/plant-user-http/fertilization-reminder-service.js",
+        "cloudfunctions/layer/utils/plant-knowledge.js"
+      ],
+      "script_sha256": "fe0249a1ed08d2a2b5e50a0bbb878fcd30344a38664b721c0523c3978c626ae9",
+      "reusable_scenarios": [
+        "test/e2e/automator/care/watering/transpiration-v3/_shared/lib/request-capture.mjs",
+        "test/e2e/automator/_shared/fertilization-reminder-e2e-helpers.mjs"
+      ],
+      "id_policy": {
+        "sections": [
+          "3.1"
+        ],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.1"
+        ],
+        "stable_ids": [
+          "plant-card-fertilization-{plant.id}",
+          "plant-card-fertilization-sheet",
+          "plant-card-fertilization-sheet-content",
+          "fertilization-reminder-section",
+          "fertilization-reminder-preview-button",
+          "fertilization-reminder-preview",
+          "fertilization-reminder-calculation-info-button",
+          "fertilization-reminder-calculation-tooltip",
+          "fertilization-reminder-calculation-tooltip-dismiss-layer",
+          "fertilization-reminder-cancel-button",
+          "plant-card-fertilization-close-button"
+        ],
+        "stable_id_prefixes": [
+          "plant-card-fertilization-",
+          "fertilization-reminder-"
+        ]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": [
+          "/user-plants",
+          "/auth-user-http",
+          "/user-plants/fertilization-reminders/preview",
+          "/user-plants/fertilization-reminders/cancel"
+        ],
+        "cache": false,
+        "reentry": true,
+        "fixtures": [
+          "the authenticated cloud1_dev account must expose at least one real user plant whose current-month audited table has a fixed interval and no active fertilization reminder",
+          "the leaf does not patch request responses; it records and forwards mini-program runtime wx.request to the user-owned LAN gateway",
+          "the leaf creates one pending plan through the UI, cancels it through the UI, then reopens and reads back no active reminder"
+        ]
+      }
+    },
+    {
+      "id": "user.plant_detail.fertilization_monthly",
+      "category_path": [
+        "user",
+        "plant-detail",
+        "fertilization-monthly"
+      ],
+      "leaf_script": "test/e2e/automator/user/plant-detail/fertilization-monthly.mjs",
+      "integrity_files": [
+        "src/pages/index/components/FertilizationMonthlySheet.vue",
+        "src/pages/index/components/FertilizationReminderCalculationTooltip.vue",
+        "src/pages/index/components/FertilizationReminderSetup.vue",
+        "src/pages/index/components/useFertilizationCalculationTooltip.js",
+        "src/pages/index/components/SavedFertilizationReminderState.vue",
+        "src/pages/index/components/fertilization-reminder-options.js",
+        "src/pages/index/components/watering-reminder-options.js",
+        "src/components/FertilizationMonthlyTable.vue",
+        "src/api/plants-http.js",
+        "src/vue-query/plants/mutations/fertilization-reminders.js",
+        "cloudfunctions/layer/utils/plant-knowledge.js",
+        "cloudfunctions/layer/utils/fertilization-reminder-planner.js",
+        "cloudfunctions/plant-user-http/fertilization-reminder-service.js"
+      ],
+      "script_sha256": "fef13a66231f4fff22496c20b948122fffa68308e57e23f75e62971a9564bccf",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": [
+          "3.1",
+          "3.2"
+        ],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.1",
+          "docs/ai-rules/frontend-automation-id-policy.md#3.2"
+        ],
+        "stable_ids": [
+          "index-plant-list",
+          "index-plant-card-edit-{plant.id}",
+          "plant-card-fertilization-{plant.id}",
+          "plant-card-fertilization-sheet",
+          "plant-card-fertilization-sheet-content",
+          "plant-card-fertilization-monthly-table",
+          "fertilization-reminder-preview-button",
+          "fertilization-reminder-calendar-confirm-button",
+          "fertilization-reminder-calculation-info-button",
+          "fertilization-reminder-calculation-tooltip",
+          "fertilization-reminder-calculation-tooltip-dismiss-layer",
+          "fertilization-reminder-saved-state",
+          "user-plant-detail-page",
+          "user-plant-detail-fertilization-card",
+          "user-plant-detail-fertilization-monthly-table"
+        ],
+        "stable_id_prefixes": [
+          "plant-card-fertilization-"
+        ]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": [
+          "/user-plants",
+          "/user-plants?id=95001"
+        ],
+        "cache": false,
+        "reentry": true,
+        "fixtures": [
+          "runtime-only authenticated fixture; no CloudBase user_plant_instances write",
+          "fixture plant 95001 exposes Monstera public fertilizationMonthly with 12 months",
+          "fixture restores user storage, Pinia state, query cache and request functions after the leaf"
+        ]
+      }
+    },
+    {
+      "id": "user.plant_detail.fertilization_reminder_setup",
+      "category_path": [
+        "user",
+        "plant-detail",
+        "fertilization-reminder-setup"
+      ],
+      "leaf_script": "test/e2e/automator/user/plant-detail/fertilization-reminder-setup.mjs",
+      "integrity_files": [
+        "src/pages/reminder/reminder.vue",
+        "src/pages/index/components/FertilizationMonthlySheet.vue",
+        "src/pages/index/components/FertilizationReminderCalculationTooltip.vue",
+        "src/pages/index/components/FertilizationReminderSetup.vue",
+        "src/pages/index/components/useFertilizationCalculationTooltip.js",
+        "src/pages/index/components/fertilization-reminder-options.js",
+        "src/api/plants-http.js",
+        "src/vue-query/plants/mutations/fertilization-reminders.js",
+        "cloudfunctions/plant-user-http/fertilization-reminder-service.js"
+      ],
+      "script_sha256": "08882c88eb405ed628417e083b96e9be48a9c37af56826a67a2c25a2a47aaa87",
+      "reusable_scenarios": [
+        "test/e2e/automator/_shared/fertilization-reminder-e2e-helpers.mjs"
+      ],
+      "id_policy": {
+        "sections": [
+          "3.1"
+        ],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.1"
+        ],
+        "stable_ids": [
+          "index-plant-list",
+          "plant-card-fertilization-{plant.id}",
+          "reminder-tab-fertilization-{plant.id}",
+          "plant-card-fertilization-sheet",
+          "plant-card-fertilization-sheet-content",
+          "plant-card-fertilization-monthly-table",
+          "plant-card-fertilization-monthly-unavailable",
+          "fertilization-reminder-no-fixed-period",
+          "fertilization-reminder-option-liquid",
+          "fertilization-reminder-option-slow-release",
+          "fertilization-reminder-preview-button",
+          "fertilization-reminder-calendar-confirm-button",
+          "fertilization-reminder-calculation-info-button",
+          "fertilization-reminder-calculation-tooltip",
+          "fertilization-reminder-calculation-tooltip-dismiss-layer",
+          "fertilization-reminder-cancel-button",
+          "plant-card-fertilization-close-button"
+        ],
+        "stable_id_prefixes": [
+          "plant-card-fertilization-",
+          "fertilization-reminder-"
+        ]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": [
+          "/user-plants",
+          "/user-plants/fertilization-reminders"
+        ],
+        "cache": false,
+        "reentry": true,
+        "fixtures": [
+          "runtime-only authenticated fixture; no CloudBase user_plant_instances write",
+          "each setup state reopens the popup from the index or reminder-tab user entry",
+          "fixture models calendar success, calendar failure, retryable sync failure and terminal plan expiry"
+        ]
+      }
+    },
+    {
+      "id": "user.plant_detail.fertilization_reminder_actions",
+      "category_path": [
+        "user",
+        "plant-detail",
+        "fertilization-reminder-actions"
+      ],
+      "leaf_script": "test/e2e/automator/user/plant-detail/fertilization-reminder-actions.mjs",
+      "integrity_files": [
+        "src/pages/index/components/FertilizationMonthlySheet.vue",
+        "src/pages/index/components/FertilizationReminderCalculationTooltip.vue",
+        "src/pages/index/components/SavedFertilizationReminderState.vue",
+        "src/pages/index/components/useFertilizationCalculationTooltip.js",
+        "src/pages/index/components/fertilization-reminder-options.js",
+        "src/api/plants-http.js",
+        "src/vue-query/plants/mutations/fertilization-reminders.js",
+        "cloudfunctions/plant-user-http/fertilization-reminder-service.js"
+      ],
+      "script_sha256": "7d6f1ed5faa6326c4d863c672fe7528cbe7b440a9783082e2b0bd2e64356e6c7",
+      "reusable_scenarios": [
+        "test/e2e/automator/_shared/fertilization-reminder-e2e-helpers.mjs"
+      ],
+      "id_policy": {
+        "sections": [
+          "3.1"
+        ],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.1"
+        ],
+        "stable_ids": [
+          "plant-card-fertilization-{plant.id}",
+          "plant-card-fertilization-sheet",
+          "plant-card-fertilization-sheet-content",
+          "fertilization-reminder-saved-state",
+          "fertilization-reminder-current-month-rule",
+          "fertilization-reminder-extra-confirmation",
+          "fertilization-reminder-extra-confirmation-checkbox",
+          "fertilization-reminder-complete-button",
+          "fertilization-reminder-dismiss-button",
+          "fertilization-reminder-reconfigure-button",
+          "fertilization-reminder-reconfigure-ack",
+          "fertilization-reminder-reconfigure-confirm",
+          "fertilization-reminder-reconfigure-cancel",
+          "fertilization-reminder-section",
+          "fertilization-reminder-preview"
+        ],
+        "stable_id_prefixes": [
+          "plant-card-fertilization-",
+          "fertilization-reminder-"
+        ]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": [
+          "/user-plants",
+          "/user-plants/fertilization-reminders"
+        ],
+        "cache": false,
+        "reentry": true,
+        "fixtures": [
+          "runtime-only authenticated fixture; no CloudBase user_plant_instances write",
+          "each due-state action is entered through the home plant-card fertilization icon",
+          "fixture records complete, dismiss and reconfigure mutations without writing CloudBase data"
         ]
       }
     }

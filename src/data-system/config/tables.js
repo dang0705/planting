@@ -1,6 +1,7 @@
 'use strict'
 
 const crypto = require('crypto')
+const GENUS_FERTILIZING_MONTHLY_AUDIT = require('../../../SQL-cvs/genus_fertilizing_monthly_audit_v1.json')
 
 const DATA_SOURCE_CONFIGS = {
   diagnosis: {
@@ -78,6 +79,13 @@ function normalizePrimitive(value) {
   }
 
   return normalized
+}
+
+function getGenusFertilizingMonthlyAudit(genusName) {
+  const audit =
+    GENUS_FERTILIZING_MONTHLY_AUDIT.overrides?.[genusName] ||
+    GENUS_FERTILIZING_MONTHLY_AUDIT.defaultCoverage
+  return JSON.parse(JSON.stringify(audit))
 }
 
 function buildStableId(prefix, values = []) {
@@ -359,6 +367,7 @@ function mapGenusCareProfile(rawRow = {}) {
     plant_category: normalizePrimitive(rawRow.plant_category),
     watering_strategy_json: rawRow.watering_strategy_json,
     fertilizing_strategy_json: rawRow.fertilizing_strategy_json,
+    fertilizing_monthly_strategy_json: getGenusFertilizingMonthlyAudit(genusName),
     light_strategy_json: rawRow.light_strategy_json,
     airflow_strategy_json: rawRow.airflow_strategy_json,
     temp_min_c: rawRow.temp_min_c,
@@ -497,6 +506,7 @@ const TABLE_CONFIGS = [
       'plant_category',
       'watering_strategy_json',
       'fertilizing_strategy_json',
+      'fertilizing_monthly_strategy_json',
       'light_strategy_json',
       'airflow_strategy_json',
       'temp_min_c',
@@ -527,6 +537,7 @@ const TABLE_CONFIGS = [
     jsonColumns: [
       'watering_strategy_json',
       'fertilizing_strategy_json',
+      'fertilizing_monthly_strategy_json',
       'light_strategy_json',
       'airflow_strategy_json'
     ],

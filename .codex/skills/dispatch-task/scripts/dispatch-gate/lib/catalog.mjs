@@ -4,6 +4,24 @@ import path from 'node:path'
 import { executionBundleFingerprint } from './execution-bundle.mjs'
 import { repoRoot, writeJsonAtomic, stateDir } from './state.mjs'
 
+// The screenshot worker is launched by path from the shared screenshot
+// harness, so it is not discoverable through static ESM imports. Keep it in
+// every catalog execution bundle explicitly; otherwise a changed worker could
+// bypass the frozen-script hash and formal QA would run unreviewed logic.
+export const CATALOG_SHARED_EXECUTION_INTEGRITY_FILES = Object.freeze([
+  'test/e2e/automator/diagnosis/_shared/screenshot-worker.mjs'
+])
+
+export function catalogExecutionBundleFingerprint(
+  leafScript,
+  { entry = {}, rootDir = repoRoot } = {}
+) {
+  return executionBundleFingerprint(leafScript, {
+    rootDir,
+    additionalFiles: [...CATALOG_SHARED_EXECUTION_INTEGRITY_FILES, ...(entry.integrity_files ?? [])]
+  })
+}
+
 export {
   executionBundleFingerprint,
   resolveExecutionBundle,
@@ -116,9 +134,7 @@ export function validateCatalog() {
     require(fs.existsSync(abs), `catalog script does not exist: ${script}`, errors)
     if (fs.existsSync(abs)) {
       try {
-        const bundle = executionBundleFingerprint(abs, {
-          additionalFiles: entry.integrity_files ?? []
-        })
+        const bundle = catalogExecutionBundleFingerprint(abs, { entry })
         require(entry.script_sha256 ===
           bundle.hash, `script hash mismatch for ${entry.id}: expected ${entry.script_sha256}, got ${bundle.hash}`, errors)
       } catch (error) {

@@ -78,19 +78,20 @@ try {
     nextTime: tomorrow.toISOString(),
     intervalDays: 7
   })
-  plantingStore.setPlantReminder({
+  const legacyFertilizeResult = plantingStore.setPlantReminder({
     plantId: 1,
     plantName: '绿萝',
     type: 'fertilize',
     nextTime: tomorrow.toISOString(),
     intervalDays: 30
   })
+  assert.equal(legacyFertilizeResult.success, false)
   assert.equal(plantingStore.getPlantReminderState(1, 'water').active, true)
-  assert.equal(plantingStore.getPlantReminderState(1, 'fertilize').active, true)
+  assert.equal(plantingStore.getPlantReminderState(1, 'fertilize').active, false)
 
   plantingStore.disablePlantReminder({ plantId: 1, type: 'water' })
   assert.equal(plantingStore.getPlantReminderState(1, 'water').active, false)
-  assert.equal(plantingStore.getPlantReminderState(1, 'fertilize').active, true)
+  assert.equal(plantingStore.getPlantReminderState(1, 'fertilize').active, false)
 
   plantingStore.setPlantReminder({
     plantId: 2,
@@ -115,15 +116,16 @@ try {
     nextTime: yesterday.toISOString(),
     intervalDays: 7
   })
-  plantingStore.setPlantReminder({
+  const legacyFertilizeResultForPlant3 = plantingStore.setPlantReminder({
     plantId: 3,
     plantName: '虎皮兰',
     type: 'fertilize',
     nextTime: yesterday.toISOString(),
     intervalDays: 30
   })
+  assert.equal(legacyFertilizeResultForPlant3.success, false)
   assert.equal(plantingStore.getPlantReminderState(3, 'water').active, true)
-  assert.equal(plantingStore.getPlantReminderState(3, 'fertilize').active, true)
+  assert.equal(plantingStore.getPlantReminderState(3, 'fertilize').active, false)
 
   console.log('\n' + '='.repeat(50))
   console.log('✓ 所有测试通过！Pinia 在 Vue3 + Uniapp 项目中工作正常')

@@ -2,15 +2,36 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { repoRoot } from './state.mjs'
 import { captureIsolatedPreflightScreenshot } from './qa-preflight-screenshot.mjs'
+import { connectAutomatorTransport } from '../../../../../../test/e2e/automator/_shared/formal-leaf-harness.mjs'
+import { getCurrentPageWithFallback } from '../../../../../../test/e2e/automator/_shared/page-probe.mjs'
 
 export { captureIsolatedPreflightScreenshot } from './qa-preflight-screenshot.mjs'
 
 /* eslint-disable no-var -- these callback bodies are serialized for ES5-only App.callFunction parsing. */
 
-export const PREFLIGHT_RPC_TIMEOUT_MS = 8000
+// A freshly reopened DevTools project can accept the Automator WebSocket
+// before its appservice page has finished attaching. `currentPage()` is the
+// first RPC that observes that boundary and has taken just over eight seconds
+// in a verified run. Keep the deadline bounded, but leave enough room for one
+// cold appservice attach so a healthy runtime is not rejected as transport
+// failure.
+export const PREFLIGHT_RPC_TIMEOUT_MS = 15000
 export const PREFLIGHT_SCREENSHOT_TIMEOUT_MS = 20000
 export const PREFLIGHT_DISCONNECT_TIMEOUT_MS = 3000
-export const PREFLIGHT_CAPTURE_TIMEOUT_MS = 30000
+// The overall capture deadline must cover the bounded renderer recovery
+// sequence as well as the ordinary Automator probes. A renderer screenshot
+// may consume one full attempt, a retry delay, and a second full attempt;
+// keeping this at 30s caused a valid second attempt to be reported as a late
+// failure. The budget remains finite and is derived from the child deadlines.
+const PREFLIGHT_SCREENSHOT_ATTEMPTS = 2
+const PREFLIGHT_SCREENSHOT_RETRY_DELAY_MS = 350
+const PREFLIGHT_CAPTURE_MARGIN_MS = 2000
+export const PREFLIGHT_CAPTURE_TIMEOUT_MS =
+  PREFLIGHT_RPC_TIMEOUT_MS * 4 +
+  PREFLIGHT_DISCONNECT_TIMEOUT_MS +
+  PREFLIGHT_SCREENSHOT_TIMEOUT_MS * PREFLIGHT_SCREENSHOT_ATTEMPTS +
+  PREFLIGHT_SCREENSHOT_RETRY_DELAY_MS +
+  PREFLIGHT_CAPTURE_MARGIN_MS
 const WX_REQUEST_TIMEOUT_MS = 10000
 const WX_REQUEST_POLL_INTERVAL_MS = 200
 let wxRequestProbeSequence = 0
@@ -234,7 +255,7 @@ export async function probeWxRequest({
 async function connectMiniProgram(wsEndpoint) {
   const imported = await import('miniprogram-automator')
   const automator = imported.default ?? imported
-  return automator.connect({ wsEndpoint })
+  return connectAutomatorTransport(automator, wsEndpoint)
 }
 
 export async function captureRuntimeEvidence({
@@ -261,12 +282,18 @@ export async function captureRuntimeEvidence({
     })
     report.checks.ws.passed = true
     report.checks.automator = { passed: true, ws_endpoint: wsEndpoint }
-    const page = await withPreflightDeadline({
+    const pageProbe = await withPreflightDeadline({
       report,
       step: 'current_page',
       timeoutMs: rpcTimeoutMs,
-      action: () => miniProgram.currentPage()
+      action: () =>
+        getCurrentPageWithFallback(miniProgram, {
+          timeoutMs: Math.min(6000, rpcTimeoutMs),
+          perRpcTimeoutMs: Math.min(3000, rpcTimeoutMs)
+        })
     })
+    const page = pageProbe.page
+    report.checks.rpc_steps.current_page.source = pageProbe.source
     report.pagePath = page?.path ?? 'unavailable'
     const pageData = await withPreflightDeadline({
       report,
@@ -352,6 +379,7 @@ export async function captureRuntimeEvidence({
 export function isRecoverableRuntimeFailure(error) {
   return (
     /preflight_(?:screenshot|transport)_timeout/i.test(error?.code ?? '') ||
+    /automator_page_probe_timeout|automator_current_page_unavailable/i.test(error?.code ?? '') ||
     /screenshot|transport/i.test(error?.message ?? '')
   )
 }

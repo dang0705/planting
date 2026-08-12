@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { runRendererScreenshotProbe } from './renderer-screenshot-probe.mjs'
+import { connectAutomatorTransport } from '../../../../../../test/e2e/automator/_shared/formal-leaf-harness.mjs'
 
 function emit(result) {
   process.stdout.write(`${JSON.stringify(result)}\n`)
@@ -9,7 +10,7 @@ function emit(result) {
 async function connectMiniProgram({ wsEndpoint }) {
   const imported = await import('miniprogram-automator')
   const automator = imported.default ?? imported['module.exports'] ?? imported
-  return automator.connect({ wsEndpoint })
+  return connectAutomatorTransport(automator, wsEndpoint)
 }
 
 function emitEvent(event) {

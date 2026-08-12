@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { getCurrentPageWithFallback } from './page-probe.mjs'
 
 export const DEFAULT_SCREENSHOT_STABILITY_TIMEOUT_MS = 10_000
 export const DEFAULT_SCREENSHOT_QUIET_WINDOW_MS = 900
@@ -180,10 +181,16 @@ export async function waitForScreenshotStability({
         continue
       }
 
-      const page = await withTimeout(
-        () => miniProgram.currentPage(),
-        Math.min(2_500, Math.max(1, remaining))
-      )
+      const page = (
+        await withTimeout(
+          () =>
+            getCurrentPageWithFallback(miniProgram, {
+              timeoutMs: Math.min(2_500, Math.max(1, remaining)),
+              perRpcTimeoutMs: 1250
+            }),
+          Math.min(2_500, Math.max(1, remaining))
+        )
+      ).page
       const route = normalizeRoute(page)
       lastRoute = route
       if (expectedRoute && route !== expectedRoute) {

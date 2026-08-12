@@ -104,10 +104,33 @@
           </view>
         </view>
 
-        <view v-if="plant?.fertilization" class="bg-white p-4 mb-3">
+        <view
+          v-if="plant?.fertilization || plant?.fertilizationMonthly"
+          id="user-plant-detail-fertilization-card"
+          class="bg-white p-4 mb-3"
+        >
           <text class="text-base font-semibold text-gray-800 block mb-4">🧪 施肥建议</text>
-          <view class="p-3 bg-[#F8F6F0] rounded-xl">
+          <view v-if="plant?.fertilization" class="p-3 bg-[#F8F6F0] rounded-xl mb-3">
             <text class="text-sm text-gray-600 leading-relaxed">{{ fertilizationText }}</text>
+          </view>
+
+          <view
+            v-if="fertilizationMonthly.available"
+            id="user-plant-detail-fertilization-monthly-table"
+          >
+            <text class="text-sm font-semibold text-gray-800 block mb-2">施肥时间表</text>
+            <FertilizationMonthlyTable
+              :monthly="fertilizationMonthly"
+              table-id="user-plant-detail-fertilization-monthly-table-content"
+            />
+          </view>
+
+          <view
+            v-else
+            id="user-plant-detail-fertilization-monthly-unavailable"
+            class="p-3 bg-[#F8F6F0] rounded-xl"
+          >
+            <text class="text-xs leading-5 text-gray-500">该植物属暂无已审核的月度施肥表</text>
           </view>
         </view>
 
@@ -162,6 +185,7 @@ import { getFileUrl } from '@/composables/useCloudFile.js'
 import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
 import DiagnosePopup from '@/components/DiagnosePopup.vue'
+import FertilizationMonthlyTable from '@/components/FertilizationMonthlyTable.vue'
 import UserPlantAirEnvironmentCard from '@/components/UserPlantAirEnvironmentCard.vue'
 import { callComponentMethod } from '@/utils/component-ref.js'
 
@@ -241,6 +265,18 @@ const fertilizationText = computed(() => {
       ? `${fertilization.freq[0]}${fertilization.freq[1] ? `-${fertilization.freq[1]}` : ''}${fertilization.unit || '天'}`
       : ''
   return [fertilization.type, freqText, fertilization.other].filter(Boolean).join(' · ')
+})
+
+const fertilizationMonthly = computed(() => {
+  return (
+    plant.value?.fertilizationMonthly || {
+      available: false,
+      rows: [],
+      notes: '',
+      scopeLabel: '',
+      sourceNames: []
+    }
+  )
 })
 
 const temperatureText = computed(() => {

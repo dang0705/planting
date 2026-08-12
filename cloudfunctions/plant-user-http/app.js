@@ -32,6 +32,15 @@ const {
   saveWateringReminder
 } = require('./watering-reminder-service')
 const {
+  attachFertilizationReminderStateToList,
+  cancelFertilizationReminder,
+  completeFertilizationReminder,
+  confirmFertilizationReminder,
+  dismissFertilizationReminder,
+  previewFertilizationReminder,
+  readFertilizationReminder
+} = require('./fertilization-reminder-service')
+const {
   buildWeatherSummary,
   computeAdhocPlanner,
   injectD0IntoForecastDays
@@ -91,6 +100,42 @@ async function main(event, context) {
         })
       }
       return methodNotAllowed(method)
+    }
+
+    if (path.includes('/fertilization-reminders')) {
+      const plantId = Number(request.body.plantId || request.query.plantId)
+      if (method === 'GET') {
+        if (!plantId) {
+          return jsonResponse(400, { code: 400, message: '缺少植物ID', data: null })
+        }
+        const result = await readFertilizationReminder(openid, plantId)
+        return jsonResponse(result.statusCode, {
+          code: result.statusCode,
+          message: result.message,
+          data: result.data
+        })
+      }
+      if (method !== 'POST') {
+        return methodNotAllowed(method)
+      }
+      const action = path.split('/').filter(Boolean).pop()
+      const actionHandlers = {
+        preview: previewFertilizationReminder,
+        confirm: confirmFertilizationReminder,
+        complete: completeFertilizationReminder,
+        dismiss: dismissFertilizationReminder,
+        cancel: cancelFertilizationReminder
+      }
+      const handler = actionHandlers[action]
+      if (!handler) {
+        return methodNotAllowed(method)
+      }
+      const result = await handler(openid, request.body || {})
+      return jsonResponse(result.statusCode, {
+        code: result.statusCode,
+        message: result.message,
+        data: result.data
+      })
     }
 
     if (path.includes('/watering-reminders')) {
@@ -378,7 +423,11 @@ async function main(event, context) {
       })
       const enrichedData = await attachCareLocationsToList({ openid, data })
       const reminderData = await attachWateringReminderStateToList(openid, enrichedData)
-      return jsonResponse(200, { code: 200, data: reminderData })
+      const fertilizationReminderData = await attachFertilizationReminderStateToList(
+        openid,
+        reminderData
+      )
+      return jsonResponse(200, { code: 200, data: fertilizationReminderData })
     }
 
     if (method === 'POST') {

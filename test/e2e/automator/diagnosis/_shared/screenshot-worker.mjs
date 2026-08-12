@@ -10,6 +10,7 @@ import {
   screenshotStabilityBudget,
   waitForScreenshotStability
 } from '../../_shared/screenshot-stability.mjs'
+import { connectAutomatorTransport } from '../../_shared/formal-leaf-harness.mjs'
 
 const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
 const WORKER_PATH = fileURLToPath(import.meta.url)
@@ -217,7 +218,11 @@ async function captureScreenshot(wsEndpoint, outputPath, timeoutMs, projectPath,
   try {
     phase = 'connect'
     emitStage('connect_started')
-    miniProgram = await automator.connect({ wsEndpoint })
+    // Screenshots use the same transport-only connection as the primary leaf.
+    // Calling automator.connect directly makes this disposable worker depend on
+    // the SDK's optional Tool.getInfo().SDKVersion field; recent DevTools can
+    // omit it for isolated projects and the SDK then fails before the capture.
+    miniProgram = await connectAutomatorTransport(automator, wsEndpoint)
     emitStage('automator_connected')
     phase = 'stability'
     emitStage('stability_started')

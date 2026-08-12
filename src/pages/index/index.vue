@@ -44,6 +44,7 @@
               @history="openPlantHistory"
               @edit="openEditPlant"
               @reminder="openReminder"
+              @fertilization="openFertilization"
             />
             <view
               v-if="plantDiagnoseHistory[plant.id]?.length"
@@ -128,6 +129,12 @@
         :plant="currentReminderPlant"
         @close="currentReminderPlantId = null"
       />
+      <FertilizationMonthlySheet
+        ref="fertilizationMonthlyRef"
+        :plant="currentFertilizationPlant"
+        @close="currentFertilizationPlantId = null"
+        @changed="loadUserPlants(true)"
+      />
     </view>
   </Layout>
 </template>
@@ -144,6 +151,7 @@ import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
 import PlantCard from './components/PlantCard.vue'
+import FertilizationMonthlySheet from './components/FertilizationMonthlySheet.vue'
 import WateringReminderSheet from './components/WateringReminderSheet.vue'
 
 const JUST_NOW_MS = 60000
@@ -156,14 +164,21 @@ const plantingStore = usePlantingStore()
 const loadingPlants = ref(false)
 const diagnosePopupRef = ref(null)
 const wateringReminderRef = ref(null)
+const fertilizationMonthlyRef = ref(null)
 const currentPlantId = ref('')
 const currentPlantName = ref('')
 const currentReminderPlantId = ref(null)
+const currentFertilizationPlantId = ref(null)
 const plantDiagnoseHistory = reactive({})
 const currentReminderPlant = computed(() =>
   currentReminderPlantId.value === null
     ? null
     : plantStore.userPlants.find(plant => plant.id === currentReminderPlantId.value) || null
+)
+const currentFertilizationPlant = computed(() =>
+  currentFertilizationPlantId.value === null
+    ? null
+    : plantStore.userPlants.find(plant => plant.id === currentFertilizationPlantId.value) || null
 )
 
 onMounted(async () => {
@@ -208,7 +223,12 @@ function getReminderSummary(plant) {
   const backendReminder = normalizeBackendWaterReminder(plant?.wateringReminder)
   const localWater = plantingStore.getPlantReminderState(plant.id, 'water')
   return {
-    water: backendReminder || localWater
+    water: backendReminder || localWater,
+    fertilize: {
+      active: Boolean(plant?.fertilizationReminder?.active),
+      reminder: plant?.fertilizationReminder || null,
+      nextTime: plant?.fertilizationReminder?.nextTime || ''
+    }
   }
 }
 function normalizeBackendWaterReminder(reminder) {
@@ -247,6 +267,11 @@ async function openReminder({ plant, type }) {
     await nextTick()
     callComponentMethod(wateringReminderRef, 'open')
   }
+}
+async function openFertilization(plant) {
+  currentFertilizationPlantId.value = plant.id
+  await nextTick()
+  callComponentMethod(fertilizationMonthlyRef, 'open')
 }
 function handleDiagnoseSuccess() {
   if (currentPlantId.value) {

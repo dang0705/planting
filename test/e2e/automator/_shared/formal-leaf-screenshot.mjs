@@ -94,6 +94,22 @@ function captureFormalScreenshotAttempt({
 } = {}) {
   return new Promise(resolve => {
     fsModule.mkdirSync(path.dirname(outputPath), { recursive: true })
+    // Never allow a previous run's PNG to satisfy the current worker. The
+    // output path is test-owned evidence, so remove only this exact artifact
+    // before each bounded attempt.
+    try {
+      fsModule.unlinkSync(outputPath)
+    } catch (error) {
+      if (error?.code !== 'ENOENT') {
+        resolve({
+          status: 'failed_environment',
+          code: 'screenshot_artifact_reset_failed',
+          reason: String(error?.message || error),
+          output_path: outputPath
+        })
+        return
+      }
+    }
     let child
     let stdout = ''
     let stderr = ''

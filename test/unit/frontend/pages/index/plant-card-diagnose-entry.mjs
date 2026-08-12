@@ -94,8 +94,8 @@ assert.match(
 )
 assert.match(
   plantCardSource,
-  /defineEmits\(\['diagnose', 'history', 'edit', 'reminder'\]\)/,
-  'PlantCard must emit diagnose among its declared emits'
+  /defineEmits\(\['diagnose', 'history', 'edit', 'reminder', 'fertilization'\]\)/,
+  'PlantCard must declare both reminder and fertilization actions'
 )
 
 // 契约 5：共享 DiagnosePopup 必须内部挂载 DiagnoseFlow，保持 plant-card -> popup -> flow 链路。

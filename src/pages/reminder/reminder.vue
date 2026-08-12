@@ -9,7 +9,7 @@
       <view v-else-if="!plantStore.hasPlants" id="reminder-tab-empty" class="py-16 text-center">
         <text class="block text-lg font-semibold text-gray-800">还没有可设置提醒的植物</text>
         <text class="mt-2 block text-sm leading-6 text-gray-500">
-          添加植物后，可以在这里安排浇水提醒。
+          添加植物后，可以在这里安排浇水或施肥提醒。
         </text>
       </view>
 
@@ -28,14 +28,26 @@
               <text class="mt-1 block text-xs leading-5 text-[#667085]">
                 {{ getWaterReminderText(plant) }}
               </text>
+              <text class="mt-1 block text-xs leading-5 text-[#667085]">
+                {{ getFertilizationReminderText(plant) }}
+              </text>
             </view>
-            <button
-              :id="`reminder-tab-water-${plant.id}`"
-              class="shrink-0 rounded-lg bg-[#2D6A4F] px-4 py-2 text-xs font-semibold text-white"
-              @click="openReminder(plant)"
-            >
-              浇水提醒
-            </button>
+            <view class="flex shrink-0 flex-col gap-2">
+              <button
+                :id="`reminder-tab-water-${plant.id}`"
+                class="rounded-lg bg-[#2D6A4F] px-4 py-2 text-xs font-semibold text-white"
+                @click="openReminder(plant)"
+              >
+                浇水提醒
+              </button>
+              <button
+                :id="`reminder-tab-fertilization-${plant.id}`"
+                class="rounded-lg border border-[#2D6A4F] bg-white px-4 py-2 text-xs font-semibold text-[#2D6A4F] after:border-0"
+                @click="openFertilizationReminder(plant)"
+              >
+                施肥提醒
+              </button>
+            </view>
           </view>
         </view>
       </view>
@@ -44,6 +56,12 @@
         ref="wateringReminderRef"
         :plant="currentReminderPlant"
         @close="currentReminderPlantId = null"
+      />
+      <FertilizationMonthlySheet
+        ref="fertilizationReminderRef"
+        :plant="currentFertilizationPlant"
+        @close="currentFertilizationPlantId = null"
+        @changed="loadUserPlants(true)"
       />
     </view>
   </Layout>
@@ -58,17 +76,25 @@ import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
 import WateringReminderSheet from '@/pages/index/components/WateringReminderSheet.vue'
+import FertilizationMonthlySheet from '@/pages/index/components/FertilizationMonthlySheet.vue'
 
 const plantStore = usePlantStore()
 const plantingStore = usePlantingStore()
 const userStore = useUserStore()
 const loadingPlants = ref(false)
 const wateringReminderRef = ref(null)
+const fertilizationReminderRef = ref(null)
 const currentReminderPlantId = ref(null)
+const currentFertilizationPlantId = ref(null)
 const currentReminderPlant = computed(() =>
   currentReminderPlantId.value === null
     ? null
     : plantStore.userPlants.find(plant => plant.id === currentReminderPlantId.value) || null
+)
+const currentFertilizationPlant = computed(() =>
+  currentFertilizationPlantId.value === null
+    ? null
+    : plantStore.userPlants.find(plant => plant.id === currentFertilizationPlantId.value) || null
 )
 
 onMounted(async () => {
@@ -117,9 +143,29 @@ function getWaterReminderText(plant) {
   return summary.water?.active ? '已有浇水提醒' : '还没有安排浇水提醒'
 }
 
+function getFertilizationReminderText(plant) {
+  const reminder = plant?.fertilizationReminder
+  if (!reminder?.active) {
+    return plant?.fertilizationMonthly?.available
+      ? '还没有安排施肥提醒'
+      : '暂无已审核的月度施肥表'
+  }
+  return reminder.isDue
+    ? reminder.reminderKind === 'first_confirmation'
+      ? '首次确认提醒已到，请打开查看'
+      : '施肥提醒已到，请打开查看'
+    : `${reminder.reminderKind === 'first_confirmation' ? '首次确认提醒' : '施肥提醒'}：${String(reminder.nextCheckDate || '').slice(5).replace('-', '月')}日`
+}
+
 async function openReminder(plant) {
   currentReminderPlantId.value = plant.id
   await nextTick()
   callComponentMethod(wateringReminderRef, 'open')
+}
+
+async function openFertilizationReminder(plant) {
+  currentFertilizationPlantId.value = plant.id
+  await nextTick()
+  callComponentMethod(fertilizationReminderRef, 'open')
 }
 </script>

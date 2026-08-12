@@ -303,12 +303,16 @@ function enableFocusedReminder() {
   if (!selectedReminderFocus.value) {
     return
   }
+  if (selectedReminderFocus.value.type !== 'water') {
+    uni.showToast({ title: '施肥提醒请从植物卡片设置', icon: 'none' })
+    return
+  }
   plantingStore.setPlantReminder({
     plantId: selectedReminderFocus.value.plantId,
     plantName: selectedReminderFocus.value.plantName,
     type: selectedReminderFocus.value.type,
     nextTime: buildTomorrowReminderTime(),
-    intervalDays: selectedReminderFocus.value.type === 'fertilize' ? 30 : 7
+    intervalDays: 7
   })
   uni.showToast({
     title: `${getTaskName(selectedReminderFocus.value.type)}提醒已设置`,

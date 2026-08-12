@@ -1,5 +1,18 @@
 import assert from 'node:assert/strict'
 import { probeWxRequest } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/qa-preflight.mjs'
+import { resolveQaWxRequestUrl } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/qa-run.mjs'
+
+assert.deepEqual(resolveQaWxRequestUrl('http://example.test/health', {}), {
+  url: 'http://example.test/health',
+  source: 'cli'
+})
+assert.deepEqual(
+  resolveQaWxRequestUrl('', { CLOUDBASE_LOCAL_FUNCTIONS_HOST_IP: '192.168.50.80' }),
+  {
+    url: 'http://192.168.50.80:3010/plant-user-http/user-plants/health',
+    source: 'derived_local_lan_health'
+  }
+)
 
 const healthUrl = 'http://127.0.0.1:12345/__local_functions__/health'
 const successfulSlot = '__dispatchQaWxRequest_test_success'

@@ -2,7 +2,41 @@
 
 const { models } = require('/opt/utils/cloudbase')
 const { normalizeAirEnvironmentInput } = require('./air-environment-evidence')
+const {
+  getUserPlantFertilizationEvents,
+  insertFertilizationEvent
+} = require('./fertilization-history')
 const MAX_USER_PLANT_NOTES_LENGTH = 200
+const FERTILIZATION_LABEL_PATTERN = /产品标签|按标签/u
+const FERTILIZATION_PAUSE_LABEL_PATTERN = /(?:暂停施肥|暂停追加|暂停)(?:$|[；，。])/u
+const FERTILIZATION_SCOPE_GUIDANCE = {
+  indoor_growth_signal: '月份仅作参考；不长新叶或新芽时暂停。',
+  indoor_phenology: '按实际生长节奏参考月份；停止生长时暂停。',
+  container_frost_free_window: '按当地无霜期和实际生长调整；停止生长时暂停。',
+  container_phenology: '按实际生长节点调整月份；停止生长时暂停。',
+  aquatic_water_temperature: '按水温和实际生长调整；肥料不要倒入水中。'
+}
+const FERTILIZATION_PAUSE_GUIDANCE =
+  '表中标为“暂停施肥”或“暂停追加”时，该月不安排这类肥料的提醒。'
+const FERTILIZATION_SCOPE_TYPES = new Set(['indoor', 'container', 'aquatic'])
+const FERTILIZATION_ADJUSTMENT_MODES = new Set([
+  'growth_signal',
+  'frost_free_window',
+  'phenology',
+  'water_temperature'
+])
+
+function emptyFertilizationMonthly() {
+  return {
+    available: false,
+    rows: [],
+    scopeLabel: '',
+    scopeGuidance: '',
+    choiceGuidance: '',
+    publicNote: '',
+    sourceNames: []
+  }
+}
 
 function normalizePlantKeyword(value) {
   return String(value || '')
@@ -45,6 +79,137 @@ function normalizeReliabilitySummary(summary, reliabilityScore) {
 
 function parseCareJson(value) {
   return parseJsonField(value, null)
+}
+
+function uniqueStrings(values = []) {
+  return Array.from(new Set(values.map(value => String(value || '').trim()).filter(Boolean)))
+}
+
+function isPubliclyDisplayableFertilizationRule(displayText) {
+  return Boolean(displayText) && !FERTILIZATION_LABEL_PATTERN.test(displayText)
+}
+
+function buildFertilizationScopeGuidance(scopeKey, rows) {
+  const baseGuidance = FERTILIZATION_SCOPE_GUIDANCE[scopeKey]
+  if (!baseGuidance) {
+    return ''
+  }
+
+  const hasPauseRule = rows.some(row =>
+    [row?.liquid, row?.slowRelease]
+      .filter(Boolean)
+      .some(
+        cell =>
+          FERTILIZATION_PAUSE_LABEL_PATTERN.test(cell.displayText) ||
+          cell.schedule?.kind === 'pause'
+      )
+  )
+
+  return hasPauseRule ? `${baseGuidance}${FERTILIZATION_PAUSE_GUIDANCE}` : baseGuidance
+}
+
+function mapFertilizationMonthlyCell(cell, sourceById) {
+  const displayText = String(cell?.displayText || '').trim()
+  if (!displayText) {
+    return null
+  }
+
+  const sourceNames = uniqueStrings(
+    Array.isArray(cell?.sourceRefIds)
+      ? cell.sourceRefIds.map(sourceId => sourceById.get(sourceId)?.name)
+      : []
+  )
+  if (!sourceNames.length) {
+    return null
+  }
+
+  const schedule =
+    cell?.schedule && Number(cell.schedule.schemaVersion) === 1 && cell.schedule.kind
+      ? cell.schedule
+      : null
+
+  return { displayText, schedule, sourceNames }
+}
+
+function mapFertilizationMonthly(value) {
+  const audit = parseCareJson(value)
+  if (!audit || audit.reviewStatus !== 'audited') {
+    return emptyFertilizationMonthly()
+  }
+
+  const scopeType = String(audit.scopeType || '').trim()
+  const adjustmentMode = String(audit.adjustmentMode || '').trim()
+  if (
+    !FERTILIZATION_SCOPE_TYPES.has(scopeType) ||
+    !FERTILIZATION_ADJUSTMENT_MODES.has(adjustmentMode)
+  ) {
+    return emptyFertilizationMonthly()
+  }
+  const scopeGuidanceKey = `${scopeType}_${adjustmentMode}`
+  if (!FERTILIZATION_SCOPE_GUIDANCE[scopeGuidanceKey]) {
+    return emptyFertilizationMonthly()
+  }
+
+  const sourceRefs = Array.isArray(audit.sourceRefs) ? audit.sourceRefs : []
+  const sourceById = new Map(
+    sourceRefs
+      .filter(source => source?.id && source?.name && source?.url && source?.evidenceRef)
+      .map(source => [source.id, source])
+  )
+  const rawRows = Array.isArray(audit.rows) ? audit.rows : []
+  const seenMonths = new Set()
+  const rows = []
+
+  for (const rawRow of rawRows) {
+    const month = Number(rawRow?.month)
+    if (!Number.isInteger(month) || month < 1 || month > 12 || seenMonths.has(month)) {
+      return emptyFertilizationMonthly()
+    }
+
+    const rawLiquid = mapFertilizationMonthlyCell(rawRow.liquid, sourceById)
+    const rawSlowRelease = mapFertilizationMonthlyCell(rawRow.slowRelease, sourceById)
+    if ((rawRow.liquid && !rawLiquid) || (rawRow.slowRelease && !rawSlowRelease)) {
+      return emptyFertilizationMonthly()
+    }
+    const liquid =
+      rawLiquid && isPubliclyDisplayableFertilizationRule(rawLiquid.displayText) ? rawLiquid : null
+    const slowRelease =
+      rawSlowRelease && isPubliclyDisplayableFertilizationRule(rawSlowRelease.displayText)
+        ? rawSlowRelease
+        : null
+    if (!rawLiquid && !rawSlowRelease) {
+      return emptyFertilizationMonthly()
+    }
+
+    seenMonths.add(month)
+    rows.push({ month, liquid, slowRelease })
+  }
+
+  if (rows.length !== 12) {
+    return emptyFertilizationMonthly()
+  }
+
+  rows.sort((left, right) => left.month - right.month)
+  if (!rows.some(row => row.liquid || row.slowRelease)) {
+    return emptyFertilizationMonthly()
+  }
+  const scopeGuidance = buildFertilizationScopeGuidance(scopeGuidanceKey, rows)
+  const sourceNames = uniqueStrings(
+    rows.flatMap(row => [
+      ...(row.liquid?.sourceNames || []),
+      ...(row.slowRelease?.sourceNames || [])
+    ])
+  )
+
+  return {
+    available: true,
+    rows,
+    scopeLabel: String(audit.scopeLabel || '').trim(),
+    scopeGuidance,
+    choiceGuidance: scopeType === 'aquatic' ? '' : '液体肥和缓释肥选一种，不要同时使用。',
+    publicNote: String(audit.publicNote || '').trim(),
+    sourceNames
+  }
 }
 
 function stringifyNullableJson(value) {
@@ -260,6 +425,7 @@ const CATALOG_SELECT_SQL = `
     gcp.watering_strategy_json,
     gcp.watering_way_quantization_json,
     gcp.fertilizing_strategy_json,
+    gcp.fertilizing_monthly_strategy_json,
     gcp.light_strategy_json,
     gcp.airflow_strategy_json,
     gcp.temp_min_c,
@@ -310,6 +476,7 @@ function mapPlantRow(row) {
     watering: parseCareJson(row.watering_strategy_json),
     wateringQuantization: parseCareJson(row.watering_way_quantization_json),
     fertilization: parseCareJson(row.fertilizing_strategy_json),
+    fertilizationMonthly: mapFertilizationMonthly(row.fertilizing_monthly_strategy_json),
     sunning: parseCareJson(row.light_strategy_json),
     ventilation: parseCareJson(row.airflow_strategy_json),
     temperatureMin:
@@ -709,6 +876,7 @@ function mapUserPlantInstanceRow(row, plant = null) {
     latinName: plant?.latinName || row.plant_latin_name || '',
     watering: plant?.watering || null,
     fertilization: plant?.fertilization || null,
+    fertilizationMonthly: plant?.fertilizationMonthly || null,
     sunning: plant?.sunning || null,
     ventilation: plant?.ventilation || null,
     temperatureMin: plant?.temperatureMin ?? null,
@@ -815,6 +983,7 @@ async function getUserPlantInstanceById(openid, id) {
   const plantInstance = mapUserPlantInstanceRow(row, plant)
   // 单独 try/catch 查询 watering_events_json，列不存在时不阻断主流程
   plantInstance.wateringEvents = await getUserPlantWateringEvents(openid, id)
+  plantInstance.fertilizationEvents = await getUserPlantFertilizationEvents(models, openid, id)
   return plantInstance
 }
 
@@ -1390,11 +1559,16 @@ async function resolvePlantContext({ openid, plantId = null, userPlantId = null 
 
 module.exports = {
   normalizePlantKeyword,
+  mapFertilizationMonthly,
   listPlantCatalog,
   getPlantCatalogById,
   findCanonicalPlantMatch,
   createUserPlantInstance,
   getUserPlantInstanceById,
+  getUserPlantFertilizationEvents: (openid, id, limit = 20) =>
+    getUserPlantFertilizationEvents(models, openid, id, limit),
+  insertFertilizationEvent: (openid, userPlantId, event = {}) =>
+    insertFertilizationEvent(models, openid, userPlantId, event),
   getUserPlantWateringEvents,
   insertWateringEvent,
   getUserPlantWateringStrategy,

@@ -18,7 +18,10 @@ export async function safeScreenshot(mp, artifactDir, label, wsEndpoint) {
     })
     resumeAutomatorSession(mp, resumed.mp)
     return outputPath
-  } catch {
+  } catch (error) {
+    if (error?.reconnectedMp) {
+      resumeAutomatorSession(mp, error.reconnectedMp)
+    }
     return null
   }
 }

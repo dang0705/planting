@@ -117,6 +117,10 @@ export function setClassification(report, classification, reason) {
   if (!ALLOWED_CLASSIFICATIONS.has(classification)) {
     throw new Error(`invalid classification: ${classification}`)
   }
+  if (classification === 'PASS' && hasFailedAssertions(report)) {
+    classification = 'FAIL_PRODUCT'
+    reason ||= 'one or more assertions failed'
+  }
   report.classification = classification
   report.status = classification === 'PASS' ? 'passed' : 'failed'
   report.failure_kind = STRUCTURED_FAILURE_KIND[classification] ?? null

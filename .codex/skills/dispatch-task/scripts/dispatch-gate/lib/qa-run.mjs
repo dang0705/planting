@@ -21,6 +21,10 @@ import { runFormalQaExecution, runFormalQaPreflight } from './formal-isolated-qa
 import { cleanupTestOwnedQaSession, createTestOwnedQaSession } from './test-owned-qa-session.mjs'
 import { isProcessAlive } from './process-liveness.mjs'
 import { findHandoff, readJson, repoRoot, stateDir, writeJsonAtomic } from './state.mjs'
+import {
+  DEFAULT_PORT,
+  resolveLocalApiBaseUrl
+} from '../../../../../../scripts/dev/local-api-env-config.mjs'
 
 const qaGateOptionsWithValue = new Set([
   '--catalog-id',
@@ -66,6 +70,32 @@ function recordPath(dispatchRunId, executionId) {
 }
 
 const safeExecutionId = value => /^[a-zA-Z0-9._-]{8,160}$/.test(value)
+const LOCAL_QA_WX_REQUEST_PATH = 'plant-user-http/user-plants/health'
+
+export function resolveQaWxRequestUrl(value, environment = process.env) {
+  const explicit = String(value || '').trim()
+  if (explicit) {
+    return { url: explicit, source: 'cli' }
+  }
+  const envUrl = String(environment.QA_WX_REQUEST_URL || '').trim()
+  if (envUrl) {
+    return { url: envUrl, source: 'environment' }
+  }
+  try {
+    const port = Number(environment.CLOUDBASE_LOCAL_FUNCTIONS_PORT || DEFAULT_PORT)
+    const baseUrl = resolveLocalApiBaseUrl({ mode: 'lan', port }, environment)
+    return {
+      url: `${baseUrl}/${LOCAL_QA_WX_REQUEST_PATH}`,
+      source: 'derived_local_lan_health'
+    }
+  } catch (error) {
+    return {
+      url: '',
+      source: 'unavailable',
+      reason: error?.message || 'unable to derive local LAN health URL'
+    }
+  }
+}
 
 function expectedProjectPathForRun(dispatchRunId) {
   const handoff = dispatchRunId ? readJson(findHandoff(dispatchRunId), {}) : {}
@@ -243,6 +273,7 @@ export function createQaRunCommands({
       appendQaEvent(dispatchRunId, dry, 'dry_run_checked')
       return emit({ ...dry, execution_record: path.relative(repoRoot, recordFile) })
     }
+    const wxRequest = resolveQaWxRequestUrl(argValue('wx-request-url'))
     const outcome = await runFormalQaExecution({
       dispatchRunId,
       catalogId,
@@ -250,7 +281,7 @@ export function createQaRunCommands({
       gate,
       expectedProjectPath,
       screenshotPath: path.join(stateDir(dispatchRunId), 'qa-runs', `${executionId}-preflight.png`),
-      wxRequestUrl: argValue('wx-request-url'),
+      wxRequestUrl: wxRequest.url,
       allowTargetedRestart: prepared.allowTargetedRestart,
       args,
       argValue,
@@ -291,6 +322,7 @@ export function createQaRunCommands({
         inspectFrozenExecutionBundle({
           ...options,
           bundleFingerprint,
+          entry: gate.entry,
           additionalFiles: gate.entry?.integrity_files ?? []
         }),
       failedBundleEvidence: failedExecutionBundleEvidence,
@@ -336,6 +368,7 @@ export function createQaRunCommands({
         1
       )
     }
+    const wxRequest = resolveQaWxRequestUrl(argValue('wx-request-url'))
     const report = await runFormalQaPreflight({
       dispatchRunId: prepared.dispatchRunId,
       projectPath: prepared.expectedProjectPath,
@@ -344,7 +377,7 @@ export function createQaRunCommands({
         'qa-runs',
         `${prepared.executionId}-preflight.png`
       ),
-      wxRequestUrl: argValue('wx-request-url'),
+      wxRequestUrl: wxRequest.url,
       allowTargetedRestart: prepared.allowTargetedRestart,
       runtimeFactory: options => runtimeFactory(options),
       runtimeCleanup,

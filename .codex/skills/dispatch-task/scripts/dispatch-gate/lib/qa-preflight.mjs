@@ -15,6 +15,7 @@ import {
   withPreflightDeadline
 } from './qa-preflight-runtime.mjs'
 import { captureIsolatedRendererScreenshot } from './renderer-screenshot-readiness.mjs'
+import { checkQaProjectSnapshot } from '../../../../../../test/e2e/automator/_shared/runtime-project-policy.mjs'
 
 export { probeWxRequest } from './qa-preflight-runtime.mjs'
 export { extractLeafReport } from './qa-leaf-report.mjs'
@@ -125,7 +126,27 @@ function addFailure(report, item) {
   return report
 }
 
-function preflightChecks({ report, projectPath, wsPort, runtimeInspector, lanFlowProbe, runtime }) {
+function preflightChecks({
+  report,
+  projectPath,
+  wsPort,
+  runtimeInspector,
+  lanFlowProbe,
+  runtime,
+  requireIsolatedProject = false
+}) {
+  if (requireIsolatedProject) {
+    const snapshot = checkQaProjectSnapshot(projectPath)
+    report.checks.project_snapshot = {
+      passed: snapshot.ok,
+      code: snapshot.code ?? null,
+      reason: snapshot.reason ?? null,
+      marker_path: snapshot.markerPath ?? null
+    }
+    if (!snapshot.ok) {
+      return failure(snapshot.code, snapshot.reason, report.checks.project_snapshot)
+    }
+  }
   const inspectedRuntime = runtime ?? runtimeInspector({ expectedProjectPath: projectPath, wsPort })
   report.devtools_runtime = inspectedRuntime
   report.observed_project_path = inspectedRuntime.observed_project_path ?? 'unavailable'
@@ -268,6 +289,7 @@ export async function runQaPreflight({
   screenshotPath,
   allowTargetedRestart = false,
   preflightTimeoutMs = PREFLIGHT_CAPTURE_TIMEOUT_MS,
+  requireIsolatedProject = false,
   runtimeInspector = inspectDevToolsRuntime,
   preverifiedRuntime = null,
   recoveryExecutor = recoverVerifiedTargetDevTools,
@@ -319,7 +341,8 @@ export async function runQaPreflight({
     wsPort,
     runtimeInspector,
     lanFlowProbe,
-    runtime
+    runtime,
+    requireIsolatedProject
   })
   if (earlyFailure) {
     return addFailure(report, earlyFailure)

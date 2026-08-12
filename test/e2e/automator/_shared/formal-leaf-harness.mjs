@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 export { captureFormalScreenshot } from './formal-leaf-screenshot.mjs'
-import { captureFormalScreenshot } from './formal-leaf-screenshot.mjs'
+import { captureFormalScreenshot as defaultCaptureFormalScreenshot } from './formal-leaf-screenshot.mjs'
 import { screenshotStabilityBudget, waitForScreenshotStability } from './screenshot-stability.mjs'
 
 export const FORMAL_LEAF_TIMEOUT_MS = 12_000
@@ -35,6 +35,20 @@ function resumeSession(session, replacement) {
     state.raw = rawSession(replacement)
   }
   return session
+}
+
+export async function connectAutomatorTransport(automator, wsEndpoint) {
+  // miniprogram-automator 0.12.x calls checkVersion() after connecting and
+  // assumes Tool.getInfo().SDKVersion is always present. Recent WeChat
+  // DevTools may omit that optional field for cloned QA projects; the SDK
+  // then crashes in cmpVersion with `undefined.split`. The transport
+  // connection itself is valid and the project/runtime identity has already
+  // been verified by the QA supervisor, so use the launcher's transport-only
+  // method when available and keep the package fallback for older releases.
+  if (typeof automator?.launcher?.connectTool === 'function') {
+    return automator.launcher.connectTool({ wsEndpoint })
+  }
+  return automator.connect({ wsEndpoint })
 }
 
 export function resolveFormalLeafPrincipal(env = process.env) {
@@ -181,7 +195,7 @@ export async function connectFormalLeaf({
   const raw = await deadline({
     name: 'leaf.connect',
     timeoutMs,
-    operation: () => automator.connect({ wsEndpoint })
+    operation: () => connectAutomatorTransport(automator, wsEndpoint)
   })
   return { mp: createResumableSession(raw), wsEndpoint }
 }
@@ -224,6 +238,7 @@ export async function handoffFormalLeafScreenshot({
   expectedRoute = '',
   maxAttempts = 2,
   retryDelayMs = 350,
+  captureFormalScreenshot = defaultCaptureFormalScreenshot,
   deadline = withDeadline
 } = {}) {
   const verifiedEndpoint = formalAutomatorEndpoint({
@@ -249,7 +264,21 @@ export async function handoffFormalLeafScreenshot({
       }
     }
   }
-  await disconnectFormalLeaf({ mp, timeoutMs, deadline })
+  let primaryDisconnect = { status: 'not_attempted' }
+  try {
+    await disconnectFormalLeaf({ mp, timeoutMs, deadline })
+    primaryDisconnect = { status: 'passed' }
+  } catch (error) {
+    // A page reload or renderer handoff can close the primary transport before
+    // the explicit disconnect reaches it. The disposable screenshot worker
+    // owns the next connection, so an already-closed primary session is not a
+    // reason to skip the worker. Keep the failure visible in evidence.
+    primaryDisconnect = {
+      status: 'already_closed_or_failed',
+      code: error?.code || 'formal_leaf_primary_disconnect_failed',
+      reason: String(error?.message || error)
+    }
+  }
   const screenshot = await captureFormalScreenshot({
     wsEndpoint: verifiedEndpoint,
     outputPath,
@@ -260,25 +289,42 @@ export async function handoffFormalLeafScreenshot({
     maxAttempts,
     retryDelayMs
   })
-  if (screenshot.status !== 'passed') {
-    const error = new Error(screenshot.code || 'formal screenshot worker failed')
-    error.code = screenshot.code || 'formal_leaf_screenshot_failed'
+  let reconnected
+  try {
+    reconnected = await connectFormalLeaf({
+      automator,
+      wsEndpoint: verifiedEndpoint,
+      timeoutMs,
+      deadline
+    })
+  } catch (error) {
     error.screenshot = screenshot
+    error.primaryDisconnect = primaryDisconnect
     throw error
   }
-  const reconnected = await connectFormalLeaf({
-    automator,
-    wsEndpoint: verifiedEndpoint,
-    timeoutMs,
-    deadline
-  })
   // Some leaf clients wrap this harness session in their own resumable proxy.
   // That outer proxy is intentionally opaque to this module, so updating only
   // our WeakMap would return a facade that still points at the disconnected
   // pre-screenshot transport. Return the fresh session for opaque wrappers;
   // retain the original facade only when this harness owns its state.
   const resumed = liveSessions.has(mp) ? resumeSession(mp, reconnected.mp) : reconnected.mp
-  return { ...screenshot, pre_capture_stability: preCaptureStability, mp: resumed }
+  if (screenshot.status !== 'passed') {
+    const error = new Error(screenshot.code || 'formal screenshot worker failed')
+    error.code = screenshot.code || 'formal_leaf_screenshot_failed'
+    error.screenshot = screenshot
+    error.primaryDisconnect = primaryDisconnect
+    // Opaque wrappers (for example the transpiration client) cannot be
+    // updated through this module's WeakMap. Callers can adopt this fresh
+    // session before recording the bounded screenshot failure.
+    error.reconnectedMp = resumed
+    throw error
+  }
+  return {
+    ...screenshot,
+    pre_capture_stability: preCaptureStability,
+    primary_disconnect: primaryDisconnect,
+    mp: resumed
+  }
 }
 
 export function formalLeafReport({

@@ -60,15 +60,36 @@
         class="flex h-[127px] w-[49px] flex-[0_0_49px] flex-col items-center justify-center gap-2 border-l border-[rgba(45,122,79,0.15)] py-3 pl-[9px] pr-2"
       >
         <button
-          v-for="item in reminderItems"
-          :key="item.type"
-          :id="`plant-card-reminder-${plant.id}-${item.type}`"
+          :id="`plant-card-reminder-${plant.id}-water`"
           class="m-0 flex size-8 items-center justify-center rounded-full border p-0 after:border-0"
-          :class="item.active ? 'border-[#74d4ff] bg-[#f0f9ff]' : 'border-[#e5e7eb] bg-[#f9fafb]'"
+          :class="
+            waterReminderActive ? 'border-[#74d4ff] bg-[#f0f9ff]' : 'border-[#e5e7eb] bg-[#f9fafb]'
+          "
           hover-class="none"
-          @click.stop="$emit('reminder', { plant, type: item.type })"
+          @click.stop="$emit('reminder', { plant, type: 'water' })"
         >
-          <image :src="item.icon" class="size-4 flex-[0_0_16px]" mode="aspectFit" />
+          <image
+            :src="waterReminderActive ? waterActiveIcon : waterDefaultIcon"
+            class="size-4 flex-[0_0_16px]"
+            mode="aspectFit"
+          />
+        </button>
+        <button
+          :id="`plant-card-fertilization-${plant.id}`"
+          class="m-0 flex size-8 items-center justify-center rounded-full border p-0 after:border-0"
+          :class="
+            fertilizationReminderActive
+              ? 'border-[#74d4ff] bg-[#f0f9ff]'
+              : 'border-[#e5e7eb] bg-[#f9fafb]'
+          "
+          hover-class="none"
+          @click.stop="$emit('fertilization', plant)"
+        >
+          <image
+            :src="fertilizationReminderActive ? fertilizeActiveIcon : fertilizeDefaultIcon"
+            class="size-4 flex-[0_0_16px]"
+            mode="aspectFit"
+          />
         </button>
       </view>
     </view>
@@ -81,6 +102,8 @@ import PlantDisplayBase from '@/components/PlantDisplayBase.vue'
 import PlantProfileCompleteness from './PlantProfileCompleteness.vue'
 import diagnoseIcon from '@/assets/icons/home-card-diagnose.svg'
 import historyIcon from '@/assets/icons/home-card-history.svg'
+import fertilizeActiveIcon from '@/assets/icons/home-card-fertilize-active.svg'
+import fertilizeDefaultIcon from '@/assets/icons/home-card-fertilize-default.svg'
 import waterActiveIcon from '@/assets/icons/home-card-water-active.svg'
 import waterDefaultIcon from '@/assets/icons/home-card-water-default.svg'
 
@@ -92,13 +115,10 @@ const props = defineProps({
   }
 })
 
-defineEmits(['diagnose', 'history', 'edit', 'reminder'])
+defineEmits(['diagnose', 'history', 'edit', 'reminder', 'fertilization'])
 
-const reminderItems = computed(() => [
-  {
-    type: 'water',
-    active: Boolean(props.reminderSummary?.water?.active),
-    icon: props.reminderSummary?.water?.active ? waterActiveIcon : waterDefaultIcon
-  }
-])
+const waterReminderActive = computed(() => Boolean(props.reminderSummary?.water?.active))
+const fertilizationReminderActive = computed(() =>
+  Boolean(props.reminderSummary?.fertilize?.active || props.plant?.fertilizationReminder?.active)
+)
 </script>

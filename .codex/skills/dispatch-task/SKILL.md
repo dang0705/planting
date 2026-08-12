@@ -329,6 +329,16 @@ Figma、UI、用户可观察行为、API/schema/数据链路、端上运行、�
 
 main QA 不运行 unit tests，不修改业务代码。
 
+### 10.0 测试层级与真实性边界（强制）
+
+dispatch 必须把 unit-test、服务层 e2e 和真实端上 e2e 分开计分，不能用较低层级的通过替代较高层级的验收：
+
+1. `test/unit/**` 是模块级验证，允许假数据、mock、stub 和内存依赖；禁止依赖真实微信运行时、真实 `wx.request`、真实 CloudBase API 或真实开发库。unit-test 通过只说明被测模块在隔离输入下正确，不能作为用户可观察功能或端上验收证据。
+2. `test/e2e/batch/**` 是跨模块服务链路验证，必须调用项目真实配置的 API 和开发库；禁止 mock 被测接口响应、伪造植物/用户数据或绕过 API 直接写入结果。batch 只能证明后端/接口链路，不能替代小程序页面和交互验收。
+3. `test/e2e/automator/**` 中用于正式端上验收的叶子必须运行真实小程序、真实用户登录态、真实 `cloud1_dev` 数据、真实 LAN gateway 和真实运行时 `wx.request`。请求捕获只能观察并转发，不能合成响应；页面必须使用真实数据进入、操作和读回。
+4. 使用 fixture/mock 的 Automator 叶子只能作为诊断或回归工具，必须标记为 `fixture_diagnostic`，不得写入 `runtime-qa-evidence.json` 作为正式端上通过。正式 acceptance 必须选择 catalog 中声明 `automator_required` 且 `data_mode=automator_live_real_api` 的 live 叶子。
+5. 测试或 QA 报告及其 catalog/qa-run 证据必须明确可核验数据模式：`unit_fake`、`e2e_real_api`、`automator_live_real_api` 或 `fixture_diagnostic`。无法证明真实 API、真实数据和真实运行时来源的结果只能记为 `not_verified` / `blocked`，不得包装成 PASS。
+
 automator QA 必须先通过 catalog gate：
 
 ```bash

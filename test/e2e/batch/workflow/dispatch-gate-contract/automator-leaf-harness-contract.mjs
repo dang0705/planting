@@ -15,12 +15,25 @@ import {
   withDeadline
 } from '../../../automator/_shared/formal-leaf-harness.mjs'
 import { executionBundleFingerprint } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/execution-bundle.mjs'
-import { readCatalog } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/catalog.mjs'
+import {
+  catalogExecutionBundleFingerprint,
+  readCatalog
+} from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/catalog.mjs'
+import { getCurrentPageWithFallback } from '../../../automator/_shared/page-probe.mjs'
 
 assert.equal(
   formalAutomatorEndpoint({ MINIPROGRAM_AUTOMATOR_WS: 'ws://127.0.0.1:9421' }),
   'ws://127.0.0.1:9421'
 )
+const fallbackPageProbe = await getCurrentPageWithFallback(
+  {
+    currentPage: () => new Promise(() => {}),
+    pageStack: async () => [{ path: 'pages/index/index' }, { path: 'pages/detail/detail' }]
+  },
+  { timeoutMs: 20, perRpcTimeoutMs: 5 }
+)
+assert.equal(fallbackPageProbe.page.path, 'pages/detail/detail')
+assert.equal(fallbackPageProbe.source, 'page_stack_fallback')
 assert.throws(
   () => formalAutomatorEndpoint({ MINIPROGRAM_AUTOMATOR_WS: 'http://127.0.0.1:9421' }),
   /supervisor-provided Automator endpoint/
@@ -67,7 +80,7 @@ const handedOff = await handoffFormalLeafScreenshot({
   },
   wsEndpoint: 'ws://127.0.0.1:9420',
   outputPath: path.join(os.tmpdir(), 'formal-leaf-handoff-contract.png'),
-  captureScreenshot: async () => ({ status: 'passed', validPng: true })
+  captureFormalScreenshot: async () => ({ status: 'passed', validPng: true })
 })
 assert.notEqual(
   handedOff.mp,
@@ -76,6 +89,33 @@ assert.notEqual(
 )
 assert.equal(typeof handedOff.mp.disconnect, 'function')
 assert.deepEqual(reconnectCalls, ['disconnect:first', 'connect:second'])
+const stalePrimaryEvents = []
+const stalePrimary = await handoffFormalLeafScreenshot({
+  mp: {
+    disconnect: async () => {
+      stalePrimaryEvents.push('primary-disconnect-closed')
+      throw new Error('Connection closed, check if wechat web devTools is still running')
+    }
+  },
+  automator: {
+    connect: async () => {
+      stalePrimaryEvents.push('reconnect-after-closed-primary')
+      return { disconnect: async () => {} }
+    }
+  },
+  wsEndpoint: 'ws://127.0.0.1:9420',
+  outputPath: path.join(os.tmpdir(), 'formal-leaf-stale-primary-contract.png'),
+  captureFormalScreenshot: async () => {
+    stalePrimaryEvents.push('screenshot-worker-after-closed-primary')
+    return { status: 'passed', validPng: true }
+  }
+})
+assert.deepEqual(stalePrimaryEvents, [
+  'primary-disconnect-closed',
+  'screenshot-worker-after-closed-primary',
+  'reconnect-after-closed-primary'
+])
+assert.equal(stalePrimary.primary_disconnect.status, 'already_closed_or_failed')
 const firstProfile = []
 const secondProfile = []
 const principal = resolveFormalLeafPrincipal({ E2E_TEST_OPENID: 'e2e_shared_test_user' })
@@ -236,10 +276,14 @@ const prohibited = [
   /\$vm\b/
 ]
 for (const entry of readCatalog().entries) {
-  const activeBundle = executionBundleFingerprint(entry.leaf_script)
+  const activeBundle = catalogExecutionBundleFingerprint(entry.leaf_script, { entry })
   assert.ok(
     activeBundle.files.includes(harnessPath),
     `${entry.id} must execute through the shared formal leaf harness`
+  )
+  assert.ok(
+    activeBundle.files.some(file => file.endsWith('/screenshot-worker.mjs')),
+    `${entry.id} must freeze the isolated screenshot worker in its execution bundle`
   )
   for (const file of activeBundle.files) {
     if (

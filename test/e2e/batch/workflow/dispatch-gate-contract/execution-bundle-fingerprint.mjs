@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { executionBundleFingerprint } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/execution-bundle.mjs'
+import { catalogExecutionBundleFingerprint } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/catalog.mjs'
 import { createQaRunCommands } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/qa-run.mjs'
 import { previousFrozenBundleAttemptGate } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/qa-run-bundle-integrity.mjs'
 import { buildWorktreeScopeReport } from '../../../../../.codex/skills/dispatch-task/scripts/lib/implementation-postflight-checks.mjs'
@@ -105,7 +106,7 @@ try {
   const entry = {
     id: 'synthetic.execution_bundle_mutation',
     leaf_script: leafScript,
-    script_sha256: executionBundleFingerprint(leaf).hash,
+    script_sha256: catalogExecutionBundleFingerprint(leaf, { entry: {} }).hash,
     category_path: ['diagnosis', 'execution-bundle-mutation'],
     id_policy: { refs: [] },
     requirements: {}

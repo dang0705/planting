@@ -12,6 +12,7 @@
 
 import path from 'node:path'
 import fs from 'node:fs'
+import { checkQaProjectSnapshot } from '../../../../../_shared/runtime-project-policy.mjs'
 
 /**
  * 检查 project.config.json 是否存在于项目目录。
@@ -52,7 +53,13 @@ export function checkProjectDir(projectPath) {
  */
 export function preflightProject(projectPath) {
   const dirCheck = checkProjectDir(projectPath)
-  if (!dirCheck.ok) return dirCheck
+  if (!dirCheck.ok) {
+    return dirCheck
+  }
+  const snapshotCheck = checkQaProjectSnapshot(projectPath)
+  if (!snapshotCheck.ok) {
+    return { ok: false, reason: snapshotCheck.reason, code: snapshotCheck.code }
+  }
   const configCheck = checkProjectConfig(projectPath)
   if (!configCheck.ok) {
     return { ok: false, reason: configCheck.reason }
