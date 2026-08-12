@@ -1,0 +1,39 @@
+{
+  "task": "watering-transpiration-v3-e2e-trae-20260713",
+  "gitHead": "e21c5605c6077bf8a5eb14da83c476738e824ee0",
+  "branch": "sprint-ai-workflow",
+  "baseHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "projectPath": "/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin",
+  "mode": "fertilization-monthly",
+  "wsEndpoint": "ws://127.0.0.1:9421",
+  "startedAt": "2026-08-11T09:37:51.865Z",
+  "endedAt": "2026-08-11T09:38:27.098Z",
+  "pages": [
+    {
+      "path": "/pages/index/index",
+      "time": "2026-08-11T09:37:55.631Z"
+    }
+  ],
+  "pageDataSummaries": [],
+  "capturedRequests": [],
+  "assertions": [
+    {
+      "name": "首页通过真实 plant store 展示 Monstera 夹具植物",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T09:37:55.664Z"
+    },
+    {
+      "name": "首页夹具截图有效",
+      "passed": false,
+      "detail": null,
+      "time": "2026-08-11T09:38:27.097Z"
+    }
+  ],
+  "screenshots": [],
+  "classification": "BLOCKED_ENV",
+  "blockerReason": "Connection closed, check if wechat web devTools is still running",
+  "status": "failed",
+  "failure_kind": "failed_environment",
+  "business_assertions_reached": false
+}

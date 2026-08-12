@@ -1,0 +1,63 @@
+{
+  "task": "air-environment-v2-user-plant-watering:saved-prefill",
+  "gitHead": "b5bcbe4a343d04bf1ec9a1b73bdfd56cd45c377c",
+  "branch": "sprint-ai-workflow",
+  "projectPath": "/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin",
+  "wsEndpoint": "ws://127.0.0.1:53841",
+  "startedAt": "2026-08-09T04:59:07.708Z",
+  "endedAt": "2026-08-09T04:59:24.509Z",
+  "pages": [
+    {
+      "path": "/pages/watering-advisor/watering-advisor",
+      "time": "2026-08-09T04:59:11.637Z"
+    }
+  ],
+  "pageDataSummaries": [],
+  "assertions": [
+    {
+      "name": "open my-plants selector",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:59:14.899Z"
+    },
+    {
+      "name": "fixture has at least one user plant",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:59:15.688Z"
+    },
+    {
+      "name": "select first user plant",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:59:15.747Z"
+    },
+    {
+      "name": "enter air-environment step",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:59:15.818Z"
+    },
+    {
+      "name": "air-environment step is actually rendered after next",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:59:21.281Z"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/airflow-air-exchange-v1/air-environment-v2-saved-prefill-initial-2026-08-09T04-59-11-637Z.png",
+      "time": "2026-08-09T04:59:14.779Z"
+    },
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/airflow-air-exchange-v1/air-environment-v2-saved-prefill-final-2026-08-09T04-59-21-282Z.png",
+      "time": "2026-08-09T04:59:24.509Z"
+    }
+  ],
+  "classification": "BLOCKED_FIXTURE",
+  "blockerReason": "saved-prefill fixture is missing: selected user plant has no complete saved air environment profile",
+  "status": "failed",
+  "failure_kind": "failed_environment",
+  "business_assertions_reached": false
+}

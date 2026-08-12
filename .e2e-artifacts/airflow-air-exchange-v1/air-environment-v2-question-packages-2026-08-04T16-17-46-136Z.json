@@ -1,0 +1,37 @@
+{
+  "task": "air-environment-v2-question-packages",
+  "gitHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "branch": "sprint-ai-workflow",
+  "projectPath": "/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin",
+  "wsEndpoint": "ws://127.0.0.1:9420",
+  "startedAt": "2026-08-04T16:17:18.284Z",
+  "endedAt": "2026-08-04T16:17:46.136Z",
+  "pages": [
+    {
+      "path": "/pages/index/index",
+      "time": "2026-08-04T16:17:22.101Z"
+    },
+    {
+      "path": "/pages/index/index",
+      "time": "2026-08-04T16:17:35.888Z"
+    }
+  ],
+  "pageDataSummaries": [],
+  "assertions": [
+    {
+      "name": "yellowing_mode: diagnosis entry exists",
+      "passed": false,
+      "detail": "requires a user plant fixture",
+      "time": "2026-08-04T16:17:32.112Z"
+    },
+    {
+      "name": "wilting_droop_mode: diagnosis entry exists",
+      "passed": false,
+      "detail": "requires a user plant fixture",
+      "time": "2026-08-04T16:17:46.134Z"
+    }
+  ],
+  "screenshots": [],
+  "classification": "FAIL_PRODUCT",
+  "blockerReason": "one or more assertions failed"
+}

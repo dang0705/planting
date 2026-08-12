@@ -1,0 +1,45 @@
+{
+  "task": "air-environment-v2-user-plant-watering:saved-prefill",
+  "gitHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "branch": "sprint-ai-workflow",
+  "projectPath": "/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin",
+  "wsEndpoint": "ws://127.0.0.1:9420",
+  "startedAt": "2026-08-05T12:31:06.118Z",
+  "endedAt": "2026-08-05T12:31:18.616Z",
+  "pages": [
+    {
+      "path": "/pages/watering-advisor/watering-advisor",
+      "time": "2026-08-05T12:31:09.874Z"
+    }
+  ],
+  "pageDataSummaries": [],
+  "assertions": [
+    {
+      "name": "open my-plants selector",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-05T12:31:10.298Z"
+    },
+    {
+      "name": "fixture has at least one user plant",
+      "passed": false,
+      "detail": null,
+      "time": "2026-08-05T12:31:18.366Z"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/airflow-air-exchange-v1/air-environment-v2-saved-prefill-initial-2026-08-05T12-31-09-874Z.png",
+      "time": "2026-08-05T12:31:10.122Z"
+    },
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/airflow-air-exchange-v1/air-environment-v2-saved-prefill-final-2026-08-05T12-31-18-366Z.png",
+      "time": "2026-08-05T12:31:18.616Z"
+    }
+  ],
+  "classification": "FAIL_PRODUCT",
+  "blockerReason": "one or more assertions failed",
+  "status": "failed",
+  "failure_kind": "failed_product",
+  "business_assertions_reached": false
+}

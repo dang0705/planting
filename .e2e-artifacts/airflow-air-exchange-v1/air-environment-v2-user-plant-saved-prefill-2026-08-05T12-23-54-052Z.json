@@ -1,0 +1,28 @@
+{
+  "task": "air-environment-v2-user-plant-watering:saved-prefill",
+  "gitHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "branch": "sprint-ai-workflow",
+  "projectPath": "/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin",
+  "wsEndpoint": "ws://127.0.0.1:9420",
+  "startedAt": "2026-08-05T12:23:50.021Z",
+  "endedAt": "2026-08-05T12:23:54.052Z",
+  "pages": [
+    {
+      "path": "/pages/watering-advisor/watering-advisor",
+      "time": "2026-08-05T12:23:53.802Z"
+    }
+  ],
+  "pageDataSummaries": [],
+  "assertions": [],
+  "screenshots": [
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/airflow-air-exchange-v1/air-environment-v2-saved-prefill-initial-2026-08-05T12-23-53-802Z.png",
+      "time": "2026-08-05T12:23:54.052Z"
+    }
+  ],
+  "classification": "FAIL_PRODUCT",
+  "blockerReason": "Connection closed, check if wechat web devTools is still running",
+  "status": "failed",
+  "failure_kind": "failed_product",
+  "business_assertions_reached": false
+}
