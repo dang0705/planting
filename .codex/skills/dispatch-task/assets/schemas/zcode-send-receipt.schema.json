@@ -118,18 +118,18 @@
         "attempts": {
           "type": "array",
           "minItems": 1,
-          "maxItems": 2,
+          "maxItems": 1,
           "items": {
             "type": "object",
             "additionalProperties": false,
             "required": ["method", "delivery_verified"],
             "properties": {
-              "method": { "enum": ["cmd_v", "edit_menu_paste"] },
+              "method": { "const": "cmd_v" },
               "delivery_verified": { "type": "boolean" }
             }
           }
         },
-        "selected_method": { "enum": ["cmd_v", "edit_menu_paste", null] },
+        "selected_method": { "enum": ["cmd_v", null] },
         "rendering": { "enum": ["direct_text", "pasted_text_attachment", null] },
         "pre_send_verified": { "type": "boolean" },
         "direct_text_identity": {
@@ -145,11 +145,9 @@
         "attachment": {
           "type": ["object", "null"],
           "additionalProperties": false,
-          "required": ["name", "sha256", "bytes", "lines", "present_before_send", "present_after_send"],
+          "required": ["name", "lines", "present_before_send", "present_after_send"],
           "properties": {
             "name": { "type": "string", "minLength": 1 },
-            "sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
-            "bytes": { "type": "integer", "minimum": 1 },
             "lines": { "type": "integer", "minimum": 1 },
             "present_before_send": { "type": "boolean" },
             "present_after_send": { "type": "boolean" }
@@ -223,7 +221,7 @@
           },
           "paste_delivery": {
             "properties": {
-              "selected_method": { "enum": ["cmd_v", "edit_menu_paste"] },
+              "selected_method": { "const": "cmd_v" },
               "rendering": { "enum": ["direct_text", "pasted_text_attachment"] },
               "pre_send_verified": { "const": true },
               "verified_at": { "type": "string" }

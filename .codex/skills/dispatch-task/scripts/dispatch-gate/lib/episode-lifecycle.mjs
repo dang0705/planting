@@ -5,7 +5,6 @@ import {
   continuationDefaults,
   LIFECYCLE_STAGES,
   now,
-  readEpisodeById,
   requireActiveEpisode,
   withActiveEpisode,
   writeEpisode
@@ -61,21 +60,23 @@ export function issueCompletionReadyAuthorization({
   }
 }
 
-function validAuthorization(proof, runId) {
+function authorizationFailureReason(proof, runId) {
   if (
     !proof ||
     proof.authorized_by !== 'validate-completion-readiness' ||
     proof?.payload?.dispatch_run_id !== String(runId ?? '')
   )
-    return false
+    return 'authorization_proof_invalid'
   const expected = crypto
     .createHmac('sha256', secret)
     .update(JSON.stringify(proof.payload))
     .digest('hex')
-  return (
-    Buffer.from(String(proof.hmac ?? '')).length === Buffer.from(expected).length &&
-    crypto.timingSafeEqual(Buffer.from(String(proof.hmac ?? '')), Buffer.from(expected))
-  )
+  const actual = Buffer.from(String(proof.hmac ?? ''))
+  const expectedBuffer = Buffer.from(expected)
+  if (actual.length !== expectedBuffer.length) {
+    return 'authorization_proof_hmac_invalid'
+  }
+  return crypto.timingSafeEqual(actual, expectedBuffer) ? null : 'authorization_proof_hmac_invalid'
 }
 
 export function migrateLegacyEpisodeLifecycle(input) {
@@ -249,11 +250,15 @@ export function recordQaOutcome(input) {
 }
 
 export function markCompletionReady(input) {
-  if (!validAuthorization(input.authorizationProof, input.dispatchRunId))
+  const authorizationReason = authorizationFailureReason(
+    input.authorizationProof,
+    input.dispatchRunId
+  )
+  if (authorizationReason)
     return {
       status: 'blocked',
       reason: 'completion_ready_requires_valid_authorization_proof',
-      authorization_reason: 'authorization_proof_invalid'
+      authorization_reason: authorizationReason
     }
   const gate = transition(
     input,

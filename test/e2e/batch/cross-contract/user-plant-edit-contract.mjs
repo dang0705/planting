@@ -122,7 +122,7 @@ assert.match(detailCall.sql, /up\.plant_date/, 'detail SELECT should include pla
 assert.match(detailCall.sql, /up\.notes/, 'detail SELECT should include notes')
 
 const formModelSource = fs.readFileSync(
-  'src/pages/user-plant-detail/components/plant-form-model.js',
+  'src/subpackages/plant/user-plant-detail/components/plant-form-model.js',
   'utf8'
 )
 assert.doesNotMatch(
@@ -142,7 +142,7 @@ const mutationSource = fs.readFileSync('src/vue-query/plants/mutations/user-plan
 assert.match(mutationSource, /invalidateUserPlantsQuery/, 'mutations should invalidate user plants')
 
 const plantPageSource = fs.readFileSync(
-  'src/pages/user-plant-detail/components/UserPlantDetailForm.vue',
+  'src/subpackages/plant/user-plant-detail/components/UserPlantDetailForm.vue',
   'utf8'
 )
 assert.match(

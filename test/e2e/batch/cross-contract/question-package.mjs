@@ -425,8 +425,9 @@ async function testRegisteredQuestionFailsWhenDbRowsAreMissing() {
 
 async function testFrontendQuestionKeyOnlyPackageAnswerPayload() {
   const { createQuestionAnswerMap, buildQuestionAnswerPayload } =
-    await import('../../../../src/utils/diagnose-question-answer-payload.js')
-  const { normalizeQuestions } = await import('../../../../src/utils/diagnose-result-normalizer.js')
+    await import('../../../../src/subpackages/diagnosis/utils/diagnose-question-answer-payload.js')
+  const { normalizeQuestions } =
+    await import('../../../../src/subpackages/diagnosis/utils/diagnose-result-normalizer.js')
   const questions = [
     {
       questionKey: WATERING_FREQUENCY_CONTEXT_QUESTION_KEY,
@@ -471,7 +472,7 @@ async function testFrontendQuestionKeyOnlyPackageAnswerPayload() {
 
 async function testAirEnvironmentSidecarSurvivesPackagePayloadAssembly() {
   const { buildQuestionAnswerPayload } =
-    await import('../../../../src/utils/diagnose-question-answer-payload.js')
+    await import('../../../../src/subpackages/diagnosis/utils/diagnose-question-answer-payload.js')
   const questionKey = 'q_wilting_droop__air_environment'
   const input = {
     airExchange: {

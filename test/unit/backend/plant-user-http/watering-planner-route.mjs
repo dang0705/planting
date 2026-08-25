@@ -21,11 +21,11 @@ async function runAll() {
 }
 function buildLightEnvironment() {
   return {
-    facing: 'south',
-    windowType: 'standard',
-    position: 'windowsill',
-    hasDirectSun: true,
-    distance: 30
+    schemaVersion: 2,
+    naturalLightType: 'direct',
+    entryMethod: 'through_glass',
+    hasSupplementalLight: false,
+    captureSource: 'user'
   }
 }
 function buildStrategy() {
@@ -153,6 +153,22 @@ function loadAppWithSpies(overrides = {}) {
         updateUserPlantInstance: async () => ({}),
         deleteUserPlantInstance: async () => ({}),
         getUserPlantWateringStrategy: strategySpy.fn
+      }
+    }
+    if (request === '/opt/utils/cloudbase') {
+      return { models: { $runSQL: async () => ({ data: { executeResultList: [] } }) } }
+    }
+    if (request === '/opt/utils/fertilization-history') {
+      return {
+        getUserPlantFertilizationEvents: async () => [],
+        insertFertilizationEvent: async () => ({})
+      }
+    }
+    if (request === '/opt/utils/fertilization-reminder-planner') {
+      return {
+        calculateFertilizationCheck: () => ({}),
+        evaluateMonthlyRule: () => ({ kind: 'interval', available: true, sourceNames: ['test'] }),
+        parseDate: value => new Date(String(value))
       }
     }
     if (request === '/opt/utils/watering-planner') {
@@ -294,12 +310,12 @@ test('computeTranspirationIntervalFactor 收到精确的 lightEnvironment 对象
     'lightEnvironment 应为 getUserPlantLightEnvironment 返回的精确对象'
   )
   assert.ok(
-    call.lightEnvironment.facing &&
-      call.lightEnvironment.windowType &&
-      call.lightEnvironment.position &&
-      'hasDirectSun' in call.lightEnvironment &&
-      'distance' in call.lightEnvironment,
-    'lightEnvironment 应包含 facing/windowType/position/hasDirectSun/distance 五个字段'
+    call.lightEnvironment.schemaVersion === 2 &&
+      call.lightEnvironment.naturalLightType === 'direct' &&
+      call.lightEnvironment.entryMethod === 'through_glass' &&
+      'hasSupplementalLight' in call.lightEnvironment &&
+      call.lightEnvironment.captureSource === 'user',
+    'lightEnvironment 应包含 V2 分类光照契约'
   )
 })
 test('lightEnvironment 为 null 时传入 null（不抛错）', async () => {

@@ -310,41 +310,64 @@ test('watering planner thresholds are configurable and included in formula trace
   )
 })
 
-test('fertilizing planner does not depend on weather inputs and keeps the fixed baseline', () => {
+test('fertilizing planner uses the reviewed monthly profile and real history state', () => {
   assert.equal(buildFertilizingPlanner.length, 0)
 
+  const monthly = {
+    available: true,
+    rows: [
+      {
+        month: 5,
+        liquid: {
+          displayText: '每月1次',
+          sourceNames: ['RHS'],
+          schedule: {
+            schemaVersion: 1,
+            kind: 'interval',
+            interval: {
+              min: { value: 1, unit: 'month' },
+              max: { value: 1, unit: 'month' }
+            },
+            conditionCodes: ['none']
+          }
+        }
+      }
+    ]
+  }
   const plan = buildFertilizingPlanner({
-    behaviorTimeline: normalizeCareBehaviorTimeline({
-      referenceDate: '2026-05-27',
-      lastFertilizedBucket: '31_60d'
-    }),
-    lastFertilizedBucket: '31_60d',
-    recentFertilizerStrength: 'unknown',
-    plantShowsWeakGrowth: false,
-    justRepottedRecently: false,
-    historical: {
-      hotDryDays: 999,
-      coldHumidDays: 999
-    },
-    forecast: {
-      hotDryDays: 999,
-      hotHumidDays: 999
-    },
-    weather: {
-      uvIndex: 99,
-      humidity: 0
+    diagnosisDate: '2026-05-27',
+    plantContext: {
+      userPlantId: 7,
+      fertilizationMonthly: monthly,
+      fertilizationHistoryStatus: 'available',
+      fertilizationHistory: [{ date: '2026-04-01', fertilizerType: 'liquid' }]
     }
   })
 
-  assert.deepEqual(plan.baseline.intervalDays, [30, 45])
-  assert.equal(plan.baseline.fertilizerType, 'thin_liquid_fertilizer')
-  assert.equal(plan.action, FERTILIZING_ACTIONS.THIN_AFTER_DUE)
-  assert.equal(plan.lastFertilizedBucket, '31_60d')
-  assert.equal(plan.calculation.formulaVersion, 'fertilizing_planner_v7_configurable')
-  assert.equal(
-    plan.calculation.formulas.find(item => item.key === 'thin_after_due_condition').passed,
-    true
-  )
+  assert.equal(plan.action, FERTILIZING_ACTIONS.DUE_CHECK)
+  assert.equal(plan.status, 'monthly_due_check')
+  assert.equal(plan.calculation.formulaVersion, 'fertilizing_monthly_v1')
+  assert.equal(plan.nextCheckDate, '2026-05-27')
+
+  const firstConfirmation = buildFertilizingPlanner({
+    diagnosisDate: '2026-05-27',
+    plantContext: {
+      userPlantId: 7,
+      fertilizationMonthly: monthly,
+      fertilizationHistoryStatus: 'empty',
+      fertilizationHistory: []
+    }
+  })
+  assert.equal(firstConfirmation.action, FERTILIZING_ACTIONS.FIRST_CONFIRMATION)
+
+  const catalogOnly = buildFertilizingPlanner({
+    diagnosisDate: '2026-05-27',
+    plantContext: {
+      fertilizationMonthly: monthly,
+      fertilizationHistoryStatus: 'not_applicable'
+    }
+  })
+  assert.equal(catalogOnly.action, FERTILIZING_ACTIONS.HISTORY_NOT_AVAILABLE)
 })
 
 test('light planner requires a real exposure scene and does not match UV-only input', () => {
@@ -397,9 +420,18 @@ test('light planner requires a real exposure scene and does not match UV-only in
 
   const exposedPlan = buildLightPlanner({
     forecast,
-    userLightCondition: 'direct_sun_exposure',
-    userHasDirectSunExposure: false,
-    plantRequiresBrightLight: true,
+    userLightContext: {
+      schemaVersion: 2,
+      naturalLightType: 'direct',
+      entryMethod: 'open_environment',
+      hasSupplementalLight: false,
+      captureSource: 'user'
+    },
+    plantFeatures: {
+      weatherLightFactor10d: 1,
+      lightEvidenceInsufficient: false,
+      lightConfidence: 'high'
+    },
     behaviorTimeline: normalizeCareBehaviorTimeline({
       referenceDate: '2026-05-27',
       lightChangeEvents10d: [{ date: '2026-05-26', event: 'moved_to_stronger_light' }]
@@ -424,6 +456,11 @@ test('environment builder preserves behavior summary and combines direct sun wit
     },
     environmentWeatherWindow: {
       meta: { diagnosisDate: '2026-05-27' },
+      plantFeatures: {
+        weatherLightFactor10d: 1,
+        lightEvidenceInsufficient: false,
+        lightConfidence: 'high'
+      },
       historicalDays: [
         { date: '2026-05-25', tempMin: 24, tempMax: 31, humidity: 42, precipMm: 0, uvIndex: 8 },
         { date: '2026-05-26', tempMin: 24, tempMax: 32, humidity: 40, precipMm: 0, uvIndex: 9 }
@@ -436,6 +473,13 @@ test('environment builder preserves behavior summary and combines direct sun wit
     careBehaviorTimeline: {
       referenceDate: '2026-05-27',
       dailyRecords: [{ date: '2026-05-26', lightEvent: 'direct_sun_exposure' }]
+    },
+    userLightContext: {
+      schemaVersion: 2,
+      naturalLightType: 'direct',
+      entryMethod: 'open_environment',
+      hasSupplementalLight: false,
+      captureSource: 'user'
     }
   })
 
@@ -443,10 +487,7 @@ test('environment builder preserves behavior summary and combines direct sun wit
   assert.equal(context.historicalSummary10d.aboveGenusUvMaxDays, 2)
   assert.equal(context.thresholds.version, 'care_planner_thresholds_v1')
   assert.equal(context.calculationTrace.watering.formulaVersion, 'watering_planner_v21')
-  assert.equal(
-    context.calculationTrace.fertilizing.formulaVersion,
-    'fertilizing_planner_v7_configurable'
-  )
+  assert.equal(context.calculationTrace.fertilizing.formulaVersion, 'fertilizing_monthly_v1')
   assert.ok(context.outputs.lightContext.includes(LIGHT_CONTEXTS.EXCESS_LIGHT_OR_SUNBURN_RISK))
 })
 

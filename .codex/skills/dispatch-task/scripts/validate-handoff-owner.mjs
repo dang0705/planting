@@ -1,6 +1,6 @@
 export function validateImplementationOwnerHandoff({
   data,
-  tier,
+  _tier,
   externalMode,
   externalTier,
   codeChanges,
@@ -239,8 +239,6 @@ function validateZcodeContract({ zcode, external, need, isObject, includesAll, u
     'run_verified_clipboard_bridge',
     'paste_clipboard_via_cmd_v',
     'verify_paste_delivery',
-    'open_edit_menu_if_needed',
-    'paste_clipboard_via_edit_menu_if_needed',
     'send_prompt_after_integrity_check',
     'verify_post_send_delivery'
   ]

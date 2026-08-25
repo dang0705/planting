@@ -6,10 +6,16 @@ const repoRoot = process.cwd()
 const read = relativePath => fs.readFileSync(path.join(repoRoot, relativePath), 'utf8')
 
 const cardSource = read('src/components/UserPlantAirEnvironmentCard.vue')
-const detailSource = read('src/pages/user-plant-detail/components/UserPlantDetailView.vue')
-const plantPageSource = read('src/pages/user-plant-detail/components/UserPlantDetailForm.vue')
-const panelSource = read('src/pages/user-plant-detail/components/PlantInfoStepPanel.vue')
-const submitSource = read('src/pages/user-plant-detail/components/plant-submit.js')
+const detailSource = read(
+  'src/subpackages/plant/user-plant-detail/components/UserPlantDetailView.vue'
+)
+const plantPageSource = read(
+  'src/subpackages/plant/user-plant-detail/components/UserPlantDetailForm.vue'
+)
+const panelSource = read(
+  'src/subpackages/plant/user-plant-detail/components/PlantInfoStepPanel.vue'
+)
+const submitSource = read('src/subpackages/plant/user-plant-detail/components/plant-submit.js')
 const composableSource = read('src/composables/useUserPlantAirEnvironment.js')
 const apiSource = read('src/api/plants-http.js')
 const storeSource = read('src/store/plants.js')
@@ -71,8 +77,8 @@ assert.match(
 )
 assert.doesNotMatch(plantPageSource, /UserPlantAirEnvironmentCard/)
 assert.match(plantPageSource, /:show-light-environment="!isEditMode"/)
-assert.match(plantPageSource, /light: '\/pages\/plant-environment\/light-environment'/)
-assert.match(plantPageSource, /air: '\/pages\/airflow\/index'/)
+assert.match(plantPageSource, /light: '\/subpackages\/care\/plant-environment\/light-environment'/)
+assert.match(plantPageSource, /air: '\/subpackages\/care\/airflow\/index'/)
 assert.match(plantPageSource, /plant-environment-saved/)
 assert.match(panelSource, /<slot name="after-form" \/>/)
 assert.match(panelSource, /:style="\{ paddingBottom: `\$\{bottomPadding\}px` \}"/)

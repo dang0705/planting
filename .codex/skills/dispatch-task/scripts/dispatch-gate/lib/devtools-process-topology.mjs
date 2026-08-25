@@ -64,7 +64,10 @@ export function ancestorsFrom(pid, commandRunner = spawnSync) {
 }
 
 export const isMainDevToolsProcess = (command = '') =>
-  /\/Contents\/MacOS\/wechatdevtools(?:\s|$)/.test(command)
+  /\/Contents\/MacOS\/wechatdevtools(?:\s|$)/.test(command) ||
+  (/\/Contents\/MacOS\/Electron(?:\s|$)/.test(command) &&
+    /\/Contents\/Resources\/app\.asar(?:\s|$)/.test(command) &&
+    /(?:^|\s)--cli(?:\s|$)/.test(command))
 
 export function directControlPortEvidence(command = '') {
   const ide = command.match(/--ide-http-port(?:=|\s+)(\d+)/)

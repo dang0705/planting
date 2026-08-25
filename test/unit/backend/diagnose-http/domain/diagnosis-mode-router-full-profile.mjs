@@ -57,7 +57,7 @@ assert.deepEqual(
   ['yellow_leaf']
 )
 assert.equal(DIAGNOSIS_MODE_REGISTRY.yellow_leaf.questionPackageKind, 'fixed_yellow_leaf')
-assert.equal(getQuestionPackageByMode('yellow_leaf').questionCount, 3)
+assert.equal(getQuestionPackageByMode('yellow_leaf').questionCount, 4)
 
 // ---------------------------------------------------------------------------
 // full profile：wilting_droop 固定题包模式（0.9 进入 question_package）
@@ -73,7 +73,7 @@ assert.deepEqual(
   ['wilting_droop']
 )
 assert.equal(DIAGNOSIS_MODE_REGISTRY.wilting_droop.questionPackageKind, 'fixed_wilting_droop')
-assert.equal(getQuestionPackageByMode('wilting_droop').questionCount, 5)
+assert.equal(getQuestionPackageByMode('wilting_droop').questionCount, 6)
 
 // ---------------------------------------------------------------------------
 // full profile：yellow_speckling 不自动转 yellow_leaf，仍作为证据进入 question_package
@@ -87,10 +87,7 @@ const specklingYellowRoute = resolveDiagnosisModeRoute({
 })
 assert.equal(specklingYellowRoute.nextAction, 'question_package')
 assert.deepEqual(specklingYellowRoute.directMatches, [])
-assert.deepEqual(
-  specklingYellowRoute.associatedModes,
-  ['yellow_leaf']
-)
+assert.deepEqual(specklingYellowRoute.associatedModes, ['yellow_leaf'])
 assert.equal(specklingYellowRoute.confidenceTier, 'very_likely')
 assert.equal(specklingYellowRoute.likelyResult, true)
 
@@ -275,7 +272,9 @@ const wiltingDroopModelDirectRoute = resolveDiagnosisModeRoute({
     evidence('leaf_yellowing', 'high', 'strong', 'img_wd', 'leaf_upper_surface'),
     evidence('leaf_droop', 'high', 'strong', 'img_wd', 'leaf_upper_surface')
   ],
-  visualModeCandidates: [{ mode: 'wilting_droop', confidence: 0.95, regionRef: 'leaf_upper_surface' }]
+  visualModeCandidates: [
+    { mode: 'wilting_droop', confidence: 0.95, regionRef: 'leaf_upper_surface' }
+  ]
 })
 assert.deepEqual(
   wiltingDroopModelDirectRoute.modelDirectModeKeys,
@@ -300,9 +299,7 @@ assert.equal(
 // ---------------------------------------------------------------------------
 const powderyModelDirectRoute = resolveDiagnosisModeRoute({
   diagnosisProfile: 'full',
-  admittedEvidence: [
-    evidence('leaf_yellowing', 'high', 'strong', 'img_pm', 'leaf_upper_surface')
-  ],
+  admittedEvidence: [evidence('leaf_yellowing', 'high', 'strong', 'img_pm', 'leaf_upper_surface')],
   visualModeCandidates: [{ mode: 'powdery_mildew', confidence: 0.95, regionRef: 'leaf_front' }]
 })
 assert.deepEqual(

@@ -96,20 +96,31 @@ Module._load = function loadWithStubs(request, parent, isMain) {
 const {
   completeFertilizationReminder
 } = require('../../../../cloudfunctions/plant-user-http/fertilization-reminder-service.js')
+const todayInShanghai = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Shanghai',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit'
+}).format(new Date())
 Module._load = originalLoad
 
-const blocked = await completeFertilizationReminder('openid-1', { plantId: 7, planId: 'plan-10' })
+const blocked = await completeFertilizationReminder('openid-1', {
+  plantId: 7,
+  planId: 'plan-10',
+  conditionAnswers: {}
+})
 assert.equal(blocked.statusCode, 409)
-assert.equal(blocked.data.requiresExtraConfirmation, true)
+assert.equal(blocked.data.requiresMinimumIntervalAcknowledgement, true)
 assert.equal(insertedEvents.length, 0)
 
 const completed = await completeFertilizationReminder('openid-1', {
   plantId: 7,
   planId: 'plan-10',
-  extraConfirmation: true
+  conditionAnswers: {},
+  acknowledgeMinimumInterval: true
 })
 assert.equal(completed.statusCode, 200)
-assert.equal(completed.data.completedDate, '2026-08-11')
+assert.equal(completed.data.completedDate, todayInShanghai)
 assert.equal(insertedEvents[0].source, 'reminder_complete')
 assert.equal(insertedEvents[0].planId, 'plan-10')
 assert.ok(sqlCalls.some(call => /SET status = 'completed'/u.test(call.sql)))

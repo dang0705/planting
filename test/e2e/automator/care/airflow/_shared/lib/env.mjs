@@ -13,6 +13,7 @@
 
 import path from 'node:path'
 import fs from 'node:fs'
+import os from 'node:os'
 import { execSync } from 'node:child_process'
 import { formalAutomatorEndpoint } from '../../../../_shared/formal-leaf-harness.mjs'
 export function resolveEnv(argv = process.argv.slice(2)) {
@@ -27,9 +28,13 @@ export function resolveEnv(argv = process.argv.slice(2)) {
 function parseCliArgs(argv) {
   const args = {}
   for (const token of argv) {
-    if (!token.startsWith('--')) continue
+    if (!token.startsWith('--')) {
+      continue
+    }
     const eq = token.indexOf('=')
-    if (eq < 0) continue
+    if (eq < 0) {
+      continue
+    }
     const key = token.slice(2, eq)
     const value = token.slice(eq + 1)
     args[key] = value
@@ -39,7 +44,9 @@ function parseCliArgs(argv) {
 
 function resolveProjectPath(cliArgs) {
   const raw = cliArgs['mp-project-path'] || process.env.MP_PROJECT_PATH
-  if (raw) return path.resolve(raw)
+  if (raw) {
+    return path.resolve(raw)
+  }
   return path.resolve(process.cwd(), 'dist/dev/mp-weixin')
 }
 
@@ -50,7 +57,12 @@ function resolveArtifactDir(cliArgs) {
     ensureDir(resolved)
     return resolved
   }
-  const dir = path.resolve(process.cwd(), '.e2e-artifacts/airflow-air-exchange-v1')
+  const dir = path.join(
+    os.tmpdir(),
+    'planting-automator-diagnostic',
+    'airflow-air-exchange-v1',
+    String(process.pid)
+  )
   ensureDir(dir)
   return dir
 }
@@ -70,7 +82,7 @@ function ensureDir(dir) {
 export function resolveGitHead(cwd = process.cwd()) {
   try {
     return execSync('git rev-parse HEAD', { cwd, encoding: 'utf8' }).trim()
-  } catch (error) {
+  } catch {
     return null
   }
 }
@@ -78,7 +90,7 @@ export function resolveGitHead(cwd = process.cwd()) {
 export function resolveGitBranch(cwd = process.cwd()) {
   try {
     return execSync('git rev-parse --abbrev-ref HEAD', { cwd, encoding: 'utf8' }).trim()
-  } catch (error) {
+  } catch {
     return null
   }
 }

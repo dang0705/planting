@@ -110,7 +110,8 @@ function validateE2eMigration() {
 function reconcileQaRun() {
   const result = reconcileQaRunClassification({
     dispatchRunId: argValue('dispatch-run-id'),
-    executionId: argValue('execution-id')
+    executionId: argValue('execution-id'),
+    runInstanceId: argValue('run-instance-id') || null
   })
   return emit(result, ['reconciled', 'already_reconciled'].includes(result.status) ? 0 : 1)
 }

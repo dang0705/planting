@@ -100,7 +100,8 @@ function normalizeOutcomeKey(value = '') {
 
 function hasValidLightHealthEvidence(environmentCareContext = null) {
   const evidence = environmentCareContext?.outputs?.lightHealthEvidence
-  const score = Number(environmentCareContext?.outputs?.lightHealthScore)
+  const rawScore = environmentCareContext?.outputs?.lightHealthScore
+  const score = rawScore === null || rawScore === undefined || rawScore === '' ? NaN : Number(rawScore)
   return Boolean(evidence && typeof evidence === 'object' && Number.isFinite(score))
 }
 

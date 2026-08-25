@@ -103,11 +103,11 @@ async function runPestScenario(report, miniProgram, wsEndpoint, artifactDir, ret
     await choice.tap()
     await sleep(1000)
   }
-  const questionPage = await waitForPagePath(miniProgram, 'pages/diagnose/question-package')
+  const questionPage = await waitForPagePath(miniProgram, 'subpackages/diagnosis/question-package')
   recordAssertion(
     report,
     'pest direction enters common question package page',
-    questionPage?.path === 'pages/diagnose/question-package',
+    questionPage?.path === 'subpackages/diagnosis/question-package',
     questionPage?.path
   )
   const packageRoot = await assertElement(

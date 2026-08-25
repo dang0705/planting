@@ -47,23 +47,6 @@
       </view>
     </view>
 
-    <view
-      v-if="monthly.scopeLabel || monthly.scopeGuidance || monthly.choiceGuidance"
-      class="mt-3 rounded-xl bg-[#F8F6F0] p-3"
-    >
-      <text class="block text-xs font-semibold leading-5 text-gray-600">
-        适用范围：{{ monthly.scopeLabel }}
-      </text>
-      <text v-if="monthly.choiceGuidance" class="mt-1 block text-[11px] leading-4 text-gray-500">
-        {{ monthly.choiceGuidance }}
-      </text>
-      <text v-if="monthly.scopeGuidance" class="mt-1 block text-[11px] leading-4 text-gray-500">
-        {{ monthly.scopeGuidance }}
-      </text>
-    </view>
-    <view v-if="monthly.publicNote" class="mt-3 rounded-xl bg-[#F8F6F0] p-3">
-      <text class="text-xs leading-5 text-gray-600">{{ monthly.publicNote }}</text>
-    </view>
     <text v-if="monthly.sourceNames.length" class="mt-2 block text-[11px] leading-4 text-gray-400">
       数据来源：{{ monthly.sourceNames.join('、') }}
     </text>

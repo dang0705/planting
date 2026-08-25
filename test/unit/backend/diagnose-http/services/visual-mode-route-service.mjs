@@ -78,10 +78,10 @@ const route = routed.diagnosis_mode_route_result
 
 assert.equal(routed.diagnosis_session_id, 'diag_1784604381317_xbtqr02b')
 assert.equal(routed.visual_call_batch_id, 'visbatch_1784604381317_bt9yz3ft')
-assert.equal(route.nextAction, 'question_package')
-assert.equal(route.routePrimaryAction, 'question_package')
+assert.equal(route.nextAction, 'direct_result')
+assert.equal(route.routePrimaryAction, 'direct_result')
 assert.equal(route.recommendedMode, 'thrips')
-assert.equal(route.recommendedDirection, 'pest')
+assert.equal(route.recommendedDirection, 'thrips')
 assert.deepEqual(route.directMatches, [])
 assert.deepEqual(route.associatedModes, ['thrips'])
 assert.deepEqual(

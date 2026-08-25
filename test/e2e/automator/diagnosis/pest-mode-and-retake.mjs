@@ -65,7 +65,11 @@ export async function runPestModeAndRetakeScenario({
       )
     ).mp
     await runAutomatorStep(report, 'runtime.installFormalPrincipal', () =>
-      installFormalLeafPrincipal({ mp: miniProgram, principal: FORMAL_PRINCIPAL })
+      installFormalLeafPrincipal({
+        mp: miniProgram,
+        principal: FORMAL_PRINCIPAL,
+        env: { ...process.env, QA_CATALOG_DATA_MODE: 'fixture_diagnostic' }
+      })
     )
     await runAutomatorStep(report, 'runtime.installHarness', () =>
       installHarness(miniProgram, fixtureEnabled)

@@ -32,55 +32,104 @@
     </text>
 
     <view v-if="reminder?.isDue" class="mt-3 rounded-xl bg-white p-3">
+      <text v-if="!canComplete" class="block text-xs leading-5 text-[#8A5A00]">
+        {{ completionBlockMessage }}
+      </text>
+
       <view
-        v-if="requiresExtraConfirmation"
-        id="fertilization-reminder-extra-confirmation"
+        v-if="canComplete && conditionRequirements.length"
+        id="fertilization-reminder-condition-checks"
+        class="rounded-xl bg-[#FFF7DF] p-2.5"
+      >
+        <text class="block text-[11px] leading-4 text-[#8A5A00]">请先确认当前情况：</text>
+        <view v-for="requirement in conditionRequirements" :key="requirement.code" class="mt-2">
+          <text class="block text-xs leading-5 text-[#53645A]">{{ requirement.prompt }}</text>
+          <view class="mt-1.5 grid grid-cols-2 gap-2">
+            <button
+              :id="`fertilization-reminder-due-condition-${requirement.code}-yes`"
+              class="m-0 rounded-lg border px-2 py-2 text-xs after:border-0"
+              :class="
+                conditionAnswers[requirement.code] === true
+                  ? 'border-[#2D7A4F] bg-[#E8F5E9] text-[#2D7A4F]'
+                  : 'border-[#E1E9DD] bg-white text-[#53645A]'
+              "
+              hover-class="none"
+              @tap="setConditionAnswer(requirement.code, true)"
+            >
+              是
+            </button>
+            <button
+              :id="`fertilization-reminder-due-condition-${requirement.code}-no`"
+              class="m-0 rounded-lg border px-2 py-2 text-xs after:border-0"
+              :class="
+                conditionAnswers[requirement.code] === false
+                  ? 'border-[#2D7A4F] bg-[#E8F5E9] text-[#2D7A4F]'
+                  : 'border-[#E1E9DD] bg-white text-[#53645A]'
+              "
+              hover-class="none"
+              @tap="setConditionAnswer(requirement.code, false)"
+            >
+              否
+            </button>
+          </view>
+        </view>
+      </view>
+
+      <view
+        v-if="canComplete && requiresMinimumIntervalAcknowledgement"
+        id="fertilization-reminder-minimum-interval"
         class="mt-2 rounded-xl bg-[#FFF7DF] p-2.5"
       >
-        <text class="block text-[11px] leading-4 text-[#8A5A00]">{{ extraConfirmationText }}</text>
+        <text class="block text-[11px] leading-4 text-[#8A5A00]"
+          >这是首次确认提醒，系统没有可靠的上次施肥日期。</text
+        >
         <checkbox-group
-          id="fertilization-reminder-extra-confirmation-group"
+          id="fertilization-reminder-minimum-interval-group"
           class="mt-2"
-          @change="onExtraConfirmationChange"
+          @change="onMinimumIntervalChange"
         >
           <label class="flex items-center gap-2">
             <checkbox
-              id="fertilization-reminder-extra-confirmation-checkbox"
+              id="fertilization-reminder-minimum-interval-ack"
               value="confirmed"
-              :checked="extraConfirmed"
+              :checked="minimumIntervalConfirmed"
               color="#2D7A4F"
             />
-            <text class="text-xs text-[#53645A]">我已确认，可以按本月规则处理</text>
+            <text class="text-xs text-[#53645A]">我确认距离上次施肥至少达到本表最短间隔</text>
           </label>
         </checkbox-group>
       </view>
-      <button
+
+      <view
         v-if="canComplete"
         id="fertilization-reminder-complete-button"
-        class="mt-2 m-0 w-full rounded-xl bg-[#2D7A4F] py-2.5 text-sm font-semibold text-white after:border-0"
-        hover-class="none"
-        :disabled="requiresExtraConfirmation && !extraConfirmed"
-        @click="$emit('complete', requiresExtraConfirmation ? extraConfirmed : true)"
+        class="mt-2 w-full rounded-xl py-2.5 text-center text-sm font-semibold text-white"
+        :class="canSubmit ? 'bg-[#2D7A4F]' : 'bg-gray-300'"
+        role="button"
+        :aria-disabled="!canSubmit"
+        @tap="handleCompleteClick"
       >
         今天已施肥
-      </button>
-      <button
+      </view>
+      <view
         id="fertilization-reminder-dismiss-button"
         class="mt-2 m-0 w-full rounded-xl border border-[#E1E9DD] bg-white py-2.5 text-sm text-[#53645A] after:border-0"
-        hover-class="none"
-        @click="$emit('dismiss')"
+        role="button"
+        @tap.stop="handleDismissClick"
       >
         本次跳过
-      </button>
+      </view>
     </view>
 
     <button
-      id="fertilization-reminder-reconfigure-button"
-      class="mt-3 m-0 w-full rounded-xl border border-[#E1E9DD] bg-white py-2.5 text-xs text-[#53645A] after:border-0"
+      v-if="!calendarDeleteVisible"
+      id="fertilization-reminder-delete-calendar-button"
+      class="mt-2 m-0 w-full rounded-xl border border-[#E1E9DD] bg-white py-2.5 text-xs text-[#53645A] after:border-0"
       hover-class="none"
-      @click="$emit('reconfigure')"
+      :disabled="loading"
+      @tap="$emit('request-calendar-delete')"
     >
-      重新设置提醒
+      删除日历施肥提醒
     </button>
   </view>
 </template>
@@ -88,45 +137,87 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 
-defineEmits(['complete', 'dismiss', 'reconfigure'])
+const emit = defineEmits(['completeReminder', 'dismiss', 'request-calendar-delete'])
 
 const props = defineProps({
   reminder: { type: Object, default: null },
+  loading: { type: Boolean, default: false },
   canComplete: { type: Boolean, default: false },
   currentMonthEvaluation: { type: Object, default: null },
-  requiresExtraConfirmation: { type: Boolean, default: false },
-  confirmationReasons: { type: Array, default: () => [] }
+  conditionRequirements: { type: Array, default: () => [] },
+  requiresMinimumIntervalAcknowledgement: { type: Boolean, default: false },
+  completionBlockReason: { type: String, default: '' },
+  calendarDeleteVisible: { type: Boolean, default: false }
 })
 
-const extraConfirmed = ref(false)
-const extraConfirmationText = computed(() => {
-  const reasons = new Set(props.confirmationReasons)
-  if (reasons.has('first_confirmation')) {
-    return '这是首次确认提醒，目前没有可靠的上次施肥日期。'
+const conditionAnswers = ref({})
+const minimumIntervalConfirmed = ref(false)
+
+function setConditionAnswer(code, value) {
+  conditionAnswers.value = { ...conditionAnswers.value, [code]: value }
+}
+
+function onMinimumIntervalChange(event) {
+  minimumIntervalConfirmed.value = Boolean(event?.detail?.value?.includes('confirmed'))
+}
+
+const allConditionsAnswered = computed(() =>
+  props.conditionRequirements.every(item => typeof conditionAnswers.value[item.code] === 'boolean')
+)
+
+const canSubmit = computed(
+  () =>
+    props.canComplete &&
+    allConditionsAnswered.value &&
+    (!props.requiresMinimumIntervalAcknowledgement || minimumIntervalConfirmed.value)
+)
+
+const completionBlockMessage = computed(() => {
+  const messages = {
+    fertilization_guard: '当前处于暂缓施肥状态，暂不能记录施肥。',
+    plant_health: '植物当前状态异常，暂不能记录施肥。',
+    monthly_pause: '本月按表暂停施肥。',
+    monthly_avoid: '本月按表不建议施肥。',
+    monthly_history_unavailable: '施肥记录暂时无法读取，暂不能确认是否施肥。',
+    monthly_no_reliable_rule: '本月没有可靠的固定施肥周期。',
+    conditions_unmet: '当前情况不满足本月施肥条件。',
+    conditions_pending: '请先确认本月施肥条件。',
+    monthly_not_due: '还没到本次施肥提醒日期。'
   }
-  if (reasons.has('conditional_rule')) {
-    return '本月规则带有条件，请先确认条件确实满足。'
-  }
-  if (reasons.has('event_rule')) {
-    return '本月规则对应特定生长事件，请先确认事件已经发生。'
-  }
-  if (reasons.has('plant_health')) {
-    return '植物近期状态异常，施肥前请先确认当前状态允许施肥。'
-  }
-  if (reasons.has('fertilizer_type_changed')) {
-    return '这次使用的肥料类型与上次不同，请先确认更换肥料。'
-  }
-  return '植物近期养护情况有变化，请先确认当前状态允许施肥。'
+  return messages[props.completionBlockReason] || '请以当前月度表为准。'
 })
 
-function onExtraConfirmationChange(event) {
-  extraConfirmed.value = Boolean(event?.detail?.value?.includes('confirmed'))
+function buildCompletionPayload() {
+  return {
+    conditionAnswers: { ...conditionAnswers.value },
+    acknowledgeMinimumInterval: minimumIntervalConfirmed.value
+  }
+}
+
+function emitComplete() {
+  emit('completeReminder', buildCompletionPayload())
+}
+
+function handleDismissClick() {
+  emit('dismiss')
+}
+
+function handleCompleteClick() {
+  if (!canSubmit.value) {
+    return
+  }
+  emitComplete()
 }
 
 watch(
-  () => [props.reminder?.planId, props.requiresExtraConfirmation],
+  () => [
+    props.reminder?.planId,
+    props.requiresMinimumIntervalAcknowledgement,
+    props.conditionRequirements
+  ],
   () => {
-    extraConfirmed.value = false
+    conditionAnswers.value = {}
+    minimumIntervalConfirmed.value = false
   }
 )
 

@@ -8,13 +8,17 @@ import { runQaPreflight } from '../../../../../.codex/skills/dispatch-task/scrip
 import { captureRuntimeEvidence } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/qa-preflight-runtime.mjs'
 import { createQaRunCommands } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/qa-run.mjs'
 import { runRendererScreenshotProbe } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/renderer-screenshot-probe.mjs'
+import { acquireQaRunLease, qaRunLeaseArgs } from '../../../../../scripts/qa/qa-run-lease.mjs'
 import {
   captureIsolatedRendererScreenshot,
   rendererScreenshotUnreadyError
 } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/renderer-screenshot-readiness.mjs'
 import { repoRoot } from './helpers.mjs'
 
-const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00])
+const png = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+  'base64'
+)
 const root = fs.mkdtempSync(path.join(repoRoot, '.tmp', 'renderer-readiness-contract-'))
 const screenshotPath = path.join(root, 'evidence', 'renderer.png')
 const projectPath = path.join(repoRoot, 'dist', 'dev', 'mp-weixin')
@@ -78,7 +82,7 @@ try {
   const coreResult = await runRendererScreenshotProbe({
     wsEndpoint: `ws://127.0.0.1:${TEST_AUTOMATOR_PORT}`,
     outputPath: screenshotPath,
-    timeoutMs: 25,
+    timeoutMs: 2500,
     emitEvent: event => events.push(event),
     connect: async () => ({
       screenshot: async ({ path: target }) => fs.writeFileSync(target, png),
@@ -95,7 +99,7 @@ try {
   const invalidResult = await runRendererScreenshotProbe({
     wsEndpoint: `ws://127.0.0.1:${TEST_AUTOMATOR_PORT}`,
     outputPath: screenshotPath,
-    timeoutMs: 25,
+    timeoutMs: 2500,
     connect: async () => ({
       screenshot: async () => undefined,
       disconnect: () => undefined
@@ -229,10 +233,15 @@ try {
   assert.equal(preflight.targeted_restart.attempted, false)
   assert.equal(preflight.renderer_recovery.attempted, false)
 
-  const catalogEntry = readCatalog().entries[0]
+  const catalogEntry = readCatalog().entries.find(entry => entry.data_mode === 'fixture_diagnostic')
   const catalogId = catalogEntry.id
   const dispatchRunId = `renderer-screenshot-unready-${Date.now()}`
   const executionId = `renderer-proof-${Date.now()}`
+  const runLease = acquireQaRunLease({
+    dispatchRunId,
+    kind: 'automator',
+    runInstanceId: `renderer-proof-instance-${Date.now()}`
+  })
   const args = [
     '--allow-live',
     '--catalog-id',
@@ -242,13 +251,18 @@ try {
     '--dispatch-run-id',
     dispatchRunId,
     '--execution-timeout-ms',
-    '1000'
+    '1000',
+    ...qaRunLeaseArgs(runLease)
   ]
   const emitted = []
   let leafCalls = 0
   const commands = createQaRunCommands({
     args,
     argValue: name => {
+      const inline = args.find(arg => arg.startsWith(`--${name}=`))
+      if (inline) {
+        return inline.slice(name.length + 3)
+      }
       const index = args.indexOf(`--${name}`)
       return index >= 0 ? args[index + 1] : ''
     },
@@ -274,13 +288,18 @@ try {
       throw new Error('renderer screenshot failure must not start a leaf')
     }
   })
-  await commands.qaRun()
+  try {
+    await commands.qaRun()
+  } finally {
+    runLease.release()
+  }
   const recordPath = path.join(
     repoRoot,
     '.tmp',
     'dispatch-task',
     dispatchRunId,
     'qa-runs',
+    runLease.run_instance_id,
     `${executionId}.json`
   )
   const record = JSON.parse(fs.readFileSync(recordPath, 'utf8'))

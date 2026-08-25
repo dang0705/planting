@@ -215,6 +215,7 @@ export function createManagedLocalRuntimeSession({
   command,
   environment = {},
   mode = 'loopback',
+  reuseOutput = false,
   initialApiBaseUrl,
   resolveLanApiBaseUrl,
   ownerPid = process.pid,
@@ -351,7 +352,11 @@ export function createManagedLocalRuntimeSession({
 
   return {
     claim() {
-      if (!ownership) {
+      // A reused lease is only an observation of another live owner. Do not
+      // cache that observation forever: once the owner exits and releases (or
+      // becomes stale), a waiting caller must be able to claim the target and
+      // become the new runtime owner.
+      if (!ownership || ownership.status === 'reused') {
         ownership = acquireLocalRuntimeLease({
           targetPath,
           leaseRoot,
@@ -369,8 +374,21 @@ export function createManagedLocalRuntimeSession({
       if (claim.status !== 'acquired') {
         return claim
       }
-      const startedChild = launch(apiBaseUrl)
-      if (mode === 'lan' && typeof resolveLanApiBaseUrl === 'function') {
+      const startedChild = reuseOutput ? null : launch(apiBaseUrl)
+      if (reuseOutput) {
+        const updated = updateLocalRuntimeLease({
+          filePath: ownership.file_path,
+          lease: ownership.lease,
+          patch: { api_base_url: apiBaseUrl, child_pid: null },
+          fsModule,
+          nowMs
+        })
+        if (updated.status === 'updated') {
+          ownership = { ...ownership, lease: updated.lease }
+        }
+        onEvent({ type: 'build_reused', api_base_url: apiBaseUrl, target_path: targetPath })
+      }
+      if (!reuseOutput && mode === 'lan' && typeof resolveLanApiBaseUrl === 'function') {
         interval = setIntervalFn(() => {
           refresh().catch(error => {
             onEvent({ type: 'lan_address_refresh_failed', error: error?.message ?? String(error) })

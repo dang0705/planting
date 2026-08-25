@@ -61,7 +61,7 @@
         ref="fertilizationReminderRef"
         :plant="currentFertilizationPlant"
         @close="currentFertilizationPlantId = null"
-        @changed="loadUserPlants(true)"
+        @changed="loadUserPlants()"
       />
     </view>
   </Layout>
@@ -99,17 +99,17 @@ const currentFertilizationPlant = computed(() =>
 
 onMounted(async () => {
   if (await userStore.ensureLogin()) {
-    await loadUserPlants(true)
+    await loadUserPlants()
   }
 })
 
-async function loadUserPlants(force = false) {
-  if (loadingPlants.value && !force) {
+async function loadUserPlants() {
+  if (loadingPlants.value) {
     return
   }
   loadingPlants.value = true
   try {
-    await plantStore.getUserPlants()
+    await plantStore.getUserPlants(1, 50)
   } finally {
     loadingPlants.value = false
   }
@@ -146,15 +146,17 @@ function getWaterReminderText(plant) {
 function getFertilizationReminderText(plant) {
   const reminder = plant?.fertilizationReminder
   if (!reminder?.active) {
-    return plant?.fertilizationMonthly?.available
-      ? '还没有安排施肥提醒'
-      : '暂无已审核的月度施肥表'
+    return plant?.fertilizationMonthly?.available ? '还没有安排施肥提醒' : '暂无已审核的月度施肥表'
   }
   return reminder.isDue
     ? reminder.reminderKind === 'first_confirmation'
       ? '首次确认提醒已到，请打开查看'
       : '施肥提醒已到，请打开查看'
-    : `${reminder.reminderKind === 'first_confirmation' ? '首次确认提醒' : '施肥提醒'}：${String(reminder.nextCheckDate || '').slice(5).replace('-', '月')}日`
+    : `${reminder.reminderKind === 'first_confirmation' ? '首次确认提醒' : '施肥提醒'}：${String(
+        reminder.nextCheckDate || ''
+      )
+        .slice(5)
+        .replace('-', '月')}日`
 }
 
 async function openReminder(plant) {

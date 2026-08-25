@@ -60,7 +60,7 @@ import {
   describeAirEnvironmentInput,
   isAirEnvironmentAnswerReady
 } from '@/utils/air-environment.js'
-import { getLightFacingLabel } from '@/utils/light-environment.js'
+import { describeLightEnvironment } from '@/utils/light-environment.js'
 
 const props = defineProps({
   plant: { type: Object, default: null },
@@ -69,19 +69,7 @@ const props = defineProps({
 const emit = defineEmits(['open'])
 
 const lightSummary = computed(() => {
-  const environment = props.plant?.lightEnvironment
-  if (!environment) {
-    return '尚未设置，点击进入设置'
-  }
-  const windowLabel =
-    environment.windowType === 'no_window'
-      ? '无窗'
-      : environment.windowType === 'grow_light'
-        ? '补光灯'
-        : '有窗'
-  const facingLabel =
-    environment.windowType === 'standard' ? `${getLightFacingLabel(environment.facing)}向` : ''
-  return ['已设置', windowLabel, facingLabel].filter(Boolean).join(' · ')
+  return describeLightEnvironment(props.plant?.lightEnvironment)
 })
 
 const airSummary = computed(() => {

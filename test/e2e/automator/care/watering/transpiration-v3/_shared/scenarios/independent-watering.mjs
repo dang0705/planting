@@ -22,6 +22,7 @@ import {
   recordRequests,
   recordAssertion,
   recordScreenshot,
+  markBusinessAssertionsReached,
   setClassification
 } from '../lib/reporter.mjs'
 import {
@@ -34,7 +35,7 @@ import {
   readPageDataSummary
 } from '../lib/element-helpers.mjs'
 
-const ADVISOR_PAGE = '/pages/watering-advisor/watering-advisor'
+const ADVISOR_PAGE = '/subpackages/care/watering-advisor/watering-advisor'
 const ADVISOR_API = '/watering-advisor'
 
 const FORBIDDEN_TEXT_PATTERNS = [
@@ -74,7 +75,13 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
     let page = await reLaunchTo(mp, ADVISOR_PAGE)
     await sleep(1500)
     recordPageData(report, ADVISOR_PAGE, await readPageDataSummary(mp))
-    recordScreenshot(report, await safeScreenshot(mp, artifactDir, 'independent-01-init'))
+    recordScreenshot(
+      report,
+      await safeScreenshot(mp, artifactDir, 'independent-01-init', undefined, {
+        maxAttempts: 1,
+        report
+      })
+    )
     page = await mp.currentPage()
 
     const searchInput = await waitForElement(page, 'watering-advisor-search-input', 5000)
@@ -85,7 +92,9 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
     }
     try {
       await inputById(page, 'watering-advisor-search-input', '')
-    } catch (e) {}
+    } catch {
+      // Search input may already be empty.
+    }
     await sleep(1000)
 
     const plantItem = await findByIdPrefix(page, 'watering-advisor-plant-item-')
@@ -96,7 +105,13 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
     }
     await plantItem.element.tap()
     await sleep(800)
-    recordScreenshot(report, await safeScreenshot(mp, artifactDir, 'independent-02-plant-selected'))
+    recordScreenshot(
+      report,
+      await safeScreenshot(mp, artifactDir, 'independent-02-plant-selected', undefined, {
+        maxAttempts: 1,
+        report
+      })
+    )
     page = await mp.currentPage()
 
     // 点击 next-button，独立建议页直接切换到 inline 盆型步骤。
@@ -133,7 +148,10 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
     )
     recordScreenshot(
       report,
-      await safeScreenshot(mp, artifactDir, 'independent-03-pot-editor-opened')
+      await safeScreenshot(mp, artifactDir, 'independent-03-pot-editor-opened', undefined, {
+        maxAttempts: 1,
+        report
+      })
     )
     page = await mp.currentPage()
     if (!potSubstrateOption || !potDrainageOption) {
@@ -142,7 +160,10 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
     }
     recordScreenshot(
       report,
-      await safeScreenshot(mp, artifactDir, 'independent-04-pot-profile-completed')
+      await safeScreenshot(mp, artifactDir, 'independent-04-pot-profile-completed', undefined, {
+        maxAttempts: 1,
+        report
+      })
     )
     page = await mp.currentPage()
 
@@ -172,6 +193,7 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
     }
 
     const httpResponse = computeRequest.response
+    markBusinessAssertionsReached(report)
     const httpWrapperOk =
       httpResponse?.statusCode === 200 &&
       httpResponse.data &&
@@ -266,7 +288,16 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
       )
     }
 
-    const screenshotResult = await safeScreenshot(mp, artifactDir, 'independent-05-result')
+    const screenshotResult = await safeScreenshot(
+      mp,
+      artifactDir,
+      'independent-05-result',
+      undefined,
+      {
+        maxAttempts: 1,
+        report
+      }
+    )
     recordScreenshot(report, screenshotResult)
     recordAssertion(report, '结果页截图成功保存', !!screenshotResult)
     if (!screenshotResult) {
@@ -302,21 +333,35 @@ async function collectResultAreaInfo(page) {
   const texts = []
   try {
     const swiperItems = await page.$$('swiper-item')
-    if (!swiperItems || swiperItems.length < 3) return { ids, texts }
+    if (!swiperItems || swiperItems.length < 3) {
+      return { ids, texts }
+    }
     const resultItem = swiperItems[2]
-    if (!resultItem || typeof resultItem.$$ !== 'function') return { ids, texts }
+    if (!resultItem || typeof resultItem.$$ !== 'function') {
+      return { ids, texts }
+    }
     const elements = [...(await resultItem.$$('view')), ...(await resultItem.$$('button'))]
     for (const el of elements) {
       try {
         const id = await el.attribute('id')
-        if (id && id.startsWith('watering-advisor-')) ids.push(id)
-      } catch (e) {}
+        if (id && id.startsWith('watering-advisor-')) {
+          ids.push(id)
+        }
+      } catch {
+        // Some renderer nodes do not expose attributes during a transition.
+      }
       try {
         const text = await el.text()
-        if (text && text.trim().length > 0) texts.push(text.trim())
-      } catch (e) {}
+        if (text && text.trim().length > 0) {
+          texts.push(text.trim())
+        }
+      } catch {
+        // Some renderer nodes do not expose text during a transition.
+      }
     }
-  } catch (e) {}
+  } catch {
+    // The fallback assertions below still validate the stable result IDs.
+  }
   return { ids, texts }
 }
 

@@ -1,495 +1,236 @@
 <template>
   <view
     :id="`${idPrefix}-environment-${questionId}`"
-    class="mt-4 flex flex-col gap-2.5"
+    class="overflow-hidden rounded-2xl border border-[#e3ede5] bg-white p-5"
     :class="{ 'pointer-events-none opacity-60': disabled }"
   >
-    <!-- 有窗（居首）：作为 uni-ui 折叠面板的标题项，方位选择器/校准方位/离窗距离/位置选项/直射光均落在面板内部 -->
-    <uni-collapse
-      :key="windowCollapseRenderKey"
-      :id="`${idPrefix}-window-detail-${questionId}`"
-      v-model="windowCollapseName"
-      accordion
-      @change="handleCollapseChange"
-    >
-      <uni-collapse-item
-        :name="`${idPrefix}-window-${windowOption.key}`"
-        :open="isWindowCollapseOpen"
-        :border="false"
-        show-animation
-        title-border="none"
-        :key="windowOption.key"
-      >
-        <template v-slot:title>
-          <view
-            :id="`${idPrefix}-window-${windowOption.key}`"
-            class="flex w-full items-center gap-3 px-4 py-3.5"
-            @click.stop="selectWindow(windowOption.key)"
-          >
-            <view
-              class="box-border h-5 w-5 rounded-full border-2 p-[3px]"
-              :class="selectedWindowKey === 'window' ? 'border-brand' : 'border-ink-inactiveBorder'"
-            >
-              <view
-                v-if="selectedWindowKey === 'window'"
-                class="h-full w-full rounded-full bg-brand"
-              />
-            </view>
-            <text class="text-sm font-bold leading-5 text-ink-title">{{ windowOption.label }}</text>
-          </view>
-        </template>
+    <view v-if="showTitle" class="mb-3.5">
+      <text class="block text-[17px] font-medium leading-6 text-[#1c2921]">
+        请告诉我【{{ plantName || '植物' }}】实际接收到的光
+      </text>
+      <text class="mt-1.5 block text-[13px] leading-5 text-[#5c8066]">
+        只看植物旁：有没有晒到叶片、周围亮不亮
+      </text>
+    </view>
 
-        <view class="ml-1 border-l-2 border-brand-border pl-4">
-          <!-- 方位选择器（对齐 Figma 220:62，页面居中） -->
-          <view class="items-center pt-1" style="margin-left: -22px">
-            <text class="mb-3 block text-center text-sm font-bold text-ink-title">
-              请选择您的窗户的方位
-            </text>
-            <view class="relative mx-auto h-[220px] w-[220px]">
-              <!-- 外圆盘：fill #F5FBF7, stroke #C7E0D1 -->
-              <view
-                class="absolute left-[8px] top-[8px] h-[204px] w-[204px] rounded-full border border-lightEnv-dialStroke bg-lightEnv-dialFill"
-              />
-              <!-- 内圈氛围：fill #EBF6EF opacity 0.64 -->
-              <view
-                class="absolute left-[54px] top-[54px] h-[112px] w-[112px] rounded-full bg-lightEnv-innerAmbient"
-                style="opacity: 0.64"
-              />
-              <!-- 4 主方位按钮 N/S/E/W：62px 圆形白色 + 阴影 + 箭头SVG + 标签 -->
-              <view
-                v-for="direction in cardinalDirections"
-                :key="direction.key"
-                :id="`${idPrefix}-facing-${direction.key}`"
-                class="absolute z-10 flex h-[62px] w-[62px] flex-nowrap items-center justify-center whitespace-nowrap rounded-full border bg-white shadow-facing-btn"
-                :class="[
-                  direction.layout === 'row' ? 'flex-row' : 'flex-col',
-                  environment.facing === direction.key
-                    ? 'border-lightEnv-facingActive'
-                    : 'border-lightEnv-dialStroke'
-                ]"
-                :style="direction.style"
-                @click="selectFacing(direction.key)"
-              >
-                <image
-                  :src="
-                    environment.facing === direction.key
-                      ? directionArrowActiveIcon
-                      : directionArrowInactiveIcon
-                  "
-                  class="h-[26px] w-[26px] shrink-0"
-                  mode="aspectFit"
-                  :style="`transform: rotate(${direction.arrowRotation}deg)`"
-                />
-                <text
-                  class="shrink-0 text-[11.5px] font-semibold leading-none"
-                  :class="[
-                    direction.layout === 'row' ? 'ml-2' : 'mt-2',
-                    environment.facing === direction.key
-                      ? 'text-lightEnv-facingActive'
-                      : 'text-lightEnv-facingText'
-                  ]"
-                >
-                  {{ direction.label }}
-                </text>
-              </view>
-              <!-- 4 对角方位按钮 NE/SE/SW/NW：仅箭头，无圆形背景 -->
-              <view
-                v-for="direction in diagonalDirections"
-                :key="direction.key"
-                :id="`${idPrefix}-facing-${direction.key}`"
-                class="absolute z-10 flex h-[28px] w-[28px] items-center justify-center"
-                :style="direction.style"
-                @click="selectFacing(direction.key)"
-              >
-                <image
-                  :src="
-                    environment.facing === direction.key
-                      ? directionArrowActiveIcon
-                      : directionArrowInactiveIcon
-                  "
-                  class="h-[19px] w-[19px]"
-                  mode="aspectFit"
-                  :style="`transform: rotate(${direction.arrowRotation}deg)`"
-                />
-              </view>
-              <!-- 中心不确定按钮：54px 圆形白色 + #C7E0D1 边框 + 阴影 -->
-              <view
-                :id="`${idPrefix}-facing-unknown`"
-                class="absolute left-1/2 top-1/2 z-20 flex h-[54px] w-[54px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-lightEnv-dialStroke bg-white shadow-uncertain-btn"
-                :class="environment.facing === 'unknown' ? 'ring-2 ring-lightEnv-facingActive' : ''"
-                @click="openDirectionDialog('unknown')"
-              >
-                <text class="text-[9px] font-medium leading-[13px] text-lightEnv-uncertain"
-                  >不确定</text
-                >
-                <text
-                  class="text-[11px] font-normal leading-[14px] text-lightEnv-uncertain"
-                  style="opacity: 0.68"
-                  >?</text
-                >
-              </view>
-            </view>
-          </view>
-
-          <!-- 离窗距离 -->
-          <view class="mt-4 flex items-center justify-between">
-            <text class="text-sm leading-5 text-ink-body">离窗距离</text>
-            <view class="flex rounded-xl bg-gray-100 p-0.5">
-              <text class="rounded-[10px] bg-white px-3 py-1 text-xs font-bold text-brand-dark"
-                >米</text
-              >
-              <text class="px-3 py-1 text-xs font-bold text-ink-faint">步</text>
-            </view>
-          </view>
-
-          <slider
-            :id="`${idPrefix}-distance-slider-${questionId}`"
-            class="mt-2"
-            min="0"
-            max="10"
-            step="0.5"
-            :value="environment.distance"
-            activeColor="#00a63e"
-            backgroundColor="#e5e7eb"
-            block-color="#ffffff"
-            block-size="20"
-            :disabled="disabled"
-            @change="handleDistanceChange"
-            @changing="handleDistanceChange"
-          />
-          <view class="flex justify-between">
-            <text class="text-xs text-ink-muted">0 m</text>
-            <text class="text-xs text-ink-muted">10 m</text>
-          </view>
-
-          <view class="mt-2 flex items-center gap-2 rounded-xl bg-brand-tint px-3 py-2">
-            <view class="h-2 w-2 rounded-full bg-brand-accent" />
-            <text class="text-sm font-bold text-brand-darker">{{ distanceBandText }}</text>
-            <text class="ml-auto text-xs text-brand">
-              {{ distanceText }} 米 · 光照系数 {{ distanceFactorText }}
-            </text>
-          </view>
-
-          <view class="mt-2 rounded-xl bg-status-hintBg px-3 py-2.5">
-            <text class="text-xs leading-[19px] text-status-hintText">
-              距离只是估算：如果窗与植物之间有柜子、墙角、厚窗帘等遮挡，或站在植物位置基本看不到窗，建议改选房间中部或房间深处。
-            </text>
-          </view>
-
-          <!-- 位置选项 -->
-          <view class="mt-3 flex gap-2">
-            <text
-              v-for="item in positionOptions"
-              :key="item.key"
-              class="flex-1 rounded-xl border px-2 py-2 text-center text-xs font-bold"
-              :class="
-                environment.position === item.key
-                  ? 'border-brand bg-brand-tint text-brand-dark'
-                  : 'border-gray-200 text-ink-body'
-              "
-              @click="selectPosition(item.key)"
-            >
-              {{ item.label }}
-            </text>
-          </view>
-
-          <!-- 每天有直射光 -->
-          <view
-            class="mt-3 flex items-center justify-between rounded-xl bg-status-directSunBg px-3 py-2.5"
-          >
-            <text class="text-xs font-bold text-ink-body">每天有直射光</text>
-            <switch
-              :id="`${idPrefix}-direct-sun-${questionId}`"
-              :checked="environment.hasDirectSun"
-              color="#00a63e"
-              :disabled="disabled"
-              @change="handleDirectSunChange"
-            />
-          </view>
-        </view>
-      </uni-collapse-item>
-    </uni-collapse>
-
-    <!-- 无窗 / 补光灯：普通单选项 -->
     <view
-      v-for="option in nonWindowOptions"
-      :key="option.key"
-      :id="`${idPrefix}-window-${option.key}`"
-      class="rounded-2xl border bg-white px-4 py-3.5"
-      :class="selectedWindowKey === option.key ? 'border-brand bg-brand-tint' : 'border-gray-200'"
-      @click="selectWindow(option.key)"
+      :id="`${idPrefix}-illustration-${questionId}`"
+      class="mb-3.5 flex h-[156px] flex-col items-center overflow-hidden rounded-xl border border-[#e0f0e5] bg-[#fbfdfc] px-3 py-2"
     >
-      <view class="flex items-center gap-3">
-        <view
-          class="box-border h-5 w-5 rounded-full border-2 p-[3px]"
-          :class="selectedWindowKey === option.key ? 'border-brand' : 'border-ink-inactiveBorder'"
-        >
-          <view
-            v-if="selectedWindowKey === option.key"
-            class="h-full w-full rounded-full bg-brand"
-          />
-        </view>
-        <text class="text-sm font-bold leading-5 text-ink-title">{{ option.label }}</text>
+      <image :src="activeIllustration" class="h-[116px] w-full" mode="aspectFit" />
+      <text class="mt-1 block text-center text-[13px] leading-5 text-[#3b754d]">
+        {{ activeOption.label }}：{{ activeOption.description }}
+      </text>
+    </view>
+
+    <text class="mb-2 block text-sm font-medium leading-5 text-[#24382b]">光线进入方式</text>
+    <view class="mb-3.5 flex gap-1.5">
+      <view
+        v-for="entry in entryMethodOptions"
+        :id="`${idPrefix}-entry-${entry.key}-${questionId}`"
+        :key="entry.key"
+        class="box-border flex h-[52px] flex-1 items-center justify-center rounded-xl px-4"
+        :class="entryMethodClass(entry.key)"
+        @click="selectEntryMethod(entry.key)"
+      >
+        <text class="whitespace-nowrap text-center text-sm font-medium leading-5">
+          {{ entry.label }}
+        </text>
       </view>
     </view>
 
-    <view v-if="errorText" class="mt-1 px-1">
-      <text class="text-xs text-red-500">{{ errorText }}</text>
-    </view>
-
-    <!-- 校准方位弹框：罗盘指针直接对齐 Figma 节点 154:271 -->
-    <view
-      v-if="showDirectionDialog"
-      :id="`${idPrefix}-direction-dialog`"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6"
-    >
-      <view class="w-full max-w-[345px] rounded-2xl bg-white p-5 shadow-xl">
-        <view class="flex items-center justify-between">
-          <text class="text-base font-bold text-ink-title">校准方位</text>
-          <text
-            :id="`${idPrefix}-direction-dialog-close`"
-            class="px-1 text-2xl leading-none text-ink-close"
-            @click="closeDirectionDialog"
-          >
-            ×
+    <text class="mb-2 block text-sm font-medium leading-5 text-[#24382b]">
+      选择最接近的一种
+    </text>
+    <view class="flex flex-col gap-1.5">
+      <view
+        v-for="option in lightTypeOptions"
+        :id="`${idPrefix}-type-${option.key}-${questionId}`"
+        :key="option.key"
+        class="box-border flex h-[52px] w-full items-center rounded-xl px-4"
+        :class="
+          environment.naturalLightType === option.key
+            ? 'border-2 border-[#2d7a4f] bg-[#fbfdfc]'
+            : 'border border-[#d6e0d9] bg-white'
+        "
+        @click="selectNaturalLightType(option.key)"
+      >
+        <view class="flex min-w-0 flex-1 flex-col justify-center">
+          <text class="block text-sm font-medium leading-5 text-[#1f2e24]">
+            {{ option.label }}
+          </text>
+          <text class="block text-[11px] leading-4 text-[#63806b]">
+            {{ option.description }}
           </text>
         </view>
-        <text class="mt-3 block text-sm leading-[22px] text-ink-body">
-          请水平持握手机，走至植物所在位置，将手机顶端面向窗户后点击「确认」校准方位。
-        </text>
-
-        <!-- 罗盘：对齐 Figma 154:271，圆形容器 #f9fafb，N/S/E/W 标签 #9ca3af -->
-        <view
-          class="relative mx-auto mt-4 h-[112px] w-[112px] rounded-full border border-gray-200 bg-status-compassBg"
-        >
-          <text class="absolute left-1/2 top-1 -translate-x-1/2 text-[10px] font-bold text-gray-400"
-            >N</text
-          >
-          <text
-            class="absolute bottom-1 left-1/2 -translate-x-1/2 text-[10px] font-bold text-gray-400"
-            >S</text
-          >
-          <text class="absolute left-1 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400"
-            >W</text
-          >
-          <text
-            class="absolute right-1 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400"
-            >E</text
-          >
-          <!-- 指针：对齐 Figma 154:278，居中(inset 45.2%) + 旋转，默认 -116.8deg -->
-          <view
-            class="absolute left-1/2 top-1/2 h-0.5 w-10 origin-center rounded-full bg-brand"
-            :style="compassPointerStyle"
-          />
-          <view
-            class="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-dark"
-          />
-        </view>
-
-        <text class="mt-4 block text-center text-sm font-bold text-brand-dark">
-          当前朝向：{{ currentFacingText }}窗
-        </text>
-        <text class="mt-2 block text-center text-xs leading-5 text-ink-faint">
-          {{ compassStatusText }}
-        </text>
-        <button
-          :id="`${idPrefix}-direction-dialog-confirm`"
-          class="mt-4 h-11 rounded-2xl bg-brand p-0 text-base font-bold leading-11 text-white"
-          @click="confirmDirection"
-        >
-          确认
-        </button>
       </view>
     </view>
+
+    <view
+      class="mt-3.5 flex h-14 items-center overflow-hidden rounded-xl border border-[#dbebe0] bg-[#f6fbf7] px-3 py-2.5"
+    >
+      <view class="min-w-0 flex-1">
+        <text class="block text-sm font-medium leading-5 text-[#1f2e24]">
+          使用补光灯（可选）
+        </text>
+        <text class="block text-[11px] leading-4 text-[#63806b]">
+          可与上方任意自然光状态同时使用
+        </text>
+      </view>
+      <switch
+        :id="`${idPrefix}-supplemental-light-${questionId}`"
+        :checked="environment.hasSupplementalLight"
+        :disabled="disabled"
+        color="#2d7a4f"
+        @change="handleSupplementalLightChange"
+      />
+    </view>
+
+    <text
+      v-if="environment.hasSupplementalLight"
+      class="mt-2 block text-[11px] leading-4 text-[#63806b]"
+    >
+      已记录补光灯，实际效果取决于灯具强度、距离和使用时长。
+    </text>
+
+    <button
+      v-if="requiresConfirmation && !confirmed && hasSelectedLightType"
+      :id="`${idPrefix}-confirm-current-${questionId}`"
+      class="mt-3.5 h-11 w-full rounded-xl border border-[#2d7a4f] bg-[#fbfdfc] p-0 text-sm font-medium leading-[44px] text-[#2d7a4f]"
+      @click="confirmCurrentEnvironment"
+    >
+      仍是这样
+    </button>
+
+    <text v-if="errorText" class="mt-2 block text-xs text-red-500">{{ errorText }}</text>
   </view>
 </template>
 
 <script setup>
 import { computed, ref, watch } from 'vue'
+import directIllustration from '@/assets/light/light-type-direct.svg'
+import brightDiffuseIllustration from '@/assets/light/light-type-bright-diffuse.svg'
+import weakDiffuseIllustration from '@/assets/light/light-type-weak-diffuse.svg'
+import almostNoneIllustration from '@/assets/light/light-type-almost-none.svg'
 import {
+  ENTRY_METHOD_OPTIONS,
+  NATURAL_LIGHT_TYPE_OPTIONS,
   createDefaultLightEnvironment,
-  getLightFacingLabel,
+  getLightEnvironmentSignature,
+  getNaturalLightTypeOption,
+  markLightEnvironmentAsUser,
   sanitizeLightEnvironment
 } from '@/utils/light-environment.js'
-import selectedDirectionArrowIcon from '@/assets/icons/direction-selected-arrow.svg'
-import directionArrowActiveIcon from '@/assets/icons/direction-arrow-active.svg'
-import directionArrowInactiveIcon from '@/assets/icons/direction-arrow-inactive.svg'
-import { useCompassCalibration } from '@/composables/useCompassCalibration.js'
-import { useWindowCollapsePanel } from '@/composables/useWindowCollapsePanel.js'
-import {
-  CARDINAL_DIRECTIONS,
-  DIAGONAL_DIRECTIONS,
-  NON_WINDOW_OPTIONS,
-  POSITION_DEFAULT_DISTANCE,
-  POSITION_OPTIONS,
-  WINDOW_OPTION,
-  resolveCompassPointerStyle,
-  resolveDirectionArrowStyle,
-  resolveDistanceBand,
-  resolveDistanceFactor,
-  resolveDistancePosition
-} from './light-env-constants.js'
 
 const props = defineProps({
   modelValue: { type: Object, default: () => createDefaultLightEnvironment() },
-  questionId: { type: String, default: '' },
-  idPrefix: { type: String, default: 'light-env' },
+  questionId: { type: [String, Number], default: 'default' },
+  idPrefix: { type: String, default: 'light-environment' },
+  plantName: { type: String, default: '植物' },
+  showTitle: { type: Boolean, default: true },
   disabled: { type: Boolean, default: false },
-  errorText: { type: String, default: '' }
+  errorText: { type: String, default: '' },
+  requiresConfirmation: { type: Boolean, default: false },
+  confirmed: { type: Boolean, default: false }
 })
-const emit = defineEmits(['update:modelValue', 'change'])
 
+const emit = defineEmits(['change', 'confirm'])
+const illustrationByType = {
+  direct: directIllustration,
+  bright_diffuse: brightDiffuseIllustration,
+  weak_diffuse: weakDiffuseIllustration,
+  almost_none: almostNoneIllustration
+}
+const lightTypeOptions = NATURAL_LIGHT_TYPE_OPTIONS
+const entryMethodOptions = ENTRY_METHOD_OPTIONS
 const environment = ref(sanitizeLightEnvironment(props.modelValue))
+const previousEntryMethod = ref(environment.value.entryMethod || 'through_glass')
 
-const {
-  showDirectionDialog,
-  compassStatusText,
-  openDirectionDialog,
-  closeDirectionDialog,
-  confirmDirection
-} = useCompassCalibration({
-  disabled: () => props.disabled,
-  getEnvironment: () => environment.value,
-  commit
-})
-
-const {
-  windowCollapseItemName,
-  windowCollapseName,
-  windowCollapseRenderKey,
-  openWindowCollapse,
-  closeWindowCollapse,
-  handleCollapseChange
-} = useWindowCollapsePanel({
-  idPrefix: () => props.idPrefix,
-  getEnvironment: () => environment.value
-})
-
-function commit(nextValue) {
-  environment.value = sanitizeLightEnvironment(nextValue)
-  emit('update:modelValue', environment.value)
-  emit('change', environment.value)
-}
-
-const selectedWindowKey = computed(() => {
-  if (environment.value.windowType === 'no_window') {
-    return 'no_window'
-  }
-  if (environment.value.windowType === 'grow_light') {
-    return 'grow_light'
-  }
-  return 'window'
-})
-
-// 暴露给模板的驼峰别名（保持模板引用不变）
-const windowOption = WINDOW_OPTION
-const nonWindowOptions = NON_WINDOW_OPTIONS
-const cardinalDirections = CARDINAL_DIRECTIONS
-const diagonalDirections = DIAGONAL_DIRECTIONS
-const positionOptions = POSITION_OPTIONS
-const isWindowCollapseOpen = computed(() => {
-  return (
-    selectedWindowKey.value === 'window' &&
-    windowCollapseName.value === windowCollapseItemName.value
-  )
-})
-const distanceText = computed(() => Number(environment.value.distance || 0).toFixed(1))
-const distanceBandText = computed(() => resolveDistanceBand(environment.value.distance))
-const distanceFactorText = computed(() =>
-  resolveDistanceFactor(environment.value.distance).toFixed(2)
+const displayLightType = computed(() => environment.value.naturalLightType || 'direct')
+const activeOption = computed(
+  () => getNaturalLightTypeOption(displayLightType.value) || NATURAL_LIGHT_TYPE_OPTIONS[0]
 )
-const currentFacingText = computed(() => getLightFacingLabel(environment.value.facing))
-const selectedDirectionArrowStyle = computed(() =>
-  resolveDirectionArrowStyle(environment.value.facing)
+const activeIllustration = computed(() => illustrationByType[displayLightType.value])
+const hasSelectedLightType = computed(() => Boolean(environment.value.naturalLightType))
+const entryMethodDisabled = computed(
+  () => environment.value.naturalLightType === 'almost_none'
 )
-const compassPointerStyle = computed(() => resolveCompassPointerStyle(environment.value.facing))
-
-function selectWindow(key) {
-  if (props.disabled) {
-    return
-  }
-  if (key === 'no_window') {
-    closeWindowCollapse('no_window')
-    commit({
-      ...environment.value,
-      windowType: 'no_window',
-      facing: 'no_window',
-      position: 'deep',
-      hasDirectSun: false,
-      distance: 10
-    })
-    closeWindowCollapse('no_window')
-    return
-  }
-  if (key === 'grow_light') {
-    closeWindowCollapse('grow_light')
-    commit({
-      ...environment.value,
-      windowType: 'grow_light',
-      facing: 'unknown',
-      position: 'middle',
-      hasDirectSun: false,
-      distance: 2
-    })
-    closeWindowCollapse('grow_light')
-    return
-  }
-  commit({
-    ...environment.value,
-    windowType: 'standard',
-    facing: environment.value.facing === 'no_window' ? 'south' : environment.value.facing,
-    distance: Math.min(environment.value.distance || 1, 3)
-  })
-  // 选中「有窗」时展开折叠面板，展示方位/距离等详情
-  openWindowCollapse()
-}
-
-function selectFacing(facing) {
-  if (props.disabled) {
-    return
-  }
-  commit({ ...environment.value, facing })
-}
-
-function selectPosition(position) {
-  if (props.disabled) {
-    return
-  }
-  commit({ ...environment.value, position, distance: POSITION_DEFAULT_DISTANCE[position] })
-}
-
-function handleDistanceChange(event) {
-  if (props.disabled) {
-    return
-  }
-  const distance = Number(event?.detail?.value)
-  commit({ ...environment.value, distance, position: resolveDistancePosition(distance) })
-}
-
-function handleDirectSunChange(event) {
-  if (props.disabled) {
-    return
-  }
-  commit({ ...environment.value, hasDirectSun: Boolean(event?.detail?.value) })
-}
 
 watch(
   () => props.modelValue,
   value => {
-    environment.value = sanitizeLightEnvironment(value)
+    const next = sanitizeLightEnvironment(value)
+    if (getLightEnvironmentSignature(next) !== getLightEnvironmentSignature(environment.value)) {
+      environment.value = next
+      if (next.entryMethod) {
+        previousEntryMethod.value = next.entryMethod
+      }
+    }
   },
   { deep: true }
 )
 
-// 选中无窗/补光灯时收起有窗折叠面板；选中「有窗」时的展开由 selectWindow 主动控制，
-// 这样用户手动折叠已选中的「有窗」不会被 watch 强制重新展开。
-watch(
-  () => environment.value.windowType,
-  windowType => {
-    if (windowType !== 'standard') {
-      closeWindowCollapse()
-    }
-  },
-  { immediate: true }
-)
+function commit(value) {
+  environment.value = markLightEnvironmentAsUser(value)
+  emit('change', environment.value)
+}
+
+function selectNaturalLightType(naturalLightType) {
+  if (props.disabled) {
+    return
+  }
+  const leavingAlmostNone =
+    environment.value.naturalLightType === 'almost_none' && naturalLightType !== 'almost_none'
+  if (naturalLightType === 'almost_none' && environment.value.entryMethod) {
+    previousEntryMethod.value = environment.value.entryMethod
+  }
+  commit({
+    ...environment.value,
+    naturalLightType,
+    entryMethod:
+      naturalLightType === 'almost_none'
+        ? null
+        : leavingAlmostNone
+          ? previousEntryMethod.value || 'through_glass'
+          : environment.value.entryMethod || 'through_glass'
+  })
+}
+
+function selectEntryMethod(entryMethod) {
+  if (props.disabled || entryMethodDisabled.value) {
+    return
+  }
+  previousEntryMethod.value = entryMethod
+  commit({ ...environment.value, entryMethod })
+}
+
+function handleSupplementalLightChange(event) {
+  if (props.disabled) {
+    return
+  }
+  commit({
+    ...environment.value,
+    hasSupplementalLight: event?.detail?.value === true
+  })
+}
+
+function entryMethodClass(entryMethod) {
+  if (entryMethodDisabled.value) {
+    return 'border border-[#d1dbd4] bg-[#f5f7f6] text-[#8f9991]'
+  }
+  if (hasSelectedLightType.value && environment.value.entryMethod === entryMethod) {
+    return 'border-2 border-[#2d7a4f] bg-[#fbfdfc] text-[#1f2e24]'
+  }
+  return 'border border-[#d6e0d9] bg-white text-[#1f2e24]'
+}
+
+function confirmCurrentEnvironment() {
+  if (props.disabled || !hasSelectedLightType.value) {
+    return
+  }
+  const confirmedValue = markLightEnvironmentAsUser(environment.value)
+  environment.value = confirmedValue
+  emit('change', confirmedValue)
+  emit('confirm', confirmedValue)
+}
 </script>

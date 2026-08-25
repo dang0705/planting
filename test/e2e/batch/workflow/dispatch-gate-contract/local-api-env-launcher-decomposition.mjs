@@ -6,6 +6,10 @@ import {
   parseLocalApiEnvironmentArgs,
   resolveLocalApiBaseUrl
 } from '../../../../../scripts/dev/local-api-env-config.mjs'
+import {
+  acquireLocalRuntimeLease,
+  createManagedLocalRuntimeSession
+} from '../../../../../scripts/dev/local-runtime-session.mjs'
 import { ensureLocalRuntimeReady } from '../../../../../scripts/dev/local-api-env-gateway.mjs'
 import { runLocalApiEnvironment as runLocalApiEnvironmentOrchestrator } from '../../../../../scripts/dev/local-api-env-launcher.mjs'
 import { runLocalApiEnvironment } from '../../../../../scripts/dev/run-local-api-env.mjs'
@@ -42,27 +46,31 @@ try {
   )
   assert.equal(typeof ensureLocalRuntimeReady, 'function')
 
-  const parsed = parseLocalApiEnvironmentArgs([
-    '--mode=lan',
-    '--port=3015',
-    '--no-start-functions',
-    '--',
-    'uni',
-    '-p',
-    'mp-weixin'
-  ], {})
+  const parsed = parseLocalApiEnvironmentArgs(
+    [
+      '--mode=lan',
+      '--port=3015',
+      '--function-port-base=9100',
+      '--output-dir=/tmp/planting-qa-runtime',
+      '--no-start-functions',
+      '--',
+      'uni',
+      '-p',
+      'mp-weixin'
+    ],
+    {}
+  )
   assert.equal(parsed.options.mode, 'lan')
   assert.equal(parsed.options.port, 3015)
+  assert.equal(parsed.options.functionPortBase, 9100)
+  assert.equal(parsed.options.outputDir, path.resolve('/tmp/planting-qa-runtime'))
   assert.equal(parsed.options.startFunctions, false)
   assert.deepEqual(parsed.command, ['uni', '-p', 'mp-weixin'])
   assert.equal(parsed.options.baseUrlSource, '')
-  const staleLanEnv = parseLocalApiEnvironmentArgs(
-    ['--mode=lan', '--', 'uni', '-p', 'mp-weixin'],
-    {
-      VITE_API_BASE_URL: 'http://192.168.50.80:3010',
-      CLOUDBASE_LOCAL_FUNCTIONS_HOST_IP: '10.216.143.10'
-    }
-  )
+  const staleLanEnv = parseLocalApiEnvironmentArgs(['--mode=lan', '--', 'uni', '-p', 'mp-weixin'], {
+    VITE_API_BASE_URL: 'http://192.168.50.80:3010',
+    CLOUDBASE_LOCAL_FUNCTIONS_HOST_IP: '10.216.143.10'
+  })
   assert.equal(
     resolveLocalApiBaseUrl(staleLanEnv.options, {
       CLOUDBASE_LOCAL_FUNCTIONS_HOST_IP: '10.216.143.10'
@@ -105,6 +113,134 @@ try {
   })
   assert.deepEqual(events, ['gateway:http://127.0.0.1:3010', 'spawn:uni:-p h5'])
   assert.equal(runtimeSessionFactoryCalls, 0)
+
+  let resolveReusedExit
+  const reusedExit = new Promise(resolve => {
+    resolveReusedExit = resolve
+  })
+  const reuseSignalSource = new EventEmitter()
+  let reuseStopped = false
+  const reusePromise = runLocalApiEnvironment({
+    argv: [
+      '--mode=lan',
+      '--reuse-output',
+      '--base-url=http://127.0.0.1:3011',
+      '--',
+      'uni',
+      '-p',
+      'mp-weixin'
+    ],
+    signalSource: reuseSignalSource,
+    output: { write() {} },
+    ensureRuntime: async () => null,
+    runtimeSessionFactory: options => {
+      assert.equal(options.reuseOutput, true)
+      return {
+        start() {
+          return { status: 'started', child: null }
+        },
+        waitForExit() {
+          return reusedExit
+        },
+        async stop() {
+          reuseStopped = true
+          resolveReusedExit({ code: 0, signal: 'SIGINT' })
+          return { status: 'released' }
+        }
+      }
+    }
+  })
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(reuseStopped, false, 'the reuse session should still be alive before SIGINT')
+  reuseSignalSource.emit('SIGINT')
+  await reusePromise
+  assert.equal(reuseStopped, true, 'SIGINT must release the reused runtime lease')
+
+  let verifiedReuseStopped = false
+  let verifiedReuseWaited = false
+  let verifiedReuseStarts = 0
+  let verifiedReuseClaims = 0
+  let verifiedReuseGatewayChecks = 0
+  await runLocalApiEnvironment({
+    argv: ['--mode=lan', '--base-url=http://127.0.0.1:3011', '--', 'uni', '-p', 'mp-weixin'],
+    output: { write() {} },
+    ensureRuntime: async () => {
+      verifiedReuseGatewayChecks += 1
+      return null
+    },
+    runtimeSessionFactory: () => ({
+      claim() {
+        verifiedReuseClaims += 1
+        return { status: 'acquired' }
+      },
+      start() {
+        verifiedReuseStarts += 1
+        if (verifiedReuseStarts === 1) {
+          return {
+            status: 'reused',
+            reason: 'verified_same_target_owner_alive',
+            lease: { owner_pid: 41007 }
+          }
+        }
+        return { status: 'started', child: successfulChild() }
+      },
+      waitForExit() {
+        verifiedReuseWaited = true
+        return Promise.resolve({ code: 0, signal: null })
+      },
+      async stop() {
+        verifiedReuseStopped = true
+        return { status: 'released' }
+      }
+    })
+  })
+  assert.equal(verifiedReuseStarts, 2, 'daily startup must retry after the old owner releases')
+  assert.equal(verifiedReuseClaims, 1)
+  assert.equal(verifiedReuseGatewayChecks, 2, 'handoff must recheck the gateway after lease acquisition')
+  assert.equal(verifiedReuseWaited, true)
+  assert.equal(verifiedReuseStopped, true)
+
+  const realReuseRoot = fs.mkdtempSync(path.join(repoRoot, '.tmp', 'local-runtime-reuse-'))
+  const realReuseTarget = path.join(realReuseRoot, 'dist', 'dev', 'mp-weixin')
+  const qaOwnedLease = acquireLocalRuntimeLease({
+    targetPath: realReuseTarget,
+    leaseRoot: realReuseRoot,
+    ownerPid: process.pid,
+    ownerId: 'qa-session-that-has-exited-but-runtime-is-still-serving',
+    isProcessAlive: () => true
+  })
+  assert.equal(qaOwnedLease.status, 'acquired')
+  let dailyWatcherSpawned = false
+  let ownerAliveChecks = 0
+  await runLocalApiEnvironment({
+    argv: [
+      '--skip-health-check',
+      `--output-dir=${realReuseTarget}`,
+      `--runtime-lease-root=${realReuseRoot}`,
+      '--',
+      'uni',
+      '-p',
+      'mp-weixin'
+    ],
+    output: { write() {} },
+    spawnProcess: () => {
+      dailyWatcherSpawned = true
+      return successfulChild()
+    },
+    runtimeSessionFactory: options =>
+      createManagedLocalRuntimeSession({
+        ...options,
+        ownerId: 'daily-retry-after-qa-exit',
+        isProcessAlive: pid => Number(pid) === process.pid && ownerAliveChecks++ === 0
+      })
+  })
+  assert.equal(dailyWatcherSpawned, true, 'handoff must launch the new daily watcher after QA releases')
+  assert.equal(
+    fs.existsSync(qaOwnedLease.file_path),
+    false,
+    'the handed-off daily watcher must release its lease during cleanup'
+  )
+  fs.rmSync(realReuseRoot, { recursive: true, force: true })
 } finally {
   // This contract creates no listener, lease, gateway or external process.
 }

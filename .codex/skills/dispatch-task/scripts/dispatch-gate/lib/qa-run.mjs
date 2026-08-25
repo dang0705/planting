@@ -18,27 +18,65 @@ import {
 import { classifyQaFailure, runQaPreflight } from './qa-preflight.mjs'
 import { extractLeafReport, leafReportEvidence } from './qa-leaf-report.mjs'
 import { runFormalQaExecution, runFormalQaPreflight } from './formal-isolated-qa-execution.mjs'
-import { cleanupTestOwnedQaSession, createTestOwnedQaSession } from './test-owned-qa-session.mjs'
+import {
+  createSupervisorQaSession,
+  cleanupSupervisorQaSession
+} from '../../../../../../scripts/qa/qa-supervisor-client.mjs'
 import { isProcessAlive } from './process-liveness.mjs'
 import { findHandoff, readJson, repoRoot, stateDir, writeJsonAtomic } from './state.mjs'
 import {
   DEFAULT_PORT,
+  DEFAULT_FUNCTION_PORT_BASE,
   resolveLocalApiBaseUrl
 } from '../../../../../../scripts/dev/local-api-env-config.mjs'
+import {
+  QA_RUNTIME_FUNCTION_PORT_BASE,
+  QA_RUNTIME_LAN_PORT,
+  deriveQaRuntime
+} from './qa-runtime-plane.mjs'
+import { assertQaRunLease } from '../../../../../../scripts/qa/qa-run-lease.mjs'
+import { automatorV3RunQaRecordRoot } from '../../../../../../scripts/qa/automator-v3-run-context.mjs'
 
 const qaGateOptionsWithValue = new Set([
   '--catalog-id',
   '--execution-id',
   '--dispatch-run-id',
+  '--run-instance-id',
   '--project-path',
   '--observed-project-path',
   '--ws-port',
   '--wx-request-url',
   '--execution-timeout-ms',
   '--targeted-restart-command',
-  '--failure-kind'
+  '--failure-kind',
+  '--run-lease-token'
 ])
 const qaGateOptionPrefixes = [...qaGateOptionsWithValue].map(option => `${option}=`)
+const forbiddenFormalRuntimeOptions = new Set([
+  '--project',
+  '--project-path',
+  '--mp-project-path',
+  '--observed-project-path',
+  '--miniprogram-automator-ws',
+  '--ws-endpoint',
+  '--ws-port',
+  '--automator-port',
+  '--control-port',
+  '--port',
+  '--devtools-pid',
+  '--e2e-artifact-dir',
+  '--artifact-dir',
+  '--output-dir',
+  '--uni-output-dir',
+  '--wx-request-url'
+])
+
+export function forbiddenFormalRuntimeArgs(rawArgs) {
+  return rawArgs
+    .map(String)
+    .map(arg => arg.split('=', 1)[0])
+    .filter(arg => forbiddenFormalRuntimeOptions.has(arg))
+}
 
 export function stripQaGateArgs(rawArgs) {
   const stripped = []
@@ -65,14 +103,34 @@ function containsUnsafeRestartCommand(rawArgs) {
   )
 }
 
-function recordPath(dispatchRunId, executionId) {
-  return path.join(stateDir(dispatchRunId), 'qa-runs', `${executionId}.json`)
+function recordPath(dispatchRunId, executionId, runInstanceId = null) {
+  const root = runInstanceId
+    ? automatorV3RunQaRecordRoot(dispatchRunId, runInstanceId)
+    : path.join(stateDir(dispatchRunId), 'qa-runs')
+  return path.join(root, `${executionId}.json`)
+}
+
+function qaArtifactDir(dispatchRunId, executionId, runInstanceId = null) {
+  const root = runInstanceId
+    ? path.join(stateDir(dispatchRunId), 'qa-artifacts', runInstanceId)
+    : path.join(stateDir(dispatchRunId), 'qa-artifacts')
+  return path.join(root, executionId)
 }
 
 const safeExecutionId = value => /^[a-zA-Z0-9._-]{8,160}$/.test(value)
-const LOCAL_QA_WX_REQUEST_PATH = 'plant-user-http/user-plants/health'
+const LOCAL_QA_WX_REQUEST_PATH = 'plant-user-http/user-plants?page=1&pageSize=1'
 
-export function resolveQaWxRequestUrl(value, environment = process.env) {
+export function resolveQaWxRequestUrl(value, environment = process.env, { formal = false } = {}) {
+  if (formal) {
+    const baseUrl = resolveLocalApiBaseUrl(
+      { mode: 'lan', port: QA_RUNTIME_LAN_PORT, functionPortBase: QA_RUNTIME_FUNCTION_PORT_BASE },
+      environment
+    )
+    return {
+      url: `${baseUrl}/${LOCAL_QA_WX_REQUEST_PATH}`,
+      source: 'supervisor_fixed_lan'
+    }
+  }
   const explicit = String(value || '').trim()
   if (explicit) {
     return { url: explicit, source: 'cli' }
@@ -82,8 +140,21 @@ export function resolveQaWxRequestUrl(value, environment = process.env) {
     return { url: envUrl, source: 'environment' }
   }
   try {
-    const port = Number(environment.CLOUDBASE_LOCAL_FUNCTIONS_PORT || DEFAULT_PORT)
-    const baseUrl = resolveLocalApiBaseUrl({ mode: 'lan', port }, environment)
+    const port = Number(
+      environment.CLOUDBASE_LOCAL_FUNCTIONS_PORT || QA_RUNTIME_LAN_PORT || DEFAULT_PORT
+    )
+    const baseUrl = resolveLocalApiBaseUrl(
+      {
+        mode: 'lan',
+        port,
+        functionPortBase: Number(
+          environment.CLOUDBASE_LOCAL_FUNCTIONS_FUNCTION_PORT_BASE ||
+            QA_RUNTIME_FUNCTION_PORT_BASE ||
+            DEFAULT_FUNCTION_PORT_BASE
+        )
+      },
+      environment
+    )
     return {
       url: `${baseUrl}/${LOCAL_QA_WX_REQUEST_PATH}`,
       source: 'derived_local_lan_health'
@@ -97,7 +168,7 @@ export function resolveQaWxRequestUrl(value, environment = process.env) {
   }
 }
 
-function expectedProjectPathForRun(dispatchRunId) {
+function sourceProjectPathForRun(dispatchRunId) {
   const handoff = dispatchRunId ? readJson(findHandoff(dispatchRunId), {}) : {}
   const external = handoff.external_contract ?? handoff.zcode_contract ?? {}
   const provider = external.provider ?? external.external_implementer ?? ''
@@ -105,13 +176,21 @@ function expectedProjectPathForRun(dispatchRunId) {
     ['trae', 'chrome_cloud_agent'].includes(provider) ||
     external.prompt_transport === 'browser_plugin'
   const worktree = external?.remote_sync?.planned_worktree_path
-  return isWebExternal && worktree
-    ? path.join(worktree, 'dist', 'dev', 'mp-weixin')
-    : defaultProjectPath()
+  const sourceProjectPath =
+    isWebExternal && worktree
+      ? path.join(worktree, 'dist', 'dev', 'mp-weixin')
+      : defaultProjectPath()
+  return sourceProjectPath
 }
 
-function readQaRecords(dispatchRunId) {
-  const dir = path.join(stateDir(dispatchRunId), 'qa-runs')
+function expectedProjectPathForRun(dispatchRunId) {
+  return deriveQaRuntime({ sourceProjectPath: sourceProjectPathForRun(dispatchRunId) }).runtimePath
+}
+
+function readQaRecords(dispatchRunId, runInstanceId = null) {
+  const dir = runInstanceId
+    ? automatorV3RunQaRecordRoot(dispatchRunId, runInstanceId)
+    : path.join(stateDir(dispatchRunId), 'qa-runs')
   if (!fs.existsSync(dir)) {
     return []
   }
@@ -122,10 +201,10 @@ function readQaRecords(dispatchRunId) {
     .filter(Boolean)
 }
 
-export function recoverStaleQaRuns(dispatchRunId, staleMs = 15 * 60 * 1000) {
+export function recoverStaleQaRuns(dispatchRunId, staleMs = 15 * 60 * 1000, runInstanceId = null) {
   const recovered = []
   const skippedLive = []
-  for (const record of readQaRecords(dispatchRunId)) {
+  for (const record of readQaRecords(dispatchRunId, runInstanceId)) {
     if (record.status !== 'running') {
       continue
     }
@@ -144,7 +223,7 @@ export function recoverStaleQaRuns(dispatchRunId, staleMs = 15 * 60 * 1000) {
       terminal_reason: 'stale_running_recovery',
       completed_at: new Date().toISOString()
     }
-    writeJsonAtomic(recordPath(dispatchRunId, record.execution_id), next)
+    writeJsonAtomic(recordPath(dispatchRunId, record.execution_id, runInstanceId), next)
     recovered.push(record.execution_id)
   }
   return { recovered, skipped_live: skippedLive }
@@ -182,6 +261,8 @@ function prepareQaGate({
   const catalogId = argValue('catalog-id')
   const executionId = argValue('execution-id')
   const dispatchRunId = argValue('dispatch-run-id') || `manual-qa-${executionId || 'unbound'}`
+  const runInstanceId = argValue('run-instance-id')
+  const runLeaseToken = argValue('run-lease-token')
   const gate = resolveCatalogExecutionBundle({
     catalogId,
     executionId,
@@ -190,10 +271,32 @@ function prepareQaGate({
     catalogValidator,
     bundleFingerprint
   })
+  if (!runLeaseToken && !hasFlag('dry-run')) {
+    gate.errors.push('正式 qa-run 必须绑定 dispatch run lease')
+  }
+  if (!runLeaseToken || !runInstanceId) {
+    if (!hasFlag('dry-run')) {
+      gate.errors.push('正式 qa-run 必须绑定 run-instance-id')
+    }
+  }
+  if (runLeaseToken) {
+    try {
+      assertQaRunLease({ dispatchRunId, runInstanceId, token: runLeaseToken })
+    } catch (error) {
+      gate.errors.push(error.code || 'qa_run_lease_invalid')
+    }
+  }
+  const sourceProjectPath = sourceProjectPathForRun(dispatchRunId)
   const expectedProjectPath = expectedProjectPathForRun(dispatchRunId)
-  const requestedProjectPath = argValue('project-path') || expectedProjectPath
-  if (path.resolve(requestedProjectPath) !== path.resolve(expectedProjectPath)) {
-    gate.errors.push(`project-path must match the dispatch target: ${expectedProjectPath}`)
+  if (argValue('project-path')) {
+    gate.errors.push(
+      '正式 qa-run 不接受 caller project-path；由 supervisor 提供固定 runtime mirror'
+    )
+  }
+  if (argValue('observed-project-path')) {
+    gate.errors.push(
+      '正式 qa-run 不接受 caller observed-project-path；项目身份必须来自 owner runtime 证据'
+    )
   }
   if (containsUnsafeRestartCommand(args)) {
     gate.errors.push('caller-supplied targeted restart commands are forbidden')
@@ -204,11 +307,24 @@ function prepareQaGate({
   if (argValue('ws-port')) {
     gate.errors.push('formal QA 每次自动分配唯一 Automator 端口；--ws-port 不可指定')
   }
+  if (argValue('targeted-restart-command')) {
+    gate.errors.push(
+      'formal QA 不接受 caller restart command；只能由 owner supervisor 执行一次 target-only recovery'
+    )
+  }
+  const forbiddenRuntimeArgs = forbiddenFormalRuntimeArgs(args)
+  if (forbiddenRuntimeArgs.length) {
+    gate.errors.push(
+      `正式 QA 禁止 caller 覆盖运行时归属参数: ${[...new Set(forbiddenRuntimeArgs)].join(', ')}`
+    )
+  }
   return {
     catalogId,
     executionId,
     dispatchRunId,
+    runInstanceId,
     gate,
+    sourceProjectPath,
     expectedProjectPath,
     allowTargetedRestart: hasFlag('allow-targeted-restart')
   }
@@ -221,8 +337,8 @@ export function createQaRunCommands({
   emit,
   preflightRunner = runQaPreflight,
   leafRunner = runLeafWithWatchdog,
-  runtimeFactory = createTestOwnedQaSession,
-  runtimeCleanup = cleanupTestOwnedQaSession,
+  runtimeFactory = createSupervisorQaSession,
+  runtimeCleanup = cleanupSupervisorQaSession,
   catalogReader,
   catalogValidator,
   bundleFingerprint
@@ -236,7 +352,15 @@ export function createQaRunCommands({
       catalogValidator,
       bundleFingerprint
     })
-    const { catalogId, executionId, dispatchRunId, gate, expectedProjectPath } = prepared
+    const {
+      catalogId,
+      executionId,
+      dispatchRunId,
+      runInstanceId,
+      gate,
+      sourceProjectPath,
+      expectedProjectPath
+    } = prepared
     const dryRun = hasFlag('dry-run')
     if (!dryRun && !hasFlag('allow-live')) {
       gate.errors.push(
@@ -250,12 +374,14 @@ export function createQaRunCommands({
           gate: 'qa_run',
           catalog_id: catalogId,
           execution_id: executionId,
+          dispatch_run_id: dispatchRunId,
+          run_instance_id: runInstanceId || null,
           errors: gate.errors
         },
         1
       )
     }
-    const recordFile = recordPath(dispatchRunId, executionId)
+    const recordFile = recordPath(dispatchRunId, executionId, runInstanceId)
     if (dryRun) {
       const record = createFrozenBundleQaRecord({
         dispatchRunId,
@@ -268,28 +394,37 @@ export function createQaRunCommands({
         attempt: 0
       })
       const dry = terminalRecord(recordFile, record, 'passed_dry_run', {
-        terminal_reason: 'deterministic_gate_only'
+        terminal_reason: 'deterministic_gate_only',
+        run_instance_id: runInstanceId
       })
       appendQaEvent(dispatchRunId, dry, 'dry_run_checked')
       return emit({ ...dry, execution_record: path.relative(repoRoot, recordFile) })
     }
-    const wxRequest = resolveQaWxRequestUrl(argValue('wx-request-url'))
+    const wxRequest = resolveQaWxRequestUrl(argValue('wx-request-url'), process.env, {
+      formal: true
+    })
     const outcome = await runFormalQaExecution({
       dispatchRunId,
+      runInstanceId,
       catalogId,
       executionId,
       gate,
+      sourceProjectPath,
       expectedProjectPath,
-      screenshotPath: path.join(stateDir(dispatchRunId), 'qa-runs', `${executionId}-preflight.png`),
+      screenshotPath: path.join(
+        qaArtifactDir(dispatchRunId, executionId, runInstanceId),
+        'preflight.png'
+      ),
       wxRequestUrl: wxRequest.url,
       allowTargetedRestart: prepared.allowTargetedRestart,
       args,
       argValue,
       stripArgs: stripQaGateArgs,
       recordFile,
-      recoverStaleRuns: recoverStaleQaRuns,
-      createPreflightRecord: () =>
-        createBundlePreflightRecord({
+      recoverStaleRuns: currentDispatchRunId =>
+        recoverStaleQaRuns(currentDispatchRunId, 15 * 60 * 1000, runInstanceId),
+      createPreflightRecord: () => ({
+        ...createBundlePreflightRecord({
           dispatchRunId,
           catalogId,
           executionId,
@@ -298,8 +433,10 @@ export function createQaRunCommands({
           scriptHash: gate.scriptHash,
           executionBundleFiles: gate.executionBundleFiles
         }),
-      createLiveRecord: attempt =>
-        createFrozenBundleQaRecord({
+        run_instance_id: runInstanceId
+      }),
+      createLiveRecord: attempt => ({
+        ...createFrozenBundleQaRecord({
           dispatchRunId,
           catalogId,
           executionId,
@@ -309,14 +446,17 @@ export function createQaRunCommands({
           executionBundleFiles: gate.executionBundleFiles,
           attempt
         }),
-      readRecords: readQaRecords,
-      previousAttemptGate: previousFrozenBundleAttemptGate,
+        run_instance_id: runInstanceId
+      }),
+      readRecords: currentDispatchRunId => readQaRecords(currentDispatchRunId, runInstanceId),
+      previousAttemptGate: options =>
+        previousFrozenBundleAttemptGate({ ...options, runInstanceId }),
       writeRecord: writeJsonAtomic,
       terminalRecord,
       appendEvent: (record, event) => appendQaEvent(dispatchRunId, record, event),
       preflightRunner,
       leafRunner,
-      runtimeFactory: options => runtimeFactory(options),
+      runtimeFactory: options => runtimeFactory({ ...options, wxRequestUrl: undefined }),
       runtimeCleanup,
       inspectBundle: options =>
         inspectFrozenExecutionBundle({
@@ -348,7 +488,11 @@ export function createQaRunCommands({
       isLiveAttemptConsumed
     })
     return emit(
-      { ...outcome.record, execution_record: path.relative(repoRoot, recordFile) },
+      {
+        ...outcome.record,
+        run_instance_id: runInstanceId,
+        execution_record: path.relative(repoRoot, recordFile)
+      },
       outcome.exitCode
     )
   }
@@ -368,22 +512,29 @@ export function createQaRunCommands({
         1
       )
     }
-    const wxRequest = resolveQaWxRequestUrl(argValue('wx-request-url'))
+    const wxRequest = resolveQaWxRequestUrl(argValue('wx-request-url'), process.env, {
+      formal: true
+    })
+    const allowTargetedRestart =
+      prepared.gate.entry?.data_mode === 'fixture_diagnostic' && prepared.allowTargetedRestart
     const report = await runFormalQaPreflight({
       dispatchRunId: prepared.dispatchRunId,
+      sourceProjectPath: prepared.sourceProjectPath,
       projectPath: prepared.expectedProjectPath,
       screenshotPath: path.join(
-        stateDir(prepared.dispatchRunId),
-        'qa-runs',
-        `${prepared.executionId}-preflight.png`
+        qaArtifactDir(prepared.dispatchRunId, prepared.executionId, prepared.runInstanceId),
+        'preflight.png'
       ),
       wxRequestUrl: wxRequest.url,
-      allowTargetedRestart: prepared.allowTargetedRestart,
-      runtimeFactory: options => runtimeFactory(options),
+      allowTargetedRestart,
+      runtimeFactory: options => runtimeFactory({ ...options, wxRequestUrl: undefined }),
       runtimeCleanup,
       preflightRunner
     })
-    return emit(report, report.status === 'passed' ? 0 : 1)
+    return emit(
+      { ...report, run_instance_id: prepared.runInstanceId },
+      report.status === 'passed' ? 0 : 1
+    )
   }
 
   return { qaRun, qaPreflight }

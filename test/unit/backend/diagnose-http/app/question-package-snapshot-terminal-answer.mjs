@@ -16,6 +16,7 @@ const captured = {
 
 const questionPackageSnapshot = {
   mode: 'yellow_leaf',
+  packageVersion: 2,
   sourceMode: 'static_question_package',
   questionPackage: {
     mode: 'yellow_leaf',
@@ -97,6 +98,22 @@ const ACTIONS = {
 Module._load = function loadWithStubs(request, parent, isMain) {
   if (request === '/opt/utils/cloudbase') {
     return { models: {} }
+  }
+  if (request === '/opt/utils/air-environment-evidence') {
+    return {
+      AIR_ENVIRONMENT_RECORDED_OPTION_KEY: 'air_environment_recorded',
+      AIR_ENVIRONMENT_UNKNOWN_OPTION_KEY: 'air_environment_unknown',
+      isAirEnvironmentQuestion: () => false,
+      getAirEnvironmentQuestionKeys: () => [],
+      parseDiagnosisAirEnvironmentSidecar: () => ({
+        ok: true,
+        byQuestionId: {},
+        snapshotsByQuestionId: {},
+        sourceByQuestionId: {},
+        routeAnswers: [],
+        evidence: null
+      })
+    }
   }
   if (request === '/opt/utils/plant-knowledge') {
     return {
@@ -213,15 +230,22 @@ const result = await runAnswerDiagnosis({
         optionKey: 'light_area'
       }
     ],
+    recentLightChange: 'stronger_direct_light',
     userLightContext: {
-      facing: 'south',
-      windowType: 'standard',
-      position: 'window_side',
-      hasDirectSun: true,
-      distance: 0.5
+      schemaVersion: 2,
+      naturalLightType: 'direct',
+      entryMethod: 'open_environment',
+      hasSupplementalLight: false,
+      captureSource: 'user'
     },
     environmentWeatherWindow: {
       meta: { diagnosisDate: '2026-06-14' },
+      weatherEvidenceInsufficient: false,
+      plantFeatures: {
+        weatherLightFactor10d: 1,
+        lightConfidence: 'high',
+        lightEvidenceInsufficient: false
+      },
       historicalDays: [
         {
           date: '2026-06-14',

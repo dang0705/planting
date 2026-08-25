@@ -116,7 +116,14 @@ export function registerEpisodeRework(input) {
     if (batches.length >= MAX_REWORK_BATCHES) {
       const successor = asNonEmptyString(input.supersedesTarget?.successorDispatchRunId)
       const decision = asNonEmptyString(input.supersedesTarget?.userDecisionReason)
+      const fixTarget = asNonEmptyString(input.supersedesTarget?.fixTarget)
       if (!successor && !decision)
+        return {
+          status: 'blocked',
+          reason: 'second_rework_requires_successor_dispatch_or_explicit_user_decision_block',
+          episode: current
+        }
+      if (!successor && decision && fixTarget)
         return {
           status: 'blocked',
           reason: 'second_rework_requires_successor_dispatch_or_explicit_user_decision_block',

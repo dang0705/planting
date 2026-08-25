@@ -1,6 +1,8 @@
 import { BASE_URL, IS_LOCAL_API_BASE_URL, shouldAppendWebFunctionFlag } from '@/api/env'
-import { getCloudbaseAccessToken, getCloudbaseUserIdentity } from '@/utils/cloudbase-auth'
+import { getCloudbaseUserIdentity } from '@/utils/cloudbase-auth'
 import { getRequestAppEnvHeader } from '@/utils/runtime-env'
+
+const IS_QA_LIVE_REAL_API = String(import.meta.env.VITE_QA_LIVE_REAL_API || '').trim() === '1'
 
 function isWechatMiniProgramRuntime() {
   return typeof wx !== 'undefined' && typeof wx?.cloud !== 'undefined'
@@ -44,33 +46,39 @@ function getLocalDevOpenId() {
   return String(import.meta.env.VITE_DEV_OPENID || 'dev_terminal_mp_local').trim()
 }
 
+async function resolveRealRuntimeOpenId() {
+  if (isWechatMiniProgramRuntime()) {
+    const identity = await getCloudbaseUserIdentity()
+    const openid = identity?.openid || ''
+    if (!openid) {
+      throw new Error('微信身份获取失败：wechat-identity 未返回有效 openid，拒绝匿名降级')
+    }
+    return openid
+  }
+
+  const storedOpenId = getStoredUserOpenId()
+  if (storedOpenId) {
+    return storedOpenId
+  }
+
+  throw new Error('QA 实时身份获取失败：当前运行时没有可用的微信身份')
+}
+
 export async function resolveHttpFunctionAuth({ auth = true, headers = {} } = {}) {
   if (!auth) {
     return headers
   }
 
   let openid = ''
-  let token = ''
+  const useRealMiniProgramIdentity = isWechatMiniProgramRuntime()
 
   if (IS_LOCAL_API_BASE_URL) {
-    openid = getLocalDevOpenId()
+    openid = useRealMiniProgramIdentity ? await resolveRealRuntimeOpenId() : getLocalDevOpenId()
   } else {
     openid = getStoredUserOpenId()
-    if (isWechatMiniProgramRuntime()) {
-      try {
-        token = await getCloudbaseAccessToken()
-      } catch (error) {
-        console.warn('获取 CloudBase access token 失败，将继续尝试使用本地 openid:', error)
-      }
 
-      if (!openid) {
-        try {
-          const identity = await getCloudbaseUserIdentity()
-          openid = identity?.openid || ''
-        } catch (error) {
-          console.warn('获取 CloudBase 用户 openid 失败:', error)
-        }
-      }
+    if (useRealMiniProgramIdentity && !openid) {
+      openid = await resolveRealRuntimeOpenId()
     }
   }
 
@@ -78,11 +86,10 @@ export async function resolveHttpFunctionAuth({ auth = true, headers = {} } = {}
     ...headers,
     'x-app-env': getRequestAppEnvHeader(),
     'x-env': getRequestAppEnvHeader(),
-    ...(IS_LOCAL_API_BASE_URL
+    ...(IS_LOCAL_API_BASE_URL && !useRealMiniProgramIdentity && !IS_QA_LIVE_REAL_API
       ? { 'x-terminal-e2e': 'true', 'x-anonymous-dev-identity': 'true' }
       : {}),
-    ...(openid ? { 'x-wx-openid': openid, 'x-openid': openid } : {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {})
+    ...(openid ? { 'x-wx-openid': openid, 'x-openid': openid } : {})
   }
 }
 

@@ -8,14 +8,16 @@
       >
         <view class="flex items-center justify-between mb-4">
           <view>
-            <text class="block text-2xl font-bold mb-1">{{ weather.current?.temp || '22' }}°C</text>
-            <text class="block text-sm opacity-90">{{ weather.current?.desc || '晴' }}</text>
+            <text class="block text-2xl font-bold mb-1">{{ weather.current?.temp ?? '--' }}°C</text>
+            <text class="block text-sm opacity-90">{{
+              weather.current?.desc || '暂无天气数据'
+            }}</text>
           </view>
-          <text class="text-5xl">{{ weather.current?.icon || '🌤️' }}</text>
+          <text class="text-5xl">{{ weather.current?.icon || '—' }}</text>
         </view>
 
         <!-- 7天预报 -->
-        <view class="flex gap-2 overflow-x-auto">
+        <view v-if="weather.forecast.length" class="flex gap-2 overflow-x-auto">
           <view
             v-for="day in weather.forecast"
             :key="day.date"
@@ -26,6 +28,8 @@
             <text class="block text-xs font-semibold">{{ day.temp }}°</text>
           </view>
         </view>
+        <text v-else-if="weatherLoading" class="block text-xs opacity-80">正在读取天气...</text>
+        <text v-else class="block text-xs opacity-80">设置养护位置后显示天气参考</text>
       </view>
 
       <!-- 二十四节气 -->
@@ -40,137 +44,59 @@
               <text class="block text-xs text-gray-600">{{ currentSolarTerm.date }}</text>
             </view>
           </view>
-          <text class="text-xs text-primary" @click="viewSolarTerms">查看全部</text>
+          <text
+            id="calendar-solar-term-details"
+            class="text-xs text-primary"
+            @click="viewSolarTerms"
+            >查看全部</text
+          >
         </view>
         <text class="block text-sm text-gray-700 mt-3">{{ currentSolarTerm.tip }}</text>
       </view>
 
-      <view v-if="selectedReminderFocus" class="px-4 py-4">
-        <view class="rounded-2xl bg-white p-4 shadow-sm">
-          <view class="mb-3 flex items-center justify-between">
-            <view class="min-w-0 flex-1">
-              <text class="block text-base font-semibold text-gray-900">
-                {{ selectedReminderFocus.plantName }}
-              </text>
-              <text class="block text-xs text-gray-500">
-                已定位到{{ getTaskName(selectedReminderFocus.type) }}提醒设置
-              </text>
-            </view>
-            <view
-              class="rounded-full px-3 py-1"
-              :class="focusedReminderState.active ? 'bg-[#DBEAFE]' : 'bg-gray-100'"
-            >
-              <text
-                class="text-xs font-semibold"
-                :class="focusedReminderState.active ? 'text-[#2563EB]' : 'text-gray-500'"
-              >
-                {{ focusedReminderState.active ? '已高亮' : '未设置' }}
-              </text>
-            </view>
-          </view>
-
-          <text class="mb-3 block text-sm text-gray-600">
-            {{ focusedReminderText }}
-          </text>
-
-          <view class="flex gap-2">
-            <button
-              class="m-0 flex-1 rounded-xl border-none bg-[#3B82F6] py-2 text-sm font-semibold text-white"
-              @click="enableFocusedReminder"
-            >
-              设置提醒
-            </button>
-            <button
-              class="m-0 flex-1 rounded-xl border-none bg-gray-100 py-2 text-sm font-semibold text-gray-700"
-              @click="disableFocusedReminder"
-            >
-              停用提醒
-            </button>
-          </view>
-        </view>
-      </view>
-
-      <!-- 今日提醒 -->
-      <view class="px-4 py-4">
-        <text class="block text-lg font-bold text-gray-900 mb-3">📅 今日提醒</text>
-
-        <view
-          v-if="plantingStore.todayReminders.length === 0"
-          class="bg-white rounded-2xl p-6 text-center"
-        >
-          <text class="block text-4xl mb-2">✨</text>
-          <text class="block text-sm text-gray-600">今天没有养护任务</text>
-        </view>
-
-        <view
-          v-for="reminder in plantingStore.todayReminders"
-          :key="reminder.id"
-          class="bg-white rounded-2xl p-4 mb-3 shadow-sm"
-        >
-          <view class="flex items-center justify-between mb-3">
-            <view class="flex-1">
-              <text class="block text-base font-semibold text-gray-900 mb-1">{{
-                reminder.plantName
-              }}</text>
-              <text class="block text-sm text-gray-600">{{ reminder.location }}</text>
-            </view>
-            <view class="bg-[#D8F3DC] px-3 py-1 rounded-full">
-              <text class="text-xs text-primary font-medium">待完成</text>
-            </view>
-          </view>
-
-          <view class="flex gap-2">
-            <view
-              v-for="task in reminder.reminders"
-              :key="task.type"
-              class="flex-1 bg-gray-50 rounded-xl p-2 text-center"
-            >
-              <text class="block text-lg mb-1">{{ getTaskIcon(task.type) }}</text>
-              <text class="block text-xs text-gray-700">{{ getTaskName(task.type) }}</text>
-            </view>
-          </view>
-
-          <view class="flex gap-2 mt-3">
-            <button
-              class="flex-1 bg-primary text-white text-sm py-2 rounded-xl"
-              @click="completeTask(reminder.id)"
-            >
-              完成
-            </button>
-            <button
-              class="flex-1 bg-gray-100 text-gray-700 text-sm py-2 rounded-xl"
-              @click="postponeTask(reminder.id)"
-            >
-              推迟
-            </button>
-          </view>
-        </view>
-      </view>
+      <CalendarTaskSection
+        :loading-plants="loadingPlants"
+        :today-tasks="todayTasks"
+        :undoable-tasks="undoableTasks"
+        :action-state="actionState"
+        @complete="completeTask"
+        @postpone="postponeTask"
+        @undo="undoTask"
+      />
 
       <!-- 种植计划 -->
       <view class="px-4 pb-20">
         <view class="flex items-center justify-between mb-3">
           <text class="block text-lg font-bold text-gray-900">🌱 我的植物</text>
-          <button class="bg-primary text-white text-sm px-4 py-2 rounded-full" @click="addPlan">
+          <button
+            id="calendar-add-plant-button"
+            class="bg-primary text-white text-sm px-4 py-2 rounded-full"
+            @click="addPlan"
+          >
             + 添加
           </button>
         </view>
 
         <view
-          v-if="plantingStore.activePlans.length === 0"
+          v-if="plantStore.userPlants.length === 0"
           class="bg-white rounded-2xl p-6 text-center"
         >
           <text class="block text-4xl mb-2">🪴</text>
           <text class="block text-sm text-gray-600 mb-4">还没有种植计划</text>
-          <button class="bg-primary text-white text-sm px-6 py-2 rounded-full" @click="addPlan">
+          <button
+            id="calendar-empty-add-plant-button"
+            class="bg-primary text-white text-sm px-6 py-2 rounded-full"
+            @click="addPlan"
+          >
             添加第一株植物
           </button>
         </view>
 
         <view
-          v-for="plan in plantingStore.activePlans"
+          v-for="plan in plantStore.userPlants"
           :key="plan.id"
           class="bg-white rounded-2xl p-4 mb-3 shadow-sm"
+          :id="`calendar-plant-plan-${plan.id}`"
           @click="viewPlanDetail(plan)"
         >
           <view class="flex items-center justify-between mb-2">
@@ -195,198 +121,337 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { computed, onMounted, reactive, ref } from 'vue'
 import Layout from '@/Layout.vue'
-import { usePlantingStore } from '@/store/planting.js'
+import { getWeatherInfo } from '@/api/weather.js'
+import { saveWateringReminder } from '@/api/plants-http.js'
+import { usePlantStore } from '@/store/plants.js'
+import { useUserStore } from '@/store/user.js'
+import CalendarTaskSection from './CalendarTaskSection.vue'
+import {
+  SOLAR_TERMS,
+  addDays,
+  dateText,
+  normalizeForecast,
+  resolveWeatherIcon,
+  solarTermTip
+} from './calendar-helpers.js'
 
-const plantingStore = usePlantingStore()
-const selectedReminderFocus = ref(null)
+const HTTP_OK = 200
+const plantStore = usePlantStore()
+const userStore = useUserStore()
+const loadingPlants = ref(false)
+const weatherLoading = ref(false)
+const actionState = reactive({})
+const undoState = reactive({})
+
+const undoableTasks = computed(() =>
+  Object.values(undoState)
+    .filter(Boolean)
+    .map(item => ({
+      plantId: item.plantId,
+      plantName: item.plantName,
+      actionLabel: item.actionLabel
+    }))
+)
 
 // 天气数据
 const weather = ref({
-  current: {
-    temp: 22,
-    desc: '晴',
-    icon: '🌤️'
-  },
-  forecast: [
-    { date: '2026-02-19', weekday: '今天', icon: '🌤️', temp: 22 },
-    { date: '2026-02-20', weekday: '明天', icon: '☀️', temp: 24 },
-    { date: '2026-02-21', weekday: '周五', icon: '⛅', temp: 20 },
-    { date: '2026-02-22', weekday: '周六', icon: '🌧️', temp: 18 },
-    { date: '2026-02-23', weekday: '周日', icon: '🌤️', temp: 21 },
-    { date: '2026-02-24', weekday: '周一', icon: '☀️', temp: 23 },
-    { date: '2026-02-25', weekday: '周二', icon: '⛅', temp: 22 }
-  ]
+  current: null,
+  forecast: []
 })
 
 // 当前节气
 const currentSolarTerm = ref({
-  name: '雨水',
-  date: '2月19日',
-  tip: '雨水时节，气温回升，适合播种。注意保持土壤湿润，但避免积水。'
+  name: '当前节气',
+  date: '',
+  tip: '根据今天的日期显示节气养护提示。'
 })
+const nextSolarTerm = ref(null)
 
-onMounted(() => {
-  // 获取天气数据
-  getWeatherData()
-  // 获取节气数据
+onMounted(async () => {
   getSolarTermData()
+  await Promise.all([loadUserPlants(), getWeatherData()])
 })
 
-onShow(() => {
-  const focus = plantingStore.consumeReminderFocus()
-  if (focus) {
-    selectedReminderFocus.value = focus
-  }
+const todayTasks = computed(() => {
+  const today = dateText(new Date())
+  return plantStore.userPlants.flatMap(plant => {
+    const reminder = plant?.wateringReminder
+    const nextDate = String(reminder?.nextWaterDate || reminder?.nextTime || '').slice(0, 10)
+    if (!reminder?.nextTime || !nextDate || nextDate > today) {
+      return []
+    }
+    return [
+      {
+        id: `water-${plant.id}`,
+        plantId: plant.id,
+        plantName: plant.displayName || plant.canonicalName || '我的植物',
+        location: plant.location || '未设置位置',
+        type: 'water',
+        saving: Boolean(actionState[plant.id])
+      }
+    ]
+  })
 })
 
-const focusedReminderState = computed(() => {
-  if (!selectedReminderFocus.value) {
-    return { active: false, nextTime: '' }
+async function loadUserPlants() {
+  if (loadingPlants.value) {
+    return
   }
-  return plantingStore.getPlantReminderState(
-    selectedReminderFocus.value.plantId,
-    selectedReminderFocus.value.type
-  )
-})
-
-const focusedReminderText = computed(() => {
-  if (!selectedReminderFocus.value) {
-    return ''
+  if (!(await userStore.ensureLogin())) {
+    return
   }
-  if (!focusedReminderState.value.active) {
-    return `当前没有有效${getTaskName(selectedReminderFocus.value.type)}提醒。`
+  loadingPlants.value = true
+  try {
+    await plantStore.getUserPlants(1, 50)
+  } finally {
+    loadingPlants.value = false
   }
-  return `下次提醒：${formatReminderTime(focusedReminderState.value.nextTime)}`
-})
-
-function getWeatherData() {
-  // TODO: 调用中国气象局 API
-  console.log('获取天气数据')
 }
 
-function getSolarTermData() {
-  // TODO: 获取二十四节气数据
-  console.log('获取节气数据')
+async function getWeatherData() {
+  const { latitude, longitude, city, province } = userStore.location || {}
+  if (!Number.isFinite(Number(latitude)) || !Number.isFinite(Number(longitude))) {
+    return
+  }
+  weatherLoading.value = true
+  try {
+    const result = await getWeatherInfo({
+      lat: Number(latitude),
+      lng: Number(longitude),
+      city,
+      province
+    })
+    if (!result || result.isFallback) {
+      return
+    }
+    weather.value = {
+      current: {
+        temp: Number(result.temperature ?? result.temp),
+        desc: String(result.weather || result.condition?.text || '天气正常'),
+        icon: resolveWeatherIcon(result.weather || result.condition?.text)
+      },
+      forecast: normalizeForecast(result.forecast || result.forecastDays)
+    }
+  } catch (error) {
+    console.warn('[calendar] weather unavailable', error)
+  } finally {
+    weatherLoading.value = false
+  }
+}
+
+function getSolarTermData(now = new Date()) {
+  const year = now.getFullYear()
+  const terms = SOLAR_TERMS.map(([name, month, day]) => ({
+    name,
+    month,
+    day,
+    timestamp: new Date(year, month - 1, day).getTime()
+  }))
+  const today = now.getTime()
+  let currentIndex = terms.length - 1
+  for (let index = 0; index < terms.length; index += 1) {
+    if (terms[index].timestamp <= today) {
+      currentIndex = index
+    }
+  }
+  const current = terms[currentIndex]
+  const next = terms[(currentIndex + 1) % terms.length]
+  currentSolarTerm.value = {
+    name: current.name,
+    date: `${current.month}月${current.day}日`,
+    tip: solarTermTip(current.name)
+  }
+  nextSolarTerm.value = {
+    name: next.name,
+    date: `${next.month}月${next.day}日`
+  }
 }
 
 function viewSolarTerms() {
-  uni.showToast({
-    title: '节气详情功能开发中',
-    icon: 'none'
+  uni.showModal({
+    title: '节气提醒',
+    content: `${currentSolarTerm.value.name}：${currentSolarTerm.value.tip}\n下一个节气：${nextSolarTerm.value?.name || '待更新'} ${nextSolarTerm.value?.date || ''}`,
+    showCancel: false,
+    confirmText: '知道了'
   })
 }
 
-function getTaskIcon(type) {
-  const icons = {
-    water: '💧',
-    fertilize: '🪴',
-    prune: '✂️',
-    check: '🔍'
-  }
-  return icons[type] || '📝'
-}
-
-function getTaskName(type) {
-  const names = {
-    water: '浇水',
-    fertilize: '施肥',
-    prune: '修剪',
-    check: '检查'
-  }
-  return names[type] || '任务'
-}
-
-function enableFocusedReminder() {
-  if (!selectedReminderFocus.value) {
+async function completeTask(plantId) {
+  if (actionState[plantId]) {
     return
   }
-  if (selectedReminderFocus.value.type !== 'water') {
-    uni.showToast({ title: '施肥提醒请从植物卡片设置', icon: 'none' })
+  const plant = plantStore.userPlants.find(item => item.id === plantId)
+  if (!plant) {
+    uni.showToast({ title: '未找到可完成的任务', icon: 'none' })
     return
   }
-  plantingStore.setPlantReminder({
-    plantId: selectedReminderFocus.value.plantId,
-    plantName: selectedReminderFocus.value.plantName,
-    type: selectedReminderFocus.value.type,
-    nextTime: buildTomorrowReminderTime(),
-    intervalDays: 7
-  })
-  uni.showToast({
-    title: `${getTaskName(selectedReminderFocus.value.type)}提醒已设置`,
-    icon: 'success'
-  })
+  captureTaskSnapshot(plant, '完成')
+  actionState[plantId] = true
+  try {
+    const result = await plantStore.completeWatering(plantId)
+    if (!result.success) {
+      throw new Error(result.message || '任务保存失败')
+    }
+    uni.showToast({ title: '任务已完成', icon: 'success' })
+    await loadUserPlants()
+  } catch (error) {
+    uni.showToast({ title: error?.message || '保存失败，请重试', icon: 'none' })
+  } finally {
+    delete actionState[plantId]
+  }
 }
 
-function disableFocusedReminder() {
-  if (!selectedReminderFocus.value) {
+async function postponeTask(plantId) {
+  if (actionState[plantId]) {
     return
   }
-  plantingStore.disablePlantReminder({
-    plantId: selectedReminderFocus.value.plantId,
-    type: selectedReminderFocus.value.type
-  })
-  uni.showToast({
-    title: `${getTaskName(selectedReminderFocus.value.type)}提醒已停用`,
-    icon: 'none'
-  })
-}
-
-function buildTomorrowReminderTime() {
-  const nextTime = new Date()
-  nextTime.setDate(nextTime.getDate() + 1)
-  nextTime.setHours(9, 0, 0, 0)
-  return nextTime.toISOString()
-}
-
-function formatReminderTime(value) {
-  if (!value) {
-    return '循环提醒'
+  const plant = plantStore.userPlants.find(item => item.id === plantId)
+  const reminder = plant?.wateringReminder
+  if (!plant || !reminder) {
+    uni.showToast({ title: '未找到可推迟的提醒', icon: 'none' })
+    return
   }
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return '循环提醒'
+  captureTaskSnapshot(plant, '推迟')
+  actionState[plantId] = true
+  try {
+    const nextWaterDate = dateText(addDays(new Date(), 1))
+    const response = await saveWateringReminder(
+      buildReminderSavePayload({
+        plantId,
+        planId: reminder.planId || `watering-${plantId}`,
+        lastWatered: reminder.lastWatered || '',
+        nextWaterDate,
+        wateringEvents: Array.isArray(reminder.wateringEvents) ? reminder.wateringEvents : [],
+        plannerResult: reminder.plannerResult || {},
+        calendarPayload: reminder.calendarPayload || null
+      })
+    )
+    if (response?.code !== HTTP_OK || !response.data) {
+      throw new Error(response?.message || '推迟失败')
+    }
+    uni.showToast({ title: '已推迟到明天', icon: 'none' })
+    await loadUserPlants()
+  } catch (error) {
+    uni.showToast({ title: error?.message || '推迟失败，请重试', icon: 'none' })
+  } finally {
+    delete actionState[plantId]
   }
-  return `${date.getMonth() + 1}月${date.getDate()}日 ${String(date.getHours()).padStart(
-    2,
-    '0'
-  )}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
-function completeTask(id) {
-  uni.showToast({
-    title: '任务已完成',
-    icon: 'success'
-  })
-  // TODO: 更新任务状态
+function cloneSnapshot(value) {
+  if (value === null || value === undefined) {
+    return value
+  }
+  try {
+    return JSON.parse(JSON.stringify(value))
+  } catch {
+    return null
+  }
 }
 
-function postponeTask(id) {
-  uni.showToast({
-    title: '已推迟到明天',
-    icon: 'none'
-  })
-  // TODO: 推迟任务
+function captureTaskSnapshot(plant, actionLabel) {
+  undoState[plant.id] = {
+    plantId: plant.id,
+    plantName: plant.displayName || plant.canonicalName || '我的植物',
+    actionLabel,
+    lastWatered: plant.lastWatered ?? null,
+    nextWater: plant.nextWater ?? null,
+    reminder: cloneSnapshot(plant.wateringReminder)
+  }
+}
+
+async function undoTask(plantId) {
+  if (actionState[plantId]) {
+    return
+  }
+  const snapshot = undoState[plantId]
+  if (!snapshot) {
+    return
+  }
+  actionState[plantId] = true
+  try {
+    const reminder = snapshot.reminder
+    if (reminder) {
+      const nextWaterDate = String(reminder.nextWaterDate || reminder.nextTime || '').slice(0, 10)
+      if (!nextWaterDate) {
+        throw new Error('原提醒日期不可恢复')
+      }
+      const response = await saveWateringReminder(
+        buildReminderSavePayload({
+          plantId,
+          planId: reminder.planId || `watering-${plantId}`,
+          lastWatered: reminder.lastWatered || '',
+          nextWaterDate,
+          nextTime: reminder.nextTime || `${nextWaterDate}T09:00:00`,
+          wateringEvents: Array.isArray(reminder.wateringEvents) ? reminder.wateringEvents : [],
+          plannerResult: reminder.plannerResult || {},
+          calendarPayload: reminder.calendarPayload || null
+        })
+      )
+      if (response?.code !== HTTP_OK || !response.data) {
+        throw new Error(response?.message || '原提醒不可恢复')
+      }
+    }
+    const restored = await plantStore.updateUserPlant(plantId, {
+      lastWatered: snapshot.lastWatered,
+      nextWater: snapshot.nextWater
+    })
+    if (!restored.success) {
+      throw new Error(restored.message || '植物状态不可恢复')
+    }
+    delete undoState[plantId]
+    uni.showToast({ title: '已撤销本次操作', icon: 'success' })
+    await loadUserPlants()
+  } catch (error) {
+    uni.showToast({ title: error?.message || '撤销失败，请重试', icon: 'none' })
+  } finally {
+    delete actionState[plantId]
+  }
+}
+
+function buildReminderSavePayload({
+  plantId,
+  planId,
+  lastWatered,
+  nextWaterDate,
+  nextTime = null,
+  wateringEvents,
+  plannerResult,
+  calendarPayload
+}) {
+  return {
+    plantId,
+    planId,
+    lastWatered,
+    nextWaterDate,
+    nextWaterTime: '09:00:00',
+    nextTime: nextTime || `${nextWaterDate}T09:00:00`,
+    wateringEvents,
+    plannerResult: { ...plannerResult, planId },
+    calendarPayload
+  }
 }
 
 function addPlan() {
-  uni.showToast({
-    title: '添加植物功能开发中',
-    icon: 'none'
-  })
+  uni.navigateTo({ url: '/subpackages/plant/user-plant-detail/user-plant-detail?mode=create' })
 }
 
 function viewPlanDetail(plan) {
-  uni.showToast({
-    title: '植物详情功能开发中',
-    icon: 'none'
+  if (!plan?.id) {
+    return
+  }
+  uni.navigateTo({
+    url: `/subpackages/plant/user-plant-detail/user-plant-detail?mode=view&id=${plan.id}`
   })
 }
 
 function getDaysAgo(date) {
   const plantDate = new Date(date)
+  if (Number.isNaN(plantDate.getTime())) {
+    return '已添加'
+  }
   const now = new Date()
   const days = Math.floor((now - plantDate) / (1000 * 60 * 60 * 24))
   return `种植 ${days} 天`

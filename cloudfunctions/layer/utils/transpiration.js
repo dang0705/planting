@@ -12,12 +12,11 @@
  *
  * 光照复用：
  *   光照暴露计算由 layer/utils/light-exposure.js 提供（诊断与蒸腾共同消费同一模块）。
- *   蒸腾光照分量基于 indoorEqHours（含天气/UV 证据的最终暴露量）推导，
- *   而非 indoorFactor（仅室内衰减率），使晴天/阴天得到不同的蒸腾系数。
+ *   蒸腾光照分量只消费 light-exposure 的分类指数，不自行读取 UI 字段计算。
  *
  * 输入：
- *   lightEnvironment  - 结构化光照输入 { facing, windowType, position, hasDirectSun, distance }
- *   weatherDays       - 逐日天气记录（传给 computeLightExposure 计算 outdoorEqHours/uvFactor）
+ *   lightEnvironment  - V2 结构化光照输入
+ *   weatherDays       - 仅用于读取天气模块已生成的 lightFeatures
  *   weatherSummary    - 复用 plant-user-http 的 buildWeatherSummary 输出（天气分量）
  *   plantStrategy     - 属级策略（可选）：wateringQuantization.dryTolerance / wetTolerance
  *   airEnvironmentEvidence - 空气交换、局部气流和停滞风险的结构化证据
@@ -41,24 +40,17 @@
  */
 
 const { computeLightExposure } = require('./light-exposure')
+const {
+  STRONG_LIGHT_THRESHOLD,
+  WEAK_LIGHT_THRESHOLD,
+  LIGHT_FACTOR_MAX_ADJUST
+} = require('./light-exposure-factors')
 
 const SHADOW_MODE_DEFAULT = false
 const FACTOR_MIN = 0.8
 const FACTOR_MAX = 1.2
 const FACTOR_NEUTRAL = 1.0
 
-/**
- * indoorEqHours 与蒸腾系数的映射基准。
- *
- * indoorEqHours 是包含天气/UV 证据的最终光照暴露量（小时/天）：
- *   - 典型室内植物需求 4-6 小时/天（DEFAULT_PROFILE.freq）
- *   - indoorEqHours > 6：强光 → 蒸腾加快（factor < 1.0）
- *   - indoorEqHours < 3：弱光 → 蒸腾放慢（factor > 1.0）
- *   - 缺失天气证据时 indoorEqHours 基于中性 weatherLightFactor=1.0 计算
- */
-const INDOOR_EQ_HOURS_STRONG_THRESHOLD = 6
-const INDOOR_EQ_HOURS_WEAK_THRESHOLD = 3
-const LIGHT_FACTOR_MAX_ADJUST = 0.12
 const AIR_FACTOR_MIN = 0.94
 const AIR_FACTOR_MAX = 1.06
 
@@ -84,36 +76,35 @@ function normalizeText(value = '') {
 }
 
 /**
- * 光照分量系数——基于共享 light-exposure 的 indoorEqHours 推导。
- *
- * 复用 layer/utils/light-exposure.js 的 computeLightExposure，
- * 消费包含天气/UV 证据的最终暴露量 indoorEqHours。
- * indoorEqHours 高（强光）→ 蒸腾加快（factor < 1.0）；
- * indoorEqHours 低（弱光）→ 蒸腾放慢（factor > 1.0）。
- * 缺失光照证据：返回 1.0（中性）。
- *
- * @param {object} lightEnvironment - 结构化光照输入
- * @param {Array} [weatherDays] - 逐日天气记录（传给 computeLightExposure）
+ * 光照分量系数——基于共享分类指数。
+ * 迁移记录或低置信度记录保持中性，不主动改变浇水间隔。
  */
-function resolveLightFactor(lightEnvironment = null, weatherDays = []) {
+function resolveLightFactor(
+  lightEnvironment = null,
+  weatherDays = [],
+  { weatherLightFactor, weatherEvidenceInsufficient = false, weatherLightConfidence = '' } = {}
+) {
   const exposure = computeLightExposure({
     userLightContext: lightEnvironment || {},
-    weatherDays
+    weatherDays,
+    weatherLightFactor,
+    weatherEvidenceInsufficient,
+    weatherLightConfidence
   })
-  if (!exposure) {
+  if (!exposure || exposure.confidence === 'low') {
     return FACTOR_NEUTRAL
   }
-  const indoorEqHours = exposure.indoorEqHours
+  const index = exposure.estimatedExposureIndex
 
   let factor = FACTOR_NEUTRAL
-  if (indoorEqHours >= INDOOR_EQ_HOURS_STRONG_THRESHOLD) {
-    const lightIntensity = Math.min(1, (indoorEqHours - INDOOR_EQ_HOURS_STRONG_THRESHOLD) / 4)
-    factor -= LIGHT_FACTOR_MAX_ADJUST * lightIntensity
-  } else if (indoorEqHours < INDOOR_EQ_HOURS_WEAK_THRESHOLD) {
-    const weakness = Math.min(
+  if (index >= STRONG_LIGHT_THRESHOLD) {
+    const strength = Math.min(
       1,
-      (INDOOR_EQ_HOURS_WEAK_THRESHOLD - indoorEqHours) / INDOOR_EQ_HOURS_WEAK_THRESHOLD
+      (index - STRONG_LIGHT_THRESHOLD) / Math.max(1 - STRONG_LIGHT_THRESHOLD, 0.01)
     )
+    factor -= LIGHT_FACTOR_MAX_ADJUST * strength
+  } else if (index < WEAK_LIGHT_THRESHOLD) {
+    const weakness = Math.min(1, (WEAK_LIGHT_THRESHOLD - index) / WEAK_LIGHT_THRESHOLD)
     factor += LIGHT_FACTOR_MAX_ADJUST * weakness
   }
 
@@ -222,7 +213,10 @@ function applySpeciesConvergence(factor, plantStrategy = null) {
  *
  * @param {object} params
  * @param {object} [params.lightEnvironment] - 结构化光照输入
- * @param {Array} [params.weatherDays] - 逐日天气记录（传给 computeLightExposure 计算 indoorEqHours）
+ * @param {Array} [params.weatherDays] - 逐日天气记录（只读取天气模块预计算的光照特征）
+ * @param {number} [params.weatherLightFactor] - weatherLightFactor10d
+ * @param {boolean} [params.weatherEvidenceInsufficient] - 天气光照证据是否不足
+ * @param {string} [params.weatherLightConfidence] - 天气光照证据置信度
  * @param {object} [params.weatherSummary]  - buildWeatherSummary 输出
  * @param {object} [params.plantStrategy]   - 属级策略，含 wateringQuantization
  * @param {object} [params.airEnvironmentEvidence] - 空气环境证据
@@ -232,12 +226,19 @@ function applySpeciesConvergence(factor, plantStrategy = null) {
 function computeTranspirationIntervalFactor({
   lightEnvironment = null,
   weatherDays = [],
+  weatherLightFactor,
+  weatherEvidenceInsufficient = false,
+  weatherLightConfidence = '',
   weatherSummary = null,
   plantStrategy = null,
   airEnvironmentEvidence = null,
   shadow = SHADOW_MODE_DEFAULT
 } = {}) {
-  const lightFactor = resolveLightFactor(lightEnvironment, weatherDays)
+  const lightFactor = resolveLightFactor(lightEnvironment, weatherDays, {
+    weatherLightFactor,
+    weatherEvidenceInsufficient,
+    weatherLightConfidence
+  })
   const weatherFactor = resolveWeatherFactor(weatherSummary)
   const airFactor = resolveAirFactor(airEnvironmentEvidence)
   let computed = FACTOR_NEUTRAL

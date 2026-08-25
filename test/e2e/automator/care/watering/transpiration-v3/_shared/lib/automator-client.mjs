@@ -152,9 +152,22 @@ export function resumeAutomatorSession(session, next) {
  */
 export async function connectAutomator(wsEndpoint) {
   try {
-    return makeResumableSession(
-      (await connectFormalLeaf({ automator, wsEndpoint, timeoutMs: CONNECT_TIMEOUT_MS })).mp
-    )
+    const { mp } = await connectFormalLeaf({ automator, wsEndpoint, timeoutMs: CONNECT_TIMEOUT_MS })
+    // Preserve renderer/AppService exception evidence in the leaf stdout.  The
+    // formal report only receives the terminal classification, while an
+    // uncaught runtime exception is otherwise reduced to a bare message such
+    // as "Uncaught uni is not defined".  This listener is diagnostic-only and
+    // does not alter the runtime or swallow the exception event.
+    if (typeof mp?.on === 'function') {
+      mp.on('exception', exception => {
+        try {
+          console.error('[automator.exception]', JSON.stringify(exception))
+        } catch {
+          console.error('[automator.exception]', String(exception))
+        }
+      })
+    }
+    return makeResumableSession(mp)
   } catch (error) {
     throw new AutomatorConnectError(wsEndpoint, String(error?.message || error))
   }

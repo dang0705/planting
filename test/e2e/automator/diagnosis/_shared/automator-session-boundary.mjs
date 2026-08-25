@@ -126,7 +126,7 @@ export async function handoffQuestionPackageScreenshot({
   outputPath,
   report,
   connect,
-  expectedRoute = 'pages/diagnose/question-package',
+  expectedRoute = 'subpackages/diagnosis/question-package',
   captureScreenshot = captureFormalScreenshot,
   timeoutMs,
   renderSettleMs = SCREENSHOT_RENDER_SETTLE_MS,

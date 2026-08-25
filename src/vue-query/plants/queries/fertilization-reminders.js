@@ -8,13 +8,20 @@ export function buildFertilizationReminderQueryKey(plantId) {
 export function buildFertilizationReminderQueryOptions(plantId) {
   return {
     queryKey: buildFertilizationReminderQueryKey(plantId),
-    queryFn: async () =>
-      requestHttpFunction('plant-user-http/user-plants/fertilization-reminders', {
-        query: { plantId: Number(plantId) }
-      })
+    queryFn: async () => requestFertilizationReminder(plantId)
   }
+}
+
+function requestFertilizationReminder(plantId) {
+  return requestHttpFunction('plant-user-http/user-plants/fertilization-reminders', {
+    query: { plantId: Number(plantId) }
+  })
 }
 
 export function fetchFertilizationReminderQuery(plantId) {
   return runVueQueryQuery(buildFertilizationReminderQueryOptions(plantId))
+}
+
+export function fetchFertilizationReminderFresh(plantId) {
+  return requestFertilizationReminder(plantId)
 }

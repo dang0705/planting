@@ -207,7 +207,7 @@ pr_policy: required   # Web/云端代码任务必须产出 PR；合并由 main �
 
 ZCode 不接受 headless、新会话、手输、逐字输入或未验证的剪贴板/UI 操作作为正式发送或 fallback。
 
-当 `provider=zcode` 时必须固定 `target_session=current_open_chat`、`prompt_transport=clipboard_paste`，并要求已验证 clipboard bridge、Computer Use 动态聚焦、Cmd+V→验证→必要时 Edit > Paste→再验证、发送前 prompt integrity 与发送后当前会话 delivery。只有用户明确授权的 NSPasteboard/pbcopy/Computer Use/ZCode Edit 操作可执行；任一层失败只进入下一条受控路径或 blocked，绝不自动触发 headless。完整动作和 receipt 闭集见 [zcode-computer-use-policy.md](./zcode-computer-use-policy.md) 与 [zcode-routing.md](./zcode-routing.md)。
+当 `provider=zcode` 时必须固定 `target_session=current_open_chat`、`prompt_transport=clipboard_paste`，并要求已验证 clipboard bridge、Computer Use 动态聚焦、一次 Cmd+V 后的可见交付、发送前 prompt integrity 与发送后当前会话 delivery。只有用户明确授权的 NSPasteboard/pbcopy/Computer Use 操作可执行；Cmd+V 无可见交付时直接 blocked，不进入 Edit 菜单、headless、新会话或手输。完整动作和 receipt 闭集见 [zcode-computer-use-policy.md](./zcode-computer-use-policy.md) 与 [zcode-routing.md](./zcode-routing.md)。
 
 ## TRAE Web provider
 

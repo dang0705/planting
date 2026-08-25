@@ -31,6 +31,7 @@ import {
   recordRequests,
   recordAssertion,
   recordScreenshot,
+  markBusinessAssertionsReached,
   setClassification
 } from '../lib/reporter.mjs'
 import { readPageDataSummary } from '../lib/element-helpers.mjs'
@@ -56,7 +57,6 @@ const PLANNER_API = '/user-plants/watering-planner'
  * 运行"我的植物"浇水规划场景。
  */
 export async function runMyPlantPlannerScenario(mp, report, artifactDir, mode) {
-  let classification = 'FAIL_PRODUCT'
   try {
     await installRequestCapture(mp)
     await clearCapturedRequests(mp)
@@ -68,7 +68,10 @@ export async function runMyPlantPlannerScenario(mp, report, artifactDir, mode) {
     const pageSummary = await readPageDataSummary(mp)
     recordPageData(report, INDEX_PAGE, pageSummary)
 
-    const screenshotInit = await safeScreenshot(mp, artifactDir, 'myplant-01-init')
+    const screenshotInit = await safeScreenshot(mp, artifactDir, 'myplant-01-init', undefined, {
+      maxAttempts: 1,
+      report
+    })
     recordScreenshot(report, screenshotInit)
     page = await mp.currentPage()
 
@@ -138,7 +141,6 @@ export async function runMyPlantPlannerScenario(mp, report, artifactDir, mode) {
 
     // 触发 planner（shadow 遍历植物寻找证据；active 用 shadow plantId）
     let plannerRequest = null
-    let triggerChainResult = null
     const explorationLog = []
 
     if (mode === 'shadow') {
@@ -158,7 +160,6 @@ export async function runMyPlantPlannerScenario(mp, report, artifactDir, mode) {
           waitForRequest: mp2 => waitForPlannerRequest(mp2, 10000),
           readRequests: mp2 => readCapturedRequests(mp2)
         })
-        triggerChainResult = result
         explorationLog.push({
           plantId: candidatePlantId,
           triggerChain: result.triggerChain,
@@ -233,7 +234,6 @@ export async function runMyPlantPlannerScenario(mp, report, artifactDir, mode) {
         waitForRequest: mp2 => waitForPlannerRequest(mp2, 10000),
         readRequests: mp2 => readCapturedRequests(mp2)
       })
-      triggerChainResult = result
       plannerRequest = result.plannerRequest
 
       // P1: confirmButtonAmbiguous 是环境限制
@@ -273,6 +273,7 @@ export async function runMyPlantPlannerScenario(mp, report, artifactDir, mode) {
     }
 
     // 断言 planner 响应字段（从真实响应推断实际模式）
+    markBusinessAssertionsReached(report)
     const assertResult = await assertPlannerResponse(report, plannerRequest, mode)
 
     // P0: 实际模式与期望模式不符 → BLOCKED_ENV（LAN worker 未按 WATERING_TRANSPIRATION_ENABLED 启动）
@@ -320,7 +321,10 @@ export async function runMyPlantPlannerScenario(mp, report, artifactDir, mode) {
     }
 
     // 截图为空时 BLOCKED_ENV
-    const screenshotResult = await safeScreenshot(mp, artifactDir, 'myplant-03-result')
+    const screenshotResult = await safeScreenshot(mp, artifactDir, 'myplant-03-result', undefined, {
+      maxAttempts: 1,
+      report
+    })
     recordScreenshot(report, screenshotResult)
     recordAssertion(
       report,
@@ -358,7 +362,9 @@ async function waitForPlannerRequest(mp, timeoutMs) {
   while (Date.now() < deadline) {
     const requests = await readCapturedRequests(mp)
     const found = findRequestByUrl(requests, PLANNER_API, 'POST')
-    if (found) return found
+    if (found) {
+      return found
+    }
     await sleep(500)
   }
   return null

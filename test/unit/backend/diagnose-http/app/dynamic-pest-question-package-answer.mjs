@@ -205,6 +205,22 @@ Module._load = function loadWithStubs(request, parent, isMain) {
   if (request === '/opt/utils/cloudbase') {
     return { models: {} }
   }
+  if (request === '/opt/utils/air-environment-evidence') {
+    return {
+      AIR_ENVIRONMENT_RECORDED_OPTION_KEY: 'air_environment_recorded',
+      AIR_ENVIRONMENT_UNKNOWN_OPTION_KEY: 'air_environment_unknown',
+      isAirEnvironmentQuestion: () => false,
+      getAirEnvironmentQuestionKeys: () => [],
+      parseDiagnosisAirEnvironmentSidecar: () => ({
+        ok: true,
+        byQuestionId: {},
+        snapshotsByQuestionId: {},
+        sourceByQuestionId: {},
+        routeAnswers: [],
+        evidence: null
+      })
+    }
+  }
   if (request === '/opt/utils/plant-knowledge') {
     return {
       getPlantCatalogById: async () => null,

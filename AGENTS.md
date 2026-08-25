@@ -29,11 +29,11 @@ inclusion: always
 5. 如需依赖新插件，必须考证其适配微信小程序、包体积、npm / GitHub 状态、周下载量、star 数和最近 3 年 release 记录，并提供简短介绍，征得用户同意。
 6. 所有端上验收如果本轮代码未部署到云端，必须先成功跑通 `js npm run dev:mp-weixin:local-functions:lan` 的完整 LAN 本地函数 flow，并让小程序运行时命中新代码；只启动 scoped/local 单函数 gateway、backend curl、Node HTTP 或 gateway health，不得算端上验收完成。
 7. 除非用户明确要求外部桥接，否则不得创建、派发或复用任何内部 subagent；所有工作由 main agent 完成。
-8. 当运行时模型为 GLM 系列时，调用 `mcp__Figma_Desktop__get_design_context`、`get_metadata`、`get_variable_defs` 等 Figma 读取类工具后，禁止/跳过调用 `get_screenshot`；除非用户在当前会话中明确要求查看截图。 
-9. 具备完整开发生命周期或明显涉及业务逻辑的开发任务必须由 `main agent` 触发 `$dispatch-task` ，再由其内部判断不同的 `dispatch-tier` 执行各自工作流。已经处于 `$dispatch-task` 的任务严禁在后续的多轮会话中嵌套调用该skill。任何 `subagent` 严禁触发该 skill。 
-10. 客户端显示的文案必须从用户角度出发并符合常识，严禁将内部讨论用语、计算公式，拗口或难理解的文案暴露在界面中。必须遵循用户友好、利于用户操作的思想设计出最优的展示文案。 
-11. 输出的文案、用语减少专业词汇，尤其在 plan 模式或用户显式要求 planning时，要注重用词以通俗易懂的白话结合举例代替专业词汇。 
-12. Web/云端 external implementer 即使运行时自称 main/root，也必须在本项目中承担 external implementer 角色：只按 handoff 修改代码，完成后执行实现者自检和 unit tests；有 `figma_link` 的 UI 任务必须直接使用可用的 Figma 插件 / MCP / 工具读取设计并对齐 UI，不能依赖 main 的转述。外部桥接失败不得自动改派内部 subagent。 
+8. 当运行时模型为 GLM 系列时，调用 `mcp__Figma_Desktop__get_design_context`、`get_metadata`、`get_variable_defs` 等 Figma 读取类工具后，禁止/跳过调用 `get_screenshot`；除非用户在当前会话中明确要求查看截图。
+9. 具备完整开发生命周期或明显涉及业务逻辑的开发任务必须由 `main agent` 触发 `$dispatch-task` ，再由其内部判断不同的 `dispatch-tier` 执行各自工作流。已经处于 `$dispatch-task` 的任务严禁在后续的多轮会话中嵌套调用该skill。任何 `subagent` 严禁触发该 skill。
+10. 客户端显示的文案必须从用户角度出发并符合常识，严禁将内部讨论用语、计算公式，拗口或难理解的文案暴露在界面中。必须遵循用户友好、利于用户操作的思想设计出最优的展示文案。
+11. 输出的文案、用语减少专业词汇，尤其在 plan 模式或用户显式要求 planning时，要注重用词以通俗易懂的白话结合举例代替专业词汇。
+12. Web/云端 external implementer 即使运行时自称 main/root，也必须在本项目中承担 external implementer 角色：只按 handoff 修改代码，完成后执行实现者自检和 unit tests；有 `figma_link` 的 UI 任务必须直接使用可用的 Figma 插件 / MCP / 工具读取设计并对齐 UI，不能依赖 main 的转述。外部桥接失败不得自动改派内部 subagent。
 13. 严禁任何可能的黑箱行为，所有的设计方案都必须可视、可审计、可追溯、可回放。
 
 ## 3. 前端行为硬约束
@@ -74,11 +74,21 @@ inclusion: always
 
 ## 5.1 测试层级与真实性边界（强制）
 
-1. `test/unit/**` 只验证单个模块或函数的逻辑、映射和边界。unit-test 可以使用假数据、mock、stub 和隔离的内存依赖；不得把真实微信运行时、真实 `wx.request`、真实 CloudBase API 或真实开发库读写当作 unit-test 的必要条件。unit-test 通过不等于端上功能通过，也不得作为端上验收证据。
+1. `test/unit/**` 仍以单个模块或函数的逻辑、映射和边界为主要验证对象，但允许直接使用真实 `cloud1_dev` 数据、真实 CloudBase API 和真实数据库读写；这类结果必须标记为 `unit_real_data`，不得再强制使用 mock 或假数据。真实微信运行时、真实页面交互和截图仍属于 Automator，不因使用真实数据而转化为 unit-test。unit-test 通过不等于端上功能通过，也不得单独作为端上验收证据。
 2. `test/e2e/**` 验证跨模块的真实链路，禁止伪造被测接口响应、用内存植物仓库替代服务端数据，或把 fixture 响应冒充真实 API 返回。跑批 e2e 至少调用真实配置的 API 和开发库；它只能证明服务链路，不能覆盖真实小程序 UI、登录态、页面数据和用户交互。
 3. 端上验收必须使用真实小程序运行时、真实用户登录态、真实开发环境数据（当前开发验收为 `cloud1_dev`）、真实 LAN gateway 和真实 `wx.request`。不得注入假植物、假提醒、假接口返回或绕过页面直接写库来宣称端上通过。正式证据必须来自 catalog `qa-run`，并包含项目 identity、页面数据、有效截图和运行时请求记录。
 4. 使用 fixture 或 mock 的 Automator 叶子只能作为回归排障或组件交互诊断，必须在 catalog/报告中明确其非真实验收性质；不能与 live e2e 混称，也不能计入“端上通过”。如果 acceptance 要求真实数据，必须另有 `automator_required` 的 live 叶子覆盖同一用户路径。
-5. 测试报告或其 catalog/qa-run 证据必须明确可核验数据模式：`unit_fake`、`e2e_real_api`、`automator_live_real_api` 或 `fixture_diagnostic`。数据来源不明或接口响应被替换时，状态只能是未验收/阻断，不能记为 PASS。
+5. 测试报告或其 catalog/qa-run 证据必须明确可核验数据模式：`unit_real_data`、`unit_fake`、`e2e_real_api`、`automator_live_real_api` 或 `fixture_diagnostic`。项目默认优先使用 `unit_real_data`；只有明确需要隔离边界或离线验证时才使用 `unit_fake`。数据来源不明或接口响应被替换时，状态只能是未验收/阻断，不能记为 PASS。
+
+## 5.2 前端 UT 与真实 API E2E 硬规定
+
+1. 前端 UT 只能证明前端单模块逻辑、数据映射、状态计算、序列化和源码契约。使用 `readFileSync`、正则或源码字符串断言的用例必须标记为 `data_mode=unit_fake`、`test_kind=source_contract`，不能称为页面交互测试。
+2. 前端 UT 不得宣称已经验证真实小程序页面。它不能替代以下验证：Vue 响应式状态变化、组件真实渲染、点击/输入/禁用状态、Popup 展示、页面跳转、编译产物行为、真实 `wx.request` 和截图。
+3. 只要需求包含用户可见交互，必须至少补一个 Automator live 用例；仅前端 UT 通过时，功能状态最多为“前端逻辑通过”，不得写成“功能验收通过”。
+4. `test/e2e/**` 中标记为 `e2e_real_api` 的用例必须调用真实配置的 API、真实 `cloud1_dev` 数据库和真实用户身份。必须显式校验 `TERMINAL_E2E_FUNCTION_BASE_URL`、开发环境和身份信息；缺失时阻断，不能回退到假接口、内存仓库、fixture 响应或默认匿名用户。
+5. 真实 API E2E 禁止 monkey-patch 被测接口响应、替换网络客户端、把 fixture 当服务端结果或绕过 API 直接写库。测试必须从真实 API 读取数据，并对 HTTP 状态、业务码、关键业务字段和数据来源进行断言。
+6. 真实 API E2E 只能证明跨模块服务链路和真实数据契约，不能证明真实小程序 UI、登录态、页面响应式状态、跨页面操作或截图；这些仍由 `automator_live_real_api` 负责。
+7. 每个前端交互功能的测试记录必须分层列出：前端 UT、`e2e_real_api`、`automator_live_real_api`。任何一层未执行或使用了不符合该层边界的数据，状态必须标记为未验收或阻断，不得合并成一个笼统的 PASS。
 
 ## 6. 读取边界
 
@@ -146,7 +156,3 @@ ByteRover Topic 是长期项目知识，不是代码索引、通用知识库、�
 ### BRV 治理例外
 
 在 ByteRover 审计、迁移、纠错、合并或清理任务中，允许读取和查询全部已有 Topic，包括已经越界、过期或错误的 Topic。此类读取只用于治理，不代表其内容可以作为当前事实使用或继续保留。
-
-### Agent性格和特性
-1. ### 需具备优秀、客观、理智的挑战和对抗精神，你必须清晰的认识到用户未必全对。当你识别到用户提示词存在明显错误，或者下达的任务有潜在的风险时必须第一时间暂停执行任务并提供针对错误的解释以及多个对应的解决方案。
-2. ### 抵制任何的黑箱意识和行为。设计方案、执行细节都须优先遵循可视化、可审计、可追溯、可回放的原则。

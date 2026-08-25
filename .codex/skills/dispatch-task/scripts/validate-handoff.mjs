@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { validateImplementationOwnerHandoff } from './validate-handoff-owner.mjs'
 
 const file = process.argv[2]
@@ -7,6 +9,8 @@ if (!file) {
   console.error('usage: validate-handoff.mjs <handoff.json>')
   process.exit(2)
 }
+
+const repoRoot = path.resolve(fileURLToPath(new URL('../../../..', import.meta.url)))
 
 let raw
 let data
@@ -61,8 +65,7 @@ const acceptanceMentionsDispatchHookGate = (data.acceptance ?? []).some(item => 
 })
 
 const tier = data.dispatch_tier
-const mode =
-  data.implementation_mode ?? 'main_direct'
+const mode = data.implementation_mode ?? 'main_direct'
 const externalMode = ['external_implementer', 'zcode_external'].includes(mode)
 const externalTier = ['external_implementer', 'zcode_external'].includes(tier)
 const task = data.task ?? {}
@@ -307,6 +310,31 @@ if (runtimeAcceptanceMode === 'batch_only') {
     'batch_only requires validation.miniprogram_automator_required=false'
   )
 }
+if (data?.validation?.automator_v3_final_gate === true) {
+  need(
+    nonEmptyString(data?.validation?.automator_v3_final_gate_manifest),
+    'automator_v3_final_gate=true requires validation.automator_v3_final_gate_manifest'
+  )
+  if (nonEmptyString(data?.validation?.automator_v3_final_gate_manifest)) {
+    const manifestPath = path.resolve(
+      repoRoot,
+      String(data.validation.automator_v3_final_gate_manifest)
+    )
+    const finalGateArtifactRoot = path.resolve(repoRoot, '.tmp', 'dispatch-task')
+    need(
+      manifestPath.startsWith(`${finalGateArtifactRoot}${path.sep}`),
+      'automator_v3_final_gate_manifest must be inside .tmp/dispatch-task'
+    )
+  }
+  need(
+    runtimeAcceptanceMode === 'automator_required',
+    'automator_v3_final_gate requires validation.runtime_acceptance_mode=automator_required'
+  )
+  need(
+    data?.validation?.miniprogram_automator_required === true,
+    'automator_v3_final_gate requires validation.miniprogram_automator_required=true'
+  )
+}
 
 const pc = data.project_constraints ?? {}
 const external = data.external_contract ?? data.zcode_contract ?? {}
@@ -421,8 +449,14 @@ validateImplementationOwnerHandoff({
 // exempted.
 const selectionContract = data.selection_to_consumer
 if (codeChanges) {
-  need(isObject(selectionContract), 'code task requires selection_to_consumer contract (required=true|false)')
-  need(typeof selectionContract?.required === 'boolean', 'selection_to_consumer.required must be boolean')
+  need(
+    isObject(selectionContract),
+    'code task requires selection_to_consumer contract (required=true|false)'
+  )
+  need(
+    typeof selectionContract?.required === 'boolean',
+    'selection_to_consumer.required must be boolean'
+  )
   if (selectionContract?.required === false) {
     need(
       nonEmptyString(selectionContract?.not_applicable_reason),
@@ -431,7 +465,10 @@ if (codeChanges) {
   }
 } else if (selectionContract !== undefined) {
   need(isObject(selectionContract), 'selection_to_consumer must be an object')
-  need(typeof selectionContract?.required === 'boolean', 'selection_to_consumer.required must be boolean')
+  need(
+    typeof selectionContract?.required === 'boolean',
+    'selection_to_consumer.required must be boolean'
+  )
   if (selectionContract?.required === false) {
     need(
       nonEmptyString(selectionContract?.not_applicable_reason),

@@ -72,6 +72,33 @@ function isExecutableLeaf(file, catalog) {
   return !segments.some(segment => excluded.includes(segment))
 }
 
+const LIVE_LEAF_FORBIDDEN_PATTERNS = Object.freeze([
+  [
+    'formal_live_principal_injection',
+    /(?<!function\s)(?<!export\s)installFormalLeafPrincipal\s*\(/u
+  ],
+  ['formal_user_storage_injection', /setStorageSync\s*\(\s*['"]user['"]/u],
+  ['formal_fixture_toggle', /E2E_[A-Z0-9_]*FIXTURE|fixtureEnabled/u],
+  ['formal_request_interception', /mockWxMethod|__plantsight_e2e|fixtureFor\s*=/u]
+])
+
+function validateLiveLeafSourceContract(bundle, entry, errors) {
+  if (entry?.data_mode !== 'automator_live_real_api') {
+    return
+  }
+  for (const item of bundle) {
+    const source = fs.readFileSync(item.file, 'utf8')
+    if (item.path.endsWith('/_shared/formal-leaf-harness.mjs')) {
+      continue
+    }
+    for (const [code, pattern] of LIVE_LEAF_FORBIDDEN_PATTERNS) {
+      if (pattern.test(source)) {
+        errors.push(`${code}: live catalog bundle cannot contain ${item.path}`)
+      }
+    }
+  }
+}
+
 export function discoverExecutableLeaves(catalog = readCatalog()) {
   const roots = catalog.executable_leaf_convention?.roots ?? ['test/e2e/automator']
   return roots
@@ -107,6 +134,43 @@ export function validateCatalog() {
       entry.id.length > 0, 'catalog entry id is required', errors)
     require(!ids.has(entry.id), `duplicate catalog id: ${entry.id}`, errors)
     ids.add(entry.id)
+    require(['automator_live_real_api', 'fixture_diagnostic'].includes(
+      entry.data_mode
+    ), `data_mode must be automator_live_real_api or fixture_diagnostic for ${entry.id}`, errors)
+    require(['persisted_real_wechat', 'diagnostic_injected'].includes(
+      entry.auth_mode
+    ), `auth_mode must be persisted_real_wechat or diagnostic_injected for ${entry.id}`, errors)
+    require(['read_only', 'self_reverting', 'test_owned_persistent', 'diagnostic_only'].includes(
+      entry.mutation_policy
+    ), `mutation_policy must be read_only, self_reverting, test_owned_persistent, or diagnostic_only for ${entry.id}`, errors)
+    if (entry.data_mode === 'automator_live_real_api') {
+      require(entry.auth_mode ===
+        'persisted_real_wechat', `live catalog entry must use persisted_real_wechat: ${entry.id}`, errors)
+      require(entry.mutation_policy !==
+        'diagnostic_only', `live catalog entry cannot be diagnostic_only: ${entry.id}`, errors)
+    }
+    if (entry.data_mode === 'fixture_diagnostic') {
+      require(entry.mutation_policy ===
+        'diagnostic_only', `fixture diagnostic entry must be diagnostic_only: ${entry.id}`, errors)
+    }
+    if (entry.data_mode === 'automator_live_real_api') {
+      require(
+        Array.isArray(entry.required_assertions) && entry.required_assertions.length > 0,
+        `live catalog entry must declare required_assertions: ${entry.id}`,
+        errors
+      )
+      const requiredAssertions = entry.required_assertions || []
+      require(
+        requiredAssertions.every(assertion => typeof assertion === 'string' && assertion.trim()),
+        `required_assertions must contain non-empty strings: ${entry.id}`,
+        errors
+      )
+      require(
+        new Set(requiredAssertions).size === requiredAssertions.length,
+        `required_assertions must be unique: ${entry.id}`,
+        errors
+      )
+    }
     require(Array.isArray(entry.category_path) &&
       entry.category_path.length >=
         2, `category_path must include module/submodule/leaf for ${entry.id}`, errors)
@@ -137,6 +201,14 @@ export function validateCatalog() {
         const bundle = catalogExecutionBundleFingerprint(abs, { entry })
         require(entry.script_sha256 ===
           bundle.hash, `script hash mismatch for ${entry.id}: expected ${entry.script_sha256}, got ${bundle.hash}`, errors)
+        validateLiveLeafSourceContract(
+          bundle.files.map(file => ({
+            path: file,
+            file: path.join(repoRoot, file)
+          })),
+          entry,
+          errors
+        )
       } catch (error) {
         errors.push(`execution bundle resolution failed for ${entry.id}: ${error.message}`)
       }

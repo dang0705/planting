@@ -4,6 +4,7 @@ const { models } = require('/opt/utils/cloudbase')
 const { normalizeAirEnvironmentInput } = require('./air-environment-evidence')
 const {
   getUserPlantFertilizationEvents,
+  getUserAssertedFertilizationBaseline,
   insertFertilizationEvent
 } = require('./fertilization-history')
 const MAX_USER_PLANT_NOTES_LENGTH = 200
@@ -16,8 +17,7 @@ const FERTILIZATION_SCOPE_GUIDANCE = {
   container_phenology: '按实际生长节点调整月份；停止生长时暂停。',
   aquatic_water_temperature: '按水温和实际生长调整；肥料不要倒入水中。'
 }
-const FERTILIZATION_PAUSE_GUIDANCE =
-  '表中标为“暂停施肥”或“暂停追加”时，该月不安排这类肥料的提醒。'
+const FERTILIZATION_PAUSE_GUIDANCE = '表中标为“暂停施肥”或“暂停追加”时，该月不安排这类肥料的提醒。'
 const FERTILIZATION_SCOPE_TYPES = new Set(['indoor', 'container', 'aquatic'])
 const FERTILIZATION_ADJUSTMENT_MODES = new Set([
   'growth_signal',
@@ -887,6 +887,10 @@ function mapUserPlantInstanceRow(row, plant = null) {
     healthStatus: row.health_status || 'unknown',
     healthScore:
       row.health_score === null || row.health_score === undefined ? null : Number(row.health_score),
+    fertilizationGuard: parseJsonField(
+      row.fertilization_guard_json_text ?? row.fertilization_guard_json,
+      null
+    ),
     // 盆型档案（直接来自主表列，前端 WateringReminderSheet 直接读取）
     potProfile: mapPotProfileFromRow(row)
   }
@@ -965,6 +969,7 @@ async function getUserPlantInstanceById(openid, id) {
       up.pot_profile_version,
       up.pot_profile_source,
       up.pot_profile_confidence,
+      CAST(up.fertilization_guard_json AS CHAR) AS fertilization_guard_json_text,
       ds.health_status,
       ds.health_score
     FROM user_plant_instances up
@@ -983,7 +988,21 @@ async function getUserPlantInstanceById(openid, id) {
   const plantInstance = mapUserPlantInstanceRow(row, plant)
   // 单独 try/catch 查询 watering_events_json，列不存在时不阻断主流程
   plantInstance.wateringEvents = await getUserPlantWateringEvents(openid, id)
-  plantInstance.fertilizationEvents = await getUserPlantFertilizationEvents(models, openid, id)
+  try {
+    plantInstance.fertilizationEvents = await getUserPlantFertilizationEvents(models, openid, id)
+    const assertedBaseline = plantInstance.fertilizationEvents.length
+      ? null
+      : await getUserAssertedFertilizationBaseline(models, openid, id)
+    plantInstance.fertilizationHistory = assertedBaseline
+      ? [assertedBaseline]
+      : plantInstance.fertilizationEvents
+    plantInstance.fertilizationHistoryStatus = 'available'
+  } catch (error) {
+    plantInstance.fertilizationEvents = null
+    plantInstance.fertilizationHistory = null
+    plantInstance.fertilizationHistoryStatus =
+      error?.code === 'FERTILIZATION_HISTORY_UNAVAILABLE' ? 'unavailable' : 'unknown'
+  }
   return plantInstance
 }
 
@@ -1115,6 +1134,7 @@ async function listUserPlantInstances(openid, { page = 1, pageSize = 20 } = {}) 
       up.pot_profile_version,
       up.pot_profile_source,
       up.pot_profile_confidence,
+      CAST(up.fertilization_guard_json AS CHAR) AS fertilization_guard_json_text,
       ds.health_status,
       ds.health_score
     FROM user_plant_instances up

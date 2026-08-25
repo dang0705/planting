@@ -25,7 +25,7 @@ const DIAGNOSE_POPUP_COMPONENT_CHAIN = Object.freeze([
 const READINESS_TIMEOUT_MS = 15000
 const READINESS_RETRY_DELAY_MS = 250
 const INDEX_HOME_ROUTE = 'pages/index/index'
-const QUESTION_PACKAGE_ROUTE = 'pages/diagnose/question-package'
+const QUESTION_PACKAGE_ROUTE = 'subpackages/diagnosis/question-package'
 const RETURN_ENTRY_ROUTES = new Set(['pages/index/index', 'pages/diagnose/diagnose'])
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 const normalizePageRoute = page => String(page?.path || '').replace(/^\//, '')

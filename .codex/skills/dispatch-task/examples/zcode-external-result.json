@@ -64,8 +64,6 @@
       "direct_text_identity": null,
       "attachment": {
         "name": "Pasted text",
-        "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-        "bytes": 4096,
         "lines": 96,
         "present_before_send": true,
         "present_after_send": true

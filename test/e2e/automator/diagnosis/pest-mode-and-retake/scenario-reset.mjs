@@ -9,7 +9,7 @@ async function resetDiagnosisTab(report, miniProgram, scenarioName) {
   const currentPage = await runAutomatorStep(report, `${scenarioName}.currentPageBeforeReset`, () =>
     miniProgram.currentPage()
   )
-  if (currentPage?.path === 'pages/diagnose/question-package') {
+  if (currentPage?.path === 'subpackages/diagnosis/question-package') {
     const backControl = await assertElement(
       report,
       currentPage,

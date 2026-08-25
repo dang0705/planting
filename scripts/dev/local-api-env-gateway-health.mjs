@@ -1,10 +1,12 @@
 import {
   assertLocalCloudbaseCredentials,
   createLocalGatewayError,
+  DEFAULT_FUNCTION_PORT_BASE,
   DEFAULT_OPENID,
   FUNCTION_BUSINESS_PROBES,
   FUNCTION_HEALTH_PATHS,
   FUNCTION_PORTS,
+  getFunctionPorts,
   HEALTH_REQUEST_TIMEOUT_MS,
   LOCAL_GATEWAY_KIND,
   PROJECT_ROOT
@@ -117,11 +119,26 @@ function isLegacyRepoGateway(state = {}, requiredFunctions = []) {
   return requiredFunctions.every(name => functionPorts.get(name) === FUNCTION_PORTS[name])
 }
 
-export function isRepoLocalGateway(state = {}, requiredFunctions = []) {
+export function isRepoLocalGateway(
+  state = {},
+  requiredFunctions = [],
+  functionPortBase = DEFAULT_FUNCTION_PORT_BASE
+) {
   if (state.gateway === LOCAL_GATEWAY_KIND && state.projectRoot === PROJECT_ROOT) {
-    return true
+    const expectedPorts = getFunctionPorts(functionPortBase)
+    const functionPorts = new Map(
+      state.functions.filter(item => item.port).map(item => [item.name, item.port])
+    )
+    return requiredFunctions.every(name => functionPorts.get(name) === expectedPorts[name])
   }
-  return isLegacyRepoGateway(state, requiredFunctions)
+  if (Number(functionPortBase) === DEFAULT_FUNCTION_PORT_BASE) {
+    return isLegacyRepoGateway(state, requiredFunctions)
+  }
+  const expectedPorts = getFunctionPorts(functionPortBase)
+  const functionPorts = new Map(
+    state.functions.filter(item => item.port).map(item => [item.name, item.port])
+  )
+  return requiredFunctions.every(name => functionPorts.get(name) === expectedPorts[name])
 }
 
 function formatUnavailableGatewayWorkers(state = {}) {
@@ -131,7 +148,11 @@ function formatUnavailableGatewayWorkers(state = {}) {
   return unavailable.length ? unavailable.join(', ') : ''
 }
 
-async function assertLocalFunctionsGatewayReady(apiBaseUrl = '', requiredFunctions = []) {
+async function assertLocalFunctionsGatewayReady(
+  apiBaseUrl = '',
+  requiredFunctions = [],
+  functionPortBase = DEFAULT_FUNCTION_PORT_BASE
+) {
   const { healthUrl, response, state } = await fetchGatewayHealth(apiBaseUrl)
   if (!response.ok || state.status !== 'ok') {
     const poweredBy = response.headers.get('x-powered-by') || response.headers.get('server') || ''
@@ -162,6 +183,16 @@ async function assertLocalFunctionsGatewayReady(apiBaseUrl = '', requiredFunctio
     )
     error.gatewayState = state
     throw error
+  }
+  const expectedPorts = getFunctionPorts(functionPortBase)
+  const wrongPortFunctions = requiredFunctions.filter(
+    name => Number(state.functions.find(item => item.name === name)?.port) !== expectedPorts[name]
+  )
+  if (wrongPortFunctions.length) {
+    throw createLocalGatewayError(
+      'LOCAL_GATEWAY_FUNCTION_PORT_MISMATCH',
+      `本地 CloudBase 函数端口不匹配: ${wrongPortFunctions.join(', ')}`
+    )
   }
 }
 
@@ -274,7 +305,11 @@ function buildLocalBusinessRouteHint(unavailable = []) {
 
 export async function assertLocalRuntimeReady(apiBaseUrl = '', options = {}) {
   assertLocalCloudbaseCredentials(options.requiredFunctions)
-  await assertLocalFunctionsGatewayReady(apiBaseUrl, options.requiredFunctions)
+  await assertLocalFunctionsGatewayReady(
+    apiBaseUrl,
+    options.requiredFunctions,
+    options.functionPortBase
+  )
   await assertLocalFunctionRoutesReady(apiBaseUrl, options.requiredFunctions)
   await assertLocalBusinessRoutesReady(apiBaseUrl, options)
 }

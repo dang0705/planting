@@ -33,6 +33,9 @@ function hasMeaningfulUserLightContext(value = {}) {
   if (!isPlainObject(value)) {
     return false
   }
+  if (value.naturalLightType || value.natural_light_type) {
+    return true
+  }
   return [
     'facing',
     'windowType',
@@ -167,6 +170,11 @@ function resolveRuntimeEnvironmentCarePayload({
     hasDirectSun: pickPayloadValue(safePayload, 'hasDirectSun', 'has_direct_sun'),
     distance: pickPayloadValue(safePayload, 'distance')
   }
+  const incomingRecentLightChange = String(
+    pickPayloadValue(safePayload, 'recentLightChange', 'recent_light_change') || 'unknown'
+  )
+    .trim()
+    .toLowerCase()
   const incomingAirEnvironmentByQuestionId = pickPayloadValue(
     safePayload,
     'airEnvironmentByQuestionId',
@@ -229,6 +237,7 @@ function resolveRuntimeEnvironmentCarePayload({
           environmentWeatherWindow: environmentWeatherWindow || {},
           careBehaviorTimeline: careBehaviorTimeline || {},
           userLightContext: incomingHasMeaningfulLightContext ? incomingUserLightContext : {},
+          recentLightChange: incomingRecentLightChange,
           airEnvironmentInput: incomingHasMeaningfulAirEnvironment
             ? incomingAirEnvironmentInput
             : null

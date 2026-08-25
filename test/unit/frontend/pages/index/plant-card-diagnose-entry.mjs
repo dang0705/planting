@@ -4,8 +4,8 @@ import path from 'node:path'
 
 // 镜像契约：首页植物卡诊断入口必须以真实、确定性的植物前置条件进入。
 // 只有 plantStore.hasPlants 为真（真实植物存在）时才渲染 PlantCard 与
-// diagnose-entry-button-<plantId>；点击后复用共享 DiagnosePopup -> DiagnoseFlow。
-// 不得改成无植物也显示匿名卡片，也不得删/弱化首页 DiagnosePopup 与共享 DiagnoseFlow 验收。
+// diagnose-entry-button-<plantId>；点击后进入 diagnosis 分包的完整诊断页。
+// 不得改成无植物也显示匿名卡片，也不得在主包重新挂载完整诊断流。
 
 const repoRoot = process.cwd()
 const indexSource = fs.readFileSync(path.join(repoRoot, 'src/pages/index/index.vue'), 'utf8')
@@ -13,14 +13,11 @@ const plantCardSource = fs.readFileSync(
   path.join(repoRoot, 'src/pages/index/components/PlantCard.vue'),
   'utf8'
 )
-const diagnosePopupSource = fs.readFileSync(
-  path.join(repoRoot, 'src/components/DiagnosePopup.vue'),
+const diagnosisEntrySource = fs.readFileSync(
+  path.join(repoRoot, 'src/subpackages/diagnosis/entry.vue'),
   'utf8'
 )
-const plantsStoreSource = fs.readFileSync(
-  path.join(repoRoot, 'src/store/plants.js'),
-  'utf8'
-)
+const plantsStoreSource = fs.readFileSync(path.join(repoRoot, 'src/store/plants.js'), 'utf8')
 
 // 契约 1：首页必须用 plantStore.hasPlants 作为真实植物前置条件渲染植物列表区域。
 assert.match(
@@ -40,7 +37,7 @@ assert.match(
   'plant list must stay behind isAuthenticated + hasPlants, no anonymous plant card'
 )
 
-// 契约 2：首页必须 v-for 真实 userPlants 渲染 PlantCard，并通过 @diagnose 打开共享 DiagnosePopup。
+// 契约 2：首页必须 v-for 真实 userPlants 渲染 PlantCard，并通过 @diagnose 进入 diagnosis 分包。
 assert.match(
   indexSource,
   /v-for="plant in plantStore\.userPlants"/,
@@ -53,21 +50,22 @@ assert.match(
 )
 assert.match(
   indexSource,
-  /function openDiagnose\(plant\) \{[\s\S]*?currentPlantId\.value = plant\.id[\s\S]*?callComponentMethod\(diagnosePopupRef, 'open'\)/,
-  'openDiagnose must set the real plant id and open the shared DiagnosePopup'
+  /function openDiagnose\(plant\) \{[\s\S]*?subpackages\/diagnosis\/entry\?plantId=/,
+  'openDiagnose must navigate with the real plant id to the diagnosis subpackage'
 )
 
-// 契约 3：首页必须复用共享 DiagnosePopup 与 DiagnoseFlow，不得引入平行弹窗或长流程。
+// 契约 3：首页不得加载完整诊断流；完整流必须由 diagnosis 分包入口承接。
 assert.match(
   indexSource,
-  /import DiagnosePopup from '@\/components\/DiagnosePopup\.vue'/,
-  'index must import the shared DiagnosePopup'
+  /subpackages\/diagnosis\/entry/,
+  'index must navigate to the diagnosis subpackage entry'
 )
 assert.match(
-  indexSource,
-  /<DiagnosePopup[\s\S]*?ref="diagnosePopupRef"[\s\S]*?:plant-id="currentPlantId"[\s\S]*?diagnosis-profile="full"[\s\S]*?entry-source="plant_card"/,
-  'index must mount the shared DiagnosePopup with plant_card entry source and full profile'
+  diagnosisEntrySource,
+  /<DiagnoseFlow[\s\S]*?:plant-id="plantId"[\s\S]*?:plant-name="plantName"[\s\S]*?entry-source="diagnosis_entry"/,
+  'diagnosis entry must mount the full flow inside the diagnosis subpackage'
 )
+assert.doesNotMatch(indexSource, /DiagnosePopup|diagnosePopupRef/)
 // 确保没有平行匿名诊断弹窗。
 assert.doesNotMatch(
   indexSource,
@@ -98,24 +96,7 @@ assert.match(
   'PlantCard must declare both reminder and fertilization actions'
 )
 
-// 契约 5：共享 DiagnosePopup 必须内部挂载 DiagnoseFlow，保持 plant-card -> popup -> flow 链路。
-assert.match(
-  diagnosePopupSource,
-  /import DiagnoseFlow from '@\/components\/diagnose-flow\/DiagnoseFlow\.vue'/,
-  'DiagnosePopup must import the shared DiagnoseFlow'
-)
-assert.match(
-  diagnosePopupSource,
-  /<DiagnoseFlow[\s\S]*?:plant-id="plantId"[\s\S]*?:diagnosis-profile="diagnosisProfile"[\s\S]*?:entry-source="entrySource"/,
-  'DiagnosePopup must mount DiagnoseFlow with plant id, profile and entry source'
-)
-assert.match(
-  diagnosePopupSource,
-  /panel-id="diagnose-popup-panel"/,
-  'DiagnosePopup must expose diagnose-popup-panel id'
-)
-
-// 契约 6：plantStore.hasPlants 必须基于真实 userPlants 长度，不得有匿名兜底。
+// 契约 5：plantStore.hasPlants 必须基于真实 userPlants 长度，不得有匿名兜底。
 assert.match(
   plantsStoreSource,
   /hasPlants: state => state\.userPlants\.length > 0/,

@@ -4,6 +4,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 export const DEFAULT_PORT = 3010
+export const DEFAULT_FUNCTION_PORT_BASE = 9000
 export const DEFAULT_OPENID = 'dev_terminal_mp_local'
 export const LOCAL_FUNCTIONS_GATEWAY_SCRIPT = fileURLToPath(
   new URL('./local-functions-gateway.mjs', import.meta.url)
@@ -32,15 +33,22 @@ export const FUNCTION_HEALTH_PATHS = {
   'weather-http': 'weather-http/weather/health',
   'storage-http': 'storage-http/storage/health'
 }
-export const FUNCTION_PORTS = {
-  'diagnose-http': 9000,
-  'plant-catalog-http': 9001,
-  'plant-user-http': 9002,
-  'identify-http': 9003,
-  'diagnosis-history-http': 9004,
-  'auth-user-http': 9005,
-  'weather-http': 9006,
-  'storage-http': 9007
+export const FUNCTION_NAMES = [
+  'diagnose-http',
+  'plant-catalog-http',
+  'plant-user-http',
+  'identify-http',
+  'diagnosis-history-http',
+  'auth-user-http',
+  'weather-http',
+  'storage-http'
+]
+export const FUNCTION_PORTS = Object.fromEntries(
+  FUNCTION_NAMES.map((name, index) => [name, DEFAULT_FUNCTION_PORT_BASE + index])
+)
+export function getFunctionPorts(base = DEFAULT_FUNCTION_PORT_BASE) {
+  const numericBase = Number(base)
+  return Object.fromEntries(FUNCTION_NAMES.map((name, index) => [name, numericBase + index]))
 }
 export const GATEWAY_READY_TIMEOUT_MS = 60000
 export const HEALTH_REQUEST_TIMEOUT_MS = 3000
@@ -97,6 +105,11 @@ export function parseLocalApiEnvironmentArgs(argv = [], environment = process.en
   const options = {
     mode: 'loopback',
     port: Number(environment.CLOUDBASE_LOCAL_FUNCTIONS_PORT || DEFAULT_PORT),
+    functionPortBase: Number(
+      environment.CLOUDBASE_LOCAL_FUNCTIONS_FUNCTION_PORT_BASE || DEFAULT_FUNCTION_PORT_BASE
+    ),
+    outputDir: environment.UNI_OUTPUT_DIR || '',
+    runtimeLeaseRoot: environment.LOCAL_RUNTIME_LEASE_ROOT || '',
     baseUrl: environment.VITE_API_BASE_URL || '',
     baseUrlSource: environment.VITE_API_BASE_URL ? 'environment' : '',
     openid: environment.VITE_DEV_OPENID || DEFAULT_OPENID,
@@ -107,6 +120,7 @@ export function parseLocalApiEnvironmentArgs(argv = [], environment = process.en
       .map(item => item.trim())
       .filter(Boolean),
     startFunctions: environment.CLOUDBASE_LOCAL_AUTO_START_FUNCTIONS !== 'false',
+    reuseOutput: false,
     skipHealthCheck: false,
     skipBusinessCheck: environment.CLOUDBASE_LOCAL_SKIP_BUSINESS_CHECK === 'true'
   }
@@ -119,6 +133,15 @@ export function parseLocalApiEnvironmentArgs(argv = [], environment = process.en
     }
     if (key === '--port' && value) {
       options.port = Number(value)
+    }
+    if (key === '--function-port-base' && value) {
+      options.functionPortBase = Number(value)
+    }
+    if (key === '--output-dir' && value) {
+      options.outputDir = path.resolve(value)
+    }
+    if (key === '--runtime-lease-root' && value) {
+      options.runtimeLeaseRoot = path.resolve(value)
     }
     if (key === '--base-url' && value) {
       options.baseUrl = value
@@ -143,6 +166,9 @@ export function parseLocalApiEnvironmentArgs(argv = [], environment = process.en
     }
     if (key === '--skip-health-check') {
       options.skipHealthCheck = true
+    }
+    if (key === '--reuse-output') {
+      options.reuseOutput = true
     }
     if (key === '--skip-business-check') {
       options.skipBusinessCheck = true

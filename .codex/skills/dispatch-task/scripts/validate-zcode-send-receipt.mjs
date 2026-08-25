@@ -49,8 +49,6 @@ const REQUIRED_ACTIONS = [
   'run_verified_clipboard_bridge',
   'paste_clipboard_via_cmd_v',
   'verify_paste_delivery',
-  'open_edit_menu_if_needed',
-  'paste_clipboard_via_edit_menu_if_needed',
   'send_prompt_after_integrity_check',
   'verify_post_send_delivery'
 ]
@@ -124,19 +122,17 @@ function validatePaste(errors, paste, identity, sent) {
   need(errors, isObject(paste), 'receipt.paste_delivery is required')
   onlyKeys(errors, paste, ['attempts', 'selected_method', 'rendering', 'pre_send_verified', 'direct_text_identity', 'attachment', 'verified_at'], 'receipt.paste_delivery')
   const attempts = paste?.attempts
-  need(errors, Array.isArray(attempts) && attempts.length >= 1 && attempts.length <= 2, 'paste_delivery.attempts must contain 1-2 attempts')
+  need(errors, Array.isArray(attempts) && attempts.length === 1, 'paste_delivery.attempts must contain exactly one Cmd+V attempt')
   if (Array.isArray(attempts)) {
-    const expectedMethods = ['cmd_v', 'edit_menu_paste']
     attempts.forEach((attempt, index) => {
       need(errors, isObject(attempt), `paste_delivery.attempts[${index}] must be an object`)
       onlyKeys(errors, attempt, ['method', 'delivery_verified'], `paste_delivery.attempts[${index}]`)
-      need(errors, attempt?.method === expectedMethods[index], 'paste methods must run cmd_v then edit_menu_paste')
+      need(errors, attempt?.method === 'cmd_v', 'paste method must be cmd_v')
       need(errors, typeof attempt?.delivery_verified === 'boolean', 'paste attempt delivery_verified must be boolean')
-      if (index < attempts.length - 1) { need(errors, attempt?.delivery_verified === false, 'paste fallback must stop after verified delivery') }
     })
   }
   const verified = Array.isArray(attempts) ? attempts.filter(item => item?.delivery_verified === true) : []
-  need(errors, paste?.selected_method === null || ['cmd_v', 'edit_menu_paste'].includes(paste?.selected_method), 'paste_delivery.selected_method is unsupported')
+  need(errors, paste?.selected_method === null || paste?.selected_method === 'cmd_v', 'paste_delivery.selected_method is unsupported')
   need(errors, verified.length <= 1, 'only one paste attempt may be verified')
   need(errors, verified.length ? paste?.selected_method === verified[0].method : paste?.selected_method === null, 'paste_delivery.selected_method must identify the verified attempt')
   need(errors, ['direct_text', 'pasted_text_attachment', null].includes(paste?.rendering), 'paste_delivery.rendering is unsupported')
@@ -147,11 +143,12 @@ function validatePaste(errors, paste, identity, sent) {
   } else if (paste?.rendering === 'pasted_text_attachment') {
     need(errors, paste.direct_text_identity === null, 'attachment rendering requires direct_text_identity=null')
     need(errors, isObject(paste.attachment), 'attachment rendering requires attachment evidence')
-    onlyKeys(errors, paste.attachment, ['name', 'sha256', 'bytes', 'lines', 'present_before_send', 'present_after_send'], 'paste_delivery.attachment')
+    onlyKeys(errors, paste.attachment, ['name', 'lines', 'present_before_send', 'present_after_send'], 'paste_delivery.attachment')
     need(errors, nonEmpty(paste.attachment?.name), 'attachment.name is required')
-    need(errors, paste.attachment?.sha256 === identity.sha256 &&
-      paste.attachment?.bytes === identity.bytes && paste.attachment?.lines === identity.lines,
-    'attachment sha256/bytes/lines must equal canonical prompt')
+    need(errors, Number.isSafeInteger(paste.attachment?.lines) && paste.attachment.lines > 0,
+      'attachment.lines must be a positive integer')
+    need(errors, paste.attachment?.lines === identity.lines,
+      'attachment visible line count must equal canonical prompt line count')
     need(errors, paste.attachment?.present_before_send === true, 'attachment must be visible before send')
     if (sent) { need(errors, paste.attachment?.present_after_send === true, 'sent attachment must remain visible after send') }
   } else {

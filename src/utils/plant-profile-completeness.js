@@ -1,4 +1,4 @@
-import { hasMeaningfulLightEnvironment } from './light-environment.js'
+import { isUserConfirmedLightEnvironment } from './light-environment.js'
 import { isAirEnvironmentAnswerReady } from './air-environment.js'
 import { normalizePlantCareLocation } from './plant-care-location.js'
 
@@ -53,7 +53,8 @@ export function getPlantProfileCompletenessDetail(plant = {}) {
   const identityName = resolveIdentityName(plant)
   const careLocation = normalizePlantCareLocation(plant?.careLocation)
   const plantDate = resolvePlantDate(plant)
-  const hasLight = hasMeaningfulLightEnvironment(plant?.lightEnvironment)
+  // 迁移记录必须经用户确认后才能获得资料完整度积分。
+  const hasLight = isUserConfirmedLightEnvironment(plant?.lightEnvironment)
   const hasAir = hasMeaningfulAirEnvironment(plant?.airEnvironment)
   const hasPotProfile = hasMeaningfulPotProfile(plant?.potProfile)
 

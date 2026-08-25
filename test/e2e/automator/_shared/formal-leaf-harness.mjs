@@ -4,6 +4,12 @@ import { captureFormalScreenshot as defaultCaptureFormalScreenshot } from './for
 import { screenshotStabilityBudget, waitForScreenshotStability } from './screenshot-stability.mjs'
 
 export const FORMAL_LEAF_TIMEOUT_MS = 12_000
+// The formal preflight renderer gate already uses a 20s bounded screenshot
+// window. Leaf screenshots run after route transitions and business UI state
+// settles, so they must use the same explicit budget when callers do not
+// provide one; otherwise the shared leaf harness silently falls back to the
+// worker's shorter 15s default and can terminate a healthy renderer too early.
+export const FORMAL_LEAF_SCREENSHOT_TIMEOUT_MS = 20_000
 const liveSessions = new WeakMap()
 
 function fingerprint(value) {
@@ -37,18 +43,66 @@ function resumeSession(session, replacement) {
   return session
 }
 
-export async function connectAutomatorTransport(automator, wsEndpoint) {
-  // miniprogram-automator 0.12.x calls checkVersion() after connecting and
-  // assumes Tool.getInfo().SDKVersion is always present. Recent WeChat
-  // DevTools may omit that optional field for cloned QA projects; the SDK
-  // then crashes in cmpVersion with `undefined.split`. The transport
-  // connection itself is valid and the project/runtime identity has already
-  // been verified by the QA supervisor, so use the launcher's transport-only
-  // method when available and keep the package fallback for older releases.
-  if (typeof automator?.launcher?.connectTool === 'function') {
-    return automator.launcher.connectTool({ wsEndpoint })
+function readTransportProof(env = process.env) {
+  try {
+    const value = JSON.parse(String(env.QA_AUTOMATOR_RUNTIME_PROOF || ''))
+    return value && typeof value === 'object' ? value : null
+  } catch {
+    return null
   }
-  return automator.connect({ wsEndpoint })
+}
+
+function sdkVersionCompatibilityError(error) {
+  const text = `${String(error?.message || '')}\n${String(error?.stack || '')}`
+  return /SDKVersion|undefined[^\n]*(?:split|cmpVersion)/iu.test(text)
+}
+
+function verifiedTransportProof(proof) {
+  return Boolean(
+    proof?.project_identity_verified === true &&
+    proof?.control_port_verified === true &&
+    Number(proof?.main_devtools_pid) > 0 &&
+    Number(proof?.automation_listener_pid || proof?.port_owner_pid) > 0 &&
+    Number(proof?.automator_port) > 0 &&
+    Number(proof?.control_port) > 0 &&
+    typeof proof?.observed_project_path === 'string' &&
+    proof.observed_project_path.length > 0
+  )
+}
+
+export async function connectAutomatorTransport(automator, wsEndpoint, { runtimeProof } = {}) {
+  try {
+    // The official API is always attempted first. connectTool is a transport
+    // escape hatch, never the default connection path.
+    return await automator.connect({ wsEndpoint })
+  } catch (error) {
+    const proof = runtimeProof || readTransportProof()
+    if (!sdkVersionCompatibilityError(error)) {
+      throw error
+    }
+    if (!verifiedTransportProof(proof)) {
+      const blocked = new Error(
+        'Automator SDKVersion compatibility fallback refused without verified target runtime'
+      )
+      blocked.code = 'qa_automator_compatibility_proof_missing'
+      blocked.cause = error
+      throw blocked
+    }
+    if (typeof automator?.launcher?.connectTool !== 'function') {
+      throw error
+    }
+    const transport = await automator.launcher.connectTool({ wsEndpoint })
+    try {
+      Object.defineProperty(transport, '__qa_transport_mode', {
+        value: 'connectTool_sdkversion_compatibility',
+        configurable: true,
+        enumerable: false
+      })
+    } catch {
+      // The SDK object may be sealed; the verified connection is still valid.
+    }
+    return transport
+  }
 }
 
 export function resolveFormalLeafPrincipal(env = process.env) {
@@ -75,6 +129,13 @@ export async function installFormalLeafPrincipal({
   timeoutMs,
   deadline = withDeadline
 } = {}) {
+  if (env.QA_CATALOG_DATA_MODE !== 'fixture_diagnostic') {
+    const error = new Error(
+      'formal leaf principal injection is restricted to fixture_diagnostic leaves'
+    )
+    error.code = 'formal_live_principal_injection_forbidden'
+    throw error
+  }
   if (!mp?.callWxMethod) {
     const error = new Error('formal leaf principal requires callWxMethod')
     error.code = 'formal_leaf_principal_install_unavailable'
@@ -195,7 +256,10 @@ export async function connectFormalLeaf({
   const raw = await deadline({
     name: 'leaf.connect',
     timeoutMs,
-    operation: () => connectAutomatorTransport(automator, wsEndpoint)
+    operation: () =>
+      connectAutomatorTransport(automator, wsEndpoint, {
+        runtimeProof: readTransportProof(env)
+      })
   })
   return { mp: createResumableSession(raw), wsEndpoint }
 }
@@ -241,6 +305,10 @@ export async function handoffFormalLeafScreenshot({
   captureFormalScreenshot = defaultCaptureFormalScreenshot,
   deadline = withDeadline
 } = {}) {
+  const boundedScreenshotTimeoutMs =
+    Number.isFinite(Number(timeoutMs)) && Number(timeoutMs) > 0
+      ? Number(timeoutMs)
+      : FORMAL_LEAF_SCREENSHOT_TIMEOUT_MS
   const verifiedEndpoint = formalAutomatorEndpoint({
     MINIPROGRAM_AUTOMATOR_WS: wsEndpoint ?? process.env.MINIPROGRAM_AUTOMATOR_WS
   })
@@ -251,7 +319,7 @@ export async function handoffFormalLeafScreenshot({
         miniProgram: mp,
         projectPath,
         expectedRoute,
-        timeoutMs: screenshotStabilityBudget(Number(timeoutMs) || 10_000)
+        timeoutMs: screenshotStabilityBudget(boundedScreenshotTimeoutMs)
       })
     } catch (error) {
       // The worker is the authoritative screenshot owner. A primary-session
@@ -266,7 +334,7 @@ export async function handoffFormalLeafScreenshot({
   }
   let primaryDisconnect = { status: 'not_attempted' }
   try {
-    await disconnectFormalLeaf({ mp, timeoutMs, deadline })
+    await disconnectFormalLeaf({ mp, timeoutMs: boundedScreenshotTimeoutMs, deadline })
     primaryDisconnect = { status: 'passed' }
   } catch (error) {
     // A page reload or renderer handoff can close the primary transport before
@@ -283,7 +351,7 @@ export async function handoffFormalLeafScreenshot({
     wsEndpoint: verifiedEndpoint,
     outputPath,
     workerPath,
-    timeoutMs,
+    timeoutMs: boundedScreenshotTimeoutMs,
     projectPath,
     expectedRoute,
     maxAttempts,
@@ -294,7 +362,7 @@ export async function handoffFormalLeafScreenshot({
     reconnected = await connectFormalLeaf({
       automator,
       wsEndpoint: verifiedEndpoint,
-      timeoutMs,
+      timeoutMs: boundedScreenshotTimeoutMs,
       deadline
     })
   } catch (error) {

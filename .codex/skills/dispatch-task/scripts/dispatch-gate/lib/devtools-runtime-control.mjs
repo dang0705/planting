@@ -11,6 +11,7 @@ import {
 } from './devtools-runtime-inspection.mjs'
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
+const DEVTOOLS_CONTROL_REQUEST_TIMEOUT_MS = 8_000
 
 export function validVerifiedRuntime(runtime, expectedProjectPath, wsPort) {
   return (
@@ -31,6 +32,7 @@ export async function requestDevToolsControl({
   projectPath,
   controlPort,
   wsPort = 9420,
+  protocol = 'legacy',
   httpGet = http.get
 }) {
   if (!['close', 'open', 'auto'].includes(action) || !positiveInteger(controlPort)) {
@@ -38,31 +40,51 @@ export async function requestDevToolsControl({
   }
   const url = new URL(`http://${DEVTOOLS_CONTROL_HOST}:${Number(controlPort)}/${action}`)
   url.searchParams.set('cli', '1')
-  url.searchParams.set('projectpath', projectPath)
+  // DevTools 2.02.2608212 keeps /open on the legacy projectpath query but
+  // moved the v2 /auto contract to `project` + `autoPort`.  The stock CLI
+  // still sends the old names and exits zero even when the endpoint rejects
+  // them, so the official-Electron adapter must be explicit about the
+  // protocol instead of trusting the CLI exit code.
+  if (action === 'auto' && protocol === 'v2') {
+    url.pathname = '/v2/auto'
+    url.searchParams.set('project', projectPath)
+    url.searchParams.set('autoPort', String(wsPort))
+  } else {
+    url.searchParams.set('projectpath', projectPath)
+  }
   if (action === 'auto') {
-    url.searchParams.set('port', String(wsPort))
+    if (protocol !== 'v2') {
+      url.searchParams.set('port', String(wsPort))
+    }
     url.searchParams.set('account', '')
   }
-  return new Promise(resolve => {
-    const request = httpGet(url, { timeout: 30000 }, response => {
+  const requestOnce = requestUrl => new Promise(resolve => {
+    const request = httpGet(requestUrl, { timeout: DEVTOOLS_CONTROL_REQUEST_TIMEOUT_MS }, response => {
       let body = ''
       response.setEncoding('utf8')
       response.on('data', chunk => {
         body += chunk
       })
-      response.on('end', () =>
+      response.on('end', () => {
+        const location = response.headers?.location
+        if (response.statusCode >= 300 && response.statusCode < 400 && location) {
+          const redirected = new URL(location, requestUrl)
+          requestOnce(redirected).then(resolve)
+          return
+        }
         resolve({
           status_code: response.statusCode ?? null,
-          url: url.toString(),
+          url: requestUrl.toString(),
           body_excerpt: body.slice(0, 1000)
         })
-      )
+      })
     })
     request.once('timeout', () => request.destroy(new Error('devtools_control_timeout')))
     request.once('error', error =>
-      resolve({ status_code: null, url: url.toString(), error: error.message })
+      resolve({ status_code: null, url: requestUrl.toString(), error: error.message })
     )
   })
+  return requestOnce(url)
 }
 
 export async function invokeTargetControl({

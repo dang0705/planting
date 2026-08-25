@@ -2,11 +2,7 @@
  * 微信登录 API
  * 集成微信登录、获取手机号等功能
  */
-import {
-  getCloudbaseAccessToken,
-  getCloudbaseUserIdentity,
-  getWechatPhoneProfile
-} from '@/utils/cloudbase-auth'
+import { getCloudbaseUserIdentity, getWechatPhoneProfile } from '@/utils/cloudbase-auth'
 import { executeAuthUserMutation } from '@/vue-query/auth/mutations/user.js'
 import { fetchAuthUserByOpenidQuery } from '@/vue-query/auth/queries/user.js'
 
@@ -25,15 +21,6 @@ export async function wechatLogin() {
       }
     })
   })
-}
-
-export async function getAccessToken() {
-  try {
-    return await getCloudbaseAccessToken()
-  } catch (error) {
-    console.error('获取 access token 失败:', error)
-    throw error
-  }
 }
 
 export async function getUserInfo() {

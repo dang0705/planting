@@ -606,8 +606,17 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     hasImageInputs: Boolean(hasImageInputs)
   })
 
+  // A terminal package answer without image inputs used to return before the
+  // session write completed. That is acceptable for an unbound diagnosis, but
+  // it is unsafe for a user plant: the response can already be final while a
+  // diagnosis-derived fertilization guard is still missing from the plant.
+  const linkedUserPlantId =
+    roundResult?.plantContext?.userPlantId || refreshedSessionState?.userPlantId || null
   const shouldReturnBeforeRoundPersistence =
-    isTerminalQuestionPackageSubmit && !hasImageInputs && !isAnswerRevision
+    isTerminalQuestionPackageSubmit &&
+    !hasImageInputs &&
+    !isAnswerRevision &&
+    !linkedUserPlantId
   if (shouldReturnBeforeRoundPersistence) {
     for (const task of requiredAnswerPersistenceTasks) {
       if (task && typeof task.then === 'function') {

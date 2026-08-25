@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
 import { Resolver, lookup as systemLookup } from 'node:dns'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { copyFile, mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises'
 import { extname, resolve } from 'node:path'
 import uni from '@dcloudio/vite-plugin-uni'
 
@@ -13,8 +13,15 @@ const isH5 = process.env.UNI_PLATFORM === 'h5'
 const isApp = process.env.UNI_PLATFORM === 'app'
 const WeappTailwindcssDisabled = isH5 || isApp
 const cloudbaseEnvId = process.env.VITE_CLOUDBASE_ENV_ID || 'cloud1-2grufevs395a9d5e'
-const explicitApiBaseUrl = String(process.env.VITE_API_BASE_URL || '').trim().replace(/\/+$/, '')
-const viteAppEnv = String(process.env.VITE_APP_ENV || '').trim().toLowerCase()
+const explicitApiBaseUrl = String(process.env.VITE_API_BASE_URL || '')
+  .trim()
+  .replace(/\/+$/, '')
+const viteAppEnv = String(process.env.VITE_APP_ENV || '')
+  .trim()
+  .toLowerCase()
+const vendorMinifyQaEnabled = process.env.MP_VENDOR_MINIFY_QA === '1'
+const vendorIdentifierMinifyEnabled =
+  vendorMinifyQaEnabled && process.env.MP_VENDOR_MINIFY_IDENTIFIERS === '1'
 const cloudbaseFunctionProxyPrefix = '/__tcb_functions__'
 const cloudbaseFunctionProxyTarget = `https://${cloudbaseEnvId}.api.tcloudbasegateway.com`
 const localDiagnosisReviewPrefix = '/__local_diagnosis_review__'
@@ -29,23 +36,37 @@ let diagnosisReviewAuditStore = null
 let diagnosisReviewAuditPersistQueue = Promise.resolve()
 
 function isPrivateLocalHostname(hostname = '') {
-  const normalized = String(hostname || '').trim().toLowerCase()
-  if (!normalized) {return false}
+  const normalized = String(hostname || '')
+    .trim()
+    .toLowerCase()
+  if (!normalized) {
+    return false
+  }
   if (['localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]'].includes(normalized)) {
     return true
   }
-  if (normalized.startsWith('192.168.')) {return true}
-  if (normalized.startsWith('10.')) {return true}
+  if (normalized.startsWith('192.168.')) {
+    return true
+  }
+  if (normalized.startsWith('10.')) {
+    return true
+  }
 
   const match = normalized.match(/^172\.(\d+)\./)
-  if (!match) {return false}
+  if (!match) {
+    return false
+  }
   const second = Number(match[1])
   return second >= 16 && second <= 31
 }
 
 function getApiBaseUrlHostname(value = '') {
-  const normalized = String(value || '').trim().replace(/\/+$/, '')
-  if (!normalized || normalized.startsWith('/')) {return ''}
+  const normalized = String(value || '')
+    .trim()
+    .replace(/\/+$/, '')
+  if (!normalized || normalized.startsWith('/')) {
+    return ''
+  }
 
   const withoutProtocol = normalized.replace(/^[a-z][a-z\d+.-]*:\/\//i, '')
   const withoutPath = withoutProtocol.split(/[/?#]/)[0] || ''
@@ -58,7 +79,9 @@ function getApiBaseUrlHostname(value = '') {
 }
 
 function isLocalOrInsecureApiBaseUrl(value = '') {
-  if (!value || value.startsWith('/')) {return false}
+  if (!value || value.startsWith('/')) {
+    return false
+  }
   return /^http:\/\//i.test(value) || isPrivateLocalHostname(getApiBaseUrlHostname(value))
 }
 
@@ -91,21 +114,45 @@ function normalizeText(value = '') {
 }
 
 function normalizeReviewSourceType(value = '', fallback = 'session') {
-  const normalized = String(value || '').trim().toLowerCase()
-  if (normalized === 'all') {return 'all'}
-  if (normalized === 'batch') {return 'batch'}
-  if (normalized === 'manual') {return 'manual'}
-  if (normalized === 'session') {return 'session'}
-  if (normalized === 'web') {return 'web'}
-  if (fallback === 'all') {return 'all'}
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase()
+  if (normalized === 'all') {
+    return 'all'
+  }
+  if (normalized === 'batch') {
+    return 'batch'
+  }
+  if (normalized === 'manual') {
+    return 'manual'
+  }
+  if (normalized === 'session') {
+    return 'session'
+  }
+  if (normalized === 'web') {
+    return 'web'
+  }
+  if (fallback === 'all') {
+    return 'all'
+  }
   return fallback
 }
 
-function normalizeReviewSourceEvidence(value = '', reviewSourceType = 'session', clientPlatform = '') {
+function normalizeReviewSourceEvidence(
+  value = '',
+  reviewSourceType = 'session',
+  clientPlatform = ''
+) {
   const normalized = normalizeText(value)
-  if (normalized) {return normalized}
-  if (reviewSourceType === 'batch') {return 'batch_table'}
-  if (reviewSourceType === 'web') {return 'web_tagged'}
+  if (normalized) {
+    return normalized
+  }
+  if (reviewSourceType === 'batch') {
+    return 'batch_table'
+  }
+  if (reviewSourceType === 'web') {
+    return 'web_tagged'
+  }
   if (miniProgramClientPlatforms.has(normalizeText(clientPlatform).toLowerCase())) {
     return 'platform_tagged'
   }
@@ -142,10 +189,16 @@ function buildNormalizedSummaryFromRaw(data = {}, fallbackSummary = {}) {
       ? rawSummary.total
       : data?.total || fallbackSummary.total || 0
   )
-  const problematicCount = Number(rawSummary?.problematicCount || fallbackSummary.problematicCount || 0)
-  const nonProblematicCount = Number(rawSummary?.nonProblematicCount || fallbackSummary.nonProblematicCount || 0)
+  const problematicCount = Number(
+    rawSummary?.problematicCount || fallbackSummary.problematicCount || 0
+  )
+  const nonProblematicCount = Number(
+    rawSummary?.nonProblematicCount || fallbackSummary.nonProblematicCount || 0
+  )
   const uncertainCount = Number(rawSummary?.uncertainCount || fallbackSummary.uncertainCount || 0)
-  const otherOutcomeCount = Number(rawSummary?.otherOutcomeCount || fallbackSummary.otherOutcomeCount || 0)
+  const otherOutcomeCount = Number(
+    rawSummary?.otherOutcomeCount || fallbackSummary.otherOutcomeCount || 0
+  )
   const finalizedCount = Number(
     Object.prototype.hasOwnProperty.call(rawSummary, 'finalizedCount')
       ? rawSummary.finalizedCount
@@ -194,11 +247,9 @@ function resolveNormalizedReviewSourceType({
 
   if (
     normalizedType === 'manual' &&
-    (
-      normalizedEvidence === 'platform_tagged' ||
+    (normalizedEvidence === 'platform_tagged' ||
       normalizedEvidence === 'openid_inferred_manual' ||
-      miniProgramClientPlatforms.has(normalizedPlatform)
-    )
+      miniProgramClientPlatforms.has(normalizedPlatform))
   ) {
     return 'manual'
   }
@@ -216,17 +267,29 @@ function resolveNormalizedReviewSourceType({
 
 function normalizePreviewImageRef(value = '') {
   const normalized = normalizeText(value)
-  if (!normalized) {return ''}
-  if (normalized === '[inline_data_url]') {return ''}
+  if (!normalized) {
+    return ''
+  }
+  if (normalized === '[inline_data_url]') {
+    return ''
+  }
   return normalized
 }
 
 function guessImageContentType(filePath = '') {
   const extension = extname(String(filePath || '').trim()).toLowerCase()
-  if (extension === '.png') {return 'image/png'}
-  if (extension === '.webp') {return 'image/webp'}
-  if (extension === '.gif') {return 'image/gif'}
-  if (extension === '.heic') {return 'image/heic'}
+  if (extension === '.png') {
+    return 'image/png'
+  }
+  if (extension === '.webp') {
+    return 'image/webp'
+  }
+  if (extension === '.gif') {
+    return 'image/gif'
+  }
+  if (extension === '.heic') {
+    return 'image/heic'
+  }
   return 'image/jpeg'
 }
 
@@ -301,7 +364,9 @@ function queuePersistDiagnosisReviewAuditStore() {
   diagnosisReviewAuditPersistQueue = diagnosisReviewAuditPersistQueue
     .catch(() => {})
     .then(async () => {
-      if (!diagnosisReviewAuditStore) {return}
+      if (!diagnosisReviewAuditStore) {
+        return
+      }
       await mkdir(resolve(__dirname, 'tmp'), { recursive: true })
       await writeFile(
         localDiagnosisReviewStorePath,
@@ -317,7 +382,9 @@ function _buildQueryString(query = {}) {
   const entries = Object.entries(query).filter(
     ([, value]) => value !== undefined && value !== null && value !== ''
   )
-  if (!entries.length) {return ''}
+  if (!entries.length) {
+    return ''
+  }
 
   return `?${entries
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
@@ -345,11 +412,7 @@ function extractPreviewImageRefsFromPayload(payload = {}) {
 
   const singleImage = normalizePreviewImageRef(payload?.image || '')
 
-  return uniqueStrings([
-    ...structuredRefs,
-    ...imageIds,
-    ...(singleImage ? [singleImage] : [])
-  ])
+  return uniqueStrings([...structuredRefs, ...imageIds, ...(singleImage ? [singleImage] : [])])
 }
 
 function normalizeQuestionCountSummary(summary = null) {
@@ -406,7 +469,9 @@ function resolveDiagnosisDirectionLabels(detail = {}) {
   const directionItems = Array.isArray(detail?.diagnosisDirectionLabels)
     ? detail.diagnosisDirectionLabels
     : Array.isArray(detail?.coreProcess?.evidence?.diagnosisDirections)
-      ? detail.coreProcess.evidence.diagnosisDirections.map(item => item?.label || item?.directionKey || '')
+      ? detail.coreProcess.evidence.diagnosisDirections.map(
+          item => item?.label || item?.directionKey || ''
+        )
       : []
 
   return uniqueStrings(directionItems)
@@ -418,7 +483,10 @@ function mapAuditRecordToListItem(record = {}) {
     detail?.clientPlatform || detail?.clientContext?.platform || record.clientPlatform || ''
   )
   const reviewSourceType = resolveNormalizedReviewSourceType({
-    reviewSourceType: detail?.reviewSourceType || record.reviewSourceType || (detail?.batchReviewMeta ? 'batch' : ''),
+    reviewSourceType:
+      detail?.reviewSourceType ||
+      record.reviewSourceType ||
+      (detail?.batchReviewMeta ? 'batch' : ''),
     reviewSourceEvidence: detail?.reviewSourceEvidence || record.reviewSourceEvidence || '',
     clientPlatform,
     hasBatchReviewMeta: Boolean(detail?.batchReviewMeta),
@@ -451,7 +519,8 @@ function mapAuditRecordToListItem(record = {}) {
     plantCatalogId: detail?.plantCatalogId || null,
     plantIdentityId: normalizeText(detail?.plantIdentityId || ''),
     latestVisualCallBatchId:
-      normalizeText(detail?.latestVisualCallBatchId || '') || normalizeText(record.latestVisualCallBatchId || ''),
+      normalizeText(detail?.latestVisualCallBatchId || '') ||
+      normalizeText(record.latestVisualCallBatchId || ''),
     createdAt: normalizeText(record.createdAt || detail?.createdAt || ''),
     updatedAt: normalizeText(record.updatedAt || detail?.updatedAt || ''),
     outcomeType: normalizeText(detail?.outcomeType || record.outcomeType || ''),
@@ -462,10 +531,16 @@ function mapAuditRecordToListItem(record = {}) {
     displayName: resolveDisplayName(detail),
     summary: resolveSummary(detail),
     routePrimaryAction: normalizeText(
-      detail?.routePrimaryAction || detail?.coreSummary?.routePrimaryAction || detail?.coreProcess?.decision?.routePrimaryAction || ''
+      detail?.routePrimaryAction ||
+        detail?.coreSummary?.routePrimaryAction ||
+        detail?.coreProcess?.decision?.routePrimaryAction ||
+        ''
     ),
     stopReason: normalizeText(
-      detail?.stopReason || detail?.coreSummary?.stopReason || detail?.coreProcess?.decision?.stopReason || ''
+      detail?.stopReason ||
+        detail?.coreSummary?.stopReason ||
+        detail?.coreProcess?.decision?.stopReason ||
+        ''
     ),
     sessionStatus: normalizeText(detail?.status || detail?.sessionStatus || ''),
     identityResolutionStatus: normalizeText(detail?.identityResolutionStatus || ''),
@@ -477,9 +552,14 @@ function mapAuditRecordToListItem(record = {}) {
       Array.isArray(record.previewImageRefs) ? record.previewImageRefs.length : 0
     ),
     previewVisualRawImageRecordId: '',
-    previewImageRef: normalizePreviewImageRef(record.coverImageRef || record.previewImageRefs?.[0] || ''),
+    previewImageRef: normalizePreviewImageRef(
+      record.coverImageRef || record.previewImageRefs?.[0] || ''
+    ),
     hasReplayImage: Number((record.previewImageRefs || []).length > 0),
-    imageState: Array.isArray(record.previewImageRefs) && record.previewImageRefs.length ? 'replay' : 'missing',
+    imageState:
+      Array.isArray(record.previewImageRefs) && record.previewImageRefs.length
+        ? 'replay'
+        : 'missing',
     observedEvidenceCount,
     derivedEvidenceCount,
     reviewSourceType,
@@ -490,10 +570,16 @@ function mapAuditRecordToListItem(record = {}) {
     questionCountSummary,
     coreSummary: {
       routePrimaryAction: normalizeText(
-        detail?.routePrimaryAction || detail?.coreSummary?.routePrimaryAction || detail?.coreProcess?.decision?.routePrimaryAction || ''
+        detail?.routePrimaryAction ||
+          detail?.coreSummary?.routePrimaryAction ||
+          detail?.coreProcess?.decision?.routePrimaryAction ||
+          ''
       ),
       stopReason: normalizeText(
-        detail?.stopReason || detail?.coreSummary?.stopReason || detail?.coreProcess?.decision?.stopReason || ''
+        detail?.stopReason ||
+          detail?.coreSummary?.stopReason ||
+          detail?.coreProcess?.decision?.stopReason ||
+          ''
       ),
       observedEvidenceCount,
       derivedEvidenceCount,
@@ -506,7 +592,9 @@ function mapAuditRecordToListItem(record = {}) {
 function buildLocalDiagnosisReviewSummary(items = []) {
   const safeItems = Array.isArray(items) ? items : []
   const problematicCount = safeItems.filter(item => item?.outcomeType === 'problematic').length
-  const nonProblematicCount = safeItems.filter(item => item?.outcomeType === 'non_problematic').length
+  const nonProblematicCount = safeItems.filter(
+    item => item?.outcomeType === 'non_problematic'
+  ).length
   const uncertainCount = safeItems.filter(item => item?.outcomeType === 'uncertain').length
   const finalizedCount = problematicCount + nonProblematicCount + uncertainCount
   const otherOutcomeCount = safeItems.filter(item => {
@@ -532,7 +620,9 @@ function buildLocalDiagnosisReviewSummary(items = []) {
 function normalizeReviewListEnvelopeData(data = {}, fallbackSourceType = 'all') {
   const normalizedItems = (Array.isArray(data?.items) ? data.items : []).map(item => {
     const batchReviewMeta =
-      item?.batchReviewMeta && typeof item.batchReviewMeta === 'object' ? item.batchReviewMeta : null
+      item?.batchReviewMeta && typeof item.batchReviewMeta === 'object'
+        ? item.batchReviewMeta
+        : null
     const clientPlatform = normalizeText(item?.clientPlatform || '')
     const reviewSourceType = resolveNormalizedReviewSourceType({
       reviewSourceType: item?.reviewSourceType || (batchReviewMeta ? 'batch' : ''),
@@ -556,7 +646,9 @@ function normalizeReviewListEnvelopeData(data = {}, fallbackSourceType = 'all') 
   })
   const requestedSourceType = normalizeReviewSourceType(fallbackSourceType, 'all')
   const items = normalizedItems.filter(item => {
-    if (requestedSourceType === 'all') {return item.reviewSourceType !== 'session'}
+    if (requestedSourceType === 'all') {
+      return item.reviewSourceType !== 'session'
+    }
     return item.reviewSourceType === requestedSourceType
   })
 
@@ -572,9 +664,9 @@ function normalizeReviewListEnvelopeData(data = {}, fallbackSourceType = 'all') 
     nonProblematicCount: items.filter(item => item?.outcomeType === 'non_problematic').length,
     uncertainCount: items.filter(item => item?.outcomeType === 'uncertain').length,
     otherOutcomeCount: items.filter(item => {
-        const outcomeType = normalizeText(item?.outcomeType || '').toLowerCase()
-        return outcomeType && !['problematic', 'non_problematic', 'uncertain'].includes(outcomeType)
-      }).length
+      const outcomeType = normalizeText(item?.outcomeType || '').toLowerCase()
+      return outcomeType && !['problematic', 'non_problematic', 'uncertain'].includes(outcomeType)
+    }).length
   }
   directSourceSummary.finalizedCount =
     directSourceSummary.problematicCount +
@@ -582,7 +674,9 @@ function normalizeReviewListEnvelopeData(data = {}, fallbackSourceType = 'all') 
     directSourceSummary.uncertainCount
   directSourceSummary.pendingCount = Math.max(
     0,
-    directSourceSummary.total - directSourceSummary.finalizedCount - directSourceSummary.otherOutcomeCount
+    directSourceSummary.total -
+      directSourceSummary.finalizedCount -
+      directSourceSummary.otherOutcomeCount
   )
   const effectiveSummary =
     requestedSourceType === 'session'
@@ -595,7 +689,9 @@ function normalizeReviewListEnvelopeData(data = {}, fallbackSourceType = 'all') 
             sessionCount: Number(rawSummary.sessionCount || fallbackSummary.sessionCount || 0)
           }
         : {
-            ...(hasExplicitSummary(data) && useRawSummaryForSource ? rawSummary : directSourceSummary)
+            ...(hasExplicitSummary(data) && useRawSummaryForSource
+              ? rawSummary
+              : directSourceSummary)
           }
   const manualCount =
     requestedSourceType === 'manual'
@@ -635,7 +731,11 @@ function normalizeReviewListEnvelopeData(data = {}, fallbackSourceType = 'all') 
   }
 }
 
-async function recordDiagnosisAuditEvent({ relativePath = '', requestBody = undefined, responseBody = '' } = {}) {
+async function recordDiagnosisAuditEvent({
+  relativePath = '',
+  requestBody = undefined,
+  responseBody = ''
+} = {}) {
   const routePath = String(relativePath || '').split('?')[0]
   if (
     !routePath.includes('/diagnosis/start') &&
@@ -646,18 +746,26 @@ async function recordDiagnosisAuditEvent({ relativePath = '', requestBody = unde
   }
 
   const envelope = safeJsonParse(responseBody, null)
-  const detail = envelope?.code === 200 && envelope?.data && typeof envelope.data === 'object'
-    ? envelope.data
-    : null
-  if (!detail) {return}
+  const detail =
+    envelope?.code === 200 && envelope?.data && typeof envelope.data === 'object'
+      ? envelope.data
+      : null
+  if (!detail) {
+    return
+  }
 
   const diagnosisSessionId = normalizeText(
     detail?.diagnosisSessionId || detail?.sessionId || detail?.resultId || ''
   )
-  if (!diagnosisSessionId) {return}
+  if (!diagnosisSessionId) {
+    return
+  }
 
   const requestPayload = requestBody
-    ? safeJsonParse(Buffer.isBuffer(requestBody) ? requestBody.toString('utf8') : String(requestBody), {})
+    ? safeJsonParse(
+        Buffer.isBuffer(requestBody) ? requestBody.toString('utf8') : String(requestBody),
+        {}
+      )
     : {}
   const requestPreviewImageRefs = extractPreviewImageRefsFromPayload(requestPayload)
   const detailPreviewImageRefs = uniqueStrings(
@@ -721,10 +829,7 @@ async function handleLocalDiagnosisReviewRequest(req, res) {
 
   if (pathname === `${localDiagnosisReviewPrefix}/list`) {
     const outcomeType = normalizeText(url.searchParams.get('outcomeType') || 'all').toLowerCase()
-    const sourceType = normalizeReviewSourceType(
-      url.searchParams.get('sourceType') || 'all',
-      'all'
-    )
+    const sourceType = normalizeReviewSourceType(url.searchParams.get('sourceType') || 'all', 'all')
     const keyword = normalizeText(url.searchParams.get('keyword') || '').toLowerCase()
     const page = Math.max(1, Number(url.searchParams.get('page') || 1))
     const pageSize = Math.min(100, Math.max(1, Number(url.searchParams.get('pageSize') || 20)))
@@ -777,7 +882,11 @@ async function handleLocalDiagnosisReviewRequest(req, res) {
     const diagnosisSessionId = normalizeText(url.searchParams.get('diagnosisSessionId') || '')
     const record = diagnosisSessionId ? store.sessions?.[diagnosisSessionId] : null
     if (!record?.detail) {
-      writeJsonResponse(res, 404, { code: 404, message: '本地审计缓存中不存在该诊断详情', data: null })
+      writeJsonResponse(res, 404, {
+        code: 404,
+        message: '本地审计缓存中不存在该诊断详情',
+        data: null
+      })
       return
     }
 
@@ -796,7 +905,11 @@ async function handleLocalDiagnosisReviewRequest(req, res) {
       sampleAbsolutePath
     })
     if (!imageData) {
-      writeJsonResponse(res, 404, { code: 404, message: '本地审计缓存中不存在该诊断图片', data: null })
+      writeJsonResponse(res, 404, {
+        code: 404,
+        message: '本地审计缓存中不存在该诊断图片',
+        data: null
+      })
       return
     }
 
@@ -897,7 +1010,8 @@ function wait(ms = 0) {
 
 function parseCurlHttpResponse(rawOutput = '') {
   const text = String(rawOutput || '')
-  const separatorIndex = text.indexOf('\r\n\r\n') >= 0 ? text.indexOf('\r\n\r\n') : text.indexOf('\n\n')
+  const separatorIndex =
+    text.indexOf('\r\n\r\n') >= 0 ? text.indexOf('\r\n\r\n') : text.indexOf('\n\n')
   if (separatorIndex < 0) {
     throw new Error('Local dev proxy received malformed curl response')
   }
@@ -917,10 +1031,14 @@ function parseCurlHttpResponse(rawOutput = '') {
 
   headerLines.forEach(line => {
     const separator = line.indexOf(':')
-    if (separator <= 0) {return}
+    if (separator <= 0) {
+      return
+    }
     const key = line.slice(0, separator).trim().toLowerCase()
     const value = line.slice(separator + 1).trim()
-    if (!key || !value) {return}
+    if (!key || !value) {
+      return
+    }
     headers[key] = value
   })
 
@@ -931,7 +1049,10 @@ function parseCurlHttpResponse(rawOutput = '') {
   }
 }
 
-async function requestWithDnsFallback(targetUrl, { method = 'GET', headers = {}, body = undefined } = {}) {
+async function requestWithDnsFallback(
+  targetUrl,
+  { method = 'GET', headers = {}, body = undefined } = {}
+) {
   const url = new URL(targetUrl)
   const hostname = String(url.hostname || '').trim()
   const resolvedIp = await resolveCloudbaseHostname(hostname)
@@ -977,14 +1098,17 @@ function createCloudbaseDevProxyPlugin() {
   let cachedAccessToken = ''
 
   async function signInAnonymously() {
-    const response = await requestWithDnsFallback(`${cloudbaseFunctionProxyTarget}/auth/v1/signin/anonymously`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-device-id': deviceId
-      },
-      body: '{}'
-    })
+    const response = await requestWithDnsFallback(
+      `${cloudbaseFunctionProxyTarget}/auth/v1/signin/anonymously`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-device-id': deviceId
+        },
+        body: '{}'
+      }
+    )
     const payload = JSON.parse(String(response.body || '').trim() || 'null')
     if (response.status < 200 || response.status >= 300 || !payload?.access_token) {
       throw new Error(
@@ -1044,7 +1168,9 @@ function createCloudbaseDevProxyPlugin() {
     }
 
     Object.entries(req.headers || {}).forEach(([key, value]) => {
-      if (!value) {return}
+      if (!value) {
+        return
+      }
       if (['host', 'connection', 'content-length'].includes(String(key || '').toLowerCase())) {
         return
       }
@@ -1080,7 +1206,8 @@ function createCloudbaseDevProxyPlugin() {
     if (relativePath.includes('/diagnosis/review/images')) {
       try {
         const parsed = safeJsonParse(responseBody, null)
-        const hasPreviewImageRefs = Array.isArray(parsed?.data?.previewImageRefs) && parsed.data.previewImageRefs.length
+        const hasPreviewImageRefs =
+          Array.isArray(parsed?.data?.previewImageRefs) && parsed.data.previewImageRefs.length
         if (parsed?.code === 200 && !hasPreviewImageRefs) {
           const fallbackImageData = await buildLocalDiagnosisReviewImageData({
             diagnosisSessionId: relativeUrl.searchParams.get('diagnosisSessionId') || '',
@@ -1166,7 +1293,13 @@ function createCloudbaseDevProxyPlugin() {
             res.end(
               JSON.stringify({
                 code: 'LOCAL_DEV_PROXY_FAILED',
-                message: String(retryError?.message || retryError || error?.message || error || 'Local dev proxy failed')
+                message: String(
+                  retryError?.message ||
+                    retryError ||
+                    error?.message ||
+                    error ||
+                    'Local dev proxy failed'
+                )
               })
             )
           }
@@ -1183,7 +1316,9 @@ const cloudbaseDevProxyPlugin = createCloudbaseDevProxyPlugin()
 // 将所有 .js 文件排除出 esbuild 转译，导致 @tanstack/query-core 等 ESM 依赖
 // 中的 ?? 原样进入 vendor.js，预览时报 SyntaxError: Unexpected token ?。
 // 该插件在 Rollup 写入产物后，用 esbuild 对 common/vendor.js 做一次
-// ES2015 语法降级，消除 ?? 与 ?.。
+// ES2015 语法降级，消除 ?? 与 ?.。MP_VENDOR_MINIFY_QA=1 才会额外启用
+// 语法/空白压缩；标识符压缩必须再显式设置 MP_VENDOR_MINIFY_IDENTIFIERS=1。
+// 默认保持关闭，避免日常开发的断点、错误堆栈和热更新行为变化。
 function createWeappJsTranspilePlugin() {
   if (isH5 || isApp) {
     return null
@@ -1209,26 +1344,57 @@ function createWeappJsTranspilePlugin() {
         return
       }
 
-      if (!source.includes('??') && !source.includes('?.')) {
+      const requiresSyntaxTranspile = source.includes('??') || source.includes('?.')
+      if (!requiresSyntaxTranspile && !vendorMinifyQaEnabled) {
         return
       }
 
       const result = await esbuild.transform(source, {
+        sourcefile: vendorPath,
         target: 'es2020',
         supported: {
           'nullish-coalescing': false,
           'optional-chain': false
         },
         loader: 'js',
-        minify: false
+        minify: false,
+        minifySyntax: vendorMinifyQaEnabled,
+        minifyWhitespace: vendorMinifyQaEnabled,
+        minifyIdentifiers: vendorIdentifierMinifyEnabled,
+        keepNames: true
       })
 
-      await writeFile(vendorPath, result.code, 'utf8')
+      const temporaryVendorPath = `${vendorPath}.tmp-${process.pid}-${randomUUID()}`
+      try {
+        await writeFile(temporaryVendorPath, result.code, 'utf8')
+        await rename(temporaryVendorPath, vendorPath)
+      } finally {
+        await unlink(temporaryVendorPath).catch(() => {})
+      }
     }
   }
 }
 
 const weappJsTranspilePlugin = createWeappJsTranspilePlugin()
+
+// The compiled-asset E2E contract is part of the final mini-program output,
+// not a file injected by a test runner immediately before launch. Keeping the
+// copy in a Vite write hook also covers both `uni build` and watch rebuilds.
+function createMpE2eContractPlugin() {
+  const source = resolve(__dirname, 'qa', 'e2e', 'contract', 'mp-e2e.contract.json')
+  return {
+    name: 'planting-mp-e2e-contract',
+    async writeBundle(options) {
+      const outputDir = options?.dir || process.env.UNI_OUTPUT_DIR
+      if (!outputDir || !String(outputDir).endsWith('mp-weixin')) {
+        return
+      }
+      await copyFile(source, resolve(outputDir, 'mp-e2e.contract.json'))
+    }
+  }
+}
+
+const mpE2eContractPlugin = createMpE2eContractPlugin()
 
 export default defineConfig({
   resolve: {
@@ -1244,6 +1410,7 @@ export default defineConfig({
   },
   plugins: [
     uni(),
+    mpE2eContractPlugin,
     ...(weappJsTranspilePlugin ? [weappJsTranspilePlugin] : []),
     ...(cloudbaseDevProxyPlugin ? [cloudbaseDevProxyPlugin] : []),
     uvwt({

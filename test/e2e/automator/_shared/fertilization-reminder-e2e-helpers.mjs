@@ -20,7 +20,7 @@ const SHEET_TRANSITION_MS = 500
 const ZERO = 0
 const BOTTOM_SCROLL_POSITION = 1
 const POPUP_CONTENT_ID = 'plant-card-fertilization-sheet-content'
-const CALCULATION_TOOLTIP_DISMISS_WAIT_MS = 350
+const NATIVE_MODAL_WAIT_MS = 350
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
@@ -126,16 +126,13 @@ export async function waitForCurrentPageElement(mp, id) {
   return waitForElement(page, id, ENTRY_WAIT_MS)
 }
 
-export async function dismissFertilizationCalculationTooltip(mp) {
-  const page = await mp.currentPage()
-  const dismissLayer = await findViewById(
-    page,
-    'fertilization-reminder-calculation-tooltip-dismiss-layer'
-  )
-  if (!dismissLayer) {
-    return false
+export async function hideNativeModal(mp) {
+  try {
+    await mp.callWxMethod('hideModal')
+  } catch {
+    // WeChat DevTools does not expose a wx.hideModal API; a native Alert may
+    // already be absent in the Automator page tree. Continue with the page flow.
   }
-  await dismissLayer.tap()
-  await sleep(CALCULATION_TOOLTIP_DISMISS_WAIT_MS)
+  await sleep(NATIVE_MODAL_WAIT_MS)
   return true
 }

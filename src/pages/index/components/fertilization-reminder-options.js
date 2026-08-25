@@ -71,14 +71,14 @@ export function formatFertilizationCheckDate(value) {
   return match ? `${Number(match[2])}月${Number(match[3])}日` : '待定'
 }
 
-export function formatFertilizationCalculationGuidance(preview) {
-  if (preview?.reminderKind === 'first_confirmation' || preview?.lastDateSource !== 'recorded') {
-    return '首次确认：没有可靠的上次施肥日期，先按当前周期的一半安排确认提醒。'
+export function formatFertilizationAlertContent(preview) {
+  const dateText = `${
+    preview?.reminderKind === 'first_confirmation' ? '首次确认提醒' : '下次施肥提醒'
+  }：${formatFertilizationCheckDate(preview?.nextCheckDate)}`
+  if (preview?.reminderKind === 'first_confirmation') {
+    return `${dateText}\n没有可靠的上次施肥日期，届时请先查看本月规则。`
   }
-  if (preview?.lastAppliedDate) {
-    return `按历史记录：以上次施肥日期（${formatFertilizationCheckDate(preview.lastAppliedDate)}）为起点，按当前周期推算。`
-  }
-  return '已按当前月施肥周期计算，请确认后再加入手机日历。'
+  return dateText
 }
 
 export function formatFertilizationReminderState(reminder) {

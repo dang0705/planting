@@ -86,6 +86,7 @@
           <view
             v-for="(item, index) in visibleMenuItems"
             :key="item.id"
+            :id="`profile-menu-${item.action}`"
             class="flex items-center justify-between px-4 py-4"
             :class="{ 'border-t border-gray-100': index > 0 }"
             @click="handleMenuClick(item)"
@@ -160,7 +161,7 @@
 import { ref, computed, onMounted } from 'vue'
 import Layout from '@/Layout.vue'
 import { useUserStore } from '@/store/user.js'
-import { getDiagnosisHistory } from '@/api/plants-http.js'
+import { getDiagnosisHistory } from '@/api/diagnosis-history.js'
 import { isDevelopmentAppEnv } from '@/utils/runtime-env.js'
 
 const userStore = useUserStore()
@@ -332,17 +333,17 @@ function handleMenuClick(item) {
       break
     case 'outOfPoolReview':
       uni.navigateTo({
-        url: '/pages/profile/out-of-pool-review'
+        url: '/subpackages/review/out-of-pool-review'
       })
       break
     case 'diagnosisReview':
       uni.navigateTo({
-        url: '/pages/profile/diagnosis-review'
+        url: '/subpackages/review/diagnosis-review'
       })
       break
     case 'wateringReview':
       uni.navigateTo({
-        url: '/pages/profile/watering-review'
+        url: '/subpackages/review/watering-review'
       })
       break
   }
@@ -350,13 +351,13 @@ function handleMenuClick(item) {
 
 function viewAllHistory() {
   uni.navigateTo({
-    url: '/pages/profile/diagnosis-review'
+    url: '/subpackages/review/diagnosis-review'
   })
 }
 
 function viewDiagnoseDetail(item) {
   uni.navigateTo({
-    url: `/pages/diagnose/result?id=${item._id}`
+    url: `/subpackages/diagnosis/result?id=${item._id}`
   })
 }
 

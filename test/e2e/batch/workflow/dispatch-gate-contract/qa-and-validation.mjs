@@ -930,6 +930,35 @@ assert.equal(
   classifyQaFailure({ exitCode: 1, leafReport: malformedStructuredReport }),
   'failed_script'
 )
+const reportFileRunId = `leaf-report-file-${Date.now()}`
+const reportFilePath = path.join(
+  repoRoot,
+  '.tmp',
+  'dispatch-task',
+  reportFileRunId,
+  'qa-artifacts',
+  'leaf.json'
+)
+writeJson(reportFilePath, {
+  status: 'passed',
+  classification: 'PASS',
+  business_assertions_reached: true,
+  assertions: [{ name: 'runtime-page', passed: true }]
+})
+const reportFromFilePath = extractLeafReport({
+  stdout: `[e2e] classification: PASS\n[e2e] report: ${reportFilePath}\n`
+})
+assert.equal(reportFromFilePath.parse_status, 'parsed')
+assert.equal(reportFromFilePath.source, 'stdout_report_file')
+assert.equal(reportFromFilePath.report.status, 'passed')
+assert.equal(reportFromFilePath.report_path, reportFilePath)
+assert.equal(
+  extractLeafReport({ stdout: `[e2e] report: ${path.join(repoRoot, 'package.json')}\n` })
+    .parse_status,
+  'malformed',
+  'report path fallback must fail closed outside the dispatch artifact root'
+)
+cleanupDispatchState(reportFileRunId)
 const leafReportRecord = path.join(
   repoRoot,
   '.tmp',

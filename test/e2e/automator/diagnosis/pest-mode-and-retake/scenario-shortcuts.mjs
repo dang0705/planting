@@ -46,11 +46,11 @@ async function runShortcutScenario(report, miniProgram, wsEndpoint, artifactDir)
     await sleep(300)
   }
   recordAssertion(report, 'yellow and wilting quick entries are separate', Boolean(yellow && wilt))
-  const questionPage = await waitForPagePath(miniProgram, 'pages/diagnose/question-package')
+  const questionPage = await waitForPagePath(miniProgram, 'subpackages/diagnosis/question-package')
   recordAssertion(
     report,
     'yellow shortcut enters existing question package page',
-    questionPage?.path === 'pages/diagnose/question-package',
+    questionPage?.path === 'subpackages/diagnosis/question-package',
     questionPage?.path
   )
   const shortcutRequests = (await readRequests(miniProgram)).slice(requestBaseline)

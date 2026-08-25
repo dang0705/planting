@@ -89,7 +89,7 @@ import { useLayoutStore } from '@/store/layout.js'
 import { useUserStore } from '@/store/user.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
 
-const QUESTION_PACKAGE_PAGE_ROUTE = 'pages/diagnose/question-package'
+const QUESTION_PACKAGE_PAGE_ROUTE = 'subpackages/diagnosis/question-package'
 
 const props = defineProps({
   title: { type: String, default: '' },

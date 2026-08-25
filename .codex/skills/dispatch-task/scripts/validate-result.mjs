@@ -268,6 +268,10 @@ function validateSelectionToConsumer(resultObject, handoffObject, { need, isObje
 }
 
 if (role === 'external') {
+  const authorizedMainTakeover =
+    result.source === 'codex_recovery_after_zcode' &&
+    result.main_takeover_authorized_by_user === true &&
+    result.implementation_owner === 'main'
   need(
     handoffExternalMode,
     'role=external is only valid for implementation_mode=external_implementer'
@@ -280,7 +284,10 @@ if (role === 'external') {
     ['completed', 'blocked'].includes(result.status),
     'external status must be completed|blocked'
   )
-  need(result.codex_self_implementation === false, 'codex_self_implementation must be false')
+  need(
+    result.codex_self_implementation === false || authorizedMainTakeover,
+    'codex_self_implementation must be false unless an explicit user-authorized main takeover is recorded'
+  )
   need(
     result.external_completion_claim_treated_as_non_authoritative === true ||
       result.zcode_completion_claim_treated_as_non_authoritative === true,

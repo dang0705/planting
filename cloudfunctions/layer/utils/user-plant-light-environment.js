@@ -4,7 +4,7 @@
  * 用户植物光照环境查询模块 —— 职责单一的小模块。
  *
  * 仅从 user_plant_instances 表读取 light_environment_json 列并解析为
- * 结构化光照输入（facing/windowType/position/hasDirectSun/distance），
+ * 结构化光照输入（naturalLightType/entryMethod/hasSupplementalLight），
  * 供蒸腾间隔修正（transpiration）消费。
  *
  * 不复制光照公式、SQL 业务契约或制造第二事实源；

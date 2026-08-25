@@ -1,22 +1,18 @@
-import { runDevToolsCli, waitFor } from './test-owned-qa-support.mjs'
+import { waitFor } from './test-owned-qa-support.mjs'
+import { terminateProcessTree } from './test-owned-qa-support.mjs'
 import { requestDevToolsControl } from './devtools-runtime-control.mjs'
+import { listenerPids } from './devtools-process-topology.mjs'
 
-const RECOVERY_CLI_TIMEOUT_MS = 15_000
 const RECOVERY_SETTLE_TIMEOUT_MS = 30_000
 const DEFAULT_AUTOMATOR_PREPARE_DELAY_MS = 4_000
 
-function cliFailure(action, result) {
-  if (result.timedOut) {
-    const error = new Error(`test-owned DevTools ${action} CLI timed out`)
-    error.code = `qa_test_owned_${action}_timeout`
-    throw error
-  }
-  if (result.exitCode !== 0) {
-    const error = new Error(
-      `test-owned DevTools ${action} CLI exited with code ${result.exitCode ?? 'unknown'}`
-    )
-    error.code = `qa_test_owned_${action}_failed`
-    throw error
+function controlInvocation(action, result, session) {
+  return {
+    action,
+    control_port: Number(session.controlPort),
+    status_code: result?.status_code ?? null,
+    url: result?.url ?? '',
+    body_excerpt: String(result?.body_excerpt ?? result?.error ?? '').slice(0, 1000)
   }
 }
 
@@ -28,6 +24,13 @@ function controlFailure(action, result) {
     `test-owned DevTools ${action} control request failed with status ${result?.status_code ?? 'unknown'}`
   )
   error.code = `qa_test_owned_${action}_failed`
+  error.details = {
+    action,
+    status_code: result?.status_code ?? null,
+    url: result?.url ?? '',
+    body_excerpt: String(result?.body_excerpt ?? result?.error ?? '').slice(0, 1000),
+    response: result?.response ?? null
+  }
   throw error
 }
 
@@ -39,120 +42,210 @@ export async function recoverTestOwnedDevToolsStartup({
   projectOpenEvidenceFn,
   idePortReadyFn = null,
   launchDevTools = null,
-  runCli = runDevToolsCli,
+  openProjectFn = null,
   controlRequest = requestDevToolsControl,
+  terminateProcessTreeFn = terminateProcessTree,
+  listenerPidsFn = listenerPids,
   waitForFn = waitFor,
   onInvocation = null,
-  cliTimeoutMs = RECOVERY_CLI_TIMEOUT_MS,
   settleTimeoutMs = RECOVERY_SETTLE_TIMEOUT_MS,
-  automatorPrepareDelayMs = DEFAULT_AUTOMATOR_PREPARE_DELAY_MS
+  automatorPrepareDelayMs = DEFAULT_AUTOMATOR_PREPARE_DELAY_MS,
+  projectCompileReadyFn = null
 } = {}) {
   const invocations = []
-  const run = async (action, args) => {
-    const result = await runCli({
-      home,
-      args,
-      outputPath,
-      timeoutMs: cliTimeoutMs
-    })
-    const invocation = {
-      action,
-      pid: result.pid ?? null,
-      exit_code: result.exitCode ?? null,
-      timed_out: Boolean(result.timedOut)
-    }
-    invocations.push(invocation)
-    onInvocation?.(invocation, result)
-    cliFailure(action, result)
-    return result
-  }
-
-  const enableAutomator = async () => {
+  const run = async action => {
     const result = await controlRequest({
-      action: 'auto',
+      action,
       projectPath: session.projectPath,
       controlPort: session.controlPort,
       wsPort: session.wsPort
     })
     const invocation = {
-      action: 'auto',
-      transport: 'devtools_control_endpoint',
+      action,
+      transport: result?.transport || 'devtools_control_endpoint',
       control_port: Number(session.controlPort),
-      automator_port: Number(session.wsPort),
       status_code: result?.status_code ?? null,
       url: result?.url ?? '',
       body_excerpt: String(result?.body_excerpt ?? result?.error ?? '').slice(0, 1000)
     }
     invocations.push(invocation)
     onInvocation?.(invocation, result)
-    controlFailure('auto', result)
+    controlFailure(action, result)
     return result
   }
 
-  await run('quit', ['quit', '--port', String(session.controlPort)])
-  await waitForFn(
-    () => !mainForSessionFn(session),
-    settleTimeoutMs,
-    'test-owned DevTools exit during startup recovery'
-  )
+  const enableAutomator = async () => {
+    return run('auto')
+  }
 
-  if (launchDevTools) {
-    const launch = await launchDevTools()
-    const invocation = {
-      action: 'direct_launch',
-      pid: launch?.pid ?? null,
-      control_port: Number(session.controlPort),
-      app_session_id: launch?.app_session_id ?? ''
+  const recoverVerifiedTargetAfterCloseConflict = async closeResult => {
+    const target = mainForSessionFn(session)
+    if (!target?.pid) {
+      // A failed close request can race with DevTools exiting on its own. If
+      // both isolated control ports are already free, the target is closed
+      // and recovery may safely continue. A lingering listener still blocks.
+      const listeners = [session.controlPort, session.wsPort]
+        .filter(Boolean)
+        .flatMap(port => listenerPidsFn(port) || [])
+      return listeners.length === 0
     }
-    invocations.push(invocation)
-    onInvocation?.(invocation, launch)
-    await waitForFn(
-      () => mainForSessionFn(session),
-      settleTimeoutMs,
-      'test-owned DevTools direct relaunch during startup recovery'
+    const expectedPid = Number(
+      session.main_devtools_pid ||
+        session.initial_devtools_launch?.pid ||
+        session.devtoolsCliPid ||
+        0
     )
-    if (idePortReadyFn) {
+    const expectedPackage = String(session.initial_devtools_launch?.package_dir || '')
+    const command = String(target.command || '')
+    const official = session.devtools_runtime_kind === 'official_electron'
+    const controlPortArg = `--ide-http-port=${Number(session.controlPort)}`
+    const controlPortSpacedArg = `--ide-http-port ${Number(session.controlPort)}`
+    const ownerVerified = official
+      ? Boolean(
+          expectedPid > 0 &&
+          Number(target.pid) === expectedPid &&
+          command.includes('/Contents/MacOS/Electron') &&
+          command.includes('/Contents/Resources/app.asar') &&
+          command.includes(`--user-data-dir=${session.devtools_user_data_dir}`) &&
+          (command.includes(controlPortArg) || command.includes(controlPortSpacedArg))
+        )
+      : Boolean(
+          expectedPid > 0 &&
+          Number(target.pid) === expectedPid &&
+          command.includes(`--user-data-dir=${session.profile}`) &&
+          expectedPackage &&
+          command.includes(expectedPackage) &&
+          (command.includes(controlPortArg) || command.includes(controlPortSpacedArg))
+        )
+    if (!ownerVerified) {
+      return false
+    }
+    const terminated = await terminateProcessTreeFn(target.pid)
+    invocations.push({
+      action: 'target_only_terminate',
+      transport: 'verified_process_tree',
+      pid: Number(target.pid),
+      status: terminated.length ? 'blocked' : 'terminated',
+      close_status_code: closeResult?.status_code ?? null
+    })
+    if (terminated.length) {
+      return false
+    }
+    await waitForFn(
+      () => !mainForSessionFn(session),
+      settleTimeoutMs,
+      'test-owned DevTools exit after verified target-only recovery'
+    )
+    return true
+  }
+
+  try {
+    try {
+      await run('close')
+    } catch (error) {
+      // The IDE close endpoint can return 400/500 or drop the connection while
+      // the verified test-owned process is still alive but its project window
+      // has already been lost.  The status is not the safety decision: only
+      // the verified process-ownership check below may authorize target-only
+      // termination.  An unverified process still fails closed.
+      const recovered = await recoverVerifiedTargetAfterCloseConflict(error.details)
+      if (!recovered) {
+        throw error
+      }
+    }
+    await waitForFn(
+      () => !mainForSessionFn(session),
+      settleTimeoutMs,
+      'test-owned DevTools exit during startup recovery'
+    )
+
+    let launch = null
+    if (launchDevTools) {
+      launch = await launchDevTools()
+      const invocation = {
+        action: 'direct_launch',
+        pid: launch?.pid ?? null,
+        control_port: Number(session.controlPort),
+        app_session_id: launch?.app_session_id ?? ''
+      }
+      invocations.push(invocation)
+      onInvocation?.(invocation, launch)
       await waitForFn(
-        () => idePortReadyFn(session),
+        () => mainForSessionFn(session),
         settleTimeoutMs,
-        'test-owned DevTools control-port marker during startup recovery'
+        'test-owned DevTools direct relaunch during startup recovery'
+      )
+      if (idePortReadyFn) {
+        await waitForFn(
+          () => idePortReadyFn(session),
+          settleTimeoutMs,
+          'test-owned DevTools control-port marker during startup recovery'
+        )
+      }
+    }
+
+    const launchOpenedProject = Boolean(launch?.project_opened)
+    if (!launchOpenedProject) {
+      if (openProjectFn) {
+        const opened = await openProjectFn()
+        const result = opened?.result ?? opened
+        const invocation = opened?.invocation ?? controlInvocation('open', result, session)
+        invocations.push(invocation)
+        onInvocation?.(invocation, result)
+        controlFailure('open', result)
+      } else {
+        await run('open')
+      }
+    } else {
+      const cliOpen = launch?.cli_open || {}
+      const officialOpen = {
+        status_code: Number(cliOpen.status) === 0 ? 200 : null,
+        url: `official-cli://${session.projectPath}`,
+        body_excerpt: String(cliOpen.stdout || cliOpen.stderr || '')
+      }
+      const invocation = {
+        ...controlInvocation('open', officialOpen, session),
+        transport: 'official_cli'
+      }
+      invocations.push(invocation)
+      onInvocation?.(invocation, officialOpen)
+    }
+    if (!launchDevTools || launchOpenedProject === false) {
+      await waitForFn(
+        () => mainForSessionFn(session),
+        settleTimeoutMs,
+        'test-owned DevTools reopen during startup recovery'
       )
     }
-  }
-
-  await run('open', [
-    'open',
-    '--project',
-    session.projectPath,
-    '--port',
-    String(session.controlPort)
-  ])
-  if (!launchDevTools) {
     await waitForFn(
-      () => mainForSessionFn(session),
+      () => projectOpenEvidenceFn(session),
       settleTimeoutMs,
-      'test-owned DevTools reopen during startup recovery'
+      'test-owned project reopen during startup recovery'
     )
-  }
-  await waitForFn(
-    () => projectOpenEvidenceFn(session),
-    settleTimeoutMs,
-    'test-owned project reopen during startup recovery'
-  )
-  if (automatorPrepareDelayMs > 0) {
-    await new Promise(resolve => setTimeout(resolve, automatorPrepareDelayMs))
-  }
+    if (projectCompileReadyFn) {
+      await projectCompileReadyFn(session, settleTimeoutMs)
+    } else if (automatorPrepareDelayMs > 0) {
+      await new Promise(resolve => setTimeout(resolve, automatorPrepareDelayMs))
+    }
 
-  await enableAutomator()
-  await waitForFn(
-    () => projectOpenEvidenceFn(session),
-    settleTimeoutMs,
-    'test-owned project auto-enable during startup recovery'
-  )
+    await enableAutomator()
+    await waitForFn(
+      () => projectOpenEvidenceFn(session),
+      settleTimeoutMs,
+      'test-owned project auto-enable during startup recovery'
+    )
+  } catch (error) {
+    error.details = {
+      ...(error.details || {}),
+      recovery_invocations: invocations
+    }
+    error.recovery_invocations = invocations
+    throw error
+  }
 
   return {
     status: 'restarted',
-    recovery: 'test_owned_cli_quit_open_auto_once',
+    recovery: 'test_owned_control_close_open_auto_once',
     invocations
   }
 }

@@ -1,11 +1,14 @@
 import { defineStore } from 'pinia'
-import { getFileUrl } from '@/composables/useCloudFile.js'
+import { queryClient } from '@/lib/query-client.js'
+import { USER_PLANTS_QUERY_KEY } from '@/vue-query/plants/queries/user-plants.js'
 import { fetchUserPlants, patchUserPlant, removeUserPlant } from '@/api/plants-http.js'
+import { useUserStore } from '@/store/user.js'
 
 export const usePlantStore = defineStore('plants', {
   state: () => ({
     userPlants: [],
-    currentPlant: null
+    currentPlant: null,
+    userPlantsScope: ''
   }),
 
   getters: {
@@ -31,20 +34,18 @@ export const usePlantStore = defineStore('plants', {
   actions: {
     async getUserPlants(page = 1, pageSize = 50) {
       try {
+        const userStore = useUserStore()
+        const currentScope = userStore.openid || userStore.userId || ''
+        if (this.userPlantsScope !== currentScope) {
+          queryClient.removeQueries({ queryKey: USER_PLANTS_QUERY_KEY })
+          this.userPlantsScope = currentScope
+        }
         const response = await fetchUserPlants(page, pageSize)
         if (response?.code !== 200) {
           return { success: false, message: response?.message || '获取失败' }
         }
 
         const list = response.data.list || []
-        for (const plant of list) {
-          if (plant.imageFileId) {
-            plant.image = await getFileUrl(plant.imageFileId)
-          } else if (plant.photos?.length) {
-            plant.image = await getFileUrl(plant.photos[0])
-          }
-        }
-
         this.userPlants = list.map(p => ({
           id: p.id,
           plantId: p.plantId || null,

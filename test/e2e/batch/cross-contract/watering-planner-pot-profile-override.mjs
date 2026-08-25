@@ -88,7 +88,10 @@ test('fetchWateringPlannerResult 透传 potProfile 给 payload 构造', () => {
 })
 
 // ---- 3. 前端 watering-advisor.vue 静态断言：我的植物路径传入 potProfile ----
-const advisorSource = readFileSync('src/pages/watering-advisor/watering-advisor.vue', 'utf8')
+const advisorSource = readFileSync(
+  'src/subpackages/care/watering-advisor/watering-advisor.vue',
+  'utf8'
+)
 
 test('watering-advisor 我的植物路径调用 fetchWateringPlannerResult 时传入 potProfile', () => {
   assert.match(

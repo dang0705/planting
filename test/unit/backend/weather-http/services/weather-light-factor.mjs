@@ -120,47 +120,46 @@ function approxEqual(a, b, eps = 0.01) {
 {
   const plantContext = { sunning: { way: '明亮散射光', freq: [4, 6] } }
   const userLightContext = {
-    facing: 'south',
-    windowType: 'standard',
-    position: 'window_side',
-    hasDirectSun: false
+    schemaVersion: 2,
+    naturalLightType: 'direct',
+    entryMethod: 'through_glass',
+    hasSupplementalLight: false,
+    captureSource: 'user'
   }
-  const weatherDays = [{ sunshineHours: 5, daylightHours: 12, uvIndex: 6, textDay: '晴' }]
+  const weatherDays = []
 
-  // legacy：无 plantFeatures -> weatherLightFactor=1.0
-  const legacy = estimateLightHealth({ plantContext, userLightContext, weatherDays })
-  assert.ok(legacy, 'legacy estimate should produce a result')
-  assert.ok(approxEqual(legacy.lightHealthEvidence.weather.weatherLightFactor, 1.0))
+  // 无有效天气证据：W=1.0，但整体置信度降为 low。
+  const noEvidence = estimateLightHealth({ plantContext, userLightContext, weatherDays })
+  assert.ok(noEvidence, 'estimate should produce a result')
+  assert.ok(
+    approxEqual(noEvidence.lightHealthEvidence.exposure.evidence.weatherLightFactor, 1.0)
+  )
+  assert.equal(noEvidence.lightHealthScore, null)
 
-  // e：recent10d 因子 0.6 -> outdoorEqHours / indoorEqHours 低于 legacy
+  // e：recent10d 因子 0.6 只修正一次，指数低于中性天气。
   const recent = estimateLightHealth({
     plantContext,
     userLightContext,
     weatherDays,
     plantFeatures: { weatherLightFactor10d: 0.6, lightConfidence: 'high' }
   })
-  assert.ok(approxEqual(recent.lightHealthEvidence.weather.weatherLightFactor, 0.6))
-  assert.equal(recent.lightHealthEvidence.weather.weatherLightConfidence, 'high')
+  assert.ok(approxEqual(recent.lightHealthEvidence.exposure.evidence.weatherLightFactor, 0.6))
   assert.ok(
-    recent.lightHealthEvidence.calculation.indoorEqHours < legacy.lightHealthEvidence.calculation.indoorEqHours,
-    `recent indoorEqHours (${recent.lightHealthEvidence.calculation.indoorEqHours}) should be lower than legacy (${legacy.lightHealthEvidence.calculation.indoorEqHours})`
+    recent.lightHealthEvidence.exposure.estimatedExposureIndex <
+      noEvidence.lightHealthEvidence.exposure.estimatedExposureIndex
   )
 
-  // f1：lightEvidenceInsufficient -> 因子退回 1.00，indoorEqHours 与 legacy 一致
+  // f1：lightEvidenceInsufficient -> 因子退回 1.00，且不得形成确定性评分。
   const lightInsufficient = estimateLightHealth({
     plantContext,
     userLightContext,
     weatherDays,
     plantFeatures: { weatherLightFactor10d: 0.4, lightEvidenceInsufficient: true }
   })
-  assert.ok(approxEqual(lightInsufficient.lightHealthEvidence.weather.weatherLightFactor, 1.0))
   assert.ok(
-    approxEqual(
-      lightInsufficient.lightHealthEvidence.calculation.indoorEqHours,
-      legacy.lightHealthEvidence.calculation.indoorEqHours
-    )
+    approxEqual(lightInsufficient.lightHealthEvidence.exposure.evidence.weatherLightFactor, 1.0)
   )
-  assert.equal(lightInsufficient.lightHealthEvidence.weather.weatherLightConfidence, 'none')
+  assert.equal(lightInsufficient.lightHealthScore, null)
 
   // f2：top-level weatherEvidenceInsufficient -> 同样退回 1.00
   const weatherInsufficient = buildEnvironmentCareContextV7({
@@ -175,9 +174,9 @@ function approxEqual(a, b, eps = 0.01) {
   })
   assert.ok(
     approxEqual(
-      weatherInsufficient.outputs.lightHealthEvidence.weather.weatherLightFactor,
+      weatherInsufficient.outputs.lightHealthEvidence.exposure.evidence.weatherLightFactor,
       1.0
     )
   )
-  assert.equal(weatherInsufficient.outputs.lightHealthEvidence.weather.weatherLightConfidence, 'none')
+  assert.equal(weatherInsufficient.outputs.lightHealthScore, null)
 }

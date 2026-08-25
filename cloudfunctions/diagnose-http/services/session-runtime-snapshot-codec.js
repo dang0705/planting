@@ -82,6 +82,12 @@ function compactPlantContextForSnapshot(plantContext = null) {
     category: plantContext?.category || '',
     watering: plantContext?.watering || null,
     fertilization: plantContext?.fertilization || null,
+    fertilizationMonthly: plantContext?.fertilizationMonthly || null,
+    fertilizationHistory: Array.isArray(plantContext?.fertilizationHistory)
+      ? plantContext.fertilizationHistory.slice(0, 20)
+      : null,
+    fertilizationHistoryStatus: plantContext?.fertilizationHistoryStatus || '',
+    fertilizationGuard: plantContext?.fertilizationGuard || null,
     sunning: plantContext?.sunning || null,
     ventilation: plantContext?.ventilation || null,
     temperatureMin: normalizeSnapshotNumber(plantContext?.temperatureMin),

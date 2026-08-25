@@ -3,118 +3,46 @@
 const { models } = require('/opt/utils/cloudbase')
 const { getUserPlantInstanceById } = require('/opt/utils/plant-knowledge')
 const {
-  getUserPlantFertilizationEvents,
+  FertilizationHistoryUnavailableError,
   insertFertilizationEvent
 } = require('/opt/utils/fertilization-history')
 const {
-  calculateFertilizationCheck,
-  evaluateMonthlyRule,
-  parseDate
+  evaluateScheduleConditions,
+  getMonthlyFertilizerOptions,
+  isFertilizationGuardActive
 } = require('/opt/utils/fertilization-reminder-planner')
 const {
   attachFertilizationReminderStateToList,
-  mapReminderRow,
+  mapReminderRow: mapStoredReminderRow,
   resolveTodayDate
 } = require('./fertilization-reminder-storage')
+const {
+  ACTIVE_STATUS,
+  PENDING_STATUS,
+  buildRuleSnapshot,
+  createPendingPlan,
+  currentMonthRule,
+  getLatestFertilizationEvent,
+  mapReminderRow,
+  normalizeDate,
+  normalizeFertilizerType,
+  normalizeNextTime,
+  normalizeReminderKind,
+  parseRuleSnapshot,
+  queryActive,
+  queryPlan,
+  resolveReminderConfirmationReasons
+} = require('./fertilization-reminder-domain')
 
-const ACTIVE_STATUS = 'active'
-const PENDING_STATUS = 'pending'
-const PENDING_TTL_MINUTES = 15
-const NEXT_TIME = '09:00:00'
-const FERTILIZER_TYPES = new Set(['liquid', 'slowRelease'])
-const REMINDER_KINDS = new Set(['normal', 'first_confirmation'])
-
-function normalizeDate(value) {
-  const text = String(value || '').trim()
-  return parseDate(text) ? text : ''
-}
-
-function normalizeFertilizerType(value) {
-  const type = String(value || '').trim()
-  return FERTILIZER_TYPES.has(type) ? type : ''
-}
-
-function normalizeReminderKind(value) {
-  const kind = String(value || '').trim()
-  return REMINDER_KINDS.has(kind) ? kind : 'normal'
-}
-
-function normalizeNextTime(date) {
-  return `${date} ${NEXT_TIME}`
-}
-
-function buildPlanId(plantId) {
-  return `fertilization_check_${Number(plantId)}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-}
-
-function buildRuleSnapshot({
-  plant,
-  fertilizerType,
-  ruleMonth,
-  rule,
-  reminderKind,
-  confirmationReasons = []
-}) {
-  return {
-    schemaVersion: 1,
-    genus: plant?.genus || '',
-    plantName: plant?.displayName || plant?.canonicalName || '',
-    ruleMonth,
-    fertilizerType,
-    reminderKind: normalizeReminderKind(reminderKind),
-    confirmationReasons: Array.isArray(confirmationReasons) ? confirmationReasons : [],
-    displayText: rule.displayText,
-    schedule: rule.schedule,
-    sourceNames: Array.isArray(rule.sourceNames) ? rule.sourceNames : []
-  }
-}
-
-function parseRuleSnapshot(row = {}) {
-  if (row.rule_snapshot_json && typeof row.rule_snapshot_json === 'object') {
-    return row.rule_snapshot_json
-  }
-  try {
-    return JSON.parse(String(row.rule_snapshot_json_text || row.rule_snapshot_json || '{}'))
-  } catch {
-    return {}
-  }
-}
-
-function resolveReminderConfirmationReasons({ plant, reminderKind, snapshot, evaluation }) {
-  const reasons = new Set(
-    Array.isArray(snapshot?.confirmationReasons) ? snapshot.confirmationReasons : []
+function isHistoryReadError(error) {
+  return (
+    error instanceof FertilizationHistoryUnavailableError ||
+    ['FERTILIZATION_HISTORY_UNAVAILABLE', 'FERTILIZATION_HISTORY_INVALID'].includes(error?.code)
   )
-  if (normalizeReminderKind(reminderKind || snapshot?.reminderKind) === 'first_confirmation') {
-    reasons.add('first_confirmation')
-  }
-  if (['conditional', 'event'].includes(evaluation?.kind)) {
-    reasons.add(`${evaluation.kind}_rule`)
-  }
-  if (plant?.healthStatus === 'danger') {
-    reasons.add('plant_health')
-  }
-  return [...reasons]
 }
 
-async function getLatestFertilizationEvent(openid, plantId) {
-  const events = await getUserPlantFertilizationEvents(models, openid, plantId, 1)
-  return Array.isArray(events) && events.length ? events[0] : null
-}
-
-function currentMonthRule(plant, fertilizerType, today) {
-  const month = Number(String(today).slice(5, 7))
-  const monthly = plant?.fertilizationMonthly
-  if (!monthly?.available) {
-    return { month, evaluation: { kind: 'unavailable', available: false } }
-  }
-  const evaluation = evaluateMonthlyRule(monthly, fertilizerType, month)
-  if (evaluation.available && !evaluation.sourceNames.length) {
-    return {
-      month,
-      evaluation: { ...evaluation, kind: 'unavailable', available: false, reason: 'source_missing' }
-    }
-  }
-  return { month, evaluation }
+function isUserAssertedHistory(entry) {
+  return entry?.source === 'user_asserted' || entry?.isUserAsserted === true
 }
 
 async function assertUserPlant(openid, plantId) {
@@ -122,149 +50,113 @@ async function assertUserPlant(openid, plantId) {
   return plant || null
 }
 
-async function queryActive(openid, plantId) {
-  const result = await models.$runSQL(
-    `SELECT
-       id, user_plant_id, plan_id, status, reminder_kind, fertilizer_type, rule_month,
-       CAST(rule_snapshot_json AS CHAR) AS rule_snapshot_json_text,
-       last_applied_date, last_date_source, next_check_date, next_time,
-       completed_date, CAST(calendar_payload_json AS CHAR) AS calendar_payload_json_text,
-       expires_at, created_at, updated_at
-     FROM user_fertilization_reminder_events
-     WHERE _openid = {{openid}}
-       AND user_plant_id = {{plantId}}
-       AND status = 'active'
-     ORDER BY created_at DESC
-     LIMIT 1`,
-    { openid, plantId: Number(plantId) }
-  )
-  return result?.data?.executeResultList?.[0] || null
-}
-
-async function queryPlan(openid, planId, statuses = []) {
-  const statusSql = statuses.length
-    ? `AND status IN (${statuses.map(status => `'${status}'`).join(',')})`
-    : ''
-  const result = await models.$runSQL(
-    `SELECT
-       id, user_plant_id, plan_id, status, reminder_kind, fertilizer_type, rule_month,
-       CAST(rule_snapshot_json AS CHAR) AS rule_snapshot_json_text,
-       last_applied_date, last_date_source, next_check_date, next_time,
-       completed_date, CAST(calendar_payload_json AS CHAR) AS calendar_payload_json_text,
-       expires_at, created_at, updated_at
-     FROM user_fertilization_reminder_events
-     WHERE _openid = {{openid}}
-       AND plan_id = {{planId}}
-       ${statusSql}
-     ORDER BY created_at DESC
-     LIMIT 1`,
-    { openid, planId: String(planId || '').slice(0, 160) }
-  )
-  return result?.data?.executeResultList?.[0] || null
-}
-
-async function createPendingPlan({
-  openid,
-  plant,
-  plantId,
-  fertilizerType,
-  lastAppliedDate,
-  lastDateSource,
-  reminderKind,
-  confirmationReasons,
-  today = resolveTodayDate()
-}) {
-  const { month, evaluation } = currentMonthRule(plant, fertilizerType, today)
-  if (!evaluation.available) {
-    const requiresExtraConfirmation = ['conditional', 'event'].includes(evaluation.kind)
+function resolveCurrentMonthConclusion(plant, today, fertilizerType = '') {
+  const month = Number(String(today).slice(5, 7))
+  const monthly = plant?.fertilizationMonthly
+  if (isFertilizationGuardActive(plant?.fertilizationGuard, today)) {
     return {
-      statusCode: 422,
-      data: {
-        currentMonthEvaluation: evaluation,
-        ruleMonth: month,
-        requiresExtraConfirmation,
-        confirmationReasons: requiresExtraConfirmation ? [`${evaluation.kind}_rule`] : []
-      },
-      message: requiresExtraConfirmation
-        ? '本月规则需要额外确认，暂不能自动计算提醒日期'
-        : '本月没有可用于设置提醒的固定施肥周期'
+      status: 'monthly_deferred',
+      message: '当前处于暂缓施肥状态，请先等待观察期结束。'
     }
   }
-
-  const calculation = calculateFertilizationCheck({
-    schedule: evaluation.schedule,
-    lastAppliedDate,
-    lastDateSource,
-    referenceDate: today
-  })
-  if (!calculation.valid || !calculation.nextCheckDate) {
-    return { statusCode: 422, data: null, message: '施肥周期无法生成提醒日期' }
-  }
-
-  const planId = buildPlanId(plantId)
-  const snapshot = buildRuleSnapshot({
-    plant,
-    fertilizerType,
-    ruleMonth: month,
-    rule: evaluation.cell,
-    reminderKind,
-    confirmationReasons
-  })
-  const params = {
-    openid,
-    plantId: Number(plantId),
-    planId,
-    status: PENDING_STATUS,
-    fertilizerType,
-    ruleMonth: month,
-    ruleSnapshotJson: JSON.stringify(snapshot),
-    // CloudBase SQL template bindings stringify null. Keep the nullable DATE
-    // value as an empty binding and let SQL turn it into a real NULL instead.
-    lastAppliedDate: calculation.lastAppliedDate || '',
-    lastDateSource: calculation.lastDateSource,
-    nextCheckDate: calculation.nextCheckDate,
-    nextTime: normalizeNextTime(calculation.nextCheckDate)
-  }
-  await models.$runSQL(
-    `UPDATE user_fertilization_reminder_events
-     SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP
-     WHERE _openid = {{openid}}
-       AND user_plant_id = {{plantId}}
-       AND status = 'pending'`,
-    params
+  const historyUnavailable = ['unavailable', 'unknown', 'invalid'].includes(
+    plant?.fertilizationHistoryStatus
   )
-  await models.$runSQL(
-    `INSERT INTO user_fertilization_reminder_events
-       (_openid, user_plant_id, plan_id, status, reminder_kind, fertilizer_type, rule_month,
-        rule_snapshot_json, last_applied_date, last_date_source, next_check_date, next_time, expires_at)
-     VALUES
-       ({{openid}}, {{plantId}}, {{planId}}, {{status}}, {{reminderKind}}, {{fertilizerType}}, {{ruleMonth}},
-        {{ruleSnapshotJson}}, NULLIF({{lastAppliedDate}}, ''), {{lastDateSource}}, {{nextCheckDate}},
-        {{nextTime}}, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 15 MINUTE))`,
-    { ...params, reminderKind: normalizeReminderKind(reminderKind) }
-  )
-  return {
-    statusCode: 200,
-    message: '施肥提醒日期已生成',
-    data: {
-      planId,
-      plantId: Number(plantId),
-      fertilizerType,
-      reminderKind: normalizeReminderKind(reminderKind),
-      confirmationReasons: Array.isArray(confirmationReasons) ? confirmationReasons : [],
-      ruleMonth: month,
-      ruleSnapshot: snapshot,
-      nextCheckDate: calculation.nextCheckDate,
-      nextTime: `${calculation.nextCheckDate}T${NEXT_TIME}`,
-      dueNow: calculation.dueNow,
-      lastAppliedDate: calculation.lastAppliedDate,
-      lastDateSource: calculation.lastDateSource,
-      earliestDate: calculation.earliestDate,
-      latestDate: calculation.latestDate,
-      normalCheckDate: calculation.normalCheckDate,
-      pendingExpiresInMinutes: PENDING_TTL_MINUTES
+  if (!monthly?.available) {
+    if (historyUnavailable) {
+      return {
+        status: 'monthly_history_unavailable',
+        message: '施肥记录暂时无法读取，暂不能生成提醒。'
+      }
+    }
+    return { status: 'monthly_no_reliable_rule', message: '暂无可靠的月度施肥规则。' }
+  }
+  const selected = fertilizerType ? currentMonthRule(plant, fertilizerType, today).evaluation : null
+  if (selected?.kind === 'pause') {
+    return { status: 'monthly_pause', message: '本月按表暂停施肥。' }
+  }
+  if (selected?.kind === 'avoid') {
+    return { status: 'monthly_avoid', message: '本月按表不建议施肥。' }
+  }
+  const evaluations = selected
+    ? [selected]
+    : ['liquid', 'slowRelease'].map(type => currentMonthRule(plant, type, today).evaluation)
+  const options = getMonthlyFertilizerOptions(monthly, month)
+  if (!options.length) {
+    const special = evaluations.find(item => ['pause', 'avoid'].includes(item?.kind))
+    if (special?.kind === 'pause') {
+      return { status: 'monthly_pause', message: '本月按表暂停施肥。' }
+    }
+    if (special?.kind === 'avoid') {
+      return { status: 'monthly_avoid', message: '本月按表不建议施肥。' }
+    }
+    if (historyUnavailable) {
+      return {
+        status: 'monthly_history_unavailable',
+        message: '施肥记录暂时无法读取，暂不能生成提醒。'
+      }
+    }
+    return { status: 'monthly_no_reliable_rule', message: '本月没有可靠的固定施肥周期。' }
+  }
+  if (historyUnavailable) {
+    return {
+      status: 'monthly_history_unavailable',
+      message: '施肥记录暂时无法读取，暂不能生成提醒。'
     }
   }
+  if (selected && !selected.reliable) {
+    return { status: 'monthly_no_reliable_rule', message: '当前选择的肥料没有可靠的固定周期。' }
+  }
+  if (options.every(option => option.conditionEvaluation?.requirements?.length)) {
+    return {
+      status: 'monthly_conditions_pending',
+      message: '本月按表默认不安排施肥；如仍要设置提醒，请先确认下方条件。'
+    }
+  }
+  return { status: 'monthly_fixed_interval', message: '本月可以设置施肥提醒。' }
+}
+
+function resolveCompletionBlockReason({ plant, evaluation, due, conditionStatus = 'none', today }) {
+  if (plant?.healthStatus === 'danger') {
+    return 'plant_health'
+  }
+  if (isFertilizationGuardActive(plant?.fertilizationGuard, today)) {
+    return 'fertilization_guard'
+  }
+  if (['unavailable', 'unknown', 'invalid'].includes(plant?.fertilizationHistoryStatus)) {
+    return 'monthly_history_unavailable'
+  }
+  if (!evaluation?.available || !evaluation?.reliable) {
+    if (['pause', 'avoid'].includes(evaluation?.kind)) {
+      return `monthly_${evaluation.kind}`
+    }
+    return 'monthly_no_reliable_rule'
+  }
+  if (conditionStatus === 'unmet') {
+    return 'conditions_unmet'
+  }
+  if (conditionStatus === 'missing') {
+    return 'conditions_pending'
+  }
+  if (!due) {
+    return 'monthly_not_due'
+  }
+  return ''
+}
+
+function buildCurrentMonthOptions(plant, today) {
+  if (['unavailable', 'unknown', 'invalid'].includes(plant?.fertilizationHistoryStatus)) {
+    return []
+  }
+  const month = Number(String(today).slice(5, 7))
+  return getMonthlyFertilizerOptions(plant?.fertilizationMonthly, month).map(option => ({
+    type: option.type,
+    displayText: option.displayText,
+    sourceNames: option.sourceNames,
+    schedule: option.schedule,
+    conditionRequirements: option.conditionEvaluation?.requirements || [],
+    cell: option.cell
+  }))
 }
 
 async function readFertilizationReminder(openid, plantId) {
@@ -274,11 +166,25 @@ async function readFertilizationReminder(openid, plantId) {
   }
   const row = await queryActive(openid, plantId)
   if (!row) {
-    return { statusCode: 200, message: '暂无施肥提醒', data: null }
+    const today = resolveTodayDate()
+    return {
+      statusCode: 200,
+      message: '暂无施肥提醒',
+      data: {
+        active: false,
+        plantId: Number(plantId),
+        currentMonthConclusion: resolveCurrentMonthConclusion(plant, today),
+        currentMonthOptions: buildCurrentMonthOptions(plant, today),
+        fertilizationGuard: isFertilizationGuardActive(plant?.fertilizationGuard, today)
+          ? plant.fertilizationGuard
+          : null
+      }
+    }
   }
   const today = resolveTodayDate()
   const reminder = mapReminderRow(row, today)
   const rule = currentMonthRule(plant, reminder.fertilizerType, today)
+  const conditionRequirements = rule.evaluation.conditionEvaluation?.requirements || []
   const confirmationReasons = resolveReminderConfirmationReasons({
     plant,
     reminderKind: reminder.reminderKind,
@@ -290,10 +196,35 @@ async function readFertilizationReminder(openid, plantId) {
     message: '读取成功',
     data: {
       ...reminder,
+      active: true,
       currentMonthEvaluation: rule.evaluation,
       currentRuleMonth: rule.month,
-      requiresExtraConfirmation: confirmationReasons.length > 0,
-      confirmationReasons
+      currentMonthConclusion: resolveCurrentMonthConclusion(plant, today, reminder.fertilizerType),
+      currentMonthOptions: buildCurrentMonthOptions(plant, today),
+      conditionRequirements,
+      conditionStatus: rule.evaluation.conditionEvaluation?.status || 'none',
+      requiresConditionAnswers: conditionRequirements.length > 0,
+      requiresMinimumIntervalAcknowledgement:
+        reminder.reminderKind === 'first_confirmation' && reminder.isDue,
+      requiresFertilizerTypeChangeAcknowledgement: false,
+      confirmationReasons,
+      completionBlockReason: resolveCompletionBlockReason({
+        plant,
+        evaluation: rule.evaluation,
+        due: reminder.isDue,
+        conditionStatus: rule.evaluation.conditionEvaluation?.status || 'none',
+        today
+      }),
+      fertilizationGuard: isFertilizationGuardActive(plant?.fertilizationGuard, today)
+        ? plant.fertilizationGuard
+        : null,
+      canComplete:
+        reminder.isDue &&
+        rule.evaluation.available &&
+        rule.evaluation.reliable &&
+        plant?.healthStatus !== 'danger' &&
+        !['unavailable', 'unknown', 'invalid'].includes(plant?.fertilizationHistoryStatus) &&
+        !isFertilizationGuardActive(plant?.fertilizationGuard, today)
     }
   }
 }
@@ -308,28 +239,87 @@ async function previewFertilizationReminder(openid, body = {}) {
   if (!plant) {
     return { statusCode: 404, message: '植物不存在或无权限', data: null }
   }
+  const userAssertedDate = String(body.userAssertedLastAppliedDate || '').trim()
+  if (userAssertedDate && !normalizeDate(userAssertedDate)) {
+    return { statusCode: 400, message: '上次施肥日期格式不正确', data: null }
+  }
+  if (userAssertedDate && userAssertedDate > resolveTodayDate()) {
+    return { statusCode: 400, message: '上次施肥日期不能晚于今天', data: null }
+  }
   const active = await queryActive(openid, plantId)
   if (active) {
     return { statusCode: 409, message: '已有施肥提醒，请先结束或重设旧提醒', data: null }
   }
-  const latestEvent = await getLatestFertilizationEvent(openid, plantId)
-  const lastAppliedDate = latestEvent?.date || null
-  const lastDateSource = latestEvent ? 'recorded' : 'estimated'
-  const reminderKind = latestEvent ? 'normal' : 'first_confirmation'
-  const confirmationReasons = []
-  if (latestEvent && latestEvent.fertilizerType !== fertilizerType) {
-    confirmationReasons.push('fertilizer_type_changed')
+
+  let latestEvent
+  try {
+    latestEvent = await getLatestFertilizationEvent(openid, plantId)
+  } catch (error) {
+    if (isHistoryReadError(error)) {
+      return { statusCode: 503, message: '施肥记录暂时无法读取，请稍后再试', data: null }
+    }
+    throw error
   }
+
+  const latestHistoryIsUserAsserted = isUserAssertedHistory(latestEvent)
+  const hasRecordedHistory = Boolean(latestEvent && !latestHistoryIsUserAsserted)
+  // A user-asserted date is only a safety baseline. It does not prove which
+  // fertilizer was actually used, so it must not trigger a type-change
+  // acknowledgement or be persisted as the last factual fertilizer type.
+  const fertilizerTypeChanged = Boolean(
+    hasRecordedHistory && latestEvent.fertilizerType !== fertilizerType
+  )
+  if (hasRecordedHistory && userAssertedDate) {
+    return {
+      statusCode: 409,
+      message: '已有真实施肥记录，请重新计算提醒日期',
+      data: { historyAlreadyExists: true, latestEventDate: latestEvent.date }
+    }
+  }
+  if (fertilizerTypeChanged && body.acknowledgeFertilizerTypeChange !== true) {
+    return {
+      statusCode: 409,
+      message: '这次使用的肥料类型与上次不同，请先确认更换肥料',
+      data: {
+        requiresFertilizerTypeChangeAcknowledgement: true,
+        latestFertilizerType: latestEvent.fertilizerType,
+        selectedFertilizerType: fertilizerType
+      }
+    }
+  }
+
   return createPendingPlan({
     openid,
     plant,
     plantId,
     fertilizerType,
-    lastAppliedDate: lastAppliedDate || null,
-    lastDateSource,
-    reminderKind,
-    confirmationReasons
+    lastAppliedDate: latestEvent?.date || null,
+    lastDateSource: latestEvent
+      ? latestHistoryIsUserAsserted
+        ? 'user_asserted'
+        : 'recorded'
+      : userAssertedDate
+        ? 'user_asserted'
+        : 'estimated',
+    reminderKind: latestEvent || userAssertedDate ? 'normal' : 'first_confirmation',
+    confirmationReasons: [
+      ...(fertilizerTypeChanged ? ['fertilizer_type_changed'] : []),
+      ...(userAssertedDate ? ['user_asserted_last_date'] : [])
+    ],
+    conditionAnswers: body.conditionAnswers,
+    fertilizerTypeChangeConfirmed:
+      !fertilizerTypeChanged || body.acknowledgeFertilizerTypeChange === true,
+    historyLastFertilizerType: hasRecordedHistory ? latestEvent?.fertilizerType || '' : '',
+    ...(userAssertedDate ? { lastAppliedDate: userAssertedDate } : {})
   })
+}
+
+async function buildConfirmedReminderResponse(openid, plantId) {
+  const response = await readFertilizationReminder(openid, plantId)
+  return {
+    ...response,
+    message: '施肥提醒已保存'
+  }
 }
 
 async function confirmFertilizationReminder(openid, body = {}) {
@@ -344,8 +334,19 @@ async function confirmFertilizationReminder(openid, body = {}) {
   if (body.plantId && Number(body.plantId) !== Number(existing.user_plant_id)) {
     return { statusCode: 403, message: '检查计划与植物不匹配', data: null }
   }
+  const plant = await assertUserPlant(openid, existing.user_plant_id)
+  if (!plant) {
+    return { statusCode: 404, message: '植物不存在或无权限', data: null }
+  }
+  if (isFertilizationGuardActive(plant.fertilizationGuard, resolveTodayDate())) {
+    return {
+      statusCode: 422,
+      message: '当前处于暂缓施肥状态，暂不保存提醒',
+      data: { blockingReason: 'fertilization_guard' }
+    }
+  }
   if (existing.status === ACTIVE_STATUS) {
-    return { statusCode: 200, message: '已同步', data: mapReminderRow(existing) }
+    return buildConfirmedReminderResponse(openid, existing.user_plant_id)
   }
   if (
     existing.expires_at &&
@@ -361,68 +362,41 @@ async function confirmFertilizationReminder(openid, body = {}) {
   if (!dueNow && !calendarPayload) {
     return { statusCode: 400, message: '请先添加到手机日历', data: null }
   }
-  const params = {
-    openid,
-    planId,
-    calendarPayloadJson: calendarPayload ? JSON.stringify(calendarPayload) : null
-  }
+
+  // The active-key unique index makes promotion order significant. Retire a
+  // previous active row first, then promote this still-valid pending row in a
+  // separate conditional update. Keeping the pending predicates on the
+  // promotion prevents an expired plan from becoming active after the first
+  // query.
   await models.$runSQL(
     `UPDATE user_fertilization_reminder_events
-     SET status = CASE
-           WHEN status = 'pending' AND plan_id = {{planId}} THEN 'active'
-           WHEN status = 'active' AND user_plant_id = (
-             SELECT user_plant_id FROM (
-               SELECT user_plant_id FROM user_fertilization_reminder_events
-               WHERE _openid = {{openid}} AND plan_id = {{planId}} LIMIT 1
-             ) AS pending_plan
-           ) THEN 'superseded'
-           ELSE status
-         END,
-         calendar_payload_json = CASE
-           WHEN status = 'pending' AND plan_id = {{planId}} THEN {{calendarPayloadJson}}
-           ELSE calendar_payload_json
-         END,
-         expires_at = CASE
-           WHEN status = 'pending' AND plan_id = {{planId}} THEN NULL
-           ELSE expires_at
-         END,
+     SET status = 'superseded', updated_at = CURRENT_TIMESTAMP
+     WHERE _openid = {{openid}}
+       AND user_plant_id = {{userPlantId}}
+       AND status = 'active'`,
+    { openid, userPlantId: Number(existing.user_plant_id) }
+  )
+  await models.$runSQL(
+    `UPDATE user_fertilization_reminder_events
+     SET status = 'active',
+         calendar_payload_json = {{calendarPayloadJson}},
+         expires_at = NULL,
          updated_at = CURRENT_TIMESTAMP
      WHERE _openid = {{openid}}
-       AND EXISTS (
-         SELECT id FROM (
-           SELECT id FROM user_fertilization_reminder_events
-           WHERE _openid = {{openid}}
-             AND plan_id = {{planId}}
-             AND status = 'pending'
-             AND expires_at > CURRENT_TIMESTAMP
-         ) AS valid_pending
-       )
-       AND (
-         (status = 'pending' AND plan_id = {{planId}})
-         OR (
-           status = 'active' AND user_plant_id = (
-             SELECT user_plant_id FROM (
-               SELECT user_plant_id FROM user_fertilization_reminder_events
-               WHERE _openid = {{openid}} AND plan_id = {{planId}} LIMIT 1
-             ) AS pending_plan_for_active
-           )
-         )
-       )`,
-    params
+       AND plan_id = {{planId}}
+       AND status = 'pending'
+       AND expires_at > CURRENT_TIMESTAMP`,
+    {
+      openid,
+      planId,
+      calendarPayloadJson: calendarPayload ? JSON.stringify(calendarPayload) : null
+    }
   )
-  if (existing.last_date_source === 'recorded' && existing.last_applied_date) {
-    await insertFertilizationEvent(models, openid, existing.user_plant_id, {
-      date: existing.last_applied_date,
-      fertilizerType: existing.fertilizer_type,
-      source: 'reminder_setup',
-      planId: `${planId}:setup`
-    })
-  }
   const row = await queryPlan(openid, planId, [ACTIVE_STATUS])
   if (!row) {
     return { statusCode: 409, message: '检查计划已过期，请重新生成', data: null }
   }
-  return { statusCode: 200, message: '施肥提醒已保存', data: mapReminderRow(row) }
+  return buildConfirmedReminderResponse(openid, row.user_plant_id)
 }
 
 async function completeFertilizationReminder(openid, body = {}) {
@@ -455,33 +429,117 @@ async function completeFertilizationReminder(openid, body = {}) {
   }
   const currentRule = currentMonthRule(plant, row.fertilizer_type, today)
   const snapshot = parseRuleSnapshot(row)
-  const confirmationReasons = resolveReminderConfirmationReasons({
-    plant,
-    reminderKind: row.reminder_kind,
-    snapshot,
-    evaluation: currentRule.evaluation
-  })
-  const canRecordForRule = ['interval', 'conditional', 'event'].includes(
-    currentRule.evaluation.kind
-  )
-  if (!canRecordForRule) {
+  if (plant?.healthStatus === 'danger') {
+    return {
+      statusCode: 422,
+      message: '植物当前状态异常，暂不能记录施肥',
+      data: { currentMonthEvaluation: currentRule.evaluation, blockingReason: 'plant_health' }
+    }
+  }
+  if (isFertilizationGuardActive(plant?.fertilizationGuard, today)) {
+    return {
+      statusCode: 422,
+      message: '当前处于暂缓施肥状态，暂不能记录施肥',
+      data: {
+        currentMonthEvaluation: currentRule.evaluation,
+        blockingReason: 'fertilization_guard'
+      }
+    }
+  }
+  if (!currentRule.evaluation.available || !currentRule.evaluation.reliable) {
     return {
       statusCode: 422,
       message: '本月不建议施肥，不能记录为已施肥',
       data: { currentMonthEvaluation: currentRule.evaluation }
     }
   }
-  if (confirmationReasons.length && body.extraConfirmation !== true) {
+
+  const conditionEvaluation = evaluateScheduleConditions(
+    currentRule.evaluation.schedule,
+    body.conditionAnswers
+  )
+  if (!conditionEvaluation.valid) {
     return {
       statusCode: 409,
-      message: '请先确认当前植物状态和本月规则，再记录施肥',
+      message:
+        conditionEvaluation.status === 'unmet'
+          ? '当前情况不满足本月施肥条件，不能记录施肥'
+          : '请先确认本月施肥条件',
       data: {
-        currentMonthEvaluation: currentRule.evaluation,
-        requiresExtraConfirmation: true,
-        confirmationReasons
+        currentMonthEvaluation: { ...currentRule.evaluation, conditionEvaluation },
+        conditionRequirements: conditionEvaluation.requirements,
+        conditionStatus: conditionEvaluation.status,
+        missingConditionCodes: conditionEvaluation.missingCodes,
+        unmetConditionCodes: conditionEvaluation.unmetCodes,
+        unknownConditionCodes: conditionEvaluation.unknownCodes,
+        requiresConditionAnswers: true
       }
     }
   }
+
+  let latestEvent
+  try {
+    latestEvent = await getLatestFertilizationEvent(openid, plantId)
+  } catch (error) {
+    if (isHistoryReadError(error)) {
+      return { statusCode: 503, message: '施肥记录暂时无法读取，请稍后再试', data: null }
+    }
+    throw error
+  }
+  const snapshotLastDate = normalizeDate(row.last_applied_date)
+  const currentLastDate = normalizeDate(latestEvent?.date)
+  const snapshotLastType = snapshotLastDate ? snapshot?.historyLastFertilizerType || '' : ''
+  const latestHistoryIsUserAsserted = isUserAssertedHistory(latestEvent)
+  const samePlanUserAssertedBaseline =
+    latestHistoryIsUserAsserted &&
+    String(latestEvent?.planId || '') === planId &&
+    snapshotLastDate === currentLastDate
+  const historyChanged =
+    row.last_date_source === 'user_asserted'
+      ? Boolean(latestEvent && !latestHistoryIsUserAsserted) ||
+        (latestHistoryIsUserAsserted &&
+          !samePlanUserAssertedBaseline &&
+          snapshotLastDate !== currentLastDate)
+      : snapshotLastDate !== currentLastDate ||
+        snapshotLastType !== (latestEvent?.fertilizerType || '')
+  if (historyChanged) {
+    return {
+      statusCode: 409,
+      message: '施肥记录已有变化，请重新设置提醒',
+      data: { historyChanged: true }
+    }
+  }
+  const latestTypeChanged = Boolean(
+    latestEvent &&
+    !latestHistoryIsUserAsserted &&
+    latestEvent.fertilizerType !== row.fertilizer_type
+  )
+  if (
+    latestTypeChanged &&
+    snapshot?.setupConfirmations?.fertilizerTypeChange !== true &&
+    body.acknowledgeFertilizerTypeChange !== true
+  ) {
+    return {
+      statusCode: 409,
+      message: '这次使用的肥料类型与上次不同，请先确认更换肥料',
+      data: {
+        requiresFertilizerTypeChangeAcknowledgement: true,
+        latestFertilizerType: latestEvent.fertilizerType,
+        selectedFertilizerType: row.fertilizer_type
+      }
+    }
+  }
+  if (row.reminder_kind === 'first_confirmation' && body.acknowledgeMinimumInterval !== true) {
+    return {
+      statusCode: 409,
+      message: '请确认距离上次施肥至少已达到本表最短间隔',
+      data: {
+        requiresMinimumIntervalAcknowledgement: true,
+        currentMonthEvaluation: currentRule.evaluation
+      }
+    }
+  }
+
   await insertFertilizationEvent(models, openid, plantId, {
     date: today,
     fertilizerType: row.fertilizer_type,
@@ -503,6 +561,8 @@ async function completeFertilizationReminder(openid, body = {}) {
     lastDateSource: 'recorded',
     reminderKind: 'normal',
     confirmationReasons: [],
+    conditionAnswers: body.conditionAnswers,
+    historyLastFertilizerType: row.fertilizer_type,
     today
   })
   return {
@@ -524,32 +584,44 @@ async function dismissFertilizationReminder(openid, body = {}) {
     return { statusCode: 400, message: '缺少提醒信息', data: null }
   }
   const status = body.reason === 'reconfigure' ? 'superseded' : 'dismissed'
-  const result = await models.$runSQL(
+  await models.$runSQL(
     `UPDATE user_fertilization_reminder_events
      SET status = {{status}}, updated_at = CURRENT_TIMESTAMP
      WHERE _openid = {{openid}} AND user_plant_id = {{plantId}}
        AND plan_id = {{planId}} AND status = 'active'`,
     { openid, plantId, planId, status }
   )
-  return {
-    statusCode: 200,
-    message: result ? '本次施肥提醒已跳过' : '本次施肥提醒已跳过',
-    data: { plantId, planId, status }
-  }
+  return { statusCode: 200, message: '本次施肥提醒已跳过', data: { plantId, planId, status } }
 }
 
 async function cancelFertilizationReminder(openid, body = {}) {
+  const plantId = Number(body.plantId)
   const planId = String(body.planId || '').trim()
   if (!planId) {
     return { statusCode: 400, message: '缺少检查计划', data: null }
   }
+  const calendarDeleted = body.reason === 'calendar_deleted'
+  const cancelActiveReminder = calendarDeleted || body.reason === 'active_user_cancel'
+  if (cancelActiveReminder && !plantId) {
+    return { statusCode: 400, message: '缺少植物信息', data: null }
+  }
+  const status = cancelActiveReminder ? 'active' : 'pending'
+  const plantCondition = cancelActiveReminder ? 'AND user_plant_id = {{plantId}}' : ''
   await models.$runSQL(
     `UPDATE user_fertilization_reminder_events
      SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP
-     WHERE _openid = {{openid}} AND plan_id = {{planId}} AND status = 'pending'`,
-    { openid, planId }
+     WHERE _openid = {{openid}} AND plan_id = {{planId}} ${plantCondition} AND status = {{status}}`,
+    { openid, planId, plantId, status }
   )
-  return { statusCode: 200, message: '待同步计划已取消', data: { planId, status: 'cancelled' } }
+  return {
+    statusCode: 200,
+    message: calendarDeleted
+      ? '施肥日历提醒已移除'
+      : cancelActiveReminder
+        ? '施肥提醒已取消'
+        : '待同步计划已取消',
+    data: { plantId: plantId || null, planId, status: 'cancelled' }
+  }
 }
 
 module.exports = {
@@ -559,7 +631,7 @@ module.exports = {
   completeFertilizationReminder,
   confirmFertilizationReminder,
   dismissFertilizationReminder,
-  mapReminderRow,
+  mapReminderRow: mapStoredReminderRow,
   previewFertilizationReminder,
   readFertilizationReminder,
   resolveTodayDate,
@@ -568,6 +640,8 @@ module.exports = {
     currentMonthRule,
     normalizeDate,
     normalizeFertilizerType,
-    normalizeNextTime
+    normalizeNextTime,
+    normalizeReminderKind,
+    parseRuleSnapshot
   }
 }

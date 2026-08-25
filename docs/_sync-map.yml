@@ -87,7 +87,7 @@ areas:
       - cloudfunctions/diagnose-http/app/frontend-response.js
       - cloudfunctions/diagnose-http/domain/wilting-droop-outcome-resolver.js
       - src/pages/diagnose/follow-up/**
-      - src/pages/diagnose/question-package/**
+      - src/subpackages/diagnosis/question-package/**
       - src/utils/diagnose-follow-up-payload.js
       - src/utils/diagnose-result-normalizer.js
       - src/http-functions/diagnose/client.js

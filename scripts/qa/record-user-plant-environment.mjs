@@ -9,9 +9,9 @@
  */
 
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import automator from 'miniprogram-automator'
 import {
   cleanupTestOwnedQaSession,
   createTestOwnedQaSession
@@ -29,7 +29,16 @@ import {
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const projectPath = path.join(repoRoot, 'dist', 'dev', 'mp-weixin')
-const artifactDir = path.join(repoRoot, '.e2e-artifacts', 'plant-environment-setup')
+const artifactDir = path.resolve(
+  process.env.E2E_ARTIFACT_DIR ||
+    process.env.QA_ARTIFACT_DIR ||
+    path.join(
+      os.tmpdir(),
+      'planting-automator-diagnostic',
+      'plant-environment-setup',
+      String(process.pid)
+    )
+)
 const wxRequestUrl = 'http://192.168.50.80:3010/plant-user-http/user-plants/health'
 const plantId = String(process.env.PLANT_ID || '12')
 const dispatchRunId = `mvp-completion-20260809-record-environment-${plantId}`
@@ -43,7 +52,9 @@ async function waitForElement(page, id, timeoutMs = WAIT_MS) {
   const deadline = Date.now() + timeoutMs
   while (Date.now() < deadline) {
     const element = await findViewById(page, id)
-    if (element) return element
+    if (element) {
+      return element
+    }
     await sleep(250)
   }
   throw new Error(`端上元素未出现: #${id}`)
@@ -53,7 +64,9 @@ async function waitForOptionalElement(page, id, timeoutMs = 8_000) {
   const deadline = Date.now() + timeoutMs
   while (Date.now() < deadline) {
     const element = await findViewById(page, id)
-    if (element) return element
+    if (element) {
+      return element
+    }
     await sleep(250)
   }
   return null
@@ -64,7 +77,9 @@ async function waitForPath(mp, expectedPath, timeoutMs = WAIT_MS) {
   const normalizedExpected = String(expectedPath).replace(/^\//, '')
   while (Date.now() < deadline) {
     const page = await mp.currentPage()
-    if (String(page?.path || '').replace(/^\//, '') === normalizedExpected) return page
+    if (String(page?.path || '').replace(/^\//, '') === normalizedExpected) {
+      return page
+    }
     await sleep(250)
   }
   const page = await mp.currentPage().catch(() => null)
@@ -119,7 +134,7 @@ async function main() {
     await waitForElement(page, `index-plant-card-edit-${plantId}`)
     evidence.routes.push((await mp.currentPage()).path)
 
-    page = await mp.reLaunch('/pages/watering-advisor/watering-advisor')
+    page = await mp.reLaunch('/subpackages/care/watering-advisor/watering-advisor')
     await waitForElement(page, 'watering-advisor-my-plants-entry')
     await tapById(page, 'watering-advisor-my-plants-entry')
     await waitForElement(page, 'watering-advisor-my-plants-list')
@@ -130,12 +145,12 @@ async function main() {
     page = await mp.reLaunch('/pages/index/index')
     await waitForElement(page, `index-plant-card-edit-${plantId}`)
     await tapById(page, `index-plant-card-edit-${plantId}`)
-    page = await waitForPath(mp, '/pages/user-plant-detail/user-plant-detail')
+    page = await waitForPath(mp, '/subpackages/plant/user-plant-detail/user-plant-detail')
     await waitForElement(page, 'edit-plant-environment-light-entry')
     evidence.routes.push(page.path)
 
     await tapById(page, 'edit-plant-environment-light-entry')
-    page = await waitForPath(mp, '/pages/plant-environment/light-environment')
+    page = await waitForPath(mp, '/subpackages/care/plant-environment/light-environment')
     await waitForElement(page, 'plant-light-environment-complete-button')
     await tapById(page, 'plant-light-environment-window-window')
     await tapById(page, 'plant-light-environment-facing-south')
@@ -148,11 +163,11 @@ async function main() {
       hasDirectSun: false
     }
     await tapById(page, 'plant-light-environment-complete-button')
-    page = await waitForPath(mp, '/pages/user-plant-detail/user-plant-detail')
+    page = await waitForPath(mp, '/subpackages/plant/user-plant-detail/user-plant-detail')
     await waitForElement(page, 'edit-plant-environment-air-entry')
 
     await tapById(page, 'edit-plant-environment-air-entry')
-    page = await waitForPath(mp, '/pages/airflow/index')
+    page = await waitForPath(mp, '/subpackages/care/airflow/index')
     await waitForElement(page, 'plant-air-environment-single-page')
     await tapById(page, 'plant-air-environment-single-window-direction-one')
     await changePicker(page, 'plant-air-environment-single-window-frequency-picker', 0)
@@ -166,11 +181,11 @@ async function main() {
       deviceAirflow: 'none'
     }
     await tapById(page, 'plant-air-environment-complete-button')
-    page = await waitForPath(mp, '/pages/user-plant-detail/user-plant-detail')
+    page = await waitForPath(mp, '/subpackages/plant/user-plant-detail/user-plant-detail')
     await waitForElement(page, 'edit-plant-environment-light-status')
     evidence.routes.push(
-      '/pages/plant-environment/light-environment',
-      '/pages/airflow/index',
+      '/subpackages/care/plant-environment/light-environment',
+      '/subpackages/care/airflow/index',
       page.path
     )
     evidence.statusText = {
@@ -179,13 +194,13 @@ async function main() {
     }
 
     await tapById(page, 'edit-plant-environment-air-entry')
-    page = await waitForPath(mp, '/pages/airflow/index')
+    page = await waitForPath(mp, '/subpackages/care/airflow/index')
     await waitForElement(page, 'plant-air-environment-single-summary')
     evidence.savedAirSummary = await readTextById(page, 'plant-air-environment-single-summary')
 
     // 再走一次浇水建议的真实用户入口，确认保存资料与当前养护地点绑定；
     // 若地点发生过变化，使用端上“确认当前位置未变”完成匹配保存。
-    page = await mp.reLaunch('/pages/watering-advisor/watering-advisor')
+    page = await mp.reLaunch('/subpackages/care/watering-advisor/watering-advisor')
     await waitForElement(page, 'watering-advisor-my-plants-entry')
     await tapById(page, 'watering-advisor-my-plants-entry')
     await waitForElement(page, `watering-advisor-my-plant-card-${plantId}`)
@@ -208,7 +223,7 @@ async function main() {
     await sleep(5000)
 
     // 在新的页面实例中再次读取，确认不是当前页面草稿或内存状态造成的假回填。
-    page = await mp.reLaunch('/pages/watering-advisor/watering-advisor')
+    page = await mp.reLaunch('/subpackages/care/watering-advisor/watering-advisor')
     await waitForElement(page, 'watering-advisor-my-plants-entry')
     await tapById(page, 'watering-advisor-my-plants-entry')
     await waitForElement(page, `watering-advisor-my-plant-card-${plantId}`)

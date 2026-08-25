@@ -1,6 +1,20 @@
 import { defineStore } from 'pinia'
-import { loginWithCode, loginWithPhone, getAccessToken, getUserById } from '@/api/wechat'
+import { loginWithCode, loginWithPhone, getUserById } from '@/api/wechat'
+import { getCloudbaseUserIdentity } from '@/utils/cloudbase-auth'
 import { normalizeWeatherCoordinates } from '@/utils/weather-coordinate.js'
+
+const MINI_PROGRAM_AUTH_CACHE_MS = 30 * 1000
+let miniProgramAuthSyncPromise = null
+let miniProgramAuthIdentity = ''
+let miniProgramAuthCheckedAt = 0
+
+function isMiniProgramRuntime() {
+  return typeof wx !== 'undefined' && typeof wx.cloud?.callFunction === 'function'
+}
+
+function isMissingUserError(error) {
+  return /用户不存在/u.test(String(error?.message || error || ''))
+}
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -96,20 +110,73 @@ export const useUserStore = defineStore('user', {
      * @returns {Promise<boolean>} 是否已登录
      */
     async ensureLogin() {
-      // 如果已登录，检查是否需要刷新用户信息
-      if (this.isAuthenticated) {
+      if (!this.isAuthenticated) {
+        return false
+      }
+
+      if (!isMiniProgramRuntime()) {
         this.maybeRefreshUserInfo()
         return true
       }
 
-      // 尝试从本地恢复登录状态（现在由 Pinia 插件自动处理）
-      if (this.isAuthenticated) {
-        this.maybeRefreshUserInfo()
+      if (!miniProgramAuthSyncPromise) {
+        miniProgramAuthSyncPromise = this.reconcileMiniProgramLogin().finally(() => {
+          miniProgramAuthSyncPromise = null
+        })
+      }
+
+      try {
+        return await miniProgramAuthSyncPromise
+      } catch (error) {
+        console.error('微信小程序登录态校验失败:', error)
+        return false
+      }
+    },
+
+    /**
+     * 将旧的持久化用户状态与当前小程序运行时身份重新对齐。
+     * 持久化状态可能来自旧 Web/终端身份，不能仅凭缓存 openid 判定已登录。
+     */
+    async reconcileMiniProgramLogin() {
+      const identity = await getCloudbaseUserIdentity()
+      const runtimeOpenid = identity?.openid || ''
+      if (!runtimeOpenid) {
+        throw new Error('微信身份获取失败：wechat-identity 未返回有效 openid')
+      }
+
+      const cacheFresh =
+        miniProgramAuthIdentity === runtimeOpenid &&
+        Date.now() - miniProgramAuthCheckedAt < MINI_PROGRAM_AUTH_CACHE_MS
+      if (cacheFresh && this.openid === runtimeOpenid) {
         return true
       }
 
-      // 需要用户登录
-      return false
+      if (this.openid !== runtimeOpenid) {
+        await this.wechatLogin()
+        miniProgramAuthIdentity = runtimeOpenid
+        miniProgramAuthCheckedAt = Date.now()
+        return this.isAuthenticated && this.openid === runtimeOpenid
+      }
+
+      try {
+        const user = await getUserById(runtimeOpenid)
+        if (user) {
+          await this.setLoginInfo({ user, openid: runtimeOpenid })
+          miniProgramAuthIdentity = runtimeOpenid
+          miniProgramAuthCheckedAt = Date.now()
+          return true
+        }
+      } catch (error) {
+        if (!isMissingUserError(error)) {
+          throw error
+        }
+      }
+
+      // 只通过现有业务登录接口完成注册/登录，不伪造 store、storage 或数据库数据。
+      await this.wechatLogin()
+      miniProgramAuthIdentity = runtimeOpenid
+      miniProgramAuthCheckedAt = Date.now()
+      return this.isAuthenticated && this.openid === runtimeOpenid
     },
 
     /**
@@ -140,17 +207,10 @@ export const useUserStore = defineStore('user', {
       this.email = user.email || ''
       this.phoneNumber = user.phoneNumber || ''
 
-      // 从 getAccessToken 获取 token
-      try {
-        this.token = await getAccessToken()
-        console.log('获取到 access token:', this.token)
-      } catch (error) {
-        console.error('获取 access token 失败:', error)
-        this.token = loginData.token || ''
-      }
+      // token 仅来自登录响应，不联网获取
+      this.token = loginData.token || ''
 
       this.isLoggedIn = true
-      console.log(this.isLoggedIn, 'this.isLoggedIn')
 
       // 从服务端同步会员信息
       this.membership = {

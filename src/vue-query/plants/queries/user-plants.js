@@ -13,11 +13,14 @@ export function buildUserPlantsQueryKey(page = DEFAULT_PAGE, pageSize = DEFAULT_
 export function buildUserPlantsQueryOptions(page = DEFAULT_PAGE, pageSize = DEFAULT_PAGE_SIZE) {
   return {
     queryKey: buildUserPlantsQueryKey(page, pageSize),
-    queryFn: async () =>
-      requestHttpFunction('plant-user-http/user-plants', {
-        query: { page, pageSize }
-      })
+    queryFn: async () => requestUserPlants(page, pageSize)
   }
+}
+
+function requestUserPlants(page = DEFAULT_PAGE, pageSize = DEFAULT_PAGE_SIZE) {
+  return requestHttpFunction('plant-user-http/user-plants', {
+    query: { page, pageSize }
+  })
 }
 
 export function invalidateUserPlantsQuery() {

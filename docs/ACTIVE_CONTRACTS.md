@@ -32,8 +32,8 @@ source_of_truth:
   - src/components/PotCanvas.vue
   - src/store/plants.js
   - src/components/CareBehaviorTimeline.vue
-  - src/components/diagnose-flow/**
-  - src/components/DiagnosePopup.vue
+  - src/subpackages/diagnosis/diagnose-flow/**
+  - src/subpackages/diagnosis/components/DiagnosePopup.vue
   - scripts/sql/watering-reminder-v21-schema-20260630.sql
   - scripts/sql/add-specific-pest-diagnosis-mvp-20260720.sql
 stale_if_changed:
@@ -112,35 +112,35 @@ cloudfunctions/layer/utils/http.js
 
 ### 3.1 当前路由
 
-| 方法 | 路径                                         | 当前用途                                             |
-| ---- | -------------------------------------------- | ---------------------------------------------------- |
-| GET  | `/health`                                    | 健康检查。                                           |
+| 方法 | 路径                                         | 当前用途                                                                |
+| ---- | -------------------------------------------- | ----------------------------------------------------------------------- |
+| GET  | `/health`                                    | 健康检查。                                                              |
 | POST | `/diagnosis/start`                           | 开始诊断主链；`streamVisualDecision=true` 时使用 SSE 返回视觉阶段事件。 |
-| POST | `/diagnosis/question/start`                  | 题包初始化入口；不要从路径名反推当前仍是“追问”。     |
-| POST | `/diagnosis/answer`                          | 提交题包/问题答案；当前契约不按“每轮最多 1 题”定义。 |
-| POST | `/diagnosis/retake/authorize`                | 用户确认补拍后创建本次会话唯一的三分钟服务端授权。   |
-| POST | `/diagnosis/retake/skip`                     | 跳过风险补拍并以 `unknown` 结束本次诊断。            |
-| GET  | `/diagnosis/result`                          | 读取诊断结果。                                       |
-| GET  | `/diagnosis/history`                         | 读取诊断历史。                                       |
-| POST | `/diagnosis/feedback`                        | 提交反馈。                                           |
-| GET  | `/diagnosis/review/list`                     | 诊断审查列表。                                       |
-| GET  | `/diagnosis/review/images`                   | 审查图片读取。                                       |
-| GET  | `/diagnosis/review/detail`                   | 审查详情。                                           |
-| POST | `/diagnosis/review/import`                   | 导入审查样本。                                       |
-| GET  | `/visual/out-of-pool/list`                   | 池外视觉候选列表。                                   |
-| GET  | `/visual/out-of-pool/image`                  | 池外候选图片。                                       |
-| POST | `/visual/out-of-pool/review`                 | 池外候选 review。                                    |
-| GET  | `/visual/out-of-pool/proxy-mappings/list`    | 代理映射列表。                                       |
-| POST | `/visual/out-of-pool/proxy-mappings/upsert`  | 新增/更新代理映射。                                  |
-| POST | `/visual/out-of-pool/proxy-mappings/disable` | 禁用代理映射。                                       |
-| POST | `/stream/diagnose`                           | SSE/流式入口。                                       |
-| POST | `/diagnose`                                  | 后向路径入口。                                       |
+| POST | `/diagnosis/question/start`                  | 题包初始化入口；不要从路径名反推当前仍是“追问”。                        |
+| POST | `/diagnosis/answer`                          | 提交题包/问题答案；当前契约不按“每轮最多 1 题”定义。                    |
+| POST | `/diagnosis/retake/authorize`                | 用户确认补拍后创建本次会话唯一的三分钟服务端授权。                      |
+| POST | `/diagnosis/retake/skip`                     | 跳过风险补拍并以 `unknown` 结束本次诊断。                               |
+| GET  | `/diagnosis/result`                          | 读取诊断结果。                                                          |
+| GET  | `/diagnosis/history`                         | 读取诊断历史。                                                          |
+| POST | `/diagnosis/feedback`                        | 提交反馈。                                                              |
+| GET  | `/diagnosis/review/list`                     | 诊断审查列表。                                                          |
+| GET  | `/diagnosis/review/images`                   | 审查图片读取。                                                          |
+| GET  | `/diagnosis/review/detail`                   | 审查详情。                                                              |
+| POST | `/diagnosis/review/import`                   | 导入审查样本。                                                          |
+| GET  | `/visual/out-of-pool/list`                   | 池外视觉候选列表。                                                      |
+| GET  | `/visual/out-of-pool/image`                  | 池外候选图片。                                                          |
+| POST | `/visual/out-of-pool/review`                 | 池外候选 review。                                                       |
+| GET  | `/visual/out-of-pool/proxy-mappings/list`    | 代理映射列表。                                                          |
+| POST | `/visual/out-of-pool/proxy-mappings/upsert`  | 新增/更新代理映射。                                                     |
+| POST | `/visual/out-of-pool/proxy-mappings/disable` | 禁用代理映射。                                                          |
+| POST | `/stream/diagnose`                           | SSE/流式入口。                                                          |
+| POST | `/diagnose`                                  | 后向路径入口。                                                          |
 
 事实源：`cloudfunctions/diagnose-http/app/http-router.js`。
 
 ### 3.2 前端诊断客户端
 
-前端当前通过 `src/http-functions/diagnose/client.js` 暴露诊断主链能力，通过 `src/http-functions/diagnose/retake.js` 暴露补拍授权与跳过能力。以下能力只作为接口入口与链路实现，不定义额外追问产品口径：
+前端当前通过 `src/subpackages/diagnosis/http-functions/diagnose/client.js` 暴露诊断主链能力，通过 `src/subpackages/diagnosis/http-functions/diagnose/retake.js` 暴露补拍授权与跳过能力。以下能力只作为接口入口与链路实现，不定义额外追问产品口径：
 
 ```text
 requestDiagnosisStart
@@ -158,8 +158,8 @@ requestDiagnoseSync
 Review 与池外候选治理使用：
 
 ```text
-src/http-functions/diagnose/diagnosis-review.js
-src/http-functions/diagnose/out-of-pool-review.js
+src/subpackages/diagnosis/http-functions/diagnose/diagnosis-review.js
+src/subpackages/diagnosis/http-functions/diagnose/out-of-pool-review.js
 ```
 
 ### 3.3 结果输出契约
@@ -227,7 +227,7 @@ evidenceSnapshotId
 cloudfunctions/diagnose-http/app/frontend-response.js
 cloudfunctions/diagnose-http/domain/result-formatter.js
 cloudfunctions/diagnose-http/presenters/**
-src/utils/diagnose-result-normalizer.js
+src/subpackages/diagnosis/utils/diagnose-result-normalizer.js
 ```
 
 ### 3.4 问诊题包契约
@@ -266,7 +266,7 @@ options[]
 - 具体虫害模式必须由 AI 初诊后的正式接纳证据进入；`pest` 是 profile/上位类别，不提供无图泛虫害题包。
 - `dynamic_specific_pest` 为 0～2 题动态题包。已正式接纳的视觉证据在题包中正向预填、锁定并隐藏同证据组问题；低置信或未接纳线索不得预填。
 - 动态虫害题包允许 1 题正式 package 提交，也允许多个具体虫害同时保留到 `visibleOutcomes`；命中项只排序，不删除次要结果。
-- 所有可见题包统一进入 `pages/diagnose/question-package`；`DiagnoseFlow` 只负责把当前会话和题包交给公共题包页，不在内核中维护另一套动态虫害答题 UI。
+- 所有可见题包统一进入 `subpackages/diagnosis/question-package`；`DiagnoseFlow` 只负责把当前会话和题包交给公共题包页，不在内核中维护另一套动态虫害答题 UI。
 - 题包答案统一以 `requestMode: answer_submit` 整包提交。服务端以会话中持久化的 `questionPackageSnapshot` 校验问题和选项归属，客户端回传的题包元数据不得成为选项授权来源。
 - 风险任务必须返回风险说明、明确同意和“不敢操作 / 跳过”；跳过值固定为 `unknown`，不得计作阴性。
 
@@ -312,10 +312,10 @@ cloudfunctions/diagnose-http/services/round-runtime-persistence-service.js
 cloudfunctions/diagnose-http/services/session-question-service.js
 cloudfunctions/diagnose-http/constants/scoring.js
 cloudfunctions/diagnose-http/utils/symptom-labeler-prompt.js
-src/components/diagnose-flow/**
-src/http-functions/diagnose/retake.js
-src/pages/diagnose/question-package/question-flow.js
-src/utils/diagnose-result-normalizer.js
+src/subpackages/diagnosis/diagnose-flow/**
+src/subpackages/diagnosis/http-functions/diagnose/retake.js
+src/subpackages/diagnosis/question-package/question-flow.js
+src/subpackages/diagnosis/utils/diagnose-result-normalizer.js
 ```
 
 ## 4. `storage-http` 图片契约
@@ -591,16 +591,16 @@ WET 阻断逻辑：
 
 施肥提醒是独立于浇水提醒的服务端状态机。系统先用已记录的实际施肥历史完成初检；没有可靠上次日期时，才创建“首次确认提醒”。日历日期本身不等于已施肥事实。
 
-- `GET /user-plants/fertilization-reminders?plantId=...` 返回当前用户该植物最新 `active` 提醒；即使 `nextCheckDate` 已到期也必须返回，并附带 `isDue` 与当前月份重新读取的规则判断。
-- `POST .../preview` 只接受植物和肥料类型；服务端读取该植物最近一条实际施肥事件，从已审核月度表读取当前月 `interval` 规则，生成 15 分钟有效的 `pending` 计划和规则快照。没有可靠日期时使用 `reminderKind=first_confirmation`，不把估算日期写成施肥历史。客户端不得提交或覆盖日期、周期、来源或月份规则。
+- `GET /user-plants/fertilization-reminders?plantId=...` 返回当前用户该植物最新 `active` 提醒；即使 `nextCheckDate` 已到期也必须返回，并附带 `isDue` 与当前月份重新读取的规则判断。施肥历史查询失败时返回“记录暂不可用”，不能降级为空历史。
+- `POST .../preview` 接受植物、肥料类型，以及服务端返回的 `conditionAnswers`、`acknowledgeFertilizerTypeChange`。服务端读取该植物最近一条任意肥料的实际施肥事件，从已审核月度表读取当前月 `interval` 规则；条件未回答、条件不满足、条件码未注册或更换肥料未确认时只返回对应提示，不创建 `pending`。没有真实施肥历史时，客户端可以在首次确认提醒中提交合法且不晚于今天的 `userAssertedLastAppliedDate`；服务端只将其作为 `user_asserted` 安全基线保存到提醒计划历史，不写入实际施肥事件表，也不得当作已确认事实。校验通过后生成 15 分钟有效的 `pending` 计划和规则快照。没有可靠日期时使用 `reminderKind=first_confirmation`，首次确认提醒日期不早于本表最短间隔。客户端不得提交或覆盖周期、来源或月份规则。
 - `POST .../confirm` 只确认同一 `planId` 的未过期 `pending` 计划；日历写入成功后传入 payload，已到期计划可以不传日历 payload。重复确认必须幂等，不重新推算日期。
-- `POST .../complete` 到期后重新读取当前月规则；普通 `interval` 直接允许“今天已施肥”，首次确认、条件性/事件型规则或植物状态异常必须携带额外确认。成功后同时写入 `user_fertilization_events`，实际施肥历史不记录量计算，量字段可为空。
-- `POST .../dismiss` 以“本次跳过”结束当前提醒且不写施肥日期；`reason=reconfigure` 时标记为 `superseded`，由用户确认已删除系统日历旧事件后才能重设。
-- `POST .../cancel` 仅取消待同步的 `pending` 计划；网络失败时由 `expiresAt` 使其自然不可见，不声称已删除系统日历事件。
-- 月份表只允许 `schedule.schemaVersion=1` 且 `kind=interval` 的规则进入提醒；周按 7 天，月按自然月同日并在目标月不存在该日时取月末，区间两端分别计算后取日期中点。暂停、避免、年度次数、事件、条件和无可靠规则均不可预览。
+- `POST .../complete` 到期后重新读取当前月规则和最新施肥历史；只允许当前月仍是有来源的固定 `interval`，注册条件必须重新回答且全部满足。普通提醒可直接“今天已施肥”；首次确认必须确认已达到本表最短间隔；仅当最新真实施肥事件的肥料类型与本次选择不同时，才必须单独确认更换肥料类型；`user_asserted` 只作为日期安全基线，不触发类型变更确认；`healthStatus=danger` 直接阻断。历史查询失败不能继续。成功后同时写入 `user_fertilization_events`，实际施肥历史不记录量计算，量字段可为空。
+- `POST .../dismiss` 以“本次跳过”结束当前提醒且不写施肥日期；不提供重新设置提醒的专用入口。
+- `POST .../cancel` 默认仅取消待同步的 `pending` 计划；已设置的 active 施肥提醒只能在用户手动删除手机日历事件并确认后，传入 `reason=calendar_deleted`、植物 ID 和计划 ID 结束应用内提醒。小程序不声称能够删除系统日历事件，也不提供独立的取消施肥提醒入口。
+- 月份表只允许有来源、`schedule.schemaVersion=1` 且 `kind=interval` 的规则进入自动提醒；周按 7 天，月按自然月同日并在目标月不存在该日时取月末，区间两端分别计算后取日期中点。暂停、避免、年度次数、事件、约束、未指定和无可靠规则均不可预览；带已注册条件码的固定周期可在条件逐项确认且全部满足后预览，未注册条件码直接阻断。`container_context` 只保留为月表适用范围审计信息，在当前用户植物容器场景下由服务端自动满足，不向用户提问；`active_growth` 只能通过用户可观察的“最近有长新叶或新芽吗？”确认，不能伪装成系统已自动获得的生长状态。
 - 用户植物列表附带紧凑 `fertilizationReminder`；施肥 icon 只有存在 active 提醒时高亮，不能因为有月度表就假装已启用。
 - `user_fertilization_reminder_events` 独立于 `user_watering_reminder_events`；来源只在月度表底部汇总展示，提醒选项不逐条重复来源。
-- `user_fertilization_events` 独立保存实际施肥历史；提醒设置历史仍保留在提醒计划表。`GET /user-plants?id=...` 返回最近施肥事件 `fertilizationEvents`，事件包含日期、肥料类型、来源和可为空的量字段。
+- `user_fertilization_events` 独立保存实际施肥历史；提醒设置历史仍保留在提醒计划表。用户补录的日期以提醒计划中的 `last_date_source=user_asserted` 作为持久化安全基线，提醒跳过、重设或取消后仍可被施肥判定和诊断读取，但不计入 `fertilizationEvents`，也不等同于已施肥事实。`GET /user-plants?id=...` 返回最近施肥事件 `fertilizationEvents`，事件包含日期、肥料类型、来源和可为空的量字段。
 
 ### 7.2.4 `POST /user-plants/watering-advisor`
 

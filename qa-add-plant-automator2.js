@@ -32,7 +32,9 @@ async function run() {
           method: opts.method || 'GET',
           time: Date.now()
         })
-      } catch (e) {}
+      } catch {
+        // Request capture must never block the original request.
+      }
       return globalThis.__qaOriginalRequest.call(wx, opts)
     }
   })
@@ -43,7 +45,7 @@ async function run() {
   await miniProgram.evaluate(() => {
     globalThis.__qaRequests = []
   })
-  await miniProgram.reLaunch('/pages/user-plant-detail/user-plant-detail?mode=create')
+  await miniProgram.reLaunch('/subpackages/plant/user-plant-detail/user-plant-detail?mode=create')
   log('Waiting 7s for onMounted...')
   await sleep(7000)
 
@@ -190,7 +192,9 @@ async function run() {
           className: await nb.attribute('class')
         }
       }
-    } catch (e) {}
+    } catch {
+      // The optional post-selection probe is best effort.
+    }
     log('NEXT_BUTTON_AFTER_SELECT: ' + JSON.stringify(nextBtnAfter))
 
     // Tap next button to advance to step 1
@@ -244,7 +248,9 @@ async function run() {
   await miniProgram.evaluate(() => {
     globalThis.__qaRequests = []
   })
-  await miniProgram.reLaunch('/pages/user-plant-detail/user-plant-detail?id=test-edit-id&mode=edit')
+  await miniProgram.reLaunch(
+    '/subpackages/plant/user-plant-detail/user-plant-detail?id=test-edit-id&mode=edit'
+  )
   log('Waiting 7s for edit mode onMounted...')
   await sleep(7000)
 

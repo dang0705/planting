@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import { spawn } from 'node:child_process'
 import path from 'node:path'
+import { Worker } from 'node:worker_threads'
 import { isNonEmptyPngFile, RENDERER_SCREENSHOT_METHOD } from './renderer-screenshot-probe.mjs'
 import { repoRoot } from './state.mjs'
 
@@ -11,6 +12,11 @@ const WORKER_PATH = path.join(
 const WORKER_DEADLINE_RESERVE_MS = 1000
 const DEFAULT_SCREENSHOT_ATTEMPTS = 2
 const DEFAULT_SCREENSHOT_RETRY_DELAY_MS = 350
+const WORKER_THREAD_PATH = path.join(
+  repoRoot,
+  '.codex/skills/dispatch-task/scripts/dispatch-gate/lib/automator-screenshot-thread.mjs'
+)
+const WORKER_STARTUP_DEADLINE_MS = 1500
 
 function now() {
   return new Date().toISOString()
@@ -108,7 +114,8 @@ function failureDiagnostic({
   events,
   result,
   stderr = '',
-  parentTimedOut = false
+  parentTimedOut = false,
+  captureMode = 'child_process'
 }) {
   const commandStarted = events.find(event => event.phase === 'command_started')
   const workerTimeout = result?.status === 'timeout'
@@ -141,6 +148,7 @@ function failureDiagnostic({
       response: result?.command?.response ?? (commandStarted ? 'not_received' : 'not_started')
     },
     target_runtime: targetRuntime,
+    capture_mode: captureMode,
     worker_events: events,
     worker_result: result ?? null,
     stderr_excerpt: stringValue(stderr)
@@ -163,15 +171,21 @@ function captureIsolatedRendererScreenshotAttempt({
   return new Promise((resolve, reject) => {
     let settled = false
     let killTimer = null
+    let startupTimer = null
     let stdoutBuffer = ''
     let stderr = ''
     let child
+    let thread
+    let childActive = false
+    let threadActive = false
+    let captureMode = 'child_process'
     const finish = (callback, value, diagnostic) => {
       if (settled) {
         return
       }
       settled = true
       clearTimeout(killTimer)
+      clearTimeout(startupTimer)
       if (recordDiagnostic) {
         recordRendererDiagnostic(report, diagnostic)
       }
@@ -179,12 +193,22 @@ function captureIsolatedRendererScreenshotAttempt({
     }
     const terminate = signal => {
       try {
-        child?.kill?.(signal)
+        if (childActive) {
+          child?.kill?.(signal)
+        }
+      } catch {
+        // The worker may already have exited after emitting its terminal result.
+      }
+      try {
+        if (threadActive) {
+          void thread?.terminate?.()
+        }
       } catch {
         // The worker may already have exited after emitting its terminal result.
       }
     }
     const rejectUnready = diagnostic => {
+      diagnostic.capture_mode ??= captureMode
       terminate('SIGTERM')
       // The child is disposable and the parent may immediately start a
       // recovery attempt. Do not let a failed renderer RPC leave a second
@@ -210,6 +234,7 @@ function captureIsolatedRendererScreenshotAttempt({
           duration_ms: Date.now() - startedAt,
           completed_at: now(),
           renderer_ready_signal: 'isolated_app_capture_screenshot_valid_png',
+          capture_mode: captureMode,
           command: result.command,
           target_runtime: targetRuntime,
           worker_events: events,
@@ -223,6 +248,73 @@ function captureIsolatedRendererScreenshotAttempt({
         failureDiagnostic({ startedAt, timeoutMs, targetRuntime, events, result, stderr })
       )
     }
+    const startThreadFallback = () => {
+      if (settled || threadActive || events.some(event => event.phase === 'worker_started')) {
+        return false
+      }
+      captureMode = 'worker_thread'
+      terminate('SIGTERM')
+      childActive = false
+      try {
+        thread = new Worker(WORKER_THREAD_PATH, {
+          workerData: {
+            wsEndpoint,
+            outputPath: screenshotPath,
+            timeoutMs: workerDeadline(timeoutMs),
+            projectPath: targetRuntime.observed_project_path,
+            expectedRoute: runtime?.expected_page_path || runtime?.page_path || ''
+          }
+        })
+        threadActive = true
+        thread.on('message', consume)
+        thread.on('error', error => {
+          if (settled) {
+            return
+          }
+          rejectUnready(
+            failureDiagnostic({
+              startedAt,
+              timeoutMs,
+              targetRuntime,
+              events,
+              result: { status: 'failed', error: `renderer screenshot thread error: ${error.message}` },
+              stderr
+            })
+          )
+        })
+        thread.on('exit', code => {
+          threadActive = false
+          if (!settled && code !== 0) {
+            rejectUnready(
+              failureDiagnostic({
+                startedAt,
+                timeoutMs,
+                targetRuntime,
+                events,
+                result: {
+                  status: 'failed',
+                  error: `renderer screenshot thread exited code=${code} without terminal result`
+                },
+                stderr
+              })
+            )
+          }
+        })
+        return true
+      } catch (error) {
+        rejectUnready(
+          failureDiagnostic({
+            startedAt,
+            timeoutMs,
+            targetRuntime,
+            events,
+            result: { status: 'failed', error: `renderer screenshot thread failed to start: ${error.message}` },
+            stderr
+          })
+        )
+        return false
+      }
+    }
     try {
       fs.mkdirSync(path.dirname(screenshotPath), { recursive: true })
       child = spawnProcess(
@@ -235,9 +327,19 @@ function captureIsolatedRendererScreenshotAttempt({
           targetRuntime.observed_project_path,
           runtime?.expected_page_path || runtime?.page_path || ''
         ],
-        { stdio: ['ignore', 'pipe', 'pipe'] }
+        {
+          stdio: ['ignore', 'pipe', 'pipe'],
+          env: {
+            ...process.env,
+            QA_AUTOMATOR_RUNTIME_PROOF: JSON.stringify(targetRuntime)
+          }
+        }
       )
+      childActive = true
     } catch (error) {
+      if (spawnProcess === spawn && startThreadFallback()) {
+        return
+      }
       rejectUnready(
         failureDiagnostic({
           startedAt,
@@ -251,6 +353,11 @@ function captureIsolatedRendererScreenshotAttempt({
         })
       )
       return
+    }
+    if (spawnProcess === spawn) {
+      startupTimer = setTimeout(() => {
+        startThreadFallback()
+      }, Math.min(WORKER_STARTUP_DEADLINE_MS, Math.max(250, workerDeadline(timeoutMs))))
     }
     killTimer = setTimeout(() => {
       rejectUnready(
@@ -266,6 +373,9 @@ function captureIsolatedRendererScreenshotAttempt({
       terminate('SIGKILL')
     }, timeoutMs)
     child.stdout?.on('data', chunk => {
+      if (!childActive) {
+        return
+      }
       stdoutBuffer += chunk.toString()
       const lines = stdoutBuffer.split('\n')
       stdoutBuffer = lines.pop() ?? ''
@@ -275,9 +385,15 @@ function captureIsolatedRendererScreenshotAttempt({
         .forEach(line => consume(parseWorkerLine(line)))
     })
     child.stderr?.on('data', chunk => {
+      if (!childActive) {
+        return
+      }
       stderr += chunk.toString()
     })
     child.on('error', error => {
+      if (!childActive) {
+        return
+      }
       rejectUnready(
         failureDiagnostic({
           startedAt,
@@ -290,7 +406,8 @@ function captureIsolatedRendererScreenshotAttempt({
       )
     })
     child.on('close', (code, signal) => {
-      if (settled) {
+      childActive = false
+      if (settled || threadActive) {
         return
       }
       if (stdoutBuffer.trim()) {

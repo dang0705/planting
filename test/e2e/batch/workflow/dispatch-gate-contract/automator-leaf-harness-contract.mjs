@@ -4,6 +4,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import {
+  connectAutomatorTransport,
   connectFormalLeaf,
   clearFormalLeafPrincipal,
   captureFormalScreenshot,
@@ -51,6 +52,61 @@ const connected = await connectFormalLeaf({
 })
 assert.notEqual(connected.mp, mp, 'the harness retains a resumable session facade')
 assert.deepEqual(calls, ['ws://127.0.0.1:9420'])
+const compatibilityProof = {
+  project_identity_verified: true,
+  control_port_verified: true,
+  main_devtools_pid: 901,
+  automation_listener_pid: 903,
+  automator_port: 9421,
+  control_port: 9422,
+  observed_project_path: '/tmp/qa-runtime/mp-weixin'
+}
+const compatibilityCalls = []
+const compatibilityTransport = await connectAutomatorTransport(
+  {
+    connect: async () => {
+      compatibilityCalls.push('official')
+      throw new Error("Cannot read properties of undefined (reading 'split')")
+    },
+    launcher: {
+      connectTool: async () => {
+        compatibilityCalls.push('connectTool')
+        return { disconnect: async () => {} }
+      }
+    }
+  },
+  'ws://127.0.0.1:9421',
+  { runtimeProof: compatibilityProof }
+)
+assert.equal(compatibilityCalls.join(','), 'official,connectTool')
+assert.equal(compatibilityTransport.__qa_transport_mode, 'connectTool_sdkversion_compatibility')
+await assert.rejects(
+  () =>
+    connectAutomatorTransport(
+      {
+        connect: async () => {
+          throw new Error("Cannot read properties of undefined (reading 'split')")
+        },
+        launcher: { connectTool: async () => ({}) }
+      },
+      'ws://127.0.0.1:9421'
+    ),
+  error => error?.code === 'qa_automator_compatibility_proof_missing'
+)
+await assert.rejects(
+  () =>
+    connectAutomatorTransport(
+      {
+        connect: async () => {
+          throw new Error('connection refused')
+        },
+        launcher: { connectTool: async () => ({}) }
+      },
+      'ws://127.0.0.1:9421',
+      { runtimeProof: compatibilityProof }
+    ),
+  /connection refused/
+)
 assert.equal((await disconnectFormalLeaf({ mp })).status, 'disconnected')
 const reconnectCalls = []
 const firstTransport = {
@@ -119,13 +175,24 @@ assert.equal(stalePrimary.primary_disconnect.status, 'already_closed_or_failed')
 const firstProfile = []
 const secondProfile = []
 const principal = resolveFormalLeafPrincipal({ E2E_TEST_OPENID: 'e2e_shared_test_user' })
+await assert.rejects(
+  () =>
+    installFormalLeafPrincipal({
+      mp: { callWxMethod: async () => {} },
+      principal,
+      env: { QA_CATALOG_DATA_MODE: 'automator_live_real_api' }
+    }),
+  error => error?.code === 'formal_live_principal_injection_forbidden'
+)
 const firstEvidence = await installFormalLeafPrincipal({
   mp: { callWxMethod: async (...args) => firstProfile.push(args) },
-  principal
+  principal,
+  env: { QA_CATALOG_DATA_MODE: 'fixture_diagnostic' }
 })
 const secondEvidence = await installFormalLeafPrincipal({
   mp: { callWxMethod: async (...args) => secondProfile.push(args) },
-  principal
+  principal,
+  env: { QA_CATALOG_DATA_MODE: 'fixture_diagnostic' }
 })
 assert.equal(firstEvidence.principal_source, 'E2E_TEST_OPENID')
 assert.equal(firstEvidence.principal_fingerprint, secondEvidence.principal_fingerprint)

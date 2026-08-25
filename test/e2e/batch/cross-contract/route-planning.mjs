@@ -86,7 +86,8 @@ const {
 } = require('../../../../cloudfunctions/diagnose-http/services/session-result-read-service.js')
 Module._load = originalModuleLoad
 
-const { normalizeDiagnosisResult } = await import('../../../../src/utils/diagnose-flow.js')
+const { normalizeDiagnosisResult } =
+  await import('../../../../src/subpackages/diagnosis/utils/diagnose-flow.js')
 
 function buildObservedEvidenceSet(symptomKeys = []) {
   return (Array.isArray(symptomKeys) ? symptomKeys : []).map((symptomKey, index) => ({
@@ -2948,7 +2949,7 @@ function testRouteExplanationFollowsRoutePrimaryOutcome() {
 }
 
 function testQuestionCompletedStateUsesRouteConvergenceBranch() {
-  const source = readFileSync('./src/pages/diagnose/question-package.vue', 'utf8')
+  const source = readFileSync('./src/subpackages/diagnosis/question-package.vue', 'utf8')
 
   assert.match(
     source,
@@ -2958,7 +2959,7 @@ function testQuestionCompletedStateUsesRouteConvergenceBranch() {
 }
 
 function testDiagnosisResultPageUsesVisibleOutcomeList() {
-  const source = readFileSync('./src/pages/diagnose/result.vue', 'utf8')
+  const source = readFileSync('./src/subpackages/diagnosis/result.vue', 'utf8')
 
   assert.match(source, /function buildOutcomeDisplayItems/)
   assert.match(source, /v-for="item in viewModel\.outcomeItems"/)
@@ -4775,11 +4776,11 @@ function testFrontendNormalizationSuitability() {
 
 function testDiagnosisReviewDisplaysEnvironmentCareCalculation() {
   const source = [
-    './src/pages/profile/diagnosis-review.vue',
-    './src/pages/profile/diagnosis-review/DiagnosisReviewDetailSections.vue',
-    './src/pages/profile/diagnosis-review/environment-summary.js',
-    './src/pages/profile/diagnosis-review/environment-rows.js',
-    './src/pages/profile/diagnosis-review/formula.js'
+    './src/subpackages/review/diagnosis-review.vue',
+    './src/subpackages/review/diagnosis-review/DiagnosisReviewDetailSections.vue',
+    './src/subpackages/review/diagnosis-review/environment-summary.js',
+    './src/subpackages/review/diagnosis-review/environment-rows.js',
+    './src/subpackages/review/diagnosis-review/formula.js'
   ]
     .map(filePath => readFileSync(filePath, 'utf8'))
     .join('\n')

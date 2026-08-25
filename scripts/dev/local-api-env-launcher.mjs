@@ -12,14 +12,48 @@ import {
   isMpWeixinWatchCommand
 } from './local-runtime-session.mjs'
 
+const RUNTIME_OWNER_HANDOFF_POLL_MS = 250
+const RUNTIME_OWNER_HANDOFF_TIMEOUT_MS = 30_000
+
 function commandEnvironment(apiBaseUrl, options, environment = process.env) {
-  return {
+  const next = {
     ...environment,
     VITE_APP_ENV: 'development',
     VITE_CLOUDBASE_ENV_ID: environment.VITE_CLOUDBASE_ENV_ID || 'cloud1-2grufevs395a9d5e',
     VITE_API_BASE_URL: apiBaseUrl,
-    VITE_DEV_OPENID: options.openid
+    VITE_DEV_OPENID: options.openid,
+    CLOUDBASE_LOCAL_FUNCTIONS_PORT: String(options.port),
+    CLOUDBASE_LOCAL_FUNCTIONS_FUNCTION_PORT_BASE: String(options.functionPortBase)
   }
+  if (options.outputDir) {
+    next.UNI_OUTPUT_DIR = options.outputDir
+  }
+  return next
+}
+
+async function waitForRuntimeOwnerHandoff({ managedRuntime, initial, shouldStop, output }) {
+  const deadline = Date.now() + RUNTIME_OWNER_HANDOFF_TIMEOUT_MS
+  let started = initial
+  output.write('已有 mp-weixin watch runtime 正在运行，等待其释放租约后接管\n')
+  while (started.status === 'reused') {
+    if (shouldStop()) {
+      return { status: 'cancelled', signal: 'SIGINT' }
+    }
+    if (Date.now() >= deadline) {
+      return {
+        status: 'blocked',
+        code: 'local_runtime_owner_handoff_timeout',
+        reason: 'existing_owner_did_not_release'
+      }
+    }
+    await new Promise(resolve => setTimeout(resolve, RUNTIME_OWNER_HANDOFF_POLL_MS))
+    if (shouldStop()) {
+      return { status: 'cancelled', signal: 'SIGINT' }
+    }
+    started =
+      typeof managedRuntime.claim === 'function' ? managedRuntime.claim() : managedRuntime.start()
+  }
+  return started
 }
 
 function waitForCommandExit(child, waitForExit) {
@@ -32,7 +66,7 @@ function waitForCommandExit(child, waitForExit) {
       settled = true
       callback(value)
     }
-    child.once('error', error => settle(reject, error))
+    child?.once('error', error => settle(reject, error))
     if (typeof waitForExit === 'function') {
       waitForExit().then(
         exit => settle(resolve, exit),
@@ -71,22 +105,29 @@ export async function runLocalApiEnvironment({
   const apiBaseUrl = resolveLocalApiBaseUrl(options, environment)
   const childEnvironment = commandEnvironment(apiBaseUrl, options, environment)
   const managesMpWeixinWatch = isMpWeixinWatchCommand(command)
+  const effectiveRuntimeTargetPath = options.outputDir || runtimeTargetPath
   output.write(`VITE_API_BASE_URL=${apiBaseUrl}\n`)
   let gatewayChild = null
   let managedRuntime = null
   let managedRuntimeStop = null
+  let stopRequested = false
   const stopOwnedResources = () => {
     if (!managedRuntimeStop) {
       managedRuntimeStop = (async () => {
+        // The gateway is a dependency of the watcher. Stop a gateway owned by
+        // this launcher before releasing the watch lease, so a waiting daily
+        // launcher cannot acquire the lease while the old gateway is still in
+        // the process of shutting down.
+        await stopLocalGatewayChild(gatewayChild)
         if (managedRuntime) {
           await managedRuntime.stop()
         }
-        await stopLocalGatewayChild(gatewayChild)
       })()
     }
     return managedRuntimeStop
   }
   const stopStartedGateway = () => {
+    stopRequested = true
     stopOwnedResources().catch(error => {
       process.stderr.write(`停止本地 runtime 资源失败: ${error.message}\n`)
     })
@@ -102,25 +143,60 @@ export async function runLocalApiEnvironment({
     let waitForExit
     if (managesMpWeixinWatch) {
       managedRuntime = runtimeSessionFactory({
-        targetPath: runtimeTargetPath,
-        leaseRoot: runtimeLeaseRoot,
+        targetPath: effectiveRuntimeTargetPath,
         command,
         environment: childEnvironment,
         mode: options.mode,
+        reuseOutput: options.reuseOutput,
         initialApiBaseUrl: apiBaseUrl,
+        leaseRoot: options.runtimeLeaseRoot || runtimeLeaseRoot,
         resolveLanApiBaseUrl:
           options.mode === 'lan' ? () => resolveLocalApiBaseUrl(options, environment) : undefined,
         spawnProcess
       })
-      const started = managedRuntime.start()
-      if (started.status !== 'started' || !started.child) {
+      let started = managedRuntime.start()
+      if (started.status === 'reused' && !options.reuseOutput) {
+        started = await waitForRuntimeOwnerHandoff({
+          managedRuntime,
+          initial: started,
+          shouldStop: () => stopRequested,
+          output
+        })
+        if (started.status === 'cancelled') {
+          assertCommandExit({ code: null, signal: started.signal })
+          return
+        }
+        if (started.status === 'acquired') {
+          if (!options.skipHealthCheck) {
+            gatewayChild = await ensureRuntime(apiBaseUrl, options)
+          }
+          started = managedRuntime.start()
+        }
+      }
+      if (
+        !['started', 'reused'].includes(started.status) ||
+        (started.status === 'started' && !started.child && !options.reuseOutput)
+      ) {
         throw createLocalGatewayError(
           'LOCAL_RUNTIME_WATCH_LEASE_UNAVAILABLE',
           `未能取得 mp-weixin watch runtime lease: ${started.code || started.reason || started.status}`
         )
       }
-      child = started.child
-      waitForExit = () => managedRuntime.waitForExit()
+      if (started.status === 'reused') {
+        // A verified owner already serves the exact target output. Starting a
+        // second watcher would be unsafe, but treating this as an error makes
+        // a normal QA -> daily handoff look broken. The caller is not the
+        // lease owner, so the managed session remains a no-op and its cleanup
+        // cannot release or terminate the existing watcher.
+        output.write(
+          `复用已有 mp-weixin watch runtime: ${started.lease?.owner_pid || 'unknown'}\n`
+        )
+        child = null
+        waitForExit = () => Promise.resolve({ code: 0, signal: null, reused: true })
+      } else {
+        child = started.child
+        waitForExit = () => managedRuntime.waitForExit()
+      }
     } else {
       child = spawnProcess(command[0], command.slice(1), {
         env: childEnvironment,

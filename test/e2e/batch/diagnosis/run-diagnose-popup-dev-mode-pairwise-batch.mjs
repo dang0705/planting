@@ -5,9 +5,7 @@ import path from 'node:path'
 import Module from 'node:module'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
-import {
-  writeSplitCanonicalBatchArtifacts
-} from './lib/canonical-batch-artifacts.mjs'
+import { writeSplitCanonicalBatchArtifacts } from './lib/canonical-batch-artifacts.mjs'
 
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -18,7 +16,11 @@ Module._resolveFilename = function resolveLocalLayerPath(request, parent, isMain
   if (typeof request === 'string' && request.startsWith('/opt/utils/')) {
     return originalResolveFilename.call(
       this,
-      path.join(projectRoot, 'cloudfunctions/layer/utils', `${request.slice('/opt/utils/'.length)}.js`),
+      path.join(
+        projectRoot,
+        'cloudfunctions/layer/utils',
+        `${request.slice('/opt/utils/'.length)}.js`
+      ),
       parent,
       isMain,
       options
@@ -36,7 +38,11 @@ Module._resolveFilename = function resolveLocalLayerPath(request, parent, isMain
   if (typeof request === 'string' && request.startsWith('/opt/configs/')) {
     return originalResolveFilename.call(
       this,
-      path.join(projectRoot, 'cloudfunctions/layer/configs', `${request.slice('/opt/configs/'.length)}.js`),
+      path.join(
+        projectRoot,
+        'cloudfunctions/layer/configs',
+        `${request.slice('/opt/configs/'.length)}.js`
+      ),
       parent,
       isMain,
       options
@@ -46,8 +52,12 @@ Module._resolveFilename = function resolveLocalLayerPath(request, parent, isMain
 }
 
 const app = require('../../../../cloudfunctions/diagnose-http/app')
-const { runDiagnosisRound } = require('../../../../cloudfunctions/diagnose-http/domain/diagnosis-engine')
-const { preloadQuestionRepositoryCache } = require('../../../../cloudfunctions/diagnose-http/repositories/question-repository')
+const {
+  runDiagnosisRound
+} = require('../../../../cloudfunctions/diagnose-http/domain/diagnosis-engine')
+const {
+  preloadQuestionRepositoryCache
+} = require('../../../../cloudfunctions/diagnose-http/repositories/question-repository')
 const { models } = require('/opt/utils/cloudbase')
 
 const SCRIPT_NAME = 'run-diagnose-popup-dev-mode-pairwise-batch.mjs'
@@ -57,7 +67,8 @@ const BATCH_OPENID = 'anon_dev_diag_pairwise_batch'
 const IMPORT_OPENID = 'dev_terminal_diag_pairwise_import'
 const DEFAULT_USER_PLANT_ID = 5
 const DEFAULT_PLANT_ID = '21'
-const DEFAULT_REPORT_FILE = 'test/e2e/batch/diagnosis/manifests/diagnose-popup-dev-mode-pairwise.report.json'
+const DEFAULT_REPORT_FILE =
+  'test/e2e/batch/diagnosis/manifests/diagnose-popup-dev-mode-pairwise.report.json'
 const DEFAULT_BATCH_ARTIFACTS_DIR = 'test/e2e/batch/diagnosis/batch'
 const DEFAULT_CONCLUSION_ARTIFACTS_DIR = 'test/e2e/batch/diagnosis/conclusion'
 const ENGINE_RUN_PATH_CACHE = new Map()
@@ -65,7 +76,9 @@ const ENGINE_RUN_PATH_PENDING = new Map()
 
 function parseArgs(argv = []) {
   return argv.reduce((result, arg) => {
-    if (!arg.startsWith('--')) {return result}
+    if (!arg.startsWith('--')) {
+      return result
+    }
     const [rawKey, ...rest] = arg.slice(2).split('=')
     result[String(rawKey || '').trim()] = rest.length ? rest.join('=').trim() : 'true'
     return result
@@ -82,19 +95,29 @@ function normalizeInteger(value, fallback = 0) {
 }
 
 function normalizeBoolean(value, fallback = false) {
-  if (value === undefined || value === null || value === '') {return fallback}
+  if (value === undefined || value === null || value === '') {
+    return fallback
+  }
   const normalized = String(value).trim().toLowerCase()
-  if (['1', 'true', 'yes', 'y', 'on'].includes(normalized)) {return true}
-  if (['0', 'false', 'no', 'n', 'off'].includes(normalized)) {return false}
+  if (['1', 'true', 'yes', 'y', 'on'].includes(normalized)) {
+    return true
+  }
+  if (['0', 'false', 'no', 'n', 'off'].includes(normalized)) {
+    return false
+  }
   return fallback
 }
 
 function normalizeSqlForCache(sql = '') {
-  return String(sql || '').replace(/\s+/g, ' ').trim()
+  return String(sql || '')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 function installSelectSqlCache({ enabled = false, slowSqlMs = 0 } = {}) {
-  if (!enabled || models.__diagnosePairwiseSelectCacheInstalled) {return}
+  if (!enabled || models.__diagnosePairwiseSelectCacheInstalled) {
+    return
+  }
   const originalRunSQL = models.$runSQL.bind(models)
   const cache = new Map()
   const pending = new Map()
@@ -141,7 +164,9 @@ function sleep(ms = 0) {
 }
 
 function formatSqlText(value = '') {
-  return `'${String(value ?? '').replace(/\\/g, '\\\\').replace(/'/g, "''")}'`
+  return `'${String(value ?? '')
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "''")}'`
 }
 
 function _formatSqlNullableText(value = '') {
@@ -153,7 +178,10 @@ function sqlRows(result) {
   return result?.data?.executeResultList || result?.data?.rows || result?.rows || []
 }
 
-async function ensureBatchUserPlant({ openid = BATCH_OPENID, userPlantId = DEFAULT_USER_PLANT_ID } = {}) {
+async function ensureBatchUserPlant({
+  openid = BATCH_OPENID,
+  userPlantId = DEFAULT_USER_PLANT_ID
+} = {}) {
   const existing = await models.$runSQL(
     `
       SELECT id
@@ -218,7 +246,9 @@ async function ensureBatchUserPlant({ openid = BATCH_OPENID, userPlantId = DEFAU
 
 function parseDevModesFromDiagnosePopup(source = '') {
   const objectMatches = Array.from(
-    source.matchAll(/\{[\s\S]*?classKey:\s*['"]([^'"]+)['"][\s\S]*?classNameCn:\s*['"]([^'"]*)['"][\s\S]*?symptomKey:\s*['"]([^'"]+)['"][\s\S]*?symptomCn:\s*['"]([^'"]+)['"][\s\S]*?\}/g)
+    source.matchAll(
+      /\{[\s\S]*?classKey:\s*['"]([^'"]+)['"][\s\S]*?classNameCn:\s*['"]([^'"]*)['"][\s\S]*?symptomKey:\s*['"]([^'"]+)['"][\s\S]*?symptomCn:\s*['"]([^'"]+)['"][\s\S]*?\}/g
+    )
   )
   return objectMatches
     .map(match => ({
@@ -232,7 +262,7 @@ function parseDevModesFromDiagnosePopup(source = '') {
 }
 
 async function loadDevModes() {
-  const filePath = path.join(projectRoot, 'src/components/DiagnosePopup.vue')
+  const filePath = path.join(projectRoot, 'src/subpackages/diagnosis/components/DiagnosePopup.vue')
   const source = await fs.readFile(filePath, 'utf8')
   const modes = parseDevModesFromDiagnosePopup(source)
   if (!modes.length) {
@@ -241,7 +271,10 @@ async function loadDevModes() {
   return modes
 }
 
-function buildDevPayload(mode, { userPlantId = DEFAULT_USER_PLANT_ID, openid = BATCH_OPENID } = {}) {
+function buildDevPayload(
+  mode,
+  { userPlantId = DEFAULT_USER_PLANT_ID, openid = BATCH_OPENID } = {}
+) {
   const evidenceId = `dev_visual::${mode.classKey}::${mode.symptomKey}`
   return {
     skipAuth: true,
@@ -359,8 +392,12 @@ function buildEngineInitialEvidence(mode) {
 }
 
 function normalizeAppResponse(res) {
-  if (!res) {return { statusCode: 0, body: null }}
-  if (typeof res.body !== 'string') {return { statusCode: res.statusCode || 0, body: res.body || res }}
+  if (!res) {
+    return { statusCode: 0, body: null }
+  }
+  if (typeof res.body !== 'string') {
+    return { statusCode: res.statusCode || 0, body: res.body || res }
+  }
   try {
     return { statusCode: res.statusCode || 0, body: JSON.parse(res.body) }
   } catch {
@@ -392,7 +429,9 @@ async function callApp(pathname, payload = {}, { method = 'POST', openid = BATCH
   )
   const code = Number(result.body?.code || result.statusCode || 0)
   if (result.statusCode >= 400 || code >= 400) {
-    throw new Error(`${pathname} failed: ${result.statusCode}/${code} ${result.body?.message || ''}`.trim())
+    throw new Error(
+      `${pathname} failed: ${result.statusCode}/${code} ${result.body?.message || ''}`.trim()
+    )
   }
   return result.body?.data || result.body || {}
 }
@@ -403,7 +442,11 @@ function getPrimaryQuestion(data = {}) {
     : Array.isArray(data?.followUps)
       ? data.followUps
       : []
-  return questions.find(item => item?.questionId && Array.isArray(item?.options) && item.options.length) || null
+  return (
+    questions.find(
+      item => item?.questionId && Array.isArray(item?.options) && item.options.length
+    ) || null
+  )
 }
 
 function findOption(question = {}, optionKey = '') {
@@ -428,11 +471,7 @@ function buildPathSignature(mode, answerPath = []) {
   return `${mode.modeKey}/${mode.symptomKey}${answerText ? ` > ${answerText}` : ' > direct'}`
 }
 
-const PENDING_STOP_REASONS = new Set([
-  'await_follow_up',
-  'followup',
-  'follow_up_required'
-])
+const PENDING_STOP_REASONS = new Set(['await_follow_up', 'followup', 'follow_up_required'])
 
 function isFinalDiagnosisData(data = {}) {
   const outcomeType = normalizeText(data?.outcomeType)
@@ -442,7 +481,9 @@ function isFinalDiagnosisData(data = {}) {
 
 function isRetryableRuntimeError(error) {
   const message = normalizeText(error?.message || String(error))
-  return /单 case 超时|预热路径超时|request timeout|models\.\$runSQL|ECONNRESET|ETIMEDOUT|ESOCKETTIMEDOUT|socket hang up/i.test(message)
+  return /单 case 超时|预热路径超时|request timeout|models\.\$runSQL|ECONNRESET|ETIMEDOUT|ESOCKETTIMEDOUT|socket hang up/i.test(
+    message
+  )
 }
 
 async function runAnswerPath(mode, answerPath = [], { userPlantId = DEFAULT_USER_PLANT_ID } = {}) {
@@ -511,7 +552,11 @@ async function runAnswerPath(mode, answerPath = [], { userPlantId = DEFAULT_USER
   }
 }
 
-async function runEngineAnswerPath(mode, answerPath = [], { userPlantId = DEFAULT_USER_PLANT_ID } = {}) {
+async function runEngineAnswerPath(
+  mode,
+  answerPath = [],
+  { userPlantId = DEFAULT_USER_PLANT_ID } = {}
+) {
   const sessionId = `engine_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
   const normalizedAnswerPath = (Array.isArray(answerPath) ? answerPath : [])
     .map(item => ({
@@ -520,11 +565,7 @@ async function runEngineAnswerPath(mode, answerPath = [], { userPlantId = DEFAUL
     }))
     .filter(item => item.questionKey && item.optionKey)
   const cacheKeyForLength = length =>
-    JSON.stringify([
-      Number(userPlantId),
-      mode.modeKey,
-      normalizedAnswerPath.slice(0, length)
-    ])
+    JSON.stringify([Number(userPlantId), mode.modeKey, normalizedAnswerPath.slice(0, length)])
   const exactCacheKey = cacheKeyForLength(normalizedAnswerPath.length)
   if (ENGINE_RUN_PATH_CACHE.has(exactCacheKey)) {
     return ENGINE_RUN_PATH_CACHE.get(exactCacheKey)
@@ -534,128 +575,129 @@ async function runEngineAnswerPath(mode, answerPath = [], { userPlantId = DEFAUL
   }
 
   const runPromise = (async () => {
-  const lockedPlantContext = buildEngineLockedPlantContext({ userPlantId })
-  const initialEvidence = buildEngineInitialEvidence(mode)
-  const executedAnswers = []
-  const encounteredQuestions = []
-  let data
-  let startIndex = 0
+    const lockedPlantContext = buildEngineLockedPlantContext({ userPlantId })
+    const initialEvidence = buildEngineInitialEvidence(mode)
+    const executedAnswers = []
+    const encounteredQuestions = []
+    let data
+    let startIndex = 0
 
-  for (let index = normalizedAnswerPath.length; index >= 0; index -= 1) {
-    const prefixKey = cacheKeyForLength(index)
-    if (!ENGINE_RUN_PATH_CACHE.has(prefixKey)) {continue}
-    const cached = ENGINE_RUN_PATH_CACHE.get(prefixKey)
-    data = cached.data
-    executedAnswers.push(...cached.executedAnswers)
-    encounteredQuestions.push(...cached.encounteredQuestions)
-    startIndex = index
-    break
-  }
+    for (let index = normalizedAnswerPath.length; index >= 0; index -= 1) {
+      const prefixKey = cacheKeyForLength(index)
+      if (!ENGINE_RUN_PATH_CACHE.has(prefixKey)) {
+        continue
+      }
+      const cached = ENGINE_RUN_PATH_CACHE.get(prefixKey)
+      data = cached.data
+      executedAnswers.push(...cached.executedAnswers)
+      encounteredQuestions.push(...cached.encounteredQuestions)
+      startIndex = index
+      break
+    }
 
-  if (!data) {
-    data = await runDiagnosisRound({
-      openid: BATCH_OPENID,
-      plantId: DEFAULT_PLANT_ID,
-      userPlantId: Number(userPlantId),
-      lockedPlantContext,
-      observedSymptoms: initialEvidence.observedSymptoms,
-      observedEvidenceSet: initialEvidence.observedEvidenceSet,
-      visualAggregateResult: null,
-      answers: [],
-      askedQuestionKeys: [],
-      answeredQuestionGroupKeys: [],
-      unknownCountByGroup: {},
-      symptomClassState: null,
-      storedFollowUpRows: [],
-      round: 1,
-      stage: 'preliminary',
-      sessionId
-    })
-    ENGINE_RUN_PATH_CACHE.set(cacheKeyForLength(0), {
+    if (!data) {
+      data = await runDiagnosisRound({
+        openid: BATCH_OPENID,
+        plantId: DEFAULT_PLANT_ID,
+        userPlantId: Number(userPlantId),
+        lockedPlantContext,
+        observedSymptoms: initialEvidence.observedSymptoms,
+        observedEvidenceSet: initialEvidence.observedEvidenceSet,
+        visualAggregateResult: null,
+        answers: [],
+        askedQuestionKeys: [],
+        answeredQuestionGroupKeys: [],
+        unknownCountByGroup: {},
+        symptomClassState: null,
+        storedFollowUpRows: [],
+        round: 1,
+        stage: 'preliminary',
+        sessionId
+      })
+      ENGINE_RUN_PATH_CACHE.set(cacheKeyForLength(0), {
+        mode,
+        sessionId,
+        data,
+        currentQuestion: getPrimaryQuestion(data),
+        executedAnswers: [],
+        encounteredQuestions: []
+      })
+    }
+
+    for (const expected of normalizedAnswerPath.slice(startIndex)) {
+      const question = getPrimaryQuestion(data)
+      if (!question) {
+        throw new Error(`路径提前结束: ${buildPathSignature(mode, answerPath)}`)
+      }
+      const questionKey = normalizeText(question.questionKey || question.questionId)
+      if (expected.questionKey && expected.questionKey !== questionKey) {
+        throw new Error(
+          `路径问题不匹配: expected=${expected.questionKey}, actual=${questionKey}, path=${buildPathSignature(mode, answerPath)}`
+        )
+      }
+      const option = findOption(question, expected.optionKey)
+      if (!option) {
+        throw new Error(
+          `路径选项不存在: question=${questionKey}, option=${expected.optionKey}, path=${buildPathSignature(mode, answerPath)}`
+        )
+      }
+      const optionKey = normalizeText(option.optionKey || option.optionId)
+      encounteredQuestions.push({
+        questionKey,
+        questionText: normalizeText(question.text || question.questionText),
+        optionKey,
+        optionText: normalizeText(option.text || option.optionText)
+      })
+      executedAnswers.push({
+        questionId: question.questionId,
+        questionKey,
+        optionId: option.optionId,
+        optionKey
+      })
+      data = await runDiagnosisRound({
+        openid: BATCH_OPENID,
+        plantId: DEFAULT_PLANT_ID,
+        userPlantId: Number(userPlantId),
+        lockedPlantContext,
+        observedSymptoms: [],
+        observedEvidenceSet: data.observedEvidenceSet || initialEvidence.observedEvidenceSet,
+        visualAggregateResult: null,
+        answers: executedAnswers.map(item => ({
+          questionKey: item.questionKey,
+          optionKey: item.optionKey
+        })),
+        askedQuestionKeys: executedAnswers.map(item => item.questionKey),
+        answeredQuestionGroupKeys: [],
+        unknownCountByGroup: {},
+        symptomClassState: data.symptomClassRuntime || null,
+        storedFollowUpRows: [],
+        round: executedAnswers.length + 1,
+        stage: 'followup',
+        sessionId
+      })
+      ENGINE_RUN_PATH_CACHE.set(cacheKeyForLength(executedAnswers.length), {
+        mode,
+        sessionId,
+        data,
+        currentQuestion: getPrimaryQuestion(data),
+        executedAnswers: executedAnswers.slice(),
+        encounteredQuestions: encounteredQuestions.slice()
+      })
+    }
+
+    const result = {
       mode,
       sessionId,
       data,
       currentQuestion: getPrimaryQuestion(data),
-      executedAnswers: [],
-      encounteredQuestions: []
-    })
-  }
-
-  for (const expected of normalizedAnswerPath.slice(startIndex)) {
-    const question = getPrimaryQuestion(data)
-    if (!question) {
-      throw new Error(`路径提前结束: ${buildPathSignature(mode, answerPath)}`)
+      executedAnswers,
+      encounteredQuestions
     }
-    const questionKey = normalizeText(question.questionKey || question.questionId)
-    if (expected.questionKey && expected.questionKey !== questionKey) {
-      throw new Error(
-        `路径问题不匹配: expected=${expected.questionKey}, actual=${questionKey}, path=${buildPathSignature(mode, answerPath)}`
-      )
-    }
-    const option = findOption(question, expected.optionKey)
-    if (!option) {
-      throw new Error(
-        `路径选项不存在: question=${questionKey}, option=${expected.optionKey}, path=${buildPathSignature(mode, answerPath)}`
-      )
-    }
-    const optionKey = normalizeText(option.optionKey || option.optionId)
-    encounteredQuestions.push({
-      questionKey,
-      questionText: normalizeText(question.text || question.questionText),
-      optionKey,
-      optionText: normalizeText(option.text || option.optionText)
-    })
-    executedAnswers.push({
-      questionId: question.questionId,
-      questionKey,
-      optionId: option.optionId,
-      optionKey
-    })
-    data = await runDiagnosisRound({
-      openid: BATCH_OPENID,
-      plantId: DEFAULT_PLANT_ID,
-      userPlantId: Number(userPlantId),
-      lockedPlantContext,
-      observedSymptoms: [],
-      observedEvidenceSet: data.observedEvidenceSet || initialEvidence.observedEvidenceSet,
-      visualAggregateResult: null,
-      answers: executedAnswers.map(item => ({
-        questionKey: item.questionKey,
-        optionKey: item.optionKey
-      })),
-      askedQuestionKeys: executedAnswers.map(item => item.questionKey),
-      answeredQuestionGroupKeys: [],
-      unknownCountByGroup: {},
-      symptomClassState: data.symptomClassRuntime || null,
-      storedFollowUpRows: [],
-      round: executedAnswers.length + 1,
-      stage: 'followup',
-      sessionId
-    })
-    ENGINE_RUN_PATH_CACHE.set(cacheKeyForLength(executedAnswers.length), {
-      mode,
-      sessionId,
-      data,
-      currentQuestion: getPrimaryQuestion(data),
-      executedAnswers: executedAnswers.slice(),
-      encounteredQuestions: encounteredQuestions.slice()
-    })
-  }
-
-  const result = {
-    mode,
-    sessionId,
-    data,
-    currentQuestion: getPrimaryQuestion(data),
-    executedAnswers,
-    encounteredQuestions
-  }
-  ENGINE_RUN_PATH_CACHE.set(exactCacheKey, result)
-  return result
-  })()
-    .finally(() => {
-      ENGINE_RUN_PATH_PENDING.delete(exactCacheKey)
-    })
+    ENGINE_RUN_PATH_CACHE.set(exactCacheKey, result)
+    return result
+  })().finally(() => {
+    ENGINE_RUN_PATH_PENDING.delete(exactCacheKey)
+  })
   ENGINE_RUN_PATH_PENDING.set(exactCacheKey, runPromise)
   return runPromise
 }
@@ -678,11 +720,15 @@ async function prewarmEngineRootPaths({
             runPromise,
             new Promise((resolve, reject) => {
               timeoutId = setTimeout(() => {
-                reject(new Error(`预热路径超时 ${timeoutMs}ms: ${buildPathSignature(mode, answerPath)}`))
+                reject(
+                  new Error(`预热路径超时 ${timeoutMs}ms: ${buildPathSignature(mode, answerPath)}`)
+                )
               }, Number(timeoutMs))
             })
           ]).finally(() => {
-            if (timeoutId) {clearTimeout(timeoutId)}
+            if (timeoutId) {
+              clearTimeout(timeoutId)
+            }
           })
         }
         return await runPromise
@@ -705,21 +751,23 @@ async function prewarmEngineRootPaths({
   const queuedPaths = []
   for (const mode of modes) {
     const modeStartedAt = Date.now()
-    process.stderr.write(
-      `[pairwise-batch] prewarm start: ${mode.modeKey}/${mode.symptomKey}\n`
-    )
+    process.stderr.write(`[pairwise-batch] prewarm start: ${mode.modeKey}/${mode.symptomKey}\n`)
     await runPrewarmPathWithRetry(mode, [])
     warmedCount += 1
     process.stderr.write(
       `[pairwise-batch] prewarm done: ${mode.modeKey}/${mode.symptomKey}, elapsedMs=${Date.now() - modeStartedAt}\n`
     )
     if (Number(depth || 0) > 0) {
-      const rootResult = ENGINE_RUN_PATH_CACHE.get(JSON.stringify([Number(userPlantId), mode.modeKey, []]))
+      const rootResult = ENGINE_RUN_PATH_CACHE.get(
+        JSON.stringify([Number(userPlantId), mode.modeKey, []])
+      )
       const question = rootResult ? getPrimaryQuestion(rootResult.data) : null
       const questionKey = normalizeText(question?.questionKey || question?.questionId)
       for (const option of Array.isArray(question?.options) ? question.options : []) {
         const optionKey = normalizeText(option?.optionKey || option?.optionId)
-        if (!questionKey || !optionKey) {continue}
+        if (!questionKey || !optionKey) {
+          continue
+        }
         queuedPaths.push({ mode, answerPath: [{ questionKey, optionKey }], depth: 1 })
       }
     }
@@ -769,12 +817,7 @@ async function submitFollowUpAnswer({
   return callApp('/diagnosis/answer', payload, { openid })
 }
 
-function buildRunResultFromSweep({
-  mode,
-  sessionId,
-  answerPath = [],
-  data = {}
-} = {}) {
+function buildRunResultFromSweep({ mode, sessionId, answerPath = [], data = {} } = {}) {
   return {
     mode,
     sessionId,
@@ -914,7 +957,9 @@ function mapRecordToCanonicalResult(record = {}) {
       stopReason: normalizeText(record.stopReason),
       title: normalizeText(record.finalTitle),
       pendingTopTitle: normalizeText(record.pendingTopTitle),
-      currentTopTitle: normalizeText(record.currentTopTitle || record.finalTitle || record.pendingTopTitle),
+      currentTopTitle: normalizeText(
+        record.currentTopTitle || record.finalTitle || record.pendingTopTitle
+      ),
       topProblemKey: normalizeText(record.topProblemKey),
       topProblemDisplayName: normalizeText(record.topProblemDisplayName),
       topProblemScore: Number(record.topProblemScore || 0),
@@ -933,12 +978,15 @@ function mapRecordToCanonicalResult(record = {}) {
   }
 }
 
-async function runSessionSweepForMode(mode, {
-  userPlantId = DEFAULT_USER_PLANT_ID,
-  maxDepth = 10,
-  maxCases = 600,
-  batchGeneratedAt = new Date().toISOString()
-} = {}) {
+async function runSessionSweepForMode(
+  mode,
+  {
+    userPlantId = DEFAULT_USER_PLANT_ID,
+    maxDepth = 10,
+    maxCases = 600,
+    batchGeneratedAt = new Date().toISOString()
+  } = {}
+) {
   let data = await callApp('/diagnosis/start', buildDevPayload(mode, { userPlantId }), {
     openid: BATCH_OPENID
   })
@@ -954,15 +1002,22 @@ async function runSessionSweepForMode(mode, {
   }
 
   async function sweepCurrentQuestion(currentData, answerPath = [], depth = 0) {
-    if (shouldStop()) {return}
+    if (shouldStop()) {
+      return
+    }
     const question = getPrimaryQuestion(currentData)
     if (!question || depth >= maxDepth) {
-      records.push(buildBatchRecord(buildRunResultFromSweep({
-        mode,
-        sessionId,
-        answerPath,
-        data: currentData
-      }), { batchGeneratedAt }))
+      records.push(
+        buildBatchRecord(
+          buildRunResultFromSweep({
+            mode,
+            sessionId,
+            answerPath,
+            data: currentData
+          }),
+          { batchGeneratedAt }
+        )
+      )
       return
     }
 
@@ -982,9 +1037,13 @@ async function runSessionSweepForMode(mode, {
     let hasSubmittedThisQuestion = false
 
     for (const option of options) {
-      if (shouldStop()) {break}
+      if (shouldStop()) {
+        break
+      }
       const optionKey = normalizeText(option.optionKey || option.optionId)
-      if (!optionKey) {continue}
+      if (!optionKey) {
+        continue
+      }
       questionInfo.optionKeys.push(optionKey)
       const pairKey = buildPairKey(mode, question, option)
       scheduledPairs.add(pairKey)
@@ -1012,12 +1071,17 @@ async function runSessionSweepForMode(mode, {
         coveredPairs.add(pairKey)
         const nextQuestion = getPrimaryQuestion(data)
         if (!nextQuestion || isFinalDiagnosisData(data) || depth + 1 >= maxDepth) {
-          records.push(buildBatchRecord(buildRunResultFromSweep({
-            mode,
-            sessionId,
-            answerPath: nextAnswerPath,
-            data
-          }), { batchGeneratedAt }))
+          records.push(
+            buildBatchRecord(
+              buildRunResultFromSweep({
+                mode,
+                sessionId,
+                answerPath: nextAnswerPath,
+                data
+              }),
+              { batchGeneratedAt }
+            )
+          )
         } else {
           await sweepCurrentQuestion(data, nextAnswerPath, depth + 1)
         }
@@ -1049,14 +1113,14 @@ async function runSessionSweepForMode(mode, {
             stopReason: normalizeText(data?.stopReason),
             title: normalizeText(
               data?.summaryCard?.title ||
-              data?.finalResult?.title ||
-              data?.finalResult?.displayName ||
-              data?.topProblem?.displayName
+                data?.finalResult?.title ||
+                data?.finalResult?.displayName ||
+                data?.topProblem?.displayName
             ),
             topProblemKey: normalizeText(
               data?.topProblem?.problemKey ||
-              data?.finalResult?.problemKey ||
-              data?.rankings?.[0]?.problemKey
+                data?.finalResult?.problemKey ||
+                data?.rankings?.[0]?.problemKey
             )
           }
         ],
@@ -1150,10 +1214,12 @@ async function runSessionSweepBatch({
         discoveredQuestions.set(key, { ...value, optionKeys: [] })
       }
       const target = discoveredQuestions.get(key)
-      target.optionKeys = Array.from(new Set([
-        ...(Array.isArray(target.optionKeys) ? target.optionKeys : []),
-        ...(Array.isArray(value.optionKeys) ? value.optionKeys : [])
-      ]))
+      target.optionKeys = Array.from(
+        new Set([
+          ...(Array.isArray(target.optionKeys) ? target.optionKeys : []),
+          ...(Array.isArray(value.optionKeys) ? value.optionKeys : [])
+        ])
+      )
     }
   }
 
@@ -1162,7 +1228,9 @@ async function runSessionSweepBatch({
   }
 
   function printProgress(force = false) {
-    if (!force && completedModeCount % 2 !== 0) {return}
+    if (!force && completedModeCount % 2 !== 0) {
+      return
+    }
     process.stderr.write(
       `[pairwise-session-sweep] modes=${completedModeCount}/${modes.length}, active=${activeCount}, queued=${pendingList.length}, records=${records.length}, coveredPairs=${coveredPairs.size}, scheduledPairs=${scheduledPairs.size}, failures=${failures.length}\n`
     )
@@ -1184,8 +1252,12 @@ async function runSessionSweepBatch({
             failures.push(...result.failures)
             directFinals.push(...result.directFinals)
             mergeQuestionMap(result.discoveredQuestions)
-            for (const item of result.scheduledPairs) {scheduledPairs.add(item)}
-            for (const item of result.coveredPairs) {coveredPairs.add(item)}
+            for (const item of result.scheduledPairs) {
+              scheduledPairs.add(item)
+            }
+            for (const item of result.coveredPairs) {
+              coveredPairs.add(item)
+            }
           })
           .catch(error => {
             failures.push({
@@ -1302,7 +1374,9 @@ async function runEngineExhaustiveCountBatch({
   const terminalCases = []
   const failures = []
   const discoveredQuestions = new Map()
-  const scheduledPathSignatures = new Set(pendingList.map(item => buildPathSignature(item.mode, item.answerPath)))
+  const scheduledPathSignatures = new Set(
+    pendingList.map(item => buildPathSignature(item.mode, item.answerPath))
+  )
   const coveredPairs = new Set()
   let activeCount = 0
   let completedTaskCount = 0
@@ -1315,7 +1389,9 @@ async function runEngineExhaustiveCountBatch({
 
   function printProgress(force = false) {
     const currentCount = terminalCases.length + failures.length
-    if (!force && currentCount - lastProgressCount < 25) {return}
+    if (!force && currentCount - lastProgressCount < 25) {
+      return
+    }
     lastProgressCount = currentCount
     process.stderr.write(
       `[engine-exhaustive-count] tasks=${completedTaskCount}, active=${activeCount}, queued=${pendingList.length}, terminalCases=${terminalCases.length}, failures=${failures.length}, discoveredQuestions=${discoveredQuestions.size}, maxDepth=${maxObservedDepth}\n`
@@ -1324,7 +1400,9 @@ async function runEngineExhaustiveCountBatch({
 
   function mergeDiscoveredQuestion(mode, question) {
     const questionKey = normalizeText(question?.questionKey || question?.questionId)
-    if (!questionKey) {return}
+    if (!questionKey) {
+      return
+    }
     const questionMapKey = `${mode.modeKey}::${questionKey}`
     if (!discoveredQuestions.has(questionMapKey)) {
       discoveredQuestions.set(questionMapKey, {
@@ -1336,12 +1414,14 @@ async function runEngineExhaustiveCountBatch({
       })
     }
     const item = discoveredQuestions.get(questionMapKey)
-    item.optionKeys = Array.from(new Set([
-      ...item.optionKeys,
-      ...(Array.isArray(question.options) ? question.options : [])
-        .map(option => normalizeText(option.optionKey || option.optionId))
-        .filter(Boolean)
-    ]))
+    item.optionKeys = Array.from(
+      new Set([
+        ...item.optionKeys,
+        ...(Array.isArray(question.options) ? question.options : [])
+          .map(option => normalizeText(option.optionKey || option.optionId))
+          .filter(Boolean)
+      ])
+    )
   }
 
   function isRetryableTaskError(error) {
@@ -1394,9 +1474,9 @@ async function runEngineExhaustiveCountBatch({
           repeatedQuestionKey: repeatsAnsweredQuestion ? currentQuestionKey : '',
           finalTitle: normalizeText(
             runResult.data?.summaryCard?.title ||
-            runResult.data?.finalResult?.title ||
-            runResult.data?.finalResult?.displayName ||
-            runResult.data?.topProblem?.displayName
+              runResult.data?.finalResult?.title ||
+              runResult.data?.finalResult?.displayName ||
+              runResult.data?.topProblem?.displayName
           )
         })
         return
@@ -1405,13 +1485,19 @@ async function runEngineExhaustiveCountBatch({
       mergeDiscoveredQuestion(task.mode, question)
       const questionKey = normalizeText(question.questionKey || question.questionId)
       for (const option of Array.isArray(question.options) ? question.options : []) {
-        if (shouldStop()) {break}
+        if (shouldStop()) {
+          break
+        }
         const optionKey = normalizeText(option.optionKey || option.optionId)
-        if (!questionKey || !optionKey) {continue}
+        if (!questionKey || !optionKey) {
+          continue
+        }
         coveredPairs.add(buildPairKey(task.mode, question, option))
         const nextAnswerPath = [...task.answerPath, { questionKey, optionKey }]
         const signature = buildPathSignature(task.mode, nextAnswerPath)
-        if (scheduledPathSignatures.has(signature)) {continue}
+        if (scheduledPathSignatures.has(signature)) {
+          continue
+        }
         scheduledPathSignatures.add(signature)
         pendingList.push({ mode: task.mode, answerPath: nextAnswerPath })
       }
@@ -1425,23 +1511,25 @@ async function runEngineExhaustiveCountBatch({
     }
   }
 
-  const progressTimer = Number(progressIntervalMs || 0) > 0
-    ? setInterval(() => printProgress(true), Number(progressIntervalMs))
-    : null
-  if (progressTimer?.unref) {progressTimer.unref()}
+  const progressTimer =
+    Number(progressIntervalMs || 0) > 0
+      ? setInterval(() => printProgress(true), Number(progressIntervalMs))
+      : null
+  if (progressTimer?.unref) {
+    progressTimer.unref()
+  }
 
   await new Promise(resolve => {
     const pump = () => {
       while (activeCount < concurrency && pendingList.length && !shouldStop()) {
         const task = pendingList.shift()
         activeCount += 1
-        processTask(task)
-          .finally(() => {
-            activeCount -= 1
-            completedTaskCount += 1
-            printProgress()
-            pump()
-          })
+        processTask(task).finally(() => {
+          activeCount -= 1
+          completedTaskCount += 1
+          printProgress()
+          pump()
+        })
       }
       if ((shouldStop() || pendingList.length === 0) && activeCount === 0) {
         printProgress(true)
@@ -1451,7 +1539,9 @@ async function runEngineExhaustiveCountBatch({
     pump()
   })
 
-  if (progressTimer) {clearInterval(progressTimer)}
+  if (progressTimer) {
+    clearInterval(progressTimer)
+  }
 
   if (shouldStop() && pendingList.length) {
     failures.push({
@@ -1555,7 +1645,9 @@ async function runCoverageBatch({
 
   function printProgress(force = false) {
     const currentRecordCount = records.length + failures.length
-    if (!force && currentRecordCount - lastProgressRecordCount < 25) {return}
+    if (!force && currentRecordCount - lastProgressRecordCount < 25) {
+      return
+    }
     lastProgressRecordCount = currentRecordCount
     process.stderr.write(
       `[pairwise-batch] tasks=${completedTaskCount}, active=${activeCount}, queued=${pendingList.length}, records=${records.length}, coveredPairs=${coveredPairs.size}, scheduledPairs=${scheduledPairs.size}, failures=${failures.length}\n`
@@ -1564,7 +1656,9 @@ async function runCoverageBatch({
 
   function withTaskTimeout(promise, task) {
     const timeoutMs = Number(taskTimeoutMs || 0)
-    if (!timeoutMs || timeoutMs < 1) {return promise}
+    if (!timeoutMs || timeoutMs < 1) {
+      return promise
+    }
     const label = buildPathSignature(task.mode || {}, task.answerPath || [])
     let timeoutId
     const timeoutPromise = new Promise((resolve, reject) => {
@@ -1573,7 +1667,9 @@ async function runCoverageBatch({
       }, timeoutMs)
     })
     return Promise.race([promise, timeoutPromise]).finally(() => {
-      if (timeoutId) {clearTimeout(timeoutId)}
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
     })
   }
 
@@ -1586,10 +1682,7 @@ async function runCoverageBatch({
     let lastError = null
     for (let attemptIndex = 0; attemptIndex < maxAttempts; attemptIndex += 1) {
       try {
-        return await withTaskTimeout(
-          runPath(task.mode, task.answerPath, { userPlantId }),
-          task
-        )
+        return await withTaskTimeout(runPath(task.mode, task.answerPath, { userPlantId }), task)
       } catch (error) {
         lastError = error
         if (attemptIndex >= maxAttempts - 1 || !isRetryableTaskError(error)) {
@@ -1621,16 +1714,16 @@ async function runCoverageBatch({
           stopReason: normalizeText(runResult.data?.stopReason),
           title: normalizeText(
             runResult.data?.summaryCard?.title ||
-            runResult.data?.finalResult?.title ||
-            runResult.data?.finalResult?.displayName ||
-            runResult.data?.topProblem?.displayName
+              runResult.data?.finalResult?.title ||
+              runResult.data?.finalResult?.displayName ||
+              runResult.data?.topProblem?.displayName
           ),
           topProblemKey: shouldSuppressProblemLikePresentation
             ? ''
             : normalizeText(
                 runResult.data?.topProblem?.problemKey ||
-                runResult.data?.finalResult?.problemKey ||
-                runResult.data?.rankings?.[0]?.problemKey
+                  runResult.data?.finalResult?.problemKey ||
+                  runResult.data?.rankings?.[0]?.problemKey
               )
         })
       }
@@ -1655,11 +1748,17 @@ async function runCoverageBatch({
         const questionInfo = discoveredQuestions.get(questionMapKey)
         for (const option of Array.isArray(question.options) ? question.options : []) {
           const optionKey = normalizeText(option.optionKey || option.optionId)
-          if (!optionKey) {continue}
+          if (!optionKey) {
+            continue
+          }
           questionInfo.optionKeys.push(optionKey)
           const pairKey = buildPairKey(task.mode, question, option)
-          if (scheduledPairs.has(pairKey)) {continue}
-          if (shouldStopScheduling()) {continue}
+          if (scheduledPairs.has(pairKey)) {
+            continue
+          }
+          if (shouldStopScheduling()) {
+            continue
+          }
           scheduledPairs.add(pairKey)
           pendingList.push({
             mode: task.mode,
@@ -1687,23 +1786,25 @@ async function runCoverageBatch({
     }
   }
 
-  const progressTimer = Number(progressIntervalMs || 0) > 0
-    ? setInterval(() => printProgress(true), Number(progressIntervalMs))
-    : null
-  if (progressTimer?.unref) {progressTimer.unref()}
+  const progressTimer =
+    Number(progressIntervalMs || 0) > 0
+      ? setInterval(() => printProgress(true), Number(progressIntervalMs))
+      : null
+  if (progressTimer?.unref) {
+    progressTimer.unref()
+  }
 
   await new Promise(resolve => {
     const pump = () => {
       while (activeCount < concurrency && pendingList.length && !shouldStopScheduling()) {
         const task = pendingList.shift()
         activeCount += 1
-        processTask(task)
-          .finally(() => {
-            activeCount -= 1
-            completedTaskCount += 1
-            printProgress()
-            pump()
-          })
+        processTask(task).finally(() => {
+          activeCount -= 1
+          completedTaskCount += 1
+          printProgress()
+          pump()
+        })
       }
       if ((shouldStopScheduling() || pendingList.length === 0) && activeCount === 0) {
         printProgress(true)
@@ -1819,12 +1920,15 @@ async function main() {
   if (modeKeyFilter.size) {
     modes = modes.filter(mode => modeKeyFilter.has(mode.modeKey))
     if (!modes.length) {
-      throw new Error(`--mode-keys 未匹配到任何开发态视觉模式: ${Array.from(modeKeyFilter).join(',')}`)
+      throw new Error(
+        `--mode-keys 未匹配到任何开发态视觉模式: ${Array.from(modeKeyFilter).join(',')}`
+      )
     }
   }
   const strategy = normalizeText(args.strategy || 'pairwise')
   installSelectSqlCache({
-    enabled: ['engine-pairwise', 'engine-exhaustive-count'].includes(strategy) ||
+    enabled:
+      ['engine-pairwise', 'engine-exhaustive-count'].includes(strategy) ||
       normalizeBoolean(args['sql-select-cache'], false),
     slowSqlMs: normalizeInteger(args['slow-sql-ms'], 0)
   })
@@ -1842,10 +1946,7 @@ async function main() {
     concurrency: normalizeInteger(args.concurrency, 6),
     reportFile: args['report-file'] || DEFAULT_REPORT_FILE
   }
-  if (
-    strategy === 'engine-pairwise' &&
-    normalizeBoolean(args['prewarm-engine-roots'], true)
-  ) {
+  if (strategy === 'engine-pairwise' && normalizeBoolean(args['prewarm-engine-roots'], true)) {
     await preloadQuestionRepositoryCache()
     await prewarmEngineRootPaths({
       modes,
@@ -1854,29 +1955,30 @@ async function main() {
       depth: normalizeInteger(args['prewarm-engine-depth'], 1)
     })
   }
-  const result = strategy === 'session-sweep'
-    ? await runSessionSweepBatch(commonOptions)
-    : strategy === 'engine-pairwise'
-      ? await runCoverageBatch({
-          ...commonOptions,
-          pauseMs: normalizeInteger(args['pause-ms'], 0),
-          importToReview: false,
-          taskTimeoutMs: normalizeInteger(args['task-timeout-ms'], 0),
-          progressIntervalMs: normalizeInteger(args['progress-interval-ms'], 10000),
-          runPath: runEngineAnswerPath
-        })
-      : strategy === 'engine-exhaustive-count'
-        ? await runEngineExhaustiveCountBatch({
+  const result =
+    strategy === 'session-sweep'
+      ? await runSessionSweepBatch(commonOptions)
+      : strategy === 'engine-pairwise'
+        ? await runCoverageBatch({
             ...commonOptions,
-            progressIntervalMs: normalizeInteger(args['progress-interval-ms'], 10000)
+            pauseMs: normalizeInteger(args['pause-ms'], 0),
+            importToReview: false,
+            taskTimeoutMs: normalizeInteger(args['task-timeout-ms'], 0),
+            progressIntervalMs: normalizeInteger(args['progress-interval-ms'], 10000),
+            runPath: runEngineAnswerPath
           })
-    : await runCoverageBatch({
-        ...commonOptions,
-        pauseMs: normalizeInteger(args['pause-ms'], 0),
-        importToReview: normalizeBoolean(args['import-review'], false),
-        taskTimeoutMs: normalizeInteger(args['task-timeout-ms'], 0),
-        progressIntervalMs: normalizeInteger(args['progress-interval-ms'], 10000)
-      })
+        : strategy === 'engine-exhaustive-count'
+          ? await runEngineExhaustiveCountBatch({
+              ...commonOptions,
+              progressIntervalMs: normalizeInteger(args['progress-interval-ms'], 10000)
+            })
+          : await runCoverageBatch({
+              ...commonOptions,
+              pauseMs: normalizeInteger(args['pause-ms'], 0),
+              importToReview: normalizeBoolean(args['import-review'], false),
+              taskTimeoutMs: normalizeInteger(args['task-timeout-ms'], 0),
+              progressIntervalMs: normalizeInteger(args['progress-interval-ms'], 10000)
+            })
 
   console.log = originalLog
   originalLog(

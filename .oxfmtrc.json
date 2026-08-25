@@ -10,6 +10,16 @@
   "arrowParens": "avoid",
   "endOfLine": "lf",
   "ignorePatterns": [
+    ".agents",
+    ".brv",
+    ".brv-backup",
+    ".zcode",
+    ".tmp",
+    ".e2e-artifacts",
+    "test/batch-results",
+    "test/e2e/batch/diagnosis/_history",
+    "test/e2e/batch/diagnosis/manifests",
+    "test/e2e/batch/diagnosis/fixtures",
     "node_modules",
     "dist",
     "unpackage"

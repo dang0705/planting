@@ -15,7 +15,10 @@ const {
   getGenusSuitabilityMap,
   getHostSuitabilityMap
 } = require('../repositories/prior-repository')
-const { getProblemsByKeys, getExplanationsByProblemKeys } = require('../repositories/problem-repository')
+const {
+  getProblemsByKeys,
+  getExplanationsByProblemKeys
+} = require('../repositories/problem-repository')
 const {
   getSymptomDictionary,
   getSymptomsByKeys,
@@ -67,27 +70,16 @@ const {
   projectObservedSymptomsFromEvidence,
   projectVisualObservedSymptomsFromEvidence
 } = require('./observed-evidence')
-const {
-  evaluateContextRequiredProblemGuard
-} = require('../utils/context-required-problem-guard')
+const { evaluateContextRequiredProblemGuard } = require('../utils/context-required-problem-guard')
 const {
   prioritizeOutputEligibleCandidateOutcomes,
   hasOutputEligibleCandidateOutcome,
   hasForceableOutputCandidateOutcome
 } = require('../utils/output-eligibility')
-const {
-  buildDerivedEvidenceSet
-} = require('../utils/derived-evidence')
-const {
-  buildDiagnosisDirections
-} = require('../utils/diagnosis-directions')
-const {
-  buildCareGuidance
-} = require('../utils/care-baseline-guidance')
-const {
-  buildRouteEvidenceContext,
-  planOutcomeRoutes
-} = require('./outcome-route-planner')
+const { buildDerivedEvidenceSet } = require('../utils/derived-evidence')
+const { buildDiagnosisDirections } = require('../utils/diagnosis-directions')
+const { buildCareGuidance } = require('../utils/care-baseline-guidance')
+const { buildRouteEvidenceContext, planOutcomeRoutes } = require('./outcome-route-planner')
 const { isAuthoritativeRouteDecision } = require('../utils/outcome-route-contract')
 
 const OUTPUT_SHIFT_LOCK_EXCLUDED_PROBLEM_KEYS = new Set([
@@ -99,15 +91,14 @@ const BROAD_VISUAL_DIFFERENTIAL_CLASS_KEYS = new Set([
   'general_stress_mode',
   'leaf_spot_complex_mode'
 ])
-const BROAD_VISUAL_DIFFERENTIAL_SYMPTOM_KEYS = new Set([
-  'distorted_growth',
-  'irregular_blotches'
-])
+const BROAD_VISUAL_DIFFERENTIAL_SYMPTOM_KEYS = new Set(['distorted_growth', 'irregular_blotches'])
 const DIAGNOSIS_RUNTIME_DEBUG_LOG_ENABLED =
   String(process.env.DIAGNOSIS_RUNTIME_DEBUG_LOG || '').toLowerCase() === 'true'
 
 function logDiagnosisRuntime(message, payload = {}) {
-  if (!DIAGNOSIS_RUNTIME_DEBUG_LOG_ENABLED) {return}
+  if (!DIAGNOSIS_RUNTIME_DEBUG_LOG_ENABLED) {
+    return
+  }
   console.log(message, payload)
 }
 
@@ -151,9 +142,7 @@ function normalizeDecisionCause(decisionCause = null) {
     decisionCauseCategory: String(
       decisionCause.decisionCauseCategory || decisionCause.category || ''
     ).trim(),
-    decisionCauseText: String(
-      decisionCause.decisionCauseText || decisionCause.text || ''
-    ).trim(),
+    decisionCauseText: String(decisionCause.decisionCauseText || decisionCause.text || '').trim(),
     decisionCauseDetails:
       decisionCause.decisionCauseDetails && typeof decisionCause.decisionCauseDetails === 'object'
         ? decisionCause.decisionCauseDetails
@@ -186,27 +175,21 @@ function resolveLeadingVisibleOutcomeKey(routeDecision = null) {
 }
 
 function isRoutePlanningObservationEnabled() {
-  return isEnabledFeatureFlag(
-    'ROUTE_PLANNING_OBSERVATION_ENABLED',
-    'ROUTE_MODE_ENABLED',
-    { defaultEnabled: true }
-  )
+  return isEnabledFeatureFlag('ROUTE_PLANNING_OBSERVATION_ENABLED', 'ROUTE_MODE_ENABLED', {
+    defaultEnabled: true
+  })
 }
 
 function isRouteQuestionEnabled() {
-  return isEnabledFeatureFlag(
-    'ROUTE_QUESTION_ENABLED',
-    'ROUTE_MODE_ENABLED',
-    { defaultEnabled: true }
-  )
+  return isEnabledFeatureFlag('ROUTE_QUESTION_ENABLED', 'ROUTE_MODE_ENABLED', {
+    defaultEnabled: true
+  })
 }
 
 function isRouteOutputEnabled() {
-  return isEnabledFeatureFlag(
-    'ROUTE_OUTPUT_ENABLED',
-    'ROUTE_MODE_ENABLED',
-    { defaultEnabled: true }
-  )
+  return isEnabledFeatureFlag('ROUTE_OUTPUT_ENABLED', 'ROUTE_MODE_ENABLED', {
+    defaultEnabled: true
+  })
 }
 
 function isRouteDebugTraceEnabled() {
@@ -217,11 +200,7 @@ function isEnabledFeatureFlag(primaryEnvKey = '', conservativeEnvKey = '', optio
   const primaryRaw = String(process.env[primaryEnvKey] || '').trim()
   const conservativeRaw = String(process.env[conservativeEnvKey] || '').trim()
   const defaultEnabled = Boolean(options?.defaultEnabled)
-  const raw = String(
-    primaryRaw ||
-      conservativeRaw ||
-      (defaultEnabled ? '1' : '0')
-  )
+  const raw = String(primaryRaw || conservativeRaw || (defaultEnabled ? '1' : '0'))
     .trim()
     .toLowerCase()
   return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on'
@@ -237,9 +216,10 @@ function collectActiveObservedSymptomKeysFromEvidence(observedEvidenceSet = []) 
   return Array.from(
     new Set(
       (Array.isArray(observedEvidenceSet) ? observedEvidenceSet : [])
-        .filter(item =>
-          Number(item?.enteredRuntime ?? item?.entered_runtime ?? 1) === 1 &&
-          normalizeKey(item?.currentStatus || item?.current_status || 'active') !== 'superseded'
+        .filter(
+          item =>
+            Number(item?.enteredRuntime ?? item?.entered_runtime ?? 1) === 1 &&
+            normalizeKey(item?.currentStatus || item?.current_status || 'active') !== 'superseded'
         )
         .map(item => normalizeKey(item?.symptomKey || item?.symptom_key || ''))
         .filter(Boolean)
@@ -256,7 +236,9 @@ function hasBroadVisualDifferentialInput({
     symptomClassRuntime?.primaryClass?.classKey,
     symptomClassRuntime?.classConditionDecision?.currentClassKey,
     symptomClassRuntime?.classConditionDecision?.primaryClassKey
-  ].map(item => normalizeKey(item)).filter(Boolean)
+  ]
+    .map(item => normalizeKey(item))
+    .filter(Boolean)
 
   if (classKeys.some(classKey => BROAD_VISUAL_DIFFERENTIAL_CLASS_KEYS.has(classKey))) {
     return true
@@ -270,11 +252,14 @@ function hasBroadVisualDifferentialInput({
 function hasAnsweredQuestionOption(answers = [], questionKey = '', optionKey = '') {
   const normalizedQuestionKey = normalizeKey(questionKey)
   const normalizedOptionKey = normalizeKey(optionKey)
-  if (!normalizedQuestionKey || !normalizedOptionKey) {return false}
+  if (!normalizedQuestionKey || !normalizedOptionKey) {
+    return false
+  }
 
-  return (Array.isArray(answers) ? answers : []).some(item =>
-    normalizeKey(item?.questionKey || item?.question_key || '') === normalizedQuestionKey &&
-    normalizeKey(item?.optionKey || item?.option_key || '') === normalizedOptionKey
+  return (Array.isArray(answers) ? answers : []).some(
+    item =>
+      normalizeKey(item?.questionKey || item?.question_key || '') === normalizedQuestionKey &&
+      normalizeKey(item?.optionKey || item?.option_key || '') === normalizedOptionKey
   )
 }
 
@@ -284,7 +269,9 @@ function hasAnsweredAnyQuestion(answers = [], questionKeys = []) {
       .map(item => normalizeKey(item))
       .filter(Boolean)
   )
-  if (!questionKeySet.size) {return false}
+  if (!questionKeySet.size) {
+    return false
+  }
 
   return (Array.isArray(answers) ? answers : []).some(item =>
     questionKeySet.has(normalizeKey(item?.questionKey || item?.question_key || ''))
@@ -301,7 +288,9 @@ function hasUnresolvedEdemaFlatSpotDifferential({
     'q_observed_probe__edema__edema_bump_stage',
     'flat_spot'
   )
-  if (!edemaShapeDenied) {return false}
+  if (!edemaShapeDenied) {
+    return false
+  }
 
   return !hasAnsweredAnyQuestion(answers, [
     'q_black_spots_surface_layer_check',
@@ -323,12 +312,16 @@ function shouldRestrictToCandidateSeedOnly({
     return false
   }
 
-  const blockedReason = String(symptomClassRuntime?.classConditionDecision?.blockedReason || '').trim()
+  const blockedReason = String(
+    symptomClassRuntime?.classConditionDecision?.blockedReason || ''
+  ).trim()
   if (blockedReason === 'no_observed_symptoms') {
     return true
   }
 
-  return Boolean(symptomClassRuntime && typeof symptomClassRuntime === 'object' && !symptomClassRuntime.enabled)
+  return Boolean(
+    symptomClassRuntime && typeof symptomClassRuntime === 'object' && !symptomClassRuntime.enabled
+  )
 }
 
 function shouldSuppressCrossDirectionVisualCandidate(
@@ -336,33 +329,38 @@ function shouldSuppressCrossDirectionVisualCandidate(
   diagnosisDirections = [],
   symptomClassRuntime = null
 ) {
-  if (!symptomClassRuntime?.enabled) {return false}
+  if (!symptomClassRuntime?.enabled) {
+    return false
+  }
 
   const anchoredDirectionKeys = new Set(
     (Array.isArray(diagnosisDirections) ? diagnosisDirections : [])
-      .filter(direction =>
-        (
-          Array.isArray(direction?.matchedSymptomKeys) &&
-          direction.matchedSymptomKeys.some(Boolean)
-        ) ||
-        (
-          Array.isArray(direction?.matchedPatternKeys) &&
-          direction.matchedPatternKeys.some(Boolean)
-        )
+      .filter(
+        direction =>
+          (Array.isArray(direction?.matchedSymptomKeys) &&
+            direction.matchedSymptomKeys.some(Boolean)) ||
+          (Array.isArray(direction?.matchedPatternKeys) &&
+            direction.matchedPatternKeys.some(Boolean))
       )
       .map(direction => normalizeKey(direction?.directionKey || ''))
       .filter(Boolean)
   )
-  if (!anchoredDirectionKeys.size) {return false}
+  if (!anchoredDirectionKeys.size) {
+    return false
+  }
 
   const candidateSymptomKey = normalizeKey(candidate?.symptomKey || '')
   const candidatePatternKey = normalizeKey(candidate?.patternKey || '')
-  if (!candidateSymptomKey && !candidatePatternKey) {return false}
+  if (!candidateSymptomKey && !candidatePatternKey) {
+    return false
+  }
 
   const candidateDirectionKeys = new Set()
   for (const direction of Array.isArray(diagnosisDirections) ? diagnosisDirections : []) {
     const directionKey = normalizeKey(direction?.directionKey || '')
-    if (!directionKey) {continue}
+    if (!directionKey) {
+      continue
+    }
 
     const matchedByCandidateSymptom =
       candidateSymptomKey &&
@@ -378,12 +376,21 @@ function shouldSuppressCrossDirectionVisualCandidate(
     }
   }
 
-  if (!candidateDirectionKeys.size) {return false}
-  return Array.from(candidateDirectionKeys).every(directionKey => !anchoredDirectionKeys.has(directionKey))
+  if (!candidateDirectionKeys.size) {
+    return false
+  }
+  return Array.from(candidateDirectionKeys).every(
+    directionKey => !anchoredDirectionKeys.has(directionKey)
+  )
 }
 
 function attachPrivateSymptomClassRuntime(response = {}, symptomClassRuntime = null) {
-  if (!response || typeof response !== 'object' || !symptomClassRuntime || typeof symptomClassRuntime !== 'object') {
+  if (
+    !response ||
+    typeof response !== 'object' ||
+    !symptomClassRuntime ||
+    typeof symptomClassRuntime !== 'object'
+  ) {
     return response
   }
 
@@ -419,8 +426,10 @@ function applySymptomDictionaryToObservedSymptoms(observedSymptoms = [], symptom
       item?.signalReliability ??
       symptomMap.get(String(item?.symptomKey || '').trim())?.signalReliability ??
       0,
-    locationKey: item?.locationKey || symptomMap.get(String(item?.symptomKey || '').trim())?.locationKey || '',
-    patternKey: item?.patternKey || symptomMap.get(String(item?.symptomKey || '').trim())?.patternKey || '',
+    locationKey:
+      item?.locationKey || symptomMap.get(String(item?.symptomKey || '').trim())?.locationKey || '',
+    patternKey:
+      item?.patternKey || symptomMap.get(String(item?.symptomKey || '').trim())?.patternKey || '',
     distributionKey:
       item?.distributionKey ||
       symptomMap.get(String(item?.symptomKey || '').trim())?.distributionKey ||
@@ -440,7 +449,9 @@ function mapByKey(list = [], key = 'problemKey') {
   const map = new Map()
   for (const item of list || []) {
     const id = item?.[key]
-    if (!id) {continue}
+    if (!id) {
+      continue
+    }
     map.set(id, item)
   }
   return map
@@ -451,7 +462,9 @@ function mergeCandidatePriors(...groups) {
 
   for (const group of groups) {
     for (const item of group || []) {
-      if (!item?.problemKey) {continue}
+      if (!item?.problemKey) {
+        continue
+      }
       const existing = merged.get(item.problemKey) || {
         problemKey: item.problemKey,
         genusSuitability: null,
@@ -464,10 +477,8 @@ function mergeCandidatePriors(...groups) {
 
       merged.set(item.problemKey, {
         ...existing,
-        genusSuitability:
-          item.genusSuitability ?? existing.genusSuitability,
-        hostSuitability:
-          item.hostSuitability ?? existing.hostSuitability,
+        genusSuitability: item.genusSuitability ?? existing.genusSuitability,
+        hostSuitability: item.hostSuitability ?? existing.hostSuitability,
         finalPriorScore: Math.max(
           Number(existing.finalPriorScore || 0),
           Number(item.finalPriorScore || 0)
@@ -514,11 +525,12 @@ function buildDirectionCandidatePriors(diagnosisDirections = [], existingProblem
   for (const direction of Array.isArray(diagnosisDirections) ? diagnosisDirections : []) {
     const status = normalizeKey(direction?.status || '')
     const confidence = clamp01(direction?.confidence || 0)
-    const statusBaseWeight = {
-      leading: 0.38,
-      candidate: 0.3,
-      hint: 0.22
-    }[status] || 0.22
+    const statusBaseWeight =
+      {
+        leading: 0.38,
+        candidate: 0.3,
+        hint: 0.22
+      }[status] || 0.22
     const finalPriorScore = roundNum(statusBaseWeight + confidence * 0.12)
     const allowedProblemKeys = Array.isArray(direction?.allowedProblemKeys)
       ? direction.allowedProblemKeys
@@ -528,7 +540,9 @@ function buildDirectionCandidatePriors(diagnosisDirections = [], existingProblem
 
     for (const rawProblemKey of allowedProblemKeys) {
       const problemKey = normalizeKey(rawProblemKey)
-      if (!problemKey || existingProblemKeySet.has(problemKey)) {continue}
+      if (!problemKey || existingProblemKeySet.has(problemKey)) {
+        continue
+      }
 
       priors.push({
         problemKey,
@@ -572,9 +586,9 @@ function scopeCandidateOutcomesToDiagnosisDirections(
     return Array.isArray(candidateOutcomes) ? candidateOutcomes : []
   }
 
-  const scopedCandidateOutcomes = (Array.isArray(candidateOutcomes) ? candidateOutcomes : []).filter(item =>
-    allowedProblemKeySet.has(normalizeKey(item?.problemKey || ''))
-  )
+  const scopedCandidateOutcomes = (
+    Array.isArray(candidateOutcomes) ? candidateOutcomes : []
+  ).filter(item => allowedProblemKeySet.has(normalizeKey(item?.problemKey || '')))
 
   if (!scopedCandidateOutcomes.length) {
     return Array.isArray(candidateOutcomes) ? candidateOutcomes : []
@@ -605,14 +619,23 @@ function collectAllowedProblemKeysFromDiagnosisDirections(diagnosisDirections = 
 
 function hasDirectPositiveProblemAnswer(answerEffects = [], problemKey = '') {
   const normalizedProblemKey = normalizeKey(problemKey)
-  if (!normalizedProblemKey) {return false}
+  if (!normalizedProblemKey) {
+    return false
+  }
 
-  return (Array.isArray(answerEffects) ? answerEffects : []).some(item =>
-  {
-    if (normalizeKey(item?.effectType || '') !== 'direct_problem_positive') {return false}
-    if (normalizeKey(item?.problemKey || '') !== normalizedProblemKey) {return false}
-    if (Number(item?.value || 0) <= 0) {return false}
-    if (isDisabledYellowingFlowQuestion(item)) {return false}
+  return (Array.isArray(answerEffects) ? answerEffects : []).some(item => {
+    if (normalizeKey(item?.effectType || '') !== 'direct_problem_positive') {
+      return false
+    }
+    if (normalizeKey(item?.problemKey || '') !== normalizedProblemKey) {
+      return false
+    }
+    if (Number(item?.value || 0) <= 0) {
+      return false
+    }
+    if (isDisabledYellowingFlowQuestion(item)) {
+      return false
+    }
 
     const { packageTopic } = parseSyntheticObservedProbeQuestionKey(item?.questionKey || '')
     const normalizedPackageTopic =
@@ -633,9 +656,15 @@ function shouldBlockUnscopedClassProblemOutput({
   fastConvergencePlan = null
 } = {}) {
   const topProblemKey = normalizeKey(candidateOutcomes?.[0]?.problemKey || '')
-  if (!topProblemKey) {return false}
-  if (fastConvergencePlan?.applied) {return false}
-  if (hasDirectPositiveProblemAnswer(answerEffects, topProblemKey)) {return false}
+  if (!topProblemKey) {
+    return false
+  }
+  if (fastConvergencePlan?.applied) {
+    return false
+  }
+  if (hasDirectPositiveProblemAnswer(answerEffects, topProblemKey)) {
+    return false
+  }
 
   const allowedProblemKeySet = collectAllowedProblemKeysFromDiagnosisDirections(diagnosisDirections)
   if (allowedProblemKeySet.size) {
@@ -714,10 +743,18 @@ function hasQuestionHistory({
   askedQuestionKeys = [],
   answeredQuestionGroupKeys = []
 } = {}) {
-  if (Number(round || 1) > 1) {return true}
-  if (Array.isArray(answers) && answers.length > 0) {return true}
-  if (Array.isArray(askedQuestionKeys) && askedQuestionKeys.length > 0) {return true}
-  if (Array.isArray(answeredQuestionGroupKeys) && answeredQuestionGroupKeys.length > 0) {return true}
+  if (Number(round || 1) > 1) {
+    return true
+  }
+  if (Array.isArray(answers) && answers.length > 0) {
+    return true
+  }
+  if (Array.isArray(askedQuestionKeys) && askedQuestionKeys.length > 0) {
+    return true
+  }
+  if (Array.isArray(answeredQuestionGroupKeys) && answeredQuestionGroupKeys.length > 0) {
+    return true
+  }
   return false
 }
 
@@ -744,9 +781,7 @@ const YELLOWING_PRIMARY_CLUE_TOPIC_QUESTION_KEY =
 const LEAF_YELLOWING_FERTILIZATION_BACKGROUND_QUESTION_KEY =
   'q_leaf_yellowing_fertilization_background'
 
-const STRUCTURAL_DAMAGE_CLASS_KEYS = new Set([
-  'chewing_pest_mode'
-])
+const STRUCTURAL_DAMAGE_CLASS_KEYS = new Set(['chewing_pest_mode'])
 
 const ROOT_ZONE_DETAIL_QUESTION_KEYS = new Set([
   'q_root_rot_bad_smell',
@@ -777,9 +812,7 @@ const YELLOWING_CONDITION_DIMENSION_EQUIVALENTS = {
   [QUESTION_PACKAGE_TOPICS.YELLOWING_DISEASE_TRACE_TOPIC]: [
     QUESTION_PACKAGE_TOPICS.YELLOWING_DISEASE_TRACE_TOPIC
   ],
-  [QUESTION_PACKAGE_TOPICS.PEST_TRACE_TYPE]: [
-    QUESTION_PACKAGE_TOPICS.PEST_TRACE_TYPE
-  ],
+  [QUESTION_PACKAGE_TOPICS.PEST_TRACE_TYPE]: [QUESTION_PACKAGE_TOPICS.PEST_TRACE_TYPE],
   [QUESTION_PACKAGE_TOPICS.YELLOWING_LEAF_AGE_PATTERN]: [
     QUESTION_PACKAGE_TOPICS.YELLOWING_LEAF_AGE_PATTERN,
     QUESTION_PACKAGE_TOPICS.HOST_CONFIRMATION
@@ -808,14 +841,18 @@ const YELLOWING_CONDITION_DIMENSION_EQUIVALENTS = {
 
 function resolveYellowingEquivalentDimensions(packageTopic = '') {
   const normalizedPackageTopic = normalizeQuestionPackageTopic(packageTopic, '')
-  if (!normalizedPackageTopic) {return []}
+  if (!normalizedPackageTopic) {
+    return []
+  }
 
   const equivalents = new Set([
     normalizedPackageTopic,
     ...(YELLOWING_CONDITION_DIMENSION_EQUIVALENTS[normalizedPackageTopic] || [])
   ])
 
-  for (const [sourceDimension, sourceEquivalents] of Object.entries(YELLOWING_CONDITION_DIMENSION_EQUIVALENTS)) {
+  for (const [sourceDimension, sourceEquivalents] of Object.entries(
+    YELLOWING_CONDITION_DIMENSION_EQUIVALENTS
+  )) {
     if (
       sourceDimension === normalizedPackageTopic ||
       (Array.isArray(sourceEquivalents) && sourceEquivalents.includes(normalizedPackageTopic))
@@ -838,10 +875,14 @@ function collectAnsweredPackageTopics(askedQuestions = []) {
   return new Set(
     (Array.isArray(askedQuestions) ? askedQuestions : [])
       .map(item => {
-        const questionKey = normalizeKey(item?.questionKey || item?.question_key || item?.symptom_key || '')
+        const questionKey = normalizeKey(
+          item?.questionKey || item?.question_key || item?.symptom_key || ''
+        )
         const parsedSyntheticObservedProbe = parseSyntheticObservedProbeQuestionKey(questionKey)
-        return normalizeQuestionPackageTopic(item?.packageTopic || item?.package_topic || '', '') ||
+        return (
+          normalizeQuestionPackageTopic(item?.packageTopic || item?.package_topic || '', '') ||
           normalizeQuestionPackageTopic(parsedSyntheticObservedProbe?.packageTopic || '', '')
+        )
       })
       .filter(Boolean)
   )
@@ -853,13 +894,17 @@ function hasAnsweredYellowingConditionDimension(answeredTopics = new Set(), pack
 }
 
 function resolveNextMissingYellowingGroupDimension(answeredTopics = new Set()) {
-  return YELLOWING_REQUIRED_GROUP_DIMENSIONS.find(
-    dimension => !hasAnsweredYellowingConditionDimension(answeredTopics, dimension)
-  ) || ''
+  return (
+    YELLOWING_REQUIRED_GROUP_DIMENSIONS.find(
+      dimension => !hasAnsweredYellowingConditionDimension(answeredTopics, dimension)
+    ) || ''
+  )
 }
 
 function isYellowingEquivalentDimensionAnswered(askedQuestions = [], question = {}) {
-  const targetSymptomKey = normalizeKey(question?.targetSymptomKey || question?.target_symptom_key || '')
+  const targetSymptomKey = normalizeKey(
+    question?.targetSymptomKey || question?.target_symptom_key || ''
+  )
   if (!isYellowingConditionSymptomKey(targetSymptomKey)) {
     return false
   }
@@ -880,8 +925,12 @@ function isYellowingEquivalentDimensionAnswered(askedQuestions = [], question = 
 
 function isQuestionDimensionEquivalentToAllowed(allowedTopics = new Set(), packageTopic = '') {
   const normalizedPackageTopic = normalizeQuestionPackageTopic(packageTopic, '')
-  if (!normalizedPackageTopic) {return true}
-  if (allowedTopics.has(normalizedPackageTopic)) {return true}
+  if (!normalizedPackageTopic) {
+    return true
+  }
+  if (allowedTopics.has(normalizedPackageTopic)) {
+    return true
+  }
   for (const allowedDimension of allowedTopics) {
     const equivalents = resolveYellowingEquivalentDimensions(allowedDimension)
     if (equivalents.includes(normalizedPackageTopic)) {
@@ -893,8 +942,12 @@ function isQuestionDimensionEquivalentToAllowed(allowedTopics = new Set(), packa
 
 function isPackageTopicInYellowingRequiredGroups(packageTopic = '') {
   const normalizedPackageTopic = normalizeQuestionPackageTopic(packageTopic, '')
-  if (!normalizedPackageTopic) {return false}
-  if (YELLOWING_REQUIRED_GROUP_DIMENSIONS.includes(normalizedPackageTopic)) {return true}
+  if (!normalizedPackageTopic) {
+    return false
+  }
+  if (YELLOWING_REQUIRED_GROUP_DIMENSIONS.includes(normalizedPackageTopic)) {
+    return true
+  }
   return YELLOWING_REQUIRED_GROUP_DIMENSIONS.some(requiredDimension =>
     resolveYellowingEquivalentDimensions(requiredDimension).includes(normalizedPackageTopic)
   )
@@ -914,7 +967,11 @@ function collectYellowingAllowedDimensionsForAnsweredBranch(askedQuestions = [])
   return allowed.size ? allowed : null
 }
 
-function isYellowingQuestionAllowedByAnsweredBranch(askedQuestions = [], question = {}, options = {}) {
+function isYellowingQuestionAllowedByAnsweredBranch(
+  askedQuestions = [],
+  question = {},
+  options = {}
+) {
   const { yellowingConditionMode = false } = options || {}
   if (yellowingConditionMode) {
     const packageTopic = normalizeQuestionPackageTopic(
@@ -925,7 +982,9 @@ function isYellowingQuestionAllowedByAnsweredBranch(askedQuestions = [], questio
       return false
     }
   }
-  const targetSymptomKey = normalizeKey(question?.targetSymptomKey || question?.target_symptom_key || '')
+  const targetSymptomKey = normalizeKey(
+    question?.targetSymptomKey || question?.target_symptom_key || ''
+  )
   if (!isYellowingConditionSymptomKey(targetSymptomKey) && !yellowingConditionMode) {
     return true
   }
@@ -945,22 +1004,30 @@ function isYellowingQuestionAllowedByAnsweredBranch(askedQuestions = [], questio
 
 function getAnsweredOptionKey(answerLikeRecords = [], questionKey = '') {
   const normalizedQuestionKey = normalizeKey(questionKey)
-  if (!normalizedQuestionKey) {return ''}
+  if (!normalizedQuestionKey) {
+    return ''
+  }
   const found = (Array.isArray(answerLikeRecords) ? answerLikeRecords : [])
     .slice()
     .reverse()
-    .find(item => normalizeKey(item?.questionKey || item?.question_key || '') === normalizedQuestionKey)
+    .find(
+      item => normalizeKey(item?.questionKey || item?.question_key || '') === normalizedQuestionKey
+    )
   return normalizeKey(found?.optionKey || found?.option_key || '')
 }
 
 function countAnsweredQuestions(answerLikeRecords = [], questionKeys = new Set()) {
   const normalizedQuestionKeys = new Set(
-    Array.from(questionKeys || []).map(item => normalizeKey(item)).filter(Boolean)
+    Array.from(questionKeys || [])
+      .map(item => normalizeKey(item))
+      .filter(Boolean)
   )
-  if (!normalizedQuestionKeys.size) {return 0}
-  return (Array.isArray(answerLikeRecords) ? answerLikeRecords : [])
-    .filter(item => normalizedQuestionKeys.has(normalizeKey(item?.questionKey || item?.question_key || '')))
-    .length
+  if (!normalizedQuestionKeys.size) {
+    return 0
+  }
+  return (Array.isArray(answerLikeRecords) ? answerLikeRecords : []).filter(item =>
+    normalizedQuestionKeys.has(normalizeKey(item?.questionKey || item?.question_key || ''))
+  ).length
 }
 
 function collectAnswerRouteRecords(answers = [], askedQuestionRows = []) {
@@ -999,11 +1066,19 @@ function collectRouteAnswerRecordsForDecision({
   answeredQuestionAnswerRecords = []
 } = {}) {
   const recordsByQuestionKey = new Map()
-  for (const item of Array.isArray(answeredQuestionAnswerRecords) ? answeredQuestionAnswerRecords : []) {
+  for (const item of Array.isArray(answeredQuestionAnswerRecords)
+    ? answeredQuestionAnswerRecords
+    : []) {
     const questionKey = normalizeKey(item?.questionKey || item?.question_key || '')
-    const optionKey = normalizeKey(item?.optionKey || item?.option_key || item?.answerValue || item?.answer_value || '')
-    if (!questionKey || !optionKey) {continue}
-    if (isDisabledYellowingFlowQuestion(item)) {continue}
+    const optionKey = normalizeKey(
+      item?.optionKey || item?.option_key || item?.answerValue || item?.answer_value || ''
+    )
+    if (!questionKey || !optionKey) {
+      continue
+    }
+    if (isDisabledYellowingFlowQuestion(item)) {
+      continue
+    }
     recordsByQuestionKey.set(questionKey, {
       ...item,
       questionKey,
@@ -1012,9 +1087,15 @@ function collectRouteAnswerRecordsForDecision({
   }
   for (const item of Array.isArray(answers) ? answers : []) {
     const questionKey = normalizeKey(item?.questionKey || item?.question_key || '')
-    const optionKey = normalizeKey(item?.optionKey || item?.option_key || item?.answerValue || item?.answer_value || '')
-    if (!questionKey || !optionKey) {continue}
-    if (isDisabledYellowingFlowQuestion(item)) {continue}
+    const optionKey = normalizeKey(
+      item?.optionKey || item?.option_key || item?.answerValue || item?.answer_value || ''
+    )
+    if (!questionKey || !optionKey) {
+      continue
+    }
+    if (isDisabledYellowingFlowQuestion(item)) {
+      continue
+    }
     recordsByQuestionKey.set(questionKey, {
       ...item,
       questionKey,
@@ -1030,7 +1111,9 @@ function collectMatchedRouteEffectOutcomeKeys(routeAnswerEffects = [], answers =
       .filter(item => !isDisabledYellowingFlowQuestion(item))
       .map(item => {
         const questionKey = normalizeKey(item?.questionKey || item?.question_key || '')
-        const optionKey = normalizeKey(item?.optionKey || item?.option_key || item?.answerValue || item?.answer_value || '')
+        const optionKey = normalizeKey(
+          item?.optionKey || item?.option_key || item?.answerValue || item?.answer_value || ''
+        )
         return questionKey && optionKey ? `${questionKey}:${optionKey}` : ''
       })
       .filter(Boolean)
@@ -1040,7 +1123,9 @@ function collectMatchedRouteEffectOutcomeKeys(routeAnswerEffects = [], answers =
     new Set(
       (Array.isArray(routeAnswerEffects) ? routeAnswerEffects : [])
         .filter(item => {
-          if (isDisabledYellowingFlowQuestion(item)) {return false}
+          if (isDisabledYellowingFlowQuestion(item)) {
+            return false
+          }
           const questionKey = normalizeKey(item?.questionKey || item?.question_key || '')
           const optionKey = normalizeKey(item?.optionKey || item?.option_key || '')
           return questionKey && optionKey && answeredPairSet.has(`${questionKey}:${optionKey}`)
@@ -1083,9 +1168,13 @@ function mergeRouteAnswerEffects(preloadedRouteAnswerEffects = [], fetchedRouteA
     ...(Array.isArray(preloadedRouteAnswerEffects) ? preloadedRouteAnswerEffects : []),
     ...(Array.isArray(fetchedRouteAnswerEffects) ? fetchedRouteAnswerEffects : [])
   ]) {
-    if (isDisabledYellowingFlowQuestion(effect)) {continue}
+    if (isDisabledYellowingFlowQuestion(effect)) {
+      continue
+    }
     const dedupKey = buildRouteAnswerEffectDedupKey(effect)
-    if (!dedupKey || mergedEffects.has(dedupKey)) {continue}
+    if (!dedupKey || mergedEffects.has(dedupKey)) {
+      continue
+    }
     mergedEffects.set(dedupKey, effect)
   }
   return Array.from(mergedEffects.values())
@@ -1166,28 +1255,30 @@ async function resolveRouteAnswerEffectsForFastPath({
 function resolveRuntimeClassKey(symptomClassRuntime = null) {
   return normalizeKey(
     symptomClassRuntime?.currentClassKey ||
-    symptomClassRuntime?.primaryClass?.classKey ||
-    symptomClassRuntime?.current_class_key ||
-    ''
+      symptomClassRuntime?.primaryClass?.classKey ||
+      symptomClassRuntime?.current_class_key ||
+      ''
   )
 }
 
 function hasPositiveRootBridgeAnswer(answerLikeRecords = []) {
-  return (Array.isArray(answerLikeRecords) ? answerLikeRecords : []).some(item =>
-    ROOT_BRIDGE_QUESTION_KEYS.has(normalizeKey(item?.questionKey || item?.question_key || '')) &&
-    ['yes', 'wet_soil', 'poor_drainage'].includes(
-      normalizeKey(item?.optionKey || item?.option_key || '')
-    )
+  return (Array.isArray(answerLikeRecords) ? answerLikeRecords : []).some(
+    item =>
+      ROOT_BRIDGE_QUESTION_KEYS.has(normalizeKey(item?.questionKey || item?.question_key || '')) &&
+      ['yes', 'wet_soil', 'poor_drainage'].includes(
+        normalizeKey(item?.optionKey || item?.option_key || '')
+      )
   )
 }
 
-function shouldBlockQuestionByRouteConstraint(question = {}, {
-  answers = [],
-  askedQuestionRows = [],
-  symptomClassRuntime = null
-} = {}) {
+function shouldBlockQuestionByRouteConstraint(
+  question = {},
+  { answers = [], askedQuestionRows = [], symptomClassRuntime = null } = {}
+) {
   const questionKey = normalizeKey(question?.questionKey || question?.question_key || '')
-  if (!questionKey) {return false}
+  if (!questionKey) {
+    return false
+  }
   const questionPackageTopic = normalizeQuestionPackageTopic(
     question?.packageTopic || question?.package_topic || '',
     ''
@@ -1268,8 +1359,9 @@ function shouldBlockQuestionByRouteConstraint(question = {}, {
 }
 
 function filterQuestionsByAnsweredRouteConstraints(questions = [], options = {}) {
-  return (Array.isArray(questions) ? questions : [])
-    .filter(question => !shouldBlockQuestionByRouteConstraint(question, options))
+  return (Array.isArray(questions) ? questions : []).filter(
+    question => !shouldBlockQuestionByRouteConstraint(question, options)
+  )
 }
 
 async function buildCandidatePriors(
@@ -1278,16 +1370,16 @@ async function buildCandidatePriors(
   { round = 1, stage = 'preliminary', causalityEdges = null } = {}
 ) {
   const symptomKeys = Array.from(
-    new Set((observedSymptoms || []).map(item => String(item?.symptomKey || '').trim()).filter(Boolean))
+    new Set(
+      (observedSymptoms || []).map(item => String(item?.symptomKey || '').trim()).filter(Boolean)
+    )
   )
 
   const linkedPriorBundle = await getLinkedCandidatePriors(plantContext)
   const linkedPriors = Array.isArray(linkedPriorBundle?.priors) ? linkedPriorBundle.priors : []
   const shouldUseSessionConservative = !linkedPriorBundle?.hasAnyLinks
   const [plantPriors, genusPriors, hostPriors, evidenceEdges] = await Promise.all([
-    shouldUseSessionConservative
-      ? getCandidateProblemPriors(plantContext)
-      : Promise.resolve([]),
+    shouldUseSessionConservative ? getCandidateProblemPriors(plantContext) : Promise.resolve([]),
     shouldUseSessionConservative
       ? getGenusCandidatePriors(plantContext.genus)
       : Promise.resolve([]),
@@ -1298,9 +1390,7 @@ async function buildCandidatePriors(
           category: plantContext.category
         })
       : Promise.resolve([]),
-    symptomKeys.length
-      ? getEvidenceEdges({ symptomKeys })
-      : Promise.resolve([])
+    symptomKeys.length ? getEvidenceEdges({ symptomKeys }) : Promise.resolve([])
   ])
 
   const evidenceOnlyPriors = Array.from(
@@ -1312,17 +1402,14 @@ async function buildCandidatePriors(
     finalPriorScore: 0.35,
     matchedHostLevel: '',
     sourceLayer: 'evidence_hit',
-      dataStatus: 'partial'
-    }))
+    dataStatus: 'partial'
+  }))
 
   const prioritizedStaticPriors =
     linkedPriors.length || !shouldUseSessionConservative
       ? linkedPriors
       : mergeCandidatePriors(plantPriors, genusPriors, hostPriors)
-  const merged = mergeCandidatePriors(
-    prioritizedStaticPriors,
-    evidenceOnlyPriors
-  )
+  const merged = mergeCandidatePriors(prioritizedStaticPriors, evidenceOnlyPriors)
 
   if (Number(round || 1) <= 1 && stage !== 'question') {
     return merged
@@ -1375,7 +1462,9 @@ function parseQuestionRationaleMeta(rationale = '') {
   }
 
   const raw = String(rationale || '').trim()
-  if (!raw) {return {}}
+  if (!raw) {
+    return {}
+  }
 
   try {
     const parsed = JSON.parse(raw)
@@ -1392,13 +1481,14 @@ function collectAnswerLikeRecordsFromQuestionRows(rows = []) {
       const rationale = parseQuestionRationaleMeta(row?.rationale)
       return {
         questionKey: String(
-          rationale?.questionKey ||
-            rationale?.qk ||
-            row?.symptom_key ||
-            ''
+          rationale?.questionKey || rationale?.qk || row?.symptom_key || ''
         ).trim(),
-        optionKey: String(row?.answer_value || '').trim().toLowerCase(),
-        status: String(row?.status || '').trim().toLowerCase(),
+        optionKey: String(row?.answer_value || '')
+          .trim()
+          .toLowerCase(),
+        status: String(row?.status || '')
+          .trim()
+          .toLowerCase(),
         targetSymptomKey: String(rationale?.targetSymptomKey || rationale?.tsk || '').trim(),
         packageTopic: String(rationale?.packageTopic || rationale?.td || '').trim(),
         packageSection: String(rationale?.packageSection || rationale?.rs || '').trim()
@@ -1411,17 +1501,18 @@ function mergeAskedQuestionRows(...groups) {
   const map = new Map()
 
   for (const item of groups.flat()) {
-    const questionKey = normalizeKey(item?.questionKey || item?.question_key || item?.symptom_key || '')
-    if (!questionKey) {continue}
+    const questionKey = normalizeKey(
+      item?.questionKey || item?.question_key || item?.symptom_key || ''
+    )
+    if (!questionKey) {
+      continue
+    }
 
     const existing = map.get(questionKey) || {}
     const parsedSyntheticObservedProbe = parseSyntheticObservedProbeQuestionKey(questionKey)
     const packageTopic =
       normalizeQuestionPackageTopic(item?.packageTopic || item?.package_topic || '', '') ||
-      normalizeQuestionPackageTopic(
-        parsedSyntheticObservedProbe?.packageTopic || '',
-        ''
-      ) ||
+      normalizeQuestionPackageTopic(parsedSyntheticObservedProbe?.packageTopic || '', '') ||
       normalizeQuestionPackageTopic(existing?.packageTopic || existing?.package_topic || '', '')
     const targetSymptomKey = normalizeKey(
       item?.targetSymptomKey ||
@@ -1459,12 +1550,16 @@ function collectPositiveMappedObservedSymptomsFromAnswers(answers = [], optionMa
   const observedMap = new Map()
 
   for (const item of optionMappings || []) {
-    if (!answerKeySet.has(`${item.questionKey}::${item.optionKey}`)) {continue}
+    if (!answerKeySet.has(`${item.questionKey}::${item.optionKey}`)) {
+      continue
+    }
 
     const mappedSymptomKey = String(item.mapsToSymptomKey || '').trim()
     const answerValue = Number(item.value || 0)
     const associationStrength = clamp01(item.associationStrength)
-    if (!mappedSymptomKey || answerValue <= 0 || associationStrength <= 0) {continue}
+    if (!mappedSymptomKey || answerValue <= 0 || associationStrength <= 0) {
+      continue
+    }
 
     const confidence = clamp01(Math.max(answerValue, associationStrength))
     const current = observedMap.get(mappedSymptomKey)
@@ -1526,51 +1621,53 @@ function buildRetakeAdviceFromVisualRouteContext(visualRouteContext = {}) {
 
   if (questionCapture.length) {
     return Array.from(
-      new Set(
-        questionCapture.map(item =>
-          item.startsWith('请') ? item : `请优先补拍：${item}`
-        )
-      )
+      new Set(questionCapture.map(item => (item.startsWith('请') ? item : `请优先补拍：${item}`)))
     )
   }
 
-  return [
-    '请优先补拍更清晰的受损部位近照。',
-    '请补拍主体更完整的整株图，避免只拍局部。'
-  ]
+  return ['请优先补拍更清晰的受损部位近照。', '请补拍主体更完整的整株图，避免只拍局部。']
 }
 
 function normalizeVisualCandidateBand(value = '', conservative = 'low') {
-  const normalized = String(value || '').trim().toLowerCase()
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase()
   return ['low', 'medium', 'high'].includes(normalized) ? normalized : conservative
 }
 
 function normalizeVisualCandidateStrength(value = '', conservative = 'weak') {
-  const normalized = String(value || '').trim().toLowerCase()
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase()
   return ['weak', 'medium', 'strong'].includes(normalized) ? normalized : conservative
 }
 
 function normalizeVisualCandidateReadiness(value = '', conservative = 'cautious') {
-  const normalized = String(value || '').trim().toLowerCase()
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase()
   return ['retain_only', 'cautious', 'ready'].includes(normalized) ? normalized : conservative
 }
 
 function scoreVisualCandidateSeed(item = {}) {
-  const bandScore = {
-    low: 20,
-    medium: 40,
-    high: 60
-  }[normalizeVisualCandidateBand(item?.confidenceBand, 'low')] || 0
-  const strengthScore = {
-    weak: 10,
-    medium: 20,
-    strong: 30
-  }[normalizeVisualCandidateStrength(item?.strengthLevel, 'weak')] || 0
-  const readinessScore = {
-    retain_only: 0,
-    cautious: 15,
-    ready: 30
-  }[normalizeVisualCandidateReadiness(item?.admissionReadiness, 'cautious')] || 0
+  const bandScore =
+    {
+      low: 20,
+      medium: 40,
+      high: 60
+    }[normalizeVisualCandidateBand(item?.confidenceBand, 'low')] || 0
+  const strengthScore =
+    {
+      weak: 10,
+      medium: 20,
+      strong: 30
+    }[normalizeVisualCandidateStrength(item?.strengthLevel, 'weak')] || 0
+  const readinessScore =
+    {
+      retain_only: 0,
+      cautious: 15,
+      ready: 30
+    }[normalizeVisualCandidateReadiness(item?.admissionReadiness, 'cautious')] || 0
   const supportScore = Math.max(0, Number(item?.supportCount || 0) - 1) * 8
   const reliabilityScore = Math.round(clamp01(item?.signalReliability ?? 0.6) * 20)
   return bandScore + strengthScore + readinessScore + supportScore + reliabilityScore
@@ -1646,7 +1743,9 @@ function collectVisualCandidateSymptoms(visualAggregateResult = null, symptomDic
   }
 
   const symptomMap = mapByKey(symptomDictionary, 'symptomKey')
-  const aggregatedSymptomCandidates = Array.isArray(visualAggregateResult?.aggregated_symptom_candidates)
+  const aggregatedSymptomCandidates = Array.isArray(
+    visualAggregateResult?.aggregated_symptom_candidates
+  )
     ? visualAggregateResult.aggregated_symptom_candidates
     : Array.isArray(visualAggregateResult?.aggregatedSymptomCandidates)
       ? visualAggregateResult.aggregatedSymptomCandidates
@@ -1664,7 +1763,9 @@ function collectVisualCandidateSymptoms(visualAggregateResult = null, symptomDic
       ? visualAggregateResult.admissionRecords
       : []
   for (const item of admissionRecords) {
-    if (String(item?.admission_result || item?.admissionResult || '').trim() !== 'candidate_retained') {
+    if (
+      String(item?.admission_result || item?.admissionResult || '').trim() !== 'candidate_retained'
+    ) {
       continue
     }
 
@@ -1675,19 +1776,22 @@ function collectVisualCandidateSymptoms(visualAggregateResult = null, symptomDic
         item?.candidate?.symptomKey ||
         ''
     ).trim()
-    if (!symptomKey) {continue}
+    if (!symptomKey) {
+      continue
+    }
 
     const candidate = item?.candidate || aggregatedCandidateMap.get(symptomKey) || {}
     const symptomMeta = symptomMap.get(symptomKey) || {}
     const nextEntry = {
       symptomKey,
-      symptomCn: String(
-        candidate?.display_name_cn ||
-          candidate?.displayNameCn ||
-          symptomMeta?.displayTextCn ||
-          symptomMeta?.symptomCn ||
-          symptomKey
-      ).trim() || symptomKey,
+      symptomCn:
+        String(
+          candidate?.display_name_cn ||
+            candidate?.displayNameCn ||
+            symptomMeta?.displayTextCn ||
+            symptomMeta?.symptomCn ||
+            symptomKey
+        ).trim() || symptomKey,
       userObservationTipCn: String(symptomMeta?.userObservationTipCn || '').trim(),
       signalReliability: Number(symptomMeta?.signalReliability || 0),
       locationKey: normalizeKey(symptomMeta?.locationKey || ''),
@@ -1710,7 +1814,7 @@ function collectVisualCandidateSymptoms(visualAggregateResult = null, symptomDic
         ? candidate.support_organs
         : Array.isArray(candidate?.supportOrgans)
           ? candidate.supportOrgans
-        : [],
+          : [],
       supportingRegionNote: normalizeKey(
         candidate?.supporting_region_note || candidate?.supportingRegionNote || ''
       ),
@@ -1740,23 +1844,24 @@ function collectVisualCandidateSymptoms(visualAggregateResult = null, symptomDic
         item?.closestSymptomKeyHint ||
         ''
     )
-    if (!symptomKey) {continue}
+    if (!symptomKey) {
+      continue
+    }
 
     const symptomMeta = symptomMap.get(symptomKey) || {}
-    if (!normalizeKey(symptomMeta?.symptomKey || '')) {continue}
+    if (!normalizeKey(symptomMeta?.symptomKey || '')) {
+      continue
+    }
 
-    const hintCount = Math.max(1, Number(
-      item?.support_count ||
-        item?.supportCount ||
-        item?.hint_count ||
-        item?.hintCount ||
-        1
-    ))
+    const hintCount = Math.max(
+      1,
+      Number(item?.support_count || item?.supportCount || item?.hint_count || item?.hintCount || 1)
+    )
     const nextEntry = {
       symptomKey,
-      symptomCn: normalizeKey(
-        symptomMeta?.displayTextCn || symptomMeta?.symptomCn || symptomKey
-      ) || symptomKey,
+      symptomCn:
+        normalizeKey(symptomMeta?.displayTextCn || symptomMeta?.symptomCn || symptomKey) ||
+        symptomKey,
       userObservationTipCn: normalizeKey(symptomMeta?.userObservationTipCn || ''),
       signalReliability: Number(symptomMeta?.signalReliability || 0),
       locationKey: normalizeKey(symptomMeta?.locationKey || ''),
@@ -1822,10 +1927,9 @@ function isOutOfPoolOnlyNoMappingVisualAggregate(visualAggregateResult = {}) {
       : []
     const evidenceRole = normalizeKey(item?.evidence_role || '')
     const hintScope = normalizeKey(item?.hint_scope || '')
-    return !mappingIds.length && (
-      evidenceRole === 'audit' ||
-      hintScope === 'audit_only' ||
-      hintScope === 'out_of_pool_proxy'
+    return (
+      !mappingIds.length &&
+      (evidenceRole === 'audit' || hintScope === 'audit_only' || hintScope === 'out_of_pool_proxy')
     )
   })
 }
@@ -1853,16 +1957,24 @@ function hasOutOfPoolMappingMatch(rawNames = [], mappingTerms = []) {
   }
 
   const rawSet = new Set(normalizedRawNames)
-  const rawTokens = new Set(normalizedRawNames.flatMap(item => splitOutOfPoolMappingComparableText(item)))
+  const rawTokens = new Set(
+    normalizedRawNames.flatMap(item => splitOutOfPoolMappingComparableText(item))
+  )
 
   return mappingTerms.some(term => {
     const normalizedTerm = normalizeOutOfPoolMappingComparableText(term)
-    if (!normalizedTerm) {return false}
-    if (rawSet.has(normalizedTerm)) {return true}
+    if (!normalizedTerm) {
+      return false
+    }
+    if (rawSet.has(normalizedTerm)) {
+      return true
+    }
 
-    return normalizedRawNames.some(rawName =>
-      rawName.includes(normalizedTerm) || normalizedTerm.includes(rawName)
-    ) || splitOutOfPoolMappingComparableText(normalizedTerm).some(token => rawTokens.has(token))
+    return (
+      normalizedRawNames.some(
+        rawName => rawName.includes(normalizedTerm) || normalizedTerm.includes(rawName)
+      ) || splitOutOfPoolMappingComparableText(normalizedTerm).some(token => rawTokens.has(token))
+    )
   })
 }
 
@@ -1950,9 +2062,10 @@ function buildWeakOutOfPoolHintOnlyDecisionDetails(visualAggregateResult = {}) {
 }
 
 function buildOutOfPoolObservationConservative(decisionCause = null) {
-  const details = decisionCause?.decisionCauseDetails && typeof decisionCause.decisionCauseDetails === 'object'
-    ? decisionCause.decisionCauseDetails
-    : {}
+  const details =
+    decisionCause?.decisionCauseDetails && typeof decisionCause.decisionCauseDetails === 'object'
+      ? decisionCause.decisionCauseDetails
+      : {}
   const rawNames = Array.from(
     new Set(
       (Array.isArray(details?.outOfPoolRawNames) ? details.outOfPoolRawNames : [])
@@ -1973,7 +2086,9 @@ function buildOutOfPoolObservationConservative(decisionCause = null) {
 
 function buildSyntheticVisualCandidateQuestion(item = {}) {
   const symptomKey = String(item?.symptomKey || '').trim()
-  if (!symptomKey) {return null}
+  if (!symptomKey) {
+    return null
+  }
 
   const symptomLabel = String(item?.symptomCn || symptomKey).trim() || symptomKey
   const helpText =
@@ -2018,9 +2133,8 @@ function buildUncertainRoundResult({
   decisionCause = null
 } = {}) {
   const resultId = toResultId(sessionId, round)
-  const normalizedUncertainLegalityReason = String(
-    uncertainLegalityReason || 'input_unfillable'
-  ).trim() || 'input_unfillable'
+  const normalizedUncertainLegalityReason =
+    String(uncertainLegalityReason || 'input_unfillable').trim() || 'input_unfillable'
   const normalizedConfidenceReasons = Array.from(
     new Set(
       [
@@ -2036,7 +2150,8 @@ function buildUncertainRoundResult({
     normalizedUncertainLegalityReason === 'out_of_pool_hint_unconfirmed' ||
     normalizedDecisionCause?.decisionCauseCategory === 'out_of_pool_visual_hint' ||
     normalizedDecisionCause?.decisionCauseCategory === 'visual_scope_gap'
-  const outOfPoolObservationConservative = buildOutOfPoolObservationConservative(normalizedDecisionCause)
+  const outOfPoolObservationConservative =
+    buildOutOfPoolObservationConservative(normalizedDecisionCause)
   const outOfPoolSummary = outOfPoolObservationConservative?.observationText
     ? `图片中存在当前自动诊断范围外的可见异常。模型原始观察为：${outOfPoolObservationConservative.observationText}。这不是正式诊断结论，系统暂不能给出针对性处理建议；建议先保持观察，避免仅凭本次结果进行大幅养护调整。`
     : '图片中存在当前自动诊断范围外的可见异常。系统无法把它稳定归入现有诊断路径，因此本次不继续常规诊断，也不判断为“暂无明显问题”。由于该异常尚未纳入当前诊断池，系统暂不能给出针对性的处理建议；建议先保持观察，避免仅凭本次结果进行大幅养护调整。'
@@ -2061,7 +2176,8 @@ function buildUncertainRoundResult({
         whyItHappens: outOfPoolObservationConservative?.observationText
           ? `当前图片中有可见异常，但该异常未形成可确认的正式诊断证据。模型原始观察为：${outOfPoolObservationConservative.observationText}。`
           : '当前图片中有可见异常，但该异常超出当前自动诊断支持的症状范围，或尚未形成可确认的正式诊断证据。',
-        whatToCheckNext: '可继续观察该异常是否扩大、重复出现或影响整体状态；如变化明显，建议由人工或更完整资料进一步确认。',
+        whatToCheckNext:
+          '可继续观察该异常是否扩大、重复出现或影响整体状态；如变化明显，建议由人工或更完整资料进一步确认。',
         firstAid: '在没有稳定归类前，先保持养护条件相对稳定，不建议仅凭本次结果进行针对性处理。',
         avoid: '避免把该异常直接等同于某个具体问题，也避免在缺少确认时大幅调整养护或使用处理措施。',
         reassurance: '跳过常规诊断是为了避免把诊断池外的异常硬套进现有问题。'
@@ -2165,7 +2281,9 @@ async function tryBuildRouteAnswerFastPath({
   perfLogger = null
 } = {}) {
   const markFastPath = (stageName, details = {}) => {
-    if (!perfLogger || typeof perfLogger.mark !== 'function') {return}
+    if (!perfLogger || typeof perfLogger.mark !== 'function') {
+      return
+    }
     perfLogger.mark(stageName, {
       round,
       ...details
@@ -2194,7 +2312,7 @@ async function tryBuildRouteAnswerFastPath({
     new Set(
       routeAnswerRecordsForDecision
         .map(item => normalizeKey(item?.questionKey || item?.question_key || ''))
-      .filter(Boolean)
+        .filter(Boolean)
     )
   )
   if (!routeAnswerEffectQuestionKeys.length) {
@@ -2285,9 +2403,11 @@ async function tryBuildRouteAnswerFastPath({
   }
 
   const routeOutcomeKeys = Array.from(
-    new Set([
-      ...(Array.isArray(routeDecision.visibleOutcomeKeys) ? routeDecision.visibleOutcomeKeys : [])
-    ].map(item => normalizeKey(item)).filter(Boolean))
+    new Set(
+      [...(Array.isArray(routeDecision.visibleOutcomeKeys) ? routeDecision.visibleOutcomeKeys : [])]
+        .map(item => normalizeKey(item))
+        .filter(Boolean)
+    )
   )
   const routeOutcomes = routeOutcomeKeys.length
     ? await outcomeRouteRepository.getDiagnosisOutcomesByKeys(routeOutcomeKeys)
@@ -2407,14 +2527,21 @@ async function runDiagnosisRound({
         category: lockedPlantContext.category || '',
         watering: lockedPlantContext.watering || null,
         fertilization: lockedPlantContext.fertilization || null,
+        fertilizationMonthly: lockedPlantContext.fertilizationMonthly || null,
+        fertilizationHistory: Array.isArray(lockedPlantContext.fertilizationHistory)
+          ? lockedPlantContext.fertilizationHistory
+          : null,
+        fertilizationHistoryStatus: lockedPlantContext.fertilizationHistoryStatus || '',
         sunning: lockedPlantContext.sunning || null,
         ventilation: lockedPlantContext.ventilation || null,
         temperatureMin:
-          lockedPlantContext.temperatureMin === null || lockedPlantContext.temperatureMin === undefined
+          lockedPlantContext.temperatureMin === null ||
+          lockedPlantContext.temperatureMin === undefined
             ? null
             : Number(lockedPlantContext.temperatureMin),
         temperatureMax:
-          lockedPlantContext.temperatureMax === null || lockedPlantContext.temperatureMax === undefined
+          lockedPlantContext.temperatureMax === null ||
+          lockedPlantContext.temperatureMax === undefined
             ? null
             : Number(lockedPlantContext.temperatureMax),
         humidityMin:
@@ -2438,7 +2565,9 @@ async function runDiagnosisRound({
     plantContext.latestVisualCallBatchId ||
     ''
 
-  const questionKeys = Array.from(new Set((answers || []).map(item => item.questionKey).filter(Boolean)))
+  const questionKeys = Array.from(
+    new Set((answers || []).map(item => item.questionKey).filter(Boolean))
+  )
   const normalizedProvidedAnswerOptionMappings = Array.isArray(rawAnswerOptionMappings)
     ? rawAnswerOptionMappings
     : []
@@ -2447,19 +2576,25 @@ async function runDiagnosisRound({
       .map(item => String(item?.questionKey || '').trim())
       .filter(Boolean)
   )
-  const missingQuestionKeys = questionKeys.filter(key => !providedAnswerQuestionKeys.has(String(key).trim()))
+  const missingQuestionKeys = questionKeys.filter(
+    key => !providedAnswerQuestionKeys.has(String(key).trim())
+  )
   const askedQuestionKeyList = Array.from(
     new Set((askedQuestionKeys || []).map(item => String(item || '').trim()).filter(Boolean))
   )
   const preloadedAskedQuestionRowMap = new Map()
   for (const item of Array.isArray(preloadedAskedQuestionRows) ? preloadedAskedQuestionRows : []) {
     const questionKey = normalizeKey(item?.questionKey || item?.question_key || '')
-    if (!questionKey) {continue}
-    if (preloadedAskedQuestionRowMap.has(questionKey)) {continue}
+    if (!questionKey) {
+      continue
+    }
+    if (preloadedAskedQuestionRowMap.has(questionKey)) {
+      continue
+    }
     preloadedAskedQuestionRowMap.set(questionKey, item)
   }
-  const askedQuestionKeysMissingFromCache = askedQuestionKeyList.filter(key =>
-    !preloadedAskedQuestionRowMap.has(normalizeKey(key))
+  const askedQuestionKeysMissingFromCache = askedQuestionKeyList.filter(
+    key => !preloadedAskedQuestionRowMap.has(normalizeKey(key))
   )
   const routeFastPathAnswerOptionMappings = [
     ...normalizedProvidedAnswerOptionMappings,
@@ -2488,7 +2623,8 @@ async function runDiagnosisRound({
     })
   )
   const routeFastPathDerivedEvidenceForResolution = []
-  const shouldAttemptRouteFastPath = stage === 'question' && Boolean(Array.isArray(answers) && answers.length)
+  const shouldAttemptRouteFastPath =
+    stage === 'question' && Boolean(Array.isArray(answers) && answers.length)
   let routeFastPathResultBeforeHydration = null
   if (shouldAttemptRouteFastPath) {
     routeFastPathResultBeforeHydration = await tryBuildRouteAnswerFastPath({
@@ -2524,12 +2660,11 @@ async function runDiagnosisRound({
   if (routeFastPathResultBeforeHydration) {
     return routeFastPathResultBeforeHydration
   }
-  const shouldSkipStoredQuestionLookup = (
+  const shouldSkipStoredQuestionLookup =
     !shouldAttemptRouteFastPath &&
     Number(round || 1) <= 1 &&
     stage === 'preliminary' &&
     !askedQuestionKeyList.length
-  )
   const resolvedStoredQuestionRowsCache = Array.isArray(preloadedStoredQuestionRows)
     ? preloadedStoredQuestionRows
     : shouldSkipStoredQuestionLookup
@@ -2547,12 +2682,12 @@ async function runDiagnosisRound({
       ? Promise.resolve(resolvedStoredQuestionRowsCache)
       : sessionId
         ? listQuestionRows(sessionId).catch(error => {
-          console.warn('diagnose-http failed to load question rows:', {
-            sessionId,
-            message: error?.message || String(error)
+            console.warn('diagnose-http failed to load question rows:', {
+              sessionId,
+              message: error?.message || String(error)
+            })
+            return []
           })
-          return []
-        })
         : Promise.resolve([]),
     askedQuestionKeysMissingFromCache.length
       ? getQuestionsByKeys(askedQuestionKeysMissingFromCache)
@@ -2561,7 +2696,9 @@ async function runDiagnosisRound({
   const dedupeAnswerOptionMapping = new Map()
   const buildOptionMappingKey = item => {
     const questionKey = String(item?.questionKey || '').trim()
-    const optionKey = String(item?.optionKey || '').trim().toLowerCase()
+    const optionKey = String(item?.optionKey || '')
+      .trim()
+      .toLowerCase()
     return questionKey && optionKey ? `${questionKey}::${optionKey}` : ''
   }
   for (const item of [
@@ -2570,8 +2707,12 @@ async function runDiagnosisRound({
     ...buildSyntheticQuestionOptionMappings(questionKeys)
   ]) {
     const dedupeKey = buildOptionMappingKey(item)
-    if (!dedupeKey) {continue}
-    if (dedupeAnswerOptionMapping.has(dedupeKey)) {continue}
+    if (!dedupeKey) {
+      continue
+    }
+    if (dedupeAnswerOptionMapping.has(dedupeKey)) {
+      continue
+    }
     dedupeAnswerOptionMapping.set(dedupeKey, item)
   }
   const answerOptionMappings = Array.from(dedupeAnswerOptionMapping.values())
@@ -2717,7 +2858,8 @@ async function runDiagnosisRound({
       decisionCause: {
         decisionCauseKey: 'out_of_pool_no_mapping',
         decisionCauseCategory: 'visual_scope_gap',
-        decisionCauseText: '当前存在诊断范围外的可见异常，但没有已审计 proxy mapping，因此跳过常规诊断并输出保守池外结果。',
+        decisionCauseText:
+          '当前存在诊断范围外的可见异常，但没有已审计 proxy mapping，因此跳过常规诊断并输出保守池外结果。',
         decisionCauseDetails: decisionDetails
       }
     })
@@ -2812,8 +2954,7 @@ async function runDiagnosisRound({
           decisionCauseDetails: {
             preferredVisualRouteAction: preferredVisualRouteAction || '',
             blockedReason:
-              symptomClassRuntime?.classConditionDecision?.blockedReason ||
-              'no_observed_symptoms'
+              symptomClassRuntime?.classConditionDecision?.blockedReason || 'no_observed_symptoms'
           }
         }
       })
@@ -2839,11 +2980,10 @@ async function runDiagnosisRound({
     }
   }
 
-  const candidatePriors = await buildCandidatePriors(
-    plantContext,
-    observedSymptomsForResolution,
-    { round, stage }
-  )
+  const candidatePriors = await buildCandidatePriors(plantContext, observedSymptomsForResolution, {
+    round,
+    stage
+  })
   const candidatePriorsCausalityEdges = Array.isArray(candidatePriors?.__causalityEdges)
     ? candidatePriors.__causalityEdges
     : null
@@ -2879,9 +3019,7 @@ async function runDiagnosisRound({
               '先保持当前养护稳定，再观察 3-7 天是否继续扩展。'
             ],
       routePrimaryAction:
-        preferredVisualRouteAction === 'retake_first'
-          ? 'retake_first'
-          : 'uncertain_prepare',
+        preferredVisualRouteAction === 'retake_first' ? 'retake_first' : 'uncertain_prepare',
       sourceReason: 'insufficient_candidate_priors',
       uncertainLegalityReason: 'input_unfillable',
       decisionCause: {
@@ -2915,15 +3053,13 @@ async function runDiagnosisRound({
     return result
   }
 
-  const mappedSymptomKeys = collectMappedSymptomKeysFromAnswers(
-    answers,
-    answerOptionMappings
-  )
+  const mappedSymptomKeys = collectMappedSymptomKeysFromAnswers(answers, answerOptionMappings)
   const symptomKeys = Array.from(
-    new Set([
-      ...observedSymptomsForResolution.map(item => item.symptomKey),
-      ...mappedSymptomKeys
-    ].filter(Boolean))
+    new Set(
+      [...observedSymptomsForResolution.map(item => item.symptomKey), ...mappedSymptomKeys].filter(
+        Boolean
+      )
+    )
   )
 
   const symptomRowsPromise = symptomKeys.length
@@ -2945,19 +3081,14 @@ async function runDiagnosisRound({
     },
     candidateProblemKeys
   )
-  const [
-    symptomRows,
-    evidenceEdges,
-    problems,
-    conservativeGenusMap,
-    conservativeHostMap
-  ] = await Promise.all([
-    symptomRowsPromise,
-    evidenceEdgesPromise,
-    problemsPromise,
-    conservativeGenusMapPromise,
-    conservativeHostMapPromise
-  ])
+  const [symptomRows, evidenceEdges, problems, conservativeGenusMap, conservativeHostMap] =
+    await Promise.all([
+      symptomRowsPromise,
+      evidenceEdgesPromise,
+      problemsPromise,
+      conservativeGenusMapPromise,
+      conservativeHostMapPromise
+    ])
 
   const symptomMap = mapByKey(symptomRows, 'symptomKey')
   const priorMap = mapByKey(candidatePriorsWithDirectionCoverage, 'problemKey')
@@ -2987,24 +3118,21 @@ async function runDiagnosisRound({
 
   const candidateOutcomes = candidateProblemKeys.map(problemKey => {
     const prior = priorMap.get(problemKey) || {}
-    const genusSuitability =
-      Number(prior.genusSuitability ?? conservativeGenusMap[problemKey] ?? 0.5)
-    const hostSuitability =
-      Number(prior.hostSuitability ?? conservativeHostMap[problemKey]?.hostSuitability ?? 1)
+    const genusSuitability = Number(
+      prior.genusSuitability ?? conservativeGenusMap[problemKey] ?? 0.5
+    )
+    const hostSuitability = Number(
+      prior.hostSuitability ?? conservativeHostMap[problemKey]?.hostSuitability ?? 1
+    )
 
     const visualEvidence = Number(visualScores[problemKey] || 0)
     const questionEvidence = Number(questionScores[problemKey] || 0)
     const penalty = Number(penalties[problemKey] || 0)
 
     const totalEvidence = visualEvidence + evidenceConfig.questionWeight * questionEvidence
-    const evidenceCount = [
-      visualEvidence > 0,
-      questionEvidence > 0
-    ].filter(Boolean).length
+    const evidenceCount = [visualEvidence > 0, questionEvidence > 0].filter(Boolean).length
     const evidenceWeight =
-      totalEvidence *
-        computeGenusFactor(genusSuitability) *
-        computeHostFactor(hostSuitability) -
+      totalEvidence * computeGenusFactor(genusSuitability) * computeHostFactor(hostSuitability) -
       penalty
 
     const problem = problems.find(item => item.problemKey === problemKey)
@@ -3030,9 +3158,10 @@ async function runDiagnosisRound({
       ? candidatePriorsCausalityEdges
       : await getCausalityEdges(candidateProblemKeys.slice(0, 3))
     : []
-  const answeredQuestionAnswerRecords = sessionId && askedQuestionKeys.length
-    ? collectAnswerLikeRecordsFromQuestionRows(resolvedStoredQuestionRows)
-    : []
+  const answeredQuestionAnswerRecords =
+    sessionId && askedQuestionKeys.length
+      ? collectAnswerLikeRecordsFromQuestionRows(resolvedStoredQuestionRows)
+      : []
   const fastConvergencePlan = resolveHighSpecificityConvergencePlan({
     visualAggregateResult,
     visualRouteContext,
@@ -3055,10 +3184,14 @@ async function runDiagnosisRound({
     answeredQuestionAnswerRecords
   })
   const routeAnswerEffectQuestionKeys = Array.from(
-    new Set([
-      ...routeAnswerRecordsForDecision.map(item => normalizeKey(item?.questionKey || item?.question_key || '')),
-      ...askedQuestionKeys.map(item => normalizeKey(item))
-    ].filter(Boolean))
+    new Set(
+      [
+        ...routeAnswerRecordsForDecision.map(item =>
+          normalizeKey(item?.questionKey || item?.question_key || '')
+        ),
+        ...askedQuestionKeys.map(item => normalizeKey(item))
+      ].filter(Boolean)
+    )
   )
   const routeAnswerEffectsResolution = routeAnswerEffectQuestionKeys.length
     ? await resolveRouteAnswerEffectsForFastPath({
@@ -3108,20 +3241,20 @@ async function runDiagnosisRound({
   const weakOutOfPoolHintOnly = isWeakOutOfPoolHintOnlyVisualAggregate(visualAggregateResult)
   const effectiveOutOfPoolOnlyNoMapping =
     outOfPoolOnlyNoMapping && !outOfPoolRuntimeMappingAvailable
-  const effectiveWeakOutOfPoolHintOnly =
-    weakOutOfPoolHintOnly && !outOfPoolRuntimeMappingAvailable
+  const effectiveWeakOutOfPoolHintOnly = weakOutOfPoolHintOnly && !outOfPoolRuntimeMappingAvailable
   const hasAuthoritativeRouteDecision = isAuthoritativeRouteDecision(routeDecision)
   const routeQuestionEnabled = isRouteQuestionEnabled()
   const routeOutputEnabled = isRouteOutputEnabled()
   const routeModeEnabled = routeQuestionEnabled || routeOutputEnabled
   const shouldUseRouteOutputDecision = routeOutputEnabled && hasAuthoritativeRouteDecision
-  const hasRouteVisibleResult = shouldUseRouteOutputDecision && Array.isArray(routeDecision?.visibleOutcomeKeys) &&
-    routeDecision.visibleOutcomeKeys.length > 0
-  const routeOutputNoVisibleOutcome = Array.isArray(routeDecision?.visibleOutcomeKeys) &&
-    routeDecision.visibleOutcomeKeys.length === 0
-  const hasUsableRouteOutputDecision =
+  const hasRouteVisibleResult =
     shouldUseRouteOutputDecision &&
-    hasRouteVisibleResult
+    Array.isArray(routeDecision?.visibleOutcomeKeys) &&
+    routeDecision.visibleOutcomeKeys.length > 0
+  const routeOutputNoVisibleOutcome =
+    Array.isArray(routeDecision?.visibleOutcomeKeys) &&
+    routeDecision.visibleOutcomeKeys.length === 0
+  const hasUsableRouteOutputDecision = shouldUseRouteOutputDecision && hasRouteVisibleResult
 
   const mergedObservedEvidence = mergeObservedEvidenceSet(
     labeledObservedEvidenceForResolution,
@@ -3207,9 +3340,8 @@ async function runDiagnosisRound({
     problemRoleByKey,
     symptomClassRuntime: mergedSymptomClassRuntime
   })
-  const prioritizedOutputCandidateOutcomes =
-    !questionRequired
-      ? prioritizeOutputEligibleCandidateOutcomes(
+  const prioritizedOutputCandidateOutcomes = !questionRequired
+    ? prioritizeOutputEligibleCandidateOutcomes(
         candidateOutcomes,
         labeledMergedObservedEvidence,
         problemRoleByKey,
@@ -3218,15 +3350,14 @@ async function runDiagnosisRound({
           answerEffects
         }
       )
-      : candidateOutcomes
-  const outputCandidateOutcomes =
-    !questionRequired
-      ? scopeCandidateOutcomesToDiagnosisDirections(
-          prioritizedOutputCandidateOutcomes,
-          diagnosisDirections,
-          problemRoleByKey
-        )
-      : prioritizedOutputCandidateOutcomes
+    : candidateOutcomes
+  const outputCandidateOutcomes = !questionRequired
+    ? scopeCandidateOutcomesToDiagnosisDirections(
+        prioritizedOutputCandidateOutcomes,
+        diagnosisDirections,
+        problemRoleByKey
+      )
+    : prioritizedOutputCandidateOutcomes
   const stabilizedOutputCandidateOutcomes = !questionRequired
     ? stabilizeOutputCandidateOutcomesAgainstConfirmedGuardShift(
         outputCandidateOutcomes,
@@ -3265,12 +3396,14 @@ async function runDiagnosisRound({
           ])
         ),
         advice: Array.from(
-          new Set([
-            ...(Array.isArray(lowConfidenceBase?.advice) ? lowConfidenceBase.advice : []),
-            ...(outputContextProblemGuard.applies && !outputContextProblemGuard.hasRequiredContext
-              ? [outputContextProblemGuard.advice]
-              : [])
-          ].filter(Boolean))
+          new Set(
+            [
+              ...(Array.isArray(lowConfidenceBase?.advice) ? lowConfidenceBase.advice : []),
+              ...(outputContextProblemGuard.applies && !outputContextProblemGuard.hasRequiredContext
+                ? [outputContextProblemGuard.advice]
+                : [])
+            ].filter(Boolean)
+          )
         ),
         uncertainLegalityReason:
           lowConfidenceBase?.uncertainLegalityReason ||
@@ -3345,24 +3478,18 @@ async function runDiagnosisRound({
     questionHistory &&
     activeRuntimeSymptomKeysForOutput.length > 0 &&
     activeRuntimeSymptomKeysForOutput.every(symptomKey =>
-      [
-        'holes_in_leaf',
-        'chewed_edges',
-        'skeletonized_leaves',
-        'tunnels_in_leaf'
-      ].includes(symptomKey)
+      ['holes_in_leaf', 'chewed_edges', 'skeletonized_leaves', 'tunnels_in_leaf'].includes(
+        symptomKey
+      )
     ) &&
-    [
-      'chewing_insects',
-      'caterpillars',
-      'beetles',
-      'snails_slugs',
-      'leaf_miners'
-    ].includes(String(stabilizedOutputCandidateOutcomes?.[0]?.problemKey || '').trim()) &&
+    ['chewing_insects', 'caterpillars', 'beetles', 'snails_slugs', 'leaf_miners'].includes(
+      String(stabilizedOutputCandidateOutcomes?.[0]?.problemKey || '').trim()
+    ) &&
     Number(stabilizedOutputCandidateOutcomes?.[0]?.questionEvidence || 0) <= 0
   const hasLeafSpotBridgeRoutingGap =
     !questionRequired &&
-    String(mergedSymptomClassRuntime?.classConditionDecision?.blockedReason || '').trim() === 'class_group_pool_empty' &&
+    String(mergedSymptomClassRuntime?.classConditionDecision?.blockedReason || '').trim() ===
+      'class_group_pool_empty' &&
     Array.isArray(mergedSymptomClassRuntime?.classScores) &&
     mergedSymptomClassRuntime.classScores.some(
       item => String(item?.classKey || '').trim() === 'leaf_spot_complex_mode'
@@ -3388,22 +3515,16 @@ async function runDiagnosisRound({
     filteredQuestions.length === 0
   const hasActiveObservedEvidence = hasActiveObservedEvidenceEntries(labeledMergedObservedEvidence)
   const shouldBlockOutOfPoolHintUnconfirmed =
-    weakOutOfPoolHintOnly &&
-    !questionRequired &&
-    !hasActiveObservedEvidence
+    weakOutOfPoolHintOnly && !questionRequired && !hasActiveObservedEvidence
   const broadVisualDifferentialUnresolved =
     !questionRequired &&
     !fastConvergencePlan?.applied &&
-    (
-      edemaFlatSpotDifferentialActive ||
-      (
-        broadVisualDifferentialActive &&
+    (edemaFlatSpotDifferentialActive ||
+      (broadVisualDifferentialActive &&
         !hasDirectPositiveProblemAnswer(
           answerEffects,
           normalizeKey(stabilizedOutputCandidateOutcomes?.[0]?.problemKey || '')
-        )
-      )
-    )
+        )))
   const governedLowConfidence = hasLeafSpotBridgeRoutingGap
     ? {
         ...lowConfidence,
@@ -3420,8 +3541,7 @@ async function runDiagnosisRound({
             '当前已进入叶斑桥接路由，但可执行题组仍为空，不能直接输出具体问题；需补充更高特异事实或等待对应题组完善。'
           ])
         ),
-        uncertainLegalityReason:
-          lowConfidence?.uncertainLegalityReason || 'resource_limit'
+        uncertainLegalityReason: lowConfidence?.uncertainLegalityReason || 'resource_limit'
       }
     : effectiveOutOfPoolOnlyNoMapping && !questionRequired
       ? {
@@ -3433,159 +3553,160 @@ async function runDiagnosisRound({
               'out_of_pool_no_mapping'
             ])
           ),
-        advice: Array.from(
-          new Set([
-            ...(Array.isArray(lowConfidence?.advice) ? lowConfidence.advice : []),
-            '图片中存在当前自动诊断范围外的可见异常。本次不继续常规诊断，也不判断为暂无明显问题；由于该异常尚未纳入当前诊断池，系统暂不能给出针对性的处理建议，建议先保持观察并避免仅凭本次结果进行大幅调整。'
-          ])
-        ),
-        outOfPoolObservation: buildOutOfPoolObservationConservative({
-          decisionCauseDetails: buildWeakOutOfPoolHintOnlyDecisionDetails(visualAggregateResult)
-        }),
-        uncertainLegalityReason: 'out_of_pool_no_mapping'
-      }
-    : effectiveWeakOutOfPoolHintOnly && !questionRequired
-      ? {
-          ...lowConfidence,
-          isLowConfidence: true,
-          reasons: Array.from(
+          advice: Array.from(
             new Set([
-              ...(Array.isArray(lowConfidence?.reasons) ? lowConfidence.reasons : []),
-              'weak_out_of_pool_proxy_only'
+              ...(Array.isArray(lowConfidence?.advice) ? lowConfidence.advice : []),
+              '图片中存在当前自动诊断范围外的可见异常。本次不继续常规诊断，也不判断为暂无明显问题；由于该异常尚未纳入当前诊断池，系统暂不能给出针对性的处理建议，建议先保持观察并避免仅凭本次结果进行大幅调整。'
             ])
           ),
-        advice: Array.from(
-          new Set([
-            ...(Array.isArray(lowConfidence?.advice) ? lowConfidence.advice : []),
-              '图片中存在当前诊断范围外的可见异常，但还没有形成可确认的正式诊断证据；本次只作为非诊断观察展示，系统暂不能给出针对性处理建议。'
-          ])
-        ),
-        outOfPoolObservation: buildOutOfPoolObservationConservative({
-          decisionCauseDetails: buildWeakOutOfPoolHintOnlyDecisionDetails(visualAggregateResult)
-        }),
-        uncertainLegalityReason:
-          lowConfidence?.uncertainLegalityReason || 'out_of_pool_review_required'
-      }
-    : shouldBlockOutOfPoolHintUnconfirmed
-      ? {
-          ...lowConfidence,
-          isLowConfidence: true,
-          reasons: Array.from(
-            new Set([
-              ...(Array.isArray(lowConfidence?.reasons) ? lowConfidence.reasons : []),
-              'out_of_pool_hint_unconfirmed_after_package'
-            ])
-          ),
-        advice: Array.from(
-          new Set([
-            ...(Array.isArray(lowConfidence?.advice) ? lowConfidence.advice : []),
-              '图片里存在池外可见异常提示，但题包答案没有形成可确认的正式证据；本次只作为非诊断观察展示，不判断为暂无明显问题，也不输出具体处理方向。'
-          ])
-        ),
-        outOfPoolObservation: buildOutOfPoolObservationConservative({
-          decisionCauseDetails: buildWeakOutOfPoolHintOnlyDecisionDetails(visualAggregateResult)
-        }),
-        uncertainLegalityReason:
-          lowConfidence?.uncertainLegalityReason || 'out_of_pool_hint_unconfirmed'
-      }
-    : yellowingOnlyRuntimeEvidenceAfterQuestionPackage
-    ? {
-        ...lowConfidence,
-        isLowConfidence: true,
-        reasons: Array.from(
-          new Set([
-            ...(Array.isArray(lowConfidence?.reasons) ? lowConfidence.reasons : []),
-            'yellowing_differential_unresolved'
-          ])
-        ),
-        advice: Array.from(
-          new Set([
-            ...(Array.isArray(lowConfidence?.advice) ? lowConfidence.advice : []),
-            '当前只有黄叶事实，题包答案没有形成分布、水分、光照、施肥、病虫害或进展速度方面的明确分流证据，不能直接输出缺铁、缺氮、缺水或弱光等具体问题。'
-          ])
-        ),
-        uncertainLegalityReason:
-          lowConfidence?.uncertainLegalityReason || 'input_unfillable'
-      }
-    : structuralOnlyRuntimeEvidenceAfterQuestionPackage
-    ? {
-        ...lowConfidence,
-        isLowConfidence: true,
-        reasons: Array.from(
-          new Set([
-            ...(Array.isArray(lowConfidence?.reasons) ? lowConfidence.reasons : []),
-            'structural_damage_cause_unresolved'
-          ])
-        ),
-        advice: Array.from(
-          new Set([
-            ...(Array.isArray(lowConfidence?.advice) ? lowConfidence.advice : []),
-            '当前只有孔洞、缺口或网状缺损这类结构事实，题包答案没有形成虫害活动、病斑脱落或机械既有伤的明确分流证据，不能直接输出具体虫害。'
-          ])
-        ),
-        uncertainLegalityReason:
-          lowConfidence?.uncertainLegalityReason || 'input_unfillable'
-      }
-    : broadVisualDifferentialUnresolved
-    ? {
-        ...lowConfidence,
-        isLowConfidence: true,
-        reasons: Array.from(
-          new Set([
-            ...(Array.isArray(lowConfidence?.reasons) ? lowConfidence.reasons : []),
-            'broad_visual_differential_unresolved'
-          ])
-        ),
-        advice: Array.from(
-          new Set([
-            ...(Array.isArray(lowConfidence?.advice) ? lowConfidence.advice : []),
-            '当前视觉证据属于宽泛异常，可能对应多个方向；没有形成用户正向问诊证据前，不能直接闭合为某个具体问题。'
-          ])
-        ),
-        uncertainLegalityReason:
-          lowConfidence?.uncertainLegalityReason || 'input_unfillable'
-      }
-    : shouldBlockUnscopedClassOutput
-    ? {
-        ...lowConfidence,
-        isLowConfidence: true,
-        reasons: Array.from(
-          new Set([
-            ...(Array.isArray(lowConfidence?.reasons) ? lowConfidence.reasons : []),
-            'symptom_class_problem_family_unscoped'
-          ])
-        ),
-        advice: Array.from(
-          new Set([
-            ...(Array.isArray(lowConfidence?.advice) ? lowConfidence.advice : []),
-            '当前视觉方向与最高候选问题不在同一条已确认的诊断方向内，且没有用户正向问诊证据，不能跨方向输出具体问题。'
-          ])
-        ),
-        uncertainLegalityReason:
-          lowConfidence?.uncertainLegalityReason || 'input_unfillable'
-      }
-    : shouldBlockUnforceablePackageOutcome || shouldBlockUnforceableOutputOutcome
-    ? {
-        ...lowConfidence,
-        isLowConfidence: true,
-        reasons: Array.from(
-          new Set([
-            ...(Array.isArray(lowConfidence?.reasons) ? lowConfidence.reasons : []),
-            'no_forceable_output_problem'
-          ])
-        ),
-        advice: Array.from(
-          new Set([
-            ...(Array.isArray(lowConfidence?.advice) ? lowConfidence.advice : []),
-            shouldBlockUnforceablePackageOutcome
-              ? '当前题包答案没有形成可用证据，建议补充更明确的回答，或补拍关键部位后重新开始诊断。'
-              : '当前视觉方向没有形成可安全输出的具体问题证据，不能只凭先验或泛化线索给出具体诊断。'
-          ])
-        ),
-        uncertainLegalityReason:
-          lowConfidence?.uncertainLegalityReason || 'input_unfillable'
-      }
-    : lowConfidence
+          outOfPoolObservation: buildOutOfPoolObservationConservative({
+            decisionCauseDetails: buildWeakOutOfPoolHintOnlyDecisionDetails(visualAggregateResult)
+          }),
+          uncertainLegalityReason: 'out_of_pool_no_mapping'
+        }
+      : effectiveWeakOutOfPoolHintOnly && !questionRequired
+        ? {
+            ...lowConfidence,
+            isLowConfidence: true,
+            reasons: Array.from(
+              new Set([
+                ...(Array.isArray(lowConfidence?.reasons) ? lowConfidence.reasons : []),
+                'weak_out_of_pool_proxy_only'
+              ])
+            ),
+            advice: Array.from(
+              new Set([
+                ...(Array.isArray(lowConfidence?.advice) ? lowConfidence.advice : []),
+                '图片中存在当前诊断范围外的可见异常，但还没有形成可确认的正式诊断证据；本次只作为非诊断观察展示，系统暂不能给出针对性处理建议。'
+              ])
+            ),
+            outOfPoolObservation: buildOutOfPoolObservationConservative({
+              decisionCauseDetails: buildWeakOutOfPoolHintOnlyDecisionDetails(visualAggregateResult)
+            }),
+            uncertainLegalityReason:
+              lowConfidence?.uncertainLegalityReason || 'out_of_pool_review_required'
+          }
+        : shouldBlockOutOfPoolHintUnconfirmed
+          ? {
+              ...lowConfidence,
+              isLowConfidence: true,
+              reasons: Array.from(
+                new Set([
+                  ...(Array.isArray(lowConfidence?.reasons) ? lowConfidence.reasons : []),
+                  'out_of_pool_hint_unconfirmed_after_package'
+                ])
+              ),
+              advice: Array.from(
+                new Set([
+                  ...(Array.isArray(lowConfidence?.advice) ? lowConfidence.advice : []),
+                  '图片里存在池外可见异常提示，但题包答案没有形成可确认的正式证据；本次只作为非诊断观察展示，不判断为暂无明显问题，也不输出具体处理方向。'
+                ])
+              ),
+              outOfPoolObservation: buildOutOfPoolObservationConservative({
+                decisionCauseDetails:
+                  buildWeakOutOfPoolHintOnlyDecisionDetails(visualAggregateResult)
+              }),
+              uncertainLegalityReason:
+                lowConfidence?.uncertainLegalityReason || 'out_of_pool_hint_unconfirmed'
+            }
+          : yellowingOnlyRuntimeEvidenceAfterQuestionPackage
+            ? {
+                ...lowConfidence,
+                isLowConfidence: true,
+                reasons: Array.from(
+                  new Set([
+                    ...(Array.isArray(lowConfidence?.reasons) ? lowConfidence.reasons : []),
+                    'yellowing_differential_unresolved'
+                  ])
+                ),
+                advice: Array.from(
+                  new Set([
+                    ...(Array.isArray(lowConfidence?.advice) ? lowConfidence.advice : []),
+                    '当前只有黄叶事实，题包答案没有形成分布、水分、光照、施肥、病虫害或进展速度方面的明确分流证据，不能直接输出缺铁、缺氮、缺水或弱光等具体问题。'
+                  ])
+                ),
+                uncertainLegalityReason:
+                  lowConfidence?.uncertainLegalityReason || 'input_unfillable'
+              }
+            : structuralOnlyRuntimeEvidenceAfterQuestionPackage
+              ? {
+                  ...lowConfidence,
+                  isLowConfidence: true,
+                  reasons: Array.from(
+                    new Set([
+                      ...(Array.isArray(lowConfidence?.reasons) ? lowConfidence.reasons : []),
+                      'structural_damage_cause_unresolved'
+                    ])
+                  ),
+                  advice: Array.from(
+                    new Set([
+                      ...(Array.isArray(lowConfidence?.advice) ? lowConfidence.advice : []),
+                      '当前只有孔洞、缺口或网状缺损这类结构事实，题包答案没有形成虫害活动、病斑脱落或机械既有伤的明确分流证据，不能直接输出具体虫害。'
+                    ])
+                  ),
+                  uncertainLegalityReason:
+                    lowConfidence?.uncertainLegalityReason || 'input_unfillable'
+                }
+              : broadVisualDifferentialUnresolved
+                ? {
+                    ...lowConfidence,
+                    isLowConfidence: true,
+                    reasons: Array.from(
+                      new Set([
+                        ...(Array.isArray(lowConfidence?.reasons) ? lowConfidence.reasons : []),
+                        'broad_visual_differential_unresolved'
+                      ])
+                    ),
+                    advice: Array.from(
+                      new Set([
+                        ...(Array.isArray(lowConfidence?.advice) ? lowConfidence.advice : []),
+                        '当前视觉证据属于宽泛异常，可能对应多个方向；没有形成用户正向问诊证据前，不能直接闭合为某个具体问题。'
+                      ])
+                    ),
+                    uncertainLegalityReason:
+                      lowConfidence?.uncertainLegalityReason || 'input_unfillable'
+                  }
+                : shouldBlockUnscopedClassOutput
+                  ? {
+                      ...lowConfidence,
+                      isLowConfidence: true,
+                      reasons: Array.from(
+                        new Set([
+                          ...(Array.isArray(lowConfidence?.reasons) ? lowConfidence.reasons : []),
+                          'symptom_class_problem_family_unscoped'
+                        ])
+                      ),
+                      advice: Array.from(
+                        new Set([
+                          ...(Array.isArray(lowConfidence?.advice) ? lowConfidence.advice : []),
+                          '当前视觉方向与最高候选问题不在同一条已确认的诊断方向内，且没有用户正向问诊证据，不能跨方向输出具体问题。'
+                        ])
+                      ),
+                      uncertainLegalityReason:
+                        lowConfidence?.uncertainLegalityReason || 'input_unfillable'
+                    }
+                  : shouldBlockUnforceablePackageOutcome || shouldBlockUnforceableOutputOutcome
+                    ? {
+                        ...lowConfidence,
+                        isLowConfidence: true,
+                        reasons: Array.from(
+                          new Set([
+                            ...(Array.isArray(lowConfidence?.reasons) ? lowConfidence.reasons : []),
+                            'no_forceable_output_problem'
+                          ])
+                        ),
+                        advice: Array.from(
+                          new Set([
+                            ...(Array.isArray(lowConfidence?.advice) ? lowConfidence.advice : []),
+                            shouldBlockUnforceablePackageOutcome
+                              ? '当前题包答案没有形成可用证据，建议补充更明确的回答，或补拍关键部位后重新开始诊断。'
+                              : '当前视觉方向没有形成可安全输出的具体问题证据，不能只凭先验或泛化线索给出具体诊断。'
+                          ])
+                        ),
+                        uncertainLegalityReason:
+                          lowConfidence?.uncertainLegalityReason || 'input_unfillable'
+                      }
+                    : lowConfidence
   const shouldForceOutputAfterQuestionPackage =
     !questionRequired &&
     questionHistory &&
@@ -3601,149 +3722,179 @@ async function runDiagnosisRound({
     hasEligibleOutputProblem &&
     hasForceableOutputProblem
   const decisionCause =
-    !questionRequired &&
-    effectiveOutOfPoolOnlyNoMapping
+    !questionRequired && effectiveOutOfPoolOnlyNoMapping
       ? {
           decisionCauseKey: 'out_of_pool_no_mapping',
           decisionCauseCategory: 'visual_scope_gap',
-          decisionCauseText: '当前存在诊断范围外的可见异常，但没有已审计 proxy mapping，因此跳过常规诊断并输出保守池外结果。',
+          decisionCauseText:
+            '当前存在诊断范围外的可见异常，但没有已审计 proxy mapping，因此跳过常规诊断并输出保守池外结果。',
           decisionCauseDetails: buildWeakOutOfPoolHintOnlyDecisionDetails(visualAggregateResult)
         }
-      : !questionRequired &&
-    effectiveWeakOutOfPoolHintOnly
-      ? {
-          decisionCauseKey: 'weak_out_of_pool_proxy_only',
-          decisionCauseCategory: 'out_of_pool_visual_hint',
-          decisionCauseText: '正式 symptom_candidates 为空，仅存在池外弱提示，不能直接输出具体问题。',
-          decisionCauseDetails: buildWeakOutOfPoolHintOnlyDecisionDetails(visualAggregateResult)
-        }
-      : !questionRequired &&
-    shouldBlockOutOfPoolHintUnconfirmed
-      ? {
-          decisionCauseKey: 'out_of_pool_hint_unconfirmed_after_package',
-          decisionCauseCategory: 'out_of_pool_visual_hint',
-          decisionCauseText: '图片里存在池外可见异常提示，但题包答案没有形成可确认的正式证据，因此不能输出非问题结论。',
-          decisionCauseDetails: buildWeakOutOfPoolHintOnlyDecisionDetails(visualAggregateResult)
-        }
-      : !questionRequired &&
-    !hasActiveObservedEvidence
-      ? {
-          decisionCauseKey: 'no_observed_symptoms',
-          decisionCauseCategory: 'visual_input_gap',
-          decisionCauseText: '当前轮次没有形成可用的正式视觉证据。',
-          decisionCauseDetails: {
-            currentClassKey: mergedSymptomClassRuntime?.currentClassKey || '',
-            blockedReason:
-              mergedSymptomClassRuntime?.classConditionDecision?.blockedReason ||
-              'no_observed_symptoms'
-          }
-        }
-      : hasLeafSpotBridgeRoutingGap
+      : !questionRequired && effectiveWeakOutOfPoolHintOnly
         ? {
-            decisionCauseKey: 'class_group_pool_empty',
-            decisionCauseCategory: 'class_routing_gap',
-            decisionCauseText: '当前已进入叶斑桥接路由，但 question group 仍为空，不能直接输出具体问题。',
-            decisionCauseDetails: {
-              currentClassKey: mergedSymptomClassRuntime?.currentClassKey || '',
-              primaryClassKey: mergedSymptomClassRuntime?.primaryClass?.classKey || '',
-              blockedReason: mergedSymptomClassRuntime?.classConditionDecision?.blockedReason || '',
-              classScoreKeys: Array.isArray(mergedSymptomClassRuntime?.classScores)
-                ? mergedSymptomClassRuntime.classScores.map(item => item?.classKey).filter(Boolean)
-                : []
+            decisionCauseKey: 'weak_out_of_pool_proxy_only',
+            decisionCauseCategory: 'out_of_pool_visual_hint',
+            decisionCauseText:
+              '正式 symptom_candidates 为空，仅存在池外弱提示，不能直接输出具体问题。',
+            decisionCauseDetails: buildWeakOutOfPoolHintOnlyDecisionDetails(visualAggregateResult)
+          }
+        : !questionRequired && shouldBlockOutOfPoolHintUnconfirmed
+          ? {
+              decisionCauseKey: 'out_of_pool_hint_unconfirmed_after_package',
+              decisionCauseCategory: 'out_of_pool_visual_hint',
+              decisionCauseText:
+                '图片里存在池外可见异常提示，但题包答案没有形成可确认的正式证据，因此不能输出非问题结论。',
+              decisionCauseDetails: buildWeakOutOfPoolHintOnlyDecisionDetails(visualAggregateResult)
             }
-          }
-      : !questionRequired &&
-    outputContextProblemGuard.applies &&
-    !outputContextProblemGuard.hasRequiredContext &&
-    filteredQuestions.length === 0
-      ? {
-          decisionCauseKey:
-            mergedSymptomClassRuntime?.enabled &&
-            mergedSymptomClassRuntime?.classConditionDecision?.hasEnabledGroups
-              ? 'class_converged_context_guard_blocked'
-              : 'context_guard_blocked_without_required_context',
-          decisionCauseCategory: 'context_guard_block',
-          decisionCauseText: outputContextProblemGuard.advice || '当前候选问题缺少必要上下文，不能安全输出具体 root cause。',
-          decisionCauseDetails: {
-            problemKey: outputContextProblemGuard.problemKey || '',
-            currentClassKey: mergedSymptomClassRuntime?.currentClassKey || '',
-            currentGroupKey: mergedSymptomClassRuntime?.currentGroupKey || '',
-            hasEnabledGroups: Boolean(mergedSymptomClassRuntime?.classConditionDecision?.hasEnabledGroups),
-            preferredQuestionKeys: Array.isArray(outputContextProblemGuard.preferredQuestionKeys)
-              ? outputContextProblemGuard.preferredQuestionKeys
-              : [],
-            matchedSymptomKeys: Array.isArray(outputContextProblemGuard.matchedSymptomKeys)
-              ? outputContextProblemGuard.matchedSymptomKeys
-              : []
-          }
-        }
-      : yellowingOnlyRuntimeEvidenceAfterQuestionPackage
-        ? {
-            decisionCauseKey: 'yellowing_differential_unresolved',
-            decisionCauseCategory: 'output_guard',
-            decisionCauseText: '当前只有黄叶事实，题包答案没有形成明确分流证据，因此不能安全输出具体缺素/水分/光照问题。',
-            decisionCauseDetails: {
-              activeRuntimeSymptomKeys: activeRuntimeSymptomKeysForOutput,
-              hasEligibleOutputProblem,
-              hasForceableOutputProblem
-            }
-          }
-      : structuralOnlyRuntimeEvidenceAfterQuestionPackage
-        ? {
-            decisionCauseKey: 'structural_damage_cause_unresolved',
-            decisionCauseCategory: 'output_guard',
-            decisionCauseText: '当前只有结构损伤事实，题包答案没有形成明确病因分流证据，因此不能安全输出具体虫害。',
-            decisionCauseDetails: {
-              activeRuntimeSymptomKeys: activeRuntimeSymptomKeysForOutput,
-              topProblemKey: String(stabilizedOutputCandidateOutcomes?.[0]?.problemKey || '').trim(),
-              topQuestionEvidence: Number(stabilizedOutputCandidateOutcomes?.[0]?.questionEvidence || 0)
-            }
-          }
-      : broadVisualDifferentialUnresolved
-        ? {
-            decisionCauseKey: 'broad_visual_differential_unresolved',
-            decisionCauseCategory: 'output_guard',
-            decisionCauseText: '当前视觉异常过于宽泛，且没有用户正向问诊证据，不能直接输出具体问题。',
-            decisionCauseDetails: {
-              currentClassKey: mergedSymptomClassRuntime?.currentClassKey || '',
-              primaryClassKey: mergedSymptomClassRuntime?.primaryClass?.classKey || '',
-              activeRuntimeSymptomKeys: activeRuntimeSymptomKeysForOutput,
-              edemaFlatSpotDifferentialActive,
-              topProblemKey: String(stabilizedOutputCandidateOutcomes?.[0]?.problemKey || '').trim()
-            }
-          }
-      : shouldBlockUnscopedClassOutput
-        ? {
-            decisionCauseKey: 'symptom_class_problem_family_unscoped',
-            decisionCauseCategory: 'output_guard',
-            decisionCauseText: '当前视觉方向与最高候选问题不在同一条已确认的诊断方向内，且没有用户正向问诊证据。',
-            decisionCauseDetails: {
-              currentClassKey: mergedSymptomClassRuntime?.currentClassKey || '',
-              primaryClassKey: mergedSymptomClassRuntime?.primaryClass?.classKey || '',
-              topProblemKey: String(stabilizedOutputCandidateOutcomes?.[0]?.problemKey || '').trim(),
-              diagnosisDirectionKeys: Array.isArray(diagnosisDirections)
-                ? diagnosisDirections.map(item => item?.directionKey).filter(Boolean)
-                : [],
-              allowedProblemKeys: Array.from(
-                collectAllowedProblemKeysFromDiagnosisDirections(diagnosisDirections)
-              )
-            }
-          }
-      : shouldBlockUnforceablePackageOutcome || shouldBlockUnforceableOutputOutcome
-        ? {
-            decisionCauseKey: shouldBlockUnforceablePackageOutcome
-              ? 'no_forceable_output_problem_after_package'
-              : 'no_forceable_output_problem_without_question',
-            decisionCauseCategory: 'output_guard',
-            decisionCauseText: shouldBlockUnforceablePackageOutcome
-              ? '题包提交后仍未形成可安全输出的 root cause 证据。'
-              : '当前视觉方向没有形成可安全输出的具体问题证据。',
-            decisionCauseDetails: {
-              hasEligibleOutputProblem,
-              hasForceableOutputProblem
-            }
-          }
-        : null
+          : !questionRequired && !hasActiveObservedEvidence
+            ? {
+                decisionCauseKey: 'no_observed_symptoms',
+                decisionCauseCategory: 'visual_input_gap',
+                decisionCauseText: '当前轮次没有形成可用的正式视觉证据。',
+                decisionCauseDetails: {
+                  currentClassKey: mergedSymptomClassRuntime?.currentClassKey || '',
+                  blockedReason:
+                    mergedSymptomClassRuntime?.classConditionDecision?.blockedReason ||
+                    'no_observed_symptoms'
+                }
+              }
+            : hasLeafSpotBridgeRoutingGap
+              ? {
+                  decisionCauseKey: 'class_group_pool_empty',
+                  decisionCauseCategory: 'class_routing_gap',
+                  decisionCauseText:
+                    '当前已进入叶斑桥接路由，但 question group 仍为空，不能直接输出具体问题。',
+                  decisionCauseDetails: {
+                    currentClassKey: mergedSymptomClassRuntime?.currentClassKey || '',
+                    primaryClassKey: mergedSymptomClassRuntime?.primaryClass?.classKey || '',
+                    blockedReason:
+                      mergedSymptomClassRuntime?.classConditionDecision?.blockedReason || '',
+                    classScoreKeys: Array.isArray(mergedSymptomClassRuntime?.classScores)
+                      ? mergedSymptomClassRuntime.classScores
+                          .map(item => item?.classKey)
+                          .filter(Boolean)
+                      : []
+                  }
+                }
+              : !questionRequired &&
+                  outputContextProblemGuard.applies &&
+                  !outputContextProblemGuard.hasRequiredContext &&
+                  filteredQuestions.length === 0
+                ? {
+                    decisionCauseKey:
+                      mergedSymptomClassRuntime?.enabled &&
+                      mergedSymptomClassRuntime?.classConditionDecision?.hasEnabledGroups
+                        ? 'class_converged_context_guard_blocked'
+                        : 'context_guard_blocked_without_required_context',
+                    decisionCauseCategory: 'context_guard_block',
+                    decisionCauseText:
+                      outputContextProblemGuard.advice ||
+                      '当前候选问题缺少必要上下文，不能安全输出具体 root cause。',
+                    decisionCauseDetails: {
+                      problemKey: outputContextProblemGuard.problemKey || '',
+                      currentClassKey: mergedSymptomClassRuntime?.currentClassKey || '',
+                      currentGroupKey: mergedSymptomClassRuntime?.currentGroupKey || '',
+                      hasEnabledGroups: Boolean(
+                        mergedSymptomClassRuntime?.classConditionDecision?.hasEnabledGroups
+                      ),
+                      preferredQuestionKeys: Array.isArray(
+                        outputContextProblemGuard.preferredQuestionKeys
+                      )
+                        ? outputContextProblemGuard.preferredQuestionKeys
+                        : [],
+                      matchedSymptomKeys: Array.isArray(
+                        outputContextProblemGuard.matchedSymptomKeys
+                      )
+                        ? outputContextProblemGuard.matchedSymptomKeys
+                        : []
+                    }
+                  }
+                : yellowingOnlyRuntimeEvidenceAfterQuestionPackage
+                  ? {
+                      decisionCauseKey: 'yellowing_differential_unresolved',
+                      decisionCauseCategory: 'output_guard',
+                      decisionCauseText:
+                        '当前只有黄叶事实，题包答案没有形成明确分流证据，因此不能安全输出具体缺素/水分/光照问题。',
+                      decisionCauseDetails: {
+                        activeRuntimeSymptomKeys: activeRuntimeSymptomKeysForOutput,
+                        hasEligibleOutputProblem,
+                        hasForceableOutputProblem
+                      }
+                    }
+                  : structuralOnlyRuntimeEvidenceAfterQuestionPackage
+                    ? {
+                        decisionCauseKey: 'structural_damage_cause_unresolved',
+                        decisionCauseCategory: 'output_guard',
+                        decisionCauseText:
+                          '当前只有结构损伤事实，题包答案没有形成明确病因分流证据，因此不能安全输出具体虫害。',
+                        decisionCauseDetails: {
+                          activeRuntimeSymptomKeys: activeRuntimeSymptomKeysForOutput,
+                          topProblemKey: String(
+                            stabilizedOutputCandidateOutcomes?.[0]?.problemKey || ''
+                          ).trim(),
+                          topQuestionEvidence: Number(
+                            stabilizedOutputCandidateOutcomes?.[0]?.questionEvidence || 0
+                          )
+                        }
+                      }
+                    : broadVisualDifferentialUnresolved
+                      ? {
+                          decisionCauseKey: 'broad_visual_differential_unresolved',
+                          decisionCauseCategory: 'output_guard',
+                          decisionCauseText:
+                            '当前视觉异常过于宽泛，且没有用户正向问诊证据，不能直接输出具体问题。',
+                          decisionCauseDetails: {
+                            currentClassKey: mergedSymptomClassRuntime?.currentClassKey || '',
+                            primaryClassKey:
+                              mergedSymptomClassRuntime?.primaryClass?.classKey || '',
+                            activeRuntimeSymptomKeys: activeRuntimeSymptomKeysForOutput,
+                            edemaFlatSpotDifferentialActive,
+                            topProblemKey: String(
+                              stabilizedOutputCandidateOutcomes?.[0]?.problemKey || ''
+                            ).trim()
+                          }
+                        }
+                      : shouldBlockUnscopedClassOutput
+                        ? {
+                            decisionCauseKey: 'symptom_class_problem_family_unscoped',
+                            decisionCauseCategory: 'output_guard',
+                            decisionCauseText:
+                              '当前视觉方向与最高候选问题不在同一条已确认的诊断方向内，且没有用户正向问诊证据。',
+                            decisionCauseDetails: {
+                              currentClassKey: mergedSymptomClassRuntime?.currentClassKey || '',
+                              primaryClassKey:
+                                mergedSymptomClassRuntime?.primaryClass?.classKey || '',
+                              topProblemKey: String(
+                                stabilizedOutputCandidateOutcomes?.[0]?.problemKey || ''
+                              ).trim(),
+                              diagnosisDirectionKeys: Array.isArray(diagnosisDirections)
+                                ? diagnosisDirections
+                                    .map(item => item?.directionKey)
+                                    .filter(Boolean)
+                                : [],
+                              allowedProblemKeys: Array.from(
+                                collectAllowedProblemKeysFromDiagnosisDirections(
+                                  diagnosisDirections
+                                )
+                              )
+                            }
+                          }
+                        : shouldBlockUnforceablePackageOutcome ||
+                            shouldBlockUnforceableOutputOutcome
+                          ? {
+                              decisionCauseKey: shouldBlockUnforceablePackageOutcome
+                                ? 'no_forceable_output_problem_after_package'
+                                : 'no_forceable_output_problem_without_question',
+                              decisionCauseCategory: 'output_guard',
+                              decisionCauseText: shouldBlockUnforceablePackageOutcome
+                                ? '题包提交后仍未形成可安全输出的 root cause 证据。'
+                                : '当前视觉方向没有形成可安全输出的具体问题证据。',
+                              decisionCauseDetails: {
+                                hasEligibleOutputProblem,
+                                hasForceableOutputProblem
+                              }
+                            }
+                          : null
   const effectiveLowConfidence = shouldForceOutputAfterQuestionPackage
     ? {
         ...governedLowConfidence,
@@ -3751,25 +3902,27 @@ async function runDiagnosisRound({
       }
     : governedLowConfidence
   const explanationProblemKeys = !questionRequired
-    ? stabilizedOutputCandidateOutcomes.slice(0, 5).map(item => item.problemKey).filter(Boolean)
+    ? stabilizedOutputCandidateOutcomes
+        .slice(0, 5)
+        .map(item => item.problemKey)
+        .filter(Boolean)
     : []
   const explanations = explanationProblemKeys.length
     ? await getExplanationsByProblemKeys(explanationProblemKeys)
     : []
-  const routeOutcomeKeys =
-    effectiveShouldUseRouteOutputDecision
-      ? Array.from(
-          new Set(
-            [
-              ...(Array.isArray(routeDecision?.visibleOutcomeKeys)
-                ? routeDecision.visibleOutcomeKeys
-                : [])
-            ]
-              .map(item => String(item || '').trim())
-              .filter(Boolean)
-          )
+  const routeOutcomeKeys = effectiveShouldUseRouteOutputDecision
+    ? Array.from(
+        new Set(
+          [
+            ...(Array.isArray(routeDecision?.visibleOutcomeKeys)
+              ? routeDecision.visibleOutcomeKeys
+              : [])
+          ]
+            .map(item => String(item || '').trim())
+            .filter(Boolean)
         )
-      : []
+      )
+    : []
   const routeOutcomes =
     effectiveShouldUseRouteOutputDecision && routeOutcomeKeys.length
       ? await outcomeRouteRepository.getDiagnosisOutcomesByKeys(routeOutcomeKeys)
@@ -3802,13 +3955,13 @@ async function runDiagnosisRound({
               outcomeLocked: 'uncertain',
               stopReason: 'uncertain_output_ready',
               uncertainLegalityReason:
-                effectiveLowConfidence?.uncertainLegalityReason || 'route_output_no_visible_outcome',
+                effectiveLowConfidence?.uncertainLegalityReason ||
+                'route_output_no_visible_outcome',
               stopReasonDetail:
                 normalizeDecisionCause(routeDecision?.decisionCause)?.decisionCauseKey ||
                 decisionCause?.decisionCauseKey ||
                 'route_no_visible_outcome',
-              decisionCause:
-                normalizeDecisionCause(routeDecision?.decisionCause) ||
+              decisionCause: normalizeDecisionCause(routeDecision?.decisionCause) ||
                 decisionCause || {
                   decisionCauseKey: 'route_no_visible_outcome',
                   decisionCauseCategory: 'route_conservative',
@@ -3826,8 +3979,7 @@ async function runDiagnosisRound({
                 routeDecision?.decisionCause?.decisionCauseKey ||
                 decisionCause?.decisionCauseKey ||
                 'route_conservative_uncertain',
-              decisionCause:
-                normalizeDecisionCause(routeDecision?.decisionCause) ||
+              decisionCause: normalizeDecisionCause(routeDecision?.decisionCause) ||
                 decisionCause || {
                   decisionCauseKey: 'route_conservative_uncertain',
                   decisionCauseCategory: 'route_conservative',
@@ -3835,35 +3987,33 @@ async function runDiagnosisRound({
                   decisionCauseDetails: {}
                 }
             }
-      : {
-          outcomeLocked:
-            shouldForceOutputAfterQuestionPackage
+        : {
+            outcomeLocked: shouldForceOutputAfterQuestionPackage
               ? 'problematic'
               : effectiveLowConfidence?.uncertainLegalityReason ||
-                  (outputContextProblemGuard.applies && !outputContextProblemGuard.hasRequiredContext)
+                  (outputContextProblemGuard.applies &&
+                    !outputContextProblemGuard.hasRequiredContext)
                 ? 'uncertain'
                 : 'problematic',
-          stopReason:
-            shouldForceOutputAfterQuestionPackage
+            stopReason: shouldForceOutputAfterQuestionPackage
               ? 'problematic_output_ready'
               : effectiveLowConfidence?.uncertainLegalityReason ||
-                  (outputContextProblemGuard.applies && !outputContextProblemGuard.hasRequiredContext)
+                  (outputContextProblemGuard.applies &&
+                    !outputContextProblemGuard.hasRequiredContext)
                 ? 'uncertain_output_ready'
                 : 'problematic_output_ready',
-          uncertainLegalityReason:
-            shouldForceOutputAfterQuestionPackage
+            uncertainLegalityReason: shouldForceOutputAfterQuestionPackage
               ? ''
               : effectiveLowConfidence?.uncertainLegalityReason ||
                 (outputContextProblemGuard.applies && !outputContextProblemGuard.hasRequiredContext
                   ? 'input_unfillable'
                   : ''),
-          stopReasonDetail: decisionCause?.decisionCauseKey || '',
-          decisionCause
-        }
+            stopReasonDetail: decisionCause?.decisionCauseKey || '',
+            decisionCause
+          }
   const allActionProfileKeys = resolveVisibleRouteActionProfileKeys(routeDecision, routeOutcomes)
   const actionProfiles =
-    effectiveShouldUseRouteOutputDecision &&
-    allActionProfileKeys.length
+    effectiveShouldUseRouteOutputDecision && allActionProfileKeys.length
       ? await outcomeRouteRepository.getOutcomeActionProfiles(allActionProfileKeys)
       : []
 

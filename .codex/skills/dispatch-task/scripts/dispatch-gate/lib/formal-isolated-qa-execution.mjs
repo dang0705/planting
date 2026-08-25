@@ -1,3 +1,5 @@
+import path from 'node:path'
+
 import { qaCleanupPassed } from './formal-isolated-qa-session.mjs'
 import { extractLeafReport, leafReportRequiresFullLanRebuild } from './qa-leaf-report.mjs'
 import {
@@ -5,6 +7,11 @@ import {
   finalizeFormalQaRunRecord,
   transitionFormalQaRunRecord
 } from './formal-qa-run-record.mjs'
+import {
+  currentShared,
+  isFreshAuthConsumptionEvidence,
+  readAuthConsumptionEvidence
+} from '../../../../../../scripts/qa/qa-auth-broker-core.mjs'
 
 function appendTransition(appendEvent, record, outcome) {
   appendEvent(record, outcome)
@@ -32,11 +39,76 @@ function failureFromSession(session) {
   }
 }
 
+function qaArtifactDir(recordFile, executionId) {
+  const recordDirectory = path.dirname(recordFile)
+  const runInstanceId = path.basename(recordDirectory)
+  if (runInstanceId === 'qa-runs') {
+    return path.join(path.dirname(recordDirectory), 'qa-artifacts', executionId)
+  }
+  const dispatchDirectory = path.dirname(path.dirname(recordDirectory))
+  return path.join(dispatchDirectory, 'qa-artifacts', runInstanceId, executionId)
+}
+
+function currentQaAuthConsumption() {
+  const evidence = readAuthConsumptionEvidence()
+  return evidence?.latest_by_role?.qa || null
+}
+
+function authConsumptionMatchesRuntime(runtimeEvidence) {
+  const shared = currentShared()
+  const evidence = readAuthConsumptionEvidence()
+  const event = evidence?.latest_by_role?.qa || evidence?.latest || null
+  const eventGeneration = Number(event?.auth_generation || 0) || null
+  const runtimeGeneration = Number(runtimeEvidence?.auth_generation || 0) || null
+  const sharedGeneration = Number(shared?.authGeneration || 0) || null
+  const generationCeiling = Math.max(runtimeGeneration || 0, sharedGeneration || 0)
+  const processAndIdentityMatch = Boolean(
+    event &&
+    event.identity_hash === runtimeEvidence?.identity_hash &&
+    eventGeneration &&
+    generationCeiling &&
+    eventGeneration <= generationCeiling
+  )
+  if (!processAndIdentityMatch) {
+    return false
+  }
+  return isFreshAuthConsumptionEvidence(readAuthConsumptionEvidence(), {
+    role: 'qa',
+    pid: runtimeEvidence?.main_devtools_pid,
+    process_start_identity: runtimeEvidence?.process_start_identity,
+    profile: runtimeEvidence?.profile || runtimeEvidence?.user_data_dir,
+    // The broker may rotate shared material while a stable QA process keeps
+    // running. The event itself is the consumed material proof; current
+    // generation/ticket are only used as a ceiling above, never as an exact
+    // equality requirement that would reject a valid older receipt.
+    auth_generation: eventGeneration,
+    identity_hash: event.identity_hash,
+    ticket_hash: event.ticket_hash,
+    // A stable QA process may serve a long live matrix. Once the exact
+    // process/profile/auth-generation/ticket tuple matches, the receipt is
+    // valid for that process lifetime; the 120s freshness window remains
+    // enforced for the initial auth-concurrency report.
+    max_age_ms: null
+  })
+}
+
+async function waitForAuthConsumption(runtimeEvidence, timeoutMs = 15_000) {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() <= deadline) {
+    if (authConsumptionMatchesRuntime(runtimeEvidence)) {
+      return currentQaAuthConsumption()
+    }
+    await new Promise(resolve => setTimeout(resolve, 100))
+  }
+  return null
+}
+
 export async function runFormalQaExecution({
   dispatchRunId,
   catalogId,
   executionId,
   gate,
+  sourceProjectPath,
   expectedProjectPath,
   screenshotPath,
   wxRequestUrl,
@@ -77,6 +149,13 @@ export async function runFormalQaExecution({
   }
 
   const prepareRuntime = async ({ fullLanRebuild = false, reason = null } = {}) => {
+    // A verified target-only DevTools recovery is infrastructure recovery, not
+    // a fixture privilege. Live real-api leaves must be able to recover one
+    // transient renderer failure without rebuilding the app or touching the
+    // daily DevTools. The caller can only enable this through the formal
+    // dispatch gate; the recovery primitive still verifies ownership,
+    // project identity and the close/open/auto cycle.
+    const allowRecovery = allowTargetedRestart === true
     phase('launching', {
       ...(fullLanRebuild
         ? {
@@ -88,20 +167,51 @@ export async function runFormalQaExecution({
     })
     session = await runtimeFactory({
       dispatchRunId,
+      sourceProjectPath,
       projectPath: expectedProjectPath,
       screenshotPath,
       wxRequestUrl,
-      allowTargetedRestart,
+      allowTargetedRestart: allowRecovery,
       forceFullLanRebuild: fullLanRebuild,
       fullLanRebuildReason: reason
     })
     if (session.status !== 'ready') {
       return { failure: failureFromSession(session) }
     }
-    phase('runtime_verified', { runtime_evidence: session.runtime_evidence })
+    const authConsumption =
+      gate.entry?.data_mode === 'automator_live_real_api'
+        ? await waitForAuthConsumption(session.runtime_evidence)
+        : currentQaAuthConsumption()
+    const authConsumptionAck = {
+      status: authConsumption ? 'passed' : 'blocked',
+      code: authConsumption
+        ? 'qa_auth_consumption_ack_received'
+        : 'qa_auth_consumption_ack_missing',
+      event: authConsumption
+    }
+    phase('runtime_verified', {
+      runtime_evidence: session.runtime_evidence,
+      auth_consumption: authConsumption,
+      auth_consumption_ack: authConsumptionAck
+    })
+    if (gate.entry?.data_mode === 'automator_live_real_api' && !authConsumption) {
+      return {
+        failure: {
+          status: 'failed_environment',
+          terminal_reason: 'qa_auth_consumption_receipt_missing_or_stale',
+          runtime_evidence: session.runtime_evidence,
+          auth_consumption: currentQaAuthConsumption(),
+          auth_consumption_ack: authConsumptionAck,
+          live_attempt_consumed: false
+        }
+      }
+    }
     let preflight
     try {
-      preflight = await preflightRunner(session.preflight_options)
+      preflight = await preflightRunner({
+        ...session.preflight_options,
+        allowTargetedRestart: allowRecovery
+      })
     } catch (error) {
       preflight = {
         status: 'failed_environment',
@@ -127,10 +237,23 @@ export async function runFormalQaExecution({
 
   const runLeafAttempt = async ({ preflight, attempt }) => {
     record = mergeLiveRecord(record, createLiveRecord(attempt))
+    record = {
+      ...record,
+      auth_consumption: record.auth_consumption || currentQaAuthConsumption(),
+      auth_consumption_ack: record.auth_consumption_ack || {
+        status: record.auth_consumption ? 'passed' : 'blocked',
+        code: record.auth_consumption
+          ? 'qa_auth_consumption_ack_received'
+          : 'qa_auth_consumption_ack_missing',
+        event: record.auth_consumption || null
+      },
+      auth_consumption_captured_at_ms: record.auth_consumption_captured_at_ms || Date.now()
+    }
     phase('leaf_running')
     let terminalFromLifecycle = null
     let lifecycle
     try {
+      const artifactDir = qaArtifactDir(recordFile, executionId)
       lifecycle = await leafRunner({
         script: gate.script,
         args: stripArgs(args),
@@ -141,7 +264,24 @@ export async function runFormalQaExecution({
           MP_PROJECT_PATH: session.preflight_options.projectPath,
           MP_AUTOMATOR_PORT: String(session.preflight_options.wsPort),
           QA_RUNTIME_PROJECT_SNAPSHOT: '1',
-          QA_RUNTIME_SESSION_ID: session.sessionId
+          QA_RUNTIME_SESSION_ID: session.sessionId,
+          QA_CATALOG_DATA_MODE: gate.entry?.data_mode || '',
+          QA_CATALOG_AUTH_MODE: gate.entry?.auth_mode || '',
+          QA_AUTOMATOR_LIVE_LEAF: gate.entry?.data_mode === 'automator_live_real_api' ? '1' : '0',
+          QA_AUTOMATOR_RUNTIME_PROOF: JSON.stringify({
+            project_identity_verified:
+              session.preflight_options.runtime?.project_identity_verified === true,
+            observed_project_path: session.preflight_options.projectPath,
+            main_devtools_pid: session.preflight_options.runtime?.main_devtools_pid,
+            automation_listener_pid:
+              session.preflight_options.runtime?.automation_listener_pid ??
+              session.preflight_options.runtime?.port_owner_pid,
+            port_owner_pid: session.preflight_options.runtime?.port_owner_pid,
+            automator_port: session.preflight_options.wsPort,
+            control_port: session.preflight_options.runtime?.control_port,
+            control_port_verified: session.preflight_options.runtime?.control_port_verified === true
+          }),
+          E2E_ARTIFACT_DIR: artifactDir
         },
         timeoutMs: argValue('execution-timeout-ms'),
         onStarted: started => {
@@ -188,6 +328,8 @@ export async function runFormalQaExecution({
               status: terminalFromLifecycle.status,
               ...terminalFromLifecycle,
               runtime_evidence: session.runtime_evidence,
+              auth_consumption: record.auth_consumption,
+              auth_consumption_ack: record.auth_consumption_ack,
               live_attempt_consumed: false
             }
       }
@@ -206,6 +348,8 @@ export async function runFormalQaExecution({
         execution_timeout_ms: lifecycle.execution_timeout_ms,
         preflight,
         runtime_evidence: session.runtime_evidence,
+        auth_consumption: record.auth_consumption,
+        auth_consumption_ack: record.auth_consumption_ack,
         ...frozenBundleEvidence(integrity),
         leaf_report: reportEvidence,
         live_attempt_consumed: isLiveAttemptConsumed({ status, leafReport: reportEvidence }),
@@ -229,6 +373,7 @@ export async function runFormalQaExecution({
         const attemptGate = previousAttemptGate({
           records: readRecords(dispatchRunId),
           catalogId,
+          executionId,
           scriptHash: gate.scriptHash
         })
         if (attemptGate.blocked) {
@@ -249,7 +394,10 @@ export async function runFormalQaExecution({
         })
         candidate = attemptResult.candidate
 
-        if (leafReportRequiresFullLanRebuild(attemptResult.leafReport)) {
+        if (
+          gate.entry?.data_mode === 'fixture_diagnostic' &&
+          leafReportRequiresFullLanRebuild(attemptResult.leafReport)
+        ) {
           const recoveryReason =
             attemptResult.leafReport.report.blockerReason ?? 'runtime did not expose a user plant'
           const initialCandidate = candidate
@@ -350,6 +498,7 @@ export async function runFormalQaExecution({
 
 export async function runFormalQaPreflight({
   dispatchRunId,
+  sourceProjectPath,
   projectPath,
   screenshotPath,
   wxRequestUrl,
@@ -362,6 +511,7 @@ export async function runFormalQaPreflight({
     return await (async () => {
       const session = await runtimeFactory({
         dispatchRunId,
+        sourceProjectPath,
         projectPath,
         screenshotPath,
         wxRequestUrl,

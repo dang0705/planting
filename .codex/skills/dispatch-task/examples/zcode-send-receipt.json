@@ -50,11 +50,11 @@
         "delivery_verified": false
       },
       {
-        "method": "edit_menu_paste",
+        "method": "cmd_v",
         "delivery_verified": true
       }
     ],
-    "selected_method": "edit_menu_paste",
+    "selected_method": "cmd_v",
     "rendering": "direct_text",
     "pre_send_verified": true,
     "direct_text_identity": {

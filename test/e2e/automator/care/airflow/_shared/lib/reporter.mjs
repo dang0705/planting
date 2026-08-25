@@ -27,6 +27,7 @@ export function createReport(meta) {
     pageDataSummaries: [],
     assertions: [],
     screenshots: [],
+    screenshot_attempts: [],
     classification: null,
     blockerReason: null,
     status: 'running',
@@ -62,6 +63,16 @@ export function recordScreenshot(report, filepath) {
   }
 }
 
+export function recordScreenshotAttempts(report, label, attempts) {
+  if (!Array.isArray(attempts)) {
+    return
+  }
+  report.screenshot_attempts.push({
+    label: String(label || ''),
+    attempts: attempts.map(attempt => ({ ...attempt }))
+  })
+}
+
 export function setClassification(report, classification, reason) {
   if (!ALLOWED_CLASSIFICATIONS.has(classification)) {
     throw new Error(`invalid classification: ${classification}`)
@@ -84,6 +95,7 @@ export function leafReportPayload(report) {
     failure_kind: report.failure_kind,
     business_assertions_reached: Boolean(report.business_assertions_reached),
     assertions: report.assertions,
+    screenshot_attempts: report.screenshot_attempts,
     classification: report.classification,
     blockerReason: report.blockerReason,
     report_path: report.report_path ?? null

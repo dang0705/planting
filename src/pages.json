@@ -14,64 +14,10 @@
       }
     },
     {
-      "path": "pages/user-plant-detail/user-plant-detail",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": "植物信息",
-        "navigationBarBackgroundColor": "#2D7A4F",
-        "navigationBarTextStyle": "white"
-      }
-    },
-    {
-      "path": "pages/plant-environment/light-environment",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": "光照环境",
-        "navigationBarBackgroundColor": "#2D7A4F",
-        "navigationBarTextStyle": "white"
-      }
-    },
-    {
-      "path": "pages/watering-advisor/watering-advisor",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": "浇水建议",
-        "navigationBarBackgroundColor": "#2D7A4F",
-        "navigationBarTextStyle": "white"
-      }
-    },
-    {
-      "path": "pages/airflow/index",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": "空气环境评估",
-        "navigationBarBackgroundColor": "#2D7A4F",
-        "navigationBarTextStyle": "white"
-      }
-    },
-    {
       "path": "pages/diagnose/diagnose",
       "style": {
         "navigationStyle": "custom",
         "navigationBarTitleText": "AI 诊断",
-        "navigationBarBackgroundColor": "#2D7A4F",
-        "navigationBarTextStyle": "white"
-      }
-    },
-    {
-      "path": "pages/diagnose/question-package",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": "继续问诊",
-        "navigationBarBackgroundColor": "#2D7A4F",
-        "navigationBarTextStyle": "white"
-      }
-    },
-    {
-      "path": "pages/diagnose/result",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": "诊断结果",
         "navigationBarBackgroundColor": "#2D7A4F",
         "navigationBarTextStyle": "white"
       }
@@ -96,33 +42,118 @@
         "navigationStyle": "custom",
         "navigationBarTextStyle": "white"
       }
+    }
+  ],
+  "subPackages": [
+    {
+      "root": "subpackages/review",
+      "pages": [
+        {
+          "path": "out-of-pool-review",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "池外视觉审核",
+            "navigationBarBackgroundColor": "#2F5D50",
+            "navigationBarTextStyle": "white"
+          }
+        },
+        {
+          "path": "diagnosis-review",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "诊断记录管理",
+            "navigationBarBackgroundColor": "#2F5D50",
+            "navigationBarTextStyle": "white"
+          }
+        },
+        {
+          "path": "watering-review",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "浇水算法审计",
+            "navigationBarBackgroundColor": "#2F5D50",
+            "navigationBarTextStyle": "white"
+          }
+        }
+      ]
     },
     {
-      "path": "pages/profile/out-of-pool-review",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": "池外视觉审核",
-        "navigationBarBackgroundColor": "#2F5D50",
-        "navigationBarTextStyle": "white"
-      }
+      "root": "subpackages/diagnosis",
+      "pages": [
+        {
+          "path": "question-package",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "继续问诊",
+            "navigationBarBackgroundColor": "#2D7A4F",
+            "navigationBarTextStyle": "white"
+          }
+        },
+        {
+          "path": "entry",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "AI 诊断",
+            "navigationBarBackgroundColor": "#2D7A4F",
+            "navigationBarTextStyle": "white"
+          }
+        },
+        {
+          "path": "result",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "诊断结果",
+            "navigationBarBackgroundColor": "#2D7A4F",
+            "navigationBarTextStyle": "white"
+          }
+        }
+      ]
     },
     {
-      "path": "pages/profile/diagnosis-review",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": "诊断记录管理",
-        "navigationBarBackgroundColor": "#2F5D50",
-        "navigationBarTextStyle": "white"
-      }
+      "root": "subpackages/care",
+      "pages": [
+        {
+          "path": "watering-advisor/watering-advisor",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "浇水建议",
+            "navigationBarBackgroundColor": "#2D7A4F",
+            "navigationBarTextStyle": "white"
+          }
+        },
+        {
+          "path": "airflow/index",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "空气环境评估",
+            "navigationBarBackgroundColor": "#2D7A4F",
+            "navigationBarTextStyle": "white"
+          }
+        },
+        {
+          "path": "plant-environment/light-environment",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "光照环境",
+            "navigationBarBackgroundColor": "#2D7A4F",
+            "navigationBarTextStyle": "white"
+          }
+        }
+      ]
     },
     {
-      "path": "pages/profile/watering-review",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": "浇水算法审计",
-        "navigationBarBackgroundColor": "#2F5D50",
-        "navigationBarTextStyle": "white"
-      }
+      "root": "subpackages/plant",
+      "pages": [
+        {
+          "path": "user-plant-detail/user-plant-detail",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "植物信息",
+            "navigationBarBackgroundColor": "#2D7A4F",
+            "navigationBarTextStyle": "white"
+          }
+        }
+      ]
     }
   ],
   "globalStyle": {

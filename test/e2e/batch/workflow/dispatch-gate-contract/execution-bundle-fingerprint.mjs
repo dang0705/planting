@@ -8,6 +8,7 @@ import { createQaRunCommands } from '../../../../../.codex/skills/dispatch-task/
 import { previousFrozenBundleAttemptGate } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/qa-run-bundle-integrity.mjs'
 import { buildWorktreeScopeReport } from '../../../../../.codex/skills/dispatch-task/scripts/lib/implementation-postflight-checks.mjs'
 import { repoRoot } from './helpers.mjs'
+import { acquireQaRunLease, qaRunLeaseArgs } from '../../../../../scripts/qa/qa-run-lease.mjs'
 
 const fixtureRoot = fs.mkdtempSync(
   path.join(repoRoot, '.tmp', 'dispatch-task', 'execution-bundle-contract-')
@@ -34,6 +35,7 @@ const ordinaryUndeclaredFile = path.join(
   'dispatch-gate-contract',
   `${artifactScopeRunId}.mjs`
 )
+const runLease = acquireQaRunLease({ dispatchRunId, kind: 'execution-bundle-contract' })
 
 try {
   fs.mkdirSync(path.dirname(direct), { recursive: true })
@@ -115,6 +117,8 @@ try {
     'catalog-id': entry.id,
     'execution-id': executionId,
     'dispatch-run-id': dispatchRunId,
+    'run-instance-id': runLease.run_instance_id,
+    'run-lease-token': runLease.token,
     'execution-timeout-ms': '1000'
   }
   const args = [
@@ -125,10 +129,33 @@ try {
     executionId,
     '--dispatch-run-id',
     dispatchRunId,
+    ...qaRunLeaseArgs(runLease),
     '--execution-timeout-ms',
     '1000'
   ]
   const emitted = []
+  const syntheticRuntimeFactory = async () => ({
+    status: 'ready',
+    sessionId: 'synthetic-execution-bundle-session',
+    preflight_options: {
+      wsEndpoint: 'ws://127.0.0.1:9421',
+      projectPath: fixtureRoot,
+      wsPort: 9421,
+      runtime: {
+        project_identity_verified: true,
+        main_devtools_pid: 101,
+        automation_listener_pid: 202,
+        port_owner_pid: 202,
+        control_port: 9422,
+        control_port_verified: true
+      }
+    },
+    runtime_evidence: { status: 'verified', project_identity_verified: true }
+  })
+  const syntheticRuntimeCleanup = async () => ({
+    status: 'terminated',
+    code: 'synthetic_runtime_cleanup'
+  })
   const commands = createQaRunCommands({
     args,
     argValue: name => values[name] || '',
@@ -140,6 +167,8 @@ try {
     catalogReader: () => ({ entries: [entry] }),
     catalogValidator: () => ({ status: 'passed', errors: [] }),
     preflightRunner: async () => ({ status: 'passed' }),
+    runtimeFactory: syntheticRuntimeFactory,
+    runtimeCleanup: syntheticRuntimeCleanup,
     leafRunner: async () => {
       fs.writeFileSync(nested, "export const nested = 'mutated-during-run'\n")
       return {
@@ -178,6 +207,8 @@ try {
     catalogReader: () => ({ entries: [entry] }),
     catalogValidator: () => ({ status: 'passed', errors: [] }),
     preflightRunner: async () => ({ status: 'passed' }),
+    runtimeFactory: syntheticRuntimeFactory,
+    runtimeCleanup: syntheticRuntimeCleanup,
     leafRunner: async ({ onTerminal }) => {
       onTerminal({ status: 'failed_environment', terminal_reason: 'synthetic lifecycle terminal' })
       fs.writeFileSync(nested, "export const nested = 'mutated-after-terminal'\n")
@@ -193,6 +224,57 @@ try {
     previousFrozenBundleAttemptGate({
       records: [record, lifecycleRecord],
       catalogId: entry.id,
+      executionId: lifecycleExecutionId,
+      scriptHash: entry.script_sha256
+    }),
+    { blocked: false, attempts: 0 }
+  )
+
+  assert.deepEqual(
+    previousFrozenBundleAttemptGate({
+      records: [
+        {
+          ...record,
+          status: 'failed_environment',
+          execution_id: 'same-execution',
+          live_attempt: 1,
+          live_attempt_consumed: true
+        },
+        {
+          ...record,
+          status: 'failed_environment',
+          execution_id: 'same-execution',
+          live_attempt: 2,
+          live_attempt_consumed: true
+        }
+      ],
+      catalogId: entry.id,
+      executionId: 'same-execution',
+      scriptHash: entry.script_sha256
+    }),
+    { blocked: true, reason: 'live_attempt_budget_exhausted_for_frozen_hash', attempts: 2 }
+  )
+
+  assert.deepEqual(
+    previousFrozenBundleAttemptGate({
+      records: [
+        {
+          ...record,
+          status: 'failed_environment',
+          execution_id: 'other-execution',
+          live_attempt: 1,
+          live_attempt_consumed: true
+        },
+        {
+          ...record,
+          status: 'failed_environment',
+          execution_id: 'other-execution',
+          live_attempt: 2,
+          live_attempt_consumed: true
+        }
+      ],
+      catalogId: entry.id,
+      executionId: 'new-execution',
       scriptHash: entry.script_sha256
     }),
     { blocked: false, attempts: 0 }
@@ -253,6 +335,7 @@ try {
     ordinaryReport.errors.some(error => error.includes('actual changed files not declared'))
   )
 } finally {
+  runLease.release()
   fs.rmSync(fixtureRoot, { recursive: true, force: true })
   fs.rmSync(path.join(repoRoot, '.tmp', 'dispatch-task', dispatchRunId), {
     recursive: true,

@@ -1,7 +1,11 @@
 'use strict'
 
 const { resolveCarePlannerThresholds } = require('../configs/care-planner-thresholds')
-const { estimateLightHealth, normalizeUserLightContext } = require('./light-health-estimator')
+const {
+  estimateLightHealth,
+  normalizeUserLightContext,
+  computeLightExposure
+} = require('./light-health-estimator')
 // 浇水规划器已抽取到 layer 共享，diagnose-http 与 plant-user-http 共用同一实现。
 // 部署环境通过 CloudBase Layer 加载 /opt/utils/watering-planner；
 // 本地测试环境回退到相对路径直接引用源码。
@@ -33,52 +37,50 @@ try {
     computeTranspirationIntervalFactor: computeTranspirationIntervalFactorShared,
     resolveShadowModeFromEnv: resolveShadowModeFromEnvShared
   } = require('/opt/utils/transpiration'))
-  ;({ resolveAirEnvironmentEvidence: resolveAirEnvironmentEvidenceShared } = require(
-    '/opt/utils/air-environment-evidence'
-  ))
+  ;({
+    resolveAirEnvironmentEvidence: resolveAirEnvironmentEvidenceShared
+  } = require('/opt/utils/air-environment-evidence'))
 } catch {
   ;({
     computeTranspirationIntervalFactor: computeTranspirationIntervalFactorShared,
     resolveShadowModeFromEnv: resolveShadowModeFromEnvShared
   } = require('../../layer/utils/transpiration'))
-  ;({ resolveAirEnvironmentEvidence: resolveAirEnvironmentEvidenceShared } = require(
-    '../../layer/utils/air-environment-evidence'
-  ))
+  ;({
+    resolveAirEnvironmentEvidence: resolveAirEnvironmentEvidenceShared
+  } = require('../../layer/utils/air-environment-evidence'))
 }
 
 // 剂量分类器同 watering-planner：部署环境通过 /opt/utils 加载，本地回退到相对路径。
 // 之前无条件相对路径 require 在 CloudBase 部署时会 MODULE_NOT_FOUND（diagnose-http 函数包不包含 layer 目录）。
 let resolveMlToDoseClassShared
 try {
-  ;({ resolveMlToDoseClass: resolveMlToDoseClassShared } = require('/opt/utils/water-volume-format'))
+  ;({
+    resolveMlToDoseClass: resolveMlToDoseClassShared
+  } = require('/opt/utils/water-volume-format'))
 } catch {
-  ;({ resolveMlToDoseClass: resolveMlToDoseClassShared } = require('../../layer/utils/water-volume-format'))
+  ;({
+    resolveMlToDoseClass: resolveMlToDoseClassShared
+  } = require('../../layer/utils/water-volume-format'))
 }
 const resolveMlToDoseClass = resolveMlToDoseClassShared
 
-const FERTILIZING_ACTIONS = Object.freeze({
-  PAUSE: 'pause',
-  THIN_AFTER_DUE: 'thin_after_due',
-  NORMAL_BASELINE: 'normal_baseline',
-  POSSIBLE_DEFICIENCY_CHECK: 'possible_deficiency_check'
-})
+let fertilizationPlannerShared
+try {
+  fertilizationPlannerShared = require('/opt/utils/fertilization-reminder-planner')
+} catch {
+  fertilizationPlannerShared = require('../../layer/utils/fertilization-reminder-planner')
+}
+const { buildFertilizationDecision, FERTILIZING_ACTIONS } = fertilizationPlannerShared
 
 const LIGHT_CONTEXTS = Object.freeze({
   EXCESS_LIGHT_OR_SUNBURN_RISK: 'excess_light_or_sunburn_risk',
   RECENT_LIGHT_INCREASE_STRESS: 'recent_light_increase_stress',
+  RECENT_LIGHT_DECREASE: 'recent_light_decrease',
   LOW_LIGHT_BACKGROUND: 'low_light_background'
 })
 
-const DEFAULT_FERTILIZING_THRESHOLDS = resolveCarePlannerThresholds().fertilizing
-const FERTILIZING_BASELINE = Object.freeze({
-  intervalDays: [
-    DEFAULT_FERTILIZING_THRESHOLDS.intervalMinDays,
-    DEFAULT_FERTILIZING_THRESHOLDS.intervalMaxDays
-  ],
-  fertilizerType: 'thin_liquid_fertilizer'
-})
-
 const MS_PER_DAY = 24 * 60 * 60 * 1000
+// 仅用于解析历史光照变化事件，不用于推导当前光照环境。
 const DIRECT_LIGHT_TOKENS = [
   'direct_sun_exposure',
   'directsun',
@@ -100,7 +102,6 @@ const STRONGER_LIGHT_TOKENS = [
   '移到直射',
   '换到强光'
 ]
-const LOW_LIGHT_TOKENS = ['low_light', 'shade', 'dark', 'weak_light', '阴暗', '弱光', '背阴']
 
 function normalizeText(value = '') {
   return String(value || '')
@@ -124,17 +125,21 @@ function hasMeaningfulUserLightContext(value = {}) {
   if (!isPlainObject(value)) {
     return false
   }
-  return [
-    'facing',
-    'windowType',
-    'window_type',
-    'position',
-    'hasDirectSun',
-    'has_direct_sun',
-    'distance',
-    'distanceMeters',
-    'distance_meters'
-  ].some(key => value[key] !== undefined && value[key] !== null && value[key] !== '')
+  return Boolean(
+    value.naturalLightType ||
+      value.natural_light_type ||
+      [
+        'facing',
+        'windowType',
+        'window_type',
+        'position',
+        'hasDirectSun',
+        'has_direct_sun',
+        'distance',
+        'distanceMeters',
+        'distance_meters'
+      ].some(key => value[key] !== undefined && value[key] !== null && value[key] !== '')
+  )
 }
 
 function toNumber(value) {
@@ -359,24 +364,6 @@ function updateConsecutiveStreak(state = {}, key = '', active = false) {
   const maxKey = `${key}Max`
   state[currentKey] = active ? Number(state[currentKey] || 0) + 1 : 0
   state[maxKey] = Math.max(Number(state[maxKey] || 0), Number(state[currentKey] || 0))
-}
-
-function buildPlannerFormulaStep({
-  key = '',
-  expression = '',
-  inputs = {},
-  thresholds = {},
-  result = null,
-  passed = null
-} = {}) {
-  return {
-    key,
-    expression,
-    inputs,
-    thresholds,
-    result,
-    ...(passed === null || passed === undefined ? {} : { passed: Boolean(passed) })
-  }
 }
 
 function buildEnvironmentSummary({
@@ -918,203 +905,57 @@ function buildWateringPlanner({
 
 function buildFertilizingPlanner(...args) {
   const options = args[0] || {}
-  const thresholds = resolveCarePlannerThresholds(options.thresholds || null).fertilizing
-  const timeline = options.behaviorTimeline?.summary
-    ? options.behaviorTimeline
-    : normalizeCareBehaviorTimeline(options.behaviorTimeline || {})
-  const summary = timeline.summary || {}
-  const lastFertilizedBucket = normalizeBucket(
-    options.lastFertilizedBucket ||
-      options.last_fertilized_bucket ||
-      summary.lastFertilizedBucket ||
-      timeline.lastFertilizedBucket
-  )
-  const recentStrength = normalizeText(
-    options.recentFertilizerStrength ||
-      options.recent_fertilizer_strength ||
-      summary.latestFertilizerStrength
-  )
-  const weakGrowth = Boolean(
-    options.plantShowsWeakGrowth || options.weakGrowth || options.hasWeakGrowth
-  )
-  const justRepotted = Boolean(
-    options.justRepottedRecently || options.justRepotted || options.recentlyRepotted
-  )
-  const recentFertilizingCount = Number(summary.fertilizingCount10d || 0)
-  const concentratedStrengths = Array.isArray(thresholds.concentratedStrengths)
-    ? thresholds.concentratedStrengths.map(item => normalizeText(item)).filter(Boolean)
-    : []
-  const concentrated = concentratedStrengths.includes(recentStrength)
-  const baseline = {
-    intervalDays: [
-      Number(thresholds.intervalMinDays || FERTILIZING_BASELINE.intervalDays[0]),
-      Number(thresholds.intervalMaxDays || FERTILIZING_BASELINE.intervalDays[1])
-    ],
-    fertilizerType: FERTILIZING_BASELINE.fertilizerType
-  }
-  const recentConditionHit =
-    justRepotted ||
-    concentrated ||
-    recentFertilizingCount > 0 ||
-    lastFertilizedBucket === 'within_10d'
-  const deficiencyGapBuckets = Array.isArray(thresholds.deficiencyGapBuckets)
-    ? thresholds.deficiencyGapBuckets.map(item => normalizeBucket(item))
-    : []
-  const dueGapBuckets = Array.isArray(thresholds.dueGapBuckets)
-    ? thresholds.dueGapBuckets.map(item => normalizeBucket(item))
-    : []
-  const deficiencyConditionHit = weakGrowth && deficiencyGapBuckets.includes(lastFertilizedBucket)
-  const dueConditionHit = dueGapBuckets.includes(lastFertilizedBucket)
-  const calculation = {
-    formulaVersion: 'fertilizing_planner_v7_configurable',
-    inputs: {
-      lastFertilizedBucket,
-      recentStrength,
-      weakGrowth,
-      justRepotted,
-      recentFertilizingCount
-    },
-    thresholds: clonePlain(thresholds),
-    formulas: [
-      buildPlannerFormulaStep({
-        key: 'recent_or_high_risk_condition',
-        expression:
-          'justRepotted || concentrated || recentFertilizingCount > 0 || lastFertilizedBucket === "within_10d"',
-        inputs: { justRepotted, concentrated, recentFertilizingCount, lastFertilizedBucket },
-        result: recentConditionHit,
-        passed: recentConditionHit
-      }),
-      buildPlannerFormulaStep({
-        key: 'possible_deficiency_condition',
-        expression: 'weakGrowth && deficiencyGapBuckets.includes(lastFertilizedBucket)',
-        inputs: { weakGrowth, lastFertilizedBucket },
-        thresholds: { deficiencyGapBuckets },
-        result: deficiencyConditionHit,
-        passed: deficiencyConditionHit
-      }),
-      buildPlannerFormulaStep({
-        key: 'thin_after_due_condition',
-        expression: 'dueGapBuckets.includes(lastFertilizedBucket)',
-        inputs: { lastFertilizedBucket },
-        thresholds: { dueGapBuckets },
-        result: dueConditionHit,
-        passed: dueConditionHit
-      })
-    ]
-  }
-
-  if (recentConditionHit) {
-    return {
-      baseline,
-      action: FERTILIZING_ACTIONS.PAUSE,
-      lastFertilizedBucket,
-      reasons: ['recent_or_high_risk_fertilizing_condition'],
-      thresholds: clonePlain(thresholds),
-      calculation: {
-        ...calculation,
-        result: {
-          action: FERTILIZING_ACTIONS.PAUSE
-        }
-      }
-    }
-  }
-
-  if (deficiencyConditionHit) {
-    return {
-      baseline,
-      action: FERTILIZING_ACTIONS.POSSIBLE_DEFICIENCY_CHECK,
-      lastFertilizedBucket,
-      reasons: ['weak_growth_and_long_gap'],
-      thresholds: clonePlain(thresholds),
-      calculation: {
-        ...calculation,
-        result: {
-          action: FERTILIZING_ACTIONS.POSSIBLE_DEFICIENCY_CHECK
-        }
-      }
-    }
-  }
-
-  if (dueConditionHit) {
-    return {
-      baseline,
-      action: FERTILIZING_ACTIONS.THIN_AFTER_DUE,
-      lastFertilizedBucket,
-      reasons: ['fixed_30_45_day_baseline_due'],
-      thresholds: clonePlain(thresholds),
-      calculation: {
-        ...calculation,
-        result: {
-          action: FERTILIZING_ACTIONS.THIN_AFTER_DUE
-        }
-      }
-    }
-  }
-
+  const plantContext = options.plantContext || {}
+  const referenceDate = String(
+    options.diagnosisDate ||
+      options.referenceDate ||
+      options.behaviorTimeline?.referenceDate ||
+      options.behaviorTimeline?.reference_date ||
+      new Date().toISOString().slice(0, 10)
+  ).slice(0, 10)
+  const decision = buildFertilizationDecision({
+    plantContext,
+    fertilizerType: options.fertilizerType || '',
+    referenceDate
+  })
   return {
-    baseline,
-    action: FERTILIZING_ACTIONS.NORMAL_BASELINE,
-    lastFertilizedBucket,
-    reasons: ['not_due_by_fixed_baseline'],
-    thresholds: clonePlain(thresholds),
+    ...decision,
     calculation: {
-      ...calculation,
+      formulaVersion: 'fertilizing_monthly_v1',
+      inputs: {
+        referenceDate,
+        month: decision.ruleMonth,
+        fertilizerType: decision.fertilizerType,
+        historyStatus: decision.historyStatus,
+        historyCount: Array.isArray(plantContext.fertilizationHistory)
+          ? plantContext.fertilizationHistory.length
+          : 0
+      },
       result: {
-        action: FERTILIZING_ACTIONS.NORMAL_BASELINE
+        status: decision.status,
+        nextCheckDate: decision.nextCheckDate,
+        dueNow: decision.dueNow,
+        lastAppliedDate: decision.lastAppliedDate,
+        reasons: decision.reasons
       }
     }
   }
-}
-
-function hasDirectExposureScene({
-  userLightCondition = '',
-  userHasDirectSunExposure = false,
-  behaviorTimeline = {}
-} = {}) {
-  if (userHasDirectSunExposure === true) {
-    return true
-  }
-  if (includesAnyToken(userLightCondition, DIRECT_LIGHT_TOKENS)) {
-    return true
-  }
-  const summary = behaviorTimeline?.summary || {}
-  return summary.userHasDirectSunExposure === true
 }
 
 function buildLightPlanner({
   forecast = {},
-  userLightCondition = '',
-  userHasDirectSunExposure = false,
-  plantRequiresBrightLight = false,
   behaviorTimeline = {},
   plantContext = {},
   userLightContext = {},
   weatherDays = [],
   plantFeatures = {},
-  weatherEvidenceInsufficient = false
+  weatherEvidenceInsufficient = false,
+  recentLightChange = 'unknown'
 } = {}) {
   const timeline = behaviorTimeline?.summary
     ? behaviorTimeline
     : normalizeCareBehaviorTimeline(behaviorTimeline)
   const lightContext = []
-  const directExposure = hasDirectExposureScene({
-    userLightCondition,
-    userHasDirectSunExposure,
-    behaviorTimeline: timeline
-  })
-
-  if (directExposure && Number(forecast.aboveGenusUvMaxDays || 0) > 0) {
-    lightContext.push(LIGHT_CONTEXTS.EXCESS_LIGHT_OR_SUNBURN_RISK)
-  }
-
-  if (directExposure && timeline.summary?.movedToStrongerLightWithin10d === true) {
-    lightContext.push(LIGHT_CONTEXTS.RECENT_LIGHT_INCREASE_STRESS)
-  }
-
-  if (plantRequiresBrightLight && includesAnyToken(userLightCondition, LOW_LIGHT_TOKENS)) {
-    lightContext.push(LIGHT_CONTEXTS.LOW_LIGHT_BACKGROUND)
-  }
-
   const lightHealth = estimateLightHealth({
     plantContext,
     userLightContext,
@@ -1122,10 +963,50 @@ function buildLightPlanner({
     plantFeatures,
     weatherEvidenceInsufficient
   })
+  const stableExposure = lightHealth?.lightHealthEvidence?.exposure || null
+  const directExposure = Boolean(
+    stableExposure &&
+      stableExposure.confidence !== 'low' &&
+      stableExposure.evidence?.naturalLightType === 'direct'
+  )
+
+  const hasEffectiveWeatherLightEvidence =
+    weatherEvidenceInsufficient !== true && plantFeatures?.lightEvidenceInsufficient !== true
+  if (
+    directExposure &&
+    hasEffectiveWeatherLightEvidence &&
+    Number(forecast.aboveGenusUvMaxDays || 0) > 0
+  ) {
+    lightContext.push(LIGHT_CONTEXTS.EXCESS_LIGHT_OR_SUNBURN_RISK)
+  }
+
+  const normalizedRecentLightChange = [
+    'stronger_direct_light',
+    'no_clear_change',
+    'weaker_light',
+    'unknown'
+  ].includes(String(recentLightChange || '').trim())
+    ? String(recentLightChange).trim()
+    : 'unknown'
+
+  if (
+    normalizedRecentLightChange === 'stronger_direct_light' ||
+    (directExposure && timeline.summary?.movedToStrongerLightWithin10d === true)
+  ) {
+    lightContext.push(LIGHT_CONTEXTS.RECENT_LIGHT_INCREASE_STRESS)
+  }
+  if (normalizedRecentLightChange === 'weaker_light') {
+    lightContext.push(LIGHT_CONTEXTS.RECENT_LIGHT_DECREASE)
+  }
+
+  if (lightHealth?.lightHealthEvidence?.direction === 'low') {
+    lightContext.push(LIGHT_CONTEXTS.LOW_LIGHT_BACKGROUND)
+  }
 
   return {
     lightContext,
     realExposureScene: directExposure,
+    recentLightChange: normalizedRecentLightChange,
     userLightContext: normalizeUserLightContext(userLightContext),
     lightHealthScore: lightHealth?.lightHealthScore ?? null,
     lightHealthLevel: lightHealth?.lightHealthLevel || '',
@@ -1151,6 +1032,7 @@ function buildEnvironmentCareContextV7({
   environmentWeatherWindow = {},
   careBehaviorTimeline = {},
   userLightContext = {},
+  recentLightChange = 'unknown',
   airEnvironmentInput = null,
   airEnvironmentEvidence = null,
   wateringQuantization = null,
@@ -1171,11 +1053,28 @@ function buildEnvironmentCareContextV7({
       careBehaviorTimeline?.reference_date,
     ...careBehaviorTimeline
   })
-  const directExposure = hasDirectExposureScene({
-    userLightCondition: plantContext.userLightCondition || plantContext.lightCondition || '',
-    userHasDirectSunExposure: timeline.summary.userHasDirectSunExposure,
-    behaviorTimeline: timeline
+  const effectiveUserLightContext = hasMeaningfulUserLightContext(userLightContext)
+    ? userLightContext
+    : plantContext.userLightContext || {}
+  const environmentExposure = computeLightExposure({
+    userLightContext: effectiveUserLightContext,
+    weatherDays: [
+      ...(environmentWeatherWindow.historicalDays ||
+        environmentWeatherWindow.historical_days ||
+        []),
+      ...(environmentWeatherWindow.forecastDays || environmentWeatherWindow.forecast_days || [])
+    ],
+    weatherLightFactor: environmentWeatherWindow?.plantFeatures?.weatherLightFactor10d,
+    weatherEvidenceInsufficient:
+      environmentWeatherWindow?.weatherEvidenceInsufficient === true ||
+      environmentWeatherWindow?.plantFeatures?.lightEvidenceInsufficient === true,
+    weatherLightConfidence: environmentWeatherWindow?.plantFeatures?.lightConfidence || ''
   })
+  const directExposure = Boolean(
+    environmentExposure &&
+      environmentExposure.confidence !== 'low' &&
+      environmentExposure.evidence?.naturalLightType === 'direct'
+  )
   const bounds = {
     plantContext,
     temperatureMin: plantContext.temperatureMin,
@@ -1198,10 +1097,6 @@ function buildEnvironmentCareContextV7({
     thresholds,
     ...bounds
   })
-  const effectiveUserLightContext =
-    hasMeaningfulUserLightContext(userLightContext)
-      ? userLightContext
-      : plantContext.userLightContext || {}
   const resolvedAirEnvironmentEvidence =
     airEnvironmentEvidence ||
     resolveAirEnvironmentEvidenceShared(airEnvironmentInput) ||
@@ -1211,15 +1106,22 @@ function buildEnvironmentCareContextV7({
   const transpiration = computeTranspirationIntervalFactorShared({
     lightEnvironment: effectiveUserLightContext,
     weatherDays: (
-      environmentWeatherWindow.historicalDays || environmentWeatherWindow.historical_days || []
+      environmentWeatherWindow.historicalDays ||
+      environmentWeatherWindow.historical_days ||
+      []
     ).slice(0, 10),
+    weatherLightFactor: environmentWeatherWindow?.plantFeatures?.weatherLightFactor10d,
+    weatherEvidenceInsufficient:
+      environmentWeatherWindow?.weatherEvidenceInsufficient === true ||
+      environmentWeatherWindow?.plantFeatures?.lightEvidenceInsufficient === true,
+    weatherLightConfidence: environmentWeatherWindow?.plantFeatures?.lightConfidence || '',
     weatherSummary: historicalSummary10d,
-    plantStrategy: wateringQuantization || plantContext.wateringQuantization
-      ? {
-          wateringQuantization:
-            wateringQuantization || plantContext.wateringQuantization
-        }
-      : null,
+    plantStrategy:
+      wateringQuantization || plantContext.wateringQuantization
+        ? {
+            wateringQuantization: wateringQuantization || plantContext.wateringQuantization
+          }
+        : null,
     airEnvironmentEvidence: resolvedAirEnvironmentEvidence,
     shadow: resolveShadowModeFromEnvShared()
   })
@@ -1240,19 +1142,12 @@ function buildEnvironmentCareContextV7({
     transpirationIntervalFactor: transpiration.intervalFactor
   })
   const fertilizing = buildFertilizingPlanner({
+    diagnosisDate,
     behaviorTimeline: timeline,
-    lastFertilizedBucket: timeline.lastFertilizedBucket,
-    plantShowsWeakGrowth: Boolean(plantContext.plantShowsWeakGrowth || plantContext.weakGrowth),
-    justRepottedRecently: Boolean(
-      plantContext.justRepottedRecently || plantContext.recentlyRepotted
-    ),
-    thresholds
+    plantContext
   })
   const light = buildLightPlanner({
     forecast: forecastSummary15d,
-    userLightCondition: plantContext.userLightCondition || plantContext.lightCondition || '',
-    userHasDirectSunExposure: directExposure,
-    plantRequiresBrightLight: resolvePlantRequiresBrightLight(plantContext),
     behaviorTimeline: timeline,
     plantContext,
     userLightContext: effectiveUserLightContext,
@@ -1263,7 +1158,8 @@ function buildEnvironmentCareContextV7({
       ...(environmentWeatherWindow.forecastDays || environmentWeatherWindow.forecast_days || [])
     ],
     plantFeatures: environmentWeatherWindow?.plantFeatures || {},
-    weatherEvidenceInsufficient: environmentWeatherWindow?.weatherEvidenceInsufficient === true
+    weatherEvidenceInsufficient: environmentWeatherWindow?.weatherEvidenceInsufficient === true,
+    recentLightChange
   })
 
   return {
@@ -1281,14 +1177,14 @@ function buildEnvironmentCareContextV7({
       watering: watering.calculation || null,
       fertilizing: fertilizing.calculation || null,
       light: {
-        formulaVersion: light.lightHealthEvidence
-          ? 'light_health_estimator_v1'
-          : 'light_planner_v7_contextual',
+        formulaVersion:
+          light.lightHealthEvidence?.formulaVersion || 'light_planner_v7_contextual',
         inputs: {
           forecast: pickNumberFields(forecastSummary15d, ['aboveGenusUvMaxDays']),
           userHasDirectSunExposure: directExposure,
           plantRequiresBrightLight: resolvePlantRequiresBrightLight(plantContext),
-          userLightContext: light.userLightContext
+          userLightContext: light.userLightContext,
+          recentLightChange: light.recentLightChange
         },
         result: {
           lightContext: light.lightContext,
@@ -1304,11 +1200,13 @@ function buildEnvironmentCareContextV7({
       wateringContext: watering.wateringContext,
       wateringAction: watering.action,
       fertilizingAction: fertilizing.action,
+      fertilizationStatus: fertilizing.status,
       lightContext: light.lightContext,
       lightHealthScore: light.lightHealthScore,
       lightHealthLevel: light.lightHealthLevel,
       lightHealthReason: light.lightHealthReason,
       lightHealthEvidence: light.lightHealthEvidence,
+      recentLightChange: light.recentLightChange,
       airEnvironmentEvidence: resolvedAirEnvironmentEvidence,
       transpirationIntervalFactor: transpiration.intervalFactor,
       transpirationComputedFactor: transpiration.computedFactor,
@@ -1329,6 +1227,5 @@ module.exports = {
   WATERING_ACTIONS,
   FERTILIZING_ACTIONS,
   LIGHT_CONTEXTS,
-  FERTILIZING_BASELINE,
   resolveCarePlannerThresholds
 }

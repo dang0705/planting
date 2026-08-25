@@ -242,6 +242,12 @@ async function getSessionState(openid, sessionId) {
       category: session.plant_category || '',
       watering: runtimeSnapshot?.plantContext?.watering || null,
       fertilization: runtimeSnapshot?.plantContext?.fertilization || null,
+      fertilizationMonthly: runtimeSnapshot?.plantContext?.fertilizationMonthly || null,
+      fertilizationHistory: Array.isArray(runtimeSnapshot?.plantContext?.fertilizationHistory)
+        ? runtimeSnapshot.plantContext.fertilizationHistory
+        : null,
+      fertilizationHistoryStatus: runtimeSnapshot?.plantContext?.fertilizationHistoryStatus || '',
+      fertilizationGuard: runtimeSnapshot?.plantContext?.fertilizationGuard || null,
       sunning: runtimeSnapshot?.plantContext?.sunning || null,
       ventilation: runtimeSnapshot?.plantContext?.ventilation || null,
       temperatureMin: runtimeSnapshot?.plantContext?.temperatureMin ?? null,

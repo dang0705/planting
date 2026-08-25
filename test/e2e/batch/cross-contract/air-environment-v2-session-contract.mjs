@@ -129,9 +129,12 @@ const rejectedSourceSnapshot = JSON.parse(
 )
 assert.deepEqual(rejectedSourceSnapshot.airEnvironmentSnapshotsByQuestionId, {})
 
-const questionFlow = readFileSync('src/pages/diagnose/question-package/question-flow.js', 'utf8')
+const questionFlow = readFileSync(
+  'src/subpackages/diagnosis/question-package/question-flow.js',
+  'utf8'
+)
 const questionRestartCard = readFileSync(
-  'src/pages/diagnose/question-package/QuestionPackageRestartRequired.vue',
+  'src/subpackages/diagnosis/question-package/QuestionPackageRestartRequired.vue',
   'utf8'
 )
 assert.match(questionFlow, /Number\(value\?\.questionPackage\?\.packageVersion \|\| 1\) < 2/)
@@ -185,7 +188,7 @@ const screenshotHandoff = await handoffQuestionPackageScreenshot({
     },
     { scope: 'primary' }
   ),
-  page: { path: 'pages/diagnose/question-package' },
+  page: { path: 'subpackages/diagnosis/question-package' },
   wsEndpoint: 'ws://fixture.test',
   outputPath: 'fixture-proof.png',
   report: screenshotHandoffReport,
@@ -194,7 +197,7 @@ const screenshotHandoff = await handoffQuestionPackageScreenshot({
     return {
       currentPage: async () => {
         sessionHandoffEvents.push('post-screenshot-currentPage')
-        return { path: 'pages/diagnose/question-package' }
+        return { path: 'subpackages/diagnosis/question-package' }
       }
     }
   },
@@ -229,7 +232,7 @@ await boundedNativeSession.native().switchTab({ url: 'pages/index/index' })
 assert.deepEqual(nativeTabEvents, ['switchTab:pages/index/index'])
 
 async function layoutReturnWindowScenario(firstObservedRoute) {
-  let route = 'pages/diagnose/question-package'
+  let route = 'subpackages/diagnosis/question-package'
   let triggerCalls = 0
   const routeObservationTimeouts = []
   const backAction = {
@@ -277,7 +280,7 @@ assert.deepEqual(layoutReturnSummary(await layoutReturnWindowScenario('pages/ind
   [15000, 15000]
 ])
 assert.deepEqual(
-  layoutReturnSummary(await layoutReturnWindowScenario('pages/diagnose/question-package')),
+  layoutReturnSummary(await layoutReturnWindowScenario('subpackages/diagnosis/question-package')),
   ['pages/index/index', 1, [15000, 15000]]
 )
 
@@ -288,7 +291,7 @@ const timedOutDisconnect = await handoffQuestionPackageScreenshot({
     { disconnect: () => new Promise(() => {}) },
     { scope: 'primary' }
   ),
-  page: { path: 'pages/diagnose/question-package' },
+  page: { path: 'subpackages/diagnosis/question-package' },
   wsEndpoint: 'ws://fixture.test',
   outputPath: 'fixture-proof.png',
   report: timedOutDisconnectReport,

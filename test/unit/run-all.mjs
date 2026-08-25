@@ -16,10 +16,31 @@ function walk(root) {
   })
 }
 
-function listTests() {
+function isRealDataTest(file) {
+  const normalized = file.replaceAll('\\', '/')
+  return (
+    normalized.includes('/real-data/') ||
+    normalized.endsWith('.real-data.mjs') ||
+    normalized.endsWith('-real-data.mjs')
+  )
+}
+
+function listTests({ includeRealData = false, realDataOnly = false, filter = '' } = {}) {
   return ROOTS.flatMap(root => walk(root))
     .filter(file => file.endsWith('.mjs') || file.endsWith('.cjs'))
+    .filter(file => includeRealData || !isRealDataTest(file))
+    .filter(file => !realDataOnly || isRealDataTest(file))
+    .filter(file => !filter || file.includes(filter))
     .sort()
+}
+
+function parseRunnerOptions(argv = []) {
+  const filterArgument = argv.find(argument => argument.startsWith('--filter=')) || ''
+  return {
+    includeRealData: argv.includes('--real-data') || argv.includes('--real-data-only'),
+    realDataOnly: argv.includes('--real-data-only'),
+    filter: filterArgument.slice('--filter='.length)
+  }
 }
 
 function extractSourceRefs(source, rootName) {
@@ -102,11 +123,17 @@ function runTest(file) {
   })
 }
 
-const tests = listTests()
-assertUnitIsolation(tests)
+const runnerOptions = parseRunnerOptions(process.argv.slice(2))
+const allTests = listTests({ includeRealData: true })
+const tests = listTests(runnerOptions)
+assertUnitIsolation(allTests)
+
+if (!tests.length) {
+  throw new Error('没有匹配的单元测试；检查 --real-data-only 或 --filter 参数')
+}
 
 if (process.argv.includes('--check-layout-only')) {
-  process.stdout.write(`[unit] layout check passed: ${tests.length} files\n`)
+  process.stdout.write(`[unit] layout check passed: ${allTests.length} files\n`)
   process.exit(0)
 }
 

@@ -48,13 +48,13 @@ const routePredicateMatch = layoutSource.match(
 )
 assert.ok(routePredicateMatch, 'Layout must declare the active question-package route predicate')
 const isActiveQuestionPackagePage = Function(
-  `const QUESTION_PACKAGE_PAGE_ROUTE = 'pages/diagnose/question-package';
+  `const QUESTION_PACKAGE_PAGE_ROUTE = 'subpackages/diagnosis/question-package';
 ${routePredicateMatch[0]}; return isActiveQuestionPackagePage`
 )()
 
 const diagnoseQuestionStack = [
   { route: 'pages/diagnose/diagnose' },
-  { route: 'pages/diagnose/question-package' }
+  { route: 'subpackages/diagnosis/question-package' }
 ]
 assert.equal(
   isActiveQuestionPackagePage(diagnoseQuestionStack),
@@ -69,13 +69,13 @@ assert.equal(
 assert.equal(
   isActiveQuestionPackagePage([
     { route: 'pages/index/index' },
-    { route: 'pages/diagnose/question-package' }
+    { route: 'subpackages/diagnosis/question-package' }
   ]),
   true,
   'question-package must return home even when its previous page is not the diagnose tab'
 )
 assert.equal(
-  isActiveQuestionPackagePage([{ route: 'pages/diagnose/question-package' }]),
+  isActiveQuestionPackagePage([{ route: 'subpackages/diagnosis/question-package' }]),
   true,
   'single-page question-package must also return home rather than rely on navigateBack'
 )
@@ -85,7 +85,7 @@ function invokeGoBack(pages) {
   const goBack = Function(
     'getCurrentPages',
     'uni',
-    `const QUESTION_PACKAGE_PAGE_ROUTE = 'pages/diagnose/question-package';
+    `const QUESTION_PACKAGE_PAGE_ROUTE = 'subpackages/diagnosis/question-package';
 ${routePredicateMatch[0]}
 ${goBackImplementation}
 function goHome() { uni.switchTab({ url: '/pages/index/index' }) }
@@ -105,7 +105,7 @@ function invokeGoBackWithoutRuntimeGlobal() {
     navigateBack: options => calls.push({ type: 'navigateBack', options })
   }
   const goBack = vm.runInNewContext(
-    `const QUESTION_PACKAGE_PAGE_ROUTE = 'pages/diagnose/question-package';
+    `const QUESTION_PACKAGE_PAGE_ROUTE = 'subpackages/diagnosis/question-package';
 ${routePredicateMatch[0]}
 ${goBackImplementation}
 function goHome() { uni.switchTab({ url: '/pages/index/index' }) }
@@ -127,13 +127,15 @@ assert.equal(
   'normal back stack must retain navigateBack and not redirect to diagnose'
 )
 assert.equal(
-  invokeGoBack([{ route: 'pages/index/index' }, { route: 'pages/diagnose/question-package' }])[0]
-    ?.type,
+  invokeGoBack([
+    { route: 'pages/index/index' },
+    { route: 'subpackages/diagnosis/question-package' }
+  ])[0]?.type,
   'switchTab',
   'question-package with another prior page must return home rather than rely on navigateBack'
 )
 assert.deepEqual(
-  invokeGoBack([{ route: 'pages/diagnose/question-package' }]),
+  invokeGoBack([{ route: 'subpackages/diagnosis/question-package' }]),
   [{ type: 'switchTab', options: { url: '/pages/index/index' } }],
   'single question-package page must switch home for reliable diagnosis re-entry'
 )

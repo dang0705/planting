@@ -115,15 +115,6 @@
         </button>
       </view>
 
-      <DiagnosePopup
-        ref="diagnosePopupRef"
-        :plant-id="currentPlantId"
-        :plant-name="currentPlantName"
-        diagnosis-profile="full"
-        entry-source="plant_card"
-        @success="handleDiagnoseSuccess"
-        @close="handleDiagnosePopupClose"
-      />
       <WateringReminderSheet
         ref="wateringReminderRef"
         :plant="currentReminderPlant"
@@ -133,7 +124,7 @@
         ref="fertilizationMonthlyRef"
         :plant="currentFertilizationPlant"
         @close="currentFertilizationPlantId = null"
-        @changed="loadUserPlants(true)"
+        @changed="loadUserPlants()"
       />
     </view>
   </Layout>
@@ -143,9 +134,8 @@
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import HeaderWeatherInfo from '@/components/HeaderWeatherInfo.vue'
 import Layout from '@/Layout.vue'
-import DiagnosePopup from '@/components/DiagnosePopup.vue'
 import loadingIcon from '@/assets/icons/loading.svg'
-import { getDiagnosisHistory } from '@/api/plants-http.js'
+import { getDiagnosisHistory } from '@/api/diagnosis-history.js'
 import { usePlantingStore } from '@/store/planting.js'
 import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
@@ -162,11 +152,8 @@ const plantStore = usePlantStore()
 const userStore = useUserStore()
 const plantingStore = usePlantingStore()
 const loadingPlants = ref(false)
-const diagnosePopupRef = ref(null)
 const wateringReminderRef = ref(null)
 const fertilizationMonthlyRef = ref(null)
-const currentPlantId = ref('')
-const currentPlantName = ref('')
 const currentReminderPlantId = ref(null)
 const currentFertilizationPlantId = ref(null)
 const plantDiagnoseHistory = reactive({})
@@ -183,40 +170,41 @@ const currentFertilizationPlant = computed(() =>
 
 onMounted(async () => {
   if (await userStore.ensureLogin()) {
-    await loadUserPlants(true)
+    await loadUserPlants()
   }
 })
-async function loadUserPlants(force = false) {
-  if (loadingPlants.value && !force) {
+
+async function loadUserPlants() {
+  if (loadingPlants.value) {
     return
   }
   loadingPlants.value = true
   try {
-    await plantStore.getUserPlants()
+    await plantStore.getUserPlants(1, 50)
   } finally {
     loadingPlants.value = false
   }
 }
 async function userLogin() {
   await userStore.wechatLogin()
-  await loadUserPlants(true)
+  await loadUserPlants()
 }
 async function handleIndexPhoneLogin(event) {
   await userStore.phoneLogin({
     code: event?.detail?.code || '',
     cloudId: event?.detail?.cloudID || event?.detail?.cloudId || ''
   })
-  await loadUserPlants(true)
+  await loadUserPlants()
 }
 function addPlant() {
-  uni.navigateTo({ url: '/pages/user-plant-detail/user-plant-detail?mode=create' })
+  uni.navigateTo({ url: '/subpackages/plant/user-plant-detail/user-plant-detail?mode=create' })
 }
 function goWateringAdvisor() {
-  uni.navigateTo({ url: '/pages/watering-advisor/watering-advisor' })
+  uni.navigateTo({ url: '/subpackages/care/watering-advisor/watering-advisor' })
 }
 function openEditPlant(plant) {
   uni.navigateTo({
-    url: `/pages/user-plant-detail/user-plant-detail?mode=edit&id=${plant.id}`
+    url: `/subpackages/plant/user-plant-detail/user-plant-detail?mode=edit&id=${plant.id}`
   })
 }
 function getReminderSummary(plant) {
@@ -246,9 +234,11 @@ function normalizeBackendWaterReminder(reminder) {
   }
 }
 function openDiagnose(plant) {
-  currentPlantId.value = plant.id
-  currentPlantName.value = plant.canonicalName || plant.displayName || '当前植物'
-  callComponentMethod(diagnosePopupRef, 'open')
+  const plantId = encodeURIComponent(String(plant?.id || ''))
+  const plantName = encodeURIComponent(plant?.canonicalName || plant?.displayName || '当前植物')
+  uni.navigateTo({
+    url: `/subpackages/diagnosis/entry?plantId=${plantId}&plantName=${plantName}`
+  })
 }
 async function openPlantHistory(plant) {
   if (plantDiagnoseHistory[plant.id]) {
@@ -273,17 +263,8 @@ async function openFertilization(plant) {
   await nextTick()
   callComponentMethod(fertilizationMonthlyRef, 'open')
 }
-function handleDiagnoseSuccess() {
-  if (currentPlantId.value) {
-    delete plantDiagnoseHistory[currentPlantId.value]
-  }
-}
-function handleDiagnosePopupClose() {
-  currentPlantId.value = ''
-  currentPlantName.value = ''
-}
 function viewDiagnoseDetail(recordId) {
-  uni.navigateTo({ url: `/pages/diagnose/result?id=${recordId}` })
+  uni.navigateTo({ url: `/subpackages/diagnosis/result?id=${recordId}` })
 }
 function formatTime(time) {
   const diff = Date.now() - new Date(time).getTime()

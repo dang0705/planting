@@ -5,7 +5,8 @@ import os from 'node:os'
 import path from 'node:path'
 import { captureFormalScreenshot } from './formal-leaf-screenshot.mjs'
 
-export const SCREENSHOT_RELIABILITY_TARGET = 0.96
+// “拉起即用”压力门禁要求每次首拍成功；任何恢复或失败都不能记为稳定通过。
+export const SCREENSHOT_RELIABILITY_TARGET = 1
 
 function numberArg(value, fallback) {
   const parsed = Number(value)
@@ -13,7 +14,7 @@ function numberArg(value, fallback) {
 }
 
 export async function runScreenshotReliabilityBenchmark({
-  wsEndpoint = process.env.MINIPROGRAM_AUTOMATOR_WS || 'ws://127.0.0.1:9420',
+  wsEndpoint = process.env.MINIPROGRAM_AUTOMATOR_WS || 'ws://127.0.0.1:9421',
   projectPath = process.env.MP_PROJECT_PATH,
   attempts = 25,
   timeoutMs = 12_000,
@@ -47,7 +48,12 @@ export async function runScreenshotReliabilityBenchmark({
   const recovered = results.filter(item => item.successful_attempt > 1).length
   const successRate = attempts > 0 ? passed / attempts : 0
   return {
-    status: successRate >= SCREENSHOT_RELIABILITY_TARGET ? 'passed' : 'failed',
+    status:
+      successRate >= SCREENSHOT_RELIABILITY_TARGET &&
+      firstAttemptPassed === attempts &&
+      recovered === 0
+        ? 'passed'
+        : 'failed',
     target: SCREENSHOT_RELIABILITY_TARGET,
     attempts,
     passed,

@@ -129,23 +129,27 @@ function monthlyWithCurrentRule(displayText, schedule) {
   })
 }
 
-async function verifyExtraConfirmation({ mp, report, opened, expectedText, expectedReason }) {
-  const panel = await waitForCurrentPageElement(mp, 'fertilization-reminder-extra-confirmation')
+async function verifyMinimumIntervalConfirmation({ mp, report, opened, expectedReason }) {
+  const panel = await waitForCurrentPageElement(mp, 'fertilization-reminder-minimum-interval')
   const complete = await waitForCurrentPageElement(mp, 'fertilization-reminder-complete-button')
   assertCondition(
     report,
-    `${expectedReason} 会显示对应的额外确认说明`,
-    Boolean(panel) && (await textOf(panel)).includes(expectedText)
+    `${expectedReason} 会显示首次确认说明`,
+    Boolean(panel) && (await textOf(panel)).includes('没有可靠的上次施肥日期')
   )
-  assertCondition(report, `${expectedReason} 未确认前不能完成施肥`, await isDisabled(complete))
-  await tapCurrent(mp, 'fertilization-reminder-extra-confirmation-checkbox')
+  assertCondition(
+    report,
+    `${expectedReason} 未确认最短间隔前不能完成施肥`,
+    await isDisabled(complete)
+  )
+  await tapCurrent(mp, 'fertilization-reminder-minimum-interval-ack')
   const enabledComplete = await waitForCurrentPageElement(
     mp,
     'fertilization-reminder-complete-button'
   )
   assertCondition(
     report,
-    `${expectedReason} 勾选确认后允许记录施肥`,
+    `${expectedReason} 确认最短间隔后允许记录施肥`,
     !(await isDisabled(enabledComplete))
   )
   await tapCurrent(mp, 'fertilization-reminder-complete-button')
@@ -153,7 +157,8 @@ async function verifyExtraConfirmation({ mp, report, opened, expectedText, expec
   assertCondition(
     report,
     `${expectedReason} 完成操作写入真实施肥记录请求`,
-    state?.completedPlans?.length === ONE && state.completedPlans[ZERO].extraConfirmation === true
+    state?.completedPlans?.length === ONE &&
+      state.completedPlans[ZERO].acknowledgeMinimumInterval === true
   )
 }
 
@@ -227,7 +232,7 @@ async function run() {
           '今天已施肥会记录完成日期并显示下一次待确认预览',
           state?.completedPlans?.length === ONE &&
             state.completedPlans[ZERO].fertilizerType === 'liquid' &&
-            (await textOf(preview)).includes('下次施肥提醒')
+            /(首次确认提醒|下次施肥提醒)/u.test(await textOf(preview))
         )
       }
     )
@@ -250,7 +255,7 @@ async function run() {
       }
     )
 
-    const extraConfirmationCases = [
+    const confirmationCases = [
       {
         reason: 'first_confirmation',
         text: '目前没有可靠的上次施肥日期',
@@ -258,18 +263,16 @@ async function run() {
         reminder: createActiveReminder({
           reminderKind: 'first_confirmation',
           isDue: true,
-          requiresExtraConfirmation: true,
-          confirmationReasons: ['first_confirmation']
+          requiresMinimumIntervalAcknowledgement: true
         })
       },
       {
         reason: 'conditional_rule',
         text: '本月规则带有条件',
-        monthly: monthlyWithCurrentRule('请在长出新叶后少量补充', CONDITIONAL_SCHEDULE),
+        monthly: monthlyWithCurrentRule('长出新叶后再施肥', CONDITIONAL_SCHEDULE),
         reminder: createActiveReminder({
           isDue: true,
-          requiresExtraConfirmation: true,
-          confirmationReasons: ['conditional_rule']
+          canComplete: false
         })
       },
       {
@@ -278,8 +281,7 @@ async function run() {
         monthly: monthlyWithCurrentRule('换盆稳定后施1次', EVENT_SCHEDULE),
         reminder: createActiveReminder({
           isDue: true,
-          requiresExtraConfirmation: true,
-          confirmationReasons: ['event_rule']
+          canComplete: false
         })
       },
       {
@@ -288,8 +290,7 @@ async function run() {
         monthly: createFertilizationMonthly(),
         reminder: createActiveReminder({
           isDue: true,
-          requiresExtraConfirmation: true,
-          confirmationReasons: ['plant_health']
+          canComplete: false
         })
       },
       {
@@ -298,12 +299,11 @@ async function run() {
         monthly: createFertilizationMonthly(),
         reminder: createActiveReminder({
           isDue: true,
-          requiresExtraConfirmation: true,
-          confirmationReasons: ['fertilizer_type_changed']
+          canComplete: false
         })
       }
     ]
-    for (const scenario of extraConfirmationCases) {
+    for (const scenario of confirmationCases) {
       await executeScenario(
         mp,
         report,
@@ -312,14 +312,33 @@ async function run() {
           plant: createFixturePlant({ fertilizationMonthly: scenario.monthly }),
           initialReminder: scenario.reminder
         },
-        opened =>
-          verifyExtraConfirmation({
-            mp,
-            report,
-            opened,
-            expectedText: scenario.text,
-            expectedReason: scenario.reason
-          })
+        opened => {
+          if (scenario.reason === 'first_confirmation') {
+            return verifyMinimumIntervalConfirmation({
+              mp,
+              report,
+              opened,
+              expectedReason: scenario.reason
+            })
+          }
+          return (async () => {
+            const currentRule = await waitForCurrentPageElement(
+              mp,
+              'fertilization-reminder-current-month-rule'
+            )
+            const complete = await findViewById(
+              await mp.currentPage(),
+              'fertilization-reminder-complete-button'
+            )
+            assertCondition(report, `${scenario.reason} 不自动显示施肥完成按钮`, !complete)
+            assertCondition(
+              report,
+              `${scenario.reason} 显示当前月规则`,
+              (await textOf(currentRule)).includes(scenario.text)
+            )
+            await tapCurrent(mp, 'fertilization-reminder-dismiss-button')
+          })()
+        }
       )
     }
 
@@ -357,41 +376,39 @@ async function run() {
     await executeScenario(
       mp,
       report,
-      '重新设置必须先确认已删除旧日历事件',
+      '删除日历施肥提醒必须先确认已手动删除',
       { plant: createFixturePlant(), initialReminder: createActiveReminder() },
       async opened => {
-        await tapCurrent(mp, 'fertilization-reminder-reconfigure-button')
+        await tapCurrent(mp, 'fertilization-reminder-delete-calendar-button')
         const acknowledgement = await waitForCurrentPageElement(
           mp,
-          'fertilization-reminder-reconfigure'
+          'fertilization-reminder-calendar-delete'
         )
         const confirm = await waitForCurrentPageElement(
           mp,
-          'fertilization-reminder-reconfigure-confirm'
+          'fertilization-reminder-calendar-delete-confirm'
         )
         assertCondition(
           report,
-          '重新设置先解释旧日历需要用户自行删除且确认按钮禁用',
-          (await textOf(acknowledgement)).includes('无法替你删除手机日历中的旧事件') &&
+          '删除日历提醒先说明需要用户自行删除且确认按钮禁用',
+          (await textOf(acknowledgement)).includes('无法删除手机日历中的施肥提醒') &&
             (await isDisabled(confirm))
         )
-        await tapCurrent(mp, 'fertilization-reminder-reconfigure-cancel')
+        await tapCurrent(mp, 'fertilization-reminder-calendar-delete-dismiss')
         const closedAck = await findViewById(
           await mp.currentPage(),
-          'fertilization-reminder-reconfigure'
+          'fertilization-reminder-calendar-delete'
         )
-        assertCondition(report, '重新设置可以暂不处理而回到已保存状态', !closedAck)
-        await tapCurrent(mp, 'fertilization-reminder-reconfigure-button')
-        await tapCurrent(mp, 'fertilization-reminder-reconfigure-ack')
-        await tapCurrent(mp, 'fertilization-reminder-reconfigure-confirm')
-        const setup = await waitForCurrentPageElement(mp, 'fertilization-reminder-section')
+        assertCondition(report, '删除日历提醒可以暂不处理而保留已保存状态', !closedAck)
+        await tapCurrent(mp, 'fertilization-reminder-delete-calendar-button')
+        await tapCurrent(mp, 'fertilization-reminder-calendar-delete-ack')
+        await tapCurrent(mp, 'fertilization-reminder-calendar-delete-confirm')
+        const savedState = await waitForCurrentPageElement(mp, 'fertilization-reminder-saved-state')
         const state = await readFixtureFertilizationState(mp, opened.fixtureConfig.runtimeSlot)
         assertCondition(
           report,
-          '确认删除旧日历后结束旧计划并重新开放设置',
-          Boolean(setup) &&
-            state?.dismissedPlans?.length === ONE &&
-            state.dismissedPlans[ZERO].reason === 'reconfigure'
+          '确认已删除日历后结束应用内 active 提醒',
+          !savedState && state?.cancelledPlanIds?.length === ONE
         )
       }
     )

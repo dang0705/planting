@@ -4,6 +4,7 @@ import {
   GATEWAY_READY_TIMEOUT_MS,
   GATEWAY_RECOVERY_TIMEOUT_MS,
   LOCAL_FUNCTIONS_GATEWAY_SCRIPT,
+  DEFAULT_FUNCTION_PORT_BASE,
   PROJECT_ROOT
 } from './local-api-env-config.mjs'
 import {
@@ -61,14 +62,7 @@ async function resolveRepoLocalGatewayListenerPid(port) {
   }
 
   try {
-    const { stdout } = await execFileAsync('lsof', [
-      '-Fn',
-      '-a',
-      '-p',
-      listenerPid,
-      '-d',
-      'cwd'
-    ])
+    const { stdout } = await execFileAsync('lsof', ['-Fn', '-a', '-p', listenerPid, '-d', 'cwd'])
     const cwd = String(stdout || '')
       .split(/\r?\n/)
       .map(item => item.trim())
@@ -102,6 +96,7 @@ function spawnLocalFunctionsGateway(options = {}) {
   const gatewayArgs = [
     LOCAL_FUNCTIONS_GATEWAY_SCRIPT,
     `--port=${options.port}`,
+    `--function-port-base=${options.functionPortBase ?? DEFAULT_FUNCTION_PORT_BASE}`,
     `--host=${process.env.CLOUDBASE_LOCAL_FUNCTIONS_HOST || '0.0.0.0'}`
   ]
   const env = {
@@ -170,7 +165,7 @@ async function recoverStaleGateway(apiBaseUrl = '', options = {}, error = null) 
   } catch {
     return null
   }
-  if (!isRepoLocalGateway(snapshot.state, options.requiredFunctions)) {
+  if (!isRepoLocalGateway(snapshot.state, options.requiredFunctions, options.functionPortBase)) {
     return null
   }
   const staleByHealth = gatewayStateLooksStale(snapshot.state, options.requiredFunctions)

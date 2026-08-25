@@ -240,6 +240,7 @@ function compactEnvironmentCareContextForPublic(value = null, careBehaviorTimeli
         wateringContext: String(value.outputs.wateringContext || '').trim(),
         wateringAction: String(value.outputs.wateringAction || '').trim(),
         fertilizingAction: String(value.outputs.fertilizingAction || '').trim(),
+        fertilizationStatus: String(value.outputs.fertilizationStatus || '').trim(),
         lightContext: Array.isArray(value.outputs.lightContext)
           ? value.outputs.lightContext.map(item => String(item || '').trim()).filter(Boolean)
           : [],

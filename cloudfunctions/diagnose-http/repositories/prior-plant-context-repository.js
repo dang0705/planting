@@ -1,7 +1,11 @@
 'use strict'
 
 const { models } = require('/opt/utils/cloudbase')
-const { getPlantCatalogById, getUserPlantInstanceById } = require('/opt/utils/plant-knowledge')
+const {
+  getPlantCatalogById,
+  getUserPlantInstanceById,
+  mapFertilizationMonthly
+} = require('/opt/utils/plant-knowledge')
 const { table } = require('../db/table-helper')
 const {
   priorCache,
@@ -42,6 +46,7 @@ async function getGenusCareProfile(genusName = '', familyName = '') {
         SELECT
           CAST(watering_strategy_json AS CHAR) AS watering_strategy_json_text,
           CAST(fertilizing_strategy_json AS CHAR) AS fertilizing_strategy_json_text,
+          CAST(fertilizing_monthly_strategy_json AS CHAR) AS fertilizing_monthly_strategy_json_text,
           CAST(light_strategy_json AS CHAR) AS light_strategy_json_text,
           CAST(airflow_strategy_json AS CHAR) AS airflow_strategy_json_text,
           temp_min_c,
@@ -67,6 +72,7 @@ async function getGenusCareProfile(genusName = '', familyName = '') {
     const careProfile = {
       watering: normalizeCareStrategy(row.watering_strategy_json_text),
       fertilization: normalizeCareStrategy(row.fertilizing_strategy_json_text),
+      fertilizationMonthly: mapFertilizationMonthly(row.fertilizing_monthly_strategy_json_text),
       sunning: normalizeCareStrategy(row.light_strategy_json_text),
       ventilation: normalizeCareStrategy(row.airflow_strategy_json_text),
       temperatureMin:
@@ -105,6 +111,23 @@ function buildResolvedPlantContext({
   const normalizedPlantVentilation = normalizeCareStrategy(
     plant?.ventilation || userPlant?.ventilation || null
   )
+  const userFertilizationHistory = Array.isArray(userPlant?.fertilizationHistory)
+    ? userPlant.fertilizationHistory
+    : Array.isArray(userPlant?.fertilizationEvents)
+      ? userPlant.fertilizationEvents
+      : null
+  const invalidFertilizationEvent = userFertilizationHistory?.some(
+    event => !event?.date || !event?.fertilizerType
+  )
+  const fertilizationHistoryStatus = userPlant
+    ? userPlant.fertilizationHistoryStatus !== 'available'
+      ? userPlant.fertilizationHistoryStatus || 'unavailable'
+      : invalidFertilizationEvent
+        ? 'invalid'
+        : userFertilizationHistory.length
+          ? 'available'
+          : 'empty'
+    : 'not_applicable'
   const resolvedPlantId =
     plant?.plantId ||
     userPlant?.plantId ||
@@ -146,6 +169,14 @@ function buildResolvedPlantContext({
       careProfile?.watering?.wateringQuantization ||
       null,
     fertilization: normalizedPlantFertilization || careProfile?.fertilization || null,
+    fertilizationMonthly:
+      plant?.fertilizationMonthly ||
+      userPlant?.fertilizationMonthly ||
+      careProfile?.fertilizationMonthly ||
+      null,
+    fertilizationHistory: userFertilizationHistory,
+    fertilizationHistoryStatus,
+    fertilizationGuard: userPlant?.fertilizationGuard || null,
     sunning: normalizedPlantSunning || careProfile?.sunning || null,
     userLightContext: userPlant?.lightEnvironment || null,
     airEnvironment: userPlant?.airEnvironment || null,

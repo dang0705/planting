@@ -14,12 +14,18 @@ const RECONCILABLE_STATUSES = new Set([
 ])
 const FAILURE_STATUSES = new Set(['failed_environment', 'failed_product', 'failed_script'])
 
-function recordFile(dispatchRunId, executionId) {
-  return path.join(stateDir(dispatchRunId), 'qa-runs', `${executionId}.json`)
+function recordFile(dispatchRunId, executionId, runInstanceId = null) {
+  return runInstanceId
+    ? path.join(stateDir(dispatchRunId), 'qa-runs', runInstanceId, `${executionId}.json`)
+    : path.join(stateDir(dispatchRunId), 'qa-runs', `${executionId}.json`)
 }
 
-function rawReportFile(dispatchRunId, rawReportRef) {
-  const qaRunsDir = path.resolve(stateDir(dispatchRunId), 'qa-runs')
+function rawReportFile(dispatchRunId, rawReportRef, runInstanceId = null) {
+  const qaRunsDir = path.resolve(
+    stateDir(dispatchRunId),
+    'qa-runs',
+    ...(runInstanceId ? [runInstanceId] : [])
+  )
   const file = path.resolve(repoRoot, String(rawReportRef ?? ''))
   const relative = path.relative(qaRunsDir, file)
   if (!rawReportRef || relative.startsWith('..') || path.isAbsolute(relative)) {
@@ -35,6 +41,7 @@ function blocked(code, message, details = {}) {
 export function reconcileQaRunClassification({
   dispatchRunId,
   executionId,
+  runInstanceId = null,
   now = () => new Date()
 }) {
   if (!dispatchRunId || !executionId) {
@@ -43,7 +50,7 @@ export function reconcileQaRunClassification({
       'dispatch run id and execution id are required'
     )
   }
-  const file = recordFile(dispatchRunId, executionId)
+  const file = recordFile(dispatchRunId, executionId, runInstanceId)
   const record = readJson(file, null)
   if (!record || record.gate !== 'qa_run' || record.execution_id !== executionId) {
     return blocked('qa_execution_record_not_found', 'existing qa-run record is required')
@@ -55,7 +62,7 @@ export function reconcileQaRunClassification({
     )
   }
   const rawRef = record.leaf_report?.raw_report_ref
-  const rawFile = rawReportFile(dispatchRunId, rawRef)
+  const rawFile = rawReportFile(dispatchRunId, rawRef, runInstanceId)
   const artifact = rawFile ? readJson(rawFile, null) : null
   if (!artifact?.raw_report) {
     return blocked(

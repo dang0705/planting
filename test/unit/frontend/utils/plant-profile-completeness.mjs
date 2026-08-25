@@ -13,11 +13,11 @@ const completePlant = {
     longitude: 121.4737
   },
   lightEnvironment: {
-    facing: 'south',
-    windowType: 'standard',
-    position: 'window_side',
-    hasDirectSun: true,
-    distance: 1
+    schemaVersion: 2,
+    naturalLightType: 'direct',
+    entryMethod: 'through_glass',
+    hasSupplementalLight: false,
+    captureSource: 'user'
   },
   airEnvironment: {
     airExchange: {
@@ -74,6 +74,16 @@ const invalidLight = getPlantProfileCompletenessDetail({
 assert.equal(invalidLight.score, 90)
 assert.equal(invalidLight.items.lightEnvironment.satisfied, false)
 assert.equal('location' in invalidLight.items, false)
+
+const migratedLight = getPlantProfileCompletenessDetail({
+  ...completePlant,
+  lightEnvironment: {
+    ...completePlant.lightEnvironment,
+    captureSource: 'migrated_v1'
+  }
+})
+assert.equal(migratedLight.score, 90)
+assert.equal(migratedLight.items.lightEnvironment.satisfied, false)
 
 const emptyDetail = getPlantProfileCompletenessDetail({
   canonicalName: '',

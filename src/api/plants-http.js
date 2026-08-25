@@ -12,18 +12,10 @@ import { executeSaveWateringReminderMutation } from '@/vue-query/plants/mutation
 import { executeFertilizationReminderMutation } from '@/vue-query/plants/mutations/fertilization-reminders.js'
 import { executeIdentifyPlantMutation } from '@/vue-query/plants/mutations/identify.js'
 import { fetchWateringReminderQuery } from '@/vue-query/plants/queries/watering-reminders.js'
-import { fetchFertilizationReminderQuery } from '@/vue-query/plants/queries/fertilization-reminders.js'
 import {
-  fetchDiagnosisHistoryQuery,
-  fetchDiagnosisDetailQuery
-} from '@/vue-query/diagnosis-history/queries/history.js'
-import {
-  requestDiagnosisStart,
-  requestDiagnosisAnswer,
-  requestDiagnosisResult,
-  requestDiagnosisHistory,
-  requestDiagnosisFeedback
-} from '@/http-functions/diagnose/client.js'
+  fetchFertilizationReminderFresh,
+  fetchFertilizationReminderQuery
+} from '@/vue-query/plants/queries/fertilization-reminders.js'
 import { resolvePayloadCareLocation } from '@/utils/plant-care-location.js'
 import { requestHttpFunction } from '@/api/http.js'
 
@@ -97,6 +89,10 @@ export function fetchFertilizationReminder(plantId) {
   return fetchFertilizationReminderQuery(plantId)
 }
 
+export function fetchFertilizationReminderFreshState(plantId) {
+  return fetchFertilizationReminderFresh(plantId)
+}
+
 export function previewFertilizationReminder(payload) {
   return executeFertilizationReminderMutation('preview', payload)
 }
@@ -119,32 +115,4 @@ export function cancelFertilizationReminder(payload) {
 
 export function identifyPlantByImage(imageUrl) {
   return executeIdentifyPlantMutation(imageUrl)
-}
-
-export function fetchDiagnosisHistory(page = 1, pageSize = 10, plantId = null) {
-  return fetchDiagnosisHistoryQuery(page, pageSize, plantId)
-}
-
-export function fetchDiagnosisDetail(id) {
-  return fetchDiagnosisDetailQuery(id)
-}
-
-export function startDiagnosis(payload) {
-  return requestDiagnosisStart(payload)
-}
-
-export function submitDiagnosisAnswers(payload) {
-  return requestDiagnosisAnswer(payload)
-}
-
-export function getDiagnosisResult(params) {
-  return requestDiagnosisResult(params)
-}
-
-export function getDiagnosisHistory(params) {
-  return requestDiagnosisHistory(params)
-}
-
-export function submitDiagnosisFeedback(payload) {
-  return requestDiagnosisFeedback(payload)
 }

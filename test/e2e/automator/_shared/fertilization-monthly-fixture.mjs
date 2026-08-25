@@ -257,12 +257,32 @@ export async function installFixture(
           if (!state.reminder || data.planId !== state.reminder.planId) {
             return { code: 404, message: '提醒不存在', data: null }
           }
-          if (state.reminder.requiresExtraConfirmation && !data.extraConfirmation) {
-            return { code: 400, message: '请先完成额外确认', data: null }
+          const requirements = Array.isArray(state.reminder.conditionRequirements)
+            ? state.reminder.conditionRequirements
+            : []
+          const answers = data.conditionAnswers || {}
+          if (
+            requirements.some(
+              requirement =>
+                typeof answers[requirement.code] !== 'boolean' || answers[requirement.code] !== true
+            )
+          ) {
+            return {
+              code: 422,
+              message: '请先确认当前情况',
+              data: { conditionRequirements: requirements }
+            }
+          }
+          if (
+            state.reminder.requiresMinimumIntervalAcknowledgement &&
+            data.acknowledgeMinimumInterval !== true
+          ) {
+            return { code: 422, message: '请确认距离上次施肥至少达到本表最短间隔', data: null }
           }
           state.completedPlans.push({
             planId: String(data.planId),
-            extraConfirmation: Boolean(data.extraConfirmation),
+            conditionAnswers: cloneRuntime(data.conditionAnswers || {}),
+            acknowledgeMinimumInterval: data.acknowledgeMinimumInterval === true,
             fertilizerType: state.reminder.fertilizerType
           })
           state.reminder = null

@@ -4,6 +4,15 @@ const FERTILIZER_TYPES = new Set(['liquid', 'slowRelease'])
 const SOURCES = new Set(['reminder_setup', 'reminder_complete', 'manual', 'qa'])
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 
+class FertilizationHistoryUnavailableError extends Error {
+  constructor(cause) {
+    super('施肥历史暂时无法读取')
+    this.name = 'FertilizationHistoryUnavailableError'
+    this.code = 'FERTILIZATION_HISTORY_UNAVAILABLE'
+    this.cause = cause
+  }
+}
+
 function normalizeDate(value) {
   const text = String(value || '').trim()
   return DATE_PATTERN.test(text) ? text : ''
@@ -44,10 +53,63 @@ async function getUserPlantFertilizationEvents(models, openid, userPlantId, limi
       { openid, userPlantId: Number(userPlantId), limit: Number(limit) }
     )
     return (result?.data?.executeResultList || []).map(mapFertilizationEventRow)
-  } catch {
-    // 允许历史表尚未迁移的旧环境继续读取植物详情。
-    return null
+  } catch (error) {
+    throw new FertilizationHistoryUnavailableError(error)
   }
+}
+
+async function getUserAssertedFertilizationBaseline(models, openid, userPlantId) {
+  try {
+    const result = await models.$runSQL(
+      `SELECT id, user_plant_id, plan_id, fertilizer_type, last_applied_date,
+              last_date_source, created_at
+       FROM user_fertilization_reminder_events
+       WHERE _openid = {{openid}}
+         AND user_plant_id = {{userPlantId}}
+         AND last_date_source = 'user_asserted'
+         AND NOT (last_applied_date <=> NULL)
+       ORDER BY created_at DESC, id DESC
+       LIMIT 1`,
+      { openid, userPlantId: Number(userPlantId) }
+    )
+    const row = result?.data?.executeResultList?.[0]
+    if (!row) {
+      return null
+    }
+    const date = normalizeDate(row.last_applied_date)
+    const fertilizerType = normalizeFertilizerType(row.fertilizer_type)
+    if (!date || !fertilizerType) {
+      const error = new Error('用户补录的施肥日期无法识别')
+      error.code = 'FERTILIZATION_HISTORY_INVALID'
+      throw error
+    }
+    return {
+      id: Number(row.id),
+      date,
+      fertilized: false,
+      fertilizerType,
+      amount: null,
+      amountUnit: null,
+      source: 'user_asserted',
+      planId: row.plan_id || null,
+      createdAt: row.created_at || '',
+      isUserAsserted: true
+    }
+  } catch (error) {
+    if (error?.code === 'FERTILIZATION_HISTORY_INVALID') {
+      throw error
+    }
+    throw new FertilizationHistoryUnavailableError(error)
+  }
+}
+
+async function getUserPlantFertilizationHistory(models, openid, userPlantId, limit = 20) {
+  const events = await getUserPlantFertilizationEvents(models, openid, userPlantId, limit)
+  if (events.length) {
+    return events
+  }
+  const baseline = await getUserAssertedFertilizationBaseline(models, openid, userPlantId)
+  return baseline ? [baseline] : []
 }
 
 async function insertFertilizationEvent(models, openid, userPlantId, event = {}) {
@@ -80,8 +142,9 @@ async function insertFertilizationEvent(models, openid, userPlantId, event = {})
     `INSERT INTO user_fertilization_events
        (_openid, user_plant_id, event_date, fertilizer_type, amount_value, amount_unit, source, plan_id)
      VALUES
-       ({{openid}}, {{userPlantId}}, {{eventDate}}, {{fertilizerType}}, {{amountValue}},
-        {{amountUnit}}, {{source}}, {{planId}})
+       ({{openid}}, {{userPlantId}}, {{eventDate}}, {{fertilizerType}},
+        NULLIF({{amountValue}}, 'null'), NULLIF({{amountUnit}}, 'null'),
+        {{source}}, {{planId}})
      ON DUPLICATE KEY UPDATE id = id`,
     params
   )
@@ -90,6 +153,9 @@ async function insertFertilizationEvent(models, openid, userPlantId, event = {})
 
 module.exports = {
   getUserPlantFertilizationEvents,
+  getUserPlantFertilizationHistory,
+  getUserAssertedFertilizationBaseline,
+  FertilizationHistoryUnavailableError,
   insertFertilizationEvent,
   mapFertilizationEventRow,
   _test: { normalizeDate, normalizeFertilizerType, normalizeSource }

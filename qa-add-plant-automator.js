@@ -32,19 +32,23 @@ async function run() {
           method: opts.method || 'GET',
           time: Date.now()
         })
-      } catch (e) {}
+      } catch {
+        // Request capture must never block the original request.
+      }
       return globalThis.__qaOriginalRequest.call(wx, opts)
     }
   })
   log('Interceptor installed.')
 
   // Step 2: reLaunch to user-plant-detail create mode — first screen test
-  log('reLaunch to /pages/user-plant-detail/user-plant-detail?mode=create (non-edit)...')
+  log(
+    'reLaunch to /subpackages/plant/user-plant-detail/user-plant-detail?mode=create (non-edit)...'
+  )
   globalThis.__qaRequests = [] // reset via evaluate below
   await miniProgram.evaluate(() => {
     globalThis.__qaRequests = []
   })
-  await miniProgram.reLaunch('/pages/user-plant-detail/user-plant-detail?mode=create')
+  await miniProgram.reLaunch('/subpackages/plant/user-plant-detail/user-plant-detail?mode=create')
   log('Waiting 6s for onMounted to complete...')
   await sleep(6000)
 
@@ -164,7 +168,9 @@ async function run() {
           className: await nextBtn2.attribute('class')
         }
       }
-    } catch (e) {}
+    } catch {
+      // The optional post-selection probe is best effort.
+    }
     log('NEXT_BUTTON_AFTER_SELECT: ' + JSON.stringify(nextBtnInfo2))
 
     // Tap next button to advance to step 1
@@ -231,7 +237,7 @@ async function run() {
   try {
     // reLaunch with a fake edit mode to see if user-plants is requested
     await miniProgram.reLaunch(
-      '/pages/user-plant-detail/user-plant-detail?id=test-plant-id&mode=edit'
+      '/subpackages/plant/user-plant-detail/user-plant-detail?id=test-plant-id&mode=edit'
     )
     await sleep(6000)
     const editReqs = await miniProgram.evaluate(() =>

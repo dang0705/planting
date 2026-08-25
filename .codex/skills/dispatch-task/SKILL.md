@@ -84,7 +84,7 @@ external_contract.manual_typing_forbidden = true
 external_contract.zcode_clipboard_bridge_authorization = { enabled: true, mode: current_turn_explicit | persistent_user_authorization }
 ```
 
-ZCode bridge 从 canonical prompt regular file 读取 UTF-8 正文，依次尝试 macOS NSPasteboard 与 pbcopy；每次都读回并校验 SHA-256、bytes、lines，成功即停止，全部失败才 blocked。main 只能在最新 app state 中动态定位并聚焦唯一 ZCode entry area，先尝试 Cmd+V 并验证，失败才走 Edit > Paste；发送前必须验证 direct text 完整 identity 或 pasted-text 附件 bytes/lines，发送后必须验证同一消息/附件进入当前会话。不得持久化 prompt、旧剪贴板、element index、credential 或原始 UI dump；不得自动回退 headless、新会话、逐字输入或手输。
+ZCode bridge 从 canonical prompt regular file 读取 UTF-8 正文，依次尝试 macOS NSPasteboard 与 pbcopy；每次都在本地读回并校验 SHA-256、bytes、lines，成功即停止，全部失败才 blocked。main 只能在最新 app state 中动态定位并聚焦唯一 ZCode entry area，只执行一次 Cmd+V 并验证可见交付；附件分支用可见行数与 canonical prompt 行数核对，不要求 ZCode UI 重复暴露 hash/bytes。发送后必须验证同一消息/附件进入当前会话。不得持久化 prompt、旧剪贴板、element index、credential 或原始 UI dump；Cmd+V 无可见交付时直接 blocked，不得进入 Edit 菜单、headless、新会话、逐字输入或手输。
 
 ## 3. Gate A — Intake、分级与 baseline
 
@@ -214,7 +214,7 @@ node .codex/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
 
 ## 6. Gate B1 — Main Implementation Lock
 
-`main_direct` 不 spawn、不中转、不创建任何内部子代理。main 在自己的工作区完成实现、测试、自检、diff review 和 Completion Gate。只有 `external_implementer` 进入外部桥接；外部 provider 运行期间，main 遵守其工作区和等待锁。
+main 在自己的工作区完成实现、测试、自检、diff review 和 Completion Gate。只有 `external_implementer` 进入外部桥接；外部 provider 运行期间，main 遵守其工作区和等待锁。
 
 ## 7. Gate B1.5 — External Provider Run Lock / 等待与工作区所有权
 
@@ -333,11 +333,11 @@ main QA 不运行 unit tests，不修改业务代码。
 
 dispatch 必须把 unit-test、服务层 e2e 和真实端上 e2e 分开计分，不能用较低层级的通过替代较高层级的验收：
 
-1. `test/unit/**` 是模块级验证，允许假数据、mock、stub 和内存依赖；禁止依赖真实微信运行时、真实 `wx.request`、真实 CloudBase API 或真实开发库。unit-test 通过只说明被测模块在隔离输入下正确，不能作为用户可观察功能或端上验收证据。
+1. `test/unit/**` 是模块级验证，允许并优先使用真实 `cloud1_dev` 数据、真实 CloudBase API 和真实数据库读写；使用真实数据的结果必须标记为 `unit_real_data`，不再强制要求 mock、stub 或假数据。真实微信运行时、页面交互、截图和小程序端上的 `wx.request` 仍由 Automator 负责。unit-test 通过只说明模块/服务在所用数据边界下正确，不能单独作为用户可观察功能或端上验收证据。
 2. `test/e2e/batch/**` 是跨模块服务链路验证，必须调用项目真实配置的 API 和开发库；禁止 mock 被测接口响应、伪造植物/用户数据或绕过 API 直接写入结果。batch 只能证明后端/接口链路，不能替代小程序页面和交互验收。
 3. `test/e2e/automator/**` 中用于正式端上验收的叶子必须运行真实小程序、真实用户登录态、真实 `cloud1_dev` 数据、真实 LAN gateway 和真实运行时 `wx.request`。请求捕获只能观察并转发，不能合成响应；页面必须使用真实数据进入、操作和读回。
 4. 使用 fixture/mock 的 Automator 叶子只能作为诊断或回归工具，必须标记为 `fixture_diagnostic`，不得写入 `runtime-qa-evidence.json` 作为正式端上通过。正式 acceptance 必须选择 catalog 中声明 `automator_required` 且 `data_mode=automator_live_real_api` 的 live 叶子。
-5. 测试或 QA 报告及其 catalog/qa-run 证据必须明确可核验数据模式：`unit_fake`、`e2e_real_api`、`automator_live_real_api` 或 `fixture_diagnostic`。无法证明真实 API、真实数据和真实运行时来源的结果只能记为 `not_verified` / `blocked`，不得包装成 PASS。
+5. 测试或 QA 报告及其 catalog/qa-run 证据必须明确可核验数据模式：`unit_real_data`、`unit_fake`、`e2e_real_api`、`automator_live_real_api` 或 `fixture_diagnostic`。项目默认优先使用 `unit_real_data`；无法证明真实 API、真实数据和真实运行时来源的结果只能记为 `not_verified` / `blocked`，不得包装成 PASS。
 
 automator QA 必须先通过 catalog gate：
 
@@ -346,11 +346,11 @@ node .codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs validate-e2e-cata
 node .codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs qa-run --catalog-id=<leaf-id> --execution-id=<run-id> --dry-run
 ```
 
-只有 catalog 精确叶子、`docs/ai-rules/frontend-automation-id-policy.md` 引用、冻结脚本 hash、execution id 和 qa-run execution record 全部通过后，才允许进入 LAN/DevTools/automator。live `qa-run` 在调用叶子脚本前必须完成 target projectPath、完整 LAN flow、9420/WS、page data、截图和小程序运行时 `wx.request` preflight；错误项目绝不能重启。截图 RPC 失效时，必须先从 9420 listener 的祖先进程链证明唯一 target projectPath、main DevTools PID 与真实控制端口；进程 `--project` / 已打开 config 缺失时，仅可用同一 main `--app-session-id` 的近期 WeappLog 补强：`AUTO` 必须精确 port `9420` 和 target 路径，且同 session `FileUtils` 精确 target 路径，并持久化 source、file、timestamp；过期或 session / port / path 不匹配的记录必须拒绝。一次受控 `close -> open -> auto` 后必须重新证明 main PID、9420 listener PID、控制端口和项目路径，并重跑截图与 `wx.request`。任何项目证据、控制端口或 restart PID 证明缺失均为 `devtools_automator_blocker`，不得把单独 `cli auto` 记为重启。qa-run 必须串行锁定 9420、同一冻结 hash 最多两次 live attempt，产品失败不得原地重试，所有异常都必须终态化为 `aborted`、`failed_environment`、`failed_product` 或 `failed_script`。裸跑 automator 脚本只能作为排障，不能作为 `runtime-qa-evidence.json` 的验收来源；将裸跑结果包装成通过证据属于 QA evidence forgery。
+只有 catalog 精确叶子、`docs/ai-rules/frontend-automation-id-policy.md` 引用、冻结脚本 hash、execution id 和 qa-run execution record 全部通过后，才允许进入 LAN/DevTools/automator。live `qa-run` 在调用叶子脚本前必须完成 target projectPath、完整 LAN flow、正式 QA `9421` WebSocket、`9422` DevTools control port、page data、截图和小程序运行时 `wx.request` preflight；`9420` 只属于用户日常交互调试，错误项目绝不能重启。正式 QA 截图 RPC 失效时，必须先用 QA-owned `9421/9422`、owner PID、profile 和 projectPath 共同证明唯一目标；不得从日常 `9420` listener、日常 PID 或日常 profile 推导 QA ownership。一次受控 `close -> open -> auto` 后必须重新证明 QA main PID、`9421` listener PID、`9422` 控制端口和项目路径，并重跑截图与 `wx.request`。任何项目证据、控制端口或 restart PID 证明缺失均为 `devtools_automator_blocker`，不得把单独 `cli auto` 记为重启。qa-run 必须串行锁定 `9421/9422`，同一冻结 hash 最多两次 live attempt，产品失败不得原地重试，所有异常都必须终态化为 `aborted`、`failed_environment`、`failed_product` 或 `failed_script`。裸跑 automator 脚本只能作为排障，不能作为 `runtime-qa-evidence.json` 的验收来源；将裸跑结果包装成通过证据属于 QA evidence forgery。
 
 运行态验收模式由 `validation.runtime_acceptance_mode` 显式声明；仅当模式为 `automator_required` | `batch_substitute_allowed` | `batch_only` 时，必须产出 `runtime-qa-evidence.json`：
 
-- `automator_required`：必须完整 LAN flow、合同指定 `dist/dev/mp-weixin`、9420、miniprogram-automator、page / `wx.request` evidence。
+- `automator_required`：必须完整 LAN flow、合同指定 `dist/dev/mp-weixin`、正式 QA `9421/9422`、miniprogram-automator、page / `wx.request` evidence。
 - `batch_substitute_allowed`：必须有 `validation.batch_substitute_user_approval_ref`；跑批可以替代本轮端上验收，但 evidence 可记录 `end_side_status=not_verified_by_user_approved_substitution`。
 - `batch_only`：只用于算法或服务层矩阵，不得覆盖真实 UI 或端上交互验收。
 
@@ -464,27 +464,25 @@ main 不得读取或转述 uni-ui 组件索引、映射表、组件规则；只�
 
 ## 13. Hard stops
 
-1. 任何内部子代理已被派发，或 main 通过 spawn/child 继续实现代码类文件。
-2. external provider 使用 20 秒/40 秒等短轮询、临时 `git status` 或“暂无可见 diff”判定无产出、失败或完成。
-3. 代码修改任务缺少 worktree baseline，baseline 与本轮变更重叠未处理，或未通过 postflight report 仍完成。
-4. 任何内部子代理、spawn、agent_type、target_role 或 spawn_contract 出现在 `main_direct` 任务中。
-5. `external_implementer` 模式 spawn 了任何内部子代理、缺少 send receipt、缺少 handoff manual，或 provider 交付证据与 `external_contract.prompt_transport` 不一致。
-6. provider UI/会话/prompt 完整性未通过 adapter 要求，或 prompt 发送失败仍继续。
-7. 仅用 shell/脚本/自然语言声明替代声明为 required 的 UI/Computer/Chrome adapter 操作，或用“dispatch 预授权”替代用户当前明确授权。
-8. external implementer 失败后自动 fallback 到任何子代理；未获得用户重新授权前不得改变外部桥接合同。
-9. external handoff 缺少 handoff manual，或 main 未先读取 handoff manual 就用 UI/聊天状态判定外部实现者已结束。
-10. external implementer 已收到 prompt 并开始运行后，main 仍持续盯屏、使用短轮询或在 30 分钟内读取 provider UI 进度；正式等待必须使用 5 分钟下限的 recurring wakeup。
-11. main_direct result 缺少 `implementation_owner=main`，或外部 result 伪造内部 agent identity。
-12. UI handoff 缺少 styling system、SCSS policy、component library 或 rule refs。
-13. main 在 Figma 任务缺少实现阶段的直接 Figma 证据，或把视觉细节塞进 handoff 代替真实取证。
-14. figma_link 存在，但实现者没有直接读取 Figma 证据，或 main QA 没有独立 baseline。
-15. `component_library` 包含 `uni-ui` 且存在 figma_link，但缺 uni-ui 映射合同或实现者缺 `uni_ui_mapping_evidence`。
-16. Tailwind 项目新增未授权 `.scss`、`<style lang="scss">` 或用 scoped style 重建常规 UI。
-17. 变更越过 allowed/forbidden paths，未声明真实 changed files，或引入未授权依赖/API/schema。
-18. main QA 重跑单测，或用“看起来正确”替代运行证据。
-19. 在 `AGENTS.md` 判定无常规召回或记录资格时仍调用或写入 ByteRover，或用本 skill/reference 的示例绕过、扩大或缩小 AGENTS 的内容边界。
-20. provider 终态后直接 finish 或完成 episode，跳过 `provider_delivered -> recovery_in_progress -> review_passed -> qa_*  -> completion_ready` 严格转移；或在 `completion_ready` 之前 `episode finish --status=completed`。
-21. 聊天、manual、provider result 自称完成被当作 `completion_ready`；`completion_ready` 只能由成功验证的 `validate-completion-readiness` 记录。
-22. 第二次 rework 无可审计 successor dispatch 或无明确 `user_decision_required`（仅在无修复目标时）就停止；或有修复目标却直接停止。
-23. 未来 provider 合同混用 `provider_status=delivered` 与 `completed` 语义，或使用 `dispatch_id` 别名替代 `dispatch_run_id`。
-24. 选择类任务缺失 `selection_to_consumer` 合同或实现者证据；非选择类任务未声明 `not_applicable=true` 与原因。
+1. external provider 使用 20 秒/40 秒等短轮询、临时 `git status` 或“暂无可见 diff”判定无产出、失败或完成。 
+2. 代码修改任务缺少 worktree baseline，baseline 与本轮变更重叠未处理，或未通过 postflight report 仍完成。
+3. `external_implementer` 模式 spawn 了任何内部子代理、缺少 send receipt、缺少 handoff manual，或 provider 交付证据与 `external_contract.prompt_transport` 不一致。 
+4. provider UI/会话/prompt 完整性未通过 adapter 要求，或 prompt 发送失败仍继续。 
+5. 仅用 shell/脚本/自然语言声明替代声明为 required 的 UI/Computer/Chrome adapter 操作，或用“dispatch 预授权”替代用户当前明确授权。 
+6. external implementer 失败后自动 fallback 到任何子代理；未获得用户重新授权前不得改变外部桥接合同。 
+7. external handoff 缺少 handoff manual，或 main 未先读取 handoff manual 就用 UI/聊天状态判定外部实现者已结束。 
+8. external implementer 已收到 prompt 并开始运行后，main 仍持续盯屏、使用短轮询或在 30 分钟内读取 provider UI 进度；正式等待必须使用 5 分钟下限的 recurring wakeup。 
+9. main_direct result 缺少 `implementation_owner=main`，或外部 result 伪造内部 agent identity。 
+10. UI handoff 缺少 styling system、SCSS policy、component library 或 rule refs。 
+11. main 在 Figma 任务缺少实现阶段的直接 Figma 证据，或把视觉细节塞进 handoff 代替真实取证。 
+12. figma_link 存在，但实现者没有直接读取 Figma 证据，或 main QA 没有独立 baseline。
+13. `component_library` 包含 `uni-ui` 且存在 figma_link，但缺 uni-ui 映射合同或实现者缺 `uni_ui_mapping_evidence`。 
+14. Tailwind 项目新增未授权 `.scss`、`<style lang="scss">` 或用 scoped style 重建常规 UI。 
+15. 变更越过 allowed/forbidden paths，未声明真实 changed files，或引入未授权依赖/API/schema。 
+16. main QA 重跑单测，或用“看起来正确”替代运行证据。 
+17. 在 `AGENTS.md` 判定无常规召回或记录资格时仍调用或写入 ByteRover，或用本 skill/reference 的示例绕过、扩大或缩小 AGENTS 的内容边界。 
+18. provider 终态后直接 finish 或完成 episode，跳过 `provider_delivered -> recovery_in_progress -> review_passed -> qa_*  -> completion_ready` 严格转移；或在 `completion_ready` 之前 `episode finish --status=completed`。 
+19. 聊天、manual、provider result 自称完成被当作 `completion_ready`；`completion_ready` 只能由成功验证的 `validate-completion-readiness` 记录。 
+20. 第二次 rework 无可审计 successor dispatch 或无明确 `user_decision_required`（仅在无修复目标时）就停止；或有修复目标却直接停止。 
+21. 未来 provider 合同混用 `provider_status=delivered` 与 `completed` 语义，或使用 `dispatch_id` 别名替代 `dispatch_run_id`。 
+22. 选择类任务缺失 `selection_to_consumer` 合同或实现者证据；非选择类任务未声明 `not_applicable=true` 与原因

@@ -55,15 +55,13 @@ verify current ZCode chat
 -> focus and verify focused element
 -> prepared clipboard bridge
 -> Cmd+V
--> latest app state: verify delivery
--> if failed: latest state + Edit > Paste
--> latest app state: verify delivery
--> verify direct text identity or pasted-text attachment
+-> latest app state: verify visible delivery (attachment line count may be used)
+-> verify direct text identity or pasted-text attachment visible line count
 -> click send
 -> latest app state: verify current-chat delivery
 ```
 
-任一层未通过时不得点击发送。失败只进入下一条受控 paste 方法或 blocked；不得自动回退 headless、新会话、手输、逐字输入、credential 注入或其他应用。
+任一层未通过时不得点击发送。Cmd+V 无可见交付时直接 blocked；不得自动回退到 Edit 菜单、headless、新会话、手输、逐字输入、credential 注入或其他应用。
 
 ## Send receipt
 
@@ -72,7 +70,7 @@ verify current ZCode chat
 - canonical `prompt_identity={path,sha256,bytes,lines,verified_before_after}`；
 - clipboard write attempts、selected method、readback verification；
 - dynamic focus evidence，并固定 `element_index_persisted=false`；
-- paste attempts、selected method 与 `direct_text|pasted_text_attachment` 分支证据；
+- paste attempt、selected method 与 `direct_text|pasted_text_attachment` 分支证据；只记录 Cmd+V；
 - send click、input submitted、conversation state change 与 post-send delivery；
 - redaction 和单调时间证据。
 

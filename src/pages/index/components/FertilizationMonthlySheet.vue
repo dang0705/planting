@@ -7,6 +7,11 @@
     title="施肥时间表"
     subtitle="按植物所属属级养护数据展示"
     height-mode="fullHeight"
+    confirm-id="fertilization-reminder-entry-button"
+    confirm-text="设置下次施肥提醒"
+    :show-confirm="canOpenReminderSetup"
+    :confirm-disabled="loading"
+    :on-confirm="openReminderSetup"
     :mask-click="!loading"
     @change="onPopupChange"
   >
@@ -38,140 +43,109 @@
       </text>
     </view>
 
-    <FertilizationReminderSetup
-      v-if="fertilizationMonthly.available && currentMonthOptions.length && !reminder && !preview"
-      :options="currentMonthOptions"
-      :selected-type="selectedType"
-      :loading="loading"
-      :can-preview="canPreview"
-      @select-type="selectedType = $event"
-      @preview="createPreview"
-    />
     <view
-      v-if="fertilizationMonthly.available && !currentMonthOptions.length && !reminder && !preview"
+      v-if="
+        fertilizationMonthly.available &&
+        !currentMonthOptions.length &&
+        !currentMonthGuard &&
+        !reminder &&
+        !preview
+      "
       id="fertilization-reminder-no-fixed-period"
       class="mt-4 rounded-[14px] bg-[#FFF7DF] p-3"
     >
       <text class="text-xs leading-5 text-[#8A5A00]">本月没有可用于设置提醒的固定施肥周期。</text>
     </view>
-
     <view
-      v-if="preview"
-      id="fertilization-reminder-preview"
-      class="mt-4 rounded-[14px] border border-[#D7E6DC] bg-[#F8FAF9] p-3"
+      v-if="currentMonthGuard && !reminder && !preview"
+      id="fertilization-reminder-deferred"
+      class="mt-4 rounded-[14px] bg-[#FFF7DF] p-3"
     >
-      <view class="flex items-start justify-between gap-2">
-        <text class="min-w-0 flex-1 text-sm font-semibold text-[#1F2933]">
-          {{ preview?.reminderKind === 'first_confirmation' ? '首次确认提醒' : '下次施肥提醒' }}：{{
-            previewDateText
-          }}
-        </text>
-        <button
-          id="fertilization-reminder-calculation-info-button"
-          class="m-0 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#7A9583] bg-white p-0 text-sm font-semibold leading-none text-[#52705E] after:border-0"
-          hover-class="none"
-          aria-label="查看提醒日期计算说明"
-          @click.stop="showCalculationTooltipForTenSeconds"
-        >
-          <text class="leading-none">!</text>
-        </button>
-      </view>
-      <text v-if="syncError" class="mt-2 block text-xs leading-5 text-[#B45309]">{{
-        syncError
-      }}</text>
-      <button
-        id="fertilization-reminder-calendar-confirm-button"
-        class="mt-3 m-0 w-full rounded-xl bg-[#2D7A4F] py-3 text-sm font-semibold text-white after:border-0 disabled:bg-gray-300"
-        hover-class="none"
-        :disabled="loading || syncTerminalError"
-        @click="confirmPreview"
-      >
-        {{
-          loading
-            ? '保存中…'
-            : syncTerminalError
-              ? '请先取消这次设置'
-              : pendingCalendarPayload
-                ? '重试同步'
-                : preview.dueNow
-                  ? '确认保存施肥提醒'
-                  : '确认并添加到手机日历'
-        }}
-      </button>
-      <button
-        id="fertilization-reminder-cancel-button"
-        class="mt-2 m-0 w-full rounded-xl border border-[#E1E9DD] bg-white py-2.5 text-xs text-[#53645A] after:border-0"
-        hover-class="none"
-        @click="cancelPreview"
-      >
-        取消这次设置
-      </button>
+      <text class="text-xs leading-5 text-[#8A5A00]">当前处于暂缓施肥状态，暂不能设置提醒。</text>
     </view>
 
-    <FertilizationReminderCalculationTooltip
-      v-if="showCalculationTooltip && preview"
-      :guidance="calculationGuidance"
-      @close="hideCalculationTooltip"
+    <FertilizationReminderPreview
+      :preview="preview"
+      :preview-date-text="previewDateText"
+      :loading="loading"
+      :sync-error="syncError"
+      :sync-terminal-error="syncTerminalError"
+      :pending-calendar-payload="pendingCalendarPayload"
+      :asserted-date="assertedDate"
+      :today-date="todayStr()"
+      @alert="showFertilizationAlert"
+      @confirm="confirmPreview"
+      @cancel="cancelPreview"
+      @asserted-date-change="onAssertedDateChange"
+      @recalculate-with-asserted-date="recalculateWithAssertedDate"
+    />
+
+    <FertilizationReminderAlert
+      :visible="showFertilizationAlertDialog"
+      :content="fertilizationAlertContent"
+      :title="fertilizationAlertTitle"
+      :cancel-text="fertilizationAlertCancelText"
+      :confirm-text="fertilizationAlertConfirmText"
+      @confirm="confirmFertilizationAlert"
+      @cancel="cancelFertilizationAlert"
     />
 
     <SavedFertilizationReminderState
       v-if="reminder"
       :reminder="reminder"
+      :loading="loading"
       :can-complete="canComplete"
       :current-month-evaluation="currentMonthEvaluation"
-      :requires-extra-confirmation="Boolean(reminder?.requiresExtraConfirmation)"
-      :confirmation-reasons="reminder?.confirmationReasons || []"
-      @complete="completeReminder"
+      :condition-requirements="reminder?.conditionRequirements || []"
+      :completion-block-reason="reminder?.completionBlockReason || ''"
+      :calendar-delete-visible="showCalendarDelete"
+      :requires-minimum-interval-acknowledgement="
+        Boolean(reminder?.requiresMinimumIntervalAcknowledgement)
+      "
+      @complete-reminder="completeReminder"
       @dismiss="dismissReminder"
-      @reconfigure="showReconfigureAck = true"
+      @request-calendar-delete="openCalendarDelete"
     />
 
-    <view
-      v-if="showReconfigureAck"
-      id="fertilization-reminder-reconfigure"
-      class="mt-3 rounded-[14px] bg-[#FFF7DF] p-3"
-    >
-      <text class="block text-xs leading-5 text-[#8A5A00]">
-        应用无法替你删除手机日历中的旧事件。请先在手机日历删除旧提醒，再继续重新设置。
-      </text>
-      <checkbox-group
-        id="fertilization-reminder-reconfigure-ack-group"
-        class="mt-2"
-        @change="onReconfigureAcknowledgedChange"
-      >
-        <label class="flex items-center gap-2">
-          <checkbox
-            id="fertilization-reminder-reconfigure-ack"
-            value="deleted"
-            :checked="reconfigureAcknowledged"
-            color="#2D7A4F"
-          />
-          <text class="text-xs text-[#53645A]">我已删除旧提醒</text>
-        </label>
-      </checkbox-group>
-      <button
-        id="fertilization-reminder-reconfigure-confirm"
-        class="mt-2 m-0 w-full rounded-xl bg-[#2D7A4F] py-2.5 text-xs font-semibold text-white after:border-0 disabled:bg-gray-300"
-        hover-class="none"
-        :disabled="!reconfigureAcknowledged || loading"
-        @click="confirmReconfigure"
-      >
-        开始重新设置
-      </button>
-      <button
-        id="fertilization-reminder-reconfigure-cancel"
-        class="mt-2 m-0 w-full rounded-xl border border-[#E1E9DD] bg-white py-2.5 text-xs text-[#53645A] after:border-0"
-        hover-class="none"
-        @click="showReconfigureAck = false"
-      >
-        暂不重设
-      </button>
-    </view>
+    <FertilizationReminderCalendarDelete
+      :visible="showCalendarDelete"
+      :acknowledged="calendarDeleteAcknowledged"
+      :loading="loading"
+      @change="onCalendarDeleteAcknowledgedChange"
+      @confirm="confirmCalendarDelete"
+      @cancel="closeCalendarDelete"
+    />
+  </BottomSheet>
+
+  <BottomSheet
+    ref="reminderSetupPopupRef"
+    panel-id="fertilization-reminder-setup-sheet"
+    content-id="fertilization-reminder-setup-sheet-content"
+    close-id="fertilization-reminder-setup-close-button"
+    title="选择肥料"
+    :mask-click="!loading"
+    @change="onReminderSetupPopupChange"
+  >
+    <FertilizationReminderSetup
+      :options="currentMonthOptions"
+      :selected-type="selectedType"
+      :loading="loading"
+      :can-preview="canSubmitPreview"
+      :preflight="preflight"
+      :sync-error="syncError"
+      :condition-answers="conditionAnswers"
+      :fertilizer-type-change-acknowledged="fertilizerTypeChangeAcknowledged"
+      preview-button-text="继续"
+      @select-type="selectFertilizerType"
+      @change-condition="handleConditionChange"
+      @change-type-change="onFertilizerTypeChange"
+      @preview="handlePreviewRequest"
+    />
   </BottomSheet>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import BottomSheet from '@/components/common/BottomSheet.vue'
 import FertilizationMonthlyTable from '@/components/FertilizationMonthlyTable.vue'
 import {
@@ -180,20 +154,23 @@ import {
   confirmFertilizationReminder,
   dismissFertilizationReminder,
   fetchFertilizationReminder,
+  fetchFertilizationReminderFreshState,
   previewFertilizationReminder
 } from '@/api/plants-http.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
-import FertilizationReminderCalculationTooltip from './FertilizationReminderCalculationTooltip.vue'
 import FertilizationReminderSetup from './FertilizationReminderSetup.vue'
 import SavedFertilizationReminderState from './SavedFertilizationReminderState.vue'
-import { useFertilizationCalculationTooltip } from './useFertilizationCalculationTooltip.js'
+import FertilizationReminderPreview from './FertilizationReminderPreview.vue'
+import FertilizationReminderCalendarDelete from './FertilizationReminderCalendarDelete.vue'
+import FertilizationReminderAlert from './FertilizationReminderAlert.vue'
 import {
   addPhoneCalendar,
   buildFertilizationCalendarPayload,
-  formatFertilizationCalculationGuidance,
+  formatFertilizationAlertContent,
   formatFertilizationCheckDate,
   resolveCurrentMonthEvaluation,
-  resolveCurrentMonthOptions
+  resolveCurrentMonthOptions,
+  todayStr
 } from './fertilization-reminder-options.js'
 
 const FIRST_FREQUENCY_INDEX = 0
@@ -202,23 +179,48 @@ const SECOND_FREQUENCY_INDEX = 1
 const props = defineProps({ plant: { type: Object, default: null } })
 const emit = defineEmits(['close', 'changed'])
 const popupRef = ref(null)
+const reminderSetupPopupRef = ref(null)
 const reminder = ref(null)
 const preview = ref(null)
 const loading = ref(false)
 const selectedType = ref('')
+const preflight = ref(null)
+const conditionAnswers = ref({})
+const fertilizerTypeChangeAcknowledged = ref(false)
+const showFertilizationAlertDialog = ref(false)
+const fertilizationAlertResolver = ref(null)
+const fertilizationAlertMode = ref('preview')
+const conditionOverrideCode = ref('')
 const pendingCalendarPayload = ref(null)
 const syncError = ref('')
 const syncTerminalError = ref(false)
-const showReconfigureAck = ref(false)
-const reconfigureAcknowledged = ref(false)
-const {
-  showCalculationTooltip,
-  hideCalculationTooltip,
-  showCalculationTooltipForTenSeconds
-} = useFertilizationCalculationTooltip()
+const showCalendarDelete = ref(false)
+const calendarDeleteAcknowledged = ref(false)
+const serverCurrentMonthOptions = ref(null)
+const currentMonthGuard = ref(null)
+const assertedDate = ref('')
 
-function onReconfigureAcknowledgedChange(event) {
-  reconfigureAcknowledged.value = Boolean(event?.detail?.value?.includes('deleted'))
+const canOpenReminderSetup = computed(
+  () =>
+    fertilizationMonthly.value.available &&
+    currentMonthOptions.value.length > 0 &&
+    !currentMonthGuard.value &&
+    !reminder.value &&
+    !preview.value
+)
+
+function onCalendarDeleteAcknowledgedChange(event) {
+  calendarDeleteAcknowledged.value = Boolean(event?.detail?.value?.includes('deleted'))
+}
+
+function openCalendarDelete() {
+  calendarDeleteAcknowledged.value = false
+  showCalendarDelete.value = true
+}
+
+function closeCalendarDelete() {
+  showCalendarDelete.value = false
+  calendarDeleteAcknowledged.value = false
 }
 const fertilizationMonthly = computed(
   () =>
@@ -243,36 +245,66 @@ const fertilizationText = computed(() => {
       : ''
   return [fertilization.type, freqText, fertilization.other].filter(Boolean).join(' · ')
 })
-const currentMonthOptions = computed(() => resolveCurrentMonthOptions(fertilizationMonthly.value))
+const currentMonthOptions = computed(() =>
+  Array.isArray(serverCurrentMonthOptions.value)
+    ? serverCurrentMonthOptions.value
+    : resolveCurrentMonthOptions(fertilizationMonthly.value)
+)
+
+function resolveLocalConditionPreflight(type = selectedType.value) {
+  const option = currentMonthOptions.value.find(item => item.type === type)
+  const conditionRequirements = Array.isArray(option?.conditionRequirements)
+    ? option.conditionRequirements
+    : []
+  return conditionRequirements.length ? { conditionRequirements } : null
+}
+
 const currentMonthEvaluation = computed(() =>
   resolveCurrentMonthEvaluation(fertilizationMonthly.value, reminder.value?.fertilizerType)
 )
 const canPreview = computed(
   () =>
     Boolean(selectedType.value) &&
+    !currentMonthGuard.value &&
     currentMonthOptions.value.some(option => option.type === selectedType.value)
 )
-const canComplete = computed(() =>
-  Boolean(
-    reminder.value?.isDue &&
-    ['interval', 'conditional', 'event'].includes(currentMonthEvaluation.value.kind)
+const canSubmitPreview = computed(() => {
+  if (!canPreview.value) {
+    return false
+  }
+  if (!preflight.value) {
+    return true
+  }
+  const conditionsReady = (preflight.value.conditionRequirements || [])
+    .filter(requirement => !isGrowthCondition(requirement.code))
+    .every(requirement => typeof conditionAnswers.value[requirement.code] === 'boolean')
+  return (
+    conditionsReady &&
+    (!preflight.value.requiresFertilizerTypeChangeAcknowledgement ||
+      fertilizerTypeChangeAcknowledged.value)
   )
+})
+const canComplete = computed(() =>
+  Boolean(reminder.value?.isDue && reminder.value?.canComplete === true)
 )
 const previewDateText = computed(() => formatFertilizationCheckDate(preview.value?.nextCheckDate))
-const calculationGuidance = computed(() =>
-  formatFertilizationCalculationGuidance(preview.value)
-)
 
 function resetSetup() {
   reminder.value = null
   preview.value = null
-  selectedType.value = currentMonthOptions.value[0]?.type || ''
+  preflight.value = null
+  conditionAnswers.value = {}
+  fertilizerTypeChangeAcknowledged.value = false
   pendingCalendarPayload.value = null
   syncError.value = ''
   syncTerminalError.value = false
-  hideCalculationTooltip()
-  showReconfigureAck.value = false
-  reconfigureAcknowledged.value = false
+  showCalendarDelete.value = false
+  calendarDeleteAcknowledged.value = false
+  serverCurrentMonthOptions.value = null
+  currentMonthGuard.value = null
+  assertedDate.value = ''
+  selectedType.value = currentMonthOptions.value[0]?.type || ''
+  preflight.value = resolveLocalConditionPreflight()
 }
 
 async function loadReminder() {
@@ -283,10 +315,19 @@ async function loadReminder() {
   }
   try {
     const response = await fetchFertilizationReminder(plantId)
-    reminder.value = response?.code === 200 ? response.data : null
+    const responseData = response?.code === 200 ? response.data : null
+    reminder.value = responseData?.active === true ? responseData : null
+    serverCurrentMonthOptions.value = Array.isArray(responseData?.currentMonthOptions)
+      ? responseData.currentMonthOptions
+      : null
+    currentMonthGuard.value = responseData?.fertilizationGuard || null
     preview.value = null
+    preflight.value = null
+    conditionAnswers.value = {}
+    fertilizerTypeChangeAcknowledged.value = false
     if (!reminder.value) {
       selectedType.value = currentMonthOptions.value[0]?.type || ''
+      preflight.value = resolveLocalConditionPreflight()
     }
   } catch (error) {
     console.warn('读取施肥提醒失败:', error?.message || error)
@@ -305,12 +346,105 @@ function close() {
 
 function onPopupChange(event) {
   if (!event?.show) {
-    hideCalculationTooltip()
+    closeReminderSetup()
     emit('close')
   }
 }
 
-async function createPreview() {
+function onReminderSetupPopupChange(event) {
+  if (!event?.show) {
+    syncError.value = ''
+  }
+}
+
+function openReminderSetup() {
+  if (!canOpenReminderSetup.value) {
+    return
+  }
+  syncError.value = ''
+  callComponentMethod(reminderSetupPopupRef, 'open')
+}
+
+function closeReminderSetup() {
+  callComponentMethod(reminderSetupPopupRef, 'close')
+}
+
+function showFertilizationAlert() {
+  if (!preview.value) {
+    return Promise.resolve(false)
+  }
+  fertilizationAlertMode.value = 'preview'
+  showFertilizationAlertDialog.value = true
+  return new Promise(resolve => {
+    fertilizationAlertResolver.value = resolve
+  })
+}
+
+function showGrowthConditionAlert(code) {
+  closeReminderSetup()
+  conditionOverrideCode.value = String(code || '').trim()
+  fertilizationAlertMode.value = 'growth_condition'
+  showFertilizationAlertDialog.value = true
+}
+
+const fertilizationAlertContent = computed(() => {
+  if (fertilizationAlertMode.value === 'growth_condition') {
+    return '本月按表默认不安排施肥。\n只有植物近期确实长出新叶或新芽，才建议继续设置提醒。'
+  }
+  return formatFertilizationAlertContent(preview.value)
+})
+const fertilizationAlertTitle = computed(() =>
+  fertilizationAlertMode.value === 'growth_condition' ? '请确认施肥条件' : '施肥提醒'
+)
+const fertilizationAlertCancelText = computed(() =>
+  fertilizationAlertMode.value === 'growth_condition' ? '本次不设置' : '稍后设置'
+)
+const fertilizationAlertConfirmText = computed(() =>
+  fertilizationAlertMode.value === 'growth_condition' ? '继续设置' : '设置日历'
+)
+
+async function confirmFertilizationAlert() {
+  const alertMode = fertilizationAlertMode.value
+  const growthCode = conditionOverrideCode.value
+  showFertilizationAlertDialog.value = false
+  if (alertMode === 'growth_condition') {
+    conditionOverrideCode.value = ''
+    if (growthCode) {
+      setConditionAnswer({ code: growthCode, value: true })
+    }
+    fertilizationAlertMode.value = 'preview'
+    await createPreview()
+    return
+  } else {
+    await confirmPreview()
+  }
+  fertilizationAlertResolver.value?.(true)
+  fertilizationAlertResolver.value = null
+}
+
+function cancelFertilizationAlert() {
+  showFertilizationAlertDialog.value = false
+  conditionOverrideCode.value = ''
+  fertilizationAlertResolver.value?.(false)
+  fertilizationAlertResolver.value = null
+}
+
+function onAssertedDateChange(event) {
+  assertedDate.value = String(event?.detail?.value || '').trim()
+}
+
+function resolveFertilizationErrorMessage(error, fallback = '暂时无法生成提醒日期') {
+  const candidates = [
+    error?.message,
+    error?.data?.message,
+    error?.response?.data?.message,
+    error?.response?.message
+  ]
+  const message = candidates.find(value => typeof value === 'string' && value.trim())
+  return message ? message.trim() : fallback
+}
+
+async function createPreview(userAssertedLastAppliedDate = '') {
   if (!canPreview.value || !props.plant?.id) {
     return
   }
@@ -318,19 +452,70 @@ async function createPreview() {
   syncError.value = ''
   pendingCalendarPayload.value = null
   syncTerminalError.value = false
-  hideCalculationTooltip()
+  let shouldShowAlert = false
   try {
     const response = await previewFertilizationReminder({
       plantId: Number(props.plant.id),
-      fertilizerType: selectedType.value
+      fertilizerType: selectedType.value,
+      conditionAnswers: conditionAnswers.value,
+      acknowledgeFertilizerTypeChange: fertilizerTypeChangeAcknowledged.value,
+      ...(userAssertedLastAppliedDate ? { userAssertedLastAppliedDate } : {})
     })
-    if (response?.code !== 200 || !response.data) {
-      throw new Error(response?.message || '暂时无法生成提醒日期')
+    if (Number(response?.code) !== 200 || !response.data) {
+      const responseData = response?.data || {}
+      if (
+        responseData.conditionRequirements?.length ||
+        responseData.requiresFertilizerTypeChangeAcknowledgement
+      ) {
+        preflight.value = responseData
+        syncError.value = resolveFertilizationErrorMessage(response, '请先确认设置条件')
+        return
+      }
+      syncError.value = resolveFertilizationErrorMessage(response)
+      return
     }
     preview.value = response.data
-    showCalculationTooltipForTenSeconds()
+    preflight.value = null
+    conditionAnswers.value = {}
+    fertilizerTypeChangeAcknowledged.value = false
+    shouldShowAlert = true
   } catch (error) {
-    uni.showToast({ title: error?.message || '生成失败', icon: 'none' })
+    syncError.value = resolveFertilizationErrorMessage(error, '生成失败，请稍后重试')
+    uni.showToast({ title: syncError.value, icon: 'none' })
+  } finally {
+    loading.value = false
+    if (shouldShowAlert) {
+      closeReminderSetup()
+      await nextTick()
+      await showFertilizationAlert()
+    }
+  }
+}
+
+async function handlePreviewRequest() {
+  const growthRequirement = (preflight.value?.conditionRequirements || []).find(requirement =>
+    isGrowthCondition(requirement.code)
+  )
+  if (growthRequirement && conditionAnswers.value[growthRequirement.code] !== true) {
+    await showGrowthConditionAlert(growthRequirement.code)
+    return
+  }
+  await createPreview()
+}
+
+async function recalculateWithAssertedDate(date) {
+  const normalizedDate = String(date || '').trim()
+  if (!normalizedDate || loading.value || !preview.value) {
+    return
+  }
+  loading.value = true
+  try {
+    if (preview.value.planId) {
+      await cancelFertilizationReminder({ planId: preview.value.planId }).catch(() => {})
+    }
+    preview.value = null
+    pendingCalendarPayload.value = null
+    await createPreview(normalizedDate)
   } finally {
     loading.value = false
   }
@@ -340,7 +525,6 @@ async function confirmPreview() {
   if (!preview.value || loading.value) {
     return
   }
-  hideCalculationTooltip()
   loading.value = true
   syncError.value = ''
   syncTerminalError.value = false
@@ -367,6 +551,16 @@ async function confirmPreview() {
       throw new Error(response?.message || '应用内同步失败')
     }
     reminder.value = response.data
+    try {
+      const refreshedResponse = await fetchFertilizationReminderFreshState(Number(props.plant.id))
+      if (refreshedResponse?.code === 200 && refreshedResponse.data?.active === true) {
+        reminder.value = refreshedResponse.data
+      } else {
+        throw new Error('提醒已保存，但最新状态暂时无法读取')
+      }
+    } catch (refreshError) {
+      syncError.value = refreshError?.message || '提醒已保存，请重新打开查看最新状态。'
+    }
     preview.value = null
     pendingCalendarPayload.value = null
     emit('changed', reminder.value)
@@ -400,7 +594,42 @@ async function cancelPreview() {
   syncTerminalError.value = false
 }
 
-async function completeReminder(extraConfirmation = false) {
+function selectFertilizerType(type) {
+  selectedType.value = type
+  preflight.value = resolveLocalConditionPreflight(type)
+  conditionAnswers.value = {}
+  fertilizerTypeChangeAcknowledged.value = false
+  syncError.value = ''
+}
+
+function setConditionAnswer({ code, value } = {}) {
+  if (!code || typeof value !== 'boolean') {
+    return
+  }
+  conditionAnswers.value = { ...conditionAnswers.value, [code]: value }
+  syncError.value = ''
+}
+
+async function handleConditionChange({ code, value } = {}) {
+  if (!code || typeof value !== 'boolean') {
+    return
+  }
+  if (value === true && isGrowthCondition(code)) {
+    await showGrowthConditionAlert(code)
+    return
+  }
+  setConditionAnswer({ code, value })
+}
+
+function isGrowthCondition(code) {
+  return ['active_growth', 'new_leaves_or_shoots'].includes(String(code || '').trim())
+}
+
+function onFertilizerTypeChange(event) {
+  fertilizerTypeChangeAcknowledged.value = Boolean(event?.detail?.value?.includes('confirmed'))
+}
+
+async function completeReminder(completion = {}) {
   if (!reminder.value || loading.value) {
     return
   }
@@ -409,9 +638,14 @@ async function completeReminder(extraConfirmation = false) {
     const response = await completeFertilizationReminder({
       plantId: Number(props.plant.id),
       planId: reminder.value.planId,
-      extraConfirmation
+      conditionAnswers: completion.conditionAnswers || {},
+      acknowledgeMinimumInterval: completion.acknowledgeMinimumInterval === true,
+      acknowledgeFertilizerTypeChange: completion.acknowledgeFertilizerTypeChange === true
     })
     if (response?.code !== 200) {
+      if (response?.data && reminder.value) {
+        reminder.value = { ...reminder.value, ...response.data }
+      }
       throw new Error(response?.message || '记录失败')
     }
     reminder.value = null
@@ -443,7 +677,7 @@ async function dismissReminder() {
     if (response?.code !== 200) {
       throw new Error(response?.message || '结束失败')
     }
-    reminder.value = null
+    await loadReminder()
     emit('changed', null)
   } catch (error) {
     uni.showToast({ title: error?.message || '结束失败', icon: 'none' })
@@ -452,27 +686,28 @@ async function dismissReminder() {
   }
 }
 
-async function confirmReconfigure() {
-  if (!reconfigureAcknowledged.value || !reminder.value) {
-    return
+async function confirmCalendarDelete() {
+  if (!calendarDeleteAcknowledged.value || !reminder.value || loading.value) {
+    return false
   }
   loading.value = true
   try {
-    const response = await dismissFertilizationReminder({
+    const response = await cancelFertilizationReminder({
       plantId: Number(props.plant.id),
       planId: reminder.value.planId,
-      reason: 'reconfigure'
+      reason: 'calendar_deleted'
     })
     if (response?.code !== 200) {
-      throw new Error(response?.message || '无法结束旧提醒')
+      throw new Error(response?.message || '删除失败')
     }
-    reminder.value = null
-    showReconfigureAck.value = false
-    reconfigureAcknowledged.value = false
-    selectedType.value = currentMonthOptions.value[0]?.type || ''
+    await loadReminder()
     emit('changed', null)
+    closeCalendarDelete()
+    uni.showToast({ title: '施肥日历提醒已移除', icon: 'success' })
+    return true
   } catch (error) {
-    uni.showToast({ title: error?.message || '无法重新设置', icon: 'none' })
+    uni.showToast({ title: error?.message || '删除失败', icon: 'none' })
+    return false
   } finally {
     loading.value = false
   }

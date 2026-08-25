@@ -62,6 +62,9 @@ function getLightHealthScore(routeEvidenceContext = {}, evidence = null) {
     evidence?.calculation?.score
   ]
   for (const value of candidates) {
+    if (value === null || value === undefined || value === '') {
+      continue
+    }
     const numberValue = Number(value)
     if (Number.isFinite(numberValue)) {
       return numberValue

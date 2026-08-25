@@ -7,8 +7,8 @@ export const USER_PLANTS_QUERY_KEY = ['http-function', 'plant-user-http', 'user-
 export const FIXTURE_PLANT_ID = 95001
 export const INDEX_PAGE = '/pages/index/index'
 export const REMINDER_PAGE = '/pages/reminder/reminder'
-export const DETAIL_PAGE = `/pages/user-plant-detail/user-plant-detail?mode=view&id=${FIXTURE_PLANT_ID}`
-export const DETAIL_ROUTE = 'pages/user-plant-detail/user-plant-detail'
+export const DETAIL_PAGE = `/subpackages/plant/user-plant-detail/user-plant-detail?mode=view&id=${FIXTURE_PLANT_ID}`
+export const DETAIL_ROUTE = 'subpackages/plant/user-plant-detail/user-plant-detail'
 
 export const FIXTURE_USER = Object.freeze({
   userId: 'e2e_fertilization_monthly_fixture_user',
@@ -144,8 +144,9 @@ export function createActiveReminder({
   fertilizerType = 'liquid',
   reminderKind = 'normal',
   isDue = false,
-  requiresExtraConfirmation = false,
-  confirmationReasons = []
+  canComplete = true,
+  requiresMinimumIntervalAcknowledgement = false,
+  conditionRequirements = []
 } = {}) {
   return {
     planId,
@@ -154,8 +155,9 @@ export function createActiveReminder({
     isDue,
     fertilizerType,
     reminderKind,
-    requiresExtraConfirmation,
-    confirmationReasons,
+    canComplete,
+    requiresMinimumIntervalAcknowledgement,
+    conditionRequirements,
     nextCheckDate: '2026-08-22',
     nextTime: '2026-08-22T09:00:00',
     ruleSnapshot: {

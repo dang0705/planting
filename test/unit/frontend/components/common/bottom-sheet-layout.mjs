@@ -10,7 +10,10 @@ const potProfileEditorSource = readFileSync(
   'src/pages/index/components/PotProfileEditor.vue',
   'utf8'
 )
-const diagnosePopupSource = readFileSync('src/components/DiagnosePopup.vue', 'utf8')
+const diagnosePopupSource = readFileSync(
+  'src/subpackages/diagnosis/components/DiagnosePopup.vue',
+  'utf8'
+)
 
 assert.match(
   bottomSheetSource,

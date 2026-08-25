@@ -14,6 +14,7 @@ export async function requestHttpFunction(
     responseType,
     enableChunked,
     timeout,
+    returnErrorResponse = false,
     onChunkReceived
   } = {}
 ) {
@@ -27,10 +28,15 @@ export async function requestHttpFunction(
     responseType,
     enableChunked,
     timeout,
+    returnErrorResponse,
     onChunkReceived
   })
 
   if (response.statusCode >= 200 && response.statusCode < 300) {
+    return response.data
+  }
+
+  if (returnErrorResponse) {
     return response.data
   }
 

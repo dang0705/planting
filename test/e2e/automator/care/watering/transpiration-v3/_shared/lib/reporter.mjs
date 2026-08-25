@@ -45,6 +45,7 @@ export function createReport(meta) {
     capturedRequests: [],
     assertions: [],
     screenshots: [],
+    screenshot_attempts: [],
     classification: null,
     blockerReason: null,
     status: 'running',
@@ -98,12 +99,37 @@ export function recordAssertion(report, name, passed, detail) {
 }
 
 /**
+ * Mark the point at which the leaf has crossed from harness/page readiness
+ * into a real product operation.  This is deliberately explicit: a selector
+ * or transport assertion alone must not be accepted as business evidence.
+ */
+export function markBusinessAssertionsReached(report) {
+  report.business_assertions_reached = true
+}
+
+/**
  * 记录截图绝对路径。
  */
 export function recordScreenshot(report, filepath) {
   if (filepath) {
     report.screenshots.push({ path: filepath, time: new Date().toISOString() })
   }
+}
+
+/**
+ * Record the bounded worker attempts for a business screenshot.  Formal live
+ * leaves must prove that their first attempt succeeded; diagnostic leaves may
+ * still retain their bounded recovery behavior, but their attempts remain
+ * visible in the raw report.
+ */
+export function recordScreenshotAttempts(report, label, attempts) {
+  if (!Array.isArray(attempts)) {
+    return
+  }
+  report.screenshot_attempts.push({
+    label: String(label || ''),
+    attempts: attempts.map(attempt => ({ ...attempt }))
+  })
 }
 
 /**
@@ -136,6 +162,7 @@ export function emitLeafReport(report) {
       failure_kind: report.failure_kind,
       business_assertions_reached: Boolean(report.business_assertions_reached),
       assertions: report.assertions,
+      screenshot_attempts: report.screenshot_attempts,
       classification: report.classification,
       blockerReason: report.blockerReason
     })

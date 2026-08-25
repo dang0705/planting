@@ -50,7 +50,13 @@ function lanFlowRunning() {
   return /dev:mp-weixin:local-functions:lan/.test(text)
 }
 
-function emptyReport({ projectPath, wsEndpoint, wxRequestUrl, observedProjectPath }) {
+function emptyReport({
+  projectPath,
+  wsEndpoint,
+  wxRequestUrl,
+  observedProjectPath,
+  runtimeChannel
+}) {
   return {
     status: 'running',
     gate: 'qa_preflight',
@@ -59,6 +65,7 @@ function emptyReport({ projectPath, wsEndpoint, wxRequestUrl, observedProjectPat
     observed_project_path: 'unavailable',
     caller_observed_project_path: observedProjectPath ? 'ignored_untrusted_input' : 'not_provided',
     wsEndpoint,
+    runtime_channel: runtimeChannel || 'interactive',
     wx_request_url: wxRequestUrl || 'unavailable',
     checks: {},
     evidence_paths: [],
@@ -133,7 +140,8 @@ function preflightChecks({
   runtimeInspector,
   lanFlowProbe,
   runtime,
-  requireIsolatedProject = false
+  requireIsolatedProject = false,
+  runtimeChannel = 'interactive'
 }) {
   if (requireIsolatedProject) {
     const snapshot = checkQaProjectSnapshot(projectPath)
@@ -166,6 +174,23 @@ function preflightChecks({
     session_log_evidence: inspectedRuntime.session_log_evidence ?? [],
     passed:
       inspectedRuntime.status === 'verified' && inspectedRuntime.project_identity_verified === true
+  }
+  const formalChannel = runtimeChannel === 'formal_qa_v3'
+  report.checks.channel = {
+    expected: formalChannel ? { ws_port: 9421, control_port: 9422 } : null,
+    observed: {
+      ws_port: Number(wsPort),
+      control_port: Number(inspectedRuntime.control_port) || null
+    },
+    passed:
+      !formalChannel || (Number(wsPort) === 9421 && Number(inspectedRuntime.control_port) === 9422)
+  }
+  if (!report.checks.channel.passed) {
+    return failure(
+      'qa_formal_channel_mismatch',
+      '正式 QA 只能使用 Automator 9421 与 DevTools control 9422',
+      report.checks.channel
+    )
   }
   if (!report.checks.project_identity.passed) {
     return failure(
@@ -286,7 +311,9 @@ export async function runQaPreflight({
   observedProjectPath,
   wsPort = 9420,
   wxRequestUrl = '',
+  requireAuthenticatedWxRequest = false,
   screenshotPath,
+  initialRoute = '',
   allowTargetedRestart = false,
   preflightTimeoutMs = PREFLIGHT_CAPTURE_TIMEOUT_MS,
   requireIsolatedProject = false,
@@ -296,6 +323,7 @@ export async function runQaPreflight({
   bootstrapExecutor = enableAutomatorForVerifiedTargetDevTools,
   lanFlowProbe = lanFlowRunning,
   portProbe = connectPort,
+  runtimeChannel = 'interactive',
   runtimeCapture = captureRendererReadyRuntimeEvidence
 }) {
   const resolvedProjectPath = normalizeRuntimePath(projectPath)
@@ -304,8 +332,34 @@ export async function runQaPreflight({
     projectPath: resolvedProjectPath,
     observedProjectPath,
     wsEndpoint,
-    wxRequestUrl
+    wxRequestUrl,
+    requireAuthenticatedWxRequest,
+    runtimeChannel
   })
+  if (runtimeChannel === 'formal_qa_v3' && Number(wsPort) !== 9421) {
+    return addFailure(
+      report,
+      failure(
+        'qa_formal_channel_mismatch',
+        '正式 QA 只能从固定 Automator 9421 入口进入，不能触碰日常调试通道',
+        {
+          expected: { ws_port: 9421, control_port: 9422 },
+          observed: { ws_port: Number(wsPort), control_port: null },
+          runtime_inspection: 'not_attempted'
+        }
+      )
+    )
+  }
+  if (requireAuthenticatedWxRequest && /\/health(?:[/?]|$)/u.test(String(wxRequestUrl || ''))) {
+    return addFailure(
+      report,
+      failure(
+        'qa_authenticated_probe_path_invalid',
+        '正式 QA 的身份探针不得使用未鉴权 health 路径',
+        { wx_request_url: wxRequestUrl }
+      )
+    )
+  }
   let runtime = preverifiedRuntime
     ? preverifiedRuntime
     : await runtimeInspector({ expectedProjectPath: resolvedProjectPath, wsPort })
@@ -342,7 +396,8 @@ export async function runQaPreflight({
     runtimeInspector,
     lanFlowProbe,
     runtime,
-    requireIsolatedProject
+    requireIsolatedProject,
+    runtimeChannel
   })
   if (earlyFailure) {
     return addFailure(report, earlyFailure)
@@ -358,6 +413,9 @@ export async function runQaPreflight({
     wsEndpoint,
     screenshotPath,
     wxRequestUrl,
+    requireAuthenticatedIdentity: requireAuthenticatedWxRequest,
+    runtimeProof: runtime,
+    initialRoute,
     screenshotTimeoutMs: PREFLIGHT_SCREENSHOT_TIMEOUT_MS
   }
   try {

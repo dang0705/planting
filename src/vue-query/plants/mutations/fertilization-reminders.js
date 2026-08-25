@@ -12,7 +12,8 @@ function buildMutationOptions(action) {
     mutationFn: async payload =>
       requestHttpFunction(`plant-user-http/user-plants/fertilization-reminders/${action}`, {
         method: 'POST',
-        body: payload
+        body: payload,
+        returnErrorResponse: true
       })
   }
 }
@@ -25,7 +26,7 @@ export async function executeFertilizationReminderMutation(action, payload = {})
     response.data?.active &&
     payload?.plantId
   ) {
-    queryClient.setQueryData(buildFertilizationReminderQueryKey(payload.plantId), response)
+    queryClient.removeQueries({ queryKey: buildFertilizationReminderQueryKey(payload.plantId) })
   }
   if (['complete', 'dismiss', 'cancel'].includes(action) && payload?.plantId) {
     queryClient.removeQueries({ queryKey: buildFertilizationReminderQueryKey(payload.plantId) })

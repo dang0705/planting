@@ -3,7 +3,7 @@ import { isAutomatorOperationError } from './automator-session-boundary.mjs'
 
 const ACTIVE_PAGE_TIMEOUT_MS = 10000
 const READINESS_RETRY_DELAY_MS = 250
-const QUESTION_PACKAGE_ROUTE = 'pages/diagnose/question-package'
+const QUESTION_PACKAGE_ROUTE = 'subpackages/diagnosis/question-package'
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 const normalizePageRoute = page => String(page?.path || '').replace(/^\//, '')
 

@@ -43,7 +43,10 @@ import {
 import { preflightProject } from '../../care/watering/transpiration-v3/_shared/lib/project-check.mjs'
 import { installFixture, restoreFixture } from '../../_shared/fertilization-monthly-fixture.mjs'
 import { verifyFertilizationCalendarScenarios } from '../../_shared/fertilization-reminder-calendar-scenarios.mjs'
-import { scrollFertilizationSheetToActions } from '../../_shared/fertilization-reminder-e2e-helpers.mjs'
+import {
+  hideNativeModal,
+  scrollFertilizationSheetToActions
+} from '../../_shared/fertilization-reminder-e2e-helpers.mjs'
 import {
   readFixtureFertilizationState,
   readFixtureRequests,
@@ -194,9 +197,9 @@ async function run() {
     )
     recordAssertion(
       report,
-      '首页弹框显示月度表适用范围和调整提示',
-        homeMonthlyText.includes('适用范围：温带室内盆栽参考（龟背竹属）') &&
-        homeMonthlyText.includes('该月不安排这类肥料的提醒')
+      '首页弹框不展示冗余适用范围和调整提示',
+      !homeMonthlyText.includes('适用范围：') &&
+        !homeMonthlyText.includes('该月不安排这类肥料的提醒')
     )
     recordAssertion(
       report,
@@ -215,41 +218,47 @@ async function run() {
     const reminderSetupText = reminderSetup ? await textOf(reminderSetup) : ''
     recordAssertion(
       report,
-      '首页弹框使用施肥提醒文案',
-      reminderSetupText.includes('设置施肥提醒') &&
-        reminderSetupText.includes('设置下次施肥提醒')
+      '首页弹框底部固定展示施肥提醒入口',
+      !reminderSetupText.includes('设置施肥提醒') && !reminderSetupText.includes('设置下次施肥提醒')
     )
 
+    const reminderEntry = await findViewById(page, 'fertilization-reminder-entry-button')
+    const reminderEntryText = await textOf(reminderEntry)
+    recordAssertion(
+      report,
+      '首页弹框底部固定展示设置下次施肥提醒入口',
+      Boolean(reminderEntry) && reminderEntryText.includes('设置下次施肥提醒')
+    )
+    if (reminderEntry) {
+      await reminderEntry.tap()
+      await sleep(300)
+    }
+    page = await mp.currentPage()
+    const reminderSetupSheet = await waitForElement(
+      page,
+      'fertilization-reminder-setup-sheet',
+      10000
+    )
     const reminderOption = await findViewById(page, 'fertilization-reminder-option-liquid')
     const reminderPreviewButton = await findViewById(page, 'fertilization-reminder-preview-button')
-    recordAssertion(report, '施肥提醒只展示当前月的固定周期选项', Boolean(reminderOption))
-    recordAssertion(report, '施肥提醒可请求提醒日期预览', Boolean(reminderPreviewButton))
+    recordAssertion(report, '点击入口后打开选择肥料底部弹框', Boolean(reminderSetupSheet))
+    recordAssertion(report, '选择肥料弹框只展示当前月的固定周期选项', Boolean(reminderOption))
+    recordAssertion(report, '选择肥料弹框可继续请求提醒日期预览', Boolean(reminderPreviewButton))
     if (reminderPreviewButton) {
       await reminderPreviewButton.tap()
       await sleep(300)
       page = await mp.currentPage()
       const reminderPreview = await findViewById(page, 'fertilization-reminder-preview')
-      const reminderTooltip = await findViewById(
-        page,
-        'fertilization-reminder-calculation-tooltip'
-      )
       const previewText = reminderPreview ? await textOf(reminderPreview) : ''
       recordAssertion(report, '施肥提醒显示提醒日期预览', Boolean(reminderPreview))
-      recordAssertion(report, '施肥提醒预览后自动显示算法说明 Tooltip', Boolean(reminderTooltip))
       recordAssertion(
         report,
-        '无历史日期时显示首次确认提醒',
-        previewText.includes('首次确认提醒') &&
-          !previewText.includes('没有可靠的上次施肥日期') &&
-          previewText.includes('确认并添加到手机日历')
+        '施肥提醒预览使用当前提醒文案且不展示算法术语',
+        /(首次确认提醒|下次施肥提醒)/u.test(previewText) &&
+          !previewText.includes('算法') &&
+          !previewText.includes('下次施肥日期')
       )
-      const tooltipDismissLayer = await findViewById(
-        page,
-        'fertilization-reminder-calculation-tooltip-dismiss-layer'
-      )
-      if (tooltipDismissLayer) {
-        await tooltipDismissLayer.tap()
-      }
+      await hideNativeModal(mp)
       await verifyFertilizationCalendarScenarios({
         mp,
         report,
@@ -342,7 +351,7 @@ async function run() {
     recordAssertion(
       report,
       '详情页月度表显示适用范围和调整提示',
-        tableText.includes('适用范围：温带室内盆栽参考（龟背竹属）') &&
+      tableText.includes('适用范围：温带室内盆栽参考（龟背竹属）') &&
         tableText.includes('该月不安排这类肥料的提醒')
     )
     recordAssertion(

@@ -38,22 +38,34 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 function assertSourceContract() {
   const reads = {
-    upload: readFileSync('src/components/diagnose-flow/DiagnoseUploadStage.vue', 'utf8'),
-    flow: readFileSync('src/components/diagnose-flow/DiagnoseFlow.vue', 'utf8'),
-    popupActions: readFileSync('src/components/diagnose-flow/popup-actions.js', 'utf8'),
-    retake: readFileSync('src/components/diagnose-flow/RetakeCard.vue', 'utf8'),
-    retakeCopy: readFileSync('src/components/diagnose-flow/retake-copy.js', 'utf8'),
-    retakeExpiry: readFileSync('src/components/diagnose-flow/retake-expiry.js', 'utf8'),
-    direction: readFileSync('src/components/diagnose-flow/DirectionChoiceCard.vue', 'utf8'),
-    submit: readFileSync('src/components/diagnose-flow/dialog-submit.js', 'utf8'),
-    packagePage: readFileSync('src/pages/diagnose/question-package.vue', 'utf8'),
-    packageContext: readFileSync('src/pages/diagnose/question-package/page-context.js', 'utf8'),
-    packageRetake: readFileSync(
-      'src/pages/diagnose/question-package/QuestionPackageRetake.vue',
+    upload: readFileSync('src/subpackages/diagnosis/diagnose-flow/DiagnoseUploadStage.vue', 'utf8'),
+    flow: readFileSync('src/subpackages/diagnosis/diagnose-flow/DiagnoseFlow.vue', 'utf8'),
+    popupActions: readFileSync('src/subpackages/diagnosis/diagnose-flow/popup-actions.js', 'utf8'),
+    retake: readFileSync('src/subpackages/diagnosis/diagnose-flow/RetakeCard.vue', 'utf8'),
+    retakeCopy: readFileSync('src/subpackages/diagnosis/diagnose-flow/retake-copy.js', 'utf8'),
+    retakeExpiry: readFileSync('src/subpackages/diagnosis/diagnose-flow/retake-expiry.js', 'utf8'),
+    direction: readFileSync(
+      'src/subpackages/diagnosis/diagnose-flow/DirectionChoiceCard.vue',
       'utf8'
     ),
-    packageRetakeFlow: readFileSync('src/pages/diagnose/question-package/retake-flow.js', 'utf8'),
-    packageSubmit: readFileSync('src/pages/diagnose/question-package/question-submit.js', 'utf8'),
+    submit: readFileSync('src/subpackages/diagnosis/diagnose-flow/dialog-submit.js', 'utf8'),
+    packagePage: readFileSync('src/subpackages/diagnosis/question-package.vue', 'utf8'),
+    packageContext: readFileSync(
+      'src/subpackages/diagnosis/question-package/page-context.js',
+      'utf8'
+    ),
+    packageRetake: readFileSync(
+      'src/subpackages/diagnosis/question-package/QuestionPackageRetake.vue',
+      'utf8'
+    ),
+    packageRetakeFlow: readFileSync(
+      'src/subpackages/diagnosis/question-package/retake-flow.js',
+      'utf8'
+    ),
+    packageSubmit: readFileSync(
+      'src/subpackages/diagnosis/question-package/question-submit.js',
+      'utf8'
+    ),
     answer: readFileSync('cloudfunctions/diagnose-http/app/diagnosis-answer-runner.js', 'utf8'),
     retakeRuntime: readFileSync(
       'cloudfunctions/diagnose-http/app/diagnosis-answer-retake-runtime.js',

@@ -56,7 +56,7 @@ import {
   resolveFormalLeafPrincipal
 } from '../_shared/formal-leaf-harness.mjs'
 const INDEX_PAGE = '/pages/index/index'
-const QUESTION_PACKAGE_PAGE = 'pages/diagnose/question-package'
+const QUESTION_PACKAGE_PAGE = 'subpackages/diagnosis/question-package'
 const QUESTION_PACKAGE_SCREENSHOT_TIMEOUT_MS = 60_000
 const QUESTION_PACKAGE_SCREENSHOT_RENDER_SETTLE_MS = 5_000
 const CASES = Object.freeze({
@@ -344,7 +344,11 @@ export async function runAirEnvironmentV2QuestionPackages() {
       }),
       { scope: 'main' }
     )
-    const principalEvidence = await installFormalLeafPrincipal({ mp, principal })
+    const principalEvidence = await installFormalLeafPrincipal({
+      mp,
+      principal,
+      env: { ...process.env, QA_CATALOG_DATA_MODE: 'fixture_diagnostic' }
+    })
     report.formal_principal = principalEvidence
     const fixtureStartup = await switchTabHomeBeforeFixture({
       mp,

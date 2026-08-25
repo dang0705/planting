@@ -112,8 +112,8 @@ const singleYellowVisualResponse = await buildPestRouteResponse({
 assert.equal(singleYellowVisualResponse.stage, 'question_package')
 assert.equal(singleYellowVisualResponse.selectedModeKey, 'yellow_leaf')
 assert.equal(singleYellowVisualResponse.questionPackage.mode, 'yellow_leaf')
-assert.equal(singleYellowVisualResponse.questionPackage.questionCount, 3)
-assert.equal(singleYellowVisualResponse.questions.length, 3)
+assert.equal(singleYellowVisualResponse.questionPackage.questionCount, 4)
+assert.equal(singleYellowVisualResponse.questions.length, 4)
 
 const singleWiltVisualRoute = resolveDiagnosisModeRoute({
   diagnosisProfile: 'full',
@@ -140,8 +140,8 @@ const singleWiltVisualResponse = await buildPestRouteResponse({
 assert.equal(singleWiltVisualResponse.stage, 'question_package')
 assert.equal(singleWiltVisualResponse.selectedModeKey, 'wilting_droop')
 assert.equal(singleWiltVisualResponse.questionPackage.mode, 'wilting_droop')
-assert.equal(singleWiltVisualResponse.questionPackage.questionCount, 5)
-assert.equal(singleWiltVisualResponse.questions.length, 5)
+assert.equal(singleWiltVisualResponse.questionPackage.questionCount, 6)
+assert.equal(singleWiltVisualResponse.questions.length, 6)
 
 const singleSpiderCandidateRoute = resolveDiagnosisModeRoute({
   diagnosisProfile: 'pest',
@@ -410,24 +410,21 @@ assert.deepEqual(
 assert.match(productionThripsResponse.visibleOutcomes[0].displayNameCn, /^可能是/)
 assert.equal(productionThripsResponse.candidateRefinementAvailable, false)
 assert.deepEqual(productionThripsResponse.directionChoices, [])
-const staleSinglePestRefinementResponse = await resolveDirectionChoiceRoundResult({
-  payload: { requestMode: 'direction_choice', selectedModeKey: 'pest' },
-  sessionId: 'diag_thrips_stale_refinement',
-  round: 2,
-  refreshedSessionState: {
-    plantContext: {},
-    visualAggregateResult: {
-      diagnosis_mode_route_result: productionThripsRoute
-    }
-  },
-  sessionState: {}
-})
-assert.equal(staleSinglePestRefinementResponse.questionRequired, false)
-assert.deepEqual(
-  staleSinglePestRefinementResponse.visibleOutcomes.map(item => item.problemKey),
-  ['thrips']
+await assert.rejects(
+  resolveDirectionChoiceRoundResult({
+    payload: { requestMode: 'direction_choice', selectedModeKey: 'thrips' },
+    sessionId: 'diag_thrips_stale_refinement',
+    round: 2,
+    refreshedSessionState: {
+      plantContext: {},
+      visualAggregateResult: {
+        diagnosis_mode_route_result: productionThripsRoute
+      }
+    },
+    sessionState: {}
+  }),
+  error => error?.statusCode === 400 && /当前会话不需要选择诊断方向/.test(error.message)
 )
-assert.deepEqual(staleSinglePestRefinementResponse.directionChoices, [])
 
 const directSpiderConfirmThripsRoute = resolveDiagnosisModeRoute({
   diagnosisProfile: 'pest',

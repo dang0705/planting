@@ -312,7 +312,7 @@ test('computeAdhocPlanner 输出 data keys 精确为 ["amountRangeMl"]', async (
  * ============================================================ */
 
 test('watering-advisor.vue 行数不超过 500', () => {
-  const vue = fs.readFileSync('src/pages/watering-advisor/watering-advisor.vue', 'utf8')
+  const vue = fs.readFileSync('src/subpackages/care/watering-advisor/watering-advisor.vue', 'utf8')
   const lineCount = vue.split('\n').length
   assert.ok(lineCount <= 500, `watering-advisor.vue 应 <= 500 行，got ${lineCount}`)
 })

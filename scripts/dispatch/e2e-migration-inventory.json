@@ -1,9 +1,9 @@
 {
   "version": 1,
   "source": {
-    "head": "bd8c472d9a7ea30e6f0b15871c5338cd0e51229b",
+    "head": "2a2f5153e9f7251fef85dced1551479380ec09ad",
     "enumeration_command": "git ls-tree -r --name-only HEAD test/e2e",
-    "tracked_head_count": 509
+    "tracked_head_count": 592
   },
   "current_roots": {
     "test/e2e": ["batch", "automator"],
@@ -114,13 +114,13 @@
     },
     {
       "source": "test/e2e/batch/watering/qa-watering-unit-alignment-final.cjs",
-      "destination": "test/e2e/automator/care/watering/reminder-dose/unit-alignment-final.cjs",
+      "destination": "test/e2e/automator/care/watering/reminder-dose/unit-alignment-final.mjs",
       "intent": "true automator leaf moved out of batch",
       "modified_after_move": false
     },
     {
       "source": "test/e2e/batch/watering/qa-watering-unit-alignment-v4.cjs",
-      "destination": "test/e2e/automator/care/watering/reminder-dose/unit-alignment-v4.cjs",
+      "destination": "test/e2e/automator/care/watering/reminder-dose/unit-alignment-v4.mjs",
       "intent": "true automator leaf moved out of batch",
       "modified_after_move": false
     }

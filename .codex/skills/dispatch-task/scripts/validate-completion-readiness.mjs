@@ -7,6 +7,7 @@ import {
   issueCompletionReadyAuthorization,
   markCompletionReady
 } from './dispatch-gate/lib/episode-state.mjs'
+import { validateAutomatorV3FinalGateManifest } from '../../../../scripts/qa/automator-v3-final-gate.mjs'
 
 const [handoffFile, implementationResultFile, postflightReportFile, runtimeQaEvidenceFile] =
   process.argv.slice(2)
@@ -63,6 +64,7 @@ const needsRuntimeQaEvidence = [
   'batch_substitute_allowed',
   'batch_only'
 ].includes(runtimeAcceptanceMode)
+const needsAutomatorV3FinalGate = handoff?.validation?.automator_v3_final_gate === true
 const forbiddenRoleReceiptFields = [
   'owner',
   'agent_identity',
@@ -80,15 +82,31 @@ const expectedAutomatorProjectPath = () => {
   }
   return mainWorkspaceMiniProgramProjectPath
 }
-const validateAutomatorProjectPath = (actualPath, label) => {
+const validateAutomatorProjectPath = (actualPath, label, runtimeRecord = null) => {
   const expectedPath = expectedAutomatorProjectPath()
+  const runtimeExpectedPath = normalizeFsPath(
+    runtimeRecord?.runtime_evidence?.expected_project_path
+  )
+  const runtimeObservedPath = normalizeFsPath(
+    runtimeRecord?.runtime_evidence?.observed_project_path
+  )
+  const runtimeIdentityVerified =
+    runtimeRecord?.runtime_evidence?.project_identity_verified === true
+  const acceptedPaths = [expectedPath]
+  if (
+    runtimeIdentityVerified &&
+    runtimeExpectedPath &&
+    runtimeExpectedPath === runtimeObservedPath
+  ) {
+    acceptedPaths.push(runtimeExpectedPath)
+  }
   need(nonEmptyString(actualPath), `${label} is required`)
   if (!nonEmptyString(actualPath)) {
     return
   }
   need(
-    normalizeFsPath(actualPath) === expectedPath,
-    `${label} must match expected projectPath: ${expectedPath}`
+    acceptedPaths.includes(normalizeFsPath(actualPath)),
+    `${label} must match expected projectPath: ${acceptedPaths.join(' or ')}`
   )
 }
 const blockers = impl.deviations_or_blockers ?? impl.blockers ?? []
@@ -145,9 +163,13 @@ if (mode === 'zcode_external' || mode === 'external_implementer') {
       'external implementation result source is required'
     )
   }
+  const authorizedMainTakeover =
+    impl.source === 'codex_recovery_after_zcode' &&
+    impl.main_takeover_authorized_by_user === true &&
+    impl.implementation_owner === 'main'
   need(
-    impl.codex_self_implementation === false,
-    'external implementation result must confirm codex_self_implementation=false'
+    impl.codex_self_implementation === false || authorizedMainTakeover,
+    'external implementation result must confirm codex_self_implementation=false unless an explicit user-authorized main takeover is recorded'
   )
 }
 need(Array.isArray(blockers), 'implementation blockers/deviations must be an array')
@@ -269,6 +291,49 @@ if (needsRuntimeQaEvidence) {
     `runtime_acceptance_mode=${runtimeAcceptanceMode} requires runtime-qa-evidence.json`
   )
 }
+if (needsAutomatorV3FinalGate) {
+  const manifestFile = handoff?.validation?.automator_v3_final_gate_manifest
+  need(
+    nonEmptyString(manifestFile),
+    'automator_v3_final_gate requires validation.automator_v3_final_gate_manifest'
+  )
+  if (nonEmptyString(manifestFile)) {
+    const manifestPath = path.resolve(repoRoot, manifestFile)
+    const finalGateArtifactRoot = path.resolve(repoRoot, '.tmp', 'dispatch-task')
+    need(
+      manifestPath.startsWith(`${finalGateArtifactRoot}${path.sep}`),
+      'automator_v3_final_gate manifest must be inside .tmp/dispatch-task'
+    )
+    need(
+      fs.existsSync(manifestPath),
+      `automator_v3_final_gate manifest does not exist: ${manifestFile}`
+    )
+    if (fs.existsSync(manifestPath)) {
+      let manifestRealpath = null
+      try {
+        manifestRealpath = fs.realpathSync(manifestPath)
+      } catch {
+        manifestRealpath = null
+      }
+      need(
+        manifestRealpath !== null &&
+          manifestRealpath.startsWith(`${finalGateArtifactRoot}${path.sep}`) &&
+          !manifestRealpath.includes(`${path.sep}.e2e-artifacts${path.sep}`),
+        'automator_v3_final_gate manifest realpath must remain inside .tmp/dispatch-task'
+      )
+      const finalGateManifest = readJson(manifestPath)
+      need(
+        finalGateManifest.dispatch_run_id === handoff.dispatch_run_id,
+        'automator_v3_final_gate manifest dispatch_run_id must match handoff'
+      )
+      const finalGate = validateAutomatorV3FinalGateManifest(finalGateManifest)
+      need(
+        finalGate.passed === true,
+        `automator_v3_final_gate must be passed: ${JSON.stringify(finalGate.errors)}`
+      )
+    }
+  }
+}
 if (runtimeQa) {
   need(isObject(runtimeQa), 'runtime-qa-evidence must be an object')
   need(
@@ -317,6 +382,7 @@ if (runtimeQa) {
       'failed/blocked runtime-qa-evidence requires failures, not_verified, or blocked_reason'
     )
   }
+  let runtimeExecutionRecord = null
   if (runtimeAcceptanceMode === 'automator_required') {
     need(
       runtimeQa.channel === 'miniprogram_automator',
@@ -350,6 +416,7 @@ if (runtimeQa) {
       )
       if (fs.existsSync(recordPath)) {
         const record = readJson(recordPath)
+        runtimeExecutionRecord = record
         need(
           record.catalog_id === runtimeQa.catalog_id,
           'qa_run_execution_record catalog_id must match runtime evidence'
@@ -399,7 +466,11 @@ if (runtimeQa) {
         )
       }
     }
-    validateAutomatorProjectPath(runtimeQa.projectPath, 'runtime-qa-evidence.projectPath')
+    validateAutomatorProjectPath(
+      runtimeQa.projectPath,
+      'runtime-qa-evidence.projectPath',
+      runtimeExecutionRecord
+    )
     need(nonEmptyString(runtimeQa.pagePath), 'runtime-qa-evidence.pagePath is required')
     const hasPort =
       Number.isInteger(runtimeQa.automator_port) ||
@@ -475,7 +546,10 @@ if (runtimeQa) {
 const selectionContract = handoff.selection_to_consumer ?? null
 const implSelection = impl.selection_to_consumer ?? null
 if (selectionContract && selectionContract.required === true) {
-  need(isObject(implSelection), 'selection_to_consumer.required=true requires implementation result selection_to_consumer evidence')
+  need(
+    isObject(implSelection),
+    'selection_to_consumer.required=true requires implementation result selection_to_consumer evidence'
+  )
   if (isObject(implSelection)) {
     need(
       Array.isArray(implSelection.values) && implSelection.values.length > 0,
@@ -510,7 +584,9 @@ if (selectionContract && selectionContract.required === true) {
   }
 } else {
   need(
-    isObject(implSelection) && implSelection.not_applicable === true && nonEmptyString(implSelection.reason),
+    isObject(implSelection) &&
+      implSelection.not_applicable === true &&
+      nonEmptyString(implSelection.reason),
     'non-selection tasks must declare selection_to_consumer.not_applicable=true with a reason'
   )
 }

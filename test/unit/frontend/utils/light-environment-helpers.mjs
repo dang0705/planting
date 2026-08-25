@@ -1,35 +1,87 @@
 import assert from 'node:assert/strict'
 
-const { compassDirectionToFacing, createDefaultLightEnvironment, getLightFacingLabel } =
-  await import('../../../../src/utils/light-environment.js')
+const {
+  createDefaultLightEnvironment,
+  describeLightEnvironment,
+  getLightEnvironmentSignature,
+  hasMeaningfulLightEnvironment,
+  isUserConfirmedLightEnvironment,
+  markLightEnvironmentAsUser,
+  migrateLegacyLightEnvironment,
+  normalizeOptionalLightEnvironment,
+  sanitizeLightEnvironment
+} = await import('../../../../src/utils/light-environment.js')
 
-const cases = [
-  [-1, 'north'],
-  [0, 'north'],
-  [22.49, 'north'],
-  [22.5, 'north_east'],
-  [67.49, 'north_east'],
-  [67.5, 'east'],
-  [112.5, 'south_east'],
-  [157.5, 'south'],
-  [202.5, 'south_west'],
-  [247.5, 'west'],
-  [292.5, 'north_west'],
-  [337.49, 'north_west'],
-  [337.5, 'north'],
-  [720, 'north']
-]
+const empty = createDefaultLightEnvironment()
+assert.equal(empty.schemaVersion, 2)
+assert.equal(empty.naturalLightType, '')
+assert.equal(hasMeaningfulLightEnvironment(empty), false)
+assert.equal(normalizeOptionalLightEnvironment(empty), null)
 
-for (const [degree, facing] of cases) {
-  assert.equal(compassDirectionToFacing(degree), facing, `degree ${degree}`)
-}
+const direct = sanitizeLightEnvironment({
+  schemaVersion: 2,
+  naturalLightType: 'direct',
+  entryMethod: 'through_glass',
+  hasSupplementalLight: true,
+  captureSource: 'user'
+})
+assert.deepEqual(direct, {
+  schemaVersion: 2,
+  naturalLightType: 'direct',
+  entryMethod: 'through_glass',
+  hasSupplementalLight: true,
+  captureSource: 'user'
+})
+assert.equal(isUserConfirmedLightEnvironment(direct), true)
+assert.match(describeLightEnvironment(direct), /直射光/)
+assert.match(describeLightEnvironment(direct), /已记录补光灯/)
 
-assert.equal(compassDirectionToFacing('not-a-number'), 'unknown')
-assert.equal(getLightFacingLabel('north_east'), '东北')
-assert.equal(getLightFacingLabel('south_east'), '东南')
-assert.equal(getLightFacingLabel('south_west'), '西南')
-assert.equal(getLightFacingLabel('north_west'), '西北')
-assert.equal(getLightFacingLabel('missing'), '不确定')
-assert.equal(createDefaultLightEnvironment().facing, 'south')
+const almostNone = sanitizeLightEnvironment({
+  ...direct,
+  naturalLightType: 'almost_none',
+  entryMethod: 'open_environment'
+})
+assert.equal(almostNone.entryMethod, null)
+assert.equal(almostNone.hasSupplementalLight, true)
 
-console.log('light environment helper tests passed')
+const migratedDirect = migrateLegacyLightEnvironment({
+  facing: 'south',
+  windowType: 'standard',
+  position: 'window_side',
+  hasDirectSun: true,
+  distance: 0.5
+})
+assert.equal(migratedDirect.naturalLightType, 'direct')
+assert.equal(migratedDirect.captureSource, 'migrated_v1')
+assert.equal(isUserConfirmedLightEnvironment(migratedDirect), false)
+
+assert.deepEqual(
+  migrateLegacyLightEnvironment({
+    facing: 'balcony',
+    windowType: 'standard',
+    position: 'middle',
+    hasDirectSun: false
+  }),
+  {
+    schemaVersion: 2,
+    naturalLightType: 'weak_diffuse',
+    entryMethod: 'open_environment',
+    hasSupplementalLight: false,
+    captureSource: 'migrated_v1'
+  }
+)
+
+const migratedGrowLight = migrateLegacyLightEnvironment({ windowType: 'grow_light' })
+assert.equal(migratedGrowLight.naturalLightType, 'almost_none')
+assert.equal(migratedGrowLight.entryMethod, null)
+assert.equal(migratedGrowLight.hasSupplementalLight, true)
+
+const confirmed = markLightEnvironmentAsUser(migratedGrowLight)
+assert.equal(confirmed.captureSource, 'user')
+assert.equal(isUserConfirmedLightEnvironment(confirmed), true)
+assert.notEqual(
+  getLightEnvironmentSignature(confirmed),
+  getLightEnvironmentSignature(migratedGrowLight)
+)
+
+console.log('light environment V2 helper tests passed')

@@ -78,10 +78,15 @@ for (const source of headAssets) {
 }
 
 for (const move of inventory.explicit_moves) {
+  const sourceIsHeadAsset = headAssets.includes(move.source)
+  const destinationIsHeadAsset = headAssets.includes(move.destination)
   need(
-    headAssets.includes(move.source),
-    `explicit move source is not a HEAD E2E asset: ${move.source}`
+    sourceIsHeadAsset || destinationIsHeadAsset,
+    `explicit move has neither a HEAD source nor a HEAD destination: ${move.source} -> ${move.destination}`
   )
+  if (!sourceIsHeadAsset && destinationIsHeadAsset) {
+    warnings.push(`historical move already landed in HEAD: ${move.source} -> ${move.destination}`)
+  }
   need(
     !move.destination.startsWith('test/e2e/batch/watering/'),
     `watering automator destination still under batch: ${move.destination}`

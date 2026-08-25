@@ -218,6 +218,21 @@ assert.equal(boundedOverall.status, 'failed_environment')
 assert.equal(boundedOverall.failures[0].code, 'preflight_transport_timeout')
 assert.equal(boundedOverall.checks.rpc_steps.overall_capture.status, 'timed_out')
 
+let formalWrongPortInspectionCalls = 0
+const formalWrongPort = await runQaPreflight({
+  projectPath: expectedProjectPath,
+  wsPort: 9420,
+  runtimeChannel: 'formal_qa_v3',
+  runtimeInspector: async () => {
+    formalWrongPortInspectionCalls += 1
+    throw new Error('formal QA must reject the daily port before inspection')
+  }
+})
+assert.equal(formalWrongPort.status, 'failed_environment')
+assert.equal(formalWrongPort.failures[0].code, 'qa_formal_channel_mismatch')
+assert.equal(formalWrongPort.details.runtime_inspection, 'not_attempted')
+assert.equal(formalWrongPortInspectionCalls, 0)
+
 let reusedCaptureEndpoint = ''
 const reusedPortReport = await runQaPreflight({
   projectPath: expectedProjectPath,

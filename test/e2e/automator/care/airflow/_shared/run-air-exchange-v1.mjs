@@ -8,7 +8,7 @@
  *   - 不得声称已完成黄叶主流程验收。
  *
  * 验收范围：
- *   - reLaunch 到 /pages/airflow/index 容器页，断言完整空气环境组件加载
+ *   - reLaunch 到 /subpackages/care/airflow/index 容器页，断言完整空气环境组件加载
  *   - 选择几乎不开、开启新风和正常开窗分别触发完成，断言结果摘要文案
  *   - 换气只保留一个动态图例槽位；几乎不开显式展示关窗图例
  *
@@ -33,14 +33,16 @@ import {
   recordPage,
   recordAssertion,
   recordScreenshot,
+  recordScreenshotAttempts,
   setClassification,
   saveReport,
-  hasFailedAssertions
+  hasFailedAssertions,
+  markBusinessAssertionsReached
 } from './lib/reporter.mjs'
 import { preflightProject } from './lib/project-check.mjs'
 import { findViewById } from '../../watering/transpiration-v3/_shared/lib/element-helpers.mjs'
 
-const AIRFLOW_PAGE = '/pages/airflow/index'
+const AIRFLOW_PAGE = '/subpackages/care/airflow/index'
 const SCREENSHOT_DIR_NAME = 'screenshots'
 
 export async function runAirExchangeV1() {
@@ -72,7 +74,8 @@ export async function runAirExchangeV1() {
     recordPage(report, AIRFLOW_PAGE)
 
     await assertStableIdsPresent(mp, page, report)
-    mp = await assertSourceFlow(mp, page, report, env)
+    markBusinessAssertionsReached(report)
+    mp = await assertSourceFlow(mp, page, report)
     mp = await captureScreenshot(mp, report, env, 'airflow-final')
 
     // 仅在未被截图环境失败终态化为 BLOCKED_ENV 时才判定 PASS/FAIL_PRODUCT，
@@ -134,7 +137,7 @@ async function assertStableIdsPresent(mp, page, report) {
   }
 }
 
-async function assertSourceFlow(mp, page, report, env) {
+async function assertSourceFlow(mp, page, report) {
   // 1. 初始完成按钮不可用（ready=false）
   // Mini Program Automator 对 HTML boolean attribute 可能返回 true / 'true' / 'disabled' / ''（空字符串）
   const component = await page.$('air-environment-assessment').catch(() => null)
@@ -344,13 +347,16 @@ async function captureScreenshot(mp, report, env, name) {
       wsEndpoint: env.wsEndpoint,
       outputPath: filepath,
       projectPath: env.projectPath,
-      expectedRoute: AIRFLOW_PAGE.slice(1)
+      expectedRoute: AIRFLOW_PAGE.slice(1),
+      maxAttempts: 1
     })
+    recordScreenshotAttempts(report, name, resumed.attempts)
     recordScreenshot(report, filepath)
     return resumed.mp
   } catch (error) {
     // 截图超时/transport 失败终态化为 BLOCKED_ENV，不静默吞掉，不误判为产品断言失败
     report.screenshot_diagnostic = error?.screenshot || null
+    recordScreenshotAttempts(report, name, error?.screenshot?.attempts)
     const screenshotReason =
       error?.screenshot?.worker_result?.error || error?.screenshot?.reason || error?.message
     setClassification(

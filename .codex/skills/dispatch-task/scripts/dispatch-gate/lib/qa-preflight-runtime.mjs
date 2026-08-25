@@ -44,6 +44,10 @@ function now() {
   return new Date().toISOString()
 }
 
+function normalizeRoute(value) {
+  return String(value?.path ?? value ?? '').replace(/^\/+/, '')
+}
+
 function stepError(step, timeoutMs) {
   const error = new Error(`preflight ${step} timed out after ${timeoutMs}ms`)
   error.code =
@@ -108,7 +112,7 @@ function nextWxRequestSlot() {
   return `__dispatchQaWxRequest_${Date.now()}_${wxRequestProbeSequence}`
 }
 
-function acceptableHealthStatus(statusCode) {
+function acceptableResponseStatus(statusCode) {
   return Number.isInteger(statusCode) && statusCode >= 200 && statusCode < 400
 }
 
@@ -135,6 +139,7 @@ export function requestFailureMessage(result, timeoutMs) {
 export async function probeWxRequest({
   miniProgram,
   url,
+  requireAuthenticatedIdentity = false,
   slot = nextWxRequestSlot(),
   timeoutMs = WX_REQUEST_TIMEOUT_MS,
   pollIntervalMs = WX_REQUEST_POLL_INTERVAL_MS,
@@ -148,51 +153,106 @@ export async function probeWxRequest({
   try {
     await evaluateStep(
       'wx_request_start',
-      function (requestSlot, requestUrl) {
-        globalThis[requestSlot] = { state: 'pending' }
-        try {
-          wx.request({
-            url: requestUrl,
-            method: 'GET',
-            success: function (response) {
-              var statusCode =
-                response && response.statusCode !== undefined ? response.statusCode : null
-              globalThis[requestSlot] = {
-                state: 'completed',
-                ok: true,
-                statusCode: statusCode
-              }
-            },
-            fail: function (error) {
-              var errorMessage = error && error.errMsg ? error.errMsg : String(error)
-              globalThis[requestSlot] = {
-                state: 'completed',
-                ok: false,
-                error: errorMessage
-              }
-            },
-            complete: function () {
-              var current = globalThis[requestSlot]
-              if (current && current.state === 'pending') {
-                globalThis[requestSlot] = {
-                  state: 'completed',
-                  ok: false,
-                  error: 'wx.request completed without success or fail result'
-                }
-              }
-            }
-          })
-        } catch (error) {
-          var message = error && error.message ? error.message : String(error)
+      function (requestSlot, requestUrl, requireIdentity) {
+        globalThis[requestSlot] = {
+          state: 'pending',
+          identity_required: requireIdentity === true,
+          identity_resolved: false
+        }
+        var finishFailure = function (message) {
           globalThis[requestSlot] = {
             state: 'completed',
             ok: false,
+            identity_required: requireIdentity === true,
+            identity_resolved: false,
             error: message
           }
         }
+        var sendRequest = function (openid) {
+          if (requireIdentity === true && !openid) {
+            finishFailure('wechat-identity 未返回有效 openid')
+            return
+          }
+          try {
+            var requestOptions = {
+              url: requestUrl,
+              method: 'GET',
+              success: function (response) {
+                var statusCode =
+                  response && response.statusCode !== undefined ? response.statusCode : null
+                var responseData = response && response.data
+                var responseCode =
+                  responseData && responseData.code !== undefined ? responseData.code : null
+                globalThis[requestSlot] = {
+                  state: 'completed',
+                  ok: true,
+                  statusCode: statusCode,
+                  response_code: responseCode,
+                  identity_required: requireIdentity === true,
+                  identity_resolved: Boolean(openid)
+                }
+              },
+              fail: function (error) {
+                var errorMessage = error && error.errMsg ? error.errMsg : String(error)
+                globalThis[requestSlot] = {
+                  state: 'completed',
+                  ok: false,
+                  identity_required: requireIdentity === true,
+                  identity_resolved: Boolean(openid),
+                  error: errorMessage
+                }
+              },
+              complete: function () {
+                var current = globalThis[requestSlot]
+                if (current && current.state === 'pending') {
+                  globalThis[requestSlot] = {
+                    state: 'completed',
+                    ok: false,
+                    identity_required: requireIdentity === true,
+                    identity_resolved: Boolean(openid),
+                    error: 'wx.request completed without success or fail result'
+                  }
+                }
+              }
+            }
+            if (openid) {
+              requestOptions.header = {
+                'x-wx-openid': openid,
+                'x-openid': openid
+              }
+            }
+            wx.request(requestOptions)
+          } catch (error) {
+            var message = error && error.message ? error.message : String(error)
+            finishFailure(message)
+          }
+        }
+        if (requireIdentity !== true) {
+          sendRequest('')
+          return { started: true, identity_required: false }
+        }
+        if (!wx.cloud || typeof wx.cloud.callFunction !== 'function') {
+          finishFailure('wx.cloud.callFunction 不可用，无法建立真实身份')
+          return { started: false, identity_required: true }
+        }
+        try {
+          wx.cloud.callFunction({
+            name: 'wechat-identity',
+            data: {},
+            success: function (result) {
+              var identity = result && result.result ? result.result : {}
+              sendRequest(identity && identity.openid ? String(identity.openid) : '')
+            },
+            fail: function (error) {
+              finishFailure(error && error.errMsg ? error.errMsg : String(error))
+            }
+          })
+        } catch (error) {
+          finishFailure(error && error.message ? error.message : String(error))
+        }
         return { started: true }
       },
-      [slot, url]
+      [slot, url, requireAuthenticatedIdentity]
     )
     while (nowMs() <= deadline) {
       const observation = await evaluateStep(
@@ -206,6 +266,9 @@ export async function probeWxRequest({
             state: value.state,
             ok: value.ok,
             statusCode: value.statusCode,
+            response_code: value.response_code,
+            identity_required: value.identity_required,
+            identity_resolved: value.identity_resolved,
             error: value.error
           }
         },
@@ -219,7 +282,11 @@ export async function probeWxRequest({
         result = {
           ...observation,
           statusCode: Number.isFinite(statusCode) ? statusCode : null,
-          passed: observation.ok === true && acceptableHealthStatus(statusCode)
+          passed:
+            observation.ok === true &&
+            acceptableResponseStatus(statusCode) &&
+            (requireAuthenticatedIdentity !== true ||
+              (observation.identity_resolved === true && Number(observation.response_code) === 200))
         }
         return result
       }
@@ -252,10 +319,10 @@ export async function probeWxRequest({
   }
 }
 
-async function connectMiniProgram(wsEndpoint) {
+async function connectMiniProgram(wsEndpoint, runtimeProof) {
   const imported = await import('miniprogram-automator')
   const automator = imported.default ?? imported
-  return connectAutomatorTransport(automator, wsEndpoint)
+  return connectAutomatorTransport(automator, wsEndpoint, { runtimeProof })
 }
 
 export async function captureRuntimeEvidence({
@@ -263,6 +330,9 @@ export async function captureRuntimeEvidence({
   wsEndpoint,
   screenshotPath,
   wxRequestUrl,
+  requireAuthenticatedIdentity = false,
+  runtimeProof = null,
+  initialRoute = '',
   connect = connectMiniProgram,
   rpcTimeoutMs = PREFLIGHT_RPC_TIMEOUT_MS,
   screenshotTimeoutMs = PREFLIGHT_SCREENSHOT_TIMEOUT_MS,
@@ -278,11 +348,56 @@ export async function captureRuntimeEvidence({
       report,
       step: 'connect',
       timeoutMs: rpcTimeoutMs,
-      action: () => connect(wsEndpoint)
+      action: () => connect(wsEndpoint, runtimeProof)
     })
     report.checks.ws.passed = true
     report.checks.automator = { passed: true, ws_endpoint: wsEndpoint }
-    const pageProbe = await withPreflightDeadline({
+    let pageProbe
+    if (initialRoute) {
+      if (typeof miniProgram.reLaunch !== 'function') {
+        const error = new Error(`Automator runtime does not expose reLaunch for ${initialRoute}`)
+        error.code = 'qa_initial_route_reset_unavailable'
+        throw error
+      }
+      const expectedRoute = normalizeRoute(initialRoute)
+      try {
+        const currentRouteProbe = await withPreflightDeadline({
+          report,
+          step: 'initial_route_probe',
+          timeoutMs: Math.min(3000, rpcTimeoutMs),
+          action: () =>
+            getCurrentPageWithFallback(miniProgram, {
+              timeoutMs: Math.min(2500, rpcTimeoutMs),
+              perRpcTimeoutMs: Math.min(1250, rpcTimeoutMs)
+            })
+        })
+        if (normalizeRoute(currentRouteProbe.page) === expectedRoute) {
+          pageProbe = currentRouteProbe
+          recordStep(report, 'initial_route_reset', {
+            status: 'passed',
+            code: 'preflight_initial_route_already_ready',
+            route: expectedRoute,
+            action: 'skipped_relaunch'
+          })
+        }
+      } catch {
+        // A not-yet-attached appservice page is handled by the normal reLaunch
+        // path below; the route probe is only an optimization for an already
+        // ready initial page.
+      }
+      if (!pageProbe) {
+        await withPreflightDeadline({
+          report,
+          step: 'initial_route_reset',
+          timeoutMs: rpcTimeoutMs,
+          action: () => miniProgram.reLaunch(initialRoute)
+        })
+        // A reLaunch acknowledgement can arrive before the new appservice page
+        // has attached. currentPage() below remains the authoritative readiness
+        // probe, so do not accept the route reset by acknowledgement alone.
+      }
+    }
+    pageProbe ||= await withPreflightDeadline({
       report,
       step: 'current_page',
       timeoutMs: rpcTimeoutMs,
@@ -292,6 +407,13 @@ export async function captureRuntimeEvidence({
           perRpcTimeoutMs: Math.min(3000, rpcTimeoutMs)
         })
     })
+    if (!report.checks.rpc_steps.current_page) {
+      recordStep(report, 'current_page', {
+        status: 'passed',
+        code: 'preflight_current_page_reused',
+        source: pageProbe.source
+      })
+    }
     const page = pageProbe.page
     report.checks.rpc_steps.current_page.source = pageProbe.source
     report.pagePath = page?.path ?? 'unavailable'
@@ -314,6 +436,7 @@ export async function captureRuntimeEvidence({
     const request = await probeRequest({
       miniProgram,
       url: wxRequestUrl,
+      requireAuthenticatedIdentity,
       evaluateStep: (step, callback, args) =>
         withPreflightDeadline({
           report,
@@ -325,6 +448,9 @@ export async function captureRuntimeEvidence({
     report.checks.wx_request = {
       passed: request.passed === true && request.cleanup?.passed === true,
       status_code: request.statusCode ?? null,
+      response_code: request.response_code ?? null,
+      identity_required: request.identity_required === true,
+      identity_resolved: request.identity_resolved === true,
       error: request.error ?? null,
       timed_out: request.timed_out === true,
       cleanup: request.cleanup,

@@ -1,5 +1,11 @@
 'use strict'
 
+// The CloudBase Node 18.15 runtime does not expose the Web File global, while
+// some transitive SDK releases load undici during startup and expect it.
+if (typeof globalThis.File !== 'function') {
+  globalThis.File = class File {}
+}
+
 const {
   jsonResponse,
   notFound,
@@ -60,10 +66,33 @@ const {
   saveUserPlantAirEnvironment
 } = require('./air-environment-service')
 const { resolveAirEnvironmentEvidence } = require('/opt/utils/air-environment-evidence')
+let normalizeUserLightContext
+try {
+  ;({ normalizeUserLightContext } = require('/opt/utils/light-exposure-normalize'))
+} catch {
+  ;({ normalizeUserLightContext } = require('../layer/utils/light-exposure-normalize'))
+}
+
+function normalizePersistedLightEnvironment(value) {
+  if (value === null || value === undefined) {
+    return null
+  }
+  const normalized = normalizeUserLightContext(value)
+  if (!normalized.hasMeaningfulInput) {
+    return null
+  }
+  return {
+    schemaVersion: 2,
+    naturalLightType: normalized.naturalLightType,
+    entryMethod: normalized.entryMethod,
+    hasSupplementalLight: normalized.hasSupplementalLight,
+    captureSource: normalized.captureSource
+  }
+}
 
 async function main(event, context) {
   const request = getHttpRequestData(event, context)
-  const path = String(request.path || '')
+  const path = String(request.path || '').split('?')[0]
   const method = request.method || 'GET'
 
   try {
@@ -307,7 +336,7 @@ async function main(event, context) {
       // v3 蒸腾间隔修正：仅影响"我的植物"下次浇水间隔（BASELINE 间隔），
       // 不影响单次浇水毫升数（amountRangeMl 由 hydration-load 独立计算），
       // 也不绕过 WET/DRY Gate 保护。默认实际生效，环境变量可显式切回影子模式。
-      // 结构化光照环境（facing/windowType/position/hasDirectSun/distance）由职责单一的小模块读取。
+      // 结构化光照环境（光型、进入方式、补光灯）由职责单一的小模块读取。
       const transpirationShadow = resolveShadowModeFromEnv(process.env)
       const lightEnvironment = await getUserPlantLightEnvironment(openid, plantId)
       // 空气交换、局部气流和设备风先在证据层分开，再以 bounded interval factor 进入 BASELINE。
@@ -451,7 +480,7 @@ async function main(event, context) {
           request.body || {},
           'lightEnvironment'
         )
-          ? request.body.lightEnvironment
+          ? normalizePersistedLightEnvironment(request.body.lightEnvironment)
           : null,
         airEnvironment: Object.prototype.hasOwnProperty.call(request.body || {}, 'airEnvironment')
           ? request.body.airEnvironment
@@ -485,7 +514,11 @@ async function main(event, context) {
       if (!id) {
         return jsonResponse(400, { code: 400, message: '缺少植物ID', data: null })
       }
-      const updated = await updateUserPlantInstance(openid, id, request.body)
+      const updates = { ...request.body }
+      if (Object.prototype.hasOwnProperty.call(updates, 'lightEnvironment')) {
+        updates.lightEnvironment = normalizePersistedLightEnvironment(updates.lightEnvironment)
+      }
+      const updated = await updateUserPlantInstance(openid, id, updates)
       const careLocation = await savePlantCareLocation({
         openid,
         plantId: id,
@@ -519,7 +552,11 @@ module.exports.main = (event, context) => {
   const appEnv = resolveRequestAppEnv(request.headers, request.query, request.body)
   return runWithRequestAppEnv(appEnv, () => main(event, context))
 }
-module.exports._test = { main, buildWateringReminderErrorDiagnostic }
+module.exports._test = {
+  main,
+  buildWateringReminderErrorDiagnostic,
+  normalizePersistedLightEnvironment
+}
 
 function sanitizeErrorMessage(error) {
   return String(error?.message || error || '')

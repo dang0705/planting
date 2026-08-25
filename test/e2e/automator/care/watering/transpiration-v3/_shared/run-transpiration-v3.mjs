@@ -35,7 +35,7 @@
  *       - 确认 active 与 shadow snapshot 完整输入签名 hash 相同
  *
  * 失败语义：任何必需断言失败，进程非零退出。
- * 连接 9420 失败 → BLOCKED_ENV，非零退出。
+ * 连接正式 QA `9421` 失败 → BLOCKED_ENV，非零退出。
  * 不自动启动/关闭/重启 DevTools。
  */
 
@@ -85,7 +85,7 @@ export async function runTranspirationV3({ forcedScenario = null } = {}) {
     baseHead
   })
 
-  // P1-2: 连接 9420 前预检 project.config.json
+  // P1-2: 连接正式 QA 9421 前预检 project.config.json
   const projectCheck = preflightProject(env.projectPath)
   if (!projectCheck.ok) {
     const report = createReport({
@@ -107,7 +107,7 @@ export async function runTranspirationV3({ forcedScenario = null } = {}) {
     process.exit(2)
   }
 
-  // 连接 9420（不自动启动 DevTools）
+  // 连接正式 QA 9421（不自动启动 DevTools）
   let mp
   try {
     console.log('[e2e] connecting to', env.wsEndpoint)
@@ -126,7 +126,7 @@ export async function runTranspirationV3({ forcedScenario = null } = {}) {
       setClassification(
         report,
         'BLOCKED_ENV',
-        `automator connect failed: ${env.wsEndpoint} — ${error.reason}. 请确认微信开发者工具已启动并开启 9420 端口（设置 → 安全设置 → 服务端口）。`
+        `automator connect failed: ${env.wsEndpoint} — ${error.reason}. 请确认 QA-owned 微信开发者工具已启动并开启 9421 端口（设置 → 安全设置 → 服务端口）。`
       )
       const reportPath = saveReport(
         report,
@@ -165,7 +165,9 @@ export async function runTranspirationV3({ forcedScenario = null } = {}) {
         scenario: 'independent',
         classification,
         blockerReason: reportInd.blockerReason,
-        reportPath
+        reportPath,
+        assertions: reportInd.assertions,
+        businessAssertionsReached: reportInd.business_assertions_reached
       })
     }
 
@@ -196,7 +198,9 @@ export async function runTranspirationV3({ forcedScenario = null } = {}) {
         scenario: 'myplant',
         classification,
         blockerReason: reportMyPlant.blockerReason,
-        reportPath
+        reportPath,
+        assertions: reportMyPlant.assertions,
+        businessAssertionsReached: reportMyPlant.business_assertions_reached
       })
     }
   } finally {
@@ -219,6 +223,7 @@ export async function runTranspirationV3({ forcedScenario = null } = {}) {
 
   const terminalResult = overallResults.find(result => result.classification !== 'PASS')
   const terminalClassification = terminalResult?.classification ?? 'PASS'
+  const assertions = overallResults.flatMap(result => result.assertions || [])
   emitLeafReport({
     status: terminalClassification === 'PASS' ? 'passed' : 'failed',
     failure_kind:
@@ -227,8 +232,10 @@ export async function runTranspirationV3({ forcedScenario = null } = {}) {
         : terminalClassification === 'PASS'
           ? null
           : 'failed_environment',
-    business_assertions_reached: overallResults.length > 0,
-    assertions: [],
+    business_assertions_reached:
+      overallResults.some(result => result.businessAssertionsReached === true) &&
+      assertions.length > 0,
+    assertions,
     classification: terminalClassification,
     blockerReason: terminalResult?.blockerReason ?? null
   })

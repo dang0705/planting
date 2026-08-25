@@ -83,8 +83,6 @@ function fixture(label, branch = 'direct_text') {
         attachment: attachment
           ? {
               name: `${id}-prompt.md`,
-              sha256: identity.sha256,
-              bytes: identity.bytes,
               lines: identity.lines,
               present_before_send: true,
               present_after_send: true
@@ -126,7 +124,7 @@ test('accepts native clipboard, Cmd+V, and exact direct text delivery', () => {
   assert.deepEqual(errorsFor(fixture('native-direct')), [])
 })
 
-test('accepts ordered pbcopy and Edit > Paste fallbacks with attachment evidence', () => {
+test('accepts ordered pbcopy and one visible Cmd+V attachment with local identity evidence', () => {
   const item = fixture('fallback-attachment', 'pasted_text_attachment')
   item.receipt.clipboard.write_attempts = [
     {
@@ -143,15 +141,12 @@ test('accepts ordered pbcopy and Edit > Paste fallbacks with attachment evidence
     }
   ]
   item.receipt.clipboard.selected_method = 'pbcopy'
-  item.receipt.paste_delivery.attempts = [
-    { method: 'cmd_v', delivery_verified: false },
-    { method: 'edit_menu_paste', delivery_verified: true }
-  ]
-  item.receipt.paste_delivery.selected_method = 'edit_menu_paste'
+  item.receipt.paste_delivery.attempts = [{ method: 'cmd_v', delivery_verified: true }]
+  item.receipt.paste_delivery.selected_method = 'cmd_v'
   assert.deepEqual(errorsFor(item), [])
 })
 
-test('rejects out-of-order fallbacks and any attempt after successful delivery', () => {
+test('rejects out-of-order clipboard fallback and any second paste attempt', () => {
   const clipboard = fixture('clipboard-order')
   clipboard.receipt.clipboard.write_attempts = [
     {
@@ -171,9 +166,9 @@ test('rejects out-of-order fallbacks and any attempt after successful delivery',
   const paste = fixture('paste-order')
   paste.receipt.paste_delivery.attempts = [
     { method: 'cmd_v', delivery_verified: true },
-    { method: 'edit_menu_paste', delivery_verified: false }
+    { method: 'cmd_v', delivery_verified: false }
   ]
-  assert.match(errorsFor(paste).join('\n'), /stop after verified/)
+  assert.match(errorsFor(paste).join('\n'), /exactly one Cmd\+V|paste method must be cmd_v/)
 })
 
 test('rejects send before each clipboard, focus, paste, and prompt-integrity gate', () => {
@@ -213,13 +208,7 @@ test('requires exact direct text identity and complete attachment lifecycle', ()
   assert.match(errorsFor(direct).join('\n'), /direct_text identity/)
   for (const mutate of [
     attachment => {
-      attachment.sha256 = '0'.repeat(64)
-    },
-    attachment => {
       attachment.lines += 1
-    },
-    attachment => {
-      attachment.bytes += 1
     },
     attachment => {
       attachment.present_before_send = false

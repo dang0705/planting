@@ -25,14 +25,16 @@ export function readLockOwner(lockPath) {
   }
 }
 
-export function canReclaimStaleLock({ lockPath, staleMs, nowMs = Date.now() }) {
+export function canReclaimStaleLock({ lockPath }) {
   try {
-    const stat = fs.statSync(lockPath)
     const ownerAlive = isProcessAlive(readLockOwner(lockPath)?.pid)
     if (!ownerAlive) {
       return true
     }
-    return nowMs - stat.mtimeMs > staleMs
+    // Age alone never proves ownership has ended. A live QA process may hold a
+    // lock across a long build or renderer recovery window; reclaiming it based
+    // only on mtime would permit a second runner to touch its DevTools session.
+    return false
   } catch {
     return false
   }

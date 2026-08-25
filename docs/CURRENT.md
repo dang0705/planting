@@ -40,57 +40,78 @@ stale_if_changed:
 
 ## 2. 默认事实源
 
-| 领域 | 当前事实源 |
-|---|---|
-| 前端入口 | `src/main.js`, `src/pages.json`, `src/manifest.json` |
-| 前端诊断页面 | `src/pages/diagnose/**`, `src/components/diagnose-flow/**`, `src/components/DiagnosePopup.vue` |
-| 前端 HTTP 函数客户端 | `src/http-functions/**`, `src/api/env.js` |
-| Vue Query 数据流 | `src/vue-query/**` |
-| 前端诊断归一化 | `src/utils/diagnose-result-normalizer.js`, `src/utils/diagnose-flow*.js` |
-| 诊断统一后端 | `cloudfunctions/diagnose-http/**` |
-| 诊断路由入口 | `cloudfunctions/diagnose-http/app.js`, `cloudfunctions/diagnose-http/app/http-router.js` |
-| 诊断主链 | `cloudfunctions/diagnose-http/domain/diagnosis-engine.js` |
-| 结果输出契约 | `cloudfunctions/diagnose-http/app/frontend-response.js`, `cloudfunctions/diagnose-http/domain/result-formatter.js`, `cloudfunctions/diagnose-http/presenters/**` |
-| 环境/schema 分流 | `src/utils/runtime-env.js`, `src/api/env.js`, `cloudfunctions/diagnose-http/db/schema-resolver.js`, `cloudfunctions/layer/utils/http.js` |
-| 本地调试/部署 | `package.json`, `scripts/dev/**`, `scripts/deploy-*.mjs`, `scripts/security/check-no-secrets.mjs` |
-| BRV/AI 工作流 | `.codex/**`, `.brvspace`, `docs/_sync-map.yml` |
+| 领域                 | 当前事实源                                                                                                                                                       |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 前端入口             | `src/main.js`, `src/pages.json`, `src/manifest.json`                                                                                                             |
+| 前端诊断页面         | `src/pages/diagnose/**`, `src/subpackages/diagnosis/diagnose-flow/**`, `src/subpackages/diagnosis/components/DiagnosePopup.vue`                                  |
+| 前端 HTTP 函数客户端 | `src/http-functions/**`, `src/api/env.js`                                                                                                                        |
+| Vue Query 数据流     | `src/vue-query/**`                                                                                                                                               |
+| 前端诊断归一化       | `src/subpackages/diagnosis/utils/diagnose-result-normalizer.js`, `src/subpackages/diagnosis/utils/diagnose-flow*.js`                                             |
+| 诊断统一后端         | `cloudfunctions/diagnose-http/**`                                                                                                                                |
+| 诊断路由入口         | `cloudfunctions/diagnose-http/app.js`, `cloudfunctions/diagnose-http/app/http-router.js`                                                                         |
+| 诊断主链             | `cloudfunctions/diagnose-http/domain/diagnosis-engine.js`                                                                                                        |
+| 结果输出契约         | `cloudfunctions/diagnose-http/app/frontend-response.js`, `cloudfunctions/diagnose-http/domain/result-formatter.js`, `cloudfunctions/diagnose-http/presenters/**` |
+| 环境/schema 分流     | `src/utils/runtime-env.js`, `src/api/env.js`, `cloudfunctions/diagnose-http/db/schema-resolver.js`, `cloudfunctions/layer/utils/http.js`                         |
+| 本地调试/部署        | `package.json`, `scripts/dev/**`, `scripts/deploy-*.mjs`, `scripts/security/check-no-secrets.mjs`                                                                |
+| BRV/AI 工作流        | `.codex/**`, `.brvspace`, `docs/_sync-map.yml`                                                                                                                   |
 
 ## 3. 当前主要模块
+
+### 3.0 Automator v3 运行边界
+
+- 正式端上 QA 使用持久测试 profile 与固定 QA 端口 `9421/9422/9424/3799/3011/9100-9107`，不接触日常 `9420`、日常 profile 或日常 DevTools 进程；9424 仅用于 QA 原生认证状态重绑定并受主进程/profile/参数所有权校验；运行平面、构建镜像、manifest、owner、lease 和截图证据均由 QA-owned 状态管理。
+- 启动 readiness 不只检查端口：QA 主进程必须使用系统安装的原生 DevTools executable/package，并带有 QA-owned、来源哈希可核验的扩展快照 `--load-extension=<QA extension snapshot>` 和对应 `--custom-devtools-frontend=<snapshot>/inspector`，再在同一 QA profile、原生 bundle 和 owner 进程树中观察到真实 `--extension-process`；profile 内的 `WeappPlugin` 不再作为扩展事实源。QA CLI 副本只作为隔离 HOME 下的 `open`/`quit` 路由适配器，不能成为 runtime executable/package。只有 manifest、`devtools_page`、`inspector` 目录、快照 marker、源哈希和扩展子进程全部成立才可进入 ready；QA 还必须在项目打开前通过固定 9424 的 QA-owned 原生认证桥接端口调用动态发现的 `getUserInfo/updateUserInfo`，核对原生状态、`userInfo_*` 持久化字段、认证世代和 identity hash；缺少扩展子进程时返回 `qa_extension_load_failed`，原生认证桥接失败时返回有界的 `qa_native_auth_*` 终态，不得把“端口已监听”当作可用。
+- 同一微信号的两个 profile 只能通过认证 broker 协调 DevTools 服务端票据，不能把文件夹隔离误认为账号隔离。日常进程必须先通过 PID、进程启动身份、固定 profile、固定 3798/9423 端口、服务 listener 所属和一次性 capability 校验；在票据进入 120 秒窗口时，broker 通过原生日常 DevTools 官方 `Tool.refreshTicket` 让日常 owner 自己续票，再只读观察 profile/session log 并发布同一代 auth generation。QA 只能消费这份共享票据，不能自行调用刷新接口；刷新调用、观察不到新代次或身份变化都会在有界窗口内阻断。两边都关闭后，QA broker 仍可刷新共享票据并保留跨重启登录态。
+- 认证模式必须区分：未由受控启动器持有 owner/capability 的日常进程是 `native_daily_read_only`，只允许安全观察；由受控启动器启动、且服务 listener 与固定端口均通过校验的日常进程是 `managed_daily_single_writer`，可通过官方 `Tool.refreshTicket` 完成持续刷新；`qa_only_shared_refresh` 只证明两边关闭后的重启复用。三者不能互相冒充。
+- 认证 broker 的写入来源只有受控 `daily`、明确的 `broker_observed_daily` 观察发布和 `qa-auth-broker` 内部刷新；旧的模糊 `broker`/legacy profile 扫描路径已被拒绝，避免从不明 profile 选票或把只读观察当成正式写入。
+- 端上“拉起即用”的最终放行仍需以当前 generation 的冷启动、真实 `wx.request`、有效 PNG、重复截图和 catalog live 叶子证据为准；unit、构建或旧截图不替代正式 runtime 证据。
+- 具体稳定性门是 3 次完整冷启动压力、同一 generation 的 5 个 warm `qa-run`，以及当前 catalog 每个 live 叶子连续 3 次 `qa-run`；warm/live preflight 必须不超过 15 秒，且不得发生重建、重开 DevTools 或恢复。
+- 3 次冷启动只是一道短门禁；最终可靠性门采用分层证据：20 次完整真实冷启动，每次检查首张有效 PNG、真实 `wx.request`、identity 和清理状态；随后在一个新 generation 上执行 1000 次快速 control-plane probe，连续检查 supervisor、lease、profile owner、固定端口、manifest、LAN owner 和 identity 不漂移。1000 次 probe 通过单个有界 Node 批处理执行，不为每次 probe 重启进程或扫描全量进程表。20 次真实冷启动与 1000 次快速 probe 必须全部通过，不能把快速 probe 冒充冷启动；真实冷启动单轮不超过 5 分钟，快速 probe 阶段不超过 10 分钟，整个可靠性门不超过 45 分钟。
+- 同号并行也有独立短门和持续门：先执行 3 次启动采样，再在受控日常单写入者 + QA 同时运行期间执行固定 30 分钟、至少 300 次控制面采样。profile realpath、端口和 owner PID 必须持续稳定，identity hash 必须一致，认证代次只能由 broker 单调刷新且 QA 必须持续来自 `broker_effective_shared`；原生日常进程、过期票据、身份变化或无法证明 owner 时只能阻断。
+- 同号并行证据还必须证明 QA 的有效票据来源是 `broker_effective_shared`；QA profile 中的旧缓存不能替代运行时消费路径证明。
+- 认证消费回执的 120 秒新鲜窗口只用于认证并行阶段的启动采样；同一 supervisor generation 的 warm/live 叶子可复用回执，但必须逐叶绑定同一 QA PID、进程启动身份、profile、identity hash、认证代次和 ticket hash，且消费时间不得晚于该叶子捕获时间。这样长套件不会因墙上时间经过而制造假失败，也不会接受旧进程或旧票据。
+- 长 live/soak 阶段不再要求单张认证票据静态覆盖整个阶段；启动时仍要求票据新鲜且日常 owner、capability、identity 均可验证。若预计会过期，broker 必须在 120 秒窗口内调用原生日常 owner 的官方 `Tool.refreshTicket`，并在最多 15 秒内观察到更高 auth generation，再在 30 秒窗口内观察到同号 QA 的精确消费回执；identity、日常 owner、代次回退、端口 ownership 或消费未出现都会立即阻断。live/soak 报告必须包含 `auth_watchdog.status=passed`，不能把“允许续期”当成“已经续期”。
+- 5 个 warm 叶子不代表全部业务覆盖；正式放行前还必须执行 `npm run qa:automator:live-matrix -- --allow-live ...`，逐一验收 catalog 当前全部 `automator_live_real_api` 叶子。live 集合由 catalog 动态决定，不能再把数量写死。diagnostic 叶子必须单独报告，不能计入 live 通过。
+- catalog live 集合也不等于全功能覆盖。`test/e2e/automator/business-coverage.json` 独立登记 `src/pages.json` 的全部注册页面和关键业务能力，并要求每个页面对应 live/diagnostic 证据；日历、提醒、光照保存回传、植物详情三模式等未形成闭环时必须保持 `blocked`，最终门禁拒绝 `status=incomplete`，不能通过增加或重复已有叶子掩盖漏测。
+- 最终放行必须再执行 `npm run qa:automator:final-gate -- --dispatch-run-id=<同一dispatch-run-id> --run-instance-id=<本次执行实例> --auth-report=<...> --cold-start-report=<...> --warm-report=<...> --live-report=<...> --soak-report=<...>`。它只接受同一 dispatch run、同一 run instance 下的 5 份机器报告，并再次核对 3 次同号采样、3 次短冷启动、5 次 warm、当前全部 live 叶子各 3 次重复执行，以及可靠性门的 20 次真实冷启动 + 1000 次快速 control-plane probe；还必须核对 live/soak 的认证续期 watchdog 没有失败。每次 preflight 的首张截图都必须在第 1 次 worker 尝试成功，发生截图重试即阻断，不得用第二次成功冒充首次成功。任何旧报告拼接、恢复/重建/重启、无效 PNG、缺少真实 `wx.request` 或清理失败都会阻断。
+- 正式 suite 必须由 `npm run qa:automator:v3-suite -- --allow-live --dispatch-run-id=<唯一dispatch-run-id>` 编排。full 模式先快速校验业务覆盖清单，发现注册页面或关键能力未覆盖就立即 `blocked`，不消耗 30 分钟认证连续采样和可靠性门；需要单独取得基础设施证据时使用 `--infra-only`，它仍执行认证、3 次短冷启动、5 次 warm、20 次真实冷启动和 1000 次快速 probe，终态只能是 `diagnostic_passed`，不得宣称拉起即用。通过业务快门后，full suite 才在同一 run lease 下执行两条证据链，最终 Gate 仍要求全部同时通过。任何阶段失败立即写出 blocked 终态并释放 lease，不从旧轮次拼接报告。单 runner 仍可用于排障，但不构成最终放行证据。
+- final gate 不只核对报告数量：manifest 中的 live 清单必须与当前 catalog 的官方 `automator_live_real_api` 集合完全一致；每个 warm/live 记录必须回指对应 `catalog_id`、`automator_live_real_api`、`persisted_real_wechat` 和非 diagnostic mutation policy；每次真实 `wx.request` 必须明确 `identity_required=true` 且 `identity_resolved=true`。PNG 证据还要通过 CRC、IHDR、IDAT 和 IEND 完整性校验，正式记录、截图和五份报告必须真实落在 `.tmp/dispatch-task/<dispatch-run-id>/qa-runs/<run-instance-id>/` 与 `.tmp/dispatch-task/<dispatch-run-id>/qa-artifacts/<run-instance-id>/` 下。
+- live 业务叶子的每一张截图也必须写入 `screenshot_attempts`，并与 `screenshots` 一一对应；每张图只能有一次 worker 尝试且第 1 次成功。业务截图第 2 次重试得到 PNG 时，live matrix 和 final gate 都阻断，不能把启动预检的首次成功与业务叶子的重试混为一谈。
 
 ### 3.1 前端
 
 - `src/pages/index/index.vue`：首页，植物卡水滴 icon 点击打开浇水提醒弹框（不再跳转日历页）。
 - `src/pages/index/components/WateringReminderSheet.vue`：浇水提醒底部弹框，含上次浇水入口、建议下次浇水 Summary、添加至日历主操作；点击上次浇水打开二级日期选择器（复用 `CareBehaviorTimeline`）。已保存提醒会回显上次设置时间和下次浇水建议。
 - `src/pages/diagnose/diagnose.vue`：五项 tab 中的诊断入口，直接复用共享 `DiagnoseFlow`；默认 `full`，可切换 `pest`，并显要展示黄叶、枯萎无图直入。
-- `src/components/diagnose-flow/**`：诊断 tab 与植物卡片弹窗共用的完整诊断内核，负责模式选择、图片、视觉请求、方向选择、题包交接、补拍和结果状态；所有可见题包统一由公共题包页承接。
-- `src/pages/diagnose/question-package.vue`：黄叶、发蔫或下垂及 1～2 题动态虫害包的公共答题页；题包只按整包 `answer_submit` 提交。
-- `src/components/DiagnosePopup.vue`：植物卡片诊断按钮使用的 BottomSheet 容器，保留 open/close/reset、植物上下文和弹窗生命周期，内部嵌入 `DiagnoseFlow`。
-- `src/pages/diagnose/result.vue`：诊断历史的只读结果承接页；不与新诊断入口页混用。
-- `src/pages/reminder/reminder.vue`：五项 tab 中的提醒页；当前仅展示浇水分支并复用 `WateringReminderSheet`，不展示未实现的施肥入口。
+- `src/subpackages/diagnosis/diagnose-flow/**`：诊断 tab 与植物卡片弹窗共用的完整诊断内核，负责模式选择、图片、视觉请求、方向选择、题包交接、补拍和结果状态；所有可见题包统一由公共题包页承接。
+- `src/subpackages/diagnosis/question-package.vue`：黄叶、发蔫或下垂及 1～2 题动态虫害包的公共答题页；题包只按整包 `answer_submit` 提交。
+- `src/subpackages/diagnosis/components/DiagnosePopup.vue`：植物卡片诊断按钮使用的 BottomSheet 容器，保留 open/close/reset、植物上下文和弹窗生命周期，内部嵌入 `DiagnoseFlow`。
+- `src/subpackages/diagnosis/result.vue`：诊断历史的只读结果承接页；不与新诊断入口页混用。
+- `src/pages/reminder/reminder.vue`：五项 tab 中的提醒页；加载真实用户植物，并分别复用 `WateringReminderSheet` 与 `FertilizationMonthlySheet` 完成浇水、施肥提醒入口和保存后刷新。
 - 诊断延续页与相关目录：历史命名不定义当前产品口径，当前以问诊题包与结果展示理解。
-- `src/pages/profile/diagnosis-review.vue`：诊断审查页面。
-- `src/pages/profile/out-of-pool-review.vue`：池外视觉候选和代理映射审查。
+- `src/subpackages/review/diagnosis-review.vue`：诊断审查分包页面。
+- `src/subpackages/review/out-of-pool-review.vue`：池外视觉候选和代理映射审查分包页面。
 - `src/http-functions/core/httpRequest.js`：统一 HTTP 云函数请求封装。
-- `src/http-functions/diagnose/client.js`：诊断主链、结果、历史、反馈、SSE 客户端。
-- `src/http-functions/diagnose/diagnosis-review.js`：诊断 review 客户端。
-- `src/http-functions/diagnose/out-of-pool-review.js`：池外候选治理客户端。
+- `src/subpackages/diagnosis/http-functions/diagnose/client.js`：诊断主链、结果、历史、反馈、SSE 客户端。
+- `src/subpackages/diagnosis/http-functions/diagnose/diagnosis-review.js`：诊断 review 客户端。
+- `src/subpackages/diagnosis/http-functions/diagnose/out-of-pool-review.js`：池外候选治理客户端。
 - `src/http-functions/storage/client.js`：诊断图片上传/删除客户端。
 
 ### 3.2 后端 CloudBase HTTP 函数
 
-| 函数 | 当前职责 |
-|---|---|
-| `diagnose-http` | 统一诊断主链、问诊题包、结果、历史、反馈、review、池外候选，含 `/diagnose` 入口路径。 |
-| `storage-http` | 诊断/植物图片上传、临时 URL、图片删除，图片后缀有 allowlist。 |
-| `identify-http` | 植物识别，当前通过百度视觉识别能力取候选。 |
-| `weather-http` | 当前天气与环境天气窗口，支持 `/weather/current`、`/weather/environment-context`、`/weather/v7/environment-context`、`/weather/health`、`/weather/recent` 与 `/weather/ingestion/recent-10d`。支持 `weather-ingestion-recent-10d` 定时触发并入库最近 10 天天气缓存。诊断模式下 `environment-context` 使用自有 recent-10d 缓存优先，`plantFeatures.weatherLightFactor10d` 参与 light 估算；未命中/读取失败时返回 `200` 且 `historicalDays` 可为空。 |
-| `plant-catalog-http` | 植物目录列表、详情、名称映射。 |
-| `plant-user-http` | 用户植物实例 CRUD，含 `/user-plants/watering-planner` 浇水规划器接口（接收 10 天浇水事件集合 + 天气数据，返回 nextWaterDate 等），以及 `/user-plants/watering-reminders` 日历创建后的提醒读写接口。 |
-| `auth-user-http` | 微信登录、手机号绑定、用户资料更新、AI quota/权限等用户能力。 |
-| `wechat-identity` | 微信 openid/unionid 相关身份桥接。 |
-| `wechat-phone` | 微信手机号解密/桥接。 |
-| `diagnosis-history-http` | 已退役；返回 410 并指向 `diagnose-http` 替代路径。 |
-| `layer` | 共享 CloudBase、HTTP、运行环境、LLM、配额、植物知识工具，含 `watering-planner.js`（浇水规划器纯计算模块，diagnose-http 与 plant-user-http 共用）。 |
+| 函数                     | 当前职责                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `diagnose-http`          | 统一诊断主链、问诊题包、结果、历史、反馈、review、池外候选，含 `/diagnose` 入口路径。                                                                                                                                                                                                                                                                                                                                                             |
+| `storage-http`           | 诊断/植物图片上传、临时 URL、图片删除，图片后缀有 allowlist。                                                                                                                                                                                                                                                                                                                                                                                     |
+| `identify-http`          | 植物识别，当前通过百度视觉识别能力取候选。                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `weather-http`           | 当前天气与环境天气窗口，支持 `/weather/current`、`/weather/environment-context`、`/weather/v7/environment-context`、`/weather/health`、`/weather/recent` 与 `/weather/ingestion/recent-10d`。支持 `weather-ingestion-recent-10d` 定时触发并入库最近 10 天天气缓存。诊断模式下 `environment-context` 使用自有 recent-10d 缓存优先，`plantFeatures.weatherLightFactor10d` 参与 light 估算；未命中/读取失败时返回 `200` 且 `historicalDays` 可为空。 |
+| `plant-catalog-http`     | 植物目录列表、详情、名称映射。                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `plant-user-http`        | 用户植物实例 CRUD，含 `/user-plants/watering-planner` 浇水规划器接口（接收 10 天浇水事件集合 + 天气数据，返回 nextWaterDate 等），以及 `/user-plants/watering-reminders` 日历创建后的提醒读写接口。                                                                                                                                                                                                                                               |
+| `auth-user-http`         | 微信登录、手机号绑定、用户资料更新、AI quota/权限等用户能力。                                                                                                                                                                                                                                                                                                                                                                                     |
+| `wechat-identity`        | 微信 openid/unionid 相关身份桥接。                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `wechat-phone`           | 微信手机号解密/桥接。                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `diagnosis-history-http` | 已退役；返回 410 并指向 `diagnose-http` 替代路径。                                                                                                                                                                                                                                                                                                                                                                                                |
+| `layer`                  | 共享 CloudBase、HTTP、运行环境、LLM、配额、植物知识工具，含 `watering-planner.js`（浇水规划器纯计算模块，diagnose-http 与 plant-user-http 共用）。                                                                                                                                                                                                                                                                                                |
 
 ## 4. 当前诊断主链
 
@@ -165,13 +186,13 @@ POST /diagnose
 
 ## 6. 环境与 schema
 
-| 场景 | 值 |
-|---|---|
-| development / dev / local / test | `cloud1_dev` |
-| production / prod | `cloud1-2grufevs395a9d5e` |
-| 前端默认 CloudBase envId | `cloud1-2grufevs395a9d5e`，可由 `VITE_CLOUDBASE_ENV_ID` 覆盖 |
-| 本地 API base | `VITE_API_BASE_URL`，生产环境禁止本地或非 HTTPS base URL |
-| 请求环境头 | `x-app-env` / `x-env` |
+| 场景                             | 值                                                           |
+| -------------------------------- | ------------------------------------------------------------ |
+| development / dev / local / test | `cloud1_dev`                                                 |
+| production / prod                | `cloud1-2grufevs395a9d5e`                                    |
+| 前端默认 CloudBase envId         | `cloud1-2grufevs395a9d5e`，可由 `VITE_CLOUDBASE_ENV_ID` 覆盖 |
+| 本地 API base                    | `VITE_API_BASE_URL`，生产环境禁止本地或非 HTTPS base URL     |
+| 请求环境头                       | `x-app-env` / `x-env`                                        |
 
 ## 7. 本地与发布入口
 

@@ -4,7 +4,7 @@
  * 项目目录预检 —— 浇水算法 v3 蒸腾间隔修正端上验收。
  *
  * 职责：
- *   - 在连接 9420 前验证 MP_PROJECT_PATH 下 project.config.json 存在
+ *   - 在连接正式 QA `9421` 前验证 MP_PROJECT_PATH 下 project.config.json 存在
  *   - 不存在时返回 BLOCKED_ENV，避免连接后才发现路径错误
  *
  * 不承载业务逻辑。

@@ -38,6 +38,13 @@ const {
 Module._load = originalModuleLoad
 
 const payload = {
+  userLightContext: {
+    schemaVersion: 2,
+    naturalLightType: 'direct',
+    entryMethod: 'open_environment',
+    hasSupplementalLight: false,
+    captureSource: 'user'
+  },
   careBehaviorTimeline: {
     referenceDate: '2026-05-27',
     dailyRecords: [
@@ -54,6 +61,11 @@ const payload = {
   },
   environmentWeatherWindow: {
     meta: { diagnosisDate: '2026-05-27' },
+    plantFeatures: {
+      weatherLightFactor10d: 1,
+      lightEvidenceInsufficient: false,
+      lightConfidence: 'high'
+    },
     historicalDays: Array.from({ length: 10 }, (_, index) => ({
       date: `2026-05-${String(17 + index).padStart(2, '0')}`,
       tempMaxC: 25,
@@ -97,7 +109,7 @@ const result = resolveRuntimeEnvironmentCarePayload({
 
 assert.equal(result.careBehaviorTimeline.dailyRecords.length, 3)
 assert.equal(result.environmentCareContext.outputs.wateringContext, 'likely_too_wet')
-assert.equal(result.environmentCareContext.outputs.fertilizingAction, 'thin_after_due')
+assert.equal(result.environmentCareContext.outputs.fertilizingAction, 'monthly_no_reliable_rule')
 assert.equal(result.environmentCareContext.historicalSummary10d.highHumidityDays, 5)
 assert.equal(result.environmentCareContext.forecastSummary15d.aboveGenusUvMaxDays, 3)
 
@@ -120,10 +132,7 @@ assert.equal(
   airOnlyResult.environmentCareContext.outputs.airEnvironmentEvidence.air_exchange_level,
   'high'
 )
-assert.notEqual(
-  airOnlyResult.environmentCareContext.outputs.transpirationIntervalFactor,
-  1
-)
+assert.notEqual(airOnlyResult.environmentCareContext.outputs.transpirationIntervalFactor, 1)
 
 const duplicatedAliasResult = resolveRuntimeEnvironmentCarePayload({
   payload: {

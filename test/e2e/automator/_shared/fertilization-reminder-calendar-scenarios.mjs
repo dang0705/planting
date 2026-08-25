@@ -5,7 +5,7 @@ import {
   waitForElement
 } from '../care/watering/transpiration-v3/_shared/lib/element-helpers.mjs'
 import {
-  dismissFertilizationCalculationTooltip,
+  hideNativeModal,
   scrollFertilizationSheetToActions
 } from './fertilization-reminder-e2e-helpers.mjs'
 
@@ -55,7 +55,7 @@ export async function verifyFertilizationCalendarScenarios({
   plantId
 }) {
   let page = await mp.currentPage()
-  await dismissFertilizationCalculationTooltip(mp)
+  await hideNativeModal(mp)
   const confirmButton = await findViewById(page, 'fertilization-reminder-calendar-confirm-button')
   recordAssertion(report, '施肥提醒可调用系统日历写入', Boolean(confirmButton))
   if (!confirmButton) {
@@ -71,6 +71,7 @@ export async function verifyFertilizationCalendarScenarios({
     ELEMENT_WAIT_TIMEOUT_MS
   )
   const savedText = await textOf(savedState)
+  recordAssertion(report, '施肥提醒可调用系统日历写入', Boolean(savedState))
   const successState = await readFixtureState(mp, fixtureSlot)
   const failureRequestStart = Array.isArray(successState?.requests)
     ? successState.requests.length
@@ -126,6 +127,17 @@ export async function verifyFertilizationCalendarScenarios({
     throw new Error('日历失败场景无法重新挂载施肥弹框')
   }
   await scrollFertilizationSheetToActions(mp)
+  const reminderEntry = await waitForElement(
+    page,
+    'fertilization-reminder-entry-button',
+    ELEMENT_WAIT_TIMEOUT_MS
+  )
+  if (!reminderEntry) {
+    throw new Error('日历失败场景未恢复设置下次施肥提醒入口')
+  }
+  await reminderEntry.tap()
+  await sleep(UI_TRANSITION_WAIT_MS)
+  page = await mp.currentPage()
   const previewButton = await waitForElement(
     page,
     'fertilization-reminder-preview-button',
@@ -136,7 +148,7 @@ export async function verifyFertilizationCalendarScenarios({
   }
   await previewButton.tap()
   await sleep(PREVIEW_WAIT_MS)
-  await dismissFertilizationCalculationTooltip(mp)
+  await hideNativeModal(mp)
   page = await mp.currentPage()
   const failedConfirmButton = await waitForElement(
     page,

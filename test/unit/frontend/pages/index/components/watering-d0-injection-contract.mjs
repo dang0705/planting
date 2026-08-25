@@ -23,9 +23,12 @@ const sheetPlannerSource = readFileSync(
   'src/pages/index/components/useWateringReminderPlanner.js',
   'utf8'
 )
-const advisorSource = readFileSync('src/pages/watering-advisor/watering-advisor.vue', 'utf8')
+const advisorSource = readFileSync(
+  'src/subpackages/care/watering-advisor/watering-advisor.vue',
+  'utf8'
+)
 const advisorWeatherSource = readFileSync(
-  'src/pages/watering-advisor/useWateringAdvisorWeather.js',
+  'src/subpackages/care/watering-advisor/useWateringAdvisorWeather.js',
   'utf8'
 )
 

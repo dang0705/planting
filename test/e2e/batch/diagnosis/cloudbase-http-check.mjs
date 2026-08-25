@@ -45,7 +45,9 @@ const FUNCTION_BASE_URL = String(process.env.TERMINAL_E2E_FUNCTION_BASE_URL || '
 
 function parseArgs(argv = []) {
   return argv.reduce((result, arg) => {
-    if (!arg.startsWith('--')) {return result}
+    if (!arg.startsWith('--')) {
+      return result
+    }
 
     const [rawKey, ...rest] = arg.slice(2).split('=')
     const key = rawKey.trim()
@@ -89,22 +91,24 @@ async function writeCachedAuthResult(authResult = null) {
   await fs.mkdir(path.dirname(AUTH_CACHE_PATH), { recursive: true })
   await fs.writeFile(
     AUTH_CACHE_PATH,
-    JSON.stringify({
-      access_token: accessToken,
-      token_type: String(authResult?.token_type || 'Bearer').trim() || 'Bearer',
-      scope: String(authResult?.scope || 'anonymous').trim() || 'anonymous',
-      expires_at: expiresAt,
-      sub: String(authResult?.sub || '').trim()
-    }, null, 2),
+    JSON.stringify(
+      {
+        access_token: accessToken,
+        token_type: String(authResult?.token_type || 'Bearer').trim() || 'Bearer',
+        scope: String(authResult?.scope || 'anonymous').trim() || 'anonymous',
+        expires_at: expiresAt,
+        sub: String(authResult?.sub || '').trim()
+      },
+      null,
+      2
+    ),
     'utf8'
   )
 }
 
 function resolveInjectedAuthResult(args = {}) {
   const accessToken = String(
-    args['access-token'] ||
-      process.env.CLOUDBASE_TEST_ACCESS_TOKEN ||
-      ''
+    args['access-token'] || process.env.CLOUDBASE_TEST_ACCESS_TOKEN || ''
   ).trim()
   if (!accessToken) {
     return null
@@ -112,32 +116,28 @@ function resolveInjectedAuthResult(args = {}) {
 
   return {
     access_token: accessToken,
-    token_type: String(
-      args['access-token-type'] ||
-        process.env.CLOUDBASE_TEST_ACCESS_TOKEN_TYPE ||
-        'Bearer'
-    ).trim() || 'Bearer',
-    scope: String(
-      args['access-token-scope'] ||
-        process.env.CLOUDBASE_TEST_ACCESS_TOKEN_SCOPE ||
-        'anonymous'
-    ).trim() || 'anonymous',
-    expires_in: Number(
-      args['access-token-expires-in'] ||
-        process.env.CLOUDBASE_TEST_ACCESS_TOKEN_EXPIRES_IN ||
-        0
-    ) || 0,
+    token_type:
+      String(
+        args['access-token-type'] || process.env.CLOUDBASE_TEST_ACCESS_TOKEN_TYPE || 'Bearer'
+      ).trim() || 'Bearer',
+    scope:
+      String(
+        args['access-token-scope'] || process.env.CLOUDBASE_TEST_ACCESS_TOKEN_SCOPE || 'anonymous'
+      ).trim() || 'anonymous',
+    expires_in:
+      Number(
+        args['access-token-expires-in'] || process.env.CLOUDBASE_TEST_ACCESS_TOKEN_EXPIRES_IN || 0
+      ) || 0,
     sub: String(
-      args['access-token-sub'] ||
-        process.env.CLOUDBASE_TEST_ACCESS_TOKEN_SUB ||
-        args.openid ||
-        ''
+      args['access-token-sub'] || process.env.CLOUDBASE_TEST_ACCESS_TOKEN_SUB || args.openid || ''
     ).trim()
   }
 }
 
 function safeJsonParse(value, fallback) {
-  if (!value) {return fallback}
+  if (!value) {
+    return fallback
+  }
   try {
     return JSON.parse(value)
   } catch (error) {
@@ -150,7 +150,9 @@ function sleep(ms = 0) {
 }
 
 function normalizeText(value = '') {
-  return String(value || '').trim().toLowerCase()
+  return String(value || '')
+    .trim()
+    .toLowerCase()
 }
 
 function normalizeObservedSymptomsInput(observedSymptoms = []) {
@@ -166,7 +168,10 @@ function normalizeObservedSymptomsInput(observedSymptoms = []) {
     .filter(item => item.symptomKey)
 }
 
-function buildObservedEvidenceSetFromSymptoms(observedSymptoms = [], { idPrefix = 'terminal_input' } = {}) {
+function buildObservedEvidenceSetFromSymptoms(
+  observedSymptoms = [],
+  { idPrefix = 'terminal_input' } = {}
+) {
   return normalizeObservedSymptomsInput(observedSymptoms).map((item, index) => ({
     observedEvidenceSetId: `${idPrefix}::${item.symptomKey || `evidence_${index + 1}`}`,
     evidenceKey: item.symptomKey,
@@ -187,9 +192,7 @@ function normalizeObservedEvidenceSetInput(
   const explicitEvidenceItems = (Array.isArray(observedEvidenceSet) ? observedEvidenceSet : [])
     .map((item, index) => {
       const symptomKey = String(item?.symptomKey || item?.symptom_key || '').trim()
-      const evidenceKey = String(
-        item?.evidenceKey || item?.evidence_key || symptomKey || ''
-      ).trim()
+      const evidenceKey = String(item?.evidenceKey || item?.evidence_key || symptomKey || '').trim()
       const observedEvidenceSetId = String(
         item?.observedEvidenceSetId ||
           item?.observed_evidence_set_id ||
@@ -199,7 +202,9 @@ function normalizeObservedEvidenceSetInput(
       return {
         observedEvidenceSetId,
         evidenceKey,
-        evidenceType: String(item?.evidenceType || item?.evidence_type || '').trim() || (symptomKey ? 'symptom' : ''),
+        evidenceType:
+          String(item?.evidenceType || item?.evidence_type || '').trim() ||
+          (symptomKey ? 'symptom' : ''),
         symptomKey,
         symptomCn: String(
           item?.symptomCn ||
@@ -213,8 +218,12 @@ function normalizeObservedEvidenceSetInput(
         confidence: Number(item?.confidence || 0),
         sourceType: String(item?.sourceType || item?.source_type || 'user_answer').trim(),
         currentStatus: String(item?.currentStatus || item?.current_status || 'active').trim(),
-        targetLayer: String(item?.targetLayer || item?.target_layer || 'observed_evidence_set').trim(),
-        parentEvidenceKey: String(item?.parentEvidenceKey || item?.parent_evidence_key || '').trim(),
+        targetLayer: String(
+          item?.targetLayer || item?.target_layer || 'observed_evidence_set'
+        ).trim(),
+        parentEvidenceKey: String(
+          item?.parentEvidenceKey || item?.parent_evidence_key || ''
+        ).trim(),
         sourceRecordId: String(item?.sourceRecordId || item?.source_record_id || '').trim()
       }
     })
@@ -311,7 +320,9 @@ function toBase64Url(value) {
 }
 
 function fromBase64Url(value) {
-  const normalized = String(value || '').replace(/-/g, '+').replace(/_/g, '/')
+  const normalized = String(value || '')
+    .replace(/-/g, '+')
+    .replace(/_/g, '/')
   const pad = normalized.length % 4 === 0 ? '' : '='.repeat(4 - (normalized.length % 4))
   return Buffer.from(`${normalized}${pad}`, 'base64').toString('utf8')
 }
@@ -319,12 +330,18 @@ function fromBase64Url(value) {
 function parsePublicId(prefix, publicId) {
   const full = String(publicId || '')
   const marker = `${prefix}_`
-  if (!full.startsWith(marker)) {return ''}
+  if (!full.startsWith(marker)) {
+    return ''
+  }
   const encoded = full.slice(marker.length)
-  if (!encoded || !/^[A-Za-z0-9_-]+$/.test(encoded)) {return ''}
+  if (!encoded || !/^[A-Za-z0-9_-]+$/.test(encoded)) {
+    return ''
+  }
 
   const decoded = fromBase64Url(encoded)
-  if (!decoded || toBase64Url(decoded) !== encoded) {return ''}
+  if (!decoded || toBase64Url(decoded) !== encoded) {
+    return ''
+  }
   return decoded
 }
 
@@ -366,9 +383,7 @@ function parseCsvArg(value = '') {
 }
 
 function normalizeTextList(values = []) {
-  return (Array.isArray(values) ? values : [])
-    .map(item => normalizeText(item))
-    .filter(Boolean)
+  return (Array.isArray(values) ? values : []).map(item => normalizeText(item)).filter(Boolean)
 }
 
 function pickFirstArgValue(args = {}, keys = []) {
@@ -412,7 +427,9 @@ function assertExpectedGovernanceFields(scope, payload = {}, expectations = {}) 
 
   for (const [fieldKey, fieldLabel] of fieldSpecs) {
     const expectedValue = normalizeText(expectations?.[fieldKey] || '')
-    if (!expectedValue) {continue}
+    if (!expectedValue) {
+      continue
+    }
 
     const actualValue = String(payload?.[fieldKey] || '').trim()
     assertCondition(actualValue, `${scope} ${fieldLabel} 缺失`)
@@ -439,14 +456,14 @@ function assertCompactRuntimeArtifacts(scope, payload = {}) {
   const stage = normalizeText(payload?.stage || '')
   const status = normalizeText(payload?.status || '')
 
-  assertCondition(normalizeText(payload?.diagnosisSessionId || ''), `${scope} diagnosisSessionId 缺失`)
+  assertCondition(
+    normalizeText(payload?.diagnosisSessionId || ''),
+    `${scope} diagnosisSessionId 缺失`
+  )
   assertCondition(normalizeText(payload?.roundId || ''), `${scope} roundId 缺失`)
   assertCondition(['followup', 'final'].includes(stage), `${scope} stage 异常: ${stage}`)
   assertCondition(status, `${scope} status 缺失`)
-  assertCondition(
-    payload?.uiHints && typeof payload.uiHints === 'object',
-    `${scope} uiHints 缺失`
-  )
+  assertCondition(payload?.uiHints && typeof payload.uiHints === 'object', `${scope} uiHints 缺失`)
 
   if (stage === 'followup') {
     assertCondition(Array.isArray(payload?.questions), `${scope} questions 缺失`)
@@ -473,18 +490,40 @@ function assertFormalRuntimeArtifacts(scope, payload = {}) {
   const stage = normalizeText(payload?.stage || '')
   const routePrimaryAction = normalizeText(payload?.routePrimaryAction || '')
 
-  assertCondition(questionPackageSnapshot && typeof questionPackageSnapshot === 'object', `${scope} questionPackageSnapshot 缺失`)
+  assertCondition(
+    questionPackageSnapshot && typeof questionPackageSnapshot === 'object',
+    `${scope} questionPackageSnapshot 缺失`
+  )
   assertCondition(stopState && typeof stopState === 'object', `${scope} stopState 缺失`)
-  assertCondition(outputEligibility && typeof outputEligibility === 'object', `${scope} outputEligibility 缺失`)
+  assertCondition(
+    outputEligibility && typeof outputEligibility === 'object',
+    `${scope} outputEligibility 缺失`
+  )
   assertCondition(Array.isArray(diagnosticTrace), `${scope} diagnosticTrace 缺失`)
   assertCondition(coreProcess && typeof coreProcess === 'object', `${scope} coreProcess 缺失`)
-  assertCondition(coreProcess?.visual && typeof coreProcess.visual === 'object', `${scope} coreProcess.visual 缺失`)
-  assertCondition(coreProcess?.evidence && typeof coreProcess.evidence === 'object', `${scope} coreProcess.evidence 缺失`)
-  assertCondition(coreProcess?.followUp && typeof coreProcess.followUp === 'object', `${scope} coreProcess.followUp 缺失`)
-  assertCondition(coreProcess?.decision && typeof coreProcess.decision === 'object', `${scope} coreProcess.decision 缺失`)
-  assertCondition(Array.isArray(questionPackageSnapshot?.questionItems), `${scope} questionPackageSnapshot.questionItems 不是数组`)
   assertCondition(
-    coreProcess?.followUp?.questionPackageSnapshot && typeof coreProcess.followUp.questionPackageSnapshot === 'object',
+    coreProcess?.visual && typeof coreProcess.visual === 'object',
+    `${scope} coreProcess.visual 缺失`
+  )
+  assertCondition(
+    coreProcess?.evidence && typeof coreProcess.evidence === 'object',
+    `${scope} coreProcess.evidence 缺失`
+  )
+  assertCondition(
+    coreProcess?.followUp && typeof coreProcess.followUp === 'object',
+    `${scope} coreProcess.followUp 缺失`
+  )
+  assertCondition(
+    coreProcess?.decision && typeof coreProcess.decision === 'object',
+    `${scope} coreProcess.decision 缺失`
+  )
+  assertCondition(
+    Array.isArray(questionPackageSnapshot?.questionItems),
+    `${scope} questionPackageSnapshot.questionItems 不是数组`
+  )
+  assertCondition(
+    coreProcess?.followUp?.questionPackageSnapshot &&
+      typeof coreProcess.followUp.questionPackageSnapshot === 'object',
     `${scope} coreProcess.followUp.questionPackageSnapshot 缺失`
   )
   assertCondition(
@@ -492,7 +531,8 @@ function assertFormalRuntimeArtifacts(scope, payload = {}) {
     `${scope} coreProcess.decision.stopState 缺失`
   )
   assertCondition(
-    coreProcess?.decision?.outputEligibility && typeof coreProcess.decision.outputEligibility === 'object',
+    coreProcess?.decision?.outputEligibility &&
+      typeof coreProcess.decision.outputEligibility === 'object',
     `${scope} coreProcess.decision.outputEligibility 缺失`
   )
   assertCondition(
@@ -509,11 +549,14 @@ function assertFormalRuntimeArtifacts(scope, payload = {}) {
     `${scope} coreProcess routePrimaryAction 不一致`
   )
   assertCondition(
-    normalizeText(coreProcess?.decision?.stopReason || '') === normalizeText(payload?.stopReason || ''),
+    normalizeText(coreProcess?.decision?.stopReason || '') ===
+      normalizeText(payload?.stopReason || ''),
     `${scope} coreProcess stopReason 不一致`
   )
   assertCondition(
-    diagnosticTrace.some(item => normalizeText(item?.eventType || '') === 'question_package_snapshot_evaluated'),
+    diagnosticTrace.some(
+      item => normalizeText(item?.eventType || '') === 'question_package_snapshot_evaluated'
+    ),
     `${scope} diagnosticTrace 缺少 question_package_snapshot_evaluated`
   )
   assertCondition(
@@ -521,14 +564,25 @@ function assertFormalRuntimeArtifacts(scope, payload = {}) {
     `${scope} diagnosticTrace 缺少 stop_state_formed`
   )
   assertCondition(
-    diagnosticTrace.some(item => normalizeText(item?.eventType || '') === 'output_eligibility_evaluated'),
+    diagnosticTrace.some(
+      item => normalizeText(item?.eventType || '') === 'output_eligibility_evaluated'
+    ),
     `${scope} diagnosticTrace 缺少 output_eligibility_evaluated`
   )
 
   if (stage === 'followup') {
-    assertCondition(Number(outputEligibility?.eligible || 0) === 0, `${scope} followup outputEligibility 不应可输出`)
-    assertCondition(Number(stopState?.isStopped || 0) === 0, `${scope} followup stopState 不应已停止`)
-    assertCondition(Number(stopState?.allowMoreQuestions || 0) === 1, `${scope} followup 应允许继续追问`)
+    assertCondition(
+      Number(outputEligibility?.eligible || 0) === 0,
+      `${scope} followup outputEligibility 不应可输出`
+    )
+    assertCondition(
+      Number(stopState?.isStopped || 0) === 0,
+      `${scope} followup stopState 不应已停止`
+    )
+    assertCondition(
+      Number(stopState?.allowMoreQuestions || 0) === 1,
+      `${scope} followup 应允许继续追问`
+    )
     assertCondition(
       Number(questionPackageSnapshot?.activeItemCount || 0) > 0,
       `${scope} followup questionPackageSnapshot.activeItemCount 应大于 0`
@@ -537,9 +591,18 @@ function assertFormalRuntimeArtifacts(scope, payload = {}) {
 
   if (stage === 'final') {
     assertCondition(Number(stopState?.isStopped || 0) === 1, `${scope} final stopState 应已停止`)
-    assertCondition(Number(outputEligibility?.eligible || 0) === 1, `${scope} final outputEligibility 应可输出`)
-    assertCondition(Number(questionPackageSnapshot?.activeItemCount || 0) === 0, `${scope} final questionPackageSnapshot.activeItemCount 应为 0`)
-    assertCondition(Array.isArray(payload?.derivedEvidenceSet), `${scope} final derivedEvidenceSet 缺失`)
+    assertCondition(
+      Number(outputEligibility?.eligible || 0) === 1,
+      `${scope} final outputEligibility 应可输出`
+    )
+    assertCondition(
+      Number(questionPackageSnapshot?.activeItemCount || 0) === 0,
+      `${scope} final questionPackageSnapshot.activeItemCount 应为 0`
+    )
+    assertCondition(
+      Array.isArray(payload?.derivedEvidenceSet),
+      `${scope} final derivedEvidenceSet 缺失`
+    )
     assertCondition(
       payload?.careBaselineSummary && typeof payload.careBaselineSummary === 'object',
       `${scope} final careBaselineSummary 缺失`
@@ -551,15 +614,21 @@ function assertFormalRuntimeArtifacts(scope, payload = {}) {
   }
 
   if (stage === 'followup' && routePrimaryAction === 'retake_first') {
-    const hasRetakeItem = (Array.isArray(questionPackageSnapshot?.questionItems) ? questionPackageSnapshot.questionItems : []).some(
-      item => normalizeText(item?.questionGroupKey || '') === 'retake_capture'
+    const hasRetakeItem = (
+      Array.isArray(questionPackageSnapshot?.questionItems)
+        ? questionPackageSnapshot.questionItems
+        : []
+    ).some(item => normalizeText(item?.questionGroupKey || '') === 'retake_capture')
+    assertCondition(
+      hasRetakeItem,
+      `${scope} retake_first 缺少 retake_capture questionPackageSnapshot 项`
     )
-    assertCondition(hasRetakeItem, `${scope} retake_first 缺少 retake_capture questionPackageSnapshot 项`)
   }
 }
 
 function resolveImageSuffix(imagePath = '') {
-  const suffix = path.extname(String(imagePath || ''))
+  const suffix = path
+    .extname(String(imagePath || ''))
     .trim()
     .toLowerCase()
     .replace(/^\./, '')
@@ -578,7 +647,9 @@ function normalizePositiveIntegerArg(value, fallback = 0) {
 
 function buildSmokeUploadCompressionTrace(imageFile = {}) {
   const compression = imageFile?.compression || null
-  if (!compression || typeof compression !== 'object') {return null}
+  if (!compression || typeof compression !== 'object') {
+    return null
+  }
   const originalSizeBytes = Number(compression.originalSizeBytes || imageFile.originalSize || 0)
   const uploadedSizeBytes = Number(compression.uploadedSizeBytes || imageFile.size || 0)
   return {
@@ -630,7 +701,10 @@ async function maybeCompressSmokeImage(resolvedPath, suffix, originalBuffer, arg
   }
 
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'diagnose-smoke-image-'))
-  const outPath = path.join(tmpDir, `${path.basename(resolvedPath, path.extname(resolvedPath))}.jpg`)
+  const outPath = path.join(
+    tmpDir,
+    `${path.basename(resolvedPath, path.extname(resolvedPath))}.jpg`
+  )
 
   try {
     await execFileAsync(
@@ -714,10 +788,13 @@ async function readImageAsDataUrl(imagePath = '', args = {}) {
 async function readImageFiles(args = {}) {
   const imagePaths = parseCsvArg(args['image-paths'])
   const fallbackPath = String(args['image-path'] || '').trim()
-  const resolvedPaths = imagePaths.length ? imagePaths : (fallbackPath ? [fallbackPath] : [])
+  const resolvedPaths = imagePaths.length ? imagePaths : fallbackPath ? [fallbackPath] : []
 
   assertCondition(resolvedPaths.length > 0, '缺少 --image-path 或 --image-paths')
-  assertCondition(resolvedPaths.length <= 5, `视觉 smoke 最多支持 5 张图，当前 ${resolvedPaths.length} 张`)
+  assertCondition(
+    resolvedPaths.length <= 5,
+    `视觉 smoke 最多支持 5 张图，当前 ${resolvedPaths.length} 张`
+  )
 
   const files = []
   for (const imagePath of resolvedPaths) {
@@ -731,7 +808,10 @@ function resolveSlotTypeList(args = {}, imageCount = 0) {
   const explicitSlotTypes = parseCsvArg(args['input-slot-types']).map(item => normalizeText(item))
 
   return Array.from({ length: imageCount }, (_, index) => {
-    const slotType = explicitSlotTypes[index] || PRIMARY_SLOT_SEQUENCE[index] || PRIMARY_SLOT_SEQUENCE[PRIMARY_SLOT_SEQUENCE.length - 1]
+    const slotType =
+      explicitSlotTypes[index] ||
+      PRIMARY_SLOT_SEQUENCE[index] ||
+      PRIMARY_SLOT_SEQUENCE[PRIMARY_SLOT_SEQUENCE.length - 1]
     return SLOT_LABEL_MAP[slotType] ? slotType : 'unknown'
   })
 }
@@ -766,7 +846,9 @@ function buildFunctionUrl(envId, path, query = {}) {
   const url = new URL(normalizedPath, baseUrl)
 
   Object.entries(query || {}).forEach(([key, value]) => {
-    if (value === undefined || value === null || value === '') {return}
+    if (value === undefined || value === null || value === '') {
+      return
+    }
     url.searchParams.set(key, String(value))
   })
   if (!FUNCTION_BASE_URL) {
@@ -806,14 +888,17 @@ async function signInAnonymously(envId, deviceId) {
 
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     try {
-      const response = await requestJson(`https://${envId}.api.tcloudbasegateway.com/auth/v1/signin/anonymously`, {
-        method: 'POST',
-        headers: {
-          'x-device-id': deviceId,
-          'Content-Type': 'application/json'
-        },
-        body: '{}'
-      })
+      const response = await requestJson(
+        `https://${envId}.api.tcloudbasegateway.com/auth/v1/signin/anonymously`,
+        {
+          method: 'POST',
+          headers: {
+            'x-device-id': deviceId,
+            'Content-Type': 'application/json'
+          },
+          body: '{}'
+        }
+      )
 
       if (!response.ok) {
         throw new Error(`匿名登录失败: HTTP ${response.status} ${response.text}`)
@@ -837,9 +922,15 @@ async function signInAnonymously(envId, deviceId) {
   throw lastError || new Error('匿名登录失败')
 }
 
-async function requestJson(url, { method = 'GET', headers = {}, body = undefined, timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS } = {}) {
+async function requestJson(
+  url,
+  { method = 'GET', headers = {}, body = undefined, timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS } = {}
+) {
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), Math.max(1000, Number(timeoutMs || DEFAULT_REQUEST_TIMEOUT_MS)))
+  const timeout = setTimeout(
+    () => controller.abort(),
+    Math.max(1000, Number(timeoutMs || DEFAULT_REQUEST_TIMEOUT_MS))
+  )
 
   try {
     const response = await fetch(url, {
@@ -856,7 +947,11 @@ async function requestJson(url, { method = 'GET', headers = {}, body = undefined
     }
   } catch (error) {
     const message = String(error?.message || error || '').toLowerCase()
-    if (!message.includes('fetch failed') && !message.includes('aborted') && !message.includes('timeout')) {
+    if (
+      !message.includes('fetch failed') &&
+      !message.includes('aborted') &&
+      !message.includes('timeout')
+    ) {
       throw error
     }
     if (!USE_CURL_FALLBACK) {
@@ -868,8 +963,17 @@ async function requestJson(url, { method = 'GET', headers = {}, body = undefined
   }
 }
 
-async function requestJsonViaCurl(url, { method = 'GET', headers = {}, body = undefined, timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS } = {}) {
-  const curlArgs = ['-sS', '--max-time', String(Math.max(1, Math.ceil(Number(timeoutMs || DEFAULT_REQUEST_TIMEOUT_MS) / 1000))), '-X', method]
+async function requestJsonViaCurl(
+  url,
+  { method = 'GET', headers = {}, body = undefined, timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS } = {}
+) {
+  const curlArgs = [
+    '-sS',
+    '--max-time',
+    String(Math.max(1, Math.ceil(Number(timeoutMs || DEFAULT_REQUEST_TIMEOUT_MS) / 1000))),
+    '-X',
+    method
+  ]
   if (CURL_RESOLVE_IP) {
     try {
       const parsedUrl = new URL(url)
@@ -882,7 +986,9 @@ async function requestJsonViaCurl(url, { method = 'GET', headers = {}, body = un
   }
 
   Object.entries(headers || {}).forEach(([key, value]) => {
-    if (value === undefined || value === null || value === '') {return}
+    if (value === undefined || value === null || value === '') {
+      return
+    }
     curlArgs.push('-H', `${key}: ${value}`)
   })
 
@@ -913,16 +1019,20 @@ async function requestJsonViaCurl(url, { method = 'GET', headers = {}, body = un
   }
 }
 
-async function callFunction(envId, token, {
-  path,
-  method = 'GET',
-  query = {},
-  body = null,
-  openid = '',
-  appEnv = '',
-  terminalE2E = false,
-  skipAuth = false
-}) {
+async function callFunction(
+  envId,
+  token,
+  {
+    path,
+    method = 'GET',
+    query = {},
+    body = null,
+    openid = '',
+    appEnv = '',
+    terminalE2E = false,
+    skipAuth = false
+  }
+) {
   const normalizedMethod = String(method || 'GET').toUpperCase()
   const headers = {
     'Content-Type': 'application/json'
@@ -947,9 +1057,7 @@ async function callFunction(envId, token, {
 
   const normalizedQuery = { ...query }
   const normalizedBody =
-    body && typeof body === 'object' && !Array.isArray(body)
-      ? { ...body }
-      : body
+    body && typeof body === 'object' && !Array.isArray(body) ? { ...body } : body
 
   if (skipAuth) {
     normalizedQuery.skipAuth = 'true'
@@ -964,12 +1072,11 @@ async function callFunction(envId, token, {
     }
   }
 
-  const {
-    requestMethod,
-    requestQuery,
-    requestHeaders,
-    logicalMethod
-  } = resolveHttpMethodTransport(normalizedMethod, normalizedQuery, headers)
+  const { requestMethod, requestQuery, requestHeaders, logicalMethod } = resolveHttpMethodTransport(
+    normalizedMethod,
+    normalizedQuery,
+    headers
+  )
   const url = buildFunctionUrl(envId, path, requestQuery)
 
   const response = await requestJson(url.toString(), {
@@ -995,16 +1102,20 @@ async function callFunction(envId, token, {
   }
 }
 
-async function callFunctionSse(envId, token, {
-  path,
-  method = 'POST',
-  query = {},
-  body = null,
-  openid = '',
-  appEnv = '',
-  terminalE2E = false,
-  skipAuth = false
-}) {
+async function callFunctionSse(
+  envId,
+  token,
+  {
+    path,
+    method = 'POST',
+    query = {},
+    body = null,
+    openid = '',
+    appEnv = '',
+    terminalE2E = false,
+    skipAuth = false
+  }
+) {
   const normalizedMethod = String(method || 'POST').toUpperCase()
   const headers = {
     Accept: 'text/event-stream',
@@ -1030,9 +1141,7 @@ async function callFunctionSse(envId, token, {
 
   const normalizedQuery = { ...query }
   const normalizedBody =
-    body && typeof body === 'object' && !Array.isArray(body)
-      ? { ...body }
-      : body
+    body && typeof body === 'object' && !Array.isArray(body) ? { ...body } : body
 
   if (skipAuth) {
     normalizedQuery.skipAuth = 'true'
@@ -1047,12 +1156,11 @@ async function callFunctionSse(envId, token, {
     }
   }
 
-  const {
-    requestMethod,
-    requestQuery,
-    requestHeaders,
-    logicalMethod
-  } = resolveHttpMethodTransport(normalizedMethod, normalizedQuery, headers)
+  const { requestMethod, requestQuery, requestHeaders, logicalMethod } = resolveHttpMethodTransport(
+    normalizedMethod,
+    normalizedQuery,
+    headers
+  )
   const url = buildFunctionUrl(envId, path, requestQuery)
 
   const response = await requestJson(url.toString(), {
@@ -1084,16 +1192,21 @@ function isTransientFunctionFailure(result = null) {
   const status = Number(result?.status || 0)
   const bodyCode = String(result?.body?.code || '')
   const bodyMessage = String(
-    result?.body?.message ||
-    result?.body?.error ||
-    result?.body?.RetMsg ||
-    ''
+    result?.body?.message || result?.body?.error || result?.body?.RetMsg || ''
   ).toLowerCase()
 
-  if (status >= 500) {return true}
-  if (bodyCode === 'SYS_ERR') {return true}
-  if (bodyMessage.includes('database connection failed')) {return true}
-  if (bodyMessage.includes('please check the corresponding database connection configuration')) {return true}
+  if (status >= 500) {
+    return true
+  }
+  if (bodyCode === 'SYS_ERR') {
+    return true
+  }
+  if (bodyMessage.includes('database connection failed')) {
+    return true
+  }
+  if (bodyMessage.includes('please check the corresponding database connection configuration')) {
+    return true
+  }
   return false
 }
 
@@ -1111,10 +1224,12 @@ function isTransientRequestError(error = null) {
   )
 }
 
-async function callFunctionWithRetry(envId, token, options, {
-  maxAttempts = 4,
-  delayMs = 1200
-} = {}) {
+async function callFunctionWithRetry(
+  envId,
+  token,
+  options,
+  { maxAttempts = 4, delayMs = 1200 } = {}
+) {
   let lastResult = null
   let lastError = null
 
@@ -1147,24 +1262,32 @@ async function callFunctionWithRetry(envId, token, options, {
 }
 
 function isTransientSseFailure(result = null) {
-  if (!result) {return true}
-  if (Number(result?.status || 0) >= 500) {return true}
+  if (!result) {
+    return true
+  }
+  if (Number(result?.status || 0) >= 500) {
+    return true
+  }
 
   const errorMessage = String(
-    result?.errorEvent?.payload?.message ||
-    result?.errorEvent?.payload?.error ||
-    ''
+    result?.errorEvent?.payload?.message || result?.errorEvent?.payload?.error || ''
   ).toLowerCase()
 
-  if (errorMessage.includes('database connection failed')) {return true}
-  if (errorMessage.includes('please check the corresponding database connection configuration')) {return true}
+  if (errorMessage.includes('database connection failed')) {
+    return true
+  }
+  if (errorMessage.includes('please check the corresponding database connection configuration')) {
+    return true
+  }
   return false
 }
 
-async function callFunctionSseWithRetry(envId, token, options, {
-  maxAttempts = 3,
-  delayMs = 1200
-} = {}) {
+async function callFunctionSseWithRetry(
+  envId,
+  token,
+  options,
+  { maxAttempts = 3, delayMs = 1200 } = {}
+) {
   let lastResult = null
   let lastError = null
 
@@ -1331,7 +1454,9 @@ function buildSmokeBatchAnswerPath(answerRounds = []) {
 function buildSmokeBatchAnswerPathSignature(answerPath = []) {
   return (Array.isArray(answerPath) ? answerPath : [])
     .flatMap(round => (Array.isArray(round?.answers) ? round.answers : []))
-    .map(answer => `${answer?.questionId || ''}:${answer?.optionId || ''}:${answer?.answerToken || ''}`)
+    .map(
+      answer => `${answer?.questionId || ''}:${answer?.optionId || ''}:${answer?.answerToken || ''}`
+    )
     .filter(item => item !== '::')
     .join('|')
 }
@@ -1359,7 +1484,13 @@ function buildVisualSmokeBatchReviewRecord({
     sourceSchema: args['source-schema'] || args['schema-env'] || 'cloud1_dev',
     batchGeneratedAt: new Date().toISOString(),
     sampleLabel: args['sample-label'] || args['batch-sample-label'] || 'terminal-visual-smoke',
-    sampleFileName: firstImage?.name || firstImage?.fileName || String(firstImage?.resolvedPath || '').split('/').pop() || '',
+    sampleFileName:
+      firstImage?.name ||
+      firstImage?.fileName ||
+      String(firstImage?.resolvedPath || '')
+        .split('/')
+        .pop() ||
+      '',
     sampleAbsolutePath: firstImage?.resolvedPath || firstImage?.path || '',
     answerPathSignature: buildSmokeBatchAnswerPathSignature(answerPath),
     answerPath,
@@ -1370,26 +1501,34 @@ function buildVisualSmokeBatchReviewRecord({
   }
 }
 
-async function importVisualSmokeBatchReview(envId, token, {
-  args = {},
-  baseOptions = {},
-  record = {}
-}) {
+async function importVisualSmokeBatchReview(
+  envId,
+  token,
+  { args = {}, baseOptions = {}, record = {} }
+) {
   const batchSource = args['review-batch-source'] || args['batch-source'] || 'terminal-visual-smoke'
-  const response = await callFunctionWithRetry(envId, token, {
-    ...baseOptions,
-    path: 'diagnose-http/diagnosis/review/list',
-    method: 'POST',
-    body: {
-      action: 'importBatch',
-      batchSource,
-      records: [record]
+  const response = await callFunctionWithRetry(
+    envId,
+    token,
+    {
+      ...baseOptions,
+      path: 'diagnose-http/diagnosis/review/list',
+      method: 'POST',
+      body: {
+        action: 'importBatch',
+        batchSource,
+        records: [record]
+      }
+    },
+    {
+      maxAttempts: Number(args['review-import-retries'] || 3),
+      delayMs: Number(args['retry-delay-ms'] || 1500)
     }
-  }, {
-    maxAttempts: Number(args['review-import-retries'] || 3),
-    delayMs: Number(args['retry-delay-ms'] || 1500)
-  })
-  assertCondition(response.ok, `review importBatch 请求失败: HTTP ${response.status} ${JSON.stringify(response.body)}`)
+  )
+  assertCondition(
+    response.ok,
+    `review importBatch 请求失败: HTTP ${response.status} ${JSON.stringify(response.body)}`
+  )
 
   const data = extractEnvelopeData(response.body)
   return {
@@ -1403,41 +1542,52 @@ async function importVisualSmokeBatchReview(envId, token, {
   }
 }
 
-async function runDiagnosisSessionFlow(envId, token, {
-  baseOptions,
-  startBody,
-  args,
-  defaultOutcomeIfMissing = '',
-  startMode = 'sync'
-}) {
+async function runDiagnosisSessionFlow(
+  envId,
+  token,
+  { baseOptions, startBody, args, defaultOutcomeIfMissing = '', startMode = 'sync' }
+) {
   const normalizedStartMode = normalizeText(startMode || 'sync') === 'stream' ? 'stream' : 'sync'
-  const start = normalizedStartMode === 'stream'
-    ? await callFunctionSseWithRetry(envId, token, {
-        ...baseOptions,
-        path: 'diagnose-http/stream/diagnose',
-        method: 'POST',
-        body: startBody
-      }, {
-        maxAttempts: Number(args['start-retries'] || 4),
-        delayMs: Number(args['retry-delay-ms'] || 1500)
-      })
-    : await callFunctionWithRetry(envId, token, {
-        ...baseOptions,
-        path: 'diagnose-http/diagnosis/start',
-        method: 'POST',
-        body: startBody
-      }, {
-        maxAttempts: Number(args['start-retries'] || 6),
-        delayMs: Number(args['retry-delay-ms'] || 1500)
-      })
+  const start =
+    normalizedStartMode === 'stream'
+      ? await callFunctionSseWithRetry(
+          envId,
+          token,
+          {
+            ...baseOptions,
+            path: 'diagnose-http/stream/diagnose',
+            method: 'POST',
+            body: startBody
+          },
+          {
+            maxAttempts: Number(args['start-retries'] || 4),
+            delayMs: Number(args['retry-delay-ms'] || 1500)
+          }
+        )
+      : await callFunctionWithRetry(
+          envId,
+          token,
+          {
+            ...baseOptions,
+            path: 'diagnose-http/diagnosis/start',
+            method: 'POST',
+            body: startBody
+          },
+          {
+            maxAttempts: Number(args['start-retries'] || 6),
+            delayMs: Number(args['retry-delay-ms'] || 1500)
+          }
+        )
 
-  const startErrorText = normalizedStartMode === 'stream'
-    ? start?.errorEvent?.payload?.message || start?.body || ''
-    : JSON.stringify(start?.body)
+  const startErrorText =
+    normalizedStartMode === 'stream'
+      ? start?.errorEvent?.payload?.message || start?.body || ''
+      : JSON.stringify(start?.body)
   assertCondition(start.ok, `start 请求失败: HTTP ${start.status} ${startErrorText}`)
-  const startData = normalizedStartMode === 'stream'
-    ? start?.doneEvent?.payload?.data || null
-    : extractEnvelopeData(start.body)
+  const startData =
+    normalizedStartMode === 'stream'
+      ? start?.doneEvent?.payload?.data || null
+      : extractEnvelopeData(start.body)
   if (normalizedStartMode === 'stream') {
     assertCondition(
       start?.doneEvent?.payload?.type === 'done' && startData && typeof startData === 'object',
@@ -1459,27 +1609,28 @@ async function runDiagnosisSessionFlow(envId, token, {
 
   const answerPattern = parseAnswerPattern(args['answer-pattern'] || '')
   const answerPlan = answerPattern.length ? [...answerPattern] : ['yes']
-  const buildAnswersForQuestions = (questions, roundOffset = 0) => (Array.isArray(questions) ? questions : []).map((question, index) => {
-    const sequentialIndex = Number(roundOffset || 0) + index
-    const answerToken = answerPlan[sequentialIndex] || answerPlan[answerPlan.length - 1] || 'yes'
-    const optionId = pickOptionIdByPattern(question, answerToken)
-    assertCondition(
-      optionId,
-      `问题 ${question?.questionId || ''} 未找到 ${answerToken} 选项: ${JSON.stringify(
-        Array.isArray(question?.options)
-          ? question.options.map(option => ({
-              optionId: option?.optionId || '',
-              text: option?.text || ''
-            }))
-          : []
-      )}`
-    )
-    return {
-      questionId: question.questionId,
-      optionId,
-      answerToken
-    }
-  })
+  const buildAnswersForQuestions = (questions, roundOffset = 0) =>
+    (Array.isArray(questions) ? questions : []).map((question, index) => {
+      const sequentialIndex = Number(roundOffset || 0) + index
+      const answerToken = answerPlan[sequentialIndex] || answerPlan[answerPlan.length - 1] || 'yes'
+      const optionId = pickOptionIdByPattern(question, answerToken)
+      assertCondition(
+        optionId,
+        `问题 ${question?.questionId || ''} 未找到 ${answerToken} 选项: ${JSON.stringify(
+          Array.isArray(question?.options)
+            ? question.options.map(option => ({
+                optionId: option?.optionId || '',
+                text: option?.text || ''
+              }))
+            : []
+        )}`
+      )
+      return {
+        questionId: question.questionId,
+        optionId,
+        answerToken
+      }
+    })
 
   const answerRounds = []
   let currentRoundData = startData
@@ -1510,20 +1661,28 @@ async function runDiagnosisSessionFlow(envId, token, {
     )
 
     const answers = buildAnswersForQuestions(currentRoundData.questions, loopIndex)
-    const answer = await callFunctionWithRetry(envId, token, {
-      ...baseOptions,
-      path: 'diagnose-http/diagnosis/answer',
-      method: 'POST',
-      body: {
-        diagnosisSessionId: startData.diagnosisSessionId,
-        roundId: currentRoundData.roundId,
-        answers
+    const answer = await callFunctionWithRetry(
+      envId,
+      token,
+      {
+        ...baseOptions,
+        path: 'diagnose-http/diagnosis/answer',
+        method: 'POST',
+        body: {
+          diagnosisSessionId: startData.diagnosisSessionId,
+          roundId: currentRoundData.roundId,
+          answers
+        }
+      },
+      {
+        maxAttempts: Number(args['answer-retries'] || 4),
+        delayMs: Number(args['retry-delay-ms'] || 1500)
       }
-    }, {
-      maxAttempts: Number(args['answer-retries'] || 4),
-      delayMs: Number(args['retry-delay-ms'] || 1500)
-    })
-    assertCondition(answer.ok, `answer 请求失败: HTTP ${answer.status} ${JSON.stringify(answer.body)}`)
+    )
+    assertCondition(
+      answer.ok,
+      `answer 请求失败: HTTP ${answer.status} ${JSON.stringify(answer.body)}`
+    )
     const answerData = extractEnvelopeData(answer.body)
 
     answerRounds.push({
@@ -1554,8 +1713,14 @@ async function runDiagnosisSessionFlow(envId, token, {
   }
 
   assertCondition(finalAnswer && finalAnswerData, '未在预期轮次内到达 final 结果')
-  assertCondition(finalAnswerData?.stage === 'final', `answer stage 异常: ${finalAnswerData?.stage || ''}`)
-  assertCondition(finalAnswerData?.status === 'closed', `answer status 异常: ${finalAnswerData?.status || ''}`)
+  assertCondition(
+    finalAnswerData?.stage === 'final',
+    `answer stage 异常: ${finalAnswerData?.stage || ''}`
+  )
+  assertCondition(
+    finalAnswerData?.status === 'closed',
+    `answer status 异常: ${finalAnswerData?.status || ''}`
+  )
 
   const expectedOutcome = normalizeText(args['expect-outcome'] || defaultOutcomeIfMissing)
   const expectedNonProblematicType = normalizeText(args['expect-non-problematic-type'] || '')
@@ -1571,7 +1736,8 @@ async function runDiagnosisSessionFlow(envId, token, {
   assertCondition(finalAnswerData?.finalResult?.resultId, 'answer 未返回 finalResult.resultId')
   if (expectedProblemKey) {
     assertCondition(
-      parsePublicId(PUBLIC_ID_PREFIXES.problem, finalAnswerData?.finalResult?.problemId || '') === expectedProblemKey,
+      parsePublicId(PUBLIC_ID_PREFIXES.problem, finalAnswerData?.finalResult?.problemId || '') ===
+        expectedProblemKey,
       `answer problemId 异常: ${finalAnswerData?.finalResult?.problemId || ''}`
     )
   }
@@ -1584,12 +1750,19 @@ async function runDiagnosisSessionFlow(envId, token, {
       id: finalAnswerData.finalResult.resultId
     }
   })
-  assertCondition(result.ok, `result 请求失败: HTTP ${result.status} ${JSON.stringify(result.body)}`)
+  assertCondition(
+    result.ok,
+    `result 请求失败: HTTP ${result.status} ${JSON.stringify(result.body)}`
+  )
   const resultData = extractEnvelopeData(result.body)
-  assertCondition(resultData?.diagnosisSessionId === startData.diagnosisSessionId, 'result diagnosisSessionId 不匹配')
+  assertCondition(
+    resultData?.diagnosisSessionId === startData.diagnosisSessionId,
+    'result diagnosisSessionId 不匹配'
+  )
   if (expectedProblemKey) {
     assertCondition(
-      parsePublicId(PUBLIC_ID_PREFIXES.problem, resultData?.finalResult?.problemId || '') === expectedProblemKey,
+      parsePublicId(PUBLIC_ID_PREFIXES.problem, resultData?.finalResult?.problemId || '') ===
+        expectedProblemKey,
       `result problemId 异常: ${resultData?.finalResult?.problemId || ''}`
     )
   }
@@ -1605,7 +1778,10 @@ async function runDiagnosisSessionFlow(envId, token, {
       pageSize: Number(args['history-page-size'] || 10)
     }
   })
-  assertCondition(history.ok, `history 请求失败: HTTP ${history.status} ${JSON.stringify(history.body)}`)
+  assertCondition(
+    history.ok,
+    `history 请求失败: HTTP ${history.status} ${JSON.stringify(history.body)}`
+  )
   const historyData = extractEnvelopeData(history.body)
   const historyItems = Array.isArray(historyData?.items) ? historyData.items : []
   const matchedHistory = historyItems.find(item => item?.historyId === startData.diagnosisSessionId)
@@ -1646,6 +1822,7 @@ async function runDiagnoseSmoke(envId, authResult, args) {
   const baseOptions = buildDiagnoseBaseOptions(args)
   const token = authResult.access_token
   const plantCatalogId = String(args['plant-catalog-id'] || '1')
+  const userPlantId = String(args['user-plant-id'] || '').trim()
   const parsedObservedSymptoms = safeJsonParse(args['observed-symptoms'], [])
   const observedSymptoms = normalizeObservedSymptomsInput(
     Array.isArray(parsedObservedSymptoms) ? parsedObservedSymptoms : []
@@ -1671,6 +1848,7 @@ async function runDiagnoseSmoke(envId, authResult, args) {
     baseOptions,
     startBody: {
       plantCatalogId,
+      ...(userPlantId ? { userPlantId, plantId: userPlantId } : {}),
       observedSymptoms: observedSymptomsForRequest,
       observedEvidenceSet
     },
@@ -1756,6 +1934,7 @@ async function runDiagnoseVisualSmoke(envId, authResult, args) {
   const baseOptions = buildDiagnoseBaseOptions(args)
   const token = authResult.access_token
   const plantCatalogId = String(args['plant-catalog-id'] || '1')
+  const userPlantId = String(args['user-plant-id'] || '').trim()
   const requestedStartMode = normalizeText(args['start-mode'] || 'sync')
   const startMode = requestedStartMode === 'stream' ? 'stream' : 'sync'
   const keepUploadedImage = normalizeBooleanArg(args['keep-uploaded-image'], false)
@@ -1764,7 +1943,9 @@ async function runDiagnoseVisualSmoke(envId, authResult, args) {
   const expectedObservedEvidenceSymptomKeys = normalizeTextList(
     parseCsvArg(args['expect-observed-evidence-symptom-keys'])
   )
-  const expectedFollowUpRequired = resolveOptionalBooleanExpectation(args['expect-follow-up-required'])
+  const expectedFollowUpRequired = resolveOptionalBooleanExpectation(
+    args['expect-follow-up-required']
+  )
   const expectedFastConvergenceApplied = resolveOptionalBooleanExpectation(
     args['expect-fast-convergence-applied']
   )
@@ -1816,21 +1997,29 @@ async function runDiagnoseVisualSmoke(envId, authResult, args) {
       uploadAttempts = []
 
       for (const imageFile of imageFiles) {
-        const upload = await callFunctionWithRetry(envId, token, {
-          ...baseOptions,
-          path: 'storage-http/storage/diagnose-images',
-          method: 'POST',
-          body: {
-            dataUrl: imageFile.dataUrl,
-            suffix: imageFile.suffix,
-            plantId: plantCatalogId,
-            maxAge: Number(args['image-max-age'] || 7200)
+        const upload = await callFunctionWithRetry(
+          envId,
+          token,
+          {
+            ...baseOptions,
+            path: 'storage-http/storage/diagnose-images',
+            method: 'POST',
+            body: {
+              dataUrl: imageFile.dataUrl,
+              suffix: imageFile.suffix,
+              plantId: plantCatalogId,
+              maxAge: Number(args['image-max-age'] || 7200)
+            }
+          },
+          {
+            maxAttempts: Number(args['upload-retries'] || 3),
+            delayMs: Number(args['retry-delay-ms'] || 1500)
           }
-        }, {
-          maxAttempts: Number(args['upload-retries'] || 3),
-          delayMs: Number(args['retry-delay-ms'] || 1500)
-        })
-        assertCondition(upload.ok, `upload 请求失败: HTTP ${upload.status} ${JSON.stringify(upload.body)}`)
+        )
+        assertCondition(
+          upload.ok,
+          `upload 请求失败: HTTP ${upload.status} ${JSON.stringify(upload.body)}`
+        )
 
         const uploadedImage = extractEnvelopeData(upload.body)
         assertCondition(uploadedImage?.fileId, 'upload 未返回 fileId')
@@ -1853,6 +2042,7 @@ async function runDiagnoseVisualSmoke(envId, authResult, args) {
       baseOptions,
       startBody: {
         plantCatalogId,
+        ...(userPlantId ? { userPlantId, plantId: userPlantId } : {}),
         image: normalizedImageRefs[0] || '',
         images: structuredImages,
         observedSymptoms: []
@@ -1872,8 +2062,12 @@ async function runDiagnoseVisualSmoke(envId, authResult, args) {
       matchedHistory
     } = flow
 
-    const observedSymptoms = Array.isArray(resultData?.observedSymptoms) ? resultData.observedSymptoms : []
-    const observedEvidenceSet = Array.isArray(resultData?.observedEvidenceSet) ? resultData.observedEvidenceSet : []
+    const observedSymptoms = Array.isArray(resultData?.observedSymptoms)
+      ? resultData.observedSymptoms
+      : []
+    const observedEvidenceSet = Array.isArray(resultData?.observedEvidenceSet)
+      ? resultData.observedEvidenceSet
+      : []
     if (minObservedSymptoms > 0) {
       assertCondition(
         observedSymptoms.length >= minObservedSymptoms,
@@ -1940,7 +2134,10 @@ async function runDiagnoseVisualSmoke(envId, authResult, args) {
         resultData,
         startData
       })
-      assertCondition(batchReviewRecord.diagnosisSessionId, 'review importBatch 缺少 diagnosisSessionId')
+      assertCondition(
+        batchReviewRecord.diagnosisSessionId,
+        'review importBatch 缺少 diagnosisSessionId'
+      )
       batchReviewResult = await importVisualSmokeBatchReview(envId, token, {
         args,
         baseOptions,
@@ -1952,18 +2149,26 @@ async function runDiagnoseVisualSmoke(envId, authResult, args) {
       cleanupResult.attempted = true
       let deletedCount = 0
       for (const uploadedImage of uploadedImages) {
-        const cleanup = await callFunctionWithRetry(envId, token, {
-          ...baseOptions,
-          path: 'storage-http/storage/diagnose-images',
-          method: 'DELETE',
-          body: {
-            fileId: uploadedImage.fileId
+        const cleanup = await callFunctionWithRetry(
+          envId,
+          token,
+          {
+            ...baseOptions,
+            path: 'storage-http/storage/diagnose-images',
+            method: 'DELETE',
+            body: {
+              fileId: uploadedImage.fileId
+            }
+          },
+          {
+            maxAttempts: Number(args['cleanup-retries'] || 2),
+            delayMs: Number(args['retry-delay-ms'] || 1500)
           }
-        }, {
-          maxAttempts: Number(args['cleanup-retries'] || 2),
-          delayMs: Number(args['retry-delay-ms'] || 1500)
-        })
-        assertCondition(cleanup.ok, `cleanup 请求失败: HTTP ${cleanup.status} ${JSON.stringify(cleanup.body)}`)
+        )
+        assertCondition(
+          cleanup.ok,
+          `cleanup 请求失败: HTTP ${cleanup.status} ${JSON.stringify(cleanup.body)}`
+        )
         deletedCount += 1
       }
       cleanupResult.deleted = deletedCount === uploadedImages.length
@@ -1982,7 +2187,10 @@ async function runDiagnoseVisualSmoke(envId, authResult, args) {
         suffix: imageFiles[0]?.suffix || '',
         suffixes: imageFiles.map(item => item.suffix),
         size: imageFiles.reduce((sum, item) => sum + Number(item.size || 0), 0),
-        originalSize: imageFiles.reduce((sum, item) => sum + Number(item.originalSize || item.size || 0), 0),
+        originalSize: imageFiles.reduce(
+          (sum, item) => sum + Number(item.originalSize || item.size || 0),
+          0
+        ),
         compression: imageFiles.map(item => item.compression || null),
         imageCount: imageFiles.length,
         sourceType: useInlineImage ? 'inline_data_url' : 'storage_temp_url'
@@ -2031,7 +2239,10 @@ async function runDiagnoseVisualSmoke(envId, authResult, args) {
         observedSymptomsCount: Array.isArray(startData.observedSymptoms)
           ? startData.observedSymptoms.length
           : 0,
-        observedSymptomKeys: (Array.isArray(startData.observedSymptoms) ? startData.observedSymptoms : [])
+        observedSymptomKeys: (Array.isArray(startData.observedSymptoms)
+          ? startData.observedSymptoms
+          : []
+        )
           .map(item => String(item?.symptomKey || '').trim())
           .filter(Boolean),
         sseReplyCount: Array.isArray(start.replyEvents) ? start.replyEvents.length : 0,
@@ -2071,7 +2282,9 @@ async function runDiagnoseVisualSmoke(envId, authResult, args) {
         displayName: resultData.finalResult?.displayName || '',
         severity: resultData.finalResult?.severity || '',
         observedSymptomsCount: observedSymptoms.length,
-        observedSymptomKeys: observedSymptoms.map(item => String(item?.symptomKey || '').trim()).filter(Boolean),
+        observedSymptomKeys: observedSymptoms
+          .map(item => String(item?.symptomKey || '').trim())
+          .filter(Boolean),
         observedEvidenceSetCount: observedEvidenceSet.length,
         observedEvidenceSymptomKeys: observedEvidenceSet
           .map(item => String(item?.symptomKey || '').trim())
@@ -2096,17 +2309,22 @@ async function runDiagnoseVisualSmoke(envId, authResult, args) {
       try {
         let deletedCount = 0
         for (const uploadedImage of uploadedImages) {
-          const cleanup = await callFunctionWithRetry(envId, token, {
-            ...baseOptions,
-            path: 'storage-http/storage/diagnose-images',
-            method: 'DELETE',
-            body: {
-              fileId: uploadedImage.fileId
+          const cleanup = await callFunctionWithRetry(
+            envId,
+            token,
+            {
+              ...baseOptions,
+              path: 'storage-http/storage/diagnose-images',
+              method: 'DELETE',
+              body: {
+                fileId: uploadedImage.fileId
+              }
+            },
+            {
+              maxAttempts: Number(args['cleanup-retries'] || 2),
+              delayMs: Number(args['retry-delay-ms'] || 1500)
             }
-          }, {
-            maxAttempts: Number(args['cleanup-retries'] || 2),
-            delayMs: Number(args['retry-delay-ms'] || 1500)
-          })
+          )
           if (cleanup.ok) {
             deletedCount += 1
             continue
@@ -2130,18 +2348,17 @@ async function runWithParsedArgs(args = {}) {
   const skipAuth = normalizeBooleanArg(args['skip-auth'], false)
   const forceAnonymousAuth = normalizeBooleanArg(args['force-anonymous-auth'], false)
   const emitAuthToken = normalizeBooleanArg(args['emit-auth-token'], false)
-  const injectedAuthResult = resolveInjectedAuthResult(args) || await readCachedAuthResult()
+  const injectedAuthResult = resolveInjectedAuthResult(args) || (await readCachedAuthResult())
 
   if (!envId) {
     throw new Error('缺少 --env=cloudbase-env-id')
   }
 
-  const deviceId =
-    args['device-id'] ||
-    `codex-terminal-${crypto.randomUUID()}`
+  const deviceId = args['device-id'] || `codex-terminal-${crypto.randomUUID()}`
 
   const shouldSignInAnonymously = !injectedAuthResult && (!skipAuth || forceAnonymousAuth)
-  const authResult = injectedAuthResult ||
+  const authResult =
+    injectedAuthResult ||
     (shouldSignInAnonymously
       ? await signInAnonymously(envId, deviceId)
       : {
@@ -2243,10 +2460,7 @@ function writeErrorAndExit(error) {
   })
 }
 
-export {
-  parseArgs,
-  runWithParsedArgs
-}
+export { parseArgs, runWithParsedArgs }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch(error => {

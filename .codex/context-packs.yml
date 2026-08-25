@@ -96,11 +96,11 @@ packs:
       - cloudfunctions/diagnose-http/app/manual-symptom-question-start-fast-path.js
       - cloudfunctions/diagnose-http/app/frontend-response.js
       - cloudfunctions/diagnose-http/app/http-router.js
-      - src/http-functions/diagnose/client.js
-      - src/pages/diagnose/question-package/question-flow.js
-      - src/pages/diagnose/question-package/payload.js
-      - src/utils/diagnose-question-answer-payload.js
-      - src/utils/diagnose-result-normalizer.js
+      - src/subpackages/diagnosis/http-functions/diagnose/client.js
+      - src/subpackages/diagnosis/question-package/question-flow.js
+      - src/subpackages/diagnosis/question-package/payload.js
+      - src/subpackages/diagnosis/utils/diagnose-question-answer-payload.js
+      - src/subpackages/diagnosis/utils/diagnose-result-normalizer.js
     max_additional_files: 5
     stale_guards:
       - 'Do not use old claims saying regular route follow-up has one question per round.'
@@ -116,7 +116,7 @@ packs:
       - cloudfunctions/layer/utils/pot-geometry.js
       - cloudfunctions/layer/utils/plant-knowledge.js
       - cloudfunctions/layer/utils/water-volume-format.js
-      - src/pages/watering-advisor/watering-advisor.vue
+      - src/subpackages/care/watering-advisor/watering-advisor.vue
       - src/pages/index/components/watering-reminder-options.js
       - src/pages/index/components/WateringReminderSheet.vue
       - src/pages/index/components/PotProfileEditor.vue
@@ -129,13 +129,13 @@ packs:
     read:
       - docs/CURRENT.md
       - docs/ACTIVE_CONTRACTS.md
-      - src/http-functions/diagnose/client.js
-      - src/vue-query/diagnose/mutations/useDiagnoseMutation.js
-      - src/vue-query/diagnose/mutations/useDiagnosisQuestionStartMutation.js
-      - src/vue-query/diagnose/mutations/useDiagnosisAnswerMutation.js
-      - src/utils/diagnose-result-normalizer.js
+      - src/subpackages/diagnosis/http-functions/diagnose/client.js
+      - src/subpackages/diagnosis/vue-query/diagnose/mutations/useDiagnoseMutation.js
+      - src/subpackages/diagnosis/vue-query/diagnose/mutations/useDiagnosisQuestionStartMutation.js
+      - src/subpackages/diagnosis/vue-query/diagnose/mutations/useDiagnosisAnswerMutation.js
+      - src/subpackages/diagnosis/utils/diagnose-result-normalizer.js
       - src/pages/diagnose/diagnose.vue
-      - src/pages/diagnose/question-package.vue
+      - src/subpackages/diagnosis/question-package.vue
     max_additional_files: 5
 
   cloudbase-api:

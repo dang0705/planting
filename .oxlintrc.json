@@ -59,24 +59,28 @@
   },
   "overrides": [
     {
-      "files": [
-        "**/*.vue"
-      ],
+      "files": ["**/*.vue"],
       "rules": {
         "no-undef": "error",
         "no-unused-vars": "error"
       }
     },
     {
-      "files": [
-        "**/*.js",
-        "**/*.cjs",
-        "**/*.mjs"
-      ]
+      "files": ["**/*.js", "**/*.cjs", "**/*.mjs"]
     }
   ],
   "ignorePatterns": [
     ".github",
+    ".agents",
+    ".brv",
+    ".brv-backup",
+    ".zcode",
+    ".tmp",
+    ".e2e-artifacts",
+    "test/batch-results",
+    "test/e2e/batch/diagnosis/_history",
+    "test/e2e/batch/diagnosis/manifests",
+    "test/e2e/batch/diagnosis/fixtures",
     "uni_modules",
     "node_modules",
     "dist",

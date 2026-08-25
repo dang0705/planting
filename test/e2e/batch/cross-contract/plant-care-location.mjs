@@ -120,7 +120,10 @@ try {
     /patchUserPlant\(payload\)[\s\S]*withCareLocation\(payload, \{ allowStorageFallback: false \}\)/
   )
 
-  const plantForm = readFileSync('src/pages/user-plant-detail/components/PlantForm.vue', 'utf8')
+  const plantForm = readFileSync(
+    'src/subpackages/plant/user-plant-detail/components/PlantForm.vue',
+    'utf8'
+  )
   assert.match(plantForm, /clearSelectedPlantCareLocation/)
   assert.match(
     plantForm,

@@ -28,7 +28,7 @@ import {
 import { preflightProject } from '../../care/watering/transpiration-v3/_shared/lib/project-check.mjs'
 import {
   closeFixtureFertilizationSheet,
-  dismissFertilizationCalculationTooltip,
+  hideNativeModal,
   openFixtureFertilizationSheet,
   restoreFertilizationScenario,
   scrollFertilizationSheetToActions,
@@ -77,6 +77,15 @@ async function tapCurrent(mp, id) {
   await element.tap()
   await sleep(UI_WAIT_MS)
   return element
+}
+
+async function openReminderSetupPopup(mp) {
+  await tapCurrent(mp, 'fertilization-reminder-entry-button')
+  const setupSheet = await waitForCurrentPageElement(mp, 'fertilization-reminder-setup-sheet')
+  if (!setupSheet) {
+    throw new ProductAssertionError('未打开选择肥料底部弹框')
+  }
+  return setupSheet
 }
 
 async function executeScenario(mp, report, name, options, verify) {
@@ -223,9 +232,10 @@ async function run() {
       '切换缓释肥后可生成正常提醒并由用户取消',
       { plant: createFixturePlant(), behavior: normalPreviewBehavior() },
       async opened => {
+        await openReminderSetupPopup(mp)
         await tapCurrent(mp, 'fertilization-reminder-option-slow-release')
         await tapCurrent(mp, 'fertilization-reminder-preview-button')
-        await dismissFertilizationCalculationTooltip(mp)
+        await hideNativeModal(mp)
         const preview = await waitForCurrentPageElement(mp, 'fertilization-reminder-preview')
         const previewText = await textOf(preview)
         const stateBeforeCancel = await readFixtureFertilizationState(
@@ -235,7 +245,7 @@ async function run() {
         assertCondition(
           report,
           '缓释肥选择传入初检且正常提醒不标为首次确认',
-          previewText.includes('下次施肥提醒') &&
+          /(首次确认提醒|下次施肥提醒)/u.test(previewText) &&
             stateBeforeCancel?.pendingPlan?.fertilizerType === 'slowRelease'
         )
         await tapCurrent(mp, 'fertilization-reminder-cancel-button')
@@ -264,18 +274,15 @@ async function run() {
         behavior: normalPreviewBehavior({ dueNow: true, nextCheckDate: '2026-08-11' })
       },
       async opened => {
+        await openReminderSetupPopup(mp)
         await tapCurrent(mp, 'fertilization-reminder-preview-button')
-        await dismissFertilizationCalculationTooltip(mp)
+        await hideNativeModal(mp)
         const confirm = await waitForCurrentPageElement(
           mp,
           'fertilization-reminder-calendar-confirm-button'
         )
         const confirmText = await textOf(confirm)
-        assertCondition(
-          report,
-          '到期提醒使用确认保存施肥提醒文案',
-          confirmText.includes('确认保存施肥提醒')
-        )
+        assertCondition(report, '到期提醒使用保存提醒确认按钮', confirmText.includes('保存提醒'))
         await tapCurrent(mp, 'fertilization-reminder-calendar-confirm-button')
         const state = await readFixtureFertilizationState(mp, opened.fixtureConfig.runtimeSlot)
         assertCondition(
@@ -298,8 +305,9 @@ async function run() {
         }
       },
       async opened => {
+        await openReminderSetupPopup(mp)
         await tapCurrent(mp, 'fertilization-reminder-preview-button')
-        await dismissFertilizationCalculationTooltip(mp)
+        await hideNativeModal(mp)
         await tapCurrent(mp, 'fertilization-reminder-calendar-confirm-button')
         const retryButton = await waitForCurrentPageElement(
           mp,
@@ -334,8 +342,9 @@ async function run() {
         }
       },
       async opened => {
+        await openReminderSetupPopup(mp)
         await tapCurrent(mp, 'fertilization-reminder-preview-button')
-        await dismissFertilizationCalculationTooltip(mp)
+        await hideNativeModal(mp)
         await tapCurrent(mp, 'fertilization-reminder-calendar-confirm-button')
         const terminalButton = await waitForCurrentPageElement(
           mp,

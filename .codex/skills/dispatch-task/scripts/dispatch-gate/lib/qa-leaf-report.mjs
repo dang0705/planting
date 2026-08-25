@@ -1,3 +1,8 @@
+import fs from 'node:fs'
+import path from 'node:path'
+
+import { repoRoot } from './state.mjs'
+
 const TERMINAL_KINDS = new Set(['failed_environment', 'failed_product', 'failed_script', 'aborted'])
 export const LEAF_CLASSIFICATION_VERSION = 'qa_leaf_classification_v2'
 const TRANSPORT_MARKERS =
@@ -97,10 +102,90 @@ function parseFromSource(source, text) {
   return fallback
 }
 
+function isWithinPath(candidate, root) {
+  const relative = path.relative(root, candidate)
+  return (
+    relative === '' ||
+    (relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative))
+  )
+}
+
+function reportPathCandidates(text) {
+  const candidates = []
+  const matcher = /\[e2e\]\s+report:\s*(.+?)(?:\r?\n|$)/g
+  let match
+  while ((match = matcher.exec(text))) {
+    const reportPath = match[1].trim().replace(/^['"]|['"]$/g, '')
+    if (reportPath) {
+      candidates.push(reportPath)
+    }
+  }
+  return candidates
+}
+
+function parseReportFile(source, text) {
+  const dispatchRoot = path.join(repoRoot, '.tmp', 'dispatch-task')
+  for (const candidate of reportPathCandidates(text)) {
+    const requestedPath = path.resolve(repoRoot, candidate)
+    let reportPath
+    try {
+      reportPath = fs.realpathSync(requestedPath)
+    } catch (error) {
+      return {
+        parse_status: 'malformed',
+        source: `${source}_report_file`,
+        raw_report: '',
+        report_path: requestedPath,
+        parse_error: `report file is unavailable: ${error.message}`
+      }
+    }
+    if (!isWithinPath(reportPath, dispatchRoot) || path.extname(reportPath) !== '.json') {
+      return {
+        parse_status: 'malformed',
+        source: `${source}_report_file`,
+        raw_report: '',
+        report_path: requestedPath,
+        parse_error: 'report file must be a JSON file under .tmp/dispatch-task'
+      }
+    }
+    try {
+      const rawReport = fs.readFileSync(reportPath, 'utf8')
+      const report = JSON.parse(rawReport)
+      if (!report || typeof report !== 'object' || typeof report.status !== 'string') {
+        return {
+          parse_status: 'malformed',
+          source: `${source}_report_file`,
+          raw_report: rawReport,
+          report_path: reportPath,
+          parse_error: 'report file must contain an object with a string status'
+        }
+      }
+      return {
+        parse_status: 'parsed',
+        source: `${source}_report_file`,
+        raw_report: rawReport,
+        report,
+        report_path: reportPath
+      }
+    } catch (error) {
+      return {
+        parse_status: 'malformed',
+        source: `${source}_report_file`,
+        raw_report: '',
+        report_path: reportPath,
+        parse_error: error.message
+      }
+    }
+  }
+  return null
+}
+
 export function extractLeafReport({ stdout = '', stderr = '' } = {}) {
   return (
     parseFromSource('stdout', stdout) ??
-    parseFromSource('stderr', stderr) ?? {
+    parseFromSource('stderr', stderr) ??
+    parseReportFile('stdout', stdout) ??
+    parseReportFile('stderr', stderr) ?? {
       parse_status: 'absent',
       source: 'unavailable',
       raw_report: ''
@@ -209,8 +294,13 @@ export function leafReportEvidence(leafReport, evidencePath) {
     report_status: leafReport.report?.status ?? 'unavailable',
     failure_kind: classifyLeafReport(leafReport) ?? 'unavailable',
     business_assertions_reached: leafReport.report?.business_assertions_reached === true,
+    assertions: Array.isArray(leafReport.report?.assertions) ? leafReport.report.assertions : [],
+    screenshot_attempts: Array.isArray(leafReport.report?.screenshot_attempts)
+      ? leafReport.report.screenshot_attempts
+      : [],
     classification_version: LEAF_CLASSIFICATION_VERSION,
     raw_report_ref: evidencePath,
+    report_path: leafReport.report_path ?? null,
     parse_error: leafReport.parse_error ?? null
   }
 }

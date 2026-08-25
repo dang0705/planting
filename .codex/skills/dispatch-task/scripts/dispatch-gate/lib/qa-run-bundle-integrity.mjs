@@ -77,6 +77,9 @@ export function createFrozenBundleQaRecord({
     frozen_script_sha256: scriptHash,
     execution_bundle_files: executionBundleFiles,
     category_path: entry.category_path,
+    data_mode: entry.data_mode,
+    auth_mode: entry.auth_mode,
+    mutation_policy: entry.mutation_policy,
     id_policy_refs: entry.id_policy?.refs ?? entry.required_id_policy_refs,
     requirements: entry.requirements,
     live_attempt: attempt,
@@ -95,10 +98,18 @@ export function createBundlePreflightRecord(options) {
   }
 }
 
-export function previousFrozenBundleAttemptGate({ records, catalogId, scriptHash }) {
+export function previousFrozenBundleAttemptGate({
+  records,
+  catalogId,
+  executionId,
+  scriptHash,
+  runInstanceId = null
+}) {
   const relevant = records.filter(
     record =>
       record.catalog_id === catalogId &&
+      record.execution_id === executionId &&
+      (!runInstanceId || record.run_instance_id === runInstanceId) &&
       record.frozen_script_sha256 === scriptHash &&
       record.live_attempt > 0 &&
       record.live_attempt_consumed !== false
@@ -179,7 +190,14 @@ export function appendBundleQaEvent(dispatchRunId, record, outcome) {
     execution_bundle_files: record.execution_bundle_files,
     execution_record: path.relative(
       repoRoot,
-      path.join(stateDir(dispatchRunId), 'qa-runs', `${record.execution_id}.json`)
+      record.run_instance_id
+        ? path.join(
+            stateDir(dispatchRunId),
+            'qa-runs',
+            record.run_instance_id,
+            `${record.execution_id}.json`
+          )
+        : path.join(stateDir(dispatchRunId), 'qa-runs', `${record.execution_id}.json`)
     )
   })
 }

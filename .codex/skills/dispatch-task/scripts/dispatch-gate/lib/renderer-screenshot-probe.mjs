@@ -1,25 +1,14 @@
-import { closeSync, existsSync, mkdirSync, openSync, readSync, statSync } from 'node:fs'
+import { mkdirSync, statSync } from 'node:fs'
 import path from 'node:path'
 import {
   screenshotStabilityBudget,
   waitForScreenshotStability
 } from '../../../../../../test/e2e/automator/_shared/screenshot-stability.mjs'
+import { isValidPngEvidence } from '../../../../../../scripts/qa/qa-png-evidence.mjs'
 
 export const RENDERER_SCREENSHOT_METHOD = 'App.captureScreenshot'
-const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
-
 export function isNonEmptyPngFile(filePath) {
-  if (!existsSync(filePath) || statSync(filePath).size <= PNG_MAGIC.length) {
-    return false
-  }
-  const descriptor = openSync(filePath, 'r')
-  try {
-    const bytes = Buffer.alloc(PNG_MAGIC.length)
-    readSync(descriptor, bytes, 0, PNG_MAGIC.length, 0)
-    return bytes.equals(PNG_MAGIC)
-  } finally {
-    closeSync(descriptor)
-  }
+  return isValidPngEvidence(filePath)
 }
 
 function now() {

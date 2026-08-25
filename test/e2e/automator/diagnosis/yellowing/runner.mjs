@@ -21,7 +21,9 @@ import {
 } from './dom.mjs'
 import { pickBestOption } from './option-selection.mjs'
 
-const DEFAULT_REPORT_DIR = path.join(process.cwd(), '.tmp/e2e/diagnosis/yellowing-qa-artifacts')
+const REPORT_ROOT = process.env.E2E_ARTIFACT_DIR
+  ? path.resolve(process.env.E2E_ARTIFACT_DIR)
+  : path.join(process.cwd(), '.tmp/e2e/diagnosis/yellowing-qa-artifacts')
 const nowStamp = () => new Date().toISOString()
 async function screenshot(miniProgram, wsEndpoint, reportDir, name) {
   const filePath = path.join(reportDir, `${nowStamp().replace(/[:.]/g, '-')}-${name}.png`)
@@ -29,9 +31,10 @@ async function screenshot(miniProgram, wsEndpoint, reportDir, name) {
     mp: miniProgram,
     automator,
     wsEndpoint,
-    outputPath: filePath
+    outputPath: filePath,
+    maxAttempts: 1
   })
-  return { path: filePath, miniProgram: resumed.mp }
+  return { path: filePath, miniProgram: resumed.mp, attempts: resumed.attempts }
 }
 
 export async function runYellowingQuickFlow({
@@ -40,7 +43,7 @@ export async function runYellowingQuickFlow({
   maxSteps,
   profile
 }) {
-  const reportDir = path.join(DEFAULT_REPORT_DIR, nowStamp().replace(/[:.]/g, '-'))
+  const reportDir = path.join(REPORT_ROOT, nowStamp().replace(/[:.]/g, '-'))
   const logs = []
 
   let miniProgram = null
@@ -52,6 +55,7 @@ export async function runYellowingQuickFlow({
   }
 
   const shots = []
+  const screenshotAttempts = []
   const pushLog = entry => {
     logs.push({ time: nowStamp(), ...entry })
   }
@@ -92,6 +96,7 @@ export async function runYellowingQuickFlow({
     let shot = await screenshot(miniProgram, wsEndpoint, reportDir, '00-popup-opened')
     miniProgram = shot.miniProgram
     shots.push(shot.path)
+    screenshotAttempts.push({ label: '00-popup-opened', attempts: shot.attempts })
     startPage = await miniProgram.currentPage()
 
     const quickEntry = await findElementByIdSuffix(
@@ -118,6 +123,7 @@ export async function runYellowingQuickFlow({
     shot = await screenshot(miniProgram, wsEndpoint, reportDir, '01-yellowing-selected')
     miniProgram = shot.miniProgram
     shots.push(shot.path)
+    screenshotAttempts.push({ label: '01-yellowing-selected', attempts: shot.attempts })
     current = await resolveQuestionState(await miniProgram.currentPage())
     pushLog({ type: 'state', label: 'after-yellowing', path: current.path })
 
@@ -125,7 +131,7 @@ export async function runYellowingQuickFlow({
     while (questionIndex < maxSteps) {
       let pageNow = await miniProgram.currentPage()
       current = await resolveQuestionState(pageNow)
-      if (!current.path.includes('pages/diagnose/question-package')) {
+      if (!current.path.includes('subpackages/diagnosis/question-package')) {
         pushLog({ type: 'state', label: 'quit-early', path: current.path, reason: '跳出问答页' })
         break
       }
@@ -186,6 +192,10 @@ export async function runYellowingQuickFlow({
       )
       miniProgram = shot.miniProgram
       shots.push(shot.path)
+      screenshotAttempts.push({
+        label: `step-${questionIndex + 1}-before`,
+        attempts: shot.attempts
+      })
       pageNow = await miniProgram.currentPage()
       const refreshedOptions = await collectQuestionOptions(pageNow)
       const refreshedCandidates = refreshedOptions.get(currentQuestionId) || []
@@ -223,8 +233,12 @@ export async function runYellowingQuickFlow({
       shot = await screenshot(miniProgram, wsEndpoint, reportDir, `step-${questionIndex + 1}-after`)
       miniProgram = shot.miniProgram
       shots.push(shot.path)
+      screenshotAttempts.push({
+        label: `step-${questionIndex + 1}-after`,
+        attempts: shot.attempts
+      })
 
-      if (!afterState.path.includes('pages/diagnose/question-package')) {
+      if (!afterState.path.includes('subpackages/diagnosis/question-package')) {
         pushLog({ type: 'state', label: 'route-changed', path: afterState.path })
         break
       }
@@ -268,27 +282,16 @@ export async function runYellowingQuickFlow({
     shot = await screenshot(miniProgram, wsEndpoint, reportDir, 'final-state')
     miniProgram = shot.miniProgram
     pushLog({ type: 'result', screenshot: shot.path })
+    screenshotAttempts.push({ label: 'final-state', attempts: shot.attempts })
   } finally {
-    try {
-      if (miniProgram) {
-        const finalShot = await screenshot(
-          miniProgram,
-          wsEndpoint,
-          DEFAULT_REPORT_DIR,
-          `final-${Date.now()}`
-        )
-        miniProgram = finalShot.miniProgram
-      }
-    } finally {
-      if (miniProgram) {
-        try {
-          await disconnectFormalLeaf({ mp: miniProgram, timeoutMs: 5000 })
-        } catch (error) {
-          pushLog({
-            type: 'cleanup-error',
-            message: error.message || String(error)
-          })
-        }
+    if (miniProgram) {
+      try {
+        await disconnectFormalLeaf({ mp: miniProgram, timeoutMs: 5000 })
+      } catch (error) {
+        pushLog({
+          type: 'cleanup-error',
+          message: error.message || String(error)
+        })
       }
     }
   }
@@ -297,6 +300,7 @@ export async function runYellowingQuickFlow({
     reportDir,
     logs,
     shots,
+    screenshotAttempts,
     startedAt: new Date().toISOString()
   }
 }

@@ -1,7 +1,6 @@
 import automator from 'miniprogram-automator'
 import { spawn } from 'node:child_process'
 import { execSync } from 'node:child_process'
-import path from 'node:path'
 import fs from 'node:fs'
 
 const CLI = '/Applications/wechatwebdevtools.app/Contents/MacOS/cli'
@@ -31,11 +30,15 @@ async function txt(n) {
 async function findById(page, id) {
   const views = await page.$$('view')
   for (const v of views) {
-    if ((await attr(v, 'id')) === id) return v
+    if ((await attr(v, 'id')) === id) {
+      return v
+    }
   }
   const btns = await page.$$('button')
   for (const b of btns) {
-    if ((await attr(b, 'id')) === id) return b
+    if ((await attr(b, 'id')) === id) {
+      return b
+    }
   }
   return null
 }
@@ -43,7 +46,9 @@ async function findByIdLike(page, key) {
   const all = await page.$$('view,button')
   for (const n of all) {
     const id = await attr(n, 'id')
-    if (id && id.includes(key)) return n
+    if (id && id.includes(key)) {
+      return n
+    }
   }
   return null
 }
@@ -53,9 +58,13 @@ async function rootStyle(page) {
     const views = await page.$$('view')
     for (const v of views) {
       const s = await attr(v, 'style')
-      if (s && s.includes('--app-header-height')) return s
+      if (s && s.includes('--app-header-height')) {
+        return s
+      }
     }
-  } catch {}
+  } catch {
+    // Root style is optional diagnostic evidence.
+  }
   return null
 }
 
@@ -75,16 +84,18 @@ async function ensureAuto() {
       mp = await automator.connect({ wsEndpoint: `ws://127.0.0.1:${PORT}` })
       log('connected at', i, 's')
       return
-    } catch {}
+    } catch {
+      // Continue probing the next possible page method.
+    }
   }
   throw new Error('connect to automator failed')
 }
 
 const PAGES = [
   ['/pages/index/index', 'index'],
-  ['/pages/user-plant-detail/user-plant-detail?mode=view&id=1', 'user-plant-detail'],
+  ['/subpackages/plant/user-plant-detail/user-plant-detail?mode=view&id=1', 'user-plant-detail'],
   ['/pages/diagnose/diagnose', 'diagnose'],
-  ['/pages/diagnose/question-package', 'question-package'],
+  ['/subpackages/diagnosis/question-package', 'question-package'],
   ['/pages/calendar/calendar', 'calendar'],
   ['/pages/profile/profile', 'profile'],
   ['/pages/profile/watering-review', 'watering-review'],
@@ -102,10 +113,16 @@ async function capturePages() {
       let path = null
       try {
         path = page.path
-      } catch (e) {}
+      } catch {
+        // The path property is an optional compatibility fallback.
+      }
       try {
-        if (!path && typeof page.path === 'function') path = await page.path()
-      } catch (e) {}
+        if (!path && typeof page.path === 'function') {
+          path = await page.path()
+        }
+      } catch {
+        // The path property is an optional compatibility fallback.
+      }
       const style = await rootStyle(page)
       const file = path ? `${SHOT_DIR}/page-${name}.png` : `${SHOT_DIR}/page-${name}.png`
       await mp.screenshot({ path: file })
@@ -121,7 +138,9 @@ async function capturePages() {
 
 async function existsVisible(page, id) {
   const n = await findById(page, id)
-  if (!n) return { found: false }
+  if (!n) {
+    return { found: false }
+  }
   try {
     const vis = await n.visible?.()
     return { found: true, node: n, visible: vis }
@@ -160,7 +179,9 @@ async function flowIndex() {
       } else if (panel.node) {
         try {
           await page.$('.uni-popup')
-        } catch {}
+        } catch {
+          // The fallback selector is only a best-effort close probe.
+        }
       }
       await mp.screenshot({ path: `${SHOT_DIR}/popup-diagnose-closed.png` })
       out.diagnoseClosed = !(await existsVisible(page, 'diagnose-popup-panel')).found
@@ -201,7 +222,7 @@ async function flowIndex() {
         }
       }
       // open date picker
-      const dateRow = await findByIdLike(page, 'watering-date-') // date trigger row
+      await findByIdLike(page, 'watering-date-') // date trigger row
       const closeW = await existsVisible(page, 'watering-reminder-close-button')
       if (closeW.node) {
         await closeW.node.tap()
@@ -219,7 +240,7 @@ async function flowIndex() {
 async function flowPlantDetail() {
   const out = {}
   await mp.callWxMethod('reLaunch', {
-    url: '/pages/user-plant-detail/user-plant-detail?mode=view&id=1'
+    url: '/subpackages/plant/user-plant-detail/user-plant-detail?mode=view&id=1'
   })
   await sleep(3500)
   const page = await mp.currentPage()
@@ -232,7 +253,9 @@ async function flowPlantDetail() {
     const btns = await page.$$('button')
     for (const b of btns) {
       const t = await txt(b)
-      if (t && t.includes('编辑信息')) return b
+      if (t && t.includes('编辑信息')) {
+        return b
+      }
     }
     return null
   })()
@@ -285,12 +308,20 @@ async function flowPlantDetail() {
   fs.writeFileSync('/tmp/qa-report.json', JSON.stringify(report, null, 2))
   log('REPORT written /tmp/qa-report.json')
   await mp.disconnect()
-  if (auto) auto.kill()
+  if (auto) {
+    auto.kill()
+  }
 })().catch(async e => {
   console.error('FATAL', e)
   try {
-    if (mp) await mp.disconnect()
-  } catch {}
-  if (auto) auto.kill()
+    if (mp) {
+      await mp.disconnect()
+    }
+  } catch {
+    // Disconnect is best effort during fatal cleanup.
+  }
+  if (auto) {
+    auto.kill()
+  }
   process.exit(1)
 })

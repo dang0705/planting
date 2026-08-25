@@ -9,6 +9,12 @@ import {
   LOCAL_RUNTIME_LEASE_ROOT,
   MP_WEIXIN_RUNTIME_TARGET
 } from '../../../../../../scripts/dev/local-api-env-config.mjs'
+import {
+  QA_RUNTIME_LEASE_ROOT as QA_RUNTIME_PLANE_LEASE_ROOT,
+  QA_RUNTIME_MANIFEST_ROOT,
+  QA_RUNTIME_PROFILE_PRODUCT_HASH as QA_RUNTIME_PLANE_PROFILE_PRODUCT_HASH,
+  processStartIdentity
+} from './qa-runtime-plane.mjs'
 import { readCurrentSessionProjectEvidence } from './devtools-session-log.mjs'
 import {
   ancestorsFrom,
@@ -21,6 +27,12 @@ import {
 } from './devtools-process-topology.mjs'
 import { canReclaimStaleLock } from './process-liveness.mjs'
 import { repoRoot } from './state.mjs'
+import {
+  QA_CLI,
+  SYSTEM_CLI,
+  isOfficialElectronBundle
+} from '../../../../../../scripts/qa/patch-wechat-devtools-launcher.mjs'
+import { QA_SHARED_AUTH_ROOT } from './test-owned-devtools-launch.mjs'
 
 export const QA_RUNTIME_SESSION_ROOT = path.join(
   repoRoot,
@@ -28,8 +40,15 @@ export const QA_RUNTIME_SESSION_ROOT = path.join(
   'dispatch-task',
   'qa-runtime-sessions'
 )
-export const QA_RUNTIME_PROFILE_PRODUCT_HASH = '50a7d9210159a32f006158795f893857'
-export const QA_RUNTIME_DEVTOOLS_CLI = '/Applications/wechatwebdevtools.app/Contents/MacOS/cli'
+export const QA_RUNTIME_PROFILE_PRODUCT_HASH =
+  isOfficialElectronBundle()
+    ? QA_RUNTIME_PLANE_PROFILE_PRODUCT_HASH
+    : '7a30d6576abfa238418b33c3c50ac14e'
+// The CLI is only a profile-routing adapter: the stock CLI hardcodes the
+// daily product/profile and fails under the isolated QA HOME. It may issue
+// open/quit requests, but it must never be used as the DevTools runtime
+// executable; the runtime itself is always the installed native binary/package.
+export const QA_RUNTIME_DEVTOOLS_CLI = isOfficialElectronBundle() ? SYSTEM_CLI : QA_CLI
 export const QA_RUNTIME_PROFILE_ROOT = path.join('Library', 'Application Support', '微信开发者工具')
 // Keep the test account separate from the operator's normal DevTools profile,
 // but persist it across QA runs so a one-time QR login survives process
@@ -50,6 +69,8 @@ const QA_TRANSIENT_PROFILE_PATHS = Object.freeze([
   // not authentication state; preserving it makes the next CLI invocation
   // connect to a dead test-owned port instead of opening its isolated project.
   'Default/.ide',
+  'Default/.ide-status',
+  'Default/.cli',
   'WeappApplication',
   'WeappCache/WeappCompileCache',
   'WeappCache/WeappTraceFiles',
@@ -186,7 +207,8 @@ export async function waitFor(predicate, timeoutMs, label) {
     }
     await new Promise(resolve => setTimeout(resolve, QA_RUNTIME_POLL_MS))
   }
-  const error = new Error(`${label} exceeded ${timeoutMs}ms`)
+  const suffix = lastError?.message ? `: ${lastError.message}` : ''
+  const error = new Error(`${label} exceeded ${timeoutMs}ms${suffix}`)
   error.code = 'qa_runtime_start_timeout'
   error.cause = lastError
   throw error
@@ -287,7 +309,7 @@ function findSourceProfile() {
   throw error
 }
 
-function acquirePersistentProfileLock() {
+export function acquirePersistentProfileLock() {
   fs.mkdirSync(QA_RUNTIME_AUTH_HOME, { recursive: true })
   try {
     const fd = fs.openSync(QA_RUNTIME_PROFILE_LOCK, 'wx')
@@ -364,6 +386,32 @@ export function resetTransientQaProfileState(profilePath) {
   }
 }
 
+export function resetQaIdePortMarkers(profilePath) {
+  const profile = path.resolve(String(profilePath || ''))
+  const expectedRoot = path.resolve(QA_RUNTIME_AUTH_PROFILE_ROOT, QA_RUNTIME_PROFILE_PRODUCT_HASH)
+  if (profile !== expectedRoot) {
+    const error = new Error('QA IDE marker reset refused outside the persistent QA profile')
+    error.code = 'qa_ide_marker_profile_invalid'
+    throw error
+  }
+
+  const removed = []
+  for (const relativePath of ['Default/.ide', 'Default/.ide-status', 'Default/.cli']) {
+    const target = path.join(profile, relativePath)
+    if (!fs.existsSync(target)) {
+      continue
+    }
+    fs.rmSync(target, { recursive: true, force: true })
+    removed.push(relativePath)
+  }
+  return {
+    status: 'reset',
+    profile,
+    preserved: ['login', 'storage', 'WeappLocalData', 'WeappApplication', 'WeappCache'],
+    removed
+  }
+}
+
 function qaProfileLocalStorageFile(profilePath, key) {
   const profile = path.resolve(String(profilePath || ''))
   const expectedRoot = path.resolve(QA_RUNTIME_AUTH_PROFILE_ROOT, QA_RUNTIME_PROFILE_PRODUCT_HASH)
@@ -372,15 +420,20 @@ function qaProfileLocalStorageFile(profilePath, key) {
     error.code = 'qa_project_list_profile_path_invalid'
     throw error
   }
-  const mapPath = path.join(profile, 'WeappLocalData', 'hash_key_map_2.json')
-  const map = JSON.parse(fs.readFileSync(mapPath, 'utf8'))
-  const hash = Object.entries(map).find(([, value]) => value === key)?.[0]
-  if (!hash) {
-    const error = new Error(`QA profile local-storage key is unavailable: ${key}`)
+  // DevTools' local-storage filename is the MD5 of the exact key.  Deriving
+  // it directly makes the key deterministic and avoids selecting an
+  // unrelated project by scanning hash_key_map_2/localstorage_*.json.
+  const normalizedKey = String(key || '').trim()
+  if (!normalizedKey) {
+    const error = new Error('QA profile local-storage key is unavailable')
     error.code = 'qa_project_list_key_unavailable'
     throw error
   }
-  return path.join(profile, 'WeappLocalData', `localstorage_${hash}.json`)
+  return path.join(
+    profile,
+    'WeappLocalData',
+    `localstorage_${crypto.createHash('md5').update(normalizedKey).digest('hex')}.json`
+  )
 }
 
 function qaProfileProjectStateFile(profilePath, projectPath) {
@@ -410,6 +463,90 @@ function writeQaProfileJson(filePath, content) {
   fs.renameSync(temporaryPath, filePath)
 }
 
+/**
+ * Resolve the cached DevTools runtime state without treating the project hash
+ * map as a source of truth.  The caller supplies the two exact MD5-derived
+ * files; this helper never scans the profile or accepts an unrelated project.
+ */
+export function resolveQaProjectRuntimeStateCandidate({
+  sourceStatePath,
+  targetStatePath,
+  sourceProjectPath,
+  targetProjectPath,
+  expectedAppId
+} = {}) {
+  const sourceProject = path.resolve(String(sourceProjectPath || ''))
+  const targetProject = path.resolve(String(targetProjectPath || ''))
+  const readState = filePath => {
+    try {
+      return { filePath, state: JSON.parse(fs.readFileSync(filePath, 'utf8')) }
+    } catch {
+      return null
+    }
+  }
+  const stateMatchesAppId = state =>
+    state?.appid === expectedAppId ||
+    state?.appId === expectedAppId ||
+    state?.attr?.appid === expectedAppId ||
+    state?.attr?.appId === expectedAppId
+  const stateProjectPath = state =>
+    state?.projectpath || state?.projectPath || state?.projectid || state?.projectId || ''
+  const exactStateFor = (filePath, expectedProject) => {
+    const loaded = readState(filePath)
+    if (!loaded || !stateMatchesAppId(loaded.state)) {
+      return null
+    }
+    if (
+      normalizeRuntimePath(stateProjectPath(loaded.state)) !==
+      normalizeRuntimePath(expectedProject)
+    ) {
+      return null
+    }
+    return { ...loaded, expectedProject }
+  }
+  return (
+    exactStateFor(targetStatePath, targetProject) ||
+    exactStateFor(sourceStatePath, sourceProject)
+  )
+}
+
+function qaProjectStateManifestPath(runtimeKey) {
+  const value = String(runtimeKey || '')
+  if (!/^[a-f0-9]{32}$/u.test(value)) {
+    const error = new Error('QA project state runtime key is invalid')
+    error.code = 'qa_project_runtime_key_invalid'
+    throw error
+  }
+  return path.join(QA_RUNTIME_MANIFEST_ROOT, `${value}.project-state.json`)
+}
+
+function buildQaProjectStateManifest({
+  runtimeKey,
+  sourceProjectPath,
+  targetProjectPath,
+  appid,
+  sourceStatePath,
+  targetStatePath,
+  sourceState
+}) {
+  const manifestPath = qaProjectStateManifestPath(runtimeKey)
+  const manifest = {
+    schema_version: 1,
+    runtime_key: runtimeKey,
+    source_project_path: path.resolve(sourceProjectPath),
+    target_project_path: path.resolve(targetProjectPath),
+    appid,
+    source_state_path: path.resolve(sourceStatePath),
+    target_state_path: path.resolve(targetStatePath),
+    source_state_sha256: crypto
+      .createHash('sha256')
+      .update(JSON.stringify(sourceState))
+      .digest('hex'),
+    registered_at: new Date().toISOString()
+  }
+  return { manifestPath, manifest }
+}
+
 export function buildQaProjectRuntimeState({
   sourceState = {},
   projectPath,
@@ -432,14 +569,14 @@ export function buildQaProjectRuntimeState({
     compileType: sourceState.compileType || 'weapp',
     libVersion: projectConfig.libVersion || sourceState.libVersion,
     setting: {
-      ...(sourceState.setting || {}),
+      ...sourceState.setting,
       ...projectSettings
     },
     attr: sourceState.attr
       ? {
           ...sourceState.attr,
           setting: {
-            ...(sourceState.attr.setting || {}),
+            ...sourceState.attr.setting,
             ...projectSettings
           }
         }
@@ -451,7 +588,8 @@ export function registerQaProjectInProfile({
   profilePath,
   projectPath,
   sourceProjectPath,
-  projectConfig
+  projectConfig,
+  runtimeKey
 } = {}) {
   const filePath = qaProfileLocalStorageFile(profilePath, QA_PROFILE_PROJECT_LIST_KEY)
   const previousRaw = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : null
@@ -460,39 +598,141 @@ export function registerQaProjectInProfile({
     'WeappLocalData',
     'hash_key_map_2.json'
   )
-  const previousMapRaw = fs.readFileSync(mapPath, 'utf8')
-  const sourceState = (() => {
-    const candidates = []
-    const map = JSON.parse(previousMapRaw)
-    const exact = `project2_${path.resolve(String(sourceProjectPath))}`
-    if (map && Object.values(map).includes(exact)) {
-      candidates.push(exact)
-    }
-    for (const value of Object.values(map)) {
-      if (typeof value === 'string' && value.startsWith('project2_')) {
-        candidates.push(value)
-      }
-    }
-    for (const key of candidates) {
-      const sourceStateFile = qaProfileLocalStorageFile(profilePath, key)
+  const previousMapRaw = fs.existsSync(mapPath) ? fs.readFileSync(mapPath, 'utf8') : '{}\n'
+  const sourceStateRecord = (() => {
+    const sourceProject = path.resolve(String(sourceProjectPath))
+    const targetProject = path.resolve(String(projectPath))
+    const expectedAppId = projectConfig?.appid
+    const exactSource = qaProfileProjectStateFile(profilePath, sourceProject)
+    const exactTarget = qaProfileProjectStateFile(profilePath, targetProject)
+    const readState = filePath => {
       try {
-        const state = JSON.parse(fs.readFileSync(sourceStateFile, 'utf8'))
-        if (state?.appid === projectConfig?.appid || state?.attr?.appid === projectConfig?.appid) {
-          return state
-        }
+        return { filePath, state: JSON.parse(fs.readFileSync(filePath, 'utf8')) }
       } catch {
-        // An unrelated or stale project state is ignored.
+        return null
       }
     }
-    return null
+    const stateMatchesAppId = state =>
+      state?.appid === expectedAppId ||
+      state?.appId === expectedAppId ||
+      state?.attr?.appid === expectedAppId ||
+      state?.attr?.appId === expectedAppId
+    const stateProjectPath = state =>
+      state?.projectpath || state?.projectPath || state?.projectid || state?.projectId || ''
+    const manifestPath = runtimeKey ? qaProjectStateManifestPath(runtimeKey) : null
+    if (manifestPath && fs.existsSync(manifestPath)) {
+      let manifest
+      try {
+        manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
+      } catch (error) {
+        const invalid = new Error('QA project runtime-state manifest is unreadable')
+        invalid.code = 'qa_project_runtime_state_manifest_invalid'
+        invalid.cause = error
+        throw invalid
+      }
+      const sourceStatePath = path.resolve(String(manifest?.source_state_path || ''))
+      const targetStatePath = path.resolve(String(manifest?.target_state_path || ''))
+      const exactSourcePath = path.resolve(exactSource.filePath)
+      const exactTargetPath = path.resolve(exactTarget.filePath)
+      const sourcePathMatches = [
+        exactSourcePath,
+        exactTargetPath
+      ].includes(sourceStatePath)
+      const targetPathMatches = targetStatePath === path.resolve(exactTarget.filePath)
+      const manifestValid =
+        manifest?.schema_version === 1 &&
+        manifest.runtime_key === runtimeKey &&
+        path.resolve(String(manifest.source_project_path || '')) === sourceProject &&
+        path.resolve(String(manifest.target_project_path || '')) === targetProject &&
+        manifest.appid === expectedAppId &&
+        targetPathMatches &&
+        sourcePathMatches
+      if (!manifestValid) {
+        // A QA product-hash migration changes the profile directory while
+        // retaining the same runtime key and project.  Preserve the strict
+        // manifest contract for every other mismatch, but allow this one
+        // recoverable case to rebuild the manifest from the exact state files
+        // in the current persistent QA profile.  This never scans the
+        // profile, accepts the daily profile, or trusts the stale paths.
+        const qaProfileRoot = path.resolve(QA_RUNTIME_AUTH_PROFILE_ROOT)
+        const isQaProfileStatePath = filePath => {
+          const relative = path.relative(qaProfileRoot, filePath)
+          const parts = relative.split(path.sep)
+          return (
+            parts.length === 3 &&
+            /^[a-f0-9]{32}$/u.test(parts[0]) &&
+            parts[1] === 'WeappLocalData' &&
+            /^localstorage_[a-f0-9]{32}\.json$/u.test(parts[2])
+          )
+        }
+        const manifestIdentityMatchesTarget =
+          manifest?.schema_version === 1 &&
+          manifest.runtime_key === runtimeKey &&
+          path.resolve(String(manifest.source_project_path || '')) === sourceProject &&
+          path.resolve(String(manifest.target_project_path || '')) === targetProject &&
+          manifest.appid === expectedAppId
+        const manifestUsesCurrentProfileState =
+          sourceStatePath === exactSourcePath && targetStatePath === exactTargetPath
+        const currentCandidate = resolveQaProjectRuntimeStateCandidate({
+          sourceStatePath: exactSourcePath,
+          targetStatePath: exactTargetPath,
+          sourceProjectPath: sourceProject,
+          targetProjectPath: targetProject,
+          expectedAppId
+        })
+        if (
+          manifestIdentityMatchesTarget &&
+          !manifestUsesCurrentProfileState &&
+          isQaProfileStatePath(sourceStatePath) &&
+          isQaProfileStatePath(targetStatePath) &&
+          currentCandidate
+        ) {
+          return currentCandidate
+        }
+        const invalid = new Error('QA project runtime-state manifest does not match the target')
+        invalid.code = 'qa_project_runtime_state_manifest_invalid'
+        invalid.manifest = manifest
+        throw invalid
+      }
+      const canonical = readState(sourceStatePath)
+      if (!canonical || !stateMatchesAppId(canonical.state)) {
+        const invalid = new Error('QA project runtime-state manifest points to unavailable state')
+        invalid.code = 'qa_project_runtime_state_manifest_invalid'
+        invalid.manifest = manifest
+        throw invalid
+      }
+      const expectedStatePath = stateProjectPath(canonical.state)
+      const statePathMatches =
+        normalizeRuntimePath(expectedStatePath) === sourceProject ||
+        normalizeRuntimePath(expectedStatePath) === targetProject
+      if (!statePathMatches) {
+        const invalid = new Error('QA project runtime-state manifest state path is inconsistent')
+        invalid.code = 'qa_project_runtime_state_manifest_invalid'
+        invalid.manifest = manifest
+        throw invalid
+      }
+      return canonical
+    }
+    // The target mirror is the strongest source because it has already been
+    // registered for this runtime key.  The source worktree's exact state
+    // filename is the only permitted bootstrap fallback.  No project list,
+    // hash-map, or local-storage directory scan is allowed here.
+    return resolveQaProjectRuntimeStateCandidate({
+      sourceStatePath: exactSource.filePath,
+      targetStatePath: exactTarget.filePath,
+      sourceProjectPath: sourceProject,
+      targetProjectPath: targetProject,
+      expectedAppId
+    })
   })()
-  if (!sourceState) {
+  if (!sourceStateRecord) {
     const error = new Error(
       `QA profile has no cached project runtime state for appid ${projectConfig?.appid || 'unknown'}`
     )
     error.code = 'qa_project_runtime_state_unavailable'
     throw error
   }
+  const sourceState = sourceStateRecord.state
   const targetState = qaProfileProjectStateFile(profilePath, projectPath)
   const targetStatePreviousRaw = fs.existsSync(targetState.filePath)
     ? fs.readFileSync(targetState.filePath, 'utf8')
@@ -504,12 +744,9 @@ export function registerQaProjectInProfile({
     error.code = 'qa_project_list_parse_failed'
     throw error
   }
+  const normalizedSourceProjectPath = path.resolve(String(sourceProjectPath))
   const sourceEntry =
-    projectList[sourceProjectPath] ||
-    Object.values(projectList).find(
-      entry => entry?.appId === projectConfig?.appid || entry?.appID === projectConfig?.appid
-    ) ||
-    {}
+    projectList[normalizedSourceProjectPath] || projectList[sourceProjectPath] || {}
   const normalizedProjectPath = path.resolve(String(projectPath))
   projectList[normalizedProjectPath] = {
     ...sourceEntry,
@@ -526,10 +763,34 @@ export function registerQaProjectInProfile({
   const nextMap = { ...JSON.parse(previousMapRaw) }
   nextMap[crypto.createHash('md5').update(targetState.key).digest('hex')] = targetState.key
   const state = buildQaProjectRuntimeState({ sourceState, projectPath, projectConfig })
+  const sourceStatePath = sourceStateRecord.filePath
+  let projectStateManifest = null
+  let previousProjectStateManifestRaw = null
+  if (runtimeKey) {
+    const manifestPath = qaProjectStateManifestPath(runtimeKey)
+    previousProjectStateManifestRaw = fs.existsSync(manifestPath)
+      ? fs.readFileSync(manifestPath, 'utf8')
+      : null
+    projectStateManifest = buildQaProjectStateManifest({
+      runtimeKey,
+      sourceProjectPath,
+      targetProjectPath: normalizedProjectPath,
+      appid: projectConfig?.appid,
+      sourceStatePath,
+      targetStatePath: targetState.filePath,
+      sourceState
+    })
+  }
   try {
     writeQaProfileJson(filePath, `${JSON.stringify(projectList)}\n`)
     writeQaProfileJson(mapPath, `${JSON.stringify(nextMap, null, 2)}\n`)
     writeQaProfileJson(targetState.filePath, `${JSON.stringify(state)}\n`)
+    if (projectStateManifest) {
+      writeQaProfileJson(
+        projectStateManifest.manifestPath,
+        `${JSON.stringify(projectStateManifest.manifest, null, 2)}\n`
+      )
+    }
   } catch (error) {
     if (previousRaw === null) {
       try {
@@ -550,6 +811,17 @@ export function registerQaProjectInProfile({
     } else {
       writeQaProfileJson(targetState.filePath, targetStatePreviousRaw)
     }
+    if (projectStateManifest) {
+      if (previousProjectStateManifestRaw === null) {
+        try {
+          fs.unlinkSync(projectStateManifest.manifestPath)
+        } catch {
+          // The manifest may not have been written before the failure.
+        }
+      } else {
+        writeQaProfileJson(projectStateManifest.manifestPath, previousProjectStateManifestRaw)
+      }
+    }
     throw error
   }
   return {
@@ -560,7 +832,10 @@ export function registerQaProjectInProfile({
     mapPath,
     previousMapRaw,
     statePath: targetState.filePath,
-    statePreviousRaw: targetStatePreviousRaw
+    statePreviousRaw: targetStatePreviousRaw,
+    projectStateManifestPath: projectStateManifest?.manifestPath || null,
+    projectStateManifestPreviousRaw: previousProjectStateManifestRaw,
+    projectStateManifest
   }
 }
 
@@ -595,6 +870,25 @@ export function restoreQaProjectInProfile(registration) {
   if (registration.mapPath && registration.previousMapRaw) {
     writeQaProfileJson(registration.mapPath, registration.previousMapRaw)
   }
+  if (registration.projectStateManifestPath) {
+    if (
+      registration.projectStateManifestPreviousRaw === null ||
+      registration.projectStateManifestPreviousRaw === undefined
+    ) {
+      try {
+        fs.unlinkSync(registration.projectStateManifestPath)
+      } catch (error) {
+        if (error?.code !== 'ENOENT') {
+          return { status: 'blocked', error: error.message }
+        }
+      }
+    } else {
+      writeQaProfileJson(
+        registration.projectStateManifestPath,
+        registration.projectStateManifestPreviousRaw
+      )
+    }
+  }
   return { status: 'restored', filePath: registration.filePath }
 }
 
@@ -626,7 +920,13 @@ export function cloneTestProfile() {
 }
 
 function runtimeLease(targetPath) {
-  const filePath = localRuntimeLeasePath(targetPath, QA_RUNTIME_LEASE_ROOT)
+  const target = normalizeRuntimePath(targetPath)
+  const preferredRoot = target.startsWith(
+    `${path.join(os.homedir(), '.planting', 'automator-qa')}${path.sep}`
+  )
+    ? QA_RUNTIME_PLANE_LEASE_ROOT
+    : QA_RUNTIME_LEASE_ROOT
+  const filePath = localRuntimeLeasePath(targetPath, preferredRoot)
   try {
     return { filePath, value: JSON.parse(fs.readFileSync(filePath, 'utf8')) }
   } catch {
@@ -648,14 +948,36 @@ export function localRuntimeEvidence(targetPath) {
   return runtimeLease(targetPath)
 }
 
-export function mainForSession({ profile, controlPort }) {
-  return mainDevToolsProcesses().find(item => {
+export function mainForSession({ profile, devtools_user_data_dir, controlPort }) {
+  const expectedUserDataDir = normalizeRuntimePath(
+    String(devtools_user_data_dir || profile || '')
+  )
+  const expectedControlPort = Number(controlPort)
+  if (
+    !expectedUserDataDir ||
+    !Number.isInteger(expectedControlPort) ||
+    expectedControlPort <= 0
+  ) {
+    return null
+  }
+  const main = mainDevToolsProcesses().find(item => {
     const direct = directControlPortEvidence(item.command)
     return (
-      normalizeRuntimePath(userDataDirFromCommand(item.command)) ===
-        normalizeRuntimePath(profile) && Number(direct.port) === Number(controlPort)
+      normalizeRuntimePath(userDataDirFromCommand(item.command)) === expectedUserDataDir &&
+      Number(direct.port) === expectedControlPort
     )
   })
+  if (!main) {
+    return null
+  }
+  return {
+    ...main,
+    // Official Electron writes timestamp-named WeappLog files instead of
+    // embedding the argv session id in the filename. Keep the process start
+    // identity alongside the verified owner so the log reader can reject
+    // residue from an older cold start.
+    process_start_identity: processStartIdentity(main.pid)
+  }
 }
 
 export function ownedRuntimeEvidence(session) {
@@ -670,6 +992,7 @@ export function ownedRuntimeEvidence(session) {
     }
   }
   const control = controlPortListenerEvidence(session.controlPort, main.pid)
+  const directControl = directControlPortEvidence(main.command)
   const wsOwners = listenerPids(session.wsPort).map(pid => ({
     automation_listener_pid: pid,
     main_devtools_pid: main.pid,
@@ -698,11 +1021,15 @@ export function ownedRuntimeEvidence(session) {
     project_identity_verified: projectProof,
     project_identity_source: projectProof ? 'test_owned_session_fileutils' : 'unavailable',
     main_devtools_pid: main.pid,
+    process_start_identity: processStartIdentity(main.pid),
+    identity_hash: session.identity_hash || null,
+    auth_generation: Number(session.auth_generation || 0) || null,
     automation_listener_pid: wsOwner[0]?.automation_listener_pid ?? null,
     port_owner_pid: wsOwner[0]?.automation_listener_pid ?? null,
     automator_listener_pids: wsOwners.map(item => item.automation_listener_pid),
     automator_port: session.wsPort,
     control_port: session.controlPort,
+    control_port_source: directControl.source,
     control_port_verified: control.verified,
     user_data_dir: session.profile,
     session_log_evidence: sessionLog,
@@ -721,7 +1048,13 @@ function appendChildOutput(child, filePath, label) {
 export async function runDevToolsCli({ home, args, outputPath, timeoutMs = 30_000 }) {
   const child = spawn(QA_RUNTIME_DEVTOOLS_CLI, args, {
     cwd: repoRoot,
-    env: { ...process.env, HOME: home },
+    env: {
+      ...process.env,
+      HOME: home,
+      USERPROFILE: home,
+      WECHAT_DEVTOOLS_SHARED_AUTH_ROOT: QA_SHARED_AUTH_ROOT,
+      WECHAT_QA_LAUNCHER_ROLE: 'qa'
+    },
     stdio: ['pipe', 'pipe', 'pipe']
   })
   child.stdin.end('y\n')
@@ -823,7 +1156,7 @@ export async function terminateProcessIds(pids = [], timeoutMs = QA_RUNTIME_CLEA
 }
 
 export function cleanupEvidence(session) {
-  const lease = runtimeLease(session.runtimeTargetPath)
+  const lease = runtimeLease(session.localRuntimeTargetPath || session.runtimeTargetPath)
   const borrowed = session.localRuntimeMode === 'borrowed'
   return {
     main_pid: mainForSession(session)?.pid ?? null,
@@ -847,11 +1180,13 @@ export function cleanupEvidence(session) {
 }
 
 function sessionProfilePids(session) {
-  const rawProfile = String(session?.profile || '')
-  if (!rawProfile) {
+  const roots = [session?.home, session?.profile, session?.devtools_user_data_dir]
+    .map(value => String(value || '').trim())
+    .filter(Boolean)
+    .map(value => normalizeRuntimePath(value))
+  if (roots.length === 0) {
     return []
   }
-  const profile = normalizeRuntimePath(rawProfile)
   return processTable()
     .filter(item => {
       const command = String(item.command || '')
@@ -859,14 +1194,19 @@ function sessionProfilePids(session) {
         /--user-data-dir(?:=|\s+)(?:"([^"]+)"|'([^']+)'|(.*?)(?=\s+-{1,2}[\w-]|\s*$))/
       )
       const userDataDir = match ? (match[1] ?? match[2] ?? match[3]?.trim() ?? '') : ''
-      return userDataDir && normalizeRuntimePath(userDataDir).startsWith(profile)
+      const normalizedUserDataDir = userDataDir ? normalizeRuntimePath(userDataDir) : ''
+      return roots.some(
+        root =>
+          normalizedUserDataDir === root ||
+          normalizedUserDataDir.startsWith(`${root}${path.sep}`)
+      )
     })
     .map(item => Number(item.pid))
     .filter(pid => pid > 0)
 }
 
 export function releaseStaleLocalRuntimeLease(session) {
-  const lease = runtimeLease(session.runtimeTargetPath)
+  const lease = runtimeLease(session.localRuntimeTargetPath || session.runtimeTargetPath)
   if (
     lease.value &&
     !processAlive(lease.value.owner_pid) &&

@@ -4,24 +4,22 @@
  * wx.request 拦截与读取 —— 浇水算法 v3 蒸腾间隔修正端上验收。
  *
  * 职责：
- *   - 在小程序运行时安装 wx.request monkey-patch，捕获真实请求/响应
+ *   - 在小程序运行时安装 wx.request/uni.request monkey-patch，捕获真实请求/响应
  *   - 读取已捕获的请求列表
- *   - 恢复原始 wx.request
+ *   - 恢复原始请求函数
  *   - 递归脱敏：移除 token/openid/cookie/Authorization/session/credential 等敏感字段
  *
  * 关键约束：
  *   - mp.evaluate 回调运行在小程序环境，不能引用 Node 模块闭包。
  *     所有正则、常量、辅助函数必须全部在回调内部定义。
  *   - 安装/恢复必须幂等，避免重复安装后把 wrapper 当成 original。
- *   - 不破坏原始 wx.request 的 success/fail/complete 回调语义。
+ *   - 不破坏原始请求函数的 success/fail/complete 回调语义。
  *
- * 不替代后端 curl/Node HTTP/mock；只采集小程序运行时真实 wx.request。
+ * 不替代后端 curl/Node HTTP/mock；只采集小程序运行时真实网络请求。
  */
 
-const CAPTURE_FLAG = '__e2eWateringV3CaptureInstalled'
-
 /**
- * 安装 wx.request 拦截器到 globalThis.__e2eRequests。
+ * 安装运行时请求拦截器到 globalThis.__e2eRequests。
  *
  * 幂等：重复调用不会重复安装（检查 __e2eWateringV3CaptureInstalled 标志）。
  *
@@ -29,13 +27,29 @@ const CAPTURE_FLAG = '__e2eWateringV3CaptureInstalled'
  */
 export async function installRequestCapture(mp) {
   await mp.evaluate(() => {
-    // 幂等保护：已安装则先恢复原 wx.request，再重新安装
-    if (globalThis.__e2eWateringV3CaptureInstalled && globalThis.__e2eOriginalRequest) {
-      wx.request = globalThis.__e2eOriginalRequest
+    // Do not reference the undeclared `uni` identifier directly.  Some
+    // compiled assets expose only `globalThis.uni` (and some expose no Uni
+    // namespace at all); an identifier lookup can surface as an AppService
+    // "Uncaught uni is not defined" even when guarded by a runtime probe.
+    const uniRef = globalThis.uni
+    // 幂等保护：已安装则先恢复所有已包裹的请求函数，再重新安装
+    const previousState = globalThis.__e2eRequestCaptureState
+    if (previousState && previousState.installed) {
+      if (previousState.wxRequest && typeof wx !== 'undefined') {
+        wx.request = previousState.wxRequest
+      }
+      if (previousState.uniRequest && uniRef) {
+        uniRef.request = previousState.uniRequest
+      }
     }
 
     globalThis.__e2eRequests = []
-    globalThis.__e2eOriginalRequest = wx.request
+    const state = {
+      installed: true,
+      wxRequest: typeof wx !== 'undefined' ? wx.request : null,
+      uniRequest: uniRef && typeof uniRef.request === 'function' ? uniRef.request : null
+    }
+    globalThis.__e2eRequestCaptureState = state
     globalThis.__e2eWateringV3CaptureInstalled = true
 
     // 敏感 header 键正则（在回调内部定义，不引用 Node 闭包）
@@ -47,8 +61,12 @@ export async function installRequestCapture(mp) {
       /^(authorization|token|openid|sessionid|session_key|session-key|cookie|credential|secret|access_token|refresh_token|password|_openid)$/i
 
     function sanitizeValue(value, depth) {
-      if (depth > 6) return '[max-depth]'
-      if (value === null || value === undefined) return value
+      if (depth > 6) {
+        return '[max-depth]'
+      }
+      if (value === null || value === undefined) {
+        return value
+      }
       if (typeof value === 'string') {
         // 脱敏疑似 token/JWT 的长字符串（>40 字符且匹配 token 模式）
         if (value.length > 40 && /^[A-Za-z0-9_\-.]+$/.test(value)) {
@@ -56,7 +74,9 @@ export async function installRequestCapture(mp) {
         }
         return value
       }
-      if (typeof value === 'number' || typeof value === 'boolean') return value
+      if (typeof value === 'number' || typeof value === 'boolean') {
+        return value
+      }
       if (Array.isArray(value)) {
         return value.slice(0, 50).map(v => sanitizeValue(v, depth + 1))
       }
@@ -87,62 +107,114 @@ export async function installRequestCapture(mp) {
     }
 
     function sanitizeRequestData(data) {
-      if (data === null || data === undefined) return null
+      if (data === null || data === undefined) {
+        return null
+      }
       try {
         return sanitizeValue(JSON.parse(JSON.stringify(data)), 0)
-      } catch (e) {
+      } catch {
         return String(data)
       }
     }
 
     function sanitizeResponseData(data) {
-      if (data === null || data === undefined) return null
+      if (data === null || data === undefined) {
+        return null
+      }
       try {
         return sanitizeValue(JSON.parse(JSON.stringify(data)), 0)
-      } catch (e) {
+      } catch {
         return String(data)
       }
     }
 
-    wx.request = function (opts) {
-      const captured = {
-        url: opts.url || '',
-        method: opts.method || 'GET',
-        data: sanitizeRequestData(opts.data),
-        header: sanitizeHeader(opts.header || {}),
-        time: Date.now()
+    function wrapRequest(owner, original, transport) {
+      if (typeof original !== 'function') {
+        return null
       }
-      const origSuccess = opts.success
-      const origFail = opts.fail
-      const origComplete = opts.complete
-
-      opts.success = function (res) {
-        try {
-          captured.response = {
-            statusCode: res.statusCode,
-            data: sanitizeResponseData(res.data)
+      return function (opts = {}) {
+        const inheritedCapture = opts && opts.__e2eRequestCaptureContext
+        if (inheritedCapture) {
+          return original.call(owner, opts)
+        }
+        const captured = {
+          transport,
+          url: opts.url || '',
+          method: opts.method || 'GET',
+          data: sanitizeRequestData(opts.data),
+          header: sanitizeHeader(opts.header || {}),
+          time: Date.now()
+        }
+        const origSuccess = opts.success
+        const origFail = opts.fail
+        const origComplete = opts.complete
+        let recorded = false
+        const record = () => {
+          if (recorded) {
+            return
           }
-          globalThis.__e2eRequests.push(captured)
-        } catch (e) {}
-        if (origSuccess) return origSuccess(res)
+          recorded = true
+          try {
+            globalThis.__e2eRequests.push(captured)
+          } catch {
+            // Runtime teardown can race request completion; the request itself remains valid.
+          }
+        }
+        const nextOpts = { ...opts }
+        Object.defineProperty(nextOpts, '__e2eRequestCaptureContext', {
+          value: captured,
+          enumerable: false,
+          configurable: true
+        })
+
+        nextOpts.success = function (res) {
+          try {
+            captured.response = {
+              statusCode: res.statusCode,
+              data: sanitizeResponseData(res.data)
+            }
+          } catch {
+            // Keep the request record even when response serialization fails.
+          }
+          record()
+          if (origSuccess) {
+            return origSuccess(res)
+          }
+        }
+        nextOpts.fail = function (err) {
+          try {
+            captured.error = String(err?.errMsg || err)
+          } catch {
+            // Keep the request record even when the failure object is not serializable.
+          }
+          record()
+          if (origFail) {
+            return origFail(err)
+          }
+        }
+        nextOpts.complete = function (resOrErr) {
+          if (origComplete) {
+            return origComplete(resOrErr)
+          }
+        }
+        return original.call(owner, nextOpts)
       }
-      opts.fail = function (err) {
-        try {
-          captured.error = String(err?.errMsg || err)
-          globalThis.__e2eRequests.push(captured)
-        } catch (e) {}
-        if (origFail) return origFail(err)
-      }
-      opts.complete = function (resOrErr) {
-        if (origComplete) return origComplete(resOrErr)
-      }
-      return globalThis.__e2eOriginalRequest.call(wx, opts)
+    }
+
+    // UniApp 小程序产物通常调用 uni.request；保留 wx.request 作为原生页面/旧产物回退。
+    // 即使两者指向同一个原函数，也要分别替换两个属性，否则只替换 wx.request
+    // 无法覆盖 uni.request 这个别名属性。
+    if (state.uniRequest && uniRef) {
+      uniRef.request = wrapRequest(uniRef, state.uniRequest, 'uni.request')
+    }
+    if (state.wxRequest && typeof wx !== 'undefined') {
+      wx.request = wrapRequest(wx, state.wxRequest, 'wx.request')
     }
   })
 }
 
 /**
- * 读取已捕获的 wx.request 列表（深拷贝，避免引用污染）。
+ * 读取已捕获的运行时请求列表（深拷贝，避免引用污染）。
  */
 export async function readCapturedRequests(mp) {
   return mp.evaluate(() => {
@@ -160,21 +232,30 @@ export async function clearCapturedRequests(mp) {
 }
 
 /**
- * 恢复原始 wx.request（必须在 finally 中调用）。
+ * 恢复原始请求函数（必须在 finally 中调用）。
  * 幂等：未安装时无操作。
  */
 export async function restoreRequest(mp) {
-  if (!mp) return
+  if (!mp) {
+    return
+  }
   try {
     await mp.evaluate(() => {
-      if (globalThis.__e2eOriginalRequest) {
-        wx.request = globalThis.__e2eOriginalRequest
-        delete globalThis.__e2eOriginalRequest
+      const uniRef = globalThis.uni
+      const state = globalThis.__e2eRequestCaptureState
+      if (state) {
+        if (state.wxRequest && typeof wx !== 'undefined') {
+          wx.request = state.wxRequest
+        }
+        if (state.uniRequest && uniRef) {
+          uniRef.request = state.uniRequest
+        }
+        delete globalThis.__e2eRequestCaptureState
         delete globalThis.__e2eRequests
         delete globalThis.__e2eWateringV3CaptureInstalled
       }
     })
-  } catch (error) {
+  } catch {
     // ignore restore errors
   }
 }
@@ -189,8 +270,12 @@ export async function restoreRequest(mp) {
  */
 export function findRequestByUrl(requests, urlFragment, method) {
   for (const req of requests) {
-    if (!req.url || !req.url.includes(urlFragment)) continue
-    if (method && String(req.method).toUpperCase() !== String(method).toUpperCase()) continue
+    if (!req.url || !req.url.includes(urlFragment)) {
+      continue
+    }
+    if (method && String(req.method).toUpperCase() !== String(method).toUpperCase()) {
+      continue
+    }
     return req
   }
   return null

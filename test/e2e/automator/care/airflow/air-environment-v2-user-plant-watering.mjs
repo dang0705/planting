@@ -9,7 +9,7 @@
  * - `failure-fallback`：网关令空气环境 GET/PATCH 失败，且该植物已有完整盆型；
  * - `switch-draft`：第一株有资料、第二株无资料，用于确认草稿不串植物。
  *
- * 脚本只连接已有 9420 与现有 LAN 服务，不启动、不重启，也不制造资料。
+ * 脚本只连接 catalog supervisor 提供的正式 QA 9421 与现有 LAN 服务，不启动、不重启，也不制造资料。
  */
 
 import path from 'node:path'
@@ -45,7 +45,7 @@ import {
 } from './_shared/lib/reporter.mjs'
 import { preflightProject } from './_shared/lib/project-check.mjs'
 
-const WATERING_PAGE = '/pages/watering-advisor/watering-advisor'
+const WATERING_PAGE = '/subpackages/care/watering-advisor/watering-advisor'
 const ALMOST_NEVER_PICKER_INDEX = 3
 const PICKER_SETTLE_DELAY_MS = 100
 const SCENARIOS = new Set(['saved-prefill', 'failure-fallback', 'switch-draft'])

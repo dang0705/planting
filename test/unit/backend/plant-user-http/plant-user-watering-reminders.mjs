@@ -39,6 +39,19 @@ Module._load = function patchedWateringReminderLoad(request, parent, isMain) {
   if (request === '/opt/utils/air-environment-evidence') {
     return { resolveAirEnvironmentEvidence: () => null }
   }
+  if (request === '/opt/utils/fertilization-history') {
+    return {
+      getUserPlantFertilizationEvents: async () => [],
+      insertFertilizationEvent: async () => ({})
+    }
+  }
+  if (request === '/opt/utils/fertilization-reminder-planner') {
+    return {
+      calculateFertilizationCheck: () => ({}),
+      evaluateMonthlyRule: () => ({ kind: 'interval', available: true, sourceNames: ['test'] }),
+      parseDate: value => new Date(String(value))
+    }
+  }
   if (request === '/opt/utils/plant-knowledge') {
     return {
       createUserPlantInstance: async () => ({}),
@@ -189,6 +202,8 @@ const serviceSource = fs.readFileSync(
   'cloudfunctions/plant-user-http/watering-reminder-service.js',
   'utf8'
 )
+const appSource = fs.readFileSync('cloudfunctions/plant-user-http/app.js', 'utf8')
+assert.match(appSource, /String\(request\.path \|\| ''\)\.split\('\?'\)\[0\]/)
 assert.match(
   serviceSource,
   /SELECT id FROM user_plant_instances WHERE id = {{plantId}} AND _openid = {{openid}}/

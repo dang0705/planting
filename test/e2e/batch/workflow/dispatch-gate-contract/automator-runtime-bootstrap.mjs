@@ -240,14 +240,14 @@ const staleRouteReport = { pageDataSummaries: [], assertions: [] }
 await switchTabHomeBeforeFixture({
   mp: { currentPage: async () => (fixtureStartupEvents.push('unexpected-currentPage'), null) },
   report: staleRouteReport,
-  switchTab: async () => ({ path: 'pages/diagnose/question-package' }),
+  switchTab: async () => ({ path: 'subpackages/diagnosis/question-package' }),
   markFixtureAttempted: () => fixtureStartupEvents.push('unexpected-fixture-attempt'),
   installFixture: async () => (fixtureStartupEvents.push('unexpected-fixture'), null)
 })
 assert.equal(staleRouteReport.classification, 'BLOCKED_ENV')
 assert.match(
   staleRouteReport.blockerReason,
-  /automator_route_registry_stale.*pages\/diagnose\/question-package/
+  /automator_route_registry_stale.*subpackages\/diagnosis\/question-package/
 )
 assert.deepEqual(fixtureStartupEvents, ['switchTab', 'fixture-attempt', 'fixture', 'currentPage'])
 const leafPath = 'test/e2e/automator/diagnosis/air-environment-v2-question-packages.mjs'
@@ -296,7 +296,7 @@ assert.equal(entrySummary.targetQuickEntryId, 'diagnose-dev-symptom-class-option
 assert.deepEqual(entrySummary.componentPath, quick.componentPath)
 assert.equal(JSON.stringify(serializableReport).includes('"entry"'), false)
 await circularEntry.tap()
-const activeQuestionPackagePage = { path: 'pages/diagnose/question-package' }
+const activeQuestionPackagePage = { path: 'subpackages/diagnosis/question-package' }
 const currentPages = [{ path: 'pages/index/index' }, activeQuestionPackagePage]
 const resolvedQuestionPackagePage = await waitForActiveQuestionPackagePage({
   currentPage: async () => currentPages.shift() ?? activeQuestionPackagePage
@@ -389,11 +389,11 @@ const packageLayout = scopedQuery('layout', selector =>
   selector === '#layout-left-action' ? layoutBackAction : null
 )
 const freshPackagePage = {
-  path: 'pages/diagnose/question-package',
+  path: 'subpackages/diagnosis/question-package',
   ...scopedQuery('fresh-package', selector => (selector === 'layout' ? packageLayout : null))
 }
 const stalePackagePage = {
-  path: 'pages/diagnose/question-package',
+  path: 'subpackages/diagnosis/question-package',
   $: async () => {
     throw new Error('stale package page must not be queried')
   }
@@ -426,7 +426,7 @@ const immediateRouteObservation = async (mp, _matches) => {
   return page
 }
 async function unchangedLayoutTapScenario(onTrigger) {
-  let route = 'pages/diagnose/question-package'
+  let route = 'subpackages/diagnosis/question-package'
   const backAction = action({ onTrigger: () => onTrigger(() => (route = 'pages/index/index')) })
   const packagePage = {
     path: route,
@@ -442,7 +442,7 @@ async function unchangedLayoutTapScenario(onTrigger) {
     returned: await returnQuestionPackageWithLayoutBack({
       mp: {
         currentPage: async () =>
-          route === 'pages/diagnose/question-package' ? packagePage : { path: route }
+          route === 'subpackages/diagnosis/question-package' ? packagePage : { path: route }
       },
       page: packagePage,
       report,

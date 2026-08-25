@@ -36,7 +36,7 @@ async function runAll() {
  * ============================================================ */
 
 test('watering-advisor.vue 结果区只包含毫升数文本和导航按钮', () => {
-  const vue = fs.readFileSync('src/pages/watering-advisor/watering-advisor.vue', 'utf8')
+  const vue = fs.readFileSync('src/subpackages/care/watering-advisor/watering-advisor.vue', 'utf8')
   // 只检查 plannerResult 条件块内的内容（v-else-if="plannerResult"）
   const resultStart = vue.indexOf('v-else-if="plannerResult"')
   const resultEnd = vue.indexOf('</view>', vue.indexOf('watering-advisor-done', resultStart))
@@ -69,7 +69,7 @@ test('watering-advisor.vue 结果区只包含毫升数文本和导航按钮', ()
 })
 
 test('watering-advisor.vue 不导入 formatMlRangeToBottleText', () => {
-  const vue = fs.readFileSync('src/pages/watering-advisor/watering-advisor.vue', 'utf8')
+  const vue = fs.readFileSync('src/subpackages/care/watering-advisor/watering-advisor.vue', 'utf8')
   assert.ok(!vue.includes('formatMlRangeToBottleText'), '不应导入 formatMlRangeToBottleText')
 })
 

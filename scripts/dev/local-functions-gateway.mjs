@@ -6,13 +6,16 @@ import http from 'node:http'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { createLocalFunctionLayerWatcher } from './local-function-layer-watcher.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const projectRoot = path.resolve(__dirname, '..', '..')
 const DEFAULT_GATEWAY_PORT = 3010
+const DEFAULT_FUNCTION_PORT_BASE = 9000
 const DEFAULT_CLOUDBASE_ENV_ID = 'cloud1-2grufevs395a9d5e'
 const DEFAULT_SQL_DATABASE = 'cloud1_dev'
 const LOCAL_GATEWAY_KIND = 'planting-local-functions-gateway'
+const LOCAL_FUNCTION_LAYER_ROOT = path.join(projectRoot, 'cloudfunctions', 'layer')
 const LOCAL_CREDENTIAL_SECRET_ID_KEYS = [
   'CLOUDBASE_SECRET_ID',
   'TENCENT_SECRET_ID',
@@ -33,20 +36,23 @@ const FUNCTIONS_REQUIRING_CLOUDBASE_CREDENTIALS = new Set([
   'weather-http'
 ])
 
-const HTTP_FUNCTIONS = [
-  { name: 'diagnose-http', port: 9000 },
-  { name: 'plant-catalog-http', port: 9001 },
-  { name: 'plant-user-http', port: 9002 },
-  { name: 'identify-http', port: 9003 },
-  { name: 'diagnosis-history-http', port: 9004 },
-  { name: 'auth-user-http', port: 9005 },
-  { name: 'weather-http', port: 9006 },
-  { name: 'storage-http', port: 9007 }
+const FUNCTION_NAMES = [
+  'diagnose-http',
+  'plant-catalog-http',
+  'plant-user-http',
+  'identify-http',
+  'diagnosis-history-http',
+  'auth-user-http',
+  'weather-http',
+  'storage-http'
 ]
 
 function parseArgs(argv = []) {
   const args = {
     port: Number(process.env.CLOUDBASE_LOCAL_FUNCTIONS_PORT || DEFAULT_GATEWAY_PORT),
+    functionPortBase: Number(
+      process.env.CLOUDBASE_LOCAL_FUNCTIONS_FUNCTION_PORT_BASE || DEFAULT_FUNCTION_PORT_BASE
+    ),
     host: process.env.CLOUDBASE_LOCAL_FUNCTIONS_HOST || '0.0.0.0',
     functions: String(process.env.LOCAL_FUNCTIONS || '').trim()
   }
@@ -56,6 +62,9 @@ function parseArgs(argv = []) {
     const value = rest.join('=').trim()
     if (key === '--port' && value) {
       args.port = Number(value)
+    }
+    if (key === '--function-port-base' && value) {
+      args.functionPortBase = Number(value)
     }
     if (key === '--host' && value) {
       args.host = value
@@ -248,17 +257,22 @@ function resolveTcbFfBin() {
   )
 }
 
-function getSelectedFunctions(selection = '') {
+function getSelectedFunctions(selection = '', functionPortBase = DEFAULT_FUNCTION_PORT_BASE) {
   const selectedNames = String(selection || '')
     .split(',')
     .map(item => item.trim())
     .filter(Boolean)
 
   if (!selectedNames.length) {
-    return HTTP_FUNCTIONS
+    return FUNCTION_NAMES.map((name, index) => ({
+      name,
+      port: functionPortBase + index
+    }))
   }
 
-  const known = new Map(HTTP_FUNCTIONS.map(item => [item.name, item]))
+  const known = new Map(
+    FUNCTION_NAMES.map((name, index) => [name, { name, port: functionPortBase + index }])
+  )
   return selectedNames.map(name => {
     const matched = known.get(name)
     if (!matched) {
@@ -457,7 +471,7 @@ function createGatewayServer(functionRuntimes) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2))
-  const functions = getSelectedFunctions(args.functions)
+  const functions = getSelectedFunctions(args.functions, args.functionPortBase)
   ensureTcbFfInstalled(functions)
 
   const localEnv = readEnvFile(path.join(projectRoot, '.env.local'))
@@ -471,6 +485,9 @@ async function main() {
   const server = createGatewayServer(functionRuntimes)
   const children = []
   let shuttingDown = false
+  let restarting = false
+  let restartPromise = null
+  let layerWatcher = null
 
   await new Promise((resolveListen, rejectListen) => {
     server.once('error', rejectListen)
@@ -480,33 +497,93 @@ async function main() {
     })
   })
 
+  function waitForChildExit(child, timeoutMs = 3000) {
+    if (!child || child.exitCode !== null || child.signalCode) {
+      return Promise.resolve()
+    }
+    return new Promise(resolve => {
+      let settled = false
+      const settle = () => {
+        if (settled) {
+          return
+        }
+        settled = true
+        clearTimeout(timeout)
+        resolve()
+      }
+      const timeout = setTimeout(() => {
+        child.kill('SIGKILL')
+        settle()
+      }, timeoutMs)
+      child.once('exit', settle)
+    })
+  }
+
   function shutdown(exitCode = 0) {
     const normalizedExitCode = Number.isInteger(exitCode) ? exitCode : 0
     if (shuttingDown) {
       return
     }
     shuttingDown = true
+    layerWatcher?.close()
     server.close()
     children.forEach(child => child.kill('SIGTERM'))
     setTimeout(() => process.exit(normalizedExitCode), 300).unref()
   }
 
-  functionRuntimes.forEach((runtime, index) => {
+  function startFunctionRuntime(runtime, index) {
     const child = spawnFunctionRuntime(runtime, localEnv)
-    children.push(child)
+    children[index] = child
     runtime.child = child
+    runtime.exitCode = null
+    runtime.signalCode = null
     child.on('exit', (code, signal) => {
+      if (runtime.child !== child) {
+        return
+      }
       runtime.exitCode = code
       runtime.signalCode = signal
 
       const name = functionRuntimes[index]?.name || 'unknown'
-      if (shuttingDown) {
+      if (shuttingDown || restarting) {
         return
       }
 
       process.stderr.write(`[${name}] 本地函数进程退出，code=${code}, signal=${signal || 'none'}\n`)
       shutdown(1)
     })
+  }
+
+  async function restartFunctionRuntimes(change = {}) {
+    if (shuttingDown || restarting) {
+      return
+    }
+    restarting = true
+    restartPromise = (async () => {
+      process.stdout.write(
+        `[local-functions] layer 发生变化，重载本地函数: ${change.filename || 'unknown'}\n`
+      )
+      const currentChildren = children.filter(Boolean)
+      currentChildren.forEach(child => child.kill('SIGTERM'))
+      await Promise.all(currentChildren.map(child => waitForChildExit(child)))
+      if (!shuttingDown) {
+        functionRuntimes.forEach((runtime, index) => startFunctionRuntime(runtime, index))
+      }
+    })().finally(() => {
+      restarting = false
+      restartPromise = null
+    })
+    await restartPromise
+  }
+
+  functionRuntimes.forEach((runtime, index) => startFunctionRuntime(runtime, index))
+
+  layerWatcher = createLocalFunctionLayerWatcher({
+    root: LOCAL_FUNCTION_LAYER_ROOT,
+    onChange: restartFunctionRuntimes,
+    onError: error => {
+      process.stderr.write(`[local-functions] layer 监听失败: ${String(error?.message || error)}\n`)
+    }
   })
 
   const lanAddresses = getLanAddresses()

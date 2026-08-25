@@ -17,7 +17,7 @@ import {
   buildQuestionAnswerPayload,
   createQuestionAnswerMap,
   normalizeQuestions
-} from '../../../../src/utils/diagnose-flow.js'
+} from '../../../../src/subpackages/diagnosis/utils/diagnose-flow.js'
 import { formatWeatherText } from '../../../../src/utils/care-behavior-weather.js'
 import {
   buildWeatherByDateFromEnvironmentWeatherWindow,
@@ -372,12 +372,15 @@ const componentSourceFiles = [
   './src/components/diagnose-popup/DiagnoseResultStage.vue'
 ]
 const componentSource = componentSourceFiles.map(file => readFileSync(file, 'utf8')).join('\n')
-const questionPageSource = readFileSync('./src/pages/diagnose/question-package.vue', 'utf8')
+const questionPageSource = readFileSync('./src/subpackages/diagnosis/question-package.vue', 'utf8')
 const questionFlowSource = readFileSync(
-  './src/pages/diagnose/question-package/question-flow.js',
+  './src/subpackages/diagnosis/question-package/question-flow.js',
   'utf8'
 )
-const diagnosePopupSource = readFileSync('./src/components/DiagnosePopup.vue', 'utf8')
+const diagnosePopupSource = readFileSync(
+  './src/subpackages/diagnosis/components/DiagnosePopup.vue',
+  'utf8'
+)
 const compactComponentSource = componentSource.replace(/\s+/g, ' ')
 const pageSwiperMatches =
   questionPageSource.match(/id="diagnose-question-package-page-swiper"/g) || []

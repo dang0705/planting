@@ -1,39 +1,42 @@
 const LIGHT_CONTEXT_TOPIC = 'light_change_context'
 
-export const LIGHT_FACING_LABELS = Object.freeze({
-  north: '北',
-  north_east: '东北',
-  east: '东',
-  south_east: '东南',
-  south: '南',
-  south_west: '西南',
-  west: '西',
-  north_west: '西北',
-  unknown: '不确定',
-  no_window: '无窗'
-})
-
-const MEANINGFUL_FACING_KEYS = new Set([
-  'north',
-  'north_east',
-  'east',
-  'south_east',
-  'south',
-  'south_west',
-  'west',
-  'north_west',
-  'unknown',
-  'no_window'
+export const NATURAL_LIGHT_TYPE_OPTIONS = Object.freeze([
+  {
+    key: 'direct',
+    label: '直射光',
+    description: '晴天时，阳光会直接照到叶片'
+  },
+  {
+    key: 'bright_diffuse',
+    label: '明亮散射光',
+    description: '不直晒，白天这里很明亮'
+  },
+  {
+    key: 'weak_diffuse',
+    label: '较弱散射光',
+    description: '不直晒，白天这里仍偏暗'
+  },
+  {
+    key: 'almost_none',
+    label: '几乎无自然光',
+    description: '白天这里很暗，几乎没有自然光'
+  }
 ])
-const MEANINGFUL_WINDOW_KEYS = new Set(['standard', 'no_window', 'grow_light'])
-const MEANINGFUL_POSITION_KEYS = new Set(['window_side', 'middle', 'deep'])
+
+export const ENTRY_METHOD_OPTIONS = Object.freeze([
+  { key: 'through_glass', label: '阳光透过窗玻璃' },
+  { key: 'open_environment', label: '开放环境' }
+])
+
+const NATURAL_LIGHT_TYPES = new Set(NATURAL_LIGHT_TYPE_OPTIONS.map(item => item.key))
+const ENTRY_METHODS = new Set(ENTRY_METHOD_OPTIONS.map(item => item.key))
 
 function normalizeText(value = '') {
-  return String(value || '').trim()
+  return String(value || '').normalize('NFKC').trim()
 }
 
 function resolveQuestionKey(question = {}) {
-  return normalizeText(question?.questionKey || question?.questionId || question?.id || '')
+  return normalizeText(question?.questionKey || question?.questionId || question?.id)
 }
 
 export function isLightEnvironmentQuestion(question = {}) {
@@ -42,104 +45,137 @@ export function isLightEnvironmentQuestion(question = {}) {
   return questionKey.includes(LIGHT_CONTEXT_TOPIC) || packageTopic === LIGHT_CONTEXT_TOPIC
 }
 
-function findOptionKey(question = {}, candidates = []) {
-  const options = Array.isArray(question?.options) ? question.options : []
-  const candidateSet = new Set(candidates)
-  const matched = options.find(option => {
-    const optionKey = normalizeText(
-      option?.optionKey || option?.optionId || option?.value || option?.id
-    )
-    return candidateSet.has(optionKey)
-  })
-  return normalizeText(
-    matched?.optionKey || matched?.optionId || matched?.value || matched?.id || candidates[0]
-  )
-}
-
-export function resolveLightEnvironmentAnswerKey(question = {}, environment = {}) {
-  if (environment.windowType === 'no_window') {
-    return findOptionKey(question, ['weaker_light', 'no_clear_change', 'unknown'])
-  }
-  if (
-    environment.hasDirectSun === true &&
-    ['west', 'south', 'balcony'].includes(environment.facing)
-  ) {
-    return findOptionKey(question, ['stronger_direct_light', 'no_clear_change', 'unknown'])
-  }
-  return findOptionKey(question, ['no_clear_change', 'weaker_light', 'unknown'])
-}
-
-export function compassDirectionToFacing(direction) {
-  const degree = Number(direction)
-  if (!Number.isFinite(degree)) {
-    return 'unknown'
-  }
-  const normalizedDegree = ((degree % 360) + 360) % 360
-  const sector = Math.floor((normalizedDegree + 22.5) / 45) % 8
-  return ['north', 'north_east', 'east', 'south_east', 'south', 'south_west', 'west', 'north_west'][
-    sector
-  ]
-}
-
-export function getLightFacingLabel(facing = '') {
-  return LIGHT_FACING_LABELS[normalizeText(facing)] || LIGHT_FACING_LABELS.unknown
-}
-
 export function createDefaultLightEnvironment() {
   return {
-    facing: 'south',
-    windowType: 'standard',
-    position: 'window_side',
-    hasDirectSun: false,
-    distance: 1
+    schemaVersion: 2,
+    naturalLightType: '',
+    entryMethod: 'through_glass',
+    hasSupplementalLight: false,
+    captureSource: 'user'
+  }
+}
+
+export function migrateLegacyLightEnvironment(value = {}) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null
+  }
+  const windowType = normalizeText(value.windowType || value.window_type).toLowerCase()
+  const facing = normalizeText(value.facing || value.direction).toLowerCase()
+  const position = normalizeText(value.position || value.roomPosition).toLowerCase()
+  const distance = Number(value.distance ?? value.distanceMeters ?? value.distance_meters)
+  const hasDirectSun = value.hasDirectSun === true || value.has_direct_sun === true
+  const hasLegacySignal = Boolean(
+    windowType ||
+      facing ||
+      position ||
+      Number.isFinite(distance) ||
+      value.hasDirectSun !== undefined ||
+      value.has_direct_sun !== undefined
+  )
+  if (!hasLegacySignal) {
+    return null
+  }
+
+  const growLight = ['grow_light', '补光灯'].includes(windowType)
+  const noWindow =
+    ['no_window', 'windowless', '无窗'].includes(windowType) ||
+    ['no_window', 'windowless', '无窗'].includes(facing)
+  const nearWindow =
+    ['window_side', 'near_window', '窗边', '靠窗'].includes(position) ||
+    (Number.isFinite(distance) && distance <= 1.2)
+  const naturalLightType = hasDirectSun
+    ? 'direct'
+    : noWindow || growLight
+      ? 'almost_none'
+      : nearWindow
+        ? 'bright_diffuse'
+        : 'weak_diffuse'
+
+  return {
+    schemaVersion: 2,
+    naturalLightType,
+    entryMethod:
+      naturalLightType === 'almost_none'
+        ? null
+        : ['balcony', '阳台'].includes(facing)
+          ? 'open_environment'
+          : 'through_glass',
+    hasSupplementalLight: growLight,
+    captureSource: 'migrated_v1'
   }
 }
 
 export function sanitizeLightEnvironment(value = {}) {
   const fallback = createDefaultLightEnvironment()
-  const distance = Number(value?.distance)
+  const isV2 = Number(value?.schemaVersion) === 2 && NATURAL_LIGHT_TYPES.has(value.naturalLightType)
+  const source = isV2 ? value : migrateLegacyLightEnvironment(value)
+  if (!source) {
+    return fallback
+  }
+  const naturalLightType = NATURAL_LIGHT_TYPES.has(source.naturalLightType)
+    ? source.naturalLightType
+    : ''
+  const entryMethod =
+    naturalLightType === 'almost_none'
+      ? null
+      : ENTRY_METHODS.has(source.entryMethod)
+        ? source.entryMethod
+        : 'through_glass'
   return {
-    facing: normalizeText(value?.facing) || fallback.facing,
-    windowType: normalizeText(value?.windowType) || fallback.windowType,
-    position: normalizeText(value?.position) || fallback.position,
-    hasDirectSun: value?.hasDirectSun === true,
-    distance: Number.isFinite(distance) ? Math.max(0, Math.min(10, distance)) : fallback.distance
+    schemaVersion: 2,
+    naturalLightType,
+    entryMethod,
+    hasSupplementalLight: source.hasSupplementalLight === true,
+    captureSource: source.captureSource === 'user' ? 'user' : 'migrated_v1'
+  }
+}
+
+export function markLightEnvironmentAsUser(value = {}) {
+  return {
+    ...sanitizeLightEnvironment(value),
+    captureSource: 'user'
   }
 }
 
 export function getLightEnvironmentSignature(value = {}) {
-  const normalized = sanitizeLightEnvironment(value)
-  return JSON.stringify(normalized)
+  return JSON.stringify(sanitizeLightEnvironment(value))
 }
 
-// 判断光照环境对象是否包含任意有效信号（朝向/窗型/摆放/距离/直射光），用于可选光照字段的归一化判定
 export function hasMeaningfulLightEnvironment(value) {
   if (!value || typeof value !== 'object') {
     return false
   }
-  if (MEANINGFUL_FACING_KEYS.has(normalizeText(value?.facing))) {
-    return true
-  }
-  if (MEANINGFUL_WINDOW_KEYS.has(normalizeText(value?.windowType))) {
-    return true
-  }
-  if (MEANINGFUL_POSITION_KEYS.has(normalizeText(value?.position))) {
-    return true
-  }
-  if (value?.hasDirectSun === true) {
-    return true
-  }
-  const distance = Number(value?.distance)
-  if (Number.isFinite(distance)) {
-    return true
-  }
-  return false
+  return NATURAL_LIGHT_TYPES.has(sanitizeLightEnvironment(value).naturalLightType)
 }
 
-// 可选光照字段归一化：无有效信号返回 null（不阻止提交并持久化为空）；否则返回规范化的完整对象
+export function isUserConfirmedLightEnvironment(value) {
+  const normalized = sanitizeLightEnvironment(value)
+  return hasMeaningfulLightEnvironment(normalized) && normalized.captureSource === 'user'
+}
+
 export function normalizeOptionalLightEnvironment(value) {
-  if (!hasMeaningfulLightEnvironment(value)) {
-    return null
+  return hasMeaningfulLightEnvironment(value) ? sanitizeLightEnvironment(value) : null
+}
+
+export function getNaturalLightTypeOption(value = '') {
+  return NATURAL_LIGHT_TYPE_OPTIONS.find(item => item.key === value) || null
+}
+
+export function describeLightEnvironment(value) {
+  const normalized = sanitizeLightEnvironment(value)
+  const type = getNaturalLightTypeOption(normalized.naturalLightType)
+  if (!type) {
+    return '尚未设置，点击进入设置'
   }
-  return sanitizeLightEnvironment(value)
+  const entry =
+    normalized.entryMethod &&
+    ENTRY_METHOD_OPTIONS.find(item => item.key === normalized.entryMethod)?.label
+  return [
+    normalized.captureSource === 'migrated_v1' ? '待确认' : type.label,
+    normalized.captureSource === 'migrated_v1' ? type.label : '',
+    entry,
+    normalized.hasSupplementalLight ? '已记录补光灯' : ''
+  ]
+    .filter(Boolean)
+    .join(' · ')
 }
