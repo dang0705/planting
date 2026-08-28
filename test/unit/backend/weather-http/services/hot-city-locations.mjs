@@ -60,6 +60,29 @@ assert.equal(selected.weatherLocation, '121.4737,31.2304')
 assert.equal(selected.cityName, '上海')
 assert.equal(selected.source, HOT_CITY_SOURCE.MANUAL_SELECTED)
 
+const namedShanghai = resolveHotCityLocation({ cityName: '上海市' })
+assert.equal(namedShanghai.matched, true)
+assert.equal(namedShanghai.reason, 'city_name_matched')
+assert.equal(namedShanghai.city.locationKey, 'city:shanghai')
+assert.equal(namedShanghai.city.cityName, '上海')
+assert.equal(namedShanghai.city.source, HOT_CITY_SOURCE.MANUAL_SELECTED)
+
+const namedShanghaiWithCoordinates = resolveHotCityLocation({
+  city: '上海',
+  latitude: 0,
+  longitude: 0
+})
+assert.equal(namedShanghaiWithCoordinates.matched, true)
+assert.equal(namedShanghaiWithCoordinates.city.locationKey, 'city:shanghai')
+
+const gpsTakesPrecedenceOverStaleCityText = resolveHotCityLocation({
+  city: '上海',
+  latitude: 30.2741,
+  longitude: 120.1551
+})
+assert.equal(gpsTakesPrecedenceOverStaleCityText.matched, true)
+assert.equal(gpsTakesPrecedenceOverStaleCityText.city.locationKey, 'city:hangzhou')
+
 const clientList = listHotCitiesForClient()
 assert.equal(clientList.length, 20)
 assert.equal(clientList[2].name, '广州')

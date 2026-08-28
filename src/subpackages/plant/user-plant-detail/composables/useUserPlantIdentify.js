@@ -1,6 +1,7 @@
 import { identifyPlantByImage } from '@/api/plants-http.js'
-import { getImageUrl, uploadPlantImage } from '@/api/storage.js'
+import { deleteImage, getImageUrl, uploadPlantImage } from '@/api/storage.js'
 import { showBottomSheetAction } from '@/utils/bottom-sheet-action.js'
+import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 
 function isRetryableRequestError(error) {
   return /timeout|timed out|network error|request:fail|fail timeout/i.test(
@@ -52,7 +53,21 @@ export function useUserPlantIdentify({
   aiDialogRef,
   activeStep
 }) {
-  const pendingImage = { path: '', url: '' }
+  const pendingImage = { path: '', url: '', fileId: '' }
+
+  async function clearPendingImage() {
+    const fileId = String(pendingImage.fileId || '').trim()
+    pendingImage.fileId = ''
+    pendingImage.url = ''
+    if (!fileId) {
+      return
+    }
+    try {
+      await deleteImage(fileId)
+    } catch {
+      // 清理失败不应覆盖识别流程的原始结果。
+    }
+  }
 
   function normalizeIdentifyPlantCandidate(candidate) {
     if (!candidate || typeof candidate !== 'object') {
@@ -96,18 +111,23 @@ export function useUserPlantIdentify({
 
   function applyIdentifySelection(plant, fallbackName, result, selectionMode) {
     formData.value.image = pendingImage.path
+    formData.value.imageFileId = pendingImage.fileId
+    pendingImage.fileId = ''
     selectedPlant.value = plant
     recognizedName.value = plant ? '' : fallbackName
     identifyContext.value = buildIdentifyContext(result, { selectionMode, selectedPlant: plant })
     showAIDialog.value = false
     activeStep.value = 1
+    reportAnalyticsEvent(ANALYTICS_EVENTS.PLANT_AI_IDENTIFY_CONFIRMED)
   }
 
   async function doIdentify(path) {
     try {
+      await clearPendingImage()
       uni.showLoading({ title: '上传图片中...', mask: true })
       const { fileId } = await uploadPlantImage(path, userStore.userId || 'anon', 'identify')
       pendingImage.path = path
+      pendingImage.fileId = fileId
       pendingImage.url = await getImageUrl(fileId, 7200)
       uni.showLoading({ title: 'AI 识别中...', mask: true })
       const response = await identifyPlantByImageWithRetry(pendingImage.url)
@@ -115,6 +135,7 @@ export function useUserPlantIdentify({
       if (response?.code !== 200) {
         throw new Error(response?.message || '识别失败')
       }
+      reportAnalyticsEvent(ANALYTICS_EVENTS.PLANT_AI_IDENTIFY_SUCCESS)
       userStore.useAIQuota()
       showAIDialog.value = true
       const result = normalizeIdentifyResult(response.data)
@@ -126,6 +147,7 @@ export function useUserPlantIdentify({
       }, 100)
     } catch (error) {
       uni.hideLoading()
+      await clearPendingImage()
       uni.showToast({ title: error?.message || '识别失败，请重试', icon: 'none' })
     }
   }
@@ -189,7 +211,13 @@ export function useUserPlantIdentify({
           applyIdentifySelection(null, result.name.trim(), result, 'recognized_name')
         }
       })
-      .catch(() => (showAIDialog.value = false))
+      .catch(() => handleAIClose())
+  }
+
+  async function handleAIClose() {
+    showAIDialog.value = false
+    formData.value.imageFileId = ''
+    await clearPendingImage()
   }
 
   function handleAIRetry() {
@@ -198,5 +226,5 @@ export function useUserPlantIdentify({
     }
   }
 
-  return { useAIIdentify, handleAIConfirm, handleAIRetry }
+  return { useAIIdentify, handleAIConfirm, handleAIRetry, handleAIClose, clearPendingImage }
 }

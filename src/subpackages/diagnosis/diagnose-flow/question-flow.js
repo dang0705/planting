@@ -1,5 +1,6 @@
 /* oxlint-disable no-unused-vars, no-magic-numbers */
 import { computed, watch } from 'vue'
+import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import { resolveRiskSkipAction } from './question-skip'
 import { mergeQuestionStateFactory } from './question-flow-helpers'
 
@@ -417,6 +418,10 @@ export function useDiagnoseQuestionFlow(ctx) {
         }),
         rerunResult
       )
+      reportAnalyticsEvent(ANALYTICS_EVENTS.DIAGNOSE_QUESTION_COMPLETED)
+      if (!result.value.hasActiveQuestions && !result.value.retakeRequest) {
+        reportAnalyticsEvent(ANALYTICS_EVENTS.DIAGNOSE_RESULT_READY)
+      }
       mergeQuestionState(result.value, payload)
 
       diagnoseStore.addToHistory({

@@ -87,6 +87,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { submitDiagnosisFeedback } from '../api/diagnosis.js'
+import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 
 const props = defineProps({
   resultId: { type: [String, Number], default: '' },
@@ -120,6 +121,7 @@ async function submit() {
         note: note.value.trim()
       }
     })
+    reportAnalyticsEvent(ANALYTICS_EVENTS.DIAGNOSE_FEEDBACK_SUBMITTED)
     submitted.value = true
     statusMessage.value = '反馈已记录，之后会用于人工优化。'
   } catch (error) {

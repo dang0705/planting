@@ -33,7 +33,7 @@ const {
 } = require('./weather-day-file-current-weather')
 
 /**
- * 把 D0 day file 的 latestSample 转换为 dailyRecord，供浇水 planner 的 buildWeatherSummary 消费。
+ * 把 D0 当天 day file 的 latestSample 缓存转换为 dailyRecord，供浇水 planner 的 buildWeatherSummary 消费。
  * 字段映射不可变（architecture_invariants）：
  *   tempMax = tempMin = latestSample.temp
  *   humidity = latestSample.humidity
@@ -63,7 +63,7 @@ function latestSampleToDailyRecord(sample = {}, date = '') {
 /**
  * 创建 day file reader 工厂。
  *
- * readDailyRecordFromDayFile：读取指定日期 day file 的 latestSample 并转换为 dailyRecord，
+ * readDailyRecordFromDayFile：读取指定日期 day file 的 latestSample 缓存并转换为 dailyRecord，
  *   只读 latestSample，不做 finalized fallback，用于浇水 planner D0 注入。
  *   与 getCurrentWeatherFromDailyArchive 不同：本函数只关心 latestSample 是否可用作 dailyRecord，
  *   不返回 current weather 字段。
@@ -82,14 +82,22 @@ function createWeatherDayFileReader({ storage, now = () => new Date() } = {}) {
       return { dailyRecord: null, dayFile: null, reason: 'date_missing', timedOut: false }
     }
     const dayObjectPath = buildWeatherDayObjectPath(locationKey, targetDate)
-    const timeout = normalizeTimeoutMs(readTimeoutMs, DEFAULT_CURRENT_WEATHER_STORAGE_READ_TIMEOUT_MS)
+    const timeout = normalizeTimeoutMs(
+      readTimeoutMs,
+      DEFAULT_CURRENT_WEATHER_STORAGE_READ_TIMEOUT_MS
+    )
     const read = await downloadJsonWithTimeout(
       storage,
       { cloudPath: dayObjectPath, fileId: '' },
       timeout
     )
     if (read.timedOut) {
-      return { dailyRecord: null, dayFile: null, reason: 'day_latest_sample_read_timeout', timedOut: true }
+      return {
+        dailyRecord: null,
+        dayFile: null,
+        reason: 'day_latest_sample_read_timeout',
+        timedOut: true
+      }
     }
     const dayFile = read.payload
     if (!isUsableLatestSample(dayFile)) {
@@ -104,7 +112,7 @@ function createWeatherDayFileReader({ storage, now = () => new Date() } = {}) {
   }
 
   /**
-   * 读取 D0 latestSample 并注入 forecastDays 开头。
+   * 读取 D0 最新缓存 latestSample 并注入 forecastDays 开头。
    * 返回 { forecastDays, todayWeatherSource, todayWeatherRecord, todayWeatherReason }
    * - todayWeatherSource: 'day_latest_sample' | 'missing'
    * - 命中时 forecastDays = [d0Record, ...originalForecastDays]（15 项）
@@ -118,7 +126,11 @@ function createWeatherDayFileReader({ storage, now = () => new Date() } = {}) {
     readTimeoutMs
   } = {}) {
     const referenceDate = date || formatLocalDateInTimezone(now(), timezone)
-    const result = await readDailyRecordFromDayFile({ locationKey, date: referenceDate, readTimeoutMs })
+    const result = await readDailyRecordFromDayFile({
+      locationKey,
+      date: referenceDate,
+      readTimeoutMs
+    })
     if (result.dailyRecord) {
       return {
         forecastDays: [result.dailyRecord, ...forecastDays],
@@ -160,7 +172,7 @@ function getSharedD0Reader() {
 }
 
 /**
- * 把 D0 day file 的 latestSample 注入 forecastDays 开头，供 buildWeatherSummary 消费。
+ * 把 D0 当天最新缓存 latestSample 注入 forecastDays 开头，供 buildWeatherSummary 消费。
  * - 命中：forecastDays = [d0Record, ...originalForecastDays]（15 项），todayWeatherSource='day_latest_sample'
  * - 缺失/超时/无 locationKey：forecastDays 不变（14 项），todayWeatherSource='missing'，summary 按 14 天统计
  *
@@ -182,8 +194,7 @@ async function injectD0IntoForecastDays({
 } = {}) {
   const resolvedTimezone = String(timezone || 'Asia/Shanghai').trim() || 'Asia/Shanghai'
   const resolvedReferenceDate =
-    String(referenceDate || '').trim() ||
-    formatLocalDateInTimezone(new Date(), resolvedTimezone)
+    String(referenceDate || '').trim() || formatLocalDateInTimezone(new Date(), resolvedTimezone)
   const trimmedLocationKey = String(locationKey || '').trim()
   if (!trimmedLocationKey) {
     return {

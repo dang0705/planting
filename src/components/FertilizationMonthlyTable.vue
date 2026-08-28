@@ -50,6 +50,18 @@
     <text v-if="monthly.sourceNames.length" class="mt-2 block text-[11px] leading-4 text-gray-400">
       数据来源：{{ monthly.sourceNames.join('、') }}
     </text>
+    <text v-if="monthly.scopeLabel" class="mt-1 block text-[11px] leading-4 text-gray-500">
+      适用范围：{{ monthly.scopeLabel }}
+    </text>
+    <text v-if="monthly.scopeGuidance" class="mt-1 block text-[11px] leading-4 text-gray-500">
+      {{ monthly.scopeGuidance }}
+    </text>
+    <text v-if="monthly.publicNote" class="mt-1 block text-[11px] leading-4 text-gray-500">
+      {{ monthly.publicNote }}
+    </text>
+    <text v-if="monthly.choiceGuidance" class="mt-1 block text-[11px] leading-4 text-gray-500">
+      {{ monthly.choiceGuidance }}
+    </text>
   </view>
 </template>
 

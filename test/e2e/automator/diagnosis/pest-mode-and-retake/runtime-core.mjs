@@ -14,7 +14,7 @@ const DEFAULT_ARTIFACT_DIR =
 // worst case (19 * 20s = 380s) exceeds the 300s QA watchdog. Non-policy recordShot calls
 // are no-ops that still record the requested name for traceability.
 const SCREENSHOT_CHECKPOINT_POLICY = new Set([
-  '00-home-diagnose-popup', // Home PlantCard -> DiagnosePopup -> shared DiagnoseFlow
+  '00-home-diagnose-entry', // Home PlantCard -> diagnosis subpackage entry -> shared DiagnoseFlow
   '03-direction-active', // multi-pest direction / question-package state
   '05-retake-skip-terminal' // terminal retake/result state (skip unknown)
 ])
@@ -38,7 +38,7 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 function assertSourceContract() {
   const reads = {
-    upload: readFileSync('src/subpackages/diagnosis/diagnose-flow/DiagnoseUploadStage.vue', 'utf8'),
+    upload: readFileSync('src/components/diagnosis/DiagnoseIntake.vue', 'utf8'),
     flow: readFileSync('src/subpackages/diagnosis/diagnose-flow/DiagnoseFlow.vue', 'utf8'),
     popupActions: readFileSync('src/subpackages/diagnosis/diagnose-flow/popup-actions.js', 'utf8'),
     retake: readFileSync('src/subpackages/diagnosis/diagnose-flow/RetakeCard.vue', 'utf8'),
@@ -103,7 +103,7 @@ function assertSourceContract() {
   assert.doesNotMatch(reads.answer, /stripVisualEvidenceItems/)
   assert.deepEqual(
     [...SCREENSHOT_CHECKPOINT_POLICY],
-    ['00-home-diagnose-popup', '03-direction-active', '05-retake-skip-terminal']
+    ['00-home-diagnose-entry', '03-direction-active', '05-retake-skip-terminal']
   )
   assert.ok(
     !SCREENSHOT_CHECKPOINT_POLICY.has('final-runtime-state'),

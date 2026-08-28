@@ -48,11 +48,11 @@ const diagnoseImagesSource = fs.readFileSync(
   'utf8'
 )
 const structuredImagesSource = fs.readFileSync(
-  path.join(repoRoot, 'src/subpackages/diagnosis/diagnose-flow/structured-images.js'),
+  path.join(repoRoot, 'src/utils/diagnose-structured-images.js'),
   'utf8'
 )
 const uploaderOptionsSource = fs.readFileSync(
-  path.join(repoRoot, 'src/subpackages/diagnosis/diagnose-flow/image-uploader-options.js'),
+  path.join(repoRoot, 'src/utils/diagnosis-image-uploader-options.js'),
   'utf8'
 )
 const cloudUploaderSource = fs.readFileSync(
@@ -76,11 +76,11 @@ const directionCardSource = fs.readFileSync(
   'utf8'
 )
 const uploadStageSource = fs.readFileSync(
-  path.join(repoRoot, 'src/subpackages/diagnosis/diagnose-flow/DiagnoseUploadStage.vue'),
+  path.join(repoRoot, 'src/components/diagnosis/DiagnoseIntake.vue'),
   'utf8'
 )
 const constantsSource = fs.readFileSync(
-  path.join(repoRoot, 'src/subpackages/diagnosis/diagnose-flow/constants.js'),
+  path.join(repoRoot, 'src/constants/diagnosis-intake.js'),
   'utf8'
 )
 const answerMutationSource = fs.readFileSync(
@@ -97,7 +97,7 @@ const popupSource = fs.readFileSync(
 
 assert.match(flowSource, /setupDiagnoseFlowState/)
 assert.doesNotMatch(flowSource, /components\/diagnose-popup/)
-assert.match(flowSource, /from '\.\/DiagnoseUploadStage\.vue'/)
+assert.match(flowSource, /from '@\/components\/diagnosis\/DiagnoseIntake\.vue'/)
 assert.match(flowSource, /from '\.\/DiagnoseResultStage\.vue'/)
 assert.doesNotMatch(flowSource, /\.\.\/diagnose-popup\/style\.css/)
 assert.doesNotMatch(flowSetupSource, /diagnose-popup/)
@@ -125,7 +125,7 @@ assert.match(uploaderOptionsSource, /maxImagePixels: 1638400/)
 assert.match(uploaderOptionsSource, /minimumCompressionQuality: 68/)
 assert.match(cloudUploaderSource, /compressedWidth: dimensions\.width/)
 assert.match(cloudUploaderSource, /compressedHeight: dimensions\.height/)
-assert.match(diagnoseImagesSource, /from '\.\/structured-images(?:\.js)?'/)
+assert.match(diagnoseImagesSource, /from '@\/utils\/diagnose-structured-images\.js'/)
 assert.match(structuredImagesSource, /sourceWidth: sourceWidth \|\| null/)
 assert.match(structuredImagesSource, /sourcePixelCount: sourcePixelCount \|\| null/)
 assert.match(structuredImagesSource, /estimatedQwenVisualTokens:/)

@@ -10,7 +10,7 @@ import {
   useDiagnosisQuestionStartMutation,
   useUserStore
 } from './deps.js'
-import { DIAGNOSIS_IMAGE_UPLOAD_OPTIONS } from './image-uploader-options'
+import { DIAGNOSIS_IMAGE_UPLOAD_OPTIONS } from '@/utils/diagnosis-image-uploader-options.js'
 
 export function createDiagnoseFlowState() {
   const userStore = useUserStore()

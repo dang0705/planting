@@ -85,6 +85,13 @@ export function saveWateringReminder(payload) {
   return executeSaveWateringReminderMutation(payload)
 }
 
+export function completeWateringReminder(payload) {
+  return requestHttpFunction('plant-user-http/user-plants/watering-reminders/complete', {
+    method: 'POST',
+    body: payload
+  })
+}
+
 export function fetchFertilizationReminder(plantId) {
   return fetchFertilizationReminderQuery(plantId)
 }

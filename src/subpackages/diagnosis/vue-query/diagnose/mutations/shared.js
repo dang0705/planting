@@ -18,7 +18,6 @@ export function buildDiagnosePayload({
   visualBatchTrace = null,
   diagnosisProfile = 'full',
   entrySource = 'diagnose_tab',
-  skipAuth = false,
   platform = resolveDiagnoseClientPlatform()
 }) {
   const normalizedImages = normalizeDiagnoseImages(images)
@@ -37,7 +36,6 @@ export function buildDiagnosePayload({
     plantId,
     userPlantId: userPlantId || plantId || null,
     ...(plantCatalogId ? { plantCatalogId } : {}),
-    skipAuth,
     imageIds: resolvedImageIds.length ? resolvedImageIds : primaryImageRef ? [primaryImageRef] : [],
     ...(primaryImageRef ? { image: primaryImageRef } : {}),
     ...(normalizedImages.length ? { images: normalizedImages } : {}),

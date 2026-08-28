@@ -1,17 +1,18 @@
 <template>
   <Layout title="AI 诊断" content-class="bg-[#F8F6F0]">
-    <view id="diagnose-tab-page" class="min-h-screen bg-[#F8F6F0] px-4 py-8">
-      <view class="rounded-3xl bg-white p-6 shadow-sm">
-        <text class="block text-xl font-semibold text-gray-900">开始 AI 诊断</text>
-        <text class="mt-2 block text-sm leading-6 text-gray-500">
-          进入独立诊断页面，选择植物并完成拍照或无图问诊。
-        </text>
+    <view id="diagnose-tab-page" class="flex min-h-screen flex-col bg-[#F8F6F0]">
+      <view id="diagnose-tab-intake" class="flex-1 px-4 pt-4">
+        <DiagnoseIntake :view="intakeView" />
+      </view>
+      <view id="diagnose-tab-footer" class="border-t border-[#E5E7EB] bg-white px-4 py-3">
         <button
-          id="diagnose-tab-open-button"
-          class="mt-6 w-full rounded-2xl bg-primary py-3.5 font-semibold text-white"
-          @click="openDiagnosis"
+          id="diagnose-submit-button"
+          class="w-full rounded-xl bg-primary py-3 font-semibold text-white"
+          :class="{ 'opacity-50': !canStartDiagnoseNow }"
+          :disabled="!canStartDiagnoseNow"
+          @click="startDiagnosis"
         >
-          开始诊断
+          {{ isStartingDiagnosis ? '正在生成问诊…' : '开始诊断' }}
         </button>
       </view>
     </view>
@@ -20,8 +21,9 @@
 
 <script setup>
 import Layout from '@/Layout.vue'
+import DiagnoseIntake from '@/components/diagnosis/DiagnoseIntake.vue'
+import { useDiagnosisTabIntake } from './diagnosis-tab-intake.js'
 
-function openDiagnosis() {
-  uni.navigateTo({ url: '/subpackages/diagnosis/entry' })
-}
+const { intakeView, canStartDiagnoseNow, isStartingDiagnosis, startDiagnosis } =
+  useDiagnosisTabIntake()
 </script>

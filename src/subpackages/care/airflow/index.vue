@@ -69,6 +69,7 @@ import AirEnvironmentAssessment from '@/components/AirEnvironmentAssessment.vue'
 import { useUserPlantAirEnvironment } from '@/composables/useUserPlantAirEnvironment.js'
 import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
+import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import {
   createInitialAirEnvironmentInput,
   describeAirEnvironmentInput,
@@ -183,6 +184,7 @@ async function savePlantAndReturn(value) {
       uni.showToast({ title: response?.message || '保存失败', icon: 'none' })
       return
     }
+    reportAnalyticsEvent(ANALYTICS_EVENTS.AIR_ENVIRONMENT_SAVED)
     emitResult({ plantId: id, kind: 'air', value: savedProfile })
     uni.navigateBack()
   } catch (error) {

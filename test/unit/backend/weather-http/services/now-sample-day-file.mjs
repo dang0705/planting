@@ -17,7 +17,9 @@ function buildMissingStorageError() {
 const fakeCloudbaseApp = {
   async downloadFile({ fileID }) {
     const payload = storageObjectsByFileId.get(fileID)
-    if (!payload) { throw buildMissingStorageError() }
+    if (!payload) {
+      throw buildMissingStorageError()
+    }
     return { fileContent: Buffer.from(JSON.stringify(payload), 'utf8') }
   },
   async uploadFile({ cloudPath, fileContent }) {
@@ -35,11 +37,15 @@ const fakeCloudbaseApp = {
   },
   async downloadFileByCloudPath({ cloudPath }) {
     const payload = storageObjects.get(cloudPath)
-    if (!payload) { throw buildMissingStorageError() }
+    if (!payload) {
+      throw buildMissingStorageError()
+    }
     return { fileContent: Buffer.from(JSON.stringify(payload), 'utf8') }
   },
   async getUploadMetadata({ cloudPath }) {
-    if (storageObjects.has(cloudPath)) { return { data: { fileId: `cloud://${cloudPath}` } } }
+    if (storageObjects.has(cloudPath)) {
+      return { data: { fileId: `cloud://${cloudPath}` } }
+    }
     throw buildMissingStorageError()
   },
   async deleteFile({ fileList }) {
@@ -47,7 +53,9 @@ const fakeCloudbaseApp = {
       const payload = storageObjectsByFileId.get(fileID)
       if (payload) {
         for (const [path, p] of storageObjects) {
-          if (p === payload) { storageObjects.delete(path) }
+          if (p === payload) {
+            storageObjects.delete(path)
+          }
         }
         storageObjectsByFileId.delete(fileID)
       }
@@ -59,27 +67,67 @@ const fakeCloudbaseApp = {
 // 模拟 QWeather /v7/weather/now 响应
 let nowResponseIndex = 0
 const nowResponses = [
-  { temp: '24', humidity: '65', text: '晴', obsTime: '2026-06-18T09:30:00+08:00', source: 'qweather_weather_now' },
-  { temp: '28', humidity: '55', text: '多云', obsTime: '2026-06-18T12:30:00+08:00', source: 'qweather_weather_now' },
-  { temp: '31', humidity: '50', text: '晴', obsTime: '2026-06-18T14:30:00+08:00', source: 'qweather_weather_now' },
-  { temp: '26', humidity: '60', text: '多云', obsTime: '2026-06-18T18:30:00+08:00', source: 'qweather_weather_now' }
+  {
+    temp: '24',
+    humidity: '65',
+    text: '晴',
+    obsTime: '2026-06-18T09:30:00+08:00',
+    source: 'qweather_weather_now'
+  },
+  {
+    temp: '28',
+    humidity: '55',
+    text: '多云',
+    obsTime: '2026-06-18T12:30:00+08:00',
+    source: 'qweather_weather_now'
+  },
+  {
+    temp: '31',
+    humidity: '50',
+    text: '晴',
+    obsTime: '2026-06-18T14:30:00+08:00',
+    source: 'qweather_weather_now'
+  },
+  {
+    temp: '26',
+    humidity: '60',
+    text: '多云',
+    obsTime: '2026-06-18T18:30:00+08:00',
+    source: 'qweather_weather_now'
+  }
 ]
 
 Module._load = function patchedNowSampleLoad(request, parent, isMain) {
   if (request === '/opt/utils/cloudbase') {
     return {
       getCloudBase: () => fakeCloudbaseApp,
-      models: { async $runSQL() { return { data: { executeResultList: [] } } } }
+      models: {
+        async $runSQL() {
+          return { data: { executeResultList: [] } }
+        }
+      }
     }
   }
   if (request === '/opt/utils/http') {
     return {
-      jsonResponse(statusCode, payload) { return { statusCode, body: JSON.stringify(payload) } },
-      notFound(path) { return { statusCode: 404, body: JSON.stringify({ code: 404, path }) } },
-      methodNotAllowed(method) { return { statusCode: 405, body: JSON.stringify({ code: 405, method }) } },
-      getHttpRequestData(event) { return event },
-      resolveRequestAppEnv() { return 'production' },
-      runWithRequestAppEnv(_appEnv, runner) { return runner() }
+      jsonResponse(statusCode, payload) {
+        return { statusCode, body: JSON.stringify(payload) }
+      },
+      notFound(path) {
+        return { statusCode: 404, body: JSON.stringify({ code: 404, path }) }
+      },
+      methodNotAllowed(method) {
+        return { statusCode: 405, body: JSON.stringify({ code: 405, method }) }
+      },
+      getHttpRequestData(event) {
+        return event
+      },
+      resolveRequestAppEnv() {
+        return 'production'
+      },
+      runWithRequestAppEnv(_appEnv, runner) {
+        return runner()
+      }
     }
   }
   // 拦截 qweather-adapter，模拟 /v7/weather/now
@@ -97,8 +145,12 @@ Module._load = function patchedNowSampleLoad(request, parent, isMain) {
             source: data.source
           }
         },
-        async fetchForecast10d() { return { raw: {}, daily: [] } },
-        async fetchWeather24h() { return { raw: {}, hourly: [] } }
+        async fetchForecast10d() {
+          return { raw: {}, daily: [] }
+        },
+        async fetchWeather24h() {
+          return { raw: {}, hourly: [] }
+        }
       })
     }
   }
@@ -106,14 +158,20 @@ Module._load = function patchedNowSampleLoad(request, parent, isMain) {
 }
 
 try {
-  const { buildWeatherDayObjectPath } = require('../../../../../cloudfunctions/weather-http/services/weather-cache-paths.js')
+  const {
+    buildWeatherDayObjectPath
+  } = require('../../../../../cloudfunctions/weather-http/services/weather-cache-paths.js')
   const {
     buildDailyRollup,
     buildWeatherNowSample,
     resolveDayFileQuality
   } = require('../../../../../cloudfunctions/weather-http/services/d0-now-sample-service.js')
-  const { createRecentWeatherService } = require('../../../../../cloudfunctions/weather-http/services/recent-weather-service.js')
-  const { convertDayFileToDailyRecord } = require('../../../../../cloudfunctions/weather-http/services/recent-weather-archive.js')
+  const {
+    createRecentWeatherService
+  } = require('../../../../../cloudfunctions/weather-http/services/recent-weather-service.js')
+  const {
+    convertDayFileToDailyRecord
+  } = require('../../../../../cloudfunctions/weather-http/services/recent-weather-archive.js')
 
   const fixedNow = new Date('2026-06-18T13:00:00+08:00')
   const service = createRecentWeatherService({
@@ -214,7 +272,10 @@ try {
   assert.ok(finalizeResult.dailyRollup.moistureFeatures, 'moistureFeatures should exist')
   assert.ok(finalizeResult.dailyRollup.tempFeatures, 'tempFeatures should exist')
   assert.ok(finalizeResult.dailyRollup.tempFeatures.tempMax !== null, 'tempMax should exist')
-  assert.ok(finalizeResult.dailyRollup.moistureFeatures.humidityMean !== null, 'humidityMean should exist')
+  assert.ok(
+    finalizeResult.dailyRollup.moistureFeatures.humidityMean !== null,
+    'humidityMean should exist'
+  )
 
   dayFile = storageObjects.get(dayPath)
   assert.equal(dayFile.state, 'finalized')
@@ -268,7 +329,10 @@ try {
   })
   const recentPayload = ingestResult.recentPayload
   assert.ok(recentPayload, 'recentPayload should exist')
-  assert.ok(recentPayload.historicalDays.length > 0, 'should have historical days from finalized D-1')
+  assert.ok(
+    recentPayload.historicalDays.length > 0,
+    'should have historical days from finalized D-1'
+  )
 
   // D0 今日 (2026-06-18) 的 day file 是 finalized，但 targetDate = D-1 = 2026-06-17
   // buildDateRangeEndingAt(2026-06-17, 10) = 2026-06-08..2026-06-17
@@ -277,7 +341,7 @@ try {
   assert.equal(recentDates.includes('2026-06-18'), false, 'D0 today must not be in recent-10d')
   assert.equal(recentDates.includes('2026-06-17'), true, 'D-1 finalized should be in recent-10d')
 
-  // === 7. 当前天气从 latestSample 读，不触发 QWeather ===
+  // === 7. D0 当前天气从当天最新缓存 latestSample 读；读取请求不触发 QWeather ===
   nowResponseIndex = 0 // 重置计数
   const currentResult = await service.getCurrentWeatherFromDailyArchive({
     locationKey: 'city:shanghai',
@@ -311,7 +375,12 @@ try {
   assert.equal(nowResponseIndex, 0, 'cache miss must not call QWeather')
 
   // === 9. buildDailyRollup: 空 samples ===
-  const emptyRollup = buildDailyRollup({ samples: [], sunWindow: {}, date: '2026-06-18', generatedAt: 'now' })
+  const emptyRollup = buildDailyRollup({
+    samples: [],
+    sunWindow: {},
+    date: '2026-06-18',
+    generatedAt: 'now'
+  })
   assert.equal(emptyRollup.quality, 'missing')
   assert.equal(emptyRollup.sampleSummary.sampleCount, 0)
 
@@ -461,12 +530,53 @@ const {
 } = require('../../../../../cloudfunctions/weather-http/services/d0-now-sample-service.js')
 
 const nestedSamples = [
-  { slotName: 'morning', temp: 24, humidity: 65, precipLastHour: 0, cloud: 20, windSpeed: 8, text: '晴', sourceKind: 'weather_now_sample' },
-  { slotName: 'forenoon', temp: 28, humidity: 55, precipLastHour: 0.2, cloud: 40, windSpeed: 12, text: '多云', sourceKind: 'weather_now_sample' },
-  { slotName: 'noon', temp: 31, humidity: 50, precipLastHour: 0, cloud: 10, windSpeed: 16, text: '晴', sourceKind: 'weather_now_sample' },
-  { slotName: 'afternoon', temp: 26, humidity: 60, precipLastHour: 0.5, cloud: 30, windSpeed: 18, text: '多云', sourceKind: 'weather_now_sample' }
+  {
+    slotName: 'morning',
+    temp: 24,
+    humidity: 65,
+    precipLastHour: 0,
+    cloud: 20,
+    windSpeed: 8,
+    text: '晴',
+    sourceKind: 'weather_now_sample'
+  },
+  {
+    slotName: 'forenoon',
+    temp: 28,
+    humidity: 55,
+    precipLastHour: 0.2,
+    cloud: 40,
+    windSpeed: 12,
+    text: '多云',
+    sourceKind: 'weather_now_sample'
+  },
+  {
+    slotName: 'noon',
+    temp: 31,
+    humidity: 50,
+    precipLastHour: 0,
+    cloud: 10,
+    windSpeed: 16,
+    text: '晴',
+    sourceKind: 'weather_now_sample'
+  },
+  {
+    slotName: 'afternoon',
+    temp: 26,
+    humidity: 60,
+    precipLastHour: 0.5,
+    cloud: 30,
+    windSpeed: 18,
+    text: '多云',
+    sourceKind: 'weather_now_sample'
+  }
 ]
-const nestedRollup = _bdr({ samples: nestedSamples, sunWindow: { sunrise: '2026-06-18T06:00:00+08:00', sunset: '2026-06-18T18:00:00+08:00' }, date: '2026-06-18', generatedAt: 'now' })
+const nestedRollup = _bdr({
+  samples: nestedSamples,
+  sunWindow: { sunrise: '2026-06-18T06:00:00+08:00', sunset: '2026-06-18T18:00:00+08:00' },
+  date: '2026-06-18',
+  generatedAt: 'now'
+})
 
 assert.equal(nestedRollup.quality, 'complete')
 assert.ok(nestedRollup.sampleSummary, 'sampleSummary must exist')
@@ -483,7 +593,9 @@ assert.ok(['none', 'low', 'medium', 'high'].includes(nestedRollup.lightFeatures.
 assert.ok(nestedRollup.moistureFeatures, 'moistureFeatures must exist')
 assert.ok(nestedRollup.moistureFeatures.humidityMean !== null)
 assert.ok(nestedRollup.moistureFeatures.precipLastHourSum !== null)
-assert.ok(['none', 'low', 'medium', 'high'].includes(nestedRollup.moistureFeatures.wetSoilRiskFromWeather))
+assert.ok(
+  ['none', 'low', 'medium', 'high'].includes(nestedRollup.moistureFeatures.wetSoilRiskFromWeather)
+)
 
 assert.ok(nestedRollup.tempFeatures, 'tempFeatures must exist')
 assert.ok(nestedRollup.tempFeatures.tempMean !== null)
@@ -496,9 +608,19 @@ const partialSamples = [
   { slotName: 'morning', temp: 24, humidity: 65, sourceKind: 'weather_now_sample' },
   { slotName: 'noon', temp: 31, humidity: 50, sourceKind: 'weather_now_sample' }
 ]
-const partialRollup = _bdr({ samples: partialSamples, sunWindow: {}, date: '2026-06-18', generatedAt: 'now' })
+const partialRollup = _bdr({
+  samples: partialSamples,
+  sunWindow: {},
+  date: '2026-06-18',
+  generatedAt: 'now'
+})
 assert.equal(partialRollup.sampleSummary.sampleCount, 2)
 assert.equal(partialRollup.sampleSummary.daylightSampleCount, 2)
-assert.deepEqual(partialRollup.sampleSummary.missingSlots, ['sunrise', 'forenoon', 'afternoon', 'sunset'])
+assert.deepEqual(partialRollup.sampleSummary.missingSlots, [
+  'sunrise',
+  'forenoon',
+  'afternoon',
+  'sunset'
+])
 
 console.log('now-sample-day-file tests passed (with nested rollup coverage)')

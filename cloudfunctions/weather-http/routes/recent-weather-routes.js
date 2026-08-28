@@ -2,6 +2,7 @@
 
 const { createRecentWeatherService } = require('../services/recent-weather-service')
 const { buildLocationKey } = require('../services/weather-cache-paths')
+const { formatLocalDateInTimezone } = require('../services/recent-weather-features')
 
 function buildRecentWeatherService({ apiKey = '', baseUrl = '' } = {}) {
   return createRecentWeatherService({ apiKey, baseUrl })
@@ -33,28 +34,27 @@ function pickPayloadLocation(payload = {}) {
   }
 }
 
-async function buildDiagnosisRecentWeatherWindow({ payload = {}, service }) {
+async function buildDiagnosisRecentWeatherWindow({
+  payload = {},
+  service,
+  now = () => new Date()
+}) {
   const locationInfo = pickPayloadLocation(payload)
+  const timezone = locationInfo.timezone || 'Asia/Shanghai'
+  const diagnosisDate = locationInfo.diagnosisDate || formatLocalDateInTimezone(now(), timezone)
   const recentWindow = await service.readRecentWeatherForDiagnosis({
     ...locationInfo,
+    timezone,
+    diagnosisDate,
     allowArchiveRebuild:
       payload.allowArchiveRebuild === true || payload.allowArchiveRebuild === 'true',
     readTimeoutMs: payload.readTimeoutMs || payload.timeoutMs
   })
 
-  // 诊断模式 D0 当天观测：复用 layer 共享的 getCurrentWeatherFromDailyArchive，
-  // 从 day file latestSample 填充 currentWeather 挂到 response 顶层。
-  // 诊断模式保持只读 recent-10d.json（historicalDays D-10..D-1），不引入 forecastDays；
-  // day file 缺失/超时不回退 QWeather 实时 API，currentWeather=null。
-  const diagnosisDate =
-    locationInfo.diagnosisDate ||
-    payload.diagnosisDate ||
-    payload.diagnosis_date ||
-    payload.date ||
-    recentWindow.meta?.diagnosisDate ||
-    ''
-  const timezone = locationInfo.timezone || 'Asia/Shanghai'
-
+  // 诊断天气窗口由两个独立缓存层组成：
+  // 1) currentWeather：读取当天 days/{date}.json.latestSample，它是定时 QWeather /now 采样写入的 D0 最新缓存；
+  // 2) historicalDays：读取 recent-10d.json，仅包含 D-10..D-1 的历史缓存。
+  // 诊断请求不现场调用 QWeather；D0 缓存缺失时沿用现有有界 finalized rollup 降级，并通过 todayWeatherSource 标明来源。
   let currentWeather = null
   let todayWeatherSource = 'missing'
   let todayWeatherReason = 'missing'
@@ -78,8 +78,7 @@ async function buildDiagnosisRecentWeatherWindow({ payload = {}, service }) {
       }
       todayWeatherReason = currentResult.dailyWeatherCache?.reason || todayWeatherSource
     } else {
-      todayWeatherReason =
-        currentResult?.dailyWeatherCache?.reason || 'day_latest_sample_missing'
+      todayWeatherReason = currentResult?.dailyWeatherCache?.reason || 'day_latest_sample_missing'
     }
   } catch (error) {
     todayWeatherReason = `current_weather_read_failed:${error.message || error}`

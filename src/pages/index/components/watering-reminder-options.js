@@ -338,7 +338,7 @@ export function buildPhoneCalendarPayload({
     description: [
       reasonText,
       amountText ? `建议水量：${amountText}` : '',
-      '后续修改请到系统日历中操作。'
+      '此提醒已保存到手机日历；在日历中修改不会同步回青花植。'
     ]
       .filter(Boolean)
       .join('\n'),

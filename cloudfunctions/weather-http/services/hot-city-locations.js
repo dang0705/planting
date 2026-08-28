@@ -89,7 +89,8 @@ function listConfiguredHotCitiesForIngestion({ env = process.env } = {}) {
   const results = []
   for (const item of requested) {
     const normalized = String(item).trim()
-    const city = resolveHotCityByKeyOrName(normalized) || resolveHotCityByKeyOrName(`city:${normalized}`)
+    const city =
+      resolveHotCityByKeyOrName(normalized) || resolveHotCityByKeyOrName(`city:${normalized}`)
     if (!city || !city.key || seen.has(city.key)) {
       continue
     }
@@ -149,6 +150,13 @@ function normalizeSource(value = '', fallback = HOT_CITY_SOURCE.MANUAL_SELECTED)
   return ALLOWED_HOT_CITY_SOURCES.has(normalized) ? normalized : fallback
 }
 
+function normalizeCityName(value = '') {
+  return String(value || '')
+    .trim()
+    .replace(/(市|区|县|盟|州|旗)$/u, '')
+    .trim()
+}
+
 function toSelectedHotCity(
   city = {},
   { source = HOT_CITY_SOURCE.MANUAL_SELECTED, distanceM = null } = {}
@@ -173,38 +181,75 @@ function resolveHotCityByKeyOrName(value = '') {
   if (!normalized) {
     return null
   }
+  const normalizedCityName = normalizeCityName(normalized)
   return (
-    HOT_CITY_WEATHER_LOCATIONS.find(city => city.key === normalized || city.name === normalized) ||
-    null
+    HOT_CITY_WEATHER_LOCATIONS.find(
+      city =>
+        city.key === normalized ||
+        city.name === normalized ||
+        normalizeCityName(city.name) === normalizedCityName
+    ) || null
   )
 }
 
 function resolveHotCityLocation(input = {}) {
   const coordinates = roundCoordinatesForHotCity(input)
-  if (!coordinates) {
-    return { matched: false, reason: 'coordinates_missing', coordinates: null, city: null }
-  }
-
-  const nearest = findNearestCity(coordinates)
-  if (!nearest) {
-    return { matched: false, reason: 'hot_city_empty', coordinates, city: null }
-  }
-  const distanceM =
-    nearest.distanceM !== undefined ? nearest.distanceM : getDistanceMeters(coordinates, nearest)
-  const matched = distanceM <= Number(nearest.radiusM || 0)
-  return {
-    matched,
-    reason: matched ? 'nearest_city_matched' : 'nearest_city_outside_radius',
-    distanceM,
-    coordinates,
-    city: toSelectedHotCity(nearest, { source: HOT_CITY_SOURCE.GPS_MATCHED, distanceM }),
-    nearestCity: {
-      key: nearest.key,
-      name: nearest.name,
-      radiusM: nearest.radiusM,
-      distanceM
+  let coordinateResult = null
+  if (coordinates) {
+    const nearest = findNearestCity(coordinates)
+    if (!nearest) {
+      coordinateResult = { matched: false, reason: 'hot_city_empty', coordinates, city: null }
+    } else {
+      const distanceM =
+        nearest.distanceM !== undefined
+          ? nearest.distanceM
+          : getDistanceMeters(coordinates, nearest)
+      const matched = distanceM <= Number(nearest.radiusM || 0)
+      coordinateResult = {
+        matched,
+        reason: matched ? 'nearest_city_matched' : 'nearest_city_outside_radius',
+        distanceM,
+        coordinates,
+        city: toSelectedHotCity(nearest, { source: HOT_CITY_SOURCE.GPS_MATCHED, distanceM }),
+        nearestCity: {
+          key: nearest.key,
+          name: nearest.name,
+          radiusM: nearest.radiusM,
+          distanceM
+        }
+      }
+      if (matched) {
+        return coordinateResult
+      }
     }
   }
+
+  const cityHint = input.cityName ?? input.city
+  const namedCity = resolveHotCityByKeyOrName(cityHint)
+  if (namedCity) {
+    return {
+      matched: true,
+      reason: 'city_name_matched',
+      distanceM: null,
+      coordinates,
+      city: toSelectedHotCity(namedCity),
+      nearestCity: {
+        key: namedCity.key,
+        name: namedCity.name,
+        radiusM: namedCity.radiusM,
+        distanceM: null
+      }
+    }
+  }
+
+  return (
+    coordinateResult || {
+      matched: false,
+      reason: 'coordinates_missing',
+      coordinates: null,
+      city: null
+    }
+  )
 }
 
 function listHotCitiesForClient() {

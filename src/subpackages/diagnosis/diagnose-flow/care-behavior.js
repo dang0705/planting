@@ -1,4 +1,5 @@
 /* oxlint-disable no-unused-vars, no-magic-numbers */
+import { toDateString } from '@/utils/care-behavior-timeline/date-utils.js'
 
 export function useDiagnoseCareBehavior(ctx) {
   const {
@@ -228,7 +229,7 @@ export function useDiagnoseCareBehavior(ctx) {
         return String(referenceDate).slice(0, 10)
       }
     }
-    return new Date().toISOString().slice(0, 10)
+    return toDateString(new Date())
   }
 
   function resolveCareBehaviorWeatherLocation() {

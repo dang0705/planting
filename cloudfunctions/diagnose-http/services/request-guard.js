@@ -1,41 +1,18 @@
 'use strict'
 
 const { checkAIQuota, deductQuota } = require('/opt/utils/quota')
-const {
-  normalizeHeaders,
-  resolveRequestAppEnv,
-  resolveHttpUserInfo,
-  isSkipAuthEnabled
-} = require('/opt/utils/http')
+const { resolveHttpUserInfo } = require('/opt/utils/http')
 
-function shouldSkipPersistence(request = null) {
-  const headers = normalizeHeaders(request?.headers || {})
-  return String(headers['x-terminal-e2e'] || '').trim().toLowerCase() !== 'true'
+function isTrustedLocalFunctionRuntime() {
+  return /^(1|true)$/i.test(String(process.env.CLOUDBASE_LOCAL_FUNCTIONS_GATEWAY || '').trim())
 }
 
-function shouldBypassQuota(request = null, openid = '', { skipAuth = false } = {}) {
-  if (skipAuth) {
-    return true
-  }
-
-  const headers = normalizeHeaders(request?.headers || {})
-  const appEnv = resolveRequestAppEnv(headers, request?.query || {}, request?.body || {})
-  const isTerminalE2E = String(headers['x-terminal-e2e'] || '').trim().toLowerCase() === 'true'
-  if (!isTerminalE2E || appEnv !== 'development') {
+function shouldBypassQuota(openid = '') {
+  if (!isTrustedLocalFunctionRuntime()) {
     return false
   }
-
   const normalizedOpenid = String(openid || '').trim()
-  return normalizedOpenid.startsWith('anon_dev_') || normalizedOpenid.startsWith('dev_terminal_')
-}
-
-function buildRequestExecutionFlags(request = null, payload = {}) {
-  const skipAuth = isSkipAuthEnabled(payload?.skipAuth)
-
-  return {
-    skipAuth,
-    skipPersistence: skipAuth && shouldSkipPersistence(request)
-  }
+  return normalizedOpenid.startsWith('dev_terminal_')
 }
 
 const INTERNAL_REVIEW_OPENID_PREFIXES = ['dev_terminal_', 'anon_dev_']
@@ -47,7 +24,7 @@ function getInternalReviewAllowlist() {
     .filter(Boolean)
 }
 
-function hasInternalReviewAccess({ request = null, skipAuth = false, userInfo = null } = {}) {
+function hasInternalReviewAccess({ userInfo = null } = {}) {
   const openid = String(userInfo?.openid || '').trim()
   if (!openid) {
     return false
@@ -58,19 +35,12 @@ function hasInternalReviewAccess({ request = null, skipAuth = false, userInfo = 
     return true
   }
 
-  const headers = normalizeHeaders(request?.headers || {})
-  const appEnv = resolveRequestAppEnv(headers, request?.query || {}, request?.body || {})
   const hasDevPrefix = INTERNAL_REVIEW_OPENID_PREFIXES.some(prefix => openid.startsWith(prefix))
-
-  if (skipAuth && hasDevPrefix) {
-    return true
-  }
-
-  return appEnv === 'development' && hasDevPrefix
+  return isTrustedLocalFunctionRuntime() && hasDevPrefix
 }
 
-function assertInternalReviewAccess({ request = null, skipAuth = false, userInfo = null } = {}) {
-  if (hasInternalReviewAccess({ request, skipAuth, userInfo })) {
+function assertInternalReviewAccess({ userInfo = null } = {}) {
+  if (hasInternalReviewAccess({ userInfo })) {
     return
   }
 
@@ -78,20 +48,15 @@ function assertInternalReviewAccess({ request = null, skipAuth = false, userInfo
 }
 
 async function resolveRequestPrincipal({ request = null, context = null, payload = {} } = {}) {
-  const { skipAuth, skipPersistence } = buildRequestExecutionFlags(request, payload)
-  const userInfo = skipAuth
-    ? { openid: payload?.openid || '' }
-    : await resolveHttpUserInfo(request?.headers || {}, payload, context)
+  const userInfo = await resolveHttpUserInfo(request?.headers || {}, payload, context)
 
   return {
-    skipAuth,
-    skipPersistence,
     userInfo
   }
 }
 
-function assertAuthenticatedUser({ skipAuth = false, userInfo = null, message = '请先登录' } = {}) {
-  if (skipAuth || userInfo?.openid) {
+function assertAuthenticatedUser({ userInfo = null, message = '请先登录' } = {}) {
+  if (userInfo?.openid) {
     return
   }
 
@@ -118,9 +83,7 @@ async function consumeQuota(openid, { skipQuota = false } = {}) {
 }
 
 async function runWithQuotaGuard({
-  request = null,
   openid = '',
-  skipAuth = false,
   enabled = true,
   task
 } = {}) {
@@ -128,7 +91,7 @@ async function runWithQuotaGuard({
     throw new Error('runWithQuotaGuard 缺少 task')
   }
 
-  const skipQuota = shouldBypassQuota(request, openid, { skipAuth })
+  const skipQuota = shouldBypassQuota(openid)
   if (!enabled) {
     return task({ skipQuota })
   }

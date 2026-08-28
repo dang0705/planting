@@ -7,7 +7,7 @@
       @click="injectAutomationDiagnoseImagesFromStorage"
     />
     <view id="diagnose-flow-content" class="flex-1 pb-3">
-      <DiagnoseUploadStage v-if="!result" :view="viewContext" />
+      <DiagnoseIntake v-if="!result" :view="viewContext" />
       <DiagnoseResultStage v-if="result" :view="viewContext" />
     </view>
     <view id="diagnose-flow-footer" class="border-t border-[#E5E7EB] bg-white px-4 py-3">
@@ -79,12 +79,13 @@
 
 <script>
 import AIStreamDialog from '@/components/AIStreamDialog.vue'
-import DiagnoseUploadStage from './DiagnoseUploadStage.vue'
+import DiagnoseIntake from '@/components/diagnosis/DiagnoseIntake.vue'
 import DiagnoseResultStage from './DiagnoseResultStage.vue'
 import { setupDiagnoseFlowState } from './setup.js'
 
 function setupDiagnoseFlow(props, context) {
   const state = setupDiagnoseFlowState(props, context)
+
   return {
     ...state,
     finishFlow() {
@@ -100,11 +101,12 @@ function setupDiagnoseFlow(props, context) {
 export default {
   components: {
     AIStreamDialog,
-    DiagnoseUploadStage,
+    DiagnoseIntake,
     DiagnoseResultStage
   },
   props: {
     plantId: { type: [String, Number], default: '' },
+    plantCatalogId: { type: [String, Number], default: '' },
     plantName: { type: String, default: '' },
     diagnosisProfile: { type: String, default: 'full' },
     entrySource: { type: String, default: 'diagnose_tab' },

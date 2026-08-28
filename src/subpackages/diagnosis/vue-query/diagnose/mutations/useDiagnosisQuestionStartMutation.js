@@ -11,7 +11,6 @@ function makeQuestionStartCacheKey(payload = {}) {
   const symptomKey = String(payload.symptomKey || '').trim()
   const description = String(payload.description || '').trim()
   const platform = String(payload.clientContext?.platform || 'web').trim()
-  const skipAuth = Number(Boolean(payload.skipAuth)) ? '1' : '0'
 
   return [
     'diagnose',
@@ -21,7 +20,6 @@ function makeQuestionStartCacheKey(payload = {}) {
     symptomClassKey,
     symptomKey,
     platform,
-    skipAuth,
     description
   ]
 }
@@ -35,8 +33,7 @@ function normalizeQuestionStartPayload({
   symptomKey,
   description,
   diagnosisProfile = 'full',
-  entrySource = 'diagnose_tab',
-  skipAuth = false
+  entrySource = 'diagnose_tab'
 } = {}) {
   const normalizedEntrySource = normalizeQuestionStartEntrySource(entrySource)
   const allowsStandaloneDiagnoseTab = normalizedEntrySource === 'diagnose_tab'
@@ -60,7 +57,6 @@ function normalizeQuestionStartPayload({
     ...(description ? { description } : {}),
     diagnosisProfile,
     entrySource: normalizedEntrySource,
-    skipAuth,
     clientContext: {
       source: normalizedEntrySource,
       platform: resolveQuestionStartClientPlatform(),
@@ -106,8 +102,7 @@ export function useDiagnosisQuestionStartMutation() {
       entrySource = 'diagnose_tab',
       onText,
       onFinish,
-      onError,
-      skipAuth = false
+      onError
     } = {}) => {
       try {
         onText?.('正在生成问诊...', '正在生成问诊...')
@@ -120,8 +115,7 @@ export function useDiagnosisQuestionStartMutation() {
           symptomKey,
           description,
           diagnosisProfile,
-          entrySource,
-          skipAuth
+          entrySource
         })
         const cacheKey = makeQuestionStartCacheKey(requestPayload)
         const normalizedResult = await queryClient.fetchQuery({

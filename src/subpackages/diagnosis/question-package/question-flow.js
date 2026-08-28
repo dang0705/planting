@@ -74,6 +74,7 @@ export function useQuestionPackageFlow({
   const lightEnvironmentConfirmedByQuestionId = ref({})
   const suppressedTimelineAnswerByQuestionId = ref({})
   const isSubmittingQuestionAnswer = ref(false)
+  const isQuestionStatePreparing = ref(false)
   const packageRestartRequired = ref(false)
   const airEnvironment = useQuestionAirEnvironment({
     result,
@@ -82,6 +83,7 @@ export function useQuestionPackageFlow({
   })
   const {
     environmentWeatherWindow,
+    environmentWeatherByDate,
     environmentWeatherWindowLoading,
     environmentWeatherWindowError,
     refreshEnvironmentWeatherWindowForCareBehavior
@@ -132,7 +134,7 @@ export function useQuestionPackageFlow({
       }, {})
   }
 
-  function resetQuestionState(questions = []) {
+  async function resetQuestionState(questions = []) {
     packageRestartRequired.value = requiresAirEnvironmentPackageRestart(result.value)
     if (packageRestartRequired.value) {
       questionStack.value = []
@@ -145,28 +147,46 @@ export function useQuestionPackageFlow({
       airEnvironment.reset([])
       return
     }
-    const nextQuestions = dedupeQuestionsById(
-      Array.isArray(questions) ? questions.filter(item => getQuestionId(item)) : []
-    )
-    questionStack.value = nextQuestions
-    activeQuestionIndex.value = 0
-    questionAnswers.value = createQuestionAnswerMap(nextQuestions)
-    careBehaviorTimelineByQuestionId.value = buildCareBehaviorTimelineByQuestionIdMap(nextQuestions)
-    const savedLightEnvironment = getSavedLightEnvironment(result.value, plantStore)
-    lightEnvironmentByQuestionId.value = buildLightEnvironmentByQuestionIdMap(
-      nextQuestions,
-      lightEnvironmentByQuestionId.value,
-      savedLightEnvironment
-    )
-    lightEnvironmentConfirmedByQuestionId.value = Object.fromEntries(
-      nextQuestions
-        .filter(item => isLightEnvironmentQuestion(item))
-        .map(item => [getQuestionId(item), false])
-    )
-    suppressedTimelineAnswerByQuestionId.value = {}
-    airEnvironment.reset(nextQuestions)
-    refreshEnvironmentWeatherWindowForCareBehavior(nextQuestions, careBehaviorTimelineByQuestionId)
-    hydrateSavedLightEnvironment(nextQuestions)
+    isQuestionStatePreparing.value = true
+    questionStack.value = []
+    try {
+      const nextQuestions = dedupeQuestionsById(
+        Array.isArray(questions) ? questions.filter(item => getQuestionId(item)) : []
+      )
+      activeQuestionIndex.value = 0
+      questionAnswers.value = createQuestionAnswerMap(nextQuestions)
+      careBehaviorTimelineByQuestionId.value = {}
+      const savedLightEnvironment = getSavedLightEnvironment(result.value, plantStore)
+      lightEnvironmentByQuestionId.value = buildLightEnvironmentByQuestionIdMap(
+        nextQuestions,
+        lightEnvironmentByQuestionId.value,
+        savedLightEnvironment
+      )
+      lightEnvironmentConfirmedByQuestionId.value = Object.fromEntries(
+        nextQuestions
+          .filter(item => isLightEnvironmentQuestion(item))
+          .map(item => [getQuestionId(item), false])
+      )
+      suppressedTimelineAnswerByQuestionId.value = {}
+      airEnvironment.reset(nextQuestions)
+      careBehaviorTimelineByQuestionId.value =
+        buildCareBehaviorTimelineByQuestionIdMap(nextQuestions)
+      questionStack.value = nextQuestions
+      hydrateSavedLightEnvironment(nextQuestions)
+      if (nextQuestions.some(item => isCareBehaviorWateringTimelineQuestion(item))) {
+        // 天气是时间线的补充数据，不能阻塞独立问诊的题目挂载。请求完成后通过
+        // environmentWeatherByDate 与时间线 map 的响应式更新填充指标；失败只在时间线提示。
+        refreshEnvironmentWeatherWindowForCareBehavior(
+          nextQuestions,
+          careBehaviorTimelineByQuestionId
+        ).then(() => {
+          careBehaviorTimelineByQuestionId.value =
+            buildCareBehaviorTimelineByQuestionIdMap(nextQuestions)
+        })
+      }
+    } finally {
+      isQuestionStatePreparing.value = false
+    }
   }
 
   async function hydrateSavedLightEnvironment(questions = []) {
@@ -367,9 +387,7 @@ export function useQuestionPackageFlow({
       return
     }
     const userPlantId = Number(
-      result.value?.plantContext?.userPlantId ||
-        result.value?.userPlantId ||
-        0
+      result.value?.plantContext?.userPlantId || result.value?.userPlantId || 0
     )
     if (!userPlantId) {
       return
@@ -562,7 +580,8 @@ export function useQuestionPackageFlow({
       refreshEnvironmentWeatherWindowForCareBehavior(
         questionStack.value,
         careBehaviorTimelineByQuestionId
-      )
+      ),
+    { immediate: true }
   )
 
   return {
@@ -577,7 +596,10 @@ export function useQuestionPackageFlow({
     questionProgressText,
     nextButtonText,
     isSubmittingQuestionAnswer,
+    isQuestionStatePreparing,
     packageRestartRequired,
+    environmentWeatherWindow,
+    environmentWeatherByDate,
     environmentWeatherWindowLoading,
     environmentWeatherWindowError,
     resetQuestionState,

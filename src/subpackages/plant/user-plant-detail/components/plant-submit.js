@@ -15,7 +15,11 @@ function appendPotProfilePayload(payload, potProfile) {
   payload.confidence = potProfile.confidence || 'normal'
 }
 
-async function resolvePhotoFileId({ image, selectedPlant, userId }) {
+async function resolvePhotoFileId({ image, imageFileId, selectedPlant, userId }) {
+  const existingFileId = String(imageFileId || '').trim()
+  if (existingFileId) {
+    return existingFileId
+  }
   const normalizedImage = String(image || '')
   if (!normalizedImage) {
     return ''
@@ -50,6 +54,7 @@ export async function buildPlantSubmitPayload({
   ).trim()
   const localPhotoFileId = await resolvePhotoFileId({
     image: formData.image,
+    imageFileId: formData.imageFileId,
     selectedPlant: sourcePlant,
     userId
   })

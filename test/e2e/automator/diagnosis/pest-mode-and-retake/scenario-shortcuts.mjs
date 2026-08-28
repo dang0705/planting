@@ -11,7 +11,7 @@ import { resetDiagnosisTab } from './scenario-reset.mjs'
 async function runShortcutScenario(report, miniProgram, wsEndpoint, artifactDir) {
   const page = await resetDiagnosisTab(report, miniProgram, 'fullShortcut')
   const requestBaseline = (await readRequests(miniProgram)).length
-  report.pagePath = 'pages/diagnose/diagnose'
+  report.pagePath = 'subpackages/diagnosis/flow'
   await sleep(900)
   const fullButton = await assertElement(
     report,

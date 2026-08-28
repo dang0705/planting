@@ -26,8 +26,7 @@ export function useDiagnoseStreamMutation() {
       entrySource = 'diagnose_tab',
       onText,
       onFinish,
-      onError,
-      skipAuth = false
+      onError
     } = {}) => {
       try {
         onText?.('思考中...', '思考中...')
@@ -55,8 +54,7 @@ export function useDiagnoseStreamMutation() {
             latestVisualCallBatchId,
             visualBatchTrace,
             diagnosisProfile,
-            entrySource,
-            skipAuth
+            entrySource
           }),
           {
             onProgress: fullText => onText?.(fullText, fullText)

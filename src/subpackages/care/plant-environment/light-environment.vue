@@ -40,6 +40,7 @@ import { fetchUserPlant, patchUserPlant } from '@/api/plants-http.js'
 import LightEnvironmentPicker from '@/components/LightEnvironmentPicker.vue'
 import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
+import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import {
   createDefaultLightEnvironment,
   getLightEnvironmentSignature,
@@ -119,10 +120,12 @@ async function saveAndReturn() {
     const saved = readback?.code === HTTP_OK ? readback.data?.lightEnvironment : null
     if (
       !saved ||
-      getLightEnvironmentSignature(saved) !== getLightEnvironmentSignature(confirmedLightEnvironment)
+      getLightEnvironmentSignature(saved) !==
+        getLightEnvironmentSignature(confirmedLightEnvironment)
     ) {
       throw new Error('保存结果未读回，请重试')
     }
+    reportAnalyticsEvent(ANALYTICS_EVENTS.LIGHT_ENVIRONMENT_SAVED)
     plantStore.updateUserPlantLocal(id, { lightEnvironment: confirmedLightEnvironment })
     emitResult({ plantId: id, kind: 'light', value: confirmedLightEnvironment })
     uni.navigateBack()

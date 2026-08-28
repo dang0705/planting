@@ -37,46 +37,59 @@ async function resetDiagnosisTab(report, miniProgram, scenarioName) {
       }
       await backControl.tap()
     })
-    await runAutomatorStep(report, `${scenarioName}.waitForDiagnoseTabAfterBackTap`, async () => {
-      const returnedPage = await waitForPagePath(miniProgram, 'pages/diagnose/diagnose')
-      const passed = returnedPage?.path === 'pages/diagnose/diagnose'
-      // Capture the page stack AFTER the back tap to expose whether navigateBack
-      // dispatched, fell back, or no-op'd.
-      const stackAfter = passed
-        ? null
-        : await miniProgram.evaluate(() => {
-            try {
-              const pages = (typeof getCurrentPages === 'function' ? getCurrentPages() : []) || []
-              return {
-                length: pages.length,
-                paths: pages.map(p => p?.route || p?.path || '')
+    await runAutomatorStep(
+      report,
+      `${scenarioName}.waitForDiagnosisEntryAfterBackTap`,
+      async () => {
+        const returnedPage = await waitForPagePath(miniProgram, 'subpackages/diagnosis/flow')
+        const passed = returnedPage?.path === 'subpackages/diagnosis/flow'
+        // Capture the page stack AFTER the back tap to expose whether navigateBack
+        // dispatched, fell back, or no-op'd.
+        const stackAfter = passed
+          ? null
+          : await miniProgram.evaluate(() => {
+              try {
+                const pages = (typeof getCurrentPages === 'function' ? getCurrentPages() : []) || []
+                return {
+                  length: pages.length,
+                  paths: pages.map(p => p?.route || p?.path || '')
+                }
+              } catch (error) {
+                return { length: -1, paths: [], error: String(error?.message || error) }
               }
-            } catch (error) {
-              return { length: -1, paths: [], error: String(error?.message || error) }
-            }
+            })
+        recordAssertion(
+          report,
+          `${scenarioName} leaves question package through the visible back control`,
+          passed,
+          JSON.stringify({
+            beforeTap: stackBefore,
+            afterTap: stackAfter,
+            finalPage: returnedPage?.path || ''
           })
-      recordAssertion(
-        report,
-        `${scenarioName} leaves question package through the visible back control`,
-        passed,
-        JSON.stringify({
-          beforeTap: stackBefore,
-          afterTap: stackAfter,
-          finalPage: returnedPage?.path || ''
-        })
-      )
-      if (!passed) {
-        throw new Error(
-          `expected pages/diagnose/diagnose, got ${returnedPage?.path || 'unknown'}; stackBefore=${JSON.stringify(stackBefore)}`
         )
+        if (!passed) {
+          throw new Error(
+            `expected subpackages/diagnosis/flow, got ${returnedPage?.path || 'unknown'}; stackBefore=${JSON.stringify(stackBefore)}`
+          )
+        }
       }
-    })
+    )
   }
-  // This post-result scenario reset is not a homepage Tab entry; user-visible
-  // question-package return remains the Layout action above.
-  return runAutomatorStep(report, `${scenarioName}.reLaunch:pages/diagnose/diagnose`, () =>
+  await runAutomatorStep(report, `${scenarioName}.reLaunch:pages/diagnose/diagnose`, () =>
     miniProgram.reLaunch('/pages/diagnose/diagnose')
   )
+  const entryPage = await waitForPagePath(miniProgram, 'subpackages/diagnosis/flow')
+  const entryFlow = await assertElement(
+    report,
+    entryPage,
+    '#diagnosis-flow-page-content',
+    `${scenarioName} diagnosis tab enters the subpackage flow directly`
+  )
+  if (!entryFlow) {
+    throw new Error('diagnosis flow content not found after returning from question package')
+  }
+  return entryPage
 }
 
 export { resetDiagnosisTab }

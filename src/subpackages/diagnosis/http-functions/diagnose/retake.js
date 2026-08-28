@@ -1,29 +1,4 @@
 import { httpRequest } from '@/http-functions/core/httpRequest'
-import { isDevelopmentAppEnv } from '@/utils/runtime-env'
-
-const DEV_H5_DIAGNOSIS_OPENID = 'dev_terminal_diagnosis_h5'
-
-function isH5Runtime() {
-  return (
-    typeof window !== 'undefined' && (typeof wx === 'undefined' || typeof wx?.cloud === 'undefined')
-  )
-}
-
-function shouldUseDevBypass() {
-  return isH5Runtime() && (Boolean(import.meta.env.DEV) || isDevelopmentAppEnv())
-}
-
-function buildDevBypassPayload(payload = {}) {
-  if (!shouldUseDevBypass()) {
-    return payload
-  }
-
-  return {
-    ...payload,
-    skipAuth: true,
-    openid: payload?.openid || DEV_H5_DIAGNOSIS_OPENID
-  }
-}
 
 function isRetryableRequestError(error) {
   const message = String(error?.message || error || '').toLowerCase()
@@ -84,7 +59,7 @@ const retakeSkipRequester = httpRequest({
 
 export async function requestDiagnosisRetakeAuthorize(payload) {
   const response = await requestWithRetry(
-    () => retakeAuthorizeRequester({ payload: buildDevBypassPayload(payload), timeout: 15000 }),
+    () => retakeAuthorizeRequester({ payload, timeout: 15000 }),
     { retries: 1, fallbackMessage: '开始补拍失败' }
   )
   return unwrapResponseEnvelope(response?.data, '开始补拍失败')
@@ -92,7 +67,7 @@ export async function requestDiagnosisRetakeAuthorize(payload) {
 
 export async function requestDiagnosisRetakeSkip(payload) {
   const response = await requestWithRetry(
-    () => retakeSkipRequester({ payload: buildDevBypassPayload(payload), timeout: 15000 }),
+    () => retakeSkipRequester({ payload, timeout: 15000 }),
     { retries: 1, fallbackMessage: '跳过补拍失败' }
   )
   return unwrapResponseEnvelope(response?.data, '跳过补拍失败')

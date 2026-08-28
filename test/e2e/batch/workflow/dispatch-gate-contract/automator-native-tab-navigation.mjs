@@ -20,21 +20,33 @@ assert.deepEqual(nativeTabNavigationDetails('/pages/index/index'), {
   expectedRoute: 'pages/index/index',
   navigation_channel: 'native_tabbar',
   native_tab_path: 'pages/index/index',
-  operationChannel: 'Native.switchTab'
+  operationChannel: 'MiniProgram.switchTab'
 })
+
+assert.equal(
+  (
+    await navigateNativeTab({
+      mp: {
+        switchTab: async () => {},
+        currentPage: async () => ({ path: 'pages/diagnose/diagnose' })
+      },
+      logicalPath: '/pages/diagnose/diagnose',
+      expectedRoute: '/pages/diagnose/diagnose',
+      timeoutMs: 100,
+      pollIntervalMs: 10
+    })
+  ).path,
+  'pages/diagnose/diagnose'
+)
 
 let clock = 0
 const calls = []
-let directSwitchTabCalls = 0
 const wrongPage = { path: 'pages/calendar/calendar' }
 const homePage = { path: 'pages/index/index' }
 const pages = [wrongPage, homePage]
 const returnedHome = await navigateNativeTab({
   mp: {
-    switchTab: async () => {
-      directSwitchTabCalls += 1
-    },
-    native: () => ({ switchTab: async payload => calls.push(payload) }),
+    switchTab: async url => calls.push(url),
     currentPage: async () => pages.shift() ?? homePage
   },
   logicalPath: '/pages/index/index',
@@ -46,15 +58,14 @@ const returnedHome = await navigateNativeTab({
   }
 })
 assert.equal(returnedHome, homePage)
-assert.deepEqual(calls, [{ url: 'pages/index/index' }])
-assert.equal(directSwitchTabCalls, 0)
+assert.deepEqual(calls, ['/pages/index/index'])
 
 clock = 0
 const wrongRouteCalls = []
 await assert.rejects(
   navigateNativeTab({
     mp: {
-      native: () => ({ switchTab: async payload => wrongRouteCalls.push(payload) }),
+      switchTab: async url => wrongRouteCalls.push(url),
       currentPage: async () => wrongPage
     },
     logicalPath: '/pages/index/index',
@@ -72,13 +83,13 @@ await assert.rejects(
       expectedRoute: 'pages/index/index',
       navigation_channel: NATIVE_TABBAR_CHANNEL,
       native_tab_path: 'pages/index/index',
-      operationChannel: 'Native.switchTab',
+      operationChannel: 'MiniProgram.switchTab',
       observedRoute: 'pages/calendar/calendar'
     })
     return true
   }
 )
-assert.deepEqual(wrongRouteCalls, [{ url: 'pages/index/index' }])
+assert.deepEqual(wrongRouteCalls, ['/pages/index/index'])
 
 const failedHomeReport = { pageDataSummaries: [], assertions: [] }
 const failedHome = await switchTabHomeBeforeFixture({
@@ -116,7 +127,9 @@ for (const leafPath of leafPaths) {
     bundle.files.includes('test/e2e/automator/diagnosis/_shared/native-tab-navigation.mjs'),
     `${leafPath} must execute through the native tab adapter`
   )
-  for (const file of bundle.files) {
+  for (const file of bundle.files.filter(
+    item => item !== 'test/e2e/automator/diagnosis/_shared/native-tab-navigation.mjs'
+  )) {
     const source = fs.readFileSync(file, 'utf8')
     assert.doesNotMatch(source, /\b(?:mp|miniProgram)\.switchTab\s*\(/)
   }

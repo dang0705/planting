@@ -1,34 +1,9 @@
 import { httpRequest } from '@/http-functions/core/httpRequest'
-import { isDevelopmentAppEnv } from '@/utils/runtime-env'
 import { normalizeHistoryDetail, normalizeHistoryList } from './client-history-detail'
 import {
   requestDiagnoseStream as requestDiagnoseStreamImpl,
   logDiagnosisStartCompletion
 } from './client-stream'
-
-const DEV_H5_DIAGNOSIS_OPENID = 'dev_terminal_diagnosis_h5'
-
-function isH5Runtime() {
-  return (
-    typeof window !== 'undefined' && (typeof wx === 'undefined' || typeof wx?.cloud === 'undefined')
-  )
-}
-
-function shouldUseDevBypass() {
-  return isH5Runtime() && (Boolean(import.meta.env.DEV) || isDevelopmentAppEnv())
-}
-
-function buildDevBypassPayload(payload = {}) {
-  if (!shouldUseDevBypass()) {
-    return payload
-  }
-
-  return {
-    ...payload,
-    skipAuth: true,
-    openid: payload?.openid || DEV_H5_DIAGNOSIS_OPENID
-  }
-}
 
 function isRetryableRequestError(error) {
   const message = String(error?.message || error || '').toLowerCase()
@@ -152,12 +127,6 @@ export async function requestDiagnosisResult(query) {
   const requestQuery = {
     id: query?.id || query?.sessionId || query?.resultId || ''
   }
-  if (query?.skipAuth !== undefined) {
-    requestQuery.skipAuth = query.skipAuth
-  }
-  if (query?.openid) {
-    requestQuery.openid = query.openid
-  }
 
   const response = await resultDiagnosisRequester({
     query: requestQuery
@@ -173,7 +142,7 @@ export async function requestDiagnosisHistory(query = {}) {
 }
 
 export async function requestDiagnosisFeedback(payload) {
-  const response = await feedbackDiagnosisRequester({ payload: buildDevBypassPayload(payload) })
+  const response = await feedbackDiagnosisRequester({ payload })
   return unwrapResponseEnvelope(response?.data, '提交反馈失败')
 }
 

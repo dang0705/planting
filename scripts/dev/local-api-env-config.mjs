@@ -75,7 +75,7 @@ const FUNCTIONS_REQUIRING_CLOUDBASE_CREDENTIALS = new Set([
 ])
 export const FUNCTION_BUSINESS_PROBES = {
   'plant-user-http': {
-    path: 'plant-user-http/user-plants?page=1&pageSize=1&skipAuth=true'
+    path: 'plant-user-http/user-plants?page=1&pageSize=1'
   },
   'weather-http': {
     path: 'weather-http/weather/current',

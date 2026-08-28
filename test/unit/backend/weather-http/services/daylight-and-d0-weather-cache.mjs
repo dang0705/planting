@@ -262,7 +262,7 @@ assert.equal(
   'D0 finalize 不得写 recent-10d'
 )
 
-// 当前天气从 latestSample 读，不触发 QWeather
+// D0 当前天气从当天最新缓存 latestSample 读；读取请求不触发 QWeather
 const currentResult = await service.getCurrentWeatherFromDailyArchive({
   locationKey: 'city:shanghai',
   cityName: '上海',

@@ -22,8 +22,12 @@ assert.doesNotMatch(reminderSource, /<DiagnosePopup/)
 assert.match(reminderSource, /<WateringReminderSheet/)
 assert.match(reminderSource, /id="reminder-tab-plant-list"/)
 assert.match(reminderSource, /reminder-tab-water-/)
-assert.equal(reminderTab.iconPath, 'static/tabbar/reminder.png')
-assert.equal(reminderTab.selectedIconPath, 'static/tabbar/reminder-active.png')
+assert.equal(reminderTab, undefined, '提醒页在 MVP 阶段不得出现在 TabBar')
+assert.equal(
+  pagesConfig.tabBar.list.some(item => item.pagePath === 'pages/calendar/calendar'),
+  false,
+  '日历页在 MVP 阶段不得出现在 TabBar'
+)
 assert.match(reminderSource, /<FertilizationMonthlySheet/)
 assert.match(reminderSource, /reminder-tab-fertilization-/)
 assert.match(plantCardSource, /fertilizeActiveIcon/)

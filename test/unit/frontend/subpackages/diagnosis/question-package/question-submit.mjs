@@ -38,8 +38,16 @@ const { submitQuestionPackageAnswers } = new Function(
   'buildQuestionAnswerPayload',
   'normalizeDiagnosisResult',
   'preserveDiagnosisContinuationContext',
+  'ANALYTICS_EVENTS',
+  'reportAnalyticsEvent',
   `${submitSource}\nreturn { submitQuestionPackageAnswers }`
-)(buildQuestionAnswerPayload, normalizeDiagnosisResult, preserveDiagnosisContinuationContext)
+)(
+  buildQuestionAnswerPayload,
+  normalizeDiagnosisResult,
+  preserveDiagnosisContinuationContext,
+  { DIAGNOSE_QUESTION_COMPLETED: 'question_completed', DIAGNOSE_RESULT_READY: 'result_ready' },
+  () => {}
+)
 
 globalThis.uni = {
   showToast: payload => calls.toast.push(payload)

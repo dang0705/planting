@@ -92,7 +92,7 @@
         icon="🔍"
         loading-text="正在识别植物..."
         confirm-text="使用识别结果"
-        @close="showAIDialog = false"
+        @close="handleAIClose"
         @confirm="handleAIConfirm"
         @retry="handleAIRetry"
       />
@@ -108,7 +108,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import Layout from '@/Layout.vue'
 import { createUserPlant, fetchUserPlant, patchUserPlant } from '@/api/plants-http.js'
 import AIStreamDialog from '@/components/AIStreamDialog.vue'
@@ -118,6 +118,7 @@ import { ONE_MEGA_BYTE } from '@/constants'
 import { useDefaultPlants } from '@/composables/useDefaultPlants.js'
 import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
+import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import { normalizePlantCareLocation } from '@/utils/plant-care-location.js'
 import PlantInfoStepPanel from './PlantInfoStepPanel.vue'
 import { buildPlantFormFromUserPlant, createInitialPlantForm } from './plant-form-model.js'
@@ -192,7 +193,7 @@ const plantGroups = computed(() => {
   }
   return groups
 })
-const { useAIIdentify, handleAIConfirm, handleAIRetry } = useUserPlantIdentify({
+const { useAIIdentify, handleAIConfirm, handleAIRetry, handleAIClose, clearPendingImage } = useUserPlantIdentify({
   userStore,
   defaultPlants,
   formData,
@@ -204,6 +205,10 @@ const { useAIIdentify, handleAIConfirm, handleAIRetry } = useUserPlantIdentify({
   showAIDialog,
   aiDialogRef,
   activeStep
+})
+
+onBeforeUnmount(() => {
+  clearPendingImage().catch(() => {})
 })
 
 onMounted(async () => {
@@ -457,6 +462,7 @@ async function submitForm() {
 }
 
 async function submitNewPlantForm() {
+  reportAnalyticsEvent(ANALYTICS_EVENTS.SAVE_USER_NEW_PLANT)
   if (!(await userStore.ensureLogin())) {
     loginMsg.value = '添加植物需要先登录'
     showLogin.value = true
@@ -486,6 +492,7 @@ async function submitNewPlantForm() {
       uni.showToast({ title: response?.message || '保存失败', icon: 'none' })
       return
     }
+    reportAnalyticsEvent(ANALYTICS_EVENTS.USER_NEW_PLANT_CREATED)
     await plantStore.getUserPlants(1, 50)
     uni.showToast({ title: '添加成功', icon: 'success' })
     setTimeout(() => uni.navigateBack(), SUCCESS_NAV_DELAY_MS)

@@ -84,19 +84,25 @@ export async function runYellowingQuickFlow({
     await entry.tap()
     await sleep(1000)
 
-    const popup = await findElementByIdSuffix(startPage, 'diagnose-popup-panel', 12000, 300)
-    if (!popup) {
-      throw new Error('未命中诊断弹窗（diagnose-popup-panel）')
+    startPage = await miniProgram.currentPage()
+    const diagnosisEntry = await findElementByIdSuffix(
+      startPage,
+      'diagnosis-flow-page-content',
+      12000,
+      300
+    )
+    if (!diagnosisEntry) {
+      throw new Error('未命中诊断分包真实流程（diagnosis-flow-page-content）')
     }
     pushLog({
       type: 'state',
-      label: 'popup-opened',
+      label: 'diagnosis-entry-opened',
       path: (await resolveQuestionState(startPage)).path
     })
-    let shot = await screenshot(miniProgram, wsEndpoint, reportDir, '00-popup-opened')
+    let shot = await screenshot(miniProgram, wsEndpoint, reportDir, '00-diagnosis-entry-opened')
     miniProgram = shot.miniProgram
     shots.push(shot.path)
-    screenshotAttempts.push({ label: '00-popup-opened', attempts: shot.attempts })
+    screenshotAttempts.push({ label: '00-diagnosis-entry-opened', attempts: shot.attempts })
     startPage = await miniProgram.currentPage()
 
     const quickEntry = await findElementByIdSuffix(

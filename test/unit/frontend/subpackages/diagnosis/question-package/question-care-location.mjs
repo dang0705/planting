@@ -45,7 +45,7 @@ return { findDiagnosisPlant, resolveDiagnosisCareLocation }`
 
 function createHotCity() {
   return {
-    locationKey: 'shanghai',
+    locationKey: 'city:shanghai',
     cityName: '上海',
     latitude: 31.2304,
     longitude: 121.4737
@@ -69,7 +69,7 @@ function createHotCity() {
   })
 
   assert.equal(patchCalls.length, 0)
-  assert.equal(location.locationKey, 'shanghai')
+  assert.equal(location.locationKey, 'city:shanghai')
   assert.equal(location.source, CARE_LOCATION_SOURCE.LEGACY_USER_LOCATION)
   assert.equal(location.plantId, '')
 }
@@ -93,8 +93,30 @@ function createHotCity() {
   assert.equal(location.plantId, 'plant-42')
   assert.equal(patchCalls.length, 1)
   assert.equal(patchCalls[0].id, 'plant-42')
-  assert.equal(patchCalls[0].careLocation.locationKey, 'shanghai')
+  assert.equal(patchCalls[0].careLocation.locationKey, 'city:shanghai')
   assert.equal(patchCalls[0].careLocation.source, CARE_LOCATION_SOURCE.LEGACY_USER_LOCATION)
+}
+
+{
+  let resolvedInput = null
+  const { resolveDiagnosisCareLocation } = loadCareLocationModule({
+    patchUserPlant: () => Promise.resolve({}),
+    resolveHotCityByGps: input => {
+      resolvedInput = input
+      return Promise.resolve({ matched: true, city: createHotCity() })
+    }
+  })
+
+  const location = await resolveDiagnosisCareLocation({
+    result: { plantId: 'diagnose_tab_anonymous' },
+    plantStore: { userPlants: [] },
+    userLocation: { city: '上海市' }
+  })
+
+  assert.equal(resolvedInput.cityName, '上海市')
+  assert.equal(location.locationKey, 'city:shanghai')
+  assert.equal(location.cityName, '上海')
+  assert.equal(location.source, CARE_LOCATION_SOURCE.LEGACY_USER_LOCATION)
 }
 
 console.log('diagnose question care location tests passed')

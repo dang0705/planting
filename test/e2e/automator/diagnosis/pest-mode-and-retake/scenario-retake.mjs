@@ -43,8 +43,8 @@ async function runPestScenario(report, miniProgram, wsEndpoint, artifactDir, ret
   const page = await resetDiagnosisTab(report, miniProgram, `pest.${retakeMode}`)
   recordAssertion(
     report,
-    `diagnosis page re-entry resets before ${retakeMode} scenario`,
-    page?.path === 'pages/diagnose/diagnose',
+    `diagnosis subpackage re-entry resets before ${retakeMode} scenario`,
+    page?.path === 'subpackages/diagnosis/flow',
     page?.path || ''
   )
   await runAutomatorStep(report, `pest.${retakeMode}.setFixtureRetakeMode`, () =>

@@ -5,6 +5,13 @@
       class="box-border flex h-screen min-h-screen flex-col bg-[#f8faf9]"
     >
       <QuestionPackageRestartRequired v-if="packageRestartRequired" @restart="returnPreviousPage" />
+      <view
+        v-else-if="isQuestionStatePreparing"
+        id="diagnose-question-package-preparing"
+        class="flex min-h-screen items-center justify-center px-6"
+      >
+        <text class="text-sm text-gray-500">正在准备问诊…</text>
+      </view>
       <template v-else-if="result?.hasActiveQuestions && questionStack.length">
         <view class="flex min-h-0 flex-1 flex-col pt-6">
           <QuestionPackageProgressHeader
@@ -53,6 +60,8 @@
                       :question-id="getQuestionId(question)"
                       :question="question"
                       :timeline="getCareBehaviorTimelineByQuestion(question)"
+                      :environment-weather-window="environmentWeatherWindow"
+                      :weather-by-date="environmentWeatherByDate"
                       :loading="environmentWeatherWindowLoading"
                       :error="environmentWeatherWindowError"
                       :enable-dose-per-date="true"
@@ -445,7 +454,10 @@ const {
   questionProgressText,
   nextButtonText,
   isSubmittingQuestionAnswer,
+  isQuestionStatePreparing,
   packageRestartRequired,
+  environmentWeatherWindow,
+  environmentWeatherByDate,
   environmentWeatherWindowLoading,
   environmentWeatherWindowError,
   resetQuestionState,
@@ -475,6 +487,7 @@ const {
   result,
   images,
   plantName,
+  payload,
   userStore,
   diagnoseStore,
   diagnosisAnswerMutation

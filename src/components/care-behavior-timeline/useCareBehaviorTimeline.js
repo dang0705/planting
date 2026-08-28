@@ -90,7 +90,11 @@ export function useCareBehaviorTimeline(props, emit) {
     if (props.loading) {
       return []
     }
-    return collectWeatherSources(props.question, timeline)
+    return [
+      props.weatherByDate,
+      props.environmentWeatherWindow,
+      ...collectWeatherSources(props.question, timeline)
+    ]
   })
   const weatherByDate = computed(() => {
     const merged = {}
@@ -119,12 +123,13 @@ export function useCareBehaviorTimeline(props, emit) {
   const cellItems = computed(() =>
     displayWindow.value.map(item => {
       const state = dateStates.value[item.date] || {}
+      const weather = weatherByDate.value[item.date] || {}
       const temperatureDisplayText = formatCellMetricText(
-        state.temperatureText || weatherByDate.value[item.date]?.temperatureText || '',
+        state.temperatureText || weather.temperatureText || '',
         '°'
       )
       const humidityDisplayText = formatCellMetricText(
-        state.humidityText || weatherByDate.value[item.date]?.humidityText || '',
+        state.humidityText || weather.humidityText || '',
         '%'
       )
       return {
@@ -143,11 +148,17 @@ export function useCareBehaviorTimeline(props, emit) {
         watering: Boolean(state.recordedWatering),
         fertilizing: Boolean(state.recordedFertilizing),
         lightChange: Boolean(state.recordedLightChange),
-        hasWeatherMetrics: Boolean(state.temperatureText || state.humidityText),
-        weatherText: state.weatherText || weatherByDate.value[item.date]?.text || '',
-        temperatureText:
-          state.temperatureText || weatherByDate.value[item.date]?.temperatureText || '',
-        humidityText: state.humidityText || weatherByDate.value[item.date]?.humidityText || '',
+        // 天气异步到达时，dateStates 可能仍是首次初始化的空快照；
+        // 直接使用最新 weather map 决定显示，避免独立问诊把已取得的历史天气隐藏掉。
+        hasWeatherMetrics: Boolean(
+          state.temperatureText ||
+          state.humidityText ||
+          weather.temperatureText ||
+          weather.humidityText
+        ),
+        weatherText: state.weatherText || weather.text || '',
+        temperatureText: state.temperatureText || weather.temperatureText || '',
+        humidityText: state.humidityText || weather.humidityText || '',
         temperatureDisplayText,
         humidityDisplayText
       }

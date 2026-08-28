@@ -101,15 +101,15 @@
         >
           <view class="flex items-center justify-between mb-2">
             <text class="block text-base font-semibold text-gray-900">{{ plan.plantName }}</text>
-            <text class="text-xs text-gray-500">{{ getDaysAgo(plan.plantDate) }}</text>
+            <text class="text-xs text-gray-500">{{ formatPlantingAge(plan.plantDate) }}</text>
           </view>
 
           <view class="flex items-center gap-2 mb-3">
             <view class="bg-gray-100 px-2 py-1 rounded">
               <text class="text-xs text-gray-700">{{ plan.location }}</text>
             </view>
-            <view class="bg-[#D8F3DC] px-2 py-1 rounded">
-              <text class="text-xs text-primary">健康</text>
+            <view class="px-2 py-1 rounded" :class="resolveHealthStatusPresentation(plan.healthStatus).className">
+              <text class="text-xs">{{ resolveHealthStatusPresentation(plan.healthStatus).label }}</text>
             </view>
           </view>
 
@@ -127,12 +127,15 @@ import { getWeatherInfo } from '@/api/weather.js'
 import { saveWateringReminder } from '@/api/plants-http.js'
 import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
+import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import CalendarTaskSection from './CalendarTaskSection.vue'
 import {
   SOLAR_TERMS,
   addDays,
   dateText,
+  formatPlantingAge,
   normalizeForecast,
+  resolveHealthStatusPresentation,
   resolveWeatherIcon,
   solarTermTip
 } from './calendar-helpers.js'
@@ -294,6 +297,7 @@ async function completeTask(plantId) {
     if (!result.success) {
       throw new Error(result.message || '任务保存失败')
     }
+    reportAnalyticsEvent(ANALYTICS_EVENTS.WATERING_RECORDED)
     uni.showToast({ title: '任务已完成', icon: 'success' })
     await loadUserPlants()
   } catch (error) {
@@ -447,15 +451,6 @@ function viewPlanDetail(plan) {
   })
 }
 
-function getDaysAgo(date) {
-  const plantDate = new Date(date)
-  if (Number.isNaN(plantDate.getTime())) {
-    return '已添加'
-  }
-  const now = new Date()
-  const days = Math.floor((now - plantDate) / (1000 * 60 * 60 * 24))
-  return `种植 ${days} 天`
-}
 </script>
 
 <style scoped>

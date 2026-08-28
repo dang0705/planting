@@ -1,6 +1,11 @@
 'use strict'
 
 const { models } = require('/opt/utils/cloudbase')
+const {
+  assertOwnedPlantImagesForPlant,
+  assertOwnedTemporaryPlantImages,
+  bindOwnedTemporaryPlantImages
+} = require('./plant-images')
 const { normalizeAirEnvironmentInput } = require('./air-environment-evidence')
 const {
   getUserPlantFertilizationEvents,
@@ -645,6 +650,10 @@ async function createUserPlantInstance({
   potProfileConfidence = 'low',
   photos = null
 }) {
+  const ownedTemporaryPhotoFileIds = await assertOwnedTemporaryPlantImages({
+    openid,
+    fileIds: photos
+  })
   let plant = null
   const normalizedPlantId = normalizeNullableString(plantId)
   const normalizedPlantIdentityId = normalizeNullableString(plantIdentityId)
@@ -804,6 +813,14 @@ async function createUserPlantInstance({
     )
 
     insertedId = Number(fallbackResult?.data?.executeResultList?.[0]?.id || 0)
+  }
+
+  if (insertedId && ownedTemporaryPhotoFileIds.length) {
+    await bindOwnedTemporaryPlantImages({
+      openid,
+      plantId: insertedId,
+      fileIds: ownedTemporaryPhotoFileIds
+    })
   }
 
   return insertedId ? getUserPlantInstanceById(openid, insertedId) : null
@@ -1181,6 +1198,7 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
 
   const fields = []
   const params = { openid, id: Number(id) }
+  let pendingPhotoFileIds = []
 
   if (updates.nickname !== undefined || updates.nickName !== undefined) {
     fields.push('nickname = {{nickname}}')
@@ -1199,8 +1217,14 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
     params.notes = normalizeUserPlantNotes(updates.notes)
   }
   if (updates.photos !== undefined) {
+    const ownedPhotos = await assertOwnedPlantImagesForPlant({
+      openid,
+      plantId: id,
+      fileIds: updates.photos
+    })
+    pendingPhotoFileIds = ownedPhotos.temporaryFileIds
     fields.push('photos = {{photos}}')
-    params.photos = updates.photos ? JSON.stringify(updates.photos) : null
+    params.photos = ownedPhotos.fileIds.length ? JSON.stringify(ownedPhotos.fileIds) : null
   }
   if (hasOwnField(updates, 'lightEnvironment')) {
     fields.push('light_environment_json = {{lightEnvironmentJson}}')
@@ -1318,6 +1342,15 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
     } catch {
       // 列不存在时忽略，不阻断 nickname / last_watered 等字段的写入
     }
+    updated = await getUserPlantInstanceById(openid, id)
+  }
+
+  if (pendingPhotoFileIds.length) {
+    await bindOwnedTemporaryPlantImages({
+      openid,
+      plantId: id,
+      fileIds: pendingPhotoFileIds
+    })
     updated = await getUserPlantInstanceById(openid, id)
   }
 

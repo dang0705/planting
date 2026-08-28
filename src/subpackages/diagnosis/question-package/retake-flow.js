@@ -6,9 +6,9 @@ import {
   requestDiagnosisRetakeAuthorize,
   requestDiagnosisRetakeSkip
 } from '../http-functions/diagnose/retake.js'
-import { buildSlotMetadata } from '../utils/diagnose-image-slots.js'
+import { buildSlotMetadata } from '@/utils/diagnose-image-slots.js'
 import { normalizeDiagnosisResult } from '../utils/diagnose-flow.js'
-import { DIAGNOSIS_IMAGE_UPLOAD_OPTIONS } from '@/subpackages/diagnosis/diagnose-flow/image-uploader-options.js'
+import { DIAGNOSIS_IMAGE_UPLOAD_OPTIONS } from '@/utils/diagnosis-image-uploader-options.js'
 import {
   buildAuthorizedRetakeResult,
   buildRetakeImageAnswerPayload,
@@ -22,7 +22,7 @@ import {
 } from '@/subpackages/diagnosis/diagnose-flow/retake-clock.js'
 import { buildRetakeConfirmationContent } from '@/subpackages/diagnosis/diagnose-flow/retake-copy.js'
 import { isRetakeWindowExpiredError } from '@/subpackages/diagnosis/diagnose-flow/retake-expiry.js'
-import { buildStructuredImageInputs } from '@/subpackages/diagnosis/diagnose-flow/structured-images.js'
+import { buildStructuredImageInputs } from '@/utils/diagnose-structured-images.js'
 
 const RETAKE_IMAGE_LIMIT = 1
 const RETAKE_TIMER_INTERVAL_MS = 1000

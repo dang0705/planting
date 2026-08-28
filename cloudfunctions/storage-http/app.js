@@ -14,16 +14,48 @@ const {
   runWithRequestAppEnv,
   resolveHttpUserInfo
 } = require('/opt/utils/http')
+const {
+  assertOwnedPlantImage,
+  assertOwnedUserPlant,
+  bindOwnedTemporaryPlantImages
+} = require('/opt/utils/plant-images')
 
 const ALLOWED_IMAGE_SUFFIXES = new Set(['jpg', 'jpeg', 'png', 'webp', 'heic', 'gif'])
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+const MIN_TEMP_URL_AGE_SECONDS = 300
+const MAX_TEMP_URL_AGE_SECONDS = 7200
 
-async function getPlantImages(plantId, limit = 10, offset = 0) {
+function createRequestError(statusCode, message) {
+  const error = new Error(message)
+  error.statusCode = statusCode
+  return error
+}
+
+function normalizeTempUrlAge(value, fallback = 3600) {
+  const parsed = Number(value)
+  const normalized = Number.isFinite(parsed) ? parsed : fallback
+  return Math.max(MIN_TEMP_URL_AGE_SECONDS, Math.min(MAX_TEMP_URL_AGE_SECONDS, normalized))
+}
+
+function isTemporaryPlantImageId(value) {
+  return ['', 'temp', 'identify'].includes(String(value || '').trim())
+}
+
+function normalizePaginationValue(value, fallback, maximum) {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed)) {
+    return fallback
+  }
+  return Math.max(0, Math.min(maximum, Math.floor(parsed)))
+}
+
+async function getPlantImages({ plantId, openid, limit = 10, offset = 0 }) {
   const result = await models.$runSQL(
     `SELECT * FROM plant_images
-     WHERE plantId = {{plantId}}
+     WHERE plantId = {{plantId}} AND _openid = {{openid}}
      ORDER BY uploadedAt DESC
      LIMIT {{limit}} OFFSET {{offset}}`,
-    { plantId, limit, offset }
+    { plantId, openid, limit, offset }
   )
   return result?.data?.executeResultList || []
 }
@@ -43,17 +75,31 @@ function parseImageDataUrl(dataUrl = '') {
     .match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([\s\S]+)$/i)
 
   if (!match) {
-    throw new Error('图片数据格式无效')
+    throw createRequestError(400, '图片数据格式无效')
   }
 
   const mimeType = String(match[1] || '').toLowerCase()
   const base64 = String(match[2] || '').trim()
 
   if (!base64) {
-    throw new Error('图片内容为空')
+    throw createRequestError(400, '图片内容为空')
   }
 
   return { mimeType, base64 }
+}
+
+function decodeImageBase64(base64) {
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(base64) || base64.length % 4 !== 0) {
+    throw createRequestError(400, '图片内容格式无效')
+  }
+  const buffer = Buffer.from(base64, 'base64')
+  if (!buffer.length) {
+    throw createRequestError(400, '图片内容为空')
+  }
+  if (buffer.length > MAX_IMAGE_BYTES) {
+    throw createRequestError(413, '图片过大，请选择 5MB 以下')
+  }
+  return buffer
 }
 
 function resolveImageSuffix({ suffix = '', mimeType = '' } = {}) {
@@ -61,13 +107,6 @@ function resolveImageSuffix({ suffix = '', mimeType = '' } = {}) {
     .trim()
     .toLowerCase()
     .replace(/^\./, '')
-
-  if (normalizedSuffix) {
-    if (!ALLOWED_IMAGE_SUFFIXES.has(normalizedSuffix)) {
-      throw new Error(`不支持的图片格式: ${normalizedSuffix}`)
-    }
-    return normalizedSuffix
-  }
 
   const mimeToSuffix = {
     'image/jpeg': 'jpg',
@@ -77,13 +116,50 @@ function resolveImageSuffix({ suffix = '', mimeType = '' } = {}) {
     'image/heic': 'heic',
     'image/gif': 'gif'
   }
-
   const inferred = mimeToSuffix[String(mimeType || '').toLowerCase()]
+
+  if (normalizedSuffix) {
+    if (!ALLOWED_IMAGE_SUFFIXES.has(normalizedSuffix)) {
+      throw createRequestError(400, '不支持的图片格式')
+    }
+    const comparableSuffix = normalizedSuffix === 'jpeg' ? 'jpg' : normalizedSuffix
+    if (inferred && comparableSuffix !== inferred) {
+      throw createRequestError(400, '图片格式与文件内容不一致')
+    }
+    return normalizedSuffix
+  }
+
   if (!inferred || !ALLOWED_IMAGE_SUFFIXES.has(inferred)) {
-    throw new Error('无法识别图片格式')
+    throw createRequestError(400, '无法识别图片格式')
   }
 
   return inferred
+}
+
+function hasExpectedImageSignature(buffer, suffix) {
+  const normalizedSuffix = suffix === 'jpeg' ? 'jpg' : suffix
+  const signatures = {
+    jpg: () => buffer.length >= 3 && buffer.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff])),
+    png: () =>
+      buffer.length >= 8 &&
+      buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])),
+    webp: () =>
+      buffer.length >= 12 &&
+      buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
+      buffer.subarray(8, 12).toString('ascii') === 'WEBP',
+    gif: () =>
+      buffer.length >= 6 && ['GIF87a', 'GIF89a'].includes(buffer.subarray(0, 6).toString('ascii')),
+    heic: () => buffer.length >= 12 && buffer.subarray(4, 8).toString('ascii') === 'ftyp'
+  }
+  return Boolean(signatures[normalizedSuffix]?.())
+}
+
+function assertImagePayload({ base64, suffix }) {
+  const buffer = decodeImageBase64(base64)
+  if (!hasExpectedImageSignature(buffer, suffix)) {
+    throw createRequestError(400, '图片内容与格式不一致')
+  }
+  return buffer
 }
 
 function buildDiagnoseImageCloudPath({ openid, plantId, suffix }) {
@@ -106,11 +182,7 @@ async function uploadDiagnoseImage({ dataUrl, suffix, plantId, openid, maxAge })
   const app = getCloudBase()
   const { mimeType, base64 } = parseImageDataUrl(dataUrl)
   const normalizedSuffix = resolveImageSuffix({ suffix, mimeType })
-  const buffer = Buffer.from(base64, 'base64')
-
-  if (!buffer.length) {
-    throw new Error('图片内容为空')
-  }
+  const buffer = assertImagePayload({ base64, suffix: normalizedSuffix })
 
   const tempFilePath = path.join(
     os.tmpdir(),
@@ -137,7 +209,7 @@ async function uploadDiagnoseImage({ dataUrl, suffix, plantId, openid, maxAge })
 
     const urlResult = await app.getTempFileURL({
       fileList: [fileId],
-      maxAge: Number(maxAge || 7200)
+      maxAge: normalizeTempUrlAge(maxAge, 7200)
     })
     const tempUrl = urlResult?.fileList?.[0]?.tempFileURL || ''
 
@@ -170,11 +242,7 @@ async function uploadStorageImage({
   const app = getCloudBase()
   const { mimeType, base64 } = parseImageDataUrl(dataUrl)
   const normalizedSuffix = resolveImageSuffix({ suffix, mimeType })
-  const buffer = Buffer.from(base64, 'base64')
-
-  if (!buffer.length) {
-    throw new Error('图片内容为空')
-  }
+  const buffer = assertImagePayload({ base64, suffix: normalizedSuffix })
 
   const tempFilePath = path.join(
     os.tmpdir(),
@@ -201,7 +269,7 @@ async function uploadStorageImage({
 
     const urlResult = await app.getTempFileURL({
       fileList: [fileId],
-      maxAge: Number(maxAge || 7200)
+      maxAge: normalizeTempUrlAge(maxAge, 7200)
     })
     const tempUrl = urlResult?.fileList?.[0]?.tempFileURL || ''
 
@@ -256,7 +324,7 @@ async function getFileTempUrl(fileId, maxAge = 3600) {
   const app = getCloudBase()
   const urlResult = await app.getTempFileURL({
     fileList: [String(fileId || '').trim()],
-    maxAge: Number(maxAge || 3600)
+    maxAge: normalizeTempUrlAge(maxAge, 3600)
   })
   const tempUrl = urlResult?.fileList?.[0]?.tempFileURL || ''
 
@@ -272,6 +340,22 @@ async function deleteDiagnoseImage(fileId) {
   await app.deleteFile({
     fileList: [String(fileId || '').trim()]
   })
+}
+
+async function deleteOwnedPlantImage({ openid, fileId }) {
+  await assertOwnedPlantImage({ openid, fileId })
+  await deleteDiagnoseImage(fileId)
+  await models.$runSQL(
+    'DELETE FROM plant_images WHERE _openid = {{openid}} AND fileId = {{fileId}}',
+    { openid: String(openid || '').trim(), fileId: String(fileId || '').trim() }
+  )
+}
+
+async function assertOwnedUploadTarget({ openid, plantId }) {
+  if (isTemporaryPlantImageId(plantId)) {
+    return
+  }
+  await assertOwnedUserPlant({ openid, plantId })
 }
 
 async function main(event, context) {
@@ -324,6 +408,11 @@ async function main(event, context) {
           return jsonResponse(400, { code: 400, message: '缺少必要参数: fileId', data: null })
         }
 
+        const safeOpenid = sanitizePathSegment(userInfo.openid, 'anon')
+        if (!String(payload.fileId || '').includes(`/diagnose/${safeOpenid}/`)) {
+          return jsonResponse(403, { code: 403, message: '无权删除该诊断图片', data: null })
+        }
+
         await deleteDiagnoseImage(payload.fileId)
         return jsonResponse(200, {
           code: 200,
@@ -341,6 +430,7 @@ async function main(event, context) {
           return jsonResponse(400, { code: 400, message: '缺少必要参数: dataUrl', data: null })
         }
 
+        await assertOwnedUploadTarget({ openid: userInfo.openid, plantId: payload.plantId })
         const uploaded = await uploadPlantImageFile({
           dataUrl: payload.dataUrl,
           suffix: payload.suffix,
@@ -361,6 +451,7 @@ async function main(event, context) {
           return jsonResponse(400, { code: 400, message: '缺少必要参数: fileId', data: null })
         }
 
+        await assertOwnedPlantImage({ openid: userInfo.openid, fileId: payload.fileId })
         const tempUrl = await getFileTempUrl(payload.fileId, payload.maxAge)
         return jsonResponse(200, {
           code: 200,
@@ -378,7 +469,7 @@ async function main(event, context) {
           return jsonResponse(400, { code: 400, message: '缺少必要参数: fileId', data: null })
         }
 
-        await deleteDiagnoseImage(payload.fileId)
+        await deleteOwnedPlantImage({ openid: userInfo.openid, fileId: payload.fileId })
         return jsonResponse(200, {
           code: 200,
           message: '删除成功',
@@ -393,11 +484,17 @@ async function main(event, context) {
       if (!payload.plantId) {
         return jsonResponse(400, { code: 400, message: '缺少必要参数: plantId', data: null })
       }
+      await assertOwnedUserPlant({ openid: userInfo.openid, plantId: payload.plantId })
       return jsonResponse(200, {
         code: 200,
         message: '获取成功',
         data: {
-          images: await getPlantImages(payload.plantId, Number(payload.limit || 10), Number(payload.offset || 0))
+          images: await getPlantImages({
+            plantId: payload.plantId,
+            openid: userInfo.openid,
+            limit: normalizePaginationValue(payload.limit, 10, 50),
+            offset: normalizePaginationValue(payload.offset, 0, 1000)
+          })
         }
       })
     }
@@ -406,17 +503,25 @@ async function main(event, context) {
       if (!payload.fileId || !payload.plantId) {
         return jsonResponse(400, { code: 400, message: '缺少必要参数: fileId, plantId', data: null })
       }
-      await models.$runSQL(
-        'UPDATE plant_images SET plantId = {{plantId}} WHERE fileId = {{fileId}}',
-        { plantId: payload.plantId, fileId: payload.fileId }
-      )
+      await bindOwnedTemporaryPlantImages({
+        openid: userInfo.openid,
+        plantId: payload.plantId,
+        fileIds: [payload.fileId]
+      })
       return jsonResponse(200, { code: 200, message: '更新成功', data: null })
     }
 
     return methodNotAllowed(method)
   } catch (error) {
-    console.error('storage-http error:', error)
-    return jsonResponse(500, { code: 500, message: error.message, data: null })
+    const statusCode = Number(error?.statusCode) || 500
+    if (statusCode >= 500) {
+      console.error('storage-http error:', error)
+    }
+    return jsonResponse(statusCode, {
+      code: statusCode,
+      message: statusCode >= 500 ? '图片服务暂时不可用，请稍后重试' : error.message,
+      data: null
+    })
   }
 }
 
@@ -424,4 +529,12 @@ module.exports.main = (event, context) => {
   const request = getHttpRequestData(event, context)
   const appEnv = resolveRequestAppEnv(request.headers, request.query, request.body)
   return runWithRequestAppEnv(appEnv, () => main(event, context))
+}
+
+module.exports._test = {
+  assertImagePayload,
+  buildDiagnoseImageCloudPath,
+  buildPlantImageCloudPath,
+  normalizeTempUrlAge,
+  resolveImageSuffix
 }

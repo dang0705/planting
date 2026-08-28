@@ -50,10 +50,12 @@ import { useCareBehaviorTimeline } from './care-behavior-timeline/useCareBehavio
 
 const props = defineProps({
   error: { type: [String, Object], default: '' },
+  environmentWeatherWindow: { type: Object, default: null },
   loading: { type: Boolean, default: false },
   question: { type: Object, default: () => ({}) },
   questionId: { type: String, default: '' },
   timeline: { type: Object, default: () => ({}) },
+  weatherByDate: { type: Object, default: () => ({}) },
   idPrefix: { type: String, default: 'diagnose' },
   sticky: { type: Boolean, default: false },
   enableDosePerDate: { type: Boolean, default: false },

@@ -21,15 +21,14 @@ export function useWateringAdvisorWeather({ selectedCatalogPlant, plantStore, us
   const forecastDays = ref([])
   const weatherLocationKey = ref('')
 
-  // D0 注入契约：locationKey 统一从 plant.careLocation.locationKey 读取，
-  // 用于后端从 day file latestSample 注入当日天气；缺失时 todayWeatherSource='missing'。
+  // D0 最新缓存注入契约：locationKey 统一从 plant.careLocation.locationKey 读取，
+  // 用于后端从当天 day file.latestSample 注入当日天气；缺失时 todayWeatherSource='missing'。
   // 我的植物路径优先用 careLocation.locationKey；目录植物无 careLocation，兜底 weather window。
   const plannerLocationKey = computed(() => {
     const plant = selectedCatalogPlant.value
     if (plant?.userPlantId) {
       const userPlant = plantStore.userPlants?.find(item => item.id === plant.userPlantId)
-      const fromCareLocation =
-        userPlant?.careLocation?.locationKey || userPlant?.locationKey || ''
+      const fromCareLocation = userPlant?.careLocation?.locationKey || userPlant?.locationKey || ''
       if (fromCareLocation) {
         return String(fromCareLocation).trim()
       }
@@ -61,9 +60,7 @@ export function useWateringAdvisorWeather({ selectedCatalogPlant, plantStore, us
       const window = await getEnvironmentWeatherWindow({
         ...location,
         // 透传 plant careLocation 的 locationKey，让后端用同一 key 解析 D0 day file
-        ...(plantCareLocation?.locationKey
-          ? { locationKey: plantCareLocation.locationKey }
-          : {}),
+        ...(plantCareLocation?.locationKey ? { locationKey: plantCareLocation.locationKey } : {}),
         diagnosisDate: todayStr(),
         mode: 'environment'
       })

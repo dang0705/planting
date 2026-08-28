@@ -26,7 +26,11 @@
           <text class="mt-2 text-sm leading-6 text-gray-400">
             记录你的每一株植物，让 AI 帮你更好地照顾它们
           </text>
-          <button class="mt-6 rounded-3xl bg-primary px-8 py-3.5 text-white" @click="addPlant">
+          <button
+            id="index-empty-add-plant-button"
+            class="mt-6 rounded-3xl bg-primary px-8 py-3.5 text-white"
+            @click="addPlant"
+          >
             添加第一株植物
           </button>
         </view>
@@ -68,6 +72,7 @@
             </view>
           </view>
           <view
+            id="index-add-plant-button"
             class="mt-4 flex flex-col items-center justify-center rounded-[20px] border-2 border-dashed border-primary bg-white p-5"
             @click="addPlant"
           >
@@ -139,6 +144,7 @@ import { getDiagnosisHistory } from '@/api/diagnosis-history.js'
 import { usePlantingStore } from '@/store/planting.js'
 import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
+import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
 import PlantCard from './components/PlantCard.vue'
 import FertilizationMonthlySheet from './components/FertilizationMonthlySheet.vue'
@@ -167,7 +173,6 @@ const currentFertilizationPlant = computed(() =>
     ? null
     : plantStore.userPlants.find(plant => plant.id === currentFertilizationPlantId.value) || null
 )
-
 onMounted(async () => {
   if (await userStore.ensureLogin()) {
     await loadUserPlants()
@@ -197,9 +202,11 @@ async function handleIndexPhoneLogin(event) {
   await loadUserPlants()
 }
 function addPlant() {
+  reportAnalyticsEvent(ANALYTICS_EVENTS.USER_CLICK_CREATE_PLANT)
   uni.navigateTo({ url: '/subpackages/plant/user-plant-detail/user-plant-detail?mode=create' })
 }
 function goWateringAdvisor() {
+  reportAnalyticsEvent(ANALYTICS_EVENTS.ISOLATED_WATERING_PLANNER)
   uni.navigateTo({ url: '/subpackages/care/watering-advisor/watering-advisor' })
 }
 function openEditPlant(plant) {
@@ -234,10 +241,16 @@ function normalizeBackendWaterReminder(reminder) {
   }
 }
 function openDiagnose(plant) {
-  const plantId = encodeURIComponent(String(plant?.id || ''))
-  const plantName = encodeURIComponent(plant?.canonicalName || plant?.displayName || '当前植物')
+  if (!plant?.id) {
+    return
+  }
+  const plantId = encodeURIComponent(String(plant.id))
+  const plantCatalogId = plant.plantId
+    ? `&plantCatalogId=${encodeURIComponent(String(plant.plantId))}`
+    : ''
+  const plantName = encodeURIComponent(plant.canonicalName || plant.displayName || '当前植物')
   uni.navigateTo({
-    url: `/subpackages/diagnosis/entry?plantId=${plantId}&plantName=${plantName}`
+    url: `/subpackages/diagnosis/flow?plantId=${plantId}${plantCatalogId}&plantName=${plantName}&entrySource=plant_card`
   })
 }
 async function openPlantHistory(plant) {

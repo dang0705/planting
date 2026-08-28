@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process'
+import { spawn, spawnSync } from 'node:child_process'
 import {
   createLocalGatewayError,
   LOCAL_RUNTIME_LEASE_ROOT,
@@ -31,13 +31,57 @@ function commandEnvironment(apiBaseUrl, options, environment = process.env) {
   return next
 }
 
-async function waitForRuntimeOwnerHandoff({ managedRuntime, initial, shouldStop, output }) {
+function defaultProcessCommand(pid) {
+  const result = spawnSync('ps', ['-p', String(pid), '-o', 'command='], { encoding: 'utf8' })
+  return result.status === 0 ? String(result.stdout || '').trim() : ''
+}
+
+function isManagedMpWeixinWatchCommand(command) {
+  return (
+    command.includes('scripts/dev/run-local-api-env.mjs') &&
+    /(?:^|\s)--\s+uni\s+-p\s+mp-weixin(?:\s|$)/u.test(command)
+  )
+}
+
+function isManagedMpWeixinWatchChild(command) {
+  return command.includes('uni') && /(?:^|\s)-p\s+mp-weixin(?:\s|$)/u.test(command)
+}
+
+function verifyRuntimeOwnerForTakeover(lease, processCommand) {
+  const ownerPid = Number(lease?.owner_pid)
+  const childPid = Number(lease?.child_pid)
+  if (
+    !Number.isInteger(ownerPid) ||
+    ownerPid <= 0 ||
+    !Number.isInteger(childPid) ||
+    childPid <= 0
+  ) {
+    return { status: 'blocked', code: 'local_runtime_owner_metadata_invalid' }
+  }
+  const ownerCommand = processCommand(ownerPid)
+  const childCommand = processCommand(childPid)
+  if (!isManagedMpWeixinWatchCommand(ownerCommand) || !isManagedMpWeixinWatchChild(childCommand)) {
+    return {
+      status: 'blocked',
+      code: 'local_runtime_owner_unverified',
+      owner_pid: ownerPid,
+      child_pid: childPid
+    }
+  }
+  return { status: 'verified', owner_pid: ownerPid, child_pid: childPid }
+}
+
+async function waitForRuntimeOwnerHandoff({ managedRuntime, initial, shouldStop }) {
   const deadline = Date.now() + RUNTIME_OWNER_HANDOFF_TIMEOUT_MS
   let started = initial
-  output.write('已有 mp-weixin watch runtime 正在运行，等待其释放租约后接管\n')
   while (started.status === 'reused') {
     if (shouldStop()) {
       return { status: 'cancelled', signal: 'SIGINT' }
+    }
+    started =
+      typeof managedRuntime.claim === 'function' ? managedRuntime.claim() : managedRuntime.start()
+    if (started.status !== 'reused') {
+      return started
     }
     if (Date.now() >= deadline) {
       return {
@@ -50,10 +94,34 @@ async function waitForRuntimeOwnerHandoff({ managedRuntime, initial, shouldStop,
     if (shouldStop()) {
       return { status: 'cancelled', signal: 'SIGINT' }
     }
-    started =
-      typeof managedRuntime.claim === 'function' ? managedRuntime.claim() : managedRuntime.start()
   }
   return started
+}
+
+async function takeOverRuntimeOwner({
+  managedRuntime,
+  initial,
+  shouldStop,
+  output,
+  processCommand,
+  signalProcess
+}) {
+  const owner = verifyRuntimeOwnerForTakeover(initial?.lease, processCommand)
+  if (owner.status !== 'verified') {
+    return owner
+  }
+  try {
+    signalProcess(owner.owner_pid, 'SIGINT')
+  } catch (error) {
+    return {
+      status: 'blocked',
+      code: 'local_runtime_owner_handoff_signal_failed',
+      owner_pid: owner.owner_pid,
+      reason: String(error?.message || error)
+    }
+  }
+  output.write(`已请求接管现有 mp-weixin watch runtime: ${owner.owner_pid}\n`)
+  return waitForRuntimeOwnerHandoff({ managedRuntime, initial, shouldStop })
 }
 
 function waitForCommandExit(child, waitForExit) {
@@ -94,7 +162,9 @@ export async function runLocalApiEnvironment({
   spawnProcess = spawn,
   runtimeSessionFactory = createManagedLocalRuntimeSession,
   runtimeTargetPath = MP_WEIXIN_RUNTIME_TARGET,
-  runtimeLeaseRoot = LOCAL_RUNTIME_LEASE_ROOT
+  runtimeLeaseRoot = LOCAL_RUNTIME_LEASE_ROOT,
+  processCommand = defaultProcessCommand,
+  signalProcess = process.kill
 } = {}) {
   const { options, command } = parseLocalApiEnvironmentArgs(argv, environment)
   if (!command.length) {
@@ -156,11 +226,13 @@ export async function runLocalApiEnvironment({
       })
       let started = managedRuntime.start()
       if (started.status === 'reused' && !options.reuseOutput) {
-        started = await waitForRuntimeOwnerHandoff({
+        started = await takeOverRuntimeOwner({
           managedRuntime,
           initial: started,
           shouldStop: () => stopRequested,
-          output
+          output,
+          processCommand,
+          signalProcess
         })
         if (started.status === 'cancelled') {
           assertCommandExit({ code: null, signal: started.signal })
@@ -188,9 +260,7 @@ export async function runLocalApiEnvironment({
         // a normal QA -> daily handoff look broken. The caller is not the
         // lease owner, so the managed session remains a no-op and its cleanup
         // cannot release or terminate the existing watcher.
-        output.write(
-          `复用已有 mp-weixin watch runtime: ${started.lease?.owner_pid || 'unknown'}\n`
-        )
+        output.write(`复用已有 mp-weixin watch runtime: ${started.lease?.owner_pid || 'unknown'}\n`)
         child = null
         waitForExit = () => Promise.resolve({ code: 0, signal: null, reused: true })
       } else {

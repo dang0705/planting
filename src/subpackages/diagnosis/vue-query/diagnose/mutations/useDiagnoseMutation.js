@@ -29,8 +29,7 @@ export function useDiagnoseMutation() {
       entrySource = 'diagnose_tab',
       onText,
       onFinish,
-      onError,
-      skipAuth = false
+      onError
     } = {}) => {
       try {
         onText?.('思考中...', '思考中...')
@@ -57,8 +56,7 @@ export function useDiagnoseMutation() {
           latestVisualCallBatchId,
           visualBatchTrace,
           diagnosisProfile,
-          entrySource,
-          skipAuth
+          entrySource
         })
         const normalizedResult =
           typeof onText === 'function'

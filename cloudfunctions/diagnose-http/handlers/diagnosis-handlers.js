@@ -93,14 +93,11 @@ async function executeDiagnosisStart(request, payload, principal, onVisualEvent)
   assertAuthenticatedUser({ ...principal, message: '请先登录' })
   await getRefactorReadiness().ensureDiagnosisStartRefactorReady()
   const executed = await runWithQuotaGuard({
-    request,
     openid: principal.userInfo?.openid || '',
-    skipAuth: principal.skipAuth,
     task: async () =>
       getStartRunner().runStartDiagnosis({
         payload,
         openid: principal.userInfo?.openid || '',
-        skipPersistence: principal.skipPersistence,
         ...(typeof onVisualEvent === 'function' ? { onVisualEvent } : {})
       })
   })
@@ -201,14 +198,11 @@ async function handleDiagnosisQuestionStart(request, context, payload) {
       source: 'diagnosis-question-start'
     })
     const executed = await runWithQuotaGuard({
-      request,
       openid: principal.userInfo?.openid || '',
-      skipAuth: principal.skipAuth,
       task: async () =>
         getQuestionStartRunner().runQuestionStartDiagnosis({
           payload,
-          openid: principal.userInfo?.openid || '',
-          skipPersistence: principal.skipPersistence
+          openid: principal.userInfo?.openid || ''
         })
     })
     const hydratedResponse = await withQuestionTextConservative(executed.response)
@@ -246,8 +240,7 @@ async function handleDiagnosisAnswer(request, context, payload) {
     })
     const executed = await getAnswerRunner().runAnswerDiagnosis({
       payload,
-      openid: principal.userInfo?.openid || '',
-      skipPersistence: principal.skipPersistence
+      openid: principal.userInfo?.openid || ''
     })
     const hydratedResponse = executed.response?.questionRequired
       ? await withQuestionTextConservative(executed.response)

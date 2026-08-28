@@ -1,5 +1,6 @@
 import { getQuestionIdentity as getQuestionId } from '../utils/diagnose-question-identity.js'
 import { extractCareBehaviorTimelineFromQuestion } from '@/utils/care-behavior-timeline.js'
+import { toDateString } from '@/utils/care-behavior-timeline/date-utils.js'
 import {
   WEATHER_COORDINATE_PRECISION,
   normalizeWeatherCoordinates
@@ -87,7 +88,7 @@ export function resolveCareBehaviorReferenceDate(questions = []) {
       return String(referenceDate).slice(0, 10)
     }
   }
-  return new Date().toISOString().slice(0, 10)
+  return toDateString(new Date())
 }
 
 export function resolveCareBehaviorWeatherLocation(location = {}) {

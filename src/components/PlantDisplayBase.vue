@@ -4,11 +4,11 @@
       v-if="imageSource"
       :id="`plant-display-image-${plant.id || 'unknown'}`"
       :src="imageSource"
-      class="h-full w-full"
+      class="size-full"
       mode="aspectFill"
       @error="handleImageError"
     />
-    <view v-else class="relative h-full w-full bg-[#f1f8f4]">
+    <view v-else class="relative size-full bg-[#f1f8f4]">
       <view
         class="absolute left-1/2 top-1/2 h-[58px] w-[3px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#2d7a4f]"
       />

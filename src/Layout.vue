@@ -90,6 +90,8 @@ import { useUserStore } from '@/store/user.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
 
 const QUESTION_PACKAGE_PAGE_ROUTE = 'subpackages/diagnosis/question-package'
+const DIAGNOSIS_TAB_PAGE_ROUTE = 'pages/diagnose/diagnose'
+const PREVIOUS_PAGE_OFFSET = 2
 
 const props = defineProps({
   title: { type: String, default: '' },
@@ -128,6 +130,15 @@ function isActiveQuestionPackagePage(pages) {
 function goBack() {
   const pages = typeof getCurrentPages === 'function' ? getCurrentPages() : []
   if (isActiveQuestionPackagePage(pages)) {
+    const previousRoute = pages[pages.length - PREVIOUS_PAGE_OFFSET]?.route
+    if (previousRoute === DIAGNOSIS_TAB_PAGE_ROUTE) {
+      uni.navigateBack({
+        fail: error => {
+          console.warn('[Layout.goBack] navigateBack failed', error)
+        }
+      })
+      return
+    }
     goHome()
     return
   }

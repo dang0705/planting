@@ -5,22 +5,17 @@ import {
   findBySemanticId,
   recordAssertion,
   recordShot,
-  sleep
+  sleep,
+  waitForPagePath
 } from './runtime-core.mjs'
 
-async function runFiveTabAndReuseScenario(report, miniProgram, wsEndpoint, artifactDir) {
+async function runThreeTabAndReuseScenario(report, miniProgram, wsEndpoint, artifactDir) {
   // installHarness has already patched the live user store to the fixture identity, so the
-  // home page will read isAuthenticated=true. The five-tab loop below visits the home tab
-  // first through the official Native TabBar adapter.
+  // home page will read isAuthenticated=true. The three-tab MVP loop below uses the official
+  // MiniProgram.switchTab adapter for every tab before opening a deep page branch.
   // A top-level reLaunch('/pages/index/index') was removed: main QA r3 proved it hangs the
   // live automator for exactly 10s before any product assertion.
   const tabs = [
-    { key: 'home', path: '/pages/index/index', expected: 'pages/index/index', root: 'index-page' },
-    {
-      key: 'calendar',
-      path: '/pages/calendar/calendar',
-      expected: 'pages/calendar/calendar'
-    },
     {
       key: 'diagnose',
       path: '/pages/diagnose/diagnose',
@@ -28,29 +23,28 @@ async function runFiveTabAndReuseScenario(report, miniProgram, wsEndpoint, artif
       root: 'diagnose-tab-page'
     },
     {
-      key: 'reminder',
-      path: '/pages/reminder/reminder',
-      expected: 'pages/reminder/reminder',
-      root: 'reminder-tab-page'
-    },
-    {
       key: 'profile',
       path: '/pages/profile/profile',
       expected: 'pages/profile/profile',
       root: 'profile-diagnose-history-section'
-    }
+    },
+    { key: 'home', path: '/pages/index/index', expected: 'pages/index/index', root: 'index-page' }
   ]
 
   for (const tab of tabs) {
-    const page = await navigateNativeTab({ mp: miniProgram, logicalPath: tab.path })
+    const page = await navigateNativeTab({
+      mp: miniProgram,
+      logicalPath: tab.path,
+      expectedRoute: tab.expected
+    })
     recordAssertion(
       report,
-      `five-tab route visible: ${tab.key}`,
+      `three-tab route visible: ${tab.key}`,
       page?.path === tab.expected,
       page?.path
     )
     if (tab.root) {
-      await assertElement(report, page, `#${tab.root}`, `five-tab root visible: ${tab.key}`, 4000)
+      await assertElement(report, page, `#${tab.root}`, `three-tab root visible: ${tab.key}`, 4000)
     }
     await recordShot(report, miniProgram, wsEndpoint, artifactDir, `00-tab-${tab.key}`)
 
@@ -89,61 +83,53 @@ async function runFiveTabAndReuseScenario(report, miniProgram, wsEndpoint, artif
       } else {
         await diagnoseEntry.tap()
         await sleep(700)
-        const popupPanel = await assertElement(
+        const diagnosisPage = await waitForPagePath(miniProgram, 'subpackages/diagnosis/flow')
+        recordAssertion(
           report,
-          page,
-          '#diagnose-popup-panel',
-          'plant card DiagnosePopup opens',
+          'plant card navigates to the real diagnosis subpackage flow',
+          diagnosisPage?.path === 'subpackages/diagnosis/flow',
+          diagnosisPage?.path
+        )
+        const diagnosisFlow = await assertElement(
+          report,
+          diagnosisPage,
+          '#diagnosis-flow-page-content',
+          'diagnosis subpackage flow mounts shared flow',
           4000
         )
-        const sharedFlow = await assertElement(
+        const diagnosisRoot = await assertElement(
           report,
-          page,
-          '#diagnose-flow',
-          'plant card popup reuses DiagnoseFlow',
+          diagnosisPage,
+          '#diagnosis-flow-page',
+          'diagnosis subpackage flow root visible',
           4000
         )
         recordAssertion(
           report,
-          'DiagnosePopup keeps shared flow core',
-          Boolean(popupPanel && sharedFlow)
+          'diagnosis flow keeps shared flow core',
+          Boolean(diagnosisFlow && diagnosisRoot)
         )
-        await recordShot(report, miniProgram, wsEndpoint, artifactDir, '00-home-diagnose-popup')
-        const popupClose = await findBySemanticId(page, 'diagnose-popup-close-button')
-        if (popupClose) {
-          await popupClose.tap()
-          await sleep(300)
+        await recordShot(report, miniProgram, wsEndpoint, artifactDir, '00-home-diagnose-entry')
+        const diagnosisBack = await findBySemanticId(diagnosisPage, 'layout-left-action')
+        recordAssertion(
+          report,
+          'diagnosis flow returns to home before next tab',
+          Boolean(diagnosisBack)
+        )
+        if (!diagnosisBack) {
+          throw new Error('layout-left-action not found after home diagnosis flow')
         }
-      }
-    }
-
-    if (tab.key === 'reminder') {
-      const waterEntry = await findByIdContains(page, 'reminder-tab-water-', 4000)
-      recordAssertion(report, 'reminder tab exposes watering branch', Boolean(waterEntry))
-      if (waterEntry) {
-        await waterEntry.tap()
-        await sleep(700)
-      }
-      const wateringSheet = await assertElement(
-        report,
-        page,
-        '#watering-reminder-sheet',
-        'reminder tab reuses WateringReminderSheet',
-        4000
-      )
-      recordAssertion(
-        report,
-        'reminder tab does not expose fertilizing branch',
-        !(await findByIdContains(page, 'fertiliz', 500))
-      )
-      await recordShot(report, miniProgram, wsEndpoint, artifactDir, '00-reminder-watering-sheet')
-      const reminderClose = await findBySemanticId(page, 'watering-reminder-close-button')
-      if (wateringSheet && reminderClose) {
-        await reminderClose.tap()
-        await sleep(300)
+        await diagnosisBack.tap()
+        const homeAfterDiagnosis = await waitForPagePath(miniProgram, 'pages/index/index')
+        recordAssertion(
+          report,
+          'home restored after card diagnosis branch',
+          homeAfterDiagnosis?.path === 'pages/index/index',
+          homeAfterDiagnosis?.path
+        )
       }
     }
   }
 }
 
-export { runFiveTabAndReuseScenario }
+export { runThreeTabAndReuseScenario }

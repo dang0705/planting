@@ -28,6 +28,22 @@ function normalizeConfidence(value) {
   return score
 }
 
+function normalizeNullableSqlNumber(value) {
+  if (value === null || value === undefined || value === '') {
+    return null
+  }
+  const numberValue = Number(value)
+  return Number.isFinite(numberValue) ? numberValue : null
+}
+
+function buildNullableSqlNumberBinding(value) {
+  const normalizedValue = normalizeNullableSqlNumber(value)
+  return {
+    value: normalizedValue === null ? 0 : normalizedValue,
+    hasValue: normalizedValue === null ? 0 : 1
+  }
+}
+
 function resolveQualityLevel(score) {
   if (score >= 0.85) {return 'high'}
   if (score >= 0.65) {return 'medium'}
@@ -207,9 +223,9 @@ async function persistIdentifyRuntimeArtifacts({
       ) VALUES (
         {{visualRawImageRecordId}}, {{openid}}, {{sessionId}}, {{visualCallBatchId}}, {{imageRef}},
         {{inputSlotType}}, {{inputSlotOrder}}, {{inputSlotLabel}}, {{userDeclaredOrganType}},
-        {{userDeclaredOrganConfidence}}, {{sourceModelProvider}}, {{sourceModelName}},
-        {{modelName}}, {{modelVersion}}, {{promptVersion}}, {{rawTextOutput}},
-        {{rawStructuredOutput}}, {{callStatus}}, {{latencyMs}}, {{errorCode}}, CURRENT_TIMESTAMP
+        NULL, {{sourceModelProvider}}, {{sourceModelName}},
+        {{modelName}}, {{modelVersion}}, NULL, {{rawTextOutput}},
+        {{rawStructuredOutput}}, {{callStatus}}, NULL, NULL, CURRENT_TIMESTAMP
       )
     `,
     {
@@ -222,17 +238,13 @@ async function persistIdentifyRuntimeArtifacts({
       inputSlotOrder: 0,
       inputSlotLabel: '',
       userDeclaredOrganType: '',
-      userDeclaredOrganConfidence: null,
       sourceModelProvider: provider,
       sourceModelName: provider,
       modelName: provider,
       modelVersion: '',
-      promptVersion: null,
       rawTextOutput: recognizedName || '',
       rawStructuredOutput: stringifyJson(rawPayload),
-      callStatus: 'succeeded',
-      latencyMs: null,
-      errorCode: null
+      callStatus: 'succeeded'
     }
   )
 
@@ -252,12 +264,12 @@ async function persistIdentifyRuntimeArtifacts({
         {{visualNormalizedImageResultId}}, {{openid}}, {{sessionId}}, {{visualCallBatchId}},
         {{visualRawImageRecordId}}, {{sourceModelProvider}}, {{sourceModelName}},
         {{inputSlotOrder}}, {{inputSlotLabel}}, {{userDeclaredOrganType}},
-        {{userDeclaredOrganConfidence}}, {{analyzabilityLevel}}, {{clarityLevel}},
-        {{subjectCompletenessLevel}}, {{primaryOrganType}}, {{primaryOrganConfidence}},
+        NULL, {{analyzabilityLevel}}, {{clarityLevel}},
+        {{subjectCompletenessLevel}}, {{primaryOrganType}}, NULL,
         {{organSource}}, {{multiOrganDetected}}, {{organConflictFlag}},
         {{organResolutionReason}}, {{topkSymptomsJson}}, {{patternCandidatesJson}},
-        {{routeHintsJson}}, {{routePrimaryAction}}, {{top1StabilityScore}},
-        {{top3StabilityScore}}, {{longTailNoiseFlag}}, {{patternDerivationStatus}},
+        {{routeHintsJson}}, {{routePrimaryAction}}, NULL,
+        NULL, {{longTailNoiseFlag}}, {{patternDerivationStatus}},
         CURRENT_TIMESTAMP
       )
     `,
@@ -272,12 +284,10 @@ async function persistIdentifyRuntimeArtifacts({
       inputSlotOrder: 0,
       inputSlotLabel: '',
       userDeclaredOrganType: '',
-      userDeclaredOrganConfidence: null,
       analyzabilityLevel: qualityLevel,
       clarityLevel: qualityLevel,
       subjectCompletenessLevel: completenessLevel,
       primaryOrganType,
-      primaryOrganConfidence: null,
       organSource,
       multiOrganDetected: 0,
       organConflictFlag: 0,
@@ -286,8 +296,6 @@ async function persistIdentifyRuntimeArtifacts({
       patternCandidatesJson: stringifyJson([]),
       routeHintsJson: stringifyJson(routeHints),
       routePrimaryAction,
-      top1StabilityScore: null,
-      top3StabilityScore: null,
       longTailNoiseFlag,
       patternDerivationStatus: 'not_applicable'
     }
@@ -332,24 +340,31 @@ async function persistIdentifyRuntimeArtifacts({
         {{identityResolutionRecordId}}, {{openid}}, {{sessionId}}, {{visualCallBatchId}},
         {{rawRecognitionName}}, {{taxonomyMatchStatus}}, {{identityResolutionStatus}},
         {{matchedPlantIdentityId}}, {{isCurrentPrimaryIdentity}}, {{matchRule}},
-        {{matchScore}}, {{matchReason}}, NULL, NULL,
+        CASE
+          WHEN {{matchScoreHasValue}} = 1 THEN {{matchScoreValue}}
+          ELSE NULL
+        END, {{matchReason}}, NULL, NULL,
         NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
       )
     `,
-    {
-      identityResolutionRecordId,
-      openid,
-      sessionId,
-      visualCallBatchId,
-      rawRecognitionName: recognizedName || '',
-      taxonomyMatchStatus,
-      identityResolutionStatus,
-      matchedPlantIdentityId,
-      isCurrentPrimaryIdentity: taxonomyMatchStatus === 'matched' ? 1 : 0,
-      matchRule,
-      matchScore: primaryCandidate?.matchScore ?? null,
-      matchReason
-    }
+    (() => {
+      const matchScoreBinding = buildNullableSqlNumberBinding(primaryCandidate?.matchScore)
+      return {
+        identityResolutionRecordId,
+        openid,
+        sessionId,
+        visualCallBatchId,
+        rawRecognitionName: recognizedName || '',
+        taxonomyMatchStatus,
+        identityResolutionStatus,
+        matchedPlantIdentityId,
+        isCurrentPrimaryIdentity: taxonomyMatchStatus === 'matched' ? 1 : 0,
+        matchRule,
+        matchScoreValue: matchScoreBinding.value,
+        matchScoreHasValue: matchScoreBinding.hasValue,
+        matchReason
+      }
+    })()
   )
 
   await models.$runSQL(

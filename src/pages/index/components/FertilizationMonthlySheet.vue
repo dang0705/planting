@@ -98,7 +98,6 @@
       :current-month-evaluation="currentMonthEvaluation"
       :condition-requirements="reminder?.conditionRequirements || []"
       :completion-block-reason="reminder?.completionBlockReason || ''"
-      :calendar-delete-visible="showCalendarDelete"
       :requires-minimum-interval-acknowledgement="
         Boolean(reminder?.requiresMinimumIntervalAcknowledgement)
       "
@@ -108,7 +107,7 @@
     />
 
     <FertilizationReminderCalendarDelete
-      :visible="showCalendarDelete"
+      ref="calendarDeletePopupRef"
       :acknowledged="calendarDeleteAcknowledged"
       :loading="loading"
       @change="onCalendarDeleteAcknowledgedChange"
@@ -158,6 +157,7 @@ import {
   previewFertilizationReminder
 } from '@/api/plants-http.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
+import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import FertilizationReminderSetup from './FertilizationReminderSetup.vue'
 import SavedFertilizationReminderState from './SavedFertilizationReminderState.vue'
 import FertilizationReminderPreview from './FertilizationReminderPreview.vue'
@@ -180,6 +180,7 @@ const props = defineProps({ plant: { type: Object, default: null } })
 const emit = defineEmits(['close', 'changed'])
 const popupRef = ref(null)
 const reminderSetupPopupRef = ref(null)
+const calendarDeletePopupRef = ref(null)
 const reminder = ref(null)
 const preview = ref(null)
 const loading = ref(false)
@@ -194,11 +195,11 @@ const conditionOverrideCode = ref('')
 const pendingCalendarPayload = ref(null)
 const syncError = ref('')
 const syncTerminalError = ref(false)
-const showCalendarDelete = ref(false)
 const calendarDeleteAcknowledged = ref(false)
 const serverCurrentMonthOptions = ref(null)
 const currentMonthGuard = ref(null)
 const assertedDate = ref('')
+let reminderLoadSequence = 0
 
 const canOpenReminderSetup = computed(
   () =>
@@ -215,11 +216,11 @@ function onCalendarDeleteAcknowledgedChange(event) {
 
 function openCalendarDelete() {
   calendarDeleteAcknowledged.value = false
-  showCalendarDelete.value = true
+  callComponentMethod(calendarDeletePopupRef, 'open')
 }
 
 function closeCalendarDelete() {
-  showCalendarDelete.value = false
+  callComponentMethod(calendarDeletePopupRef, 'close')
   calendarDeleteAcknowledged.value = false
 }
 const fertilizationMonthly = computed(
@@ -298,7 +299,6 @@ function resetSetup() {
   pendingCalendarPayload.value = null
   syncError.value = ''
   syncTerminalError.value = false
-  showCalendarDelete.value = false
   calendarDeleteAcknowledged.value = false
   serverCurrentMonthOptions.value = null
   currentMonthGuard.value = null
@@ -309,12 +309,16 @@ function resetSetup() {
 
 async function loadReminder() {
   const plantId = Number(props.plant?.id)
+  const requestSequence = ++reminderLoadSequence
+  resetSetup()
   if (!plantId) {
-    resetSetup()
     return
   }
   try {
     const response = await fetchFertilizationReminder(plantId)
+    if (requestSequence !== reminderLoadSequence || Number(props.plant?.id) !== plantId) {
+      return
+    }
     const responseData = response?.code === 200 ? response.data : null
     reminder.value = responseData?.active === true ? responseData : null
     serverCurrentMonthOptions.value = Array.isArray(responseData?.currentMonthOptions)
@@ -330,6 +334,9 @@ async function loadReminder() {
       preflight.value = resolveLocalConditionPreflight()
     }
   } catch (error) {
+    if (requestSequence !== reminderLoadSequence || Number(props.plant?.id) !== plantId) {
+      return
+    }
     console.warn('读取施肥提醒失败:', error?.message || error)
     resetSetup()
   }
@@ -561,6 +568,7 @@ async function confirmPreview() {
     } catch (refreshError) {
       syncError.value = refreshError?.message || '提醒已保存，请重新打开查看最新状态。'
     }
+    reportAnalyticsEvent(ANALYTICS_EVENTS.FERTILIZATION_REMINDER_SAVED)
     preview.value = null
     pendingCalendarPayload.value = null
     emit('changed', reminder.value)
@@ -648,6 +656,7 @@ async function completeReminder(completion = {}) {
       }
       throw new Error(response?.message || '记录失败')
     }
+    reportAnalyticsEvent(ANALYTICS_EVENTS.FERTILIZATION_RECORDED)
     reminder.value = null
     preview.value = response.data?.nextPreview || null
     pendingCalendarPayload.value = null

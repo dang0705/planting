@@ -10,13 +10,15 @@ import {
 } from '@/utils/weather-coordinate.js'
 import { fetchCurrentWeatherQuery } from '@/vue-query/weather/queries/current-weather.js'
 import { fetchEnvironmentWeatherQuery } from '@/vue-query/weather/queries/environment-weather.js'
+import { requestHttpFunction } from '@/api/http'
 import { resolveHotCityByGps } from '@/api/weather-hot-cities.js'
 
 const CITY_LOOKUP_CACHE_TTL_MS = 5 * 60 * 1000
 const cityLookupInflight = new Map()
 const cityLookupCache = new Map()
 const MAX_ARRAY_HISTORY_DAYS_TO_KEEP = 120
-// 浇水 planner D0 注入契约：前端只传 D+1..D+14（14 项），D0 由后端从 day file latestSample 注入。
+// 天气窗口双层缓存契约：D0 使用当天 day file.latestSample 的最新缓存，历史使用 recent-10d 的 D-10..D-1；
+// 浇水 planner 前端只传 D+1..D+14（14 项），D0 由后端从当天最新缓存注入。
 const MAX_ARRAY_FORECAST_DAYS_TO_KEEP = 14
 
 function buildCityLookupKey(latitude, longitude) {
@@ -60,7 +62,7 @@ function normalizeEnvironmentWeatherWindowPayload(window = null) {
     ? asArray(forecastDaysCamel)
     : asArray(forecastDaysSnake)
 
-  // 浇水 planner D0 注入契约：前端只传 D+1..D+14（14 项），D0 由后端从 day file latestSample 注入。
+  // 浇水 planner D0 注入契约：前端只传 D+1..D+14（14 项），D0 由后端从当天 day file.latestSample 注入。
   // 后端 qweather 15d 预报从 D0 开始，且 injectD0IntoForecastDays 可能再前置一条 D0；
   // 需先按 diagnosisDate 过滤掉所有 D0 记录（含 qweather 原始 D0 与 day file 注入的 D0），
   // 再截断到 14 项，避免 D0 双重计数并丢失 D+14。
@@ -438,7 +440,9 @@ export async function getEnvironmentWeatherWindow(options = {}) {
     locationKey = '',
     careLocationId = '',
     source = '',
-    plantId = ''
+    plantId = '',
+    forceRefresh = false,
+    timeout
   } = options
   const location = normalizeWeatherCoordinates({ lat, lng })
   const normalizedLocationKey = String(locationKey || '').trim()
@@ -447,7 +451,7 @@ export async function getEnvironmentWeatherWindow(options = {}) {
     return null
   }
 
-  const result = await fetchEnvironmentWeatherQuery({
+  const payload = {
     lat: location?.lat,
     lng: location?.lng,
     diagnosisDate,
@@ -458,7 +462,15 @@ export async function getEnvironmentWeatherWindow(options = {}) {
     careLocationId,
     source,
     plantId
-  })
+  }
+  const result = forceRefresh
+    ? await requestHttpFunction('weather-http/weather/environment-context', {
+        method: 'POST',
+        body: payload,
+        auth: true,
+        timeout
+      })
+    : await fetchEnvironmentWeatherQuery(payload)
 
   if (result?.code === 200) {
     return normalizeEnvironmentWeatherWindowPayload(result.data) || null

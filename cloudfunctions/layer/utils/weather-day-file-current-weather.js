@@ -1,8 +1,9 @@
 'use strict'
 
-// D0 current weather archive service，从 weather-day-file-reader.js 拆分。
-// 负责：从 day file latestSample 或 finalized dailyRollup 构建 current weather，
-// 并提供 7 天 finalized 回退查找。被 weather-http/services/recent-weather-current.js 复用。
+// D0 当天最新天气缓存读取服务，从 weather-day-file-reader.js 拆分。
+// 定时采样链路先调用 QWeather /v7/weather/now 写入 day file.latestSample，
+// 诊断和浇水规划再读取这个 D0 最新缓存；它与 recent-10d 历史缓存是两个独立层。
+// D0 latestSample 缺失时保留现有 finalized dailyRollup 有界降级，并由来源字段明确标识。
 
 const {
   addDays,
@@ -86,22 +87,23 @@ function buildCurrentWeatherDataFromDailyRollup({ rollup = {}, cacheSource = '' 
 function isUsableLatestSample(dayPayload = {}) {
   return Boolean(
     isPlainObject(dayPayload) &&
-      dayPayload.latestSample &&
-      dayPayload.latestSample.temp !== undefined
+    dayPayload.latestSample &&
+    dayPayload.latestSample.temp !== undefined
   )
 }
 
 function isUsableFinalizedDayFile(dayPayload = {}) {
   return Boolean(
     isPlainObject(dayPayload) &&
-      String(dayPayload.state || '') === 'finalized' &&
-      dayPayload.dailyRollup
+    String(dayPayload.state || '') === 'finalized' &&
+    dayPayload.dailyRollup
   )
 }
 
 /**
- * 创建 current weather archive service。
- * 优先读 D0 day file latestSample；缺失时回退 7 天 finalized dailyRollup；
+ * 创建 D0 current weather cache reader。
+ * 优先读当天 day file.latestSample（定时 QWeather now 采样形成的 D0 最新缓存）；
+ * 缺失时回退 7 天 finalized dailyRollup 作为降级展示，不将其冒充为 D0 最新样本；
  * 主读超时且无显式 override 时，在 grace 总预算内继续等同一主读。
  *
  * @param {object}   params

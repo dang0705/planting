@@ -278,9 +278,9 @@ scripts/sql/ensure-weather-history-cache-tables.sql
 
 ### 3.2 天气 recent-10d 热门城市缓存运维
 
-天气缓存相关代码变更后，若要让线上/本地真实诊断读到上海热门城市缓存，先重新执行 recent-10d 批量/定时采集，确认 `weather-cache/v1/locations/city:shanghai/recent-10d.json` 已生成且日期窗口匹配，再期待 `/weather/environment-context` 对上海植物返回 `weatherEvidenceInsufficient=false`。既有 `coord:*` 上海缓存属于历史脏 key，不能作为 `city:shanghai` 的有效替代；清理这些脏 key 是独立运维动作，不是诊断请求链路的同步修复步骤。
+天气缓存相关代码变更后，历史诊断证据应检查 `weather-cache/v1/locations/city:shanghai/recent-10d.json` 是否覆盖 D-10 至 D-1；D0 不检查这个文件，而检查同一地点当天 `days/{date}.json.latestSample` 是否存在且为最新成功采样。`/weather/environment-context` 会将 D0 `currentWeather` 与历史 `historicalDays` 分层返回；不能因为一层缺失就要求重建另一层。既有 `coord:*` 上海缓存属于历史脏 key，不能作为 `city:shanghai` 的有效替代；清理这些脏 key 是独立运维动作，不是诊断请求链路的同步修复步骤。
 
-D0 当前天气不再维护 `working/{date}.json` 与 `daily/{date}.json` 两套文件。采样和归档都写入 `weather-cache/v1/locations/{locationKey}/days/{date}.json`：白天 now 采样保持 `state=working` 并更新 `latestSample`，定稿后写入 `dailyRollup`、`state=finalized`、`finalizedAt`。`recent-10d.json` 只从 D-1 到 D-10 的 finalized day file 聚合，排障时不要用旧 `dailyArchives` 或 D0 文件解释 recent 证据。
+D0 当前天气不再维护 `working/{date}.json` 与 `daily/{date}.json` 两套文件。采样和归档都写入 `weather-cache/v1/locations/{locationKey}/days/{date}.json`：白天 now 采样保持 `state=working` 并更新当天最新缓存 `latestSample`，诊断和浇水规划从此字段读取 D0；定稿后写入 `dailyRollup`、`state=finalized`、`finalizedAt`。`recent-10d.json` 只从 D-1 到 D-10 的 finalized day file 聚合，D0 不进入 recent；排障时要分别检查 D0 day file 与 recent 历史文件，不要用其中一层解释另一层证据。
 
 线上/本地 D0 now 采样日界线由 sweep timer 控制：`weather-d0-now-sunrise-sweep` 每 10 分钟覆盖 04:00-07:59，`weather-d0-now-sunset-sweep` 每 10 分钟覆盖 17:00-20:59。函数内使用 `suncalc` 按城市计算当日 sunrise/sunset，并只处理距离当前触发时刻 10 分钟内的热门城市；写入的 slot 分别是 `sunrise` 与 `sunset`。`sunset` 是 D0 最后一枪瞬时样本，不是 finalize。其他 D0 timer 为 `weather-d0-now-morning-0720`、`weather-d0-now-forenoon-1120`、`weather-d0-now-noon-1420`、`weather-d0-now-afternoon-1620`；加上 `weather-ingestion-recent-10d` 后线上触发器总数为 7，低于 CloudBase 单函数 10 触发器限制。`weather-ingestion-recent-10d` 不创建 D0 `days/{date}.json`，早晨排障应看 D0 timer 日志与 `weather-cache/v1/locations/{locationKey}/days/{date}.json`，并结合 `weather-cache/v1/season-trigger-state/{safeLocationKey}.json` / `.../season-trigger-audit/{safeLocationKey}/{year}.jsonl`。
 

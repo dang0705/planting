@@ -147,7 +147,13 @@ function normalizeObsTime(obsTime = '', sampledAt = '', timezone = 'Asia/Shangha
   return formatIsoInTimezone(date, timezone)
 }
 
-function buildWeatherNowSample({ slotName = '', sampledAt = '', nowData = {}, sourceKind = 'weather_now_sample', timezone = 'Asia/Shanghai' }) {
+function buildWeatherNowSample({
+  slotName = '',
+  sampledAt = '',
+  nowData = {},
+  sourceKind = 'weather_now_sample',
+  timezone = 'Asia/Shanghai'
+}) {
   const obsTime = normalizeObsTime(nowData.obsTime || nowData.obs_time, sampledAt, timezone)
   return pruneUndefined({
     slotName,
@@ -171,7 +177,13 @@ function buildWeatherNowSample({ slotName = '', sampledAt = '', nowData = {}, so
   })
 }
 
-function buildSampleFromCurrentWeather({ slotName = '', sampledAt = '', currentWeather = {}, sourceKind, timezone = 'Asia/Shanghai' }) {
+function buildSampleFromCurrentWeather({
+  slotName = '',
+  sampledAt = '',
+  currentWeather = {},
+  sourceKind,
+  timezone = 'Asia/Shanghai'
+}) {
   return buildWeatherNowSample({
     slotName,
     sampledAt,
@@ -383,7 +395,7 @@ function createD0NowSampleService({
 
   /**
    * D0 working：调用 /v7/weather/now 采样，追加到 days/{date}.json 的 samples[]，
-   * 更新 latestSample，state 保持 working。
+   * 更新当天最新缓存 latestSample，state 保持 working；诊断和浇水规划从该缓存读取 D0。
    * 所有时间字段使用 location.timezone 下的本地 ISO 字符串，不使用 toISOString()。
    */
   async function sampleNowWeather(input = {}) {
@@ -484,7 +496,8 @@ function createD0NowSampleService({
   }
 
   /**
-   * D0 finalize：仅从已有 samples[] 生成 dailyRollup，不调用 QWeather /v7/weather/now。
+   * D0 finalize：仅从已有 samples[] 生成 dailyRollup，不调用 QWeather /v7/weather/now；
+   * finalize 只定稿 D0 day file，不把 D0 写入 recent-10d 历史缓存。
    * state 改为 finalized，设置 finalizedAt，sourceKind 改为 observed_now_rollup。
    * finalize 不向 samples[] 写入任何样本，也不产生 slotName=finalize 样本。
    * 所有时间字段使用 location.timezone 下的本地 ISO 字符串。
@@ -526,7 +539,11 @@ function createD0NowSampleService({
       dailyRollup,
       sourceKind: 'observed_now_rollup',
       quality: dailyRollup.quality,
-      generatedAt: normalizeExistingIsoInTimezone(existingPayload?.generatedAt, timezone, generatedAt),
+      generatedAt: normalizeExistingIsoInTimezone(
+        existingPayload?.generatedAt,
+        timezone,
+        generatedAt
+      ),
       updatedAt: generatedAt,
       sunWindow,
       weatherObjectPath: dayObjectPath

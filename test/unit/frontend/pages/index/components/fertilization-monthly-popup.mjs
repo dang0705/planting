@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 
+// data_mode=unit_fake
+// test_kind=source_contract
+// 本用例只验证前端源码契约，不验证真实小程序渲染、点击结果或 wx.request。
+
 const indexSource = readFileSync('src/pages/index/index.vue', 'utf8')
 const plantCardSource = readFileSync('src/pages/index/components/PlantCard.vue', 'utf8')
 const sheetSource = readFileSync('src/pages/index/components/FertilizationMonthlySheet.vue', 'utf8')
@@ -80,9 +84,8 @@ assert.match(sheetSource, /plant-card-fertilization-monthly-unavailable/)
 assert.match(sheetSource, /<FertilizationMonthlyTable/)
 assert.match(tableSource, /液体肥/)
 assert.match(tableSource, /缓释肥/)
-assert.doesNotMatch(tableSource, /monthly\.scopeLabel/)
-assert.doesNotMatch(tableSource, /适用范围/u)
-assert.doesNotMatch(tableSource, /monthly\.scopeGuidance/)
+assert.match(tableSource, /适用范围：\{\{ monthly\.scopeLabel \}\}/)
+assert.match(tableSource, /monthly\.scopeGuidance/)
 assert.doesNotMatch(tableSource, /monthly\.choiceGuidance/)
 assert.doesNotMatch(tableSource, /monthly\.publicNote/)
 assert.doesNotMatch(tableSource, /monthly\.notes/)
@@ -170,6 +173,12 @@ assert.match(sheetSource, /pendingCalendarPayload/)
 assert.match(previewSource, /syncTerminalError/)
 assert.match(previewSource, /重试同步/)
 assert.match(calendarDeleteSource, /fertilization-reminder-calendar-delete/)
+assert.match(calendarDeleteSource, /<BottomSheet/)
+assert.match(calendarDeleteSource, /panel-id="fertilization-reminder-calendar-delete"/)
+assert.match(calendarDeleteSource, /content-id="fertilization-reminder-calendar-delete-content"/)
+assert.match(calendarDeleteSource, /close-id="fertilization-reminder-calendar-delete-close-button"/)
+assert.match(calendarDeleteSource, /title="删除日历施肥提醒"/u)
+assert.match(calendarDeleteSource, /defineExpose\(\{ open, close \}\)/)
 assert.match(calendarDeleteSource, /fertilization-reminder-calendar-delete-group/)
 assert.match(calendarDeleteSource, /fertilization-reminder-calendar-delete-ack/)
 assert.match(
@@ -177,7 +186,11 @@ assert.match(
   /青花植无法删除手机日历中的施肥提醒/u,
   'calendar deletion must explain the mini-program limitation'
 )
+assert.doesNotMatch(calendarDeleteSource, /v-if="visible"/u)
 assert.match(sheetSource, /@change="onCalendarDeleteAcknowledgedChange"/)
+assert.match(sheetSource, /ref="calendarDeletePopupRef"/u)
+assert.match(sheetSource, /callComponentMethod\(calendarDeletePopupRef, 'open'\)/u)
+assert.match(sheetSource, /callComponentMethod\(calendarDeletePopupRef, 'close'\)/u)
 assert.match(savedSource, /fertilization-reminder-complete-button/)
 assert.match(savedSource, /fertilization-reminder-minimum-interval-ack/)
 assert.match(savedSource, /id="fertilization-reminder-minimum-interval-group"/)
@@ -189,16 +202,17 @@ assert.match(savedSource, /fertilization-reminder-current-month-rule/)
 assert.match(savedSource, /currentMonthEvaluation\.cell\?\.displayText/)
 assert.match(savedSource, /fertilization-reminder-delete-calendar-button/)
 assert.match(savedSource, /request-calendar-delete/)
-assert.match(savedSource, /calendarDeleteVisible/)
-assert.doesNotMatch(
-  savedSource,
-  /青花植无法删除手机日历中的提醒/u,
-  'saved state must not own a second calendar-conflict panel'
-)
-assert.match(savedSource, /v-if="!calendarDeleteVisible"/u)
+assert.doesNotMatch(savedSource, /calendarDeleteVisible/)
+assert.doesNotMatch(savedSource, /青花植无法删除手机日历中的提醒/u)
 assert.match(sheetSource, /@request-calendar-delete="openCalendarDelete"/)
 assert.match(sheetSource, /function confirmCalendarDelete\(\)/)
 assert.match(sheetSource, /reason: 'calendar_deleted'/u)
+assert.match(sheetSource, /let reminderLoadSequence = 0/u)
+assert.match(sheetSource, /const requestSequence = \+\+reminderLoadSequence/u)
+assert.match(
+  sheetSource,
+  /requestSequence !== reminderLoadSequence || Number\(props\.plant\?\.id\) !== plantId/u
+)
 assert.doesNotMatch(savedSource, /重新设置提醒/u)
 assert.doesNotMatch(savedSource, /取消施肥提醒/u)
 assert.match(sheetSource, /fertilization-reminder-no-fixed-period/)

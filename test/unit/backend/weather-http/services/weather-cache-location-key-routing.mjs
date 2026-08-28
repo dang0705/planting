@@ -10,6 +10,9 @@ const {
   createDiagnosisRecentWeatherReader
 } = require('../../../../../cloudfunctions/weather-http/services/recent-weather-diagnosis-reader.js')
 const {
+  createDiagnosisRecentWeatherReader: createSchedulerDiagnosisRecentWeatherReader
+} = require('../../../../../cloudfunctions/weather-ingestion-scheduler/services/recent-weather-diagnosis-reader.js')
+const {
   buildHotCityIngestionTargets
 } = require('../../../../../cloudfunctions/weather-http/services/recent-weather-batch.js')
 
@@ -140,7 +143,56 @@ assert.equal(freshWeather.locationKey, 'city:shanghai')
 assert.equal(freshWeather.weatherEvidenceInsufficient, false)
 assert.equal(freshWeather.historicalDays.length, 1)
 
-// 10) 诊断 reader：过期 partial payload 即使非 insufficient，也不得作为当前诊断日证据
+// 10) D0 定稿误写成次日窗口时，诊断当天只能读取 D-1..D-10 的交集，不能因元数据错位整窗丢失。
+function buildNextDayWindowPayload() {
+  const payload = buildUsableRecentPayload({
+    targetDate: '2026-06-18',
+    diagnosisDate: '2026-06-19'
+  })
+  payload.window.start = '2026-06-09'
+  payload.window.end = '2026-06-18'
+  payload.historicalDays = Array.from({ length: 10 }, (_, index) => {
+    const date = new Date('2026-06-09T12:00:00Z')
+    date.setUTCDate(date.getUTCDate() + index)
+    return {
+      ...payload.historicalDays[0],
+      date: date.toISOString().slice(0, 10)
+    }
+  })
+  return payload
+}
+
+for (const createReader of [
+  createDiagnosisRecentWeatherReader,
+  createSchedulerDiagnosisRecentWeatherReader
+]) {
+  const nextDayWindowReader = createReader({
+    readRecentWeather: async () => ({
+      payload: buildNextDayWindowPayload(),
+      cacheHit: false,
+      sourceKind: 'object_storage'
+    }),
+    rebuildRecentWeatherFromArchives: async () => null
+  })
+  const alignedWeather = await nextDayWindowReader({
+    locationKey: 'city:shanghai',
+    diagnosisDate: '2026-06-18'
+  })
+  assert.equal(alignedWeather.weatherEvidenceInsufficient, false)
+  assert.equal(alignedWeather.historicalDays.length, 9)
+  assert.equal(alignedWeather.historicalDays.at(-1).date, '2026-06-17')
+  assert.equal(
+    alignedWeather.historicalDays.some(day => day.date === '2026-06-18'),
+    false
+  )
+  assert.equal(alignedWeather.window.targetDate, '2026-06-17')
+  assert.equal(alignedWeather.meta.diagnosisDate, '2026-06-18')
+  assert.equal(alignedWeather.meta.cacheWindowAlignment, 'next_day_d0_trimmed')
+  assert.equal(alignedWeather.plantFeatures.dayCount, 9)
+  assert.equal(alignedWeather.plantFeatures.missingDayCount, 1)
+}
+
+// 11) 诊断 reader：过期 partial payload 即使非 insufficient，也不得作为当前诊断日证据
 const staleReader = createDiagnosisRecentWeatherReader({
   readRecentWeather: async () => ({
     payload: buildUsableRecentPayload({
@@ -161,7 +213,7 @@ assert.equal(staleWeather.weatherEvidenceInsufficient, true)
 assert.equal(staleWeather.historicalDays.length, 0)
 assert.equal(staleWeather.meta.reason, 'recent_10d_rebuild_deferred')
 
-// 11) 批量采集目标必须覆盖全部 20 个热城且都是 city:* key（含 city:shanghai）
+// 12) 批量采集目标必须覆盖全部 20 个热城且都是 city:* key（含 city:shanghai）
 const ingestionTargets = buildHotCityIngestionTargets()
 assert.equal(ingestionTargets.length, 20)
 assert.equal(

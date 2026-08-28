@@ -16,6 +16,9 @@ const {
   createRecentWeatherService
 } = require('../../../../../cloudfunctions/weather-http/services/recent-weather-service.js')
 const {
+  createRecentWeatherService: createSchedulerRecentWeatherService
+} = require('../../../../../cloudfunctions/weather-ingestion-scheduler/services/recent-weather-service.js')
+const {
   createQWeatherAdapter
 } = require('../../../../../cloudfunctions/weather-http/adapters/qweather-adapter.js')
 const {
@@ -151,7 +154,9 @@ const service = createRecentWeatherService({
 })
 
 // 新架构：预置 finalized day file（D-1）
-const { buildWeatherDayObjectPath } = require('../../../../../cloudfunctions/weather-http/services/weather-cache-paths.js')
+const {
+  buildWeatherDayObjectPath
+} = require('../../../../../cloudfunctions/weather-http/services/weather-cache-paths.js')
 const laD1Path = buildWeatherDayObjectPath('city:LosAngeles', '2026-06-12')
 storage.objects.set(laD1Path, {
   schemaVersion: 'weather-cache/v1/day-now-sample',
@@ -163,7 +168,11 @@ storage.objects.set(laD1Path, {
   dailyRollup: {
     date: '2026-06-12',
     quality: 'partial',
-    sampleSummary: { sampleCount: 1, daylightSampleCount: 1, missingSlots: ['forenoon', 'noon', 'afternoon'] },
+    sampleSummary: {
+      sampleCount: 1,
+      daylightSampleCount: 1,
+      missingSlots: ['forenoon', 'noon', 'afternoon']
+    },
     lightFeatures: { daylightCloudMean: null, lowLightProxy: 'none' },
     moistureFeatures: { humidityMean: 55, precipLastHourSum: null, wetSoilRiskFromWeather: 'low' },
     tempFeatures: { tempMean: 20, tempMax: 20, heatStressLevel: 'low', coldStressLevel: 'low' },
@@ -190,10 +199,7 @@ assert.equal(ingestResult.recentPayload.window.start, '2026-06-03')
 assert.equal(ingestResult.recentPayload.window.end, '2026-06-12')
 assert.equal(ingestResult.recentPayload.historicalDays.length, 10)
 assert.equal(ingestResult.recentPayload.historicalDays.at(-1).date, '2026-06-12')
-assert.equal(
-  ingestResult.recentPayload.historicalDays.at(-1).sourceKind,
-  'observed_now_rollup'
-)
+assert.equal(ingestResult.recentPayload.historicalDays.at(-1).sourceKind, 'observed_now_rollup')
 assert.equal(ingestResult.recentPayload.sourceKind, 'weather_cache_recent_10d')
 assert.equal(ingestResult.recentPayload.plantFeatures.dayCount, 1)
 assert.equal(ingestResult.recentPayload.plantFeatures.missingDayCount, 9)
@@ -208,6 +214,32 @@ assert.equal(
   'ingestion 必须写 recent-10d.json'
 )
 
+// 调用方即使把 D0 传入 recent-10d 重建，服务层也必须钳制到当地 D-1。
+const sameDayTargetResult = await service.ingestRecentForecast({
+  locationKey: 'city:LosAngeles',
+  qweatherLocationId: 'LA001',
+  cityName: '洛杉矶',
+  timezone: 'America/Los_Angeles',
+  targetDate: '2026-06-13'
+})
+assert.equal(sameDayTargetResult.targetDate, '2026-06-12')
+assert.equal(sameDayTargetResult.recentPayload.window.end, '2026-06-12')
+
+const schedulerStorage = createMemoryStorage(Object.fromEntries(storage.objects))
+const schedulerSameDayTargetResult = await createSchedulerRecentWeatherService({
+  storage: schedulerStorage,
+  locationRepository: createMemoryLocationRepository(),
+  now: () => new Date('2026-06-14T00:30:00Z')
+}).ingestRecentForecast({
+  locationKey: 'city:LosAngeles',
+  qweatherLocationId: 'LA001',
+  cityName: '洛杉矶',
+  timezone: 'America/Los_Angeles',
+  targetDate: '2026-06-13'
+})
+assert.equal(schedulerSameDayTargetResult.targetDate, '2026-06-12')
+assert.equal(schedulerSameDayTargetResult.recentPayload.window.end, '2026-06-12')
+
 clearRecentWeatherMemoryCache()
 const currentEntryStorage = createMemoryStorage()
 let currentEntryForecastCalls = 0
@@ -221,13 +253,25 @@ const currentEntryService = createRecentWeatherService({
       return { raw: { code: '200' }, daily: [] }
     },
     async fetchCurrentWeather() {
-      return { tempC: 25, humidity: 60, text: '晴', obsTime: '2026-06-17T09:30:00+08:00', source: 'qweather_weather_now' }
+      return {
+        tempC: 25,
+        humidity: 60,
+        text: '晴',
+        obsTime: '2026-06-17T09:30:00+08:00',
+        source: 'qweather_weather_now'
+      }
     }
   }
 })
-const currentEntryInput = { lat: 35.22, lng: 105.46, city: '远离热城测试地', timezone: 'Asia/Shanghai' }
+const currentEntryInput = {
+  lat: 35.22,
+  lng: 105.46,
+  city: '远离热城测试地',
+  timezone: 'Asia/Shanghai'
+}
 // 新架构：无 day file 时缓存 miss，返回 evidence insufficient，不调用 QWeather
-const currentEntryResult = await currentEntryService.getCurrentWeatherFromDailyArchive(currentEntryInput)
+const currentEntryResult =
+  await currentEntryService.getCurrentWeatherFromDailyArchive(currentEntryInput)
 assert.equal(currentEntryResult.weatherData, null, '无 day file 时 weatherData 为 null')
 assert.equal(currentEntryResult.dailyWeatherCache.weatherEvidenceInsufficient, true)
 assert.equal(currentEntryResult.dailyWeatherCache.cacheHit, false)
@@ -252,7 +296,10 @@ const slowCurrentResult = await slowCurrentService.getCurrentWeatherFromDailyArc
 })
 assert.equal(slowCurrentResult.weatherData, null)
 assert.equal(slowCurrentResult.dailyWeatherCache.weatherEvidenceInsufficient, true)
-assert.ok(Date.now() - slowCurrentStartedAt < 100, 'current weather miss must not wait slow storage')
+assert.ok(
+  Date.now() - slowCurrentStartedAt < 100,
+  'current weather miss must not wait slow storage'
+)
 assert.equal(slowCurrentStorageCompleted, false)
 
 const sqlStatements = []
@@ -319,7 +366,11 @@ const rollingService = createRecentWeatherService({
   storage: rollingStorage,
   locationRepository: rollingRepository,
   now: () => rollingNow,
-  adapter: { async fetchForecast10d() { return { raw: {}, daily: [] } } }
+  adapter: {
+    async fetchForecast10d() {
+      return { raw: {}, daily: [] }
+    }
+  }
 })
 
 // 新架构：预置两个 finalized day files
@@ -333,14 +384,26 @@ for (const d of ['2026-06-11', '2026-06-12']) {
     samples: [{ slotName: 'morning', temp: 20, humidity: 55, sourceKind: 'weather_now_sample' }],
     latestSample: { slotName: 'morning', temp: 20 },
     dailyRollup: {
-      date: d, quality: 'partial',
-      sampleSummary: { sampleCount: 1, daylightSampleCount: 1, missingSlots: ['forenoon', 'noon', 'afternoon'] },
+      date: d,
+      quality: 'partial',
+      sampleSummary: {
+        sampleCount: 1,
+        daylightSampleCount: 1,
+        missingSlots: ['forenoon', 'noon', 'afternoon']
+      },
       lightFeatures: { daylightCloudMean: null, lowLightProxy: 'none' },
-      moistureFeatures: { humidityMean: 55, precipLastHourSum: null, wetSoilRiskFromWeather: 'low' },
+      moistureFeatures: {
+        humidityMean: 55,
+        precipLastHourSum: null,
+        wetSoilRiskFromWeather: 'low'
+      },
       tempFeatures: { tempMean: 20, tempMax: 20, heatStressLevel: 'low', coldStressLevel: 'low' },
-      tempMin: 20, dominantWeatherText: ''
+      tempMin: 20,
+      dominantWeatherText: ''
     },
-    sourceKind: 'observed_now_rollup', quality: 'partial', weatherObjectPath: p
+    sourceKind: 'observed_now_rollup',
+    quality: 'partial',
+    weatherObjectPath: p
   })
 }
 
@@ -428,7 +491,9 @@ try {
     },
     now: () => new Date('2026-06-14T00:30:00Z')
   })
-  const configuredHotCityResult = await configuredHotCityService.ingestActiveLocations({ limit: 10 })
+  const configuredHotCityResult = await configuredHotCityService.ingestActiveLocations({
+    limit: 10
+  })
   assert.equal(configuredHotCityResult.total, 1)
   assert.equal(configuredHotCityResult.results[0].locationKey, 'city:shanghai')
   assert.equal(configuredHotCitySqlCalls, 0, '配置 WEATHER_HOT_CITY_INGESTION_KEYS 时不得查询 SQL')

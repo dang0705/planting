@@ -2,6 +2,7 @@
 
 const { createRecentWeatherService } = require('../services/recent-weather-service')
 const { buildLocationKey } = require('../services/weather-cache-paths')
+const { formatLocalDateInTimezone } = require('../services/recent-weather-features')
 const { createD0SlotManifestService } = require('../services/d0-slot-manifest')
 const { createD0TimerAuditService } = require('../services/d0-timer-audit')
 const {
@@ -65,9 +66,18 @@ function pickPayloadLocation(payload = {}) {
   }
 }
 
-async function buildDiagnosisRecentWeatherWindow({ payload = {}, service }) {
+async function buildDiagnosisRecentWeatherWindow({
+  payload = {},
+  service,
+  now = () => new Date()
+}) {
+  const locationInfo = pickPayloadLocation(payload)
+  const timezone = locationInfo.timezone || 'Asia/Shanghai'
+  const diagnosisDate = locationInfo.diagnosisDate || formatLocalDateInTimezone(now(), timezone)
   const recentWindow = await service.readRecentWeatherForDiagnosis({
-    ...pickPayloadLocation(payload),
+    ...locationInfo,
+    timezone,
+    diagnosisDate,
     allowArchiveRebuild:
       payload.allowArchiveRebuild === true || payload.allowArchiveRebuild === 'true',
     readTimeoutMs: payload.readTimeoutMs || payload.timeoutMs
@@ -76,12 +86,7 @@ async function buildDiagnosisRecentWeatherWindow({ payload = {}, service }) {
     ...recentWindow,
     meta: {
       ...recentWindow.meta,
-      diagnosisDate:
-        payload.diagnosisDate ||
-        payload.diagnosis_date ||
-        payload.date ||
-        recentWindow.meta?.diagnosisDate ||
-        '',
+      diagnosisDate,
       mode: 'diagnosis'
     }
   }

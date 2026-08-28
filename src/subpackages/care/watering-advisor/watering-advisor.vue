@@ -334,6 +334,7 @@ import PotProfileFormCore from '@/components/pot-profile/PotProfileFormCore.vue'
 import { useUserStore } from '@/store/user.js'
 import { usePlantStore } from '@/store/plants.js'
 import { fetchUserPlantWateringPlanner } from '@/api/plants-http.js'
+import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import CatalogPlantSearch from './components/CatalogPlantSearch.vue'
 import { formatMlRangeToBottleText } from '@/utils/water-volume-format.js'
 import {
@@ -544,6 +545,7 @@ async function goToResult() {
     }
     if (result) {
       plannerResult.value = result
+      reportAnalyticsEvent(ANALYTICS_EVENTS.WATERING_PLAN_READY)
       if (!selectedUserPlant) {
         try {
           const catalogPlantId =
@@ -587,6 +589,7 @@ async function confirmWatered() {
   }
   try {
     await confirmAdvisorSessionWatered({ catalogPlantId, wateredDate: todayStr() })
+    reportAnalyticsEvent(ANALYTICS_EVENTS.WATERING_RECORDED)
     wateringConfirmed.value = true
   } catch (error) {
     uni.showToast({ title: error?.message || '记录失败，请稍后重试', icon: 'none' })

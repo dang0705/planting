@@ -161,6 +161,7 @@ try {
   let verifiedReuseStarts = 0
   let verifiedReuseClaims = 0
   let verifiedReuseGatewayChecks = 0
+  const verifiedReuseSignals = []
   await runLocalApiEnvironment({
     argv: ['--mode=lan', '--base-url=http://127.0.0.1:3011', '--', 'uni', '-p', 'mp-weixin'],
     output: { write() {} },
@@ -179,7 +180,7 @@ try {
           return {
             status: 'reused',
             reason: 'verified_same_target_owner_alive',
-            lease: { owner_pid: 41007 }
+            lease: { owner_pid: 41007, child_pid: 41008 }
           }
         }
         return { status: 'started', child: successfulChild() }
@@ -192,13 +193,51 @@ try {
         verifiedReuseStopped = true
         return { status: 'released' }
       }
-    })
+    }),
+    processCommand: pid => {
+      if (pid === 41007) {
+        return 'node scripts/dev/run-local-api-env.mjs --mode=lan -- uni -p mp-weixin'
+      }
+      if (pid === 41008) {
+        return 'node node_modules/.bin/uni -p mp-weixin'
+      }
+      return ''
+    },
+    signalProcess: (pid, signal) => verifiedReuseSignals.push({ pid, signal })
   })
   assert.equal(verifiedReuseStarts, 2, 'daily startup must retry after the old owner releases')
   assert.equal(verifiedReuseClaims, 1)
-  assert.equal(verifiedReuseGatewayChecks, 2, 'handoff must recheck the gateway after lease acquisition')
+  assert.equal(
+    verifiedReuseGatewayChecks,
+    2,
+    'handoff must recheck the gateway after lease acquisition'
+  )
   assert.equal(verifiedReuseWaited, true)
   assert.equal(verifiedReuseStopped, true)
+  assert.deepEqual(verifiedReuseSignals, [{ pid: 41007, signal: 'SIGINT' }])
+
+  let unverifiedOwnerSignalled = false
+  await assert.rejects(
+    runLocalApiEnvironment({
+      argv: ['--mode=lan', '--base-url=http://127.0.0.1:3011', '--', 'uni', '-p', 'mp-weixin'],
+      output: { write() {} },
+      ensureRuntime: async () => null,
+      runtimeSessionFactory: () => ({
+        start() {
+          return { status: 'reused', lease: { owner_pid: 41009, child_pid: 41010 } }
+        },
+        async stop() {
+          return { status: 'not_owner' }
+        }
+      }),
+      processCommand: () => 'unknown-process',
+      signalProcess: () => {
+        unverifiedOwnerSignalled = true
+      }
+    }),
+    error => error?.code === 'LOCAL_RUNTIME_WATCH_LEASE_UNAVAILABLE'
+  )
+  assert.equal(unverifiedOwnerSignalled, false, 'unverified owners must never receive a signal')
 
   const realReuseRoot = fs.mkdtempSync(path.join(repoRoot, '.tmp', 'local-runtime-reuse-'))
   const realReuseTarget = path.join(realReuseRoot, 'dist', 'dev', 'mp-weixin')
@@ -211,7 +250,6 @@ try {
   })
   assert.equal(qaOwnedLease.status, 'acquired')
   let dailyWatcherSpawned = false
-  let ownerAliveChecks = 0
   await runLocalApiEnvironment({
     argv: [
       '--skip-health-check',
@@ -231,10 +269,10 @@ try {
       createManagedLocalRuntimeSession({
         ...options,
         ownerId: 'daily-retry-after-qa-exit',
-        isProcessAlive: pid => Number(pid) === process.pid && ownerAliveChecks++ === 0
+        isProcessAlive: () => false
       })
   })
-  assert.equal(dailyWatcherSpawned, true, 'handoff must launch the new daily watcher after QA releases')
+  assert.equal(dailyWatcherSpawned, true, 'stale leases must allow the new daily watcher to start')
   assert.equal(
     fs.existsSync(qaOwnedLease.file_path),
     false,

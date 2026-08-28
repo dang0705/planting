@@ -1,7 +1,13 @@
 'use strict'
 
-const { getUserInfo, getCloudBase } = require('./cloudbase')
+const crypto = require('crypto')
+const { getUserInfo } = require('./cloudbase')
 const { normalizeAppEnv, runWithRequestAppEnv } = require('./runtime-env')
+
+const HTTP_IDENTITY_TICKET_PREFIX = 'planting-http-v1'
+const HTTP_IDENTITY_TICKET_MAX_AGE_SECONDS = 5 * 60
+const LOCAL_FUNCTION_RUNTIME_FLAG = 'CLOUDBASE_LOCAL_FUNCTIONS_GATEWAY'
+const OPENID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/
 
 function jsonResponse(statusCode, payload) {
   return {
@@ -26,53 +32,12 @@ function normalizeHeaders(rawHeaders = {}) {
   }, {})
 }
 
-function resolveRequestAppEnv(rawHeaders = {}, query = {}, body = {}) {
-  const headers = normalizeHeaders(rawHeaders)
+function resolveRequestAppEnv(_rawHeaders = {}, _query = {}, _body = {}) {
   return normalizeAppEnv(
-    headers['x-app-env'] ||
-      query.appEnv ||
-      query.app_env ||
-      body.appEnv ||
-      body.app_env ||
-      process.env.APP_ENV ||
+    process.env.APP_ENV ||
       process.env.RUNTIME_ENV ||
       process.env.NODE_ENV
   )
-}
-
-function decodeCloudbaseContext(value) {
-  if (!value || typeof value !== 'string') {
-    return null
-  }
-
-  try {
-    const normalized = value.replace(/-/g, '+').replace(/_/g, '/')
-    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=')
-    return JSON.parse(Buffer.from(padded, 'base64').toString('utf8'))
-  } catch (error) {
-    console.warn('解析 x-cloudbase-context 失败:', error.message)
-    return null
-  }
-}
-
-function decodeJwtPayload(token) {
-  if (!token || typeof token !== 'string') {
-    return null
-  }
-
-  const segments = token.split('.')
-  if (segments.length < 2) {
-    return null
-  }
-
-  try {
-    const normalized = segments[1].replace(/-/g, '+').replace(/_/g, '/')
-    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=')
-    return JSON.parse(Buffer.from(padded, 'base64').toString('utf8'))
-  } catch (error) {
-    console.warn('解析 access token 失败:', error.message)
-    return null
-  }
 }
 
 function parseQueryString(rawValue) {
@@ -150,6 +115,7 @@ function getHttpRequestData(event, context) {
   const rawHeaders = httpContext.headers || event?.headers || {}
   const queryFromContext =
     httpContext.query && typeof httpContext.query === 'object' ? httpContext.query : {}
+  const queryFromEvent = event?.query && typeof event.query === 'object' ? event.query : {}
   const queryFromPath = parseQueryString(httpContext.path)
   const queryFromUrl = parseQueryString(httpContext.url || httpContext.rawPath || httpContext.reqUrl)
   const body = parseEventBody(event)
@@ -164,7 +130,8 @@ function getHttpRequestData(event, context) {
     {
       ...queryFromPath,
       ...queryFromUrl,
-      ...queryFromContext
+      ...queryFromContext,
+      ...queryFromEvent
     },
     body
   )
@@ -201,129 +168,101 @@ function getOpenIdFromUserInfo(userInfo) {
   )
 }
 
-function isSkipAuthEnabled(value) {
-  return value === true || value === 'true' || value === '1' || value === 1
+function isLocalFunctionRuntime() {
+  return /^(1|true)$/i.test(String(process.env[LOCAL_FUNCTION_RUNTIME_FLAG] || '').trim())
 }
 
-async function resolveUserFromBearerToken(headers) {
-  const authorization = headers.authorization || headers.Authorization
-  if (!authorization || typeof authorization !== 'string' || !authorization.startsWith('Bearer ')) {
-    return null
-  }
+function getHttpIdentityTicketSecret() {
+  const value = String(process.env.HTTP_IDENTITY_TICKET_SECRET || '').trim()
+  return value.length >= 32 ? value : ''
+}
 
-  const accessToken = authorization.slice(7).trim()
-  const payload = decodeJwtPayload(accessToken)
-  if (!payload) {
-    return null
-  }
-
-  const directOpenId =
-    payload.openid ||
-    payload.openId ||
-    payload.WX_OPENID ||
-    ''
-  const uid =
-    payload.uid ||
-    payload.user_id ||
-    payload.userId ||
-    payload.sub ||
-    payload.TCB_UUID ||
-    ''
-  const customUserId =
-    payload.customUserId ||
-    payload.custom_user_id ||
-    payload.TCB_CUSTOM_USER_ID ||
-    ''
-
-  if (directOpenId) {
-    return {
-      openid: directOpenId,
-      uid,
-      customUserId,
-      source: 'bearer-token'
-    }
-  }
-
-  if (!uid && !customUserId) {
-    return null
-  }
-
+function parseTicketPayload(encodedPayload = '') {
   try {
-    const auth = getCloudBase().auth()
-    const targetUid = uid || customUserId
-    const result = await auth.getEndUserInfo(targetUid)
-    const userInfo = result?.userInfo || {}
-    const resolvedOpenId =
-      userInfo.openId ||
-      userInfo.openid ||
-      ''
-
-    if (!resolvedOpenId) {
-      return null
-    }
-
-    return {
-      openid: resolvedOpenId,
-      uid: userInfo.uid || uid || '',
-      customUserId: userInfo.customUserId || customUserId || '',
-      source: 'bearer-token-profile',
-      userInfo
-    }
-  } catch (error) {
-    console.warn('通过 access token 补查用户信息失败:', error.message)
+    return JSON.parse(Buffer.from(encodedPayload, 'base64url').toString('utf8'))
+  } catch {
     return null
   }
 }
 
-function isTruthyFlag(value) {
-  return value === true || value === 'true' || value === '1' || value === 1
+function signHttpIdentityTicket(encodedPayload, secret) {
+  return crypto.createHmac('sha256', secret).update(encodedPayload).digest('base64url')
 }
 
-function buildAnonymousDevOpenId(value) {
-  const normalized = String(value || '')
-    .trim()
-    .replace(/[^A-Za-z0-9_-]/g, '_')
-    .slice(0, 96)
-
-  return normalized ? `anon_dev_${normalized}` : ''
+function hasMatchingSignature(expected, received) {
+  const expectedBuffer = Buffer.from(String(expected || ''))
+  const receivedBuffer = Buffer.from(String(received || ''))
+  return (
+    expectedBuffer.length === receivedBuffer.length &&
+    expectedBuffer.length > 0 &&
+    crypto.timingSafeEqual(expectedBuffer, receivedBuffer)
+  )
 }
 
-function isAnonymousDevIdentityEnabled(rawHeaders, query = {}) {
-  const headers = normalizeHeaders(rawHeaders)
-  const appEnv = resolveRequestAppEnv(headers, query, query)
-
-  if (appEnv !== 'development') {
-    return false
+function createHttpIdentityTicket({ openid = '', uid = '', customUserId = '' } = {}) {
+  const secret = getHttpIdentityTicketSecret()
+  const normalizedOpenid = String(openid || '').trim()
+  if (!secret || !OPENID_PATTERN.test(normalizedOpenid)) {
+    return ''
   }
 
-  return isTruthyFlag(
-    headers['x-terminal-e2e'] ||
-      headers['x-anonymous-dev-identity'] ||
-      query.terminalE2E ||
-      query.anonymousDevIdentity
-  )
+  const issuedAt = Math.floor(Date.now() / 1000)
+  const encodedPayload = Buffer.from(
+    JSON.stringify({
+      version: 1,
+      openid: normalizedOpenid,
+      uid: String(uid || '').trim(),
+      customUserId: String(customUserId || '').trim(),
+      issuedAt,
+      expiresAt: issuedAt + HTTP_IDENTITY_TICKET_MAX_AGE_SECONDS,
+      nonce: crypto.randomBytes(16).toString('base64url')
+    })
+  ).toString('base64url')
+  return `${HTTP_IDENTITY_TICKET_PREFIX}.${encodedPayload}.${signHttpIdentityTicket(encodedPayload, secret)}`
+}
+
+function resolveHttpIdentityTicket(headers = {}) {
+  const authorization = String(headers.authorization || '').trim()
+  const prefix = `Bearer ${HTTP_IDENTITY_TICKET_PREFIX}.`
+  if (!authorization.startsWith(prefix)) {
+    return null
+  }
+
+  const token = authorization.slice('Bearer '.length)
+  const [ticketPrefix, encodedPayload, signature, extra] = token.split('.')
+  const secret = getHttpIdentityTicketSecret()
+  if (ticketPrefix !== HTTP_IDENTITY_TICKET_PREFIX || !encodedPayload || !signature || extra || !secret) {
+    return null
+  }
+  if (!hasMatchingSignature(signHttpIdentityTicket(encodedPayload, secret), signature)) {
+    return null
+  }
+
+  const payload = parseTicketPayload(encodedPayload)
+  const now = Math.floor(Date.now() / 1000)
+  if (
+    !payload ||
+    payload.version !== 1 ||
+    !OPENID_PATTERN.test(String(payload.openid || '')) ||
+    !Number.isInteger(payload.issuedAt) ||
+    !Number.isInteger(payload.expiresAt) ||
+    payload.issuedAt > now + 60 ||
+    payload.expiresAt < now ||
+    payload.expiresAt - payload.issuedAt > HTTP_IDENTITY_TICKET_MAX_AGE_SECONDS
+  ) {
+    return null
+  }
+
+  return {
+    openid: payload.openid,
+    uid: String(payload.uid || '').trim(),
+    customUserId: String(payload.customUserId || '').trim(),
+    source: 'signed-http-ticket'
+  }
 }
 
 async function resolveHttpUserInfo(rawHeaders, query = {}, context = null) {
   const headers = normalizeHeaders(rawHeaders)
-  const headerOpenId = headers['x-wx-openid'] || headers['x-openid']
-
-  if (headerOpenId) {
-    return {
-      openid: headerOpenId,
-      source: 'openid-header'
-    }
-  }
-
-  const cloudbaseContext = decodeCloudbaseContext(headers['x-cloudbase-context'])
-  const cloudbaseOpenId = getOpenIdFromUserInfo(cloudbaseContext)
-  if (cloudbaseOpenId) {
-    return {
-      openid: cloudbaseOpenId,
-      source: 'x-cloudbase-context',
-      userInfo: cloudbaseContext
-    }
-  }
 
   if (context) {
     try {
@@ -341,38 +280,16 @@ async function resolveHttpUserInfo(rawHeaders, query = {}, context = null) {
     }
   }
 
-  const bearerUser = await resolveUserFromBearerToken(headers)
-  if (bearerUser?.openid) {
-    return bearerUser
+  const ticketUser = resolveHttpIdentityTicket(headers)
+  if (ticketUser) {
+    return ticketUser
   }
 
-  if (isAnonymousDevIdentityEnabled(rawHeaders, query)) {
-    const authorization = headers.authorization || headers.Authorization
-    const accessToken = typeof authorization === 'string' && authorization.startsWith('Bearer ')
-      ? authorization.slice(7).trim()
-      : ''
-    const payload = decodeJwtPayload(accessToken)
-    const scopes = String(payload?.scope || '')
-      .split(/\s+/)
-      .map(item => item.trim())
-      .filter(Boolean)
-    const anonymousSubject = payload?.sub || payload?.uid || payload?.user_id || ''
-    const anonymousOpenId =
-      scopes.includes('anonymous') ? buildAnonymousDevOpenId(anonymousSubject) : ''
-
-    if (anonymousOpenId) {
-      return {
-        openid: anonymousOpenId,
-        uid: anonymousSubject || '',
-        source: 'bearer-token-anonymous-dev'
-      }
-    }
-  }
-
-  if (isSkipAuthEnabled(query.skipAuth)) {
+  const localOpenid = String(headers['x-wx-openid'] || headers['x-openid'] || '').trim()
+  if (isLocalFunctionRuntime() && OPENID_PATTERN.test(localOpenid)) {
     return {
-      openid: `test_user_${Date.now()}`,
-      source: 'skip-auth'
+      openid: localOpenid,
+      source: 'local-function-gateway'
     }
   }
 
@@ -389,5 +306,10 @@ module.exports = {
   parseEventBody,
   getHttpRequestData,
   resolveHttpUserInfo,
-  isSkipAuthEnabled
+  createHttpIdentityTicket,
+  _test: {
+    resolveHttpIdentityTicket,
+    signHttpIdentityTicket,
+    isLocalFunctionRuntime
+  }
 }

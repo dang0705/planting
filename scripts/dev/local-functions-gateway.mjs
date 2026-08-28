@@ -236,6 +236,7 @@ function buildRuntimeEnv() {
   return {
     APP_ENV: 'development',
     RUNTIME_ENV: 'development',
+    CLOUDBASE_LOCAL_FUNCTIONS_GATEWAY: 'true',
     SCHEMA_ENV: 'development',
     X_ENV: 'development',
     SQL_DATABASE: DEFAULT_SQL_DATABASE,

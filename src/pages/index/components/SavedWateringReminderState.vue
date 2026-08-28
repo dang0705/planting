@@ -4,7 +4,7 @@
     class="mt-3 rounded-[14px] border border-[#b7e4c7] bg-[#f0fdf4] p-4"
   >
     <view class="flex items-center justify-between">
-      <text class="text-[13px] font-semibold text-[#166534]">已添加到手机日历</text>
+      <text class="text-[13px] font-semibold text-[#166534]">已保存到手机日历</text>
       <text id="watering-reminder-saved-created-at" class="text-[11px] text-[#5b7b68]">
         {{ display.createdText }}
       </text>

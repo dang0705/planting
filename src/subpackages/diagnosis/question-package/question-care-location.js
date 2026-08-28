@@ -27,6 +27,14 @@ function getRealPlantId(plant = null) {
   return plant ? normalizeText(plant.id || plant.plantId) : ''
 }
 
+function hasValidCoordinates(location = {}) {
+  const latitude = Number(location.latitude)
+  const longitude = Number(location.longitude)
+  return (
+    Number.isFinite(latitude) && Number.isFinite(longitude) && latitude !== 0 && longitude !== 0
+  )
+}
+
 export async function resolveDiagnosisCareLocation({ result = {}, plantStore, userLocation } = {}) {
   const plant = findDiagnosisPlant({ result, plantStore })
   const realPlantId = getRealPlantId(plant)
@@ -39,10 +47,11 @@ export async function resolveDiagnosisCareLocation({ result = {}, plantStore, us
     }
   }
 
-  if (!userLocation?.latitude || !userLocation?.longitude) {
+  const cityName = normalizeText(userLocation?.cityName || userLocation?.city)
+  if (!cityName && !hasValidCoordinates(userLocation)) {
     return null
   }
-  const resolved = await resolveHotCityByGps(userLocation).catch(() => null)
+  const resolved = await resolveHotCityByGps({ ...userLocation, cityName }).catch(() => null)
   if (!resolved?.matched || !resolved.city) {
     return null
   }

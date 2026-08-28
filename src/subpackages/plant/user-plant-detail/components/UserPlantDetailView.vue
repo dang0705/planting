@@ -185,6 +185,7 @@ import { fetchUserPlant } from '@/api/plants-http.js'
 import { useFileUrl } from '@/composables/useCloudFile.js'
 import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
+import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import FertilizationMonthlyTable from '@/components/FertilizationMonthlyTable.vue'
 import UserPlantAirEnvironmentCard from '@/components/UserPlantAirEnvironmentCard.vue'
 
@@ -338,15 +339,24 @@ function startDiagnosis() {
     })
     return
   }*/
-  const plantName = encodeURIComponent(plant.value?.displayName || '植物')
-  uni.navigateTo({
-    url: `/subpackages/diagnosis/entry?plantId=${encodeURIComponent(String(plantId.value || ''))}&plantName=${plantName}`
-  })
+  const query = [
+    `plantId=${encodeURIComponent(String(plantId.value || ''))}`,
+    `plantName=${encodeURIComponent(plant.value?.displayName || '植物')}`,
+    plant.value?.plantId
+      ? `plantCatalogId=${encodeURIComponent(String(plant.value.plantId))}`
+      : '',
+    'entrySource=plant_detail'
+  ]
+    .filter(Boolean)
+    .join('&')
+  uni.navigateTo({ url: `/subpackages/diagnosis/flow?${query}` })
 }
 
 async function doWatering() {
+  reportAnalyticsEvent(ANALYTICS_EVENTS.ENTER_USER_PLANT_WATERING)
   const result = await plantStore.completeWatering(plantId.value)
   if (result.success) {
+    reportAnalyticsEvent(ANALYTICS_EVENTS.WATERING_RECORDED)
     await loadPlant()
     uni.showToast({ title: '浇水完成', icon: 'success' })
   } else {

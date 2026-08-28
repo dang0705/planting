@@ -1,5 +1,6 @@
 /* oxlint-disable no-unused-vars, no-magic-numbers */
-import { buildStructuredImageInputs } from './structured-images.js'
+import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
+import { buildStructuredImageInputs } from '@/utils/diagnose-structured-images.js'
 
 export function useDiagnoseImages(ctx) {
   const {
@@ -272,6 +273,7 @@ export function useDiagnoseImages(ctx) {
   }
 
   async function startDiagnose() {
+    reportAnalyticsEvent(ANALYTICS_EVENTS.DIAGNOSE)
     const propObservedSymptoms = Array.isArray(props.observedSymptoms) ? props.observedSymptoms : []
     const effectiveObservedSymptoms = propObservedSymptoms
     const effectiveObservedEvidenceSet = []
@@ -341,6 +343,7 @@ export function useDiagnoseImages(ctx) {
         images: hasObservedSymptoms ? [] : structuredImages,
         imageIds: imageUrls,
         plantId: props.plantId,
+        plantCatalogId: props.plantCatalogId,
         plantName: props.plantName,
         observedSymptoms: hasObservedSymptoms ? effectiveObservedSymptoms : [],
         observedEvidenceSet: effectiveObservedEvidenceSet,

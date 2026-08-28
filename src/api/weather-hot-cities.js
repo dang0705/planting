@@ -10,13 +10,26 @@ export async function fetchHotCityWeatherLocations() {
   return list.map(item => normalizePlantCareLocation(item)).filter(Boolean)
 }
 
-export async function resolveHotCityByGps({ latitude, longitude, lat, lng } = {}) {
+export async function resolveHotCityByGps({
+  latitude,
+  longitude,
+  lat,
+  lng,
+  city,
+  cityName,
+  name
+} = {}) {
+  const cityText = cityName ?? city ?? name
+  const body = {
+    lat: lat ?? latitude,
+    lng: lng ?? longitude
+  }
+  if (cityText) {
+    body.cityName = cityText
+  }
   const response = await requestHttpFunction('weather-http/weather/hot-cities/resolve', {
     method: 'POST',
-    body: {
-      lat: lat ?? latitude,
-      lng: lng ?? longitude
-    },
+    body,
     auth: true
   })
   const data = response?.data || {}

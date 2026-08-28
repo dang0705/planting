@@ -32,7 +32,7 @@ import {
   switchTabHomeBeforeFixture,
   listElementIds,
   waitForActiveQuestionPackagePage,
-  waitForKnownDiagnosePopupQuickEntry,
+  waitForDiagnosisEntryPage,
   waitForKnownHomeEntry
 } from './_shared/home-entry-readiness.mjs'
 import { navigateNativeTab } from './_shared/native-tab-navigation.mjs'
@@ -129,12 +129,23 @@ async function verifyCase(mp, report, env, symptom, page) {
     return null
   }
   await entry.tap()
-  const quick = await waitForKnownDiagnosePopupQuickEntry({
-    page,
+  const diagnosisEntryPage = await waitForDiagnosisEntryPage({
+    mp,
     report,
-    symptom,
-    pagePath: INDEX_PAGE
+    symptom
   })
+  const quick = diagnosisEntryPage
+    ? await findElementById(
+        diagnosisEntryPage,
+        `diagnose-dev-symptom-class-option-${symptom}`
+      )
+    : null
+  recordAssertion(
+    report,
+    `${symptom}: diagnosis entry exposes the quick symptom option`,
+    Boolean(quick),
+    `diagnose-dev-symptom-class-option-${symptom}`
+  )
   if (!quick) {
     return null
   }

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { loginWithCode, loginWithPhone, getUserById } from '@/api/wechat'
 import { getCloudbaseUserIdentity } from '@/utils/cloudbase-auth'
+import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import { normalizeWeatherCoordinates } from '@/utils/weather-coordinate.js'
 
 const MINI_PROGRAM_AUTH_CACHE_MS = 30 * 1000
@@ -75,6 +76,7 @@ export const useUserStore = defineStore('user', {
       try {
         const loginData = await loginWithCode()
         this.setLoginInfo(loginData)
+        reportAnalyticsEvent(ANALYTICS_EVENTS.USER_LOGIN_SUCCESS)
         return loginData
       } catch (error) {
         console.error('微信登录失败:', error)
@@ -90,6 +92,7 @@ export const useUserStore = defineStore('user', {
       try {
         const loginData = await loginWithPhone(phoneCode)
         this.setLoginInfo(loginData)
+        reportAnalyticsEvent(ANALYTICS_EVENTS.USER_LOGIN_SUCCESS)
         return loginData
       } catch (error) {
         console.error('手机号登录失败:', error)

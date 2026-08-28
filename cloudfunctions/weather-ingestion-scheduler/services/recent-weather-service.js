@@ -14,14 +14,8 @@ const { createWeatherLocationRepository } = require('../repositories/weather-loc
 const { createWeatherObjectStorage } = require('./weather-object-storage')
 const { normalizeRecentPayload } = require('./recent-weather-normalize')
 const { ingestActiveLocations: ingestActiveLocationsBatch } = require('./recent-weather-batch')
-const {
-  readManifest,
-  rebuildRecentWeather
-} = require('./recent-weather-archive')
-const {
-  RECENT_SCHEMA_VERSION,
-  buildRecentWeatherPayload
-} = require('./recent-weather-payloads')
+const { readManifest, rebuildRecentWeather } = require('./recent-weather-archive')
+const { RECENT_SCHEMA_VERSION, buildRecentWeatherPayload } = require('./recent-weather-payloads')
 const { createCurrentWeatherArchiveService } = require('./recent-weather-current')
 const { createD0NowSampleService } = require('./d0-now-sample-service')
 const { createDiagnosisRecentWeatherReader } = require('./recent-weather-diagnosis-reader')
@@ -230,7 +224,12 @@ function createRecentWeatherService({
     const location = await resolveArchiveLocation(locationInput)
     const generatedAtDate = now()
     const localToday = formatLocalDateInTimezone(generatedAtDate, locationInput.timezone)
-    const targetDate = normalizeDate(input.targetDate || addDays(localToday, -1))
+    const latestHistoricalDate = addDays(localToday, -1)
+    const requestedTargetDate = String(input.targetDate || '').trim()
+    const targetDate =
+      requestedTargetDate && normalizeDate(requestedTargetDate) < latestHistoricalDate
+        ? normalizeDate(requestedTargetDate)
+        : latestHistoricalDate
     const manifest = await readManifest({ storage, location }).catch(() => ({
       dayArchives: {},
       dailyArchives: {}
@@ -261,7 +260,10 @@ function createRecentWeatherService({
           recentFileId: uploadResult.fileId,
           manifestObjectPath: manifestPath,
           manifestFileId: manifestUpload.fileId,
-          recentGeneratedAt: formatIsoInTimezone(generatedAtDate, locationInput.timezone || 'Asia/Shanghai')
+          recentGeneratedAt: formatIsoInTimezone(
+            generatedAtDate,
+            locationInput.timezone || 'Asia/Shanghai'
+          )
         })
         .catch(() => null)
     }

@@ -40,7 +40,7 @@ export function bindQuestionPackagePageEntry({
   result,
   resetQuestionState
 }) {
-  onLoad(options => {
+  onLoad(async options => {
     routeOptions.value = options || {}
     const cacheKey =
       String(
@@ -49,6 +49,6 @@ export function bindQuestionPackagePageEntry({
     payload.value = resolveQuestionPackagePayload(routeOptions.value, cacheKey)
     images.value = Array.isArray(payload.value?.images) ? payload.value.images : []
     result.value = resolveInitialDiagnosisResult(payload.value)
-    resetQuestionState(result.value?.questions || [])
+    await resetQuestionState(result.value?.questions || [])
   })
 }

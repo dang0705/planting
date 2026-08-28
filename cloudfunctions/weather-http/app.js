@@ -173,7 +173,8 @@ async function main(event, context) {
       const payload = method === 'GET' ? request.query : request.body
       const result = resolveHotCityLocation({
         lat: payload.lat ?? payload.latitude,
-        lng: payload.lng ?? payload.longitude
+        lng: payload.lng ?? payload.longitude,
+        cityName: payload.cityName ?? payload.city ?? payload.name
       })
       return jsonResponse(200, { code: 200, message: '解析成功', data: result })
     }

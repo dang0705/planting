@@ -37,7 +37,7 @@ function toNumber(value, fallback) {
 function buildLeafReport(result, { wsEndpoint, projectPath, profile, maxSteps } = {}) {
   const logs = Array.isArray(result?.logs) ? result.logs : []
   const launch = logs.find(item => item.type === 'state' && item.label === 'launch')
-  const popup = logs.find(item => item.type === 'state' && item.label === 'popup-opened')
+  const entry = logs.find(item => item.type === 'state' && item.label === 'diagnosis-entry-opened')
   const yellowing = logs.find(item => item.type === 'state' && item.label === 'after-yellowing')
   const answers = logs.filter(item => item.type === 'answer')
   const resultState = logs.find(item => item.type === 'result' && !item.screenshot)
@@ -50,9 +50,9 @@ function buildLeafReport(result, { wsEndpoint, projectPath, profile, maxSteps } 
       detail: launch?.path || 'launch state missing'
     },
     {
-      name: '诊断弹窗已打开',
-      passed: Boolean(popup),
-      detail: popup?.path || 'popup state missing'
+      name: '诊断分包入口已打开',
+      passed: Boolean(entry),
+      detail: entry?.path || 'diagnosis entry state missing'
     },
     {
       name: '黄叶业务入口已选择',

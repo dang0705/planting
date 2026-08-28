@@ -24,7 +24,8 @@ export async function getWechatCloudIdentity() {
         resolve({
           openid: result.openid || '',
           appid: result.appid || '',
-          unionid: result.unionid || ''
+          unionid: result.unionid || '',
+          httpIdentityTicket: result.httpIdentityTicket || ''
         })
       },
       fail: reject
@@ -79,6 +80,7 @@ export async function getCloudbaseUserIdentity() {
     uid: '',
     customUserId: '',
     appid: wechatIdentity.appid || '',
-    unionid: wechatIdentity.unionid || ''
+    unionid: wechatIdentity.unionid || '',
+    httpIdentityTicket: wechatIdentity.httpIdentityTicket || ''
   }
 }

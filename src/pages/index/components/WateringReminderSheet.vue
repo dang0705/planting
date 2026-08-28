@@ -165,6 +165,7 @@ import waterDefaultIcon from '@/assets/icons/home-card-water-default.svg'
 import { usePlantingStore } from '@/store/planting.js'
 import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
+import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import { mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline } from '@/utils/care-behavior-weather-window.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
 import PotProfileEditor from './PotProfileEditor.vue'
@@ -263,7 +264,7 @@ const canAddToCalendar = computed(
 )
 const addToCalendarText = computed(() =>
   savedReminderActive.value && !savedReminderChanged.value
-    ? '已添加到手机日历'
+    ? '已保存到手机日历'
     : isOverWateringBlocked.value
       ? '近期过浇，暂不安排浇水'
       : '添加到手机日历'
@@ -405,13 +406,14 @@ async function addToCalendar() {
     if (response?.code !== 200 || !response.data) {
       throw new Error(response?.message || '应用内提醒保存失败')
     }
+    reportAnalyticsEvent(ANALYTICS_EVENTS.WATERING_REMINDER_SAVED)
     savedReminder.value = response.data
     savedReminderInputSignature.value = currentReminderInputSignature.value
     mirrorSavedReminder(response.data)
     await new Promise(resolve => {
       uni.showModal({
         title: '提醒已添加',
-        content: '提醒已添加，后续修改请到系统日历中操作。',
+        content: '提醒已保存到手机日历。若需调整，请在手机日历中编辑；这些修改不会同步回青花植。',
         showCancel: false,
         success: resolve,
         fail: resolve

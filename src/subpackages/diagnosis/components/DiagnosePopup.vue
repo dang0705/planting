@@ -13,6 +13,7 @@
       <DiagnoseFlow
         ref="flowRef"
         :plant-id="plantId"
+        :plant-catalog-id="plantCatalogId"
         :plant-name="plantName"
         :diagnosis-profile="diagnosisProfile"
         :entry-source="entrySource"
@@ -37,6 +38,7 @@ export default {
   },
   props: {
     plantId: { type: [String, Number], default: '' },
+    plantCatalogId: { type: [String, Number], default: '' },
     plantName: { type: String, default: '' },
     diagnosisProfile: { type: String, default: 'full' },
     entrySource: { type: String, default: 'plant_card' },

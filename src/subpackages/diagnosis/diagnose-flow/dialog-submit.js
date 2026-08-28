@@ -1,5 +1,6 @@
 /* oxlint-disable no-unused-vars, no-magic-numbers */
 import { computed } from 'vue'
+import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import { buildDirectionChoicePayload } from './direction-choice-payload'
 import { shouldNavigateDiagnosisResult } from './question-package-navigation'
 import { buildAuthorizedRetakeResult, buildRetakeImageAnswerPayload } from './retake-continuation'
@@ -168,6 +169,7 @@ export function useDiagnoseDialogSubmit(ctx) {
   }
 
   function navigateToDiagnosisQuestionPackagePage(diagnosisResult) {
+    reportAnalyticsEvent(ANALYTICS_EVENTS.ENTER_DIAGNOSE_QUESTIONS)
     const previewImages = getCasePreviewImages({ includeAdditionalImages: false })
     const normalizedResult = enrichDiagnosisResult(
       normalizeDiagnosisResult(diagnosisResult, {
@@ -180,6 +182,7 @@ export function useDiagnoseDialogSubmit(ctx) {
 
     uni.setStorageSync(storageKey, {
       plantId: props.plantId,
+      plantCatalogId: props.plantCatalogId,
       plantName: props.plantName || '植物',
       images: previewImages,
       diagnosisResult,
@@ -212,6 +215,7 @@ export function useDiagnoseDialogSubmit(ctx) {
       )
       if (!normalizedResult.hasActiveQuestions) {
         result.value = normalizedResult
+        reportAnalyticsEvent(ANALYTICS_EVENTS.DIAGNOSE_RESULT_READY)
         showAIDialog.value = false
         pendingDiagnosePayload.value = null
         resetQuestionState([], {

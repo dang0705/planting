@@ -1,8 +1,21 @@
 import { defineStore } from 'pinia'
 import { queryClient } from '@/lib/query-client.js'
 import { USER_PLANTS_QUERY_KEY } from '@/vue-query/plants/queries/user-plants.js'
-import { fetchUserPlants, patchUserPlant, removeUserPlant } from '@/api/plants-http.js'
+import {
+  completeWateringReminder,
+  fetchUserPlants,
+  patchUserPlant,
+  removeUserPlant
+} from '@/api/plants-http.js'
 import { useUserStore } from '@/store/user.js'
+
+function localDateString(date = new Date()) {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0')
+  ].join('-')
+}
 
 export const usePlantStore = defineStore('plants', {
   state: () => ({
@@ -209,32 +222,24 @@ export const usePlantStore = defineStore('plants', {
       }
     },
 
-    async completeWatering(id, { wateringEvents = null, nextWaterDate = null } = {}) {
-      // nextWater 不再在前端用平均值公式计算，由后端 buildWateringPlanner 产出
-      const updates = {}
-      const nowIso = new Date().toISOString()
-
-      if (wateringEvents && wateringEvents.length > 0) {
-        updates.wateringEvents = wateringEvents
-        const sorted = [...wateringEvents].sort((a, b) =>
-          String(b.date || '').localeCompare(String(a.date || ''))
-        )
-        if (sorted[0]?.date) {
-          updates.lastWatered = sorted[0].date
+    async completeWatering(id, { wateredDate = '' } = {}) {
+      try {
+        const response = await completeWateringReminder({
+          plantId: Number(id),
+          wateredDate: wateredDate || localDateString()
+        })
+        if (response?.code !== 200 || !response.data) {
+          return { success: false, message: response?.message || '浇水记录失败' }
         }
-      } else if (wateringEvents === null) {
-        // 旧调用方式（无参数）：仅记录当前时间为 lastWatered
-        updates.lastWatered = nowIso
+        this.updateUserPlantLocal(id, {
+          lastWatered: response.data.lastWatered,
+          nextWater: null,
+          wateringReminder: null
+        })
+        return { success: true, data: response.data }
+      } catch (error) {
+        return { success: false, message: error?.message || '浇水记录失败' }
       }
-
-      if (nextWaterDate) {
-        updates.nextWater = nextWaterDate
-      }
-
-      if (Object.keys(updates).length === 0) {
-        return { success: false, message: '缺少浇水事件或下次浇水日期' }
-      }
-      return this.updateUserPlant(id, updates)
     },
 
     applyWateringReminder(id, reminder = {}) {

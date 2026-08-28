@@ -26,7 +26,7 @@ import {
   readRequests,
   restoreHarness
 } from './pest-mode-and-retake/fixture-restore.mjs'
-import { runFiveTabAndReuseScenario } from './pest-mode-and-retake/scenario-tabs.mjs'
+import { runThreeTabAndReuseScenario } from './pest-mode-and-retake/scenario-tabs.mjs'
 import { runShortcutScenario } from './pest-mode-and-retake/scenario-shortcuts.mjs'
 import { runPestScenario } from './pest-mode-and-retake/scenario-retake.mjs'
 
@@ -76,7 +76,7 @@ export async function runPestModeAndRetakeScenario({
     )
     resetScreenshotBudget()
     await runAutomatorStep(report, 'scenario.fiveTabAndReuse', () =>
-      runFiveTabAndReuseScenario(report, miniProgram, wsEndpoint, artifactDir)
+      runThreeTabAndReuseScenario(report, miniProgram, wsEndpoint, artifactDir)
     )
     for (const retakeMode of ['active', 'skip', 'expired']) {
       await runAutomatorStep(report, `scenario.pest.${retakeMode}`, () =>

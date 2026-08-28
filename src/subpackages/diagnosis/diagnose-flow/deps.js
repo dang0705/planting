@@ -42,4 +42,4 @@ export {
   buildSlotGroups,
   buildSlotMetadata,
   inferAdditionalImageSlotTypeFromSuggestion
-} from '../utils/diagnose-image-slots.js'
+} from '@/utils/diagnose-image-slots.js'

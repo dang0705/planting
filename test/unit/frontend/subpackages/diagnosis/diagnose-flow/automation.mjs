@@ -1,7 +1,34 @@
 import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
 
-import { useDiagnoseAutomation } from '../../../../../../src/subpackages/diagnosis/diagnose-flow/automation.js'
-import { useDiagnoseImages } from '../../../../../../src/subpackages/diagnosis/diagnose-flow/images.js'
+const repoRoot = process.cwd()
+const automationSource = fs.readFileSync(
+  path.join(repoRoot, 'src/subpackages/diagnosis/diagnose-flow/automation.js'),
+  'utf8'
+)
+const imagesSource = fs
+  .readFileSync(path.join(repoRoot, 'src/subpackages/diagnosis/diagnose-flow/images.js'), 'utf8')
+  .replace(
+    "import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'",
+    "const ANALYTICS_EVENTS = {}; const reportAnalyticsEvent = () => {}"
+  )
+  .replace(
+    "import { buildStructuredImageInputs } from '@/utils/diagnose-structured-images.js'",
+    `const buildStructuredImageInputs = files =>
+      files.map((item, index) => ({
+        imageRef: item.uploaded?.tempUrl || item.uploaded?.url || '',
+        inputSlotType: item.inputSlotType || 'unknown',
+        orderIndex: index,
+        ...(item.captureRegion ? { captureRegion: item.captureRegion } : {})
+      }))`
+  )
+const { useDiagnoseAutomation } = await import(
+  `data:text/javascript,${encodeURIComponent(automationSource)}`
+)
+const { useDiagnoseImages } = await import(
+  `data:text/javascript,${encodeURIComponent(imagesSource)}`
+)
 
 function createAutomationHarness() {
   const imageFiles = { value: [] }

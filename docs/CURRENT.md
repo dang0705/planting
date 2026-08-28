@@ -43,7 +43,7 @@ stale_if_changed:
 | 领域                 | 当前事实源                                                                                                                                                       |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 前端入口             | `src/main.js`, `src/pages.json`, `src/manifest.json`                                                                                                             |
-| 前端诊断页面         | `src/pages/diagnose/**`, `src/subpackages/diagnosis/diagnose-flow/**`, `src/subpackages/diagnosis/components/DiagnosePopup.vue`                                  |
+| 前端诊断页面         | `src/pages/diagnose/diagnose.vue`（主包最小入口壳）、`src/subpackages/diagnosis/entry.vue`（分包实际入口）、`src/subpackages/diagnosis/diagnose-flow/**`、`src/subpackages/diagnosis/components/DiagnosePopup.vue` |
 | 前端 HTTP 函数客户端 | `src/http-functions/**`, `src/api/env.js`                                                                                                                        |
 | Vue Query 数据流     | `src/vue-query/**`                                                                                                                                               |
 | 前端诊断归一化       | `src/subpackages/diagnosis/utils/diagnose-result-normalizer.js`, `src/subpackages/diagnosis/utils/diagnose-flow*.js`                                             |
@@ -82,10 +82,11 @@ stale_if_changed:
 
 - `src/pages/index/index.vue`：首页，植物卡水滴 icon 点击打开浇水提醒弹框（不再跳转日历页）。
 - `src/pages/index/components/WateringReminderSheet.vue`：浇水提醒底部弹框，含上次浇水入口、建议下次浇水 Summary、添加至日历主操作；点击上次浇水打开二级日期选择器（复用 `CareBehaviorTimeline`）。已保存提醒会回显上次设置时间和下次浇水建议。
-- `src/pages/diagnose/diagnose.vue`：五项 tab 中的诊断入口，直接复用共享 `DiagnoseFlow`；默认 `full`，可切换 `pest`，并显要展示黄叶、枯萎无图直入。
-- `src/subpackages/diagnosis/diagnose-flow/**`：诊断 tab 与植物卡片弹窗共用的完整诊断内核，负责模式选择、图片、视觉请求、方向选择、题包交接、补拍和结果状态；所有可见题包统一由公共题包页承接。
+- `src/pages/diagnose/diagnose.vue`：五项 tab 中的最小诊断入口壳，只负责把用户导航到诊断分包，不在主包挂载完整诊断流。
+- `src/subpackages/diagnosis/entry.vue`：诊断分包实际入口，接收无植物、用户植物和目录植物上下文，挂载完整 `DiagnoseFlow`；所有实际诊断跳转均从这里开始并继续进入分包题包 / 结果页。
+- `src/subpackages/diagnosis/diagnose-flow/**`：完整诊断内核，负责模式选择、图片、视觉请求、方向选择、题包交接、补拍和结果状态；所有可见题包统一由公共题包页承接。
 - `src/subpackages/diagnosis/question-package.vue`：黄叶、发蔫或下垂及 1～2 题动态虫害包的公共答题页；题包只按整包 `answer_submit` 提交。
-- `src/subpackages/diagnosis/components/DiagnosePopup.vue`：植物卡片诊断按钮使用的 BottomSheet 容器，保留 open/close/reset、植物上下文和弹窗生命周期，内部嵌入 `DiagnoseFlow`。
+- `src/subpackages/diagnosis/components/DiagnosePopup.vue`：可复用的 BottomSheet 诊断容器，保留 open/close/reset、植物上下文和弹窗生命周期；当前首页植物卡片和植物详情入口直接导航到 `subpackages/diagnosis/entry`，不在主包创建该弹窗。
 - `src/subpackages/diagnosis/result.vue`：诊断历史的只读结果承接页；不与新诊断入口页混用。
 - `src/pages/reminder/reminder.vue`：五项 tab 中的提醒页；加载真实用户植物，并分别复用 `WateringReminderSheet` 与 `FertilizationMonthlySheet` 完成浇水、施肥提醒入口和保存后刷新。
 - 诊断延续页与相关目录：历史命名不定义当前产品口径，当前以问诊题包与结果展示理解。
@@ -104,7 +105,7 @@ stale_if_changed:
 | `diagnose-http`          | 统一诊断主链、问诊题包、结果、历史、反馈、review、池外候选，含 `/diagnose` 入口路径。                                                                                                                                                                                                                                                                                                                                                             |
 | `storage-http`           | 诊断/植物图片上传、临时 URL、图片删除，图片后缀有 allowlist。                                                                                                                                                                                                                                                                                                                                                                                     |
 | `identify-http`          | 植物识别，当前通过百度视觉识别能力取候选。                                                                                                                                                                                                                                                                                                                                                                                                        |
-| `weather-http`           | 当前天气与环境天气窗口，支持 `/weather/current`、`/weather/environment-context`、`/weather/v7/environment-context`、`/weather/health`、`/weather/recent` 与 `/weather/ingestion/recent-10d`。支持 `weather-ingestion-recent-10d` 定时触发并入库最近 10 天天气缓存。诊断模式下 `environment-context` 使用自有 recent-10d 缓存优先，`plantFeatures.weatherLightFactor10d` 参与 light 估算；未命中/读取失败时返回 `200` 且 `historicalDays` 可为空。 |
+| `weather-http`           | 当前天气与环境天气窗口，支持 `/weather/current`、`/weather/environment-context`、`/weather/v7/environment-context`、`/weather/health`、`/weather/recent` 与 `/weather/ingestion/recent-10d`。天气窗口采用双层缓存：D0 从当天 `days/{date}.json.latestSample` 读取，D-1~D-10 从 `recent-10d.json` 读取；D0 now 由定时 QWeather 采样维护，诊断请求不现场调用和风。`plantFeatures.weatherLightFactor10d` 参与 light 估算；任一层未命中时按来源字段降级，`historicalDays` 可为空。 |
 | `plant-catalog-http`     | 植物目录列表、详情、名称映射。                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `plant-user-http`        | 用户植物实例 CRUD，含 `/user-plants/watering-planner` 浇水规划器接口（接收 10 天浇水事件集合 + 天气数据，返回 nextWaterDate 等），以及 `/user-plants/watering-reminders` 日历创建后的提醒读写接口。                                                                                                                                                                                                                                               |
 | `auth-user-http`         | 微信登录、手机号绑定、用户资料更新、AI quota/权限等用户能力。                                                                                                                                                                                                                                                                                                                                                                                     |

@@ -24,8 +24,16 @@ export function nativeTabNavigationDetails(logicalPath) {
     expectedRoute: nativeTabPath,
     navigation_channel: NATIVE_TABBAR_CHANNEL,
     native_tab_path: nativeTabPath,
-    operationChannel: 'Native.switchTab'
+    operationChannel: 'MiniProgram.switchTab'
   }
+}
+
+function normalizeExpectedRoute(route) {
+  const normalizedRoute = String(route || '').replace(/^\//, '')
+  if (!normalizedRoute || normalizedRoute.startsWith('/')) {
+    throw new TypeError(`native tab expected route must be a non-empty route: ${route || 'empty'}`)
+  }
+  return normalizedRoute
 }
 
 export class NativeTabNavigationError extends Error {
@@ -45,18 +53,22 @@ function navigationError(code, details, cause) {
 export async function navigateNativeTab({
   mp,
   logicalPath,
+  expectedRoute,
   timeoutMs = DEFAULT_ROUTE_TIMEOUT_MS,
   pollIntervalMs = DEFAULT_POLL_INTERVAL_MS,
   now = Date.now,
   sleep = pause
 }) {
-  const details = { ...nativeTabNavigationDetails(logicalPath), observedRoute: 'unavailable' }
-  const nativeTool = mp?.native?.()
-  if (typeof nativeTool?.switchTab !== 'function') {
+  const details = {
+    ...nativeTabNavigationDetails(logicalPath),
+    ...(expectedRoute ? { expectedRoute: normalizeExpectedRoute(expectedRoute) } : {}),
+    observedRoute: 'unavailable'
+  }
+  if (typeof mp?.switchTab !== 'function') {
     throw navigationError('native_tabbar_unavailable', details)
   }
   try {
-    await nativeTool.switchTab({ url: details.native_tab_path })
+    await mp.switchTab(`/${details.native_tab_path}`)
   } catch (error) {
     throw navigationError('native_tabbar_switch_failed', details, error)
   }

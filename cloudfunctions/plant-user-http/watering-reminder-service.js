@@ -1,6 +1,7 @@
 'use strict'
 
 const { models } = require('/opt/utils/cloudbase')
+const { insertWateringEvent } = require('/opt/utils/plant-knowledge')
 
 const ACTIVE_STATUS = 'active'
 const REMINDER_TYPE_WATER = 'water'
@@ -21,7 +22,17 @@ function parseJsonText(value, fallback) {
 
 function normalizeDate(value) {
   const text = String(value || '').trim()
-  return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : ''
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!match) {
+    return ''
+  }
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const date = new Date(Date.UTC(year, month - 1, day))
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
+    ? text
+    : ''
 }
 
 function normalizeTime(value) {
@@ -61,6 +72,19 @@ function resolveLastWatered(body = {}) {
       .filter(Boolean)
       .sort((a, b) => b.localeCompare(a))[0] || ''
   )
+}
+
+function resolveWateredDate(body = {}) {
+  const supplied = String(body.wateredDate || body.lastWatered || '').trim()
+  if (supplied) {
+    return normalizeDate(supplied)
+  }
+  return getTodayInChina()
+}
+
+function getTodayInChina() {
+  const chinaNow = new Date(Date.now() + 8 * 60 * 60 * 1000)
+  return chinaNow.toISOString().slice(0, 10)
 }
 
 function mapReminderRow(row = {}) {
@@ -272,9 +296,82 @@ async function saveWateringReminder(openid, body = {}) {
   return { statusCode: 200, data: reminder, message: '保存成功' }
 }
 
+async function recordReminderCompletionEvent(openid, plantId, wateredDate) {
+  try {
+    const existingResult = await models.$runSQL(
+      `SELECT id
+       FROM user_watering_events
+       WHERE _openid = {{openid}}
+         AND user_plant_id = {{plantId}}
+         AND event_date = {{wateredDate}}
+         AND source = 'reminder_complete'
+       LIMIT 1`,
+      { openid, plantId: Number(plantId), wateredDate }
+    )
+    if (existingResult?.data?.executeResultList?.[0]?.id) {
+      return
+    }
+    await insertWateringEvent(openid, plantId, {
+      date: wateredDate,
+      source: 'reminder_complete'
+    })
+  } catch {
+    // 浇水主状态已完成；历史表不可用时不回滚该用户可见结果。
+  }
+}
+
+async function completeWateringReminder(openid, body = {}) {
+  const plantId = Number(body.plantId)
+  if (!plantId) {
+    return { statusCode: 400, data: null, message: '缺少植物ID' }
+  }
+  const owned = await assertUserPlantOwned(openid, plantId)
+  if (!owned) {
+    return { statusCode: 404, data: null, message: '植物不存在或无权限' }
+  }
+
+  const wateredDate = resolveWateredDate(body)
+  if (!wateredDate) {
+    return { statusCode: 400, data: null, message: '浇水日期无效' }
+  }
+  if (wateredDate > getTodayInChina()) {
+    return { statusCode: 400, data: null, message: '浇水日期不能晚于今天' }
+  }
+  const params = { openid, plantId, wateredDate }
+  await models.$runSQL(
+    `UPDATE user_plant_instances AS plant
+     LEFT JOIN user_watering_reminder_events AS reminder
+       ON reminder._openid = {{openid}}
+       AND reminder.user_plant_id = plant.id
+       AND reminder.reminder_type = 'water'
+       AND reminder.status = 'active'
+     SET plant.last_watered = {{wateredDate}},
+         plant.next_water = NULL,
+         plant.updated_at = CURRENT_TIMESTAMP,
+         reminder.status = 'completed',
+         reminder.last_watered = {{wateredDate}},
+         reminder.updated_at = CURRENT_TIMESTAMP
+     WHERE plant.id = {{plantId}} AND plant._openid = {{openid}}`,
+    params
+  )
+  await recordReminderCompletionEvent(openid, plantId, wateredDate)
+
+  return {
+    statusCode: 200,
+    data: {
+      plantId,
+      lastWatered: wateredDate,
+      nextWater: null,
+      wateringReminder: null
+    },
+    message: '浇水已记录'
+  }
+}
+
 module.exports = {
   ACTIVE_STATUS,
   attachWateringReminderStateToList,
+  completeWateringReminder,
   getLatestWateringReminder,
   readWateringReminder,
   saveWateringReminder,
@@ -282,6 +379,8 @@ module.exports = {
     mapReminderRow,
     normalizeIsoLikeTime,
     normalizeNextTime,
-    resolveLastWatered
+    resolveLastWatered,
+    resolveWateredDate,
+    getTodayInChina
   }
 }

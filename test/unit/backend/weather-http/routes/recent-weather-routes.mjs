@@ -69,7 +69,11 @@ Module._load = function patchedRecentWeatherRoutesLoad(request, parent, isMain) 
   if (request === '/opt/utils/cloudbase') {
     return {
       getCloudBase: () => fakeCloudbaseApp,
-      models: { async $runSQL() { return { data: { executeResultList: [] } } } }
+      models: {
+        async $runSQL() {
+          return { data: { executeResultList: [] } }
+        }
+      }
     }
   }
   if (request === '/opt/utils/http') {
@@ -184,7 +188,7 @@ try {
   const recentPath = buildRecentWeatherObjectPath(locationKey)
   const dayPath = buildWeatherDayObjectPath(locationKey, diagnosisDate)
 
-  // ===== 1. 诊断模式 + day file latestSample 命中 =====
+  // ===== 1. 诊断模式 + D0 latestSample 与 D-10..D-1 recent-10d 分层命中 =====
   storageObjects.clear()
   storageObjectsByFileId.clear()
   const historicalDays = Array.from({ length: 10 }, (_, index) => {
@@ -192,8 +196,14 @@ try {
     d.setUTCDate(d.getUTCDate() - (index + 1))
     return buildHistoricalDay({ date: d.toISOString().slice(0, 10) })
   })
-  storageObjects.set(recentPath, buildRecent10dPayload({ locationKey, diagnosisDate, historicalDays }))
-  storageObjects.set(dayPath, buildDayFilePayload({ locationKey, date: diagnosisDate, temp: 27, humidity: 58 }))
+  storageObjects.set(
+    recentPath,
+    buildRecent10dPayload({ locationKey, diagnosisDate, historicalDays })
+  )
+  storageObjects.set(
+    dayPath,
+    buildDayFilePayload({ locationKey, date: diagnosisDate, temp: 27, humidity: 58 })
+  )
 
   const service = createRecentWeatherService({
     apiKey: 'test-key',
@@ -208,14 +218,27 @@ try {
 
   assert.ok(hitResult.currentWeather, 'day file 命中时 currentWeather 应非 null')
   assert.equal(typeof hitResult.currentWeather, 'object')
-  assert.equal(hitResult.currentWeather.temperature, 27, 'currentWeather.temperature 应来自 latestSample.temp')
+  assert.equal(
+    hitResult.currentWeather.temperature,
+    27,
+    'currentWeather.temperature 应来自 latestSample.temp'
+  )
   assert.equal(hitResult.currentWeather.weather, '晴')
   assert.equal(hitResult.currentWeather.source, 'weather_cache_day_latest_sample')
   assert.equal(hitResult.currentWeather.cacheSource, 'day_latest_sample')
   assert.equal(hitResult.todayWeatherSource, 'day_latest_sample')
   assert.equal(hitResult.todayWeatherReason, 'day_latest_sample_present')
   assert.ok(Array.isArray(hitResult.historicalDays), 'historicalDays 仍为数组')
-  assert.equal(hitResult.historicalDays.length, 10, 'historicalDays 仍来自 recent-10d.json（10 项）')
+  assert.equal(
+    hitResult.historicalDays.length,
+    10,
+    'historicalDays 仍来自 recent-10d.json（10 项）'
+  )
+  assert.equal(
+    hitResult.historicalDays.some(day => day.date === diagnosisDate),
+    false,
+    'D0 latestSample 不得进入 historicalDays'
+  )
   assert.equal(hitResult.meta.mode, 'diagnosis')
   assert.equal(hitResult.meta.diagnosisDate, diagnosisDate)
 
@@ -233,10 +256,13 @@ try {
   assert.ok(!missResult.forecastDays, '诊断模式不应返回 forecastDays')
 
   // ===== 3. 诊断模式 + day file finalized rollup fallback =====
-  // D0 day file 无 latestSample，D-1 day file 为 finalized → fallback 命中
+  // D0 day file 无 latestSample，D-1 day file 为 finalized → 仅允许已有降级回退
   storageObjects.clear()
   storageObjectsByFileId.clear()
-  storageObjects.set(recentPath, buildRecent10dPayload({ locationKey, diagnosisDate, historicalDays }))
+  storageObjects.set(
+    recentPath,
+    buildRecent10dPayload({ locationKey, diagnosisDate, historicalDays })
+  )
   const d1Date = '2026-07-24'
   const d1Path = buildWeatherDayObjectPath(locationKey, d1Date)
   storageObjects.set(d1Path, {
@@ -298,7 +324,11 @@ try {
   assert.ok(!('dailyRecords' in diagnosisResponse), '诊断模式应 omit dailyRecords')
   assert.ok(!('historical_days' in diagnosisResponse), '诊断模式应 omit historical_days（legacy）')
   assert.equal(diagnosisResponse.historicalDays.length, 10)
-  assert.equal(diagnosisResponse.meta.recordCounts.forecastDays, 0, 'recordCounts.forecastDays 强制为 0')
+  assert.equal(
+    diagnosisResponse.meta.recordCounts.forecastDays,
+    0,
+    'recordCounts.forecastDays 强制为 0'
+  )
   assert.equal(diagnosisResponse.meta.recordCounts.historicalDays, 10)
 
   // ===== 5. 非诊断模式（mode=environment）行为不变：原样返回 =====
@@ -322,6 +352,28 @@ try {
   })
   assert.equal(noKeyResult.currentWeather, null, 'locationKey 缺失时 currentWeather=null')
   assert.equal(noKeyResult.todayWeatherSource, 'missing')
+
+  // ===== 8. 独立诊断未传日期时，路由以地点时区的 D0 作为历史窗口校正锚点 =====
+  let defaultDateReaderInput = null
+  const defaultDateResult = await buildDiagnosisRecentWeatherWindow({
+    payload: { locationKey, timezone: 'Asia/Shanghai' },
+    service: {
+      async readRecentWeatherForDiagnosis(input) {
+        defaultDateReaderInput = input
+        return {
+          historicalDays: [],
+          meta: { sourceKind: 'weather_cache_recent_10d' },
+          weatherEvidenceInsufficient: true
+        }
+      },
+      async getCurrentWeatherFromDailyArchive() {
+        return { weatherData: null, dailyWeatherCache: { reason: 'day_latest_sample_missing' } }
+      }
+    },
+    now: () => fixedNow
+  })
+  assert.equal(defaultDateReaderInput.diagnosisDate, diagnosisDate)
+  assert.equal(defaultDateResult.meta.diagnosisDate, diagnosisDate)
 } finally {
   Module._load = originalLoad
 }

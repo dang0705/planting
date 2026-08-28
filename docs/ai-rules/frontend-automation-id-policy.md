@@ -21,6 +21,7 @@
   - 首页（index）：`src/pages/index/index.vue`
   - 用户植物统一页：`src/subpackages/plant/user-plant-detail/user-plant-detail.vue`（`mode=create` 新增、`mode=edit` 编辑、`mode=view` 只读）
   - 诊断 tab：`src/pages/diagnose/diagnose.vue`
+  - 诊断分包真实流程：`src/subpackages/diagnosis/flow.vue`
   - 共享诊断内核：`src/subpackages/diagnosis/diagnose-flow/DiagnoseFlow.vue`
   - 诊断弹窗（容器）：`src/subpackages/diagnosis/components/DiagnosePopup.vue`
   - AI 流程弹窗（组件）：`src/components/AIStreamDialog.vue`
@@ -49,9 +50,11 @@
 | ------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | 天气位置信息        | `src/components/HeaderWeatherInfo.vue`                               | `header-weather-location-button`                                                                                                                                                                                                               | 点击刷新定位 / 天气                                           |
 | 天气缓存开关        | `src/components/HeaderWeatherInfo.vue`                               | `header-weather-cache-toggle`                                                                                                                                                                                                                  | 点击切换天气缓存                                              |
-| 进入诊断入口        | `src/pages/index/index.vue`                                          | `diagnose-entry-button-{plant.id}`                                                                                                                                                                                                             | 点击打开诊断弹窗                                              |
+| 进入诊断入口        | `src/pages/index/index.vue`                                          | `diagnose-entry-button-{plant.id}`                                                                                                                                                                                                             | 点击进入诊断分包流                                            |
+| 创建植物入口        | `src/pages/index/index.vue`                                          | `index-empty-add-plant-button` / `index-add-plant-button`                                                                                                                                                                                      | 点击创建植物；上报 `user_click_create_plant`                  |
+| 独立浇水建议入口    | `src/pages/index/index.vue`                                          | `index-watering-advisor-entry`                                                                                                                                                                                                                 | 点击进入独立浇水建议；上报 `isolated_watering_planner`        |
 | 植物图片失效重试    | `src/components/PlantDisplayBase.vue`                                | `plant-display-image-{plant.id}`                                                                                                                                                                                                               | 图片加载失败时只重签当前植物图片，不刷新植物列表              |
-| 编辑植物入口        | `src/pages/index/components/PlantCard.vue`                           | `index-plant-card-edit-{plant.id}`                                                                                                                                                                                                             | 点击卡片主体进入编辑植物页                                    |
+| 编辑植物入口        | `src/pages/index/components/PlantCard.vue`                           | `index-plant-card-edit-{plant.id}`                                                                                                                                                                                                             | 点击植物图片进入编辑植物页                                    |
 | 卡片历史入口        | `src/pages/index/components/PlantCard.vue`                           | `index-plant-card-history-{plant.id}`                                                                                                                                                                                                          | 点击查看该植物诊断历史                                        |
 | 浇水提醒入口        | `src/pages/index/components/PlantCard.vue`                           | `plant-card-reminder-{plant.id}-water`                                                                                                                                                                                                         | 点击打开浇水提醒弹框；断言水滴提醒状态                        |
 | 施肥时间表入口      | `src/pages/index/components/PlantCard.vue`                           | `plant-card-fertilization-{plant.id}`                                                                                                                                                                                                          | 点击打开首页底部施肥时间表弹框                                |
@@ -81,7 +84,7 @@
 | 施肥提醒完成        | `src/pages/index/components/SavedFertilizationReminderState.vue`     | `fertilization-reminder-complete-button`                                                                                                                                                                                                       | 记录今天真实施肥日期                                          |
 | 施肥提醒跳过        | `src/pages/index/components/SavedFertilizationReminderState.vue`     | `fertilization-reminder-dismiss-button`                                                                                                                                                                                                        | 本次跳过且不写施肥日期                                        |
 | 删除日历施肥提醒    | `src/pages/index/components/SavedFertilizationReminderState.vue`     | `fertilization-reminder-delete-calendar-button`                                                                                                                                                                                                | 打开手机日历手动删除确认区                                    |
-| 删除日历确认区      | `src/pages/index/components/FertilizationReminderCalendarDelete.vue` | `fertilization-reminder-calendar-delete` / `fertilization-reminder-calendar-delete-group` / `fertilization-reminder-calendar-delete-ack` / `fertilization-reminder-calendar-delete-confirm` / `fertilization-reminder-calendar-delete-dismiss` | 用户确认已手动删除日历提醒后结束 active 施肥提醒              |
+| 删除日历确认 Popup  | `src/pages/index/components/FertilizationReminderCalendarDelete.vue` | `fertilization-reminder-calendar-delete` / `fertilization-reminder-calendar-delete-content` / `fertilization-reminder-calendar-delete-close-button` / `fertilization-reminder-calendar-delete-body` / `fertilization-reminder-calendar-delete-group` / `fertilization-reminder-calendar-delete-ack` / `fertilization-reminder-calendar-delete-confirm` / `fertilization-reminder-calendar-delete-dismiss` | 点击删除入口后，在独立底部 Popup 中确认已手动删除日历提醒 |
 | 主页历史记录项      | `src/pages/index/index.vue`                                          | `index-diagnose-record-{record._id}`                                                                                                                                                                                                           | 点击查看历史结果                                              |
 | 首页盆土检查指导    | `src/pages/index/components/WateringReminderSheet.vue`               | `watering-reminder-soil-check-guidance`                                                                                                                                                                                                        | 断言浇水提醒中显示先检查盆土的指导                            |
 
@@ -89,8 +92,8 @@
 
 | 功能模块               | 文件                                                                         | 稳定 id                                        | 操作 / 断言                                    |
 | ---------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------- |
-| 诊断入口               | `src/subpackages/plant/user-plant-detail/components/UserPlantDetailView.vue` | `user-plant-detail-diagnose-button`            | 点击打开诊断弹窗                               |
-| 浇水入口               | `src/subpackages/plant/user-plant-detail/components/UserPlantDetailView.vue` | `user-plant-detail-water-button`               | 点击记录浇水                                   |
+| 诊断入口               | `src/subpackages/plant/user-plant-detail/components/UserPlantDetailView.vue` | `user-plant-detail-diagnose-button`            | 点击进入诊断分包入口页                           |
+| 浇水入口               | `src/subpackages/plant/user-plant-detail/components/UserPlantDetailView.vue` | `user-plant-detail-water-button`               | 点击记录浇水；上报 `enter_user_plant_watering` |
 | 编辑入口               | `src/subpackages/plant/user-plant-detail/components/UserPlantDetailView.vue` | `user-plant-detail-edit-button`                | 进入同一路由的 `mode=edit`                     |
 | 删除入口               | `src/subpackages/plant/user-plant-detail/components/UserPlantDetailView.vue` | `user-plant-detail-delete-button`              | 点击确认删除                                   |
 | 植物详情图片失效重试   | `src/subpackages/plant/user-plant-detail/components/UserPlantDetailView.vue` | `user-plant-detail-image`                      | 图片加载失败时只重签当前植物图片               |
@@ -111,19 +114,22 @@
 | -------------------- | ----------------------------------------------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------- |
 | 弹窗根容器           | `src/subpackages/diagnosis/components/DiagnosePopup.vue`          | `diagnose-popup-panel`                              | 断言弹窗已打开                                                               |
 | 弹窗滚动内容         | `src/subpackages/diagnosis/components/DiagnosePopup.vue`          | `diagnose-popup-scroll`                             | 断言主内容可见                                                               |
-| 共享内核根容器       | `src/subpackages/diagnosis/diagnose-flow/DiagnoseFlow.vue`        | `diagnose-flow`                                     | 诊断 tab 与植物卡片弹窗必须出现同一内核                                      |
-| 主上传阶段           | `src/subpackages/diagnosis/diagnose-flow/DiagnoseUploadStage.vue` | `diagnose-upload-stage`                             | 断言处于开始诊断前                                                           |
-| 综合诊断模式         | `src/subpackages/diagnosis/diagnose-flow/DiagnoseUploadStage.vue` | `diagnose-profile-full-button`                      | 点击选择 `full`；初始默认选中                                                |
-| 只看虫害模式         | `src/subpackages/diagnosis/diagnose-flow/DiagnoseUploadStage.vue` | `diagnose-profile-pest-button`                      | 点击选择 `pest`；必须有图片                                                  |
-| 无图快捷入口区       | `src/subpackages/diagnosis/diagnose-flow/DiagnoseUploadStage.vue` | `diagnose-no-image-entry-panel`                     | 断言黄叶、枯萎入口显要可见                                                   |
-| 无图症状快捷选择     | `src/subpackages/diagnosis/diagnose-flow/DiagnoseUploadStage.vue` | `diagnose-dev-symptom-class-option-{classKey}`      | 黄叶使用 `yellowing_mode`，枯萎使用 `wilting_droop_mode`；直接启动原固定题包 |
-| 无图症状正式快捷入口 | `src/subpackages/diagnosis/diagnose-flow/DiagnoseUploadStage.vue` | `3ef72261--diagnose-dev-symptom-class-quick-select` | 点击后调用 `/diagnosis/question/start`，不得上传图片或调用视觉模型           |
-| 快捷选择状态         | `src/subpackages/diagnosis/diagnose-flow/DiagnoseUploadStage.vue` | `diagnose-dev-symptom-class-status`                 | 断言当前已选黄叶或枯萎                                                       |
-| 快捷选择清空         | `src/subpackages/diagnosis/diagnose-flow/DiagnoseUploadStage.vue` | `diagnose-dev-symptom-class-clear-button`           | 清除当前快捷模式                                                             |
-| 主图上传槽位容器     | `src/subpackages/diagnosis/diagnose-flow/DiagnoseUploadStage.vue` | `diagnose-upload-slot-{slotType}`                   | 断言槽位存在                                                                 |
-| 主图上传按钮         | `src/subpackages/diagnosis/diagnose-flow/DiagnoseUploadStage.vue` | `diagnose-upload-{slotType}-button`                 | 点击选择图片                                                                 |
-| 主图数量             | `src/subpackages/diagnosis/diagnose-flow/DiagnoseUploadStage.vue` | `diagnose-upload-count`                             | 断言上传数量                                                                 |
-| 提交诊断             | `src/subpackages/diagnosis/diagnose-flow/DiagnoseFlow.vue`        | `diagnose-submit-button`                            | 点击提交主诊断                                                               |
+| 诊断 Tab 实际入口    | `src/pages/diagnose/diagnose.vue`                                 | `diagnose-tab-page` / `diagnose-tab-intake`         | Tab 直入并停留在真实主包照片/无图症状入口；没有自动跳转、分流或中间页           |
+| 诊断分包真实流程页   | `src/subpackages/diagnosis/flow.vue`                              | `diagnosis-flow-page` / `diagnosis-flow-page-content` | 首页和植物详情入口进入此真实执行页；诊断 Tab 不经过该页                              |
+| 共享内核根容器       | `src/subpackages/diagnosis/diagnose-flow/DiagnoseFlow.vue`        | `diagnose-flow`                                     | 分包真实流程页和可复用诊断弹窗容器使用同一内核                                  |
+| 主上传阶段           | `src/components/diagnosis/DiagnoseIntake.vue`                     | `diagnose-upload-stage`                             | 主包 Tab 与分包流程共用同一照片/无图症状首屏                                    |
+| 综合诊断模式         | `src/components/diagnosis/DiagnoseIntake.vue`                     | `diagnose-profile-full-button`                      | 点击选择 `full`；初始默认选中                                                |
+| 只看虫害模式         | `src/components/diagnosis/DiagnoseIntake.vue`                     | `diagnose-profile-pest-button`                      | 点击选择 `pest`；必须有图片                                                  |
+| 无图快捷入口区       | `src/components/diagnosis/DiagnoseIntake.vue`                     | `diagnose-no-image-entry-panel`                     | 断言黄叶、枯萎入口显要可见                                                   |
+| 无图症状快捷选择     | `src/components/diagnosis/DiagnoseIntake.vue`                     | `diagnose-dev-symptom-class-option-{classKey}`      | 黄叶使用 `yellowing_mode`，枯萎使用 `wilting_droop_mode`；从主包入口开始原固定题包 |
+| 无图症状正式快捷入口 | `src/components/diagnosis/DiagnoseIntake.vue`                     | `3ef72261--diagnose-dev-symptom-class-quick-select` | 从诊断 Tab 点击后在原页调用 `/diagnosis/question/start`，仅一次跳转直达问题包，不得伪造响应 |
+| 快捷选择状态         | `src/components/diagnosis/DiagnoseIntake.vue`                     | `diagnose-dev-symptom-class-status`                 | 断言当前已选黄叶或枯萎                                                       |
+| 快捷选择清空         | `src/components/diagnosis/DiagnoseIntake.vue`                     | `diagnose-dev-symptom-class-clear-button`           | 清除当前快捷模式                                                             |
+| 主图上传槽位容器     | `src/components/diagnosis/DiagnoseIntake.vue`                     | `diagnose-upload-slot-{slotType}`                   | 断言槽位存在                                                                 |
+| 主图上传按钮         | `src/components/diagnosis/DiagnoseIntake.vue`                     | `diagnose-upload-{slotType}-button`                 | 点击选择图片                                                                 |
+| 主图数量             | `src/components/diagnosis/DiagnoseIntake.vue`                     | `diagnose-upload-count`                             | 断言上传数量                                                                 |
+| 提交诊断             | `src/pages/diagnose/diagnose.vue` / `src/subpackages/diagnosis/diagnose-flow/DiagnoseFlow.vue` | `diagnose-submit-button` | 主包在原页完成真实请求后仅一次跳转直达问题包；分包内重试/重置时提交主诊断；均上报 `diagnose` |
+| 问诊包返回           | `src/Layout.vue` | `layout-left-action` | 诊断 Tab 直达问诊包时返回诊断 Tab；其他既有问诊来源保持原有返回行为 |
 
 #### B. 结果展示
 
@@ -219,7 +225,7 @@
 | 功能模块        | 文件                                | 稳定 id                    | 操作 / 断言              |
 | --------------- | ----------------------------------- | -------------------------- | ------------------------ |
 | AI 诊断确认弹窗 | `src/components/AIStreamDialog.vue` | `ai-stream-dialog`         | 断言 AI 诊断过程弹窗出现 |
-| AI 诊断确认按钮 | `src/components/AIStreamDialog.vue` | `ai-stream-confirm-button` | 点击进入问诊             |
+| AI 诊断确认按钮 | `src/components/AIStreamDialog.vue` | `ai-stream-confirm-button` | 点击进入问诊；上报 `enter_diagnose_questions` |
 | AI 诊断取消按钮 | `src/components/AIStreamDialog.vue` | `ai-stream-cancel-button`  | 点击取消继续             |
 
 ### 3.5 浇水提醒弹框
@@ -341,15 +347,14 @@
 | 种植日期选择         | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-plant-date-picker` / `edit-plant-plant-date-picker`                   | 点击选择种植日期                      |
 | 备注输入             | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-notes-input` / `edit-plant-notes-input`                               | 输入备注                              |
 | 添加植物上一步       | `src/subpackages/plant/user-plant-detail/components/PlantInfoStepPanel.vue`        | `add-plant-back-to-selection-button`                                             | 点击返回植物选择步骤                  |
-| 添加植物提交         | `src/subpackages/plant/user-plant-detail/components/PlantInfoStepPanel.vue`        | `add-plant-submit-button`                                                        | 点击完成添加植物                      |
+| 添加植物提交         | `src/subpackages/plant/user-plant-detail/components/PlantInfoStepPanel.vue`        | `add-plant-submit-button`                                                        | 点击完成添加植物；上报 `save_user_new_plant` |
 | 编辑植物提交         | `src/subpackages/plant/user-plant-detail/components/PlantInfoStepPanel.vue`        | `edit-plant-submit-button`                                                       | 点击保存植物信息                      |
 
 ### 3.12 诊断 tab 与提醒 tab
 
 | 功能模块          | 文件                              | 稳定 id                                 | 操作 / 断言                                                  |
 | ----------------- | --------------------------------- | --------------------------------------- | ------------------------------------------------------------ |
-| 诊断 tab 页面     | `src/pages/diagnose/diagnose.vue` | `diagnose-tab-page`                     | 断言五项 tab 的诊断页加载                                    |
-| 诊断 tab 共享内核 | `src/pages/diagnose/diagnose.vue` | `diagnose-tab-flow`                     | 断言页面直接复用 `DiagnoseFlow`                              |
+| 诊断 tab 实际薄壳 | `src/pages/diagnose/diagnose.vue` | `diagnose-tab-page` / `diagnose-tab-intake` | 诊断 tab 直入并停留在真实照片/无图症状入口；仅用户开始诊断后才跳入分包真实流程 |
 | 提醒 tab 页面     | `src/pages/reminder/reminder.vue` | `reminder-tab-page`                     | 断言提醒页加载且只展示浇水入口                               |
 | 提醒植物列表      | `src/pages/reminder/reminder.vue` | `reminder-tab-plant-list`               | 断言用户植物列表可见                                         |
 | 提醒植物项        | `src/pages/reminder/reminder.vue` | `reminder-tab-plant-{plant.id}`         | 断言植物信息与浇水入口同卡展示                               |

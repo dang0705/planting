@@ -115,7 +115,8 @@ async function readDailyArchive({ storage, location, date, manifest }) {
   let payload = null
 
   if (dayArchiveMeta?.cloudPath || dayArchiveMeta?.fileId) {
-    dayObjectPath = dayArchiveMeta.cloudPath || buildWeatherDayObjectPath(location.locationKey, date)
+    dayObjectPath =
+      dayArchiveMeta.cloudPath || buildWeatherDayObjectPath(location.locationKey, date)
     payload = await storage
       .downloadJson({ cloudPath: dayObjectPath, fileId: dayArchiveMeta.fileId || '' })
       .catch(() => null)
@@ -144,8 +145,8 @@ async function readDailyArchive({ storage, location, date, manifest }) {
 }
 
 /**
- * 重建 recent-10d.json。只聚合 D-1 到 D-10 且 state=finalized 的 days 文件；
- * D0 今日不得进入 recent-10d。
+ * 重建历史 recent-10d.json。只聚合 D-1 到 D-10 且 state=finalized 的 days 文件；
+ * D0 最新天气留在当天 day file.latestSample，D0 今日不得进入 recent-10d。
  */
 async function rebuildRecentWeather({
   storage,

@@ -5,7 +5,7 @@ const {
   buildRecentWeatherObjectPath,
   normalizeLocationKey
 } = require('./weather-cache-paths')
-const { addDays, normalizeDate } = require('./recent-weather-features')
+const { addDays, buildPlantWeatherFeatures, normalizeDate } = require('./recent-weather-features')
 const { normalizeRecentHistoricalDays } = require('./recent-weather-normalize')
 const { isPlainObject } = require('./recent-weather-payloads')
 
@@ -49,6 +49,51 @@ function shouldRebuildRecentPayloadFromArchives(payload = {}, diagnosisDate = ''
     payload.meta?.quality === 'missing' ||
     payload.meta?.weatherEvidenceInsufficient
   )
+}
+
+function buildNextDayWindowAlignment(payload = {}, diagnosisDate = '') {
+  const normalizedDiagnosisDate = diagnosisDate ? normalizeDate(diagnosisDate) : ''
+  if (!normalizedDiagnosisDate) {
+    return null
+  }
+
+  const expectedTargetDate = addDays(normalizedDiagnosisDate, -1)
+  const payloadDiagnosisDate = normalizeDate(
+    payload.meta?.diagnosisDate || payload.meta?.diagnosis_date || ''
+  )
+  const payloadTargetDate = normalizeDate(payload.window?.targetDate || '')
+  const isUsable = !(
+    payload.weatherEvidenceInsufficient ||
+    payload.quality === 'missing' ||
+    payload.meta?.quality === 'missing' ||
+    payload.meta?.weatherEvidenceInsufficient
+  )
+  if (
+    !isUsable ||
+    payloadTargetDate !== normalizedDiagnosisDate ||
+    payloadDiagnosisDate !== addDays(normalizedDiagnosisDate, 1)
+  ) {
+    return null
+  }
+
+  const firstHistoricalDate = addDays(expectedTargetDate, -9)
+  const historicalDays = normalizeRecentHistoricalDays(payload).filter(day => {
+    const rawDate = String(day?.date || day?.fxDate || '').trim()
+    if (!rawDate) {
+      return false
+    }
+    const date = normalizeDate(rawDate)
+    return date >= firstHistoricalDate && date <= expectedTargetDate
+  })
+  if (!historicalDays.length) {
+    return null
+  }
+
+  return {
+    diagnosisDate: normalizedDiagnosisDate,
+    targetDate: expectedTargetDate,
+    historicalDays
+  }
 }
 
 function buildMissingDiagnosisWeatherWindow({
@@ -160,7 +205,14 @@ function createDiagnosisRecentWeatherReader({
     }
 
     const diagnosisDate = resolveDiagnosisDate(input)
-    if (result?.payload && shouldRebuildRecentPayloadFromArchives(result.payload, diagnosisDate)) {
+    const nextDayWindowAlignment = result?.payload
+      ? buildNextDayWindowAlignment(result.payload, diagnosisDate)
+      : null
+    if (
+      result?.payload &&
+      shouldRebuildRecentPayloadFromArchives(result.payload, diagnosisDate) &&
+      !nextDayWindowAlignment
+    ) {
       result = null
     }
     const allowArchiveRebuild = input.allowArchiveRebuild === true
@@ -180,15 +232,42 @@ function createDiagnosisRecentWeatherReader({
       })
     }
 
-    const historicalDays = normalizeRecentHistoricalDays(result.payload)
+    const historicalDays =
+      nextDayWindowAlignment?.historicalDays || normalizeRecentHistoricalDays(result.payload)
     return {
       ...result.payload,
       locationKey,
       cacheHit: result.cacheHit,
       cacheSourceKind: result.sourceKind,
       historicalDays,
+      ...(nextDayWindowAlignment
+        ? {
+            plantFeatures: buildPlantWeatherFeatures(historicalDays)
+          }
+        : {}),
+      ...(nextDayWindowAlignment
+        ? {
+            window: {
+              ...(isPlainObject(result.payload.window) ? result.payload.window : {}),
+              targetDate: nextDayWindowAlignment.targetDate,
+              start: historicalDays[0]?.date || '',
+              end: historicalDays[historicalDays.length - 1]?.date || '',
+              days: historicalDays.length
+            }
+          }
+        : {}),
       meta: {
         ...(isPlainObject(result.payload.meta) ? result.payload.meta : {}),
+        ...(nextDayWindowAlignment
+          ? {
+              diagnosisDate: nextDayWindowAlignment.diagnosisDate,
+              historicalWindow: {
+                start: historicalDays[0]?.date || '',
+                end: historicalDays[historicalDays.length - 1]?.date || ''
+              },
+              cacheWindowAlignment: 'next_day_d0_trimmed'
+            }
+          : {}),
         sourceKind: result.payload.sourceKind || 'weather_cache_recent_10d',
         quality: result.payload.quality || 'partial',
         weatherObjectPath:

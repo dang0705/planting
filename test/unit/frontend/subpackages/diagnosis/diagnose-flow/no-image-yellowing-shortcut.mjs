@@ -14,11 +14,11 @@ const popupActionsSource = fs.readFileSync(
   'utf8'
 )
 const constantsSource = fs.readFileSync(
-  path.join(repoRoot, 'src/subpackages/diagnosis/diagnose-flow/constants.js'),
+  path.join(repoRoot, 'src/constants/diagnosis-intake.js'),
   'utf8'
 )
 const uploadStageSource = fs.readFileSync(
-  path.join(repoRoot, 'src/subpackages/diagnosis/diagnose-flow/DiagnoseUploadStage.vue'),
+  path.join(repoRoot, 'src/components/diagnosis/DiagnoseIntake.vue'),
   'utf8'
 )
 const questionStartMutationSource = fs.readFileSync(
@@ -127,7 +127,7 @@ assert.ok(
   'yellowing_mode must be declared before wilting_droop_mode so both stay independent'
 )
 
-// 契约 8：DiagnoseUploadStage 必须为每个快捷项渲染独立的语义化 id，并绑定 handleSymptomClassQuickSelect。
+// 契约 8：共享 DiagnoseIntake 必须为每个快捷项渲染独立的语义化 id，并绑定 handleSymptomClassQuickSelect。
 assert.match(
   uploadStageSource,
   /:id="`diagnose-dev-symptom-class-option-\$\{item\.classKey\}`"/,

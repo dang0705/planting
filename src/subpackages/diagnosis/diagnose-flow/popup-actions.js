@@ -327,6 +327,7 @@ export function useDiagnoseFlowActions(ctx) {
       await questionStartMutation.mutateAsync({
         plantId: props.plantId,
         userPlantId: props.plantId,
+        plantCatalogId: props.plantCatalogId,
         plantName: props.plantName,
         symptomClassKey: option.classKey,
         symptomKey: option.symptomKey,

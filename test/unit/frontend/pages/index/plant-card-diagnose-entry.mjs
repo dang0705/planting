@@ -13,10 +13,6 @@ const plantCardSource = fs.readFileSync(
   path.join(repoRoot, 'src/pages/index/components/PlantCard.vue'),
   'utf8'
 )
-const diagnosisEntrySource = fs.readFileSync(
-  path.join(repoRoot, 'src/subpackages/diagnosis/entry.vue'),
-  'utf8'
-)
 const plantsStoreSource = fs.readFileSync(path.join(repoRoot, 'src/store/plants.js'), 'utf8')
 
 // 契约 1：首页必须用 plantStore.hasPlants 作为真实植物前置条件渲染植物列表区域。
@@ -37,7 +33,7 @@ assert.match(
   'plant list must stay behind isAuthenticated + hasPlants, no anonymous plant card'
 )
 
-// 契约 2：首页必须 v-for 真实 userPlants 渲染 PlantCard，并通过 @diagnose 进入 diagnosis 分包。
+// 契约 2：首页必须 v-for 真实 userPlants 渲染 PlantCard，并通过 @diagnose 进入诊断分包。
 assert.match(
   indexSource,
   /v-for="plant in plantStore\.userPlants"/,
@@ -50,21 +46,16 @@ assert.match(
 )
 assert.match(
   indexSource,
-  /function openDiagnose\(plant\) \{[\s\S]*?subpackages\/diagnosis\/entry\?plantId=/,
-  'openDiagnose must navigate with the real plant id to the diagnosis subpackage'
+  /function openDiagnose\(plant\) \{[\s\S]*?plantId = encodeURIComponent\(String\(plant\.id\)\)[\s\S]*?subpackages\/diagnosis\/flow\?plantId=/,
+  'openDiagnose must navigate with the real user plant id to the diagnosis subpackage'
 )
 
-// 契约 3：首页不得加载完整诊断流；完整流必须由 diagnosis 分包入口承接。
+// 契约 3：首页直接进入承载完整诊断流的分包 flow 页面，并保留目录植物上下文。
 assert.match(
   indexSource,
-  /subpackages\/diagnosis\/entry/,
-  'index must navigate to the diagnosis subpackage entry'
+  /plantCatalogId = plant\.plantId/
 )
-assert.match(
-  diagnosisEntrySource,
-  /<DiagnoseFlow[\s\S]*?:plant-id="plantId"[\s\S]*?:plant-name="plantName"[\s\S]*?entry-source="diagnosis_entry"/,
-  'diagnosis entry must mount the full flow inside the diagnosis subpackage'
-)
+assert.match(indexSource, /entrySource=plant_card/)
 assert.doesNotMatch(indexSource, /DiagnosePopup|diagnosePopupRef/)
 // 确保没有平行匿名诊断弹窗。
 assert.doesNotMatch(
@@ -95,6 +86,14 @@ assert.match(
   /defineEmits\(\['diagnose', 'history', 'edit', 'reminder', 'fertilization'\]\)/,
   'PlantCard must declare both reminder and fertilization actions'
 )
+assert.match(
+  plantCardSource,
+  /:class="healthPresentation\.className"[\s\S]*?\{\{ healthPresentation\.label \}\}/,
+  'PlantCard must render the actual health-status presentation instead of a fixed healthy label'
+)
+assert.match(plantCardSource, /label: '状态待评估'/)
+assert.match(plantCardSource, /label: '需要关注'/)
+assert.doesNotMatch(plantCardSource, /<text>健康<\/text>/)
 
 // 契约 5：plantStore.hasPlants 必须基于真实 userPlants 长度，不得有匿名兜底。
 assert.match(

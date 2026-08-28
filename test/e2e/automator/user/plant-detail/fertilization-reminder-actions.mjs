@@ -376,7 +376,7 @@ async function run() {
     await executeScenario(
       mp,
       report,
-      '删除日历施肥提醒必须先确认已手动删除',
+      '删除日历施肥提醒在独立 Popup 中确认',
       { plant: createFixturePlant(), initialReminder: createActiveReminder() },
       async opened => {
         await tapCurrent(mp, 'fertilization-reminder-delete-calendar-button')
@@ -390,7 +390,7 @@ async function run() {
         )
         assertCondition(
           report,
-          '删除日历提醒先说明需要用户自行删除且确认按钮禁用',
+          '删除日历提醒在独立底部 Popup 中说明需要用户自行删除且确认按钮禁用',
           (await textOf(acknowledgement)).includes('无法删除手机日历中的施肥提醒') &&
             (await isDisabled(confirm))
         )

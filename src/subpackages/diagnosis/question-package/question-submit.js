@@ -1,5 +1,6 @@
 import { buildQuestionAnswerPayload, normalizeDiagnosisResult } from '../utils/diagnose-flow.js'
 import { preserveDiagnosisContinuationContext } from '@/subpackages/diagnosis/diagnose-flow/retake-continuation.js'
+import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 
 export async function submitQuestionPackageAnswers({
   result,
@@ -42,7 +43,11 @@ export async function submitQuestionPackageAnswers({
     currentResult
   )
   result.value = nextResult
-  resetQuestionState(nextResult?.questions || [])
+  reportAnalyticsEvent(ANALYTICS_EVENTS.DIAGNOSE_QUESTION_COMPLETED)
+  if (!nextResult?.hasActiveQuestions && !nextResult?.retakeRequest) {
+    reportAnalyticsEvent(ANALYTICS_EVENTS.DIAGNOSE_RESULT_READY)
+  }
+  await resetQuestionState(nextResult?.questions || [])
   diagnoseStore.addToHistory({
     images,
     diagnosis: nextResult,

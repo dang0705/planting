@@ -1,7 +1,6 @@
 import { httpRequest } from '@/http-functions/core/httpRequest'
 import { isDevelopmentAppEnv } from '@/utils/runtime-env'
 
-const DEV_H5_DIAGNOSIS_REVIEW_OPENID = 'dev_terminal_diagnosis_review_h5'
 const LOCAL_DIAGNOSIS_REVIEW_PREFIX = '/__local_diagnosis_review__'
 const MINI_PROGRAM_CLIENT_PLATFORMS = new Set(['wechat-mini-program', 'wechat_mp', 'mini-program'])
 
@@ -11,20 +10,8 @@ function isH5Runtime() {
   )
 }
 
-function shouldUseDevBypass() {
+function shouldUseLocalReviewFallback() {
   return isH5Runtime() && (Boolean(import.meta.env.DEV) || isDevelopmentAppEnv())
-}
-
-function buildDevBypassPayload(payload = {}) {
-  if (!shouldUseDevBypass()) {
-    return payload
-  }
-
-  return {
-    ...payload,
-    skipAuth: true,
-    openid: payload?.openid || DEV_H5_DIAGNOSIS_REVIEW_OPENID
-  }
 }
 
 function buildQueryString(query = {}) {
@@ -196,7 +183,7 @@ const detailDiagnosisReviewRequester = httpRequest({
 
 export async function requestDiagnosisReviewList(query = {}) {
   try {
-    const response = await listDiagnosisReviewRequester({ query: buildDevBypassPayload(query) })
+    const response = await listDiagnosisReviewRequester({ query })
     const data = unwrapResponseEnvelope(response?.data, '读取诊断记录失败')
     const normalizedData = normalizeReviewListResponse(data, query?.sourceType || 'all')
     if (import.meta.env.DEV) {
@@ -207,7 +194,7 @@ export async function requestDiagnosisReviewList(query = {}) {
         fallbackMode: 'formal_review'
       })
     }
-    if (shouldUseDevBypass()) {
+    if (shouldUseLocalReviewFallback()) {
       const localData = await requestLocalDiagnosisReviewList(query).catch(() => null)
       if (Array.isArray(localData?.items) && localData.items.length) {
         const localItemsBySessionId = new Map(
@@ -259,7 +246,7 @@ export async function requestDiagnosisReviewList(query = {}) {
         message: error?.message || String(error)
       })
     }
-    if (shouldUseDevBypass()) {
+    if (shouldUseLocalReviewFallback()) {
       try {
         const localData = await requestLocalDiagnosisReviewList(query)
         if (Array.isArray(localData?.items) && localData.items.length) {
@@ -275,10 +262,10 @@ export async function requestDiagnosisReviewList(query = {}) {
 
 export async function requestDiagnosisReviewImages(query = {}) {
   try {
-    const response = await imageDiagnosisReviewRequester({ query: buildDevBypassPayload(query) })
+    const response = await imageDiagnosisReviewRequester({ query })
     const data = unwrapResponseEnvelope(response?.data, '读取诊断图片失败')
     const previewImageRefs = Array.isArray(data?.previewImageRefs) ? data.previewImageRefs : []
-    if (shouldUseDevBypass() && !previewImageRefs.length) {
+    if (shouldUseLocalReviewFallback() && !previewImageRefs.length) {
       try {
         const localData = await requestLocalDiagnosisReviewImages(query)
         const localPreviewImageRefs = Array.isArray(localData?.previewImageRefs)
@@ -293,7 +280,7 @@ export async function requestDiagnosisReviewImages(query = {}) {
     }
     return data
   } catch (error) {
-    if (shouldUseDevBypass()) {
+    if (shouldUseLocalReviewFallback()) {
       try {
         return await requestLocalDiagnosisReviewImages(query)
       } catch {
@@ -306,14 +293,14 @@ export async function requestDiagnosisReviewImages(query = {}) {
 
 export async function requestDiagnosisReviewDetail(query = {}) {
   try {
-    const response = await detailDiagnosisReviewRequester({ query: buildDevBypassPayload(query) })
+    const response = await detailDiagnosisReviewRequester({ query })
     const data = unwrapResponseEnvelope(response?.data, '读取诊断详情失败')
     return {
       ...mapHistoryDetailToReviewDetail(data, { requestedSourceType: query?.sourceType || 'all' }),
       fallbackMode: 'formal_review'
     }
   } catch (error) {
-    if (shouldUseDevBypass()) {
+    if (shouldUseLocalReviewFallback()) {
       try {
         const data = await requestLocalDiagnosisReviewDetail(query)
         return mapHistoryDetailToReviewDetail(data, {

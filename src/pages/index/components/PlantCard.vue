@@ -1,15 +1,15 @@
 <template>
   <view
-    :id="`index-plant-card-edit-${plant.id}`"
     class="h-[129px] w-full overflow-hidden rounded-[12px] border border-[rgba(45,122,79,0.15)] bg-white p-px shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]"
-    @click="$emit('edit', plant)"
   >
     <view class="flex h-[127px] w-full overflow-hidden rounded-[11px]">
-      <PlantDisplayBase
-        :plant="plant"
-        container-class="h-[127px] w-[112px] flex-[0_0_112px] rounded-none"
+      <view
+        :id="`index-plant-card-edit-${plant.id}`"
+        class="h-[127px] w-[112px] flex-[0_0_112px]"
         @click.stop="$emit('edit', plant)"
-      />
+      >
+        <PlantDisplayBase :plant="plant" container-class="h-full w-full rounded-none" />
+      </view>
 
       <view class="flex h-[127px] min-w-0 flex-1 flex-col gap-2 p-3">
         <view class="flex h-[27px] items-center gap-1.5">
@@ -23,9 +23,10 @@
 
         <view class="flex h-[22px] items-center gap-1.5">
           <view
-            class="inline-flex h-[22px] items-center justify-center rounded-full border border-[#b9f8cf] bg-[#dcfce7] px-[9px] py-[3px] text-xs font-normal leading-4 text-[#008236]"
+            class="inline-flex h-[22px] items-center justify-center rounded-full border px-[9px] py-[3px] text-xs font-normal leading-4"
+            :class="healthPresentation.className"
           >
-            <text>健康</text>
+            <text>{{ healthPresentation.label }}</text>
           </view>
           <view
             class="inline-flex h-[22px] items-center justify-center rounded-full border border-[#b8e6fe] bg-[#dff2fe] px-[9px] py-[3px] text-xs font-normal leading-4 text-[#0069a8]"
@@ -59,38 +60,46 @@
       <view
         class="flex h-[127px] w-[49px] flex-[0_0_49px] flex-col items-center justify-center gap-2 border-l border-[rgba(45,122,79,0.15)] py-3 pl-[9px] pr-2"
       >
-        <button
-          :id="`plant-card-reminder-${plant.id}-water`"
-          class="m-0 flex size-8 items-center justify-center rounded-full border p-0 after:border-0"
-          :class="
-            waterReminderActive ? 'border-[#74d4ff] bg-[#f0f9ff]' : 'border-[#e5e7eb] bg-[#f9fafb]'
-          "
-          hover-class="none"
-          @click.stop="$emit('reminder', { plant, type: 'water' })"
-        >
-          <image
-            :src="waterReminderActive ? waterActiveIcon : waterDefaultIcon"
-            class="size-4 flex-[0_0_16px]"
-            mode="aspectFit"
-          />
-        </button>
-        <button
-          :id="`plant-card-fertilization-${plant.id}`"
-          class="m-0 flex size-8 items-center justify-center rounded-full border p-0 after:border-0"
-          :class="
-            fertilizationReminderActive
-              ? 'border-[#74d4ff] bg-[#f0f9ff]'
-              : 'border-[#e5e7eb] bg-[#f9fafb]'
-          "
-          hover-class="none"
-          @click.stop="$emit('fertilization', plant)"
-        >
-          <image
-            :src="fertilizationReminderActive ? fertilizeActiveIcon : fertilizeDefaultIcon"
-            class="size-4 flex-[0_0_16px]"
-            mode="aspectFit"
-          />
-        </button>
+        <view class="flex flex-col items-center gap-0.5">
+          <button
+            :id="`plant-card-reminder-${plant.id}-water`"
+            class="m-0 flex size-8 items-center justify-center rounded-full border p-0 after:border-0"
+            :class="
+              waterReminderActive
+                ? 'border-[#74d4ff] bg-[#f0f9ff]'
+                : 'border-[#e5e7eb] bg-[#f9fafb]'
+            "
+            hover-class="none"
+            @click.stop="$emit('reminder', { plant, type: 'water' })"
+          >
+            <image
+              :src="waterReminderActive ? waterActiveIcon : waterDefaultIcon"
+              class="size-4 flex-[0_0_16px]"
+              mode="aspectFit"
+            />
+          </button>
+          <text class="text-[10px] leading-[14px] text-[#667085]">水</text>
+        </view>
+        <view class="flex flex-col items-center gap-0.5">
+          <button
+            :id="`plant-card-fertilization-${plant.id}`"
+            class="m-0 flex size-8 items-center justify-center rounded-full border p-0 after:border-0"
+            :class="
+              fertilizationReminderActive
+                ? 'border-[#74d4ff] bg-[#f0f9ff]'
+                : 'border-[#e5e7eb] bg-[#f9fafb]'
+            "
+            hover-class="none"
+            @click.stop="$emit('fertilization', plant)"
+          >
+            <image
+              :src="fertilizationReminderActive ? fertilizeActiveIcon : fertilizeDefaultIcon"
+              class="size-4 flex-[0_0_16px]"
+              mode="aspectFit"
+            />
+          </button>
+          <text class="text-[10px] leading-[14px] text-[#667085]">肥</text>
+        </view>
       </view>
     </view>
   </view>
@@ -121,4 +130,26 @@ const waterReminderActive = computed(() => Boolean(props.reminderSummary?.water?
 const fertilizationReminderActive = computed(() =>
   Boolean(props.reminderSummary?.fertilize?.active || props.plant?.fertilizationReminder?.active)
 )
+
+const healthPresentation = computed(() => {
+  const status = String(props.plant?.healthStatus || '')
+    .trim()
+    .toLowerCase()
+  if (['healthy', 'good', 'normal'].includes(status)) {
+    return {
+      label: '状态良好',
+      className: 'border-[#b9f8cf] bg-[#dcfce7] text-[#008236]'
+    }
+  }
+  if (['warning', 'attention', 'unhealthy', 'poor', 'danger'].includes(status)) {
+    return {
+      label: '需要关注',
+      className: 'border-[#f6d6a8] bg-[#fff3e0] text-[#b75a00]'
+    }
+  }
+  return {
+    label: '状态待评估',
+    className: 'border-[#d9dde3] bg-[#f3f4f6] text-[#5b6472]'
+  }
+})
 </script>

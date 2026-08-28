@@ -30,11 +30,10 @@ export function useWateringReminderPlanner({ props, userStore, selectedWateringE
   const weatherLoading = ref(false)
   const loading = ref(false)
 
-  // D0 注入契约：locationKey 统一从 plant.careLocation.locationKey 读取，
-  // 用于后端从 day file latestSample 注入当日天气；缺失时 todayWeatherSource='missing'。
+  // D0 最新缓存注入契约：locationKey 统一从 plant.careLocation.locationKey 读取，
+  // 用于后端从当天 day file.latestSample 注入当日天气；缺失时 todayWeatherSource='missing'。
   const plannerLocationKey = computed(() => {
-    const fromPlant =
-      props.plant?.careLocation?.locationKey || props.plant?.locationKey || ''
+    const fromPlant = props.plant?.careLocation?.locationKey || props.plant?.locationKey || ''
     const fromWindow =
       environmentWeatherWindow.value?.locationKey ||
       environmentWeatherWindow.value?.location?.locationKey ||

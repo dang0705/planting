@@ -136,10 +136,15 @@ async function hydrateFixtureUser(miniProgram) {
           /* $hydrate is best-effort */
         }
       }
+      const storedUser = typeof wx !== 'undefined' ? wx.getStorageSync('user') : null
+      const fixtureOpenid = String(storedUser?.openid || '')
+      if (!fixtureOpenid) {
+        throw new Error('fixture user storage openid is unavailable')
+      }
       // Authoritative: directly overwrite the live reactive state with the fixture user.
       userStore.$patch({
         userId: 'e2e_fixture_user',
-        openid: 'e2e_fixture_openid_pest_mode_retake',
+        openid: fixtureOpenid,
         union_id: '',
         username: '端上验收用户',
         nickname: '端上验收用户',
@@ -203,7 +208,7 @@ async function loadFixturePlant(miniProgram) {
       globalThis.__e2ePlantLoadError = String(error?.message || error)
     }
   })
-  // Prove the fixture plant was loaded into the real product store before the five-tab
+  // Prove the fixture plant was loaded into the real product store before the three-tab MVP
   // test starts. Fail with a narrow diagnostic if not.
   const plantCheck = await miniProgram.evaluate(() => {
     try {

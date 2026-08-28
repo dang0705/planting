@@ -25,8 +25,13 @@ const DIAGNOSE_POPUP_COMPONENT_CHAIN = Object.freeze([
 const READINESS_TIMEOUT_MS = 15000
 const READINESS_RETRY_DELAY_MS = 250
 const INDEX_HOME_ROUTE = 'pages/index/index'
+const DIAGNOSIS_ENTRY_ROUTE = 'subpackages/diagnosis/flow'
 const QUESTION_PACKAGE_ROUTE = 'subpackages/diagnosis/question-package'
-const RETURN_ENTRY_ROUTES = new Set(['pages/index/index', 'pages/diagnose/diagnose'])
+const RETURN_ENTRY_ROUTES = new Set([
+  'pages/index/index',
+  'pages/diagnose/diagnose',
+  DIAGNOSIS_ENTRY_ROUTE
+])
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 const normalizePageRoute = page => String(page?.path || '').replace(/^\//, '')
 const blockQuestionPackageReturn = (report, symptom, detail) => {
@@ -154,6 +159,47 @@ export async function waitForKnownDiagnosePopupQuickEntry({
     return null
   }
   return resolution?.entry ?? null
+}
+export async function waitForDiagnosisEntryPage({
+  mp,
+  report,
+  symptom,
+  timeoutMs = READINESS_TIMEOUT_MS,
+  waitForRouteFn = waitForRoute
+}) {
+  const page = await waitForRouteFn(mp, route => route === DIAGNOSIS_ENTRY_ROUTE, timeoutMs)
+  let activePage = page
+  const flowDeadline = Date.now() + timeoutMs
+  let entryFlowPresent = Boolean(await activePage?.$('#diagnosis-flow-page-content'))
+  while (!entryFlowPresent && Date.now() < flowDeadline) {
+    await sleep(READINESS_RETRY_DELAY_MS)
+    activePage = await mp.currentPage()
+    entryFlowPresent = Boolean(await activePage?.$('#diagnosis-flow-page-content'))
+  }
+  const observedPage = activePage || page
+  const ready = normalizePageRoute(observedPage) === DIAGNOSIS_ENTRY_ROUTE && entryFlowPresent
+  recordPageData(report, observedPage?.path || 'unavailable', {
+    diagnosisEntry: {
+      expectedRoute: DIAGNOSIS_ENTRY_ROUTE,
+      observedRoute: normalizePageRoute(observedPage),
+      entryFlowPresent
+    }
+  })
+  recordAssertion(
+    report,
+    `${symptom}: diagnosis subpackage entry opens from the real plant card`,
+    ready,
+    observedPage?.path || 'unavailable'
+  )
+  if (!ready) {
+    setClassification(
+      report,
+      'BLOCKED_ENV',
+      `${symptom}: expected ${DIAGNOSIS_ENTRY_ROUTE}, observed ${normalizePageRoute(observedPage) || 'unavailable'}`
+    )
+    return null
+  }
+  return observedPage
 }
 export async function waitForKnownHomeEntry({
   mp,
@@ -333,11 +379,7 @@ export async function returnToKnownHomeForPlantReentry({
   symptom,
   waitForRouteFn,
   routeTimeoutMs,
-  routeOptions,
-  popupTimeoutMs,
-  popupNow,
-  popupSleepFn,
-  popupRetryDelayMs
+  routeOptions
 }) {
   const returned = await returnQuestionPackageWithLayoutBack({
     mp,
@@ -351,36 +393,59 @@ export async function returnToKnownHomeForPlantReentry({
   if (!returned) {
     return null
   }
-  const returnedHome = returned.route === 'pages/index/index'
+  let homePage = returned.page
+  if (returned.route === DIAGNOSIS_ENTRY_ROUTE) {
+    const entryLayout = await homePage?.$('layout')
+    const entryBackAction = entryLayout ? await entryLayout.$('#layout-left-action') : null
+    const entryBackReady = Boolean(entryBackAction)
+    recordAssertion(
+      report,
+      `${symptom}: diagnosis entry exposes Layout return action`,
+      entryBackReady,
+      entryBackReady ? undefined : 'diagnosis entry back action missing'
+    )
+    if (!entryBackReady) {
+      return blockQuestionPackageReturn(
+        report,
+        symptom,
+        'diagnosis entry Layout return action is unavailable'
+      )
+    }
+    try {
+      await entryBackAction.tap()
+    } catch (error) {
+      return blockQuestionPackageReturn(
+        report,
+        symptom,
+        `diagnosis entry Layout return action could not be tapped: ${String(error?.message || error)}`
+      )
+    }
+    homePage = await waitForRoute(
+      mp,
+      route => route === INDEX_HOME_ROUTE,
+      routeTimeoutMsForHomeReturn(routeTimeoutMs)
+    )
+  }
+  const returnedHome = normalizePageRoute(homePage) === INDEX_HOME_ROUTE
   recordAssertion(
     report,
     `${symptom}: Layout return restores homepage for fixed plant re-entry`,
     returnedHome,
-    returned.route
+    normalizePageRoute(homePage)
   )
   if (!returnedHome) {
     setClassification(
       report,
       'BLOCKED_ENV',
-      `${symptom}: fixed plant re-entry requires homepage, got ${returned.route}`
+      `${symptom}: fixed plant re-entry requires homepage, got ${normalizePageRoute(homePage)}`
     )
     return null
   }
-  if (
-    !(await resetKnownDiagnosePopupForHomeReentry({
-      page: returned.page,
-      report,
-      symptom,
-      pagePath: returned.page.path,
-      timeoutMs: popupTimeoutMs,
-      now: popupNow,
-      sleepFn: popupSleepFn,
-      retryDelayMs: popupRetryDelayMs
-    }))
-  ) {
-    return null
-  }
-  return returned.page
+  return homePage
+}
+
+function routeTimeoutMsForHomeReturn(value) {
+  return Number.isFinite(Number(value)) && Number(value) > 0 ? Number(value) : READINESS_TIMEOUT_MS
 }
 export async function resetKnownDiagnosePopupForHomeReentry({
   page,

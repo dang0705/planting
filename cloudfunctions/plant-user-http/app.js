@@ -34,6 +34,7 @@ const {
 } = require('./care-location-service')
 const {
   attachWateringReminderStateToList,
+  completeWateringReminder,
   readWateringReminder,
   saveWateringReminder
 } = require('./watering-reminder-service')
@@ -181,6 +182,14 @@ async function main(event, context) {
         })
       }
       if (method === 'POST') {
+        if (path.endsWith('/watering-reminders/complete')) {
+          const result = await completeWateringReminder(openid, request.body)
+          return jsonResponse(result.statusCode, {
+            code: result.statusCode,
+            message: result.message,
+            data: result.data
+          })
+        }
         try {
           const result = await saveWateringReminder(openid, request.body)
           return jsonResponse(result.statusCode, {

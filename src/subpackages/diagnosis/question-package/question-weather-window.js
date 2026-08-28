@@ -1,10 +1,16 @@
 import { ref } from 'vue'
 import { getEnvironmentWeatherWindow } from '@/api/weather.js'
-import { mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline } from '@/utils/care-behavior-weather-window.js'
+import {
+  buildWeatherByDateFromEnvironmentWeatherWindow,
+  mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline
+} from '@/utils/care-behavior-weather-window.js'
 import { isCareBehaviorWateringTimelineQuestion } from '@/utils/care-behavior-timeline.js'
 import { isLightEnvironmentQuestion } from '@/utils/light-environment.js'
 import { resolveDiagnosisCareLocation } from './question-care-location.js'
-import { resolveCareBehaviorReferenceDate } from './question-environment.js'
+import {
+  resolveCareBehaviorReferenceDate,
+  resolveCareBehaviorWeatherLocation
+} from './question-environment.js'
 
 /**
  * 维护问诊阶段养护行为时间线所需的环境天气窗口。
@@ -15,13 +21,25 @@ import { resolveCareBehaviorReferenceDate } from './question-environment.js'
  */
 export function useEnvironmentWeatherWindow({ result, plantStore, userStore }) {
   const environmentWeatherWindow = ref(null)
+  const environmentWeatherByDate = ref({})
   const environmentWeatherWindowRequestKey = ref('')
   const environmentWeatherWindowLoading = ref(false)
   const environmentWeatherWindowError = ref('')
 
-  function applyEnvironmentWeatherWindowToCareBehaviorTimelines(
-    careBehaviorTimelineByQuestionId
-  ) {
+  function hydrateEnvironmentWeatherWindow(weatherWindow = null) {
+    if (!weatherWindow || typeof weatherWindow !== 'object') {
+      return false
+    }
+    const weatherByDate = buildWeatherByDateFromEnvironmentWeatherWindow(weatherWindow)
+    if (!Object.keys(weatherByDate).length) {
+      return false
+    }
+    environmentWeatherWindow.value = weatherWindow
+    environmentWeatherByDate.value = weatherByDate
+    return true
+  }
+
+  function applyEnvironmentWeatherWindowToCareBehaviorTimelines(careBehaviorTimelineByQuestionId) {
     if (!environmentWeatherWindow.value) {
       return
     }
@@ -48,6 +66,28 @@ export function useEnvironmentWeatherWindow({ result, plantStore, userStore }) {
       if (!environmentQuestions.length || environmentWeatherWindowLoading.value) {
         return
       }
+      const diagnosisDate = resolveCareBehaviorReferenceDate(environmentQuestions)
+      const userPlantId = String(result.value?.userPlantId || '').trim()
+      const independentLocation = userPlantId
+        ? null
+        : resolveCareBehaviorWeatherLocation(userStore.location || {})
+      if (independentLocation) {
+        environmentWeatherWindowLoading.value = true
+        const weatherWindow = await getEnvironmentWeatherWindow({
+          ...independentLocation,
+          diagnosisDate,
+          mode: 'diagnosis',
+          plantId: String(result.value?.plantId || '').trim(),
+          // 独立问诊刚创建，不能加入可能遗留的同 key 查询等待队列；这里必须用真实
+          // wx.request 取得当前城市的诊断窗口，并在网络异常时由 timeout 释放页面初始化。
+          forceRefresh: true,
+          timeout: 8_000
+        })
+        if (hydrateEnvironmentWeatherWindow(weatherWindow)) {
+          applyEnvironmentWeatherWindowToCareBehaviorTimelines(careBehaviorTimelineByQuestionId)
+        }
+        return
+      }
       const location = await resolveDiagnosisCareLocation({
         result: result.value,
         plantStore,
@@ -56,7 +96,6 @@ export function useEnvironmentWeatherWindow({ result, plantStore, userStore }) {
       if (!location) {
         return
       }
-      const diagnosisDate = resolveCareBehaviorReferenceDate(environmentQuestions)
       const requestKey = `${location.locationKey}|${diagnosisDate}`
       if (
         requestKey === environmentWeatherWindowRequestKey.value &&
@@ -78,7 +117,7 @@ export function useEnvironmentWeatherWindow({ result, plantStore, userStore }) {
         mode: 'diagnosis'
       })
       if (weatherWindow) {
-        environmentWeatherWindow.value = weatherWindow
+        hydrateEnvironmentWeatherWindow(weatherWindow)
         environmentWeatherWindowRequestKey.value = requestKey
         applyEnvironmentWeatherWindowToCareBehaviorTimelines(careBehaviorTimelineByQuestionId)
       }
@@ -94,8 +133,10 @@ export function useEnvironmentWeatherWindow({ result, plantStore, userStore }) {
 
   return {
     environmentWeatherWindow,
+    environmentWeatherByDate,
     environmentWeatherWindowLoading,
     environmentWeatherWindowError,
+    hydrateEnvironmentWeatherWindow,
     refreshEnvironmentWeatherWindowForCareBehavior
   }
 }
