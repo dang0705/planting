@@ -55,7 +55,7 @@ export const usePlantStore = defineStore('plants', {
         }
         const response = await fetchUserPlants(page, pageSize)
         if (response?.code !== 200) {
-          return { success: false, message: response?.message || '获取失败' }
+          return { success: false, message: '暂时无法加载植物，请检查网络后重试' }
         }
 
         const list = response.data.list || []
@@ -113,7 +113,7 @@ export const usePlantStore = defineStore('plants', {
         return { success: true, total: response.data.total }
       } catch (error) {
         console.error('获取用户植物列表失败:', error)
-        return { success: false, message: error.message }
+        return { success: false, message: '暂时无法加载植物，请检查网络后重试' }
       }
     },
 
@@ -152,12 +152,19 @@ export const usePlantStore = defineStore('plants', {
         const response = await removeUserPlant(plantId)
         if (response?.code === 200) {
           this.userPlants = this.userPlants.filter(p => p.id !== plantId)
-          return { success: true }
+          if (this.currentPlant?.id === plantId) {
+            this.currentPlant = null
+          }
+          return {
+            success: true,
+            cleanupPending: Boolean(response?.data?.cleanupPending),
+            message: response?.data?.cleanupPending ? '植物已删除，图片正在清理' : '已删除'
+          }
         }
-        return { success: false, message: response?.message || '删除失败' }
+        return { success: false, message: '暂时无法删除植物，请检查网络后重试' }
       } catch (error) {
         console.error('删除植物失败:', error)
-        return { success: false, message: error.message }
+        return { success: false, message: '暂时无法删除植物，请检查网络后重试' }
       }
     },
 
@@ -175,11 +182,11 @@ export const usePlantStore = defineStore('plants', {
           return { success: true }
         }
         this.updateUserPlantLocal(id, originalPlant)
-        return { success: false, message: response?.message || '更新失败' }
+        return { success: false, message: '暂时无法保存修改，请检查网络后重试' }
       } catch (error) {
         console.error('乐观更新失败:', error)
         this.updateUserPlantLocal(id, originalPlant)
-        return { success: false, message: error.message }
+        return { success: false, message: '暂时无法保存修改，请检查网络后重试' }
       }
     },
 
@@ -214,11 +221,11 @@ export const usePlantStore = defineStore('plants', {
           return { success: true }
         }
         plant.potProfile = originalPotProfile
-        return { success: false, message: response?.message || '保存失败' }
+        return { success: false, message: '暂时无法保存盆型信息，请检查网络后重试' }
       } catch (error) {
         console.error('保存盆型档案失败:', error)
         plant.potProfile = originalPotProfile
-        return { success: false, message: error.message }
+        return { success: false, message: '暂时无法保存盆型信息，请检查网络后重试' }
       }
     },
 
@@ -229,7 +236,7 @@ export const usePlantStore = defineStore('plants', {
           wateredDate: wateredDate || localDateString()
         })
         if (response?.code !== 200 || !response.data) {
-          return { success: false, message: response?.message || '浇水记录失败' }
+          return { success: false, message: '浇水记录暂未保存，请检查网络后重试' }
         }
         this.updateUserPlantLocal(id, {
           lastWatered: response.data.lastWatered,
@@ -237,8 +244,8 @@ export const usePlantStore = defineStore('plants', {
           wateringReminder: null
         })
         return { success: true, data: response.data }
-      } catch (error) {
-        return { success: false, message: error?.message || '浇水记录失败' }
+      } catch {
+        return { success: false, message: '浇水记录暂未保存，请检查网络后重试' }
       }
     },
 

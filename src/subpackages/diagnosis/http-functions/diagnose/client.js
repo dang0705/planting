@@ -1,11 +1,11 @@
 import { httpRequest } from '@/http-functions/core/httpRequest'
 import { normalizeHistoryDetail, normalizeHistoryList } from './client-history-detail'
-import {
-  requestDiagnoseStream as requestDiagnoseStreamImpl,
-  logDiagnosisStartCompletion
-} from './client-stream'
+import { requestDiagnoseStream as requestDiagnoseStreamImpl } from './client-stream'
 
 function isRetryableRequestError(error) {
+  if (error?.isRetryable) {
+    return true
+  }
   const message = String(error?.message || error || '').toLowerCase()
   return (
     message.includes('timeout') ||
@@ -103,7 +103,6 @@ export async function requestDiagnosisStart(payload) {
     { retries: 1, fallbackMessage: '发起诊断失败' }
   )
   const data = unwrapResponseEnvelope(response?.data, '发起诊断失败')
-  logDiagnosisStartCompletion('buffered', data)
   return data
 }
 

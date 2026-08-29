@@ -68,7 +68,7 @@ const props = defineProps({
   },
   title: {
     type: String,
-    default: 'AI 识别'
+    default: '植物识别'
   },
   icon: {
     type: String,
@@ -76,7 +76,7 @@ const props = defineProps({
   },
   loadingText: {
     type: String,
-    default: '正在分析中...'
+    default: '正在处理，请稍候...'
   },
   confirmText: {
     type: String,
@@ -135,7 +135,7 @@ function finishStream(data) {
 function setError(err) {
   loading.value = false
   error.value = err
-  streamText.value = `识别失败: ${err.message || err}`
+  streamText.value = '暂时无法完成，请检查网络后重试。'
 }
 
 function handleClose() {

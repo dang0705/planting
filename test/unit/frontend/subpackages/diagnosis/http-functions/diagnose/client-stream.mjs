@@ -29,7 +29,7 @@ const responseStartedProgressText = buildVisualProgressText('visual_model_respon
   fullText: '{"normalized_organ":"leaf"}',
   prompt: '内部提示词'
 })
-assert.equal(responseStartedProgressText, '正在整理照片检查结果。')
+assert.equal(responseStartedProgressText, '正在整理检查结果。')
 assert.doesNotMatch(responseStartedProgressText, /normalized_organ|leaf|提示词/)
 
 const decisionProgressText = buildVisualProgressText('visual_decision_ready', {
@@ -38,7 +38,7 @@ const decisionProgressText = buildVisualProgressText('visual_decision_ready', {
     symptomCandidates: [{ symptomCn: '不应展示的模型标签' }]
   }
 })
-assert.equal(decisionProgressText, '照片检查完成，发现 3 处可见异常。')
+assert.equal(decisionProgressText, '照片检查完成，发现 3 处需要留意的地方。')
 assert.doesNotMatch(decisionProgressText, /不应展示的模型标签/)
 
 const expectedResult = {
@@ -71,6 +71,27 @@ const streamed = await buildStreamDiagnosisPromise(
 )
 assert.deepEqual(streamed, expectedResult)
 assert.equal(progress.length, lifecycleEvents.length)
+
+const replyProgress = []
+const replyResult = await buildStreamDiagnosisPromise(
+  {},
+  {
+    onProgress: text => replyProgress.push(text),
+    streamDiagnoseRequester: async options => {
+      options.onChunkReceived({
+        data:
+          'event: reply\ndata: {"event":"reply","content":"内部推理：叶片存在病斑","fullText":"完整原始模型输出"}\n\n'
+      })
+      options.onChunkReceived({
+        data: `event: done\ndata: ${JSON.stringify({ event: 'done', data: expectedResult })}\n\n`
+      })
+      return { statusCode: 200, data: '' }
+    }
+  }
+)
+assert.deepEqual(replyResult, expectedResult)
+assert.deepEqual(replyProgress, ['正在整理检查结果。'])
+assert.doesNotMatch(replyProgress.join('\n'), /内部推理|原始模型输出|病斑/)
 
 const bufferedObject = await buildStreamDiagnosisPromise(
   {},

@@ -78,8 +78,8 @@ async function save() {
     emit('saved', savedData)
     uni.showToast({ title: '盆型信息已保存', icon: 'success' })
     close()
-  } catch (error) {
-    uni.showToast({ title: error.message || '保存失败', icon: 'none' })
+  } catch {
+    uni.showToast({ title: '盆型信息暂未保存，请检查网络后重试', icon: 'none' })
   } finally {
     saving.value = false
   }

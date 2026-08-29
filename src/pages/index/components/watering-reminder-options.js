@@ -451,9 +451,9 @@ export async function confirmAdvisorSessionWatered({ catalogPlantId, wateredDate
 }
 
 export async function fetchAdvisorSessions({ page = 1, pageSize = 20 } = {}) {
-  const response = await requestHttpFunction(
-    `plant-user-http/user-plants/watering-advisor?page=${page}&pageSize=${pageSize}`,
-    { method: 'GET' }
-  )
+  const response = await requestHttpFunction('plant-user-http/user-plants/watering-advisor', {
+    method: 'GET',
+    query: { page, pageSize }
+  })
   return response?.code === 200 ? response.data : null
 }

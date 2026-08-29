@@ -12,9 +12,10 @@ export function useDefaultPlants() {
   const initialLoading = ref(false)
   const loadingMore = ref(false)
   const loading = computed(() => initialLoading.value || loadingMore.value)
+  let requestSequence = 0
 
-  async function fetchCatalogPage(targetPage) {
-    const normalizedKeyword = keywordRef.value.trim()
+  async function fetchCatalogPage(targetPage, keyword = keywordRef.value) {
+    const normalizedKeyword = String(keyword || '').trim()
     console.log('[PlantCatalogQuery] fetch', {
       keyword: normalizedKeyword,
       pageParam: targetPage,
@@ -39,10 +40,14 @@ export function useDefaultPlants() {
       hasMore: Boolean(data?.hasMore)
     }
 
+    return payload
+  }
+
+  function applyCatalogPayload(payload, { replace = false } = {}) {
     total.value = payload.total
     hasMore.value = payload.hasMore
     page.value = payload.page
-    return payload.list
+    plants.value = replace ? payload.list : [...plants.value, ...payload.list]
   }
 
   /**
@@ -55,6 +60,7 @@ export function useDefaultPlants() {
       return
     }
 
+    const sequence = ++requestSequence
     keywordRef.value = String(nextKeyword || '').trim()
     console.log('[PlantCatalogQuery] load', {
       keyword: keywordRef.value,
@@ -62,30 +68,50 @@ export function useDefaultPlants() {
       pageSize: pageSize.value
     })
     initialLoading.value = true
+    loadingMore.value = false
     try {
-      plants.value = await fetchCatalogPage(1)
+      const payload = await fetchCatalogPage(1, keywordRef.value)
+      if (sequence !== requestSequence) {
+        return
+      }
+      applyCatalogPayload(payload, { replace: true })
     } finally {
-      initialLoading.value = false
+      if (sequence === requestSequence) {
+        initialLoading.value = false
+      }
     }
   }
 
   async function loadNextPage() {
-    if (!hasMore.value || loadingMore.value) {return}
+    if (!hasMore.value || loadingMore.value) {
+      return
+    }
+    const sequence = requestSequence
+    const targetPage = page.value + 1
+    const keyword = keywordRef.value
     loadingMore.value = true
     try {
-      const nextList = await fetchCatalogPage(page.value + 1)
-      plants.value = [...plants.value, ...nextList]
+      const payload = await fetchCatalogPage(targetPage, keyword)
+      if (sequence !== requestSequence) {
+        return
+      }
+      applyCatalogPayload(payload)
     } finally {
-      loadingMore.value = false
+      if (sequence === requestSequence) {
+        loadingMore.value = false
+      }
     }
   }
 
   function reset() {
+    requestSequence += 1
     keywordRef.value = ''
     page.value = 1
     plants.value = []
     total.value = 0
     hasMore.value = false
+    initialLoading.value = false
+    loadingMore.value = false
   }
 
   return {

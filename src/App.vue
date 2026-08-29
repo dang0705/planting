@@ -1,6 +1,9 @@
 <script setup>
 import { onLaunch, onShow, onHide } from '@dcloudio/uni-app'
 import { CLOUDBASE_ENV_ID } from '@/utils/runtime-env'
+// #ifdef MP-WEIXIN
+import { getCloudbaseAccessToken } from '@/utils/cloudbase-auth'
+// #endif
 
 // #ifdef MP-WEIXIN
 function initMiniProgramCloud() {
@@ -9,14 +12,25 @@ function initMiniProgramCloud() {
     traceUser: true
   })
 
+  // 正式线上预检与业务请求共用同一 CloudBase 登录态。只暴露一个按需取令牌
+  // 的函数，不把令牌写入页面数据或业务 store。
+  wx.cloud.__plantingGetCloudbaseAccessToken = getCloudbaseAccessToken
+  if (typeof getApp === 'function') {
+    const app = getApp()
+    if (app) {
+      app.globalData = app.globalData || {}
+      app.globalData.__plantingGetCloudbaseAccessToken = getCloudbaseAccessToken
+    }
+  }
+
   try {
     if (wx.cloud?.extend?.AI) {
-      console.log('✅ AI 扩展已初始化')
+      console.log('云能力已初始化')
       return
     }
-    console.warn('⚠️ AI 扩展不可用，深度思考功能可能无法使用')
+    console.warn('云能力扩展不可用')
   } catch (error) {
-    console.error('❌ AI 扩展初始化失败:', error)
+    console.error('云能力扩展初始化失败:', error)
   }
 }
 // #endif

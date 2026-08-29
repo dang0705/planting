@@ -64,16 +64,22 @@ function assertAuthenticatedUser({ userInfo = null, message = '请先登录' } =
 }
 
 async function ensureQuota(openid, { skipQuota = false } = {}) {
-  if (skipQuota || !openid) {return}
+  if (skipQuota || !openid) {
+    return
+  }
 
   const quota = await checkAIQuota(openid, 'diagnose')
   if (!quota.allowed) {
-    throw Object.assign(new Error(quota.message || '诊断配额不足'), { statusCode: quota.code || 403 })
+    throw Object.assign(new Error(quota.message || '诊断配额不足'), {
+      statusCode: quota.code || 403
+    })
   }
 }
 
 async function consumeQuota(openid, { skipQuota = false } = {}) {
-  if (skipQuota || !openid) {return}
+  if (skipQuota || !openid) {
+    return
+  }
 
   try {
     await deductQuota(openid, 'diagnose')
@@ -82,11 +88,7 @@ async function consumeQuota(openid, { skipQuota = false } = {}) {
   }
 }
 
-async function runWithQuotaGuard({
-  openid = '',
-  enabled = true,
-  task
-} = {}) {
+async function runWithQuotaGuard({ openid = '', enabled = true, task } = {}) {
   if (typeof task !== 'function') {
     throw new Error('runWithQuotaGuard 缺少 task')
   }
@@ -106,5 +108,6 @@ module.exports = {
   resolveRequestPrincipal,
   assertAuthenticatedUser,
   assertInternalReviewAccess,
+  hasInternalReviewAccess,
   runWithQuotaGuard
 }

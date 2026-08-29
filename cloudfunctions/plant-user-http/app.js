@@ -8,6 +8,7 @@ if (typeof globalThis.File !== 'function') {
 
 const {
   jsonResponse,
+  internalServerError,
   notFound,
   methodNotAllowed,
   getHttpRequestData,
@@ -20,7 +21,6 @@ const {
   getUserPlantInstanceById,
   listUserPlantInstances,
   updateUserPlantInstance,
-  deleteUserPlantInstance,
   getUserPlantWateringStrategy
 } = require('/opt/utils/plant-knowledge')
 const {
@@ -32,6 +32,9 @@ const {
   attachCareLocationsToList,
   savePlantCareLocation
 } = require('./care-location-service')
+const {
+  deleteUserPlantCompletely
+} = require('./plant-deletion-service')
 const {
   attachWateringReminderStateToList,
   completeWateringReminder,
@@ -209,7 +212,7 @@ async function main(event, context) {
           return jsonResponse(500, {
             code: 500,
             message: '浇水提醒表未就绪或保存失败，请稍后重试',
-            data: diagnostic
+            data: null
           })
         }
       }
@@ -545,14 +548,41 @@ async function main(event, context) {
       if (!id) {
         return jsonResponse(400, { code: 400, message: '缺少植物ID', data: null })
       }
-      await deleteUserPlantInstance(openid, id)
-      return jsonResponse(200, { code: 200, message: '删除成功', data: { id } })
+      let deleted
+      try {
+        deleted = await deleteUserPlantCompletely({ openid, plantId: id })
+      } catch (error) {
+        if (Number(error?.statusCode) === 400 || Number(error?.statusCode) === 404) {
+          return jsonResponse(error.statusCode, {
+            code: error.statusCode,
+            message: error.message,
+            data: null
+          })
+        }
+        if (Number(error?.statusCode) === 503) {
+          return jsonResponse(503, {
+            code: 503,
+            message: '删除服务暂未就绪，请稍后重试',
+            data: null
+          })
+        }
+        throw error
+      }
+      return jsonResponse(200, {
+        code: 200,
+        message: deleted.cleanupPending ? '植物已删除，图片正在清理' : '删除成功',
+        data: {
+          id,
+          cleanupPending: deleted.cleanupPending,
+          cleanupAttempted: deleted.cleanupAttempted
+        }
+      })
     }
 
     return methodNotAllowed(method)
   } catch (error) {
     console.error('plant-user-http error:', error)
-    return jsonResponse(500, { code: 500, message: error.message, data: null })
+    return internalServerError('植物信息暂时不可用，请稍后重试')
   }
 }
 

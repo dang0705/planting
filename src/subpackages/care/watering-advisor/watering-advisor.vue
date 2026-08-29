@@ -307,7 +307,7 @@
           v-if="plannerResult"
           id="watering-advisor-done"
           class="m-0 h-[52px] flex-[2] rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white"
-          @click="finishAdvisor"
+          @click="handleFinishAdvisor"
         >
           完成
         </button>
@@ -335,6 +335,7 @@ import { useUserStore } from '@/store/user.js'
 import { usePlantStore } from '@/store/plants.js'
 import { fetchUserPlantWateringPlanner } from '@/api/plants-http.js'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
+import { createAsyncActionGuard, createLeadingThrottle } from '@/utils/interaction-guard.js'
 import CatalogPlantSearch from './components/CatalogPlantSearch.vue'
 import { formatMlRangeToBottleText } from '@/utils/water-volume-format.js'
 import {
@@ -362,6 +363,7 @@ const selectedCatalogPlant = ref(null)
 const computing = ref(false)
 const plannerResult = ref(null)
 const wateringConfirmed = ref(false)
+const confirmWateredAction = createAsyncActionGuard()
 const searchRef = ref(null)
 const potProfileFormRef = ref(null)
 const selectedUserPlantId = ref(null)
@@ -577,23 +579,28 @@ async function goToResult() {
 function finishAdvisor() {
   uni.navigateBack()
 }
-async function confirmWatered() {
-  if (isUserPlant.value || wateringConfirmed.value) {
-    return
-  }
-  const catalogPlantId =
-    selectedCatalogPlant.value?.plantIdentityId || selectedCatalogPlant.value?.sessionPlantId || ''
-  if (!catalogPlantId) {
-    uni.showToast({ title: '缺少植物信息，暂时无法记录', icon: 'none' })
-    return
-  }
-  try {
-    await confirmAdvisorSessionWatered({ catalogPlantId, wateredDate: todayStr() })
-    reportAnalyticsEvent(ANALYTICS_EVENTS.WATERING_RECORDED)
-    wateringConfirmed.value = true
-  } catch (error) {
-    uni.showToast({ title: error?.message || '记录失败，请稍后重试', icon: 'none' })
-  }
+const handleFinishAdvisor = createLeadingThrottle(finishAdvisor, 500)
+function confirmWatered() {
+  return confirmWateredAction.run(async () => {
+    if (isUserPlant.value || wateringConfirmed.value) {
+      return
+    }
+    const catalogPlantId =
+      selectedCatalogPlant.value?.plantIdentityId ||
+      selectedCatalogPlant.value?.sessionPlantId ||
+      ''
+    if (!catalogPlantId) {
+      uni.showToast({ title: '缺少植物信息，暂时无法记录', icon: 'none' })
+      return
+    }
+    try {
+      await confirmAdvisorSessionWatered({ catalogPlantId, wateredDate: todayStr() })
+      reportAnalyticsEvent(ANALYTICS_EVENTS.WATERING_RECORDED)
+      wateringConfirmed.value = true
+    } catch {
+      uni.showToast({ title: '浇水记录暂未保存，请检查网络后重试', icon: 'none' })
+    }
+  })
 }
 function loadInitialCatalog() {
   searchRef.value?.loadPlants('')

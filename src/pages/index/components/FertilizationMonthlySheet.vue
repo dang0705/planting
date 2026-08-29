@@ -134,7 +134,7 @@
       :sync-error="syncError"
       :condition-answers="conditionAnswers"
       :fertilizer-type-change-acknowledged="fertilizerTypeChangeAcknowledged"
-      preview-button-text="继续"
+      preview-button-text="设置下次施肥提醒"
       @select-type="selectFertilizerType"
       @change-condition="handleConditionChange"
       @change-type-change="onFertilizerTypeChange"
@@ -158,6 +158,7 @@ import {
 } from '@/api/plants-http.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
+import { createAsyncActionGuard } from '@/utils/interaction-guard.js'
 import FertilizationReminderSetup from './FertilizationReminderSetup.vue'
 import SavedFertilizationReminderState from './SavedFertilizationReminderState.vue'
 import FertilizationReminderPreview from './FertilizationReminderPreview.vue'
@@ -200,6 +201,7 @@ const serverCurrentMonthOptions = ref(null)
 const currentMonthGuard = ref(null)
 const assertedDate = ref('')
 let reminderLoadSequence = 0
+const createPreviewAction = createAsyncActionGuard()
 
 const canOpenReminderSetup = computed(
   () =>
@@ -388,7 +390,6 @@ function showFertilizationAlert() {
 }
 
 function showGrowthConditionAlert(code) {
-  closeReminderSetup()
   conditionOverrideCode.value = String(code || '').trim()
   fertilizationAlertMode.value = 'growth_condition'
   showFertilizationAlertDialog.value = true
@@ -415,6 +416,7 @@ async function confirmFertilizationAlert() {
   const growthCode = conditionOverrideCode.value
   showFertilizationAlertDialog.value = false
   if (alertMode === 'growth_condition') {
+    closeReminderSetup()
     conditionOverrideCode.value = ''
     if (growthCode) {
       setConditionAnswer({ code: growthCode, value: true })
@@ -440,63 +442,58 @@ function onAssertedDateChange(event) {
   assertedDate.value = String(event?.detail?.value || '').trim()
 }
 
-function resolveFertilizationErrorMessage(error, fallback = '暂时无法生成提醒日期') {
-  const candidates = [
-    error?.message,
-    error?.data?.message,
-    error?.response?.data?.message,
-    error?.response?.message
-  ]
-  const message = candidates.find(value => typeof value === 'string' && value.trim())
-  return message ? message.trim() : fallback
+function resolveFertilizationErrorMessage(_error, fallback = '暂时无法生成提醒日期') {
+  return fallback
 }
 
-async function createPreview(userAssertedLastAppliedDate = '') {
-  if (!canPreview.value || !props.plant?.id) {
-    return
-  }
-  loading.value = true
-  syncError.value = ''
-  pendingCalendarPayload.value = null
-  syncTerminalError.value = false
-  let shouldShowAlert = false
-  try {
-    const response = await previewFertilizationReminder({
-      plantId: Number(props.plant.id),
-      fertilizerType: selectedType.value,
-      conditionAnswers: conditionAnswers.value,
-      acknowledgeFertilizerTypeChange: fertilizerTypeChangeAcknowledged.value,
-      ...(userAssertedLastAppliedDate ? { userAssertedLastAppliedDate } : {})
-    })
-    if (Number(response?.code) !== 200 || !response.data) {
-      const responseData = response?.data || {}
-      if (
-        responseData.conditionRequirements?.length ||
-        responseData.requiresFertilizerTypeChangeAcknowledgement
-      ) {
-        preflight.value = responseData
-        syncError.value = resolveFertilizationErrorMessage(response, '请先确认设置条件')
-        return
-      }
-      syncError.value = resolveFertilizationErrorMessage(response)
+function createPreview(userAssertedLastAppliedDate = '') {
+  return createPreviewAction.run(async () => {
+    if (!canPreview.value || !props.plant?.id) {
       return
     }
-    preview.value = response.data
-    preflight.value = null
-    conditionAnswers.value = {}
-    fertilizerTypeChangeAcknowledged.value = false
-    shouldShowAlert = true
-  } catch (error) {
-    syncError.value = resolveFertilizationErrorMessage(error, '生成失败，请稍后重试')
-    uni.showToast({ title: syncError.value, icon: 'none' })
-  } finally {
-    loading.value = false
-    if (shouldShowAlert) {
-      closeReminderSetup()
-      await nextTick()
-      await showFertilizationAlert()
+    loading.value = true
+    syncError.value = ''
+    pendingCalendarPayload.value = null
+    syncTerminalError.value = false
+    let shouldShowAlert = false
+    try {
+      const response = await previewFertilizationReminder({
+        plantId: Number(props.plant.id),
+        fertilizerType: selectedType.value,
+        conditionAnswers: conditionAnswers.value,
+        acknowledgeFertilizerTypeChange: fertilizerTypeChangeAcknowledged.value,
+        ...(userAssertedLastAppliedDate ? { userAssertedLastAppliedDate } : {})
+      })
+      if (Number(response?.code) !== 200 || !response.data) {
+        const responseData = response?.data || {}
+        if (
+          responseData.conditionRequirements?.length ||
+          responseData.requiresFertilizerTypeChangeAcknowledgement
+        ) {
+          preflight.value = responseData
+          syncError.value = resolveFertilizationErrorMessage(response, '请先确认设置条件')
+          return
+        }
+        syncError.value = resolveFertilizationErrorMessage(response)
+        return
+      }
+      preview.value = response.data
+      preflight.value = null
+      conditionAnswers.value = {}
+      fertilizerTypeChangeAcknowledged.value = false
+      shouldShowAlert = true
+    } catch (error) {
+      syncError.value = resolveFertilizationErrorMessage(error, '生成失败，请稍后重试')
+      uni.showToast({ title: syncError.value, icon: 'none' })
+    } finally {
+      loading.value = false
+      if (shouldShowAlert) {
+        closeReminderSetup()
+        await nextTick()
+        await showFertilizationAlert()
+      }
     }
-  }
+  })
 }
 
 async function handlePreviewRequest() {
@@ -565,8 +562,8 @@ async function confirmPreview() {
       } else {
         throw new Error('提醒已保存，但最新状态暂时无法读取')
       }
-    } catch (refreshError) {
-      syncError.value = refreshError?.message || '提醒已保存，请重新打开查看最新状态。'
+    } catch {
+      syncError.value = '提醒已保存，请重新打开查看最新状态。'
     }
     reportAnalyticsEvent(ANALYTICS_EVENTS.FERTILIZATION_REMINDER_SAVED)
     preview.value = null
@@ -581,7 +578,7 @@ async function confirmPreview() {
     }
     syncError.value = pendingCalendarPayload.value
       ? '手机日历已添加，但应用内还没保存成功，请点击“重试同步”。'
-      : error?.message || '暂时无法添加提醒，请稍后重试。'
+      : '暂时无法添加提醒，请稍后重试。'
     if (!pendingCalendarPayload.value && preview.value?.planId) {
       await cancelFertilizationReminder({ planId: preview.value.planId }).catch(() => {})
       preview.value = null
@@ -666,8 +663,8 @@ async function completeReminder(completion = {}) {
     if (!preview.value) {
       uni.showToast({ title: '已记录今天施肥', icon: 'success' })
     }
-  } catch (error) {
-    uni.showToast({ title: error?.message || '记录失败', icon: 'none' })
+  } catch {
+    uni.showToast({ title: '暂时无法记录施肥，请稍后重试', icon: 'none' })
   } finally {
     loading.value = false
   }
@@ -688,8 +685,8 @@ async function dismissReminder() {
     }
     await loadReminder()
     emit('changed', null)
-  } catch (error) {
-    uni.showToast({ title: error?.message || '结束失败', icon: 'none' })
+  } catch {
+    uni.showToast({ title: '暂时无法移除本次提醒，请稍后重试', icon: 'none' })
   } finally {
     loading.value = false
   }
@@ -714,8 +711,8 @@ async function confirmCalendarDelete() {
     closeCalendarDelete()
     uni.showToast({ title: '施肥日历提醒已移除', icon: 'success' })
     return true
-  } catch (error) {
-    uni.showToast({ title: error?.message || '删除失败', icon: 'none' })
+  } catch {
+    uni.showToast({ title: '暂时无法移除提醒，请稍后重试', icon: 'none' })
     return false
   } finally {
     loading.value = false

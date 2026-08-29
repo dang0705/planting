@@ -56,12 +56,6 @@
     <text v-if="monthly.scopeGuidance" class="mt-1 block text-[11px] leading-4 text-gray-500">
       {{ monthly.scopeGuidance }}
     </text>
-    <text v-if="monthly.publicNote" class="mt-1 block text-[11px] leading-4 text-gray-500">
-      {{ monthly.publicNote }}
-    </text>
-    <text v-if="monthly.choiceGuidance" class="mt-1 block text-[11px] leading-4 text-gray-500">
-      {{ monthly.choiceGuidance }}
-    </text>
   </view>
 </template>
 

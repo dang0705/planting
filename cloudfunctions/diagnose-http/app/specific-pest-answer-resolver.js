@@ -129,7 +129,7 @@ function buildSpecificPestOutcome(mode = '', { probable = false } = {}) {
     summary:
       mode === 'fungus_gnat'
         ? `${probable ? '当前更接近' : '已保留'} ${displayName} 方向，线索集中在盆土小飞虫活动。`
-        : `${probable ? '当前更接近' : '已保留'} ${displayName} 方向，线索来自视觉证据和补充回答。`,
+        : `${probable ? '当前更接近' : '已保留'} ${displayName} 方向，结合照片和你的补充回答判断。`,
     severity: 'medium',
     urgency: 'observe',
     actionAdviceItems,
@@ -212,10 +212,10 @@ function resolveSpecificPestAnswerResult({
     : []
   const summary = hasOutcomes
     ? canRefinePestCandidates
-      ? '当前图片支持多个虫害方向，其中部分仍需在结果页继续细分。'
+      ? '当前照片可能涉及多种虫害，需要继续观察并补充细节。'
       : !finalModes.length && probableSummaryMode
-        ? `补充回答未能确认关键特征，当前仍按图片候选更接近 ${probableSummaryLabel}，需结合后续观察确认。`
-        : `已根据虫害视觉线索和补充回答保留 ${visibleOutcomes.length} 个方向。`
+        ? `补充回答暂未确认关键特征，当前更接近 ${probableSummaryLabel}，建议结合后续变化继续观察。`
+        : `结合照片和你的补充回答，当前整理出 ${visibleOutcomes.length} 个可能方向。`
     : '这次图片和回答还不能稳定判断具体虫害。'
   const stickyHoneydewAnswer = hasStickyHoneydewAnswer(answers)
 

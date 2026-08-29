@@ -115,7 +115,7 @@
         id="fertilization-reminder-dismiss-button"
         class="mt-2 m-0 w-full rounded-xl border border-[#E1E9DD] bg-white py-2.5 text-sm text-[#53645A] after:border-0"
         role="button"
-        @tap.stop="handleDismissClick"
+        @tap="handleDismissClick"
       >
         本次跳过
       </view>

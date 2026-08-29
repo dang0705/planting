@@ -43,8 +43,10 @@ function unwrapResponseEnvelope(responseData, fallbackMessage) {
   if (code === 200) {
     return envelope?.data
   }
-  const businessCode = envelope?.businessCode ? `（${envelope.businessCode}）` : ''
-  throw new Error(`${envelope?.message || fallbackMessage}${businessCode}`)
+  const error = new Error(envelope?.message || fallbackMessage)
+  error.businessCode = String(envelope?.businessCode || '').trim()
+  error.code = error.businessCode || String(envelope?.code || '').trim()
+  throw error
 }
 
 const retakeAuthorizeRequester = httpRequest({

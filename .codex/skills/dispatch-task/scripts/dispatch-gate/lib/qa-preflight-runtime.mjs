@@ -157,7 +157,10 @@ export async function probeWxRequest({
         globalThis[requestSlot] = {
           state: 'pending',
           identity_required: requireIdentity === true,
-          identity_resolved: false
+          identity_resolved: false,
+          access_token_resolved: false,
+          identity_ticket_resolved: false,
+          native_http_function: false
         }
         var finishFailure = function (message) {
           globalThis[requestSlot] = {
@@ -165,12 +168,111 @@ export async function probeWxRequest({
             ok: false,
             identity_required: requireIdentity === true,
             identity_resolved: false,
+            access_token_resolved: false,
+            identity_ticket_resolved: false,
+            native_http_function: false,
             error: message
           }
         }
-        var sendRequest = function (openid) {
+        var sendRequest = function (identity, accessToken) {
+          var openid = identity && identity.openid ? String(identity.openid) : ''
+          var bearerToken = accessToken ? String(accessToken).trim() : ''
+          var identityTicket =
+            identity && identity.httpIdentityTicket
+              ? String(identity.httpIdentityTicket).trim()
+              : ''
+          var nativeTarget = null
+          try {
+            var nativeMatch = String(requestUrl || '').match(
+              /\/v1\/functions\/([^/?#]+)(\/[^?#]*)?(?:\?([^#]*))?/i
+            )
+            if (nativeMatch && nativeMatch[1]) {
+              var nativeQuery = String(nativeMatch[3] || '')
+                .split('&')
+                .filter(function (part) {
+                  return part && !/^webfn=/i.test(part)
+                })
+                .join('&')
+              nativeTarget = {
+                name: decodeURIComponent(nativeMatch[1]),
+                path:
+                  String(nativeMatch[2] || '/') +
+                  (nativeQuery ? '?' + nativeQuery : '')
+              }
+            }
+          } catch (error) {
+            nativeTarget = null
+          }
           if (requireIdentity === true && !openid) {
             finishFailure('wechat-identity 未返回有效 openid')
+            return
+          }
+          if (
+            nativeTarget &&
+            wx.cloud &&
+            typeof wx.cloud.callHTTPFunction === 'function'
+          ) {
+            try {
+              wx.cloud.callHTTPFunction({
+                name: nativeTarget.name,
+                path: nativeTarget.path,
+                method: 'GET',
+                header: identityTicket
+                  ? {
+                      // Keep the preflight request contract identical to the
+                      // product's native httpRequest transport. The online
+                      // functions use these environment headers to select
+                      // the development schema; omitting them can make
+                      // wx.cloud.callHTTPFunction fail at the gateway before
+                      // a business response is produced.
+                      'x-app-env': 'development',
+                      'x-env': 'development',
+                      Authorization: 'Bearer ' + identityTicket,
+                      'x-planting-http-identity-ticket': identityTicket
+                    }
+                  : undefined,
+                success: function (response) {
+                  var responseData = response && response.data
+                  var responseCode =
+                    responseData && responseData.code !== undefined ? responseData.code : null
+                  var statusCode =
+                    response && response.statusCode !== undefined ? response.statusCode : null
+                  globalThis[requestSlot] = {
+                    state: 'completed',
+                    ok: true,
+                    statusCode: statusCode,
+                    response_code: responseCode,
+                    identity_required: requireIdentity === true,
+                    identity_resolved: Boolean(openid),
+                    access_token_resolved: false,
+                    identity_ticket_resolved: Boolean(identityTicket),
+                    native_http_function: true
+                  }
+                },
+                fail: function (error) {
+                  globalThis[requestSlot] = {
+                    state: 'completed',
+                    ok: false,
+                    identity_required: requireIdentity === true,
+                    identity_resolved: Boolean(openid),
+                    access_token_resolved: false,
+                    identity_ticket_resolved: Boolean(identityTicket),
+                    native_http_function: true,
+                    error: error && error.errMsg ? error.errMsg : String(error)
+                  }
+                }
+              })
+            } catch (error) {
+              finishFailure(error && error.message ? error.message : String(error))
+            }
+            return
+          }
+          if (requireIdentity === true && !bearerToken) {
+            finishFailure('微信登录态不可用，请重新打开小程序')
+            return
+          }
+          if (requireIdentity === true && !identityTicket) {
+            finishFailure('微信身份校验信息缺失，请重新打开小程序')
             return
           }
           try {
@@ -189,7 +291,10 @@ export async function probeWxRequest({
                   statusCode: statusCode,
                   response_code: responseCode,
                   identity_required: requireIdentity === true,
-                  identity_resolved: Boolean(openid)
+                  identity_resolved: Boolean(openid),
+                  access_token_resolved: Boolean(bearerToken),
+                  identity_ticket_resolved: Boolean(identityTicket),
+                  native_http_function: false
                 }
               },
               fail: function (error) {
@@ -199,6 +304,9 @@ export async function probeWxRequest({
                   ok: false,
                   identity_required: requireIdentity === true,
                   identity_resolved: Boolean(openid),
+                  access_token_resolved: Boolean(bearerToken),
+                  identity_ticket_resolved: Boolean(identityTicket),
+                  native_http_function: false,
                   error: errorMessage
                 }
               },
@@ -210,16 +318,21 @@ export async function probeWxRequest({
                     ok: false,
                     identity_required: requireIdentity === true,
                     identity_resolved: Boolean(openid),
+                    access_token_resolved: Boolean(bearerToken),
+                    identity_ticket_resolved: Boolean(identityTicket),
+                    native_http_function: false,
                     error: 'wx.request completed without success or fail result'
                   }
                 }
               }
             }
-            if (openid) {
-              requestOptions.header = {
-                'x-wx-openid': openid,
-                'x-openid': openid
-              }
+            if (bearerToken) {
+              requestOptions.header = requestOptions.header || {}
+              requestOptions.header.Authorization = 'Bearer ' + bearerToken
+            }
+            if (identityTicket) {
+              requestOptions.header = requestOptions.header || {}
+              requestOptions.header['x-planting-http-identity-ticket'] = identityTicket
             }
             wx.request(requestOptions)
           } catch (error) {
@@ -227,8 +340,35 @@ export async function probeWxRequest({
             finishFailure(message)
           }
         }
+        var resolveTokenAndSend = function (identity) {
+          var getAccessToken =
+            wx.cloud && wx.cloud.__plantingGetCloudbaseAccessToken
+              ? wx.cloud.__plantingGetCloudbaseAccessToken
+              : null
+          if (typeof getAccessToken !== 'function' && typeof getApp === 'function') {
+            var app = getApp()
+            var globalData = app && app.globalData
+            getAccessToken = globalData && globalData.__plantingGetCloudbaseAccessToken
+          }
+          if (typeof getAccessToken !== 'function') {
+            finishFailure('微信登录态不可用，请重新打开小程序')
+            return
+          }
+          try {
+            Promise.resolve(getAccessToken()).then(
+              function (accessToken) {
+                sendRequest(identity, accessToken)
+              },
+              function (error) {
+                finishFailure(error && error.message ? error.message : String(error))
+              }
+            )
+          } catch (error) {
+            finishFailure(error && error.message ? error.message : String(error))
+          }
+        }
         if (requireIdentity !== true) {
-          sendRequest('')
+          sendRequest('', '')
           return { started: true, identity_required: false }
         }
         if (!wx.cloud || typeof wx.cloud.callFunction !== 'function') {
@@ -241,7 +381,7 @@ export async function probeWxRequest({
             data: {},
             success: function (result) {
               var identity = result && result.result ? result.result : {}
-              sendRequest(identity && identity.openid ? String(identity.openid) : '')
+              resolveTokenAndSend(identity)
             },
             fail: function (error) {
               finishFailure(error && error.errMsg ? error.errMsg : String(error))
@@ -269,6 +409,9 @@ export async function probeWxRequest({
             response_code: value.response_code,
             identity_required: value.identity_required,
             identity_resolved: value.identity_resolved,
+            access_token_resolved: value.access_token_resolved,
+            identity_ticket_resolved: value.identity_ticket_resolved,
+            native_http_function: value.native_http_function,
             error: value.error
           }
         },
@@ -286,7 +429,11 @@ export async function probeWxRequest({
             observation.ok === true &&
             acceptableResponseStatus(statusCode) &&
             (requireAuthenticatedIdentity !== true ||
-              (observation.identity_resolved === true && Number(observation.response_code) === 200))
+              (observation.identity_resolved === true &&
+                Number(observation.response_code) === 200 &&
+                (observation.native_http_function === true ||
+                  (observation.access_token_resolved === true &&
+                    observation.identity_ticket_resolved === true))))
         }
         return result
       }
@@ -451,6 +598,9 @@ export async function captureRuntimeEvidence({
       response_code: request.response_code ?? null,
       identity_required: request.identity_required === true,
       identity_resolved: request.identity_resolved === true,
+      access_token_resolved: request.access_token_resolved === true,
+      identity_ticket_resolved: request.identity_ticket_resolved === true,
+      native_http_function: request.native_http_function === true,
       error: request.error ?? null,
       timed_out: request.timed_out === true,
       cleanup: request.cleanup,

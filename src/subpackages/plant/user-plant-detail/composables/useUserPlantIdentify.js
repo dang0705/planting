@@ -4,6 +4,9 @@ import { showBottomSheetAction } from '@/utils/bottom-sheet-action.js'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 
 function isRetryableRequestError(error) {
+  if (error?.isRetryable) {
+    return true
+  }
   return /timeout|timed out|network error|request:fail|fail timeout/i.test(
     String(error?.message || error || '')
   )
@@ -129,7 +132,7 @@ export function useUserPlantIdentify({
       pendingImage.path = path
       pendingImage.fileId = fileId
       pendingImage.url = await getImageUrl(fileId, 7200)
-      uni.showLoading({ title: 'AI 识别中...', mask: true })
+      uni.showLoading({ title: '正在识别植物...', mask: true })
       const response = await identifyPlantByImageWithRetry(pendingImage.url)
       uni.hideLoading()
       if (response?.code !== 200) {
@@ -141,20 +144,20 @@ export function useUserPlantIdentify({
       const result = normalizeIdentifyResult(response.data)
       setTimeout(() => {
         aiDialogRef.value?.setText(
-          `识别结果：${result.name}\n置信度：${((result.confidence || 0) * 100).toFixed(1)}%`
+          `识别结果：${result.name}\n请确认是否正确。`
         )
         aiDialogRef.value?.finishStream(result)
       }, 100)
-    } catch (error) {
+    } catch {
       uni.hideLoading()
       await clearPendingImage()
-      uni.showToast({ title: error?.message || '识别失败，请重试', icon: 'none' })
+      uni.showToast({ title: '暂时无法识别图片，请检查网络后重试', icon: 'none' })
     }
   }
 
   async function useAIIdentify() {
     if (!(await userStore.ensureLogin())) {
-      loginMsg.value = '使用 AI 识别功能需要先登录'
+      loginMsg.value = '使用图片识别需要先登录'
       showLogin.value = true
       return
     }

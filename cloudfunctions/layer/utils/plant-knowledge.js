@@ -72,14 +72,16 @@ function clampProbability(value) {
   return clamp(Number(value || 0), 0, 1)
 }
 
-function normalizeReliabilitySummary(summary, reliabilityScore) {
+function normalizeReliabilitySummary(summary) {
   const normalizedSummary = String(summary || '').trim()
   if (!normalizedSummary) {
     return normalizedSummary
   }
 
-  const normalizedPercent = `${Math.round(clampProbability(reliabilityScore) * 100)}%`
-  return normalizedSummary.replace(/可信度\s*\d+%/g, `可信度 ${normalizedPercent}`)
+  return normalizedSummary
+    .replace(/(?:[，,；;]\s*)?(?:可信度|置信度)\s*\d+%/g, '')
+    .replace(/[，,；;]\s*$/g, '')
+    .trim()
 }
 
 function parseCareJson(value) {
@@ -1556,7 +1558,7 @@ async function listDiagnosisSessions(openid, { page = 1, pageSize = 10, userPlan
       plantCatalogId: row.plant_id,
       plantName: row.plant_nickname || row.canonical_name || '未知植物',
       mainIssue: row.final_problem_cn || row.top_problem_key || null,
-      summary: normalizeReliabilitySummary(row.ai_summary || '', row.reliability_score),
+      summary: normalizeReliabilitySummary(row.ai_summary || ''),
       imageUrl: row.image_url || '',
       healthScore:
         row.health_score === null || row.health_score === undefined

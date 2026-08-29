@@ -1,6 +1,11 @@
 import { BASE_URL, IS_LOCAL_API_BASE_URL, shouldAppendWebFunctionFlag } from '@/api/env'
-import { getCloudbaseUserIdentity } from '@/utils/cloudbase-auth'
+import {
+  getCloudbaseAccessToken,
+  getCloudbaseUserIdentity
+} from '@/utils/cloudbase-auth'
 import { getRequestAppEnvHeader } from '@/utils/runtime-env'
+
+export const DEFAULT_HTTP_TIMEOUT_MS = 20_000
 
 function isWechatMiniProgramRuntime() {
   return typeof wx !== 'undefined' && typeof wx?.cloud !== 'undefined'
@@ -18,6 +23,42 @@ function buildQueryString(query = {}) {
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
     .join('&')
   return `?${search}`
+}
+
+function parseFunctionPath(functionPath = '') {
+  const rawPath = String(functionPath || '').replace(/^\/+/, '')
+  const queryIndex = rawPath.indexOf('?')
+  if (queryIndex < 0) {
+    return { path: rawPath, query: {} }
+  }
+
+  const path = rawPath.slice(0, queryIndex)
+  const query = rawPath
+    .slice(queryIndex + 1)
+    .split('&')
+    .reduce((result, pair) => {
+      if (!pair) {
+        return result
+      }
+      const separatorIndex = pair.indexOf('=')
+      const rawKey = separatorIndex < 0 ? pair : pair.slice(0, separatorIndex)
+      const rawValue = separatorIndex < 0 ? '' : pair.slice(separatorIndex + 1)
+      try {
+        const key = decodeURIComponent(rawKey).trim()
+        if (key) {
+          result[key] = decodeURIComponent(rawValue)
+        }
+      } catch {
+        // 非法路径查询不应阻断显式 query；保留原始值交给服务端处理。
+        const key = String(rawKey || '').trim()
+        if (key) {
+          result[key] = String(rawValue || '')
+        }
+      }
+      return result
+    }, {})
+
+  return { path, query }
 }
 
 function getLocalDevOpenId() {
@@ -68,28 +109,35 @@ export async function resolveHttpFunctionAuth({ auth = true, headers = {} } = {}
   }
 
   const identity = await resolveRealRuntimeIdentity()
-  const ticket = String(identity?.httpIdentityTicket || '').trim()
-  if (!ticket) {
-    throw new Error('微信身份票据获取失败，请稍后重试')
+  const accessToken = String(await getCloudbaseAccessToken()).trim()
+  const identityTicket = String(identity?.httpIdentityTicket || '').trim()
+  if (!accessToken || !identityTicket) {
+    throw new Error('微信登录态获取失败，请稍后重试')
   }
   return {
     ...headers,
     'x-app-env': getRequestAppEnvHeader(),
     'x-env': getRequestAppEnvHeader(),
-    Authorization: `Bearer ${ticket}`
+    Authorization: `Bearer ${accessToken}`,
+    'x-planting-http-identity-ticket': identityTicket
   }
 }
 
 function createUrl(functionPath, query) {
-  const queryString = buildQueryString(query)
+  const parsedPath = parseFunctionPath(functionPath)
+  const mergedQuery = {
+    ...parsedPath.query,
+    ...(query && typeof query === 'object' ? query : {})
+  }
+  const queryString = buildQueryString(mergedQuery)
   const baseUrl = String(BASE_URL || '').replace(/\/+$/, '')
-  const path = String(functionPath || '').replace(/^\/+/, '')
+  const path = parsedPath.path
 
   if (!shouldAppendWebFunctionFlag()) {
     return `${baseUrl}/${path}${queryString}`
   }
 
-  if (query && Object.prototype.hasOwnProperty.call(query, 'webfn')) {
+  if (Object.prototype.hasOwnProperty.call(mergedQuery, 'webfn')) {
     return `${baseUrl}/${path}${queryString}`
   }
 
@@ -123,6 +171,83 @@ function resolveHttpMethodTransport(method = 'GET', query = {}, headers = {}) {
   }
 }
 
+function buildNativeHttpFunctionRequest(functionPath, query = {}) {
+  const parsedPath = parseFunctionPath(functionPath)
+  const mergedQuery = {
+    ...parsedPath.query,
+    ...(query && typeof query === 'object' ? query : {})
+  }
+  const pathSegments = parsedPath.path.split('/').filter(Boolean)
+  const functionName = pathSegments.shift() || ''
+  const path = `/${pathSegments.join('/')}`.replace(/\/$/u, '') || '/'
+  const queryString = buildQueryString(mergedQuery)
+
+  if (!functionName) {
+    throw new Error('缺少有效的 HTTP 云函数路径')
+  }
+
+  return {
+    name: functionName,
+    path: `${path}${queryString}`
+  }
+}
+
+function requestNativeHttpFunction({
+  functionPath,
+  method,
+  query,
+  payload,
+  headers,
+  identityTicket,
+  enableChunked,
+  timeout,
+  onChunkReceived
+}) {
+  const target = buildNativeHttpFunctionRequest(functionPath, query)
+  const options = {
+    name: target.name,
+    path: target.path,
+    method,
+    header: {
+      ...headers,
+      ...(identityTicket
+        ? {
+            Authorization: `Bearer ${identityTicket}`,
+            'x-planting-http-identity-ticket': identityTicket
+          }
+        : {})
+    },
+    ...(payload !== undefined ? { data: payload } : {}),
+    ...(enableChunked !== undefined ? { enableChunked } : {}),
+    ...(Number(timeout) > 0 ? { timeout: Number(timeout) } : {}),
+    ...(typeof onChunkReceived === 'function'
+      ? { onChunkedReceived: onChunkReceived }
+      : {})
+  }
+
+  return new Promise((resolve, reject) => {
+    try {
+      wx.cloud.callHTTPFunction({
+        ...options,
+        success: response => resolve(response),
+        fail: error => reject(buildPublicTransportError(error))
+      })
+    } catch (error) {
+      reject(buildPublicTransportError(error))
+    }
+  })
+}
+
+function buildPublicTransportError(error) {
+  const rawMessage = String(error?.errMsg || error?.message || error || '').toLowerCase()
+  const isTimeout = rawMessage.includes('timeout') || rawMessage.includes('timed out')
+  const publicError = new Error(
+    isTimeout ? '请求超时，请检查网络后重试' : '网络连接不稳定，请检查网络后重试'
+  )
+  publicError.isRetryable = true
+  return publicError
+}
+
 export function httpRequest(defaults = {}) {
   return async function (options = {}) {
     const {
@@ -137,24 +262,50 @@ export function httpRequest(defaults = {}) {
       timeout = defaults.timeout,
       onChunkReceived
     } = options
+    const requestTimeout = timeout === undefined ? DEFAULT_HTTP_TIMEOUT_MS : timeout
 
     if (!functionPath) {
       throw new Error('缺少 functionPath')
     }
 
-    const mergedHeaders = await resolveHttpFunctionAuth({
-      auth,
-      headers: {
-        'Content-Type': 'application/json',
-        ...defaults.headers,
-        ...headers
-      }
-    })
+    const baseHeaders = {
+      'Content-Type': 'application/json',
+      ...defaults.headers,
+      ...headers
+    }
     const { requestMethod, requestQuery, requestHeaders } = resolveHttpMethodTransport(
       method,
       query,
-      mergedHeaders
+      baseHeaders
     )
+
+    if (
+      isWechatMiniProgramRuntime() &&
+      !IS_LOCAL_API_BASE_URL &&
+      typeof wx.cloud.callHTTPFunction === 'function'
+    ) {
+      const identity = await resolveRealRuntimeIdentity()
+      return requestNativeHttpFunction({
+        functionPath,
+        method: requestMethod,
+        query: requestQuery,
+        payload,
+        headers: {
+          ...requestHeaders,
+          'x-app-env': getRequestAppEnvHeader(),
+          'x-env': getRequestAppEnvHeader()
+        },
+        identityTicket: identity.httpIdentityTicket,
+        enableChunked,
+        timeout: requestTimeout,
+        onChunkReceived
+      })
+    }
+
+    const mergedHeaders = await resolveHttpFunctionAuth({
+      auth,
+      headers: requestHeaders
+    })
     const url = createUrl(functionPath, requestQuery)
     console.log('[http-request] request url:', url)
 
@@ -163,12 +314,12 @@ export function httpRequest(defaults = {}) {
         url,
         method: requestMethod,
         data: payload,
-        header: requestHeaders,
+        header: mergedHeaders,
         ...(responseType ? { responseType } : {}),
         ...(enableChunked !== undefined ? { enableChunked } : {}),
-        ...(timeout ? { timeout } : {}),
+        ...(Number(requestTimeout) > 0 ? { timeout: Number(requestTimeout) } : {}),
         success: response => resolve(response),
-        fail: error => reject(error)
+        fail: error => reject(buildPublicTransportError(error))
       })
 
       if (

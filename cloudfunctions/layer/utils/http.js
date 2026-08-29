@@ -5,6 +5,7 @@ const { getUserInfo } = require('./cloudbase')
 const { normalizeAppEnv, runWithRequestAppEnv } = require('./runtime-env')
 
 const HTTP_IDENTITY_TICKET_PREFIX = 'planting-http-v1'
+const HTTP_IDENTITY_TICKET_HEADER = 'x-planting-http-identity-ticket'
 const HTTP_IDENTITY_TICKET_MAX_AGE_SECONDS = 5 * 60
 const LOCAL_FUNCTION_RUNTIME_FLAG = 'CLOUDBASE_LOCAL_FUNCTIONS_GATEWAY'
 const OPENID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/
@@ -21,47 +22,70 @@ function methodNotAllowed(method) {
   return jsonResponse(405, { code: 405, message: `不支持的请求方法: ${method}` })
 }
 
+function internalServerError(message = '服务暂时不可用，请稍后重试') {
+  return jsonResponse(500, { code: 500, message, data: null })
+}
+
 function notFound(path) {
   return jsonResponse(404, { code: 404, message: `接口不存在: ${path}` })
 }
 
 function normalizeHeaders(rawHeaders = {}) {
-  return Object.entries(rawHeaders).reduce((headers, [key, value]) => {
+  const source = rawHeaders && typeof rawHeaders === 'object' ? rawHeaders : {}
+  return Object.entries(source).reduce((headers, [key, value]) => {
     headers[String(key).toLowerCase()] = Array.isArray(value) ? value[0] : value
     return headers
   }, {})
 }
 
+function decodeQueryComponent(value) {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return String(value || '')
+  }
+}
+
 function resolveRequestAppEnv(_rawHeaders = {}, _query = {}, _body = {}) {
-  return normalizeAppEnv(
-    process.env.APP_ENV ||
-      process.env.RUNTIME_ENV ||
-      process.env.NODE_ENV
-  )
+  return normalizeAppEnv(process.env.APP_ENV || process.env.RUNTIME_ENV || process.env.NODE_ENV)
 }
 
 function parseQueryString(rawValue) {
   const raw = String(rawValue || '')
   const queryIndex = raw.indexOf('?')
-  if (queryIndex === -1) {return {}}
+  if (queryIndex === -1) {
+    return {}
+  }
 
   const queryString = raw.slice(queryIndex + 1)
   return queryString.split('&').reduce((result, pair) => {
-    if (!pair) {return result}
-    const [rawKey, rawVal = ''] = pair.split('=')
-    const key = decodeURIComponent(rawKey || '').trim()
-    if (!key) {return result}
-    result[key] = decodeURIComponent(rawVal || '')
+    if (!pair) {
+      return result
+    }
+    const separatorIndex = pair.indexOf('=')
+    const rawKey = separatorIndex === -1 ? pair : pair.slice(0, separatorIndex)
+    const rawVal = separatorIndex === -1 ? '' : pair.slice(separatorIndex + 1)
+    const key = decodeQueryComponent(rawKey).trim()
+    if (!key) {
+      return result
+    }
+    result[key] = decodeQueryComponent(rawVal)
     return result
   }, {})
 }
 
+function asRequestObject(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : {}
+}
+
 function parseEventBody(event) {
-  if (!event) {return {}}
+  if (!event) {
+    return {}
+  }
 
   if (typeof event === 'string') {
     try {
-      return JSON.parse(event)
+      return asRequestObject(JSON.parse(event))
     } catch {
       return {}
     }
@@ -69,14 +93,14 @@ function parseEventBody(event) {
 
   if (typeof event.body === 'string') {
     try {
-      return JSON.parse(event.body)
+      return asRequestObject(JSON.parse(event.body))
     } catch {
       return {}
     }
   }
 
   if (event.body && typeof event.body === 'object') {
-    return event.body
+    return asRequestObject(event.body)
   }
 
   if (typeof event === 'object') {
@@ -87,7 +111,9 @@ function parseEventBody(event) {
 }
 
 function normalizeHttpMethod(value, fallback = 'GET') {
-  const normalized = String(value || '').trim().toUpperCase()
+  const normalized = String(value || '')
+    .trim()
+    .toUpperCase()
   return normalized || fallback
 }
 
@@ -111,13 +137,15 @@ function resolveOverrideMethod(rawHeaders = {}, query = {}, body = {}) {
 }
 
 function getHttpRequestData(event, context) {
-  const httpContext = context.httpContext || {}
+  const httpContext = context?.httpContext || {}
   const rawHeaders = httpContext.headers || event?.headers || {}
   const queryFromContext =
     httpContext.query && typeof httpContext.query === 'object' ? httpContext.query : {}
   const queryFromEvent = event?.query && typeof event.query === 'object' ? event.query : {}
   const queryFromPath = parseQueryString(httpContext.path)
-  const queryFromUrl = parseQueryString(httpContext.url || httpContext.rawPath || httpContext.reqUrl)
+  const queryFromUrl = parseQueryString(
+    httpContext.url || httpContext.rawPath || httpContext.reqUrl
+  )
   const body = parseEventBody(event)
   const inferredMethod = normalizeHttpMethod(
     httpContext.method ||
@@ -149,14 +177,17 @@ function getHttpRequestData(event, context) {
     query: {
       ...queryFromPath,
       ...queryFromUrl,
-      ...queryFromContext
+      ...queryFromContext,
+      ...queryFromEvent
     },
     body
   }
 }
 
 function getOpenIdFromUserInfo(userInfo) {
-  if (!userInfo) {return ''}
+  if (!userInfo) {
+    return ''
+  }
 
   return (
     userInfo.OPENID ||
@@ -224,14 +255,23 @@ function createHttpIdentityTicket({ openid = '', uid = '', customUserId = '' } =
 function resolveHttpIdentityTicket(headers = {}) {
   const authorization = String(headers.authorization || '').trim()
   const prefix = `Bearer ${HTTP_IDENTITY_TICKET_PREFIX}.`
-  if (!authorization.startsWith(prefix)) {
+  const headerTicket = String(headers[HTTP_IDENTITY_TICKET_HEADER] || '').trim()
+  const token = authorization.startsWith(prefix)
+    ? authorization.slice('Bearer '.length)
+    : headerTicket
+  if (!token) {
     return null
   }
 
-  const token = authorization.slice('Bearer '.length)
   const [ticketPrefix, encodedPayload, signature, extra] = token.split('.')
   const secret = getHttpIdentityTicketSecret()
-  if (ticketPrefix !== HTTP_IDENTITY_TICKET_PREFIX || !encodedPayload || !signature || extra || !secret) {
+  if (
+    ticketPrefix !== HTTP_IDENTITY_TICKET_PREFIX ||
+    !encodedPayload ||
+    !signature ||
+    extra ||
+    !secret
+  ) {
     return null
   }
   if (!hasMatchingSignature(signHttpIdentityTicket(encodedPayload, secret), signature)) {
@@ -298,6 +338,7 @@ async function resolveHttpUserInfo(rawHeaders, query = {}, context = null) {
 
 module.exports = {
   jsonResponse,
+  internalServerError,
   methodNotAllowed,
   notFound,
   normalizeHeaders,
@@ -308,6 +349,8 @@ module.exports = {
   resolveHttpUserInfo,
   createHttpIdentityTicket,
   _test: {
+    decodeQueryComponent,
+    parseQueryString,
     resolveHttpIdentityTicket,
     signHttpIdentityTicket,
     isLocalFunctionRuntime

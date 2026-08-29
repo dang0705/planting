@@ -89,6 +89,12 @@ Module._load = function patchedWateringReminderLoad(request, parent, isMain) {
       saveUserPlantAirEnvironment: async () => ({ statusCode: 200, message: 'ok', data: null })
     }
   }
+  if (request.endsWith('/plant-deletion-service')) {
+    return {
+      deleteUserPlantCompletely: async () => ({ cleanupPending: false, cleanupAttempted: 0 }),
+      drainPendingPlantFileDeletionJobs: async () => ({ attempted: 0, pending: 0 })
+    }
+  }
   if (request.endsWith('/watering-planner-service')) {
     return {
       buildWeatherSummary: () => ({}),
@@ -192,8 +198,7 @@ try {
   })
   assert.equal(failedSaveResponse.statusCode, 500)
   assert.equal(failedSaveResponse.payload.message, '浇水提醒表未就绪或保存失败，请稍后重试')
-  assert.equal(failedSaveResponse.payload.data.errorCode, 'WATERING_REMINDER_TABLE_NOT_READY')
-  assert.match(failedSaveResponse.payload.data.errorMessage, /user_watering_reminder_events/)
+  assert.equal(failedSaveResponse.payload.data, null)
 } finally {
   Module._load = originalLoad
 }

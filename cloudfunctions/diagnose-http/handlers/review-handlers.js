@@ -1,7 +1,7 @@
 'use strict'
 
 const { jsonResponse } = require('/opt/utils/http')
-const { resolveRequestPrincipal, assertInternalReviewAccess } = require('../services/request-guard')
+const { resolveRequestPrincipal, hasInternalReviewAccess } = require('../services/request-guard')
 const {
   listDiagnosisReviewSessions,
   getDiagnosisReviewImages,
@@ -11,10 +11,10 @@ const {
 
 async function handleDiagnosisReviewList(request, context, query) {
   const principal = await resolveRequestPrincipal({ request, context, payload: query || {} })
-  assertInternalReviewAccess({ request, ...principal })
-  const outcomeType = String(
-    query?.outcomeType || query?.status || query?.outcome || 'all'
-  ).trim()
+  if (!hasInternalReviewAccess(principal)) {
+    return jsonResponse(403, { code: 403, message: '无权访问该接口', data: null })
+  }
+  const outcomeType = String(query?.outcomeType || query?.status || query?.outcome || 'all').trim()
 
   const data = await listDiagnosisReviewSessions({
     page: Number(query?.page || 1),
@@ -29,7 +29,9 @@ async function handleDiagnosisReviewList(request, context, query) {
 
 async function handleDiagnosisReviewImages(request, context, query) {
   const principal = await resolveRequestPrincipal({ request, context, payload: query || {} })
-  assertInternalReviewAccess({ request, ...principal })
+  if (!hasInternalReviewAccess(principal)) {
+    return jsonResponse(403, { code: 403, message: '无权访问该接口', data: null })
+  }
 
   const data = await getDiagnosisReviewImages({
     diagnosisSessionId:
@@ -46,7 +48,9 @@ async function handleDiagnosisReviewImages(request, context, query) {
 
 async function handleDiagnosisReviewDetail(request, context, query) {
   const principal = await resolveRequestPrincipal({ request, context, payload: query || {} })
-  assertInternalReviewAccess({ request, ...principal })
+  if (!hasInternalReviewAccess(principal)) {
+    return jsonResponse(403, { code: 403, message: '无权访问该接口', data: null })
+  }
 
   const data = await getDiagnosisReviewDetail({
     diagnosisSessionId:
@@ -63,7 +67,9 @@ async function handleDiagnosisReviewDetail(request, context, query) {
 
 async function handleDiagnosisReviewImportBatch(request, context, payload) {
   const principal = await resolveRequestPrincipal({ request, context, payload: payload || {} })
-  assertInternalReviewAccess({ request, ...principal })
+  if (!hasInternalReviewAccess(principal)) {
+    return jsonResponse(403, { code: 403, message: '无权访问该接口', data: null })
+  }
 
   const data = await upsertDiagnosisBatchReviews({
     records: Array.isArray(payload?.records) ? payload.records : [],

@@ -80,15 +80,15 @@ async function initialize() {
     const response = await fetchUserPlant(id)
     const plant = response?.code === HTTP_OK ? response.data : null
     if (!plant) {
-      returnToEditorWithError(response?.message || '未找到要编辑的植物')
+      returnToEditorWithError('未找到要编辑的植物')
       return
     }
     plantName.value = String(
       plant.displayName || plant.nickname || plant.canonicalName || plant.recognizedName || '植物'
     ).trim()
     draft.value = sanitizeLightEnvironment(plant.lightEnvironment || {})
-  } catch (error) {
-    returnToEditorWithError(error?.message || '读取失败，请返回重试')
+  } catch {
+    returnToEditorWithError('暂时无法读取植物信息，请检查网络后重试')
   } finally {
     loading.value = false
   }
@@ -113,7 +113,7 @@ async function saveAndReturn() {
   try {
     const response = await patchUserPlant({ id, lightEnvironment: confirmedLightEnvironment })
     if (response?.code !== HTTP_OK) {
-      uni.showToast({ title: response?.message || '保存失败', icon: 'none' })
+      uni.showToast({ title: '光照信息暂未保存，请检查网络后重试', icon: 'none' })
       return
     }
     const readback = await fetchUserPlant(id)
@@ -129,8 +129,8 @@ async function saveAndReturn() {
     plantStore.updateUserPlantLocal(id, { lightEnvironment: confirmedLightEnvironment })
     emitResult({ plantId: id, kind: 'light', value: confirmedLightEnvironment })
     uni.navigateBack()
-  } catch (error) {
-    uni.showToast({ title: error?.message || '网络错误，请重试', icon: 'none' })
+  } catch {
+    uni.showToast({ title: '光照信息暂未保存，请检查网络后重试', icon: 'none' })
   } finally {
     saving.value = false
   }

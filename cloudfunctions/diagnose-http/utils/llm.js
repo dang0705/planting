@@ -28,8 +28,33 @@ const {
 } = require('../configs')
 
 const HunyuanClient = tencentcloud.hunyuan.v20230901.Client
-const SECRET_ID = process.env.CLOUDBASE_SECRET_ID || ''
-const SECRET_KEY = process.env.CLOUDBASE_SECRET_KEY || ''
+const EXPLICIT_SECRET_ID =
+  process.env.CLOUDBASE_SECRET_ID ||
+  process.env.TENCENT_SECRET_ID ||
+  process.env.TENCENTCLOUD_SECRETID ||
+  ''
+const EXPLICIT_SECRET_KEY =
+  process.env.CLOUDBASE_SECRET_KEY ||
+  process.env.TENCENT_SECRET_KEY ||
+  process.env.TENCENTCLOUD_SECRETKEY ||
+  ''
+const EXPLICIT_SESSION_TOKEN =
+  process.env.CLOUDBASE_TOKEN ||
+  process.env.CLOUDBASE_SESSION_TOKEN ||
+  process.env.TENCENT_SESSION_TOKEN ||
+  process.env.TENCENTCLOUD_SESSIONTOKEN ||
+  process.env.TENCENTCLOUD_SESSION_TOKEN ||
+  ''
+const RUNTIME_SECRET_ID = process.env.TENCENTCLOUD_SECRETID || ''
+const RUNTIME_SECRET_KEY = process.env.TENCENTCLOUD_SECRETKEY || ''
+const RUNTIME_SESSION_TOKEN =
+  process.env.TENCENTCLOUD_SESSIONTOKEN || process.env.TENCENTCLOUD_SESSION_TOKEN || ''
+const USE_RUNTIME_CREDENTIALS = Boolean(
+  RUNTIME_SECRET_ID && RUNTIME_SECRET_KEY && RUNTIME_SESSION_TOKEN
+)
+const SECRET_ID = USE_RUNTIME_CREDENTIALS ? RUNTIME_SECRET_ID : EXPLICIT_SECRET_ID
+const SECRET_KEY = USE_RUNTIME_CREDENTIALS ? RUNTIME_SECRET_KEY : EXPLICIT_SECRET_KEY
+const SESSION_TOKEN = USE_RUNTIME_CREDENTIALS ? RUNTIME_SESSION_TOKEN : EXPLICIT_SESSION_TOKEN
 const IMAGE_HTTP_AGENT = new https.Agent({ keepAlive: true, maxSockets: 8 })
 const cloudBaseClient = isOpenAiVisionProvider(providerId)
   ? createCloudBaseAiOpenAiClient({
@@ -85,7 +110,11 @@ function getHunyuanClient() {
     throw new Error('缺少混元调用密钥配置')
   }
   hunyuanClient = new HunyuanClient({
-    credential: { secretId: SECRET_ID, secretKey: SECRET_KEY },
+    credential: {
+      secretId: SECRET_ID,
+      secretKey: SECRET_KEY,
+      ...(SESSION_TOKEN ? { token: SESSION_TOKEN } : {})
+    },
     region: '',
     profile: { httpProfile: { endpoint, reqTimeout: requestTimeoutSec } }
   })

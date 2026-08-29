@@ -17,7 +17,7 @@
       "path": "pages/diagnose/diagnose",
       "style": {
         "navigationStyle": "custom",
-        "navigationBarTitleText": "AI 诊断",
+        "navigationBarTitleText": "植物状况检查",
         "navigationBarBackgroundColor": "#2D7A4F",
         "navigationBarTextStyle": "white"
       }
@@ -93,7 +93,7 @@
           "path": "flow",
           "style": {
             "navigationStyle": "custom",
-            "navigationBarTitleText": "AI 诊断",
+            "navigationBarTitleText": "植物状况检查",
             "navigationBarBackgroundColor": "#2D7A4F",
             "navigationBarTextStyle": "white"
           }
@@ -158,7 +158,7 @@
   ],
   "globalStyle": {
     "navigationBarTextStyle": "white",
-    "navigationBarTitleText": "AI 植伴",
+    "navigationBarTitleText": "青花植",
     "navigationBarBackgroundColor": "#2D7A4F",
     "backgroundColor": "#F8F6F0"
   },
@@ -174,14 +174,12 @@
         "iconPath": "static/tabbar/home.png",
         "selectedIconPath": "static/tabbar/home-active.png"
       },
-
       {
         "pagePath": "pages/diagnose/diagnose",
         "text": "诊断",
         "iconPath": "static/tabbar/diagnose.png",
         "selectedIconPath": "static/tabbar/diagnose-active.png"
       },
-
       {
         "pagePath": "pages/profile/profile",
         "text": "我的",

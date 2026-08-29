@@ -214,7 +214,11 @@ if (isOfficialElectronBundle()) {
   assert.equal(directLaunch.args[0], directLaunch.installed_bundle.app_asar)
   assert.equal(directLaunch.args.includes('--cli'), true)
   assert.ok(directLaunch.args.includes('--remote-port'))
-  assert.ok(directLaunch.args.includes('--ide-http-port=9421'))
+  assert.ok(directLaunch.args.includes('--ide-http-port'))
+  assert.equal(
+    directLaunch.args[directLaunch.args.indexOf('--ide-http-port') + 1],
+    '9421'
+  )
   assert.ok(
     directLaunch.args.includes(
       `--user-data-dir=${path.dirname(directLaunch.profile)}`
@@ -299,7 +303,7 @@ assert.deepEqual(startupRecoveryInvocations, ['close', 'open', 'auto'])
 let status500Main = {
   pid: 101,
   command:
-    '/Applications/wechatwebdevtools.app/Contents/MacOS/Electron /Applications/wechatwebdevtools.app/Contents/Resources/app.asar --user-data-dir=/qa/profile --ide-http-port=3799'
+    '/Applications/wechatwebdevtools.app/Contents/MacOS/Electron /Applications/wechatwebdevtools.app/Contents/Resources/app.asar --cli --user-data-dir=/qa/profile --ide-http-port=3799'
 }
 const status500Recovery = await recoverTestOwnedDevToolsStartup({
   session: {
@@ -337,7 +341,7 @@ const status500Recovery = await recoverTestOwnedDevToolsStartup({
     status500Main = {
       pid: 102,
       command:
-        '/Applications/wechatwebdevtools.app/Contents/MacOS/Electron /Applications/wechatwebdevtools.app/Contents/Resources/app.asar --user-data-dir=/qa/profile --ide-http-port=3799'
+        '/Applications/wechatwebdevtools.app/Contents/MacOS/Electron /Applications/wechatwebdevtools.app/Contents/Resources/app.asar --cli --user-data-dir=/qa/profile --ide-http-port=3799'
     }
     return { pid: 102, project_opened: true, cli_open: { status: 0, stdout: '', stderr: '' } }
   },

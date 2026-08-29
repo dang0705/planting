@@ -2150,11 +2150,8 @@ function buildUncertainRoundResult({
     normalizedUncertainLegalityReason === 'out_of_pool_hint_unconfirmed' ||
     normalizedDecisionCause?.decisionCauseCategory === 'out_of_pool_visual_hint' ||
     normalizedDecisionCause?.decisionCauseCategory === 'visual_scope_gap'
-  const outOfPoolObservationConservative =
-    buildOutOfPoolObservationConservative(normalizedDecisionCause)
-  const outOfPoolSummary = outOfPoolObservationConservative?.observationText
-    ? `图片中存在当前自动诊断范围外的可见异常。模型原始观察为：${outOfPoolObservationConservative.observationText}。这不是正式诊断结论，系统暂不能给出针对性处理建议；建议先保持观察，避免仅凭本次结果进行大幅养护调整。`
-    : '图片中存在当前自动诊断范围外的可见异常。系统无法把它稳定归入现有诊断路径，因此本次不继续常规诊断，也不判断为“暂无明显问题”。由于该异常尚未纳入当前诊断池，系统暂不能给出针对性的处理建议；建议先保持观察，避免仅凭本次结果进行大幅养护调整。'
+  const outOfPoolSummary =
+    '照片中有需要留意的变化，但暂时无法判断具体原因。本次先不建议针对性处理，请保持养护稳定并继续观察。'
   const summary = isOutOfPoolUncertain
     ? outOfPoolSummary
     : advice[0] || '当前证据不足，暂不能安全判断。'
@@ -2173,9 +2170,7 @@ function buildUncertainRoundResult({
   })
   const explanation = isOutOfPoolUncertain
     ? {
-        whyItHappens: outOfPoolObservationConservative?.observationText
-          ? `当前图片中有可见异常，但该异常未形成可确认的正式诊断证据。模型原始观察为：${outOfPoolObservationConservative.observationText}。`
-          : '当前图片中有可见异常，但该异常超出当前自动诊断支持的症状范围，或尚未形成可确认的正式诊断证据。',
+        whyItHappens: '当前照片中有需要留意的变化，但还不足以判断具体原因。',
         whatToCheckNext:
           '可继续观察该异常是否扩大、重复出现或影响整体状态；如变化明显，建议由人工或更完整资料进一步确认。',
         firstAid: '在没有稳定归类前，先保持养护条件相对稳定，不建议仅凭本次结果进行针对性处理。',
@@ -2205,8 +2200,7 @@ function buildUncertainRoundResult({
       displayName: isOutOfPoolUncertain ? '发现诊断范围外的可见异常' : '暂不能稳定判断',
       summary,
       severity: 'low',
-      urgency: isOutOfPoolUncertain ? 'low' : 'medium',
-      outOfPoolObservation: outOfPoolObservationConservative
+      urgency: isOutOfPoolUncertain ? 'low' : 'medium'
     },
     questionRequired: false,
     questions: [],

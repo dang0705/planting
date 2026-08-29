@@ -124,9 +124,9 @@ async function submit() {
     reportAnalyticsEvent(ANALYTICS_EVENTS.DIAGNOSE_FEEDBACK_SUBMITTED)
     submitted.value = true
     statusMessage.value = '反馈已记录，之后会用于人工优化。'
-  } catch (error) {
+  } catch {
     statusType.value = 'error'
-    statusMessage.value = error?.message || '提交失败，请稍后重试。'
+    statusMessage.value = '提交失败，请稍后重试。'
   } finally {
     submitting.value = false
   }

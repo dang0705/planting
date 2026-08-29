@@ -29,6 +29,14 @@
     },
     {
       "functionName": "diagnose-http",
+      "path": "/diagnosis/retake/authorize"
+    },
+    {
+      "functionName": "diagnose-http",
+      "path": "/diagnosis/retake/skip"
+    },
+    {
+      "functionName": "diagnose-http",
       "path": "/diagnosis/result"
     },
     {
@@ -42,6 +50,10 @@
     {
       "functionName": "diagnose-http",
       "path": "/diagnosis/review/detail"
+    },
+    {
+      "functionName": "diagnose-http",
+      "path": "/diagnosis/review/import"
     },
     {
       "functionName": "diagnose-http",
@@ -78,6 +90,10 @@
     {
       "functionName": "diagnose-http",
       "path": "/health"
+    },
+    {
+      "functionName": "diagnose-http",
+      "path": "/"
     }
   ]
 }

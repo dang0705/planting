@@ -101,24 +101,65 @@ function qualifySqlTableNames(sql, databaseName) {
  * 这里统一适配，避免本地只配置 TENCENT_* 时仍报 secret id error。
  */
 function resolveCloudbaseCredentials(env = process.env) {
-  const secretId = String(
+  const accessKey = String(env.CLOUDBASE_APIKEY || env.CLOUDBASE_API_KEY || '').trim()
+  const explicitSecretId = String(
     env.CLOUDBASE_SECRET_ID || env.TENCENT_SECRET_ID || env.TENCENTCLOUD_SECRETID || ''
   ).trim()
-  const secretKey = String(
+  const explicitSecretKey = String(
     env.CLOUDBASE_SECRET_KEY || env.TENCENT_SECRET_KEY || env.TENCENTCLOUD_SECRETKEY || ''
   ).trim()
+  const explicitSessionToken = String(
+    env.CLOUDBASE_TOKEN ||
+      env.CLOUDBASE_SESSION_TOKEN ||
+      env.TENCENT_SESSION_TOKEN ||
+      env.TENCENTCLOUD_SESSIONTOKEN ||
+      env.TENCENTCLOUD_SESSION_TOKEN ||
+      env.TCB_SESSIONTOKEN ||
+      ''
+  ).trim()
 
-  return { secretId, secretKey }
+  // CloudBase 云函数会注入带 session token 的运行时临时凭据。
+  // 若线上同时残留了旧的 CLOUDBASE_SECRET_*，必须优先使用这组运行时凭据，
+  // 否则 SDK 会拿不带 token 的临时密钥调用 $runSQL，最终返回 500。
+  const runtimeSecretId = String(env.TENCENTCLOUD_SECRETID || '').trim()
+  const runtimeSecretKey = String(env.TENCENTCLOUD_SECRETKEY || '').trim()
+  const runtimeSessionToken = String(
+    env.TENCENTCLOUD_SESSIONTOKEN || env.TENCENTCLOUD_SESSION_TOKEN || ''
+  ).trim()
+
+  if (runtimeSecretId && runtimeSecretKey && runtimeSessionToken) {
+    return {
+      secretId: runtimeSecretId,
+      secretKey: runtimeSecretKey,
+      sessionToken: runtimeSessionToken
+    }
+  }
+
+  if (accessKey) {
+    return { accessKey }
+  }
+
+  return {
+    secretId: explicitSecretId,
+    secretKey: explicitSecretKey,
+    ...(explicitSessionToken ? { sessionToken: explicitSessionToken } : {})
+  }
 }
 
-function buildCloudbaseInitOptions(context) {
+function buildCloudbaseInitOptions(context, env = process.env) {
   const options = {
     env: resolveCloudbaseEnvId(context)
   }
-  const credentials = resolveCloudbaseCredentials()
+  const credentials = resolveCloudbaseCredentials(env)
   if (credentials.secretId && credentials.secretKey) {
     options.secretId = credentials.secretId
     options.secretKey = credentials.secretKey
+  }
+  if (credentials.accessKey) {
+    options.accessKey = credentials.accessKey
+  }
+  if (credentials.sessionToken) {
+    options.sessionToken = credentials.sessionToken
   }
   return options
 }
@@ -274,5 +315,6 @@ module.exports = {
   storage,
   getUserInfo,
   resolveCloudbaseCredentials,
+  buildCloudbaseInitOptions,
   resolveSqlRunConfig
 }

@@ -656,7 +656,7 @@ export function runtimeManifestIsReady(
     typeof manifest.built_at === 'string' &&
     Number.isFinite(Date.parse(manifest.built_at)) &&
     Number.isInteger(Number(manifest.function_port_base)) &&
-    /^https?:\/\/[^\s/]+:\d+$/u.test(String(manifest.api_base_url || '')) &&
+    /^https?:\/\/[^\s/]+(?::\d+)?(?:\/[^\s]*)?$/u.test(String(manifest.api_base_url || '')) &&
     Number(manifest.qa_owner_pid) > 0 &&
     Number(manifest.lan_owner_pid) > 0 &&
     Number(manifest.devtools_owner_pid) > 0 &&
@@ -977,15 +977,21 @@ export function reapStaleQaFixedPortLocks() {
 }
 
 export function qaRuntimeFixedPorts() {
-  return [
+  const ports = [
     { kind: 'automator', port: QA_RUNTIME_WS_PORT },
     { kind: 'control', port: QA_RUNTIME_CONTROL_PORT },
     { kind: 'service', port: QA_RUNTIME_SERVICE_PORT },
-    { kind: 'native-auth-debug', port: QA_RUNTIME_NATIVE_AUTH_DEBUG_PORT },
     { kind: 'lan', port: QA_RUNTIME_LAN_PORT },
     ...Object.entries(getFunctionPorts(QA_RUNTIME_FUNCTION_PORT_BASE)).map(([name, port]) => ({
       kind: `function-${name}`,
       port
     }))
   ]
+  if (QA_RUNTIME_DEVTOOLS_RUNTIME_KIND !== 'official_electron') {
+    ports.splice(3, 0, {
+      kind: 'native-auth-debug',
+      port: QA_RUNTIME_NATIVE_AUTH_DEBUG_PORT
+    })
+  }
+  return ports
 }

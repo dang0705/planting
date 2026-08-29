@@ -149,7 +149,7 @@ async function initializePlantEditorMode() {
   const response = await fetchUserPlant(id)
   const plant = response?.code === HTTP_OK ? response.data : null
   if (!plant) {
-    returnToEditorWithError(response?.message || '未找到要编辑的植物')
+    returnToEditorWithError('未找到要编辑的植物')
     return
   }
   plantRecord.value = plant
@@ -181,14 +181,14 @@ async function savePlantAndReturn(value) {
     })
     const savedProfile = response?.data?.airEnvironment || null
     if (response?.code !== HTTP_OK || !savedProfile) {
-      uni.showToast({ title: response?.message || '保存失败', icon: 'none' })
+      uni.showToast({ title: '通风信息暂未保存，请检查网络后重试', icon: 'none' })
       return
     }
     reportAnalyticsEvent(ANALYTICS_EVENTS.AIR_ENVIRONMENT_SAVED)
     emitResult({ plantId: id, kind: 'air', value: savedProfile })
     uni.navigateBack()
-  } catch (error) {
-    uni.showToast({ title: error?.message || '网络错误，请重试', icon: 'none' })
+  } catch {
+    uni.showToast({ title: '通风信息暂未保存，请检查网络后重试', icon: 'none' })
   } finally {
     saving.value = false
   }

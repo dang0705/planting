@@ -3,6 +3,7 @@
 const { models } = require('/opt/utils/cloudbase')
 const {
   jsonResponse,
+  internalServerError,
   notFound,
   methodNotAllowed,
   getHttpRequestData,
@@ -333,7 +334,9 @@ async function wechatLogin(wechatData) {
 }
 
 async function getUserById(userId) {
-  const result = await models.$runSQL('SELECT * FROM users WHERE _id = {{userId}} LIMIT 1', { userId })
+  const result = await models.$runSQL('SELECT * FROM users WHERE _id = {{userId}} LIMIT 1', {
+    userId
+  })
   const users = result?.data?.executeResultList || []
   if (!users.length) {
     throw new Error('用户不存在')
@@ -376,7 +379,9 @@ function resolveWechatIdentity(data = {}, payload = {}) {
 }
 
 async function getUserByEmail(email) {
-  const result = await models.$runSQL('SELECT * FROM users WHERE email = {{email}} LIMIT 1', { email })
+  const result = await models.$runSQL('SELECT * FROM users WHERE email = {{email}} LIMIT 1', {
+    email
+  })
   const users = result?.data?.executeResultList || []
   if (!users.length) {
     throw new Error('用户不存在')
@@ -449,7 +454,9 @@ async function main(event, context) {
       hasPayloadAppid: Boolean(wechatIdentity.appid),
       hasResolvedUserOpenId: Boolean(userInfo?.openid),
       resolvedOpenIdMatchesPayload:
-        Boolean(userInfo?.openid) && Boolean(wechatIdentity.openid) && userInfo.openid === wechatIdentity.openid
+        Boolean(userInfo?.openid) &&
+        Boolean(wechatIdentity.openid) &&
+        userInfo.openid === wechatIdentity.openid
     })
 
     switch (action) {
@@ -500,7 +507,11 @@ async function main(event, context) {
           data: await updateUserPhoneNumber(data.userId, data.phoneNumber)
         })
       case 'getUserByUnionId':
-        return jsonResponse(200, { code: 200, message: '获取成功', data: await getUserByUnionId(data.union_id) })
+        return jsonResponse(200, {
+          code: 200,
+          message: '获取成功',
+          data: await getUserByUnionId(data.union_id)
+        })
       case 'getUserByOpenid':
         return jsonResponse(200, {
           code: 200,
@@ -508,13 +519,17 @@ async function main(event, context) {
           data: await getUserByOpenid(data.openid || payload.openid || userInfo?.openid || '')
         })
       case 'getUserByEmail':
-        return jsonResponse(200, { code: 200, message: '获取成功', data: await getUserByEmail(data.email) })
+        return jsonResponse(200, {
+          code: 200,
+          message: '获取成功',
+          data: await getUserByEmail(data.email)
+        })
       default:
         return jsonResponse(400, { code: 400, message: '无效操作', data: null })
     }
   } catch (error) {
     console.error('auth-user-http error:', error)
-    return jsonResponse(500, { code: 500, message: error.message, data: null })
+    return internalServerError('用户信息暂时不可用，请稍后重试')
   }
 }
 

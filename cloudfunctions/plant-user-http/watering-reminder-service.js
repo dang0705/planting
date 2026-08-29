@@ -30,7 +30,9 @@ function normalizeDate(value) {
   const month = Number(match[2])
   const day = Number(match[3])
   const date = new Date(Date.UTC(year, month - 1, day))
-  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
+  return date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
     ? text
     : ''
 }
@@ -107,7 +109,7 @@ function mapReminderRow(row = {}) {
     active: row.status === ACTIVE_STATUS && Boolean(nextTime),
     lastWatered: row.last_watered || '',
     nextWaterDate: row.next_water_date || '',
-    nextWaterTime: nextTime,
+    nextWaterTime: nextTime ? nextTime.split('T')[1] || '' : '',
     nextTime,
     nextWaterWindow: plannerResult.nextWaterWindow || null,
     nextWaterReason: plannerResult.nextWaterReason || '',

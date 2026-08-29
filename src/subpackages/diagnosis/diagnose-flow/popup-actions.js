@@ -322,7 +322,7 @@ export function useDiagnoseFlowActions(ctx) {
       return*/
     }
 
-    uni.showLoading({ title: '正在生成问诊...' })
+    uni.showLoading({ title: '正在准备问题...' })
     try {
       await questionStartMutation.mutateAsync({
         plantId: props.plantId,
@@ -339,8 +339,8 @@ export function useDiagnoseFlowActions(ctx) {
           navigateToDiagnosisQuestionPackagePage(diagnosisResult)
         }
       })
-    } catch (error) {
-      uni.showToast({ title: error?.message || '问诊初始化失败，请重试', icon: 'none' })
+    } catch {
+      uni.showToast({ title: '暂时无法开始问诊，请检查网络后重试', icon: 'none' })
     } finally {
       uni.hideLoading()
     }

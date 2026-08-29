@@ -63,9 +63,9 @@
     <AIStreamDialog
       ref="aiStreamDialogRef"
       :visible="showAIDialog"
-      title="AI 智能诊断"
+      title="植物状况检查"
       icon="🩺"
-      loading-text="正在诊断植物健康..."
+      loading-text="正在检查照片..."
       :confirm-text="result?.retakeRequest ? '查看补拍要求' : '进入问诊'"
       cancel-text="稍后再说"
       :show-cancel="true"

@@ -1,7 +1,6 @@
 import {
   mapSeverityToHealthText,
-  normalizeOutcomeType,
-  normalizeStringList
+  normalizeOutcomeType
 } from './diagnose-flow-shared.js'
 import { getQuestionIdentity } from './diagnose-question-identity.js'
 import {
@@ -28,8 +27,6 @@ import {
   normalizeOutcomeEntry,
   normalizeOutcomeList,
   normalizeOutcomeModeText,
-  normalizeRouteDecision,
-  normalizeRouteDecisionCause,
   resolveMainIssueText,
   resolveScientificName,
   resolveSummaryText,
@@ -274,14 +271,7 @@ export function normalizeDiagnosisResult(
     diagnosis,
     visibleOutcomes
   })
-  const routeDecisionCause = normalizeRouteDecisionCause(
-    diagnosis.routeDecisionCause ||
-      finalResult?.routeDecisionCause ||
-      diagnosis.routeDecision?.decisionCause ||
-      diagnosis.stopDecision?.decisionCause
-  )
   const actionAdvice = normalizeActionAdvice(diagnosis.actionAdvice || finalResult?.actionAdvice)
-  const routeDecision = normalizeRouteDecision(diagnosis.routeDecision)
   // A package snapshot with zero active questions can survive a direct-result
   // response. Do not expose that stale package to the popup or render a
   // misleading question count.
@@ -374,12 +364,10 @@ export function normalizeDiagnosisResult(
       diagnosis.candidateRefinementAvailable && directionChoices.length > EMPTY_COUNT
     ),
     outcomeMode: normalizeOutcomeModeText(
-      diagnosis.outcomeMode || finalResult?.outcomeMode || routeDecision?.mode || '',
+      diagnosis.outcomeMode || finalResult?.outcomeMode || '',
       visibleOutcomes
     ),
-    routeDecisionCause,
     actionAdvice,
-    routeDecision,
     contributingFactors: Array.isArray(diagnosis.contributingFactors)
       ? diagnosis.contributingFactors
       : [],
@@ -427,9 +415,6 @@ export function normalizeDiagnosisResult(
       ...(rawQuestionPackage?.optionalFollowUp ? { optionalFollowUp: true } : {}),
       ...(rawQuestionPackage?.likelyResult ? { likelyResult: true } : {})
     },
-    confidenceLevel: diagnosis.confidenceLevel || 'normal',
-    confidenceReasons: normalizeStringList(diagnosis.confidenceReasons),
-    needHumanReview: Boolean(diagnosis.needHumanReview),
     treatmentText:
       diagnosis.treatmentText ||
       normalizedNextSteps

@@ -88,10 +88,10 @@ function buildSymptomClassUncertainPrefix(symptomClassRuntime = null) {
   const primaryClass = resolvePrimarySymptomClass(symptomClassRuntime)
   if (!primaryClass) {return ''}
 
-  const classLabel = normalizeText(primaryClass.classNameCn || primaryClass.classKey)
+  const classLabel = normalizeText(primaryClass.classNameCn)
   if (!classLabel) {return ''}
 
-  return `当前已收敛到“${classLabel}”，但还缺少足够的补充事实，暂时不能安全定位到具体原因。`
+  return `当前照片更像出现“${classLabel}”这类变化，但还缺少判断具体原因所需的信息。`
 }
 
 function pickPrimaryOutcome(candidateOutcomes = [], problemMap = new Map()) {
@@ -177,28 +177,9 @@ function isOutOfPoolLowConfidence(lowConfidence = {}) {
   )
 }
 
-function resolveOutOfPoolObservation(lowConfidence = {}) {
-  const observation = lowConfidence?.outOfPoolObservation &&
-    typeof lowConfidence.outOfPoolObservation === 'object'
-    ? lowConfidence.outOfPoolObservation
-    : null
-  const observationText = normalizeText(observation?.observationText || '')
-  const observationNames = Array.isArray(observation?.observationNames)
-    ? observation.observationNames.map(item => normalizeText(item)).filter(Boolean)
-    : []
-  if (!observationText && !observationNames.length) {return null}
-  return {
-    observationNames,
-    observationText: observationText || observationNames.join('；')
-  }
-}
-
 function buildUncertainSummary(lowConfidence = {}, symptomClassRuntime = null) {
   if (isOutOfPoolLowConfidence(lowConfidence)) {
-    const observation = resolveOutOfPoolObservation(lowConfidence)
-    return observation?.observationText
-      ? `图片中存在当前自动诊断范围外的可见异常。模型原始观察为：${observation.observationText}。这不是正式诊断结论，系统暂不能给出针对性处理建议；建议先保持观察，避免仅凭本次结果进行大幅养护调整。`
-      : '图片中存在当前自动诊断范围外的可见异常。系统无法把它稳定归入现有诊断路径，因此本次不继续常规诊断，也不判断为“暂无明显问题”。由于该异常尚未纳入当前诊断池，系统暂不能给出针对性的处理建议；建议先保持观察，避免仅凭本次结果进行大幅养护调整。'
+    return '照片中有需要留意的变化，但暂时无法判断具体原因。本次先不建议针对性处理，请保持养护稳定并继续观察。'
   }
 
   const advice = Array.isArray(lowConfidence?.advice)
@@ -219,11 +200,8 @@ function buildUncertainSummary(lowConfidence = {}, symptomClassRuntime = null) {
 
 function buildUncertainExplanation(lowConfidence = {}, symptomClassRuntime = null) {
   if (isOutOfPoolLowConfidence(lowConfidence)) {
-    const observation = resolveOutOfPoolObservation(lowConfidence)
     return {
-      whyItHappens: observation?.observationText
-        ? `当前图片中有可见异常，但该异常未形成可确认的正式诊断证据。模型原始观察为：${observation.observationText}。`
-        : '当前图片中有可见异常，但该异常超出当前自动诊断支持的症状范围，或尚未形成可确认的正式诊断证据。',
+      whyItHappens: '当前照片中有需要留意的变化，但还不足以判断具体原因。',
       whatToCheckNext: '可继续观察该异常是否扩大、重复出现或影响整体状态；如变化明显，建议由人工或更完整资料进一步确认。',
       firstAid: '在没有稳定归类前，先保持养护条件相对稳定，不建议仅凭本次结果进行针对性处理。',
       avoid: '避免把该异常直接等同于某个具体问题，也避免在缺少确认时大幅调整养护或使用处理措施。',
@@ -235,15 +213,11 @@ function buildUncertainExplanation(lowConfidence = {}, symptomClassRuntime = nul
     ? lowConfidence.advice.map(item => String(item || '').trim()).filter(Boolean)
     : []
   const primaryClass = resolvePrimarySymptomClass(symptomClassRuntime)
-  const classLabel = normalizeText(primaryClass?.classNameCn || primaryClass?.classKey)
-  const runtimeNotes = normalizeText(primaryClass?.runtimeNotes)
+  const classLabel = normalizeText(primaryClass?.classNameCn)
   const whyItHappens = classLabel
-    ? `当前视觉和题包答案更支持“${classLabel}”这一症状模式，但具体 root cause 仍缺少关键上下文，继续硬判风险较高。`
-    : '当前证据不足或仍有冲突，继续硬判具体问题风险较高。'
-  const whatToCheckNext = uniqList([
-    advice[0],
-    runtimeNotes
-  ]).join(' ')
+    ? `当前照片和你的回答更接近“${classLabel}”这类变化，但还无法判断具体原因。`
+    : '当前照片和你的回答还不足以判断具体原因。'
+  const whatToCheckNext = normalizeText(advice[0])
 
   return {
     whyItHappens,
@@ -266,8 +240,7 @@ function buildUncertainFinalResult({ resultId, lowConfidence = {} } = {}) {
       displayName: '发现诊断范围外的可见异常',
       summary: buildUncertainSummary(lowConfidence),
       severity: 'low',
-      urgency: 'low',
-      outOfPoolObservation: resolveOutOfPoolObservation(lowConfidence)
+      urgency: 'low'
     }
   }
 

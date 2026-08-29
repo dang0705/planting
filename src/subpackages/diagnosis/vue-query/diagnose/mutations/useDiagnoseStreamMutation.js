@@ -29,7 +29,7 @@ export function useDiagnoseStreamMutation() {
       onError
     } = {}) => {
       try {
-        onText?.('思考中...', '思考中...')
+        onText?.('正在检查照片...', '正在检查照片...')
         validateDiagnoseInput({
           plantId,
           userPlantId,

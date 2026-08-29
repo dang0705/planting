@@ -98,16 +98,18 @@ export async function recoverTestOwnedDevToolsStartup({
     const expectedPackage = String(session.initial_devtools_launch?.package_dir || '')
     const command = String(target.command || '')
     const official = session.devtools_runtime_kind === 'official_electron'
-    const controlPortArg = `--ide-http-port=${Number(session.controlPort)}`
-    const controlPortSpacedArg = `--ide-http-port ${Number(session.controlPort)}`
+    const hasPortArgument = (flag, value) =>
+      command.includes(`${flag}=${Number(value)}`) ||
+      command.includes(`${flag} ${Number(value)}`)
     const ownerVerified = official
       ? Boolean(
           expectedPid > 0 &&
           Number(target.pid) === expectedPid &&
           command.includes('/Contents/MacOS/Electron') &&
           command.includes('/Contents/Resources/app.asar') &&
+          command.includes('--cli') &&
           command.includes(`--user-data-dir=${session.devtools_user_data_dir}`) &&
-          (command.includes(controlPortArg) || command.includes(controlPortSpacedArg))
+          hasPortArgument('--ide-http-port', session.controlPort)
         )
       : Boolean(
           expectedPid > 0 &&
@@ -115,7 +117,7 @@ export async function recoverTestOwnedDevToolsStartup({
           command.includes(`--user-data-dir=${session.profile}`) &&
           expectedPackage &&
           command.includes(expectedPackage) &&
-          (command.includes(controlPortArg) || command.includes(controlPortSpacedArg))
+          hasPortArgument('--ide-http-port', session.controlPort)
         )
     if (!ownerVerified) {
       return false

@@ -128,7 +128,7 @@ async function handleGetPhoneNumber(e) {
   } catch (error) {
     console.error('手机号登录失败:', error)
     uni.showToast({
-      title: error.message || '登录失败',
+      title: '登录失败，请稍后重试',
       icon: 'none'
     })
   } finally {
@@ -159,7 +159,7 @@ async function handleQuickLogin() {
   } catch (error) {
     console.error('快速登录失败:', error)
     uni.showToast({
-      title: error.message || '登录失败',
+      title: '登录失败，请稍后重试',
       icon: 'none'
     })
   } finally {

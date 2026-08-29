@@ -130,7 +130,7 @@ function buildOutcomeAvoidAdviceItems(outcome = {}) {
   ])
 }
 
-export function useQuestionPackageResultView({ result, payload, routeOptions }) {
+export function useQuestionPackageResultView({ result, payload }) {
   const hasCompletedDiagnosis = computed(
     () => Boolean(result.value) && !result.value.hasActiveQuestions
   )
@@ -164,7 +164,7 @@ export function useQuestionPackageResultView({ result, payload, routeOptions }) 
         formatOutcomeDisplayLabel(finalOutcome.value?.summary) ||
         formatOutcomeDisplayLabel(result.value?.summaryText) ||
         formatOutcomeDisplayLabel(result.value?.summaryCard?.subtitle) ||
-        '系统已根据视觉证据和补充问诊整理出当前结论。'
+      '已根据照片和你的补充信息整理出当前结论。'
     ).trim()
   )
   const outcomeTypeText = computed(() => {
@@ -191,12 +191,6 @@ export function useQuestionPackageResultView({ result, payload, routeOptions }) 
       outcomeSummaryText.value || outcomeTypeText.value || '当前尚未见到明确问题，建议继续观察。'
     ).trim()
   )
-  const confidenceLevelText = computed(() => {
-    const level = String(
-      result.value?.confidenceLevel || finalOutcome.value?.confidenceLevel || ''
-    ).trim()
-    return { high: '较高', normal: '一般', medium: '一般', low: '较低' }[level] || level || '一般'
-  })
   const observedItems = computed(() => {
     const source = [
       ...(Array.isArray(payload.value?.observedSymptoms) ? payload.value.observedSymptoms : []),
@@ -282,45 +276,6 @@ export function useQuestionPackageResultView({ result, payload, routeOptions }) 
       fallbackLabel: '通用建议'
     })
   )
-  const runtimeEnv = import.meta.env || {}
-  const routeDebugEnabled =
-    runtimeEnv.VITE_APP_ENV === 'development' ||
-    (Boolean(runtimeEnv.DEV) && runtimeEnv.VITE_APP_ENV !== 'production')
-  const routeDebugDecision = computed(
-    () => result.value?.routeDecision || result.value?.__runtimeRouteDecision || null
-  )
-  const showRouteDebugPanel = computed(() => routeDebugEnabled && Boolean(routeDebugDecision.value))
-  const routeDebugSummaryText = computed(() =>
-    String(
-      routeDebugDecision.value?.decisionCause?.decisionCauseText ||
-        result.value?.routeDecisionCause?.decisionCauseText ||
-        ''
-    ).trim()
-  )
-  const routeDebugModeText = computed(() => String(routeDebugDecision.value?.mode || '').trim())
-  const routeDebugVisibleOutcomeText = computed(() =>
-    normalizeArrayText(routeDebugDecision.value?.visibleOutcomeKeys).join(' / ')
-  )
-  const routeDebugGroupText = computed(() =>
-    normalizeArrayText(routeDebugDecision.value?.activeRouteGroupKeys).join(' / ')
-  )
-  const sessionLabel = computed(() =>
-    String(
-      result.value?.diagnosisSessionId ||
-        payload.value?.diagnosisSessionId ||
-        routeOptions.value?.sessionId ||
-        '未提供 sessionId'
-    ).trim()
-  )
-  const roundLabel = computed(() =>
-    String(
-      result.value?.roundId ||
-        payload.value?.roundId ||
-        routeOptions.value?.roundId ||
-        '未提供 roundId'
-    ).trim()
-  )
-
   return {
     hasCompletedDiagnosis,
     hasRouteConvergenceDetails,
@@ -330,17 +285,9 @@ export function useQuestionPackageResultView({ result, payload, routeOptions }) 
     isProblematicOutcome,
     showNonProblemOutcomeResultCard,
     nonProblemOutcomeSummaryText,
-    confidenceLevelText,
     allOutcomeDisplays,
     observedItems,
     actionAdviceGroups,
-    avoidAdviceGroups,
-    showRouteDebugPanel,
-    routeDebugSummaryText,
-    routeDebugModeText,
-    routeDebugVisibleOutcomeText,
-    routeDebugGroupText,
-    sessionLabel,
-    roundLabel
+    avoidAdviceGroups
   }
 }

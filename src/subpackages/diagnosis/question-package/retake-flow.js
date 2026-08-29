@@ -144,8 +144,8 @@ export function useQuestionPackageRetake({
       currentNow.value = Date.now()
       retakeAuthorizationReceivedClientAt.value = currentNow.value
       result.value = buildAuthorizedRetakeResult(result.value, authorization)
-    } catch (error) {
-      uni.showToast({ title: error?.message || '开始补拍失败', icon: 'none' })
+    } catch {
+      uni.showToast({ title: '暂时无法开始补拍，请检查网络后重试', icon: 'none' })
     } finally {
       retakeAuthorizationPending.value = false
     }
@@ -164,8 +164,8 @@ export function useQuestionPackageRetake({
       retakeAuthorizationReceivedClientAt.value = 0
       applyDiagnosisResult(skippedResult)
       uni.showToast({ title: '已跳过补拍', icon: 'none' })
-    } catch (error) {
-      uni.showToast({ title: error?.message || '跳过补拍失败，请重试', icon: 'none' })
+    } catch {
+      uni.showToast({ title: '暂时无法跳过补拍，请稍后重试', icon: 'none' })
     }
   }
 
@@ -233,7 +233,7 @@ export function useQuestionPackageRetake({
         uni.showToast({ title: '补拍时间已结束，本次诊断已结束', icon: 'none' })
         return
       }
-      uni.showToast({ title: error?.message || '补拍提交失败，请重试', icon: 'none' })
+      uni.showToast({ title: '补拍暂未提交成功，请检查网络后重试', icon: 'none' })
     } finally {
       isSubmittingImage.value = false
     }

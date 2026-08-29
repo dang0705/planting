@@ -1,5 +1,5 @@
 <template>
-  <Layout title="AI 诊断" content-class="bg-[#F8F6F0]">
+  <Layout title="植物状况检查" content-class="bg-[#F8F6F0]">
     <view id="diagnose-tab-page" class="flex min-h-screen flex-col bg-[#F8F6F0]">
       <view id="diagnose-tab-intake" class="flex-1 px-4 pt-4">
         <DiagnoseIntake :view="intakeView" />
@@ -12,7 +12,7 @@
           :disabled="!canStartDiagnoseNow"
           @click="startDiagnosis"
         >
-          {{ isStartingDiagnosis ? '正在生成问诊…' : '开始诊断' }}
+          {{ isStartingDiagnosis ? '正在准备问题…' : '开始检查' }}
         </button>
       </view>
     </view>

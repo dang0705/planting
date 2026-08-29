@@ -63,10 +63,12 @@
         :key="requirement.code"
         class="mt-3"
       >
-        <text class="block text-xs leading-5 text-[#53645A]">{{ requirement.prompt }}</text>
+        <text class="block text-xs leading-5 text-[#53645A]">
+          {{ displayConditionPrompt(requirement) }}
+        </text>
         <view class="mt-2 grid grid-cols-2 gap-2">
           <button
-            :id="`fertilization-reminder-condition-${requirement.code}-yes`"
+            :id="`fertilization-reminder-condition-${conditionElementKey(requirement.code)}-yes`"
             class="m-0 rounded-lg border px-2 py-2 text-xs after:border-0"
             :class="
               conditionAnswers[requirement.code] === true
@@ -79,7 +81,7 @@
             {{ isGrowthCondition(requirement.code) ? '继续设置' : '是' }}
           </button>
           <button
-            :id="`fertilization-reminder-condition-${requirement.code}-no`"
+            :id="`fertilization-reminder-condition-${conditionElementKey(requirement.code)}-no`"
             class="m-0 rounded-lg border px-2 py-2 text-xs after:border-0"
             :class="
               conditionAnswers[requirement.code] === false
@@ -132,8 +134,8 @@ const props = defineProps({
 })
 
 const visibleConditionRequirements = computed(() =>
-  (props.preflight?.conditionRequirements || []).filter(
-    requirement => !isGrowthCondition(requirement.code)
+  (props.preflight?.conditionRequirements || []).filter(requirement =>
+    isGrowthCondition(requirement.code)
   )
 )
 const hasVisiblePreflight = computed(
@@ -146,5 +148,13 @@ defineEmits(['select-type', 'preview', 'change-condition', 'change-type-change']
 
 function isGrowthCondition(code) {
   return ['active_growth', 'new_leaves_or_shoots'].includes(String(code || '').trim())
+}
+
+function conditionElementKey(code) {
+  return isGrowthCondition(code) ? 'active_growth' : String(code || '').trim()
+}
+
+function displayConditionPrompt(requirement = {}) {
+  return isGrowthCondition(requirement.code) ? '最近有长新叶或新芽吗？' : requirement.prompt
 }
 </script>

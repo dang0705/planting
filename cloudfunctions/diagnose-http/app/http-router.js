@@ -1,6 +1,12 @@
 'use strict'
 
-const { jsonResponse, notFound, methodNotAllowed, getHttpRequestData } = require('/opt/utils/http')
+const {
+  jsonResponse,
+  internalServerError,
+  notFound,
+  methodNotAllowed,
+  getHttpRequestData
+} = require('/opt/utils/http')
 const { debugLog } = require('../utils/common')
 
 let diagnosisHandlers = null
@@ -26,6 +32,27 @@ function getOutOfPoolHandlers() {
     outOfPoolHandlers = require('../handlers/out-of-pool-handlers')
   }
   return outOfPoolHandlers
+}
+
+function publicRouteError(error) {
+  const statusCode = Number(error?.statusCode || 0)
+  if (statusCode < 400 || statusCode >= 500) {
+    return null
+  }
+
+  const messageByStatus = {
+    400: '请求参数无效',
+    401: '请先登录',
+    403: '无权访问该接口',
+    404: '请求资源不存在',
+    405: '不支持的请求方法'
+  }
+
+  return jsonResponse(statusCode, {
+    code: statusCode,
+    message: messageByStatus[statusCode] || '请求无法完成',
+    data: null
+  })
 }
 
 function normalizeHttpPayload(payload) {
@@ -89,12 +116,34 @@ async function main(event, context) {
       })
     }
 
+    // 保留活动契约中的兼容入口：旧脚本仍通过 /stream/diagnose 发起 SSE，
+    // /diagnose 则是历史同步入口。两者都必须复用 diagnosis/start，避免出现
+    // 第二套诊断状态机或让配置中“已暴露”的路径落到 404。
+    if (path === '/stream/diagnose' || path.endsWith('/stream/diagnose')) {
+      if (method !== 'POST') {
+        return methodNotAllowed(method)
+      }
+      const { handleDiagnosisStart } = getDiagnosisHandlers()
+      return await handleDiagnosisStart(request, context, {
+        ...payload,
+        streamVisualDecision: true
+      })
+    }
+
+    if (path === '/diagnose' || path.endsWith('/diagnose')) {
+      if (method !== 'POST') {
+        return methodNotAllowed(method)
+      }
+      const { handleDiagnosisStart } = getDiagnosisHandlers()
+      return await handleDiagnosisStart(request, context, payload)
+    }
+
     if (path.includes('/diagnosis/start')) {
       if (method !== 'POST') {
         return methodNotAllowed(method)
       }
       const { handleDiagnosisStart } = getDiagnosisHandlers()
-      return handleDiagnosisStart(request, context, payload)
+      return await handleDiagnosisStart(request, context, payload)
     }
 
     if (path.includes('/diagnosis/question/start')) {
@@ -102,7 +151,7 @@ async function main(event, context) {
         return methodNotAllowed(method)
       }
       const { handleDiagnosisQuestionStart } = getDiagnosisHandlers()
-      return handleDiagnosisQuestionStart(request, context, payload)
+      return await handleDiagnosisQuestionStart(request, context, payload)
     }
 
     if (path.includes('/diagnosis/answer')) {
@@ -110,7 +159,7 @@ async function main(event, context) {
         return methodNotAllowed(method)
       }
       const { handleDiagnosisAnswer } = getDiagnosisHandlers()
-      return handleDiagnosisAnswer(request, context, payload)
+      return await handleDiagnosisAnswer(request, context, payload)
     }
 
     if (path.includes('/diagnosis/retake/authorize')) {
@@ -118,7 +167,7 @@ async function main(event, context) {
         return methodNotAllowed(method)
       }
       const { handleDiagnosisRetakeAuthorize } = getDiagnosisHandlers()
-      return handleDiagnosisRetakeAuthorize(request, context, payload)
+      return await handleDiagnosisRetakeAuthorize(request, context, payload)
     }
 
     if (path.includes('/diagnosis/retake/skip')) {
@@ -126,7 +175,7 @@ async function main(event, context) {
         return methodNotAllowed(method)
       }
       const { handleDiagnosisRetakeSkip } = getDiagnosisHandlers()
-      return handleDiagnosisRetakeSkip(request, context, payload)
+      return await handleDiagnosisRetakeSkip(request, context, payload)
     }
 
     if (path.includes('/diagnosis/result')) {
@@ -134,7 +183,7 @@ async function main(event, context) {
         return methodNotAllowed(method)
       }
       const { handleDiagnosisResult } = getDiagnosisHandlers()
-      return handleDiagnosisResult(request, context, request.query)
+      return await handleDiagnosisResult(request, context, request.query)
     }
 
     if (path.includes('/diagnosis/history')) {
@@ -142,7 +191,7 @@ async function main(event, context) {
         return methodNotAllowed(method)
       }
       const { handleDiagnosisHistory } = getDiagnosisHandlers()
-      return handleDiagnosisHistory(request, context, request.query)
+      return await handleDiagnosisHistory(request, context, request.query)
     }
 
     if (path.includes('/diagnosis/review/list')) {
@@ -150,7 +199,7 @@ async function main(event, context) {
         return methodNotAllowed(method)
       }
       const { handleDiagnosisReviewList } = getReviewHandlers()
-      return handleDiagnosisReviewList(request, context, request.query)
+      return await handleDiagnosisReviewList(request, context, request.query)
     }
 
     if (path.includes('/diagnosis/review/images')) {
@@ -158,7 +207,7 @@ async function main(event, context) {
         return methodNotAllowed(method)
       }
       const { handleDiagnosisReviewImages } = getReviewHandlers()
-      return handleDiagnosisReviewImages(request, context, request.query)
+      return await handleDiagnosisReviewImages(request, context, request.query)
     }
 
     if (path.includes('/diagnosis/review/detail')) {
@@ -167,13 +216,13 @@ async function main(event, context) {
         String(payload?.action || request.query?.action || '').trim() === 'importBatch'
       ) {
         const { handleDiagnosisReviewImportBatch } = getReviewHandlers()
-        return handleDiagnosisReviewImportBatch(request, context, payload)
+        return await handleDiagnosisReviewImportBatch(request, context, payload)
       }
       if (method !== 'GET') {
         return methodNotAllowed(method)
       }
       const { handleDiagnosisReviewDetail } = getReviewHandlers()
-      return handleDiagnosisReviewDetail(request, context, request.query)
+      return await handleDiagnosisReviewDetail(request, context, request.query)
     }
 
     if (path.includes('/diagnosis/review/import')) {
@@ -181,7 +230,7 @@ async function main(event, context) {
         return methodNotAllowed(method)
       }
       const { handleDiagnosisReviewImportBatch } = getReviewHandlers()
-      return handleDiagnosisReviewImportBatch(request, context, payload)
+      return await handleDiagnosisReviewImportBatch(request, context, payload)
     }
 
     if (path.includes('/diagnosis/feedback')) {
@@ -190,10 +239,10 @@ async function main(event, context) {
       }
       if (String(payload?.action || request.query?.action || '').trim() === 'importBatch') {
         const { handleDiagnosisReviewImportBatch } = getReviewHandlers()
-        return handleDiagnosisReviewImportBatch(request, context, payload)
+        return await handleDiagnosisReviewImportBatch(request, context, payload)
       }
       const { handleDiagnosisFeedback } = getDiagnosisHandlers()
-      return handleDiagnosisFeedback(request, context, payload)
+      return await handleDiagnosisFeedback(request, context, payload)
     }
 
     if (path.includes('/visual/out-of-pool/list')) {
@@ -201,7 +250,7 @@ async function main(event, context) {
         return methodNotAllowed(method)
       }
       const { handleOutOfPoolCandidateList } = getOutOfPoolHandlers()
-      return handleOutOfPoolCandidateList(request, context, request.query)
+      return await handleOutOfPoolCandidateList(request, context, request.query)
     }
 
     if (path.includes('/visual/out-of-pool/image')) {
@@ -209,7 +258,7 @@ async function main(event, context) {
         return methodNotAllowed(method)
       }
       const { handleOutOfPoolCandidateImage } = getOutOfPoolHandlers()
-      return handleOutOfPoolCandidateImage(request, context, request.query)
+      return await handleOutOfPoolCandidateImage(request, context, request.query)
     }
 
     if (path.includes('/visual/out-of-pool/review')) {
@@ -217,7 +266,7 @@ async function main(event, context) {
         return methodNotAllowed(method)
       }
       const { handleOutOfPoolCandidateReview } = getOutOfPoolHandlers()
-      return handleOutOfPoolCandidateReview(request, context, payload)
+      return await handleOutOfPoolCandidateReview(request, context, payload)
     }
 
     if (path.includes('/visual/out-of-pool/proxy-mappings/list')) {
@@ -225,7 +274,7 @@ async function main(event, context) {
         return methodNotAllowed(method)
       }
       const { handleOutOfPoolProxyMappingList } = getOutOfPoolHandlers()
-      return handleOutOfPoolProxyMappingList(request, context, request.query)
+      return await handleOutOfPoolProxyMappingList(request, context, request.query)
     }
 
     if (path.includes('/visual/out-of-pool/proxy-mappings/upsert')) {
@@ -233,7 +282,7 @@ async function main(event, context) {
         return methodNotAllowed(method)
       }
       const { handleOutOfPoolProxyMappingUpsert } = getOutOfPoolHandlers()
-      return handleOutOfPoolProxyMappingUpsert(request, context, payload)
+      return await handleOutOfPoolProxyMappingUpsert(request, context, payload)
     }
 
     if (path.includes('/visual/out-of-pool/proxy-mappings/disable')) {
@@ -241,21 +290,18 @@ async function main(event, context) {
         return methodNotAllowed(method)
       }
       const { handleOutOfPoolProxyMappingDisable } = getOutOfPoolHandlers()
-      return handleOutOfPoolProxyMappingDisable(request, context, payload)
+      return await handleOutOfPoolProxyMappingDisable(request, context, payload)
     }
 
     return notFound(path)
   } catch (error) {
     console.error('diagnose-http error:', error)
-    return jsonResponse(500, {
-      code: 500,
-      message: error.message || '服务器错误',
-      data: null
-    })
+    return publicRouteError(error) || internalServerError('诊断暂时不可用，请稍后重试')
   }
 }
 
 module.exports = {
   normalizeHttpPayload,
-  main
+  main,
+  _test: { publicRouteError }
 }

@@ -241,6 +241,12 @@ function loadAppWithSpies(overrides = {}) {
         savePlantCareLocation: async () => null
       }
     }
+    if (request.endsWith('/plant-deletion-service')) {
+      return {
+        deleteUserPlantCompletely: async () => ({ cleanupPending: false, cleanupAttempted: 0 }),
+        drainPendingPlantFileDeletionJobs: async () => ({ attempted: 0, pending: 0 })
+      }
+    }
     if (request.endsWith('/watering-reminder-service')) {
       return {
         attachWateringReminderStateToList: async (_openid, data) => data,

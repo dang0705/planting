@@ -171,7 +171,7 @@ export function readCurrentSessionProjectEvidence({
     appservice_loadstop_at: null,
     failures: []
   }
-  // Official Electron 2.02.2608172 keeps the injected session id on the
+  // Official Electron 2.02.2608272 keeps the injected session id on the
   // verified main-process argv but does not echo the argv in WeappLog. Native
   // bundles may still emit the historical argv line, so accept either source
   // while retaining the exact current-process/session binding.

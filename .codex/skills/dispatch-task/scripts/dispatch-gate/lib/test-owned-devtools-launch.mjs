@@ -22,6 +22,7 @@ import {
   OFFICIAL_ELECTRON_RUNTIME,
   SYSTEM_APP_ASAR,
   SYSTEM_ELECTRON,
+  SYSTEM_PRODUCT_HASH,
   SYSTEM_NW_BINARY,
   SYSTEM_PACKAGE,
   isOfficialElectronBundle
@@ -35,9 +36,11 @@ function qaFileUrl(filePath) {
 }
 
 export const QA_DIRECT_DEVTOOLS_BINARY = SYSTEM_NW_BINARY
-// The formal QA plane uses the immutable installed DevTools binary and native
-// package. A patched/copy launcher is never a runtime dependency: its native
-// server-window bootstrap can leave renderers alive without creating 9422.
+// The formal QA plane uses the immutable installed DevTools bundle. Electron
+// releases run app.asar directly; the legacy native package is retained only
+// as a compatibility path for older installations. A patched/copy launcher is
+// never a runtime dependency: its server-window bootstrap can leave renderers
+// alive without creating the fixed control listener.
 export const QA_DIRECT_DEVTOOLS_PACKAGE = SYSTEM_PACKAGE
 export const QA_OFFICIAL_ELECTRON = SYSTEM_ELECTRON
 export const QA_OFFICIAL_APP_ASAR = SYSTEM_APP_ASAR
@@ -119,7 +122,7 @@ function userDataDirArgumentVariants(userDataDir) {
   return [...variants].map(value => `--user-data-dir=${value}`)
 }
 
-function resetOfficialQaSingletons(userDataDir) {
+export function resetOfficialQaSingletons(userDataDir) {
   const root = path.resolve(String(userDataDir || ''))
   const qaRoot = path.resolve(QA_DEVTOOLS_HOME)
   if (root !== qaRoot && !root.startsWith(`${qaRoot}${path.sep}`)) {
@@ -133,8 +136,20 @@ function resetOfficialQaSingletons(userDataDir) {
     throw error
   }
   const removed = []
+  // Electron receives the parent Chromium data root and creates the
+  // product-hash profile below it. Singleton links therefore live in the
+  // hash leaf, not beside the root argument. Accept either form so recovery
+  // can be called with a persisted profile path or the launch root.
+  const profileRoot = path.basename(root) === SYSTEM_PRODUCT_HASH
+    ? root
+    : path.join(root, SYSTEM_PRODUCT_HASH)
+  if (!profileRoot.startsWith(`${qaRoot}${path.sep}`)) {
+    const error = new Error('official Electron singleton profile is outside QA home')
+    error.code = 'qa_official_singleton_profile_invalid'
+    throw error
+  }
   for (const name of ['SingletonLock', 'SingletonCookie', 'SingletonSocket']) {
-    const target = path.join(root, name)
+    const target = path.join(profileRoot, name)
     try {
       const stat = fs.lstatSync(target)
       if (stat.isSymbolicLink()) {
@@ -153,7 +168,8 @@ export function buildOfficialElectronDevToolsLaunch({
   userDataDir,
   controlPort,
   projectPath,
-  appSessionId = crypto.randomBytes(8).toString('hex')
+  appSessionId = crypto.randomBytes(8).toString('hex'),
+  installedBundle = null
 } = {}) {
   const normalizedProfile = path.resolve(String(profile || ''))
   const normalizedUserDataDir = path.resolve(String(userDataDir || ''))
@@ -161,22 +177,34 @@ export function buildOfficialElectronDevToolsLaunch({
   if (!normalizedProfile || !normalizedUserDataDir || !Number.isInteger(Number(controlPort))) {
     throw new Error('official Electron DevTools launch requires profile, user-data root and control port')
   }
-  if (!isOfficialElectronBundle()) {
+  const verifiedBundle = assertInstalledDevToolsBundle()
+  if (
+    installedBundle &&
+    (installedBundle.runtime_kind !== verifiedBundle.runtime_kind ||
+      path.resolve(String(installedBundle.electron || '')) !== path.resolve(verifiedBundle.electron) ||
+      path.resolve(String(installedBundle.app_asar || '')) !== path.resolve(verifiedBundle.app_asar) ||
+      installedBundle.release_version !== verifiedBundle.release_version)
+  ) {
+    const error = new Error('official Electron launch bundle does not match the installed bundle')
+    error.code = 'qa_official_electron_bundle_mismatch'
+    throw error
+  }
+  if (verifiedBundle.runtime_kind !== 'official_electron') {
     const error = new Error('official Electron DevTools bundle is unavailable')
     error.code = 'qa_official_electron_bundle_unavailable'
     throw error
   }
   return {
-    command: QA_OFFICIAL_ELECTRON,
+    command: verifiedBundle.electron,
     args: [
-      QA_OFFICIAL_APP_ASAR,
+      verifiedBundle.app_asar,
       '--cli',
       '--remote-port',
       String(QA_RUNTIME_SERVICE_PORT),
       '--enable-service-port',
       `--user-data-dir=${normalizedUserDataDir}`,
       `--app-session-id=${appSessionId}`,
-      // The official 2.02.2608172 bootstrap parses this option as a
+      // The official 2.02.2608272 bootstrap parses this option as a
       // two-token argv pair (`indexOf('--ide-http-port')` followed by the
       // value). The equals form is silently ignored and makes the IDE pick a
       // random port, which then fails the fixed control-plane ownership gate.
@@ -192,22 +220,22 @@ export function buildOfficialElectronDevToolsLaunch({
     runtime_kind: 'official_electron',
     bundle: {
       kind: OFFICIAL_ELECTRON_RUNTIME.kind,
-      release: OFFICIAL_ELECTRON_RUNTIME.release,
-      electron: QA_OFFICIAL_ELECTRON,
-      app_asar: QA_OFFICIAL_APP_ASAR,
+      release: verifiedBundle.release_version || OFFICIAL_ELECTRON_RUNTIME.release,
+      electron: verifiedBundle.electron,
+      app_asar: verifiedBundle.app_asar,
       app_asar_unpacked: OFFICIAL_ELECTRON_RUNTIME.app_asar_unpacked,
-      product_hash: OFFICIAL_ELECTRON_RUNTIME.product_hash
+      product_hash: verifiedBundle.product_hash
     },
     installed_bundle: {
       kind: OFFICIAL_ELECTRON_RUNTIME.kind,
-      release: OFFICIAL_ELECTRON_RUNTIME.release,
-      electron: QA_OFFICIAL_ELECTRON,
-      app_asar: QA_OFFICIAL_APP_ASAR,
-      product_hash: OFFICIAL_ELECTRON_RUNTIME.product_hash
+      release: verifiedBundle.release_version || OFFICIAL_ELECTRON_RUNTIME.release,
+      electron: verifiedBundle.electron,
+      app_asar: verifiedBundle.app_asar,
+      product_hash: verifiedBundle.product_hash
     },
     shared_auth_package: null,
     package_dir: null,
-    runtime_package: QA_OFFICIAL_APP_ASAR,
+    runtime_package: verifiedBundle.app_asar,
     command_boundary: 'installed_official_electron',
     package_boundary: 'installed_app_asar',
     auth_state: null,
@@ -228,7 +256,8 @@ export function buildTestOwnedDevToolsLaunch({
   if (!normalizedProfile || !Number.isInteger(Number(controlPort))) {
     throw new Error('test-owned DevTools launch requires profile and control port')
   }
-  if (isOfficialElectronBundle()) {
+  const installedBundle = assertInstalledDevToolsBundle()
+  if (installedBundle.runtime_kind === 'official_electron') {
     return buildOfficialElectronDevToolsLaunch({
       profile: normalizedProfile,
       // The official Electron runtime treats this as the Chromium data root
@@ -237,10 +266,10 @@ export function buildTestOwnedDevToolsLaunch({
       userDataDir: path.resolve(path.dirname(normalizedProfile)),
       controlPort,
       projectPath,
-      appSessionId
+      appSessionId,
+      installedBundle
     })
   }
-  const installedBundle = assertInstalledDevToolsBundle()
   if (isManagedQaProfile(normalizedProfile)) {
     ensureQaProfileNativePackage({ profile: normalizedProfile })
   }
@@ -292,7 +321,11 @@ export function buildTestOwnedDevToolsLaunch({
   }
 }
 
-export function buildQaDevToolsEnvironment(baseEnv = process.env) {
+export function buildQaDevToolsEnvironment(
+  baseEnv = process.env,
+  { runtimeKind = isOfficialElectronBundle() ? 'official_electron' : 'legacy_native' } = {}
+) {
+  const official = runtimeKind === 'official_electron'
   return {
     ...baseEnv,
     HOME: QA_DEVTOOLS_HOME,
@@ -300,8 +333,14 @@ export function buildQaDevToolsEnvironment(baseEnv = process.env) {
     WECHAT_DEVTOOLS_SHARED_AUTH_ROOT: QA_SHARED_AUTH_ROOT,
     WECHAT_DEVTOOLS_SHARED_AUTH_ROLE: 'qa',
     WECHAT_QA_LAUNCHER_ROLE: 'qa',
-    WECHAT_QA_LAUNCHER_NW_BINARY: QA_DIRECT_DEVTOOLS_BINARY,
-    WECHAT_QA_LAUNCHER_PACKAGE_DIR: QA_DIRECT_DEVTOOLS_PACKAGE
+    WECHAT_QA_RUNTIME_KIND: runtimeKind,
+    // The Electron bootstrap must not receive retired NW package hints. Keep
+    // the variables present as empty strings so a caller's ambient environment
+    // cannot silently route the new runtime back through the legacy path.
+    WECHAT_QA_LAUNCHER_NW_BINARY: official ? '' : QA_DIRECT_DEVTOOLS_BINARY,
+    WECHAT_QA_LAUNCHER_PACKAGE_DIR: official ? '' : QA_DIRECT_DEVTOOLS_PACKAGE,
+    WECHAT_QA_EXTENSION_PATH: official ? '' : baseEnv.WECHAT_QA_EXTENSION_PATH || '',
+    WECHAT_QA_CUSTOM_FRONTEND: official ? '' : baseEnv.WECHAT_QA_CUSTOM_FRONTEND || ''
   }
 }
 
@@ -389,7 +428,7 @@ export async function launchTestOwnedDevTools(options = {}) {
           }
         : {}),
       WECHAT_QA_RUNTIME_KIND: launch.runtime_kind || 'legacy_native'
-    })
+    }, { runtimeKind: launch.runtime_kind || 'legacy_native' })
     const child = spawn(launch.command, launch.args, {
       detached: true,
       env: environment,

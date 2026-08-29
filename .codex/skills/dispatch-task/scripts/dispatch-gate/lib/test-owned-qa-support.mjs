@@ -30,6 +30,8 @@ import { repoRoot } from './state.mjs'
 import {
   QA_CLI,
   SYSTEM_CLI,
+  SYSTEM_APP_ASAR,
+  SYSTEM_ELECTRON,
   isOfficialElectronBundle
 } from '../../../../../../scripts/qa/patch-wechat-devtools-launcher.mjs'
 import { QA_SHARED_AUTH_ROOT } from './test-owned-devtools-launch.mjs'
@@ -44,10 +46,10 @@ export const QA_RUNTIME_PROFILE_PRODUCT_HASH =
   isOfficialElectronBundle()
     ? QA_RUNTIME_PLANE_PROFILE_PRODUCT_HASH
     : '7a30d6576abfa238418b33c3c50ac14e'
-// The CLI is only a profile-routing adapter: the stock CLI hardcodes the
-// daily product/profile and fails under the isolated QA HOME. It may issue
-// open/quit requests, but it must never be used as the DevTools runtime
-// executable; the runtime itself is always the installed native binary/package.
+// The CLI is only a profile-routing adapter. Legacy NW installs need the
+// patched QA CLI because the stock script hardcodes the daily profile; the
+// Electron release uses the installed CLI with HOME redirected to QA. In both
+// cases it may issue open/quit requests, but it is never the runtime executable.
 export const QA_RUNTIME_DEVTOOLS_CLI = isOfficialElectronBundle() ? SYSTEM_CLI : QA_CLI
 export const QA_RUNTIME_PROFILE_ROOT = path.join('Library', 'Application Support', '微信开发者工具')
 // Keep the test account separate from the operator's normal DevTools profile,
@@ -949,9 +951,15 @@ export function localRuntimeEvidence(targetPath) {
 }
 
 export function mainForSession({ profile, devtools_user_data_dir, controlPort }) {
+  const expectedProfile = normalizeRuntimePath(String(profile || ''))
+  const explicitUserDataDir = Boolean(devtools_user_data_dir)
   const expectedUserDataDir = normalizeRuntimePath(
     String(devtools_user_data_dir || profile || '')
   )
+  const expectedUserDataDirs = new Set([expectedUserDataDir])
+  if (isOfficialElectronBundle() && !explicitUserDataDir && expectedProfile) {
+    expectedUserDataDirs.add(normalizeRuntimePath(path.dirname(expectedProfile)))
+  }
   const expectedControlPort = Number(controlPort)
   if (
     !expectedUserDataDir ||
@@ -963,7 +971,9 @@ export function mainForSession({ profile, devtools_user_data_dir, controlPort })
   const main = mainDevToolsProcesses().find(item => {
     const direct = directControlPortEvidence(item.command)
     return (
-      normalizeRuntimePath(userDataDirFromCommand(item.command)) === expectedUserDataDir &&
+      expectedUserDataDirs.has(normalizeRuntimePath(userDataDirFromCommand(item.command))) &&
+      (!isOfficialElectronBundle() ||
+        (item.command.includes(SYSTEM_ELECTRON) && item.command.includes(SYSTEM_APP_ASAR))) &&
       Number(direct.port) === expectedControlPort
     )
   })
@@ -1024,6 +1034,12 @@ export function ownedRuntimeEvidence(session) {
     process_start_identity: processStartIdentity(main.pid),
     identity_hash: session.identity_hash || null,
     auth_generation: Number(session.auth_generation || 0) || null,
+    // Auth-consumption receipts are bound to the concrete product profile
+    // directory, while official Electron's command line may expose only the
+    // parent user-data root. Keep both paths in runtime evidence so the
+    // formal gate compares like-for-like instead of rejecting a valid native
+    // receipt as stale.
+    profile: normalizeRuntimePath(session.profile || ''),
     automation_listener_pid: wsOwner[0]?.automation_listener_pid ?? null,
     port_owner_pid: wsOwner[0]?.automation_listener_pid ?? null,
     automator_listener_pids: wsOwners.map(item => item.automation_listener_pid),
@@ -1031,7 +1047,7 @@ export function ownedRuntimeEvidence(session) {
     control_port: session.controlPort,
     control_port_source: directControl.source,
     control_port_verified: control.verified,
-    user_data_dir: session.profile,
+    user_data_dir: session.devtools_user_data_dir || session.profile,
     session_log_evidence: sessionLog,
     owners: wsOwners
   }
@@ -1053,7 +1069,14 @@ export async function runDevToolsCli({ home, args, outputPath, timeoutMs = 30_00
       HOME: home,
       USERPROFILE: home,
       WECHAT_DEVTOOLS_SHARED_AUTH_ROOT: QA_SHARED_AUTH_ROOT,
-      WECHAT_QA_LAUNCHER_ROLE: 'qa'
+      WECHAT_QA_LAUNCHER_ROLE: 'qa',
+      WECHAT_QA_RUNTIME_KIND: isOfficialElectronBundle() ? 'official_electron' : 'legacy_native',
+      ...(isOfficialElectronBundle()
+        ? {
+            WECHAT_QA_LAUNCHER_NW_BINARY: '',
+            WECHAT_QA_LAUNCHER_PACKAGE_DIR: ''
+          }
+        : {})
     },
     stdio: ['pipe', 'pipe', 'pipe']
   })

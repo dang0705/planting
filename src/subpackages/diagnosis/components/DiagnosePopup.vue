@@ -5,7 +5,7 @@
     panel-id="diagnose-popup-panel"
     content-id="diagnose-popup-scroll"
     close-id="diagnose-popup-close-button"
-    title="AI 诊断"
+    title="植物状况检查"
     height-mode="fullHeight"
     @change="handleChange"
   >

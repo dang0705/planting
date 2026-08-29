@@ -88,7 +88,7 @@
       <AIStreamDialog
         ref="aiDialogRef"
         :visible="showAIDialog"
-        title="AI 智能识别"
+        title="识别植物"
         icon="🔍"
         loading-text="正在识别植物..."
         confirm-text="使用识别结果"
@@ -119,6 +119,7 @@ import { useDefaultPlants } from '@/composables/useDefaultPlants.js'
 import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
+import { createAsyncActionGuard, createDebounced } from '@/utils/interaction-guard.js'
 import { normalizePlantCareLocation } from '@/utils/plant-care-location.js'
 import PlantInfoStepPanel from './PlantInfoStepPanel.vue'
 import { buildPlantFormFromUserPlant, createInitialPlantForm } from './plant-form-model.js'
@@ -168,7 +169,9 @@ const plantListTouching = ref(false)
 const formErrors = reactive({ careLocation: '' })
 const potProfileEditorRef = ref(null)
 const potProfileSaving = ref(false)
-let searchTimer = null
+const submitAction = createAsyncActionGuard()
+const potProfileAction = createAsyncActionGuard()
+const debouncedLoadPlants = createDebounced(keyword => loadPlants(keyword), SEARCH_DEBOUNCE_MS)
 
 const formData = ref(createInitialPlantForm())
 const plantId = computed(() => String(props.plantId || '').trim())
@@ -193,21 +196,23 @@ const plantGroups = computed(() => {
   }
   return groups
 })
-const { useAIIdentify, handleAIConfirm, handleAIRetry, handleAIClose, clearPendingImage } = useUserPlantIdentify({
-  userStore,
-  defaultPlants,
-  formData,
-  selectedPlant,
-  recognizedName,
-  identifyContext,
-  showLogin,
-  loginMsg,
-  showAIDialog,
-  aiDialogRef,
-  activeStep
-})
+const { useAIIdentify, handleAIConfirm, handleAIRetry, handleAIClose, clearPendingImage } =
+  useUserPlantIdentify({
+    userStore,
+    defaultPlants,
+    formData,
+    selectedPlant,
+    recognizedName,
+    identifyContext,
+    showLogin,
+    loginMsg,
+    showAIDialog,
+    aiDialogRef,
+    activeStep
+  })
 
 onBeforeUnmount(() => {
+  debouncedLoadPlants.cancel()
   clearPendingImage().catch(() => {})
 })
 
@@ -245,7 +250,7 @@ async function initializeEditPage() {
   const plant = response?.code === HTTP_SUCCESS_CODE ? response.data : null
   if (!plant) {
     loading.value = false
-    uni.showToast({ title: response?.message || '未找到要编辑的植物', icon: 'none' })
+    uni.showToast({ title: '未找到要编辑的植物', icon: 'none' })
     setTimeout(() => uni.navigateBack(), SUCCESS_NAV_DELAY_MS)
     return
   }
@@ -279,10 +284,7 @@ watch(recognizedName, name => {
 })
 
 watch(searchKeyword, value => {
-  if (searchTimer) {
-    clearTimeout(searchTimer)
-  }
-  searchTimer = setTimeout(() => loadPlants(value), SEARCH_DEBOUNCE_MS)
+  debouncedLoadPlants(value)
 })
 
 function handleSwiperChange(event) {
@@ -313,13 +315,12 @@ function handleFormBack() {
 }
 
 function handleSearchConfirm() {
-  if (searchTimer) {
-    clearTimeout(searchTimer)
-  }
+  debouncedLoadPlants.cancel()
   loadPlants(searchKeyword.value)
 }
 
 function clearSearch() {
+  debouncedLoadPlants.cancel()
   searchKeyword.value = ''
   loadPlants()
 }
@@ -373,41 +374,43 @@ function openPotProfileEditor() {
   potProfileEditorRef.value?.open()
 }
 
-async function savePotProfile(profile) {
-  if (!profile || potProfileSaving.value) {
-    return
-  }
-  if (!(await userStore.ensureLogin())) {
-    loginMsg.value = isEditMode.value ? '编辑植物需要先登录' : '添加植物需要先登录'
-    showLogin.value = true
-    return
-  }
-
-  if (!isEditMode.value) {
-    formData.value = { ...formData.value, potProfile: profile }
-    potProfileEditorRef.value?.close()
-    return
-  }
-
-  potProfileSaving.value = true
-  try {
-    const response = await patchUserPlant({ id: Number(plantId.value), ...profile })
-    if (response?.code !== HTTP_SUCCESS_CODE) {
-      uni.showToast({ title: response?.message || '盆型信息保存失败', icon: 'none' })
+function savePotProfile(profile) {
+  return potProfileAction.run(async () => {
+    if (!profile || potProfileSaving.value) {
       return
     }
-    const serverPlant = await refreshCurrentPlantFromServer()
-    formData.value = {
-      ...formData.value,
-      potProfile: serverPlant?.potProfile || profile
+    if (!(await userStore.ensureLogin())) {
+      loginMsg.value = isEditMode.value ? '编辑植物需要先登录' : '添加植物需要先登录'
+      showLogin.value = true
+      return
     }
-    potProfileEditorRef.value?.close()
-    uni.showToast({ title: '盆型信息已保存', icon: 'success' })
-  } catch (error) {
-    uni.showToast({ title: error?.message || '网络错误，请重试', icon: 'none' })
-  } finally {
-    potProfileSaving.value = false
-  }
+
+    if (!isEditMode.value) {
+      formData.value = { ...formData.value, potProfile: profile }
+      potProfileEditorRef.value?.close()
+      return
+    }
+
+    potProfileSaving.value = true
+    try {
+      const response = await patchUserPlant({ id: Number(plantId.value), ...profile })
+      if (response?.code !== HTTP_SUCCESS_CODE) {
+        uni.showToast({ title: '盆型信息暂未保存，请检查网络后重试', icon: 'none' })
+        return
+      }
+      const serverPlant = await refreshCurrentPlantFromServer()
+      formData.value = {
+        ...formData.value,
+        potProfile: serverPlant?.potProfile || profile
+      }
+      potProfileEditorRef.value?.close()
+      uni.showToast({ title: '盆型信息已保存', icon: 'success' })
+    } catch {
+      uni.showToast({ title: '暂时无法保存盆型信息，请稍后重试', icon: 'none' })
+    } finally {
+      potProfileSaving.value = false
+    }
+  })
 }
 
 function handleEnvironmentSaved(payload = {}) {
@@ -450,15 +453,17 @@ function uploadPhoto() {
   })
 }
 
-async function submitForm() {
-  if (submitting.value) {
-    return
-  }
-  if (isEditMode.value) {
-    await submitEditForm()
-    return
-  }
-  await submitNewPlantForm()
+function submitForm() {
+  return submitAction.run(async () => {
+    if (submitting.value) {
+      return
+    }
+    if (isEditMode.value) {
+      await submitEditForm()
+      return
+    }
+    await submitNewPlantForm()
+  })
 }
 
 async function submitNewPlantForm() {
@@ -489,15 +494,15 @@ async function submitNewPlantForm() {
     })
     const response = await createUserPlant(payload)
     if (response?.code !== HTTP_SUCCESS_CODE) {
-      uni.showToast({ title: response?.message || '保存失败', icon: 'none' })
+      uni.showToast({ title: '暂时无法添加植物，请检查网络后重试', icon: 'none' })
       return
     }
     reportAnalyticsEvent(ANALYTICS_EVENTS.USER_NEW_PLANT_CREATED)
     await plantStore.getUserPlants(1, 50)
     uni.showToast({ title: '添加成功', icon: 'success' })
     setTimeout(() => uni.navigateBack(), SUCCESS_NAV_DELAY_MS)
-  } catch (error) {
-    uni.showToast({ title: error?.message || '网络错误，请重试', icon: 'none' })
+  } catch {
+    uni.showToast({ title: '暂时无法添加植物，请检查网络后重试', icon: 'none' })
   } finally {
     submitting.value = false
   }
@@ -534,14 +539,14 @@ async function submitEditForm() {
     }
     const response = await patchUserPlant({ id: Number(plantId.value), ...payload })
     if (response?.code !== HTTP_SUCCESS_CODE) {
-      uni.showToast({ title: response?.message || '保存失败', icon: 'none' })
+      uni.showToast({ title: '暂时无法保存植物信息，请检查网络后重试', icon: 'none' })
       return
     }
     await plantStore.getUserPlants(1, 50)
     uni.showToast({ title: '保存成功', icon: 'success' })
     setTimeout(() => uni.navigateBack(), SUCCESS_NAV_DELAY_MS)
-  } catch (error) {
-    uni.showToast({ title: error?.message || '网络错误，请重试', icon: 'none' })
+  } catch {
+    uni.showToast({ title: '暂时无法保存植物信息，请检查网络后重试', icon: 'none' })
   } finally {
     submitting.value = false
   }

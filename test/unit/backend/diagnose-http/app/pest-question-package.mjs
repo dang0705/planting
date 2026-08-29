@@ -251,7 +251,7 @@ assert.deepEqual(
 )
 assert.match(allNegativeRefinementResult.visibleOutcomes[0].displayNameCn, /^可能是/)
 assert.equal(allNegativeRefinementResult.confidenceLevel, 'low')
-assert.match(allNegativeRefinementResult.finalResult.summary, /补充回答未能确认关键特征/)
+assert.match(allNegativeRefinementResult.finalResult.summary, /补充回答暂未确认关键特征/)
 
 const refinementMatrixPackage = buildSpecificPestQuestionPackage({
   candidateModes: ['thrips', 'spider_mite']

@@ -29,6 +29,16 @@ export function useWateringReminderPlanner({ props, userStore, selectedWateringE
   const environmentWeatherWindow = ref(null)
   const weatherLoading = ref(false)
   const loading = ref(false)
+  let weatherRequestSequence = 0
+  let plannerRequestSequence = 0
+
+  function currentPlantId() {
+    return String(props.plant?.id || '')
+  }
+
+  function isCurrentRequest(requestSequence, activeSequence, plantId) {
+    return requestSequence === activeSequence && currentPlantId() === plantId
+  }
 
   // D0 最新缓存注入契约：locationKey 统一从 plant.careLocation.locationKey 读取，
   // 用于后端从当天 day file.latestSample 注入当日天气；缺失时 todayWeatherSource='missing'。
@@ -70,6 +80,10 @@ export function useWateringReminderPlanner({ props, userStore, selectedWateringE
   })
 
   function resetWeatherPlannerState() {
+    weatherRequestSequence += 1
+    plannerRequestSequence += 1
+    weatherLoading.value = false
+    loading.value = false
     plannerResult.value = null
     hasWeatherRef.value = false
     weatherDays.value = []
@@ -81,6 +95,8 @@ export function useWateringReminderPlanner({ props, userStore, selectedWateringE
     // D0 与 forecast 必须同源：优先用 plant.careLocation 拉 weather window，
     // 否则会出现 D0 用 plant location、forecast 用 user GPS 的拼接错位，corrupting 摘要。
     // plant 无 careLocation 时 fallback 到 userStore.location（此时 D0 也用 user location，保持同源）。
+    const plantId = currentPlantId()
+    const requestSequence = ++weatherRequestSequence
     const plantCareLocation = props.plant?.careLocation || null
     const plantLocationSource = plantCareLocation
       ? {
@@ -93,8 +109,12 @@ export function useWateringReminderPlanner({ props, userStore, selectedWateringE
       : userStore.location
     const location = resolveWeatherLocation(plantLocationSource)
     if (!location) {
-      hasWeatherRef.value = false
-      weatherDays.value = []
+      if (isCurrentRequest(requestSequence, weatherRequestSequence, plantId)) {
+        hasWeatherRef.value = false
+        weatherDays.value = []
+        forecastDays.value = []
+        environmentWeatherWindow.value = null
+      }
       return
     }
     weatherLoading.value = true
@@ -108,23 +128,40 @@ export function useWateringReminderPlanner({ props, userStore, selectedWateringE
         diagnosisDate: todayStr(),
         mode: 'environment'
       })
+      if (!isCurrentRequest(requestSequence, weatherRequestSequence, plantId)) {
+        return
+      }
       environmentWeatherWindow.value = window || null
       weatherDays.value = window?.historicalDays || window?.historical_days || []
       forecastDays.value = window?.forecastDays || window?.forecast_days || []
       hasWeatherRef.value = weatherDays.value.length > 0 || forecastDays.value.length > 0
+    } catch {
+      if (!isCurrentRequest(requestSequence, weatherRequestSequence, plantId)) {
+        return
+      }
+      environmentWeatherWindow.value = null
+      weatherDays.value = []
+      forecastDays.value = []
+      hasWeatherRef.value = false
+      uni.showToast({ title: '天气暂不可用，请稍后重试', icon: 'none' })
     } finally {
-      weatherLoading.value = false
+      if (isCurrentRequest(requestSequence, weatherRequestSequence, plantId)) {
+        weatherLoading.value = false
+      }
     }
   }
 
   async function fetchPlanner() {
-    if (!props.plant?.id) {
+    const plantId = currentPlantId()
+    if (!plantId) {
       return
     }
+    const requestSequence = ++plannerRequestSequence
     loading.value = true
+    plannerResult.value = null
     try {
       const result = await fetchWateringPlannerResult({
-        plantId: props.plant.id,
+        plantId,
         wateringEvents: selectedWateringEventsForPlanner.value,
         weatherDays: weatherDays.value,
         forecastDays: forecastDays.value,
@@ -132,13 +169,22 @@ export function useWateringReminderPlanner({ props, userStore, selectedWateringE
         timezone: plannerTimezone.value,
         airEnvironmentOverride: props.plant?.airEnvironment?.input || null
       })
+      if (!isCurrentRequest(requestSequence, plannerRequestSequence, plantId)) {
+        return
+      }
       if (result) {
         plannerResult.value = result
+      } else {
+        uni.showToast({ title: '暂时无法生成建议，请稍后重试', icon: 'none' })
       }
-    } catch (error) {
-      uni.showToast({ title: error?.message || '建议计算失败，请重试', icon: 'none' })
+    } catch {
+      if (isCurrentRequest(requestSequence, plannerRequestSequence, plantId)) {
+        uni.showToast({ title: '暂时无法生成浇水建议，请稍后重试', icon: 'none' })
+      }
     } finally {
-      loading.value = false
+      if (isCurrentRequest(requestSequence, plannerRequestSequence, plantId)) {
+        loading.value = false
+      }
     }
   }
 

@@ -437,7 +437,7 @@ export function useDiagnoseQuestionFlow(ctx) {
       })
     } catch (error) {
       console.error('问诊处理失败:', error)
-      uni.showToast({ title: error.message || '问诊失败，请重试', icon: 'none' })
+      uni.showToast({ title: '暂时无法提交回答，请检查网络后重试', icon: 'none' })
     } finally {
       submittingQuestionMode.value = ''
     }

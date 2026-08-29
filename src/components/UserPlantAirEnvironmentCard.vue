@@ -96,8 +96,8 @@ async function save() {
     }
     uni.showToast({ title: '已保存', icon: 'success' })
     emit('saved', response.data)
-  } catch (error) {
-    saveError.value = error?.message || '保存失败，请重试'
+  } catch {
+    saveError.value = '保存失败，请检查网络后重试'
   } finally {
     saving.value = false
   }

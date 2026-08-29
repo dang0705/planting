@@ -3,6 +3,7 @@
 const https = require('https')
 const {
   jsonResponse,
+  internalServerError,
   notFound,
   methodNotAllowed,
   getHttpRequestData,
@@ -17,7 +18,9 @@ const AK = process.env.BAIDU_AK
 const SK = process.env.BAIDU_SK
 
 function pickPlantMatchFields(plant) {
-  if (!plant) {return null}
+  if (!plant) {
+    return null
+  }
   return {
     id: plant.id || '',
     plantIdentityId: plant.plantIdentityId || '',
@@ -230,12 +233,8 @@ async function main(event, context) {
 
     const topResult = processed.data.result?.[0] || {}
     const matches = await findCanonicalPlantMatch(topResult.name || '')
-    const {
-      strongMatch,
-      primaryCandidate,
-      taxonomyMatchStatus,
-      identityResolutionStatus
-    } = classifyIdentityMatches(matches)
+    const { strongMatch, primaryCandidate, taxonomyMatchStatus, identityResolutionStatus } =
+      classifyIdentityMatches(matches)
     const simplifiedMatchedPlant = pickPlantMatchFields(strongMatch)
     const simplifiedCandidates = matches.map(pickPlantMatchFields).filter(Boolean)
     const identifyId = buildIdentifyId()
@@ -269,13 +268,12 @@ async function main(event, context) {
         identityResolutionStatus,
         routePrimaryAction: runtimeArtifacts.routePrimaryAction,
         matchedPlant: simplifiedMatchedPlant,
-        candidates: simplifiedCandidates,
-        raw: processed.data
+        candidates: simplifiedCandidates
       }
     })
   } catch (error) {
     console.error('identify-http error:', error)
-    return jsonResponse(500, { code: 500, message: error.message, data: null })
+    return internalServerError('植物识别暂时不可用，请稍后重试')
   }
 }
 

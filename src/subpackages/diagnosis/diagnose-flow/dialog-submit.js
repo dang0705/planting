@@ -342,7 +342,7 @@ export function useDiagnoseDialogSubmit(ctx) {
         return
       }
       console.error('提交补图失败:', error)
-      uni.showToast({ title: error.message || '补图失败，请重试', icon: 'none' })
+      uni.showToast({ title: '补拍暂未提交成功，请检查网络后重试', icon: 'none' })
     } finally {
       submittingQuestionMode.value = ''
     }
@@ -390,8 +390,8 @@ export function useDiagnoseDialogSubmit(ctx) {
           currentNow.value = Date.now()
           retakeAuthorizationReceivedClientAt.value = currentNow.value
           result.value = buildAuthorizedRetakeResult(result.value, authorization)
-        } catch (error) {
-          uni.showToast({ title: error?.message || '开始补拍失败', icon: 'none' })
+        } catch {
+          uni.showToast({ title: '暂时无法开始补拍，请检查网络后重试', icon: 'none' })
         } finally {
           retakeAuthorizationPending.value = false
         }
@@ -425,8 +425,8 @@ export function useDiagnoseDialogSubmit(ctx) {
       })
       emit('success', result.value)
       uni.showToast({ title: '已跳过补拍', icon: 'none' })
-    } catch (error) {
-      uni.showToast({ title: error?.message || '跳过补拍失败，请重试', icon: 'none' })
+    } catch {
+      uni.showToast({ title: '暂时无法跳过补拍，请稍后重试', icon: 'none' })
     } finally {
       submittingQuestionMode.value = ''
     }
@@ -457,8 +457,8 @@ export function useDiagnoseDialogSubmit(ctx) {
         answerRevision: result.value.answerRevision
       })
       emit('success', result.value)
-    } catch (error) {
-      uni.showToast({ title: error?.message || '方向选择失败，请重试', icon: 'none' })
+    } catch {
+      uni.showToast({ title: '暂时无法保存选择，请稍后重试', icon: 'none' })
     } finally {
       submittingQuestionMode.value = ''
     }

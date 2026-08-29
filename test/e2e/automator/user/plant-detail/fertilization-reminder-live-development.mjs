@@ -56,6 +56,8 @@ const LIVE_QA_PAUSE_PLANT_ID = Number(process.env.FERTILIZATION_LIVE_PAUSE_PLANT
 const LIVE_QA_RULE_ONLY = process.env.FERTILIZATION_LIVE_RULE_ONLY === '1'
 const UI_WAIT_MS = 500
 const ELEMENT_WAIT_MS = 10000
+const DISMISS_REQUEST_WAIT_MS = 2000
+const ELEMENT_TAP_FALLBACK_TIMEOUT_MS = 3000
 const CLI_ARGUMENT_START_INDEX = 2
 const FAILURE_EXIT_CODE = 2
 const ZERO = 0
@@ -433,6 +435,17 @@ async function waitForCapturedRequest(mp, predicate, timeoutMs = ELEMENT_WAIT_MS
   return null
 }
 
+async function waitForElementAbsent(mp, id, timeoutMs = ELEMENT_WAIT_MS) {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    if (!(await findViewById(await mp.currentPage(), id))) {
+      return true
+    }
+    await sleep(UI_WAIT_MS)
+  }
+  return false
+}
+
 function requestDataForPlant(request, plantId) {
   return Number(request?.data?.plantId) === Number(plantId)
 }
@@ -467,6 +480,7 @@ async function run() {
   let temporaryCompletionPlantId = 0
   let temporarySkipPlantId = 0
   let completionEvidence = false
+  let cleanupFailed = false
 
   try {
     const projectCheck = preflightProject(env.projectPath)
@@ -604,7 +618,6 @@ async function run() {
         '缓释肥条件问询只保留用户无法替代判断的生长状态',
         Boolean(conditionPreflight) &&
           conditionPreflightText.includes('最近有长新叶或新芽吗？') &&
-          conditionPreflightText.includes('本月按表默认不安排施肥') &&
           !conditionPreflightText.includes('目前仍在正常生长吗？') &&
           !conditionPreflightText.includes('花盆或其他容器'),
         conditionPreflightText
@@ -615,9 +628,9 @@ async function run() {
       )
       assertCondition(
         report,
-        '条件型固定周期默认关闭提醒入口',
+        '条件型固定周期继续设置入口可见且需经过条件警示',
         Boolean(conditionPreviewButton) &&
-          (await readDisabledState(conditionPreviewButton)) === true,
+          (await readDisabledState(conditionPreviewButton)) === false,
         await textOf(conditionPreviewButton)
       )
       const growthContinueButton = await findViewById(
@@ -943,17 +956,61 @@ async function run() {
       'fertilization-reminder-dismiss-button'
     )
     assertCondition(report, '到期真实页面显示本次跳过操作', Boolean(skipButton))
-    await tapStableElement(skipButton)
-    // DevTools occasionally drops Element.tap for a node inside this scroll-view;
-    // dispatch the same runtime tap on the same rendered node as a bounded fallback.
-    await skipButton.trigger('tap')
-    await sleep(UI_WAIT_MS)
+    // 先向当前渲染节点派发真实 tap，避免滚动容器内 Element.tap 在 DevTools
+    // 偶发悬挂；若事件未到达，再回退到物理点击。
+    await Promise.race([
+      skipButton.trigger('tap', {}),
+      sleep(ELEMENT_TAP_FALLBACK_TIMEOUT_MS)
+    ])
+    let dismissRequest = await waitForCapturedRequest(
+      mp,
+      request =>
+        String(request.url || '').includes(
+          'plant-user-http/user-plants/fertilization-reminders/dismiss'
+        ) &&
+        String(request.method || '').toUpperCase() === 'POST' &&
+        Number(request.data?.plantId) === Number(skipPlantId) &&
+        requestSucceeded(request),
+      DISMISS_REQUEST_WAIT_MS
+    )
+    if (!dismissRequest) {
+      await Promise.race([
+        tapStableElement(skipButton),
+        sleep(ELEMENT_TAP_FALLBACK_TIMEOUT_MS)
+      ])
+      dismissRequest = await waitForCapturedRequest(
+        mp,
+        request =>
+          String(request.url || '').includes(
+            'plant-user-http/user-plants/fertilization-reminders/dismiss'
+          ) &&
+          String(request.method || '').toUpperCase() === 'POST' &&
+          Number(request.data?.plantId) === Number(skipPlantId) &&
+          requestSucceeded(request),
+        DISMISS_REQUEST_WAIT_MS
+      )
+    }
+    assertCondition(
+      report,
+      '本次跳过通过真实 API 结束提醒',
+      Boolean(dismissRequest),
+      JSON.stringify(dismissRequest?.response || null)
+    )
     const setupAfterSkip = await waitForElement(
       await mp.currentPage(),
-      'fertilization-reminder-section',
+      'fertilization-reminder-entry-button',
       ELEMENT_WAIT_MS
     )
-    assertCondition(report, '本次跳过后真实页面回到提醒设置区', Boolean(setupAfterSkip))
+    const savedAfterSkip = await waitForElementAbsent(
+      mp,
+      'fertilization-reminder-saved-state',
+      ELEMENT_WAIT_MS
+    )
+    assertCondition(
+      report,
+      '本次跳过后真实页面回到施肥表入口',
+      Boolean(setupAfterSkip) && savedAfterSkip
+    )
 
     const skipClose = await findViewById(
       await mp.currentPage(),
@@ -976,7 +1033,7 @@ async function run() {
         String(request.method || '').toUpperCase() === 'POST' &&
         requestDataForPlant(request, livePlantId)
     )
-    const dismissRequest = requests.find(
+    const capturedDismissRequest = requests.find(
       request =>
         String(request.url || '').includes(
           'plant-user-http/user-plants/fertilization-reminders/dismiss'
@@ -1008,8 +1065,8 @@ async function run() {
     assertCondition(
       report,
       '小程序运行时真实调用 dismiss API 并收到 200',
-      requestSucceeded(dismissRequest),
-      JSON.stringify(dismissRequest?.response || null)
+      requestSucceeded(capturedDismissRequest),
+      JSON.stringify(capturedDismissRequest?.response || null)
     )
     const latestReminderRead = reminderReads.at(LAST_INDEX)
     assertCondition(
@@ -1059,6 +1116,7 @@ async function run() {
       try {
         await cleanupTemporaryFertilizationPlant(mp, temporarySkipPlantId)
       } catch (error) {
+        cleanupFailed = true
         recordAssertion(
           report,
           '临时跳过植物通过真实接口清理',
@@ -1071,6 +1129,7 @@ async function run() {
       try {
         await cleanupTemporaryFertilizationPlant(mp, temporaryCompletionPlantId)
       } catch (error) {
+        cleanupFailed = true
         recordAssertion(
           report,
           '临时完成植物通过真实接口清理',
@@ -1078,6 +1137,12 @@ async function run() {
           String(error?.message || error)
         )
       }
+    }
+    if (cleanupFailed && report.classification === 'PASS') {
+      // setClassification(PASS) performs the canonical failed-assertion
+      // downgrade to FAIL_PRODUCT. Never let a cleanup assertion be hidden by
+      // the business-path PASS recorded before finally.
+      setClassification(report, 'PASS', 'QA 临时数据未能通过真实接口清理')
     }
     await restoreRequest(mp)
     await safeDisconnect(mp)

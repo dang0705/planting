@@ -14,10 +14,6 @@
             <text class="block text-xs text-gray-500">植物</text>
             <text class="block text-sm text-gray-900">{{ viewModel.plantName }}</text>
           </view>
-          <view id="diagnosis-result-page-stage">
-            <text class="block text-xs text-gray-500">当前阶段</text>
-            <text class="block text-sm text-gray-900">{{ viewModel.stage }}</text>
-          </view>
           <view id="diagnosis-result-page-main-issue">
             <text class="block text-xs text-gray-500">诊断结论</text>
             <text class="block text-sm text-gray-900">{{ viewModel.mainIssue }}</text>
@@ -50,6 +46,21 @@
           />
         </view>
 
+        <view
+          v-else-if="loadError"
+          id="diagnosis-result-page-error"
+          class="py-4 text-center"
+        >
+          <text class="block text-sm text-gray-600">{{ loadError }}</text>
+          <button
+            id="diagnosis-result-page-retry"
+            class="mt-3 rounded-full bg-[#EEF3EF] px-4 py-2 text-sm text-primary"
+            @click="loadRemoteResult(routeId)"
+          >
+            重新加载
+          </button>
+        </view>
+
         <view v-else id="diagnosis-result-page-empty">
           <text class="block text-sm text-gray-600">暂无可展示的诊断记录。</text>
         </view>
@@ -71,6 +82,7 @@ const diagnoseStore = useDiagnoseStore()
 const routeId = ref('')
 const remoteResult = ref(null)
 const loading = ref(false)
+const loadError = ref('')
 
 onLoad(options => {
   routeId.value = String(options?.id || '')
@@ -96,7 +108,7 @@ const localRecord = computed(() => {
         String(diagnosis?.diagnosisSessionId || '') === routeId.value ||
         String(diagnosis?.resultId || '') === routeId.value
       )
-    }) || list[0]
+    }) || null
   )
 })
 
@@ -134,7 +146,6 @@ const viewModel = computed(() => {
   const leadingOutcomeDisplay = outcomeItems[0]?.label || ''
   return {
     plantName: diagnosis.plantName || '植物',
-    stage: diagnosis.stage || 'unknown',
     mainIssue:
       leadingOutcomeDisplay ||
       diagnosis.mainIssueText ||
@@ -225,11 +236,17 @@ function buildOutcomeDisplayItems(diagnosis = {}) {
 }
 
 async function loadRemoteResult(id) {
+  if (!id || loading.value) {
+    return
+  }
+
   loading.value = true
+  loadError.value = ''
   try {
     remoteResult.value = await getDiagnosisResult({ id })
   } catch (error) {
-    console.warn('加载远程诊断结果失败，回退本地记录:', error)
+    remoteResult.value = null
+    loadError.value = '暂时无法加载诊断记录，请检查网络后重试。'
   } finally {
     loading.value = false
   }

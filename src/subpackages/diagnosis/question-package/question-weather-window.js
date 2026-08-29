@@ -123,9 +123,7 @@ export function useEnvironmentWeatherWindow({ result, plantStore, userStore }) {
       }
     } catch (error) {
       console.warn('获取养护时间线环境天气失败:', error)
-      environmentWeatherWindowError.value = String(
-        error?.message || error?.msg || '养护时间线天气加载失败，请稍后重试。'
-      ).trim()
+      environmentWeatherWindowError.value = '暂时无法加载当时的天气情况，请稍后重试。'
     } finally {
       environmentWeatherWindowLoading.value = false
     }

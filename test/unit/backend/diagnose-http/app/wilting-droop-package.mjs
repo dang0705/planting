@@ -285,7 +285,7 @@ function testFrontendSurfaceFields() {
   const frontend = buildFrontendAnswerResponse(result)
   assert.equal(frontend.hasActiveQuestions, false)
   assert.ok(frontend.visibleOutcomes.length)
-  assert.ok(frontend.blockedActionExplanations.length)
+  assert.equal(frontend.blockedActionExplanations, undefined)
   assert.match(frontend.highRiskWarning, /高危信号/)
   assert.match(frontend.observationPeriod, /24-48/)
   assert.doesNotMatch(allResultText(frontend), /最可能原因/)

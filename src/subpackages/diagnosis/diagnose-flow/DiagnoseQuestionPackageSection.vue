@@ -214,7 +214,7 @@
                   v-if="hasDirtyQuestionAnswers"
                   class="block text-[10px] text-[#8B7355] leading-relaxed mt-2"
                 >
-                  你修改了之前的答案，点下一题后后续问题会交给后端重新判断。
+                  你修改了之前的答案，点下一题后会据此调整后续问题。
                 </text>
               </view>
             </view>
@@ -247,7 +247,7 @@
       <text class="block text-sm font-semibold text-gray-900 mb-2">补充图片</text>
       <view class="bg-[#F8F6F0] rounded-xl p-3 border border-[#D8F3DC]">
         <text class="block text-[10px] text-gray-500 mb-2">
-          当前阶段最多补图 1 次。若补图，将生成新的视觉调用批次并重建视觉证据。</text
+          本次检查最多可补充 1 次照片。提交后会更新本次检查结果。</text
         >
         <view
           v-if="additionalImageCaptureSuggestions.length"

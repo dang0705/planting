@@ -18,65 +18,22 @@
           </view>
         </view>
 
-        <!-- 会员状态 -->
+        <!-- 当前可用次数；付费入口在 MVP 阶段不展示。 -->
         <view class="bg-white/20 backdrop-blur rounded-2xl p-4">
-          <view class="flex items-center justify-between">
+          <view class="flex items-center">
             <view>
-              <text class="block text-white/80 text-xs mb-1">诊断次数</text>
+              <text class="block text-white/80 text-xs mb-1">本月可用次数</text>
               <text class="block text-white text-2xl font-bold">
-                {{ userStore.isPremium ? '无限' : `${userStore.membership.freeQuota} 次` }}
+                {{ remainingDiagnosisQuotaText }}
               </text>
             </view>
-            <view>
+            <view class="ml-12">
               <text class="block text-white/80 text-xs mb-1">已使用</text>
               <text class="block text-white text-2xl font-bold"
-                >{{ userStore.membership.usedCount }} 次</text
+                >{{ userStore.membership?.usedCount || 0 }} 次</text
               >
             </view>
-            <button
-              v-if="!userStore.isPremium"
-              class="bg-white text-primary font-semibold px-6 py-2 rounded-full"
-              @click="upgradeMembership"
-            >
-              升级会员
-            </button>
           </view>
-        </view>
-      </view>
-
-      <!-- 会员权益 -->
-      <view v-if="!userStore.isPremium" class="px-4 py-6">
-        <text class="block text-lg font-bold text-gray-900 mb-4">✨ 会员权益</text>
-
-        <view class="bg-white rounded-3xl p-6 shadow-sm">
-          <view class="flex items-center justify-between mb-6">
-            <view>
-              <text class="block text-2xl font-bold text-gray-900 mb-1">¥19.9</text>
-              <text class="block text-sm text-gray-600">首月特惠</text>
-            </view>
-            <view class="bg-[#D8F3DC] px-4 py-2 rounded-full">
-              <text class="text-sm font-semibold text-primary">限时优惠</text>
-            </view>
-          </view>
-
-          <view class="space-y-3 mb-6">
-            <view v-for="benefit in memberBenefits" :key="benefit.id" class="flex items-start">
-              <text class="text-lg mr-2">{{ benefit.icon }}</text>
-              <view class="flex-1">
-                <text class="block text-base font-semibold text-gray-900 mb-1">{{
-                  benefit.title
-                }}</text>
-                <text class="block text-sm text-gray-600">{{ benefit.desc }}</text>
-              </view>
-            </view>
-          </view>
-
-          <button
-            class="w-full bg-primary text-white font-semibold py-4 rounded-2xl"
-            @click="upgradeMembership"
-          >
-            立即开通会员
-          </button>
         </view>
       </view>
 
@@ -84,7 +41,7 @@
       <view class="px-4 pb-6">
         <view class="bg-white rounded-3xl overflow-hidden shadow-sm">
           <view
-            v-for="(item, index) in visibleMenuItems"
+            v-for="(item, index) in menuItems"
             :key="item.id"
             :id="`profile-menu-${item.action}`"
             class="flex items-center justify-between px-4 py-4"
@@ -103,17 +60,31 @@
       <!-- 诊断历史 -->
       <view id="profile-diagnose-history-section" class="px-4 pb-20">
         <view class="flex items-center justify-between mb-3">
-          <text class="block text-lg font-bold text-gray-900">📋 诊断历史</text>
-          <text
-            id="profile-diagnose-history-view-all"
-            class="text-sm text-primary"
-            @click="viewAllHistory"
-            >查看全部</text
-          >
+          <text class="block text-lg font-bold text-gray-900">📋 最近诊断</text>
+          <text class="text-xs text-gray-400">最多显示 5 条</text>
         </view>
 
         <view
-          v-if="diagnoseHistory.length === 0 && !loadingHistory"
+          v-if="historyError"
+          id="profile-diagnose-history-error"
+          class="bg-white rounded-2xl p-6 text-center"
+        >
+          <text class="block text-sm text-gray-600">{{ historyError }}</text>
+          <button
+            id="profile-diagnose-history-retry"
+            class="mt-3 rounded-full bg-[#EEF3EF] px-4 py-2 text-sm text-primary"
+            @click="loadDiagnoseHistory"
+          >
+            重新加载
+          </button>
+        </view>
+
+        <view v-else-if="loadingHistory" class="bg-white rounded-2xl p-6 text-center">
+          <text class="block text-sm text-gray-500">正在加载诊断记录...</text>
+        </view>
+
+        <view
+          v-else-if="diagnoseHistory.length === 0"
           id="profile-diagnose-history-empty"
           class="bg-white rounded-2xl p-6 text-center"
         >
@@ -158,21 +129,21 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import Layout from '@/Layout.vue'
 import { useUserStore } from '@/store/user.js'
 import { getDiagnosisHistory } from '@/api/diagnosis-history.js'
-import { isDevelopmentAppEnv } from '@/utils/runtime-env.js'
 
 const userStore = useUserStore()
 
 // 诊断历史数据
 const diagnoseHistory = ref([])
 const loadingHistory = ref(false)
+const historyError = ref('')
 
 // 会员状态
 const membershipText = computed(() => {
-  return userStore.isPremium ? '高级会员' : '免费用户'
+  return userStore.isPremium ? '高级账户' : '当前账户'
 })
 
 const membershipBadgeClass = computed(() => {
@@ -181,91 +152,24 @@ const membershipBadgeClass = computed(() => {
     : 'bg-white/30 text-white px-3 py-1 rounded-full'
 })
 
-// 会员权益
-const memberBenefits = ref([
-  {
-    id: 1,
-    icon: '🔍',
-    title: '无限次诊断',
-    desc: '不限次数使用 AI 诊断功能'
-  },
-  {
-    id: 2,
-    icon: '📅',
-    title: '专属养护计划',
-    desc: '根据植物特性定制养护方案'
-  },
-  {
-    id: 3,
-    icon: '💬',
-    title: '优先客服支持',
-    desc: '专属客服通道，快速响应'
-  },
-  {
-    id: 4,
-    icon: '📚',
-    title: '养护知识库',
-    desc: '解锁全部养护知识和技巧'
+const remainingDiagnosisQuotaText = computed(() => {
+  if (userStore.isPremium) {
+    return '不限次'
   }
-])
+  const quota = Number(userStore.membership?.freeQuota || 0)
+  const usedCount = Number(userStore.membership?.usedCount || 0)
+  return `${Math.max(0, quota - usedCount)} 次`
+})
 
 // 功能菜单
-const menuItems = ref([
+const menuItems = [
   {
     id: 1,
     icon: '🌱',
     title: '我的植物',
     action: 'myPlants'
-  },
-  {
-    id: 2,
-    icon: '📖',
-    title: '养护知识',
-    action: 'knowledge'
-  },
-  {
-    id: 3,
-    icon: '⚙️',
-    title: '设置',
-    action: 'settings'
-  },
-  {
-    id: 4,
-    icon: '❓',
-    title: '帮助与反馈',
-    action: 'help'
-  },
-  {
-    id: 5,
-    icon: '🧾',
-    title: '池外视觉审核',
-    action: 'outOfPoolReview',
-    devOnly: true
-  },
-  {
-    id: 6,
-    icon: '诊',
-    title: '诊断记录管理',
-    action: 'diagnosisReview',
-    devOnly: true
-  },
-  {
-    id: 7,
-    icon: '💧',
-    title: '浇水算法审计',
-    action: 'wateringReview',
-    devOnly: true
   }
-])
-
-const visibleMenuItems = computed(() =>
-  menuItems.value.filter(item => {
-    if (!item?.devOnly) {
-      return true
-    }
-    return isDevelopmentAppEnv()
-  })
-)
+]
 
 // 加载诊断历史
 onMounted(() => {
@@ -273,11 +177,12 @@ onMounted(() => {
 })
 
 async function loadDiagnoseHistory() {
-  if (!userStore.isAuthenticated) {
+  if (!userStore.isAuthenticated || loadingHistory.value) {
     return
   }
 
   loadingHistory.value = true
+  historyError.value = ''
   try {
     const result = await getDiagnosisHistory({
       page: 1,
@@ -286,7 +191,7 @@ async function loadDiagnoseHistory() {
 
     diagnoseHistory.value = (result?.items || []).map(item => ({
       _id: item.resultId || item.historyId || '',
-      plantName: '植物',
+      plantName: item.plantName || item.displayName || '植物',
       mainIssue: item?.summary?.displayName || '诊断记录',
       createdAt: item.createdAt,
       imageUrl: '',
@@ -294,68 +199,28 @@ async function loadDiagnoseHistory() {
     }))
   } catch (error) {
     console.error('加载诊断历史失败:', error)
+    diagnoseHistory.value = []
+    historyError.value = '暂时无法加载诊断记录，请检查网络后重试。'
   } finally {
     loadingHistory.value = false
   }
-}
-
-function upgradeMembership() {
-  uni.showModal({
-    title: '开通会员',
-    content: '首月特惠 ¥19.9，立即开通享受无限次诊断',
-    confirmText: '立即支付',
-    success: res => {
-      if (res.confirm) {
-        // TODO: 调用微信支付
-        uni.showToast({
-          title: '支付功能开发中',
-          icon: 'none'
-        })
-      }
-    }
-  })
 }
 
 function handleMenuClick(item) {
   switch (item.action) {
     case 'myPlants':
       uni.switchTab({
-        url: '/pages/calendar/calendar'
-      })
-      break
-    case 'knowledge':
-    case 'settings':
-    case 'help':
-      uni.showToast({
-        title: `${item.title}功能开发中`,
-        icon: 'none'
-      })
-      break
-    case 'outOfPoolReview':
-      uni.navigateTo({
-        url: '/subpackages/review/out-of-pool-review'
-      })
-      break
-    case 'diagnosisReview':
-      uni.navigateTo({
-        url: '/subpackages/review/diagnosis-review'
-      })
-      break
-    case 'wateringReview':
-      uni.navigateTo({
-        url: '/subpackages/review/watering-review'
+        url: '/pages/index/index'
       })
       break
   }
 }
 
-function viewAllHistory() {
-  uni.navigateTo({
-    url: '/subpackages/review/diagnosis-review'
-  })
-}
-
 function viewDiagnoseDetail(item) {
+  if (!item?._id) {
+    uni.showToast({ title: '这条诊断记录暂时无法打开，请稍后重试', icon: 'none' })
+    return
+  }
   uni.navigateTo({
     url: `/subpackages/diagnosis/result?id=${item._id}`
   })
@@ -363,6 +228,9 @@ function viewDiagnoseDetail(item) {
 
 function formatTime(time) {
   const date = new Date(time)
+  if (Number.isNaN(date.getTime())) {
+    return '时间未知'
+  }
   const now = new Date()
   const diff = now - date
 

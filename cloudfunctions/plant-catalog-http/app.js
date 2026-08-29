@@ -2,6 +2,7 @@
 
 const {
   jsonResponse,
+  internalServerError,
   notFound,
   methodNotAllowed,
   getHttpRequestData,
@@ -25,14 +26,18 @@ async function main(event, context) {
     }
 
     if (path.includes('/catalog/map')) {
-      if (method !== 'GET') {return methodNotAllowed(method)}
+      if (method !== 'GET') {
+        return methodNotAllowed(method)
+      }
       const keyword = request.query.keyword || ''
       const matches = await findCanonicalPlantMatch(keyword)
       return jsonResponse(200, { code: 200, data: { keyword, matches } })
     }
 
     if (path.includes('/catalog/plants')) {
-      if (method !== 'GET') {return methodNotAllowed(method)}
+      if (method !== 'GET') {
+        return methodNotAllowed(method)
+      }
       if (request.query.plantId) {
         const plant = await getPlantCatalogById(request.query.plantId)
         if (!plant) {
@@ -53,7 +58,7 @@ async function main(event, context) {
     return notFound(path)
   } catch (error) {
     console.error('plant-catalog-http error:', error)
-    return jsonResponse(500, { code: 500, message: error.message, data: null })
+    return internalServerError('植物目录暂时不可用，请稍后重试')
   }
 }
 

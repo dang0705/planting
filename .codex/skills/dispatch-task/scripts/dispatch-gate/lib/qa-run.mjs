@@ -36,6 +36,7 @@ import {
 } from './qa-runtime-plane.mjs'
 import { assertQaRunLease } from '../../../../../../scripts/qa/qa-run-lease.mjs'
 import { automatorV3RunQaRecordRoot } from '../../../../../../scripts/qa/automator-v3-run-context.mjs'
+import { resolveQaBackendTarget } from '../../../../../../scripts/qa/qa-backend-target.mjs'
 
 const qaGateOptionsWithValue = new Set([
   '--catalog-id',
@@ -122,13 +123,13 @@ const LOCAL_QA_WX_REQUEST_PATH = 'plant-user-http/user-plants?page=1&pageSize=1'
 
 export function resolveQaWxRequestUrl(value, environment = process.env, { formal = false } = {}) {
   if (formal) {
-    const baseUrl = resolveLocalApiBaseUrl(
-      { mode: 'lan', port: QA_RUNTIME_LAN_PORT, functionPortBase: QA_RUNTIME_FUNCTION_PORT_BASE },
-      environment
-    )
+    const target = resolveQaBackendTarget(environment, {
+      port: QA_RUNTIME_LAN_PORT,
+      functionPortBase: QA_RUNTIME_FUNCTION_PORT_BASE
+    })
     return {
-      url: `${baseUrl}/${LOCAL_QA_WX_REQUEST_PATH}`,
-      source: 'supervisor_fixed_lan'
+      url: target.wxRequestUrl,
+      source: target.source
     }
   }
   const explicit = String(value || '').trim()

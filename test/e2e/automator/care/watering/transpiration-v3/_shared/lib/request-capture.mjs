@@ -38,6 +38,13 @@ export async function installRequestCapture(mp) {
       if (previousState.wxRequest && typeof wx !== 'undefined') {
         wx.request = previousState.wxRequest
       }
+      if (
+        previousState.wxCallHTTPFunction &&
+        typeof wx !== 'undefined' &&
+        wx.cloud
+      ) {
+        wx.cloud.callHTTPFunction = previousState.wxCallHTTPFunction
+      }
       if (previousState.uniRequest && uniRef) {
         uniRef.request = previousState.uniRequest
       }
@@ -47,6 +54,12 @@ export async function installRequestCapture(mp) {
     const state = {
       installed: true,
       wxRequest: typeof wx !== 'undefined' ? wx.request : null,
+      wxCallHTTPFunction:
+        typeof wx !== 'undefined' &&
+        wx.cloud &&
+        typeof wx.cloud.callHTTPFunction === 'function'
+          ? wx.cloud.callHTTPFunction
+          : null,
       uniRequest: uniRef && typeof uniRef.request === 'function' ? uniRef.request : null
     }
     globalThis.__e2eRequestCaptureState = state
@@ -54,7 +67,7 @@ export async function installRequestCapture(mp) {
 
     // 敏感 header 键正则（在回调内部定义，不引用 Node 闭包）
     const SENSITIVE_HEADER_KEYS =
-      /^(authorization|x-cloudbase-credentials|cookie|token|openid|sessionid|session-id|x-csrf-token|set-cookie|access-token|refresh-token|secret|credential)/i
+      /^(authorization|x-cloudbase-credentials|cookie|token|openid|sessionid|session-id|x-csrf-token|set-cookie|access-token|refresh-token|secret|credential|x-planting-http-identity-ticket|identity-ticket)/i
 
     // 敏感 data 键正则
     const SENSITIVE_DATA_KEYS =
@@ -201,11 +214,85 @@ export async function installRequestCapture(mp) {
       }
     }
 
+    function wrapCallHTTPFunction(owner, original) {
+      if (typeof original !== 'function') {
+        return null
+      }
+      return function (opts = {}) {
+        const inheritedCapture = opts && opts.__e2eRequestCaptureContext
+        if (inheritedCapture) {
+          return original.call(owner, opts)
+        }
+        const functionName = String(opts.name || '').replace(/^\/+|\/+$/gu, '')
+        const functionPath = String(opts.path || '').replace(/^\/+/, '')
+        const captured = {
+          transport: 'wx.cloud.callHTTPFunction',
+          url: [functionName, functionPath].filter(Boolean).join('/'),
+          method: opts.method || 'GET',
+          data: sanitizeRequestData(opts.data),
+          header: sanitizeHeader(opts.header || {}),
+          time: Date.now()
+        }
+        const origSuccess = opts.success
+        const origFail = opts.fail
+        let recorded = false
+        const record = () => {
+          if (recorded) {
+            return
+          }
+          recorded = true
+          try {
+            globalThis.__e2eRequests.push(captured)
+          } catch {
+            // Runtime teardown can race request completion; the request itself remains valid.
+          }
+        }
+        const nextOpts = { ...opts }
+        Object.defineProperty(nextOpts, '__e2eRequestCaptureContext', {
+          value: captured,
+          enumerable: false,
+          configurable: true
+        })
+        nextOpts.success = function (res) {
+          try {
+            captured.response = {
+              statusCode: res?.statusCode ?? res?.status ?? null,
+              data: sanitizeResponseData(res?.data)
+            }
+          } catch {
+            // Keep the request record even when response serialization fails.
+          }
+          record()
+          if (origSuccess) {
+            return origSuccess(res)
+          }
+        }
+        nextOpts.fail = function (err) {
+          try {
+            captured.error = String(err?.errMsg || err?.message || err)
+          } catch {
+            // Keep the request record even when the failure object is not serializable.
+          }
+          record()
+          if (origFail) {
+            return origFail(err)
+          }
+        }
+        return original.call(owner, nextOpts)
+      }
+    }
+
     // UniApp 小程序产物通常调用 uni.request；保留 wx.request 作为原生页面/旧产物回退。
     // 即使两者指向同一个原函数，也要分别替换两个属性，否则只替换 wx.request
     // 无法覆盖 uni.request 这个别名属性。
     if (state.uniRequest && uniRef) {
       uniRef.request = wrapRequest(uniRef, state.uniRequest, 'uni.request')
+    }
+    if (state.wxCallHTTPFunction && typeof wx !== 'undefined' && wx.cloud) {
+      wx.cloud.callHTTPFunction = wrapCallHTTPFunction(
+        wx.cloud,
+        state.wxCallHTTPFunction
+      )
     }
     if (state.wxRequest && typeof wx !== 'undefined') {
       wx.request = wrapRequest(wx, state.wxRequest, 'wx.request')
@@ -246,6 +333,9 @@ export async function restoreRequest(mp) {
       if (state) {
         if (state.wxRequest && typeof wx !== 'undefined') {
           wx.request = state.wxRequest
+        }
+        if (state.wxCallHTTPFunction && typeof wx !== 'undefined' && wx.cloud) {
+          wx.cloud.callHTTPFunction = state.wxCallHTTPFunction
         }
         if (state.uniRequest && uniRef) {
           uniRef.request = state.uniRequest

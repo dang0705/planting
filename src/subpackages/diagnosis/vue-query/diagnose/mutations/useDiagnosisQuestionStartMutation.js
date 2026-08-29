@@ -105,7 +105,7 @@ export function useDiagnosisQuestionStartMutation() {
       onError
     } = {}) => {
       try {
-        onText?.('正在生成问诊...', '正在生成问诊...')
+        onText?.('正在准备问题...', '正在准备问题...')
         const requestPayload = normalizeQuestionStartPayload({
           plantId,
           userPlantId,

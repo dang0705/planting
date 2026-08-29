@@ -19,7 +19,6 @@ const {
   pickMinimalSummaryCard,
   pickMinimalVisualBatchTrace,
   pickMinimalVisualAggregateSummary,
-  pickMinimalOutputEligibility,
   compactCareBehaviorTimelineForPublic,
   compactEnvironmentCareContextForPublic,
   buildQuestionPackageUiHints,
@@ -176,20 +175,9 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
     questions,
     finalResult,
     visibleOutcomes,
-    candidateModes: Array.isArray(publicResponse.candidateModes)
-      ? publicResponse.candidateModes
-      : [],
-    provisionalModes: Array.isArray(publicResponse.provisionalModes)
-      ? publicResponse.provisionalModes
-      : [],
-    candidateRefinementAvailable: Boolean(publicResponse.candidateRefinementAvailable),
-    blockedActionExplanations: Array.isArray(publicResponse.blockedActionExplanations)
-      ? publicResponse.blockedActionExplanations
-      : [],
     highRiskWarning: normalizeText(publicResponse.highRiskWarning),
     observationPeriod: normalizeText(publicResponse.observationPeriod),
     outcomeMode,
-    routeDecisionCause: publicResponse.routeDecisionCause || null,
     summaryCard: pickMinimalSummaryCard(publicResponse.summaryCard),
     explanation,
     resultExplanation: explanation,
@@ -220,10 +208,6 @@ function buildFrontendDiagnosisResponse(publicResponse = {}) {
       optionLayout: 'vertical',
       transition: 'swiper'
     },
-    outputEligibility: pickMinimalOutputEligibility(publicResponse.outputEligibility),
-    confidenceLevel: publicResponse.confidenceLevel || '',
-    confidenceReasons: normalizeStringList(publicResponse.confidenceReasons),
-    needHumanReview: Boolean(publicResponse.needHumanReview),
     ...(careBehaviorTimeline ? { careBehaviorTimeline } : {}),
     ...(environmentCareContext ? { environmentCareContext } : {})
   }
@@ -263,7 +247,6 @@ function buildFrontendAnswerResponse(publicResponse = {}) {
     displayName: rawFinalResult.displayName || rawFinalResult.problemName || '',
     summary: rawFinalResult.summary || '',
     severity: rawFinalResult.severity || '',
-    confidenceLevel: rawFinalResult.confidenceLevel || '',
     outcomeType: rawFinalResult.outcomeType || publicResponse.outcomeType || '',
     nonProblematicType: rawFinalResult.nonProblematicType || ''
   }
@@ -345,9 +328,6 @@ function buildFrontendAnswerResponse(publicResponse = {}) {
     stopReason: publicResponse.stopReason || '',
     finalResult,
     visibleOutcomes,
-    blockedActionExplanations: Array.isArray(publicResponse.blockedActionExplanations)
-      ? publicResponse.blockedActionExplanations
-      : [],
     highRiskWarning: normalizeText(publicResponse.highRiskWarning),
     observationPeriod: normalizeText(publicResponse.observationPeriod),
     outcomeMode,
@@ -369,8 +349,6 @@ function buildFrontendAnswerResponse(publicResponse = {}) {
     ...(!hasVisibleOutcomes && treatmentText ? { treatmentText } : {}),
     ...(!hasVisibleOutcomes && preventionText ? { preventionText } : {}),
     ...(!hasVisibleOutcomes && summaryCard ? { summaryCard } : {}),
-    confidenceLevel: publicResponse.confidenceLevel || finalResult?.confidenceLevel || '',
-    ...(publicResponse.needHumanReview ? { needHumanReview: true } : {}),
     hasActiveQuestions: hasActiveQuestionsFlag,
     questions: optionalQuestions,
     ...(environmentCareContext ? { environmentCareContext } : {}),

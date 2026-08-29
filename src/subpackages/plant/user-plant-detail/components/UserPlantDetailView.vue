@@ -226,8 +226,8 @@ async function loadPlant() {
     }
     plant.value = response.data
     plantStore.updateUserPlantLocal?.(plant.value.id, plant.value)
-  } catch (error) {
-    uni.showToast({ title: error?.message || '网络错误，请重试', icon: 'none' })
+  } catch {
+    uni.showToast({ title: '暂时无法加载植物信息，请检查网络后重试', icon: 'none' })
   } finally {
     loading.value = false
   }
@@ -360,7 +360,7 @@ async function doWatering() {
     await loadPlant()
     uni.showToast({ title: '浇水完成', icon: 'success' })
   } else {
-    uni.showToast({ title: result.message || '操作失败', icon: 'none' })
+    uni.showToast({ title: '浇水记录暂未保存，请检查网络后重试', icon: 'none' })
   }
 }
 
@@ -373,17 +373,20 @@ function editPlant() {
 function confirmDelete() {
   uni.showModal({
     title: '确认删除',
-    content: '删除后将无法恢复，确定要删除这株植物吗？',
+    content: '将永久删除这株植物及其养护、提醒和诊断记录。已添加到手机日历的提醒不会自动删除，请手动移除。',
     confirmText: '删除',
     confirmColor: '#F44336',
     success: async res => {
       if (res.confirm) {
         const result = await plantStore.deleteUserPlant(plantId.value)
         if (result.success) {
-          uni.showToast({ title: '已删除', icon: 'success' })
+          uni.showToast({
+            title: result.message || '已删除',
+            icon: result.cleanupPending ? 'none' : 'success'
+          })
           setTimeout(() => uni.navigateBack(), 1500)
         } else {
-          uni.showToast({ title: result.message || '删除失败', icon: 'none' })
+          uni.showToast({ title: '暂时无法删除植物，请检查网络后重试', icon: 'none' })
         }
       }
     }

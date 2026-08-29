@@ -40,7 +40,7 @@ export async function requestDevToolsControl({
   }
   const url = new URL(`http://${DEVTOOLS_CONTROL_HOST}:${Number(controlPort)}/${action}`)
   url.searchParams.set('cli', '1')
-  // DevTools 2.02.2608212 keeps /open on the legacy projectpath query but
+  // DevTools 2.02.2608272 keeps /open on the legacy projectpath query but
   // moved the v2 /auto contract to `project` + `autoPort`.  The stock CLI
   // still sends the old names and exits zero even when the endpoint rejects
   // them, so the official-Electron adapter must be explicit about the

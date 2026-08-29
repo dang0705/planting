@@ -78,15 +78,6 @@ function pickActiveIntermediateFields(publicResponse = {}) {
   if (publicResponse?.recommendedMode) {
     fields.recommendedMode = publicResponse.recommendedMode
   }
-  if (Array.isArray(publicResponse?.directMatches)) {
-    fields.directMatches = publicResponse.directMatches
-  }
-  if (Array.isArray(publicResponse?.evidenceLedger)) {
-    fields.evidenceLedger = publicResponse.evidenceLedger
-  }
-  if (publicResponse?.pendingDirectPestSnapshot) {
-    fields.pendingDirectPestSnapshot = publicResponse.pendingDirectPestSnapshot
-  }
   return fields
 }
 
@@ -215,7 +206,6 @@ function pickMinimalFinalResult(finalResult = null) {
     problemName: String(finalResult?.problemName || finalResult?.displayName || '').trim(),
     summary: String(finalResult?.summary || '').trim(),
     severity: String(finalResult?.severity || '').trim(),
-    confidenceLevel: String(finalResult?.confidenceLevel || '').trim(),
     outcomeType: String(finalResult?.outcomeType || '').trim(),
     nonProblematicType: String(finalResult?.nonProblematicType || '').trim(),
     visibleOutcomes,
@@ -317,8 +307,7 @@ function pickMinimalVisualBatchTrace(trace = null) {
     supersedeTargetBatchId:
       trace?.supersedeTargetBatchId || trace?.supersede_target_batch_id || null,
     supersededByBatchId: trace?.supersededByBatchId || trace?.superseded_by_batch_id || null,
-    supersedeApplied: Number(trace?.supersedeApplied ?? trace?.supersede_applied ?? 0) ? 1 : 0,
-    supersedeReason: String(trace?.supersedeReason || trace?.supersede_reason || '').trim()
+    supersedeApplied: Number(trace?.supersedeApplied ?? trace?.supersede_applied ?? 0) ? 1 : 0
   }
 }
 
@@ -327,25 +316,9 @@ function pickMinimalVisualAggregateSummary(summary = null) {
     return null
   }
   return {
-    visualCallBatchId: summary?.visualCallBatchId || summary?.visual_call_batch_id || null,
-    effectiveImageCount: Number(
-      summary?.effectiveImageCount ?? summary?.effective_image_count ?? 0
-    ),
-    aggregateQualityGrade: String(
-      summary?.aggregateQualityGrade || summary?.aggregate_quality_grade || ''
-    ).trim(),
-    aggregateAnalyzability: String(
-      summary?.aggregateAnalyzability || summary?.aggregate_analyzability || ''
-    ).trim(),
-    suggestedFollowupCapture: normalizeStringList(
+    suggestedAdditionalImageCapture: normalizeStringList(
       summary?.suggestedFollowupCapture || summary?.suggested_question_capture
-    ),
-    admissionReadyFlag: Number(summary?.admissionReadyFlag ?? summary?.admission_ready_flag ?? 0)
-      ? 1
-      : 0,
-    routePrimaryAction: String(
-      summary?.routePrimaryAction || summary?.route_primary_action || ''
-    ).trim()
+    )
   }
 }
 

@@ -30,3 +30,23 @@ assert.deepEqual(response.nextSteps.map(item => item.text), [
   '当前证据仍不够稳定，建议补查叶背、根部、盆土状态，必要时重新开始诊断。',
   repeatedAdvice
 ])
+
+const outOfPoolResponse = formatDiagnosisResponse({
+  sessionId: 'diag_out_of_pool_user_copy',
+  stage: 'final',
+  lowConfidence: {
+    isLowConfidence: true,
+    reasons: ['out_of_pool_no_mapping'],
+    outOfPoolObservation: {
+      observationText: '内部模型观察文本，不应直接面向用户显示'
+    }
+  },
+  questionRequired: false,
+  stopDecision: {
+    outcomeLocked: 'uncertain',
+    stopReason: 'uncertain_output_ready',
+    uncertainLegalityReason: 'out_of_pool_no_mapping'
+  }
+})
+assert.match(outOfPoolResponse.finalResult.summary, /暂时无法判断具体原因/)
+assert.doesNotMatch(JSON.stringify(outOfPoolResponse), /内部模型观察文本|模型原始观察|outOfPoolObservation/)

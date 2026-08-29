@@ -143,36 +143,12 @@ function normalizeVisualDecisionEvent(payloadItem = {}) {
   }
 }
 
-export function logDiagnosisStartCompletion(source, data) {
-  const usage = data?.aiUsage || data?.visualUsage || null
-  console.log(`[diagnosis/start] ${source} final response:`, data)
-  console.log(`[diagnosis/start] ${source} AI raw data:`, data?.aiDebug || [])
-  for (const item of Array.isArray(data?.aiDebug) ? data.aiDebug : []) {
-    const formattedPrompt = String(item?.formattedPrompt || '')
-    if (!formattedPrompt) {
-      continue
-    }
-    console.log(
-      `[diagnosis/start] ${source} ai[${item.imageIndex ?? '?'}] complete prompt:\n${formattedPrompt}`
-    )
-  }
-  console.log(`[diagnosis/start] ${source} token usage:`, {
-    inputTokens: usage?.inputTokens ?? null,
-    outputTokens: usage?.outputTokens ?? null,
-    totalTokens: usage?.totalTokens ?? null,
-    cachedTokens: usage?.cachedTokens ?? null,
-    cacheCreationTokens: usage?.cacheCreationTokens ?? null,
-    reasoningTokens: usage?.reasoningTokens ?? null
-  })
-}
-
 export function buildVisualProgressText(eventName, payloadItem = {}) {
   const normalizedEventName = String(
     eventName || payloadItem?.phase || payloadItem?.type || ''
   ).trim()
-  const explicitContent = String(payloadItem?.content || '').trim()
-  if (normalizedEventName === 'visual_progress' && explicitContent) {
-    return explicitContent
+  if (normalizedEventName === 'visual_progress') {
+    return '正在检查照片。'
   }
 
   if (normalizedEventName === 'visual_session_created') {
@@ -191,10 +167,10 @@ export function buildVisualProgressText(eventName, payloadItem = {}) {
     return '正在查看照片中的可见痕迹。'
   }
   if (normalizedEventName === 'visual_model_response_started') {
-    return '正在整理照片检查结果。'
+    return '正在整理检查结果。'
   }
   if (normalizedEventName === 'visual_model_complete') {
-    return '照片已查看，正在整理发现。'
+    return '照片已查看，正在整理结果。'
   }
   if (normalizedEventName === 'visual_decision_ready') {
     const decision = normalizeVisualDecisionEvent(payloadItem)
@@ -205,9 +181,9 @@ export function buildVisualProgressText(eventName, payloadItem = {}) {
     const outOfPoolCount = decision.counts.outOfPoolSymptomCandidates
     const visibleAbnormalityCount = inPoolCount + outOfPoolCount
     if (visibleAbnormalityCount > 0) {
-      return `照片检查完成，发现 ${visibleAbnormalityCount} 处可见异常。`
+      return `照片检查完成，发现 ${visibleAbnormalityCount} 处需要留意的地方。`
     }
-    return '照片检查完成，暂时没有看到明确异常，可能需要更清楚的照片。'
+    return '照片检查完成，暂时没有发现明显异常；如仍有疑问，可补拍更清楚的照片。'
   }
   if (normalizedEventName === 'visual_persisted') {
     return '照片已检查，正在准备下一步。'
@@ -215,13 +191,12 @@ export function buildVisualProgressText(eventName, payloadItem = {}) {
   if (normalizedEventName === 'visual_extraction_complete') {
     return '照片检查完成，正在准备问题或结果。'
   }
-  return ''
+  return '正在检查照片。'
 }
 
 export function buildStreamDiagnosisPromise(payload, { onProgress, streamDiagnoseRequester } = {}) {
   return new Promise((resolve, reject) => {
     let settled = false
-    let latestFullText = ''
     let latestProgressText = ''
 
     const pushProgress = text => {
@@ -230,7 +205,6 @@ export function buildStreamDiagnosisPromise(payload, { onProgress, streamDiagnos
         return
       }
       latestProgressText = normalizedText
-      latestFullText = normalizedText
       onProgress?.(normalizedText)
     }
 
@@ -261,17 +235,8 @@ export function buildStreamDiagnosisPromise(payload, { onProgress, streamDiagnos
       }
 
       if (normalizedEventName === 'reply') {
-        const fullText = String(payloadItem?.fullText || '').trim()
-        const content = String(payloadItem?.content || '').trim()
-        if (fullText) {
-          latestFullText = fullText
-          onProgress?.(fullText)
-          return
-        }
-        if (content) {
-          latestFullText += content
-          onProgress?.(latestFullText)
-        }
+        // 模型的原始片段不是面向用户的内容，只保留稳定的进度提示。
+        pushProgress('正在整理检查结果。')
         return
       }
 
@@ -283,7 +248,6 @@ export function buildStreamDiagnosisPromise(payload, { onProgress, streamDiagnos
       if (normalizedEventName === 'done') {
         const data = payloadItem?.data
         if (data && typeof data === 'object') {
-          logDiagnosisStartCompletion('stream', data)
           settleResolve(data)
           return
         }
@@ -334,17 +298,11 @@ export function buildStreamDiagnosisPromise(payload, { onProgress, streamDiagnos
           return
         }
         if (envelope?.data && typeof envelope.data === 'object') {
-          logDiagnosisStartCompletion('stream-buffered', envelope.data)
           settleResolve(envelope.data)
           return
         }
 
-        if (latestFullText) {
-          settleReject(new Error('流式诊断已结束，但未返回结构化结果'))
-          return
-        }
-
-        settleReject(new Error('流式诊断响应为空'))
+        settleReject(new Error('检查结果暂时无法获取，请重试'))
       })
       .catch(error => {
         settleReject(error)
@@ -357,7 +315,7 @@ export async function requestDiagnoseStream(
   payload,
   { onProgress, streamDiagnoseRequester, requestWithRetry } = {}
 ) {
-  onProgress?.('正在分析图片并生成问诊...')
+  onProgress?.('正在检查照片...')
   const streamPayload = {
     ...payload,
     streamVisualDecision: true

@@ -8,6 +8,7 @@ import {
   forbiddenFormalRuntimeArgs,
   resolveQaWxRequestUrl
 } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/qa-run.mjs'
+import { resolveQaBackendTarget } from '../../../../../scripts/qa/qa-backend-target.mjs'
 
 assert.deepEqual(forbiddenFormalRuntimeArgs(['--wx-request-url=http://example.test']), [
   '--wx-request-url'
@@ -39,11 +40,35 @@ assert.deepEqual(
     source: 'supervisor_fixed_lan'
   }
 )
+assert.deepEqual(
+  resolveQaWxRequestUrl(
+    '',
+    {
+      QA_BACKEND_MODE: 'online',
+      QA_ONLINE_API_BASE_URL:
+        'https://cloud1-2grufevs395a9d5e.api.tcloudbasegateway.com/v1/functions'
+    },
+    { formal: true }
+  ),
+  {
+    url: 'https://cloud1-2grufevs395a9d5e.api.tcloudbasegateway.com/v1/functions/plant-user-http/user-plants?page=1&pageSize=1&webfn=true',
+    source: 'supervisor_fixed_online'
+  }
+)
+assert.throws(
+  () =>
+    resolveQaBackendTarget({
+      QA_BACKEND_MODE: 'online',
+      QA_ONLINE_API_BASE_URL: 'http://127.0.0.1:3011'
+    }),
+  error => error?.code === 'qa_online_base_url_invalid'
+)
 
 const healthUrl = 'http://127.0.0.1:12345/__local_functions__/health'
 const successfulSlot = '__dispatchQaWxRequest_test_success'
 let successfulCallbacks
 const originalWx = globalThis.wx
+const originalGetApp = globalThis.getApp
 const forbiddenSerializedSyntax = [
   /=>/,
   /\.\.\./,
@@ -71,14 +96,25 @@ function compatibilityMiniProgram(serializedSources) {
 
 globalThis.wx = {
   cloud: {
+    __plantingGetCloudbaseAccessToken: async () => 'platform-access-token',
     callFunction: options => {
-      options.success({ result: { openid: 'runtime-openid' } })
+      options.success({
+        result: {
+          openid: 'runtime-openid',
+          httpIdentityTicket: 'ignored-legacy-ticket'
+        }
+      })
     }
   },
   request: callbacks => {
     successfulCallbacks = callbacks
   }
 }
+globalThis.getApp = () => ({
+  globalData: {
+    __plantingGetCloudbaseAccessToken: async () => 'platform-access-token'
+  }
+})
 try {
   const serializedSources = []
   const success = await probeWxRequest({
@@ -119,9 +155,11 @@ try {
   assert.equal(authenticated.passed, true)
   assert.equal(authenticated.identity_required, true)
   assert.equal(authenticated.identity_resolved, true)
+  assert.equal(authenticated.access_token_resolved, true)
+  assert.equal(authenticated.identity_ticket_resolved, true)
   assert.deepEqual(authenticatedRequest.header, {
-    'x-wx-openid': 'runtime-openid',
-    'x-openid': 'runtime-openid'
+    Authorization: 'Bearer platform-access-token',
+    'x-planting-http-identity-ticket': 'ignored-legacy-ticket'
   })
 
   const rejectedSlot = '__dispatchQaWxRequest_test_rejected_status'
@@ -172,6 +210,11 @@ try {
     delete globalThis.wx
   } else {
     globalThis.wx = originalWx
+  }
+  if (originalGetApp === undefined) {
+    delete globalThis.getApp
+  } else {
+    globalThis.getApp = originalGetApp
   }
 }
 

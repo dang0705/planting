@@ -24,12 +24,12 @@
           <text class="text-6xl">🌱</text>
           <text class="mt-4 text-lg font-semibold text-gray-800">还没有添加植物</text>
           <text class="mt-2 text-sm leading-6 text-gray-400">
-            记录你的每一株植物，让 AI 帮你更好地照顾它们
+            记录你的每一株植物，方便持续查看养护建议
           </text>
           <button
             id="index-empty-add-plant-button"
             class="mt-6 rounded-3xl bg-primary px-8 py-3.5 text-white"
-            @click="addPlant"
+            @click="handleAddPlant"
           >
             添加第一株植物
           </button>
@@ -74,7 +74,7 @@
           <view
             id="index-add-plant-button"
             class="mt-4 flex flex-col items-center justify-center rounded-[20px] border-2 border-dashed border-primary bg-white p-5"
-            @click="addPlant"
+            @click="handleAddPlant"
           >
             <uni-icons type="plusempty" />
             <text class="text-sm font-semibold text-primary">添加新植物</text>
@@ -82,7 +82,7 @@
           <view
             id="index-watering-advisor-entry"
             class="mt-3 flex items-center justify-between rounded-[20px] bg-white p-4 shadow-sm"
-            @click="goWateringAdvisor"
+            @click="handleGoWateringAdvisor"
           >
             <view class="flex items-center gap-3">
               <text class="text-[24px]">💧</text>
@@ -99,7 +99,7 @@
       <view v-else class="mx-4 mt-6 rounded-[24px] bg-white p-5 shadow-sm">
         <text class="mb-2 block text-lg font-semibold text-gray-800">登录后开始记录植物</text>
         <text class="mb-5 block text-sm text-gray-500"
-          >登录后可使用植物识别、AI 诊断、养护记录和历史同步能力。</text
+          >登录后可使用植物识别、植物状况检查、养护记录和历史同步。</text
         >
         <!-- #ifdef MP-WEIXIN -->
         <button
@@ -137,6 +137,7 @@
 
 <script setup>
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import HeaderWeatherInfo from '@/components/HeaderWeatherInfo.vue'
 import Layout from '@/Layout.vue'
 import loadingIcon from '@/assets/icons/loading.svg'
@@ -146,6 +147,8 @@ import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
+import { createAsyncActionGuard, createLeadingThrottle } from '@/utils/interaction-guard.js'
+import { invalidateUserPlantsQuery } from '@/vue-query/plants/queries/user-plants.js'
 import PlantCard from './components/PlantCard.vue'
 import FertilizationMonthlySheet from './components/FertilizationMonthlySheet.vue'
 import WateringReminderSheet from './components/WateringReminderSheet.vue'
@@ -162,6 +165,8 @@ const wateringReminderRef = ref(null)
 const fertilizationMonthlyRef = ref(null)
 const currentReminderPlantId = ref(null)
 const currentFertilizationPlantId = ref(null)
+const userLoginAction = createAsyncActionGuard()
+const phoneLoginAction = createAsyncActionGuard()
 const plantDiagnoseHistory = reactive({})
 const currentReminderPlant = computed(() =>
   currentReminderPlantId.value === null
@@ -173,10 +178,22 @@ const currentFertilizationPlant = computed(() =>
     ? null
     : plantStore.userPlants.find(plant => plant.id === currentFertilizationPlantId.value) || null
 )
+const pageMounted = ref(false)
 onMounted(async () => {
   if (await userStore.ensureLogin()) {
+    await invalidateUserPlantsQuery()
     await loadUserPlants()
   }
+  pageMounted.value = true
+})
+
+// 从添加/编辑页返回，或小程序从后台恢复时，主动失效列表缓存，避免展示旧植物数据。
+onShow(async () => {
+  if (!pageMounted.value || !userStore.isAuthenticated || loadingPlants.value) {
+    return
+  }
+  await invalidateUserPlantsQuery()
+  await loadUserPlants()
 })
 
 async function loadUserPlants() {
@@ -190,16 +207,20 @@ async function loadUserPlants() {
     loadingPlants.value = false
   }
 }
-async function userLogin() {
-  await userStore.wechatLogin()
-  await loadUserPlants()
-}
-async function handleIndexPhoneLogin(event) {
-  await userStore.phoneLogin({
-    code: event?.detail?.code || '',
-    cloudId: event?.detail?.cloudID || event?.detail?.cloudId || ''
+function userLogin() {
+  return userLoginAction.run(async () => {
+    await userStore.wechatLogin()
+    await loadUserPlants()
   })
-  await loadUserPlants()
+}
+function handleIndexPhoneLogin(event) {
+  return phoneLoginAction.run(async () => {
+    await userStore.phoneLogin({
+      code: event?.detail?.code || '',
+      cloudId: event?.detail?.cloudID || event?.detail?.cloudId || ''
+    })
+    await loadUserPlants()
+  })
 }
 function addPlant() {
   reportAnalyticsEvent(ANALYTICS_EVENTS.USER_CLICK_CREATE_PLANT)
@@ -209,6 +230,8 @@ function goWateringAdvisor() {
   reportAnalyticsEvent(ANALYTICS_EVENTS.ISOLATED_WATERING_PLANNER)
   uni.navigateTo({ url: '/subpackages/care/watering-advisor/watering-advisor' })
 }
+const handleAddPlant = createLeadingThrottle(addPlant, 500)
+const handleGoWateringAdvisor = createLeadingThrottle(goWateringAdvisor, 500)
 function openEditPlant(plant) {
   uni.navigateTo({
     url: `/subpackages/plant/user-plant-detail/user-plant-detail?mode=edit&id=${plant.id}`

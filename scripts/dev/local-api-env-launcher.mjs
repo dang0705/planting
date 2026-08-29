@@ -180,6 +180,7 @@ export async function runLocalApiEnvironment({
   let gatewayChild = null
   let managedRuntime = null
   let managedRuntimeStop = null
+  let reuseKeepAliveTimer = null
   let stopRequested = false
   const stopOwnedResources = () => {
     if (!managedRuntimeStop) {
@@ -220,8 +221,15 @@ export async function runLocalApiEnvironment({
         reuseOutput: options.reuseOutput,
         initialApiBaseUrl: apiBaseUrl,
         leaseRoot: options.runtimeLeaseRoot || runtimeLeaseRoot,
+        // Online QA still uses the `lan` runtime mode so the existing
+        // supervisor/lease ownership checks remain applicable, but it must
+        // never refresh the frontend URL back to a local address when the
+        // machine's network changes. The explicit online target is stable
+        // and is already carried in `apiBaseUrl`.
         resolveLanApiBaseUrl:
-          options.mode === 'lan' ? () => resolveLocalApiBaseUrl(options, environment) : undefined,
+          options.mode === 'lan' && environment.QA_BACKEND_MODE !== 'online'
+            ? () => resolveLocalApiBaseUrl(options, environment)
+            : undefined,
         spawnProcess
       })
       let started = managedRuntime.start()
@@ -266,6 +274,13 @@ export async function runLocalApiEnvironment({
       } else {
         child = started.child
         waitForExit = () => managedRuntime.waitForExit()
+        if (options.reuseOutput && !child) {
+          // A reuse-only runtime intentionally has no compiler child. Keep
+          // this launcher process alive until SIGINT/SIGTERM so its lease is
+          // not released immediately just because an unresolved Promise does
+          // not keep Node's event loop alive.
+          reuseKeepAliveTimer = setInterval(() => {}, 60_000)
+        }
       }
     } else {
       child = spawnProcess(command[0], command.slice(1), {
@@ -278,6 +293,10 @@ export async function runLocalApiEnvironment({
   } finally {
     signalSource.off('SIGINT', stopStartedGateway)
     signalSource.off('SIGTERM', stopStartedGateway)
+    if (reuseKeepAliveTimer) {
+      clearInterval(reuseKeepAliveTimer)
+      reuseKeepAliveTimer = null
+    }
     await stopOwnedResources()
   }
 }

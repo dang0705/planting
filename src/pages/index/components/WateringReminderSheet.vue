@@ -107,6 +107,13 @@
           </text>
         </view>
       </view>
+      <view
+        v-if="calendarSyncError"
+        id="watering-reminder-calendar-sync-error"
+        class="mt-3 rounded-xl border border-[#f2d99a] bg-[#fff7df] px-3 py-2"
+      >
+        <text class="block text-[12px] leading-5 text-[#8A5A00]">{{ calendarSyncError }}</text>
+      </view>
 
       <SavedWateringReminderState v-if="savedReminderActive" :display="savedReminderDisplay" />
     </BottomSheet>
@@ -168,6 +175,7 @@ import { useUserStore } from '@/store/user.js'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import { mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline } from '@/utils/care-behavior-weather-window.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
+import { createAsyncActionGuard } from '@/utils/interaction-guard.js'
 import PotProfileEditor from './PotProfileEditor.vue'
 import SavedWateringReminderState from './SavedWateringReminderState.vue'
 import { useWateringReminderPlanner } from './useWateringReminderPlanner.js'
@@ -202,6 +210,11 @@ const reminderLoading = ref(false)
 const savedReminder = ref(null)
 const savedReminderInputSignature = ref('')
 const selectedWateringEvents = ref([])
+const pendingReminderSavePayload = ref(null)
+const pendingReminderPlantId = ref('')
+const calendarSyncError = ref('')
+const addToCalendarAction = createAsyncActionGuard()
+const PENDING_REMINDER_SYNC_STORAGE_PREFIX = 'watering-reminder-pending-sync-v1'
 const savedReminderWateringEvents = computed(() =>
   Array.isArray(savedReminder.value?.wateringEvents) ? savedReminder.value.wateringEvents : []
 )
@@ -258,16 +271,19 @@ const savedReminderChanged = computed(
 )
 const canAddToCalendar = computed(
   () =>
-    (!savedReminderActive.value || savedReminderChanged.value) &&
-    !isOverWateringBlocked.value &&
-    Boolean(plannerResult.value?.nextWaterDate)
+    Boolean(pendingReminderSavePayload.value) ||
+    ((!savedReminderActive.value || savedReminderChanged.value) &&
+      !isOverWateringBlocked.value &&
+      Boolean(plannerResult.value?.nextWaterDate))
 )
 const addToCalendarText = computed(() =>
-  savedReminderActive.value && !savedReminderChanged.value
-    ? '已保存到手机日历'
-    : isOverWateringBlocked.value
-      ? '近期过浇，暂不安排浇水'
-      : '添加到手机日历'
+  pendingReminderSavePayload.value
+    ? '重试同步到青花植'
+    : savedReminderActive.value && !savedReminderChanged.value
+      ? '已保存到手机日历'
+      : isOverWateringBlocked.value
+        ? '近期过浇，暂不安排浇水'
+        : '添加到手机日历'
 )
 const savedReminderDisplay = computed(() => buildSavedReminderDisplay(savedReminder.value))
 const nextWaterDisplay = computed(() => {
@@ -282,10 +298,67 @@ const nextWaterDisplay = computed(() => {
 function currentPlantId() {
   return props.plant?.id === undefined || props.plant?.id === null ? '' : String(props.plant.id)
 }
+function pendingReminderStorageKey(plantId = currentPlantId()) {
+  const openid = String(userStore.openid || '').trim()
+  const normalizedPlantId = String(plantId || '').trim()
+  if (!openid || !normalizedPlantId) {
+    return ''
+  }
+  return `${PENDING_REMINDER_SYNC_STORAGE_PREFIX}:${encodeURIComponent(openid)}:${normalizedPlantId}`
+}
+function restorePendingReminderSavePayload(plantId = currentPlantId()) {
+  const storageKey = pendingReminderStorageKey(plantId)
+  if (!storageKey) {
+    return false
+  }
+  try {
+    const stored = uni.getStorageSync(storageKey)
+    const payload = stored?.payload
+    if (!payload || String(payload.plantId || '') !== String(plantId || '')) {
+      return false
+    }
+    pendingReminderSavePayload.value = payload
+    pendingReminderPlantId.value = String(plantId)
+    calendarSyncError.value =
+      '手机日历已添加，但青花植还未同步成功。请点击“重试同步到青花植”；稍后重新打开此植物也可继续同步，请不要再次添加日历。'
+    return true
+  } catch (error) {
+    console.warn('读取待同步浇水提醒失败:', error)
+    return false
+  }
+}
+function persistPendingReminderSavePayload(payload) {
+  const plantId = String(payload?.plantId || '')
+  const storageKey = pendingReminderStorageKey(plantId)
+  if (!storageKey || !plantId) {
+    return
+  }
+  try {
+    uni.setStorageSync(storageKey, { payload })
+  } catch (error) {
+    console.warn('保存待同步浇水提醒失败:', error)
+  }
+}
+function clearPendingReminderSavePayload(plantId = pendingReminderPlantId.value) {
+  const storageKey = pendingReminderStorageKey(plantId)
+  if (storageKey) {
+    try {
+      uni.removeStorageSync(storageKey)
+    } catch (error) {
+      console.warn('清除待同步浇水提醒失败:', error)
+    }
+  }
+  pendingReminderSavePayload.value = null
+  pendingReminderPlantId.value = ''
+  calendarSyncError.value = ''
+}
 function resetReminderState() {
   selectedWateringEvents.value = []
   savedReminder.value = null
   savedReminderInputSignature.value = ''
+  pendingReminderSavePayload.value = null
+  pendingReminderPlantId.value = ''
+  calendarSyncError.value = ''
   resetWeatherPlannerState()
 }
 async function open() {
@@ -304,6 +377,10 @@ function onPopupChange(event) {
   isSheetOpen.value = true
 }
 async function openLastWateringPicker() {
+  if (pendingReminderSavePayload.value) {
+    uni.showToast({ title: '请先完成日历提醒同步', icon: 'none' })
+    return
+  }
   callComponentMethod(datePickerPopupRef, 'open')
   if (!environmentWeatherWindow.value && !weatherLoading.value) {
     await loadWeatherDays()
@@ -337,6 +414,7 @@ async function loadSavedReminder() {
     }
     const reminder = response?.code === 200 ? response.data : null
     if (isWateringReminderActive(reminder)) {
+      clearPendingReminderSavePayload(requestedPlantId)
       savedReminder.value = reminder
       plannerResult.value = normalizeSavedReminderPlannerResult(reminder)
       selectedWateringEvents.value = Array.isArray(reminder.wateringEvents)
@@ -347,8 +425,10 @@ async function loadSavedReminder() {
       return
     }
     savedReminder.value = null
+    restorePendingReminderSavePayload(requestedPlantId)
   } catch (error) {
     console.warn('读取浇水提醒失败:', error)
+    restorePendingReminderSavePayload(requestedPlantId)
   } finally {
     reminderLoading.value = false
     if (pendingReminderReload.value && isSheetOpen.value) {
@@ -360,8 +440,18 @@ async function loadSavedReminder() {
     }
   }
 }
-const openPotProfileEditor = () => callComponentMethod(potProfileEditorRef, 'open')
-const onPotProfileSaved = () => fetchPlanner()
+function openPotProfileEditor() {
+  if (pendingReminderSavePayload.value) {
+    uni.showToast({ title: '请先完成日历提醒同步', icon: 'none' })
+    return
+  }
+  callComponentMethod(potProfileEditorRef, 'open')
+}
+function onPotProfileSaved() {
+  if (!pendingReminderSavePayload.value) {
+    fetchPlanner()
+  }
+}
 function mirrorSavedReminder(reminder) {
   plantStore.applyWateringReminder(props.plant.id, reminder)
   plantingStore.setPlantReminder({
@@ -373,65 +463,92 @@ function mirrorSavedReminder(reminder) {
     repeat: false
   })
 }
-async function addToCalendar() {
-  if (!canAddToCalendar.value || !props.plant?.id) {
-    return
-  }
-  const nextWaterDate = plannerResult.value.nextWaterDate
-  const calendarPayload = buildWateringReminderCalendarPayload({
-    plant: props.plant,
-    nextWaterDate,
-    amountText: amountBottleText.value,
-    reasonText: plannerResult.value?.nextWaterReason || ''
-  })
-  loading.value = true
-  try {
-    await addPhoneCalendar(calendarPayload)
-    const planId = plannerResult.value?.planId || `calendar_${Date.now()}`
-    const wateringEvents = attachPlanIdToWateringEvents(
-      selectedWateringEventsForPlanner.value,
-      planId
-    )
-    const response = await saveWateringReminder(
-      buildWateringReminderSavePayload({
-        plantId: props.plant.id,
-        planId,
-        lastWatered: lastWateringText.value === '尚无记录' ? '' : lastWateringText.value,
-        nextWaterDate,
-        wateringEvents,
-        plannerResult: plannerResult.value,
-        calendarPayload
-      })
-    )
-    if (response?.code !== 200 || !response.data) {
-      throw new Error(response?.message || '应用内提醒保存失败')
+function addToCalendar() {
+  return addToCalendarAction.run(async () => {
+    if (!canAddToCalendar.value || !props.plant?.id) {
+      return
     }
-    reportAnalyticsEvent(ANALYTICS_EVENTS.WATERING_REMINDER_SAVED)
-    savedReminder.value = response.data
-    savedReminderInputSignature.value = currentReminderInputSignature.value
-    mirrorSavedReminder(response.data)
-    await new Promise(resolve => {
-      uni.showModal({
-        title: '提醒已添加',
-        content: '提醒已保存到手机日历。若需调整，请在手机日历中编辑；这些修改不会同步回青花植。',
-        showCancel: false,
-        success: resolve,
-        fail: resolve
+    loading.value = true
+    try {
+      if (!pendingReminderSavePayload.value) {
+        const nextWaterDate = plannerResult.value?.nextWaterDate
+        if (!nextWaterDate) {
+          throw new Error('请先生成浇水建议')
+        }
+        const calendarPayload = buildWateringReminderCalendarPayload({
+          plant: props.plant,
+          nextWaterDate,
+          amountText: amountBottleText.value,
+          reasonText: plannerResult.value?.nextWaterReason || ''
+        })
+        await addPhoneCalendar(calendarPayload)
+        const planId = plannerResult.value?.planId || `calendar_${Date.now()}`
+        pendingReminderSavePayload.value = buildWateringReminderSavePayload({
+          plantId: props.plant.id,
+          planId,
+          lastWatered: lastWateringText.value === '尚无记录' ? '' : lastWateringText.value,
+          nextWaterDate,
+          wateringEvents: attachPlanIdToWateringEvents(
+            selectedWateringEventsForPlanner.value,
+            planId
+          ),
+          plannerResult: plannerResult.value,
+          calendarPayload
+        })
+        pendingReminderPlantId.value = currentPlantId()
+        persistPendingReminderSavePayload(pendingReminderSavePayload.value)
+      }
+      const response = await saveWateringReminder(pendingReminderSavePayload.value)
+      if (response?.code === 404) {
+        clearPendingReminderSavePayload()
+        throw new Error('植物已删除，请在手机日历中删除这条提醒')
+      }
+      if (response?.code !== 200 || !response.data) {
+        throw new Error(response?.message || '应用内提醒保存失败')
+      }
+      reportAnalyticsEvent(ANALYTICS_EVENTS.WATERING_REMINDER_SAVED)
+      savedReminder.value = response.data
+      savedReminderInputSignature.value = currentReminderInputSignature.value
+      clearPendingReminderSavePayload()
+      mirrorSavedReminder(response.data)
+      await new Promise(resolve => {
+        uni.showModal({
+          title: '提醒已添加',
+          content: '提醒已保存到手机日历。若需调整，请在手机日历中编辑；这些修改不会同步回青花植。',
+          showCancel: false,
+          success: resolve,
+          fail: resolve
+        })
       })
-    })
-    close()
-  } catch (error) {
-    uni.showToast({
-      title: error?.message || '添加失败，请重试',
-      icon: 'none'
-    })
-  } finally {
-    loading.value = false
-  }
+      close()
+    } catch (error) {
+      if (pendingReminderSavePayload.value) {
+        calendarSyncError.value =
+          '手机日历已添加，但青花植还未同步成功。请点击“重试同步到青花植”；稍后重新打开此植物也可继续同步，请不要再次添加日历。'
+      }
+      uni.showToast({
+        title: pendingReminderSavePayload.value
+          ? '日历已添加，请重试同步'
+          : '暂时无法添加提醒，请稍后重试',
+        icon: 'none'
+      })
+    } finally {
+      loading.value = false
+    }
+  })
 }
 watch(
   () => props.plant?.id,
   async newPlantId => {
+    if (!newPlantId && pendingReminderSavePayload.value) {
+      return
+    }
+    if (
+      pendingReminderSavePayload.value &&
+      String(newPlantId || '') === pendingReminderPlantId.value
+    ) {
+      return
+    }
     resetReminderState()
     if (newPlantId && isSheetOpen.value) {
       await nextTick()

@@ -29,6 +29,7 @@ import {
   getSavedLightEnvironment
 } from './question-environment.js'
 import { fetchUserPlant, patchUserPlant } from '@/api/plants-http.js'
+import { createAsyncActionGuard } from '@/utils/interaction-guard.js'
 import { estimateQuestionSwiperHeight } from './question-display.js'
 import { useEnvironmentWeatherWindow } from './question-weather-window.js'
 import { submitQuestionPackageAnswers } from './question-submit.js'
@@ -74,6 +75,7 @@ export function useQuestionPackageFlow({
   const lightEnvironmentConfirmedByQuestionId = ref({})
   const suppressedTimelineAnswerByQuestionId = ref({})
   const isSubmittingQuestionAnswer = ref(false)
+  const submitQuestionAnswersAction = createAsyncActionGuard()
   const isQuestionStatePreparing = ref(false)
   const packageRestartRequired = ref(false)
   const airEnvironment = useQuestionAirEnvironment({
@@ -523,38 +525,40 @@ export function useQuestionPackageFlow({
     )
   }
 
-  async function submitQuestionAnswers() {
-    if (!result.value || !canProceedQuestion()) {
-      return
-    }
-    isSubmittingQuestionAnswer.value = true
-    try {
-      await persistConfirmedLightEnvironment()
-      const frozenAirEnvironment = airEnvironment.freezeForSubmit(questionStack.value)
-      airEnvironment.saveInBackground(questionStack.value, frozenAirEnvironment)
-      await submitQuestionPackageAnswers({
-        result,
-        images: images.value,
-        plantName: plantName.value,
-        questionAnswers: questionAnswers.value,
-        questionStack: questionStack.value,
-        currentQuestion: currentQuestion.value,
-        isQuestionPackageMode: isQuestionPackageMode.value,
-        careBehaviorTimelineByQuestionId: careBehaviorTimelineByQuestionId.value,
-        lightEnvironmentByQuestionId: lightEnvironmentByQuestionId.value,
-        airEnvironmentByQuestionId: frozenAirEnvironment.byQuestionId,
-        airEnvironmentSnapshotsByQuestionId: frozenAirEnvironment.snapshotsByQuestionId,
-        environmentWeatherWindow: environmentWeatherWindow.value,
-        diagnosisAnswerMutation,
-        diagnoseStore,
-        resetQuestionState
-      })
-    } catch (error) {
-      console.error('问诊处理失败:', error)
-      uni.showToast({ title: error.message || '问诊失败，请重试', icon: 'none' })
-    } finally {
-      isSubmittingQuestionAnswer.value = false
-    }
+  function submitQuestionAnswers() {
+    return submitQuestionAnswersAction.run(async () => {
+      if (!result.value || !canProceedQuestion()) {
+        return
+      }
+      isSubmittingQuestionAnswer.value = true
+      try {
+        await persistConfirmedLightEnvironment()
+        const frozenAirEnvironment = airEnvironment.freezeForSubmit(questionStack.value)
+        airEnvironment.saveInBackground(questionStack.value, frozenAirEnvironment)
+        await submitQuestionPackageAnswers({
+          result,
+          images: images.value,
+          plantName: plantName.value,
+          questionAnswers: questionAnswers.value,
+          questionStack: questionStack.value,
+          currentQuestion: currentQuestion.value,
+          isQuestionPackageMode: isQuestionPackageMode.value,
+          careBehaviorTimelineByQuestionId: careBehaviorTimelineByQuestionId.value,
+          lightEnvironmentByQuestionId: lightEnvironmentByQuestionId.value,
+          airEnvironmentByQuestionId: frozenAirEnvironment.byQuestionId,
+          airEnvironmentSnapshotsByQuestionId: frozenAirEnvironment.snapshotsByQuestionId,
+          environmentWeatherWindow: environmentWeatherWindow.value,
+          diagnosisAnswerMutation,
+          diagnoseStore,
+          resetQuestionState
+        })
+      } catch (error) {
+        console.error('问诊处理失败:', error)
+        uni.showToast({ title: '暂时无法提交回答，请检查网络后重试', icon: 'none' })
+      } finally {
+        isSubmittingQuestionAnswer.value = false
+      }
+    })
   }
 
   async function handleNextQuestion() {

@@ -489,7 +489,7 @@ cloudfunctions/weather-http/config.json
 | GET    | `/user-plants`                                | 当前用户植物列表。                           |
 | POST   | `/user-plants`                                | 新建用户植物。                               |
 | PATCH  | `/user-plants`                                | 更新用户植物，需 `id`。                      |
-| DELETE | `/user-plants`                                | 删除用户植物，需 `id`。                      |
+| DELETE | `/user-plants`                                | 完整删除当前用户植物及关联养护、提醒和诊断数据，需 `id`。图片对象提交后立即清理；失败时保留受用户约束的重试作业并返回 `cleanupPending`。 |
 | POST   | `/user-plants/watering-planner`               | 复用共享规划器计算浇水建议。                 |
 | GET    | `/user-plants/watering-reminders?plantId=...` | 读取当前用户指定植物最新未过期浇水日历提醒。 |
 | POST   | `/user-plants/watering-reminders`             | 系统日历创建成功后保存完整浇水提醒事件。     |
@@ -583,6 +583,7 @@ WET 阻断逻辑：
 
 - `GET` 需要 `plantId`，只返回当前 openid 名下该植物的最新 active 且未过期水提醒；无权限返回 404。
 - `POST` 必须在前端 `uni.addPhoneCalendar` 成功后调用，保存 `plantId`、`planId`、`lastWatered`、`nextWaterDate`、`nextWaterTime/nextTime`、最近浇水事件集合、planner 结果详情和 calendar payload。
+- 若手机日历已成功但本次 POST 失败，按当前用户和植物隔离的本地恢复记录必须保留同一份保存 payload；当前弹层和重新打开后的重试都只同步应用内状态，不得再次调用 `uni.addPhoneCalendar` 创建重复日历事件。
 - `POST` 会将同一植物既有 active 水提醒标记为 `superseded`，再插入新提醒，并同步 `user_plant_instances.last_watered/next_water`。
 - `GET /user-plants` 列表会附带紧凑 `wateringReminder`；若新表在旧环境缺失，列表降级为无提醒状态，不阻断植物列表加载。
 - 一次性水提醒以 `nextTime` 过期，前端不得使用 `repeat=true` 维持长期高亮。
@@ -647,7 +648,7 @@ getUserByEmail
 `diagnosis-history-http` 已下线：
 
 - `/diagnosis/history/health` 返回 `status: deprecated`。
-- `/diagnosis/history`、`/diagnosis/history/detail`、`/diagnosis/history/feedback`、`/diagnosis/decision` 返回 410。
+- 公开配置只保留 health 路由；`/diagnosis/history`、`/diagnosis/history/detail`、`/diagnosis/history/feedback`、`/diagnosis/decision` 未暴露，网关返回 404。
 - 替代路径在 `diagnose-http`：`/diagnosis/history`、`/diagnosis/result`、`/diagnosis/feedback`。
 
 文档若要求调用 `diagnosis-history-http`，应标记为 stale/superseded。

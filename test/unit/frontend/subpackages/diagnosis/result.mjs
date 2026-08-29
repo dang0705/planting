@@ -11,6 +11,14 @@ const { buildOutcomeDisplayItems } = new Function(
 )()
 
 assert.match(source, /v-if="viewModel\.outcomeItems\.length > 1"/)
+assert.doesNotMatch(source, /当前阶段|viewModel\.stage/)
+assert.match(source, /diagnosis-result-page-retry/)
+assert.match(source, /暂时无法加载诊断记录，请检查网络后重试。/)
+assert.doesNotMatch(
+  source.slice(source.indexOf('if (!routeId.value)'), source.indexOf('const resolvedPlantName')),
+  /\}\) \|\| list\[0\]/,
+  '带有结果 id 时，远端读取失败不能回退展示另一条诊断记录'
+)
 
 assert.deepEqual(
   buildOutcomeDisplayItems({

@@ -281,12 +281,6 @@
                   outcomeTypeText
                 }}</text>
               </view>
-              <view class="flex-1 rounded-2xl bg-emerald-50 px-3 py-3">
-                <text class="block text-[10px] font-bold text-gray-500">可信度</text>
-                <text class="mt-1 block text-[13px] font-black leading-snug text-[#184d39]">{{
-                  confidenceLevelText
-                }}</text>
-              </view>
             </view>
           </view>
           <view
@@ -309,7 +303,7 @@
             id="diagnose-question-package-result-observed"
             class="mt-3.5 rounded-[22px] border border-[#e7e0d1] bg-[#fffdf8] p-4 shadow-sm"
           >
-            <text class="block text-[15px] font-black text-gray-900">视觉证据</text>
+            <text class="block text-[15px] font-black text-gray-900">照片中看到</text>
             <view class="mt-3 flex flex-wrap gap-2">
               <text
                 v-for="item in observedItems"
@@ -380,29 +374,6 @@
             :result-id="feedbackResultId"
             id-prefix="diagnose-question-package-result-feedback"
           />
-          <view
-            v-if="showRouteDebugPanel"
-            id="diagnose-question-package-debug-panel"
-            class="mt-3.5 rounded-[22px] border border-[#e7e0d1] bg-[#fffdf8] p-4 shadow-sm"
-          >
-            <text class="block text-[15px] font-black text-gray-900">决策详情</text>
-            <view class="mt-3 flex flex-col gap-2">
-              <text v-if="routeDebugSummaryText" class="block text-xs leading-relaxed text-gray-600"
-                >决策原因：{{ routeDebugSummaryText }}</text
-              >
-              <text v-if="routeDebugModeText" class="block text-xs leading-relaxed text-gray-600"
-                >模式：{{ routeDebugModeText }}</text
-              >
-              <text
-                v-if="routeDebugVisibleOutcomeText"
-                class="block text-xs leading-relaxed text-gray-600"
-                >展示结果：{{ routeDebugVisibleOutcomeText }}</text
-              >
-              <text v-if="routeDebugGroupText" class="block text-xs leading-relaxed text-gray-600"
-                >命中流程组：{{ routeDebugGroupText }}</text
-              >
-            </view>
-          </view>
         </view>
       </scroll-view>
       <QuestionPackageEmptyState v-else @back="returnPreviousPage" />
@@ -536,16 +507,10 @@ const {
   isProblematicOutcome,
   showNonProblemOutcomeResultCard,
   nonProblemOutcomeSummaryText,
-  confidenceLevelText,
   allOutcomeDisplays,
   observedItems,
   actionAdviceGroups,
-  avoidAdviceGroups,
-  showRouteDebugPanel,
-  routeDebugSummaryText,
-  routeDebugModeText,
-  routeDebugVisibleOutcomeText,
-  routeDebugGroupText
+  avoidAdviceGroups
 } = useQuestionPackageResultView({ result, payload, routeOptions })
 const hasRouteConvergenceDetails = computed(() => routeConvergenceDetailsVisible.value)
 const feedbackResultId = computed(() =>

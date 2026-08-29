@@ -120,7 +120,7 @@ function buildOrthogonalProbeText(item = {}, packageTopic = '', _context = {}) {
         questionText: locationKey === 'leaf'
           ? `这些“${symptomLabel}”更像跟着叶片组织一起变化，还是只停留在表面一层？`
           : `这些“${symptomLabel}”更像附着在表面，还是组织本身变色？`,
-        helpText: '只观察位置关系，不要求擦拭；如果视觉证据已经明确，系统会优先问其他病因分流题。',
+        helpText: '只观察位置关系，不要求擦拭；若照片中的情况已经较明确，会优先询问其他可能原因。',
         packageSection: QUESTION_PACKAGE_SECTIONS.DIFFERENTIAL_PROBE
       }
     case QUESTION_PACKAGE_TOPICS.TISSUE_MOISTURE:

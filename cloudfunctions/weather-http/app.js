@@ -1,7 +1,28 @@
 'use strict'
 
+// CloudBase Nodejs18.15 的运行时没有全局 File，而当前依赖树中的 undici
+// 在加载时会直接读取它；提前补齐最小兼容实现，避免函数在启动阶段以 443 退出。
+if (typeof globalThis.File === 'undefined') {
+  const BlobConstructor = typeof globalThis.Blob === 'function' ? globalThis.Blob : null
+  globalThis.File = BlobConstructor
+    ? class File extends BlobConstructor {
+        constructor(fileBits, fileName, options = {}) {
+          super(fileBits, options)
+          this.name = String(fileName || '')
+          this.lastModified = Number(options.lastModified || Date.now())
+        }
+      }
+    : class File {
+        constructor(_fileBits, fileName, options = {}) {
+          this.name = String(fileName || '')
+          this.lastModified = Number(options.lastModified || Date.now())
+        }
+      }
+}
+
 const {
   jsonResponse,
+  internalServerError,
   notFound,
   methodNotAllowed,
   getHttpRequestData,
@@ -80,16 +101,16 @@ async function getCurrentWeatherFromDailyArchive(payload = {}) {
   try {
     const service = buildRecentWeatherService(QWEATHER_CONFIG)
     return await service.getCurrentWeatherFromDailyArchive(payload)
-  } catch (error) {
+  } catch {
     return {
       weatherData: null,
       dailyWeatherCache: {
         cacheHit: false,
         refreshed: false,
         reason: 'daily_archive_current_failed',
-        message: error.message || String(error)
+        message: '天气缓存暂不可用'
       },
-      message: error.message || String(error)
+      message: '天气缓存暂不可用'
     }
   }
 }
@@ -363,7 +384,7 @@ async function main(event, context) {
     })
   } catch (error) {
     console.error('weather-http error:', error)
-    return jsonResponse(500, { code: 500, message: error.message || '获取天气失败', data: null })
+    return internalServerError('获取天气失败，请稍后重试')
   }
 }
 

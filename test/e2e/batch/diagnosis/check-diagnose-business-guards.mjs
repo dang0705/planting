@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const projectRoot = path.resolve(__dirname, '../../..')
+const projectRoot = path.resolve(__dirname, '../../../..')
 const originalResolveFilename = Module._resolveFilename
 
 Module._resolveFilename = function resolveLocalLayerPath(request, parent, isMain, options) {
@@ -88,8 +88,8 @@ const {
   getOutputEligibleCandidateOutcomes
 } = require('../../../../cloudfunctions/diagnose-http/utils/output-eligibility')
 const {
-  prompts: { llm: buildPromptTemplate }
-} = require('../../../../cloudfunctions/diagnose-http/configs')
+  STATIC_VISUAL_WORKFLOW_RULES
+} = require('../../../../cloudfunctions/diagnose-http/utils/visual-prompt-static-rules')
 
 function checkPromptLocationPoolGuard() {
   const symptomRows = [
@@ -112,28 +112,18 @@ function checkPromptLocationPoolGuard() {
 }
 
 function checkPromptCommonSenseGuard() {
-  const prompt = buildPromptTemplate({
-    symptomOptionsText: 'chewed_edges（叶子边缘像被啃过）、black_spots_spreading（黑斑扩散）',
-    imageContextText: '当前图：第1/1张；槽位=叶片。'
-  })
-
   assert.ok(
-    prompt.includes('Prefer structural damage for true holes') &&
-      prompt.includes('Use only visible evidence') &&
-      prompt.includes('infer no cause'),
-    'prompt 必须把孔洞/缺口/骨架化约束为结构损伤视觉事实，且不得直接推断虫害病因'
+    STATIC_VISUAL_WORKFLOW_RULES.includes('只标当前图可见证据') &&
+      STATIC_VISUAL_WORKFLOW_RULES.includes('不推断触感、气味、遮挡、历史、病因、治疗或最终状态'),
+    '视觉 prompt 必须只记录可见事实，且不得直接推断病因'
   )
   assert.ok(
-    prompt.includes('Report yellow_speckling only for dense') &&
-      prompt.includes('clustered') &&
-      prompt.includes('do not guess'),
-    'prompt 必须显式约束弱小黄点信号要保守，不能把反光/高光硬报为 yellow_speckling'
+    STATIC_VISUAL_WORKFLOW_RULES.includes('单个噪点、压缩块、灰尘、土屑、失焦颗粒或水珠不得直接升级'),
+    '视觉 prompt 必须把弱小噪点与可确认的虫害或病原结构区分开'
   )
   assert.ok(
-    prompt.includes('powdery, gray-black, or removable films') &&
-      prompt.includes('surface-coverage/mold patterns') &&
-      prompt.includes('not internal spots'),
-    'prompt 必须显式约束表面白粉/煤污层优先走覆盖层/霉层，而不是组织内部斑点'
+    STATIC_VISUAL_WORKFLOW_RULES.includes('先区分表面附着（霉层、粉层）与组织变色（病斑、黄化）'),
+    '视觉 prompt 必须区分表面粉层或霉层与组织内部的变色斑点'
   )
 
   return {
@@ -1441,64 +1431,59 @@ function checkContextRequiredProblemGuard() {
 
 function checkHighSpecificityFastConvergenceGuard() {
   const blockedTargetSymptomKeys = getHighSpecificityQuestionBlockedSymptomKeys({
-    policy: HIGH_SPECIFICITY_FAST_CONVERGENCE_POLICIES.ZERO_FOLLOW_UP
+    policy: HIGH_SPECIFICITY_FAST_CONVERGENCE_POLICIES.ZERO_QUESTION
   })
 
   assert.ok(
-    !blockedTargetSymptomKeys.includes('fine_webbing'),
-    '红蜘蛛 fine_webbing 不应被归入 zero_follow_up 的 question block 列表'
+    blockedTargetSymptomKeys.includes('powder_white'),
+    '白粉病的 powder_white 已满足直达结果条件时，不能再被追问覆盖'
   )
 
   const plan = resolveHighSpecificityConvergencePlan({
     visualAggregateResult: {
       aggregate_analyzability: 'high',
-      aggregated_symptom_candidates: [
-        {
-          symptom_key: 'fine_webbing',
-          support_organs: ['leaf'],
-          confidence_band: 'high',
-          strength_level: 'medium'
-        }
-      ],
+      diagnosis_mode_route_result: {
+        nextAction: 'direct_result',
+        directMatches: [{ modeKey: 'powdery_mildew' }]
+      },
       admission_records: [
         {
+          visual_admission_record_id: 'admit_powdery',
           admission_result: 'formally_admitted',
-          object_key: 'fine_webbing',
+          object_key: 'powder_white',
           candidate: {
-            symptom_key: 'fine_webbing',
+            symptom_key: 'powder_white',
             support_organs: ['leaf'],
-            confidence_band: 'high',
+            confidence_band: 'medium',
             strength_level: 'medium'
           }
         }
       ]
     },
-    visualRouteContext: {
-      routePrimaryAction: 'ask_first'
-    },
     observedEvidenceSet: [
       {
-        symptomKey: 'fine_webbing',
-        confidence: 0.95,
-        sourceType: 'visual_admitted'
+        symptomKey: 'powder_white',
+        confidence: 0.9,
+        sourceType: 'visual_admitted',
+        sourceRecordId: 'admit_powdery'
       }
     ],
     symptomDictionary: [
       {
-        symptomKey: 'fine_webbing',
+        symptomKey: 'powder_white',
         signalReliability: 0.9
       }
     ],
     candidateOutcomes: [
       {
-        problemKey: 'spider_mites',
+        problemKey: 'powdery_mildew',
         finalScore: 0.98,
         baseScore: 0.98
       }
     ],
     problems: [
       {
-        problemKey: 'spider_mites',
+        problemKey: 'powdery_mildew',
         problemRole: 'root_cause'
       }
     ]
@@ -1506,18 +1491,18 @@ function checkHighSpecificityFastConvergenceGuard() {
 
   assert.equal(
     plan?.policy,
-    HIGH_SPECIFICITY_FAST_CONVERGENCE_POLICIES.SINGLE_CONFIRMATION,
-    '红蜘蛛 fine_webbing 命中时，应进入 single_confirmation 快速收敛而不是 zero_follow_up'
+    HIGH_SPECIFICITY_FAST_CONVERGENCE_POLICIES.ZERO_QUESTION,
+    '白粉病在可见白粉被正式采纳并走直达结果时，应停止追加确认题'
   )
   assert.equal(
-    Boolean(plan?.shouldBypassFollowUp),
-    false,
-    'red spider fine_webbing 不应默认绕过 follow-up'
+    Boolean(plan?.shouldBypassQuestion),
+    true,
+    '白粉病直达结果必须显式跳过补充问题'
   )
   assert.equal(
     Number(plan?.maxQuestions || 0),
-    1,
-    'red spider fine_webbing 只允许 1 个高收益确认题'
+    0,
+    '白粉病直达结果不应再向用户展示多余问题'
   )
 
   return {

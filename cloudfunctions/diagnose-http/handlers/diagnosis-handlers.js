@@ -28,6 +28,7 @@ const VISUAL_SSE_EVENT_NAMES = new Set([
   'visual_persisted',
   'visual_extraction_complete'
 ])
+const PUBLIC_SERVICE_ERROR_CODES = new Set(['MODEL_UNAVAILABLE', 'visual_model_unavailable'])
 
 function getRefactorReadiness() {
   return require('../app/refactor-readiness')
@@ -59,10 +60,16 @@ function buildFrontendAnswerResponse(payload) {
 
 function buildErrorPayload(error, fallbackMessage = '请求失败') {
   const statusCode = Number(error?.statusCode || 500)
+  const isClientError = statusCode >= 400 && statusCode < 500
+  const isPublicServiceError = PUBLIC_SERVICE_ERROR_CODES.has(String(error?.code || ''))
   return {
     code: statusCode,
-    businessCode: error?.code ? String(error.code) : '',
-    message: error?.message || fallbackMessage,
+    businessCode:
+      (isClientError || isPublicServiceError) && error?.code
+        ? String(error.code)
+        : 'INTERNAL_ERROR',
+    message:
+      (isClientError || isPublicServiceError) && error?.message ? error.message : fallbackMessage,
     data: null
   }
 }
@@ -105,34 +112,11 @@ async function executeDiagnosisStart(request, payload, principal, onVisualEvent)
   const publicResponse = presentDiagnosisRoundResponse(hydratedResponse)
   const hydratedPublicResponse = await withQuestionTextConservative(publicResponse)
   const frontendData = buildFrontendResponse(hydratedPublicResponse)
-  const data = {
-    ...frontendData,
-    ...(executed.visualUsage ? { aiUsage: executed.visualUsage } : {}),
-    ...(Array.isArray(executed.aiDebug) ? { aiDebug: executed.aiDebug } : {})
-  }
-  const finalLog = {
-    sessionId: executed.sessionId || data?.diagnosisSessionId || null,
-    streamed: typeof onVisualEvent === 'function',
-    data,
-    usage: executed.visualUsage || null,
-    aiDebug: executed.aiDebug || []
-  }
-  console.log('diagnosis/start final response:', finalLog)
-  console.log('diagnosis/start final response json:', JSON.stringify(finalLog))
-  for (const item of Array.isArray(executed.aiDebug) ? executed.aiDebug : []) {
-    console.log(`diagnosis/start ai[${item.imageIndex}] formatted prompt:\n${item.formattedPrompt}`)
-    console.log(
-      `diagnosis/start ai[${item.imageIndex}] raw model data:`,
-      JSON.stringify({
-        imageId: item.imageId,
-        rawTextOutput: item.rawTextOutput,
-        rawStructuredOutput: item.rawStructuredOutput,
-        usage: item.usage,
-        adapterMeta: item.adapterMeta
-      })
-    )
-  }
-  return data
+  console.log('diagnosis/start completed:', {
+    sessionId: executed.sessionId || frontendData?.diagnosisSessionId || null,
+    streamed: typeof onVisualEvent === 'function'
+  })
+  return frontendData
 }
 
 async function handleDiagnosisStartStream(request, context, payload) {
@@ -326,7 +310,12 @@ async function handleDiagnosisResult(request, context, query) {
     return jsonResponse(404, { code: 404, message: '结果不存在', data: null })
   }
 
-  return jsonResponse(200, { code: 200, data: result })
+  const publicResponse = presentDiagnosisRoundResponse(result)
+  const hydratedPublicResponse = await withQuestionTextConservative(publicResponse)
+  return jsonResponse(200, {
+    code: 200,
+    data: buildFrontendResponse(hydratedPublicResponse)
+  })
 }
 
 async function handleDiagnosisHistory(request, context, query) {
@@ -378,5 +367,6 @@ module.exports = {
   handleDiagnosisRetakeSkip,
   handleDiagnosisResult,
   handleDiagnosisHistory,
-  handleDiagnosisFeedback
+  handleDiagnosisFeedback,
+  _test: { buildErrorPayload }
 }

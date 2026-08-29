@@ -48,7 +48,10 @@ import {
   userDataDirFromCommand
 } from './devtools-process-topology.mjs'
 import { repoRoot } from './state.mjs'
-import { resolveLocalApiBaseUrl } from '../../../../../../scripts/dev/local-api-env-config.mjs'
+import {
+  resolveQaBackendTarget,
+  resolveQaBackendMode
+} from '../../../../../../scripts/qa/qa-backend-target.mjs'
 import {
   acquireFixedQaPortLock,
   acquireQaSupervisorLease,
@@ -105,15 +108,11 @@ function sha256File(filePath) {
   return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex')
 }
 
-function qaLanApiBaseUrl() {
-  return resolveLocalApiBaseUrl(
-    {
-      mode: 'lan',
-      port: QA_RUNTIME_LAN_PORT,
-      functionPortBase: QA_RUNTIME_FUNCTION_PORT_BASE
-    },
-    process.env
-  )
+function qaBackendTarget() {
+  return resolveQaBackendTarget(process.env, {
+    port: QA_RUNTIME_LAN_PORT,
+    functionPortBase: QA_RUNTIME_FUNCTION_PORT_BASE
+  })
 }
 
 function registerQaSession(session) {
@@ -210,6 +209,10 @@ async function waitForProjectCompileReady(session, timeoutMs = AUTOMATOR_PREPARE
       if (
         evidence.status !== 'bootstrap_verified' ||
         !evidence.runtime_lifecycle?.compile_started_at ||
+        // The official Electron /v2/auto endpoint is only reliable after the
+        // AppService webview has emitted loadstop, not merely after webpack
+        // output becomes quiet.
+        !evidence.runtime_lifecycle?.appservice_loadstop_at ||
         !buildOutputPresent(session.projectPath)
       ) {
         previousSignature = null
@@ -436,12 +439,16 @@ async function waitForStableBuildOutput(projectPath, timeoutMs) {
 }
 
 function localRuntimeStartArguments(targetPath, { reuseOutput = false } = {}) {
+  const backend = qaBackendTarget()
   return [
     LOCAL_RUNTIME_SCRIPT,
     '--mode=lan',
     `--port=${QA_RUNTIME_LAN_PORT}`,
     `--function-port-base=${QA_RUNTIME_FUNCTION_PORT_BASE}`,
     `--output-dir=${targetPath}`,
+    ...(backend.mode === 'online'
+      ? [`--base-url=${backend.baseUrl}`, '--skip-health-check', '--no-start-functions']
+      : []),
     ...(reuseOutput ? ['--reuse-output'] : []),
     '--',
     'uni',
@@ -470,6 +477,7 @@ function localRuntimeStartEnvironment(targetPath, forceFullLanRebuild, session) 
     LOCAL_RUNTIME_LEASE_ROOT: path.join(QA_RUNTIME_ROOT, 'leases'),
     CLOUDBASE_LOCAL_FUNCTIONS_PORT: String(QA_RUNTIME_LAN_PORT),
     CLOUDBASE_LOCAL_FUNCTIONS_FUNCTION_PORT_BASE: String(QA_RUNTIME_FUNCTION_PORT_BASE),
+    QA_BACKEND_MODE: resolveQaBackendMode(process.env),
     VITE_QA_LIVE_REAL_API: '1',
     VITE_DEV_OPENID: openid,
     QA_FULL_LAN_REBUILD_ATTEMPT: forceFullLanRebuild ? '1' : '0'
@@ -1215,11 +1223,13 @@ export async function createTestOwnedQaSession({
     })
     persistSessionRecord(session)
     const activeManifest = readQaRuntimeManifest(session.runtimeTargetPath)
+    const backend = qaBackendTarget()
     const canReuseActiveGeneration = Boolean(
       !forceFullLanRebuild &&
       runtimeManifestIsReady(sourceRuntime, activeManifest) &&
       buildOutputPresent(session.runtimeTargetPath) &&
-      activeManifest.identity_hash === session.identity_hash
+      activeManifest.identity_hash === session.identity_hash &&
+      activeManifest.api_base_url === backend.baseUrl
     )
     let builtRuntime = sourceRuntime
     let readyManifest
@@ -1268,7 +1278,7 @@ export async function createTestOwnedQaSession({
       readyManifest = reusedManifest
     } else {
       writeQaRuntimeManifest(sourceRuntime, {
-        api_base_url: qaLanApiBaseUrl(),
+        api_base_url: qaBackendTarget().baseUrl,
         build_status: 'building',
         built_at: null,
         qa_owner_pid: process.pid,
@@ -1360,7 +1370,7 @@ export async function createTestOwnedQaSession({
         }
       }
       readyManifest = writeQaRuntimeManifest(builtRuntime, {
-        api_base_url: qaLanApiBaseUrl(),
+        api_base_url: qaBackendTarget().baseUrl,
         build_output_path: session.projectPath,
         build_status: 'ready',
         built_at: new Date().toISOString(),
@@ -1579,6 +1589,7 @@ export async function createTestOwnedQaSession({
     // The official Electron CLI exposes the Automator port through its hidden
     // --auto-port option. Legacy native bundles retain the verified control
     // endpoint path; the two mechanisms must not be conflated.
+    let autoControlRecovery = null
     if (session.devtools_runtime_kind === 'official_electron') {
       const autoResult = await requestDevToolsControl({
         action: 'auto',
@@ -1588,18 +1599,62 @@ export async function createTestOwnedQaSession({
         protocol: 'v2'
       })
       session.auto_control = {
-        ...controlInvocationEvidence(
-          'auto',
-          autoResult,
-          session,
-          'devtools_control_endpoint_v2'
-        ),
+        ...controlInvocationEvidence('auto', autoResult, session, 'devtools_control_endpoint_v2'),
         automator_port: session.wsPort,
         protocol: 'v2',
         request_query: {
           project: session.projectPath,
           autoPort: String(session.wsPort)
         }
+      }
+
+      // The official Electron endpoint can apply the automation switch and
+      // then keep the HTTP request open until its renderer work settles. A
+      // socket timeout therefore does not prove that the switch failed. Keep
+      // the transport result intact, but accept it only after the QA-owned
+      // 9421 listener and project identity are independently verified.
+      if (
+        Number(autoResult?.status_code) !== 200 &&
+        autoResult?.error === 'devtools_control_timeout'
+      ) {
+        try {
+          autoControlRecovery = await waitFor(
+            () => {
+              const evidence = ownedRuntimeEvidence(session)
+              if (evidence.session_log_evidence?.runtime_lifecycle?.failures?.length) {
+                const runtimeFailure = new Error('DevTools AppService 在 Automator 控制超时后报告失败')
+                runtimeFailure.code = 'qa_devtools_appservice_failed_after_automator_control_timeout'
+                runtimeFailure.details = {
+                  runtime_lifecycle: evidence.session_log_evidence.runtime_lifecycle,
+                  runtime_evidence: evidence
+                }
+                throw runtimeFailure
+              }
+              return evidence.status === 'verified' ? evidence : false
+            },
+            Math.min(startTimeoutMs, AUTOMATOR_STARTUP_RETRY_TIMEOUT_MS),
+            'test-owned Automator runtime after control timeout'
+          )
+        } catch (error) {
+          if (error.code !== 'qa_runtime_start_timeout') {
+            throw error
+          }
+          autoControlRecovery = null
+        }
+      }
+      session.auto_control = {
+        ...session.auto_control,
+        transport_status_code: autoResult?.status_code ?? null,
+        recovered_runtime: autoControlRecovery
+          ? {
+              status: autoControlRecovery.status,
+              automator_port: autoControlRecovery.automator_port,
+              main_devtools_pid: autoControlRecovery.main_devtools_pid,
+              automation_listener_pid: autoControlRecovery.automation_listener_pid,
+              project_identity_verified: autoControlRecovery.project_identity_verified,
+              verification: 'owned_runtime_evidence_after_control_timeout'
+            }
+          : null
       }
     } else if (startupRecovery) {
       const recoveredAuto = startupRecovery.invocations.find(item => item.action === 'auto')
@@ -1630,7 +1685,10 @@ export async function createTestOwnedQaSession({
       project_compile_ready: projectCompileReady
     }
     persistSessionRecord(session)
-    if (Number(session.auto_control?.status_code) !== 200) {
+    const automatorControlPassed =
+      Number(session.auto_control?.status_code) === 200 ||
+      session.auto_control?.recovered_runtime?.status === 'verified'
+    if (!automatorControlPassed) {
       const error = new Error(
         `Automator 端口开启失败，DevTools control status: ${session.auto_control?.status_code ?? 'unknown'}`
       )
@@ -1706,7 +1764,7 @@ export async function createTestOwnedQaSession({
     session.startup_recovery = startupRecovery
     const runtimeManifest = writeQaRuntimeManifest(builtRuntime, {
       generation: readyManifest.generation,
-      api_base_url: qaLanApiBaseUrl(),
+      api_base_url: qaBackendTarget().baseUrl,
       build_output_path: session.projectPath,
       build_status: 'ready',
       built_at: readyManifest.built_at,
@@ -1726,6 +1784,8 @@ export async function createTestOwnedQaSession({
     session.status = 'ready'
     persistSessionRecord(session)
     session.runtime_evidence = {
+      backend_mode: resolveQaBackendMode(process.env),
+      backend_base_url: qaBackendTarget().baseUrl,
       mode:
         session.localRuntimeMode === 'borrowed'
           ? 'borrowed_user_lan_runtime'

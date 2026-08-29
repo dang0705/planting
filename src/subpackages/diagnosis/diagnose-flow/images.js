@@ -373,7 +373,7 @@ export function useDiagnoseImages(ctx) {
     } catch (error) {
       console.error('诊断失败:', error)
       uni.hideLoading()
-      uni.showToast({ title: error?.message || '诊断失败，请重试', icon: 'none' })
+      uni.showToast({ title: '检查暂时未完成，请检查网络后重试', icon: 'none' })
     }
   }
 

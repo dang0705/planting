@@ -131,6 +131,13 @@ assert.match(
 )
 assert.match(setupSource, /visibleConditionRequirements/)
 assert.match(setupSource, /hasVisiblePreflight/)
+assert.match(
+  setupSource,
+  /visibleConditionRequirements[\s\S]*?filter\(requirement =>[\s\S]*?isGrowthCondition\(requirement\.code\)/u,
+  '设置页只展示需要用户判断的生长状态条件'
+)
+assert.match(setupSource, /conditionElementKey\(requirement\.code\)/u)
+assert.match(setupSource, /最近有长新叶或新芽吗？/u)
 assert.match(sheetSource, /await createPreview\(\)/)
 assert.doesNotMatch(setupSource, /两种肥料仍共用同一条施肥间隔/)
 assert.match(previewSource, /fertilization-reminder-alert-info-button/)

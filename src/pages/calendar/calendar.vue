@@ -300,8 +300,8 @@ async function completeTask(plantId) {
     reportAnalyticsEvent(ANALYTICS_EVENTS.WATERING_RECORDED)
     uni.showToast({ title: '任务已完成', icon: 'success' })
     await loadUserPlants()
-  } catch (error) {
-    uni.showToast({ title: error?.message || '保存失败，请重试', icon: 'none' })
+  } catch {
+    uni.showToast({ title: '暂时无法完成任务，请检查网络后重试', icon: 'none' })
   } finally {
     delete actionState[plantId]
   }
@@ -337,8 +337,8 @@ async function postponeTask(plantId) {
     }
     uni.showToast({ title: '已推迟到明天', icon: 'none' })
     await loadUserPlants()
-  } catch (error) {
-    uni.showToast({ title: error?.message || '推迟失败，请重试', icon: 'none' })
+  } catch {
+    uni.showToast({ title: '暂时无法推迟提醒，请检查网络后重试', icon: 'none' })
   } finally {
     delete actionState[plantId]
   }
@@ -408,8 +408,8 @@ async function undoTask(plantId) {
     delete undoState[plantId]
     uni.showToast({ title: '已撤销本次操作', icon: 'success' })
     await loadUserPlants()
-  } catch (error) {
-    uni.showToast({ title: error?.message || '撤销失败，请重试', icon: 'none' })
+  } catch {
+    uni.showToast({ title: '暂时无法撤销本次操作，请检查网络后重试', icon: 'none' })
   } finally {
     delete actionState[plantId]
   }

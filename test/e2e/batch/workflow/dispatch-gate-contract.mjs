@@ -3,11 +3,12 @@ import path from 'node:path'
 import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { spawnSync } from 'node:child_process'
+import { isOfficialElectronBundle } from '../../../../scripts/qa/patch-wechat-devtools-launcher.mjs'
 
 const LOCAL_RUNTIME_PORTS = [
   3010,
   3011,
-  9424,
+  ...(isOfficialElectronBundle() ? [] : [9424]),
   ...Array.from({ length: 8 }, (_, index) => 9000 + index),
   ...Array.from({ length: 8 }, (_, index) => 9100 + index)
 ]
