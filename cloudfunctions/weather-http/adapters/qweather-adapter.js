@@ -89,6 +89,8 @@ function normalizeHistoricalDaily(record = {}, date = '') {
 
 function normalizeCurrentWeather(data = {}, source = 'qweather_weather_now') {
   const now = data.now || data
+  const obsTime = now.obsTime || ''
+  const weatherDate = String(obsTime).match(/^(\d{4}-\d{1,2}-\d{1,2})/)?.[1] || ''
   return pruneUndefined({
     tempC: toNumber(now.temp),
     feelsLikeC: toNumber(now.feelsLike),
@@ -104,7 +106,8 @@ function normalizeCurrentWeather(data = {}, source = 'qweather_weather_now') {
     visibilityKm: toNumber(now.vis),
     cloud: toNumber(now.cloud),
     dew: toNumber(now.dew),
-    obsTime: now.obsTime || '',
+    obsTime,
+    ...(weatherDate ? { weatherDate } : {}),
     source
   })
 }
@@ -216,7 +219,11 @@ function createQWeatherAdapter({
       const data = await request('/v7/weather/15d', {
         location: normalizeLocation({ lat, lng })
       })
-      return (Array.isArray(data.daily) ? data.daily : []).map(normalizeForecastDaily)
+      // 不要直接把 normalizeForecastDaily 作为 map callback；Array.map 会把 index
+      // 当作第二参数传入，导致 source 被错误写成 0、1、2……。
+      return (Array.isArray(data.daily) ? data.daily : []).map(record =>
+        normalizeForecastDaily(record)
+      )
     },
 
     async fetchForecast10d({ locationId, lat, lng }) {

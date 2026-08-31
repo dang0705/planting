@@ -141,7 +141,17 @@
           </view>
         </view>
 
-        <view v-if="!plants.length && !initialLoading" class="py-6 text-center">
+        <view v-if="error" id="watering-advisor-catalog-error" class="py-6 text-center">
+          <text class="block text-[12px] text-[#b45309]">{{ error }}</text>
+          <button
+            id="watering-advisor-catalog-retry"
+            class="mt-2 rounded-lg border border-[#2d7a4f] bg-white px-3 py-2 text-xs text-[#2d7a4f]"
+            @click="load(searchKeyword.trim())"
+          >
+            重新加载
+          </button>
+        </view>
+        <view v-else-if="!plants.length && !initialLoading" class="py-6 text-center">
           <text class="text-[12px] text-[#9ca3af]">输入植物名称开始搜索</text>
         </view>
         <view v-if="initialLoading" class="py-6 text-center">
@@ -153,7 +163,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useDefaultPlants } from '@/composables/useDefaultPlants.js'
 import PlantSelectCard from './PlantSelectCard.vue'
 
@@ -173,7 +183,8 @@ const searchKeyword = ref('')
 const myPlantsCollapseName = ref('')
 let searchTimer = null
 
-const { plants, initialLoading, loadingMore, hasMore, load, loadNextPage } = useDefaultPlants()
+const { plants, initialLoading, loadingMore, hasMore, error, load, loadNextPage } =
+  useDefaultPlants()
 
 onMounted(() => {
   load('')
@@ -182,6 +193,13 @@ onMounted(() => {
 defineExpose({
   loadPlants: keyword => load(keyword),
   loadNextPage
+})
+
+onBeforeUnmount(() => {
+  if (searchTimer) {
+    clearTimeout(searchTimer)
+    searchTimer = null
+  }
 })
 
 function isSelected(plant) {

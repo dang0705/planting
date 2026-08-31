@@ -76,6 +76,19 @@ function loadAppWithSpies(overrides = {}) {
       return airEnvironmentEvidenceSpy.impl(input)
     }
   }
+  const injectD0Spy = {
+    calls: [],
+    fn({ forecastDays = [], referenceDate = '' }) {
+      injectD0Spy.calls.push({ forecastDays, referenceDate })
+      return {
+        forecastDays,
+        todayWeatherSource: 'missing',
+        todayWeatherRecord: null,
+        todayWeatherReason: 'test_mock',
+        referenceDate: referenceDate || '2026-06-18'
+      }
+    }
+  }
   // transpirationSpy: computeTranspirationIntervalFactor(params) — 单参数对象
   const transpirationSpy = {
     calls: [],
@@ -214,13 +227,7 @@ function loadAppWithSpies(overrides = {}) {
           },
           error: null
         }),
-        injectD0IntoForecastDays: async ({ forecastDays = [], referenceDate = '' }) => ({
-          forecastDays,
-          todayWeatherSource: 'missing',
-          todayWeatherRecord: null,
-          todayWeatherReason: 'test_mock',
-          referenceDate: referenceDate || '2026-06-18'
-        })
+        injectD0IntoForecastDays: injectD0Spy.fn
       }
     }
     if (request.endsWith('/watering-advisor-service')) {
@@ -264,7 +271,8 @@ function loadAppWithSpies(overrides = {}) {
       plannerSpy,
       lightEnvSpy,
       strategySpy,
-      airEnvironmentEvidenceSpy
+      airEnvironmentEvidenceSpy,
+      injectD0Spy
     }
   } finally {
     Module._load = originalLoad
@@ -301,6 +309,18 @@ test('getUserPlantLightEnvironment 被调用并传入 openid 与 plantId', async
   assert.equal(lightEnvSpy.calls.length, 1, 'getUserPlantLightEnvironment 应被调用 1 次')
   assert.equal(lightEnvSpy.calls[0].openid, 'openid_route_test')
   assert.equal(lightEnvSpy.calls[0].plantId, 77)
+})
+test('浇水规划接收完整 D0..D+14 天气窗口，并交由 D0 注入器校验', async () => {
+  const { app, injectD0Spy } = loadAppWithSpies()
+  const referenceDate = '2026-08-30'
+  const forecastDays = Array.from({ length: 16 }, (_, index) => ({
+    date: new Date(Date.UTC(2026, 7, 30 + index)).toISOString().slice(0, 10),
+    source: 'weather_cache_day_latest_sample'
+  }))
+  await callPlannerRoute(app, { referenceDate, forecastDays })
+  assert.equal(injectD0Spy.calls.length, 1)
+  assert.equal(injectD0Spy.calls[0].forecastDays.length, 15)
+  assert.equal(injectD0Spy.calls[0].forecastDays[0].date, referenceDate)
 })
 test('computeTranspirationIntervalFactor 收到精确的 lightEnvironment 对象', async () => {
   const exactEnv = buildLightEnvironment()

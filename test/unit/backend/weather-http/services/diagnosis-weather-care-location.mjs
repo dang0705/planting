@@ -11,7 +11,7 @@ const readRecentWeatherForDiagnosis = createDiagnosisRecentWeatherReader({
     return null
   },
   async rebuildRecentWeatherFromArchives() {
-    throw new Error('diagnosis miss should not rebuild by default')
+    throw new Error('archive rebuild unavailable')
   }
 })
 
@@ -31,6 +31,6 @@ assert.equal(missing.source, 'manual_selected')
 assert.equal(missing.meta.plantId, 101)
 assert.equal(missing.meta.careLocationId, 'pcl_1')
 assert.equal(missing.meta.source, 'manual_selected')
-assert.equal(missing.meta.reason, 'recent_10d_rebuild_deferred')
+assert.equal(missing.meta.reason, 'recent_10d_object_missing')
 
 console.log('diagnosis-weather-care-location tests passed')

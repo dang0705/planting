@@ -342,9 +342,24 @@ async function handleRecentWeatherTimerEvent({
   seasonTriggerSync = null,
   defaultLimit = process.env.WEATHER_INGESTION_BATCH_LIMIT || 20
 } = {}) {
-  const seasonTriggerResult = seasonTriggerSync
-    ? await seasonTriggerSync.syncToday({ date: event.date || event.targetDate || '' })
-    : null
+  // 节气状态/触发器是辅助能力，不能阻断天气归档主链路。
+  // 线上凭据、对象存储或节气数据异常时仍应继续采集最近 10 天天气，
+  // 并把失败作为可审计状态返回给调度日志。
+  let seasonTriggerResult = null
+  let seasonTriggerWarning = null
+  if (seasonTriggerSync) {
+    try {
+      seasonTriggerResult = await seasonTriggerSync.syncToday({
+        date: event.date || event.targetDate || ''
+      })
+    } catch (error) {
+      seasonTriggerWarning = {
+        status: 'failed',
+        reason: 'season_trigger_sync_failed'
+      }
+      console.error('season trigger sync failed; weather ingestion continues', error)
+    }
+  }
   const limit = event.limit || event.Limit || defaultLimit
   const result = await service.ingestActiveLocations({ limit })
   return {
@@ -354,6 +369,7 @@ async function handleRecentWeatherTimerEvent({
       triggerName: event.TriggerName || event.triggerName || '',
       sourceKind: 'weather_cache_recent_10d_timer',
       seasonTriggerSync: seasonTriggerResult,
+      ...(seasonTriggerWarning ? { seasonTriggerWarning } : {}),
       ...result
     }
   }

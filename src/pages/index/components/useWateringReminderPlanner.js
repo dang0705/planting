@@ -1,7 +1,10 @@
 import { computed, ref } from 'vue'
 import { getEnvironmentWeatherWindow } from '@/api/weather.js'
 import { estimatePotVolumeMl, formatMlRangeToBottleText } from '@/utils/water-volume-format.js'
-import { mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline } from '@/utils/care-behavior-weather-window.js'
+import {
+  mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline,
+  resolveEnvironmentWeatherWindowNotice
+} from '@/utils/care-behavior-weather-window.js'
 import {
   buildPlannerSummaryRows,
   buildWateringReminderInputSignature,
@@ -28,6 +31,7 @@ export function useWateringReminderPlanner({ props, userStore, selectedWateringE
   const forecastDays = ref([])
   const environmentWeatherWindow = ref(null)
   const weatherLoading = ref(false)
+  const weatherError = ref('')
   const loading = ref(false)
   let weatherRequestSequence = 0
   let plannerRequestSequence = 0
@@ -83,6 +87,7 @@ export function useWateringReminderPlanner({ props, userStore, selectedWateringE
     weatherRequestSequence += 1
     plannerRequestSequence += 1
     weatherLoading.value = false
+    weatherError.value = ''
     loading.value = false
     plannerResult.value = null
     hasWeatherRef.value = false
@@ -114,6 +119,7 @@ export function useWateringReminderPlanner({ props, userStore, selectedWateringE
         weatherDays.value = []
         forecastDays.value = []
         environmentWeatherWindow.value = null
+        weatherError.value = '暂时无法获取天气，日期仍可继续填写。'
       }
       return
     }
@@ -135,6 +141,7 @@ export function useWateringReminderPlanner({ props, userStore, selectedWateringE
       weatherDays.value = window?.historicalDays || window?.historical_days || []
       forecastDays.value = window?.forecastDays || window?.forecast_days || []
       hasWeatherRef.value = weatherDays.value.length > 0 || forecastDays.value.length > 0
+      weatherError.value = resolveEnvironmentWeatherWindowNotice(window)
     } catch {
       if (!isCurrentRequest(requestSequence, weatherRequestSequence, plantId)) {
         return
@@ -143,6 +150,7 @@ export function useWateringReminderPlanner({ props, userStore, selectedWateringE
       weatherDays.value = []
       forecastDays.value = []
       hasWeatherRef.value = false
+      weatherError.value = '暂时无法获取天气，日期仍可继续填写。'
       uni.showToast({ title: '天气暂不可用，请稍后重试', icon: 'none' })
     } finally {
       if (isCurrentRequest(requestSequence, weatherRequestSequence, plantId)) {
@@ -193,6 +201,7 @@ export function useWateringReminderPlanner({ props, userStore, selectedWateringE
     loading,
     hasWeatherRef,
     weatherLoading,
+    weatherError,
     environmentWeatherWindow,
     plannerLocationKey,
     plannerTimezone,

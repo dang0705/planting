@@ -46,18 +46,24 @@ async function buildDiagnosisRecentWeatherWindow({
     ...locationInfo,
     timezone,
     diagnosisDate,
-    allowArchiveRebuild:
-      payload.allowArchiveRebuild === true || payload.allowArchiveRebuild === 'true',
+    ...(payload.allowArchiveRebuild === undefined
+      ? {}
+      : {
+          allowArchiveRebuild:
+            payload.allowArchiveRebuild === true || payload.allowArchiveRebuild === 'true'
+        }),
     readTimeoutMs: payload.readTimeoutMs || payload.timeoutMs
   })
 
   // 诊断天气窗口由两个独立缓存层组成：
   // 1) currentWeather：读取当天 days/{date}.json.latestSample，它是定时 QWeather /now 采样写入的 D0 最新缓存；
   // 2) historicalDays：读取 recent-10d.json，仅包含 D-10..D-1 的历史缓存。
-  // 诊断请求不现场调用 QWeather；D0 缓存缺失时沿用现有有界 finalized rollup 降级，并通过 todayWeatherSource 标明来源。
+  // 诊断请求不现场调用 QWeather；D0 缓存缺失时可读取 finalized rollup 做内部判定，
+  // 但只有与 diagnosisDate 一致的天气才允许返回给前端，避免旧日期数据误标为“今天”。
   let currentWeather = null
   let todayWeatherSource = 'missing'
   let todayWeatherReason = 'missing'
+  let todayWeatherFallbackDate = ''
 
   try {
     const currentResult = await service.getCurrentWeatherFromDailyArchive({
@@ -67,16 +73,31 @@ async function buildDiagnosisRecentWeatherWindow({
       useCache: true
     })
     if (currentResult?.weatherData) {
-      currentWeather = currentResult.weatherData
+      const observedWeatherDate = String(
+        currentResult.weatherData.weatherDate || currentResult.dailyWeatherCache?.targetDate || ''
+      ).slice(0, 10)
+      const isTodayWeather = !observedWeatherDate || observedWeatherDate === diagnosisDate
+      // D0 缺失时可以读取最近定稿日作为内部诊断降级，但绝不能把旧日期数据
+      // 标成“今天”的天气返回给前端，否则时间线会产生事实错误。
+      if (!isTodayWeather) {
+        todayWeatherFallbackDate = observedWeatherDate
+        todayWeatherReason = 'day_latest_sample_missing'
+      } else {
+        currentWeather = currentResult.weatherData
+      }
       const cacheSource = currentResult.weatherData.cacheSource || ''
-      if (cacheSource === 'day_latest_sample') {
+      if (!isTodayWeather) {
+        todayWeatherSource = 'missing'
+      } else if (cacheSource === 'day_latest_sample') {
         todayWeatherSource = 'day_latest_sample'
       } else if (cacheSource === 'day_finalized_rollup') {
         todayWeatherSource = 'day_finalized_rollup_fallback'
       } else if (cacheSource) {
         todayWeatherSource = cacheSource
       }
-      todayWeatherReason = currentResult.dailyWeatherCache?.reason || todayWeatherSource
+      if (isTodayWeather) {
+        todayWeatherReason = currentResult.dailyWeatherCache?.reason || todayWeatherSource
+      }
     } else {
       todayWeatherReason = currentResult?.dailyWeatherCache?.reason || 'day_latest_sample_missing'
     }
@@ -89,6 +110,7 @@ async function buildDiagnosisRecentWeatherWindow({
     currentWeather,
     todayWeatherSource,
     todayWeatherReason,
+    ...(todayWeatherFallbackDate ? { todayWeatherFallbackDate } : {}),
     meta: {
       ...recentWindow.meta,
       diagnosisDate,

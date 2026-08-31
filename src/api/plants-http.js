@@ -8,7 +8,10 @@ import {
   executePatchUserPlantMutation,
   executeRemoveUserPlantMutation
 } from '@/vue-query/plants/mutations/user-plants.js'
-import { executeSaveWateringReminderMutation } from '@/vue-query/plants/mutations/watering-reminders.js'
+import {
+  executeCompleteWateringReminderMutation,
+  executeSaveWateringReminderMutation
+} from '@/vue-query/plants/mutations/watering-reminders.js'
 import { executeFertilizationReminderMutation } from '@/vue-query/plants/mutations/fertilization-reminders.js'
 import { executeIdentifyPlantMutation } from '@/vue-query/plants/mutations/identify.js'
 import { fetchWateringReminderQuery } from '@/vue-query/plants/queries/watering-reminders.js'
@@ -16,6 +19,7 @@ import {
   fetchFertilizationReminderFresh,
   fetchFertilizationReminderQuery
 } from '@/vue-query/plants/queries/fertilization-reminders.js'
+import { executePatchUserPlantAirEnvironmentMutation } from '@/vue-query/plants/mutations/air-environment.js'
 import { resolvePayloadCareLocation } from '@/utils/plant-care-location.js'
 import { requestHttpFunction } from '@/api/http.js'
 
@@ -54,10 +58,7 @@ export function fetchUserPlantAirEnvironment(plantId) {
 }
 
 export function patchUserPlantAirEnvironment(payload) {
-  return requestHttpFunction('plant-user-http/user-plants/air-environment', {
-    method: 'PATCH',
-    body: payload
-  })
+  return executePatchUserPlantAirEnvironmentMutation(payload)
 }
 
 export async function fetchUserPlantWateringPlanner(payload = {}) {
@@ -86,10 +87,7 @@ export function saveWateringReminder(payload) {
 }
 
 export function completeWateringReminder(payload) {
-  return requestHttpFunction('plant-user-http/user-plants/watering-reminders/complete', {
-    method: 'POST',
-    body: payload
-  })
+  return executeCompleteWateringReminderMutation(payload)
 }
 
 export function fetchFertilizationReminder(plantId) {

@@ -30,23 +30,22 @@ const {
 const {
   attachCareLocation,
   attachCareLocationsToList,
+  mapCareLocationRow,
   savePlantCareLocation
 } = require('./care-location-service')
+const { deleteUserPlantCompletely } = require('./plant-deletion-service')
 const {
-  deleteUserPlantCompletely
-} = require('./plant-deletion-service')
-const {
-  attachWateringReminderStateToList,
   completeWateringReminder,
+  mapReminderRow: mapWateringReminderRow,
   readWateringReminder,
   saveWateringReminder
 } = require('./watering-reminder-service')
 const {
-  attachFertilizationReminderStateToList,
   cancelFertilizationReminder,
   completeFertilizationReminder,
   confirmFertilizationReminder,
   dismissFertilizationReminder,
+  mapReminderRow: mapFertilizationReminderRow,
   previewFertilizationReminder,
   readFertilizationReminder
 } = require('./fertilization-reminder-service')
@@ -94,6 +93,119 @@ function normalizePersistedLightEnvironment(value) {
   }
 }
 
+function resolveTodayDate() {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(new Date())
+  const values = Object.fromEntries(parts.map(part => [part.type, part.value]))
+  return `${values.year}-${values.month}-${values.day}`
+}
+
+// 与前端 Vue Query 的 5 分钟新鲜期一致；所有写请求会主动失效，避免用户自己的修改读到旧列表。
+const USER_PLANT_RESPONSE_CACHE_TTL_MS = 5 * 60 * 1_000
+const userPlantListResponseCache = new Map()
+const userPlantDetailResponseCache = new Map()
+
+function readUserPlantResponseCache(cache, key) {
+  const entry = cache.get(key)
+  if (!entry || entry.expiresAt <= Date.now()) {
+    cache.delete(key)
+    return null
+  }
+  return entry.value
+}
+
+function writeUserPlantResponseCache(cache, key, value) {
+  cache.set(key, { value, expiresAt: Date.now() + USER_PLANT_RESPONSE_CACHE_TTL_MS })
+  return value
+}
+
+function invalidateUserPlantResponseCache(openid, plantId = null) {
+  const listPrefix = `${openid}:`
+  for (const key of userPlantListResponseCache.keys()) {
+    if (key.startsWith(listPrefix)) {
+      userPlantListResponseCache.delete(key)
+    }
+  }
+  if (plantId) {
+    userPlantDetailResponseCache.delete(`${openid}:${Number(plantId)}`)
+  } else {
+    for (const key of userPlantDetailResponseCache.keys()) {
+      if (key.startsWith(listPrefix)) {
+        userPlantDetailResponseCache.delete(key)
+      }
+    }
+  }
+}
+
+const USER_PLANT_LIST_FIELDS = new Set([
+  'id',
+  'plantId',
+  'plantIdentityId',
+  'sessionPlantId',
+  'canonicalName',
+  'nickname',
+  'displayName',
+  'recognizedName',
+  'sourceType',
+  'recognitionType',
+  'recognitionConfidence',
+  'identityResolutionStatus',
+  'visualCallBatchId',
+  'location',
+  'plantDate',
+  'notes',
+  'photos',
+  'lightEnvironment',
+  'airEnvironment',
+  'imageFileId',
+  'lastWatered',
+  'nextWater',
+  'createdAt',
+  'genus',
+  'familyCn',
+  'familyEn',
+  'latinName',
+  'healthStatus',
+  'healthScore',
+  'potProfile',
+  'careLocationId',
+  'careLocation',
+  'locationKey',
+  'wateringReminder',
+  'fertilizationReminder',
+  'fertilizationMonthly'
+])
+
+function compactUserPlantListItem(item = {}) {
+  return Object.fromEntries(
+    Object.entries(item).filter(([key, value]) => {
+      if (!USER_PLANT_LIST_FIELDS.has(key)) {
+        return false
+      }
+      if (value === null || value === undefined || value === '') {
+        return false
+      }
+      if (Array.isArray(value) && value.length === 0) {
+        return false
+      }
+      if (
+        key === 'fertilizationMonthly' &&
+        (!value ||
+          value.available !== true ||
+          !Array.isArray(value.rows) ||
+          value.rows.length !== 12)
+      ) {
+        return false
+      }
+      return true
+    })
+  )
+}
+
 async function main(event, context) {
   const request = getHttpRequestData(event, context)
   const path = String(request.path || '').split('?')[0]
@@ -113,6 +225,10 @@ async function main(event, context) {
       return jsonResponse(401, { code: 401, message: '请先登录', data: null })
     }
     const openid = userInfo.openid
+
+    if (method !== 'GET') {
+      invalidateUserPlantResponseCache(openid)
+    }
 
     if (path.includes('/air-environment')) {
       const plantId = Number(request.body.plantId || request.query.plantId)
@@ -323,8 +439,8 @@ async function main(event, context) {
         ? request.body.forecastDays
         : []
 
-      // D0 注入：前端传 D+1..D+14（14 项），后端从 day file latestSample 注入 D0 作为当日天气。
-      // 命中时 forecast 为 15 天（D0 + D+1..D+14）；缺失/超时 todayWeatherSource='missing'，按 14 天统计。
+      // D0 校验：前端传完整 D0..D+14，后端先丢弃调用方 D0，再从 day file latestSample
+      // 注入唯一权威 D0。命中时 forecast 为 15 天；缺失/超时仅保留 D+1..D+14。
       const {
         forecastDays: forecastWithD0,
         todayWeatherSource,
@@ -334,7 +450,7 @@ async function main(event, context) {
         locationKey,
         timezone,
         referenceDate: request.body.referenceDate || '',
-        forecastDays: forecastWeatherDays.slice(0, 14)
+        forecastDays: forecastWeatherDays.slice(0, 15)
       })
 
       const historical = buildWeatherSummary(weatherDays.slice(0, 10), strategy)
@@ -448,27 +564,60 @@ async function main(event, context) {
     if (method === 'GET') {
       const id = Number(request.query.id)
       if (id) {
+        const cacheKey = `${openid}:${id}`
+        const cached = readUserPlantResponseCache(userPlantDetailResponseCache, cacheKey)
+        if (cached) {
+          return jsonResponse(200, { code: 200, data: cached })
+        }
         const plant = await getUserPlantInstanceById(openid, id)
         if (!plant) {
           return jsonResponse(404, { code: 404, message: '植物不存在或无权限', data: null })
         }
-        const enriched = await attachCareLocationsToList({
-          openid,
-          data: { list: [plant], total: 1, page: 1, pageSize: 1 }
-        })
-        return jsonResponse(200, { code: 200, data: enriched.list[0] || plant })
+        // 详情主查询已并行读取当前用户的位置；仅对旧数据/旧函数层缺失的位置再补查。
+        const enriched = plant?.careLocation
+          ? { list: [plant], total: 1, page: 1, pageSize: 1 }
+          : await attachCareLocationsToList({
+              openid,
+              data: { list: [plant], total: 1, page: 1, pageSize: 1 }
+            })
+        const detail = enriched.list[0] || plant
+        writeUserPlantResponseCache(userPlantDetailResponseCache, cacheKey, detail)
+        return jsonResponse(200, { code: 200, data: detail })
+      }
+      const page = Number(request.query.page || 1)
+      const pageSize = Number(request.query.pageSize || 20)
+      const cacheKey = `${openid}:${page}:${pageSize}`
+      const cached = readUserPlantResponseCache(userPlantListResponseCache, cacheKey)
+      if (cached) {
+        return jsonResponse(200, { code: 200, data: cached })
       }
       const data = await listUserPlantInstances(openid, {
-        page: Number(request.query.page || 1),
-        pageSize: Number(request.query.pageSize || 20)
+        page,
+        pageSize,
+        includeEnrichments: true
       })
-      const enrichedData = await attachCareLocationsToList({ openid, data })
-      const reminderData = await attachWateringReminderStateToList(openid, enrichedData)
-      const fertilizationReminderData = await attachFertilizationReminderStateToList(
-        openid,
-        reminderData
-      )
-      return jsonResponse(200, { code: 200, data: fertilizationReminderData })
+      const today = resolveTodayDate()
+      const finalList = (data.list || []).map(item => {
+        const enrichment = item.__listEnrichment || {}
+        const { __listEnrichment: _ignored, ...plant } = item
+        const careLocation = mapCareLocationRow(enrichment.careLocationRow)
+        const withCareLocation = attachCareLocation(plant, careLocation)
+        return compactUserPlantListItem({
+          ...withCareLocation,
+          wateringReminder: enrichment.wateringReminderRow
+            ? mapWateringReminderRow(enrichment.wateringReminderRow)
+            : null,
+          fertilizationReminder: enrichment.fertilizationReminderRow
+            ? mapFertilizationReminderRow(enrichment.fertilizationReminderRow, today)
+            : null
+        })
+      })
+      const finalData = {
+        ...data,
+        list: finalList
+      }
+      writeUserPlantResponseCache(userPlantListResponseCache, cacheKey, finalData)
+      return jsonResponse(200, { code: 200, data: finalData })
     }
 
     if (method === 'POST') {
@@ -536,6 +685,7 @@ async function main(event, context) {
         plantId: id,
         careLocation: request.body.careLocation || request.body.plantCareLocation || null
       })
+      invalidateUserPlantResponseCache(openid, id)
       return jsonResponse(200, {
         code: 200,
         message: '更新成功',

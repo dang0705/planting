@@ -13,5 +13,6 @@ CREATE TABLE IF NOT EXISTS `cloud1-2grufevs395a9d5e`.`user_watering_events` (
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '记录创建时间',
   PRIMARY KEY (`id`),
   INDEX `idx_plant_date` (`user_plant_id`, `event_date` DESC),
-  INDEX `idx_openid` (`_openid`)
+  INDEX `idx_openid` (`_openid`),
+  UNIQUE KEY `uq_user_plant_watering_event` (`_openid`, `user_plant_id`, `event_date`, `source`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户浇水事件审计表';

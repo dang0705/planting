@@ -166,6 +166,7 @@ module.exports = {
   attachCareLocation,
   attachCareLocationsToList,
   CARE_LOCATION_SOURCE,
+  mapCareLocationRow,
   normalizeCareLocation,
   normalizeSource,
   savePlantCareLocation

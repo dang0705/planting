@@ -10,10 +10,16 @@ import {
   localRuntimeLeasePath,
   releaseLocalRuntimeLease
 } from '../../../../../scripts/dev/local-runtime-session.mjs'
+import {
+  assertMpWeixinScopedStyleConsistency,
+  findMpWeixinScopedStyleMismatches
+} from '../../../../../scripts/dev/mp-weixin-output-validation.mjs'
 import { repoRoot } from './helpers.mjs'
 
 const leaseRoot = fs.mkdtempSync(path.join(repoRoot, '.tmp', 'local-runtime-session-'))
 const targetPath = path.join(repoRoot, 'dist', 'dev', 'mp-weixin')
+const runtimeOutputRoot = fs.mkdtempSync(path.join(repoRoot, '.tmp', 'local-runtime-output-'))
+const runtimeTargetPath = path.join(runtimeOutputRoot, 'mp-weixin')
 
 try {
   assert.equal(isMpWeixinWatchCommand(['uni', '-p', 'mp-weixin']), true)
@@ -84,6 +90,24 @@ try {
   assert.equal(blocked.code, 'local_runtime_lease_identity_unverified')
   assert.equal(fs.readFileSync(invalidLeasePath, 'utf8'), '{not-json}\n')
 
+  const validationRoot = fs.mkdtempSync(path.join(repoRoot, '.tmp', 'mp-weixin-output-'))
+  const validationWxml = path.join(validationRoot, 'components', 'Example.wxml')
+  const validationWxss = path.join(validationRoot, 'components', 'Example.wxss')
+  fs.mkdirSync(path.dirname(validationWxml), { recursive: true })
+  fs.writeFileSync(validationWxml, '<view class="data-v-a1b2c3d4" />\n')
+  fs.writeFileSync(validationWxss, '.example.data-v-a1b2c3d4 { color: red; }\n')
+  assert.deepEqual(findMpWeixinScopedStyleMismatches(validationRoot), [])
+  fs.writeFileSync(validationWxss, '.example.data-v-deadbeef { color: red; }\n')
+  assert.equal(findMpWeixinScopedStyleMismatches(validationRoot).length, 1)
+  assert.throws(
+    () => assertMpWeixinScopedStyleConsistency(validationRoot),
+    error => error?.code === 'mp_weixin_scoped_style_mismatch'
+  )
+  fs.writeFileSync(validationWxml, '<view />\n')
+  fs.writeFileSync(validationWxss, '.example.data-v-deadbeef { color: red; }\n')
+  assert.equal(findMpWeixinScopedStyleMismatches(validationRoot).length, 1)
+  fs.rmSync(validationRoot, { recursive: true, force: true })
+
   const spawned = []
   function syntheticChild(pid) {
     const child = new EventEmitter()
@@ -100,14 +124,18 @@ try {
     }
     return child
   }
+  fs.mkdirSync(runtimeTargetPath, { recursive: true })
+  const staleOutputMarker = path.join(runtimeTargetPath, 'stale-output.marker')
+  fs.writeFileSync(staleOutputMarker, 'stale')
   const runtime = createManagedLocalRuntimeSession({
-    targetPath,
+    targetPath: runtimeTargetPath,
     leaseRoot,
     command: ['uni', '-p', 'mp-weixin'],
     environment: { VITE_APP_ENV: 'development' },
     mode: 'lan',
     initialApiBaseUrl: 'http://192.168.1.24:3010',
     resolveLanApiBaseUrl: () => 'http://192.168.1.25:3010',
+    cleanOutput: true,
     ownerPid: 41006,
     ownerId: 'managed-owner',
     refreshIntervalMs: 60_000,
@@ -120,6 +148,7 @@ try {
   })
   assert.equal(runtime.claim().status, 'acquired')
   assert.equal(runtime.start().status, 'started')
+  assert.equal(fs.existsSync(staleOutputMarker), false, 'watcher 启动前必须清理旧编译产物')
   assert.equal(spawned[0].options.env.VITE_API_BASE_URL, 'http://192.168.1.24:3010')
   const refreshed = await runtime.refresh()
   assert.equal(refreshed.status, 'restarted')
@@ -129,4 +158,5 @@ try {
   assert.equal((await runtime.stop()).status, 'released')
 } finally {
   fs.rmSync(leaseRoot, { recursive: true, force: true })
+  fs.rmSync(runtimeOutputRoot, { recursive: true, force: true })
 }

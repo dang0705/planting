@@ -30,6 +30,7 @@
   - 历史结果页：`src/subpackages/diagnosis/result.vue`
   - 提醒 tab：`src/pages/reminder/reminder.vue`
   - 个人中心：`src/pages/profile/profile.vue`
+  - 订阅会员页：`src/subpackages/subscription/subscription.vue`
   - 首页卡片组件：`src/pages/index/components/PlantCard.vue`
   - 植物图片展示组件：`src/components/PlantDisplayBase.vue`
   - 用户植物表单：`src/subpackages/plant/user-plant-detail/components/UserPlantDetailForm.vue`
@@ -101,11 +102,16 @@
 | 空气环境保存           | `src/components/UserPlantAirEnvironmentCard.vue`                             | `user-plant-detail-air-environment-save`       | 完成三项后保存；失败时草稿必须保留             |
 | 保存错误               | `src/components/UserPlantAirEnvironmentCard.vue`                             | `user-plant-detail-air-environment-save-error` | 断言保存失败说明和重试入口仍可见               |
 | 编辑页环境条件组       | `src/components/PlantEnvironmentSettingsGroup.vue`                           | `edit-plant-environment-group`                 | 断言光照和空气入口属于同一环境条件分组         |
+| 编辑页基本信息分区     | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`           | `edit-plant-basic-info-section`                | 断言照片、昵称、种植日期和备注归入基本信息分区 |
+| 编辑页养护信息分区     | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`           | `edit-plant-care-info-section`                 | 断言养护城市和环境设置归入养护信息分区         |
+| 编辑页盆信息分区       | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`           | `edit-plant-pot-info-section`                  | 断言盆型和基质入口归入盆信息分区               |
 | 编辑页光照环境入口     | `src/components/PlantEnvironmentSettingsGroup.vue`                           | `edit-plant-environment-light-entry`           | 点击进入独立光照环境设置页                     |
 | 编辑页空气环境入口     | `src/components/PlantEnvironmentSettingsGroup.vue`                           | `edit-plant-environment-air-entry`             | 点击进入独立空气环境设置页                     |
 | 光照环境设置完成       | `src/subpackages/care/plant-environment/light-environment.vue`               | `plant-light-environment-complete-button`      | 保存光照环境并携带结果返回编辑页               |
 | 空气环境设置完成       | `src/subpackages/care/airflow/index.vue`                                     | `plant-air-environment-complete-button`        | 植物编辑模式下保存空气环境并携带结果返回编辑页 |
 | 空气环境设置页返回编辑 | `src/subpackages/care/airflow/index.vue`                                     | `plant-air-environment-back-button`            | 植物编辑模式下放弃本次设置并返回编辑页         |
+
+新增模式复用同一份表单骨架，三处分区的稳定 id 仅将 `edit-plant-` 前缀替换为 `add-plant-`：`add-plant-basic-info-section`、`add-plant-care-info-section`、`add-plant-pot-info-section`。
 
 ### 3.3 共享诊断内核与弹窗（`diagnose-flow` / `DiagnosePopup.vue`）
 
@@ -271,23 +277,40 @@
 
 ### 3.8 历史结果页
 
-| 功能模块     | 文件                                                                                                      | 稳定 id                                                                                            | 操作 / 断言                       |
-| ------------ | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------- |
-| 结果页根容器 | `src/subpackages/diagnosis/result.vue`                                                                    | `diagnosis-result-page`                                                                            | 断言只读结果页加载                |
-| 结论列表     | `src/subpackages/diagnosis/result.vue`                                                                    | `diagnosis-result-page-outcome-list`                                                               | 断言历史结果可见，允许 1-N 个结果 |
-| 空态         | `src/subpackages/diagnosis/result.vue`                                                                    | `diagnosis-result-page-empty`                                                                      | 断言无历史结果时空态可见          |
+| 功能模块     | 文件                                                                                                      | 稳定 id                                                                                            | 操作 / 断言                          |
+| ------------ | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| 结果页根容器 | `src/subpackages/diagnosis/result.vue`                                                                    | `diagnosis-result-page`                                                                            | 断言只读结果页加载                   |
+| 结论列表     | `src/subpackages/diagnosis/result.vue`                                                                    | `diagnosis-result-page-outcome-list`                                                               | 断言历史结果可见，允许 1-N 个结果    |
+| 空态         | `src/subpackages/diagnosis/result.vue`                                                                    | `diagnosis-result-page-empty`                                                                      | 断言无历史结果时空态可见             |
 | 加载失败重试 | `src/subpackages/diagnosis/result.vue`                                                                    | `diagnosis-result-page-retry`                                                                      | 单条诊断记录加载失败时重新请求该记录 |
-| 诊断反馈卡   | `src/subpackages/diagnosis/components/DiagnosisFeedbackCard.vue` / `src/subpackages/diagnosis/result.vue` | `diagnosis-result-page-feedback-card`                                                              | 断言反馈入口随结果展示            |
-| 诊断反馈选项 | `src/subpackages/diagnosis/components/DiagnosisFeedbackCard.vue`                                          | `diagnosis-result-page-feedback-helpful-yes/no` / `diagnosis-result-page-feedback-accurate-yes/no` | 选择有帮助程度和判断准确程度      |
-| 提交诊断反馈 | `src/subpackages/diagnosis/components/DiagnosisFeedbackCard.vue`                                          | `diagnosis-result-page-feedback-submit`                                                            | 提交后断言成功状态；重复提交禁用  |
+| 诊断反馈卡   | `src/subpackages/diagnosis/components/DiagnosisFeedbackCard.vue` / `src/subpackages/diagnosis/result.vue` | `diagnosis-result-page-feedback-card`                                                              | 断言反馈入口随结果展示               |
+| 诊断反馈选项 | `src/subpackages/diagnosis/components/DiagnosisFeedbackCard.vue`                                          | `diagnosis-result-page-feedback-helpful-yes/no` / `diagnosis-result-page-feedback-accurate-yes/no` | 选择有帮助程度和判断准确程度         |
+| 提交诊断反馈 | `src/subpackages/diagnosis/components/DiagnosisFeedbackCard.vue`                                          | `diagnosis-result-page-feedback-submit`                                                            | 提交后断言成功状态；重复提交禁用     |
 
 ### 3.9 个人中心
 
-| 功能模块     | 文件                            | 稳定 id                              | 操作 / 断言                          |
-| ------------ | ------------------------------- | ------------------------------------ | ------------------------------------ |
+| 功能模块     | 文件                            | 稳定 id                              | 操作 / 断言                               |
+| ------------ | ------------------------------- | ------------------------------------ | ----------------------------------------- |
 | 我的植物入口 | `src/pages/profile/profile.vue` | `profile-menu-myPlants`              | 点击切回首页植物列表；不得跳转日历/提醒页 |
-| 历史重试     | `src/pages/profile/profile.vue` | `profile-diagnose-history-retry`     | 历史加载失败时重新请求最近 5 条记录      |
-| 历史记录项   | `src/pages/profile/profile.vue` | `profile-diagnose-record-{item._id}` | 点击查看该条历史结果                     |
+| 会员服务入口 | `src/pages/profile/profile.vue` | `profile-subscription-entry`         | 点击进入会员服务分包页                    |
+| 历史重试     | `src/pages/profile/profile.vue` | `profile-diagnose-history-retry`     | 历史加载失败时重新请求最近 5 条记录       |
+| 历史记录项   | `src/pages/profile/profile.vue` | `profile-diagnose-record-{item._id}` | 点击查看该条历史结果                      |
+
+### 3.9.1 会员服务
+
+| 功能模块     | 文件                                            | 稳定 id                                  | 操作 / 断言                                  |
+| ------------ | ----------------------------------------------- | ---------------------------------------- | -------------------------------------------- |
+| 页面根容器   | `src/subpackages/subscription/subscription.vue` | `subscription-page`                      | 断言会员服务分包页已打开                     |
+| 当前会员摘要 | `src/subpackages/subscription/subscription.vue` | `subscription-membership-summary`        | 断言当前会员类型和有效期可见                 |
+| 套餐列表     | `src/subpackages/subscription/subscription.vue` | `subscription-plan-list`                 | 断言服务端套餐已加载                         |
+| 套餐项       | `src/subpackages/subscription/subscription.vue` | `subscription-plan-{plan.id}`            | 点击选择套餐；动态 ID 只使用服务端 plan.id   |
+| 套餐立即购买 | `src/subpackages/subscription/subscription.vue` | `subscription-plan-{plan.id}-pay-button` | 创建订单并调用微信支付；重复点击期间保持禁用 |
+| 套餐加载失败 | `src/subpackages/subscription/subscription.vue` | `subscription-plans-error`               | 断言加载失败说明和重新加载入口可见           |
+| 套餐重新加载 | `src/subpackages/subscription/subscription.vue` | `subscription-plans-retry-button`        | 重新请求服务端套餐                           |
+| 支付状态     | `src/subpackages/subscription/subscription.vue` | `subscription-payment-status`            | 断言支付处理中、失败或完成状态可见           |
+| 支付状态文案 | `src/subpackages/subscription/subscription.vue` | `subscription-payment-status-text`       | 断言用户可理解的支付/订单确认说明            |
+| 订单状态     | `src/subpackages/subscription/subscription.vue` | `subscription-payment-order-status`      | 断言订单查询返回的状态可见                   |
+| 刷新订单状态 | `src/subpackages/subscription/subscription.vue` | `subscription-refresh-order-button`      | 支付确认超时或订单处理中时重新查询订单       |
 
 ### 3.10 独立浇水建议页
 
@@ -329,28 +352,31 @@
 
 ### 3.11 添加植物 / 编辑植物
 
-| 功能模块             | 文件                                                                               | 稳定 id                                                                          | 操作 / 断言                                  |
-| -------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------- |
-| 选植物搜索框         | `src/subpackages/plant/user-plant-detail/components/PlantSelectionStep.vue`        | `add-plant-search-input`                                                         | 输入搜索植物                                 |
-| AI 识别入口          | `src/subpackages/plant/user-plant-detail/components/PlantSelectionStep.vue`        | `add-plant-ai-identify-button`                                                   | 点击拍照识别                                 |
-| 植物卡片项           | `src/subpackages/plant/user-plant-detail/components/PlantSelectionStep.vue`        | `add-plant-card-{plant.id}`                                                      | 点击选中植物                                 |
-| 添加植物下一步       | `src/subpackages/plant/user-plant-detail/components/PlantSelectionStep.vue`        | `add-plant-next-button`                                                          | 点击进入信息填写步骤                         |
-| 信息表单根节点       | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-form` / `edit-plant-form`                                             | 断言添加/编辑植物表单已渲染                  |
-| 植物照片上传         | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-photo-upload` / `edit-plant-photo-upload`                             | 点击上传或替换植物照片                       |
-| 植物照片预览失效重试 | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-photo-preview` / `edit-plant-photo-preview`                           | 图片加载失败时只重签当前照片                 |
-| 植物昵称输入         | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-nickname-input` / `edit-plant-nickname-input`                         | 输入植物昵称                                 |
-| 城市修改按钮         | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-city-button` / `edit-plant-city-button`                               | 点击打开养护城市选择弹层                     |
-| 城市弹层关闭         | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-city-sheet-close` / `edit-plant-city-sheet-close`                     | 点击关闭城市选择弹层                         |
-| 城市选项             | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-city-option-{locationKey}` / `edit-plant-city-option-{locationKey}`   | 点击选择养护城市                             |
-| 光照环境控件         | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-light-*` / `edit-plant-light-*`                                       | 断言光照环境选择器可见并执行对应选择         |
-| 盆型输入入口         | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-pot-profile-button` / `edit-plant-pot-profile-button`                 | 点击打开盆型与基质输入弹层                   |
-| 盆型确认保存         | `src/subpackages/plant/user-plant-detail/components/UserPlantPotProfileEditor.vue` | `add-plant-pot-profile-confirm-button` / `edit-plant-pot-profile-confirm-button` | 新增暂存到提交载荷；编辑直接保存接口         |
-| 摆放位置选项         | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-location-{slot}` / `edit-plant-location-{slot}`                       | 点击切换摆放位置；`slot` 如 `balcony`        |
-| 种植日期选择         | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-plant-date-picker` / `edit-plant-plant-date-picker`                   | 点击选择种植日期                             |
-| 备注输入             | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-notes-input` / `edit-plant-notes-input`                               | 输入备注                                     |
-| 添加植物上一步       | `src/subpackages/plant/user-plant-detail/components/PlantInfoStepPanel.vue`        | `add-plant-back-to-selection-button`                                             | 点击返回植物选择步骤                         |
-| 添加植物提交         | `src/subpackages/plant/user-plant-detail/components/PlantInfoStepPanel.vue`        | `add-plant-submit-button`                                                        | 点击完成添加植物；上报 `save_user_new_plant` |
-| 编辑植物提交         | `src/subpackages/plant/user-plant-detail/components/PlantInfoStepPanel.vue`        | `edit-plant-submit-button`                                                       | 点击保存植物信息                             |
+| 功能模块                 | 文件                                                                               | 稳定 id                                                                          | 操作 / 断言                                         |
+| ------------------------ | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------- |
+| 选植物搜索框             | `src/subpackages/plant/user-plant-detail/components/PlantSelectionStep.vue`        | `add-plant-search-input`                                                         | 输入搜索植物                                        |
+| AI 识别入口              | `src/subpackages/plant/user-plant-detail/components/PlantSelectionStep.vue`        | `add-plant-ai-identify-button`                                                   | 点击拍照识别                                        |
+| 植物卡片项               | `src/subpackages/plant/user-plant-detail/components/PlantSelectionStep.vue`        | `add-plant-card-{plant.id}`                                                      | 点击选中植物                                        |
+| 添加植物下一步           | `src/subpackages/plant/user-plant-detail/components/PlantSelectionStep.vue`        | `add-plant-next-button`                                                          | 点击进入信息填写步骤                                |
+| 信息表单根节点           | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-form` / `edit-plant-form`                                             | 断言添加/编辑植物表单已渲染                         |
+| 新增植物选择步骤滚动容器 | `src/subpackages/plant/user-plant-detail/components/UserPlantDetailForm.vue`       | `add-plant-selection-scroll`                                                     | 验证植物选择步骤的纵向滚动视口和快速滑动后的布局    |
+| 植物信息步骤滚动容器     | `src/subpackages/plant/user-plant-detail/components/PlantInfoStepPanel.vue`        | `add-plant-info-scroll` / `edit-plant-info-scroll`                               | 验证新增/编辑信息表单的纵向滚动视口、底部操作区可达 |
+| 植物信息步骤底部操作栏   | `src/subpackages/plant/user-plant-detail/components/PlantInfoStepPanel.vue`        | `add-plant-submit-bar` / `edit-plant-submit-bar`                                 | 保存/完成按钮始终固定在信息页底部，不随表单内容滚动 |
+| 植物照片上传             | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-photo-upload` / `edit-plant-photo-upload`                             | 点击上传或替换植物照片                              |
+| 植物照片预览失效重试     | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-photo-preview` / `edit-plant-photo-preview`                           | 图片加载失败时只重签当前照片                        |
+| 植物昵称输入             | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-nickname-input` / `edit-plant-nickname-input`                         | 输入植物昵称                                        |
+| 城市修改按钮             | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-city-button` / `edit-plant-city-button`                               | 点击打开养护城市选择弹层                            |
+| 城市弹层关闭             | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-city-sheet-close` / `edit-plant-city-sheet-close`                     | 点击关闭城市选择弹层                                |
+| 城市选项                 | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-city-option-{locationKey}` / `edit-plant-city-option-{locationKey}`   | 点击选择养护城市                                    |
+| 光照环境控件             | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-light-*` / `edit-plant-light-*`                                       | 断言光照环境选择器可见并执行对应选择                |
+| 盆型输入入口             | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-pot-profile-button` / `edit-plant-pot-profile-button`                 | 点击打开盆型与基质输入弹层                          |
+| 盆型确认保存             | `src/subpackages/plant/user-plant-detail/components/UserPlantPotProfileEditor.vue` | `add-plant-pot-profile-confirm-button` / `edit-plant-pot-profile-confirm-button` | 新增暂存到提交载荷；编辑直接保存接口                |
+| 摆放位置选项             | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-location-{slot}` / `edit-plant-location-{slot}`                       | 点击切换摆放位置；`slot` 如 `balcony`               |
+| 种植日期选择             | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-plant-date-picker` / `edit-plant-plant-date-picker`                   | 点击选择种植日期                                    |
+| 备注输入                 | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-notes-input` / `edit-plant-notes-input`                               | 输入备注                                            |
+| 添加植物上一步           | `src/subpackages/plant/user-plant-detail/components/PlantInfoStepPanel.vue`        | `add-plant-back-to-selection-button`                                             | 点击返回植物选择步骤                                |
+| 添加植物提交             | `src/subpackages/plant/user-plant-detail/components/PlantInfoStepPanel.vue`        | `add-plant-submit-button`                                                        | 点击完成添加植物；上报 `save_user_new_plant`        |
+| 编辑植物提交             | `src/subpackages/plant/user-plant-detail/components/PlantInfoStepPanel.vue`        | `edit-plant-submit-button`                                                       | 点击保存植物信息                                    |
 
 ### 3.12 诊断 tab 与提醒 tab
 

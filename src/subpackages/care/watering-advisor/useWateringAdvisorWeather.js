@@ -20,6 +20,19 @@ export function useWateringAdvisorWeather({ selectedCatalogPlant, plantStore, us
   const weatherDays = ref([])
   const forecastDays = ref([])
   const weatherLocationKey = ref('')
+  let requestVersion = 0
+
+  function clearWeather() {
+    weatherDays.value = []
+    forecastDays.value = []
+    weatherLocationKey.value = ''
+  }
+
+  function getSelectionKey(plant) {
+    return [plant?.userPlantId || '', plant?.plantIdentityId || '', plant?.sessionPlantId || '']
+      .map(value => String(value || '').trim())
+      .join('|')
+  }
 
   // D0 最新缓存注入契约：locationKey 统一从 plant.careLocation.locationKey 读取，
   // 用于后端从当天 day file.latestSample 注入当日天气；缺失时 todayWeatherSource='missing'。
@@ -38,6 +51,8 @@ export function useWateringAdvisorWeather({ selectedCatalogPlant, plantStore, us
 
   async function loadWeatherDays() {
     const selectedPlant = selectedCatalogPlant.value
+    const selectionKey = getSelectionKey(selectedPlant)
+    const version = ++requestVersion
     const userPlant = selectedPlant?.userPlantId
       ? plantStore.userPlants?.find(item => item.id === selectedPlant.userPlantId)
       : null
@@ -53,6 +68,9 @@ export function useWateringAdvisorWeather({ selectedCatalogPlant, plantStore, us
       : userStore.location
     const location = resolveWeatherLocation(locationSource)
     if (!location) {
+      if (version === requestVersion) {
+        clearWeather()
+      }
       uni.showToast({ title: '未获取到定位，建议将使用默认天气', icon: 'none' })
       return
     }
@@ -64,16 +82,27 @@ export function useWateringAdvisorWeather({ selectedCatalogPlant, plantStore, us
         diagnosisDate: todayStr(),
         mode: 'environment'
       })
+      if (
+        version !== requestVersion ||
+        selectionKey !== getSelectionKey(selectedCatalogPlant.value)
+      ) {
+        return
+      }
       weatherDays.value = window?.historicalDays || window?.historical_days || []
       forecastDays.value = window?.forecastDays || window?.forecast_days || []
       weatherLocationKey.value = String(
         window?.locationKey || window?.location?.locationKey || ''
       ).trim()
     } catch {
-      weatherDays.value = []
-      forecastDays.value = []
-      weatherLocationKey.value = ''
+      if (version === requestVersion) {
+        clearWeather()
+      }
     }
+  }
+
+  function resetWeatherDays() {
+    requestVersion += 1
+    clearWeather()
   }
 
   return {
@@ -81,6 +110,7 @@ export function useWateringAdvisorWeather({ selectedCatalogPlant, plantStore, us
     forecastDays,
     weatherLocationKey,
     plannerLocationKey,
-    loadWeatherDays
+    loadWeatherDays,
+    resetWeatherDays
   }
 }

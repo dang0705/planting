@@ -8,6 +8,7 @@ import {
   removeUserPlant
 } from '@/api/plants-http.js'
 import { useUserStore } from '@/store/user.js'
+import { parsePlantDateTime } from '@/utils/plant-datetime.js'
 
 function localDateString(date = new Date()) {
   return [
@@ -16,6 +17,8 @@ function localDateString(date = new Date()) {
     String(date.getDate()).padStart(2, '0')
   ].join('-')
 }
+
+let userPlantsRequestVersion = 0
 
 export const usePlantStore = defineStore('plants', {
   state: () => ({
@@ -39,21 +42,33 @@ export const usePlantStore = defineStore('plants', {
         if (!p.nextWater) {
           return false
         }
-        return new Date(p.nextWater) <= now
+        const dueAt = parsePlantDateTime(p.nextWater)
+        return Boolean(dueAt && dueAt <= now)
       })
     }
   },
 
   actions: {
     async getUserPlants(page = 1, pageSize = 50) {
+      const requestVersion = ++userPlantsRequestVersion
       try {
         const userStore = useUserStore()
         const currentScope = userStore.openid || userStore.userId || ''
         if (this.userPlantsScope !== currentScope) {
           queryClient.removeQueries({ queryKey: USER_PLANTS_QUERY_KEY })
           this.userPlantsScope = currentScope
+          this.userPlants = []
+          this.currentPlant = null
         }
         const response = await fetchUserPlants(page, pageSize)
+        const latestScope = userStore.openid || userStore.userId || ''
+        if (
+          requestVersion !== userPlantsRequestVersion ||
+          latestScope !== currentScope ||
+          this.userPlantsScope !== currentScope
+        ) {
+          return { success: false, stale: true, message: '账号已切换，请重新加载' }
+        }
         if (response?.code !== 200) {
           return { success: false, message: '暂时无法加载植物，请检查网络后重试' }
         }

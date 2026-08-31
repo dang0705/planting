@@ -1,24 +1,12 @@
 'use strict'
 
 const { buildLocationKey } = require('../services/weather-cache-paths')
+const { buildCloudBaseInitOptions: buildRuntimeCloudBaseInitOptions } = require('../utils/cloudbase-credentials')
 
 let fallbackCloudBaseApp = null
 
 function buildCloudBaseInitOptions() {
-  const env = String(process.env.CLOUDBASE_ENV_ID || process.env.TCB_ENV || '').trim()
-  const secretId = String(
-    process.env.CLOUDBASE_SECRET_ID || process.env.TENCENT_SECRET_ID || process.env.TENCENTCLOUD_SECRETID || ''
-  ).trim()
-  const secretKey = String(
-    process.env.CLOUDBASE_SECRET_KEY ||
-      process.env.TENCENT_SECRET_KEY ||
-      process.env.TENCENTCLOUD_SECRETKEY ||
-      ''
-  ).trim()
-  return {
-    ...(env ? { env } : {}),
-    ...(secretId && secretKey ? { secretId, secretKey } : {})
-  }
+  return buildRuntimeCloudBaseInitOptions(process.env)
 }
 
 function loadNodeSdkModels() {

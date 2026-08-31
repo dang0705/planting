@@ -4,10 +4,10 @@ import { readFileSync } from 'node:fs'
 /**
  * 前端 D0 注入契约测试：
  * 验证三个浇水 planner 入口的前端代码正确传递 locationKey/timezone，
- * 以及 normalizeEnvironmentWeatherWindowPayload 截断 forecastDays 至 14 项（D+1..D+14）。
+ * 以及 normalizeEnvironmentWeatherWindowPayload 保留缓存 D0 + D+1..D+14。
  *
  * 契约要点：
- *   - forecastDays 数组前端只传 D+1..D+14（14 项），D0 由后端从 day file latestSample 注入
+ *   - forecastDays 数组前端传 D0..D+14（最多 15 项），D0 必须来自天气缓存
  *   - locationKey 统一从 plant.careLocation.locationKey 读取
  *   - timezone 默认 Asia/Shanghai
  *   - WateringReminderSheet.vue 与 watering-advisor.vue 均需传 locationKey/timezone
@@ -33,13 +33,13 @@ const advisorWeatherSource = readFileSync(
 )
 
 /* ============================================================
- * 1. src/api/weather.js: normalizeEnvironmentWeatherWindowPayload 截断 forecastDays
+ * 1. src/api/weather.js: normalizeEnvironmentWeatherWindowPayload 保留缓存 D0
  * ============================================================ */
 
 assert.match(
   weatherApiSource,
-  /MAX_ARRAY_FORECAST_DAYS_TO_KEEP\s*=\s*14/,
-  'weather.js 应定义 MAX_ARRAY_FORECAST_DAYS_TO_KEEP = 14'
+  /MAX_ARRAY_FORECAST_DAYS_TO_KEEP\s*=\s*15/,
+  'weather.js 应定义 MAX_ARRAY_FORECAST_DAYS_TO_KEEP = 15'
 )
 
 assert.match(
@@ -56,14 +56,20 @@ assert.match(
 
 assert.match(
   weatherApiSource,
-  /forecastDaysWithoutD0 = diagnosisDate/,
-  'normalizeEnvironmentWeatherWindowPayload 应按 diagnosisDate 过滤 D0 记录'
+  /const isCachedD0 = day =>/,
+  'normalizeEnvironmentWeatherWindowPayload 应识别天气缓存 D0'
 )
 
 assert.match(
   weatherApiSource,
-  /forecastDays: forecastDaysWithoutD0\.slice\(0, MAX_ARRAY_FORECAST_DAYS_TO_KEEP\)/,
-  'normalizeEnvironmentWeatherWindowPayload 应将去掉 D0 后的 forecastDays 截断为 14 项'
+  /const normalizedForecastDays = cachedD0\s*\?\s*\[cachedD0, \.\.\.futureForecastDays\]/,
+  'normalizeEnvironmentWeatherWindowPayload 应将缓存 D0 放在未来预报之前'
+)
+
+assert.match(
+  weatherApiSource,
+  /forecastDays: normalizedForecastDays\.slice\(0, MAX_ARRAY_FORECAST_DAYS_TO_KEEP\)/,
+  'normalizeEnvironmentWeatherWindowPayload 应将 D0..D+14 截断为最多 15 项'
 )
 
 /* ============================================================

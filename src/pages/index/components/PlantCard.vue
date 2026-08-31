@@ -29,6 +29,7 @@
             <text>{{ healthPresentation.label }}</text>
           </view>
           <view
+            v-if="needsWatering"
             class="inline-flex h-[22px] items-center justify-center rounded-full border border-[#b8e6fe] bg-[#dff2fe] px-[9px] py-[3px] text-xs font-normal leading-4 text-[#0069a8]"
           >
             <text>需浇水</text>
@@ -107,6 +108,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { parsePlantDateTime } from '@/utils/plant-datetime.js'
 import PlantDisplayBase from '@/components/PlantDisplayBase.vue'
 import PlantProfileCompleteness from './PlantProfileCompleteness.vue'
 import diagnoseIcon from '@/assets/icons/home-card-diagnose.svg'
@@ -127,6 +129,14 @@ const props = defineProps({
 defineEmits(['diagnose', 'history', 'edit', 'reminder', 'fertilization'])
 
 const waterReminderActive = computed(() => Boolean(props.reminderSummary?.water?.active))
+const needsWatering = computed(() => {
+  const nextWater = props.plant?.nextWater || props.reminderSummary?.water?.nextWaterDate
+  if (!nextWater) {
+    return false
+  }
+  const dueAt = parsePlantDateTime(nextWater)
+  return Boolean(dueAt && dueAt.getTime() <= Date.now())
+})
 const fertilizationReminderActive = computed(() =>
   Boolean(props.reminderSummary?.fertilize?.active || props.plant?.fertilizationReminder?.active)
 )

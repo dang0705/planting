@@ -6,6 +6,11 @@ const { insertWateringEvent } = require('/opt/utils/plant-knowledge')
 const ACTIVE_STATUS = 'active'
 const REMINDER_TYPE_WATER = 'water'
 
+function runInNativeTransaction(handler) {
+  const { withNativeTransaction } = require('/opt/utils/native-mysql')
+  return withNativeTransaction(handler)
+}
+
 function parseJsonText(value, fallback) {
   if (value === null || value === undefined || value === '') {
     return fallback
@@ -266,33 +271,57 @@ async function saveWateringReminder(openid, body = {}) {
     })
   }
 
-  await models.$runSQL(
-    `UPDATE user_watering_reminder_events
-     SET status = 'superseded', updated_at = CURRENT_TIMESTAMP
-     WHERE _openid = {{openid}}
-       AND user_plant_id = {{plantId}}
-       AND reminder_type = 'water'
-       AND status = 'active'`,
-    params
-  )
-  await models.$runSQL(
-    `INSERT INTO user_watering_reminder_events
-       (_openid, user_plant_id, plan_id, reminder_type, status, last_watered, next_water_date,
-        next_time, watering_events_json, planner_result_json, calendar_payload_json)
-     VALUES
-       ({{openid}}, {{plantId}}, {{planId}}, {{reminderType}}, {{status}}, {{lastWatered}},
-        {{nextWaterDate}}, {{nextTime}}, {{wateringEventsJson}}, {{plannerResultJson}},
-        {{calendarPayloadJson}})`,
-    params
-  )
-  await models.$runSQL(
-    `UPDATE user_plant_instances
-     SET last_watered = COALESCE({{lastWatered}}, last_watered),
-         next_water = {{nextWaterDate}},
-         updated_at = CURRENT_TIMESTAMP
-     WHERE id = {{plantId}} AND _openid = {{openid}}`,
-    params
-  )
+  await runInNativeTransaction(async connection => {
+    const [ownedRows] = await connection.execute(
+      `SELECT id
+       FROM user_plant_instances
+       WHERE id = ? AND _openid = ?
+       FOR UPDATE`,
+      [plantId, openid]
+    )
+    if (!ownedRows?.[0]) {
+      const error = new Error('植物不存在或无权限')
+      error.statusCode = 404
+      throw error
+    }
+
+    await connection.execute(
+      `UPDATE user_watering_reminder_events
+       SET status = 'superseded', updated_at = CURRENT_TIMESTAMP
+       WHERE _openid = ?
+         AND user_plant_id = ?
+         AND reminder_type = 'water'
+         AND status = 'active'`,
+      [openid, plantId]
+    )
+    await connection.execute(
+      `INSERT INTO user_watering_reminder_events
+         (_openid, user_plant_id, plan_id, reminder_type, status, last_watered, next_water_date,
+          next_time, watering_events_json, planner_result_json, calendar_payload_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        openid,
+        plantId,
+        params.planId,
+        params.reminderType,
+        params.status,
+        params.lastWatered,
+        params.nextWaterDate,
+        params.nextTime,
+        params.wateringEventsJson,
+        params.plannerResultJson,
+        params.calendarPayloadJson
+      ]
+    )
+    await connection.execute(
+      `UPDATE user_plant_instances
+       SET last_watered = COALESCE(?, last_watered),
+           next_water = ?,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND _openid = ?`,
+      [params.lastWatered, params.nextWaterDate, plantId, openid]
+    )
+  })
 
   const reminder = await getLatestWateringReminder(openid, plantId)
   return { statusCode: 200, data: reminder, message: '保存成功' }
@@ -375,6 +404,7 @@ module.exports = {
   attachWateringReminderStateToList,
   completeWateringReminder,
   getLatestWateringReminder,
+  mapReminderRow,
   readWateringReminder,
   saveWateringReminder,
   _test: {

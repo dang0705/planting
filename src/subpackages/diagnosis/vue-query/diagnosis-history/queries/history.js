@@ -1,24 +1,12 @@
-import {
-  requestDiagnosisHistory,
-  requestDiagnosisResult
-} from '../../../http-functions/diagnose/client.js'
+import { requestDiagnosisResult } from '../../../http-functions/diagnose/client.js'
 import { runVueQueryQuery } from '@/lib/vue-query-runtime.js'
-
-export function buildDiagnosisHistoryQueryOptions(page = 1, pageSize = 10, plantId = null) {
-  return {
-    queryKey: ['http-function', 'diagnose-http', 'history', page, pageSize, plantId || 'all'],
-    queryFn: async () =>
-      requestDiagnosisHistory({
-        page,
-        pageSize,
-        ...(plantId ? { userPlantId: plantId, plantId } : {})
-      })
-  }
-}
-
-export function fetchDiagnosisHistoryQuery(page = 1, pageSize = 10, plantId = null) {
-  return runVueQueryQuery(buildDiagnosisHistoryQueryOptions(page, pageSize, plantId))
-}
+import { DIAGNOSIS_HISTORY_QUERY_KEY } from '@/constants/query-keys.js'
+export {
+  buildDiagnosisHistoryQueryOptions,
+  fetchDiagnosisHistoryQuery,
+  invalidateDiagnosisHistoryQueries
+} from '@/vue-query/diagnosis-history/queries/history.js'
+export { DIAGNOSIS_HISTORY_QUERY_KEY }
 
 export function buildDiagnosisDetailQueryOptions(id) {
   return {

@@ -21,7 +21,8 @@ export const DEFAULT_REQUIRED_FUNCTIONS = [
   'diagnosis-history-http',
   'auth-user-http',
   'weather-http',
-  'storage-http'
+  'storage-http',
+  'subscription-http'
 ]
 export const FUNCTION_HEALTH_PATHS = {
   'diagnose-http': 'diagnose-http/health',
@@ -31,7 +32,8 @@ export const FUNCTION_HEALTH_PATHS = {
   'diagnosis-history-http': 'diagnosis-history-http/diagnosis/history/health',
   'auth-user-http': 'auth-user-http/auth/user/health',
   'weather-http': 'weather-http/weather/health',
-  'storage-http': 'storage-http/storage/health'
+  'storage-http': 'storage-http/storage/health',
+  'subscription-http': 'subscription-http/subscription/health'
 }
 export const FUNCTION_NAMES = [
   'diagnose-http',
@@ -41,7 +43,8 @@ export const FUNCTION_NAMES = [
   'diagnosis-history-http',
   'auth-user-http',
   'weather-http',
-  'storage-http'
+  'storage-http',
+  'subscription-http'
 ]
 export const FUNCTION_PORTS = Object.fromEntries(
   FUNCTION_NAMES.map((name, index) => [name, DEFAULT_FUNCTION_PORT_BASE + index])

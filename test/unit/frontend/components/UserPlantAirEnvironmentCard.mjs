@@ -64,7 +64,10 @@ assert.match(
   detailSource,
   /import UserPlantAirEnvironmentCard from '@\/components\/UserPlantAirEnvironmentCard\.vue'/
 )
-assert.match(detailSource, /<UserPlantAirEnvironmentCard :plant="plant" \/>/)
+assert.match(
+  detailSource,
+  /<UserPlantAirEnvironmentCard :plant="plant" @saved="handleAirEnvironmentSaved" \/>/
+)
 
 // Assert: 编辑植物页面只保留环境条件入口，不再嵌入完整空气环境卡片。
 assert.match(

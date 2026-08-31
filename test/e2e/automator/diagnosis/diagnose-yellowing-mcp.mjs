@@ -34,6 +34,22 @@ function toNumber(value, fallback) {
   return Number.isFinite(number) ? number : fallback
 }
 
+function extractWeatherWindow(request = {}) {
+  const responseData = request?.response?.data
+  if (!responseData || typeof responseData !== 'object') {
+    return null
+  }
+  const candidates = [responseData?.data?.data, responseData?.data, responseData]
+  return (
+    candidates.find(
+      value =>
+        value &&
+        typeof value === 'object' &&
+        (Array.isArray(value.historicalDays) || Array.isArray(value.historical_days))
+    ) || null
+  )
+}
+
 function buildLeafReport(result, { wsEndpoint, projectPath, profile, maxSteps } = {}) {
   const logs = Array.isArray(result?.logs) ? result.logs : []
   const launch = logs.find(item => item.type === 'state' && item.label === 'launch')
@@ -43,6 +59,44 @@ function buildLeafReport(result, { wsEndpoint, projectPath, profile, maxSteps } 
   const resultState = logs.find(item => item.type === 'result' && !item.screenshot)
   const resultElements = logs.find(item => item.type === 'result-elements')
   const finalScreenshot = [...(result?.shots || [])].at(-1) || ''
+  const weatherRequests = (Array.isArray(result?.capturedRequests) ? result.capturedRequests : [])
+    .filter(request => String(request?.url || '').includes('weather-http/weather/environment-context'))
+  const weatherRequest = weatherRequests.at(-1) || null
+  const weatherWindow = extractWeatherWindow(weatherRequest)
+  const historicalDays = Array.isArray(weatherWindow?.historicalDays)
+    ? weatherWindow.historicalDays
+    : Array.isArray(weatherWindow?.historical_days)
+      ? weatherWindow.historical_days
+      : []
+  const usableHistoricalDays = historicalDays.filter(day => {
+    if (day?.missing || String(day?.quality || '').trim() === 'missing') {
+      return false
+    }
+    return [day?.tempMaxC, day?.tempMinC, day?.humidity, day?.textDay, day?.text].some(
+      value => value !== undefined && value !== null && value !== ''
+    )
+  })
+  const missingHistoricalDays = historicalDays.filter(
+    day => day?.missing === true || String(day?.quality || '').trim() === 'missing'
+  )
+  const classifiedHistoricalDays = [...usableHistoricalDays, ...missingHistoricalDays]
+  const unclassifiedHistoricalDays = historicalDays.filter(
+    day => !classifiedHistoricalDays.includes(day)
+  )
+  const historicalDates = historicalDays
+    .map(day => String(day?.date || '').trim())
+    .filter(Boolean)
+  const timelineWeather = logs.find(item => item.type === 'timeline-weather')
+  const timelineNoticeText = String(timelineWeather?.noticeText || '').trim()
+  const timelineCells = Array.isArray(timelineWeather?.cells) ? timelineWeather.cells : []
+  const renderedHistoricalDays = timelineCells.filter(
+    cell => cell.hasWeatherMetrics && historicalDays.some(day => String(day?.date || '') === cell.date)
+  )
+  const renderedMissingDays = timelineCells.filter(
+    cell =>
+      cell.hasWeatherMetrics &&
+      missingHistoricalDays.some(day => String(day?.date || '') === cell.date)
+  )
   const assertions = [
     {
       name: '真实首页已启动',
@@ -50,7 +104,7 @@ function buildLeafReport(result, { wsEndpoint, projectPath, profile, maxSteps } 
       detail: launch?.path || 'launch state missing'
     },
     {
-      name: '诊断分包入口已打开',
+      name: '诊断分包流程页已打开',
       passed: Boolean(entry),
       detail: entry?.path || 'diagnosis entry state missing'
     },
@@ -63,6 +117,41 @@ function buildLeafReport(result, { wsEndpoint, projectPath, profile, maxSteps } 
       name: '至少完成一轮真实问答',
       passed: answers.length > 0,
       detail: `answer_count=${answers.length}`
+    },
+    {
+      name: '诊断天气窗口请求成功',
+      passed: Boolean(
+        weatherRequest &&
+          Number(weatherRequest?.response?.statusCode || 0) === 200 &&
+          weatherWindow
+      ),
+      detail: weatherRequest
+        ? `status=${weatherRequest?.response?.statusCode || 'unknown'}, historical=${historicalDays.length}`
+        : '未捕获 weather/environment-context 请求'
+    },
+    {
+      name: '最近10天历史天气窗口完整返回',
+      passed:
+        historicalDays.length === 10 &&
+        new Set(historicalDates).size === 10 &&
+        unclassifiedHistoricalDays.length === 0,
+      detail: `historical_days=${historicalDays.length}, usable=${usableHistoricalDays.length}, missing=${missingHistoricalDays.length}, unclassified=${unclassifiedHistoricalDays.length}`
+    },
+    {
+      name: '缺失天气已向用户说明',
+      passed:
+        missingHistoricalDays.length === 0 ||
+        /最近 10 天.*天气记录.*(缺失|准备好)/u.test(timelineNoticeText),
+      detail: `missing=${missingHistoricalDays.length}, notice=${timelineNoticeText || 'none'}`
+    },
+    {
+      name: '最近10天天气在时间格逐日渲染',
+      passed:
+        historicalDays.length === 10 &&
+        timelineCells.length > 0 &&
+        renderedHistoricalDays.length === usableHistoricalDays.length &&
+        renderedMissingDays.length === 0,
+      detail: `timeline_cells=${timelineCells.length}, rendered_historical=${renderedHistoricalDays.length}, rendered_missing=${renderedMissingDays.length}`
     },
     {
       name: '诊断结果状态已到达',
@@ -95,7 +184,18 @@ function buildLeafReport(result, { wsEndpoint, projectPath, profile, maxSteps } 
       maxSteps,
       screenshots: result?.shots || [],
       screenshot_attempts: result?.screenshotAttempts || [],
-      report_dir: result?.reportDir || null
+      report_dir: result?.reportDir || null,
+      weather: {
+        request_count: weatherRequests.length,
+        request: weatherRequest,
+        historical_days: historicalDays,
+        usable_historical_days: usableHistoricalDays.length,
+        missing_historical_days: missingHistoricalDays.length,
+        unclassified_historical_days: unclassifiedHistoricalDays.length,
+        timeline_notice_text: timelineNoticeText,
+        timeline_cells: timelineCells,
+        rendered_historical_days: renderedHistoricalDays.length
+      }
     }
   }
 }
@@ -108,7 +208,8 @@ async function writeLeafArtifacts(result, report, reportFile) {
       {
         ...report,
         logs: result?.logs || [],
-        screenshots: result?.shots || []
+        screenshots: result?.shots || [],
+        capturedRequests: result?.capturedRequests || []
       },
       null,
       2

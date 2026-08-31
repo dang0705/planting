@@ -133,14 +133,14 @@ async function resolveConfirmedWateringEvents({
  * 通过 catalogPlantId 从植物知识库取属级浇水策略 + 温湿度 bounds，
  * 盆型由前端临时传入，天气由前端自动获取后传入。
  *
- * D0 当日天气从 day file latestSample 注入：前端传 forecastDays 为 D+1..D+14（14 项），
- * 后端注入 D0 后 buildWeatherSummary 统计 15 天。D0 缺失/超时 todayWeatherSource='missing'，summary 按 14 天统计。
+ * D0 当日天气从 day file latestSample 注入：前端传完整 D0..D+14，后端先去掉调用方 D0，
+ * 再注入唯一权威 D0 后 buildWeatherSummary 统计最多 15 天。D0 缺失/超时仅统计 D+1..D+14。
  *
  * @param {object} params
  * @param {string} params.catalogPlantId - 植物种类 ID
  * @param {object} params.potProfile - 盆型档案 { potTopDiameterCm, potBottomDiameterCm, potHeightCm, hasDrainageHole, substrateType }
  * @param {Array}  params.weatherDays - 历史 10d 天气日数据
- * @param {Array}  params.forecastDays - 预报 D+1..D+14 天气日数据（14 项，不含 D0）
+ * @param {Array}  params.forecastDays - D0..D+14 天气日数据（最多 15 项；D0 会由后端校验）
  * @param {string} params.referenceDate - 参考日期 YYYY-MM-DD
  * @param {string} params.locationKey - 地点 key（用于 D0 day file 读取）
  * @param {string} params.timezone - 时区，默认 Asia/Shanghai
@@ -183,14 +183,18 @@ async function computeAdhocPlanner({
     wateringEvents
   })
 
-  // D0 注入：前端传 D+1..D+14（14 项），后端注入 D0 latestSample 作为当日天气
-  const { forecastDays: forecastWithD0, todayWeatherSource, todayWeatherReason, referenceDate: resolvedReferenceDate } =
-    await injectD0IntoForecastDays({
-      locationKey,
-      timezone,
-      referenceDate,
-      forecastDays: forecastDays.slice(0, 14)
-    })
+  // D0 校验：前端传完整 D0..D+14，后端剔除调用方 D0 后注入 day file latestSample
+  const {
+    forecastDays: forecastWithD0,
+    todayWeatherSource,
+    todayWeatherReason,
+    referenceDate: resolvedReferenceDate
+  } = await injectD0IntoForecastDays({
+    locationKey,
+    timezone,
+    referenceDate,
+    forecastDays: forecastDays.slice(0, 15)
+  })
 
   const historical = buildWeatherSummary(weatherDays.slice(0, 10), strategy)
   const forecast = buildWeatherSummary(forecastWithD0.slice(0, 15), strategy)

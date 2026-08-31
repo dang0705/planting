@@ -44,7 +44,8 @@ const FUNCTION_NAMES = [
   'diagnosis-history-http',
   'auth-user-http',
   'weather-http',
-  'storage-http'
+  'storage-http',
+  'subscription-http'
 ]
 
 function parseArgs(argv = []) {

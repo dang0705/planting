@@ -226,6 +226,16 @@ assert.match(sheetSource, /fertilization-reminder-no-fixed-period/)
 assert.match(sheetSource, /currentMonthOptions\.length/)
 assert.doesNotMatch(sheetSource, /fertilization-current-month-conclusion/)
 assert.match(sheetSource, /fertilization-reminder-deferred/)
+assert.match(sheetSource, /fetchUserPlant/)
+assert.match(sheetSource, /async function loadPlantDetails\(\)/)
+assert.match(sheetSource, /await fetchUserPlant\(plantId\)/)
+assert.match(sheetSource, /monthlyLoading/)
+assert.match(sheetSource, /monthlyReady/)
+assert.match(
+  sheetSource,
+  /requestSequence !== plantDetailLoadSequence[\s\S]*Number\(props\.plant\?\.id\) !== plantId/u,
+  '施肥月表详情请求必须防止切换植物后的旧响应覆盖新状态'
+)
 assert.match(mutationSource, /action === 'confirm'/)
 assert.match(mutationSource, /response\.data\?\.active/)
 assert.match(

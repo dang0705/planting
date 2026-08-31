@@ -1,100 +1,14 @@
-import cloudbase from '@cloudbase/js-sdk'
-import { registerAuth } from '@cloudbase/js-sdk/miniprogram_dist/auth'
-import { CLOUDBASE_ENV_ID } from '@/utils/runtime-env'
-
-// CloudBase 公网函数网关只接受平台签发的 access token；自定义票据仅用于
-// 兼容本地函数网关，不作为线上 Authorization 凭据。认证注册保持单例，避免
-// 每次请求重复安装小程序适配器。
-registerAuth(cloudbase)
-
-let cloudbaseApp = null
-let authInstance = null
-let signInPromise = null
+/**
+ * 微信小程序身份与手机号能力
+ *
+ * 仅依赖已初始化的 wx.cloud.callFunction，不引入 CloudBase Web SDK。
+ * 登录由现有的微信登录链路负责；这里仅提供身份查询和手机号授权能力，
+ * HTTP 请求使用 wechat-identity 返回的签名身份票据。
+ */
 
 function assertMiniProgramEnv() {
   if (typeof wx === 'undefined' || !wx.cloud) {
     throw new Error('微信身份能力仅支持已初始化 wx.cloud 的微信小程序环境')
-  }
-}
-
-function signInWithOpenId(auth) {
-  if (typeof auth.signInWithOpenId === 'function') {
-    return auth.signInWithOpenId({ refreshToken: true })
-  }
-
-  if (typeof auth.signInWithWechat === 'function') {
-    return auth.signInWithWechat({})
-  }
-
-  throw new Error('当前 CloudBase SDK 不支持小程序静默登录')
-}
-
-export function getCloudbaseApp() {
-  assertMiniProgramEnv()
-
-  if (!cloudbaseApp) {
-    cloudbaseApp = cloudbase.init({
-      env: CLOUDBASE_ENV_ID,
-      wxCloud: wx.cloud
-    })
-  }
-
-  return cloudbaseApp
-}
-
-export function getCloudbaseAuth() {
-  if (!authInstance) {
-    authInstance = getCloudbaseApp().auth({
-      persistence: 'local'
-    })
-  }
-
-  return authInstance
-}
-
-export async function ensureCloudbaseLogin({ force = false } = {}) {
-  const auth = getCloudbaseAuth()
-
-  if (!force) {
-    try {
-      const loginState = await auth.getLoginState()
-      if (loginState?.user) {
-        return auth
-      }
-    } catch (error) {
-      console.warn('检查 CloudBase 登录态失败，将尝试重新登录:', error)
-    }
-  }
-
-  if (!signInPromise || force) {
-    signInPromise = Promise.resolve(signInWithOpenId(auth)).finally(() => {
-      signInPromise = null
-    })
-  }
-
-  await signInPromise
-  return auth
-}
-
-export async function getCloudbaseAccessToken({ forceRefresh = false } = {}) {
-  const auth = await ensureCloudbaseLogin({ force: forceRefresh })
-
-  try {
-    const tokenInfo = await auth.getAccessToken()
-    if (tokenInfo?.accessToken) {
-      return tokenInfo.accessToken
-    }
-    throw new Error('未获取到 CloudBase access token')
-  } catch (error) {
-    if (!forceRefresh) {
-      const retryAuth = await ensureCloudbaseLogin({ force: true })
-      const tokenInfo = await retryAuth.getAccessToken()
-      if (tokenInfo?.accessToken) {
-        return tokenInfo.accessToken
-      }
-    }
-
-    throw error
   }
 }
 
@@ -168,12 +82,5 @@ export async function getCloudbaseUserIdentity() {
     appid: wechatIdentity.appid || '',
     unionid: wechatIdentity.unionid || '',
     httpIdentityTicket: wechatIdentity.httpIdentityTicket || ''
-  }
-}
-
-export async function getCloudbaseAuthHeader(options) {
-  const accessToken = await getCloudbaseAccessToken(options)
-  return {
-    Authorization: `Bearer ${accessToken}`
   }
 }

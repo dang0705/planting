@@ -57,7 +57,7 @@ assert.equal(observedReadKey, 'city:shanghai')
 assert.equal(missShanghai.locationKey, 'city:shanghai')
 assert.equal(missShanghai.meta.weatherObjectPath, buildRecentWeatherObjectPath('city:shanghai'))
 assert.equal(missShanghai.weatherEvidenceInsufficient, true)
-assert.equal(missShanghai.meta.reason, 'recent_10d_rebuild_deferred')
+assert.equal(missShanghai.meta.reason, 'recent_10d_object_missing')
 
 // 7) 诊断 reader：仅给中文 cityName='上海' 也必须解析到 city:shanghai，而非 coord:*
 observedReadKey = ''
@@ -211,7 +211,20 @@ const staleWeather = await staleReader({
 assert.equal(staleWeather.locationKey, 'city:shanghai')
 assert.equal(staleWeather.weatherEvidenceInsufficient, true)
 assert.equal(staleWeather.historicalDays.length, 0)
-assert.equal(staleWeather.meta.reason, 'recent_10d_rebuild_deferred')
+assert.equal(staleWeather.meta.reason, 'recent_10d_object_missing')
+
+const deferredReader = createDiagnosisRecentWeatherReader({
+  readRecentWeather: async () => null,
+  rebuildRecentWeatherFromArchives: async () => {
+    throw new Error('explicitly disabled')
+  }
+})
+const explicitlyDeferred = await deferredReader({
+  locationKey: 'city:shanghai',
+  diagnosisDate: '2026-06-18',
+  allowArchiveRebuild: false
+})
+assert.equal(explicitlyDeferred.meta.reason, 'recent_10d_rebuild_deferred')
 
 // 12) 批量采集目标必须覆盖全部 20 个热城且都是 city:* key（含 city:shanghai）
 const ingestionTargets = buildHotCityIngestionTargets()

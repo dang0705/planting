@@ -5,6 +5,22 @@
         <text class="text-sm text-gray-500">正在加载植物信息...</text>
       </view>
 
+      <view
+        v-else-if="loadError && !plant"
+        class="flex min-h-screen flex-col items-center justify-center px-6 text-center"
+      >
+        <text class="text-4xl">🌿</text>
+        <text class="mt-4 text-lg font-semibold text-gray-800">暂时无法打开植物详情</text>
+        <text class="mt-2 text-sm leading-6 text-gray-400">{{ loadError }}</text>
+        <button
+          id="user-plant-detail-retry-button"
+          class="mt-6 rounded-3xl bg-primary px-8 py-3.5 text-white"
+          @click="loadPlant"
+        >
+          重新加载
+        </button>
+      </view>
+
       <view v-else-if="plant" class="pb-5">
         <!-- 内容区域 -->
         <!-- 植物头部信息 -->
@@ -57,10 +73,13 @@
           <button
             id="user-plant-detail-water-button"
             class="flex-1 bg-white border border-gray-300 rounded-2xl p-3.5 px-2 flex flex-col items-center gap-1.5"
+            :disabled="wateringAction.isPending"
             @click="doWatering"
           >
             <text class="text-2xl">💧</text>
-            <text class="text-xs text-gray-600 font-semibold">浇水</text>
+            <text class="text-xs text-gray-600 font-semibold">{{
+              wateringAction.isPending ? '记录中…' : '浇水'
+            }}</text>
           </button>
           <button
             id="user-plant-detail-edit-button"
@@ -72,7 +91,18 @@
           </button>
         </view>
 
-        <UserPlantAirEnvironmentCard :plant="plant" />
+        <view v-if="loadError" class="mx-4 mb-3 rounded-2xl bg-[#fff7ed] px-4 py-3">
+          <text class="block text-sm text-[#9a3412]">{{ loadError }}</text>
+          <button
+            id="user-plant-detail-inline-retry-button"
+            class="mt-2 rounded-xl bg-white px-4 py-2 text-xs text-[#9a3412]"
+            @click="loadPlant"
+          >
+            重新加载
+          </button>
+        </view>
+
+        <UserPlantAirEnvironmentCard :plant="plant" @saved="handleAirEnvironmentSaved" />
 
         <!-- 浇水信息 -->
         <view
@@ -188,6 +218,8 @@ import { useUserStore } from '@/store/user.js'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import FertilizationMonthlyTable from '@/components/FertilizationMonthlyTable.vue'
 import UserPlantAirEnvironmentCard from '@/components/UserPlantAirEnvironmentCard.vue'
+import { createAsyncActionGuard } from '@/utils/interaction-guard.js'
+import { parsePlantDateTime } from '@/utils/plant-datetime.js'
 
 const HTTP_SUCCESS_CODE = 200
 const props = defineProps({
@@ -198,7 +230,10 @@ const userStore = useUserStore()
 
 const plantId = computed(() => Number(props.plantId) || null)
 const plant = ref(null)
-const loading = ref(true)
+const loading = ref(false)
+const loadError = ref('')
+const wateringAction = createAsyncActionGuard()
+let loadVersion = 0
 const imageFileId = computed(() => plant.value?.imageFileId || plant.value?.photos?.[0] || '')
 const { url: imageUrl, resolve: resolveImageUrl, refresh: refreshImageUrl } = useFileUrl()
 const imageRetryCount = ref(0)
@@ -212,26 +247,73 @@ watch(
   { immediate: true }
 )
 
-onMounted(loadPlant)
+onMounted(async () => {
+  await loadPlant()
+})
+
+watch(plantId, (nextId, previousId) => {
+  if (nextId === previousId) {
+    return
+  }
+  loadVersion += 1
+  loading.value = false
+  plant.value = null
+  loadError.value = ''
+  if (nextId) {
+    loadPlant()
+  }
+})
 
 async function loadPlant() {
+  if (loading.value) {
+    return false
+  }
+  const version = ++loadVersion
+  const requestedPlantId = plantId.value
   loading.value = true
+  loadError.value = ''
   try {
-    if (!(await userStore.ensureLogin())) {
-      return
+    if (!requestedPlantId) {
+      loadError.value = '未找到这株植物的信息'
+      return false
     }
-    const response = await fetchUserPlant(plantId.value)
+    if (!(await userStore.ensureLogin())) {
+      loadError.value = '查看植物详情需要先登录'
+      return false
+    }
+    const response = await fetchUserPlant(requestedPlantId)
+    if (version !== loadVersion || requestedPlantId !== plantId.value) {
+      return false
+    }
     if (response?.code !== HTTP_SUCCESS_CODE || !response.data) {
-      return
+      loadError.value = '暂时无法加载植物信息，请稍后重试'
+      return false
     }
     plant.value = response.data
     plantStore.updateUserPlantLocal?.(plant.value.id, plant.value)
+    return true
   } catch {
-    uni.showToast({ title: '暂时无法加载植物信息，请检查网络后重试', icon: 'none' })
+    if (version === loadVersion && requestedPlantId === plantId.value) {
+      loadError.value = '暂时无法加载植物信息，请检查网络后重试'
+    }
+    return false
   } finally {
-    loading.value = false
+    if (version === loadVersion) {
+      loading.value = false
+    }
   }
 }
+
+function handleAirEnvironmentSaved(airEnvironment) {
+  if (!plant.value) {
+    return
+  }
+  plant.value = { ...plant.value, airEnvironment }
+  plantStore.applyAirEnvironmentLocal?.(plant.value.id, airEnvironment)
+  loadError.value = ''
+}
+
+defineExpose({ refresh: loadPlant })
 
 async function handleImageError() {
   if (!imageFileId.value || imageRetryCount.value >= 1) {
@@ -247,7 +329,8 @@ const isWaterOverdue = computed(() => {
   if (!plant.value?.nextWater) {
     return false
   }
-  return new Date(plant.value.nextWater) <= new Date()
+  const dueAt = parsePlantDateTime(plant.value.nextWater)
+  return Boolean(dueAt && dueAt.getTime() <= Date.now())
 })
 
 const wateringText = computed(() => {
@@ -342,9 +425,7 @@ function startDiagnosis() {
   const query = [
     `plantId=${encodeURIComponent(String(plantId.value || ''))}`,
     `plantName=${encodeURIComponent(plant.value?.displayName || '植物')}`,
-    plant.value?.plantId
-      ? `plantCatalogId=${encodeURIComponent(String(plant.value.plantId))}`
-      : '',
+    plant.value?.plantId ? `plantCatalogId=${encodeURIComponent(String(plant.value.plantId))}` : '',
     'entrySource=plant_detail'
   ]
     .filter(Boolean)
@@ -353,15 +434,26 @@ function startDiagnosis() {
 }
 
 async function doWatering() {
-  reportAnalyticsEvent(ANALYTICS_EVENTS.ENTER_USER_PLANT_WATERING)
-  const result = await plantStore.completeWatering(plantId.value)
-  if (result.success) {
-    reportAnalyticsEvent(ANALYTICS_EVENTS.WATERING_RECORDED)
-    await loadPlant()
-    uni.showToast({ title: '浇水完成', icon: 'success' })
-  } else {
-    uni.showToast({ title: '浇水记录暂未保存，请检查网络后重试', icon: 'none' })
-  }
+  return wateringAction.run(async () => {
+    reportAnalyticsEvent(ANALYTICS_EVENTS.ENTER_USER_PLANT_WATERING)
+    const result = await plantStore.completeWatering(plantId.value)
+    if (result.success) {
+      reportAnalyticsEvent(ANALYTICS_EVENTS.WATERING_RECORDED)
+      plant.value = {
+        ...plant.value,
+        lastWatered: result.data?.lastWatered || plant.value?.lastWatered,
+        nextWater: null,
+        wateringReminder: null
+      }
+      const refreshed = await loadPlant()
+      uni.showToast({
+        title: refreshed ? '浇水完成' : '已记录浇水，详情稍后更新',
+        icon: refreshed ? 'success' : 'none'
+      })
+    } else {
+      uni.showToast({ title: '浇水记录暂未保存，请检查网络后重试', icon: 'none' })
+    }
+  })
 }
 
 function editPlant() {
@@ -373,7 +465,8 @@ function editPlant() {
 function confirmDelete() {
   uni.showModal({
     title: '确认删除',
-    content: '将永久删除这株植物及其养护、提醒和诊断记录。已添加到手机日历的提醒不会自动删除，请手动移除。',
+    content:
+      '将永久删除这株植物及其养护、提醒和诊断记录。已添加到手机日历的提醒不会自动删除，请手动移除。',
     confirmText: '删除',
     confirmColor: '#F44336',
     success: async res => {
@@ -397,7 +490,10 @@ function getDaysAgo(date) {
   if (!date) {
     return '未知'
   }
-  const d = new Date(date)
+  const d = parsePlantDateTime(date)
+  if (!d) {
+    return '未知'
+  }
   const days = Math.floor((new Date() - d) / (1000 * 60 * 60 * 24))
   if (days === 0) {
     return '今天添加'
@@ -409,7 +505,10 @@ function formatNextTime(time) {
   if (!time) {
     return ''
   }
-  const date = new Date(time)
+  const date = parsePlantDateTime(time)
+  if (!date) {
+    return ''
+  }
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
@@ -434,7 +533,10 @@ function formatDate(dateString) {
   if (!dateString) {
     return ''
   }
-  const date = new Date(dateString)
+  const date = parsePlantDateTime(dateString)
+  if (!date) {
+    return ''
+  }
   const now = new Date()
   const diffMs = now - date
   const diffMins = Math.floor(diffMs / (1000 * 60))

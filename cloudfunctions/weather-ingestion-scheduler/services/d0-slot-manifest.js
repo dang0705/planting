@@ -14,7 +14,9 @@ const {
 } = require('./now-sample-slots')
 
 const MANIFEST_SCHEMA_VERSION = 'weather-cache/v1/d0-slot-manifest'
-const DEFAULT_BATCH_SIZE = 5
+// 固定 D0 timer 每天只触发一次；未显式配置限流时必须覆盖全部热门城市。
+// 需要分批压测或控制单次耗时时，可通过 WEATHER_D0_SLOT_BATCH_SIZE 覆盖。
+const DEFAULT_BATCH_SIZE = 20
 
 function formatShanghaiDate(date) {
   try {

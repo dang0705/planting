@@ -96,12 +96,11 @@ function compatibilityMiniProgram(serializedSources) {
 
 globalThis.wx = {
   cloud: {
-    __plantingGetCloudbaseAccessToken: async () => 'platform-access-token',
     callFunction: options => {
       options.success({
         result: {
           openid: 'runtime-openid',
-          httpIdentityTicket: 'ignored-legacy-ticket'
+          httpIdentityTicket: 'runtime-identity-ticket'
         }
       })
     }
@@ -110,11 +109,6 @@ globalThis.wx = {
     successfulCallbacks = callbacks
   }
 }
-globalThis.getApp = () => ({
-  globalData: {
-    __plantingGetCloudbaseAccessToken: async () => 'platform-access-token'
-  }
-})
 try {
   const serializedSources = []
   const success = await probeWxRequest({
@@ -155,11 +149,11 @@ try {
   assert.equal(authenticated.passed, true)
   assert.equal(authenticated.identity_required, true)
   assert.equal(authenticated.identity_resolved, true)
-  assert.equal(authenticated.access_token_resolved, true)
+  assert.equal(authenticated.access_token_resolved, false)
   assert.equal(authenticated.identity_ticket_resolved, true)
   assert.deepEqual(authenticatedRequest.header, {
-    Authorization: 'Bearer platform-access-token',
-    'x-planting-http-identity-ticket': 'ignored-legacy-ticket'
+    Authorization: 'Bearer runtime-identity-ticket',
+    'x-planting-http-identity-ticket': 'runtime-identity-ticket'
   })
 
   const rejectedSlot = '__dispatchQaWxRequest_test_rejected_status'

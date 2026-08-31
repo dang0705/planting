@@ -15,8 +15,8 @@ async function loadHttpRequestModule({ isLocal, devOpenid, identity = {} }) {
       `const BASE_URL = 'https://functions.example.com';\nconst IS_LOCAL_API_BASE_URL = ${isLocal};\nconst shouldAppendWebFunctionFlag = () => true`
     )
     .replace(
-      "import {\n  getCloudbaseAccessToken,\n  getCloudbaseUserIdentity\n} from '@/utils/cloudbase-auth'",
-      `const getCloudbaseUserIdentity = async () => (${JSON.stringify(identity)});\nconst getCloudbaseAccessToken = async () => (${JSON.stringify(identity.accessToken || '')})`
+      "import { getCloudbaseUserIdentity } from '@/utils/cloudbase-auth'",
+      `const getCloudbaseUserIdentity = async () => (${JSON.stringify(identity)})`
     )
     .replace(
       "import { getRequestAppEnvHeader } from '@/utils/runtime-env'",
@@ -55,18 +55,14 @@ try {
     devOpenid: 'dev_terminal_mp_local',
     identity: {
       openid: 'wx_live_user',
-      httpIdentityTicket: 'planting-http-v1.payload.signature',
-      accessToken: 'platform-access-token'
+      httpIdentityTicket: 'planting-http-v1.payload.signature'
     }
   })
   const remoteHeaders = await remoteMiniProgramModule.resolveHttpFunctionAuth({
     headers: { Authorization: 'Bearer attacker-controlled' }
   })
-  assert.equal(remoteHeaders.Authorization, 'Bearer platform-access-token')
-  assert.equal(
-    remoteHeaders['x-planting-http-identity-ticket'],
-    'planting-http-v1.payload.signature'
-  )
+  assert.equal(remoteHeaders.Authorization, 'Bearer planting-http-v1.payload.signature')
+  assert.equal(remoteHeaders['x-planting-http-identity-ticket'], undefined)
   assert.equal(remoteHeaders['x-wx-openid'], undefined)
   assert.equal(remoteHeaders['x-openid'], undefined)
 
@@ -100,12 +96,37 @@ try {
   assert.equal(capturedNativeRequest?.header['x-app-env'], 'development')
   assert.equal(capturedNativeRequest?.header.Authorization, 'Bearer unused-ticket')
 
+  let capturedPublicNativeRequest = null
+  globalThis.wx = {
+    cloud: {
+      callHTTPFunction(options) {
+        capturedPublicNativeRequest = options
+        options.success({ statusCode: 200, data: { code: 200 } })
+        return {}
+      }
+    }
+  }
+  const publicNativeModule = await loadHttpRequestModule({
+    isLocal: false,
+    devOpenid: 'dev_terminal_mp_local',
+    identity: {}
+  })
+  await publicNativeModule.httpRequest({ auth: false })({
+    functionPath: 'plant-catalog-http/catalog/health'
+  })
+  assert.equal(
+    capturedPublicNativeRequest?.header.Authorization,
+    undefined,
+    'auth:false 的原生请求不得强制建立微信身份'
+  )
+  assert.equal(capturedPublicNativeRequest?.header['x-app-env'], 'development')
+
   const ticketlessMiniProgramModule = await loadHttpRequestModule({
     isLocal: false,
     devOpenid: 'dev_terminal_mp_local',
     identity: { openid: 'wx_live_user' }
   })
-  await assert.rejects(ticketlessMiniProgramModule.resolveHttpFunctionAuth(), /登录态获取失败/)
+  await assert.rejects(ticketlessMiniProgramModule.resolveHttpFunctionAuth(), /身份票据获取失败/)
 
   delete globalThis.wx
   const remoteH5Module = await loadHttpRequestModule({

@@ -291,10 +291,10 @@ try {
     service
   })
 
-  assert.ok(fallbackResult.currentWeather, 'fallback 命中时 currentWeather 应非 null')
-  assert.equal(fallbackResult.todayWeatherSource, 'day_finalized_rollup_fallback')
-  assert.equal(fallbackResult.todayWeatherReason, 'day_finalized_rollup_fallback')
-  assert.equal(fallbackResult.currentWeather.cacheSource, 'day_finalized_rollup')
+  assert.equal(fallbackResult.currentWeather, null, '旧日期 finalized rollup 不得冒充今天')
+  assert.equal(fallbackResult.todayWeatherSource, 'missing')
+  assert.equal(fallbackResult.todayWeatherReason, 'day_latest_sample_missing')
+  assert.equal(fallbackResult.todayWeatherFallbackDate, d1Date)
 
   // ===== 4. buildEnvironmentWeatherWindowByMode: 诊断模式保留 currentWeather、omit forecastDays =====
   const diagnosisWindow = {

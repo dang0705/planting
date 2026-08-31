@@ -1,8 +1,11 @@
-import { defineStore } from 'pinia'
+import { defineStore, getActivePinia } from 'pinia'
 import { loginWithCode, loginWithPhone, getUserById } from '@/api/wechat'
 import { getCloudbaseUserIdentity } from '@/utils/cloudbase-auth'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import { normalizeWeatherCoordinates } from '@/utils/weather-coordinate.js'
+import { queryClient } from '@/lib/query-client.js'
+import { USER_PLANTS_QUERY_KEY } from '@/vue-query/plants/queries/user-plants.js'
+import { DIAGNOSIS_HISTORY_QUERY_KEY } from '@/constants/query-keys.js'
 
 const MINI_PROGRAM_AUTH_CACHE_MS = 30 * 1000
 let miniProgramAuthSyncPromise = null
@@ -15,6 +18,36 @@ function isMiniProgramRuntime() {
 
 function isMissingUserError(error) {
   return /用户不存在/u.test(String(error?.message || error || ''))
+}
+
+function isActiveMembership(membership = {}) {
+  const type = String(membership.type || 'free')
+  if (!['basic', 'premium'].includes(type)) {
+    return false
+  }
+  if (membership.status && membership.status !== 'active') {
+    return false
+  }
+  if (!membership.expireTime) {
+    return true
+  }
+  const expireTime =
+    typeof membership.expireTime === 'number'
+      ? membership.expireTime
+      : Date.parse(String(membership.expireTime))
+  return Number.isFinite(expireTime) && expireTime > Date.now()
+}
+
+function buildMembership(user = {}) {
+  const type = user.subscription_plan || 'free'
+  const isPaidPlan = ['basic', 'premium'].includes(type)
+  return {
+    type,
+    status: user.subscription_status || 'active',
+    expireTime: user.subscription_endDate || null,
+    freeQuota: isPaidPlan ? 999 : Math.max(0, 5 - (user.usage_diagnoseMonth || 0)),
+    usedCount: user.usage_diagnoseTotal || 0
+  }
 }
 
 export const useUserStore = defineStore('user', {
@@ -39,7 +72,8 @@ export const useUserStore = defineStore('user', {
 
     // 会员信息
     membership: {
-      type: 'free', // free | premium
+      type: 'free', // free | basic | premium
+      status: 'active',
       expireTime: null,
       freeQuota: 5, // 剩余免费诊断次数
       usedCount: 0
@@ -57,13 +91,11 @@ export const useUserStore = defineStore('user', {
   }),
 
   getters: {
-    isPremium: state => state.membership.type === 'premium',
-    canDiagnose: state => {
-      if (state.membership.type === 'premium') {
-        return true
-      }
-      return state.membership.freeQuota > 0
-    },
+    isMember: state => isActiveMembership(state.membership),
+    isPremium: state => state.membership.type === 'premium' && isActiveMembership(state.membership),
+    canDiagnose: state =>
+      isActiveMembership(state.membership) ||
+      (state.membership.type === 'free' && state.membership.freeQuota > 0),
     displayName: state => state.nickname || state.username || '植物爱好者',
     isAuthenticated: state => Boolean(state.openid)
   },
@@ -216,16 +248,7 @@ export const useUserStore = defineStore('user', {
       this.isLoggedIn = true
 
       // 从服务端同步会员信息
-      this.membership = {
-        type: user.subscription_plan || 'free',
-        expireTime: user.subscription_endDate || null,
-        // premium 用户无限次，free 用户根据月度使用情况计算剩余次数（每月5次）
-        freeQuota:
-          user.subscription_plan === 'premium'
-            ? 999
-            : Math.max(0, 5 - (user.usage_diagnoseMonth || 0)),
-        usedCount: user.usage_diagnoseTotal || 0
-      }
+      this.membership = buildMembership(user)
     },
 
     /**
@@ -286,7 +309,7 @@ export const useUserStore = defineStore('user', {
       if (this.membership.type === 'free' && this.membership.freeQuota > 0) {
         this.membership.freeQuota--
         this.membership.usedCount++
-      } else if (this.membership.type === 'premium') {
+      } else if (isActiveMembership(this.membership)) {
         this.membership.usedCount++
       }
     },
@@ -296,6 +319,7 @@ export const useUserStore = defineStore('user', {
      */
     upgradeToPremium(expireTime) {
       this.membership.type = 'premium'
+      this.membership.status = 'active'
       this.membership.expireTime = expireTime
     },
 
@@ -303,6 +327,10 @@ export const useUserStore = defineStore('user', {
      * 登出
      */
     logout() {
+      const plantStore = getActivePinia()?._s?.get('plants')
+      plantStore?.$reset?.()
+      queryClient.removeQueries({ queryKey: USER_PLANTS_QUERY_KEY })
+      queryClient.removeQueries({ queryKey: DIAGNOSIS_HISTORY_QUERY_KEY })
       this.userId = ''
       this.openid = ''
       this.union_id = ''
@@ -315,6 +343,7 @@ export const useUserStore = defineStore('user', {
       this.isLoggedIn = false
       this.membership = {
         type: 'free',
+        status: 'active',
         expireTime: null,
         freeQuota: 5,
         usedCount: 0
@@ -333,15 +362,7 @@ export const useUserStore = defineStore('user', {
         const user = await getUserById(this.openid)
         if (user) {
           // 更新会员信息
-          this.membership = {
-            type: user.subscription_plan || 'free',
-            expireTime: user.subscription_endDate || null,
-            freeQuota:
-              user.subscription_plan === 'premium'
-                ? 999
-                : Math.max(0, 5 - (user.usage_diagnoseMonth || 0)),
-            usedCount: user.usage_diagnoseTotal || 0
-          }
+          this.membership = buildMembership(user)
 
           // 更新其他可能变化的信息
           this.nickname = user.profile_wechatNickname || user.nickname || this.nickname

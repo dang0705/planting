@@ -1,6 +1,7 @@
 import { buildQuestionAnswerPayload, normalizeDiagnosisResult } from '../utils/diagnose-flow.js'
 import { preserveDiagnosisContinuationContext } from '@/subpackages/diagnosis/diagnose-flow/retake-continuation.js'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
+import { invalidateDiagnosisHistoryQueries } from '../vue-query/diagnosis-history/queries/history.js'
 
 export async function submitQuestionPackageAnswers({
   result,
@@ -53,6 +54,9 @@ export async function submitQuestionPackageAnswers({
     diagnosis: nextResult,
     diagnosisId: nextResult.diagnosisSessionId || ''
   })
+  await invalidateDiagnosisHistoryQueries(
+    currentResult?.userPlantId || currentResult?.plantId || null
+  )
   uni.showToast({
     title: nextResult.retakeRequest
       ? '请按提示完成补拍'

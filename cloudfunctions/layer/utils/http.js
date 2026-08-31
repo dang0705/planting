@@ -138,7 +138,17 @@ function resolveOverrideMethod(rawHeaders = {}, query = {}, body = {}) {
 
 function getHttpRequestData(event, context) {
   const httpContext = context?.httpContext || {}
-  const rawHeaders = httpContext.headers || event?.headers || {}
+  // CloudBase HTTP functions can expose headers on both the event and
+  // context.httpContext. The context object may contain only framework
+  // headers, so selecting it with `||` silently drops application headers
+  // (including the signed identity ticket). Merge both sources before
+  // normalizing them in resolveHttpUserInfo.
+  const rawHeaders = {
+    ...(event?.headers && typeof event.headers === 'object' ? event.headers : {}),
+    ...(httpContext.headers && typeof httpContext.headers === 'object'
+      ? httpContext.headers
+      : {})
+  }
   const queryFromContext =
     httpContext.query && typeof httpContext.query === 'object' ? httpContext.query : {}
   const queryFromEvent = event?.query && typeof event.query === 'object' ? event.query : {}

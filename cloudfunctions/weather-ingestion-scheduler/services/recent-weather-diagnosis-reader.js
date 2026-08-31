@@ -215,7 +215,10 @@ function createDiagnosisRecentWeatherReader({
     ) {
       result = null
     }
-    const allowArchiveRebuild = input.allowArchiveRebuild === true
+    // 诊断读取默认允许从已定稿的 day archive 自愈重建 recent-10d。
+    // 这不调用外部天气服务，只使用已有归档；只有调用方明确传 false 时才关闭，
+    // 避免定时任务漏跑后把真实历史天气静默显示为空。
+    const allowArchiveRebuild = input.allowArchiveRebuild !== false
     if (!result?.payload && allowArchiveRebuild) {
       result = await rebuildRecentWeatherFromArchives({
         locationKey,

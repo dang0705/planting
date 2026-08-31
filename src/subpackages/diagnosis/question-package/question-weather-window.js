@@ -2,7 +2,8 @@ import { ref } from 'vue'
 import { getEnvironmentWeatherWindow } from '@/api/weather.js'
 import {
   buildWeatherByDateFromEnvironmentWeatherWindow,
-  mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline
+  mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline,
+  resolveEnvironmentWeatherWindowNotice
 } from '@/utils/care-behavior-weather-window.js'
 import { isCareBehaviorWateringTimelineQuestion } from '@/utils/care-behavior-timeline.js'
 import { isLightEnvironmentQuestion } from '@/utils/light-environment.js'
@@ -31,6 +32,9 @@ export function useEnvironmentWeatherWindow({ result, plantStore, userStore }) {
       return false
     }
     const weatherByDate = buildWeatherByDateFromEnvironmentWeatherWindow(weatherWindow)
+    // 这是给用户看的状态，不暴露缓存、重建或接口内部原因；partial 也不能
+    // 静默显示成完整十天，避免用户误以为每一天都有天气依据。
+    environmentWeatherWindowError.value = resolveEnvironmentWeatherWindowNotice(weatherWindow)
     if (!Object.keys(weatherByDate).length) {
       return false
     }

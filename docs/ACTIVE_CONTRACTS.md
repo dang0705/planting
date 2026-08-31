@@ -643,6 +643,24 @@ getUserByEmail
 
 事实源：`cloudfunctions/auth-user-http/app.js`。
 
+## 8.1 微信支付订阅后端契约
+
+`subscription-http` 与 `subscription-notify-http` 是独立的 HTTPS 云函数，当前只承载一次性月卡（不是自动续费协议）和微信支付回调：
+
+- `GET /subscription/plans` 返回服务端套餐；未配置 `WECHAT_PAY_SUBSCRIPTION_PLANS_JSON` 时使用内置的 `free` 免费方案和 `premium_30d` 1 分/30 天开发测试方案，价格和时长不从客户端取。
+- 免费方案只用于展示当前免费档，不创建支付订单；支付套餐使用一次性 JSAPI 小程序支付，购买成功后获得 30 天会员，不自动续费。
+- `POST /subscription/orders` 需要登录态，入参为 `planId` 和客户端幂等号 `clientRequestId`；服务端从认证身份解析 openid，创建待支付订单，调用微信小程序/JSAPI 下单接口并返回 `wx.requestPayment` 所需参数。
+- `GET /subscription/orders?outTradeNo=...` 需要登录态，只能读取当前用户自己的订单。
+- `POST /subscription/notify` 由只处理回调的 `subscription-notify-http` 接收，不走用户登录态；必须校验微信回调签名、时间窗口、平台序列号并用 API v3 密钥解密，再在 MySQL 事务中校验商户、金额、币种、openid，幂等更新订单和 `users.subscription_*`。`subscription-http` 不开放匿名调用。
+- 订单表为 `subscription_orders`，当前迁移源为 `scripts/sql/ensure-subscription-orders-table-20260830.sql`，仅准备 `cloud1_dev`，未由本变更自动执行。
+- 下单接口先把订单标为 `prepay_processing`，同一客户端幂等号的并发请求不会重复调用微信；微信统一下单失败后订单进入 `prepay_failed`，可以复用同一幂等号重试。
+- 运行时必须配置 `WECHAT_PAY_APPID`、`WECHAT_PAY_MCHID`、`WECHAT_PAY_MERCHANT_SERIAL_NO`、商户私钥、`WECHAT_PAY_API_V3_KEY`、平台公钥及序列号、`WECHAT_PAY_NOTIFY_URL`；套餐金额字段 `amountFen` 使用人民币分；密钥不得写入 `cloudbaserc.json` 或源码。
+- 部署时仅给 `subscription-notify-http` 配置可接收微信回调的匿名访问规则，环境函数规则保留 `* -> auth != null`；订单接口仍由应用层登录态保护，不能把客户端传入的 `userId/openid` 当作身份依据。
+- 前端入口位于 `src/pages/profile/profile.vue`，页面位于 `src/subpackages/subscription/subscription.vue`；页面只提交 `planId/clientRequestId`，展示服务端套餐，并在订单查询确认为 `paid` 后刷新用户会员状态。
+- 页面请求封装位于 `src/api/subscription.js`；`GET /subscription/plans` 返回 `data.plans`，订单查询返回 `data` 中的订单对象，支付下单返回 `data.order/data.payment`。
+
+事实源：`cloudfunctions/subscription-http/`、`scripts/sql/ensure-subscription-orders-table-20260830.sql`。
+
 ## 9. 已退役契约
 
 `diagnosis-history-http` 已下线：

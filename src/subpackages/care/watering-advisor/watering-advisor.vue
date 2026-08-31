@@ -299,6 +299,7 @@
         <button
           id="watering-advisor-back-2"
           class="m-0 h-[52px] flex-1 rounded-2xl border border-[#2d7a4f] bg-white p-0 text-base font-bold leading-[52px] text-[#2d7a4f]"
+          :disabled="computing"
           @click="goBackToPotProfile"
         >
           {{ plannerResult ? '重新输入' : '返回重新输入' }}
@@ -373,7 +374,7 @@ const {
   loadError: airEnvironmentLoadError,
   loading: airEnvironmentLoading
 } = airEnvironment
-const { weatherDays, forecastDays, plannerLocationKey, loadWeatherDays } =
+const { weatherDays, forecastDays, plannerLocationKey, loadWeatherDays, resetWeatherDays } =
   useWateringAdvisorWeather({ selectedCatalogPlant, plantStore, userStore })
 const selectedCatalogPlantName = computed(
   () =>
@@ -429,13 +430,20 @@ const amountText = computed(() => {
   return formatMlRangeToBottleText(range)
 })
 function selectCatalogPlant(plant) {
+  if (computing.value) {
+    return
+  }
   selectedCatalogPlant.value = plant
   selectedUserPlantId.value = null
   wateringConfirmed.value = false
   airEnvironment.reset()
   resetWateringAirEnvironment()
+  resetWeatherDays()
 }
 async function selectUserPlant(plant) {
+  if (computing.value) {
+    return
+  }
   selectedUserPlantId.value = plant.id
   selectedCatalogPlant.value = {
     plantIdentityId: plant.plantIdentityId || '',
@@ -453,6 +461,7 @@ async function selectUserPlant(plant) {
   }
   wateringConfirmed.value = false
   airEnvironment.reset(plant.id)
+  resetWeatherDays()
   await loadForUserPlant(plant.id)
 }
 function goToNextStep() {
@@ -475,12 +484,21 @@ function goToPotProfile() {
   activeStep.value = potProfileStep.value
 }
 function goToSourceStep() {
+  if (computing.value) {
+    return
+  }
   activeStep.value = STEP_SOURCE
 }
 function goBackToPotProfile() {
+  if (computing.value) {
+    return
+  }
   activeStep.value = potProfileStep.value
 }
 function goBackFromPotProfile() {
+  if (computing.value) {
+    return
+  }
   activeStep.value = isUserPlant.value ? AIR_ENVIRONMENT_STEP : STEP_SOURCE
 }
 function handleAirEnvironmentChange(value) {
@@ -606,8 +624,14 @@ function loadInitialCatalog() {
   searchRef.value?.loadPlants('')
 }
 
+let hasShownOnce = false
 onShow(() => {
-  // Refresh when returning to this page after the child ref already exists.
+  // Child onMounted already performs the first load; only refresh on a real
+  // return to the page so the initial lifecycle does not issue two requests.
+  if (!hasShownOnce) {
+    hasShownOnce = true
+    return
+  }
   loadInitialCatalog()
 })
 </script>

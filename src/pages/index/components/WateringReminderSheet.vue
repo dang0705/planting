@@ -7,6 +7,7 @@
       close-id="watering-reminder-close-button"
       confirm-id="watering-reminder-confirm-button"
       title="添加浇水提醒"
+      height-mode="fullHeight"
       :confirm-text="addToCalendarText"
       loading-text="计算中..."
       show-confirm
@@ -132,6 +133,8 @@
           id-prefix="home-watering"
           :sticky="true"
           :timeline="timelineInput"
+          :loading="reminderLoading || weatherLoading"
+          :error="weatherError"
           :enable-dose-per-date="true"
           :pot-volume-ml="potVolumeMl"
           @change="onTimelineChange"
@@ -233,6 +236,7 @@ const {
   loading,
   hasWeatherRef,
   weatherLoading,
+  weatherError,
   environmentWeatherWindow,
   plannerLocationKey,
   plannerTimezone,

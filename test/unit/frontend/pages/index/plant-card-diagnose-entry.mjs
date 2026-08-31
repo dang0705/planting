@@ -51,10 +51,7 @@ assert.match(
 )
 
 // 契约 3：首页直接进入承载完整诊断流的分包 flow 页面，并保留目录植物上下文。
-assert.match(
-  indexSource,
-  /plantCatalogId = plant\.plantId/
-)
+assert.match(indexSource, /plantCatalogId = plant\.plantId/)
 assert.match(indexSource, /entrySource=plant_card/)
 assert.doesNotMatch(indexSource, /DiagnosePopup|diagnosePopupRef/)
 // 确保没有平行匿名诊断弹窗。
@@ -94,6 +91,10 @@ assert.match(
 assert.match(plantCardSource, /label: '状态待评估'/)
 assert.match(plantCardSource, /label: '需要关注'/)
 assert.doesNotMatch(plantCardSource, /<text>健康<\/text>/)
+assert.match(plantCardSource, /v-if="needsWatering"[\s\S]*>\s*<text>需浇水<\/text>/)
+assert.match(plantCardSource, /const needsWatering = computed\(\(\) => \{/)
+assert.match(plantCardSource, /parsePlantDateTime\(nextWater\)/)
+assert.match(plantCardSource, /dueAt\.getTime\(\) <= Date\.now\(\)/)
 
 // 契约 5：plantStore.hasPlants 必须基于真实 userPlants 长度，不得有匿名兜底。
 assert.match(

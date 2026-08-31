@@ -174,9 +174,8 @@ export async function probeWxRequest({
             error: message
           }
         }
-        var sendRequest = function (identity, accessToken) {
+        var sendRequest = function (identity) {
           var openid = identity && identity.openid ? String(identity.openid) : ''
-          var bearerToken = accessToken ? String(accessToken).trim() : ''
           var identityTicket =
             identity && identity.httpIdentityTicket
               ? String(identity.httpIdentityTicket).trim()
@@ -267,10 +266,6 @@ export async function probeWxRequest({
             }
             return
           }
-          if (requireIdentity === true && !bearerToken) {
-            finishFailure('微信登录态不可用，请重新打开小程序')
-            return
-          }
           if (requireIdentity === true && !identityTicket) {
             finishFailure('微信身份校验信息缺失，请重新打开小程序')
             return
@@ -292,7 +287,7 @@ export async function probeWxRequest({
                   response_code: responseCode,
                   identity_required: requireIdentity === true,
                   identity_resolved: Boolean(openid),
-                  access_token_resolved: Boolean(bearerToken),
+                  access_token_resolved: false,
                   identity_ticket_resolved: Boolean(identityTicket),
                   native_http_function: false
                 }
@@ -304,7 +299,7 @@ export async function probeWxRequest({
                   ok: false,
                   identity_required: requireIdentity === true,
                   identity_resolved: Boolean(openid),
-                  access_token_resolved: Boolean(bearerToken),
+                  access_token_resolved: false,
                   identity_ticket_resolved: Boolean(identityTicket),
                   native_http_function: false,
                   error: errorMessage
@@ -318,7 +313,7 @@ export async function probeWxRequest({
                     ok: false,
                     identity_required: requireIdentity === true,
                     identity_resolved: Boolean(openid),
-                    access_token_resolved: Boolean(bearerToken),
+                    access_token_resolved: false,
                     identity_ticket_resolved: Boolean(identityTicket),
                     native_http_function: false,
                     error: 'wx.request completed without success or fail result'
@@ -326,12 +321,9 @@ export async function probeWxRequest({
                 }
               }
             }
-            if (bearerToken) {
-              requestOptions.header = requestOptions.header || {}
-              requestOptions.header.Authorization = 'Bearer ' + bearerToken
-            }
             if (identityTicket) {
               requestOptions.header = requestOptions.header || {}
+              requestOptions.header.Authorization = 'Bearer ' + identityTicket
               requestOptions.header['x-planting-http-identity-ticket'] = identityTicket
             }
             wx.request(requestOptions)
@@ -340,35 +332,8 @@ export async function probeWxRequest({
             finishFailure(message)
           }
         }
-        var resolveTokenAndSend = function (identity) {
-          var getAccessToken =
-            wx.cloud && wx.cloud.__plantingGetCloudbaseAccessToken
-              ? wx.cloud.__plantingGetCloudbaseAccessToken
-              : null
-          if (typeof getAccessToken !== 'function' && typeof getApp === 'function') {
-            var app = getApp()
-            var globalData = app && app.globalData
-            getAccessToken = globalData && globalData.__plantingGetCloudbaseAccessToken
-          }
-          if (typeof getAccessToken !== 'function') {
-            finishFailure('微信登录态不可用，请重新打开小程序')
-            return
-          }
-          try {
-            Promise.resolve(getAccessToken()).then(
-              function (accessToken) {
-                sendRequest(identity, accessToken)
-              },
-              function (error) {
-                finishFailure(error && error.message ? error.message : String(error))
-              }
-            )
-          } catch (error) {
-            finishFailure(error && error.message ? error.message : String(error))
-          }
-        }
         if (requireIdentity !== true) {
-          sendRequest('', '')
+          sendRequest({})
           return { started: true, identity_required: false }
         }
         if (!wx.cloud || typeof wx.cloud.callFunction !== 'function') {
@@ -381,7 +346,7 @@ export async function probeWxRequest({
             data: {},
             success: function (result) {
               var identity = result && result.result ? result.result : {}
-              resolveTokenAndSend(identity)
+              sendRequest(identity)
             },
             fail: function (error) {
               finishFailure(error && error.errMsg ? error.errMsg : String(error))
@@ -432,8 +397,7 @@ export async function probeWxRequest({
               (observation.identity_resolved === true &&
                 Number(observation.response_code) === 200 &&
                 (observation.native_http_function === true ||
-                  (observation.access_token_resolved === true &&
-                    observation.identity_ticket_resolved === true))))
+                  observation.identity_ticket_resolved === true)))
         }
         return result
       }

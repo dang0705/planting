@@ -62,7 +62,9 @@ function startStorageRead(storage, input = {}) {
 
 function buildCurrentWeatherDataFromLatestSample({ sample = {}, cacheSource = '' } = {}) {
   const temperature = sample.temp ?? 0
+  const weatherDate = String(sample.obsTime || sample.sampledAt || '').slice(0, 10)
   return {
+    ...(weatherDate ? { weatherDate } : {}),
     temperature,
     humidity: sample.humidity ?? 0,
     weather: sample.text || '未知',
@@ -99,7 +101,9 @@ function buildCurrentWeatherDataFromDailyRollup({ rollup = {}, cacheSource = '' 
   const lightFeatures = rollup.lightFeatures || {}
 
   const temperature = tempFeatures.tempMean ?? rollup.temp ?? 0
+  const weatherDate = String(rollup.date || '').slice(0, 10)
   return {
+    ...(weatherDate ? { weatherDate } : {}),
     temperature,
     humidity: moistureFeatures.humidityMean ?? rollup.humidity ?? 0,
     weather: rollup.dominantWeatherText || rollup.text || '未知',

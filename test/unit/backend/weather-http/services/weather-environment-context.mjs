@@ -91,6 +91,111 @@ assert.equal(
 assert.equal(windowPayload.forecastDays.filter(day => day.uvIndex === 8).length, 4)
 assert.equal(windowPayload.meta.todaySource, 'forecast_15d_with_weather_now')
 
+// cacheWindow 模式：历史 D-10..D-1 与 D0 由诊断缓存提供，环境窗口只请求未来预报。
+const historicalCallCountBeforeCacheWindow = calls.historicalDates.length
+const currentCallCountBeforeCacheWindow = calls.current
+const forecastCallCountBeforeCacheWindow = calls.forecast
+const cacheWindowPayload = await buildEnvironmentWeatherWindow({
+  lat: 31.2,
+  lng: 121.5,
+  locationKey: 'city:shanghai',
+  diagnosisDate: '2026-05-27',
+  adapter,
+  cacheWindow: {
+    locationKey: 'city:shanghai',
+    historicalDays: [
+      {
+        date: '2026-05-25',
+        tempMaxC: 25,
+        tempMinC: 18,
+        humidity: 66,
+        source: 'weather_cache_daily_archive',
+        sourceKind: 'observed_now_rollup'
+      },
+      {
+        date: '2026-05-26',
+        source: 'weather_cache_daily_missing',
+        sourceKind: 'weather_cache_daily_missing',
+        missing: true,
+        quality: 'missing'
+      }
+    ],
+    currentWeather: {
+      tempC: 29,
+      humidity: 60,
+      text: '晴',
+      weatherDate: '2026-05-27',
+      source: 'weather_cache_day_latest_sample',
+      cacheSource: 'day_latest_sample'
+    },
+    todayWeatherSource: 'day_latest_sample',
+    todayWeatherReason: 'day_latest_sample_present',
+    weatherEvidenceInsufficient: false,
+    meta: {
+      sourceKind: 'weather_cache_recent_10d',
+      quality: 'partial',
+      weatherObjectPath: 'weather-cache/v1/locations/city:shanghai/recent-10d.json',
+      historicalWindow: { start: '2026-05-25', end: '2026-05-26' },
+      warnings: ['historical_cache_partial']
+    }
+  }
+})
+
+assert.equal(cacheWindowPayload.meta.sourceKind, 'weather_cache_recent_10d')
+assert.equal(cacheWindowPayload.meta.quality, 'partial')
+assert.equal(cacheWindowPayload.meta.todaySource, 'day_latest_sample')
+assert.equal(cacheWindowPayload.meta.todayWeatherSource, 'day_latest_sample')
+assert.equal(cacheWindowPayload.meta.todayWeatherReason, 'day_latest_sample_present')
+assert.equal(cacheWindowPayload.currentWeather.source, 'weather_cache_day_latest_sample')
+assert.equal(cacheWindowPayload.historicalDays[0].source, 'weather_cache_daily_archive')
+assert.equal(cacheWindowPayload.historicalDays[1].missing, true)
+assert.equal(cacheWindowPayload.forecastDays.length, 15)
+assert.equal(cacheWindowPayload.forecastDays[0].date, '2026-05-27')
+assert.equal(cacheWindowPayload.forecastDays[0].source, 'weather_cache_day_latest_sample')
+assert.equal(cacheWindowPayload.forecastDays[0].sourceKind, 'weather_now_sample')
+assert.equal(cacheWindowPayload.forecastDays[1].date, '2026-05-28')
+assert.equal(cacheWindowPayload.forecastDays.filter(day => day.date === '2026-05-27').length, 1)
+assert.equal(cacheWindowPayload.meta.forecastWindow.start, '2026-05-27')
+assert.equal(cacheWindowPayload.meta.forecastWindow.end, '2026-06-10')
+assert.equal(
+  calls.current,
+  currentCallCountBeforeCacheWindow,
+  'cacheWindow 不得再次调用 QWeather now'
+)
+assert.equal(
+  calls.historicalDates.length,
+  historicalCallCountBeforeCacheWindow,
+  'cacheWindow 不得调用 QWeather historical'
+)
+assert.equal(calls.forecast, forecastCallCountBeforeCacheWindow + 1, 'cacheWindow 仍需请求未来预报')
+
+const localCacheWindowPayload = await buildEnvironmentWeatherWindow({
+  lat: 31.2,
+  lng: 121.5,
+  diagnosisDate: '2026-05-27',
+  appEnv: 'development',
+  cacheWindow: {
+    historicalDays: [
+      {
+        date: '2026-05-26',
+        tempMaxC: 24,
+        source: 'weather_cache_daily_archive',
+        sourceKind: 'observed_now_rollup'
+      }
+    ],
+    currentWeather: null,
+    todayWeatherSource: 'missing',
+    todayWeatherReason: 'day_latest_sample_missing',
+    weatherEvidenceInsufficient: false,
+    meta: { sourceKind: 'weather_cache_recent_10d', quality: 'partial' }
+  }
+})
+assert.equal(localCacheWindowPayload.historicalDays.length, 1)
+assert.equal(localCacheWindowPayload.historicalDays[0].source, 'weather_cache_daily_archive')
+assert.equal(localCacheWindowPayload.forecastDays.length, 14)
+assert.equal(localCacheWindowPayload.forecastDays[0].source, 'local_dev_fallback')
+assert.equal(localCacheWindowPayload.currentWeather, null)
+
 console.log('weather-environment-context tests passed')
 
 const qweatherAdapterPath =
@@ -197,8 +302,10 @@ async function runQWeatherAdapterTests() {
 
   assert.equal(nowPayload.tempC, 27)
   assert.equal(nowPayload.text, '阴')
+  assert.equal(nowPayload.weatherDate, '2026-06-01')
   assert.equal(forecastPayload.length, 1)
   assert.equal(forecastPayload[0].date, '2026-06-01')
+  assert.equal(forecastPayload[0].source, 'qweather_forecast_15d')
   assert.equal(historyPayload.date, '20260522')
   assert.equal(lookupCalls, 1, '历史数据应先请求一次地理反查')
   assert.equal(nowCalls, 1, '实时天气必须通过经纬度请求')

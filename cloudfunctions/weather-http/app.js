@@ -243,11 +243,15 @@ async function main(event, context) {
         return jsonResponse(400, { code: 400, message: '缺少位置参数：lat 和 lng', data: null })
       }
 
+      const recentWeatherService = buildRecentWeatherService(QWEATHER_CONFIG)
+      // 诊断与浇水环境窗口必须先读取同一个 recent-10d/day archive 缓存：
+      // 历史天气和 D0 不能由 environment 模式再次直连 QWeather，否则同一天会出现两套事实。
+      const cachedWeatherWindow = await buildDiagnosisRecentWeatherWindow({
+        payload,
+        service: recentWeatherService
+      })
       const weatherWindow = diagnosisMode
-        ? await buildDiagnosisRecentWeatherWindow({
-            payload,
-            service: buildRecentWeatherService(QWEATHER_CONFIG)
-          })
+        ? cachedWeatherWindow
         : await buildEnvironmentWeatherWindow({
             lat,
             lng,
@@ -260,7 +264,8 @@ async function main(event, context) {
             locationKey: payload.locationKey || payload.location_key || '',
             qweatherLocationId: payload.qweatherLocationId || payload.qweather_location_id || '',
             cityName: payload.cityName || payload.city_name || '',
-            city: payload.city || ''
+            city: payload.city || '',
+            cacheWindow: cachedWeatherWindow
           })
       const responseWindow = buildEnvironmentWeatherWindowByMode(
         weatherWindow,

@@ -335,7 +335,7 @@ const archiveOnlyDefaultRead = await archiveOnlyService.readRecentWeatherForDiag
   diagnosisDate: '2026-06-13'
 })
 assert.equal(archiveOnlyDefaultRead.historicalDays.length, 0)
-assert.equal(archiveOnlyDefaultRead.meta.reason, 'recent_10d_rebuild_deferred')
+assert.equal(archiveOnlyDefaultRead.meta.reason, 'recent_10d_object_missing')
 const archiveOnlyRead = await archiveOnlyService.readRecentWeatherForDiagnosis({
   locationKey: 'city:ArchiveOnly',
   diagnosisDate: '2026-06-13',

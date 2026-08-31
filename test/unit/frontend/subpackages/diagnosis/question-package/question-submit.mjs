@@ -38,6 +38,7 @@ const { submitQuestionPackageAnswers } = new Function(
   'buildQuestionAnswerPayload',
   'normalizeDiagnosisResult',
   'preserveDiagnosisContinuationContext',
+  'invalidateDiagnosisHistoryQueries',
   'ANALYTICS_EVENTS',
   'reportAnalyticsEvent',
   `${submitSource}\nreturn { submitQuestionPackageAnswers }`
@@ -45,6 +46,7 @@ const { submitQuestionPackageAnswers } = new Function(
   buildQuestionAnswerPayload,
   normalizeDiagnosisResult,
   preserveDiagnosisContinuationContext,
+  async () => {},
   { DIAGNOSE_QUESTION_COMPLETED: 'question_completed', DIAGNOSE_RESULT_READY: 'result_ready' },
   () => {}
 )
@@ -164,10 +166,7 @@ assert.match(
   /selectQuestionOption\(question, option\)\s+await handleNextQuestion\(\)/
 )
 assert.doesNotMatch(pageFlowSource, /resolveLightEnvironmentAnswerKey/)
-assert.doesNotMatch(
-  pageFlowSource,
-  /handleLightEnvironmentChange[\s\S]{0,900}setQuestionAnswer/
-)
+assert.doesNotMatch(pageFlowSource, /handleLightEnvironmentChange[\s\S]{0,900}setQuestionAnswer/)
 assert.match(answerPayloadSource, /basePayload\.recentLightChange/)
 assert.match(answerPayloadSource, /userLightContext/)
 assert.match(packagePageSource, /最近光照有变化吗/)

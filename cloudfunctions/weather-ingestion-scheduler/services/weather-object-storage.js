@@ -4,6 +4,7 @@ const fs = require('fs')
 const os = require('os')
 const path = require('path')
 const crypto = require('crypto')
+const { buildCloudBaseInitOptions: buildRuntimeCloudBaseInitOptions } = require('../utils/cloudbase-credentials')
 
 const DEFAULT_STORAGE_BUCKET_BY_ENV = {
   'cloud1-2grufevs395a9d5e': '636c-cloud1-2grufevs395a9d5e-1403815561'
@@ -12,23 +13,7 @@ const DEFAULT_STORAGE_BUCKET_BY_ENV = {
 let fallbackCloudBaseApp = null
 
 function buildCloudBaseInitOptions() {
-  const env = String(process.env.CLOUDBASE_ENV_ID || process.env.TCB_ENV || '').trim()
-  const secretId = String(
-    process.env.CLOUDBASE_SECRET_ID ||
-      process.env.TENCENT_SECRET_ID ||
-      process.env.TENCENTCLOUD_SECRETID ||
-      ''
-  ).trim()
-  const secretKey = String(
-    process.env.CLOUDBASE_SECRET_KEY ||
-      process.env.TENCENT_SECRET_KEY ||
-      process.env.TENCENTCLOUD_SECRETKEY ||
-      ''
-  ).trim()
-  return {
-    ...(env ? { env } : {}),
-    ...(secretId && secretKey ? { secretId, secretKey } : {})
-  }
+  return buildRuntimeCloudBaseInitOptions(process.env)
 }
 
 function loadNodeSdkCloudBaseApp() {

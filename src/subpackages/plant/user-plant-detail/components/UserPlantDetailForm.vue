@@ -1,9 +1,9 @@
 <template>
   <Layout :title="pageTitle" left-action="back" background-class="bg-[#f8faf9]">
-    <view class="min-h-screen bg-[#f8faf9] pb-5">
+    <view class="box-border h-[calc(100vh-var(--app-header-height))] min-h-0 bg-[#f8faf9]">
       <view
         v-if="isEditMode && (loading || !currentPlant)"
-        class="flex min-h-screen items-center justify-center px-6"
+        class="flex min-h-full items-center justify-center px-6"
       >
         <text class="text-sm text-gray-500">正在加载植物信息...</text>
       </view>
@@ -11,14 +11,14 @@
       <swiper
         v-else
         id="add-plant-swiper"
-        class="min-h-screen"
+        class="h-full min-h-0"
         :current="swiperStep"
         :duration="260"
         :disable-touch="isEditMode || plantListTouching"
         @change="handleSwiperChange"
       >
         <swiper-item v-if="!isEditMode">
-          <scroll-view scroll-y class="h-screen">
+          <scroll-view id="add-plant-selection-scroll" scroll-y class="box-border h-full min-h-0">
             <PlantSelectionStep
               v-model:search-keyword="searchKeyword"
               :plant-groups="plantGroups"
@@ -57,7 +57,7 @@
             :submit-button-id="submitButtonId"
             :submit-text="submitText"
             submitting-text="保存中..."
-            @update:model-value="formData = $event"
+            @update:model-value="handleFormModelUpdate"
             @upload-photo="uploadPhoto"
             @city-change="formErrors.careLocation = ''"
             @open-pot-profile="openPotProfileEditor"
@@ -155,6 +155,7 @@ const {
 
 const currentPlant = ref(null)
 const loading = ref(true)
+const editFormDirty = ref(false)
 const activeStep = ref(SELECTION_STEP)
 const selectedPlant = ref(null)
 const recognizedName = ref('')
@@ -216,12 +217,12 @@ onBeforeUnmount(() => {
   clearPendingImage().catch(() => {})
 })
 
-onMounted(async () => {
+onMounted(() => {
   if (isEditMode.value) {
-    await initializeEditPage()
+    initializeEditPage()
     return
   }
-  await loadPlants()
+  loadPlants()
 })
 
 function handleBackPress() {
@@ -238,27 +239,73 @@ function handleBackPress() {
 defineExpose({ handleBackPress })
 
 async function initializeEditPage() {
-  loading.value = true
-  currentPlant.value = null
-  if (!(await userStore.ensureLogin())) {
-    loginMsg.value = '编辑植物需要先登录'
-    showLogin.value = true
+  const cachedPlant = getCachedEditPlant()
+  editFormDirty.value = false
+
+  // 首页编辑入口已经持有同一登录用户的植物列表。先使用这份已归属的
+  // 内存数据渲染表单，避免把身份校验和详情请求的耗时直接暴露为整页白屏。
+  if (cachedPlant) {
+    applyEditPlant(cachedPlant, { hydrateForm: true })
     loading.value = false
-    return
+  } else {
+    loading.value = true
+    currentPlant.value = null
   }
-  const response = await fetchUserPlant(Number(plantId.value))
-  const plant = response?.code === HTTP_SUCCESS_CODE ? response.data : null
-  if (!plant) {
+
+  try {
+    if (!(await userStore.ensureLogin())) {
+      currentPlant.value = null
+      formData.value = createInitialPlantForm()
+      loginMsg.value = '编辑植物需要先登录'
+      showLogin.value = true
+      return
+    }
+
+    const response = await fetchUserPlant(Number(plantId.value))
+    const plant = response?.code === HTTP_SUCCESS_CODE ? response.data : null
+    if (!plant) {
+      currentPlant.value = null
+      formData.value = createInitialPlantForm()
+      uni.showToast({ title: '未找到要编辑的植物', icon: 'none' })
+      setTimeout(() => uni.navigateBack(), SUCCESS_NAV_DELAY_MS)
+      return
+    }
+
+    applyEditPlant(plant, { hydrateForm: !editFormDirty.value })
+  } catch {
+    if (!cachedPlant) {
+      uni.showToast({ title: '暂时无法加载植物信息，请检查网络后重试', icon: 'none' })
+      setTimeout(() => uni.navigateBack(), SUCCESS_NAV_DELAY_MS)
+    } else {
+      uni.showToast({ title: '最新信息暂未同步，可继续编辑现有信息', icon: 'none' })
+    }
+  } finally {
     loading.value = false
-    uni.showToast({ title: '未找到要编辑的植物', icon: 'none' })
-    setTimeout(() => uni.navigateBack(), SUCCESS_NAV_DELAY_MS)
-    return
   }
+}
+
+function getCachedEditPlant() {
+  const scope = String(userStore.openid || userStore.userId || '').trim()
+  if (!scope || plantStore.userPlantsScope !== scope) {
+    return null
+  }
+  return plantStore.userPlants.find(item => String(item?.id || '') === plantId.value) || null
+}
+
+function applyEditPlant(plant, { hydrateForm = true } = {}) {
   const serverPlant = { ...plant, image: '' }
   plantStore.updateUserPlantLocal?.(serverPlant.id, serverPlant)
-  currentPlant.value = serverPlant
-  formData.value = buildPlantFormFromUserPlant(serverPlant)
-  loading.value = false
+  currentPlant.value = currentPlant.value ? { ...currentPlant.value, ...serverPlant } : serverPlant
+  if (hydrateForm) {
+    formData.value = buildPlantFormFromUserPlant(serverPlant)
+  }
+}
+
+function handleFormModelUpdate(nextFormData) {
+  if (isEditMode.value) {
+    editFormDirty.value = true
+  }
+  formData.value = nextFormData
 }
 
 watch(selectedPlant, plant => {
@@ -391,6 +438,7 @@ function savePotProfile(profile) {
       return
     }
 
+    editFormDirty.value = true
     potProfileSaving.value = true
     try {
       const response = await patchUserPlant({ id: Number(plantId.value), ...profile })
@@ -445,9 +493,13 @@ function uploadPhoto() {
             uni.showToast({ title: '图片过大，请选择 5MB 以下', icon: 'none' })
             return
           }
+          editFormDirty.value = isEditMode.value || editFormDirty.value
           formData.value = { ...formData.value, image: path, imageFileId: '' }
         },
-        fail: () => (formData.value = { ...formData.value, image: path, imageFileId: '' })
+        fail: () => {
+          editFormDirty.value = isEditMode.value || editFormDirty.value
+          formData.value = { ...formData.value, image: path, imageFileId: '' }
+        }
       })
     }
   })
@@ -498,7 +550,11 @@ async function submitNewPlantForm() {
       return
     }
     reportAnalyticsEvent(ANALYTICS_EVENTS.USER_NEW_PLANT_CREATED)
-    await plantStore.getUserPlants(1, 50)
+    const refreshResult = await plantStore.getUserPlants(1, 50)
+    if (!refreshResult?.success) {
+      uni.showToast({ title: '植物已保存，但列表暂时无法更新，请稍后重试', icon: 'none' })
+      return
+    }
     uni.showToast({ title: '添加成功', icon: 'success' })
     setTimeout(() => uni.navigateBack(), SUCCESS_NAV_DELAY_MS)
   } catch {
@@ -542,7 +598,11 @@ async function submitEditForm() {
       uni.showToast({ title: '暂时无法保存植物信息，请检查网络后重试', icon: 'none' })
       return
     }
-    await plantStore.getUserPlants(1, 50)
+    const refreshResult = await plantStore.getUserPlants(1, 50)
+    if (!refreshResult?.success) {
+      uni.showToast({ title: '信息已保存，但列表暂时无法更新，请稍后重试', icon: 'none' })
+      return
+    }
     uni.showToast({ title: '保存成功', icon: 'success' })
     setTimeout(() => uni.navigateBack(), SUCCESS_NAV_DELAY_MS)
   } catch {

@@ -3,6 +3,7 @@
     <view id="diagnosis-flow-page" class="min-h-screen bg-[#F8F6F0]">
       <DiagnoseFlow
         id="diagnosis-flow-page-content"
+        :content-padding="true"
         :plant-id="plantId"
         :plant-catalog-id="plantCatalogId"
         :plant-name="plantName"

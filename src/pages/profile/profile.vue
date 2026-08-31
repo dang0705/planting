@@ -18,7 +18,7 @@
           </view>
         </view>
 
-        <!-- 当前可用次数；付费入口在 MVP 阶段不展示。 -->
+        <!-- 当前可用次数 -->
         <view class="bg-white/20 backdrop-blur rounded-2xl p-4">
           <view class="flex items-center">
             <view>
@@ -34,6 +34,28 @@
               >
             </view>
           </view>
+        </view>
+        <view
+          id="profile-subscription-entry"
+          class="mt-3 flex items-center justify-between rounded-2xl bg-white/15 px-4 py-3"
+          @click="openSubscriptionPage"
+        >
+          <view class="flex items-center">
+            <text class="mr-3 text-xl">✦</text>
+            <view>
+              <text class="block text-sm font-semibold text-white">
+                {{ userStore.isMember ? '续期会员' : '升级会员' }}
+              </text>
+              <text class="mt-1 block text-xs text-white/70">
+                {{
+                  userStore.isMember
+                    ? '延长会员有效期，继续享受完整养护能力'
+                    : '解锁完整植物养护与诊断能力'
+                }}
+              </text>
+            </view>
+          </view>
+          <text class="text-xl text-white/70">›</text>
         </view>
       </view>
 
@@ -130,9 +152,11 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import Layout from '@/Layout.vue'
 import { useUserStore } from '@/store/user.js'
 import { getDiagnosisHistory } from '@/api/diagnosis-history.js'
+import { parsePlantDateTime } from '@/utils/plant-datetime.js'
 
 const userStore = useUserStore()
 
@@ -143,17 +167,23 @@ const historyError = ref('')
 
 // 会员状态
 const membershipText = computed(() => {
-  return userStore.isPremium ? '高级账户' : '当前账户'
+  if (userStore.isPremium) {
+    return '高级会员'
+  }
+  if (userStore.isMember) {
+    return '基础会员'
+  }
+  return '当前账户'
 })
 
 const membershipBadgeClass = computed(() => {
-  return userStore.isPremium
+  return userStore.isMember
     ? 'bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full'
     : 'bg-white/30 text-white px-3 py-1 rounded-full'
 })
 
 const remainingDiagnosisQuotaText = computed(() => {
-  if (userStore.isPremium) {
+  if (userStore.isMember) {
     return '不限次'
   }
   const quota = Number(userStore.membership?.freeQuota || 0)
@@ -176,8 +206,17 @@ onMounted(() => {
   loadDiagnoseHistory()
 })
 
+onShow(() => {
+  loadDiagnoseHistory()
+})
+
 async function loadDiagnoseHistory() {
-  if (!userStore.isAuthenticated || loadingHistory.value) {
+  if (!userStore.isAuthenticated) {
+    diagnoseHistory.value = []
+    historyError.value = ''
+    return
+  }
+  if (loadingHistory.value) {
     return
   }
 
@@ -216,6 +255,10 @@ function handleMenuClick(item) {
   }
 }
 
+function openSubscriptionPage() {
+  uni.navigateTo({ url: '/subpackages/subscription/subscription' })
+}
+
 function viewDiagnoseDetail(item) {
   if (!item?._id) {
     uni.showToast({ title: '这条诊断记录暂时无法打开，请稍后重试', icon: 'none' })
@@ -227,8 +270,8 @@ function viewDiagnoseDetail(item) {
 }
 
 function formatTime(time) {
-  const date = new Date(time)
-  if (Number.isNaN(date.getTime())) {
+  const date = parsePlantDateTime(time)
+  if (!date) {
     return '时间未知'
   }
   const now = new Date()

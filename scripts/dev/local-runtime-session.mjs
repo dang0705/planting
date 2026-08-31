@@ -216,6 +216,7 @@ export function createManagedLocalRuntimeSession({
   environment = {},
   mode = 'loopback',
   reuseOutput = false,
+  cleanOutput = false,
   initialApiBaseUrl,
   resolveLanApiBaseUrl,
   ownerPid = process.pid,
@@ -239,6 +240,7 @@ export function createManagedLocalRuntimeSession({
   let restarting = false
   let stopped = false
   let finalExit = null
+  let outputPrepared = false
   let finalExitResolve
   const finalExitPromise = new Promise(resolve => {
     finalExitResolve = resolve
@@ -373,6 +375,11 @@ export function createManagedLocalRuntimeSession({
       const claim = this.claim()
       if (claim.status !== 'acquired') {
         return claim
+      }
+      if (cleanOutput && !reuseOutput && !outputPrepared) {
+        fsModule.rmSync(targetPath, { recursive: true, force: true })
+        outputPrepared = true
+        onEvent({ type: 'build_output_cleaned', target_path: targetPath })
       }
       const startedChild = reuseOutput ? null : launch(apiBaseUrl)
       if (reuseOutput) {

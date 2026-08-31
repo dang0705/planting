@@ -9,7 +9,7 @@ const {
 const { normalizeAirEnvironmentInput } = require('./air-environment-evidence')
 const {
   getUserPlantFertilizationEvents,
-  getUserAssertedFertilizationBaseline,
+  getUserPlantFertilizationHistory,
   insertFertilizationEvent
 } = require('./fertilization-history')
 const MAX_USER_PLANT_NOTES_LENGTH = 200
@@ -30,6 +30,9 @@ const FERTILIZATION_ADJUSTMENT_MODES = new Set([
   'phenology',
   'water_temperature'
 ])
+const PLANT_CATALOG_CACHE_TTL_MS = 60_000
+const plantCatalogCache = new Map()
+const plantCatalogSummaryCache = new Map()
 
 function emptyFertilizationMonthly() {
   return {
@@ -409,6 +412,16 @@ const CATALOG_FROM_SQL = `
    AND gcp.is_active = 1
 `
 
+// 详情仍需完整养护策略，但别名只用于目录搜索，不属于用户植物详情展示。
+// 移除全量 alias_summary 聚合，避免每次详情读取都扫描整张别名表。
+const CATALOG_DETAIL_FROM_SQL = `
+  FROM plant_identity_entities pie
+  LEFT JOIN genus_care_profiles gcp
+    ON gcp.genus_name = pie.genus_name
+   AND gcp.family_name_canonical = pie.family_name_canonical
+   AND gcp.is_active = 1
+`
+
 const CATALOG_SELECT_SQL = `
   SELECT
     pie.plant_identity_id,
@@ -443,6 +456,31 @@ const CATALOG_SELECT_SQL = `
     gcp.review_status AS care_review_status,
     gcp.evidence_level,
     alias_summary.alias_names
+`
+
+const CATALOG_DETAIL_SELECT_SQL = CATALOG_SELECT_SQL.replace(
+  'alias_summary.alias_names',
+  'NULL AS alias_names'
+)
+
+// 列表只需要身份、名称和封面；完整养护策略在详情/规划接口按需读取。
+// 避免列表请求为每株植物解析属级策略、月度施肥 JSON 和别名聚合。
+const CATALOG_SUMMARY_SELECT_SQL = `
+  SELECT
+    pie.plant_identity_id,
+    pie.session_plant_id,
+    pie.canonical_identity_name,
+    pie.canonical_identity_name_cn,
+    pie.canonical_identity_name_en,
+    pie.primary_display_name,
+    pie.identity_level,
+    pie.family_name_canonical,
+    pie.family_name_cn,
+    pie.family_name_en,
+    pie.genus_name,
+    pie.scientific_name,
+    pie.cover_image_ref,
+    pie.review_status AS identity_review_status
 `
 
 function mapPlantRow(row) {
@@ -549,26 +587,100 @@ async function listPlantCatalog({ keyword = '', page = 1, pageSize = 10, offset 
 }
 
 async function getPlantCatalogById(plantId) {
-  const sql = `
-    ${CATALOG_SELECT_SQL}
-    ${CATALOG_FROM_SQL}
-    WHERE pie.is_active = 1
-      AND (
-        pie.plant_identity_id = {{plantId}}
-        OR pie.session_plant_id = {{plantId}}
+  const lookupId = normalizeNullableString(plantId)
+  if (!lookupId) {
+    return null
+  }
+  const cached = plantCatalogCache.get(lookupId)
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.value
+  }
+  const map = await getPlantCatalogByIds([lookupId], { detail: true })
+  return map.get(lookupId) || null
+}
+
+/**
+ * 批量读取用户植物所需的目录记录。
+ * 列表接口之前对每一株植物调用一次 getPlantCatalogById，7 株植物就产生 7 次
+ * CloudBase SQL 往返；这里把 identity/session 两种匹配合并为一次查询，调用方
+ * 仍按原来的 lookup id 取得同一条优先级最高的目录记录。
+ */
+async function getPlantCatalogByIds(plantIds = [], { summary = false, detail = false } = {}) {
+  const ids = Array.from(
+    new Set((Array.isArray(plantIds) ? plantIds : []).map(normalizeNullableString).filter(Boolean))
+  )
+  if (!ids.length) {
+    return new Map()
+  }
+
+  const now = Date.now()
+  const cache = summary ? plantCatalogSummaryCache : plantCatalogCache
+  const resultMap = new Map()
+  const missingIds = []
+  for (const id of ids) {
+    const cached = cache.get(id)
+    if (cached && cached.expiresAt > now) {
+      resultMap.set(id, cached.value)
+    } else {
+      missingIds.push(id)
+    }
+  }
+  if (!missingIds.length) {
+    return resultMap
+  }
+
+  const placeholders = missingIds.map((_, index) => `{{plantId${index}}}`)
+  const params = Object.fromEntries(missingIds.map((id, index) => [`plantId${index}`, id]))
+  const result = await models.$runSQL(
+    `
+      ${summary ? CATALOG_SUMMARY_SELECT_SQL : detail ? CATALOG_DETAIL_SELECT_SQL : CATALOG_SELECT_SQL}
+      ${
+        summary
+          ? 'FROM plant_identity_entities pie'
+          : detail
+            ? CATALOG_DETAIL_FROM_SQL
+            : CATALOG_FROM_SQL
+      }
+      WHERE pie.is_active = 1
+        AND (
+          pie.plant_identity_id IN (${placeholders.join(',')})
+          OR pie.session_plant_id IN (${placeholders.join(',')})
+        )
+    `,
+    params
+  )
+
+  const candidatesById = new Map(missingIds.map(id => [id, []]))
+  for (const row of result?.data?.executeResultList || []) {
+    const mapped = mapPlantRow(row)
+    const identityId = normalizeNullableString(row.plant_identity_id)
+    const sessionId = normalizeNullableString(row.session_plant_id)
+    for (const id of missingIds) {
+      const matchPriority = sessionId === id ? 0 : identityId === id ? 1 : null
+      if (matchPriority !== null) {
+        candidatesById.get(id).push({ matchPriority, mapped })
+      }
+    }
+  }
+
+  for (const id of missingIds) {
+    const candidates = candidatesById.get(id) || []
+    candidates.sort((left, right) => {
+      if (left.matchPriority !== right.matchPriority) {
+        return left.matchPriority - right.matchPriority
+      }
+      return String(left.mapped?.canonicalName || '').localeCompare(
+        String(right.mapped?.canonicalName || ''),
+        'zh-Hans'
       )
-    ORDER BY
-      CASE
-        WHEN pie.session_plant_id = {{plantId}} THEN 0
-        ELSE 1
-      END,
-      pie.primary_display_name,
-      pie.plant_identity_id
-    LIMIT 1
-  `
-  const result = await models.$runSQL(sql, { plantId })
-  const row = result?.data?.executeResultList?.[0]
-  return row ? mapPlantRow(row) : null
+    })
+    const value = candidates[0]?.mapped || null
+    resultMap.set(id, value)
+    if (value) {
+      cache.set(id, { value, expiresAt: now + PLANT_CATALOG_CACHE_TTL_MS })
+    }
+  }
+  return resultMap
 }
 
 async function findCanonicalPlantMatch(name, limit = 5) {
@@ -828,28 +940,72 @@ async function createUserPlantInstance({
   return insertedId ? getUserPlantInstanceById(openid, insertedId) : null
 }
 
+// 只为当前结果集中的用户植物查最新诊断。
+// 旧写法先对 diagnosis_sessions 全表 GROUP BY，再回连用户植物；历史记录增长后，
+// 即使当前用户只有几株植物，也会为每次 user-plants 请求扫描整张诊断表。
+// 相关子查询利用 user_plant_id 索引按株取 MAX(created_at)，避免全表聚合；
+// 同一时间戳存在多条记录时再以 diagnosis_id 稳定收敛为一条，避免列表重复和窗口总数失真。
 const USER_PLANT_LATEST_DIAGNOSIS_SQL = `
-  LEFT JOIN (
-    SELECT d1.user_plant_id, d1.health_status, d1.health_score, d1.created_at
-    FROM diagnosis_sessions d1
-    INNER JOIN (
-      SELECT user_plant_id, MAX(created_at) AS latest_created_at
-      FROM diagnosis_sessions
-      GROUP BY user_plant_id
-    ) latest
-      ON latest.user_plant_id = d1.user_plant_id
-     AND latest.latest_created_at = d1.created_at
-  ) ds ON ds.user_plant_id = up.id
+    LEFT JOIN (
+      SELECT user_plant_id, health_status, health_score
+      FROM (
+        SELECT
+          user_plant_id,
+          health_status,
+          health_score,
+          ROW_NUMBER() OVER (
+            PARTITION BY user_plant_id
+            ORDER BY created_at DESC, diagnosis_id DESC
+          ) AS diagnosis_rank
+        FROM diagnosis_sessions
+        WHERE _openid = {{openid}}
+      ) ranked_diagnoses
+      WHERE diagnosis_rank = 1
+    ) ds ON ds.user_plant_id = up.id
 `
 
+function compactFertilizationMonthlyForList(value) {
+  if (!value || typeof value !== 'object') {
+    return value || null
+  }
+  return {
+    available: value.available === true,
+    rows: [],
+    scopeLabel: value.scopeLabel || '',
+    scopeGuidance: value.scopeGuidance || '',
+    choiceGuidance: value.choiceGuidance || '',
+    publicNote: value.publicNote || '',
+    sourceNames: Array.isArray(value.sourceNames) ? value.sourceNames : []
+  }
+}
+
+function mapUserPlantCareLocationFromRow(row = {}) {
+  if (!row?.care_location_id) {
+    return null
+  }
+  return {
+    careLocationId: row.care_location_id,
+    plantId: row.care_plant_id,
+    userId: row.care_user_id || row.care_openid || '',
+    openid: row.care_openid || row.care_user_id || '',
+    locationKey: row.care_location_key || '',
+    cityName: row.care_city_name || '',
+    latitude: Number(row.care_latitude),
+    longitude: Number(row.care_longitude),
+    weatherLocation: row.care_weather_location || '',
+    source: row.care_source || ''
+  }
+}
+
 function mapUserPlantInstanceRow(row, plant = null) {
+  const resolvedPlant = plant || mapJoinedCatalogRow(row)
   const plantIdentityId =
-    plant?.plantIdentityId || normalizeNullableString(row.plant_identity_id) || ''
+    resolvedPlant?.plantIdentityId || normalizeNullableString(row.plant_identity_id) || ''
   const sessionPlantId =
-    plant?.sessionPlantId || normalizeNullableString(row.session_plant_id) || ''
+    resolvedPlant?.sessionPlantId || normalizeNullableString(row.session_plant_id) || ''
   const canonicalName =
     normalizeNullableString(row.canonical_name) ||
-    plant?.canonicalName ||
+    resolvedPlant?.canonicalName ||
     normalizeNullableString(row.recognized_name) ||
     ''
   const nickname = normalizeNullableString(row.nickname) || ''
@@ -885,24 +1041,24 @@ function mapUserPlantInstanceRow(row, plant = null) {
       row.air_environment_json_text ?? row.air_environment_json,
       row.updated_at
     ),
-    imageFileId: plant?.imageFileId || '',
+    imageFileId: resolvedPlant?.imageFileId || '',
     lastWatered: row.last_watered || null,
     nextWater: row.next_water || null,
     createdAt: row.created_at || null,
-    genus: plant?.genus || row.plant_genus || '',
-    familyCn: plant?.familyCn || '',
-    familyEn: plant?.familyEn || row.plant_family_en || '',
-    latinName: plant?.latinName || row.plant_latin_name || '',
-    watering: plant?.watering || null,
-    fertilization: plant?.fertilization || null,
-    fertilizationMonthly: plant?.fertilizationMonthly || null,
-    sunning: plant?.sunning || null,
-    ventilation: plant?.ventilation || null,
-    temperatureMin: plant?.temperatureMin ?? null,
-    temperatureMax: plant?.temperatureMax ?? null,
-    humidityMin: plant?.humidityMin ?? null,
-    humidityMax: plant?.humidityMax ?? null,
-    varianceLevel: plant?.varianceLevel || '',
+    genus: resolvedPlant?.genus || row.plant_genus || '',
+    familyCn: resolvedPlant?.familyCn || '',
+    familyEn: resolvedPlant?.familyEn || row.plant_family_en || '',
+    latinName: resolvedPlant?.latinName || row.plant_latin_name || '',
+    watering: resolvedPlant?.watering || null,
+    fertilization: resolvedPlant?.fertilization || null,
+    fertilizationMonthly: resolvedPlant?.fertilizationMonthly || null,
+    sunning: resolvedPlant?.sunning || null,
+    ventilation: resolvedPlant?.ventilation || null,
+    temperatureMin: resolvedPlant?.temperatureMin ?? null,
+    temperatureMax: resolvedPlant?.temperatureMax ?? null,
+    humidityMin: resolvedPlant?.humidityMin ?? null,
+    humidityMax: resolvedPlant?.humidityMax ?? null,
+    varianceLevel: resolvedPlant?.varianceLevel || '',
     healthStatus: row.health_status || 'unknown',
     healthScore:
       row.health_score === null || row.health_score === undefined ? null : Number(row.health_score),
@@ -913,6 +1069,45 @@ function mapUserPlantInstanceRow(row, plant = null) {
     // 盆型档案（直接来自主表列，前端 WateringReminderSheet 直接读取）
     potProfile: mapPotProfileFromRow(row)
   }
+}
+
+function mapJoinedCatalogRow(row = {}) {
+  if (!row.catalog_plant_identity_id && !row.catalog_session_plant_id) {
+    return null
+  }
+  return mapPlantRow({
+    plant_identity_id: row.catalog_plant_identity_id,
+    session_plant_id: row.catalog_session_plant_id,
+    canonical_identity_name: row.catalog_canonical_identity_name,
+    canonical_identity_name_cn: row.catalog_canonical_identity_name_cn,
+    canonical_identity_name_en: row.catalog_canonical_identity_name_en,
+    primary_display_name: row.catalog_primary_display_name,
+    identity_level: row.catalog_identity_level,
+    family_name_canonical: row.catalog_family_name_canonical,
+    family_name_cn: row.catalog_family_name_cn,
+    family_name_en: row.catalog_family_name_en,
+    genus_name: row.catalog_genus_name,
+    species_name: row.catalog_species_name,
+    scientific_name: row.catalog_scientific_name,
+    category_name_cn: row.catalog_category_name_cn,
+    category_name_en: row.catalog_category_name_en,
+    basic_description: row.catalog_basic_description,
+    cover_image_ref: row.catalog_cover_image_ref,
+    identity_review_status: row.catalog_identity_review_status,
+    watering_strategy_json: row.catalog_watering_strategy_json,
+    watering_way_quantization_json: row.catalog_watering_way_quantization_json,
+    fertilizing_strategy_json: row.catalog_fertilizing_strategy_json,
+    fertilizing_monthly_strategy_json: row.catalog_fertilizing_monthly_strategy_json,
+    light_strategy_json: row.catalog_light_strategy_json,
+    airflow_strategy_json: row.catalog_airflow_strategy_json,
+    temp_min_c: row.catalog_temp_min_c,
+    temp_max_c: row.catalog_temp_max_c,
+    humidity_min: row.catalog_humidity_min,
+    humidity_max: row.catalog_humidity_max,
+    care_review_status: row.catalog_care_review_status,
+    evidence_level: row.catalog_evidence_level,
+    alias_names: row.catalog_alias_names
+  })
 }
 
 /**
@@ -990,9 +1185,27 @@ async function getUserPlantInstanceById(openid, id) {
       up.pot_profile_confidence,
       CAST(up.fertilization_guard_json AS CHAR) AS fertilization_guard_json_text,
       ds.health_status,
-      ds.health_score
+      ds.health_score,
+      care.id AS care_location_id,
+      care._openid AS care_openid,
+      care.plant_id AS care_plant_id,
+      care.user_id AS care_user_id,
+      care.location_key AS care_location_key,
+      care.city_name AS care_city_name,
+      care.latitude AS care_latitude,
+      care.longitude AS care_longitude,
+      care.weather_location AS care_weather_location,
+      care.source AS care_source
     FROM user_plant_instances up
     ${USER_PLANT_LATEST_DIAGNOSIS_SQL}
+    LEFT JOIN LATERAL (
+      SELECT id, _openid, plant_id, user_id, location_key, city_name, latitude, longitude,
+             weather_location, source
+      FROM plant_care_locations
+      WHERE _openid = {{openid}} AND plant_id = up.id
+      ORDER BY updated_at DESC, id DESC
+      LIMIT 1
+    ) care ON TRUE
     WHERE up._openid = {{openid}} AND up.id = {{id}}
     LIMIT 1
   `
@@ -1003,24 +1216,27 @@ async function getUserPlantInstanceById(openid, id) {
   }
 
   const plantLookupId = resolveUserPlantCatalogLookupId(row)
-  const plant = plantLookupId ? await getPlantCatalogById(plantLookupId) : null
+  const [plant, wateringEvents, fertilizationHistory] = await Promise.all([
+    plantLookupId ? getPlantCatalogById(plantLookupId) : Promise.resolve(null),
+    getUserPlantWateringEvents(openid, id),
+    getUserPlantFertilizationHistory(models, openid, id)
+      .then(events => ({ events, status: 'available' }))
+      .catch(error => ({
+        events: null,
+        status: error?.code === 'FERTILIZATION_HISTORY_UNAVAILABLE' ? 'unavailable' : 'unknown'
+      }))
+  ])
   const plantInstance = mapUserPlantInstanceRow(row, plant)
-  // 单独 try/catch 查询 watering_events_json，列不存在时不阻断主流程
-  plantInstance.wateringEvents = await getUserPlantWateringEvents(openid, id)
-  try {
-    plantInstance.fertilizationEvents = await getUserPlantFertilizationEvents(models, openid, id)
-    const assertedBaseline = plantInstance.fertilizationEvents.length
-      ? null
-      : await getUserAssertedFertilizationBaseline(models, openid, id)
-    plantInstance.fertilizationHistory = assertedBaseline
-      ? [assertedBaseline]
-      : plantInstance.fertilizationEvents
-    plantInstance.fertilizationHistoryStatus = 'available'
-  } catch (error) {
-    plantInstance.fertilizationEvents = null
-    plantInstance.fertilizationHistory = null
-    plantInstance.fertilizationHistoryStatus =
-      error?.code === 'FERTILIZATION_HISTORY_UNAVAILABLE' ? 'unavailable' : 'unknown'
+  // 事件、施肥历史和目录查询彼此独立，并行读取；缺失事件表仍不阻断详情主流程。
+  plantInstance.wateringEvents = wateringEvents
+  plantInstance.fertilizationEvents = fertilizationHistory.events
+  plantInstance.fertilizationHistory = fertilizationHistory.events
+  plantInstance.fertilizationHistoryStatus = fertilizationHistory.status
+  const careLocation = mapUserPlantCareLocationFromRow(row)
+  if (careLocation) {
+    plantInstance.careLocationId = careLocation.careLocationId
+    plantInstance.careLocation = careLocation
+    plantInstance.locationKey = careLocation.locationKey
   }
   return plantInstance
 }
@@ -1114,7 +1330,18 @@ async function getUserPlantWateringStrategy(openid, id) {
   }
 }
 
-async function listUserPlantInstances(openid, { page = 1, pageSize = 20 } = {}) {
+async function listUserPlantInstances(openid, options = {}) {
+  if (options.includeEnrichments === true) {
+    return listUserPlantInstancesWithEnrichmentsFast(openid, options)
+  }
+  // 仅保留旧富化实现作为排障回放入口；线上列表一律走快速批量路径。
+  if (options.includeEnrichments === 'legacy') {
+    return listUserPlantInstancesWithEnrichments(openid, options)
+  }
+  return listUserPlantInstancesLegacy(openid, options)
+}
+
+async function listUserPlantInstancesLegacy(openid, { page = 1, pageSize = 20 } = {}) {
   const limit = Number(pageSize)
   const offset = (Number(page) - 1) * limit
   const displayableIdentityCondition = displayableUserPlantSqlCondition('up')
@@ -1163,28 +1390,506 @@ async function listUserPlantInstances(openid, { page = 1, pageSize = 20 } = {}) 
     ORDER BY up.created_at DESC
     LIMIT {{limit}} OFFSET {{offset}}
   `
-  const countResult = await models.$runSQL(
-    `SELECT COUNT(*) AS total
+  const countSql = `SELECT COUNT(*) AS total
      FROM user_plant_instances up
      WHERE up._openid = {{openid}}
-       AND ${displayableIdentityCondition}`,
-    { openid }
-  )
+       AND ${displayableIdentityCondition}`
+  // 总数与当前页互不依赖，并行发起可省掉一次 CloudBase SQL 往返。
+  const [countResult, result] = await Promise.all([
+    models.$runSQL(countSql, { openid }),
+    models.$runSQL(sql, { openid, limit, offset })
+  ])
   const total = Number(countResult?.data?.executeResultList?.[0]?.total || 0)
-  const result = await models.$runSQL(sql, { openid, limit, offset })
   const rows = (result?.data?.executeResultList || []).filter(hasDisplayableUserPlantIdentity)
   const plantIds = Array.from(
     new Set(rows.map(row => resolveUserPlantCatalogLookupId(row)).filter(Boolean))
   )
-  const plants = await Promise.all(
-    plantIds.map(async plantId => [plantId, await getPlantCatalogById(plantId)])
-  )
-  const plantMap = new Map(plants)
+  const plantMap = await getPlantCatalogByIds(plantIds)
 
   return {
     list: rows.map(row =>
       mapUserPlantInstanceRow(row, plantMap.get(resolveUserPlantCatalogLookupId(row)) || null)
     ),
+    total,
+    page: Number(page),
+    pageSize: limit,
+    hasMore: offset + rows.length < total
+  }
+}
+
+const USER_PLANT_CATALOG_LOOKUP_SQL = `COALESCE(
+  NULLIF(NULLIF(NULLIF(TRIM(up.plant_identity_id), ''), 'null'), 'undefined') COLLATE utf8mb4_unicode_ci,
+  NULLIF(NULLIF(NULLIF(TRIM(up.plant_id), ''), 'null'), 'undefined') COLLATE utf8mb4_unicode_ci,
+  NULLIF(NULLIF(NULLIF(TRIM(up.session_plant_id), ''), 'null'), 'undefined') COLLATE utf8mb4_unicode_ci
+)`
+
+function buildUserPlantIdInClause(ids = []) {
+  return Array.from(
+    new Set((Array.isArray(ids) ? ids : []).map(Number).filter(Number.isInteger))
+  ).join(',')
+}
+
+function mapFirstByPlantId(rows, key) {
+  const map = new Map()
+  for (const row of rows || []) {
+    const plantId = Number(row?.[key])
+    if (!Number.isInteger(plantId) || map.has(plantId)) {
+      continue
+    }
+    map.set(plantId, row)
+  }
+  return map
+}
+
+async function listUserPlantCareRows(openid, plantIds = []) {
+  const inClause = buildUserPlantIdInClause(plantIds)
+  if (!inClause) {
+    return []
+  }
+  const result = await models.$runSQL(
+    `
+      SELECT id, _openid, plant_id, user_id, location_key, city_name, latitude, longitude,
+             weather_location, source
+      FROM (
+        SELECT id, _openid, plant_id, user_id, location_key, city_name, latitude, longitude,
+               weather_location, source,
+               ROW_NUMBER() OVER (PARTITION BY plant_id ORDER BY updated_at DESC, id DESC) AS row_rank
+        FROM plant_care_locations
+        WHERE _openid = {{openid}} AND plant_id IN (${inClause})
+      ) latest_care
+      WHERE row_rank = 1
+    `,
+    { openid }
+  )
+  return result?.data?.executeResultList || []
+}
+
+async function listUserPlantWateringReminderRows(openid, plantIds = []) {
+  const inClause = buildUserPlantIdInClause(plantIds)
+  if (!inClause) {
+    return []
+  }
+  const result = await models.$runSQL(
+    `
+      SELECT id, user_plant_id, plan_id, reminder_type, status, last_watered,
+             next_water_date, next_time, created_at, updated_at
+      FROM (
+        SELECT id, user_plant_id, plan_id, reminder_type, status, last_watered,
+               next_water_date, next_time, created_at, updated_at,
+               ROW_NUMBER() OVER (PARTITION BY user_plant_id ORDER BY next_time DESC, created_at DESC, id DESC) AS row_rank
+        FROM user_watering_reminder_events
+        WHERE _openid = {{openid}}
+          AND user_plant_id IN (${inClause})
+          AND reminder_type = 'water'
+          AND status = 'active'
+          AND next_time >= CURRENT_TIMESTAMP
+      ) latest_watering
+      WHERE row_rank = 1
+    `,
+    { openid }
+  )
+  return result?.data?.executeResultList || []
+}
+
+async function listUserPlantFertilizationReminderRows(openid, plantIds = []) {
+  const inClause = buildUserPlantIdInClause(plantIds)
+  if (!inClause) {
+    return []
+  }
+  const result = await models.$runSQL(
+    `
+      SELECT id, user_plant_id, plan_id, status, reminder_kind, fertilizer_type, rule_month,
+             last_applied_date, last_date_source, next_check_date, next_time,
+             completed_date, expires_at, created_at, updated_at
+      FROM (
+        SELECT id, user_plant_id, plan_id, status, reminder_kind, fertilizer_type, rule_month,
+               last_applied_date, last_date_source, next_check_date, next_time,
+               completed_date, expires_at, created_at, updated_at,
+               ROW_NUMBER() OVER (PARTITION BY user_plant_id ORDER BY created_at DESC, id DESC) AS row_rank
+        FROM user_fertilization_reminder_events
+        WHERE _openid = {{openid}}
+          AND user_plant_id IN (${inClause})
+          AND status = 'active'
+      ) latest_fertilization
+      WHERE row_rank = 1
+    `,
+    { openid }
+  )
+  return result?.data?.executeResultList || []
+}
+
+async function listUserPlantLatestDiagnosisRows(openid, plantIds = []) {
+  const inClause = buildUserPlantIdInClause(plantIds)
+  if (!inClause) {
+    return []
+  }
+  const result = await models.$runSQL(
+    `
+      SELECT user_plant_id, health_status, health_score
+      FROM (
+        SELECT user_plant_id, health_status, health_score,
+               ROW_NUMBER() OVER (PARTITION BY user_plant_id ORDER BY created_at DESC, diagnosis_id DESC) AS row_rank
+        FROM diagnosis_sessions
+        WHERE _openid = {{openid}} AND user_plant_id IN (${inClause})
+      ) latest_diagnosis
+      WHERE row_rank = 1
+    `,
+    { openid }
+  )
+  return result?.data?.executeResultList || []
+}
+
+async function listUserPlantInstancesWithEnrichmentsFast(openid, { page = 1, pageSize = 20 } = {}) {
+  const limit = Math.max(1, Number(pageSize) || 20)
+  const normalizedPage = Math.max(1, Number(page) || 1)
+  const offset = (normalizedPage - 1) * limit
+  const displayableIdentityCondition = displayableUserPlantSqlCondition('up')
+  const baseSql = `
+    SELECT
+      up.id,
+      up.plant_id,
+      up.plant_identity_id,
+      up.session_plant_id,
+      up.canonical_name,
+      up.recognized_name,
+      up.source_type,
+      up.recognition_type,
+      up.recognition_confidence,
+      up.identity_resolution_status,
+      up.visual_call_batch_id,
+      up.nickname,
+      up.location,
+      up.plant_date,
+      up.notes,
+      CAST(up.light_environment_json AS CHAR) AS light_environment_json_text,
+      CAST(up.air_environment_json AS CHAR) AS air_environment_json_text,
+      up.photos,
+      up.last_watered,
+      up.next_water,
+      up.created_at,
+      up.plant_genus,
+      up.plant_family_en,
+      up.plant_latin_name,
+      up.pot_top_diameter_cm,
+      up.pot_bottom_diameter_cm,
+      up.pot_height_cm,
+      up.has_drainage_hole,
+      up.pot_material,
+      up.substrate_type,
+      up.pot_profile_version,
+      up.pot_profile_source,
+      up.pot_profile_confidence,
+      CAST(up.fertilization_guard_json AS CHAR) AS fertilization_guard_json_text,
+      COUNT(*) OVER() AS total_count
+    FROM user_plant_instances up
+    WHERE up._openid = {{openid}}
+      AND ${displayableIdentityCondition}
+    ORDER BY up.created_at DESC, up.id DESC
+    LIMIT {{limit}} OFFSET {{offset}}
+  `
+  const baseResult = await models.$runSQL(baseSql, { openid, limit, offset })
+  const rows = (baseResult?.data?.executeResultList || []).filter(hasDisplayableUserPlantIdentity)
+  let total = Number(rows[0]?.total_count || 0)
+  if (!rows.length) {
+    const countResult = await models.$runSQL(
+      `
+        SELECT COUNT(*) AS total
+        FROM user_plant_instances up
+        WHERE up._openid = {{openid}}
+          AND ${displayableIdentityCondition}
+      `,
+      { openid }
+    )
+    total = Number(countResult?.data?.executeResultList?.[0]?.total || 0)
+  }
+  const plantIds = rows.map(row => Number(row.id)).filter(Number.isInteger)
+  const catalogIds = Array.from(new Set(rows.map(resolveUserPlantCatalogLookupId).filter(Boolean)))
+  const [catalogMap, careRows, wateringRows, fertilizationRows, diagnosisRows] = await Promise.all([
+    getPlantCatalogByIds(catalogIds, { summary: true }),
+    listUserPlantCareRows(openid, plantIds),
+    listUserPlantWateringReminderRows(openid, plantIds),
+    listUserPlantFertilizationReminderRows(openid, plantIds),
+    listUserPlantLatestDiagnosisRows(openid, plantIds)
+  ])
+  const careByPlantId = mapFirstByPlantId(careRows, 'plant_id')
+  const wateringByPlantId = mapFirstByPlantId(wateringRows, 'user_plant_id')
+  const fertilizationByPlantId = mapFirstByPlantId(fertilizationRows, 'user_plant_id')
+  const diagnosisByPlantId = mapFirstByPlantId(diagnosisRows, 'user_plant_id')
+
+  return {
+    list: rows.map(row => {
+      const diagnosis = diagnosisByPlantId.get(Number(row.id)) || {}
+      const item = mapUserPlantInstanceRow(
+        { ...row, health_status: diagnosis.health_status, health_score: diagnosis.health_score },
+        catalogMap.get(resolveUserPlantCatalogLookupId(row)) || null
+      )
+      item.fertilizationMonthly = compactFertilizationMonthlyForList(item.fertilizationMonthly)
+      item.__listEnrichment = {
+        careLocationRow: careByPlantId.get(Number(row.id)) || null,
+        wateringReminderRow: wateringByPlantId.get(Number(row.id)) || null,
+        fertilizationReminderRow: fertilizationByPlantId.get(Number(row.id)) || null
+      }
+      return item
+    }),
+    total,
+    page: normalizedPage,
+    pageSize: limit,
+    hasMore: offset + rows.length < total
+  }
+}
+
+async function listUserPlantInstancesWithEnrichments(openid, { page = 1, pageSize = 20 } = {}) {
+  const limit = Number(pageSize)
+  const offset = (Number(page) - 1) * limit
+  const displayableIdentityCondition = displayableUserPlantSqlCondition('up')
+  const sql = `
+    SELECT
+      up.id,
+      up.plant_id,
+      up.plant_identity_id,
+      up.session_plant_id,
+      up.canonical_name,
+      up.recognized_name,
+      up.source_type,
+      up.recognition_type,
+      up.recognition_confidence,
+      up.identity_resolution_status,
+      up.visual_call_batch_id,
+      up.nickname,
+      up.location,
+      up.plant_date,
+      up.notes,
+      CAST(up.light_environment_json AS CHAR) AS light_environment_json_text,
+      CAST(up.air_environment_json AS CHAR) AS air_environment_json_text,
+      up.photos,
+      up.last_watered,
+      up.next_water,
+      up.created_at,
+      up.plant_genus,
+      up.plant_family_en,
+      up.plant_latin_name,
+      up.pot_top_diameter_cm,
+      up.pot_bottom_diameter_cm,
+      up.pot_height_cm,
+      up.has_drainage_hole,
+      up.pot_material,
+      up.substrate_type,
+      up.pot_profile_version,
+      up.pot_profile_source,
+      up.pot_profile_confidence,
+      CAST(up.fertilization_guard_json AS CHAR) AS fertilization_guard_json_text,
+      ds.health_status,
+      ds.health_score,
+      cat.plant_identity_id AS catalog_plant_identity_id,
+      cat.session_plant_id AS catalog_session_plant_id,
+      cat.canonical_identity_name AS catalog_canonical_identity_name,
+      cat.canonical_identity_name_cn AS catalog_canonical_identity_name_cn,
+      cat.canonical_identity_name_en AS catalog_canonical_identity_name_en,
+      cat.primary_display_name AS catalog_primary_display_name,
+      cat.genus_name AS catalog_genus_name,
+      cat.cover_image_ref AS catalog_cover_image_ref,
+      cat.fertilizing_monthly_strategy_json AS catalog_fertilizing_monthly_strategy_json,
+      care.id AS care_location_id,
+      care._openid AS care_openid,
+      care.plant_id AS care_plant_id,
+      care.user_id AS care_user_id,
+      care.location_key AS care_location_key,
+      care.city_name AS care_city_name,
+      care.latitude AS care_latitude,
+      care.longitude AS care_longitude,
+      care.weather_location AS care_weather_location,
+      care.source AS care_source,
+      water.id AS watering_reminder_id,
+      water.user_plant_id AS watering_reminder_user_plant_id,
+      water.plan_id AS watering_reminder_plan_id,
+      water.reminder_type AS watering_reminder_type,
+      water.status AS watering_reminder_status,
+      water.last_watered AS watering_reminder_last_watered,
+      water.next_water_date AS watering_reminder_next_water_date,
+      water.next_time AS watering_reminder_next_time,
+      water.created_at AS watering_reminder_created_at,
+      water.updated_at AS watering_reminder_updated_at,
+      fert.id AS fertilization_reminder_id,
+      fert.user_plant_id AS fertilization_reminder_user_plant_id,
+      fert.plan_id AS fertilization_reminder_plan_id,
+      fert.status AS fertilization_reminder_status,
+      fert.reminder_kind AS fertilization_reminder_kind,
+      fert.fertilizer_type AS fertilization_reminder_fertilizer_type,
+      fert.rule_month AS fertilization_reminder_rule_month,
+      fert.last_applied_date AS fertilization_reminder_last_applied_date,
+      fert.last_date_source AS fertilization_reminder_last_date_source,
+      fert.next_check_date AS fertilization_reminder_next_check_date,
+      fert.next_time AS fertilization_reminder_next_time,
+      fert.completed_date AS fertilization_reminder_completed_date,
+      fert.expires_at AS fertilization_reminder_expires_at,
+      fert.created_at AS fertilization_reminder_created_at,
+      fert.updated_at AS fertilization_reminder_updated_at,
+      COUNT(*) OVER() AS total_count
+    FROM user_plant_instances up
+    LEFT JOIN diagnosis_sessions ds
+      ON ds.user_plant_id = up.id
+     AND ds._openid = up._openid
+     AND ds.created_at = (
+       SELECT MAX(latest_ds.created_at)
+       FROM diagnosis_sessions latest_ds
+       WHERE latest_ds.user_plant_id = up.id
+         AND latest_ds._openid = up._openid
+     )
+     AND ds.diagnosis_id = (
+       SELECT MAX(tie_break_ds.diagnosis_id)
+       FROM diagnosis_sessions tie_break_ds
+       WHERE tie_break_ds.user_plant_id = up.id
+         AND tie_break_ds._openid = up._openid
+         AND tie_break_ds.created_at = (
+           SELECT MAX(tie_break_created.created_at)
+           FROM diagnosis_sessions tie_break_created
+           WHERE tie_break_created.user_plant_id = up.id
+             AND tie_break_created._openid = up._openid
+         )
+     )
+    LEFT JOIN LATERAL (
+      SELECT
+        pie.plant_identity_id,
+        pie.session_plant_id,
+        pie.canonical_identity_name,
+        pie.canonical_identity_name_cn,
+        pie.canonical_identity_name_en,
+        pie.primary_display_name,
+        pie.identity_level,
+        pie.family_name_canonical,
+        pie.family_name_cn,
+        pie.family_name_en,
+        pie.genus_name,
+        pie.cover_image_ref,
+        gcp.fertilizing_monthly_strategy_json,
+        pie.review_status AS identity_review_status
+      FROM plant_identity_entities pie
+      LEFT JOIN genus_care_profiles gcp
+        ON gcp.genus_name = pie.genus_name
+       AND gcp.family_name_canonical = pie.family_name_canonical
+       AND gcp.is_active = 1
+      WHERE pie.is_active = 1
+        AND (
+          pie.plant_identity_id COLLATE utf8mb4_unicode_ci = ${USER_PLANT_CATALOG_LOOKUP_SQL}
+          OR pie.session_plant_id COLLATE utf8mb4_unicode_ci = ${USER_PLANT_CATALOG_LOOKUP_SQL}
+        )
+      ORDER BY
+        CASE
+          WHEN pie.session_plant_id COLLATE utf8mb4_unicode_ci = ${USER_PLANT_CATALOG_LOOKUP_SQL}
+          THEN 0 ELSE 1
+        END,
+        pie.primary_display_name,
+        pie.plant_identity_id
+      LIMIT 1
+    ) cat ON TRUE
+    LEFT JOIN plant_care_locations care
+      ON care._openid = {{openid}} AND care.plant_id = up.id
+    LEFT JOIN LATERAL (
+      SELECT
+        id, user_plant_id, plan_id, reminder_type, status, last_watered, next_water_date,
+        next_time,
+        created_at, updated_at
+      FROM user_watering_reminder_events
+      WHERE _openid = {{openid}}
+        AND user_plant_id = up.id
+        AND reminder_type = 'water'
+        AND status = 'active'
+        AND next_time >= CURRENT_TIMESTAMP
+      ORDER BY next_time DESC, created_at DESC
+      LIMIT 1
+    ) water ON TRUE
+    LEFT JOIN LATERAL (
+      SELECT
+        id, user_plant_id, plan_id, status, reminder_kind, fertilizer_type, rule_month,
+        last_applied_date, last_date_source, next_check_date, next_time,
+        completed_date, expires_at, created_at, updated_at
+      FROM user_fertilization_reminder_events
+      WHERE _openid = {{openid}}
+        AND user_plant_id = up.id
+        AND status = 'active'
+      ORDER BY created_at DESC
+      LIMIT 1
+    ) fert ON TRUE
+    WHERE up._openid = {{openid}}
+      AND ${displayableIdentityCondition}
+    ORDER BY up.created_at DESC
+    LIMIT {{limit}} OFFSET {{offset}}
+  `
+  const result = await models.$runSQL(sql, { openid, limit, offset })
+  const rows = (result?.data?.executeResultList || []).filter(hasDisplayableUserPlantIdentity)
+  let total = Number(rows[0]?.total_count || 0)
+  if (!rows.length) {
+    const countResult = await models.$runSQL(
+      `SELECT COUNT(*) AS total
+       FROM user_plant_instances up
+       WHERE up._openid = {{openid}}
+         AND ${displayableIdentityCondition}`,
+      { openid }
+    )
+    total = Number(countResult?.data?.executeResultList?.[0]?.total || 0)
+  }
+
+  return {
+    list: rows.map(row => {
+      const item = mapUserPlantInstanceRow(row)
+      // 列表仅返回月表摘要；打开施肥时间表时由详情接口读取完整 12 个月明细。
+      item.fertilizationMonthly = compactFertilizationMonthlyForList(item.fertilizationMonthly)
+      item.__listEnrichment = {
+        careLocationRow: row.care_location_id
+          ? {
+              id: row.care_location_id,
+              _openid: row.care_openid,
+              plant_id: row.care_plant_id,
+              user_id: row.care_user_id,
+              location_key: row.care_location_key,
+              city_name: row.care_city_name,
+              latitude: row.care_latitude,
+              longitude: row.care_longitude,
+              weather_location: row.care_weather_location,
+              source: row.care_source
+            }
+          : null,
+        wateringReminderRow: row.watering_reminder_id
+          ? {
+              id: row.watering_reminder_id,
+              user_plant_id: row.watering_reminder_user_plant_id,
+              plan_id: row.watering_reminder_plan_id,
+              reminder_type: row.watering_reminder_type,
+              status: row.watering_reminder_status,
+              last_watered: row.watering_reminder_last_watered,
+              next_water_date: row.watering_reminder_next_water_date,
+              next_time: row.watering_reminder_next_time,
+              watering_events_json_text: row.watering_reminder_events_json_text,
+              planner_result_json_text: row.watering_reminder_planner_json_text,
+              calendar_payload_json_text: row.watering_reminder_calendar_json_text,
+              created_at: row.watering_reminder_created_at,
+              updated_at: row.watering_reminder_updated_at
+            }
+          : null,
+        fertilizationReminderRow: row.fertilization_reminder_id
+          ? {
+              id: row.fertilization_reminder_id,
+              user_plant_id: row.fertilization_reminder_user_plant_id,
+              plan_id: row.fertilization_reminder_plan_id,
+              status: row.fertilization_reminder_status,
+              reminder_kind: row.fertilization_reminder_kind,
+              fertilizer_type: row.fertilization_reminder_fertilizer_type,
+              rule_month: row.fertilization_reminder_rule_month,
+              rule_snapshot_json_text: row.fertilization_reminder_rule_snapshot_json_text,
+              last_applied_date: row.fertilization_reminder_last_applied_date,
+              last_date_source: row.fertilization_reminder_last_date_source,
+              next_check_date: row.fertilization_reminder_next_check_date,
+              next_time: row.fertilization_reminder_next_time,
+              completed_date: row.fertilization_reminder_completed_date,
+              calendar_payload_json_text: row.fertilization_reminder_calendar_json_text,
+              expires_at: row.fertilization_reminder_expires_at,
+              created_at: row.fertilization_reminder_created_at,
+              updated_at: row.fertilization_reminder_updated_at
+            }
+          : null
+      }
+      return item
+    }),
     total,
     page: Number(page),
     pageSize: limit,
@@ -1617,6 +2322,7 @@ module.exports = {
   mapFertilizationMonthly,
   listPlantCatalog,
   getPlantCatalogById,
+  getPlantCatalogByIds,
   findCanonicalPlantMatch,
   createUserPlantInstance,
   getUserPlantInstanceById,

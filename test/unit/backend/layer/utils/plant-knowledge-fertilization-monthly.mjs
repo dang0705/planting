@@ -58,10 +58,7 @@ assert.deepEqual(mapped.rows[0].slowRelease.sourceNames, ['RHS'])
 assert.equal(mapped.rows[0].slowRelease.displayText, '约2–3个月')
 assert.deepEqual(mapped.sourceNames, ['RHS', 'UMN Extension'])
 assert.equal(mapped.scopeLabel, '温带室内盆栽参考')
-assert.equal(
-  mapped.scopeGuidance,
-  '月份仅作参考；不长新叶或新芽时暂停。'
-)
+assert.equal(mapped.scopeGuidance, '月份仅作参考；不长新叶或新芽时暂停。')
 assert.doesNotMatch(mapped.scopeGuidance, /暂停施肥|暂停追加/)
 assert.equal(mapped.choiceGuidance, '液体肥和缓释肥选一种，不要同时使用。')
 assert.equal(mapped.publicNote, '只在实际长新叶或新芽时继续施肥。')
@@ -216,7 +213,7 @@ const catalogKnowledge = loadPlantKnowledge(async sql => {
     data: {
       executeResultList: [
         {
-          plant_identity_id: 'green-radish-identity',
+          plant_identity_id: 'plant-1',
           session_plant_id: 'green-radish-session',
           primary_display_name: '绿萝',
           scientific_name: 'Epipremnum aureum',

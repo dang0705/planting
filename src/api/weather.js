@@ -17,9 +17,9 @@ const CITY_LOOKUP_CACHE_TTL_MS = 5 * 60 * 1000
 const cityLookupInflight = new Map()
 const cityLookupCache = new Map()
 const MAX_ARRAY_HISTORY_DAYS_TO_KEEP = 120
-// 天气窗口双层缓存契约：D0 使用当天 day file.latestSample 的最新缓存，历史使用 recent-10d 的 D-10..D-1；
-// 浇水 planner 前端只传 D+1..D+14（14 项），D0 由后端从当天最新缓存注入。
-const MAX_ARRAY_FORECAST_DAYS_TO_KEEP = 14
+// 天气窗口契约：历史 D-10..D-1 与 D0 均由服务端天气缓存提供，未来 D+1..D+14 来自预报；
+// 浇水 planner 接收完整 D0..D+14 窗口，后端仍会用当天 day file 校验并去重 D0。
+const MAX_ARRAY_FORECAST_DAYS_TO_KEEP = 15
 
 function buildCityLookupKey(latitude, longitude) {
   const location = normalizeWeatherCoordinates({ latitude, longitude })
@@ -62,19 +62,30 @@ function normalizeEnvironmentWeatherWindowPayload(window = null) {
     ? asArray(forecastDaysCamel)
     : asArray(forecastDaysSnake)
 
-  // 浇水 planner D0 注入契约：前端只传 D+1..D+14（14 项），D0 由后端从当天 day file.latestSample 注入。
-  // 后端 qweather 15d 预报从 D0 开始，且 injectD0IntoForecastDays 可能再前置一条 D0；
-  // 需先按 diagnosisDate 过滤掉所有 D0 记录（含 qweather 原始 D0 与 day file 注入的 D0），
-  // 再截断到 14 项，避免 D0 双重计数并丢失 D+14。
+  // 浇水 planner 需要 D0..D+14；D0 只接受服务端天气缓存记录，不能把 QWeather D0 预报
+  // 当作当天实况。后端收到后仍会从 day file 读取权威 D0 并去重，前端记录仅用于完整传递窗口。
   const diagnosisDate = String(window?.meta?.diagnosisDate || '').slice(0, 10)
-  const forecastDaysWithoutD0 = diagnosisDate
-    ? rawForecastDays.filter(day => String(day?.date || '').slice(0, 10) !== diagnosisDate)
+  const isCachedD0 = day => {
+    const date = String(day?.date || day?.fxDate || '').slice(0, 10)
+    const source = String(day?.source || '').trim()
+    const sourceKind = String(day?.sourceKind || '').trim()
+    return (
+      date === diagnosisDate &&
+      (source.startsWith('weather_cache') || sourceKind === 'weather_now_sample')
+    )
+  }
+  const cachedD0 = diagnosisDate ? rawForecastDays.find(isCachedD0) : null
+  const futureForecastDays = diagnosisDate
+    ? rawForecastDays.filter(
+        day => String(day?.date || day?.fxDate || '').slice(0, 10) !== diagnosisDate
+      )
     : rawForecastDays
+  const normalizedForecastDays = cachedD0 ? [cachedD0, ...futureForecastDays] : futureForecastDays
 
   return {
     ...rest,
     historicalDays: normalizedHistoricalDays.slice(0, MAX_ARRAY_HISTORY_DAYS_TO_KEEP),
-    forecastDays: forecastDaysWithoutD0.slice(0, MAX_ARRAY_FORECAST_DAYS_TO_KEEP)
+    forecastDays: normalizedForecastDays.slice(0, MAX_ARRAY_FORECAST_DAYS_TO_KEEP)
   }
 }
 

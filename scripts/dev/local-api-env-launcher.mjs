@@ -219,6 +219,7 @@ export async function runLocalApiEnvironment({
         environment: childEnvironment,
         mode: options.mode,
         reuseOutput: options.reuseOutput,
+        cleanOutput: !options.reuseOutput,
         initialApiBaseUrl: apiBaseUrl,
         leaseRoot: options.runtimeLeaseRoot || runtimeLeaseRoot,
         // Online QA still uses the `lan` runtime mode so the existing

@@ -70,7 +70,8 @@ const SQL_TABLES = [
   'diagnosis_weather_evidence',
   'user_watering_reminder_events',
   'user_fertilization_reminder_events',
-  'user_fertilization_events'
+  'user_fertilization_events',
+  'subscription_orders'
 ]
 
 function qualifySqlTableNames(sql, databaseName) {

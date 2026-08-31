@@ -17,6 +17,19 @@
           <text class="mt-3 block text-sm text-gray-500">加载中...</text>
         </view>
 
+        <view v-else-if="plantsError" class="flex flex-col items-center px-8 py-16 text-center">
+          <text class="text-4xl">🌿</text>
+          <text class="mt-4 text-lg font-semibold text-gray-800">植物暂时加载失败</text>
+          <text class="mt-2 text-sm leading-6 text-gray-400">请检查网络后再试一次</text>
+          <button
+            id="index-plants-retry-button"
+            class="mt-6 rounded-3xl bg-primary px-8 py-3.5 text-white"
+            @click="loadUserPlants"
+          >
+            重新加载
+          </button>
+        </view>
+
         <view
           v-else-if="!plantStore.hasPlants"
           class="flex flex-col items-center px-8 py-16 text-center"
@@ -148,7 +161,6 @@ import { useUserStore } from '@/store/user.js'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
 import { createAsyncActionGuard, createLeadingThrottle } from '@/utils/interaction-guard.js'
-import { invalidateUserPlantsQuery } from '@/vue-query/plants/queries/user-plants.js'
 import PlantCard from './components/PlantCard.vue'
 import FertilizationMonthlySheet from './components/FertilizationMonthlySheet.vue'
 import WateringReminderSheet from './components/WateringReminderSheet.vue'
@@ -161,6 +173,7 @@ const plantStore = usePlantStore()
 const userStore = useUserStore()
 const plantingStore = usePlantingStore()
 const loadingPlants = ref(false)
+const plantsError = ref('')
 const wateringReminderRef = ref(null)
 const fertilizationMonthlyRef = ref(null)
 const currentReminderPlantId = ref(null)
@@ -178,22 +191,14 @@ const currentFertilizationPlant = computed(() =>
     ? null
     : plantStore.userPlants.find(plant => plant.id === currentFertilizationPlantId.value) || null
 )
-const pageMounted = ref(false)
 onMounted(async () => {
   if (await userStore.ensureLogin()) {
-    await invalidateUserPlantsQuery()
     await loadUserPlants()
   }
-  pageMounted.value = true
 })
 
-// 从添加/编辑页返回，或小程序从后台恢复时，主动失效列表缓存，避免展示旧植物数据。
-onShow(async () => {
-  if (!pageMounted.value || !userStore.isAuthenticated || loadingPlants.value) {
-    return
-  }
-  await invalidateUserPlantsQuery()
-  await loadUserPlants()
+onShow(() => {
+  Object.keys(plantDiagnoseHistory).forEach(key => delete plantDiagnoseHistory[key])
 })
 
 async function loadUserPlants() {
@@ -201,8 +206,12 @@ async function loadUserPlants() {
     return
   }
   loadingPlants.value = true
+  plantsError.value = ''
   try {
-    await plantStore.getUserPlants(1, 50)
+    const result = await plantStore.getUserPlants(1, 50)
+    if (!result?.success && !result?.stale) {
+      plantsError.value = result?.message || '暂时无法加载植物，请检查网络后重试'
+    }
   } finally {
     loadingPlants.value = false
   }

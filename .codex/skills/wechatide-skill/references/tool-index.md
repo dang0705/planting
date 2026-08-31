@@ -51,6 +51,8 @@
 | `cloud_fn_list` | cloudbase-operator | 只读列出指定云环境中的云函数 |
 | `cloud_query_storage` | cloudbase-operator | 只读查询云存储文件列表、文件信息、临时下载链接或文本内容。 |
 | `cloud_manage_storage` | cloudbase-operator | 管理云存储文件（上传/下载/删除）；upload/delete 属于写操作。 |
+| `cloud_query_msg_push` | cloudbase-operator | 只读查询小程序云开发消息推送配置或合法事件约束。 |
+| `cloud_manage_msg_push` | cloudbase-operator | 管理小程序云开发消息推送配置（订阅/退订/启停/确保云函数模式），属于写操作。 |
 
 ## 已废弃（勿调用，且不出现在 `wechatide -h` 默认目录）
 

@@ -2,9 +2,9 @@ import {
   requestDiagnosisAnswer,
   requestDiagnosisFeedback,
   requestDiagnosisHistory,
-  requestDiagnosisResult,
   requestDiagnosisStart
 } from '../http-functions/diagnose/client.js'
+import { fetchDiagnosisDetailQuery } from '../vue-query/diagnosis-history/queries/history.js'
 
 export function startDiagnosis(payload) {
   return requestDiagnosisStart(payload)
@@ -15,7 +15,11 @@ export function submitDiagnosisAnswers(payload) {
 }
 
 export function getDiagnosisResult(params) {
-  return requestDiagnosisResult(params)
+  const id =
+    params && typeof params === 'object'
+      ? params.id || params.resultId || params.sessionId || ''
+      : params
+  return fetchDiagnosisDetailQuery(id)
 }
 
 export function getDiagnosisHistory(params) {

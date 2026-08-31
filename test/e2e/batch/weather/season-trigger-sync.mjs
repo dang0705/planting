@@ -124,6 +124,9 @@ assert.equal(buildDailyCronFromMinuteOfDay(291), '0 51 4 * * * *')
       CLOUDBASE_SECRET_KEY: 'skey'
     },
     functions: {
+      async getFunctionDetail() {
+        return { Triggers: [] }
+      },
       async deleteFunctionTrigger(functionName, triggerName) {
         deleted.push({ functionName, triggerName })
       },

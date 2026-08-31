@@ -5,6 +5,11 @@ import {
   disconnectFormalLeaf,
   handoffFormalLeafScreenshot
 } from '../../_shared/formal-leaf-harness.mjs'
+import {
+  installRequestCapture,
+  readCapturedRequests,
+  restoreRequest
+} from '../../care/watering/transpiration-v3/_shared/lib/request-capture.mjs'
 import { navigateNativeTab } from '../_shared/native-tab-navigation.mjs'
 import {
   clickQuestionNext,
@@ -17,6 +22,7 @@ import {
   normalizeText,
   resolveQuestionMetaByShell,
   resolveQuestionState,
+  safeText,
   sleep
 } from './dom.mjs'
 import { pickBestOption } from './option-selection.mjs'
@@ -37,6 +43,131 @@ async function screenshot(miniProgram, wsEndpoint, reportDir, name) {
   return { path: filePath, miniProgram: resumed.mp, attempts: resumed.attempts }
 }
 
+async function completeLightEnvironmentQuestion(page, questionId, pushLog) {
+  if (!String(questionId || '').includes('light_change_context')) {
+    return false
+  }
+  const directLight = await findElementByIdSuffix(
+    page,
+    `diagnose-light-type-direct-${questionId}`,
+    3000,
+    200
+  )
+  if (!directLight) {
+    pushLog({ type: 'state', label: 'light-environment-control-missing', questionId })
+    return false
+  }
+  await directLight.tap()
+  await sleep(300)
+  const confirm = await findElementByIdSuffix(
+    page,
+    `diagnose-light-confirm-current-${questionId}`,
+    3000,
+    200
+  )
+  if (confirm) {
+    await confirm.tap()
+    await sleep(300)
+  }
+  pushLog({
+    type: 'state',
+    label: 'light-environment-confirmed',
+    questionId,
+    naturalLightType: 'direct',
+    confirmationButtonFound: Boolean(confirm)
+  })
+  return true
+}
+
+async function completeAirEnvironmentQuestion(page, questionId, pushLog) {
+  if (!String(questionId || '').includes('air_environment')) {
+    return false
+  }
+  const unknown = await findElementByIdSuffix(
+    page,
+    `diagnose-air-environment-${questionId}-unknown`,
+    3000,
+    200
+  )
+  if (!unknown) {
+    pushLog({ type: 'state', label: 'air-environment-control-missing', questionId })
+    return false
+  }
+  await unknown.tap()
+  await sleep(500)
+  pushLog({
+    type: 'state',
+    label: 'air-environment-skipped',
+    questionId,
+    answer: '不确定，跳过这项'
+  })
+  return true
+}
+
+async function collectTimelineWeatherEvidence(page) {
+  const elements = await collectElementsWithId(page)
+  const cells = []
+  for (const { elementId, element } of elements) {
+    const match = String(elementId || '').match(/care-behavior-date-(\d{4}-\d{2}-\d{2})$/)
+    if (!match) {
+      continue
+    }
+    let text = ''
+    try {
+      text = normalizeText(await element.text())
+    } catch {
+      text = ''
+    }
+    cells.push({
+      date: match[1],
+      text,
+      hasTemperature: /\d+\s*°/.test(text),
+      hasHumidity: /\d+\s*%/.test(text),
+      hasWeatherMetrics: /\d+\s*°/.test(text) || /\d+\s*%/.test(text)
+    })
+  }
+  return cells.sort((a, b) => a.date.localeCompare(b.date))
+}
+
+async function waitForTimelineWeatherEvidence(page, timeoutMs = 10_000) {
+  const deadline = Date.now() + timeoutMs
+  let latest = []
+  while (Date.now() < deadline) {
+    latest = await collectTimelineWeatherEvidence(page)
+    if (latest.some(item => item.hasWeatherMetrics)) {
+      return latest
+    }
+    await sleep(500)
+  }
+  return latest
+}
+
+async function collectTimelineWeatherNotice(page) {
+  try {
+    const notice = await page.$('.care-behavior-error-text')
+    return notice ? normalizeText(await safeText(notice)) : ''
+  } catch {
+    return ''
+  }
+}
+
+async function waitForDiagnosisFlowEntry(miniProgram, timeoutMs = 30_000) {
+  const deadline = Date.now() + timeoutMs
+  let latestPage = null
+  while (Date.now() < deadline) {
+    latestPage = await miniProgram.currentPage()
+    const route = normalizeText(latestPage?.path)
+    if (route.includes('subpackages/diagnosis/flow')) {
+      const entry = await findElementByIdSuffix(latestPage, 'diagnosis-flow-page-content', 1000, 200)
+      if (entry) {
+        return { page: latestPage, entry }
+      }
+    }
+    await sleep(300)
+  }
+  return { page: latestPage, entry: null }
+}
+
 export async function runYellowingQuickFlow({
   wsEndpoint,
   projectPath: _projectPath,
@@ -47,9 +178,11 @@ export async function runYellowingQuickFlow({
   const logs = []
 
   let miniProgram = null
+  let capturedRequests = []
 
   try {
     miniProgram = (await connectFormalLeaf({ automator, wsEndpoint })).mp
+    await installRequestCapture(miniProgram)
   } catch (error) {
     throw new Error(`连接测试专属 automator 失败：${error.message}`)
   }
@@ -82,15 +215,9 @@ export async function runYellowingQuickFlow({
       throw new Error('未找到诊断入口按钮（id 包含 diagnose-entry-button-）')
     }
     await entry.tap()
-    await sleep(1000)
-
-    startPage = await miniProgram.currentPage()
-    const diagnosisEntry = await findElementByIdSuffix(
-      startPage,
-      'diagnosis-flow-page-content',
-      12000,
-      300
-    )
+    const diagnosisEntryResult = await waitForDiagnosisFlowEntry(miniProgram)
+    startPage = diagnosisEntryResult.page
+    const diagnosisEntry = diagnosisEntryResult.entry
     if (!diagnosisEntry) {
       throw new Error('未命中诊断分包真实流程（diagnosis-flow-page-content）')
     }
@@ -161,7 +288,7 @@ export async function runYellowingQuickFlow({
       }
 
       const candidates = optionsByQuestion.get(currentQuestionId) || []
-      if (!candidates.length) {
+      if (!candidates.length && !String(currentQuestionId).includes('air_environment')) {
         const fallback =
           optionsByQuestion.get(orderQuestionId) || [...optionsByQuestion.values()][0]
         if (!fallback || !fallback.length) {
@@ -177,12 +304,77 @@ export async function runYellowingQuickFlow({
       }
 
       const questionMeta = await resolveQuestionMetaByShell(pageNow, currentQuestionId)
+      if (String(currentQuestionId).includes('air_environment')) {
+        const skipped = await completeAirEnvironmentQuestion(
+          pageNow,
+          currentQuestionId,
+          pushLog
+        )
+        if (!skipped) {
+          break
+        }
+        shot = await screenshot(
+          miniProgram,
+          wsEndpoint,
+          reportDir,
+          `step-${questionIndex + 1}-before`
+        )
+        miniProgram = shot.miniProgram
+        shots.push(shot.path)
+        screenshotAttempts.push({
+          label: `step-${questionIndex + 1}-before`,
+          attempts: shot.attempts
+        })
+        pageNow = await miniProgram.currentPage()
+        const beforePage = await resolveQuestionState(pageNow)
+        const nextButton = await clickQuestionNext(pageNow, currentQuestionId)
+        if (!nextButton) {
+          pushLog({ type: 'state', label: 'next-not-found', questionId: currentQuestionId })
+          break
+        }
+        let afterPage = await miniProgram.currentPage()
+        let afterState = await resolveQuestionState(afterPage)
+        const completionDeadline = Date.now() + 20_000
+        while (
+          Date.now() < completionDeadline &&
+          afterState.path.includes('subpackages/diagnosis/question-package') &&
+          afterState.hasActiveQuestions
+        ) {
+          await sleep(1000)
+          afterPage = await miniProgram.currentPage()
+          afterState = await resolveQuestionState(afterPage)
+        }
+        pushLog({
+          type: 'answer',
+          step: questionIndex + 1,
+          questionId: currentQuestionId,
+          questionText: questionMeta.text || questionMeta.questionText || '',
+          chosenOptionText: '不确定，跳过这项',
+          pathBefore: beforePage.path,
+          pathAfter: afterState.path
+        })
+        shot = await screenshot(
+          miniProgram,
+          wsEndpoint,
+          reportDir,
+          `step-${questionIndex + 1}-after`
+        )
+        miniProgram = shot.miniProgram
+        shots.push(shot.path)
+        screenshotAttempts.push({
+          label: `step-${questionIndex + 1}-after`,
+          attempts: shot.attempts
+        })
+        break
+      }
       const options = candidates.length ? candidates : [...optionsByQuestion.values()][0] || []
 
       if (!options.length) {
         pushLog({ type: 'state', label: 'no-available-option', questionId: currentQuestionId })
         break
       }
+
+      await completeLightEnvironmentQuestion(pageNow, currentQuestionId, pushLog)
 
       const picked = pickBestOption(questionMeta, options, profile)
       if (!picked) {
@@ -203,6 +395,15 @@ export async function runYellowingQuickFlow({
         attempts: shot.attempts
       })
       pageNow = await miniProgram.currentPage()
+      if (String(currentQuestionId).includes('watering_frequency_context')) {
+        const timelineWeather = await waitForTimelineWeatherEvidence(pageNow)
+        pushLog({
+          type: 'timeline-weather',
+          questionId: currentQuestionId,
+          cells: timelineWeather,
+          noticeText: await collectTimelineWeatherNotice(pageNow)
+        })
+      }
       const refreshedOptions = await collectQuestionOptions(pageNow)
       const refreshedCandidates = refreshedOptions.get(currentQuestionId) || []
       const refreshedPicked = pickBestOption(questionMeta, refreshedCandidates, profile)
@@ -292,6 +493,12 @@ export async function runYellowingQuickFlow({
   } finally {
     if (miniProgram) {
       try {
+        capturedRequests = await readCapturedRequests(miniProgram)
+      } catch {
+        capturedRequests = []
+      }
+      await restoreRequest(miniProgram)
+      try {
         await disconnectFormalLeaf({ mp: miniProgram, timeoutMs: 5000 })
       } catch (error) {
         pushLog({
@@ -307,6 +514,7 @@ export async function runYellowingQuickFlow({
     logs,
     shots,
     screenshotAttempts,
+    capturedRequests,
     startedAt: new Date().toISOString()
   }
 }

@@ -11,6 +11,7 @@ export function useDefaultPlants() {
   const hasMore = ref(false)
   const initialLoading = ref(false)
   const loadingMore = ref(false)
+  const error = ref('')
   const loading = computed(() => initialLoading.value || loadingMore.value)
   let requestSequence = 0
 
@@ -69,12 +70,17 @@ export function useDefaultPlants() {
     })
     initialLoading.value = true
     loadingMore.value = false
+    error.value = ''
     try {
       const payload = await fetchCatalogPage(1, keywordRef.value)
       if (sequence !== requestSequence) {
         return
       }
       applyCatalogPayload(payload, { replace: true })
+    } catch {
+      if (sequence === requestSequence) {
+        error.value = '暂时无法加载植物列表，请稍后重试'
+      }
     } finally {
       if (sequence === requestSequence) {
         initialLoading.value = false
@@ -90,12 +96,17 @@ export function useDefaultPlants() {
     const targetPage = page.value + 1
     const keyword = keywordRef.value
     loadingMore.value = true
+    error.value = ''
     try {
       const payload = await fetchCatalogPage(targetPage, keyword)
       if (sequence !== requestSequence) {
         return
       }
       applyCatalogPayload(payload)
+    } catch {
+      if (sequence === requestSequence) {
+        error.value = '暂时无法加载更多植物，请稍后重试'
+      }
     } finally {
       if (sequence === requestSequence) {
         loadingMore.value = false
@@ -110,6 +121,7 @@ export function useDefaultPlants() {
     plants.value = []
     total.value = 0
     hasMore.value = false
+    error.value = ''
     initialLoading.value = false
     loadingMore.value = false
   }
@@ -119,6 +131,7 @@ export function useDefaultPlants() {
     loading,
     initialLoading,
     loadingMore,
+    error,
     load,
     loadNextPage,
     page,

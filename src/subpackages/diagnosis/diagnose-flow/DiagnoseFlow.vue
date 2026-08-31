@@ -6,7 +6,7 @@
       class="diagnose-automation-trigger"
       @click="injectAutomationDiagnoseImagesFromStorage"
     />
-    <view id="diagnose-flow-content" class="flex-1 pb-3">
+    <view id="diagnose-flow-content" class="flex-1 pb-3" :class="{ 'px-4': contentPadding }">
       <DiagnoseIntake v-if="!result" :view="viewContext" />
       <DiagnoseResultStage v-if="result" :view="viewContext" />
     </view>
@@ -111,6 +111,7 @@ export default {
     diagnosisProfile: { type: String, default: 'full' },
     entrySource: { type: String, default: 'diagnose_tab' },
     observedSymptoms: { type: Array, default: () => [] },
+    contentPadding: { type: Boolean, default: false },
     embedded: { type: Boolean, default: false }
   },
   emits: ['success', 'close'],

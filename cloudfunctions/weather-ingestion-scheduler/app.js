@@ -40,16 +40,6 @@ module.exports.main = async function weatherIngestionTimerMain(event = {}, conte
     .trim()
     .toLowerCase()
   const eventKeys = event.keys || event.Params || event.params
-  const seasonTriggerSync = createSeasonTriggerSyncService()
-
-  try {
-    if (isD0Weather24hTimerEvent(event) || isRecentWeatherIngestionTimerEvent(event)) {
-      await seasonTriggerSync.ensureBaseTimerTriggers()
-    }
-  } catch (error) {
-    console.error('ensureBaseTimerTriggers failed', error)
-  }
-
   if (isD0Weather24hTimerEvent(event)) {
     return handleD0Weather24hTimerEvent({
       event,
@@ -58,6 +48,9 @@ module.exports.main = async function weatherIngestionTimerMain(event = {}, conte
   }
 
   if (isRecentWeatherIngestionTimerEvent(event)) {
+    // 触发器由显式部署/运维动作协调；运行时不再调用管理面改写 timer。
+    // 这样天气采集不依赖管理凭据，也避免每次 timer 触发都产生删除/重建窗口。
+    const seasonTriggerSync = createSeasonTriggerSyncService()
     return handleRecentWeatherTimerEvent({
       event,
       service: buildRecentWeatherService(),

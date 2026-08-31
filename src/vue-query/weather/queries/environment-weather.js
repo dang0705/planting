@@ -2,6 +2,8 @@ import { requestHttpFunction } from '@/api/http'
 import { runVueQueryQuery } from '@/lib/vue-query-runtime.js'
 import { normalizeWeatherCoordinates } from '@/utils/weather-coordinate.js'
 
+export const ENVIRONMENT_WEATHER_STALE_TIME_MS = 5 * 60 * 1000
+
 export function buildEnvironmentWeatherQueryOptions({
   lat,
   lng,
@@ -58,7 +60,9 @@ export function buildEnvironmentWeatherQueryOptions({
         },
         auth: true
       }),
-    staleTime: 30 * 60 * 1000
+    // 当天 D0 由缓存采样或实时天气注入，30 分钟旧快照会让日历显示过期天气；
+    // 保留 Vue Query 去重/缓存能力，但把窗口的新鲜度与位置天气查询统一到 5 分钟。
+    staleTime: ENVIRONMENT_WEATHER_STALE_TIME_MS
   }
 }
 

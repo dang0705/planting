@@ -1,6 +1,6 @@
 ---
 name: wechatide-skill
-version: 0.3.9
+version: 0.3.10
 description: >-
   微信开发者工具（wechatide）工作流根入口：小程序/小游戏的创建与导入、编译预览上传、
   登录与项目管理、页面自动化、调试取证、云开发，以及开发者工具的下载安装更新。
@@ -102,7 +102,7 @@ wechatide -c <clientName> <toolName> [flags...] [--token <cliAccessToken>]
 | 预览、二维码、上传体验版（预览优先 `auto_preview`；可不打开窗口） | `skills/previewer/SKILL.md` |
 | 点击、输入、滚动、页面断言、自动化脚本 | `skills/automator/SKILL.md` |
 | console / network / 截图取证 / 状态诊断 | `skills/debugger/SKILL.md` |
-| 云环境、云函数、云数据库、云存储 | `skills/cloudbase-operator/SKILL.md` |
+| 云环境、云函数、云数据库、云存储、消息推送 | `skills/cloudbase-operator/SKILL.md` |
 | 小程序地图组件 / 腾讯位置服务 API | 外部 skill：`tencentmap-miniprogram-skill`（前端）/ `tencentmap-webservice-skill`（后端）——本包不处理，需触发主动下载；详见 [map-skill-index](references/map-skill-index.md) |
 
 选择原则：按**当前主目标**进一个 scene；不要跨 scene 混用原子工具。多目标时先完成 blocker，再移交。

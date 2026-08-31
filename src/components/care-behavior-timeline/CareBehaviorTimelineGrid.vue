@@ -14,7 +14,11 @@
     </view>
 
     <view class="care-behavior-grid-stage relative overflow-visible">
-      <CareBehaviorTimelineSkeleton v-if="showLoadingSkeleton" :items="skeletonCellItems" />
+      <CareBehaviorTimelineSkeleton
+        v-if="showLoadingSkeleton"
+        :id="`${idPrefix}-care-behavior-skeleton`"
+        :items="skeletonCellItems"
+      />
       <view v-else class="care-behavior-grid grid grid-cols-7 gap-1">
         <CareBehaviorTimelineCell
           v-for="item in cellItems"

@@ -846,6 +846,7 @@ const environmentWeatherWindow = {
     tempC: 30,
     humidity: 58,
     text: '多云',
+    obsTime: `${baseDate}T12:00+08:00`,
     source: 'qweather_weather_now'
   }
 }
@@ -858,6 +859,19 @@ assert.equal(weatherWindowByDate[baseDate].weather, '多云')
 assert.equal(weatherWindowByDate[baseDate].temperature, 30)
 assert.equal(weatherWindowByDate[baseDate].source, 'qweather_weather_now')
 
+const staleCurrentWeatherByDate = buildWeatherByDateFromEnvironmentWeatherWindow({
+  ...environmentWeatherWindow,
+  currentWeather: {
+    ...environmentWeatherWindow.currentWeather,
+    obsTime: '2026-05-26T23:59+08:00'
+  }
+})
+assert.equal(
+  Object.hasOwn(staleCurrentWeatherByDate, baseDate),
+  false,
+  '旧日期 currentWeather 不得覆盖当天日期格'
+)
+
 const timelineWithEnvironmentWeather = mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline(
   { reference_date: baseDate },
   environmentWeatherWindow
@@ -869,6 +883,13 @@ assert.equal(timelineWithEnvironmentWeather.weatherByDate['2026-06-11'].humidity
 assert.ok(componentSource.includes('buildWeatherByDateFromEnvironmentWeatherWindow'))
 assert.ok(componentSource.includes('timeline?.environmentWeatherWindow'))
 assert.ok(componentSource.includes('payload?.environmentWeatherWindow'))
+assert.ok(componentSource.includes('showLoadingSkeleton'))
+assert.ok(
+  readFileSync(
+    './src/components/care-behavior-timeline/CareBehaviorTimelineGrid.vue',
+    'utf8'
+  ).includes('care-behavior-skeleton')
+)
 
 assert.equal(
   formatWeatherText({

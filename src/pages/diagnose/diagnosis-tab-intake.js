@@ -164,6 +164,10 @@ export function useDiagnosisTabIntake() {
       isStartingDiagnosis.value = true
       uni.showLoading({ title: '正在准备问题...' })
       try {
+        if (!(await userStore.ensureLogin())) {
+          uni.showToast({ title: '请先登录后再开始检查', icon: 'none' })
+          return false
+        }
         reportAnalyticsEvent(ANALYTICS_EVENTS.DIAGNOSE)
         const structuredImages = buildStructuredImageInputs(imageFiles.value)
         const selectedSymptom = selectedDevSymptomClassOption.value

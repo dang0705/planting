@@ -17,18 +17,25 @@
   >
     <view id="plant-card-fertilization-summary" class="mb-3 rounded-[14px] bg-[#F8F6F0] p-3">
       <text class="block text-sm font-semibold text-gray-800">
-        {{ plant?.displayName || '当前植物' }}
+        {{ activePlant?.displayName || '当前植物' }}
       </text>
-      <text v-if="plant?.genus" class="mt-1 block text-xs text-gray-500">
-        {{ plant.genus }} 属
+      <text v-if="activePlant?.genus" class="mt-1 block text-xs text-gray-500">
+        {{ activePlant.genus }} 属
       </text>
       <text v-if="fertilizationText" class="mt-2 block text-xs leading-5 text-gray-600">
         基础施肥建议：{{ fertilizationText }}
       </text>
     </view>
 
+    <view
+      v-if="monthlyLoading"
+      id="plant-card-fertilization-monthly-loading"
+      class="rounded-[14px] bg-[#F8F6F0] p-3"
+    >
+      <text class="text-xs leading-5 text-gray-500">正在读取施肥时间表...</text>
+    </view>
     <FertilizationMonthlyTable
-      v-if="fertilizationMonthly.available"
+      v-else-if="fertilizationMonthly.available && monthlyReady"
       :monthly="fertilizationMonthly"
       table-id="plant-card-fertilization-monthly-table"
     />
@@ -37,7 +44,7 @@
       id="plant-card-fertilization-monthly-unavailable"
       class="rounded-[14px] bg-[#F8F6F0] p-3"
     >
-      <text class="text-xs leading-5 text-gray-500">该植物属暂无已审核的月度施肥表</text>
+      <text class="text-xs leading-5 text-gray-500">{{ monthlyUnavailableText }}</text>
       <text v-if="fertilizationText" class="mt-2 block text-xs leading-5 text-gray-600">
         {{ fertilizationText }}
       </text>
@@ -144,7 +151,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import BottomSheet from '@/components/common/BottomSheet.vue'
 import FertilizationMonthlyTable from '@/components/FertilizationMonthlyTable.vue'
 import {
@@ -154,6 +161,7 @@ import {
   dismissFertilizationReminder,
   fetchFertilizationReminder,
   fetchFertilizationReminderFreshState,
+  fetchUserPlant,
   previewFertilizationReminder
 } from '@/api/plants-http.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
@@ -200,7 +208,11 @@ const calendarDeleteAcknowledged = ref(false)
 const serverCurrentMonthOptions = ref(null)
 const currentMonthGuard = ref(null)
 const assertedDate = ref('')
+const resolvedPlant = ref(null)
+const monthlyLoading = ref(false)
+const monthlyLoadError = ref('')
 let reminderLoadSequence = 0
+let plantDetailLoadSequence = 0
 const createPreviewAction = createAsyncActionGuard()
 
 const canOpenReminderSetup = computed(
@@ -225,9 +237,15 @@ function closeCalendarDelete() {
   callComponentMethod(calendarDeletePopupRef, 'close')
   calendarDeleteAcknowledged.value = false
 }
+const activePlant = computed(() => {
+  if (!resolvedPlant.value || resolvedPlant.value.id !== props.plant?.id) {
+    return props.plant
+  }
+  return { ...props.plant, ...resolvedPlant.value }
+})
 const fertilizationMonthly = computed(
   () =>
-    props.plant?.fertilizationMonthly || {
+    activePlant.value?.fertilizationMonthly || {
       available: false,
       rows: [],
       scopeLabel: '',
@@ -238,7 +256,7 @@ const fertilizationMonthly = computed(
     }
 )
 const fertilizationText = computed(() => {
-  const fertilization = props.plant?.fertilization
+    const fertilization = activePlant.value?.fertilization
   if (!fertilization) {
     return ''
   }
@@ -247,6 +265,17 @@ const fertilizationText = computed(() => {
       ? `${fertilization.freq[FIRST_FREQUENCY_INDEX]}${fertilization.freq[SECOND_FREQUENCY_INDEX] ? `-${fertilization.freq[SECOND_FREQUENCY_INDEX]}` : ''}${fertilization.unit || '天'}`
       : ''
   return [fertilization.type, freqText, fertilization.other].filter(Boolean).join(' · ')
+})
+const monthlyReady = computed(
+  () => fertilizationMonthly.value.available && fertilizationMonthly.value.rows?.length === 12
+)
+const monthlyUnavailableText = computed(() => {
+  if (monthlyLoadError.value) {
+    return '施肥时间表暂时无法读取，请稍后重试。'
+  }
+  return fertilizationMonthly.value.available
+    ? '施肥时间表暂时无法读取，请稍后重试。'
+    : '该植物属暂无已审核的月度施肥表'
 })
 const currentMonthOptions = computed(() =>
   Array.isArray(serverCurrentMonthOptions.value)
@@ -344,9 +373,42 @@ async function loadReminder() {
   }
 }
 
+async function loadPlantDetails() {
+  const plantId = Number(props.plant?.id)
+  const requestSequence = ++plantDetailLoadSequence
+  resolvedPlant.value = null
+  monthlyLoadError.value = ''
+  if (!plantId) {
+    return
+  }
+  monthlyLoading.value = true
+  try {
+    const response = await fetchUserPlant(plantId)
+    if (
+      requestSequence !== plantDetailLoadSequence ||
+      Number(props.plant?.id) !== plantId
+    ) {
+      return
+    }
+    if (response?.code === 200 && response.data?.id === plantId) {
+      resolvedPlant.value = response.data
+      return
+    }
+    monthlyLoadError.value = '详情读取失败'
+  } catch (error) {
+    if (requestSequence === plantDetailLoadSequence && Number(props.plant?.id) === plantId) {
+      monthlyLoadError.value = error?.message || '详情读取失败'
+    }
+  } finally {
+    if (requestSequence === plantDetailLoadSequence) {
+      monthlyLoading.value = false
+    }
+  }
+}
+
 async function open() {
   callComponentMethod(popupRef, 'open')
-  await loadReminder()
+  await Promise.all([loadPlantDetails(), loadReminder()])
 }
 
 function close() {
@@ -359,6 +421,16 @@ function onPopupChange(event) {
     emit('close')
   }
 }
+
+watch(
+  () => props.plant?.id,
+  () => {
+    plantDetailLoadSequence += 1
+    resolvedPlant.value = null
+    monthlyLoading.value = false
+    monthlyLoadError.value = ''
+  }
+)
 
 function onReminderSetupPopupChange(event) {
   if (!event?.show) {

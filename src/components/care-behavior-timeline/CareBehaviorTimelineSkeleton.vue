@@ -1,8 +1,5 @@
 <template>
-  <view
-    class="grid grid-cols-7 gap-1"
-    aria-hidden="true"
-  >
+  <view :id="id" class="grid grid-cols-7 gap-1" aria-hidden="true">
     <view
       v-for="item in items"
       :key="item"
@@ -22,6 +19,7 @@
 
 <script setup>
 defineProps({
+  id: { type: String, default: '' },
   items: { type: Array, default: () => [] }
 })
 </script>

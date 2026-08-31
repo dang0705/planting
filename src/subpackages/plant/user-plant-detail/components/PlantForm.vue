@@ -1,69 +1,165 @@
 <template>
-  <view :id="`${idPrefix}-form`">
-    <!-- 植物照片 -->
-    <view class="mb-6">
-      <text class="block text-sm font-semibold text-gray-800 mb-3">植物照片</text>
-      <view
-        :id="`${idPrefix}-photo-upload`"
-        class="h-[120px] w-[120px] overflow-hidden rounded-2xl"
-        @click="$emit('upload-photo')"
-      >
-        <image
-          v-if="displayImage"
-          :id="`${idPrefix}-photo-preview`"
-          :src="displayImage"
-          class="w-full h-full"
-          mode="aspectFill"
-          @error="handleImageError"
-        />
+  <view :id="`${idPrefix}-form`" class="space-y-4">
+    <view
+      :id="`${idPrefix}-basic-info-section`"
+      class="rounded-2xl border border-[rgba(45,122,79,0.15)] bg-white p-4"
+    >
+      <view class="mb-4">
+        <text class="block text-base font-semibold text-[#1f2937]">基本信息</text>
+        <text class="mt-1 block text-xs leading-5 text-[#6b7280]">照片、昵称和种植时间</text>
+      </view>
+
+      <view class="mb-5">
+        <text class="mb-3 block text-sm font-semibold text-gray-800">植物照片</text>
         <view
-          v-else
-          class="w-full h-full bg-gray-100 border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center"
+          :id="`${idPrefix}-photo-upload`"
+          class="h-[120px] w-[120px] overflow-hidden rounded-2xl"
+          @click="$emit('upload-photo')"
         >
-          <text class="text-[32px] mb-2">📷</text>
-          <text class="text-xs text-gray-400">添加照片</text>
+          <image
+            v-if="displayImage"
+            :id="`${idPrefix}-photo-preview`"
+            :src="displayImage"
+            class="h-full w-full"
+            mode="aspectFill"
+            @error="handleImageError"
+          />
+          <view
+            v-else
+            class="flex h-full w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-gray-100"
+          >
+            <text class="mb-2 text-[32px]">📷</text>
+            <text class="text-xs text-gray-400">添加照片</text>
+          </view>
         </view>
+      </view>
+
+      <view class="mb-5">
+        <text class="mb-3 block text-sm font-semibold text-gray-800">
+          植物昵称 <text class="font-normal text-gray-400">(可选)</text>
+        </text>
+        <view
+          class="box-border flex w-full items-center rounded-xl border border-solid border-gray-300 bg-white px-4 py-3"
+        >
+          <input
+            :id="`${idPrefix}-nickname-input`"
+            :value="modelValue.nickname"
+            class="box-border min-w-0 flex-1 border-none bg-transparent p-0 text-sm"
+            placeholder="给它起个名字吧"
+            placeholder-class="text-gray-300"
+            @input="update('nickname', $event.detail.value)"
+          />
+        </view>
+      </view>
+
+      <view class="mb-5">
+        <text class="mb-3 block text-sm font-semibold text-gray-800">种植日期</text>
+        <picker
+          :id="`${idPrefix}-plant-date-picker`"
+          mode="date"
+          :value="modelValue.plantDate"
+          @change="update('plantDate', $event.detail.value)"
+        >
+          <view
+            class="flex items-center justify-between rounded-xl border border-gray-300 bg-white px-4 py-3"
+          >
+            <text class="text-sm text-gray-800">{{ modelValue.plantDate || '选择日期' }}</text>
+            <text class="text-lg text-gray-400">›</text>
+          </view>
+        </picker>
+      </view>
+
+      <view>
+        <text class="mb-3 block text-sm font-semibold text-gray-800">
+          备注 <text class="font-normal text-gray-400">(可选)</text>
+        </text>
+        <view
+          class="box-border w-full rounded-xl border border-solid border-gray-300 bg-white px-4 py-3"
+        >
+          <textarea
+            :id="`${idPrefix}-notes-input`"
+            :value="modelValue.notes"
+            class="box-border min-h-[100px] w-full border-none bg-transparent p-0 text-sm"
+            placeholder="记录一些特别的信息..."
+            placeholder-class="text-gray-300"
+            maxlength="200"
+            @input="update('notes', $event.detail.value)"
+          />
+        </view>
+        <text class="mt-2 block text-right text-xs text-gray-400">
+          {{ (modelValue.notes || '').length }}/200
+        </text>
       </view>
     </view>
 
-    <!-- 植物昵称 -->
-    <view class="mb-6">
-      <text class="block text-sm font-semibold text-gray-800 mb-3"
-        >植物昵称 <text class="font-normal text-gray-400">(可选)</text></text
-      >
-      <input
-        :id="`${idPrefix}-nickname-input`"
-        :value="modelValue.nickname"
-        @input="update('nickname', $event.detail.value)"
-        class="w-full py-3 px-4 bg-white border border-gray-300 rounded-xl text-sm"
-        placeholder="给它起个名字吧"
-        placeholder-class="text-gray-300"
-      />
+    <view
+      :id="`${idPrefix}-care-info-section`"
+      class="rounded-2xl border border-[rgba(45,122,79,0.15)] bg-white p-4"
+    >
+      <view class="mb-4">
+        <text class="block text-base font-semibold text-[#1f2937]">养护信息</text>
+        <text class="mt-1 block text-xs leading-5 text-[#6b7280]"
+          >养护地点和环境会影响后续建议</text
+        >
+      </view>
+
+      <view class="mb-5">
+        <text class="mb-3 block text-sm font-semibold text-gray-800">
+          养护城市 <text class="text-red-500">*</text>
+        </text>
+        <view
+          class="flex items-center justify-between rounded-xl border bg-white px-4 py-3"
+          :class="cityError ? 'border-red-300' : 'border-gray-200'"
+        >
+          <view class="min-w-0 flex-1">
+            <text class="block text-sm font-semibold text-gray-800">{{
+              selectedCareLocation?.cityName || '请选择城市'
+            }}</text>
+            <text class="mt-1 block text-xs text-gray-400">{{ locationStatusText }}</text>
+          </view>
+          <button
+            :id="`${idPrefix}-city-button`"
+            class="m-0 h-9 rounded-full border border-emerald-200 bg-emerald-50 px-4 text-xs font-semibold leading-9 text-[#016630]"
+            @click="showCitySheet = true"
+          >
+            修改
+          </button>
+        </view>
+        <text v-if="cityError" class="mt-2 block text-xs text-red-500">{{ cityError }}</text>
+      </view>
+
+      <view v-if="showLightEnvironment">
+        <LightEnvironmentPicker
+          :id-prefix="`${idPrefix}-light`"
+          question-id="profile"
+          :model-value="modelValue.lightEnvironment"
+          :plant-name="modelValue.nickname || '植物'"
+          @change="value => update('lightEnvironment', value)"
+        />
+      </view>
+
+      <slot name="care-settings" />
     </view>
 
-    <view class="mb-6">
-      <text class="block text-sm font-semibold text-gray-800 mb-3">
-        养护城市 <text class="text-red-500">*</text>
-      </text>
+    <view
+      :id="`${idPrefix}-pot-info-section`"
+      class="rounded-2xl border border-[rgba(45,122,79,0.15)] bg-white p-4"
+    >
+      <view class="mb-4">
+        <text class="block text-base font-semibold text-[#1f2937]">盆信息</text>
+        <text class="mt-1 block text-xs leading-5 text-[#6b7280]">盆型和基质用于估算浇水量</text>
+      </view>
       <view
-        class="flex items-center justify-between rounded-xl border bg-white px-4 py-3"
-        :class="cityError ? 'border-red-300' : 'border-gray-200'"
+        :id="`${idPrefix}-pot-profile-button`"
+        class="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3"
+        @click="$emit('open-pot-profile')"
       >
         <view class="min-w-0 flex-1">
-          <text class="block text-sm font-semibold text-gray-800">{{
-            selectedCareLocation?.cityName || '请选择城市'
-          }}</text>
-          <text class="mt-1 block text-xs text-gray-400">{{ locationStatusText }}</text>
+          <text class="block text-sm font-semibold text-gray-800">{{ potProfileTitle }}</text>
+          <text class="mt-1 block text-xs text-gray-400">{{ potProfileSummary }}</text>
         </view>
-        <button
-          :id="`${idPrefix}-city-button`"
-          class="m-0 h-9 rounded-full border border-emerald-200 bg-emerald-50 px-4 text-xs font-semibold leading-9 text-[#016630]"
-          @click="showCitySheet = true"
-        >
-          修改
-        </button>
+        <text class="ml-3 text-lg text-gray-400">›</text>
       </view>
-      <text v-if="cityError" class="mt-2 block text-xs text-red-500">{{ cityError }}</text>
     </view>
 
     <view
@@ -104,68 +200,6 @@
         />
       </view>
     </view>
-
-    <view v-if="showLightEnvironment" class="mb-6">
-      <LightEnvironmentPicker
-        :id-prefix="`${idPrefix}-light`"
-        question-id="profile"
-        :model-value="modelValue.lightEnvironment"
-        :plant-name="modelValue.nickname || '植物'"
-        @change="value => update('lightEnvironment', value)"
-      />
-    </view>
-
-    <view class="mb-6">
-      <text class="block text-sm font-semibold text-gray-800 mb-3">盆型与基质</text>
-      <view
-        :id="`${idPrefix}-pot-profile-button`"
-        class="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3"
-        @click="$emit('open-pot-profile')"
-      >
-        <view class="min-w-0 flex-1">
-          <text class="block text-sm font-semibold text-gray-800">{{ potProfileTitle }}</text>
-          <text class="mt-1 block text-xs text-gray-400">{{ potProfileSummary }}</text>
-        </view>
-        <text class="ml-3 text-lg text-gray-400">›</text>
-      </view>
-    </view>
-
-    <!-- 种植日期 -->
-    <view class="mb-6">
-      <text class="block text-sm font-semibold text-gray-800 mb-3">种植日期</text>
-      <picker
-        :id="`${idPrefix}-plant-date-picker`"
-        mode="date"
-        :value="modelValue.plantDate"
-        @change="update('plantDate', $event.detail.value)"
-      >
-        <view
-          class="flex items-center justify-between py-3 px-4 bg-white border border-gray-300 rounded-xl"
-        >
-          <text class="text-sm text-gray-800">{{ modelValue.plantDate || '选择日期' }}</text>
-          <text class="text-lg text-gray-400">›</text>
-        </view>
-      </picker>
-    </view>
-
-    <!-- 备注 -->
-    <view class="mb-6">
-      <text class="block text-sm font-semibold text-gray-800 mb-3"
-        >备注 <text class="font-normal text-gray-400">(可选)</text></text
-      >
-      <textarea
-        :id="`${idPrefix}-notes-input`"
-        :value="modelValue.notes"
-        @input="update('notes', $event.detail.value)"
-        class="w-full min-h-[100px] py-3 px-4 bg-white border border-gray-300 rounded-xl text-sm"
-        placeholder="记录一些特别的信息..."
-        placeholder-class="text-gray-300"
-        maxlength="200"
-      />
-      <text class="block text-right text-xs text-gray-400 mt-2"
-        >{{ (modelValue.notes || '').length }}/200</text
-      >
-    </view>
   </view>
 </template>
 
@@ -182,6 +216,8 @@ import ChipsSelector from '@/components/common/ChipsSelector.vue'
 import LightEnvironmentPicker from '@/components/LightEnvironmentPicker.vue'
 
 const INFO_STEP = 1
+const INITIAL_IMAGE_RETRY_COUNT = 0
+const IMAGE_RETRY_LIMIT = 1
 const props = defineProps({
   modelValue: { type: Object, required: true },
   cityError: { type: String, default: '' },
@@ -192,7 +228,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'upload-photo', 'city-change', 'open-pot-profile'])
 
 const { url: remoteImageUrl, resolve: resolveImageUrl, refresh: refreshImageUrl } = useFileUrl()
-const imageRetryCount = ref(0)
+const imageRetryCount = ref(INITIAL_IMAGE_RETRY_COUNT)
 const displayImage = computed(() =>
   props.modelValue.imageFileId ? remoteImageUrl.value : props.modelValue.image || ''
 )
@@ -200,14 +236,14 @@ const displayImage = computed(() =>
 watch(
   () => props.modelValue.imageFileId,
   nextFileId => {
-    imageRetryCount.value = 0
+    imageRetryCount.value = INITIAL_IMAGE_RETRY_COUNT
     resolveImageUrl(nextFileId)
   },
   { immediate: true }
 )
 
 async function handleImageError() {
-  if (!props.modelValue.imageFileId || imageRetryCount.value >= 1) {
+  if (!props.modelValue.imageFileId || imageRetryCount.value >= IMAGE_RETRY_LIMIT) {
     remoteImageUrl.value = ''
     return
   }

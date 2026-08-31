@@ -1,8 +1,5 @@
 import { BASE_URL, IS_LOCAL_API_BASE_URL, shouldAppendWebFunctionFlag } from '@/api/env'
-import {
-  getCloudbaseAccessToken,
-  getCloudbaseUserIdentity
-} from '@/utils/cloudbase-auth'
+import { getCloudbaseUserIdentity } from '@/utils/cloudbase-auth'
 import { getRequestAppEnvHeader } from '@/utils/runtime-env'
 
 export const DEFAULT_HTTP_TIMEOUT_MS = 20_000
@@ -109,17 +106,15 @@ export async function resolveHttpFunctionAuth({ auth = true, headers = {} } = {}
   }
 
   const identity = await resolveRealRuntimeIdentity()
-  const accessToken = String(await getCloudbaseAccessToken()).trim()
-  const identityTicket = String(identity?.httpIdentityTicket || '').trim()
-  if (!accessToken || !identityTicket) {
-    throw new Error('微信登录态获取失败，请稍后重试')
+  const ticket = String(identity?.httpIdentityTicket || '').trim()
+  if (!ticket) {
+    throw new Error('微信身份票据获取失败，请稍后重试')
   }
   return {
     ...headers,
     'x-app-env': getRequestAppEnvHeader(),
     'x-env': getRequestAppEnvHeader(),
-    Authorization: `Bearer ${accessToken}`,
-    'x-planting-http-identity-ticket': identityTicket
+    Authorization: `Bearer ${ticket}`
   }
 }
 
@@ -284,7 +279,7 @@ export function httpRequest(defaults = {}) {
       !IS_LOCAL_API_BASE_URL &&
       typeof wx.cloud.callHTTPFunction === 'function'
     ) {
-      const identity = await resolveRealRuntimeIdentity()
+      const identity = auth ? await resolveRealRuntimeIdentity() : null
       return requestNativeHttpFunction({
         functionPath,
         method: requestMethod,
@@ -295,7 +290,7 @@ export function httpRequest(defaults = {}) {
           'x-app-env': getRequestAppEnvHeader(),
           'x-env': getRequestAppEnvHeader()
         },
-        identityTicket: identity.httpIdentityTicket,
+        identityTicket: identity?.httpIdentityTicket,
         enableChunked,
         timeout: requestTimeout,
         onChunkReceived

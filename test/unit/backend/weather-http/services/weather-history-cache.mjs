@@ -523,7 +523,7 @@ assert.equal(missWindow.weatherEvidenceInsufficient, true)
 assert.equal(missWindow.historicalDays.length, 0)
 assert.equal(missWindow.meta.quality, 'missing')
 assert.equal(missStorage.reads.get(buildRecentWeatherObjectPath('city:Missing')), 1)
-assert.equal(missWindow.meta.reason, 'recent_10d_rebuild_deferred')
+assert.equal(missWindow.meta.reason, 'recent_10d_object_missing')
 
 clearRecentWeatherMemoryCache()
 let slowStorageCompleted = false

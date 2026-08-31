@@ -10,7 +10,9 @@ process.env.QWEATHER_API_KEY = 'unit-weather-key'
 const storageObjects = new Map()
 const storageObjectsByFileId = new Map()
 let forecast10dCalls = 0
+let forecast15dCalls = 0
 let historicalCalls = 0
+let currentWeatherCalls = 0
 
 const fakeCloudbaseApp = {
   async downloadFile({ fileID }) {
@@ -85,22 +87,33 @@ Module._load = function patched(request, parent, isMain) {
   }
 
   if (
-    request === './services/weather-window-service' &&
-    String(parent?.filename || '').endsWith('/cloudfunctions/weather-http/app.js')
-  ) {
-    return {
-      async buildEnvironmentWeatherWindow() {
-        throw new Error('诊断模式不应回退旧 environment window')
-      }
-    }
-  }
-
-  if (
     request === '../adapters/qweather-adapter' &&
     String(parent?.filename || '').includes('/cloudfunctions/weather-http/services/')
   ) {
     return {
       createQWeatherAdapter: () => ({
+        async fetchCurrentWeather() {
+          currentWeatherCalls += 1
+          return {
+            tempC: 28,
+            humidity: 60,
+            text: '晴',
+            weatherDate: new Date().toISOString().slice(0, 10),
+            source: 'fake_qweather_now'
+          }
+        },
+        async fetchForecast15d({ diagnosisDate }) {
+          forecast15dCalls += 1
+          return Array.from({ length: 15 }, (_, index) => ({
+            date: addDays(diagnosisDate || new Date().toISOString().slice(0, 10), index),
+            tempMaxC: 30,
+            tempMinC: 22,
+            humidity: 60,
+            precipMm: 0,
+            textDay: '晴',
+            source: 'fake_qweather_forecast'
+          }))
+        },
         async fetchForecast10d() {
           forecast10dCalls += 1
           return {
@@ -144,7 +157,9 @@ try {
   const {
     clearRecentWeatherMemoryCache
   } = require('../../../../cloudfunctions/weather-http/services/recent-weather-memory-cache.js')
-  const { buildWeatherDayObjectPath } = require('../../../../cloudfunctions/weather-http/services/weather-cache-paths.js')
+  const {
+    buildWeatherDayObjectPath
+  } = require('../../../../cloudfunctions/weather-http/services/weather-cache-paths.js')
 
   // 新架构：批量采集前需预置 finalized day file
   const today = new Date().toISOString().slice(0, 10)
@@ -160,9 +175,17 @@ try {
     dailyRollup: {
       date: d1,
       quality: 'partial',
-      sampleSummary: { sampleCount: 1, daylightSampleCount: 1, missingSlots: ['forenoon', 'noon', 'afternoon'] },
+      sampleSummary: {
+        sampleCount: 1,
+        daylightSampleCount: 1,
+        missingSlots: ['forenoon', 'noon', 'afternoon']
+      },
       lightFeatures: { daylightCloudMean: null, lowLightProxy: 'none' },
-      moistureFeatures: { humidityMean: 65, precipLastHourSum: null, wetSoilRiskFromWeather: 'low' },
+      moistureFeatures: {
+        humidityMean: 65,
+        precipLastHourSum: null,
+        wetSoilRiskFromWeather: 'low'
+      },
       tempFeatures: { tempMean: 24, tempMax: 24, heatStressLevel: 'low', coldStressLevel: 'low' },
       tempMin: 24,
       dominantWeatherText: ''
@@ -238,6 +261,71 @@ try {
   )
   assert.equal(historicalCalls, historicalCallsAfterBatch, '诊断请求不得调用 QWeather')
   assert.equal(forecast10dCalls, 0, '新架构不得调用 fetchForecast10d')
+
+  const diagnosisDate = addDays(shanghaiResult.targetDate, 1)
+  const shanghaiD0Path = buildWeatherDayObjectPath('city:shanghai', diagnosisDate)
+  storageObjects.set(shanghaiD0Path, {
+    schemaVersion: 'weather-cache/v1/day-now-sample',
+    locationKey: 'city:shanghai',
+    date: diagnosisDate,
+    state: 'working',
+    latestSample: {
+      slotName: 'noon',
+      temp: 31,
+      humidity: 52,
+      text: '晴',
+      precipLastHour: 0,
+      sampledAt: `${diagnosisDate}T04:00:00.000Z`
+    },
+    quality: 'partial'
+  })
+
+  // 环境模式也必须复用同一份历史/D0 缓存；只允许请求未来 15 日预报，
+  // 不得再次请求 QWeather historical 或 current，避免与诊断窗口形成两套事实。
+  const historicalCallsBeforeEnvironment = historicalCalls
+  const currentCallsBeforeEnvironment = currentWeatherCalls
+  const environmentResponse = await weatherApp.main(
+    {
+      path: '/weather/environment-context',
+      method: 'POST',
+      headers: {},
+      query: {},
+      body: {
+        mode: 'environment',
+        locationKey: 'city:shanghai',
+        lat: 31.22,
+        lng: 121.46,
+        diagnosisDate
+      }
+    },
+    {}
+  )
+  const environmentPayload = JSON.parse(environmentResponse.body)
+  assert.equal(environmentResponse.statusCode, 200)
+  assert.equal(environmentPayload.data.meta.sourceKind, 'weather_cache_recent_10d')
+  assert.equal(environmentPayload.data.meta.todaySource, 'day_latest_sample')
+  assert.equal(environmentPayload.data.historicalDays.length > 0, true)
+  assert.equal(
+    environmentPayload.data.forecastDays.filter(
+      day => day.date === environmentPayload.data.meta.diagnosisDate
+    ).length,
+    1,
+    '环境模式缓存窗口应保留且只返回一个缓存 D0'
+  )
+  assert.equal(environmentPayload.data.forecastDays[0].source, 'weather_cache_day_latest_sample')
+  assert.equal(environmentPayload.data.forecastDays[0].sourceKind, 'weather_now_sample')
+  assert.equal(environmentPayload.data.forecastDays.length, 15)
+  assert.equal(environmentPayload.data.forecastDays.at(-1).date, addDays(diagnosisDate, 14))
+  assert.equal(
+    environmentPayload.data.historicalDays.some(
+      day => day.source === 'qweather_historical_weather'
+    ),
+    false,
+    '环境模式历史记录不得再标记为 QWeather historical'
+  )
+  assert.equal(historicalCalls, historicalCallsBeforeEnvironment)
+  assert.equal(currentWeatherCalls, currentCallsBeforeEnvironment)
+  assert.equal(forecast15dCalls, 1, '环境模式只应请求一次未来预报')
 } finally {
   Module._load = originalLoad
   if (originalQWeatherApiKey === undefined) {

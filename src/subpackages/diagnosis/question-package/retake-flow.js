@@ -23,6 +23,7 @@ import {
 import { buildRetakeConfirmationContent } from '@/subpackages/diagnosis/diagnose-flow/retake-copy.js'
 import { isRetakeWindowExpiredError } from '@/subpackages/diagnosis/diagnose-flow/retake-expiry.js'
 import { buildStructuredImageInputs } from '@/utils/diagnose-structured-images.js'
+import { invalidateDiagnosisHistoryQueries } from '../vue-query/diagnosis-history/queries/history.js'
 
 const RETAKE_IMAGE_LIMIT = 1
 const RETAKE_TIMER_INTERVAL_MS = 1000
@@ -124,6 +125,9 @@ export function useQuestionPackageRetake({
         diagnosis: nextResult,
         diagnosisId: nextResult.diagnosisSessionId || ''
       })
+      invalidateDiagnosisHistoryQueries(
+        nextResult?.userPlantId || nextResult?.plantId || result.value?.userPlantId || null
+      )
     }
     return nextResult
   }

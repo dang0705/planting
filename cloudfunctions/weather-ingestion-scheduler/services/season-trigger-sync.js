@@ -18,6 +18,7 @@ const {
   resolveHotCityForSeasonTrigger
 } = require('./hot-city-locations')
 const { formatLocalDateInTimezone } = require('./recent-weather-features')
+const { resolveCloudBaseCredentials } = require('../utils/cloudbase-credentials')
 
 const DRIFT_THRESHOLD_MINUTES = 15
 const SEASON_TRIGGER_STATE_SCHEMA_VERSION = 'weather-cache/v1/season-trigger-state'
@@ -43,6 +44,35 @@ function normalizeTimerTrigger(trigger = {}) {
     return null
   }
   return { name, type: 'timer', config }
+}
+
+function normalizeExistingTimerTrigger(trigger = {}) {
+  const name = String(trigger?.TriggerName || trigger?.name || '').trim()
+  const type = String(trigger?.Type || trigger?.type || '').trim().toLowerCase()
+  if (!name || (type && type !== 'timer')) {
+    return null
+  }
+
+  let description = trigger?.TriggerDesc || trigger?.triggerDesc || trigger?.config || ''
+  if (typeof description === 'string') {
+    try {
+      description = JSON.parse(description)
+    } catch {
+      // Older manager responses may expose the cron expression directly.
+    }
+  }
+  const config = String(
+    description?.cron || description?.config || description || ''
+  ).trim()
+  if (!config) {
+    return null
+  }
+  const enabled =
+    trigger?.Enable === undefined && trigger?.enable === undefined
+      ? true
+      : Number(trigger?.Enable ?? trigger?.enable) === 1 ||
+        String(trigger?.Enable ?? trigger?.enable).toLowerCase() === 'on'
+  return { name, type: 'timer', config, enabled }
 }
 
 function loadBaseTimerTriggersFromConfig() {
@@ -176,17 +206,12 @@ function buildDesiredTimerTriggers(additionalTriggers = []) {
 
 function loadCloudBaseManagerFromEnv(env = process.env) {
   const envId = String(env.CLOUDBASE_ENV_ID || env.TCB_ENV || '').trim()
-  const secretId = String(
-    env.CLOUDBASE_SECRET_ID || env.TENCENT_SECRET_ID || env.TENCENTCLOUD_SECRETID || ''
-  ).trim()
-  const secretKey = String(
-    env.CLOUDBASE_SECRET_KEY || env.TENCENT_SECRET_KEY || env.TENCENTCLOUD_SECRETKEY || ''
-  ).trim()
-  if (!envId || !secretId || !secretKey) {
+  const credentials = resolveCloudBaseCredentials(env)
+  if (!envId || !credentials.secretId || !credentials.secretKey) {
     throw new Error('缺少 CloudBase manager 显式 envId/secretId/secretKey')
   }
   const CloudBase = require('@cloudbase/manager-node')
-  const app = new CloudBase({ envId, secretId, secretKey })
+  const app = new CloudBase({ envId, ...credentials })
   return app.functions
 }
 
@@ -233,20 +258,68 @@ function createCloudBaseTriggerClient({ env = process.env, functions = null } = 
     return { triggers: payload }
   }
 
-  async function replaceTimerTriggers(triggers = []) {
-    const payload = buildDesiredTimerTriggers(triggers)
-    for (const trigger of payload) {
-      await deleteTriggerIfExists(trigger.name)
+  async function listCurrentTimerTriggers() {
+    if (typeof resolvedFunctions.getFunctionDetail !== 'function') {
+      throw new Error('CloudBase manager 缺少 getFunctionDetail，无法安全校验现有 timer trigger')
     }
-    await createTimerTriggers(payload)
-    return { triggers: payload, functionName }
+    const detail = await resolvedFunctions.getFunctionDetail(functionName)
+    const rawTriggers = Array.isArray(detail?.Triggers)
+      ? detail.Triggers
+      : Array.isArray(detail?.triggers)
+        ? detail.triggers
+        : null
+    if (!rawTriggers) {
+      throw new Error('CloudBase manager getFunctionDetail 未返回 Triggers，已停止 reconcile')
+    }
+    return rawTriggers.map(normalizeExistingTimerTrigger).filter(Boolean)
+  }
+
+  async function reconcileTimerTriggers(triggers = []) {
+    const desired = buildDesiredTimerTriggers(triggers)
+    const current = await listCurrentTimerTriggers()
+    const currentByName = new Map(current.map(trigger => [trigger.name, trigger]))
+    const toCreate = []
+    const changed = []
+    const unchanged = []
+
+    for (const trigger of desired) {
+      const existing = currentByName.get(trigger.name)
+      if (!existing) {
+        toCreate.push(trigger)
+        continue
+      }
+      if (
+        existing.config !== trigger.config ||
+        existing.type !== trigger.type ||
+        existing.enabled === false
+      ) {
+        await deleteTriggerIfExists(trigger.name)
+        toCreate.push(trigger)
+        changed.push(trigger.name)
+        continue
+      }
+      unchanged.push(trigger.name)
+    }
+
+    // Only create missing or changed managed triggers. Unknown existing
+    // triggers are intentionally preserved; this function must not delete all
+    // timers on every invocation just to reconcile the eight base timers.
+    await createTimerTriggers(toCreate)
+    return {
+      triggers: desired,
+      functionName,
+      created: toCreate.map(trigger => trigger.name),
+      changed,
+      unchanged,
+      existingCount: current.length
+    }
   }
 
   async function updateTimerTrigger({ triggerName = '', cron = '', additionalTriggers = [] } = {}) {
     if (!triggerName || !cron) {
       throw new Error('更新 timer trigger 缺少 triggerName 或 cron')
     }
-    await replaceTimerTriggers([...additionalTriggers, { name: triggerName, config: cron }])
+    await reconcileTimerTriggers([...additionalTriggers, { name: triggerName, config: cron }])
     return { triggerName, cron, functionName }
   }
 
@@ -254,16 +327,20 @@ function createCloudBaseTriggerClient({ env = process.env, functions = null } = 
     if (!triggerName || !cron) {
       throw new Error('校验 timer trigger 缺少 triggerName 或 cron')
     }
-    await replaceTimerTriggers([...additionalTriggers, { name: triggerName, config: cron }])
+    await reconcileTimerTriggers([...additionalTriggers, { name: triggerName, config: cron }])
     return { triggerName, cron, functionName, ensured: true }
   }
 
   async function ensureBaseTimerTriggers({ additionalTriggers = [] } = {}) {
-    const result = await replaceTimerTriggers(additionalTriggers)
+    const result = await reconcileTimerTriggers(additionalTriggers)
     return {
       functionName,
       count: result.triggers.length,
-      triggers: result.triggers
+      triggers: result.triggers,
+      created: result.created,
+      changed: result.changed,
+      unchanged: result.unchanged,
+      existingCount: result.existingCount
     }
   }
 

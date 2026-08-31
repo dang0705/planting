@@ -157,6 +157,11 @@ async function readCurrentPath(pageOrMiniProgram) {
 
 async function findActiveQuestionIdFromDom(page) {
   const elements = await collectElementsWithId(page)
+  const activeMarker = 'diagnose-question-package-page-active-question-'
+  const active = elements.find(item => item.elementId.includes(activeMarker))
+  if (active) {
+    return active.elementId.slice(active.elementId.indexOf(activeMarker) + activeMarker.length)
+  }
   const questionShells = elements.filter(item =>
     item.elementId.includes('diagnose-question-package-page-question-shell-')
   )
@@ -216,6 +221,17 @@ async function resolveQuestionMetaByShell(page, questionId) {
 }
 
 async function clickQuestionNext(page, questionId) {
+  // The package footer owns the generic next action. Prefer the page-scoped
+  // control so a shell lookup cannot accidentally resolve a hidden neighbor
+  // during the swiper transition.
+  const pageNextCandidates = (await collectElementsWithId(page)).filter(item =>
+    item.elementId.endsWith('diagnose-question-package-page-next-button')
+  )
+  const pageNext = pageNextCandidates.at(-1)?.element
+  if (pageNext) {
+    await pageNext.tap()
+    return true
+  }
   const nextByQuestion = await findElementByIdSuffix(
     page,
     'diagnose-question-package-page-question-shell-' + questionId,
