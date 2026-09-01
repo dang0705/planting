@@ -1,18 +1,44 @@
-name: tmp-qhz-asset-test
+name: tmp-qhz-asset-build
 on:
   push:
     branches: ['tmp/qhz-asset-test']
     paths:
       - '.github/workflows/_tmp_qhz_asset_test.yml'
+      - 'scripts/_tmp_qhz_fetch_plant_images.py'
+      - 'docs/plant_catalog.csv'
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - name: Create test artifact
-        run: |
-          mkdir -p out
-          echo ok > out/test.txt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          name: qhz-test
-          path: out/
+          python-version: '3.12'
+      - name: Install runtime dependencies
+        run: python -m pip install --disable-pip-version-check requests pillow
+      - name: Fetch and validate plant images
+        id: collect
+        continue-on-error: true
+        run: python scripts/_tmp_qhz_fetch_plant_images.py
+      - name: Package result
+        if: always()
+        run: |
+          if [ -d _tmp_qhz_images ]; then
+            cd _tmp_qhz_images
+            zip -r ../qinghuazhi-mvp-plant-images.zip .
+          else
+            mkdir -p _tmp_empty
+            echo 'collector produced no output' > _tmp_empty/ERROR.txt
+            cd _tmp_empty
+            zip -r ../qinghuazhi-mvp-plant-images.zip .
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qinghuazhi-mvp-plant-images
+          path: qinghuazhi-mvp-plant-images.zip
+          compression-level: 0
+      - name: Enforce completeness
+        if: steps.collect.outcome != 'success'
+        run: exit 1
