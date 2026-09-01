@@ -1,37 +1,16 @@
-name: tmp-qhz-final-reviewed-pack-parallel
+name: tmp-qhz-patch-three
 on:
   push:
     branches: ['tmp/qhz-asset-test']
     paths:
       - '.github/workflows/_tmp_qhz_asset_test.yml'
+      - 'scripts/_tmp_qhz_patch_three.py'
       - 'scripts/_tmp_qhz_build_final_pack.py'
-      - 'scripts/_tmp_qhz_build_final_category.py'
-      - 'scripts/_tmp_qhz_final_titles.json'
       - 'docs/plant_catalog.csv'
 jobs:
   build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - key: succulent
-            category: '仙人掌/多肉'
-          - key: aquatic
-            category: '水生植物'
-          - key: bulbous
-            category: '球根花卉'
-          - key: herbaceous
-            category: '草本'
-          - key: vegetable
-            category: '蔬菜'
-          - key: foliage
-            category: '观叶植物'
-          - key: flowering
-            category: '观花植物'
-          - key: herb
-            category: '香草'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -39,17 +18,14 @@ jobs:
           python-version: '3.12'
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check requests pillow
-      - name: Build reviewed category
-        env:
-          FILTER_KEY: ${{ matrix.key }}
-          FILTER_CATEGORY: ${{ matrix.category }}
-        run: python scripts/_tmp_qhz_build_final_category.py
-      - name: Package category artifact
+      - name: Build patch images
+        run: python scripts/_tmp_qhz_patch_three.py
+      - name: Package patch
         run: |
-          cd _tmp_qhz_final_${{ matrix.key }}
-          zip -r ../qinghuazhi-final-${{ matrix.key }}.zip .
+          cd _tmp_qhz_patch_three
+          zip -r ../qinghuazhi-patch-three.zip .
       - uses: actions/upload-artifact@v4
         with:
-          name: qinghuazhi-final-${{ matrix.key }}
-          path: qinghuazhi-final-${{ matrix.key }}.zip
+          name: qinghuazhi-patch-three
+          path: qinghuazhi-patch-three.zip
           compression-level: 0
