@@ -1,16 +1,19 @@
-name: tmp-qhz-patch-three
+name: tmp-qhz-closeup-review
 on:
   push:
     branches: ['tmp/qhz-asset-test']
     paths:
       - '.github/workflows/_tmp_qhz_asset_test.yml'
-      - 'scripts/_tmp_qhz_patch_three.py'
-      - 'scripts/_tmp_qhz_build_final_pack.py'
+      - 'scripts/_tmp_qhz_closeup_candidates.py'
       - 'docs/plant_catalog.csv'
 jobs:
   build:
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [0,1,2,3]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -18,14 +21,17 @@ jobs:
           python-version: '3.12'
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check requests pillow
-      - name: Build patch images
-        run: python scripts/_tmp_qhz_patch_three.py
-      - name: Package patch
+      - name: Generate closeup candidates
+        env:
+          PART_INDEX: ${{ matrix.part }}
+          PART_COUNT: 4
+        run: python scripts/_tmp_qhz_closeup_candidates.py
+      - name: Package review
         run: |
-          cd _tmp_qhz_patch_three
-          zip -r ../qinghuazhi-patch-three.zip .
+          cd _tmp_qhz_closeup_${{ matrix.part }}
+          zip -r ../qhz-closeup-${{ matrix.part }}.zip .
       - uses: actions/upload-artifact@v4
         with:
-          name: qinghuazhi-patch-three
-          path: qinghuazhi-patch-three.zip
+          name: qhz-closeup-${{ matrix.part }}
+          path: qhz-closeup-${{ matrix.part }}.zip
           compression-level: 0
