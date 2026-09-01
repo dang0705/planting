@@ -1,34 +1,17 @@
-name: tmp-qhz-candidate-review-parallel
+name: tmp-qhz-targeted-candidate-review
 on:
   push:
     branches: ['tmp/qhz-asset-test']
     paths:
       - '.github/workflows/_tmp_qhz_asset_test.yml'
-      - 'scripts/_tmp_qhz_generate_candidates.py'
-      - 'scripts/_tmp_qhz_generate_candidates_category.py'
+      - 'scripts/_tmp_qhz_targeted_candidates.py'
       - 'docs/plant_catalog.csv'
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - key: succulent
-            category: '仙人掌/多肉'
-          - key: aquatic
-            category: '水生植物'
-          - key: bulbous
-            category: '球根花卉'
-          - key: herbaceous
-            category: '草本'
-          - key: vegetable
-            category: '蔬菜'
-          - key: foliage
-            category: '观叶植物'
-          - key: flowering
-            category: '观花植物'
-          - key: herb
-            category: '香草'
+        part: [0,1,2,3]
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -38,17 +21,17 @@ jobs:
           python-version: '3.12'
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check requests pillow
-      - name: Generate category candidates
+      - name: Generate targeted candidates
         env:
-          FILTER_CATEGORY: ${{ matrix.category }}
-          FILTER_KEY: ${{ matrix.key }}
-        run: python scripts/_tmp_qhz_generate_candidates_category.py
-      - name: Package category review
+          PART_INDEX: ${{ matrix.part }}
+          PART_COUNT: 4
+        run: python scripts/_tmp_qhz_targeted_candidates.py
+      - name: Package targeted review
         run: |
-          cd _tmp_qhz_candidates_${{ matrix.key }}
-          zip -r ../qinghuazhi-candidates-${{ matrix.key }}.zip .
+          cd _tmp_qhz_targeted_${{ matrix.part }}
+          zip -r ../qinghuazhi-targeted-${{ matrix.part }}.zip .
       - uses: actions/upload-artifact@v4
         with:
-          name: qinghuazhi-candidates-${{ matrix.key }}
-          path: qinghuazhi-candidates-${{ matrix.key }}.zip
+          name: qinghuazhi-targeted-${{ matrix.part }}
+          path: qinghuazhi-targeted-${{ matrix.part }}.zip
           compression-level: 0
