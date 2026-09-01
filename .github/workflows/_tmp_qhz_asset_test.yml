@@ -5,11 +5,12 @@ on:
     paths:
       - '.github/workflows/_tmp_qhz_asset_test.yml'
       - 'scripts/_tmp_qhz_fetch_plant_images.py'
+      - 'scripts/_tmp_qhz_fetch_retry.py'
       - 'docs/plant_catalog.csv'
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -20,7 +21,7 @@ jobs:
       - name: Fetch and validate plant images
         id: collect
         continue-on-error: true
-        run: python scripts/_tmp_qhz_fetch_plant_images.py
+        run: python scripts/_tmp_qhz_fetch_retry.py
       - name: Package result
         if: always()
         run: |
