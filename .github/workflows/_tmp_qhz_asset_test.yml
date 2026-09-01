@@ -1,21 +1,19 @@
-name: tmp-qhz-closeup-patch-part1-split
+name: tmp-qhz-closeup-round2
 on:
   push:
     branches: ['tmp/qhz-asset-test']
     paths:
       - '.github/workflows/_tmp_qhz_asset_test.yml'
-      - 'scripts/_tmp_qhz_build_closeup_patch_part1_split.py'
-      - 'scripts/_tmp_qhz_build_closeup_patch.py'
-      - 'scripts/_tmp_qhz_closeup_replacements.json'
+      - 'scripts/_tmp_qhz_closeup_round2.py'
       - 'docs/plant_catalog.csv'
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
-        sub: [0,1,2,3]
+        part: [0,1,2,3]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -23,17 +21,17 @@ jobs:
           python-version: '3.12'
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check requests pillow
-      - name: Build split patch
+      - name: Generate round2 candidates
         env:
-          SUB_INDEX: ${{ matrix.sub }}
-          SUB_COUNT: 4
-        run: python scripts/_tmp_qhz_build_closeup_patch_part1_split.py
-      - name: Package patch
+          PART_INDEX: ${{ matrix.part }}
+          PART_COUNT: 4
+        run: python scripts/_tmp_qhz_closeup_round2.py
+      - name: Package review
         run: |
-          cd _tmp_qhz_closeup_patch_0
-          zip -r ../qhz-closeup-patch-part1-${{ matrix.sub }}.zip .
+          cd _tmp_qhz_round2_${{ matrix.part }}
+          zip -r ../qhz-round2-${{ matrix.part }}.zip .
       - uses: actions/upload-artifact@v4
         with:
-          name: qhz-closeup-patch-part1-${{ matrix.sub }}
-          path: qhz-closeup-patch-part1-${{ matrix.sub }}.zip
+          name: qhz-round2-${{ matrix.part }}
+          path: qhz-round2-${{ matrix.part }}.zip
           compression-level: 0
