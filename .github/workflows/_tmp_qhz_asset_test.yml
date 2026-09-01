@@ -1,0 +1,18 @@
+name: tmp-qhz-asset-test
+on:
+  push:
+    branches: ['tmp/qhz-asset-test']
+    paths:
+      - '.github/workflows/_tmp_qhz_asset_test.yml'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create test artifact
+        run: |
+          mkdir -p out
+          echo ok > out/test.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qhz-test
+          path: out/
