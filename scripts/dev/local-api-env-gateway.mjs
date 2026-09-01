@@ -105,6 +105,7 @@ function spawnLocalFunctionsGateway(options = {}) {
       ? options.requiredFunctions.join(',')
       : process.env.LOCAL_FUNCTIONS || ''
   }
+  delete env.CLOUDBASE_LOCAL_SESSION_TOKEN
   return spawn(process.execPath, gatewayArgs, { env, stdio: 'inherit' })
 }
 

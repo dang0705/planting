@@ -1,0 +1,27 @@
+{
+  "functionsRoot": ".",
+  "functions": [
+    {
+      "name": "subscription-http",
+      "directory": "."
+    }
+  ],
+  "routes": [
+    {
+      "functionName": "subscription-http",
+      "path": "/subscription/plans"
+    },
+    {
+      "functionName": "subscription-http",
+      "path": "/subscription/orders"
+    },
+    {
+      "functionName": "subscription-http",
+      "path": "/subscription/notify"
+    },
+    {
+      "functionName": "subscription-http",
+      "path": "/subscription/health"
+    }
+  ]
+}

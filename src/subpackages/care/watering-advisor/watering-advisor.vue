@@ -1,6 +1,13 @@
 <template>
   <Layout title="浇水建议" left-action="back" background-class="bg-[#f8faf9]">
-    <view class="flex h-screen min-h-0 flex-col bg-[#f8faf9] pb-5">
+    <view
+      v-if="restrictedPlatform"
+      id="watering-advisor-unavailable"
+      class="flex min-h-[520px] items-center justify-center bg-[#f8faf9] px-6 text-center"
+    >
+      <text class="text-sm leading-6 text-[#667085]">当前端暂未开放浇水提醒，敬请期待。</text>
+    </view>
+    <view v-else class="flex h-screen min-h-0 flex-col bg-[#f8faf9] pb-5">
       <view class="flex items-center justify-center gap-2 px-4 pt-4">
         <view v-for="(label, index) in stepLabels" :key="index" class="flex items-center gap-2">
           <view
@@ -322,17 +329,21 @@
         </button>
       </view>
     </view>
+    <FeatureUnavailableModal v-model="featureUnavailableVisible" :feature-key="openedFeatureKey" />
   </Layout>
 </template>
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import Layout from '@/Layout.vue'
+import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
 import ButtonStepTrack from '@/components/common/ButtonStepTrack.vue'
 import AirEnvironmentAssessment from '@/components/AirEnvironmentAssessment.vue'
 import AirEnvironmentSummaryCard from '@/components/AirEnvironmentSummaryCard.vue'
 import PotProfileFormCore from '@/components/pot-profile/PotProfileFormCore.vue'
 import { useUserStore } from '@/store/user.js'
+import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
+import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
 import { usePlantStore } from '@/store/plants.js'
 import { fetchUserPlantWateringPlanner } from '@/api/plants-http.js'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
@@ -356,6 +367,12 @@ import { useWateringAdvisorAirEnvironment } from './useWateringAdvisorAirEnviron
 import { useWateringAdvisorMyPlants } from './useWateringAdvisorMyPlants.js'
 const userStore = useUserStore()
 const plantStore = usePlantStore()
+const restrictedPlatform = isRestrictedMiniProgram()
+const {
+  openedFeatureKey,
+  visible: featureUnavailableVisible,
+  openFeatureUnavailable
+} = useFeatureUnavailableModal()
 const STEP_SOURCE = 0
 const AIR_ENVIRONMENT_STEP = 1
 const AMOUNT_RANGE_MIN_LENGTH = 2
@@ -626,6 +643,10 @@ function loadInitialCatalog() {
 
 let hasShownOnce = false
 onShow(() => {
+  if (restrictedPlatform) {
+    openFeatureUnavailable('watering')
+    return
+  }
   // Child onMounted already performs the first load; only refresh on a real
   // return to the page so the initial lifecycle does not issue two requests.
   if (!hasShownOnce) {

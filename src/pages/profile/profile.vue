@@ -18,11 +18,11 @@
           </view>
         </view>
 
-        <!-- 当前可用次数 -->
+        <!-- 当前会员权益 -->
         <view class="bg-white/20 backdrop-blur rounded-2xl p-4">
           <view class="flex items-center">
             <view>
-              <text class="block text-white/80 text-xs mb-1">本月可用次数</text>
+              <text class="block text-white/80 text-xs mb-1">高级功能</text>
               <text class="block text-white text-2xl font-bold">
                 {{ remainingDiagnosisQuotaText }}
               </text>
@@ -147,6 +147,7 @@
         </view>
       </view>
     </view>
+    <FeatureUnavailableModal v-model="featureUnavailableVisible" :feature-key="openedFeatureKey" />
   </Layout>
 </template>
 
@@ -154,9 +155,12 @@
 import { computed, onMounted, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import Layout from '@/Layout.vue'
+import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
 import { useUserStore } from '@/store/user.js'
 import { getDiagnosisHistory } from '@/api/diagnosis-history.js'
 import { parsePlantDateTime } from '@/utils/plant-datetime.js'
+import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
+import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
 
 const userStore = useUserStore()
 
@@ -164,6 +168,12 @@ const userStore = useUserStore()
 const diagnoseHistory = ref([])
 const loadingHistory = ref(false)
 const historyError = ref('')
+const restrictedPlatform = isRestrictedMiniProgram()
+const {
+  openedFeatureKey,
+  visible: featureUnavailableVisible,
+  openFeatureUnavailable
+} = useFeatureUnavailableModal()
 
 // 会员状态
 const membershipText = computed(() => {
@@ -173,7 +183,7 @@ const membershipText = computed(() => {
   if (userStore.isMember) {
     return '基础会员'
   }
-  return '当前账户'
+  return '免费账户'
 })
 
 const membershipBadgeClass = computed(() => {
@@ -186,9 +196,7 @@ const remainingDiagnosisQuotaText = computed(() => {
   if (userStore.isMember) {
     return '不限次'
   }
-  const quota = Number(userStore.membership?.freeQuota || 0)
-  const usedCount = Number(userStore.membership?.usedCount || 0)
-  return `${Math.max(0, quota - usedCount)} 次`
+  return '升级后可用'
 })
 
 // 功能菜单
@@ -211,6 +219,11 @@ onShow(() => {
 })
 
 async function loadDiagnoseHistory() {
+  if (restrictedPlatform) {
+    diagnoseHistory.value = []
+    historyError.value = ''
+    return
+  }
   if (!userStore.isAuthenticated) {
     diagnoseHistory.value = []
     historyError.value = ''
@@ -256,6 +269,10 @@ function handleMenuClick(item) {
 }
 
 function openSubscriptionPage() {
+  if (restrictedPlatform) {
+    openFeatureUnavailable('subscription')
+    return
+  }
   uni.navigateTo({ url: '/subpackages/subscription/subscription' })
 }
 

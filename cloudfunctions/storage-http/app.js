@@ -19,6 +19,13 @@ const {
   assertOwnedUserPlant,
   bindOwnedTemporaryPlantImages
 } = require('/opt/utils/plant-images')
+let platformSession
+try {
+  platformSession = require('/opt/utils/platform-session')
+} catch {
+  platformSession = require('../layer/utils/platform-session')
+}
+const { assertPlatformFeature } = platformSession
 
 const ALLOWED_IMAGE_SUFFIXES = new Set(['jpg', 'jpeg', 'png', 'webp', 'heic', 'gif'])
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024
@@ -380,6 +387,14 @@ async function main(event, context) {
     const userInfo = await resolveHttpUserInfo(request.headers, payload, context)
     if (!userInfo?.openid) {
       return jsonResponse(401, { code: 401, message: '请先登录', data: null })
+    }
+    try {
+      assertPlatformFeature(userInfo, requestPath)
+    } catch (error) {
+      if (Number(error?.statusCode) === 403) {
+        return jsonResponse(403, { code: error.code, message: error.message, data: null })
+      }
+      throw error
     }
 
     if (requestPath.includes('/storage/diagnose-images')) {

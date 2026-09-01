@@ -2,7 +2,7 @@
   <Layout title="继续问诊" left-action="back" background-class="bg-[#f8faf9]">
     <view
       id="diagnose-question-package-page"
-      class="box-border flex h-screen min-h-screen flex-col bg-[#f8faf9]"
+      class="relative box-border flex h-screen min-h-screen flex-col bg-[#f8faf9]"
     >
       <QuestionPackageRestartRequired v-if="packageRestartRequired" @restart="returnPreviousPage" />
       <view
@@ -377,12 +377,24 @@
         </view>
       </scroll-view>
       <QuestionPackageEmptyState v-else @back="returnPreviousPage" />
+      <view
+        v-if="restrictedPlatform"
+        id="diagnose-question-package-unavailable"
+        class="absolute inset-0 z-40 flex min-h-screen items-center justify-center bg-[#f8faf9] px-6 text-center"
+      >
+        <text class="text-sm leading-6 text-[#667085]">当前端暂未开放 AI 植物诊断，敬请期待。</text>
+      </view>
+      <FeatureUnavailableModal
+        v-model="featureUnavailableVisible"
+        :feature-key="openedFeatureKey"
+      />
     </view>
   </Layout>
 </template>
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import Layout from '@/Layout.vue'
+import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
 import DiagnosisFeedbackCard from './components/DiagnosisFeedbackCard.vue'
 import { useDiagnoseStore } from '@/store/diagnose.js'
 import { useUserStore } from '@/store/user.js'
@@ -405,8 +417,16 @@ import {
   bindQuestionPackagePageEntry,
   useQuestionPackageContext
 } from './question-package/page-context.js'
+import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
+import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
 const diagnoseStore = useDiagnoseStore()
 const userStore = useUserStore()
+const restrictedPlatform = isRestrictedMiniProgram()
+const {
+  openedFeatureKey,
+  visible: featureUnavailableVisible,
+  openFeatureUnavailable
+} = useFeatureUnavailableModal()
 const diagnosisAnswerMutation = useDiagnosisAnswerMutation()
 const routeOptions = ref({})
 const payload = ref({})
@@ -531,5 +551,10 @@ const shouldRenderQuestionContent = questionIndex =>
   Math.abs(Number(questionIndex) - Number(activeQuestionIndex.value)) <= 1
 
 bindQuestionPackagePageEntry({ routeOptions, payload, images, result, resetQuestionState })
+onMounted(() => {
+  if (restrictedPlatform) {
+    openFeatureUnavailable('diagnosis')
+  }
+})
 </script>
 <style scoped src="./question-package.css"></style>

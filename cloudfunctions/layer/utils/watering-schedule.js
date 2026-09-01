@@ -111,7 +111,10 @@ function normalizeWateringEvent(event = {}, conservativeReferenceDate = '') {
   if (!isPlainObject(event)) {
     return null
   }
-  const watered = event.watered !== false && event.didWater !== false && event.action !== 'none'
+  // 明确的未浇水/跳过事件不能因为带有 amount 字段而被改写成已浇水。
+  if (event.watered === false || event.didWater === false || event.action === 'none') {
+    return null
+  }
   const amount = normalizeText(
     event.amount || event.wateringAmount || event.watering_amount || event.level || event.value
   )
@@ -121,7 +124,7 @@ function normalizeWateringEvent(event = {}, conservativeReferenceDate = '') {
   const date = normalizeDate(
     event.date || event.eventDate || event.day || conservativeReferenceDate
   )
-  if (!watered && !amount && !hasAmountMl) {
+  if (!date) {
     return null
   }
   const normalized = {
@@ -131,6 +134,11 @@ function normalizeWateringEvent(event = {}, conservativeReferenceDate = '') {
   }
   if (hasAmountMl) {
     normalized.amountMl = Math.round(amountMl)
+  }
+  for (const field of ['id', 'eventId', 'source', 'planId']) {
+    if (event[field] !== undefined && event[field] !== null && String(event[field]).trim()) {
+      normalized[field] = String(event[field]).trim()
+    }
   }
   return normalized
 }
@@ -149,8 +157,15 @@ function dedupeNormalizedEvents(events = [], keyResolver = event => JSON.stringi
   return Array.from(seen.values())
 }
 
-function limitRecentNormalizedEvents(events = [], limit = 10) {
-  return events
+function limitRecentNormalizedEvents(events = [], limit = 10, referenceDate = '') {
+  const normalizedReferenceDate = normalizeDate(referenceDate)
+  const windowedEvents = normalizedReferenceDate
+    ? events.filter(event => {
+        const diff = daysAgo(normalizedReferenceDate, event.date)
+        return diff !== null && diff >= 0 && diff < limit
+      })
+    : events
+  return windowedEvents
     .slice()
     .sort((a, b) => normalizeDate(b.date).localeCompare(normalizeDate(a.date)))
     .slice(0, limit)
@@ -159,9 +174,14 @@ function limitRecentNormalizedEvents(events = [], limit = 10) {
 
 /* ---------- 行为时间线归一化 ---------- */
 
-function buildBehaviorSummary(referenceDate = '', events = {}, potGeometry = {}) {
+function buildBehaviorSummary(
+  referenceDate = '',
+  events = {},
+  potGeometry = {},
+  baselineIntervalDays = [5, 8]
+) {
   const wateringEvents = Array.isArray(events.wateringEvents) ? events.wateringEvents : []
-  const lookbackWindowDays = resolveLookbackWindowDays([5, 8], potGeometry)
+  const lookbackWindowDays = resolveLookbackWindowDays(baselineIntervalDays, potGeometry)
   const potVolumeMl = Number(potGeometry.potVolumeMl) || 0
 
   const effectiveHydrationLoad = computeEffectiveHydrationLoad(
@@ -210,20 +230,27 @@ function normalizeCareBehaviorTimeline(input = {}) {
       source.diagnosis_date ||
       new Date().toISOString()
   )
-  const wateringEvents10d = [
-    ...(Array.isArray(source.wateringEvents10d) ? source.wateringEvents10d : []),
-    ...(Array.isArray(source.watering_events_10d) ? source.watering_events_10d : [])
-  ]
+  const rawWateringEvents = Array.isArray(source.wateringEvents10d)
+    ? source.wateringEvents10d
+    : Array.isArray(source.watering_events_10d)
+      ? source.watering_events_10d
+      : []
+  const normalizedWateringEvents = rawWateringEvents
     .map(event => normalizeWateringEvent(event, referenceDate))
     .filter(Boolean)
-  const dedupedWateringEvents10d = dedupeNormalizedEvents(wateringEvents10d, event =>
-    normalizeDate(event.date)
+  const baselineIntervalDays = Array.isArray(source.baselineIntervalDays)
+    ? source.baselineIntervalDays
+    : [5, 8]
+  // 仅去掉完全相同的重复事件，不按日期去重，保留同日多次浇水的真实负载。
+  const recentWateringEvents10d = limitRecentNormalizedEvents(
+    dedupeNormalizedEvents(normalizedWateringEvents),
+    10,
+    referenceDate
   )
-  const recentWateringEvents10d = limitRecentNormalizedEvents(dedupedWateringEvents10d)
 
   const summary = buildBehaviorSummary(referenceDate, {
     wateringEvents: recentWateringEvents10d
-  })
+  }, {}, baselineIntervalDays)
 
   return {
     referenceDate,

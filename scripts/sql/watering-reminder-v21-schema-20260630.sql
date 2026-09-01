@@ -8,7 +8,7 @@ ALTER TABLE `cloud1_dev`.`user_plant_instances`
     AFTER `pot_top_diameter_cm`,
   ADD COLUMN IF NOT EXISTS `pot_height_cm` DECIMAL(6,2) NULL COMMENT '盆高，单位 cm'
     AFTER `pot_bottom_diameter_cm`,
-  ADD COLUMN IF NOT EXISTS `has_drainage_hole` VARCHAR(16) NOT NULL DEFAULT 'true' COMMENT '是否有排水孔：true/false/unknown'
+  ADD COLUMN IF NOT EXISTS `has_drainage_hole` VARCHAR(16) NOT NULL DEFAULT 'unknown' COMMENT '是否有排水孔：true/false/unknown'
     AFTER `pot_height_cm`,
   ADD COLUMN IF NOT EXISTS `pot_material` VARCHAR(32) NOT NULL DEFAULT 'unknown' COMMENT '盆器材质：plastic/ceramic/terracotta/glazed/unknown'
     AFTER `has_drainage_hole`,
@@ -20,6 +20,16 @@ ALTER TABLE `cloud1_dev`.`user_plant_instances`
     AFTER `pot_profile_version`,
   ADD COLUMN IF NOT EXISTS `pot_profile_confidence` VARCHAR(16) NOT NULL DEFAULT 'low' COMMENT '盆型画像置信度：low/normal/high'
     AFTER `pot_profile_source`;
+
+ALTER TABLE `cloud1_dev`.`user_plant_instances`
+  MODIFY COLUMN `has_drainage_hole` VARCHAR(16) NOT NULL DEFAULT 'unknown' COMMENT '是否有排水孔：true/false/unknown';
+
+UPDATE `cloud1_dev`.`user_plant_instances`
+SET `has_drainage_hole` = 'unknown'
+WHERE `pot_top_diameter_cm` IS NULL
+  AND `pot_bottom_diameter_cm` IS NULL
+  AND `pot_height_cm` IS NULL
+  AND COALESCE(`pot_profile_source`, 'default') = 'default';
 
 -- 盆型信息已完整迁入主表；若历史扩展表存在则废弃（研发未上线，无需迁移历史数据）。
 DROP TABLE IF EXISTS `cloud1_dev`.`user_plant_care_extensions`;

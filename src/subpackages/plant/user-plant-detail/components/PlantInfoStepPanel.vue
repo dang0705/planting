@@ -20,6 +20,8 @@
         :active-step="activeStep"
         :id-prefix="idPrefix"
         :show-light-environment="showLightEnvironment"
+        :show-photo="showPhoto"
+        :show-pot-profile="showPotProfile"
         class="mb-5"
         @update:model-value="emit('update:modelValue', $event)"
         @upload-photo="emit('upload-photo')"
@@ -80,7 +82,9 @@ defineProps({
   submitting: { type: Boolean, default: false },
   activeStep: { type: Number, default: 1 },
   bottomPadding: { type: Number, default: 48 },
-  showLightEnvironment: { type: Boolean, default: true }
+  showLightEnvironment: { type: Boolean, default: true },
+  showPhoto: { type: Boolean, default: true },
+  showPotProfile: { type: Boolean, default: true }
 })
 
 const emit = defineEmits([

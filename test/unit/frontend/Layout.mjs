@@ -83,9 +83,9 @@ assert.equal(
 function invokeGoBack(pages) {
   const calls = []
   const goBack = Function(
-  'getCurrentPages',
-  'uni',
-  `const QUESTION_PACKAGE_PAGE_ROUTE = 'subpackages/diagnosis/question-package';
+    'getCurrentPages',
+    'uni',
+    `const QUESTION_PACKAGE_PAGE_ROUTE = 'subpackages/diagnosis/question-package';
 const DIAGNOSIS_TAB_PAGE_ROUTE = 'pages/diagnose/diagnose';
 const PREVIOUS_PAGE_OFFSET = 2;
 ${routePredicateMatch[0]}
@@ -180,3 +180,23 @@ assert.match(
 )
 
 console.log('Layout goBack navigation contract tests passed')
+
+const platformCapabilitiesSource = fs.readFileSync(
+  path.join(repoRoot, 'src/utils/platform-capabilities.js'),
+  'utf8'
+)
+const layoutStoreSource = fs.readFileSync(path.join(repoRoot, 'src/store/layout.js'), 'utf8')
+
+// data_mode=unit_fake; test_kind=source_contract。抖音真机顶部导航重叠仍需端上截图验收。
+assert.match(platformCapabilitiesSource, /usesPlatformNavigationChrome/u)
+assert.match(layoutSource, /v-if="renderAppHeader"/u)
+assert.match(layoutSource, /platformNavigationChrome/u)
+assert.match(layoutSource, /var\(--app-header-height\)/u)
+assert.match(
+  layoutSource,
+  /paddingTop: props\.contentPaddingTop && renderAppHeader\.value \? 'var\(--app-header-height\)' : '0px'/u
+)
+assert.match(layoutStoreSource, /getCustomButtonBoundingClientRect/u)
+assert.match(layoutStoreSource, /MP-TOUTIAO/u)
+
+console.log('shared Layout platform-navigation contract passed')

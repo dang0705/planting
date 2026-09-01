@@ -24,11 +24,7 @@ const detailSource = read(
 const pagesConfig = JSON.parse(pagesJson)
 assert.deepEqual(
   pagesConfig.tabBar.list.map(item => item.pagePath),
-  [
-    'pages/index/index',
-    'pages/diagnose/diagnose',
-    'pages/profile/profile'
-  ]
+  ['pages/index/index', 'pages/diagnose/diagnose', 'pages/profile/profile']
 )
 assert.equal(
   pagesConfig.tabBar.list.some(item => item.pagePath === 'pages/calendar/calendar'),
@@ -102,4 +98,4 @@ assert.match(detailSource, /subpackages\/diagnosis\/flow\?\$\{query\}/)
 assert.doesNotMatch(indexSource, /subpackages\/diagnosis\/entry/)
 assert.doesNotMatch(detailSource, /subpackages\/diagnosis\/entry/)
 
-console.log('diagnosis tab thin-shell route contract tests passed')
+console.log('diagnosis tab common-ui route contract tests passed')

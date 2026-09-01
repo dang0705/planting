@@ -236,11 +236,16 @@ async function assertLocalFunctionRoutesReady(apiBaseUrl = '', requiredFunctions
   }
 }
 
-async function assertLocalBusinessRoutesReady(apiBaseUrl = '', options = {}) {
+function isUnauthenticatedBusinessProbe(response, body) {
+  return response?.status === 401 || body?.code === 401
+}
+
+export async function assertLocalBusinessRoutesReady(apiBaseUrl = '', options = {}) {
   if (options.skipBusinessCheck) {
     return
   }
   const baseUrl = String(apiBaseUrl || '').replace(/\/+$/, '')
+  const sessionToken = String(options.sessionToken || '').trim()
   const unavailable = []
   for (const functionName of options.requiredFunctions || []) {
     const probe = FUNCTION_BUSINESS_PROBES[functionName]
@@ -257,10 +262,14 @@ async function assertLocalBusinessRoutesReady(apiBaseUrl = '', options = {}) {
           'x-env': 'development',
           'x-wx-openid': options.openid || DEFAULT_OPENID,
           'x-openid': options.openid || DEFAULT_OPENID,
-          'x-terminal-e2e': 'true'
+          'x-terminal-e2e': 'true',
+          ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {})
         },
         body: probe.body ? JSON.stringify(probe.body) : undefined
       })
+      if (isUnauthenticatedBusinessProbe(response, body) && !sessionToken) {
+        continue
+      }
       if (!response.ok || body?.code !== 200) {
         unavailable.push(
           `${functionName}: ${response.status} ${body?.message || response.statusText}`
@@ -282,6 +291,9 @@ async function assertLocalBusinessRoutesReady(apiBaseUrl = '', options = {}) {
 
 function buildLocalBusinessRouteHint(unavailable = []) {
   const message = unavailable.join('\n').toLowerCase()
+  if (message.includes('401') || message.includes('请先登录')) {
+    return '\n严格业务探针需要有效的 Bearer 会话令牌；请重新登录后更新 CLOUDBASE_LOCAL_SESSION_TOKEN，或移除该变量让启动器仅执行未登录探针。'
+  }
   if (message.includes('secret id error') || message.includes('sign_param_invalid')) {
     return '\n请检查 .env.local 中的 CloudBase SecretId/SecretKey 是否存在、已轮换且有目标环境 SQL 权限。'
   }

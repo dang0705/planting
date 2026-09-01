@@ -1,5 +1,6 @@
 /* oxlint-disable no-unused-vars, no-magic-numbers */
 import { callComponentMethod } from '@/utils/component-ref.js'
+import { requireMvpAccess } from '@/utils/subscription-access.js'
 
 export function useDiagnoseFlowActions(ctx) {
   const {
@@ -307,19 +308,8 @@ export function useDiagnoseFlowActions(ctx) {
       return
     }
 
-    if (!userStore.canDiagnose) {
-      /*uni.showModal({
-        title: '提示',
-        content: '免费诊断次数已用完，升级会员享受无限次诊断',
-        confirmText: '升级会员',
-        success: res => {
-          if (res.confirm) {
-            close()
-            uni.switchTab({ url: '/pages/profile/profile' })
-          }
-        }
-      })
-      return*/
+    if (!(await requireMvpAccess(userStore, { source: 'diagnose_flow_symptom' }))) {
+      return
     }
 
     uni.showLoading({ title: '正在准备问题...' })

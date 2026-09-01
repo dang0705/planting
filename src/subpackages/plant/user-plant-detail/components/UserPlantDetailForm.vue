@@ -53,7 +53,9 @@
             :submitting="submitting"
             :show-back="!isEditMode"
             :back-button-id="isEditMode ? '' : 'add-plant-back-to-selection-button'"
-            :show-light-environment="!isEditMode"
+            :show-light-environment="!isEditMode && !restrictedPlatform"
+            :show-photo="!restrictedPlatform"
+            :show-pot-profile="!restrictedPlatform"
             :submit-button-id="submitButtonId"
             :submit-text="submitText"
             submitting-text="保存中..."
@@ -66,7 +68,7 @@
           >
             <template #after-form>
               <PlantEnvironmentSettingsGroup
-                v-if="isEditMode"
+                v-if="isEditMode && !restrictedPlatform"
                 :plant="currentPlant"
                 id-prefix="edit-plant-environment"
                 @open="openEnvironment"
@@ -103,6 +105,10 @@
         @close="showLogin = false"
         @success="handleLoginSuccess"
       />
+      <FeatureUnavailableModal
+        v-model="featureUnavailableVisible"
+        :feature-key="openedFeatureKey"
+      />
     </view>
   </Layout>
 </template>
@@ -112,6 +118,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import Layout from '@/Layout.vue'
 import { createUserPlant, fetchUserPlant, patchUserPlant } from '@/api/plants-http.js'
 import AIStreamDialog from '@/components/AIStreamDialog.vue'
+import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
 import LoginModal from '@/components/LoginModal.vue'
 import PlantEnvironmentSettingsGroup from '@/components/PlantEnvironmentSettingsGroup.vue'
 import { ONE_MEGA_BYTE } from '@/constants'
@@ -121,9 +128,11 @@ import { useUserStore } from '@/store/user.js'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import { createAsyncActionGuard, createDebounced } from '@/utils/interaction-guard.js'
 import { normalizePlantCareLocation } from '@/utils/plant-care-location.js'
+import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
+import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
 import PlantInfoStepPanel from './PlantInfoStepPanel.vue'
 import { buildPlantFormFromUserPlant, createInitialPlantForm } from './plant-form-model.js'
-import { buildPlantSubmitPayload } from './plant-submit.js'
+import { buildPlantSubmitPayload, buildRestrictedManualPlantPayload } from './plant-submit.js'
 import PlantSelectionStep from './PlantSelectionStep.vue'
 import UserPlantPotProfileEditor from './UserPlantPotProfileEditor.vue'
 import { useUserPlantIdentify } from '../composables/useUserPlantIdentify.js'
@@ -172,6 +181,12 @@ const potProfileEditorRef = ref(null)
 const potProfileSaving = ref(false)
 const submitAction = createAsyncActionGuard()
 const potProfileAction = createAsyncActionGuard()
+const restrictedPlatform = isRestrictedMiniProgram()
+const {
+  openedFeatureKey,
+  visible: featureUnavailableVisible,
+  openFeatureUnavailable
+} = useFeatureUnavailableModal()
 const debouncedLoadPlants = createDebounced(keyword => loadPlants(keyword), SEARCH_DEBOUNCE_MS)
 
 const formData = ref(createInitialPlantForm())
@@ -181,9 +196,14 @@ const pageTitle = computed(() => (isEditMode.value ? '编辑植物' : '添加植
 const pageIdPrefix = computed(() => (isEditMode.value ? 'edit-plant' : 'add-plant'))
 const formPanelId = computed(() => `${pageIdPrefix.value}-info-panel`)
 const formTitle = computed(() => (isEditMode.value ? '编辑植物信息' : '完善植物信息'))
-const formSubtitle = computed(() =>
-  isEditMode.value ? '修改昵称、养护城市和备注等信息' : '养护城市必填，光照环境可稍后补充'
-)
+const formSubtitle = computed(() => {
+  if (isEditMode.value) {
+    return '修改昵称、养护城市和备注等信息'
+  }
+  return restrictedPlatform
+    ? '养护城市必填，其他信息可随时补充'
+    : '养护城市必填，光照环境可稍后补充'
+})
 const formActiveStep = computed(() => (isEditMode.value ? INFO_STEP : activeStep.value))
 const swiperStep = computed(() => (isEditMode.value ? SELECTION_STEP : activeStep.value))
 const submitButtonId = computed(() => `${pageIdPrefix.value}-submit-button`)
@@ -209,7 +229,8 @@ const { useAIIdentify, handleAIConfirm, handleAIRetry, handleAIClose, clearPendi
     loginMsg,
     showAIDialog,
     aiDialogRef,
-    activeStep
+    activeStep,
+    openFeatureUnavailable
   })
 
 onBeforeUnmount(() => {
@@ -382,6 +403,9 @@ function handlePlantSelect(plant) {
   identifyContext.value = null
   selectedPlant.value = plant
   recognizedName.value = ''
+  // 卡片本身就是新增流程的主要入口：选定目录植物后立即进入信息填写。
+  // “选好了”按钮仍保留给辅助操作和识别结果等非卡片路径。
+  activeStep.value = INFO_STEP
 }
 
 function handleLoginSuccess() {
@@ -414,6 +438,10 @@ function openEnvironment(kind) {
 }
 
 function openPotProfileEditor() {
+  if (restrictedPlatform) {
+    openFeatureUnavailable('watering')
+    return
+  }
   if (!isEditMode.value && !canEnterInfoStep.value) {
     uni.showToast({ title: '请先选择或识别植物', icon: 'none' })
     return
@@ -480,6 +508,10 @@ async function refreshCurrentPlantFromServer() {
 }
 
 function uploadPhoto() {
+  if (restrictedPlatform) {
+    openFeatureUnavailable('image')
+    return
+  }
   uni.chooseImage({
     count: 1,
     sizeType: ['compressed'],
@@ -542,9 +574,19 @@ async function submitNewPlantForm() {
       selectedPlant: selectedPlant.value,
       identifyContext: identifyContext.value,
       recognizedName: recognizedName.value,
-      userId: userStore.userId
+      userId: userStore.userId,
+      includePhotos: !restrictedPlatform,
+      includeLightEnvironment: !restrictedPlatform,
+      includeAirEnvironment: !restrictedPlatform,
+      includePotProfile: !restrictedPlatform
     })
-    const response = await createUserPlant(payload)
+    const requestPayload = restrictedPlatform
+      ? buildRestrictedManualPlantPayload({
+          formData: { ...formData.value, careLocation },
+          recognizedName: recognizedName.value
+        })
+      : payload
+    const response = await createUserPlant(requestPayload)
     if (response?.code !== HTTP_SUCCESS_CODE) {
       uni.showToast({ title: '暂时无法添加植物，请检查网络后重试', icon: 'none' })
       return
@@ -588,12 +630,20 @@ async function submitEditForm() {
       userId: userStore.userId,
       includeLightEnvironment: false,
       includeAirEnvironment: false,
-      includePotProfile: false
+      includePotProfile: false,
+      includePhotos: false
     })
     if (!payload.photos) {
       delete payload.photos
     }
-    const response = await patchUserPlant({ id: Number(plantId.value), ...payload })
+    const requestPayload = restrictedPlatform
+      ? buildRestrictedManualPlantPayload({
+          formData: { ...formData.value, careLocation },
+          recognizedName: currentPlant.value.recognizedName || '',
+          recordVersion: currentPlant.value.recordVersion
+        })
+      : payload
+    const response = await patchUserPlant({ id: Number(plantId.value), ...requestPayload })
     if (response?.code !== HTTP_SUCCESS_CODE) {
       uni.showToast({ title: '暂时无法保存植物信息，请检查网络后重试', icon: 'none' })
       return

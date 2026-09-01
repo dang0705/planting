@@ -28,6 +28,7 @@ function commandEnvironment(apiBaseUrl, options, environment = process.env) {
   if (options.outputDir) {
     next.UNI_OUTPUT_DIR = options.outputDir
   }
+  delete next.CLOUDBASE_LOCAL_SESSION_TOKEN
   return next
 }
 
@@ -45,6 +46,22 @@ function isManagedMpWeixinWatchCommand(command) {
 
 function isManagedMpWeixinWatchChild(command) {
   return command.includes('uni') && /(?:^|\s)-p\s+mp-weixin(?:\s|$)/u.test(command)
+}
+
+function resolveMiniProgramPlatform(command = []) {
+  const values = command.map(value => String(value))
+  return ['mp-weixin', 'mp-toutiao', 'mp-xhs'].find(platform => values.includes(platform)) || ''
+}
+
+function isolatePlatformSessionToken(options, command) {
+  const platform = resolveMiniProgramPlatform(command)
+  if (!platform || platform === 'mp-weixin') {
+    return options
+  }
+  // CLOUDBASE_LOCAL_SESSION_TOKEN is a WeChat/local bearer used by the strict
+  // business probe. Never let it leak into a Douyin/Xiaohongshu launcher:
+  // those platforms must obtain their own runtime session after phone auth.
+  return { ...options, sessionToken: '' }
 }
 
 function verifyRuntimeOwnerForTakeover(lease, processCommand) {
@@ -166,7 +183,9 @@ export async function runLocalApiEnvironment({
   processCommand = defaultProcessCommand,
   signalProcess = process.kill
 } = {}) {
-  const { options, command } = parseLocalApiEnvironmentArgs(argv, environment)
+  const parsed = parseLocalApiEnvironmentArgs(argv, environment)
+  const { command } = parsed
+  const options = isolatePlatformSessionToken(parsed.options, command)
   if (!command.length) {
     throw new Error(
       '缺少待执行命令，示例：node scripts/dev/run-local-api-env.mjs -- uni -p mp-weixin'

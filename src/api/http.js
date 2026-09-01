@@ -14,6 +14,7 @@ export async function requestHttpFunction(
     responseType,
     enableChunked,
     timeout,
+    baseUrl,
     returnErrorResponse = false,
     onChunkReceived
   } = {}
@@ -28,6 +29,7 @@ export async function requestHttpFunction(
     responseType,
     enableChunked,
     timeout,
+    baseUrl,
     returnErrorResponse,
     onChunkReceived
   })

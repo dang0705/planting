@@ -1,5 +1,6 @@
 import { defineStore, getActivePinia } from 'pinia'
-import { loginWithCode, loginWithPhone, getUserById } from '@/api/wechat'
+import { loginWithPhone, getUserById } from '@/api/wechat'
+import { clearPlatformSession, getActivePlatformAccessToken } from '@/api/platform-session'
 import { getCloudbaseUserIdentity } from '@/utils/cloudbase-auth'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import { normalizeWeatherCoordinates } from '@/utils/weather-coordinate.js'
@@ -45,7 +46,8 @@ function buildMembership(user = {}) {
     type,
     status: user.subscription_status || 'active',
     expireTime: user.subscription_endDate || null,
-    freeQuota: isPaidPlan ? 999 : Math.max(0, 5 - (user.usage_diagnoseMonth || 0)),
+    // MVP 高阶能力仅对有效会员开放，免费账户不再保留旧的免费诊断额度。
+    freeQuota: isPaidPlan ? 999 : 0,
     usedCount: user.usage_diagnoseTotal || 0
   }
 }
@@ -75,7 +77,7 @@ export const useUserStore = defineStore('user', {
       type: 'free', // free | basic | premium
       status: 'active',
       expireTime: null,
-      freeQuota: 5, // 剩余免费诊断次数
+      freeQuota: 0, // 免费账户不可使用高阶诊断
       usedCount: 0
     },
 
@@ -93,29 +95,12 @@ export const useUserStore = defineStore('user', {
   getters: {
     isMember: state => isActiveMembership(state.membership),
     isPremium: state => state.membership.type === 'premium' && isActiveMembership(state.membership),
-    canDiagnose: state =>
-      isActiveMembership(state.membership) ||
-      (state.membership.type === 'free' && state.membership.freeQuota > 0),
+    canDiagnose: state => isActiveMembership(state.membership),
     displayName: state => state.nickname || state.username || '植物爱好者',
-    isAuthenticated: state => Boolean(state.openid)
+    isAuthenticated: state => Boolean(state.userId && getActivePlatformAccessToken())
   },
 
   actions: {
-    /**
-     * 微信登录（使用 code）
-     */
-    async wechatLogin() {
-      try {
-        const loginData = await loginWithCode()
-        this.setLoginInfo(loginData)
-        reportAnalyticsEvent(ANALYTICS_EVENTS.USER_LOGIN_SUCCESS)
-        return loginData
-      } catch (error) {
-        console.error('微信登录失败:', error)
-        throw error
-      }
-    },
-
     /**
      * 手机号登录
      * @param {string} phoneCode - 手机号授权 code
@@ -182,24 +167,26 @@ export const useUserStore = defineStore('user', {
       const cacheFresh =
         miniProgramAuthIdentity === runtimeOpenid &&
         Date.now() - miniProgramAuthCheckedAt < MINI_PROGRAM_AUTH_CACHE_MS
-      if (cacheFresh && this.openid === runtimeOpenid) {
+      if (cacheFresh && this.openid === runtimeOpenid && this.isAuthenticated) {
         return true
       }
 
       if (this.openid !== runtimeOpenid) {
-        await this.wechatLogin()
-        miniProgramAuthIdentity = runtimeOpenid
-        miniProgramAuthCheckedAt = Date.now()
-        return this.isAuthenticated && this.openid === runtimeOpenid
+        this.logout()
+        return false
       }
 
       try {
-        const user = await getUserById(runtimeOpenid)
+        const user = await getUserById(this.userId)
         if (user) {
-          await this.setLoginInfo({ user, openid: runtimeOpenid })
+          await this.setLoginInfo({
+            user,
+            openid: runtimeOpenid,
+            token: getActivePlatformAccessToken()
+          })
           miniProgramAuthIdentity = runtimeOpenid
           miniProgramAuthCheckedAt = Date.now()
-          return true
+          return this.isAuthenticated
         }
       } catch (error) {
         if (!isMissingUserError(error)) {
@@ -207,11 +194,7 @@ export const useUserStore = defineStore('user', {
         }
       }
 
-      // 只通过现有业务登录接口完成注册/登录，不伪造 store、storage 或数据库数据。
-      await this.wechatLogin()
-      miniProgramAuthIdentity = runtimeOpenid
-      miniProgramAuthCheckedAt = Date.now()
-      return this.isAuthenticated && this.openid === runtimeOpenid
+      return false
     },
 
     /**
@@ -243,7 +226,7 @@ export const useUserStore = defineStore('user', {
       this.phoneNumber = user.phoneNumber || ''
 
       // token 仅来自登录响应，不联网获取
-      this.token = loginData.token || ''
+      this.token = loginData.token || loginData.session?.accessToken || getActivePlatformAccessToken()
 
       this.isLoggedIn = true
 
@@ -306,10 +289,7 @@ export const useUserStore = defineStore('user', {
      * 使用AI配额
      */
     useAIQuota() {
-      if (this.membership.type === 'free' && this.membership.freeQuota > 0) {
-        this.membership.freeQuota--
-        this.membership.usedCount++
-      } else if (isActiveMembership(this.membership)) {
+      if (isActiveMembership(this.membership)) {
         this.membership.usedCount++
       }
     },
@@ -331,6 +311,7 @@ export const useUserStore = defineStore('user', {
       plantStore?.$reset?.()
       queryClient.removeQueries({ queryKey: USER_PLANTS_QUERY_KEY })
       queryClient.removeQueries({ queryKey: DIAGNOSIS_HISTORY_QUERY_KEY })
+      clearPlatformSession()
       this.userId = ''
       this.openid = ''
       this.union_id = ''
@@ -345,7 +326,7 @@ export const useUserStore = defineStore('user', {
         type: 'free',
         status: 'active',
         expireTime: null,
-        freeQuota: 5,
+        freeQuota: 0,
         usedCount: 0
       }
     },
@@ -354,12 +335,12 @@ export const useUserStore = defineStore('user', {
      * 从服务端刷新用户信息（同步会员状态等）
      */
     async refreshUserInfo() {
-      if (!this.openid) {
+      if (!this.isAuthenticated || !this.userId) {
         return false
       }
 
       try {
-        const user = await getUserById(this.openid)
+        const user = await getUserById(this.userId)
         if (user) {
           // 更新会员信息
           this.membership = buildMembership(user)

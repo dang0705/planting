@@ -1,6 +1,7 @@
 /* oxlint-disable no-unused-vars, no-magic-numbers */
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import { buildStructuredImageInputs } from '@/utils/diagnose-structured-images.js'
+import { requireMvpAccess } from '@/utils/subscription-access.js'
 
 export function useDiagnoseImages(ctx) {
   const {
@@ -320,19 +321,8 @@ export function useDiagnoseImages(ctx) {
       return
     }
 
-    if (!userStore.canDiagnose) {
-      /*uni.showModal({
-        title: '提示',
-        content: '免费诊断次数已用完，升级会员享受无限次诊断',
-        confirmText: '升级会员',
-        success: res => {
-          if (res.confirm) {
-            closePopup()
-            uni.switchTab({ url: '/pages/profile/profile' })
-          }
-        }
-      })
-      return*/
+    if (!(await requireMvpAccess(userStore, { source: 'diagnose_flow_image' }))) {
+      return
     }
 
     try {

@@ -385,6 +385,18 @@ test('buildWateringPlanner 收到 computeTranspirationIntervalFactor 产出的 i
     'buildWateringPlanner 应收到 transpiration 产出的 intervalFactor'
   )
 })
+test('我的植物规划忽略客户端盆型覆盖，只使用服务端已保存盆型', async () => {
+  const { app, plannerSpy } = loadAppWithSpies()
+  await callPlannerRoute(app, {
+    potProfile: {
+      potTopDiameterCm: 99,
+      potBottomDiameterCm: 99,
+      potHeightCm: 99,
+      hasDrainageHole: 'false'
+    }
+  })
+  assert.deepEqual(plannerSpy.calls[0].potProfile, buildStrategy().potProfile)
+})
 test('shadow 模式下 computedFactor != 1.0 时触发二次 buildWateringPlanner 调用', async () => {
   const { app, plannerSpy } = loadAppWithSpies({
     transpirationImpl: () => ({

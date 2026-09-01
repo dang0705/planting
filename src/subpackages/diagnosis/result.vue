@@ -46,11 +46,7 @@
           />
         </view>
 
-        <view
-          v-else-if="loadError"
-          id="diagnosis-result-page-error"
-          class="py-4 text-center"
-        >
+        <view v-else-if="loadError" id="diagnosis-result-page-error" class="py-4 text-center">
           <text class="block text-sm text-gray-600">{{ loadError }}</text>
           <button
             id="diagnosis-result-page-retry"
@@ -65,29 +61,52 @@
           <text class="block text-sm text-gray-600">暂无可展示的诊断记录。</text>
         </view>
       </view>
+      <view
+        v-if="restrictedPlatform"
+        id="diagnosis-result-unavailable"
+        class="mt-4 rounded-2xl bg-white p-6 text-center"
+      >
+        <text class="text-sm leading-6 text-[#667085]">当前端暂未开放 AI 植物诊断，敬请期待。</text>
+      </view>
     </view>
+    <FeatureUnavailableModal v-model="featureUnavailableVisible" :feature-key="openedFeatureKey" />
   </Layout>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import Layout from '@/Layout.vue'
+import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
 import DiagnosisFeedbackCard from './components/DiagnosisFeedbackCard.vue'
 import { getDiagnosisResult } from './api/diagnosis.js'
 import { useDiagnoseStore } from '@/store/diagnose.js'
 import { normalizeDiagnosisResult } from './utils/diagnose-flow.js'
+import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
+import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
 
 const diagnoseStore = useDiagnoseStore()
 const routeId = ref('')
 const remoteResult = ref(null)
 const loading = ref(false)
 const loadError = ref('')
+const restrictedPlatform = isRestrictedMiniProgram()
+const {
+  openedFeatureKey,
+  visible: featureUnavailableVisible,
+  openFeatureUnavailable
+} = useFeatureUnavailableModal()
 
 onLoad(options => {
   routeId.value = String(options?.id || '')
-  if (routeId.value) {
+  if (routeId.value && !restrictedPlatform) {
     loadRemoteResult(routeId.value)
+  }
+})
+
+onMounted(() => {
+  if (restrictedPlatform) {
+    openFeatureUnavailable('diagnosis')
   }
 })
 

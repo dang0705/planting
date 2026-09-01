@@ -16,6 +16,24 @@ const {
   runWithRequestAppEnv,
   resolveHttpUserInfo
 } = require('/opt/utils/http')
+let platformSession
+try {
+  platformSession = require('/opt/utils/platform-session')
+} catch {
+  platformSession = require('../layer/utils/platform-session')
+}
+const { allowedManualPlantFields, assertPlatformFeature, isRestrictedPlatform } = platformSession
+let cloudbaseUtils
+let catalogImageUrlUtils
+try {
+  cloudbaseUtils = require('/opt/utils/cloudbase')
+  catalogImageUrlUtils = require('/opt/utils/catalog-image-url')
+} catch {
+  cloudbaseUtils = require('../layer/utils/cloudbase')
+  catalogImageUrlUtils = require('../layer/utils/catalog-image-url')
+}
+const { getCloudBase } = cloudbaseUtils
+const { resolveCatalogImageUrls } = catalogImageUrlUtils
 const {
   createUserPlantInstance,
   getUserPlantInstanceById,
@@ -38,7 +56,8 @@ const {
   completeWateringReminder,
   mapReminderRow: mapWateringReminderRow,
   readWateringReminder,
-  saveWateringReminder
+  saveWateringReminder,
+  undoWateringReminder
 } = require('./watering-reminder-service')
 const {
   cancelFertilizationReminder,
@@ -143,6 +162,7 @@ function invalidateUserPlantResponseCache(openid, plantId = null) {
 
 const USER_PLANT_LIST_FIELDS = new Set([
   'id',
+  'recordVersion',
   'plantId',
   'plantIdentityId',
   'sessionPlantId',
@@ -206,6 +226,48 @@ function compactUserPlantListItem(item = {}) {
   )
 }
 
+function compactRestrictedPlatformPlant(item = {}, { imageUrl = '' } = {}) {
+  const payload = {
+    id: item.id,
+    recordVersion: Number(item.recordVersion || 1),
+    nickname: item.nickname || '',
+    recognizedName: item.recognizedName || '',
+    displayName: item.nickname || item.recognizedName || '未命名植物',
+    location: item.location || '',
+    plantDate: item.plantDate || null,
+    notes: item.notes || '',
+    sourceType: 'manual',
+    createdAt: item.createdAt || null
+  }
+  if (imageUrl) {
+    payload.imageUrl = imageUrl
+    payload.imageSource = 'catalog'
+  }
+  return payload
+}
+
+async function buildRestrictedPlatformPlant(item) {
+  if (!item?.imageFileId) {
+    return compactRestrictedPlatformPlant(item)
+  }
+  const imageUrls = await resolveCatalogImageUrls([item], { app: getCloudBase() })
+  return compactRestrictedPlatformPlant(item, {
+    imageUrl: imageUrls.get(String(item?.imageFileId || '').trim()) || ''
+  })
+}
+
+async function buildRestrictedPlatformPlantList(items = []) {
+  const safeItems = Array.isArray(items) ? items : []
+  const imageUrls = safeItems.some(item => item?.imageFileId)
+    ? await resolveCatalogImageUrls(safeItems, { app: getCloudBase() })
+    : new Map()
+  return safeItems.map(item =>
+    compactRestrictedPlatformPlant(item, {
+      imageUrl: imageUrls.get(String(item?.imageFileId || '').trim()) || ''
+    })
+  )
+}
+
 async function main(event, context) {
   const request = getHttpRequestData(event, context)
   const path = String(request.path || '').split('?')[0]
@@ -224,7 +286,21 @@ async function main(event, context) {
     if (!userInfo?.openid) {
       return jsonResponse(401, { code: 401, message: '请先登录', data: null })
     }
+    try {
+      assertPlatformFeature(userInfo, path)
+    } catch (error) {
+      if (Number(error?.statusCode) === 403) {
+        return jsonResponse(403, {
+          code: error.code || 'PLATFORM_FEATURE_UNAVAILABLE',
+          message: error.message,
+          data: null
+        })
+      }
+      throw error
+    }
     const openid = userInfo.openid
+    const ownerUserId = userInfo.userId || openid
+    const restrictedPlatform = isRestrictedPlatform(userInfo.platform)
 
     if (method !== 'GET') {
       invalidateUserPlantResponseCache(openid)
@@ -301,6 +377,14 @@ async function main(event, context) {
         })
       }
       if (method === 'POST') {
+        if (path.endsWith('/watering-reminders/undo')) {
+          const result = await undoWateringReminder(openid, request.body)
+          return jsonResponse(result.statusCode, {
+            code: result.statusCode,
+            message: result.message,
+            data: result.data
+          })
+        }
         if (path.endsWith('/watering-reminders/complete')) {
           const result = await completeWateringReminder(openid, request.body)
           return jsonResponse(result.statusCode, {
@@ -325,9 +409,13 @@ async function main(event, context) {
               errorMessage: diagnostic.errorMessage
             })
           )
-          return jsonResponse(500, {
-            code: 500,
-            message: '浇水提醒表未就绪或保存失败，请稍后重试',
+          const statusCode = Number(error?.statusCode) || 500
+          return jsonResponse(statusCode, {
+            code: statusCode,
+            message:
+              statusCode === 409
+                ? error?.message || '当前没有可添加的浇水日期'
+                : '浇水提醒表未就绪或保存失败，请稍后重试',
             data: null
           })
         }
@@ -484,15 +572,14 @@ async function main(event, context) {
 
       // shadow 模式：intervalFactor 恒为 1.0，业务采用 legacy 间隔；
       // 默认 intervalFactor 生效，影响 BASELINE 间隔。
-      // potProfileOverride：独立浇水建议流程可从前端传入当前步骤盆型，优先于数据库 potProfile；
-      // 首页浇水提醒不传此字段，回退到 strategy.potProfile（DB），保持兼容。
-      const potProfileOverride = request.body.potProfile || null
+      // 我的植物规划只使用服务端已保存的盆型；独立浇水建议走 /watering-advisor，
+      // 避免客户端用临时盆型覆盖已保存资料并把结果误当成植物档案建议。
       const plan = buildWateringPlanner({
         wateringStrategy: strategy.watering || {},
         historical,
         forecast,
         behaviorTimeline: timeline,
-        potProfile: potProfileOverride || strategy.potProfile || null,
+        potProfile: strategy.potProfile || null,
         wateringQuantization: strategy.wateringQuantization || null,
         referenceDate,
         transpirationIntervalFactor: transpiration.intervalFactor
@@ -507,7 +594,7 @@ async function main(event, context) {
           historical,
           forecast,
           behaviorTimeline: timeline,
-          potProfile: potProfileOverride || strategy.potProfile || null,
+          potProfile: strategy.potProfile || null,
           wateringQuantization: strategy.wateringQuantization || null,
           referenceDate,
           transpirationIntervalFactor: transpiration.computedFactor
@@ -582,7 +669,10 @@ async function main(event, context) {
             })
         const detail = enriched.list[0] || plant
         writeUserPlantResponseCache(userPlantDetailResponseCache, cacheKey, detail)
-        return jsonResponse(200, { code: 200, data: detail })
+        return jsonResponse(200, {
+          code: 200,
+          data: restrictedPlatform ? await buildRestrictedPlatformPlant(detail) : detail
+        })
       }
       const page = Number(request.query.page || 1)
       const pageSize = Number(request.query.pageSize || 20)
@@ -614,29 +704,31 @@ async function main(event, context) {
       })
       const finalData = {
         ...data,
-        list: finalList
+        list: restrictedPlatform ? await buildRestrictedPlatformPlantList(finalList) : finalList
       }
       writeUserPlantResponseCache(userPlantListResponseCache, cacheKey, finalData)
       return jsonResponse(200, { code: 200, data: finalData })
     }
 
     if (method === 'POST') {
+      const manual = restrictedPlatform ? allowedManualPlantFields(request.body) : null
       const created = await createUserPlantInstance({
         openid,
-        plantId: request.body.plantId || null,
-        plantIdentityId: request.body.plantIdentityId || null,
-        sessionPlantId: request.body.sessionPlantId || null,
-        recognizedName: request.body.recognizedName || null,
-        sourceType: request.body.sourceType || 'catalog',
+        ownerUserId,
+        plantId: manual ? null : request.body.plantId || null,
+        plantIdentityId: manual ? null : request.body.plantIdentityId || null,
+        sessionPlantId: manual ? null : request.body.sessionPlantId || null,
+        recognizedName: manual ? manual.recognizedName : request.body.recognizedName || null,
+        sourceType: manual ? 'manual' : request.body.sourceType || 'catalog',
         recognitionType: request.body.recognitionType || null,
         recognitionConfidence: request.body.recognitionConfidence || null,
         identityResolutionStatus: request.body.identityResolutionStatus || null,
         visualCallBatchId: request.body.visualCallBatchId || null,
-        nickname: request.body.nickname || request.body.nickName || null,
+        nickname: manual ? manual.nickname : request.body.nickname || request.body.nickName || null,
         // generic placement is legacy-only; new forms no longer collect it.
-        location: request.body.location || null,
-        plantDate: request.body.plantDate || null,
-        notes: request.body.notes ?? null,
+        location: manual ? manual.location : request.body.location || null,
+        plantDate: manual ? manual.plantDate : request.body.plantDate || null,
+        notes: manual ? manual.notes : (request.body.notes ?? null),
         lightEnvironment: Object.prototype.hasOwnProperty.call(
           request.body || {},
           'lightEnvironment'
@@ -656,8 +748,15 @@ async function main(event, context) {
         substrateType: request.body.substrateType,
         potProfileSource: request.body.source,
         potProfileConfidence: request.body.confidence,
-        photos: request.body.photos || null
+        photos: manual ? null : request.body.photos || null
       })
+      if (restrictedPlatform) {
+        return jsonResponse(200, {
+          code: 200,
+          message: '保存成功',
+          data: await buildRestrictedPlatformPlant(created)
+        })
+      }
       const careLocation = await savePlantCareLocation({
         openid,
         plantId: created?.id,
@@ -675,11 +774,21 @@ async function main(event, context) {
       if (!id) {
         return jsonResponse(400, { code: 400, message: '缺少植物ID', data: null })
       }
-      const updates = { ...request.body }
+      const updates = restrictedPlatform
+        ? allowedManualPlantFields(request.body)
+        : { ...request.body }
       if (Object.prototype.hasOwnProperty.call(updates, 'lightEnvironment')) {
         updates.lightEnvironment = normalizePersistedLightEnvironment(updates.lightEnvironment)
       }
       const updated = await updateUserPlantInstance(openid, id, updates)
+      if (restrictedPlatform) {
+        invalidateUserPlantResponseCache(openid, id)
+        return jsonResponse(200, {
+          code: 200,
+          message: '更新成功',
+          data: await buildRestrictedPlatformPlant(updated)
+        })
+      }
       const careLocation = await savePlantCareLocation({
         openid,
         plantId: id,
@@ -698,11 +807,35 @@ async function main(event, context) {
       if (!id) {
         return jsonResponse(400, { code: 400, message: '缺少植物ID', data: null })
       }
+      if (restrictedPlatform) {
+        const requestedRecordVersion = Number(
+          request.body.recordVersion || request.query.recordVersion
+        )
+        if (!Number.isInteger(requestedRecordVersion) || requestedRecordVersion < 1) {
+          return jsonResponse(400, {
+            code: 'USER_PLANT_VERSION_INVALID',
+            message: '植物版本无效，请刷新后再试',
+            data: null
+          })
+        }
+        const currentPlant = await getUserPlantInstanceById(openid, id)
+        if (!currentPlant || Number(currentPlant.recordVersion || 1) !== requestedRecordVersion) {
+          return jsonResponse(409, {
+            code: 'USER_PLANT_VERSION_CONFLICT',
+            message: '植物信息已在其他设备更新，请刷新后再试',
+            data: null
+          })
+        }
+      }
       let deleted
       try {
         deleted = await deleteUserPlantCompletely({ openid, plantId: id })
       } catch (error) {
-        if (Number(error?.statusCode) === 400 || Number(error?.statusCode) === 404) {
+        if (
+          Number(error?.statusCode) === 400 ||
+          Number(error?.statusCode) === 404 ||
+          Number(error?.statusCode) === 409
+        ) {
           return jsonResponse(error.statusCode, {
             code: error.statusCode,
             message: error.message,
@@ -732,6 +865,13 @@ async function main(event, context) {
     return methodNotAllowed(method)
   } catch (error) {
     console.error('plant-user-http error:', error)
+    if (Number(error?.statusCode) === 400 || Number(error?.statusCode) === 409) {
+      return jsonResponse(error.statusCode, {
+        code: error.code || error.statusCode,
+        message: error.message || '植物信息暂时不可用，请稍后重试',
+        data: null
+      })
+    }
     return internalServerError('植物信息暂时不可用，请稍后重试')
   }
 }

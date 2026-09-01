@@ -22,6 +22,19 @@ function getMenuButtonRect() {
   return null
 }
 
+function getPlatformCustomButtonRect() {
+  try {
+    // #ifdef MP-TOUTIAO
+    return typeof globalThis === 'undefined'
+      ? null
+      : globalThis.tt?.getCustomButtonBoundingClientRect?.() || null
+    // #endif
+  } catch (error) {
+    console.warn('读取平台导航按钮失败:', error)
+  }
+  return null
+}
+
 function measureHeader() {
   const systemInfo = getSystemInfo()
   const statusBarHeight = Number(systemInfo.statusBarHeight || 0)
@@ -34,6 +47,23 @@ function measureHeader() {
       navBarHeight,
       headerHeight: statusBarHeight + navBarHeight,
       menuButton
+    }
+  }
+  const platformButton = getPlatformCustomButtonRect()
+  if (
+    platformButton &&
+    Number(platformButton.top) >= 0 &&
+    Number(platformButton.bottom) > Number(platformButton.top)
+  ) {
+    const navBarHeight =
+      Number(platformButton.bottom) -
+      Number(platformButton.top) +
+      Math.max(0, (Number(platformButton.top) - statusBarHeight) * 2)
+    return {
+      statusBarHeight,
+      navBarHeight,
+      headerHeight: statusBarHeight + navBarHeight,
+      menuButton: platformButton
     }
   }
   return {

@@ -22,6 +22,7 @@ const launcherModules = [
   'scripts/dev/local-api-env-gateway.mjs',
   'scripts/dev/local-api-env-launcher.mjs'
 ]
+const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8'))
 
 function successfulChild() {
   const child = new EventEmitter()
@@ -46,6 +47,38 @@ try {
   )
   assert.equal(typeof ensureLocalRuntimeReady, 'function')
 
+  const localPlatformProfiles = {
+    'mp-weixin': { port: 3010, functionPortBase: 9000 },
+    'mp-toutiao': { port: 3020, functionPortBase: 9200 },
+    'mp-xhs': { port: 3030, functionPortBase: 9300 }
+  }
+  for (const [platform, profile] of Object.entries(localPlatformProfiles)) {
+    for (const mode of ['local-functions', 'local-functions:lan']) {
+      const scriptName = `dev:${platform}:${mode}`
+      const script = packageJson.scripts?.[scriptName] || ''
+      assert.match(script, /scripts\/dev\/run-local-api-env\.mjs/)
+      assert.match(script, new RegExp(`--port=${profile.port}`))
+      assert.match(script, new RegExp(`--function-port-base=${profile.functionPortBase}`))
+      assert.match(script, new RegExp(`--output-dir=dist/dev/${platform}`))
+      assert.match(script, new RegExp(`uni -p ${platform}`))
+      if (mode === 'local-functions') {
+        assert.match(script, new RegExp(`--base-url=http://127\\.0\\.0\\.1:${profile.port}`))
+      } else {
+        assert.doesNotMatch(script, /--base-url=/)
+      }
+    }
+  }
+  assert.deepEqual(
+    new Set(Object.values(localPlatformProfiles).map(profile => profile.port)).size,
+    Object.keys(localPlatformProfiles).length,
+    'platform gateway ports must be unique'
+  )
+  assert.deepEqual(
+    new Set(Object.values(localPlatformProfiles).map(profile => profile.functionPortBase)).size,
+    Object.keys(localPlatformProfiles).length,
+    'platform worker port ranges must be unique'
+  )
+
   const parsed = parseLocalApiEnvironmentArgs(
     [
       '--mode=lan',
@@ -67,6 +100,30 @@ try {
   assert.equal(parsed.options.startFunctions, false)
   assert.deepEqual(parsed.command, ['uni', '-p', 'mp-weixin'])
   assert.equal(parsed.options.baseUrlSource, '')
+
+  const parsedSession = parseLocalApiEnvironmentArgs(
+    ['--mode=lan', '--', 'uni', '-p', 'mp-toutiao'],
+    { CLOUDBASE_LOCAL_SESSION_TOKEN: 'session-token-from-shell' }
+  )
+  assert.equal(parsedSession.options.sessionToken, 'session-token-from-shell')
+
+  let douyinProbeOptions
+  await runLocalApiEnvironment({
+    argv: ['--base-url=http://127.0.0.1:3020', '--', 'uni', '-p', 'mp-toutiao'],
+    environment: { CLOUDBASE_LOCAL_SESSION_TOKEN: 'wechat-session-must-not-leak' },
+    output: { write() {} },
+    ensureRuntime: async (_apiBaseUrl, options) => {
+      douyinProbeOptions = options
+      return null
+    },
+    spawnProcess: () => successfulChild()
+  })
+  assert.equal(
+    douyinProbeOptions.sessionToken,
+    '',
+    'Douyin local launcher must not reuse the WeChat local bearer session'
+  )
+
   const staleLanEnv = parseLocalApiEnvironmentArgs(['--mode=lan', '--', 'uni', '-p', 'mp-weixin'], {
     VITE_API_BASE_URL: 'http://192.168.50.80:3010',
     CLOUDBASE_LOCAL_FUNCTIONS_HOST_IP: '10.216.143.10'
@@ -96,6 +153,7 @@ try {
   let runtimeSessionFactoryCalls = 0
   await runLocalApiEnvironment({
     argv: ['--base-url=http://127.0.0.1:3010', '--', 'uni', '-p', 'h5'],
+    environment: { CLOUDBASE_LOCAL_SESSION_TOKEN: 'session-token-must-stay-in-parent' },
     output: { write() {} },
     ensureRuntime: async apiBaseUrl => {
       events.push(`gateway:${apiBaseUrl}`)
@@ -104,6 +162,7 @@ try {
     spawnProcess: (command, args, options) => {
       events.push(`spawn:${command}:${args.join(' ')}`)
       assert.equal(options.env.VITE_API_BASE_URL, 'http://127.0.0.1:3010')
+      assert.equal(options.env.CLOUDBASE_LOCAL_SESSION_TOKEN, undefined)
       return successfulChild()
     },
     runtimeSessionFactory: () => {

@@ -2,6 +2,8 @@ import { identifyPlantByImage } from '@/api/plants-http.js'
 import { deleteImage, getImageUrl, uploadPlantImage } from '@/api/storage.js'
 import { showBottomSheetAction } from '@/utils/bottom-sheet-action.js'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
+import { requireMvpAccess } from '@/utils/subscription-access.js'
+import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
 
 function isRetryableRequestError(error) {
   if (error?.isRetryable) {
@@ -54,7 +56,8 @@ export function useUserPlantIdentify({
   loginMsg,
   showAIDialog,
   aiDialogRef,
-  activeStep
+  activeStep,
+  openFeatureUnavailable
 }) {
   const pendingImage = { path: '', url: '', fileId: '' }
 
@@ -143,9 +146,7 @@ export function useUserPlantIdentify({
       showAIDialog.value = true
       const result = normalizeIdentifyResult(response.data)
       setTimeout(() => {
-        aiDialogRef.value?.setText(
-          `识别结果：${result.name}\n请确认是否正确。`
-        )
+        aiDialogRef.value?.setText(`识别结果：${result.name}\n请确认是否正确。`)
         aiDialogRef.value?.finishStream(result)
       }, 100)
     } catch {
@@ -156,18 +157,21 @@ export function useUserPlantIdentify({
   }
 
   async function useAIIdentify() {
+    if (isRestrictedMiniProgram()) {
+      openFeatureUnavailable?.('identify')
+      return
+    }
     if (!(await userStore.ensureLogin())) {
       loginMsg.value = '使用图片识别需要先登录'
       showLogin.value = true
       return
     }
-    if (!userStore.canDiagnose) {
-      uni.showModal({
-        title: '提示',
-        content: '免费识别次数已用完，升级会员享受无限次识别',
-        confirmText: '升级会员',
-        success: result => result.confirm && uni.switchTab({ url: '/pages/profile/profile' })
-      })
+    if (
+      !(await requireMvpAccess(userStore, {
+        source: 'plant_identify',
+        loginChecked: true
+      }))
+    ) {
       return
     }
     uni.chooseImage({
@@ -223,9 +227,16 @@ export function useUserPlantIdentify({
     await clearPendingImage()
   }
 
-  function handleAIRetry() {
-    if (pendingImage.path) {
-      doIdentify(pendingImage.path)
+  async function handleAIRetry() {
+    if (isRestrictedMiniProgram()) {
+      openFeatureUnavailable?.('identify')
+      return
+    }
+    if (
+      pendingImage.path &&
+      (await requireMvpAccess(userStore, { source: 'plant_identify_retry' }))
+    ) {
+      await doIdentify(pendingImage.path)
     }
   }
 

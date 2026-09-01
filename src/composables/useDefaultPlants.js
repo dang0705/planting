@@ -1,8 +1,25 @@
 import { computed, ref } from 'vue'
 import { fetchPlantCatalogQuery } from '@/vue-query/plants/queries/catalog.js'
 import { getFileUrl } from '@/composables/useCloudFile.js'
+import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
+
+function normalizeCatalogPlantForPlatform(plant, restrictedPlatform) {
+  if (!restrictedPlatform) {
+    return plant
+  }
+
+  // 抖音/小红书只开放植物文字档案，不能让目录项携带图片 fileId。
+  // 否则 PlantDisplayBase 仍会尝试走 wx.cloud.getTempFileURL，平台端可能一直等待。
+  return {
+    ...plant,
+    imageFileId: '',
+    imageUrl: '',
+    image: ''
+  }
+}
 
 export function useDefaultPlants() {
+  const restrictedPlatform = isRestrictedMiniProgram()
   const keywordRef = ref('')
   const page = ref(1)
   const pageSize = ref(10)
@@ -24,7 +41,8 @@ export function useDefaultPlants() {
     })
     const response = await fetchPlantCatalogQuery(normalizedKeyword, targetPage, pageSize.value)
     const data = response?.data || {}
-    const list = Array.isArray(data?.list) ? data.list : Array.isArray(data) ? data : []
+    const rawList = Array.isArray(data?.list) ? data.list : Array.isArray(data) ? data : []
+    const list = rawList.map(plant => normalizeCatalogPlantForPlatform(plant, restrictedPlatform))
 
     for (const plant of list) {
       if (plant.imageFileId) {

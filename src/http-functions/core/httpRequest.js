@@ -1,4 +1,5 @@
 import { BASE_URL, IS_LOCAL_API_BASE_URL, shouldAppendWebFunctionFlag } from '@/api/env'
+import { getActivePlatformAccessToken } from '@/api/platform-session'
 import { getCloudbaseUserIdentity } from '@/utils/cloudbase-auth'
 import { getRequestAppEnvHeader } from '@/utils/runtime-env'
 
@@ -79,6 +80,16 @@ export async function resolveHttpFunctionAuth({ auth = true, headers = {} } = {}
     return headers
   }
 
+  const platformSessionToken = getActivePlatformAccessToken()
+  if (platformSessionToken) {
+    return {
+      ...headers,
+      'x-app-env': getRequestAppEnvHeader(),
+      'x-env': getRequestAppEnvHeader(),
+      Authorization: `Bearer ${platformSessionToken}`
+    }
+  }
+
   const useRealMiniProgramIdentity = isWechatMiniProgramRuntime()
 
   if (IS_LOCAL_API_BASE_URL) {
@@ -118,14 +129,14 @@ export async function resolveHttpFunctionAuth({ auth = true, headers = {} } = {}
   }
 }
 
-function createUrl(functionPath, query) {
+function createUrl(functionPath, query, baseUrlOverride = '') {
   const parsedPath = parseFunctionPath(functionPath)
   const mergedQuery = {
     ...parsedPath.query,
     ...(query && typeof query === 'object' ? query : {})
   }
   const queryString = buildQueryString(mergedQuery)
-  const baseUrl = String(BASE_URL || '').replace(/\/+$/, '')
+  const baseUrl = String(baseUrlOverride || BASE_URL || '').replace(/\/+$/, '')
   const path = parsedPath.path
 
   if (!shouldAppendWebFunctionFlag()) {
@@ -255,6 +266,7 @@ export function httpRequest(defaults = {}) {
       responseType = defaults.responseType,
       enableChunked = defaults.enableChunked,
       timeout = defaults.timeout,
+      baseUrl = defaults.baseUrl,
       onChunkReceived
     } = options
     const requestTimeout = timeout === undefined ? DEFAULT_HTTP_TIMEOUT_MS : timeout
@@ -279,7 +291,8 @@ export function httpRequest(defaults = {}) {
       !IS_LOCAL_API_BASE_URL &&
       typeof wx.cloud.callHTTPFunction === 'function'
     ) {
-      const identity = auth ? await resolveRealRuntimeIdentity() : null
+      const platformSessionToken = auth ? getActivePlatformAccessToken() : ''
+      const identity = auth && !platformSessionToken ? await resolveRealRuntimeIdentity() : null
       return requestNativeHttpFunction({
         functionPath,
         method: requestMethod,
@@ -288,7 +301,8 @@ export function httpRequest(defaults = {}) {
         headers: {
           ...requestHeaders,
           'x-app-env': getRequestAppEnvHeader(),
-          'x-env': getRequestAppEnvHeader()
+          'x-env': getRequestAppEnvHeader(),
+          ...(platformSessionToken ? { Authorization: `Bearer ${platformSessionToken}` } : {})
         },
         identityTicket: identity?.httpIdentityTicket,
         enableChunked,
@@ -301,7 +315,7 @@ export function httpRequest(defaults = {}) {
       auth,
       headers: requestHeaders
     })
-    const url = createUrl(functionPath, requestQuery)
+    const url = createUrl(functionPath, requestQuery, baseUrl)
     console.log('[http-request] request url:', url)
 
     return new Promise((resolve, reject) => {

@@ -41,8 +41,8 @@ assertIncludes(/`pot_top_diameter_cm`\s+DECIMAL\(6,2\) NULL/i, '盆口直径字�
 assertIncludes(/`pot_bottom_diameter_cm`\s+DECIMAL\(6,2\) NULL/i, '盆底直径字段必须存在')
 assertIncludes(/`pot_height_cm`\s+DECIMAL\(6,2\) NULL/i, '盆高字段必须存在')
 assertIncludes(
-  /`has_drainage_hole`\s+VARCHAR\(16\) NOT NULL DEFAULT 'true'/i,
-  '排水孔字段必须用合同默认值'
+  /`has_drainage_hole`\s+VARCHAR\(16\) NOT NULL DEFAULT 'unknown'/i,
+  '排水孔字段必须默认为未知，不能把未填写当成有排水孔'
 )
 assertIncludes(/`pot_material`\s+VARCHAR\(32\) NOT NULL DEFAULT 'unknown'/i, '盆器材质字段必须存在')
 assertIncludes(

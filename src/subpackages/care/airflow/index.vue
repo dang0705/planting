@@ -56,6 +56,17 @@
       >
         重新选择
       </button>
+      <view
+        v-if="restrictedPlatform"
+        id="airflow-unavailable"
+        class="fixed inset-0 z-40 flex items-center justify-center bg-[#f8faf9] px-6 text-center"
+      >
+        <text class="text-sm leading-6 text-[#667085]">当前端暂未开放养护环境设置，敬请期待。</text>
+      </view>
+      <FeatureUnavailableModal
+        v-model="featureUnavailableVisible"
+        :feature-key="openedFeatureKey"
+      />
     </view>
   </Layout>
 </template>
@@ -65,6 +76,7 @@ import { computed, getCurrentInstance, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { fetchUserPlant, patchUserPlant } from '@/api/plants-http.js'
 import Layout from '@/Layout.vue'
+import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
 import AirEnvironmentAssessment from '@/components/AirEnvironmentAssessment.vue'
 import { useUserPlantAirEnvironment } from '@/composables/useUserPlantAirEnvironment.js'
 import { usePlantStore } from '@/store/plants.js'
@@ -76,12 +88,20 @@ import {
   isAirEnvironmentAnswerReady,
   sanitizeAirEnvironmentInput
 } from '@/utils/air-environment.js'
+import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
+import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
 
 const HTTP_OK = 200
 const ERROR_NAV_DELAY_MS = 500
 const pageInstance = getCurrentInstance()
 const plantStore = usePlantStore()
 const userStore = useUserStore()
+const restrictedPlatform = isRestrictedMiniProgram()
+const {
+  openedFeatureKey,
+  visible: featureUnavailableVisible,
+  openFeatureUnavailable
+} = useFeatureUnavailableModal()
 const plantAirEnvironment = useUserPlantAirEnvironment({ plantStore })
 const { draft: plantDraft, loadError: plantLoadError, setDraft, load, reset } = plantAirEnvironment
 
@@ -107,6 +127,10 @@ const resultSummary = computed(() => {
 })
 
 onLoad(options => {
+  if (restrictedPlatform) {
+    openFeatureUnavailable('watering')
+    return
+  }
   plantId.value = String(options?.plantId || '').trim()
   returnTo.value = String(options?.returnTo || '').trim()
   if (isPlantEditorMode.value) {

@@ -9,7 +9,7 @@
     }"
   >
     <view
-      v-if="showHeader"
+      v-if="renderAppHeader"
       class="fixed left-0 right-0 top-0 z-[999]"
       :class="headerClass"
       :style="headerStyle"
@@ -88,6 +88,7 @@ import BottomSheet from '@/components/common/BottomSheet.vue'
 import { useLayoutStore } from '@/store/layout.js'
 import { useUserStore } from '@/store/user.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
+import { usesPlatformNavigationChrome } from '@/utils/platform-capabilities.js'
 
 const QUESTION_PACKAGE_PAGE_ROUTE = 'subpackages/diagnosis/question-package'
 const DIAGNOSIS_TAB_PAGE_ROUTE = 'pages/diagnose/diagnose'
@@ -111,8 +112,11 @@ const layoutStore = useLayoutStore()
 const userStore = useUserStore()
 const actionSheetRef = ref(null)
 const actionSheet = ref({ title: '', itemList: [], resolve: null, reject: null, settled: true })
+const platformNavigationChrome = usesPlatformNavigationChrome()
+const renderAppHeader = computed(() => props.showHeader && !platformNavigationChrome)
 const contentStyle = computed(() => ({
-  paddingTop: props.showHeader && props.contentPaddingTop ? 'var(--app-header-height)' : '0px'
+  // 抖音的顶部品牌区/胶囊由平台绘制，应用隐藏 header 后不再预留应用 header 间距。
+  paddingTop: props.contentPaddingTop && renderAppHeader.value ? 'var(--app-header-height)' : '0px'
 }))
 
 onMounted(() => {

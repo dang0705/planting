@@ -738,6 +738,7 @@ async function findCanonicalPlantMatch(name, limit = 5) {
 
 async function createUserPlantInstance({
   openid,
+  ownerUserId = null,
   plantId = null,
   plantIdentityId = null,
   sessionPlantId = null,
@@ -757,7 +758,7 @@ async function createUserPlantInstance({
   potTopDiameterCm = null,
   potBottomDiameterCm = null,
   potHeightCm = null,
-  hasDrainageHole = 'true',
+  hasDrainageHole = 'unknown',
   potMaterial = 'unknown',
   substrateType = 'unknown',
   potProfileSource = 'default',
@@ -845,14 +846,14 @@ async function createUserPlantInstance({
 
   const sql = `
     INSERT INTO user_plant_instances (
-      _openid, plant_id, plant_identity_id, session_plant_id, canonical_name, recognized_name,
+      _openid, owner_user_id, plant_id, plant_identity_id, session_plant_id, canonical_name, recognized_name,
       source_type, recognition_type, recognition_confidence, identity_resolution_status,
       visual_call_batch_id, nickname, location, plant_date, notes, light_environment_json, air_environment_json,
       pot_top_diameter_cm, pot_bottom_diameter_cm, pot_height_cm, has_drainage_hole, pot_material, substrate_type,
       pot_profile_source, pot_profile_confidence, photos,
       plant_genus, plant_family_en, plant_latin_name
     ) VALUES (
-      {{openid}}, {{plantId}}, {{plantIdentityId}}, {{sessionPlantId}}, {{canonicalName}}, {{recognizedName}},
+      {{openid}}, {{ownerUserId}}, {{plantId}}, {{plantIdentityId}}, {{sessionPlantId}}, {{canonicalName}}, {{recognizedName}},
       {{sourceType}}, {{recognitionType}}, NULLIF({{recognitionConfidence}}, ''), {{identityResolutionStatus}},
       {{visualCallBatchId}}, {{nickname}}, {{location}}, NULLIF({{plantDate}}, ''), {{notes}}, {{lightEnvironmentJson}}, {{airEnvironmentJson}},
       NULLIF({{potTopDiameterCm}}, ''), NULLIF({{potBottomDiameterCm}}, ''), NULLIF({{potHeightCm}}, ''),
@@ -863,6 +864,7 @@ async function createUserPlantInstance({
 
   await models.$runSQL(sql, {
     openid,
+    ownerUserId: normalizeNullableString(ownerUserId) || openid,
     plantId: matchedPlantId,
     plantIdentityId: persistedPlantIdentityId,
     sessionPlantId: persistedSessionPlantId,
@@ -888,7 +890,7 @@ async function createUserPlantInstance({
     potTopDiameterCm: toNullableDecimal(potTopDiameterCm),
     potBottomDiameterCm: toNullableDecimal(potBottomDiameterCm),
     potHeightCm: toNullableDecimal(potHeightCm),
-    hasDrainageHole: normalizeNullableString(hasDrainageHole) || 'true',
+    hasDrainageHole: normalizeNullableString(hasDrainageHole) || 'unknown',
     potMaterial: normalizeNullableString(potMaterial) || 'unknown',
     substrateType: normalizeNullableString(substrateType) || 'unknown',
     potProfileSource: normalizeNullableString(potProfileSource) || 'default',
@@ -1013,6 +1015,7 @@ function mapUserPlantInstanceRow(row, plant = null) {
 
   return {
     id: row.id,
+    recordVersion: Number(row.record_version || 1),
     plantId: normalizeNullableString(row.plant_id) || '',
     plantIdentityId,
     sessionPlantId,
@@ -1137,7 +1140,12 @@ function mapPotProfileFromRow(row) {
       row.pot_height_cm === null || row.pot_height_cm === undefined
         ? null
         : Number(row.pot_height_cm),
-    hasDrainageHole: row.has_drainage_hole || 'true',
+    hasDrainageHole:
+      Number(row.pot_top_diameter_cm) > 0 ||
+      Number(row.pot_bottom_diameter_cm) > 0 ||
+      Number(row.pot_height_cm) > 0
+        ? row.has_drainage_hole || 'unknown'
+        : 'unknown',
     potMaterial: row.pot_material || 'unknown',
     substrateType,
     substrateComposition,
@@ -1151,6 +1159,7 @@ async function getUserPlantInstanceById(openid, id) {
   const sql = `
     SELECT
       up.id,
+      up.record_version,
       up.plant_id,
       up.plant_identity_id,
       up.session_plant_id,
@@ -1254,7 +1263,7 @@ async function getUserPlantWateringEvents(openid, id, limit = 10) {
     return rows.map(row => ({
       id: row.id,
       date: row.event_date,
-      watered: true,
+      watered: row.source !== 'reminder_undo',
       amount: row.amount_label,
       amountMl: row.amount_ml,
       source: row.source,
@@ -1348,6 +1357,7 @@ async function listUserPlantInstancesLegacy(openid, { page = 1, pageSize = 20 } 
   const sql = `
     SELECT
       up.id,
+      up.record_version,
       up.plant_id,
       up.plant_identity_id,
       up.session_plant_id,
@@ -1482,7 +1492,6 @@ async function listUserPlantWateringReminderRows(openid, plantIds = []) {
           AND user_plant_id IN (${inClause})
           AND reminder_type = 'water'
           AND status = 'active'
-          AND next_time >= CURRENT_TIMESTAMP
       ) latest_watering
       WHERE row_rank = 1
     `,
@@ -1547,6 +1556,7 @@ async function listUserPlantInstancesWithEnrichmentsFast(openid, { page = 1, pag
   const baseSql = `
     SELECT
       up.id,
+      up.record_version,
       up.plant_id,
       up.plant_identity_id,
       up.session_plant_id,
@@ -1645,6 +1655,7 @@ async function listUserPlantInstancesWithEnrichments(openid, { page = 1, pageSiz
   const sql = `
     SELECT
       up.id,
+      up.record_version,
       up.plant_id,
       up.plant_identity_id,
       up.session_plant_id,
@@ -1794,7 +1805,6 @@ async function listUserPlantInstancesWithEnrichments(openid, { page = 1, pageSiz
         AND user_plant_id = up.id
         AND reminder_type = 'water'
         AND status = 'active'
-        AND next_time >= CURRENT_TIMESTAMP
       ORDER BY next_time DESC, created_at DESC
       LIMIT 1
     ) water ON TRUE
@@ -1903,6 +1913,20 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
     throw new Error('植物不存在或无权限修改')
   }
 
+  const requestedRecordVersion = Number(updates.recordVersion)
+  if (updates.recordVersion !== undefined && (!Number.isInteger(requestedRecordVersion) || requestedRecordVersion < 1)) {
+    const error = new Error('植物版本无效')
+    error.code = 'USER_PLANT_VERSION_INVALID'
+    error.statusCode = 400
+    throw error
+  }
+  if (updates.recordVersion !== undefined && requestedRecordVersion !== Number(existing.recordVersion || 1)) {
+    const error = new Error('植物信息已在其他设备更新，请刷新后再试')
+    error.code = 'USER_PLANT_VERSION_CONFLICT'
+    error.statusCode = 409
+    throw error
+  }
+
   const fields = []
   const params = { openid, id: Number(id) }
   let pendingPhotoFileIds = []
@@ -1910,6 +1934,10 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
   if (updates.nickname !== undefined || updates.nickName !== undefined) {
     fields.push('nickname = {{nickname}}')
     params.nickname = updates.nickname !== undefined ? updates.nickname : updates.nickName
+  }
+  if (updates.recognizedName !== undefined) {
+    fields.push('recognized_name = {{recognizedName}}')
+    params.recognizedName = updates.recognizedName
   }
   if (updates.location !== undefined) {
     fields.push('location = {{location}}')
@@ -1986,12 +2014,26 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
   // （last_watered / next_water 等字段必须能正常写入）
   let updated
   if (fields.length) {
+    if (updates.recordVersion !== undefined) {
+      fields.push('record_version = record_version + 1')
+      params.recordVersion = requestedRecordVersion
+    }
     const sql = `
       UPDATE user_plant_instances
       SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP
       WHERE id = {{id}} AND _openid = {{openid}}
+      ${updates.recordVersion !== undefined ? 'AND record_version = {{recordVersion}}' : ''}
     `
-    await models.$runSQL(sql, params)
+    const writeResult = await models.$runSQL(sql, params)
+    const rawAffectedRows =
+      writeResult?.data?.rowsAffected ?? writeResult?.data?.affectedRows
+    const affectedRows = rawAffectedRows === undefined ? null : Number(rawAffectedRows)
+    if (updates.recordVersion !== undefined && affectedRows === 0) {
+      const error = new Error('植物信息已在其他设备更新，请刷新后再试')
+      error.code = 'USER_PLANT_VERSION_CONFLICT'
+      error.statusCode = 409
+      throw error
+    }
     updated = await getUserPlantInstanceById(openid, id)
   } else {
     updated = existing
@@ -2000,6 +2042,9 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
   // 浇水事件逐条 INSERT 到独立审计表
   if (params.wateringEvents !== undefined && Array.isArray(params.wateringEvents)) {
     for (const ev of params.wateringEvents) {
+      if (ev?.watered === false || ev?.didWater === false || ev?.action === 'none') {
+        continue
+      }
       try {
         await insertWateringEvent(openid, id, ev)
       } catch {
@@ -2021,7 +2066,7 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
       ),
       potHeightCm: toNullableDecimal(updates.potHeightCm ?? updates.pot_height_cm),
       hasDrainageHole:
-        normalizeNullableString(updates.hasDrainageHole ?? updates.has_drainage_hole) || 'true',
+        normalizeNullableString(updates.hasDrainageHole ?? updates.has_drainage_hole) || 'unknown',
       potMaterial:
         normalizeNullableString(updates.potMaterial ?? updates.pot_material) || 'unknown',
       substrateType:
@@ -2029,26 +2074,22 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
       source: normalizeNullableString(updates.source) || 'user',
       confidence: normalizeNullableString(updates.confidence) || 'normal'
     }
-    try {
-      await models.$runSQL(
-        `UPDATE user_plant_instances
-        SET
-          pot_top_diameter_cm = NULLIF({{potTopDiameterCm}}, ''),
-          pot_bottom_diameter_cm = NULLIF({{potBottomDiameterCm}}, ''),
-          pot_height_cm = NULLIF({{potHeightCm}}, ''),
-          has_drainage_hole = {{hasDrainageHole}},
-          pot_material = {{potMaterial}},
-          substrate_type = {{substrateType}},
-          pot_profile_source = {{source}},
-          pot_profile_confidence = {{confidence}},
-          pot_profile_version = pot_profile_version + 1,
-          updated_at = CURRENT_TIMESTAMP
-        WHERE id = {{id}} AND _openid = {{openid}}`,
-        potParams
-      )
-    } catch {
-      // 列不存在时忽略，不阻断 nickname / last_watered 等字段的写入
-    }
+    await models.$runSQL(
+      `UPDATE user_plant_instances
+      SET
+        pot_top_diameter_cm = NULLIF({{potTopDiameterCm}}, ''),
+        pot_bottom_diameter_cm = NULLIF({{potBottomDiameterCm}}, ''),
+        pot_height_cm = NULLIF({{potHeightCm}}, ''),
+        has_drainage_hole = {{hasDrainageHole}},
+        pot_material = {{potMaterial}},
+        substrate_type = {{substrateType}},
+        pot_profile_source = {{source}},
+        pot_profile_confidence = {{confidence}},
+        pot_profile_version = pot_profile_version + 1,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = {{id}} AND _openid = {{openid}}`,
+      potParams
+    )
     updated = await getUserPlantInstanceById(openid, id)
   }
 
@@ -2140,7 +2181,12 @@ function mapCareExtensionRow(row) {
       row.pot_height_cm === null || row.pot_height_cm === undefined
         ? null
         : Number(row.pot_height_cm),
-    hasDrainageHole: row.has_drainage_hole || 'true',
+    hasDrainageHole:
+      Number(row.pot_top_diameter_cm) > 0 ||
+      Number(row.pot_bottom_diameter_cm) > 0 ||
+      Number(row.pot_height_cm) > 0
+        ? row.has_drainage_hole || 'unknown'
+        : 'unknown',
     potMaterial: row.pot_material || 'unknown',
     substrateType,
     substrateComposition,
@@ -2155,7 +2201,7 @@ function buildDefaultPotProfile() {
     potTopDiameterCm: null,
     potBottomDiameterCm: null,
     potHeightCm: null,
-    hasDrainageHole: 'true',
+    hasDrainageHole: 'unknown',
     potMaterial: 'unknown',
     substrateType: 'unknown',
     profileVersion: 1,

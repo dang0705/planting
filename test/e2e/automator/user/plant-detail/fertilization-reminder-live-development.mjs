@@ -185,26 +185,19 @@ async function collectRealFertilizationEntries(page) {
 }
 
 async function ensureRealMiniProgramLogin(mp, page, report) {
-  const loginButton = await findViewById(page, 'index-quick-login-button')
+  const loginButton = await findViewById(page, 'index-phone-login-button')
   if (!loginButton) {
     recordAssertion(report, '真实小程序用户已登录或无需再次登录', true)
     return page
   }
 
-  await tapStableElement(loginButton)
-  const deadline = Date.now() + ELEMENT_WAIT_MS
-  while (Date.now() < deadline) {
-    const currentPage = await mp.currentPage()
-    const stillNeedsLogin = await findViewById(currentPage, 'index-quick-login-button')
-    if (!stillNeedsLogin) {
-      recordAssertion(report, '真实小程序完成用户登录', true)
-      return currentPage
-    }
-    await sleep(UI_WAIT_MS)
-  }
-
-  recordAssertion(report, '真实小程序完成用户登录', false, '快速登录按钮仍可见')
-  throw new ProductAssertionError('真实小程序登录未完成')
+  recordAssertion(
+    report,
+    '真实小程序完成手机号登录',
+    false,
+    'BLOCKED_ENV：手机号授权必须由真机用户主动确认，自动化不会模拟或绕过该授权'
+  )
+  throw new ProductAssertionError('BLOCKED_ENV：请先在真机完成手机号授权后再运行此 live 用例')
 }
 
 async function findRealPlantWithFixedInterval(

@@ -59,13 +59,31 @@ export function parseSubstrateComposition(profile) {
 
 export function buildPotProfileSummary(profile) {
   if (!profile) {
-    return '点击补充盆型信息'
+    return '填写盆口和盆高，可估算水量范围'
   }
   const parts = []
   if (profile.potTopDiameterCm) {
     parts.push(`口径 ${profile.potTopDiameterCm}cm`)
   }
-  parts.push(profile.hasDrainageHole === 'true' ? '有排水孔' : '无/不确定排水孔')
+  if (profile.potHeightCm) {
+    parts.push(`高 ${profile.potHeightCm}cm`)
+  }
+  if (!profile.potTopDiameterCm || !profile.potHeightCm) {
+    return '填写盆口和盆高，可估算水量范围'
+  }
+  if (!profile.potBottomDiameterCm) {
+    return '已有基础尺寸，还可以补充排水孔'
+  }
+  if (profile.potBottomDiameterCm) {
+    parts.push(`底径 ${profile.potBottomDiameterCm}cm`)
+  }
+  if (profile.hasDrainageHole === 'true') {
+    parts.push('有排水孔')
+  } else if (profile.hasDrainageHole === 'false') {
+    parts.push('无排水孔')
+  } else {
+    parts.push('排水孔不确定')
+  }
   const composition = parseSubstrateComposition(profile)
   if (composition?.length) {
     parts.push(
@@ -73,6 +91,39 @@ export function buildPotProfileSummary(profile) {
     )
   }
   return parts.join(' · ')
+}
+
+export function resolvePotProfileState(profile) {
+  if (!profile || Number(profile.potTopDiameterCm) <= 0 || Number(profile.potHeightCm) <= 0) {
+    return 'missing'
+  }
+  if (Number(profile.potBottomDiameterCm) <= 0) {
+    return 'partial'
+  }
+  return 'complete'
+}
+
+export function buildPlannerEvidenceText({
+  plannerResult,
+  potProfile,
+  wateringEvents = [],
+  hasWeatherRef = false
+} = {}) {
+  const profileState = resolvePotProfileState(potProfile)
+  const evidence = []
+  if (wateringEvents.length || plannerResult?.lastWateredDaysAgo !== undefined) {
+    evidence.push('最近浇水记录')
+  }
+  if (hasWeatherRef || plannerResult?.weatherRef || plannerResult?.weatherUsed) {
+    evidence.push('最近天气')
+  }
+  if (profileState !== 'missing') {
+    evidence.push('盆型')
+  }
+  if (!evidence.length) {
+    return '建议结合盆土确认'
+  }
+  return `已结合${evidence.join('、')}`
 }
 
 export function resolveWateringDoseText(echo, potVolumeMl) {
@@ -102,29 +153,11 @@ export function buildPlannerSummaryRows({
   if (!amountBottleText || isOverWateringBlocked) {
     return []
   }
-  const rows = [
-    {
-      label: '建议水量',
-      value: amountBottleText,
-      valueClass: 'text-xs font-medium text-gray-700'
-    }
-  ]
+  const rows = []
   if (plannerResult?.stopCondition) {
     rows.push({
       label: '停止条件',
       value: plannerResult.stopCondition,
-      valueClass: 'text-xs text-gray-600'
-    })
-  }
-  if (plannerResult?.confidenceLevel) {
-    rows.push({
-      label: '建议依据',
-      value:
-        {
-          low: '信息较少，建议结合盆土确认',
-          normal: '信息较充分，仍建议结合盆土确认',
-          high: '信息较充分，仍建议结合盆土确认'
-        }[plannerResult.confidenceLevel] || '建议结合盆土确认',
       valueClass: 'text-xs text-gray-600'
     })
   }
@@ -136,11 +169,6 @@ export function buildPlannerSummaryRows({
 }
 
 export function normalizePlannerResultDate(data = {}) {
-  if (data.nextWaterDate && data.nextWaterDate < todayStr()) {
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    return { ...data, nextWaterDate: todayStrFromDate(tomorrow) }
-  }
   return data
 }
 
@@ -148,20 +176,15 @@ export function normalizeSavedReminderPlannerResult(reminder) {
   return normalizePlannerResultDate(reminder?.plannerResult || reminder)
 }
 
-function todayStrFromDate(date) {
-  return [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, '0'),
-    String(date.getDate()).padStart(2, '0')
-  ].join('-')
-}
-
 export function isWateringReminderActive(reminder) {
   if (!reminder?.nextTime) {
     return false
   }
+  if (reminder.status && reminder.status !== 'active') {
+    return false
+  }
   const nextTime = new Date(reminder.nextTime)
-  return !Number.isNaN(nextTime.getTime()) && nextTime >= new Date()
+  return !Number.isNaN(nextTime.getTime())
 }
 
 export function formatReminderDateTimeText(value) {
@@ -349,25 +372,27 @@ export function buildPhoneCalendarPayload({
 export function buildWateringReminderSavePayload({
   plantId,
   planId,
-  lastWatered,
-  nextWaterDate,
   wateringEvents,
   plannerResult,
-  calendarPayload
+  calendarPayload,
+  weatherDays = [],
+  forecastDays = [],
+  locationKey = '',
+  timezone = 'Asia/Shanghai',
+  airEnvironmentOverride = null
 }) {
   return {
     plantId,
     planId,
-    lastWatered,
-    nextWaterDate,
-    nextWaterTime: '09:00:00',
-    nextTime: buildReminderNextTime(nextWaterDate),
     wateringEvents,
-    plannerResult: {
-      ...plannerResult,
-      planId
-    },
-    calendarPayload
+    calendarPayload,
+    weatherDays,
+    forecastDays,
+    locationKey,
+    timezone,
+    airEnvironmentOverride,
+    // 仅作为客户端日历展示的本地快照，不作为服务端业务结果来源。
+    clientPlanId: String(plannerResult?.planId || planId || '')
   }
 }
 

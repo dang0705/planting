@@ -23,6 +23,10 @@ const imagesSource = fs
         ...(item.captureRegion ? { captureRegion: item.captureRegion } : {})
       }))`
   )
+  .replace(
+    "import { requireMvpAccess } from '@/utils/subscription-access.js'",
+    'const requireMvpAccess = async () => true'
+  )
 const { useDiagnoseAutomation } = await import(
   `data:text/javascript,${encodeURIComponent(automationSource)}`
 )

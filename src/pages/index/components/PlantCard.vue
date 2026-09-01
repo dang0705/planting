@@ -36,23 +36,23 @@
           </view>
         </view>
 
-        <view class="flex h-[38px] items-center gap-2">
+        <view class="flex h-[38px] min-w-0 w-full items-center gap-2">
           <button
             :id="`diagnose-entry-button-${plant.id}`"
-            class="m-0 flex h-9 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] border-0 bg-[#2d7a4f] px-3 py-2 text-sm font-medium leading-5 text-white after:border-0"
+            class="m-0 box-border flex h-9 min-w-0 w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] border-0 bg-[#2d7a4f] px-3 py-2 text-sm font-medium leading-5 text-white after:border-0"
             hover-class="none"
             @click.stop="$emit('diagnose', plant)"
           >
-            <image :src="diagnoseIcon" class="size-4 flex-[0_0_16px]" mode="aspectFit" />
+            <image :src="diagnoseIcon" class="!size-4 flex-[0_0_16px]" mode="aspectFit" />
             <text>诊断</text>
           </button>
           <button
             :id="`index-plant-card-history-${plant.id}`"
-            class="m-0 flex h-9 border border-solid border-primary flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] bg-white px-3 py-2 text-sm font-medium leading-5 text-[#0a0a0a] after:border-0"
+            class="m-0 box-border flex h-9 min-w-0 w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] border border-solid border-primary bg-white px-3 py-2 text-sm font-medium leading-5 text-[#0a0a0a] after:border-0"
             hover-class="none"
             @click.stop="$emit('history', plant)"
           >
-            <image :src="historyIcon" class="size-4 flex-[0_0_16px]" mode="aspectFit" />
+            <image :src="historyIcon" class="!size-4 flex-[0_0_16px]" mode="aspectFit" />
             <text>历史</text>
           </button>
         </view>
@@ -64,7 +64,7 @@
         <view class="flex flex-col items-center gap-0.5">
           <button
             :id="`plant-card-reminder-${plant.id}-water`"
-            class="m-0 flex size-8 items-center justify-center rounded-full border p-0 after:border-0"
+            class="m-0 box-border flex min-w-0 size-8 items-center justify-center rounded-full border p-0 after:border-0"
             :class="
               waterReminderActive
                 ? 'border-[#74d4ff] bg-[#f0f9ff]'
@@ -75,7 +75,7 @@
           >
             <image
               :src="waterReminderActive ? waterActiveIcon : waterDefaultIcon"
-              class="size-4 flex-[0_0_16px]"
+              class="!size-4 flex-[0_0_16px]"
               mode="aspectFit"
             />
           </button>
@@ -84,7 +84,7 @@
         <view class="flex flex-col items-center gap-0.5">
           <button
             :id="`plant-card-fertilization-${plant.id}`"
-            class="m-0 flex size-8 items-center justify-center rounded-full border p-0 after:border-0"
+            class="m-0 box-border flex min-w-0 size-8 items-center justify-center rounded-full border p-0 after:border-0"
             :class="
               fertilizationReminderActive
                 ? 'border-[#74d4ff] bg-[#f0f9ff]'
@@ -95,7 +95,7 @@
           >
             <image
               :src="fertilizationReminderActive ? fertilizeActiveIcon : fertilizeDefaultIcon"
-              class="size-4 flex-[0_0_16px]"
+              class="!size-4 flex-[0_0_16px]"
               mode="aspectFit"
             />
           </button>

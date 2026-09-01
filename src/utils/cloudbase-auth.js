@@ -43,6 +43,18 @@ export async function getWechatPhoneProfile({ code = '', cloudId = '' } = {}) {
   if (code) {
     data.code = code
   }
+  if (!cloudId && code) {
+    const loginResult = await new Promise((resolve, reject) => {
+      wx.login({
+        success: resolve,
+        fail: reject
+      })
+    })
+    if (!loginResult?.code) {
+      throw new Error('微信登录未返回有效凭据')
+    }
+    data.loginCode = loginResult.code
+  }
 
   return new Promise((resolve, reject) => {
     wx.cloud.callFunction({
@@ -50,18 +62,13 @@ export async function getWechatPhoneProfile({ code = '', cloudId = '' } = {}) {
       data,
       success: res => {
         const result = res?.result || {}
-        if (!result.phoneNumber) {
-          reject(new Error(result.message || 'wechat-phone 未返回有效手机号'))
+        if (!result.phoneProof) {
+          reject(new Error(result.message || 'wechat-phone 未返回有效手机号授权证明'))
           return
         }
 
         resolve({
-          openid: result.openid || '',
-          appid: result.appid || '',
-          unionid: result.unionid || '',
-          phoneNumber: result.phoneNumber || '',
-          purePhoneNumber: result.purePhoneNumber || '',
-          countryCode: result.countryCode || '+86'
+          phoneProof: result.phoneProof
         })
       },
       fail: reject

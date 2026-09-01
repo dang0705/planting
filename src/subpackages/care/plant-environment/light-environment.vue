@@ -28,6 +28,17 @@
           {{ saving ? '保存中...' : '完成并返回编辑' }}
         </button>
       </view>
+      <view
+        v-if="restrictedPlatform"
+        id="plant-light-environment-unavailable"
+        class="fixed inset-0 z-40 flex items-center justify-center bg-[#f8faf9] px-6 text-center"
+      >
+        <text class="text-sm leading-6 text-[#667085]">当前端暂未开放养护环境设置，敬请期待。</text>
+      </view>
+      <FeatureUnavailableModal
+        v-model="featureUnavailableVisible"
+        :feature-key="openedFeatureKey"
+      />
     </scroll-view>
   </Layout>
 </template>
@@ -36,6 +47,7 @@
 import { getCurrentInstance, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import Layout from '@/Layout.vue'
+import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
 import { fetchUserPlant, patchUserPlant } from '@/api/plants-http.js'
 import LightEnvironmentPicker from '@/components/LightEnvironmentPicker.vue'
 import { usePlantStore } from '@/store/plants.js'
@@ -48,12 +60,20 @@ import {
   normalizeOptionalLightEnvironment,
   sanitizeLightEnvironment
 } from '@/utils/light-environment.js'
+import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
+import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
 
 const HTTP_OK = 200
 const ERROR_NAV_DELAY_MS = 500
 const pageInstance = getCurrentInstance()
 const plantStore = usePlantStore()
 const userStore = useUserStore()
+const restrictedPlatform = isRestrictedMiniProgram()
+const {
+  openedFeatureKey,
+  visible: featureUnavailableVisible,
+  openFeatureUnavailable
+} = useFeatureUnavailableModal()
 
 const plantId = ref('')
 const loading = ref(true)
@@ -62,6 +82,10 @@ const draft = ref(createDefaultLightEnvironment())
 const plantName = ref('植物')
 
 onLoad(options => {
+  if (restrictedPlatform) {
+    openFeatureUnavailable('watering')
+    return
+  }
   plantId.value = String(options?.plantId || '').trim()
   initialize()
 })

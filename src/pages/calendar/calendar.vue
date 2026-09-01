@@ -108,8 +108,13 @@
             <view class="bg-gray-100 px-2 py-1 rounded">
               <text class="text-xs text-gray-700">{{ plan.location }}</text>
             </view>
-            <view class="px-2 py-1 rounded" :class="resolveHealthStatusPresentation(plan.healthStatus).className">
-              <text class="text-xs">{{ resolveHealthStatusPresentation(plan.healthStatus).label }}</text>
+            <view
+              class="px-2 py-1 rounded"
+              :class="resolveHealthStatusPresentation(plan.healthStatus).className"
+            >
+              <text class="text-xs">{{
+                resolveHealthStatusPresentation(plan.healthStatus).label
+              }}</text>
             </view>
           </view>
 
@@ -117,16 +122,20 @@
         </view>
       </view>
     </view>
+    <FeatureUnavailableModal v-model="featureUnavailableVisible" :feature-key="openedFeatureKey" />
   </Layout>
 </template>
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import Layout from '@/Layout.vue'
+import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
 import { getWeatherInfo } from '@/api/weather.js'
-import { saveWateringReminder } from '@/api/plants-http.js'
+import { saveWateringReminder, undoWateringReminder } from '@/api/plants-http.js'
 import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
+import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
+import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import CalendarTaskSection from './CalendarTaskSection.vue'
 import {
@@ -147,6 +156,12 @@ const loadingPlants = ref(false)
 const weatherLoading = ref(false)
 const actionState = reactive({})
 const undoState = reactive({})
+const restrictedPlatform = isRestrictedMiniProgram()
+const {
+  openedFeatureKey,
+  visible: featureUnavailableVisible,
+  openFeatureUnavailable
+} = useFeatureUnavailableModal()
 
 const undoableTasks = computed(() =>
   Object.values(undoState)
@@ -174,6 +189,10 @@ const nextSolarTerm = ref(null)
 
 onMounted(async () => {
   getSolarTermData()
+  if (restrictedPlatform) {
+    openFeatureUnavailable('calendar')
+    return
+  }
   await Promise.all([loadUserPlants(), getWeatherData()])
 })
 
@@ -273,6 +292,10 @@ function getSolarTermData(now = new Date()) {
 }
 
 function viewSolarTerms() {
+  if (restrictedPlatform) {
+    openFeatureUnavailable('calendar')
+    return
+  }
   uni.showModal({
     title: '节气提醒',
     content: `${currentSolarTerm.value.name}：${currentSolarTerm.value.tip}\n下一个节气：${nextSolarTerm.value?.name || '待更新'} ${nextSolarTerm.value?.date || ''}`,
@@ -282,6 +305,10 @@ function viewSolarTerms() {
 }
 
 async function completeTask(plantId) {
+  if (restrictedPlatform) {
+    openFeatureUnavailable('watering')
+    return
+  }
   if (actionState[plantId]) {
     return
   }
@@ -293,21 +320,27 @@ async function completeTask(plantId) {
   captureTaskSnapshot(plant, '完成')
   actionState[plantId] = true
   try {
-    const result = await plantStore.completeWatering(plantId)
+    const result = await plantStore.completeWatering(plantId, {
+      planId: plant.wateringReminder?.planId || ''
+    })
     if (!result.success) {
       throw new Error(result.message || '任务保存失败')
     }
     reportAnalyticsEvent(ANALYTICS_EVENTS.WATERING_RECORDED)
-    uni.showToast({ title: '任务已完成', icon: 'success' })
+    uni.showToast({ title: '已记录这次浇水，下次建议会据此更新', icon: 'success' })
     await loadUserPlants()
   } catch {
-    uni.showToast({ title: '暂时无法完成任务，请检查网络后重试', icon: 'none' })
+    uni.showToast({ title: '这次浇水还没有记录成功，提醒状态未改变', icon: 'none' })
   } finally {
     delete actionState[plantId]
   }
 }
 
 async function postponeTask(plantId) {
+  if (restrictedPlatform) {
+    openFeatureUnavailable('watering')
+    return
+  }
   if (actionState[plantId]) {
     return
   }
@@ -335,7 +368,7 @@ async function postponeTask(plantId) {
     if (response?.code !== HTTP_OK || !response.data) {
       throw new Error(response?.message || '推迟失败')
     }
-    uni.showToast({ title: '已推迟到明天', icon: 'none' })
+    uni.showToast({ title: '已重新安排提醒', icon: 'none' })
     await loadUserPlants()
   } catch {
     uni.showToast({ title: '暂时无法推迟提醒，请检查网络后重试', icon: 'none' })
@@ -367,6 +400,10 @@ function captureTaskSnapshot(plant, actionLabel) {
 }
 
 async function undoTask(plantId) {
+  if (restrictedPlatform) {
+    openFeatureUnavailable('watering')
+    return
+  }
   if (actionState[plantId]) {
     return
   }
@@ -376,37 +413,24 @@ async function undoTask(plantId) {
   }
   actionState[plantId] = true
   try {
-    const reminder = snapshot.reminder
-    if (reminder) {
-      const nextWaterDate = String(reminder.nextWaterDate || reminder.nextTime || '').slice(0, 10)
-      if (!nextWaterDate) {
-        throw new Error('原提醒日期不可恢复')
-      }
-      const response = await saveWateringReminder(
-        buildReminderSavePayload({
-          plantId,
-          planId: reminder.planId || `watering-${plantId}`,
-          lastWatered: reminder.lastWatered || '',
-          nextWaterDate,
-          nextTime: reminder.nextTime || `${nextWaterDate}T09:00:00`,
-          wateringEvents: Array.isArray(reminder.wateringEvents) ? reminder.wateringEvents : [],
-          plannerResult: reminder.plannerResult || {},
-          calendarPayload: reminder.calendarPayload || null
-        })
-      )
-      if (response?.code !== HTTP_OK || !response.data) {
-        throw new Error(response?.message || '原提醒不可恢复')
-      }
-    }
-    const restored = await plantStore.updateUserPlant(plantId, {
-      lastWatered: snapshot.lastWatered,
-      nextWater: snapshot.nextWater
+    const response = await undoWateringReminder({
+      plantId,
+      planId: snapshot.reminder?.planId || ''
     })
-    if (!restored.success) {
-      throw new Error(restored.message || '植物状态不可恢复')
+    if (response?.code !== HTTP_OK || !response.data) {
+      throw new Error(response?.message || '原记录不可撤销')
     }
+    plantStore.updateUserPlantLocal(plantId, {
+      lastWatered: response.data.lastWatered,
+      nextWater: response.data.nextWater
+    })
     delete undoState[plantId]
-    uni.showToast({ title: '已撤销本次操作', icon: 'success' })
+    uni.showToast({
+      title: snapshot.reminder?.calendarPayload
+        ? '青花植记录已撤销，手机日历中的事项需要手动删除'
+        : '已撤销这次浇水记录，后续建议会重新计算',
+      icon: 'success'
+    })
     await loadUserPlants()
   } catch {
     uni.showToast({ title: '暂时无法撤销本次操作，请检查网络后重试', icon: 'none' })
@@ -450,7 +474,6 @@ function viewPlanDetail(plan) {
     url: `/subpackages/plant/user-plant-detail/user-plant-detail?mode=view&id=${plan.id}`
   })
 }
-
 </script>
 
 <style scoped>

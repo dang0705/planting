@@ -90,7 +90,8 @@
       }
     },
     "subscription": {
-      "entry": "subscription.entry"
+      "entry": "subscription.entry",
+      "touchpoints": "subscription.paid_touchpoints"
     }
   },
   "entries": [
@@ -109,7 +110,7 @@
         "diagnosis tab renders the real photo and no-image intake",
         "diagnosis intake has no intermediary or split page",
         "diagnosis tab page data is readable",
-        "diagnosis tab thin-shell screenshot is valid PNG",
+        "diagnosis tab common-ui screenshot is valid PNG",
         "diagnosis tab exposes a real user action to start no-image diagnosis",
         "diagnosis tab user action navigates directly to the question package",
         "direct question package screenshot is valid PNG",
@@ -118,7 +119,7 @@
         "question package returns directly to the diagnosis tab",
         "switching away from the diagnosis tab has no redirect loop"
       ],
-      "script_sha256": "9ccc027b9d05cc4ae36469232f83ac41b89222d49f5352ff827d27bfbeb2918d",
+      "script_sha256": "44e970dfc15a31bf59d7ea011f839aedfe5ebddd19d686f332397585a77a1e12",
       "reusable_scenarios": [],
       "id_policy": {
         "sections": ["3.1", "3.3"],
@@ -1173,7 +1174,7 @@
         "首页添加植物入口在真实账户中可见",
         "快速重复点击只产生一个建档页",
         "建档页根节点可见且页面栈没有重复建档页",
-        "建档页下一步后信息步骤已激活",
+        "建档页点击植物卡片后信息步骤已激活",
         "快速连续滚动后滚动位置和页面布局仍可读",
         "添加植物信息步骤内容超出视口后可滚动",
         "添加植物信息步骤快速连续滚动后到达底部",
@@ -1183,7 +1184,7 @@
         "快速滚动后的建档页截图为有效 PNG",
         "真实小程序 wx.request 健康请求完成"
       ],
-      "script_sha256": "cdc9f6174e9f465830e7fd74d60724587a015957abc44eef870ac99551529ace",
+      "script_sha256": "b4c0c38a364cb63f382dfb1cc8b6dca2a4ba497e337b38494cd2a96eff00e8df",
       "reusable_scenarios": [],
       "id_policy": {
         "sections": ["3.1", "3.12.1"],
@@ -1252,6 +1253,47 @@
         "reentry": false,
         "fixtures": [
           "persisted real WeChat identity, configured cloud1_dev subscription plan, and real subscription-http response; payment button is intentionally not tapped"
+        ]
+      }
+    },
+    {
+      "id": "subscription.paid_touchpoints",
+      "category_path": ["subscription", "touchpoints"],
+      "leaf_script": "test/e2e/automator/subscription/paid-touchpoints.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "read_only",
+      "required_assertions": [
+        "真实运行身份为免费账户",
+        "独立浇水建议入口未调用原业务页并跳转订阅页",
+        "诊断 tab 未调用诊断接口并跳转订阅页",
+        "免费用户被拦截时未调用诊断或浇水建议接口",
+        "免费用户跳转订阅页截图有效"
+      ],
+      "script_sha256": "1648ddce49ef9e40f363ffb2d5e98c19d3ecd97a3b895807aab935ddcad5757e",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.1", "3.9", "3.10"],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.1",
+          "docs/ai-rules/frontend-automation-id-policy.md#3.9",
+          "docs/ai-rules/frontend-automation-id-policy.md#3.10"
+        ],
+        "stable_ids": [
+          "index-watering-advisor-entry",
+          "diagnose-dev-symptom-class-option-yellow_leaf",
+          "subscription-page",
+          "subscription-membership-type"
+        ],
+        "stable_id_prefixes": []
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["GET /subscription-http/subscription/plans"],
+        "cache": false,
+        "reentry": false,
+        "fixtures": [
+          "persisted real WeChat identity whose server-synced membership is free; no fixture response, membership rewrite, plant injection, or real payment"
         ]
       }
     }

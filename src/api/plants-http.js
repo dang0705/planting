@@ -90,6 +90,14 @@ export function completeWateringReminder(payload) {
   return executeCompleteWateringReminderMutation(payload)
 }
 
+export function undoWateringReminder(payload) {
+  return requestHttpFunction('plant-user-http/user-plants/watering-reminders/undo', {
+    method: 'POST',
+    body: payload,
+    returnErrorResponse: true
+  })
+}
+
 export function fetchFertilizationReminder(plantId) {
   return fetchFertilizationReminderQuery(plantId)
 }

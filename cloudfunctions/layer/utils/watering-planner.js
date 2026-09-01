@@ -141,20 +141,21 @@ function buildWateringPlanner({
   // 盆型几何计算
   const potGeometry = potProfile ? computePotGeometry(potProfile) : computePotGeometry({})
 
-  const timeline = behaviorTimeline?.summary
-    ? behaviorTimeline
-    : normalizeCareBehaviorTimeline(behaviorTimeline)
+  const baseline = {
+    intervalDays: resolveBaselineInterval(wateringStrategy)
+  }
+  const timeline = normalizeCareBehaviorTimeline({
+    ...behaviorTimeline,
+    baselineIntervalDays: baseline.intervalDays
+  })
 
   // 重新用盆型几何构建摘要（lookbackWindow 依赖盆型）
   const summary = buildBehaviorSummary(
     timeline.referenceDate || timeline.reference_date || referenceDate || new Date().toISOString(),
     { wateringEvents: timeline.watering_events_10d || timeline.wateringEvents10d || [] },
-    potGeometry
+    potGeometry,
+    baseline.intervalDays
   )
-
-  const baseline = {
-    intervalDays: resolveBaselineInterval(wateringStrategy)
-  }
 
   // 动态回看窗口（受 way/freq + 盆型影响）
   const lookbackWindowDays = resolveLookbackWindowDays(baseline.intervalDays, potGeometry)
@@ -460,8 +461,9 @@ function buildWateringPlanner({
     rootZoneMoistureIndex,
     userDoseEcho,
     potGeometry,
-    amountRangeMl: amountSuggestion.amountRangeMl,
-    stopCondition: amountSuggestion.stopCondition,
+    // 没有可计算的盆体积时不返回伪精确毫升数；日期仍可按历史和策略继续推导。
+    amountRangeMl: potGeometry.potVolumeMl > 0 ? amountSuggestion.amountRangeMl : null,
+    stopCondition: potGeometry.potVolumeMl > 0 ? amountSuggestion.stopCondition : null,
     confidenceLevel: hasDoseConflict ? 'low' : amountSuggestion.confidenceLevel,
     soilCheck: buildSoilCheckGuidance(gate.gateState),
     // 下次浇水日期

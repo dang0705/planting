@@ -13,6 +13,13 @@ const {
 } = require('/opt/utils/http')
 const { findCanonicalPlantMatch } = require('/opt/utils/plant-knowledge')
 const { persistIdentifyRuntimeArtifacts } = require('/opt/utils/identify-runtime')
+let platformSession
+try {
+  platformSession = require('/opt/utils/platform-session')
+} catch {
+  platformSession = require('../layer/utils/platform-session')
+}
+const { assertPlatformFeature } = platformSession
 
 const AK = process.env.BAIDU_AK
 const SK = process.env.BAIDU_SK
@@ -217,6 +224,14 @@ async function main(event, context) {
     const userInfo = await resolveHttpUserInfo(request.headers, request.query, context)
     if (!userInfo?.openid) {
       return jsonResponse(401, { code: 401, message: '请先登录', data: null })
+    }
+    try {
+      assertPlatformFeature(userInfo, path)
+    } catch (error) {
+      if (Number(error?.statusCode) === 403) {
+        return jsonResponse(403, { code: error.code, message: error.message, data: null })
+      }
+      throw error
     }
 
     const imageUrl = payload.imageUrl

@@ -483,18 +483,18 @@ cloudfunctions/weather-http/config.json
 
 ### 7.2 `plant-user-http`
 
-| 方法   | 路径                                          | 当前用途                                     |
-| ------ | --------------------------------------------- | -------------------------------------------- |
-| GET    | `/user-plants/health`                         | 健康检查。                                   |
-| GET    | `/user-plants`                                | 当前用户植物列表。                           |
-| POST   | `/user-plants`                                | 新建用户植物。                               |
-| PATCH  | `/user-plants`                                | 更新用户植物，需 `id`。                      |
+| 方法   | 路径                                          | 当前用途                                                                                                                                 |
+| ------ | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/user-plants/health`                         | 健康检查。                                                                                                                               |
+| GET    | `/user-plants`                                | 当前用户植物列表。                                                                                                                       |
+| POST   | `/user-plants`                                | 新建用户植物。                                                                                                                           |
+| PATCH  | `/user-plants`                                | 更新用户植物，需 `id`。                                                                                                                  |
 | DELETE | `/user-plants`                                | 完整删除当前用户植物及关联养护、提醒和诊断数据，需 `id`。图片对象提交后立即清理；失败时保留受用户约束的重试作业并返回 `cleanupPending`。 |
-| POST   | `/user-plants/watering-planner`               | 复用共享规划器计算浇水建议。                 |
-| GET    | `/user-plants/watering-reminders?plantId=...` | 读取当前用户指定植物最新未过期浇水日历提醒。 |
-| POST   | `/user-plants/watering-reminders`             | 系统日历创建成功后保存完整浇水提醒事件。     |
+| POST   | `/user-plants/watering-planner`               | 复用共享规划器计算浇水建议。                                                                                                             |
+| GET    | `/user-plants/watering-reminders?plantId=...` | 读取当前用户指定植物最新未过期浇水日历提醒。                                                                                             |
+| POST   | `/user-plants/watering-reminders`             | 系统日历创建成功后保存完整浇水提醒事件。                                                                                                 |
 
-`plant-user-http` 需要解析到 openid；否则返回 401。
+`plant-user-http` 需要解析到服务端签发的持久会话，并使用统一业务 `user_id` 作为归属；缺少或过期 Bearer 会话时返回 401。客户端提交的 OpenID、UnionID、手机号明文均不参与身份判定。
 
 ### 7.2.1 `POST /user-plants/watering-planner`
 
@@ -581,7 +581,7 @@ WET 阻断逻辑：
 
 本接口只处理系统日历已创建后的应用内提醒状态，不替代 `/watering-planner` 纯计算职责。
 
-- `GET` 需要 `plantId`，只返回当前 openid 名下该植物的最新 active 且未过期水提醒；无权限返回 404。
+- `GET` 需要 `plantId`，只返回当前业务 `user_id` 名下该植物的最新 active 且未过期水提醒；无权限返回 404。
 - `POST` 必须在前端 `uni.addPhoneCalendar` 成功后调用，保存 `plantId`、`planId`、`lastWatered`、`nextWaterDate`、`nextWaterTime/nextTime`、最近浇水事件集合、planner 结果详情和 calendar payload。
 - 若手机日历已成功但本次 POST 失败，按当前用户和植物隔离的本地恢复记录必须保留同一份保存 payload；当前弹层和重新打开后的重试都只同步应用内状态，不得再次调用 `uni.addPhoneCalendar` 创建重复日历事件。
 - `POST` 会将同一植物既有 active 水提醒标记为 `superseded`，再插入新提醒，并同步 `user_plant_instances.last_watered/next_water`。
@@ -625,23 +625,33 @@ src/store/plants.js
 
 ## 8. 用户认证契约
 
-`auth-user-http` 当前入口是 `/auth/user`，按 `action` 分发。
+`auth-user-http` 当前入口是 `/auth/user`，按 `action` 分发，函数权限保持 `auth != null`。
+
+三端手机号引导登录使用独立的匿名入口 `/auth/platform-phone`（函数名
+`platform-phone-bootstrap-http`）。该入口只接受 `POST` 的 `platformPhoneLogin`，允许微信、抖音和小红书三个平台；它完成平台手机号证明校验并签发统一 Bearer 会话，后续植物及其他业务接口必须携带该会话。
+线上入口使用 CloudBase HTTPS 服务域名
+`https://cloud1-2grufevs395a9d5e-1403815561.ap-shanghai.app.tcloudbase.com/auth/platform-phone`；该入口不能改走需要 CloudBase 登录态的 `api.tcloudbasegateway.com/v1/functions` 路径。`VITE_PLATFORM_PHONE_BOOTSTRAP_BASE_URL` 可在不同环境覆盖服务域名，本地 gateway 仍使用本地函数路径。
 
 当前 action：
 
 ```text
-wechatLogin
+platformPhoneLogin
 phoneLogin
 updateEmail
-updatePhoneNumber
 getUserByUnionId
 getUserByOpenid
 getUserByEmail
 ```
 
-健康检查：`/auth/user/health`。
+微信端先由受保护的 `wechat-phone` 云函数依据当前 CloudBase 运行时身份生成签名 `phoneProof`，再匿名调用 bootstrap 的 `platformPhoneLogin`；抖音 / 小红书直接提交平台授权凭据。三端共用同一套手机号归户、冲突检测和随机 Bearer 会话机制；平台登录码和用户主动授权的手机号证明均由服务端校验，客户端只接收脱敏手机号与随机 Bearer 会话令牌。`auth-user-http` 仍保持 `auth != null`，其历史 `phoneLogin` 仅保留受保护兼容分发，不是客户端新登录入口。历史 `wechatLogin`、`updatePhoneNumber` action 仅保留兼容分发，当前固定返回 `PHONE_AUTH_REQUIRED`，不得作为登录降级路径。匿名 bootstrap 不接受任何客户端身份字段。
 
-事实源：`cloudfunctions/auth-user-http/app.js`。
+抖音手机号使用新方式：前端先调用一次 `tt.login`，再通过 `getPhoneNumber` 回调提交一次性 `e.detail.code`；服务端用 `client_token` 调用 `https://open.douyin.com/api/apps/v1/get_phonenumber_info/`，并用抖音后台当前应用公钥对应的 RSA 私钥解密、校验应用水印后才归户。抖音 `tt.login` 不得在手机号回调内再次调用；旧基础库仍可在明确携带 `encryptedData` 与 `iv` 时走受限兼容解密路径。
+
+健康检查：`/auth/user/health`、`/auth/platform-phone/health`。
+
+事实源：`cloudfunctions/auth-user-http/app.js`、`cloudfunctions/platform-phone-bootstrap-http/app.js`、`cloudfunctions/wechat-phone/index.js`、`src/api/wechat.js`、`cloudfunctions/layer/utils/platform-phone-bootstrap.js` 与 `cloudfunctions/layer/utils/platform-phone-verifiers.js`。
+
+历史 `users.phoneNumber` 明文迁移由 `scripts/migrate-legacy-phone-fields.mjs` 执行，默认只读预览，只有显式 `--apply` 才写入 `phone_hash`、`phone_ciphertext`、`phone_masked` 并清空旧明文字段；该步骤必须在备份和 dry-run 统计确认后执行。
 
 ## 8.1 微信支付订阅后端契约
 
@@ -649,9 +659,10 @@ getUserByEmail
 
 - `GET /subscription/plans` 返回服务端套餐；未配置 `WECHAT_PAY_SUBSCRIPTION_PLANS_JSON` 时使用内置的 `free` 免费方案和 `premium_30d` 1 分/30 天开发测试方案，价格和时长不从客户端取。
 - 免费方案只用于展示当前免费档，不创建支付订单；支付套餐使用一次性 JSAPI 小程序支付，购买成功后获得 30 天会员，不自动续费。
-- `POST /subscription/orders` 需要登录态，入参为 `planId` 和客户端幂等号 `clientRequestId`；服务端从认证身份解析 openid，创建待支付订单，调用微信小程序/JSAPI 下单接口并返回 `wx.requestPayment` 所需参数。
+- 微信支付只属于微信小程序；抖音 / 小红书仅共享手机号归户后的植物档案，不共享订阅状态、订单、支付凭证或支付入口请求。
+- `POST /subscription/orders` 仅接受微信小程序会话，入参为 `planId` 和客户端幂等号 `clientRequestId`；抖音、小红书会话统一返回 403 与中性“当前端暂未开放订阅服务，敬请期待。”。微信侧服务端从统一业务用户身份解析 `user_id`，再单独解析该用户绑定的微信原始 `payer_openid` 调用微信小程序/JSAPI 下单接口并返回 `wx.requestPayment` 所需参数。`user_id`/`_openid` 是业务归属，`payer_openid` 只用于微信支付前置下单与回调校验，不能由客户端提交。
 - `GET /subscription/orders?outTradeNo=...` 需要登录态，只能读取当前用户自己的订单。
-- `POST /subscription/notify` 由只处理回调的 `subscription-notify-http` 接收，不走用户登录态；必须校验微信回调签名、时间窗口、平台序列号并用 API v3 密钥解密，再在 MySQL 事务中校验商户、金额、币种、openid，幂等更新订单和 `users.subscription_*`。`subscription-http` 不开放匿名调用。
+- `POST /subscription/notify` 由只处理回调的 `subscription-notify-http` 接收，不走用户登录态；必须校验微信回调签名、时间窗口、平台序列号并用 API v3 密钥解密，再在 MySQL 事务中校验商户、金额、币种、`payer_openid`，幂等更新订单和 `users.subscription_*`。`subscription-http` 不开放匿名调用，抖音/小红书不会进入支付或订阅链路。
 - 订单表为 `subscription_orders`，当前迁移源为 `scripts/sql/ensure-subscription-orders-table-20260830.sql`，仅准备 `cloud1_dev`，未由本变更自动执行。
 - 下单接口先把订单标为 `prepay_processing`，同一客户端幂等号的并发请求不会重复调用微信；微信统一下单失败后订单进入 `prepay_failed`，可以复用同一幂等号重试。
 - 运行时必须配置 `WECHAT_PAY_APPID`、`WECHAT_PAY_MCHID`、`WECHAT_PAY_MERCHANT_SERIAL_NO`、商户私钥、`WECHAT_PAY_API_V3_KEY`、平台公钥及序列号、`WECHAT_PAY_NOTIFY_URL`；套餐金额字段 `amountFen` 使用人民币分；密钥不得写入 `cloudbaserc.json` 或源码。

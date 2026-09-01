@@ -5,8 +5,11 @@ import { useCloudImageUploader } from '@/composables/useCloudImageUploader.js'
 import { useUserStore } from '@/store/user.js'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import { createAsyncActionGuard } from '@/utils/interaction-guard.js'
+import { requireMvpAccess } from '@/utils/subscription-access.js'
 import { DIAGNOSIS_IMAGE_UPLOAD_OPTIONS } from '@/utils/diagnosis-image-uploader-options.js'
 import { buildStructuredImageInputs } from '@/utils/diagnose-structured-images.js'
+import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
+import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
 import {
   PRIMARY_IMAGE_LIMIT,
   PRIMARY_SLOT_SEQUENCE,
@@ -65,6 +68,11 @@ function buildStandaloneDiagnosisPayload(structuredImages, diagnosisProfile) {
 
 export function useDiagnosisTabIntake() {
   const userStore = useUserStore()
+  const {
+    openedFeatureKey,
+    visible: featureUnavailableVisible,
+    openFeatureUnavailable
+  } = useFeatureUnavailableModal()
   const uploader = useCloudImageUploader({
     count: PRIMARY_IMAGE_LIMIT,
     ...DIAGNOSIS_IMAGE_UPLOAD_OPTIONS
@@ -97,6 +105,14 @@ export function useDiagnosisTabIntake() {
     return imageFiles.value.length > NO_IMAGES || Boolean(selectedDevSymptomClassOption.value)
   })
 
+  function guardRestrictedDiagnosis() {
+    if (!isRestrictedMiniProgram()) {
+      return false
+    }
+    openFeatureUnavailable('diagnosis')
+    return true
+  }
+
   function setDiagnosisProfile(profile = 'full') {
     selectedDiagnosisProfile.value = profile === 'pest' ? 'pest' : 'full'
   }
@@ -106,6 +122,9 @@ export function useDiagnosisTabIntake() {
   }
 
   async function chooseImage(slotType = 'other') {
+    if (guardRestrictedDiagnosis()) {
+      return
+    }
     const normalizedSlotType = normalizeSlotType(slotType, 'other')
     const slotLimit = getSlotCapacity(PRIMARY_IMAGE_LIMIT)
     if (imageFiles.value.length >= PRIMARY_IMAGE_LIMIT) {
@@ -157,17 +176,25 @@ export function useDiagnosisTabIntake() {
 
   function startDiagnosis() {
     return startDiagnosisAction.run(async () => {
+      if (guardRestrictedDiagnosis()) {
+        return false
+      }
       if (isStartingDiagnosis.value || !validateStart()) {
+        return false
+      }
+
+      if (
+        !(await requireMvpAccess(userStore, {
+          source: 'diagnose_tab',
+          loginMessage: '请先登录后再开始检查'
+        }))
+      ) {
         return false
       }
 
       isStartingDiagnosis.value = true
       uni.showLoading({ title: '正在准备问题...' })
       try {
-        if (!(await userStore.ensureLogin())) {
-          uni.showToast({ title: '请先登录后再开始检查', icon: 'none' })
-          return false
-        }
         reportAnalyticsEvent(ANALYTICS_EVENTS.DIAGNOSE)
         const structuredImages = buildStructuredImageInputs(imageFiles.value)
         const selectedSymptom = selectedDevSymptomClassOption.value
@@ -211,6 +238,9 @@ export function useDiagnosisTabIntake() {
   }
 
   async function handleSymptomClassQuickSelect(option = null) {
+    if (guardRestrictedDiagnosis()) {
+      return
+    }
     selectedDevSymptomClassKey.value = String(option?.classKey || '').trim()
     if (selectedDiagnosisProfile.value === 'pest') {
       uni.showToast({ title: '只看虫害需要先上传照片', icon: 'none' })
@@ -242,6 +272,8 @@ export function useDiagnosisTabIntake() {
     }),
     canStartDiagnoseNow,
     isStartingDiagnosis,
-    startDiagnosis
+    startDiagnosis,
+    openedFeatureKey,
+    featureUnavailableVisible
   }
 }

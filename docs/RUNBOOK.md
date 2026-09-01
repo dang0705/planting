@@ -217,21 +217,46 @@ npm run dev:functions:diagnose
 ```bash
 npm run dev:mp-weixin:local-functions
 npm run dev:mp-weixin:local-functions:lan
+npm run dev:mp-toutiao:local-functions
+npm run dev:mp-toutiao:local-functions:lan
+npm run dev:mp-xhs:local-functions
+npm run dev:mp-xhs:local-functions:lan
 npm run dev:h5:local-functions
 ```
 
-当前端口表：
+三个平台脚本使用彼此隔离的前端产物目录、gateway 端口和函数 worker 端口：
 
-| 函数                     | 端口 |
-| ------------------------ | ---: |
-| `diagnose-http`          | 9000 |
-| `plant-catalog-http`     | 9001 |
-| `plant-user-http`        | 9002 |
-| `identify-http`          | 9003 |
-| `diagnosis-history-http` | 9004 |
-| `auth-user-http`         | 9005 |
-| `weather-http`           | 9006 |
-| `storage-http`           | 9007 |
+| 平台   | 前端产物              | gateway | 函数 worker 起始端口 |
+| ------ | --------------------- | ------: | -------------------: |
+| 微信   | `dist/dev/mp-weixin`  |    3010 |                 9000 |
+| 抖音   | `dist/dev/mp-toutiao` |    3020 |                 9200 |
+| 小红书 | `dist/dev/mp-xhs`     |    3030 |                 9300 |
+
+脚本会显式锁定这些值，并忽略残留的 `VITE_API_BASE_URL` 或其他平台端口环境变量；因此同时启动微信和抖音不会复用、接管或覆盖对方的本地 gateway/产物。每个平台仍会启动自己的 uni-app 监听进程。
+
+导入抖音/小红书开发者工具前校验产物 AppID：
+
+```bash
+npm run check:mp-toutiao-output
+npm run check:mp-xhs-output
+```
+
+校验会拒绝 `testAppId`、缺失配置或与 `src/manifest.json` 不一致的 `project.config.json`。抖音目标目录必须是 `dist/dev/mp-toutiao`，不是源码目录或其他平台产物目录。
+
+当前函数 worker 端口表（各平台从上表的起始端口按顺序递增）：
+
+| 函数                     | 微信 | 抖音 | 小红书 |
+| ------------------------ | ---: | ---: | -----: |
+| `diagnose-http`          | 9000 | 9200 |   9300 |
+| `plant-catalog-http`     | 9001 | 9201 |   9301 |
+| `plant-user-http`        | 9002 | 9202 |   9302 |
+| `identify-http`          | 9003 | 9203 |   9303 |
+| `diagnosis-history-http` | 9004 | 9204 |   9304 |
+| `auth-user-http`         | 9005 | 9205 |   9305 |
+| `platform-phone-bootstrap-http` | 9006 | 9206 |   9306 |
+| `weather-http`           | 9007 | 9207 |   9307 |
+| `storage-http`           | 9008 | 9208 |   9308 |
+| `subscription-http`      | 9009 | 9209 |   9309 |
 
 事实源：`scripts/dev/local-functions-gateway.mjs` 与 `scripts/dev/run-local-api-env.mjs`。
 

@@ -1,7 +1,8 @@
 'use strict'
 
 const { models } = require('/opt/utils/cloudbase')
-const { insertWateringEvent } = require('/opt/utils/plant-knowledge')
+const { resolveServerWateringPlan } = require('./watering-reminder-plan-service')
+const { mapReminderRow } = require('./watering-reminder-mapper')
 
 const ACTIVE_STATUS = 'active'
 const REMINDER_TYPE_WATER = 'water'
@@ -9,20 +10,6 @@ const REMINDER_TYPE_WATER = 'water'
 function runInNativeTransaction(handler) {
   const { withNativeTransaction } = require('/opt/utils/native-mysql')
   return withNativeTransaction(handler)
-}
-
-function parseJsonText(value, fallback) {
-  if (value === null || value === undefined || value === '') {
-    return fallback
-  }
-  if (typeof value === 'object') {
-    return value
-  }
-  try {
-    return JSON.parse(String(value))
-  } catch {
-    return fallback
-  }
 }
 
 function normalizeDate(value) {
@@ -94,40 +81,6 @@ function getTodayInChina() {
   return chinaNow.toISOString().slice(0, 10)
 }
 
-function mapReminderRow(row = {}) {
-  const plannerResult = parseJsonText(row.planner_result_json_text ?? row.planner_result_json, {})
-  const wateringEvents = parseJsonText(
-    row.watering_events_json_text ?? row.watering_events_json,
-    []
-  )
-  const calendarPayload = parseJsonText(
-    row.calendar_payload_json_text ?? row.calendar_payload_json,
-    {}
-  )
-  const nextTime = row.next_time ? String(row.next_time).replace(' ', 'T') : ''
-  return {
-    id: row.id,
-    plantId: row.user_plant_id,
-    planId: row.plan_id || '',
-    type: row.reminder_type || REMINDER_TYPE_WATER,
-    status: row.status || ACTIVE_STATUS,
-    active: row.status === ACTIVE_STATUS && Boolean(nextTime),
-    lastWatered: row.last_watered || '',
-    nextWaterDate: row.next_water_date || '',
-    nextWaterTime: nextTime ? nextTime.split('T')[1] || '' : '',
-    nextTime,
-    nextWaterWindow: plannerResult.nextWaterWindow || null,
-    nextWaterReason: plannerResult.nextWaterReason || '',
-    amountRangeMl: plannerResult.amountRangeMl || null,
-    reasonCodes: Array.isArray(plannerResult.reasonCodes) ? plannerResult.reasonCodes : [],
-    wateringEvents: Array.isArray(wateringEvents) ? wateringEvents : [],
-    plannerResult,
-    calendarPayload,
-    createdAt: row.created_at || '',
-    updatedAt: row.updated_at || ''
-  }
-}
-
 async function assertUserPlantOwned(openid, plantId) {
   const result = await models.$runSQL(
     'SELECT id FROM user_plant_instances WHERE id = {{plantId}} AND _openid = {{openid}} LIMIT 1',
@@ -157,7 +110,6 @@ async function getLatestWateringReminder(openid, plantId) {
        AND user_plant_id = {{plantId}}
        AND reminder_type = 'water'
        AND status = 'active'
-       AND next_time >= CURRENT_TIMESTAMP
      ORDER BY next_time DESC, created_at DESC
      LIMIT 1`,
     { openid, plantId: Number(plantId) }
@@ -205,7 +157,6 @@ async function attachWateringReminderStateToList(openid, data = {}) {
          AND user_plant_id IN (${ids.map(id => Number(id)).join(',')})
          AND reminder_type = 'water'
          AND status = 'active'
-         AND next_time >= CURRENT_TIMESTAMP
        ORDER BY next_time DESC, created_at DESC`,
       { openid }
     )
@@ -239,24 +190,20 @@ async function saveWateringReminder(openid, body = {}) {
     return { statusCode: 404, data: null, message: '植物不存在或无权限' }
   }
 
-  const nextWaterDate = normalizeDate(body.nextWaterDate)
-  const nextTime =
-    normalizeIsoLikeTime(body.nextTime) ||
-    normalizeNextTime(nextWaterDate, body.nextWaterTime || body.nextTimeOfDay)
-  if (!nextWaterDate || !nextTime) {
-    return { statusCode: 400, data: null, message: '缺少下次浇水时间' }
-  }
-
-  const wateringEvents = Array.isArray(body.wateringEvents) ? body.wateringEvents : []
-  const plannerResult =
-    body.plannerResult && typeof body.plannerResult === 'object' ? body.plannerResult : {}
+  const { timeline, plan } = await resolveServerWateringPlan(openid, plantId, body)
+  const nextWaterDate = normalizeDate(plan.nextWaterDate)
+  const nextTime = normalizeNextTime(nextWaterDate, '09:00:00')
+  const wateringEvents = timeline.wateringEvents10d || []
+  const planId = String(body.planId || `server_plan_${Date.now()}`).slice(0, 128)
+  const plannerResult = { ...plan, planId }
   const calendarPayload =
     body.calendarPayload && typeof body.calendarPayload === 'object' ? body.calendarPayload : {}
-  const lastWatered = resolveLastWatered({ ...body, wateringEvents })
+  // lastWatered 只从服务端重新归一化的事件得到，不接受客户端直接覆盖。
+  const lastWatered = resolveLastWatered({ wateringEvents })
   const params = {
     openid,
     plantId,
-    planId: String(body.planId || plannerResult.planId || `calendar_${Date.now()}`).slice(0, 128),
+    planId,
     reminderType: REMINDER_TYPE_WATER,
     status: ACTIVE_STATUS,
     lastWatered: lastWatered || null,
@@ -327,30 +274,6 @@ async function saveWateringReminder(openid, body = {}) {
   return { statusCode: 200, data: reminder, message: '保存成功' }
 }
 
-async function recordReminderCompletionEvent(openid, plantId, wateredDate) {
-  try {
-    const existingResult = await models.$runSQL(
-      `SELECT id
-       FROM user_watering_events
-       WHERE _openid = {{openid}}
-         AND user_plant_id = {{plantId}}
-         AND event_date = {{wateredDate}}
-         AND source = 'reminder_complete'
-       LIMIT 1`,
-      { openid, plantId: Number(plantId), wateredDate }
-    )
-    if (existingResult?.data?.executeResultList?.[0]?.id) {
-      return
-    }
-    await insertWateringEvent(openid, plantId, {
-      date: wateredDate,
-      source: 'reminder_complete'
-    })
-  } catch {
-    // 浇水主状态已完成；历史表不可用时不回滚该用户可见结果。
-  }
-}
-
 async function completeWateringReminder(openid, body = {}) {
   const plantId = Number(body.plantId)
   if (!plantId) {
@@ -368,34 +291,183 @@ async function completeWateringReminder(openid, body = {}) {
   if (wateredDate > getTodayInChina()) {
     return { statusCode: 400, data: null, message: '浇水日期不能晚于今天' }
   }
-  const params = { openid, plantId, wateredDate }
-  await models.$runSQL(
-    `UPDATE user_plant_instances AS plant
-     LEFT JOIN user_watering_reminder_events AS reminder
-       ON reminder._openid = {{openid}}
-       AND reminder.user_plant_id = plant.id
-       AND reminder.reminder_type = 'water'
-       AND reminder.status = 'active'
-     SET plant.last_watered = {{wateredDate}},
-         plant.next_water = NULL,
-         plant.updated_at = CURRENT_TIMESTAMP,
-         reminder.status = 'completed',
-         reminder.last_watered = {{wateredDate}},
-         reminder.updated_at = CURRENT_TIMESTAMP
-     WHERE plant.id = {{plantId}} AND plant._openid = {{openid}}`,
-    params
-  )
-  await recordReminderCompletionEvent(openid, plantId, wateredDate)
+  const requestedPlanId = String(body.planId || '').trim().slice(0, 128)
+  let completedPlanId = requestedPlanId
+  let completedDate = ''
+  await runInNativeTransaction(async connection => {
+    const [plantRows] = await connection.execute(
+      `SELECT id
+       FROM user_plant_instances
+       WHERE id = ? AND _openid = ?
+       FOR UPDATE`,
+      [plantId, openid]
+    )
+    if (!plantRows?.[0]) {
+      const error = new Error('植物不存在或无权限')
+      error.statusCode = 404
+      throw error
+    }
+
+    const [reminderRows] = await connection.execute(
+      `SELECT id, plan_id
+       FROM user_watering_reminder_events
+       WHERE _openid = ?
+         AND user_plant_id = ?
+         AND reminder_type = ?
+         AND status = ?
+       ORDER BY id DESC
+       LIMIT 1
+       FOR UPDATE`,
+      [openid, plantId, REMINDER_TYPE_WATER, ACTIVE_STATUS]
+    )
+    const reminder = reminderRows?.[0] || null
+    // 同一计划的重复提交必须返回第一次结果，不能被第二次点击改写成新的浇水日期。
+    if (!reminder && requestedPlanId) {
+      const [completedRows] = await connection.execute(
+        `SELECT event_date
+         FROM user_watering_events
+         WHERE _openid = ? AND user_plant_id = ?
+           AND source = 'reminder_complete'
+           AND plan_id = ?
+         ORDER BY id DESC
+         LIMIT 1
+         FOR UPDATE`,
+        [openid, plantId, requestedPlanId]
+      )
+      if (completedRows?.[0]?.event_date) {
+        completedPlanId = requestedPlanId
+        completedDate = String(completedRows[0].event_date)
+        return
+      }
+    }
+    completedPlanId = String(
+      requestedPlanId || reminder?.plan_id || `manual_${plantId}_${wateredDate}_${Date.now()}`
+    ).slice(0, 128)
+
+    await connection.execute(
+      `UPDATE user_plant_instances
+       SET last_watered = ?, next_water = NULL, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND _openid = ?`,
+      [wateredDate, plantId, openid]
+    )
+    if (reminder) {
+      await connection.execute(
+        `UPDATE user_watering_reminder_events
+         SET status = 'completed', updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND _openid = ?`,
+        [reminder.id, openid]
+      )
+    }
+    await connection.execute(
+      `INSERT INTO user_watering_events
+         (_openid, user_plant_id, event_date, amount_label, amount_ml, source, plan_id)
+       VALUES (?, ?, ?, NULL, NULL, 'reminder_complete', ?)
+       ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)`,
+      [openid, plantId, wateredDate, completedPlanId]
+    )
+  })
 
   return {
     statusCode: 200,
     data: {
       plantId,
-      lastWatered: wateredDate,
+      lastWatered: completedDate || wateredDate,
       nextWater: null,
-      wateringReminder: null
+      wateringReminder: null,
+      planId: completedPlanId
     },
     message: '浇水已记录'
+  }
+}
+
+async function undoWateringReminder(openid, body = {}) {
+  const plantId = Number(body.plantId)
+  if (!plantId) {
+    return { statusCode: 400, data: null, message: '缺少植物ID' }
+  }
+  const requestedPlanId = String(body.planId || '').trim().slice(0, 128)
+  let restoredDate = null
+  let restoredReminder = null
+  await runInNativeTransaction(async connection => {
+    const [plantRows] = await connection.execute(
+      `SELECT id
+       FROM user_plant_instances
+       WHERE id = ? AND _openid = ?
+       FOR UPDATE`,
+      [plantId, openid]
+    )
+    if (!plantRows?.[0]) {
+      const error = new Error('植物不存在或无权限')
+      error.statusCode = 404
+      throw error
+    }
+    const reminderParams = requestedPlanId
+      ? [openid, plantId, requestedPlanId]
+      : [openid, plantId]
+    const reminderWhere = requestedPlanId
+      ? `AND plan_id = ? AND status = 'completed'`
+      : `AND status = 'completed'`
+    const [reminderRows] = await connection.execute(
+      `SELECT id, plan_id, last_watered, next_water_date
+       FROM user_watering_reminder_events
+       WHERE _openid = ? AND user_plant_id = ? ${reminderWhere}
+       ORDER BY id DESC
+       LIMIT 1
+       FOR UPDATE`,
+      reminderParams
+    )
+    const reminder = reminderRows?.[0]
+    if (!reminder) {
+      const error = new Error('没有可撤销的浇水记录')
+      error.statusCode = 409
+      throw error
+    }
+    const planId = String(reminder.plan_id || '').slice(0, 128)
+    const [completionEvents] = await connection.execute(
+      `SELECT event_date
+       FROM user_watering_events
+       WHERE _openid = ? AND user_plant_id = ?
+         AND source = 'reminder_complete'
+         AND plan_id = ?
+       ORDER BY id DESC
+       LIMIT 1`,
+      [openid, plantId, reminder.plan_id]
+    )
+    const completedDate = completionEvents?.[0]?.event_date || getTodayInChina()
+    restoredDate = reminder.last_watered || null
+    restoredReminder = {
+      planId,
+      nextWaterDate: reminder.next_water_date || null
+    }
+    await connection.execute(
+      `UPDATE user_watering_reminder_events
+       SET status = 'active', updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND _openid = ?`,
+      [reminder.id, openid]
+    )
+    await connection.execute(
+      `UPDATE user_plant_instances
+       SET last_watered = ?, next_water = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND _openid = ?`,
+      [restoredDate, reminder.next_water_date || null, plantId, openid]
+    )
+    await connection.execute(
+      `INSERT INTO user_watering_events
+         (_openid, user_plant_id, event_date, amount_label, amount_ml, source, plan_id)
+       VALUES (?, ?, ?, NULL, NULL, 'reminder_undo', ?)
+       ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)`,
+      [openid, plantId, completedDate, planId]
+    )
+  })
+  return {
+    statusCode: 200,
+    data: {
+      plantId,
+      lastWatered: restoredDate,
+      nextWater: restoredReminder.nextWaterDate,
+      planId: restoredReminder.planId
+    },
+    message: '已撤销这次浇水记录，后续建议会重新计算'
   }
 }
 
@@ -403,6 +475,7 @@ module.exports = {
   ACTIVE_STATUS,
   attachWateringReminderStateToList,
   completeWateringReminder,
+  undoWateringReminder,
   getLatestWateringReminder,
   mapReminderRow,
   readWateringReminder,

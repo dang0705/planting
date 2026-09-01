@@ -5,8 +5,16 @@ const {
   internalServerError,
   notFound,
   methodNotAllowed,
-  getHttpRequestData
+  getHttpRequestData,
+  resolveHttpUserInfo
 } = require('/opt/utils/http')
+let platformSession
+try {
+  platformSession = require('/opt/utils/platform-session')
+} catch {
+  platformSession = require('../../layer/utils/platform-session')
+}
+const { assertPlatformFeature } = platformSession
 const { debugLog } = require('../utils/common')
 
 let diagnosisHandlers = null
@@ -49,8 +57,11 @@ function publicRouteError(error) {
   }
 
   return jsonResponse(statusCode, {
-    code: statusCode,
-    message: messageByStatus[statusCode] || '请求无法完成',
+    code: error?.code || statusCode,
+    message:
+      error?.code === 'PLATFORM_FEATURE_UNAVAILABLE'
+        ? error.message
+        : messageByStatus[statusCode] || '请求无法完成',
     data: null
   })
 }
@@ -115,6 +126,14 @@ async function main(event, context) {
         }
       })
     }
+
+    const identity = await resolveHttpUserInfo(request.headers, payload, context)
+    if (!identity?.openid) {
+      const error = new Error('请先登录')
+      error.statusCode = 401
+      throw error
+    }
+    assertPlatformFeature(identity, path)
 
     // 保留活动契约中的兼容入口：旧脚本仍通过 /stream/diagnose 发起 SSE，
     // /diagnose 则是历史同步入口。两者都必须复用 diagnosis/start，避免出现

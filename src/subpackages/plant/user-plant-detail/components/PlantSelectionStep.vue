@@ -68,14 +68,15 @@
               group.length < 3 ? 'grid grid-cols-1' : 'grid grid-cols-2 grid-rows-2'
             ]"
           >
-            <PlantCard
+            <view
               v-for="plant in group.items"
               :id="`add-plant-card-${plant.id}`"
               :key="plant.id"
-              :plant="plant"
-              :selected="selectedPlant?.id === plant.id"
-              @select="$emit('select-plant', plant)"
-            />
+              class="h-[234px] w-[142px] shrink-0"
+              @tap.stop="handlePlantSelect(plant)"
+            >
+              <PlantCard :plant="plant" :selected="selectedPlant?.id === plant.id" />
+            </view>
           </view>
           <view class="flex w-16 shrink-0 items-center justify-center">
             <text v-if="plantsLoadingMore" class="text-xs text-gray-400">加载中...</text>
@@ -127,7 +128,7 @@ defineProps({
 const primaryButtonStyle =
   'background: linear-gradient(90deg, #00a63e 0%, #00bc7d 100%); box-shadow: 0 2px 4px rgba(0, 166, 62, 0.2), 0 4px 6px rgba(0, 166, 62, 0.2)'
 
-defineEmits([
+const emit = defineEmits([
   'update:searchKeyword',
   'search-confirm',
   'clear-search',
@@ -138,4 +139,8 @@ defineEmits([
   'list-touch-start',
   'list-touch-end'
 ])
+
+function handlePlantSelect(plant) {
+  emit('select-plant', plant)
+}
 </script>

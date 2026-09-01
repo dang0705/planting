@@ -28,6 +28,7 @@ const LOCAL_CREDENTIAL_SECRET_KEY_KEYS = [
 ]
 const FUNCTIONS_REQUIRING_CLOUDBASE_CREDENTIALS = new Set([
   'auth-user-http',
+  'platform-phone-bootstrap-http',
   'diagnose-http',
   'identify-http',
   'plant-catalog-http',
@@ -43,6 +44,7 @@ const FUNCTION_NAMES = [
   'identify-http',
   'diagnosis-history-http',
   'auth-user-http',
+  'platform-phone-bootstrap-http',
   'weather-http',
   'storage-http',
   'subscription-http'

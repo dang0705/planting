@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict'
 import { HEALTH_REQUEST_TIMEOUT_MS } from '../../../../../scripts/dev/local-api-env-config.mjs'
-import { fetchJsonWithTimeout } from '../../../../../scripts/dev/local-api-env-gateway-health.mjs'
+import {
+  assertLocalBusinessRoutesReady,
+  fetchJsonWithTimeout
+} from '../../../../../scripts/dev/local-api-env-gateway-health.mjs'
 
 const originalFetch = globalThis.fetch
 const originalSetTimeout = globalThis.setTimeout
@@ -8,6 +11,13 @@ const originalClearTimeout = globalThis.clearTimeout
 
 const abortError = () => Object.assign(new Error('request aborted'), { name: 'AbortError' })
 const jsonResponse = body => ({ text: async () => JSON.stringify(body) })
+const probeResponse = (status, body, statusText = '') => ({
+  ok: status >= 200 && status < 300,
+  status,
+  statusText: statusText || (status === 401 ? 'Unauthorized' : 'OK'),
+  headers: { get: () => '' },
+  text: async () => JSON.stringify(body)
+})
 
 async function slowResponseUsesNumericTimeoutAndClearsTimer() {
   const timers = []
@@ -72,10 +82,65 @@ async function missingTimeoutUsesConfiguredDefault() {
   assert.equal(timers[0].delay, HEALTH_REQUEST_TIMEOUT_MS)
 }
 
+async function businessProbeRespectsAuthenticationBoundary() {
+  const requests = []
+  globalThis.fetch = async (url, request) => {
+    requests.push({ url, request })
+    return probeResponse(401, { code: 401, message: '请先登录' })
+  }
+  await assert.doesNotReject(() =>
+    assertLocalBusinessRoutesReady('http://127.0.0.1:3010', {
+      requiredFunctions: ['plant-user-http', 'weather-http']
+    })
+  )
+  assert.equal(requests.length, 2, 'unauthenticated business probes should still be sent')
+  assert.equal(
+    requests[0].request.headers.Authorization,
+    undefined,
+    'startup probes must not invent a bearer token'
+  )
+
+  globalThis.fetch = async () =>
+    probeResponse(503, { code: 503, message: '服务暂未就绪' }, 'Service Unavailable')
+  await assert.rejects(
+    assertLocalBusinessRoutesReady('http://127.0.0.1:3010', {
+      requiredFunctions: ['plant-user-http']
+    }),
+    error => error?.code === 'LOCAL_FUNCTION_BUSINESS_ROUTES_NOT_READY'
+  )
+
+  requests.length = 0
+  globalThis.fetch = async (url, request) => {
+    requests.push({ url, request })
+    return probeResponse(200, { code: 200 })
+  }
+  await assert.doesNotReject(() =>
+    assertLocalBusinessRoutesReady('http://127.0.0.1:3010', {
+      requiredFunctions: ['plant-user-http'],
+      sessionToken: 'session-token-for-probe'
+    })
+  )
+  assert.equal(
+    requests[0].request.headers.Authorization,
+    'Bearer session-token-for-probe',
+    'strict business probes must use the supplied bearer session'
+  )
+
+  globalThis.fetch = async () => probeResponse(401, { code: 401, message: '请先登录' })
+  await assert.rejects(
+    assertLocalBusinessRoutesReady('http://127.0.0.1:3010', {
+      requiredFunctions: ['plant-user-http'],
+      sessionToken: 'expired-session-token'
+    }),
+    error => error?.code === 'LOCAL_FUNCTION_BUSINESS_ROUTES_NOT_READY'
+  )
+}
+
 try {
   await slowResponseUsesNumericTimeoutAndClearsTimer()
   await timeoutUsesExistingErrorAndClearsTimer()
   await missingTimeoutUsesConfiguredDefault()
+  await businessProbeRespectsAuthenticationBoundary()
 } finally {
   globalThis.fetch = originalFetch
   globalThis.setTimeout = originalSetTimeout

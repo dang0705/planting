@@ -6,8 +6,8 @@
     close-id="pot-profile-editor-close-button"
     confirm-id="pot-profile-editor-confirm-button"
     title="盆型与基质"
-    subtitle="尺寸用于估算水量，基质用于修正保水与透气。"
-    confirm-text="确认并保存"
+    subtitle="填写盆口和盆高，就能估算每次浇水量。"
+    :confirm-text="confirmText"
     loading-text="保存中..."
     height-mode="fullHeight"
     show-confirm
@@ -20,6 +20,7 @@
       :id-prefix="'pot-profile-editor'"
       :loading="loading"
       @summary="value => emit('summary', value)"
+      @change="syncConfirmText"
     />
   </BottomSheet>
 </template>
@@ -38,12 +39,20 @@ const popupRef = ref(null)
 const formCoreRef = ref(null)
 const loading = ref(false)
 const saving = ref(false)
+const confirmText = ref('填写关键尺寸')
+
+function syncConfirmText() {
+  const state = formCoreRef.value?.getProfileState?.() || 'empty'
+  confirmText.value =
+    state === 'complete' ? '保存并更新建议' : state === 'basic' ? '保存基础盆型' : '填写关键尺寸'
+}
 
 async function open() {
   loading.value = true
   callComponentMethod(popupRef, 'open')
-  // 应用当前植物 potProfile（null 时内核重置到默认值）
+  // 应用当前植物 potProfile（null 时清空真实值，图形仅显示示例）
   formCoreRef.value?.applyPotProfile(props.plant?.potProfile)
+  syncConfirmText()
   loading.value = false
   // 等待 popup 动画完成后再初始化 canvas
   await formCoreRef.value?.initCanvas()
@@ -54,6 +63,10 @@ function close() {
 }
 
 async function save() {
+  if (!formCoreRef.value?.validate?.()) {
+    syncConfirmText()
+    return
+  }
   if (!(await formCoreRef.value?.confirmOversizedPot())) {
     return
   }

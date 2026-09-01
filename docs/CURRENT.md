@@ -43,7 +43,7 @@ stale_if_changed:
 | 领域                 | 当前事实源                                                                                                                                                       |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 前端入口             | `src/main.js`, `src/pages.json`, `src/manifest.json`                                                                                                             |
-| 前端诊断页面         | `src/pages/diagnose/diagnose.vue`（主包最小入口壳）、`src/subpackages/diagnosis/entry.vue`（分包实际入口）、`src/subpackages/diagnosis/diagnose-flow/**`、`src/subpackages/diagnosis/components/DiagnosePopup.vue` |
+| 前端诊断页面         | `src/pages/diagnose/diagnose.vue`（统一诊断入口页面）、`src/subpackages/diagnosis/flow.vue`（完整诊断流程）、`src/subpackages/diagnosis/diagnose-flow/**`、`src/subpackages/diagnosis/components/DiagnosePopup.vue` |
 | 前端 HTTP 函数客户端 | `src/http-functions/**`, `src/api/env.js`                                                                                                                        |
 | Vue Query 数据流     | `src/vue-query/**`                                                                                                                                               |
 | 前端诊断归一化       | `src/subpackages/diagnosis/utils/diagnose-result-normalizer.js`, `src/subpackages/diagnosis/utils/diagnose-flow*.js`                                             |
@@ -82,11 +82,11 @@ stale_if_changed:
 
 - `src/pages/index/index.vue`：首页，植物卡水滴 icon 点击打开浇水提醒弹框（不再跳转日历页）。
 - `src/pages/index/components/WateringReminderSheet.vue`：浇水提醒底部弹框，含上次浇水入口、建议下次浇水 Summary、添加至日历主操作；点击上次浇水打开二级日期选择器（复用 `CareBehaviorTimeline`）。已保存提醒会回显上次设置时间和下次浇水建议。
-- `src/pages/diagnose/diagnose.vue`：五项 tab 中的最小诊断入口壳，只负责把用户导航到诊断分包，不在主包挂载完整诊断流。
-- `src/subpackages/diagnosis/entry.vue`：诊断分包实际入口，接收无植物、用户植物和目录植物上下文，挂载完整 `DiagnoseFlow`；所有实际诊断跳转均从这里开始并继续进入分包题包 / 结果页。
+- `src/pages/diagnose/diagnose.vue`：诊断 Tab 的统一入口页面，直接挂载照片/无图症状入口；微信继续进入完整诊断流程，抖音/小红书在同一页面按能力表显示中性提示。
+- `src/subpackages/diagnosis/flow.vue`：完整诊断流程页面，接收植物和诊断模式上下文；受限平台只显示不可用提示，不创建诊断请求。
 - `src/subpackages/diagnosis/diagnose-flow/**`：完整诊断内核，负责模式选择、图片、视觉请求、方向选择、题包交接、补拍和结果状态；所有可见题包统一由公共题包页承接。
 - `src/subpackages/diagnosis/question-package.vue`：黄叶、发蔫或下垂及 1～2 题动态虫害包的公共答题页；题包只按整包 `answer_submit` 提交。
-- `src/subpackages/diagnosis/components/DiagnosePopup.vue`：可复用的 BottomSheet 诊断容器，保留 open/close/reset、植物上下文和弹窗生命周期；当前首页植物卡片和植物详情入口直接导航到 `subpackages/diagnosis/entry`，不在主包创建该弹窗。
+- `src/subpackages/diagnosis/components/DiagnosePopup.vue`：可复用的 BottomSheet 诊断容器，保留 open/close/reset、植物上下文和弹窗生命周期；当前首页植物卡片和植物详情入口直接导航到 `subpackages/diagnosis/flow`，不在主包创建该弹窗。
 - `src/subpackages/diagnosis/result.vue`：诊断历史的只读结果承接页；不与新诊断入口页混用。
 - `src/pages/reminder/reminder.vue`：五项 tab 中的提醒页；加载真实用户植物，并分别复用 `WateringReminderSheet` 与 `FertilizationMonthlySheet` 完成浇水、施肥提醒入口和保存后刷新。
 - 诊断延续页与相关目录：历史命名不定义当前产品口径，当前以问诊题包与结果展示理解。

@@ -29,7 +29,7 @@
             <image
               v-if="imageUrl"
               id="user-plant-detail-image"
-              :src="imageUrl"
+              :src="imageUrl || plant?.imageUrl"
               class="w-full h-full"
               mode="aspectFill"
               @error="handleImageError"
@@ -102,7 +102,11 @@
           </button>
         </view>
 
-        <UserPlantAirEnvironmentCard :plant="plant" @saved="handleAirEnvironmentSaved" />
+        <UserPlantAirEnvironmentCard
+          v-if="!restrictedPlatform"
+          :plant="plant"
+          @saved="handleAirEnvironmentSaved"
+        />
 
         <!-- 浇水信息 -->
         <view
@@ -204,6 +208,10 @@
       <view v-else class="flex min-h-screen items-center justify-center px-6">
         <text class="text-sm text-gray-500">未找到这株植物</text>
       </view>
+      <FeatureUnavailableModal
+        v-model="featureUnavailableVisible"
+        :feature-key="openedFeatureKey"
+      />
     </view>
   </Layout>
 </template>
@@ -211,6 +219,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import Layout from '@/Layout.vue'
+import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
 import { fetchUserPlant } from '@/api/plants-http.js'
 import { useFileUrl } from '@/composables/useCloudFile.js'
 import { usePlantStore } from '@/store/plants.js'
@@ -220,6 +229,9 @@ import FertilizationMonthlyTable from '@/components/FertilizationMonthlyTable.vu
 import UserPlantAirEnvironmentCard from '@/components/UserPlantAirEnvironmentCard.vue'
 import { createAsyncActionGuard } from '@/utils/interaction-guard.js'
 import { parsePlantDateTime } from '@/utils/plant-datetime.js'
+import { requireMvpAccess } from '@/utils/subscription-access.js'
+import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
+import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
 
 const HTTP_SUCCESS_CODE = 200
 const props = defineProps({
@@ -227,6 +239,12 @@ const props = defineProps({
 })
 const plantStore = usePlantStore()
 const userStore = useUserStore()
+const restrictedPlatform = isRestrictedMiniProgram()
+const {
+  openedFeatureKey,
+  visible: featureUnavailableVisible,
+  openFeatureUnavailable
+} = useFeatureUnavailableModal()
 
 const plantId = computed(() => Number(props.plantId) || null)
 const plant = ref(null)
@@ -408,20 +426,14 @@ const ventilationText = computed(() => {
     .join(' · ')
 })
 
-function startDiagnosis() {
-  /*if (!userStore.canDiagnose) {
-    uni.showModal({
-      title: '提示',
-      content: '免费诊断次数已用完，升级会员享受无限次诊断',
-      confirmText: '升级会员',
-      success: res => {
-        if (res.confirm) {
-          uni.switchTab({ url: '/pages/profile/profile' })
-        }
-      }
-    })
+async function startDiagnosis() {
+  if (restrictedPlatform) {
+    openFeatureUnavailable('diagnosis')
     return
-  }*/
+  }
+  if (!(await requireMvpAccess(userStore, { source: 'plant_detail_diagnose' }))) {
+    return
+  }
   const query = [
     `plantId=${encodeURIComponent(String(plantId.value || ''))}`,
     `plantName=${encodeURIComponent(plant.value?.displayName || '植物')}`,
@@ -434,6 +446,10 @@ function startDiagnosis() {
 }
 
 async function doWatering() {
+  if (restrictedPlatform) {
+    openFeatureUnavailable('watering')
+    return
+  }
   return wateringAction.run(async () => {
     reportAnalyticsEvent(ANALYTICS_EVENTS.ENTER_USER_PLANT_WATERING)
     const result = await plantStore.completeWatering(plantId.value)

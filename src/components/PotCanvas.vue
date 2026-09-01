@@ -4,7 +4,7 @@
     :style="{ width: `${canvasWidth}px`, height: `${canvasHeight}px` }"
   >
     <!-- 骨架屏 -->
-    <view v-if="!isNormalMode" class="absolute inset-0 flex flex-col items-center justify-center">
+    <view v-if="!shouldRenderCanvas" class="absolute inset-0 flex flex-col items-center justify-center">
       <view
         class="border-2 border-dashed border-gray-300 rounded-lg"
         :style="{
@@ -20,7 +20,7 @@
 
     <!-- Canvas 绘制层（Canvas 2D 同层渲染，避免在 scroll-view 中滚动时定住） -->
     <canvas
-      v-if="isNormalMode"
+      v-if="shouldRenderCanvas"
       type="2d"
       id="potCanvas"
       class="absolute inset-0"
@@ -29,7 +29,8 @@
 
     <!-- 盆口右把手（水平控直径 + 垂直控高度，二合一） -->
     <view
-      v-if="isNormalMode"
+      v-if="isNormalMode && !previewOnly"
+      :id="`${idPrefix}-top-handle`"
       class="absolute flex items-center justify-center"
       :style="{
         left: topHandleX - handleOuterSize / 2 + 'px',
@@ -49,7 +50,8 @@
 
     <!-- 盆底右把手（仅水平） -->
     <view
-      v-if="isNormalMode"
+      v-if="isNormalMode && !previewOnly"
+      :id="`${idPrefix}-bottom-handle`"
       class="absolute flex items-center justify-center"
       :style="{
         left: bottomHandleX - handleOuterSize / 2 + 'px',
@@ -76,6 +78,8 @@ const props = defineProps({
   potTopDiameterCm: { type: Number, default: null },
   potBottomDiameterCm: { type: Number, default: null },
   potHeightCm: { type: Number, default: null },
+  previewOnly: { type: Boolean, default: false },
+  idPrefix: { type: String, default: 'pot-canvas' },
   substrateComposition: { type: Array, default: null },
   canvasWidth: { type: Number, default: 200 },
   canvasHeight: { type: Number, default: 207 },
@@ -160,6 +164,9 @@ const isNormalMode = computed(() => {
     props.potHeightCm > 0
   )
 })
+
+// 盆型缺失时仍绘制浅色示例，避免用户把“没有真实数据”误解成“没有可看的内容”。
+const shouldRenderCanvas = computed(() => isNormalMode.value || props.previewOnly)
 
 const effTopCm = computed(() => (isNormalMode.value ? props.potTopDiameterCm : SKELETON_TOP))
 const effBottomCm = computed(() =>
@@ -316,7 +323,7 @@ function draw() {
   const ty = topY.value
   const by = bottomY.value
 
-  if (isNormalMode.value) {
+  if (shouldRenderCanvas.value) {
     drawSubstrateLayers(topR, botR, h, ty, by)
 
     ctx.beginPath()
@@ -325,21 +332,25 @@ function draw() {
     ctx.lineTo(CENTER_X.value + botR, by)
     ctx.lineTo(CENTER_X.value - botR, by)
     ctx.closePath()
-    ctx.strokeStyle = '#2f8f57'
+    const strokeColor = props.previewOnly ? '#9ab3a0' : '#2f8f57'
+    ctx.strokeStyle = strokeColor
     ctx.lineWidth = 1.5
+    ctx.setLineDash(props.previewOnly ? [5 * scaleBase.value, 4 * scaleBase.value] : [])
     ctx.stroke()
+    ctx.setLineDash([])
 
-    ctx.fillStyle = '#2f8f57'
+    ctx.fillStyle = strokeColor
     ctx.font = `${labelFontSize.value}px sans-serif`
     ctx.textAlign = 'center'
-    ctx.fillText('盆口 ' + effTopCm.value + 'cm', CENTER_X.value, ty - 8 * scaleY.value)
-    ctx.fillText('盆底 ' + effBottomCm.value + 'cm', CENTER_X.value, by + 18 * scaleY.value)
+    const labelPrefix = props.previewOnly ? '示例 ' : ''
+    ctx.fillText(labelPrefix + '盆口 ' + effTopCm.value + 'cm', CENTER_X.value, ty - 8 * scaleY.value)
+    ctx.fillText(labelPrefix + '盆底 ' + effBottomCm.value + 'cm', CENTER_X.value, by + 18 * scaleY.value)
 
-    const heightText = '高' + effHeightCm.value + 'cm'
+    const heightText = `${labelPrefix}高${effHeightCm.value}cm`
     const labelX =
       CENTER_X.value + Math.max(topR, botR) + HEIGHT_LABEL_RIGHT_GAP_PX * scaleBase.value
     const labelCenterY = (ty + by) / 2
-    ctx.fillStyle = '#2f8f57'
+    ctx.fillStyle = strokeColor
     ctx.font = `${labelFontSize.value}px sans-serif`
     ctx.textAlign = 'left'
     ctx.textBaseline = 'middle'
@@ -348,6 +359,17 @@ function draw() {
 }
 
 function drawSubstrateLayers(topR, botR, h, ty, by) {
+  if (props.previewOnly) {
+    ctx.beginPath()
+    ctx.moveTo(CENTER_X.value - topR, ty)
+    ctx.lineTo(CENTER_X.value + topR, ty)
+    ctx.lineTo(CENTER_X.value + botR, by)
+    ctx.lineTo(CENTER_X.value - botR, by)
+    ctx.closePath()
+    ctx.fillStyle = 'rgba(154, 179, 160, 0.10)'
+    ctx.fill()
+    return
+  }
   const composition = props.substrateComposition
   if (!composition || !composition.length) {
     ctx.beginPath()
@@ -481,13 +503,14 @@ watch(
     () => props.potTopDiameterCm,
     () => props.potBottomDiameterCm,
     () => props.potHeightCm,
+    () => props.previewOnly,
     () => props.substrateComposition,
     () => props.canvasWidth,
     () => props.canvasHeight
   ],
   () => {
     updateCanvasSizeFromProps()
-    if (isNormalMode.value) {
+    if (shouldRenderCanvas.value) {
       nextTick(() => {
         if (!ctx) {
           initCanvas()
@@ -503,7 +526,7 @@ watch(
 
 onMounted(() => {
   updateCanvasSizeFromProps()
-  if (isNormalMode.value) {
+  if (shouldRenderCanvas.value) {
     nextTick(() => setTimeout(() => initCanvas(), 300))
   }
 })

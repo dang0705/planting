@@ -8,13 +8,11 @@
         ref="potCanvasRef"
         :canvas-width="potCanvasSize.width"
         :canvas-height="potCanvasSize.height"
-        :pot-top-diameter-cm="
-          loading ? null : form.potTopDiameterCm ? Number(form.potTopDiameterCm) : 20
-        "
-        :pot-bottom-diameter-cm="
-          loading ? null : form.potBottomDiameterCm ? Number(form.potBottomDiameterCm) : 10
-        "
-        :pot-height-cm="loading ? null : form.potHeightCm ? Number(form.potHeightCm) : 15"
+        :id-prefix="idPrefix"
+        :preview-only="previewOnly"
+        :pot-top-diameter-cm="displayTopDiameterCm"
+        :pot-bottom-diameter-cm="displayBottomDiameterCm"
+        :pot-height-cm="displayHeightCm"
         :substrate-composition="substrateComposition"
         :texture-map="textureMap"
         @update:pot-top-diameter-cm="value => (form.potTopDiameterCm = String(value))"
@@ -23,45 +21,48 @@
       />
     </view>
 
-    <view class="mt-3 rounded-[16px] border border-[#e1e9dd] bg-[#f7faf5] p-3">
-      <text class="mb-2 block text-[12px] font-semibold text-[#1f2933]">选择盆土构成</text>
-      <view class="flex flex-wrap gap-2">
-        <view
-          v-for="option in substrateOptions"
-          :key="option.value"
-          :id="`${idPrefix}-substrate-${option.value}`"
-          class="flex items-center rounded-[12px] border px-2 py-1.5"
-          :class="
-            isSubstrateSelected(option.value)
-              ? 'border-[#2f8f57] bg-[#e8f3ea]'
-              : 'border-[#e1e9dd] bg-white'
-          "
-          @click="toggleSubstrate(option.value)"
-        >
-          <text
-            class="text-[10px]"
-            :class="
-              isSubstrateSelected(option.value) ? 'font-semibold text-[#2f8f57]' : 'text-[#1f2933]'
-            "
-          >
-            {{ option.label }}
-          </text>
-        </view>
+    <text v-if="previewOnly" class="mt-2 block text-[11px] text-[#8a9690]">
+      示例尺寸，仅用于参考，不会保存。
+    </text>
+    <text v-else-if="hasCompleteDimensions" class="mt-2 block text-[11px] text-[#718075]">
+      拖动绿色圆点调整，也可以直接填写厘米数。
+    </text>
+    <text v-else class="mt-2 block text-[11px] text-[#718075]">
+      填写盆底直径后可以拖动调整，也可以直接填写厘米数。
+    </text>
+
+    <view class="mt-3 grid grid-cols-2 gap-2">
+      <view class="rounded-[12px] border border-[#e1e9dd] bg-white px-3 py-2">
+        <text class="block text-[11px] text-[#718075]">盆口直径（cm）</text>
+        <input
+          :id="`${idPrefix}-top-diameter-input`"
+          class="mt-1 w-full text-[15px] text-[#1f2933]"
+          type="number"
+          maxlength="3"
+          placeholder="例如 20"
+          :value="form.potTopDiameterCm"
+          @input="updateDimension('potTopDiameterCm', $event.detail.value)"
+        />
       </view>
-      <view v-if="substrateComposition.length" class="mt-3 space-y-2">
-        <view
-          v-for="item in substrateComposition"
-          :key="item.material"
-          class="flex items-center gap-2"
-        >
-          <text class="w-12 text-[10px] text-[#53645a]">{{ substrateLabel(item.material) }}</text>
-          <view class="h-1 flex-1 rounded-full bg-gray-200">
-            <view class="h-1 rounded-full bg-[#2f8f57]" :style="{ width: item.ratio + '%' }" />
-          </view>
-          <text class="w-8 text-right text-[10px] text-[#53645a]">{{ item.ratio }}%</text>
-        </view>
+      <view class="rounded-[12px] border border-[#e1e9dd] bg-white px-3 py-2">
+        <text class="block text-[11px] text-[#718075]">盆高（cm）</text>
+        <input
+          :id="`${idPrefix}-height-input`"
+          class="mt-1 w-full text-[15px] text-[#1f2933]"
+          type="number"
+          maxlength="3"
+          placeholder="例如 15"
+          :value="form.potHeightCm"
+          @input="updateDimension('potHeightCm', $event.detail.value)"
+        />
       </view>
     </view>
+    <text v-if="validationMessage" class="mt-2 block text-[12px] text-[#b45309]">
+      {{ validationMessage }}
+    </text>
+    <text v-else-if="dimensionFeedback" class="mt-2 block text-[12px] text-[#2d7a4f]">
+      {{ dimensionFeedback }}
+    </text>
   </view>
 
   <view class="mt-3">
@@ -89,6 +90,69 @@
         </text>
       </view>
     </view>
+    <text class="mt-2 block text-[12px] text-[#718075]">{{ drainageHelpText }}</text>
+  </view>
+
+  <view class="mt-3 rounded-[16px] border border-[#e1e9dd] bg-[#f7faf5] p-3">
+    <text class="block text-[12px] font-semibold text-[#1f2933]">盆底直径（cm，可选）</text>
+    <input
+      :id="`${idPrefix}-bottom-diameter-input`"
+      class="mt-2 rounded-[12px] border border-[#e1e9dd] bg-white px-3 py-2 text-[15px] text-[#1f2933]"
+      type="number"
+      maxlength="3"
+      placeholder="知道尺寸再填写"
+      :value="form.potBottomDiameterCm"
+      @input="updateDimension('potBottomDiameterCm', $event.detail.value)"
+    />
+    <text v-if="hasBasicDimensions && !hasBottomDiameter" class="mt-2 block text-[12px] text-[#718075]">
+      补充盆底尺寸后，水量范围会更细。
+    </text>
+  </view>
+
+  <view class="mt-3 rounded-[16px] border border-[#e1e9dd] bg-[#f7faf5] p-3">
+    <text class="block text-[12px] font-semibold text-[#1f2933]">基质信息（可选）</text>
+    <text class="mt-1 block text-[12px] text-[#718075]">
+      如果知道基质，水量建议会更贴近盆土的干湿速度。
+    </text>
+    <view class="mt-2 flex flex-wrap gap-2">
+      <view
+        v-for="option in substrateOptions"
+        :key="option.value"
+        :id="`${idPrefix}-substrate-${option.value}`"
+        class="flex items-center rounded-[12px] border px-2 py-1.5"
+        :class="
+          isSubstrateSelected(option.value)
+            ? 'border-[#2f8f57] bg-[#e8f3ea]'
+            : 'border-[#e1e9dd] bg-white'
+        "
+        @click="toggleSubstrate(option.value)"
+      >
+        <text
+          class="text-[10px]"
+          :class="
+            isSubstrateSelected(option.value) ? 'font-semibold text-[#2f8f57]' : 'text-[#1f2933]'
+          "
+        >
+          {{ option.label }}
+        </text>
+      </view>
+    </view>
+    <text v-if="substrateComposition.length" class="mt-2 block text-[11px] text-[#718075]">
+      当前按平均比例暂估。
+    </text>
+    <view v-if="substrateComposition.length" class="mt-2 space-y-2">
+      <view
+        v-for="item in substrateComposition"
+        :key="item.material"
+        class="flex items-center gap-2"
+      >
+        <text class="w-12 text-[10px] text-[#53645a]">{{ substrateLabel(item.material) }}</text>
+        <view class="h-1 flex-1 rounded-full bg-gray-200">
+          <view class="h-1 rounded-full bg-[#2f8f57]" :style="{ width: item.ratio + '%' }" />
+        </view>
+        <text class="w-8 text-right text-[10px] text-[#53645a]">{{ item.ratio }}%</text>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -97,12 +161,12 @@ import { computed, getCurrentInstance, nextTick, onMounted, ref, watch } from 'v
 import PotCanvas from '@/components/PotCanvas.vue'
 import { estimatePotVolumeMl, isOversizedPot } from '@/utils/water-volume-format.js'
 
-// 默认盆型尺寸（与 PotCanvas 当前默认口径/底径/高度一致），排水孔默认 true，基质默认 unknown
+// 盆型缺失时不写入示例尺寸；示例只用于帮助用户理解图形。
 const DEFAULT_FORM = {
-  potTopDiameterCm: '20',
-  potBottomDiameterCm: '10',
-  potHeightCm: '15',
-  hasDrainageHole: 'true'
+  potTopDiameterCm: '',
+  potBottomDiameterCm: '',
+  potHeightCm: '',
+  hasDrainageHole: 'unknown'
 }
 
 const props = defineProps({
@@ -118,6 +182,7 @@ const potCanvasSize = ref({ width: 200, height: 207 })
 const form = ref({ ...DEFAULT_FORM })
 const profileData = ref(null)
 const selectedSubstrates = ref([])
+const validationMessage = ref('')
 
 const textureMap = {
   general: '',
@@ -144,7 +209,8 @@ const substrateOptions = [
 ]
 const drainageOptions = [
   { label: '有', value: 'true' },
-  { label: '无 / 不确定', value: 'unknown' }
+  { label: '无', value: 'false' },
+  { label: '不确定', value: 'unknown' }
 ]
 
 const substrateComposition = computed(() => {
@@ -159,26 +225,74 @@ const substrateComposition = computed(() => {
   }))
 })
 
+const hasBasicDimensions = computed(
+  () => Number(form.value.potTopDiameterCm) > 0 && Number(form.value.potHeightCm) > 0
+)
+const hasBottomDiameter = computed(() => Number(form.value.potBottomDiameterCm) > 0)
+const hasCompleteDimensions = computed(
+  () => hasBasicDimensions.value && hasBottomDiameter.value
+)
+const previewOnly = computed(() => !hasCompleteDimensions.value)
+const displayTopDiameterCm = computed(() => (previewOnly.value ? 20 : Number(form.value.potTopDiameterCm)))
+const displayBottomDiameterCm = computed(() =>
+  previewOnly.value ? 10 : Number(form.value.potBottomDiameterCm)
+)
+const displayHeightCm = computed(() => (previewOnly.value ? 15 : Number(form.value.potHeightCm)))
+const dimensionFeedback = computed(() => {
+  if (hasCompleteDimensions.value) {
+    return '盆型已完整，水量范围会更贴近实际。'
+  }
+  if (hasBasicDimensions.value) {
+    return '已可提供基础水量范围。'
+  }
+  return ''
+})
+const drainageHelpText = computed(() => {
+  if (form.value.hasDrainageHole === 'true') {
+    return '水分可以从底部排出。'
+  }
+  if (form.value.hasDrainageHole === 'false') {
+    return '建议少量多次，并留意盆底积水。'
+  }
+  return '不确定也可以继续，建议浇水前多检查盆土。'
+})
+
 const summary = computed(() => {
   const profile = profileData.value
-  // 默认状态也能产出可理解的摘要：使用 form 当前值而非 profileData
+  // 摘要只描述真实填写内容，不把示例尺寸当成用户资料。
   const top = form.value.potTopDiameterCm
+  const bottom = form.value.potBottomDiameterCm
   const height = form.value.potHeightCm
   const parts = []
   if (top) {
     parts.push(`口径 ${top}cm`)
   }
-  parts.push(form.value.hasDrainageHole === 'true' ? '有排水孔' : '无/不确定排水孔')
+  if (height) {
+    parts.push(`高 ${height}cm`)
+  }
+  if (bottom) {
+    parts.push(`底径 ${bottom}cm`)
+  }
+  if (form.value.hasDrainageHole === 'true') {
+    parts.push('有排水孔')
+  } else if (form.value.hasDrainageHole === 'false') {
+    parts.push('无排水孔')
+  } else {
+    parts.push('排水孔不确定')
+  }
   if (substrateComposition.value.length) {
     parts.push(substrateComposition.value.map(item => substrateLabel(item.material)).join('+'))
-  } else {
-    parts.push('未知基质')
   }
-  if (!top && !height && !profile) {
-    return '点击补充盆型信息'
+  if (!top && !height && !bottom && !profile && form.value.hasDrainageHole === 'unknown') {
+    return '填写盆口和盆高，可估算水量范围'
   }
   return parts.join(' · ')
 })
+
+function updateDimension(field, value) {
+  form.value[field] = String(value || '').replace(/[^0-9.]/g, '')
+  validationMessage.value = ''
+}
 
 function isSubstrateSelected(value) {
   return selectedSubstrates.value.includes(value)
@@ -222,15 +336,14 @@ async function updatePotCanvasSize() {
 }
 
 /**
- * 应用盆型档案到表单。入参为 null 时重置到 DEFAULT_FORM 和空基质，
- * 确保切换到无 potProfile 的植物时不残留上一个植物的盆型。
+ * 应用盆型档案到表单。入参为 null 时清空真实尺寸，确保示例不会落库。
  */
 function applyPotProfile(potProfile) {
   if (!potProfile) {
-    // 重置到默认值，让默认状态可直接提交
     form.value = { ...DEFAULT_FORM }
     selectedSubstrates.value = []
     profileData.value = null
+    validationMessage.value = ''
     return
   }
   const data = { ...potProfile }
@@ -243,16 +356,15 @@ function applyPotProfile(potProfile) {
   }
   profileData.value = data
   form.value = {
-    potTopDiameterCm:
-      data.potTopDiameterCm > 0 ? String(data.potTopDiameterCm) : DEFAULT_FORM.potTopDiameterCm,
-    potBottomDiameterCm:
-      data.potBottomDiameterCm > 0
-        ? String(data.potBottomDiameterCm)
-        : DEFAULT_FORM.potBottomDiameterCm,
-    potHeightCm: data.potHeightCm > 0 ? String(data.potHeightCm) : DEFAULT_FORM.potHeightCm,
-    hasDrainageHole: data.hasDrainageHole || 'true'
+    potTopDiameterCm: data.potTopDiameterCm > 0 ? String(data.potTopDiameterCm) : '',
+    potBottomDiameterCm: data.potBottomDiameterCm > 0 ? String(data.potBottomDiameterCm) : '',
+    potHeightCm: data.potHeightCm > 0 ? String(data.potHeightCm) : '',
+    hasDrainageHole: ['true', 'false', 'unknown'].includes(String(data.hasDrainageHole))
+      ? String(data.hasDrainageHole)
+      : 'unknown'
   }
   selectedSubstrates.value = data.substrateComposition?.map(item => item.material) || []
+  validationMessage.value = ''
 }
 
 function getPayload() {
@@ -263,8 +375,26 @@ function getPayload() {
     hasDrainageHole: form.value.hasDrainageHole,
     substrateType: substrateComposition.value.length
       ? JSON.stringify(substrateComposition.value)
-      : 'unknown'
+      : null,
+    source: 'user',
+    confidence: hasCompleteDimensions.value ? 'normal' : 'low'
   }
+}
+
+function validate() {
+  if (!hasBasicDimensions.value) {
+    validationMessage.value = '先填写盆口直径和盆高，就可以保存基础盆型。'
+    return false
+  }
+  validationMessage.value = ''
+  return true
+}
+
+function getProfileState() {
+  if (!form.value.potTopDiameterCm && !form.value.potHeightCm && !form.value.potBottomDiameterCm) {
+    return 'empty'
+  }
+  return hasCompleteDimensions.value ? 'complete' : 'basic'
 }
 
 async function confirmOversizedPot() {
@@ -305,7 +435,7 @@ onMounted(() => {
 watch(
   () => props.initialProfile,
   profile => {
-    // profile 为 null 时也需重置到默认值，避免切换到无 potProfile 的植物时残留上一个植物的盆型
+    // profile 为 null 时也需清空真实值，避免切换到无 potProfile 的植物时残留上一个植物的盆型
     applyPotProfile(profile)
   }
 )
@@ -316,6 +446,8 @@ watch([form, substrateComposition], () => emit('change', getPayload()), { deep: 
 defineExpose({
   applyPotProfile,
   getPayload,
+  validate,
+  getProfileState,
   confirmOversizedPot,
   commitProfileData,
   initCanvas,

@@ -124,13 +124,28 @@
           微信手机号登录
         </button>
         <!-- #endif -->
+        <!-- #ifdef MP-TOUTIAO || MP-XHS -->
         <button
-          id="index-quick-login-button"
-          class="w-full rounded-2xl bg-[#EEF3EF] py-3.5 text-[#2D7A4F]"
-          @click="userLogin"
+          id="index-platform-phone-login-button"
+          class="mb-3 w-full rounded-2xl bg-primary py-3.5 text-white"
+          :class="{ 'opacity-60': platformPhoneLoggingIn }"
+          :disabled="platformPhoneLoggingIn"
+          :open-type="loginCodeReady ? 'getPhoneNumber' : ''"
+          @click="handlePlatformLoginTap"
+          @getphonenumber="handlePlatformPhoneLogin"
         >
-          快速登录
+          {{
+            platformPhoneLoggingIn
+              ? '登录中…'
+              : loginCodeReady
+                ? '授权手机号快捷登录'
+                : '准备手机号登录'
+          }}
         </button>
+        <text v-if="loginPreparationError" class="mb-3 block text-sm leading-6 text-[#B42318]">
+          {{ loginPreparationError }}
+        </text>
+        <!-- #endif -->
       </view>
 
       <WateringReminderSheet
@@ -145,6 +160,14 @@
         @changed="loadUserPlants()"
       />
     </view>
+    <!-- #ifdef MP-TOUTIAO -->
+    <PlatformPrivacyModal
+      :model-value="privacyVisible"
+      @open-contract="openPrivacyContract"
+      @agree="agreePrivacyAuthorization"
+    />
+    <!-- #endif -->
+    <FeatureUnavailableModal v-model="featureUnavailableVisible" :feature-key="openedFeatureKey" />
   </Layout>
 </template>
 
@@ -153,6 +176,8 @@ import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import HeaderWeatherInfo from '@/components/HeaderWeatherInfo.vue'
 import Layout from '@/Layout.vue'
+import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
+import PlatformPrivacyModal from '@/components/PlatformPrivacyModal.vue'
 import loadingIcon from '@/assets/icons/loading.svg'
 import { getDiagnosisHistory } from '@/api/diagnosis-history.js'
 import { usePlantingStore } from '@/store/planting.js'
@@ -161,6 +186,11 @@ import { useUserStore } from '@/store/user.js'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
 import { createAsyncActionGuard, createLeadingThrottle } from '@/utils/interaction-guard.js'
+import { requireMvpAccess } from '@/utils/subscription-access.js'
+import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
+import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
+import { getActivePlatformAccessToken } from '@/api/platform-session.js'
+import { usePlatformPhoneLogin } from '@/composables/usePlatformPhoneLogin.js'
 import PlantCard from './components/PlantCard.vue'
 import FertilizationMonthlySheet from './components/FertilizationMonthlySheet.vue'
 import WateringReminderSheet from './components/WateringReminderSheet.vue'
@@ -178,7 +208,6 @@ const wateringReminderRef = ref(null)
 const fertilizationMonthlyRef = ref(null)
 const currentReminderPlantId = ref(null)
 const currentFertilizationPlantId = ref(null)
-const userLoginAction = createAsyncActionGuard()
 const phoneLoginAction = createAsyncActionGuard()
 const plantDiagnoseHistory = reactive({})
 const currentReminderPlant = computed(() =>
@@ -191,6 +220,36 @@ const currentFertilizationPlant = computed(() =>
     ? null
     : plantStore.userPlants.find(plant => plant.id === currentFertilizationPlantId.value) || null
 )
+const {
+  loginCodeReady,
+  loginPreparationError,
+  loggingIn: platformPhoneLoggingIn,
+  handleGetPhoneNumber: handlePlatformPhoneLogin,
+  prepareLoginCode,
+  privacyVisible,
+  openPrivacyContract,
+  agreePrivacyAuthorization
+} = usePlatformPhoneLogin({
+  onSuccess: async user => {
+    await userStore.setLoginInfo({
+      user,
+      token: getActivePlatformAccessToken()
+    })
+    await loadUserPlants()
+  }
+})
+
+async function handlePlatformLoginTap() {
+  if (loginCodeReady.value || platformPhoneLoggingIn.value) {
+    return
+  }
+  await prepareLoginCode()
+}
+const {
+  openedFeatureKey,
+  visible: featureUnavailableVisible,
+  openFeatureUnavailable
+} = useFeatureUnavailableModal()
 onMounted(async () => {
   if (await userStore.ensureLogin()) {
     await loadUserPlants()
@@ -216,12 +275,6 @@ async function loadUserPlants() {
     loadingPlants.value = false
   }
 }
-function userLogin() {
-  return userLoginAction.run(async () => {
-    await userStore.wechatLogin()
-    await loadUserPlants()
-  })
-}
 function handleIndexPhoneLogin(event) {
   return phoneLoginAction.run(async () => {
     await userStore.phoneLogin({
@@ -235,7 +288,14 @@ function addPlant() {
   reportAnalyticsEvent(ANALYTICS_EVENTS.USER_CLICK_CREATE_PLANT)
   uni.navigateTo({ url: '/subpackages/plant/user-plant-detail/user-plant-detail?mode=create' })
 }
-function goWateringAdvisor() {
+async function goWateringAdvisor() {
+  if (isRestrictedMiniProgram()) {
+    openFeatureUnavailable('watering')
+    return
+  }
+  if (!(await requireMvpAccess(userStore, { source: 'index_watering_advisor' }))) {
+    return
+  }
   reportAnalyticsEvent(ANALYTICS_EVENTS.ISOLATED_WATERING_PLANNER)
   uni.navigateTo({ url: '/subpackages/care/watering-advisor/watering-advisor' })
 }
@@ -272,8 +332,15 @@ function normalizeBackendWaterReminder(reminder) {
     nextTime: reminder.nextTime
   }
 }
-function openDiagnose(plant) {
+async function openDiagnose(plant) {
   if (!plant?.id) {
+    return
+  }
+  if (isRestrictedMiniProgram()) {
+    openFeatureUnavailable('diagnosis')
+    return
+  }
+  if (!(await requireMvpAccess(userStore, { source: 'index_plant_diagnose' }))) {
     return
   }
   const plantId = encodeURIComponent(String(plant.id))
@@ -286,6 +353,10 @@ function openDiagnose(plant) {
   })
 }
 async function openPlantHistory(plant) {
+  if (isRestrictedMiniProgram()) {
+    openFeatureUnavailable('diagnosis')
+    return
+  }
   if (plantDiagnoseHistory[plant.id]) {
     return
   }
@@ -297,6 +368,13 @@ async function openPlantHistory(plant) {
   }))
 }
 async function openReminder({ plant, type }) {
+  if (isRestrictedMiniProgram()) {
+    openFeatureUnavailable(type === 'water' ? 'watering' : 'fertilization')
+    return
+  }
+  if (!(await requireMvpAccess(userStore, { source: `index_${type}_reminder` }))) {
+    return
+  }
   if (type === 'water') {
     currentReminderPlantId.value = plant.id
     await nextTick()
@@ -304,6 +382,13 @@ async function openReminder({ plant, type }) {
   }
 }
 async function openFertilization(plant) {
+  if (isRestrictedMiniProgram()) {
+    openFeatureUnavailable('fertilization')
+    return
+  }
+  if (!(await requireMvpAccess(userStore, { source: 'index_fertilization_reminder' }))) {
+    return
+  }
   currentFertilizationPlantId.value = plant.id
   await nextTick()
   callComponentMethod(fertilizationMonthlyRef, 'open')

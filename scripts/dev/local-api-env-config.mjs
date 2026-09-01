@@ -20,6 +20,7 @@ export const DEFAULT_REQUIRED_FUNCTIONS = [
   'identify-http',
   'diagnosis-history-http',
   'auth-user-http',
+  'platform-phone-bootstrap-http',
   'weather-http',
   'storage-http',
   'subscription-http'
@@ -31,6 +32,7 @@ export const FUNCTION_HEALTH_PATHS = {
   'identify-http': 'identify-http/identify/health',
   'diagnosis-history-http': 'diagnosis-history-http/diagnosis/history/health',
   'auth-user-http': 'auth-user-http/auth/user/health',
+  'platform-phone-bootstrap-http': 'platform-phone-bootstrap-http/auth/platform-phone/health',
   'weather-http': 'weather-http/weather/health',
   'storage-http': 'storage-http/storage/health',
   'subscription-http': 'subscription-http/subscription/health'
@@ -42,6 +44,7 @@ export const FUNCTION_NAMES = [
   'identify-http',
   'diagnosis-history-http',
   'auth-user-http',
+  'platform-phone-bootstrap-http',
   'weather-http',
   'storage-http',
   'subscription-http'
@@ -69,6 +72,7 @@ const LOCAL_CREDENTIAL_SECRET_KEY_KEYS = [
 ]
 const FUNCTIONS_REQUIRING_CLOUDBASE_CREDENTIALS = new Set([
   'auth-user-http',
+  'platform-phone-bootstrap-http',
   'diagnose-http',
   'identify-http',
   'plant-catalog-http',
@@ -116,6 +120,7 @@ export function parseLocalApiEnvironmentArgs(argv = [], environment = process.en
     baseUrl: environment.VITE_API_BASE_URL || '',
     baseUrlSource: environment.VITE_API_BASE_URL ? 'environment' : '',
     openid: environment.VITE_DEV_OPENID || DEFAULT_OPENID,
+    sessionToken: String(environment.CLOUDBASE_LOCAL_SESSION_TOKEN || '').trim(),
     requiredFunctions: String(
       environment.CLOUDBASE_LOCAL_REQUIRED_FUNCTIONS || DEFAULT_REQUIRED_FUNCTIONS.join(',')
     )

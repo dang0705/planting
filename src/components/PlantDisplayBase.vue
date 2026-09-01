@@ -4,7 +4,7 @@
       v-if="imageSource"
       :id="`plant-display-image-${plant.id || 'unknown'}`"
       :src="imageSource"
-      class="size-full"
+      class="!size-full"
       mode="aspectFill"
       @error="handleImageError"
     />
@@ -34,7 +34,9 @@ const props = defineProps({
 const fileId = computed(() => props.plant?.imageFileId || props.plant?.photos?.[0] || '')
 const { url, resolve, refresh } = useFileUrl()
 const imageRetryCount = ref(0)
-const imageSource = computed(() => url.value || (fileId.value ? '' : props.plant?.image || ''))
+const imageSource = computed(
+  () => url.value || (fileId.value ? '' : props.plant?.imageUrl || props.plant?.image || '')
+)
 
 watch(
   fileId,

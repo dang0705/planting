@@ -65,6 +65,13 @@ export const BASE_URL = explicitApiBaseUrl || (isH5DevProxyRuntime
   ? H5_DEV_FUNCTION_PROXY_BASE
   : `https://${CLOUDBASE_ENV_ID}.api.tcloudbasegateway.com/v1/functions`)
 
+// 匿名手机号 bootstrap 走 HTTPS 云函数服务域名；API 网关的 /v1/functions
+// 入口仍要求 CloudBase 登录态，不能承载三端首次登录。
+export const PLATFORM_PHONE_BOOTSTRAP_BASE_URL = normalizeBaseUrl(
+  import.meta.env.VITE_PLATFORM_PHONE_BOOTSTRAP_BASE_URL ||
+    `https://${CLOUDBASE_ENV_ID}-1403815561.ap-shanghai.app.tcloudbase.com`
+)
+
 export function shouldAppendWebFunctionFlag() {
   return !IS_LOCAL_API_BASE_URL
 }

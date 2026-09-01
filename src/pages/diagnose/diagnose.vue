@@ -16,14 +16,22 @@
         </button>
       </view>
     </view>
+    <FeatureUnavailableModal v-model="featureUnavailableVisible" :feature-key="openedFeatureKey" />
   </Layout>
 </template>
 
 <script setup>
 import Layout from '@/Layout.vue'
+import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
 import DiagnoseIntake from '@/components/diagnosis/DiagnoseIntake.vue'
 import { useDiagnosisTabIntake } from './diagnosis-tab-intake.js'
 
-const { intakeView, canStartDiagnoseNow, isStartingDiagnosis, startDiagnosis } =
-  useDiagnosisTabIntake()
+const {
+  intakeView,
+  canStartDiagnoseNow,
+  isStartingDiagnosis,
+  startDiagnosis,
+  openedFeatureKey,
+  featureUnavailableVisible
+} = useDiagnosisTabIntake()
 </script>

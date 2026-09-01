@@ -2,7 +2,6 @@
   <view
     class="h-[234px] w-[142px] shrink-0 overflow-hidden rounded-2xl border bg-white transition-all duration-200"
     :style="cardStyle"
-    @click="$emit('select')"
   >
     <PlantDisplayBase :plant="plant" container-class="h-[117px] w-full rounded-none" />
     <view class="flex h-[116px] flex-col gap-[6px] px-[10px] py-[10px]">
@@ -28,8 +27,6 @@ const props = defineProps({
   plant: { type: Object, required: true },
   selected: { type: Boolean, default: false }
 })
-defineEmits(['select'])
-
 const cardStyle = computed(() =>
   props.selected
     ? 'border-color: #2d7a4f; box-shadow: 0 0 0 2px rgba(45, 122, 79, 0.3)'

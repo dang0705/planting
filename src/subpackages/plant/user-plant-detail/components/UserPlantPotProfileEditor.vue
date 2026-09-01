@@ -6,7 +6,7 @@
     :close-id="`${idPrefix}-close-button`"
     :confirm-id="`${idPrefix}-confirm-button`"
     title="盆型与基质"
-    subtitle="尺寸用于估算水量，基质用于修正保水与透气。"
+    subtitle="填写盆口和盆高，就能估算每次浇水量。"
     loading-text="保存中..."
     height-mode="fullHeight"
     show-confirm

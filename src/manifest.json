@@ -72,6 +72,12 @@
     "usingComponents": true
   },
   "mp-toutiao": {
+    "appid": "tt79ef0f52e78e857401",
+    "usingComponents": true,
+    "usePrivacyCheck": true
+  },
+  "mp-xhs": {
+    "appid": "69b9576cdb45760001d82e15",
     "usingComponents": true
   },
   "uniStatistics": {

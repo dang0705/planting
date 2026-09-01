@@ -1,7 +1,11 @@
 <template>
   <view v-if="show" class="fixed inset-0 z-50 flex items-center justify-center">
     <!-- 遮罩层 -->
-    <view class="absolute inset-0 bg-black/50" @click="handleCancel"></view>
+    <view
+      id="login-modal-backdrop"
+      class="absolute inset-0 bg-black/50"
+      @click="handleCancel"
+    ></view>
 
     <!-- 登录弹窗 -->
     <view class="relative bg-white rounded-3xl p-8 mx-6 w-full max-w-sm shadow-2xl">
@@ -40,29 +44,28 @@
       </button>
       <!-- #endif -->
 
-      <!-- #ifndef MP-WEIXIN -->
+      <!-- #ifdef MP-TOUTIAO || MP-XHS -->
       <button
-        v-if="!isLoggingIn"
-        id="login-modal-phone-login-unavailable-button"
-        class="w-full bg-gray-100 text-gray-500 font-semibold py-4 rounded-2xl mb-3 flex items-center justify-center"
-        @click="handlePhoneLoginUnavailable"
+        v-if="!isLoggingIn && !platformLoggingIn"
+        id="login-modal-platform-phone-login-button"
+        class="w-full bg-primary text-white font-semibold py-4 rounded-2xl mb-3 flex items-center justify-center"
+        :class="{ 'opacity-60': platformLoggingIn }"
+        :disabled="platformLoggingIn"
+        :open-type="loginCodeReady ? 'getPhoneNumber' : ''"
+        @click="handlePlatformLoginTap"
+        @getphonenumber="handlePlatformGetPhoneNumber"
       >
-        <text class="text-base">📱 手机号登录接入中</text>
+        <text class="text-base">
+          {{ loginCodeReady ? '📱 授权手机号快捷登录' : '📱 准备手机号登录' }}
+        </text>
       </button>
+      <text v-if="loginPreparationError" class="block text-xs text-center text-[#B42318] mt-2">
+        {{ loginPreparationError }}
+      </text>
       <!-- #endif -->
 
-      <!-- 快速登录按钮 -->
-      <button
-        v-if="!isLoggingIn"
-        id="login-modal-quick-login-button"
-        class="w-full bg-gray-100 text-gray-700 font-semibold py-4 rounded-2xl flex items-center justify-center"
-        @click="handleQuickLogin"
-      >
-        <text class="text-base">⚡ 快速登录</text>
-      </button>
-
       <!-- 登录中 -->
-      <view v-if="isLoggingIn" class="flex flex-col items-center py-4">
+      <view v-if="isLoggingIn || platformLoggingIn" class="flex flex-col items-center py-4">
         <view
           class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-3"
         ></view>
@@ -71,20 +74,31 @@
 
       <!-- 提示信息 -->
       <text class="block text-xs text-center text-gray-500 mt-4">
-        微信端支持手机号桥接登录，其他小程序端会后续接入。
+        请通过当前平台的手机号授权完成登录。
       </text>
       <text class="block text-xs text-center text-gray-500 mt-2">
         登录即表示同意《用户协议》和《隐私政策》
       </text>
     </view>
   </view>
+  <!-- #ifdef MP-TOUTIAO -->
+  <PlatformPrivacyModal
+    v-if="show"
+    :model-value="privacyVisible"
+    @open-contract="openPrivacyContract"
+    @agree="agreePrivacyAuthorization"
+  />
+  <!-- #endif -->
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { useUserStore } from '@/store/user'
+import PlatformPrivacyModal from '@/components/PlatformPrivacyModal.vue'
+import { getActivePlatformAccessToken } from '@/api/platform-session.js'
+import { usePlatformPhoneLogin } from '@/composables/usePlatformPhoneLogin.js'
 
-const props = defineProps({
+defineProps({
   show: {
     type: Boolean,
     default: false
@@ -99,6 +113,32 @@ const emit = defineEmits(['close', 'success'])
 
 const userStore = useUserStore()
 const isLoggingIn = ref(false)
+const {
+  loginCodeReady,
+  loginPreparationError,
+  loggingIn: platformLoggingIn,
+  handleGetPhoneNumber: handlePlatformGetPhoneNumber,
+  privacyVisible,
+  openPrivacyContract,
+  agreePrivacyAuthorization,
+  prepareLoginCode
+} = usePlatformPhoneLogin({
+  onSuccess: async user => {
+    await userStore.setLoginInfo({
+      user,
+      token: getActivePlatformAccessToken()
+    })
+    emit('success')
+    emit('close')
+  }
+})
+
+async function handlePlatformLoginTap() {
+  if (loginCodeReady.value || platformLoggingIn.value) {
+    return
+  }
+  await prepareLoginCode()
+}
 
 /**
  * 处理获取手机号
@@ -136,42 +176,11 @@ async function handleGetPhoneNumber(e) {
   }
 }
 
-function handlePhoneLoginUnavailable() {
-  uni.showToast({
-    title: '当前平台手机号登录接入中',
-    icon: 'none'
-  })
-}
-
-/**
- * 快速登录（使用 code）
- */
-async function handleQuickLogin() {
-  try {
-    await userStore.wechatLogin()
-    uni.showToast({
-      title: '登录成功',
-      icon: 'success'
-    })
-    isLoggingIn.value = true
-    emit('success')
-    emit('close')
-  } catch (error) {
-    console.error('快速登录失败:', error)
-    uni.showToast({
-      title: '登录失败，请稍后重试',
-      icon: 'none'
-    })
-  } finally {
-    isLoggingIn.value = false
-  }
-}
-
 /**
  * 取消登录
  */
 function handleCancel() {
-  if (!isLoggingIn.value) {
+  if (!isLoggingIn.value && !platformLoggingIn.value) {
     emit('close')
   }
 }

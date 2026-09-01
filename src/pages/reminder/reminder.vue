@@ -63,6 +63,10 @@
         @close="currentFertilizationPlantId = null"
         @changed="loadUserPlants()"
       />
+      <FeatureUnavailableModal
+        v-model="featureUnavailableVisible"
+        :feature-key="openedFeatureKey"
+      />
     </view>
   </Layout>
 </template>
@@ -70,11 +74,15 @@
 <script setup>
 import { computed, nextTick, onMounted, ref } from 'vue'
 import Layout from '@/Layout.vue'
+import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
 import loadingIcon from '@/assets/icons/loading.svg'
 import { usePlantingStore } from '@/store/planting.js'
 import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
+import { requireMvpAccess } from '@/utils/subscription-access.js'
+import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
+import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
 import WateringReminderSheet from '@/pages/index/components/WateringReminderSheet.vue'
 import FertilizationMonthlySheet from '@/pages/index/components/FertilizationMonthlySheet.vue'
 
@@ -86,6 +94,12 @@ const wateringReminderRef = ref(null)
 const fertilizationReminderRef = ref(null)
 const currentReminderPlantId = ref(null)
 const currentFertilizationPlantId = ref(null)
+const restrictedPlatform = isRestrictedMiniProgram()
+const {
+  openedFeatureKey,
+  visible: featureUnavailableVisible,
+  openFeatureUnavailable
+} = useFeatureUnavailableModal()
 const currentReminderPlant = computed(() =>
   currentReminderPlantId.value === null
     ? null
@@ -160,12 +174,26 @@ function getFertilizationReminderText(plant) {
 }
 
 async function openReminder(plant) {
+  if (restrictedPlatform) {
+    openFeatureUnavailable('watering')
+    return
+  }
+  if (!(await requireMvpAccess(userStore, { source: 'reminder_water' }))) {
+    return
+  }
   currentReminderPlantId.value = plant.id
   await nextTick()
   callComponentMethod(wateringReminderRef, 'open')
 }
 
 async function openFertilizationReminder(plant) {
+  if (restrictedPlatform) {
+    openFeatureUnavailable('fertilization')
+    return
+  }
+  if (!(await requireMvpAccess(userStore, { source: 'reminder_fertilization' }))) {
+    return
+  }
   currentFertilizationPlantId.value = plant.id
   await nextTick()
   callComponentMethod(fertilizationReminderRef, 'open')

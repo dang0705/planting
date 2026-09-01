@@ -32,6 +32,7 @@ export function useWateringReminderPlanner({ props, userStore, selectedWateringE
   const environmentWeatherWindow = ref(null)
   const weatherLoading = ref(false)
   const weatherError = ref('')
+  const plannerError = ref('')
   const loading = ref(false)
   let weatherRequestSequence = 0
   let plannerRequestSequence = 0
@@ -88,6 +89,7 @@ export function useWateringReminderPlanner({ props, userStore, selectedWateringE
     plannerRequestSequence += 1
     weatherLoading.value = false
     weatherError.value = ''
+    plannerError.value = ''
     loading.value = false
     plannerResult.value = null
     hasWeatherRef.value = false
@@ -151,7 +153,6 @@ export function useWateringReminderPlanner({ props, userStore, selectedWateringE
       forecastDays.value = []
       hasWeatherRef.value = false
       weatherError.value = '暂时无法获取天气，日期仍可继续填写。'
-      uni.showToast({ title: '天气暂不可用，请稍后重试', icon: 'none' })
     } finally {
       if (isCurrentRequest(requestSequence, weatherRequestSequence, plantId)) {
         weatherLoading.value = false
@@ -166,6 +167,7 @@ export function useWateringReminderPlanner({ props, userStore, selectedWateringE
     }
     const requestSequence = ++plannerRequestSequence
     loading.value = true
+    plannerError.value = ''
     plannerResult.value = null
     try {
       const result = await fetchWateringPlannerResult({
@@ -183,11 +185,11 @@ export function useWateringReminderPlanner({ props, userStore, selectedWateringE
       if (result) {
         plannerResult.value = result
       } else {
-        uni.showToast({ title: '暂时无法生成建议，请稍后重试', icon: 'none' })
+        plannerError.value = '暂时无法生成建议，请稍后重试。'
       }
     } catch {
       if (isCurrentRequest(requestSequence, plannerRequestSequence, plantId)) {
-        uni.showToast({ title: '暂时无法生成浇水建议，请稍后重试', icon: 'none' })
+        plannerError.value = '暂时无法生成浇水建议，请稍后重试。'
       }
     } finally {
       if (isCurrentRequest(requestSequence, plannerRequestSequence, plantId)) {
@@ -202,6 +204,9 @@ export function useWateringReminderPlanner({ props, userStore, selectedWateringE
     hasWeatherRef,
     weatherLoading,
     weatherError,
+    plannerError,
+    weatherDays,
+    forecastDays,
     environmentWeatherWindow,
     plannerLocationKey,
     plannerTimezone,

@@ -61,7 +61,6 @@ async function runThreeTabAndReuseScenario(report, miniProgram, wsEndpoint, arti
         // popup/flow assertions and continue to the next tab safely.
         const indexRoot = await findBySemanticId(page, 'index-page')
         const loginButton = await findBySemanticId(page, 'index-phone-login-button')
-        const quickLoginButton = await findBySemanticId(page, 'index-quick-login-button')
         const emptyHint = await findBySemanticId(page, 'index-plant-list')
         recordAssertion(
           report,
@@ -70,10 +69,9 @@ async function runThreeTabAndReuseScenario(report, miniProgram, wsEndpoint, arti
           JSON.stringify({
             hasIndexRoot: Boolean(indexRoot),
             hasLoginButton: Boolean(loginButton),
-            hasQuickLoginButton: Boolean(quickLoginButton),
             hasPlantList: Boolean(emptyHint),
             interpretation:
-              loginButton || quickLoginButton
+              loginButton
                 ? 'home page shows login prompt (fixture user not rehydrated)'
                 : emptyHint
                   ? 'home page has plant list but no PlantCard (mock user-plants not consumed)'

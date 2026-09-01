@@ -96,6 +96,7 @@ export const usePlantStore = defineStore('plants', {
           lightEnvironment: p.lightEnvironment || null,
           airEnvironment: p.airEnvironment || null,
           image: p.image || '',
+          imageUrl: p.imageUrl || '',
           photos: p.photos || [],
           imageFileId: p.imageFileId || '',
           lastWatered: p.lastWatered || null,
@@ -244,11 +245,12 @@ export const usePlantStore = defineStore('plants', {
       }
     },
 
-    async completeWatering(id, { wateredDate = '' } = {}) {
+    async completeWatering(id, { wateredDate = '', planId = '' } = {}) {
       try {
         const response = await completeWateringReminder({
           plantId: Number(id),
-          wateredDate: wateredDate || localDateString()
+          wateredDate: wateredDate || localDateString(),
+          planId: planId || this.userPlants.find(item => item.id === id)?.wateringReminder?.planId || ''
         })
         if (response?.code !== 200 || !response.data) {
           return { success: false, message: '浇水记录暂未保存，请检查网络后重试' }

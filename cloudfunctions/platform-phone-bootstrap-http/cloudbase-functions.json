@@ -1,0 +1,19 @@
+{
+  "functionsRoot": ".",
+  "functions": [
+    {
+      "name": "platform-phone-bootstrap-http",
+      "directory": "."
+    }
+  ],
+  "routes": [
+    {
+      "functionName": "platform-phone-bootstrap-http",
+      "path": "/auth/platform-phone"
+    },
+    {
+      "functionName": "platform-phone-bootstrap-http",
+      "path": "/auth/platform-phone/health"
+    }
+  ]
+}

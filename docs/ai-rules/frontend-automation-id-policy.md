@@ -246,6 +246,23 @@
 | 已保存状态回显   | `src/pages/index/components/WateringReminderSheet.vue` | `watering-reminder-saved-state`       | 断言已保存提醒显示                 |
 | 已保存下次浇水   | `src/pages/index/components/WateringReminderSheet.vue` | `watering-reminder-saved-next-time`   | 断言下次浇水建议显示               |
 | 已保存原因说明   | `src/pages/index/components/WateringReminderSheet.vue` | `watering-reminder-saved-reason`      | 断言原因回显可见                   |
+| 盆型收益提示     | `src/pages/index/components/WateringReminderSheet.vue` | `watering-reminder-pot-profile-benefit` | 缺少完整盆型时，断言水量补充收益只在结果旁出现 |
+| 建议依据说明     | `src/pages/index/components/WateringReminderSheet.vue` | `watering-reminder-planner-evidence` | 断言当前建议依据的用户可见说明                 |
+| 建议计算失败     | `src/pages/index/components/WateringReminderSheet.vue` | `watering-reminder-planner-error` | 断言建议失败时只有一个可恢复错误区域             |
+
+### 3.5.1 盆型编辑共享内核
+
+`PotProfileFormCore` 的输入与选项使用 `idPrefix` 前缀；首页弹窗固定为 `pot-profile-editor`，独立浇水建议按页面前缀生成。
+
+| 功能模块       | 组件                                           | 稳定 id 后缀                         | 操作 / 断言                                      |
+| -------------- | ---------------------------------------------- | ------------------------------------ | ------------------------------------------------ |
+| 盆口直径输入   | `src/components/pot-profile/PotProfileFormCore.vue` | `{idPrefix}-top-diameter-input`    | 填写盆口直径                                     |
+| 盆高输入       | `src/components/pot-profile/PotProfileFormCore.vue` | `{idPrefix}-height-input`          | 填写盆高                                         |
+| 盆底直径输入   | `src/components/pot-profile/PotProfileFormCore.vue` | `{idPrefix}-bottom-diameter-input` | 可选填写盆底直径                                 |
+| 排水孔有       | `src/components/pot-profile/PotProfileFormCore.vue` | `{idPrefix}-drainage-true`         | 选择有排水孔                                     |
+| 排水孔无       | `src/components/pot-profile/PotProfileFormCore.vue` | `{idPrefix}-drainage-false`        | 选择无排水孔                                     |
+| 排水孔不确定   | `src/components/pot-profile/PotProfileFormCore.vue` | `{idPrefix}-drainage-unknown`      | 选择不确定，不得被转成有或无                   |
+| 基质选项       | `src/components/pot-profile/PotProfileFormCore.vue` | `{idPrefix}-substrate-{value}`     | 选择可选基质                                     |
 
 ### 3.6 养护时间线
 
@@ -340,7 +357,7 @@
 | 同步状态             | `src/subpackages/care/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-air-environment-sync-status`                              | 仅弱状态，不能阻断建议主流程                          |
 | 重试保存             | `src/subpackages/care/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-air-environment-retry-save`                               | 保存失败后重试；不替换完成按钮                        |
 | inline 盆型基质选项  | `src/components/pot-profile/PotProfileFormCore.vue`                                                          | `watering-advisor-pot-profile-substrate-{value}`                            | 点击切换该基质选项选中态                              |
-| inline 排水孔选项    | `src/components/pot-profile/PotProfileFormCore.vue`                                                          | `watering-advisor-pot-profile-drainage-{value}`                             | 点击选择有/无排水孔                                   |
+| inline 排水孔选项    | `src/components/pot-profile/PotProfileFormCore.vue`                                                          | `watering-advisor-pot-profile-drainage-{value}`                             | 点击选择有/无/不确定排水孔                           |
 | 获取建议按钮         | `src/subpackages/care/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-compute-button`                                           | 点击触发浇水建议计算                                  |
 | 结果步骤重新输入     | `src/subpackages/care/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-back-2`                                                   | 点击返回盆型步骤                                      |
 | 建议水量结果         | `src/subpackages/care/watering-advisor/watering-advisor.vue`                                                 | `watering-advisor-result-amount`                                            | 断言显示建议水量（矿泉水瓶/5L油桶口径，与首页一致）   |
@@ -356,7 +373,7 @@
 | ------------------------ | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------- |
 | 选植物搜索框             | `src/subpackages/plant/user-plant-detail/components/PlantSelectionStep.vue`        | `add-plant-search-input`                                                         | 输入搜索植物                                        |
 | AI 识别入口              | `src/subpackages/plant/user-plant-detail/components/PlantSelectionStep.vue`        | `add-plant-ai-identify-button`                                                   | 点击拍照识别                                        |
-| 植物卡片项               | `src/subpackages/plant/user-plant-detail/components/PlantSelectionStep.vue`        | `add-plant-card-{plant.id}`                                                      | 点击选中植物                                        |
+| 植物卡片项               | `src/subpackages/plant/user-plant-detail/components/PlantSelectionStep.vue`        | `add-plant-card-{plant.id}`                                                      | 点击选中植物并进入信息填写步骤                      |
 | 添加植物下一步           | `src/subpackages/plant/user-plant-detail/components/PlantSelectionStep.vue`        | `add-plant-next-button`                                                          | 点击进入信息填写步骤                                |
 | 信息表单根节点           | `src/subpackages/plant/user-plant-detail/components/PlantForm.vue`                 | `add-plant-form` / `edit-plant-form`                                             | 断言添加/编辑植物表单已渲染                         |
 | 新增植物选择步骤滚动容器 | `src/subpackages/plant/user-plant-detail/components/UserPlantDetailForm.vue`       | `add-plant-selection-scroll`                                                     | 验证植物选择步骤的纵向滚动视口和快速滑动后的布局    |
@@ -380,14 +397,14 @@
 
 ### 3.12 诊断 tab 与提醒 tab
 
-| 功能模块          | 文件                              | 稳定 id                                     | 操作 / 断言                                                                    |
-| ----------------- | --------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------ |
-| 诊断 tab 实际薄壳 | `src/pages/diagnose/diagnose.vue` | `diagnose-tab-page` / `diagnose-tab-intake` | 诊断 tab 直入并停留在真实照片/无图症状入口；仅用户开始诊断后才跳入分包真实流程 |
-| 提醒 tab 页面     | `src/pages/reminder/reminder.vue` | `reminder-tab-page`                         | 断言提醒页加载且只展示浇水入口                                                 |
-| 提醒植物列表      | `src/pages/reminder/reminder.vue` | `reminder-tab-plant-list`                   | 断言用户植物列表可见                                                           |
-| 提醒植物项        | `src/pages/reminder/reminder.vue` | `reminder-tab-plant-{plant.id}`             | 断言植物信息与浇水入口同卡展示                                                 |
-| 打开浇水提醒      | `src/pages/reminder/reminder.vue` | `reminder-tab-water-{plant.id}`             | 点击复用 `WateringReminderSheet`                                               |
-| 打开施肥提醒      | `src/pages/reminder/reminder.vue` | `reminder-tab-fertilization-{plant.id}`     | 点击复用 `FertilizationMonthlySheet`，保存后重新读取植物状态                   |
+| 功能模块          | 文件                              | 稳定 id                                     | 操作 / 断言                                                                       |
+| ----------------- | --------------------------------- | ------------------------------------------- | --------------------------------------------------------------------------------- |
+| 诊断 tab 统一入口 | `src/pages/diagnose/diagnose.vue` | `diagnose-tab-page` / `diagnose-tab-intake` | 三端使用同一诊断入口页面；微信开始后进入完整流程，抖音/小红书按能力表弹出中性提示 |
+| 提醒 tab 页面     | `src/pages/reminder/reminder.vue` | `reminder-tab-page`                         | 断言提醒页加载且只展示浇水入口                                                    |
+| 提醒植物列表      | `src/pages/reminder/reminder.vue` | `reminder-tab-plant-list`                   | 断言用户植物列表可见                                                              |
+| 提醒植物项        | `src/pages/reminder/reminder.vue` | `reminder-tab-plant-{plant.id}`             | 断言植物信息与浇水入口同卡展示                                                    |
+| 打开浇水提醒      | `src/pages/reminder/reminder.vue` | `reminder-tab-water-{plant.id}`             | 点击复用 `WateringReminderSheet`                                                  |
+| 打开施肥提醒      | `src/pages/reminder/reminder.vue` | `reminder-tab-fertilization-{plant.id}`     | 点击复用 `FertilizationMonthlySheet`，保存后重新读取植物状态                      |
 
 ### 3.12.1 养护日历
 
@@ -451,6 +468,22 @@
 | 档案确认     | src/components/LightEnvironmentPicker.vue                             | {prefix}-confirm-current-{questionId}                         | 诊断中确认已有 V2 档案仍然有效                                            |
 | 近期光照变化 | src/subpackages/diagnosis/question-package/QuestionPackageOptions.vue | diagnose-question-package-page-option-{questionId}-{optionId} | 独立选择 stronger_direct_light / no_clear_change / weaker_light / unknown |
 | 独立页保存   | src/subpackages/care/plant-environment/light-environment.vue          | plant-light-environment-complete-button                       | 保存并真实读回 V2 光照环境                                                |
+
+### 3.15 三端共用 UI 与受限入口
+
+| 功能模块                | 文件                                                                                                                                                                                                                                   | 稳定 id                                                                                                                                              | 操作 / 断言                                                       |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| 受限提示弹框            | `src/components/FeatureUnavailableModal.vue`                                                                                                                                                                                           | `feature-unavailable-modal` / `feature-unavailable-message`                                                                                          | 断言提示出现且文案与 featureKey 对应                              |
+| 受限提示确认            | `src/components/FeatureUnavailableModal.vue`                                                                                                                                                                                           | `feature-unavailable-confirm-button`                                                                                                                 | 关闭提示，不触发业务请求或页面跳转                                |
+| 微信手机号登录          | `src/pages/index/index.vue`                                                                                                                                                                                                            | `index-phone-login-button`                                                                                                                           | 由用户点击触发 `getPhoneNumber` 授权；不再提供 OpenID 快速登录    |
+| 微信登录弹窗            | `src/components/LoginModal.vue`                                                                                                                                                                                                        | `login-modal-phone-login-button`                                                                                                                     | 仅展示手机号授权按钮                                              |
+| 登录弹窗遮罩            | `src/components/LoginModal.vue`                                                                                                                                                                                                        | `login-modal-backdrop`                                                                                                                               | 点击遮罩关闭登录弹窗；微信或平台登录处理中不关闭                  |
+| 抖音/小红书手机号登录   | `src/pages/index/index.vue` / `src/components/LoginModal.vue`                                                                                                                                                                          | `index-platform-phone-login-button` / `login-modal-platform-phone-login-button`                                                                      | 同一套首页和登录弹窗 UI；按钮按当前平台触发 `getPhoneNumber` 授权 |
+| 抖音隐私保护提示        | `src/components/PlatformPrivacyModal.vue`                                                                                                                                                                                              | `phone-auth-privacy-modal` / `phone-auth-privacy-contract` / `phone-auth-privacy-agree`                                                              | 先阅读并同意隐私保护协议，再继续手机号授权；不触发业务请求        |
+| 受限入口提示            | `src/pages/index/index.vue` / `src/pages/diagnose/diagnose.vue` / `src/subpackages/plant/user-plant-detail/components/UserPlantDetailForm.vue`                                                                                         | `feature-unavailable-modal` / `feature-unavailable-message` / `feature-unavailable-confirm-button`                                                   | 三端共用同一页面和弹框组件；抖音/小红书只在同一 UI 内按能力表拦截 |
+| 新增、编辑、删除植物    | `src/pages/index/index.vue` / `src/pages/index/components/PlantCard.vue` / `src/subpackages/plant/user-plant-detail/components/UserPlantDetailForm.vue` / `src/subpackages/plant/user-plant-detail/components/UserPlantDetailView.vue` | `index-add-plant-button` / `index-plant-card-edit-{id}` / `add-plant-submit-button` / `edit-plant-submit-button` / `user-plant-detail-delete-button` | 三端共用完整植物页面；抖音/小红书提交时服务端仅接受文字基础字段   |
+| 诊断入口                | `src/pages/diagnose/diagnose.vue` / `src/subpackages/plant/user-plant-detail/components/UserPlantDetailView.vue`                                                                                                                       | `diagnose-submit-button` / `user-plant-detail-diagnose-button`                                                                                       | 微信执行真实诊断；抖音/小红书保留入口并弹出中性提示，不发诊断请求 |
+| 浇水/施肥/日历/订阅入口 | `src/pages/index/index.vue` / `src/pages/reminder/reminder.vue` / `src/pages/calendar/calendar.vue` / `src/subpackages/subscription/subscription.vue`                                                                                  | 对应页面既有 `index-watering-advisor-entry`、`reminder-tab-water-{id}`、`calendar-add-plant-button`、`profile-subscription-entry` 等 ID              | 三端共用同一页面；受限平台点击后弹出对应提示，不访问业务接口      |
 
 ## 4. automator catalog 映射
 

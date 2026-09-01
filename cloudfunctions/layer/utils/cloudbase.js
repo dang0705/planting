@@ -21,6 +21,7 @@ function isRetryableRunSqlError(error) {
 const SQL_TABLES = [
   'users',
   'user_platform_identities',
+  'user_sessions',
   'plant_catalog',
   'plant_images',
   'plant_identity_entities',

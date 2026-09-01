@@ -1,8 +1,9 @@
 'use strict'
 
 const crypto = require('crypto')
-const { getUserInfo } = require('./cloudbase')
+const { getUserInfo, models } = require('./cloudbase')
 const { normalizeAppEnv, runWithRequestAppEnv } = require('./runtime-env')
+const { getBearerToken, resolvePersistentSession } = require('./platform-session')
 
 const HTTP_IDENTITY_TICKET_PREFIX = 'planting-http-v1'
 const HTTP_IDENTITY_TICKET_HEADER = 'x-planting-http-identity-ticket'
@@ -311,8 +312,23 @@ function resolveHttpIdentityTicket(headers = {}) {
   }
 }
 
-async function resolveHttpUserInfo(rawHeaders, query = {}, context = null) {
+async function resolveHttpUserInfo(rawHeaders, query = {}, context = null, options = {}) {
   const headers = normalizeHeaders(rawHeaders)
+  const allowRuntimeIdentity = options?.allowRuntimeIdentity === true
+
+  // 三端统一使用服务端存储的随机会话。必须优先于 CloudBase 运行时身份，
+  // 否则抖音/小红书请求会退回到不属于本业务的宿主身份。
+  const bearerToken = getBearerToken(headers)
+  if (bearerToken) {
+    const platformSession = await resolvePersistentSession({ token: bearerToken, models })
+    if (platformSession) {
+      return platformSession
+    }
+  }
+
+  if (!allowRuntimeIdentity) {
+    return null
+  }
 
   if (context) {
     try {

@@ -6,10 +6,12 @@
     >
       <view class="mb-4">
         <text class="block text-base font-semibold text-[#1f2937]">基本信息</text>
-        <text class="mt-1 block text-xs leading-5 text-[#6b7280]">照片、昵称和种植时间</text>
+        <text class="mt-1 block text-xs leading-5 text-[#6b7280]">
+          {{ showPhoto ? '照片、昵称和种植时间' : '昵称、种植时间和备注' }}
+        </text>
       </view>
 
-      <view class="mb-5">
+      <view v-if="showPhoto" class="mb-5">
         <text class="mb-3 block text-sm font-semibold text-gray-800">植物照片</text>
         <view
           :id="`${idPrefix}-photo-upload`"
@@ -142,6 +144,7 @@
     </view>
 
     <view
+      v-if="showPotProfile"
       :id="`${idPrefix}-pot-info-section`"
       class="rounded-2xl border border-[rgba(45,122,79,0.15)] bg-white p-4"
     >
@@ -223,7 +226,9 @@ const props = defineProps({
   cityError: { type: String, default: '' },
   activeStep: { type: Number, default: 0 },
   idPrefix: { type: String, default: 'add-plant' },
-  showLightEnvironment: { type: Boolean, default: true }
+  showLightEnvironment: { type: Boolean, default: true },
+  showPhoto: { type: Boolean, default: true },
+  showPotProfile: { type: Boolean, default: true }
 })
 const emit = defineEmits(['update:modelValue', 'upload-photo', 'city-change', 'open-pot-profile'])
 
@@ -268,7 +273,12 @@ const potProfileSummary = computed(() => {
     return '可填写尺寸、排水孔和盆土构成'
   }
   const dimensions = profile.potTopDiameterCm ? `口径 ${profile.potTopDiameterCm}cm` : '尺寸未填写'
-  const drainage = profile.hasDrainageHole === 'true' ? '有排水孔' : '无/不确定排水孔'
+  const drainage =
+    profile.hasDrainageHole === 'true'
+      ? '有排水孔'
+      : profile.hasDrainageHole === 'false'
+        ? '无排水孔'
+        : '排水孔不确定'
   return `${dimensions} · ${drainage}`
 })
 const locationStatusText = computed(() => {
