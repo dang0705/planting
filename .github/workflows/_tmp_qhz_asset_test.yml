@@ -1,45 +1,30 @@
-name: tmp-qhz-asset-build
+name: tmp-qhz-candidate-review
 on:
   push:
     branches: ['tmp/qhz-asset-test']
     paths:
       - '.github/workflows/_tmp_qhz_asset_test.yml'
-      - 'scripts/_tmp_qhz_fetch_plant_images.py'
-      - 'scripts/_tmp_qhz_fetch_retry.py'
+      - 'scripts/_tmp_qhz_generate_candidates.py'
       - 'docs/plant_catalog.csv'
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install runtime dependencies
+      - name: Install dependencies
         run: python -m pip install --disable-pip-version-check requests pillow
-      - name: Fetch and validate plant images
-        id: collect
-        continue-on-error: true
-        run: python scripts/_tmp_qhz_fetch_retry.py
-      - name: Package result
-        if: always()
+      - name: Generate candidates
+        run: python scripts/_tmp_qhz_generate_candidates.py
+      - name: Package candidate review
         run: |
-          if [ -d _tmp_qhz_images ]; then
-            cd _tmp_qhz_images
-            zip -r ../qinghuazhi-mvp-plant-images.zip .
-          else
-            mkdir -p _tmp_empty
-            echo 'collector produced no output' > _tmp_empty/ERROR.txt
-            cd _tmp_empty
-            zip -r ../qinghuazhi-mvp-plant-images.zip .
-          fi
+          cd _tmp_qhz_candidates
+          zip -r ../qinghuazhi-candidate-review.zip .
       - uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: qinghuazhi-mvp-plant-images
-          path: qinghuazhi-mvp-plant-images.zip
+          name: qinghuazhi-candidate-review
+          path: qinghuazhi-candidate-review.zip
           compression-level: 0
-      - name: Enforce completeness
-        if: steps.collect.outcome != 'success'
-        run: exit 1
