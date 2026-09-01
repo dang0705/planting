@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-import csv, io, json, os, re, time
-from pathlib import Path
+import csv, io, json, os, re
 from PIL import Image, ImageOps
 import _tmp_qhz_build_final_pack as base
 
@@ -17,26 +16,24 @@ def main():
         plant=cats[pid]; title=SEL[pid]
         print(f'[{n}/{len(ids)}] {pid} {plant["name"]} <- {title}',flush=True)
         try:
-            params={'action':'query','format':'json','formatversion':'2','titles':title,'prop':'imageinfo','iiprop':'url|extmetadata|size|mime'}
+            params={'action':'query','format':'json','formatversion':'2','titles':title,'prop':'imageinfo','iiprop':'url|extmetadata|size|mime','iiurlwidth':1600}
             data=base.get(params).json(); pages=data.get('query',{}).get('pages',[])
             if not pages or pages[0].get('missing') is not None: raise RuntimeError('Commons file title not found')
             page=pages[0]; actual=page.get('title',''); ii=(page.get('imageinfo') or [{}])[0]; md=ii.get('extmetadata') or {}
-            url=ii.get('url'); mime=(ii.get('mime') or '')
+            original_url=ii.get('url'); url=ii.get('thumburl') or original_url; mime=(ii.get('mime') or '')
             if not url or not mime.startswith('image/'): raise RuntimeError('no valid image URL')
             lic=base.clean((md.get('LicenseShortName') or {}).get('value','')); usage=base.clean((md.get('UsageTerms') or {}).get('value',''))
             if not any(k in (lic+' '+usage).lower() for k in base.ALLOWED): raise RuntimeError(f'license not allowed: {lic}/{usage}')
             raw=base.download(url); im=Image.open(io.BytesIO(raw)); im=ImageOps.exif_transpose(im).convert('RGB')
-            ow,oh=im.size
-            if min(ow,oh)<350: raise RuntimeError(f'image too small {im.size}')
-            im.thumbnail((1800,1800),Image.Resampling.LANCZOS)
+            ow,oh=ii.get('width') or im.width, ii.get('height') or im.height
+            if min(im.size)<350: raise RuntimeError(f'image too small {im.size}')
             sub=base.CATDIR[plant['cat_cn']]; (OUT/sub).mkdir(parents=True,exist_ok=True)
             safe=re.sub(r'[^a-z0-9]+','-',plant['scientific'].lower().replace('×','x')).strip('-'); rel=f'{sub}/{pid}_{safe}.jpg'
             im.save(OUT/rel,'JPEG',quality=91,optimize=True,progressive=True)
             author=base.clean((md.get('Artist') or {}).get('value','')); desc=base.clean((md.get('ImageDescription') or {}).get('value','')); source=base.clean((md.get('Credit') or {}).get('value','')) or base.clean((md.get('Source') or {}).get('value',''))
-            records.append({'plant_id':pid,'category':plant['cat_cn'],'plant_cn':plant['name'],'scientific_name':plant['scientific'],'commons_title':actual,'source_page':'https://commons.wikimedia.org/wiki/'+actual.replace(' ','_'),'original_url':url,'author':author,'license':lic,'license_url':base.license_url(lic),'needs_attribution':'no' if ('cc0' in lic.lower() or 'public domain' in lic.lower()) else 'yes','source':source,'description':desc,'original_width':ow,'original_height':oh,'file':rel})
-            time.sleep(0.5)
+            records.append({'plant_id':pid,'category':plant['cat_cn'],'plant_cn':plant['name'],'scientific_name':plant['scientific'],'commons_title':actual,'source_page':'https://commons.wikimedia.org/wiki/'+actual.replace(' ','_'),'original_url':original_url,'author':author,'license':lic,'license_url':base.license_url(lic),'needs_attribution':'no' if ('cc0' in lic.lower() or 'public domain' in lic.lower()) else 'yes','source':source,'description':desc,'original_width':ow,'original_height':oh,'file':rel})
         except Exception as e:
-            failures.append({'plant_id':pid,'plant_cn':plant['name'],'scientific_name':plant['scientific'],'title':title,'error':str(e)}); print(' FAIL',e,flush=True); time.sleep(1)
+            failures.append({'plant_id':pid,'plant_cn':plant['name'],'scientific_name':plant['scientific'],'title':title,'error':str(e)}); print(' FAIL',e,flush=True)
     fields=['plant_id','category','plant_cn','scientific_name','commons_title','source_page','original_url','author','license','license_url','needs_attribution','source','description','original_width','original_height','file']
     with (OUT/'attribution.csv').open('w',encoding='utf-8-sig',newline='') as f:
         w=csv.DictWriter(f,fieldnames=fields); w.writeheader(); w.writerows(records)
