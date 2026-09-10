@@ -62,7 +62,7 @@
         </view>
       </view>
       <view
-        v-if="restrictedPlatform"
+        v-if="!diagnosisAvailable"
         id="diagnosis-result-unavailable"
         class="mt-4 rounded-2xl bg-white p-6 text-center"
       >
@@ -74,7 +74,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import Layout from '@/Layout.vue'
 import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
@@ -83,14 +83,15 @@ import { getDiagnosisResult } from './api/diagnosis.js'
 import { useDiagnoseStore } from '@/store/diagnose.js'
 import { normalizeDiagnosisResult } from './utils/diagnose-flow.js'
 import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
-import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
+import { isDiagnosisAvailable } from '@/utils/platform-capabilities.js'
 
 const diagnoseStore = useDiagnoseStore()
 const routeId = ref('')
+const entrySource = ref('diagnose_tab')
 const remoteResult = ref(null)
 const loading = ref(false)
 const loadError = ref('')
-const restrictedPlatform = isRestrictedMiniProgram()
+const diagnosisAvailable = computed(() => isDiagnosisAvailable(entrySource.value))
 const {
   openedFeatureKey,
   visible: featureUnavailableVisible,
@@ -99,16 +100,19 @@ const {
 
 onLoad(options => {
   routeId.value = String(options?.id || '')
-  if (routeId.value && !restrictedPlatform) {
+  entrySource.value = normalizeDiagnosisEntrySource(options?.entrySource)
+  if (routeId.value && diagnosisAvailable.value) {
     loadRemoteResult(routeId.value)
   }
-})
-
-onMounted(() => {
-  if (restrictedPlatform) {
+  if (!diagnosisAvailable.value) {
     openFeatureUnavailable('diagnosis')
   }
 })
+
+function normalizeDiagnosisEntrySource(value) {
+  const source = String(value || '').trim()
+  return ['plant_history', 'diagnose_tab'].includes(source) ? source : 'diagnose_tab'
+}
 
 const localRecord = computed(() => {
   const list = diagnoseStore.history || []

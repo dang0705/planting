@@ -312,7 +312,10 @@ Module._load = function loadWithStubs(request, parent, isMain) {
     }
   }
   if (request === './static-cache-preloader' || request === '../app/static-cache-preloader') {
-    return { triggerStaticRepositoryCachePreload: () => {} }
+    return {
+      triggerStaticRepositoryCachePreload: () => {},
+      triggerDiagnosisAnswerPackageCachePreload: () => {}
+    }
   }
   return originalLoad.call(this, request, parent, isMain)
 }

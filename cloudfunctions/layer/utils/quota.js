@@ -195,9 +195,7 @@ function getUserTier(user) {
  * @param {string} openid 用户 openid
  * @param {string} type 'diagnose' | 'identify'
  */
-async function checkAIQuota(openid, type = 'diagnose') {
-  const user = await getUserWithQuota(openid);
-
+function checkAIQuotaForUser(user, type = 'diagnose') {
   if (!user) {
     return {
       allowed: false,
@@ -255,6 +253,11 @@ async function checkAIQuota(openid, type = 'diagnose') {
       remainingMonth: monthlyLimit - usedMonth
     }
   };
+}
+
+async function checkAIQuota(openid, type = 'diagnose') {
+  const user = await getUserWithQuota(openid);
+  return checkAIQuotaForUser(user, type);
 }
 
 /**
@@ -396,6 +399,7 @@ module.exports = {
   getUserWithQuota,
   getUserTier,
   checkAIQuota,
+  checkAIQuotaForUser,
   checkChatQuota,
   deductQuota,
   getQuotaOverview

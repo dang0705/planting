@@ -169,9 +169,14 @@ async function handleDiagnosisStart(request, context, payload) {
   }
 }
 
-async function handleDiagnosisQuestionStart(request, context, payload) {
+async function handleDiagnosisQuestionStart(request, context, payload, resolvedPrincipal = null) {
   payload = payload || {}
-  const principal = await resolveRequestPrincipal({ request, context, payload })
+  const principal =
+    resolvedPrincipal && typeof resolvedPrincipal === 'object'
+      ? resolvedPrincipal
+      : await resolveRequestPrincipal({ request, context, payload })
+  const timing = resolvedPrincipal?.timing || null
+  timing?.mark('handler-ready')
 
   try {
     assertAuthenticatedUser({ ...principal, message: '请先登录' })
@@ -181,14 +186,21 @@ async function handleDiagnosisQuestionStart(request, context, payload) {
       refreshTimeoutMs: 0,
       source: 'diagnosis-question-start'
     })
+    timing?.mark('readiness-ready')
     const executed = await runWithQuotaGuard({
       openid: principal.userInfo?.openid || '',
+      quotaUserSnapshot: principal.userInfo?.quotaUserSnapshot || null,
+      quotaUserSnapshotFresh: principal.userInfo?.quotaUserSnapshotFresh === true,
+      timing,
+      deferQuotaConsumption: true,
       task: async () =>
         getQuestionStartRunner().runQuestionStartDiagnosis({
           payload,
-          openid: principal.userInfo?.openid || ''
+          openid: principal.userInfo?.openid || '',
+          timing
         })
     })
+    timing?.mark('quota-and-runner-ready')
     const hydratedResponse = await withQuestionTextConservative(executed.response)
     const hydratedPublicResponse = await withQuestionTextConservative({
       ...hydratedResponse,
@@ -198,7 +210,9 @@ async function handleDiagnosisQuestionStart(request, context, payload) {
       plantIdentityId: executed.plantIdentityId || hydratedResponse.plantIdentityId || '',
       latestVisualCallBatchId:
         executed.latestVisualCallBatchId ?? hydratedResponse.latestVisualCallBatchId ?? null
-    })
+      })
+    timing?.mark('response-ready')
+    timing?.finish({ statusCode: 200 })
 
     return jsonResponse(200, {
       code: 200,
@@ -206,13 +220,19 @@ async function handleDiagnosisQuestionStart(request, context, payload) {
       data: buildFrontendResponse(hydratedPublicResponse)
     })
   } catch (error) {
+    timing?.finish({ statusCode: Number(error?.statusCode || 500), failed: true })
     return jsonResponse(error.statusCode || 500, buildErrorPayload(error, '问诊初始化失败'))
   }
 }
 
-async function handleDiagnosisAnswer(request, context, payload) {
+async function handleDiagnosisAnswer(request, context, payload, resolvedPrincipal = null) {
   payload = payload || {}
-  const principal = await resolveRequestPrincipal({ request, context, payload })
+  const principal =
+    resolvedPrincipal && typeof resolvedPrincipal === 'object'
+      ? resolvedPrincipal
+      : await resolveRequestPrincipal({ request, context, payload })
+  const timing = resolvedPrincipal?.timing || null
+  timing?.mark('handler-ready')
 
   try {
     assertAuthenticatedUser({ ...principal, message: '请先登录' })
@@ -222,10 +242,13 @@ async function handleDiagnosisAnswer(request, context, payload) {
       refreshTimeoutMs: 0,
       source: 'diagnosis-answer'
     })
+    timing?.mark('readiness-ready')
     const executed = await getAnswerRunner().runAnswerDiagnosis({
       payload,
-      openid: principal.userInfo?.openid || ''
+      openid: principal.userInfo?.openid || '',
+      timing
     })
+    timing?.mark('answer-runner-ready')
     const hydratedResponse = executed.response?.questionRequired
       ? await withQuestionTextConservative(executed.response)
       : executed.response
@@ -237,6 +260,8 @@ async function handleDiagnosisAnswer(request, context, payload) {
     if (executed.uiPatch) {
       data.uiPatch = executed.uiPatch
     }
+    timing?.mark('response-ready')
+    timing?.finish({ statusCode: 200 })
 
     return jsonResponse(200, {
       code: 200,
@@ -244,6 +269,7 @@ async function handleDiagnosisAnswer(request, context, payload) {
       data
     })
   } catch (error) {
+    timing?.finish({ statusCode: Number(error?.statusCode || 500), failed: true })
     return jsonResponse(error.statusCode || 500, buildErrorPayload(error, '问诊提交失败'))
   }
 }

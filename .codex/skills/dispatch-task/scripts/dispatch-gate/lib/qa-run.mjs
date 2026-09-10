@@ -36,7 +36,10 @@ import {
 } from './qa-runtime-plane.mjs'
 import { assertQaRunLease } from '../../../../../../scripts/qa/qa-run-lease.mjs'
 import { automatorV3RunQaRecordRoot } from '../../../../../../scripts/qa/automator-v3-run-context.mjs'
-import { resolveQaBackendTarget } from '../../../../../../scripts/qa/qa-backend-target.mjs'
+import {
+  qaBackendTargetEvidence,
+  resolveQaBackendTarget
+} from '../../../../../../scripts/qa/qa-backend-target.mjs'
 
 const qaGateOptionsWithValue = new Set([
   '--catalog-id',
@@ -169,6 +172,30 @@ export function resolveQaWxRequestUrl(value, environment = process.env, { formal
   }
 }
 
+export function resolveQaCatalogBackendTarget(entry = {}, environment = process.env) {
+  const target = resolveQaBackendTarget(environment, {
+    port: QA_RUNTIME_LAN_PORT,
+    functionPortBase: QA_RUNTIME_FUNCTION_PORT_BASE
+  })
+  const requiredBackendMode = entry?.requirements?.backend_mode
+  if (requiredBackendMode && target.mode !== requiredBackendMode) {
+    throw Object.assign(
+      new Error(
+        `catalog leaf 要求 ${requiredBackendMode} backend，但当前 QA_BACKEND_MODE=${target.mode}`
+      ),
+      {
+        code: 'qa_catalog_backend_mode_mismatch',
+        details: {
+          required_backend_mode: requiredBackendMode,
+          observed_backend_mode: target.mode,
+          target_source: target.source
+        }
+      }
+    )
+  }
+  return target
+}
+
 function sourceProjectPathForRun(dispatchRunId) {
   const handoff = dispatchRunId ? readJson(findHandoff(dispatchRunId), {}) : {}
   const external = handoff.external_contract ?? handoff.zcode_contract ?? {}
@@ -272,6 +299,14 @@ function prepareQaGate({
     catalogValidator,
     bundleFingerprint
   })
+  let backendTarget = null
+  if (!hasFlag('dry-run')) {
+    try {
+      backendTarget = resolveQaCatalogBackendTarget(gate.entry, process.env)
+    } catch (error) {
+      gate.errors.push(error.code || 'qa_backend_target_invalid')
+    }
+  }
   if (!runLeaseToken && !hasFlag('dry-run')) {
     gate.errors.push('正式 qa-run 必须绑定 dispatch run lease')
   }
@@ -327,6 +362,7 @@ function prepareQaGate({
     gate,
     sourceProjectPath,
     expectedProjectPath,
+    backendTarget,
     allowTargetedRestart: hasFlag('allow-targeted-restart')
   }
 }
@@ -360,7 +396,8 @@ export function createQaRunCommands({
       runInstanceId,
       gate,
       sourceProjectPath,
-      expectedProjectPath
+      expectedProjectPath,
+      backendTarget
     } = prepared
     const dryRun = hasFlag('dry-run')
     if (!dryRun && !hasFlag('allow-live')) {
@@ -377,6 +414,7 @@ export function createQaRunCommands({
           execution_id: executionId,
           dispatch_run_id: dispatchRunId,
           run_instance_id: runInstanceId || null,
+          backend_target: qaBackendTargetEvidence(backendTarget),
           errors: gate.errors
         },
         1
@@ -412,6 +450,7 @@ export function createQaRunCommands({
       gate,
       sourceProjectPath,
       expectedProjectPath,
+      backendTarget,
       screenshotPath: path.join(
         qaArtifactDir(dispatchRunId, executionId, runInstanceId),
         'preflight.png'
@@ -434,6 +473,7 @@ export function createQaRunCommands({
           scriptHash: gate.scriptHash,
           executionBundleFiles: gate.executionBundleFiles
         }),
+        backend_target: qaBackendTargetEvidence(backendTarget),
         run_instance_id: runInstanceId
       }),
       createLiveRecord: attempt => ({
@@ -447,6 +487,7 @@ export function createQaRunCommands({
           executionBundleFiles: gate.executionBundleFiles,
           attempt
         }),
+        backend_target: qaBackendTargetEvidence(backendTarget),
         run_instance_id: runInstanceId
       }),
       readRecords: currentDispatchRunId => readQaRecords(currentDispatchRunId, runInstanceId),

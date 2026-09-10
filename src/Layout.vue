@@ -55,6 +55,40 @@
       </view>
     </view>
 
+    <view v-if="renderDouyinWeatherHeader" id="douyin-weather-header" class="relative bg-[#2D7A4F]">
+      <view
+        v-if="douyinWeatherExpanded"
+        id="douyin-weather-dismiss-area"
+        class="fixed inset-x-0 bottom-0 z-[998] bg-transparent"
+        :style="{ top: 'var(--app-header-height)' }"
+        @click="closeDouyinWeather"
+      />
+      <view
+        id="douyin-weather-trigger-row"
+        class="relative z-[999] flex min-h-[42px] items-center justify-end px-4"
+        @click="closeDouyinWeather"
+      >
+        <view
+          id="douyin-weather-trigger"
+          class="flex h-7 items-center gap-1 rounded-full bg-white/15 px-3 active:bg-white/25"
+          @click.stop="toggleDouyinWeather"
+        >
+          <text class="text-[12px] font-medium leading-none text-white">天气</text>
+          <text class="text-[13px] leading-none text-white/80">
+            {{ douyinWeatherExpanded ? '⌃' : '⌄' }}
+          </text>
+        </view>
+      </view>
+      <view
+        v-if="douyinWeatherExpanded"
+        id="douyin-weather-panel"
+        class="relative z-[999] px-4 pb-3 pt-1"
+        @click.stop
+      >
+        <HeaderWeatherInfo />
+      </view>
+    </view>
+
     <view :class="contentClass" :style="contentStyle">
       <slot />
     </view>
@@ -85,6 +119,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import BottomSheet from '@/components/common/BottomSheet.vue'
+import HeaderWeatherInfo from '@/components/HeaderWeatherInfo.vue'
 import { useLayoutStore } from '@/store/layout.js'
 import { useUserStore } from '@/store/user.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
@@ -99,6 +134,7 @@ const props = defineProps({
   leftAction: { type: String, default: '' },
   leftActionId: { type: String, default: 'layout-left-action' },
   showHeader: { type: Boolean, default: true },
+  showWeatherHeader: { type: Boolean, default: false },
   headerClass: { type: String, default: '' },
   headerStyle: {
     type: Object,
@@ -113,9 +149,13 @@ const userStore = useUserStore()
 const actionSheetRef = ref(null)
 const actionSheet = ref({ title: '', itemList: [], resolve: null, reject: null, settled: true })
 const platformNavigationChrome = usesPlatformNavigationChrome()
+const douyinWeatherExpanded = ref(false)
 const renderAppHeader = computed(() => props.showHeader && !platformNavigationChrome)
+const renderDouyinWeatherHeader = computed(
+  () => props.showWeatherHeader && platformNavigationChrome
+)
 const contentStyle = computed(() => ({
-  // 抖音的顶部品牌区/胶囊由平台绘制，应用隐藏 header 后不再预留应用 header 间距。
+  // 抖音使用标准导航栏时，页面内容天然从平台导航栏下方开始；天气条保持在页面流内。
   paddingTop: props.contentPaddingTop && renderAppHeader.value ? 'var(--app-header-height)' : '0px'
 }))
 
@@ -158,6 +198,12 @@ function goBack() {
 }
 function goHome() {
   uni.switchTab({ url: '/pages/index/index' })
+}
+function toggleDouyinWeather() {
+  douyinWeatherExpanded.value = !douyinWeatherExpanded.value
+}
+function closeDouyinWeather() {
+  douyinWeatherExpanded.value = false
 }
 async function openActionSheet(payload) {
   actionSheet.value = {

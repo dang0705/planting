@@ -1,4 +1,5 @@
 /* oxlint-disable no-unused-vars, no-magic-numbers */
+import { buildSharedOutcomeAdviceGroups } from '../utils/outcome-advice-groups.js'
 
 export function useDiagnoseOutcomeAdvice(ctx) {
   const {
@@ -223,32 +224,25 @@ export function useDiagnoseOutcomeAdvice(ctx) {
     outcomeSources = [],
     getOutcomeItems,
     fallbackItems = [],
-    fallbackLabel = '通用建议'
+    fallbackLabel = '通用建议',
+    section = 'action',
+    getOutcomeActionItems,
+    getOutcomeAvoidItems,
+    sharedSymptomLabels = []
   } = {}) {
     const sourceOutcomes = buildUniqueOutcomesForAdvice(outcomeSources)
-    const sourceGroups = sourceOutcomes
-      .map((outcome, index) => ({
-        key: normalizeOutcomeDisplayKey(outcome, index),
-        outcomeLabel: formatOutcomeDisplayLabel(outcome),
-        items: uniqueStrings(getOutcomeItems ? getOutcomeItems(outcome) : [])
-      }))
-      .filter(group => group.outcomeLabel && group.items.length)
-
-    if (sourceGroups.length || !fallbackItems.length) {
-      return sourceGroups.map(group => ({
-        ...group,
-        showOutcomeLabel: sourceOutcomes.length > 1
-      }))
-    }
-
-    return [
-      {
-        key: '__fallback__',
-        outcomeLabel: fallbackLabel,
-        items: uniqueStrings(fallbackItems),
-        showOutcomeLabel: true
-      }
-    ]
+    const grouped = buildSharedOutcomeAdviceGroups({
+      outcomeSources: sourceOutcomes,
+      getOutcomeKey: normalizeOutcomeDisplayKey,
+      getOutcomeLabel: formatOutcomeDisplayLabel,
+      getActionItems: getOutcomeActionItems || (section === 'action' ? getOutcomeItems : undefined),
+      getAvoidItems: getOutcomeAvoidItems || (section === 'avoid' ? getOutcomeItems : undefined),
+      sharedSymptomLabels,
+      fallbackActionItems: section === 'action' ? fallbackItems : [],
+      fallbackAvoidItems: section === 'avoid' ? fallbackItems : [],
+      fallbackLabel
+    })
+    return section === 'avoid' ? grouped.avoidGroups : grouped.actionGroups
   }
 
   function buildOutcomeActionAdviceItems(outcome = {}) {

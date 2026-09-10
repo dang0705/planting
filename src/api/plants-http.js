@@ -38,7 +38,9 @@ export function fetchUserPlants(page = 1, pageSize = 20) {
 export function fetchUserPlant(id) {
   return requestHttpFunction('plant-user-http/user-plants', {
     method: 'GET',
-    query: { id: Number(id) }
+    query: { id: Number(id) },
+    // 详情不属于一期短票据读入口；保持持久会话校验，确保吊销即时生效。
+    requirePlatformSession: true
   })
 }
 

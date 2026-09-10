@@ -26,6 +26,10 @@ assert.equal(
   formalAutomatorEndpoint({ MINIPROGRAM_AUTOMATOR_WS: 'ws://127.0.0.1:9421' }),
   'ws://127.0.0.1:9421'
 )
+assert.throws(
+  () => formalAutomatorEndpoint({ MINIPROGRAM_AUTOMATOR_WS: 'ws://127.0.0.1:9420' }),
+  /QA-owned Automator endpoint/
+)
 const fallbackPageProbe = await getCurrentPageWithFallback(
   {
     currentPage: () => new Promise(() => {}),
@@ -37,7 +41,7 @@ assert.equal(fallbackPageProbe.page.path, 'pages/detail/detail')
 assert.equal(fallbackPageProbe.source, 'page_stack_fallback')
 assert.throws(
   () => formalAutomatorEndpoint({ MINIPROGRAM_AUTOMATOR_WS: 'http://127.0.0.1:9421' }),
-  /supervisor-provided Automator endpoint/
+  /QA-owned Automator endpoint/
 )
 const calls = []
 const mp = { disconnect: async () => calls.push('disconnect') }
@@ -48,10 +52,10 @@ const connected = await connectFormalLeaf({
       return mp
     }
   },
-  wsEndpoint: 'ws://127.0.0.1:9420'
+  wsEndpoint: 'ws://127.0.0.1:9421'
 })
 assert.notEqual(connected.mp, mp, 'the harness retains a resumable session facade')
-assert.deepEqual(calls, ['ws://127.0.0.1:9420'])
+assert.deepEqual(calls, ['ws://127.0.0.1:9421'])
 const compatibilityProof = {
   project_identity_verified: true,
   control_port_verified: true,
@@ -134,7 +138,7 @@ const handedOff = await handoffFormalLeafScreenshot({
       return secondTransport
     }
   },
-  wsEndpoint: 'ws://127.0.0.1:9420',
+  wsEndpoint: 'ws://127.0.0.1:9421',
   outputPath: path.join(os.tmpdir(), 'formal-leaf-handoff-contract.png'),
   captureFormalScreenshot: async () => ({ status: 'passed', validPng: true })
 })
@@ -159,7 +163,7 @@ const stalePrimary = await handoffFormalLeafScreenshot({
       return { disconnect: async () => {} }
     }
   },
-  wsEndpoint: 'ws://127.0.0.1:9420',
+  wsEndpoint: 'ws://127.0.0.1:9421',
   outputPath: path.join(os.tmpdir(), 'formal-leaf-stale-primary-contract.png'),
   captureFormalScreenshot: async () => {
     stalePrimaryEvents.push('screenshot-worker-after-closed-primary')

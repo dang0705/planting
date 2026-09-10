@@ -144,7 +144,7 @@ export function processAlive(pid) {
 
 export function processTable() {
   const result = spawnSync('ps', ['-axo', 'pid=,ppid=,command='], { encoding: 'utf8' })
-  return result.stdout
+  return String(result.stdout || '')
     .split('\n')
     .map(line => line.trim().match(/^(\d+)\s+(\d+)\s+(.+)$/))
     .filter(Boolean)
@@ -1023,6 +1023,12 @@ export function ownedRuntimeEvidence(session) {
     )
   const wsOwner = wsOwners.filter(item => item.owned)
   const verified = control.verified && projectProof && wsOwner.length === 1
+  // Official Electron receives the product profile through the
+  // `--user-data-dir` parent.  Report the directory from the verified
+  // command line so callers can compare like-for-like; `profile` remains the
+  // concrete product directory used for QA identity and receipts.
+  const observedUserDataDir =
+    userDataDirFromCommand(main.command) || session.devtools_user_data_dir || session.profile
   return {
     status: verified ? 'verified' : 'unavailable',
     code: verified ? null : 'qa_owned_runtime_identity_unverified',
@@ -1047,7 +1053,7 @@ export function ownedRuntimeEvidence(session) {
     control_port: session.controlPort,
     control_port_source: directControl.source,
     control_port_verified: control.verified,
-    user_data_dir: session.devtools_user_data_dir || session.profile,
+    user_data_dir: observedUserDataDir,
     session_log_evidence: sessionLog,
     owners: wsOwners
   }

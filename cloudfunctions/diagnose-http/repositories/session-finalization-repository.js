@@ -14,6 +14,7 @@ async function upsertDiagnosisSnapshotRecord(params = {}) {
         data_bundle_version,
         question_system_version,
         result_explanation_version,
+        legacy_adapter_version,
         session_adapter_version
       ) VALUES (
         {{diagnosisId}},
@@ -23,6 +24,7 @@ async function upsertDiagnosisSnapshotRecord(params = {}) {
         {{dataBundleVersion}},
         {{questionSystemVersion}},
         {{resultExplanationVersion}},
+        {{legacyAdapterVersion}},
         {{sessionAdapterVersion}}
       )
       ON DUPLICATE KEY UPDATE
@@ -31,6 +33,7 @@ async function upsertDiagnosisSnapshotRecord(params = {}) {
         data_bundle_version = VALUES(data_bundle_version),
         question_system_version = VALUES(question_system_version),
         result_explanation_version = VALUES(result_explanation_version),
+        legacy_adapter_version = VALUES(legacy_adapter_version),
         session_adapter_version = VALUES(session_adapter_version),
         updated_at = CURRENT_TIMESTAMP
     `,

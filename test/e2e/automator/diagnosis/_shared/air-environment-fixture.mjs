@@ -12,6 +12,8 @@ const USER_PLANTS_QUERY_KEY = ['http-function', 'plant-user-http', 'user-plants'
 const FIXTURE_STORE_READY_TIMEOUT_MS = 10000
 const FIXTURE_STORE_READY_POLL_MS = 200
 const FIXTURE_STORE_INSPECTION_TIMEOUT_MS = 2000
+const RUNTIME_IDENTITY_TIMEOUT_MS = 5000
+const RUNTIME_IDENTITY_POLL_MS = 100
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 export const AIR_ENVIRONMENT_FIXTURE_USER = Object.freeze({
   userId: 'e2e_air_environment_fixture_user',
@@ -68,8 +70,78 @@ function fixtureError(prefix, result) {
   return new AirEnvironmentFixtureError(`${prefix}: ${detail}`)
 }
 
+async function resolveRuntimeOpenid(miniProgram) {
+  const slot = `__e2eAirEnvironmentRuntimeIdentity_${Date.now()}`
+  const started = await miniProgram.evaluate(function (identitySlot) {
+    try {
+      globalThis[identitySlot] = { status: 'pending' }
+      if (!wx?.cloud || typeof wx.cloud.callFunction !== 'function') {
+        globalThis[identitySlot] = {
+          status: 'failed',
+          reason: 'wx.cloud.callFunction unavailable'
+        }
+        return { ok: false, reason: 'wx.cloud.callFunction unavailable' }
+      }
+      wx.cloud.callFunction({
+        name: 'wechat-identity',
+        data: {},
+        success: function (response) {
+          const openid = String(response?.result?.openid || '').trim()
+          globalThis[identitySlot] = openid
+            ? { status: 'resolved', openid }
+            : { status: 'failed', reason: 'wechat-identity returned no openid' }
+        },
+        fail: function (error) {
+          globalThis[identitySlot] = {
+            status: 'failed',
+            reason: String(error?.errMsg || error || 'wechat-identity failed')
+          }
+        }
+      })
+      return { ok: true }
+    } catch (error) {
+      return { ok: false, reason: String(error?.message || error) }
+    }
+  }, slot)
+  if (!started?.ok) {
+    throw new AirEnvironmentFixtureError(
+      `fixture runtime identity probe did not start: ${started?.reason || 'unknown error'}`
+    )
+  }
+
+  const deadline = Date.now() + RUNTIME_IDENTITY_TIMEOUT_MS
+  let lastState = null
+  try {
+    while (Date.now() < deadline) {
+      lastState = await miniProgram.evaluate(function (identitySlot) {
+        const state = globalThis[identitySlot]
+        return state && typeof state === 'object' ? { ...state } : null
+      }, slot)
+      if (lastState?.status === 'resolved' && lastState.openid) {
+        return String(lastState.openid)
+      }
+      if (lastState?.status === 'failed') {
+        break
+      }
+      await sleep(RUNTIME_IDENTITY_POLL_MS)
+    }
+  } finally {
+    await miniProgram.evaluate(function (identitySlot) {
+      delete globalThis[identitySlot]
+    }, slot)
+  }
+  throw new AirEnvironmentFixtureError(
+    `fixture runtime identity unavailable: ${JSON.stringify(lastState || { status: 'timeout' })}`
+  )
+}
+
 export async function installAirEnvironmentDiagnosisFixture(miniProgram, { principal } = {}) {
   const definition = fixtureDefinition(principal)
+  // The app's real onMounted login reconciliation compares the persisted user
+  // openid with the current wx.cloud runtime identity. Fixture leaves may
+  // replace the plant list, but they must keep this identity aligned with the
+  // authenticated QA session or the product will correctly log out.
+  definition.user.openid = await resolveRuntimeOpenid(miniProgram)
   const snapshot = await miniProgram.evaluate(function (fixture) {
     function cloneRuntime(value) {
       if (typeof value === 'undefined') {

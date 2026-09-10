@@ -6,14 +6,13 @@
  * 关键修复（P0-2/P0-3/P0-4）：
  *   - 删除任何点击 watering-reminder-confirm-button 的 fallback（会触发 addToCalendar 副作用）
  *   - 无副作用触发链：plant-card-reminder-{id}-water → watering-reminder-last-watering-row
- *     → watering-date-picker-sheet → 容器内确认按钮 → confirmDatePicker → fetchPlanner
+ *     → 过往浇水步骤 → 盆型步骤 → fetchPlanner
  *   - 多植物遍历：切换前用 watering-reminder-close-button 关闭 sheet
  *   - 探索失败只记录探索信息，不污染最终断言；全部失败才 BLOCKED_FIXTURE
  *   - active 先加载 shadow snapshot，按 snapshot.plantId 精确选择植物
  *   - 完整请求 canonical SHA-256 签名比较（不只 plantId/date/url）
  *   - 断言没有 /watering-reminders 保存接口请求
  *   - P0: 从真实响应推断后端实际模式，与期望模式不符时归 BLOCKED_ENV（LAN worker 未按 WATERING_TRANSPIRATION_ENABLED 启动）
- *   - P1: confirmButtonAmbiguous 时归 BLOCKED_ENV（日期选择器容器内 button 结构无法稳定定位）
  */
 
 import { reLaunchTo } from '../lib/automator-client.mjs'
@@ -164,21 +163,8 @@ export async function runMyPlantPlannerScenario(mp, report, artifactDir, mode) {
           plantId: candidatePlantId,
           triggerChain: result.triggerChain,
           sideEffectDetected: result.sideEffectDetected,
-          gotPlannerRequest: !!result.plannerRequest,
-          confirmButtonAmbiguous: !!result.confirmButtonAmbiguous
+          gotPlannerRequest: !!result.plannerRequest
         })
-
-        // P1: confirmButtonAmbiguous 是环境限制（日期选择器容器 button 结构无法稳定定位），不是 fixture 问题
-        if (result.confirmButtonAmbiguous) {
-          recordPageData(report, 'shadow-exploration-log', explorationLog)
-          setClassification(
-            report,
-            'BLOCKED_ENV',
-            `plant ${candidatePlantId} 触发链中日期选择器容器内 button 结构无法稳定定位（confirmButtonAmbiguous）。` +
-              '无法在不误触的前提下点击确认按钮。需检查 watering-date-picker-content 内 button 渲染结构。'
-          )
-          return 'BLOCKED_ENV'
-        }
 
         // 记录所有真实 wx.request
         const allRequests = await readCapturedRequests(mp)
@@ -235,17 +221,6 @@ export async function runMyPlantPlannerScenario(mp, report, artifactDir, mode) {
         readRequests: mp2 => readCapturedRequests(mp2)
       })
       plannerRequest = result.plannerRequest
-
-      // P1: confirmButtonAmbiguous 是环境限制
-      if (result.confirmButtonAmbiguous) {
-        setClassification(
-          report,
-          'BLOCKED_ENV',
-          `active 触发链中日期选择器容器内 button 结构无法稳定定位（confirmButtonAmbiguous）。` +
-            '无法在不误触的前提下点击确认按钮。需检查 watering-date-picker-content 内 button 渲染结构。'
-        )
-        return 'BLOCKED_ENV'
-      }
 
       const allRequests = await readCapturedRequests(mp)
       recordRequests(report, allRequests)

@@ -69,6 +69,13 @@ async function captureControlRequestUrls(assertions) {
       controlPort,
       wsPort: 9420
     })
+    const officialAuto = await requestDevToolsControl({
+      action: 'auto',
+      projectPath: specialProjectPath,
+      controlPort,
+      wsPort: 9421,
+      protocol: 'v2'
+    })
     const expectedOpen = new URLSearchParams({ cli: '1', projectpath: specialProjectPath })
     const expectedAuto = new URLSearchParams({
       cli: '1',
@@ -76,12 +83,27 @@ async function captureControlRequestUrls(assertions) {
       port: '9420',
       account: ''
     })
+    const expectedOfficialAuto = new URLSearchParams({
+      cli: '1',
+      project: specialProjectPath,
+      port: '9421',
+      account: ''
+    })
 
     assert.equal(open.status_code, 200)
     assert.equal(auto.status_code, 200)
-    assert.deepEqual(urls, [`/open?${expectedOpen}`, `/auto?${expectedAuto}`])
-    for (const requestUrl of urls) {
-      assert.match(requestUrl, /projectpath=%2F/, 'absolute project path must be encoded once')
+    assert.equal(officialAuto.status_code, 200)
+    assert.deepEqual(urls, [
+      `/open?${expectedOpen}`,
+      `/auto?${expectedAuto}`,
+      `/v2/auto?${expectedOfficialAuto}`
+    ])
+    for (const [index, requestUrl] of urls.entries()) {
+      assert.match(
+        requestUrl,
+        index === 2 ? /project=%2F/ : /projectpath=%2F/,
+        'absolute project path must be encoded once'
+      )
       assert.doesNotMatch(
         requestUrl,
         /projectpath=[^&]*%25/i,
@@ -90,6 +112,12 @@ async function captureControlRequestUrls(assertions) {
     }
     assert.match(urls[1], /(?:\?|&)port=9420(?:&|$)/, 'auto must retain the Automator port')
     assert.match(urls[1], /(?:\?|&)account=(?:&|$)/, 'auto must retain the empty account parameter')
+    assert.match(
+      urls[2],
+      /(?:\?|&)port=9421(?:&|$)/,
+      'stable official Electron v2 auto must use port, not autoPort'
+    )
+    assert.doesNotMatch(urls[2], /(?:\?|&)autoPort=/, 'stable official Electron rejects autoPort')
   })
 }
 

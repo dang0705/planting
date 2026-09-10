@@ -1,18 +1,18 @@
 <template>
   <view>
     <view
-      v-if="question.riskNotice || question.requiresExplicitConsent"
+      v-if="question?.riskNotice || question?.requiresExplicitConsent"
       :id="`diagnose-question-risk-notice-${questionId}`"
       class="mt-3 rounded-xl bg-[#fff6f3] px-3 py-2"
     >
       <text class="block text-[11px] font-semibold text-[#8b3a2f]">操作提醒</text>
       <text class="mt-1 block text-[11px] leading-relaxed text-[#8b3a2f]">
-        {{ question.riskNotice || '不方便操作时可以跳过。' }}
+        {{ question?.riskNotice || '不方便操作时可以跳过。' }}
       </text>
       <text v-if="safetyInstructionsText" class="mt-1 block text-[11px] text-[#8b3a2f]">
         {{ safetyInstructionsText }}
       </text>
-      <view v-if="question.requiresExplicitConsent" class="mt-2 flex gap-2">
+      <view v-if="question?.requiresExplicitConsent" class="mt-2 flex gap-2">
         <button
           :id="`diagnose-question-risk-consent-${questionId}`"
           class="h-[34px] flex-1 rounded-lg p-0 text-[11px] leading-[34px]"
@@ -43,7 +43,7 @@
         :id="`diagnose-question-package-page-option-${questionId}-${option.optionId || option.optionKey || optionIndex}`"
         class="overflow-hidden rounded-2xl border border-emerald-100 bg-white"
         :class="[
-          isSelected(option) ? 'border-[#2d7a4f] bg-emerald-50' : '',
+          isSelected(option) ? '!border-primary bg-emerald-50' : '',
           isQuestionRiskOptionBlocked(question, option) ? 'opacity-50' : ''
         ]"
         @click="selectOption(option)"
@@ -75,8 +75,8 @@ import { useDiagnoseQuestionRisk } from '@/subpackages/diagnosis/diagnose-flow/q
 import { getOptionDescription, getOptionText } from './question-display.js'
 
 const props = defineProps({
-  question: { type: Object, required: true },
-  questionId: { type: String, required: true },
+  question: { type: Object, default: () => ({}) },
+  questionId: { type: String, default: '' },
   options: { type: Array, default: () => [] },
   selectedOptionId: { type: String, default: '' }
 })

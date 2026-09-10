@@ -1,17 +1,36 @@
 'use strict'
 
 const { models } = require('/opt/utils/cloudbase')
-const {
-  assertOwnedPlantImagesForPlant,
-  assertOwnedTemporaryPlantImages,
-  bindOwnedTemporaryPlantImages
-} = require('./plant-images')
 const { normalizeAirEnvironmentInput } = require('./air-environment-evidence')
-const {
-  getUserPlantFertilizationEvents,
-  getUserPlantFertilizationHistory,
-  insertFertilizationEvent
-} = require('./fertilization-history')
+
+// 非列表业务继续复用现有 CloudBase SQL 入口。这里不在 Shared Layer 中
+// 启动原生 MySQL 连接、预热连接池或与回退链路竞速，避免读请求改变写链路
+// 的网络依赖与故障面。
+async function runUserPlantReadSql(sql, params = {}) {
+  return models.$runSQL(sql, params)
+}
+
+async function runUserPlantReadSqlBatch(statements = []) {
+  return Promise.all(
+    statements.map(statement => models.$runSQL(statement.sql, statement.params || {}))
+  )
+}
+
+let plantImages
+function loadPlantImages() {
+  if (!plantImages) {
+    plantImages = require('./plant-images')
+  }
+  return plantImages
+}
+
+let fertilizationHistory
+function loadFertilizationHistory() {
+  if (!fertilizationHistory) {
+    fertilizationHistory = require('./fertilization-history')
+  }
+  return fertilizationHistory
+}
 const MAX_USER_PLANT_NOTES_LENGTH = 200
 const FERTILIZATION_LABEL_PATTERN = /产品标签|按标签/u
 const FERTILIZATION_PAUSE_LABEL_PATTERN = /(?:暂停施肥|暂停追加|暂停)(?:$|[；，。])/u
@@ -605,12 +624,12 @@ async function getPlantCatalogById(plantId) {
  * CloudBase SQL 往返；这里把 identity/session 两种匹配合并为一次查询，调用方
  * 仍按原来的 lookup id 取得同一条优先级最高的目录记录。
  */
-async function getPlantCatalogByIds(plantIds = [], { summary = false, detail = false } = {}) {
+function preparePlantCatalogRead(plantIds = [], { summary = false, detail = false } = {}) {
   const ids = Array.from(
     new Set((Array.isArray(plantIds) ? plantIds : []).map(normalizeNullableString).filter(Boolean))
   )
   if (!ids.length) {
-    return new Map()
+    return { resultMap: new Map(), statement: null }
   }
 
   const now = Date.now()
@@ -626,13 +645,18 @@ async function getPlantCatalogByIds(plantIds = [], { summary = false, detail = f
     }
   }
   if (!missingIds.length) {
-    return resultMap
+    return { resultMap, statement: null }
   }
 
   const placeholders = missingIds.map((_, index) => `{{plantId${index}}}`)
   const params = Object.fromEntries(missingIds.map((id, index) => [`plantId${index}`, id]))
-  const result = await models.$runSQL(
-    `
+  return {
+    resultMap,
+    missingIds,
+    cache,
+    now,
+    statement: {
+      sql: `
       ${summary ? CATALOG_SUMMARY_SELECT_SQL : detail ? CATALOG_DETAIL_SELECT_SQL : CATALOG_SELECT_SQL}
       ${
         summary
@@ -647,9 +671,19 @@ async function getPlantCatalogByIds(plantIds = [], { summary = false, detail = f
           OR pie.session_plant_id IN (${placeholders.join(',')})
         )
     `,
-    params
-  )
+      params
+    }
+  }
+}
 
+function applyPlantCatalogReadResult(plan, result) {
+  const resultMap = plan?.resultMap || new Map()
+  if (!plan?.statement) {
+    return resultMap
+  }
+  const missingIds = plan.missingIds || []
+  const cache = plan.cache
+  const now = plan.now || Date.now()
   const candidatesById = new Map(missingIds.map(id => [id, []]))
   for (const row of result?.data?.executeResultList || []) {
     const mapped = mapPlantRow(row)
@@ -681,6 +715,15 @@ async function getPlantCatalogByIds(plantIds = [], { summary = false, detail = f
     }
   }
   return resultMap
+}
+
+async function getPlantCatalogByIds(plantIds = [], options = {}) {
+  const plan = preparePlantCatalogRead(plantIds, options)
+  if (!plan.statement) {
+    return plan.resultMap
+  }
+  const result = await runUserPlantReadSql(plan.statement.sql, plan.statement.params)
+  return applyPlantCatalogReadResult(plan, result)
 }
 
 async function findCanonicalPlantMatch(name, limit = 5) {
@@ -765,7 +808,7 @@ async function createUserPlantInstance({
   potProfileConfidence = 'low',
   photos = null
 }) {
-  const ownedTemporaryPhotoFileIds = await assertOwnedTemporaryPlantImages({
+  const ownedTemporaryPhotoFileIds = await loadPlantImages().assertOwnedTemporaryPlantImages({
     openid,
     fileIds: photos
   })
@@ -932,7 +975,7 @@ async function createUserPlantInstance({
   }
 
   if (insertedId && ownedTemporaryPhotoFileIds.length) {
-    await bindOwnedTemporaryPlantImages({
+    await loadPlantImages().bindOwnedTemporaryPlantImages({
       openid,
       plantId: insertedId,
       fileIds: ownedTemporaryPhotoFileIds
@@ -1207,14 +1250,27 @@ async function getUserPlantInstanceById(openid, id) {
       care.source AS care_source
     FROM user_plant_instances up
     ${USER_PLANT_LATEST_DIAGNOSIS_SQL}
-    LEFT JOIN LATERAL (
-      SELECT id, _openid, plant_id, user_id, location_key, city_name, latitude, longitude,
-             weather_location, source
+    LEFT JOIN (
+      SELECT
+        id,
+        _openid,
+        plant_id,
+        user_id,
+        location_key,
+        city_name,
+        latitude,
+        longitude,
+        weather_location,
+        source,
+        ROW_NUMBER() OVER (
+          PARTITION BY plant_id
+          ORDER BY updated_at DESC, id DESC
+        ) AS care_rank
       FROM plant_care_locations
-      WHERE _openid = {{openid}} AND plant_id = up.id
-      ORDER BY updated_at DESC, id DESC
-      LIMIT 1
-    ) care ON TRUE
+      WHERE _openid = {{openid}}
+    ) care
+      ON care.plant_id = up.id
+     AND care.care_rank = 1
     WHERE up._openid = {{openid}} AND up.id = {{id}}
     LIMIT 1
   `
@@ -1228,7 +1284,7 @@ async function getUserPlantInstanceById(openid, id) {
   const [plant, wateringEvents, fertilizationHistory] = await Promise.all([
     plantLookupId ? getPlantCatalogById(plantLookupId) : Promise.resolve(null),
     getUserPlantWateringEvents(openid, id),
-    getUserPlantFertilizationHistory(models, openid, id)
+    loadFertilizationHistory().getUserPlantFertilizationHistory(models, openid, id)
       .then(events => ({ events, status: 'available' }))
       .catch(error => ({
         events: null,
@@ -1311,7 +1367,7 @@ async function insertWateringEvent(openid, userPlantId, event = {}) {
  * 不查 watering_events_json（planner 不需要），比 getUserPlantInstanceById 少一次 SQL。
  */
 async function getUserPlantWateringStrategy(openid, id) {
-  const result = await models.$runSQL(
+  const result = await runUserPlantReadSql(
     'SELECT plant_id, session_plant_id FROM user_plant_instances WHERE id = {{id}} AND _openid = {{openid}} LIMIT 1',
     { openid, id: Number(id) }
   )
@@ -1341,9 +1397,12 @@ async function getUserPlantWateringStrategy(openid, id) {
 
 async function listUserPlantInstances(openid, options = {}) {
   if (options.includeEnrichments === true) {
-    return listUserPlantInstancesWithEnrichmentsFast(openid, options)
+    // 首页列表原来先读基础分页，再用第二次批量 SQL 取目录、位置、提醒和诊断。
+    // 冷实例中两次数据库往返串行，网络波动会直接相加。这里固定走单条参数化
+    // 查询：仍只命中当前页、仍按每株读取最新一条富化记录，但只等待一次读结果。
+    return listUserPlantInstancesWithEnrichments(openid, options)
   }
-  // 仅保留旧富化实现作为排障回放入口；线上列表一律走快速批量路径。
+  // 仅保留完整 CTE 富化实现作为排障回放入口。
   if (options.includeEnrichments === 'legacy') {
     return listUserPlantInstancesWithEnrichments(openid, options)
   }
@@ -1364,23 +1423,15 @@ async function listUserPlantInstancesLegacy(openid, { page = 1, pageSize = 20 } 
       up.canonical_name,
       up.recognized_name,
       up.source_type,
-      up.recognition_type,
-      up.recognition_confidence,
-      up.identity_resolution_status,
-      up.visual_call_batch_id,
       up.nickname,
       up.location,
       up.plant_date,
       up.notes,
       CAST(up.light_environment_json AS CHAR) AS light_environment_json_text,
       CAST(up.air_environment_json AS CHAR) AS air_environment_json_text,
-      up.photos,
       up.last_watered,
       up.next_water,
-      up.created_at,
       up.plant_genus,
-      up.plant_family_en,
-      up.plant_latin_name,
       up.pot_top_diameter_cm,
       up.pot_bottom_diameter_cm,
       up.pot_height_cm,
@@ -1451,13 +1502,13 @@ function mapFirstByPlantId(rows, key) {
   return map
 }
 
-async function listUserPlantCareRows(openid, plantIds = []) {
+function buildUserPlantCareReadStatement(openid, plantIds = []) {
   const inClause = buildUserPlantIdInClause(plantIds)
   if (!inClause) {
-    return []
+    return null
   }
-  const result = await models.$runSQL(
-    `
+  return {
+    sql: `
       SELECT id, _openid, plant_id, user_id, location_key, city_name, latitude, longitude,
              weather_location, source
       FROM (
@@ -1469,18 +1520,17 @@ async function listUserPlantCareRows(openid, plantIds = []) {
       ) latest_care
       WHERE row_rank = 1
     `,
-    { openid }
-  )
-  return result?.data?.executeResultList || []
+    params: { openid }
+  }
 }
 
-async function listUserPlantWateringReminderRows(openid, plantIds = []) {
+function buildUserPlantWateringReminderReadStatement(openid, plantIds = []) {
   const inClause = buildUserPlantIdInClause(plantIds)
   if (!inClause) {
-    return []
+    return null
   }
-  const result = await models.$runSQL(
-    `
+  return {
+    sql: `
       SELECT id, user_plant_id, plan_id, reminder_type, status, last_watered,
              next_water_date, next_time, created_at, updated_at
       FROM (
@@ -1495,18 +1545,17 @@ async function listUserPlantWateringReminderRows(openid, plantIds = []) {
       ) latest_watering
       WHERE row_rank = 1
     `,
-    { openid }
-  )
-  return result?.data?.executeResultList || []
+    params: { openid }
+  }
 }
 
-async function listUserPlantFertilizationReminderRows(openid, plantIds = []) {
+function buildUserPlantFertilizationReminderReadStatement(openid, plantIds = []) {
   const inClause = buildUserPlantIdInClause(plantIds)
   if (!inClause) {
-    return []
+    return null
   }
-  const result = await models.$runSQL(
-    `
+  return {
+    sql: `
       SELECT id, user_plant_id, plan_id, status, reminder_kind, fertilizer_type, rule_month,
              last_applied_date, last_date_source, next_check_date, next_time,
              completed_date, expires_at, created_at, updated_at
@@ -1522,18 +1571,17 @@ async function listUserPlantFertilizationReminderRows(openid, plantIds = []) {
       ) latest_fertilization
       WHERE row_rank = 1
     `,
-    { openid }
-  )
-  return result?.data?.executeResultList || []
+    params: { openid }
+  }
 }
 
-async function listUserPlantLatestDiagnosisRows(openid, plantIds = []) {
+function buildUserPlantLatestDiagnosisReadStatement(openid, plantIds = []) {
   const inClause = buildUserPlantIdInClause(plantIds)
   if (!inClause) {
-    return []
+    return null
   }
-  const result = await models.$runSQL(
-    `
+  return {
+    sql: `
       SELECT user_plant_id, health_status, health_score
       FROM (
         SELECT user_plant_id, health_status, health_score,
@@ -1543,8 +1591,43 @@ async function listUserPlantLatestDiagnosisRows(openid, plantIds = []) {
       ) latest_diagnosis
       WHERE row_rank = 1
     `,
-    { openid }
-  )
+    params: { openid }
+  }
+}
+
+async function listUserPlantCareRows(openid, plantIds = []) {
+  const statement = buildUserPlantCareReadStatement(openid, plantIds)
+  if (!statement) {
+    return []
+  }
+  const result = await runUserPlantReadSql(statement.sql, statement.params)
+  return result?.data?.executeResultList || []
+}
+
+async function listUserPlantWateringReminderRows(openid, plantIds = []) {
+  const statement = buildUserPlantWateringReminderReadStatement(openid, plantIds)
+  if (!statement) {
+    return []
+  }
+  const result = await runUserPlantReadSql(statement.sql, statement.params)
+  return result?.data?.executeResultList || []
+}
+
+async function listUserPlantFertilizationReminderRows(openid, plantIds = []) {
+  const statement = buildUserPlantFertilizationReminderReadStatement(openid, plantIds)
+  if (!statement) {
+    return []
+  }
+  const result = await runUserPlantReadSql(statement.sql, statement.params)
+  return result?.data?.executeResultList || []
+}
+
+async function listUserPlantLatestDiagnosisRows(openid, plantIds = []) {
+  const statement = buildUserPlantLatestDiagnosisReadStatement(openid, plantIds)
+  if (!statement) {
+    return []
+  }
+  const result = await runUserPlantReadSql(statement.sql, statement.params)
   return result?.data?.executeResultList || []
 }
 
@@ -1589,7 +1672,6 @@ async function listUserPlantInstancesWithEnrichmentsFast(openid, { page = 1, pag
       up.pot_profile_version,
       up.pot_profile_source,
       up.pot_profile_confidence,
-      CAST(up.fertilization_guard_json AS CHAR) AS fertilization_guard_json_text,
       COUNT(*) OVER() AS total_count
     FROM user_plant_instances up
     WHERE up._openid = {{openid}}
@@ -1597,11 +1679,11 @@ async function listUserPlantInstancesWithEnrichmentsFast(openid, { page = 1, pag
     ORDER BY up.created_at DESC, up.id DESC
     LIMIT {{limit}} OFFSET {{offset}}
   `
-  const baseResult = await models.$runSQL(baseSql, { openid, limit, offset })
+  const baseResult = await runUserPlantReadSql(baseSql, { openid, limit, offset })
   const rows = (baseResult?.data?.executeResultList || []).filter(hasDisplayableUserPlantIdentity)
   let total = Number(rows[0]?.total_count || 0)
   if (!rows.length) {
-    const countResult = await models.$runSQL(
+    const countResult = await runUserPlantReadSql(
       `
         SELECT COUNT(*) AS total
         FROM user_plant_instances up
@@ -1614,13 +1696,24 @@ async function listUserPlantInstancesWithEnrichmentsFast(openid, { page = 1, pag
   }
   const plantIds = rows.map(row => Number(row.id)).filter(Number.isInteger)
   const catalogIds = Array.from(new Set(rows.map(resolveUserPlantCatalogLookupId).filter(Boolean)))
-  const [catalogMap, careRows, wateringRows, fertilizationRows, diagnosisRows] = await Promise.all([
-    getPlantCatalogByIds(catalogIds, { summary: true }),
-    listUserPlantCareRows(openid, plantIds),
-    listUserPlantWateringReminderRows(openid, plantIds),
-    listUserPlantFertilizationReminderRows(openid, plantIds),
-    listUserPlantLatestDiagnosisRows(openid, plantIds)
-  ])
+  const catalogPlan = preparePlantCatalogRead(catalogIds, { summary: true })
+  const enrichmentStatements = [
+    catalogPlan.statement,
+    buildUserPlantCareReadStatement(openid, plantIds),
+    buildUserPlantWateringReminderReadStatement(openid, plantIds),
+    buildUserPlantFertilizationReminderReadStatement(openid, plantIds),
+    buildUserPlantLatestDiagnosisReadStatement(openid, plantIds)
+  ].filter(Boolean)
+  const enrichmentResults = await runUserPlantReadSqlBatch(enrichmentStatements)
+  let enrichmentResultIndex = 0
+  const catalogMap = catalogPlan.statement
+    ? applyPlantCatalogReadResult(catalogPlan, enrichmentResults[enrichmentResultIndex++])
+    : catalogPlan.resultMap
+  const careRows = enrichmentResults[enrichmentResultIndex++]?.data?.executeResultList || []
+  const wateringRows = enrichmentResults[enrichmentResultIndex++]?.data?.executeResultList || []
+  const fertilizationRows =
+    enrichmentResults[enrichmentResultIndex++]?.data?.executeResultList || []
+  const diagnosisRows = enrichmentResults[enrichmentResultIndex++]?.data?.executeResultList || []
   const careByPlantId = mapFirstByPlantId(careRows, 'plant_id')
   const wateringByPlantId = mapFirstByPlantId(wateringRows, 'user_plant_id')
   const fertilizationByPlantId = mapFirstByPlantId(fertilizationRows, 'user_plant_id')
@@ -1649,46 +1742,48 @@ async function listUserPlantInstancesWithEnrichmentsFast(openid, { page = 1, pag
 }
 
 async function listUserPlantInstancesWithEnrichments(openid, { page = 1, pageSize = 20 } = {}) {
-  const limit = Number(pageSize)
-  const offset = (Number(page) - 1) * limit
+  const limit = Math.max(1, Number(pageSize) || 20)
+  const normalizedPage = Math.max(1, Number(page) || 1)
+  const offset = (normalizedPage - 1) * limit
   const displayableIdentityCondition = displayableUserPlantSqlCondition('up')
   const sql = `
+    WITH paged_user_plants AS (
+      SELECT
+        up.id,
+        up.record_version,
+        up.plant_id,
+        up.plant_identity_id,
+        up.session_plant_id,
+        up.canonical_name,
+        up.recognized_name,
+        up.source_type,
+        up.nickname,
+        up.location,
+        up.plant_date,
+        up.notes,
+        CAST(up.light_environment_json AS CHAR) AS light_environment_json_text,
+        CAST(up.air_environment_json AS CHAR) AS air_environment_json_text,
+        up.last_watered,
+        up.next_water,
+        up.plant_genus,
+        up.pot_top_diameter_cm,
+        up.pot_bottom_diameter_cm,
+        up.pot_height_cm,
+        up.has_drainage_hole,
+        up.pot_material,
+        up.substrate_type,
+        up.pot_profile_version,
+        up.pot_profile_source,
+        up.pot_profile_confidence,
+        COUNT(*) OVER() AS total_count
+      FROM user_plant_instances up
+      WHERE up._openid = {{openid}}
+        AND ${displayableIdentityCondition}
+      ORDER BY up.created_at DESC, up.id DESC
+      LIMIT {{limit}} OFFSET {{offset}}
+    )
     SELECT
-      up.id,
-      up.record_version,
-      up.plant_id,
-      up.plant_identity_id,
-      up.session_plant_id,
-      up.canonical_name,
-      up.recognized_name,
-      up.source_type,
-      up.recognition_type,
-      up.recognition_confidence,
-      up.identity_resolution_status,
-      up.visual_call_batch_id,
-      up.nickname,
-      up.location,
-      up.plant_date,
-      up.notes,
-      CAST(up.light_environment_json AS CHAR) AS light_environment_json_text,
-      CAST(up.air_environment_json AS CHAR) AS air_environment_json_text,
-      up.photos,
-      up.last_watered,
-      up.next_water,
-      up.created_at,
-      up.plant_genus,
-      up.plant_family_en,
-      up.plant_latin_name,
-      up.pot_top_diameter_cm,
-      up.pot_bottom_diameter_cm,
-      up.pot_height_cm,
-      up.has_drainage_hole,
-      up.pot_material,
-      up.substrate_type,
-      up.pot_profile_version,
-      up.pot_profile_source,
-      up.pot_profile_confidence,
-      CAST(up.fertilization_guard_json AS CHAR) AS fertilization_guard_json_text,
+      up.*,
       ds.health_status,
       ds.health_score,
       cat.plant_identity_id AS catalog_plant_identity_id,
@@ -1699,7 +1794,6 @@ async function listUserPlantInstancesWithEnrichments(openid, { page = 1, pageSiz
       cat.primary_display_name AS catalog_primary_display_name,
       cat.genus_name AS catalog_genus_name,
       cat.cover_image_ref AS catalog_cover_image_ref,
-      cat.fertilizing_monthly_strategy_json AS catalog_fertilizing_monthly_strategy_json,
       care.id AS care_location_id,
       care._openid AS care_openid,
       care.plant_id AS care_plant_id,
@@ -1735,29 +1829,16 @@ async function listUserPlantInstancesWithEnrichments(openid, { page = 1, pageSiz
       fert.expires_at AS fertilization_reminder_expires_at,
       fert.created_at AS fertilization_reminder_created_at,
       fert.updated_at AS fertilization_reminder_updated_at,
-      COUNT(*) OVER() AS total_count
-    FROM user_plant_instances up
-    LEFT JOIN diagnosis_sessions ds
-      ON ds.user_plant_id = up.id
-     AND ds._openid = up._openid
-     AND ds.created_at = (
-       SELECT MAX(latest_ds.created_at)
-       FROM diagnosis_sessions latest_ds
-       WHERE latest_ds.user_plant_id = up.id
-         AND latest_ds._openid = up._openid
-     )
-     AND ds.diagnosis_id = (
-       SELECT MAX(tie_break_ds.diagnosis_id)
-       FROM diagnosis_sessions tie_break_ds
-       WHERE tie_break_ds.user_plant_id = up.id
-         AND tie_break_ds._openid = up._openid
-         AND tie_break_ds.created_at = (
-           SELECT MAX(tie_break_created.created_at)
-           FROM diagnosis_sessions tie_break_created
-           WHERE tie_break_created.user_plant_id = up.id
-             AND tie_break_created._openid = up._openid
-         )
-     )
+      up.total_count
+    FROM paged_user_plants up
+    LEFT JOIN LATERAL (
+      SELECT diagnosis.health_status, diagnosis.health_score
+      FROM diagnosis_sessions diagnosis
+      WHERE diagnosis._openid = {{openid}}
+        AND diagnosis.user_plant_id = up.id
+      ORDER BY diagnosis.created_at DESC, diagnosis.diagnosis_id DESC
+      LIMIT 1
+    ) ds ON TRUE
     LEFT JOIN LATERAL (
       SELECT
         pie.plant_identity_id,
@@ -1766,19 +1847,9 @@ async function listUserPlantInstancesWithEnrichments(openid, { page = 1, pageSiz
         pie.canonical_identity_name_cn,
         pie.canonical_identity_name_en,
         pie.primary_display_name,
-        pie.identity_level,
-        pie.family_name_canonical,
-        pie.family_name_cn,
-        pie.family_name_en,
         pie.genus_name,
-        pie.cover_image_ref,
-        gcp.fertilizing_monthly_strategy_json,
-        pie.review_status AS identity_review_status
+        pie.cover_image_ref
       FROM plant_identity_entities pie
-      LEFT JOIN genus_care_profiles gcp
-        ON gcp.genus_name = pie.genus_name
-       AND gcp.family_name_canonical = pie.family_name_canonical
-       AND gcp.is_active = 1
       WHERE pie.is_active = 1
         AND (
           pie.plant_identity_id COLLATE utf8mb4_unicode_ci = ${USER_PLANT_CATALOG_LOOKUP_SQL}
@@ -1792,9 +1863,15 @@ async function listUserPlantInstancesWithEnrichments(openid, { page = 1, pageSiz
         pie.primary_display_name,
         pie.plant_identity_id
       LIMIT 1
-    ) cat ON TRUE
-    LEFT JOIN plant_care_locations care
-      ON care._openid = {{openid}} AND care.plant_id = up.id
+      ) cat ON TRUE
+    LEFT JOIN LATERAL (
+      SELECT id, _openid, plant_id, user_id, location_key, city_name, latitude,
+             longitude, weather_location, source
+      FROM plant_care_locations
+      WHERE _openid = {{openid}} AND plant_id = up.id
+      ORDER BY updated_at DESC, id DESC
+      LIMIT 1
+    ) care ON TRUE
     LEFT JOIN LATERAL (
       SELECT
         id, user_plant_id, plan_id, reminder_type, status, last_watered, next_water_date,
@@ -1820,16 +1897,12 @@ async function listUserPlantInstancesWithEnrichments(openid, { page = 1, pageSiz
       ORDER BY created_at DESC
       LIMIT 1
     ) fert ON TRUE
-    WHERE up._openid = {{openid}}
-      AND ${displayableIdentityCondition}
-    ORDER BY up.created_at DESC
-    LIMIT {{limit}} OFFSET {{offset}}
   `
-  const result = await models.$runSQL(sql, { openid, limit, offset })
+  const result = await runUserPlantReadSql(sql, { openid, limit, offset })
   const rows = (result?.data?.executeResultList || []).filter(hasDisplayableUserPlantIdentity)
   let total = Number(rows[0]?.total_count || 0)
   if (!rows.length) {
-    const countResult = await models.$runSQL(
+    const countResult = await runUserPlantReadSql(
       `SELECT COUNT(*) AS total
        FROM user_plant_instances up
        WHERE up._openid = {{openid}}
@@ -1901,7 +1974,7 @@ async function listUserPlantInstancesWithEnrichments(openid, { page = 1, pageSiz
       return item
     }),
     total,
-    page: Number(page),
+    page: normalizedPage,
     pageSize: limit,
     hasMore: offset + rows.length < total
   }
@@ -1952,7 +2025,7 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
     params.notes = normalizeUserPlantNotes(updates.notes)
   }
   if (updates.photos !== undefined) {
-    const ownedPhotos = await assertOwnedPlantImagesForPlant({
+    const ownedPhotos = await loadPlantImages().assertOwnedPlantImagesForPlant({
       openid,
       plantId: id,
       fileIds: updates.photos
@@ -2094,7 +2167,7 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
   }
 
   if (pendingPhotoFileIds.length) {
-    await bindOwnedTemporaryPlantImages({
+    await loadPlantImages().bindOwnedTemporaryPlantImages({
       openid,
       plantId: id,
       fileIds: pendingPhotoFileIds
@@ -2373,9 +2446,9 @@ module.exports = {
   createUserPlantInstance,
   getUserPlantInstanceById,
   getUserPlantFertilizationEvents: (openid, id, limit = 20) =>
-    getUserPlantFertilizationEvents(models, openid, id, limit),
+    loadFertilizationHistory().getUserPlantFertilizationEvents(models, openid, id, limit),
   insertFertilizationEvent: (openid, userPlantId, event = {}) =>
-    insertFertilizationEvent(models, openid, userPlantId, event),
+    loadFertilizationHistory().insertFertilizationEvent(models, openid, userPlantId, event),
   getUserPlantWateringEvents,
   insertWateringEvent,
   getUserPlantWateringStrategy,

@@ -3,7 +3,12 @@
  * 集成微信登录、获取手机号等功能
  */
 import { getWechatPhoneProfile } from '@/utils/cloudbase-auth'
-import { clearPlatformSession, savePlatformSession } from '@/api/platform-session'
+import {
+  clearPlatformSession,
+  savePlatformIdentityTicket,
+  savePlatformSession
+} from '@/api/platform-session'
+import { IS_LOCAL_API_BASE_URL, PLATFORM_PHONE_BOOTSTRAP_BASE_URL } from '@/api/env'
 import { requestHttpFunction } from '@/api/http'
 import { executeAuthUserMutation } from '@/vue-query/auth/mutations/user.js'
 import { fetchAuthUserByOpenidQuery } from '@/vue-query/auth/queries/user.js'
@@ -17,9 +22,13 @@ export async function loginWithPhone(phoneCode) {
       cloudId: typeof phoneCode === 'object' ? phoneCode?.cloudId || phoneCode?.cloudID || '' : ''
     })
 
-    const result = await requestHttpFunction('platform-phone-bootstrap-http/auth/platform-phone', {
+    const functionPath = IS_LOCAL_API_BASE_URL
+      ? 'platform-phone-bootstrap-http/auth/platform-phone'
+      : 'auth/platform-phone'
+    const result = await requestHttpFunction(functionPath, {
       method: 'POST',
       auth: false,
+      baseUrl: IS_LOCAL_API_BASE_URL ? undefined : PLATFORM_PHONE_BOOTSTRAP_BASE_URL,
       body: {
         action: 'platformPhoneLogin',
         data: {
@@ -78,6 +87,10 @@ export async function updateUserPhoneNumber(userId, phoneNumber) {
 export async function getUserById(userId) {
   const result = await fetchAuthUserByOpenidQuery(userId)
   if (result.code === 200) {
+    savePlatformIdentityTicket(
+      result.data?.httpIdentityTicket,
+      result.data?.httpIdentityTicketExpiresAt
+    )
     return result.data
   }
   throw new Error(result.message || '获取用户信息失败')

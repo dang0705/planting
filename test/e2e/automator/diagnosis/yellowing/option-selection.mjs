@@ -61,6 +61,19 @@ function pickBestOption(questionMeta, options, profile) {
     }
   }
 
+  if (profile === 'nutrient') {
+    if (contains(combined, ['施肥', '换盆']) || contains(qTarget, ['fertil'])) {
+      return (
+        pickByText('0 次') ||
+        pickByText('0次') ||
+        pickByText('1-2 次') ||
+        pickByText('1-2次') ||
+        unknownOptions[0] ||
+        list[0]
+      )
+    }
+  }
+
   if (unknownOptions.length) {
     return unknownOptions[0]
   }

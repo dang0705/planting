@@ -1,6 +1,7 @@
 'use strict'
 
 const DEFAULT_CATALOG_IMAGE_MAX_AGE_SECONDS = 7200
+const RESTRICTED_CATALOG_PLATFORMS = new Set(['douyin_mp', 'xiaohongshu_mp'])
 
 function normalizeCatalogImageRef(value) {
   const normalized = String(value || '').trim()
@@ -18,6 +19,38 @@ function collectCatalogImageRefs(items = []) {
         .filter(Boolean)
     )
   ]
+}
+
+function isRestrictedCatalogPlatform(platform) {
+  return RESTRICTED_CATALOG_PLATFORMS.has(String(platform || '').trim())
+}
+
+function compactCatalogPlantForRestrictedPlatform(item = {}, imageUrls = new Map()) {
+  const payload = { ...item }
+  const imageFileId = normalizeCatalogImageRef(item?.imageFileId)
+  delete payload.imageFileId
+  delete payload.image
+  delete payload.photos
+
+  const imageUrl = String(imageUrls.get(imageFileId) || '').trim()
+  if (imageUrl) {
+    payload.imageUrl = imageUrl
+    payload.imageSource = 'catalog'
+  } else {
+    delete payload.imageUrl
+    delete payload.imageSource
+  }
+  return payload
+}
+
+function mapCatalogPlantsForPlatform(value, { platform = '', imageUrls = new Map() } = {}) {
+  if (!value || !isRestrictedCatalogPlatform(platform)) {
+    return value
+  }
+  if (Array.isArray(value)) {
+    return value.map(item => compactCatalogPlantForRestrictedPlatform(item, imageUrls))
+  }
+  return compactCatalogPlantForRestrictedPlatform(value, imageUrls)
 }
 
 /**
@@ -61,5 +94,7 @@ module.exports = {
   DEFAULT_CATALOG_IMAGE_MAX_AGE_SECONDS,
   normalizeCatalogImageRef,
   collectCatalogImageRefs,
-  resolveCatalogImageUrls
+  resolveCatalogImageUrls,
+  isRestrictedCatalogPlatform,
+  mapCatalogPlantsForPlatform
 }

@@ -29,17 +29,14 @@ function resolveOrdinaryQuestionFallbackOptionKey(questionKey, questionDefinitio
   return String(option?.optionId || option?.optionKey || 'unknown').trim() || 'unknown'
 }
 
-function resolveOrdinaryQuestionFallbackControlId(questionKey, questionDefinitions = []) {
+function isLightEnvironmentQuestionDefinition(questionKey, questionDefinitions = []) {
   const question = (Array.isArray(questionDefinitions) ? questionDefinitions : []).find(
     item => String(item?.questionKey || '').trim() === String(questionKey || '').trim()
   )
-  if (
+  return (
     String(question?.packageTopic || '').trim() === 'light_change_context' ||
     String(question?.questionKey || '').includes('light_change_context')
-  ) {
-    return 'diagnose-light-window-no_window'
-  }
-  return ordinaryQuestionFallbackOptionId(questionKey, questionDefinitions)
+  )
 }
 
 export function ordinaryQuestionFallbackOptionId(questionKey, questionDefinitions = []) {
@@ -117,17 +114,43 @@ export async function answerVisibleOrdinaryQuestion({
   questionDefinitions = []
 }) {
   const questionLabel = `ordinary question ${ordinal}`
+  const isLightQuestion = isLightEnvironmentQuestionDefinition(
+    questionKey,
+    questionDefinitions
+  )
   if (
     !(await tapActiveQuestionControl({
       page,
       questionKey,
-      controlId: resolveOrdinaryQuestionFallbackControlId(questionKey, questionDefinitions),
+      controlId: ordinaryQuestionFallbackOptionId(questionKey, questionDefinitions),
       report,
       findElementById,
-      assertion: `${questionLabel} unknown option is available`
+      assertion: `${questionLabel} fallback option is available`
     }))
   ) {
     return false
+  }
+  if (isLightQuestion) {
+    if (
+      !(await tapActiveQuestionControl({
+        page,
+        questionKey,
+        controlId: `diagnose-light-type-almost_none-${questionKey}`,
+        report,
+        findElementById,
+        assertion: `${questionLabel} current light environment is selectable`
+      }))
+    ) {
+      return false
+    }
+    const confirmationId = `diagnose-light-confirm-current-${questionKey}`
+    const confirmation = await findElementById(page, confirmationId, 1500)
+    if (confirmation) {
+      await runBoundedAutomatorOperation({
+        operation: `question_package.${String(questionKey)}.${confirmationId}.tap`,
+        action: () => confirmation.tap()
+      })
+    }
   }
   return tapActiveQuestionControl({
     page,

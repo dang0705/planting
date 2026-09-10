@@ -59,6 +59,9 @@ stale_if_changed:
 
 ### 3.0 Automator v3 运行边界
 
+- QA 启动目标必须由 `scripts/qa/qa-backend-target.mjs` 的 canonical target（唯一固定目标）派生；`QA_ONLINE_API_BASE_URL`、`QA_ONLINE_HTTP_FUNCTION_BASE_URL` 和 `VITE_PUBLIC_HTTP_FUNCTION_BASE_URL` 只能作为一致性校验值，不能改写目标。online target 固定为当前开发验收环境的 CloudBase gateway/public HTTP function 对，发现 `api.tcloudbase.com`、其他环境或 gateway/public 混用时，在启动 DevTools 前阻断。
+- QA bootstrap 的顺序固定为：backend target -> QA profile 认证材料/认证世代 -> QA DevTools 项目与编译 -> Automator 9421 -> 真实首页业务身份 -> runtime preflight/wx.request。每一阶段都写入 `bootstrap_gates`；前一阶段未通过不得进入后一阶段。catalog 叶子可用 `requirements.backend_mode` 声明 LAN/online，formal `qa-run` 在进程启动前校验该声明。
+- 性能叶子不得裸跑：必须由同一 dispatch/run instance 的 formal `qa-run` 注入执行号、QA runtime identity proof、9421/9422 和真实 Automator 运行时；Node/curl、宿主机 HTTP、本地函数、旧 DevTools 请求或服务端日志只能用于诊断，不能写入端上性能结论。
 - 正式端上 QA 使用持久测试 profile 与固定 QA 端口 `9421/9422/9424/3799/3011/9100-9107`，不接触日常 `9420`、日常 profile 或日常 DevTools 进程；9424 仅用于 QA 原生认证状态重绑定并受主进程/profile/参数所有权校验；运行平面、构建镜像、manifest、owner、lease 和截图证据均由 QA-owned 状态管理。
 - 启动 readiness 不只检查端口：QA 主进程必须使用系统安装的原生 DevTools executable/package，并带有 QA-owned、来源哈希可核验的扩展快照 `--load-extension=<QA extension snapshot>` 和对应 `--custom-devtools-frontend=<snapshot>/inspector`，再在同一 QA profile、原生 bundle 和 owner 进程树中观察到真实 `--extension-process`；profile 内的 `WeappPlugin` 不再作为扩展事实源。QA CLI 副本只作为隔离 HOME 下的 `open`/`quit` 路由适配器，不能成为 runtime executable/package。只有 manifest、`devtools_page`、`inspector` 目录、快照 marker、源哈希和扩展子进程全部成立才可进入 ready；QA 还必须在项目打开前通过固定 9424 的 QA-owned 原生认证桥接端口调用动态发现的 `getUserInfo/updateUserInfo`，核对原生状态、`userInfo_*` 持久化字段、认证世代和 identity hash；缺少扩展子进程时返回 `qa_extension_load_failed`，原生认证桥接失败时返回有界的 `qa_native_auth_*` 终态，不得把“端口已监听”当作可用。
 - 同一微信号的两个 profile 只能通过认证 broker 协调 DevTools 服务端票据，不能把文件夹隔离误认为账号隔离。日常进程必须先通过 PID、进程启动身份、固定 profile、固定 3798/9423 端口、服务 listener 所属和一次性 capability 校验；在票据进入 120 秒窗口时，broker 通过原生日常 DevTools 官方 `Tool.refreshTicket` 让日常 owner 自己续票，再只读观察 profile/session log 并发布同一代 auth generation。QA 只能消费这份共享票据，不能自行调用刷新接口；刷新调用、观察不到新代次或身份变化都会在有界窗口内阻断。两边都关闭后，QA broker 仍可刷新共享票据并保留跨重启登录态。
@@ -82,12 +85,13 @@ stale_if_changed:
 
 - `src/pages/index/index.vue`：首页，植物卡水滴 icon 点击打开浇水提醒弹框（不再跳转日历页）。
 - `src/pages/index/components/WateringReminderSheet.vue`：浇水提醒底部弹框，含上次浇水入口、建议下次浇水 Summary、添加至日历主操作；点击上次浇水打开二级日期选择器（复用 `CareBehaviorTimeline`）。已保存提醒会回显上次设置时间和下次浇水建议。
-- `src/pages/diagnose/diagnose.vue`：诊断 Tab 的统一入口页面，直接挂载照片/无图症状入口；微信继续进入完整诊断流程，抖音/小红书在同一页面按能力表显示中性提示。
-- `src/subpackages/diagnosis/flow.vue`：完整诊断流程页面，接收植物和诊断模式上下文；受限平台只显示不可用提示，不创建诊断请求。
+- `src/pages/diagnose/diagnose.vue`：诊断 Tab 的统一入口页面，直接挂载照片/无图症状入口；微信和抖音进入完整诊断流程，小红书按能力表显示中性提示。
+- `src/subpackages/diagnosis/flow.vue`：完整诊断流程页面，接收植物和诊断模式上下文；抖音及其下游问题包不再被平台功能门禁拦截，小红书仍只显示不可用提示，不创建诊断请求。
 - `src/subpackages/diagnosis/diagnose-flow/**`：完整诊断内核，负责模式选择、图片、视觉请求、方向选择、题包交接、补拍和结果状态；所有可见题包统一由公共题包页承接。
 - `src/subpackages/diagnosis/question-package.vue`：黄叶、发蔫或下垂及 1～2 题动态虫害包的公共答题页；题包只按整包 `answer_submit` 提交。
 - `src/subpackages/diagnosis/components/DiagnosePopup.vue`：可复用的 BottomSheet 诊断容器，保留 open/close/reset、植物上下文和弹窗生命周期；当前首页植物卡片和植物详情入口直接导航到 `subpackages/diagnosis/flow`，不在主包创建该弹窗。
-- `src/subpackages/diagnosis/result.vue`：诊断历史的只读结果承接页；不与新诊断入口页混用。
+- `src/subpackages/diagnosis/result.vue`：诊断历史的只读结果承接页；用户植物历史入口在抖音可承接结果，不与新诊断入口页混用。
+- 抖音功能门禁已移除：前端功能不可用提示和服务端 `PLATFORM_FEATURE_UNAVAILABLE` 仅继续限制小红书；抖音仍保留图片临时 URL、植物字段与返回结构等平台传输适配，以及登录、会员和支付安全校验。
 - `src/pages/reminder/reminder.vue`：五项 tab 中的提醒页；加载真实用户植物，并分别复用 `WateringReminderSheet` 与 `FertilizationMonthlySheet` 完成浇水、施肥提醒入口和保存后刷新。
 - 诊断延续页与相关目录：历史命名不定义当前产品口径，当前以问诊题包与结果展示理解。
 - `src/subpackages/review/diagnosis-review.vue`：诊断审查分包页面。

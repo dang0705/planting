@@ -3,6 +3,9 @@
 const { createQWeatherAdapter } = require('../adapters/qweather-adapter')
 const { buildLocationKey } = require('./weather-cache-paths')
 
+const FORECAST_15D_CACHE_TTL_MS = 5 * 60 * 1000
+const forecast15dCache = new Map()
+
 function normalizeDate(value = '') {
   const raw = String(value || '').trim()
   if (!raw) {
@@ -179,16 +182,70 @@ async function fetchHistoricalDays({ adapter, lat, lng, dates }) {
   return results.slice(0, 10)
 }
 
-async function fetchForecastDays({ adapter, lat, lng, diagnosisDate }) {
-  const forecastDays = await adapter.fetchForecast15d({ lat, lng, diagnosisDate })
-  return (Array.isArray(forecastDays) ? forecastDays : [])
-    .map((record, index) =>
-      normalizeAdapterDaily(record, {
-        date: addDays(diagnosisDate, index),
-        source: 'qweather_forecast_15d'
-      })
-    )
-    .slice(0, 15)
+async function fetchForecastDays({ adapter, lat, lng, diagnosisDate, cacheKey = '' }) {
+  const readForecast = async () => {
+    const forecastDays = await adapter.fetchForecast15d({ lat, lng, diagnosisDate })
+    return (Array.isArray(forecastDays) ? forecastDays : [])
+      .map((record, index) =>
+        normalizeAdapterDaily(record, {
+          date: addDays(diagnosisDate, index),
+          source: 'qweather_forecast_15d'
+        })
+      )
+      .slice(0, 15)
+  }
+
+  // Only real QWeather requests are cached. Injected adapters in unit tests and
+  // maintenance callers retain their exact call semantics. The five-minute TTL
+  // matches the client query freshness and is short enough not to cross a normal
+  // forecast refresh boundary unnoticed.
+  if (!cacheKey) {
+    return readForecast()
+  }
+  const cached = forecast15dCache.get(cacheKey)
+  if (cached?.promise) {
+    return cached.promise
+  }
+  if (cached?.value && Date.now() - cached.cachedAt <= FORECAST_15D_CACHE_TTL_MS) {
+    return cached.value
+  }
+  forecast15dCache.delete(cacheKey)
+
+  const promise = readForecast()
+  forecast15dCache.set(cacheKey, { promise, cachedAt: Date.now() })
+  promise.then(
+    value => {
+      const current = forecast15dCache.get(cacheKey)
+      if (current?.promise === promise) {
+        forecast15dCache.set(cacheKey, { value, cachedAt: Date.now() })
+      }
+    },
+    () => {
+      const current = forecast15dCache.get(cacheKey)
+      if (current?.promise === promise) {
+        forecast15dCache.delete(cacheKey)
+      }
+    }
+  )
+  return promise
+}
+
+function prefetchEnvironmentForecast({
+  lat,
+  lng,
+  diagnosisDate = '',
+  apiKey = '',
+  baseUrl = '',
+  adapter = null
+} = {}) {
+  const qweatherAdapter = adapter || createQWeatherAdapter({ apiKey, baseUrl })
+  return fetchForecastDays({
+    adapter: qweatherAdapter,
+    lat,
+    lng,
+    diagnosisDate: normalizeDate(diagnosisDate),
+    cacheKey: adapter ? '' : `${String(lat)}:${String(lng)}`
+  })
 }
 
 async function buildEnvironmentWeatherWindow({
@@ -203,7 +260,8 @@ async function buildEnvironmentWeatherWindow({
   qweatherLocationId = '',
   cityName = '',
   city = '',
-  cacheWindow = null
+  cacheWindow = null,
+  forecastDaysPromise = null
 } = {}) {
   if (!hasLocation({ lat, lng })) {
     throw new Error('缺少位置参数：lat 和 lng')
@@ -215,7 +273,9 @@ async function buildEnvironmentWeatherWindow({
     return buildLocalDevWeatherWindow({ diagnosisDate: d0, lat, lng })
   }
 
-  const qweatherAdapter = adapter || createQWeatherAdapter({ apiKey, baseUrl })
+  const qweatherAdapter =
+    adapter ||
+    (!forecastDaysPromise || !hasCacheWindow ? createQWeatherAdapter({ apiKey, baseUrl }) : null)
   const historicalDates = buildDateRange(addDays(d0, -10), 10)
   const forecastDates = buildDateRange(d0, 15)
   const warnings = []
@@ -234,12 +294,14 @@ async function buildEnvironmentWeatherWindow({
   let currentWeather = null
 
   try {
-    forecastDays = await fetchForecastDays({
-      adapter: qweatherAdapter,
-      lat,
-      lng,
-      diagnosisDate: d0
-    })
+    forecastDays = await (forecastDaysPromise ||
+      fetchForecastDays({
+        adapter: qweatherAdapter,
+        lat,
+        lng,
+        diagnosisDate: d0,
+        cacheKey: adapter ? '' : `${String(lat)}:${String(lng)}`
+      }))
   } catch (error) {
     warnings.push(`forecast_15d_failed:${error.message || error}`)
     // 本地开发没有 QWeather 凭据时，只为未来日期保留明确标记的开发预报；
@@ -379,5 +441,7 @@ module.exports = {
   addDays,
   buildDateRange,
   buildEnvironmentWeatherWindow,
-  buildLocalDevWeatherWindow
+  buildLocalDevWeatherWindow,
+  fetchForecastDays,
+  prefetchEnvironmentForecast
 }

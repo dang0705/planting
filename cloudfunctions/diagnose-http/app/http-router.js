@@ -8,14 +8,41 @@ const {
   getHttpRequestData,
   resolveHttpUserInfo
 } = require('/opt/utils/http')
-let platformSession
+let assertPlatformFeature
 try {
-  platformSession = require('/opt/utils/platform-session')
+  ;({ assertPlatformFeature } = require('/opt/utils/platform-session'))
 } catch {
-  platformSession = require('../../layer/utils/platform-session')
+  // 旧的已验证 layer10 没有独立暴露 platform-session；诊断路由只需要
+  // 平台能力门禁，保留同一规则即可让当前代码兼容该 layer 的远端版本。
+  assertPlatformFeature = (identity, path) => {
+    const platform = String(identity?.platform || '').trim()
+    if (platform !== 'xiaohongshu_mp') {
+      return true
+    }
+    if (/\/user-plants(?:\/)?$/.test(String(path || '').split('?')[0])) {
+      return true
+    }
+    const message = /identify|recognition/.test(String(path || '').toLowerCase())
+      ? '当前端暂未开放 AI 植物识别，敬请期待。'
+      : /fertiliz/.test(String(path || '').toLowerCase())
+        ? '当前端暂未开放施肥提醒，敬请期待。'
+        : /watering|water-reminder/.test(String(path || '').toLowerCase())
+          ? '当前端暂未开放浇水提醒，敬请期待。'
+          : /calendar|reminder/.test(String(path || '').toLowerCase())
+            ? '当前端暂未开放日历提醒，敬请期待。'
+            : /subscription|pay|order/.test(String(path || '').toLowerCase())
+              ? '当前端暂未开放订阅服务，敬请期待。'
+              : /storage|upload|file/.test(String(path || '').toLowerCase())
+                ? '当前端暂未开放图片与文件服务，敬请期待。'
+                : '当前端暂未开放 AI 植物诊断，敬请期待。'
+    throw Object.assign(new Error(message), {
+      code: 'PLATFORM_FEATURE_UNAVAILABLE',
+      statusCode: 403
+    })
+  }
 }
-const { assertPlatformFeature } = platformSession
 const { debugLog } = require('../utils/common')
+const { createReviewTimingLogger } = require('../repositories/diagnosis-review/review-performance')
 
 let diagnosisHandlers = null
 let reviewHandlers = null
@@ -93,11 +120,42 @@ function normalizeHttpPayload(payload) {
   return {}
 }
 
+function buildIdentityResolutionHeaders(headers = {}) {
+  const normalizedHeaders = { ...(headers || {}) }
+  const hasAuthorization = Object.keys(normalizedHeaders).some(
+    key => String(key).toLowerCase() === 'authorization'
+  )
+  const platformSession = String(
+    Object.entries(normalizedHeaders).find(
+      ([key]) => String(key).toLowerCase() === 'x-planting-platform-session'
+    )?.[1] || ''
+  ).trim()
+
+  // wx.cloud.callHTTPFunction 会占用 Authorization 作为 CloudBase 网关凭据，
+  // 因此跨平台业务会话使用独立请求头；在函数内转换为既有 Bearer 解析入口。
+  // 令牌仍由 resolvePersistentSession 做哈希校验、过期校验和撤销校验，不能
+  // 通过客户端提交 userId/openid 绕过身份验证。
+  if (!hasAuthorization && platformSession) {
+    normalizedHeaders.authorization = `Bearer ${platformSession}`
+  }
+  return normalizedHeaders
+}
+
 async function main(event, context) {
   const request = getHttpRequestData(event, context)
   const path = String(request.path || '')
   const method = request.method || 'GET'
   const payload = normalizeHttpPayload(method === 'GET' ? request.query : request.body)
+  const requestTiming =
+    path.includes('/diagnosis/question/start') || path.includes('/diagnosis/answer')
+      ? createReviewTimingLogger(
+          path.includes('/diagnosis/answer')
+            ? 'diagnosis-answer-http'
+            : 'diagnosis-question-start-http',
+          { method, path }
+        )
+      : null
+  requestTiming?.mark('request-routed')
   debugLog('diagnose-http request routing:', {
     method,
     path
@@ -127,7 +185,18 @@ async function main(event, context) {
       })
     }
 
-    const identity = await resolveHttpUserInfo(request.headers, payload, context)
+    const identityHeaders = buildIdentityResolutionHeaders(request.headers)
+    const hasPlatformSession = Object.keys(request.headers || {}).some(
+      key => String(key).toLowerCase() === 'x-planting-platform-session'
+    )
+    const identity = await resolveHttpUserInfo(identityHeaders, payload, context, {
+      timing: requestTiming,
+      // 有应用会话时禁止退回微信运行时身份，避免跨端会话失效后串到另一
+      // 个微信平台用户；无应用会话时才读取 CloudBase HTTP 上下文中的真实
+      // 微信身份，不需要额外调用 wechat-identity。
+      allowRuntimeIdentity: !hasPlatformSession
+    })
+    requestTiming?.mark('identity-ready', { identityResolved: Boolean(identity?.openid) })
     if (!identity?.openid) {
       const error = new Error('请先登录')
       error.statusCode = 401
@@ -170,7 +239,10 @@ async function main(event, context) {
         return methodNotAllowed(method)
       }
       const { handleDiagnosisQuestionStart } = getDiagnosisHandlers()
-      return await handleDiagnosisQuestionStart(request, context, payload)
+      return await handleDiagnosisQuestionStart(request, context, payload, {
+        userInfo: identity,
+        timing: requestTiming
+      })
     }
 
     if (path.includes('/diagnosis/answer')) {
@@ -178,7 +250,10 @@ async function main(event, context) {
         return methodNotAllowed(method)
       }
       const { handleDiagnosisAnswer } = getDiagnosisHandlers()
-      return await handleDiagnosisAnswer(request, context, payload)
+      return await handleDiagnosisAnswer(request, context, payload, {
+        userInfo: identity,
+        timing: requestTiming
+      })
     }
 
     if (path.includes('/diagnosis/retake/authorize')) {

@@ -20,7 +20,7 @@ default_context:
 
 packs:
   ai-workflow:
-    trigger: 'dispatch-task, implementer routing, main docs, BRV, Codex rules'
+    trigger: 'dispatch-task, implementer routing, main docs, OpenViking, Codex rules'
     read:
       - AGENTS.md
       - .codex/memory.md
@@ -53,15 +53,14 @@ packs:
     max_additional_files: 0
 
   main-docs-patch:
-    trigger: 'classify says active contract, runbook, current map, or BRV index is affected'
+    trigger: 'classify says active contract, runbook, current map, or OpenViking memory is affected'
     read:
       - docs/CURRENT.md
       - docs/ACTIVE_CONTRACTS.md
       - docs/RUNBOOK.md
       - docs/_sync-map.yml
       - docs/_doc-status.yml
-      - .brv/config.json
-      - .brvspace
+      - .openviking/config.json
     input_required:
       - relevant diff hunks only
       - changed source files listed by sync-map
@@ -191,10 +190,8 @@ packs:
       - scripts/sql/ensure-formal-runtime-artifact-tables.sql
     max_additional_files: 6
 
-brv_policy:
-  default_manifest: .brvspace
-  default_read_only:
-    - .brvspace
-    - .brv/config.json
+openviking_policy:
+  default_peer_config: .openviking/config.json
+  default_scope: project_root_and_descendants
   full_fact_files_require_trigger: true
   invalidation_required: true

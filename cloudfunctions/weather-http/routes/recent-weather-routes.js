@@ -4,6 +4,8 @@ const { createRecentWeatherService } = require('../services/recent-weather-servi
 const { buildLocationKey } = require('../services/weather-cache-paths')
 const { formatLocalDateInTimezone } = require('../services/recent-weather-features')
 
+const DEFAULT_ENVIRONMENT_CONTEXT_CACHE_READ_TIMEOUT_MS = 700
+
 function buildRecentWeatherService({ apiKey = '', baseUrl = '' } = {}) {
   return createRecentWeatherService({ apiKey, baseUrl })
 }
@@ -37,22 +39,80 @@ function pickPayloadLocation(payload = {}) {
 async function buildDiagnosisRecentWeatherWindow({
   payload = {},
   service,
-  now = () => new Date()
+  now = () => new Date(),
+  onTimingMark = null
 }) {
+  const markTiming = (stage, details = {}) => {
+    if (typeof onTimingMark === 'function') {
+      onTimingMark(stage, details)
+    }
+  }
   const locationInfo = pickPayloadLocation(payload)
   const timezone = locationInfo.timezone || 'Asia/Shanghai'
   const diagnosisDate = locationInfo.diagnosisDate || formatLocalDateInTimezone(now(), timezone)
-  const recentWindow = await service.readRecentWeatherForDiagnosis({
+  const readTimeoutMs =
+    payload.readTimeoutMs || payload.timeoutMs || DEFAULT_ENVIRONMENT_CONTEXT_CACHE_READ_TIMEOUT_MS
+  const allowArchiveRebuild =
+    payload.allowArchiveRebuild === true || payload.allowArchiveRebuild === 'true'
+  const useCurrentWeatherMemoryCache =
+    payload.useCurrentWeatherMemoryCache === true || payload.useCurrentWeatherMemoryCache === 'true'
+
+  // recent-10d 与 D0 是独立事实源，但两次读取没有先后依赖；并行等待可把
+  // 请求时间从两条网络链路之和收敛到较慢的一条。关键环境接口默认不在请求内
+  // 触发 10 个 day archive 的同步重建，缓存缺失时明确降级并交给定时采集恢复。
+  markTiming('weather-cache-window-start', {
+    allow_archive_rebuild: allowArchiveRebuild,
+    read_timeout_ms: readTimeoutMs
+  })
+  const recentWindowPromise = service.readRecentWeatherForDiagnosis({
     ...locationInfo,
     timezone,
     diagnosisDate,
-    ...(payload.allowArchiveRebuild === undefined
-      ? {}
-      : {
-          allowArchiveRebuild:
-            payload.allowArchiveRebuild === true || payload.allowArchiveRebuild === 'true'
-        }),
-    readTimeoutMs: payload.readTimeoutMs || payload.timeoutMs
+    allowArchiveRebuild,
+    readTimeoutMs
+  })
+  recentWindowPromise.then(
+    recentWindow =>
+      markTiming('weather-cache-recent-ready', {
+        recent_cache_hit: recentWindow?.cacheHit === true,
+        historical_days: Array.isArray(recentWindow?.historicalDays)
+          ? recentWindow.historicalDays.length
+          : 0
+      }),
+    error => markTiming('weather-cache-recent-failed', { message: String(error?.message || error) })
+  )
+  const currentWeatherPromise = Promise.resolve()
+    .then(() =>
+      service.getCurrentWeatherFromDailyArchive({
+        ...locationInfo,
+        timezone,
+        targetDate: diagnosisDate,
+        useCache: true,
+        useMemoryCache: useCurrentWeatherMemoryCache,
+        skipFinalizedFallback: useCurrentWeatherMemoryCache,
+        readTimeoutMs
+      })
+    )
+    .catch(error => ({
+      weatherData: null,
+      dailyWeatherCache: {
+        reason: `current_weather_read_failed:${error.message || error}`
+      }
+    }))
+  currentWeatherPromise.then(currentResult =>
+    markTiming('weather-cache-current-ready', {
+      current_cache_hit: currentResult?.dailyWeatherCache?.cacheHit === true,
+      current_weather_present: Boolean(currentResult?.weatherData)
+    })
+  )
+  const [recentWindow, currentResult] = await Promise.all([
+    recentWindowPromise,
+    currentWeatherPromise
+  ])
+  markTiming('weather-cache-window-ready', {
+    recent_cache_hit: recentWindow?.cacheHit === true,
+    current_cache_hit: currentResult?.dailyWeatherCache?.cacheHit === true,
+    current_weather_present: Boolean(currentResult?.weatherData)
   })
 
   // 诊断天气窗口由两个独立缓存层组成：
@@ -66,12 +126,6 @@ async function buildDiagnosisRecentWeatherWindow({
   let todayWeatherFallbackDate = ''
 
   try {
-    const currentResult = await service.getCurrentWeatherFromDailyArchive({
-      ...locationInfo,
-      timezone,
-      targetDate: diagnosisDate,
-      useCache: true
-    })
     if (currentResult?.weatherData) {
       const observedWeatherDate = String(
         currentResult.weatherData.weatherDate || currentResult.dailyWeatherCache?.targetDate || ''

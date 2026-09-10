@@ -162,7 +162,9 @@ function limitRecentNormalizedEvents(events = [], limit = 10, referenceDate = ''
   const windowedEvents = normalizedReferenceDate
     ? events.filter(event => {
         const diff = daysAgo(normalizedReferenceDate, event.date)
-        return diff !== null && diff >= 0 && diff < limit
+        // 前端时间轴把参考日前第 limit 天作为可选日期（例如最近 10 天含今天时的边界日）。
+        // 边界日是用户明确选中的有效历史，不能在归一化时被静默丢弃，否则单条边界记录会被误判为“没有历史”。
+        return diff !== null && diff >= 0 && diff <= limit
       })
     : events
   return windowedEvents

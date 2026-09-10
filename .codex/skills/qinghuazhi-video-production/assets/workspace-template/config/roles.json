@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "roles": {
+    "female-a": {
+      "roleId": "female-a",
+      "label": "年轻女性绿植新手",
+      "gender": "女性",
+      "speaker": "新手",
+      "description": "中国年轻女性，室内绿植场景，新手视角，适合表达困惑、焦虑、确认、安心等日常养护情绪。",
+      "tags": [
+        "年轻女性",
+        "中国人",
+        "室内",
+        "绿植",
+        "新手"
+      ],
+      "assetRole": "female-a"
+    },
+    "male-a": {
+      "roleId": "male-a",
+      "label": "年轻男性绿植讲解角色",
+      "gender": "男性",
+      "speaker": "讲解者",
+      "description": "中国年轻男性，室内绿植场景，表达克制、清晰，适合解释和说明类镜头；不得包装为真实专家。",
+      "tags": [
+        "年轻男性",
+        "中国人",
+        "室内",
+        "绿植",
+        "专业感"
+      ],
+      "assetRole": "male-a"
+    }
+  }
+}

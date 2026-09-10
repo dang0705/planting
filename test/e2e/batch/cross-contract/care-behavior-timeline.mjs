@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
+import dayjs from 'dayjs'
 
 import {
   appendCareBehaviorSidecar,
@@ -52,14 +53,20 @@ assert.equal(normalizedFromSession.last_fertilized_bucket, 'within_10d')
 
 const displayWindow = buildCareBehaviorDisplayWindow(new Date(baseDate))
 assert.equal(displayWindow.length, 21)
-assert.equal(displayWindow[0].date, '2026-05-12')
-assert.equal(displayWindow[displayWindow.length - 1].date, '2026-06-01')
+assert.equal(displayWindow[0].date, '2026-05-11')
+assert.equal(displayWindow[displayWindow.length - 1].date, '2026-05-31')
+assert.equal(dayjs(displayWindow[0].date).day(), 1)
+assert.equal(dayjs(displayWindow[displayWindow.length - 1].date).day(), 0)
+assert.equal(
+  displayWindow.every((item, index) => dayjs(item.date).day() === (index + 1) % 7),
+  true
+)
 assert.equal(displayWindow.find(item => item.date === baseDate).isToday, true)
 assert.equal(displayWindow.find(item => item.date === baseDate).isSelectable, true)
 assert.equal(displayWindow.find(item => item.date === '2026-05-17').isHistoricalOutOfRange, true)
 assert.equal(displayWindow.find(item => item.date === '2026-05-17').isSelectable, false)
-assert.equal(displayWindow.find(item => item.date === '2026-06-01').isFuture, true)
-assert.equal(displayWindow.find(item => item.date === '2026-06-01').canOpenDetail, true)
+assert.equal(displayWindow.find(item => item.date === '2026-05-31').isFuture, true)
+assert.equal(displayWindow.find(item => item.date === '2026-05-31').canOpenDetail, true)
 
 const timelineWriteGuard = buildCareBehaviorTimelineFromDateEvents(
   {
@@ -603,6 +610,11 @@ assert.equal(diagnosePopupSource.includes('<swiper'), false)
 assert.equal(diagnosePopupSource.includes('<swiper-item'), false)
 assert.ok(questionPageSource.includes('environmentWeatherWindowLoading'))
 assert.ok(questionPageSource.includes('environmentWeatherWindowError'))
+assert.ok(questionPageSource.includes('v-if="isCareBehaviorWateringTimelineQuestion(question)"'))
+assert.ok(questionPageSource.includes(':reset-key="getCareBehaviorTimelineResetKey(question)"'))
+assert.ok(
+  questionPageSource.includes('@select-date="handleCareBehaviorTimelineDateSelect(question)"')
+)
 assert.ok(
   questionFlowSource.includes(
     'hasMeaningfulCareBehaviorTimeline(getCareBehaviorTimelineByQuestion(question))'
@@ -610,7 +622,22 @@ assert.ok(
 )
 assert.ok(questionPageSource.includes(':loading="environmentWeatherWindowLoading"'))
 assert.ok(questionPageSource.includes(':error="environmentWeatherWindowError"'))
-assert.ok(questionFlowSource.includes('Object.keys(storedTimeline).length'))
+assert.match(
+  questionFlowSource,
+  /const hasStoredTimeline = Object\.prototype\.hasOwnProperty\.call\(\s*careBehaviorTimelineByQuestionId\.value,\s*questionId\s*\)/s
+)
+assert.match(
+  questionFlowSource,
+  /if \(isTimelineAnswerSyncSuppressed\(questionId\)\) \{\s*return \{\}\s*\}/s
+)
+assert.match(questionFlowSource, /function getCareBehaviorTimelineResetKey\(question = \{\}\)/)
+assert.match(questionFlowSource, /function handleCareBehaviorTimelineDateSelect\(question\)/)
+assert.match(questionFlowSource, /bumpCareBehaviorTimelineResetVersion\(normalizedQuestionId\)/)
+assert.match(componentSource, /resetKey: \{ type: \[Number, String\], default: 0 \}/)
+assert.match(componentSource, /defineEmits\(\['change', 'select-date'\]\)/)
+assert.match(componentSource, /function resetInteractiveTimelineState\(\)/)
+assert.match(componentSource, /wateringDoseByDate\.value = \{\}/)
+assert.match(componentSource, /emit\('select-date', item\)/)
 assert.ok(questionFlowSource.includes('mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline('))
 assert.ok(questionPageSource.indexOf('questionDiagnosisContextText') < questionPageTrackStart)
 assert.ok(questionPageItemStart > questionPageTrackStart)

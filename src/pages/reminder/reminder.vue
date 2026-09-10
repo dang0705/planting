@@ -82,7 +82,7 @@ import { useUserStore } from '@/store/user.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
 import { requireMvpAccess } from '@/utils/subscription-access.js'
 import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
-import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
+import { isFeatureAvailable } from '@/utils/platform-capabilities.js'
 import WateringReminderSheet from '@/pages/index/components/WateringReminderSheet.vue'
 import FertilizationMonthlySheet from '@/pages/index/components/FertilizationMonthlySheet.vue'
 
@@ -94,7 +94,6 @@ const wateringReminderRef = ref(null)
 const fertilizationReminderRef = ref(null)
 const currentReminderPlantId = ref(null)
 const currentFertilizationPlantId = ref(null)
-const restrictedPlatform = isRestrictedMiniProgram()
 const {
   openedFeatureKey,
   visible: featureUnavailableVisible,
@@ -174,7 +173,7 @@ function getFertilizationReminderText(plant) {
 }
 
 async function openReminder(plant) {
-  if (restrictedPlatform) {
+  if (!isFeatureAvailable('watering')) {
     openFeatureUnavailable('watering')
     return
   }
@@ -187,7 +186,7 @@ async function openReminder(plant) {
 }
 
 async function openFertilizationReminder(plant) {
-  if (restrictedPlatform) {
+  if (!isFeatureAvailable('fertilization')) {
     openFeatureUnavailable('fertilization')
     return
   }

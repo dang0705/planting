@@ -98,12 +98,21 @@ async function verifyAuthenticatedWxRequest(miniProgram) {
   ).replace(/\/+$/u, '')
   const requestUrl = baseUrl.replace(/\/(?:plant-user-http\/)?user-plants\/health$/u, '') + '/plant-user-http/user-plants?page=1&pageSize=1'
   const slot = `__mpE2eLiveRequest_${Date.now()}_${process.pid}`
+  const cloudEnvId = String(
+    process.env.CLOUDBASE_ENV_ID || process.env.VITE_CLOUDBASE_ENV_ID || 'cloud1-2grufevs395a9d5e'
+  ).trim()
   await miniProgram.evaluate(
-    function (resultSlot, url) {
+    function (resultSlot, url, environmentId) {
       globalThis[resultSlot] = { state: 'pending' }
       const finish = value => { globalThis[resultSlot] = { state: 'done', ...value } }
       if (!wx.cloud || typeof wx.cloud.callFunction !== 'function') {
         finish({ ok: false, error: 'wx.cloud.callFunction unavailable' })
+        return
+      }
+      try {
+        wx.cloud.init({ env: environmentId, traceUser: false })
+      } catch (error) {
+        finish({ ok: false, error: error?.errMsg || error?.message || 'wx.cloud.init failed' })
         return
       }
       wx.cloud.callFunction({
@@ -135,7 +144,8 @@ async function verifyAuthenticatedWxRequest(miniProgram) {
       })
     },
     slot,
-    requestUrl
+    requestUrl,
+    cloudEnvId
   )
   const deadline = Date.now() + 15_000
   while (Date.now() < deadline) {

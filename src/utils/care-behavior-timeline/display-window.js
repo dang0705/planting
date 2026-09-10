@@ -1,30 +1,46 @@
+import dayjs from 'dayjs'
+
+const DEFAULT_ANCHOR_OFFSET = 0
+const DAY_FORMAT = 'YYYY-MM-DD'
+const DAY_STEP = 'day'
 const DEFAULT_DISPLAY_DAYS_BEFORE = 16
 const DEFAULT_DISPLAY_DAYS_AFTER = 4
 const DEFAULT_SELECTABLE_START_OFFSET = -10
 const DEFAULT_SELECTABLE_END_OFFSET = 0
+const DEFAULT_WEEK_START = 1
+const WINDOW_PADDING = 1
+const WEEK_DAY_COUNT = 7
 
 function toDateString(date) {
-  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
-    return ''
+  return date.format(DAY_FORMAT)
+}
+
+function coerceReferenceDate(referenceDate = dayjs()) {
+  const value = dayjs(referenceDate)
+  return value.isValid() ? value.startOf('day') : dayjs().startOf('day')
+}
+
+function getAlignedWeekStartDate(anchor, startOffset, alignAllowance) {
+  const rawStart = anchor.add(startOffset, DAY_STEP)
+  const rawWeekday = rawStart.day()
+  const shiftBackwardToMonday = (rawWeekday - DEFAULT_WEEK_START + WEEK_DAY_COUNT) % WEEK_DAY_COUNT
+  const shiftForwardToMonday = (DEFAULT_WEEK_START - rawWeekday + WEEK_DAY_COUNT) % WEEK_DAY_COUNT
+  if (shiftBackwardToMonday <= alignAllowance) {
+    return rawStart.subtract(shiftBackwardToMonday, DAY_STEP)
   }
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${date.getFullYear()}-${month}-${day}`
+  if (shiftForwardToMonday <= alignAllowance) {
+    return rawStart.add(shiftForwardToMonday, DAY_STEP)
+  }
+  return rawStart
 }
 
-function coerceReferenceDate(referenceDate = new Date()) {
-  const value = referenceDate instanceof Date ? new Date(referenceDate) : new Date(referenceDate)
-  return Number.isNaN(value.getTime()) ? new Date() : value
-}
-
-export function buildCareBehaviorDisplayWindow(referenceDate = new Date(), options = {}) {
-  const base = coerceReferenceDate(referenceDate)
-  const anchor = new Date(base.getFullYear(), base.getMonth(), base.getDate())
+export function buildCareBehaviorDisplayWindow(referenceDate = dayjs(), options = {}) {
+  const anchor = coerceReferenceDate(referenceDate)
   const displayDaysBefore = Number.isFinite(Number(options?.displayDaysBefore))
-    ? Math.max(0, Number(options.displayDaysBefore))
+    ? Math.max(DEFAULT_ANCHOR_OFFSET, Number(options.displayDaysBefore))
     : DEFAULT_DISPLAY_DAYS_BEFORE
   const displayDaysAfter = Number.isFinite(Number(options?.displayDaysAfter))
-    ? Math.max(0, Number(options.displayDaysAfter))
+    ? Math.max(DEFAULT_ANCHOR_OFFSET, Number(options.displayDaysAfter))
     : DEFAULT_DISPLAY_DAYS_AFTER
   const selectableStartOffset = Number.isFinite(Number(options?.selectableStartOffset))
     ? Number(options.selectableStartOffset)
@@ -33,19 +49,19 @@ export function buildCareBehaviorDisplayWindow(referenceDate = new Date(), optio
     ? Number(options.selectableEndOffset)
     : DEFAULT_SELECTABLE_END_OFFSET
 
-  const total = displayDaysBefore + displayDaysAfter + 1
-  const startOffset = -displayDaysBefore
+  const total = displayDaysBefore + displayDaysAfter + WINDOW_PADDING
+  const rawStartOffset = -displayDaysBefore
+  const alignedStartDate = getAlignedWeekStartDate(anchor, rawStartOffset, displayDaysAfter)
 
   return Array.from({ length: total }, (_, index) => {
-    const offset = startOffset + index
-    const date = new Date(anchor)
-    date.setDate(anchor.getDate() + offset)
+    const date = alignedStartDate.add(index, DAY_STEP)
+    const offset = date.diff(anchor, DAY_STEP)
     const normalized = toDateString(date)
     return {
       date: normalized,
-      day: date.getDate(),
-      isToday: offset === 0,
-      isFuture: offset > 0,
+      day: date.date(),
+      isToday: offset === DEFAULT_ANCHOR_OFFSET,
+      isFuture: offset > DEFAULT_ANCHOR_OFFSET,
       isHistoricalOutOfRange: offset < selectableStartOffset,
       isSelectable: offset >= selectableStartOffset && offset <= selectableEndOffset,
       canOpenDetail: true,

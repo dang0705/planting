@@ -19,7 +19,10 @@ const { normalizeRoundFromRoundId, resolveRequestClientContext } = require('./re
 const { persistRoundResult } = require('./visual-runtime')
 const outcomeRouteRepository = require('../repositories/outcome-route-repository')
 const { createReviewTimingLogger } = require('../repositories/diagnosis-review/review-performance')
-const { triggerStaticRepositoryCachePreload } = require('./static-cache-preloader')
+const {
+  triggerStaticRepositoryCachePreload,
+  triggerDiagnosisAnswerPackageCachePreload
+} = require('./static-cache-preloader')
 const {
   applyConsumedRetakeState,
   isCompleteQuestionPackageSnapshotAnswerSubmit,
@@ -36,6 +39,10 @@ const {
   ensurePackageVersionTwo,
   validateAirEnvironmentPackageSidecar
 } = require('./air-environment-package')
+const {
+  verifyQuestionPackageContinuationToken,
+  buildQuestionPackageContinuationSessionState
+} = require('./question-package-continuation')
 
 function getSessionQuestionRowRuntime() {
   return require('./session-question-row-runtime')
@@ -62,6 +69,13 @@ function isSpecificPestQuestionPackage(value = null) {
     normalizePackageMode(value.route) === 'specific_pest_visual' ||
     normalizePackageMode(value.sourceMode) === 'visual_specific_pest'
   )
+}
+
+function isYellowLeafQuestionPackage(value = null) {
+  const mode = String(
+    value?.mode || value?.diagnosisMode || value?.sourceMode || value?.route || ''
+  ).trim()
+  return ['yellow_leaf', 'manual_yellowing_care_environment_frontloaded', 'yellowing_mode', 'leaf_yellowing'].includes(mode)
 }
 
 function resolvePayloadSpecificPestQuestionPackage(payload = {}) {
@@ -157,32 +171,23 @@ function resolveSpecificPestQuestionPackageFromRows({
   }
 }
 
-async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } = {}) {
+async function runAnswerDiagnosis({
+  payload,
+  openid,
+  skipPersistence = false,
+  timing: requestTiming = null
+} = {}) {
   payload = payload || {}
   const sessionId = payload.diagnosisSessionId || payload.diagnosisId
   if (!sessionId) {
     throw Object.assign(new Error('缺少 diagnosisSessionId'), { statusCode: 400 })
   }
-  const timing = createReviewTimingLogger('diagnosis-answer', {
-    sessionId,
-    skipPersistence: Boolean(skipPersistence)
-  })
-
-  const sessionState = await getSessionState(openid, sessionId)
-  if (!sessionState) {
-    throw Object.assign(new Error('诊断会话不存在或已失效'), { statusCode: 404 })
-  }
-  timing.mark('session-state-loaded', {
-    hasAnswers:
-      Array.isArray(sessionState?.answeredAnswers) && sessionState.answeredAnswers.length > 0
-  })
-  triggerStaticRepositoryCachePreload({
-    scope: 'diagnosis-answer',
-    sessionId,
-    openid,
-    source: 'answer_runner'
-  })
-  timing.mark('static-cache-preload-triggered')
+  const timing =
+    requestTiming ||
+    createReviewTimingLogger('diagnosis-answer', {
+      sessionId,
+      skipPersistence: Boolean(skipPersistence)
+    })
 
   const {
     answers,
@@ -195,11 +200,62 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     payloadQuestionPackageSubmit,
     dirtyQuestionKey
   } = resolveAnswerInputRuntime(payload)
+  const payloadQuestionPackage = payload?.questionPackage || payload?.question_package || null
+  const canUseSnapshotOnlySessionRead =
+    payloadQuestionPackageSubmit && !isSpecificPestQuestionPackage(payloadQuestionPackage)
+  const answerPackageQuestionKeys = Array.from(
+    new Set((Array.isArray(answers) ? answers : []).map(item => String(item?.questionKey || '').trim()).filter(Boolean))
+  )
+  const answerPackageRuntimePreloadPromise =
+    canUseSnapshotOnlySessionRead && answerPackageQuestionKeys.length
+      ? triggerDiagnosisAnswerPackageCachePreload(answerPackageQuestionKeys, {
+          additionalOutcomeKeys: isYellowLeafQuestionPackage(payloadQuestionPackage)
+            ? ['low_light_growth_weakness', 'sunburn', 'overwatering_root_pressure']
+            : [],
+          scope: 'diagnosis-answer',
+          sessionId,
+          openid,
+          source: 'answer_request'
+        })
+      : null
+  const questionPackageContinuation = canUseSnapshotOnlySessionRead
+    ? verifyQuestionPackageContinuationToken({
+        token:
+          payload?.questionPackageContinuationToken ||
+          payload?.question_package_continuation_token ||
+          '',
+        openid,
+        sessionId
+      })
+    : null
+  if (questionPackageContinuation) {
+    // 题包定义来自服务端签名票据，不能继续使用客户端可改写的 package
+    // 参与模式判断或 outcome 计算。answers 仍会通过票据快照做题目/选项归属校验。
+    payload = {
+      ...payload,
+      questionPackage: questionPackageContinuation.questionPackage
+    }
+  }
+  const sessionState = questionPackageContinuation
+    ? buildQuestionPackageContinuationSessionState(questionPackageContinuation)
+    : await getSessionState(openid, sessionId, {
+        loadAuxiliary: !canUseSnapshotOnlySessionRead
+      })
+  if (!sessionState) {
+    throw Object.assign(new Error('诊断会话不存在或已失效'), { statusCode: 404 })
+  }
+  timing.mark('session-state-loaded', {
+    loadAuxiliary: !canUseSnapshotOnlySessionRead,
+    source: questionPackageContinuation ? 'signed_question_package_continuation' : 'database',
+    hasAnswers:
+      Array.isArray(sessionState?.answeredAnswers) && sessionState.answeredAnswers.length > 0
+  })
   let answerRevision = null
   let uiPatch = null
 
-  const observedSymptoms =
-    Array.isArray(sessionState.observedEvidenceSet) && sessionState.observedEvidenceSet.length
+  const observedSymptoms = canUseSnapshotOnlySessionRead
+    ? []
+    : Array.isArray(sessionState.observedEvidenceSet) && sessionState.observedEvidenceSet.length
       ? []
       : await getObservedSymptomsBySession(sessionId)
   if (observedSymptoms.length) {
@@ -221,6 +277,43 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
   const answerRound = roundFromClient || expectedRound
   let refreshedSessionState = sessionState
   const storedQuestionPackageSnapshot = resolveQuestionPackageSnapshot(refreshedSessionState)
+  const hasStoredQuestionPackageRuntimeData = Boolean(
+    storedQuestionPackageSnapshot?.questionPackageRuntimeData &&
+    Array.isArray(storedQuestionPackageSnapshot.questionPackageRuntimeData.answerEffects) &&
+    Array.isArray(storedQuestionPackageSnapshot.questionPackageRuntimeData.diagnosisOutcomes) &&
+    Array.isArray(storedQuestionPackageSnapshot.questionPackageRuntimeData.actionProfiles)
+  )
+  const preloadedQuestionPackageRuntimeData =
+    !hasStoredQuestionPackageRuntimeData && answerPackageRuntimePreloadPromise
+      ? await answerPackageRuntimePreloadPromise
+      : null
+  if (canUseSnapshotOnlySessionRead && !hasStoredQuestionPackageRuntimeData) {
+    if (!preloadedQuestionPackageRuntimeData && !answerPackageRuntimePreloadPromise) {
+      triggerDiagnosisAnswerPackageCachePreload(
+        storedQuestionPackageSnapshot?.packageQuestions
+          ?.map(question => question?.questionKey)
+          .filter(Boolean) || [],
+        {
+          scope: 'diagnosis-answer',
+          sessionId,
+          source: 'answer_runner'
+        }
+      )
+    }
+  } else {
+    triggerStaticRepositoryCachePreload({
+      scope: 'diagnosis-answer',
+      sessionId,
+      openid,
+      source: 'answer_runner'
+    })
+  }
+  timing.mark('static-cache-preload-triggered', {
+    mode: canUseSnapshotOnlySessionRead ? 'question_package' : 'full',
+    runtimeDataReady: Boolean(
+      hasStoredQuestionPackageRuntimeData || preloadedQuestionPackageRuntimeData
+    )
+  })
   const payloadSpecificPestQuestionPackage = resolvePayloadSpecificPestQuestionPackage(payload)
   let questionPackageSnapshot = storedQuestionPackageSnapshot || payloadSpecificPestQuestionPackage
   let hasSpecificPestQuestionPackageSnapshot =
@@ -307,12 +400,29 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
           : [])
       ])
     )
-    const optionMappingPromise = questionKeys.length
-      ? getQuestionOptionMappings(questionKeys)
-      : Promise.resolve([])
-    const routeAnswerEffectsPromise = routeAnswerEffectQuestionKeys.length
-      ? outcomeRouteRepository.getOutcomeAnswerEffects(routeAnswerEffectQuestionKeys)
-      : Promise.resolve([])
+    const hasPackageOptionSnapshot =
+      isTerminalQuestionPackageSubmit &&
+      !hasSpecificPestQuestionPackageSnapshot &&
+      Array.isArray(questionPackageSnapshot?.packageQuestions) &&
+      questionPackageSnapshot.packageQuestions.length > 0
+    const optionMappingPromise =
+      questionKeys.length && !hasPackageOptionSnapshot
+        ? getQuestionOptionMappings(questionKeys)
+        : Promise.resolve([])
+    const questionPackageRuntimeData =
+      questionPackageSnapshot?.questionPackageRuntimeData || preloadedQuestionPackageRuntimeData
+    const hasQuestionPackageRuntimeData = Boolean(
+      isTerminalQuestionPackageSubmit &&
+      questionPackageRuntimeData &&
+      Array.isArray(questionPackageRuntimeData.answerEffects) &&
+      Array.isArray(questionPackageRuntimeData.diagnosisOutcomes) &&
+      Array.isArray(questionPackageRuntimeData.actionProfiles)
+    )
+    const routeAnswerEffectsPromise = hasQuestionPackageRuntimeData
+      ? Promise.resolve(questionPackageRuntimeData.answerEffects)
+      : routeAnswerEffectQuestionKeys.length
+        ? outcomeRouteRepository.getOutcomeAnswerEffects(routeAnswerEffectQuestionKeys)
+        : Promise.resolve([])
     const [ownership, questionOptionMappingsFromStore, routeAnswerEffectsFromStore] =
       isAnswerRevision
         ? await Promise.all([
@@ -510,6 +620,8 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     sessionState,
     runtimeCarePayload,
     runtimeRouteAnswerEffects,
+    questionPackageRuntimeData:
+      questionPackageSnapshot?.questionPackageRuntimeData || preloadedQuestionPackageRuntimeData,
     visualExtraction,
     clientContext
   })
@@ -606,17 +718,14 @@ async function runAnswerDiagnosis({ payload, openid, skipPersistence = false } =
     hasImageInputs: Boolean(hasImageInputs)
   })
 
-  // A terminal package answer without image inputs used to return before the
-  // session write completed. That is acceptable for an unbound diagnosis, but
-  // it is unsafe for a user plant: the response can already be final while a
-  // diagnosis-derived fertilization guard is still missing from the plant.
-  const linkedUserPlantId =
-    roundResult?.plantContext?.userPlantId || refreshedSessionState?.userPlantId || null
+  // A terminal package answer without image inputs is fully computed from the
+  // server-side question package snapshot. Persisting the final session and
+  // diagnosis-derived fertilization guard is still required, but neither write
+  // is needed to render this already-computed response. Keep both writes on the
+  // same server invocation and observe failures, without making the user wait
+  // for an extra SQL round trip (including the linked user-plant path).
   const shouldReturnBeforeRoundPersistence =
-    isTerminalQuestionPackageSubmit &&
-    !hasImageInputs &&
-    !isAnswerRevision &&
-    !linkedUserPlantId
+    isTerminalQuestionPackageSubmit && !hasImageInputs && !isAnswerRevision
   if (shouldReturnBeforeRoundPersistence) {
     for (const task of requiredAnswerPersistenceTasks) {
       if (task && typeof task.then === 'function') {

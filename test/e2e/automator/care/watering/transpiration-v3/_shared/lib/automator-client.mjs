@@ -216,7 +216,12 @@ export async function reLaunchTo(mp, pagePath) {
     timeoutMs: CONNECT_TIMEOUT_MS,
     operation: () => waitForPageSettled(mp)
   })
-  if (normalizePagePath(settledPage?.path) === normalizePagePath(pagePath)) {
+  // 同一路径也可能通过 query 参数承载不同业务模式（例如
+  // user-plant-detail?mode=view 与 ?mode=edit）。只比较 pathname 会把旧
+  // 页面误判为目标页面，导致后续断言实际仍在 view 模式。带 query 的
+  // 目标必须真正发起一次 reLaunch，再由目标路径 fence 等待稳定。
+  const targetHasQuery = String(pagePath || '').includes('?')
+  if (!targetHasQuery && normalizePagePath(settledPage?.path) === normalizePagePath(pagePath)) {
     return settledPage
   }
   let navigationError = null

@@ -231,7 +231,11 @@ import { createAsyncActionGuard } from '@/utils/interaction-guard.js'
 import { parsePlantDateTime } from '@/utils/plant-datetime.js'
 import { requireMvpAccess } from '@/utils/subscription-access.js'
 import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
-import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
+import {
+  isDiagnosisAvailable,
+  isFeatureAvailable,
+  isRestrictedMiniProgram
+} from '@/utils/platform-capabilities.js'
 
 const HTTP_SUCCESS_CODE = 200
 const props = defineProps({
@@ -427,7 +431,7 @@ const ventilationText = computed(() => {
 })
 
 async function startDiagnosis() {
-  if (restrictedPlatform) {
+  if (!isDiagnosisAvailable('plant_detail')) {
     openFeatureUnavailable('diagnosis')
     return
   }
@@ -446,7 +450,7 @@ async function startDiagnosis() {
 }
 
 async function doWatering() {
-  if (restrictedPlatform) {
+  if (!isFeatureAvailable('watering')) {
     openFeatureUnavailable('watering')
     return
   }

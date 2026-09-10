@@ -1,4 +1,5 @@
 import { httpRequest } from '@/http-functions/core/httpRequest'
+import { IS_LOCAL_API_BASE_URL, PUBLIC_HTTP_FUNCTION_BASE_URL } from '@/api/env'
 
 const defaultHttpFunctionRequester = httpRequest()
 
@@ -11,6 +12,10 @@ export async function requestHttpFunction(
     payload,
     headers,
     auth = true,
+    preferPlatformSession = false,
+    requirePlatformSession = false,
+    requireSignedIdentityTicket = false,
+    dataType,
     responseType,
     enableChunked,
     timeout,
@@ -19,6 +24,8 @@ export async function requestHttpFunction(
     onChunkReceived
   } = {}
 ) {
+  const publicBaseUrl =
+    baseUrl ?? (!IS_LOCAL_API_BASE_URL ? PUBLIC_HTTP_FUNCTION_BASE_URL : undefined)
   const response = await defaultHttpFunctionRequester({
     functionPath,
     method,
@@ -26,10 +33,14 @@ export async function requestHttpFunction(
     payload: payload ?? body,
     headers,
     auth,
+    preferPlatformSession,
+    requirePlatformSession,
+    requireSignedIdentityTicket,
+    dataType,
     responseType,
     enableChunked,
     timeout,
-    baseUrl,
+    baseUrl: publicBaseUrl,
     returnErrorResponse,
     onChunkReceived
   })

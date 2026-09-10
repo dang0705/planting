@@ -10,6 +10,7 @@
         :id-prefix="idPrefix"
         :model-value="environment"
         :disabled="disabled"
+        :hide-navigation="externalFooter"
         :back-label="backLabel"
         :back-id="resolvedBackId"
         :completion-label="completionLabel"
@@ -205,6 +206,7 @@ const props = defineProps({
   heightMode: { type: String, default: 'content' },
   disabled: { type: Boolean, default: false },
   footerPosition: { type: String, default: 'absolute' },
+  externalFooter: { type: Boolean, default: false },
   backLabel: { type: String, default: '' },
   backId: { type: String, default: '' },
   completionLabel: { type: String, default: '' },

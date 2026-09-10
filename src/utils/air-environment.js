@@ -163,8 +163,13 @@ export function normalizeAirEnvironmentLocationBinding(value = {}) {
 export function isSameAirEnvironmentLocationBinding(saved = {}, current = {}) {
   const savedBinding = normalizeAirEnvironmentLocationBinding(saved)
   const currentBinding = normalizeAirEnvironmentLocationBinding(current)
-  if (!savedBinding.careLocationId && !savedBinding.locationKey) {
-    return false
+  // 历史档案可能没有位置绑定；当前植物也可能尚未保存照料位置。此时不能
+  // 把“无法比较”当成“位置已变化”，否则每次问诊都会强迫用户重填空气环境。
+  // 只有两边都有可比较的位置且确实不同，才要求再次确认。
+  const hasSavedBinding = Boolean(savedBinding.careLocationId || savedBinding.locationKey)
+  const hasCurrentBinding = Boolean(currentBinding.careLocationId || currentBinding.locationKey)
+  if (!hasSavedBinding || !hasCurrentBinding) {
+    return true
   }
   return (
     savedBinding.careLocationId === currentBinding.careLocationId &&

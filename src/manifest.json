@@ -74,7 +74,13 @@
   "mp-toutiao": {
     "appid": "tt79ef0f52e78e857401",
     "usingComponents": true,
-    "usePrivacyCheck": true
+    "usePrivacyCheck": true,
+    "permission": {
+      "scope.userLocation": {
+        "desc": "用于获取您的位置信息以提供天气服务"
+      }
+    },
+    "requiredPrivateInfos": ["scope.userLocation"]
   },
   "mp-xhs": {
     "appid": "69b9576cdb45760001d82e15",

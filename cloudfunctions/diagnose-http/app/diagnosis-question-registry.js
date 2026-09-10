@@ -41,8 +41,9 @@ function resolveRuntimeMetadata(packageTopic = '') {
 function assertRepository(repository = {}) {
   if (
     !repository ||
-    typeof repository.getQuestionsByKeys !== 'function' ||
-    typeof repository.getQuestionOptionMappings !== 'function'
+    (typeof repository.getQuestionPackageByKeys !== 'function' &&
+      (typeof repository.getQuestionsByKeys !== 'function' ||
+        typeof repository.getQuestionOptionMappings !== 'function'))
   ) {
     throw Object.assign(new Error('题包问题数据库仓储不可用'), { statusCode: 500 })
   }
@@ -134,10 +135,15 @@ async function loadRegisteredPackageQuestion({
   const resolvedRepository = repository || getDefaultQuestionRepository()
   assertRepository(resolvedRepository)
 
-  const [questions, optionRows] = await Promise.all([
-    resolvedRepository.getQuestionsByKeys([questionKey]),
-    resolvedRepository.getQuestionOptionMappings([questionKey])
-  ])
+  const packageRows = typeof resolvedRepository.getQuestionPackageByKeys === 'function'
+    ? await resolvedRepository.getQuestionPackageByKeys([questionKey])
+    : null
+  const [questions, optionRows] = packageRows
+    ? [packageRows.questions, packageRows.optionRows]
+    : await Promise.all([
+        resolvedRepository.getQuestionsByKeys([questionKey]),
+        resolvedRepository.getQuestionOptionMappings([questionKey])
+      ])
   const question = (Array.isArray(questions) ? questions : [])
     .find(item => normalizeText(item?.questionKey) === questionKey)
   if (!question) {

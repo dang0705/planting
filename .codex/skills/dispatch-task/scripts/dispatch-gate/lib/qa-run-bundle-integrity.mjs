@@ -27,7 +27,7 @@ export function resolveCatalogExecutionBundle({
   if (!validExecutionId(executionId)) {
     errors.push('--execution-id must be 8-160 chars of [a-zA-Z0-9._-]')
   }
-  const catalogReport = catalogValidator()
+  const catalogReport = catalogValidator({ catalogId })
   if (catalogReport.status !== 'passed') {
     errors.push(...catalogReport.errors)
   }

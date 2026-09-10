@@ -13,6 +13,8 @@ const STATIC_REPOSITORY_CACHE_TTL_MS = Math.max(
 const staticCache = {
   allRouteGroupsBySchema: new Map(),
   preloadExpiresAtBySchema: new Map(),
+  answerPackagePreloadExpiresAtBySchema: new Map(),
+  answerPackageRuntimeDataBySchema: new Map(),
   routeGroupsBySignature: new Map(),
   routesByOutcomeSignature: new Map(),
   conditionsByRouteSignature: new Map(),
@@ -414,7 +416,7 @@ async function preloadOutcomeRouteRepositoryCache() {
             host_profile_condition_json,
             entry_priority,
             max_questions,
-            conservative_policy,
+            fallback_policy AS conservative_policy,
             action_profile_key,
             action_conflict_group,
             enabled,
@@ -433,11 +435,11 @@ async function preloadOutcomeRouteRepositoryCache() {
             route_questions.route_key,
             route_questions.step_no,
             route_questions.question_key,
-            questions.package_topic,
+            '' AS package_topic,
             questions.target_symptom_key,
             questions.question_text_user_cn,
-            route_questions.condition_key,
-            route_questions.route_package_role,
+            route_questions.gate_key AS condition_key,
+            route_questions.question_role AS route_package_role,
             route_questions.required_for_closure,
             route_questions.ask_priority,
             route_questions.skip_if_evidence_json,
@@ -664,6 +666,189 @@ async function preloadOutcomeRouteRepositoryCache() {
   })
 }
 
+async function preloadDiagnosisAnswerPackageCache(questionKeys = [], additionalOutcomeKeys = []) {
+  const safeQuestionKeys = normalizeKeys(questionKeys)
+  const safeAdditionalOutcomeKeys = normalizeKeys(additionalOutcomeKeys)
+  if (!STATIC_REPOSITORY_CACHE_TTL_MS || !safeQuestionKeys.length) {
+    return null
+  }
+
+  const now = Date.now()
+  const schema = resolveSchema()
+  if (Number(staticCache.answerPackagePreloadExpiresAtBySchema.get(schema) || 0) > now) {
+    return staticCache.answerPackageRuntimeDataBySchema.get(schema) || null
+  }
+
+  return withPendingStaticQuery(
+    buildSchemaCacheKey(['preloadDiagnosisAnswerPackageCache', normalizeCacheSignature(safeQuestionKeys)]),
+    async () => {
+      const refreshedNow = Date.now()
+      if (Number(staticCache.answerPackagePreloadExpiresAtBySchema.get(schema) || 0) > refreshedNow) {
+        return staticCache.answerPackageRuntimeDataBySchema.get(schema) || null
+      }
+
+      const answerEffectsRaw = await runSql(
+        `
+          SELECT
+            question_key,
+            option_key,
+            outcome_key,
+            route_key,
+            effect_type,
+            effect_strength,
+            redirect_outcome_key,
+            evidence_dimension,
+            effect_note_cn,
+            enabled,
+            review_status,
+            data_status
+          FROM ${table('outcome_answer_effects')}
+          WHERE question_key IN ${sqlInList(safeQuestionKeys)}
+            AND enabled = 1
+            AND ${buildAuditedStatusClause('data_status')}
+            AND ${buildReviewedStatusClause('review_status')}
+          ORDER BY question_key ASC, option_key ASC
+        `
+      )
+
+      const mappedAnswerEffects = answerEffectsRaw.map(mapAnswerEffectRow)
+      const effectsByQuestion = new Map()
+      for (const row of mappedAnswerEffects) {
+        const key = normalizeKey(row.questionKey)
+        if (!key) {continue}
+        const rows = effectsByQuestion.get(key) || []
+        rows.push(row)
+        effectsByQuestion.set(key, rows)
+      }
+      for (const questionKey of safeQuestionKeys) {
+        setCached(
+          staticCache.answerEffectsByQuestionSignature,
+          buildSchemaCacheKey(['answerEffectsByQuestion', normalizeCacheSignature([questionKey])]),
+          effectsByQuestion.get(questionKey) || []
+        )
+      }
+
+      const outcomeKeys = new Set(safeAdditionalOutcomeKeys)
+      for (const row of mappedAnswerEffects) {
+        const outcomeKey = normalizeKey(row.outcomeKey)
+        const redirectOutcomeKey = normalizeKey(row.redirectOutcomeKey)
+        if (outcomeKey) {outcomeKeys.add(outcomeKey)}
+        if (redirectOutcomeKey) {outcomeKeys.add(redirectOutcomeKey)}
+      }
+      // outcome 和 action profile 是同一份固定题包运行时资料。原实现先查
+      // outcome，再按 action_profile_key 追加一次 SQL；首个 answer 请求会因此
+      // 多等一轮数据库往返。这里用 LEFT JOIN 一次取齐，仍然只保留已审核资料。
+      const outcomesAndProfilesRaw = outcomeKeys.size
+        ? await runSql(
+          `
+            SELECT
+              outcomes.outcome_key,
+              outcomes.problem_key,
+              outcomes.outcome_name_cn,
+              outcomes.outcome_type,
+              outcomes.outcome_category,
+              outcomes.display_name_cn,
+              outcomes.user_definition_cn,
+              outcomes.action_profile_key AS outcome_action_profile_key,
+              outcomes.risk_level,
+              outcomes.is_final_output,
+              outcomes.is_intermediate_node,
+              outcomes.allow_direct_close,
+              outcomes.allow_uncertain_close,
+              outcomes.priority,
+              outcomes.review_status,
+              outcomes.data_status,
+              profiles.action_profile_key AS joined_action_profile_key,
+              profiles.title_cn AS joined_title_cn,
+              profiles.today_actions_json AS joined_today_actions_json,
+              profiles.three_day_actions_json AS joined_three_day_actions_json,
+              profiles.seven_day_observe_json AS joined_seven_day_observe_json,
+              profiles.avoid_actions_json AS joined_avoid_actions_json,
+              profiles.retake_or_escalate_json AS joined_retake_or_escalate_json,
+              profiles.plant_baseline_merge_policy AS joined_plant_baseline_merge_policy,
+              profiles.review_status AS joined_review_status,
+              profiles.data_status AS joined_data_status
+            FROM ${table('diagnosis_outcomes')} outcomes
+            LEFT JOIN ${table('outcome_action_profiles')} profiles
+              ON profiles.action_profile_key = outcomes.action_profile_key
+              AND ${buildAuditedStatusClause('profiles.data_status')}
+              AND ${buildReviewedStatusClause('profiles.review_status')}
+            WHERE outcomes.outcome_key IN ${sqlInList(Array.from(outcomeKeys))}
+              AND ${buildAuditedStatusClause('outcomes.data_status')}
+              AND ${buildReviewedStatusClause('outcomes.review_status')}
+            ORDER BY outcomes.priority DESC, outcomes.outcome_key ASC
+          `
+        )
+        : []
+      const mappedOutcomes = outcomesAndProfilesRaw.map(row =>
+        mapDiagnosisOutcomeRow({
+          ...row,
+          action_profile_key: row.outcome_action_profile_key
+        })
+      )
+      const diagnosisOutcomes = mappedOutcomes.filter(row => outcomeKeys.has(normalizeKey(row.outcomeKey)))
+      for (const row of diagnosisOutcomes) {
+        const key = normalizeKey(row.outcomeKey)
+        if (!key) {continue}
+        setCached(
+          staticCache.outcomesBySignature,
+          buildSchemaCacheKey(['diagnosisOutcomes', normalizeCacheSignature([key])]),
+          [row]
+        )
+      }
+
+      const actionProfilesByKey = new Map()
+      for (const row of outcomesAndProfilesRaw) {
+        const actionProfileKey = normalizeKey(row.joined_action_profile_key)
+        if (!actionProfileKey || actionProfilesByKey.has(actionProfileKey)) {
+          continue
+        }
+        actionProfilesByKey.set(
+          actionProfileKey,
+          mapActionProfileRow({
+            action_profile_key: row.joined_action_profile_key,
+            title_cn: row.joined_title_cn,
+            today_actions_json: row.joined_today_actions_json,
+            three_day_actions_json: row.joined_three_day_actions_json,
+            seven_day_observe_json: row.joined_seven_day_observe_json,
+            avoid_actions_json: row.joined_avoid_actions_json,
+            retake_or_escalate_json: row.joined_retake_or_escalate_json,
+            plant_baseline_merge_policy: row.joined_plant_baseline_merge_policy,
+            review_status: row.joined_review_status,
+            data_status: row.joined_data_status
+          })
+        )
+      }
+      const actionProfiles = Array.from(actionProfilesByKey.values())
+      for (const row of actionProfiles) {
+        const key = normalizeKey(row.actionProfileKey)
+        if (!key) {continue}
+        setCached(
+          staticCache.actionProfilesBySignature,
+          buildSchemaCacheKey(['actionProfiles', normalizeCacheSignature([key])]),
+          [row]
+        )
+      }
+
+      const runtimeData = {
+        answerEffects: mappedAnswerEffects,
+        diagnosisOutcomes,
+        actionProfiles
+      }
+      staticCache.answerPackageRuntimeDataBySchema.set(schema, runtimeData)
+      staticCache.answerPackagePreloadExpiresAtBySchema.set(
+        schema,
+        refreshedNow + STATIC_REPOSITORY_CACHE_TTL_MS
+      )
+      return runtimeData
+    }
+  )
+}
+
+function getDiagnosisAnswerPackageRuntimeData() {
+  return staticCache.answerPackageRuntimeDataBySchema.get(resolveSchema()) || null
+}
+
 async function getOutcomeRoutesByOutcomeKeys(outcomeKeys = []) {
   const safeKeys = normalizeKeys(outcomeKeys)
   if (!safeKeys.length) {return []}
@@ -707,7 +892,7 @@ async function getOutcomeRoutesByOutcomeKeys(outcomeKeys = []) {
         host_profile_condition_json,
         entry_priority,
         max_questions,
-        conservative_policy,
+        fallback_policy AS conservative_policy,
         action_profile_key,
         action_conflict_group,
         enabled,
@@ -825,11 +1010,11 @@ async function getOutcomeRouteQuestions(routeKeys = []) {
         route_questions.route_key,
         route_questions.step_no,
         route_questions.question_key,
-        questions.package_topic,
+        '' AS package_topic,
         questions.target_symptom_key,
         questions.question_text_user_cn,
-        route_questions.condition_key,
-        route_questions.route_package_role,
+        route_questions.gate_key AS condition_key,
+        route_questions.question_role AS route_package_role,
         route_questions.required_for_closure,
         route_questions.ask_priority,
         route_questions.skip_if_evidence_json,
@@ -1031,5 +1216,7 @@ module.exports = {
   getOutcomeAnswerEffects,
   getOutcomeActionProfiles,
   getDiagnosisOutcomesByKeys,
-  preloadOutcomeRouteRepositoryCache
+  preloadOutcomeRouteRepositoryCache,
+  preloadDiagnosisAnswerPackageCache,
+  getDiagnosisAnswerPackageRuntimeData
 }

@@ -3,7 +3,10 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { captureRuntimeEvidence } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/qa-preflight-runtime.mjs'
-import { probeWxRequest } from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/qa-preflight.mjs'
+import {
+  probeWxRequest,
+  resolvePreflightBackendTarget
+} from '../../../../../.codex/skills/dispatch-task/scripts/dispatch-gate/lib/qa-preflight.mjs'
 import {
   forbiddenFormalRuntimeArgs,
   resolveQaWxRequestUrl
@@ -51,8 +54,8 @@ assert.deepEqual(
     { formal: true }
   ),
   {
-    url: 'https://cloud1-2grufevs395a9d5e.api.tcloudbasegateway.com/v1/functions/plant-user-http/user-plants?page=1&pageSize=1&webfn=true',
-    source: 'supervisor_fixed_online'
+    url: 'https://cloud1-2grufevs395a9d5e-1403815561.ap-shanghai.app.tcloudbase.com/plant-user-http/user-plants?page=1&pageSize=1',
+    source: 'supervisor_fixed_online_public_http'
   }
 )
 assert.throws(
@@ -63,6 +66,29 @@ assert.throws(
     }),
   error => error?.code === 'qa_online_base_url_invalid'
 )
+assert.throws(
+  () =>
+    resolveQaBackendTarget({
+      QA_BACKEND_MODE: 'online',
+      QA_ONLINE_API_BASE_URL: 'https://cloud1-2grufevs395a9d5e.api.tcloudbase.com/v1/functions'
+    }),
+  error => error?.code === 'qa_online_api_base_url_must_be_gateway'
+)
+assert.deepEqual(
+  resolvePreflightBackendTarget(
+    'https://cloud1-2grufevs395a9d5e.api.tcloudbasegateway.com/v1/functions/plant-user-http/user-plants?page=1&pageSize=1&webfn=true'
+  ),
+  {
+    mode: 'online',
+    requiresLanFlow: false,
+    url: 'https://cloud1-2grufevs395a9d5e.api.tcloudbasegateway.com/v1/functions/plant-user-http/user-plants?page=1&pageSize=1&webfn=true'
+  }
+)
+assert.deepEqual(resolvePreflightBackendTarget('http://192.168.50.80:3011/health'), {
+  mode: 'lan',
+  requiresLanFlow: true,
+  url: 'http://192.168.50.80:3011/health'
+})
 
 const healthUrl = 'http://127.0.0.1:12345/__local_functions__/health'
 const successfulSlot = '__dispatchQaWxRequest_test_success'
@@ -155,6 +181,43 @@ try {
     Authorization: 'Bearer runtime-identity-ticket',
     'x-planting-http-identity-ticket': 'runtime-identity-ticket'
   })
+
+  const appSessionSlot = '__dispatchQaWxRequest_test_app_session'
+  let appSessionRequest
+  globalThis.uni = {
+    getStorageSync: key =>
+      key === 'planting-platform-session'
+        ? { accessToken: 'planting-session-v1_test-access-token' }
+        : null
+  }
+  globalThis.wx.request = options => {
+    appSessionRequest = options
+    successfulCallbacks = options
+  }
+  const appSession = await probeWxRequest({
+    miniProgram: compatibilityMiniProgram([]),
+    url: 'http://127.0.0.1:3011/plant-user-http/user-plants?page=1&pageSize=1',
+    requireAuthenticatedIdentity: true,
+    requirePersistedAppSession: true,
+    slot: appSessionSlot,
+    timeoutMs: 1000,
+    pollIntervalMs: 10,
+    sleep: async () => {
+      appSessionRequest.success({ statusCode: 200, data: { code: 200 } })
+      appSessionRequest.complete()
+    }
+  })
+  assert.equal(appSession.passed, true)
+  assert.equal(appSession.app_session_required, true)
+  assert.equal(appSession.access_token_resolved, true)
+  assert.equal(appSession.identity_ticket_resolved, false)
+  assert.equal(
+    appSessionRequest.header['x-planting-platform-session'],
+    'planting-session-v1_test-access-token'
+  )
+  assert.equal(appSessionRequest.header.Authorization, undefined)
+  assert.equal(appSessionRequest.header['x-planting-http-identity-ticket'], undefined)
+  delete globalThis.uni
 
   const rejectedSlot = '__dispatchQaWxRequest_test_rejected_status'
   const rejected = await probeWxRequest({

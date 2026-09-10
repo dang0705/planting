@@ -135,7 +135,7 @@ import { saveWateringReminder, undoWateringReminder } from '@/api/plants-http.js
 import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
 import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
-import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
+import { isFeatureAvailable } from '@/utils/platform-capabilities.js'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import CalendarTaskSection from './CalendarTaskSection.vue'
 import {
@@ -156,7 +156,6 @@ const loadingPlants = ref(false)
 const weatherLoading = ref(false)
 const actionState = reactive({})
 const undoState = reactive({})
-const restrictedPlatform = isRestrictedMiniProgram()
 const {
   openedFeatureKey,
   visible: featureUnavailableVisible,
@@ -189,7 +188,7 @@ const nextSolarTerm = ref(null)
 
 onMounted(async () => {
   getSolarTermData()
-  if (restrictedPlatform) {
+  if (!isFeatureAvailable('calendar')) {
     openFeatureUnavailable('calendar')
     return
   }
@@ -292,7 +291,7 @@ function getSolarTermData(now = new Date()) {
 }
 
 function viewSolarTerms() {
-  if (restrictedPlatform) {
+  if (!isFeatureAvailable('calendar')) {
     openFeatureUnavailable('calendar')
     return
   }
@@ -305,7 +304,7 @@ function viewSolarTerms() {
 }
 
 async function completeTask(plantId) {
-  if (restrictedPlatform) {
+  if (!isFeatureAvailable('watering')) {
     openFeatureUnavailable('watering')
     return
   }
@@ -337,7 +336,7 @@ async function completeTask(plantId) {
 }
 
 async function postponeTask(plantId) {
-  if (restrictedPlatform) {
+  if (!isFeatureAvailable('watering')) {
     openFeatureUnavailable('watering')
     return
   }
@@ -400,7 +399,7 @@ function captureTaskSnapshot(plant, actionLabel) {
 }
 
 async function undoTask(plantId) {
-  if (restrictedPlatform) {
+  if (!isFeatureAvailable('watering')) {
     openFeatureUnavailable('watering')
     return
   }

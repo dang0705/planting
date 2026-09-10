@@ -12,6 +12,25 @@ import {
   isFreshAuthConsumptionEvidence,
   readAuthConsumptionEvidence
 } from '../../../../../../scripts/qa/qa-auth-broker-core.mjs'
+import {
+  buildQaHealthRequestUrl,
+  resolveQaBackendMode,
+  resolveQaBackendTarget
+} from '../../../../../../scripts/qa/qa-backend-target.mjs'
+
+function fullRebuildEvidence(reason) {
+  const backendMode = resolveQaBackendMode(process.env)
+  const online = backendMode === 'online'
+  return {
+    full_rebuild_requested: true,
+    full_rebuild_mode: backendMode,
+    full_lan_rebuild_requested: !online,
+    full_rebuild_command: online
+      ? 'QA-owned mp-weixin build with remote HTTPS backend; local-functions gateway disabled'
+      : 'npm run dev:mp-weixin:local-functions:lan',
+    full_lan_rebuild_reason: reason
+  }
+}
 
 function appendTransition(appendEvent, record, outcome) {
   appendEvent(record, outcome)
@@ -157,13 +176,7 @@ export async function runFormalQaExecution({
     // project identity and the close/open/auto cycle.
     const allowRecovery = allowTargetedRestart === true
     phase('launching', {
-      ...(fullLanRebuild
-        ? {
-            full_lan_rebuild_requested: true,
-            full_lan_rebuild_command: 'npm run dev:mp-weixin:local-functions:lan',
-            full_lan_rebuild_reason: reason
-          }
-        : {})
+      ...(fullLanRebuild ? fullRebuildEvidence(reason) : {})
     })
     session = await runtimeFactory({
       dispatchRunId,
@@ -208,8 +221,18 @@ export async function runFormalQaExecution({
     }
     let preflight
     try {
+      const coldPerformancePreflight =
+        gate.entry?.preflight_mode === 'health_only_for_cold_performance'
+      const preflightOptions = coldPerformancePreflight
+        ? {
+            ...session.preflight_options,
+            wxRequestUrl: buildQaHealthRequestUrl(resolveQaBackendTarget(process.env).baseUrl),
+            requireAuthenticatedWxRequest: false,
+            cold_performance_preflight: true
+          }
+        : session.preflight_options
       preflight = await preflightRunner({
-        ...session.preflight_options,
+        ...preflightOptions,
         allowTargetedRestart: allowRecovery
       })
     } catch (error) {
@@ -401,24 +424,20 @@ export async function runFormalQaExecution({
           const recoveryReason =
             attemptResult.leafReport.report.blockerReason ?? 'runtime did not expose a user plant'
           const initialCandidate = candidate
-          phase('cleaning', {
-            full_lan_rebuild_requested: true,
-            full_lan_rebuild_command: 'npm run dev:mp-weixin:local-functions:lan',
-            full_lan_rebuild_reason: recoveryReason
-          })
+          const rebuildEvidence = fullRebuildEvidence(recoveryReason)
+          phase('cleaning', rebuildEvidence)
           const initialCleanup = await runtimeCleanup({ session })
           cleanup = initialCleanup
           phase('cleaned', {
             runtime_cleanup: initialCleanup,
-            full_lan_rebuild_requested: true
+            ...rebuildEvidence
           })
           session = null
           record = {
             ...record,
             fixture_runtime_recovery: {
               required: true,
-              command: 'npm run dev:mp-weixin:local-functions:lan',
-              reason: recoveryReason,
+              ...rebuildEvidence,
               initial_attempt: initialCandidate,
               initial_cleanup: initialCleanup
             }

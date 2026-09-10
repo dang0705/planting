@@ -26,6 +26,7 @@ import {
   readTextById,
   tapStableElement
 } from '../../test/e2e/automator/care/watering/transpiration-v3/_shared/lib/element-helpers.mjs'
+import { resolveQaBackendTarget } from './qa-backend-target.mjs'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const projectPath = path.join(repoRoot, 'dist', 'dev', 'mp-weixin')
@@ -39,7 +40,10 @@ const artifactDir = path.resolve(
       String(process.pid)
     )
 )
-const wxRequestUrl = 'http://192.168.50.80:3010/plant-user-http/user-plants/health'
+const wxRequestUrl = resolveQaBackendTarget(process.env, {
+  port: 3011,
+  functionPortBase: 9100
+}).wxRequestUrl
 const plantId = String(process.env.PLANT_ID || '12')
 const dispatchRunId = `mvp-completion-20260809-record-environment-${plantId}`
 const WAIT_MS = 20_000

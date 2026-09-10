@@ -10,14 +10,13 @@ source_of_truth:
   - AGENTS.md
   - .codex/context-packs.yml
   - .codex/skills/dispatch-task/references/knowledge-hygiene-policy.md
-  - .brvspace
+  - .openviking/config.json
   - docs/_doc-status.yml
   - docs/_sync-map.yml
 stale_if_changed:
   - AGENTS.md
   - .codex/**
-  - .brvspace
-  - .brv/context-tree/**
+  - .openviking/**
   - docs/_doc-status.yml
   - docs/_sync-map.yml
 ---
@@ -32,8 +31,8 @@ stale_if_changed:
 蓝图归档；
 活文档极简化；
 契约必须同步；
-BRV 只做索引；
-main 负责最小 active docs 与 ByteRover 影响处理。
+OpenViking 只做索引；
+main 负责最小 active docs 与 OpenViking 影响处理。
 ```
 
 事实优先级：
@@ -42,9 +41,10 @@ main 负责最小 active docs 与 ByteRover 影响处理。
 |---:|---|---|
 | 1 | 代码、测试、schema、配置、package scripts | 当前事实源。 |
 | 2 | active docs | 只解释当前契约、导航和运行方式。 |
-| 3 | ByteRover V4 memory | 当前以 `.brvspace` 绑定的 space 为准；只能作为定位线索，不能单独当事实。 |
-| 4 | retrieval-only docs | 只能作为定位线索。 |
-| 5 | archived/superseded blueprints | 历史材料，不能作为当前事实。 |
+| 3 | OpenViking memory | 当前以 `.openviking/config.json` 的 `planting` peer 为准；只能作为定位线索，不能单独当事实。 |
+| 4 | 历史迁移材料 | 只读审计/回滚材料，不能作为新的默认记忆源。 |
+| 5 | retrieval-only docs | 只能作为定位线索。 |
+| 6 | archived/superseded blueprints | 历史材料，不能作为当前事实。 |
 
 ## 2. 文档状态模型
 
@@ -79,7 +79,7 @@ docs/_sync-map.yml
 
 `docs/code-logics/**`、`docs/new-rules/**`、`docs/route规划及outcome瘦身计划/**`、`docs/ai-runs/**` 不再被维护成当前事实。
 
-## 4. Main docs / BRV 工作流
+## 4. Main docs / OpenViking 工作流
 
 ### 4.1 classify 模式
 
@@ -99,7 +99,7 @@ docs/_doc-status.yml
 status: no-op | patch-required | audit-required | blocked
 affected_areas: []
 active_docs_to_patch: []
-brv_keys_to_update: []
+  memory_keys_to_update: []
 archive_or_stale_actions: []
 reason: ""
 ```
@@ -111,11 +111,11 @@ reason: ""
 ```text
 命中源码
 命中活文档
-命中 ByteRover V4 topics 或 legacy BRV archive
+命中 OpenViking memory 或历史迁移材料
 相关 diff hunk
 ```
 
-禁止读取整仓、整个 docs、整套 ByteRover/BRV 材料。
+禁止读取整仓、整个 docs、整套历史记忆材料。
 
 ### 4.3 audit 模式
 
@@ -125,7 +125,7 @@ reason: ""
 大规模架构重写
 公共契约大改
 既有文档与代码大面积冲突
-ByteRover topics 或 legacy BRV archive 污染严重
+OpenViking memory 或历史迁移材料污染严重
 迁移/发布事故复盘
 ```
 
@@ -143,7 +143,7 @@ ByteRover topics 或 legacy BRV archive 污染严重
 - Config/schema changed: yes/no
 - Architecture/workflow changed: yes/no
 - Deployment/runbook changed: yes/no
-- ByteRover/source-verified memory affected: yes/no
+  - OpenViking/source-verified memory affected: yes/no
 
 ## Changed files
 - ...
@@ -159,7 +159,7 @@ Only relevant hunks.
 ## Candidate active docs
 - ...
 
-## Candidate ByteRover recall keys
+## Candidate OpenViking memory keys
 - ...
 
 ## Forbidden context
@@ -168,21 +168,21 @@ Only relevant hunks.
 
 ## 6. 触发矩阵
 
-| 变更类型 | 文档动作 | ByteRover 动作 |
+| 变更类型 | 文档动作 | OpenViking 动作 |
 |---|---|---|
 | 纯内部重构，无行为变化 | 通常 no-op | no-op |
-| HTTP 路由、请求/响应字段、前端可见字段变化 | 更新 `ACTIVE_CONTRACTS.md` | 更新相关 ByteRover V4 topic / recall key |
-| env/schema/CloudBase 路由变化 | 更新 `ACTIVE_CONTRACTS.md` 和 `RUNBOOK.md` | 更新相关 ByteRover V4 topic / recall key |
-| package script、CI、部署、本地调试变化 | 更新 `RUNBOOK.md` | 视情况更新 |
-| agent 分工、dispatch、context pack、MCP 策略变化 | 更新 `AGENTS.md`、`.codex/context-packs.yml`、本文 | 更新相关 ByteRover V4 topic / recall key |
+| HTTP 路由、请求/响应字段、前端可见字段变化 | 更新 `ACTIVE_CONTRACTS.md` | 更新相关 OpenViking memory |
+| env/schema/CloudBase 路由变化 | 更新 `ACTIVE_CONTRACTS.md` 和 `RUNBOOK.md` | 更新相关 OpenViking memory |
+| package script、CI、部署、本地调试变化 | 更新 `RUNBOOK.md` | 视情况更新 OpenViking 记忆 |
+| agent 分工、dispatch、context pack、MCP 策略变化 | 更新 `AGENTS.md`、`.codex/context-packs.yml`、本文 | 更新相关 OpenViking memory |
 | 既有文档与代码冲突 | 标记 stale/superseded | 禁止引用既有文档为事实 |
-| 新增稳定源码事实 | 如影响契约则更新活文档 | 添加对应的 ByteRover V4 recall 记录 |
+| 新增稳定源码事实 | 如影响契约则更新活文档 | 添加对应的 OpenViking memory 记录 |
 
-## 7. ByteRover V4 只做记忆索引
+## 7. OpenViking 只做记忆索引
 
-当前默认 memory source 是 `.brvspace` 绑定的 ByteRover V4 `planting` space。legacy `.brv/context-tree/**` 只作为归档材料处理，不再作为当前默认 memory source。
+当前默认 memory source 是仓库根目录 `.openviking/config.json` 绑定的 OpenViking `planting` peer，作用范围从仓库根目录开始并覆盖子目录。历史迁移材料只用于审计和回滚，不作为当前默认 memory source。
 
-ByteRover 条目必须短，并且具备来源与失效条件：
+OpenViking 记忆条目必须短，并且具备来源与失效条件：
 
 ```yaml
 id: F-DIAG-ROUTES-002
@@ -203,7 +203,7 @@ confidence: high
 无来源的经验性长文
 把既有蓝图当当前事实
 把 AI handoff 当运行事实
-把 ByteRover/BRV 写成第二套文档
+把 OpenViking 写成第二套文档
 ```
 
 ## 8. 归档策略

@@ -68,7 +68,7 @@ async function upsertDiagnosisSessionRecord(input = {}) {
         {{sessionId}},
         {{openid}},
         IF({{userPlantIdHasValue}} = 1, {{userPlantIdValue}}, NULL),
-        {{plantId}},
+        NULLIF({{plantId}}, ''),
         {{diagnosisMode}},
         {{plantGenus}},
         {{plantFamily}},

@@ -269,6 +269,7 @@ export function buildDiagnosisAnswerMutationPayload({
   requestMode = '',
   baseAnswerRevision = 0,
   dirtyFromQuestionId = '',
+  questionPackageContinuationToken = '',
   questionPackage = null,
   uiHints = null,
   careBehaviorTimeline = null,
@@ -322,6 +323,9 @@ export function buildDiagnosisAnswerMutationPayload({
       ? { baseAnswerRevision: Number(baseAnswerRevision || 0) }
       : {}),
     ...(dirtyFromQuestionId ? { dirtyFromQuestionId } : {}),
+    ...(questionPackageContinuationToken
+      ? { questionPackageContinuationToken: String(questionPackageContinuationToken).trim() }
+      : {}),
     ...(questionPackage && typeof questionPackage === 'object' ? { questionPackage } : {}),
     ...(uiHints && typeof uiHints === 'object' ? { uiHints } : {}),
     imageIds: resolvedImageIds.length ? resolvedImageIds : primaryImageRef ? [primaryImageRef] : [],

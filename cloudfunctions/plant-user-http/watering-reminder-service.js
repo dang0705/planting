@@ -1,6 +1,7 @@
 'use strict'
 
 const { models } = require('/opt/utils/cloudbase')
+const { getUserPlantWateringEvents } = require('/opt/utils/plant-knowledge')
 const { resolveServerWateringPlan } = require('./watering-reminder-plan-service')
 const { mapReminderRow } = require('./watering-reminder-mapper')
 
@@ -124,7 +125,22 @@ async function readWateringReminder(openid, plantId) {
     return { found: false, statusCode: 404, data: null }
   }
   const reminder = await getLatestWateringReminder(openid, plantId)
-  return { found: Boolean(reminder), statusCode: 200, data: reminder }
+  const persistedEvents = await getUserPlantWateringEvents(openid, plantId, 30)
+  const wateringEvents = Array.isArray(persistedEvents) ? persistedEvents : []
+  if (!reminder) {
+    return {
+      found: false,
+      statusCode: 200,
+      data: wateringEvents.length ? { wateringEvents } : null
+    }
+  }
+  // 保留提醒自身保存的事件，另返回服务端最新历史，供前端识别旧提醒是否需要重算。
+  // 这样不会在 GET 读取动作中偷偷改写提醒或植物状态。
+  return {
+    found: true,
+    statusCode: 200,
+    data: { ...reminder, persistedWateringEvents: wateringEvents }
+  }
 }
 
 async function attachWateringReminderStateToList(openid, data = {}) {

@@ -35,8 +35,15 @@ import { launchTestOwnedDevTools } from './test-owned-devtools-launch.mjs'
 import {
   ensureQaAuthAvailable,
   markQaAuthServerFailure,
+  qaAuthProfiles,
   readQaAuthManifest
 } from '../../../../../../scripts/qa/qa-auth-coordinator.mjs'
+import {
+  inspectFreshQaAppSession,
+  projectStorageId,
+  reconcileQaAppSessionPartitions,
+  syncQaAppSessionFromDailyReadOnly
+} from '../../../../../../scripts/qa/qa-app-auth-coordinator.mjs'
 import { currentShared } from '../../../../../../scripts/qa/qa-auth-broker-core.mjs'
 import { readCurrentSessionProjectEvidence } from './devtools-session-log.mjs'
 import {
@@ -90,6 +97,16 @@ const LOCAL_RUNTIME_GATEWAY_SCRIPT = path.join(
   'local-functions-gateway.mjs'
 )
 const FULL_LAN_STARTUP_COMMAND = 'npm run dev:mp-weixin:local-functions:lan'
+
+function qaRuntimeBackendMode() {
+  return resolveQaBackendMode(process.env)
+}
+
+function qaRuntimeBuildCommand() {
+  return qaRuntimeBackendMode() === 'online'
+    ? 'QA-owned mp-weixin build with remote HTTPS backend; local-functions gateway disabled'
+    : FULL_LAN_STARTUP_COMMAND
+}
 // A cold QA runtime starts eight local function workers before the mini-program
 // watcher. Keep this bounded, but do not classify a healthy first boot as a
 // failure merely because the host is still warming its function processes.
@@ -442,7 +459,7 @@ function localRuntimeStartArguments(targetPath, { reuseOutput = false } = {}) {
   const backend = qaBackendTarget()
   return [
     LOCAL_RUNTIME_SCRIPT,
-    '--mode=lan',
+    `--mode=${backend.mode === 'online' ? 'remote' : 'lan'}`,
     `--port=${QA_RUNTIME_LAN_PORT}`,
     `--function-port-base=${QA_RUNTIME_FUNCTION_PORT_BASE}`,
     `--output-dir=${targetPath}`,
@@ -479,6 +496,8 @@ function localRuntimeStartEnvironment(targetPath, forceFullLanRebuild, session) 
     CLOUDBASE_LOCAL_FUNCTIONS_FUNCTION_PORT_BASE: String(QA_RUNTIME_FUNCTION_PORT_BASE),
     QA_BACKEND_MODE: resolveQaBackendMode(process.env),
     VITE_QA_LIVE_REAL_API: '1',
+    VITE_QA_PERFORMANCE_COLD_LANE:
+      String(process.env.QA_PERFORMANCE_COLD_LANE || '').trim() === '1' ? '1' : '0',
     VITE_DEV_OPENID: openid,
     QA_FULL_LAN_REBUILD_ATTEMPT: forceFullLanRebuild ? '1' : '0'
   }
@@ -616,7 +635,7 @@ function localRuntimeSupervisorProcess(pid) {
   return Boolean(
     process &&
     /run-local-api-env\.mjs/.test(String(process.command || '')) &&
-    /--mode=lan/.test(String(process.command || ''))
+    /--mode=(?:lan|remote)/.test(String(process.command || ''))
   )
 }
 
@@ -903,6 +922,11 @@ function persistSessionRecord(session) {
     local_runtime_child_pid: session.localRuntimeChildPid,
     borrowed_local_runtime_pid: session.borrowedLocalRuntimePid,
     borrowed_local_runtime_child_pid: session.borrowedLocalRuntimeChildPid,
+    full_rebuild_requested: session.full_rebuild_requested,
+    full_rebuild_mode: session.full_rebuild_mode,
+    full_lan_rebuild_requested: session.full_lan_rebuild_requested,
+    full_lan_rebuild_command: session.full_lan_rebuild_command,
+    full_lan_rebuild_reason: session.full_lan_rebuild_reason,
     auto_cli_pid: session.auto_cli_pid,
     open_cli_pid: session.open_cli_pid,
     open_cli_attempts: session.open_cli_attempts ?? [],
@@ -910,6 +934,7 @@ function persistSessionRecord(session) {
     main_devtools_pid: session.main_devtools_pid,
     startup_recovery: session.startup_recovery ?? null,
     project_list_registration: session.projectListRegistration,
+    app_auth_bridge: session.app_auth_bridge || null,
     automator_port: session.wsPort,
     control_port: session.controlPort,
     updated_at: new Date().toISOString()
@@ -1097,6 +1122,7 @@ export async function createTestOwnedQaSession({
   projectPath,
   screenshotPath,
   wxRequestUrl,
+  allowManualEnrollment = false,
   _runtimeTargetPath = QA_RUNTIME_TARGET,
   startTimeoutMs = START_TIMEOUT_MS,
   forceFullLanRebuild = false,
@@ -1156,8 +1182,10 @@ export async function createTestOwnedQaSession({
     localRuntimeMode: 'owned',
     borrowedLocalRuntimePid: null,
     borrowedLocalRuntimeChildPid: null,
-    full_lan_rebuild_requested: forceFullLanRebuild,
-    full_lan_rebuild_command: FULL_LAN_STARTUP_COMMAND,
+    full_lan_rebuild_requested: forceFullLanRebuild && qaRuntimeBackendMode() === 'lan',
+    full_rebuild_requested: forceFullLanRebuild,
+    full_rebuild_mode: qaRuntimeBackendMode(),
+    full_lan_rebuild_command: qaRuntimeBuildCommand(),
     full_lan_rebuild_reason: fullLanRebuildReason,
     main_devtools_pid: null,
     projectListRegistration: null,
@@ -1391,6 +1419,57 @@ export async function createTestOwnedQaSession({
         fs.readFileSync(path.join(session.projectPath, 'project.config.json'), 'utf8')
       )
     })
+    try {
+      session.app_auth_bridge = syncQaAppSessionFromDailyReadOnly({
+        dailyProfile: qaAuthProfiles().daily,
+        qaProfile: session.profile,
+        sourceProjectPath: session.sourceProjectPath,
+        targetProjectPath: session.projectPath
+      })
+    } catch (error) {
+      const existingQaSession = inspectFreshQaAppSession({
+        profile: session.profile,
+        storageId: projectStorageId(session.projectPath)
+      })
+      if (existingQaSession.status === 'ready') {
+        const reconciledQaSession = reconcileQaAppSessionPartitions({
+          profile: session.profile,
+          storageId: projectStorageId(session.projectPath)
+        })
+        session.app_auth_bridge = {
+          ...reconciledQaSession,
+          status: reconciledQaSession.status === 'ready' ? 'preserved' : reconciledQaSession.status,
+          code:
+            reconciledQaSession.status === 'ready'
+              ? 'qa_app_auth_target_partitions_reconciled'
+              : 'qa_app_auth_target_session_preserved',
+          source_error: error.code,
+          target_profile: session.profile,
+          target_project_path: session.projectPath,
+          target_file: existingQaSession.file_name,
+          target_identity_hash: existingQaSession.identity_hash,
+          session_expires_at: existingQaSession.session_expires_at
+        }
+      } else {
+        const manualEnrollmentFallbackCodes = new Set([
+          'qa_app_auth_identity_mismatch',
+          'qa_app_auth_source_unavailable'
+        ])
+        if (!allowManualEnrollment || !manualEnrollmentFallbackCodes.has(error?.code)) {
+          throw error
+        }
+        // Explicit enrollment may start from an empty or wrong local app
+        // session. The real QA mini-program entry must replace it through the
+        // visible login control; never copy another identity as a fallback.
+        session.app_auth_bridge = {
+          status: 'pending',
+          code: 'qa_app_auth_manual_enrollment_required',
+          source_error: error.code,
+          target_profile: session.profile,
+          target_project_path: session.projectPath
+        }
+      }
+    }
     persistSessionRecord(session)
     session.user_devtools_cleanup = {
       status: 'not_needed',
@@ -1622,8 +1701,11 @@ export async function createTestOwnedQaSession({
             () => {
               const evidence = ownedRuntimeEvidence(session)
               if (evidence.session_log_evidence?.runtime_lifecycle?.failures?.length) {
-                const runtimeFailure = new Error('DevTools AppService 在 Automator 控制超时后报告失败')
-                runtimeFailure.code = 'qa_devtools_appservice_failed_after_automator_control_timeout'
+                const runtimeFailure = new Error(
+                  'DevTools AppService 在 Automator 控制超时后报告失败'
+                )
+                runtimeFailure.code =
+                  'qa_devtools_appservice_failed_after_automator_control_timeout'
                 runtimeFailure.details = {
                   runtime_lifecycle: evidence.session_log_evidence.runtime_lifecycle,
                   runtime_evidence: evidence
@@ -1806,6 +1888,8 @@ export async function createTestOwnedQaSession({
       local_runtime_target_path: localRuntimeTargetPath(session),
       borrowed_local_runtime_pid: session.borrowedLocalRuntimePid,
       borrowed_local_runtime_child_pid: session.borrowedLocalRuntimeChildPid,
+      full_rebuild_requested: session.full_rebuild_requested,
+      full_rebuild_mode: session.full_rebuild_mode,
       full_lan_rebuild_requested: session.full_lan_rebuild_requested,
       full_lan_rebuild_command: session.full_lan_rebuild_command,
       full_lan_rebuild_reason: session.full_lan_rebuild_reason,

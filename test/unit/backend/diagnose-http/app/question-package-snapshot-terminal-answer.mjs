@@ -11,7 +11,8 @@ const CARE_AREA_QUESTION_KEY = 'q_observed_probe__leaf_yellowing__yellowing_care
 const captured = {
   genericRunnerCalled: false,
   persistedRoundResult: null,
-  routeAnswerEffectsArgs: null
+  routeAnswerEffectsArgs: null,
+  sessionReadOptions: null
 }
 
 const questionPackageSnapshot = {
@@ -147,7 +148,10 @@ Module._load = function loadWithStubs(request, parent, isMain) {
   }
   if (request === '../services/session-service' || request === './services/session-service') {
     return {
-      getSessionState: async () => sessionState,
+      getSessionState: async (_openid, _sessionId, options) => {
+        captured.sessionReadOptions = options
+        return sessionState
+      },
       getObservedSymptomsBySession: async () => []
     }
   }
@@ -200,7 +204,8 @@ Module._load = function loadWithStubs(request, parent, isMain) {
   }
   if (request === './static-cache-preloader' || request === '../app/static-cache-preloader') {
     return {
-      triggerStaticRepositoryCachePreload: () => {}
+      triggerStaticRepositoryCachePreload: () => {},
+      triggerDiagnosisAnswerPackageCachePreload: () => {}
     }
   }
 
@@ -220,6 +225,11 @@ const result = await runAnswerDiagnosis({
     diagnosisSessionId: 'session_snapshot_terminal',
     roundId: 'round_1',
     requestMode: 'answer_submit',
+    questionPackage: {
+      mode: 'yellow_leaf',
+      questionCount: 2,
+      answerSubmitMode: 'package'
+    },
     answers: [
       {
         questionKey: LIGHT_QUESTION_KEY,
@@ -258,6 +268,8 @@ const result = await runAnswerDiagnosis({
 })
 
 assert.equal(captured.genericRunnerCalled, false)
+assert.deepEqual(captured.sessionReadOptions, { loadAuxiliary: false })
+assert.equal(captured.persistedRoundResult.awaitPersistence, false)
 assert.ok(captured.routeAnswerEffectsArgs.includes(LIGHT_QUESTION_KEY))
 assert.equal(result.response.visibleOutcomes[0].outcomeKey, 'sunburn')
 assert.equal(result.response.environmentCareContext.outputs.lightHealthEvidence.direction, 'strong')

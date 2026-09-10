@@ -119,13 +119,37 @@ const packagePublic = buildPublicRoundResponse({
   questionRequired: true,
   questions: twoQuestionPackage.packageQuestions,
   questionPackage: twoQuestionPackage,
+  visibleOutcomes: [
+    {
+      outcomeKey: 'whitefly',
+      displayNameCn: '白粉虱/叶背小虫',
+      action_profile_key: 'action_pest_basic',
+      actionAdviceItems: ['先隔离观察'],
+      avoidAdviceItems: ['暂时不要马上喷浓药']
+    }
+  ],
   uiHints: { answerSubmitMode: 'package', questionDisplayMode: 'package' }
 })
 assert.equal(packagePublic.questions.length, 2)
 assert.equal(packagePublic.uiHints.answerSubmitMode, 'package')
+assert.equal(packagePublic.visibleOutcomes[0].actionProfileKey, 'action_pest_basic')
 const packageFrontend = buildFrontendDiagnosisResponse(packagePublic)
 assert.equal(packageFrontend.questions.length, 2)
 assert.equal(packageFrontend.questionPackage.questionCount, 2)
+const terminalPublic = buildCompactAnswerRoundResponse({
+  diagnosisSessionId: 'diag_package_terminal',
+  roundId: 'round_2',
+  routePrimaryAction: 'finalize',
+  sessionStatus: 'completed',
+  outcomeType: 'problematic',
+  questionRequired: false,
+  visibleOutcomes: packagePublic.visibleOutcomes
+})
+assert.equal(terminalPublic.visibleOutcomes[0].actionProfileKey, 'action_pest_basic')
+assert.equal(
+  buildFrontendAnswerResponse(terminalPublic).visibleOutcomes[0].actionProfileKey,
+  'action_pest_basic'
+)
 assert.match(
   startRunnerSource,
   /allowsAnonymousPlantContext = clientContext\?\.entrySource === 'diagnose_tab'/

@@ -7,7 +7,8 @@ const {
   notFound,
   getHttpRequestData,
   resolveRequestAppEnv,
-  runWithRequestAppEnv
+  runWithRequestAppEnv,
+  createHttpIdentityTicket
 } = require('/opt/utils/http')
 const { createPlatformError, normalizePlatform } = require('/opt/utils/platform-session')
 const {
@@ -40,6 +41,33 @@ function getSchemaNotReadyResponse(error) {
     message: '手机号登录服务尚未初始化，请稍后再试',
     data: null
   })
+}
+
+function attachHttpIdentityTicket(result = {}) {
+  const user = result?.user && typeof result.user === 'object' ? result.user : {}
+  const session = result?.session && typeof result.session === 'object' ? result.session : {}
+  const userId = String(user._id || user.id || '').trim()
+  const openid = String(user._openid || user.wechat_openid || userId).trim()
+  const httpIdentityTicket = createHttpIdentityTicket({
+    openid,
+    uid: userId,
+    customUserId: userId,
+    subject: 'planting-user',
+    // 会话平台代表本次已验证的手机号授权平台；用户历史主平台可能不同，
+    // 不能用旧主平台覆盖当前会话的身份票据。
+    platform: normalizePlatform(session?.platform || user?.principal_platform)
+  })
+  if (!httpIdentityTicket) {
+    return result
+  }
+  return {
+    ...result,
+    session: {
+      ...session,
+      httpIdentityTicket,
+      httpIdentityTicketExpiresAt: Date.now() + 5 * 60 * 1000
+    }
+  }
 }
 
 async function main(event, context) {
@@ -85,11 +113,13 @@ async function main(event, context) {
       hasEncryptedData: Boolean(data.encryptedData)
     })
 
-    const result = await platformPhoneLogin({
-      platform,
-      data,
-      resolvedIdentity: null
-    })
+    const result = attachHttpIdentityTicket(
+      await platformPhoneLogin({
+        platform,
+        data,
+        resolvedIdentity: null
+      })
+    )
     return jsonResponse(200, { code: 200, message: '登录成功', data: result })
   } catch (error) {
     console.error('platform-phone-bootstrap-http error:', {

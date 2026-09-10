@@ -20,6 +20,7 @@ const DISABLED_YELLOWING_FLOW_DIMENSIONS = new Set([
 const DISABLED_YELLOWING_FLOW_QUESTION_KEYS = new Set([
   YELLOWING_LEAF_AGE_PATTERN_QUESTION_KEY,
   YELLOWING_DISTRIBUTION_PATTERN_QUESTION_KEY,
+  'q_leaf_yellowing_light_background',
   'q_leaf_yellowing_new_growth_bias',
   'q_iron_new_leaves_yellow',
   'q_iron_not_old_first',

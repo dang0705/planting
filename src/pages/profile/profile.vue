@@ -160,7 +160,7 @@ import { useUserStore } from '@/store/user.js'
 import { getDiagnosisHistory } from '@/api/diagnosis-history.js'
 import { parsePlantDateTime } from '@/utils/plant-datetime.js'
 import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
-import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
+import { isFeatureAvailable } from '@/utils/platform-capabilities.js'
 
 const userStore = useUserStore()
 
@@ -168,7 +168,6 @@ const userStore = useUserStore()
 const diagnoseHistory = ref([])
 const loadingHistory = ref(false)
 const historyError = ref('')
-const restrictedPlatform = isRestrictedMiniProgram()
 const {
   openedFeatureKey,
   visible: featureUnavailableVisible,
@@ -219,7 +218,7 @@ onShow(() => {
 })
 
 async function loadDiagnoseHistory() {
-  if (restrictedPlatform) {
+  if (!isFeatureAvailable('diagnosis')) {
     diagnoseHistory.value = []
     historyError.value = ''
     return
@@ -269,7 +268,7 @@ function handleMenuClick(item) {
 }
 
 function openSubscriptionPage() {
-  if (restrictedPlatform) {
+  if (!isFeatureAvailable('subscription')) {
     openFeatureUnavailable('subscription')
     return
   }

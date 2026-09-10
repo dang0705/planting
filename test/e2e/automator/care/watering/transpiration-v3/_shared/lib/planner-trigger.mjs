@@ -1,39 +1,70 @@
 'use strict'
 
 /**
- * 无副作用 planner 触发链 —— 浇水算法 v3 蒸腾间隔修正端上验收。
+ * planner 触发链 —— 浇水算法 v3 蒸腾间隔修正端上验收。
  *
  * 职责：
- *   - 通过真实 UI 交互触发 /user-plants/watering-planner，不产生外部副作用
+ *   - 通过真实 UI 交互触发 /user-plants/watering-planner
  *   - 不点击 watering-reminder-confirm-button（会调用 addToCalendar + saveWateringReminder）
  *   - 不直接调用页面业务方法、不写数据库、不保存提醒、不添加系统日历
+ *   - 盆型有改动时，允许并记录“查看建议前保存当前植物盆型”的 PATCH
  *
- * 无副作用触发链：
+ * 触发链：
  *   1. 点击 plant-card-reminder-{id}-water
  *   2. 等待 watering-reminder-sheet 出现
  *   3. 点击 watering-reminder-last-watering-row
- *   4. 等待 watering-date-picker-sheet 出现
- *   5. 点击 watering-date-picker-confirm-button 确认
- *   6. confirmDatePicker → fetchPlanner → /user-plants/watering-planner wx.request
+ *   4. 等待 watering-reminder-input-stepper 出现
+ *   5. 点击 watering-reminder-input-next-button 进入盆型步骤
+ *   6. 再次点击 watering-reminder-input-next-button → 保存盆型（如有改动）→ fetchPlanner
  *
- * 断言无副作用：
+ * 外部副作用边界：
  *   - 不应出现 /watering-reminders 保存接口请求
  *   - 不应触发添加日历后的状态
+ *   - /user-plants?_method=PATCH 盆型保存请求属于本流程预期行为，不计入提醒副作用
  */
 
-import {
-  findViewById,
-  collectByIdPrefix,
-  waitForElement
-} from './element-helpers.mjs'
+import { findViewById, collectByIdPrefix, waitForElement } from './element-helpers.mjs'
 
 const WATERING_ENTRY_PREFIX = 'plant-card-reminder-'
 const WATERING_ENTRY_SUFFIX = '-water'
 const WATERING_SHEET_ID = 'watering-reminder-sheet'
 const LAST_WATERING_ROW_ID = 'watering-reminder-last-watering-row'
-const DATE_PICKER_SHEET_ID = 'watering-date-picker-sheet'
-const DATE_PICKER_CONFIRM_BUTTON_ID = 'watering-date-picker-confirm-button'
+const INPUT_STEPPER_ID = 'watering-reminder-input-stepper'
+const INPUT_NEXT_BUTTON_ID = 'watering-reminder-input-next-button'
+const INPUT_POT_STEP_ID = 'watering-reminder-input-step-pot'
+const POT_TOP_HANDLE_ID = 'watering-reminder-input-pot-profile-top-handle'
+const POT_BOTTOM_HANDLE_ID = 'watering-reminder-input-pot-profile-bottom-handle'
 const WATERING_REMINDER_SAVE_API = '/watering-reminders'
+const USER_PLANT_PATCH_API = '/user-plants'
+
+function isDisabledValue(value) {
+  return value === true || value === 1 || String(value).trim().toLowerCase() === 'true'
+}
+
+async function readDisabledState(element) {
+  try {
+    return isDisabledValue(await element.property('disabled'))
+  } catch {
+    return isDisabledValue(await element.attribute('disabled'))
+  }
+}
+
+async function findSelectableUnselectedWateringDate(page) {
+  const dateCells = await collectByIdPrefix(
+    page,
+    'watering-reminder-input-history-care-behavior-date-'
+  )
+  for (const cell of dateCells) {
+    const className = String((await cell.element.attribute('class').catch(() => '')) || '')
+    if (
+      className.includes('care-behavior-cell--selectable') &&
+      !className.includes('care-behavior-cell--selected')
+    ) {
+      return cell.element
+    }
+  }
+  return null
+}
 
 /**
  * 关闭 watering-reminder-sheet（无副作用）。
@@ -44,58 +75,27 @@ export async function closeWateringSheet(page) {
     await closeBtn.tap()
     await sleep(500)
   }
-  // 也尝试关闭可能仍打开的 date-picker
-  const datePickerClose = await findViewById(page, 'watering-date-picker-close-button')
-  if (datePickerClose) {
-    await datePickerClose.tap()
-    await sleep(300)
-  }
 }
 
 /**
- * 定位浇水日期选择器的确认按钮。
- *
- * 使用当前组件公开的稳定 ID，不扫描全页面文案或依赖 button 顺序，避免误触。
- *
- * @param {object} page
- * @returns {Promise<{button: object|null, ambiguous: boolean, detail: string}>}
- */
-export async function findDatePickerConfirmButton(page) {
-  const confirmButton = await findViewById(page, DATE_PICKER_CONFIRM_BUTTON_ID)
-  if (confirmButton) {
-    return {
-      button: confirmButton,
-      ambiguous: false,
-      detail: `found ${DATE_PICKER_CONFIRM_BUTTON_ID}`
-    }
-  }
-  return {
-    button: null,
-    ambiguous: true,
-    detail: `${DATE_PICKER_CONFIRM_BUTTON_ID} 未找到`
-  }
-}
-
-/**
- * 通过无副作用触发链触发 /user-plants/watering-planner 请求。
+ * 通过真实步骤触发 /user-plants/watering-planner 请求。
  *
  * @param {object} mp - miniProgram 实例
  * @param {object} page - 当前页面
  * @param {string|number} plantId - 目标植物 ID（用于定位 plant-card-reminder-{id}-water）
  * @param {object} options - { captureClear: Function, readRequests: Function, waitForRequest: Function }
- * @returns {Promise<{plannerRequest: object|null, triggerChain: Array, sideEffectDetected: boolean, confirmButtonAmbiguous: boolean}>}
+ * @returns {Promise<{plannerRequest: object|null, potProfileSaveRequests: Array, triggerChain: Array, sideEffectDetected: boolean}>}
  */
-export async function triggerPlannerNoSideEffect(mp, page, plantId, options) {
+export async function triggerPlannerNoSideEffect(mp, page, plantId, options = {}) {
   const triggerChain = []
   let sideEffectDetected = false
-  let confirmButtonAmbiguous = false
 
   // 步骤 1：定位并点击 plant-card-reminder-{plantId}-water
   const entryId = `${WATERING_ENTRY_PREFIX}${plantId}${WATERING_ENTRY_SUFFIX}`
   const entryEl = await findViewById(page, entryId)
   if (!entryEl) {
     triggerChain.push({ step: 'click-entry', success: false, reason: `${entryId} not found` })
-    return { plannerRequest: null, triggerChain, sideEffectDetected, confirmButtonAmbiguous: false }
+    return { plannerRequest: null, potProfileSaveRequests: [], triggerChain, sideEffectDetected }
   }
   await entryEl.tap()
   triggerChain.push({ step: 'click-entry', success: true, id: entryId })
@@ -109,54 +109,130 @@ export async function triggerPlannerNoSideEffect(mp, page, plantId, options) {
       success: false,
       reason: `${WATERING_SHEET_ID} not found`
     })
-    return { plannerRequest: null, triggerChain, sideEffectDetected, confirmButtonAmbiguous: false }
+    return { plannerRequest: null, potProfileSaveRequests: [], triggerChain, sideEffectDetected }
   }
   triggerChain.push({ step: 'wait-sheet', success: true, id: WATERING_SHEET_ID })
 
-  // 步骤 3：点击 watering-reminder-last-watering-row
-  const lastWateringRow = await findViewById(page, LAST_WATERING_ROW_ID)
-  if (!lastWateringRow) {
-    triggerChain.push({
-      step: 'click-last-watering-row',
-      success: false,
-      reason: `${LAST_WATERING_ROW_ID} not found`
-    })
-    await closeWateringSheet(page)
-    return { plannerRequest: null, triggerChain, sideEffectDetected, confirmButtonAmbiguous: false }
+  // 步骤 3：没有历史时，产品会直接进入题包式输入，避免用户再点一次
+  // “过往浇水日期”。有历史时才保留从结果页点击该行的路径。
+  let inputStepper = await findViewById(page, INPUT_STEPPER_ID)
+  if (inputStepper) {
+    triggerChain.push({ step: 'required-history-input-already-open', success: true, id: INPUT_STEPPER_ID })
+  } else {
+    const lastWateringRow = await findViewById(page, LAST_WATERING_ROW_ID)
+    if (!lastWateringRow) {
+      triggerChain.push({
+        step: 'click-last-watering-row',
+        success: false,
+        reason: `${LAST_WATERING_ROW_ID} not found`
+      })
+      await closeWateringSheet(page)
+      return { plannerRequest: null, potProfileSaveRequests: [], triggerChain, sideEffectDetected }
+    }
+    await lastWateringRow.tap()
+    triggerChain.push({ step: 'click-last-watering-row', success: true, id: LAST_WATERING_ROW_ID })
+    await sleep(800)
+    inputStepper = await waitForElement(page, INPUT_STEPPER_ID, 5000)
   }
-  await lastWateringRow.tap()
-  triggerChain.push({ step: 'click-last-watering-row', success: true, id: LAST_WATERING_ROW_ID })
-  await sleep(1500)
 
-  // 步骤 4：等待 watering-date-picker-sheet 出现
-  const datePickerSheet = await waitForElement(page, DATE_PICKER_SHEET_ID, 5000)
-  if (!datePickerSheet) {
+  // 步骤 4：确认题包式浇水输入步骤已出现
+  if (!inputStepper) {
     triggerChain.push({
-      step: 'wait-date-picker',
+      step: 'wait-input-stepper',
       success: false,
-      reason: `${DATE_PICKER_SHEET_ID} not found`
+      reason: `${INPUT_STEPPER_ID} not found`
     })
     await closeWateringSheet(page)
-    return { plannerRequest: null, triggerChain, sideEffectDetected, confirmButtonAmbiguous: false }
+    return { plannerRequest: null, potProfileSaveRequests: [], triggerChain, sideEffectDetected }
   }
-  triggerChain.push({ step: 'wait-date-picker', success: true, id: DATE_PICKER_SHEET_ID })
+  triggerChain.push({ step: 'wait-input-stepper', success: true, id: INPUT_STEPPER_ID })
 
-  // 步骤 5：在 watering-date-picker-content 内定位"确认"按钮并点击
-  const confirmResult = await findDatePickerConfirmButton(page)
-  const confirmBtn = confirmResult.button
-  if (!confirmBtn) {
-    confirmButtonAmbiguous = confirmResult.ambiguous
+  // 若没有预置历史记录，先选择一个可用日期；已有历史记录则保持原选择，避免误取消。
+  const nextButton = await waitForElement(page, INPUT_NEXT_BUTTON_ID, 5000)
+  if (!nextButton) {
     triggerChain.push({
-      step: 'find-confirm-button',
+      step: 'find-input-next-button',
       success: false,
-      reason: confirmResult.detail,
-      ambiguous: confirmResult.ambiguous
+      reason: `${INPUT_NEXT_BUTTON_ID} not found`
     })
     await closeWateringSheet(page)
-    return { plannerRequest: null, triggerChain, sideEffectDetected, confirmButtonAmbiguous }
+    return { plannerRequest: null, potProfileSaveRequests: [], triggerChain, sideEffectDetected }
   }
-  await confirmBtn.tap()
-  triggerChain.push({ step: 'click-confirm-button', success: true })
+  let nextDisabled = await readDisabledState(nextButton)
+  if (nextDisabled) {
+    const dateCell = await findSelectableUnselectedWateringDate(page)
+    if (!dateCell) {
+      triggerChain.push({
+        step: 'select-required-watering-date',
+        success: false,
+        reason: '没有可选择且尚未选中的过往浇水日期'
+      })
+      await closeWateringSheet(page)
+      return { plannerRequest: null, potProfileSaveRequests: [], triggerChain, sideEffectDetected }
+    }
+    await dateCell.tap()
+    triggerChain.push({ step: 'select-required-watering-date', success: true })
+    await sleep(500)
+    nextDisabled = await readDisabledState(nextButton)
+    if (nextDisabled) {
+      triggerChain.push({
+        step: 'verify-required-watering-date',
+        success: false,
+        reason: '选择可用日期后，下一步仍不可用'
+      })
+      await closeWateringSheet(page)
+      return { plannerRequest: null, potProfileSaveRequests: [], triggerChain, sideEffectDetected }
+    }
+  }
+
+  await nextButton.tap()
+  triggerChain.push({ step: 'click-input-next-to-pot', success: true, id: INPUT_NEXT_BUTTON_ID })
+  await sleep(500)
+
+  const potStep = await waitForElement(page, INPUT_POT_STEP_ID, 5000)
+  if (!potStep) {
+    triggerChain.push({
+      step: 'wait-pot-step',
+      success: false,
+      reason: `${INPUT_POT_STEP_ID} not found`
+    })
+    await closeWateringSheet(page)
+    return { plannerRequest: null, potProfileSaveRequests: [], triggerChain, sideEffectDetected }
+  }
+  triggerChain.push({ step: 'wait-pot-step', success: true, id: INPUT_POT_STEP_ID })
+
+  let potProfileInteraction = null
+  if (options.ensurePotProfileByDrag) {
+    potProfileInteraction = await ensurePotProfileByDrag(page)
+    triggerChain.push({
+      step: 'drag-pot-profile-handles',
+      success: potProfileInteraction.complete,
+      handles: potProfileInteraction.handles
+    })
+    if (!potProfileInteraction.complete) {
+      await closeWateringSheet(page)
+      return {
+        plannerRequest: null,
+        potProfileSaveRequests: [],
+        triggerChain,
+        sideEffectDetected,
+        potProfileInteraction
+      }
+    }
+  }
+
+  const latestNextButton = await waitForElement(page, INPUT_NEXT_BUTTON_ID, 5000)
+  if (!latestNextButton) {
+    triggerChain.push({
+      step: 'find-pot-next-button',
+      success: false,
+      reason: `${INPUT_NEXT_BUTTON_ID} not found on pot step`
+    })
+    await closeWateringSheet(page)
+    return { plannerRequest: null, potProfileSaveRequests: [], triggerChain, sideEffectDetected }
+  }
+  await latestNextButton.tap()
+  triggerChain.push({ step: 'click-input-next-to-result', success: true, id: INPUT_NEXT_BUTTON_ID })
   await sleep(2000)
 
   // 步骤 6：等待 planner 请求
@@ -167,8 +243,16 @@ export async function triggerPlannerNoSideEffect(mp, page, plantId, options) {
     url: plannerRequest?.url || null
   })
 
-  // 步骤 7：检测副作用——不应出现 /watering-reminders 保存接口
+  // 步骤 7：记录预期的盆型 PATCH，并检查真正不应发生的提醒保存
   const allRequests = await options.readRequests(mp)
+  const potProfileSaveRequests = allRequests.filter(isUserPlantPatchRequest)
+  if (potProfileSaveRequests.length > 0) {
+    triggerChain.push({
+      step: 'pot-profile-save-check',
+      success: true,
+      reason: `检测到 ${potProfileSaveRequests.length} 个当前植物盆型保存请求`
+    })
+  }
   const saveRequests = allRequests.filter(
     r =>
       r.url &&
@@ -190,10 +274,93 @@ export async function triggerPlannerNoSideEffect(mp, page, plantId, options) {
     })
   }
 
-  // 关闭 sheet（清理状态）
-  await closeWateringSheet(page)
+  // 默认关闭 sheet（清理状态）。持久化场景会在结果页截屏和回显断言后自行关闭。
+  if (options.closeAfter !== false) {
+    await closeWateringSheet(page)
+  }
 
-  return { plannerRequest, triggerChain, sideEffectDetected, confirmButtonAmbiguous }
+  return {
+    plannerRequest,
+    potProfileSaveRequests,
+    triggerChain,
+    sideEffectDetected,
+    potProfileInteraction
+  }
+}
+
+function isUserPlantPatchRequest(request) {
+  if (!request?.url || !request.url.includes(USER_PLANT_PATCH_API)) {
+    return false
+  }
+  const method = String(request.method || '').toUpperCase()
+  // 小程序本地 HTTP bridge 会把 PATCH 编码为 POST + _method=PATCH；两种记录都是同一业务写入。
+  return method === 'PATCH' || /[?&]_method=PATCH(?:&|$)/.test(request.url)
+}
+
+async function ensurePotProfileByDrag(page) {
+  const handles = []
+  for (const config of [
+    { id: POT_TOP_HANDLE_ID, primary: { x: 24, y: -24 }, fallback: { x: -48, y: 48 } },
+    { id: POT_BOTTOM_HANDLE_ID, primary: { x: 24, y: 0 }, fallback: { x: -48, y: 0 } }
+  ]) {
+    const result = await dragHandleInEitherDirection(page, config)
+    handles.push({ id: config.id, ...result })
+  }
+  return {
+    complete: handles.every(handle => handle.changed),
+    handles
+  }
+}
+
+async function dragHandleInEitherDirection(page, { id, primary, fallback }) {
+  for (const delta of [primary, fallback]) {
+    const handle = await waitForElement(page, id, 5000)
+    if (!handle) {
+      return { changed: false, reason: 'handle_not_found' }
+    }
+    const before = await readOffset(handle)
+    if (!before) {
+      return { changed: false, reason: 'offset_unavailable' }
+    }
+    const start = touchPoint(before.left, before.top)
+    const end = touchPoint(before.left + delta.x, before.top + delta.y)
+    await handle.touchstart({ touches: [start], changedTouches: [start] })
+    await handle.touchmove({ touches: [end], changedTouches: [end] })
+    await handle.touchend({ changedTouches: [end] })
+    await sleep(450)
+
+    const movedHandle = await waitForElement(page, id, 3000)
+    const after = movedHandle ? await readOffset(movedHandle) : null
+    if (after && (Math.abs(after.left - before.left) > 1 || Math.abs(after.top - before.top) > 1)) {
+      return { changed: true, delta, before, after }
+    }
+  }
+  return { changed: false, reason: 'drag_did_not_change_handle_position' }
+}
+
+function touchPoint(left, top) {
+  return {
+    clientX: left,
+    clientY: top,
+    pageX: left,
+    pageY: top,
+    x: left,
+    y: top
+  }
+}
+
+async function readOffset(element) {
+  try {
+    const offset = await element.offset()
+    const left = Number(offset?.left ?? offset?.x)
+    const top = Number(offset?.top ?? offset?.y)
+    if (Number.isFinite(left) && Number.isFinite(top)) {
+      return { left, top }
+    }
+  } catch {
+    // The caller turns this into a visible assertion instead of guessing coordinates.
+  }
+  return null
 }
 
 /**
@@ -206,7 +373,9 @@ export async function triggerPlannerNoSideEffect(mp, page, plantId, options) {
  * @returns {Promise<Array<{plantId: string, element: object, id: string, stableId: string}>>}
  */
 export async function collectWateringEntries(page) {
-  const entries = await collectByIdPrefix(page, WATERING_ENTRY_PREFIX)
+  // 只需找到少量真实入口供后续逐个完成流程。Nightly 中每张植物卡片都是
+  // 独立组件；全量递归几十张卡片会把入口探测放大成无意义等待。
+  const entries = await collectByIdPrefix(page, WATERING_ENTRY_PREFIX, { limit: 3 })
   return entries
     .filter(e => e.stableId.endsWith(WATERING_ENTRY_SUFFIX))
     .map(e => ({

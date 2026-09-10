@@ -20,7 +20,7 @@ export function createQuestionAnswerMap(questions = []) {
       continue
     }
     entries[questionId] = isLightEnvironmentQuestion(item)
-      ? ''
+      ? 'unknown'
       : isCareBehaviorWateringTimelineQuestion(item)
         ? resolveCareBehaviorTimelineAutoAnswerOptionId(item) || ''
         : resolveDefaultQuestionOptionId(item)
@@ -86,6 +86,9 @@ export function buildQuestionAnswerPayload(result, answerMap = {}, options = {})
     requestMode: options?.requestMode || (answers.length > 1 ? 'answer_revision' : 'answer_submit'),
     baseAnswerRevision: Number(options?.baseAnswerRevision || result?.answerRevision || 0),
     dirtyFromQuestionId: String(options?.dirtyFromQuestionId || '').trim(),
+    ...(result?.questionPackageContinuationToken
+      ? { questionPackageContinuationToken: result.questionPackageContinuationToken }
+      : {}),
     ...(result?.questionPackage && typeof result.questionPackage === 'object'
       ? { questionPackage: result.questionPackage }
       : {}),

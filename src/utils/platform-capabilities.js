@@ -8,7 +8,6 @@ const RESTRICTED_PLATFORM_FEATURES = Object.freeze([
   'payment',
   'storage'
 ])
-
 export function getCurrentMiniProgramPlatform() {
   // #ifdef MP-WEIXIN
   return 'wechat_mp'
@@ -31,12 +30,28 @@ export function usesPlatformNavigationChrome() {
 }
 
 export function isRestrictedMiniProgram() {
+  // 仅供跨端传输适配使用，不代表该平台的功能不可用。
   const platform = getCurrentMiniProgramPlatform()
   return platform === 'douyin_mp' || platform === 'xiaohongshu_mp'
 }
 
+export function isDiagnosisAvailable() {
+  const platform = getCurrentMiniProgramPlatform()
+  if (platform === 'xiaohongshu_mp') {
+    return false
+  }
+  return true
+}
+
+export function isDiagnosisFlowAvailable() {
+  return getCurrentMiniProgramPlatform() !== 'xiaohongshu_mp'
+}
+
 export function isFeatureAvailable(featureKey) {
-  if (!isRestrictedMiniProgram()) {
+  if (String(featureKey || '').trim() === 'diagnosis') {
+    return isDiagnosisAvailable()
+  }
+  if (getCurrentMiniProgramPlatform() !== 'xiaohongshu_mp') {
     return true
   }
   return !RESTRICTED_PLATFORM_FEATURES.includes(String(featureKey || '').trim())

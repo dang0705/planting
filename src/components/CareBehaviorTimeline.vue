@@ -36,6 +36,7 @@
     <CareBehaviorWateringDoseList
       v-if="enableDosePerDate"
       :rows="wateringDoseRows"
+      :id-prefix="idPrefix"
       :pot-volume-ml="potVolumeMl"
       @update-dose="onUpdateDose"
     />
@@ -59,9 +60,10 @@ const props = defineProps({
   idPrefix: { type: String, default: 'diagnose' },
   sticky: { type: Boolean, default: false },
   enableDosePerDate: { type: Boolean, default: false },
-  potVolumeMl: { type: Number, default: 0 }
+  potVolumeMl: { type: Number, default: 0 },
+  resetKey: { type: [Number, String], default: 0 }
 })
-const emit = defineEmits(['change'])
+const emit = defineEmits(['change', 'select-date'])
 
 const {
   cellItems,

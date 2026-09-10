@@ -1,6 +1,5 @@
 import { computed } from 'vue'
-
-const MULTIPLE_OUTCOME_COUNT = 1
+import { buildSharedOutcomeAdviceGroups } from '../utils/outcome-advice-groups.js'
 
 function uniqueStrings(values = []) {
   return Array.from(
@@ -81,30 +80,25 @@ export function buildOutcomeAdviceGroups({
   outcomeSources = [],
   getOutcomeItems,
   fallbackItems = [],
-  fallbackLabel = '通用建议'
+  fallbackLabel = '通用建议',
+  section = 'action',
+  getOutcomeActionItems,
+  getOutcomeAvoidItems,
+  sharedSymptomLabels = []
 } = {}) {
   const sourceOutcomes = buildUniqueOutcomesForAdvice(outcomeSources)
-  const sourceGroups = sourceOutcomes
-    .map((outcome, index) => ({
-      key: normalizeOutcomeDisplayKey(outcome, index),
-      outcomeLabel: formatOutcomeDisplayLabel(outcome),
-      items: uniqueStrings(getOutcomeItems ? getOutcomeItems(outcome) : [])
-    }))
-    .filter(group => group.outcomeLabel && group.items.length)
-  if (sourceGroups.length || !fallbackItems.length) {
-    return sourceGroups.map(group => ({
-      ...group,
-      showOutcomeLabel: sourceOutcomes.length > MULTIPLE_OUTCOME_COUNT
-    }))
-  }
-  return [
-    {
-      key: '__fallback__',
-      outcomeLabel: fallbackLabel,
-      items: uniqueStrings(fallbackItems),
-      showOutcomeLabel: true
-    }
-  ]
+  const grouped = buildSharedOutcomeAdviceGroups({
+    outcomeSources: sourceOutcomes,
+    getOutcomeKey: normalizeOutcomeDisplayKey,
+    getOutcomeLabel: formatOutcomeDisplayLabel,
+    getActionItems: getOutcomeActionItems || (section === 'action' ? getOutcomeItems : undefined),
+    getAvoidItems: getOutcomeAvoidItems || (section === 'avoid' ? getOutcomeItems : undefined),
+    sharedSymptomLabels,
+    fallbackActionItems: section === 'action' ? fallbackItems : [],
+    fallbackAvoidItems: section === 'avoid' ? fallbackItems : [],
+    fallbackLabel
+  })
+  return section === 'avoid' ? grouped.avoidGroups : grouped.actionGroups
 }
 
 function buildOutcomeActionAdviceItems(outcome = {}) {
@@ -264,6 +258,10 @@ export function useQuestionPackageResultView({ result, payload }) {
     buildOutcomeAdviceGroups({
       outcomeSources: outcomeAdviceSources.value,
       getOutcomeItems: buildOutcomeActionAdviceItems,
+      section: 'action',
+      getOutcomeActionItems: buildOutcomeActionAdviceItems,
+      getOutcomeAvoidItems: buildOutcomeAvoidAdviceItems,
+      sharedSymptomLabels: observedItems.value,
       fallbackItems: actionAdviceTexts.value,
       fallbackLabel: '通用建议'
     })
@@ -272,6 +270,10 @@ export function useQuestionPackageResultView({ result, payload }) {
     buildOutcomeAdviceGroups({
       outcomeSources: outcomeAdviceSources.value,
       getOutcomeItems: buildOutcomeAvoidAdviceItems,
+      section: 'avoid',
+      getOutcomeActionItems: buildOutcomeActionAdviceItems,
+      getOutcomeAvoidItems: buildOutcomeAvoidAdviceItems,
+      sharedSymptomLabels: observedItems.value,
       fallbackItems: avoidAdviceTexts.value,
       fallbackLabel: '通用建议'
     })

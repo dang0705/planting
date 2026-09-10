@@ -157,7 +157,9 @@ export function resetOfficialQaSingletons(userDataDir) {
         removed.push(name)
       }
     } catch (error) {
-      if (error?.code !== 'ENOENT') throw error
+      if (error?.code !== 'ENOENT') {
+        throw error
+      }
     }
   }
   return removed
@@ -204,7 +206,7 @@ export function buildOfficialElectronDevToolsLaunch({
       '--enable-service-port',
       `--user-data-dir=${normalizedUserDataDir}`,
       `--app-session-id=${appSessionId}`,
-      // The official 2.02.2608272 bootstrap parses this option as a
+      // The official 2.02.2609012 bootstrap parses this option as a
       // two-token argv pair (`indexOf('--ide-http-port')` followed by the
       // value). The equals form is silently ignored and makes the IDE pick a
       // random port, which then fails the fixed control-plane ownership gate.
@@ -326,10 +328,18 @@ export function buildQaDevToolsEnvironment(
   { runtimeKind = isOfficialElectronBundle() ? 'official_electron' : 'legacy_native' } = {}
 ) {
   const official = runtimeKind === 'official_electron'
+  // Electron's macOS safeStorage resolves its Keychain search list from HOME.
+  // Keep the real OS home for the official runtime while --user-data-dir
+  // continues to isolate all DevTools data under QA_DEVTOOLS_HOME. Redirecting
+  // HOME makes macOS look for a second login keychain inside the disposable QA
+  // directory and blocks startup with a "Keychain Not Found" dialog.
+  const runtimeHome = official
+    ? baseEnv.HOME || baseEnv.USERPROFILE || '/tmp'
+    : QA_DEVTOOLS_HOME
   return {
     ...baseEnv,
-    HOME: QA_DEVTOOLS_HOME,
-    USERPROFILE: QA_DEVTOOLS_HOME,
+    HOME: runtimeHome,
+    USERPROFILE: runtimeHome,
     WECHAT_DEVTOOLS_SHARED_AUTH_ROOT: QA_SHARED_AUTH_ROOT,
     WECHAT_DEVTOOLS_SHARED_AUTH_ROLE: 'qa',
     WECHAT_QA_LAUNCHER_ROLE: 'qa',

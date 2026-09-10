@@ -17,11 +17,15 @@
       </text>
     </view>
     <view class="mt-3 flex items-center justify-between">
-      <text class="text-[12px] text-[#5a7868]">大概浇多少</text>
+      <text class="text-[12px] text-[#5a7868]">浇水量</text>
       <text v-if="isOverWateringBlocked" class="text-[13px] font-medium text-[#1d2a23]">
         近期先不浇
       </text>
-      <text v-else-if="amountBottleText" class="text-[13px] font-medium text-[#1d2a23]">
+      <text
+        v-else-if="amountBottleText"
+        id="watering-reminder-result-amount"
+        class="text-[13px] font-medium text-[#1d2a23]"
+      >
         {{ amountBottleText }}
       </text>
       <text
@@ -33,65 +37,34 @@
       </text>
       <text v-else class="text-[13px] font-medium text-[#1d2a23]">暂不提供固定水量</text>
     </view>
-    <text
-      v-if="plannerEvidenceText"
-      id="watering-reminder-planner-evidence"
-      class="mt-2 block text-[12px] text-[#5a7868]"
-    >
-      {{ plannerEvidenceText }}
-    </text>
-    <view v-if="nextWaterReason" class="mt-3">
-      <text class="block text-[12px] font-semibold text-[#5a7868]">为什么这样建议</text>
-      <text class="mt-1 block text-[12px] leading-5 text-[#5a7868]">
-        {{ nextWaterReason }}
-      </text>
-    </view>
     <view
       v-if="soilCheckMessage"
       id="watering-reminder-soil-check-guidance"
       class="mt-3 rounded-xl border border-[#d7e6dc] bg-white px-3 py-2"
     >
-      <text class="block text-[12px] font-semibold text-[#2d7a4f]">浇水前先看盆土</text>
-      <text class="mt-1 block text-[12px] leading-5 text-[#5a7868]">
-        {{ soilCheckMessage }}
-      </text>
-    </view>
-    <view v-if="plannerSummaryRows.length" class="mt-2 border-t border-gray-200/50 pt-2">
-      <view
-        v-for="row in plannerSummaryRows"
-        :key="row.label"
-        class="flex items-center justify-between"
-      >
-        <text class="text-xs text-gray-500">{{ row.label }}</text>
-        <text :class="row.valueClass">{{ row.value }}</text>
-      </view>
-    </view>
-    <view v-if="reasonCodes.length" class="mt-2 flex flex-wrap gap-1">
-      <text
-        v-for="code in reasonCodes"
-        :key="code"
-        v-show="reasonCodeLabel(code)"
-        class="rounded-full bg-white/60 px-2 py-0.5 text-[10px] text-gray-500"
-      >
-        {{ reasonCodeLabel(code) }}
+      <text class="block text-[12px] leading-5 text-[#2d7a4f]">
+        {{ compactSoilCheckMessage(soilCheckMessage) }}
       </text>
     </view>
   </view>
 </template>
 
 <script setup>
-import { reasonCodeLabel } from './watering-reminder-options.js'
+function compactSoilCheckMessage(message) {
+  const detail = String(message || '')
+    .trim()
+    .replace(/^下次浇水前先检查盆土[，,]\s*/, '')
+    .replace(/^建议现在检查盆土[，,]\s*/, '')
+    .replace(/^先检查盆土[，,]\s*/, '')
+  return detail ? `浇水前摸一下盆土，${detail}` : '浇水前摸一下盆土。'
+}
 
 defineProps({
   isOverWateringBlocked: { type: Boolean, default: false },
   isOverdue: { type: Boolean, default: false },
   nextWaterDisplay: { type: String, default: '' },
-  nextWaterReason: { type: String, default: '' },
   amountBottleText: { type: String, default: '' },
   potProfileState: { type: String, default: 'missing' },
-  plannerEvidenceText: { type: String, default: '' },
-  soilCheckMessage: { type: String, default: '' },
-  plannerSummaryRows: { type: Array, default: () => [] },
-  reasonCodes: { type: Array, default: () => [] }
+  soilCheckMessage: { type: String, default: '' }
 })
 </script>

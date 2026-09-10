@@ -56,6 +56,11 @@ export function usePlatformPhoneLogin({ onSuccess } = {}) {
 
   // #ifdef MP-TOUTIAO
   function getDouyinApi() {
+    // eslint-disable-next-line no-undef
+    const nativeDouyin = typeof tt !== 'undefined' ? tt : null
+    if (nativeDouyin) {
+      return nativeDouyin
+    }
     return typeof globalThis === 'undefined' ? null : globalThis.tt || null
   }
 

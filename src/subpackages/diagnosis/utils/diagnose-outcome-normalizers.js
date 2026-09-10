@@ -46,6 +46,7 @@ export function normalizeOutcomeEntry(outcome = null) {
     urgency: String(outcome?.urgency || '').trim(),
     firstAid: String(outcome?.firstAid || '').trim(),
     avoid: String(outcome?.avoid || '').trim(),
+    actionProfileKey: String(outcome?.actionProfileKey || outcome?.action_profile_key || '').trim(),
     actionAdviceItems: normalizeStringList(outcome?.actionAdviceItems),
     avoidAdviceItems: normalizeStringList(outcome?.avoidAdviceItems),
     reassurance: String(outcome?.reassurance || '').trim()

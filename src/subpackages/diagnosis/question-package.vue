@@ -2,7 +2,7 @@
   <Layout title="继续问诊" left-action="back" background-class="bg-[#f8faf9]">
     <view
       id="diagnose-question-package-page"
-      class="relative box-border flex h-screen min-h-screen flex-col bg-[#f8faf9]"
+      class="relative box-border h-[calc(100vh-var(--app-header-height))] min-h-0 bg-[#f8faf9]"
     >
       <QuestionPackageRestartRequired v-if="packageRestartRequired" @restart="returnPreviousPage" />
       <view
@@ -13,124 +13,149 @@
         <text class="text-sm text-gray-500">正在准备问诊…</text>
       </view>
       <template v-else-if="result?.hasActiveQuestions && questionStack.length">
-        <view class="flex min-h-0 flex-1 flex-col pt-6">
-          <QuestionPackageProgressHeader
-            :title="questionDiagnosisContextText"
-            :progress="questionProgressText"
-          />
-          <ButtonStepTrack
-            id="diagnose-question-package-page-swiper"
-            :items="questionStack"
-            :active-index="activeQuestionIndex"
-            viewport-class="min-h-0 w-full flex-1 overflow-y-visible"
-            :viewport-style="questionSwiperStyle"
-            item-class="relative h-full overflow-hidden"
-          >
-            <template #step="{ item: question, index: questionIndex }">
-              <scroll-view
-                v-if="question && shouldRenderQuestionContent(questionIndex)"
-                :id="`diagnose-question-package-page-question-scroll-${getQuestionId(question) || questionIndex}`"
-                scroll-y
-                class="h-full"
+        <scroll-view
+          id="diagnose-question-package-page-scroll"
+          scroll-y
+          :scroll-top="questionPageScrollTop"
+          :scroll-with-animation="false"
+          class="h-full min-h-0"
+        >
+          <view class="flex min-h-0 flex-col pt-6">
+            <QuestionPackageProgressHeader
+              :title="questionDiagnosisContextText"
+              :progress="questionProgressText"
+            />
+            <view
+              v-if="currentQuestion && !isCareBehaviorWateringTimelineQuestion(currentQuestion)"
+              :id="`diagnose-question-package-page-question-scroll-${getQuestionId(currentQuestion)}`"
+              class="w-full"
+            >
+              <view
+                :id="`diagnose-question-package-page-active-question-${getQuestionId(currentQuestion)}`"
+                class="pointer-events-none absolute h-0 w-0 overflow-hidden"
+              />
+              <view
+                :id="`diagnose-question-package-page-question-shell-${getQuestionId(currentQuestion)}`"
+                class="box-border min-h-full px-4 pb-[112px]"
               >
                 <view
-                  v-if="questionIndex === activeQuestionIndex"
-                  :id="`diagnose-question-package-page-active-question-${getQuestionId(question) || questionIndex}`"
-                  class="pointer-events-none absolute h-0 w-0 overflow-hidden"
-                />
-                <view
-                  :id="`diagnose-question-package-page-question-shell-${getQuestionId(question) || questionIndex}`"
-                  class="box-border min-h-full px-4 pb-[112px]"
+                  :id="`diagnose-question-package-page-question-card-${getQuestionId(currentQuestion)}`"
+                  class="question-package-card-enter rounded-[20px] border border-emerald-100 bg-white px-4 py-4 shadow-sm"
                 >
-                  <view
-                    :id="`diagnose-question-package-page-question-card-${getQuestionId(question) || questionIndex}`"
-                    class="question-package-card-enter rounded-[20px] border border-emerald-100 bg-white px-4 py-4 shadow-sm"
+                  <text
+                    v-if="!isLightEnvironmentQuestion(currentQuestion)"
+                    class="block text-base font-semibold leading-7 text-[#2d7a4f]"
                   >
-                    <text class="block text-base font-semibold leading-7 text-[#2d7a4f]">
-                      {{ getQuestionTitle(question) }}
-                    </text>
-                    <text
-                      v-if="getQuestionHelpText(question)"
-                      class="mt-2 block text-xs leading-relaxed text-gray-500"
-                    >
-                      {{ getQuestionHelpText(question) }}
-                    </text>
-                    <CareBehaviorTimeline
-                      v-if="isCareBehaviorWateringTimelineQuestion(question)"
-                      :question-id="getQuestionId(question)"
-                      :question="question"
-                      :timeline="getCareBehaviorTimelineByQuestion(question)"
-                      :environment-weather-window="environmentWeatherWindow"
-                      :weather-by-date="environmentWeatherByDate"
-                      :loading="environmentWeatherWindowLoading"
-                      :error="environmentWeatherWindowError"
-                      :enable-dose-per-date="true"
-                      :pot-volume-ml="0"
-                      @change="payload => handleCareBehaviorTimelineChange(question, payload)"
-                    />
-                    <LightEnvironmentPicker
-                      v-if="isLightEnvironmentQuestion(question)"
-                      :question-id="getQuestionId(question)"
-                      :id-prefix="'diagnose-light'"
-                      :plant-name="plantName"
-                      :model-value="getLightEnvironmentByQuestion(question)"
-                      :requires-confirmation="requiresLightEnvironmentConfirmation(question)"
-                      :confirmed="isLightEnvironmentConfirmed(question)"
-                      @change="payload => handleLightEnvironmentChange(question, payload)"
-                      @confirm="payload => confirmLightEnvironment(question, payload)"
-                    />
-                    <text
-                      v-if="
-                        isLightEnvironmentQuestion(question) &&
-                        getVisibleCareBehaviorOptions(question).length
-                      "
-                      class="mb-2 mt-4 block text-sm font-medium leading-5 text-[#24382b]"
-                    >
-                      最近光照有变化吗？
-                    </text>
-                    <QuestionPackageAirEnvironmentStep
-                      v-if="isAirEnvironmentQuestion(question)"
-                      :question="question"
-                      :question-id="getQuestionId(question)"
-                      :air-environment="airEnvironmentUi"
-                      footer-position="fixed"
-                      back-label="上一题"
-                      back-id="diagnose-question-package-page-prev-button"
-                      :completion-label="nextButtonText"
-                      completion-id="diagnose-question-package-page-next-button"
-                      @change="payload => handleAirEnvironmentChange(question, payload)"
-                      @unknown="selectAirEnvironmentUnknown(question)"
-                      @edit="openAirEnvironmentEditor(question)"
-                      @confirm="confirmAirEnvironmentLocation(question)"
-                      @back="goPreviousQuestion"
-                      @complete="handleNextQuestion"
-                    />
-                    <QuestionPackageOptions
-                      v-if="
-                        !isAirEnvironmentQuestion(question) &&
-                        getVisibleCareBehaviorOptions(question).length
-                      "
-                      :question="question"
-                      :question-id="getQuestionId(question) || String(questionIndex)"
-                      :options="getVisibleCareBehaviorOptions(question)"
-                      :selected-option-id="getSelectedQuestionOptionId(question)"
-                      @select="option => selectQuestionOption(question, option)"
-                      @skip="option => skipQuestionRisk(question, option)"
-                    />
-                  </view>
+                    {{ getQuestionTitle(currentQuestion) }}
+                  </text>
+                  <text
+                    v-if="
+                      !isLightEnvironmentQuestion(currentQuestion) &&
+                      getQuestionHelpText(currentQuestion)
+                    "
+                    class="mt-2 block text-xs leading-relaxed text-gray-500"
+                  >
+                    {{ getQuestionHelpText(currentQuestion) }}
+                  </text>
+                  <LightEnvironmentPicker
+                    v-if="isLightEnvironmentQuestion(currentQuestion)"
+                    :key="`light-${getQuestionId(currentQuestion)}`"
+                    :question-id="getQuestionId(currentQuestion)"
+                    :id-prefix="'diagnose-light'"
+                    :plant-name="plantName"
+                    :model-value="getLightEnvironmentByQuestion(currentQuestion)"
+                    :requires-confirmation="requiresLightEnvironmentConfirmation(currentQuestion)"
+                    :confirmed="isLightEnvironmentConfirmed(currentQuestion)"
+                    @change="payload => handleLightEnvironmentChange(currentQuestion, payload)"
+                    @confirm="payload => confirmLightEnvironment(currentQuestion, payload)"
+                  />
+                  <QuestionPackageAirEnvironmentStep
+                    v-if="isAirEnvironmentQuestion(currentQuestion)"
+                    :key="`air-${getQuestionId(currentQuestion)}`"
+                    :question="currentQuestion"
+                    :question-id="getQuestionId(currentQuestion)"
+                    :air-environment="airEnvironmentUi"
+                    footer-position="fixed"
+                    back-label="上一题"
+                    back-id="diagnose-question-package-page-prev-button"
+                    :completion-label="nextButtonText"
+                    completion-id="diagnose-question-package-page-next-button"
+                    external-footer
+                    @change="payload => handleAirEnvironmentChange(currentQuestion, payload)"
+                    @unknown="selectAirEnvironmentUnknown(currentQuestion)"
+                    @edit="openAirEnvironmentEditor(currentQuestion)"
+                    @confirm="confirmAirEnvironmentLocation(currentQuestion)"
+                    @back="goPreviousQuestion"
+                    @complete="handleNextQuestion"
+                  />
+                  <QuestionPackageOptions
+                    v-if="
+                      !isAirEnvironmentQuestion(currentQuestion) &&
+                      !isLightEnvironmentQuestion(currentQuestion) &&
+                      getVisibleCareBehaviorOptions(currentQuestion).length
+                    "
+                    :key="`options-${getQuestionId(currentQuestion)}`"
+                    :question="currentQuestion"
+                    :question-id="getQuestionId(currentQuestion)"
+                    :options="getVisibleCareBehaviorOptions(currentQuestion)"
+                    :selected-option-id="getSelectedQuestionOptionId(currentQuestion)"
+                    @select="option => selectQuestionOption(currentQuestion, option)"
+                    @skip="option => skipQuestionRisk(currentQuestion, option)"
+                  />
                 </view>
-              </scroll-view>
+              </view>
+            </view>
+            <view
+              v-else
+              :id="`diagnose-question-package-page-question-scroll-${getQuestionId(currentQuestion)}`"
+              class="w-full"
+            >
               <view
-                v-else-if="question"
-                :id="`diagnose-question-package-page-question-shell-${getQuestionId(question) || questionIndex}`"
-                class="h-0 overflow-hidden"
+                :id="`diagnose-question-package-page-active-question-${getQuestionId(currentQuestion)}`"
+                class="pointer-events-none absolute h-0 w-0 overflow-hidden"
               />
-            </template>
-          </ButtonStepTrack>
-          <view
-            v-if="!activeAirEnvironmentOwnsFooter"
-            class="fixed bottom-0 left-0 right-0 z-30 box-border flex gap-3 border-t border-emerald-100 bg-[#f8faf9] px-4 pb-5 pt-3"
-          >
+              <view
+                :id="`diagnose-question-package-page-question-shell-${getQuestionId(currentQuestion)}`"
+                class="box-border min-h-full px-4 pb-[112px]"
+              >
+                <view
+                  :id="`diagnose-question-package-page-question-card-${getQuestionId(currentQuestion)}`"
+                  class="question-package-card-enter rounded-[20px] border border-emerald-100 bg-white px-4 py-4 shadow-sm"
+                >
+                  <text class="block text-base font-semibold leading-7 text-[#2d7a4f]">
+                    {{ getQuestionTitle(currentQuestion) }}
+                  </text>
+                  <text
+                    v-if="getQuestionHelpText(currentQuestion)"
+                    class="mt-2 block text-xs leading-relaxed text-gray-500"
+                  >
+                    {{ getQuestionHelpText(currentQuestion) }}
+                  </text>
+                  <CareBehaviorTimeline
+                    :key="`${getQuestionId(currentQuestion)}-${activeQuestionIndex}`"
+                    :question-id="getQuestionId(currentQuestion)"
+                    :question="currentQuestion"
+                    :timeline="getCareBehaviorTimelineByQuestion(currentQuestion)"
+                    :reset-key="getCareBehaviorTimelineResetKey(currentQuestion)"
+                    :id-prefix="`diagnose-question-package-${getQuestionId(currentQuestion)}`"
+                    :environment-weather-window="environmentWeatherWindow"
+                    :weather-by-date="environmentWeatherByDate"
+                    :loading="environmentWeatherWindowLoading"
+                    :error="environmentWeatherWindowError"
+                    :enable-dose-per-date="true"
+                    :pot-volume-ml="0"
+                    @select-date="handleCareBehaviorTimelineDateSelect(currentQuestion)"
+                    @change="payload => handleCareBehaviorTimelineChange(currentQuestion, payload)"
+                  />
+                </view>
+              </view>
+            </view>
+          </view>
+        </scroll-view>
+        <view
+          class="fixed bottom-0 left-0 right-0 z-30 box-border flex flex-col gap-3 border-t border-emerald-100 bg-[#f8faf9] px-4 pb-5 pt-3"
+        >
+          <view class="flex gap-3">
             <button
               id="diagnose-question-package-page-prev-button"
               class="h-[52px] flex-1 rounded-xl border border-emerald-100 bg-white p-0 text-[13px] font-bold leading-[52px] text-[#2d6a4f]"
@@ -152,6 +177,15 @@
               {{ nextButtonText }}
             </button>
           </view>
+          <button
+            v-if="isAirEnvironmentQuestion(questionStack[activeQuestionIndex])"
+            :id="`diagnose-air-environment-${getQuestionId(questionStack[activeQuestionIndex])}-unknown`"
+            class="h-10 w-full rounded-xl border border-[#b8c9be] bg-white p-0 text-sm font-semibold leading-10 text-[#466054]"
+            :disabled="isSubmittingQuestionAnswer"
+            @click="selectAirEnvironmentUnknown(questionStack[activeQuestionIndex])"
+          >
+            不确定，跳过这项
+          </button>
         </view>
       </template>
       <QuestionPackageRetake
@@ -217,11 +251,17 @@
             class="mt-3.5 rounded-[22px] bg-emerald-50 p-4"
           >
             <text class="block text-[15px] font-black text-gray-900">处理建议</text>
-            <view v-for="group in actionAdviceGroups" :key="group.key" class="mb-3 last:mb-0">
+            <view
+              v-for="group in actionAdviceGroups"
+              :key="group.key"
+              data-advice-section="action"
+              :data-advice-group-key="group.key"
+              class="mb-3 last:mb-0"
+            >
               <text
                 v-if="group.showOutcomeLabel"
                 class="mt-2.5 block text-xs font-extrabold leading-snug text-gray-800"
-                >{{ group.outcomeLabel }}：</text
+                >{{ group.displayLabel || group.symptomLabel || group.outcomeLabel }}：</text
               >
               <text
                 v-for="(item, index) in group.items"
@@ -238,11 +278,17 @@
             class="mt-3.5 rounded-[22px] bg-orange-50 p-4"
           >
             <text class="block text-[15px] font-black text-gray-900">暂时不要做</text>
-            <view v-for="group in avoidAdviceGroups" :key="group.key" class="mb-3 last:mb-0">
+            <view
+              v-for="group in avoidAdviceGroups"
+              :key="group.key"
+              data-advice-section="avoid"
+              :data-advice-group-key="group.key"
+              class="mb-3 last:mb-0"
+            >
               <text
                 v-if="group.showOutcomeLabel"
                 class="mt-2.5 block text-xs font-extrabold leading-snug text-gray-800"
-                >{{ group.outcomeLabel }}：</text
+                >{{ group.displayLabel || group.symptomLabel || group.outcomeLabel }}：</text
               >
               <text
                 v-for="(item, index) in group.items"
@@ -293,6 +339,7 @@
               <text
                 v-for="(item, index) in allOutcomeDisplays"
                 :key="`outcome_${index}`"
+                data-diagnosis-outcome-label="true"
                 class="rounded-full bg-emerald-50 px-2.5 py-2 text-[11px] font-extrabold leading-none text-[#2d6a4f]"
                 >{{ item }}</text
               >
@@ -323,12 +370,14 @@
               <view
                 v-for="group in actionAdviceGroups"
                 :key="`action_group_${group.key}`"
+                data-advice-section="action"
+                :data-advice-group-key="group.key"
                 class="mb-2 last:mb-0"
               >
                 <text
                   v-if="group.showOutcomeLabel"
                   class="block text-xs font-extrabold leading-snug text-gray-800"
-                  >{{ group.outcomeLabel }}：</text
+                  >{{ group.displayLabel || group.symptomLabel || group.outcomeLabel }}：</text
                 >
                 <text
                   v-for="(item, index) in group.items"
@@ -353,12 +402,14 @@
               <view
                 v-for="group in avoidAdviceGroups"
                 :key="`avoid_group_${group.key}`"
+                data-advice-section="avoid"
+                :data-advice-group-key="group.key"
                 class="mb-2 last:mb-0"
               >
                 <text
                   v-if="group.showOutcomeLabel"
                   class="block text-xs font-extrabold leading-snug text-gray-800"
-                  >{{ group.outcomeLabel }}：</text
+                  >{{ group.displayLabel || group.symptomLabel || group.outcomeLabel }}：</text
                 >
                 <text
                   v-for="(item, index) in group.items"
@@ -378,7 +429,7 @@
       </scroll-view>
       <QuestionPackageEmptyState v-else @back="returnPreviousPage" />
       <view
-        v-if="restrictedPlatform"
+        v-if="!diagnosisFlowAvailable"
         id="diagnose-question-package-unavailable"
         class="absolute inset-0 z-40 flex min-h-screen items-center justify-center bg-[#f8faf9] px-6 text-center"
       >
@@ -392,13 +443,12 @@
   </Layout>
 </template>
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import Layout from '@/Layout.vue'
 import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
 import DiagnosisFeedbackCard from './components/DiagnosisFeedbackCard.vue'
 import { useDiagnoseStore } from '@/store/diagnose.js'
 import { useUserStore } from '@/store/user.js'
-import ButtonStepTrack from '@/components/common/ButtonStepTrack.vue'
 import CareBehaviorTimeline from '@/components/CareBehaviorTimeline.vue'
 import LightEnvironmentPicker from '@/components/LightEnvironmentPicker.vue'
 import QuestionPackageAirEnvironmentStep from './question-package/QuestionPackageAirEnvironmentStep.vue'
@@ -418,10 +468,10 @@ import {
   useQuestionPackageContext
 } from './question-package/page-context.js'
 import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
-import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
+import { isDiagnosisFlowAvailable } from '@/utils/platform-capabilities.js'
 const diagnoseStore = useDiagnoseStore()
 const userStore = useUserStore()
-const restrictedPlatform = isRestrictedMiniProgram()
+const diagnosisFlowAvailable = computed(() => isDiagnosisFlowAvailable())
 const {
   openedFeatureKey,
   visible: featureUnavailableVisible,
@@ -441,7 +491,7 @@ const { plantName, questionDiagnosisContextText } = useQuestionPackageContext({
 const {
   questionStack,
   activeQuestionIndex,
-  questionSwiperStyle,
+  currentQuestion,
   questionProgressText,
   nextButtonText,
   isSubmittingQuestionAnswer,
@@ -454,6 +504,8 @@ const {
   resetQuestionState,
   getCareBehaviorTimelineByQuestion,
   handleCareBehaviorTimelineChange,
+  handleCareBehaviorTimelineDateSelect,
+  getCareBehaviorTimelineResetKey,
   getLightEnvironmentByQuestion,
   handleLightEnvironmentChange,
   confirmLightEnvironment,
@@ -482,16 +534,6 @@ const {
   userStore,
   diagnoseStore,
   diagnosisAnswerMutation
-})
-const activeAirEnvironmentOwnsFooter = computed(() => {
-  const question = questionStack.value[activeQuestionIndex.value]
-  if (!question || !isAirEnvironmentQuestion(question)) {
-    return false
-  }
-  if (getSelectedQuestionOptionId(question) === 'air_environment_unknown') {
-    return false
-  }
-  return !airEnvironmentUi.isSummaryVisible(question) || airEnvironmentUi.isEditorOpen(question)
 })
 const {
   retakeRequest,
@@ -543,16 +585,20 @@ const feedbackResultId = computed(() =>
   ).trim()
 )
 
-// Keep the active card and its immediate neighbors mounted for the slide transition.
-// Older cards only need a stable shell/count marker; mounting every question at once also
-// mounts hidden scroll-views, SVG scenes, and interactive air-environment trees, which can
-// wedge the WeChat renderer during App.captureScreenshot.
-const shouldRenderQuestionContent = questionIndex =>
-  Math.abs(Number(questionIndex) - Number(activeQuestionIndex.value)) <= 1
+const QUESTION_PAGE_SCROLL_RESET_PULSE = 1
+const questionPageScrollTop = ref(0)
+
+async function resetActiveQuestionPageScroll() {
+  questionPageScrollTop.value = QUESTION_PAGE_SCROLL_RESET_PULSE
+  await nextTick()
+  questionPageScrollTop.value = 0
+}
+
+watch(activeQuestionIndex, resetActiveQuestionPageScroll, { flush: 'sync' })
 
 bindQuestionPackagePageEntry({ routeOptions, payload, images, result, resetQuestionState })
 onMounted(() => {
-  if (restrictedPlatform) {
+  if (!diagnosisFlowAvailable.value) {
     openFeatureUnavailable('diagnosis')
   }
 })

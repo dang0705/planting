@@ -9,14 +9,16 @@
         <text class="text-sm text-[#6b7280]">正在读取光照环境...</text>
       </view>
       <view v-else>
-        <LightEnvironmentPicker
-          id-prefix="plant-light-environment"
-          question-id="profile"
-          :model-value="draft"
-          :plant-name="plantName"
-          :disabled="saving"
-          @change="handleChange"
-        />
+        <view class="rounded-[20px] border border-emerald-100 bg-white px-4 py-4 shadow-sm">
+          <LightEnvironmentPicker
+            id-prefix="plant-light-environment"
+            question-id="profile"
+            :model-value="draft"
+            :plant-name="plantName"
+            :disabled="saving"
+            @change="handleChange"
+          />
+        </view>
 
         <button
           id="plant-light-environment-complete-button"
@@ -29,7 +31,7 @@
         </button>
       </view>
       <view
-        v-if="restrictedPlatform"
+        v-if="featureUnavailable"
         id="plant-light-environment-unavailable"
         class="fixed inset-0 z-40 flex items-center justify-center bg-[#f8faf9] px-6 text-center"
       >
@@ -61,14 +63,14 @@ import {
   sanitizeLightEnvironment
 } from '@/utils/light-environment.js'
 import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
-import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
+import { isFeatureAvailable } from '@/utils/platform-capabilities.js'
 
 const HTTP_OK = 200
 const ERROR_NAV_DELAY_MS = 500
 const pageInstance = getCurrentInstance()
 const plantStore = usePlantStore()
 const userStore = useUserStore()
-const restrictedPlatform = isRestrictedMiniProgram()
+const featureUnavailable = !isFeatureAvailable('watering')
 const {
   openedFeatureKey,
   visible: featureUnavailableVisible,
@@ -82,7 +84,7 @@ const draft = ref(createDefaultLightEnvironment())
 const plantName = ref('植物')
 
 onLoad(options => {
-  if (restrictedPlatform) {
+  if (featureUnavailable) {
     openFeatureUnavailable('watering')
     return
   }

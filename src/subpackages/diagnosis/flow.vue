@@ -2,7 +2,7 @@
   <Layout title="植物状况检查" left-action="back" background-class="bg-[#F8F6F0]">
     <view id="diagnosis-flow-page" class="min-h-screen bg-[#F8F6F0]">
       <DiagnoseFlow
-        v-if="!restrictedPlatform"
+        v-if="diagnosisAvailable"
         id="diagnosis-flow-page-content"
         :content-padding="true"
         :plant-id="plantId"
@@ -25,20 +25,20 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import Layout from '@/Layout.vue'
 import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
 import DiagnoseFlow from './diagnose-flow/DiagnoseFlow.vue'
 import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
-import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
+import { isDiagnosisFlowAvailable } from '@/utils/platform-capabilities.js'
 
 const plantId = ref('')
 const plantCatalogId = ref('')
 const plantName = ref('')
 const entrySource = ref('diagnose_tab')
 const diagnosisProfile = ref('full')
-const restrictedPlatform = isRestrictedMiniProgram()
+const diagnosisAvailable = computed(() => isDiagnosisFlowAvailable())
 const {
   openedFeatureKey,
   visible: featureUnavailableVisible,
@@ -64,14 +64,14 @@ function normalizeDiagnosisProfile(value) {
 }
 
 onLoad(options => {
-  if (restrictedPlatform) {
-    openFeatureUnavailable('diagnosis')
-  }
   plantId.value = decodeQueryValue(options?.plantId)
   plantCatalogId.value = decodeQueryValue(options?.plantCatalogId || options?.catalogPlantId)
   plantName.value = decodeQueryValue(options?.plantName)
   entrySource.value = normalizeEntrySource(options?.entrySource)
   diagnosisProfile.value = normalizeDiagnosisProfile(options?.diagnosisProfile)
+  if (!diagnosisAvailable.value) {
+    openFeatureUnavailable('diagnosis')
+  }
 })
 
 function handleClose() {

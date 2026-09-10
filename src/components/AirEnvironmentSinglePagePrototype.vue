@@ -208,7 +208,7 @@
       </view>
     </view>
 
-    <view :id="`${idPrefix}-single-navigation`" class="mt-4 flex gap-3">
+    <view v-if="!hideNavigation" :id="`${idPrefix}-single-navigation`" class="mt-4 flex gap-3">
       <button
         v-if="backLabel"
         :id="resolvedBackId"
@@ -247,6 +247,7 @@ const props = defineProps({
   modelValue: { type: Object, default: () => createInitialAirEnvironmentInput() },
   idPrefix: { type: String, default: 'air-environment' },
   disabled: { type: Boolean, default: false },
+  hideNavigation: { type: Boolean, default: false },
   backLabel: { type: String, default: '' },
   backId: { type: String, default: '' },
   completionLabel: { type: String, default: '' },

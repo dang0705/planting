@@ -42,7 +42,7 @@ const saving = ref(false)
 const confirmText = ref('填写关键尺寸')
 
 function syncConfirmText() {
-  const state = formCoreRef.value?.getProfileState?.() || 'empty'
+  const state = callComponentMethod(formCoreRef, 'getProfileState') || 'empty'
   confirmText.value =
     state === 'complete' ? '保存并更新建议' : state === 'basic' ? '保存基础盆型' : '填写关键尺寸'
 }
@@ -51,11 +51,11 @@ async function open() {
   loading.value = true
   callComponentMethod(popupRef, 'open')
   // 应用当前植物 potProfile（null 时清空真实值，图形仅显示示例）
-  formCoreRef.value?.applyPotProfile(props.plant?.potProfile)
+  callComponentMethod(formCoreRef, 'applyPotProfile', props.plant?.potProfile)
   syncConfirmText()
   loading.value = false
   // 等待 popup 动画完成后再初始化 canvas
-  await formCoreRef.value?.initCanvas()
+  await callComponentMethod(formCoreRef, 'initCanvas')
 }
 
 function close() {
@@ -63,16 +63,16 @@ function close() {
 }
 
 async function save() {
-  if (!formCoreRef.value?.validate?.()) {
+  if (!callComponentMethod(formCoreRef, 'validate')) {
     syncConfirmText()
     return
   }
-  if (!(await formCoreRef.value?.confirmOversizedPot())) {
+  if (!(await callComponentMethod(formCoreRef, 'confirmOversizedPot'))) {
     return
   }
   const plantId = props.plant?.id
-  const payload = formCoreRef.value?.getPayload()
-  const savedData = formCoreRef.value?.commitProfileData()
+  const payload = callComponentMethod(formCoreRef, 'getPayload')
+  const savedData = callComponentMethod(formCoreRef, 'commitProfileData')
 
   // 无 plant：仅回传 payload，由父组件接收后自行处理（如独立浇水建议入口）
   if (!plantId) {

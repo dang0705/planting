@@ -1,0 +1,271 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "contractVersion": {
+      "type": "integer",
+      "enum": [
+        4
+      ]
+    },
+    "contentId": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "goal": {
+      "type": "string"
+    },
+    "targetDurationSec": {
+      "type": "integer"
+    },
+    "tone": {
+      "type": "string"
+    },
+    "subtitlePosition": {
+      "type": "string",
+      "enum": [
+        "顶",
+        "偏顶部",
+        "中",
+        "偏底部",
+        "底部"
+      ]
+    },
+    "scenes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "shots": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "plant",
+                    "person_voiceover",
+                    "person_dialogue",
+                    "existing_video"
+                  ]
+                },
+                "visual": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "category": {
+                      "type": "string",
+                      "enum": [
+                        "person",
+                        "plant",
+                        "symptom",
+                        "app_capture"
+                      ]
+                    },
+                    "role": {
+                      "type": "string"
+                    },
+                    "gender": {
+                      "type": "string",
+                      "enum": [
+                        "",
+                        "女性",
+                        "男性"
+                      ]
+                    },
+                    "plant": {
+                      "type": "string"
+                    },
+                    "symptom": {
+                      "type": "string"
+                    },
+                    "feature": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "category",
+                    "role",
+                    "gender",
+                    "plant",
+                    "symptom",
+                    "feature",
+                    "description"
+                  ]
+                },
+                "speech": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "dialogue",
+                        "voiceover",
+                        "none"
+                      ]
+                    },
+                    "speaker": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "voice": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "mode",
+                    "speaker",
+                    "text",
+                    "voice"
+                  ]
+                },
+                "durationHintSec": {
+                  "type": "integer"
+                },
+                "prompt": {
+                  "type": "string"
+                },
+                "transitionAfter": {
+                  "type": "string",
+                  "enum": [
+                    "硬切",
+                    "轻柔"
+                  ]
+                },
+                "rhythm": {
+                  "type": "string",
+                  "enum": [
+                    "紧凑",
+                    "自然",
+                    "舒缓"
+                  ]
+                },
+                "emotion": {
+                  "type": "string",
+                  "enum": [
+                    "平静",
+                    "放松",
+                    "安心",
+                    "高兴",
+                    "兴奋",
+                    "自信",
+                    "疑惑",
+                    "怀疑",
+                    "犹豫",
+                    "惊讶",
+                    "担心",
+                    "心烦",
+                    "烦躁",
+                    "不耐烦",
+                    "无奈",
+                    "失望",
+                    "挫败",
+                    "伤心",
+                    "焦虑",
+                    "紧张",
+                    "害怕",
+                    "慌张",
+                    "愤怒",
+                    "暴躁"
+                  ]
+                },
+                "stance": {
+                  "type": "string",
+                  "enum": [
+                    "默认",
+                    "安抚",
+                    "鼓励",
+                    "共情"
+                  ]
+                },
+                "expression": {
+                  "type": "string",
+                  "enum": [
+                    "默认",
+                    "低声",
+                    "耳语",
+                    "喊叫",
+                    "玩笑",
+                    "秘密感"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "type",
+                "visual",
+                "speech",
+                "durationHintSec",
+                "prompt",
+                "rhythm",
+                "emotion",
+                "stance",
+                "expression",
+                "transitionAfter"
+              ]
+            }
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "钩子",
+              "问题展开",
+              "原因解释",
+              "产品展示",
+              "结果收益",
+              "行动引导"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "purpose",
+          "shots"
+        ]
+      }
+    },
+    "targetPlatforms": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "douyin",
+          "xiaohongshu",
+          "wechat_channels"
+        ]
+      }
+    }
+  },
+  "required": [
+    "contractVersion",
+    "contentId",
+    "targetPlatforms",
+    "title",
+    "goal",
+    "targetDurationSec",
+    "tone",
+    "subtitlePosition",
+    "scenes"
+  ]
+}

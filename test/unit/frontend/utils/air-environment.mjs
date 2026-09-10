@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict'
 
-const { isAirEnvironmentAnswerReady, resolveAirEnvironmentPreview, sanitizeAirEnvironmentInput } =
-  await import('../../../../src/utils/air-environment.js')
+const {
+  isAirEnvironmentAnswerReady,
+  isSameAirEnvironmentLocationBinding,
+  resolveAirEnvironmentPreview,
+  sanitizeAirEnvironmentInput
+} = await import('../../../../src/utils/air-environment.js')
 
 const freshAirInput = {
   airExchange: { source: 'fresh_air' },
@@ -54,6 +58,27 @@ assert.equal(
     canopyOpenness: 'open',
     deviceAirflow: { mode: 'none', sources: [], directSources: [], sourceModes: {} }
   }),
+  false
+)
+
+// 已保存档案没有历史位置绑定时，不能被误判为位置变化；只有两边都有绑定且不一致时才需要确认。
+assert.equal(isSameAirEnvironmentLocationBinding({}, {}), true)
+assert.equal(
+  isSameAirEnvironmentLocationBinding({}, { careLocationId: 'current', locationKey: 'room' }),
+  true
+)
+assert.equal(
+  isSameAirEnvironmentLocationBinding(
+    { careLocationId: 'saved', locationKey: 'room' },
+    { careLocationId: 'saved', locationKey: 'room' }
+  ),
+  true
+)
+assert.equal(
+  isSameAirEnvironmentLocationBinding(
+    { careLocationId: 'saved', locationKey: 'room' },
+    { careLocationId: 'other', locationKey: 'room' }
+  ),
   false
 )
 assert.deepEqual(

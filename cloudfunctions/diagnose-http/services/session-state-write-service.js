@@ -189,7 +189,9 @@ async function upsertDiagnosisSession({
       openid,
       userPlantIdValue: normalizedUserPlantId === null ? 0 : normalizedUserPlantId,
       userPlantIdHasValue: normalizedUserPlantId === null ? 0 : 1,
-      plantId: normalizeNullableSqlText(plantContext?.plantId),
+      // 空植物上下文必须落成 SQL NULL。使用空字符串作为绑定值，避免
+      // CloudBase SQL 模板把 JavaScript null 当作对象参数传入，触发 plant_catalog 外键错误。
+      plantId: normalizeNullableSqlText(plantContext?.plantId) || '',
       diagnosisMode: mode,
       plantGenus: plantContext?.genus || '',
       plantFamily: plantContext?.family || '',

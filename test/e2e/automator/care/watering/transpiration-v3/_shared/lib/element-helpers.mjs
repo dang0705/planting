@@ -37,6 +37,7 @@ const NATIVE_INTERACTIVE_TAGS = new Set([
   'scroll-view',
   'swiper'
 ])
+const PAGE_COMPONENT_SCOPE_CACHE = new WeakMap()
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
@@ -103,22 +104,211 @@ async function safeQueryAll(page, selector) {
   return []
 }
 
+function attributeSelector(operator, value) {
+  const slash = '\\'
+  const quote = '"'
+  const escaped = String(value)
+    .replaceAll(slash, `${slash}${slash}`)
+    .replaceAll(quote, `${slash}${quote}`)
+  return `[id${operator}"${escaped}"]`
+}
+
+async function collectScopedMatches(page, selectors, { limit = Number.POSITIVE_INFINITY } = {}) {
+  const results = []
+  const seen = new Set()
+  const scopes = [page, ...(await safeQueryAll(page, 'component'))]
+  for (const scope of scopes) {
+    for (const selector of selectors) {
+      for (const element of await safeQueryAll(scope, selector)) {
+        try {
+          const id = await element.attribute('id')
+          if (!id || seen.has(`${id}:${String(element.tagName || '')}`)) continue
+          seen.add(`${id}:${String(element.tagName || '')}`)
+          results.push({ element, id, tag: String(element.tagName || '').toLowerCase() })
+          if (results.length >= limit) return results
+        } catch {
+          // A component may finish re-rendering between selector resolution and attribute access.
+        }
+      }
+    }
+  }
+  return results
+}
+
+async function findScopedMatch(page, selectors, matches) {
+  const scopes = [page, ...(await safeQueryAll(page, 'component'))]
+  for (const scope of scopes) {
+    for (const selector of selectors) {
+      for (const element of await safeQueryAll(scope, selector)) {
+        try {
+          const id = await element.attribute('id')
+          if (id && matches(id)) {
+            return { element, id, tag: String(element.tagName || '').toLowerCase() }
+          }
+        } catch {
+          // A component may finish re-rendering between selector resolution and attribute access.
+        }
+      }
+    }
+  }
+  return null
+}
+
+function idNamespace(id) {
+  const parts = String(id || '').split('-').filter(Boolean)
+  return parts.length >= 2 ? `${parts[0]}-${parts[1]}-` : ''
+}
+
+function usesNestedComponentScope(namespace) {
+  return namespace === 'watering-reminder-'
+}
+
+function pageScopeCache(page) {
+  let cache = PAGE_COMPONENT_SCOPE_CACHE.get(page)
+  if (!cache) {
+    cache = new Map()
+    PAGE_COMPONENT_SCOPE_CACHE.set(page, cache)
+  }
+  return cache
+}
+
+async function findIdInScope(scope, id) {
+  const selectors = [attributeSelector('=', id), attributeSelector('$=', `--${id}`)]
+  for (const selector of selectors) {
+    for (const element of await safeQueryAll(scope, selector)) {
+      try {
+        const actualId = await element.attribute('id')
+        if (matchesStableId(actualId, id)) return element
+      } catch {
+        // The scope may have re-rendered while DevTools resolved the selector.
+      }
+    }
+  }
+  return null
+}
+
+async function scopeHasNamespace(scope, namespace) {
+  if (!namespace) return false
+  for (const selector of [attributeSelector('^=', namespace), attributeSelector('*=', `--${namespace}`)]) {
+    if ((await safeQueryAll(scope, selector)).length > 0) return true
+  }
+  return false
+}
+
+async function findIdInNestedComponents(scope, id, depth = 5) {
+  if (depth <= 0) return null
+  for (const child of await safeQueryAll(scope, 'component')) {
+    const direct = await findIdInScope(child, id)
+    if (direct) return direct
+    const nested = await findIdInNestedComponents(child, id, depth - 1)
+    if (nested) return nested
+  }
+  return null
+}
+
+async function findNamespaceOwnerScope(page, namespace) {
+  if (!usesNestedComponentScope(namespace)) return null
+  const cache = pageScopeCache(page)
+  const cachedScope = cache.get(namespace)
+  if (cachedScope && (await scopeHasNamespace(cachedScope, namespace))) {
+    return cachedScope
+  }
+  cache.delete(namespace)
+  for (const scope of await safeQueryAll(page, 'component')) {
+    if (await scopeHasNamespace(scope, namespace)) {
+      cache.set(namespace, scope)
+      return scope
+    }
+  }
+  return null
+}
+
+async function findPrefixInNestedComponents(scope, prefix, depth = 5) {
+  const selectors = [attributeSelector('^=', prefix), attributeSelector('*=', `--${prefix}`)]
+  for (const selector of selectors) {
+    for (const element of await safeQueryAll(scope, selector)) {
+      try {
+        const id = await element.attribute('id')
+        if (matchesStableIdPrefix(id, prefix)) {
+          return { element, id, tag: String(element.tagName || '').toLowerCase() }
+        }
+      } catch {
+        // The scope may have re-rendered while DevTools resolved the selector.
+      }
+    }
+  }
+  if (depth <= 0) return null
+  for (const child of await safeQueryAll(scope, 'component')) {
+    const nested = await findPrefixInNestedComponents(child, prefix, depth - 1)
+    if (nested) return nested
+  }
+  return null
+}
+
+async function collectPrefixInNestedComponents(scope, prefix, { limit, depth = 5 } = {}) {
+  const results = []
+  const seen = new Set()
+  const selectors = [attributeSelector('^=', prefix), attributeSelector('*=', `--${prefix}`)]
+  const visit = async (current, remainingDepth) => {
+    for (const selector of selectors) {
+      for (const element of await safeQueryAll(current, selector)) {
+        try {
+          const id = await element.attribute('id')
+          if (!id || !matchesStableIdPrefix(id, prefix) || seen.has(id)) continue
+          seen.add(id)
+          results.push({ element, id, stableId: extractStableId(id) })
+          if (results.length >= limit) return true
+        } catch {
+          // The scope may have re-rendered while DevTools resolved the selector.
+        }
+      }
+    }
+    if (remainingDepth <= 0) return false
+    for (const child of await safeQueryAll(current, 'component')) {
+      if (await visit(child, remainingDepth - 1)) return true
+    }
+    return false
+  }
+  await visit(scope, depth)
+  return results
+}
+
+async function findIdInComponentTree(page, id) {
+  const namespace = idNamespace(id)
+  const cache = pageScopeCache(page)
+  const cachedScope = cache.get(namespace)
+  if (cachedScope) {
+    const cached = (await findIdInScope(cachedScope, id)) ||
+      (await findIdInNestedComponents(cachedScope, id))
+    if (cached) return cached
+    cache.delete(namespace)
+  }
+
+  const namespaceOwner = await findNamespaceOwnerScope(page, namespace)
+  if (namespaceOwner) {
+    const nested = (await findIdInScope(namespaceOwner, id)) ||
+      (await findIdInNestedComponents(namespaceOwner, id))
+    if (nested) return nested
+  }
+
+  for (const scope of await safeQueryAll(page, 'component')) {
+    const direct = await findIdInScope(scope, id)
+    if (direct) return direct
+    if (namespace && (await scopeHasNamespace(scope, namespace))) {
+      cache.set(namespace, scope)
+      const nested = await findIdInNestedComponents(scope, id)
+      if (nested) return nested
+    }
+  }
+  return null
+}
+
 /**
  * 收集页面所有带 id 的元素。
  * @returns {Promise<Array<{element: object, id: string}>>}
  */
 async function collectAllElementsWithId(page) {
-  const all = await safeQueryAll(page, '[id]')
-  const results = []
-  for (const el of all) {
-    try {
-      const attr = await el.attribute('id')
-      if (attr) {
-        results.push({ element: el, id: attr, tag: String(el.tagName || '').toLowerCase() })
-      }
-    } catch (e) {}
-  }
-  return results
+  return collectScopedMatches(page, ['[id]'])
 }
 
 function isNativeInteractiveElement(element) {
@@ -160,6 +350,19 @@ export async function findViewById(page, id) {
     if (exact && isNativeInteractiveElement(exact)) return exact
   } catch (e) {}
 
+  const componentTreeMatch = await findIdInComponentTree(page, id)
+  if (componentTreeMatch) return componentTreeMatch
+
+  const scopedExact = await findScopedMatch(page, [attributeSelector('=', id)], value => value === id)
+  if (scopedExact) return scopedExact.element
+
+  const scopedPrefixed = await findScopedMatch(
+    page,
+    [attributeSelector('$=', `--${id}`)],
+    value => matchesStableId(value, id)
+  )
+  if (scopedPrefixed) return scopedPrefixed.element
+
   // 回退：遍历所有元素，精确匹配或构建前缀匹配
   const all = await collectAllElementsWithId(page)
   let fallback = exact
@@ -177,6 +380,21 @@ export async function findViewById(page, id) {
  * 兼容构建前缀：`<scopeId>--<prefix>...`
  */
 export async function findByIdPrefix(page, prefix) {
+  const namespace = idNamespace(prefix)
+  const namespaceOwner = await findNamespaceOwnerScope(page, namespace)
+  if (namespaceOwner) {
+    const nested = await findPrefixInNestedComponents(namespaceOwner, prefix)
+    if (nested) {
+      return { element: nested.element, id: nested.id, stableId: extractStableId(nested.id) }
+    }
+  }
+  const scoped = await findScopedMatch(page, [
+    attributeSelector('^=', prefix),
+    attributeSelector('*=', `--${prefix}`)
+  ], value => matchesStableIdPrefix(value, prefix))
+  if (scoped) {
+    return { element: scoped.element, id: scoped.id, stableId: extractStableId(scoped.id) }
+  }
   const all = await collectAllElementsWithId(page)
   let fallback = null
   for (const { element, id: attr } of all) {
@@ -195,6 +413,38 @@ export async function findByIdPrefix(page, prefix) {
  * 兼容构建前缀：先提取稳定 ID，再按 prefix/suffix 切割中间动态部分。
  */
 export async function findByIdPrefixAndSuffix(page, prefix, suffix) {
+  const namespace = idNamespace(prefix)
+  const namespaceOwner = await findNamespaceOwnerScope(page, namespace)
+  if (namespaceOwner) {
+    const nested = await findPrefixInNestedComponents(namespaceOwner, prefix)
+    if (nested) {
+      const stableId = extractStableId(nested.id)
+      if (stableId.endsWith(suffix)) {
+        return {
+          element: nested.element,
+          id: nested.id,
+          stableId,
+          extractedId: stableId.slice(prefix.length, stableId.length - suffix.length)
+        }
+      }
+    }
+  }
+  const scoped = await findScopedMatch(page, [
+    attributeSelector('^=', prefix),
+    attributeSelector('*=', `--${prefix}`)
+  ], value => {
+    const stable = extractStableId(value)
+    return stable.startsWith(prefix) && stable.endsWith(suffix)
+  })
+  if (scoped) {
+    const stableId = extractStableId(scoped.id)
+    return {
+      element: scoped.element,
+      id: scoped.id,
+      stableId,
+      extractedId: stableId.slice(prefix.length, stableId.length - suffix.length)
+    }
+  }
   const all = await collectAllElementsWithId(page)
   for (const { element, id: attr } of all) {
     const stable = extractStableId(attr)
@@ -210,12 +460,25 @@ export async function findByIdPrefixAndSuffix(page, prefix, suffix) {
  * 返回数组，每项含 { element, id, stableId }。
  * 兼容构建前缀。
  */
-export async function collectByIdPrefix(page, prefix) {
+export async function collectByIdPrefix(page, prefix, { limit = Number.POSITIVE_INFINITY } = {}) {
   const results = []
-  const all = await collectAllElementsWithId(page)
+  const namespace = idNamespace(prefix)
+  const namespaceOwner = await findNamespaceOwnerScope(page, namespace)
+  if (namespaceOwner) {
+    return collectPrefixInNestedComponents(namespaceOwner, prefix, { limit })
+  }
+  let all = await collectScopedMatches(
+    page,
+    [attributeSelector('^=', prefix), attributeSelector('*=', `--${prefix}`)],
+    { limit }
+  )
+  if (!all.length) {
+    all = await collectAllElementsWithId(page)
+  }
   for (const { element, id: attr } of all) {
     if (matchesStableIdPrefix(attr, prefix)) {
       results.push({ element, id: attr, stableId: extractStableId(attr) })
+      if (results.length >= limit) break
     }
   }
   return results

@@ -135,8 +135,15 @@ function isYellowingStaticQuestionStartMode(option = {}) {
 }
 
 function buildMinimalPlantContext({ plantId = '', userPlantId = '', plantCatalogId = '' } = {}) {
+  const normalizedPlantId = String(plantCatalogId || plantId || '').trim()
+  const persistedPlantId =
+    normalizedPlantId && normalizedPlantId !== 'diagnose_tab_anonymous'
+      ? normalizedPlantId
+      : null
   return {
-    plantId: plantCatalogId || plantId || '',
+    // 无图诊断页允许没有绑定植物。`diagnose_tab_anonymous` 只是旧的前端占位值，
+    // 不能写入带有 plant_catalog 外键的 diagnosis_sessions.plant_id。
+    plantId: persistedPlantId,
     userPlantId: userPlantId || '',
     plantIdentityId: '',
     identityResolutionStatus: 'question_start_static_package'

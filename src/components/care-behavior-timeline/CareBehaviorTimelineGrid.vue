@@ -68,6 +68,8 @@ defineProps({
   showLoadingSkeleton: { type: Boolean, default: false }
 })
 
-const weekLabels = ['日', '一', '二', '三', '四', '五', '六']
+const WEEKDAY_LABELS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+const weekLabels = WEEKDAY_LABELS
+
 const skeletonCellItems = Array.from({ length: 21 }, (_, index) => index)
 </script>

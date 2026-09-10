@@ -37,9 +37,7 @@ function commandFlagValue(command = '', flag, { singleToken = false } = {}) {
 }
 
 function timestampFromLogLine(line) {
-  const match = line.match(
-    /^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})([+-]\d{2}:\d{2})?\]/
-  )
+  const match = line.match(/^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})([+-]\d{2}:\d{2})?\]/)
   if (!match) {
     return null
   }
@@ -171,7 +169,7 @@ export function readCurrentSessionProjectEvidence({
     appservice_loadstop_at: null,
     failures: []
   }
-  // Official Electron 2.02.2608272 keeps the injected session id on the
+  // Official Electron 2.02.2609012 keeps the injected session id on the
   // verified main-process argv but does not echo the argv in WeappLog. Native
   // bundles may still emit the historical argv line, so accept either source
   // while retaining the exact current-process/session binding.
@@ -204,13 +202,23 @@ export function readCurrentSessionProjectEvidence({
       const timestamp = timestampFromLogLine(line)
       const currentProcessRecord =
         recentSessionRecord(timestamp, nowMs) &&
-        (!Number.isFinite(processStartMs) || timestamp >= processStartMs - SESSION_LOG_CLOCK_SKEW_MS)
-      if (currentProcessRecord) {
+        (!Number.isFinite(processStartMs) ||
+          timestamp >= processStartMs - SESSION_LOG_CLOCK_SKEW_MS)
+      // Keep a small clock-skew tolerance for identity evidence: DevTools can
+      // emit its project-opening lines just before the OS process timestamp is
+      // observable. A failure, however, must belong to this process strictly.
+      // Otherwise a failure from the immediately preceding isolated session can
+      // abort a healthy new session before Automator is enabled.
+      const currentLifecycleRecord =
+        currentProcessRecord && (!Number.isFinite(processStartMs) || timestamp >= processStartMs)
+      if (currentLifecycleRecord) {
         if (
           line.includes('openProjectSimulatorDebuggerAndCompile start') ||
           line.includes('[SimulatorService] simulator app compile') ||
           line.includes('[appservice] restart appservice compile') ||
-          line.includes('[backend initEnv] isMiniAppProject=false, isEvalProject=false, starting compiler')
+          line.includes(
+            '[backend initEnv] isMiniAppProject=false, isEvalProject=false, starting compiler'
+          )
         ) {
           lifecycle.compile_started_at = lifecycle.compile_started_at || timestamp
         }

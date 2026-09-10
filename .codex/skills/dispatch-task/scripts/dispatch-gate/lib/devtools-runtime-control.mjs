@@ -40,22 +40,19 @@ export async function requestDevToolsControl({
   }
   const url = new URL(`http://${DEVTOOLS_CONTROL_HOST}:${Number(controlPort)}/${action}`)
   url.searchParams.set('cli', '1')
-  // DevTools 2.02.2608272 keeps /open on the legacy projectpath query but
-  // moved the v2 /auto contract to `project` + `autoPort`.  The stock CLI
-  // still sends the old names and exits zero even when the endpoint rejects
-  // them, so the official-Electron adapter must be explicit about the
-  // protocol instead of trusting the CLI exit code.
+  // The stable Electron runtime keeps /open on the legacy projectpath query,
+  // while /v2/auto requires `project` but still names the listener argument
+  // `port`. The endpoint returns HTTP 200 even when sent `autoPort`, without
+  // creating an Automator listener, so use the installed runtime's observed
+  // contract rather than treating the HTTP status as proof of readiness.
   if (action === 'auto' && protocol === 'v2') {
     url.pathname = '/v2/auto'
     url.searchParams.set('project', projectPath)
-    url.searchParams.set('autoPort', String(wsPort))
   } else {
     url.searchParams.set('projectpath', projectPath)
   }
   if (action === 'auto') {
-    if (protocol !== 'v2') {
-      url.searchParams.set('port', String(wsPort))
-    }
+    url.searchParams.set('port', String(wsPort))
     url.searchParams.set('account', '')
   }
   const requestOnce = requestUrl => new Promise(resolve => {

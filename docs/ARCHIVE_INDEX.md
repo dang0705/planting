@@ -27,7 +27,7 @@ stale_if_changed:
 | `docs/RUNBOOK.md` | current | 当前运行/验证/发布手册。 |
 | `docs/KNOWLEDGE_GOVERNANCE.md` | current | 知识治理规则。 |
 | `docs/ARCHIVE_INDEX.md` | current | 归档索引。 |
-| `docs/_sync-map.yml` | current | 代码到文档/BRV 影响映射。 |
+| `docs/_sync-map.yml` | current | 代码到文档/OpenViking 影响映射。 |
 | `docs/_doc-status.yml` | current | 文档状态清单。 |
 
 ## 2. 大型代码逻辑文档

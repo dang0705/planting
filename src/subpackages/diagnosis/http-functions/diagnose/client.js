@@ -1,4 +1,5 @@
 import { httpRequest } from '@/http-functions/core/httpRequest'
+import { DIAGNOSIS_HTTP_BASE_URL } from '@/api/env'
 import { normalizeHistoryDetail, normalizeHistoryList } from './client-history-detail'
 import { requestDiagnoseStream as requestDiagnoseStreamImpl } from './client-stream'
 
@@ -59,28 +60,80 @@ function unwrapResponseEnvelope(raw, fallbackMessage = '请求失败') {
 
 const startDiagnosisRequester = httpRequest({
   functionPath: 'diagnose-http/diagnosis/start',
-  method: 'POST'
+  method: 'POST',
+  baseUrl: DIAGNOSIS_HTTP_BASE_URL,
+  requirePlatformSession: true
 })
 
 const questionStartDiagnosisRequester = httpRequest({
+  functionPath: 'diagnosis-question-start-http/diagnosis/question/start',
+  method: 'POST',
+  baseUrl: DIAGNOSIS_HTTP_BASE_URL,
+  requirePlatformSession: true
+})
+
+const legacyQuestionStartDiagnosisRequester = httpRequest({
   functionPath: 'diagnose-http/diagnosis/question/start',
-  method: 'POST'
+  method: 'POST',
+  baseUrl: DIAGNOSIS_HTTP_BASE_URL,
+  requirePlatformSession: true
 })
 
 const streamDiagnoseRequester = httpRequest({
   functionPath: 'diagnose-http/diagnosis/start',
   method: 'POST',
+  baseUrl: DIAGNOSIS_HTTP_BASE_URL,
   enableChunked: true,
   responseType: 'text',
+  // SSE 诊断同样属于写入/扣减链路，必须使用可即时吊销的持久平台会话。
+  requirePlatformSession: true,
   headers: {
     Accept: 'text/event-stream'
   }
 })
 
 const answerDiagnosisRequester = httpRequest({
-  functionPath: 'diagnose-http/diagnosis/answer',
-  method: 'POST'
+  functionPath: 'diagnosis-answer-http/diagnosis/answer',
+  method: 'POST',
+  baseUrl: DIAGNOSIS_HTTP_BASE_URL,
+  requirePlatformSession: true
 })
+
+const legacyAnswerDiagnosisRequester = httpRequest({
+  functionPath: 'diagnose-http/diagnosis/answer',
+  method: 'POST',
+  baseUrl: DIAGNOSIS_HTTP_BASE_URL,
+  requirePlatformSession: true
+})
+
+function supportsDedicatedQuestionPackage(payload = {}) {
+  return ['yellowing_mode', 'wilting_droop_mode'].includes(
+    String(payload?.symptomClassKey || payload?.symptom_class_key || '').trim()
+  )
+}
+
+function supportsDedicatedYellowLeafAnswer(payload = {}) {
+  const questionPackage = payload?.questionPackage || payload?.question_package || {}
+  const packageMode = String(
+    questionPackage?.mode || questionPackage?.sourceMode || questionPackage?.route || ''
+  )
+    .trim()
+    .toLowerCase()
+  return (
+    String(payload?.requestMode || payload?.mode || '')
+      .trim()
+      .toLowerCase() === 'answer_submit' &&
+    [
+      'yellow_leaf',
+      'manual_yellowing_care_environment_frontloaded',
+      'yellowing_mode',
+      'leaf_yellowing'
+    ].includes(packageMode) &&
+    String(questionPackage?.answerSubmitMode || questionPackage?.answer_submit_mode || '')
+      .trim()
+      .toLowerCase() === 'package'
+  )
+}
 
 const resultDiagnosisRequester = httpRequest({
   functionPath: 'diagnose-http/diagnosis/result',
@@ -108,7 +161,10 @@ export async function requestDiagnosisStart(payload) {
 
 export async function requestDiagnosisQuestionStart(payload) {
   const response = await requestWithRetry(
-    () => questionStartDiagnosisRequester({ payload, timeout: 25000 }),
+    () =>
+      (supportsDedicatedQuestionPackage(payload)
+        ? questionStartDiagnosisRequester
+        : legacyQuestionStartDiagnosisRequester)({ payload, timeout: 25000 }),
     { retries: 1, fallbackMessage: '初始化问诊失败' }
   )
   return unwrapResponseEnvelope(response?.data, '初始化问诊失败')
@@ -116,7 +172,10 @@ export async function requestDiagnosisQuestionStart(payload) {
 
 export async function requestDiagnosisAnswer(payload) {
   const response = await requestWithRetry(
-    () => answerDiagnosisRequester({ payload, timeout: 25000 }),
+    () =>
+      (supportsDedicatedYellowLeafAnswer(payload)
+        ? answerDiagnosisRequester
+        : legacyAnswerDiagnosisRequester)({ payload, timeout: 25000 }),
     { retries: 1, fallbackMessage: '提交问诊失败' }
   )
   return unwrapResponseEnvelope(response?.data, '提交问诊失败')

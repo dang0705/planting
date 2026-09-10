@@ -7,6 +7,14 @@ const {
 } = require('/opt/utils/http')
 const { resolveSchemaEnv, runWithSchemaEnv } = require('./db/schema-resolver')
 const { main, _test: routerTest } = require('./app/http-router')
+const { triggerQuestionPackageCachePreload } = require('./app/static-cache-preloader')
+
+// 固定题包的首个数据库题目只读且按 schema 缓存。进程加载时提前预热，
+// 首个 question/start 到达时会复用缓存或加入同一个进行中的查询，避免把冷查询串在首屏响应中。
+triggerQuestionPackageCachePreload({
+  scope: 'diagnose-http-startup',
+  source: 'module_load'
+})
 
 module.exports.main = async (event, context) => {
   const request = getHttpRequestData(event, context)

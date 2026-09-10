@@ -16,10 +16,12 @@ import { resolveHotCityByGps } from '@/api/weather-hot-cities.js'
 const CITY_LOOKUP_CACHE_TTL_MS = 5 * 60 * 1000
 const cityLookupInflight = new Map()
 const cityLookupCache = new Map()
+let douyinRuntimeCapabilitiesLogged = false
 const MAX_ARRAY_HISTORY_DAYS_TO_KEEP = 120
 // 天气窗口契约：历史 D-10..D-1 与 D0 均由服务端天气缓存提供，未来 D+1..D+14 来自预报；
 // 浇水 planner 接收完整 D0..D+14 窗口，后端仍会用当天 day file 校验并去重 D0。
 const MAX_ARRAY_FORECAST_DAYS_TO_KEEP = 15
+const DOUYIN_LOCATION_PLATFORM_AUTH_ERROR_NO = 10101
 
 function buildCityLookupKey(latitude, longitude) {
   const location = normalizeWeatherCoordinates({ latitude, longitude })
@@ -94,6 +96,151 @@ function isResolvedCityName(city = '') {
   return Boolean(normalizedCity && normalizedCity !== '当前位置')
 }
 
+function getDouyinApi() {
+  // 抖音真机部分版本的 uni 兼容层不会把位置授权记录到小程序设置页。
+  // 直接调用官方 tt API，才能触发首次授权并让设置页出现对应开关。
+  // #ifdef MP-TOUTIAO
+  let douyin = null
+  let source = 'unavailable'
+  // eslint-disable-next-line no-undef
+  const nativeDouyin = typeof tt !== 'undefined' ? tt : null
+  if (nativeDouyin) {
+    douyin = nativeDouyin
+    source = 'tt'
+  } else if (typeof globalThis !== 'undefined' && globalThis.tt) {
+    douyin = globalThis.tt
+    source = 'globalThis.tt'
+  }
+  if (!douyinRuntimeCapabilitiesLogged) {
+    console.log('[DouyinLocation] runtime', {
+      source,
+      hasGetLocation: typeof douyin?.getLocation === 'function',
+      hasAuthorize: typeof douyin?.authorize === 'function',
+      hasGetSetting: typeof douyin?.getSetting === 'function',
+      hasOpenSetting: typeof douyin?.openSetting === 'function',
+      canUseGetLocation:
+        typeof douyin?.canIUse === 'function' ? Boolean(douyin.canIUse('tt.getLocation')) : null
+    })
+    douyinRuntimeCapabilitiesLogged = true
+  }
+  return douyin
+  // #endif
+  return null
+}
+
+function logDouyinLocationState(event, payload = {}) {
+  const authSetting = payload?.authSetting || payload?.data || {}
+  const scopeUserLocation = authSetting['scope.userLocation']
+  console.log('[DouyinLocation]', event, {
+    scopeUserLocation:
+      scopeUserLocation === true ? true : scopeUserLocation === false ? false : 'undefined',
+    authSettingKeys: Object.keys(authSetting),
+    errNo: payload?.errNo ?? payload?.errno ?? '',
+    errMsg: String(payload?.errMsg || '')
+  })
+}
+
+export function isDouyinRuntime() {
+  return Boolean(getDouyinApi()?.getLocation)
+}
+
+function isLocationAuthorizationError(error = {}) {
+  const message = String(error?.errMsg || error?.message || error || '').toLowerCase()
+  return (
+    message.includes('auth deny') ||
+    message.includes('auth denied') ||
+    message.includes('not authorized') ||
+    message.includes('permission')
+  )
+}
+
+function isLocationPrivacyError(error = {}) {
+  const message = String(error?.errMsg || error?.message || error || '').toLowerCase()
+  const errorNumber = Number(error?.errNo ?? error?.errno)
+  return (
+    errorNumber === 10201 ||
+    errorNumber === 10202 ||
+    message.includes('privacy permission is not authorized') ||
+    message.includes('api scope is not declared in the privacy agreement')
+  )
+}
+
+function isLocationCapabilityError(error = {}) {
+  const message = String(error?.errMsg || error?.message || error || '').toLowerCase()
+  const errorNumber = Number(error?.errNo ?? error?.errno)
+  return (
+    errorNumber === DOUYIN_LOCATION_PLATFORM_AUTH_ERROR_NO ||
+    message.includes('platform auth deny') ||
+    message.includes('not supported') ||
+    message.includes('not support') ||
+    message.includes('not available') ||
+    message.includes('not open') ||
+    message.includes('capability') ||
+    message.includes('not in whitelist')
+  )
+}
+
+function getDouyinLocation() {
+  const douyin = getDouyinApi()
+  if (!douyin?.getLocation) {
+    return null
+  }
+
+  return new Promise((resolve, reject) => {
+    douyin.getLocation({
+      type: 'gcj02',
+      success: res => {
+        logDouyinLocationState('getLocation:success', res)
+        resolve(res)
+      },
+      fail: error => {
+        logDouyinLocationState('getLocation:fail', error)
+        reject(error)
+      }
+    })
+  })
+}
+
+function openDouyinSetting() {
+  const douyin = getDouyinApi()
+  if (!douyin?.openSetting) {
+    return null
+  }
+
+  return new Promise((resolve, reject) => {
+    douyin.openSetting({
+      success: res => {
+        logDouyinLocationState('openSetting:success', res)
+        resolve(res)
+      },
+      fail: error => {
+        logDouyinLocationState('openSetting:fail', error)
+        reject(error)
+      }
+    })
+  })
+}
+
+function getDouyinSetting() {
+  const douyin = getDouyinApi()
+  if (!douyin?.getSetting) {
+    return null
+  }
+
+  return new Promise((resolve, reject) => {
+    douyin.getSetting({
+      success: res => {
+        logDouyinLocationState('getSetting:success', res)
+        resolve(res)
+      },
+      fail: error => {
+        logDouyinLocationState('getSetting:fail', error)
+        reject(error)
+      }
+    })
+  })
+}
+
 function normalizeCityText(city = '') {
   if (typeof city === 'string') {
     return city.trim()
@@ -134,6 +281,19 @@ function setCachedCityLookup(cacheKey = '', value = null) {
 }
 
 export async function checkLocationPermission() {
+  const douyinSetting = getDouyinSetting()
+  if (douyinSetting) {
+    try {
+      const authSetting = (await douyinSetting)?.authSetting || {}
+      if (authSetting['scope.userLocation'] === undefined) {
+        return 'notRequested'
+      }
+      return authSetting['scope.userLocation'] === true ? 'authorized' : 'denied'
+    } catch {
+      return 'unknown'
+    }
+  }
+
   return new Promise(resolve => {
     uni.getSetting({
       success: res => {
@@ -154,6 +314,47 @@ export async function checkLocationPermission() {
 }
 
 export async function requestLocationPermission() {
+  const douyin = getDouyinApi()
+  if (douyin?.getLocation) {
+    try {
+      // tt.getLocation 本身会触发首次位置授权。先调用 tt.authorize 会额外经过
+      // 平台白名单校验，部分真机在能力已开通时仍会返回 10101，导致设置页没有位置项。
+      await getDouyinLocation()
+      return true
+    } catch (error) {
+      if (isLocationPrivacyError(error)) {
+        throw new Error('请先在抖音小程序隐私保护协议中声明地理位置信息')
+      }
+      if (isLocationCapabilityError(error)) {
+        throw new Error('抖音暂未放行定位权限，请检查开放平台的模糊地理位置能力和隐私协议')
+      }
+      if (!isLocationAuthorizationError(error)) {
+        throw error
+      }
+
+      const modalRes = await new Promise(resolve => {
+        uni.showModal({
+          title: '位置权限',
+          content: '需要获取您的位置信息来显示天气，是否去设置页面开启位置权限？',
+          showCancel: true,
+          confirmText: '去设置',
+          cancelText: '取消',
+          success: resolve,
+          fail: () => resolve({ confirm: false })
+        })
+      })
+      if (!modalRes?.confirm) {
+        throw new Error('用户取消授权')
+      }
+
+      const settingRes = await openDouyinSetting()
+      if (settingRes?.authSetting?.['scope.userLocation'] === true) {
+        return true
+      }
+      throw new Error('用户拒绝授权')
+    }
+  }
+
   return new Promise((resolve, reject) => {
     uni.getSetting({
       success: res => {
@@ -243,6 +444,13 @@ export async function requestLocationPermission() {
 }
 
 export async function openSettingForLocation() {
+  const douyinSetting = openDouyinSetting()
+  if (douyinSetting) {
+    return douyinSetting
+      .then(res => res?.authSetting?.['scope.userLocation'] === true)
+      .catch(() => false)
+  }
+
   return new Promise(resolve => {
     uni.openSetting({
       success: res => {
@@ -262,82 +470,101 @@ export async function openSettingForLocation() {
 
 export async function getCurrentLocation() {
   return new Promise((resolve, reject) => {
-    uni.getSetting({
-      success: settingRes => {
-        const authSetting = settingRes.authSetting
-        if (authSetting['scope.userLocation'] !== true) {
-          reject(new Error('auth_denied'))
-          return
-        }
-
-        uni.getLocation({
-          type: 'gcj02',
-          success: async res => {
-            const location = normalizeWeatherCoordinates({
-              latitude: res.latitude,
-              longitude: res.longitude
-            })
-            if (!location) {
-              reject(new Error('location_failed'))
-              return
-            }
-            try {
-              console.log('获取位置成功，经纬度:', location.latitude, location.longitude)
-              let cityInfo = await getCityNameByLocation(location.latitude, location.longitude)
-              if (!isResolvedCityName(cityInfo?.city)) {
-                try {
-                  const hotCity = await resolveHotCityByGps({
-                    latitude: location.latitude,
-                    longitude: location.longitude
-                  })
-                  const hotCityName = normalizeCityText(
-                    hotCity?.cityName || hotCity?.city || hotCity?.name || ''
-                  )
-                  if (isResolvedCityName(hotCityName)) {
-                    cityInfo = {
-                      ...cityInfo,
-                      city: hotCityName,
-                      province: cityInfo.province || hotCity?.province || '',
-                      district: cityInfo.district || hotCity?.district || ''
-                    }
-                  }
-                } catch {
-                  // 热门城市兜底失败时保留原始回退值（如‘当前位置’）
-                }
-              }
-              console.log('获取城市信息成功:', cityInfo)
-              resolve({
-                latitude: location.latitude,
-                longitude: location.longitude,
-                ...cityInfo
-              })
-            } catch (error) {
-              console.error('获取城市信息失败:', error)
-              resolve({
-                latitude: location.latitude,
-                longitude: location.longitude,
-                province: '',
-                city: '当前位置',
-                district: ''
-              })
-            }
-          },
-          fail: err => {
-            console.error('获取位置失败:', err)
-
-            if (err.errMsg && err.errMsg.includes('auth deny')) {
-              reject(new Error('auth_denied'))
-            } else if (err.errMsg && err.errMsg.includes('fail')) {
-              reject(new Error('location_failed'))
-            } else {
-              reject(err)
-            }
-          }
-        })
-      },
-      fail: () => {
-        reject(new Error('无法获取权限设置'))
+    const onLocationSuccess = async res => {
+      const location = normalizeWeatherCoordinates({
+        latitude: res.latitude,
+        longitude: res.longitude
+      })
+      if (!location) {
+        reject(new Error('location_failed'))
+        return
       }
+      try {
+        console.log('获取位置成功，经纬度:', location.latitude, location.longitude)
+        let cityInfo = await getCityNameByLocation(location.latitude, location.longitude)
+        if (!isResolvedCityName(cityInfo?.city)) {
+          try {
+            const hotCity = await resolveHotCityByGps({
+              latitude: location.latitude,
+              longitude: location.longitude
+            })
+            const hotCityName = normalizeCityText(
+              hotCity?.cityName || hotCity?.city || hotCity?.name || ''
+            )
+            if (isResolvedCityName(hotCityName)) {
+              cityInfo = {
+                ...cityInfo,
+                city: hotCityName,
+                province: cityInfo.province || hotCity?.province || '',
+                district: cityInfo.district || hotCity?.district || ''
+              }
+            }
+          } catch {
+            // 热门城市兜底失败时保留原始回退值（如“当前位置”）。
+          }
+        }
+        console.log('获取城市信息成功:', cityInfo)
+        resolve({
+          latitude: location.latitude,
+          longitude: location.longitude,
+          ...cityInfo
+        })
+      } catch (error) {
+        console.error('获取城市信息失败:', error)
+        resolve({
+          latitude: location.latitude,
+          longitude: location.longitude,
+          province: '',
+          city: '当前位置',
+          district: ''
+        })
+      }
+    }
+
+    const onLocationFail = err => {
+      console.error('获取位置失败:', err)
+      if (isLocationPrivacyError(err)) {
+        reject(new Error('请先在抖音小程序隐私保护协议中声明地理位置信息'))
+      } else if (isLocationCapabilityError(err)) {
+        reject(new Error('抖音暂未放行定位权限，请检查开放平台的模糊地理位置能力和隐私协议'))
+      } else if (isLocationAuthorizationError(err)) {
+        reject(new Error('auth_denied'))
+      } else if (String(err?.errMsg || '').includes('fail')) {
+        reject(new Error('location_failed'))
+      } else {
+        reject(err)
+      }
+    }
+
+    const handleSetting = settingRes => {
+      const authSetting = settingRes?.authSetting || {}
+      if (authSetting['scope.userLocation'] !== true) {
+        reject(new Error('auth_denied'))
+        return
+      }
+
+      const douyinLocation = getDouyinLocation()
+      if (douyinLocation) {
+        douyinLocation.then(onLocationSuccess).catch(onLocationFail)
+        return
+      }
+
+      uni.getLocation({
+        type: 'gcj02',
+        success: onLocationSuccess,
+        fail: onLocationFail
+      })
+    }
+
+    const douyinSetting = getDouyinSetting()
+    if (douyinSetting) {
+      douyinSetting.then(handleSetting).catch(() => reject(new Error('无法获取权限设置')))
+      return
+    }
+
+    uni.getSetting({
+      success: handleSetting,
+      fail: () => reject(new Error('无法获取权限设置'))
     })
   })
 }
@@ -360,7 +587,7 @@ export function getCityNameByLocation(latitude, longitude) {
   }
 
   const lookupPromise = new Promise(resolve => {
-    wx.request({
+    uni.request({
       url: 'https://apis.map.qq.com/ws/geocoder/v1/',
       data: {
         location: `${location.latitude},${location.longitude}`,

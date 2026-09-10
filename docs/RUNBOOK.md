@@ -368,6 +368,13 @@ npm run build:mp-weixin:ci
 npm run build:mp-weixin:cloud-dev
 ```
 
+小程序云端开发环境：
+
+```bash
+npm run dev:mp-weixin:cloud-dev
+npm run dev:mp-toutiao:cloud-dev
+```
+
 H5：
 
 ```bash

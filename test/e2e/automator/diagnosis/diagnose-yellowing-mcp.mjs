@@ -7,6 +7,7 @@ import { formalAutomatorEndpoint } from '../_shared/formal-leaf-harness.mjs'
 import { normalize } from './yellowing/dom.mjs'
 import { runYellowingQuickFlow } from './yellowing/runner.mjs'
 import { isValidPngEvidence } from '../../../../scripts/qa/qa-png-evidence.mjs'
+import { resolveQaBackendTarget } from '../../../../scripts/qa/qa-backend-target.mjs'
 
 const DEFAULT_PROJECT = path.join(process.cwd(), 'dist/dev/mp-weixin')
 const DEFAULT_MAX_STEPS = 12
@@ -58,9 +59,38 @@ function buildLeafReport(result, { wsEndpoint, projectPath, profile, maxSteps } 
   const answers = logs.filter(item => item.type === 'answer')
   const resultState = logs.find(item => item.type === 'result' && !item.screenshot)
   const resultElements = logs.find(item => item.type === 'result-elements')
+  const resultAdviceEvidence = logs.find(item => item.type === 'result-advice-groups')
+  const resultAdviceGroups = Array.isArray(resultAdviceEvidence?.groups)
+    ? resultAdviceEvidence.groups
+    : []
+  const actionAdviceGroups = resultAdviceGroups.filter(group => group.section === 'action')
+  const avoidAdviceGroups = resultAdviceGroups.filter(group => group.section === 'avoid')
+  const uniqueActionAdviceKeys = [...new Set(actionAdviceGroups.map(group => group.key))].sort()
+  const uniqueAvoidAdviceKeys = [...new Set(avoidAdviceGroups.map(group => group.key))].sort()
+  const resultOutcomeLabels = Array.isArray(resultAdviceEvidence?.outcomeLabels)
+    ? resultAdviceEvidence.outcomeLabels
+    : []
+  const expectedNutrientOutcomeLabels = [
+    '缺铁/新叶脉间黄化',
+    '缺氮/长期营养不足',
+    '营养供给偏弱'
+  ]
+  const groupedAdviceUsesSymptoms =
+    profile === 'nutrient' &&
+    actionAdviceGroups.length === 1 &&
+    avoidAdviceGroups.length === 1 &&
+    expectedNutrientOutcomeLabels.every(label =>
+      String(actionAdviceGroups[0]?.text || '').includes(label)
+    ) &&
+    expectedNutrientOutcomeLabels.every(label =>
+      String(avoidAdviceGroups[0]?.text || '').includes(label)
+    )
   const finalScreenshot = [...(result?.shots || [])].at(-1) || ''
-  const weatherRequests = (Array.isArray(result?.capturedRequests) ? result.capturedRequests : [])
-    .filter(request => String(request?.url || '').includes('weather-http/weather/environment-context'))
+  const weatherRequests = (
+    Array.isArray(result?.capturedRequests) ? result.capturedRequests : []
+  ).filter(request =>
+    String(request?.url || '').includes('weather-http/weather/environment-context')
+  )
   const weatherRequest = weatherRequests.at(-1) || null
   const weatherWindow = extractWeatherWindow(weatherRequest)
   const historicalDays = Array.isArray(weatherWindow?.historicalDays)
@@ -83,14 +113,14 @@ function buildLeafReport(result, { wsEndpoint, projectPath, profile, maxSteps } 
   const unclassifiedHistoricalDays = historicalDays.filter(
     day => !classifiedHistoricalDays.includes(day)
   )
-  const historicalDates = historicalDays
-    .map(day => String(day?.date || '').trim())
-    .filter(Boolean)
+  const historicalDates = historicalDays.map(day => String(day?.date || '').trim()).filter(Boolean)
   const timelineWeather = logs.find(item => item.type === 'timeline-weather')
+  const scrollReset = logs.find(item => item.type === 'scroll-reset')
   const timelineNoticeText = String(timelineWeather?.noticeText || '').trim()
   const timelineCells = Array.isArray(timelineWeather?.cells) ? timelineWeather.cells : []
   const renderedHistoricalDays = timelineCells.filter(
-    cell => cell.hasWeatherMetrics && historicalDays.some(day => String(day?.date || '') === cell.date)
+    cell =>
+      cell.hasWeatherMetrics && historicalDays.some(day => String(day?.date || '') === cell.date)
   )
   const renderedMissingDays = timelineCells.filter(
     cell =>
@@ -119,11 +149,14 @@ function buildLeafReport(result, { wsEndpoint, projectPath, profile, maxSteps } 
       detail: `answer_count=${answers.length}`
     },
     {
+      name: '切题后滚动位置重置',
+      passed: scrollReset?.passed === true,
+      detail: scrollReset ? JSON.stringify(scrollReset) : '未记录滚动重置证据'
+    },
+    {
       name: '诊断天气窗口请求成功',
       passed: Boolean(
-        weatherRequest &&
-          Number(weatherRequest?.response?.statusCode || 0) === 200 &&
-          weatherWindow
+        weatherRequest && Number(weatherRequest?.response?.statusCode || 0) === 200 && weatherWindow
       ),
       detail: weatherRequest
         ? `status=${weatherRequest?.response?.statusCode || 'unknown'}, historical=${historicalDays.length}`
@@ -162,6 +195,36 @@ function buildLeafReport(result, { wsEndpoint, projectPath, profile, maxSteps } 
       detail: resultState?.path || 'result state missing'
     },
     {
+      name: '建议和暂时避免使用同一归并主键',
+      passed:
+        uniqueActionAdviceKeys.length > 0 &&
+        JSON.stringify(uniqueActionAdviceKeys) === JSON.stringify(uniqueAvoidAdviceKeys),
+      detail: {
+        action_keys: uniqueActionAdviceKeys,
+        avoid_keys: uniqueAvoidAdviceKeys
+      }
+    },
+    {
+      name: '相同主键只渲染一组建议和一组暂时避免',
+      passed:
+        actionAdviceGroups.length === uniqueActionAdviceKeys.length &&
+        avoidAdviceGroups.length === uniqueAvoidAdviceKeys.length,
+      detail: {
+        action_group_count: actionAdviceGroups.length,
+        avoid_group_count: avoidAdviceGroups.length
+      }
+    },
+    {
+      name: '多个结论的建议标题归拢为症状',
+      passed: groupedAdviceUsesSymptoms,
+      detail: {
+        expected_outcome_labels: expectedNutrientOutcomeLabels,
+        result_outcome_labels: resultOutcomeLabels,
+        action_text: actionAdviceGroups[0]?.text || '',
+        avoid_text: avoidAdviceGroups[0]?.text || ''
+      }
+    },
+    {
       name: '最终截图为有效 PNG',
       passed: Boolean(finalScreenshot) && isValidPngEvidence(finalScreenshot),
       detail: finalScreenshot || 'final screenshot missing'
@@ -195,7 +258,10 @@ function buildLeafReport(result, { wsEndpoint, projectPath, profile, maxSteps } 
         timeline_notice_text: timelineNoticeText,
         timeline_cells: timelineCells,
         rendered_historical_days: renderedHistoricalDays.length
-      }
+      },
+      scroll_reset: scrollReset || null,
+      result_advice_groups: resultAdviceGroups,
+      result_outcome_labels: resultOutcomeLabels
     }
   }
 }
@@ -221,9 +287,11 @@ async function writeLeafArtifacts(result, report, reportFile) {
 async function main() {
   const args = parseArgs(process.argv.slice(2))
   const wsEndpoint = formalAutomatorEndpoint(process.env)
+  const backendTarget = resolveQaBackendTarget(process.env)
   const projectPath = normalize(args.project || process.env.MP_PROJECT_PATH || DEFAULT_PROJECT)
   const maxSteps = toNumber(args.maxSteps, DEFAULT_MAX_STEPS)
-  const profile = normalize(args.profile || 'overwatering') || 'overwatering'
+  const profile =
+    normalize(args.profile || process.env.QA_YELLOWING_PROFILE || 'overwatering') || 'overwatering'
   if (!fs.existsSync(projectPath)) {
     throw new Error(`项目路径不存在: ${projectPath}`)
   }
@@ -234,23 +302,45 @@ async function main() {
   let result = null
   let report
   try {
-    result = await runYellowingQuickFlow({ wsEndpoint, projectPath, maxSteps, profile })
+    result = await runYellowingQuickFlow({
+      wsEndpoint,
+      projectPath,
+      maxSteps,
+      profile,
+      authProbeBaseUrl: backendTarget.baseUrl
+    })
     report = buildLeafReport(result, { wsEndpoint, projectPath, profile, maxSteps })
   } catch (error) {
-    report = {
-      status: 'failed',
-      failure_kind: 'failed_environment',
-      business_assertions_reached: false,
-      assertions: [
-        {
-          name: 'yellowing quick flow completed',
-          passed: false,
-          detail: error?.message || String(error)
-        }
-      ],
-      classification: 'BLOCKED_ENV',
-      blockerReason: error?.message || String(error),
-      evidence: { wsEndpoint, projectPath, profile, maxSteps }
+    result = error?.partialResult || null
+    if (result) {
+      report = buildLeafReport(result, { wsEndpoint, projectPath, profile, maxSteps })
+      report.status = 'failed'
+      report.failure_kind =
+        error?.failure_kind === 'failed_product' ? 'failed_product' : 'failed_environment'
+      report.classification =
+        report.failure_kind === 'failed_product' ? 'FAIL_PRODUCT' : 'BLOCKED_ENV'
+      report.blockerReason = error?.message || String(error)
+      report.assertions.push({
+        name: 'yellowing quick flow completed',
+        passed: false,
+        detail: error?.message || String(error)
+      })
+    } else {
+      report = {
+        status: 'failed',
+        failure_kind: 'failed_environment',
+        business_assertions_reached: false,
+        assertions: [
+          {
+            name: 'yellowing quick flow completed',
+            passed: false,
+            detail: error?.message || String(error)
+          }
+        ],
+        classification: 'BLOCKED_ENV',
+        blockerReason: error?.message || String(error),
+        evidence: { wsEndpoint, projectPath, profile, maxSteps }
+      }
     }
   }
   const reportFile = path.join(

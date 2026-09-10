@@ -74,6 +74,7 @@ export function useCareBehaviorTimeline(props, emit) {
       return
     }
     wateringDoseByDate.value = { ...wateringDoseByDate.value, [date]: amountMl }
+    emitTimelineChange()
   }
 
   const referenceDate = useReferenceDate(props)
@@ -372,6 +373,21 @@ export function useCareBehaviorTimeline(props, emit) {
     }
   }
 
+  function resetInteractiveTimelineState() {
+    clearLongPressTimer()
+    clearPopoverAutoHideTimer()
+    clearLongPressSuppressTimer()
+    bucketSelection.value = 'unknown'
+    baseBucketSelection.value = 'unknown'
+    dateStates.value = buildDateStates()
+    selectedDate.value = ''
+    popoverDate.value = ''
+    popoverOpenedAt.value = 0
+    longPressTriggeredDate.value = ''
+    suppressSelectDateAfterLongPress.value = ''
+    wateringDoseByDate.value = {}
+  }
+
   function syncBucketSelection(nextStates = {}) {
     const hasFertilizing = Object.values(nextStates).some(item =>
       Boolean(item?.recordedFertilizing)
@@ -394,6 +410,7 @@ export function useCareBehaviorTimeline(props, emit) {
       selectedDate.value = date
     }
     syncBucketSelection(nextStates)
+    emitTimelineChange()
   }
 
   function selectDate(item = {}) {
@@ -409,6 +426,7 @@ export function useCareBehaviorTimeline(props, emit) {
       clearLongPressSelectSuppression()
       return
     }
+    emit('select-date', item)
     selectedDate.value = item.date
     if (item.isSelectable) {
       toggleCareAction(item.date, 'watering')
@@ -498,11 +516,26 @@ export function useCareBehaviorTimeline(props, emit) {
     }, INITIAL_SKELETON_VISIBLE_MS)
   }
 
-  watch(timelinePayload, value => emit('change', value), { deep: true, immediate: true })
+  function emitTimelineChange() {
+    emit('change', timelinePayload.value)
+  }
+
   watch(() => [props.timeline, props.question], initializeTimelineFromProps, {
     deep: true,
     immediate: true
   })
+  // 先从父级已保存的时间线恢复日期格，再向父级同步 payload。
+  // 否则组件重新挂载时会先以空 dateStates 发出一次 change，覆盖返回上一题要回显的数据。
+  watch(timelinePayload, emitTimelineChange, { deep: true, immediate: true })
+  watch(
+    () => props.resetKey,
+    (nextResetKey, previousResetKey) => {
+      if (nextResetKey === previousResetKey) {
+        return
+      }
+      resetInteractiveTimelineState()
+    }
+  )
   // 盆体积变化导致档位变化时，清除旧的剂量选中态（旧 ml 不匹配新档位）
   watch(
     () => props.potVolumeMl,

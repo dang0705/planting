@@ -113,7 +113,32 @@ async function persistRoundResult({
     return
   }
 
-  const persistencePromise = persistRoundRuntime({
+  if (!awaitPersistence) {
+    const runPersistence = () => {
+      persistRoundRuntime({
+        sessionId,
+        openid,
+        plantContext,
+        response,
+        round,
+        image,
+        description,
+        clientContext,
+        sessionQuestionRows: sessionQuestionRows || questionRows
+      }).catch(error => {
+        console.error('diagnosis-http persist round result failed:', {
+          sessionId,
+          round,
+          message: String(error?.message || error || '')
+        })
+      })
+    }
+    const schedule = typeof setImmediate === 'function' ? setImmediate : queueMicrotask
+    schedule(runPersistence)
+    return
+  }
+
+  await persistRoundRuntime({
     sessionId,
     openid,
     plantContext,
@@ -124,18 +149,6 @@ async function persistRoundResult({
     clientContext,
     sessionQuestionRows: sessionQuestionRows || questionRows
   })
-  if (!awaitPersistence) {
-    persistencePromise.catch(error => {
-      console.error('diagnosis-http persist round result failed:', {
-        sessionId,
-        round,
-        message: String(error?.message || error || '')
-      })
-    })
-    return
-  }
-
-  await persistencePromise
 }
 
 module.exports = {

@@ -316,6 +316,9 @@ export function normalizeDiagnosisResult(
     diagnosisSessionId: diagnosis.diagnosisSessionId || '',
     resultId: diagnosis.resultId || '',
     roundId: diagnosis.roundId || 'round_1',
+    ...(diagnosis.questionPackageContinuationToken
+      ? { questionPackageContinuationToken: diagnosis.questionPackageContinuationToken }
+      : {}),
     plantId: diagnosis.plantId || diagnosis.userPlantId || diagnosis.plantCatalogId || '',
     userPlantId: diagnosis.userPlantId || null,
     plantCatalogId: diagnosis.plantCatalogId || null,

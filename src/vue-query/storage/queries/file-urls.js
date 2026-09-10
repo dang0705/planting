@@ -1,4 +1,7 @@
 import { queryClient } from '@/lib/query-client.js'
+import { requestHttpFunction } from '@/api/http.js'
+import { ensureWechatCloudInitialized } from '@/utils/cloudbase-auth.js'
+import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
 
 export const CLOUD_FILE_URL_QUERY_KEY = ['cloud-storage', 'temp-file-url']
 export const TEMP_FILE_URL_STALE_TIME_MS = 50 * 60 * 1000
@@ -49,6 +52,25 @@ function scheduleBatchFlush() {
   Promise.resolve().then(flushPendingRequests)
 }
 
+async function requestRestrictedPlatformFileUrls(fileIds) {
+  const response = await requestHttpFunction('plant-catalog-http/catalog/image-urls', {
+    method: 'POST',
+    body: { fileIds },
+    // 仅允许服务端目录图片白名单，未登录的植物选择页也需要显示目录封面。
+    auth: false
+  })
+  return (Array.isArray(response?.data?.list) ? response.data.list : []).map(item => ({
+    fileID: item?.fileId || '',
+    tempFileURL: item?.imageUrl || ''
+  }))
+}
+
+async function requestWechatFileUrls(fileIds) {
+  ensureWechatCloudInitialized()
+  const response = await wx.cloud.getTempFileURL({ fileList: fileIds })
+  return response?.fileList || []
+}
+
 async function flushPendingRequests() {
   batchFlushScheduled = false
   const entries = [...pendingRequests.entries()]
@@ -57,10 +79,10 @@ async function flushPendingRequests() {
   for (let index = 0; index < entries.length; index += CLOUD_STORAGE_BATCH_LIMIT) {
     const chunk = entries.slice(index, index + CLOUD_STORAGE_BATCH_LIMIT)
     try {
-      const response = await wx.cloud.getTempFileURL({
-        fileList: chunk.map(([fileId]) => fileId)
-      })
-      const responseItems = response?.fileList || []
+      const fileIds = chunk.map(([fileId]) => fileId)
+      const responseItems = isRestrictedMiniProgram()
+        ? await requestRestrictedPlatformFileUrls(fileIds)
+        : await requestWechatFileUrls(fileIds)
       for (const [fileId, entry] of chunk) {
         const item = responseItems.find(file => (file?.fileID || file?.fileId) === fileId)
         const url = item?.tempFileURL || ''

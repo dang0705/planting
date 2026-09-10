@@ -15,6 +15,8 @@ export const LOCAL_RUNTIME_LEASE_ROOT = path.join(PROJECT_ROOT, '.tmp', 'local-r
 export const LOCAL_GATEWAY_KIND = 'planting-local-functions-gateway'
 export const DEFAULT_REQUIRED_FUNCTIONS = [
   'diagnose-http',
+  'diagnosis-question-start-http',
+  'diagnosis-answer-http',
   'plant-catalog-http',
   'plant-user-http',
   'identify-http',
@@ -39,6 +41,8 @@ export const FUNCTION_HEALTH_PATHS = {
 }
 export const FUNCTION_NAMES = [
   'diagnose-http',
+  'diagnosis-question-start-http',
+  'diagnosis-answer-http',
   'plant-catalog-http',
   'plant-user-http',
   'identify-http',
@@ -74,6 +78,8 @@ const FUNCTIONS_REQUIRING_CLOUDBASE_CREDENTIALS = new Set([
   'auth-user-http',
   'platform-phone-bootstrap-http',
   'diagnose-http',
+  'diagnosis-question-start-http',
+  'diagnosis-answer-http',
   'identify-http',
   'plant-catalog-http',
   'plant-user-http',

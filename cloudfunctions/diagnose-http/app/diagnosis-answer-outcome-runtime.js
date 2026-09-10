@@ -19,6 +19,7 @@ async function resolveSpecializedAnswerRoundResults({
   sessionState = {},
   runtimeCarePayload = {},
   runtimeRouteAnswerEffects = [],
+  questionPackageRuntimeData = null,
   visualExtraction = null,
   clientContext = {}
 } = {}) {
@@ -46,7 +47,8 @@ async function resolveSpecializedAnswerRoundResults({
           plantContext,
           careBehaviorTimeline: runtimeCarePayload.careBehaviorTimeline,
           environmentCareContext: runtimeCarePayload.environmentCareContext,
-          routeAnswerEffects: runtimeRouteAnswerEffects
+          routeAnswerEffects: runtimeRouteAnswerEffects,
+          questionPackageRuntimeData
         })
       : null
   const specificPestRoundResult = resolveSpecificPestRoundResult({

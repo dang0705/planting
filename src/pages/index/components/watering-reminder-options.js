@@ -72,7 +72,7 @@ export function buildPotProfileSummary(profile) {
     return '填写盆口和盆高，可估算水量范围'
   }
   if (!profile.potBottomDiameterCm) {
-    return '已有基础尺寸，还可以补充排水孔'
+    return '已有基础尺寸，还可以补充盆底尺寸'
   }
   if (profile.potBottomDiameterCm) {
     parts.push(`底径 ${profile.potBottomDiameterCm}cm`)
@@ -231,10 +231,25 @@ export function resolveLastWateringDate(events = [], fallback = '') {
   )
 }
 
-export function buildWateringReminderInputSignature({ lastWatered = '', potProfile = null } = {}) {
+export function buildWateringReminderInputSignature({
+  lastWatered = '',
+  potProfile = null,
+  wateringEvents = []
+} = {}) {
+  const wateringEventSignature = (Array.isArray(wateringEvents) ? wateringEvents : [])
+    .map(event => ({
+      date: String(event?.date || '').trim(),
+      amountMl: event?.amountMl ?? event?.amount_ml ?? null,
+      amount: String(event?.amount || '').trim()
+    }))
+    .filter(event => event.date)
+    .sort((a, b) =>
+      `${a.date}-${a.amountMl}-${a.amount}`.localeCompare(`${b.date}-${b.amountMl}-${b.amount}`)
+    )
   return JSON.stringify({
     lastWatered: String(lastWatered || '').trim(),
-    potProfile: potProfile || null
+    potProfile: potProfile || null,
+    wateringEvents: wateringEventSignature
   })
 }
 
@@ -314,6 +329,7 @@ export async function fetchWateringPlannerResult({
 }) {
   const response = await requestHttpFunction('plant-user-http/user-plants/watering-planner', {
     method: 'POST',
+    returnErrorResponse: true,
     body: buildWateringPlannerRequestPayload({
       plantId,
       wateringEvents,
@@ -325,7 +341,13 @@ export async function fetchWateringPlannerResult({
       airEnvironmentOverride
     })
   })
-  return response?.code === 200 ? normalizePlannerResultDate(response.data) : null
+  if (response?.code !== 200) {
+    const error = new Error(response?.message || '暂时无法生成浇水建议，请稍后重试。')
+    error.statusCode = response?.code || 500
+    error.requiresWateringHistory = Boolean(response?.data?.requiresWateringHistory)
+    throw error
+  }
+  return normalizePlannerResultDate(response.data)
 }
 
 export function buildWateringReminderCalendarPayload({

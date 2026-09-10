@@ -4,6 +4,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { captureFormalScreenshot } from './formal-leaf-screenshot.mjs'
+import { formalAutomatorEndpoint } from './formal-leaf-harness.mjs'
 
 // “拉起即用”压力门禁要求每次首拍成功；任何恢复或失败都不能记为稳定通过。
 export const SCREENSHOT_RELIABILITY_TARGET = 1
@@ -21,6 +22,9 @@ export async function runScreenshotReliabilityBenchmark({
   outputDirectory = path.join(os.tmpdir(), `planting-screenshot-reliability-${Date.now()}`),
   capture = captureFormalScreenshot
 } = {}) {
+  const verifiedWsEndpoint = formalAutomatorEndpoint({
+    MINIPROGRAM_AUTOMATOR_WS: wsEndpoint
+  })
   fs.mkdirSync(outputDirectory, { recursive: true })
   const results = []
   for (let index = 1; index <= attempts; index += 1) {
@@ -29,7 +33,7 @@ export async function runScreenshotReliabilityBenchmark({
       `screenshot-${String(index).padStart(3, '0')}.png`
     )
     const result = await capture({
-      wsEndpoint,
+      wsEndpoint: verifiedWsEndpoint,
       outputPath,
       projectPath,
       timeoutMs,

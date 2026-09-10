@@ -1,7 +1,7 @@
 <template>
   <Layout title="浇水建议" left-action="back" background-class="bg-[#f8faf9]">
     <view
-      v-if="restrictedPlatform"
+      v-if="featureUnavailable"
       id="watering-advisor-unavailable"
       class="flex min-h-[520px] items-center justify-center bg-[#f8faf9] px-6 text-center"
     >
@@ -343,7 +343,7 @@ import AirEnvironmentSummaryCard from '@/components/AirEnvironmentSummaryCard.vu
 import PotProfileFormCore from '@/components/pot-profile/PotProfileFormCore.vue'
 import { useUserStore } from '@/store/user.js'
 import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
-import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
+import { isFeatureAvailable } from '@/utils/platform-capabilities.js'
 import { usePlantStore } from '@/store/plants.js'
 import { fetchUserPlantWateringPlanner } from '@/api/plants-http.js'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
@@ -367,7 +367,7 @@ import { useWateringAdvisorAirEnvironment } from './useWateringAdvisorAirEnviron
 import { useWateringAdvisorMyPlants } from './useWateringAdvisorMyPlants.js'
 const userStore = useUserStore()
 const plantStore = usePlantStore()
-const restrictedPlatform = isRestrictedMiniProgram()
+const featureUnavailable = !isFeatureAvailable('watering')
 const {
   openedFeatureKey,
   visible: featureUnavailableVisible,
@@ -643,7 +643,7 @@ function loadInitialCatalog() {
 
 let hasShownOnce = false
 onShow(() => {
-  if (restrictedPlatform) {
+  if (featureUnavailable) {
     openFeatureUnavailable('watering')
     return
   }

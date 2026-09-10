@@ -16,7 +16,6 @@ function normalizeText(value = '', conservative = '') {
   const normalized = String(value || '').trim()
   return normalized || conservative
 }
-
 const CONTEXT_REQUIRED_PROBLEM_GUARDS = {
   root_rot: {
     preferredQuestionKeys: [
@@ -86,7 +85,7 @@ const CONTEXT_REQUIRED_PROBLEM_GUARDS = {
       '缺水不能只凭黄叶直出，至少需要补齐“经常干透后才浇/干土萎蔫/叶片卷曲干脆”等供水不足事实。'
   },
   low_light: {
-    preferredQuestionKeys: ['q_leaf_yellowing_light_background'],
+    preferredQuestionKeys: ['q_observed_probe__leaf_yellowing__light_change_context'],
     corroboratingSymptomKeys: [
       'low_light_context',
       'leggy_growth',
@@ -97,7 +96,10 @@ const CONTEXT_REQUIRED_PROBLEM_GUARDS = {
       '光照不足不能只凭黄叶直出，至少需要补齐“近期位置更阴/长期弱光/徒长或新生长变弱”等光照背景事实。'
   },
   sunburn: {
-    preferredQuestionKeys: ['q_leaf_yellowing_light_background', 'q_leaf_bleaching_sunburn_patch'],
+    preferredQuestionKeys: [
+      'q_observed_probe__leaf_yellowing__light_change_context',
+      'q_leaf_bleaching_sunburn_patch'
+    ],
     corroboratingSymptomKeys: [
       'recent_direct_sun_increase',
       'sunburn_patch',

@@ -29,7 +29,10 @@ const {
   resolveRequestAppEnv,
   runWithRequestAppEnv
 } = require('/opt/utils/http')
-const { buildEnvironmentWeatherWindow } = require('./services/weather-window-service')
+const {
+  buildEnvironmentWeatherWindow,
+  prefetchEnvironmentForecast
+} = require('./services/weather-window-service')
 const {
   buildDiagnosisRecentWeatherWindow,
   buildRecentWeatherService,
@@ -43,6 +46,36 @@ const { listHotCitiesForClient, resolveHotCityLocation } = require('./services/h
 const QWEATHER_CONFIG = {
   baseUrl: process.env.QWEATHER_API_BASE_URL || 'https://n773jqqeap.re.qweatherapi.com',
   apiKey: process.env.QWEATHER_API_KEY
+}
+let sharedRecentWeatherService
+
+function getSharedRecentWeatherService() {
+  if (!sharedRecentWeatherService) {
+    sharedRecentWeatherService = buildRecentWeatherService(QWEATHER_CONFIG)
+  }
+  return sharedRecentWeatherService
+}
+
+function readQaPerformanceProbeId(headers = {}) {
+  const value = headers['x-qa-performance-probe-id'] || headers['X-QA-Performance-Probe-Id'] || ''
+  const normalized = String(value).trim()
+  return /^[A-Za-z0-9._:-]{8,120}$/u.test(normalized) ? normalized : ''
+}
+
+function createQaRequestTiming(probeId) {
+  if (!probeId) {
+    return null
+  }
+  const startedAt = Date.now()
+  const marks = []
+  return {
+    mark(stage, details = {}) {
+      marks.push({ stage, elapsed_ms: Date.now() - startedAt, ...details })
+    },
+    flush() {
+      console.log('qa-performance-timing', JSON.stringify({ probeId, marks }))
+    }
+  }
 }
 const INVALID_CITY_CACHE_NAMES = new Set([
   '',
@@ -99,7 +132,7 @@ function buildLocalDevWeatherData() {
 
 async function getCurrentWeatherFromDailyArchive(payload = {}) {
   try {
-    const service = buildRecentWeatherService(QWEATHER_CONFIG)
+    const service = getSharedRecentWeatherService()
     return await service.getCurrentWeatherFromDailyArchive(payload)
   } catch {
     return {
@@ -181,6 +214,17 @@ async function main(event, context) {
   const path = String(request.path || '')
   const method = request.method || 'GET'
   const appEnv = resolveRequestAppEnv(request.headers, request.query, request.body)
+  const qaProbeId = readQaPerformanceProbeId(request.headers)
+  const timing = createQaRequestTiming(qaProbeId)
+  if (qaProbeId) {
+    const endpoint = path.includes('/weather/environment-context')
+      ? 'weather-http/weather/environment-context'
+      : path.includes('/weather/current')
+        ? 'weather-http/weather/current'
+        : 'weather-http'
+    console.log('qa-performance-probe', JSON.stringify({ probeId: qaProbeId, endpoint }))
+  }
+  timing?.mark('request-enter')
 
   try {
     if (path.includes('/weather/health')) {
@@ -217,7 +261,7 @@ async function main(event, context) {
       }
       const result = await handleWeather24hRequest({
         payload: request.body || {},
-        service: buildRecentWeatherService(QWEATHER_CONFIG)
+        service: getSharedRecentWeatherService()
       })
       return jsonResponse(result.code, {
         code: result.code,
@@ -230,6 +274,7 @@ async function main(event, context) {
       path.includes('/weather/environment-context') ||
       path.includes('/weather/v7/environment-context')
     ) {
+      timing?.mark('environment-context-start')
       if (!['GET', 'POST'].includes(method)) {
         return methodNotAllowed(method)
       }
@@ -243,12 +288,33 @@ async function main(event, context) {
         return jsonResponse(400, { code: 400, message: '缺少位置参数：lat 和 lng', data: null })
       }
 
-      const recentWeatherService = buildRecentWeatherService(QWEATHER_CONFIG)
+      const recentWeatherService = getSharedRecentWeatherService()
       // 诊断与浇水环境窗口必须先读取同一个 recent-10d/day archive 缓存：
       // 历史天气和 D0 不能由 environment 模式再次直连 QWeather，否则同一天会出现两套事实。
+      const forecastDaysPromise = diagnosisMode
+        ? null
+        : prefetchEnvironmentForecast({
+            lat,
+            lng,
+            diagnosisDate: payload.diagnosisDate || payload.diagnosis_date || payload.date,
+            apiKey: QWEATHER_CONFIG.apiKey,
+            baseUrl: QWEATHER_CONFIG.baseUrl
+          })
+      forecastDaysPromise?.then(
+        value => timing?.mark('weather-forecast-ready', { forecast_days: value?.length || 0 }),
+        error =>
+          timing?.mark('weather-forecast-failed', { message: String(error?.message || error) })
+      )
+      forecastDaysPromise?.catch(() => null)
       const cachedWeatherWindow = await buildDiagnosisRecentWeatherWindow({
-        payload,
-        service: recentWeatherService
+        payload: {
+          ...payload,
+          // 环境首页允许短时复用已确认存在的 D0；诊断模式必须每次重新确认 day file，
+          // 避免 D0 归档刚被采样/定稿或撤销时把旧值继续当成当前事实。
+          useCurrentWeatherMemoryCache: !diagnosisMode
+        },
+        service: recentWeatherService,
+        onTimingMark: (stage, details) => timing?.mark(stage, details)
       })
       const weatherWindow = diagnosisMode
         ? cachedWeatherWindow
@@ -265,12 +331,26 @@ async function main(event, context) {
             qweatherLocationId: payload.qweatherLocationId || payload.qweather_location_id || '',
             cityName: payload.cityName || payload.city_name || '',
             city: payload.city || '',
-            cacheWindow: cachedWeatherWindow
+            cacheWindow: cachedWeatherWindow,
+            forecastDaysPromise
           })
+      timing?.mark('environment-context-window-ready', {
+        mode: normalizeEnvironmentContextMode(environmentContextMode),
+        forecast_prefetch_started: Boolean(forecastDaysPromise)
+      })
       const responseWindow = buildEnvironmentWeatherWindowByMode(
         weatherWindow,
         environmentContextMode
       )
+      timing?.mark('environment-context-response-ready', {
+        mode: normalizeEnvironmentContextMode(environmentContextMode),
+        historical_days: Array.isArray(responseWindow?.historicalDays)
+          ? responseWindow.historicalDays.length
+          : 0,
+        forecast_days: Array.isArray(responseWindow?.forecastDays)
+          ? responseWindow.forecastDays.length
+          : 0
+      })
 
       return jsonResponse(200, {
         code: 200,
@@ -289,7 +369,7 @@ async function main(event, context) {
       const payload = method === 'GET' ? request.query : request.body
       const result = await handleRecentWeatherRequest({
         payload,
-        service: buildRecentWeatherService(QWEATHER_CONFIG)
+        service: getSharedRecentWeatherService()
       })
       return jsonResponse(result.code, {
         code: result.code,
@@ -304,7 +384,7 @@ async function main(event, context) {
       }
       const result = await handleRecentWeatherIngestionRequest({
         payload: request.body || {},
-        service: buildRecentWeatherService(QWEATHER_CONFIG)
+        service: getSharedRecentWeatherService()
       })
       return jsonResponse(result.code, {
         code: result.code,
@@ -390,6 +470,8 @@ async function main(event, context) {
   } catch (error) {
     console.error('weather-http error:', error)
     return internalServerError('获取天气失败，请稍后重试')
+  } finally {
+    timing?.flush()
   }
 }
 

@@ -4,7 +4,10 @@
     :style="{ width: `${canvasWidth}px`, height: `${canvasHeight}px` }"
   >
     <!-- 骨架屏 -->
-    <view v-if="!shouldRenderCanvas" class="absolute inset-0 flex flex-col items-center justify-center">
+    <view
+      v-if="!shouldRenderCanvas"
+      class="absolute inset-0 flex flex-col items-center justify-center"
+    >
       <view
         class="border-2 border-dashed border-gray-300 rounded-lg"
         :style="{
@@ -22,49 +25,53 @@
     <canvas
       v-if="shouldRenderCanvas"
       type="2d"
-      id="potCanvas"
+      :id="canvasId"
       class="absolute inset-0"
       :style="{ width: `${canvasWidth}px`, height: `${canvasHeight}px` }"
     />
 
     <!-- 盆口右把手（水平控直径 + 垂直控高度，二合一） -->
     <view
-      v-if="isNormalMode && !previewOnly"
+      v-if="shouldRenderCanvas"
       :id="`${idPrefix}-top-handle`"
-      class="absolute flex items-center justify-center"
+      class="pot-canvas-drag-handle absolute flex items-center justify-center"
+      :class="{ 'pot-canvas-drag-handle-active': activeHandle === 'top' }"
       :style="{
         left: topHandleX - handleOuterSize / 2 + 'px',
         top: topHandleY - handleOuterSize / 2 + 'px',
         width: handleOuterSize + 'px',
         height: handleOuterSize + 'px'
       }"
-      @touchstart.stop="onTopHandleTouchStart"
-      @touchmove.stop="onTopHandleTouchMove"
+      @touchstart.stop.prevent="onTopHandleTouchStart"
+      @touchmove.stop.prevent="onTopHandleTouchMove"
       @touchend.stop="onHandleTouchEnd"
+      @touchcancel.stop="onHandleTouchEnd"
     >
       <view
-        class="rounded-full bg-[#2f8f57] shadow-sm"
+        class="pot-canvas-drag-handle-dot rounded-full bg-[#2f8f57] shadow-sm"
         :style="{ width: handleInnerSize + 'px', height: handleInnerSize + 'px' }"
       />
     </view>
 
     <!-- 盆底右把手（仅水平） -->
     <view
-      v-if="isNormalMode && !previewOnly"
+      v-if="shouldRenderCanvas"
       :id="`${idPrefix}-bottom-handle`"
-      class="absolute flex items-center justify-center"
+      class="pot-canvas-drag-handle absolute flex items-center justify-center"
+      :class="{ 'pot-canvas-drag-handle-active': activeHandle === 'bottom' }"
       :style="{
         left: bottomHandleX - handleOuterSize / 2 + 'px',
         top: bottomHandleY - handleOuterSize / 2 + 'px',
         width: handleOuterSize + 'px',
         height: handleOuterSize + 'px'
       }"
-      @touchstart.stop="onBottomHandleTouchStart"
-      @touchmove.stop="onBottomHandleTouchMove"
+      @touchstart.stop.prevent="onBottomHandleTouchStart"
+      @touchmove.stop.prevent="onBottomHandleTouchMove"
       @touchend.stop="onHandleTouchEnd"
+      @touchcancel.stop="onHandleTouchEnd"
     >
       <view
-        class="rounded-full bg-[#2f8f57] shadow-sm"
+        class="pot-canvas-drag-handle-dot rounded-full bg-[#2f8f57] shadow-sm"
         :style="{ width: handleInnerSize + 'px', height: handleInnerSize + 'px' }"
       />
     </view>
@@ -72,13 +79,14 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick, getCurrentInstance } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, getCurrentInstance } from 'vue'
 
 const props = defineProps({
   potTopDiameterCm: { type: Number, default: null },
   potBottomDiameterCm: { type: Number, default: null },
   potHeightCm: { type: Number, default: null },
   previewOnly: { type: Boolean, default: false },
+  exampleDimensions: { type: Object, default: () => ({}) },
   idPrefix: { type: String, default: 'pot-canvas' },
   substrateComposition: { type: Array, default: null },
   canvasWidth: { type: Number, default: 200 },
@@ -118,6 +126,7 @@ const MAX_HEIGHT_PX = 161
 
 const canvasWidth = ref(Math.max(1, Number(props.canvasWidth) || CANVAS_BASE_W))
 const canvasHeight = ref(Math.max(1, Number(props.canvasHeight) || CANVAS_BASE_H))
+const canvasId = computed(() => `${props.idPrefix || 'pot-canvas'}-canvas`)
 
 function updateCanvasSizeFromProps() {
   canvasWidth.value = Math.max(1, Number(props.canvasWidth) || CANVAS_BASE_W)
@@ -166,7 +175,19 @@ const isNormalMode = computed(() => {
 })
 
 // 盆型缺失时仍绘制浅色示例，避免用户把“没有真实数据”误解成“没有可看的内容”。
-const shouldRenderCanvas = computed(() => isNormalMode.value || props.previewOnly)
+const hasAnyDimensions = computed(() =>
+  [props.potTopDiameterCm, props.potBottomDiameterCm, props.potHeightCm].some(
+    value => Number(value) > 0
+  )
+)
+const shouldRenderCanvas = computed(
+  () => isNormalMode.value || props.previewOnly || hasAnyDimensions.value
+)
+const isExampleOnly = computed(
+  () =>
+    props.previewOnly &&
+    !Object.values(props.exampleDimensions || {}).some(isExample => isExample === false)
+)
 
 const effTopCm = computed(() => (isNormalMode.value ? props.potTopDiameterCm : SKELETON_TOP))
 const effBottomCm = computed(() =>
@@ -223,12 +244,17 @@ const touchStartBottomCm = ref(0)
 const touchStartHeightCm = ref(0)
 const activeHandle = ref(null)
 
+function getTouchPoint(event) {
+  return event?.touches?.[0] || event?.changedTouches?.[0] || null
+}
+
 let canvasNode = null
 let ctx = null
 let dpr = 1
-let initRetries = 0
 const MAX_INIT_RETRIES = 8
 const textureImageCache = new Map()
+let setupRequestId = 0
+let initPromise = null
 
 function applyCanvasBufferSize() {
   if (!canvasNode || !ctx) {
@@ -236,11 +262,14 @@ function applyCanvasBufferSize() {
   }
   canvasNode.width = Math.max(1, Math.round(canvasWidth.value * dpr))
   canvasNode.height = Math.max(1, Math.round(canvasHeight.value * dpr))
-  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  if (typeof ctx.setTransform === 'function') {
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+  }
   ctx.scale(dpr, dpr)
 }
 
 function setupCanvas() {
+  const requestId = ++setupRequestId
   return new Promise(resolve => {
     const compInstance = instance?.proxy || instance?.ctx
     if (!compInstance) {
@@ -250,42 +279,73 @@ function setupCanvas() {
     uni
       .createSelectorQuery()
       .in(compInstance)
-      .select('#potCanvas')
+      .select(`#${canvasId.value}`)
       .fields({ node: true, size: true })
       .exec(res => {
+        if (requestId !== setupRequestId) {
+          resolve(false)
+          return
+        }
         const node = res?.[0]?.node
         if (!node) {
           resolve(false)
           return
         }
         canvasNode = node
-        ctx = canvasNode.getContext('2d')
+        try {
+          ctx = canvasNode.getContext('2d')
+        } catch (error) {
+          console.warn('[PotCanvas] 获取绘图上下文失败', canvasId.value, error)
+          canvasNode = null
+          ctx = null
+          resolve(false)
+          return
+        }
+        if (!ctx) {
+          canvasNode = null
+          resolve(false)
+          return
+        }
         try {
           dpr = uni.getSystemInfoSync().pixelRatio || 1
         } catch {
           dpr = 1
         }
-        applyCanvasBufferSize()
-        preloadTextures()
-        draw()
-        resolve(true)
+        try {
+          applyCanvasBufferSize()
+          preloadTextures()
+          draw()
+          resolve(true)
+        } catch (error) {
+          console.warn('[PotCanvas] 初始化绘制失败', canvasId.value, error)
+          canvasNode = null
+          ctx = null
+          resolve(false)
+        }
       })
   })
 }
 
 async function initCanvas() {
-  const ok = await setupCanvas()
-  if (ok) {
-    initRetries = 0
-    return true
+  if (initPromise) {
+    return initPromise
   }
-  if (initRetries < MAX_INIT_RETRIES) {
-    initRetries += 1
-    await new Promise(resolve => setTimeout(resolve, 250))
-    return initCanvas()
+  initPromise = (async () => {
+    for (let attempt = 0; attempt <= MAX_INIT_RETRIES; attempt += 1) {
+      if (await setupCanvas()) {
+        return true
+      }
+      if (attempt < MAX_INIT_RETRIES) {
+        await new Promise(resolve => setTimeout(resolve, 250))
+      }
+    }
+    return false
+  })()
+  try {
+    return await initPromise
+  } finally {
+    initPromise = null
   }
-  initRetries = 0
-  return false
 }
 
 function preloadTextures() {
@@ -324,7 +384,12 @@ function draw() {
   const by = bottomY.value
 
   if (shouldRenderCanvas.value) {
-    drawSubstrateLayers(topR, botR, h, ty, by)
+    try {
+      drawSubstrateLayers(topR, botR, h, ty, by)
+    } catch (error) {
+      console.warn('[PotCanvas] 基质绘制失败，已使用盆体底色', canvasId.value, error)
+      fillPotBody(topR, botR, ty, by, 'rgba(47, 143, 87, 0.08)')
+    }
 
     ctx.beginPath()
     ctx.moveTo(CENTER_X.value - topR, ty)
@@ -332,21 +397,34 @@ function draw() {
     ctx.lineTo(CENTER_X.value + botR, by)
     ctx.lineTo(CENTER_X.value - botR, by)
     ctx.closePath()
-    const strokeColor = props.previewOnly ? '#9ab3a0' : '#2f8f57'
+    const strokeColor = isExampleOnly.value ? '#9ab3a0' : '#2f8f57'
     ctx.strokeStyle = strokeColor
     ctx.lineWidth = 1.5
-    ctx.setLineDash(props.previewOnly ? [5 * scaleBase.value, 4 * scaleBase.value] : [])
+    if (typeof ctx.setLineDash === 'function') {
+      ctx.setLineDash(isExampleOnly.value ? [5 * scaleBase.value, 4 * scaleBase.value] : [])
+    }
     ctx.stroke()
-    ctx.setLineDash([])
+    if (typeof ctx.setLineDash === 'function') {
+      ctx.setLineDash([])
+    }
 
     ctx.fillStyle = strokeColor
     ctx.font = `${labelFontSize.value}px sans-serif`
     ctx.textAlign = 'center'
-    const labelPrefix = props.previewOnly ? '示例 ' : ''
-    ctx.fillText(labelPrefix + '盆口 ' + effTopCm.value + 'cm', CENTER_X.value, ty - 8 * scaleY.value)
-    ctx.fillText(labelPrefix + '盆底 ' + effBottomCm.value + 'cm', CENTER_X.value, by + 18 * scaleY.value)
+    const topLabelPrefix = props.exampleDimensions?.top ? '示例 ' : ''
+    const bottomLabelPrefix = props.exampleDimensions?.bottom ? '示例 ' : ''
+    ctx.fillText(
+      topLabelPrefix + '盆口 ' + effTopCm.value + 'cm',
+      CENTER_X.value,
+      ty - 8 * scaleY.value
+    )
+    ctx.fillText(
+      bottomLabelPrefix + '盆底 ' + effBottomCm.value + 'cm',
+      CENTER_X.value,
+      by + 18 * scaleY.value
+    )
 
-    const heightText = `${labelPrefix}高${effHeightCm.value}cm`
+    const heightText = `${props.exampleDimensions?.height ? '示例 ' : ''}高${effHeightCm.value}cm`
     const labelX =
       CENTER_X.value + Math.max(topR, botR) + HEIGHT_LABEL_RIGHT_GAP_PX * scaleBase.value
     const labelCenterY = (ty + by) / 2
@@ -358,41 +436,39 @@ function draw() {
   }
 }
 
+function fillPotBody(topR, botR, ty, by, fillStyle) {
+  ctx.beginPath()
+  ctx.moveTo(CENTER_X.value - topR, ty)
+  ctx.lineTo(CENTER_X.value + topR, ty)
+  ctx.lineTo(CENTER_X.value + botR, by)
+  ctx.lineTo(CENTER_X.value - botR, by)
+  ctx.closePath()
+  ctx.fillStyle = fillStyle
+  ctx.fill()
+}
+
 function drawSubstrateLayers(topR, botR, h, ty, by) {
-  if (props.previewOnly) {
-    ctx.beginPath()
-    ctx.moveTo(CENTER_X.value - topR, ty)
-    ctx.lineTo(CENTER_X.value + topR, ty)
-    ctx.lineTo(CENTER_X.value + botR, by)
-    ctx.lineTo(CENTER_X.value - botR, by)
-    ctx.closePath()
-    ctx.fillStyle = 'rgba(154, 179, 160, 0.10)'
-    ctx.fill()
+  if (isExampleOnly.value) {
+    fillPotBody(topR, botR, ty, by, 'rgba(154, 179, 160, 0.10)')
     return
   }
-  const composition = props.substrateComposition
+  const composition = (Array.isArray(props.substrateComposition) ? props.substrateComposition : [])
+    .map(item => {
+      if (!item || typeof item !== 'object') {
+        return null
+      }
+      const ratio = Number(item.ratio)
+      return Number.isFinite(ratio) && ratio > 0 ? { material: item.material, ratio } : null
+    })
+    .filter(Boolean)
   if (!composition || !composition.length) {
-    ctx.beginPath()
-    ctx.moveTo(CENTER_X.value - topR, ty)
-    ctx.lineTo(CENTER_X.value + topR, ty)
-    ctx.lineTo(CENTER_X.value + botR, by)
-    ctx.lineTo(CENTER_X.value - botR, by)
-    ctx.closePath()
-    ctx.fillStyle = 'rgba(47, 143, 87, 0.08)'
-    ctx.fill()
+    fillPotBody(topR, botR, ty, by, 'rgba(47, 143, 87, 0.08)')
     return
   }
 
   const totalRatio = composition.reduce((sum, item) => sum + (item.ratio || 0), 0)
-  if (totalRatio <= 0) {
-    ctx.beginPath()
-    ctx.moveTo(CENTER_X.value - topR, ty)
-    ctx.lineTo(CENTER_X.value + topR, ty)
-    ctx.lineTo(CENTER_X.value + botR, by)
-    ctx.lineTo(CENTER_X.value - botR, by)
-    ctx.closePath()
-    ctx.fillStyle = 'rgba(47, 143, 87, 0.08)'
-    ctx.fill()
+  if (!Number.isFinite(totalRatio) || totalRatio <= 0) {
+    fillPotBody(topR, botR, ty, by, 'rgba(47, 143, 87, 0.08)')
     return
   }
 
@@ -443,9 +519,13 @@ function drawSubstrateLayers(topR, botR, h, ty, by) {
 
 // 盆口右把手：水平控直径 + 垂直控高度
 function onTopHandleTouchStart(e) {
+  const point = getTouchPoint(e)
+  if (!point) {
+    return
+  }
   activeHandle.value = 'top'
-  touchStartX.value = e.touches[0].clientX
-  touchStartY.value = e.touches[0].clientY
+  touchStartX.value = point.clientX ?? point.pageX ?? 0
+  touchStartY.value = point.clientY ?? point.pageY ?? 0
   touchStartTopCm.value = props.potTopDiameterCm || SKELETON_TOP
   touchStartHeightCm.value = props.potHeightCm || SKELETON_HEIGHT
 }
@@ -454,8 +534,14 @@ function onTopHandleTouchMove(e) {
   if (activeHandle.value !== 'top') {
     return
   }
-  const deltaX = e.touches[0].clientX - touchStartX.value
-  const deltaY = e.touches[0].clientY - touchStartY.value
+  const point = getTouchPoint(e)
+  if (!point) {
+    return
+  }
+  const currentX = point.clientX ?? point.pageX ?? touchStartX.value
+  const currentY = point.clientY ?? point.pageY ?? touchStartY.value
+  const deltaX = currentX - touchStartX.value
+  const deltaY = currentY - touchStartY.value
 
   // 水平 → 盆口直径
   const startRadiusPx = diameterToRadiusPx(touchStartTopCm.value)
@@ -476,8 +562,12 @@ function onTopHandleTouchMove(e) {
 
 // 盆底右把手：仅水平
 function onBottomHandleTouchStart(e) {
+  const point = getTouchPoint(e)
+  if (!point) {
+    return
+  }
   activeHandle.value = 'bottom'
-  touchStartX.value = e.touches[0].clientX
+  touchStartX.value = point.clientX ?? point.pageX ?? 0
   touchStartBottomCm.value = props.potBottomDiameterCm || SKELETON_BOTTOM
 }
 
@@ -485,7 +575,12 @@ function onBottomHandleTouchMove(e) {
   if (activeHandle.value !== 'bottom') {
     return
   }
-  const deltaX = e.touches[0].clientX - touchStartX.value
+  const point = getTouchPoint(e)
+  if (!point) {
+    return
+  }
+  const currentX = point.clientX ?? point.pageX ?? touchStartX.value
+  const deltaX = currentX - touchStartX.value
   const startRadiusPx = diameterToRadiusPx(touchStartBottomCm.value)
   const newRadiusPx = Math.max(
     minRadiusPx.value,
@@ -504,9 +599,11 @@ watch(
     () => props.potBottomDiameterCm,
     () => props.potHeightCm,
     () => props.previewOnly,
+    () => props.exampleDimensions,
     () => props.substrateComposition,
     () => props.canvasWidth,
-    () => props.canvasHeight
+    () => props.canvasHeight,
+    () => props.idPrefix
   ],
   () => {
     updateCanvasSizeFromProps()
@@ -524,10 +621,59 @@ watch(
   { deep: true }
 )
 
+watch(
+  shouldRenderCanvas,
+  visible => {
+    if (!visible) {
+      setupRequestId += 1
+      canvasNode = null
+      ctx = null
+      return
+    }
+    nextTick(() => initCanvas())
+  },
+  { flush: 'post' }
+)
+
 onMounted(() => {
   updateCanvasSizeFromProps()
   if (shouldRenderCanvas.value) {
-    nextTick(() => setTimeout(() => initCanvas(), 300))
+    nextTick(() => initCanvas())
   }
 })
+
+onBeforeUnmount(() => {
+  setupRequestId += 1
+  canvasNode = null
+  ctx = null
+  initPromise = null
+})
 </script>
+
+<style scoped>
+.pot-canvas-drag-handle {
+  border-radius: 9999px;
+  box-shadow: 0 0 0 2px rgba(47, 143, 87, 0.2);
+  animation: pot-canvas-handle-breathe 1.8s ease-in-out infinite;
+}
+
+.pot-canvas-drag-handle-dot {
+  box-sizing: border-box;
+  border: 2px solid #ffffff;
+}
+
+.pot-canvas-drag-handle-active {
+  animation-duration: 1s;
+}
+
+@keyframes pot-canvas-handle-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px rgba(47, 143, 87, 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 0 6px rgba(47, 143, 87, 0.34);
+  }
+}
+</style>

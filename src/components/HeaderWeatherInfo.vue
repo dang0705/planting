@@ -70,11 +70,22 @@ defineProps({
   showCacheToggle: { type: Boolean, default: true }
 })
 
-const { location, gpsLocation, weather, setCityLocation } = useHeaderWeather()
+const { location, gpsLocation, weather, selectLocation, setCityLocation } = useHeaderWeather()
 const showCitySheet = ref(false)
 const hotCities = ref([])
 const loadingCities = ref(false)
 const selectedCityValue = computed(() => resolveCityText(location.value))
+const shouldRequestLocation = computed(() =>
+  [
+    '获取位置...',
+    '点击获取位置',
+    '位置权限未授权',
+    '请先完善隐私协议',
+    '位置能力未开通',
+    '定位失败',
+    '位置获取失败'
+  ].includes(location.value)
+)
 
 function resolveCityText(city = '') {
   if (typeof city === 'string') {
@@ -151,6 +162,13 @@ function onCitySelect(payload) {
 }
 
 async function openCityPicker() {
+  console.log('[DouyinLocation] header-click', {
+    location: String(location.value || ''),
+    shouldRequestLocation: shouldRequestLocation.value
+  })
+  if (shouldRequestLocation.value) {
+    await selectLocation()
+  }
   showCitySheet.value = true
   if (!hotCities.value.length) {
     await loadHotCities()

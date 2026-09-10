@@ -38,6 +38,33 @@ assert.deepEqual(
   ]
 )
 
+const sharedProfileGroups = buildOutcomeAdviceGroups({
+  outcomeSources: [
+    {
+      outcomeKey: 'iron_deficiency',
+      actionProfileKey: 'action_nutrient_support_basic',
+      displayNameCn: '缺铁/新叶脉间黄化',
+      actionAdviceItems: ['核对补肥情况'],
+      avoidAdviceItems: ['不要一次性重肥猛补']
+    },
+    {
+      outcomeKey: 'nitrogen_deficiency',
+      actionProfileKey: 'action_nutrient_support_basic',
+      displayNameCn: '缺氮/长期营养不足',
+      actionAdviceItems: ['从低浓度少量补肥开始'],
+      avoidAdviceItems: ['不要和大幅浇水调整同时进行']
+    }
+  ],
+  section: 'action',
+  getOutcomeItems: getActionAdvice,
+  getOutcomeActionItems: getActionAdvice,
+  getOutcomeAvoidItems: outcome => outcome.avoidAdviceItems,
+  sharedSymptomLabels: [{ label: '新叶脉间黄化' }, { label: '长期营养不足' }]
+})
+assert.equal(sharedProfileGroups.length, 1)
+assert.equal(sharedProfileGroups[0].key, 'action_nutrient_support_basic')
+assert.equal(sharedProfileGroups[0].displayLabel, '新叶脉间黄化、长期营养不足')
+
 const pageSource = readFileSync('src/subpackages/diagnosis/question-package.vue', 'utf8')
 assert.equal((pageSource.match(/v-if="group\.showOutcomeLabel"/g) || []).length, 4)
 

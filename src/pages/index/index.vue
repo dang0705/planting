@@ -1,5 +1,5 @@
 <template>
-  <Layout title="青花植">
+  <Layout title="青花植" :show-weather-header="true">
     <template #left-info>
       <HeaderWeatherInfo />
     </template>
@@ -12,9 +12,28 @@
       </view>
 
       <template v-if="userStore.isAuthenticated">
-        <view v-if="loadingPlants" class="py-10 text-center">
-          <image :src="loadingIcon" class="mx-auto size-16" />
-          <text class="mt-3 block text-sm text-gray-500">加载中...</text>
+        <view v-if="loadingPlants" id="index-plants-loading-skeleton" class="space-y-4 p-4">
+          <view
+            v-for="skeletonIndex in 2"
+            :key="skeletonIndex"
+            class="flex h-[129px] animate-pulse overflow-hidden rounded-[12px] border border-[rgba(45,122,79,0.15)] bg-white p-px shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]"
+          >
+            <view class="h-[127px] w-[112px] flex-[0_0_112px] bg-gray-200" />
+            <view class="flex h-[127px] min-w-0 flex-1 flex-col gap-2 p-3">
+              <view class="h-[27px] w-32 rounded bg-gray-200" />
+              <view class="h-[22px] w-20 rounded-full bg-gray-100" />
+              <view class="flex h-[38px] min-w-0 w-full gap-2">
+                <view class="h-9 min-w-0 w-0 flex-1 rounded-[10px] bg-gray-200" />
+                <view class="h-9 min-w-0 w-0 flex-1 rounded-[10px] bg-gray-100" />
+              </view>
+            </view>
+            <view
+              class="flex h-[127px] w-[49px] flex-[0_0_49px] flex-col items-center justify-center gap-2 border-l border-[rgba(45,122,79,0.15)] py-3 pl-[9px] pr-2"
+            >
+              <view class="size-8 rounded-full bg-gray-100" />
+              <view class="size-8 rounded-full bg-gray-100" />
+            </view>
+          </view>
         </view>
 
         <view v-else-if="plantsError" class="flex flex-col items-center px-8 py-16 text-center">
@@ -49,6 +68,16 @@
         </view>
 
         <view v-else id="index-plant-list" class="p-4">
+          <view class="mb-2 flex justify-end">
+            <view
+              id="index-add-plant-button"
+              class="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-primary active:bg-[#eef3ef]"
+              @click="handleAddPlant"
+            >
+              <uni-icons type="plusempty" size="14" color="#2d7a4f" />
+              <text>添加植物</text>
+            </view>
+          </view>
           <view
             v-for="plant in plantStore.userPlants"
             :key="plant.id"
@@ -85,14 +114,6 @@
             </view>
           </view>
           <view
-            id="index-add-plant-button"
-            class="mt-4 flex flex-col items-center justify-center rounded-[20px] border-2 border-dashed border-primary bg-white p-5"
-            @click="handleAddPlant"
-          >
-            <uni-icons type="plusempty" />
-            <text class="text-sm font-semibold text-primary">添加新植物</text>
-          </view>
-          <view
             id="index-watering-advisor-entry"
             class="mt-3 flex items-center justify-between rounded-[20px] bg-white p-4 shadow-sm"
             @click="handleGoWateringAdvisor"
@@ -118,10 +139,13 @@
         <button
           id="index-phone-login-button"
           class="mb-3 w-full rounded-2xl bg-primary py-3.5 text-white"
+          :class="{ 'opacity-60': phoneLoggingIn }"
+          :disabled="phoneLoggingIn"
+          :loading="phoneLoggingIn"
           open-type="getPhoneNumber"
           @getphonenumber="handleIndexPhoneLogin"
         >
-          微信手机号登录
+          {{ phoneLoggingIn ? '登录中…' : '微信手机号登录' }}
         </button>
         <!-- #endif -->
         <!-- #ifdef MP-TOUTIAO || MP-XHS -->
@@ -130,6 +154,7 @@
           class="mb-3 w-full rounded-2xl bg-primary py-3.5 text-white"
           :class="{ 'opacity-60': platformPhoneLoggingIn }"
           :disabled="platformPhoneLoggingIn"
+          :loading="platformPhoneLoggingIn"
           :open-type="loginCodeReady ? 'getPhoneNumber' : ''"
           @click="handlePlatformLoginTap"
           @getphonenumber="handlePlatformPhoneLogin"
@@ -178,7 +203,6 @@ import HeaderWeatherInfo from '@/components/HeaderWeatherInfo.vue'
 import Layout from '@/Layout.vue'
 import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
 import PlatformPrivacyModal from '@/components/PlatformPrivacyModal.vue'
-import loadingIcon from '@/assets/icons/loading.svg'
 import { getDiagnosisHistory } from '@/api/diagnosis-history.js'
 import { usePlantingStore } from '@/store/planting.js'
 import { usePlantStore } from '@/store/plants.js'
@@ -188,7 +212,7 @@ import { callComponentMethod } from '@/utils/component-ref.js'
 import { createAsyncActionGuard, createLeadingThrottle } from '@/utils/interaction-guard.js'
 import { requireMvpAccess } from '@/utils/subscription-access.js'
 import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
-import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
+import { isDiagnosisAvailable, isFeatureAvailable } from '@/utils/platform-capabilities.js'
 import { getActivePlatformAccessToken } from '@/api/platform-session.js'
 import { usePlatformPhoneLogin } from '@/composables/usePlatformPhoneLogin.js'
 import PlantCard from './components/PlantCard.vue'
@@ -198,27 +222,34 @@ import WateringReminderSheet from './components/WateringReminderSheet.vue'
 const JUST_NOW_MS = 60000
 const ONE_HOUR_MS = 3600000
 const ONE_DAY_MS = 86400000
+const qaPerformanceRefresh = import.meta.env.VITE_QA_PERFORMANCE_COLD_LANE === '1'
 
 const plantStore = usePlantStore()
 const userStore = useUserStore()
 const plantingStore = usePlantingStore()
-const loadingPlants = ref(false)
+const loadingPlants = ref(true)
+const plantLoadStarted = ref(false)
 const plantsError = ref('')
 const wateringReminderRef = ref(null)
 const fertilizationMonthlyRef = ref(null)
 const currentReminderPlantId = ref(null)
 const currentFertilizationPlantId = ref(null)
 const phoneLoginAction = createAsyncActionGuard()
+const phoneLoggingIn = ref(false)
 const plantDiagnoseHistory = reactive({})
 const currentReminderPlant = computed(() =>
   currentReminderPlantId.value === null
     ? null
-    : plantStore.userPlants.find(plant => plant.id === currentReminderPlantId.value) || null
+    : plantStore.userPlants.find(
+        plant => Number(plant.id) === Number(currentReminderPlantId.value)
+      ) || null
 )
 const currentFertilizationPlant = computed(() =>
   currentFertilizationPlantId.value === null
     ? null
-    : plantStore.userPlants.find(plant => plant.id === currentFertilizationPlantId.value) || null
+    : plantStore.userPlants.find(
+        plant => Number(plant.id) === Number(currentFertilizationPlantId.value)
+      ) || null
 )
 const {
   loginCodeReady,
@@ -238,7 +269,6 @@ const {
     await loadUserPlants()
   }
 })
-
 async function handlePlatformLoginTap() {
   if (loginCodeReady.value || platformPhoneLoggingIn.value) {
     return
@@ -253,17 +283,31 @@ const {
 onMounted(async () => {
   if (await userStore.ensureLogin()) {
     await loadUserPlants()
+  } else {
+    loadingPlants.value = false
   }
 })
 
 onShow(() => {
   Object.keys(plantDiagnoseHistory).forEach(key => delete plantDiagnoseHistory[key])
+  if (qaPerformanceRefresh && userStore.isAuthenticated) {
+    userStore
+      .ensureLogin()
+      .then(isLoggedIn => {
+        if (isLoggedIn) {
+          return loadUserPlants()
+        }
+        return undefined
+      })
+      .catch(() => undefined)
+  }
 })
 
 async function loadUserPlants() {
-  if (loadingPlants.value) {
+  if (plantLoadStarted.value && loadingPlants.value) {
     return
   }
+  plantLoadStarted.value = true
   loadingPlants.value = true
   plantsError.value = ''
   try {
@@ -276,12 +320,20 @@ async function loadUserPlants() {
   }
 }
 function handleIndexPhoneLogin(event) {
+  if (phoneLoggingIn.value) {
+    return
+  }
+  phoneLoggingIn.value = true
   return phoneLoginAction.run(async () => {
-    await userStore.phoneLogin({
-      code: event?.detail?.code || '',
-      cloudId: event?.detail?.cloudID || event?.detail?.cloudId || ''
-    })
-    await loadUserPlants()
+    try {
+      await userStore.phoneLogin({
+        code: event?.detail?.code || '',
+        cloudId: event?.detail?.cloudID || event?.detail?.cloudId || ''
+      })
+      await loadUserPlants()
+    } finally {
+      phoneLoggingIn.value = false
+    }
   })
 }
 function addPlant() {
@@ -289,7 +341,7 @@ function addPlant() {
   uni.navigateTo({ url: '/subpackages/plant/user-plant-detail/user-plant-detail?mode=create' })
 }
 async function goWateringAdvisor() {
-  if (isRestrictedMiniProgram()) {
+  if (!isFeatureAvailable('watering')) {
     openFeatureUnavailable('watering')
     return
   }
@@ -336,7 +388,7 @@ async function openDiagnose(plant) {
   if (!plant?.id) {
     return
   }
-  if (isRestrictedMiniProgram()) {
+  if (!isDiagnosisAvailable('plant_card')) {
     openFeatureUnavailable('diagnosis')
     return
   }
@@ -353,7 +405,7 @@ async function openDiagnose(plant) {
   })
 }
 async function openPlantHistory(plant) {
-  if (isRestrictedMiniProgram()) {
+  if (!isDiagnosisAvailable('plant_history')) {
     openFeatureUnavailable('diagnosis')
     return
   }
@@ -368,8 +420,9 @@ async function openPlantHistory(plant) {
   }))
 }
 async function openReminder({ plant, type }) {
-  if (isRestrictedMiniProgram()) {
-    openFeatureUnavailable(type === 'water' ? 'watering' : 'fertilization')
+  const featureKey = type === 'water' ? 'watering' : 'fertilization'
+  if (!isFeatureAvailable(featureKey)) {
+    openFeatureUnavailable(featureKey)
     return
   }
   if (!(await requireMvpAccess(userStore, { source: `index_${type}_reminder` }))) {
@@ -382,7 +435,7 @@ async function openReminder({ plant, type }) {
   }
 }
 async function openFertilization(plant) {
-  if (isRestrictedMiniProgram()) {
+  if (!isFeatureAvailable('fertilization')) {
     openFeatureUnavailable('fertilization')
     return
   }
@@ -394,7 +447,9 @@ async function openFertilization(plant) {
   callComponentMethod(fertilizationMonthlyRef, 'open')
 }
 function viewDiagnoseDetail(recordId) {
-  uni.navigateTo({ url: `/subpackages/diagnosis/result?id=${recordId}` })
+  uni.navigateTo({
+    url: `/subpackages/diagnosis/result?id=${recordId}&entrySource=plant_history`
+  })
 }
 function formatTime(time) {
   const diff = Date.now() - new Date(time).getTime()

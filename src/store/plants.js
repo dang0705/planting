@@ -138,7 +138,8 @@ export const usePlantStore = defineStore('plants', {
     },
 
     updateUserPlantLocal(id, updates) {
-      const index = this.userPlants.findIndex(p => p.id === id)
+      const plantId = Number(id)
+      const index = this.userPlants.findIndex(p => Number(p.id) === plantId)
       if (index !== -1) {
         const nextNickname = updates.nickname !== undefined ? updates.nickname : updates.nickName
         if (nextNickname !== undefined) {
@@ -211,7 +212,8 @@ export const usePlantStore = defineStore('plants', {
     },
 
     async savePotProfile(id, potProfileFields) {
-      const plant = this.userPlants.find(p => p.id === id)
+      const plantId = Number(id)
+      const plant = this.userPlants.find(p => Number(p.id) === plantId)
       if (!plant) {
         return { success: false, message: '植物不存在' }
       }
@@ -229,18 +231,28 @@ export const usePlantStore = defineStore('plants', {
           substrateComposition = null
         }
       }
-      plant.potProfile = { ...plant.potProfile, ...potProfileFields, substrateComposition }
+      const nextPotProfile = { ...plant.potProfile, ...potProfileFields, substrateComposition }
+      const applyLocalPotProfile = potProfile => {
+        this.updateUserPlantLocal(plantId, { potProfile })
+        if (Number(this.currentPlant?.id) === plantId) {
+          this.currentPlant = { ...this.currentPlant, potProfile }
+        }
+      }
+      applyLocalPotProfile(nextPotProfile)
 
       try {
-        const response = await patchUserPlant({ id, ...potProfileFields })
+        const response = await patchUserPlant({ id: plantId, ...potProfileFields })
         if (response?.code === 200) {
+          if (response.data?.potProfile) {
+            applyLocalPotProfile(response.data.potProfile)
+          }
           return { success: true }
         }
-        plant.potProfile = originalPotProfile
+        applyLocalPotProfile(originalPotProfile)
         return { success: false, message: '暂时无法保存盆型信息，请检查网络后重试' }
       } catch (error) {
         console.error('保存盆型档案失败:', error)
-        plant.potProfile = originalPotProfile
+        applyLocalPotProfile(originalPotProfile)
         return { success: false, message: '暂时无法保存盆型信息，请检查网络后重试' }
       }
     },
@@ -250,7 +262,8 @@ export const usePlantStore = defineStore('plants', {
         const response = await completeWateringReminder({
           plantId: Number(id),
           wateredDate: wateredDate || localDateString(),
-          planId: planId || this.userPlants.find(item => item.id === id)?.wateringReminder?.planId || ''
+          planId:
+            planId || this.userPlants.find(item => item.id === id)?.wateringReminder?.planId || ''
         })
         if (response?.code !== 200 || !response.data) {
           return { success: false, message: '浇水记录暂未保存，请检查网络后重试' }

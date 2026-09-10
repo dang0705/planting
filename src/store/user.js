@@ -9,6 +9,13 @@ import { USER_PLANTS_QUERY_KEY } from '@/vue-query/plants/queries/user-plants.js
 import { DIAGNOSIS_HISTORY_QUERY_KEY } from '@/constants/query-keys.js'
 
 const MINI_PROGRAM_AUTH_CACHE_MS = 30 * 1000
+// 隔离性能构建需要让每轮首页回归都真实发出 auth/user 请求；普通构建
+// 继续复用已有身份校验缓存，避免把 QA 采样开关带入业务运行时。
+// 可选链同时兼容 Vite 的小程序编译和 Node ESM 源码契约测试；不能用
+// typeof import.meta，Vite 会为其注入 Node url 模块，小程序运行时不支持。
+// 使用静态 Vite 环境变量访问，确保性能构建能在编译期保留每轮真实 auth/user 刷新。
+// 可选链访问会被小程序构建器裁掉，导致页面只复用登录缓存，性能叶子无法得到目标请求。
+const QA_PERFORMANCE_REFRESH = import.meta.env.VITE_QA_PERFORMANCE_COLD_LANE === '1'
 let miniProgramAuthSyncPromise = null
 let miniProgramAuthIdentity = ''
 let miniProgramAuthCheckedAt = 0
@@ -108,6 +115,8 @@ export const useUserStore = defineStore('user', {
     async phoneLogin(phoneCode) {
       try {
         const loginData = await loginWithPhone(phoneCode)
+        miniProgramAuthIdentity = ''
+        miniProgramAuthCheckedAt = 0
         this.setLoginInfo(loginData)
         reportAnalyticsEvent(ANALYTICS_EVENTS.USER_LOGIN_SUCCESS)
         return loginData
@@ -158,6 +167,33 @@ export const useUserStore = defineStore('user', {
      * 持久化状态可能来自旧 Web/终端身份，不能仅凭缓存 openid 判定已登录。
      */
     async reconcileMiniProgramLogin() {
+      const platformSessionToken = getActivePlatformAccessToken()
+      if (platformSessionToken) {
+        const sessionIdentity = `${this.userId}:${this.openid}`
+        const cacheFresh =
+          !QA_PERFORMANCE_REFRESH &&
+          miniProgramAuthIdentity === sessionIdentity &&
+          Date.now() - miniProgramAuthCheckedAt < MINI_PROGRAM_AUTH_CACHE_MS
+        if (cacheFresh && this.isAuthenticated) {
+          return true
+        }
+
+        const user = await getUserById(this.userId)
+        const remoteUserId = String(user?._id || user?.id || '').trim()
+        if (!remoteUserId || (this.userId && remoteUserId !== String(this.userId))) {
+          this.logout()
+          return false
+        }
+        await this.setLoginInfo({
+          user,
+          openid: user.wechat_openid || user._openid || this.openid,
+          token: platformSessionToken
+        })
+        miniProgramAuthIdentity = `${this.userId}:${this.openid}`
+        miniProgramAuthCheckedAt = Date.now()
+        return this.isAuthenticated
+      }
+
       const identity = await getCloudbaseUserIdentity()
       const runtimeOpenid = identity?.openid || ''
       if (!runtimeOpenid) {
@@ -165,6 +201,7 @@ export const useUserStore = defineStore('user', {
       }
 
       const cacheFresh =
+        !QA_PERFORMANCE_REFRESH &&
         miniProgramAuthIdentity === runtimeOpenid &&
         Date.now() - miniProgramAuthCheckedAt < MINI_PROGRAM_AUTH_CACHE_MS
       if (cacheFresh && this.openid === runtimeOpenid && this.isAuthenticated) {
@@ -312,6 +349,8 @@ export const useUserStore = defineStore('user', {
       queryClient.removeQueries({ queryKey: USER_PLANTS_QUERY_KEY })
       queryClient.removeQueries({ queryKey: DIAGNOSIS_HISTORY_QUERY_KEY })
       clearPlatformSession()
+      miniProgramAuthIdentity = ''
+      miniProgramAuthCheckedAt = 0
       this.userId = ''
       this.openid = ''
       this.union_id = ''

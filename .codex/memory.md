@@ -9,7 +9,7 @@ This file is a compact AI-consumed memory pointer. It is not a source of truth.
 
 1. Code, tests, schema, config, package scripts.
 2. Active docs listed in `.codex/context-packs.yml`.
-3. `.brv/context-tree/facts-index.yml` as index only.
+3. OpenViking memory via the project-root `.openviking/config.json` peer.
 4. Archived docs only when explicitly requested.
 
 ## Current diagnosis package guard
@@ -20,11 +20,10 @@ This file is a compact AI-consumed memory pointer. It is not a source of truth.
 - Legacy code names such as `follow-up`, `QuestionStart`, or `FollowUpMutation` do not by themselves prove the current product口径.
 - Route planner must not emit dynamic question planning (`NEED_MORE_INFO`, `requiresFollowUp`, `nextQuestionKeys`) for missing evidence; the old route-planned follow-up resolver was removed.
 
-## Default BRV files
-
-Read only:
+## Default OpenViking source
 
 ```text
-.brv/context-tree/_index.md
-.brv/context-tree/facts-index.yml
+peer: planting
+config: .openviking/config.json
+scope: project root and descendants
 ```

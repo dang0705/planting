@@ -1,6 +1,14 @@
-import { BASE_URL, IS_LOCAL_API_BASE_URL, shouldAppendWebFunctionFlag } from '@/api/env'
-import { getActivePlatformAccessToken } from '@/api/platform-session'
-import { getCloudbaseUserIdentity } from '@/utils/cloudbase-auth'
+import {
+  BASE_URL,
+  IS_LOCAL_API_BASE_URL,
+  PUBLIC_HTTP_FUNCTION_BASE_URL,
+  shouldAppendWebFunctionFlag
+} from '@/api/env'
+import {
+  getActivePlatformAccessToken,
+  getActivePlatformIdentityTicket
+} from '@/api/platform-session'
+import { getCloudbaseUserIdentity, refreshPlatformHttpIdentity } from '@/utils/cloudbase-auth'
 import { getRequestAppEnvHeader } from '@/utils/runtime-env'
 
 export const DEFAULT_HTTP_TIMEOUT_MS = 20_000
@@ -63,6 +71,34 @@ function getLocalDevOpenId() {
   return String(import.meta.env.VITE_DEV_OPENID || 'dev_terminal_mp_local').trim()
 }
 
+function stripReservedIdentityHeaders(headers = {}) {
+  const sanitized = { ...headers }
+  delete sanitized.Authorization
+  delete sanitized.authorization
+  delete sanitized['x-planting-http-identity-ticket']
+  delete sanitized['x-planting-platform-session']
+  return sanitized
+}
+
+function buildSignedIdentityTicketHeaders(headers = {}, ticket = '') {
+  return {
+    ...stripReservedIdentityHeaders(headers),
+    'x-app-env': getRequestAppEnvHeader(),
+    'x-env': getRequestAppEnvHeader(),
+    Authorization: `Bearer ${ticket}`,
+    'x-planting-http-identity-ticket': ticket
+  }
+}
+
+async function refreshSignedIdentityTicketHeaders(headers = {}) {
+  const refreshedIdentity = await refreshPlatformHttpIdentity()
+  const ticket = String(refreshedIdentity?.httpIdentityTicket || '').trim()
+  if (!ticket) {
+    throw new Error('身份票据刷新失败，请重新登录后再继续问诊')
+  }
+  return buildSignedIdentityTicketHeaders(headers, ticket)
+}
+
 async function resolveRealRuntimeIdentity() {
   if (isWechatMiniProgramRuntime()) {
     const identity = await getCloudbaseUserIdentity()
@@ -75,22 +111,74 @@ async function resolveRealRuntimeIdentity() {
   throw new Error('HTTP 云函数身份仅支持微信小程序或本地函数网关')
 }
 
-export async function resolveHttpFunctionAuth({ auth = true, headers = {} } = {}) {
+export async function resolveHttpFunctionAuth({
+  auth = true,
+  headers = {},
+  requirePlatformSession = false,
+  requireSignedIdentityTicket = false,
+  preferPlatformSession = false
+} = {}) {
   if (!auth) {
     return headers
   }
 
+  const useRealMiniProgramIdentity = isWechatMiniProgramRuntime()
   const platformSessionToken = getActivePlatformAccessToken()
+  // 写操作、诊断和其他需要可即时吊销权限的请求始终使用持久平台会话。
+  // preferPlatformSession 作为历史调用方的兼容别名，优先级高于短票据。
+  if (!IS_LOCAL_API_BASE_URL && (requirePlatformSession || preferPlatformSession)) {
+    if (!platformSessionToken && useRealMiniProgramIdentity) {
+      throw new Error('当前登录会话已失效，请重新登录后再继续问诊')
+    }
+    if (platformSessionToken) {
+      return {
+        ...stripReservedIdentityHeaders(headers),
+        'x-app-env': getRequestAppEnvHeader(),
+        'x-env': getRequestAppEnvHeader(),
+        Authorization: `Bearer ${platformSessionToken}`,
+        // 公网 HTTP 函数域名按该受控字段读取持久平台会话；保留
+        // Authorization 仅用于仍由 API 网关承载的兼容入口。
+        'x-planting-platform-session': platformSessionToken
+      }
+    }
+  }
+
+  if (!IS_LOCAL_API_BASE_URL && requireSignedIdentityTicket) {
+    const platformIdentityTicket = getActivePlatformIdentityTicket()
+    if (platformIdentityTicket) {
+      return buildSignedIdentityTicketHeaders(headers, platformIdentityTicket)
+    }
+    if (platformSessionToken) {
+      return refreshSignedIdentityTicketHeaders(headers)
+    }
+  }
+
+  // 非目标业务默认仍走持久会话；不能因为本地存有短票据就改变写请求的
+  // 授权来源。只有显式 requireSignedIdentityTicket 的两个读入口可用票据。
+  if (!IS_LOCAL_API_BASE_URL && platformSessionToken) {
+    return {
+      ...stripReservedIdentityHeaders(headers),
+      'x-app-env': getRequestAppEnvHeader(),
+      'x-env': getRequestAppEnvHeader(),
+      Authorization: `Bearer ${platformSessionToken}`,
+      // 公网 HTTP 网关可能重写 Authorization；全部持久会话请求都显式
+      // 传递既有受控会话字段，避免非目标接口在网关后被误判为未登录。
+      'x-planting-platform-session': platformSessionToken
+    }
+  }
+
   if (platformSessionToken) {
     return {
-      ...headers,
+      ...stripReservedIdentityHeaders(headers),
       'x-app-env': getRequestAppEnvHeader(),
       'x-env': getRequestAppEnvHeader(),
       Authorization: `Bearer ${platformSessionToken}`
     }
   }
 
-  const useRealMiniProgramIdentity = isWechatMiniProgramRuntime()
+  if (requirePlatformSession && !IS_LOCAL_API_BASE_URL && useRealMiniProgramIdentity) {
+    throw new Error('当前登录会话已失效，请重新登录后再继续问诊')
+  }
 
   if (IS_LOCAL_API_BASE_URL) {
     const openid = useRealMiniProgramIdentity
@@ -117,15 +205,15 @@ export async function resolveHttpFunctionAuth({ auth = true, headers = {} } = {}
   }
 
   const identity = await resolveRealRuntimeIdentity()
-  const ticket = String(identity?.httpIdentityTicket || '').trim()
-  if (!ticket) {
-    throw new Error('微信身份票据获取失败，请稍后重试')
+  if (!identity.httpIdentityTicket) {
+    throw new Error('微信身份接口未返回有效 HTTP 身份票据')
   }
   return {
-    ...headers,
+    ...stripReservedIdentityHeaders(headers),
     'x-app-env': getRequestAppEnvHeader(),
     'x-env': getRequestAppEnvHeader(),
-    Authorization: `Bearer ${ticket}`
+    Authorization: `Bearer ${identity.httpIdentityTicket}`,
+    'x-planting-http-identity-ticket': identity.httpIdentityTicket
   }
 }
 
@@ -139,7 +227,7 @@ function createUrl(functionPath, query, baseUrlOverride = '') {
   const baseUrl = String(baseUrlOverride || BASE_URL || '').replace(/\/+$/, '')
   const path = parsedPath.path
 
-  if (!shouldAppendWebFunctionFlag()) {
+  if (!shouldAppendWebFunctionFlag(baseUrl)) {
     return `${baseUrl}/${path}${queryString}`
   }
 
@@ -177,73 +265,6 @@ function resolveHttpMethodTransport(method = 'GET', query = {}, headers = {}) {
   }
 }
 
-function buildNativeHttpFunctionRequest(functionPath, query = {}) {
-  const parsedPath = parseFunctionPath(functionPath)
-  const mergedQuery = {
-    ...parsedPath.query,
-    ...(query && typeof query === 'object' ? query : {})
-  }
-  const pathSegments = parsedPath.path.split('/').filter(Boolean)
-  const functionName = pathSegments.shift() || ''
-  const path = `/${pathSegments.join('/')}`.replace(/\/$/u, '') || '/'
-  const queryString = buildQueryString(mergedQuery)
-
-  if (!functionName) {
-    throw new Error('缺少有效的 HTTP 云函数路径')
-  }
-
-  return {
-    name: functionName,
-    path: `${path}${queryString}`
-  }
-}
-
-function requestNativeHttpFunction({
-  functionPath,
-  method,
-  query,
-  payload,
-  headers,
-  identityTicket,
-  enableChunked,
-  timeout,
-  onChunkReceived
-}) {
-  const target = buildNativeHttpFunctionRequest(functionPath, query)
-  const options = {
-    name: target.name,
-    path: target.path,
-    method,
-    header: {
-      ...headers,
-      ...(identityTicket
-        ? {
-            Authorization: `Bearer ${identityTicket}`,
-            'x-planting-http-identity-ticket': identityTicket
-          }
-        : {})
-    },
-    ...(payload !== undefined ? { data: payload } : {}),
-    ...(enableChunked !== undefined ? { enableChunked } : {}),
-    ...(Number(timeout) > 0 ? { timeout: Number(timeout) } : {}),
-    ...(typeof onChunkReceived === 'function'
-      ? { onChunkedReceived: onChunkReceived }
-      : {})
-  }
-
-  return new Promise((resolve, reject) => {
-    try {
-      wx.cloud.callHTTPFunction({
-        ...options,
-        success: response => resolve(response),
-        fail: error => reject(buildPublicTransportError(error))
-      })
-    } catch (error) {
-      reject(buildPublicTransportError(error))
-    }
-  })
-}
-
 function buildPublicTransportError(error) {
   const rawMessage = String(error?.errMsg || error?.message || error || '').toLowerCase()
   const isTimeout = rawMessage.includes('timeout') || rawMessage.includes('timed out')
@@ -252,6 +273,24 @@ function buildPublicTransportError(error) {
   )
   publicError.isRetryable = true
   return publicError
+}
+
+export function normalizeJsonResponseData(data, dataType = '') {
+  if (dataType !== 'json' || typeof data !== 'string') {
+    return data
+  }
+
+  const normalized = data.replace(/^\uFEFF/u, '').trim()
+  if (!normalized) {
+    return data
+  }
+
+  try {
+    return JSON.parse(normalized)
+  } catch {
+    // 非 JSON 错误页仍保留原文，交给上层按 HTTP 状态码处理，不能伪造成功对象。
+    return data
+  }
 }
 
 export function httpRequest(defaults = {}) {
@@ -263,8 +302,24 @@ export function httpRequest(defaults = {}) {
       payload = defaults.payload,
       headers = {},
       auth = defaults.auth !== undefined ? defaults.auth : true,
-      responseType = defaults.responseType,
+      requirePlatformSession = options.requirePlatformSession !== undefined
+        ? options.requirePlatformSession
+        : defaults.requirePlatformSession === true,
+      requireSignedIdentityTicket = options.requireSignedIdentityTicket !== undefined
+        ? options.requireSignedIdentityTicket
+        : defaults.requireSignedIdentityTicket === true,
+      preferPlatformSession = options.preferPlatformSession !== undefined
+        ? options.preferPlatformSession
+        : defaults.preferPlatformSession === true,
       enableChunked = defaults.enableChunked,
+      dataType = options.dataType !== undefined
+        ? options.dataType
+        : defaults.dataType !== undefined
+          ? defaults.dataType
+          : enableChunked
+            ? undefined
+            : 'json',
+      responseType = defaults.responseType,
       timeout = defaults.timeout,
       baseUrl = defaults.baseUrl,
       onChunkReceived
@@ -277,6 +332,8 @@ export function httpRequest(defaults = {}) {
 
     const baseHeaders = {
       'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'Cache-Control': 'no-cache, no-transform',
       ...defaults.headers,
       ...headers
     }
@@ -286,48 +343,33 @@ export function httpRequest(defaults = {}) {
       baseHeaders
     )
 
-    if (
-      isWechatMiniProgramRuntime() &&
-      !IS_LOCAL_API_BASE_URL &&
-      typeof wx.cloud.callHTTPFunction === 'function'
-    ) {
-      const platformSessionToken = auth ? getActivePlatformAccessToken() : ''
-      const identity = auth && !platformSessionToken ? await resolveRealRuntimeIdentity() : null
-      return requestNativeHttpFunction({
-        functionPath,
-        method: requestMethod,
-        query: requestQuery,
-        payload,
-        headers: {
-          ...requestHeaders,
-          'x-app-env': getRequestAppEnvHeader(),
-          'x-env': getRequestAppEnvHeader(),
-          ...(platformSessionToken ? { Authorization: `Bearer ${platformSessionToken}` } : {})
-        },
-        identityTicket: identity?.httpIdentityTicket,
-        enableChunked,
-        timeout: requestTimeout,
-        onChunkReceived
-      })
-    }
-
     const mergedHeaders = await resolveHttpFunctionAuth({
       auth,
-      headers: requestHeaders
+      headers: requestHeaders,
+      requirePlatformSession,
+      requireSignedIdentityTicket,
+      preferPlatformSession
     })
-    const url = createUrl(functionPath, requestQuery, baseUrl)
+    const requestBaseUrl =
+      baseUrl ?? (!IS_LOCAL_API_BASE_URL ? PUBLIC_HTTP_FUNCTION_BASE_URL : undefined)
+    const url = createUrl(functionPath, requestQuery, requestBaseUrl)
     console.log('[http-request] request url:', url)
 
-    return new Promise((resolve, reject) => {
+    const dispatch = requestHeaders => new Promise((resolve, reject) => {
       const requestTask = uni.request({
         url,
         method: requestMethod,
         data: payload,
-        header: mergedHeaders,
+        header: requestHeaders,
+        ...(dataType ? { dataType } : {}),
         ...(responseType ? { responseType } : {}),
         ...(enableChunked !== undefined ? { enableChunked } : {}),
         ...(Number(requestTimeout) > 0 ? { timeout: Number(requestTimeout) } : {}),
-        success: response => resolve(response),
+        success: response =>
+          resolve({
+            ...response,
+            data: normalizeJsonResponseData(response?.data, dataType)
+          }),
         fail: error => reject(buildPublicTransportError(error))
       })
 
@@ -338,5 +380,19 @@ export function httpRequest(defaults = {}) {
         requestTask.onChunkReceived(onChunkReceived)
       }
     })
+
+    const initialResponse = await dispatch(mergedHeaders)
+    const shouldRetrySignedTicket =
+      requireSignedIdentityTicket &&
+      !IS_LOCAL_API_BASE_URL &&
+      Number(initialResponse?.statusCode || 0) === 401 &&
+      Boolean(getActivePlatformAccessToken())
+    if (!shouldRetrySignedTicket) {
+      return initialResponse
+    }
+
+    // 客户端本地有效但服务端拒绝的短票据（如边界时钟差或刚过期）只刷新
+    // 一次并重试同一只读请求；写入类请求不会进入此分支。
+    return dispatch(await refreshSignedIdentityTicketHeaders(requestHeaders))
   }
 }

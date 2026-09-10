@@ -30,7 +30,6 @@ import {
 } from './question-environment.js'
 import { fetchUserPlant, patchUserPlant } from '@/api/plants-http.js'
 import { createAsyncActionGuard } from '@/utils/interaction-guard.js'
-import { estimateQuestionSwiperHeight } from './question-display.js'
 import { useEnvironmentWeatherWindow } from './question-weather-window.js'
 import { submitQuestionPackageAnswers } from './question-submit.js'
 import { useQuestionAirEnvironment } from './question-air-environment.js'
@@ -71,6 +70,7 @@ export function useQuestionPackageFlow({
   const activeQuestionIndex = ref(0)
   const questionAnswers = ref({})
   const careBehaviorTimelineByQuestionId = ref({})
+  const careBehaviorTimelineResetVersionByQuestionId = ref({})
   const lightEnvironmentByQuestionId = ref({})
   const lightEnvironmentConfirmedByQuestionId = ref({})
   const suppressedTimelineAnswerByQuestionId = ref({})
@@ -93,22 +93,6 @@ export function useQuestionPackageFlow({
 
   const currentQuestion = computed(() => questionStack.value[activeQuestionIndex.value] || null)
   const isQuestionPackageMode = computed(() => isPackageResult(result.value))
-  const questionSwiperStyle = computed(() => {
-    // 光照环境题同时包含光型图例、进入方式、补光灯和近期变化，
-    // 固定像素高度容易裁剪折叠面板下方内容；改为占满可用高度，由内部 scroll-view 自行滚动。
-    if (isLightEnvironmentQuestion(currentQuestion.value)) {
-      return {}
-    }
-    // 养护行为浇水时间线题包含 CareBehaviorWateringDoseList，多日期 dose slider 行数动态，
-    // 固定像素高度（estimateQuestionSwiperHeight 默认 220）会裁剪多日期档位；
-    // 改为占满可用高度，由内部 scroll-view 自行滚动，保证所有档位 slider 都可见。
-    if (isCareBehaviorWateringTimelineQuestion(currentQuestion.value)) {
-      return {}
-    }
-    return {
-      height: `${estimateQuestionSwiperHeight(currentQuestion.value)}px`
-    }
-  })
   const questionProgressText = computed(() => {
     const currentIndex = Math.min(activeQuestionIndex.value + 1, questionStack.value.length || 1)
     return `问题 ${currentIndex} / ${questionStack.value.length || 1}`
@@ -127,9 +111,18 @@ export function useQuestionPackageFlow({
         if (!questionId) {
           return acc
         }
+        if (isTimelineAnswerSyncSuppressed(questionId)) {
+          acc[questionId] = {}
+          return acc
+        }
+        const hasStoredTimeline = Object.prototype.hasOwnProperty.call(
+          careBehaviorTimelineByQuestionId.value || {},
+          questionId
+        )
         acc[questionId] = mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline(
-          careBehaviorTimelineByQuestionId.value?.[questionId] ||
-            extractCareBehaviorTimelineFromQuestion(item),
+          hasStoredTimeline
+            ? careBehaviorTimelineByQuestionId.value[questionId]
+            : extractCareBehaviorTimelineFromQuestion(item),
           environmentWeatherWindow.value
         )
         return acc
@@ -143,6 +136,7 @@ export function useQuestionPackageFlow({
       activeQuestionIndex.value = 0
       questionAnswers.value = {}
       careBehaviorTimelineByQuestionId.value = {}
+      careBehaviorTimelineResetVersionByQuestionId.value = {}
       lightEnvironmentByQuestionId.value = {}
       lightEnvironmentConfirmedByQuestionId.value = {}
       suppressedTimelineAnswerByQuestionId.value = {}
@@ -158,6 +152,7 @@ export function useQuestionPackageFlow({
       activeQuestionIndex.value = 0
       questionAnswers.value = createQuestionAnswerMap(nextQuestions)
       careBehaviorTimelineByQuestionId.value = {}
+      careBehaviorTimelineResetVersionByQuestionId.value = {}
       const savedLightEnvironment = getSavedLightEnvironment(result.value, plantStore)
       lightEnvironmentByQuestionId.value = buildLightEnvironmentByQuestionIdMap(
         nextQuestions,
@@ -236,8 +231,15 @@ export function useQuestionPackageFlow({
     if (!questionId) {
       return fallbackTimeline
     }
+    if (isTimelineAnswerSyncSuppressed(questionId)) {
+      return {}
+    }
     const storedTimeline = careBehaviorTimelineByQuestionId.value[questionId]
-    return storedTimeline && Object.keys(storedTimeline).length
+    const hasStoredTimeline = Object.prototype.hasOwnProperty.call(
+      careBehaviorTimelineByQuestionId.value,
+      questionId
+    )
+    return hasStoredTimeline
       ? mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline(
           storedTimeline,
           environmentWeatherWindow.value
@@ -274,6 +276,20 @@ export function useQuestionPackageFlow({
     return Boolean(suppressedTimelineAnswerByQuestionId.value[normalizeText(questionId)])
   }
 
+  function bumpCareBehaviorTimelineResetVersion(questionId = '') {
+    const normalizedQuestionId = normalizeText(questionId)
+    if (!normalizedQuestionId) {
+      return
+    }
+    const currentVersion = Number(
+      careBehaviorTimelineResetVersionByQuestionId.value[normalizedQuestionId] || 0
+    )
+    careBehaviorTimelineResetVersionByQuestionId.value = {
+      ...careBehaviorTimelineResetVersionByQuestionId.value,
+      [normalizedQuestionId]: currentVersion + 1
+    }
+  }
+
   function syncCareBehaviorTimelineAnswer(question, timeline = null) {
     const questionId = getQuestionId(question)
     if (!questionId) {
@@ -308,6 +324,20 @@ export function useQuestionPackageFlow({
     if (!questionId) {
       return
     }
+    // 相邻题会为横向过渡保持挂载，但隐藏题没有用户交互资格；其组件重算产生的
+    // 空 payload 不能覆盖当前题已填写的日历缓存。
+    if (getQuestionId(currentQuestion.value) !== questionId) {
+      return
+    }
+    if (
+      isTimelineAnswerSyncSuppressed(questionId) &&
+      isCareBehaviorTimelineUnclearAnswer(
+        question,
+        normalizeText(questionAnswers.value[questionId])
+      )
+    ) {
+      return
+    }
     const currentTimeline = careBehaviorTimelineByQuestionId.value?.[questionId] || {}
     const nextTimeline = mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline(
       timeline || {},
@@ -329,6 +359,19 @@ export function useQuestionPackageFlow({
       [questionId]: nextTimeline
     }
     syncCareBehaviorTimelineAnswer(question, nextTimeline)
+  }
+
+  function handleCareBehaviorTimelineDateSelect(question) {
+    const questionId = getQuestionId(question)
+    if (!questionId) {
+      return
+    }
+    const currentAnswerId = normalizeText(questionAnswers.value[questionId])
+    if (!isCareBehaviorTimelineUnclearAnswer(question, currentAnswerId)) {
+      return
+    }
+    suppressTimelineAnswerSync(questionId, false)
+    setQuestionAnswer(questionId, '')
   }
 
   function getLightEnvironmentByQuestion(question = {}) {
@@ -424,14 +467,17 @@ export function useQuestionPackageFlow({
     }
     const answerId = normalizeText(answerValue)
     const autoAnswerId = resolveCareBehaviorTimelineAutoAnswerOptionId(question)
-    if (
-      isCareBehaviorTimelineSentinelAnswer(question, answerId) ||
-      answerId === autoAnswerId ||
-      isCareBehaviorTimelineUnclearAnswer(question, answerId)
-    ) {
-      if (isCareBehaviorTimelineUnclearAnswer(question, answerId)) {
-        suppressTimelineAnswerSync(normalizedQuestionId, true)
+    const isUnclearAnswer = isCareBehaviorTimelineUnclearAnswer(question, answerId)
+    if (isUnclearAnswer) {
+      suppressTimelineAnswerSync(normalizedQuestionId, true)
+      bumpCareBehaviorTimelineResetVersion(normalizedQuestionId)
+      careBehaviorTimelineByQuestionId.value = {
+        ...careBehaviorTimelineByQuestionId.value,
+        [normalizedQuestionId]: {}
       }
+      return
+    }
+    if (isCareBehaviorTimelineSentinelAnswer(question, answerId) || answerId === autoAnswerId) {
       return
     }
     suppressTimelineAnswerSync(normalizedQuestionId, false)
@@ -471,6 +517,13 @@ export function useQuestionPackageFlow({
 
   const getSelectedQuestionOptionId = question =>
     normalizeText(questionAnswers.value[getQuestionId(question)])
+
+  function getCareBehaviorTimelineResetKey(question = {}) {
+    const questionId = getQuestionId(question)
+    return questionId
+      ? Number(careBehaviorTimelineResetVersionByQuestionId.value[questionId] || 0)
+      : 0
+  }
 
   async function skipQuestionRisk(question, option) {
     selectQuestionOption(question, option)
@@ -596,7 +649,6 @@ export function useQuestionPackageFlow({
     lightEnvironmentConfirmedByQuestionId,
     currentQuestion,
     isQuestionPackageMode,
-    questionSwiperStyle,
     questionProgressText,
     nextButtonText,
     isSubmittingQuestionAnswer,
@@ -609,6 +661,8 @@ export function useQuestionPackageFlow({
     resetQuestionState,
     getCareBehaviorTimelineByQuestion,
     handleCareBehaviorTimelineChange,
+    handleCareBehaviorTimelineDateSelect,
+    getCareBehaviorTimelineResetKey,
     getLightEnvironmentByQuestion,
     handleLightEnvironmentChange,
     confirmLightEnvironment,

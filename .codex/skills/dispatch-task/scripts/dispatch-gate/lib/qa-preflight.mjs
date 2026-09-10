@@ -29,6 +29,22 @@ function failure(code, message, details = {}) {
   return { status: 'failed_environment', code, message, details }
 }
 
+export function resolvePreflightBackendTarget(wxRequestUrl = '') {
+  const normalizedUrl = String(wxRequestUrl || '').trim()
+  let isRemote = false
+  try {
+    const parsed = new URL(normalizedUrl)
+    isRemote = parsed.protocol === 'https:'
+  } catch {
+    isRemote = false
+  }
+  return {
+    mode: isRemote ? 'online' : 'lan',
+    requiresLanFlow: !isRemote,
+    url: normalizedUrl
+  }
+}
+
 function connectPort(port) {
   return new Promise(resolve => {
     const socket = net.createConnection({ host: '127.0.0.1', port })
@@ -140,6 +156,7 @@ function preflightChecks({
   runtimeInspector,
   lanFlowProbe,
   runtime,
+  wxRequestUrl,
   requireIsolatedProject = false,
   runtimeChannel = 'interactive'
 }) {
@@ -201,10 +218,26 @@ function preflightChecks({
       report.checks.project_identity
     )
   }
-  const lanReady = lanFlowProbe()
-  report.checks.lan = { command: 'dev:mp-weixin:local-functions:lan', passed: lanReady }
+  const backendTarget = resolvePreflightBackendTarget(wxRequestUrl)
+  report.checks.backend_target = {
+    mode: backendTarget.mode,
+    url: backendTarget.url || 'unavailable',
+    passed: Boolean(backendTarget.url)
+  }
+  const lanReady = backendTarget.requiresLanFlow ? lanFlowProbe() : true
+  report.checks.lan = {
+    required: backendTarget.requiresLanFlow,
+    command: backendTarget.requiresLanFlow
+      ? 'npm run dev:mp-weixin:local-functions:lan'
+      : 'not_required_online_backend',
+    passed: lanReady
+  }
   if (!lanReady) {
-    return failure('lan_flow_not_running', 'complete LAN local-functions flow is not running')
+    return failure(
+      'lan_flow_not_running',
+      'LAN 后端模式要求完整 local-functions flow 正在运行',
+      { backend_target: backendTarget }
+    )
   }
   report.checks.ws = { port: wsPort, passed: false }
   return null
@@ -396,6 +429,7 @@ export async function runQaPreflight({
     runtimeInspector,
     lanFlowProbe,
     runtime,
+    wxRequestUrl,
     requireIsolatedProject,
     runtimeChannel
   })
@@ -414,6 +448,7 @@ export async function runQaPreflight({
     screenshotPath,
     wxRequestUrl,
     requireAuthenticatedIdentity: requireAuthenticatedWxRequest,
+    requirePersistedAppSession: requireAuthenticatedWxRequest,
     runtimeProof: runtime,
     initialRoute,
     screenshotTimeoutMs: PREFLIGHT_SCREENSHOT_TIMEOUT_MS

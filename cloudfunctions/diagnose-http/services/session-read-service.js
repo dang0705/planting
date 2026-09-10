@@ -125,7 +125,7 @@ async function expireRetakeAuthorizationIfNeeded({
   }
 }
 
-async function getSessionState(openid, sessionId) {
+async function getSessionState(openid, sessionId, { loadAuxiliary = true } = {}) {
   const session = await getDiagnosisSessionStateRow(openid, sessionId)
   if (!session) {
     return null
@@ -152,8 +152,9 @@ async function getSessionState(openid, sessionId) {
   const snapshotHasDirectionChoices =
     Array.isArray(runtimeSnapshot?.directionChoices) &&
     Boolean(runtimeSnapshot.directionChoices.length)
-  const shouldLoadObservedEvidenceSet = !snapshotHasObservedEvidenceSet
+  const shouldLoadObservedEvidenceSet = loadAuxiliary && !snapshotHasObservedEvidenceSet
   const shouldLoadVisualAggregateResult =
+    loadAuxiliary &&
     Boolean(latestVisualCallBatchId) &&
     (!snapshotVisualAggregateSummary || snapshotHasDirectionChoices)
   const [
@@ -162,8 +163,10 @@ async function getSessionState(openid, sessionId) {
     persistedObservedEvidenceSet,
     persistedVisualAggregateResult
   ] = await Promise.all([
-    hasSnapshotStopState ? Promise.resolve(null) : getLatestStopStateBySession(sessionId, openid),
-    listQuestionRows(sessionId),
+    loadAuxiliary && !hasSnapshotStopState
+      ? getLatestStopStateBySession(sessionId, openid)
+      : Promise.resolve(null),
+    loadAuxiliary ? listQuestionRows(sessionId) : Promise.resolve([]),
     shouldLoadObservedEvidenceSet
       ? getObservedEvidenceSetBySession(sessionId, openid)
       : Promise.resolve(snapshotObservedEvidenceSet),
@@ -277,7 +280,11 @@ async function getSessionState(openid, sessionId) {
     diagnosticTrace: Array.isArray(runtimeSnapshot?.diagnosticTrace)
       ? runtimeSnapshot.diagnosticTrace
       : [],
-    observedEvidenceSet: persistedObservedEvidenceSet,
+    observedEvidenceSet: loadAuxiliary
+      ? persistedObservedEvidenceSet
+      : snapshotHasObservedEvidenceSet
+        ? snapshotObservedEvidenceSet
+        : [],
     derivedEvidenceSet: normalizePublicDerivedEvidenceSet(runtimeSnapshot?.derivedEvidenceSet),
     diagnosisDirections: normalizePublicDiagnosisDirectionSet(runtimeSnapshot?.diagnosisDirections),
     symptomClassRuntime: normalizePublicSymptomClassRuntime(runtimeSnapshot?.symptomClassRuntime),

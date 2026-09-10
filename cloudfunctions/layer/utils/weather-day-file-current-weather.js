@@ -22,6 +22,8 @@ const {
   startStorageRead
 } = require('./weather-day-file-timeout')
 
+const CURRENT_WEATHER_MEMORY_CACHE_TTL_MS = 30 * 1000
+
 function buildCurrentWeatherDataFromLatestSample({ sample = {}, cacheSource = '' } = {}) {
   const temperature = sample.temp ?? 0
   return {
@@ -116,13 +118,39 @@ function createCurrentWeatherArchiveService({ storage, now, resolveLocationInput
     throw new Error('createCurrentWeatherArchiveService: resolveLocationInput is required')
   }
 
-  async function getCurrentWeatherFromDailyArchive(input = {}) {
+  const currentWeatherReadInFlight = new Map()
+  const currentWeatherMemoryCache = new Map()
+
+  function buildCurrentWeatherCacheKey(locationKey = '', targetDate = '') {
+    return `${String(locationKey || '').trim()}:${normalizeDate(targetDate)}`
+  }
+
+  function clearCurrentWeatherCache({ locationKey = '', targetDate = '' } = {}) {
+    const key = String(locationKey || '').trim()
+    if (!key) {
+      currentWeatherMemoryCache.clear()
+      return
+    }
+    if (!targetDate) {
+      for (const cacheKey of currentWeatherMemoryCache.keys()) {
+        if (cacheKey.startsWith(`${key}:`)) {
+          currentWeatherMemoryCache.delete(cacheKey)
+        }
+      }
+      return
+    }
+    currentWeatherMemoryCache.delete(buildCurrentWeatherCacheKey(key, targetDate))
+  }
+
+  async function readCurrentWeatherFromDailyArchive(input = {}) {
     const locationInput = resolveLocationInput(input)
     const generatedAtDate = now()
     const timezone = locationInput.timezone || 'Asia/Shanghai'
     const today = formatLocalDateInTimezone(generatedAtDate, timezone)
     const targetDate = normalizeDate(input.targetDate || today)
     const shouldReadCache = input.useCache !== false && input.useCache !== 'false'
+    const skipFinalizedFallback =
+      input.skipFinalizedFallback === true || input.skipFinalizedFallback === 'true'
     const explicitReadTimeoutMs =
       input.readTimeoutMs || input.timeoutMs || process.env.WEATHER_CURRENT_STORAGE_READ_TIMEOUT_MS
     const hasExplicitOverride = Boolean(explicitReadTimeoutMs)
@@ -164,6 +192,23 @@ function createCurrentWeatherArchiveService({ storage, now, resolveLocationInput
         }
       }
       primaryReadTimedOut = Boolean(initialRead.timedOut)
+
+      if (skipFinalizedFallback) {
+        return {
+          weatherData: null,
+          dailyWeatherCache: {
+            cacheHit: false,
+            refreshed: false,
+            reason: primaryReadTimedOut
+              ? 'day_latest_sample_read_timeout'
+              : 'day_latest_sample_missing',
+            weatherEvidenceInsufficient: true,
+            locationKey: locationInput.locationKey,
+            targetDate,
+            dayObjectPath
+          }
+        }
+      }
 
       const fallbackCandidates = await Promise.all(
         Array.from({ length: 7 }, (_, index) => {
@@ -240,7 +285,54 @@ function createCurrentWeatherArchiveService({ storage, now, resolveLocationInput
     }
   }
 
+  async function getCurrentWeatherFromDailyArchive(input = {}) {
+    const locationInput = resolveLocationInput(input)
+    const targetDate = normalizeDate(
+      input.targetDate ||
+        formatLocalDateInTimezone(now(), locationInput.timezone || 'Asia/Shanghai')
+    )
+    const shouldReadCache = input.useCache !== false && input.useCache !== 'false'
+    const useMemoryCache = input.useMemoryCache === true || input.useMemoryCache === 'true'
+    if (!shouldReadCache) {
+      return readCurrentWeatherFromDailyArchive(input)
+    }
+
+    const inFlightKey = `${locationInput.locationKey}:${targetDate}`
+    if (useMemoryCache) {
+      const cached = currentWeatherMemoryCache.get(inFlightKey)
+      if (cached && Date.now() - cached.cachedAt <= CURRENT_WEATHER_MEMORY_CACHE_TTL_MS) {
+        return cached.value
+      }
+      if (cached) {
+        currentWeatherMemoryCache.delete(inFlightKey)
+      }
+    }
+    const inFlight = currentWeatherReadInFlight.get(inFlightKey)
+    if (inFlight) {
+      return inFlight
+    }
+    const readPromise = readCurrentWeatherFromDailyArchive(input)
+    currentWeatherReadInFlight.set(inFlightKey, readPromise)
+    readPromise.then(
+      value => {
+        if (useMemoryCache && value?.weatherData && value?.dailyWeatherCache?.cacheHit) {
+          currentWeatherMemoryCache.set(inFlightKey, {
+            cachedAt: Date.now(),
+            value
+          })
+        }
+      },
+      () => null
+    )
+    readPromise.then(
+      () => currentWeatherReadInFlight.delete(inFlightKey),
+      () => currentWeatherReadInFlight.delete(inFlightKey)
+    )
+    return readPromise
+  }
+
   return {
+    clearCurrentWeatherCache,
     getCurrentWeatherFromDailyArchive
   }
 }
@@ -248,6 +340,7 @@ function createCurrentWeatherArchiveService({ storage, now, resolveLocationInput
 module.exports = {
   buildCurrentWeatherDataFromDailyRollup,
   buildCurrentWeatherDataFromLatestSample,
+  CURRENT_WEATHER_MEMORY_CACHE_TTL_MS,
   createCurrentWeatherArchiveService,
   isUsableFinalizedDayFile,
   isUsableLatestSample

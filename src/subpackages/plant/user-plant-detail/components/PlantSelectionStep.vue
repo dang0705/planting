@@ -47,43 +47,27 @@
       <view v-if="initialPlantsLoading" class="flex justify-center py-8">
         <text class="text-sm text-gray-400">加载中...</text>
       </view>
-      <scroll-view
-        v-else
-        class="w-full"
-        scroll-x
-        enhanced
-        show-scrollbar="false"
-        lower-threshold="120"
-        @touchstart="$emit('list-touch-start')"
-        @touchend="$emit('list-touch-end')"
-        @touchcancel="$emit('list-touch-end')"
-        @scrolltolower="$emit('scroll-lower')"
-      >
-        <view class="flex gap-3 pb-1">
+      <view v-else class="w-full">
+        <view class="grid grid-cols-2 gap-3">
           <view
-            v-for="(group, gi) in plantGroups"
-            :key="group.key || gi"
-            :class="[
-              'shrink-0 snap-start gap-3',
-              group.length < 3 ? 'grid grid-cols-1' : 'grid grid-cols-2 grid-rows-2'
-            ]"
+            v-for="plant in plants"
+            :id="`add-plant-card-${plant.id}`"
+            :key="plant.id"
+            class="min-w-0"
+            @tap.stop="handlePlantSelect(plant)"
           >
-            <view
-              v-for="plant in group.items"
-              :id="`add-plant-card-${plant.id}`"
-              :key="plant.id"
-              class="h-[234px] w-[142px] shrink-0"
-              @tap.stop="handlePlantSelect(plant)"
-            >
-              <PlantCard :plant="plant" :selected="selectedPlant?.id === plant.id" />
-            </view>
-          </view>
-          <view class="flex w-16 shrink-0 items-center justify-center">
-            <text v-if="plantsLoadingMore" class="text-xs text-gray-400">加载中...</text>
-            <text v-else-if="hasMorePlants" class="text-xs text-gray-300">更多</text>
+            <PlantCard :plant="plant" :selected="selectedPlant?.id === plant.id" />
           </view>
         </view>
-      </scroll-view>
+        <view
+          id="add-plant-load-more-sentinel"
+          class="flex min-h-[28px] w-full items-center justify-center"
+          aria-hidden="true"
+        >
+          <text v-if="plantsLoadingMore" class="text-xs text-gray-400">加载中...</text>
+          <text v-else-if="hasMorePlants" class="text-xs text-gray-300">继续下滑加载更多</text>
+        </view>
+      </view>
     </view>
 
     <button
@@ -109,13 +93,17 @@
 </template>
 
 <script setup>
+import { getCurrentInstance, nextTick, onBeforeUnmount, onMounted, watch } from 'vue'
 import aiIdentifyIcon from '@/assets/icons/ai-identify.svg'
 import searchIcon from '@/assets/icons/search.svg'
 import PlantCard from './PlantCard.vue'
 
-defineProps({
+const LOAD_MORE_INTERSECTION_THRESHOLD = 0
+const LOAD_MORE_VIEWPORT_MARGIN_PX = 160
+
+const props = defineProps({
   searchKeyword: { type: String, default: '' },
-  plantGroups: { type: Array, default: () => [] },
+  plants: { type: Array, default: () => [] },
   plantCount: { type: Number, default: 0 },
   initialPlantsLoading: { type: Boolean, default: false },
   plantsLoadingMore: { type: Boolean, default: false },
@@ -132,13 +120,55 @@ const emit = defineEmits([
   'update:searchKeyword',
   'search-confirm',
   'clear-search',
-  'scroll-lower',
+  'load-more',
   'select-plant',
   'ai-identify',
-  'next',
-  'list-touch-start',
-  'list-touch-end'
+  'next'
 ])
+
+const componentInstance = getCurrentInstance()
+let loadMoreObserver = null
+
+function disconnectLoadMoreObserver() {
+  loadMoreObserver?.disconnect()
+  loadMoreObserver = null
+}
+
+function observeLoadMoreSentinel() {
+  disconnectLoadMoreObserver()
+
+  if (
+    typeof uni === 'undefined' ||
+    typeof uni.createIntersectionObserver !== 'function' ||
+    !componentInstance?.proxy
+  ) {
+    return
+  }
+
+  loadMoreObserver = uni.createIntersectionObserver(componentInstance.proxy, {
+    thresholds: [LOAD_MORE_INTERSECTION_THRESHOLD]
+  })
+  loadMoreObserver
+    .relativeToViewport({ bottom: LOAD_MORE_VIEWPORT_MARGIN_PX })
+    .observe('#add-plant-load-more-sentinel', result => {
+      if (
+        Number(result?.intersectionRatio || LOAD_MORE_INTERSECTION_THRESHOLD) >
+        LOAD_MORE_INTERSECTION_THRESHOLD
+      ) {
+        emit('load-more')
+      }
+    })
+}
+
+function scheduleLoadMoreObservation() {
+  nextTick(observeLoadMoreSentinel)
+}
+
+onMounted(scheduleLoadMoreObservation)
+onBeforeUnmount(disconnectLoadMoreObserver)
+watch(() => [props.initialPlantsLoading, props.plants.length], scheduleLoadMoreObservation, {
+  flush: 'post'
+})
 
 function handlePlantSelect(plant) {
   emit('select-plant', plant)

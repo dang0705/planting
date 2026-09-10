@@ -57,7 +57,7 @@
         重新选择
       </button>
       <view
-        v-if="restrictedPlatform"
+        v-if="featureUnavailable"
         id="airflow-unavailable"
         class="fixed inset-0 z-40 flex items-center justify-center bg-[#f8faf9] px-6 text-center"
       >
@@ -89,14 +89,14 @@ import {
   sanitizeAirEnvironmentInput
 } from '@/utils/air-environment.js'
 import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
-import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
+import { isFeatureAvailable } from '@/utils/platform-capabilities.js'
 
 const HTTP_OK = 200
 const ERROR_NAV_DELAY_MS = 500
 const pageInstance = getCurrentInstance()
 const plantStore = usePlantStore()
 const userStore = useUserStore()
-const restrictedPlatform = isRestrictedMiniProgram()
+const featureUnavailable = !isFeatureAvailable('watering')
 const {
   openedFeatureKey,
   visible: featureUnavailableVisible,
@@ -127,7 +127,7 @@ const resultSummary = computed(() => {
 })
 
 onLoad(options => {
-  if (restrictedPlatform) {
+  if (featureUnavailable) {
     openFeatureUnavailable('watering')
     return
   }

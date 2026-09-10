@@ -1,6 +1,6 @@
 <template>
   <view
-    class="h-[234px] w-[142px] shrink-0 overflow-hidden rounded-2xl border bg-white transition-all duration-200"
+    class="h-[234px] w-full min-w-0 overflow-hidden rounded-2xl border bg-white transition-all duration-200"
     :style="cardStyle"
   >
     <PlantDisplayBase :plant="plant" container-class="h-[117px] w-full rounded-none" />

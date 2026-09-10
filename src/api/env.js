@@ -65,13 +65,49 @@ export const BASE_URL = explicitApiBaseUrl || (isH5DevProxyRuntime
   ? H5_DEV_FUNCTION_PROXY_BASE
   : `https://${CLOUDBASE_ENV_ID}.api.tcloudbasegateway.com/v1/functions`)
 
+const defaultPublicHttpFunctionBaseUrl =
+  `https://${CLOUDBASE_ENV_ID}-1403815561.ap-shanghai.app.tcloudbase.com`
+
+// 公开 HTTPS 云函数服务域名。它只负责承载公网路由，具体身份校验仍在
+// 各函数内部完成；原生 HTTP 云函数通道仅保留给尚未建立手机号会话的微信身份引导。
+export const PUBLIC_HTTP_FUNCTION_BASE_URL = normalizeBaseUrl(
+  import.meta.env.VITE_PUBLIC_HTTP_FUNCTION_BASE_URL || defaultPublicHttpFunctionBaseUrl
+)
+
 // 匿名手机号 bootstrap 走 HTTPS 云函数服务域名；API 网关的 /v1/functions
 // 入口仍要求 CloudBase 登录态，不能承载三端首次登录。
 export const PLATFORM_PHONE_BOOTSTRAP_BASE_URL = normalizeBaseUrl(
-  import.meta.env.VITE_PLATFORM_PHONE_BOOTSTRAP_BASE_URL ||
-    `https://${CLOUDBASE_ENV_ID}-1403815561.ap-shanghai.app.tcloudbase.com`
+  import.meta.env.VITE_PLATFORM_PHONE_BOOTSTRAP_BASE_URL || PUBLIC_HTTP_FUNCTION_BASE_URL
 )
 
-export function shouldAppendWebFunctionFlag() {
-  return !IS_LOCAL_API_BASE_URL
+// 题包请求在已有手机号会话后走同一个公开 HTTPS 服务域名。该域名的路由
+// 由函数自身校验 x-planting-platform-session，避免使用原生通道的内部字节
+// 包，也不要求客户端持有 CloudBase Authorization。
+export const DIAGNOSIS_HTTP_BASE_URL = IS_LOCAL_API_BASE_URL
+  ? ''
+  : normalizeBaseUrl(
+      import.meta.env.VITE_DIAGNOSIS_HTTP_BASE_URL || PUBLIC_HTTP_FUNCTION_BASE_URL
+    )
+
+export function shouldAppendWebFunctionFlag(baseUrl = BASE_URL) {
+  if (IS_LOCAL_API_BASE_URL) {
+    return false
+  }
+
+  const normalized = normalizeBaseUrl(baseUrl)
+  if (!normalized || normalized.startsWith('/')) {
+    return false
+  }
+
+  // `webfn=true` belongs to CloudBase API Gateway's /v1/functions protocol.
+  // The public app.tcloudbase.com function domain already returns JSON directly;
+  // adding this flag there switches it to the slow web-function protocol.
+  return (
+    /^https:\/\//iu.test(normalized) &&
+    /\.api\.tcloudbasegateway\.com$/iu.test(getBaseUrlHostname(normalized)) &&
+    normalized
+      .replace(/^[a-z][a-z\d+.-]*:\/\/[^/?#]+/iu, '')
+      .split(/[?#]/u)[0]
+      .replace(/\/+$/u, '') === '/v1/functions'
+  )
 }

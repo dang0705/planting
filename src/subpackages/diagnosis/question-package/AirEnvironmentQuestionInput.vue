@@ -1,5 +1,5 @@
 <template>
-  <view class="mt-4 rounded-2xl bg-[#f8faf9] p-3">
+  <view class="mt-4 rounded-2xl bg-[#f8faf9]">
     <AirEnvironmentSummaryCard
       v-if="showSummary"
       :id="`diagnose-air-environment-${questionId}-summary`"
@@ -33,6 +33,7 @@
       height-mode="content"
       :model-value="modelValue"
       :footer-position="footerPosition"
+      :external-footer="externalFooter"
       :back-label="backLabel"
       :back-id="backId"
       :completion-label="completionLabel"
@@ -42,6 +43,7 @@
       @complete="value => emit('complete', value)"
     />
     <button
+      v-if="!externalFooter"
       :id="`diagnose-air-environment-${questionId}-unknown`"
       class="mt-4 h-10 w-full rounded-xl border border-[#b8c9be] bg-white p-0 text-sm font-semibold leading-10 text-[#466054]"
       @click="emit('unknown')"
@@ -59,6 +61,7 @@ defineProps({
   questionId: { type: String, default: '' },
   modelValue: { type: Object, default: null },
   footerPosition: { type: String, default: 'absolute' },
+  externalFooter: { type: Boolean, default: false },
   showSummary: { type: Boolean, default: false },
   editorOpen: { type: Boolean, default: false },
   needsConfirmation: { type: Boolean, default: false },

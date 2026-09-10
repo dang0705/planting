@@ -47,6 +47,12 @@ async function resolveServerWateringPlan(openid, plantId, body = {}) {
     watering_events_10d: requestedEvents.length ? requestedEvents : persistedEvents || [],
     baselineIntervalDays: strategy.watering?.freq || strategy.watering?.intervalDays
   })
+  if (!(timeline.watering_events_10d || []).length) {
+    const error = new Error('请先填写过往浇水日期')
+    error.statusCode = 409
+    error.requiresWateringHistory = true
+    throw error
+  }
   const lightEnvironment = await getUserPlantLightEnvironment(openid, plantId)
   const airEnvironmentEvidence = resolveAirEnvironmentEvidence(body.airEnvironmentOverride)
   const transpiration = computeTranspirationIntervalFactor({

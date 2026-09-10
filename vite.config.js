@@ -27,6 +27,66 @@ const cloudbaseFunctionProxyTarget = `https://${cloudbaseEnvId}.api.tcloudbasega
 const localDiagnosisReviewPrefix = '/__local_diagnosis_review__'
 const localDiagnosisReviewStorePath = resolve(__dirname, 'tmp', 'diagnosis-review-dev-cache.json')
 const miniProgramClientPlatforms = new Set(['wechat-mini-program', 'wechat_mp', 'mini-program'])
+
+// 抖音小程序运行时可能没有把全局对象属性映射成 CommonJS 模块内的裸变量。
+// @tanstack/query-core 使用 `new AbortController()`，因此仅在 app.js 中注入
+// globalThis.AbortController 仍可能在 vendor.js 内报 ReferenceError。构建时将
+// 这个引用改成 vendor.js 自己作用域内的构造器，并保留一个最小可用实现。
+const douyinAbortControllerCompat = `
+var __plantingAbortController = (() => {
+  const globalObjects = []
+  if (typeof globalThis !== 'undefined') globalObjects.push(globalThis)
+  if (typeof global !== 'undefined') globalObjects.push(global)
+  if (typeof self !== 'undefined') globalObjects.push(self)
+  if (typeof window !== 'undefined') globalObjects.push(window)
+  for (const globalObject of globalObjects) {
+    if (typeof globalObject.AbortController === 'function') {
+      return globalObject.AbortController
+    }
+  }
+
+  class PlantingAbortSignal {
+    constructor() {
+      this.aborted = false
+      this.reason = undefined
+      this.onabort = null
+      this.listeners = new Set()
+    }
+
+    addEventListener(type, listener) {
+      if (type === 'abort' && typeof listener === 'function') {
+        this.listeners.add(listener)
+      }
+    }
+
+    removeEventListener(type, listener) {
+      if (type === 'abort' && typeof listener === 'function') {
+        this.listeners.delete(listener)
+      }
+    }
+
+    dispatchEvent(event) {
+      if (!event || event.type !== 'abort') return true
+      for (const listener of this.listeners) listener.call(this, event)
+      if (typeof this.onabort === 'function') this.onabort.call(this, event)
+      return true
+    }
+  }
+
+  return class PlantingAbortController {
+    constructor() {
+      this.signal = new PlantingAbortSignal()
+    }
+
+    abort(reason) {
+      if (this.signal.aborted) return
+      this.signal.aborted = true
+      this.signal.reason = reason
+      this.signal.dispatchEvent({ type: 'abort' })
+    }
+  }
+})()
+`
 const publicDnsResolver = isH5 ? new Resolver() : null
 if (publicDnsResolver) {
   publicDnsResolver.setServers(['1.1.1.1', '8.8.8.8'])
@@ -1345,7 +1405,10 @@ function createWeappJsTranspilePlugin() {
       }
 
       const requiresSyntaxTranspile = source.includes('??') || source.includes('?.')
-      if (!requiresSyntaxTranspile && !vendorMinifyQaEnabled) {
+      const isDouyinVendor = /[\\/]mp-toutiao[\\/]common[\\/]vendor\.js$/.test(vendorPath)
+      const requiresAbortControllerCompat =
+        isDouyinVendor && /\bnew\s+AbortController\b/.test(source)
+      if (!requiresSyntaxTranspile && !vendorMinifyQaEnabled && !requiresAbortControllerCompat) {
         return
       }
 
@@ -1364,9 +1427,18 @@ function createWeappJsTranspilePlugin() {
         keepNames: true
       })
 
+      let outputCode = result.code
+      if (requiresAbortControllerCompat) {
+        outputCode = outputCode.replace(
+          /\bnew\s+AbortController\b/g,
+          'new __plantingAbortController'
+        )
+        outputCode = outputCode.replace(/^("use strict";\s*)/, `$1${douyinAbortControllerCompat}\n`)
+      }
+
       const temporaryVendorPath = `${vendorPath}.tmp-${process.pid}-${randomUUID()}`
       try {
-        await writeFile(temporaryVendorPath, result.code, 'utf8')
+        await writeFile(temporaryVendorPath, outputCode, 'utf8')
         await rename(temporaryVendorPath, vendorPath)
       } finally {
         await unlink(temporaryVendorPath).catch(() => {})

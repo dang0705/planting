@@ -3,12 +3,12 @@
 const { createReviewTimingLogger } = require('../repositories/diagnosis-review/review-performance')
 const { DIAGNOSIS_MODE_REGISTRY } = require('../domain/diagnosis-mode-registry')
 
-function getStaticQuestionPackageStart() {
-  return require('./static-question-package-start')
+function createQuestionPackageContinuationToken(...args) {
+  return require('./question-package-continuation').createQuestionPackageContinuationToken(...args)
 }
 
-function getManualQuestionStartFastPath() {
-  return require('./manual-symptom-question-start-fast-path')
+function getStaticQuestionPackageStart() {
+  return require('./static-question-package-start')
 }
 
 function getResolveRequestClientContext() {
@@ -17,26 +17,6 @@ function getResolveRequestClientContext() {
 
 function buildQuestionStartSessionId() {
   return `diag_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
-}
-
-const manualQuestionStartFastPathTest = {
-  resolveManualStartActiveSymptomKeys(...args) {
-    return getManualQuestionStartFastPath()._test.resolveManualStartActiveSymptomKeys(...args)
-  },
-  collectCandidateOutcomeKeysFromRouteGroups(...args) {
-    return getManualQuestionStartFastPath()._test.collectCandidateOutcomeKeysFromRouteGroups(
-      ...args
-    )
-  },
-  shouldUseYellowingCareEnvironmentGuard(...args) {
-    return getManualQuestionStartFastPath()._test.shouldUseYellowingCareEnvironmentGuard(...args)
-  },
-  buildManualStartRouteDecision(...args) {
-    return getManualQuestionStartFastPath()._test.buildManualStartRouteDecision(...args)
-  },
-  buildManualQuestionStartRoundResult(...args) {
-    return getManualQuestionStartFastPath()._test.buildManualQuestionStartRoundResult(...args)
-  }
 }
 
 const staticQuestionPackageStartTest = {
@@ -294,7 +274,8 @@ async function persistQuestionStartRoundResult({
   image,
   description,
   skipPersistence = false,
-  clientContext = null
+  clientContext = null,
+  questionPackageRuntimeData = null
 }) {
   if (skipPersistence) {
     return
@@ -309,13 +290,19 @@ async function persistQuestionStartRoundResult({
     image,
     description,
     clientContext,
-    questionPackageSnapshotOnly: response?.metrics?.questionStartPath === 'static_question_package'
+    questionPackageSnapshotOnly: response?.metrics?.questionStartPath === 'static_question_package',
+    questionPackageRuntimeData
   })
 }
 
-async function runQuestionStartDiagnosis({ payload, openid, skipPersistence = false } = {}) {
+async function runQuestionStartDiagnosis({
+  payload,
+  openid,
+  skipPersistence = false,
+  timing: externalTiming = null
+} = {}) {
   payload = payload || {}
-  const timing = createReviewTimingLogger('diagnosis-question-start', {
+  const timing = externalTiming || createReviewTimingLogger('diagnosis-question-start', {
     skipPersistence: Boolean(skipPersistence)
   })
   const resolveRequestClientContext = getResolveRequestClientContext()
@@ -342,7 +329,7 @@ async function runQuestionStartDiagnosis({ payload, openid, skipPersistence = fa
   if (!userPlantId && !plantId && !allowsAnonymousPlantContext) {
     throw Object.assign(new Error('缺少 userPlantId 或 plantCatalogId'), { statusCode: 400 })
   }
-  const runtimePlantId = plantId || 'diagnose_tab_anonymous'
+  const runtimePlantId = plantId || ''
 
   const option = resolveManualSymptomMode(payload)
   const sessionId = buildQuestionStartSessionId()
@@ -361,6 +348,7 @@ async function runQuestionStartDiagnosis({ payload, openid, skipPersistence = fa
       userPlantId,
       plantCatalogId
     })
+    timing.mark('static-question-package-building')
     const roundResult = await staticQuestionPackageStart.buildStaticQuestionPackageStartRoundResult(
       {
         sessionId,
@@ -369,10 +357,16 @@ async function runQuestionStartDiagnosis({ payload, openid, skipPersistence = fa
         round: 1
       }
     )
+    const questionPackageContinuationToken = createQuestionPackageContinuationToken({
+      openid,
+      sessionId,
+      response: roundResult,
+      plantContext: roundResult.plantContext
+    })
     timing.mark('static-question-package-ready', {
       packageQuestionCount: Array.isArray(roundResult?.questions) ? roundResult.questions.length : 0
     })
-    await persistQuestionStartRoundResult({
+    const persistInitialQuestionStart = () => persistQuestionStartRoundResult({
       sessionId,
       openid,
       plantContext: roundResult.plantContext,
@@ -382,8 +376,29 @@ async function runQuestionStartDiagnosis({ payload, openid, skipPersistence = fa
       description:
         payload.description || `无图症状模式：${option.symptomCn}（${option.classNameCn}）`,
       skipPersistence,
-      clientContext
+      clientContext,
+      questionPackageRuntimeData: null
     })
+    // 有签名续接票据时，answer 可以在不读取 diagnosis_sessions 的情况下完成
+    // 固定题包校验；初始会话写入移到当前调用返回后，避免把一次无图规则题包
+    // 的首屏响应串在 SQL 写入之后。没有票据时保留原有同步持久化语义。
+    if (questionPackageContinuationToken && typeof setImmediate === 'function') {
+      setImmediate(() => {
+        Promise.resolve()
+          .then(persistInitialQuestionStart)
+          .then(() => timing.mark('session-persistence-ready'))
+          .catch(error => {
+            console.error('diagnosis-question-start deferred session persistence failed:', {
+              sessionId,
+              message: String(error?.message || error || '')
+            })
+          })
+      })
+    } else {
+      timing.mark('session-persistence-start')
+      await persistInitialQuestionStart()
+      timing.mark('session-persistence-ready')
+    }
     timing.finish({
       hasPackageQuestions: true,
       hasFinalResult: false,
@@ -396,12 +411,12 @@ async function runQuestionStartDiagnosis({ payload, openid, skipPersistence = fa
       plantId:
         roundResult?.plantContext?.userPlantId ||
         roundResult?.plantContext?.plantId ||
-        runtimePlantId ||
         '',
-      plantCatalogId: roundResult?.plantContext?.plantId || runtimePlantId || null,
+      plantCatalogId: roundResult?.plantContext?.plantId || plantCatalogId || null,
       plantIdentityId: roundResult?.plantContext?.plantIdentityId || '',
       latestVisualCallBatchId: null,
       diagnosisText: '',
+      questionPackageContinuationToken,
       response: roundResult
     }
   }
@@ -419,7 +434,6 @@ module.exports = {
   resolveManualSymptomMode,
   runQuestionStartDiagnosis,
   _test: {
-    ...manualQuestionStartFastPathTest,
     ...staticQuestionPackageStartTest,
     buildQuestionStartSessionId,
     getResolveRequestClientContext,

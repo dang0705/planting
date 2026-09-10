@@ -21,7 +21,7 @@ const detailSource = read(
   'src/subpackages/plant/user-plant-detail/components/UserPlantDetailView.vue'
 )
 
-const pagesConfig = JSON.parse(pagesJson)
+const pagesConfig = JSON.parse(pagesJson.replace(/^\s*\/\/\s*#(?:if|endif|else).*$/gm, ''))
 assert.deepEqual(
   pagesConfig.tabBar.list.map(item => item.pagePath),
   ['pages/index/index', 'pages/diagnose/diagnose', 'pages/profile/profile']
@@ -75,7 +75,8 @@ assert.match(intakeDraftSource, /DIAGNOSIS_QUESTION_PACKAGE_STORAGE_KEY_PREFIX/)
 assert.match(intakeDraftSource, /uni\.setStorageSync/)
 assert.match(intakeDraftSource, /diagnosisResult/)
 assert.match(diagnosisStartSource, /diagnose-http\/diagnosis\/start/)
-assert.match(diagnosisStartSource, /diagnose-http\/diagnosis\/question\/start/)
+assert.match(diagnosisStartSource, /diagnosis-question-start-http\/diagnosis\/question\/start/)
+assert.match(diagnosisStartSource, /DIAGNOSIS_HTTP_BASE_URL/)
 assert.match(diagnosisStartSource, /isRetryableRequestError/)
 assert.match(diagnosisStartSource, /attempt <= 1/)
 assert.match(structuredImagesSource, /sourceWidth: sourceWidth \|\| null/)

@@ -33,7 +33,6 @@
               >只支持叶子发黄、发蔫或下垂；只看虫害需要照片。</text
             >
           </view>
-          <text class="diagnose-no-image-tag">按症状检查</text>
         </view>
         <view id="3ef72261--diagnose-dev-symptom-class-quick-select" class="diagnose-quick-select">
           <view
@@ -45,8 +44,9 @@
               selectedDevSymptomClassKey === item.classKey ? 'diagnose-quick-option--active' : ''
             "
             @click="handleSymptomClassQuickSelect(item)"
-            ><text>{{ item.classNameCn }}</text></view
           >
+            <text>{{ item.classNameCn }}</text>
+          </view>
         </view>
         <view
           v-if="selectedDevSymptomClassOption"

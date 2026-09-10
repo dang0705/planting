@@ -10,53 +10,23 @@
         :canvas-height="potCanvasSize.height"
         :id-prefix="idPrefix"
         :preview-only="previewOnly"
+        :example-dimensions="exampleDimensions"
         :pot-top-diameter-cm="displayTopDiameterCm"
         :pot-bottom-diameter-cm="displayBottomDiameterCm"
         :pot-height-cm="displayHeightCm"
         :substrate-composition="substrateComposition"
         :texture-map="textureMap"
-        @update:pot-top-diameter-cm="value => (form.potTopDiameterCm = String(value))"
-        @update:pot-bottom-diameter-cm="value => (form.potBottomDiameterCm = String(value))"
-        @update:pot-height-cm="value => (form.potHeightCm = String(value))"
+        @update:pot-top-diameter-cm="value => updateDimension('potTopDiameterCm', value)"
+        @update:pot-bottom-diameter-cm="value => updateDimension('potBottomDiameterCm', value)"
+        @update:pot-height-cm="value => updateDimension('potHeightCm', value)"
       />
     </view>
 
-    <text v-if="previewOnly" class="mt-2 block text-[11px] text-[#8a9690]">
-      示例尺寸，仅用于参考，不会保存。
-    </text>
-    <text v-else-if="hasCompleteDimensions" class="mt-2 block text-[11px] text-[#718075]">
-      拖动绿色圆点调整，也可以直接填写厘米数。
-    </text>
-    <text v-else class="mt-2 block text-[11px] text-[#718075]">
-      填写盆底直径后可以拖动调整，也可以直接填写厘米数。
+    <text class="mt-2 block text-[11px] text-[#718075]">拖动绿色节点调整盆型尺寸。</text>
+    <text v-if="previewOnly" class="mt-1 block text-[11px] text-[#8a9690]">
+      示例尺寸仅作参考，拖动后才会纳入。
     </text>
 
-    <view class="mt-3 grid grid-cols-2 gap-2">
-      <view class="rounded-[12px] border border-[#e1e9dd] bg-white px-3 py-2">
-        <text class="block text-[11px] text-[#718075]">盆口直径（cm）</text>
-        <input
-          :id="`${idPrefix}-top-diameter-input`"
-          class="mt-1 w-full text-[15px] text-[#1f2933]"
-          type="number"
-          maxlength="3"
-          placeholder="例如 20"
-          :value="form.potTopDiameterCm"
-          @input="updateDimension('potTopDiameterCm', $event.detail.value)"
-        />
-      </view>
-      <view class="rounded-[12px] border border-[#e1e9dd] bg-white px-3 py-2">
-        <text class="block text-[11px] text-[#718075]">盆高（cm）</text>
-        <input
-          :id="`${idPrefix}-height-input`"
-          class="mt-1 w-full text-[15px] text-[#1f2933]"
-          type="number"
-          maxlength="3"
-          placeholder="例如 15"
-          :value="form.potHeightCm"
-          @input="updateDimension('potHeightCm', $event.detail.value)"
-        />
-      </view>
-    </view>
     <text v-if="validationMessage" class="mt-2 block text-[12px] text-[#b45309]">
       {{ validationMessage }}
     </text>
@@ -78,7 +48,7 @@
             ? 'border-[#2f8f57] bg-[#e8f3ea]'
             : 'border-[#e1e9dd] bg-[#f7faf5]'
         "
-        @click="form.hasDrainageHole = option.value"
+        @click="setDrainageOption(option.value)"
       >
         <text
           class="text-[14px]"
@@ -91,22 +61,6 @@
       </view>
     </view>
     <text class="mt-2 block text-[12px] text-[#718075]">{{ drainageHelpText }}</text>
-  </view>
-
-  <view class="mt-3 rounded-[16px] border border-[#e1e9dd] bg-[#f7faf5] p-3">
-    <text class="block text-[12px] font-semibold text-[#1f2933]">盆底直径（cm，可选）</text>
-    <input
-      :id="`${idPrefix}-bottom-diameter-input`"
-      class="mt-2 rounded-[12px] border border-[#e1e9dd] bg-white px-3 py-2 text-[15px] text-[#1f2933]"
-      type="number"
-      maxlength="3"
-      placeholder="知道尺寸再填写"
-      :value="form.potBottomDiameterCm"
-      @input="updateDimension('potBottomDiameterCm', $event.detail.value)"
-    />
-    <text v-if="hasBasicDimensions && !hasBottomDiameter" class="mt-2 block text-[12px] text-[#718075]">
-      补充盆底尺寸后，水量范围会更细。
-    </text>
   </view>
 
   <view class="mt-3 rounded-[16px] border border-[#e1e9dd] bg-[#f7faf5] p-3">
@@ -229,15 +183,23 @@ const hasBasicDimensions = computed(
   () => Number(form.value.potTopDiameterCm) > 0 && Number(form.value.potHeightCm) > 0
 )
 const hasBottomDiameter = computed(() => Number(form.value.potBottomDiameterCm) > 0)
-const hasCompleteDimensions = computed(
-  () => hasBasicDimensions.value && hasBottomDiameter.value
+const hasCompleteDimensions = computed(() => hasBasicDimensions.value && hasBottomDiameter.value)
+const hasAnyDimensions = computed(() =>
+  Boolean(
+    Number(form.value.potTopDiameterCm) ||
+    Number(form.value.potBottomDiameterCm) ||
+    Number(form.value.potHeightCm)
+  )
 )
-const previewOnly = computed(() => !hasCompleteDimensions.value)
-const displayTopDiameterCm = computed(() => (previewOnly.value ? 20 : Number(form.value.potTopDiameterCm)))
-const displayBottomDiameterCm = computed(() =>
-  previewOnly.value ? 10 : Number(form.value.potBottomDiameterCm)
-)
-const displayHeightCm = computed(() => (previewOnly.value ? 15 : Number(form.value.potHeightCm)))
+const previewOnly = computed(() => !hasAnyDimensions.value)
+const exampleDimensions = computed(() => ({
+  top: !Number(form.value.potTopDiameterCm),
+  bottom: !Number(form.value.potBottomDiameterCm),
+  height: !Number(form.value.potHeightCm)
+}))
+const displayTopDiameterCm = computed(() => Number(form.value.potTopDiameterCm) || 20)
+const displayBottomDiameterCm = computed(() => Number(form.value.potBottomDiameterCm) || 10)
+const displayHeightCm = computed(() => Number(form.value.potHeightCm) || 15)
 const dimensionFeedback = computed(() => {
   if (hasCompleteDimensions.value) {
     return '盆型已完整，水量范围会更贴近实际。'
@@ -289,11 +251,6 @@ const summary = computed(() => {
   return parts.join(' · ')
 })
 
-function updateDimension(field, value) {
-  form.value[field] = String(value || '').replace(/[^0-9.]/g, '')
-  validationMessage.value = ''
-}
-
 function isSubstrateSelected(value) {
   return selectedSubstrates.value.includes(value)
 }
@@ -304,7 +261,20 @@ function toggleSubstrate(value) {
   } else {
     selectedSubstrates.value.push(value)
   }
+  emit('change', getPayload())
 }
+
+function setDrainageOption(value) {
+  form.value.hasDrainageHole = value
+  emit('change', getPayload())
+}
+
+function updateDimension(field, value) {
+  form.value[field] = String(value || '')
+  validationMessage.value = ''
+  emit('change', getPayload())
+}
+
 function substrateLabel(value) {
   return substrateOptions.find(option => option.value === value)?.label || value
 }
@@ -349,7 +319,8 @@ function applyPotProfile(potProfile) {
   const data = { ...potProfile }
   if (typeof data.substrateType === 'string' && data.substrateType.startsWith('[')) {
     try {
-      data.substrateComposition = JSON.parse(data.substrateType)
+      const parsed = JSON.parse(data.substrateType)
+      data.substrateComposition = Array.isArray(parsed) ? parsed : []
     } catch {
       data.substrateComposition = []
     }
@@ -363,7 +334,9 @@ function applyPotProfile(potProfile) {
       ? String(data.hasDrainageHole)
       : 'unknown'
   }
-  selectedSubstrates.value = data.substrateComposition?.map(item => item.material) || []
+  selectedSubstrates.value = (Array.isArray(data.substrateComposition) ? data.substrateComposition : [])
+    .filter(item => item && typeof item.material === 'string' && item.material.trim())
+    .map(item => item.material)
   validationMessage.value = ''
 }
 
@@ -423,8 +396,11 @@ function commitProfileData() {
 
 async function initCanvas() {
   await nextTick()
-  await updatePotCanvasSize()
-  setTimeout(() => potCanvasRef.value?.initCanvas(), 300)
+  const measured = await updatePotCanvasSize()
+  if (!measured) {
+    return false
+  }
+  return Boolean(await potCanvasRef.value?.initCanvas?.())
 }
 
 // initialProfile 变化时自动应用（包括 null 重置）

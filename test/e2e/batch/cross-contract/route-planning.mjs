@@ -73,8 +73,8 @@ const {
   _test: diagnosisEngineTest
 } = require('../../../../cloudfunctions/diagnose-http/domain/diagnosis-engine.js')
 const {
-  _test: questionStartRunnerTest
-} = require('../../../../cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js')
+  _test: manualQuestionStartFastPathTest
+} = require('../../../../cloudfunctions/diagnose-http/app/manual-symptom-question-start-fast-path.js')
 const {
   _test: sessionStateWriteServiceTest
 } = require('../../../../cloudfunctions/diagnose-http/services/session-state-write-service.js')
@@ -3020,13 +3020,13 @@ function testRuntimeSnapshotPersistsInternalRouteDecision() {
 }
 
 function testManualQuestionStartRouteGroupBridge() {
-  const activeSymptomKeys = questionStartRunnerTest.resolveManualStartActiveSymptomKeys(
+  const activeSymptomKeys = manualQuestionStartFastPathTest.resolveManualStartActiveSymptomKeys(
     buildObservedEvidenceSet(['uniform_yellowing'])
   )
   assert.equal(activeSymptomKeys.includes('uniform_yellowing'), true)
   assert.equal(activeSymptomKeys.includes('leaf_yellowing'), true)
 
-  const candidateOutcomeKeys = questionStartRunnerTest.collectCandidateOutcomeKeysFromRouteGroups(
+  const candidateOutcomeKeys = manualQuestionStartFastPathTest.collectCandidateOutcomeKeysFromRouteGroups(
     [
       {
         routeGroupKey: 'yellowing_care_split_group',
@@ -3044,7 +3044,7 @@ function testManualQuestionStartRouteGroupBridge() {
   assert.deepEqual(candidateOutcomeKeys, ['overwatering_root_pressure', 'underwatering'])
 
   const nonYellowingCandidateOutcomeKeys =
-    questionStartRunnerTest.collectCandidateOutcomeKeysFromRouteGroups(
+    manualQuestionStartFastPathTest.collectCandidateOutcomeKeysFromRouteGroups(
       [
         {
           routeGroupKey: 'leaf_spot_split_group',
@@ -3138,7 +3138,7 @@ async function testManualQuestionStartFastPathBuildsQuestionRound() {
     )
   }
 
-  const result = await questionStartRunnerTest.buildManualQuestionStartRoundResult({
+  const result = await manualQuestionStartFastPathTest.buildManualQuestionStartRoundResult({
     sessionId: 'diag_manual_fast_path',
     plantContext: {
       plantId: '1',

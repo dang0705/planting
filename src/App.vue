@@ -1,31 +1,14 @@
 <script setup>
 import { onLaunch, onShow, onHide } from '@dcloudio/uni-app'
-import { CLOUDBASE_ENV_ID } from '@/utils/runtime-env'
-
-// #ifdef MP-WEIXIN
-function initMiniProgramCloud() {
-  wx.cloud.init({
-    env: CLOUDBASE_ENV_ID,
-    traceUser: true
-  })
-
-  try {
-    if (wx.cloud?.extend?.AI) {
-      console.log('云能力已初始化')
-      return
-    }
-    console.warn('云能力扩展不可用')
-  } catch (error) {
-    console.error('云能力扩展初始化失败:', error)
-  }
-}
-// #endif
 
 onLaunch(() => {
   console.log('App Launch')
 
   // #ifdef MP-WEIXIN
-  initMiniProgramCloud()
+  // 云能力按需初始化，避免 App 启动时触发 DevTools 旧 access_token 校验；
+  // 远端业务请求在实际调用前再初始化 wx.cloud，手机号授权和云文件能力
+  // 也沿用按需初始化。
+  console.log('云能力按需初始化')
   // #endif
 
   // #ifdef H5

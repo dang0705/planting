@@ -24,9 +24,18 @@
  * 幂等：重复调用不会重复安装（检查 __e2eWateringV3CaptureInstalled 标志）。
  *
  * @param {object} mp - miniProgram 实例
+ * @param {object} [options]
+ * @param {boolean} [options.addProbeId=false] - 给真实出站请求增加可关联的 QA 探针头
+ * @param {string} [options.probePrefix='qa'] - 探针标识前缀
  */
-export async function installRequestCapture(mp) {
-  await mp.evaluate(() => {
+export async function installRequestCapture(
+  mp,
+  { addProbeId = false, probePrefix = 'qa' } = {}
+) {
+  await mp.evaluate(captureOptions => {
+    captureOptions = captureOptions || {}
+    const shouldAddProbeId = captureOptions.addProbeId === true
+    const probePrefix = String(captureOptions.probePrefix || 'qa')
     // Do not reference the undeclared `uni` identifier directly.  Some
     // compiled assets expose only `globalThis.uni` (and some expose no Uni
     // namespace at all); an identifier lookup can surface as an AppService
@@ -67,7 +76,7 @@ export async function installRequestCapture(mp) {
 
     // 敏感 header 键正则（在回调内部定义，不引用 Node 闭包）
     const SENSITIVE_HEADER_KEYS =
-      /^(authorization|x-cloudbase-credentials|cookie|token|openid|sessionid|session-id|x-csrf-token|set-cookie|access-token|refresh-token|secret|credential|x-planting-http-identity-ticket|identity-ticket)/i
+      /^(authorization|x-cloudbase-credentials|cookie|token|openid|sessionid|session-id|x-csrf-token|set-cookie|access-token|refresh-token|secret|credential|x-planting-platform-session|x-planting-http-identity-ticket|identity-ticket)/i
 
     // 敏感 data 键正则
     const SENSITIVE_DATA_KEYS =
@@ -156,7 +165,9 @@ export async function installRequestCapture(mp) {
           method: opts.method || 'GET',
           data: sanitizeRequestData(opts.data),
           header: sanitizeHeader(opts.header || {}),
-          time: Date.now()
+          time: Date.now(),
+          elapsed_ms: null,
+          probe_id: null
         }
         const origSuccess = opts.success
         const origFail = opts.fail
@@ -167,6 +178,7 @@ export async function installRequestCapture(mp) {
             return
           }
           recorded = true
+          captured.elapsed_ms = Math.max(0, Date.now() - Number(captured.time || Date.now()))
           try {
             globalThis.__e2eRequests.push(captured)
           } catch {
@@ -174,6 +186,16 @@ export async function installRequestCapture(mp) {
           }
         }
         const nextOpts = { ...opts }
+        if (shouldAddProbeId) {
+          const probeId = `${probePrefix}-${Date.now()}-${Math.random()
+            .toString(36)
+            .slice(2, 10)}`
+          captured.probe_id = probeId
+          nextOpts.header = {
+            ...(opts.header || {}),
+            'x-qa-performance-probe-id': probeId
+          }
+        }
         Object.defineProperty(nextOpts, '__e2eRequestCaptureContext', {
           value: captured,
           enumerable: false,
@@ -184,7 +206,10 @@ export async function installRequestCapture(mp) {
           try {
             captured.response = {
               statusCode: res.statusCode,
-              data: sanitizeResponseData(res.data)
+              data: sanitizeResponseData(res.data),
+              // CloudBase 网关在响应头返回唯一请求 ID；保留脱敏后的
+              // 非敏感头，供真实 wx.request 与 CLS Init Report 精确关联。
+              header: sanitizeHeader(res.header || res.headers || {})
             }
           } catch {
             // Keep the request record even when response serialization fails.
@@ -231,7 +256,9 @@ export async function installRequestCapture(mp) {
           method: opts.method || 'GET',
           data: sanitizeRequestData(opts.data),
           header: sanitizeHeader(opts.header || {}),
-          time: Date.now()
+          time: Date.now(),
+          elapsed_ms: null,
+          probe_id: null
         }
         const origSuccess = opts.success
         const origFail = opts.fail
@@ -241,6 +268,7 @@ export async function installRequestCapture(mp) {
             return
           }
           recorded = true
+          captured.elapsed_ms = Math.max(0, Date.now() - Number(captured.time || Date.now()))
           try {
             globalThis.__e2eRequests.push(captured)
           } catch {
@@ -257,7 +285,8 @@ export async function installRequestCapture(mp) {
           try {
             captured.response = {
               statusCode: res?.statusCode ?? res?.status ?? null,
-              data: sanitizeResponseData(res?.data)
+              data: sanitizeResponseData(res?.data),
+              header: sanitizeHeader(res?.header || res?.headers || {})
             }
           } catch {
             // Keep the request record even when response serialization fails.
@@ -297,7 +326,7 @@ export async function installRequestCapture(mp) {
     if (state.wxRequest && typeof wx !== 'undefined') {
       wx.request = wrapRequest(wx, state.wxRequest, 'wx.request')
     }
-  })
+  }, { addProbeId, probePrefix })
 }
 
 /**

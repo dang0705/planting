@@ -13,13 +13,39 @@ const {
 const { createWeatherLocationRepository } = require('../repositories/weather-location-repository')
 const { createWeatherObjectStorage } = require('./weather-object-storage')
 const { normalizeRecentPayload } = require('./recent-weather-normalize')
-const { ingestActiveLocations: ingestActiveLocationsBatch } = require('./recent-weather-batch')
-const { readManifest, rebuildRecentWeather } = require('./recent-weather-archive')
 const { RECENT_SCHEMA_VERSION, buildRecentWeatherPayload } = require('./recent-weather-payloads')
-const { createCurrentWeatherArchiveService } = require('./recent-weather-current')
-const { createD0NowSampleService } = require('./d0-now-sample-service')
 const { createDiagnosisRecentWeatherReader } = require('./recent-weather-diagnosis-reader')
 const { formatIsoInTimezone } = require('./now-sample-slots')
+
+const recentWeatherReadInFlight = new Map()
+const storageIds = new WeakMap()
+let nextStorageId = 1
+
+function getStorageId(storage) {
+  if (!storage || (typeof storage !== 'object' && typeof storage !== 'function')) {
+    return 'default'
+  }
+  if (!storageIds.has(storage)) {
+    storageIds.set(storage, nextStorageId++)
+  }
+  return String(storageIds.get(storage))
+}
+
+function loadRecentWeatherArchive() {
+  return require('./recent-weather-archive')
+}
+
+function loadRecentWeatherBatch() {
+  return require('./recent-weather-batch')
+}
+
+function loadCurrentWeatherArchive() {
+  return require('./recent-weather-current')
+}
+
+function loadD0NowSampleService() {
+  return require('./d0-now-sample-service')
+}
 
 function resolveLocationInput(input = {}) {
   const locationKey = buildLocationKey(input)
@@ -70,43 +96,57 @@ function createRecentWeatherService({
       }
     }
 
-    const defaultObjectPath = buildRecentWeatherObjectPath(key)
-    const defaultPayload = await storage.downloadJson({
-      cloudPath: defaultObjectPath,
-      fileId: ''
-    })
-    if (defaultPayload) {
-      const normalizedPayload = normalizeRecentPayload(defaultPayload)
+    const inFlightKey = `${getStorageId(storage)}:${bypassMemory ? 'bypass' : 'normal'}:${key}`
+    const inFlight = recentWeatherReadInFlight.get(inFlightKey)
+    if (inFlight) {
+      return inFlight
+    }
+
+    const readPromise = (async () => {
+      const defaultObjectPath = buildRecentWeatherObjectPath(key)
+      const defaultPayload = await storage.downloadJson({
+        cloudPath: defaultObjectPath,
+        fileId: ''
+      })
+      if (defaultPayload) {
+        const normalizedPayload = normalizeRecentPayload(defaultPayload)
+        setRecentWeatherInMemory(key, normalizedPayload)
+        return {
+          payload: normalizedPayload,
+          cacheHit: false,
+          sourceKind: 'object_storage'
+        }
+      }
+
+      const location =
+        !isCoordinateLocationKey(key) && typeof locationRepository.findByLocationKey === 'function'
+          ? await locationRepository.findByLocationKey(key).catch(() => null)
+          : null
+      if (!location) {
+        return null
+      }
+      const objectPath = location?.recentObjectPath || defaultObjectPath
+      const payload = await storage.downloadJson({
+        cloudPath: objectPath,
+        fileId: location?.recentFileId || ''
+      })
+      if (!payload) {
+        return null
+      }
+      const normalizedPayload = normalizeRecentPayload(payload)
       setRecentWeatherInMemory(key, normalizedPayload)
       return {
         payload: normalizedPayload,
         cacheHit: false,
         sourceKind: 'object_storage'
       }
-    }
-
-    const location =
-      !isCoordinateLocationKey(key) && typeof locationRepository.findByLocationKey === 'function'
-        ? await locationRepository.findByLocationKey(key).catch(() => null)
-        : null
-    if (!location) {
-      return null
-    }
-    const objectPath = location?.recentObjectPath || defaultObjectPath
-    const payload = await storage.downloadJson({
-      cloudPath: objectPath,
-      fileId: location?.recentFileId || ''
-    })
-    if (!payload) {
-      return null
-    }
-    const normalizedPayload = normalizeRecentPayload(payload)
-    setRecentWeatherInMemory(key, normalizedPayload)
-    return {
-      payload: normalizedPayload,
-      cacheHit: false,
-      sourceKind: 'object_storage'
-    }
+    })()
+    recentWeatherReadInFlight.set(inFlightKey, readPromise)
+    readPromise.then(
+      () => recentWeatherReadInFlight.delete(inFlightKey),
+      () => recentWeatherReadInFlight.delete(inFlightKey)
+    )
+    return readPromise
   }
 
   async function rebuildRecentWeatherFromArchives({
@@ -131,6 +171,7 @@ function createRecentWeatherService({
       manifestObjectPath: buildWeatherManifestObjectPath(key),
       manifestFileId: ''
     }
+    const { readManifest, rebuildRecentWeather } = loadRecentWeatherArchive()
     const defaultManifest = await readManifest({
       storage,
       location: defaultManifestLocation
@@ -196,20 +237,37 @@ function createRecentWeatherService({
       : locationInput
   }
 
+  const { createCurrentWeatherArchiveService } = loadCurrentWeatherArchive()
   const currentWeatherArchive = createCurrentWeatherArchiveService({
     storage,
     now,
     resolveLocationInput
   })
-  const d0NowSample = createD0NowSampleService({
-    storage,
-    locationRepository,
-    adapter,
-    apiKey,
-    baseUrl,
-    now,
-    resolveLocationInput
-  })
+  let d0NowSample
+  function getD0NowSampleService() {
+    if (!d0NowSample) {
+      const { createD0NowSampleService } = loadD0NowSampleService()
+      d0NowSample = createD0NowSampleService({
+        storage,
+        locationRepository,
+        adapter,
+        apiKey,
+        baseUrl,
+        now,
+        resolveLocationInput
+      })
+    }
+    return d0NowSample
+  }
+
+  async function runD0Mutation(methodName, input = {}) {
+    const result = await getD0NowSampleService()[methodName](input)
+    currentWeatherArchive.clearCurrentWeatherCache({
+      locationKey: result?.location?.locationKey || input.locationKey || input.location_key,
+      targetDate: result?.targetDate || input.targetDate || input.target_date || input.date
+    })
+    return result
+  }
   const readRecentWeatherForDiagnosis = createDiagnosisRecentWeatherReader({
     readRecentWeather,
     rebuildRecentWeatherFromArchives
@@ -231,6 +289,7 @@ function createRecentWeatherService({
       requestedTargetDate && normalizeDate(requestedTargetDate) < latestHistoricalDate
         ? normalizeDate(requestedTargetDate)
         : latestHistoricalDate
+    const { readManifest, rebuildRecentWeather } = loadRecentWeatherArchive()
     const manifest = await readManifest({ storage, location }).catch(() => ({
       dayArchives: {},
       dailyArchives: {}
@@ -284,6 +343,7 @@ function createRecentWeatherService({
   }
 
   async function ingestActiveLocations({ limit = 20 } = {}) {
+    const { ingestActiveLocations: ingestActiveLocationsBatch } = loadRecentWeatherBatch()
     return ingestActiveLocationsBatch({
       locationRepository,
       ingestRecentForecast,
@@ -297,10 +357,10 @@ function createRecentWeatherService({
     ingestRecentForecast,
     readRecentWeather,
     readRecentWeatherForDiagnosis,
-    sampleNowWeather: d0NowSample.sampleNowWeather,
-    finalizeNowWeather: d0NowSample.finalizeNowWeather,
-    updateNowSample: d0NowSample.updateNowSample,
-    updateD0Weather24hWorking: d0NowSample.updateD0Weather24hWorking
+    sampleNowWeather: input => runD0Mutation('sampleNowWeather', input),
+    finalizeNowWeather: input => runD0Mutation('finalizeNowWeather', input),
+    updateNowSample: input => runD0Mutation('updateNowSample', input),
+    updateD0Weather24hWorking: input => runD0Mutation('updateD0Weather24hWorking', input)
   }
 }
 

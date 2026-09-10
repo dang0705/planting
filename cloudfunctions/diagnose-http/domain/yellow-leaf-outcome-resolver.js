@@ -307,6 +307,13 @@ function buildVisibleOutcome(outcome = {}, actionProfile = null) {
     summary: normalizeText(outcome?.userDefinitionCn),
     severity: normalizeText(outcome?.riskLevel || 'medium'),
     urgency: '',
+    actionProfileKey: normalizeText(
+      outcome?.actionProfileKey ||
+        outcome?.action_profile_key ||
+        actionProfile?.actionProfileKey ||
+        actionProfile?.action_profile_key ||
+        ''
+    ),
     actionAdviceItems: Array.isArray(actionProfile?.todayActions) ? actionProfile.todayActions : [],
     avoidAdviceItems: Array.isArray(actionProfile?.avoidActions) ? actionProfile.avoidActions : []
   }
@@ -320,17 +327,27 @@ async function resolveYellowLeafOutcomeResult({
   plantContext = {},
   careBehaviorTimeline = null,
   environmentCareContext = null,
-  routeAnswerEffects = []
+  routeAnswerEffects = [],
+  questionPackageRuntimeData = null
 } = {}) {
   if (!isYellowLeafQuestionPackage(questionPackage)) {
     return null
   }
 
   const hasLightHealthEvidence = hasValidLightHealthEvidence(environmentCareContext)
+  const hasQuestionPackageRuntimeData = Boolean(
+    questionPackageRuntimeData &&
+      Array.isArray(questionPackageRuntimeData.answerEffects) &&
+      Array.isArray(questionPackageRuntimeData.diagnosisOutcomes) &&
+      Array.isArray(questionPackageRuntimeData.actionProfiles)
+  )
+  const packageAnswerEffects = hasQuestionPackageRuntimeData
+    ? questionPackageRuntimeData.answerEffects
+    : routeAnswerEffects
   const matchedEffects = [
     ...buildLightHealthOutcomeEffects(environmentCareContext),
     ...buildHydrationOutcomeEffects(environmentCareContext),
-    ...collectMatchedAnswerEffects(routeAnswerEffects, answers).filter(effect =>
+    ...collectMatchedAnswerEffects(packageAnswerEffects, answers).filter(effect =>
       shouldUseAnswerEffect(effect, hasLightHealthEvidence)
     )
   ]
@@ -344,22 +361,30 @@ async function resolveYellowLeafOutcomeResult({
     allowedOutcomeKeySet.has(item.outcomeKey)
   )
   const matchedOutcomeKeys = rankedOutcomeScores.map(item => item.outcomeKey)
-  const repositoryDiagnosisOutcomes = matchedOutcomeKeys.length
-    ? await outcomeRouteRepository.getDiagnosisOutcomesByKeys(matchedOutcomeKeys)
-    : []
+  const repositoryDiagnosisOutcomes = hasQuestionPackageRuntimeData
+    ? []
+    : matchedOutcomeKeys.length
+      ? await outcomeRouteRepository.getDiagnosisOutcomesByKeys(matchedOutcomeKeys)
+      : []
   const diagnosisOutcomes = mergeBuiltinLightOutcomes(
     matchedOutcomeKeys,
-    repositoryDiagnosisOutcomes
+    hasQuestionPackageRuntimeData
+      ? questionPackageRuntimeData.diagnosisOutcomes
+      : repositoryDiagnosisOutcomes
   )
   const actionProfileKeys = Array.from(
     new Set(diagnosisOutcomes.map(item => normalizeText(item?.actionProfileKey)).filter(Boolean))
   )
-  const repositoryActionProfiles = actionProfileKeys.length
-    ? await outcomeRouteRepository.getOutcomeActionProfiles(actionProfileKeys)
-    : []
+  const repositoryActionProfiles = hasQuestionPackageRuntimeData
+    ? []
+    : actionProfileKeys.length
+      ? await outcomeRouteRepository.getOutcomeActionProfiles(actionProfileKeys)
+      : []
   const actionProfiles = mergeBuiltinLightActionProfiles(
     actionProfileKeys,
-    repositoryActionProfiles
+    hasQuestionPackageRuntimeData
+      ? questionPackageRuntimeData.actionProfiles
+      : repositoryActionProfiles
   )
   const actionProfileMap = new Map(
     actionProfiles.map(item => [normalizeText(item?.actionProfileKey), item])

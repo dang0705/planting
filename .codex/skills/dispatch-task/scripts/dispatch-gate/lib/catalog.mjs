@@ -112,7 +112,7 @@ export function readCatalog() {
   return JSON.parse(fs.readFileSync(catalogPath, 'utf8'))
 }
 
-export function validateCatalog() {
+export function validateCatalog({ catalogId = null } = {}) {
   const errors = []
   const warnings = []
   const catalog = readCatalog()
@@ -154,22 +154,15 @@ export function validateCatalog() {
         'diagnostic_only', `fixture diagnostic entry must be diagnostic_only: ${entry.id}`, errors)
     }
     if (entry.data_mode === 'automator_live_real_api') {
-      require(
-        Array.isArray(entry.required_assertions) && entry.required_assertions.length > 0,
-        `live catalog entry must declare required_assertions: ${entry.id}`,
-        errors
-      )
+      require(Array.isArray(entry.required_assertions) &&
+        entry.required_assertions.length >
+          0, `live catalog entry must declare required_assertions: ${entry.id}`, errors)
       const requiredAssertions = entry.required_assertions || []
-      require(
-        requiredAssertions.every(assertion => typeof assertion === 'string' && assertion.trim()),
-        `required_assertions must contain non-empty strings: ${entry.id}`,
-        errors
-      )
-      require(
-        new Set(requiredAssertions).size === requiredAssertions.length,
-        `required_assertions must be unique: ${entry.id}`,
-        errors
-      )
+      require(requiredAssertions.every(
+        assertion => typeof assertion === 'string' && assertion.trim()
+      ), `required_assertions must contain non-empty strings: ${entry.id}`, errors)
+      require(new Set(requiredAssertions).size ===
+        requiredAssertions.length, `required_assertions must be unique: ${entry.id}`, errors)
     }
     require(Array.isArray(entry.category_path) &&
       entry.category_path.length >=
@@ -198,17 +191,23 @@ export function validateCatalog() {
     require(fs.existsSync(abs), `catalog script does not exist: ${script}`, errors)
     if (fs.existsSync(abs)) {
       try {
-        const bundle = catalogExecutionBundleFingerprint(abs, { entry })
-        require(entry.script_sha256 ===
-          bundle.hash, `script hash mismatch for ${entry.id}: expected ${entry.script_sha256}, got ${bundle.hash}`, errors)
-        validateLiveLeafSourceContract(
-          bundle.files.map(file => ({
-            path: file,
-            file: path.join(repoRoot, file)
-          })),
-          entry,
-          errors
-        )
+        // A single formal run owns exactly one catalog leaf. Keep the full
+        // catalog's structural checks, but do not let an unrelated leaf's
+        // stale frozen hash block the selected run. The selected leaf is
+        // still fingerprinted and checked below without exception.
+        if (!catalogId || entry.id === catalogId) {
+          const bundle = catalogExecutionBundleFingerprint(abs, { entry })
+          require(entry.script_sha256 ===
+            bundle.hash, `script hash mismatch for ${entry.id}: expected ${entry.script_sha256}, got ${bundle.hash}`, errors)
+          validateLiveLeafSourceContract(
+            bundle.files.map(file => ({
+              path: file,
+              file: path.join(repoRoot, file)
+            })),
+            entry,
+            errors
+          )
+        }
       } catch (error) {
         errors.push(`execution bundle resolution failed for ${entry.id}: ${error.message}`)
       }
@@ -261,6 +260,11 @@ export function validateCatalog() {
     require(Array.isArray(
       entry.requirements?.fixtures
     ), `requirements.fixtures must be an array for ${entry.id}`, errors)
+    if (entry.requirements?.backend_mode !== undefined) {
+      require(['lan', 'online'].includes(
+        entry.requirements.backend_mode
+      ), `requirements.backend_mode must be lan or online for ${entry.id}`, errors)
+    }
   }
 
   const discoveredLeaves = discoverExecutableLeaves(catalog)

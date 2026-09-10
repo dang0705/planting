@@ -1,8 +1,16 @@
 'use strict'
 
 const { runWithSchemaEnv } = require('../db/schema-resolver')
-const { preloadQuestionRepositoryCache } = require('../repositories/question-repository')
-const { preloadOutcomeRouteRepositoryCache } = require('../repositories/outcome-route-repository')
+const {
+  preloadQuestionRepositoryCache,
+  preloadQuestionPackageCache
+} = require('../repositories/question-repository')
+const {
+  preloadOutcomeRouteRepositoryCache,
+  preloadDiagnosisAnswerPackageCache,
+  getDiagnosisAnswerPackageRuntimeData: getCachedDiagnosisAnswerPackageRuntimeData
+} = require('../repositories/outcome-route-repository')
+const { WATERING_FREQUENCY_CONTEXT_QUESTION_KEY } = require('./diagnosis-question-registry')
 
 const DEFAULT_PRELOAD_SCHEMA_ENVS = ['production', 'development']
 
@@ -39,6 +47,41 @@ function triggerStaticRepositoryCachePreload(context = {}) {
     })
 }
 
+function triggerDiagnosisAnswerPackageCachePreload(questionKeys = [], context = {}) {
+  const { scope, logContext } = buildLogContext(context)
+  const additionalOutcomeKeys = Array.isArray(context?.additionalOutcomeKeys)
+    ? context.additionalOutcomeKeys
+    : []
+
+  return Promise.resolve()
+    .then(() => preloadDiagnosisAnswerPackageCache(questionKeys, additionalOutcomeKeys))
+    .catch(error => {
+      console.warn(`${scope} diagnosis answer package cache preload failed`, {
+        ...logContext,
+        message: error?.message || String(error || '')
+      })
+      return null
+    })
+}
+
+function getDiagnosisAnswerPackageRuntimeData() {
+  return getCachedDiagnosisAnswerPackageRuntimeData()
+}
+
+function triggerQuestionPackageCachePreload(context = {}) {
+  const { scope, logContext } = buildLogContext(context)
+
+  return Promise.resolve()
+    .then(() => preloadQuestionPackageCache([WATERING_FREQUENCY_CONTEXT_QUESTION_KEY]))
+    .catch(error => {
+      console.warn(`${scope} question package cache preload failed`, {
+        ...logContext,
+        message: error?.message || String(error || '')
+      })
+      return null
+    })
+}
+
 function triggerStaticRepositoryCachePreloadForSchemaEnvs(schemaEnvs = DEFAULT_PRELOAD_SCHEMA_ENVS, context = {}) {
   const safeSchemaEnvs = Array.from(
     new Set((Array.isArray(schemaEnvs) ? schemaEnvs : [])
@@ -65,6 +108,10 @@ function triggerStaticRepositoryCachePreloadForSchemaEnvs(schemaEnvs = DEFAULT_P
 
 module.exports = {
   preloadStaticRepositoryCacheForCurrentSchema,
+  preloadDiagnosisAnswerPackageCache,
+  getDiagnosisAnswerPackageRuntimeData,
   triggerStaticRepositoryCachePreload,
+  triggerDiagnosisAnswerPackageCachePreload,
+  triggerQuestionPackageCachePreload,
   triggerStaticRepositoryCachePreloadForSchemaEnvs
 }

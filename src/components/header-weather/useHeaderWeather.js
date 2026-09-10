@@ -4,7 +4,8 @@ import {
   getWeatherInfo,
   formatWeatherDisplay,
   checkLocationPermission,
-  requestLocationPermission
+  requestLocationPermission,
+  isDouyinRuntime
 } from '@/api/weather.js'
 import { WEATHER_CONFIG } from '@/config/weather'
 import { useUserStore } from '@/store/user.js'
@@ -130,20 +131,49 @@ export function useHeaderWeather() {
     gpsLocation.value = '获取位置...'
     weather.value = DEFAULT_WEATHER_TEXT
 
+    const markLocationFailure = error => {
+      console.error('[HeaderWeather] 获取位置失败', {
+        message: String(error?.message || ''),
+        errMsg: String(error?.errMsg || ''),
+        errNo: error?.errNo ?? error?.errno ?? ''
+      })
+      if (error?.message === 'auth_denied' || error?.errMsg?.includes?.('auth deny')) {
+        location.value = '位置权限未授权'
+        gpsLocation.value = '位置权限未授权'
+      } else if (error?.message?.includes?.('隐私保护协议')) {
+        location.value = '请先完善隐私协议'
+        gpsLocation.value = '请先完善隐私协议'
+      } else if (error?.message?.includes?.('暂未放行定位权限')) {
+        location.value = '定位暂不可用'
+        gpsLocation.value = '定位暂不可用'
+      } else if (error?.message === 'location_failed') {
+        location.value = '定位失败'
+        gpsLocation.value = '定位失败'
+      } else {
+        location.value = '位置获取失败'
+        gpsLocation.value = '位置获取失败'
+      }
+      weather.value = DEFAULT_WEATHER_TEXT
+    }
+
     const permissionStatus = await checkLocationPermission()
     if (permissionStatus === 'denied') {
-      location.value = '位置权限未授权'
-      gpsLocation.value = '位置权限未授权'
-      return
+      try {
+        // 抖音拒绝过位置权限后，重复调用 getLocation 才能进入官方设置引导。
+        // 仅展示“未授权”会让用户永远看不到可开启的权限开关。
+        await requestLocationPermission()
+      } catch (error) {
+        markLocationFailure(error)
+        return false
+      }
     }
 
     if (permissionStatus === 'notRequested') {
       try {
         await requestLocationPermission()
-      } catch {
-        location.value = '位置权限未授权'
-        gpsLocation.value = '位置权限未授权'
-        return
+      } catch (error) {
+        markLocationFailure(error)
+        return false
       }
     }
 
@@ -159,22 +189,25 @@ export function useHeaderWeather() {
         longitude: locationData.longitude
       })
       await refreshWeather()
+      return true
     } catch (error) {
-      if (error?.message === 'auth_denied' || error?.errMsg?.includes?.('auth deny')) {
-        location.value = '位置权限未授权'
-        gpsLocation.value = '位置权限未授权'
-      } else if (error?.message === 'location_failed') {
-        location.value = '定位失败'
-        gpsLocation.value = '定位失败'
-      } else {
-        location.value = '位置获取失败'
-        gpsLocation.value = '位置获取失败'
-      }
-      weather.value = DEFAULT_WEATHER_TEXT
+      markLocationFailure(error)
+      return false
     }
   }
 
   async function initLocationAndWeather() {
+    if (isDouyinRuntime()) {
+      const permissionStatus = await checkLocationPermission()
+      if (permissionStatus !== 'authorized') {
+        location.value = '点击获取位置'
+        gpsLocation.value = '点击获取位置'
+        weather.value = DEFAULT_WEATHER_TEXT
+        await refreshWeather()
+        return
+      }
+    }
+
     try {
       await getCurrentLocationAndWeather()
     } catch {
@@ -192,10 +225,14 @@ export function useHeaderWeather() {
 
   async function selectLocation() {
     try {
-      await getCurrentLocationAndWeather()
-      uni.showToast({ title: '位置已更新', icon: 'success', duration: TOAST_DURATION_MS })
+      const updated = await getCurrentLocationAndWeather()
+      if (updated) {
+        uni.showToast({ title: '位置已更新', icon: 'success', duration: TOAST_DURATION_MS })
+      }
+      return updated
     } catch {
       uni.showToast({ title: '位置获取失败', icon: 'none' })
+      return false
     }
   }
 

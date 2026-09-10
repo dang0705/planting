@@ -16,6 +16,7 @@ const DEFAULT_CLOUDBASE_ENV_ID = 'cloud1-2grufevs395a9d5e'
 const DEFAULT_SQL_DATABASE = 'cloud1_dev'
 const LOCAL_GATEWAY_KIND = 'planting-local-functions-gateway'
 const LOCAL_FUNCTION_LAYER_ROOT = path.join(projectRoot, 'cloudfunctions', 'layer')
+const NATIVE_HTTP_FUNCTIONS = new Set(['auth-user-http', 'plant-user-http'])
 const LOCAL_CREDENTIAL_SECRET_ID_KEYS = [
   'CLOUDBASE_SECRET_ID',
   'TENCENT_SECRET_ID',
@@ -30,6 +31,8 @@ const FUNCTIONS_REQUIRING_CLOUDBASE_CREDENTIALS = new Set([
   'auth-user-http',
   'platform-phone-bootstrap-http',
   'diagnose-http',
+  'diagnosis-question-start-http',
+  'diagnosis-answer-http',
   'identify-http',
   'plant-catalog-http',
   'plant-user-http',
@@ -39,6 +42,8 @@ const FUNCTIONS_REQUIRING_CLOUDBASE_CREDENTIALS = new Set([
 
 const FUNCTION_NAMES = [
   'diagnose-http',
+  'diagnosis-question-start-http',
+  'diagnosis-answer-http',
   'plant-catalog-http',
   'plant-user-http',
   'identify-http',
@@ -49,6 +54,7 @@ const FUNCTION_NAMES = [
   'storage-http',
   'subscription-http'
 ]
+const FUNCTION_DIRECTORY_BY_NAME = {}
 
 function parseArgs(argv = []) {
   const args = {
@@ -270,12 +276,16 @@ function getSelectedFunctions(selection = '', functionPortBase = DEFAULT_FUNCTIO
   if (!selectedNames.length) {
     return FUNCTION_NAMES.map((name, index) => ({
       name,
+      directory: FUNCTION_DIRECTORY_BY_NAME[name] || name,
       port: functionPortBase + index
     }))
   }
 
   const known = new Map(
-    FUNCTION_NAMES.map((name, index) => [name, { name, port: functionPortBase + index }])
+    FUNCTION_NAMES.map((name, index) => [
+      name,
+      { name, directory: FUNCTION_DIRECTORY_BY_NAME[name] || name, port: functionPortBase + index }
+    ])
   )
   return selectedNames.map(name => {
     const matched = known.get(name)
@@ -296,27 +306,46 @@ function getLanAddresses() {
 function ensureTcbFfInstalled(functions) {
   const tcbFfBin = resolveTcbFfBin()
   const missing = functions
+    .filter(item => !NATIVE_HTTP_FUNCTIONS.has(item.name))
     .map(item => ({
       ...item,
-      dir: path.join(projectRoot, 'cloudfunctions', item.name),
+      dir: path.join(projectRoot, 'cloudfunctions', item.directory || item.name),
       tcbFfBin
     }))
     .filter(item => !fs.existsSync(item.tcbFfBin))
 
-  if (!missing.length) {
-    return
+  const nativeMissing = functions
+    .filter(item => NATIVE_HTTP_FUNCTIONS.has(item.name))
+    .filter(
+      item =>
+        !fs.existsSync(
+          path.join(
+            projectRoot,
+            'cloudfunctions',
+            item.directory || item.name,
+            'native-http-server.js'
+          )
+        )
+    )
+  if (nativeMissing.length) {
+    throw new Error(`缺少原生 HTTP 函数入口: ${nativeMissing.map(item => item.name).join(', ')}`)
   }
-
-  const names = missing.map(item => item.name).join(', ')
-  throw new Error(
-    `缺少本地 tcb-ff 依赖: ${names}\n` +
-      '请先运行: npm run dev:functions:install\n' +
-      '本地云函数依赖统一安装在项目根目录 node_modules；线上部署仍使用各函数 package.json 自动安装。'
-  )
+  if (missing.length) {
+    const names = missing.map(item => item.name).join(', ')
+    throw new Error(
+      `缺少本地 tcb-ff 依赖: ${names}\n` +
+        '请先运行: npm run dev:functions:install\n' +
+        '本地云函数依赖统一安装在项目根目录 node_modules；线上部署仍使用各函数 package.json 自动安装。'
+    )
+  }
 }
 
 function spawnFunctionRuntime(definition, localEnv) {
-  const functionDir = path.join(projectRoot, 'cloudfunctions', definition.name)
+  const functionDir = path.join(
+    projectRoot,
+    'cloudfunctions',
+    definition.directory || definition.name
+  )
   const tcbFfBin = resolveTcbFfBin()
   const optAlias = path.join(projectRoot, 'scripts', 'dev', 'cloudfunctions-local-opt-alias.cjs')
   const nodeOptions = [`--require=${optAlias}`, process.env.NODE_OPTIONS || '']
@@ -327,25 +356,25 @@ function spawnFunctionRuntime(definition, localEnv) {
     ...localEnv,
     ...process.env,
     ...buildRuntimeEnv(),
+    ...(NATIVE_HTTP_FUNCTIONS.has(definition.name) ? { CLOUDBASE_DIRECT_MYSQL_READS: '0' } : {}),
     PORT: String(definition.port),
     NODE_OPTIONS: nodeOptions
   })
 
-  const child = spawn(
-    process.execPath,
-    [
-      tcbFfBin,
-      '-w',
-      '--enableCors=true',
-      `--port=${definition.port}`,
-      '--functionsConfigFile=cloudbase-functions.json'
-    ],
-    {
-      cwd: functionDir,
-      env,
-      stdio: ['ignore', 'pipe', 'pipe']
-    }
-  )
+  const commandArgs = NATIVE_HTTP_FUNCTIONS.has(definition.name)
+    ? ['native-http-server.js']
+    : [
+        tcbFfBin,
+        '-w',
+        '--enableCors=true',
+        `--port=${definition.port}`,
+        '--functionsConfigFile=cloudbase-functions.json'
+      ]
+  const child = spawn(process.execPath, commandArgs, {
+    cwd: functionDir,
+    env,
+    stdio: ['ignore', 'pipe', 'pipe']
+  })
 
   child.stdout.on('data', chunk => {
     process.stdout.write(`[${definition.name}] ${chunk}`)
@@ -373,6 +402,11 @@ function addCorsHeaders(res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Headers', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
+}
+
+function resolveTargetFunctionName(functionName) {
+  // 读写均在同一原生函数内处理；不再通过公网 write 函数增加跳数和身份边界。
+  return functionName
 }
 
 function getFunctionHealthEntry(runtime = {}) {
@@ -423,7 +457,13 @@ function createGatewayServer(functionRuntimes) {
     }
 
     const [, functionName, ...restPath] = requestUrl.pathname.split('/')
-    const definition = functionByName.get(functionName)
+    const targetFunctionName = resolveTargetFunctionName(
+      functionName,
+      requestUrl,
+      req.method,
+      functionByName
+    )
+    const definition = functionByName.get(targetFunctionName)
     if (!definition) {
       writeJson(res, 404, {
         code: 404,

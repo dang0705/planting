@@ -5,6 +5,10 @@ import Module from 'node:module'
 const require = createRequire(import.meta.url)
 const originalLoad = Module._load
 
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 // ===== mock 对象存储 =====
 const storageObjects = new Map()
 const storageObjectsByFileId = new Map()
@@ -374,6 +378,66 @@ try {
   })
   assert.equal(defaultDateReaderInput.diagnosisDate, diagnosisDate)
   assert.equal(defaultDateResult.meta.diagnosisDate, diagnosisDate)
+
+  // ===== 9. recent-10d 与 D0 必须并行读取，且默认不在用户请求中同步重建 =====
+  let recentReaderInput = null
+  let currentReaderInput = null
+  let recentStartedAt = 0
+  let currentStartedAt = 0
+  const timingMarks = []
+  const parallelStartedAt = Date.now()
+  const parallelResult = await buildDiagnosisRecentWeatherWindow({
+    payload: { locationKey, diagnosisDate, timezone: 'Asia/Shanghai' },
+    service: {
+      async readRecentWeatherForDiagnosis(input) {
+        recentReaderInput = input
+        recentStartedAt = Date.now()
+        await delay(180)
+        return {
+          historicalDays,
+          meta: { sourceKind: 'weather_cache_recent_10d', quality: 'partial' },
+          quality: 'partial'
+        }
+      },
+      async getCurrentWeatherFromDailyArchive(input) {
+        currentReaderInput = input
+        currentStartedAt = Date.now()
+        await delay(180)
+        return {
+          weatherData: {
+            temperature: 28,
+            weatherDate: diagnosisDate,
+            source: 'weather_cache_day_latest_sample'
+          },
+          dailyWeatherCache: {
+            reason: 'day_latest_sample_present',
+            targetDate: diagnosisDate
+          }
+        }
+      }
+    },
+    onTimingMark(stage, details) {
+      timingMarks.push({ stage, details })
+    }
+  })
+  assert.ok(
+    Date.now() - parallelStartedAt < 320,
+    'recent-10d 与 D0 读取应并行，而不是等待两条 180ms 链路之和'
+  )
+  assert.ok(Math.abs(recentStartedAt - currentStartedAt) < 80, '两条缓存读取应在同一请求阶段启动')
+  assert.equal(recentReaderInput.allowArchiveRebuild, false)
+  assert.equal(recentReaderInput.readTimeoutMs, 700)
+  assert.equal(currentReaderInput.readTimeoutMs, 700)
+  assert.equal(parallelResult.currentWeather.weatherDate, diagnosisDate)
+  assert.deepEqual(
+    timingMarks.map(item => item.stage),
+    [
+      'weather-cache-window-start',
+      'weather-cache-recent-ready',
+      'weather-cache-current-ready',
+      'weather-cache-window-ready'
+    ]
+  )
 } finally {
   Module._load = originalLoad
 }

@@ -80,6 +80,7 @@
                   :question-id="getQuestionId(question)"
                   :question="question"
                   :timeline="getCareBehaviorTimelineByQuestion(question)"
+                  :id-prefix="`diagnose-question-package-${getQuestionId(question) || ('q-' + pageIndex)}`"
                   :loading="environmentWeatherWindowLoading"
                   :error="environmentWeatherWindowError"
                   :enable-dose-per-date="true"

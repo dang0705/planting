@@ -4,6 +4,7 @@ import { captureFormalScreenshot as defaultCaptureFormalScreenshot } from './for
 import { screenshotStabilityBudget, waitForScreenshotStability } from './screenshot-stability.mjs'
 
 export const FORMAL_LEAF_TIMEOUT_MS = 12_000
+export const FORMAL_QA_AUTOMATOR_PORT = 9421
 // The formal preflight renderer gate already uses a 20s bounded screenshot
 // window. Leaf screenshots run after route transitions and business UI state
 // settles, so they must use the same explicit budget when callers do not
@@ -192,10 +193,13 @@ export function formalAutomatorEndpoint(env = process.env) {
     parsed.protocol !== 'ws:' ||
     parsed.hostname !== '127.0.0.1' ||
     !Number.isInteger(Number(parsed.port)) ||
-    Number(parsed.port) <= 0
+    Number(parsed.port) !== FORMAL_QA_AUTOMATOR_PORT ||
+    !['', '/'].includes(parsed.pathname) ||
+    parsed.search ||
+    parsed.hash
   ) {
     const error = new Error(
-      'formal catalog leaves require a supervisor-provided Automator endpoint'
+      `formal catalog leaves require the QA-owned Automator endpoint ws://127.0.0.1:${FORMAL_QA_AUTOMATOR_PORT}`
     )
     error.code = 'formal_automator_endpoint_unverified'
     throw error

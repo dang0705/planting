@@ -368,11 +368,19 @@ export function useDiagnoseComputed(ctx) {
   const outcomeAdviceSources = computed(() =>
     buildUniqueOutcomesForAdvice(visibleOutcomeSource.value)
   )
+  const sharedSymptomLabels = computed(() => [
+    ...(Array.isArray(result.value?.observedSymptoms) ? result.value.observedSymptoms : []),
+    ...(Array.isArray(result.value?.observedEvidenceSet) ? result.value.observedEvidenceSet : [])
+  ])
 
   const actionAdviceGroups = computed(() =>
     buildOutcomeAdviceGroups({
       outcomeSources: outcomeAdviceSources.value,
       getOutcomeItems: buildOutcomeActionAdviceItems,
+      section: 'action',
+      getOutcomeActionItems: buildOutcomeActionAdviceItems,
+      getOutcomeAvoidItems: buildOutcomeAvoidAdviceItems,
+      sharedSymptomLabels: sharedSymptomLabels.value,
       fallbackItems: actionAdviceTexts.value,
       fallbackLabel: '通用建议'
     })
@@ -382,6 +390,10 @@ export function useDiagnoseComputed(ctx) {
     buildOutcomeAdviceGroups({
       outcomeSources: outcomeAdviceSources.value,
       getOutcomeItems: buildOutcomeAvoidAdviceItems,
+      section: 'avoid',
+      getOutcomeActionItems: buildOutcomeActionAdviceItems,
+      getOutcomeAvoidItems: buildOutcomeAvoidAdviceItems,
+      sharedSymptomLabels: sharedSymptomLabels.value,
       fallbackItems: avoidAdviceTexts.value,
       fallbackLabel: '通用建议'
     })

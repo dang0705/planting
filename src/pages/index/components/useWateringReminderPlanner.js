@@ -187,9 +187,11 @@ export function useWateringReminderPlanner({ props, userStore, selectedWateringE
       } else {
         plannerError.value = '暂时无法生成建议，请稍后重试。'
       }
-    } catch {
+    } catch (error) {
       if (isCurrentRequest(requestSequence, plannerRequestSequence, plantId)) {
-        plannerError.value = '暂时无法生成浇水建议，请稍后重试。'
+        plannerError.value = error?.requiresWateringHistory
+          ? '请先填写过往浇水日期'
+          : '暂时无法生成浇水建议，请稍后重试。'
       }
     } finally {
       if (isCurrentRequest(requestSequence, plannerRequestSequence, plantId)) {

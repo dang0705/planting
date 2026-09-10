@@ -1,7 +1,13 @@
 'use strict'
 
+// CloudBase Node 18.15 不提供 Web File 全局变量，而数据库 SDK 的 undici
+// 依赖会在模块初始化阶段读取它；必须在加载 /opt/utils/cloudbase 前补齐。
+if (typeof globalThis.File !== 'function') {
+  globalThis.File = class File {}
+}
+
 const crypto = require('crypto')
-const { models } = require('/opt/utils/cloudbase')
+const { models, runCloudbaseRestTableQuery } = require('/opt/utils/cloudbase')
 const {
   jsonResponse,
   internalServerError,
@@ -10,7 +16,8 @@ const {
   getHttpRequestData,
   resolveRequestAppEnv,
   runWithRequestAppEnv,
-  resolveHttpUserInfo
+  resolveHttpUserInfo,
+  createHttpIdentityTicket
 } = require('/opt/utils/http')
 const {
   createPlatformError,
@@ -24,30 +31,115 @@ const {
   verifyPhoneProof
 } = require('/opt/utils/platform-session')
 
+async function readUserSql(sql, params = {}) {
+  return models.$runSQL(sql, params)
+}
+
 const PLATFORM_APP_IDS = {
   wechat_mp: String(process.env.WECHAT_MINIPROGRAM_APP_ID || '').trim(),
   douyin_mp: 'tt79ef0f52e78e857401',
   xiaohongshu_mp: '69b9576cdb45760001d82e15'
 }
+const HTTP_IDENTITY_TICKET_TTL_MS = 5 * 60 * 1000
+// auth/user 的读接口只需要公开用户资料；显式投影避免把密码、手机号密文/hash
+// 和其他内部列带入查询结果，再由 userResponse 二次清理。
+const PUBLIC_USER_SELECT_SQL = `
+  SELECT
+    _id, _openid, principal_platform, principal_openid, wechat_openid,
+    wechat_unionid, douyin_openid, xiaohongshu_openid, union_id, username, email,
+    phoneNumber, phone_country_code, phone_verified_at, phone_bind_platform,
+    phone_bind_source, subscription_plan, subscription_status,
+    subscription_startDate, subscription_endDate, usage_diagnoseToday,
+    usage_diagnoseTotal, usage_identifyToday, usage_identifyTotal,
+    usage_lastResetDate, profile_avatar, profile_bio, profile_wechatNickname,
+    profile_wechatAvatar, profile_createdAt, profile_lastLoginAt, isActive,
+    createdAt, updatedAt, usage_chatToday, usage_chatTotal, usage_diagnoseMonth,
+    usage_lastMonthReset, quota, phone_masked
+  FROM users
+`
+const PUBLIC_USER_SELECT_FIELDS = [
+  '_id',
+  '_openid',
+  'principal_platform',
+  'principal_openid',
+  'wechat_openid',
+  'wechat_unionid',
+  'douyin_openid',
+  'xiaohongshu_openid',
+  'union_id',
+  'username',
+  'email',
+  'phoneNumber',
+  'phone_country_code',
+  'phone_verified_at',
+  'phone_bind_platform',
+  'phone_bind_source',
+  'subscription_plan',
+  'subscription_status',
+  'subscription_startDate',
+  'subscription_endDate',
+  'usage_diagnoseToday',
+  'usage_diagnoseTotal',
+  'usage_identifyToday',
+  'usage_identifyTotal',
+  'usage_lastResetDate',
+  'profile_avatar',
+  'profile_bio',
+  'profile_wechatNickname',
+  'profile_wechatAvatar',
+  'profile_createdAt',
+  'profile_lastLoginAt',
+  'isActive',
+  'createdAt',
+  'updatedAt',
+  'usage_chatToday',
+  'usage_chatTotal',
+  'usage_diagnoseMonth',
+  'usage_lastMonthReset',
+  'quota',
+  'phone_masked'
+].join(',')
+function readQaPerformanceProbeId(headers = {}) {
+  const value = headers['x-qa-performance-probe-id'] || headers['X-QA-Performance-Probe-Id'] || ''
+  const normalized = String(value).trim()
+  return /^[A-Za-z0-9._:-]{8,120}$/u.test(normalized) ? normalized : ''
+}
+
+function createQaRequestTiming(probeId) {
+  if (!probeId) {
+    return null
+  }
+  const startedAt = Date.now()
+  const marks = []
+  return {
+    mark(stage, details = {}) {
+      marks.push({
+        stage,
+        elapsed_ms: Date.now() - startedAt,
+        ...details
+      })
+    },
+    flush() {
+      console.log('qa-performance-timing', JSON.stringify({ probeId, marks }))
+    }
+  }
+}
 
 let platformPhoneVerifiers
-try {
-  platformPhoneVerifiers = require('/opt/utils/platform-phone-verifiers')
-} catch {
-  platformPhoneVerifiers = require('../layer/utils/platform-phone-verifiers')
+function loadPlatformPhoneVerifiers() {
+  if (platformPhoneVerifiers) {
+    return platformPhoneVerifiers
+  }
+  try {
+    platformPhoneVerifiers = require('/opt/utils/platform-phone-verifiers')
+  } catch {
+    platformPhoneVerifiers = require('../layer/utils/platform-phone-verifiers')
+  }
+  return platformPhoneVerifiers
 }
-const { verifyDouyinPhoneAuthorization, verifyXhsPhoneAuthorization } = platformPhoneVerifiers
 
 function rows(result) {
   return result?.data?.executeResultList || []
-}
-
-function getConfiguredPlatformAppId(platform) {
-  const appId = normalizeAppId(PLATFORM_APP_IDS[platform])
-  if (!appId) {
-    throw createPlatformError('平台登录配置未完成，请稍后再试', 'PLATFORM_AUTH_NOT_CONFIGURED', 503)
-  }
-  return appId
 }
 
 function assertNoClientIdentityFields(data = {}) {
@@ -113,6 +205,38 @@ function userResponse(user = {}) {
     ...safe,
     phoneNumber: maskedPhone,
     phoneMasked: maskedPhone
+  }
+}
+
+function userResponseWithHttpIdentityTicket(user = {}, identity = {}) {
+  const safeUser = userResponse(user)
+  const canonicalIdentity =
+    identity?.source === 'platform-session' ||
+    (identity?.source === 'signed-http-ticket' && identity?.userId)
+  if (!canonicalIdentity) {
+    return safeUser
+  }
+  const openid = String(
+    identity?.openid || user?._openid || user?.wechat_openid || user?._id || ''
+  ).trim()
+  const userId = String(identity?.userId || user?._id || '').trim()
+  if (!userId) {
+    return safeUser
+  }
+  const httpIdentityTicket = createHttpIdentityTicket({
+    openid,
+    uid: userId,
+    customUserId: userId,
+    subject: 'planting-user',
+    platform: normalizePlatform(identity?.platform || user?.principal_platform)
+  })
+  if (!httpIdentityTicket) {
+    return safeUser
+  }
+  return {
+    ...safeUser,
+    httpIdentityTicket,
+    httpIdentityTicketExpiresAt: Date.now() + HTTP_IDENTITY_TICKET_TTL_MS
   }
 }
 
@@ -340,6 +464,8 @@ async function platformPhoneLogin({ platform, data, resolvedIdentity }) {
       proofNonce: proof.nonce
     }
   } else {
+    const { verifyDouyinPhoneAuthorization, verifyXhsPhoneAuthorization } =
+      loadPlatformPhoneVerifiers()
     const result =
       platform === 'douyin_mp'
         ? await verifyDouyinPhoneAuthorization(data, { appIds: PLATFORM_APP_IDS })
@@ -371,7 +497,33 @@ async function platformPhoneLogin({ platform, data, resolvedIdentity }) {
     // 仅供既有微信端本地状态与运行时身份比对；服务端绝不信任客户端回传该字段。
     safeUser.wechat_openid = verified.platformUserId
   }
-  return { user: safeUser, session, isNewUser: resolved.isNewUser }
+  const httpIdentityTicketUser = userResponseWithHttpIdentityTicket(user, {
+    openid: user?._openid,
+    userId: user?._id,
+    platform: verified.platform,
+    source: 'platform-session'
+  })
+  return {
+    user: {
+      ...safeUser,
+      ...(httpIdentityTicketUser.httpIdentityTicket
+        ? {
+            httpIdentityTicket: httpIdentityTicketUser.httpIdentityTicket,
+            httpIdentityTicketExpiresAt: httpIdentityTicketUser.httpIdentityTicketExpiresAt
+          }
+        : {})
+    },
+    session: {
+      ...session,
+      ...(httpIdentityTicketUser.httpIdentityTicket
+        ? {
+            httpIdentityTicket: httpIdentityTicketUser.httpIdentityTicket,
+            httpIdentityTicketExpiresAt: httpIdentityTicketUser.httpIdentityTicketExpiresAt
+          }
+        : {})
+    },
+    isNewUser: resolved.isNewUser
+  }
 }
 
 function generateId() {
@@ -716,10 +868,40 @@ async function _getUserByUnionId(unionId) {
   return sanitizeUser(users[0])
 }
 
-async function _getUserByOpenid(openid) {
-  const result = await models.$runSQL('SELECT * FROM users WHERE _openid = {{openid}} LIMIT 1', {
-    openid
-  })
+async function _getUserByOpenid(openid, timing = null) {
+  let result
+  timing?.mark('user-rest-read-start')
+  try {
+    result = await runCloudbaseRestTableQuery({
+      table: 'users',
+      select: PUBLIC_USER_SELECT_FIELDS,
+      equals: { _openid: openid },
+      limit: 1
+    })
+    timing?.mark('user-rest-read-success', {
+      row_count: Number(result?.data?.executeResultList?.length || 0)
+    })
+  } catch (error) {
+    // 复杂 SQL/旧环境仍保留兼容路径；只有 REST 单表读取失败才回到
+    // 低代码 SQL，不把两条查询并行发出，避免一次请求放大数据库压力。
+    console.warn(
+      '[auth-user-http] REST user read fallback',
+      JSON.stringify({
+        code: error?.code || 'CLOUDBASE_REST_READ_FAILED',
+        message: String(error?.message || '').slice(0, 160)
+      })
+    )
+    timing?.mark('user-rest-read-failed', {
+      code: String(error?.code || 'CLOUDBASE_REST_READ_FAILED').slice(0, 80)
+    })
+    timing?.mark('user-sql-fallback-start')
+    result = await readUserSql(`${PUBLIC_USER_SELECT_SQL} WHERE _openid = {{openid}} LIMIT 1`, {
+      openid
+    })
+    timing?.mark('user-sql-fallback-success', {
+      row_count: Number(result?.data?.executeResultList?.length || 0)
+    })
+  }
   const users = result?.data?.executeResultList || []
   if (!users.length) {
     throw new Error('用户不存在')
@@ -786,6 +968,17 @@ async function main(event, context) {
   const request = getHttpRequestData(event, context)
   const path = String(request.path || '')
   const method = request.method || 'POST'
+  const qaProbeId = readQaPerformanceProbeId(request.headers)
+  const timing = createQaRequestTiming(qaProbeId)
+  if (qaProbeId) {
+    // 以单行 JSON 写入，CLS 不会把对象参数折叠成不可关联的“{”；
+    // 性能验收据此把端上 wx.request 与本次函数日志精确关联。
+    console.log(
+      'qa-performance-probe',
+      JSON.stringify({ probeId: qaProbeId, endpoint: 'auth-user-http/auth/user' })
+    )
+  }
+  timing?.mark('request-enter')
 
   try {
     if (path.includes('/auth/user/health')) {
@@ -803,18 +996,30 @@ async function main(event, context) {
     const payload = method === 'GET' ? request.query : request.body
     const action = String(payload.action || '')
     const data = payload.data && typeof payload.data === 'object' ? payload.data : {}
-    // 只有微信手机号授权的第一步需要读取 CloudBase 运行时身份来校验
-    // phoneProof；其余业务 action 必须使用服务端签发的持久会话。
+    // 微信原生 HTTP 调用由 CloudBase 注入运行时身份。手机号登录和按
+    // openid 读取当前微信账户都可以使用这份身份；跨平台业务 action 仍
+    // 必须使用服务端签发的持久会话。
     const userInfo = await resolveHttpUserInfo(request.headers, payload, context, {
-      allowRuntimeIdentity: action === 'phoneLogin'
+      allowRuntimeIdentity: ['phoneLogin', 'getUserByOpenid'].includes(action),
+      allowSignedHttpIdentityTicket: action === 'getUserByOpenid',
+      timing
     })
+    timing?.mark('identity-ready', { source: userInfo?.source || '' })
 
-    // 不记录 OpenID、手机号或 token；日志仅保留可审计的来源与动作。
-    console.log('auth-user-http action:', {
-      action,
-      hasResolvedUserInfo: Boolean(userInfo),
-      userInfoSource: userInfo?.source || ''
-    })
+    // 正常读请求不写日志，避免每次 auth/user 都进入日志链路；QA 探针和
+    // 显式 DEBUG_LOG 仍保留可审计的来源与动作，但不记录 OpenID、手机号或 token。
+    if (
+      qaProbeId ||
+      String(process.env.DEBUG_LOG || '')
+        .trim()
+        .toLowerCase() === 'true'
+    ) {
+      console.log('auth-user-http action:', {
+        action,
+        hasResolvedUserInfo: Boolean(userInfo),
+        userInfoSource: userInfo?.source || ''
+      })
+    }
 
     switch (action) {
       case 'phoneLogin': {
@@ -866,13 +1071,39 @@ async function main(event, context) {
       case 'getUserByUnionId':
       case 'getUserByOpenid':
       case 'getUserByEmail': {
-        if (!userInfo?.userId) {
+        // getUserByOpenid 只能按服务端解析出的当前身份读取用户，不能信任
+        // 客户端提交的身份字段。原生微信请求使用 CloudBase 网关注入的
+        // runtime openid；其他受信调用可使用已验签的 HTTP 身份票据。
+        const ticketOpenid = String(userInfo?.openid || '').trim()
+        const canReadOwnUserByTicket =
+          action === 'getUserByOpenid' &&
+          ['signed-http-ticket', 'cloudbase-runtime', 'cloudbase-runtime-header'].includes(
+            userInfo?.source
+          ) &&
+          ticketOpenid
+
+        if (!userInfo?.userId && !canReadOwnUserByTicket) {
           return jsonResponse(401, { code: 401, message: '请先登录', data: null })
         }
+
+        if (canReadOwnUserByTicket) {
+          const user = await _getUserByOpenid(ticketOpenid, timing)
+          timing?.mark('response-ready')
+          return jsonResponse(200, {
+            code: 200,
+            message: '获取成功',
+            data: userResponseWithHttpIdentityTicket(user, userInfo)
+          })
+        }
+
+        timing?.mark('user-sql-by-id-start')
+        const user = await getUserById(userInfo.userId)
+        timing?.mark('user-sql-by-id-success')
+        timing?.mark('response-ready')
         return jsonResponse(200, {
           code: 200,
           message: '获取成功',
-          data: userResponse(await getUserById(userInfo.userId))
+          data: userResponseWithHttpIdentityTicket(user, userInfo)
         })
       }
       default:
@@ -889,6 +1120,8 @@ async function main(event, context) {
       return schemaNotReady
     }
     return internalServerError('用户信息暂时不可用，请稍后重试')
+  } finally {
+    timing?.flush()
   }
 }
 

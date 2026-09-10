@@ -1,20 +1,16 @@
 # Token-lean Codex configuration for this repository.
 # Use higher models or CloudBase MCP only when the task explicitly requires them.
-
 approval_policy = "never"
 sandbox_mode = "workspace-write"
 
-
 [agents]
-# Keep parallelism bounded. Each thread has its own context cost.
-max_threads = 10
-max_depth = 1
-job_max_runtime_seconds = 1800
+  # Keep parallelism bounded. Each thread has its own context cost.
+  max_threads = 10
+  max_depth = 1
+  job_max_runtime_seconds = 1800
 
 [sandbox_workspace_write]
-network_access = false
+  network_access = false
 
-# CloudBase MCP is intentionally not enabled by default.
-# For deployment, live SQL, CloudBase logs, gateway management, or production smoke tasks,
-# use a separate local profile that adds the cloudbase MCP server after the task pack is selected.
-# Do not keep MCP tools resident for ordinary code/docs tasks.
+  [mcp_servers.webstorm]
+    url = "http://127.0.0.1:64343/stream"

@@ -15,12 +15,19 @@
   "pages": [
     {
       "path": "pages/index/index",
-      "style": { "navigationStyle": "custom", "navigationBarTextStyle": "white" }
+      "style": {
+        // #ifndef MP-TOUTIAO
+        "navigationStyle": "custom",
+        // #endif
+        "navigationBarTextStyle": "white"
+      }
     },
     {
       "path": "pages/diagnose/diagnose",
       "style": {
+        // #ifndef MP-TOUTIAO
         "navigationStyle": "custom",
+        // #endif
         "navigationBarTitleText": "植物状况检查",
         "navigationBarBackgroundColor": "#2D7A4F",
         "navigationBarTextStyle": "white"
@@ -28,15 +35,30 @@
     },
     {
       "path": "pages/calendar/calendar",
-      "style": { "navigationStyle": "custom", "navigationBarTextStyle": "white" }
+      "style": {
+        // #ifndef MP-TOUTIAO
+        "navigationStyle": "custom",
+        // #endif
+        "navigationBarTextStyle": "white"
+      }
     },
     {
       "path": "pages/reminder/reminder",
-      "style": { "navigationStyle": "custom", "navigationBarTextStyle": "white" }
+      "style": {
+        // #ifndef MP-TOUTIAO
+        "navigationStyle": "custom",
+        // #endif
+        "navigationBarTextStyle": "white"
+      }
     },
     {
       "path": "pages/profile/profile",
-      "style": { "navigationStyle": "custom", "navigationBarTextStyle": "white" }
+      "style": {
+        // #ifndef MP-TOUTIAO
+        "navigationStyle": "custom",
+        // #endif
+        "navigationBarTextStyle": "white"
+      }
     }
   ],
   "subPackages": [
@@ -46,7 +68,9 @@
         {
           "path": "out-of-pool-review",
           "style": {
+            // #ifndef MP-TOUTIAO
             "navigationStyle": "custom",
+            // #endif
             "navigationBarTitleText": "池外视觉审核",
             "navigationBarBackgroundColor": "#2F5D50",
             "navigationBarTextStyle": "white"
@@ -55,7 +79,9 @@
         {
           "path": "diagnosis-review",
           "style": {
+            // #ifndef MP-TOUTIAO
             "navigationStyle": "custom",
+            // #endif
             "navigationBarTitleText": "诊断记录管理",
             "navigationBarBackgroundColor": "#2F5D50",
             "navigationBarTextStyle": "white"
@@ -64,7 +90,9 @@
         {
           "path": "watering-review",
           "style": {
+            // #ifndef MP-TOUTIAO
             "navigationStyle": "custom",
+            // #endif
             "navigationBarTitleText": "浇水算法审计",
             "navigationBarBackgroundColor": "#2F5D50",
             "navigationBarTextStyle": "white"
@@ -78,7 +106,9 @@
         {
           "path": "question-package",
           "style": {
+            // #ifndef MP-TOUTIAO
             "navigationStyle": "custom",
+            // #endif
             "navigationBarTitleText": "继续问诊",
             "navigationBarBackgroundColor": "#2D7A4F",
             "navigationBarTextStyle": "white"
@@ -87,7 +117,9 @@
         {
           "path": "flow",
           "style": {
+            // #ifndef MP-TOUTIAO
             "navigationStyle": "custom",
+            // #endif
             "navigationBarTitleText": "植物状况检查",
             "navigationBarBackgroundColor": "#2D7A4F",
             "navigationBarTextStyle": "white"
@@ -96,7 +128,9 @@
         {
           "path": "result",
           "style": {
+            // #ifndef MP-TOUTIAO
             "navigationStyle": "custom",
+            // #endif
             "navigationBarTitleText": "诊断结果",
             "navigationBarBackgroundColor": "#2D7A4F",
             "navigationBarTextStyle": "white"
@@ -110,7 +144,9 @@
         {
           "path": "watering-advisor/watering-advisor",
           "style": {
+            // #ifndef MP-TOUTIAO
             "navigationStyle": "custom",
+            // #endif
             "navigationBarTitleText": "浇水建议",
             "navigationBarBackgroundColor": "#2D7A4F",
             "navigationBarTextStyle": "white"
@@ -119,7 +155,9 @@
         {
           "path": "airflow/index",
           "style": {
+            // #ifndef MP-TOUTIAO
             "navigationStyle": "custom",
+            // #endif
             "navigationBarTitleText": "空气环境评估",
             "navigationBarBackgroundColor": "#2D7A4F",
             "navigationBarTextStyle": "white"
@@ -128,7 +166,9 @@
         {
           "path": "plant-environment/light-environment",
           "style": {
+            // #ifndef MP-TOUTIAO
             "navigationStyle": "custom",
+            // #endif
             "navigationBarTitleText": "光照环境",
             "navigationBarBackgroundColor": "#2D7A4F",
             "navigationBarTextStyle": "white"
@@ -142,7 +182,9 @@
         {
           "path": "user-plant-detail/user-plant-detail",
           "style": {
+            // #ifndef MP-TOUTIAO
             "navigationStyle": "custom",
+            // #endif
             "navigationBarTitleText": "植物信息",
             "navigationBarBackgroundColor": "#2D7A4F",
             "navigationBarTextStyle": "white"
@@ -156,7 +198,9 @@
         {
           "path": "subscription",
           "style": {
+            // #ifndef MP-TOUTIAO
             "navigationStyle": "custom",
+            // #endif
             "navigationBarTitleText": "会员服务",
             "navigationBarBackgroundColor": "#2D7A4F",
             "navigationBarTextStyle": "white"

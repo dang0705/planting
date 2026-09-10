@@ -25,6 +25,7 @@
           :class="[itemClass, index === safeActiveIndex ? activeItemClass : inactiveItemClass]"
         >
           <slot
+            v-if="!items.length || items[index]"
             name="step"
             :index="index"
             :active="index === safeActiveIndex"

@@ -51,7 +51,7 @@ stale_if_changed:
 ## 1. 契约优先级
 
 ```text
-代码 / schema / tests / package scripts > 本文 > BRV index > 归档文档
+代码 / schema / tests / package scripts > 本文 > OpenViking memory index > 归档文档
 ```
 
 当本文与源码冲突时，先信源码，然后由 main 修补本文。

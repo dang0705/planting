@@ -224,7 +224,8 @@ Module._load = function loadWithStubs(request, parent, isMain) {
 
   if (request === './static-cache-preloader') {
     return {
-      triggerStaticRepositoryCachePreload: () => {}
+      triggerStaticRepositoryCachePreload: () => {},
+      triggerDiagnosisAnswerPackageCachePreload: () => {}
     }
   }
 

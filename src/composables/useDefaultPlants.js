@@ -8,13 +8,12 @@ function normalizeCatalogPlantForPlatform(plant, restrictedPlatform) {
     return plant
   }
 
-  // 抖音/小红书只开放植物文字档案，不能让目录项携带图片 fileId。
-  // 否则 PlantDisplayBase 仍会尝试走 wx.cloud.getTempFileURL，平台端可能一直等待。
+  // 抖音/小红书不能在端上调用 wx.cloud.getTempFileURL；目录接口会返回
+  // 服务端解析后的临时 HTTPS 地址，因此只移除 fileId，保留图片地址。
   return {
     ...plant,
     imageFileId: '',
-    imageUrl: '',
-    image: ''
+    image: plant.imageUrl || plant.image || ''
   }
 }
 
@@ -44,12 +43,17 @@ export function useDefaultPlants() {
     const rawList = Array.isArray(data?.list) ? data.list : Array.isArray(data) ? data : []
     const list = rawList.map(plant => normalizeCatalogPlantForPlatform(plant, restrictedPlatform))
 
-    for (const plant of list) {
-      if (plant.imageFileId) {
+    // 图片临时地址只影响图片显示，不应阻塞目录文字和卡片首屏渲染。
+    // PlantDisplayBase 会基于 imageFileId 自行解析；这里保留后台预热，供表单和其他复用方使用。
+    Promise.all(
+      list.map(async plant => {
+        if (!plant.imageFileId) {
+          return
+        }
         plant.image = await getFileUrl(plant.imageFileId)
         plant.imageUrl = plant.image
-      }
-    }
+      })
+    ).catch(() => {})
 
     const payload = {
       list,

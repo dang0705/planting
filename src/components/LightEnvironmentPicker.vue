@@ -1,7 +1,6 @@
 <template>
   <view
     :id="`${idPrefix}-environment-${questionId}`"
-    class="overflow-hidden rounded-2xl border border-[#e3ede5] bg-white p-5"
     :class="{ 'pointer-events-none opacity-60': disabled }"
   >
     <view v-if="showTitle" class="mb-3.5">
@@ -17,7 +16,11 @@
       :id="`${idPrefix}-illustration-${questionId}`"
       class="mb-3.5 flex h-[156px] flex-col items-center overflow-hidden rounded-xl border border-[#e0f0e5] bg-[#fbfdfc] px-3 py-2"
     >
-      <image :src="activeIllustration" class="h-[116px] w-full" mode="aspectFit" />
+      <image
+        :src="activeIllustration"
+        class="light-environment-picker-illustration h-[116px] w-full"
+        mode="aspectFit"
+      />
       <text class="mt-1 block text-center text-[13px] leading-5 text-[#3b754d]">
         {{ activeOption.label }}：{{ activeOption.description }}
       </text>
@@ -39,9 +42,7 @@
       </view>
     </view>
 
-    <text class="mb-2 block text-sm font-medium leading-5 text-[#24382b]">
-      选择最接近的一种
-    </text>
+    <text class="mb-2 block text-sm font-medium leading-5 text-[#24382b]"> 选择最接近的一种 </text>
     <view class="flex flex-col gap-1.5">
       <view
         v-for="option in lightTypeOptions"
@@ -70,9 +71,7 @@
       class="mt-3.5 flex h-14 items-center overflow-hidden rounded-xl border border-[#dbebe0] bg-[#f6fbf7] px-3 py-2.5"
     >
       <view class="min-w-0 flex-1">
-        <text class="block text-sm font-medium leading-5 text-[#1f2e24]">
-          使用补光灯（可选）
-        </text>
+        <text class="block text-sm font-medium leading-5 text-[#1f2e24]"> 使用补光灯（可选） </text>
         <text class="block text-[11px] leading-4 text-[#63806b]">
           可与上方任意自然光状态同时使用
         </text>
@@ -152,9 +151,7 @@ const activeOption = computed(
 )
 const activeIllustration = computed(() => illustrationByType[displayLightType.value])
 const hasSelectedLightType = computed(() => Boolean(environment.value.naturalLightType))
-const entryMethodDisabled = computed(
-  () => environment.value.naturalLightType === 'almost_none'
-)
+const entryMethodDisabled = computed(() => environment.value.naturalLightType === 'almost_none')
 
 watch(
   () => props.modelValue,
@@ -234,3 +231,11 @@ function confirmCurrentEnvironment() {
   emit('confirm', confirmedValue)
 }
 </script>
+
+<style scoped>
+/* #ifdef MP-TOUTIAO */
+.light-environment-picker-illustration {
+  height: 100%;
+}
+/* #endif */
+</style>

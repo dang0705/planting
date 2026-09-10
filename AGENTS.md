@@ -18,7 +18,7 @@ inclusion: always
 - Build：Vite。
 - Platform：微信小程序优先。
 - AI：视觉识别与诊断链路涉及 Qwen / 混元 Vision 等能力。
-- AI memories: ByteRover
+- AI memories: OpenViking
 
 ## 2. 全局行为硬规则
 
@@ -30,11 +30,18 @@ inclusion: always
 6. 所有端上验收如果本轮代码未部署到云端，必须先成功跑通 `js npm run dev:mp-weixin:local-functions:lan` 的完整 LAN 本地函数 flow，并让小程序运行时命中新代码；只启动 scoped/local 单函数 gateway、backend curl、Node HTTP 或 gateway health，不得算端上验收完成。
 7. 除非用户明确要求外部桥接，否则不得创建、派发或复用任何内部 subagent；所有工作由 main agent 完成。
 8. 当运行时模型为 GLM 系列时，调用 `mcp__Figma_Desktop__get_design_context`、`get_metadata`、`get_variable_defs` 等 Figma 读取类工具后，禁止/跳过调用 `get_screenshot`；除非用户在当前会话中明确要求查看截图。
-9. 具备完整开发生命周期或明显涉及业务逻辑的开发任务必须由 `main agent` 触发 `$dispatch-task` ，再由其内部判断不同的 `dispatch-tier` 执行各自工作流。已经处于 `$dispatch-task` 的任务严禁在后续的多轮会话中嵌套调用该skill。任何 `subagent` 严禁触发该 skill。
-10. 客户端显示的文案必须从用户角度出发并符合常识，严禁将内部讨论用语、计算公式，拗口或难理解的文案暴露在界面中。必须遵循用户友好、利于用户操作的思想设计出最优的展示文案。
-11. 输出的文案、用语减少专业词汇，尤其在 plan 模式或用户显式要求 planning时，要注重用词以通俗易懂的白话结合举例代替专业词汇。
-12. Web/云端 external implementer 即使运行时自称 main/root，也必须在本项目中承担 external implementer 角色：只按 handoff 修改代码，完成后执行实现者自检和 unit tests；有 `figma_link` 的 UI 任务必须直接使用可用的 Figma 插件 / MCP / 工具读取设计并对齐 UI，不能依赖 main 的转述。外部桥接失败不得自动改派内部 subagent。
-13. 严禁任何可能的黑箱行为，所有的设计方案都必须可视、可审计、可追溯、可回放。
+9. 客户端显示的文案必须从用户角度出发并符合常识，严禁将内部讨论用语、计算公式，拗口或难理解的文案暴露在界面中。必须遵循用户友好、利于用户操作的思想设计出最优的展示文案。
+10. 输出的文案、用语减少专业词汇，尤其在 plan 模式或用户显式要求 planning时，要注重用词以通俗易懂的白话结合举例代替专业词汇。
+11. Web/云端 external implementer 即使运行时自称 main/root，也必须在本项目中承担 external implementer 角色：只按 handoff 修改代码，完成后执行实现者自检和 unit tests；有 `figma_link` 的 UI 任务必须直接使用可用的 Figma 插件 / MCP / 工具读取设计并对齐 UI，不能依赖 main 的转述。外部桥接失败不得自动改派内部 subagent。
+12. 严禁任何可能的黑箱行为，所有的设计方案都必须可视、可审计、可追溯、可回放。
+
+## 2.1 通用计划证伪门（目标模式运行时强制执行）
+
+1. 只有任务明确进入“目标模式”时才启用本门禁：用户已要求完成一个具体目标，且预计需要连续多个行动、外部状态变更或较长执行时间。纯问答、资料说明、一次性诊断和只读审查不属于目标模式，不得借本条无故扩大流程。进入目标模式后，第一步必须是**最短路径证伪**：在开始实现、部署、批量操作或长时间等待前，写清唯一目标、关键假设、最小可判定实验、继续条件、失败条件、回退方式和硬时间上限。无法写出最小证伪实验的计划视为无效，必须先停下修正计划。
+2. 证伪实验必须优先于完整实现和大规模验证，且只能使用为回答当前假设所需的最少真实数据、请求和步骤。实验结果若已证明假设不成立、收益不足、业务链路断裂或风险超过阈值，必须立即终止该方案并按记录回退临时变更；不得以“再测一轮”“补齐工具”“完善基础设施”“已经投入很多时间”或改写目标为理由继续。
+3. “未证实”不等于“可以继续”：证据缺失、环境不确定、测试链路失效或结果相互矛盾时，任务状态只能是 `BLOCKED_ENV`/“未验收”，不得扩大实现、追加长时间等待或把辅助工作写成进展。只有在当前计划中预先定义的最小补证动作能直接消除该阻断时，才允许执行一次；否则必须停止并报告，等待用户明确决定。
+4. 每个计划必须设置自主时间盒和检查点。到达时间盒、连续一次关键实验失败，或达到任一停止条件时，必须输出基于事实的 Go/Stop 结论并停止；不得自动续期、换假设、换环境或开启新一轮长程任务。任何超出原时间盒的继续执行都需要用户明确授权，授权必须注明新增目标、上限和停止条件。
+5. 只有最小证伪实验通过且继续条件满足，才允许进入完整实现、批量采样或正式验收。每一阶段结束时必须在计划/报告中记录已证实、已证伪、未覆盖项、实际耗时和下一步唯一动作；状态复述、脚本运行、端口可达或 HTTP 200 本身不算进展。计划被证伪后不得保留未验收的候选实现，也不得为了挽救投入而扩大范围。
 
 ## 3. 前端行为硬约束
 
@@ -69,8 +76,7 @@ inclusion: always
 3. `9420` 只属于用户交互调试会话：正式 catalog `qa-run` / `qa-preflight` 不得连接、重配、关闭或以其为 fallback。正式 QA 必须先验证 LAN watcher lease、目标 `dist/dev/mp-weixin`、测试专属 persistent profile、test-owned DevTools owner 与官方 IDE plugin，再仅通过隔离控制端口启用 test-owned `9421` 并用真实 PNG、项目 identity、page data 和运行时 `wx.request` 验证。用户调试会话仍应先读取 PID、控制端口和项目路径；不得为正式 QA 复用、切换或关闭该进程。
 4. QA 不运行 unit tests；QA 负责运行时、端上、UI/Figma、E2E 和用户可观察行为验证。
 5. automator QA 必须通过 `test/e2e/automator/catalog.json` 精确选择叶子脚本，并在 LAN/DevTools/automator 前校验 automation id policy、脚本 hash 和 execution id；直接裸跑 automator 脚本只能作为排障，不能作为验收证据。
-6. dispatch-task flow 中 QA owner 为 main；main 执行 QA 不授权其修改业务代码。发现产品问题必须退回原 implementer 或 external implementer；只有经 `dispatch-task` §1.3 判定为受限 maintenance patch 的格式、lint/build、typo 或机械冲突修复，main 才可在终态后处理。
-7. `src/**` 或 `cloudfunctions/**` 文件移动、拆分或重命名时，必须同步移动对应 `test/unit/frontend/**` 或 `test/unit/backend/**` 镜像测试；frontend/backend unit 使用同一递归镜像约定：`test/unit/frontend/<src 相对目录>/...` 对应 `src/<相对目录>/...`，`test/unit/backend/<cloudfunctions 相对目录>/...` 对应 `cloudfunctions/<相对目录>/...`。unit 文件名不得使用 `test-` 前缀；无单一源目录映射或跨 `src` 与 `cloudfunctions` 的行为必须放入 `test/e2e/batch` 或 `test/e2e/automator`。
+6. `src/**` 或 `cloudfunctions/**` 文件移动、拆分或重命名时，必须同步移动对应 `test/unit/frontend/**` 或 `test/unit/backend/**` 镜像测试；frontend/backend unit 使用同一递归镜像约定：`test/unit/frontend/<src 相对目录>/...` 对应 `src/<相对目录>/...`，`test/unit/backend/<cloudfunctions 相对目录>/...` 对应 `cloudfunctions/<相对目录>/...`。unit 文件名不得使用 `test-` 前缀；无单一源目录映射或跨 `src` 与 `cloudfunctions` 的行为必须放入 `test/e2e/batch` 或 `test/e2e/automator`。
 
 ## 5.1 测试层级与真实性边界（强制）
 
@@ -107,6 +113,16 @@ inclusion: always
 3. 优化前后的对比必须保持相同开发环境、真实登录身份、数据集、请求参数和端上运行时；只要缺少真实 `wx.request` 端到端证据，或 p95 未达到目标，状态只能写“未达标/未验收”，不得以服务端较快的诊断结果宣称达标。
 4. 任何为降低耗时而做的字段裁剪、缓存、并行化或懒加载，都必须同时复核用户可见字段、跨页面串联、失败恢复和数据来源；不能为了数字牺牲业务闭环，也不能把缓存命中或请求未发出误报为接口响应达标。
 
+## 5.5 性能优化止损与证伪优先（绝对硬规定）
+
+1. 性能优化的第一目标是以最短路径**证实或证伪候选假设**，不是持续采样、完善测试设施或堆叠优化手段。任何实现、部署或长时间测量前，必须在计划中写清：唯一目标接口、稳定基线、候选改动能消除的具体耗时、最小可判定实验、继续阈值、失败阈值、单函数回退包/指纹及时间上限；缺一项即停止，不得开始。
+2. 每个候选最多只有一个自主决策窗口：最多 20 分钟定位与基线核验、15 分钟实现/单元验证、10 分钟真实端上最小验证。冷启动确有必要时，只可额外使用一次预先写明的生命周期静默窗口及一次日志关联等待；不得以“等待冷启动”“补日志”“修 Automator”名义开启第二个自主窗口。总计超过 60 分钟，必须先向用户报告已获得的证据、明确的 Go/Stop 结论和剩余最小工作，并取得用户明确同意才能继续。
+3. 最小端上验证必须与稳定基线使用相同环境、账号、数据、参数和真实 `wx.request`，至少各有一条经正确口径确认的冷候选/热请求。若冷启动需要 `Init Report`，时间间隔只产生候选，不能当作证据；关联链路在预先设定的等待期内不能工作时，立即标记 `BLOCKED_ENV` 并停止，不能通过重复轮次掩盖观测失败。
+4. 最小验证结束即强制 Go/Stop：业务、身份、字段、排序、跨页读回任一项回退，或候选未达到计划中预先写明的正向信号（默认：冷请求至少改善 15%，且热请求不得恶化超过 5%），一律判定 `FAIL_CANDIDATE`。`FAIL_CANDIDATE` 必须在同一任务中按已记录指纹单函数回退，并终止该候选；不得追加第二轮采样、扩大到其他函数、改用缓存/竞速/预置实例，或以“样本不足”“基础设施待完善”继续消耗时间。
+5. 只有最小验证同时证明业务未回退且达到正向信号，才允许进入 5 冷/10 热探索采样；只有探索采样仍为正向，才允许进入 20 冷/30 热正式验收。采样层级不得倒置，不能为了收集 p95 而跳过候选止损门。
+6. 测试、日志或 Automator 本身的修复不是性能优化成果。它只能在不改变业务且能在当前决策窗口内直接取得候选结论时进行一次最小修复；否则必须停止并请求用户决定，不得把测试基础设施工作伪装成优化进展。
+7. 每次候选结束时，计划和最终报告必须同时写出：基线、候选、真实端上数据、是否满足继续阈值、回退指纹、保留或终止的决定。没有“继续”证据就是终止，不得保留未验收候选代码或将“接口 200”“函数初始化很快”“测试已运行”表述为优化成功。
+
 ## 6. 读取边界
 
 1. `docs/code-logics/` 不得全量读取；先读 `INDEX.md`。
@@ -116,18 +132,22 @@ inclusion: always
 
 1. 代码、测试、schema、配置和 package scripts 是事实源。
 2. Active docs 只解释当前契约和操作方式，不是第二事实源。
-3. archived / superseded / stale 文档或 ByteRover Topic 不得作为当前实现依据。
-4. 不得默认全量读取 `docs/`、遗留 `.brv/`、`.codex/skills/**/references/`、`docs/code-logics/`、`docs/new-rules/`、`docs/ai-runs/`、`docs/route规划及outcome瘦身计划/`。
+3. archived / superseded / stale 文档或 OpenViking 记忆条目不得作为当前实现依据。
+4. 不得默认全量读取 `docs/`、历史迁移材料、`.codex/skills/**/references/`、`docs/code-logics/`、`docs/new-rules/`、`docs/ai-runs/`、`docs/route规划及outcome瘦身计划/`。
 5. 任务上下文必须优先通过 `.codex/context-packs.yml` 选择最小文件包。
-6. 发生冲突时，当前事实源优先；若 ByteRover Topic 已过期，本轮任务应形成明确的更新或治理候选，不得静默沿用错误记忆。
+6. 发生冲突时，当前事实源优先；若 OpenViking 记忆条目已过期，本轮任务应形成明确的更新或治理候选，不得静默沿用错误记忆。
 
-## 8. BRV / ByteRover 内容边界
+## 8. OpenViking 记忆内容边界
 
-ByteRover 的具体存取机制、Topic Schema 和操作能力由当前安装的 `ByteRover V4 Skill` 定义，严禁在系统环境中调用V3的运行时 `brv`。本节只负责项目级内容资格和事实使用边界。
+当前默认长期记忆源是 OpenViking `planting` peer，配置位于仓库根目录 `.openviking/config.json`，作用范围从仓库根目录开始并覆盖其子目录。
 
-BRV 内容资格必须遵守本节边界。用户已明确确认：本项目应长期记录经过当前事实源与实际验收验证的 dispatch-task 工作流契约，以及可复现、跨文件、会导致重复返工的 Automator/QA 卡点与解决方法。`dispatch-task` 负责调用时机、结果验证、记忆影响判断和验收流程；本条允许其将上述稳定工作流知识纳入 BRV，但不得把临时日志或未验证推测写入 BRV。
+OpenViking 召回结果只提供长期上下文和导航线索，不能替代代码、测试、schema、配置和实际运行证据。发生冲突时，当前事实源和用户当前指令优先。
 
-ByteRover Topic 是长期项目知识，不是代码索引、通用知识库、执行规则仓库、项目日志、附件库或第二事实源。查询结果只能作为长期上下文和事实线索；涉及当前实现时，必须回到代码、测试、schema、配置或 package scripts 验证。
+OpenViking 的召回与记录使用当前可用的 OpenViking skill/MCP；本节只负责项目级内容资格和事实使用边界。
+
+记忆内容资格必须遵守本节边界。本条允许其将上述稳定工作流知识纳入 OpenViking，但不得把临时日志或未验证推测写入 OpenViking。
+
+OpenViking 记忆条目和历史迁移材料都不是代码索引、通用知识库、执行规则仓库、项目日志、附件库或第二事实源。查询结果只能作为长期上下文和事实线索；涉及当前实现时，必须回到代码、测试、schema、配置或 package scripts 验证。
 
 ### 允许在常规任务中查询，并在满足记录条件时写入
 
@@ -143,7 +163,7 @@ ByteRover Topic 是长期项目知识，不是代码索引、通用知识库、�
 - 经跨文件验证、具有重复发生风险且不容易从局部源码直接发现的 `validated_recurring_gotcha`；
 - 经跨文件验证、可在多个模块或未来功能中复用的 `validated_reusable_project_pattern`；
 - 经跨文件验证、未来任务不召回便容易误判、破坏契约或重复推导的稳定业务行为边界。
-- 用户明确采纳、经当前源码、合同和实际运行证据共同验证，并会约束后续任务的 `stable_workflow_contract`，包括 dispatch episode、主流程职责、返工与等待边界、BRV 召回/记录责任；
+- 用户明确采纳、经当前源码、合同和实际运行证据共同验证，并会约束后续任务的 `stable_workflow_contract`，包括主流程职责、返工与等待边界、OpenViking 召回/记录责任；
 - 经至少一次失败与一次修复后复现验证、且可跨任务复用的 `validated_recurring_workflow_gotcha`，包括 Automator/DevTools/QA 的卡点、根因、判定信号和已验证解决方法。
 
 候选知识只有同时满足以下条件时才允许记录：
@@ -154,12 +174,12 @@ ByteRover Topic 是长期项目知识，不是代码索引、通用知识库、�
 4. 未来 Agent 不召回时，存在重复踩坑、破坏契约、错误决策或重复推导的现实风险；
 5. 没有在 AGENTS.md、Skill、validator、Handoff Contract 或其他权威规则中被完整定义。
 
-### 禁止作为 BRV Topic 查询依据或记录内容
+### 禁止作为 OpenViking 记忆查询依据或记录内容
 
 - 每次都应从当前源码确认的 code fact；
 - 仅描述当前实现位置的文件、函数、组件、路由、调用关系或 import/export 清单；
 - lint、format、style、500 行拆分、普通机械重构和依赖安装流程；
-- 仅把 AGENTS.md、Skill、validator、dispatch gate 或 Handoff Contract 原文复制成规则副本；但经用户确认并由源码、合同和运行证据共同证明的稳定工作流契约，不属于此禁项；
+- 仅把 AGENTS.md、Skill、validator 或 Handoff Contract 原文复制成规则副本；但经用户确认并由源码、合同和运行证据共同证明的稳定工作流契约，不属于此禁项；
 - 仅描述一次性的临时 bug 修复、当前 Sprint 状态、短期 TODO 和任务执行日志；若已提炼为跨任务可复现的根因、识别信号和经验证解决方法，可按 `validated_recurring_workflow_gotcha` 记录；
 - 测试命令、测试文件索引、断言写法、覆盖率要求、mock/fixture 实现和 QA 执行步骤；
 - 通用工程知识、公开行业知识、外部文档内容或一般领域知识，除非已经被当前项目明确采纳并形成稳定项目决策或契约；
@@ -170,6 +190,6 @@ ByteRover Topic 是长期项目知识，不是代码索引、通用知识库、�
 
 代码、测试、schema、配置、package scripts、Active docs 和实际端上验收可以作为 Topic 的来源证据，但来源文件本身的存在、路径或实现方式不得成为录入理由。录入理由必须是这些来源共同证明了允许范围内的稳定项目知识。不得录入凭据、原始日志、临时执行 ID、PID、一次性时间戳、缓存内容或未经复核的模型推测。
 
-### BRV 治理例外
+### 历史记忆迁移治理例外
 
-在 ByteRover 审计、迁移、纠错、合并或清理任务中，允许读取和查询全部已有 Topic，包括已经越界、过期或错误的 Topic。此类读取只用于治理，不代表其内容可以作为当前事实使用或继续保留。
+在记忆审计、迁移、纠错、合并或清理任务中，允许读取和查询全部历史条目，包括已经越界、过期或错误的内容。此类读取只用于迁移治理，不代表其内容可以作为当前事实使用或继续保留。未经另行授权，不删除、合并或清空历史源数据。

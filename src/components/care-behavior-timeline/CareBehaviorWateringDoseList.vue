@@ -15,14 +15,15 @@
         <text class="text-[10px] text-gray-400">= 5L 水桶</text>
       </view>
     </view>
-    <view v-for="row in rows" :key="row.date" class="mt-3">
+    <view v-for="row in rows" :key="`${idPrefix}-${row.date}`" class="mt-3">
       <view class="flex items-center justify-between">
         <text class="text-xs font-medium text-gray-700">{{ row.date }}</text>
         <text class="text-sm font-bold text-[#2f8f57]">{{ doseLabel(row.amountMl, row.hasSelection) }}</text>
       </view>
       <view class="mt-2">
         <slider
-          :id="`watering-dose-slider-${row.date}`"
+          :id="`${idPrefix}-watering-dose-slider-${row.date}`"
+          :key="`${idPrefix}-watering-dose-slider-${row.date}`"
           class="dose-slider w-full min-w-0 m-0"
           :min="0"
           :max="sliderMaxIndex"
@@ -37,7 +38,7 @@
         <view class="relative mt-1 h-10 w-full">
           <view
             v-for="(opt, index) in bottleOptions"
-            :id="`watering-dose-label-${row.date}-${index}`"
+            :id="`${idPrefix}-watering-dose-label-${row.date}-${index}`"
             :key="opt.value || index"
             class="absolute top-0 flex flex-col items-center text-[10px] text-gray-400"
             :style="getLabelStyle(index)"
@@ -75,6 +76,7 @@ import bucketIcon from '@/assets/icons/oil-bucket.svg'
 
 const props = defineProps({
   rows: { type: Array, default: () => [] },
+  idPrefix: { type: String, default: 'diagnose' },
   potVolumeMl: { type: Number, default: 0 }
 })
 const emit = defineEmits(['update-dose'])

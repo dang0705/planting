@@ -9,7 +9,7 @@ import { requireMvpAccess } from '@/utils/subscription-access.js'
 import { DIAGNOSIS_IMAGE_UPLOAD_OPTIONS } from '@/utils/diagnosis-image-uploader-options.js'
 import { buildStructuredImageInputs } from '@/utils/diagnose-structured-images.js'
 import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
-import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
+import { isDiagnosisAvailable } from '@/utils/platform-capabilities.js'
 import {
   PRIMARY_IMAGE_LIMIT,
   PRIMARY_SLOT_SEQUENCE,
@@ -106,7 +106,7 @@ export function useDiagnosisTabIntake() {
   })
 
   function guardRestrictedDiagnosis() {
-    if (!isRestrictedMiniProgram()) {
+    if (isDiagnosisAvailable('diagnose_tab')) {
       return false
     }
     openFeatureUnavailable('diagnosis')

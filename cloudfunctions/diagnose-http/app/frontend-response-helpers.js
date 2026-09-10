@@ -227,6 +227,9 @@ function pickMinimalOutcomeEntry(outcome = null) {
     summary: String(outcome?.summary || '').trim(),
     severity: String(outcome?.severity || '').trim(),
     urgency: String(outcome?.urgency || '').trim(),
+    actionProfileKey: normalizeText(
+      outcome?.actionProfileKey || outcome?.action_profile_key || ''
+    ),
     actionAdviceItems: normalizeStringList(outcome?.actionAdviceItems),
     avoidAdviceItems: normalizeStringList(outcome?.avoidAdviceItems)
   }

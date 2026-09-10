@@ -17,8 +17,10 @@ const optionsSource = readFileSync(
 )
 const querySource = readFileSync('src/vue-query/plants/queries/watering-reminders.js', 'utf8')
 const mutationSource = readFileSync('src/vue-query/plants/mutations/watering-reminders.js', 'utf8')
-const FIRST_CAPTURE_GROUP = 1
-
+const calendarSource = readFileSync(
+  'src/pages/index/components/useWateringReminderCalendar.js',
+  'utf8'
+)
 assert.match(indexSource, /import \{ computed, nextTick, onMounted, reactive, ref \} from 'vue'/)
 assert.match(
   indexSource,
@@ -28,7 +30,6 @@ assert.match(
 assert.match(sheetSource, /const isSheetOpen = ref\(false\)/)
 assert.match(sheetSource, /const pendingReminderReload = ref\(false\)/)
 assert.match(sheetSource, /const savedReminderInputSignature = ref\(''\)/)
-assert.match(sheetSource, /function currentPlantId\(\)/)
 assert.match(
   sheetSource,
   /const requestedPlantId = currentPlantId\(\)[\s\S]+const response = await fetchWateringReminder\(plantId\)[\s\S]+if \(currentPlantId\(\) !== requestedPlantId\)/
@@ -40,19 +41,16 @@ assert.match(
 assert.match(sheetSource, /plannerResult\.value = normalizeSavedReminderPlannerResult\(reminder\)/)
 assert.match(
   sheetSource,
-  /selectedWateringEvents\.value = Array\.isArray\(reminder\.wateringEvents\)/
+  /const effectiveEvents = remoteWateringEvents\.value\.length[\s\S]+selectedWateringEvents\.value = effectiveEvents/
 )
 assert.match(
   sheetSource,
   /savedReminderInputSignature\.value = currentReminderInputSignature\.value/
 )
 assert.match(sheetSource, /\(!savedReminderActive\.value \|\| savedReminderChanged\.value\)/)
-const confirmDatePickerBody = sheetSource.match(
-  /async function confirmDatePicker\(\) \{([\s\S]*?)\n\}/
-)?.[FIRST_CAPTURE_GROUP]
-assert.ok(confirmDatePickerBody)
-assert.doesNotMatch(confirmDatePickerBody, /savedReminder\.value = null/)
-assert.match(sheetSource, /<SavedWateringReminderState v-if="savedReminderActive"/)
+assert.match(sheetSource, /persistedEventsChanged/)
+assert.match(sheetSource, /savedReminder\.value = null[\s\S]+selectedWateringEvents\.value = \[\.\.\.effectiveEvents\]/)
+assert.match(sheetSource, /<SavedWateringReminderState[\s\S]*v-if="savedReminderActive && !inputFlowOpen"/)
 assert.match(sheetSource, /:display="savedReminderDisplay"/)
 assert.match(savedStateSource, /id="watering-reminder-saved-state"/)
 assert.match(savedStateSource, /id="watering-reminder-saved-created-at"/)
@@ -62,9 +60,10 @@ assert.match(savedStateSource, /display\.createdText/)
 assert.match(savedStateSource, /display\.nextText/)
 assert.match(savedStateSource, /display\.reasonText/)
 assert.match(sheetSource, /useWateringReminderPlanner\(/)
+assert.match(sheetPlannerSource, /function currentPlantId\(\)/)
 assert.match(sheetPlannerSource, /fetchWateringPlannerResult\(/)
-assert.match(sheetSource, /buildWateringReminderCalendarPayload\(/)
-assert.match(sheetSource, /attachPlanIdToWateringEvents\(/)
+assert.match(calendarSource, /buildWateringReminderCalendarPayload\(/)
+assert.match(calendarSource, /attachPlanIdToWateringEvents\(/)
 
 assert.match(optionsSource, /export function buildSavedReminderDisplay\(reminder\)/)
 assert.match(

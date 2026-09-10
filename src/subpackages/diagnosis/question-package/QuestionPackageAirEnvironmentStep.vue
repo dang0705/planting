@@ -7,6 +7,7 @@
     :needs-confirmation="airEnvironment.needsConfirmation(question)"
     :summary="airEnvironment.getSummary(question)"
     :footer-position="footerPosition"
+    :external-footer="externalFooter"
     :back-label="backLabel"
     :back-id="backId"
     :completion-label="completionLabel"
@@ -26,8 +27,18 @@ import AirEnvironmentQuestionInput from './AirEnvironmentQuestionInput.vue'
 defineProps({
   question: { type: Object, default: () => ({}) },
   questionId: { type: String, default: '' },
-  airEnvironment: { type: Object, required: true },
+  airEnvironment: {
+    type: Object,
+    default: () => ({
+      getByQuestion: () => null,
+      isSummaryVisible: () => false,
+      isEditorOpen: () => false,
+      needsConfirmation: () => false,
+      getSummary: () => ''
+    })
+  },
   footerPosition: { type: String, default: 'absolute' },
+  externalFooter: { type: Boolean, default: false },
   backLabel: { type: String, default: '' },
   backId: { type: String, default: '' },
   completionLabel: { type: String, default: '' },

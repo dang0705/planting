@@ -145,7 +145,7 @@
         </view>
 
         <text
-          v-if="!restrictedPlatform"
+          v-if="subscriptionAvailable"
           id="subscription-payment-notice"
           class="mt-6 block pb-6 text-xs leading-5 text-[#9CA3AF]"
         >
@@ -176,7 +176,7 @@ import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
 import { useUserStore } from '@/store/user.js'
 import { onLoad } from '@dcloudio/uni-app'
 import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
-import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
+import { isFeatureAvailable } from '@/utils/platform-capabilities.js'
 
 const ORDER_CONFIRM_ATTEMPTS = 8
 const ORDER_CONFIRM_INTERVAL_MS = 1500
@@ -192,7 +192,7 @@ const paymentMessage = ref('')
 const paymentError = ref('')
 const currentOrder = ref(null)
 const requestIds = new Map()
-const restrictedPlatform = isRestrictedMiniProgram()
+const subscriptionAvailable = isFeatureAvailable('subscription')
 const {
   openedFeatureKey,
   visible: featureUnavailableVisible,
@@ -236,7 +236,7 @@ const orderStatusText = computed(() => {
 })
 
 onLoad(() => {
-  if (restrictedPlatform) {
+  if (!subscriptionAvailable) {
     openFeatureUnavailable('subscription')
     return
   }
@@ -284,7 +284,7 @@ function getClientRequestId(planId) {
 }
 
 async function startPayment(plan) {
-  if (restrictedPlatform) {
+  if (!subscriptionAvailable) {
     openFeatureUnavailable('subscription')
     return
   }

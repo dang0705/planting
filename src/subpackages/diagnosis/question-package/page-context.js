@@ -5,7 +5,7 @@ import {
   resolveInitialDiagnosisResult,
   resolveQuestionPackagePayload
 } from './payload.js'
-import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
+import { isDiagnosisFlowAvailable } from '@/utils/platform-capabilities.js'
 
 function resolveQuestionPackageModeTitle(mode = '') {
   if (mode === 'specific_pest_visual') {
@@ -41,7 +41,7 @@ export function bindQuestionPackagePageEntry({
   result,
   resetQuestionState
 }) {
-  if (isRestrictedMiniProgram()) {
+  if (!isDiagnosisFlowAvailable()) {
     return
   }
   onLoad(async options => {

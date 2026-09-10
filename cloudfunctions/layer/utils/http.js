@@ -1,20 +1,20 @@
 'use strict'
 
-const crypto = require('crypto')
 const { getUserInfo, models } = require('./cloudbase')
 const { normalizeAppEnv, runWithRequestAppEnv } = require('./runtime-env')
 const { getBearerToken, resolvePersistentSession } = require('./platform-session')
+const { createHttpIdentityTicket, resolveHttpIdentityTicket } = require('./http-identity-ticket')
 
-const HTTP_IDENTITY_TICKET_PREFIX = 'planting-http-v1'
-const HTTP_IDENTITY_TICKET_HEADER = 'x-planting-http-identity-ticket'
-const HTTP_IDENTITY_TICKET_MAX_AGE_SECONDS = 5 * 60
 const LOCAL_FUNCTION_RUNTIME_FLAG = 'CLOUDBASE_LOCAL_FUNCTIONS_GATEWAY'
 const OPENID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/
 
 function jsonResponse(statusCode, payload) {
   return {
     statusCode,
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store, no-transform'
+    },
     body: JSON.stringify(payload)
   }
 }
@@ -146,9 +146,7 @@ function getHttpRequestData(event, context) {
   // normalizing them in resolveHttpUserInfo.
   const rawHeaders = {
     ...(event?.headers && typeof event.headers === 'object' ? event.headers : {}),
-    ...(httpContext.headers && typeof httpContext.headers === 'object'
-      ? httpContext.headers
-      : {})
+    ...(httpContext.headers && typeof httpContext.headers === 'object' ? httpContext.headers : {})
   }
   const queryFromContext =
     httpContext.query && typeof httpContext.query === 'object' ? httpContext.query : {}
@@ -160,6 +158,9 @@ function getHttpRequestData(event, context) {
   const body = parseEventBody(event)
   const inferredMethod = normalizeHttpMethod(
     httpContext.method ||
+      // functions-framework 将原始方法放在 httpContext.httpMethod；若漏读它，
+      // 空 JSON POST 会被误判为 GET，进而被业务路由拒绝为 405。
+      httpContext.httpMethod ||
       event?.httpMethod ||
       event?.requestContext?.http?.method ||
       (body && Object.keys(body).length ? 'POST' : 'GET')
@@ -210,119 +211,84 @@ function getOpenIdFromUserInfo(userInfo) {
   )
 }
 
-function isLocalFunctionRuntime() {
-  return /^(1|true)$/i.test(String(process.env[LOCAL_FUNCTION_RUNTIME_FLAG] || '').trim())
-}
+function resolveCloudbaseRuntimeHeaderUser(headers = {}) {
+  const openid = String(headers['x-wx-openid'] || '').trim()
+  const appid = String(headers['x-wx-appid'] || '').trim()
+  const source = String(headers['x-wx-source'] || '').trim()
+  const configuredAppId = String(process.env.WECHAT_MINIPROGRAM_APP_ID || '').trim()
 
-function getHttpIdentityTicketSecret() {
-  const value = String(process.env.HTTP_IDENTITY_TICKET_SECRET || '').trim()
-  return value.length >= 32 ? value : ''
-}
-
-function parseTicketPayload(encodedPayload = '') {
-  try {
-    return JSON.parse(Buffer.from(encodedPayload, 'base64url').toString('utf8'))
-  } catch {
-    return null
-  }
-}
-
-function signHttpIdentityTicket(encodedPayload, secret) {
-  return crypto.createHmac('sha256', secret).update(encodedPayload).digest('base64url')
-}
-
-function hasMatchingSignature(expected, received) {
-  const expectedBuffer = Buffer.from(String(expected || ''))
-  const receivedBuffer = Buffer.from(String(received || ''))
-  return (
-    expectedBuffer.length === receivedBuffer.length &&
-    expectedBuffer.length > 0 &&
-    crypto.timingSafeEqual(expectedBuffer, receivedBuffer)
-  )
-}
-
-function createHttpIdentityTicket({ openid = '', uid = '', customUserId = '' } = {}) {
-  const secret = getHttpIdentityTicketSecret()
-  const normalizedOpenid = String(openid || '').trim()
-  if (!secret || !OPENID_PATTERN.test(normalizedOpenid)) {
-    return ''
-  }
-
-  const issuedAt = Math.floor(Date.now() / 1000)
-  const encodedPayload = Buffer.from(
-    JSON.stringify({
-      version: 1,
-      openid: normalizedOpenid,
-      uid: String(uid || '').trim(),
-      customUserId: String(customUserId || '').trim(),
-      issuedAt,
-      expiresAt: issuedAt + HTTP_IDENTITY_TICKET_MAX_AGE_SECONDS,
-      nonce: crypto.randomBytes(16).toString('base64url')
-    })
-  ).toString('base64url')
-  return `${HTTP_IDENTITY_TICKET_PREFIX}.${encodedPayload}.${signHttpIdentityTicket(encodedPayload, secret)}`
-}
-
-function resolveHttpIdentityTicket(headers = {}) {
-  const authorization = String(headers.authorization || '').trim()
-  const prefix = `Bearer ${HTTP_IDENTITY_TICKET_PREFIX}.`
-  const headerTicket = String(headers[HTTP_IDENTITY_TICKET_HEADER] || '').trim()
-  const token = authorization.startsWith(prefix)
-    ? authorization.slice('Bearer '.length)
-    : headerTicket
-  if (!token) {
-    return null
-  }
-
-  const [ticketPrefix, encodedPayload, signature, extra] = token.split('.')
-  const secret = getHttpIdentityTicketSecret()
+  // HTTP 云函数的微信原生调用不会把身份放进 Node context，CloudBase 会
+  // 将已认证的运行时身份注入 X-Wx-Openid/X-Wx-Appid。必须同时有 appid、
+  // source 且 appid 与当前环境绑定的小程序一致，不能把单独的 openid 头当成
+  // 身份，也不能让抖音/小红书请求退回到宿主身份。
   if (
-    ticketPrefix !== HTTP_IDENTITY_TICKET_PREFIX ||
-    !encodedPayload ||
-    !signature ||
-    extra ||
-    !secret
-  ) {
-    return null
-  }
-  if (!hasMatchingSignature(signHttpIdentityTicket(encodedPayload, secret), signature)) {
-    return null
-  }
-
-  const payload = parseTicketPayload(encodedPayload)
-  const now = Math.floor(Date.now() / 1000)
-  if (
-    !payload ||
-    payload.version !== 1 ||
-    !OPENID_PATTERN.test(String(payload.openid || '')) ||
-    !Number.isInteger(payload.issuedAt) ||
-    !Number.isInteger(payload.expiresAt) ||
-    payload.issuedAt > now + 60 ||
-    payload.expiresAt < now ||
-    payload.expiresAt - payload.issuedAt > HTTP_IDENTITY_TICKET_MAX_AGE_SECONDS
+    !OPENID_PATTERN.test(openid) ||
+    !appid ||
+    !source ||
+    !configuredAppId ||
+    appid !== configuredAppId
   ) {
     return null
   }
 
   return {
-    openid: payload.openid,
-    uid: String(payload.uid || '').trim(),
-    customUserId: String(payload.customUserId || '').trim(),
-    source: 'signed-http-ticket'
+    openid,
+    appid,
+    source: 'cloudbase-runtime-header'
   }
+}
+
+function isLocalFunctionRuntime() {
+  return /^(1|true)$/i.test(String(process.env[LOCAL_FUNCTION_RUNTIME_FLAG] || '').trim())
 }
 
 async function resolveHttpUserInfo(rawHeaders, query = {}, context = null, options = {}) {
   const headers = normalizeHeaders(rawHeaders)
   const allowRuntimeIdentity = options?.allowRuntimeIdentity === true
+  const allowSignedHttpIdentityTicket = options?.allowSignedHttpIdentityTicket === true
 
-  // 三端统一使用服务端存储的随机会话。必须优先于 CloudBase 运行时身份，
-  // 否则抖音/小红书请求会退回到不属于本业务的宿主身份。
+  // 持久平台会话是统一用户和数据归属的唯一默认来源。运行时注入的微信
+  // OpenID 只允许在明确的身份建立入口作为兜底，不能抢在已存在会话前面。
   const bearerToken = getBearerToken(headers)
   if (bearerToken) {
-    const platformSession = await resolvePersistentSession({ token: bearerToken, models })
+    options?.timing?.mark('identity-session-query-start')
+    const platformSession = await resolvePersistentSession({
+      token: bearerToken,
+      models,
+      timing: options?.timing || null
+    })
+    options?.timing?.mark('identity-session-query-ready', {
+      identityResolved: Boolean(platformSession?.openid)
+    })
     if (platformSession) {
       return platformSession
+    }
+  }
+
+  // 只有显式允许短票据的两个只读入口才能使用统一用户票据；写操作和
+  // 其他业务默认跳过票据，避免可延迟吊销的凭据绕过持久会话校验。即使同时
+  // 携带两种凭据，也先完成持久会话校验，防止旧票据覆盖当前统一账号。
+  if (allowSignedHttpIdentityTicket) {
+    const ticketUser = resolveHttpIdentityTicket(headers)
+    if (ticketUser?.userId && ticketUser.subject === 'planting-user') {
+      return ticketUser
+    }
+  }
+
+  // 本地 LAN 网关的 x-openid 仅用于开发/测试身份注入，不会出现在云端；
+  // 即使业务路由不允许运行时身份，也要保留既有本地读写调试闭环。
+  const localOpenid = String(headers['x-wx-openid'] || headers['x-openid'] || '').trim()
+  if (isLocalFunctionRuntime() && OPENID_PATTERN.test(localOpenid)) {
+    return {
+      openid: localOpenid,
+      source: 'local-function-gateway'
+    }
+  }
+
+  if (allowRuntimeIdentity) {
+    const runtimeHeaderUser = resolveCloudbaseRuntimeHeaderUser(headers)
+    if (runtimeHeaderUser) {
+      return runtimeHeaderUser
     }
   }
 
@@ -346,19 +312,6 @@ async function resolveHttpUserInfo(rawHeaders, query = {}, context = null, optio
     }
   }
 
-  const ticketUser = resolveHttpIdentityTicket(headers)
-  if (ticketUser) {
-    return ticketUser
-  }
-
-  const localOpenid = String(headers['x-wx-openid'] || headers['x-openid'] || '').trim()
-  if (isLocalFunctionRuntime() && OPENID_PATTERN.test(localOpenid)) {
-    return {
-      openid: localOpenid,
-      source: 'local-function-gateway'
-    }
-  }
-
   return null
 }
 
@@ -373,12 +326,13 @@ module.exports = {
   parseEventBody,
   getHttpRequestData,
   resolveHttpUserInfo,
+  resolveHttpIdentityTicket,
+  resolveCloudbaseRuntimeHeaderUser,
   createHttpIdentityTicket,
   _test: {
     decodeQueryComponent,
     parseQueryString,
     resolveHttpIdentityTicket,
-    signHttpIdentityTicket,
     isLocalFunctionRuntime
   }
 }

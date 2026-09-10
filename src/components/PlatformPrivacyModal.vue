@@ -7,7 +7,7 @@
     <view class="w-full rounded-3xl bg-white p-5 shadow-xl">
       <text class="block text-lg font-semibold text-[#27322B]">隐私保护提示</text>
       <text class="mt-3 block text-sm leading-6 text-[#667085]">
-        为完成手机号登录，我们会处理你的手机号并用于账号注册、登录和跨端同步。请先阅读并同意隐私保护协议。
+        为提供账号登录、跨端同步和天气定位服务，我们会按需处理你的手机号和位置信息。请先阅读并同意隐私保护协议。
       </text>
       <view class="mt-5 flex gap-3">
         <button

@@ -12,5 +12,10 @@ assert.match(source, /footerPosition === 'fixed'[\s\S]*?'fixed bottom-0 left-0 r
 assert.match(source, /footerPosition: \{ type: String, default: 'absolute' \}/)
 assert.match(source, /rootClass: \{ type: \[String, Array, Object\], default: '' \}/)
 assert.match(source, /fill: \{ type: Boolean, default: true \}/)
+assert.match(
+  source,
+  /<slot\s+v-if="!items\.length \|\| items\[index\]"[\s\S]*?:item="items\[index\]"/,
+  'empty step entries must not invoke the step slot'
+)
 
 console.log('ButtonStepTrack footer-position contract tests passed')

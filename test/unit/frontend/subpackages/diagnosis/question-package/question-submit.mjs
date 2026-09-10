@@ -160,7 +160,7 @@ assert.doesNotMatch(
 )
 assert.match(pageContextSource, /specific_pest_visual/)
 assert.match(pageContextSource, /虫害细节确认/)
-assert.match(packagePageSource, /@skip="option => skipQuestionRisk\(question, option\)"/)
+assert.match(packagePageSource, /@skip="option => skipQuestionRisk\(currentQuestion, option\)"/)
 assert.match(
   pageFlowSource,
   /selectQuestionOption\(question, option\)\s+await handleNextQuestion\(\)/
@@ -169,7 +169,43 @@ assert.doesNotMatch(pageFlowSource, /resolveLightEnvironmentAnswerKey/)
 assert.doesNotMatch(pageFlowSource, /handleLightEnvironmentChange[\s\S]{0,900}setQuestionAnswer/)
 assert.match(answerPayloadSource, /basePayload\.recentLightChange/)
 assert.match(answerPayloadSource, /userLightContext/)
-assert.match(packagePageSource, /最近光照有变化吗/)
+assert.doesNotMatch(packagePageSource, /最近光照有变化吗/)
+assert.match(packagePageSource, /!isLightEnvironmentQuestion\(currentQuestion\)/)
+assert.match(
+  packagePageSource,
+  /v-if="currentQuestion && !isCareBehaviorWateringTimelineQuestion\(currentQuestion\)"/
+)
+assert.match(
+  packagePageSource,
+  /v-if="[\s\S]*!isAirEnvironmentQuestion\(currentQuestion\)[\s\S]*getVisibleCareBehaviorOptions\(currentQuestion\)\.length/
+)
+assert.doesNotMatch(packagePageSource, /<ButtonStepTrack/)
+assert.match(answerPayloadSource, /isLightEnvironmentQuestion\(item\)[\s\S]{0,80}'unknown'/)
 assert.match(packagePageSource, /requiresLightEnvironmentConfirmation/)
+assert.match(packagePageSource, /:key="`options-\$\{getQuestionId\(currentQuestion\)\}`"/)
+assert.match(packagePageSource, /:key="`air-\$\{getQuestionId\(currentQuestion\)\}`"/)
+assert.match(packagePageSource, /:key="`light-\$\{getQuestionId\(currentQuestion\)\}`"/)
+assert.match(
+  packagePageSource,
+  /:id="`diagnose-question-package-page-question-scroll-\$\{getQuestionId\(currentQuestion\)\}`"/
+)
+assert.match(
+  packagePageSource,
+  /:id="`diagnose-question-package-page-question-shell-\$\{getQuestionId\(currentQuestion\)\}`"/
+)
+
+const optionsSource = readFileSync(
+  'src/subpackages/diagnosis/question-package/QuestionPackageOptions.vue',
+  'utf8'
+)
+assert.match(optionsSource, /question: \{ type: Object, default: \(\) => \(\{\}\) \}/)
+assert.match(optionsSource, /question\?\.riskNotice/)
+
+const airEnvironmentStepSource = readFileSync(
+  'src/subpackages/diagnosis/question-package/QuestionPackageAirEnvironmentStep.vue',
+  'utf8'
+)
+assert.match(airEnvironmentStepSource, /airEnvironment: \{[\s\S]*?type: Object,[\s\S]*?default:/)
+assert.match(airEnvironmentStepSource, /getByQuestion: \(\) => null/)
 
 console.log('question package submit tests passed')

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { createRequire } from 'node:module'
 import Module from 'node:module'
 const require = createRequire(import.meta.url)
+const { normalizeCareBehaviorTimeline } = require('../../../../cloudfunctions/layer/utils/watering-schedule.js')
 const tests = []
 function test(name, fn) {
   tests.push({ name, fn })
@@ -133,6 +134,22 @@ function loadAppWithSpies(overrides = {}) {
       return strategySpy.impl(openid, plantId)
     }
   }
+  const wateringEventsSpy = {
+    calls: [],
+    impl: overrides.wateringEventsImpl || (() => []),
+    async fn(openid, plantId, limit) {
+      wateringEventsSpy.calls.push({ openid, plantId, limit })
+      return wateringEventsSpy.impl(openid, plantId, limit)
+    }
+  }
+  const latestReminderSpy = {
+    calls: [],
+    impl: overrides.latestReminderImpl || (() => null),
+    async fn(openid, plantId) {
+      latestReminderSpy.calls.push({ openid, plantId })
+      return latestReminderSpy.impl(openid, plantId)
+    }
+  }
   Module._load = function patchedAppLoad(request, parent, isMain) {
     if (request === '/opt/utils/http') {
       return {
@@ -165,7 +182,8 @@ function loadAppWithSpies(overrides = {}) {
         listUserPlantInstances: async () => ({ list: [], total: 0, page: 1, pageSize: 20 }),
         updateUserPlantInstance: async () => ({}),
         deleteUserPlantInstance: async () => ({}),
-        getUserPlantWateringStrategy: strategySpy.fn
+        getUserPlantWateringStrategy: strategySpy.fn,
+        getUserPlantWateringEvents: wateringEventsSpy.fn
       }
     }
     if (request === '/opt/utils/cloudbase') {
@@ -187,7 +205,7 @@ function loadAppWithSpies(overrides = {}) {
     if (request === '/opt/utils/watering-planner') {
       return {
         buildWateringPlanner: plannerSpy.fn,
-        normalizeCareBehaviorTimeline: value => value
+        normalizeCareBehaviorTimeline
       }
     }
     if (request === '/opt/utils/transpiration') {
@@ -257,6 +275,7 @@ function loadAppWithSpies(overrides = {}) {
     if (request.endsWith('/watering-reminder-service')) {
       return {
         attachWateringReminderStateToList: async (_openid, data) => data,
+        getLatestWateringReminder: latestReminderSpy.fn,
         readWateringReminder: async () => ({ statusCode: 200, data: null }),
         saveWateringReminder: async () => ({ statusCode: 200, message: 'ok', data: null })
       }
@@ -271,6 +290,8 @@ function loadAppWithSpies(overrides = {}) {
       plannerSpy,
       lightEnvSpy,
       strategySpy,
+      wateringEventsSpy,
+      latestReminderSpy,
       airEnvironmentEvidenceSpy,
       injectD0Spy
     }
@@ -287,7 +308,7 @@ async function callPlannerRoute(app, body = {}) {
     headers: {},
     body: {
       plantId: body.plantId ?? 1,
-      wateringEvents: body.wateringEvents ?? [],
+      wateringEvents: body.wateringEvents ?? [{ date: '2026-06-30', amount: 'normal' }],
       weatherDays: body.weatherDays ?? [],
       forecastDays: body.forecastDays ?? [],
       referenceDate: body.referenceDate ?? '2026-07-01',
@@ -302,6 +323,84 @@ test('/watering-planner 路由不提前 404，正确调用 getUserPlantWateringS
   assert.equal(strategySpy.calls.length, 1, 'getUserPlantWateringStrategy 应被调用 1 次')
   assert.equal(strategySpy.calls[0].openid, 'openid_route_test')
   assert.equal(strategySpy.calls[0].plantId, 42)
+})
+test('没有过往浇水日期时，规划路由返回 409 且不调用规划器', async () => {
+  const { app, plannerSpy } = loadAppWithSpies()
+  const response = await callPlannerRoute(app, { wateringEvents: [] })
+  assert.equal(response.statusCode, 409)
+  assert.equal(response.payload.code, 409)
+  assert.equal(response.payload.data.requiresWateringHistory, true)
+  assert.equal(plannerSpy.calls.length, 0)
+})
+test('请求体未带历史时，规划路由回读服务端已保存的浇水事件', async () => {
+  const persistedEvents = [{ date: '2026-06-30', watered: true, amount: 'normal' }]
+  const { app, plannerSpy, wateringEventsSpy } = loadAppWithSpies({
+    wateringEventsImpl: () => persistedEvents
+  })
+  const response = await callPlannerRoute(app, { wateringEvents: [] })
+  assert.equal(response.statusCode, 200)
+  assert.deepEqual(wateringEventsSpy.calls, [
+    { openid: 'openid_route_test', plantId: 1, limit: 30 }
+  ])
+  assert.deepEqual(plannerSpy.calls[0].behaviorTimeline.watering_events_10d, persistedEvents)
+})
+test('事件表为空但已有提醒历史时，规划路由仍使用提醒中的浇水事件', async () => {
+  const reminderEvents = [{ date: '2026-06-30', watered: true, amount: 'normal' }]
+  const { app, plannerSpy, wateringEventsSpy, latestReminderSpy } = loadAppWithSpies({
+    wateringEventsImpl: () => [],
+    latestReminderImpl: () => ({ wateringEvents: reminderEvents })
+  })
+  const response = await callPlannerRoute(app, { wateringEvents: [] })
+  assert.equal(response.statusCode, 200)
+  assert.deepEqual(wateringEventsSpy.calls, [
+    { openid: 'openid_route_test', plantId: 1, limit: 30 }
+  ])
+  assert.deepEqual(latestReminderSpy.calls, [{ openid: 'openid_route_test', plantId: 1 }])
+  assert.deepEqual(plannerSpy.calls[0].behaviorTimeline.watering_events_10d, reminderEvents)
+})
+test('提醒表暂不可用但事件表有历史时，规划路由继续使用事件表历史', async () => {
+  const persistedEvents = [{ date: '2026-06-30', watered: true, amount: 'normal' }]
+  const { app, plannerSpy } = loadAppWithSpies({
+    wateringEventsImpl: () => persistedEvents,
+    latestReminderImpl: () => {
+      throw new Error('reminder table unavailable')
+    }
+  })
+  const response = await callPlannerRoute(app, { wateringEvents: [] })
+  assert.equal(response.statusCode, 200)
+  assert.deepEqual(plannerSpy.calls[0].behaviorTimeline.watering_events_10d, persistedEvents)
+})
+test('请求体已有历史时，优先使用本次请求的历史，不重复回读服务端事件', async () => {
+  const requestedEvents = [{ date: '2026-06-30', watered: true, amount: 'small' }]
+  const { app, plannerSpy, wateringEventsSpy } = loadAppWithSpies({
+    wateringEventsImpl: () => {
+      throw new Error('不应在已有请求历史时回读')
+    }
+  })
+  const response = await callPlannerRoute(app, { wateringEvents: requestedEvents })
+  assert.equal(response.statusCode, 200)
+  assert.equal(wateringEventsSpy.calls.length, 0)
+  assert.deepEqual(plannerSpy.calls[0].behaviorTimeline.watering_events_10d, requestedEvents)
+})
+test('前端真实日期样例进入规划路由后，非空 wateringEvents 不得被判定为缺失', async () => {
+  const requestedEvents = [{ date: '2026-08-25', watered: true, amount: 'normal', amountMl: 275 }]
+  const { app, plannerSpy } = loadAppWithSpies()
+  const response = await callPlannerRoute(app, {
+    referenceDate: '2026-09-01',
+    wateringEvents: requestedEvents
+  })
+  assert.equal(response.statusCode, 200)
+  assert.deepEqual(plannerSpy.calls[0].behaviorTimeline.watering_events_10d, requestedEvents)
+})
+test('前端允许的第 10 天边界历史进入规划器，不返回“请先填写过往浇水日期”', async () => {
+  const requestedEvents = [{ date: '2026-08-22', watered: true, amount: 'normal' }]
+  const { app, plannerSpy } = loadAppWithSpies()
+  const response = await callPlannerRoute(app, {
+    referenceDate: '2026-09-01',
+    wateringEvents: requestedEvents
+  })
+  assert.equal(response.statusCode, 200)
+  assert.deepEqual(plannerSpy.calls[0].behaviorTimeline.watering_events_10d, requestedEvents)
 })
 test('getUserPlantLightEnvironment 被调用并传入 openid 与 plantId', async () => {
   const { app, lightEnvSpy } = loadAppWithSpies()

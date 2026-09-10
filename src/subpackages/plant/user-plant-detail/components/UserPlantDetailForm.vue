@@ -14,14 +14,14 @@
         class="h-full min-h-0"
         :current="swiperStep"
         :duration="260"
-        :disable-touch="isEditMode || plantListTouching"
+        :disable-touch="isEditMode"
         @change="handleSwiperChange"
       >
         <swiper-item v-if="!isEditMode">
           <scroll-view id="add-plant-selection-scroll" scroll-y class="box-border h-full min-h-0">
             <PlantSelectionStep
               v-model:search-keyword="searchKeyword"
-              :plant-groups="plantGroups"
+              :plants="defaultPlants"
               :plant-count="defaultPlants.length"
               :initial-plants-loading="initialPlantsLoading"
               :plants-loading-more="plantsLoadingMore"
@@ -31,12 +31,10 @@
               :can-proceed="canEnterInfoStep"
               @search-confirm="handleSearchConfirm"
               @clear-search="clearSearch"
-              @scroll-lower="handlePlantScrollToLower"
+              @load-more="handlePlantLoadMore"
               @select-plant="handlePlantSelect"
               @ai-identify="useAIIdentify"
               @next="goInfoStep"
-              @list-touch-start="plantListTouching = true"
-              @list-touch-end="plantListTouching = false"
             />
           </scroll-view>
         </swiper-item>
@@ -129,7 +127,7 @@ import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import { createAsyncActionGuard, createDebounced } from '@/utils/interaction-guard.js'
 import { normalizePlantCareLocation } from '@/utils/plant-care-location.js'
 import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
-import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
+import { isFeatureAvailable, isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
 import PlantInfoStepPanel from './PlantInfoStepPanel.vue'
 import { buildPlantFormFromUserPlant, createInitialPlantForm } from './plant-form-model.js'
 import { buildPlantSubmitPayload, buildRestrictedManualPlantPayload } from './plant-submit.js'
@@ -139,7 +137,6 @@ import { useUserPlantIdentify } from '../composables/useUserPlantIdentify.js'
 
 const SELECTION_STEP = 0
 const INFO_STEP = 1
-const PLANT_GROUP_SIZE = 4
 const SEARCH_DEBOUNCE_MS = 500
 const FIRST_IMAGE_INDEX = 0
 const IMAGE_SIZE_LIMIT_MB = 5
@@ -175,7 +172,6 @@ const loginMsg = ref('添加植物需要先登录')
 const showAIDialog = ref(false)
 const aiDialogRef = ref(null)
 const searchKeyword = ref('')
-const plantListTouching = ref(false)
 const formErrors = reactive({ careLocation: '' })
 const potProfileEditorRef = ref(null)
 const potProfileSaving = ref(false)
@@ -209,14 +205,6 @@ const swiperStep = computed(() => (isEditMode.value ? SELECTION_STEP : activeSte
 const submitButtonId = computed(() => `${pageIdPrefix.value}-submit-button`)
 const submitText = computed(() => (isEditMode.value ? '保存修改' : '完成添加'))
 const canEnterInfoStep = computed(() => Boolean(selectedPlant.value || recognizedName.value))
-const plantGroups = computed(() => {
-  const groups = []
-  for (let i = 0; i < defaultPlants.value.length; i += PLANT_GROUP_SIZE) {
-    const items = defaultPlants.value.slice(i, i + PLANT_GROUP_SIZE)
-    groups.push({ key: items.map(item => item.id).join('-'), length: items.length, items })
-  }
-  return groups
-})
 const { useAIIdentify, handleAIConfirm, handleAIRetry, handleAIClose, clearPendingImage } =
   useUserPlantIdentify({
     userStore,
@@ -336,10 +324,10 @@ watch(selectedPlant, plant => {
   if (!formData.value.nickname.trim()) {
     formData.value.nickname = plant.canonicalName || ''
   }
-  if (!formData.value.image && plant.imageUrl) {
+  if (!formData.value.image && (plant.imageUrl || plant.imageFileId)) {
     formData.value = {
       ...formData.value,
-      image: plant.imageUrl,
+      image: plant.imageUrl || '',
       imageFileId: plant.imageFileId || ''
     }
   }
@@ -393,7 +381,7 @@ function clearSearch() {
   loadPlants()
 }
 
-function handlePlantScrollToLower() {
+function handlePlantLoadMore() {
   if (hasMorePlants.value && !plantsLoadingMore.value) {
     loadNextPage()
   }
@@ -438,7 +426,7 @@ function openEnvironment(kind) {
 }
 
 function openPotProfileEditor() {
-  if (restrictedPlatform) {
+  if (!isFeatureAvailable('watering')) {
     openFeatureUnavailable('watering')
     return
   }
@@ -508,7 +496,7 @@ async function refreshCurrentPlantFromServer() {
 }
 
 function uploadPhoto() {
-  if (restrictedPlatform) {
+  if (!isFeatureAvailable('storage')) {
     openFeatureUnavailable('image')
     return
   }

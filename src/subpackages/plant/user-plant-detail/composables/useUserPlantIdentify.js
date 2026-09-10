@@ -3,7 +3,7 @@ import { deleteImage, getImageUrl, uploadPlantImage } from '@/api/storage.js'
 import { showBottomSheetAction } from '@/utils/bottom-sheet-action.js'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import { requireMvpAccess } from '@/utils/subscription-access.js'
-import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
+import { isFeatureAvailable } from '@/utils/platform-capabilities.js'
 
 function isRetryableRequestError(error) {
   if (error?.isRetryable) {
@@ -157,7 +157,7 @@ export function useUserPlantIdentify({
   }
 
   async function useAIIdentify() {
-    if (isRestrictedMiniProgram()) {
+    if (!isFeatureAvailable('identify')) {
       openFeatureUnavailable?.('identify')
       return
     }
@@ -228,7 +228,7 @@ export function useUserPlantIdentify({
   }
 
   async function handleAIRetry() {
-    if (isRestrictedMiniProgram()) {
+    if (!isFeatureAvailable('identify')) {
       openFeatureUnavailable?.('identify')
       return
     }

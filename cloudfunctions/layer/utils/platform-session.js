@@ -8,6 +8,7 @@ const PHONE_PROOF_PREFIX = 'planting-phone-proof-v1'
 const PHONE_PROOF_TTL_SECONDS = 5 * 60
 const SUPPORTED_PLATFORMS = new Set(['wechat_mp', 'douyin_mp', 'xiaohongshu_mp'])
 const RESTRICTED_PLATFORMS = new Set(['douyin_mp', 'xiaohongshu_mp'])
+const FEATURE_RESTRICTED_PLATFORMS = new Set(['xiaohongshu_mp'])
 
 const FEATURE_MESSAGES = {
   identify: '当前端暂未开放 AI 植物识别，敬请期待。',
@@ -40,7 +41,9 @@ function normalizePlatform(value) {
 }
 
 function normalizeAppId(value) {
-  return String(value || '').trim().slice(0, 128)
+  return String(value || '')
+    .trim()
+    .slice(0, 128)
 }
 
 function normalizePlatformUserId(value) {
@@ -50,13 +53,18 @@ function normalizePlatformUserId(value) {
 
 function normalizePhone(phone, countryCode = '+86') {
   const compact = String(phone || '').replace(/[\s-]/g, '')
-  const normalizedCountryCode = String(countryCode || '+86').trim().replace(/^00/, '+') || '+86'
+  const normalizedCountryCode =
+    String(countryCode || '+86')
+      .trim()
+      .replace(/^00/, '+') || '+86'
   if (!/^\+?\d{1,4}$/.test(normalizedCountryCode) || !/^\+?\d{6,20}$/.test(compact)) {
     return null
   }
   const digits = compact.replace(/^\+/, '')
   return {
-    countryCode: normalizedCountryCode.startsWith('+') ? normalizedCountryCode : `+${normalizedCountryCode}`,
+    countryCode: normalizedCountryCode.startsWith('+')
+      ? normalizedCountryCode
+      : `+${normalizedCountryCode}`,
     phone: digits
   }
 }
@@ -199,7 +207,10 @@ function hashSessionToken(token) {
   if (!raw.startsWith(`${SESSION_PREFIX}_`)) {
     return ''
   }
-  return crypto.createHmac('sha256', requiredSecret('SESSION_TOKEN_SECRET')).update(raw).digest('hex')
+  return crypto
+    .createHmac('sha256', requiredSecret('SESSION_TOKEN_SECRET'))
+    .update(raw)
+    .digest('hex')
 }
 
 function sessionExpiresAt(now = Date.now()) {
@@ -207,12 +218,23 @@ function sessionExpiresAt(now = Date.now()) {
 }
 
 function getBearerToken(headers = {}) {
+  const platformSession = String(
+    Object.entries(headers || {}).find(
+      ([key]) => String(key).toLowerCase() === 'x-planting-platform-session'
+    )?.[1] || ''
+  ).trim()
+  if (platformSession) {
+    return platformSession
+  }
+
   const authorization = String(headers.authorization || headers.Authorization || '').trim()
   const matched = authorization.match(/^Bearer\s+(.+)$/i)
   return matched ? String(matched[1] || '').trim() : ''
 }
 
 function isRestrictedPlatform(platform) {
+  // 仅控制抖音/小红书的数据传输适配；功能门禁单独由
+  // FEATURE_RESTRICTED_PLATFORMS 控制。
   return RESTRICTED_PLATFORMS.has(normalizePlatform(platform))
 }
 
@@ -248,7 +270,7 @@ function isBasicPlantCrudPath(path = '') {
 
 function assertPlatformFeature(identity, path) {
   const platform = normalizePlatform(identity?.platform)
-  if (!isRestrictedPlatform(platform)) {
+  if (!FEATURE_RESTRICTED_PLATFORMS.has(platform)) {
     return true
   }
   if (isBasicPlantCrudPath(path)) {
@@ -276,36 +298,62 @@ function allowedManualPlantFields(payload = {}) {
   ])
   const forbidden = Object.keys(source).filter(key => !allowed.has(key))
   if (forbidden.length) {
-    throw createPlatformError('当前端仅支持植物文字基础信息', 'PLATFORM_PLANT_FIELDS_FORBIDDEN', 403)
+    throw createPlatformError(
+      '当前端仅支持植物文字基础信息',
+      'PLATFORM_PLANT_FIELDS_FORBIDDEN',
+      403
+    )
   }
   return {
     id: source.id,
     recordVersion: source.recordVersion,
-    nickname: String(source.nickname || '').trim().slice(0, 80) || null,
-    recognizedName: String(source.recognizedName || '').trim().slice(0, 120) || null,
-    location: String(source.location || '').trim().slice(0, 120) || null,
-    plantDate: String(source.plantDate || '').trim().slice(0, 16) || null,
-    notes: source.notes === undefined || source.notes === null ? null : String(source.notes).slice(0, 500),
+    nickname:
+      String(source.nickname || '')
+        .trim()
+        .slice(0, 80) || null,
+    recognizedName:
+      String(source.recognizedName || '')
+        .trim()
+        .slice(0, 120) || null,
+    location:
+      String(source.location || '')
+        .trim()
+        .slice(0, 120) || null,
+    plantDate:
+      String(source.plantDate || '')
+        .trim()
+        .slice(0, 16) || null,
+    notes:
+      source.notes === undefined || source.notes === null
+        ? null
+        : String(source.notes).slice(0, 500),
     sourceType: 'manual'
   }
 }
 
-async function resolvePersistentSession({ token, models, now = Date.now() }) {
+async function resolvePersistentSession({ token, models, now = Date.now(), timing = null }) {
   const tokenHash = hashSessionToken(token)
   if (!tokenHash || !models?.$runSQL) {
     return null
   }
   let result
   try {
+    timing?.mark('session-sql-start')
     result = await models.$runSQL(
       `SELECT s.user_id, s.platform, s.app_id, s.expires_at, s.revoked_at,
-              u._openid AS storage_openid
+              u._openid AS storage_openid,
+              u.subscription_plan,
+              u.subscription_status,
+              u.subscription_endDate,
+              u.usage_diagnoseMonth,
+              u.usage_lastMonthReset
          FROM user_sessions s
          LEFT JOIN users u ON BINARY u._id = BINARY s.user_id
         WHERE s.token_hash = {{tokenHash}}
         LIMIT 1`,
       { tokenHash }
     )
+    timing?.mark('session-sql-ready')
   } catch (error) {
     // 迁移尚未执行时，旧环境没有 user_sessions；按未登录处理，
     // 不让业务接口把缺表异常暴露成 500，也不回退到平台 OpenID。
@@ -332,6 +380,17 @@ async function resolvePersistentSession({ token, models, now = Date.now() }) {
     userId: String(session.user_id).trim(),
     platform: normalizePlatform(session.platform),
     appId: normalizeAppId(session.app_id),
+    quotaUserSnapshot: {
+      subscription_plan: session.subscription_plan,
+      subscription_status: session.subscription_status,
+      subscription_endDate: session.subscription_endDate,
+      usage_diagnoseMonth: session.usage_diagnoseMonth,
+      usage_lastMonthReset: session.usage_lastMonthReset
+    },
+    quotaUserSnapshotFresh:
+      Boolean(session.usage_lastMonthReset) &&
+      new Date(session.usage_lastMonthReset).toISOString().slice(0, 7) ===
+        new Date(now).toISOString().slice(0, 7),
     source: 'platform-session'
   }
 }

@@ -48,6 +48,22 @@ function buildQuestionPackageSnapshot(response = {}) {
   }
 }
 
+function mergeQuestionPackageRuntimeData(snapshot = null, runtimeData = null) {
+  if (!runtimeData || typeof runtimeData !== 'object') {
+    return snapshot
+  }
+  return {
+    ...(snapshot && typeof snapshot === 'object' ? snapshot : {}),
+    questionPackageRuntimeData: {
+      answerEffects: Array.isArray(runtimeData.answerEffects) ? runtimeData.answerEffects : [],
+      diagnosisOutcomes: Array.isArray(runtimeData.diagnosisOutcomes)
+        ? runtimeData.diagnosisOutcomes
+        : [],
+      actionProfiles: Array.isArray(runtimeData.actionProfiles) ? runtimeData.actionProfiles : []
+    }
+  }
+}
+
 function shouldPersistQuestionPackageSnapshot(response = {}, explicitSnapshotOnly = false) {
   if (explicitSnapshotOnly || response?.questionPackageSnapshot) {
     return true
@@ -67,18 +83,21 @@ function shouldPersistQuestionPackageSnapshot(response = {}, explicitSnapshotOnl
 }
 
 function runDeferredPersistenceJobs(sessionId = '', jobs = []) {
+  const schedule = typeof setImmediate === 'function' ? setImmediate : queueMicrotask
   for (const job of jobs) {
     if (typeof job !== 'function') {
       continue
     }
-    Promise.resolve()
-      .then(job)
-      .catch(error => {
-        console.error('diagnosis-http deferred persistence failed:', {
-          sessionId,
-          message: String(error?.message || error || '')
+    schedule(() => {
+      Promise.resolve()
+        .then(job)
+        .catch(error => {
+          console.error('diagnosis-http deferred persistence failed:', {
+            sessionId,
+            message: String(error?.message || error || '')
+          })
         })
-      })
+    })
   }
 }
 
@@ -92,7 +111,8 @@ async function persistRoundRuntime({
   description,
   clientContext = null,
   sessionQuestionRows = null,
-  questionPackageSnapshotOnly = false
+  questionPackageSnapshotOnly = false,
+  questionPackageRuntimeData = null
 } = {}) {
   const isInitialRound = Number(round || 1) <= 1
   const shouldWriteQuestionPackageSnapshot = shouldPersistQuestionPackageSnapshot(
@@ -102,10 +122,17 @@ async function persistRoundRuntime({
   const persistenceResponse = shouldWriteQuestionPackageSnapshot
     ? {
         ...response,
-        questionPackageSnapshot:
-          response?.questionPackageSnapshot || buildQuestionPackageSnapshot(response)
+        questionPackageSnapshot: mergeQuestionPackageRuntimeData(
+          response?.questionPackageSnapshot || buildQuestionPackageSnapshot(response),
+          questionPackageRuntimeData
+        )
       }
     : response
+  // 固定题包的完整提交会携带 questionPackage，并由 answer runner 从会话快照校验题目归属。
+  // 此时再同步写入逐题 follow-up 行只增加一次串行数据库写入，既不参与首屏展示，也不是
+  // answer_submit 的必要数据。保留会话快照作为唯一运行时来源，避免 start 接口等待这次写入。
+  const shouldWriteSessionQuestionRowsForRound =
+    shouldWriteSessionQuestionRows(response) && !questionPackageSnapshotOnly
   await upsertDiagnosisSession({
     sessionId,
     openid,
@@ -146,8 +173,8 @@ async function persistRoundRuntime({
     )
   }
 
-  if (shouldWriteQuestionPackageSnapshot || shouldWriteSessionQuestionRows(response)) {
-    if (shouldWriteSessionQuestionRows(response)) {
+  if (shouldWriteQuestionPackageSnapshot || shouldWriteSessionQuestionRowsForRound) {
+    if (shouldWriteSessionQuestionRowsForRound) {
       await writeSessionRoundQuestionRows({
         sessionId,
         round,
@@ -174,6 +201,7 @@ module.exports = {
   _test: {
     buildQuestionPackageSnapshot,
     shouldPersistQuestionPackageSnapshot,
+    mergeQuestionPackageRuntimeData,
     runDeferredPersistenceJobs
   }
 }

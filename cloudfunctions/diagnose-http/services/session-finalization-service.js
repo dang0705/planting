@@ -44,6 +44,7 @@ async function saveFinalDiagnosisSnapshot({
       dataBundleVersion: versionMetadata.dataBundleVersion,
       questionSystemVersion: versionMetadata.questionSystemVersion,
       resultExplanationVersion: versionMetadata.resultExplanationVersion,
+      legacyAdapterVersion: versionMetadata.legacyAdapterVersion,
       sessionAdapterVersion: versionMetadata.sessionAdapterVersion
     })
   } catch (error) {

@@ -9,7 +9,13 @@ const directResult = normalizeDiagnosisResult({
   status: 'completed',
   questionRequired: false,
   routePrimaryAction: 'finalize',
-  visibleOutcomes: [{ outcomeKey: 'thrips', displayNameCn: '可能是蓟马' }],
+  visibleOutcomes: [
+    {
+      outcomeKey: 'thrips',
+      displayNameCn: '可能是蓟马',
+      actionProfileKey: 'action_pest_basic'
+    }
+  ],
   directionChoices: [{ modeKey: 'pest', userDisplayName: '继续细分虫害方向' }],
   candidateRefinementAvailable: true,
   questions: [{ questionKey: 'stale_question', text: '不应继续显示' }],
@@ -29,6 +35,7 @@ assert.equal(directResult.questionPackage, undefined)
 assert.equal(directResult.hasActiveQuestions, false)
 assert.deepEqual(directResult.directionChoices, [])
 assert.equal(directResult.candidateRefinementAvailable, false)
+assert.equal(directResult.visibleOutcomes[0].actionProfileKey, 'action_pest_basic')
 
 const multiOutcomeDirectResult = normalizeDiagnosisResult({
   diagnosisSessionId: 'diag_direct_visual_multi',

@@ -100,6 +100,10 @@ function buildCompactOutcomeEntry(outcome = null) {
     summary: String(outcome?.summary || '').trim(),
     severity: String(outcome?.severity || '').trim(),
     urgency: String(outcome?.urgency || '').trim(),
+    actionProfileKey: toCompactString(
+      outcome?.actionProfileKey,
+      outcome?.action_profile_key
+    ),
     actionAdviceItems: compactStringList(outcome?.actionAdviceItems),
     avoidAdviceItems: compactStringList(outcome?.avoidAdviceItems)
   }

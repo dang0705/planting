@@ -1,15 +1,33 @@
 /* oxlint-disable no-magic-numbers */
+import { DIAGNOSIS_HTTP_BASE_URL } from '@/api/env'
 import { httpRequest } from '@/http-functions/core/httpRequest'
 
 const startDiagnosisRequester = httpRequest({
   functionPath: 'diagnose-http/diagnosis/start',
-  method: 'POST'
+  method: 'POST',
+  baseUrl: DIAGNOSIS_HTTP_BASE_URL,
+  requirePlatformSession: true
 })
 
 const startQuestionDiagnosisRequester = httpRequest({
-  functionPath: 'diagnose-http/diagnosis/question/start',
-  method: 'POST'
+  functionPath: 'diagnosis-question-start-http/diagnosis/question/start',
+  method: 'POST',
+  baseUrl: DIAGNOSIS_HTTP_BASE_URL,
+  requirePlatformSession: true
 })
+
+const legacyQuestionStartDiagnosisRequester = httpRequest({
+  functionPath: 'diagnose-http/diagnosis/question/start',
+  method: 'POST',
+  baseUrl: DIAGNOSIS_HTTP_BASE_URL,
+  requirePlatformSession: true
+})
+
+function supportsDedicatedQuestionPackage(payload = {}) {
+  return ['yellowing_mode', 'wilting_droop_mode'].includes(
+    String(payload?.symptomClassKey || payload?.symptom_class_key || '').trim()
+  )
+}
 
 function unwrapResponseEnvelope(raw, fallbackMessage) {
   if (!raw || typeof raw !== 'object') {
@@ -65,5 +83,12 @@ export function requestDiagnosisStart(payload) {
 }
 
 export function requestDiagnosisQuestionStart(payload) {
-  return request(startQuestionDiagnosisRequester, payload, 25000, '初始化问诊失败')
+  return request(
+    supportsDedicatedQuestionPackage(payload)
+      ? startQuestionDiagnosisRequester
+      : legacyQuestionStartDiagnosisRequester,
+    payload,
+    25000,
+    '初始化问诊失败'
+  )
 }

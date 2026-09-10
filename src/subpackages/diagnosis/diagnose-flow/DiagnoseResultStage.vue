@@ -71,12 +71,14 @@
         <view
           v-for="group in actionAdviceGroups"
           :key="`action_${group.key}`"
+          data-advice-section="action"
+          :data-advice-group-key="group.key"
           class="mb-2 last:mb-0"
         >
           <text
             v-if="group.showOutcomeLabel"
             class="block text-[11px] text-gray-800 font-semibold mb-1"
-            >{{ group.outcomeLabel }}：</text
+            >{{ group.displayLabel || group.symptomLabel || group.outcomeLabel }}：</text
           >
           <text
             v-for="(item, index) in group.items"
@@ -91,11 +93,17 @@
     <view v-if="avoidAdviceGroups.length" id="diagnose-result-avoid-advice" class="mb-3">
       <text class="block text-sm font-semibold text-gray-900 mb-2">暂时不要做</text>
       <view class="bg-[#FFF6F3] rounded-xl p-3">
-        <view v-for="group in avoidAdviceGroups" :key="`avoid_${group.key}`" class="mb-2 last:mb-0">
+        <view
+          v-for="group in avoidAdviceGroups"
+          :key="`avoid_${group.key}`"
+          data-advice-section="avoid"
+          :data-advice-group-key="group.key"
+          class="mb-2 last:mb-0"
+        >
           <text
             v-if="group.showOutcomeLabel"
             class="block text-[11px] text-gray-800 font-semibold mb-1"
-            >{{ group.outcomeLabel }}：</text
+            >{{ group.displayLabel || group.symptomLabel || group.outcomeLabel }}：</text
           >
           <text
             v-for="(item, index) in group.items"
