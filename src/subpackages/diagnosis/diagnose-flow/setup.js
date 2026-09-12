@@ -165,6 +165,7 @@ export function setupDiagnoseFlowState(props, { emit, expose }) {
     isSubmittingQuestionFlow: ctx.isSubmittingQuestionFlow,
     isSubmittingQuestionAnswer: ctx.isSubmittingQuestionAnswer,
     isSubmittingAdditionalImage: ctx.isSubmittingAdditionalImage,
+    isVisualScanning: ctx.isVisualScanning,
     currentQuestion: ctx.currentQuestion,
     hasDirtyQuestionAnswers: ctx.hasDirtyQuestionAnswers,
     questionSwiperTrackStyle: computed(() => String(ctx.questionSwiperTrackStyle?.value || '')),

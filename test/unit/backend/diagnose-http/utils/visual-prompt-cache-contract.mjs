@@ -194,7 +194,7 @@ const staticRulesSource = readFileSync(
 )
 // Measured from this fixed full/leaf fixture.
 // 基线反映提示词再平衡（多模式诊断）后的实际长度；不允许超过当前基线。
-const fullLeafPromptLengthBaseline = 5905
+const fullLeafPromptLengthBaseline = 6006
 const fullLeafStaticPrefixLengthBaseline = 4297
 const currentStaticPrefixLengthBaseline = 4297
 const maximumPromptLength = fullLeafPromptLengthBaseline

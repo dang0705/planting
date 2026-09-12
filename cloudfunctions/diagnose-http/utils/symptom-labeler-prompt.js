@@ -258,6 +258,12 @@ function buildImageContextText(
     lines.push(generalVisibleAnomalyDescriptions)
   }
 
+  if (promptContext.diagnosisProfile === 'full') {
+    lines.push(
+      'full：本图明确黄化或叶片下垂时，须同时填对应 symptom_candidates 与 yellow_leaf/wilting_droop mode_candidates；confidence 仅表示症状可见把握，非病因。'
+    )
+  }
+
   if (promptContext.diagnosisProfile === 'pest') {
     lines.push(
       `diagnosis_profile=pest 时，mode_candidates 只能使用这 8 个虫害机器键：${PEST_MODE_KEYS.join(', ')}。黄化或下垂只能作为伴随可见证据，不能输出 yellow_leaf 或 wilting_droop 作为 mode_candidates。`

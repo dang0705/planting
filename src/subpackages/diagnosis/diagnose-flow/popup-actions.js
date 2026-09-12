@@ -35,7 +35,6 @@ export function useDiagnoseFlowActions(ctx) {
     diagnosisAnswerMutation,
     uploader,
     additionalImageUploader,
-    imageFiles,
     hasPendingUploads,
     hasUploadErrors,
     additionalImageFiles,
@@ -100,11 +99,6 @@ export function useDiagnoseFlowActions(ctx) {
   const currentQuestion = {
     get value() {
       return ctx.currentQuestion?.value
-    }
-  }
-  const primaryStructuredImages = {
-    get value() {
-      return ctx.primaryStructuredImages?.value || []
     }
   }
   const additionalStructuredImages = {
@@ -270,17 +264,12 @@ export function useDiagnoseFlowActions(ctx) {
     return Boolean(questionStartMutation.isPending?.value || questionStartMutation.isLoading?.value)
   }
 
-  async function handleSymptomClassQuickSelect(option = null) {
+  function handleSymptomClassQuickSelect(option = null) {
     if (selectedDiagnosisProfile.value === 'pest') {
       uni.showToast({ title: '只看虫害需要先上传照片', icon: 'none' })
       return
     }
     selectDevSymptomClass(option?.classKey || '')
-    if (imageFiles.value.length || primaryStructuredImages.value.length) {
-      return
-    }
-
-    await startQuestionDiagnosisFromSymptomClass()
   }
 
   async function startQuestionDiagnosisFromSymptomClass() {

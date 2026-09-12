@@ -230,6 +230,7 @@ import UserPlantAirEnvironmentCard from '@/components/UserPlantAirEnvironmentCar
 import { createAsyncActionGuard } from '@/utils/interaction-guard.js'
 import { parsePlantDateTime } from '@/utils/plant-datetime.js'
 import { requireMvpAccess } from '@/utils/subscription-access.js'
+import { confirmDiagnosisProfile } from '@/utils/diagnosis-entry-confirm.js'
 import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
 import {
   isDiagnosisAvailable,
@@ -438,11 +439,13 @@ async function startDiagnosis() {
   if (!(await requireMvpAccess(userStore, { source: 'plant_detail_diagnose' }))) {
     return
   }
+  const diagnosisProfile = await confirmDiagnosisProfile()
   const query = [
     `plantId=${encodeURIComponent(String(plantId.value || ''))}`,
     `plantName=${encodeURIComponent(plant.value?.displayName || '植物')}`,
     plant.value?.plantId ? `plantCatalogId=${encodeURIComponent(String(plant.value.plantId))}` : '',
-    'entrySource=plant_detail'
+    'entrySource=plant_detail',
+    `diagnosisProfile=${diagnosisProfile}`
   ]
     .filter(Boolean)
     .join('&')

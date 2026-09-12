@@ -39,6 +39,7 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 function assertSourceContract() {
   const reads = {
     upload: readFileSync('src/components/diagnosis/DiagnoseIntake.vue', 'utf8'),
+    flowPage: readFileSync('src/subpackages/diagnosis/flow.vue', 'utf8'),
     flow: readFileSync('src/subpackages/diagnosis/diagnose-flow/DiagnoseFlow.vue', 'utf8'),
     popupActions: readFileSync('src/subpackages/diagnosis/diagnose-flow/popup-actions.js', 'utf8'),
     retake: readFileSync('src/subpackages/diagnosis/diagnose-flow/RetakeCard.vue', 'utf8'),
@@ -72,9 +73,12 @@ function assertSourceContract() {
       'utf8'
     )
   }
-  assert.match(reads.upload, /id="diagnose-profile-full-button"/)
-  assert.match(reads.upload, /id="diagnose-profile-pest-button"/)
-  assert.match(reads.upload, /只看虫害需要照片/)
+  assert.doesNotMatch(reads.upload, /id="diagnose-profile-(full|pest)-button"/)
+  assert.match(reads.upload, /id="diagnose-symptom-mode-toggle"/)
+  assert.match(reads.upload, /id="diagnose-upload-toggle"/)
+  assert.match(reads.upload, /id="diagnose-organ-upload-board"/)
+  assert.match(reads.flowPage, /diagnosis-flow-header-back-button/)
+  assert.doesNotMatch(reads.upload, /id="diagnose-upload-count"/)
   assert.match(reads.flow, /id="diagnose-submit-button"/)
   assert.match(reads.popupActions, /questionStartMutation\.mutateAsync\(/)
   assert.match(reads.popupActions, /navigateToDiagnosisQuestionPackagePage\(diagnosisResult\)/)

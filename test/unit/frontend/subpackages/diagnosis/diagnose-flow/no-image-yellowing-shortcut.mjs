@@ -2,11 +2,9 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 
-// 镜像契约：无图黄叶快捷项是直接问诊入口（source-contract 风格，与 diagnose-flow-contract.mjs 一致）。
-// 点击 diagnose-dev-symptom-class-option-yellowing_mode 必须立即复用
-// startQuestionDiagnosisFromSymptomClass -> questionStartMutation.mutateAsync，
-// 发出 diagnose-http/diagnosis/question/start（diagnosisProfile=full、symptomClassKey=yellowing_mode、无 image/images），
-// 不得只更新本地选中态后等待用户再点“开始诊断”，也不得调用 diagnose-http/diagnosis/start。
+// 镜像契约：症状模式只负责选择，按设计稿由底部“开始诊断”统一提交。
+// 无图时点击 diagnose-dev-symptom-class-option-yellowing_mode 后保持在当前页，
+// 点击底部按钮再复用 startQuestionDiagnosisFromSymptomClass。
 
 const repoRoot = process.cwd()
 const popupActionsSource = fs.readFileSync(
@@ -33,17 +31,15 @@ const diagnoseClientSource = fs.readFileSync(
   'utf8'
 )
 
-// 契约 1：黄叶快捷项点击事件必须直接委托给 startQuestionDiagnosisFromSymptomClass，
-// 而不是只更新本地选中态后等待用户再点击“开始诊断”。
+// 契约 1：黄叶快捷项点击事件只更新本地选中态，不得绕过设计稿底部按钮自动提交。
 assert.match(
   popupActionsSource,
-  /async function handleSymptomClassQuickSelect[\s\S]*?selectDevSymptomClass\([\s\S]*?await startQuestionDiagnosisFromSymptomClass\(\)/,
-  'handleSymptomClassQuickSelect must immediately call startQuestionDiagnosisFromSymptomClass after selecting the class'
+  /function handleSymptomClassQuickSelect[\s\S]*?selectDevSymptomClass\(option\?\.classKey \|\| ''\)/,
+  'handleSymptomClassQuickSelect must set the local selected class key'
 )
-// 锁定关键路径顺序：先 selectDevSymptomClass 设置选中态，再在无图条件下立即 await
-// startQuestionDiagnosisFromSymptomClass，而不是只更新本地选中态后提前 return。
+// 锁定选择函数只改变状态；真正的 question/start 仍由开始诊断按钮触发。
 const quickSelectBodyMatch = popupActionsSource.match(
-  /async function handleSymptomClassQuickSelect\(option = null\) \{([\s\S]*?)\n\s{2}\}\n\n\s{2}async function startQuestionDiagnosisFromSymptomClass/
+  /function handleSymptomClassQuickSelect\(option = null\) \{([\s\S]*?)\n\s{2}\}\n\n\s{2}async function startQuestionDiagnosisFromSymptomClass/
 )
 assert.ok(quickSelectBodyMatch, 'handleSymptomClassQuickSelect body must be locatable')
 const quickSelectBody = quickSelectBodyMatch[1]
@@ -52,15 +48,15 @@ assert.match(
   /selectDevSymptomClass\(option\?\.classKey \|\| ''\)/,
   'handleSymptomClassQuickSelect must set the local selected class key'
 )
-assert.match(
+assert.doesNotMatch(
   quickSelectBody,
-  /if \(imageFiles\.value\.length \|\| primaryStructuredImages\.value\.length\) \{[\s\S]*?return[\s\S]*?\}/,
-  'handleSymptomClassQuickSelect only defers when images already exist'
+  /startQuestionDiagnosisFromSymptomClass\(\)/,
+  'handleSymptomClassQuickSelect must wait for the bottom submit button'
 )
 assert.match(
-  quickSelectBody,
-  /await startQuestionDiagnosisFromSymptomClass\(\)/,
-  'handleSymptomClassQuickSelect must immediately start question diagnosis when no images exist'
+  popupActionsSource,
+  /async function startQuestionDiagnosisFromSymptomClass[\s\S]*?questionStartMutation\.mutateAsync\(/,
+  'bottom submit path must still start the question package'
 )
 
 // 契约 2：startQuestionDiagnosisFromSymptomClass 必须调用 questionStartMutation.mutateAsync，
@@ -76,17 +72,12 @@ assert.doesNotMatch(
   'no-image shortcut path must not invoke visual diagnosis start mutation'
 )
 
-// 契约 3：handleSymptomClassQuickSelect 在有图片时只更新本地选中态，走正常提交流程。
-assert.match(
-  popupActionsSource,
-  /if \(imageFiles\.value\.length \|\| primaryStructuredImages\.value\.length\) \{[\s\S]*?return[\s\S]*?\}/,
-  'when images exist, yellowing shortcut must defer to the normal submit flow without starting question diagnosis'
-)
+// 契约 3：有图时点击症状仍只更新本地选中态，开始诊断按钮走图片诊断路径。
 
 // 契约 4：只看虫害模式下黄叶快捷项必须拒绝并提示需要照片。
 assert.match(
   popupActionsSource,
-  /async function handleSymptomClassQuickSelect[\s\S]*?if \(selectedDiagnosisProfile\.value === 'pest'\) \{[\s\S]*?uni\.showToast\(\{ title: '只看虫害需要先上传照片'/,
+  /function handleSymptomClassQuickSelect[\s\S]*?if \(selectedDiagnosisProfile\.value === 'pest'\) \{[\s\S]*?uni\.showToast\(\{ title: '只看虫害需要先上传照片'/,
   'pest profile must reject no-image yellowing shortcut with a toast'
 )
 
@@ -127,7 +118,7 @@ assert.ok(
   'yellowing_mode must be declared before wilting_droop_mode so both stay independent'
 )
 
-// 契约 8：共享 DiagnoseIntake 必须为每个快捷项渲染独立的语义化 id，并绑定 handleSymptomClassQuickSelect。
+// 契约 8：共享 DiagnoseIntake 必须为每个快捷项渲染独立的语义化 id，并绑定设计稿选择处理函数。
 assert.match(
   uploadStageSource,
   /:id="`diagnose-dev-symptom-class-option-\$\{item\.classKey\}`"/,
@@ -135,8 +126,8 @@ assert.match(
 )
 assert.match(
   uploadStageSource,
-  /@click="handleSymptomClassQuickSelect\(item\)"/,
-  'quick option click must bind handleSymptomClassQuickSelect directly'
+  /@click="handleSymptomModeSelect\(item\)"/,
+  'quick option click must bind the design-state selection handler'
 )
 assert.match(
   uploadStageSource,

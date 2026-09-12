@@ -1,18 +1,22 @@
 ---
 name: cloudbase-platform
 description: CloudBase platform overview and routing guide. This skill should be used when users need high-level capability selection, platform concepts, console navigation, or cross-platform best practices before choosing a more specific implementation skill.
-version: 2.18.0
+version: 2.33.2
 alwaysApply: false
 ---
 
-## Standalone Install Note
+## Sibling skills (local only)
 
-If this environment only installed the current skill, start from the CloudBase main entry and use the published `cloudbase/references/...` paths for sibling skills.
+Sibling CloudBase skills ship beside this skill. Use local relative paths such as `../auth-tool-cloudbase/SKILL.md`.
 
-- CloudBase main entry: `https://cnb.cool/tencent/cloud/cloudbase/cloudbase-skills/-/git/raw/main/skills/cloudbase/SKILL.md`
-- Current skill raw source: `https://cnb.cool/tencent/cloud/cloudbase/cloudbase-skills/-/git/raw/main/skills/cloudbase/references/cloudbase-platform/SKILL.md`
+If a referenced sibling skill file is missing from this environment, ask the user to install the full CloudBase plugin (or the missing skill). Do **not** HTTP-fetch remote skill or protocol markdown into the agent context.
 
-Keep local `references/...` paths for files that ship with the current skill directory. When this file points to a sibling skill such as `auth-tool` or `web-development`, use the standalone fallback URL shown next to that reference.
+**Cross-cutting protocols** (required before code changes or deployments):
+- Change Safety Protocol: `references/protocols/change-safety-protocol.md`
+- Deployment Gate: `references/protocols/deployment-gate.md`
+- Sensitive Runtime Data Protection: `references/protocols/sensitive-runtime-data-protection.md`
+
+**Post-deployment (optional, non-intrusive)**: after a deployment is verified successful, you may offer at most once to generate anonymized shareables (Deployment Share) — see `references/protocols/deployment-share.md`. Never follow up if declined; never publish on the user's behalf.
 
 ## Activation Contract
 
@@ -28,14 +32,18 @@ Keep local `references/...` paths for files that ship with the current skill dir
 
 ### Then also read
 
-- Web app implementation -> `../web-development/SKILL.md` (standalone fallback: `https://cnb.cool/tencent/cloud/cloudbase/cloudbase-skills/-/git/raw/main/skills/cloudbase/references/web-development/SKILL.md`)
-- Web auth and provider setup -> `../auth-tool/SKILL.md` (standalone fallback: `https://cnb.cool/tencent/cloud/cloudbase/cloudbase-skills/-/git/raw/main/skills/cloudbase/references/auth-tool/SKILL.md`), `../auth-web/SKILL.md` (standalone fallback: `https://cnb.cool/tencent/cloud/cloudbase/cloudbase-skills/-/git/raw/main/skills/cloudbase/references/auth-web/SKILL.md`)
-- Mini program development -> `../miniprogram-development/SKILL.md` (standalone fallback: `https://cnb.cool/tencent/cloud/cloudbase/cloudbase-skills/-/git/raw/main/skills/cloudbase/references/miniprogram-development/SKILL.md`)
-- Cloud functions -> `../cloud-functions/SKILL.md` (standalone fallback: `https://cnb.cool/tencent/cloud/cloudbase/cloudbase-skills/-/git/raw/main/skills/cloudbase/references/cloud-functions/SKILL.md`)
-- Official HTTP API clients -> `../http-api/SKILL.md` (standalone fallback: `https://cnb.cool/tencent/cloud/cloudbase/cloudbase-skills/-/git/raw/main/skills/cloudbase/references/http-api/SKILL.md`)
-- Document database -> `../no-sql-web-sdk/SKILL.md` (standalone fallback: `https://cnb.cool/tencent/cloud/cloudbase/cloudbase-skills/-/git/raw/main/skills/cloudbase/references/no-sql-web-sdk/SKILL.md`) or `../no-sql-wx-mp-sdk/SKILL.md` (standalone fallback: `https://cnb.cool/tencent/cloud/cloudbase/cloudbase-skills/-/git/raw/main/skills/cloudbase/references/no-sql-wx-mp-sdk/SKILL.md`)
-- Relational database / data modeling -> `../relational-database-tool/SKILL.md` (standalone fallback: `https://cnb.cool/tencent/cloud/cloudbase/cloudbase-skills/-/git/raw/main/skills/cloudbase/references/relational-database-tool/SKILL.md`) or `../data-model-creation/SKILL.md` (standalone fallback: `https://cnb.cool/tencent/cloud/cloudbase/cloudbase-skills/-/git/raw/main/skills/cloudbase/references/data-model-creation/SKILL.md`)
-- Cloud storage -> `../cloud-storage-web/SKILL.md` (standalone fallback: `https://cnb.cool/tencent/cloud/cloudbase/cloudbase-skills/-/git/raw/main/skills/cloudbase/references/cloud-storage-web/SKILL.md`)
+- Minimal Web + database demo (BaaS-first, no cloud functions by default) -> `../minimal-web-baas-demo/SKILL.md`
+  - **Stack order for 最小前后端 / Lovable-like demos:** Web SDK CRUD > MCP schema > template warmup during credential wait > cloud functions (default count = 0). Capability sniff: connector ready → `envQuery` → lock one DB plane → MCP schema → `@cloudbase/js-sdk` CRUD → preview.
+- Web app implementation -> `../web-development/SKILL.md`
+- Web auth and provider setup -> `../auth-tool-cloudbase/SKILL.md`, `../auth-web-cloudbase/SKILL.md`
+- Mini program development -> `../miniprogram-development/SKILL.md`
+- WeChat Pay, Official Account OAuth, JSAPI Pay, or Native QR-code Pay through CloudBase Integration Center -> `../cloudbase-wechat-integration/SKILL.md` (official docs: `https://docs.cloudbase.net/integration/introduce/index.md`)
+- Cloud functions -> `../cloud-functions/SKILL.md`
+- Official HTTP API clients -> `../http-api-cloudbase/SKILL.md`
+- Document database -> `../cloudbase-document-database-web-sdk/SKILL.md` or `../cloudbase-document-database-in-wechat-miniprogram/SKILL.md`
+- CloudBase PostgreSQL / PG -> `../postgresql-development-cloudbase/SKILL.md`
+- MySQL relational database / data modeling -> `../relational-database-mcp-cloudbase/SKILL.md` or `../data-model-creation/SKILL.md`
+- Cloud storage -> `../cloud-storage-web/SKILL.md`
 
 ### Do NOT use for
 
@@ -48,9 +56,10 @@ Keep local `references/...` paths for files that ship with the current skill dir
 - Staying here after the correct implementation skill is already clear.
 - Mixing platform overview with platform-specific API shapes or SDK details.
 - Using this overview skill as a detour in an existing application where the active auth, storage, and data files are already obvious.
-- **Confusing security domains with custom domains**: These are two completely different tools for different purposes:
-  - `envDomainManagement` (action: create/delete) = Security domains (安全域名) for CORS/request source validation - used for browser upload whitelisting. Does NOT accept certificateId.
-  - `manageGateway(action="bindCustomDomain")` = Custom domains (自定义域名) for public HTTPS access with SSL certificates - requires domain and certificateId parameters.
+- Making code or configuration changes without first following the Change Safety Protocol (`cloudbase-platform/references/protocols/change-safety-protocol.md`).
+- Starting any deployment, publish, custom domain, or CloudRun work without first completing the checks in `cloudbase-platform/references/protocols/deployment-gate.md`.
+- Echoing `x-cloudbase-context`, full `req.headers`, or `process.env` from Cloud Functions / CloudRun (including httpbin-style debug images) — follow `references/protocols/sensitive-runtime-data-protection.md`.
+- **Confusing security domains with custom domains**: these are two different tools for different purposes. See the "Domain Management Tools" table below for the authoritative split.
 
 ## When to use this skill
 
@@ -78,18 +87,19 @@ Use this skill for **CloudBase platform knowledge** when you need to:
    - Use SDK built-in authentication features (Web)
    - Understand natural login-free feature (Mini Program)
    - Configure appropriate database permissions
-   - Use cloud functions for cross-collection operations
+   - Prefer `@cloudbase/js-sdk` direct DB access for browser CRUD; use cloud functions only for secrets, scheduled/background jobs, or elevated cross-collection logic that security rules / RLS cannot express (see `../minimal-web-baas-demo/SKILL.md` for the demo default)
 
 3. **Use correct SDKs and APIs**
    - Different platforms require different SDKs for data models
    - MySQL data models must use models SDK, not collection API
+   - PostgreSQL / CloudBase PG work must route to `postgresql-development-cloudbase`; do not reuse NoSQL `app.database()` / `db.collection(...)` snippets or MySQL `queryMysqlDatabase` / `manageMysqlDatabase` for PG data paths
    - Use `envQuery` tool to get environment ID
    - In an existing Web application with fixed structure, inspect the existing `src/lib/backend.*`, `src/lib/auth.*`, `src/lib/*service.*`, and bound page handlers before broad concept reading.
 
 4. **Use the canonical CloudBase MCP setup from the main `cloudbase` guideline**
    - This platform overview intentionally does **not** duplicate the full MCP / mcporter config block
    - For the canonical config snippet, CLI commands, and auth examples, read the main `cloudbase` guideline first
-   - Keep the same core rules here: use MCP first, inspect tool schemas before execution, and do not hard-code Secret ID / Secret Key / Env ID in config
+   - Keep the same core rules here: prefer MCP when tools are available in this session; if not, configure MCP for next session and use `tcb` CLI now (`../cloudbase-cli/SKILL.md`, `../cloudbase/references/tooling-fallback.md`). Inspect tool schemas before MCP execution. Do not hard-code Secret ID / Secret Key / Env ID in config
    - Keep the auth split explicit: management-side login uses `auth`, while application-side auth configuration uses `queryAppAuth` / `manageAppAuth`
 
 ---
@@ -102,38 +112,34 @@ When working with domain-related tasks, use the correct tool based on the requir
 
 | Requirement | Tool | Parameters | Purpose |
 |-------------|------|------------|---------|
-| **Security Domain (安全域名)** | `envDomainManagement` | `action`, `domains` (array of host:port strings) | CORS/request source validation for browser uploads. No certificate involved. |
-| **Custom Domain (自定义域名)** | `manageGateway(action="bindCustomDomain")` | `domain` (string), `certificateId` (string) | Public HTTPS access with SSL certificate. Requires certId from SSL console. |
-| **Delete Custom Domain** | `manageGateway(action="deleteCustomDomain")` | `domain` (string) | Remove custom domain binding. |
+| **Security Domain (安全域名)** | `manageEnv(action="addSecurityDomain" \| "removeSecurityDomain")` | `domains` (array of host:port strings) | CORS/request source validation for browser uploads. No certificate involved. (Deprecated alias: `envDomainManagement`.) |
+| **Reuse existing Custom Domain** | `queryGateway(listCustomDomains)` → `manageGateway(createRoute)` | `domain` = existing custom domain; route fields | Expose a service/path on an already-bound custom domain. **No certificateId.** Prefer this when a custom domain already exists. |
+| **Bind new Custom Domain (自定义域名)** | `manageGateway(action="bindCustomDomain")` | `domain` (string), `certificateId` (string) | First-time bind of a new public HTTPS domain. Requires certId from SSL console. |
+| **Delete Custom Domain** | `manageGateway(action="deleteCustomDomain")` | `domain` (string) | Remove custom domain binding (only after routes on that domain are deleted). |
+| **Disable / enable gateway route** | `manageGateway(action="disableRoute" \| "enableRoute")` | `path` (required), prefer explicit `domain` | Toggle `Routes[].Enable` via `ModifyHTTPServiceRoute` (not `ModifyGatewayRoute`). |
+| **Disable static hosting default domain** | `queryGateway(listRoutes)` → `manageGateway(disableRoute)` | `domain` = `*.tcloudbaseapp.com` (`DomainType=STATIC_STORE`, `IsDefault=true`), usually `path="/"` | Turns off public access on the shared hosting CDN default host. **Do not use `manageHosting`.** |
 
 **Key indicators for choosing the right tool:**
-- Task mentions "certificate ID" or "SSL" → Use `manageGateway(action="bindCustomDomain")`
-- Task mentions "浏览器上传" or "CORS" or "安全域名" → Use `envDomainManagement`
-- Task mentions "public access" or "HTTPS" with domain → Use `manageGateway`
+- Task mentions "自定义域名访问" but env already has a custom domain → `listCustomDomains` then `createRoute(domain=...)` (no certificateId)
+- Task mentions "certificate ID" or "SSL" **and** needs to bind a **new** domain → `manageGateway(action="bindCustomDomain")`
+- Task mentions "浏览器上传" or "CORS" or "安全域名" → Use `manageEnv(action="addSecurityDomain" / "removeSecurityDomain")`
+- Task mentions "public access" or "HTTPS" with domain → Prefer reuse via `createRoute` when possible; only `bindCustomDomain` for first-time domain bind
+- Task mentions "关闭/禁用静态托管默认域名" / `*.tcloudbaseapp.com` → `queryGateway(listRoutes)` then `manageGateway(disableRoute)` with that STATIC_STORE domain; never invent `ModifyGatewayRoute`
+
+### Error Code Troubleshooting: Route Through Official Docs
+
+When a CloudBase tool call fails and the error message contains a specific error code (pattern `Category.Code`, e.g. `OperationDenied.FreePackageDenied`, `ResourceNotFound.*`), **always route through the official docs before acting — do not guess the meaning, do not hardcode fix recipes here**:
+
+1. Extract the error code from the error message.
+2. Look it up: `searchKnowledgeBase(mode="docs", action="searchDocs", query="<错误码>")` — official docs search covers error-code pages. Act on the documented meaning and the fix steps the doc prescribes (plan limits → upgrade guidance, misconfiguration → config fix, etc.).
+3. If docs search returns nothing, fall back to the canonical error-code pages:
+   - Error code basics & self-service troubleshooting: `https://docs.cloudbase.net/error-code/basic`
+   - Control-plane cloud API error codes: `https://cloud.tencent.com/document/product/876/34823`
+4. Never assert capability-per-plan or error-code semantics from memory — official docs and the console plan comparison are the only authoritative sources. Example: for Web 安全域名 plan requirements, cite `https://cloud.tencent.com/document/product/876/127357` rather than assuming which tier unlocks it.
 
 ### Recording Operation Results
 
-When a task explicitly requires recording operation steps or results to a file (e.g., `RESULT.json`):
-
-1. Perform the tool calls first to get actual results
-2. Collect all operation steps with their success/failure status
-3. Write the complete record to the specified file in the required format
-4. Include both successful operations and failed attempts with error messages
-
-Example structure for operation recording:
-```json
-{
-  "steps": [
-    {"action": "listDomains", "success": true, "message": "Found 3 domains"},
-    {"action": "bindDomain", "success": false, "message": "Certificate not found"}
-  ],
-  "summary": {
-    "totalAttempted": 2,
-    "succeeded": 1,
-    "failed": 1
-  }
-}
-```
+When a task explicitly requires recording operation steps or results to a file (e.g., `RESULT.json`): perform the tool calls first, then write a complete record containing every attempt (action, success/failure, message) plus a `summary` with total / succeeded / failed counts. Do not write the file from memory before the calls finish.
 
 ## Storage and Hosting
 
@@ -142,11 +148,13 @@ Example structure for operation recording:
    - Generally, publicly accessible files can be stored in static hosting, which provides a public web address
    - Static hosting supports custom domain configuration (requires console operation)
    - Cloud storage is suitable for files with privacy requirements, can get temporary access addresses via temporary file URLs
-   - If the task needs COS SDK polling, file metadata lookup, or temporary URLs for an uploaded object, use cloud storage tools (`manageStorage` / `queryStorage`), not `uploadFiles`
+   - If the task needs COS SDK polling, file metadata lookup, or temporary URLs for an uploaded object, use cloud storage tools (`manageStorage` / `queryStorage`), not `manageHosting(action="upload")`
 
 2. **Static Hosting Domain**:
-   - CloudBase static hosting domain can be obtained via `getWebsiteConfig` tool
+   - CloudBase static hosting domain and website document config can be obtained via `queryHosting(action="websiteConfig")`
    - Combine with static hosting file paths to construct final access addresses
+   - Default shared host looks like `<envId>-<appId>.tcloudbaseapp.com` (`DomainType=STATIC_STORE`, often `IsDefault=true` in `queryGateway(listRoutes)`)
+   - To **disable** that default public host: `manageGateway(action="disableRoute", domain="<that-host>", path="/")` (or `updateRoute` with `enable=false`). Re-enable with `enableRoute`. Do **not** look for a `manageHosting` disable-default-domain action; do **not** call non-existent `ModifyGatewayRoute` — the API is `ModifyHTTPServiceRoute`
    - **Important**: If access address is a directory, it must end with `/`
 
 3. **Cloud Storage Public URL**:
@@ -170,6 +178,46 @@ Example structure for operation recording:
      - Do **not** use dynamic imports like `import("@cloudbase/js-sdk")` or async wrappers such as `initCloudBase()` with internal `initPromise`
    - Then proceed with login using a verified method (username/password, phone, email, or WeChat)
 
+2. **Environment Management (via manageEnv)**:
+   The `manageEnv` tool provides full lifecycle management for CloudBase environments.
+
+   | Action | Description | Key Parameters |
+   |--------|-------------|----------------|
+   | `listPackages` | Query available plans | (none) |
+   | `create` | Create new environment (needs confirm) | `alias`, `packageId`, `resources`, `duration` |
+   | `modifyPlan` | Change plan (upgrade/downgrade, needs confirm) | `envId`, `packageId` |
+   | `renew` | Renew environment (needs confirm) | `envId`, `duration` |
+
+   **Creating an environment with specific resources:**
+   ```
+   manageEnv(action="create", alias="my-env", packageId="baas_personal",
+             resources=["flexdb","storage","function","postgresql"], confirm="yes")
+   ```
+
+   - **`resources`** (optional, create only): controls which CloudBase capabilities to enable:
+     - `flexdb` — Document database (NoSQL)
+     - `storage` — Cloud Storage
+     - `function` — Cloud Functions
+     - `postgresql` — PostgreSQL relational database (PG mode)
+   - Defaults to all four when omitted. MCP always sends non-empty `Resources` to CreateEnv.
+   - Do **not** pass `region`: CreateEnv does not accept Region; environment region is determined by account/package.
+   - ⚠️ **All paid operations** (create / modifyPlan / renew) require `confirm="yes"`.
+
+   **Querying available packages before creating:**
+   ```
+   manageEnv(action="listPackages")
+   ```
+
+   **Changing plan (e.g. personal → standard):**
+   ```
+   manageEnv(action="modifyPlan", envId="your-env-id", packageId="baas_pf_standard", confirm="yes")
+   ```
+
+   **Renewing an environment:**
+   ```
+   manageEnv(action="renew", envId="your-env-id", duration=1, confirm="yes")
+   ```
+
 ## Authentication Best Practices
 
 **Important: Authentication methods for different platforms are completely different, must strictly distinguish!**
@@ -178,8 +226,10 @@ Example structure for operation recording:
 - **Must use SDK built-in authentication**: CloudBase Web SDK provides complete authentication features
 - **Recommended method**: SMS login with `auth.getVerification()`, for detailed, refer to web auth related docs
 - **Forbidden behavior**: Do not use cloud functions to implement login authentication logic
-- **User management**: After login, get user information via `auth.getCurrentUser()`
+- **Session management**: For route guards and login proof, use `auth.getSession()` and require `data.session`; do not use deprecated `getLoginState()` or `auth.getUser()` / `auth.getCurrentUser()` as proof of real login.
 - **Provider and login-method setup**: Use `queryAppAuth` / `manageAppAuth`, not the MCP `auth` tool
+- **Anonymous login is disabled by default.** Publishable `accessKey` alone does **not** create a gateway-authenticated anonymous session. With `@cloudbase/js-sdk` **3.x**, call `await auth.signInAnonymously()` (or an equivalent authenticated session) **before** NoSQL `app.database()` CRUD, or the gateway returns **401**. If the app uses AuthGuard or RLS for access control, ensure `is_anonymous` checks are in place when anonymous access is allowed.
+- **⚠️ PG RLS: Use `auth.uid()`, NOT `current_user`.** When writing RLS policies for CloudBase PostgreSQL, the user identity must use `auth.uid()` (returns the JWT `sub` / actual user ID as **`text`**, not `uuid` — unlike Supabase). Prefer owner columns as `varchar(64)` / `text`; if the column is `uuid`, cast with `auth.uid()::uuid` or you get `operator does not exist: uuid = text`. Do NOT use `current_user` or `current_setting(...)` — these PostgreSQL built-in functions return the database role name (e.g. `authenticated`), not the CloudBase auth user ID. CloudBase PG provides four auth helper functions: `auth.uid()`, `auth.role()`, `auth.email()`, `auth.jwt()`. Verify availability with `SELECT proname FROM pg_proc WHERE pronamespace = 'auth'::regnamespace`.
 
 ### Mini Program Authentication
 - **Login-free feature**: Mini program CloudBase is naturally login-free, no login flow needed
@@ -220,7 +270,7 @@ Example structure for operation recording:
    Create collection → Configure security rules → Write code → Test
    ```
    - Use `managePermissions(action="updateResourcePermission")` to configure resource permissions
-   - If permissions were just changed, allow a short propagation window (typically 2-5 minutes) before retesting, but do not assume every failure is cache. Re-check the actual rule shape and active client write pattern first.
+   - If permissions were just changed, retry after a few seconds (typically within ~30s). Do not blind-wait 2-5 minutes. If it still fails, re-check the actual rule shape and active client write pattern first — most failures are misconfigured rules, not cache.
    - See `no-sql-web-sdk/security-rules.md` for detailed `resourceType="noSqlDatabase"` examples only; do not treat `doc._openid`, `auth.openid`, query-subset validation, or `create` / `update` / `delete` JSON templates as generic rules for functions, storage, or SQL tables
    - Official references:
      - General security rules overview: `https://cloud.tencent.com/document/product/876/41802`
@@ -240,74 +290,34 @@ Compatibility note:
    - **System logs**: `PRIVATE` or `ADMINONLY`
 
 5. **Cross-Collection Operations**:
-   - If user has no special requirements, operations involving cross-database collections must be implemented via cloud functions
+   - Prefer security rules / RLS and client SDK when the permission model allows it
+   - Use cloud functions when the operation needs elevated privileges, server secrets, or multi-collection logic that rules cannot express
+   - For minimal Web demos (Todo / Notes / Kanban / 最小前后端), do **not** introduce cloud functions for CRUD — follow `../minimal-web-baas-demo/SKILL.md`
 
 ## Role Management (MCP)
 
-CloudBase MCP provides role management capabilities through the `queryPermissions` and `managePermissions` tools. These are equivalent to the CLI `tcb role` commands.
+CloudBase MCP provides role management via `queryPermissions` and `managePermissions` (CLI equivalent: `tcb role`). See each tool's schema for the full action list.
 
 **⚠️ CRITICAL: Role policies and resource permissions are two independent systems with NO automatic synchronization.**
 
 - Resource permissions (security rules) control access to specific resources (tables, collections, functions, storage)
 - Roles (identity dimension) control policy bundles and member assignments
 
-### Available Actions
+**Query** (`queryPermissions`): `listRoles`, `getRole` (by `roleId` / `roleIdentity` / `roleName`).
+**Manage** (`managePermissions`): `createRole`, `updateRole`, `deleteRoles`, `addRoleMembers`, `removeRoleMembers`, `addRolePolicies`, `removeRolePolicies`.
 
-**Query Operations** (via `queryPermissions`):
-| Action | Description |
-|--------|-------------|
-| `listRoles` | List all roles (system and custom) |
-| `getRole` | Get detailed role information by roleId/roleIdentity/roleName |
-
-**Management Operations** (via `managePermissions`):
-| Action | Description |
-|--------|-------------|
-| `createRole` | Create a new custom role |
-| `updateRole` | Update an existing role (add/remove policies or members) |
-| `deleteRoles` | Delete one or more custom roles |
-| `addRoleMembers` | Add members to a role |
-| `removeRoleMembers` | Remove members from a role |
-| `addRolePolicies` | Add policies to a role |
-| `removeRolePolicies` | Remove policies from a role |
-
-### Usage Examples
-
-**List all roles:**
 ```
-queryPermissions(action="listRoles")
+managePermissions(action="createRole", roleName="Developer", roleIdentity="developer",
+                  policies=["FunctionsAccess"], memberUids=["user-uid-1"])
 ```
 
-**Get specific role details:**
-```
-queryPermissions(action="getRole", roleId="role-xxx")
-# or by identity
-queryPermissions(action="getRole", roleIdentity="dev_role")
-# or by name
-queryPermissions(action="getRole", roleName="Developer")
-```
-
-**Delete a custom role:**
-```
-managePermissions(action="deleteRoles", roleIds=["role-xxx"])
-```
-
-**Create a custom role:**
-```
-managePermissions(action="createRole", roleName="Developer", roleIdentity="developer", policies=["FunctionsAccess"], memberUids=["user-uid-1"])
-```
-
-**Update a role (add policies):**
-```
-managePermissions(action="updateRole", roleId="role-xxx", addPolicies=["StoragesAccess"])
-```
-
-> ⚠️ Note: Only custom roles can be deleted. System roles are read-only.
+> ⚠️ Only custom roles can be deleted. System roles are read-only.
 
 See also: CLI equivalent commands in `cloudbase-cli/references/permission.md`
 
 3. **Cloud Function Optimization**:
-   - If involving cloud functions, while ensuring security, can minimize the number of cloud functions as much as possible
-   - For example: implement one cloud function for client-side requests, implement one cloud function for data initialization
+   - Browser CRUD should not default to a cloud-function middleware layer; prefer `@cloudbase/js-sdk` → database (see `../minimal-web-baas-demo/SKILL.md`)
+   - When cloud functions are truly required, keep the count minimal and scope each function to secrets, elevated privilege, or background work
 
 ## Data Models
 
@@ -330,105 +340,33 @@ See also: CLI equivalent commands in `cloudbase-cli/references/permission.md`
 
 ## Console Management
 
-After creating/deploying resources, provide corresponding console management page links. All console URLs follow the pattern: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/{path}`.
+After creating/deploying resources, provide corresponding console links. All console URLs follow the pattern: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/{path}` — replace `${envId}` with the real EnvId resolved via `envQuery` (resolve aliases first; see Environment and Authentication below), and resource names with actual values.
 
-The CloudBase console is updated frequently. If a live, logged-in console shows a different hash path from this document, prefer the live console path over stale documentation and then update this skill to match.
+The CloudBase console is updated frequently. If a live, logged-in console shows a different hash path from this list, prefer the live console path over stale documentation and then update this skill to match.
 
-### Core Function Entry Points
+### Entry points (one line each)
 
-1. **Overview (概览)**: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/overview`
-   - Main dashboard showing environment status, resource usage, and quick access to key features
-   - Displays overview of all CloudBase services and their status
+- Overview: `#/overview`
+- Template Center: `#/cloud-template/market`
+- Document Database: `#/db/doc` · Collections `#/db/doc/collection/${collectionName}` · Models `#/db/doc/model/${modelName}`
+- MySQL Database: `#/db/mysql` · Tables `#/db/mysql/table/default/` (must be enabled in console first)
+- Cloud Functions: `#/scf` · Detail `#/scf/detail?id=${functionName}&NameSpace=${envId}`
+- CloudRun: `#/platform-run`
+- Cloud Storage: `#/storage`
+- AI+: `#/ai`
+- Static Hosting: `#/static-hosting` (alt: `https://console.cloud.tencent.com/tcb/hosting`)
+- Identity Authentication: `#/identity` · Login management `#/identity/login-manage` · Token management `#/identity/token-management`
+- Weida Low-Code: `#/lowcode/apps`
+- Logs & Monitoring: `#/devops/log`
+- Environment Settings: `#/env/http-access` (security domains, CORS, env vars, quotas)
 
-2. **Template Center (模板中心)**: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/cloud-template/market`
-   - Access project templates for React, Vue, Mini Program, UniApp, and backend frameworks
-   - AI Builder templates for rapid application generation
-   - Framework templates: React, Vue, Miniapp, UniApp, Gin, Django, Flask, SpringBoot, Express, NestJS, FastAPI
+For configuration pages (like login management), guide users through the setup process rather than only dropping a link.
 
-3. **Document Database (文档型数据库)**: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/db/doc`
-   - Manage NoSQL document database collections
-   - **Collection Management**: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/db/doc/collection/${collectionName}`
-     - View, edit, and manage collection data
-     - Configure security rules and permissions
-   - **Data Model Management**: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/db/doc/model/${modelName}`
-     - Create and manage data models with relationships
-     - View model schema and field definitions
+## Reference index
 
-4. **MySQL Database (MySQL 数据库)**: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/db/mysql`
-   - Manage MySQL relational database
-   - **Table Management**: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/db/mysql/table/default/`
-     - Create, modify, and manage database tables
-     - Execute SQL queries and manage table structure
-   - **Important**: Must enable MySQL database in console before use
+All packaged reference files (required for skill lint reachability):
 
-5. **Cloud Functions (云函数)**: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/scf`
-   - Manage and deploy Node.js cloud functions
-   - **Function List**: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/scf`
-   - **Function Detail**: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/scf/detail?id=${functionName}&NameSpace=${envId}`
-     - View function code, logs, and configuration
-     - Manage function triggers and environment variables
-     - Monitor function invocations and performance
-
-6. **CloudRun (云托管)**: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/platform-run`
-   - Manage containerized backend services
-   - Deploy services using Function mode or Container mode
-   - Configure service scaling, access types, and environment variables
-   - View service logs and monitoring data
-
-7. **Cloud Storage (云存储)**: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/storage`
-   - Manage file storage buckets
-   - Upload, download, and organize files
-   - Configure storage permissions and access policies
-   - Generate temporary access URLs for private files
-
-8. **AI+**: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/ai`
-   - Access AI capabilities and services
-   - AI Builder for generating templates and code
-   - AI image recognition and other AI features
-
-9. **Static Website Hosting (静态网站托管)**: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/static-hosting`
-   - Deploy and manage static websites
-   - Alternative URL: `https://console.cloud.tencent.com/tcb/hosting`
-   - Configure custom domains and CDN settings
-   - View deployment history and access logs
-
-10. **Identity Authentication (身份认证)**: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/identity`
-    - Configure authentication methods and user management
-    - **Login Management**: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/identity/login-manage`
-      - Enable/disable login methods (SMS, Email, Username/Password, WeChat, Custom Login)
-      - Configure SMS/Email templates
-      - Manage security domain whitelist
-    - **Token Management**: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/identity/token-management`
-      - Manage API Keys and Publishable Keys
-      - View and manage access tokens
-
-11. **Weida Low-Code (微搭低代码)**: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/lowcode/apps`
-    - Access Weida low-code development platform
-    - Build applications using visual drag-and-drop interface
-
-12. **Logs & Monitoring (日志监控)**: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/devops/log`
-    - View logs from cloud functions, CloudRun services, and other resources
-    - Monitor resource usage, performance metrics, and error rates
-    - Set up alerts and notifications
-
-13. **Environment Settings (环境配置)**: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/env/http-access`
-    - Configure environment-level settings
-    - Manage security domains and CORS settings
-    - Configure environment variables and secrets
-    - View environment information and resource quotas
-
-### URL Construction Guidelines
-
-- **Base URL Pattern**: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/{path}`
-- **Replace Variables**: Always replace `${envId}` with the actual environment ID queried via `envQuery` tool
-- **Alias Handling**: If the conversation only contains an alias or shorthand, first resolve it with `envQuery(action="list", alias=..., aliasExact=true)` and use the returned `EnvId`; if the alias is ambiguous or missing, ask the user to confirm before generating links
-- **Resource-Specific URLs**: For specific resources (collections, functions, models), replace resource name variables with actual values
-- **Usage**: After creating/deploying resources, provide these console links to users for management operations
-
-### Quick Reference
-
-When directing users to console pages:
-- Use the full URL with environment ID
-- Explain what they can do on each page
-- Provide context about why they need to access that specific page
-- For configuration pages (like login management), guide users through the setup process
+- [protocols/change-safety-protocol.md](references/protocols/change-safety-protocol.md)
+- [protocols/deployment-gate.md](references/protocols/deployment-gate.md)
+- [protocols/deployment-share.md](references/protocols/deployment-share.md)
+- [protocols/sensitive-runtime-data-protection.md](references/protocols/sensitive-runtime-data-protection.md)

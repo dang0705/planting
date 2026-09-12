@@ -6,20 +6,31 @@
       class="diagnose-automation-trigger"
       @click="injectAutomationDiagnoseImagesFromStorage"
     />
-    <view id="diagnose-flow-content" class="flex-1 pb-3" :class="{ 'px-4': contentPadding }">
+    <view
+      id="diagnose-flow-content"
+      class="flex-1 pb-3 pt-4"
+      :class="{
+        'px-4': contentPadding,
+        'diagnose-flow-content--with-sticky-footer': !embedded && !result
+      }"
+    >
       <DiagnoseIntake v-if="!result" :view="viewContext" />
       <DiagnoseResultStage v-if="result" :view="viewContext" />
     </view>
-    <view id="diagnose-flow-footer" class="border-t border-[#E5E7EB] bg-white px-4 py-3">
+    <view
+      id="diagnose-flow-footer"
+      class="border-t border-[#E5E7EB] bg-white px-4 py-4"
+      :class="{ 'diagnose-flow-footer--sticky': !embedded && !result }"
+    >
       <view v-if="!result" id="diagnose-flow-footer-start">
         <button
           id="diagnose-submit-button"
-          class="w-full rounded-xl bg-primary py-3 font-semibold text-white"
-          :class="{ 'opacity-50': !canStartDiagnoseNow }"
-          :disabled="!canStartDiagnoseNow"
+          class="h-12 w-full rounded-xl bg-primary px-0 py-0 text-base font-medium leading-6 text-white after:border-0"
+          :class="{ 'opacity-70': isVisualScanning }"
+          :disabled="isVisualScanning"
           @click="startDiagnose"
         >
-          开始诊断
+          {{ isVisualScanning ? '扫描中…' : '开始诊断' }}
         </button>
       </view>
       <view v-else-if="retakeExpired" id="diagnose-flow-footer-expired-actions">

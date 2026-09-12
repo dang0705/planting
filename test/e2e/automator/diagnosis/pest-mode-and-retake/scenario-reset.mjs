@@ -5,7 +5,7 @@ import {
   waitForPagePath
 } from './runtime-core.mjs'
 
-async function resetDiagnosisTab(report, miniProgram, scenarioName) {
+async function resetDiagnosisTab(report, miniProgram, scenarioName, diagnosisProfile = 'full') {
   const currentPage = await runAutomatorStep(report, `${scenarioName}.currentPageBeforeReset`, () =>
     miniProgram.currentPage()
   )
@@ -76,8 +76,12 @@ async function resetDiagnosisTab(report, miniProgram, scenarioName) {
       }
     )
   }
-  await runAutomatorStep(report, `${scenarioName}.reLaunch:pages/diagnose/diagnose`, () =>
-    miniProgram.reLaunch('/pages/diagnose/diagnose')
+  const launchPath =
+    diagnosisProfile === 'pest'
+      ? '/subpackages/diagnosis/flow?diagnosisProfile=pest'
+      : '/pages/diagnose/diagnose'
+  await runAutomatorStep(report, `${scenarioName}.reLaunch:${launchPath}`, () =>
+    miniProgram.reLaunch(launchPath)
   )
   const entryPage = await waitForPagePath(miniProgram, 'subpackages/diagnosis/flow')
   const entryFlow = await assertElement(

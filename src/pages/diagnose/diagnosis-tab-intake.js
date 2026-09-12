@@ -6,6 +6,7 @@ import { useUserStore } from '@/store/user.js'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import { createAsyncActionGuard } from '@/utils/interaction-guard.js'
 import { requireMvpAccess } from '@/utils/subscription-access.js'
+import { confirmDiagnosisProfile } from '@/utils/diagnosis-entry-confirm.js'
 import { DIAGNOSIS_IMAGE_UPLOAD_OPTIONS } from '@/utils/diagnosis-image-uploader-options.js'
 import { buildStructuredImageInputs } from '@/utils/diagnose-structured-images.js'
 import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
@@ -191,6 +192,8 @@ export function useDiagnosisTabIntake() {
       ) {
         return false
       }
+
+      selectedDiagnosisProfile.value = await confirmDiagnosisProfile()
 
       isStartingDiagnosis.value = true
       uni.showLoading({ title: '正在准备问题...' })

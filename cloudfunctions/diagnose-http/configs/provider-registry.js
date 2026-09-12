@@ -155,7 +155,9 @@ const PROVIDER_REGISTRY = Object.freeze({
         promptCacheKey: false,
         strategyType: 'static_prefix_without_server_cache'
       }),
-      request: Object.freeze({ maxTokens: true, enableThinking: false })
+      // Qwen3.5 在百炼默认开启思考；诊断结构化抽取必须显式关闭，避免把
+      // 原本的快速视觉调用变成长思考请求。
+      request: Object.freeze({ maxTokens: true, enableThinking: true })
     })
   })
 })

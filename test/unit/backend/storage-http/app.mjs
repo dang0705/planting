@@ -39,8 +39,14 @@ try {
         methodNotAllowed: () => ({ statusCode: 405, code: 405 }),
         getHttpRequestData: event => event,
         resolveRequestAppEnv: () => 'development',
-        runWithRequestAppEnv: (_env, task) => task(),
-        resolveHttpUserInfo: async () => ({ openid: 'wx_owner' })
+        runWithRequestAppEnv: (_env, task) => task()
+      }
+    }
+    if (request === '/opt/utils/platform-session') {
+      return {
+        assertPlatformFeature: () => true,
+        getBearerToken: () => 'planting-session-v1_test',
+        resolvePersistentSession: async () => ({ openid: 'wx_owner' })
       }
     }
     if (request === '/opt/utils/plant-images') {
@@ -69,7 +75,10 @@ try {
     () => storage._test.resolveImageSuffix({ suffix: 'jpg', mimeType: 'image/png' }),
     error => error.statusCode === 400
   )
-  assert.equal(storage._test.assertImagePayload({ base64: validPngBase64, suffix: 'png' }).length, 12)
+  assert.equal(
+    storage._test.assertImagePayload({ base64: validPngBase64, suffix: 'png' }).length,
+    12
+  )
   assert.throws(
     () => storage._test.assertImagePayload({ base64: validPngBase64, suffix: 'jpg' }),
     error => error.statusCode === 400

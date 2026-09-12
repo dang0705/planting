@@ -17,8 +17,8 @@ const {
   clampConfidence
 } = require('./visual-contract')
 const { normalizeCaptureRegion } = require('./capture-region-normalizer')
+const { appendCanonicalGeneralVisualCandidates } = require('./visual-discriminator-evidence')
 const { PEST_MODE_KEYS, PEST_VISUAL_RULES } = require('../domain/diagnosis-mode-registry')
-
 const MIN_THRIPS_VISIBLE_MODE_CONFIDENCE = 0.95
 
 function extractJsonBlock(text) {
@@ -223,10 +223,17 @@ function parsePartialStructuredVisualResult(text, options = {}) {
   const visualDiscriminators = normalizeVisualDiscriminators(
     safeJsonParseArrayField(source, 'visual_discriminators')
   )
-  const canonicalSymptomCandidates = appendCanonicalThripsVisibleCandidate({
-    symptomCandidates,
-    modeCandidates,
-    visualDiscriminators
+  const captureRegion = normalizeCaptureRegion(extractJsonStringField(source, 'capture_region'))
+  const regionRef = normalizeCaptureRegion(extractJsonStringField(source, 'region_ref') || captureRegion)
+  const canonicalSymptomCandidates = appendCanonicalGeneralVisualCandidates({
+    symptomCandidates: appendCanonicalThripsVisibleCandidate({
+      symptomCandidates,
+      modeCandidates,
+      visualDiscriminators
+    }),
+    visualDiscriminators,
+    diagnosisProfile: options?.diagnosisProfile,
+    regionRef
   })
   const missingInfoForPath = normalizeMissingInfoForPath(
     safeJsonParseArrayField(source, 'missing_info_for_path')
@@ -262,9 +269,9 @@ function parsePartialStructuredVisualResult(text, options = {}) {
       : secondaryCandidates,
     out_of_pool_symptom_candidates: outOfPoolCandidates,
     route_hints: routeHints,
-    capture_region: normalizeCaptureRegion(extractJsonStringField(source, 'capture_region')),
+    capture_region: captureRegion,
     mode_candidates: modeCandidates,
-    region_ref: normalizeCaptureRegion(extractJsonStringField(source, 'region_ref')),
+    region_ref: regionRef,
     visual_discriminators: visualDiscriminators,
     missing_info_for_path: missingInfoForPath,
     suggested_question_capture: suggestedFollowupCapture,
@@ -368,10 +375,17 @@ function parseStructuredVisualResult(text, options = {}) {
         .slice(0, 8)
     : []
   const visualDiscriminators = normalizeVisualDiscriminators(payload?.visual_discriminators || [])
-  const canonicalSymptomCandidates = appendCanonicalThripsVisibleCandidate({
-    symptomCandidates,
-    modeCandidates,
-    visualDiscriminators
+  const captureRegion = normalizeCaptureRegion(payload?.capture_region || payload?.captureRegion)
+  const regionRef = normalizeCaptureRegion(payload?.region_ref || payload?.regionRef || captureRegion)
+  const canonicalSymptomCandidates = appendCanonicalGeneralVisualCandidates({
+    symptomCandidates: appendCanonicalThripsVisibleCandidate({
+      symptomCandidates,
+      modeCandidates,
+      visualDiscriminators
+    }),
+    visualDiscriminators,
+    diagnosisProfile: options?.diagnosisProfile,
+    regionRef
   })
 
   const qualityGrade = normalizeQualityGrade(
@@ -391,9 +405,9 @@ function parseStructuredVisualResult(text, options = {}) {
     symptom_candidates: canonicalSymptomCandidates,
     out_of_pool_symptom_candidates: candidateLists.outOfPoolCandidates,
     route_hints: normalizeRouteHints(payload?.route_hints || []),
-    capture_region: normalizeCaptureRegion(payload?.capture_region || payload?.captureRegion),
+    capture_region: captureRegion,
     mode_candidates: modeCandidates,
-    region_ref: normalizeCaptureRegion(payload?.region_ref || payload?.regionRef),
+    region_ref: regionRef,
     visual_discriminators: visualDiscriminators,
     missing_info_for_path: normalizeMissingInfoForPath(payload?.missing_info_for_path || []),
     suggested_question_capture: normalizeSuggestedFollowupCapture(

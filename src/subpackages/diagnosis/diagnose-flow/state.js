@@ -17,6 +17,7 @@ export function createDiagnoseFlowState() {
   const diagnoseStore = useDiagnoseStore()
   const popup = ref(null)
   const result = ref(null)
+  const visualScanning = ref(false)
   const showAIDialog = ref(false)
   const aiStreamDialogRef = ref(null)
   const pendingDiagnosePayload = ref(null)
@@ -69,6 +70,7 @@ export function createDiagnoseFlowState() {
     diagnoseStore,
     popup,
     result,
+    visualScanning,
     showAIDialog,
     aiStreamDialogRef,
     pendingDiagnosePayload,

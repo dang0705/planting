@@ -1,18 +1,19 @@
 ---
 name: web-development
 description: Use when users need to implement, integrate, debug, build, deploy, or validate a Web frontend after the product direction is already clear, especially for React, Vue, Vite, browser flows, or CloudBase Web integration.
-version: 2.18.0
+version: 2.33.2
 alwaysApply: false
 ---
 
-## Standalone Install Note
+## Sibling skills (local only)
 
-If this environment only installed the current skill, start from the CloudBase main entry and use the published `cloudbase/references/...` paths for sibling skills.
+Sibling CloudBase skills ship beside this skill. Use local relative paths such as `../auth-tool-cloudbase/SKILL.md`.
 
-- CloudBase main entry: `https://cnb.cool/tencent/cloud/cloudbase/cloudbase-skills/-/git/raw/main/skills/cloudbase/SKILL.md`
-- Current skill raw source: `https://cnb.cool/tencent/cloud/cloudbase/cloudbase-skills/-/git/raw/main/skills/cloudbase/references/web-development/SKILL.md`
+If a referenced sibling skill file is missing from this environment, ask the user to install the full CloudBase plugin (or the missing skill). Do **not** HTTP-fetch remote skill or protocol markdown into the agent context.
 
-Keep local `references/...` paths for files that ship with the current skill directory. When this file points to a sibling skill such as `auth-tool` or `web-development`, use the standalone fallback URL shown next to that reference.
+**Cross-cutting protocols** (required before code changes or deployments):
+- Change Safety Protocol: `../cloudbase-platform/references/protocols/change-safety-protocol.md`
+- Deployment Gate: `../cloudbase-platform/references/protocols/deployment-gate.md`
 
 # Web Development
 
@@ -28,18 +29,21 @@ Keep local `references/...` paths for files that ship with the current skill dir
 
 - The task includes project structure, framework conventions, build config, deployment, routing, or frontend test and validation flows.
 - The request includes UI implementation but the visual direction is already fixed; otherwise read `ui-design` first.
+- **⚠️ Any task involving interface styling, layout, color scheme, or font selection — before writing the first line of CSS/Tailwind, you MUST load the `ui-design` skill and output a Design Specification.** Skipping this step causes frontend styling to degrade to generic AI template defaults. The `ui-design` skill must be loaded before any visual implementation begins, not retroactively after the user complains about the appearance.
 
 ### Then also read
 
 - General React / Vue / Vite guidance -> `frameworks.md`
 - Browser flow checks or page validation -> `browser-testing.md`
-- Login flow -> `../auth-tool/SKILL.md` (standalone fallback: `https://cnb.cool/tencent/cloud/cloudbase/cloudbase-skills/-/git/raw/main/skills/cloudbase/references/auth-tool/SKILL.md`), then `../auth-web/SKILL.md` (standalone fallback: `https://cnb.cool/tencent/cloud/cloudbase/cloudbase-skills/-/git/raw/main/skills/cloudbase/references/auth-web/SKILL.md`)
+- Login flow -> `../auth-tool-cloudbase/SKILL.md`, then `../auth-web-cloudbase/SKILL.md`
+- Official Account JSAPI Pay, Native QR-code Pay, or WeChat OAuth on CloudBase -> `../cloudbase-wechat-integration/SKILL.md` (official docs: `https://docs.cloudbase.net/integration/introduce/index.md`)
 - CloudBase database work -> matching database skill
 
 ### Do NOT use for
 
 - Visual direction setting, prototype-first design work, or pure aesthetic exploration.
 - Mini programs, native Apps, or backend-only services.
+- WeChat payment or Official Account OAuth contract details; use `cloudbase-wechat-integration` after identifying the Web surface.
 
 ### Common mistakes / gotchas
 
@@ -47,6 +51,7 @@ Keep local `references/...` paths for files that ship with the current skill dir
 - Mixing framework setup, deployment, and CloudBase integration concerns into one vague change.
 - Treating cloud functions as the default solution for Web authentication.
 - Skipping browser-level validation after a UI or routing change.
+- **History mode SPA with CloudBase static hosting**: deploying a single-page app using History mode (React Router / Vue Router) without configuring the static hosting "404 error document" to `index.html`. This causes `NoSuchKey` / 404 errors when users refresh or directly visit any sub-route.
 - In an existing application, detouring into UI redesign or broad repo sweeps before patching the current handlers and services.
 
 ## Engineering constitution (non-negotiable)
@@ -66,6 +71,9 @@ These rules override convenience. Treat them as a gate before saying "done".
 - The same spirit applies to ESLint: do not sprinkle `// eslint-disable` to mute the real signal. Fix the rule violation, or discuss before disabling.
 
 ### 2. Self-verify before claiming done
+
+Before making any non-trivial code or configuration change, you must first follow the Change Safety Protocol in `cloudbase-platform/references/protocols/change-safety-protocol.md` (declare impact → user confirmation → post-edit verification).
+Before any static hosting publish or custom domain work, complete the checks in `cloudbase-platform/references/protocols/deployment-gate.md`.
 
 Saying "I've implemented it" / "fixed it" / "it should work" without evidence is not acceptable. Before declaring completion, you must actually run the checks and report the result.
 
@@ -124,7 +132,7 @@ Use this skill for Web engineering work such as:
 
 4. **Treat CloudBase as an integration branch**
    - Use CloudBase Web SDK and static hosting guidance only when the project actually needs CloudBase platform features.
-   - Reuse `auth-tool` and `auth-web` for login or provider readiness instead of re-describing those flows here.
+   - Reuse `auth-tool-cloudbase` and `auth-web-cloudbase` for login or provider readiness instead of re-describing those flows here.
 
 ## Core workflow
 
@@ -154,8 +162,8 @@ Use this section only when the Web project needs CloudBase platform features.
 
 ### Web SDK rules
 
-- Prefer npm installation for React, Vue, Vite, and other bundler-based projects
-- Use the CDN only for static HTML pages, quick demos, embedded snippets, or README examples
+- Prefer npm installation for React, Vue, Vite, and other bundler-based projects: `npm install @cloudbase/js-sdk`
+- Use the CDN only for static HTML pages, quick demos, embedded snippets, or README examples: `https://static.cloudbase.net/cloudbase-js-sdk/latest/cloudbase.full.js`
 - Only use documented CloudBase Web SDK APIs; do not invent methods or options
 - Keep a shared `app` or `auth` instance instead of re-initializing on every call
 - If the user only provides an environment alias, nickname, or other shorthand, resolve it to the canonical full `EnvId` before writing SDK init code, console links, or config files. Do not pass alias-like short forms directly into `cloudbase.init({ env })`.
@@ -164,7 +172,7 @@ Use this section only when the Web project needs CloudBase platform features.
 
 - Authentication must use CloudBase SDK built-in features
 - Do not move Web login logic into cloud functions
-- For provider readiness, login method setup, or publishable key issues, route to `auth-tool` and `auth-web`
+- For provider readiness, login method setup, or publishable key issues, route to `auth-tool-cloudbase` and `auth-web-cloudbase`
 
 ### Static hosting defaults
 
@@ -172,6 +180,17 @@ Use this section only when the Web project needs CloudBase platform features.
 - Prefer relative asset paths for static hosting compatibility
 - Use hash routing by default when the project lacks server-side route rewrites
 - If the user does not specify a root path, avoid deploying directly to the site root by default
+- **SPA routing (History mode)**: when using React Router / Vue Router in History mode (not hash mode), configure the CloudBase static hosting **"404 error document"** to `index.html`. Otherwise refreshing or directly visiting any sub-route returns `NoSuchKey` / 404 error, because the static hosting looks for a file at that path instead of falling through to `index.html` for the SPA to handle routing.
+
+  Use the MCP tool to apply this:
+  ```json
+  manageHosting({ action: "setWebsiteDocument", indexDocument: "index.html", errorDocument: "index.html" })
+  ```
+
+  Then verify with:
+  ```json
+  queryHosting({ action: "websiteConfig" })
+  ```
 
 ### CloudBase quick start
 
@@ -183,5 +202,5 @@ const app = cloudbase.init({
   env: "your-full-env-id", // Canonical full CloudBase environment ID resolved from envQuery or the console
 });
 
-const auth = app.auth();
+const auth = app.auth
 ```

@@ -11,10 +11,12 @@ import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
-const { assertSafeFunctionEnvUpdate } = require('../../cloudfunctions/layer/utils/cloudbase-env-update-guard.js')
+const {
+  assertSafeFunctionEnvUpdate
+} = require('../../cloudfunctions/layer/utils/cloudbase-env-update-guard.js')
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const canonicalEnvId = 'cloud1-2grufevs395a9d5e'
-const readers = ['auth-user-http', 'plant-user-http']
+const readers = ['storage-http']
 const requiredSecretKeys = ['HTTP_IDENTITY_TICKET_SECRET', 'SESSION_TOKEN_SECRET']
 const apply = process.argv.includes('--apply')
 const envId = String(process.env.CLOUDBASE_ENV_ID || process.env.TCB_ENV || canonicalEnvId).trim()
@@ -27,10 +29,13 @@ function runTcb(args, options = {}) {
   const result = spawnSync('npx', ['--yes', '--package', '@cloudbase/cli@3.2.2', 'tcb', ...args], {
     cwd: options.cwd || projectRoot,
     env: { ...process.env, CLOUDBASE_ENV_ID: envId, TCB_ENV: envId },
+    input: options.input,
     encoding: 'utf8'
   })
   if (result.status !== 0) {
-    fail(`tcb ${args.slice(0, 3).join(' ')} failed: ${String(result.stderr || result.stdout || '').slice(0, 600)}`)
+    fail(
+      `tcb ${args.slice(0, 3).join(' ')} failed: ${String(result.stderr || result.stdout || '').slice(0, 600)}`
+    )
   }
   return String(result.stdout || '')
 }
@@ -67,23 +72,44 @@ function readVariables(detail) {
 
 function parseEnvFile(file) {
   if (!fs.existsSync(file)) return {}
-  return fs.readFileSync(file, 'utf8').split(/\r?\n/u).reduce((values, line) => {
-    const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/u)
-    if (!match || match[1].startsWith('#')) return values
-    let value = match[2]
-    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-      value = value.slice(1, -1)
-    }
-    values[match[1]] = value
-    return values
-  }, {})
+  return fs
+    .readFileSync(file, 'utf8')
+    .split(/\r?\n/u)
+    .reduce((values, line) => {
+      const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/u)
+      if (!match || match[1].startsWith('#')) return values
+      let value = match[2]
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1)
+      }
+      values[match[1]] = value
+      return values
+    }, {})
 }
 
 function localSecrets() {
-  const values = { ...parseEnvFile(path.join(projectRoot, '.env.local')), ...process.env }
-  const secrets = Object.fromEntries(requiredSecretKeys.map(key => [key, String(values[key] || '').trim()]))
+  const values = {
+    ...parseEnvFile(path.join(projectRoot, '.env')),
+    ...parseEnvFile(path.join(projectRoot, '.env.local')),
+    ...process.env
+  }
+  const secrets = Object.fromEntries(
+    requiredSecretKeys.map(key => [key, String(values[key] || '').trim()])
+  )
+  return requiredSecretKeys.every(key => secrets[key].length >= 32) ? secrets : null
+}
+
+function remoteSecretsFromReader() {
+  const detail = unwrapDetail(parseJson(runTcb(['fn', 'detail', 'auth-user-http', '--json'])))
+  const variables = readVariables(detail)
+  const secrets = Object.fromEntries(
+    requiredSecretKeys.map(key => [key, String(variables[key] || '').trim()])
+  )
   const missing = requiredSecretKeys.filter(key => secrets[key].length < 32)
-  if (missing.length) fail(`本地缺少 reader 必需密钥: ${missing.join(', ')}`)
+  if (missing.length) fail(`auth-user-http 远端缺少 reader 必需密钥: ${missing.join(', ')}`)
   return secrets
 }
 
@@ -94,39 +120,57 @@ function configuredReader(name, config) {
 }
 
 function changedKeys(before, after) {
-  return Array.from(new Set([...Object.keys(before), ...Object.keys(after)])).filter(
-    key => before[key] !== after[key]
-  ).sort()
+  return Array.from(new Set([...Object.keys(before), ...Object.keys(after)]))
+    .filter(key => before[key] !== after[key])
+    .sort()
 }
 
 function syncReader(name, config, secrets) {
   const detail = unwrapDetail(parseJson(runTcb(['fn', 'detail', name, '--json'])))
   const remote = readVariables(detail)
-  if (!Object.keys(remote).length) fail(`${name} remote environment variables are unavailable; refusing full replace`)
+  if (!Object.keys(remote).length)
+    fail(`${name} remote environment variables are unavailable; refusing full replace`)
   const reader = configuredReader(name, config)
   const next = { ...remote, ...(reader.envVariables || {}), ...secrets }
   assertSafeFunctionEnvUpdate(remote, next)
   const changes = changedKeys(remote, next)
-  if (!apply) return { name, action: 'dry_run', changedKeys: changes, remoteKeyCount: Object.keys(remote).length }
+  if (!apply)
+    return {
+      name,
+      action: 'dry_run',
+      changedKeys: changes,
+      remoteKeyCount: Object.keys(remote).length
+    }
   const temporaryDir = fs.mkdtempSync(path.join(os.tmpdir(), `planting-reader-config-${name}-`))
   try {
     fs.writeFileSync(
       path.join(temporaryDir, 'cloudbaserc.json'),
       `${JSON.stringify({ envId, functions: [{ ...reader, envVariables: next }] }, null, 2)}\n`
     )
-    runTcb(['config', 'update', 'fn', name, '--json'], { cwd: temporaryDir })
+    const updateOutput = runTcb(['config', 'update', 'fn', name, '--json'], {
+      cwd: temporaryDir,
+      input: '\u001b[B\r'
+    })
+    if (!updateOutput.trim()) fail(`${name} config update returned no output`)
   } finally {
     fs.rmSync(temporaryDir, { recursive: true, force: true })
   }
-  return { name, action: 'updated', changedKeys: changes, remoteKeyCount: Object.keys(remote).length }
+  return {
+    name,
+    action: 'updated',
+    changedKeys: changes,
+    remoteKeyCount: Object.keys(remote).length
+  }
 }
 
 try {
   if (envId !== canonicalEnvId) fail(`reader config target must be ${canonicalEnvId}`)
   const config = JSON.parse(fs.readFileSync(path.join(projectRoot, 'cloudbaserc.json'), 'utf8'))
-  const secrets = localSecrets()
+  const secrets = localSecrets() || remoteSecretsFromReader()
   const results = readers.map(name => syncReader(name, config, secrets))
-  console.log(JSON.stringify({ status: apply ? 'updated' : 'dry_run', environment: envId, results }, null, 2))
+  console.log(
+    JSON.stringify({ status: apply ? 'updated' : 'dry_run', environment: envId, results }, null, 2)
+  )
 } catch (error) {
   console.error(String(error?.message || error))
   process.exit(1)

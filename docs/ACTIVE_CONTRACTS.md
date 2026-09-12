@@ -277,6 +277,7 @@ options[]
 - SSE 建立后、身份与模型前置流程完成前可先发送 `visual_preparing`，但不得伪称会话或模型已经启动；单图模型收到首个非空内容时最多发送一次 `visual_model_response_started`，其负载不得含模型 chunk、JSON、机器键或提示词。模型传输时序把 `firstByteMs` 与 `firstContentMs` 分开记录；后者只代表首个可见内容到达，不承诺模型推理变快。
 - SSE 客户端使用一次 `enableChunked` 请求消费事件流；流式请求失败时不得自动重放一次普通 `/diagnosis/start`。运行时不支持 SSE 时，服务端在调用模型前返回 `SSE_UNSUPPORTED`；不带流式标记的旧调用继续使用 `{ code, message, data }` JSON 包装。
 - `diagnosisProfile=full` 可提出黄叶、枯萎和具体虫害方向；`diagnosisProfile=pest` 只允许八种具体虫害成为模式候选，黄叶、下垂只作为伴随现象保存。
+- `full` 图中模型已确认的 `leaf_anomaly_sign`（`uniform_yellow`、`patchy_yellow`、`droop_wilt`）若未同时给出对应正式症状候选，解析层将其补为既有的 `leaf_yellowing`、`yellowing_patchy`、`leaf_droop` 可见证据；该补全不新建或抬高 `mode_candidates`，也不在 `pest` profile 生效。
 - 高特异性组合只能使用同一图片、同一 `regionRef` 的独立证据组；同义证据最多计一次。一个以上虫害达到门槛时全部保留。
 - Prompt 的静态区包含完整 schema、器官/拍摄区域、证据与模式目录；profile、分析轮次、入口、植物上下文、前序正式证据摘要和未解决缺口只放动态尾部。
 - 提示词不描述逐虫虫体形状，也不得以文字特征诱导模型找虫；模型先独立识别当前图中的虫体或叶内潜道，随后 `PEST_VISUAL_RULES` 才按当前器官把模式键和 `PEST_EVIDENCE_RULES` 的直接证据组合编译到动态尾部。细网、叶片点状白黄伤痕、银白擦伤、同区针尖黑点、叶内潜道等非虫体可见异常必须保留在动态尾部，辅助证据不得被误写成直判必填项。

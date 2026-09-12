@@ -13,22 +13,17 @@ async function runShortcutScenario(report, miniProgram, wsEndpoint, artifactDir)
   const requestBaseline = (await readRequests(miniProgram)).length
   report.pagePath = 'subpackages/diagnosis/flow'
   await sleep(900)
-  const fullButton = await assertElement(
+  const symptomToggle = await assertElement(
     report,
     page,
-    '#diagnose-profile-full-button',
-    'full profile button visible'
+    '#diagnose-symptom-mode-toggle',
+    'symptom mode toggle visible'
   )
-  await assertElement(report, page, '#diagnose-profile-pest-button', 'pest profile button visible')
-  await assertElement(report, page, '#diagnose-no-image-entry-panel', 'quick entry panel visible')
-  // Explicitly select the full profile before tapping the yellow shortcut. This scenario
-  // runs after pest scenarios which leave the profile as 'pest'; without this tap,
-  // handleSymptomClassQuickSelect correctly declines no-image question start for pest.
-  // Tapping full restores the profile the yellow shortcut requires.
-  if (fullButton) {
-    await fullButton.tap()
+  if (symptomToggle) {
+    await symptomToggle.tap()
     await sleep(300)
   }
+  await assertElement(report, page, '#diagnose-no-image-entry-panel', 'quick entry panel visible')
   const yellow = await assertElement(
     report,
     page,
@@ -44,6 +39,16 @@ async function runShortcutScenario(report, miniProgram, wsEndpoint, artifactDir)
   if (yellow) {
     await yellow.tap()
     await sleep(300)
+  }
+  const submit = await assertElement(
+    report,
+    page,
+    '#diagnose-submit-button',
+    'bottom diagnosis submit visible'
+  )
+  if (submit) {
+    await submit.tap()
+    await sleep(800)
   }
   recordAssertion(report, 'yellow and wilting quick entries are separate', Boolean(yellow && wilt))
   const questionPage = await waitForPagePath(miniProgram, 'subpackages/diagnosis/question-package')

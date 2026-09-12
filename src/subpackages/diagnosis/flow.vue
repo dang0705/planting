@@ -1,6 +1,30 @@
 <template>
-  <Layout title="植物状况检查" left-action="back" background-class="bg-[#F8F6F0]">
-    <view id="diagnosis-flow-page" class="min-h-screen bg-[#F8F6F0]">
+  <Layout
+    :title="plantName ? `诊断 - ${plantName}` : '诊断'"
+    background-class="bg-[#F8FAF9]"
+    :header-style="{
+      background: '#F8FAF9',
+      borderBottom: '1px solid rgba(45, 122, 79, 0.15)'
+    }"
+  >
+    <template #left-action>
+      <view
+        id="diagnosis-flow-header-back-button"
+        class="flex size-7 items-center justify-center"
+        @click="handleClose"
+      >
+        <image :src="diagnosisBackIcon" class="size-5" mode="aspectFit" />
+      </view>
+    </template>
+    <template #title>
+      <text class="block max-w-[220px] truncate text-xl font-medium leading-[30px] text-[#0A0A0A]">
+        {{ plantName ? `诊断 - ${plantName}` : '诊断' }}
+      </text>
+    </template>
+    <template #right>
+      <view class="size-7" />
+    </template>
+    <view id="diagnosis-flow-page" class="min-h-screen bg-[#F8FAF9]">
       <DiagnoseFlow
         v-if="diagnosisAvailable"
         id="diagnosis-flow-page-content"
@@ -27,6 +51,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
+import diagnosisBackIcon from '@/assets/diagnosis/diagnosis-upload.svg'
 import Layout from '@/Layout.vue'
 import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
 import DiagnoseFlow from './diagnose-flow/DiagnoseFlow.vue'

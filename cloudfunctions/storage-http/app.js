@@ -4,15 +4,20 @@ const fs = require('fs')
 const os = require('os')
 const path = require('path')
 const crypto = require('crypto')
-const { models, getCloudBase } = require('/opt/utils/cloudbase')
+let cloudbaseRuntime
+try {
+  cloudbaseRuntime = require('./cloudbase')
+} catch {
+  cloudbaseRuntime = require('/opt/utils/cloudbase')
+}
+const { models, getCloudBase } = cloudbaseRuntime
 const {
   jsonResponse,
   notFound,
   methodNotAllowed,
   getHttpRequestData,
   resolveRequestAppEnv,
-  runWithRequestAppEnv,
-  resolveHttpUserInfo
+  runWithRequestAppEnv
 } = require('/opt/utils/http')
 const {
   assertOwnedPlantImage,
@@ -21,11 +26,23 @@ const {
 } = require('/opt/utils/plant-images')
 let platformSession
 try {
-  platformSession = require('/opt/utils/platform-session')
+  platformSession = require('./platform-session')
 } catch {
-  platformSession = require('../layer/utils/platform-session')
+  try {
+    platformSession = require('/opt/utils/platform-session')
+  } catch {
+    platformSession = require('../layer/utils/platform-session')
+  }
 }
-const { assertPlatformFeature } = platformSession
+const { assertPlatformFeature, getBearerToken, resolvePersistentSession } = platformSession
+
+async function resolveStorageUserInfo(headers) {
+  const token = getBearerToken(headers)
+  if (!token) {
+    return null
+  }
+  return resolvePersistentSession({ token, models })
+}
 
 const ALLOWED_IMAGE_SUFFIXES = new Set(['jpg', 'jpeg', 'png', 'webp', 'heic', 'gif'])
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024
@@ -238,14 +255,7 @@ async function uploadDiagnoseImage({ dataUrl, suffix, plantId, openid, maxAge })
   }
 }
 
-async function uploadStorageImage({
-  dataUrl,
-  suffix,
-  plantId,
-  openid,
-  maxAge,
-  buildCloudPath
-}) {
+async function uploadStorageImage({ dataUrl, suffix, plantId, openid, maxAge, buildCloudPath }) {
   const app = getCloudBase()
   const { mimeType, base64 } = parseImageDataUrl(dataUrl)
   const normalizedSuffix = resolveImageSuffix({ suffix, mimeType })
@@ -384,7 +394,7 @@ async function main(event, context) {
     }
 
     const payload = method === 'GET' ? request.query : request.body
-    const userInfo = await resolveHttpUserInfo(request.headers, payload, context)
+    const userInfo = await resolveStorageUserInfo(request.headers)
     if (!userInfo?.openid) {
       return jsonResponse(401, { code: 401, message: '请先登录', data: null })
     }
@@ -516,7 +526,11 @@ async function main(event, context) {
 
     if (method === 'PATCH') {
       if (!payload.fileId || !payload.plantId) {
-        return jsonResponse(400, { code: 400, message: '缺少必要参数: fileId, plantId', data: null })
+        return jsonResponse(400, {
+          code: 400,
+          message: '缺少必要参数: fileId, plantId',
+          data: null
+        })
       }
       await bindOwnedTemporaryPlantImages({
         openid: userInfo.openid,

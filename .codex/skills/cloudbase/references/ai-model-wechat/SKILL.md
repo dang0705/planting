@@ -1,18 +1,15 @@
 ---
 name: ai-model-wechat
-description: Use this skill for CloudBase AI model calls in WeChat Mini Programs via wx.cloud.extend.AI, including generateText, streamText, callback streaming, createModel provider selection, billing eligibility checks, model readiness checks, Token Credits, 小程序成长计划, managed model enabling, and custom model onboarding. Do not use for browser Web apps, Node.js backend, cloud functions, or image generation.
-version: 2.18.0
+description: "Use this skill for WeChat Mini Program AI via wx.cloud.extend.AI (小程序, wx.cloud apps). Covers generateText and streamText with callbacks (onText, onEvent, onFinish); streamText needs a data wrapper, generateText returns the raw response. Models via wx.cloud.extend.AI.createModel with groups hunyuan-exp (小程序成长计划), cloudbase (main managed), or custom-*; model id goes in the data wrapper `model` field. MUST run two-step preflight before code — see body. NOT for browser/Web (use ai-model-web), Node.js backend (use ai-model-nodejs), or image generation (use ai-model-nodejs)."
+version: 2.33.2
 alwaysApply: false
 ---
 
-## Standalone Install Note
+## Sibling skills (local only)
 
-If this environment only installed the current skill, start from the CloudBase main entry and use the published `cloudbase/references/...` paths for sibling skills.
+Sibling CloudBase skills ship beside this skill. Use local relative paths such as `../auth-tool-cloudbase/SKILL.md`.
 
-- CloudBase main entry: `https://cnb.cool/tencent/cloud/cloudbase/cloudbase-skills/-/git/raw/main/skills/cloudbase/SKILL.md`
-- Current skill raw source: `https://cnb.cool/tencent/cloud/cloudbase/cloudbase-skills/-/git/raw/main/skills/cloudbase/references/ai-model-wechat/SKILL.md`
-
-Keep local `references/...` paths for files that ship with the current skill directory. When this file points to a sibling skill such as `auth-tool` or `web-development`, use the standalone fallback URL shown next to that reference.
+If a referenced sibling skill file is missing from this environment, ask the user to install the full CloudBase plugin (or the missing skill). Do **not** HTTP-fetch remote skill or protocol markdown into the agent context.
 
 ## When to use this skill
 
@@ -29,7 +26,7 @@ Use this skill for **calling AI models in WeChat Mini Program** using `wx.cloud.
 - Browser/Web apps → use `ai-model-web` skill
 - Node.js backend or cloud functions → use `ai-model-nodejs` skill
 - Image generation → use `ai-model-nodejs` skill (not available in Mini Program)
-- HTTP API integration → use `http-api` skill
+- Runtimes without a CloudBase SDK (native apps, Python, etc.) → use `http-api-cloudbase` skill (it now includes the `ai_model` OpenAPI spec for direct HTTP calls)
 
 ---
 

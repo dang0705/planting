@@ -23,8 +23,8 @@ assert.match(
 )
 assert.match(
   diagnoseFlow,
-  /id="diagnose-flow-content"[\s\S]*:class="\{\s*'px-4': contentPadding\s*\}"/u,
-  'DiagnoseFlow 内容区必须按 contentPadding 条件启用 px-4'
+  /id="diagnose-flow-content"[\s\S]*:class="\{[\s\S]*'px-4': contentPadding,[\s\S]*'diagnose-flow-content--with-sticky-footer': !embedded && !result[\s\S]*\}"/u,
+  'DiagnoseFlow 内容区必须按条件启用横向 padding 和吸底按钮预留空间'
 )
 assert.match(
   diagnoseFlow,

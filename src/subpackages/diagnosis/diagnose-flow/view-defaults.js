@@ -56,6 +56,7 @@ export const DIAGNOSE_VIEW_DEFAULTS = {
   isSubmittingQuestionFlow: false,
   isSubmittingQuestionAnswer: false,
   isSubmittingAdditionalImage: false,
+  isVisualScanning: false,
   currentQuestion: null,
   hasDirtyQuestionAnswers: false,
   questionSwiperTrackStyle: '',

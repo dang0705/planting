@@ -11,6 +11,7 @@ HTTP Functions are standard web services, not `exports.main(event, context)` han
 - Ship an executable `scf_bootstrap` file.
 - Include runtime dependencies in the package; HTTP Functions do not auto-install `node_modules` for you.
 - For simple HTTP APIs, prefer the Node.js native `http` module so the function shape stays explicit and dependency-light. Only introduce Express, Koa, NestJS, or similar frameworks when the user explicitly asks for one or the service complexity justifies it.
+- If the service calls CloudBase resources through `@cloudbase/node-sdk` or `@cloudbase/manager-node`, read `./http-function-credentials.md` first. HTTP Functions must use explicit credentials and must not rely on the Event Function passwordless/default temporary credential path.
 
 ## Minimal structure
 
@@ -51,9 +52,24 @@ If the user specifies "Node.js 18", use runtime `Nodejs18.15` and the path `/var
 const http = require("http");
 const { URL } = require("url");
 
+// CORS headers — default to * for simple cross-origin APIs
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
 function sendJson(res, statusCode, data) {
-  res.writeHead(statusCode, { "Content-Type": "application/json; charset=utf-8" });
+  res.writeHead(statusCode, {
+    "Content-Type": "application/json; charset=utf-8",
+    ...CORS_HEADERS,
+  });
   res.end(JSON.stringify(data));
+}
+
+function sendOptions(res) {
+  res.writeHead(204, CORS_HEADERS);
+  res.end();
 }
 
 function readJsonBody(req) {
@@ -82,6 +98,11 @@ function readJsonBody(req) {
 }
 
 const server = http.createServer(async (req, res) => {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return sendOptions(res);
+  }
+
   const url = new URL(req.url || "/", "http://127.0.0.1");
 
   if (req.method === "GET" && url.pathname === "/health") {
@@ -113,8 +134,10 @@ server.listen(9000);
 - If you intentionally use ES Modules, use `import ...` consistently and do not rely on CommonJS-only globals such as bare `__dirname`, `require(...)`, or `module.exports`. When you need the current file path in ESM, derive it from `import.meta.url`.
 - Treat routing, method checks, and body parsing as part of the function code. With the native `http` module, parse `req.url` yourself and read the request body from the stream before calling `JSON.parse`.
 - Return JSON responses explicitly and set `Content-Type` yourself, for example `application/json; charset=utf-8`.
+- **Handle CORS headers**. Browsers block cross-origin requests without proper CORS headers. Default to `Access-Control-Allow-Origin: *` for simple APIs, and always respond to `OPTIONS` preflight requests with `200` and CORS headers.
 - Keep unsupported routes and methods explicit. Return `404` for unknown paths, and return `405` when the path exists but the HTTP method is not allowed.
 - Keep `scf_bootstrap`, `index.js`, `package.json`, and any bundled dependencies in the function directory that will be uploaded.
+- Keep credentials out of the function package. Inject them through function environment variables and preserve existing variables when updating the configuration.
 
 ### Module system note
 
@@ -129,10 +152,11 @@ That combination avoids the common ESM pitfall where `__dirname` is not defined.
 
 - With Node native `http`, use `new URL(req.url, "http://127.0.0.1")` and read `url.searchParams` for query values.
 - With Node native `http`, `req.body` does not exist. Read the body stream manually, then parse JSON yourself.
-- `req.headers` -> incoming HTTP headers.
+- `req.headers` -> incoming HTTP headers for **server-side** use only (auth checks, content negotiation). **Never serialize `req.headers`, `process.env`, or `x-cloudbase-context` into the HTTP response.** See `../../cloudbase-platform/references/protocols/sensitive-runtime-data-protection.md`.
 - Path parameters are framework-level conveniences. With the native `http` module, match `url.pathname` yourself.
 - Always send a response explicitly. With Node native `http`, use `res.writeHead(...)` and `res.end(...)`.
 - Return meaningful status codes such as `400`, `401`, `404`, `405`, `500`.
+- Debug endpoints, if required, must return an explicit allowlist of non-sensitive fields (for example `method` + `path`) — not a full header or env dump.
 
 ### Example with method checks
 
@@ -140,9 +164,24 @@ That combination avoids the common ESM pitfall where `__dirname` is not defined.
 const http = require("http");
 const { URL } = require("url");
 
+// CORS headers — default to * for simple cross-origin APIs
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
 function sendJson(res, statusCode, data) {
-  res.writeHead(statusCode, { "Content-Type": "application/json; charset=utf-8" });
+  res.writeHead(statusCode, {
+    "Content-Type": "application/json; charset=utf-8",
+    ...CORS_HEADERS,
+  });
   res.end(JSON.stringify(data));
+}
+
+function sendOptions(res) {
+  res.writeHead(204, CORS_HEADERS);
+  res.end();
 }
 
 function readJsonBody(req) {
@@ -171,6 +210,11 @@ function readJsonBody(req) {
 }
 
 const server = http.createServer(async (req, res) => {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return sendOptions(res);
+  }
+
   const url = new URL(req.url || "/", "http://127.0.0.1");
 
   if (url.pathname === "/users" && req.method === "POST") {
@@ -215,12 +259,15 @@ Express 5 note: `app.all("/{*splat}", (req, res) => {` is the safe catch-all for
 
 ## End-to-end deployment lifecycle
 
-Follow these steps in order when creating an HTTP Function:
+This document covers the **managed-runtime** HTTP Function (ships `scf_bootstrap`, runs on a language runtime, packaged as zip). If the function instead needs custom system libraries or an arbitrary runtime, deploy it from a container image (`Runtime: CustomImage`) and read `./http-functions-custom-image.md` — the runtime contract (web server on port `9000`, CORS, security rules) is identical, only the packaging and deployment differ.
+
+Follow these steps in order when creating a managed-runtime HTTP Function:
 
 1. **Write the function code** — create the directory with `index.js`, `scf_bootstrap`, and `package.json`.
-2. **Deploy with `manageFunctions`** — set `type: "HTTP"`, `protocolType: "HTTP"`, and `runtime` explicitly.
-3. **Configure security rules** — HTTP Functions default to a restrictive security rule. If the function should be publicly accessible, call `managePermissions(action="updateResourcePermission")` with `resourceType="function"`. Note: anonymous login is disabled by default for new environments; use `permission: "CUSTOM"` with `securityRule: '{"invoke":"true"}'` for truly public endpoints rather than relying on anonymous auth.
-4. **Verify** — call the function URL and confirm it returns the expected response. If you get `EXCEED_AUTHORITY`, the security rule needs to be updated (step 3).
+2. **Configure SDK credentials when needed** — if the function uses `@cloudbase/node-sdk` or `@cloudbase/manager-node`, follow `./http-function-credentials.md`. For a Node SDK server API Key, use `manageAppAuth(action="createApiKey", keyType="api_key")` and inject `CLOUDBASE_APIKEY`. Manager SDK requires Tencent Cloud `SecretId` / `SecretKey`.
+3. **Deploy with `manageFunctions`** — set `type: "HTTP"`, `protocolType: "HTTP"`, and `runtime` explicitly.
+4. **Configure security rules** — HTTP Functions default to a restrictive security rule. If the function should be publicly accessible, call `managePermissions(action="updateResourcePermission")` with `resourceType="function"`. Note: anonymous login is disabled by default for new environments; use `permission: "CUSTOM"` with `securityRule: '{"invoke":"true"}'` for truly public endpoints rather than relying on anonymous auth.
+5. **Verify** — call the function URL and confirm it returns the expected response. If the function uses a CloudBase SDK, exercise one harmless SDK read and check logs for expired-token or authorization failures. If you get `EXCEED_AUTHORITY` at invocation, the function security rule needs to be updated (step 4).
 
 ## Deployment flow
 
@@ -252,16 +299,16 @@ manageFunctions({
 After creating an HTTP Function, it will reject unauthenticated callers with `EXCEED_AUTHORITY` by default. If the function should be publicly accessible:
 
 > ⚠️ **Note:** Anonymous login is disabled by default for new environments. For public endpoints, use `rule: "true"` to allow all callers regardless of auth state, rather than relying on anonymous login being enabled.
+>
+> ⚠️ **PostgreSQL environments:** platform `ModifyResourcePermission` / `DescribeResourcePermission` reject PG envs. Current MCP aligns with CLI `tcb policy set/get`: `managePermissions` / `queryPermissions` for `resourceType="function"` automatically fall back to Manager SDK `modifyEnvAuthzConfig` / `describeEnvAuthzConfig` (`authz.user.rego`). Passing `securityRule: '{"invoke":true}'` generates a public-functions OPA allow policy; you can also pass a full Rego document starting with `package authz.user`. See https://docs.cloudbase.net/cli-v1/policy/management
 
 ```javascript
 managePermissions({
   action: "updateResourcePermission",
   resourceType: "function",
   resourceId: "myHttpFunction",
-  permission: {
-    aclTag: "CUSTOM",
-    rule: "true"
-  }
+  permission: "CUSTOM",
+  securityRule: '{"invoke":true}'
 });
 ```
 
@@ -305,13 +352,14 @@ Creating the function does not automatically create a browser-facing path. Add g
 
 ```javascript
 manageGateway({
-  action: "createAccess",
-  targetType: "function",
+  action: "createRoute",
   targetName: "myHttpFunction",
-  type: "HTTP",
+  upstreamResourceType: "WEB_SCF",
   path: "/api/hello"
 });
 ```
+
+Omit `domain` to attach on the HTTP gateway IsDefault domain (`DomainType=HTTPSERVICE`, `*.{region}.app.tcloudbase.com`). That is path routing on the gateway default host — **not** a `STATIC_STORE` binding, even though the env may also show a separate IsDefault static-hosting CDN host (`*.tcloudbaseapp.com`). Verify with `queryGateway(action="listRoutes")`.
 
 Before enabling public access, confirm both of these:
 
@@ -341,5 +389,6 @@ wss.on("connection", (ws) => {
 ## When to stop and reroute
 
 - If the task is actually a timer-triggered or SDK-invoked serverless function, reroute to Event Functions.
+- If the HTTP Function needs custom system packages or an arbitrary runtime but should stay SCF request-driven and scale to zero, deploy from a container image — read `./http-functions-custom-image.md`.
 - If the task needs long-lived containers, custom system packages, or broader service architecture, reroute to `cloudrun-development`.
-- If the task is only about HTTP API calling patterns rather than implementation, reroute to `http-api`.
+- If the task is only about HTTP API calling patterns rather than implementation, reroute to `http-api-cloudbase`.

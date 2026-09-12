@@ -102,6 +102,20 @@
   background: transparent;
 }
 
+.diagnose-flow-content--with-sticky-footer {
+  padding-bottom: 112px;
+}
+
+.diagnose-flow-footer--sticky {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  box-sizing: border-box;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+}
+
 .slot-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

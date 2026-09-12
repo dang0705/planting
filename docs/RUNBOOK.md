@@ -212,6 +212,10 @@ npm run dev:functions
 npm run dev:functions:diagnose
 ```
 
+视觉模型调用成功后，`diagnose-http` 会按同一 `trace_id` 写入三条后端日志：
+`diagnose-http visual model success trace`、`diagnose-http visual model prompt input`、
+`diagnose-http visual model raw return`。它们分别记录实际 provider/model、脱敏后的文本 prompt 与脱敏后的原始模型返回；不会记录图片 URL、请求头或 API 密钥。日志仍可能含诊断业务文本，只应由有权限的排障人员查看。
+
 让前端走本地函数：
 
 ```bash

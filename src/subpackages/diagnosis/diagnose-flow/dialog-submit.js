@@ -13,6 +13,7 @@ export function useDiagnoseDialogSubmit(ctx) {
     emit,
     diagnoseStore,
     result,
+    visualScanning,
     showAIDialog,
     aiStreamDialogRef,
     pendingDiagnosePayload,
@@ -232,6 +233,7 @@ export function useDiagnoseDialogSubmit(ctx) {
 
   function handleAIRetry() {
     if (pendingDiagnosePayload.value) {
+      visualScanning.value = true
       aiStreamDialogRef.value?.startStream()
 
       const callbackOpts = {
@@ -247,7 +249,10 @@ export function useDiagnoseDialogSubmit(ctx) {
         }
       }
 
-      diagnoseMutation.mutateAsync(callbackOpts)
+      const finishVisualScan = () => {
+        visualScanning.value = false
+      }
+      diagnoseMutation.mutateAsync(callbackOpts).then(finishVisualScan, finishVisualScan)
     }
   }
 
@@ -351,6 +356,7 @@ export function useDiagnoseDialogSubmit(ctx) {
   async function resetDiagnose() {
     await Promise.all([uploader.reset(), additionalImageUploader.reset()])
     result.value = null
+    visualScanning.value = false
     pendingDiagnosePayload.value = null
     casePreviewImages.value = []
     questionAnswers.value = {}

@@ -42,6 +42,7 @@ export function useDiagnoseComputed(ctx) {
     diagnoseStore,
     popup,
     result,
+    visualScanning,
     showAIDialog,
     aiStreamDialogRef,
     pendingDiagnosePayload,
@@ -210,6 +211,16 @@ export function useDiagnoseComputed(ctx) {
   const isSubmittingQuestionAnswer = computed(() => submittingQuestionMode.value === 'answers')
 
   const isSubmittingAdditionalImage = computed(() => submittingQuestionMode.value === 'images')
+
+  const isVisualScanning = computed(
+    () =>
+      !result.value &&
+      Boolean(
+        visualScanning.value ||
+          diagnoseMutation.isPending?.value ||
+          diagnoseMutation.isLoading?.value
+      )
+  )
 
   const retakeRequest = computed(() =>
     result.value?.retakeRequest && typeof result.value.retakeRequest === 'object'
@@ -440,6 +451,7 @@ export function useDiagnoseComputed(ctx) {
     isSubmittingQuestionFlow,
     isSubmittingQuestionAnswer,
     isSubmittingAdditionalImage,
+    isVisualScanning,
     currentQuestion,
     hasDirtyQuestionAnswers,
     questionSwiperTrackStyle,

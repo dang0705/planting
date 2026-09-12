@@ -5,7 +5,7 @@
       "source": "tencentcloudbase/cloudbase-skills",
       "sourceType": "github",
       "skillPath": "skills/cloudbase/SKILL.md",
-      "computedHash": "0e644669045506684e9bb9cb338e26eb098bacfdc6b6840df22c7dea3bd10667"
+      "computedHash": "8b17294a8dc68c215757e599580d8fe92e31f19ba412945ba638e235fda15057"
     },
     "tailwindcss-advanced-layouts": {
       "source": "josiahsiegel/claude-plugin-marketplace",

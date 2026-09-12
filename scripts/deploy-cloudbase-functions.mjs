@@ -179,7 +179,13 @@ const FUNCTION_BUNDLED_RUNTIME_FILES = new Map([
     'auth-user-http',
     [
       {
-        source: path.join(projectRoot, 'cloudfunctions', 'layer', 'utils', 'http-identity-ticket.js'),
+        source: path.join(
+          projectRoot,
+          'cloudfunctions',
+          'layer',
+          'utils',
+          'http-identity-ticket.js'
+        ),
         target: 'http-identity-ticket.js'
       }
     ]
@@ -188,7 +194,13 @@ const FUNCTION_BUNDLED_RUNTIME_FILES = new Map([
     'plant-user-http',
     [
       {
-        source: path.join(projectRoot, 'cloudfunctions', 'layer', 'utils', 'http-identity-ticket.js'),
+        source: path.join(
+          projectRoot,
+          'cloudfunctions',
+          'layer',
+          'utils',
+          'http-identity-ticket.js'
+        ),
         target: 'http-identity-ticket.js'
       }
     ]
@@ -199,6 +211,23 @@ const FUNCTION_BUNDLED_RUNTIME_FILES = new Map([
       {
         source: path.join(projectRoot, 'cloudfunctions', 'layer', 'utils', 'catalog-image-url.js'),
         target: 'catalog-image-url.js'
+      }
+    ]
+  ],
+  [
+    'storage-http',
+    [
+      {
+        source: path.join(projectRoot, 'cloudfunctions', 'layer', 'utils', 'cloudbase.js'),
+        target: 'cloudbase.js'
+      },
+      {
+        source: path.join(projectRoot, 'cloudfunctions', 'layer', 'utils', 'runtime-env.js'),
+        target: 'runtime-env.js'
+      },
+      {
+        source: path.join(projectRoot, 'cloudfunctions', 'layer', 'utils', 'platform-session.js'),
+        target: 'platform-session.js'
       }
     ]
   ]
@@ -239,6 +268,29 @@ function stageFunctionPackage(sourceDirectory, functionName, deploymentId) {
     fs.copyFileSync(runtimeFile.source, path.join(stagingRoot, runtimeFile.target))
   }
   return stagingRoot
+}
+
+function installHttpFunctionDependencies(stagedDirectory, functionName) {
+  if (!fs.existsSync(path.join(stagedDirectory, 'scf_bootstrap'))) {
+    return Promise.resolve()
+  }
+
+  console.log(`Installing production dependencies for HTTP function ${functionName}`)
+  return new Promise((resolve, reject) => {
+    const child = spawn('npm', ['ci', '--omit=dev', '--ignore-scripts'], {
+      cwd: stagedDirectory,
+      env: process.env,
+      stdio: 'inherit'
+    })
+    child.on('error', reject)
+    child.on('exit', code => {
+      if (code === 0) {
+        resolve()
+        return
+      }
+      reject(new Error(`npm ci for HTTP function ${functionName} exited with code ${code}`))
+    })
+  })
 }
 
 function parseJsonFromOutput(output = '') {
@@ -457,6 +509,9 @@ async function main() {
     ...target,
     stagedDir: stageFunctionPackage(target.dir, target.name, deploymentId)
   }))
+  for (const target of stagedTargets) {
+    await installHttpFunctionDependencies(target.stagedDir, target.name)
+  }
   const manifest = {
     schema_version: 1,
     status: args.dryRun ? 'dry_run' : 'planned',

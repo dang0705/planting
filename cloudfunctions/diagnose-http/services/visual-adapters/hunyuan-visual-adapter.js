@@ -4,6 +4,7 @@ const { callLLMDiagnose } = require('../../utils/llm')
 const { parseLLMVisualResult } = require('../../utils/diagnosis-parser')
 const { normalizeCaptureRegion } = require('../../utils/capture-region-normalizer')
 const { withLlmImagePromptContext } = require('../../utils/llm-image-context')
+const { logVisualModelSuccessTrace } = require('../../utils/visual-model-success-trace')
 const {
   normalizeOrgan,
   areOrgansCompatible,
@@ -372,39 +373,63 @@ async function analyzeImage(
     ...(llmResult && typeof llmResult === 'object' ? llmResult.adapterMetaOverride || {} : {})
   })
   const rawTextOutput = typeof llmResult === 'string' ? llmResult : String(llmResult?.text || '')
-  const parseStartedAt = Date.now()
-  const rawStructuredOutput = parseLLMVisualResult(rawTextOutput, {
-    diagnosisProfile: llmOptions?.diagnosisProfile || imageRuntimeInput?.diagnosisProfile || 'full'
-  })
-  const parseMs = Math.max(0, Date.now() - parseStartedAt)
-  const normalizeStartedAt = Date.now()
-  const normalizedResult = normalizeModelVisualResult(
-    rawStructuredOutput,
-    imageRuntimeInput,
-    visualCallBatchId,
-    adapterMeta
-  )
-  const normalizeMs = Math.max(0, Date.now() - normalizeStartedAt)
+  let rawStructuredOutput = null
+  let normalizedResult = null
+  let parseMs = 0
+  let normalizeMs = 0
 
-  return {
-    ...imageRuntimeInput,
-    callStatus: 'succeeded',
-    rawTextOutput,
-    rawStructuredOutput,
-    normalizedResult,
-    adapterMeta,
-    llmPromptAudit:
-      llmResult && typeof llmResult === 'object' ? llmResult.promptAudit || null : null,
-    llmUsage: llmResult && typeof llmResult === 'object' ? llmResult.usage || null : null,
-    llmTiming:
-      llmResult && typeof llmResult === 'object'
-        ? llmResult.llmTiming || { totalMs: llmMs }
-        : { totalMs: llmMs },
-    adapterTiming: {
-      llmMs,
-      parseMs,
-      normalizeMs,
-      totalMs: Math.max(0, Date.now() - startedAt)
+  try {
+    const parseStartedAt = Date.now()
+    rawStructuredOutput = parseLLMVisualResult(rawTextOutput, {
+      diagnosisProfile:
+        llmOptions?.diagnosisProfile || imageRuntimeInput?.diagnosisProfile || 'full'
+    })
+    parseMs = Math.max(0, Date.now() - parseStartedAt)
+    const normalizeStartedAt = Date.now()
+    normalizedResult = normalizeModelVisualResult(
+      rawStructuredOutput,
+      imageRuntimeInput,
+      visualCallBatchId,
+      adapterMeta
+    )
+    normalizeMs = Math.max(0, Date.now() - normalizeStartedAt)
+
+    return {
+      ...imageRuntimeInput,
+      callStatus: 'succeeded',
+      rawTextOutput,
+      rawStructuredOutput,
+      normalizedResult,
+      adapterMeta,
+      llmPromptAudit:
+        llmResult && typeof llmResult === 'object' ? llmResult.promptAudit || null : null,
+      llmUsage: llmResult && typeof llmResult === 'object' ? llmResult.usage || null : null,
+      llmTiming:
+        llmResult && typeof llmResult === 'object'
+          ? llmResult.llmTiming || { totalMs: llmMs }
+          : { totalMs: llmMs },
+      adapterTiming: {
+        llmMs,
+        parseMs,
+        normalizeMs,
+        totalMs: Math.max(0, Date.now() - startedAt)
+      }
+    }
+  } finally {
+    try {
+      logVisualModelSuccessTrace({
+        imageRuntimeInput,
+        visualCallBatchId,
+        sessionId,
+        llmResult,
+        adapterMeta,
+        rawTextOutput,
+        rawStructuredOutput,
+        normalizedResult,
+        timing: { llmMs, parseMs, normalizeMs }
+      })
+    } catch (error) {
+      console.warn('diagnose-http visual model success trace failed:', error?.message || error)
     }
   }
 }

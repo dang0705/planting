@@ -11,6 +11,7 @@ export function useDiagnoseImages(ctx) {
     diagnoseStore,
     popup,
     result,
+    visualScanning,
     showAIDialog,
     aiStreamDialogRef,
     pendingDiagnosePayload,
@@ -342,6 +343,7 @@ export function useDiagnoseImages(ctx) {
         description: `共上传 ${imageUrls.length} 张照片`
       }
 
+      visualScanning.value = true
       pendingDiagnosePayload.value = diagnosePayload
       showAIDialog.value = true
       await new Promise(resolve => setTimeout(resolve, 100))
@@ -364,6 +366,8 @@ export function useDiagnoseImages(ctx) {
       console.error('诊断失败:', error)
       uni.hideLoading()
       uni.showToast({ title: '检查暂时未完成，请检查网络后重试', icon: 'none' })
+    } finally {
+      visualScanning.value = false
     }
   }
 

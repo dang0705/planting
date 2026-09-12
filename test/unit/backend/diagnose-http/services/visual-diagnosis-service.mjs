@@ -127,30 +127,71 @@ const adapterMeta = {
   model_version: 'unit',
   prompt_version: 'unit'
 }
+
+function fixtureStructuredOutput(input = {}) {
+  if (String(input?.imageRef || '').includes('leaf-yellow-discriminator')) {
+    return {
+      normalized_organ: 'leaf',
+      image_quality_grade: 'good',
+      analyzability: 'high',
+      capture_region: 'leaf_upper_surface',
+      region_ref: 'leaf_upper_surface',
+      mode_candidates: [],
+      symptom_candidates: [],
+      visual_discriminators: [
+        {
+          dimension_key: 'leaf_anomaly_sign',
+          value_key: 'uniform_yellow',
+          confidence_band: 'high',
+          visible_basis_cn: '叶片整体呈明显黄化。'
+        }
+      ]
+    }
+  }
+  if (String(input?.imageRef || '').includes('soil-wet-surface')) {
+    return {
+      normalized_organ: 'soil',
+      image_quality_grade: 'good',
+      analyzability: 'high',
+      capture_region: 'soil_surface',
+      region_ref: 'soil_surface',
+      mode_candidates: [],
+      symptom_candidates: [
+        {
+          symptom_key: 'wet_soil_surface',
+          strength_level: 'strong',
+          confidence_band: 'high',
+          region_ref: 'soil_surface'
+        }
+      ],
+      visual_discriminators: []
+    }
+  }
+  return { normalized_organ: 'leaf' }
+}
+
 const visualAdapter = {
   getAdapterMeta: override => ({ ...adapterMeta, ...override }),
   async analyzeImage(input, options = {}) {
-    adapterInput = input
-    adapterOptions = options
+    const isPixelBudgetFixture = String(input?.imageRef || '').includes('pixel-budget')
+    if (isPixelBudgetFixture) {
+      adapterInput = input
+      adapterOptions = options
+    }
     const { onText } = options
     for (const chunk of streamedContent) {
       onText?.(chunk, chunk)
     }
+    const rawStructuredOutput = fixtureStructuredOutput(input)
     return {
+      ...(isPixelBudgetFixture ? {} : input),
+      callStatus: 'succeeded',
       adapterMeta,
-      normalizedResult: {
-        normalized_organ: 'leaf',
-        image_quality_grade: 'good',
-        analyzability: 'high',
-        capture_region: 'leaf_upper_surface',
-        region_ref: 'leaf_upper_surface',
-        mode_candidates: [],
-        symptom_candidates: [],
-        out_of_pool_symptom_candidates: [],
-        route_hints: []
-      },
-      rawStructuredOutput: { normalized_organ: 'leaf' },
-      rawTextOutput: '{"normalized_organ":"leaf"}',
+      normalizedResult: parseLLMVisualResult(JSON.stringify(rawStructuredOutput), {
+        diagnosisProfile: input?.diagnosisProfile || 'full'
+      }),
+      rawStructuredOutput,
+      rawTextOutput: JSON.stringify(rawStructuredOutput),
       llmPromptAudit: {
         imageContext: {
           selectedImageContexts: [{ uploadCompression: input.uploadCompression }]
@@ -276,6 +317,41 @@ try {
   assert.equal(batchResult.aiDebug[0].formattedPrompt, '')
   assert.equal(batchResult.aiDebug[0].rawTextOutput, '{"normalized_organ":"leaf"}')
   assert.deepEqual(batchResult.aiDebug[0].rawStructuredOutput, { normalized_organ: 'leaf' })
+
+  const leafAndSoilInputs = resolveVisualImageInputs({
+    images: [
+      {
+        imageRef: 'https://example.test/leaf-yellow-discriminator.jpg',
+        inputSlotType: 'leaf',
+        captureRegion: 'leaf_upper_surface'
+      },
+      {
+        imageRef: 'https://example.test/soil-wet-surface.jpg',
+        inputSlotType: 'soil',
+        captureRegion: 'soil_surface'
+      }
+    ]
+  })
+  const leafAndSoilBatch = await analyzeAndPersistVisualBatch({
+    sessionId: 'diag_leaf_soil_visual_base',
+    openid: 'openid_leaf_soil_visual_base',
+    imageInputs: leafAndSoilInputs,
+    llmOptions: { diagnosisProfile: 'full' }
+  })
+  assert.equal(
+    leafAndSoilBatch.aggregateResult.observed_symptoms.some(
+      item => item.symptomKey === 'leaf_yellowing'
+    ),
+    true
+  )
+  const leafAndSoilRoute = attachDiagnosisModeRoute({
+    diagnosisProfile: 'full',
+    aggregateResult: leafAndSoilBatch.aggregateResult,
+    successfulResults: leafAndSoilBatch.imageResults
+  }).diagnosis_mode_route_result
+  assert.equal(leafAndSoilRoute.nextAction, 'question_package')
+  assert.deepEqual(leafAndSoilRoute.associatedModes, ['yellow_leaf'])
+  assert.equal(leafAndSoilRoute.associatedModes.includes('fungus_gnat'), false)
 } finally {
   Module._load = originalLoad
 }

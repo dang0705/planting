@@ -312,7 +312,7 @@ assert.equal(tokenhubDynamicPayload.prompt_cache_key, expectedTokenHubCacheKey)
 const aliyunCachePayload = aliyunImageClient.buildPayload(cachePrompt.messages, true)
 assert.equal(Object.hasOwn(aliyunCachePayload, 'prompt_cache_key'), false)
 assert.equal(Object.hasOwn(aliyunCachePayload.messages[0].content[0], 'cache_control'), false)
-assert.equal(Object.hasOwn(aliyunCachePayload, 'enable_thinking'), false)
+assert.equal(aliyunCachePayload.enable_thinking, false)
 assert.equal(Object.hasOwn(aliyunCachePayload, 'thinking'), false)
 
 const https = require('node:https')

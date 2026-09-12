@@ -24,23 +24,22 @@ async function injectPestImage(report, page) {
     await inject.tap()
     await sleep(500)
   }
-  const uploadCount = await assertElement(
+  const uploadedImages = await assertElement(
     report,
     page,
-    '#diagnose-upload-count',
-    'upload count visible'
+    '#diagnose-uploaded-image-list',
+    'uploaded image list visible'
   )
-  const uploadText = uploadCount ? await safeText(uploadCount) : ''
   recordAssertion(
     report,
     'automation image injected into pest flow',
-    /1/.test(uploadText),
-    uploadText
+    Boolean(uploadedImages),
+    uploadedImages ? 'uploaded image list visible' : ''
   )
 }
 
 async function runPestScenario(report, miniProgram, wsEndpoint, artifactDir, retakeMode) {
-  const page = await resetDiagnosisTab(report, miniProgram, `pest.${retakeMode}`)
+  const page = await resetDiagnosisTab(report, miniProgram, `pest.${retakeMode}`, 'pest')
   recordAssertion(
     report,
     `diagnosis subpackage re-entry resets before ${retakeMode} scenario`,
@@ -54,16 +53,6 @@ async function runPestScenario(report, miniProgram, wsEndpoint, artifactDir, ret
     seedAutomationImage(miniProgram)
   )
   await sleep(900)
-  const pest = await assertElement(
-    report,
-    page,
-    '#diagnose-profile-pest-button',
-    'pest profile button visible'
-  )
-  if (pest) {
-    await pest.tap()
-    await sleep(300)
-  }
   await injectPestImage(report, page)
   await recordShot(report, miniProgram, wsEndpoint, artifactDir, `02-pest-image-${retakeMode}`)
   const submit = await assertElement(report, page, '#diagnose-submit-button', 'pest submit visible')
