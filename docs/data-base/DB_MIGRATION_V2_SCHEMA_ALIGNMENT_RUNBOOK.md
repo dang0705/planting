@@ -5,7 +5,7 @@ Apply the reusable migration for v2 schema alignment:
 
 1. Enforce internal `id` primary key for `problems` and `symptoms`
 2. Keep business unique keys
-3. Remove legacy columns not in Excel truth source
+3. Remove session columns not in Excel truth source
 4. Enable `problem_causality.is_active` for soft-delete publish flow
 5. Verify `validate-schema` passes on both dev/prod schemas
 
@@ -77,4 +77,4 @@ npm run rollback-data -- --batch=batch_YYYYMMDD_test_001
 
 - This migration follows `DATABASE_SCHEMA_SPEC_v2.md` and `CODEX_IMPLEMENTATION_PLAN_v2.md`.
 - The script is idempotent for the target changes (safe to rerun).
-- Keep foreign keys unchanged; this migration only touches PK/unique and legacy column cleanup.
+- Keep foreign keys unchanged; this migration only touches PK/unique and session column cleanup.

@@ -4,9 +4,9 @@ const { clamp01 } = require('../repositories/sql')
 
 const ALLOWED_EVIDENCE_STATUS = ['active', 'retained', 'superseded']
 
-function normalizeText(value, fallback = '') {
+function normalizeText(value, conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function normalizeStringList(values = []) {
@@ -19,19 +19,19 @@ function normalizeStringList(values = []) {
   )
 }
 
-function normalizeEvidenceStatus(value, fallback = 'active') {
-  const normalized = normalizeText(value, fallback).toLowerCase()
-  return ALLOWED_EVIDENCE_STATUS.includes(normalized) ? normalized : fallback
+function normalizeEvidenceStatus(value, conservative = 'active') {
+  const normalized = normalizeText(value, conservative).toLowerCase()
+  return ALLOWED_EVIDENCE_STATUS.includes(normalized) ? normalized : conservative
 }
 
-function normalizeEvidenceSourceType(value, fallback = '') {
-  return normalizeText(value, fallback).toLowerCase()
+function normalizeEvidenceSourceType(value, conservative = '') {
+  return normalizeText(value, conservative).toLowerCase()
 }
 
 function isVisualEvidenceSourceType(value = '') {
   const normalized = normalizeEvidenceSourceType(value)
   if (!normalized) {return false}
-  if (normalized === 'legacy_observed_symptom') {return true}
+  if (normalized === 'session_observed_symptom') {return true}
   return normalized.includes('visual')
 }
 
@@ -56,8 +56,8 @@ function normalizeObservedEvidenceItem(item = {}, defaults = {}) {
   if (!symptomKey) {return null}
 
   const sourceType = normalizeText(
-    item?.sourceType || item?.source_type || defaults.sourceType || 'legacy_observed_symptom',
-    'legacy_observed_symptom'
+    item?.sourceType || item?.source_type || defaults.sourceType || 'session_observed_symptom',
+    'session_observed_symptom'
   )
   const parentEvidenceKey = normalizeText(
     item?.parentEvidenceKey || item?.parent_evidence_key || defaults.parentEvidenceKey || '',
@@ -213,7 +213,7 @@ function buildObservedEvidenceSetFromSymptoms(observedSymptoms = [], defaults = 
           symptomKey: item?.symptomKey || item?.symptom_key || '',
           symptomCn: item?.symptomCn || item?.symptom_cn || item?.symptomKey || '',
           confidence: Number(item?.confidence ?? defaults.confidence ?? 0.7),
-          sourceType: defaults.sourceType || item?.source || item?.evidenceSource || 'legacy_observed_symptom',
+          sourceType: defaults.sourceType || item?.source || item?.evidenceSource || 'session_observed_symptom',
           currentStatus: defaults.currentStatus || 'active',
           targetLayer: defaults.targetLayer || 'observed_evidence_set',
           originVisualCallBatchId: defaults.originVisualCallBatchId || '',
@@ -310,7 +310,7 @@ function buildObservedEvidenceSetFromAnswerEffects(answerEffects = [], symptomMa
           parentEvidenceKey: `answer:${item.questionKey || ''}:${item.optionKey || ''}`,
           sourceRecordId: `${item.questionKey || ''}:${item.optionKey || ''}`,
           originVisualCallBatchId: defaults.originVisualCallBatchId || '',
-          firstSeenStage: defaults.firstSeenStage || 'followup',
+          firstSeenStage: defaults.firstSeenStage || 'question',
           enteredRuntime: 1,
           isKeyEvidence: 1
         },

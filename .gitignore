@@ -13,6 +13,7 @@ dist
 *.local
 *.pem
 *.key
+*.zip
 private.*.key
 miniprogram-ci-qrcode.*
 
@@ -32,3 +33,13 @@ miniprogram-ci-qrcode.*
 .env
 .env.*
 !.env.local.example
+cloudbaserc.json
+
+/tmp
+/.tmp
+.cache
+AI-training
+
+# ByteRover — .brv/context-tree/ contains a nested .git managed by brv vc.
+# Without these entries, `git add .` fails with "does not have a commit checked out".
+.brv/

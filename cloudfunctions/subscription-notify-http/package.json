@@ -1,0 +1,12 @@
+{
+  "name": "subscription-notify-http",
+  "version": "1.0.0",
+  "description": "青花植微信支付回调处理云函数",
+  "main": "app.js",
+  "scripts": {
+    "start": "node ../../node_modules/@cloudbase/functions-framework/bin/tcb-ff.js --port=9009 --functionsConfigFile=cloudbase-functions.json"
+  },
+  "dependencies": {
+    "@cloudbase/functions-framework": "^1.18.0"
+  }
+}

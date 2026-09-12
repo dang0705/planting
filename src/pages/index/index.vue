@@ -1,471 +1,472 @@
-﻿<template>
-  <view id="index-page" class="min-h-screen bg-[#F8F6F0]">
-    <!-- 自定义导航栏 -->
-    <CustomNavbar title="植伴" />
+<template>
+  <Layout title="青花植" :show-weather-header="true">
+    <template #left-info>
+      <HeaderWeatherInfo />
+    </template>
 
-    <!-- 内容区域 -->
-    <view class="pb-[70px]" :style="{ paddingTop: userStore.navbarHeight + 'px' }">
-      <!-- 今日养护提醒 -->
-      <view
-        v-if="plantStore.plantsNeedWater.length > 0"
-        class="m-4 p-3 px-4 rounded-2xl"
-        style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)"
-      >
-        <view class="flex items-center">
-          <text class="text-lg mr-2">🔔</text>
-          <text class="text-sm font-semibold text-[#F57C00]">
-            今日需要浇水 {{ plantStore.plantsNeedWater.length }} 株植物
-          </text>
-        </view>
+    <view id="index-page" class="min-h-screen">
+      <view v-if="plantStore.plantsNeedWater.length" class="m-4 rounded-2xl bg-[#FFF3E0] px-4 py-3">
+        <text class="text-sm font-semibold text-[#F57C00]">
+          今日需要浇水 {{ plantStore.plantsNeedWater.length }} 株植物
+        </text>
       </view>
 
-      <!-- 登录用户 -->
       <template v-if="userStore.isAuthenticated">
-        <image :src="loading" class="size-20 fixed position-center" v-if="!loaded" />
-        <!--          空状态-->
-        <view v-else-if="!plantStore.hasPlants">
-          <text class="text-6xl mb-4">🌱</text>
-          <text class="text-lg font-semibold text-gray-800 mb-2">还没有添加植物</text>
-          <text class="text-sm text-gray-400 text-center mb-8 leading-relaxed">
-            记录你的每一株植物，让 AI 帮你更好地照顾它们
-          </text>
-          <button
-            class="flex items-center px-8 py-3.5 rounded-3xl text-white text-base font-semibold border-none"
-            style="background: linear-gradient(135deg, #2d7a4f 0%, #52b788 100%)"
-            @click="addPlant"
+        <view v-if="loadingPlants" id="index-plants-loading-skeleton" class="space-y-4 p-4">
+          <view
+            v-for="skeletonIndex in 2"
+            :key="skeletonIndex"
+            class="flex h-[129px] animate-pulse overflow-hidden rounded-[12px] border border-[rgba(45,122,79,0.15)] bg-white p-px shadow-[0_1px_3px_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]"
           >
-            <text class="text-xl mr-2">+</text>
-            <text>添加第一株植物</text>
+            <view class="h-[127px] w-[112px] flex-[0_0_112px] bg-gray-200" />
+            <view class="flex h-[127px] min-w-0 flex-1 flex-col gap-2 p-3">
+              <view class="h-[27px] w-32 rounded bg-gray-200" />
+              <view class="h-[22px] w-20 rounded-full bg-gray-100" />
+              <view class="flex h-[38px] min-w-0 w-full gap-2">
+                <view class="h-9 min-w-0 w-0 flex-1 rounded-[10px] bg-gray-200" />
+                <view class="h-9 min-w-0 w-0 flex-1 rounded-[10px] bg-gray-100" />
+              </view>
+            </view>
+            <view
+              class="flex h-[127px] w-[49px] flex-[0_0_49px] flex-col items-center justify-center gap-2 border-l border-[rgba(45,122,79,0.15)] py-3 pl-[9px] pr-2"
+            >
+              <view class="size-8 rounded-full bg-gray-100" />
+              <view class="size-8 rounded-full bg-gray-100" />
+            </view>
+          </view>
+        </view>
+
+        <view v-else-if="plantsError" class="flex flex-col items-center px-8 py-16 text-center">
+          <text class="text-4xl">🌿</text>
+          <text class="mt-4 text-lg font-semibold text-gray-800">植物暂时加载失败</text>
+          <text class="mt-2 text-sm leading-6 text-gray-400">请检查网络后再试一次</text>
+          <button
+            id="index-plants-retry-button"
+            class="mt-6 rounded-3xl bg-primary px-8 py-3.5 text-white"
+            @click="loadUserPlants"
+          >
+            重新加载
           </button>
         </view>
-        <!-- 植物卡片列表 -->
-        <view v-else id="index-plant-list" class="p-4">
-          <uni-collapse @change="handleCollapseChange">
-            <uni-collapse-item
-              v-for="plant in plantStore.userPlants"
-              :key="plant.id"
-              :title="plant.displayName"
-              :name="plant.id"
-              :open="false"
-              :border="false"
-              show-animation
-              class="mb-4"
-              title-border="none"
-            >
-              <!-- 折叠面板标题插槽 -->
-              <template v-slot:title>
-                <view class="flex items-center justify-between w-full pr-4">
-                  <view class="flex items-center flex-1">
-                    <!-- 植物缩略图 -->
-                    <view class="w-16 h-16 rounded-xl overflow-hidden mr-3 flex-shrink-0">
-                      <image
-                        v-if="plant.image"
-                        :src="plant.image"
-                        class="w-full h-full"
-                        mode="aspectFill"
-                      />
-                      <view
-                        v-else
-                        class="w-full h-full flex items-center justify-center"
-                        style="background: linear-gradient(135deg, #d8f3dc 0%, #b7e4c7 100%)"
-                      >
-                        <text class="text-3xl">🪴</text>
-                      </view>
-                    </view>
 
-                    <!-- 植物基本信息 -->
-                    <view class="flex-1">
-                      <view class="flex items-center mb-1">
-                        <text class="text-base font-semibold text-gray-800 mr-2">{{
-                          plant.displayName
-                        }}</text>
-                        <view
-                          :class="getHealthBadgeClass(plant.healthStatus)"
-                          class="px-2 py-0.5 rounded-lg"
-                        >
-                          <text class="text-white text-[10px] font-semibold">{{
-                            getHealthText(plant.healthStatus)
-                          }}</text>
-                        </view>
-                      </view>
-                      <text class="text-xs text-gray-400"
-                        >{{ getDaysAgo(plant.plantDate) }} · {{ plant.location }}</text
-                      >
-                    </view>
-                  </view>
-
-                  <!-- 诊断按钮 -->
-                  <view
-                    :id="`diagnose-entry-button-${plant.id}`"
-                    class="ml-2 bg-primary px-3 py-1.5 rounded-lg flex items-center"
-                    @click.stop="openDiagnose(plant)"
-                  >
-                    <text class="text-white text-xs font-semibold">📷 诊断</text>
-                  </view>
-                </view>
-              </template>
-
-              <!-- 折叠面板内容 -->
-              <view class="px-3 py-2">
-                <!-- 诊断历史 -->
-                <view :id="`index-diagnose-history-section-${plant.id}`" class="mb-3">
-                  <text class="block text-sm font-semibold text-gray-800 mb-2">📋 诊断历史</text>
-
-                  <!-- 加载中 -->
-                  <view v-if="loadingHistory[plant.id]" :id="`index-diagnose-history-loading-${plant.id}`" class="text-center py-4">
-                    <text class="text-xs text-gray-400">加载中...</text>
-                  </view>
-
-                  <!-- 历史记录列表 -->
-                  <view v-else-if="plantDiagnoseHistory[plant.id]?.length > 0" :id="`index-diagnose-history-list-${plant.id}`">
-                    <view
-                      v-for="record in plantDiagnoseHistory[plant.id]"
-                      :key="record._id"
-                      :id="`index-diagnose-record-${record._id}`"
-                      class="bg-gray-50 rounded-xl p-2.5 mb-2"
-                      @click="viewDiagnoseDetail(record._id)"
-                    >
-                      <view class="flex items-start">
-                        <view class="flex-1">
-                          <text class="block text-xs font-semibold text-gray-800 mb-1">
-                            {{ record.mainIssue || '诊断记录' }}
-                          </text>
-                          <view class="flex items-center">
-                            <view
-                              class="px-2 py-0.5 rounded-full mr-2"
-                              :class="getHealthBadgeClass(record.healthStatus)"
-                            >
-                              <text class="text-white text-[10px] font-semibold">
-                                {{ getHealthText(record.healthStatus) }}
-                              </text>
-                            </view>
-                            <text class="text-[10px] text-gray-400">
-                              {{ formatTime(record.createdAt) }}
-                            </text>
-                          </view>
-                        </view>
-                        <text class="text-gray-400 ml-2">›</text>
-                      </view>
-                    </view>
-                  </view>
-
-                  <!-- 空状态 -->
-                  <view v-else :id="`index-diagnose-history-empty-${plant.id}`" class="bg-gray-50 rounded-xl p-3 text-center">
-                    <text class="text-xs text-gray-400">暂无诊断记录</text>
-                  </view>
-                </view>
-
-                <!-- 养护提醒 -->
-                <view
-                  v-if="needsCareToday(plant.id)"
-                  class="inline-flex px-3 py-1.5 bg-[#FFF3E0] rounded-xl mb-3"
-                >
-                  <text class="text-xs text-[#F57C00] font-semibold">💧 今日需要养护</text>
-                </view>
-
-                <!-- 查看详情按钮 -->
-                <view
-                  class="mt-2 py-2.5 text-center bg-primary rounded-xl"
-                  @click="viewPlantDetail(plant)"
-                >
-                  <text class="text-sm text-white font-semibold">查看详情</text>
-                </view>
-              </view>
-            </uni-collapse-item>
-          </uni-collapse>
-
-          <!-- 添加按钮 -->
-          <view
-            class="bg-white border-2 border-dashed border-primary rounded-[20px] flex flex-col items-center justify-center mt-4"
-            @click="addPlant"
+        <view
+          v-else-if="!plantStore.hasPlants"
+          class="flex flex-col items-center px-8 py-16 text-center"
+        >
+          <text class="text-6xl">🌱</text>
+          <text class="mt-4 text-lg font-semibold text-gray-800">还没有添加植物</text>
+          <text class="mt-2 text-sm leading-6 text-gray-400">
+            记录你的每一株植物，方便持续查看养护建议
+          </text>
+          <button
+            id="index-empty-add-plant-button"
+            class="mt-6 rounded-3xl bg-primary px-8 py-3.5 text-white"
+            @click="handleAddPlant"
           >
-            <uni-icons type="plusempty" />
-            <text class="text-sm text-primary font-semibold">添加新植物</text>
+            添加第一株植物
+          </button>
+        </view>
+
+        <view v-else id="index-plant-list" class="p-4">
+          <view class="mb-2 flex justify-end">
+            <view
+              id="index-add-plant-button"
+              class="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-primary active:bg-[#eef3ef]"
+              @click="handleAddPlant"
+            >
+              <uni-icons type="plusempty" size="14" color="#2d7a4f" />
+              <text>添加植物</text>
+            </view>
+          </view>
+          <view
+            v-for="plant in plantStore.userPlants"
+            :key="plant.id"
+            class="mb-4 rounded-3xl bg-white shadow-sm"
+          >
+            <PlantCard
+              :plant="plant"
+              :reminder-summary="getReminderSummary(plant)"
+              @diagnose="openDiagnose"
+              @history="openPlantHistory"
+              @edit="openEditPlant"
+              @reminder="openReminder"
+              @fertilization="openFertilization"
+            />
+            <view
+              v-if="plantDiagnoseHistory[plant.id]?.length"
+              :id="`index-diagnose-history-list-${plant.id}`"
+              class="mt-3 rounded-2xl bg-gray-50 p-3"
+            >
+              <view
+                v-for="record in plantDiagnoseHistory[plant.id]"
+                :key="record._id"
+                :id="`index-diagnose-record-${record._id}`"
+                class="border-b border-gray-100 py-2 last:border-0"
+                @click="viewDiagnoseDetail(record._id)"
+              >
+                <text class="block text-xs font-semibold text-gray-800">
+                  {{ record.mainIssue || '诊断记录' }}
+                </text>
+                <text class="mt-1 block text-[10px] text-gray-400">
+                  {{ formatTime(record.createdAt) }}
+                </text>
+              </view>
+            </view>
+          </view>
+          <view
+            id="index-watering-advisor-entry"
+            class="mt-3 flex items-center justify-between rounded-[20px] bg-white p-4 shadow-sm"
+            @click="handleGoWateringAdvisor"
+          >
+            <view class="flex items-center gap-3">
+              <text class="text-[24px]">💧</text>
+              <view>
+                <text class="block text-sm font-semibold text-gray-800">独立浇水建议</text>
+                <text class="block text-[11px] text-gray-400">不添加植物也能获取浇水方案</text>
+              </view>
+            </view>
+            <text class="text-[18px] text-gray-300">›</text>
           </view>
         </view>
       </template>
-      <view v-else class="mx-4 mt-6 bg-white rounded-[24px] p-5 shadow-sm">
-        <text class="block text-lg font-semibold text-gray-800 mb-2">登录后开始记录植物</text>
-        <text class="block text-sm text-gray-500 mb-5">
-          登录后可使用植物识别、AI 诊断、养护记录和历史同步能力。
-        </text>
 
+      <view v-else class="mx-4 mt-6 rounded-[24px] bg-white p-5 shadow-sm">
+        <text class="mb-2 block text-lg font-semibold text-gray-800">登录后开始记录植物</text>
+        <text class="mb-5 block text-sm text-gray-500"
+          >登录后可使用植物识别、植物状况检查、养护记录和历史同步。</text
+        >
         <!-- #ifdef MP-WEIXIN -->
         <button
           id="index-phone-login-button"
-          class="w-full bg-primary text-white font-semibold py-3.5 rounded-2xl mb-3 flex items-center justify-center"
+          class="mb-3 w-full rounded-2xl bg-primary py-3.5 text-white"
+          :class="{ 'opacity-60': phoneLoggingIn }"
+          :disabled="phoneLoggingIn"
+          :loading="phoneLoggingIn"
           open-type="getPhoneNumber"
           @getphonenumber="handleIndexPhoneLogin"
         >
-          <text class="text-base">📱 微信手机号登录</text>
+          {{ phoneLoggingIn ? '登录中…' : '微信手机号登录' }}
         </button>
         <!-- #endif -->
-
-        <!-- #ifndef MP-WEIXIN -->
+        <!-- #ifdef MP-TOUTIAO || MP-XHS -->
         <button
-          id="index-phone-login-unavailable-button"
-          class="w-full bg-gray-100 text-gray-500 font-semibold py-3.5 rounded-2xl mb-3 flex items-center justify-center"
-          @click="handlePhoneLoginUnavailable"
+          id="index-platform-phone-login-button"
+          class="mb-3 w-full rounded-2xl bg-primary py-3.5 text-white"
+          :class="{ 'opacity-60': platformPhoneLoggingIn }"
+          :disabled="platformPhoneLoggingIn"
+          :loading="platformPhoneLoggingIn"
+          :open-type="loginCodeReady ? 'getPhoneNumber' : ''"
+          @click="handlePlatformLoginTap"
+          @getphonenumber="handlePlatformPhoneLogin"
         >
-          <text class="text-base">📱 手机号登录接入中</text>
+          {{
+            platformPhoneLoggingIn
+              ? '登录中…'
+              : loginCodeReady
+                ? '授权手机号快捷登录'
+                : '准备手机号登录'
+          }}
         </button>
+        <text v-if="loginPreparationError" class="mb-3 block text-sm leading-6 text-[#B42318]">
+          {{ loginPreparationError }}
+        </text>
         <!-- #endif -->
-
-        <button
-          id="index-quick-login-button"
-          class="w-full bg-[#EEF3EF] text-[#2D7A4F] font-semibold py-3.5 rounded-2xl flex items-center justify-center"
-          @click="userLogin"
-        >
-          <text class="text-base">⚡ 快速登录</text>
-        </button>
       </view>
 
-      <!-- 养护知识 -->
-      <view v-if="plantStore.hasPlants" class="px-4 pb-4">
-        <text class="block text-base font-semibold text-gray-800 mb-3">💡 养护知识</text>
-        <view class="grid grid-cols-4 gap-3">
-          <view
-            v-for="tip in careTips"
-            :key="tip.id"
-            class="bg-white rounded-2xl p-4 px-2 flex flex-col items-center shadow-sm"
-            @click="viewTip(tip)"
-          >
-            <text class="text-[28px] mb-2">{{ tip.icon }}</text>
-            <text class="text-[11px] text-gray-600 text-center">{{ tip.title }}</text>
-          </view>
-        </view>
-      </view>
+      <WateringReminderSheet
+        ref="wateringReminderRef"
+        :plant="currentReminderPlant"
+        @close="currentReminderPlantId = null"
+      />
+      <FertilizationMonthlySheet
+        ref="fertilizationMonthlyRef"
+        :plant="currentFertilizationPlant"
+        @close="currentFertilizationPlantId = null"
+        @changed="loadUserPlants()"
+      />
     </view>
-
-    <!-- 诊断弹窗 -->
-    <DiagnosePopup
-      ref="diagnosePopupRef"
-      :plant-id="currentPlantId"
-      :plant-name="currentPlantName"
-      @success="handleDiagnoseSuccess"
-      @close="handleDiagnosePopupClose"
+    <!-- #ifdef MP-TOUTIAO -->
+    <PlatformPrivacyModal
+      :model-value="privacyVisible"
+      @open-contract="openPrivacyContract"
+      @agree="agreePrivacyAuthorization"
     />
-  </view>
+    <!-- #endif -->
+    <FeatureUnavailableModal v-model="featureUnavailableVisible" :feature-key="openedFeatureKey" />
+  </Layout>
 </template>
 
 <script setup>
-import { onMounted, ref, reactive } from 'vue'
-import CustomNavbar from '@/components/CustomNavbar'
-import DiagnosePopup from '@/components/DiagnosePopup.vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import HeaderWeatherInfo from '@/components/HeaderWeatherInfo.vue'
+import Layout from '@/Layout.vue'
+import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
+import PlatformPrivacyModal from '@/components/PlatformPrivacyModal.vue'
+import { getDiagnosisHistory } from '@/api/diagnosis-history.js'
+import { usePlantingStore } from '@/store/planting.js'
 import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
-import { getDiagnosisHistory } from '@/api/plants-http.js'
-import loading from '@/assets/icons/loading.svg'
+import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
+import { callComponentMethod } from '@/utils/component-ref.js'
+import { createAsyncActionGuard, createLeadingThrottle } from '@/utils/interaction-guard.js'
+import { requireMvpAccess } from '@/utils/subscription-access.js'
+import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
+import { isDiagnosisAvailable, isFeatureAvailable } from '@/utils/platform-capabilities.js'
+import { getActivePlatformAccessToken } from '@/api/platform-session.js'
+import { usePlatformPhoneLogin } from '@/composables/usePlatformPhoneLogin.js'
+import PlantCard from './components/PlantCard.vue'
+import FertilizationMonthlySheet from './components/FertilizationMonthlySheet.vue'
+import WateringReminderSheet from './components/WateringReminderSheet.vue'
+
+const JUST_NOW_MS = 60000
+const ONE_HOUR_MS = 3600000
+const ONE_DAY_MS = 86400000
+const qaPerformanceRefresh = import.meta.env.VITE_QA_PERFORMANCE_COLD_LANE === '1'
 
 const plantStore = usePlantStore()
 const userStore = useUserStore()
-
-const loaded = ref(false)
-const diagnosePopupRef = ref(null)
-const currentPlantId = ref('')
-const currentPlantName = ref('')
+const plantingStore = usePlantingStore()
+const loadingPlants = ref(true)
+const indexPageReady = ref(false)
+const plantLoadStarted = ref(false)
+const plantsError = ref('')
+const wateringReminderRef = ref(null)
+const fertilizationMonthlyRef = ref(null)
+const currentReminderPlantId = ref(null)
+const currentFertilizationPlantId = ref(null)
+const phoneLoginAction = createAsyncActionGuard()
+const phoneLoggingIn = ref(false)
 const plantDiagnoseHistory = reactive({})
-const loadingHistory = reactive({})
-
-const careTips = ref([
-  { id: 1, icon: '💧', title: '浇水技巧' },
-  { id: 2, icon: '☀️', title: '光照需求' },
-  { id: 3, icon: '🌡️', title: '温度控制' },
-  { id: 4, icon: '🪴', title: '施肥方法' }
-])
-
+const currentReminderPlant = computed(() =>
+  currentReminderPlantId.value === null
+    ? null
+    : plantStore.userPlants.find(
+        plant => Number(plant.id) === Number(currentReminderPlantId.value)
+      ) || null
+)
+const currentFertilizationPlant = computed(() =>
+  currentFertilizationPlantId.value === null
+    ? null
+    : plantStore.userPlants.find(
+        plant => Number(plant.id) === Number(currentFertilizationPlantId.value)
+      ) || null
+)
+const {
+  loginCodeReady,
+  loginPreparationError,
+  loggingIn: platformPhoneLoggingIn,
+  handleGetPhoneNumber: handlePlatformPhoneLogin,
+  prepareLoginCode,
+  privacyVisible,
+  openPrivacyContract,
+  agreePrivacyAuthorization
+} = usePlatformPhoneLogin({
+  onSuccess: async user => {
+    await userStore.setLoginInfo({
+      user,
+      token: getActivePlatformAccessToken()
+    })
+    await loadUserPlants()
+  }
+})
+async function handlePlatformLoginTap() {
+  if (loginCodeReady.value || platformPhoneLoggingIn.value) {
+    return
+  }
+  await prepareLoginCode()
+}
+const {
+  openedFeatureKey,
+  visible: featureUnavailableVisible,
+  openFeatureUnavailable
+} = useFeatureUnavailableModal()
 onMounted(async () => {
-  const systemInfo = uni.getSystemInfoSync()
-  userStore.setNavbarHeight((systemInfo.statusBarHeight || 0) + 44)
-
-  // 登录状态下加载用户植物
-  if (await userStore.ensureLogin()) {
-    loadUserPlants()
+  try {
+    if (await userStore.ensureLogin()) {
+      await loadUserPlants()
+    } else {
+      loadingPlants.value = false
+    }
+  } finally {
+    indexPageReady.value = true
   }
 })
 
-// 监听折叠面板展开，加载诊断历史
-function handleCollapseChange(e) {
-  // e 是展开的面板 name 数组
-  if (e && e.length > 0) {
-    const plantId = e[e.length - 1] // 获取最新展开的面板
-    if (!plantDiagnoseHistory[plantId] && !loadingHistory[plantId]) {
-      loadPlantDiagnoseHistory(plantId)
+onShow(() => {
+  Object.keys(plantDiagnoseHistory).forEach(key => delete plantDiagnoseHistory[key])
+  if (indexPageReady.value && qaPerformanceRefresh && userStore.isAuthenticated) {
+    userStore
+      .ensureLogin()
+      .then(isLoggedIn => {
+        if (isLoggedIn) {
+          return loadUserPlants()
+        }
+        return undefined
+      })
+      .catch(() => undefined)
+  }
+})
+
+async function loadUserPlants() {
+  if (plantLoadStarted.value && loadingPlants.value) {
+    return
+  }
+  plantLoadStarted.value = true
+  loadingPlants.value = true
+  plantsError.value = ''
+  try {
+    const result = await plantStore.getUserPlants(1, 50)
+    if (!result?.success && !result?.stale) {
+      plantsError.value = result?.message || '暂时无法加载植物，请检查网络后重试'
+    }
+  } finally {
+    loadingPlants.value = false
+  }
+}
+function handleIndexPhoneLogin(event) {
+  if (phoneLoggingIn.value) {
+    return
+  }
+  phoneLoggingIn.value = true
+  return phoneLoginAction.run(async () => {
+    try {
+      await userStore.phoneLogin({
+        code: event?.detail?.code || '',
+        cloudId: event?.detail?.cloudID || event?.detail?.cloudId || ''
+      })
+      await loadUserPlants()
+    } finally {
+      phoneLoggingIn.value = false
+    }
+  })
+}
+function addPlant() {
+  reportAnalyticsEvent(ANALYTICS_EVENTS.USER_CLICK_CREATE_PLANT)
+  uni.navigateTo({ url: '/subpackages/plant/user-plant-detail/user-plant-detail?mode=create' })
+}
+async function goWateringAdvisor() {
+  if (!isFeatureAvailable('watering')) {
+    openFeatureUnavailable('watering')
+    return
+  }
+  if (!(await requireMvpAccess(userStore, { source: 'index_watering_advisor' }))) {
+    return
+  }
+  reportAnalyticsEvent(ANALYTICS_EVENTS.ISOLATED_WATERING_PLANNER)
+  uni.navigateTo({ url: '/subpackages/care/watering-advisor/watering-advisor' })
+}
+const handleAddPlant = createLeadingThrottle(addPlant, 500)
+const handleGoWateringAdvisor = createLeadingThrottle(goWateringAdvisor, 500)
+function openEditPlant(plant) {
+  uni.navigateTo({
+    url: `/subpackages/plant/user-plant-detail/user-plant-detail?mode=edit&id=${plant.id}`
+  })
+}
+function getReminderSummary(plant) {
+  const backendReminder = normalizeBackendWaterReminder(plant?.wateringReminder)
+  const localWater = plantingStore.getPlantReminderState(plant.id, 'water')
+  return {
+    water: backendReminder || localWater,
+    fertilize: {
+      active: Boolean(plant?.fertilizationReminder?.active),
+      reminder: plant?.fertilizationReminder || null,
+      nextTime: plant?.fertilizationReminder?.nextTime || ''
     }
   }
 }
-
-async function loadPlantDiagnoseHistory(plantId) {
-  loadingHistory[plantId] = true
-  try {
-    const result = await getDiagnosisHistory({
-      plantId,
-      page: 1,
-      pageSize: 3
-    })
-
-    plantDiagnoseHistory[plantId] = (result?.items || []).map(item => ({
-      _id: item.resultId || item.historyId || '',
-      mainIssue: item?.summary?.displayName || '诊断记录',
-      healthStatus:
-        !item?.outcomeType
-          ? 'unknown'
-          : item?.outcomeType === 'non_problematic'
-          ? 'healthy'
-          : item?.outcomeType === 'uncertain'
-            ? 'unknown'
-            : item?.summary?.severity === 'high'
-              ? 'danger'
-              : 'warning',
-      createdAt: item.createdAt
-    }))
-  } catch (error) {
-    console.error('加载诊断历史失败:', error)
-  } finally {
-    loadingHistory[plantId] = false
+function normalizeBackendWaterReminder(reminder) {
+  if (!reminder?.nextTime) {
+    return null
+  }
+  const nextTime = new Date(reminder.nextTime)
+  if (Number.isNaN(nextTime.getTime()) || nextTime < new Date()) {
+    return null
+  }
+  return {
+    active: true,
+    reminder: { ...reminder, type: 'water', enabled: true },
+    nextTime: reminder.nextTime
   }
 }
-
-function openDiagnose(plant) {
-  currentPlantId.value = plant.id
-  currentPlantName.value = plant.canonicalName || plant.displayName || '未知植物'
-  diagnosePopupRef.value?.open()
-}
-
-function handleDiagnoseSuccess(result) {
-  // 诊断成功后刷新该植物的诊断历史
-  if (currentPlantId.value) {
-    loadPlantDiagnoseHistory(currentPlantId.value)
-  }
-}
-
-function handleDiagnosePopupClose() {
-  currentPlantId.value = ''
-  currentPlantName.value = ''
-}
-
-function viewDiagnoseDetail(recordId) {
-  uni.navigateTo({
-    url: `/pages/diagnose/diagnose?id=${recordId}`
-  })
-}
-
-function formatTime(time) {
-  const date = new Date(time)
-  const now = new Date()
-  const diff = now - date
-
-  if (diff < 60000) {return '刚刚'}
-  if (diff < 3600000) {return `${Math.floor(diff / 60000)}分钟前`}
-  if (diff < 86400000) {return `${Math.floor(diff / 3600000)}小时前`}
-  if (diff < 604800000) {return `${Math.floor(diff / 86400000)}天前`}
-
-  return `${date.getMonth() + 1}月${date.getDate()}日`
-}
-
-async function userLogin() {
-  await userStore.wechatLogin()
-  loadUserPlants()
-}
-
-async function handleIndexPhoneLogin(e) {
-  const phonePayload = {
-    code: e?.detail?.code || '',
-    cloudId: e?.detail?.cloudID || e?.detail?.cloudId || ''
-  }
-
-  if (!phonePayload.code && !phonePayload.cloudId) {
-    console.log('首页手机号授权未返回有效桥接参数:', e?.detail)
+async function openDiagnose(plant) {
+  if (!plant?.id) {
     return
   }
-
-  try {
-    await userStore.phoneLogin(phonePayload)
-    await loadUserPlants()
-    uni.showToast({
-      title: '登录成功',
-      icon: 'success'
-    })
-  } catch (error) {
-    console.error('首页手机号登录失败:', error)
-    uni.showToast({
-      title: error.message || '登录失败',
-      icon: 'none'
-    })
+  if (!isDiagnosisAvailable('plant_card')) {
+    openFeatureUnavailable('diagnosis')
+    return
   }
-}
-
-function handlePhoneLoginUnavailable() {
-  uni.showToast({
-    title: '当前平台手机号登录接入中',
-    icon: 'none'
-  })
-}
-
-async function loadUserPlants() {
-  if (loaded.value) {return}
-  loaded.value = false
-
-  try {
-    await plantStore.getUserPlants()
-  } catch (e) {
-    console.error('加载植物列表失败:', e)
-  } finally {
-    loaded.value = true
-    console.log(loaded, 'loaded')
+  if (!(await requireMvpAccess(userStore, { source: 'index_plant_diagnose' }))) {
+    return
   }
-}
-
-function addPlant() {
+  const plantId = encodeURIComponent(String(plant.id))
+  const plantCatalogId = plant.plantId
+    ? `&plantCatalogId=${encodeURIComponent(String(plant.plantId))}`
+    : ''
+  const plantName = encodeURIComponent(plant.canonicalName || plant.displayName || '当前植物')
   uni.navigateTo({
-    url: '/pages/add-plant/add-plant'
+    url: `/subpackages/diagnosis/flow?plantId=${plantId}${plantCatalogId}&plantName=${plantName}&entrySource=plant_card`
   })
 }
-
-function viewPlantDetail(plant) {
-  plantStore.setCurrentPlant(plant)
+async function openPlantHistory(plant) {
+  if (!isDiagnosisAvailable('plant_history')) {
+    openFeatureUnavailable('diagnosis')
+    return
+  }
+  if (plantDiagnoseHistory[plant.id]) {
+    return
+  }
+  const result = await getDiagnosisHistory({ plantId: plant.id, page: 1, pageSize: 3 })
+  plantDiagnoseHistory[plant.id] = (result?.items || []).map(item => ({
+    _id: item.resultId || item.historyId || '',
+    mainIssue: item?.summary?.displayName || '诊断记录',
+    createdAt: item.createdAt
+  }))
+}
+async function openReminder({ plant, type }) {
+  const featureKey = type === 'water' ? 'watering' : 'fertilization'
+  if (!isFeatureAvailable(featureKey)) {
+    openFeatureUnavailable(featureKey)
+    return
+  }
+  if (!(await requireMvpAccess(userStore, { source: `index_${type}_reminder` }))) {
+    return
+  }
+  if (type === 'water') {
+    currentReminderPlantId.value = plant.id
+    await nextTick()
+    callComponentMethod(wateringReminderRef, 'open')
+  }
+}
+async function openFertilization(plant) {
+  if (!isFeatureAvailable('fertilization')) {
+    openFeatureUnavailable('fertilization')
+    return
+  }
+  if (!(await requireMvpAccess(userStore, { source: 'index_fertilization_reminder' }))) {
+    return
+  }
+  currentFertilizationPlantId.value = plant.id
+  await nextTick()
+  callComponentMethod(fertilizationMonthlyRef, 'open')
+}
+function viewDiagnoseDetail(recordId) {
   uni.navigateTo({
-    url: `/pages/plant-detail/plant-detail?id=${plant.id}`
+    url: `/subpackages/diagnosis/result?id=${recordId}&entrySource=plant_history`
   })
 }
-
-function needsCareToday(plantId) {
-  return plantStore.plantsNeedWater.some(p => p.id === plantId)
-}
-
-function getHealthBadgeClass(status) {
-  const statusClass = {
-    healthy: 'bg-green-500/90',
-    warning: 'bg-orange-500/90',
-    danger: 'bg-red-500/90',
-    sick: 'bg-red-500/90',
-    unknown: 'bg-gray-400/90'
+function formatTime(time) {
+  const diff = Date.now() - new Date(time).getTime()
+  if (diff < JUST_NOW_MS) {
+    return '刚刚'
   }
-  return statusClass[status] || statusClass.unknown
-}
-
-function getHealthText(status) {
-  const textMap = {
-    healthy: '健康',
-    warning: '注意',
-    danger: '异常',
-    sick: '异常',
-    unknown: '待确认'
+  if (diff < ONE_HOUR_MS) {
+    return `${Math.floor(diff / JUST_NOW_MS)}分钟前`
   }
-  return textMap[status] || '待确认'
-}
-
-function getDaysAgo(date) {
-  const plantDate = new Date(date)
-  const now = new Date()
-  const days = Math.floor((now - plantDate) / (1000 * 60 * 60 * 24))
-  return `${days}天`
-}
-
-function viewTip(tip) {
-  uni.showToast({
-    title: `${tip.title}功能开发中`,
-    icon: 'none'
-  })
+  if (diff < ONE_DAY_MS) {
+    return `${Math.floor(diff / ONE_HOUR_MS)}小时前`
+  }
+  return `${Math.floor(diff / ONE_DAY_MS)}天前`
 }
 </script>

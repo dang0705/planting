@@ -1,0 +1,488 @@
+---
+name: dispatch-task
+description: 'main 负责完整实现、合同、验证、审计与 Completion Gate；只有用户明确要求时才通过 external implementer bridge 交给外部 agent。'
+---
+
+# Dispatch Task
+
+## 1. 角色所有权
+
+### 1.0 Product necessity rule — JSON / validators 仅在这些边界强制
+
+强制 JSON 或 validator 的场景只有两类：
+
+1. **外部桥接边界**：external result、send receipt、handoff manual。
+2. **机器证据**：**一个** `validate-implementation-postflight.mjs` report；且当 `runtime_acceptance_mode` 为 `automator_required` | `batch_substitute_allowed` | `batch_only` 时，额外要求 `runtime-qa-evidence.json`。
+
+其余环节（main QA、docs、BRV）由 main 按行为规则执行，**不**产出 `main-*-receipt`，**不**调用 `validate-result.mjs main_qa`。
+
+- **main**：任务归一化、项目约束、路径边界、风险路由、实现模式选择、代码实现、handoff 校验、external implementer 桥接控制、diff-first review、返工协调、QA、docs/BRV 影响处理与 Completion Gate；
+  - `simple_patch`、`standard_task`、`deep_contract` 均由 main 直接实现；复杂度只决定合同严密度和验证范围，不产生内部子代理。
+  - main 负责实现阶段的单测/lint/typecheck/build/self-check，以及独立的端上、UI/Figma、docs/BRV 和 Completion Gate。
+  - 代码类文件包括但不限于：`src/**`、`cloudfunctions/**`、测试代码、schema、配置、package/lockfile、构建脚本、迁移脚本。
+- **External implementer**：仅在 `implementation_mode=external_implementer`（兼容旧值 `zcode_external`）时替代实现阶段；按 main 生成的最小 handoff prompt 修改代码并写 handoff manual；不替代 main 架构判断、QA 或验收。ZCode、Trae、Chrome 插件驱动的云端 agent 都只是 provider/adapter。
+- **Main QA**：由 main 独立验证 e2e、端上、UI/Figma 与运行时；不运行单测，不替代 main code review，不修复业务代码。仅在 automator/batch 模式产出 `runtime-qa-evidence.json`。
+- **Main docs / BRV**：由 main 在 Completion Gate 前判断并处理 active docs 与 ByteRover 影响；不得把文档或记忆治理伪装成实现修复。
+
+### 1.2 三种实现流
+
+| 流                     | 合同 / 证据                                                                                              | 实现后校验                               |
+| ---------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| `simple_patch`         | 无 handoff / 无 receipt                                                                                  | diff review + scoped lint/fmt            |
+| `main_direct`          | main result + 一个 postflight report（simple_patch 可走最小验证）                                         | `validate-result.mjs main` + postflight    |
+| `external_implementer` | 既有 external artifacts（prompt、send receipt、handoff manual、recovery result）+ 同一 postflight report | `validate-implementation-postflight.mjs` |
+
+普通任务默认只读本文件。不得先读完整历史、完整 ClickUp、完整 Figma、全仓规则、`.codex/skills/**/references/` 或旧 INDEX。
+
+### 1.1 BRV / ByteRover
+
+`AGENTS.md` 的 `BRV / ByteRover 内容边界` 是本项目 ByteRover 内容资格的唯一裁决来源。本 skill、其 references、模板和 handoff 不得重新定义、扩大或缩小该边界。
+
+本 skill 只负责编排：
+
+- 任务开始阶段是否需要执行 ByteRover recall；
+- Query、Read、当前事实源核验与最小上下文下发；
+- 任务过程中的 `brv_memory_impact`、`record_plan`、执行所有权与验收；
+- Space、权限、冲突、部分失败及破坏性操作的流程状态。
+
+BRV 记录时机必须按候选事实是否依赖实现结果区分：
+
+- 已由用户明确确认，且已由当前事实源核验、独立于本次代码修改结果的稳定业务事实，可以在任务中途立即完成 `record_plan`、写入和 readback/Query 验证；不得为了等待实现、QA 或 Completion Gate 而延迟。
+- 只有依赖最终实现、评审或端上验收才能确认的业务行为，才延后到对应证据齐备后记录。
+- 无论时机如何，均不得记录当前代码位置、一次性 bug 修复过程、临时环境状态或未经验证的实现方案。用户已明确要求并确认：经过当前源码、合同和实际验收共同验证、会约束后续任务的 dispatch 工作流契约，以及可复现的 Automator/QA 卡点与解决方法，应由 main 记录为稳定 workflow contract 或 validated recurring gotcha；不得把 provider 聊天过程、原始日志、临时执行 ID、凭据或一次性排障细节直接写入 BRV。任务结束时仍须复核已写入的记录，或明确说明 `brv_memory_impact=false`。
+
+ByteRover 的具体命令、Topic Schema、Vocabulary 和引擎行为以当前安装的 ByteRover V4 Skill 为准。当前实现事实及冲突优先级按 `AGENTS.md` 的知识治理边界执行，dispatch-task 不另建一套事实优先级。
+
+常规任务需要 recall 时读取 `references/brv-recall-gate.md`；需要 Record 或治理时读取 `references/brv-record-governance.md`。
+
+## 2. Gate A0 — Implementation Mode 简单触发路由
+
+外部实现者路由优先于普通复杂度分级。用户无需手动提供 `dispatch_tier`、`implementation_mode`、`external_implementer` 或 provider target 等内部路由字段；main 必须先根据用户输入识别外部实现意图，再进入 Gate A 完成任务分级。
+
+只要本轮任务需要代码修改，且用户输入明确要求交给外部实现者（例如 ZCode、Trae、外部 implementer、Chrome/云端 agent 等），且该要求不是出现在否定、比较、复盘、禁止使用语境中，就必须设置：
+
+```text
+implementation_mode = external_implementer
+dispatch_tier = external_implementer
+external_contract.provider = zcode | trae | chrome_cloud_agent | other
+external_contract.target_session = current_open_chat | headless_new_session | browser_session | remote_session | manual_handoff
+```
+
+兼容旧任务：`implementation_mode=zcode_external`、`dispatch_tier=zcode_external`、`zcode_contract` 仍可被 validator 接受，但新 handoff 优先使用 `external_implementer` / `external_contract`。
+
+当 `external_contract.provider=zcode` 时，Gate A0 必须覆盖通用默认值并固定生成：
+
+```text
+external_contract.target_session = current_open_chat
+external_contract.prompt_transport = clipboard_paste
+external_contract.computer_use_required = true
+external_contract.actual_tool_invocation_required = true
+external_contract.clipboard_bridge_required = true
+external_contract.clipboard_bridge_evidence_required = true
+external_contract.direct_input_injection_forbidden = true
+external_contract.manual_typing_forbidden = true
+external_contract.zcode_clipboard_bridge_authorization = { enabled: true, mode: current_turn_explicit | persistent_user_authorization }
+```
+
+ZCode bridge 从 canonical prompt regular file 读取 UTF-8 正文，依次尝试 macOS NSPasteboard 与 pbcopy；每次都在本地读回并校验 SHA-256、bytes、lines，成功即停止，全部失败才 blocked。main 只能在最新 app state 中动态定位并聚焦唯一 ZCode entry area，只执行一次 Cmd+V 并验证可见交付；附件分支用可见行数与 canonical prompt 行数核对，不要求 ZCode UI 重复暴露 hash/bytes。发送后必须验证同一消息/附件进入当前会话。不得持久化 prompt、旧剪贴板、element index、credential 或原始 UI dump；Cmd+V 无可见交付时直接 blocked，不得进入 Edit 菜单、headless、新会话、逐字输入或手输。
+
+## 3. Gate A — Intake、分级与 baseline
+
+main 只读取：用户输入/显式 source、`git status --short`、目标路径最近的 AGENTS.md。UI 任务再定向读取 Tailwind 配置和组件库入口。
+
+形成短 Brief：
+
+```text
+objective / dispatch_tier / code_changes_required / ui_task / figma_link / risk / acceptance / likely_paths / implementation_mode
+```
+
+完成 Brief 后，main 按 `AGENTS.md` 的 `BRV / ByteRover 内容边界` 判断本任务是否具有常规召回资格。需要召回时，在 Agent Assignment / Handoff 前读取并执行 `references/brv-recall-gate.md`；不需要时记录 `brv_relevance.status=not_required`，不得为流程完整性调用 ByteRover。
+
+### 3.1 dispatch_tier
+
+| `dispatch_tier`        | 适用任务                                                                                                | 默认处理                                                                                             | 实现所有者           |
+| ---------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------- |
+| `simple_patch`         | 单文件/少量文件、低风险、无 Figma、无 schema/API/状态机、无 CloudBase、无外部实现者、无 subagent 必要性 | `implementation_mode=main_direct`；main 承担最小实现、最小验证、diff review 和 Completion Gate       | main                 |
+| `standard_task`        | 多文件但在既有架构内，局部功能或普通 UI                                                                 | `implementation_mode=main_direct`，main 直接实现并完成验证                                      | main                 |
+| `deep_contract`        | API/schema/迁移/安全/跨系统状态机/兼容性或不可逆风险                                                    | `implementation_mode=main_direct`，main 读取 `references/high-risk-workflow.md` 并按 strict 合同执行 | main                 |
+| `external_implementer` | 用户或配置明确要求外部 agent 写代码（ZCode、Trae、Chrome 插件驱动的云端 agent 等）                      | `implementation_mode=external_implementer`，读取 external implementer bridge references              | external implementer |
+
+### 1.3 Main 直接小修复与终态后维护补丁
+
+`main_direct` 是所有非外部任务的正式实现路由。`simple_patch` 仍是无需完整实现合同的低风险快捷路由；`standard_task` 和 `deep_contract` 需要 main result、postflight 以及合同要求的 QA 证据。
+
+这里的“实现结果”只表示 main 或 external provider 已返回合同要求的最终结果：`completed` 或 `blocked`。它表示实现交付阶段结束并进入 main review，不表示整个 dispatch-task 已完成。只有 `completed` 结果且 recovery evidence 已齐备时，main 才能进入 Completion Gate。
+
+1. external provider 仍运行时，main 不得修改任何代码类文件；
+2. 变更默认不超过 3 个文件、80 行语义变更；纯格式化可扩大文件数，但必须证明无语义 diff；
+3. 只能修复已被验证的 typo、格式、lint/build 阻断或合同内的机械冲突，不得借机改变产品方向；
+4. external Web 任务只能在合同指定的 PR worktree 修改，并提交、推送到同一 PR head；不得把 PR worktree 的修复带回主工作区直接提交；
+5. 若需要新增业务判断、跨模块重构、API/schema/状态机变化，main 必须按 `deep_contract` 收紧 decision lock 和验证；不得把“大修”伪装成 `simple_patch`。
+
+`maintenance_patch` 的有效窗口只在 Gate C Main Review 内：从 completed 结果和 recovery evidence 可审查时开始，到 PR merge / local base sync / Completion Gate 之前结束。它不是任务完成后的补丁入口；一旦已通过 Completion Gate，后续问题必须回到原 implementer 或新建任务，不得重新打开已完成任务直接修改。
+
+maintenance patch 完成后必须重新执行 scoped diff review、oxfmt/lint/build 或合同指定验证；external Web 任务还必须重新执行 postflight，并以新的 head SHA 进入 PR merge gate。
+
+只验收或只改文档的任务由 main 直接执行，不进入 Implementation Completion Gate；不得伪装成实现任务。
+
+存在 Figma link、UI 还原、API/schema、迁移、安全、CloudBase、跨端状态机、超过 1 个业务模块或用户指定外部实现者时，不得走 `simple_patch`。
+
+`simple_patch` 一旦发现影响范围扩大，必须升级为 `standard_task` 或 `deep_contract`；升级后仍由 main 实现，但必须补齐对应合同与验证。严禁把非 `simple_patch` 伪装成快捷路由。
+
+### 3.2 Worktree baseline
+
+代码修改任务在派发前必须捕获 baseline：
+
+```bash
+node .codex/skills/dispatch-task/scripts/capture-worktree-baseline.mjs .tmp/dispatch-task/<dispatch_run_id>-worktree-baseline.json
+```
+
+规则：
+
+1.  baseline 用于区分本轮变更与用户/其他线程已有变更；不得用它自动 restore 或覆盖用户改动。
+2.  若 baseline 已经存在 dirty files，handoff 必须记录 `validation.worktree_baseline_path`，main review 必须特别检查是否与本轮 `changed_files` 重叠。
+3.  如果本轮声明修改的文件在 baseline 中已 dirty，且用户未明确授权覆盖/协作，Completion Gate 必须 blocked，不能擅自回滚。
+4.  当用户明确要求在脏共享工作区直接协作时，handoff 必须设置 `validation.allow_preexisting_dirty_overlap=true`，并在 `validation.preexisting_dirty_overlap_owners` 为每个可能重叠路径提供合同级 ownership proof；implementer result 的自我声明不能授权 overlap。
+
+## 4. Project Constraints
+
+代码任务必须形成 `Project Constraints`：
+
+```text
+rule_refs              # 路径 + 相关章节，不复制整份 AGENTS.md
+framework
+component_library      # UI 必填；若为 uni-ui 且存在 figma_link，必须触发 uni-ui 映射合同
+dependency_policy
+test_commands
+```
+
+## 5. Gate B — Handoff Contract
+
+除 `simple_patch` 外，需要代码修改的 `standard_task`、`deep_contract`、`external_implementer` 必须生成 JSON Handoff Contract。
+
+```text
+dispatch_run_id
+dispatch_tier: standard_task / deep_contract / external_implementer
+implementation_mode: main_direct / external_implementer
+task: {objective, code_changes_required, ui_task, risk, qa_required}
+external_contract                   # implementation_mode=external_implementer 时必填；旧 zcode_contract 兼容
+handoff_manual                      # implementation_mode=external_implementer 时必填
+allowed_paths / forbidden_paths
+acceptance
+project_constraints
+decision_lock:
+  level: standard / strict
+  architecture_invariants
+  local_decisions_allowed
+brv_relevance:
+  required: boolean
+  official_query_command              # required=true 时必填；失败记 recall_degraded source-first
+figma:
+  required: boolean
+  link / node_id
+  mode: internal_mcp / external_prompt_recovery
+  implementer_fetch_required
+  qa_baseline_fetch_required          # 行为标志：main QA 须独立获取视觉基准
+feature_test_plan:
+  required: boolean
+  targets                             # 源/目标范围；代码任务 required=true 时必填
+  commands                            # 至少一个 feature-specific command；generic run-all 不能单独验收
+e2e_plan:
+  required: boolean
+  automator_required
+  catalog_required
+required_skills / required_prompt_sections
+validation:
+  miniprogram_automator_required
+  runtime_acceptance_mode: automator_required / batch_substitute_allowed / batch_only
+  batch_substitute_user_approval_ref
+  worktree_baseline_path
+  postflight_report_path
+  implementer / external
+output_evidence_required
+```
+
+`standard` 只锁目标、工程规则和不可破坏的不变量；组件拆分、命名、复用落点等局部决策由 main 在合同内完成。只有 API/schema、迁移、安全、跨系统或不可逆任务读取 `references/high-risk-workflow.md` 并使用 `strict`，不为普通任务生成架构长文或逐文件伪代码。
+
+派发前执行：
+
+```bash
+node .codex/skills/dispatch-task/scripts/validate-handoff.mjs <handoff.json>
+```
+
+失败不得进入实现阶段。
+
+## 6. Gate B1 — Main Implementation Lock
+
+main 在自己的工作区完成实现、测试、自检、diff review 和 Completion Gate。只有 `external_implementer` 进入外部桥接；外部 provider 运行期间，main 遵守其工作区和等待锁。
+
+## 7. Gate B1.5 — External Provider Run Lock / 等待与工作区所有权
+
+只有 external implementer 被派发时，main 进入 External Provider Run Lock。
+
+本仓库启用本地 dispatch hook gate：
+
+```text
+.codex/hooks.json -> .codex/hooks/dispatch-gate-adapter.mjs -> .codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs
+```
+
+hook gate 的职责是可观测性与硬风险拦截，不替代本 skill 的人工判断。main 在派发前用 `dispatch-gate cli.mjs episode open` 建立一个 active episode；spawn 返回 agent id 后必须立即执行 `episode start`（`episode bind` 为等价别名）完成明确的 episode/agent binding。没有 active episode 的 hook 事件必须快速退出，绝不能写入 `unknown-dispatch-run`。同一目标的用户反馈用 `episode amend` 追加，默认复用 main 已生成的 recall packet；只有 `knowledgeScopeChanged=true` 时才要求 main 重新召回。
+
+review 缺陷必须先合并成一个完整返工清单，再执行一次 `episode rework --defect-signature=... --summary=...`。单个 episode 最多允许一个 consolidated rework batch；第二次 rework 必须产出可审计 successor dispatch（`--successor-dispatch-run-id=...`，新 run 记录 `supersedes_dispatch_run_id`，原 run 记录 `successor_dispatch_run_id`）或明确 `user_decision_required`（仅在确实缺少产品决策且无修复目标时允许）。有既定修复目标时不得直接停止。普通用户 amendment 不计入 rework budget。
+
+### 7.1 Continuation contract - provider 交付与 dispatch 完成状态分离
+
+provider（external implementer）返回终态只表示实现交付阶段结束，绝不表示整个 dispatch-task 完成。episode 通过受持久化状态机和 validator 约束的 `lifecycleStage` 强制实现严格转移：
+
+```text
+implementation_running -> provider_delivered -> recovery_in_progress -> review_passed -> qa_passed|qa_not_required -> completion_ready -> completed
+```
+
+硬规则：
+
+1. provider 终态处理只记录 `provider_delivered` + `recovery_required`（`episode provider-delivered`），不得 finish 或完成 episode；episode 保持 active。
+2. 恢复开始必须有显式状态/事件（`episode start-recovery` -> `recovery_in_progress`）。
+3. `review_passed`（`episode review-passed`）与 `qa_passed|qa_not_required`（`episode qa-outcome`）必须依次推进，不得跳过。
+4. `completion_ready` 只能由成功验证的 `validate-completion-readiness` 路径记录（`episode mark-completion-ready --authorized-by=validate-completion-readiness`）；聊天、manual、provider result 自称完成一律不接受。
+5. `episode finish --status=completed` 拒绝所有未达到 `completion_ready` 的 episode；`completion_ready` 之前任何阶段都不得完成。
+6. 在恢复、后继 dispatch 或明确决策阻断出现前，任务仍 active。
+7. `lifecycleStage` 与 `continuation`（providerDelivered/recoveryRequired/recoveryStartedAt/reviewPassedAt/qaOutcome/completionReadyAt/completionReadyAuthorizedBy）记录在 episode 与 status card；`successorDispatch`（successor_dispatch_run_id/supersedes_dispatch_run_id/relationship）记录 circuit breaker 后继链路。
+
+外部实现者 handoff manual 的 provider 完成状态与 dispatch 完成状态彻底分离：本轮 legacy manual 仍用 `status=working|completed|blocked`（`completed` 只表示 provider 交付结束）；未来生成的 provider 合同改用 `provider_status=running|delivered|blocked`，`delivered` 只触发 recovery，绝不等于 dispatch 完成。唯一标识只能是 `dispatch_run_id`；不接受 `dispatch_id` 别名，不允许 `delivered`/`completed` 语义混用。
+
+### 7.2 Selection to consumer contract
+
+任务新增或变更用户可选值（选项、模式、开关、分支路径）时，handoff 必须声明 `selection_to_consumer.required=true`，implementer/external result 必须在 `selection_to_consumer.values` 列出每个具体 value、产生该选择的 `submit_payload`、消费该选择的 `consumer_branch`、`expected_entry` 和 `anti_fallback_assertion`，并设 `consumer_verified=true`。非选择类任务必须明确写 `selection_to_consumer.not_applicable=true` 并给出原因。`validate-handoff`、`validate-result` 和 `validate-completion-readiness` 会拒绝缺失该合同或实现者证据的任务。
+
+`PostToolUse` 记录真实 tool/terminal/Figma/code-edit telemetry。内部 Subagent 生命周期不是有效 dispatch 路径；若出现内部子代理事件，必须记录为违规并阻断，不得创建 episode 绑定或继续实现。
+
+hook-self-test 只证明 CLI adapter 行为，不能证明 Desktop 原生生命周期已接通。必须用 `hook-capability`/运行态探针标明 `native_supported` 或 `cli_fallback`；native 不可用时 `.codex/hooks.json` 只保留可观测的 `PreToolUse`/`PostToolUse`，生命周期由 `episode open/start/status/finish` 显式执行，严禁继续挂载无效的 `SubagentStart`/`SubagentStop` 来制造已接通的假象。
+
+`PreToolUse` 只允许对以下硬风险返回 deny：
+
+1. 写入或格式化 `forbidden_paths`、疑似覆盖用户/其他线程工作区改动；
+2. 伪造 QA evidence、伪造 runtime/catolog/hash/execution id；
+3. 未经 catalog gate 裸跑 automator 并试图作为验收。
+
+缺失 Figma 读取、缺 unit test、`required_skills` 未执行或 BRV recall degraded 不得作为 `PreToolUse` deny 理由。
+
+硬规则：
+
+1. main 必须等待 external provider 的最终结果、handoff manual 终态，或用户明确中止；不得用短轮询判定“无产出”。
+2. external provider 正在运行时，main 不得修改、撤回、格式化、restore、checkout、apply_patch、sed 重写或自动修补其工作区内的代码类文件。
+3. external provider 正在运行时，main 不得用暂时没有可见 diff 推断 provider 失败。
+4. 外部 provider 的正式状态检查遵守 5 分钟下限；短等待只用于一次性发送成功、页面已开始运行、身份探针等非实现 completion 检查。
+5. 如果 main 在 external provider 仍可能写入时误写代码类文件，必须立即停止并返回 `blocked: main_workspace_contamination`。
+6. provider 返回 `completed|blocked` 后，main 才能进入 Gate C；`blocked` 不得转为内部子代理或静默接管实现。
+7. 同一 episode 的外部实现沟通上限是“一次初始实现 + 一次整包返工”；第二批缺陷必须触发 circuit breaker。
+
+违反本节视为 Hard stop。
+
+## 8. Gate B2 — External Implementer Bridge
+
+仅 `implementation_mode=external_implementer`（兼容旧 `zcode_external`）。**细节不得写进本文件正文**；命中后按条件读取：
+
+```text
+references/external-implementer-routing.md          # 必读：公共合同、remote sync、PR recovery、校验命令
+references/zcode-routing.md                         # provider=zcode
+references/zcode-computer-use-policy.md             # ZCode 且需操作 UI
+assets/templates/external-implementer-prompt-template.md
+assets/templates/zcode-prompt-template.md           # ZCode 兼容 alias
+```
+
+本文件只锁这几条硬边界：
+
+1. main 默认直接实现；只有进入 external bridge 时暂停本地实现，不因 external 失败自动 fallback 到任何子代理。
+2. 统一 external prompt + send receipt +（本地 manual 或 Web PR/worktree recovery）；聊天“完成”不算完成。
+3. Codex Desktop 运行 Web/云端 provider 时，必须用 Codex 内置浏览器打开和发送 prompt；普通 Chrome、shell 或 ambient browser 状态不能替代受控发送证据。
+4. Web/云端 external implementer 即使远端自称 main/root，也必须按 implementer 身份执行：只改合同范围代码，完成后提供 unit tests 等实现者自检；有 `figma_link` 时直接用可用 Figma 插件 / MCP / 工具取设计证据。
+5. Codex 内置浏览器发送成功后，必须显式保留 provider tab 为 `handoff`，send receipt 记录 `tab_retention`；不得依赖 Browser Use 默认生命周期保留外部会话。
+6. Web/云端 external implementer 的完成等待必须继承 External Provider Run Lock：首次正式状态检查不得早于 5 分钟，之后每 5 分钟低频检查。不得用 60 秒、90 秒等短等待作为“完成/失败/无产出”判断；短等待只允许用于一次性发送成功、页面已开始运行、身份探针这类非实现 completion 检查。
+7. prompt 送达并开始运行后进入 External Provider Run Lock（见 §7）；adapter 细则与 DOM/Computer 步骤只在 references。
+8. 结果回收后走同一套 Gate C/D（`validate-result.mjs external` → postflight → completion）。
+
+## 9. Gate C — Implementation Review
+
+main / external recovery 返回 JSON 后先校验结果合同，再做 diff-first review，并执行**一个** postflight：
+
+```bash
+node .codex/skills/dispatch-task/scripts/validate-result.mjs main <handoff.json> <result.json>
+# 或：validate-result.mjs external <handoff.json> <external-recovery-result.json>
+node .codex/skills/dispatch-task/scripts/validate-implementation-postflight.mjs <handoff.json> <impl-result.json> <worktree-baseline.json> > .tmp/dispatch-task/<dispatch_run_id>-postflight-report.json
+```
+
+`completed` 结果进入 Gate C Main Review；`blocked` 结果是合法阻断结果，但不得进入 Completion Gate。Completion Gate 通过才是 dispatch-task 的完成。
+
+所有代码修改任务都必须做 diff-first review：实现者（main 或 external）身份/来源、实际变更文件、路径边界、项目约束、decision lock、依赖、验证证据。UI 重点检查 Tailwind/SCSS、组件复用与 uni-ui 映射证据；Figma 任务必须存在实现者直接读取证据。失败由 main 在原路径修复或重新进入 external bridge，不得创建内部子代理。
+
+postflight report 必须确认 git root 与 HEAD 未相对 baseline 变化，并覆盖 worktree scope、no-new-deps、style-stack 等实现后机器证据。`no_new_deps` 对 `package.json` 只以依赖字段相对 HEAD 的变化作为新增依赖风险；仅 scripts/config 调整可通过并记录 warning，lockfile 或依赖字段变化仍 blocked。
+
+postflight 通过后应由 dispatch gate 创建 `.tmp/dispatch-task/<dispatch_run_id>/qa-skeleton.json`，供 main QA 继续补 runtime/batch evidence。该 skeleton 只表示 QA 计划已建立，不表示端上验收已通过。
+
+`simple_patch` 可跳过完整 handoff/result/postflight，只执行 git diff review + scoped lint/fmt/build；`standard_task`、`deep_contract` 的 `main_direct` 必须执行 main result、postflight 和 Completion Gate。
+
+缺少 baseline 或 postflight report 时，不得进入 Completion Gate。postflight report 在 `passed` 和 `blocked` 时都必须产出 JSON；`blocked` 不授权 main 修复，必须回到原实现路径或请用户决策。
+
+## 10. Gate D — QA & Completion
+
+Figma、UI、用户可观察行为、API/schema/数据链路、端上运行、高风险或用户明确要求时需要 QA；对应 handoff 可设置 `task.qa_required=true`。**`qa_required=true` 本身不强制任何 QA JSON**——QA 由 main 按需要执行；失败则退回原 implementer 或 external implementer。纯文档、注释或不影响行为的机械改动可跳过，但要记录理由。
+
+main QA 不运行 unit tests，不修改业务代码。
+
+### 10.0 测试层级与真实性边界（强制）
+
+dispatch 必须把 unit-test、服务层 e2e 和真实端上 e2e 分开计分，不能用较低层级的通过替代较高层级的验收：
+
+1. `test/unit/**` 是模块级验证，允许并优先使用真实 `cloud1_dev` 数据、真实 CloudBase API 和真实数据库读写；使用真实数据的结果必须标记为 `unit_real_data`，不再强制要求 mock、stub 或假数据。真实微信运行时、页面交互、截图和小程序端上的 `wx.request` 仍由 Automator 负责。unit-test 通过只说明模块/服务在所用数据边界下正确，不能单独作为用户可观察功能或端上验收证据。
+2. `test/e2e/batch/**` 是跨模块服务链路验证，必须调用项目真实配置的 API 和开发库；禁止 mock 被测接口响应、伪造植物/用户数据或绕过 API 直接写入结果。batch 只能证明后端/接口链路，不能替代小程序页面和交互验收。
+3. `test/e2e/automator/**` 中用于正式端上验收的叶子必须运行真实小程序、真实用户登录态、真实 `cloud1_dev` 数据、真实 LAN gateway 和真实运行时 `wx.request`。请求捕获只能观察并转发，不能合成响应；页面必须使用真实数据进入、操作和读回。
+4. 使用 fixture/mock 的 Automator 叶子只能作为诊断或回归工具，必须标记为 `fixture_diagnostic`，不得写入 `runtime-qa-evidence.json` 作为正式端上通过。正式 acceptance 必须选择 catalog 中声明 `automator_required` 且 `data_mode=automator_live_real_api` 的 live 叶子。
+5. 测试或 QA 报告及其 catalog/qa-run 证据必须明确可核验数据模式：`unit_real_data`、`unit_fake`、`e2e_real_api`、`automator_live_real_api` 或 `fixture_diagnostic`。项目默认优先使用 `unit_real_data`；无法证明真实 API、真实数据和真实运行时来源的结果只能记为 `not_verified` / `blocked`，不得包装成 PASS。
+
+automator QA 必须先通过 catalog gate：
+
+```bash
+node .codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs validate-e2e-catalog
+node .codex/skills/dispatch-task/scripts/dispatch-gate/cli.mjs qa-run --catalog-id=<leaf-id> --execution-id=<run-id> --dry-run
+```
+
+只有 catalog 精确叶子、`docs/ai-rules/frontend-automation-id-policy.md` 引用、冻结脚本 hash、execution id 和 qa-run execution record 全部通过后，才允许进入 LAN/DevTools/automator。live `qa-run` 在调用叶子脚本前必须完成 target projectPath、完整 LAN flow、正式 QA `9421` WebSocket、`9422` DevTools control port、page data、截图和小程序运行时 `wx.request` preflight；`9420` 只属于用户日常交互调试，错误项目绝不能重启。正式 QA 截图 RPC 失效时，必须先用 QA-owned `9421/9422`、owner PID、profile 和 projectPath 共同证明唯一目标；不得从日常 `9420` listener、日常 PID 或日常 profile 推导 QA ownership。一次受控 `close -> open -> auto` 后必须重新证明 QA main PID、`9421` listener PID、`9422` 控制端口和项目路径，并重跑截图与 `wx.request`。任何项目证据、控制端口或 restart PID 证明缺失均为 `devtools_automator_blocker`，不得把单独 `cli auto` 记为重启。qa-run 必须串行锁定 `9421/9422`，同一冻结 hash 最多两次 live attempt，产品失败不得原地重试，所有异常都必须终态化为 `aborted`、`failed_environment`、`failed_product` 或 `failed_script`。裸跑 automator 脚本只能作为排障，不能作为 `runtime-qa-evidence.json` 的验收来源；将裸跑结果包装成通过证据属于 QA evidence forgery。
+
+运行态验收模式由 `validation.runtime_acceptance_mode` 显式声明；仅当模式为 `automator_required` | `batch_substitute_allowed` | `batch_only` 时，必须产出 `runtime-qa-evidence.json`：
+
+- `automator_required`：必须完整 LAN flow、合同指定 `dist/dev/mp-weixin`、正式 QA `9421/9422`、miniprogram-automator、page / `wx.request` evidence。
+- `batch_substitute_allowed`：必须有 `validation.batch_substitute_user_approval_ref`；跑批可以替代本轮端上验收，但 evidence 可记录 `end_side_status=not_verified_by_user_approved_substitution`。
+- `batch_only`：只用于算法或服务层矩阵，不得覆盖真实 UI 或端上交互验收。
+
+`runtime-qa-evidence.json` 必填字段：
+
+```text
+dispatch_run_id
+status: passed | failed | blocked
+runtime_acceptance_mode
+channel
+catalog_id                  # automator_required 必填
+execution_id                # automator_required 必填
+script_sha256               # automator_required 必填
+script | script_path         # automator_required 必填，必须等于 catalog leaf_script
+qa_run_execution_record      # automator_required 必填
+projectPath
+pagePath
+automator_port | wsEndpoint
+evidence_paths[]
+failures[]
+not_verified[]
+```
+
+可选：`user_approval_ref`、`end_side_status`（batch 模式）。
+
+**禁止**出现在该文件中的字段：`owner`、`agent_identity`、`coverage`、`checks_and_evidence`、`unit_tests_run`、`next_action`、`blocker_classification`、`figma_baseline_evidence`。
+
+Completion Gate：
+
+```bash
+node .codex/skills/dispatch-task/scripts/validate-completion-readiness.mjs <handoff.json> <impl-result.json> <postflight-report.json> [runtime-qa-evidence.json]
+```
+
+完成条件：实现结果 `completed`；postflight report 为 `passed`；main review 通过；所需 QA 已通过或明确不需要；docs/BRV impact 已由 main 处理或明确不需要；blocker 与未验证项为空。`batch_substitute_allowed` 可保留端上未验证事实，但必须有用户批准记录和跑批证据。completion note 可简要说明 `docs_impact` / `brv_memory_impact`。
+
+### 10.1 Gate D1 — Active docs / ByteRover V4 知识治理
+
+main 在任务过程中持续判断 `docs_impact` / `brv_memory_impact`，二者独立；不得把 BRV 影响判断机械地推迟到实现完成后。
+
+- **docs**：仅当公共契约 / API / schema / 诊断规则 / 自动化 ID / 明确要求的 active doc 变化时维护。
+- **BRV**：仅按 `AGENTS.md` 内容边界裁决。若稳定业务事实已独立于实现结果完成用户确认与当前事实源核验，`brv_memory_impact=true` 可在实现或 QA 完成前处理；此时读 `references/brv-record-governance.md` 并执行批准的 `record_plan`（含 readback / Query）。若候选事实依赖最终实现、评审或端上验收，则等证据齐备后处理。破坏性 Prune/Delete/Merge 须用户明确批准。
+- 不写业务代码、不补实现、不替代 QA；不做角色 receipt。completion note 可简要写 `docs_impact` / `brv_memory_impact`。
+
+### 10.2 Gate D2 — Web external PR 合并与本地同步
+
+Web/云端 external implementer 的“实现完成”不等于任务完成。完成顺序固定为：
+
+1. 低频唤醒发现 provider 已返回最终结果后，先回收 PR/worktree、执行 diff review、postflight 和必要 QA；
+2. 使用 GitHub 插件读取最新 PR 元数据，核对 base branch、head branch、head SHA、冲突状态和 required checks；不得用浏览器页面文案或旧聊天摘要代替；
+3. 若 PR 有冲突，优先在合同指定 PR worktree 解决。只有 §1.3 的 maintenance patch 才能由 main 处理；语义冲突超出范围时阻断或退回原 external implementer；
+4. 使用 GitHub 插件的 merge 操作，传入最新 `expected_head_sha`。merge 返回成功前不得报告完成；
+5. merge 成功后，main 切回 PR base branch，执行 `git fetch origin` 与 `git pull --ff-only`（或等价 fast-forward），确认本地 HEAD 与远端 base 一致、工作区干净，再关闭监控自动化并通过 Completion Gate；
+6. 若主工作区有未授权 dirty files、base branch 不能 fast-forward、PR head 在 review 期间变化或 GitHub merge 失败，状态必须保持 blocked，不得擅自 reset、force-push 或覆盖用户改动。
+
+Completion evidence 必须区分 `provider_completed`、`pr_merged` 和 `local_base_synced` 三个状态；只有三者全部为真，Web external 任务才可标记 `completed`。
+
+## 11. Figma 硬边界
+
+存在 `figma_link` 时，按阶段分离取证；不要用表格压缩这些规则。
+
+**main**
+
+- 实现任务：使用 `$implementer-ui-execution-policy`，在首次 UI 编辑前直接取得 metadata + design context + screenshot；QA 仍使用 `$qa-ui-visual-baseline-policy` 独立取得视觉基准。
+- 仅外部桥接任务的 intake：使用 `$figma-ui-implementation-policy` 形成 Lite；实现事实必须由 external provider 直接取得。
+
+**main implementation**
+
+- 必须/允许：main 在首次 UI 编辑前直接取得 metadata + design context + screenshot；遵守 `$implementer-ui-execution-policy` 的取证边界。
+- 禁止：依赖 Lite 猜实现、整文件读取。
+
+**External implementer**
+
+- 必须/允许：external handoff prompt 必须强制要求外部实现者直接读取 Figma metadata + design context；`get_screenshot` 仅在当前 provider 能力允许且不违反 AGENTS 规则时调用。
+- 禁止：依赖 main Lite 猜实现、让 main 补读完整 Figma。
+- 若跳过截图：必须记录 `screenshot_policy_skip` 与对应 `policy_ref`。
+
+**main（QA 行为）**
+
+- 必须/允许：使用 `$qa-ui-visual-baseline-policy`；独立取得 metadata + reference screenshot，并取得实际运行截图。
+- 禁止：只凭 main/实现者转述判通过、整文件读取。
+
+`main_direct` Figma 模式必须满足：
+
+```text
+required_skills.main:
+  - $implementer-ui-execution-policy
+  - $qa-ui-visual-baseline-policy
+```
+
+若 `project_constraints.component_library` 包含 `uni-ui`：
+
+- `main_direct`：handoff 必须追加 `$uni-ui-figma-component-mapper` 与 `uni_ui_mapping_evidence`。
+- `external_implementer`：external handoff prompt 必须追加 `uni_ui_mapping_contract`，并要求外部实现者在首次 UI 编辑前输出最小 `Figma 区域/节点 → uni-ui 组件/备选/风险` 映射证据。
+
+main 不得读取或转述 uni-ui 组件索引、映射表、组件规则；只负责把 skill 名、prompt section 或 evidence 名写入 Contract。Lite 不是实现事实或视觉基准，Lite 不可用不授权猜测。
+
+## 12. 条件引用
+
+仅触发时读取：
+
+- `$figma-ui-implementation-policy`：main 需要 Figma Lite 路由时。
+- `references/external-implementer-routing.md`：`implementation_mode=external_implementer`。
+- `references/zcode-routing.md`：`external_contract.provider=zcode` 或旧 `implementation_mode=zcode_external`。
+- `references/zcode-computer-use-policy.md`：provider 为 ZCode 且需要 Codex main 操作 ZCode UI。
+- `references/high-risk-workflow.md`：高风险 contract lock。
+- `references/brv-recall-gate.md`：任务具有常规 ByteRover 召回资格时，定义 Query、Read、来源核验与最小上下文下发。
+- `references/brv-record-governance.md`：`brv_memory_impact=true` 时，定义 Record plan、执行所有权、治理操作与验收；不得重新定义 AGENTS 内容边界。
+- `references/brv-curate-governance.md`：旧文件名兼容入口，不得作为正式规范。
+- `references/clickup-workflow.md`：输入含有效 ClickUp ticket。
+- `references/mini-program-runtime-qa.md`：acceptance 明确要求小程序端上验证。
+
+## 13. Hard stops
+
+1. external provider 使用 20 秒/40 秒等短轮询、临时 `git status` 或“暂无可见 diff”判定无产出、失败或完成。 
+2. 代码修改任务缺少 worktree baseline，baseline 与本轮变更重叠未处理，或未通过 postflight report 仍完成。
+3. `external_implementer` 模式 spawn 了任何内部子代理、缺少 send receipt、缺少 handoff manual，或 provider 交付证据与 `external_contract.prompt_transport` 不一致。 
+4. provider UI/会话/prompt 完整性未通过 adapter 要求，或 prompt 发送失败仍继续。 
+5. 仅用 shell/脚本/自然语言声明替代声明为 required 的 UI/Computer/Chrome adapter 操作，或用“dispatch 预授权”替代用户当前明确授权。 
+6. external implementer 失败后自动 fallback 到任何子代理；未获得用户重新授权前不得改变外部桥接合同。 
+7. external handoff 缺少 handoff manual，或 main 未先读取 handoff manual 就用 UI/聊天状态判定外部实现者已结束。 
+8. external implementer 已收到 prompt 并开始运行后，main 仍持续盯屏、使用短轮询或在 30 分钟内读取 provider UI 进度；正式等待必须使用 5 分钟下限的 recurring wakeup。 
+9. main_direct result 缺少 `implementation_owner=main`，或外部 result 伪造内部 agent identity。 
+10. UI handoff 缺少 styling system、SCSS policy、component library 或 rule refs。 
+11. main 在 Figma 任务缺少实现阶段的直接 Figma 证据，或把视觉细节塞进 handoff 代替真实取证。 
+12. figma_link 存在，但实现者没有直接读取 Figma 证据，或 main QA 没有独立 baseline。
+13. `component_library` 包含 `uni-ui` 且存在 figma_link，但缺 uni-ui 映射合同或实现者缺 `uni_ui_mapping_evidence`。 
+14. Tailwind 项目新增未授权 `.scss`、`<style lang="scss">` 或用 scoped style 重建常规 UI。 
+15. 变更越过 allowed/forbidden paths，未声明真实 changed files，或引入未授权依赖/API/schema。 
+16. main QA 重跑单测，或用“看起来正确”替代运行证据。 
+17. 在 `AGENTS.md` 判定无常规召回或记录资格时仍调用或写入 ByteRover，或用本 skill/reference 的示例绕过、扩大或缩小 AGENTS 的内容边界。 
+18. provider 终态后直接 finish 或完成 episode，跳过 `provider_delivered -> recovery_in_progress -> review_passed -> qa_*  -> completion_ready` 严格转移；或在 `completion_ready` 之前 `episode finish --status=completed`。 
+19. 聊天、manual、provider result 自称完成被当作 `completion_ready`；`completion_ready` 只能由成功验证的 `validate-completion-readiness` 记录。 
+20. 第二次 rework 无可审计 successor dispatch 或无明确 `user_decision_required`（仅在无修复目标时）就停止；或有修复目标却直接停止。 
+21. 未来 provider 合同混用 `provider_status=delivered` 与 `completed` 语义，或使用 `dispatch_id` 别名替代 `dispatch_run_id`。 
+22. 选择类任务缺失 `selection_to_consumer` 合同或实现者证据；非选择类任务未声明 `not_applicable=true` 与原因

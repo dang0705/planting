@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="104" height="72" viewBox="0 0 104 72">
+  <g transform="scale(0.9463 0.9464)">
+    <g transform="translate(104,23) scale(0.82) translate(-104,-23)">
+      <path d="M26.1524 0.792526C21.9257 6.07584 19.8124 9.24583 13.4724 11.3592C8.18913 13.4725 5.01915 17.6991 0.792497 21.9258" transform="translate(53.89,23.24)" fill="none" stroke="#104E64" stroke-width="1.58499" stroke-linecap="round" stroke-dasharray="5.28 4.23" opacity="0.7">
+        <animate attributeName="stroke-dashoffset" values="0;-9.51" dur="0.9s" begin="0s" repeatCount="indefinite"/>
+      </path>
+      <path d="M32.4924 0.792712C30.379 7.13269 25.0957 10.3027 16.6424 14.5293C9.2458 17.6993 5.01915 20.8693 0.792497 25.096" transform="translate(56.0,23.24)" fill="none" stroke="#D32F2F" stroke-width="1.58499" stroke-linecap="round" stroke-dasharray="5.28 4.23" opacity="0.72">
+        <animate attributeName="stroke-dashoffset" values="0;-9.51" dur="0.82s" begin="0.1s" repeatCount="indefinite"/>
+      </path>
+      <path d="M38.7267 0.686831C38.7267 9.14013 29.2168 12.3101 18.6501 17.5934C10.1968 21.8201 4.91352 23.9334 0.686871 27.1034" transform="translate(58.1,23.24)" fill="none" stroke="#104E64" stroke-width="1.37366" stroke-linecap="round" stroke-dasharray="4.23 5.28" opacity="0.5">
+        <animate attributeName="stroke-dashoffset" values="0;-9.51" dur="1.05s" begin="0.2s" repeatCount="indefinite"/>
+      </path>
+    </g>
+  </g>
+</svg>

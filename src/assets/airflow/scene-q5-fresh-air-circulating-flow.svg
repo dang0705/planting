@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="104" height="72" viewBox="0 0 104 72">
+  <g transform="translate(55,5.28) scale(0.82) translate(-55,-5.28)">
+    <g fill="none" stroke="#2D7A4F" stroke-linecap="round" stroke-dasharray="5 5">
+      <path id="left-airflow" d="M45,14.7 C36,26 16,40 4,56.2" stroke-width="1.4" opacity="0.78">
+        <animate attributeName="stroke-dashoffset" from="5" to="0" dur="2.4s" begin="0s" repeatCount="indefinite" calcMode="linear"/>
+      </path>
+      <path id="right-airflow" d="M59,14.7 C68,26 88,40 100,56.8" stroke-width="1.4" opacity="0.78">
+        <animate attributeName="stroke-dashoffset" from="5" to="0" dur="3.1s" begin="0.9s" repeatCount="indefinite" calcMode="linear"/>
+      </path>
+    </g>
+    <path id="return-airflow" d="M100,56.8 C88,39.3 72,28.8 60.5,23.4 V14.7" fill="none" stroke="#5A7A68" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="4 6" opacity="0.55">
+      <animate attributeName="stroke-dashoffset" from="0" to="-10" dur="3.2s" repeatCount="indefinite"/>
+    </path>
+  </g>
+</svg>

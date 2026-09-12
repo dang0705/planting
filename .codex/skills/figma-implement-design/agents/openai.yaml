@@ -1,0 +1,5 @@
+interface:
+  display_name: "Figma Implement Deprecated Alias"
+  short_description: "废弃兼容入口；只指向 implementer-ui-execution-policy"
+policy:
+  allow_implicit_invocation: false

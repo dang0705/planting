@@ -1,0 +1,93 @@
+{
+  "status": "failed_product",
+  "assertions": [
+    {
+      "name": "提醒分支运行时注入成功",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "到期正常提醒显示已设置状态",
+      "passed": true,
+      "detail": "施肥提醒已设置 施肥提醒已到，请打开青花植查看本月规则。 提醒会先显示当月规则，请按页面提示决定是否施肥。 本月规则：暂无可执行的施肥规则 今天已施肥 本次跳过 重新设置提醒"
+    },
+    {
+      "name": "到期正常提醒显示当前月规则",
+      "passed": false,
+      "detail": "施肥提醒已设置 施肥提醒已到，请打开青花植查看本月规则。 提醒会先显示当月规则，请按页面提示决定是否施肥。 本月规则：暂无可执行的施肥规则 今天已施肥 本次跳过 重新设置提醒"
+    },
+    {
+      "name": "到期正常提醒显示今天已施肥和本次跳过",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "今天已施肥调用 complete 接口",
+      "passed": true,
+      "detail": "{\"url\":\"http://192.168.10.26:3010/plant-user-http/user-plants/fertilization-reminders/complete\",\"method\":\"POST\",\"data\":{\"plantId\":95001,\"planId\":\"plan-complete\",\"extraConfirmation\":true},\"response\":{\"code\":200,\"data\":{\"nextPreview\":null}}}"
+    },
+    {
+      "name": "本次跳过调用 dismiss 接口",
+      "passed": true,
+      "detail": "{\"url\":\"http://192.168.10.26:3010/plant-user-http/user-plants/fertilization-reminders/dismiss\",\"method\":\"POST\",\"data\":{\"plantId\":95001,\"planId\":\"plan-dismiss\"},\"response\":{\"code\":200,\"data\":null}}"
+    },
+    {
+      "name": "本次跳过不提交施肥日期",
+      "passed": true,
+      "detail": "{\"plantId\":95001,\"planId\":\"plan-dismiss\"}"
+    },
+    {
+      "name": "未确认时不能记录施肥",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "确认后允许记录施肥",
+      "passed": false,
+      "detail": "{}"
+    },
+    {
+      "name": "未勾选时不能结束旧提醒",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "确认后结束旧提醒并允许重新设置",
+      "passed": false,
+      "detail": "{}"
+    },
+    {
+      "name": "当前月无固定周期时显示不可设置提醒",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "name": "当前月无固定周期时不显示预览按钮",
+      "passed": false,
+      "detail": ""
+    }
+  ],
+  "requests": [],
+  "scenarios": [
+    {
+      "name": "R7 到期后今天已施肥",
+      "status": "passed"
+    },
+    {
+      "name": "R8 到期后本次跳过",
+      "status": "passed"
+    },
+    {
+      "name": "R9 首次确认额外确认门槛",
+      "status": "failed"
+    },
+    {
+      "name": "R10 重新设置提醒",
+      "status": "failed"
+    },
+    {
+      "name": "R11 当前月暂停或无固定周期",
+      "status": "failed"
+    }
+  ]
+}

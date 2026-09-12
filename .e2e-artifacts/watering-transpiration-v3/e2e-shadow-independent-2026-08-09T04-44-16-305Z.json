@@ -1,0 +1,50 @@
+{
+  "task": "watering-transpiration-v3-e2e-trae-20260713",
+  "gitHead": "b5bcbe4a343d04bf1ec9a1b73bdfd56cd45c377c",
+  "branch": "sprint-ai-workflow",
+  "baseHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "projectPath": "/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin",
+  "mode": "shadow",
+  "wsEndpoint": "ws://127.0.0.1:61942",
+  "startedAt": "2026-08-09T04:44:06.690Z",
+  "endedAt": "2026-08-09T04:44:16.305Z",
+  "pages": [
+    {
+      "path": "/pages/watering-advisor/watering-advisor",
+      "time": "2026-08-09T04:44:06.695Z"
+    }
+  ],
+  "pageDataSummaries": [
+    {
+      "path": "/pages/watering-advisor/watering-advisor",
+      "summary": {
+        "route": "pages/watering-advisor/watering-advisor",
+        "source": "public_page_path"
+      },
+      "time": "2026-08-09T04:44:12.090Z"
+    }
+  ],
+  "capturedRequests": [],
+  "assertions": [
+    {
+      "name": "搜索输入框存在",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:44:15.263Z"
+    },
+    {
+      "name": "植物列表至少有一个条目",
+      "passed": false,
+      "detail": null,
+      "time": "2026-08-09T04:44:16.304Z"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/watering-transpiration-v3/independent-01-init.png",
+      "time": "2026-08-09T04:44:15.228Z"
+    }
+  ],
+  "classification": "BLOCKED_FIXTURE",
+  "blockerReason": "未找到 watering-advisor-plant-item-{id}"
+}

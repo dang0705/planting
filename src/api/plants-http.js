@@ -8,18 +8,20 @@ import {
   executePatchUserPlantMutation,
   executeRemoveUserPlantMutation
 } from '@/vue-query/plants/mutations/user-plants.js'
+import {
+  executeCompleteWateringReminderMutation,
+  executeSaveWateringReminderMutation
+} from '@/vue-query/plants/mutations/watering-reminders.js'
+import { executeFertilizationReminderMutation } from '@/vue-query/plants/mutations/fertilization-reminders.js'
 import { executeIdentifyPlantMutation } from '@/vue-query/plants/mutations/identify.js'
+import { fetchWateringReminderQuery } from '@/vue-query/plants/queries/watering-reminders.js'
 import {
-  fetchDiagnosisHistoryQuery,
-  fetchDiagnosisDetailQuery
-} from '@/vue-query/diagnosis-history/queries/history.js'
-import {
-  requestDiagnosisStart,
-  requestDiagnosisAnswer,
-  requestDiagnosisResult,
-  requestDiagnosisHistory,
-  requestDiagnosisFeedback
-} from '@/http-functions/diagnose/client.js'
+  fetchFertilizationReminderFresh,
+  fetchFertilizationReminderQuery
+} from '@/vue-query/plants/queries/fertilization-reminders.js'
+import { executePatchUserPlantAirEnvironmentMutation } from '@/vue-query/plants/mutations/air-environment.js'
+import { resolvePayloadCareLocation } from '@/utils/plant-care-location.js'
+import { requestHttpFunction } from '@/api/http.js'
 
 export function fetchPlantCatalog(keyword = '', page = 1, pageSize = 10) {
   return fetchPlantCatalogQuery(keyword, page, pageSize)
@@ -33,46 +35,99 @@ export function fetchUserPlants(page = 1, pageSize = 20) {
   return fetchUserPlantsQuery(page, pageSize)
 }
 
+export function fetchUserPlant(id) {
+  return requestHttpFunction('plant-user-http/user-plants', {
+    method: 'GET',
+    query: { id: Number(id) },
+    // 详情不属于一期短票据读入口；保持持久会话校验，确保吊销即时生效。
+    requirePlatformSession: true
+  })
+}
+
 export function createUserPlant(payload) {
-  return executeCreateUserPlantMutation(payload)
+  return executeCreateUserPlantMutation(withCareLocation(payload, { allowStorageFallback: true }))
 }
 
 export function patchUserPlant(payload) {
-  return executePatchUserPlantMutation(payload)
+  return executePatchUserPlantMutation(withCareLocation(payload, { allowStorageFallback: false }))
+}
+
+export function fetchUserPlantAirEnvironment(plantId) {
+  return requestHttpFunction('plant-user-http/user-plants/air-environment', {
+    method: 'GET',
+    query: { plantId: Number(plantId) }
+  })
+}
+
+export function patchUserPlantAirEnvironment(payload) {
+  return executePatchUserPlantAirEnvironmentMutation(payload)
+}
+
+export async function fetchUserPlantWateringPlanner(payload = {}) {
+  const response = await requestHttpFunction('plant-user-http/user-plants/watering-planner', {
+    method: 'POST',
+    body: payload
+  })
+  return response?.code === 200 ? response.data : null
+}
+
+function withCareLocation(payload = {}, options = {}) {
+  const careLocation = resolvePayloadCareLocation(payload, options)
+  return careLocation ? { ...payload, careLocation } : payload
 }
 
 export function removeUserPlant(id) {
   return executeRemoveUserPlantMutation(id)
 }
 
+export function fetchWateringReminder(plantId) {
+  return fetchWateringReminderQuery(plantId)
+}
+
+export function saveWateringReminder(payload) {
+  return executeSaveWateringReminderMutation(payload)
+}
+
+export function completeWateringReminder(payload) {
+  return executeCompleteWateringReminderMutation(payload)
+}
+
+export function undoWateringReminder(payload) {
+  return requestHttpFunction('plant-user-http/user-plants/watering-reminders/undo', {
+    method: 'POST',
+    body: payload,
+    returnErrorResponse: true
+  })
+}
+
+export function fetchFertilizationReminder(plantId) {
+  return fetchFertilizationReminderQuery(plantId)
+}
+
+export function fetchFertilizationReminderFreshState(plantId) {
+  return fetchFertilizationReminderFresh(plantId)
+}
+
+export function previewFertilizationReminder(payload) {
+  return executeFertilizationReminderMutation('preview', payload)
+}
+
+export function confirmFertilizationReminder(payload) {
+  return executeFertilizationReminderMutation('confirm', payload)
+}
+
+export function completeFertilizationReminder(payload) {
+  return executeFertilizationReminderMutation('complete', payload)
+}
+
+export function dismissFertilizationReminder(payload) {
+  return executeFertilizationReminderMutation('dismiss', payload)
+}
+
+export function cancelFertilizationReminder(payload) {
+  return executeFertilizationReminderMutation('cancel', payload)
+}
+
 export function identifyPlantByImage(imageUrl) {
   return executeIdentifyPlantMutation(imageUrl)
-}
-
-export function fetchDiagnosisHistory(page = 1, pageSize = 10, plantId = null) {
-  return fetchDiagnosisHistoryQuery(page, pageSize, plantId)
-}
-
-export function fetchDiagnosisDetail(id) {
-  return fetchDiagnosisDetailQuery(id)
-}
-
-export function startDiagnosis(payload) {
-  return requestDiagnosisStart(payload)
-}
-
-export function submitDiagnosisAnswers(payload) {
-  return requestDiagnosisAnswer(payload)
-}
-
-export function getDiagnosisResult(params) {
-  return requestDiagnosisResult(params)
-}
-
-export function getDiagnosisHistory(params) {
-  return requestDiagnosisHistory(params)
-}
-
-export function submitDiagnosisFeedback(payload) {
-  return requestDiagnosisFeedback(payload)
 }

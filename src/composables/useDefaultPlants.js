@@ -1,8 +1,24 @@
 import { computed, ref } from 'vue'
 import { fetchPlantCatalogQuery } from '@/vue-query/plants/queries/catalog.js'
 import { getFileUrl } from '@/composables/useCloudFile.js'
+import { isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
+
+function normalizeCatalogPlantForPlatform(plant, restrictedPlatform) {
+  if (!restrictedPlatform) {
+    return plant
+  }
+
+  // 抖音/小红书不能在端上调用 wx.cloud.getTempFileURL；目录接口会返回
+  // 服务端解析后的临时 HTTPS 地址，因此只移除 fileId，保留图片地址。
+  return {
+    ...plant,
+    imageFileId: '',
+    image: plant.imageUrl || plant.image || ''
+  }
+}
 
 export function useDefaultPlants() {
+  const restrictedPlatform = isRestrictedMiniProgram()
   const keywordRef = ref('')
   const page = ref(1)
   const pageSize = ref(10)
@@ -11,10 +27,12 @@ export function useDefaultPlants() {
   const hasMore = ref(false)
   const initialLoading = ref(false)
   const loadingMore = ref(false)
+  const error = ref('')
   const loading = computed(() => initialLoading.value || loadingMore.value)
+  let requestSequence = 0
 
-  async function fetchCatalogPage(targetPage) {
-    const normalizedKeyword = keywordRef.value.trim()
+  async function fetchCatalogPage(targetPage, keyword = keywordRef.value) {
+    const normalizedKeyword = String(keyword || '').trim()
     console.log('[PlantCatalogQuery] fetch', {
       keyword: normalizedKeyword,
       pageParam: targetPage,
@@ -22,14 +40,20 @@ export function useDefaultPlants() {
     })
     const response = await fetchPlantCatalogQuery(normalizedKeyword, targetPage, pageSize.value)
     const data = response?.data || {}
-    const list = Array.isArray(data?.list) ? data.list : Array.isArray(data) ? data : []
+    const rawList = Array.isArray(data?.list) ? data.list : Array.isArray(data) ? data : []
+    const list = rawList.map(plant => normalizeCatalogPlantForPlatform(plant, restrictedPlatform))
 
-    for (const plant of list) {
-      if (plant.imageFileId) {
+    // 图片临时地址只影响图片显示，不应阻塞目录文字和卡片首屏渲染。
+    // PlantDisplayBase 会基于 imageFileId 自行解析；这里保留后台预热，供表单和其他复用方使用。
+    Promise.all(
+      list.map(async plant => {
+        if (!plant.imageFileId) {
+          return
+        }
         plant.image = await getFileUrl(plant.imageFileId)
         plant.imageUrl = plant.image
-      }
-    }
+      })
+    ).catch(() => {})
 
     const payload = {
       list,
@@ -39,10 +63,14 @@ export function useDefaultPlants() {
       hasMore: Boolean(data?.hasMore)
     }
 
+    return payload
+  }
+
+  function applyCatalogPayload(payload, { replace = false } = {}) {
     total.value = payload.total
     hasMore.value = payload.hasMore
     page.value = payload.page
-    return payload.list
+    plants.value = replace ? payload.list : [...plants.value, ...payload.list]
   }
 
   /**
@@ -55,6 +83,7 @@ export function useDefaultPlants() {
       return
     }
 
+    const sequence = ++requestSequence
     keywordRef.value = String(nextKeyword || '').trim()
     console.log('[PlantCatalogQuery] load', {
       keyword: keywordRef.value,
@@ -62,30 +91,61 @@ export function useDefaultPlants() {
       pageSize: pageSize.value
     })
     initialLoading.value = true
+    loadingMore.value = false
+    error.value = ''
     try {
-      plants.value = await fetchCatalogPage(1)
+      const payload = await fetchCatalogPage(1, keywordRef.value)
+      if (sequence !== requestSequence) {
+        return
+      }
+      applyCatalogPayload(payload, { replace: true })
+    } catch {
+      if (sequence === requestSequence) {
+        error.value = '暂时无法加载植物列表，请稍后重试'
+      }
     } finally {
-      initialLoading.value = false
+      if (sequence === requestSequence) {
+        initialLoading.value = false
+      }
     }
   }
 
   async function loadNextPage() {
-    if (!hasMore.value || loadingMore.value) {return}
+    if (!hasMore.value || loadingMore.value) {
+      return
+    }
+    const sequence = requestSequence
+    const targetPage = page.value + 1
+    const keyword = keywordRef.value
     loadingMore.value = true
+    error.value = ''
     try {
-      const nextList = await fetchCatalogPage(page.value + 1)
-      plants.value = [...plants.value, ...nextList]
+      const payload = await fetchCatalogPage(targetPage, keyword)
+      if (sequence !== requestSequence) {
+        return
+      }
+      applyCatalogPayload(payload)
+    } catch {
+      if (sequence === requestSequence) {
+        error.value = '暂时无法加载更多植物，请稍后重试'
+      }
     } finally {
-      loadingMore.value = false
+      if (sequence === requestSequence) {
+        loadingMore.value = false
+      }
     }
   }
 
   function reset() {
+    requestSequence += 1
     keywordRef.value = ''
     page.value = 1
     plants.value = []
     total.value = 0
     hasMore.value = false
+    error.value = ''
+    initialLoading.value = false
+    loadingMore.value = false
   }
 
   return {
@@ -93,6 +153,7 @@ export function useDefaultPlants() {
     loading,
     initialLoading,
     loadingMore,
+    error,
     load,
     loadNextPage,
     page,

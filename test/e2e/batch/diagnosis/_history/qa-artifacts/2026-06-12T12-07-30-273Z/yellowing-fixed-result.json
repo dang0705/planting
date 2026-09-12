@@ -1,0 +1,156 @@
+{
+  "tool": "mcp-automator-direct-9420",
+  "startedAt": "2026-06-12T12:08:38.837Z",
+  "iterations": 3,
+  "port": 9420,
+  "projectPath": "/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin",
+  "results": [
+    {
+      "iteration": 1,
+      "startAt": "2026-06-12T12:07:30.280Z",
+      "steps": [
+        {
+          "step": 1,
+          "action": "launch",
+          "path": "pages/index/index"
+        },
+        {
+          "step": 2,
+          "action": "open-popup-via-ref",
+          "opened": true
+        },
+        {
+          "step": 2.5,
+          "action": "open-method",
+          "method": "ref-fallback"
+        },
+        {
+          "step": 3,
+          "action": "select-yellowing"
+        },
+        {
+          "step": 4,
+          "action": "tap-start-button"
+        },
+        {
+          "step": 1,
+          "action": "break-not-question-package",
+          "reason": "not-question-package",
+          "path": "pages/index/index"
+        },
+        {
+          "action": "done",
+          "endPath": "pages/index/index",
+          "answerCount": 0
+        }
+      ],
+      "errors": [],
+      "endPath": "pages/index/index",
+      "answerCount": 0,
+      "toasts": [
+        "缺少植物ID，无法开始问诊",
+        "缺少植物ID，无法开始问诊"
+      ],
+      "openMethod": "ref-fallback",
+      "success": true
+    },
+    {
+      "iteration": 2,
+      "startAt": "2026-06-12T12:07:53.132Z",
+      "steps": [
+        {
+          "step": 1,
+          "action": "launch",
+          "path": "pages/index/index"
+        },
+        {
+          "step": 2,
+          "action": "open-popup-via-ref",
+          "opened": true
+        },
+        {
+          "step": 2.5,
+          "action": "open-method",
+          "method": "ref-fallback"
+        },
+        {
+          "step": 3,
+          "action": "select-yellowing"
+        },
+        {
+          "step": 4,
+          "action": "tap-start-button"
+        },
+        {
+          "step": 1,
+          "action": "break-not-question-package",
+          "reason": "not-question-package",
+          "path": "pages/index/index"
+        },
+        {
+          "action": "done",
+          "endPath": "pages/index/index",
+          "answerCount": 0
+        }
+      ],
+      "errors": [],
+      "endPath": "pages/index/index",
+      "answerCount": 0,
+      "toasts": [
+        "缺少植物ID，无法开始问诊",
+        "缺少植物ID，无法开始问诊"
+      ],
+      "openMethod": "ref-fallback",
+      "success": true
+    },
+    {
+      "iteration": 3,
+      "startAt": "2026-06-12T12:08:16.011Z",
+      "steps": [
+        {
+          "step": 1,
+          "action": "launch",
+          "path": "pages/index/index"
+        },
+        {
+          "step": 2,
+          "action": "open-popup-via-ref",
+          "opened": true
+        },
+        {
+          "step": 2.5,
+          "action": "open-method",
+          "method": "ref-fallback"
+        },
+        {
+          "step": 3,
+          "action": "select-yellowing"
+        },
+        {
+          "step": 4,
+          "action": "tap-start-button"
+        },
+        {
+          "step": 1,
+          "action": "break-not-question-package",
+          "reason": "not-question-package",
+          "path": "pages/index/index"
+        },
+        {
+          "action": "done",
+          "endPath": "pages/index/index",
+          "answerCount": 0
+        }
+      ],
+      "errors": [],
+      "endPath": "pages/index/index",
+      "answerCount": 0,
+      "toasts": [
+        "缺少植物ID，无法开始问诊",
+        "缺少植物ID，无法开始问诊"
+      ],
+      "openMethod": "ref-fallback",
+      "success": true
+    }
+  ]
+}

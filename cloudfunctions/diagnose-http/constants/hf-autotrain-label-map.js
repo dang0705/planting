@@ -23,7 +23,7 @@ module.exports = {
     route_only_signal: true,
     min_route_score: 0.7,
     route_hint_type: 'unsupported_explanatory_label',
-    route_hint_reason: 'hf_label_bacterium_requires_visual_or_followup_confirmation',
+    route_hint_reason: 'hf_label_bacterium_requires_visual_or_question_confirmation',
     normalization_note: 'hf_label_bacterium_not_written_to_evidence'
   },
   healthy: {

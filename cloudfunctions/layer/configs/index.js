@@ -4,29 +4,6 @@ module.exports = {
     model: 'hunyuan-vision',
     service: 'hunyuan'
   },
-  diagnosis: {
-    symptomCacheTtlMs: 5 * 60 * 1000,
-    aliasScoreMin: 0.08,
-    aliasScoreMax: 0.2,
-    confidenceMin: 0.45,
-    confidenceMax: 0.98,
-    decisiveContributionThreshold: 0.12,
-    decisiveAssociationStrength: 0.9,
-    decisiveSymptomReliability: 0.8,
-    decisiveHostCompatibility: 0.7,
-    healthScoreTopWeight: 34,
-    healthScoreReliabilityWeight: 20,
-    healthScoreFollowUpPenalty: 6,
-    healthScoreHealthyThreshold: 80,
-    healthScoreWarningThreshold: 55,
-    followUpTopScoreThreshold: 0.78,
-    followUpScoreGapThreshold: 0.18,
-    followUpSupportingSymptomThreshold: 2,
-    followUpDecisiveSymptomThreshold: 1,
-    followUpMaxQuestions: 3,
-    reliabilityGapCap: 0.2,
-    reliabilityGapFactor: 0.5
-  },
   prompts: {
     llm: ({ symptomOptionsText = '' } = {}) => `你是植物图像症状标注器。
 根据用户上传的植物图片，只识别“图片中肉眼可见的症状”，并从给定 symptom 列表中选择最匹配的项。

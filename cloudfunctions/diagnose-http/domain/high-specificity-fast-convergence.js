@@ -5,34 +5,32 @@ const {
   HIGH_SPECIFICITY_FAST_CONVERGENCE_RULES
 } = require('../constants/high-specificity-fast-convergence')
 
-function normalizeText(value, fallback = '') {
+function normalizeText(value, conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function normalizeStringList(values = []) {
   return Array.from(
     new Set(
-      (Array.isArray(values) ? values : [])
-        .map(item => normalizeText(item, ''))
-        .filter(Boolean)
+      (Array.isArray(values) ? values : []).map(item => normalizeText(item, '')).filter(Boolean)
     )
   )
 }
 
-function normalizeOrgan(value = '', fallback = 'unknown') {
-  const normalized = normalizeText(value, fallback).toLowerCase()
-  return normalized || fallback
+function normalizeOrgan(value = '', conservative = 'unknown') {
+  const normalized = normalizeText(value, conservative).toLowerCase()
+  return normalized || conservative
 }
 
-function normalizeBand(value = '', fallback = 'low') {
-  const normalized = normalizeText(value, fallback).toLowerCase()
-  return ['low', 'medium', 'high'].includes(normalized) ? normalized : fallback
+function normalizeBand(value = '', conservative = 'low') {
+  const normalized = normalizeText(value, conservative).toLowerCase()
+  return ['low', 'medium', 'high'].includes(normalized) ? normalized : conservative
 }
 
-function normalizeStrength(value = '', fallback = 'weak') {
-  const normalized = normalizeText(value, fallback).toLowerCase()
-  return ['weak', 'medium', 'strong'].includes(normalized) ? normalized : fallback
+function normalizeStrength(value = '', conservative = 'weak') {
+  const normalized = normalizeText(value, conservative).toLowerCase()
+  return ['weak', 'medium', 'strong'].includes(normalized) ? normalized : conservative
 }
 
 function rankBand(value = '') {
@@ -49,7 +47,9 @@ function buildProblemMap(problems = []) {
   const map = new Map()
   for (const item of Array.isArray(problems) ? problems : []) {
     const key = normalizeText(item?.problemKey || '', '')
-    if (!key) {continue}
+    if (!key) {
+      continue
+    }
     map.set(key, item)
   }
   return map
@@ -59,7 +59,9 @@ function buildSymptomMetaMap(symptomDictionary = []) {
   const map = new Map()
   for (const item of Array.isArray(symptomDictionary) ? symptomDictionary : []) {
     const key = normalizeText(item?.symptomKey || '', '')
-    if (!key) {continue}
+    if (!key) {
+      continue
+    }
     map.set(key, item)
   }
   return map
@@ -73,7 +75,9 @@ function buildCandidateIndex(visualAggregateResult = null) {
 
   for (const item of aggregatedCandidates) {
     const symptomKey = normalizeText(item?.symptom_key || '', '')
-    if (!symptomKey) {continue}
+    if (!symptomKey) {
+      continue
+    }
     candidateMap.set(symptomKey, item)
   }
 
@@ -126,7 +130,9 @@ function buildVisualEvidenceIndex({
     }
 
     const symptomKey = normalizeText(item?.symptomKey || item?.symptom_key || '', '')
-    if (!symptomKey) {continue}
+    if (!symptomKey) {
+      continue
+    }
 
     const sourceRecordId = normalizeText(item?.sourceRecordId || item?.source_record_id || '', '')
     const admissionRecord =
@@ -165,7 +171,9 @@ function buildVisualEvidenceIndex({
 }
 
 function matchesRuleEvidence(entry = {}, rule = {}) {
-  if (!entry) {return false}
+  if (!entry) {
+    return false
+  }
   if (rankBand(entry.confidenceBand) < rankBand(rule.minConfidenceBand || 'low')) {
     return false
   }
@@ -190,9 +198,8 @@ function matchesRuleEvidence(entry = {}, rule = {}) {
 
 function buildMatchedRule(rule = {}, evidenceMap = new Map()) {
   const requiredAllSymptomKeys = normalizeStringList(rule.requiredAllSymptomKeys || [])
-  const requiredAnySymptomKeyGroups = (Array.isArray(rule.requiredAnySymptomKeyGroups)
-    ? rule.requiredAnySymptomKeyGroups
-    : []
+  const requiredAnySymptomKeyGroups = (
+    Array.isArray(rule.requiredAnySymptomKeyGroups) ? rule.requiredAnySymptomKeyGroups : []
   )
     .map(group => normalizeStringList(group || []))
     .filter(group => group.length > 0)
@@ -242,7 +249,12 @@ function resolveHighSpecificityConvergencePlan({
   stage = 'preliminary'
 } = {}) {
   const routePrimaryAction = normalizeText(visualRouteContext?.routePrimaryAction || '', '')
-  if (routePrimaryAction === 'retake_first') {
+  const modeRoute = visualAggregateResult?.diagnosis_mode_route_result || {}
+  const directMatches = Array.isArray(modeRoute?.directMatches) ? modeRoute.directMatches : []
+  const routedPowderyDirect = directMatches.some(
+    item => normalizeText(item?.modeKey || '', '') === 'powdery_mildew'
+  )
+  if (modeRoute.nextAction !== 'direct_result' || !routedPowderyDirect) {
     return null
   }
 
@@ -254,9 +266,8 @@ function resolveHighSpecificityConvergencePlan({
     return null
   }
 
-  const primaryCandidateOutcome = Array.isArray(candidateOutcomes) && candidateOutcomes.length
-    ? candidateOutcomes[0]
-    : null
+  const primaryCandidateOutcome =
+    Array.isArray(candidateOutcomes) && candidateOutcomes.length ? candidateOutcomes[0] : null
   if (!primaryCandidateOutcome?.problemKey) {
     return null
   }
@@ -276,10 +287,15 @@ function resolveHighSpecificityConvergencePlan({
     return null
   }
 
-  const matchedRules = HIGH_SPECIFICITY_FAST_CONVERGENCE_RULES
-    .map(rule => buildMatchedRule(rule, evidenceMap))
+  const matchedRules = HIGH_SPECIFICITY_FAST_CONVERGENCE_RULES.map(rule =>
+    buildMatchedRule(rule, evidenceMap)
+  )
     .filter(Boolean)
-    .filter(rule => normalizeText(rule.problemKey || '', '') === normalizeText(primaryCandidateOutcome.problemKey || '', ''))
+    .filter(
+      rule =>
+        normalizeText(rule.problemKey || '', '') ===
+        normalizeText(primaryCandidateOutcome.problemKey || '', '')
+    )
 
   if (matchedRules.length !== 1) {
     return null
@@ -292,12 +308,10 @@ function resolveHighSpecificityConvergencePlan({
     directionKey: matchedRule.directionKey,
     problemKey: matchedRule.problemKey,
     policy: matchedRule.policy,
-    shouldBypassFollowUp:
-      matchedRule.policy === HIGH_SPECIFICITY_FAST_CONVERGENCE_POLICIES.ZERO_FOLLOW_UP,
+    shouldBypassQuestion:
+      matchedRule.policy === HIGH_SPECIFICITY_FAST_CONVERGENCE_POLICIES.ZERO_QUESTION,
     maxQuestions:
-      matchedRule.policy === HIGH_SPECIFICITY_FAST_CONVERGENCE_POLICIES.SINGLE_CONFIRMATION
-        ? 1
-        : 0,
+      matchedRule.policy === HIGH_SPECIFICITY_FAST_CONVERGENCE_POLICIES.SINGLE_CONFIRMATION ? 1 : 0,
     audit: {
       round: Number(round || 1) || 1,
       stage: normalizeText(stage, 'preliminary'),

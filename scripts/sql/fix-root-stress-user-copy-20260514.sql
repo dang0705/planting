@@ -1,5 +1,5 @@
 -- 将 root_stress 的用户态表达从“根区压力”改为更容易理解的“根部环境压力”。
--- 内部 outcome_key/problem_key 不变，避免影响 route、gate、review 追踪。
+-- 内部 outcome_key/problem_key 不变，避免影响 route、condition、review 追踪。
 
 UPDATE diagnosis_outcomes
 SET
@@ -20,17 +20,17 @@ SET
   updated_at = NOW()
 WHERE action_profile_key = 'action_root_stress_basic';
 
-UPDATE outcome_route_gates
+UPDATE outcome_route_conditions
 SET
   decision_cause_text_cn = '通风/湿度变化叠加萎蔫或掉叶，更符合根部环境压力方向。',
   updated_at = NOW()
-WHERE gate_key = 'airflow_root_stress_gate'
+WHERE condition_key = 'airflow_root_stress_condition'
   AND route_key = 'yellowing_airflow_root_stress_route';
 
 UPDATE outcome_answer_effects
 SET
   effect_note_cn = CASE
-    WHEN question_key = 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate'
+    WHEN question_key = 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition'
       THEN '通风/湿度分流进入根部环境压力判断。'
     WHEN question_key = 'q_observed_probe__leaf_yellowing__yellowing_progression_speed'
       THEN '伴随萎蔫或掉叶，支持根部环境压力方向。'

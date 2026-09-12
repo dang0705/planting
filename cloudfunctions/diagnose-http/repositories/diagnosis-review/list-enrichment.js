@@ -21,10 +21,10 @@ const {
   buildClientPlatformSql,
   buildManualDiagnosisReviewSelectLite,
   buildBatchDiagnosisReviewSelectLite,
-  buildLegacyDiagnosisReviewSelectLite,
+  buildSessionDiagnosisReviewSelectLite,
   buildManualDiagnosisReviewSummarySelect,
   buildBatchDiagnosisReviewSummarySelect,
-  buildLegacyDiagnosisReviewSummarySelect,
+  buildSessionDiagnosisReviewSummarySelect,
   buildCollatedInClause,
   buildInClause
 } = require('./sql-builders')
@@ -52,7 +52,7 @@ function buildUnifiedDiagnosisReviewListQuery({
   const params = {}
   const humanManualSourceClause = buildHumanManualSourceClause('sessions')
   const manualListPlatformGuardClause = buildManualListPlatformGuardClause('sessions')
-  const legacyPlatformGuardClause = buildManualPlatformGuardClause('sessions')
+  const manualPlatformGuardClause = buildManualPlatformGuardClause('sessions')
   const clientPlatformSql = buildClientPlatformSql('sessions')
 
   if (safeOutcomeType !== 'all') {
@@ -78,8 +78,8 @@ function buildUnifiedDiagnosisReviewListQuery({
     conditions.push('!(batch.diagnosis_id <=> NULL)')
   } else if (safeSourceType === 'manual') {
     conditions.push(`batch.diagnosis_id <=> NULL AND ${humanManualSourceClause} AND ${manualListPlatformGuardClause}`)
-  } else if (safeSourceType === 'legacy') {
-    conditions.push(`batch.diagnosis_id <=> NULL AND ${humanManualSourceClause} AND NOT ${legacyPlatformGuardClause}`)
+  } else if (safeSourceType === 'session') {
+    conditions.push(`batch.diagnosis_id <=> NULL AND ${humanManualSourceClause} AND NOT ${manualPlatformGuardClause}`)
   } else {
     conditions.push(`(!(batch.diagnosis_id <=> NULL) OR (${humanManualSourceClause}))`)
   }
@@ -105,13 +105,13 @@ function buildUnifiedDiagnosisReviewListQuery({
         CASE
           WHEN !(batch.diagnosis_id <=> NULL) THEN 'batch'
           WHEN ${manualListPlatformGuardClause} THEN 'manual'
-          ELSE 'legacy'
+          ELSE 'session'
         END AS review_source_type,
         ${clientPlatformSql} AS client_platform,
         CASE
           WHEN !(batch.diagnosis_id <=> NULL) THEN 'batch_table'
           WHEN ${manualListPlatformGuardClause} THEN 'openid_inferred_manual'
-          ELSE 'openid_inferred_legacy'
+          ELSE 'openid_inferred_session'
         END AS review_source_evidence,
         COALESCE(batch.batch_source, '') AS batch_source,
         COALESCE(batch.sample_label, '') AS batch_sample_label,
@@ -272,7 +272,7 @@ async function enrichDiagnosisReviewListRows(rows = []) {
       scope: 'diagnosis-review list',
       sectionName: 'visualMap',
       loader: () => loadDiagnosisReviewListVisualRows(sessionIds),
-      fallbackValue: new Map(),
+      conservativeValue: new Map(),
       degradedSections,
       timing,
       timeoutMs: LIST_ENRICHMENT_TIMEOUT_MS
@@ -281,7 +281,7 @@ async function enrichDiagnosisReviewListRows(rows = []) {
       scope: 'diagnosis-review list',
       sectionName: 'questionCounts',
       loader: () => loadDiagnosisReviewListQuestionCounts(sessionIds),
-      fallbackValue: new Map(),
+      conservativeValue: new Map(),
       degradedSections,
       timing,
       timeoutMs: LIST_ENRICHMENT_TIMEOUT_MS
@@ -324,10 +324,10 @@ async function summarizeDiagnosisReviewSessions({
     `)
   }
 
-  if (safeSourceType === 'legacy') {
+  if (safeSourceType === 'session') {
     unionParts.push(`
-      SELECT outcome_type, 'legacy' AS source_type
-      FROM (${buildLegacyDiagnosisReviewSummarySelect({ manualWhereClause })}) AS legacy_rows
+      SELECT outcome_type, 'session' AS source_type
+      FROM (${buildSessionDiagnosisReviewSummarySelect({ manualWhereClause })}) AS session_rows
     `)
   }
 
@@ -356,7 +356,7 @@ async function summarizeDiagnosisReviewSessions({
         COUNT(*) AS total,
         SUM(CASE WHEN source_type = 'manual' THEN 1 ELSE 0 END) AS manual_count,
         SUM(CASE WHEN source_type = 'batch' THEN 1 ELSE 0 END) AS batch_count,
-        SUM(CASE WHEN source_type = 'legacy' THEN 1 ELSE 0 END) AS legacy_count,
+        SUM(CASE WHEN source_type = 'session' THEN 1 ELSE 0 END) AS session_count,
         SUM(CASE WHEN outcome_type IN ('problematic', 'non_problematic', 'uncertain') THEN 1 ELSE 0 END) AS finalized_count,
         SUM(CASE WHEN outcome_type <=> NULL OR outcome_type = '' OR outcome_type NOT IN ('problematic', 'non_problematic', 'uncertain') THEN 1 ELSE 0 END) AS pending_count,
         SUM(CASE WHEN outcome_type = 'problematic' THEN 1 ELSE 0 END) AS problematic_count,
@@ -375,7 +375,7 @@ async function summarizeDiagnosisReviewSessions({
     total: Number(row.total || 0),
     manualCount: Number(row.manual_count || 0),
     batchCount: Number(row.batch_count || 0),
-    legacyCount: Number(row.legacy_count || 0),
+    sessionCount: Number(row.session_count || 0),
     finalizedCount: Number(row.finalized_count || 0),
     pendingCount: Number(row.pending_count || 0),
     problematicCount: Number(row.problematic_count || 0),
@@ -409,8 +409,8 @@ async function listDiagnosisReviewSessions({
     unionParts.push(buildManualDiagnosisReviewSelectLite({ manualWhereClause }))
   }
 
-  if (safeSourceType === 'legacy') {
-    unionParts.push(buildLegacyDiagnosisReviewSelectLite({ manualWhereClause }))
+  if (safeSourceType === 'session') {
+    unionParts.push(buildSessionDiagnosisReviewSelectLite({ manualWhereClause }))
   }
 
   if (safeSourceType === 'all' || safeSourceType === 'batch') {
@@ -428,7 +428,7 @@ async function listDiagnosisReviewSessions({
         total: 0,
         manualCount: 0,
         batchCount: 0,
-        legacyCount: 0,
+        sessionCount: 0,
         finalizedCount: 0,
         pendingCount: 0,
         problematicCount: 0,

@@ -44,6 +44,9 @@ jobs:
       - name: Check tracked secrets
         run: npm run check:secrets
 
+      - name: Check OpenViking memory boundary
+        run: npm run check:openviking-memory-boundary
+
       - name: Lint
         run: npm run lint
 

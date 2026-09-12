@@ -1,20 +1,20 @@
 'use strict'
 
 const {
-  followUpSelection
+  questionSelection
 } = require('../constants/scoring')
 const {
-  QUESTION_TARGET_DIMENSIONS,
-  normalizeQuestionTargetDimension,
-  inferObservedVisualCoveredDimensions
-} = require('../utils/question-target-dimension')
+  QUESTION_PACKAGE_TOPICS,
+  normalizeQuestionPackageTopic,
+  inferObservedVisualCoveredTopics
+} = require('../utils/question-package-topic')
 const {
   isExplicitObservedEvidenceSourceType
 } = require('../utils/explicit-observed-symptom')
 
-function normalizeText(value = '', fallback = '') {
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function isSameMorphologyFamily(
@@ -67,7 +67,7 @@ function buildObservedEvidenceCoverageIndex(observedEvidenceSet = [], symptomMet
       distributionKey: normalizeText(symptomMeta?.distributionKey || '', ''),
       strongVisualPresenceCovered: false,
       explicitObservedCovered: false,
-      coveredDimensions: new Set()
+      coveredTopics: new Set()
     }
 
     const sourceType = normalizeText(item?.sourceType || item?.source_type || '', '')
@@ -78,20 +78,20 @@ function buildObservedEvidenceCoverageIndex(observedEvidenceSet = [], symptomMet
       sourceType === 'visual_admission' ||
       String(item?.parentEvidenceKey || '').startsWith('visual_admission:')
 
-    if (isActive && isVisualAdmission && confidence >= followUpSelection.visualLockThreshold) {
+    if (isActive && isVisualAdmission && confidence >= questionSelection.visualLockThreshold) {
       current.strongVisualPresenceCovered = true
-      for (const targetDimension of inferObservedVisualCoveredDimensions({
+      for (const packageTopic of inferObservedVisualCoveredTopics({
         symptomKey,
         patternKey: current.patternKey,
         locationKey: current.locationKey
       })) {
-        current.coveredDimensions.add(targetDimension)
+        current.coveredTopics.add(packageTopic)
       }
     }
 
     if (isActive && isExplicitObservedEvidenceSourceType(sourceType)) {
       current.explicitObservedCovered = true
-      current.coveredDimensions.add(QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE)
+      current.coveredTopics.add(QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE)
     }
 
     map.set(symptomKey, current)
@@ -110,7 +110,7 @@ function hasStrongVisualCandidateCoverage(item = {}) {
   if (confidenceBand === 'high' && ['medium', 'strong'].includes(strengthLevel)) {
     return true
   }
-  if (strengthLevel === 'strong' && signalReliability >= followUpSelection.highSpecificityThreshold) {
+  if (strengthLevel === 'strong' && signalReliability >= questionSelection.highSpecificityThreshold) {
     return true
   }
   if (confidenceBand === 'high' && admissionReadiness === 'ready') {
@@ -140,9 +140,9 @@ function buildVisualCandidateCoverageIndex(visualCandidateSymptoms = [], symptom
       patternKey,
       distributionKey: normalizeText(item?.distributionKey || symptomMeta?.distributionKey || '', ''),
       strongVisualPresenceCovered,
-      coveredDimensions: new Set(
+      coveredTopics: new Set(
         strongVisualPresenceCovered
-          ? inferObservedVisualCoveredDimensions({
+          ? inferObservedVisualCoveredTopics({
               symptomKey,
               patternKey,
               locationKey
@@ -158,16 +158,16 @@ function buildVisualCandidateCoverageIndex(visualCandidateSymptoms = [], symptom
 function isDedicatedVisualPresenceConfirmQuestion(question = {}) {
   const questionKey = normalizeText(question?.questionKey || '', '')
   const targetSymptomKey = normalizeText(question?.targetSymptomKey || '', '')
-  const targetDimension = normalizeQuestionTargetDimension(
-    question?.targetDimension,
-    QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE
+  const packageTopic = normalizeQuestionPackageTopic(
+    question?.packageTopic,
+    QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE
   )
 
   if (!questionKey || !targetSymptomKey) {
     return false
   }
 
-  if (targetDimension !== QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE) {
+  if (packageTopic !== QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE) {
     return false
   }
 
@@ -186,16 +186,16 @@ function shouldBlockCoveredDimensionQuestion(
   const targetSymptomKey = normalizeText(question?.targetSymptomKey || '', '')
   if (!targetSymptomKey) {return false}
 
-  const targetDimension = normalizeQuestionTargetDimension(
-    question?.targetDimension,
-    QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE
+  const packageTopic = normalizeQuestionPackageTopic(
+    question?.packageTopic,
+    QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE
   )
   const targetCoverage = observedEvidenceCoverageMap.get(targetSymptomKey)
   const targetCandidateCoverage = visualCandidateCoverageMap.get(targetSymptomKey)
   if (
-    targetCoverage?.coveredDimensions?.has(targetDimension) ||
+    targetCoverage?.coveredTopics?.has(packageTopic) ||
     (
-      targetCandidateCoverage?.coveredDimensions?.has(targetDimension) &&
+      targetCandidateCoverage?.coveredTopics?.has(packageTopic) &&
       !isDedicatedVisualPresenceConfirmQuestion(question)
     )
   ) {
@@ -207,7 +207,7 @@ function shouldBlockCoveredDimensionQuestion(
     if (observedSymptomKey === targetSymptomKey) {continue}
     if (!observedSymptomMap.has(observedSymptomKey)) {continue}
     if (
-      observedCoverage?.coveredDimensions?.has(targetDimension) &&
+      observedCoverage?.coveredTopics?.has(packageTopic) &&
       isSameMorphologyFamily(observedSymptomKey, targetSymptomKey, symptomMetaMap)
     ) {
       return true
@@ -218,7 +218,7 @@ function shouldBlockCoveredDimensionQuestion(
     if (!candidateCoverage?.strongVisualPresenceCovered) {continue}
     if (candidateSymptomKey === targetSymptomKey) {continue}
     if (
-      candidateCoverage?.coveredDimensions?.has(targetDimension) &&
+      candidateCoverage?.coveredTopics?.has(packageTopic) &&
       isSameMorphologyFamily(candidateSymptomKey, targetSymptomKey, symptomMetaMap)
     ) {
       return true
@@ -240,17 +240,17 @@ function computeObservedFactCoverageBoost(
   const targetSymptomKey = normalizeText(question?.targetSymptomKey || '', '')
   if (!targetSymptomKey) {return 0}
 
-  const targetDimension = normalizeQuestionTargetDimension(
-    question?.targetDimension,
-    QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE
+  const packageTopic = normalizeQuestionPackageTopic(
+    question?.packageTopic,
+    QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE
   )
   if (
-    targetDimension === QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE &&
+    packageTopic === QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE &&
     observedSymptomMap.has(targetSymptomKey)
   ) {
     return 48
   }
-  if (targetDimension === QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE) {
+  if (packageTopic === QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE) {
     return 0
   }
 
@@ -291,11 +291,11 @@ function shouldBlockReturnToVisualPresenceQuestion(
   const targetSymptomKey = normalizeText(question?.targetSymptomKey || '', '')
   if (!targetSymptomKey) {return false}
 
-  const targetDimension = normalizeQuestionTargetDimension(
-    question?.targetDimension,
-    QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE
+  const packageTopic = normalizeQuestionPackageTopic(
+    question?.packageTopic,
+    QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE
   )
-  if (targetDimension !== QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE) {
+  if (packageTopic !== QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE) {
     return false
   }
 
@@ -303,11 +303,11 @@ function shouldBlockReturnToVisualPresenceQuestion(
     const askedTargetSymptomKey = normalizeText(askedQuestion?.targetSymptomKey || '', '')
     if (!askedTargetSymptomKey) {continue}
 
-    const askedTargetDimension = normalizeQuestionTargetDimension(
-      askedQuestion?.targetDimension,
-      QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE
+    const askedPackageTopic = normalizeQuestionPackageTopic(
+      askedQuestion?.packageTopic,
+      QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE
     )
-    if (askedTargetDimension === QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE) {
+    if (askedPackageTopic === QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE) {
       continue
     }
 
@@ -330,11 +330,11 @@ function shouldBlockDirectionManagedVisualPresenceQuestion(
   const targetSymptomKey = normalizeText(question?.targetSymptomKey || '', '')
   if (!targetSymptomKey) {return false}
 
-  const targetDimension = normalizeQuestionTargetDimension(
-    question?.targetDimension,
-    QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE
+  const packageTopic = normalizeQuestionPackageTopic(
+    question?.packageTopic,
+    QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE
   )
-  if (targetDimension !== QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE) {
+  if (packageTopic !== QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE) {
     return false
   }
 
@@ -362,9 +362,9 @@ function shouldBlockDirectionManagedVisualPresenceQuestion(
       : []
     )
       .map(item =>
-        normalizeQuestionTargetDimension(item, QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE)
+        normalizeQuestionPackageTopic(item, QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE)
       )
-      .filter(item => item !== QUESTION_TARGET_DIMENSIONS.VISUAL_PRESENCE)
+      .filter(item => item !== QUESTION_PACKAGE_TOPICS.VISUAL_PRESENCE)
 
     if (preferredQuestionDimensions.length > 0) {
       return true

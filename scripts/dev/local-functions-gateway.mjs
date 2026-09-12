@@ -6,12 +6,17 @@ import http from 'node:http'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { createLocalFunctionLayerWatcher } from './local-function-layer-watcher.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const projectRoot = path.resolve(__dirname, '..', '..')
 const DEFAULT_GATEWAY_PORT = 3010
+const DEFAULT_FUNCTION_PORT_BASE = 9000
 const DEFAULT_CLOUDBASE_ENV_ID = 'cloud1-2grufevs395a9d5e'
 const DEFAULT_SQL_DATABASE = 'cloud1_dev'
+const LOCAL_GATEWAY_KIND = 'planting-local-functions-gateway'
+const LOCAL_FUNCTION_LAYER_ROOT = path.join(projectRoot, 'cloudfunctions', 'layer')
+const NATIVE_HTTP_FUNCTIONS = new Set(['auth-user-http', 'plant-user-http'])
 const LOCAL_CREDENTIAL_SECRET_ID_KEYS = [
   'CLOUDBASE_SECRET_ID',
   'TENCENT_SECRET_ID',
@@ -24,7 +29,10 @@ const LOCAL_CREDENTIAL_SECRET_KEY_KEYS = [
 ]
 const FUNCTIONS_REQUIRING_CLOUDBASE_CREDENTIALS = new Set([
   'auth-user-http',
+  'platform-phone-bootstrap-http',
   'diagnose-http',
+  'diagnosis-question-start-http',
+  'diagnosis-answer-http',
   'identify-http',
   'plant-catalog-http',
   'plant-user-http',
@@ -32,20 +40,28 @@ const FUNCTIONS_REQUIRING_CLOUDBASE_CREDENTIALS = new Set([
   'weather-http'
 ])
 
-const HTTP_FUNCTIONS = [
-  { name: 'diagnose-http', port: 9000 },
-  { name: 'plant-catalog-http', port: 9001 },
-  { name: 'plant-user-http', port: 9002 },
-  { name: 'identify-http', port: 9003 },
-  { name: 'diagnosis-history-http', port: 9004 },
-  { name: 'auth-user-http', port: 9005 },
-  { name: 'weather-http', port: 9006 },
-  { name: 'storage-http', port: 9007 }
+const FUNCTION_NAMES = [
+  'diagnose-http',
+  'diagnosis-question-start-http',
+  'diagnosis-answer-http',
+  'plant-catalog-http',
+  'plant-user-http',
+  'identify-http',
+  'diagnosis-history-http',
+  'auth-user-http',
+  'platform-phone-bootstrap-http',
+  'weather-http',
+  'storage-http',
+  'subscription-http'
 ]
+const FUNCTION_DIRECTORY_BY_NAME = {}
 
 function parseArgs(argv = []) {
   const args = {
     port: Number(process.env.CLOUDBASE_LOCAL_FUNCTIONS_PORT || DEFAULT_GATEWAY_PORT),
+    functionPortBase: Number(
+      process.env.CLOUDBASE_LOCAL_FUNCTIONS_FUNCTION_PORT_BASE || DEFAULT_FUNCTION_PORT_BASE
+    ),
     host: process.env.CLOUDBASE_LOCAL_FUNCTIONS_HOST || '0.0.0.0',
     functions: String(process.env.LOCAL_FUNCTIONS || '').trim()
   }
@@ -55,6 +71,9 @@ function parseArgs(argv = []) {
     const value = rest.join('=').trim()
     if (key === '--port' && value) {
       args.port = Number(value)
+    }
+    if (key === '--function-port-base' && value) {
+      args.functionPortBase = Number(value)
     }
     if (key === '--host' && value) {
       args.host = value
@@ -87,7 +106,8 @@ function readEnvFile(filePath) {
     return {}
   }
 
-  return fs.readFileSync(filePath, 'utf8')
+  return fs
+    .readFileSync(filePath, 'utf8')
     .split(/\r?\n/)
     .reduce((env, line) => {
       const trimmed = line.trim()
@@ -112,11 +132,11 @@ function readEnvFile(filePath) {
 
 function readFunctionEnv(functionName) {
   const config = readJson(path.join(projectRoot, 'cloudbaserc.json'))
-  const matched = (Array.isArray(config.functions) ? config.functions : [])
-    .find(item => String(item?.name || '').trim() === functionName)
-  const envVariables = matched?.envVariables && typeof matched.envVariables === 'object'
-    ? matched.envVariables
-    : {}
+  const matched = (Array.isArray(config.functions) ? config.functions : []).find(
+    item => String(item?.name || '').trim() === functionName
+  )
+  const envVariables =
+    matched?.envVariables && typeof matched.envVariables === 'object' ? matched.envVariables : {}
   const envId =
     envVariables.CLOUDBASE_ENV_ID ||
     envVariables.TCB_ENV ||
@@ -225,6 +245,7 @@ function buildRuntimeEnv() {
   return {
     APP_ENV: 'development',
     RUNTIME_ENV: 'development',
+    CLOUDBASE_LOCAL_FUNCTIONS_GATEWAY: 'true',
     SCHEMA_ENV: 'development',
     X_ENV: 'development',
     SQL_DATABASE: DEFAULT_SQL_DATABASE,
@@ -235,9 +256,9 @@ function buildRuntimeEnv() {
   }
 }
 
-function resolveTcbFfBin(functionDir) {
+function resolveTcbFfBin() {
   return path.join(
-    functionDir,
+    projectRoot,
     'node_modules',
     '@cloudbase',
     'functions-framework',
@@ -246,17 +267,26 @@ function resolveTcbFfBin(functionDir) {
   )
 }
 
-function getSelectedFunctions(selection = '') {
+function getSelectedFunctions(selection = '', functionPortBase = DEFAULT_FUNCTION_PORT_BASE) {
   const selectedNames = String(selection || '')
     .split(',')
     .map(item => item.trim())
     .filter(Boolean)
 
   if (!selectedNames.length) {
-    return HTTP_FUNCTIONS
+    return FUNCTION_NAMES.map((name, index) => ({
+      name,
+      directory: FUNCTION_DIRECTORY_BY_NAME[name] || name,
+      port: functionPortBase + index
+    }))
   }
 
-  const known = new Map(HTTP_FUNCTIONS.map(item => [item.name, item]))
+  const known = new Map(
+    FUNCTION_NAMES.map((name, index) => [
+      name,
+      { name, directory: FUNCTION_DIRECTORY_BY_NAME[name] || name, port: functionPortBase + index }
+    ])
+  )
   return selectedNames.map(name => {
     const matched = known.get(name)
     if (!matched) {
@@ -274,29 +304,49 @@ function getLanAddresses() {
 }
 
 function ensureTcbFfInstalled(functions) {
+  const tcbFfBin = resolveTcbFfBin()
   const missing = functions
+    .filter(item => !NATIVE_HTTP_FUNCTIONS.has(item.name))
     .map(item => ({
       ...item,
-      dir: path.join(projectRoot, 'cloudfunctions', item.name),
-      tcbFfBin: resolveTcbFfBin(path.join(projectRoot, 'cloudfunctions', item.name))
+      dir: path.join(projectRoot, 'cloudfunctions', item.directory || item.name),
+      tcbFfBin
     }))
     .filter(item => !fs.existsSync(item.tcbFfBin))
 
-  if (!missing.length) {
-    return
+  const nativeMissing = functions
+    .filter(item => NATIVE_HTTP_FUNCTIONS.has(item.name))
+    .filter(
+      item =>
+        !fs.existsSync(
+          path.join(
+            projectRoot,
+            'cloudfunctions',
+            item.directory || item.name,
+            'native-http-server.js'
+          )
+        )
+    )
+  if (nativeMissing.length) {
+    throw new Error(`缺少原生 HTTP 函数入口: ${nativeMissing.map(item => item.name).join(', ')}`)
   }
-
-  const names = missing.map(item => item.name).join(', ')
-  throw new Error(
-    `缺少本地 tcb-ff 依赖: ${names}\n` +
-    '请先运行: npm run dev:functions:install\n' +
-    '如只调试单个函数，可运行: npm run dev:functions:install -- --function=diagnose-http'
-  )
+  if (missing.length) {
+    const names = missing.map(item => item.name).join(', ')
+    throw new Error(
+      `缺少本地 tcb-ff 依赖: ${names}\n` +
+        '请先运行: npm run dev:functions:install\n' +
+        '本地云函数依赖统一安装在项目根目录 node_modules；线上部署仍使用各函数 package.json 自动安装。'
+    )
+  }
 }
 
 function spawnFunctionRuntime(definition, localEnv) {
-  const functionDir = path.join(projectRoot, 'cloudfunctions', definition.name)
-  const tcbFfBin = resolveTcbFfBin(functionDir)
+  const functionDir = path.join(
+    projectRoot,
+    'cloudfunctions',
+    definition.directory || definition.name
+  )
+  const tcbFfBin = resolveTcbFfBin()
   const optAlias = path.join(projectRoot, 'scripts', 'dev', 'cloudfunctions-local-opt-alias.cjs')
   const nodeOptions = [`--require=${optAlias}`, process.env.NODE_OPTIONS || '']
     .filter(Boolean)
@@ -306,25 +356,25 @@ function spawnFunctionRuntime(definition, localEnv) {
     ...localEnv,
     ...process.env,
     ...buildRuntimeEnv(),
+    ...(NATIVE_HTTP_FUNCTIONS.has(definition.name) ? { CLOUDBASE_DIRECT_MYSQL_READS: '0' } : {}),
     PORT: String(definition.port),
     NODE_OPTIONS: nodeOptions
   })
 
-  const child = spawn(
-    process.execPath,
-    [
-      tcbFfBin,
-      '-w',
-      '--enableCors=true',
-      `--port=${definition.port}`,
-      '--functionsConfigFile=cloudbase-functions.json'
-    ],
-    {
-      cwd: functionDir,
-      env,
-      stdio: ['ignore', 'pipe', 'pipe']
-    }
-  )
+  const commandArgs = NATIVE_HTTP_FUNCTIONS.has(definition.name)
+    ? ['native-http-server.js']
+    : [
+        tcbFfBin,
+        '-w',
+        '--enableCors=true',
+        `--port=${definition.port}`,
+        '--functionsConfigFile=cloudbase-functions.json'
+      ]
+  const child = spawn(process.execPath, commandArgs, {
+    cwd: functionDir,
+    env,
+    stdio: ['ignore', 'pipe', 'pipe']
+  })
 
   child.stdout.on('data', chunk => {
     process.stdout.write(`[${definition.name}] ${chunk}`)
@@ -354,8 +404,28 @@ function addCorsHeaders(res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
 }
 
-function createGatewayServer(functions) {
-  const functionByName = new Map(functions.map(item => [item.name, item]))
+function resolveTargetFunctionName(functionName) {
+  // 读写均在同一原生函数内处理；不再通过公网 write 函数增加跳数和身份边界。
+  return functionName
+}
+
+function getFunctionHealthEntry(runtime = {}) {
+  const alive =
+    Boolean(runtime.child) && runtime.child.exitCode === null && runtime.child.signalCode === null
+
+  return {
+    name: runtime.name,
+    port: runtime.port,
+    pid: runtime.child?.pid || null,
+    status: alive ? 'running' : 'exited',
+    alive,
+    exitCode: runtime.exitCode ?? runtime.child?.exitCode ?? null,
+    signalCode: runtime.signalCode ?? runtime.child?.signalCode ?? null
+  }
+}
+
+function createGatewayServer(functionRuntimes) {
+  const functionByName = new Map(functionRuntimes.map(item => [item.name, item]))
 
   return http.createServer((req, res) => {
     addCorsHeaders(res)
@@ -368,21 +438,32 @@ function createGatewayServer(functions) {
 
     const requestUrl = new URL(req.url || '/', 'http://local.functions')
     if (requestUrl.pathname === '/__local_functions__/health') {
-      writeJson(res, 200, {
-        code: 200,
+      const functions = functionRuntimes.map(item => getFunctionHealthEntry(item))
+      const unavailableFunctions = functions.filter(item => !item.alive).map(item => item.name)
+      const healthy = unavailableFunctions.length === 0
+
+      writeJson(res, healthy ? 200 : 503, {
+        code: healthy ? 200 : 503,
         data: {
-          status: 'ok',
-          functions: functions.map(item => ({
-            name: item.name,
-            port: item.port
-          }))
+          gateway: LOCAL_GATEWAY_KIND,
+          projectRoot,
+          pid: process.pid,
+          status: healthy ? 'ok' : 'degraded',
+          unavailableFunctions,
+          functions
         }
       })
       return
     }
 
     const [, functionName, ...restPath] = requestUrl.pathname.split('/')
-    const definition = functionByName.get(functionName)
+    const targetFunctionName = resolveTargetFunctionName(
+      functionName,
+      requestUrl,
+      req.method,
+      functionByName
+    )
+    const definition = functionByName.get(targetFunctionName)
     if (!definition) {
       writeJson(res, 404, {
         code: 404,
@@ -434,14 +515,23 @@ function createGatewayServer(functions) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2))
-  const functions = getSelectedFunctions(args.functions)
+  const functions = getSelectedFunctions(args.functions, args.functionPortBase)
   ensureTcbFfInstalled(functions)
 
   const localEnv = readEnvFile(path.join(projectRoot, '.env.local'))
   assertLocalCloudbaseCredentials(functions, localEnv)
-  const server = createGatewayServer(functions)
+  const functionRuntimes = functions.map(item => ({
+    ...item,
+    child: null,
+    exitCode: null,
+    signalCode: null
+  }))
+  const server = createGatewayServer(functionRuntimes)
   const children = []
   let shuttingDown = false
+  let restarting = false
+  let restartPromise = null
+  let layerWatcher = null
 
   await new Promise((resolveListen, rejectListen) => {
     server.once('error', rejectListen)
@@ -451,16 +541,93 @@ async function main() {
     })
   })
 
-  functions.forEach((item, index) => {
-    const child = spawnFunctionRuntime(item, localEnv)
-    children.push(child)
-    child.on('exit', code => {
-      if (shuttingDown) {
+  function waitForChildExit(child, timeoutMs = 3000) {
+    if (!child || child.exitCode !== null || child.signalCode) {
+      return Promise.resolve()
+    }
+    return new Promise(resolve => {
+      let settled = false
+      const settle = () => {
+        if (settled) {
+          return
+        }
+        settled = true
+        clearTimeout(timeout)
+        resolve()
+      }
+      const timeout = setTimeout(() => {
+        child.kill('SIGKILL')
+        settle()
+      }, timeoutMs)
+      child.once('exit', settle)
+    })
+  }
+
+  function shutdown(exitCode = 0) {
+    const normalizedExitCode = Number.isInteger(exitCode) ? exitCode : 0
+    if (shuttingDown) {
+      return
+    }
+    shuttingDown = true
+    layerWatcher?.close()
+    server.close()
+    children.forEach(child => child.kill('SIGTERM'))
+    setTimeout(() => process.exit(normalizedExitCode), 300).unref()
+  }
+
+  function startFunctionRuntime(runtime, index) {
+    const child = spawnFunctionRuntime(runtime, localEnv)
+    children[index] = child
+    runtime.child = child
+    runtime.exitCode = null
+    runtime.signalCode = null
+    child.on('exit', (code, signal) => {
+      if (runtime.child !== child) {
         return
       }
-      const name = functions[index]?.name || 'unknown'
-      process.stderr.write(`[${name}] 本地函数进程退出，code=${code}\n`)
+      runtime.exitCode = code
+      runtime.signalCode = signal
+
+      const name = functionRuntimes[index]?.name || 'unknown'
+      if (shuttingDown || restarting) {
+        return
+      }
+
+      process.stderr.write(`[${name}] 本地函数进程退出，code=${code}, signal=${signal || 'none'}\n`)
+      shutdown(1)
     })
+  }
+
+  async function restartFunctionRuntimes(change = {}) {
+    if (shuttingDown || restarting) {
+      return
+    }
+    restarting = true
+    restartPromise = (async () => {
+      process.stdout.write(
+        `[local-functions] layer 发生变化，重载本地函数: ${change.filename || 'unknown'}\n`
+      )
+      const currentChildren = children.filter(Boolean)
+      currentChildren.forEach(child => child.kill('SIGTERM'))
+      await Promise.all(currentChildren.map(child => waitForChildExit(child)))
+      if (!shuttingDown) {
+        functionRuntimes.forEach((runtime, index) => startFunctionRuntime(runtime, index))
+      }
+    })().finally(() => {
+      restarting = false
+      restartPromise = null
+    })
+    await restartPromise
+  }
+
+  functionRuntimes.forEach((runtime, index) => startFunctionRuntime(runtime, index))
+
+  layerWatcher = createLocalFunctionLayerWatcher({
+    root: LOCAL_FUNCTION_LAYER_ROOT,
+    onChange: restartFunctionRuntimes,
+    onError: error => {
+      process.stderr.write(`[local-functions] layer 监听失败: ${String(error?.message || error)}\n`)
+    }
   })
 
   const lanAddresses = getLanAddresses()
@@ -470,18 +637,8 @@ async function main() {
   })
   process.stdout.write(`已启动函数: ${functions.map(item => item.name).join(', ')}\n`)
 
-  function shutdown() {
-    if (shuttingDown) {
-      return
-    }
-    shuttingDown = true
-    server.close()
-    children.forEach(child => child.kill('SIGTERM'))
-    setTimeout(() => process.exit(0), 300).unref()
-  }
-
-  process.on('SIGINT', shutdown)
-  process.on('SIGTERM', shutdown)
+  process.on('SIGINT', () => shutdown(0))
+  process.on('SIGTERM', () => shutdown(0))
 }
 
 main().catch(error => {
@@ -489,7 +646,7 @@ main().catch(error => {
     const port = error?.port || process.env.CLOUDBASE_LOCAL_FUNCTIONS_PORT || DEFAULT_GATEWAY_PORT
     process.stderr.write(
       `本地 CloudBase 函数 gateway 端口已被占用: ${port}\n` +
-      `请关闭占用进程，或使用 CLOUDBASE_LOCAL_FUNCTIONS_PORT=${Number(port) + 1} npm run dev:functions\n`
+        `请关闭占用进程，或使用 CLOUDBASE_LOCAL_FUNCTIONS_PORT=${Number(port) + 1} npm run dev:functions\n`
     )
     process.exit(1)
   }

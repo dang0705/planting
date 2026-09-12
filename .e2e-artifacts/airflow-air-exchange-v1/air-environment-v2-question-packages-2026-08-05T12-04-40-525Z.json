@@ -1,0 +1,136 @@
+{
+  "task": "air-environment-v2-question-packages",
+  "gitHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "branch": "sprint-ai-workflow",
+  "projectPath": "/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin",
+  "wsEndpoint": "ws://127.0.0.1:9420",
+  "startedAt": "2026-08-05T12:04:35.612Z",
+  "endedAt": "2026-08-05T12:04:40.525Z",
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "time": "2026-08-05T12:04:39.894Z"
+    },
+    {
+      "path": "pages/index/index",
+      "time": "2026-08-05T12:04:39.894Z"
+    }
+  ],
+  "pageDataSummaries": [
+    {
+      "path": "pages/index/index",
+      "summary": {
+        "automatorBootstrapRoute": {
+          "expectedRoute": "pages/index/index",
+          "observedRoute": "pages/index/index",
+          "routeReady": true,
+          "navigation_channel": "native_tabbar",
+          "native_tab_path": "pages/index/index",
+          "navigation_error": null
+        }
+      },
+      "time": "2026-08-05T12:04:35.872Z"
+    },
+    {
+      "path": "/pages/index/index",
+      "summary": {
+        "isAuthenticated": true,
+        "isLoggedIn": true,
+        "fixturePlantId": 94021,
+        "plantIds": [
+          94021
+        ],
+        "fixturePlantPresent": true,
+        "indexPlantListPresent": true,
+        "targetPlantCardPresent": true,
+        "targetEntryId": "diagnose-entry-button-94021",
+        "targetEntryPresent": true
+      },
+      "time": "2026-08-05T12:04:39.903Z"
+    },
+    {
+      "path": "/pages/index/index",
+      "summary": {
+        "diagnosePopupQuickEntry": {
+          "targetQuickEntryId": "diagnose-dev-symptom-class-option-yellowing_mode",
+          "componentPath": [
+            {
+              "selector": "diagnose-popup",
+              "present": true
+            },
+            {
+              "selector": "bottom-sheet",
+              "present": true
+            },
+            {
+              "selector": "diagnose-flow",
+              "present": true
+            },
+            {
+              "selector": "diagnose-upload-stage",
+              "present": true
+            }
+          ],
+          "targetQuickEntryPresent": true
+        }
+      },
+      "time": "2026-08-05T12:04:39.976Z"
+    }
+  ],
+  "assertions": [
+    {
+      "name": "switchTab home route",
+      "passed": true,
+      "detail": "{\"expectedRoute\":\"pages/index/index\",\"observedRoute\":\"pages/index/index\",\"routeReady\":true,\"navigation_channel\":\"native_tabbar\",\"native_tab_path\":\"pages/index/index\",\"navigation_error\":null}",
+      "time": "2026-08-05T12:04:35.872Z"
+    },
+    {
+      "name": "fixture plant entered the real plant store before homepage interaction",
+      "passed": true,
+      "detail": "{\"ok\":true,\"fixturePlantId\":94021,\"plantIds\":[94021],\"fixturePlantPresent\":true,\"userPlantsRequestObserved\":true,\"storeLoad\":{\"status\":\"started\",\"error\":null,\"invalidationError\":null},\"requestCount\":2,\"reason\":null}",
+      "time": "2026-08-05T12:04:39.894Z"
+    },
+    {
+      "name": "yellowing_mode: home readiness exposes the known diagnosis entry id",
+      "passed": true,
+      "detail": "{\"isAuthenticated\":true,\"isLoggedIn\":true,\"fixturePlantId\":94021,\"plantIds\":[94021],\"fixturePlantPresent\":true,\"indexPlantListPresent\":true,\"targetPlantCardPresent\":true,\"targetEntryId\":\"diagnose-entry-button-94021\",\"targetEntryPresent\":true}",
+      "time": "2026-08-05T12:04:39.903Z"
+    },
+    {
+      "name": "yellowing_mode: DiagnosePopup component path exposes the known no-image entry id",
+      "passed": true,
+      "detail": "{\"targetQuickEntryId\":\"diagnose-dev-symptom-class-option-yellowing_mode\",\"componentPath\":[{\"selector\":\"diagnose-popup\",\"present\":true},{\"selector\":\"bottom-sheet\",\"present\":true},{\"selector\":\"diagnose-flow\",\"present\":true},{\"selector\":\"diagnose-upload-stage\",\"present\":true}],\"targetQuickEntryPresent\":true}",
+      "time": "2026-08-05T12:04:39.976Z"
+    },
+    {
+      "name": "yellowing_mode: actual LAN question-start request passed through the fixture",
+      "passed": false,
+      "detail": "request failure={\"errMsg\":\"request:fail\"}",
+      "time": "2026-08-05T12:04:40.293Z"
+    },
+    {
+      "name": "yellowing_mode: formal no-image question-start response is observable",
+      "passed": false,
+      "detail": "request failure={\"errMsg\":\"request:fail\"}",
+      "time": "2026-08-05T12:04:40.295Z"
+    },
+    {
+      "name": "fixture state, cache and request patches were restored",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-05T12:04:40.524Z"
+    }
+  ],
+  "screenshots": [],
+  "classification": "BLOCKED_ENV",
+  "blockerReason": "yellowing_mode: LAN question-start prerequisite is unavailable: request failure={\"errMsg\":\"request:fail\"}",
+  "status": "failed",
+  "failure_kind": "failed_environment",
+  "business_assertions_reached": true,
+  "formal_principal": {
+    "principal_source": "local_dev_identity_default",
+    "principal_fingerprint": "794cf0e3e5db9fa7",
+    "storage_key": "user",
+    "credentials_persisted": false
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "contractVersion": 1,
+  "platform": "wechat-miniprogram",
+  "projectConfigPath": "project.config.json",
+  "appConfigPath": "app.json",
+  "selectorPolicy": { "kind": "semantic-id", "compiledIdMode": "exact-or-scoped" },
+  "capabilities": ["navigate", "interact", "screenshot", "runtime-request"],
+  "adapter": { "id": "fixture-adapter", "apiVersion": 1 }
+}

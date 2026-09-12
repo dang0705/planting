@@ -1,0 +1,18 @@
+{
+  "task": "air-environment-v2-question-packages",
+  "gitHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "branch": "sprint-ai-workflow",
+  "projectPath": "/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin",
+  "wsEndpoint": "ws://127.0.0.1:9420",
+  "startedAt": "2026-08-04T18:48:36.134Z",
+  "endedAt": "2026-08-04T18:48:46.170Z",
+  "pages": [],
+  "pageDataSummaries": [],
+  "assertions": [],
+  "screenshots": [],
+  "classification": "BLOCKED_ENV",
+  "blockerReason": "timeout",
+  "status": "failed",
+  "failure_kind": "failed_environment",
+  "business_assertions_reached": false
+}

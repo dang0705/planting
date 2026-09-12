@@ -3,7 +3,7 @@
 ## 根因
 
 1. `cloudbaserc.json` 曾承载发布配置和本地调试凭据，导致明文密钥容易进入跟踪文件。
-2. 旧发布入口只做 `tcb fn code update`，缺少 `fn detail`、smoke 和可审计发布证据。
+2. 既有发布入口只做 `tcb fn code update`，缺少 `fn detail`、smoke 和可审计发布证据。
 3. 小程序构建脚本混用 Windows `set VAR=...&&`，不适合直接放到 Linux GitHub runner。
 4. `project.config.json` 开启 source map 上传，正式 `miniprogram-ci upload` 存在源码暴露风险。
 5. dev/prod 之前主要靠脚本名区分，实际 envId、schema、GitHub Environment 没有形成统一切换契约。

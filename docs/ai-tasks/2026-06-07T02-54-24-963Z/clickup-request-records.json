@@ -1,0 +1,22 @@
+[
+  {
+    "id": "clickup.get_task",
+    "provider": "clickup",
+    "method": "GET",
+    "url": "https://api.clickup.com/api/v2/task/86exvnqag",
+    "status": "success",
+    "inputSummary": "读取 ClickUp task 86exvnqag",
+    "statusCode": 200,
+    "outputSummary": "{\"id\":\"86exvnqag\",\"custom_id\":null,\"custom_item_id\":0,\"name\":\"优化 diagnose-http/question/start 接口响应：免费能力内压到 500ms 内\",\"text_content\":\"背景\\n\\n当前 diagnose-http/diagnosis/question/start 接口响应非常慢，已影响问诊启动体验。\\n\\n该接口位于问诊链路的入口阶段，用户点击开始问诊后，前端需要尽快拿到当前模式的题包或起始问答数据。如果该接口继续承担过多动态诊断、数据库查询、既有状态机适配、运行时组装等职责，会导致首屏等待明显变长。\\n\\n本任务从架构角度优化接口响应速度，前提是：\\n\\n不启用任何付费功能。\\n不依赖 Redis、付费缓存、云函数升配、付费 CDN、付费数据库能力等方案。\\n优先通过职责收敛、静态化、预计算、代码路径裁剪和免费缓存策略优化响应。\\n\\n目标\\n\\n优化 diagnose-http/diagnosis/question/start 接口响应速度，使其在常规热启动路径下达到 500ms 内响应。\\n\\n需要明确区分：\\n\\n热启动 / 常规请求：目标 <= 500ms。\\n冷启动：尽量优化，但在不开启付费保活、升配等能力前提下，不承诺绝对 <= 500ms。\\n\\n范围\\n\\n必须做\\n\\n梳理 diagnose-http/diagnosis/question/start 接口入口与完整调用链。\\n测量当前接口耗时，区分冷启动、热启动、数据库查询、业务计算、序列化、日志等耗时来源。\\n梳理该接口当前是否仍经过既有 diagnosis-engine、动态下一题、复杂状态机、数据库读取或不必要的运行时组装。\\n将 start 接口职责收敛为：根据 mode / route 返回当前模式固定"
+  },
+  {
+    "id": "clickup.get_task_comments",
+    "provider": "clickup",
+    "method": "GET",
+    "url": "https://api.clickup.com/api/v2/task/86exvnqag/comment",
+    "status": "success",
+    "inputSummary": "读取 ClickUp task comments 86exvnqag",
+    "statusCode": 200,
+    "outputSummary": "{\"comments\":[]}"
+  }
+]

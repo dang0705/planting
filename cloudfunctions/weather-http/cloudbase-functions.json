@@ -13,6 +13,34 @@
     },
     {
       "functionName": "weather-http",
+      "path": "/weather/environment-context"
+    },
+    {
+      "functionName": "weather-http",
+      "path": "/weather/recent"
+    },
+    {
+      "functionName": "weather-http",
+      "path": "/weather/ingestion/recent-10d"
+    },
+    {
+      "functionName": "weather-http",
+      "path": "/weather/hot-cities"
+    },
+    {
+      "functionName": "weather-http",
+      "path": "/weather/hot-cities/resolve"
+    },
+    {
+      "functionName": "weather-http",
+      "path": "/weather/v7/weather/24h"
+    },
+    {
+      "functionName": "weather-http",
+      "path": "/v7/weather/24h"
+    },
+    {
+      "functionName": "weather-http",
       "path": "/weather/health"
     }
   ]

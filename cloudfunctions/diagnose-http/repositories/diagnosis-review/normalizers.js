@@ -1,7 +1,7 @@
 'use strict'
 
 const ALLOWED_OUTCOME_FILTERS = new Set(['all', 'problematic', 'non_problematic', 'uncertain'])
-const ALLOWED_SOURCE_FILTERS = new Set(['all', 'manual', 'batch', 'legacy'])
+const ALLOWED_SOURCE_FILTERS = new Set(['all', 'manual', 'batch', 'session'])
 const SESSION_ID_COLLATION = 'utf8mb4_unicode_ci'
 const INTERNAL_REVIEW_OPENID_PREFIXES = ['dev_terminal_', 'anon_dev_']
 const MINI_PROGRAM_CLIENT_PLATFORMS = new Set(['wechat-mini-program', 'wechat_mp', 'mini-program'])
@@ -15,15 +15,15 @@ function normalizeOutcomeFilter(value = '') {
   return normalized
 }
 
-function normalizePageNumber(value, fallback = 1) {
+function normalizePageNumber(value, conservative = 1) {
   const normalized = Number(value || 0)
-  if (!Number.isFinite(normalized) || normalized < 1) {return fallback}
+  if (!Number.isFinite(normalized) || normalized < 1) {return conservative}
   return Math.floor(normalized)
 }
 
-function normalizePageSize(value, fallback = 20) {
+function normalizePageSize(value, conservative = 20) {
   const normalized = Number(value || 0)
-  if (!Number.isFinite(normalized) || normalized < 1) {return fallback}
+  if (!Number.isFinite(normalized) || normalized < 1) {return conservative}
   return Math.min(100, Math.floor(normalized))
 }
 
@@ -31,9 +31,9 @@ function normalizeKeyword(value = '') {
   return String(value || '').trim()
 }
 
-function normalizeReviewText(value = '', fallback = '') {
+function normalizeReviewText(value = '', conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function normalizeReviewNullableNumber(value) {

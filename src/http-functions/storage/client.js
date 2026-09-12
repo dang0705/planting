@@ -55,6 +55,7 @@ export async function requestDiagnoseImageUpload(payload = {}) {
       requestHttpFunction('storage-http/storage/diagnose-images', {
         method: 'POST',
         body: payload,
+        requirePlatformSession: true,
         timeout: 30000
       }),
     { retries: 1, fallbackMessage: '上传诊断图片失败' }
@@ -66,7 +67,8 @@ export async function requestDiagnoseImageUpload(payload = {}) {
 export async function requestDiagnoseImageDelete(payload = {}) {
   const response = await requestHttpFunction('storage-http/storage/diagnose-images', {
     method: 'DELETE',
-    body: payload
+    body: payload,
+    requirePlatformSession: true
   })
 
   return unwrapResponseEnvelope(response, '删除诊断图片失败')

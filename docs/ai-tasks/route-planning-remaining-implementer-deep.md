@@ -54,13 +54,13 @@
 - 视觉新增字段从 prompt 到 parser 到 aggregate summary 到前端归一化能够透传。
 - `routeDecision.nextQuestionKeys` 可以直接生成 route follow-up，而不只是排序提示。
 - `actionAdvice` 开始由 action profile + care baseline 合成；冲突时转保守建议。
-- 公开响应中的 `routeDecision` 不再携带完整 `routeTrace/gateResults`。
+- 公开响应中的 `routeDecision` 不再携带完整 `routeTrace/conditionResults`。
 - 关闭 `route output` 时，不再公开 `primaryOutcome / visibleOutcomes / actionAdvice`。
 - 视觉 parser 遇到 `outcome_key` 等违规字段时忽略，不进入运行时。
 - `uncertain` 输出时不显示 `topProblem`。
 - `non_problematic` 输出时不产生治疗型 `actionAdvice`。
 - 本地黄金样例最小回归已覆盖文档列出的 15 个必须场景。
-- 开发态可显示最小 route debug，用户态不展示 `routeTrace/gateResults/internal ranking`。
+- 开发态可显示最小 route debug，用户态不展示 `routeTrace/conditionResults/internal ranking`。
 - 允许明确写出仍未完成的阻塞项，不把“已部分接入”伪装成“全部完成”。
 
 ## 6. 剩余阻塞项
@@ -69,5 +69,5 @@
 
 - `outcome_action_profiles` 已进入行动建议生成；若后续需要更强业务保障，可再补更大样本集的数据校验。
 - 前端结果页当前是最小接入版，没有做专门视觉/UI 重构。
-- 旧的本地 shell `check:diagnose-outcome-regression` 仍可能受环境 DNS / fetch 波动影响；正式验收已由云内 `diagnose-route-regression-runner` 接管，并已得到 `3/3` 真实样本通过结果。
+- 既有的本地 shell `check:diagnose-outcome-regression` 仍可能受环境 DNS / fetch 波动影响；正式验收已由云内 `diagnose-route-regression-runner` 接管，并已得到 `3/3` 真实样本通过结果。
 - `npm run dev:h5` 在当前容器环境仍有 `listen EPERM`，因此没有补做页面级运行截图。

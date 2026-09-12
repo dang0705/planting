@@ -2,6 +2,7 @@
 
 const {
   jsonResponse,
+  internalServerError,
   notFound,
   getHttpRequestData,
   resolveRequestAppEnv,
@@ -54,7 +55,7 @@ async function main(event, context) {
     return notFound(path)
   } catch (error) {
     console.error('diagnosis-history-http error:', error)
-    return jsonResponse(500, { code: 500, message: error.message, data: null })
+    return internalServerError('诊断记录暂时不可用，请稍后重试')
   }
 }
 

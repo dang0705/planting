@@ -96,12 +96,12 @@ SET
     ELSE option_text_cn
   END,
   option_description_user_cn = CASE
-    WHEN question_key = 'q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate' AND option_key = 'care_context' THEN '最近两周日常养护有明显变化，先从浇水、光照、施肥、通风湿度方向继续细分。'
-    WHEN question_key = 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate' AND option_key = 'watering_area' THEN '最近浇水频率明显变化，或盆土经常偏湿/偏干。'
-    WHEN question_key = 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate' AND option_key = 'light_area' THEN '最近直射时长、遮阴程度或摆放位置变化明显。'
-    WHEN question_key = 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate' AND option_key = 'fertilization_area' THEN '最近长期没补肥、施肥偏多，或刚换盆换土。'
-    WHEN question_key = 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate' AND option_key = 'airflow_humidity_area' THEN '最近环境更闷、更潮，或明显更干燥、风流变化较大。'
-    WHEN question_key = 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate' AND option_key = 'unknown' THEN '暂时看不出最可疑项，先回到黄叶分布继续排查。'
+    WHEN question_key = 'q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition' AND option_key = 'care_context' THEN '最近两周日常养护有明显变化，先从浇水、光照、施肥、通风湿度方向继续细分。'
+    WHEN question_key = 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition' AND option_key = 'watering_area' THEN '最近浇水频率明显变化，或盆土经常偏湿/偏干。'
+    WHEN question_key = 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition' AND option_key = 'light_area' THEN '最近直射时长、遮阴程度或摆放位置变化明显。'
+    WHEN question_key = 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition' AND option_key = 'fertilization_area' THEN '最近长期没补肥、施肥偏多，或刚换盆换土。'
+    WHEN question_key = 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition' AND option_key = 'airflow_humidity_area' THEN '最近环境更闷、更潮，或明显更干燥、风流变化较大。'
+    WHEN question_key = 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition' AND option_key = 'unknown' THEN '暂时看不出最可疑项，先回到黄叶分布继续排查。'
     ELSE option_description_user_cn
   END,
   updated_at = NOW()
@@ -116,7 +116,7 @@ WHERE (question_key = 'q_observed_probe__leaf_yellowing__watering_frequency_cont
     'q_leaf_yellowing_light_background',
     'q_leaf_yellowing_fertilization_background'
   ))
-  OR (question_key = 'q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate'
+  OR (question_key = 'q_observed_probe__leaf_yellowing__yellowing_primary_clue_condition'
     AND option_key = 'care_context')
-  OR (question_key = 'q_observed_probe__leaf_yellowing__yellowing_care_area_gate'
+  OR (question_key = 'q_observed_probe__leaf_yellowing__yellowing_care_area_condition'
     AND option_key IN ('watering_area', 'light_area', 'fertilization_area', 'airflow_humidity_area', 'unknown'));

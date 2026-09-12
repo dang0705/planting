@@ -1,0 +1,32 @@
+{
+  "task": "watering-transpiration-v3-e2e-trae-20260713",
+  "gitHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "branch": "sprint-ai-workflow",
+  "baseHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "projectPath": "/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin",
+  "mode": "shadow",
+  "wsEndpoint": "ws://127.0.0.1:9420",
+  "startedAt": "2026-08-05T12:55:32.881Z",
+  "endedAt": "2026-08-05T12:56:38.751Z",
+  "pages": [
+    {
+      "path": "/pages/index/index",
+      "time": "2026-08-05T12:55:32.885Z"
+    }
+  ],
+  "pageDataSummaries": [
+    {
+      "path": "/pages/index/index",
+      "summary": {
+        "route": "pages/index/index",
+        "source": "public_page_path"
+      },
+      "time": "2026-08-05T12:55:38.737Z"
+    }
+  ],
+  "capturedRequests": [],
+  "assertions": [],
+  "screenshots": [],
+  "classification": "FAIL_PRODUCT",
+  "blockerReason": "unexpected error: Connection closed, check if wechat web devTools is still running"
+}

@@ -1,8 +1,7 @@
 'use strict'
 
-const {
-  llm: { service: configuredService = 'hunyuan' } = {}
-} = require('../../configs')
+const { llm: { service: configuredService = 'hunyuan' } = {} } = require('../../configs')
+const { isOpenAiVisionProvider } = require('../../configs/provider-registry')
 const hunyuanVisualAdapter = require('./hunyuan-visual-adapter')
 const cloudbaseQwenVlVisualAdapter = require('./cloudbase-qwen-vl-visual-adapter')
 const hfAutotrainVisualAdapter = require('./hf-autotrain-visual-adapter')
@@ -20,15 +19,7 @@ function getVisualAdapter(service = configuredService) {
     return hunyuanVisualAdapter
   }
 
-  if (
-    [
-      'cloudbase_qwen_vl',
-      'cloudbase_ai_http_openai',
-      'qwen_vl',
-      'aliyun_bailian',
-      'aliyun-bailian-custom'
-    ].includes(normalizedService)
-  ) {
+  if (isOpenAiVisionProvider(normalizedService)) {
     return cloudbaseQwenVlVisualAdapter
   }
 

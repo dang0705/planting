@@ -14,11 +14,16 @@ const STATIC_REPOSITORY_CACHE_TTL_MS = Math.max(
   0,
   Number(process.env.DIAGNOSE_STATIC_CACHE_TTL_MS || 60000)
 )
+const QUESTION_PACKAGE_CACHE_TTL_MS = Math.max(
+  0,
+  Number(process.env.DIAGNOSE_QUESTION_PACKAGE_CACHE_TTL_MS || 600000)
+)
 const staticCache = {
   strategiesByProblemKey: new Map(),
   questionsByKey: new Map(),
   questionsByGroupKey: new Map(),
   optionMappingsByQuestionKey: new Map(),
+  questionPackagesBySignature: new Map(),
   questionKeysByTargetSymptomKey: new Map(),
   preloadExpiresAtBySchema: new Map()
 }
@@ -28,16 +33,20 @@ function buildSchemaCacheKey(key = '') {
   return `${resolveSchema()}::${String(key || '').trim()}`
 }
 
-function getCached(cache, key = '') {
-  if (!STATIC_REPOSITORY_CACHE_TTL_MS) {return null}
+function getCachedWithTtl(cache, key = '', ttlMs = STATIC_REPOSITORY_CACHE_TTL_MS) {
+  if (!ttlMs) {return null}
   const cacheKey = buildSchemaCacheKey(key)
   const entry = cache.get(cacheKey)
   if (!entry) {return null}
-  if (Date.now() - Number(entry.cachedAt || 0) > STATIC_REPOSITORY_CACHE_TTL_MS) {
+  if (Date.now() - Number(entry.cachedAt || 0) > ttlMs) {
     cache.delete(cacheKey)
     return null
   }
   return entry.value
+}
+
+function getCached(cache, key = '') {
+  return getCachedWithTtl(cache, key, STATIC_REPOSITORY_CACHE_TTL_MS)
 }
 
 function setCached(cache, key = '', value) {
@@ -105,18 +114,10 @@ async function preloadQuestionRepositoryCache() {
             question_group_key,
             question_level,
             observability,
-            target_dimension,
-            routing_scope,
-            question_role,
-            effect_mode,
             allow_unknown,
             priority,
             help_text_cn,
             why_this_question_cn,
-            default_option_key,
-            ui_variant,
-            render_mode,
-            template_engine_rule_key,
             data_status,
             review_status
           FROM ${table('question_library_v5_real')}
@@ -137,16 +138,12 @@ async function preloadQuestionRepositoryCache() {
             value,
             association_strength,
             answer_effect_cn,
-            option_description_user_cn,
-            display_order,
-            is_default,
             data_status,
             review_status
           FROM ${table('question_option_mapping_v5_real')}
           WHERE data_status = 'audited'
             AND review_status = 'audited'
-            AND is_active = 1
-          ORDER BY question_key ASC, COALESCE(display_order, 9999) ASC, option_key ASC
+          ORDER BY question_key ASC, option_key ASC
         `,
         {}
       )
@@ -295,18 +292,10 @@ async function getQuestionsByKeys(questionKeys = []) {
           question_group_key,
           question_level,
           observability,
-          target_dimension,
-          routing_scope,
-          question_role,
-          effect_mode,
           allow_unknown,
           priority,
           help_text_cn,
           why_this_question_cn,
-          default_option_key,
-          ui_variant,
-          render_mode,
-          template_engine_rule_key,
           data_status,
           review_status
         FROM ${table('question_library_v5_real')}
@@ -357,18 +346,10 @@ async function getQuestionsByGroupKeys(groupKeys = []) {
           question_group_key,
           question_level,
           observability,
-          target_dimension,
-          routing_scope,
-          question_role,
-          effect_mode,
           allow_unknown,
           priority,
           help_text_cn,
           why_this_question_cn,
-          default_option_key,
-          ui_variant,
-          render_mode,
-          template_engine_rule_key,
           data_status,
           review_status
         FROM ${table('question_library_v5_real')}
@@ -425,17 +406,13 @@ async function getQuestionOptionMappings(questionKeys = []) {
           value,
           association_strength,
           answer_effect_cn,
-          option_description_user_cn,
-          display_order,
-          is_default,
           data_status,
           review_status
         FROM ${table('question_option_mapping_v5_real')}
         WHERE question_key IN ${sqlInList(missingKeys)}
           AND data_status = 'audited'
           AND review_status = 'audited'
-          AND is_active = 1
-        ORDER BY question_key ASC, COALESCE(display_order, 9999) ASC, option_key ASC
+        ORDER BY question_key ASC, option_key ASC
       `,
       {}
     )
@@ -455,6 +432,121 @@ async function getQuestionOptionMappings(questionKeys = []) {
     ...cachedRows,
     ...missingKeys.flatMap(key => getCached(staticCache.optionMappingsByQuestionKey, key) || [])
   ]
+}
+
+async function getQuestionPackageByKeys(questionKeys = []) {
+  const safeKeys = Array.from(
+    new Set((questionKeys || []).map(item => String(item || '').trim()).filter(Boolean))
+  )
+  if (!safeKeys.length) {
+    return { questions: [], optionRows: [] }
+  }
+
+  const cacheKey = `questionPackageByKeys:${safeKeys.slice().sort().join('|')}`
+  const cached = getCachedWithTtl(
+    staticCache.questionPackagesBySignature,
+    cacheKey,
+    QUESTION_PACKAGE_CACHE_TTL_MS
+  )
+  if (cached !== null && cached !== undefined) {
+    return cached
+  }
+
+  const result = await withPendingStaticQuery(
+    cacheKey,
+    async () => {
+      const cachedAfterWait = getCachedWithTtl(
+        staticCache.questionPackagesBySignature,
+        cacheKey,
+        QUESTION_PACKAGE_CACHE_TTL_MS
+      )
+      if (cachedAfterWait !== null && cachedAfterWait !== undefined) {
+        return cachedAfterWait
+      }
+
+      return models.$runSQL(
+        `
+        SELECT
+          questions.question_key,
+          questions.question_text_cn,
+          questions.question_text_user_cn,
+          questions.question_type,
+          questions.target_symptom_key,
+          questions.question_group_key,
+          questions.question_level,
+          questions.observability,
+          questions.allow_unknown,
+          questions.priority,
+          questions.help_text_cn,
+          questions.why_this_question_cn,
+          questions.data_status,
+          questions.review_status,
+          options.question_key AS option_question_key,
+          options.option_key,
+          options.option_text_cn,
+          options.option_text_user_cn,
+          options.maps_to_symptom_key,
+          options.value,
+          options.association_strength,
+          options.answer_effect_cn,
+          options.data_status AS option_data_status,
+          options.review_status AS option_review_status
+        FROM ${table('question_library_v5_real')} AS questions
+        LEFT JOIN ${table('question_option_mapping_v5_real')} AS options
+          ON options.question_key = questions.question_key
+          AND options.data_status = 'audited'
+          AND options.review_status = 'audited'
+        WHERE questions.question_key IN ${sqlInList(safeKeys)}
+          AND questions.data_status = 'audited'
+          AND questions.review_status = 'audited'
+        ORDER BY questions.question_key ASC, options.option_key ASC
+        `,
+        {}
+      )
+    }
+  )
+
+  const rawRows = result?.data?.executeResultList || []
+  const questionRows = []
+  const questionsByKey = new Map()
+  const optionRows = []
+  const optionsByQuestionKey = new Map()
+  for (const row of rawRows) {
+    const questionKey = String(row.question_key || '').trim()
+    if (!questionKey) {
+      continue
+    }
+    if (!questionsByKey.has(questionKey)) {
+      const question = mapQuestionRow(row)
+      questionsByKey.set(questionKey, question)
+      questionRows.push(question)
+    }
+    const optionKey = String(row.option_key || '').trim()
+    if (!optionKey) {
+      continue
+    }
+    const mappedOption = mapOptionRow({
+      ...row,
+      question_key: row.option_question_key || questionKey,
+      data_status: row.option_data_status,
+      review_status: row.option_review_status
+    })
+    const rows = optionsByQuestionKey.get(questionKey) || []
+    rows.push(mappedOption)
+    optionsByQuestionKey.set(questionKey, rows)
+    optionRows.push(mappedOption)
+  }
+  for (const key of safeKeys) {
+    setCached(staticCache.questionsByKey, key, questionsByKey.get(key) || null)
+    setCached(staticCache.optionMappingsByQuestionKey, key, optionsByQuestionKey.get(key) || [])
+  }
+  const packageResult = { questions: questionRows, optionRows }
+  setCached(staticCache.questionPackagesBySignature, cacheKey, packageResult)
+  return packageResult
+}
+
+function preloadQuestionPackageCache(questionKeys = []) {
+  return getQuestionPackageByKeys(questionKeys)
 }
 
 async function findQuestionKeysByTargetSymptoms(symptomKeys = []) {
@@ -505,5 +597,6 @@ async function findQuestionKeysByTargetSymptoms(symptomKeys = []) {
 
 module.exports = {
   getQuestionStrategies, getQuestionsByKeys, getQuestionsByGroupKeys,
-  getQuestionOptionMappings, findQuestionKeysByTargetSymptoms, preloadQuestionRepositoryCache
+  getQuestionOptionMappings, getQuestionPackageByKeys, findQuestionKeysByTargetSymptoms,
+  preloadQuestionRepositoryCache, preloadQuestionPackageCache
 }

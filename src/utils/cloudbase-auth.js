@@ -1,55 +1,177 @@
-import cloudbase from '@cloudbase/js-sdk'
-import { registerAuth } from '@cloudbase/js-sdk/miniprogram_dist/auth'
-import { CLOUDBASE_ENV_ID } from '@/utils/runtime-env'
-registerAuth(cloudbase)
+/**
+ * 微信小程序身份与手机号能力
+ *
+ * 仅依赖微信小程序提供的 wx.cloud 能力，不引入 CloudBase Web SDK；实际
+ * 调用前按需初始化，避免 App 启动阶段被过期的 DevTools 凭据阻断。
+ * 远端身份查询使用普通 wechat-identity 事件函数拿到短时 HTTP 身份票据；
+ * 业务 HTTP 云函数统一经公网 HTTPS 路由调用。登录由现有的微信登录链路负责；
+ * 这里仅提供身份查询和手机号授权能力。
+ */
+import { IS_LOCAL_API_BASE_URL, PUBLIC_HTTP_FUNCTION_BASE_URL } from '@/api/env'
+import { CLOUDBASE_ENV_ID, getRequestAppEnvHeader } from '@/utils/runtime-env'
+import {
+  clearPlatformSession,
+  getActivePlatformAccessToken,
+  savePlatformIdentityTicket
+} from '@/api/platform-session'
 
-let cloudbaseApp = null
-let authInstance = null
-let signInPromise = null
+let miniProgramCloudInitialized = false
+let pendingPlatformIdentityRefresh = null
+
+function createPlatformIdentityRefreshError(response = {}) {
+  const body = response?.data && typeof response.data === 'object' ? response.data : {}
+  const statusCode = Number(response?.statusCode || 0)
+  const error = new Error(
+    body?.message ||
+      (statusCode === 401
+        ? '当前登录会话已失效，请重新登录后再继续问诊'
+        : '身份票据刷新失败，请稍后重试')
+  )
+  error.statusCode = statusCode
+  return error
+}
+
+function requestPlatformIdentityRefresh(platformSessionToken) {
+  if (typeof uni === 'undefined' || typeof uni.request !== 'function') {
+    return Promise.reject(new Error('当前运行环境无法刷新登录身份'))
+  }
+
+  const url = `${PUBLIC_HTTP_FUNCTION_BASE_URL}/auth-user-http/auth/user`
+  return new Promise((resolve, reject) => {
+    uni.request({
+      url,
+      method: 'POST',
+      data: {
+        action: 'getUserByOpenid',
+        data: {}
+      },
+      header: {
+        'Content-Type': 'application/json',
+        'x-app-env': getRequestAppEnvHeader(),
+        'x-env': getRequestAppEnvHeader(),
+        'x-planting-platform-session': platformSessionToken
+      },
+      dataType: 'json',
+      success: response => {
+        const body = response?.data && typeof response.data === 'object' ? response.data : {}
+        const user = body?.data && typeof body.data === 'object' ? body.data : {}
+        const httpIdentityTicket = String(user.httpIdentityTicket || '').trim()
+        if (
+          Number(response?.statusCode || 0) < 200 ||
+          Number(response?.statusCode || 0) >= 300 ||
+          Number(body?.code) !== 200 ||
+          !httpIdentityTicket
+        ) {
+          reject(createPlatformIdentityRefreshError(response))
+          return
+        }
+
+        const httpIdentityTicketExpiresAt = Number(user.httpIdentityTicketExpiresAt || 0)
+        savePlatformIdentityTicket(httpIdentityTicket, httpIdentityTicketExpiresAt)
+        resolve({
+          user,
+          httpIdentityTicket,
+          httpIdentityTicketExpiresAt
+        })
+      },
+      fail: error => reject(new Error(error?.errMsg || '身份票据刷新失败，请稍后重试'))
+    })
+  })
+}
+
+export async function refreshPlatformHttpIdentity() {
+  const platformSessionToken = getActivePlatformAccessToken()
+  if (!platformSessionToken) {
+    throw new Error('当前登录会话已失效，请重新登录后再继续问诊')
+  }
+  if (!pendingPlatformIdentityRefresh) {
+    pendingPlatformIdentityRefresh = (async () => {
+      try {
+        return await requestPlatformIdentityRefresh(platformSessionToken)
+      } catch (error) {
+        if (Number(error?.statusCode) === 401) {
+          clearPlatformSession()
+        }
+        throw error
+      } finally {
+        pendingPlatformIdentityRefresh = null
+      }
+    })()
+  }
+  return pendingPlatformIdentityRefresh
+}
 
 function assertMiniProgramEnv() {
   if (typeof wx === 'undefined' || !wx.cloud) {
-    throw new Error('CloudBase Auth 仅支持已初始化 wx.cloud 的微信小程序环境')
+    throw new Error('微信身份能力仅支持微信小程序环境')
   }
 }
 
-function signInWithOpenId(auth) {
-  if (typeof auth.signInWithOpenId === 'function') {
-    return auth.signInWithOpenId({ refreshToken: true })
-  }
-
-  if (typeof auth.signInWithWechat === 'function') {
-    return auth.signInWithWechat({})
-  }
-
-  throw new Error('当前 @cloudbase/js-sdk 不支持小程序 OpenID 静默登录')
-}
-
-export function getCloudbaseApp() {
+export function ensureWechatCloudInitialized() {
   assertMiniProgramEnv()
-
-  if (!cloudbaseApp) {
-    cloudbaseApp = cloudbase.init({
-      env: CLOUDBASE_ENV_ID,
-      wxCloud: wx.cloud
-    })
+  if (miniProgramCloudInitialized) {
+    return
   }
 
-  return cloudbaseApp
-}
-
-export function getCloudbaseAuth() {
-  if (!authInstance) {
-    authInstance = getCloudbaseApp().auth({
-      persistence: 'local'
-    })
-  }
-
-  return authInstance
+  wx.cloud.init({
+    env: CLOUDBASE_ENV_ID,
+    // 业务鉴权使用手机号会话或 CloudBase 网关注入身份，不启用用户追踪。
+    traceUser: false
+  })
+  miniProgramCloudInitialized = true
 }
 
 export async function getWechatCloudIdentity() {
   assertMiniProgramEnv()
+
+  const platformSessionToken = getActivePlatformAccessToken()
+  if (
+    !IS_LOCAL_API_BASE_URL &&
+    platformSessionToken &&
+    typeof uni !== 'undefined' &&
+    typeof uni.request === 'function'
+  ) {
+    const refreshedIdentity = await refreshPlatformHttpIdentity()
+    const user = refreshedIdentity.user || {}
+    const openid = user.wechat_openid || user._openid || user.openid || ''
+    if (!openid) {
+      throw new Error('auth-user-http 未返回有效 openid')
+    }
+    return {
+      openid,
+      appid: '',
+      unionid: user.wechat_unionid || user.union_id || user.unionid || '',
+      httpIdentityTicket: refreshedIdentity.httpIdentityTicket,
+      httpIdentityTicketExpiresAt: refreshedIdentity.httpIdentityTicketExpiresAt
+    }
+  }
+
+  if (!IS_LOCAL_API_BASE_URL && typeof wx.cloud.callFunction === 'function') {
+    ensureWechatCloudInitialized()
+    return new Promise((resolve, reject) => {
+      wx.cloud.callFunction({
+        name: 'wechat-identity',
+        data: {},
+        success: response => {
+          const result =
+            response?.result && typeof response.result === 'object' ? response.result : {}
+          const openid = result.openid || ''
+          if (!openid) {
+            reject(new Error('wechat-identity 未返回有效 openid'))
+            return
+          }
+
+          resolve({
+            openid,
+            appid: result.appid || '',
+            unionid: result.unionid || '',
+            httpIdentityTicket: result.httpIdentityTicket || ''
+          })
+        },
+        fail: reject
+      })
+    })
+  }
 
   return new Promise((resolve, reject) => {
     wx.cloud.callFunction({
@@ -60,7 +182,8 @@ export async function getWechatCloudIdentity() {
         resolve({
           openid: result.openid || '',
           appid: result.appid || '',
-          unionid: result.unionid || ''
+          unionid: result.unionid || '',
+          httpIdentityTicket: result.httpIdentityTicket || ''
         })
       },
       fail: reject
@@ -70,6 +193,7 @@ export async function getWechatCloudIdentity() {
 
 export async function getWechatPhoneProfile({ code = '', cloudId = '' } = {}) {
   assertMiniProgramEnv()
+  ensureWechatCloudInitialized()
 
   const data = {}
   if (cloudId && typeof wx.cloud.CloudID === 'function') {
@@ -78,6 +202,18 @@ export async function getWechatPhoneProfile({ code = '', cloudId = '' } = {}) {
   if (code) {
     data.code = code
   }
+  if (!cloudId && code) {
+    const loginResult = await new Promise((resolve, reject) => {
+      wx.login({
+        success: resolve,
+        fail: reject
+      })
+    })
+    if (!loginResult?.code) {
+      throw new Error('微信登录未返回有效凭据')
+    }
+    data.loginCode = loginResult.code
+  }
 
   return new Promise((resolve, reject) => {
     wx.cloud.callFunction({
@@ -85,18 +221,13 @@ export async function getWechatPhoneProfile({ code = '', cloudId = '' } = {}) {
       data,
       success: res => {
         const result = res?.result || {}
-        if (!result.phoneNumber) {
-          reject(new Error(result.message || 'wechat-phone 未返回有效手机号'))
+        if (!result.phoneProof) {
+          reject(new Error(result.message || 'wechat-phone 未返回有效手机号授权证明'))
           return
         }
 
         resolve({
-          openid: result.openid || '',
-          appid: result.appid || '',
-          unionid: result.unionid || '',
-          phoneNumber: result.phoneNumber || '',
-          purePhoneNumber: result.purePhoneNumber || '',
-          countryCode: result.countryCode || '+86'
+          phoneProof: result.phoneProof
         })
       },
       fail: reject
@@ -104,56 +235,10 @@ export async function getWechatPhoneProfile({ code = '', cloudId = '' } = {}) {
   })
 }
 
-export async function ensureCloudbaseLogin({ force = false } = {}) {
-  const auth = getCloudbaseAuth()
-
-  if (!force) {
-    try {
-      const loginState = await auth.getLoginState()
-      if (loginState?.user) {
-        return auth
-      }
-    } catch (error) {
-      console.warn('检查 CloudBase 登录态失败，将尝试重新登录:', error)
-    }
-  }
-
-  if (!signInPromise || force) {
-    signInPromise = Promise.resolve(signInWithOpenId(auth)).finally(() => {
-      signInPromise = null
-    })
-  }
-
-  await signInPromise
-  return auth
-}
-
-export async function getCloudbaseAccessToken({ forceRefresh = false } = {}) {
-  const auth = await ensureCloudbaseLogin()
-
-  try {
-    const tokenInfo = await auth.getAccessToken()
-    if (!tokenInfo?.accessToken) {
-      throw new Error('未获取到 CloudBase access token')
-    }
-    return tokenInfo.accessToken
-  } catch (error) {
-    if (!forceRefresh) {
-      const retryAuth = await ensureCloudbaseLogin({ force: true })
-      const tokenInfo = await retryAuth.getAccessToken()
-      if (tokenInfo?.accessToken) {
-        return tokenInfo.accessToken
-      }
-    }
-
-    throw error
-  }
-}
-
 export async function getCloudbaseUserIdentity() {
   const wechatIdentity = await getWechatCloudIdentity()
   if (!wechatIdentity?.openid) {
-    throw new Error('wechat-identity 未返回有效 openid')
+    throw new Error('微信身份接口未返回有效 openid')
   }
 
   return {
@@ -161,13 +246,7 @@ export async function getCloudbaseUserIdentity() {
     uid: '',
     customUserId: '',
     appid: wechatIdentity.appid || '',
-    unionid: wechatIdentity.unionid || ''
-  }
-}
-
-export async function getCloudbaseAuthHeader(options) {
-  const accessToken = await getCloudbaseAccessToken(options)
-  return {
-    Authorization: `Bearer ${accessToken}`
+    unionid: wechatIdentity.unionid || '',
+    httpIdentityTicket: wechatIdentity.httpIdentityTicket || ''
   }
 }

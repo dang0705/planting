@@ -5,7 +5,7 @@
 - 当前代码压缩包：`Archive 2.zip`
 - 项目规则压缩包：`rules.zip`
 - 诊断运行时粗文档：`diagnosis-runtime-code-logic.md`
-- 本次会话中关于“主动瘦身、养护类主轴、outcome 路径规划、gate 守卫、LLM prompt 职责边界”的讨论结论
+- 本次会话中关于“主动瘦身、养护类主轴、outcome 路径规划、condition 守卫、LLM prompt 职责边界”的讨论结论
 
 权威优先级：**当前代码 > 项目 rules > 已有运行时说明 > 本次设计讨论**。如果后续实施时发现文档和代码冲突，必须以代码为准，并同步修正文档。
 
@@ -77,7 +77,7 @@ collectPositiveMappedObservedSymptomsFromAnswers(answers, answerOptionMappings)
 - 再补充合成追问的选项映射。
 - 然后把用户回答中能确认的事实映射成症状证据。
 
-这些证据目前服务于后续 ranking 和输出守卫。route 模式下，它们仍然保留，但会额外服务于 route gate。
+这些证据目前服务于后续 ranking 和输出守卫。route 模式下，它们仍然保留，但会额外服务于 route condition。
 
 ### 3. 正式观察证据集合
 
@@ -106,7 +106,7 @@ cloudfunctions/diagnose-http/domain/observed-evidence.js
 当前系统会把四类证据合并：
 
 1. 历史正式证据。
-2. 旧版症状输入转成的证据。
+2. 既有版症状输入转成的证据。
 3. 视觉聚合结果中正式准入的证据。
 4. 用户问诊回答映射出来的证据。
 
@@ -160,9 +160,9 @@ yellowing_direction → 黄叶分流 route 候选
 | `candidatePriorsWithDirectionCoverage` | 带诊断方向覆盖的候选先验 | 补充诊断方向和直接调整带来的候选。 | 保留为候选 outcome 入口，不再直接决定最终答案。 |
 | `candidateProblemKeys` | 候选问题键 | 当前进入 ranking 的 problem key。 | Phase 1 中可继续使用，但业务语义改成 `candidateOutcomeKeys`。 |
 | `visualScores` | 视觉证据分 | 来自正式视觉证据和症状-问题边。 | route 模式中作为 route 入口强度，不直接闭合。 |
-| `questionScores` | 问诊证据分 | 用户回答贡献的正向问题分。 | route gate 消费为支持/削弱/排除效果。 |
+| `questionScores` | 问诊证据分 | 用户回答贡献的正向问题分。 | route condition 消费为支持/削弱/排除效果。 |
 | `penalties` | 惩罚分 | 否定答案等导致的扣分。 | route blocker 消费。 |
-| `answerEffects` | 回答效果 | 记录用户回答对问题/症状的影响。 | route gate 的核心输入。 |
+| `answerEffects` | 回答效果 | 记录用户回答对问题/症状的影响。 | route condition 的核心输入。 |
 | `rankings` | 问题排名 | 生成 `problemKey`、分数、排序号。 | 保留为审计和候选排序，不再作为最终裁判。 |
 | `scoreGap` | 第一名和第二名分差 | 决定是否继续追问。 | 逐步替换为 `routeDecision.requiresFollowUp`。 |
 
@@ -212,7 +212,7 @@ const shouldAskFollowUpByRanking =
 
 当前系统主要看“第一名是否够强、分数是否够高、分差是否够大”来决定是否继续问。这是 ranking 模式的代表性入口。
 
-route 改造后，这一段不能直接删除，但应被降级为兜底参考：
+route 改造后，这一段不能直接删除，但应被降级为保守参考：
 
 ```text
 routeDecision.requiresFollowUp 优先
@@ -251,8 +251,8 @@ cloudfunctions/diagnose-http/repositories/question-repository.js
 route 改造后，追问来源应收敛为：
 
 ```text
-route 当前 gate 所需问题优先
-必要时才回退到旧 buildFollowUps
+route 当前 condition 所需问题优先
+必要时才回退到既有 buildFollowUps
 ```
 
 ### 8. 输出守卫和最终格式化
@@ -300,7 +300,7 @@ primaryOutcome / secondaryOutcomes / visibleOutcomes → finalResult
 其中 ranking 只作为：
 
 - 内部审计。
-- 兼容旧字段。
+- 适配既有字段。
 - route 候选顺序来源之一。
 
 ## 三、当前 ranking 模式的主要问题
@@ -348,7 +348,7 @@ primaryOutcome / secondaryOutcomes / visibleOutcomes → finalResult
 - 不确定不能泄漏最高问题。
 - 水肿被否定后不能直接跳真菌叶斑。
 
-route 模式不会让守卫消失，但能把很多“事后补丁”前移到 route gate。
+route 模式不会让守卫消失，但能把很多“事后补丁”前移到 route condition。
 
 ## 四、route 改造的代码切入点
 
@@ -397,13 +397,13 @@ stabilizedOutputRankings → finalResult
 |---|---|---|
 | `diagnosis-engine.js` | 主运行时，ranking 与输出守卫集中地 | 接入 route planner，弱化 ranking 终局权。 |
 | `evidence-scoring.js` | 视觉/问诊证据计分 | 保留为候选排序和 route evidence 输入。 |
-| `question-repository.js` | 问题、选项、策略读取 | 保留旧策略，新增 route 问题读取或由新仓库读取。 |
+| `question-repository.js` | 问题、选项、策略读取 | 保留既有策略，新增 route 问题读取或由新仓库读取。 |
 | `question-selector.js` | 候选追问生成和排序 | route 模式下变成 fallback，不再主导第一问题。 |
 | `result-formatter.js` | 把 ranking/stopDecision 转成公开结果 | 增加 `primaryOutcome`、`secondaryOutcomes`、`visibleOutcomes` 优先格式化。 |
 | `observed-evidence.js` | 正式证据准入 | 必须保留，不允许绕过。 |
-| `question-queue-planner.js` | 前端问题队列 | 队列项要能带 route/outcome/gate 追溯。 |
+| `question-package-snapshot-planner.js` | 前端问题队列 | 队列项要能带 route/outcome/condition 追溯。 |
 | `stop-state-evaluator.js` | 停止状态判断 | 增加候选集合收窄、可见 outcome 准备完成、不确定候选输出等 route 停止状态。 |
-| `output-eligibility-evaluator.js` | 输出资格检查 | 增加 display gate、closure gate、action safety gate 通过后的输出资格。 |
+| `output-eligibility-evaluator.js` | 输出资格检查 | 增加 display condition、closure condition、action safety condition 通过后的输出资格。 |
 | `symptom-labeler-prompt.js` | 视觉 prompt | 增加路径判别特征和缺失信息，但不输出 outcome。 |
 | `diagnosis-parser.js` | 解析视觉 JSON | 解析新增字段。 |
 | `visual-diagnosis-service.js` | 聚合视觉结果 | 持久化/透传新增路径输入。 |

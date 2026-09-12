@@ -7,24 +7,29 @@ function createEntryId() {
 function normalizeSuffixes(suffix = []) {
   const values = Array.isArray(suffix) ? suffix : String(suffix || '').split(',')
   return values
-    .map(item => String(item || '').trim().toLowerCase().replace(/^\./, ''))
+    .map(item =>
+      String(item || '')
+        .trim()
+        .toLowerCase()
+        .replace(/^\./, '')
+    )
     .filter(Boolean)
 }
 
 function normalizeCompressionQuality(compressionRate = 80) {
   const value = Number(compressionRate || 0)
-  if (!Number.isFinite(value) || value <= 0) {return 80}
-  if (value <= 1) {return Math.max(1, Math.min(100, Math.round(value * 100)))}
-  return Math.max(1, Math.min(100, Math.round(value)))
+  if (!Number.isFinite(value) || value <= 0) {
+    return 80
+  }
+  return Math.max(1, Math.min(100, Math.round(value <= 1 ? value * 100 : value)))
 }
 
 function normalizeMaxSizeBytes(size = 5) {
   const value = Number(size || 0)
-  if (!Number.isFinite(value) || value <= 0) {return 0}
-  if (value <= 100) {
-    return Math.round(value * 1024 * 1024)
+  if (!Number.isFinite(value) || value <= 0) {
+    return 0
   }
-  return Math.round(value)
+  return Math.round(value <= 100 ? value * 1024 * 1024 : value)
 }
 
 function normalizeSizeType(sizeType = ['compressed']) {
@@ -36,8 +41,9 @@ function normalizeSizeType(sizeType = ['compressed']) {
 }
 
 function getFileExtension(filePath = '') {
-  const normalized = String(filePath || '').trim().split('?')[0]
-  const match = normalized.match(/\.([a-zA-Z0-9]+)$/)
+  const match = String(filePath || '')
+    .trim()
+    .match(/\.([a-zA-Z0-9]+)(?:\?.*)?$/)
   return match ? String(match[1] || '').toLowerCase() : ''
 }
 
@@ -69,28 +75,16 @@ function getImageInfo(filePath) {
   })
 }
 
-function formatSizeLabel(sizeBytes = 0) {
-  const value = Number(sizeBytes || 0)
-  if (!Number.isFinite(value) || value <= 0) {
-    return '0MB'
-  }
-
-  return `${Math.max(0.1, Math.round((value / 1024 / 1024) * 10) / 10)}MB`
-}
-
 function buildCompressionQualities(initialQuality = 80, minimumQuality = 56) {
   const start = Math.max(1, Math.min(100, Math.round(initialQuality)))
   const end = Math.max(1, Math.min(start, Math.round(minimumQuality)))
   const qualities = []
-
   for (let quality = start; quality >= end; quality -= 6) {
     qualities.push(quality)
   }
-
   if (!qualities.includes(end)) {
     qualities.push(end)
   }
-
   return Array.from(new Set(qualities)).filter(value => value < 100)
 }
 
@@ -121,8 +115,7 @@ function resolveCompressionPlan({
         detailMinimumQuality,
         Math.min(96, Math.round(preferredQuality || 96))
       ),
-      minimumQuality: detailMinimumQuality,
-      preserveImageDetails: true
+      minimumQuality: detailMinimumQuality
     }
   }
 
@@ -177,8 +170,7 @@ function resolveCompressionPlan({
     shouldCompress,
     targetBytes,
     initialQuality,
-    minimumQuality,
-    preserveImageDetails: false
+    minimumQuality
   }
 }
 
@@ -199,12 +191,23 @@ function compressImageAtQuality(filePath, quality) {
 
 async function compressLocalImage(
   filePath,
-  { quality = 80, maxSizeBytes = 0, forceCompress = false, preserveImageDetails = false } = {}
+  {
+    quality = 80,
+    maxSizeBytes = 0,
+    forceCompress = false,
+    preserveImageDetails = false,
+    minimumQuality = 0,
+    prepareImage = null,
+    sourceSizeBytes = 0
+  } = {}
 ) {
-  const originalSize = await statFile(filePath)
+  const prepared = typeof prepareImage === 'function' ? await prepareImage(filePath) : null
+  filePath = String(prepared?.filePath || filePath)
+  const workingSize = await statFile(filePath)
+  const originalSize = Number(sourceSizeBytes) > 0 ? Number(sourceSizeBytes) : workingSize
   const imageInfo = await getImageInfo(filePath)
   const plan = resolveCompressionPlan({
-    fileSize: originalSize,
+    fileSize: workingSize,
     width: imageInfo.width,
     height: imageInfo.height,
     maxSizeBytes,
@@ -212,30 +215,30 @@ async function compressLocalImage(
     forceCompress,
     preserveImageDetails
   })
-
-  if (!plan.shouldCompress) {
-    return {
-      filePath,
-      fileSize: originalSize,
-      originalSize,
-      compressed: false,
-      quality: 100,
-      width: imageInfo.width,
-      height: imageInfo.height,
-      preserveImageDetails: Boolean(preserveImageDetails)
-    }
+  const requestedMinimumQuality = Number(minimumQuality)
+  if (Number.isFinite(requestedMinimumQuality) && requestedMinimumQuality > 0) {
+    plan.minimumQuality = Math.max(plan.minimumQuality, normalizeCompressionQuality(minimumQuality))
+    plan.initialQuality = Math.max(plan.initialQuality, plan.minimumQuality)
   }
-
-  let bestCandidate = {
-    filePath,
-    fileSize: originalSize,
+  const preparationTrace =
+    prepared?.compression && typeof prepared.compression === 'object' ? prepared.compression : {}
+  const buildCandidate = (candidatePath, candidateSize, candidateQuality) => ({
+    ...preparationTrace,
+    filePath: candidatePath,
+    fileSize: candidateSize,
     originalSize,
-    compressed: false,
-    quality: 100,
+    compressed: Boolean(preparationTrace.resized) || candidatePath !== filePath,
+    quality: candidateQuality,
     width: imageInfo.width,
     height: imageInfo.height,
     preserveImageDetails: Boolean(preserveImageDetails)
+  })
+
+  if (!plan.shouldCompress) {
+    return buildCandidate(filePath, workingSize, 100)
   }
+
+  let bestCandidate = buildCandidate(filePath, workingSize, 100)
 
   const qualities = buildCompressionQualities(plan.initialQuality, plan.minimumQuality)
   for (const currentQuality of qualities) {
@@ -245,16 +248,7 @@ async function compressLocalImage(
       continue
     }
 
-    bestCandidate = {
-      filePath: compressedPath,
-      fileSize: compressedSize,
-      originalSize,
-      compressed: compressedPath !== filePath,
-      quality: currentQuality,
-      width: imageInfo.width,
-      height: imageInfo.height,
-      preserveImageDetails: Boolean(preserveImageDetails)
-    }
+    bestCandidate = buildCandidate(compressedPath, compressedSize, currentQuality)
 
     if (plan.targetBytes > 0 && compressedSize <= plan.targetBytes) {
       break
@@ -265,7 +259,7 @@ async function compressLocalImage(
     ...bestCandidate,
     targetBytes: plan.targetBytes,
     minimumQuality: plan.minimumQuality,
-    preserveImageDetails: Boolean(plan.preserveImageDetails)
+    preserveImageDetails: Boolean(preserveImageDetails)
   }
 }
 
@@ -290,6 +284,8 @@ export function useImageUploader({
   compressionTargetSize = 0,
   forceCompression = false,
   preserveImageDetails = false,
+  minimumCompressionQuality = 0,
+  prepareImage,
   uploadExecutor,
   removeExecutor
 } = {}) {
@@ -303,14 +299,10 @@ export function useImageUploader({
   const hasPendingUploads = computed(() =>
     files.value.some(item => item.status === 'queued' || item.status === 'uploading')
   )
-  const hasUploadErrors = computed(() =>
-    files.value.some(item => item.status === 'error')
-  )
-  const uploadedFiles = computed(() =>
-    files.value.filter(item => item.status === 'success')
-  )
-  const allUploaded = computed(() =>
-    files.value.length > 0 && files.value.every(item => item.status === 'success')
+  const hasUploadErrors = computed(() => files.value.some(item => item.status === 'error'))
+  const uploadedFiles = computed(() => files.value.filter(item => item.status === 'success'))
+  const allUploaded = computed(
+    () => files.value.length > 0 && files.value.every(item => item.status === 'success')
   )
   const remainingCount = computed(() => Math.max(0, maxCount - files.value.length))
 
@@ -321,7 +313,9 @@ export function useImageUploader({
 
   function patchFile(entryId, updater) {
     const index = files.value.findIndex(item => item.id === entryId)
-    if (index < 0) {return}
+    if (index < 0) {
+      return
+    }
     const current = files.value[index]
     files.value.splice(index, 1, {
       ...current,
@@ -351,17 +345,23 @@ export function useImageUploader({
     })
 
     const current = files.value.find(item => item.id === entryId)
-    if (!current) {return}
+    if (!current) {
+      return
+    }
 
     try {
       const compressed = await compressLocalImage(current.localPath, {
         quality: compressionQuality,
         maxSizeBytes: compressionTargetBytes || maxSizeBytes,
         forceCompress: forceCompression,
-        preserveImageDetails
+        preserveImageDetails,
+        minimumQuality: minimumCompressionQuality,
+        prepareImage,
+        sourceSizeBytes: current.size
       })
       if (maxSizeBytes > 0 && compressed.fileSize > maxSizeBytes) {
-        throw new Error(`压缩后仍需小于 ${formatSizeLabel(maxSizeBytes)}`)
+        const maxSizeMb = Math.max(0.1, Math.round((maxSizeBytes / 1024 / 1024) * 10) / 10)
+        throw new Error(`压缩后仍需小于 ${maxSizeMb}MB`)
       }
 
       const uploaded = await uploadExecutor({
@@ -429,9 +429,7 @@ export function useImageUploader({
 
     const accepted = prepared.filter(item => item.ok)
     const baseEntryPatch =
-      context?.entryPatch && typeof context.entryPatch === 'object'
-        ? context.entryPatch
-        : {}
+      context?.entryPatch && typeof context.entryPatch === 'object' ? context.entryPatch : {}
     const entries = accepted.map(item => ({
       id: createEntryId(),
       localPath: item.filePath,
@@ -452,7 +450,9 @@ export function useImageUploader({
 
   async function removeAt(index) {
     const target = files.value[index]
-    if (!target) {return}
+    if (!target) {
+      return
+    }
 
     files.value.splice(index, 1)
 

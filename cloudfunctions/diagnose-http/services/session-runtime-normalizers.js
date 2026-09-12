@@ -12,7 +12,7 @@ function isEnglishLikeSymptomLabel(value = '') {
   return /[A-Za-z]/.test(normalized) && !/[\u4e00-\u9fff]/.test(normalized)
 }
 
-function resolveStoredSymptomCn(item = {}, fallback = '') {
+function resolveStoredSymptomCn(item = {}, conservative = '') {
   const candidate = normalizeStoredNullableText(
     item?.symptomCn ||
       item?.symptom_cn ||
@@ -25,8 +25,8 @@ function resolveStoredSymptomCn(item = {}, fallback = '') {
       item?.symptom_key ||
       item?.evidenceKey ||
       item?.evidence_key ||
-      fallback,
-    fallback
+      conservative,
+    conservative
   )
 
   if (!candidate || isEnglishLikeSymptomLabel(candidate)) {
@@ -123,7 +123,7 @@ function normalizePublicSymptomClassRuntime(runtime = null) {
     ? {
         classKey: normalizeStoredNullableText(runtime.primaryClass.classKey, ''),
         classNameCn: normalizeStoredNullableText(runtime.primaryClass.classNameCn, ''),
-        followupModeV1: normalizeStoredNullableText(runtime.primaryClass.followupModeV1, ''),
+        questionModeV1: normalizeStoredNullableText(runtime.primaryClass.questionModeV1, ''),
         runtimeScore: Number(runtime.primaryClass.runtimeScore || 0)
       }
     : null
@@ -132,7 +132,7 @@ function normalizePublicSymptomClassRuntime(runtime = null) {
     .map(item => ({
       classKey: normalizeStoredNullableText(item?.classKey, ''),
       classNameCn: normalizeStoredNullableText(item?.classNameCn, ''),
-      followupModeV1: normalizeStoredNullableText(item?.followupModeV1, ''),
+      questionModeV1: normalizeStoredNullableText(item?.questionModeV1, ''),
       runtimeScore: Number(item?.runtimeScore || 0)
     }))
     .filter(item => item.classKey)
@@ -141,8 +141,8 @@ function normalizePublicSymptomClassRuntime(runtime = null) {
     .map(item => ({
       classKey: normalizeStoredNullableText(item?.classKey, ''),
       classNameCn: normalizeStoredNullableText(item?.classNameCn, ''),
-      followupModeV1: normalizeStoredNullableText(item?.followupModeV1, ''),
-      runtimeGateRule: normalizeStoredNullableText(item?.runtimeGateRule, ''),
+      questionModeV1: normalizeStoredNullableText(item?.questionModeV1, ''),
+      runtimeConditionRule: normalizeStoredNullableText(item?.runtimeConditionRule, ''),
       visualScore: Number(item?.visualScore || 0),
       questionActivationScore: Number(item?.questionActivationScore || 0),
       primaryLockScore: Number(item?.primaryLockScore || 0),
@@ -158,8 +158,8 @@ function normalizePublicSymptomClassRuntime(runtime = null) {
       groupRole: normalizeStoredNullableText(item?.groupRole, ''),
       basePriority: Number(item?.basePriority || 0),
       maxQuestionsPerRound: Number(item?.maxQuestionsPerRound || 0),
-      classGateType: normalizeStoredNullableText(item?.classGateType, ''),
-      followupModeV1: normalizeStoredNullableText(item?.followupModeV1, ''),
+      classConditionType: normalizeStoredNullableText(item?.classConditionType, ''),
+      questionModeV1: normalizeStoredNullableText(item?.questionModeV1, ''),
       runtimeBlockReason: normalizeStoredNullableText(item?.runtimeBlockReason, '')
     }))
     .filter(item => item.groupKey)
@@ -172,32 +172,32 @@ function normalizePublicSymptomClassRuntime(runtime = null) {
       reason: normalizeStoredNullableText(item?.reason, '')
     }))
     .filter(item => item.fromClassKey || item.toClassKey)
-  const classGateDecision = runtime?.classGateDecision && typeof runtime.classGateDecision === 'object'
+  const classConditionDecision = runtime?.classConditionDecision && typeof runtime.classConditionDecision === 'object'
     ? {
-      enabled: Boolean(runtime.classGateDecision.enabled),
-      gateMode: normalizeStoredNullableText(
-        runtime.classGateDecision.gateMode,
-        classSwitchRules.classGateTypes.soft
+      enabled: Boolean(runtime.classConditionDecision.enabled),
+      conditionMode: normalizeStoredNullableText(
+        runtime.classConditionDecision.conditionMode,
+        classSwitchRules.classConditionTypes.soft
       ),
       sourceMode: normalizeStoredNullableText(
-        runtime.classGateDecision.sourceMode,
-        classSwitchRules.classGateTypes.soft
+        runtime.classConditionDecision.sourceMode,
+        classSwitchRules.classConditionTypes.soft
       ),
-      primaryClassKey: normalizeStoredNullableText(runtime.classGateDecision.primaryClassKey, ''),
-      primaryClassRuntimeScore: Number(runtime.classGateDecision.primaryClassRuntimeScore || 0),
-      unknownLockCount: Number(runtime.classGateDecision.unknownLockCount || 0),
-      currentClassKey: normalizeStoredNullableText(runtime.classGateDecision.currentClassKey, ''),
-      hasEnabledGroups: Boolean(runtime.classGateDecision.hasEnabledGroups),
-      isHardBlocked: Boolean(runtime.classGateDecision.isHardBlocked),
-      classSwitchBlocked: Boolean(runtime.classGateDecision.classSwitchBlocked),
-      blockedReason: normalizeStoredNullableText(runtime.classGateDecision.blockedReason, ''),
-      reviewedAtRound: Number(runtime.classGateDecision.reviewedAtRound || 0),
-      disabledGroupKeys: normalizeStoredStringList(runtime.classGateDecision.disabledGroupKeys || [])
+      primaryClassKey: normalizeStoredNullableText(runtime.classConditionDecision.primaryClassKey, ''),
+      primaryClassRuntimeScore: Number(runtime.classConditionDecision.primaryClassRuntimeScore || 0),
+      unknownLockCount: Number(runtime.classConditionDecision.unknownLockCount || 0),
+      currentClassKey: normalizeStoredNullableText(runtime.classConditionDecision.currentClassKey, ''),
+      hasEnabledGroups: Boolean(runtime.classConditionDecision.hasEnabledGroups),
+      isHardBlocked: Boolean(runtime.classConditionDecision.isHardBlocked),
+      classSwitchBlocked: Boolean(runtime.classConditionDecision.classSwitchBlocked),
+      blockedReason: normalizeStoredNullableText(runtime.classConditionDecision.blockedReason, ''),
+      reviewedAtRound: Number(runtime.classConditionDecision.reviewedAtRound || 0),
+      disabledGroupKeys: normalizeStoredStringList(runtime.classConditionDecision.disabledGroupKeys || [])
     }
     : {
       enabled: false,
-      gateMode: classSwitchRules.classGateTypes.disabled,
-      sourceMode: classSwitchRules.classGateTypes.disabled,
+      conditionMode: classSwitchRules.classConditionTypes.disabled,
+      sourceMode: classSwitchRules.classConditionTypes.disabled,
       primaryClassKey: '',
       primaryClassRuntimeScore: 0,
       unknownLockCount: 0,
@@ -220,7 +220,7 @@ function normalizePublicSymptomClassRuntime(runtime = null) {
     unknownCountInGroup: Number(runtime?.unknownCountInGroup || 0),
     classSwitchHistory,
     questionGroupPool,
-    classGateDecision
+    classConditionDecision
   }
 }
 

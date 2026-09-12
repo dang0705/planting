@@ -4,59 +4,7 @@ const {
   normalizeOutcomeType,
   normalizeDiagnosisRoutePrimaryAction
 } = require('../utils/diagnosis-contract')
-
-function buildPublicQuestionQueue(questionQueue = null) {
-  if (!questionQueue || typeof questionQueue !== 'object') {
-    return null
-  }
-
-  return {
-    questionQueueId: String(questionQueue?.questionQueueId || '').trim(),
-    sessionId: String(questionQueue?.sessionId || '').trim(),
-    roundId: String(questionQueue?.roundId || '').trim(),
-    roundIndex: Number(questionQueue?.roundIndex || 1),
-    routePrimaryAction: normalizeDiagnosisRoutePrimaryAction(questionQueue?.routePrimaryAction, ''),
-    queueStatus: String(questionQueue?.queueStatus || '').trim(),
-    queueDecision: questionQueue?.queueDecision && typeof questionQueue.queueDecision === 'object'
-      ? {
-          hasActionableItems: Number(questionQueue.queueDecision?.hasActionableItems || 0) ? 1 : 0,
-          exhaustedReason: String(questionQueue.queueDecision?.exhaustedReason || '').trim(),
-          serviceTarget: String(questionQueue.queueDecision?.serviceTarget || '').trim(),
-          decisionCauseKey: String(questionQueue.queueDecision?.decisionCauseKey || '').trim(),
-          decisionCauseCategory: String(questionQueue.queueDecision?.decisionCauseCategory || '').trim(),
-          decisionCauseText: String(questionQueue.queueDecision?.decisionCauseText || '').trim(),
-          decisionCauseDetails:
-            questionQueue.queueDecision?.decisionCauseDetails &&
-            typeof questionQueue.queueDecision.decisionCauseDetails === 'object'
-              ? questionQueue.queueDecision.decisionCauseDetails
-              : null
-        }
-      : null,
-    questionItems: (Array.isArray(questionQueue?.questionItems) ? questionQueue.questionItems : []).map(item => ({
-      questionKey: String(item?.questionKey || '').trim(),
-      questionId: String(item?.questionId || '').trim(),
-      targetSymptomKey: String(item?.targetSymptomKey || '').trim(),
-      questionGroupKey: String(item?.questionGroupKey || '').trim(),
-      targetDimension: String(item?.targetDimension || '').trim(),
-      routingScope: String(item?.routingScope || '').trim(),
-      questionText: String(item?.questionText || '').trim(),
-      helpText: String(item?.helpText || '').trim(),
-      currentPriority: Number(item?.currentPriority || 0),
-      estimatedInformationGain: Number(item?.estimatedInformationGain || 0),
-      serviceTarget: String(item?.serviceTarget || '').trim(),
-      appliesWhen: item?.appliesWhen || null,
-      asked: Number(item?.asked || 0) ? 1 : 0,
-      answered: Number(item?.answered || 0) ? 1 : 0,
-      invalidated: Number(item?.invalidated || 0) ? 1 : 0,
-      invalidReason: String(item?.invalidReason || '').trim(),
-      status: String(item?.status || '').trim() || 'pending'
-    })),
-    activeItemCount: Number(questionQueue?.activeItemCount || 0),
-    askedItemCount: Number(questionQueue?.askedItemCount || 0),
-    answeredItemCount: Number(questionQueue?.answeredItemCount || 0),
-    invalidatedItemCount: Number(questionQueue?.invalidatedItemCount || 0)
-  }
-}
+const { buildPublicVisualAggregateSummary } = require('../utils/public-runtime-summary')
 
 function buildPublicStopState(stopState = null) {
   if (!stopState || typeof stopState !== 'object') {
@@ -153,14 +101,18 @@ function buildCompactOutcomeEntry(outcome = null) {
     summary: String(outcome?.summary || '').trim(),
     severity: String(outcome?.severity || '').trim(),
     urgency: String(outcome?.urgency || '').trim(),
+    actionProfileKey: toCompactString(
+      outcome?.actionProfileKey,
+      outcome?.action_profile_key
+    ),
     actionAdviceItems: compactStringList(outcome?.actionAdviceItems),
     avoidAdviceItems: compactStringList(outcome?.avoidAdviceItems)
   }
 }
 
-function toCompactFlag(value, fallback = null) {
+function toCompactFlag(value, conservative = null) {
   if (value === null || typeof value === 'undefined') {
-    return fallback
+    return conservative
   }
   return Number(value) ? 1 : 0
 }
@@ -212,31 +164,87 @@ function buildCompactSuggestedFollowupCapture(suggestedFollowupCapture = null) {
   }
 }
 
+function buildCompactVisualEvidenceItem(candidate = {}) {
+  if (!candidate || typeof candidate !== 'object') {
+    return null
+  }
+  const symptomKey = toCompactString(candidate.symptomKey, candidate.symptom_key)
+  if (!symptomKey) {
+    return null
+  }
+  return {
+    symptomKey,
+    displayNameCn: toCompactString(
+      candidate.displayNameCn,
+      candidate.display_name_cn,
+      symptomKey
+    ),
+    supportImageCount: Math.max(
+      Number(candidate.supportImageCount ?? candidate.support_image_count ?? 0),
+      Array.isArray(candidate.supportImageIds || candidate.support_image_ids)
+        ? (candidate.supportImageIds || candidate.support_image_ids).length
+        : 0
+    ),
+    supportOrgans: compactStringList(candidate.supportOrgans || candidate.support_organs),
+    primaryCaptureRegion: toCompactString(
+      candidate.primaryCaptureRegion,
+      candidate.primary_capture_region
+    )
+  }
+}
+
+function buildCompactVisualMissingInfo(item = {}) {
+  if (!item || typeof item !== 'object') {
+    return null
+  }
+  const dimensionKey = toCompactString(item.dimensionKey, item.dimension_key)
+  const reasonCn = toCompactString(item.reasonCn, item.reason_cn, item.reason)
+  return dimensionKey && reasonCn ? { dimensionKey, reasonCn } : null
+}
+
 function buildCompactVisualAggregateSummary(visualAggregateSummary = null) {
   if (!visualAggregateSummary || typeof visualAggregateSummary !== 'object') {
     return null
   }
 
+  const publicSummary = buildPublicVisualAggregateSummary(visualAggregateSummary)
+  if (!publicSummary) {
+    return null
+  }
+  const visualEvidenceItems = publicSummary.aggregatedSymptomCandidates
+    .map(buildCompactVisualEvidenceItem)
+    .filter(Boolean)
+    .slice(0, 8)
+  const visualMissingInfoForPath = publicSummary.aggregateMissingInfoForPath
+    .map(buildCompactVisualMissingInfo)
+    .filter(Boolean)
+    .slice(0, 8)
+  const suggestedFollowupCapture = Array.isArray(publicSummary.suggestedFollowupCapture)
+    ? compactStringList(publicSummary.suggestedFollowupCapture)
+    : buildCompactSuggestedFollowupCapture(publicSummary.suggestedFollowupCapture)
+
   return {
-    visualCallBatchId: toCompactString(
-      visualAggregateSummary.visualCallBatchId,
-      visualAggregateSummary.visual_call_batch_id,
-      visualAggregateSummary.callBatchId,
-      visualAggregateSummary.call_batch_id
-    ),
+    visualCallBatchId: publicSummary.visualCallBatchId || '',
+    effectiveImageCount: publicSummary.effectiveImageCount,
+    aggregateAnalyzability: publicSummary.aggregateAnalyzability,
+    organCoverageSummary: publicSummary.organCoverageSummary
+      ? {
+          coveredOrgans: compactStringList(publicSummary.organCoverageSummary.coveredOrgans),
+          requestedImageCount: Number(publicSummary.organCoverageSummary.requestedImageCount || 0),
+          effectiveImageCount: Number(publicSummary.organCoverageSummary.effectiveImageCount || 0)
+        }
+      : null,
     routePrimaryAction: normalizeDiagnosisRoutePrimaryAction(
-      visualAggregateSummary.routePrimaryAction || visualAggregateSummary.route_primary_action,
+      publicSummary.routePrimaryAction,
       ''
     ),
-    admissionReadyFlag: toCompactFlag(
-      visualAggregateSummary.admissionReadyFlag ?? visualAggregateSummary.admission_ready_flag,
-      null
-    ),
-    suggestedFollowupCapture: buildCompactSuggestedFollowupCapture(
-      visualAggregateSummary.suggestedFollowupCapture ||
-        visualAggregateSummary.suggested_followup_capture ||
-        null
-    )
+    admissionReadyFlag: toCompactFlag(publicSummary.admissionReadyFlag, null),
+    decisionSource: toCompactString(publicSummary.decisionSource),
+    primaryModelDirectModes: compactStringList(publicSummary.primaryModelDirectModes),
+    modelDirectDecisionStatus: toCompactString(publicSummary.modelDirectDecisionStatus),
+    visualEvidenceItems,
+    visualMissingInfoForPath,
+    suggestedFollowupCapture
   }
 }
 
@@ -276,7 +284,6 @@ function buildCompactFinalResult(roundResult = {}) {
 }
 
 module.exports = {
-  buildPublicQuestionQueue,
   buildPublicStopState,
   buildPublicOutputEligibility,
   buildCompactActionAdvice,

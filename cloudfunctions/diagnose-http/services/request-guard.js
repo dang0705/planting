@@ -1,41 +1,18 @@
 'use strict'
 
-const { checkAIQuota, deductQuota } = require('/opt/utils/quota')
-const {
-  normalizeHeaders,
-  resolveRequestAppEnv,
-  resolveHttpUserInfo,
-  isSkipAuthEnabled
-} = require('/opt/utils/http')
+const { checkAIQuota, checkAIQuotaForUser, deductQuota } = require('/opt/utils/quota')
+const { resolveHttpUserInfo } = require('/opt/utils/http')
 
-function shouldSkipPersistence(request = null) {
-  const headers = normalizeHeaders(request?.headers || {})
-  return String(headers['x-terminal-e2e'] || '').trim().toLowerCase() !== 'true'
+function isTrustedLocalFunctionRuntime() {
+  return /^(1|true)$/i.test(String(process.env.CLOUDBASE_LOCAL_FUNCTIONS_GATEWAY || '').trim())
 }
 
-function shouldBypassQuota(request = null, openid = '', { skipAuth = false } = {}) {
-  if (skipAuth) {
-    return true
-  }
-
-  const headers = normalizeHeaders(request?.headers || {})
-  const appEnv = resolveRequestAppEnv(headers, request?.query || {}, request?.body || {})
-  const isTerminalE2E = String(headers['x-terminal-e2e'] || '').trim().toLowerCase() === 'true'
-  if (!isTerminalE2E || appEnv !== 'development') {
+function shouldBypassQuota(openid = '') {
+  if (!isTrustedLocalFunctionRuntime()) {
     return false
   }
-
   const normalizedOpenid = String(openid || '').trim()
-  return normalizedOpenid.startsWith('anon_dev_') || normalizedOpenid.startsWith('dev_terminal_')
-}
-
-function buildRequestExecutionFlags(request = null, payload = {}) {
-  const skipAuth = isSkipAuthEnabled(payload?.skipAuth)
-
-  return {
-    skipAuth,
-    skipPersistence: skipAuth && shouldSkipPersistence(request)
-  }
+  return normalizedOpenid.startsWith('dev_terminal_')
 }
 
 const INTERNAL_REVIEW_OPENID_PREFIXES = ['dev_terminal_', 'anon_dev_']
@@ -47,7 +24,7 @@ function getInternalReviewAllowlist() {
     .filter(Boolean)
 }
 
-function hasInternalReviewAccess({ request = null, skipAuth = false, userInfo = null } = {}) {
+function hasInternalReviewAccess({ userInfo = null } = {}) {
   const openid = String(userInfo?.openid || '').trim()
   if (!openid) {
     return false
@@ -58,19 +35,12 @@ function hasInternalReviewAccess({ request = null, skipAuth = false, userInfo = 
     return true
   }
 
-  const headers = normalizeHeaders(request?.headers || {})
-  const appEnv = resolveRequestAppEnv(headers, request?.query || {}, request?.body || {})
   const hasDevPrefix = INTERNAL_REVIEW_OPENID_PREFIXES.some(prefix => openid.startsWith(prefix))
-
-  if (skipAuth && hasDevPrefix) {
-    return true
-  }
-
-  return appEnv === 'development' && hasDevPrefix
+  return isTrustedLocalFunctionRuntime() && hasDevPrefix
 }
 
-function assertInternalReviewAccess({ request = null, skipAuth = false, userInfo = null } = {}) {
-  if (hasInternalReviewAccess({ request, skipAuth, userInfo })) {
+function assertInternalReviewAccess({ userInfo = null } = {}) {
+  if (hasInternalReviewAccess({ userInfo })) {
     return
   }
 
@@ -78,37 +48,44 @@ function assertInternalReviewAccess({ request = null, skipAuth = false, userInfo
 }
 
 async function resolveRequestPrincipal({ request = null, context = null, payload = {} } = {}) {
-  const { skipAuth, skipPersistence } = buildRequestExecutionFlags(request, payload)
-  const userInfo = skipAuth
-    ? { openid: payload?.openid || '' }
-    : await resolveHttpUserInfo(request?.headers || {}, payload, context)
+  const userInfo = await resolveHttpUserInfo(request?.headers || {}, payload, context)
 
   return {
-    skipAuth,
-    skipPersistence,
     userInfo
   }
 }
 
-function assertAuthenticatedUser({ skipAuth = false, userInfo = null, message = '请先登录' } = {}) {
-  if (skipAuth || userInfo?.openid) {
+function assertAuthenticatedUser({ userInfo = null, message = '请先登录' } = {}) {
+  if (userInfo?.openid) {
     return
   }
 
   throw Object.assign(new Error(message), { statusCode: 401 })
 }
 
-async function ensureQuota(openid, { skipQuota = false } = {}) {
-  if (skipQuota || !openid) {return}
+async function ensureQuota(
+  openid,
+  { skipQuota = false, quotaUserSnapshot = null, quotaUserSnapshotFresh = false } = {}
+) {
+  if (skipQuota || !openid) {
+    return
+  }
 
-  const quota = await checkAIQuota(openid, 'diagnose')
+  const quota =
+    quotaUserSnapshot && quotaUserSnapshotFresh
+      ? checkAIQuotaForUser(quotaUserSnapshot, 'diagnose')
+      : await checkAIQuota(openid, 'diagnose')
   if (!quota.allowed) {
-    throw Object.assign(new Error(quota.message || '诊断配额不足'), { statusCode: quota.code || 403 })
+    throw Object.assign(new Error(quota.message || '诊断配额不足'), {
+      statusCode: quota.code || 403
+    })
   }
 }
 
 async function consumeQuota(openid, { skipQuota = false } = {}) {
-  if (skipQuota || !openid) {return}
+  if (skipQuota || !openid) {
+    return
+  }
 
   try {
     await deductQuota(openid, 'diagnose')
@@ -118,24 +95,39 @@ async function consumeQuota(openid, { skipQuota = false } = {}) {
 }
 
 async function runWithQuotaGuard({
-  request = null,
   openid = '',
-  skipAuth = false,
   enabled = true,
+  quotaUserSnapshot = null,
+  quotaUserSnapshotFresh = false,
+  timing = null,
+  deferQuotaConsumption = false,
   task
 } = {}) {
   if (typeof task !== 'function') {
     throw new Error('runWithQuotaGuard 缺少 task')
   }
 
-  const skipQuota = shouldBypassQuota(request, openid, { skipAuth })
+  const skipQuota = shouldBypassQuota(openid)
   if (!enabled) {
     return task({ skipQuota })
   }
 
-  await ensureQuota(openid, { skipQuota })
+  timing?.mark('quota-check-start')
+  await ensureQuota(openid, { skipQuota, quotaUserSnapshot, quotaUserSnapshotFresh })
+  timing?.mark('quota-check-ready')
   const result = await task({ skipQuota })
-  await consumeQuota(openid, { skipQuota })
+  timing?.mark('task-ready')
+  if (deferQuotaConsumption) {
+    // 固定题包 start 已经完成鉴权、配额检查和会话持久化；配额扣减本身不影响
+    // 返回题目。先发起扣减并让它在响应组装期间完成，避免把一次额外 UPDATE
+    // 数据库往返串在端上首屏响应之后。失败语义与原实现一致：只记录告警。
+    void consumeQuota(openid, { skipQuota }).then(() => {
+      timing?.mark('quota-consumed')
+    })
+  } else {
+    await consumeQuota(openid, { skipQuota })
+    timing?.mark('quota-consumed')
+  }
   return result
 }
 
@@ -143,5 +135,6 @@ module.exports = {
   resolveRequestPrincipal,
   assertAuthenticatedUser,
   assertInternalReviewAccess,
+  hasInternalReviewAccess,
   runWithQuotaGuard
 }

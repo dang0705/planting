@@ -34,7 +34,7 @@
 
 ## 本地验证
 
-- `npm ci --legacy-peer-deps`：通过
+- `npm ci --session-peer-deps`：通过
 - `node --check`：发布/密钥相关脚本通过
 - `ruby -ryaml -e 'YAML.load_file(".github/workflows/deploy.yml")'`：通过
 - `npm run check:secrets`：通过

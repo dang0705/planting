@@ -16,14 +16,14 @@
   - 模块加载时预热 production / development schema 的静态 repository cache。
 - `cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js`
   - 入口触发预热。
-  - 当请求显式传 `plantCatalogId` 且没有 `userPlantId` 时，避免把 catalog id 兼容探测成 user plant id。
+  - 当请求显式传 `plantCatalogId` 且没有 `userPlantId` 时，避免把 catalog id 适配探测成 user plant id。
 - `cloudfunctions/diagnose-http/app/diagnosis-answer-runner.js`
   - 入口触发预热。
-  - 当前答案 mark 仍同步等待；仅将 queue answered 标记等非关键持久化改为后台补写。
+  - 当前答案 mark 仍同步等待；仅将 pendingList answered 标记等非关键持久化改为后台补写。
 - `cloudfunctions/diagnose-http/app/frontend-response.js`
   - follow-up 响应瘦身，只返回下一题、基础状态和 UI hints，不返回 finalResult、visibleOutcomes、outputEligibility 等重字段。
 - `cloudfunctions/diagnose-http/app/http-router.js`
-  - 常规请求日志改为 debug-gated；review/out-of-pool/legacy handler 改懒加载。
+  - 常规请求日志改为 debug-gated；review/out-of-pool/session handler 改懒加载。
 - `cloudfunctions/diagnose-http/domain/diagnosis-engine.js`
   - 透传 `preferCatalogPlantId` 到植物上下文解析。
 - `cloudfunctions/diagnose-http/repositories/question-repository.js`
@@ -32,7 +32,7 @@
   - route 静态预加载按 schema 隔离。
   - 仅 `getOutcomeAnswerEffects` 支持由单题缓存精确组合多 answer effect；不得组合 routes / gates / outcomes。
 - `cloudfunctions/diagnose-http/repositories/prior-plant-context-repository.js`
-  - 支持 `preferCatalogPlantId`，跳过不必要的 user plant 兼容查询。
+  - 支持 `preferCatalogPlantId`，跳过不必要的 user plant 适配查询。
 - `cloudfunctions/diagnose-http/repositories/diagnosis-review/review-performance.js`
   - 性能日志仅在 `DIAGNOSIS_PERF_LOG=true` 或 `DEBUG_LOG=true` 时输出。
 - `cloudfunctions/diagnose-http/services/session-supervision-service.js`
@@ -42,7 +42,7 @@
   - 当 payload 已有题目元数据时，跳过额外题库 lookup。
 - `cloudfunctions/diagnose-http/services/round-runtime-persistence-service.js`
   - `diagnosis_sessions` runtime snapshot 与 `diagnosis_follow_ups` 仍同步持久化。
-  - visual supervision、question_queue、stop_state、initial observed evidence / symptoms 改后台补写。
+  - visual supervision、question_package_snapshot、stop_state、initial observed evidence / symptoms 改后台补写。
 - `cloudfunctions/diagnose-http/services/session-runtime-snapshot-codec.js`
   - 运行时 snapshot 中的 `routeDecision` 改为 compact 结构。
   - active follow-up snapshot 不再持久化 review-only 的重字段：`derivedEvidenceSet`、`diagnosisDirections`、`diagnosticTrace`、`careBaselineSummary`。
@@ -56,8 +56,8 @@
 
 ## 已回退 / 禁止复用的做法
 
-- 曾尝试把 route / gate / outcome 做单键缓存组合，导致黄叶完整路径缺失 `fertilizer_repot_stress` 并混入 `root_stress`。该做法已回退。
-- 后续禁止在未证明等价前组合 `outcome_routes`、`outcome_route_gates`、`diagnosis_outcomes` 或 route planner 输出。
+- 曾尝试把 route / condition / outcome 做单键缓存组合，导致黄叶完整路径缺失 `fertilizer_repot_stress` 并混入 `root_stress`。该做法已回退。
+- 后续禁止在未证明等价前组合 `outcome_routes`、`outcome_route_conditions`、`diagnosis_outcomes` 或 route planner 输出。
 - 可保留的缓存组合仅限 answer effect 行的精确拼接，且必须用负样本和完整路径正样本验证。
 
 ## 同步持久化边界
@@ -71,7 +71,7 @@
 
 允许后台补写：
 
-- `question_queue`
+- `question_package_snapshot`
 - `stop_state`
 - `observed_evidence_set`
 - `diagnosis_symptom_observations`
@@ -93,7 +93,7 @@
 ## 文档同步
 
 - `docs/ai-rules/diagnose-http-cloud-debugging.md`
-  - 补充性能优化防复发规则：同步持久化边界、可后台补写范围、schema cache 隔离、禁止 route/gate/outcome 组合缓存、follow-up 响应白名单、必须记录的负/正样本与 benchmark。
+  - 补充性能优化防复发规则：同步持久化边界、可后台补写范围、schema cache 隔离、禁止 route/condition/outcome 组合缓存、follow-up 响应白名单、必须记录的负/正样本与 benchmark。
 - `docs/code-logics/08_会话持久化_历史_运行时快照.md`
   - 补充 `/diagnosis/question/start` 与 `/diagnosis/answer` 性能优化下的同步持久化边界、可后台补写范围、compact `routeDecision` 与 `metrics=null` 口径。
 - `docs/code-logics/07_结果格式化_公开响应_前端接入契约.md`
@@ -105,7 +105,7 @@
 - 已发布到 `diagnose-http` v12。
 - `$DEFAULT` alias 当前为 `$LATEST` range `[0,0)`、v12 range `[0,100)`，即 100% 走 v12。
 - v12 provisioned concurrency：Allocated=1、Available=1、Status=Done。
-- 已清理旧版本 7 / 9 / 10 / 11 的残留 provisioned concurrency。
+- 已清理既有版本 7 / 9 / 10 / 11 的残留 provisioned concurrency。
 - 函数配置复核：Nodejs18.15、2048MB、状态 Active / Available。
 
 ## PC 清理后复测
@@ -126,9 +126,9 @@ CloudBase SQL schema：`cloud1_dev`。
 - `diagnosis_follow_ups`
   - 负样本首题均已 `status=answered`，answer 分别为 `often_wet` / `often_dry`；下一题 `light_change_context` 已落为 pending。
   - 正样本 4 题均已 `status=answered`，answer 依次为 `often_wet`、`stronger_direct_light`、`recent_heavy_fertilizer_or_repot`、`with_wilting_or_drop`。
-- `question_queue`
+- `question_package_snapshot`
   - 负样本 round_1 已 exhausted，round_2 有 1 个 active item。
-  - 正样本 round_1 到 round_5 均已落库，final round queue exhausted。
+  - 正样本 round_1 到 round_5 均已落库，final round pendingList exhausted。
 - `stop_state`
   - 负样本 round_2 为 `pending_follow_up`、`output_eligible=0`。
   - 正样本 round_5 为 `problematic_converged`、`output_eligible=1`、`stop_reason=route_visible_outcomes_ready`。

@@ -15,11 +15,11 @@ const {
   getResultById
 } = require('./session-read-service')
 const {
-  appendFollowUpQuestions,
-  markFollowUpAnswers,
-  validateFollowUpAnswerOwnership,
+  appendQuestionQuestions,
+  markQuestionAnswers,
+  validateQuestionAnswerOwnership,
   prepareAnswerRevision
-} = require('./session-follow-up-service')
+} = require('./session-question-service')
 const {
   upsertVisualSupervisionRecords
 } = require('./session-supervision-service')
@@ -38,9 +38,9 @@ module.exports = {
   replaceObservedEvidenceSet,
   replaceObservedSymptoms,
   upsertVisualSupervisionRecords,
-  appendFollowUpQuestions,
-  markFollowUpAnswers,
-  validateFollowUpAnswerOwnership,
+  appendQuestionQuestions,
+  markQuestionAnswers,
+  validateQuestionAnswerOwnership,
   prepareAnswerRevision,
   getSessionState,
   getObservedEvidenceSetBySession,

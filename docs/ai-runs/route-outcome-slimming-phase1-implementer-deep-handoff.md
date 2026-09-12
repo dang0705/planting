@@ -46,7 +46,7 @@ Dispatch Plan:
 - ✅ 本轮实际改过：[cloudfunctions/diagnose-http/constants/tables.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/constants/tables.js)
 - ✅ 本轮实际改过：[cloudfunctions/diagnose-http/constants/outcome-route.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/constants/outcome-route.js)
 - ✅ 本轮实际改过：[cloudfunctions/diagnose-http/repositories/outcome-route-repository.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/repositories/outcome-route-repository.js)
-- ✅ 本轮实际改过：[cloudfunctions/diagnose-http/domain/outcome-gate-evaluator.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/outcome-gate-evaluator.js)
+- ✅ 本轮实际改过：[cloudfunctions/diagnose-http/domain/outcome-condition-evaluator.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/outcome-condition-evaluator.js)
 - ✅ 本轮实际改过：[cloudfunctions/diagnose-http/domain/outcome-route-planner.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/outcome-route-planner.js)
 - ✅ 本轮实际改过：[cloudfunctions/diagnose-http/domain/diagnosis-engine.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/diagnosis-engine.js)
 - ✅ 本轮实际改过：[src/data-system/config/tables.js](/Users/jay/WebstormProjects/planting/src/data-system/config/tables.js)
@@ -61,9 +61,9 @@ Dispatch Plan:
 ## 结论
 
 - 已落地 route SQL 表面接入：后端常量 + data-system 配置 + repository 查询。
-- 已新增 route planner/gate evaluator 最小可运行骨架，返回完整 `routeDecision` 字段结构。
+- 已新增 route planner/condition evaluator 最小可运行骨架，返回完整 `routeDecision` 字段结构。
 - 已在 `diagnosis-engine` ranking 后插入 route 双轨观测。
-- 生产默认仍可关闭 route 观测，缺数据时统一 `fallback_ranking`，不改变旧行为。
+- 生产默认仍可关闭 route 观测，缺数据时统一 `fallback_ranking`，不改变既有行为。
 
 ## 证据
 
@@ -76,7 +76,7 @@ Dispatch Plan:
 
 - 新增 route 枚举常量文件。
 - 新增 outcome-route repository。
-- 新增 outcome gate evaluator。
+- 新增 outcome condition evaluator。
 - 新增 outcome route planner。
 - 补齐 route 相关 SQL 表名常量。
 - 补齐 data-system route 表导入配置（含 JSON / numeric columns）。
@@ -93,7 +93,7 @@ Dispatch Plan:
 ## 风险
 
 - route 表结构未上线或无数据时，启用观测开关会持续 fallback，导致 routeTrace 仅用于调试。
-- gate/planner 当前是骨架实现，业务真实性依赖后续数据任务与 QA 回放验证。
+- condition/planner 当前是骨架实现，业务真实性依赖后续数据任务与 QA 回放验证。
 - 当前 worktree 很脏，后续回归需严格限定到目标文件，避免混入他人改动。
 
 ## 验证状态
@@ -105,7 +105,7 @@ Dispatch Plan:
 - 聚焦验证：
   - `node --check cloudfunctions/diagnose-http/constants/outcome-route.js` 通过
   - `node --check cloudfunctions/diagnose-http/repositories/outcome-route-repository.js` 通过
-  - `node --check cloudfunctions/diagnose-http/domain/outcome-gate-evaluator.js` 通过
+  - `node --check cloudfunctions/diagnose-http/domain/outcome-condition-evaluator.js` 通过
   - `node --check cloudfunctions/diagnose-http/domain/outcome-route-planner.js` 通过
   - `node --check cloudfunctions/diagnose-http/domain/diagnosis-engine.js` 通过
   - `node --check src/data-system/config/tables.js` 通过
@@ -119,6 +119,6 @@ Dispatch Plan:
 ## 下一步建议
 
 1. 先由数据任务补齐 route 表结构与最小审计数据（dev 环境）。
-2. 由 `qa_reviewer` 执行“双轨不变性”回归：开关关闭时行为必须与旧版一致。
+2. 由 `qa_reviewer` 执行“双轨不变性”回归：开关关闭时行为必须与既有版一致。
 3. 进入 Phase 2 前由 `architect_reviewer` 复核 `nextQuestionKeys` 接管边界。
 4. Phase 2 再推进 route 接管追问；Phase 3 再推进 route 接管输出。

@@ -95,12 +95,12 @@ function buildRawStoredAdviceForReview(row = {}, runtimeSnapshot = {}) {
   }
 }
 
-function buildProblematicReviewAdviceFallback(problemKey = '') {
+function buildProblematicReviewAdviceConservative(problemKey = '') {
   const firstAid = '当前结果暂未匹配到已审核的处理建议。建议先保持养护条件稳定，观察问题是否扩大或重复出现，再结合人工复核结果决定具体处理。'
   const avoid = '不要在缺少已审核处理建议时直接大幅调整浇水、施肥、修剪或用药。'
 
   return {
-    source: 'governance_fallback',
+    source: 'governance_conservative',
     hasAny: true,
     explanation: {
       whyItHappens: problemKey
@@ -109,13 +109,13 @@ function buildProblematicReviewAdviceFallback(problemKey = '') {
       whatToCheckNext: '请优先核对该结果是否已有 audited explanation 或 audited problem action 字段。',
       firstAid,
       avoid,
-      reassurance: '这是治理兜底文案，用于避免把未审核旧建议当作正式处理建议展示。'
+      reassurance: '这是治理保护文案，用于避免把未审核既有建议当作正式处理建议展示。'
     },
     nextSteps: [
       {
-        stepId: 'advice_governance_fallback',
+        stepId: 'advice_governance_conservative',
         text: firstAid,
-        type: 'governance_fallback'
+        type: 'governance_conservative'
       }
     ],
     whatToAvoid: [avoid]
@@ -219,7 +219,7 @@ async function resolveDiagnosisReviewActionAdviceGovernance({ row = {}, runtimeS
       outcomeType: 'problematic',
       problemKey: '',
       rawStoredAdvice,
-      governedAdvice: buildProblematicReviewAdviceFallback(''),
+      governedAdvice: buildProblematicReviewAdviceConservative(''),
       displayRecommendation: 'show_governed_advice_only'
     }
   }
@@ -242,7 +242,7 @@ async function resolveDiagnosisReviewActionAdviceGovernance({ row = {}, runtimeS
       outcomeType: 'problematic',
       problemKey,
       rawStoredAdvice,
-      governedAdvice: buildProblematicReviewAdviceFallback(problemKey),
+      governedAdvice: buildProblematicReviewAdviceConservative(problemKey),
       displayRecommendation: 'show_governed_advice_only'
     }
   }
@@ -252,7 +252,7 @@ async function resolveDiagnosisReviewActionAdviceGovernance({ row = {}, runtimeS
         {
           stepId: 'advice_1',
           text: governedExplanation.firstAid,
-          type: explanationRow ? 'audited_explanation' : 'problem_fallback'
+          type: explanationRow ? 'audited_explanation' : 'problem_conservative'
         }
       ]
     : []
@@ -264,7 +264,7 @@ async function resolveDiagnosisReviewActionAdviceGovernance({ row = {}, runtimeS
     problemKey,
     rawStoredAdvice,
     governedAdvice: {
-      source: explanationRow ? 'audited_explanation' : 'problem_fallback',
+      source: explanationRow ? 'audited_explanation' : 'problem_conservative',
       hasAny: Boolean(governedExplanation.firstAid || governedExplanation.avoid || nextSteps.length || whatToAvoid.length),
       explanation: governedExplanation,
       nextSteps,
@@ -280,7 +280,7 @@ module.exports = {
   pickAdviceTextFromItems,
   normalizeReviewAdviceItems,
   buildRawStoredAdviceForReview,
-  buildProblematicReviewAdviceFallback,
+  buildProblematicReviewAdviceConservative,
   buildGovernedReviewAdviceFromActionAdvice,
   buildGovernedReviewExplanation,
   resolveDiagnosisReviewActionAdviceGovernance

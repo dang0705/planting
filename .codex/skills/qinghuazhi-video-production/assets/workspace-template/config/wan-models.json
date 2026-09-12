@@ -1,0 +1,189 @@
+{
+  "version": 1,
+  "routing": {
+    "defaultMode": "auto",
+    "pinScope": "lane",
+    "routingStateFile": "runtime/wan-routing-state.json",
+    "quotaLedgerFile": "runtime/wan-quota-ledger.json",
+    "lanes": {
+      "dialogue": {
+        "autoOrder": [
+          "wan27-snapshot-free",
+          "wan27-latest-free",
+          "wan26-free",
+          "wan26-flash-paid"
+        ],
+        "allowForced": true
+      },
+      "silentVisual": {
+        "autoOrder": [
+          "wan26-flash-paid"
+        ],
+        "allowForced": false
+      }
+    },
+    "maxAutomaticFallbacks": 6,
+    "freeQuotaExhaustedCodes": [
+      "AllocationQuota.FreeTierOnly"
+    ],
+    "freeTierStopMustBeEnabledInConsole": true,
+    "notes": [
+      "person_dialogue 始终经过 VideoRetalk；免费有声模型的 driving_audio 仅作为视觉表演指导。",
+      "免费额度耗尽后 dialogue lane 最终回退到 wan2.6-i2v-flash silent + VideoRetalk。",
+      "plant / person_voiceover 使用 silentVisual lane，当前固定 wan2.6-i2v-flash audio=false。"
+    ]
+  },
+  "profiles": {
+    "wan27-snapshot-free": {
+      "enabled": true,
+      "model": "wan2.7-i2v-2026-04-25",
+      "adapter": "wan27-media",
+      "adapterVersion": 1,
+      "billingMode": "free-first",
+      "qualityTier": 4,
+      "freeQuota": {
+        "initialSec": 50,
+        "expiresAt": "2026-10-18",
+        "source": "bailian-console-2026-09-03"
+      },
+      "capabilities": {
+        "imageToVideo": true,
+        "drivingAudio": true,
+        "negativePrompt": true,
+        "seed": true,
+        "resolutions": [
+          "720P",
+          "1080P"
+        ],
+        "duration": {
+          "min": 2,
+          "max": 15
+        },
+        "silentOutput": false
+      },
+      "listPriceCnyPerSec": {
+        "silent": {
+          "720P": 0.6,
+          "1080P": 1.0
+        },
+        "drivingAudio": {
+          "720P": null,
+          "1080P": null
+        }
+      },
+      "dialogueVisualMode": "driving-audio"
+    },
+    "wan27-latest-free": {
+      "enabled": true,
+      "model": "wan2.7-i2v",
+      "adapter": "wan27-media",
+      "adapterVersion": 1,
+      "billingMode": "free-first",
+      "qualityTier": 4,
+      "freeQuota": {
+        "initialSec": 50,
+        "expiresAt": "2026-10-18",
+        "source": "bailian-console-2026-09-03"
+      },
+      "capabilities": {
+        "imageToVideo": true,
+        "drivingAudio": true,
+        "negativePrompt": true,
+        "seed": true,
+        "resolutions": [
+          "720P",
+          "1080P"
+        ],
+        "duration": {
+          "min": 2,
+          "max": 15
+        },
+        "silentOutput": false
+      },
+      "listPriceCnyPerSec": {
+        "silent": {
+          "720P": 0.6,
+          "1080P": 1.0
+        },
+        "drivingAudio": {
+          "720P": null,
+          "1080P": null
+        }
+      },
+      "dialogueVisualMode": "driving-audio"
+    },
+    "wan26-free": {
+      "enabled": true,
+      "model": "wan2.6-i2v",
+      "adapter": "wan-legacy",
+      "adapterVersion": 1,
+      "billingMode": "free-first",
+      "qualityTier": 3,
+      "freeQuota": {
+        "initialSec": 50,
+        "expiresAt": "2026-10-18",
+        "source": "bailian-console-2026-09-03"
+      },
+      "capabilities": {
+        "imageToVideo": true,
+        "drivingAudio": true,
+        "negativePrompt": true,
+        "seed": true,
+        "resolutions": [
+          "720P",
+          "1080P"
+        ],
+        "duration": {
+          "min": 2,
+          "max": 15
+        },
+        "silentOutput": false
+      },
+      "listPriceCnyPerSec": {
+        "silent": {
+          "720P": null,
+          "1080P": null
+        },
+        "drivingAudio": {
+          "720P": null,
+          "1080P": null
+        }
+      },
+      "dialogueVisualMode": "driving-audio"
+    },
+    "wan26-flash-paid": {
+      "enabled": true,
+      "model": "wan2.6-i2v-flash",
+      "adapter": "wan-legacy",
+      "adapterVersion": 1,
+      "billingMode": "paid",
+      "qualityTier": 3,
+      "capabilities": {
+        "imageToVideo": true,
+        "drivingAudio": true,
+        "negativePrompt": true,
+        "seed": true,
+        "resolutions": [
+          "720P",
+          "1080P"
+        ],
+        "duration": {
+          "min": 2,
+          "max": 15
+        },
+        "silentOutput": true
+      },
+      "listPriceCnyPerSec": {
+        "silent": {
+          "720P": 0.15,
+          "1080P": 0.25
+        },
+        "drivingAudio": {
+          "720P": 0.3,
+          "1080P": 0.5
+        }
+      },
+      "dialogueVisualMode": "silent"
+    }
+  }
+}

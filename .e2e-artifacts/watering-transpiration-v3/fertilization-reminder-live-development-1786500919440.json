@@ -1,0 +1,1581 @@
+{
+  "task": "watering-transpiration-v3-e2e-trae-20260713",
+  "gitHead": "e21c5605c6077bf8a5eb14da83c476738e824ee0",
+  "branch": "sprint-ai-workflow",
+  "baseHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "projectPath": "/Users/jay/WebstormProjects/planting/.tmp/dispatch-task/qa-runtime-sessions/fertilization-copy-20260812-r9-WGSHgw/project",
+  "mode": "fertilization-reminder-live-development",
+  "wsEndpoint": "ws://127.0.0.1:61388",
+  "startedAt": "2026-08-12T02:15:03.135Z",
+  "endedAt": "2026-08-12T02:15:19.440Z",
+  "pages": [],
+  "pageDataSummaries": [],
+  "capturedRequests": [
+    {
+      "url": "http://192.168.10.26:3010/auth-user-http/auth/user",
+      "method": "POST",
+      "data": {
+        "action": "wechatLogin",
+        "data": {
+          "openid": "[redacted]",
+          "uid": "",
+          "customUserId": "",
+          "appid": "wx85bb3976301f75fb",
+          "unionid": ""
+        }
+      },
+      "header": {
+        "Content-Type": "application/json",
+        "x-app-env": "development",
+        "x-env": "development",
+        "x-terminal-e2e": "true",
+        "x-anonymous-dev-identity": "true",
+        "x-wx-openid": "dev_terminal_mp_local",
+        "x-openid": "dev_terminal_mp_local"
+      },
+      "time": 1786500907969,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "message": "登录成功",
+          "data": {
+            "user": {
+              "usage_lastMonthReset": 1783224354424,
+              "isActive": true,
+              "usage_diagnoseMonth": 202,
+              "usage_identifyToday": 0,
+              "profile_avatar": "",
+              "createdAt": 1771776898883,
+              "profile_wechatAvatar": "",
+              "subscription_status": "active",
+              "quota": 0,
+              "usage_chatTotal": 0,
+              "profile_lastLoginAt": 1786500907979,
+              "principal_openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+              "usage_identifyTotal": 11,
+              "usage_chatToday": 0,
+              "email": "",
+              "updatedAt": 1786500907979,
+              "phone_country_code": "86",
+              "phone_bind_source": "wechat_phone_bridge",
+              "subscription_plan": "premium",
+              "subscription_endDate": 1803351604000,
+              "profile_bio": "",
+              "principal_platform": "wechat_mp",
+              "wechat_openid": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA",
+              "usage_lastResetDate": 1785041651309,
+              "phoneNumber": "13795379091",
+              "usage_diagnoseToday": 9,
+              "_openid": "[redacted]",
+              "phone_verified_at": 1785903023910,
+              "profile_wechatNickname": "",
+              "profile_createdAt": 1771776898883,
+              "phone_bind_platform": "wechat_mp",
+              "_id": "user_1771776899035_yjxrh3g",
+              "subscription_startDate": 1771776898883,
+              "username": "微信用户_ocVNg3",
+              "usage_diagnoseTotal": 779
+            },
+            "isNewUser": false
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.10.26:3010/plant-user-http/user-plants?page=1&pageSize=50",
+      "method": "GET",
+      "data": null,
+      "header": {
+        "Content-Type": "application/json",
+        "x-app-env": "development",
+        "x-env": "development",
+        "x-terminal-e2e": "true",
+        "x-anonymous-dev-identity": "true",
+        "x-wx-openid": "dev_terminal_mp_local",
+        "x-openid": "dev_terminal_mp_local"
+      },
+      "time": 1786500908291,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": {
+            "list": [
+              {
+                "id": 27,
+                "plantId": "42",
+                "plantIdentityId": "plant_identity_7813b7834285a361",
+                "sessionPlantId": "42",
+                "canonicalName": "龟背竹",
+                "nickname": "龟背竹",
+                "displayName": "龟背竹",
+                "recognizedName": "",
+                "sourceType": "catalog",
+                "recognitionType": "null",
+                "recognitionConfidence": null,
+                "identityResolutionStatus": "matched",
+                "visualCallBatchId": "null",
+                "location": "null",
+                "plantDate": "2026-08-10",
+                "notes": "",
+                "photos": [
+                  "cloud://cloud1-2grufevs395a9d5e.636c-cloud1-2grufevs395a9d5e-1403815561/plants/龟背竹.jpeg"
+                ],
+                "lightEnvironment": null,
+                "airEnvironment": null,
+                "imageFileId": "cloud://cloud1-2grufevs395a9d5e.636c-cloud1-2grufevs395a9d5e-1403815561/plants/龟背竹.jpeg",
+                "lastWatered": null,
+                "nextWater": null,
+                "createdAt": "2026-08-11T07:11:22",
+                "genus": "Monstera",
+                "familyCn": "天南星科",
+                "familyEn": "Araceae",
+                "latinName": "Monstera deliciosa",
+                "watering": {
+                  "way": "表层2–3cm微干后浇透",
+                  "freq": [
+                    5,
+                    10
+                  ],
+                  "unit": "天",
+                  "verb": "浇",
+                  "basis": "盆栽基线；以基质干湿而非固定天数为准"
+                },
+                "fertilization": {
+                  "freq": [
+                    30,
+                    45
+                  ],
+                  "type": "1/2浓度均衡肥",
+                  "unit": "天",
+                  "other": "生长期为主；休眠/低温/弱光期减量或暂停"
+                },
+                "fertilizationMonthly": {
+                  "available": true,
+                  "rows": [
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    }
+                  ],
+                  "scopeLabel": "温带室内盆栽参考",
+                  "scopeGuidance": "本表按温带室内盆栽的季节和生长节点整理。月份是参考，请结合植物是否正在长新叶或新芽调整施肥。表中某一格标为“暂停施肥”或“暂停追加”时，表示该栏对应的肥料在该月默认不追加；本功能不会为这类月份建立提醒。若植物仍持续长新叶或新芽，请人工参考同一张表中最近的生长期固定周期；找不到对应固定周期时，不要使用该肥料。",
+                  "choiceGuidance": "液体肥和缓释肥选一种，不要同时使用。",
+                  "publicNote": "",
+                  "sourceNames": [
+                    "RHS",
+                    "UMN Extension",
+                    "University of Maryland Extension",
+                    "Oregon State University Extension"
+                  ]
+                },
+                "sunning": {
+                  "way": "明亮散射光/半阴",
+                  "freq": [
+                    3,
+                    6
+                  ],
+                  "unit": "小时/天",
+                  "other": "以实际光照强度与直射时段校正，避免机械按距离判断"
+                },
+                "ventilation": {
+                  "level": "medium",
+                  "other": "保持柔和空气流动；避免闷湿、强风直吹或长期封闭",
+                  "sensitivity": "medium"
+                },
+                "temperatureMin": 18,
+                "temperatureMax": 30,
+                "humidityMin": 50,
+                "humidityMax": 80,
+                "varianceLevel": "L1_or_L2_authority_audited",
+                "healthStatus": "unknown",
+                "healthScore": null,
+                "potProfile": {
+                  "potTopDiameterCm": null,
+                  "potBottomDiameterCm": null,
+                  "potHeightCm": null,
+                  "hasDrainageHole": "true",
+                  "potMaterial": "unknown",
+                  "substrateType": "unknown",
+                  "substrateComposition": null,
+                  "profileVersion": 1,
+                  "source": "default",
+                  "confidence": "low"
+                },
+                "careLocationId": 40,
+                "careLocation": {
+                  "careLocationId": 40,
+                  "plantId": 27,
+                  "userId": "dev_terminal_mp_local",
+                  "openid": "[redacted]",
+                  "locationKey": "city:shanghai",
+                  "cityName": "上海",
+                  "latitude": 31.2304,
+                  "longitude": 121.4737,
+                  "weatherLocation": "121.4737,31.2304",
+                  "source": "gps_matched"
+                },
+                "locationKey": "city:shanghai",
+                "wateringReminder": null,
+                "fertilizationReminder": null
+              },
+              {
+                "id": 26,
+                "plantId": "11",
+                "plantIdentityId": "plant_identity_c8efd47f43b2d8c7",
+                "sessionPlantId": "11",
+                "canonicalName": "虎皮兰",
+                "nickname": "虎皮兰",
+                "displayName": "虎皮兰",
+                "recognizedName": "",
+                "sourceType": "catalog",
+                "recognitionType": "null",
+                "recognitionConfidence": null,
+                "identityResolutionStatus": "matched",
+                "visualCallBatchId": "null",
+                "location": "null",
+                "plantDate": "2026-08-10",
+                "notes": "",
+                "photos": [
+                  "cloud://cloud1-2grufevs395a9d5e.636c-cloud1-2grufevs395a9d5e-1403815561/plants/虎皮兰.jpg"
+                ],
+                "lightEnvironment": null,
+                "airEnvironment": null,
+                "imageFileId": "cloud://cloud1-2grufevs395a9d5e.636c-cloud1-2grufevs395a9d5e-1403815561/plants/虎皮兰.jpg",
+                "lastWatered": null,
+                "nextWater": null,
+                "createdAt": "2026-08-11T05:56:51",
+                "genus": "Dracaena",
+                "familyCn": "天门冬科",
+                "familyEn": "Asparagaceae",
+                "latinName": "Dracaena trifasciata",
+                "watering": {
+                  "way": "盆土大半干后浇透",
+                  "freq": [
+                    10,
+                    20
+                  ],
+                  "unit": "天",
+                  "verb": "浇",
+                  "basis": "盆栽基线；以基质干湿而非固定天数为准"
+                },
+                "fertilization": {
+                  "freq": [
+                    14,
+                    30
+                  ],
+                  "type": "1/2浓度均衡肥",
+                  "unit": "天",
+                  "other": "生长期为主；休眠/低温/弱光期减量或暂停"
+                },
+                "fertilizationMonthly": {
+                  "available": true,
+                  "rows": [
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    }
+                  ],
+                  "scopeLabel": "温带室内盆栽参考",
+                  "scopeGuidance": "本表按温带室内盆栽、室内冬季变冷或光照变弱时的常见生长节奏整理。月份是参考，请结合植物是否正在长新叶或新芽调整施肥。",
+                  "choiceGuidance": "液体肥和缓释肥选一种，不要同时使用。",
+                  "publicNote": "",
+                  "sourceNames": [
+                    "UVM Extension",
+                    "RHS",
+                    "University of Maryland Extension",
+                    "Oregon State University Extension"
+                  ]
+                },
+                "sunning": {
+                  "way": "明亮散射光/可耐中低光",
+                  "freq": [
+                    2,
+                    6
+                  ],
+                  "unit": "小时/天",
+                  "other": "以实际光照强度与直射时段校正，避免机械按距离判断"
+                },
+                "ventilation": {
+                  "level": "medium",
+                  "other": "保持柔和空气流动；避免闷湿、强风直吹或长期封闭",
+                  "sensitivity": "low"
+                },
+                "temperatureMin": 15,
+                "temperatureMax": 32,
+                "humidityMin": 35,
+                "humidityMax": 70,
+                "varianceLevel": "L1_or_L2_authority_audited",
+                "healthStatus": "unknown",
+                "healthScore": null,
+                "potProfile": {
+                  "potTopDiameterCm": null,
+                  "potBottomDiameterCm": null,
+                  "potHeightCm": null,
+                  "hasDrainageHole": "true",
+                  "potMaterial": "unknown",
+                  "substrateType": "unknown",
+                  "substrateComposition": null,
+                  "profileVersion": 1,
+                  "source": "default",
+                  "confidence": "low"
+                },
+                "careLocationId": 39,
+                "careLocation": {
+                  "careLocationId": 39,
+                  "plantId": 26,
+                  "userId": "dev_terminal_mp_local",
+                  "openid": "[redacted]",
+                  "locationKey": "city:shanghai",
+                  "cityName": "上海",
+                  "latitude": 31.2304,
+                  "longitude": 121.4737,
+                  "weatherLocation": "121.4737,31.2304",
+                  "source": "gps_matched"
+                },
+                "locationKey": "city:shanghai",
+                "wateringReminder": null,
+                "fertilizationReminder": null
+              },
+              {
+                "id": 25,
+                "plantId": "1",
+                "plantIdentityId": "plant_identity_bfae80168f4b7a73",
+                "sessionPlantId": "1",
+                "canonicalName": "绿萝",
+                "nickname": "绿萝",
+                "displayName": "绿萝",
+                "recognizedName": "",
+                "sourceType": "catalog",
+                "recognitionType": "null",
+                "recognitionConfidence": null,
+                "identityResolutionStatus": "matched",
+                "visualCallBatchId": "null",
+                "location": "null",
+                "plantDate": "2026-08-09",
+                "notes": "",
+                "photos": [
+                  "cloud://cloud1-2grufevs395a9d5e.636c-cloud1-2grufevs395a9d5e-1403815561/plants/绿萝.jpg"
+                ],
+                "lightEnvironment": null,
+                "airEnvironment": null,
+                "imageFileId": "cloud://cloud1-2grufevs395a9d5e.636c-cloud1-2grufevs395a9d5e-1403815561/plants/绿萝.jpg",
+                "lastWatered": null,
+                "nextWater": null,
+                "createdAt": "2026-08-09T21:10:51",
+                "genus": "Epipremnum",
+                "familyCn": "天南星科",
+                "familyEn": "Araceae",
+                "latinName": "Epipremnum aureum",
+                "watering": {
+                  "way": "盆土半干后浇透",
+                  "freq": [
+                    7,
+                    12
+                  ],
+                  "unit": "天",
+                  "verb": "浇",
+                  "basis": "盆栽基线；以基质干湿而非固定天数为准"
+                },
+                "fertilization": {
+                  "freq": [
+                    14,
+                    30
+                  ],
+                  "type": "1/2浓度均衡肥",
+                  "unit": "天",
+                  "other": "生长期为主；休眠/低温/弱光期减量或暂停"
+                },
+                "fertilizationMonthly": {
+                  "available": true,
+                  "rows": [
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    }
+                  ],
+                  "scopeLabel": "温带室内盆栽参考（常见绿萝）",
+                  "scopeGuidance": "本表按温带室内盆栽、室内冬季变冷或光照变弱时的常见生长节奏整理。月份是参考，请结合植物是否正在长新叶或新芽调整施肥。",
+                  "choiceGuidance": "液体肥和缓释肥选一种，不要同时使用。",
+                  "publicNote": "",
+                  "sourceNames": [
+                    "Penn State Extension",
+                    "UVM Extension",
+                    "RHS",
+                    "University of Maryland Extension",
+                    "Oregon State University Extension"
+                  ]
+                },
+                "sunning": {
+                  "way": "明亮散射光/可耐低光，斑叶需更亮",
+                  "freq": [
+                    2,
+                    6
+                  ],
+                  "unit": "小时/天",
+                  "other": "以实际光照强度与直射时段校正，避免机械按距离判断"
+                },
+                "ventilation": {
+                  "level": "medium",
+                  "other": "保持柔和空气流动；避免闷湿、强风直吹或长期封闭",
+                  "sensitivity": "low"
+                },
+                "temperatureMin": 15,
+                "temperatureMax": 32,
+                "humidityMin": 40,
+                "humidityMax": 80,
+                "varianceLevel": "L1_or_L2_authority_audited",
+                "healthStatus": "unknown",
+                "healthScore": null,
+                "potProfile": {
+                  "potTopDiameterCm": null,
+                  "potBottomDiameterCm": null,
+                  "potHeightCm": null,
+                  "hasDrainageHole": "true",
+                  "potMaterial": "unknown",
+                  "substrateType": "unknown",
+                  "substrateComposition": null,
+                  "profileVersion": 1,
+                  "source": "default",
+                  "confidence": "low"
+                },
+                "careLocationId": 38,
+                "careLocation": {
+                  "careLocationId": 38,
+                  "plantId": 25,
+                  "userId": "dev_terminal_mp_local",
+                  "openid": "[redacted]",
+                  "locationKey": "city:shanghai",
+                  "cityName": "上海",
+                  "latitude": 31.2304,
+                  "longitude": 121.4737,
+                  "weatherLocation": "121.4737,31.2304",
+                  "source": "gps_matched"
+                },
+                "locationKey": "city:shanghai",
+                "wateringReminder": null,
+                "fertilizationReminder": null
+              },
+              {
+                "id": 12,
+                "plantId": "",
+                "plantIdentityId": "",
+                "sessionPlantId": "",
+                "canonicalName": "",
+                "nickname": "绿萝",
+                "displayName": "绿萝",
+                "recognizedName": "",
+                "sourceType": "catalog",
+                "recognitionType": "null",
+                "recognitionConfidence": null,
+                "identityResolutionStatus": "unresolved",
+                "visualCallBatchId": "null",
+                "location": "阳台",
+                "plantDate": null,
+                "notes": "",
+                "photos": null,
+                "lightEnvironment": {
+                  "facing": "south",
+                  "distance": 2,
+                  "position": "middle",
+                  "windowType": "standard",
+                  "hasDirectSun": false
+                },
+                "airEnvironment": {
+                  "schemaVersion": 2,
+                  "input": {
+                    "airExchange": {
+                      "source": "[max-depth]",
+                      "windowDirectionCount": "[max-depth]",
+                      "windowOpenFrequency": "[max-depth]"
+                    },
+                    "canopyOpenness": "open",
+                    "deviceAirflow": {
+                      "mode": "[max-depth]",
+                      "sources": "[max-depth]",
+                      "directSources": "[max-depth]",
+                      "sourceModes": "[max-depth]"
+                    }
+                  },
+                  "locationBinding": {
+                    "careLocationId": "26",
+                    "locationKey": "city:shanghai"
+                  },
+                  "updatedAt": "2026-08-09T06:39:31.003Z"
+                },
+                "imageFileId": "",
+                "lastWatered": null,
+                "nextWater": null,
+                "createdAt": "2026-06-23T19:00:02",
+                "genus": "null",
+                "familyCn": "",
+                "familyEn": "null",
+                "latinName": "null",
+                "watering": null,
+                "fertilization": null,
+                "fertilizationMonthly": null,
+                "sunning": null,
+                "ventilation": null,
+                "temperatureMin": null,
+                "temperatureMax": null,
+                "humidityMin": null,
+                "humidityMax": null,
+                "varianceLevel": "",
+                "healthStatus": "unknown",
+                "healthScore": null,
+                "potProfile": {
+                  "potTopDiameterCm": null,
+                  "potBottomDiameterCm": null,
+                  "potHeightCm": null,
+                  "hasDrainageHole": "true",
+                  "potMaterial": "unknown",
+                  "substrateType": "unknown",
+                  "substrateComposition": null,
+                  "profileVersion": 1,
+                  "source": "default",
+                  "confidence": "low"
+                },
+                "careLocationId": 26,
+                "careLocation": {
+                  "careLocationId": 26,
+                  "plantId": 12,
+                  "userId": "dev_terminal_mp_local",
+                  "openid": "[redacted]",
+                  "locationKey": "city:shanghai",
+                  "cityName": "上海",
+                  "latitude": 31.2304,
+                  "longitude": 121.4737,
+                  "weatherLocation": "121.4737,31.2304",
+                  "source": "legacy_user_location"
+                },
+                "locationKey": "city:shanghai",
+                "wateringReminder": null,
+                "fertilizationReminder": null
+              },
+              {
+                "id": 9,
+                "plantId": "101",
+                "plantIdentityId": "plant_identity_adb81f032b66dcf3",
+                "sessionPlantId": "101",
+                "canonicalName": "豆瓣绿",
+                "nickname": "QA上海天气缓存复测",
+                "displayName": "QA上海天气缓存复测",
+                "recognizedName": "",
+                "sourceType": "qa_runtime",
+                "recognitionType": "null",
+                "recognitionConfidence": null,
+                "identityResolutionStatus": "matched",
+                "visualCallBatchId": "null",
+                "location": "QA自动化",
+                "plantDate": null,
+                "notes": "",
+                "photos": null,
+                "lightEnvironment": {
+                  "facing": "south",
+                  "distance": 2,
+                  "position": "middle",
+                  "windowType": "standard",
+                  "hasDirectSun": false
+                },
+                "airEnvironment": {
+                  "schemaVersion": 2,
+                  "input": {
+                    "airExchange": {
+                      "source": "[max-depth]",
+                      "windowDirectionCount": "[max-depth]",
+                      "windowOpenFrequency": "[max-depth]"
+                    },
+                    "canopyOpenness": "open",
+                    "deviceAirflow": {
+                      "mode": "[max-depth]",
+                      "sources": "[max-depth]",
+                      "directSources": "[max-depth]",
+                      "sourceModes": "[max-depth]"
+                    }
+                  },
+                  "locationBinding": {
+                    "careLocationId": "8",
+                    "locationKey": "city:shanghai"
+                  },
+                  "updatedAt": "2026-08-09T06:33:11.527Z"
+                },
+                "imageFileId": "",
+                "lastWatered": null,
+                "nextWater": "2026-07-10T00:00:00",
+                "createdAt": "2026-06-19T17:22:26",
+                "genus": "Peperomia",
+                "familyCn": "胡椒科",
+                "familyEn": "Piperaceae",
+                "latinName": "Peperomia tetraphylla",
+                "watering": {
+                  "way": "表层2–3cm微干后浇透",
+                  "freq": [
+                    5,
+                    10
+                  ],
+                  "unit": "天",
+                  "verb": "浇",
+                  "basis": "盆栽基线；以基质干湿而非固定天数为准"
+                },
+                "fertilization": {
+                  "freq": [
+                    14,
+                    30
+                  ],
+                  "type": "1/2浓度均衡肥",
+                  "unit": "天",
+                  "other": "生长期为主；休眠/低温/弱光期减量或暂停"
+                },
+                "fertilizationMonthly": {
+                  "available": true,
+                  "rows": [
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    }
+                  ],
+                  "scopeLabel": "温带室内盆栽参考",
+                  "scopeGuidance": "本表按温带室内盆栽、室内冬季变冷或光照变弱时的常见生长节奏整理。月份是参考，请结合植物是否正在长新叶或新芽调整施肥。",
+                  "choiceGuidance": "液体肥和缓释肥选一种，不要同时使用。",
+                  "publicNote": "",
+                  "sourceNames": [
+                    "UVM Extension",
+                    "University of Maryland Extension",
+                    "Oregon State University Extension",
+                    "RHS"
+                  ]
+                },
+                "sunning": {
+                  "way": "明亮散射光/半阴",
+                  "freq": [
+                    3,
+                    6
+                  ],
+                  "unit": "小时/天",
+                  "other": "以实际光照强度与直射时段校正，避免机械按距离判断"
+                },
+                "ventilation": {
+                  "level": "medium",
+                  "other": "保持柔和空气流动；避免闷湿、强风直吹或长期封闭",
+                  "sensitivity": "medium"
+                },
+                "temperatureMin": 18,
+                "temperatureMax": 30,
+                "humidityMin": 50,
+                "humidityMax": 80,
+                "varianceLevel": "L1_or_L2_authority_audited",
+                "healthStatus": "unknown",
+                "healthScore": null,
+                "potProfile": {
+                  "potTopDiameterCm": null,
+                  "potBottomDiameterCm": null,
+                  "potHeightCm": null,
+                  "hasDrainageHole": "true",
+                  "potMaterial": "unknown",
+                  "substrateType": "unknown",
+                  "substrateComposition": null,
+                  "profileVersion": 1,
+                  "source": "default",
+                  "confidence": "low"
+                },
+                "careLocationId": 8,
+                "careLocation": {
+                  "careLocationId": 8,
+                  "plantId": 9,
+                  "userId": "dev_terminal_mp_local",
+                  "openid": "[redacted]",
+                  "locationKey": "city:shanghai",
+                  "cityName": "上海",
+                  "latitude": 31.2304,
+                  "longitude": 121.4737,
+                  "weatherLocation": "121.4737,31.2304",
+                  "source": "manual_selected"
+                },
+                "locationKey": "city:shanghai",
+                "wateringReminder": null,
+                "fertilizationReminder": null
+              },
+              {
+                "id": 8,
+                "plantId": "101",
+                "plantIdentityId": "plant_identity_adb81f032b66dcf3",
+                "sessionPlantId": "101",
+                "canonicalName": "豆瓣绿",
+                "nickname": "QA上海天气缓存测试",
+                "displayName": "QA上海天气缓存测试",
+                "recognizedName": "",
+                "sourceType": "qa_runtime",
+                "recognitionType": "null",
+                "recognitionConfidence": null,
+                "identityResolutionStatus": "matched",
+                "visualCallBatchId": "null",
+                "location": "QA自动化",
+                "plantDate": null,
+                "notes": "",
+                "photos": null,
+                "lightEnvironment": {
+                  "facing": "south",
+                  "distance": 2,
+                  "position": "middle",
+                  "windowType": "standard",
+                  "hasDirectSun": false
+                },
+                "airEnvironment": {
+                  "schemaVersion": 2,
+                  "input": {
+                    "airExchange": {
+                      "source": "[max-depth]",
+                      "windowDirectionCount": "[max-depth]",
+                      "windowOpenFrequency": "[max-depth]"
+                    },
+                    "canopyOpenness": "open",
+                    "deviceAirflow": {
+                      "mode": "[max-depth]",
+                      "sources": "[max-depth]",
+                      "directSources": "[max-depth]",
+                      "sourceModes": "[max-depth]"
+                    }
+                  },
+                  "locationBinding": {
+                    "careLocationId": "7",
+                    "locationKey": "city:shanghai"
+                  },
+                  "updatedAt": "2026-08-09T06:34:29.001Z"
+                },
+                "imageFileId": "",
+                "lastWatered": null,
+                "nextWater": null,
+                "createdAt": "2026-06-19T16:53:52",
+                "genus": "Peperomia",
+                "familyCn": "胡椒科",
+                "familyEn": "Piperaceae",
+                "latinName": "Peperomia tetraphylla",
+                "watering": {
+                  "way": "表层2–3cm微干后浇透",
+                  "freq": [
+                    5,
+                    10
+                  ],
+                  "unit": "天",
+                  "verb": "浇",
+                  "basis": "盆栽基线；以基质干湿而非固定天数为准"
+                },
+                "fertilization": {
+                  "freq": [
+                    14,
+                    30
+                  ],
+                  "type": "1/2浓度均衡肥",
+                  "unit": "天",
+                  "other": "生长期为主；休眠/低温/弱光期减量或暂停"
+                },
+                "fertilizationMonthly": {
+                  "available": true,
+                  "rows": [
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    }
+                  ],
+                  "scopeLabel": "温带室内盆栽参考",
+                  "scopeGuidance": "本表按温带室内盆栽、室内冬季变冷或光照变弱时的常见生长节奏整理。月份是参考，请结合植物是否正在长新叶或新芽调整施肥。",
+                  "choiceGuidance": "液体肥和缓释肥选一种，不要同时使用。",
+                  "publicNote": "",
+                  "sourceNames": [
+                    "UVM Extension",
+                    "University of Maryland Extension",
+                    "Oregon State University Extension",
+                    "RHS"
+                  ]
+                },
+                "sunning": {
+                  "way": "明亮散射光/半阴",
+                  "freq": [
+                    3,
+                    6
+                  ],
+                  "unit": "小时/天",
+                  "other": "以实际光照强度与直射时段校正，避免机械按距离判断"
+                },
+                "ventilation": {
+                  "level": "medium",
+                  "other": "保持柔和空气流动；避免闷湿、强风直吹或长期封闭",
+                  "sensitivity": "medium"
+                },
+                "temperatureMin": 18,
+                "temperatureMax": 30,
+                "humidityMin": 50,
+                "humidityMax": 80,
+                "varianceLevel": "L1_or_L2_authority_audited",
+                "healthStatus": "unknown",
+                "healthScore": null,
+                "potProfile": {
+                  "potTopDiameterCm": null,
+                  "potBottomDiameterCm": null,
+                  "potHeightCm": null,
+                  "hasDrainageHole": "true",
+                  "potMaterial": "unknown",
+                  "substrateType": "unknown",
+                  "substrateComposition": null,
+                  "profileVersion": 1,
+                  "source": "default",
+                  "confidence": "low"
+                },
+                "careLocationId": 7,
+                "careLocation": {
+                  "careLocationId": 7,
+                  "plantId": 8,
+                  "userId": "dev_terminal_mp_local",
+                  "openid": "[redacted]",
+                  "locationKey": "city:shanghai",
+                  "cityName": "上海",
+                  "latitude": 31.2304,
+                  "longitude": 121.4737,
+                  "weatherLocation": "121.4737,31.2304",
+                  "source": "manual_selected"
+                },
+                "locationKey": "city:shanghai",
+                "wateringReminder": null,
+                "fertilizationReminder": null
+              },
+              {
+                "id": 7,
+                "plantId": "101",
+                "plantIdentityId": "plant_identity_adb81f032b66dcf3",
+                "sessionPlantId": "101",
+                "canonicalName": "豆瓣绿",
+                "nickname": "QA上海天气缓存测试",
+                "displayName": "QA上海天气缓存测试",
+                "recognizedName": "",
+                "sourceType": "qa_runtime",
+                "recognitionType": "null",
+                "recognitionConfidence": null,
+                "identityResolutionStatus": "matched",
+                "visualCallBatchId": "null",
+                "location": "QA自动化",
+                "plantDate": null,
+                "notes": "",
+                "photos": null,
+                "lightEnvironment": {
+                  "facing": "south",
+                  "distance": 2,
+                  "position": "middle",
+                  "windowType": "standard",
+                  "hasDirectSun": false
+                },
+                "airEnvironment": {
+                  "schemaVersion": 2,
+                  "input": {
+                    "airExchange": {
+                      "source": "[max-depth]",
+                      "windowDirectionCount": "[max-depth]",
+                      "windowOpenFrequency": "[max-depth]"
+                    },
+                    "canopyOpenness": "open",
+                    "deviceAirflow": {
+                      "mode": "[max-depth]",
+                      "sources": "[max-depth]",
+                      "directSources": "[max-depth]",
+                      "sourceModes": "[max-depth]"
+                    }
+                  },
+                  "locationBinding": {
+                    "careLocationId": "6",
+                    "locationKey": "city:shanghai"
+                  },
+                  "updatedAt": "2026-08-09T06:29:49.612Z"
+                },
+                "imageFileId": "",
+                "lastWatered": null,
+                "nextWater": null,
+                "createdAt": "2026-06-19T16:49:15",
+                "genus": "Peperomia",
+                "familyCn": "胡椒科",
+                "familyEn": "Piperaceae",
+                "latinName": "Peperomia tetraphylla",
+                "watering": {
+                  "way": "表层2–3cm微干后浇透",
+                  "freq": [
+                    5,
+                    10
+                  ],
+                  "unit": "天",
+                  "verb": "浇",
+                  "basis": "盆栽基线；以基质干湿而非固定天数为准"
+                },
+                "fertilization": {
+                  "freq": [
+                    14,
+                    30
+                  ],
+                  "type": "1/2浓度均衡肥",
+                  "unit": "天",
+                  "other": "生长期为主；休眠/低温/弱光期减量或暂停"
+                },
+                "fertilizationMonthly": {
+                  "available": true,
+                  "rows": [
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    },
+                    {
+                      "month": "[max-depth]",
+                      "liquid": "[max-depth]",
+                      "slowRelease": "[max-depth]"
+                    }
+                  ],
+                  "scopeLabel": "温带室内盆栽参考",
+                  "scopeGuidance": "本表按温带室内盆栽、室内冬季变冷或光照变弱时的常见生长节奏整理。月份是参考，请结合植物是否正在长新叶或新芽调整施肥。",
+                  "choiceGuidance": "液体肥和缓释肥选一种，不要同时使用。",
+                  "publicNote": "",
+                  "sourceNames": [
+                    "UVM Extension",
+                    "University of Maryland Extension",
+                    "Oregon State University Extension",
+                    "RHS"
+                  ]
+                },
+                "sunning": {
+                  "way": "明亮散射光/半阴",
+                  "freq": [
+                    3,
+                    6
+                  ],
+                  "unit": "小时/天",
+                  "other": "以实际光照强度与直射时段校正，避免机械按距离判断"
+                },
+                "ventilation": {
+                  "level": "medium",
+                  "other": "保持柔和空气流动；避免闷湿、强风直吹或长期封闭",
+                  "sensitivity": "medium"
+                },
+                "temperatureMin": 18,
+                "temperatureMax": 30,
+                "humidityMin": 50,
+                "humidityMax": 80,
+                "varianceLevel": "L1_or_L2_authority_audited",
+                "healthStatus": "unknown",
+                "healthScore": null,
+                "potProfile": {
+                  "potTopDiameterCm": null,
+                  "potBottomDiameterCm": null,
+                  "potHeightCm": null,
+                  "hasDrainageHole": "true",
+                  "potMaterial": "unknown",
+                  "substrateType": "unknown",
+                  "substrateComposition": null,
+                  "profileVersion": 1,
+                  "source": "default",
+                  "confidence": "low"
+                },
+                "careLocationId": 6,
+                "careLocation": {
+                  "careLocationId": 6,
+                  "plantId": 7,
+                  "userId": "dev_terminal_mp_local",
+                  "openid": "[redacted]",
+                  "locationKey": "city:shanghai",
+                  "cityName": "上海",
+                  "latitude": 31.2304,
+                  "longitude": 121.4737,
+                  "weatherLocation": "121.4737,31.2304",
+                  "source": "manual_selected"
+                },
+                "locationKey": "city:shanghai",
+                "wateringReminder": null,
+                "fertilizationReminder": null
+              }
+            ],
+            "total": 7,
+            "page": 1,
+            "pageSize": 50,
+            "hasMore": false
+          }
+        }
+      }
+    },
+    {
+      "url": "https://cloud1-2grufevs395a9d5e.ap-shanghai.tcb-api.tencentcloudapi.com/auth/v1/user/me",
+      "method": "GET",
+      "data": null,
+      "header": {
+        "X-SDK-Version": "@cloudbase/js-sdk/2.25.8",
+        "Accept-Language": "zh-CN",
+        "x-request-id": "8ed05f14c9ac49c1942f5bf0e4282312",
+        "x-device-id": "b65c9d79b1874f47a84dec182e71359d",
+        "Authorization": "[redacted]"
+      },
+      "time": 1786500909325,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "sub": "2029927888374992896",
+          "providers": [
+            {
+              "id": "wx85bb3976301f75fb",
+              "provider_user_id": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA"
+            }
+          ],
+          "status": "ACTIVE",
+          "created_at": "2026-03-06T14:31:37.485Z",
+          "user_id": "2029927888374992896",
+          "first_pwd_login": true,
+          "type": "external",
+          "open_id": "ocVNg3bRMSVBJp9JBHT4aIvOhEnA"
+        }
+      }
+    },
+    {
+      "url": "http://192.168.10.26:3010/plant-user-http/user-plants/fertilization-reminders?plantId=27",
+      "method": "GET",
+      "data": null,
+      "header": {
+        "Content-Type": "application/json",
+        "x-app-env": "development",
+        "x-env": "development",
+        "x-terminal-e2e": "true",
+        "x-anonymous-dev-identity": "true",
+        "x-wx-openid": "dev_terminal_mp_local",
+        "x-openid": "dev_terminal_mp_local"
+      },
+      "time": 1786500910865,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "message": "暂无施肥提醒",
+          "data": null
+        }
+      }
+    },
+    {
+      "url": "http://192.168.10.26:3010/plant-user-http/user-plants/fertilization-reminders/preview",
+      "method": "POST",
+      "data": {
+        "plantId": 27,
+        "fertilizerType": "liquid"
+      },
+      "header": {
+        "Content-Type": "application/json",
+        "x-app-env": "development",
+        "x-env": "development",
+        "x-terminal-e2e": "true",
+        "x-anonymous-dev-identity": "true",
+        "x-wx-openid": "dev_terminal_mp_local",
+        "x-openid": "dev_terminal_mp_local"
+      },
+      "time": 1786500916048,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "message": "施肥提醒日期已生成",
+          "data": {
+            "planId": "[redacted-token-like]",
+            "plantId": 27,
+            "fertilizerType": "liquid",
+            "reminderKind": "first_confirmation",
+            "confirmationReasons": [],
+            "ruleMonth": 8,
+            "ruleSnapshot": {
+              "schemaVersion": 1,
+              "genus": "Monstera",
+              "plantName": "龟背竹",
+              "ruleMonth": 8,
+              "fertilizerType": "liquid",
+              "reminderKind": "first_confirmation",
+              "confirmationReasons": [],
+              "displayText": "每月1次",
+              "schedule": {
+                "schemaVersion": 1,
+                "kind": "interval",
+                "interval": {
+                  "min": {
+                    "value": 1,
+                    "unit": "month"
+                  },
+                  "max": {
+                    "value": 1,
+                    "unit": "month"
+                  }
+                },
+                "annualCount": null,
+                "eventCode": null,
+                "monthHints": null,
+                "conditionCodes": [
+                  "none"
+                ],
+                "modifiers": []
+              },
+              "sourceNames": [
+                "RHS",
+                "UMN Extension"
+              ]
+            },
+            "nextCheckDate": "2026-08-28",
+            "nextTime": "2026-08-28T09:00:00",
+            "dueNow": false,
+            "lastAppliedDate": null,
+            "lastDateSource": "estimated",
+            "earliestDate": "2026-09-12",
+            "latestDate": "2026-09-12",
+            "normalCheckDate": "2026-09-12",
+            "pendingExpiresInMinutes": 15
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.10.26:3010/plant-user-http/user-plants/fertilization-reminders/cancel",
+      "method": "POST",
+      "data": {
+        "planId": "[redacted-token-like]"
+      },
+      "header": {
+        "Content-Type": "application/json",
+        "x-app-env": "development",
+        "x-env": "development",
+        "x-terminal-e2e": "true",
+        "x-anonymous-dev-identity": "true",
+        "x-wx-openid": "dev_terminal_mp_local",
+        "x-openid": "dev_terminal_mp_local"
+      },
+      "time": 1786500917083,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "message": "待同步计划已取消",
+          "data": {
+            "planId": "[redacted-token-like]",
+            "status": "cancelled"
+          }
+        }
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "name": "真实小程序完成用户登录",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-12T02:15:08.627Z"
+    },
+    {
+      "name": "真实开发账户存在可设置施肥提醒的植物入口",
+      "passed": true,
+      "detail": "plantId=27; discovered=27,26,25,12,9,8,7",
+      "time": "2026-08-12T02:15:12.055Z"
+    },
+    {
+      "name": "真实植物卡片打开施肥时间表",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-12T02:15:12.103Z"
+    },
+    {
+      "name": "真实施肥弹框操作区在可见范围或已滚动到操作区",
+      "passed": true,
+      "detail": "{\"isScrollable\":true,\"viewportHeight\":597,\"scrollHeight\":1169,\"scrollTop\":584}",
+      "time": "2026-08-12T02:15:12.652Z"
+    },
+    {
+      "name": "真实属级月表提供当前月固定周期提醒入口",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-12T02:15:12.726Z"
+    },
+    {
+      "name": "真实施肥提醒设置截图有效",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-12T02:15:15.867Z"
+    },
+    {
+      "name": "施肥提醒入口合并为设置下次施肥提醒",
+      "passed": true,
+      "detail": "设置下次施肥提醒",
+      "time": "2026-08-12T02:15:15.939Z"
+    },
+    {
+      "name": "首次无历史施肥记录可通过真实 API 生成首次确认提醒",
+      "passed": true,
+      "detail": "首次确认提醒：8月28日 首次确认：没有可靠的上次施肥日期，先按当前周期的一半安排确认提醒。 到期后打开青花植查看当月规则，再决定是否施肥。 确认并添加到手机日历 取消这次设置",
+      "time": "2026-08-12T02:15:16.989Z"
+    },
+    {
+      "name": "取消设置后回到真实提醒设置区",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-12T02:15:17.627Z"
+    },
+    {
+      "name": "重新打开后真实开发库没有遗留 active 施肥提醒",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-12T02:15:19.435Z"
+    },
+    {
+      "name": "小程序运行时真实调用 preview API 并收到 200",
+      "passed": true,
+      "detail": "{\"statusCode\":200,\"data\":{\"code\":200,\"message\":\"施肥提醒日期已生成\",\"data\":{\"planId\":\"[redacted-token-like]\",\"plantId\":27,\"fertilizerType\":\"liquid\",\"reminderKind\":\"first_confirmation\",\"confirmationReasons\":[],\"ruleMonth\":8,\"ruleSnapshot\":{\"schemaVersion\":1,\"genus\":\"Monstera\",\"plantName\":\"龟背竹\",\"ruleMonth\":8,\"fertilizerType\":\"liquid\",\"reminderKind\":\"first_confirmation\",\"confirmationReasons\":[],\"displayText\":\"每月1次\",\"schedule\":{\"schemaVersion\":1,\"kind\":\"interval\",\"interval\":{\"min\":{\"value\":1,\"unit\":\"month\"},\"max\":{\"value\":1,\"unit\":\"month\"}},\"annualCount\":null,\"eventCode\":null,\"monthHints\":null,\"conditionCodes\":[\"none\"],\"modifiers\":[]},\"sourceNames\":[\"RHS\",\"UMN Extension\"]},\"nextCheckDate\":\"2026-08-28\",\"nextTime\":\"2026-08-28T09:00:00\",\"dueNow\":false,\"lastAppliedDate\":null,\"lastDateSource\":\"estimated\",\"earliestDate\":\"2026-09-12\",\"latestDate\":\"2026-09-12\",\"normalCheckDate\":\"2026-09-12\",\"pendingExpiresInMinutes\":15}}}",
+      "time": "2026-08-12T02:15:19.438Z"
+    },
+    {
+      "name": "小程序运行时真实调用 cancel API 并收到 200",
+      "passed": true,
+      "detail": "{\"statusCode\":200,\"data\":{\"code\":200,\"message\":\"待同步计划已取消\",\"data\":{\"planId\":\"[redacted-token-like]\",\"status\":\"cancelled\"}}}",
+      "time": "2026-08-12T02:15:19.438Z"
+    },
+    {
+      "name": "重新打开后通过真实 GET 读回无 active 状态",
+      "passed": true,
+      "detail": "{\"statusCode\":200,\"data\":{\"code\":200,\"message\":\"暂无施肥提醒\",\"data\":null}}",
+      "time": "2026-08-12T02:15:19.438Z"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/watering-transpiration-v3/fertilization-reminder-live-development-setup.png",
+      "time": "2026-08-12T02:15:15.867Z"
+    }
+  ],
+  "classification": "PASS",
+  "blockerReason": null,
+  "status": "passed",
+  "failure_kind": null,
+  "business_assertions_reached": true
+}

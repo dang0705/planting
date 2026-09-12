@@ -117,8 +117,8 @@ function buildManifest(result) {
       displayTextCn: item.displayTextCn,
       missingSchemas: item.missingSchemas
     })),
-    legacyPendingAuditedUpgradeSymptoms: schemaGapItems.map(item => ({
-      status: 'legacy_pending_audited_upgrade',
+    sessionPendingAuditedUpgradeSymptoms: schemaGapItems.map(item => ({
+      status: 'session_pending_audited_upgrade',
       symptomKey: item.symptomKey,
       displayTextCn: item.displayTextCn,
       missingSchemas: item.missingSchemas
@@ -130,7 +130,7 @@ function buildManifest(result) {
 function buildSummaryDoc(result, manifest) {
   const lines = []
   const counts19 = manifest.verifiedBatches[config.batchIds.auditedGapClosure].counts
-  const counts23 = manifest.verifiedBatches[config.batchIds.legacyGapClosure].counts
+  const counts23 = manifest.verifiedBatches[config.batchIds.sessionGapClosure].counts
   const countsStable = manifest.verifiedBatches[config.batchIds.stableMarkingBridge].counts
 
   lines.push('# ai_visual_pool formal question coverage 对比文档 v1', '')
@@ -202,9 +202,9 @@ function buildSummaryDoc(result, manifest) {
   lines.push(`    - \`question_generation_engine = ${countsStable.dev.question_generation_engine}\``)
   lines.push('')
 
-  lines.push('### 3.3 legacy 23 条 ai_visual_pool 缺口收口批次', '')
-  lines.push(`- batch：\`${config.batchIds.legacyGapClosure}\``)
-  lines.push(`- 目标：${config.batchPurpose.legacyGapClosure}`)
+  lines.push('### 3.3 session 23 条 ai_visual_pool 缺口收口批次', '')
+  lines.push(`- batch：\`${config.batchIds.sessionGapClosure}\``)
+  lines.push(`- 目标：${config.batchPurpose.sessionGapClosure}`)
   lines.push('- 验证结果：')
   lines.push('  - prod：')
   lines.push(`    - \`question_library_v5_real = ${counts23.prod.question_library_v5_real}\``)
@@ -246,7 +246,7 @@ function buildSummaryDoc(result, manifest) {
   lines.push(`- union gap count：\`${manifest.remainingMustCloseSummary.unionGapCount}\``)
   lines.push(`- 当前 \`remainingMustCloseSymptoms = ${manifest.remainingMustCloseSymptoms.length}\``)
   lines.push(
-    `- 当前 \`legacyPendingAuditedUpgradeSymptoms = ${manifest.legacyPendingAuditedUpgradeSymptoms.length}\``
+    `- 当前 \`sessionPendingAuditedUpgradeSymptoms = ${manifest.sessionPendingAuditedUpgradeSymptoms.length}\``
   )
   if (manifest.remainingMustCloseSymptoms.length === 0) {
     lines.push(
@@ -254,7 +254,7 @@ function buildSummaryDoc(result, manifest) {
     )
   } else {
     lines.push('- 当前未收口 symptom 列表：')
-    for (const item of manifest.legacyPendingAuditedUpgradeSymptoms) {
+    for (const item of manifest.sessionPendingAuditedUpgradeSymptoms) {
       lines.push(
         `  - \`${item.symptomKey}\` / ${item.displayTextCn || '未命名'} / missingSchemas=${item.missingSchemas.join(',')}`
       )
@@ -267,7 +267,7 @@ function buildSummaryDoc(result, manifest) {
     `- 19-gap 权威来源集合来自 [ai_visual_pool_question_gap_closure_v1.js](/Users/jay/WebstormProjects/planting/${config.sourceVerificationSummary.auditedGapClosureGenerator})`
   )
   lines.push(
-    `- legacy-23-gap 权威来源集合来自 [ai_visual_pool_legacy_gap_closure_v1.js](/Users/jay/WebstormProjects/planting/${config.sourceVerificationSummary.legacyGapClosureGenerator})`
+    `- session-23-gap 权威来源集合来自 [ai_visual_pool_session_gap_closure_v1.js](/Users/jay/WebstormProjects/planting/${config.sourceVerificationSummary.sessionGapClosureGenerator})`
   )
   lines.push(
     `- stable-marking bridge 生成器在 [generate-ai-visual-pool-stable-marking-audited-upgrade.mjs](/Users/jay/WebstormProjects/planting/${config.sourceVerificationSummary.stableMarkingBridgeGenerator})`

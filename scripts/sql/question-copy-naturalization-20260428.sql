@@ -54,22 +54,22 @@ WHERE `question_key` = 'q_leaf_yellowing_fertilization_background'
 
 UPDATE `question_library_v5_real`
 SET
-  `question_text_cn` = '这些位置更像真实穿孔/缺口，还是表面斑点、焦边或旧伤造成的外观变化？',
-  `question_text_user_cn` = '这些位置更像真实穿孔/缺口，还是表面斑点、焦边或旧伤造成的外观变化？',
+  `question_text_cn` = '这些位置更像真实穿孔/缺口，还是表面斑点、焦边或既有伤造成的外观变化？',
+  `question_text_user_cn` = '这些位置更像真实穿孔/缺口，还是表面斑点、焦边或既有伤造成的外观变化？',
   `help_text_cn` = '这里只确认组织是否真实缺损，不把“有洞”直接等同于虫害。'
 WHERE `question_key` = 'q_holes_in_leaf_confirm';
 
 UPDATE `question_library_v5_real`
 SET
-  `question_text_cn` = '叶缘是否有不规则缺口或组织缺损，而不是单纯焦边、干边或旧伤边缘？',
-  `question_text_user_cn` = '叶缘是否有不规则缺口或组织缺损，而不是单纯焦边、干边或旧伤边缘？',
+  `question_text_cn` = '叶缘是否有不规则缺口或组织缺损，而不是单纯焦边、干边或既有伤边缘？',
+  `question_text_user_cn` = '叶缘是否有不规则缺口或组织缺损，而不是单纯焦边、干边或既有伤边缘？',
   `help_text_cn` = '这里只确认边缘组织是否真实缺损，不把缺口直接等同于被取食。'
 WHERE `question_key` = 'q_chewed_edges_confirm';
 
 UPDATE `question_library_v5_real`
 SET
-  `question_text_cn` = '叶片是否出现真实的组织缺损或网状骨架化，而不是单纯变薄、焦枯或旧伤痕？',
-  `question_text_user_cn` = '叶片是否出现真实的组织缺损或网状骨架化，而不是单纯变薄、焦枯或旧伤痕？',
+  `question_text_cn` = '叶片是否出现真实的组织缺损或网状骨架化，而不是单纯变薄、焦枯或既有伤痕？',
+  `question_text_user_cn` = '叶片是否出现真实的组织缺损或网状骨架化，而不是单纯变薄、焦枯或既有伤痕？',
   `help_text_cn` = '这里只确认组织缺损形态，不把骨架化外观直接等同于虫害。'
 WHERE `question_key` IN (
   'q_skeletonized_leaves_confirm',

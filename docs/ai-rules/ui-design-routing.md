@@ -16,4 +16,4 @@
 2. 不要生成通用 AI 模板感 UI。
 3. 不要引入当前小程序不可用的 Web 视觉能力。
 4. Tailwind class 修改需考虑 uni-app / 小程序构建限制。
-5. 涉及 safelist、动态 class、远程样式或 OSS 样式时，应先让 `code_explorer` 定位现有方案。
+5. 涉及 safelist、动态 class、远程样式或 OSS 样式时，由 main agent 先定位现有方案。

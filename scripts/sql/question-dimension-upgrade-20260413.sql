@@ -1,35 +1,35 @@
 ALTER TABLE `question_library_v5_real`
-  ADD COLUMN IF NOT EXISTS `target_dimension` VARCHAR(64) NULL COMMENT '问题要确认或分流的事实维度' AFTER `observability`,
-  ADD COLUMN IF NOT EXISTS `routing_scope` VARCHAR(64) NULL COMMENT 'symptom_confirmation|differential_probe|context_probe' AFTER `target_dimension`;
+  ADD COLUMN IF NOT EXISTS `package_topic` VARCHAR(64) NULL COMMENT '问题要确认或分流的事实维度' AFTER `observability`,
+  ADD COLUMN IF NOT EXISTS `package_section` VARCHAR(64) NULL COMMENT 'symptom_confirmation|differential_probe|context_probe' AFTER `package_topic`;
 
 ALTER TABLE `question_generation_engine`
-  ADD COLUMN IF NOT EXISTS `target_dimension_default` VARCHAR(64) NULL COMMENT '生成规则默认目标维度' AFTER `observability_default`,
-  ADD COLUMN IF NOT EXISTS `routing_scope_default` VARCHAR(64) NULL COMMENT '生成规则默认分流范围' AFTER `target_dimension_default`;
+  ADD COLUMN IF NOT EXISTS `package_topic_default` VARCHAR(64) NULL COMMENT '生成规则默认目标维度' AFTER `observability_default`,
+  ADD COLUMN IF NOT EXISTS `package_section_default` VARCHAR(64) NULL COMMENT '生成规则默认分流范围' AFTER `package_topic_default`;
 
 UPDATE `question_library_v5_real`
 SET
-  `target_dimension` = COALESCE(`target_dimension`, 'visual_presence'),
-  `routing_scope` = COALESCE(`routing_scope`, 'symptom_confirmation')
+  `package_topic` = COALESCE(`package_topic`, 'visual_presence'),
+  `package_section` = COALESCE(`package_section`, 'symptom_confirmation')
 WHERE `data_status` = 'audited'
   AND `review_status` = 'audited';
 
 UPDATE `question_library_v5_real`
 SET
-  `target_dimension` = CASE `question_key`
+  `package_topic` = CASE `question_key`
     WHEN 'q_bacterial_water_soaked' THEN 'tissue_moisture'
     WHEN 'q_sooty_mold_confirm' THEN 'surface_residue'
     WHEN 'q_aphids_sooty_mold' THEN 'surface_residue'
     WHEN 'q_scale_sooty_mold' THEN 'surface_residue'
     WHEN 'q_whiteflies_sooty_mold' THEN 'surface_residue'
-    ELSE `target_dimension`
+    ELSE `package_topic`
   END,
-  `routing_scope` = CASE `question_key`
+  `package_section` = CASE `question_key`
     WHEN 'q_bacterial_water_soaked' THEN 'differential_probe'
     WHEN 'q_sooty_mold_confirm' THEN 'differential_probe'
     WHEN 'q_aphids_sooty_mold' THEN 'differential_probe'
     WHEN 'q_scale_sooty_mold' THEN 'differential_probe'
     WHEN 'q_whiteflies_sooty_mold' THEN 'differential_probe'
-    ELSE `routing_scope`
+    ELSE `package_section`
   END
 WHERE `question_key` IN (
   'q_bacterial_water_soaked',
@@ -47,8 +47,8 @@ INSERT INTO `question_library_v5_real` (
   `question_group_key`,
   `question_level`,
   `observability`,
-  `target_dimension`,
-  `routing_scope`,
+  `package_topic`,
+  `package_section`,
   `allow_unknown`,
   `priority`,
   `data_status`,
@@ -136,8 +136,8 @@ ON DUPLICATE KEY UPDATE
   `question_group_key` = VALUES(`question_group_key`),
   `question_level` = VALUES(`question_level`),
   `observability` = VALUES(`observability`),
-  `target_dimension` = VALUES(`target_dimension`),
-  `routing_scope` = VALUES(`routing_scope`),
+  `package_topic` = VALUES(`package_topic`),
+  `package_section` = VALUES(`package_section`),
   `allow_unknown` = VALUES(`allow_unknown`),
   `priority` = VALUES(`priority`),
   `data_status` = VALUES(`data_status`),
@@ -350,5 +350,5 @@ ON DUPLICATE KEY UPDATE
 
 UPDATE `question_generation_engine`
 SET
-  `target_dimension_default` = COALESCE(`target_dimension_default`, 'visual_presence'),
-  `routing_scope_default` = COALESCE(`routing_scope_default`, 'symptom_confirmation');
+  `package_topic_default` = COALESCE(`package_topic_default`, 'visual_presence'),
+  `package_section_default` = COALESCE(`package_section_default`, 'symptom_confirmation');

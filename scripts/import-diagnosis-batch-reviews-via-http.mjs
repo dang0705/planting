@@ -4,7 +4,7 @@ import path from 'node:path'
 const projectRoot = '/Users/jay/WebstormProjects/planting'
 const reportPath = path.join(
   projectRoot,
-  'scripts/terminal-e2e/manifests/plant-sample-combination-audit.report.json'
+  'test/e2e/batch/diagnosis/manifests/plant-sample-combination-audit.report.json'
 )
 const baseUrl =
   process.env.DIAGNOSIS_REVIEW_IMPORT_BASE_URL ||

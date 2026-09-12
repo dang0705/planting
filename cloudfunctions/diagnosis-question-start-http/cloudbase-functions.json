@@ -1,0 +1,5 @@
+{
+  "functionsRoot": ".",
+  "functions": [{"name": "diagnosis-question-start-http", "directory": "."}],
+  "routes": [{"functionName": "diagnosis-question-start-http", "path": "/diagnosis/question/start"}]
+}

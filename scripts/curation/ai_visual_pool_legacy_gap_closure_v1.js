@@ -2,8 +2,8 @@
 
 const metadata = {
   envId: 'cloud1-2grufevs395a9d5e',
-  batchId: 'batch_20260413_ai_visual_pool_legacy_gap_closure',
-  versionTag: 'v20260413_ai_legacy_gap_v1',
+  batchId: 'batch_20260413_ai_visual_pool_session_gap_closure',
+  versionTag: 'v20260413_ai_session_gap_v1',
   auditDate: '2026-04-13',
   publishedAt: '2026-04-13 21:30:00',
   sourceType: 'manual',
@@ -465,8 +465,8 @@ const closures = [
       questionLevel: 1,
       observability: 'high',
       priority: 90,
-      helpTextCn: '观察斑块是否在扩大、加深，边界是否比周边组织更暗，而不是静止不变的旧伤或稳定斑纹。',
-      whyThisQuestionCn: '扩展性黑斑是典型真菌性叶斑入口之一，能把单纯旧斑、机械伤和稳定斑纹排除出去。',
+      helpTextCn: '观察斑块是否在扩大、加深，边界是否比周边组织更暗，而不是静止不变的既有伤或稳定斑纹。',
+      whyThisQuestionCn: '扩展性黑斑是典型真菌性叶斑入口之一，能把单纯既有斑、机械伤和稳定斑纹排除出去。',
       sourceKeys: ['fungalLeafSpot'],
       problemKeys: ['alternaria_leaf_spot'],
       strategyBase: 90,

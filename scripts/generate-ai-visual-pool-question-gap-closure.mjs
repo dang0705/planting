@@ -95,11 +95,11 @@ const outputs = [
       preClosureLines: [
         '- `ai_visual_pool=yes` 且 `data_status=audited` 的 visual/hybrid 症状池中，有 19 条正式 question data 缺口。',
         '- 缺口基线文档保留在 [docs/ai_visual_pool_question_gaps_v1.md](./ai_visual_pool_question_gaps_v1.md)。',
-        '- 运行时兜底规则保留在 [docs/new-rules/视觉候选症状追问承接与兜底确认规则_v1.md](./new-rules/视觉候选症状追问承接与兜底确认规则_v1.md)。'
+        '- 运行时保守规则保留在 [docs/new-rules/视觉候选症状追问承接与保守确认规则_v1.md](./new-rules/视觉候选症状追问承接与保守确认规则_v1.md)。'
       ],
       reviewFocusLines: [
         '- 13 条 B/C/D 组症状均已采用双题：confirm + context。',
-        '- 6 条高特异/高可见症状保留单题确认，不人为膨胀 queue。',
+        '- 6 条高特异/高可见症状保留单题确认，不人为膨胀 pendingList。',
         '- 所有正式题均具备 `yes / no / unknown` 三个 audited 选项。',
         '- 所有题都带有权威来源 URL，可被外部 GPT 继续逐条抽查。'
       ]

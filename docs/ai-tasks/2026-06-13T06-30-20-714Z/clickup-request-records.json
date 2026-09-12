@@ -1,0 +1,22 @@
+[
+  {
+    "id": "clickup.get_task",
+    "provider": "clickup",
+    "method": "GET",
+    "url": "https://api.clickup.com/api/v2/task/86exxzd5t",
+    "status": "success",
+    "inputSummary": "读取 ClickUp task 86exxzd5t",
+    "statusCode": 200,
+    "outputSummary": "{\"id\":\"86exxzd5t\",\"custom_id\":null,\"custom_item_id\":0,\"name\":\"统一问诊题干与答案选项数据层：固定 questionId / text / options\",\"text_content\":\"统一问诊题干与答案选项数据层：固定 questionId / text / options\\n\\n背景\\n\\n当前问诊题包中的题干与答案选项没有被有效统一管理。\\n\\n已观察到的问题：\\n\\n同一个 packageTopic = watering_frequency_context，在黄叶模式与萎蔫 / 枯萎模式中出现了截然不同的 questionId 和 text。\\n\\n这说明当前 questionId 很可能是后端运行时临时生成，或由题包组装逻辑动态派生，而不是来自稳定的数据层定义。\\n\\n这属于设计漏洞：\\n\\n同一语义题目无法稳定追踪；\\n前端无法通过 questionId 识别固定题干与固定答案；\\n回测、埋点、结果归因、answer 映射都会变得不可靠；\\n同一 topic 在不同模式中可能漂移成不同问题；\\n后续扩展题包时会继续产生重复题、伪重复题和兼容分支。\\n\\n目标\\n\\n建立统一的问诊题目数据层，使题目具备稳定、可追踪、可复用的定义。\\n\\n核心目标：\\n\\n固定题干。\\n固定 questionId。\\n固定 text。\\n固定 helpText。\\n固定答案选项。\\n通过 questionId 能查到固定答案选项。\\n题包只引用题目定义，不再临时生成题目身份。\\n\\n必须修正的具体问题\\n\\nwatering_frequency_context 统一口径\\n\\n当前 watering_frequency_context 应统一以萎蔫 / 枯萎模式中的题干为准：\\n\\n请您选择在过去的10天内，哪几天浇了"
+  },
+  {
+    "id": "clickup.get_task_comments",
+    "provider": "clickup",
+    "method": "GET",
+    "url": "https://api.clickup.com/api/v2/task/86exxzd5t/comment",
+    "status": "success",
+    "inputSummary": "读取 ClickUp task comments 86exxzd5t",
+    "statusCode": 200,
+    "outputSummary": "{\"comments\":[]}"
+  }
+]

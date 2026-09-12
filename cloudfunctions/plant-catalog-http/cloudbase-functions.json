@@ -17,6 +17,10 @@
     },
     {
       "functionName": "plant-catalog-http",
+      "path": "/catalog/image-urls"
+    },
+    {
+      "functionName": "plant-catalog-http",
       "path": "/catalog/health"
     }
   ]

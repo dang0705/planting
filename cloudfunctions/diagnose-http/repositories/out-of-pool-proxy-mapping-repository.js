@@ -10,9 +10,9 @@ let cachedMappings = []
 let cachedAt = 0
 let proxyMappingSchemaEnsured = false
 
-function safeJsonParse(value, fallback = null) {
+function safeJsonParse(value, conservative = null) {
   if (value === null || value === undefined || value === '') {
-    return fallback
+    return conservative
   }
   if (typeof value === 'object') {
     return value
@@ -20,13 +20,13 @@ function safeJsonParse(value, fallback = null) {
   try {
     return JSON.parse(String(value))
   } catch {
-    return fallback
+    return conservative
   }
 }
 
-function normalizeText(value = '', fallback = '') {
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function normalizeMappingRow(row = {}) {
@@ -71,22 +71,22 @@ async function ensureOutOfPoolProxyMappingSchema() {
   return true
 }
 
-function normalizePageNumber(value, fallback = 1) {
+function normalizePageNumber(value, conservative = 1) {
   const normalized = Number(value || 0)
-  if (!Number.isFinite(normalized) || normalized < 1) {return fallback}
+  if (!Number.isFinite(normalized) || normalized < 1) {return conservative}
   return Math.floor(normalized)
 }
 
-function normalizePageSize(value, fallback = 20) {
+function normalizePageSize(value, conservative = 20) {
   const normalized = Number(value || 0)
-  if (!Number.isFinite(normalized) || normalized < 1) {return fallback}
+  if (!Number.isFinite(normalized) || normalized < 1) {return conservative}
   return Math.min(100, Math.floor(normalized))
 }
 
-function normalizeMappingStatus(value = '', fallback = 'pending') {
+function normalizeMappingStatus(value = '', conservative = 'pending') {
   const normalized = normalizeText(value, '').toLowerCase()
-  if (!normalized || normalized === 'all') {return fallback}
-  return ALLOWED_MAPPING_STATUSES.has(normalized) ? normalized : fallback
+  if (!normalized || normalized === 'all') {return conservative}
+  return ALLOWED_MAPPING_STATUSES.has(normalized) ? normalized : conservative
 }
 
 function normalizeStatusFilter(value = 'all') {

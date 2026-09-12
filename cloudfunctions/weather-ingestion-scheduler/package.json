@@ -1,0 +1,19 @@
+{
+  "name": "weather-ingestion-scheduler",
+  "version": "1.0.0",
+  "description": "天气定时采集调度函数",
+  "main": "app.js",
+  "scripts": {
+    "start": "node ../../node_modules/@cloudbase/functions-framework/bin/tcb-ff.js --port=9010 --functionsConfigFile=cloudbase-functions.json"
+  },
+  "dependencies": {
+    "@cloudbase/functions-framework": "^1.18.0",
+    "@cloudbase/manager-node": "5.5.5",
+    "@cloudbase/node-sdk": "^3.16.0",
+    "axios": "^1.6.0",
+    "date-fns-tz": "^3.2.0",
+    "geolib": "^3.3.14",
+    "solarlunar": "3.1.0",
+    "suncalc": "1.9.0"
+  }
+}

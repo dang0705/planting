@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="340.123" height="107.691" viewBox="0 0 340.123 107.691">
+<g transform="translate(52.17,37.64) scale(0.9925,1.0000)">
+<path id="Frame" opacity="0.5" d="M0.906872 0.906872H241.228" fill="none" stroke="#2D7A4F" stroke-width="1.81374" stroke-linecap="round" stroke-dasharray="6.8 5.67" stroke-dashoffset="0"><animate attributeName="stroke-dashoffset" from="0" to="-12.47" dur="1.4s" repeatCount="indefinite" calcMode="linear"/></path>
+</g>
+<g transform="translate(52.17,51.35) scale(0.9933,1.0000)">
+<path id="Vector" opacity="0.4" d="M0.793513 0.793513H236.58" fill="none" stroke="#2D7A4F" stroke-width="1.58703" stroke-linecap="round" stroke-dasharray="6.8 5.67" stroke-dashoffset="0"><animate attributeName="stroke-dashoffset" from="0" to="-12.47" dur="1.4s" repeatCount="indefinite" calcMode="linear"/></path>
+</g>
+</svg>

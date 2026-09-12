@@ -1,0 +1,231 @@
+{
+  "source": "codex_recovery_after_zcode",
+  "status": "completed",
+  "codex_self_implementation": false,
+  "zcode_completion_claim_treated_as_non_authoritative": true,
+  "git_diff_recovered_by_codex": true,
+  "allowed_forbidden_paths_checked": true,
+  "project_constraints_checked_by_codex": true,
+  "zcode_handoff_manual": {
+    "read_by_codex": true,
+    "path": ".tmp/dispatch-task/example-zcode-ui-001-handoff-manual.json",
+    "status": "completed",
+    "updated_at": "2026-06-29T15:00:00.000Z"
+  },
+  "zcode_send_receipt": {
+    "dispatch_run_id": "example-zcode-ui-001",
+    "status": "sent",
+    "blocker": null,
+    "transport": {
+      "kind": "zcode_visible_clipboard",
+      "target_session": "current_open_chat",
+      "status": "sent",
+      "fallback": "none",
+      "headless_used": false
+    },
+    "prompt_identity": {
+      "path": "/Users/jay/WebstormProjects/planting/.tmp/dispatch-task/example-zcode-ui-001-prompt.txt",
+      "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "bytes": 4096,
+      "lines": 96,
+      "verified_before_after": true
+    },
+    "clipboard": {
+      "write_attempts": [
+        {
+          "method": "nspasteboard",
+          "status": "verified",
+          "readback_verified": true,
+          "attempted_at": "2026-07-30T08:00:00.000Z"
+        }
+      ],
+      "selected_method": "nspasteboard",
+      "readback_verified": true,
+      "verified_at": "2026-07-30T08:00:01.000Z"
+    },
+    "input_focus": {
+      "latest_app_state_checked": true,
+      "unique_entry_area": true,
+      "clicked": true,
+      "focused_element_verified": true,
+      "element_index_persisted": false,
+      "verified_at": "2026-07-30T08:00:02.000Z"
+    },
+    "paste_delivery": {
+      "attempts": [
+        {
+          "method": "cmd_v",
+          "delivery_verified": true
+        }
+      ],
+      "selected_method": "cmd_v",
+      "rendering": "pasted_text_attachment",
+      "pre_send_verified": true,
+      "direct_text_identity": null,
+      "attachment": {
+        "name": "Pasted text",
+        "lines": 96,
+        "present_before_send": true,
+        "present_after_send": true
+      },
+      "verified_at": "2026-07-30T08:00:03.000Z"
+    },
+    "send_delivery": {
+      "send_clicked": true,
+      "input_submitted": true,
+      "conversation_state_changed": true,
+      "conversation_delivery_verified": true,
+      "verified_at": "2026-07-30T08:00:04.000Z"
+    },
+    "redaction": {
+      "prompt_body_persisted": false,
+      "old_clipboard_persisted": false,
+      "credential_persisted": false,
+      "raw_ui_dump_persisted": false,
+      "element_index_persisted": false
+    },
+    "created_at": "2026-07-30T08:00:00.000Z",
+    "sent_at": "2026-07-30T08:00:05.000Z"
+  },
+  "zcode_recovery_evidence": {
+    "handoff_manual_read": true,
+    "git_status_read": true,
+    "git_diff_read": true,
+    "forbidden_paths_clean": true,
+    "no_unapproved_dependencies": true,
+    "visible_clipboard_receipt_validated": true
+  },
+  "changed_files": [
+    "src/pages/home/index.vue",
+    "src/components/home/ReminderCard.vue"
+  ],
+  "implementation_summary": "ZCode 按合同实现首页提醒卡片，Codex 已回收真实 diff 并执行验证。",
+  "deviations_or_blockers": [],
+  "ui_scope_map": [
+    {
+      "node_id": "10:20",
+      "name": "Reminder Card",
+      "type": "must_implement",
+      "code_candidates": [
+        "src/components/home"
+      ],
+      "selected_path": "src/components/home/ReminderCard.vue",
+      "reason": "无同职责现有提醒卡片组件，复用 uni-card 作为语义容器",
+      "qa_required": true
+    }
+  ],
+  "figma_fetch_evidence": {
+    "status": "success",
+    "acquired_by": "external_implementer",
+    "acquired_before_first_ui_edit": true,
+    "source_link": "https://figma.com/design/example/file?node-id=10-20",
+    "node_id": "10:20",
+    "calls": [
+      "get_metadata",
+      "get_design_context",
+      "get_screenshot"
+    ],
+    "nodes_read": [
+      "10:20"
+    ],
+    "screenshot_ref": "zcode-evidence/figma-10-20.png",
+    "variables_or_assets_used": [],
+    "unresolved": []
+  },
+  "style_stack_compliance": {
+    "styling_system": "tailwindcss",
+    "tailwind_used": true,
+    "new_scss_added": false,
+    "scss_exception_ref": "",
+    "new_dependencies": []
+  },
+  "component_reuse_evidence": {
+    "searched": [
+      "src/components",
+      "src/pages",
+      "uni_modules"
+    ],
+    "reused": [
+      "uni-card",
+      "uni-icons"
+    ],
+    "newly_created": [
+      "ReminderCard"
+    ],
+    "reason": "项目无同职责组件，新增页面专属轻组件；内部复用 uni-card/uni-icons"
+  },
+  "uni_ui_mapping_evidence": {
+    "status": "completed",
+    "policy": "uni-ui-figma-component-mapper-contract",
+    "generated_before_first_ui_edit": true,
+    "regions": [
+      {
+        "figma_node": "10:20 Reminder Card",
+        "visual_interaction_signal": "白色圆角卡片、标题、摘要、右侧日历图标",
+        "preferred_component": "uni-card",
+        "alternative": "自定义 view",
+        "decision": "used",
+        "reason": "语义是独立信息块，uni-card 可承接卡片容器"
+      },
+      {
+        "figma_node": "10:20 calendar icon",
+        "visual_interaction_signal": "日历语义图标，可点击",
+        "preferred_component": "uni-icons",
+        "alternative": "image/SVG",
+        "decision": "used",
+        "reason": "图标语义可由 uni-icons 表达"
+      }
+    ],
+    "used_components": [
+      "uni-card",
+      "uni-icons"
+    ],
+    "custom_regions": [
+      {
+        "figma_node": "10:20 wrapper layout",
+        "reason": "页面专属外层间距与数据绑定不属于 uni-ui 独立组件职责",
+        "fallback_component": "uni-card"
+      }
+    ],
+    "install_dependency_checked": true,
+    "easycom_policy": "easycom"
+  },
+  "validation_evidence": {
+    "unit_tests": {
+      "result": "not_applicable",
+      "commands": [],
+      "evidence_ref": "",
+      "reason": "纯展示组件无独立单测入口"
+    },
+    "lint": {
+      "result": "not_applicable",
+      "commands": [],
+      "evidence_ref": "",
+      "reason": "仓库未定义独立 lint script"
+    },
+    "typecheck": {
+      "result": "passed",
+      "commands": [
+        "npm run typecheck"
+      ],
+      "evidence_ref": "evidence/typecheck.txt",
+      "reason": ""
+    },
+    "build": {
+      "result": "passed",
+      "commands": [
+        "npm run build:mp-weixin"
+      ],
+      "evidence_ref": "evidence/build.txt",
+      "reason": ""
+    },
+    "self_check": {
+      "result": "passed",
+      "commands": [
+        "manual UI smoke"
+      ],
+      "evidence_ref": "evidence/self-check.png",
+      "reason": ""
+    }
+  }
+}

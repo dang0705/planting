@@ -7,7 +7,7 @@
 ## 2. 事实源优先级
 
 1. 当前仓库文件。
-2. `AGENTS.md` 中的根规则摘要；默认由 main agent 在 Dispatch Plan 中传递给 subagent，subagent 不因本条主动读取完整 `AGENTS.md`。
+2. `AGENTS.md` 中的根规则摘要；默认由 `main agent` 在 Dispatch Plan 中传递给 subagent，subagent 不因本条主动读取完整 `AGENTS.md`。
 3. `docs/ai-rules/` 分类规则。
 4. `docs/ai-tasks/` 当前任务说明。
 5. `docs/ai-runs/` 最新 handoff。
@@ -19,7 +19,7 @@
 
 1. 文档与实际代码不一致时，必须同时报告“代码现状”和“文档要求”。
 2. 分类规则缺失或路径不存在时，必须说明缺失文件，不得假装已读取。
-3. 当前任务说明与长期规则冲突时，必须停止并交给 main agent 裁决。
+3. 当前任务说明与长期规则冲突时，必须停止并交给 `main agent` 裁决。
 4. 用户给出最新裁决时，建议沉淀到 `docs/ai-rules/`、`docs/ai-tasks/`、`docs/ai-runs/` 或 `docs/adr/`。
 
 ## 3. 修改边界
@@ -32,7 +32,7 @@
 6. 不允许绕过类型错误、Lint 错误、测试失败或构建失败。
 7. diff 必须小、可审查，并严格贴合已批准范围。
 8. 可写 agent 修改范围必须来自 Dispatch Plan 或 `architect_reviewer` 的实现边界。
-9. 如果实现过程中发现任务范围不足，必须停止并回报 main agent。
+9. 如果实现过程中发现任务范围不足，必须停止并回报 `main agent`。
 
 ## 4. 验证要求
 

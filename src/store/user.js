@@ -1,5 +1,63 @@
-import { defineStore } from 'pinia'
-import { loginWithCode, loginWithPhone, getAccessToken, getUserById } from '@/api/wechat'
+import { defineStore, getActivePinia } from 'pinia'
+import { loginWithPhone, getUserById } from '@/api/wechat'
+import { clearPlatformSession, getActivePlatformAccessToken } from '@/api/platform-session'
+import { getCloudbaseUserIdentity } from '@/utils/cloudbase-auth'
+import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
+import { normalizeWeatherCoordinates } from '@/utils/weather-coordinate.js'
+import { queryClient } from '@/lib/query-client.js'
+import { USER_PLANTS_QUERY_KEY } from '@/vue-query/plants/queries/user-plants.js'
+import { DIAGNOSIS_HISTORY_QUERY_KEY } from '@/constants/query-keys.js'
+
+const MINI_PROGRAM_AUTH_CACHE_MS = 30 * 1000
+// 隔离性能构建需要让每轮首页回归都真实发出 auth/user 请求；普通构建
+// 继续复用已有身份校验缓存，避免把 QA 采样开关带入业务运行时。
+// 可选链同时兼容 Vite 的小程序编译和 Node ESM 源码契约测试；不能用
+// typeof import.meta，Vite 会为其注入 Node url 模块，小程序运行时不支持。
+// 使用静态 Vite 环境变量访问，确保性能构建能在编译期保留每轮真实 auth/user 刷新。
+// 可选链访问会被小程序构建器裁掉，导致页面只复用登录缓存，性能叶子无法得到目标请求。
+const QA_PERFORMANCE_REFRESH = import.meta.env.VITE_QA_PERFORMANCE_COLD_LANE === '1'
+let miniProgramAuthSyncPromise = null
+let miniProgramAuthIdentity = ''
+let miniProgramAuthCheckedAt = 0
+
+function isMiniProgramRuntime() {
+  return typeof wx !== 'undefined' && typeof wx.cloud?.callFunction === 'function'
+}
+
+function isMissingUserError(error) {
+  return /用户不存在/u.test(String(error?.message || error || ''))
+}
+
+function isActiveMembership(membership = {}) {
+  const type = String(membership.type || 'free')
+  if (!['basic', 'premium'].includes(type)) {
+    return false
+  }
+  if (membership.status && membership.status !== 'active') {
+    return false
+  }
+  if (!membership.expireTime) {
+    return true
+  }
+  const expireTime =
+    typeof membership.expireTime === 'number'
+      ? membership.expireTime
+      : Date.parse(String(membership.expireTime))
+  return Number.isFinite(expireTime) && expireTime > Date.now()
+}
+
+function buildMembership(user = {}) {
+  const type = user.subscription_plan || 'free'
+  const isPaidPlan = ['basic', 'premium'].includes(type)
+  return {
+    type,
+    status: user.subscription_status || 'active',
+    expireTime: user.subscription_endDate || null,
+    // MVP 高阶能力仅对有效会员开放，免费账户不再保留旧的免费诊断额度。
+    freeQuota: isPaidPlan ? 999 : 0,
+    usedCount: user.usage_diagnoseTotal || 0
+  }
+}
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -23,9 +81,10 @@ export const useUserStore = defineStore('user', {
 
     // 会员信息
     membership: {
-      type: 'free', // free | premium
+      type: 'free', // free | basic | premium
+      status: 'active',
       expireTime: null,
-      freeQuota: 5, // 剩余免费诊断次数
+      freeQuota: 0, // 免费账户不可使用高阶诊断
       usedCount: 0
     },
 
@@ -41,30 +100,14 @@ export const useUserStore = defineStore('user', {
   }),
 
   getters: {
-    isPremium: state => state.membership.type === 'premium',
-    canDiagnose: state => {
-      if (state.membership.type === 'premium') {return true}
-      return state.membership.freeQuota > 0
-    },
+    isMember: state => isActiveMembership(state.membership),
+    isPremium: state => state.membership.type === 'premium' && isActiveMembership(state.membership),
+    canDiagnose: state => isActiveMembership(state.membership),
     displayName: state => state.nickname || state.username || '植物爱好者',
-    isAuthenticated: state => Boolean(state.openid)
+    isAuthenticated: state => Boolean(state.userId && getActivePlatformAccessToken())
   },
 
   actions: {
-    /**
-     * 微信登录（使用 code）
-     */
-    async wechatLogin() {
-      try {
-        const loginData = await loginWithCode()
-        this.setLoginInfo(loginData)
-        return loginData
-      } catch (error) {
-        console.error('微信登录失败:', error)
-        throw error
-      }
-    },
-
     /**
      * 手机号登录
      * @param {string} phoneCode - 手机号授权 code
@@ -72,7 +115,10 @@ export const useUserStore = defineStore('user', {
     async phoneLogin(phoneCode) {
       try {
         const loginData = await loginWithPhone(phoneCode)
+        miniProgramAuthIdentity = ''
+        miniProgramAuthCheckedAt = 0
         this.setLoginInfo(loginData)
+        reportAnalyticsEvent(ANALYTICS_EVENTS.USER_LOGIN_SUCCESS)
         return loginData
       } catch (error) {
         console.error('手机号登录失败:', error)
@@ -93,19 +139,98 @@ export const useUserStore = defineStore('user', {
      * @returns {Promise<boolean>} 是否已登录
      */
     async ensureLogin() {
-      // 如果已登录，检查是否需要刷新用户信息
-      if (this.isAuthenticated) {
+      if (!this.isAuthenticated) {
+        return false
+      }
+
+      if (!isMiniProgramRuntime()) {
         this.maybeRefreshUserInfo()
         return true
       }
 
-      // 尝试从本地恢复登录状态（现在由 Pinia 插件自动处理）
-      if (this.isAuthenticated) {
-        this.maybeRefreshUserInfo()
+      if (!miniProgramAuthSyncPromise) {
+        miniProgramAuthSyncPromise = this.reconcileMiniProgramLogin().finally(() => {
+          miniProgramAuthSyncPromise = null
+        })
+      }
+
+      try {
+        return await miniProgramAuthSyncPromise
+      } catch (error) {
+        console.error('微信小程序登录态校验失败:', error)
+        return false
+      }
+    },
+
+    /**
+     * 将旧的持久化用户状态与当前小程序运行时身份重新对齐。
+     * 持久化状态可能来自旧 Web/终端身份，不能仅凭缓存 openid 判定已登录。
+     */
+    async reconcileMiniProgramLogin() {
+      const platformSessionToken = getActivePlatformAccessToken()
+      if (platformSessionToken) {
+        const sessionIdentity = `${this.userId}:${this.openid}`
+        const cacheFresh =
+          !QA_PERFORMANCE_REFRESH &&
+          miniProgramAuthIdentity === sessionIdentity &&
+          Date.now() - miniProgramAuthCheckedAt < MINI_PROGRAM_AUTH_CACHE_MS
+        if (cacheFresh && this.isAuthenticated) {
+          return true
+        }
+
+        const user = await getUserById(this.userId)
+        const remoteUserId = String(user?._id || user?.id || '').trim()
+        if (!remoteUserId || (this.userId && remoteUserId !== String(this.userId))) {
+          this.logout()
+          return false
+        }
+        await this.setLoginInfo({
+          user,
+          openid: user.wechat_openid || user._openid || this.openid,
+          token: platformSessionToken
+        })
+        miniProgramAuthIdentity = `${this.userId}:${this.openid}`
+        miniProgramAuthCheckedAt = Date.now()
+        return this.isAuthenticated
+      }
+
+      const identity = await getCloudbaseUserIdentity()
+      const runtimeOpenid = identity?.openid || ''
+      if (!runtimeOpenid) {
+        throw new Error('微信身份获取失败：wechat-identity 未返回有效 openid')
+      }
+
+      const cacheFresh =
+        !QA_PERFORMANCE_REFRESH &&
+        miniProgramAuthIdentity === runtimeOpenid &&
+        Date.now() - miniProgramAuthCheckedAt < MINI_PROGRAM_AUTH_CACHE_MS
+      if (cacheFresh && this.openid === runtimeOpenid && this.isAuthenticated) {
         return true
       }
 
-      // 需要用户登录
+      if (this.openid !== runtimeOpenid) {
+        this.logout()
+        return false
+      }
+
+      try {
+        const user = await getUserById(this.userId)
+        if (user) {
+          await this.setLoginInfo({
+            user,
+            openid: runtimeOpenid,
+            token: getActivePlatformAccessToken()
+          })
+          miniProgramAuthIdentity = runtimeOpenid
+          miniProgramAuthCheckedAt = Date.now()
+          return this.isAuthenticated
+        }
+      } catch (error) {
+        if (!isMissingUserError(error)) {
+          throw error
+        }
+      }
+
       return false
     },
 
@@ -137,29 +262,13 @@ export const useUserStore = defineStore('user', {
       this.email = user.email || ''
       this.phoneNumber = user.phoneNumber || ''
 
-      // 从 getAccessToken 获取 token
-      try {
-        this.token = await getAccessToken()
-        console.log('获取到 access token:', this.token)
-      } catch (error) {
-        console.error('获取 access token 失败:', error)
-        this.token = loginData.token || ''
-      }
+      // token 仅来自登录响应，不联网获取
+      this.token = loginData.token || loginData.session?.accessToken || getActivePlatformAccessToken()
 
       this.isLoggedIn = true
-      console.log(this.isLoggedIn, 'this.isLoggedIn')
 
       // 从服务端同步会员信息
-      this.membership = {
-        type: user.subscription_plan || 'free',
-        expireTime: user.subscription_endDate || null,
-        // premium 用户无限次，free 用户根据月度使用情况计算剩余次数（每月5次）
-        freeQuota:
-          user.subscription_plan === 'premium'
-            ? 999
-            : Math.max(0, 5 - (user.usage_diagnoseMonth || 0)),
-        usedCount: user.usage_diagnoseTotal || 0
-      }
+      this.membership = buildMembership(user)
     },
 
     /**
@@ -193,7 +302,17 @@ export const useUserStore = defineStore('user', {
      * 设置位置信息
      */
     setLocation(location) {
-      this.location = { ...this.location, ...location }
+      const normalizedLocation = normalizeWeatherCoordinates(location)
+      this.location = {
+        ...this.location,
+        ...location,
+        ...(normalizedLocation
+          ? {
+              latitude: normalizedLocation.latitude,
+              longitude: normalizedLocation.longitude
+            }
+          : {})
+      }
     },
 
     /**
@@ -207,10 +326,7 @@ export const useUserStore = defineStore('user', {
      * 使用AI配额
      */
     useAIQuota() {
-      if (this.membership.type === 'free' && this.membership.freeQuota > 0) {
-        this.membership.freeQuota--
-        this.membership.usedCount++
-      } else if (this.membership.type === 'premium') {
+      if (isActiveMembership(this.membership)) {
         this.membership.usedCount++
       }
     },
@@ -220,6 +336,7 @@ export const useUserStore = defineStore('user', {
      */
     upgradeToPremium(expireTime) {
       this.membership.type = 'premium'
+      this.membership.status = 'active'
       this.membership.expireTime = expireTime
     },
 
@@ -227,6 +344,13 @@ export const useUserStore = defineStore('user', {
      * 登出
      */
     logout() {
+      const plantStore = getActivePinia()?._s?.get('plants')
+      plantStore?.$reset?.()
+      queryClient.removeQueries({ queryKey: USER_PLANTS_QUERY_KEY })
+      queryClient.removeQueries({ queryKey: DIAGNOSIS_HISTORY_QUERY_KEY })
+      clearPlatformSession()
+      miniProgramAuthIdentity = ''
+      miniProgramAuthCheckedAt = 0
       this.userId = ''
       this.openid = ''
       this.union_id = ''
@@ -239,8 +363,9 @@ export const useUserStore = defineStore('user', {
       this.isLoggedIn = false
       this.membership = {
         type: 'free',
+        status: 'active',
         expireTime: null,
-        freeQuota: 5,
+        freeQuota: 0,
         usedCount: 0
       }
     },
@@ -249,24 +374,15 @@ export const useUserStore = defineStore('user', {
      * 从服务端刷新用户信息（同步会员状态等）
      */
     async refreshUserInfo() {
-      if (!this.openid) {
+      if (!this.isAuthenticated || !this.userId) {
         return false
       }
 
       try {
-        const user = await getUserById(this.openid)
+        const user = await getUserById(this.userId)
         if (user) {
-
           // 更新会员信息
-          this.membership = {
-            type: user.subscription_plan || 'free',
-            expireTime: user.subscription_endDate || null,
-            freeQuota:
-              user.subscription_plan === 'premium'
-                ? 999
-                : Math.max(0, 5 - (user.usage_diagnoseMonth || 0)),
-            usedCount: user.usage_diagnoseTotal || 0
-          }
+          this.membership = buildMembership(user)
 
           // 更新其他可能变化的信息
           this.nickname = user.profile_wechatNickname || user.nickname || this.nickname

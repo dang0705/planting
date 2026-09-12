@@ -2,7 +2,7 @@
 -- Purpose:
 -- 1) Align DB schema to DATABASE_SCHEMA_SPEC_v2 + plants_v13_user_friendly_full_v7.xlsx
 -- 2) Keep internal id PK rule for core dictionary tables
--- 3) Remove legacy columns not in Excel truth source
+-- 3) Remove session columns not in Excel truth source
 --
 -- Target schemas:
 -- - cloud1_dev
@@ -189,7 +189,7 @@ BEGIN
   CALL ensure_unique_index(p_schema, 'symptoms', 'uk_symptoms_symptom_key', '`symptom_key`');
   CALL ensure_id_primary(p_schema, 'symptoms');
 
-  -- 2) drop legacy columns not in Excel truth source
+  -- 2) drop session columns not in Excel truth source
   CALL drop_column_if_exists(p_schema, 'problems', 'note');
   CALL drop_column_if_exists(p_schema, 'problems', '_openid');
 

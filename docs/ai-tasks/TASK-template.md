@@ -39,6 +39,6 @@
 - `code_explorer`：
 - `architect_reviewer`：
 - `implementer_fast` / `implementer_deep`：
-- `qa_reviewer`：
-- `docs_keeper`：
+- main QA：
+- main docs / BRV：
 - `release_ops`：

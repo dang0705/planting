@@ -1,0 +1,75 @@
+import { useMutation } from '@tanstack/vue-query'
+import {
+  requestDiagnosisStart,
+  requestDiagnoseStream
+} from '../../../http-functions/diagnose/client.js'
+import {
+  buildDiagnosePayload,
+  handleDiagnoseError,
+  runDiagnoseSuccessCallbacks,
+  validateDiagnoseInput
+} from './shared'
+
+export function useDiagnoseMutation() {
+  return useMutation({
+    mutationKey: ['diagnose', 'start'],
+    mutationFn: async ({
+      image,
+      images = [],
+      imageIds = [],
+      description,
+      plantId,
+      userPlantId,
+      plantCatalogId,
+      observedSymptoms = [],
+      observedEvidenceSet = [],
+      latestVisualCallBatchId = null,
+      visualBatchTrace = null,
+      diagnosisProfile = 'full',
+      entrySource = 'diagnose_tab',
+      onText,
+      onFinish,
+      onError
+    } = {}) => {
+      try {
+        onText?.('正在检查照片...', '正在检查照片...')
+        validateDiagnoseInput({
+          plantId,
+          userPlantId,
+          plantCatalogId,
+          entrySource,
+          image,
+          images,
+          observedSymptoms
+        })
+
+        const requestPayload = buildDiagnosePayload({
+          plantId,
+          userPlantId,
+          plantCatalogId,
+          image,
+          images,
+          imageIds,
+          description,
+          observedSymptoms,
+          observedEvidenceSet,
+          latestVisualCallBatchId,
+          visualBatchTrace,
+          diagnosisProfile,
+          entrySource
+        })
+        const normalizedResult =
+          typeof onText === 'function'
+            ? await requestDiagnoseStream(requestPayload, {
+                onProgress: fullText => onText?.(fullText, fullText)
+              })
+            : await requestDiagnosisStart(requestPayload)
+
+        return runDiagnoseSuccessCallbacks(normalizedResult, { onText, onFinish })
+      } catch (error) {
+        console.error('同步诊断失败:', error)
+        return handleDiagnoseError(error, { onError })
+      }
+    }
+  })
+}

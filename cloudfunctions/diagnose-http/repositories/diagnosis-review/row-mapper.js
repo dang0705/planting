@@ -41,10 +41,9 @@ function buildRouteDecisionReviewSummary(routeDecision = null, stopReason = '') 
       activeRouteGroupKeys: [],
       visibleOutcomeKeys: [],
       visibleOutcomeCount: 0,
-      nextQuestionKeys: [],
       visibleActionConflictGroups: [],
       visibleActionProfileKeys: [],
-      requiresFollowUp: false,
+      requiresQuestion: false,
       decisionCause: {
         decisionCauseKey: '',
         decisionCauseText: '',
@@ -64,9 +63,6 @@ function buildRouteDecisionReviewSummary(routeDecision = null, stopReason = '') 
   const visibleActionConflictGroups = Array.isArray(safeDecision.visibleActionConflictGroups)
     ? safeDecision.visibleActionConflictGroups.map(item => String(item || '').trim()).filter(Boolean)
     : []
-  const nextQuestionKeys = Array.isArray(safeDecision.nextQuestionKeys)
-    ? safeDecision.nextQuestionKeys.map(item => String(item || '').trim()).filter(Boolean)
-    : []
 
   const candidateOutcomeStates = Array.isArray(safeDecision.candidateOutcomeStates)
     ? safeDecision.candidateOutcomeStates.map(state => ({
@@ -75,11 +71,8 @@ function buildRouteDecisionReviewSummary(routeDecision = null, stopReason = '') 
       routeKeys: Array.isArray(state?.routeKeys)
         ? state.routeKeys.map(item => String(item || '').trim()).filter(Boolean)
         : [],
-      missingGateKeys: Array.isArray(state?.missingGateKeys)
-        ? state.missingGateKeys.map(item => String(item || '').trim()).filter(Boolean)
-        : [],
-      nextQuestionKeys: Array.isArray(state?.nextQuestionKeys)
-        ? state.nextQuestionKeys.map(item => String(item || '').trim()).filter(Boolean)
+      missingConditionKeys: Array.isArray(state?.missingConditionKeys)
+        ? state.missingConditionKeys.map(item => String(item || '').trim()).filter(Boolean)
         : []
     }))
     : []
@@ -105,12 +98,11 @@ function buildRouteDecisionReviewSummary(routeDecision = null, stopReason = '') 
       : [],
     visibleOutcomeKeys,
     visibleOutcomeCount: visibleOutcomeKeys.length,
-    nextQuestionKeys,
     visibleActionConflictGroups,
     visibleActionProfileKeys: Array.isArray(safeDecision.visibleActionProfileKeys)
       ? safeDecision.visibleActionProfileKeys.map(item => String(item || '').trim()).filter(Boolean)
       : [],
-    requiresFollowUp: Boolean(safeDecision.requiresFollowUp),
+    requiresQuestion: Boolean(safeDecision.requiresQuestion),
     decisionCause,
     candidateOutcomeStates,
     hasVisibleOutcome: visibleOutcomeKeys.length > 0,
@@ -145,8 +137,7 @@ function mapDiagnosisReviewRow(row = {}) {
   const derivedEvidenceSet = Array.isArray(runtimeSnapshot?.derivedEvidenceSet)
     ? runtimeSnapshot.derivedEvidenceSet
     : []
-  const _questionQueue = runtimeSnapshot?.questionQueue || null
-  const questionCountSummary = resolveQuestionCountSummary(row, runtimeSnapshot)
+  const questionCountSummary = resolveQuestionCountSummary(row)
   const stopReason = normalizeStoredNullableText(
     runtimeSnapshot?.stopReason || runtimeSnapshot?.stopState?.stopReason,
     ''
@@ -204,7 +195,7 @@ function mapDiagnosisReviewRow(row = {}) {
     stopReason,
     sessionStatus: String(row.session_status || '').trim(),
     identityResolutionStatus: String(row.current_identity_resolution_status || '').trim(),
-    followUpRound: Number(row.follow_up_round || 0),
+    questionRound: Number(row.follow_up_round || 0),
     currentRoundIndex: Number(row.current_round_index || 0),
     imageCount: Number(row.image_count || 0),
     previewVisualRawImageRecordId: String(row.preview_visual_raw_image_record_id || '').trim(),
@@ -212,7 +203,7 @@ function mapDiagnosisReviewRow(row = {}) {
     hasReplayImage: imagePreview.hasReplayImage,
     imageState: imagePreview.imageState,
     hunyuanPromptAudit,
-    // 兼容前端列表直接消费的平铺字段（避免再次手工拆 nested 字段）
+    // 当前前端列表直接消费的平铺字段（避免再次手工拆 nested 字段）
     llmPromptText: String(normalizedPromptRow.llm_prompt_text || '').trim(),
     llmPromptPreview: String(normalizedPromptRow.llm_prompt_preview || '').trim(),
     llmPromptLength: Number(normalizedPromptRow.llm_prompt_length || 0),
@@ -239,7 +230,7 @@ function mapDiagnosisReviewRow(row = {}) {
     diagnosisDirectionLabels: directionLabels,
     symptomClass: buildSymptomClassRuntimeReviewPayload(runtimeSnapshot?.symptomClassRuntime || null),
     questionCountSummary,
-    reviewSourceType: String(row.review_source_type || '').trim() || 'legacy',
+    reviewSourceType: String(row.review_source_type || '').trim() || 'session',
     clientPlatform: String(row.client_platform || '').trim(),
     reviewSourceEvidence: String(row.review_source_evidence || '').trim(),
     batchReviewMeta:
@@ -259,8 +250,7 @@ function mapDiagnosisReviewRow(row = {}) {
       observedEvidenceCount: observedEvidenceSet.length,
       derivedEvidenceCount: derivedEvidenceSet.length,
       diagnosisDirectionLabels: directionLabels,
-      questionCountSummary,
-      _questionQueue
+      questionCountSummary
     },
     routeDecisionSummary
   }

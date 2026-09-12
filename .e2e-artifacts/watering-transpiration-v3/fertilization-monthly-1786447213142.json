@@ -1,0 +1,164 @@
+{
+  "task": "watering-transpiration-v3-e2e-trae-20260713",
+  "gitHead": "e21c5605c6077bf8a5eb14da83c476738e824ee0",
+  "branch": "sprint-ai-workflow",
+  "baseHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "projectPath": "/Users/jay/WebstormProjects/planting/.tmp/dispatch-task/qa-runtime-sessions/fertilization-global-chain-20260811-r23-IBycYM/project",
+  "mode": "fertilization-monthly",
+  "wsEndpoint": "ws://127.0.0.1:53063",
+  "startedAt": "2026-08-11T11:19:45.795Z",
+  "endedAt": "2026-08-11T11:20:13.142Z",
+  "pages": [
+    {
+      "path": "/pages/index/index",
+      "time": "2026-08-11T11:19:48.714Z"
+    },
+    {
+      "path": "pages/user-plant-detail/user-plant-detail",
+      "time": "2026-08-11T11:20:00.236Z"
+    }
+  ],
+  "pageDataSummaries": [
+    {
+      "path": "/pages/index/index",
+      "summary": {
+        "fertilizationPopup": true,
+        "monthlyRowCount": 12,
+        "tableText": "月份 液体肥 缓释肥 1月 2月 3月 4月 5月 6月 7月 8月 9月 10月 11月 12月 暂停施肥 每月1次 暂停施肥 暂停追加 约3个月1次（长新叶或新芽时） 暂停追加 适用范围：温带室内盆栽参考（龟背竹属） 液体肥和缓释肥选一种，不要同时使用。 本表按温带室内盆栽的季节和生长节点整理。月份是参考，请结合植物是否正在长新叶或新芽调整施肥。表中某一格标为“暂停施肥”或“暂停追加”时，表示该栏对应的肥料在该月默认不追加；本功能不会为这类月份建立提醒。若植物仍持续长新叶或新芽，请人工参考同一张表中最近的生长期固定周期；找不到对应固定周期时，不要使用该肥料。 数据来源：RHS、UMN Extension"
+      },
+      "time": "2026-08-11T11:19:52.505Z"
+    }
+  ],
+  "capturedRequests": [],
+  "assertions": [
+    {
+      "name": "首页通过真实 plant store 展示 Monstera 夹具植物",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:19:48.743Z"
+    },
+    {
+      "name": "首页夹具截图有效",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:19:51.833Z"
+    },
+    {
+      "name": "截图 handoff 后首页植物卡片仍可定位",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:19:51.870Z"
+    },
+    {
+      "name": "首页植物卡片显示施肥入口",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:19:51.890Z"
+    },
+    {
+      "name": "首页底部施肥弹框打开",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:19:52.504Z"
+    },
+    {
+      "name": "首页弹框显示月度施肥表",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:19:52.504Z"
+    },
+    {
+      "name": "首页弹框包含 1—12 月",
+      "passed": true,
+      "detail": "found 12/12 months",
+      "time": "2026-08-11T11:19:52.505Z"
+    },
+    {
+      "name": "首页弹框显示来源名称",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:19:52.505Z"
+    },
+    {
+      "name": "首页弹框显示月度表适用范围和调整提示",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:19:52.505Z"
+    },
+    {
+      "name": "首页弹框不展示内部证据字段",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:19:52.505Z"
+    },
+    {
+      "name": "首页弹框使用施肥提醒文案",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:19:52.525Z"
+    },
+    {
+      "name": "施肥提醒只展示当前月的固定周期选项",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:19:52.564Z"
+    },
+    {
+      "name": "施肥提醒可请求提醒日期预览",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:19:52.564Z"
+    },
+    {
+      "name": "施肥提醒显示提醒日期预览",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:19:52.970Z"
+    },
+    {
+      "name": "无历史日期时显示首次确认提醒",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:19:52.970Z"
+    },
+    {
+      "name": "首页施肥弹框截图有效",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:19:56.060Z"
+    },
+    {
+      "name": "首页施肥弹框可关闭",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:19:56.106Z"
+    },
+    {
+      "name": "关闭施肥弹框后首页植物卡片仍可定位",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:19:56.502Z"
+    },
+    {
+      "name": "首页真实植物卡片入口可进入 user-plant-detail 路由",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:20:00.236Z"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/watering-transpiration-v3/fertilization-monthly-home.png",
+      "time": "2026-08-11T11:19:51.833Z"
+    },
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/watering-transpiration-v3/fertilization-monthly-popup.png",
+      "time": "2026-08-11T11:19:56.060Z"
+    }
+  ],
+  "classification": "BLOCKED_ENV",
+  "blockerReason": "timeout",
+  "status": "failed",
+  "failure_kind": "failed_environment",
+  "business_assertions_reached": false
+}

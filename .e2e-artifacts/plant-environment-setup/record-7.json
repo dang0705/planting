@@ -1,0 +1,108 @@
+{
+  "status": "completed",
+  "plantId": 7,
+  "source": "real_ui_form_submission",
+  "no_direct_api_write": true,
+  "selections": {
+    "light": {
+      "windowType": "standard",
+      "facing": "south",
+      "distance": 2,
+      "position": "middle",
+      "hasDirectSun": false
+    },
+    "air": {
+      "source": "window",
+      "windowDirectionCount": "one",
+      "windowOpenFrequency": "daily",
+      "canopyOpenness": "open",
+      "deviceAirflow": "none"
+    }
+  },
+  "routes": [
+    "pages/index/index",
+    "pages/user-plant-detail/user-plant-detail",
+    "/pages/plant-environment/light-environment",
+    "/pages/airflow/index",
+    "pages/user-plant-detail/user-plant-detail"
+  ],
+  "statusText": {
+    "light": "已设置 · 有窗 · 南向",
+    "air": "开窗换气，没有设备风"
+  },
+  "savedAirSummary": "当前记录\n主要靠开窗 · 无遮挡 · 没有设备风",
+  "locationBindingConfirmed": true,
+  "cleanup": {
+    "status": "terminated",
+    "code": "test_owned_runtime_terminated",
+    "before": {
+      "main_pid": 65817,
+      "control_listener_pids": [
+        65862
+      ],
+      "automator_listener_pids": [
+        65986
+      ],
+      "local_runtime_owner_alive": true,
+      "local_runtime_lease": {
+        "version": 1,
+        "target_path": "/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin",
+        "owner_pid": 65548,
+        "owner_id": "50707af8-15e8-450d-bf8a-9bf259499d65",
+        "created_at": "2026-08-09T06:29:19.704Z",
+        "updated_at": "2026-08-09T06:29:19.708Z",
+        "child_pid": 65650,
+        "api_base_url": "http://192.168.50.80:3010"
+      },
+      "local_runtime_lease_path": "/Users/jay/WebstormProjects/planting/.tmp/local-runtime-sessions/a809669361b35dd8af92ed5460030a636f00bc2096a3219da11e5a3f81cc83a5.json"
+    },
+    "after": {
+      "main_pid": null,
+      "control_listener_pids": [],
+      "automator_listener_pids": [],
+      "local_runtime_owner_alive": false,
+      "local_runtime_lease": null,
+      "local_runtime_lease_path": "/Users/jay/WebstormProjects/planting/.tmp/local-runtime-sessions/a809669361b35dd8af92ed5460030a636f00bc2096a3219da11e5a3f81cc83a5.json"
+    },
+    "user_devtools_cleanup_before": {
+      "status": "not_needed",
+      "protected_root": "/Users/jay/WebstormProjects/planting/.tmp/dispatch-task/qa-runtime-sessions",
+      "terminated": []
+    },
+    "user_devtools_cleanup_after": {
+      "status": "terminated",
+      "protected_root": "/Users/jay/WebstormProjects/planting/.tmp/dispatch-task/qa-runtime-sessions",
+      "terminated": [
+        {
+          "pid": 65816,
+          "command": "wechatwebdevtools Daemon vtools.app/Contents/MacOS/wechatwebdevtools --cli --remote-port 3799   --enable-service-port --ide-http-port",
+          "reason": "orphaned_user_devtools_daemon",
+          "remaining": []
+        },
+        {
+          "pid": 65819,
+          "command": "/Applications/wechatwebdevtools.app/Contents/Frameworks/nwjs Framework.framework/Versions/91.0.4472.114/Helpers/chrome_crashpad_handler --monitor-self --monitor-self-annotation=ptype=crashpad-handler --database=/Users/jay/Library/Application Support/微信开发者工具/Crashpad --metrics-dir=/Users/jay/Library/Application Support/微信开发者工具 --annotation=plat=OS X --annotation=prod=微信开发者工具 --annotation=ver=1.06.2504060 --handshake-fd=8",
+          "reason": "orphaned_user_devtools_support_process",
+          "remaining": []
+        },
+        {
+          "pid": 65821,
+          "command": "/Applications/wechatwebdevtools.app/Contents/Frameworks/nwjs Framework.framework/Versions/91.0.4472.114/Helpers/chrome_crashpad_handler --no-periodic-tasks --monitor-self-annotation=ptype=crashpad-handler --database=/Users/jay/Library/Application Support/微信开发者工具/Crashpad --annotation=plat=OS X --annotation=prod=微信开发者工具 --annotation=ver=1.06.2504060 --handshake-fd=4",
+          "reason": "orphaned_user_devtools_support_process",
+          "remaining": []
+        },
+        {
+          "pid": 66234,
+          "command": "/Applications/wechatwebdevtools.app/Contents/Frameworks/nwjs Framework.framework/Versions/91.0.4472.114/Helpers/wechatwebdevtools Helper (Renderer).app/Contents/MacOS/node --inspect-port=0 /Applications/wechatwebdevtools.app/Contents/Resources/package.nw/js/libs/vseditor/src/bootstrap-fork --type=extensionHost",
+          "reason": "orphaned_user_devtools_support_process",
+          "remaining": []
+        }
+      ]
+    },
+    "ports": {
+      "automator": 63699,
+      "control": 63700
+    },
+    "session_id": "mvp-completion-20260809-record-environment-7-7968212e-c4a5-4615-9916-7055079313a7"
+  }
+}

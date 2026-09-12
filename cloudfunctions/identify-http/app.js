@@ -3,6 +3,7 @@
 const https = require('https')
 const {
   jsonResponse,
+  internalServerError,
   notFound,
   methodNotAllowed,
   getHttpRequestData,
@@ -12,16 +13,25 @@ const {
 } = require('/opt/utils/http')
 const { findCanonicalPlantMatch } = require('/opt/utils/plant-knowledge')
 const { persistIdentifyRuntimeArtifacts } = require('/opt/utils/identify-runtime')
+let platformSession
+try {
+  platformSession = require('/opt/utils/platform-session')
+} catch {
+  platformSession = require('../layer/utils/platform-session')
+}
+const { assertPlatformFeature } = platformSession
 
 const AK = process.env.BAIDU_AK
 const SK = process.env.BAIDU_SK
 
 function pickPlantMatchFields(plant) {
-  if (!plant) {return null}
+  if (!plant) {
+    return null
+  }
   return {
     id: plant.id || '',
     plantIdentityId: plant.plantIdentityId || '',
-    legacyPlantId: plant.legacyPlantId || '',
+    sessionPlantId: plant.sessionPlantId || '',
     canonicalName: plant.canonicalName || '',
     matchAlias: plant.matchAlias || '',
     internetName: plant.internetName || ''
@@ -215,6 +225,14 @@ async function main(event, context) {
     if (!userInfo?.openid) {
       return jsonResponse(401, { code: 401, message: '请先登录', data: null })
     }
+    try {
+      assertPlatformFeature(userInfo, path)
+    } catch (error) {
+      if (Number(error?.statusCode) === 403) {
+        return jsonResponse(403, { code: error.code, message: error.message, data: null })
+      }
+      throw error
+    }
 
     const imageUrl = payload.imageUrl
     if (!imageUrl) {
@@ -230,12 +248,8 @@ async function main(event, context) {
 
     const topResult = processed.data.result?.[0] || {}
     const matches = await findCanonicalPlantMatch(topResult.name || '')
-    const {
-      strongMatch,
-      primaryCandidate,
-      taxonomyMatchStatus,
-      identityResolutionStatus
-    } = classifyIdentityMatches(matches)
+    const { strongMatch, primaryCandidate, taxonomyMatchStatus, identityResolutionStatus } =
+      classifyIdentityMatches(matches)
     const simplifiedMatchedPlant = pickPlantMatchFields(strongMatch)
     const simplifiedCandidates = matches.map(pickPlantMatchFields).filter(Boolean)
     const identifyId = buildIdentifyId()
@@ -254,7 +268,7 @@ async function main(event, context) {
       taxonomyMatchStatus,
       identityResolutionStatus,
       inputSlotType: 'unknown',
-      legacyCanonicalPlantId: simplifiedMatchedPlant?.id || null
+      sessionCanonicalPlantId: simplifiedMatchedPlant?.id || null
     })
 
     return jsonResponse(200, {
@@ -269,13 +283,12 @@ async function main(event, context) {
         identityResolutionStatus,
         routePrimaryAction: runtimeArtifacts.routePrimaryAction,
         matchedPlant: simplifiedMatchedPlant,
-        candidates: simplifiedCandidates,
-        raw: processed.data
+        candidates: simplifiedCandidates
       }
     })
   } catch (error) {
     console.error('identify-http error:', error)
-    return jsonResponse(500, { code: 500, message: error.message, data: null })
+    return internalServerError('植物识别暂时不可用，请稍后重试')
   }
 }
 

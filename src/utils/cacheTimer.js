@@ -12,7 +12,7 @@ let timerId = null
  * @returns {number} 定时器 ID
  */
 export function startCacheTimer(callback, remainingTime) {
-  // 清除旧定时器，防止内存泄漏
+  // 清除既有定时器，防止内存泄漏
   clearCacheTimer()
 
   if (remainingTime <= 0) {

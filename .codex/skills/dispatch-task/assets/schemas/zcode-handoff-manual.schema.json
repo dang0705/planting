@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ZCode Handoff Manual",
+  "type": "object",
+  "required": [
+    "dispatch_run_id",
+    "updated_at",
+    "phase"
+  ],
+  "properties": {
+    "dispatch_run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "description": "Legacy in-flight manual status. Future generated provider contracts must use provider_status instead; status is accepted only for the legacy send/receipt contract.",
+      "enum": [
+        "working",
+        "completed",
+        "blocked"
+      ]
+    },
+    "provider_status": {
+      "description": "Future provider delivery status. provider_delivered only records delivery + recovery_required; it never finishes the dispatch episode. The dispatch completion state is governed by the episode lifecycleStage, not by provider_status.",
+      "enum": [
+        "running",
+        "delivered",
+        "blocked"
+      ]
+    },
+    "updated_at": {
+      "type": "string"
+    },
+    "phase": {
+      "enum": [
+        "audit",
+        "editing",
+        "validation",
+        "final",
+        "blocked"
+      ]
+    }
+  },
+  "oneOf": [
+    {
+      "required": ["status"]
+    },
+    {
+      "required": ["provider_status"]
+    }
+  ]
+}

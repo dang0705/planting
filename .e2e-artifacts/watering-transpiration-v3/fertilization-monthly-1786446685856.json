@@ -1,0 +1,21 @@
+{
+  "task": "watering-transpiration-v3-e2e-trae-20260713",
+  "gitHead": "e21c5605c6077bf8a5eb14da83c476738e824ee0",
+  "branch": "sprint-ai-workflow",
+  "baseHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "projectPath": "/Users/jay/WebstormProjects/planting/.tmp/dispatch-task/qa-runtime-sessions/fertilization-global-chain-20260811-r18-DFbNSR/project",
+  "mode": "fertilization-monthly",
+  "wsEndpoint": "ws://127.0.0.1:50552",
+  "startedAt": "2026-08-11T11:11:25.838Z",
+  "endedAt": "2026-08-11T11:11:25.856Z",
+  "pages": [],
+  "pageDataSummaries": [],
+  "capturedRequests": [],
+  "assertions": [],
+  "screenshots": [],
+  "classification": "BLOCKED_ENV",
+  "blockerReason": "fixture request interception failed: plantStore is not defined",
+  "status": "failed",
+  "failure_kind": "failed_environment",
+  "business_assertions_reached": false
+}

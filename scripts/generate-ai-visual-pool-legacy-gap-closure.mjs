@@ -14,7 +14,7 @@ import {
 import { buildAiVisualPoolClosureCompareDoc } from './lib/ai-visual-pool-closure-compare-doc.mjs'
 
 const require = createRequire(import.meta.url)
-const { metadata, sourceSets, closures } = require('./curation/ai_visual_pool_legacy_gap_closure_v1.js')
+const { metadata, sourceSets, closures } = require('./curation/ai_visual_pool_session_gap_closure_v1.js')
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const sqlDir = path.join(repoRoot, 'tmp', 'import-sql', 'diagnosis')
@@ -22,29 +22,29 @@ const devSyncDir = path.join(repoRoot, 'tmp', 'import-sql', 'diagnosis-dev-sync'
 const docsDir = path.join(repoRoot, 'docs')
 
 const sqlFiles = {
-  library: path.join(sqlDir, '30-question-library-ai-visual-pool-legacy-gap-closure.sql'),
-  options: path.join(sqlDir, '31-question-option-mapping-ai-visual-pool-legacy-gap-closure.sql'),
-  strategy: path.join(sqlDir, '32-question-strategy-ai-visual-pool-legacy-gap-closure.sql'),
-  engine: path.join(sqlDir, '33-question-generation-engine-ai-visual-pool-legacy-gap-closure.sql'),
+  library: path.join(sqlDir, '30-question-library-ai-visual-pool-session-gap-closure.sql'),
+  options: path.join(sqlDir, '31-question-option-mapping-ai-visual-pool-session-gap-closure.sql'),
+  strategy: path.join(sqlDir, '32-question-strategy-ai-visual-pool-session-gap-closure.sql'),
+  engine: path.join(sqlDir, '33-question-generation-engine-ai-visual-pool-session-gap-closure.sql'),
   devSyncLibrary: path.join(
     devSyncDir,
-    '09-question-library-ai-visual-pool-legacy-gap-closure.sql'
+    '09-question-library-ai-visual-pool-session-gap-closure.sql'
   ),
   devSyncOptions: path.join(
     devSyncDir,
-    '10-question-option-mapping-ai-visual-pool-legacy-gap-closure.sql'
+    '10-question-option-mapping-ai-visual-pool-session-gap-closure.sql'
   ),
   devSyncStrategy: path.join(
     devSyncDir,
-    '11-question-strategy-ai-visual-pool-legacy-gap-closure.sql'
+    '11-question-strategy-ai-visual-pool-session-gap-closure.sql'
   ),
   devSyncEngine: path.join(
     devSyncDir,
-    '12-question-generation-engine-ai-visual-pool-legacy-gap-closure.sql'
+    '12-question-generation-engine-ai-visual-pool-session-gap-closure.sql'
   )
 }
 
-const compareDocPath = path.join(docsDir, 'ai_visual_pool_legacy_gap_closure_compare_v1.md')
+const compareDocPath = path.join(docsDir, 'ai_visual_pool_session_gap_closure_compare_v1.md')
 
 const evidenceLabelMap = {
   bad_root_smell: '闷臭/烂味',
@@ -166,7 +166,7 @@ const outputs = [
   [
     compareDocPath,
     buildAiVisualPoolClosureCompareDoc({
-      title: '# ai_visual_pool legacy 23 条缺口正式收口对比文档 v1',
+      title: '# ai_visual_pool session 23 条缺口正式收口对比文档 v1',
       metadata,
       sourceSets,
       closures,
@@ -184,13 +184,13 @@ const outputs = [
       ],
       repoRoot,
       preClosureLines: [
-        '- `ai_visual_pool=yes` 且 `data_status=audited` 的 visual/hybrid 症状池中，当前剩余 23 条 legacy formal question coverage 缺口。',
+        '- `ai_visual_pool=yes` 且 `data_status=audited` 的 visual/hybrid 症状池中，当前剩余 23 条 session formal question coverage 缺口。',
         '- 缺口基线文档保留在 [docs/ai_visual_pool_question_gaps_v1.md](./ai_visual_pool_question_gaps_v1.md)。',
-        '- 运行时兜底规则保留在 [docs/new-rules/视觉候选症状追问承接与兜底确认规则_v1.md](./new-rules/视觉候选症状追问承接与兜底确认规则_v1.md)。'
+        '- 运行时保守规则保留在 [docs/new-rules/视觉候选症状追问承接与保守确认规则_v1.md](./new-rules/视觉候选症状追问承接与保守确认规则_v1.md)。'
       ],
       reviewFocusLines: [
         '- 这批题库不是逐 symptom 的固定问卷，而是按 spider/thrips、honeydew pests、fungus gnat、leaf spot、anthracnose、edema、yellowing 等 cluster 建组。',
-        '- 需要继续分流的症状保留 confirm + context；高特异或高可见症状保留单题确认，避免把 queue 膨胀成模板卷。',
+        '- 需要继续分流的症状保留 confirm + context；高特异或高可见症状保留单题确认，避免把 pendingList 膨胀成模板卷。',
         '- 所有正式题均具备 `yes / no / unknown` 三个 audited 选项。',
         '- 所有题都带有权威来源 URL，可被外部 GPT 继续逐条抽查。'
       ]

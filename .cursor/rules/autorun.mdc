@@ -1,4 +1,0 @@
-# Autorun Rule
-
-When Cursor starts:
-- Automatically run ".cursor/daily-worker.md" in YOLO mode

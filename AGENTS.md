@@ -1,304 +1,195 @@
 ---
-description: Codex AI Team Rules - token budget optimized lightweight entrypoint
+description: Codex AI Team Rules - global guardrails
 globs: *
 alwaysApply: true
 inclusion: always
 ---
 
-# AGENTS.md
+# Repository Agent Rules
 
-## 1. 定位
+## 1. 项目技术上下文
 
-本文件是 Codex main agent 的仓库级轻量入口，只保留最高优先级规则、规则索引、最小调度协议和上下文预算。
-
-本文件不是完整工作流手册，也不是知识库正文。详细流程、角色职责、长规则、避坑记录、诊断规则与代码逻辑，应放入对应的 `docs/ai-rules/`、`.codex/agents/`、`docs/code-logics/`、`docs/new-rules/`、`docs/ai-tasks/`、`docs/ai-runs/`。
-
-核心原则：
-
-1. Main agent 默认读取本文件，负责规则路由、任务分级、最终汇总和裁决。
-2. Subagent 默认不读取完整 `AGENTS.md`；只读取 main agent 在任务说明 / Dispatch Plan 中指定的最小必要摘要、任务说明、handoff、diff、验证结果和少量规则文件。
-3. 仓库文件优先于聊天上下文；聊天上下文只能作为辅助线索。
-4. 优先让上游 agent 产出摘要，下游 agent 读取摘要，不重复读取源文档。
-5. `dispatch` skill 是调度触发器；本文件只定义所有入口都必须遵守的调度底线。
-
----
-
-## 2. 全局硬规则
-
-1. 不允许无关重构。
-2. 除非任务明确要求，不允许新增生产依赖。
-3. 不允许绕过类型错误、Lint 错误、测试失败或构建失败。
-4. 不允许删除有效业务逻辑来让检查通过。
-5. 不允许为了通过测试而削弱真实业务约束。
-6. diff 必须小、可审查，并严格贴合已批准任务范围。
-7. 中文是一等公民；文档、注释、产品术语和诊断领域概念必须中文优先。
-8. 用户要求完整交付文档时，不允许只输出补丁片段。
-9. 生产方案优先选择国内服务或中国大陆可稳定访问的方案；若使用海外服务，必须说明稳定访问、成本和替代方案。
-10. 提示词中出现部署、sql、查诊断session等与CloudBase相关的关键词，大概率需操作CloudBase，优先使用 CloudBase MCP；但 MCP / 命令返回成功不等于发布验收通过，必须结合部署证据、smoke、DB 证据或日志证据闭环。
-11. 文件路径、命令、模型名、agent 名、协议字段和代码标识符可以保留英文；产品表达、诊断概念和文档说明优先中文。
-12. 诊断流、outcome、gate、runtime、replay、CloudBase 或前端最终展示类任务，必须先建立“目标验收契约”：区分 bug 发生位置、观察入口、用户可见成功标准、必须验证的 API / DB / UI 字段，以及明确非目标；不得用 review、replay、DB 中间态或命令成功替代用户可见路径验收。
-13. 诊断 `fast path`、`warm path`、`early return`、缓存命中或性能优化路径不得绕过主链 follow-up / final / output eligibility guard；凡触及提前输出分支，必须验证“应继续追问而非 final”的负向样本和完整路径正向样本。
-
----
-
-## 3. 项目技术上下文
-
-项目技术栈以 `README.md`、`package.json` 和仓库实际文件为准。
-
-当前已知项目上下文：
-
-- Frontend：UniApp 3.0，Vue 3 语法。
+- Language：JavaScript,Node.js。
+- Frontend：UniApp 3.0，Vue 3，Tailwind CSS 3，uni-ui。
+- Backend / Cloud：Tencent CloudBase、Cloud Functions、MySQL / TDSQL-C。
+- Lint: oxlint
+- formatter: oxformat
 - State：Pinia。
-- Styling：Tailwind CSS。
 - Build：Vite。
 - Platform：微信小程序优先。
-- Backend / Cloud：Tencent CloudBase、Cloud Functions、MySQL / TDSQL-C 相关工作流。
 - AI：视觉识别与诊断链路涉及 Qwen / 混元 Vision 等能力。
+- AI memories: OpenViking
 
-不得把本项目默认当作 Taro / React / Zustand 项目处理。若仓库实际文件与上述上下文冲突，必须先报告并请求 main agent 裁决。
+## 2. 全局行为硬规则
 
-标准验证命令以 `package.json` 为准。若无确认，不得伪造验证结果。常见候选命令：
+1. 迭代过程中的业务逻辑、数据结构变动，如 `{a:{b:1}}` 改为 `{a:[1]}` 这种结构性调整的，优先采取最彻底的解决方案，避免使用保守策略如兼容、兜底代码应对此类变动从而导致无谓的代码膨胀。
+2. 计划模式和实际开发过程中必须遵循 `如无必要、勿增实体` 的开发原则。以合理复用、扩展已有的表结构、字段、功能模块、组件为优先。确认以上实体或相似度超过80%的实体不存在、无法复用和扩展该实体或此类操作对原有实体存在污染风险的才考虑新增。
+3. 开发过程中涉及到的文件超过 500 行的必须解耦拆分模块，拆分遵循高内聚、低耦合的设计思路，以提高维护性和复用性为最终目的。要求命名和目录划分合理并保证加载的性能。
+4. 新增或重构复杂功能的，优先探索并复用现有组件或模块，现有不满足的需联网探索 `npm`/ `github` 上成熟的插件。避免复杂组件/模块手搓，其为最末位兜底。
+5. 如需依赖新插件，必须考证其适配微信小程序、包体积、npm / GitHub 状态、周下载量、star 数和最近 3 年 release 记录，并提供简短介绍，征得用户同意。
+6. 所有端上验收如果本轮代码未部署到云端，必须先成功跑通 `js npm run dev:mp-weixin:local-functions:lan` 的完整 LAN 本地函数 flow，并让小程序运行时命中新代码；只启动 scoped/local 单函数 gateway、backend curl、Node HTTP 或 gateway health，不得算端上验收完成。
+7. 除非用户明确要求外部桥接，否则不得创建、派发或复用任何内部 subagent；所有工作由 main agent 完成。
+8. 当运行时模型为 GLM 系列时，调用 `mcp__Figma_Desktop__get_design_context`、`get_metadata`、`get_variable_defs` 等 Figma 读取类工具后，禁止/跳过调用 `get_screenshot`；除非用户在当前会话中明确要求查看截图。
+9. 客户端显示的文案必须从用户角度出发并符合常识，严禁将内部讨论用语、计算公式，拗口或难理解的文案暴露在界面中。必须遵循用户友好、利于用户操作的思想设计出最优的展示文案。
+10. 输出的文案、用语减少专业词汇，尤其在 plan 模式或用户显式要求 planning时，要注重用词以通俗易懂的白话结合举例代替专业词汇。
+11. Web/云端 external implementer 即使运行时自称 main/root，也必须在本项目中承担 external implementer 角色：只按 handoff 修改代码，完成后执行实现者自检和 unit tests；有 `figma_link` 的 UI 任务必须直接使用可用的 Figma 插件 / MCP / 工具读取设计并对齐 UI，不能依赖 main 的转述。外部桥接失败不得自动改派内部 subagent。
+12. 严禁任何可能的黑箱行为，所有的设计方案都必须可视、可审计、可追溯、可回放。
 
-```bash
-npm run lint
-npm run build
-npm test
-```
+## 2.1 通用计划证伪门（目标模式运行时强制执行）
 
-当前项目若未配置独立 `typecheck` script，不得伪造 `typecheck` 结果。
+1. 只有任务明确进入“目标模式”时才启用本门禁：用户已要求完成一个具体目标，且预计需要连续多个行动、外部状态变更或较长执行时间。纯问答、资料说明、一次性诊断和只读审查不属于目标模式，不得借本条无故扩大流程。进入目标模式后，第一步必须是**最短路径证伪**：在开始实现、部署、批量操作或长时间等待前，写清唯一目标、关键假设、最小可判定实验、继续条件、失败条件、回退方式和硬时间上限。无法写出最小证伪实验的计划视为无效，必须先停下修正计划。
+2. 证伪实验必须优先于完整实现和大规模验证，且只能使用为回答当前假设所需的最少真实数据、请求和步骤。实验结果若已证明假设不成立、收益不足、业务链路断裂或风险超过阈值，必须立即终止该方案并按记录回退临时变更；不得以“再测一轮”“补齐工具”“完善基础设施”“已经投入很多时间”或改写目标为理由继续。
+3. “未证实”不等于“可以继续”：证据缺失、环境不确定、测试链路失效或结果相互矛盾时，任务状态只能是 `BLOCKED_ENV`/“未验收”，不得扩大实现、追加长时间等待或把辅助工作写成进展。只有在当前计划中预先定义的最小补证动作能直接消除该阻断时，才允许执行一次；否则必须停止并报告，等待用户明确决定。
+4. 每个计划必须设置自主时间盒和检查点。到达时间盒、连续一次关键实验失败，或达到任一停止条件时，必须输出基于事实的 Go/Stop 结论并停止；不得自动续期、换假设、换环境或开启新一轮长程任务。任何超出原时间盒的继续执行都需要用户明确授权，授权必须注明新增目标、上限和停止条件。
+5. 只有最小证伪实验通过且继续条件满足，才允许进入完整实现、批量采样或正式验收。每一阶段结束时必须在计划/报告中记录已证实、已证伪、未覆盖项、实际耗时和下一步唯一动作；状态复述、脚本运行、端口可达或 HTTP 200 本身不算进展。计划被证伪后不得保留未验收的候选实现，也不得为了挽救投入而扩大范围。
 
----
+## 3. 前端行为硬约束
 
-## 4. 规则文件索引
+1. 开发 `Vue` 组件时参考 `skills/uni-app` 及 `skills/vue-best-practices` ，如有概念冲突的采纳前者。
+2. css优先使用 `Tailwind CSS` 组织样式并参考 `skills/tailwindcss-base-use` ，进阶布局则参考 `skills/tailwindcss-advanced-layouts`。
+3. 合理利用前端缓存释放服务端开销，参考 `skills/pinia`。
+4. **组件/页面的新增/更新中绑定了如 `@click` 、 `@change` 、 `@focus` 、 `@blur` 等交互事件的元素或 `uni-ui` 组件（非自定义组件）须同时绑定语义化的id，还需将此id的映射关系更新到 `docs/ai-rules/frontend-automation-id-policy.md` 以保证端上 `miniprogram-automator` 测试时能快速定位元素并正确触发事件**，示例代码如下
+   ```vue
+   <view id="example-id" class="flex " @click="toggleSubstrate(option.value)">
+       <text
+         class="text-[10px]"
+         :class="
+           isSubstrateSelected(option.value)
+             ? 'font-semibold text-[#2f8f57]'
+             : 'text-[#1f2933]'
+         "
+       >
+         {{ option.label }}
+       </text>
+   </view>
+   ```
 
-Main agent 按任务类型读取。Subagent 只读取任务说明 / Dispatch Plan 指定文件、指定章节或 main agent 摘录。
+## 4. 后端行为硬约束
 
-| 规则类别 | 文件 | 读取时机 |
-|---|---|---|
-| 项目硬规则 | `docs/ai-rules/project-hard-rules.md` | 非简单任务、实现、QA、高风险改造 |
-| 工作流细则 | `docs/ai-rules/codex-ai-workflow.md` | 需要派发、汇总、AI workflow 时 |
-| 风险路由 | `docs/ai-rules/subagent-risk-routing.md` | 需要判断 fast/deep implementer 或升级条件时 |
-| handoff | `docs/ai-rules/subagent-handoff.md` | 多步骤任务、线程恢复时 |
-| 语言术语 | `docs/ai-rules/language-policy.md` | 中文术语、文档、用户可见表达、诊断概念 |
-| 大目录索引读取策略 | `docs/ai-rules/large-doc-index-read-policy.md` | 涉及 `docs/code-logics/` 或 `docs/new-rules/` 时，先读索引，不得全量读目录 |
-| code-logics 索引 | `docs/code-logics/INDEX.md` | 涉及代码逻辑文档时，先读索引再命中文档 |
-| new-rules All-in-One 入口 | `docs/new-rules/planting_ai_diagnosis_source_index.json` + `docs/new-rules/planting_ai_diagnosis_all_in_one.md` | 涉及新规则文档时，先读 JSON 索引，再读 All-in-One 指定章节 / Sxx |
-| replay | `docs/ai-rules/diagnosis-replay.md` | diagnose-http、replay、zero-model、route / outcome 验证 |
-| CloudBase 部署 | `docs/ai-rules/cloudbase-deployment.md` | 云函数、部署、回滚、smoke、DB 证据 |
-| CloudBase 路径解析 | `docs/ai-rules/cloudbase-rule-path-resolution.md` | 需要解析 `rules/*/rule.md` 时 |
-| 认证数据库 | `docs/ai-rules/cloudbase-auth-database.md` | 登录、OPENID、鉴权、NoSQL、MySQL、TDSQL-C |
-| 小程序 / uni-app | `docs/ai-rules/miniprogram-uniapp-platform.md` | 微信小程序、uni-app、Vue 3、Pinia、端能力、构建 |
-| 前端自动化 id | `docs/ai-rules/frontend-automation-id-policy.md` | 小程序前端可见验收、稳定选择器、微信开发者工具自动化 |
-| UI 设计路由 | `docs/ai-rules/ui-design-routing.md` | 页面、组件、样式、交互、视觉改动 |
-| diagnose-http 云端调试避坑 | `docs/ai-rules/diagnose-http-cloud-debugging.md` | diagnose-http、CloudBase smoke、replay、网关、MCP、H5 代理、SQL schema、云端日志、部署验收 |
-| Subagent 线程复用 | `docs/ai-rules/subagent-thread-reuse.md` | 同一会话内开启 subagent、恢复线程、继续同角色任务 |
+1. 涉及部署环境、数据库、云函数、云存储、身份权限的参考 `.codex/skills/cloudbase`
+2. 未经允许严禁开启 `CloudBase` 或任何可能导致付费的功能如云函数的预置并发。
 
----
+## 5. QA行为约束
 
-## 5. 上下文预算规则
+1. 使用端上 `miniprogram-automator` / `9420` 做诊断相关自动化测试时，先读取 `docs/ai-rules/frontend-automation-id-policy.md` 的“第三点 元素 id 映射”，并按该映射执行入口定位与关键断言。
+2. `miniprogram-automator` 的目的若为了验证UI，必须对比截图。
+3. `9420` 只属于用户交互调试会话：正式 catalog `qa-run` / `qa-preflight` 不得连接、重配、关闭或以其为 fallback。正式 QA 必须先验证 LAN watcher lease、目标 `dist/dev/mp-weixin`、测试专属 persistent profile、test-owned DevTools owner 与官方 IDE plugin，再仅通过隔离控制端口启用 test-owned `9421` 并用真实 PNG、项目 identity、page data 和运行时 `wx.request` 验证。用户调试会话仍应先读取 PID、控制端口和项目路径；不得为正式 QA 复用、切换或关闭该进程。
+4. QA 不运行 unit tests；QA 负责运行时、端上、UI/Figma、E2E 和用户可观察行为验证。
+5. automator QA 必须通过 `test/e2e/automator/catalog.json` 精确选择叶子脚本，并在 LAN/DevTools/automator 前校验 automation id policy、脚本 hash 和 execution id；直接裸跑 automator 脚本只能作为排障，不能作为验收证据。
+6. `src/**` 或 `cloudfunctions/**` 文件移动、拆分或重命名时，必须同步移动对应 `test/unit/frontend/**` 或 `test/unit/backend/**` 镜像测试；frontend/backend unit 使用同一递归镜像约定：`test/unit/frontend/<src 相对目录>/...` 对应 `src/<相对目录>/...`，`test/unit/backend/<cloudfunctions 相对目录>/...` 对应 `cloudfunctions/<相对目录>/...`。unit 文件名不得使用 `test-` 前缀；无单一源目录映射或跨 `src` 与 `cloudfunctions` 的行为必须放入 `test/e2e/batch` 或 `test/e2e/automator`。
 
-Codex 消耗主要来自重复输入上下文。本项目必须优先控制大文档、大目录、重复规则和 subagent 多轮重复读取。
+## 5.1 测试层级与真实性边界（强制）
 
-1. Main agent 必须优先生成“规则摘要”，不要让每个 subagent 重复读取完整规则文件。
-2. Subagent 默认读取：任务说明 / Dispatch Plan、main agent 摘要、必要任务说明、必要 handoff、当前 diff 或指定代码文件。
-3. 单个 subagent 默认读取的规则文件不超过 2 个。
-4. 如果需要读取超过 2 个规则文件，任务说明 / Dispatch Plan 必须说明原因。
-5. 归档长文档、历史总结、完整避坑记录默认不读；只允许在任务说明 / Dispatch Plan 中指定章节、关键词或问题域后读取。
-6. 下游 agent 优先读取上游 agent 的摘要和 handoff，不重复读取源文档。
-7. 如果摘要不足，subagent 应请求 main agent 补充摘要或授权读取指定章节，不得自行扩展到全量文档。
-8. `AGENTS.md` 只由 main agent 默认读取；subagent 仅在例外条件下回读。
-9. `docs/code-logics/` 不得全量读取；必须先读 `docs/code-logics/INDEX.md`，再读取命中的 1～2 个文档或摘要。
-10. `docs/new-rules/` 不得全量读取；必须先读 `planting_ai_diagnosis_source_index.json`，再读取 All-in-One 的指定章节或指定 `Sxx`。
-11. 不得默认读取 `planting_ai_diagnosis_all_in_one.md` 全文；附录 A 原文只允许在明确指定 `Sxx` 时回查。
-12. release / ops 类任务默认不得直接读取 `docs/code-logics/`、`docs/new-rules/` 或 All-in-One；如需规则约束，由 main agent、architect 或 QA 摘录最小发布验收摘要后交给 release_ops。
-13. 同一会话中同一角色的 subagent 必须复用同一线程；继续同角色任务时优先 `send_input` 复用，只有旧线程失效或职责边界改变时才允许重开，并记录原因。
+1. `test/unit/**` 仍以单个模块或函数的逻辑、映射和边界为主要验证对象，但允许直接使用真实 `cloud1_dev` 数据、真实 CloudBase API 和真实数据库读写；这类结果必须标记为 `unit_real_data`，不得再强制使用 mock 或假数据。真实微信运行时、真实页面交互和截图仍属于 Automator，不因使用真实数据而转化为 unit-test。unit-test 通过不等于端上功能通过，也不得单独作为端上验收证据。
+2. `test/e2e/**` 验证跨模块的真实链路，禁止伪造被测接口响应、用内存植物仓库替代服务端数据，或把 fixture 响应冒充真实 API 返回。跑批 e2e 至少调用真实配置的 API 和开发库；它只能证明服务链路，不能覆盖真实小程序 UI、登录态、页面数据和用户交互。
+3. 端上验收必须使用真实小程序运行时、真实用户登录态、真实开发环境数据（当前开发验收为 `cloud1_dev`）、真实 LAN gateway 和真实 `wx.request`。不得注入假植物、假提醒、假接口返回或绕过页面直接写库来宣称端上通过。正式证据必须来自 catalog `qa-run`，并包含项目 identity、页面数据、有效截图和运行时请求记录。
+4. 使用 fixture 或 mock 的 Automator 叶子只能作为回归排障或组件交互诊断，必须在 catalog/报告中明确其非真实验收性质；不能与 live e2e 混称，也不能计入“端上通过”。如果 acceptance 要求真实数据，必须另有 `automator_required` 的 live 叶子覆盖同一用户路径。
+5. 测试报告或其 catalog/qa-run 证据必须明确可核验数据模式：`unit_real_data`、`unit_fake`、`e2e_real_api`、`automator_live_real_api` 或 `fixture_diagnostic`。项目默认优先使用 `unit_real_data`；只有明确需要隔离边界或离线验证时才使用 `unit_fake`。数据来源不明或接口响应被替换时，状态只能是未验收/阻断，不能记为 PASS。
 
-### 5.1 Subagent 角色注册与 fallback 规则
+## 5.2 前端 UT 与真实 API E2E 硬规定
 
-1. `.codex/agents/*.toml` 是本仓库的角色规范、模型期望和输出模板，不等于当前 Codex runtime 已经把这些角色注册为可调用的 `spawn_agent.agent_type`。
-2. `.codex/config.toml` 的 `[agents]` 当前只控制线程数量、深度和超时；若没有明确的 runtime 注册字段，不得声称它已经加载 `.codex/agents/*.toml`。
-3. `~/.codex/config.toml` 中的 `profiles.*` 只是主会话或 CLI profile 配置，不等于自定义 subagent 注册表。
-4. `dispatch`、`codex-ai-workflow.md` 和本文的角色表属于工作流路由层；它定义“应该派什么角色”，不证明 `spawn_agent` 工具当前支持该 `agent_type`。
-5. 每个角色本轮首次派发时，main agent 必须以 `spawn_agent` 的实际结果作为可用性事实源。若返回 `agent type is currently not available` 或等价错误，必须记录为“专用角色未注册 / 当前环境不支持”，不得写成该角色已成功开启。
-6. 专用角色不可用时，只有在任务仍可通过替代线程安全推进时，才允许使用 `default` 作为“逻辑角色替代线程”。替代线程必须显式记录：`logical_role`、`requested_agent_type`、`actual_agent_type`、`agent_id/thread_id`、`fallback_reason`、`expected_model/reasoning/profile/sandbox`、`observed_or_requested_model/reasoning/profile/sandbox`、`config_match=false`。
-7. 使用 `default` 替代专用角色时，应优先按 `.codex/agents/<role>.toml` 的期望模型与 reasoning 显式设置 `model` / `reasoning_effort`；若当前工具不允许、模型不可用或用户要求节省成本，必须记录原因。不得把继承主会话模型的 default 线程冒充为低成本专用角色。
-8. 同一会话的线程复用按 `logical_role` 计算，不按 `actual_agent_type=default` 计算。一个 default 替代线程一旦绑定某个逻辑角色，不得再混用为另一个逻辑角色。
-9. 若任务要求“不得跳过 code_explorer / architect_reviewer / qa_reviewer / docs_keeper / release_ops”等专用职责，而专用角色不可用，main agent 必须在 Dispatch Plan、handoff 和最终汇总中说明 fallback 是否满足该职责；不满足时必须停下请求用户裁决或记录为未完成项。
+1. 前端 UT 只能证明前端单模块逻辑、数据映射、状态计算、序列化和源码契约。使用 `readFileSync`、正则或源码字符串断言的用例必须标记为 `data_mode=unit_fake`、`test_kind=source_contract`，不能称为页面交互测试。
+2. 前端 UT 不得宣称已经验证真实小程序页面。它不能替代以下验证：Vue 响应式状态变化、组件真实渲染、点击/输入/禁用状态、Popup 展示、页面跳转、编译产物行为、真实 `wx.request` 和截图。
+3. 只要需求包含用户可见交互，必须至少补一个 Automator live 用例；仅前端 UT 通过时，功能状态最多为“前端逻辑通过”，不得写成“功能验收通过”。
+4. `test/e2e/**` 中标记为 `e2e_real_api` 的用例必须调用真实配置的 API、真实 `cloud1_dev` 数据库和真实用户身份。必须显式校验 `TERMINAL_E2E_FUNCTION_BASE_URL`、开发环境和身份信息；缺失时阻断，不能回退到假接口、内存仓库、fixture 响应或默认匿名用户。
+5. 真实 API E2E 禁止 monkey-patch 被测接口响应、替换网络客户端、把 fixture 当服务端结果或绕过 API 直接写库。测试必须从真实 API 读取数据，并对 HTTP 状态、业务码、关键业务字段和数据来源进行断言。
+6. 真实 API E2E 只能证明跨模块服务链路和真实数据契约，不能证明真实小程序 UI、登录态、页面响应式状态、跨页面操作或截图；这些仍由 `automator_live_real_api` 负责。
+7. 每个前端交互功能的测试记录必须分层列出：前端 UT、`e2e_real_api`、`automator_live_real_api`。任何一层未执行或使用了不符合该层边界的数据，状态必须标记为未验收或阻断，不得合并成一个笼统的 PASS。
 
----
+## 5.3 业务导向测试与缺口发现硬规定
 
-## 6. 任务分级与最小调度规则
+1. 所有测试脚本，无论是 `test/unit/**`、`test/e2e/**` 还是端上 Automator，都是为实际业务服务的质量工具。最终目的不只是让 happy path（正常路径）通过，而是主动发现实际业务中可能隐藏的边缘情况、失败情况、异常状态和需求断层。只覆盖 happy path 的脚本不得作为完整业务验收依据。
+2. 每个 MVP 功能都必须从多维度设计测试矩阵，至少同时检查：用户入口与可见状态、前端交互和响应式更新、页面布局与文案渲染、接口状态码与业务码、数据字段和数据来源、持久化及读回一致性、跨页面串联、缓存和异步竞态、重复操作、慢网络、超时、空数据、部分数据、过期数据、非法数据、权限/登录失效以及失败后的恢复路径。具体维度应根据该功能的真实需求和数据合同补充，不得机械套用单一模板。
+3. 断言必须验证业务语义和用户可观察结果，不能只断言 HTTP 200、接口被调用、数组非空、页面发生跳转或组件存在。涉及日期、身份、来源、状态、数量、顺序、计算结果或提示文案时，必须核对其与需求、接口合同、数据库状态和实际渲染是否一致。
+4. 测试脚本未命中真实业务流程、测试数据不足、运行时未启动、登录态失效或环境不满足时，必须标记为 `BLOCKED_ENV`、`BLOCKED_FIXTURE` 或“未验收”，不得用脚本通过、基础设施通过或接口可达来替代业务通过。脚本进入业务断言后发现功能与需求不一致，必须标记为业务/产品失败，不得改称脚本问题。
+5. 每次测试都必须检查“已覆盖什么”和“明确未覆盖什么”。发现测试遗漏、断言过宽、只测了表象、没有覆盖失败路径或无法证明用户可感知闭环时，必须将其记录为测试缺口，并在同一变更中补充用例，或明确列为阻断项及优先级；不得把未覆盖当作通过。
+6. 业务功能的最终状态必须分层报告前端单元逻辑、真实 API 链路和真实端上交互证据。任一层缺失、使用了不符合真实性边界的数据，或只验证了正常路径，整体最多只能写“部分验证/逻辑通过”，不得写成“功能验收通过”或“全量通过”。
+7. 测试设计和复盘必须反向审视“实现、接口、数据、界面、文案、用户目标”之间的 gap（差距），优先验证最可能造成错误决策、错误展示、数据丢失、状态误导或流程中断的路径。测试脚本自身的可运行性不是终点；没有发现业务问题不等于业务没有问题。
 
-本节定义所有入口都必须遵守的调度底线。`$dispatch` skill 可触发更完整的调度流程，但即使未显式调用 `$dispatch`，main agent 也必须遵守本节规则。
+## 5.4 端上接口性能验收硬规定
 
-### 6.1 简单任务的 main agent 必要动作
+1. 所有接口响应速度、性能优化和“是否达标”的判定，一律以真实小程序运行时实际发出的 `wx.request` 从发起到 `success`/`fail` 回调的端到端 `elapsed_ms` 为唯一验收口径。Node、curl、宿主机 HTTP、局部 gateway、云函数内部耗时和单元测试只能作为诊断证据，不能代替端上性能结论。
+2. 列表、详情及其他关键接口必须分别测量，至少覆盖冷请求与热请求；报告每次端上耗时、HTTP 状态码、业务码、关键业务字段、响应体字节数，并汇总最小值、p50、p95 和最大值。列表响应不能用详情响应的结果代替，反之亦然。
+3. 优化前后的对比必须保持相同开发环境、真实登录身份、数据集、请求参数和端上运行时；只要缺少真实 `wx.request` 端到端证据，或 p95 未达到目标，状态只能写“未达标/未验收”，不得以服务端较快的诊断结果宣称达标。
+4. 任何为降低耗时而做的字段裁剪、缓存、并行化或懒加载，都必须同时复核用户可见字段、跨页面串联、失败恢复和数据来源；不能为了数字牺牲业务闭环，也不能把缓存命中或请求未发出误报为接口响应达标。
 
-简单任务可以不派发 subagent，但 main agent 仍然必须完成最小闭环。简单任务不是“只改代码就结束”。
+## 5.5 性能优化止损与证伪优先（绝对硬规定）
 
-#### 6.1.1 简单任务定义
+1. 性能优化的第一目标是以最短路径**证实或证伪候选假设**，不是持续采样、完善测试设施或堆叠优化手段。任何实现、部署或长时间测量前，必须在计划中写清：唯一目标接口、稳定基线、候选改动能消除的具体耗时、最小可判定实验、继续阈值、失败阈值、单函数回退包/指纹及时间上限；缺一项即停止，不得开始。
+2. 每个候选最多只有一个自主决策窗口：最多 20 分钟定位与基线核验、15 分钟实现/单元验证、10 分钟真实端上最小验证。冷启动确有必要时，只可额外使用一次预先写明的生命周期静默窗口及一次日志关联等待；不得以“等待冷启动”“补日志”“修 Automator”名义开启第二个自主窗口。总计超过 60 分钟，必须先向用户报告已获得的证据、明确的 Go/Stop 结论和剩余最小工作，并取得用户明确同意才能继续。
+3. 最小端上验证必须与稳定基线使用相同环境、账号、数据、参数和真实 `wx.request`，至少各有一条经正确口径确认的冷候选/热请求。若冷启动需要 `Init Report`，时间间隔只产生候选，不能当作证据；关联链路在预先设定的等待期内不能工作时，立即标记 `BLOCKED_ENV` 并停止，不能通过重复轮次掩盖观测失败。
+4. 最小验证结束即强制 Go/Stop：业务、身份、字段、排序、跨页读回任一项回退，或候选未达到计划中预先写明的正向信号（默认：冷请求至少改善 15%，且热请求不得恶化超过 5%），一律判定 `FAIL_CANDIDATE`。`FAIL_CANDIDATE` 必须在同一任务中按已记录指纹单函数回退，并终止该候选；不得追加第二轮采样、扩大到其他函数、改用缓存/竞速/预置实例，或以“样本不足”“基础设施待完善”继续消耗时间。
+5. 只有最小验证同时证明业务未回退且达到正向信号，才允许进入 5 冷/10 热探索采样；只有探索采样仍为正向，才允许进入 20 冷/30 热正式验收。采样层级不得倒置，不能为了收集 p95 而跳过候选止损门。
+6. 测试、日志或 Automator 本身的修复不是性能优化成果。它只能在不改变业务且能在当前决策窗口内直接取得候选结论时进行一次最小修复；否则必须停止并请求用户决定，不得把测试基础设施工作伪装成优化进展。
+7. 每次候选结束时，计划和最终报告必须同时写出：基线、候选、真实端上数据、是否满足继续阈值、回退指纹、保留或终止的决定。没有“继续”证据就是终止，不得保留未验收候选代码或将“接口 200”“函数初始化很快”“测试已运行”表述为优化成功。
 
-满足以下条件时，main agent 可以不派发 subagent：
+## 6. 读取边界
 
-1. 单文件或极少量文件的小改动。
-2. 不涉及诊断流、outcome、gate、replay、CloudBase 发布、数据库结构、API 协议、复杂规则解释、源文档回溯、诊断 `fast path` / `early return` / 性能优化路径；若只涉及索引定位、轻量 README / 注释 / 避坑索引补充，可仍视为简单任务。
-3. 不需要跨文档推理。
-4. 不需要架构裁决。
-5. 风险边界清楚，且可以由 main agent 直接验证或明确说明未验证原因。
+1. `docs/code-logics/` 不得全量读取；先读 `INDEX.md`。
+2. `docs/new-rules/` 不得全量读取；先读 source index，再按需读取指定章节 / Sxx。
 
-#### 6.1.2 简单任务仍必须检查的事项
+## 7. 知识治理边界
 
-main agent 在简单任务中必须检查：
+1. 代码、测试、schema、配置和 package scripts 是事实源。
+2. Active docs 只解释当前契约和操作方式，不是第二事实源。
+3. archived / superseded / stale 文档或 OpenViking 记忆条目不得作为当前实现依据。
+4. 不得默认全量读取 `docs/`、历史迁移材料、`.codex/skills/**/references/`、`docs/code-logics/`、`docs/new-rules/`、`docs/ai-runs/`、`docs/route规划及outcome瘦身计划/`。
+5. 任务上下文必须优先通过 `.codex/context-packs.yml` 选择最小文件包。
+6. 发生冲突时，当前事实源优先；若 OpenViking 记忆条目已过期，本轮任务应形成明确的更新或治理候选，不得静默沿用错误记忆。
 
-1. 是否需要验证：lint、test、build、局部脚本或人工检查。
-2. 是否需要同步文档：README、`docs/ai-rules/`、`docs/code-logics/`、`docs/new-rules/`、`docs/ai-tasks/`、`docs/ai-runs/`、避坑索引。这里的“检查”只指判断是否需要同步，不代表读取对应目录或长文档。
-3. 是否影响用户可见中文文案或诊断术语。
-4. 是否引入或改变项目约定、命令、路径、环境变量、数据字段、接口字段。
-5. 是否只是局部代码实现，还是已经产生了新的规则、流程、踩坑或长期约束。
+## 8. OpenViking 记忆内容边界
 
-#### 6.1.3 简单任务下的文档处理规则
+当前默认长期记忆源是 OpenViking `planting` peer，配置位于仓库根目录 `.openviking/config.json`，作用范围从仓库根目录开始并覆盖其子目录。
 
-1. 如果只是小范围 README、注释、命令说明或局部说明补齐，main agent 可以直接完成。
-2. 如果涉及 `docs/code-logics/`，main agent 必须先读 `docs/code-logics/INDEX.md`，不得全量读取目录。
-3. 如果简单任务疑似涉及 `docs/new-rules/`，main agent 最多只读取 `docs/new-rules/planting_ai_diagnosis_source_index.json` 做定位；若需要读取 All-in-One 指定章节或 `Sxx` 原文核对，必须升级为非简单任务，重新输出任务分级 / Dispatch Plan。
-4. 如果只是补充一条避坑索引，main agent 可以直接更新 `docs/ai-rules/diagnose-http-cloud-debugging.md`。
-5. 如果需要整理完整历史细节、同步 All-in-One、更新 source_index，必须改派 `docs_keeper`。
-6. 如果需要生成或重写超过 2000 字的完整文档，必须派发 `docs_keeper` 或生成可下载文档。
-7. 如果简单代码改动导致规则、流程、接口或诊断语义变化，必须升级为非简单任务，重新输出任务分级 / Dispatch Plan。
+OpenViking 召回结果只提供长期上下文和导航线索，不能替代代码、测试、schema、配置和实际运行证据。发生冲突时，当前事实源和用户当前指令优先。
 
-#### 6.1.4 简单任务输出格式
+OpenViking 的召回与记录使用当前可用的 OpenViking skill/MCP；本节只负责项目级内容资格和事实使用边界。
 
-简单任务完成时，main agent 最少输出以下字段：
+记忆内容资格必须遵守本节边界。本条允许其将上述稳定工作流知识纳入 OpenViking，但不得把临时日志或未验证推测写入 OpenViking。
 
-1. 是否派发 subagent。
-2. 修改范围。
-3. 验证情况。
-4. 文档同步检查。
-5. 是否需要补充 handoff / task。
-6. 风险。
-7. 未完成项。
+OpenViking 记忆条目和历史迁移材料都不是代码索引、通用知识库、执行规则仓库、项目日志、附件库或第二事实源。查询结果只能作为长期上下文和事实线索；涉及当前实现时，必须回到代码、测试、schema、配置或 package scripts 验证。
 
-### 6.2 非简单任务 Dispatch Plan
+### 允许在常规任务中查询，并在满足记录条件时写入
 
-非简单任务必须先输出 Dispatch Plan，再决定是否派发 subagent。
+- 已由当前项目采纳，并影响产品或业务行为的稳定业务事实；
+- 仍约束当前或未来设计，或能解释当前架构、迁移边界及废弃原因的历史决策；
+- 用户明确确认、长期有效并与当前项目直接相关的稳定事实；
+- `stable_architecture_contract`；
+- `stable_product_contract`；
+- `stable_api_contract`；
+- `stable_schema_contract`；
+- `stable_data_flow_contract`；
+- `stable_validation_contract`；
+- 经跨文件验证、具有重复发生风险且不容易从局部源码直接发现的 `validated_recurring_gotcha`；
+- 经跨文件验证、可在多个模块或未来功能中复用的 `validated_reusable_project_pattern`；
+- 经跨文件验证、未来任务不召回便容易误判、破坏契约或重复推导的稳定业务行为边界。
+- 用户明确采纳、经当前源码、合同和实际运行证据共同验证，并会约束后续任务的 `stable_workflow_contract`，包括主流程职责、返工与等待边界、OpenViking 召回/记录责任；
+- 经至少一次失败与一次修复后复现验证、且可跨任务复用的 `validated_recurring_workflow_gotcha`，包括 Automator/DevTools/QA 的卡点、根因、判定信号和已验证解决方法。
 
-```text
-Dispatch Plan:
-- 任务类型:
-- 目标验收契约:
-  - bug 发生位置:
-  - 观察入口:
-  - 用户可见成功标准:
-  - 必须验证字段 / 证据:
-  - 快捷路径 / 主链守卫一致性:
-  - 非目标:
-- 选择的 subagent:
-- 选择原因:
-- 规则摘要:
-- 需要读取的规则文件/章节:
-- 规则文件数量是否超过 2 个: 否 / 是，原因：
-- 是否涉及 docs/code-logics: 否 / 是；若是，先读 docs/code-logics/INDEX.md，命中文档：
-- 是否涉及 docs/new-rules: 否 / 是；若是，先读 planting_ai_diagnosis_source_index.json，命中 source_id / All-in-One 章节：
-- 是否需要读取 AGENTS.md: 默认否；仅在缺少派发上下文、规则冲突、线程恢复或角色边界不清时为是
-- Subagent runtime 可用性:
-  - `.codex/agents/*.toml` 是否已由 runtime 注册为 `agent_type`: 未确认 / 是 / 否
-  - 本轮需预检的 `agent_type`:
-  - 专用角色 spawn 结果:
-  - fallback 策略:
-- 预期输出:
-- 写入权限:
-- 首部规划闭环: 派发/复用 task_planner / 合法裁剪，原因：
-- 架构分析闭环: 实现前派发/复用 architect_reviewer / main agent 明确裁剪，原因：
-- 实现闭环: implementer_fast / implementer_deep / main agent 直接执行 / 无代码实现，原因：
-- 代码 review 闭环: 实现后派发/复用 architect_reviewer / 无代码 review，原因：
-- QA 闭环: 派发 qa_reviewer / main agent 直接复核 / 合法裁剪，原因：
-- 文档同步计划: 不需要 / 需要 docs_keeper，触发依据：
-```
+候选知识只有同时满足以下条件时才允许记录：
 
-非简单实现任务进入 workflow 后，至少必须具备以下闭环，不得只做定位或只改代码：
+1. 已被当前事实源验证，或由用户明确确认；
+2. 在当前任务结束后仍具有长期价值；
+3. 不属于可从单个当前源码文件直接、无歧义恢复的普通实现事实，或其关键 WHY 无法从代码直接恢复；
+4. 未来 Agent 不召回时，存在重复踩坑、破坏契约、错误决策或重复推导的现实风险；
+5. 没有在 AGENTS.md、Skill、validator、Handoff Contract 或其他权威规则中被完整定义。
 
-1. planning：默认派发或复用 `task_planner` 输出规划草案；只有纯只读解释、纯配置检查、用户明确禁止 subagent 或当前环境不支持 subagent 时，才允许由 main agent 在 Dispatch Plan 中裁剪并写明原因。
-2. 实现前架构分析：默认派发或复用 `architect_reviewer` 定边界；只有纯只读、纯文档、已知单点低风险改动，且 Dispatch Plan 写明裁剪理由时才可由 main agent 直接承担。
-3. 代码执行：由 `implementer_fast` / `implementer_deep` 或 main agent 在明确写入边界内完成；高风险实现默认 `implementer_deep`。
-4. 实现后代码 review：凡涉及代码 diff、代码逻辑、模块边界、规则一致性、数据/API/状态边界或删减判断，必须由同一角色线程的 `architect_reviewer` 执行代码 review；`qa_reviewer` 不得替代代码 review。
-5. QA：代码 review 之后再由 `qa_reviewer` 检查测试、回归、验收证据、自动化与未验证项；QA 可以指出“缺少 architect 代码 review”，但不得把自身结论当作代码 review。
-6. handoff：非简单代码实现完成后，必须创建或更新 `docs/ai-runs/` handoff；只有无代码实现或用户明确不要落文档时可裁剪并写明原因。
-7. 文档同步：若涉及规则、流程、接口、字段、状态、问诊链路、展示契约、避坑记录、All-in-One 或 source_index，必须派发 `docs_keeper`；若不需要同步，最终汇总必须说明理由。
+### 禁止作为 OpenViking 记忆查询依据或记录内容
 
-纯只读分析、纯文档整理、纯配置检查等无法自然包含“代码执行”的任务，必须在 Dispatch Plan 中把实现闭环标记为“无代码实现”并说明原因，不能默默跳过。
+- 每次都应从当前源码确认的 code fact；
+- 仅描述当前实现位置的文件、函数、组件、路由、调用关系或 import/export 清单；
+- lint、format、style、500 行拆分、普通机械重构和依赖安装流程；
+- 仅把 AGENTS.md、Skill、validator 或 Handoff Contract 原文复制成规则副本；但经用户确认并由源码、合同和运行证据共同证明的稳定工作流契约，不属于此禁项；
+- 仅描述一次性的临时 bug 修复、当前 Sprint 状态、短期 TODO 和任务执行日志；若已提炼为跨任务可复现的根因、识别信号和经验证解决方法，可按 `validated_recurring_workflow_gotcha` 记录；
+- 测试命令、测试文件索引、断言写法、覆盖率要求、mock/fixture 实现和 QA 执行步骤；
+- 通用工程知识、公开行业知识、外部文档内容或一般领域知识，除非已经被当前项目明确采纳并形成稳定项目决策或契约；
+- 整段源码、完整文档、日志、issue、会话记录、测试输出或其他未经提炼的原始材料；
+- API key、token、密码、Cookie、私钥、生产凭据以及不必要的个人敏感信息；
+- 易变化的运行状态、临时环境值、部署状态和监控数据；
+- 未经当前事实源验证或用户明确确认的推测。
 
-### 6.3 高风险任务默认流程
+代码、测试、schema、配置、package scripts、Active docs 和实际端上验收可以作为 Topic 的来源证据，但来源文件本身的存在、路径或实现方式不得成为录入理由。录入理由必须是这些来源共同证明了允许范围内的稳定项目知识。不得录入凭据、原始日志、临时执行 ID、PID、一次性时间戳、缓存内容或未经复核的模型推测。
 
-高风险任务不得以“用户未显式要求开启 subagent”为理由跳过 subagent workflow。
-一旦任务被判定为高风险，main agent 必须主动派发至少一个只读 subagent：
+### 历史记忆迁移治理例外
 
-1. 默认先派发或复用 `task_planner` 输出规划草案；合法裁剪必须写明原因。
-2. 再派发 `code_explorer` 做只读定位。
-3. 涉及诊断流、outcome、gate、route、runtime、规则边界或架构判断时，必须再派发 `architect_reviewer` 做实现前架构分析。
-4. 涉及实现时，默认派发 `implementer_deep`；只有 `architect_reviewer` 明确裁定为低风险局部展示 / 文案修复时，才允许降级为 `implementer_fast`。
-5. 代码实现后必须复用 `architect_reviewer` 做代码 review。
-6. architect 代码 review 后必须派发 `qa_reviewer` 做测试、回归和验收证据审查。
-7. 涉及文档、规则、索引或 All-in-One 时，必须派发 `docs_keeper`。
-8. 涉及部署、CloudBase、smoke、DB 证据或回滚时，必须派发 `release_ops`。
-
-高风险任务只有在以下情况下可以不派发 subagent：
-
-1. 用户明确禁止派发 subagent。
-2. 当前环境不支持 subagent。
-3. 当前任务仅做只读解释，不做实现、不改文件。
-4. main agent 明确将任务范围降级为普通或简单任务，并说明降级依据。
-
-以下任务必须先只读分析：诊断流、outcome、ranking → route、outcome 瘦身、问题簇、gate、问诊路径、runtime、诊断 `fast path` / `warm path` / `early return` / 缓存命中 / 性能优化路径、replay / zero-model、CloudBase 云函数部署、数据结构迁移、API 协议变更、多文件状态管理改造、`docs/new-rules/` 规则解释或落地、`docs/code-logics/` 与实际代码不一致的修正。
-
-涉及客户端运行时、最终展示、review/list 暴露的历史会话、result/read、follow-up 或 diagnose 页面结果的任务，必须把“观察入口”和“业务修复位置”分开描述；review/list 和 replay 只能作为复现或观察证据，不能单独作为完成验收。
-
-默认流程：
-
-1. `task_planner`
-2. `code_explorer`
-3. `architect_reviewer` 实现前架构分析
-4. `implementer_deep`
-5. `architect_reviewer` 实现后代码 review，复用同一 architect 线程
-6. `qa_reviewer`
-7. `docs_keeper`，如果涉及文档
-8. `release_ops`，如果涉及部署、CloudBase、replay 或线上验证
-
----
-
-## 7. Subagent 路由摘要
-
-| 任务意图 | 派发角色 |
-|---|---|
-| 非简单 workflow planning、需求不清、拆任务、计划、验收标准 | `task_planner` |
-| 找文件、调用链、依赖来源、代码逻辑解释、`docs/code-logics/` 对照 | `code_explorer` |
-| 架构、状态 / API / 数据边界、诊断流、outcome、gate、模块边界、`docs/new-rules/` 一致性 | `architect_reviewer` |
-| 局部、低风险、边界明确的小改动 | `implementer_fast` |
-| 多文件、诊断流、route / outcome / gate / runtime、诊断快捷路径、replay、CloudBase、数据结构、后端高风险实现 | `implementer_deep` |
-| 测试、回归、验收证据、前端自动化、未验证项、发布前质量缺口 | `qa_reviewer` |
-| 文档、术语、`docs/code-logics/`、`docs/new-rules/`、避坑索引同步 | `docs_keeper` |
-| 发布、部署、CloudBase、replay、回滚、成本 | `release_ops` |
-
-调度约束：
-
-1. `task_planner` 只输出规划草案，不直接创建或修改正式 `docs/ai-tasks/` 文档；是否落文档由 main agent 确认，必要时派发 `docs_keeper`。
-2. `code_explorer` 只读定位，不改代码。
-3. `architect_reviewer` 负责实现前架构审查和实现后代码 review，不改代码；代码相关 review 不得交给 `qa_reviewer` 替代。
-4. `implementer_fast` 只处理低风险局部实现；一旦发现范围扩大，必须请求升级到 `implementer_deep`。
-5. `implementer_deep` 处理高风险实现；涉及部署时必须交给 `release_ops` 复核。
-6. `qa_reviewer` 只审查测试、回归、验收证据和质量缺口，不改代码；不得替代 `architect_reviewer` 做代码逻辑、模块边界或规则一致性 review。
-7. `docs_keeper` 负责文档持久化、索引同步、术语一致性和完整文档交付。
-8. `release_ops` 默认不读取大规则目录，只消费发布 / 验收相关摘要和部署证据。
-9. 同一会话内同一角色只能保留一个活跃 subagent 线程；继续同角色任务时必须复用已有线程，重开时记录原因。
-
----
-
-## 8. Subagent 读取 AGENTS.md 的例外条件
-
-Subagent 默认不读取完整 `AGENTS.md`。只有以下情况才允许回读：
-
-1. Main agent 未提供任务说明 / Dispatch Plan。
-2. 当前任务缺少明确角色边界或写入权限边界。
-3. 需要重新确认 subagent 路由、风险路由或全局硬规则。
-4. 线程中断恢复，且任务说明 / handoff 信息不足。
-5. 发现分类规则冲突，需要回到根规则确认优先级。
-
-即使回读，也只提取当前任务相关规则，不把完整 `AGENTS.md` 作为长期上下文。
+在记忆审计、迁移、纠错、合并或清理任务中，允许读取和查询全部历史条目，包括已经越界、过期或错误的内容。此类读取只用于迁移治理，不代表其内容可以作为当前事实使用或继续保留。未经另行授权，不删除、合并或清空历史源数据。

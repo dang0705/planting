@@ -1,0 +1,120 @@
+{
+  "script": "scripts/clickup-fetch-task.ts",
+  "envLoad": {
+    "cwd": "/Users/jay/WebstormProjects/codex-thin-pipeline",
+    "loadedFiles": [
+      {
+        "path": "/Users/jay/WebstormProjects/codex-thin-pipeline/.env.local",
+        "loadedKeys": [
+          "REPO_PATH",
+          "TASK",
+          "CLICKUP_API_TOKEN",
+          "FIGMA_TOKEN"
+        ],
+        "skippedExistingKeys": []
+      }
+    ],
+    "missingFiles": []
+  },
+  "readonly": true,
+  "callsCodex": false,
+  "createdAt": "2026-06-07T14:49:07.379Z",
+  "options": {
+    "taskId": "86exvt6fe",
+    "outDir": "/Users/jay/WebstormProjects/codex-thin-pipeline/runs/clickup-fetch/2026-06-07T14-49-05-885Z",
+    "commentsPages": 1,
+    "includeRaw": true,
+    "maxRawBytes": 1048576,
+    "maxFactsBytes": 524288,
+    "timeoutMs": 30000
+  },
+  "lookup": {
+    "taskId": "86exvt6fe",
+    "source": "task_id_arg"
+  },
+  "counts": {
+    "comments": 0,
+    "subtasks": 5,
+    "attachments": 0,
+    "nativeChecklistItems": 0,
+    "hardConstraints": 10,
+    "requestRecords": 2
+  },
+  "factsQuality": {
+    "status": "blocked",
+    "score": 72,
+    "weakStructure": false,
+    "highRisk": true,
+    "missingFacts": [
+      "missing_acceptance_source"
+    ],
+    "warnings": [
+      "missing_execution_hints"
+    ],
+    "requiredHumanActions": [
+      "补充 native checklist 或验收标准，否则不能进入实现。 "
+    ],
+    "sectionMatches": {
+      "background": {
+        "title": "背景",
+        "alias": "背景"
+      },
+      "goal": {
+        "title": "非目标",
+        "alias": "目标"
+      },
+      "scopeMustNotDo": {
+        "title": "1\\. 不做 ranking",
+        "alias": "不做"
+      },
+      "acceptanceCriteria": {
+        "title": "验收标准",
+        "alias": "验收标准"
+      }
+    }
+  },
+  "writes": [
+    {
+      "file": "/Users/jay/WebstormProjects/codex-thin-pipeline/runs/clickup-fetch/2026-06-07T14-49-05-885Z/clickup-task-facts.json",
+      "originalBytes": 6227,
+      "writtenBytes": 6227,
+      "limited": false
+    },
+    {
+      "file": "/Users/jay/WebstormProjects/codex-thin-pipeline/runs/clickup-fetch/2026-06-07T14-49-05-885Z/clickup-task-full-facts.json",
+      "originalBytes": 35140,
+      "writtenBytes": 35140,
+      "limited": false
+    },
+    {
+      "file": "/Users/jay/WebstormProjects/codex-thin-pipeline/runs/clickup-fetch/2026-06-07T14-49-05-885Z/clickup-request-records.json",
+      "originalBytes": 2154,
+      "writtenBytes": 2154,
+      "limited": false
+    },
+    {
+      "file": "/Users/jay/WebstormProjects/codex-thin-pipeline/runs/clickup-fetch/2026-06-07T14-49-05-885Z/clickup-task.raw.limited.json",
+      "originalBytes": 26240,
+      "writtenBytes": 26240,
+      "limited": false
+    },
+    {
+      "file": "/Users/jay/WebstormProjects/codex-thin-pipeline/runs/clickup-fetch/2026-06-07T14-49-05-885Z/clickup-comments.raw.limited.json",
+      "originalBytes": 92,
+      "writtenBytes": 92,
+      "limited": false
+    },
+    {
+      "file": "/Users/jay/WebstormProjects/codex-thin-pipeline/runs/clickup-fetch/2026-06-07T14-49-05-885Z/clickup-description.md",
+      "originalBytes": 6288,
+      "writtenBytes": 6288,
+      "limited": false
+    },
+    {
+      "file": "/Users/jay/WebstormProjects/codex-thin-pipeline/runs/clickup-fetch/2026-06-07T14-49-05-885Z/summary.md",
+      "originalBytes": 2650,
+      "writtenBytes": 2650,
+      "limited": false
+    }
+  ]
+}

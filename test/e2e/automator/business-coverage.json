@@ -1,0 +1,210 @@
+{
+  "schema_version": 1,
+  "status": "complete",
+  "purpose": "Independent record of every registered mini-program route and user-facing capability that must be exercised before Automator v3 can be declared pull-up-ready.",
+  "surfaces": [
+    {
+      "id": "page.pages.index.index",
+      "route": "pages/index/index",
+      "kind": "page",
+      "tabbar": true,
+      "acceptance_modes": ["live"],
+      "catalog_ids": [
+        "diagnosis.yellowing.no_image_quick",
+        "care.watering.transpiration_v3.independent_advice",
+        "care.watering.transpiration_v3.user_plant_planner",
+        "care.watering.reminder_dose.bottle_text",
+        "care.watering.reminder_dose.dose_dynamic",
+        "care.watering.reminder_dose.dose_label_layout",
+        "care.watering.reminder_dose.unit_alignment_final",
+        "care.watering.reminder_dose.unit_alignment_v4",
+        "care.home_card.water_and_fertilization_closure",
+        "user.plant_detail.fertilization_reminder_live_development"
+      ]
+    },
+    {
+      "id": "page.pages.diagnose.diagnose",
+      "route": "pages/diagnose/diagnose",
+      "kind": "page",
+      "tabbar": true,
+      "acceptance_modes": ["live", "diagnostic"],
+      "catalog_ids": [
+        "diagnosis.yellowing.no_image_quick",
+        "diagnosis.pest.visual_mode_retake",
+        "diagnosis.air_environment_v2.question_packages"
+      ]
+    },
+    {
+      "id": "page.pages.calendar.calendar",
+      "route": "pages/calendar/calendar",
+      "kind": "page",
+      "tabbar": false,
+      "acceptance_modes": [],
+      "catalog_ids": []
+    },
+    {
+      "id": "page.pages.reminder.reminder",
+      "route": "pages/reminder/reminder",
+      "kind": "page",
+      "tabbar": false,
+      "acceptance_modes": [],
+      "catalog_ids": []
+    },
+    {
+      "id": "page.pages.profile.profile",
+      "route": "pages/profile/profile",
+      "kind": "page",
+      "tabbar": true,
+      "acceptance_modes": ["live"],
+      "catalog_ids": ["user.review.subpackage_routing"]
+    },
+    {
+      "id": "page.subpackages.review.out-of-pool-review",
+      "route": "subpackages/review/out-of-pool-review",
+      "kind": "page",
+      "tabbar": false,
+      "acceptance_modes": ["live"],
+      "catalog_ids": ["user.review.subpackage_routing"]
+    },
+    {
+      "id": "page.subpackages.review.diagnosis-review",
+      "route": "subpackages/review/diagnosis-review",
+      "kind": "page",
+      "tabbar": false,
+      "acceptance_modes": ["live"],
+      "catalog_ids": ["user.review.subpackage_routing"]
+    },
+    {
+      "id": "page.subpackages.review.watering-review",
+      "route": "subpackages/review/watering-review",
+      "kind": "page",
+      "tabbar": false,
+      "acceptance_modes": ["live"],
+      "catalog_ids": ["user.review.subpackage_routing"]
+    },
+    {
+      "id": "page.subpackages.diagnosis.question-package",
+      "route": "subpackages/diagnosis/question-package",
+      "kind": "page",
+      "tabbar": false,
+      "acceptance_modes": ["live", "diagnostic"],
+      "catalog_ids": [
+        "diagnosis.yellowing.no_image_quick",
+        "diagnosis.pest.visual_mode_retake",
+        "diagnosis.air_environment_v2.question_packages"
+      ]
+    },
+    {
+      "id": "page.subpackages.diagnosis.flow",
+      "route": "subpackages/diagnosis/flow",
+      "kind": "page",
+      "tabbar": false,
+      "acceptance_modes": ["live", "diagnostic"],
+      "catalog_ids": [
+        "diagnosis.yellowing.no_image_quick",
+        "diagnosis.pest.visual_mode_retake",
+        "diagnosis.air_environment_v2.question_packages"
+      ]
+    },
+    {
+      "id": "page.subpackages.diagnosis.result",
+      "route": "subpackages/diagnosis/result",
+      "kind": "page",
+      "tabbar": false,
+      "acceptance_modes": ["live", "diagnostic"],
+      "catalog_ids": ["diagnosis.yellowing.no_image_quick", "diagnosis.pest.visual_mode_retake"]
+    },
+    {
+      "id": "page.subpackages.care.watering-advisor",
+      "route": "subpackages/care/watering-advisor/watering-advisor",
+      "kind": "page",
+      "tabbar": false,
+      "acceptance_modes": ["live"],
+      "catalog_ids": [
+        "care.watering.transpiration_v3.independent_advice",
+        "care.watering.transpiration_v3.user_plant_planner"
+      ]
+    },
+    {
+      "id": "page.subpackages.care.airflow",
+      "route": "subpackages/care/airflow/index",
+      "kind": "page",
+      "tabbar": false,
+      "acceptance_modes": ["live", "diagnostic"],
+      "catalog_ids": ["care.air_exchange.v1", "care.air_environment_v2.user_plant_watering"]
+    },
+    {
+      "id": "page.subpackages.care.light-environment",
+      "route": "subpackages/care/plant-environment/light-environment",
+      "kind": "page",
+      "tabbar": false,
+      "acceptance_modes": ["live"],
+      "catalog_ids": ["plant.light_environment_save_event_channel"]
+    },
+    {
+      "id": "page.subpackages.plant.user-plant-detail",
+      "route": "subpackages/plant/user-plant-detail/user-plant-detail",
+      "kind": "page",
+      "tabbar": false,
+      "acceptance_modes": ["live", "diagnostic"],
+      "catalog_ids": [
+        "plant.user_detail_create_edit_view_modes",
+        "care.watering.transpiration_v3.user_plant_planner",
+        "user.plant_detail.fertilization_reminder_live_development",
+        "user.plant_detail.fertilization_monthly",
+        "user.plant_detail.fertilization_reminder_setup",
+        "user.plant_detail.fertilization_reminder_actions"
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "calendar.task-complete-postpone-and-plan-entry",
+      "route": "pages/calendar/calendar",
+      "status": "deferred",
+      "catalog_ids": []
+    },
+    {
+      "id": "calendar.weather-and-solar-term-summary",
+      "route": "pages/calendar/calendar",
+      "status": "deferred",
+      "catalog_ids": []
+    },
+    {
+      "id": "reminder.tab-water-and-fertilization-closure",
+      "route": "pages/reminder/reminder",
+      "status": "deferred",
+      "catalog_ids": []
+    },
+    {
+      "id": "mvp.hidden-calendar-reminder-tab-entry",
+      "route": "pages/index/index",
+      "status": "covered",
+      "catalog_ids": ["care.mvp.hidden_calendar_reminder_tabs"]
+    },
+    {
+      "id": "home-card.water-and-fertilization-closure",
+      "route": "pages/index/index",
+      "status": "covered",
+      "catalog_ids": ["care.home_card.water_and_fertilization_closure"]
+    },
+    {
+      "id": "plant.light-environment-save-event-channel",
+      "route": "subpackages/care/plant-environment/light-environment",
+      "status": "covered",
+      "catalog_ids": ["plant.light_environment_save_event_channel"]
+    },
+    {
+      "id": "plant.user-detail-create-edit-view-modes",
+      "route": "subpackages/plant/user-plant-detail/user-plant-detail",
+      "status": "covered",
+      "catalog_ids": ["plant.user_detail_create_edit_view_modes"]
+    },
+    {
+      "id": "profile.mvp-boundaries",
+      "route": "pages/profile/profile",
+      "status": "covered",
+      "catalog_ids": ["user.profile.mvp_boundaries"]
+    }
+  ]
+}

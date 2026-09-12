@@ -5,7 +5,7 @@
 - 当前代码压缩包：`Archive 2.zip`
 - 项目规则压缩包：`rules.zip`
 - 诊断运行时粗文档：`diagnosis-runtime-code-logic.md`
-- 本次会话中关于“主动瘦身、养护类主轴、outcome 路径规划、gate 守卫、LLM prompt 职责边界”的讨论结论
+- 本次会话中关于“主动瘦身、养护类主轴、outcome 路径规划、condition 守卫、LLM prompt 职责边界”的讨论结论
 
 权威优先级：**当前代码 > 项目 rules > 已有运行时说明 > 本次设计讨论**。如果后续实施时发现文档和代码冲突，必须以代码为准，并同步修正文档。
 
@@ -21,8 +21,8 @@
 正确方向是：
 
 ```text
-LLM 负责把图片中可见信息结构化，提供 route 入口和 gate 所需的判别特征。
-规则引擎负责决定 outcome、route、gate 和最终输出。
+LLM 负责把图片中可见信息结构化，提供 route 入口和 condition 所需的判别特征。
+规则引擎负责决定 outcome、route、condition 和最终输出。
 ```
 
 ## 二、当前 prompt 职责
@@ -64,7 +64,7 @@ parseStructuredVisualResult()，约第 252 行
 
 不足：
 
-1. 对 route gate 帮助不够。
+1. 对 route condition 帮助不够。
 2. 缺少路径判别特征。
 3. 缺少“图片看不出来，需要问什么”的结构化信息。
 4. `route_hints` 粒度较粗。
@@ -141,7 +141,7 @@ parseStructuredVisualResult()，约第 252 行
 |---|---|---|
 | `soil_moisture` | 土壤干湿 | 积水/缺水分流。 |
 | `watering_frequency` | 浇水频率 | 积水/缺水/根系压力。 |
-| `progression` | 是否扩散 | 叶斑/旧伤/虫害分流。 |
+| `progression` | 是否扩散 | 叶斑/既有伤/虫害分流。 |
 | `recent_light_change` | 最近光照变化 | 晒伤/弱光分流。 |
 | `pest_backside_check` | 叶背虫害检查 | 虫害路径。 |
 | `stem_base_condition` | 茎基部状态 | 烂根风险/积水路径。 |
@@ -181,7 +181,7 @@ parseStructuredVisualResult()，约第 252 行
 }
 ```
 
-原因：这会绕过 route/gate 设计。
+原因：这会绕过 route/condition 设计。
 
 ### 2. 禁止推断不可见历史
 
@@ -373,7 +373,7 @@ routeDecision
 actionAdvice
 ```
 
-同时保留旧字段兼容：
+同时保留既有字段适配：
 
 ```js
 rankings
@@ -402,7 +402,7 @@ actionAdvice.avoidActions
 
 ```text
 routeKey
-gateKey
+conditionKey
 ranking finalScore
 内部 topProblem
 ```
@@ -411,7 +411,7 @@ ranking finalScore
 
 第一阶段前端可几乎不改。
 
-原因：后端仍可把 `primaryOutcome` 和 `visibleOutcomes` 映射到现有 `finalResult`、`nextSteps`、`whatToAvoid`，保持旧页面兼容。
+原因：后端仍可把 `primaryOutcome` 和 `visibleOutcomes` 映射到现有 `finalResult`、`nextSteps`、`whatToAvoid`，保持既有页面适配。
 
 最小改动：
 
@@ -436,4 +436,4 @@ ranking finalScore
 2. final outcome 时能显示行动建议。
 3. uncertain 时不显示具体最高问题。
 4. non_problematic 时不显示治疗建议。
-5. 旧字段存在时不崩溃，新字段缺失时可 fallback。
+5. 既有字段存在时不崩溃，新字段缺失时可 fallback。

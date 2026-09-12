@@ -1,7 +1,7 @@
 'use strict'
 
 const { jsonResponse } = require('/opt/utils/http')
-const { resolveRequestPrincipal, assertInternalReviewAccess } = require('../services/request-guard')
+const { resolveRequestPrincipal, hasInternalReviewAccess } = require('../services/request-guard')
 const {
   listOutOfPoolCandidates,
   getOutOfPoolCandidate,
@@ -18,7 +18,9 @@ const { buildOutOfPoolReviewMatchTerms } = require('../app/out-of-pool-match-ter
 
 async function handleOutOfPoolCandidateList(request, context, query) {
   const principal = await resolveRequestPrincipal({ request, context, payload: query || {} })
-  assertInternalReviewAccess({ request, ...principal })
+  if (!hasInternalReviewAccess(principal)) {
+    return jsonResponse(403, { code: 403, message: '无权访问该接口', data: null })
+  }
 
   const data = await listOutOfPoolCandidates({
     page: Number(query?.page || 1),
@@ -32,7 +34,9 @@ async function handleOutOfPoolCandidateList(request, context, query) {
 
 async function handleOutOfPoolCandidateImage(request, context, query) {
   const principal = await resolveRequestPrincipal({ request, context, payload: query || {} })
-  assertInternalReviewAccess({ request, ...principal })
+  if (!hasInternalReviewAccess(principal)) {
+    return jsonResponse(403, { code: 403, message: '无权访问该接口', data: null })
+  }
 
   const data = await getOutOfPoolCandidateImage({
     visualNormalizedImageResultId: query?.visualNormalizedImageResultId,
@@ -49,12 +53,16 @@ async function handleOutOfPoolCandidateImage(request, context, query) {
 async function handleOutOfPoolCandidateReview(request, context, payload) {
   payload = payload || {}
   const principal = await resolveRequestPrincipal({ request, context, payload })
-  assertInternalReviewAccess({ request, ...principal })
+  if (!hasInternalReviewAccess(principal)) {
+    return jsonResponse(403, { code: 403, message: '无权访问该接口', data: null })
+  }
 
   const visualNormalizedImageResultId = String(payload.visualNormalizedImageResultId || '').trim()
   const candidateIndex = Number(payload.candidateIndex || 0)
   const groupId = String(payload.groupId || '').trim()
-  const reviewAction = String(payload.reviewAction || '').trim().toLowerCase()
+  const reviewAction = String(payload.reviewAction || '')
+    .trim()
+    .toLowerCase()
 
   if (groupId) {
     const groupReview = await upsertOutOfPoolCandidateGroupReview({
@@ -105,7 +113,9 @@ async function handleOutOfPoolCandidateReview(request, context, payload) {
         'Auto-created from approved out-of-pool candidate.',
         candidate.visualOutOfPoolReviewId || candidate.visual_out_of_pool_review_id || '',
         candidate.reason || ''
-      ].filter(Boolean).join(' '),
+      ]
+        .filter(Boolean)
+        .join(' '),
       reviewStatus: 'audited',
       enabled: true,
       priority: 100,
@@ -126,7 +136,9 @@ async function handleOutOfPoolCandidateReview(request, context, payload) {
 
 async function handleOutOfPoolProxyMappingList(request, context, query) {
   const principal = await resolveRequestPrincipal({ request, context, payload: query || {} })
-  assertInternalReviewAccess({ request, ...principal })
+  if (!hasInternalReviewAccess(principal)) {
+    return jsonResponse(403, { code: 403, message: '无权访问该接口', data: null })
+  }
 
   const data = await listOutOfPoolProxyMappings({
     page: Number(query?.page || 1),
@@ -142,7 +154,9 @@ async function handleOutOfPoolProxyMappingList(request, context, query) {
 async function handleOutOfPoolProxyMappingUpsert(request, context, payload) {
   payload = payload || {}
   const principal = await resolveRequestPrincipal({ request, context, payload })
-  assertInternalReviewAccess({ request, ...principal })
+  if (!hasInternalReviewAccess(principal)) {
+    return jsonResponse(403, { code: 403, message: '无权访问该接口', data: null })
+  }
 
   const data = await upsertOutOfPoolProxyMapping({
     mappingId: payload.mappingId || '',
@@ -162,7 +176,9 @@ async function handleOutOfPoolProxyMappingUpsert(request, context, payload) {
 async function handleOutOfPoolProxyMappingDisable(request, context, payload) {
   payload = payload || {}
   const principal = await resolveRequestPrincipal({ request, context, payload })
-  assertInternalReviewAccess({ request, ...principal })
+  if (!hasInternalReviewAccess(principal)) {
+    return jsonResponse(403, { code: 403, message: '无权访问该接口', data: null })
+  }
 
   const data = await disableOutOfPoolProxyMapping({
     mappingId: payload.mappingId || '',

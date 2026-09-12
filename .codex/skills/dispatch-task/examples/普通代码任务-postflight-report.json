@@ -1,0 +1,31 @@
+{
+  "dispatch_run_id": "example-code-001",
+  "status": "passed",
+  "gate": "implementation_postflight",
+  "worktree": {
+    "status": "passed",
+    "gate": "worktree_scope",
+    "dispatch_run_id": "example-code-001",
+    "changed_files_since_baseline": ["src/utils/example.ts"],
+    "declared_changed_files": ["src/utils/example.ts"],
+    "undeclared_actual_changed_files": [],
+    "declared_not_visible": [],
+    "declared_preexisting_overlap": [],
+    "preexisting_dirty_modified_since_baseline": [],
+    "disappeared_since_baseline": [],
+    "errors": []
+  },
+  "no_new_deps": {
+    "status": "passed",
+    "gate": "no_new_deps",
+    "dispatch_run_id": "example-code-001",
+    "errors": []
+  },
+  "style_stack": {
+    "status": "passed",
+    "gate": "style_stack",
+    "dispatch_run_id": "example-code-001",
+    "errors": []
+  },
+  "errors": []
+}

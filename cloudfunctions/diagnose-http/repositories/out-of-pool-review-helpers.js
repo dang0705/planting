@@ -13,15 +13,15 @@ function normalizeReviewStatus(value = '') {
   return 'all'
 }
 
-function normalizePageNumber(value, fallback = 1) {
+function normalizePageNumber(value, conservative = 1) {
   const normalized = Number(value || 0)
-  if (!Number.isFinite(normalized) || normalized < 1) {return fallback}
+  if (!Number.isFinite(normalized) || normalized < 1) {return conservative}
   return Math.floor(normalized)
 }
 
-function normalizePageSize(value, fallback = 20) {
+function normalizePageSize(value, conservative = 20) {
   const normalized = Number(value || 0)
-  if (!Number.isFinite(normalized) || normalized < 1) {return fallback}
+  if (!Number.isFinite(normalized) || normalized < 1) {return conservative}
   return Math.min(100, Math.floor(normalized))
 }
 
@@ -73,13 +73,13 @@ function mapOutOfPoolCandidateRow(row = {}) {
   }
 }
 
-function safeParseJson(value, fallback) {
-  if (!value) {return fallback}
+function safeParseJson(value, conservative) {
+  if (!value) {return conservative}
   if (typeof value === 'object') {return value}
   try {
     return JSON.parse(value)
   } catch {
-    return fallback
+    return conservative
   }
 }
 

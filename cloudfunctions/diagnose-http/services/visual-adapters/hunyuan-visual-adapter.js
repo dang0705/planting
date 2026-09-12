@@ -2,8 +2,11 @@
 
 const { callLLMDiagnose } = require('../../utils/llm')
 const { parseLLMVisualResult } = require('../../utils/diagnosis-parser')
+const { normalizeCaptureRegion } = require('../../utils/capture-region-normalizer')
+const { withLlmImagePromptContext } = require('../../utils/llm-image-context')
 const {
   normalizeOrgan,
+  areOrgansCompatible,
   normalizeQualityGrade,
   normalizeAnalyzability,
   normalizeStrengthLevel,
@@ -14,6 +17,8 @@ const {
   normalizeRouteHints,
   normalizeSuggestedFollowupCapture,
   normalizeNotes,
+  normalizeVisualDiscriminators,
+  normalizeMissingInfoForPath,
   normalizeText,
   qualityGradeToAnalyzability
 } = require('../../utils/visual-contract')
@@ -55,7 +60,11 @@ function isStructuralDamageSymptomKey(symptomKey = '') {
   )
 }
 
-function hasExplicitStructuralDamageCue(symptomKey = '', supportingRegionNote = '', normalizationNotes = []) {
+function hasExplicitStructuralDamageCue(
+  symptomKey = '',
+  supportingRegionNote = '',
+  normalizationNotes = []
+) {
   const normalizedSymptomKey = normalizeText(symptomKey || '', '')
   if (!isStructuralDamageSymptomKey(normalizedSymptomKey)) {
     return true
@@ -109,13 +118,26 @@ function resolveOrganDecision(parsedResult = {}, imageRuntimeInput = {}) {
       }
     }
 
+    if (areOrgansCompatible(inputOrganHint, modelDetectedOrgan)) {
+      return {
+        // 兼容范围内仍以模型识别结果作为标准化器官；槽位只保留为输入提示。
+        normalized_organ: modelDetectedOrgan,
+        model_detected_organ: modelDetectedOrgan,
+        organ_source: normalizeOrganSource('model_detected'),
+        multi_organ_detected: 0,
+        organ_conflict_flag: 0,
+        organ_resolution_reason: `model_detected_compatible_with_ui_hint:${inputOrganHint}`
+      }
+    }
+
     return {
-      normalized_organ: inputOrganHint,
+      // UI 槽位只是输入上下文；发生冲突时保留模型识别结果，不能用槽位覆盖模型。
+      normalized_organ: modelDetectedOrgan,
       model_detected_organ: modelDetectedOrgan,
-      organ_source: normalizeOrganSource('merged'),
+      organ_source: normalizeOrganSource('model_detected'),
       multi_organ_detected: 1,
       organ_conflict_flag: 1,
-      organ_resolution_reason: `ui_hint_priority_over_model:${modelDetectedOrgan}`
+      organ_resolution_reason: `model_detected_conflict_with_ui_hint:${inputOrganHint}`
     }
   }
 
@@ -209,9 +231,8 @@ function normalizeModelVisualResult(
     qualityGradeToAnalyzability(imageQualityGrade)
   )
   const normalizationNotes = normalizeNotes(parsedResult?.normalization_notes || [])
-  const rawSymptomCandidates = (Array.isArray(parsedResult?.symptom_candidates)
-    ? parsedResult.symptom_candidates
-    : []
+  const rawSymptomCandidates = (
+    Array.isArray(parsedResult?.symptom_candidates) ? parsedResult.symptom_candidates : []
   )
     .map(item => ({
       symptom_key: normalizeText(item?.symptom_key || ''),
@@ -219,22 +240,39 @@ function normalizeModelVisualResult(
       strength_level: normalizeStrengthLevel(item?.strength_level, 'medium'),
       confidence_band: normalizeConfidenceBand(item?.confidence_band, 'medium'),
       visibility_scope: normalizeVisibilityScope(item?.visibility_scope, 'organ'),
+      region_ref: normalizeCaptureRegion(
+        item?.region_ref ||
+          item?.regionRef ||
+          item?.capture_region ||
+          parsedResult?.region_ref ||
+          parsedResult?.capture_region ||
+          imageRuntimeInput?.captureRegion
+      ),
       supporting_region_note: normalizeText(item?.supporting_region_note || ''),
       admission_readiness: normalizeAdmissionReadiness(item?.admission_readiness, 'cautious')
     }))
     .filter(item => item.symptom_key)
     .slice(0, 8)
   const symptomCandidates = rawSymptomCandidates.filter(item => {
-    if (hasExplicitStructuralDamageCue(item.symptom_key, item.supporting_region_note, normalizationNotes)) {
+    if (
+      hasExplicitStructuralDamageCue(
+        item.symptom_key,
+        item.supporting_region_note,
+        normalizationNotes
+      )
+    ) {
       return true
     }
 
-    normalizationNotes.push(`structural_candidate_dropped:${item.symptom_key}:missing_explicit_structural_cue`)
+    normalizationNotes.push(
+      `structural_candidate_dropped:${item.symptom_key}:missing_explicit_structural_cue`
+    )
     return false
   })
-  const outOfPoolSymptomCandidates = (Array.isArray(parsedResult?.out_of_pool_symptom_candidates)
-    ? parsedResult.out_of_pool_symptom_candidates
-    : []
+  const outOfPoolSymptomCandidates = (
+    Array.isArray(parsedResult?.out_of_pool_symptom_candidates)
+      ? parsedResult.out_of_pool_symptom_candidates
+      : []
   )
     .map(item => ({
       raw_visual_name_cn: normalizeText(item?.raw_visual_name_cn || '', ''),
@@ -285,9 +323,35 @@ function normalizeModelVisualResult(
     analyzability,
     symptom_candidates: symptomCandidates,
     out_of_pool_symptom_candidates: outOfPoolSymptomCandidates,
+    visual_discriminators: normalizeVisualDiscriminators(parsedResult?.visual_discriminators || []),
+    missing_info_for_path: normalizeMissingInfoForPath(parsedResult?.missing_info_for_path || []),
     route_hints: normalizeRouteHints(parsedResult?.route_hints || []),
-    suggested_followup_capture: normalizeSuggestedFollowupCapture(
-      parsedResult?.suggested_followup_capture || []
+    capture_region: normalizeCaptureRegion(
+      parsedResult?.capture_region || imageRuntimeInput?.captureRegion
+    ),
+    mode_candidates: (Array.isArray(parsedResult?.mode_candidates)
+      ? parsedResult.mode_candidates
+      : []
+    )
+      .map(item => ({
+        mode: normalizeText(item?.mode || item?.diagnosis_mode || item?.diagnosisMode || ''),
+        confidence: normalizeOptionalConfidence(item?.confidence) || 0,
+        region_ref: normalizeCaptureRegion(
+          item?.region_ref ||
+            item?.regionRef ||
+            item?.capture_region ||
+            parsedResult?.region_ref ||
+            parsedResult?.capture_region ||
+            imageRuntimeInput?.captureRegion
+        )
+      }))
+      .filter(item => item.mode)
+      .slice(0, 8),
+    region_ref: normalizeCaptureRegion(
+      parsedResult?.region_ref || imageRuntimeInput?.captureRegion
+    ),
+    suggested_question_capture: normalizeSuggestedFollowupCapture(
+      parsedResult?.suggested_question_capture || []
     ),
     normalization_notes: normalizeNotes(normalizationNotes)
   }
@@ -295,22 +359,23 @@ function normalizeModelVisualResult(
 
 async function analyzeImage(
   imageRuntimeInput,
-  { visualCallBatchId, onText, adapterMetaOverride = {}, llmOptions = {} } = {}
+  { visualCallBatchId, sessionId = '', onText, adapterMetaOverride = {}, llmOptions = {} } = {}
 ) {
   const startedAt = Date.now()
   const llmStartedAt = Date.now()
-  const llmResult = await callLLMDiagnose([imageRuntimeInput], { onText, ...llmOptions })
+  const llmResult = await withLlmImagePromptContext(llmOptions, () =>
+    callLLMDiagnose([imageRuntimeInput], { onText, sessionId })
+  )
   const llmMs = Math.max(0, Date.now() - llmStartedAt)
   const adapterMeta = getAdapterMeta({
     ...adapterMetaOverride,
     ...(llmResult && typeof llmResult === 'object' ? llmResult.adapterMetaOverride || {} : {})
   })
-  const rawTextOutput =
-    typeof llmResult === 'string'
-      ? llmResult
-      : String(llmResult?.text || '')
+  const rawTextOutput = typeof llmResult === 'string' ? llmResult : String(llmResult?.text || '')
   const parseStartedAt = Date.now()
-  const rawStructuredOutput = parseLLMVisualResult(rawTextOutput)
+  const rawStructuredOutput = parseLLMVisualResult(rawTextOutput, {
+    diagnosisProfile: llmOptions?.diagnosisProfile || imageRuntimeInput?.diagnosisProfile || 'full'
+  })
   const parseMs = Math.max(0, Date.now() - parseStartedAt)
   const normalizeStartedAt = Date.now()
   const normalizedResult = normalizeModelVisualResult(
@@ -330,8 +395,7 @@ async function analyzeImage(
     adapterMeta,
     llmPromptAudit:
       llmResult && typeof llmResult === 'object' ? llmResult.promptAudit || null : null,
-    llmUsage:
-      llmResult && typeof llmResult === 'object' ? llmResult.usage || null : null,
+    llmUsage: llmResult && typeof llmResult === 'object' ? llmResult.usage || null : null,
     llmTiming:
       llmResult && typeof llmResult === 'object'
         ? llmResult.llmTiming || { totalMs: llmMs }
@@ -349,5 +413,9 @@ module.exports = {
   ADAPTER_NAME,
   QWEN_ADAPTER_NAME,
   getAdapterMeta,
-  analyzeImage
+  analyzeImage,
+  _test: {
+    resolveOrganDecision,
+    normalizeModelVisualResult
+  }
 }

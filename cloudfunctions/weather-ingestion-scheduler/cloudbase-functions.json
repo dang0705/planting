@@ -1,0 +1,9 @@
+{
+  "functionsRoot": ".",
+  "functions": [
+    {
+      "name": "weather-ingestion-scheduler",
+      "directory": "."
+    }
+  ]
+}

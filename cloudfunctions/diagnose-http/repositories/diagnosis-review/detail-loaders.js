@@ -34,11 +34,117 @@ const {
   getLatestVisualAggregateSummary,
   resolveSymptomClassFromVisualCandidates
 } = require('./detail-data-loaders')
-const { listDiagnosisReviewFollowUps, listDiagnosisReviewAnswerEvents } = require('./follow-up-detail-loaders')
+const { listDiagnosisReviewQuestions, listDiagnosisReviewAnswerEvents } = require('./question-detail-loaders')
 const {
   createReviewTimingLogger,
   settleOptionalReviewSection
 } = require('./review-performance')
+
+function isPlainObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function buildEnvironmentCareCalculationReviewPayload(environmentCareContext = null) {
+  if (!isPlainObject(environmentCareContext)) {
+    return null
+  }
+
+  const watering = isPlainObject(environmentCareContext.watering)
+    ? environmentCareContext.watering
+    : {}
+  const fertilizing = isPlainObject(environmentCareContext.fertilizing)
+    ? environmentCareContext.fertilizing
+    : {}
+  const light = isPlainObject(environmentCareContext.light)
+    ? environmentCareContext.light
+    : {}
+  const calculationTrace = isPlainObject(environmentCareContext.calculationTrace)
+    ? environmentCareContext.calculationTrace
+    : {}
+  const thresholds = isPlainObject(environmentCareContext.thresholds)
+    ? environmentCareContext.thresholds
+    : {}
+  const wateringThresholds = isPlainObject(thresholds.watering)
+    ? thresholds.watering
+    : {}
+  const historicalSummary10d = isPlainObject(environmentCareContext.historicalSummary10d)
+    ? environmentCareContext.historicalSummary10d
+    : {}
+  const historicalThresholds = isPlainObject(historicalSummary10d.thresholds)
+    ? historicalSummary10d.thresholds
+    : {}
+
+  return {
+    version: String(environmentCareContext.version || '').trim() || 'v7',
+    thresholds,
+    thresholdFactors: {
+      wetHighHumidityDaysMin: Number(wateringThresholds.wetHighHumidityDaysMin || 0),
+      wetHighHumidityConsecutiveDaysMin: Number(wateringThresholds.wetHighHumidityConsecutiveDaysMin || 0),
+      wetColdHumidDaysMin: Number(wateringThresholds.wetColdHumidDaysMin || 0),
+      wetColdHumidConsecutiveDaysMin: Number(wateringThresholds.wetColdHumidConsecutiveDaysMin || 0),
+      wetRainyDaysMin: Number(wateringThresholds.wetRainyDaysMin || 0),
+      wetRainyConsecutiveDaysMin: Number(wateringThresholds.wetRainyConsecutiveDaysMin || 0),
+      wetPressureDeductionPerHit: Number(wateringThresholds.wetPressureDeductionPerHit || 0),
+      dryForecastHotDryDaysMin: Number(wateringThresholds.dryForecastHotDryDaysMin || 0),
+      dryForecastHotDryConsecutiveDaysMin: Number(wateringThresholds.dryForecastHotDryConsecutiveDaysMin || 0),
+      dryHistoricalHotDryDaysMin: Number(wateringThresholds.dryHistoricalHotDryDaysMin || 0),
+      dryHistoricalHotDryConsecutiveDaysMin: Number(wateringThresholds.dryHistoricalHotDryConsecutiveDaysMin || 0),
+      dryLastWateredDaysAgoMin: Number(wateringThresholds.dryLastWateredDaysAgoMin || 0)
+    },
+    keyMetrics: {
+      highHumidityDays: Number(historicalSummary10d.highHumidityDays || 0),
+      maxConsecutiveHighHumidityDays: Number(historicalSummary10d.maxConsecutiveHighHumidityDays || 0),
+      humidityMaxPercent:
+        historicalThresholds.humidityMaxPercent === null ||
+        historicalThresholds.humidityMaxPercent === undefined
+          ? null
+          : Number(historicalThresholds.humidityMaxPercent)
+    },
+    inputs: {
+      behaviorSummary10d: isPlainObject(environmentCareContext.behaviorSummary10d)
+        ? environmentCareContext.behaviorSummary10d
+        : null,
+      historicalSummary10d: isPlainObject(historicalSummary10d)
+        ? historicalSummary10d
+        : null,
+      forecastSummary15d: isPlainObject(environmentCareContext.forecastSummary15d)
+        ? environmentCareContext.forecastSummary15d
+        : null
+    },
+    watering: {
+      baseline: isPlainObject(watering.baseline) ? watering.baseline : null,
+      wateringContext: String(watering.wateringContext || '').trim(),
+      action: String(watering.action || '').trim(),
+      reasons: Array.isArray(watering.reasons)
+        ? watering.reasons.map(item => String(item || '').trim()).filter(Boolean)
+        : [],
+      formula: isPlainObject(watering.calculation)
+        ? watering.calculation
+        : (isPlainObject(calculationTrace.watering) ? calculationTrace.watering : null)
+    },
+    fertilizing: {
+      baseline: isPlainObject(fertilizing.baseline) ? fertilizing.baseline : null,
+      action: String(fertilizing.action || '').trim(),
+      lastFertilizedBucket: String(fertilizing.lastFertilizedBucket || '').trim(),
+      reasons: Array.isArray(fertilizing.reasons)
+        ? fertilizing.reasons.map(item => String(item || '').trim()).filter(Boolean)
+        : [],
+      formula: isPlainObject(fertilizing.calculation)
+        ? fertilizing.calculation
+        : (isPlainObject(calculationTrace.fertilizing) ? calculationTrace.fertilizing : null)
+    },
+    light: {
+      lightContext: Array.isArray(light.lightContext)
+        ? light.lightContext.map(item => String(item || '').trim()).filter(Boolean)
+        : [],
+      realExposureScene: Boolean(light.realExposureScene),
+      formula: isPlainObject(calculationTrace.light) ? calculationTrace.light : null
+    },
+    result: isPlainObject(environmentCareContext.outputs)
+      ? environmentCareContext.outputs
+      : null
+  }
+}
 
 async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _sourceType = 'all' } = {}) {
   const safeSessionId = String(diagnosisSessionId || '').trim()
@@ -133,7 +239,7 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
   const [
     batchRecordResult,
     visualRawRecordsResult,
-    followUpRecordsResult,
+    questionRecordsResult,
     answerRevisionEventsResult,
     visualAggregateSummaryResult,
     visualListEnrichmentResult,
@@ -143,7 +249,7 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
       scope: 'diagnosis-review detail',
       sectionName: 'batchRecord',
       loader: () => getDiagnosisBatchReviewRecord(safeSessionId),
-      fallbackValue: null,
+      conservativeValue: null,
       degradedSections,
       timing,
       timeoutMs: 1200
@@ -152,16 +258,16 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
       scope: 'diagnosis-review detail',
       sectionName: 'visualRawRecords',
       loader: () => listDiagnosisReviewVisualRawRecords(safeSessionId),
-      fallbackValue: [],
+      conservativeValue: [],
       degradedSections,
       timing,
       timeoutMs: 1200
     }),
     settleOptionalReviewSection({
       scope: 'diagnosis-review detail',
-      sectionName: 'followUpRecords',
-      loader: () => listDiagnosisReviewFollowUps(safeSessionId),
-      fallbackValue: [],
+      sectionName: 'questionRecords',
+      loader: () => listDiagnosisReviewQuestions(safeSessionId),
+      conservativeValue: [],
       degradedSections,
       timing,
       timeoutMs: 1200
@@ -170,7 +276,7 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
       scope: 'diagnosis-review detail',
       sectionName: 'answerRevisionEvents',
       loader: () => listDiagnosisReviewAnswerEvents(safeSessionId),
-      fallbackValue: [],
+      conservativeValue: [],
       degradedSections,
       timing,
       timeoutMs: 1200
@@ -182,7 +288,7 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
         diagnosisSessionId: safeSessionId,
         visualCallBatchId: row.latest_visual_call_batch_id || ''
       }),
-      fallbackValue: null,
+      conservativeValue: null,
       degradedSections,
       timing,
       timeoutMs: 1200
@@ -191,7 +297,7 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
       scope: 'diagnosis-review detail',
       sectionName: 'visualListEnrichment',
       loader: () => loadDiagnosisReviewListVisualRows([safeSessionId]),
-      fallbackValue: new Map(),
+      conservativeValue: new Map(),
       degradedSections,
       timing,
       timeoutMs: 1200
@@ -200,7 +306,7 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
       scope: 'diagnosis-review detail',
       sectionName: 'questionCountEnrichment',
       loader: () => loadDiagnosisReviewListQuestionCounts([safeSessionId]),
-      fallbackValue: new Map(),
+      conservativeValue: new Map(),
       degradedSections,
       timing,
       timeoutMs: 1200
@@ -208,7 +314,7 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
   ])
   const batchRecord = batchRecordResult.value
   const visualRawRecords = visualRawRecordsResult.value || []
-  const followUpRecords = followUpRecordsResult.value || []
+  const questionRecords = questionRecordsResult.value || []
   const answerRevisionEvents = answerRevisionEventsResult.value || []
   const visualAggregateSummary = visualAggregateSummaryResult.value
   const visualListEnrichment = visualListEnrichmentResult.value || new Map()
@@ -228,13 +334,17 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
     { promptAudit: primaryVisualPromptAudit }
   )
   const runtimeSnapshot = safeJsonParse(enrichedRow.runtime_snapshot_json, {}) || {}
+  const environmentCareContext = isPlainObject(runtimeSnapshot?.environmentCareContext)
+    ? runtimeSnapshot.environmentCareContext
+    : null
+  const environmentCareCalculation = buildEnvironmentCareCalculationReviewPayload(environmentCareContext)
   let symptomClassRuntime = runtimeSnapshot?.symptomClassRuntime || null
   if (!symptomClassRuntime && visualAggregateSummary) {
     const symptomClassResult = await settleOptionalReviewSection({
       scope: 'diagnosis-review detail',
       sectionName: 'symptomClassRuntime',
       loader: () => resolveSymptomClassFromVisualCandidates(visualAggregateSummary),
-      fallbackValue: null,
+      conservativeValue: null,
       degradedSections,
       timing,
       timeoutMs: 1200
@@ -258,14 +368,14 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
         MINI_PROGRAM_CLIENT_PLATFORMS.has(clientPlatform) ||
         isLikelyManualOpenId
       ? 'manual'
-      : 'legacy'
+      : 'session'
   const reviewSourceEvidence = batchRecord
     ? 'batch_table'
     : storedReviewSourceType === 'manual' || MINI_PROGRAM_CLIENT_PLATFORMS.has(clientPlatform)
       ? 'platform_tagged'
       : isLikelyManualOpenId
         ? 'openid_inferred_manual'
-      : 'openid_inferred_legacy'
+      : 'openid_inferred_session'
   const previewImageRef = String(enrichedRow.preview_image_ref || '').trim()
 
   const mapped = mapDiagnosisReviewRow({
@@ -293,7 +403,7 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
       runtimeSnapshot,
       mapped
     }),
-    fallbackValue: null,
+    conservativeValue: null,
     degradedSections,
     timing,
     timeoutMs: 1200
@@ -331,7 +441,6 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
     routePrimaryAction:
       row.current_route_primary_action || runtimeSnapshot?.routePrimaryAction || '',
     routeDecision: runtimeSnapshot?.routeDecision || runtimeSnapshot?.metrics?.routeDecision || null,
-    questionQueue: runtimeSnapshot?.questionQueue || null,
     stopReason: runtimeSnapshot?.stopReason || runtimeSnapshot?.stopState?.stopReason || '',
     stopState: runtimeSnapshot?.stopState || null,
     outputEligibility: runtimeSnapshot?.outputEligibility || null,
@@ -345,13 +454,15 @@ async function getDiagnosisReviewDetail({ diagnosisSessionId = '', sourceType: _
     partial: degradedSections.length > 0,
     degradedSections,
     symptomClass: buildSymptomClassRuntimeReviewPayload(symptomClassRuntime),
+    environmentCareContext,
+    environmentCareCalculation,
     coreProcess,
     actionAdviceGovernance,
     visualRawRecords,
-    followUpRecords,
+    questionRecords,
     answerRevisionEvents,
-    followUpAnswerEvents: answerRevisionEvents,
-    firstRoundQuestions: followUpRecords.filter(item => Number(item?.roundIndex || 1) <= 1),
+    questionAnswerEvents: answerRevisionEvents,
+    firstRoundQuestions: questionRecords.filter(item => Number(item?.roundIndex || 1) <= 1),
     batchReviewMeta:
       batchRecord || mapped?.reviewSourceType === 'batch'
         ? {

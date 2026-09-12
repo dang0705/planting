@@ -1,0 +1,84 @@
+{
+  "dispatch_run_id": "example-zcode-ui-001",
+  "status": "sent",
+  "blocker": null,
+  "transport": {
+    "kind": "zcode_visible_clipboard",
+    "target_session": "current_open_chat",
+    "status": "sent",
+    "fallback": "none",
+    "headless_used": false
+  },
+  "prompt_identity": {
+    "path": "/Users/jay/WebstormProjects/planting/.tmp/dispatch-task/example-zcode-ui-001-prompt.txt",
+    "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    "bytes": 4096,
+    "lines": 96,
+    "verified_before_after": true
+  },
+  "clipboard": {
+    "write_attempts": [
+      {
+        "method": "nspasteboard",
+        "status": "mismatch",
+        "readback_verified": false,
+        "attempted_at": "2026-07-30T08:00:00.000Z"
+      },
+      {
+        "method": "pbcopy",
+        "status": "verified",
+        "readback_verified": true,
+        "attempted_at": "2026-07-30T08:00:01.000Z"
+      }
+    ],
+    "selected_method": "pbcopy",
+    "readback_verified": true,
+    "verified_at": "2026-07-30T08:00:02.000Z"
+  },
+  "input_focus": {
+    "latest_app_state_checked": true,
+    "unique_entry_area": true,
+    "clicked": true,
+    "focused_element_verified": true,
+    "element_index_persisted": false,
+    "verified_at": "2026-07-30T08:00:03.000Z"
+  },
+  "paste_delivery": {
+    "attempts": [
+      {
+        "method": "cmd_v",
+        "delivery_verified": false
+      },
+      {
+        "method": "cmd_v",
+        "delivery_verified": true
+      }
+    ],
+    "selected_method": "cmd_v",
+    "rendering": "direct_text",
+    "pre_send_verified": true,
+    "direct_text_identity": {
+      "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "bytes": 4096,
+      "lines": 96
+    },
+    "attachment": null,
+    "verified_at": "2026-07-30T08:00:04.000Z"
+  },
+  "send_delivery": {
+    "send_clicked": true,
+    "input_submitted": true,
+    "conversation_state_changed": true,
+    "conversation_delivery_verified": true,
+    "verified_at": "2026-07-30T08:00:05.000Z"
+  },
+  "redaction": {
+    "prompt_body_persisted": false,
+    "old_clipboard_persisted": false,
+    "credential_persisted": false,
+    "raw_ui_dump_persisted": false,
+    "element_index_persisted": false
+  },
+  "created_at": "2026-07-30T08:00:00.000Z",
+  "sent_at": "2026-07-30T08:00:06.000Z"
+}

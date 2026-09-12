@@ -32,9 +32,9 @@ function createReviewTimingLogger(scope = 'diagnosis-review', context = {}) {
   }
 }
 
-async function withTimeout(task, timeoutMs = 0, fallbackValue = null) {
+async function withTimeout(task, timeoutMs = 0, conservativeValue = null) {
   const safeTimeoutMs = Math.max(0, Number(timeoutMs || 0))
-  const fallbackResolver = typeof fallbackValue === 'function' ? fallbackValue : () => fallbackValue
+  const conservativeResolver = typeof conservativeValue === 'function' ? conservativeValue : () => conservativeValue
 
   if (!safeTimeoutMs) {
     return {
@@ -48,7 +48,7 @@ async function withTimeout(task, timeoutMs = 0, fallbackValue = null) {
   const timeoutPromise = new Promise(resolve => {
     timer = setTimeout(() => {
       timedOut = true
-      resolve(fallbackResolver())
+      resolve(conservativeResolver())
     }, safeTimeoutMs)
   })
 
@@ -70,7 +70,7 @@ async function settleOptionalReviewSection({
   scope = 'diagnosis-review',
   sectionName = 'section',
   loader,
-  fallbackValue = null,
+  conservativeValue = null,
   degradedSections = null,
   timing = null,
   timeoutMs = 1200
@@ -78,7 +78,7 @@ async function settleOptionalReviewSection({
   const startedAt = Date.now()
 
   try {
-    const { timedOut, value } = await withTimeout(loader, timeoutMs, fallbackValue)
+    const { timedOut, value } = await withTimeout(loader, timeoutMs, conservativeValue)
     if (timing) {
       timing.mark(sectionName, {
         status: timedOut ? 'timeout' : 'ok',
@@ -106,7 +106,7 @@ async function settleOptionalReviewSection({
       degradedSections.push(sectionName)
     }
     return {
-      value: typeof fallbackValue === 'function' ? fallbackValue() : fallbackValue,
+      value: typeof conservativeValue === 'function' ? conservativeValue() : conservativeValue,
       degraded: true,
       error
     }

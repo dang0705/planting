@@ -1,5 +1,6 @@
 import { requestHttpFunction } from '@/api/http'
 import { runVueQueryQuery } from '@/lib/vue-query-runtime.js'
+import { normalizeWeatherCoordinates } from '@/utils/weather-coordinate.js'
 
 export function buildCurrentWeatherQueryOptions({
   lat,
@@ -10,14 +11,17 @@ export function buildCurrentWeatherQueryOptions({
 } = {}) {
   const normalizedCity = String(city || '').trim()
   const normalizedProvince = String(province || '').trim()
+  const location = normalizeWeatherCoordinates({ lat, lng }) || {}
+  const normalizedLat = location.lat
+  const normalizedLng = location.lng
 
   const queryOptions = {
     queryKey: [
       'http-function',
       'weather-http',
       'current',
-      lat,
-      lng,
+      normalizedLat,
+      normalizedLng,
       normalizedCity,
       normalizedProvince,
       useCache
@@ -25,7 +29,13 @@ export function buildCurrentWeatherQueryOptions({
     queryFn: async () =>
       requestHttpFunction('weather-http/weather/current', {
         method: 'POST',
-        body: { lat, lng, city: normalizedCity, province: normalizedProvince, useCache },
+        body: {
+          lat: normalizedLat,
+          lng: normalizedLng,
+          city: normalizedCity,
+          province: normalizedProvince,
+          useCache
+        },
         auth: true
       })
   }

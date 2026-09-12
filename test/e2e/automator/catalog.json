@@ -1,0 +1,1525 @@
+{
+  "version": 2,
+  "top_domains": ["ai-vision", "diagnosis", "care", "user", "plants", "subscription", "weather"],
+  "executable_leaf_convention": {
+    "roots": ["test/e2e/automator"],
+    "extensions": [".mjs", ".cjs"],
+    "excluded_path_segments": [
+      "_shared",
+      "_history",
+      "_deferred",
+      "yellowing",
+      "pest-mode-and-retake"
+    ],
+    "rule": "Every .mjs/.cjs file under test/e2e/automator is an executable leaf unless a path segment identifies shared, historical, or extracted leaf-library code."
+  },
+  "id_policy": {
+    "source": "docs/ai-rules/frontend-automation-id-policy.md",
+    "stable_id_prefixes": [
+      "diagnosis-",
+      "diagnose-",
+      "watering-advisor-",
+      "plant-card-reminder-",
+      "plant-card-fertilization-",
+      "watering-reminder-",
+      "watering-date-picker-",
+      "care-behavior-date-",
+      "pot-profile-",
+      "airflow-",
+      "subscription-"
+    ]
+  },
+  "category_tree": {
+    "ai-vision": {},
+    "diagnosis": {
+      "answer": {
+        "performance": "diagnosis.answer.performance"
+      },
+      "yellowing": {
+        "no-image-quick": "diagnosis.yellowing.no_image_quick"
+      },
+      "tab": {
+        "direct-forward": "diagnosis.tab.direct_forward"
+      },
+      "pest": {
+        "visual-mode-retake": "diagnosis.pest.visual_mode_retake"
+      },
+      "air-environment-v2": {
+        "question-packages": "diagnosis.air_environment_v2.question_packages"
+      }
+    },
+    "care": {
+      "air_exchange": {
+        "v1": "care.air_exchange.v1"
+      },
+      "air-environment-v2": {
+        "user-plant-watering": "care.air_environment_v2.user_plant_watering"
+      },
+      "watering": {
+        "transpiration-v3": {
+          "independent-advice": "care.watering.transpiration_v3.independent_advice",
+          "user-plant-planner": "care.watering.transpiration_v3.user_plant_planner"
+        },
+        "reminder-pot-profile": {
+          "persistence": "care.watering.reminder_pot_profile.persistence"
+        },
+        "reminder-dose": {
+          "bottle-text": "care.watering.reminder_dose.bottle_text",
+          "dose-dynamic": "care.watering.reminder_dose.dose_dynamic",
+          "dose-label-layout": "care.watering.reminder_dose.dose_label_layout",
+          "unit-alignment-final": "care.watering.reminder_dose.unit_alignment_final",
+          "unit-alignment-v4": "care.watering.reminder_dose.unit_alignment_v4"
+        }
+      },
+      "mvp": {
+        "hidden-calendar-reminder-tabs": "care.mvp.hidden_calendar_reminder_tabs"
+      },
+      "home-card": {
+        "water-and-fertilization-closure": "care.home_card.water_and_fertilization_closure"
+      }
+    },
+    "user": {
+      "plant-detail": {
+        "fertilization-monthly": "user.plant_detail.fertilization_monthly",
+        "fertilization-reminder-live-development": "user.plant_detail.fertilization_reminder_live_development",
+        "delete-confirmation": "user.plant_detail.delete_confirmation"
+      },
+      "remote-read": {
+        "performance": "user.remote_read.performance"
+      },
+      "review": {
+        "subpackage-routing": "user.review.subpackage_routing"
+      }
+    },
+    "weather": {
+      "environment-context": {
+        "performance": "weather.environment_context.performance"
+      }
+    },
+    "plants": {
+      "light-environment-save-event-channel": "plant.light_environment_save_event_channel",
+      "user-detail-create-edit-view-modes": "plant.user_detail_create_edit_view_modes",
+      "runtime": {
+        "interaction-resilience": "plants.runtime.interaction_resilience"
+      }
+    },
+    "subscription": {
+      "entry": "subscription.entry",
+      "touchpoints": "subscription.paid_touchpoints"
+    }
+  },
+  "entries": [
+    {
+      "id": "diagnosis.answer.performance",
+      "category_path": ["diagnosis", "answer", "performance"],
+      "leaf_script": "test/e2e/automator/diagnosis/diagnosis-answer-performance.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "test_owned_persistent",
+      "required_assertions": [
+        "从真实首页进入诊断分包并进入真实题包页面",
+        "真实题包 question/start wx.request 返回完整题包",
+        "完成题目并点击最后一个固定底部按钮后触发真实 answer",
+        "真实题包 answer wx.request 返回最终诊断语义",
+        "同一次完整 QA 中连续完成 3 个独立题包会话；首轮 question/start 与 answer 小于 1 秒，后两轮的两个接口均小于 300ms",
+        "小程序页面截图为有效 PNG"
+      ],
+      "script_sha256": "87b3a02f80f17a1cabc9ceeb5ee604a1663bbcd81a1b761c6240850b9a93d3cd",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.1", "3.3"],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.1",
+          "docs/ai-rules/frontend-automation-id-policy.md#3.3"
+        ],
+        "stable_ids": [],
+        "stable_id_prefixes": ["diagnose-", "diagnosis-"]
+      },
+      "requirements": {
+        "backend_mode": "online",
+        "screenshot": true,
+        "wx_request": [
+          "POST /diagnosis-answer-http/diagnosis/question/start",
+          "POST /diagnosis-answer-http/diagnosis/answer"
+        ],
+        "cache": "同一隔离 QA 运行时连续执行 3 个独立题包会话；性能以真实 wx.request 发起到回调的 elapsed_ms 判定，并补充 DevTools Network 截图取证",
+        "reentry": false,
+        "fixtures": [
+          "cloud1_dev 真实开发数据",
+          "持久化真实微信登录态",
+          "测试账户可创建无植物绑定黄叶题包会话"
+        ]
+      }
+    },
+    {
+      "id": "diagnosis.tab.direct_forward",
+      "category_path": ["diagnosis", "tab", "direct-forward"],
+      "leaf_script": "test/e2e/automator/diagnosis/diagnosis-tab-direct-forward.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "test_owned_persistent",
+      "preflight_mode": "health_only_for_five_remote_cold_performance_samples",
+      "required_assertions": [
+        "diagnosis tab starts from real home page",
+        "diagnosis tab stays on its real main-package page",
+        "diagnosis tab has no automatic redirect or consecutive jump",
+        "diagnosis tab main-package root is rendered",
+        "diagnosis tab renders the real photo and no-image intake",
+        "diagnosis intake has no intermediary or split page",
+        "diagnosis tab page data is readable",
+        "diagnosis tab common-ui screenshot is valid PNG",
+        "diagnosis tab exposes a real user action to start no-image diagnosis",
+        "diagnosis tab user action navigates directly to the question package",
+        "diagnosis question/start real wx.request returns HTTP and business 200",
+        "direct question package screenshot is valid PNG",
+        "diagnosis tab user action leaves no flow or dispatcher page in the stack",
+        "question package provides a visible return action",
+        "question package returns directly to the diagnosis tab",
+        "switching away from the diagnosis tab has no redirect loop"
+      ],
+      "script_sha256": "616be978503b9887db8826d5ef0f3a6192be36e7985816a22db261744721213a",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.1", "3.3"],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.1",
+          "docs/ai-rules/frontend-automation-id-policy.md#3.3"
+        ],
+        "stable_ids": ["diagnose-tab-page", "diagnose-tab-intake", "diagnose-upload-stage"],
+        "stable_id_prefixes": ["diagnose-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["diagnose"],
+        "cache": "must_record_cache_state_if_diagnosis_cache_is_touched",
+        "reentry": false,
+        "fixtures": [
+          "logged-in test account; standalone diagnosis tab supports no-image question start"
+        ]
+      }
+    },
+    {
+      "id": "diagnosis.yellowing.no_image_quick",
+      "category_path": ["diagnosis", "yellowing", "no-image-quick"],
+      "leaf_script": "test/e2e/automator/diagnosis/diagnose-yellowing-mcp.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "test_owned_persistent",
+      "required_assertions": [
+        "真实首页已启动",
+        "诊断分包流程页已打开",
+        "黄叶业务入口已选择",
+        "至少完成一轮真实问答",
+        "切题后滚动位置重置",
+        "诊断天气窗口请求成功",
+        "最近10天历史天气窗口完整返回",
+        "缺失天气已向用户说明",
+        "最近10天天气在时间格逐日渲染",
+        "诊断结果状态已到达",
+        "建议和暂时避免使用同一归并主键",
+        "相同主键只渲染一组建议和一组暂时避免",
+        "多个结论的建议标题归拢为症状",
+        "最终截图为有效 PNG"
+      ],
+      "script_sha256": "1be6fad417d0a9e450f542673ebdbe69402d886872754c38ca6c0e82a314c45e",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.1", "3.3", "3.7"],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.1",
+          "docs/ai-rules/frontend-automation-id-policy.md#3.3",
+          "docs/ai-rules/frontend-automation-id-policy.md#3.7"
+        ],
+        "stable_ids": ["diagnosis-yellowing-entry"],
+        "stable_id_prefixes": ["diagnosis-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["diagnose"],
+        "cache": "must_record_cache_state_if_diagnosis_cache_is_touched",
+        "reentry": false,
+        "fixtures": ["logged-in or dev-mode test account with diagnosis entry visible"]
+      }
+    },
+    {
+      "id": "diagnosis.pest.visual_mode_retake",
+      "category_path": ["diagnosis", "pest", "visual-mode-retake"],
+      "leaf_script": "test/e2e/automator/diagnosis/pest-mode-and-retake.mjs",
+      "data_mode": "fixture_diagnostic",
+      "auth_mode": "diagnostic_injected",
+      "mutation_policy": "diagnostic_only",
+      "script_sha256": "1db1eb60e191f7b661bfc86671f815e5e7c9d29081cf84cb3ecd96edc6bd6f1a",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.3", "3.12"],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.3",
+          "docs/ai-rules/frontend-automation-id-policy.md#3.12"
+        ],
+        "stable_ids": [
+          "diagnose-tab-page",
+          "diagnose-flow",
+          "diagnose-profile-full-button",
+          "diagnose-profile-pest-button",
+          "diagnose-no-image-entry-panel",
+          "diagnose-direction-choice-card",
+          "layout-left-action",
+          "diagnose-retake-card",
+          "diagnose-retake-start-button",
+          "diagnose-retake-skip-button",
+          "diagnose-retake-safety-instructions",
+          "diagnose-retake-countdown",
+          "diagnose-retake-expired-text",
+          "diagnose-retake-skipped-text"
+        ],
+        "stable_id_prefixes": ["diagnose-", "diagnosis-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": [
+          "diagnose-http/diagnosis/question/start",
+          "diagnose-http/diagnosis/start",
+          "diagnose-http/diagnosis/answer",
+          "diagnose-http/diagnosis/retake/authorize",
+          "diagnose-http/diagnosis/retake/skip"
+        ],
+        "cache": "real model runs must record provider usage.cached_tokens; fixture runs must mark it not_verified",
+        "reentry": true,
+        "fixtures": [
+          "E2E_DIAGNOSE_FIXTURE=1 deterministic runtime harness",
+          "automation image injection enabled"
+        ]
+      }
+    },
+    {
+      "id": "care.watering.transpiration_v3.independent_advice",
+      "category_path": ["care", "watering", "transpiration-v3", "independent-advice"],
+      "leaf_script": "test/e2e/automator/care/watering/transpiration-v3/independent-advice.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "read_only",
+      "required_assertions": [
+        "捕获到 /watering-advisor POST wx.request",
+        "响应 data 包含独立建议所需业务字段",
+        "结果区 result-amount 存在",
+        "结果区 back-2 存在",
+        "结果区 done 存在",
+        "结果页截图成功保存"
+      ],
+      "script_sha256": "6921a2cd3bd23c71ab2d1491d1415eb816f82c0ceb9aed508e29accbd492f4f5",
+      "reusable_scenarios": [
+        "test/e2e/automator/care/watering/transpiration-v3/_shared/scenarios/independent-watering.mjs"
+      ],
+      "id_policy": {
+        "sections": ["3.10"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.10"],
+        "stable_ids": [
+          "watering-advisor-search-input",
+          "watering-advisor-next-button",
+          "watering-advisor-pot-profile-substrate-general",
+          "watering-advisor-pot-profile-drainage-true",
+          "watering-advisor-compute-button",
+          "watering-advisor-result-amount"
+        ],
+        "stable_id_prefixes": ["watering-advisor-", "pot-profile-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["/watering-advisor"],
+        "cache": false,
+        "reentry": true,
+        "fixtures": ["at least one searchable advisor plant", "inline PotProfileFormCore defaults"]
+      }
+    },
+    {
+      "id": "care.watering.transpiration_v3.user_plant_planner",
+      "category_path": ["care", "watering", "transpiration-v3", "user-plant-planner"],
+      "leaf_script": "test/e2e/automator/care/watering/transpiration-v3/user-plant-planner.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "read_only",
+      "required_assertions": [
+        "运行时找到至少一个公开 plant-card-reminder-{id}-water 入口",
+        "planner 响应 statusCode=200 且 data 为对象",
+        "响应包含 v3 蒸腾字段 transpirationIntervalFactor",
+        "响应包含 amountRangeMl（蒸腾不改变单次毫升数）",
+        "结果页截图成功保存"
+      ],
+      "script_sha256": "e1f40c460eb574a404c0017d976514da4cccfce1caf7930a6f3a5d664b13c4fe",
+      "reusable_scenarios": [
+        "test/e2e/automator/care/watering/transpiration-v3/_shared/scenarios/my-plant-planner.mjs"
+      ],
+      "id_policy": {
+        "sections": ["3.10"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.10"],
+        "stable_ids": [
+          "watering-reminder-last-watering-row",
+          "watering-reminder-input-stepper",
+          "watering-reminder-input-next-button",
+          "watering-reminder-input-step-pot",
+          "watering-reminder-close-button"
+        ],
+        "stable_id_prefixes": ["plant-card-reminder-", "watering-reminder-", "care-behavior-date-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["/user-plants/watering-planner"],
+        "cache": "shadow/active snapshot signature must match when active mode is used",
+        "reentry": true,
+        "fixtures": [
+          "test account has at least one user plant with a watering reminder entry",
+          "at least one candidate user plant has structured light-environment data that can produce a transpiration candidate"
+        ]
+      }
+    },
+    {
+      "id": "care.watering.reminder_pot_profile.persistence",
+      "category_path": ["care", "watering", "reminder-pot-profile", "persistence"],
+      "leaf_script": "test/e2e/automator/care/watering/reminder-pot-profile/persistence.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "test_owned_persistent",
+      "required_assertions": [
+        "盆口和盆底节点都通过真实 touch 拖拽发生位移",
+        "查看建议前捕获当前用户植物的盆型 PATCH",
+        "PATCH 返回的用户植物已回显相同盆型",
+        "保存后的 planner 返回可用浇水量范围",
+        "结果页显示浇水量建议",
+        "重新进入盆型步骤后显示已保存的盆型拖拽节点"
+      ],
+      "script_sha256": "46e0148a9c2123bcdd7120573f469d5ff45b76c6645224afe2f4f9ec9714941e",
+      "reusable_scenarios": [
+        "test/e2e/automator/care/watering/transpiration-v3/_shared/lib/planner-trigger.mjs",
+        "test/e2e/automator/care/watering/transpiration-v3/_shared/lib/request-capture.mjs"
+      ],
+      "id_policy": {
+        "sections": ["3.5", "3.5.1"],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.5",
+          "docs/ai-rules/frontend-automation-id-policy.md#3.5.1"
+        ],
+        "stable_ids": [
+          "watering-reminder-last-watering-row",
+          "watering-reminder-input-stepper",
+          "watering-reminder-input-next-button",
+          "watering-reminder-input-step-pot",
+          "watering-reminder-input-pot-profile-top-handle",
+          "watering-reminder-input-pot-profile-bottom-handle",
+          "watering-reminder-result-amount",
+          "watering-reminder-pot-profile-row",
+          "watering-reminder-close-button"
+        ],
+        "stable_id_prefixes": ["plant-card-reminder-", "watering-reminder-", "care-behavior-date-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["/user-plants?_method=PATCH", "/user-plants/watering-planner"],
+        "cache": "PATCH response、planner response 与重新打开后的盆型摘要必须一致",
+        "reentry": true,
+        "fixtures": [
+          "QA 测试账户至少有一株可打开浇水提醒且存在可选过往浇水日期的用户植物",
+          "该植物允许 test_owned_persistent 的盆型保存；不写浇水提醒或手机日历"
+        ]
+      }
+    },
+    {
+      "id": "care.watering.reminder_dose.bottle_text",
+      "category_path": ["care", "watering", "reminder-dose", "bottle-text"],
+      "leaf_script": "test/e2e/automator/care/watering/reminder-dose/bottle-text.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "read_only",
+      "required_assertions": ["浇水剂量选项文案存在", "浇水剂量单位为瓶或桶"],
+      "script_sha256": "6fce4853c8b4f50c76ea81b8e2a089657f5a7d596d037966ac69790b2849c2b7",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.10"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.10"],
+        "stable_ids": [
+          "watering-reminder-last-watering-row",
+          "watering-reminder-input-stepper",
+          "watering-reminder-input-next-button"
+        ],
+        "stable_id_prefixes": ["plant-card-reminder-", "watering-reminder-", "care-behavior-date-"]
+      },
+      "requirements": {
+        "screenshot": false,
+        "wx_request": ["/user-plants/watering-planner"],
+        "cache": false,
+        "reentry": false,
+        "fixtures": ["user plant with watering reminder and dose options"]
+      }
+    },
+    {
+      "id": "care.watering.reminder_dose.dose_dynamic",
+      "category_path": ["care", "watering", "reminder-dose", "dose-dynamic"],
+      "leaf_script": "test/e2e/automator/care/watering/reminder-dose/dose-dynamic.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "read_only",
+      "required_assertions": ["大盆剂量档位按盆体积动态生成", "大盆浇水剂量结果存在"],
+      "script_sha256": "1233bea50914f0565c1e1c586d22f53830ff9ea299db8888ff2ca48f482a71db",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.10"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.10"],
+        "stable_ids": [
+          "watering-reminder-last-watering-row",
+          "watering-reminder-input-stepper",
+          "watering-reminder-input-next-button",
+          "watering-reminder-input-step-pot"
+        ],
+        "stable_id_prefixes": ["plant-card-reminder-", "watering-reminder-", "care-behavior-date-"]
+      },
+      "requirements": {
+        "screenshot": false,
+        "wx_request": ["/user-plants/watering-planner"],
+        "cache": false,
+        "reentry": false,
+        "fixtures": ["plant id 14 fixture with large pot volume"]
+      }
+    },
+    {
+      "id": "care.watering.reminder_dose.dose_label_layout",
+      "category_path": ["care", "watering", "reminder-dose", "dose-label-layout"],
+      "leaf_script": "test/e2e/automator/care/watering/reminder-dose/dose-label-layout.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "read_only",
+      "required_assertions": ["历史浇水剂量列表可见", "剂量列表截图成功保存"],
+      "script_sha256": "e3d6e7ec3e08a3232a235acdb79362419e3ac25dfbef253b4176b52c052e2560",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.10"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.10"],
+        "stable_ids": [
+          "watering-reminder-last-watering-row",
+          "watering-reminder-input-stepper",
+          "watering-reminder-input-next-button",
+          "watering-reminder-input-step-pot"
+        ],
+        "stable_id_prefixes": ["plant-card-reminder-", "watering-reminder-", "care-behavior-date-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["/user-plants/watering-planner"],
+        "cache": false,
+        "reentry": false,
+        "fixtures": ["user plant with historical watering date entries"]
+      }
+    },
+    {
+      "id": "care.watering.reminder_dose.unit_alignment_final",
+      "category_path": ["care", "watering", "reminder-dose", "unit-alignment-final"],
+      "leaf_script": "test/e2e/automator/care/watering/reminder-dose/unit-alignment-final.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "read_only",
+      "required_assertions": [
+        "剂量滑块单位存在",
+        "建议水量与剂量滑块单位一致",
+        "浇水规划结果截图成功保存"
+      ],
+      "script_sha256": "2de9f030cc434b25606043d3bff44ab8ac0ef6ef55c91142dd4f6f38ae5b4bdf",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.10"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.10"],
+        "stable_ids": ["plant-card-reminder-14-water"],
+        "stable_id_prefixes": ["plant-card-reminder-", "watering-reminder-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["/user-plants/watering-planner"],
+        "cache": false,
+        "reentry": false,
+        "fixtures": ["plant id 14 fixture"]
+      }
+    },
+    {
+      "id": "care.watering.reminder_dose.unit_alignment_v4",
+      "category_path": ["care", "watering", "reminder-dose", "unit-alignment-v4"],
+      "leaf_script": "test/e2e/automator/care/watering/reminder-dose/unit-alignment-v4.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "read_only",
+      "required_assertions": [
+        "剂量滑块单位存在",
+        "建议水量与剂量滑块单位一致",
+        "浇水规划结果截图成功保存"
+      ],
+      "script_sha256": "b86f609b42274edf1dceb618184e5598a019682db5960dd8d73dbe6c1e761676",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.10"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.10"],
+        "stable_ids": ["plant-card-reminder-14-water"],
+        "stable_id_prefixes": ["plant-card-reminder-", "watering-reminder-", "care-behavior-date-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["/user-plants/watering-planner"],
+        "cache": false,
+        "reentry": false,
+        "fixtures": ["plant id 14 fixture"]
+      }
+    },
+    {
+      "id": "care.air_exchange.v1",
+      "category_path": ["care", "air-exchange", "v1"],
+      "leaf_script": "test/e2e/automator/care/airflow/air-exchange-v1.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "read_only",
+      "required_assertions": [
+        "almost-never-result-text",
+        "fresh-air-result-text",
+        "window-none-recorded",
+        "window-double-daily-recorded"
+      ],
+      "script_sha256": "31c94cfc05dcfa3f1b01641ae91a0b727d271fb7998bd70755feb90899a9df34",
+      "reusable_scenarios": ["test/e2e/automator/care/airflow/_shared/run-air-exchange-v1.mjs"],
+      "integrity_files": [
+        "src/subpackages/care/airflow/index.vue",
+        "src/components/AirEnvironmentAssessment.vue",
+        "src/components/AirExchangeAssessment.vue",
+        "src/utils/air-environment.js",
+        "src/utils/air-exchange-evidence.js"
+      ],
+      "id_policy": {
+        "sections": ["3.13"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.13"],
+        "stable_ids": [
+          "airflow-assessment",
+          "airflow-single-page",
+          "airflow-single-exchange",
+          "airflow-single-exchange-window",
+          "airflow-single-window-direction-one",
+          "airflow-single-window-direction-two_or_more",
+          "airflow-single-window-frequency-picker",
+          "airflow-single-fresh-air-switch",
+          "airflow-single-canopy-open",
+          "airflow-single-canopy-partial",
+          "airflow-single-canopy-enclosed",
+          "airflow-single-canopy-unknown",
+          "airflow-single-device-mode-none",
+          "airflow-single-device-mode-has_airflow",
+          "airflow-single-device-mode-unknown",
+          "airflow-single-device-source-*-*",
+          "airflow-single-summary",
+          "airflow-submit-button",
+          "airflow-reset-button",
+          "airflow-result-summary"
+        ],
+        "stable_id_prefixes": ["airflow-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": [],
+        "cache": false,
+        "reentry": true,
+        "fixtures": ["built mp-weixin artifact with airflow page registered"]
+      }
+    },
+    {
+      "id": "care.air_environment_v2.user_plant_watering",
+      "category_path": ["care", "air-environment-v2", "user-plant-watering"],
+      "leaf_script": "test/e2e/automator/care/airflow/air-environment-v2-user-plant-watering.mjs",
+      "data_mode": "fixture_diagnostic",
+      "auth_mode": "diagnostic_injected",
+      "mutation_policy": "diagnostic_only",
+      "script_sha256": "d58dffe04edb8af5e02496496cd9b80b22625344f0410839a66def0c1e8bbd44",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.10"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.10"],
+        "stable_ids": [
+          "watering-advisor-my-plants-entry",
+          "watering-advisor-my-plant-card-{plant.id}",
+          "watering-advisor-air-environment-summary",
+          "watering-advisor-air-environment-edit",
+          "watering-advisor-air-environment-confirm-location",
+          "watering-advisor-air-environment-assessment",
+          "watering-advisor-air-environment-next-step",
+          "watering-advisor-air-environment-previous-step",
+          "watering-advisor-air-environment-next",
+          "watering-advisor-air-environment-load-error",
+          "watering-advisor-air-environment-sync-status",
+          "watering-advisor-air-environment-retry-save",
+          "watering-advisor-compute-button",
+          "watering-advisor-result-amount"
+        ],
+        "stable_id_prefixes": ["watering-advisor-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["/user-plants/air-environment", "/user-plants/watering-planner"],
+        "cache": false,
+        "reentry": true,
+        "fixtures": [
+          "saved-prefill: first user plant has a complete saved profile with a matching location binding",
+          "failure-fallback: gateway deterministically fails air-environment GET and PATCH while planner remains available",
+          "switch-draft: first and second user plants are available and second has no saved air-environment profile"
+        ]
+      }
+    },
+    {
+      "id": "diagnosis.air_environment_v2.question_packages",
+      "category_path": ["diagnosis", "air-environment-v2", "question-packages"],
+      "leaf_script": "test/e2e/automator/diagnosis/air-environment-v2-question-packages.mjs",
+      "data_mode": "fixture_diagnostic",
+      "auth_mode": "diagnostic_injected",
+      "mutation_policy": "diagnostic_only",
+      "integrity_files": [
+        "src/components/AirEnvironmentAssessment.vue",
+        "src/components/AirExchangeAssessment.vue",
+        "src/subpackages/diagnosis/question-package/AirEnvironmentQuestionInput.vue",
+        "src/subpackages/diagnosis/question-package/question-submit.js",
+        "src/subpackages/diagnosis/question-package/question-air-environment.js",
+        "src/subpackages/diagnosis/question-package.vue",
+        "src/utils/air-environment.js",
+        "src/subpackages/diagnosis/utils/diagnose-question-answer-payload.js",
+        "src/subpackages/diagnosis/vue-query/diagnose/mutations/shared.js",
+        "cloudfunctions/diagnose-http/app/air-environment-package.js",
+        "cloudfunctions/layer/utils/air-environment-evidence.js",
+        "scripts/dev/local-api-env-config.mjs",
+        "test/e2e/automator/diagnosis/_shared/screenshot-worker.mjs"
+      ],
+      "script_sha256": "5013a78b2fef9fafb01ee06f62f9ac9cc5ee004332f33c1afcb6a600546020cd",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.1", "3.3"],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.1",
+          "docs/ai-rules/frontend-automation-id-policy.md#3.3"
+        ],
+        "stable_ids": [
+          "diagnose-entry-button-{plant.id}",
+          "diagnose-dev-symptom-class-option-yellowing_mode",
+          "diagnose-dev-symptom-class-option-wilting_droop_mode",
+          "diagnose-question-package-page",
+          "diagnose-question-package-page-question-shell-{questionId}",
+          "diagnose-question-package-page-active-question-{questionId}",
+          "diagnose-air-environment-{questionId}-unknown",
+          "diagnose-air-environment-{questionId}-next-step",
+          "diagnose-air-environment-{questionId}-previous-step",
+          "diagnose-air-environment-{questionId}-location-confirmation",
+          "diagnose-air-environment-{questionId}-device-source-*-*",
+          "diagnose-question-package-restart-required-button",
+          "layout-left-action",
+          "diagnose-popup-close-button"
+        ],
+        "stable_id_prefixes": ["diagnose-", "diagnosis-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": [
+          "diagnose-http/diagnosis/question/start",
+          "diagnose-http/diagnosis/answer",
+          "/user-plants/air-environment"
+        ],
+        "cache": false,
+        "reentry": true,
+        "fixtures": [
+          "runtime-owned authenticated user and user-plant fixture loads plant 94021 through the real plant store; after the initial homepage launch it records authenticated state, plant ids, index-plant-list, plant-card presence and the component-scoped direct diagnose-entry-button-94021 query before restoring storage, stores, cache and request patches",
+          "yellowing_mode and wilting_droop_mode question-start requests pass through to LAN unchanged; their real responses must render the 4 and 6 v2 question packages with the exact air-environment key and unknown control",
+          "between yellowing_mode and wilting_droop_mode the active question-package uses Layout's component-scoped layout-left-action, returns through the diagnosis subpackage entry to the homepage, and reopens plant 94021 from the real plant card",
+          "the wilting UI records a direct fresh-air sidecar and observes the unmodified LAN answer response before asserting the existing move_from_direct_airflow outcome"
+        ]
+      }
+    },
+    {
+      "id": "user.plant_detail.fertilization_reminder_live_development",
+      "category_path": ["user", "plant-detail", "fertilization-reminder-live-development"],
+      "leaf_script": "test/e2e/automator/user/plant-detail/fertilization-reminder-live-development.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "test_owned_persistent",
+      "required_assertions": [
+        "真实植物卡片打开施肥时间表",
+        "真实属级月表提供当前月固定周期提醒入口",
+        "真实施肥提醒设置截图有效",
+        "施肥提醒入口合并为设置下次施肥提醒",
+        "首次无历史施肥记录可通过真实 API 生成提醒预览并触发 Alert 流程",
+        "Alert 触发后的施肥预览页面截图有效（原生层不在 AppService 截图树）",
+        "点击提醒信息 icon 后重新触发施肥提醒 Alert 流程",
+        "首次确认提醒提供补充上次施肥日期入口",
+        "补充日期后提供重新计算入口",
+        "补充上次施肥日期后通过真实 API 重新计算提醒",
+        "真实页面保存到期施肥提醒后显示已设置状态",
+        "到期真实页面显示今天已施肥操作",
+        "今天已施肥后真实页面生成下一次待确认预览",
+        "第二株真实植物存在施肥提醒设置入口",
+        "本次跳过路径真实页面显示已设置状态",
+        "到期真实页面显示本次跳过操作",
+        "本次跳过后真实页面回到提醒设置区",
+        "小程序运行时真实调用 preview API 并收到 200",
+        "小程序运行时真实调用 cancel API 并收到 200",
+        "小程序运行时真实调用 complete API 并收到 200",
+        "小程序运行时真实调用 dismiss API 并收到 200",
+        "重新打开后通过真实 GET 读回无 active 状态",
+        "跳过后通过真实 GET 读回无 active 状态"
+      ],
+      "integrity_files": [
+        "src/pages/index/components/PlantCard.vue",
+        "src/pages/index/components/FertilizationMonthlySheet.vue",
+        "src/pages/index/components/FertilizationReminderCalendarDelete.vue",
+        "src/pages/index/components/FertilizationReminderSetup.vue",
+        "src/pages/index/components/fertilization-reminder-options.js",
+        "src/api/plants-http.js",
+        "src/vue-query/plants/mutations/fertilization-reminders.js",
+        "cloudfunctions/plant-user-http/fertilization-reminder-service.js",
+        "cloudfunctions/layer/utils/plant-knowledge.js"
+      ],
+      "script_sha256": "bef60cd0b3d24ee3f69564767c3f37d82a46f14f61c80b2013ba01e030342a9d",
+      "reusable_scenarios": [
+        "test/e2e/automator/care/watering/transpiration-v3/_shared/lib/request-capture.mjs",
+        "test/e2e/automator/_shared/fertilization-reminder-e2e-helpers.mjs"
+      ],
+      "id_policy": {
+        "sections": ["3.1"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.1"],
+        "stable_ids": [
+          "plant-card-fertilization-{plant.id}",
+          "plant-card-fertilization-sheet",
+          "plant-card-fertilization-sheet-content",
+          "fertilization-reminder-entry-button",
+          "fertilization-reminder-setup-sheet",
+          "fertilization-reminder-setup-sheet-content",
+          "fertilization-reminder-setup-close-button",
+          "fertilization-reminder-section",
+          "fertilization-reminder-preview-button",
+          "fertilization-reminder-preview",
+          "fertilization-reminder-alert-info-button",
+          "fertilization-reminder-deferred",
+          "fertilization-reminder-asserted-date-section",
+          "fertilization-reminder-asserted-date-picker",
+          "fertilization-reminder-asserted-date-recalculate-button",
+          "fertilization-reminder-calendar-confirm-button",
+          "fertilization-reminder-saved-state",
+          "fertilization-reminder-complete-button",
+          "fertilization-reminder-dismiss-button",
+          "fertilization-reminder-cancel-button",
+          "plant-card-fertilization-close-button"
+        ],
+        "stable_id_prefixes": ["plant-card-fertilization-", "fertilization-reminder-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": [
+          "/user-plants",
+          "/auth-user-http",
+          "/user-plants/fertilization-reminders/preview",
+          "/user-plants/fertilization-reminders/cancel",
+          "/user-plants/fertilization-reminders/confirm",
+          "/user-plants/fertilization-reminders/complete",
+          "/user-plants/fertilization-reminders/dismiss"
+        ],
+        "cache": false,
+        "reentry": true,
+        "fixtures": [
+          "the authenticated cloud1_dev account must expose two real user plants whose current-month audited table has a fixed interval and no active fertilization reminder",
+          "the leaf does not patch request responses; it records real mini-program runtime calls through the configured online HTTP function or LAN gateway",
+          "the leaf creates a due plan through the UI, completes it through the UI on one real plant, and skips a due plan through the UI on a second real plant; the completion event intentionally remains in cloud1_dev as real history evidence"
+        ]
+      }
+    },
+    {
+      "id": "user.plant_detail.fertilization_monthly",
+      "category_path": ["user", "plant-detail", "fertilization-monthly"],
+      "leaf_script": "test/e2e/automator/user/plant-detail/fertilization-monthly.mjs",
+      "data_mode": "fixture_diagnostic",
+      "auth_mode": "diagnostic_injected",
+      "mutation_policy": "diagnostic_only",
+      "integrity_files": [
+        "src/pages/index/components/FertilizationMonthlySheet.vue",
+        "src/pages/index/components/FertilizationReminderCalendarDelete.vue",
+        "src/pages/index/components/FertilizationReminderSetup.vue",
+        "src/pages/index/components/SavedFertilizationReminderState.vue",
+        "src/pages/index/components/fertilization-reminder-options.js",
+        "src/pages/index/components/watering-reminder-options.js",
+        "src/components/FertilizationMonthlyTable.vue",
+        "src/api/plants-http.js",
+        "src/vue-query/plants/mutations/fertilization-reminders.js",
+        "cloudfunctions/layer/utils/plant-knowledge.js",
+        "cloudfunctions/layer/utils/fertilization-reminder-planner.js",
+        "cloudfunctions/plant-user-http/fertilization-reminder-service.js"
+      ],
+      "script_sha256": "e52f5197dd2ed3eba021196fba21ff5f08b6e4c40e86f4115f43edbf73ceb09f",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.1", "3.2"],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.1",
+          "docs/ai-rules/frontend-automation-id-policy.md#3.2"
+        ],
+        "stable_ids": [
+          "index-plant-list",
+          "index-plant-card-edit-{plant.id}",
+          "plant-card-fertilization-{plant.id}",
+          "plant-card-fertilization-sheet",
+          "plant-card-fertilization-sheet-content",
+          "plant-card-fertilization-monthly-table",
+          "fertilization-reminder-entry-button",
+          "fertilization-reminder-setup-sheet",
+          "fertilization-reminder-setup-sheet-content",
+          "fertilization-reminder-setup-close-button",
+          "fertilization-reminder-section",
+          "fertilization-reminder-preview-button",
+          "fertilization-reminder-calendar-confirm-button",
+          "fertilization-reminder-alert-info-button",
+          "fertilization-reminder-deferred",
+          "fertilization-reminder-asserted-date-section",
+          "fertilization-reminder-asserted-date-picker",
+          "fertilization-reminder-asserted-date-recalculate-button",
+          "fertilization-reminder-saved-state",
+          "user-plant-detail-page",
+          "user-plant-detail-fertilization-card",
+          "user-plant-detail-fertilization-monthly-table"
+        ],
+        "stable_id_prefixes": ["plant-card-fertilization-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["/user-plants", "/user-plants?id=95001"],
+        "cache": false,
+        "reentry": true,
+        "fixtures": [
+          "runtime-only authenticated fixture; no CloudBase user_plant_instances write",
+          "fixture plant 95001 exposes Monstera public fertilizationMonthly with 12 months",
+          "fixture restores user storage, Pinia state, query cache and request functions after the leaf"
+        ]
+      }
+    },
+    {
+      "id": "user.plant_detail.fertilization_reminder_setup",
+      "category_path": ["user", "plant-detail", "fertilization-reminder-setup"],
+      "leaf_script": "test/e2e/automator/user/plant-detail/fertilization-reminder-setup.mjs",
+      "data_mode": "fixture_diagnostic",
+      "auth_mode": "diagnostic_injected",
+      "mutation_policy": "diagnostic_only",
+      "integrity_files": [
+        "src/pages/reminder/reminder.vue",
+        "src/pages/index/components/FertilizationMonthlySheet.vue",
+        "src/pages/index/components/FertilizationReminderCalendarDelete.vue",
+        "src/pages/index/components/FertilizationReminderSetup.vue",
+        "src/pages/index/components/fertilization-reminder-options.js",
+        "src/api/plants-http.js",
+        "src/vue-query/plants/mutations/fertilization-reminders.js",
+        "cloudfunctions/plant-user-http/fertilization-reminder-service.js"
+      ],
+      "script_sha256": "280277cab3bf962354a0f390ffc8e80d49b56c494882f543c7cd40120eeb06a3",
+      "reusable_scenarios": ["test/e2e/automator/_shared/fertilization-reminder-e2e-helpers.mjs"],
+      "id_policy": {
+        "sections": ["3.1"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.1"],
+        "stable_ids": [
+          "index-plant-list",
+          "plant-card-fertilization-{plant.id}",
+          "reminder-tab-fertilization-{plant.id}",
+          "plant-card-fertilization-sheet",
+          "plant-card-fertilization-sheet-content",
+          "plant-card-fertilization-monthly-table",
+          "plant-card-fertilization-monthly-unavailable",
+          "fertilization-reminder-no-fixed-period",
+          "fertilization-reminder-entry-button",
+          "fertilization-reminder-setup-sheet",
+          "fertilization-reminder-setup-sheet-content",
+          "fertilization-reminder-setup-close-button",
+          "fertilization-reminder-option-liquid",
+          "fertilization-reminder-option-slow-release",
+          "fertilization-reminder-preview-button",
+          "fertilization-reminder-calendar-confirm-button",
+          "fertilization-reminder-alert-info-button",
+          "fertilization-reminder-deferred",
+          "fertilization-reminder-asserted-date-section",
+          "fertilization-reminder-asserted-date-picker",
+          "fertilization-reminder-asserted-date-recalculate-button",
+          "fertilization-reminder-cancel-button",
+          "plant-card-fertilization-close-button"
+        ],
+        "stable_id_prefixes": ["plant-card-fertilization-", "fertilization-reminder-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["/user-plants", "/user-plants/fertilization-reminders"],
+        "cache": false,
+        "reentry": true,
+        "fixtures": [
+          "runtime-only authenticated fixture; no CloudBase user_plant_instances write",
+          "each setup state reopens the popup from the index or reminder-tab user entry",
+          "fixture models calendar success, calendar failure, retryable sync failure and terminal plan expiry"
+        ]
+      }
+    },
+    {
+      "id": "user.plant_detail.fertilization_reminder_actions",
+      "category_path": ["user", "plant-detail", "fertilization-reminder-actions"],
+      "leaf_script": "test/e2e/automator/user/plant-detail/fertilization-reminder-actions.mjs",
+      "data_mode": "fixture_diagnostic",
+      "auth_mode": "diagnostic_injected",
+      "mutation_policy": "diagnostic_only",
+      "integrity_files": [
+        "src/pages/index/components/FertilizationMonthlySheet.vue",
+        "src/pages/index/components/FertilizationReminderCalendarDelete.vue",
+        "src/pages/index/components/SavedFertilizationReminderState.vue",
+        "src/pages/index/components/fertilization-reminder-options.js",
+        "src/api/plants-http.js",
+        "src/vue-query/plants/mutations/fertilization-reminders.js",
+        "cloudfunctions/plant-user-http/fertilization-reminder-service.js"
+      ],
+      "script_sha256": "a3b2af1eaa278dbdbba5aae168d0770989b326ba126d412c8a47d086ca4ea396",
+      "reusable_scenarios": ["test/e2e/automator/_shared/fertilization-reminder-e2e-helpers.mjs"],
+      "id_policy": {
+        "sections": ["3.1"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.1"],
+        "stable_ids": [
+          "plant-card-fertilization-{plant.id}",
+          "plant-card-fertilization-sheet",
+          "plant-card-fertilization-sheet-content",
+          "fertilization-reminder-entry-button",
+          "fertilization-reminder-setup-sheet",
+          "fertilization-reminder-setup-sheet-content",
+          "fertilization-reminder-setup-close-button",
+          "fertilization-reminder-saved-state",
+          "fertilization-reminder-current-month-rule",
+          "fertilization-reminder-condition-checks",
+          "fertilization-reminder-due-condition-{conditionCode}-yes",
+          "fertilization-reminder-due-condition-{conditionCode}-no",
+          "fertilization-reminder-minimum-interval",
+          "fertilization-reminder-minimum-interval-ack",
+          "fertilization-reminder-complete-button",
+          "fertilization-reminder-dismiss-button",
+          "fertilization-reminder-delete-calendar-button",
+          "fertilization-reminder-calendar-delete",
+          "fertilization-reminder-calendar-delete-content",
+          "fertilization-reminder-calendar-delete-close-button",
+          "fertilization-reminder-calendar-delete-ack",
+          "fertilization-reminder-calendar-delete-confirm",
+          "fertilization-reminder-calendar-delete-dismiss",
+          "fertilization-reminder-section",
+          "fertilization-reminder-preview"
+        ],
+        "stable_id_prefixes": ["plant-card-fertilization-", "fertilization-reminder-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["/user-plants", "/user-plants/fertilization-reminders"],
+        "cache": false,
+        "reentry": true,
+        "fixtures": [
+          "runtime-only authenticated fixture; no CloudBase user_plant_instances write",
+          "each due-state action is entered through the home plant-card fertilization icon",
+          "fixture records complete, dismiss and calendar-delete mutations without writing CloudBase data"
+        ]
+      }
+    },
+    {
+      "id": "user.profile.mvp_boundaries",
+      "category_path": ["user", "profile", "mvp-boundaries"],
+      "leaf_script": "test/e2e/automator/user/review-subpackage-routing.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "read_only",
+      "required_assertions": [
+        "个人中心不展示内部审核入口与未实现的历史全量入口",
+        "个人中心诊断历史区域可见",
+        "我的植物入口回到首页植物列表",
+        "个人中心重新进入后诊断历史区域仍可见",
+        "不存在的诊断记录展示用户可理解且可重试的错误态"
+      ],
+      "integrity_files": [
+        "src/pages/index/index.vue",
+        "src/pages/profile/profile.vue",
+        "src/subpackages/diagnosis/result.vue",
+        "src/pages.json",
+        "src/Layout.vue"
+      ],
+      "script_sha256": "8733dddd8fd656e4450dc3e98640e37037b36b9acc078a57fa32a63a1e84d05f",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.9", "3.8"],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.9",
+          "docs/ai-rules/frontend-automation-id-policy.md#3.8"
+        ],
+        "stable_ids": [
+          "profile-menu-myPlants",
+          "profile-diagnose-history-retry",
+          "diagnosis-result-page-retry"
+        ],
+        "stable_id_prefixes": ["profile-menu-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": [],
+        "cache": false,
+        "reentry": true,
+        "fixtures": [
+          "test-owned DevTools runtime built in development mode with dev-only profile menu visible",
+          "persisted real WeChat identity; no storage injection and no data mutation",
+          "诊断历史接口可能为空，但个人中心必须可进入且不得出现内部审核或未闭环入口",
+          "使用不存在的结果 id 触发真实只读接口失败，验证用户错误态；不伪造接口响应"
+        ]
+      }
+    },
+    {
+      "id": "care.home_card.water_and_fertilization_closure",
+      "category_path": ["care", "home-card", "water-and-fertilization-closure"],
+      "leaf_script": "test/e2e/automator/business/home-card-care-closure.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "read_only",
+      "required_assertions": [
+        "首页植物卡的浇水入口可见",
+        "首页浇水入口打开 WateringReminderSheet",
+        "首页浇水提醒弹层可关闭",
+        "首页植物卡的施肥入口可见",
+        "首页施肥入口打开 FertilizationMonthlySheet",
+        "首页施肥弹层可关闭",
+        "关闭养护弹层后首页可重新进入",
+        "首页重新进入后仍显示同一真实植物卡"
+      ],
+      "script_sha256": "45ac2a88f390f431aab927dd3bd8c00fe5a193a47c8bff0008878e8ec99af667",
+      "reusable_scenarios": ["test/e2e/automator/_shared/business-coverage-live.mjs"],
+      "id_policy": {
+        "sections": ["3.1"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.1"],
+        "stable_ids": [
+          "index-plant-list",
+          "plant-card-reminder-{plant.id}-water",
+          "watering-reminder-sheet",
+          "watering-reminder-close-button",
+          "plant-card-fertilization-{plant.id}",
+          "plant-card-fertilization-sheet",
+          "plant-card-fertilization-close-button"
+        ],
+        "stable_id_prefixes": [
+          "index-plant-card-edit-",
+          "plant-card-reminder-",
+          "plant-card-fertilization-"
+        ]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": [
+          "/user-plants",
+          "/user-plants/watering-reminders",
+          "/user-plants/fertilization-reminders"
+        ],
+        "cache": false,
+        "reentry": true,
+        "fixtures": ["authenticated account with at least one user plant"]
+      }
+    },
+    {
+      "id": "care.mvp.hidden_calendar_reminder_tabs",
+      "category_path": ["care", "mvp", "hidden-calendar-reminder-tabs"],
+      "leaf_script": "test/e2e/automator/business/mvp-hidden-tab-entry.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "read_only",
+      "required_assertions": [
+        "首页仍是 MVP 原生 Tab",
+        "日历未出现在 MVP 原生 TabBar",
+        "提醒未出现在 MVP 原生 TabBar",
+        "MVP TabBar 截图有效"
+      ],
+      "script_sha256": "d82df7b65c1a93e6c1657f82102ee01f7957ad695a88d2bcdab9ecd11e2aef7c",
+      "reusable_scenarios": ["test/e2e/automator/_shared/business-coverage-live.mjs"],
+      "id_policy": {
+        "sections": ["3.1"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.1"],
+        "stable_ids": ["index-page"],
+        "stable_id_prefixes": []
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": [],
+        "cache": false,
+        "reentry": true,
+        "fixtures": ["persisted real WeChat identity and a test-owned development DevTools runtime"]
+      }
+    },
+    {
+      "id": "plant.light_environment_save_event_channel",
+      "category_path": ["plants", "light-environment-save-event-channel"],
+      "leaf_script": "test/e2e/automator/business/light-environment-save.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "self_reverting",
+      "required_assertions": [
+        "编辑页光照环境入口可见",
+        "光照环境页已注册并可进入",
+        "四种光型均可切换并反映对应图例",
+        "四种光型均有有效截图证据",
+        "直射光可在透过玻璃与开放环境之间切换",
+        "几乎无自然光时进入方式为空且不可改写",
+        "几乎无自然光时进入方式呈现禁用样式",
+        "补光灯与自然光型独立",
+        "保存前恢复原 V2 光照资料",
+        "光照保存后返回原编辑页",
+        "光照保存返回后环境状态可读"
+      ],
+      "script_sha256": "355c5d6f745b7fcd07ff41cdd7e1804ac942fe13952bed624a0deb6b2f7d7a70",
+      "reusable_scenarios": ["test/e2e/automator/_shared/business-coverage-live.mjs"],
+      "id_policy": {
+        "sections": ["3.12.1", "3.14"],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.12.1",
+          "docs/ai-rules/frontend-automation-id-policy.md#3.14"
+        ],
+        "stable_ids": [
+          "edit-plant-environment-group",
+          "edit-plant-environment-light-entry",
+          "edit-plant-environment-light-status",
+          "plant-light-environment-page",
+          "plant-light-environment-illustration-profile",
+          "plant-light-environment-type-direct-profile",
+          "plant-light-environment-type-bright_diffuse-profile",
+          "plant-light-environment-type-weak_diffuse-profile",
+          "plant-light-environment-type-almost_none-profile",
+          "plant-light-environment-entry-through_glass-profile",
+          "plant-light-environment-entry-open_environment-profile",
+          "plant-light-environment-supplemental-light-profile",
+          "plant-light-environment-complete-button"
+        ],
+        "stable_id_prefixes": ["edit-plant-environment-", "plant-light-environment-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["/user-plants", "/user-plants?id=", "PATCH /user-plants"],
+        "cache": false,
+        "reentry": true,
+        "fixtures": [
+          "authenticated account with an existing user-confirmed V2 lightEnvironment, or a real API-created temporary V2 record that is deleted and verified after the leaf"
+        ]
+      }
+    },
+    {
+      "id": "user.plant_detail.delete_confirmation",
+      "category_path": ["user", "plant-detail", "delete-confirmation"],
+      "leaf_script": "test/e2e/automator/business/user-plant-delete-confirmation.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "read_only",
+      "required_assertions": [
+        "用户植物删除入口可见",
+        "删除确认出现前不会删除或跳转",
+        "删除确认提示已关闭且未触发删除请求",
+        "user-plant-delete-confirmation首张截图有效"
+      ],
+      "script_sha256": "f5820e287e826ad18437a7b08d91b26a37d0f55991536e8ca67556da06aef609",
+      "reusable_scenarios": ["test/e2e/automator/_shared/business-coverage-live.mjs"],
+      "id_policy": {
+        "sections": ["3.12.1"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.12.1"],
+        "stable_ids": ["user-plant-detail-page", "user-plant-detail-delete-button"],
+        "stable_id_prefixes": ["user-plant-detail-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["/user-plants", "/user-plants?id="],
+        "cache": false,
+        "reentry": false,
+        "fixtures": [
+          "authenticated account with at least one user plant; the leaf only opens and dismisses the native delete confirmation"
+        ]
+      }
+    },
+    {
+      "id": "plant.user_detail_create_edit_view_modes",
+      "category_path": ["plants", "user-detail-create-edit-view-modes"],
+      "leaf_script": "test/e2e/automator/business/user-detail-modes.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "read_only",
+      "required_assertions": [
+        "用户植物 view 模式页面可达",
+        "用户植物 edit 模式表单可达",
+        "用户植物 edit 模式保存入口可达",
+        "用户植物 edit 模式基本信息分区可见",
+        "用户植物 edit 模式养护信息分区可见",
+        "用户植物 edit 模式盆信息分区可见",
+        "用户植物 create 模式页面可达",
+        "用户植物 create 模式选择入口可达",
+        "用户植物 create 模式存在可选植物",
+        "用户植物 create 模式可进入信息表单",
+        "用户植物 create 模式已切换到信息步骤",
+        "用户植物 create 模式信息表单可见",
+        "用户植物 create 模式基本信息分区可见",
+        "用户植物 create 模式养护信息分区可见",
+        "用户植物 create 模式盆信息分区可见",
+        "用户植物详情首次加载完成",
+        "详情首次加载不显示重试错误",
+        "详情浇水按钮可见",
+        "详情页重新进入后加载完成",
+        "详情页重新进入后仍显示真实植物主体"
+      ],
+      "script_sha256": "e1fae7d2df6f6a682ae57e76baaf8d478d281bb59de3dfe4fc51c79e0b66faed",
+      "reusable_scenarios": ["test/e2e/automator/_shared/business-coverage-live.mjs"],
+      "id_policy": {
+        "sections": ["3.12.1"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.12.1"],
+        "stable_ids": [
+          "user-plant-detail-page",
+          "edit-plant-form",
+          "edit-plant-submit-button",
+          "edit-plant-basic-info-section",
+          "edit-plant-care-info-section",
+          "edit-plant-pot-info-section",
+          "add-plant-swiper",
+          "add-plant-next-button",
+          "add-plant-form",
+          "add-plant-basic-info-section",
+          "add-plant-care-info-section",
+          "add-plant-pot-info-section"
+        ],
+        "stable_id_prefixes": ["add-plant-", "edit-plant-", "user-plant-detail-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["/user-plants", "/user-plants?id="],
+        "cache": false,
+        "reentry": true,
+        "fixtures": ["authenticated account with at least one user plant"]
+      }
+    },
+    {
+      "id": "plants.runtime.interaction_resilience",
+      "category_path": ["plants", "runtime", "interaction-resilience"],
+      "leaf_script": "test/e2e/automator/business/runtime-interaction-resilience.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "read_only",
+      "required_assertions": [
+        "首页添加植物入口在真实账户中可见",
+        "快速重复点击只产生一个建档页",
+        "建档页根节点可见且页面栈没有重复建档页",
+        "建档页点击植物卡片后信息步骤已激活",
+        "快速连续滚动后滚动位置和页面布局仍可读",
+        "添加植物信息步骤内容超出视口后可滚动",
+        "添加植物信息步骤快速连续滚动后到达底部",
+        "滚动到底部后添加植物提交入口仍可定位",
+        "添加植物底部操作栏保持可见高度",
+        "信息步骤滚动到底部后页面布局未崩溃",
+        "快速滚动后的建档页截图为有效 PNG",
+        "真实小程序 wx.request 健康请求完成"
+      ],
+      "script_sha256": "85d7ba3466edc5d11a0064fab089bdd0920228c52a903ce72a67d535d8d9b235",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.1", "3.12.1"],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.1",
+          "docs/ai-rules/frontend-automation-id-policy.md#3.12.1"
+        ],
+        "stable_ids": [
+          "index-page",
+          "index-plant-list",
+          "index-add-plant-button",
+          "index-empty-add-plant-button",
+          "add-plant-swiper",
+          "add-plant-info-scroll",
+          "add-plant-submit-bar"
+        ],
+        "stable_id_prefixes": []
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["GET /plant-catalog-http/catalog/health"],
+        "cache": "must_record_cache_state_if_catalog_is_touched",
+        "reentry": true,
+        "fixtures": [
+          "persisted real WeChat identity and a real development user account; no fixture response or injected plant data"
+        ]
+      }
+    },
+    {
+      "id": "user.remote_read.performance",
+      "category_path": ["user", "remote-read", "performance"],
+      "leaf_script": "test/e2e/automator/user/remote-read-performance.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "read_only",
+      "preflight_mode": "health_only_for_cold_performance",
+      "required_assertions": [
+        "远端 QA 运行时使用 canonical public HTTPS 目标",
+        "auth/user 和 user-plants 各采集 5 次冷请求候选及 10 次热请求，均来自真实 wx.request",
+        "CloudBase 日志按 probe_id 只用于关联真实函数及冷/热状态，不代替端上耗时结论",
+        "user-plants 每次均返回当前真实用户的既有植物列表合同",
+        "所有性能数据来自小程序运行时 wx.request 发起到回调",
+        "QA 页面截图为有效 PNG",
+        "正式样本中两个接口均须满足冷请求 p95 不超过 1000ms、热请求 p95 不超过 300ms",
+        "探索样本不足时必须为 BLOCKED_ENV，不能标为 PASS；不要求历史基线"
+      ],
+      "script_sha256": "fb4c08c34373c05f77709271c783194f9a85b2d791045ba505ac43ee98e7f10a",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.1"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.1"],
+        "stable_ids": ["index-page", "index-plant-list"],
+        "stable_id_prefixes": []
+      },
+      "requirements": {
+        "backend_mode": "online",
+        "screenshot": true,
+        "wx_request": [
+          "POST /auth-user-http/auth/user",
+          "GET /plant-user-http/user-plants?page=1&pageSize=50"
+        ],
+        "cache": false,
+        "reentry": false,
+        "fixtures": [
+          "cloud1_dev 真实开发数据",
+          "持久化真实微信登录态",
+          "真实用户身份票据；不注入 openid、不替换 wx.request 响应"
+        ]
+      },
+      "performance_contract": {
+        "stage": "exploratory_then_absolute_threshold",
+        "cold_candidate_sample_count_per_endpoint": 5,
+        "hot_sample_count_per_endpoint": 10,
+        "measurement": "真实小程序 wx.request 发起到 success/fail 回调 elapsed_ms",
+        "cold_evidence": "cloudbase_init_report_correlated_by_probe_id",
+        "performance_pass_allowed": false,
+        "formal_absolute_threshold": {
+          "samples_per_endpoint": { "cold": 20, "hot": 30 },
+          "cold_p95_max_ms": 1000,
+          "hot_p95_max_ms": 300,
+          "requires_same_environment_account_data_and_parameters": true,
+          "requires_historical_baseline": false
+        }
+      }
+    },
+    {
+      "id": "weather.environment_context.performance",
+      "category_path": ["weather", "environment-context", "performance"],
+      "leaf_script": "test/e2e/automator/weather/environment-context-performance.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "read_only",
+      "required_assertions": [
+        "当前 QA 使用完整 LAN watcher、隔离 DevTools 项目和真实持久化微信身份",
+        "连续真实 wx.request 调用 weather/environment-context，返回 HTTP 200 和业务码 200",
+        "每次响应包含最近 10 天历史天气窗口，且记录关键字段和响应字节数",
+        "首个真实 wx.request cold candidate 小于 1 秒",
+        "后续真实 wx.request 的 p95 小于 300ms",
+        "所有性能数据来自小程序运行时 wx.request 发起到回调 elapsed_ms",
+        "性能报告保留 target、probe_id、transport、HTTP 状态、业务码和冷/热统计",
+        "QA 页面截图为有效 PNG"
+      ],
+      "script_sha256": "1c2c2523c69440ea4446c66dc1d970569e6bb8fef6cc2184359a8d1bcb2a3669",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.1"],
+        "refs": ["docs/ai-rules/frontend-automation-id-policy.md#3.1"],
+        "stable_ids": ["index-page"],
+        "stable_id_prefixes": []
+      },
+      "requirements": {
+        "backend_mode": "lan",
+        "screenshot": true,
+        "wx_request": ["POST /weather-http/weather/environment-context"],
+        "cache": "真实天气缓存允许命中，但必须记录响应中的来源字段",
+        "reentry": false,
+        "fixtures": [
+          "cloud1_dev 对应的完整 LAN 本地函数流和真实持久化微信身份",
+          "真实天气缓存/预报响应；不注入天气响应、不伪造 openid、不写数据库"
+        ]
+      },
+      "performance_contract": {
+        "cold_threshold_ms": 1000,
+        "hot_threshold_ms": 300,
+        "cold_sample_count": 1,
+        "hot_sample_count": 5,
+        "measurement": "真实小程序 wx.request 发起到 success/fail 回调 elapsed_ms",
+        "cold_evidence": "local_lan_cold_candidate_only; CloudBase Init Report 未伪造"
+      }
+    },
+    {
+      "id": "subscription.entry",
+      "category_path": ["subscription", "entry"],
+      "leaf_script": "test/e2e/automator/subscription/entry.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "read_only",
+      "required_assertions": [
+        "个人中心订阅入口可见",
+        "订阅会员分包页面可见",
+        "服务端至少下发一个可购买套餐",
+        "服务端订阅套餐列表可见",
+        "至少一个订阅套餐具备立即订阅入口",
+        "订阅页面通过真实运行时请求加载套餐",
+        "订阅会员页面截图有效",
+        "正式验收不发起真实支付扣款"
+      ],
+      "script_sha256": "ad4dc8511d8ac0486a40e319503b185c1faa9e57514c90787c98a4f46485aa08",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.9", "3.9.1"],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.9",
+          "docs/ai-rules/frontend-automation-id-policy.md#3.9.1"
+        ],
+        "stable_ids": [
+          "profile-subscription-entry",
+          "subscription-page",
+          "subscription-plan-list",
+          "subscription-refresh-order-button"
+        ],
+        "stable_id_prefixes": ["subscription-plan-"]
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["GET /subscription-http/subscription/plans"],
+        "cache": false,
+        "reentry": false,
+        "fixtures": [
+          "persisted real WeChat identity, configured cloud1_dev subscription plan, and real subscription-http response; payment button is intentionally not tapped"
+        ]
+      }
+    },
+    {
+      "id": "subscription.paid_touchpoints",
+      "category_path": ["subscription", "touchpoints"],
+      "leaf_script": "test/e2e/automator/subscription/paid-touchpoints.mjs",
+      "data_mode": "automator_live_real_api",
+      "auth_mode": "persisted_real_wechat",
+      "mutation_policy": "read_only",
+      "required_assertions": [
+        "真实运行身份为免费账户",
+        "独立浇水建议入口未调用原业务页并跳转订阅页",
+        "诊断 tab 未调用诊断接口并跳转订阅页",
+        "免费用户被拦截时未调用诊断或浇水建议接口",
+        "免费用户跳转订阅页截图有效"
+      ],
+      "script_sha256": "9ffa7eab20d80b1b5e39ef2df7fec8275af2c341e180268e9e5b21a045857ff8",
+      "reusable_scenarios": [],
+      "id_policy": {
+        "sections": ["3.1", "3.9", "3.10"],
+        "refs": [
+          "docs/ai-rules/frontend-automation-id-policy.md#3.1",
+          "docs/ai-rules/frontend-automation-id-policy.md#3.9",
+          "docs/ai-rules/frontend-automation-id-policy.md#3.10"
+        ],
+        "stable_ids": [
+          "index-watering-advisor-entry",
+          "diagnose-dev-symptom-class-option-yellow_leaf",
+          "subscription-page",
+          "subscription-membership-type"
+        ],
+        "stable_id_prefixes": []
+      },
+      "requirements": {
+        "screenshot": true,
+        "wx_request": ["GET /subscription-http/subscription/plans"],
+        "cache": false,
+        "reentry": false,
+        "fixtures": [
+          "persisted real WeChat identity whose server-synced membership is free; no fixture response, membership rewrite, plant injection, or real payment"
+        ]
+      }
+    }
+  ]
+}
