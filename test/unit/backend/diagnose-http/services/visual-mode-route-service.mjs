@@ -143,4 +143,124 @@ assert.deepEqual(genericRoute.associatedModes, [])
 assert.deepEqual(genericRoute.confirmationCandidates, [])
 assert.deepEqual(genericRoute.directMatches, [])
 
+function highConfidenceImage({
+  imageId,
+  mode,
+  confidence = 0.95,
+  inputSlotType = 'leaf',
+  modelOrgan = inputSlotType,
+  organConflictFlag = 0,
+  captureRegion = 'leaf_upper_surface'
+}) {
+  return {
+    imageId,
+    inputSlotType,
+    visualNormalizedImageResultId: `normalized_${imageId}`,
+    captureRegion,
+    normalizedResult: {
+      normalized_organ: modelOrgan,
+      model_detected_organ: modelOrgan,
+      organ_conflict_flag: organConflictFlag,
+      analyzability: 'high',
+      capture_region: captureRegion,
+      mode_candidates: [{ mode, confidence, region_ref: captureRegion }]
+    }
+  }
+}
+
+const modelHighDirectRoute = attachDiagnosisModeRoute({
+  diagnosisProfile: 'pest',
+  aggregateResult: {
+    aggregate_analyzability: 'high',
+    aggregated_symptom_candidates: [],
+    admission_records: []
+  },
+  successfulResults: [highConfidenceImage({ imageId: 'img_model_aphid', mode: 'aphid' })]
+}).diagnosis_mode_route_result
+assert.equal(modelHighDirectRoute.nextAction, 'direct_result')
+assert.equal(modelHighDirectRoute.decision_source, 'model_high_confidence')
+assert.deepEqual(modelHighDirectRoute.modelDirectModeKeys, ['aphid'])
+assert.equal(modelHighDirectRoute.model_direct_decision_status, 'accepted')
+assert.equal(modelHighDirectRoute.secondary_visual_candidates.length, 0)
+
+const highPlusWeakRoute = attachDiagnosisModeRoute({
+  diagnosisProfile: 'full',
+  aggregateResult: {
+    aggregate_analyzability: 'high',
+    aggregated_symptom_candidates: [],
+    admission_records: []
+  },
+  successfulResults: [
+    highConfidenceImage({ imageId: 'img_route_high', mode: 'aphid' }),
+    highConfidenceImage({
+      imageId: 'img_route_weak',
+      mode: 'yellow_leaf',
+      confidence: 0.5,
+      captureRegion: 'leaf_lower_surface'
+    })
+  ]
+}).diagnosis_mode_route_result
+assert.equal(highPlusWeakRoute.nextAction, 'direct_result')
+assert.deepEqual(highPlusWeakRoute.modelDirectModeKeys, ['aphid'])
+assert.equal(highPlusWeakRoute.secondary_visual_candidates.length, 1)
+assert.equal(highPlusWeakRoute.secondary_visual_candidates[0].modeKey, 'yellow_leaf')
+assert.equal(highPlusWeakRoute.secondary_visual_candidates[0].imageId, 'img_route_weak')
+assert.equal(highPlusWeakRoute.secondary_visual_candidates[0].regionRef, 'leaf_lower_surface')
+
+const crossFamilyRoute = attachDiagnosisModeRoute({
+  diagnosisProfile: 'full',
+  aggregateResult: {
+    aggregate_analyzability: 'high',
+    aggregated_symptom_candidates: [],
+    admission_records: []
+  },
+  successfulResults: [
+    highConfidenceImage({ imageId: 'img_route_pest', mode: 'aphid' }),
+    highConfidenceImage({ imageId: 'img_route_yellow', mode: 'yellow_leaf' })
+  ]
+}).diagnosis_mode_route_result
+assert.equal(crossFamilyRoute.nextAction, 'choose_direction')
+assert.equal(crossFamilyRoute.decision_source, 'conflict')
+assert.deepEqual(crossFamilyRoute.modelDirectModeKeys, ['aphid', 'yellow_leaf'])
+assert.deepEqual(crossFamilyRoute.directionChoices.map(item => item.modeKey), [
+  'aphid',
+  'yellow_leaf'
+])
+assert.equal(crossFamilyRoute.visual_conflicts.length, 1)
+
+const modelHighFixedPackageRoute = attachDiagnosisModeRoute({
+  diagnosisProfile: 'full',
+  aggregateResult: {
+    aggregate_analyzability: 'high',
+    aggregated_symptom_candidates: [],
+    admission_records: []
+  },
+  successfulResults: [highConfidenceImage({ imageId: 'img_route_fixed', mode: 'yellow_leaf' })]
+}).diagnosis_mode_route_result
+assert.equal(modelHighFixedPackageRoute.nextAction, 'question_package')
+assert.equal(modelHighFixedPackageRoute.decision_source, 'fixed_question_package')
+assert.deepEqual(modelHighFixedPackageRoute.modelDirectModeKeys, ['yellow_leaf'])
+
+const wrongOrganRoute = attachDiagnosisModeRoute({
+  diagnosisProfile: 'pest',
+  aggregateResult: {
+    aggregate_analyzability: 'high',
+    aggregated_symptom_candidates: [],
+    admission_records: []
+  },
+  successfulResults: [
+    highConfidenceImage({
+      imageId: 'img_route_wrong_organ',
+      mode: 'aphid',
+      inputSlotType: 'leaf',
+      modelOrgan: 'root',
+      organConflictFlag: 1
+    })
+  ]
+}).diagnosis_mode_route_result
+assert.equal(wrongOrganRoute.nextAction, 'request_followup_capture')
+assert.equal(wrongOrganRoute.decision_source, 'retake')
+assert.equal(wrongOrganRoute.followupCapturePlan.reason, 'model_direct_guard_blocked')
+assert.equal(wrongOrganRoute.model_direct_decision_status, 'blocked')
+
 console.log('visual mode route service tests passed')

@@ -117,6 +117,24 @@ function directEvidenceLedgerForDirectResult(routeResult = {}, pestCandidateMode
   }
   const hasAnyConfidenceData = candidateConfidenceMap.size > 0
   const DIRECT_TIER_CONFIDENCE_THRESHOLD = 0.95
+  const directCandidateSourceMap = new Map()
+  for (const candidate of Array.isArray(routeResult.normalizedModeCandidates)
+    ? routeResult.normalizedModeCandidates
+    : []) {
+    const modeKey = normalizeKey(candidate?.modeKey || candidate?.mode || '')
+    const confidence = Number(candidate?.confidence)
+    if (
+      !modeKey ||
+      !Number.isFinite(confidence) ||
+      confidence < DIRECT_TIER_CONFIDENCE_THRESHOLD
+    ) {
+      continue
+    }
+    const existing = directCandidateSourceMap.get(modeKey)
+    if (!existing || confidence > Number(existing.confidence || 0)) {
+      directCandidateSourceMap.set(modeKey, { ...candidate, confidence })
+    }
+  }
   const additional = pestCandidateModes
     .filter(mode => !lockedSet.has(normalizeKey(mode)))
     .filter(mode => {
@@ -130,17 +148,39 @@ function directEvidenceLedgerForDirectResult(routeResult = {}, pestCandidateMode
       // 仅提升 confidence>=0.95 的候选；缺失 confidence 时不提升（保守）
       return conf !== undefined && conf >= DIRECT_TIER_CONFIDENCE_THRESHOLD
     })
-    .map(mode => ({
-      evidenceKey: mode,
-      symptomKey: mode,
-      diagnosisMode: mode,
-      modeKey: mode,
-      routeEvidenceRole: 'direct_match',
-      sourceType: 'visual_mode_router',
-      currentStatus: 'active',
-      suppressEquivalentQuestion: true,
-      lockedInQuestionnaire: true
-    }))
+    .map(mode => {
+      const source = directCandidateSourceMap.get(normalizeKey(mode)) || {}
+      return {
+        evidenceKey: mode,
+        symptomKey: mode,
+        diagnosisMode: mode,
+        modeKey: mode,
+        routeEvidenceRole: 'direct_match',
+        sourceType: 'visual_mode_router',
+        currentStatus: 'active',
+        suppressEquivalentQuestion: true,
+        lockedInQuestionnaire: true,
+        ...(source.imageId || source.image_id ? { imageId: source.imageId || source.image_id } : {}),
+        ...(source.regionRef || source.region_ref
+          ? { regionRef: source.regionRef || source.region_ref }
+          : {}),
+        ...(source.sourceRecordId || source.source_record_id
+          ? { sourceRecordId: source.sourceRecordId || source.source_record_id }
+          : {}),
+        ...(source.visualRawImageRecordId || source.visual_raw_image_record_id
+          ? {
+              visualRawImageRecordId:
+                source.visualRawImageRecordId || source.visual_raw_image_record_id
+            }
+          : {}),
+        ...(source.inputSlotType || source.input_slot_type
+          ? { inputSlotType: source.inputSlotType || source.input_slot_type }
+          : {}),
+        ...(source.modelOrgan || source.model_organ
+          ? { modelOrgan: source.modelOrgan || source.model_organ }
+          : {})
+      }
+    })
   return [...baseLedger, ...additional]
 }
 

@@ -315,6 +315,9 @@ function buildFrontendAnswerResponse(publicResponse = {}) {
     publicResponse.environmentCareContext || null,
     publicResponse.careBehaviorTimeline || null
   )
+  const visualAggregateSummary = pickMinimalVisualAggregateSummary(
+    publicResponse.visualAggregateSummary
+  )
 
   const responsePayload = {
     diagnosisSessionId: publicResponse.diagnosisSessionId || '',
@@ -352,6 +355,7 @@ function buildFrontendAnswerResponse(publicResponse = {}) {
     hasActiveQuestions: hasActiveQuestionsFlag,
     questions: optionalQuestions,
     ...(environmentCareContext ? { environmentCareContext } : {}),
+    ...(visualAggregateSummary ? { visualAggregateSummary } : {}),
     airEnvironmentByQuestionId: publicResponse?.airEnvironmentByQuestionId || {},
     airEnvironmentSnapshotsByQuestionId: publicResponse?.airEnvironmentSnapshotsByQuestionId || {},
     airEnvironmentSnapshotSourceByQuestionId:

@@ -82,6 +82,8 @@ function resolveDiagnosisModeRoute({
   retainedVisualEvidence = [],
   visualModeCandidates = [],
   modeCandidates = [],
+  modelDirectCandidates = [],
+  modelDirectDecision = null,
   priorEvidenceLedger = [],
   imageContext = {},
   aggregateAnalyzability = ''
@@ -93,11 +95,19 @@ function resolveDiagnosisModeRoute({
       imageContext?.analyzability ||
       ''
   )
-  if (analyzability === 'low') {
+  const modelDecisionEvaluated = modelDirectDecision?.evaluated === true
+  const hasAcceptedModelCandidates = Array.isArray(modelDirectCandidates)
+    ? modelDirectCandidates.length > 0
+    : false
+  const modelDirectGuardBlocked =
+    modelDecisionEvaluated && modelDirectDecision?.status === 'blocked'
+  if ((analyzability === 'low' && !hasAcceptedModelCandidates) || modelDirectGuardBlocked) {
+    const reason = modelDirectGuardBlocked ? 'model_direct_guard_blocked' : 'low_visual_quality'
     const snapshotSeed = JSON.stringify({
       profile: normalizedProfile,
       action: 'request_followup_capture',
-      reason: 'low_visual_quality',
+      reason,
+      modelDirectDecision,
       origin: imageContext?.originVisualCallBatchId || ''
     })
     return {
@@ -107,13 +117,23 @@ function resolveDiagnosisModeRoute({
       associatedModes: [],
       directionChoices: [],
       nextAction: 'request_followup_capture',
+      decision_source: 'retake',
+      primary_model_direct_modes: [],
+      secondary_visual_candidates: modelDirectDecision?.secondaryVisualCandidates || [],
+      visual_conflicts: modelDirectDecision?.visualConflicts || [],
+      model_direct_decisions: modelDirectDecision?.imageDecisions || [],
+      model_direct_decision_status: modelDirectDecision?.status || '',
+      organ_conflict_sources: modelDirectDecision?.organConflictSources || [],
       followupCapturePlan: {
-        reason: 'low_visual_quality',
+        reason,
         requestedCaptureRegion: normalizeText(
           normalizeCaptureRegion(imageContext?.requestedCaptureRegion, 'other_local')
         ),
         riskLevel: 'low',
-        riskNotice: '这次只需要补一张更清楚的照片。',
+        riskNotice:
+          reason === 'model_direct_guard_blocked'
+            ? '照片里的器官位置和上传说明不一致，请补拍与问题对应的部位。'
+            : '这次只需要补一张更清楚的照片。',
         safetyInstructions: ['保持手机稳定，拍清楚可疑位置。'],
         requiresExplicitConsent: false,
         skipOptionEnabled: false,
@@ -124,11 +144,18 @@ function resolveDiagnosisModeRoute({
     }
   }
 
-  const evidenceItems = normalizeVisualEvidence([
+  const currentEvidenceItems = normalizeVisualEvidence([
     ...admittedVisualEvidence,
-    ...admittedEvidence,
-    ...priorEvidenceLedger
+    ...admittedEvidence
   ])
+  // 补拍会把旧批次作为上下文保留，用于避免重复追问；旧批次已经被新
+  // 图片替代，不能和本批次的不同图片拼成新的“直接证据”。同一批次内
+  // 的多图互补仍由 resolveIndirectDirectCombination 处理。
+  const priorEvidenceItems = normalizeVisualEvidence(priorEvidenceLedger).map(item => ({
+    ...item,
+    evidenceScope: 'prior_batch'
+  }))
+  const evidenceItems = [...currentEvidenceItems, ...priorEvidenceItems]
   const retainedEvidenceItems = normalizeVisualEvidence(retainedVisualEvidence)
   const confirmationEvidenceItems = [...evidenceItems, ...retainedEvidenceItems]
   const directModeScope = Object.keys(PEST_EVIDENCE_RULES).filter(modeKey =>
@@ -141,16 +168,23 @@ function resolveDiagnosisModeRoute({
   const evidenceDerivedModeKeys = directModeScope.filter(modeKey =>
     hasSupportingEvidenceForMode(modeKey, confirmationEvidenceItems)
   )
+  const blockedModelModeKeys = new Set(
+    modelDecisionEvaluated && Array.isArray(modelDirectDecision?.blockedModeKeys)
+      ? modelDirectDecision.blockedModeKeys
+      : []
+  )
   const normalizedModeCandidates = normalizeModeCandidates([
     ...visualModeCandidates,
     ...modeCandidates
-  ])
+  ]).filter(item => !blockedModelModeKeys.has(item.modeKey))
   // 模型直判模式优先（dispatch-20260726-model-mode-precedence-zcode）：
   // 模型以 >=0.95 返回的具体 mode key 是模型对具体问题的高置信判断，
   // 必须作为唯一主路由集合。禁止把任何未由模型以直判置信度返回的
   // evidence-derived mode（如 leaf_yellowing 证据派生的 yellow_leaf）加入集合。
   // 该规则对 aphid / yellow_leaf / wilting_droop / powdery_mildew 等所有已注册模式统一生效。
-  const modelDirectModeKeys = resolveModelDirectModeKeys(normalizedModeCandidates)
+  const modelDirectModeKeys = resolveModelDirectModeKeys(
+    modelDecisionEvaluated ? modelDirectCandidates : normalizedModeCandidates
+  )
   const candidateOnlyModeKeys = unique(
     normalizedModeCandidates
       .filter(item => item.confidence >= CANDIDATE_ADMIT_CONFIDENCE)
@@ -228,6 +262,14 @@ function resolveDiagnosisModeRoute({
     confirmationCandidates
   })
   const crossFamilyConflict = hasCrossFamilyModes(associatedModes)
+  const secondaryVisualCandidates = modelDecisionEvaluated
+    ? modelDirectDecision?.secondaryVisualCandidates || []
+    : normalizedModeCandidates.filter(
+        item => Number(item?.confidence || 0) < CANDIDATE_ADMIT_CONFIDENCE
+      )
+  const visualConflicts = modelDecisionEvaluated
+    ? modelDirectDecision?.visualConflicts || []
+    : []
   const pestDirectMatches = effectiveDirectMatches.filter(item =>
     PEST_MODE_KEYS.includes(item.modeKey)
   )
@@ -300,13 +342,35 @@ function resolveDiagnosisModeRoute({
                 ))
               ? 'direct_result'
               : 'question_package'
-            : 'uncertain'
+              : 'uncertain'
+  const decisionSource =
+    nextAction === 'request_followup_capture'
+      ? 'retake'
+      : crossFamilyConflict || visualConflicts.length > 0
+        ? 'conflict'
+        : modelDirectModeKeys.length > 1
+          ? 'multi_mode_visual_evidence'
+        : modelDirectModeKeys.length > 0
+          ? associatedModes.some(modeKey => isFixedQuestionPackageMode(modeKey)) &&
+            modelDirectModeKeys.every(modeKey => isFixedQuestionPackageMode(modeKey))
+            ? 'fixed_question_package'
+            : 'model_high_confidence'
+          : directMatches.length > 0
+            ? 'visual_evidence'
+            : associatedModes.some(modeKey => isFixedQuestionPackageMode(modeKey))
+              ? 'fixed_question_package'
+              : 'visual_evidence'
   const snapshotSeed = JSON.stringify({
     profile: normalizedProfile,
     directModeKeys: effectiveDirectModeKeys,
     candidateModeKeys,
     evidenceDerivedModeKeys,
     modelDirectModeKeys,
+    decisionSource,
+    primaryModelDirectModes: modelDirectModeKeys,
+    secondaryVisualCandidates,
+    visualConflicts,
+    modelDirectDecisions: modelDirectDecision?.imageDecisions || [],
     evidence: evidenceItems.map(item => [
       item.evidenceKey,
       item.evidenceGroup,
@@ -336,6 +400,12 @@ function resolveDiagnosisModeRoute({
     // 下游消费方（orchestrator / non-pest-direct-result）应优先消费此字段，
     // 不能把模型模式伪装成普通 symptom evidence。
     modelDirectModeKeys,
+    decision_source: decisionSource,
+    primary_model_direct_modes: modelDirectModeKeys,
+    secondary_visual_candidates: secondaryVisualCandidates,
+    visual_conflicts: visualConflicts,
+    model_direct_decisions: modelDirectDecision?.imageDecisions || [],
+    model_direct_decision_status: modelDirectDecision?.status || '',
     associatedModes,
     directionChoices,
     recommendedDirection,

@@ -228,6 +228,7 @@ const plantStore = usePlantStore()
 const userStore = useUserStore()
 const plantingStore = usePlantingStore()
 const loadingPlants = ref(true)
+const indexPageReady = ref(false)
 const plantLoadStarted = ref(false)
 const plantsError = ref('')
 const wateringReminderRef = ref(null)
@@ -281,16 +282,20 @@ const {
   openFeatureUnavailable
 } = useFeatureUnavailableModal()
 onMounted(async () => {
-  if (await userStore.ensureLogin()) {
-    await loadUserPlants()
-  } else {
-    loadingPlants.value = false
+  try {
+    if (await userStore.ensureLogin()) {
+      await loadUserPlants()
+    } else {
+      loadingPlants.value = false
+    }
+  } finally {
+    indexPageReady.value = true
   }
 })
 
 onShow(() => {
   Object.keys(plantDiagnoseHistory).forEach(key => delete plantDiagnoseHistory[key])
-  if (qaPerformanceRefresh && userStore.isAuthenticated) {
+  if (indexPageReady.value && qaPerformanceRefresh && userStore.isAuthenticated) {
     userStore
       .ensureLogin()
       .then(isLoggedIn => {

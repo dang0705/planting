@@ -13,6 +13,9 @@ const {
   shouldWriteSessionQuestionRows,
   writeSessionRoundQuestionRows
 } = require('./round-question-row-adapter')
+const {
+  buildQuestionPackageVisualEvidenceSnapshot
+} = require('../utils/public-runtime-summary')
 
 function buildQuestionPackageSnapshot(response = {}) {
   const questionPackage = response?.questionPackage || {}
@@ -25,6 +28,9 @@ function buildQuestionPackageSnapshot(response = {}) {
         : Array.isArray(questionPackage?.questions)
           ? questionPackage.questions
           : []
+  const visualAggregateSummary = buildQuestionPackageVisualEvidenceSnapshot(
+    response?.visualAggregateSummary || response?.visualAggregateResult || null
+  )
   return {
     mode: questionPackage.mode || '',
     route: questionPackage.route || '',
@@ -44,7 +50,8 @@ function buildQuestionPackageSnapshot(response = {}) {
       questionPackage.outcomePolicy && typeof questionPackage.outcomePolicy === 'object'
         ? questionPackage.outcomePolicy
         : null,
-    packageQuestions
+    packageQuestions,
+    ...(visualAggregateSummary ? { visualAggregateSummary } : {})
   }
 }
 

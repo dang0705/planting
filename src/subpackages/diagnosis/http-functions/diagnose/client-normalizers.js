@@ -165,6 +165,13 @@ function normalizeVisualAggregateSummary(summary = null) {
     aggregateQualityGrade: summary?.aggregateQualityGrade || summary?.aggregate_quality_grade || '',
     aggregateAnalyzability:
       summary?.aggregateAnalyzability || summary?.aggregate_analyzability || '',
+    visualEvidenceItems: Array.isArray(summary?.visualEvidenceItems)
+      ? summary.visualEvidenceItems
+      : [],
+    visualMissingInfoForPath: Array.isArray(summary?.visualMissingInfoForPath)
+      ? summary.visualMissingInfoForPath
+      : [],
+    decisionSource: String(summary?.decisionSource || summary?.decision_source || '').trim(),
     suggestedAdditionalImageCapture: normalizeStringList(
       summary?.suggestedAdditionalImageCapture || summary?.suggested_additional_image_capture
     ),

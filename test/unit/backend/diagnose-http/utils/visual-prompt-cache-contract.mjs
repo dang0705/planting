@@ -382,7 +382,7 @@ assert.doesNotMatch(
   fullInitialStaticPrefix,
   /叶肉内连续弯曲、宽度变化的潜道|盆土附近可见多只细小黑色飞虫/
 )
-assert.match(fullInitialStaticPrefix, /只依据图片独立判断当前图是否可见虫体、叶内潜道、霉层、粉层或异常变色下垂/)
+assert.match(fullInitialStaticPrefix, /仅按图片判断当前图的虫体、叶内潜道、霉层、粉层和异常变色\/下垂/)
 assert.match(fullInitialStaticPrefix, /不清楚或不在图中=uncertain/)
 assert.doesNotMatch(fullInitialStaticPrefix, /yellow_speckling=|surface_glossy_residue=/)
 // 硬壳 单独留作规则 #3 中虫体特征清单的合法用词；硬壳状凸起 已由上面的 378 行断言覆盖。

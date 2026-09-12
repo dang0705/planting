@@ -146,6 +146,7 @@
 | --------------------------------------------------------- | ----------------------------------------------------------------- | --------------------------------------- | -------------------------------------------------------------- |
 | 结果阶段容器                                              | `src/subpackages/diagnosis/components/DiagnosePopup.vue`          | `diagnose-result-stage`                 | 断言诊断已有结果                                               |
 | 当前结论                                                  | `src/subpackages/diagnosis/components/DiagnosePopup.vue`          | `diagnose-result-current-conclusion`    | 断言结论标题 / 摘要可见                                        |
+| 照片证据摘要                                              | `src/subpackages/diagnosis/diagnose-flow/DiagnoseResultStage.vue` | `diagnose-result-visual-evidence`       | 断言多图线索与仍需核实内容可见                                 |
 | 处理建议                                                  | `src/subpackages/diagnosis/components/DiagnosePopup.vue`          | `diagnose-result-action-advice`         | 断言行动建议可见                                               |
 | 暂时不要做                                                | `src/subpackages/diagnosis/components/DiagnosePopup.vue`          | `diagnose-result-avoid-advice`          | 断言避免项可见                                                 |
 | 根腐诊断入口（outcomes 命中 overwatering 时显示，禁用态） | `src/subpackages/diagnosis/diagnose-flow/DiagnoseResultStage.vue` | `diagnose-result-root-rot-entry`        | 断言过浇 outcome 存在时根腐入口可见；本轮为禁用占位，无 @click |

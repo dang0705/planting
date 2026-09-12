@@ -143,7 +143,7 @@
         ><text class="mb-1 block text-xs font-semibold text-primary">拍摄建议</text
         ><text class="block text-[10px] leading-relaxed text-gray-700">• 光线充足，避免逆光</text
         ><text class="block text-[10px] leading-relaxed text-gray-700"
-          >• 优先保留叶片特写、茎部或根颈近照、整株图</text
+          >• 优先保留叶片特写、茎部或根颈近照、盆土/盆面图、整株图</text
         ><text class="block text-[10px] leading-relaxed text-gray-700"
           >• 若已知部位，请为每张图选择对应槽位</text
         ></view

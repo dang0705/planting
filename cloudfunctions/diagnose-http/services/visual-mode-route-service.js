@@ -1,6 +1,7 @@
 'use strict'
 
 const { resolveDiagnosisModeRoute } = require('../domain/diagnosis-mode-router')
+const { buildBatchModelDirectDecision } = require('../domain/visual-direct-decision')
 const { normalizeCaptureRegion } = require('../utils/capture-region-normalizer')
 
 function normalizeText(value = '', conservative = '') {
@@ -23,6 +24,14 @@ function normalizeCandidateEvidence(candidate = {}) {
     evidenceGroup: normalizeKey(candidate?.evidence_group || candidate?.evidenceGroup || ''),
     confidenceBand: normalizeKey(candidate?.confidence_band || candidate?.confidenceBand || 'low'),
     strengthLevel: normalizeKey(candidate?.strength_level || candidate?.strengthLevel || 'weak'),
+    normalizedOrgan: normalizeKey(
+      candidate?.primary_support_organ ||
+        candidate?.normalized_organ ||
+        candidate?.normalizedOrgan ||
+        candidate?.support_organs?.[0] ||
+        'unknown'
+    ),
+    visibilityScope: normalizeKey(candidate?.visibility_scope || candidate?.visibilityScope || 'organ'),
     imageId: normalizeText(candidate?.primary_support_image_id || candidate?.imageId || ''),
     regionRef: normalizeCaptureRegion(
       candidate?.primary_capture_region || candidate?.region_ref || candidate?.capture_region
@@ -82,19 +91,38 @@ function buildVisualModeCandidates(successfulResults = []) {
   return (Array.isArray(successfulResults) ? successfulResults : []).flatMap(result => {
     const normalized = result?.normalizedResult || {}
     const imageId = normalizeText(result?.imageId || '')
-    const regionRef = normalizeCaptureRegion(
-      normalized.region_ref ||
-        normalized.capture_region ||
-        result?.captureRegion ||
-        result?.requestedCaptureRegion
-    )
     return (Array.isArray(normalized.mode_candidates) ? normalized.mode_candidates : []).map(
-      item => ({
-        modeKey: normalizeKey(item?.modeKey || item?.mode || item?.diagnosis_mode || ''),
-        confidence: Number(item?.confidence || 0),
-        imageId,
-        regionRef
-      })
+      item => {
+        const regionRef = normalizeCaptureRegion(
+          item?.region_ref ||
+            item?.regionRef ||
+            item?.capture_region ||
+            normalized.region_ref ||
+            normalized.capture_region ||
+            result?.captureRegion ||
+            result?.requestedCaptureRegion
+        )
+        return {
+          modeKey: normalizeKey(item?.modeKey || item?.mode || item?.diagnosis_mode || ''),
+          confidence: Number(item?.confidence || 0),
+          imageId,
+          regionRef,
+          sourceRecordId: normalizeText(
+            result?.visualNormalizedImageResultId || normalized.visual_normalized_image_result_id || ''
+          ),
+          visualRawImageRecordId: normalizeText(
+            result?.visualRawImageRecordId || normalized.visual_raw_image_record_id || ''
+          ),
+          inputSlotType: normalizeKey(
+            result?.inputSlotType || normalized.input_organ_hint || normalized.inputSlotType || 'unknown'
+          ),
+          modelOrgan: normalizeKey(
+            normalized.model_detected_organ || normalized.normalized_organ || 'unknown'
+          ),
+          analyzability: normalizeKey(normalized.analyzability || ''),
+          organConflictFlag: Number(normalized.organ_conflict_flag || 0) ? 1 : 0
+        }
+      }
     )
   })
 }
@@ -110,11 +138,14 @@ function attachDiagnosisModeRoute({
   const admittedVisualEvidence = buildAdmittedVisualEvidence(aggregateResult)
   const retainedVisualEvidence = buildRetainedVisualEvidence(aggregateResult)
   const visualModeCandidates = buildVisualModeCandidates(successfulResults)
+  const modelDirectDecision = buildBatchModelDirectDecision(successfulResults, diagnosisProfile)
   const routeResult = resolveDiagnosisModeRoute({
     diagnosisProfile,
     admittedVisualEvidence,
     retainedVisualEvidence,
     visualModeCandidates,
+    modelDirectCandidates: modelDirectDecision.acceptedCandidates,
+    modelDirectDecision,
     priorEvidenceLedger,
     imageContext: {
       aggregateAnalyzability: aggregateResult?.aggregate_analyzability || '',
@@ -135,6 +166,7 @@ module.exports = {
   _test: {
     buildAdmittedVisualEvidence,
     buildRetainedVisualEvidence,
-    buildVisualModeCandidates
+    buildVisualModeCandidates,
+    buildBatchModelDirectDecision
   }
 }

@@ -6,6 +6,7 @@ const { normalizeCaptureRegion } = require('../../utils/capture-region-normalize
 const { withLlmImagePromptContext } = require('../../utils/llm-image-context')
 const {
   normalizeOrgan,
+  areOrgansCompatible,
   normalizeQualityGrade,
   normalizeAnalyzability,
   normalizeStrengthLevel,
@@ -16,6 +17,8 @@ const {
   normalizeRouteHints,
   normalizeSuggestedFollowupCapture,
   normalizeNotes,
+  normalizeVisualDiscriminators,
+  normalizeMissingInfoForPath,
   normalizeText,
   qualityGradeToAnalyzability
 } = require('../../utils/visual-contract')
@@ -115,13 +118,26 @@ function resolveOrganDecision(parsedResult = {}, imageRuntimeInput = {}) {
       }
     }
 
+    if (areOrgansCompatible(inputOrganHint, modelDetectedOrgan)) {
+      return {
+        // 兼容范围内仍以模型识别结果作为标准化器官；槽位只保留为输入提示。
+        normalized_organ: modelDetectedOrgan,
+        model_detected_organ: modelDetectedOrgan,
+        organ_source: normalizeOrganSource('model_detected'),
+        multi_organ_detected: 0,
+        organ_conflict_flag: 0,
+        organ_resolution_reason: `model_detected_compatible_with_ui_hint:${inputOrganHint}`
+      }
+    }
+
     return {
-      normalized_organ: inputOrganHint,
+      // UI 槽位只是输入上下文；发生冲突时保留模型识别结果，不能用槽位覆盖模型。
+      normalized_organ: modelDetectedOrgan,
       model_detected_organ: modelDetectedOrgan,
-      organ_source: normalizeOrganSource('merged'),
+      organ_source: normalizeOrganSource('model_detected'),
       multi_organ_detected: 1,
       organ_conflict_flag: 1,
-      organ_resolution_reason: `ui_hint_priority_over_model:${modelDetectedOrgan}`
+      organ_resolution_reason: `model_detected_conflict_with_ui_hint:${inputOrganHint}`
     }
   }
 
@@ -224,6 +240,14 @@ function normalizeModelVisualResult(
       strength_level: normalizeStrengthLevel(item?.strength_level, 'medium'),
       confidence_band: normalizeConfidenceBand(item?.confidence_band, 'medium'),
       visibility_scope: normalizeVisibilityScope(item?.visibility_scope, 'organ'),
+      region_ref: normalizeCaptureRegion(
+        item?.region_ref ||
+          item?.regionRef ||
+          item?.capture_region ||
+          parsedResult?.region_ref ||
+          parsedResult?.capture_region ||
+          imageRuntimeInput?.captureRegion
+      ),
       supporting_region_note: normalizeText(item?.supporting_region_note || ''),
       admission_readiness: normalizeAdmissionReadiness(item?.admission_readiness, 'cautious')
     }))
@@ -299,6 +323,8 @@ function normalizeModelVisualResult(
     analyzability,
     symptom_candidates: symptomCandidates,
     out_of_pool_symptom_candidates: outOfPoolSymptomCandidates,
+    visual_discriminators: normalizeVisualDiscriminators(parsedResult?.visual_discriminators || []),
+    missing_info_for_path: normalizeMissingInfoForPath(parsedResult?.missing_info_for_path || []),
     route_hints: normalizeRouteHints(parsedResult?.route_hints || []),
     capture_region: normalizeCaptureRegion(
       parsedResult?.capture_region || imageRuntimeInput?.captureRegion
@@ -311,7 +337,12 @@ function normalizeModelVisualResult(
         mode: normalizeText(item?.mode || item?.diagnosis_mode || item?.diagnosisMode || ''),
         confidence: normalizeOptionalConfidence(item?.confidence) || 0,
         region_ref: normalizeCaptureRegion(
-          item?.region_ref || item?.regionRef || item?.capture_region
+          item?.region_ref ||
+            item?.regionRef ||
+            item?.capture_region ||
+            parsedResult?.region_ref ||
+            parsedResult?.capture_region ||
+            imageRuntimeInput?.captureRegion
         )
       }))
       .filter(item => item.mode)
@@ -382,5 +413,9 @@ module.exports = {
   ADAPTER_NAME,
   QWEN_ADAPTER_NAME,
   getAdapterMeta,
-  analyzeImage
+  analyzeImage,
+  _test: {
+    resolveOrganDecision,
+    normalizeModelVisualResult
+  }
 }

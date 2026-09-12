@@ -34,6 +34,7 @@ const ORGAN_TO_LOCATION_KEYS = {
   flower: ['flower'],
   root: ['root', 'soil'],
   root_crown: ['root', 'stem', 'soil'],
+  soil: ['soil'],
   whole_plant: FULL_CASE_LOCATION_KEYS,
   fruit: [],
   other: FULL_CASE_LOCATION_KEYS,
@@ -196,6 +197,7 @@ function buildImageContextText(
   )
   const promptContext = normalizeLlmImageTaskContext(imageContext, getLlmImagePromptContext())
   const currentImageContext = {
+    image_id: normalizeText(imageContext?.imageId || imageContext?.image_id || ''),
     slot_order: slotOrder,
     total_image_count: Math.max(1, totalImageCount),
     slot_label: slotLabel,

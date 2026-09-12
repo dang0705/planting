@@ -6,6 +6,7 @@ const { debugLog } = require('./common')
 const { buildSymptomLabelerPromptPayload } = require('./symptom-labeler-prompt')
 const { normalizeUsage, createCloudBaseAiOpenAiClient } = require('./cloudbase-ai-openai-contract')
 const { normalizeUploadCompression } = require('./upload-compression')
+const { normalizeCaptureRegion } = require('./capture-region-normalizer')
 const { isOpenAiVisionProvider } = require('../configs/provider-registry')
 const {
   llm: {
@@ -85,6 +86,7 @@ function normalizeImage(item = {}, index = 0) {
   const totalImageCount = Number(source?.totalImageCount)
   return {
     imageRef,
+    imageId: text(source?.imageId || source?.image_id),
     inputSlotType: serviceName(
       source?.inputSlotType || source?.slotType || source?.organHint || source?.organ || 'unknown'
     ),
@@ -98,6 +100,9 @@ function normalizeImage(item = {}, index = 0) {
     inputSlotOrder: Number.isFinite(inputSlotOrder) ? inputSlotOrder : index,
     totalImageCount: Number.isFinite(totalImageCount) ? totalImageCount : 1,
     caseSlotSummary: Array.isArray(source?.caseSlotSummary) ? source.caseSlotSummary : [],
+    captureRegion: normalizeCaptureRegion(
+      source?.captureRegion || source?.capture_region || source?.regionRef || source?.region_ref
+    ),
     uploadCompression: normalizeUploadCompression(source?.uploadCompression || source?.compression)
   }
 }
@@ -269,11 +274,13 @@ async function buildRequest(images = []) {
 
 function promptImageContext(images = []) {
   return images.map(image => ({
+    imageId: image.imageId,
     inputSlotType: image.inputSlotType,
     inputSlotLabel: image.inputSlotLabel,
     userDeclaredOrganType: image.userDeclaredOrganType,
     inputSlotOrder: image.inputSlotOrder,
     totalImageCount: image.totalImageCount,
+    captureRegion: image.captureRegion,
     uploadCompression: image.uploadCompression,
     caseSlotSummary: image.caseSlotSummary.slice(0, 6)
   }))

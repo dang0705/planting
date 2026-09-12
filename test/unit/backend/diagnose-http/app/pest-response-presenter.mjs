@@ -150,6 +150,54 @@ assert.equal(
   buildFrontendAnswerResponse(terminalPublic).visibleOutcomes[0].actionProfileKey,
   'action_pest_basic'
 )
+
+const compactVisualAnswer = buildCompactAnswerRoundResponse({
+  diagnosisSessionId: 'diag_visual_answer',
+  roundId: 'round_2',
+  routePrimaryAction: 'finalize',
+  sessionStatus: 'completed',
+  outcomeType: 'problematic',
+  questionRequired: false,
+  visualAggregateResult: {
+    visual_call_batch_id: 'visbatch_compact_answer',
+    effective_image_count: 2,
+    aggregate_analyzability: 'high',
+    organ_coverage_summary: {
+      covered_organs: ['leaf', 'soil'],
+      requested_image_count: 2,
+      effective_image_count: 2,
+      sources: []
+    },
+    aggregated_symptom_candidates: [
+      {
+        symptom_key: 'leaf_yellowing',
+        display_name_cn: '叶片发黄',
+        support_image_ids: ['visimg1', 'visimg2'],
+        support_organs: ['leaf'],
+        primary_capture_region: 'leaf_upper_surface'
+      }
+    ],
+    aggregate_missing_info_for_path: [
+      { dimension_key: 'root_zone_moisture', reason_cn: '还需要核实根区实际干湿。' }
+    ],
+    suggested_question_capture: [],
+    route_primary_action: 'question_package'
+  }
+})
+const compactVisualFrontend = buildFrontendAnswerResponse(compactVisualAnswer)
+assert.equal(compactVisualFrontend.visualAggregateSummary.effectiveImageCount, 2)
+assert.deepEqual(compactVisualFrontend.visualAggregateSummary.visualEvidenceItems, [
+  {
+    symptomKey: 'leaf_yellowing',
+    displayNameCn: '叶片发黄',
+    supportImageCount: 2,
+    supportOrgans: ['leaf'],
+    primaryCaptureRegion: 'leaf_upper_surface'
+  }
+])
+assert.deepEqual(compactVisualFrontend.visualAggregateSummary.visualMissingInfoForPath, [
+  { dimensionKey: 'root_zone_moisture', reasonCn: '还需要核实根区实际干湿。' }
+])
 assert.match(
   startRunnerSource,
   /allowsAnonymousPlantContext = clientContext\?\.entrySource === 'diagnose_tab'/

@@ -315,10 +315,20 @@ const differentRegionRoute = resolveDiagnosisModeRoute({
   ]
 })
 assert.equal(differentRegionRoute.nextAction, 'direct_result')
-assert.deepEqual(differentRegionRoute.directMatches, [])
 assert.deepEqual(
-  differentRegionRoute.confirmationCandidates.map(item => item.modeKey),
+  differentRegionRoute.directMatches.map(item => item.modeKey),
   ['spider_mite']
+)
+assert.deepEqual(
+  differentRegionRoute.directMatches[0].matchedEvidence.map(item => [
+    item.imageId,
+    item.regionRef
+  ]),
+  [
+    ['img_a', 'leaf_lower_surface'],
+    ['img_b', 'leaf_upper_surface']
+  ],
+  '互补视觉证据可以跨图合力，但每条证据必须保留图片和区域来源'
 )
 
 const auth = buildRetakeAuthorization({

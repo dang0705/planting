@@ -88,6 +88,7 @@ assert.deepEqual(compactCandidate, {
   strength_level: 'strong',
   confidence_band: 'high',
   visibility_scope: 'organ',
+  region_ref: 'unknown',
   supporting_region_note: '',
   admission_readiness: 'ready'
 })
@@ -209,6 +210,7 @@ assert.deepEqual(c3ThripsVisible, {
   strength_level: 'strong',
   confidence_band: 'high',
   visibility_scope: 'local',
+  region_ref: 'unknown',
   supporting_region_note: '局部区域可见清晰细长虫体。',
   admission_readiness: 'ready'
 })

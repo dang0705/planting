@@ -26,6 +26,15 @@ async function resolveSpecializedAnswerRoundResults({
   const plantContext = refreshedSessionState.plantContext || sessionState.plantContext || {}
   const questionPackage =
     payload.questionPackage || questionPackageSnapshot?.questionPackage || null
+  const visualAggregateResult =
+    refreshedSessionState.visualAggregateResult ||
+    refreshedSessionState.visualAggregateSummary ||
+    refreshedSessionState.runtimeSnapshot?.visualAggregateSummary ||
+    questionPackageSnapshot?.visualAggregateSummary ||
+    sessionState.visualAggregateResult ||
+    sessionState.visualAggregateSummary ||
+    sessionState.runtimeSnapshot?.visualAggregateSummary ||
+    null
   const wiltingDroopRoundResult = isTerminalQuestionPackageSubmit
     ? resolveWiltingDroopOutcomeResult({
         sessionId,
@@ -48,7 +57,8 @@ async function resolveSpecializedAnswerRoundResults({
           careBehaviorTimeline: runtimeCarePayload.careBehaviorTimeline,
           environmentCareContext: runtimeCarePayload.environmentCareContext,
           routeAnswerEffects: runtimeRouteAnswerEffects,
-          questionPackageRuntimeData
+          questionPackageRuntimeData,
+          visualAggregateResult
         })
       : null
   const specificPestRoundResult = resolveSpecificPestRoundResult({

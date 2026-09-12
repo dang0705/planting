@@ -2,9 +2,11 @@
  * 微信登录 API
  * 集成微信登录、获取手机号等功能
  */
-import { getWechatPhoneProfile } from '@/utils/cloudbase-auth'
+import { getWechatPhoneProfile, refreshPlatformHttpIdentity } from '@/utils/cloudbase-auth'
 import {
   clearPlatformSession,
+  getActivePlatformAccessToken,
+  getActivePlatformIdentityTicket,
   savePlatformIdentityTicket,
   savePlatformSession
 } from '@/api/platform-session'
@@ -85,6 +87,25 @@ export async function updateUserPhoneNumber(userId, phoneNumber) {
 }
 
 export async function getUserById(userId) {
+  // 持久会话首次换取短票据时，刷新接口已经返回完整用户资料；复用这份结果，
+  // 避免先刷新 auth/user 再用同一 userId 重复请求 auth/user。
+  if (
+    !IS_LOCAL_API_BASE_URL &&
+    getActivePlatformAccessToken() &&
+    !getActivePlatformIdentityTicket()
+  ) {
+    const refreshedIdentity = await refreshPlatformHttpIdentity()
+    const refreshedUser = refreshedIdentity?.user || null
+    const refreshedUserId = String(refreshedUser?._id || refreshedUser?.id || '').trim()
+    if (refreshedUser && refreshedUserId && refreshedUserId === String(userId || '').trim()) {
+      savePlatformIdentityTicket(
+        refreshedIdentity.httpIdentityTicket,
+        refreshedIdentity.httpIdentityTicketExpiresAt
+      )
+      return refreshedUser
+    }
+  }
+
   const result = await fetchAuthUserByOpenidQuery(userId)
   if (result.code === 200) {
     savePlatformIdentityTicket(

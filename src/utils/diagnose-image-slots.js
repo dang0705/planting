@@ -4,14 +4,22 @@ const PRIMARY_IMAGE_LIMIT = 3
 const ADDITIONAL_IMAGE_LIMIT = 1
 const SLOT_IMAGE_LIMIT = 2
 
-const PRIMARY_SLOT_SEQUENCE = ['whole_plant', 'leaf', 'stem', 'root_crown', 'other']
-const ADDITIONAL_IMAGE_SLOT_SEQUENCE = ['whole_plant', 'leaf', 'stem', 'root_crown', 'other']
+const PRIMARY_SLOT_SEQUENCE = ['whole_plant', 'leaf', 'stem', 'root_crown', 'soil', 'other']
+const ADDITIONAL_IMAGE_SLOT_SEQUENCE = [
+  'whole_plant',
+  'leaf',
+  'stem',
+  'root_crown',
+  'soil',
+  'other'
+]
 
 const ORGAN_SLOT_OPTIONS = [
   { value: 'leaf', label: '叶片图' },
   { value: 'stem', label: '茎部图' },
   { value: 'root', label: '根部图' },
   { value: 'root_crown', label: '根 / 根颈图' },
+  { value: 'soil', label: '盆土 / 盆面图' },
   { value: 'whole_plant', label: '全株图' },
   { value: 'flower', label: '花部图' },
   { value: 'fruit', label: '果部图' },
@@ -30,6 +38,7 @@ const SLOT_HINT_TEXT_MAP = {
   stem: '优先拍茎节、裂口、病斑或腐烂位置。',
   root: '优先拍根系颜色、腐烂与异常附着物。',
   root_crown: '优先拍根颈与盆土交界处的状态。',
+  soil: '优先拍土表、盆沿和茎与土接触的位置。',
   flower: '优先拍花部褪色、霉斑和畸形细节。',
   fruit: '优先拍果部斑点、皱缩和腐烂细节。',
   other: '难归类的局部异常可放在这里。'
@@ -130,6 +139,9 @@ export function inferAdditionalImageSlotTypeFromSuggestion(
   }
   if (normalized.includes('根')) {
     return 'root'
+  }
+  if (normalized.includes('盆土') || normalized.includes('土表') || normalized.includes('土壤')) {
+    return 'soil'
   }
   if (normalized.includes('茎')) {
     return 'stem'

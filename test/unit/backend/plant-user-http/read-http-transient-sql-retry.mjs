@@ -53,7 +53,9 @@ assert.equal(
     {
       runSql: async (sql, params) => {
         calls.push({ sql, params })
-        if (calls.length === 1) throw connectionError()
+        if (calls.length === 1) {
+          throw connectionError()
+        }
         return successfulSqlResult()
       }
     }
@@ -61,7 +63,10 @@ assert.equal(
   assert.equal(calls.length, 2, '列表只允许一次顺序重试')
   assert.deepEqual(calls[0], calls[1], '重试必须使用相同 SQL 与参数')
   assert.equal(result.total, 1)
-  assert.deepEqual(result.list.map(item => item.id), [7])
+  assert.deepEqual(
+    result.list.map(item => item.id),
+    [7]
+  )
   assert.equal(marks.filter(mark => mark.stage === 'list-sql-transient-retry').length, 1)
 }
 
@@ -69,19 +74,12 @@ assert.equal(
   let calls = 0
   await assert.rejects(
     () =>
-      readTest.listUserPlants(
-        { openid: 'openid-unit', userId: 'user-unit' },
-        1,
-        50,
-        null,
-        null,
-        {
-          runSql: async () => {
-            calls += 1
-            throw Object.assign(new Error('Unknown database failure'), { code: 'PE-MYS-5000' })
-          }
+      readTest.listUserPlants({ openid: 'openid-unit', userId: 'user-unit' }, 1, 50, null, null, {
+        runSql: async () => {
+          calls += 1
+          throw Object.assign(new Error('Unknown database failure'), { code: 'PE-MYS-5000' })
         }
-      ),
+      }),
     { code: 'PE-MYS-5000' }
   )
   assert.equal(calls, 1, '非瞬态数据库错误必须直接失败')
@@ -91,19 +89,12 @@ assert.equal(
   let calls = 0
   await assert.rejects(
     () =>
-      readTest.listUserPlants(
-        { openid: 'openid-unit', userId: 'user-unit' },
-        1,
-        1,
-        null,
-        7,
-        {
-          runSql: async () => {
-            calls += 1
-            throw connectionError()
-          }
+      readTest.listUserPlants({ openid: 'openid-unit', userId: 'user-unit' }, 1, 1, null, 7, {
+        runSql: async () => {
+          calls += 1
+          throw connectionError()
         }
-      ),
+      }),
     { code: 'PE-MYS-5000' }
   )
   assert.equal(calls, 1, '详情路径不得启用列表重试')

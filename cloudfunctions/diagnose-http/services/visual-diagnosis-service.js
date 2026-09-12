@@ -304,6 +304,11 @@ function scoreCandidatePriority(candidate = {}) {
   )
 }
 
+function confidenceBandRank(value = '') {
+  const normalized = normalizeConfidenceBand(value, 'medium')
+  return normalized === 'high' ? 3 : normalized === 'medium' ? 2 : 1
+}
+
 function normalizeDuplicateViewNote(value = '') {
   const normalized = normalizeText(value || '')
     .toLowerCase()
@@ -317,12 +322,14 @@ function buildDuplicateViewGroupKey({
   symptomKey = '',
   normalizedOrgan = 'unknown',
   visibilityScope = 'organ',
-  supportingRegionNote = ''
+  supportingRegionNote = '',
+  captureRegion = 'unknown'
 } = {}) {
   return [
     normalizeText(symptomKey, 'unknown_symptom'),
     normalizeOrgan(normalizedOrgan, 'unknown'),
     normalizeVisibilityScope(visibilityScope, 'organ'),
+    normalizeCaptureRegion(captureRegion),
     normalizeDuplicateViewNote(supportingRegionNote)
   ].join('::')
 }
@@ -333,7 +340,8 @@ function buildSupportViewGroupDescriptor({
   candidate = {},
   imageId = '',
   visualNormalizedImageResultId = '',
-  visualRawImageRecordId = ''
+  visualRawImageRecordId = '',
+  captureRegion = 'unknown'
 } = {}) {
   const visibilityScope = normalizeVisibilityScope(candidate?.visibility_scope, 'organ')
   const supportingRegionNote = normalizeText(candidate?.supporting_region_note || '')
@@ -343,12 +351,14 @@ function buildSupportViewGroupDescriptor({
       symptomKey,
       normalizedOrgan,
       visibilityScope,
-      supportingRegionNote
+      supportingRegionNote,
+      captureRegion
     }),
     symptom_key: normalizeText(symptomKey, ''),
     organ: normalizeOrgan(normalizedOrgan, 'unknown'),
     visibility_scope: visibilityScope,
     supporting_region_note: supportingRegionNote,
+    capture_region: normalizeCaptureRegion(captureRegion),
     image_id: normalizeText(imageId, ''),
     visual_normalized_image_result_id: normalizeText(visualNormalizedImageResultId, ''),
     visual_raw_image_record_id: normalizeText(visualRawImageRecordId, '')
@@ -454,7 +464,9 @@ function appendSupportViewGroup(candidateRecord = {}, descriptor = {}) {
       organ: descriptor.organ,
       visibility_scope: descriptor.visibility_scope,
       supporting_region_note: descriptor.supporting_region_note,
+      capture_region: descriptor.capture_region,
       image_ids: [],
+      capture_regions: [],
       visual_normalized_image_result_ids: [],
       visual_raw_image_record_ids: [],
       image_count: 0,
@@ -464,6 +476,7 @@ function appendSupportViewGroup(candidateRecord = {}, descriptor = {}) {
   }
 
   appendDistinctValue(currentGroup.image_ids, descriptor.image_id)
+  appendDistinctValue(currentGroup.capture_regions, descriptor.capture_region)
   appendDistinctValue(
     currentGroup.visual_normalized_image_result_ids,
     descriptor.visual_normalized_image_result_id
@@ -519,7 +532,9 @@ function resolveOrganSource(inputSlotType = 'unknown', normalizedOrgan = 'unknow
   if (normalizedInput === normalizedResult) {
     return 'merged'
   }
-  return 'ui_hint'
+  // 器官的像素识别只能由模型完成；槽位只是用户提供的提示。冲突时
+  // 持久化来源仍指向模型，不能把 UI 提示伪装成模型已确认的器官。
+  return 'model_detected'
 }
 
 function buildImageRuntimeInput(input = {}, index = 0) {
@@ -556,6 +571,9 @@ function buildImageRuntimeInput(input = {}, index = 0) {
     inputSlotType: normalizeOrgan(
       input.inputSlotType || input.slotType || input.organHint || input.organ || 'unknown',
       'unknown'
+    ),
+    captureRegion: normalizeCaptureRegion(
+      input.captureRegion || input.capture_region || input.regionRef || input.region_ref
     ),
     uploadCompression: normalizeUploadCompression(
       input.uploadCompression || input.compression || null
@@ -866,7 +884,12 @@ function buildAggregatedSymptomCandidates(successfulResults = []) {
   const aggregatedMap = new Map()
 
   for (const result of successfulResults) {
-    const normalizedOrgan = normalizeOrgan(result?.normalizedResult?.normalized_organ, 'unknown')
+    const normalizedOrgan = normalizeOrgan(
+      Number(result?.normalizedResult?.organ_conflict_flag || 0)
+        ? result?.normalizedResult?.model_detected_organ || result?.normalizedResult?.normalized_organ
+        : result?.normalizedResult?.normalized_organ,
+      'unknown'
+    )
     const imageId = result?.imageId || ''
     const visualNormalizedImageResultId = result?.visualNormalizedImageResultId || ''
     const visualRawImageRecordId = result?.visualRawImageRecordId || ''
@@ -903,10 +926,12 @@ function buildAggregatedSymptomCandidates(successfulResults = []) {
           support_organs: [],
           support_view_groups: [],
           support_group_keys: [],
+          supporting_sources: [],
           support_count: 0,
           primary_visual_normalized_image_result_id: visualNormalizedImageResultId || null,
           primary_visual_raw_image_record_id: visualRawImageRecordId || null,
           primary_support_image_id: imageId || null,
+          primary_support_organ: normalizedOrgan,
           primary_capture_region: candidateCaptureRegion,
           primary_support_score: candidateScore
         }
@@ -940,9 +965,30 @@ function buildAggregatedSymptomCandidates(successfulResults = []) {
           candidate,
           imageId,
           visualNormalizedImageResultId,
-          visualRawImageRecordId
+          visualRawImageRecordId,
+          captureRegion: candidateCaptureRegion
         })
       )
+      const supportSourceKey = [
+        imageId,
+        visualNormalizedImageResultId,
+        visualRawImageRecordId,
+        normalizedOrgan,
+        candidateCaptureRegion
+      ].join('::')
+      if (
+        !current.supporting_sources.some(item => item.source_key === supportSourceKey)
+      ) {
+        current.supporting_sources.push({
+          source_key: supportSourceKey,
+          image_id: imageId,
+          visual_normalized_image_result_id: visualNormalizedImageResultId,
+          visual_raw_image_record_id: visualRawImageRecordId,
+          organ: normalizedOrgan,
+          visibility_scope: normalizeVisibilityScope(candidate?.visibility_scope, 'organ'),
+          capture_region: candidateCaptureRegion
+        })
+      }
 
       if (!current.supporting_region_note && candidate?.supporting_region_note) {
         current.supporting_region_note = normalizeText(candidate.supporting_region_note)
@@ -952,6 +998,7 @@ function buildAggregatedSymptomCandidates(successfulResults = []) {
         current.primary_visual_normalized_image_result_id = visualNormalizedImageResultId || null
         current.primary_visual_raw_image_record_id = visualRawImageRecordId || null
         current.primary_support_image_id = imageId || null
+        current.primary_support_organ = normalizedOrgan
         current.primary_capture_region = candidateCaptureRegion
         current.primary_support_score = candidateScore
       }
@@ -980,7 +1027,9 @@ function buildDuplicateViewGroups(aggregatedCandidates = []) {
         organ: group.organ,
         visibility_scope: group.visibility_scope,
         supporting_region_note: group.supporting_region_note,
+        capture_region: group.capture_region,
         image_ids: group.image_ids || [],
+        capture_regions: group.capture_regions || [],
         visual_normalized_image_result_ids: group.visual_normalized_image_result_ids || [],
         visual_raw_image_record_ids: group.visual_raw_image_record_ids || [],
         image_count: Number(group.image_count || 0),
@@ -1173,10 +1222,25 @@ function buildAggregateRouteHints({
 }
 
 function buildAggregateVisualDiscriminators(successfulResults = []) {
-  const seen = new Set()
-  const output = []
+  const outputByKey = new Map()
 
   for (const result of Array.isArray(successfulResults) ? successfulResults : []) {
+    const normalized = result?.normalizedResult || {}
+    const source = {
+      image_id: normalizeText(result?.imageId || ''),
+      visual_normalized_image_result_id: normalizeText(
+        result?.visualNormalizedImageResultId || normalized.visual_normalized_image_result_id || ''
+      ),
+      organ: normalizeOrgan(
+        normalized.organ_conflict_flag
+          ? normalized.model_detected_organ || normalized.normalized_organ
+          : normalized.normalized_organ,
+        'unknown'
+      ),
+      capture_region: normalizeCaptureRegion(
+        normalized.capture_region || result?.captureRegion || ''
+      )
+    }
     for (const item of Array.isArray(result?.normalizedResult?.visual_discriminators)
       ? result.normalizedResult.visual_discriminators
       : []) {
@@ -1186,27 +1250,59 @@ function buildAggregateVisualDiscriminators(successfulResults = []) {
         continue
       }
       const dedupeKey = `${dimensionKey}::${valueKey}`
-      if (seen.has(dedupeKey)) {
-        continue
-      }
-      seen.add(dedupeKey)
-      output.push({
+      const current = outputByKey.get(dedupeKey) || {
         dimension_key: dimensionKey,
         value_key: valueKey,
         confidence_band: normalizeConfidenceBand(item?.confidence_band, 'medium'),
-        visible_basis_cn: normalizeText(item?.visible_basis_cn || '')
-      })
+        visible_basis_cn: normalizeText(item?.visible_basis_cn || ''),
+        sources: []
+      }
+      if (confidenceBandRank(item?.confidence_band) > confidenceBandRank(current.confidence_band)) {
+        current.confidence_band = normalizeConfidenceBand(item?.confidence_band, 'medium')
+      }
+      if (!current.visible_basis_cn && item?.visible_basis_cn) {
+        current.visible_basis_cn = normalizeText(item.visible_basis_cn)
+      }
+      const sourceKey = [
+        source.image_id,
+        source.visual_normalized_image_result_id,
+        source.organ,
+        source.capture_region
+      ].join('::')
+      if (sourceKey !== ':::') {
+        if (!current.sources.some(candidate => candidate.source_key === sourceKey)) {
+          current.sources.push({ source_key: sourceKey, ...source })
+        }
+      }
+      outputByKey.set(dedupeKey, current)
     }
   }
 
-  return output.slice(0, 12)
+  return Array.from(outputByKey.values())
+    .map(item => ({ ...item, sources: item.sources.slice(0, 8) }))
+    .slice(0, 12)
 }
 
 function buildAggregateMissingInfoForPath(successfulResults = []) {
-  const seen = new Set()
-  const output = []
+  const outputByKey = new Map()
 
   for (const result of Array.isArray(successfulResults) ? successfulResults : []) {
+    const normalized = result?.normalizedResult || {}
+    const source = {
+      image_id: normalizeText(result?.imageId || ''),
+      visual_normalized_image_result_id: normalizeText(
+        result?.visualNormalizedImageResultId || normalized.visual_normalized_image_result_id || ''
+      ),
+      organ: normalizeOrgan(
+        normalized.organ_conflict_flag
+          ? normalized.model_detected_organ || normalized.normalized_organ
+          : normalized.normalized_organ,
+        'unknown'
+      ),
+      capture_region: normalizeCaptureRegion(
+        normalized.capture_region || result?.captureRegion || ''
+      )
+    }
     for (const item of Array.isArray(result?.normalizedResult?.missing_info_for_path)
       ? result.normalizedResult.missing_info_for_path
       : []) {
@@ -1216,18 +1312,29 @@ function buildAggregateMissingInfoForPath(successfulResults = []) {
         continue
       }
       const dedupeKey = `${dimensionKey}::${reasonCn}`
-      if (seen.has(dedupeKey)) {
-        continue
-      }
-      seen.add(dedupeKey)
-      output.push({
+      const current = outputByKey.get(dedupeKey) || {
         dimension_key: dimensionKey,
-        reason_cn: reasonCn
-      })
+        reason_cn: reasonCn,
+        sources: []
+      }
+      const sourceKey = [
+        source.image_id,
+        source.visual_normalized_image_result_id,
+        source.organ,
+        source.capture_region
+      ].join('::')
+      if (sourceKey !== ':::') {
+        if (!current.sources.some(candidate => candidate.source_key === sourceKey)) {
+          current.sources.push({ source_key: sourceKey, ...source })
+        }
+      }
+      outputByKey.set(dedupeKey, current)
     }
   }
 
-  return output.slice(0, 12)
+  return Array.from(outputByKey.values())
+    .map(item => ({ ...item, sources: item.sources.slice(0, 8) }))
+    .slice(0, 12)
 }
 
 function buildShadowCompareSummary(successfulResults = []) {
@@ -1330,6 +1437,17 @@ async function buildAggregateResult({
     covered_organs: normalizeStringList(
       successfulResults.map(item => item?.normalizedResult?.normalized_organ || 'unknown')
     ).filter(item => item !== 'unknown'),
+    sources: successfulResults.map(item => ({
+      image_id: normalizeText(item?.imageId || ''),
+      visual_normalized_image_result_id: normalizeText(
+        item?.visualNormalizedImageResultId || item?.normalizedResult?.visual_normalized_image_result_id || ''
+      ),
+      input_slot_type: normalizeOrgan(item?.inputSlotType, 'unknown'),
+      model_organ: normalizeOrgan(item?.normalizedResult?.model_detected_organ, 'unknown'),
+      normalized_organ: normalizeOrgan(item?.normalizedResult?.normalized_organ, 'unknown'),
+      organ_source: normalizeText(item?.normalizedResult?.organ_source || '', 'unknown'),
+      organ_conflict_flag: Number(item?.normalizedResult?.organ_conflict_flag || 0) ? 1 : 0
+    })),
     requested_image_count: Array.isArray(imageInputs) ? imageInputs.length : 0,
     effective_image_count: successfulResults.length
   }
@@ -1524,6 +1642,7 @@ async function persistVisualBatchArtifacts({
       source_model_provider: adapterMeta.source_model_provider || '',
       source_model_name: adapterMeta.source_model_name || '',
       adapter_name: adapterMeta.adapter_name || '',
+      image_id: input.imageId || '',
       input_slot_type: input.inputSlotType || 'unknown',
       input_slot_order: Number.isFinite(Number(input.inputSlotOrder ?? input.orderIndex ?? 0))
         ? Number(input.inputSlotOrder ?? input.orderIndex ?? 0)
@@ -1535,6 +1654,7 @@ async function persistVisualBatchArtifacts({
       out_of_pool_replay_image_available: Number(Boolean(outOfPoolAuditImageRef)),
       out_of_pool_replay_image_ref: outOfPoolAuditImageRef || null,
       upload_compression: input.uploadCompression || null,
+      capture_region: input.captureRegion || 'unknown',
       shadow_compare: shadowCompare,
       llm_timing: result?.llmTiming || null,
       adapter_timing: result?.adapterTiming || null,
@@ -1613,6 +1733,7 @@ async function persistVisualBatchArtifacts({
         normalizedResult.source_model_provider || adapterMeta.source_model_provider || '',
       source_model_name: normalizedResult.source_model_name || adapterMeta.source_model_name || '',
       adapter_name: adapterMeta.adapter_name || '',
+      image_id: normalizedResult.image_id || input.imageId || '',
       input_organ_hint: normalizedResult.input_organ_hint || 'unknown',
       input_slot_order: Number.isFinite(
         Number(normalizedResult.input_slot_order ?? input.inputSlotOrder ?? 0)
@@ -1627,12 +1748,16 @@ async function persistVisualBatchArtifacts({
         input.userDeclaredOrganConfidence ??
         null,
       model_detected_organ: normalizedResult.model_detected_organ || 'unknown',
+      normalized_organ: normalizedResult.normalized_organ || 'unknown',
       organ_source:
         normalizedResult.organ_source ||
         resolveOrganSource(input.inputSlotType, normalizedResult.normalized_organ),
       multi_organ_detected: Number(normalizedResult.multi_organ_detected || 0),
       organ_conflict_flag: Number(normalizedResult.organ_conflict_flag || 0),
       organ_resolution_reason: normalizedResult.organ_resolution_reason || '',
+      capture_region: normalizedResult.capture_region || input.captureRegion || 'unknown',
+      visual_discriminators: normalizedResult.visual_discriminators || [],
+      missing_info_for_path: normalizedResult.missing_info_for_path || [],
       shadow_compare_enabled: Number(shadowCompare?.enabled || 0),
       shadow_compare_status: shadowCompare?.compare_status || 'disabled',
       shadow_compare_provider: shadowCompare?.source_model_provider || '',

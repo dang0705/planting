@@ -9,11 +9,18 @@ const ALLOWED_ORGANS = [
   'stem',
   'root',
   'root_crown',
+  'soil',
   'whole_plant',
   'flower',
   'fruit',
   'other',
   'unknown'
+]
+
+const WILDCARD_ORGANS = new Set(['unknown', 'other', 'whole_plant'])
+const ORGAN_COMPATIBILITY_GROUPS = [
+  new Set(['root', 'root_crown']),
+  new Set(['leaf', 'stem', 'flower', 'fruit'])
 ]
 
 const ALLOWED_QUALITY_GRADES = ['good', 'medium', 'poor']
@@ -39,6 +46,7 @@ const FORMAL_PEST_VISUAL_EVIDENCE_KEY_SET = new Set(FORMAL_PEST_VISUAL_EVIDENCE_
 const STRING_SHORTHAND_NOTE = 'provider_string_symptom_candidate_preserved_conservatively'
 const OUT_OF_POOL_RECOVERY_NOTE = 'locked_pest_evidence_recovered_conservatively'
 const VISUAL_OUTPUT_SCHEMA_TEXT = JSON.stringify({
+  image_id: '',
   normalized_organ: '',
   image_quality_grade: '',
   analyzability: '',
@@ -49,7 +57,9 @@ const VISUAL_OUTPUT_SCHEMA_TEXT = JSON.stringify({
     {
       symptom_key: '',
       strength_level: 'strong|medium|weak',
-      confidence_band: 'high|medium|low'
+      confidence_band: 'high|medium|low',
+      visibility_scope: 'local|organ|whole_plant',
+      region_ref: 'unknown'
     }
   ],
   out_of_pool_symptom_candidates: [
@@ -126,6 +136,18 @@ function normalizeEnum(value, allowed, conservative) {
 
 function normalizeOrgan(value, conservative = 'unknown') {
   return normalizeEnum(value, ALLOWED_ORGANS, conservative)
+}
+
+function areOrgansCompatible(inputOrgan = 'unknown', modelOrgan = 'unknown') {
+  const input = normalizeOrgan(inputOrgan, 'unknown')
+  const model = normalizeOrgan(modelOrgan, 'unknown')
+  if (WILDCARD_ORGANS.has(input) || WILDCARD_ORGANS.has(model)) {
+    return true
+  }
+  if (input === model) {
+    return true
+  }
+  return ORGAN_COMPATIBILITY_GROUPS.some(group => group.has(input) && group.has(model))
 }
 
 function normalizeQualityGrade(value, conservative = 'medium') {
@@ -390,6 +412,10 @@ function normalizeSymptomCandidate(item) {
       item?.visibility_scope || item?.visibilityScope,
       'organ'
     ),
+    region_ref: normalizeText(
+      item?.region_ref || item?.regionRef || item?.capture_region || item?.captureRegion || '',
+      'unknown'
+    ),
     supporting_region_note: String(
       item?.supporting_region_note ||
         item?.supportingRegionNote ||
@@ -495,6 +521,7 @@ module.exports = {
   buildRuntimeId,
   stringifyJson,
   normalizeOrgan,
+  areOrgansCompatible,
   normalizeQualityGrade,
   normalizeAnalyzability,
   normalizeStrengthLevel,

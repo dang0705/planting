@@ -81,6 +81,56 @@ function isYellowLeafQuestionPackage(questionPackage = {}) {
   ].includes(mode)
 }
 
+function buildYellowLeafVisualEvidenceContext(visualAggregateResult = null) {
+  if (!visualAggregateResult || typeof visualAggregateResult !== 'object') {
+    return null
+  }
+
+  const candidates = Array.isArray(
+    visualAggregateResult.aggregated_symptom_candidates ||
+      visualAggregateResult.aggregatedSymptomCandidates
+  )
+    ? visualAggregateResult.aggregated_symptom_candidates ||
+      visualAggregateResult.aggregatedSymptomCandidates
+    : []
+  const observedSymptoms = Array.isArray(
+    visualAggregateResult.observed_symptoms || visualAggregateResult.observedSymptoms
+  )
+    ? visualAggregateResult.observed_symptoms || visualAggregateResult.observedSymptoms
+    : []
+
+  return {
+    available: true,
+    effectiveImageCount: Number(
+      visualAggregateResult.effective_image_count ||
+        visualAggregateResult.effectiveImageCount ||
+        0
+    ),
+    aggregateAnalyzability: normalizeText(
+      visualAggregateResult.aggregate_analyzability ||
+        visualAggregateResult.aggregateAnalyzability ||
+        ''
+    ),
+    visibleFactKeys: Array.from(
+      new Set(
+        candidates
+          .map(item => normalizeText(item?.symptom_key || item?.symptomKey || ''))
+          .filter(Boolean)
+      )
+    ).slice(0, 12),
+    observedSymptomKeys: Array.from(
+      new Set(
+        observedSymptoms
+          .map(item => normalizeText(item?.symptomKey || item?.symptom_key || ''))
+          .filter(Boolean)
+      )
+    ).slice(0, 12),
+    decisionSource: normalizeText(
+      visualAggregateResult.decision_source || visualAggregateResult.decisionSource || ''
+    )
+  }
+}
+
 function collectMatchedAnswerEffects(routeAnswerEffects = [], answers = []) {
   const answerPairSet = new Set(
     (Array.isArray(answers) ? answers : [])
@@ -328,13 +378,15 @@ async function resolveYellowLeafOutcomeResult({
   careBehaviorTimeline = null,
   environmentCareContext = null,
   routeAnswerEffects = [],
-  questionPackageRuntimeData = null
+  questionPackageRuntimeData = null,
+  visualAggregateResult = null
 } = {}) {
   if (!isYellowLeafQuestionPackage(questionPackage)) {
     return null
   }
 
   const hasLightHealthEvidence = hasValidLightHealthEvidence(environmentCareContext)
+  const visualEvidenceContext = buildYellowLeafVisualEvidenceContext(visualAggregateResult)
   const hasQuestionPackageRuntimeData = Boolean(
     questionPackageRuntimeData &&
       Array.isArray(questionPackageRuntimeData.answerEffects) &&
@@ -414,8 +466,10 @@ async function resolveYellowLeafOutcomeResult({
   const hasVisibleOutcomes = visibleOutcomes.length > 0
   const outcomeType = hasVisibleOutcomes ? 'problematic' : 'uncertain'
   const summaryText = hasVisibleOutcomes
-    ? `已根据黄叶题包答案收敛到 ${visibleOutcomes.length} 个处理方向。`
-    : '当前题包答案尚未形成可直接闭合的黄叶处理方向。'
+    ? `已结合照片记录的可见情况和黄叶题包答案，收敛到 ${visibleOutcomes.length} 个处理方向。`
+    : visualEvidenceContext
+      ? '照片已记录可见情况，但当前题包答案尚未形成可直接闭合的黄叶处理方向。'
+      : '当前题包答案尚未形成可直接闭合的黄叶处理方向。'
 
   return {
     diagnosisSessionId: sessionId,
@@ -487,6 +541,8 @@ async function resolveYellowLeafOutcomeResult({
       ...questionPackage,
       mode: YELLOW_LEAF_PACKAGE_MODE
     },
+    visualAggregateResult,
+    visualEvidenceContext,
     careBehaviorTimeline,
     environmentCareContext,
     plantContext
@@ -503,6 +559,7 @@ module.exports = {
     hasValidLightHealthEvidence,
     buildHydrationOutcomeEffects,
     hasValidHydrationEvidence,
+    buildYellowLeafVisualEvidenceContext,
     mergeBuiltinLightActionProfiles,
     mergeBuiltinLightOutcomes
   }

@@ -318,7 +318,87 @@ function pickMinimalVisualAggregateSummary(summary = null) {
   if (!summary || typeof summary !== 'object') {
     return null
   }
+  const evidenceCandidates =
+    Array.isArray(summary?.aggregatedSymptomCandidates) &&
+    summary.aggregatedSymptomCandidates.length
+      ? summary.aggregatedSymptomCandidates
+      : Array.isArray(summary?.aggregated_symptom_candidates) &&
+          summary.aggregated_symptom_candidates.length
+        ? summary.aggregated_symptom_candidates
+        : Array.isArray(summary?.visualEvidenceItems)
+          ? summary.visualEvidenceItems
+          : []
+  const evidenceItems = evidenceCandidates
+    .map(item => {
+      const symptomKey = String(item?.symptomKey || item?.symptom_key || '').trim()
+      if (!symptomKey) {
+        return null
+      }
+      return {
+        symptomKey,
+        displayNameCn: String(
+          item?.displayNameCn || item?.display_name_cn || symptomKey
+        ).trim(),
+        supportImageCount: Number(
+          item?.supportImageCount ??
+            item?.support_image_count ??
+            (Array.isArray(item?.supportImageIds || item?.support_image_ids)
+              ? (item.supportImageIds || item.support_image_ids).length
+              : 0)
+        ),
+        supportOrgans: normalizeStringList(item?.supportOrgans || item?.support_organs),
+        primaryCaptureRegion: String(
+          item?.primaryCaptureRegion || item?.primary_capture_region || ''
+        ).trim()
+      }
+    })
+    .filter(Boolean)
+    .slice(0, 8)
+  const missingInfo = (
+    Array.isArray(summary?.visualMissingInfoForPath)
+      ? summary.visualMissingInfoForPath
+      : Array.isArray(summary?.aggregateMissingInfoForPath)
+      ? summary.aggregateMissingInfoForPath
+      : Array.isArray(summary?.aggregate_missing_info_for_path)
+        ? summary.aggregate_missing_info_for_path
+        : []
+  )
+    .map(item => ({
+      dimensionKey: String(item?.dimensionKey || item?.dimension_key || '').trim(),
+      reasonCn: String(item?.reasonCn || item?.reason_cn || item?.reason || '').trim()
+    }))
+    .filter(item => item.dimensionKey && item.reasonCn)
+    .slice(0, 8)
+  const organCoverageSummary =
+    summary?.organCoverageSummary || summary?.organ_coverage_summary || null
   return {
+    effectiveImageCount: Number(summary?.effectiveImageCount ?? summary?.effective_image_count ?? 0),
+    aggregateAnalyzability: String(
+      summary?.aggregateAnalyzability || summary?.aggregate_analyzability || ''
+    ).trim(),
+    organCoverageSummary:
+      organCoverageSummary && typeof organCoverageSummary === 'object'
+        ? {
+            coveredOrgans: normalizeStringList(
+              organCoverageSummary.coveredOrgans || organCoverageSummary.covered_organs
+            ),
+            requestedImageCount: Number(
+              organCoverageSummary.requestedImageCount ??
+                organCoverageSummary.requested_image_count ??
+                0
+            ),
+            effectiveImageCount: Number(
+              organCoverageSummary.effectiveImageCount ??
+                organCoverageSummary.effective_image_count ??
+                0
+            )
+          }
+        : null,
+    visualEvidenceItems: evidenceItems,
+    visualMissingInfoForPath: missingInfo,
+    decisionSource: String(
+      summary?.decisionSource || summary?.decision_source || ''
+    ).trim(),
     suggestedAdditionalImageCapture: normalizeStringList(
       summary?.suggestedFollowupCapture || summary?.suggested_question_capture
     )

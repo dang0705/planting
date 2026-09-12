@@ -28,6 +28,33 @@
       ></view
     >
     <view
+      v-if="visualEvidenceItems.length || visualMissingInfoForPath.length"
+      id="diagnose-result-visual-evidence"
+      class="mb-3"
+    >
+      <text class="block text-sm font-semibold text-gray-900 mb-2">照片提供的信息</text>
+      <view class="bg-[#F8F6F0] rounded-xl p-3 border border-[#E7E0D1]">
+        <text class="block text-[10px] text-gray-500 mb-2"
+          >已参考 {{ visualEvidenceImageCount || 1 }} 张照片；下面是照片线索，不等同于最终病因。</text
+        >
+        <view v-for="item in visualEvidenceItems" :key="item.symptomKey" class="mb-1 last:mb-0">
+          <text class="text-[11px] text-gray-700">{{ item.displayNameCn || item.symptomKey }}</text>
+          <text v-if="item.supportImageCount > 1" class="text-[10px] text-gray-500"
+            >· 来自 {{ item.supportImageCount }} 张照片</text
+          >
+        </view>
+        <view v-if="visualMissingInfoForPath.length" class="mt-2 border-t border-[#E7E0D1] pt-2">
+          <text class="block text-[10px] font-semibold text-[#8B7355]">还需要核实</text>
+          <text
+            v-for="item in visualMissingInfoForPath"
+            :key="`${item.dimensionKey}-${item.reasonCn}`"
+            class="block mt-1 text-[10px] leading-relaxed text-gray-600"
+            >{{ item.reasonCn }}</text
+          >
+        </view>
+      </view>
+    </view>
+    <view
       v-if="allOutcomeDisplays.length || resultMainIssueText || resultSummaryText"
       id="diagnose-result-current-conclusion"
       class="mb-3"

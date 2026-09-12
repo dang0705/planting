@@ -10,6 +10,10 @@ const {
 } = require('./read-runtime')
 const { runCloudbaseSql } = require('./read-sql-runtime')
 const { buildUserPlantListSql } = require('./read-list-sql')
+const {
+  isTransientCloudbaseSqlConnectionError,
+  runWithOneTransientRetry
+} = require('./read-sql-retry')
 
 const PAGE_SIZE_MAX = 50
 function readQaPerformanceProbeId(headers = {}) {
@@ -102,18 +106,6 @@ function isUserPlantsPath(path = '') {
       .split('?')[0]
       .replace(/\/+$/u, '') || '/'
   return normalized === '/user-plants' || normalized.endsWith('/user-plants')
-}
-
-function isTransientCloudbaseSqlConnectionError(error) {
-  // RunMysqlCommand 会把底层连接器的瞬态连接失败包成 PE-MYS-5000。
-  // 不能仅按错误码重试：同一错误码也可能包含可复现的 SQL/参数问题。
-  const code = String(error?.code || '').trim()
-  const message = String(error?.message || '')
-  return (
-    code === 'PE-MYS-5000' &&
-    /SQLSTATE:\s*08000\b/u.test(message) &&
-    /(?:detailMessage\s*=\s*)?Connection error\b/iu.test(message)
-  )
 }
 
 function hasDisplayableIdentity(row = {}) {
@@ -362,22 +354,18 @@ async function listUserPlants(
     ...(plantId === null ? {} : { plantId })
   }
   timing?.mark('list-sql-start')
-  let result
-  try {
-    result = await querySql(sql, params)
-  } catch (error) {
-    // 只保护本期的列表读请求。详情、写入和身份查询仍保持原有失败语义；
-    // 此处是一次串行重试，不会新增数据库竞速或额外授权链路。
-    if (plantId !== null || !isTransientCloudbaseSqlConnectionError(error)) {
-      throw error
-    }
-    timing?.mark('list-sql-transient-retry', { code: String(error.code || '') })
-    console.warn('plant-user-http/read transient list SQL connection; retrying once', {
-      code: String(error.code || ''),
-      requestId: String(error.requestId || '').slice(0, 128)
-    })
-    result = await querySql(sql, params)
-  }
+  const result =
+    plantId === null
+      ? await runWithOneTransientRetry(() => querySql(sql, params), {
+          onRetry: error => {
+            timing?.mark('list-sql-transient-retry', { code: String(error.code || '') })
+            console.warn('plant-user-http/read transient list SQL connection; retrying once', {
+              code: String(error.code || ''),
+              requestId: String(error.requestId || '').slice(0, 128)
+            })
+          }
+        })
+      : await querySql(sql, params)
   const rows = (result?.data?.executeResultList || []).filter(hasDisplayableIdentity)
   timing?.mark('list-sql-ready', { row_count: rows.length })
   const total = Number(rows[0]?.total_count || 0)
@@ -427,12 +415,18 @@ async function main(event, context) {
     )
   }
   timing?.mark('request-enter')
+  let failureStage = 'request'
   try {
     if (!isUserPlantsPath(request.path) || request.method !== 'GET') {
       return jsonResponse(404, { code: 404, message: '资源不存在', data: null })
     }
+    failureStage = 'identity'
     const resolvedIdentity = await resolvePlantReadIdentity(request.headers)
-    const identity = resolvedIdentity ? await resolvePlantOwnerIdentity(resolvedIdentity) : null
+    let identity = null
+    if (resolvedIdentity) {
+      failureStage = 'owner-identity'
+      identity = await resolvePlantOwnerIdentity(resolvedIdentity)
+    }
     if (!identity?.openid) {
       return jsonResponse(401, { code: 401, message: '请先登录', data: null })
     }
@@ -450,6 +444,7 @@ async function main(event, context) {
       if (!Number.isSafeInteger(plantId) || plantId <= 0) {
         return jsonResponse(400, { code: 400, message: '植物ID无效', data: null })
       }
+      failureStage = 'detail-read'
       const plant = await getUserPlant(identity, plantId, timing)
       if (!plant) {
         return jsonResponse(404, { code: 404, message: '植物不存在或无权限', data: null })
@@ -457,11 +452,13 @@ async function main(event, context) {
       timing?.mark('response-ready', { row_count: 1, read_kind: 'detail' })
       return jsonResponse(200, { code: 200, data: plant })
     }
+    failureStage = 'list-read'
     const data = await listUserPlants(identity, page, pageSize, timing)
     timing?.mark('response-ready', { row_count: data.list.length })
     return jsonResponse(200, { code: 200, data })
   } catch (error) {
     console.error('plant-user-http/read error:', {
+      stage: failureStage,
       code: error?.code || 'PLANT_USER_READ_FAILED',
       message: String(error?.message || '').slice(0, 300),
       requestId: String(error?.requestId || '').slice(0, 128)

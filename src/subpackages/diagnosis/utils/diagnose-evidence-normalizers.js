@@ -138,6 +138,13 @@ export function normalizeVisualAggregateSummary(summary = null) {
     )
       ? (summary.aggregateMissingInfoForPath || summary.aggregate_missing_info_for_path)
       : [],
+    visualEvidenceItems: Array.isArray(summary?.visualEvidenceItems)
+      ? summary.visualEvidenceItems
+      : [],
+    visualMissingInfoForPath: Array.isArray(summary?.visualMissingInfoForPath)
+      ? summary.visualMissingInfoForPath
+      : [],
+    decisionSource: String(summary?.decisionSource || summary?.decision_source || '').trim(),
     suggestedAdditionalImageCapture: normalizeStringList(
       summary?.suggestedAdditionalImageCapture || summary?.suggested_additional_image_capture
     ),

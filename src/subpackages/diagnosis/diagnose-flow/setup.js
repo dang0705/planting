@@ -188,6 +188,15 @@ export function setupDiagnoseFlowState(props, { emit, expose }) {
       getHealthClass(String(ctx.result?.value?.healthStatusText || '待确认'))
     ),
     resultObservedSymptoms: computed(() => asArray(ctx.result?.value?.observedSymptoms)),
+    visualEvidenceItems: computed(() =>
+      asArray(ctx.result?.value?.visualAggregateSummary?.visualEvidenceItems)
+    ),
+    visualMissingInfoForPath: computed(() =>
+      asArray(ctx.result?.value?.visualAggregateSummary?.visualMissingInfoForPath)
+    ),
+    visualEvidenceImageCount: computed(() =>
+      Number(ctx.result?.value?.visualAggregateSummary?.effectiveImageCount || 0)
+    ),
     popupPanelStyle: ctx.popupPanelStyle,
     isAccordionQuestion: question => Boolean(ctx.isAccordionQuestion?.(question)),
     isCareBehaviorWateringTimelineQuestion: question =>

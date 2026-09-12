@@ -10,6 +10,7 @@ const {
   normalizeNotes,
   normalizeVisualDiscriminators,
   normalizeMissingInfoForPath,
+  normalizeText,
   normalizeSymptomCandidate,
   normalizeCandidateLists,
   confidenceBandToScore,
@@ -252,6 +253,7 @@ function parsePartialStructuredVisualResult(text, options = {}) {
   }
 
   return {
+    image_id: normalizeText(extractJsonStringField(source, 'image_id')),
     normalized_organ: normalizedOrgan,
     image_quality_grade: qualityGrade,
     analyzability,
@@ -382,6 +384,7 @@ function parseStructuredVisualResult(text, options = {}) {
   )
 
   return {
+    image_id: normalizeText(payload?.image_id || payload?.imageId || ''),
     normalized_organ: normalizedOrgan,
     image_quality_grade: qualityGrade,
     analyzability,

@@ -95,6 +95,12 @@ assert.equal(
   'action_nutrient_support_basic'
 )
 assert.deepEqual(diagnosisResponse.visualAggregateSummary, {
+  effectiveImageCount: 0,
+  aggregateAnalyzability: '',
+  organCoverageSummary: null,
+  visualEvidenceItems: [],
+  visualMissingInfoForPath: [],
+  decisionSource: '',
   suggestedAdditionalImageCapture: ['补拍叶背细节']
 })
 assert.deepEqual(diagnosisResponse.visualBatchTrace, {

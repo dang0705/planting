@@ -37,10 +37,6 @@ function normalizeText(value = '') {
   return String(value || '').trim()
 }
 
-function normalizeRequestMode(value = '') {
-  return normalizeText(value).toLowerCase()
-}
-
 function normalizeAnswers(answers = []) {
   return (Array.isArray(answers) ? answers : [])
     .map(item => ({
@@ -142,7 +138,12 @@ async function runDiagnosisPackageAnswer({ payload = {}, openid = '', timing = n
     careBehaviorTimeline: runtimeCarePayload.careBehaviorTimeline,
     environmentCareContext: runtimeCarePayload.environmentCareContext,
     routeAnswerEffects,
-    questionPackageRuntimeData: runtimeData
+    questionPackageRuntimeData: runtimeData,
+    visualAggregateResult:
+      sessionState.visualAggregateResult ||
+      sessionState.visualAggregateSummary ||
+      questionPackageSnapshot.visualAggregateSummary ||
+      null
   })
   if (!roundResult) {
     return null

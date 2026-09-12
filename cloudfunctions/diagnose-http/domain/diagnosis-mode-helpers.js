@@ -106,6 +106,9 @@ function normalizeVisualEvidence(items = []) {
         evidenceGroup: group,
         confidenceBand: normalizeKey(item?.confidenceBand || item?.confidence_band || 'low'),
         strengthLevel: normalizeKey(item?.strengthLevel || item?.strength_level || 'weak'),
+        normalizedOrgan: normalizeKey(
+          item?.normalizedOrgan || item?.normalized_organ || item?.organ || 'unknown'
+        ),
         imageId: normalizeText(item?.imageId || item?.image_id || item?.supportImageId || ''),
         regionRef: normalizeCaptureRegion(
           item?.regionRef || item?.region_ref || item?.captureRegion || item?.capture_region
@@ -140,7 +143,19 @@ function normalizeModeCandidates(items = []) {
       ),
       confidence: Number(item?.confidence || 0),
       imageId: normalizeText(item?.imageId || item?.image_id || ''),
-      regionRef: normalizeCaptureRegion(item?.regionRef || item?.region_ref || item?.captureRegion)
+      regionRef: normalizeCaptureRegion(
+        item?.regionRef || item?.region_ref || item?.captureRegion || item?.capture_region
+      ),
+      sourceRecordId: normalizeText(
+        item?.sourceRecordId || item?.source_record_id || item?.visualNormalizedImageResultId || ''
+      ),
+      visualRawImageRecordId: normalizeText(
+        item?.visualRawImageRecordId || item?.visual_raw_image_record_id || ''
+      ),
+      inputSlotType: normalizeKey(item?.inputSlotType || item?.input_slot_type || 'unknown'),
+      modelOrgan: normalizeKey(item?.modelOrgan || item?.model_organ || 'unknown'),
+      analyzability: normalizeKey(item?.analyzability || ''),
+      organConflictFlag: Number(item?.organConflictFlag || item?.organ_conflict_flag || 0) ? 1 : 0
     }))
     // 过滤掉 registry 中不存在或 enabled=false 的模式（如 root_rot 骨架）
     .filter(item => DIAGNOSIS_MODE_REGISTRY[item.modeKey]?.enabled === true)
@@ -239,6 +254,36 @@ function resolveIndirectDirectCombination(rule = {}, indirect = []) {
           ).values()
         )
       }
+    }
+
+    // 同一模式的互补事实可以来自不同图片。仍要求每条事实带有可追溯的
+    // imageId + regionRef；没有来源的重复或泛化描述不能因为“多图”而升级。
+    const traceableMatchesByGroup = matchesByGroup.map(matches =>
+      matches
+        .filter(item => {
+          const imageId = normalizeText(item?.imageId || '')
+          const regionRef = normalizeKey(item?.regionRef || '')
+          return imageId && regionRef && regionRef !== 'unknown'
+        })
+        .sort((a, b) => {
+          const strengthDelta = rankStrength(b.strengthLevel) - rankStrength(a.strengthLevel)
+          return strengthDelta || rankBand(b.confidenceBand) - rankBand(a.confidenceBand)
+        })
+    )
+    if (traceableMatchesByGroup.some(matches => !matches.length)) {
+      continue
+    }
+
+    const crossImageEvidence = traceableMatchesByGroup.map(matches => matches[0])
+    if (crossImageEvidence.some(item => item?.evidenceScope === 'prior_batch')) {
+      continue
+    }
+    if (crossImageEvidence.some(isStrongHighEvidence)) {
+      return Array.from(
+        new Map(
+          crossImageEvidence.map(item => [`${item.evidenceKey}::${item.evidenceGroup}`, item])
+        ).values()
+      )
     }
   }
   return null

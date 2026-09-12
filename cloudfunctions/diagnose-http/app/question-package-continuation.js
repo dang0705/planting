@@ -10,6 +10,9 @@ const CONTINUATION_SECRET_ENV_KEYS = [
   'HTTP_IDENTITY_TICKET_SECRET',
   'SESSION_TOKEN_SECRET'
 ]
+const {
+  buildQuestionPackageVisualEvidenceSnapshot
+} = require('../utils/public-runtime-summary')
 
 function normalizeText(value = '') {
   return String(value || '').trim()
@@ -59,6 +62,9 @@ function buildQuestionPackageSnapshot(response = {}, runtimeData = null) {
     : Array.isArray(questionPackage?.packageQuestions)
       ? questionPackage.packageQuestions
       : []
+  const visualAggregateSummary = buildQuestionPackageVisualEvidenceSnapshot(
+    response?.visualAggregateSummary || response?.visualAggregateResult || null
+  )
   return {
     mode: normalizeText(questionPackage.mode),
     route: normalizeText(questionPackage.route),
@@ -79,6 +85,7 @@ function buildQuestionPackageSnapshot(response = {}, runtimeData = null) {
         ? questionPackage.outcomePolicy
         : null,
     packageQuestions,
+    ...(visualAggregateSummary ? { visualAggregateSummary } : {}),
     ...(runtimeData && typeof runtimeData === 'object'
       ? {
           questionPackageRuntimeData: {
@@ -210,13 +217,14 @@ function buildQuestionPackageContinuationSessionState(ticket = {}) {
     plantContext,
     runtimeSnapshot: {
       questionPackageSnapshot: snapshot,
+      visualAggregateSummary: snapshot?.visualAggregateSummary || null,
       observedSymptoms: Array.isArray(ticket.observedSymptoms) ? ticket.observedSymptoms : [],
       observedEvidenceSet: Array.isArray(ticket.observedEvidenceSet)
         ? ticket.observedEvidenceSet
         : []
     },
     visualBatchTrace: null,
-    visualAggregateSummary: null,
+    visualAggregateSummary: snapshot?.visualAggregateSummary || null,
     retakeRequest: null,
     retakeAuthorizationState: null,
     directionChoices: [],

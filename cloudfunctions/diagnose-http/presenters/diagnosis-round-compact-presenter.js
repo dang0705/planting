@@ -4,6 +4,7 @@ const {
   normalizeOutcomeType,
   normalizeDiagnosisRoutePrimaryAction
 } = require('../utils/diagnosis-contract')
+const { buildPublicVisualAggregateSummary } = require('../utils/public-runtime-summary')
 
 function buildPublicStopState(stopState = null) {
   if (!stopState || typeof stopState !== 'object') {
@@ -163,31 +164,87 @@ function buildCompactSuggestedFollowupCapture(suggestedFollowupCapture = null) {
   }
 }
 
+function buildCompactVisualEvidenceItem(candidate = {}) {
+  if (!candidate || typeof candidate !== 'object') {
+    return null
+  }
+  const symptomKey = toCompactString(candidate.symptomKey, candidate.symptom_key)
+  if (!symptomKey) {
+    return null
+  }
+  return {
+    symptomKey,
+    displayNameCn: toCompactString(
+      candidate.displayNameCn,
+      candidate.display_name_cn,
+      symptomKey
+    ),
+    supportImageCount: Math.max(
+      Number(candidate.supportImageCount ?? candidate.support_image_count ?? 0),
+      Array.isArray(candidate.supportImageIds || candidate.support_image_ids)
+        ? (candidate.supportImageIds || candidate.support_image_ids).length
+        : 0
+    ),
+    supportOrgans: compactStringList(candidate.supportOrgans || candidate.support_organs),
+    primaryCaptureRegion: toCompactString(
+      candidate.primaryCaptureRegion,
+      candidate.primary_capture_region
+    )
+  }
+}
+
+function buildCompactVisualMissingInfo(item = {}) {
+  if (!item || typeof item !== 'object') {
+    return null
+  }
+  const dimensionKey = toCompactString(item.dimensionKey, item.dimension_key)
+  const reasonCn = toCompactString(item.reasonCn, item.reason_cn, item.reason)
+  return dimensionKey && reasonCn ? { dimensionKey, reasonCn } : null
+}
+
 function buildCompactVisualAggregateSummary(visualAggregateSummary = null) {
   if (!visualAggregateSummary || typeof visualAggregateSummary !== 'object') {
     return null
   }
 
+  const publicSummary = buildPublicVisualAggregateSummary(visualAggregateSummary)
+  if (!publicSummary) {
+    return null
+  }
+  const visualEvidenceItems = publicSummary.aggregatedSymptomCandidates
+    .map(buildCompactVisualEvidenceItem)
+    .filter(Boolean)
+    .slice(0, 8)
+  const visualMissingInfoForPath = publicSummary.aggregateMissingInfoForPath
+    .map(buildCompactVisualMissingInfo)
+    .filter(Boolean)
+    .slice(0, 8)
+  const suggestedFollowupCapture = Array.isArray(publicSummary.suggestedFollowupCapture)
+    ? compactStringList(publicSummary.suggestedFollowupCapture)
+    : buildCompactSuggestedFollowupCapture(publicSummary.suggestedFollowupCapture)
+
   return {
-    visualCallBatchId: toCompactString(
-      visualAggregateSummary.visualCallBatchId,
-      visualAggregateSummary.visual_call_batch_id,
-      visualAggregateSummary.callBatchId,
-      visualAggregateSummary.call_batch_id
-    ),
+    visualCallBatchId: publicSummary.visualCallBatchId || '',
+    effectiveImageCount: publicSummary.effectiveImageCount,
+    aggregateAnalyzability: publicSummary.aggregateAnalyzability,
+    organCoverageSummary: publicSummary.organCoverageSummary
+      ? {
+          coveredOrgans: compactStringList(publicSummary.organCoverageSummary.coveredOrgans),
+          requestedImageCount: Number(publicSummary.organCoverageSummary.requestedImageCount || 0),
+          effectiveImageCount: Number(publicSummary.organCoverageSummary.effectiveImageCount || 0)
+        }
+      : null,
     routePrimaryAction: normalizeDiagnosisRoutePrimaryAction(
-      visualAggregateSummary.routePrimaryAction || visualAggregateSummary.route_primary_action,
+      publicSummary.routePrimaryAction,
       ''
     ),
-    admissionReadyFlag: toCompactFlag(
-      visualAggregateSummary.admissionReadyFlag ?? visualAggregateSummary.admission_ready_flag,
-      null
-    ),
-    suggestedFollowupCapture: buildCompactSuggestedFollowupCapture(
-      visualAggregateSummary.suggestedFollowupCapture ||
-        visualAggregateSummary.suggested_question_capture ||
-        null
-    )
+    admissionReadyFlag: toCompactFlag(publicSummary.admissionReadyFlag, null),
+    decisionSource: toCompactString(publicSummary.decisionSource),
+    primaryModelDirectModes: compactStringList(publicSummary.primaryModelDirectModes),
+    modelDirectDecisionStatus: toCompactString(publicSummary.modelDirectDecisionStatus),
+    visualEvidenceItems,
+    visualMissingInfoForPath,
+    suggestedFollowupCapture
   }
 }
 

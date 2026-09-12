@@ -215,7 +215,9 @@ function resolveSpecificPestAnswerResult({
       ? '当前照片可能涉及多种虫害，需要继续观察并补充细节。'
       : !finalModes.length && probableSummaryMode
         ? `补充回答暂未确认关键特征，当前更接近 ${probableSummaryLabel}，建议结合后续变化继续观察。`
-        : `结合照片和你的补充回答，当前整理出 ${visibleOutcomes.length} 个可能方向。`
+        : answers.length
+          ? `结合照片和你的补充回答，当前整理出 ${visibleOutcomes.length} 个可能方向。`
+          : `根据当前照片，整理出 ${visibleOutcomes.length} 个可能方向。`
     : '这次图片和回答还不能稳定判断具体虫害。'
   const stickyHoneydewAnswer = hasStickyHoneydewAnswer(answers)
 
