@@ -46,6 +46,9 @@ try {
         }
       }
     }
+    if (request === '/opt/utils/cloudbase') {
+      return { models: { $runSQL: async () => ({ data: { executeResultList: [] } }) } }
+    }
     return originalLoad.call(this, request, parent, isMain)
   }
   delete require.cache[appPath]

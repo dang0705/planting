@@ -16,6 +16,10 @@ async function loadUserStoreModule({
 }) {
   const transformed = source
     .replace(
+      /const QA_PERFORMANCE_REFRESH = import\.meta\.env\.VITE_QA_PERFORMANCE_COLD_LANE === '1'/,
+      'const QA_PERFORMANCE_REFRESH = false'
+    )
+    .replace(
       /import \{ defineStore, getActivePinia \} from 'pinia'/,
       "import { defineStore } from 'pinia'; const getActivePinia = () => ({ _s: { get: () => ({ $reset: () => { globalThis.__plantStoreReset = (globalThis.__plantStoreReset || 0) + 1 } }) } })"
     )

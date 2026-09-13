@@ -11,8 +11,7 @@ function loadApp(deleteResult) {
   const originalLoad = Module._load
   const calls = []
   const requestCounters = { list: 0, cleanup: 0 }
-  try {
-    Module._load = function loadMock(request, parent, isMain) {
+  Module._load = function loadMock(request, parent, isMain) {
       if (request === '/opt/utils/http') {
         return {
           jsonResponse: (statusCode, payload) => ({ statusCode, payload }),
@@ -24,6 +23,12 @@ function loadApp(deleteResult) {
           runWithRequestAppEnv: (_env, fn) => fn(),
           resolveHttpUserInfo: async () => ({ openid: 'wx_owner' })
         }
+      }
+      if (request === '/opt/utils/cloudbase') {
+        return { getCloudBase: () => ({}) }
+      }
+      if (request === '/opt/utils/catalog-image-url') {
+        return { resolveCatalogImageUrls: async value => value }
       }
       if (request === '/opt/utils/plant-knowledge') {
         return {
@@ -52,14 +57,14 @@ function loadApp(deleteResult) {
       if (request === '/opt/utils/air-environment-evidence') {
         return { resolveAirEnvironmentEvidence: () => null }
       }
-      if (request.endsWith('/care-location-service')) {
+      if (request.endsWith('care-location-service')) {
         return {
           attachCareLocation: value => value,
           attachCareLocationsToList: async ({ data }) => data,
           savePlantCareLocation: async () => null
         }
       }
-      if (request.endsWith('/watering-reminder-service')) {
+      if (request.endsWith('watering-reminder-service')) {
         return {
           attachWateringReminderStateToList: async (_openid, data) => data,
           completeWateringReminder: async () => ({}),
@@ -67,7 +72,7 @@ function loadApp(deleteResult) {
           saveWateringReminder: async () => ({})
         }
       }
-      if (request.endsWith('/fertilization-reminder-service')) {
+      if (request.endsWith('fertilization-reminder-service')) {
         return {
           attachFertilizationReminderStateToList: async (_openid, data) => data,
           cancelFertilizationReminder: async () => ({}),
@@ -78,27 +83,27 @@ function loadApp(deleteResult) {
           readFertilizationReminder: async () => ({})
         }
       }
-      if (request.endsWith('/watering-planner-service')) {
+      if (request.endsWith('watering-planner-service')) {
         return {
           buildWeatherSummary: () => ({}),
           computeAdhocPlanner: async () => ({}),
           injectD0IntoForecastDays: async () => ({})
         }
       }
-      if (request.endsWith('/watering-advisor-service')) {
+      if (request.endsWith('watering-advisor-service')) {
         return {
           saveAdvisorSession: async () => ({}),
           confirmAdvisorSessionWatered: async () => ({}),
           listAdvisorSessions: async () => ({})
         }
       }
-      if (request.endsWith('/air-environment-service')) {
+      if (request.endsWith('air-environment-service')) {
         return {
           readUserPlantAirEnvironment: async () => ({}),
           saveUserPlantAirEnvironment: async () => ({})
         }
       }
-      if (request.endsWith('/plant-deletion-service')) {
+      if (request.endsWith('plant-deletion-service')) {
         return {
           deleteUserPlantCompletely: async input => {
             calls.push(input)
@@ -114,17 +119,27 @@ function loadApp(deleteResult) {
         }
       }
       return originalLoad.call(this, request, parent, isMain)
+  }
+  delete require.cache[sourcePath]
+  try {
+    return {
+      app: require(sourcePath),
+      calls,
+      requestCounters,
+      restore() {
+        Module._load = originalLoad
+        delete require.cache[sourcePath]
+      }
     }
-    delete require.cache[sourcePath]
-    return { app: require(sourcePath), calls, requestCounters }
-  } finally {
+  } catch (error) {
     Module._load = originalLoad
     delete require.cache[sourcePath]
+    throw error
   }
 }
 
 {
-  const { app, requestCounters } = loadApp({ cleanupPending: false, cleanupAttempted: 0 })
+  const { app, requestCounters, restore } = loadApp({ cleanupPending: false, cleanupAttempted: 0 })
   const response = await app._test.main({
     path: '/user-plants',
     method: 'GET',
@@ -135,10 +150,11 @@ function loadApp(deleteResult) {
   assert.equal(response.statusCode, 200)
   assert.equal(requestCounters.list, 1)
   assert.equal(requestCounters.cleanup, 0)
+  restore()
 }
 
 {
-  const { app, calls } = loadApp({ cleanupPending: true, cleanupAttempted: 1 })
+  const { app, calls, restore } = loadApp({ cleanupPending: true, cleanupAttempted: 1 })
   const response = await app._test.main({
     path: '/user-plants',
     method: 'DELETE',
@@ -150,12 +166,13 @@ function loadApp(deleteResult) {
   assert.deepEqual(calls, [{ openid: 'wx_owner', plantId: 42 }])
   assert.equal(response.payload.message, '植物已删除，图片正在清理')
   assert.deepEqual(response.payload.data, { id: 42, cleanupPending: true, cleanupAttempted: 1 })
+  restore()
 }
 
 {
   const error = new Error('schema is unavailable')
   error.statusCode = 503
-  const { app } = loadApp(error)
+  const { app, restore } = loadApp(error)
   const response = await app._test.main({
     path: '/user-plants',
     method: 'DELETE',
@@ -165,6 +182,7 @@ function loadApp(deleteResult) {
   })
   assert.equal(response.statusCode, 503)
   assert.equal(response.payload.message, '删除服务暂未就绪，请稍后重试')
+  restore()
 }
 
 console.log('plant delete route tests passed')

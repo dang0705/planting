@@ -99,11 +99,7 @@ assert.match(
   /v-else-if="isQuestionStatePreparing"/,
   '天气加载期间不得显示没有问题的空状态'
 )
-assert.match(
-  questionPackageSource,
-  /:items="questionStack"/,
-  '分步容器必须只使用提交用的原始题目列表'
-)
+assert.doesNotMatch(questionPackageSource, /<ButtonStepTrack/)
 assert.match(questionPackageSource, /正在准备问诊…/, '加载提示必须向用户说明当前状态')
 assert.match(
   questionFlowSource,

@@ -4,7 +4,7 @@ import { createRequire } from 'node:module'
 // data_mode=unit_fake; test_kind=unit_logic。验证最小读取运行时与项目既有 TC3 签名器完全一致，不发 HTTP 请求。
 const require = createRequire(import.meta.url)
 const runtime = require('../../../cloudfunctions/read-sql-runtime.js')
-const cloudbaseSigner = require('../../../cloudfunctions/layer/node_modules/@cloudbase/signature-nodejs')
+const cloudbaseSigner = require('@cloudbase/signature-nodejs')
 
 const request = {
   secretId: 'AKIDunit',
@@ -54,11 +54,20 @@ delete process.env.TENCENTCLOUD_RUNENV
 delete process.env.CBR_ENV_ID
 process.env.SUMERU_ENV = 'formal'
 assert.equal(runtime._test.resolveRunEnvTag(), 'sumeru')
-if (previousRunEnv === undefined) delete process.env.TENCENTCLOUD_RUNENV
-else process.env.TENCENTCLOUD_RUNENV = previousRunEnv
-if (previousCbrEnvId === undefined) delete process.env.CBR_ENV_ID
-else process.env.CBR_ENV_ID = previousCbrEnvId
-if (previousSumeruEnv === undefined) delete process.env.SUMERU_ENV
-else process.env.SUMERU_ENV = previousSumeruEnv
+if (previousRunEnv === undefined) {
+  delete process.env.TENCENTCLOUD_RUNENV
+} else {
+  process.env.TENCENTCLOUD_RUNENV = previousRunEnv
+}
+if (previousCbrEnvId === undefined) {
+  delete process.env.CBR_ENV_ID
+} else {
+  process.env.CBR_ENV_ID = previousCbrEnvId
+}
+if (previousSumeruEnv === undefined) {
+  delete process.env.SUMERU_ENV
+} else {
+  process.env.SUMERU_ENV = previousSumeruEnv
+}
 
 console.log('read sql runtime tests passed data_mode=unit_fake test_kind=unit_logic')

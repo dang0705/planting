@@ -2,11 +2,12 @@
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
+import { readPagesManifest } from '../../../../helpers/pages-manifest.mjs'
 
 const repoRoot = process.cwd()
 const sourcePath = path.join(repoRoot, 'src/subpackages/subscription/subscription.vue')
 const source = fs.readFileSync(sourcePath, 'utf8')
-const pages = JSON.parse(fs.readFileSync(path.join(repoRoot, 'src/pages.json'), 'utf8'))
+const pages = readPagesManifest(repoRoot)
 
 const subscriptionPackage = pages.subPackages?.find(
   item => item.root === 'subpackages/subscription'

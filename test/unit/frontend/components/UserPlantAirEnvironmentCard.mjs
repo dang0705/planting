@@ -66,7 +66,7 @@ assert.match(
 )
 assert.match(
   detailSource,
-  /<UserPlantAirEnvironmentCard :plant="plant" @saved="handleAirEnvironmentSaved" \/>/
+  /<UserPlantAirEnvironmentCard[\s\S]*?v-if="!restrictedPlatform"[\s\S]*?:plant="plant"[\s\S]*?@saved="handleAirEnvironmentSaved"/
 )
 
 // Assert: 编辑植物页面只保留环境条件入口，不再嵌入完整空气环境卡片。
@@ -79,7 +79,7 @@ assert.match(
   /<template #after-form>[\s\S]*<PlantEnvironmentSettingsGroup[\s\S]*:plant="currentPlant"[\s\S]*id-prefix="edit-plant-environment"/
 )
 assert.doesNotMatch(plantPageSource, /UserPlantAirEnvironmentCard/)
-assert.match(plantPageSource, /:show-light-environment="!isEditMode"/)
+assert.match(plantPageSource, /:show-light-environment="!isEditMode && !restrictedPlatform"/)
 assert.match(plantPageSource, /light: '\/subpackages\/care\/plant-environment\/light-environment'/)
 assert.match(plantPageSource, /air: '\/subpackages\/care\/airflow\/index'/)
 assert.match(plantPageSource, /plant-environment-saved/)

@@ -13,7 +13,7 @@ const weatherSource = readSource('../../../../src/components/HeaderWeatherInfo.v
 const automationPolicySource = readSource(
   '../../../../docs/ai-rules/frontend-automation-id-policy.md'
 )
-const EXPECTED_CUSTOM_PAGE_COUNT = 16
+const EXPECTED_CUSTOM_PAGE_COUNT = 15
 
 assert.match(
   pagesSource,

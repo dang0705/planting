@@ -55,7 +55,7 @@ assert.match(
 )
 assert.match(
   serverSource,
-  /return isUserPlantListRead \? readMain : loadFullMain\(\)/u,
+  /return isUserPlantRead \? readMain : loadFullMain\(\)/u,
   '非列表路由必须在同一函数内延迟加载完整 app'
 )
 assert.doesNotMatch(serverSource, /forwardToWriteFunction|write-proxy/u)

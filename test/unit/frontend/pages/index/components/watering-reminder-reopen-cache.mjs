@@ -50,7 +50,10 @@ assert.match(
 assert.match(sheetSource, /\(!savedReminderActive\.value \|\| savedReminderChanged\.value\)/)
 assert.match(sheetSource, /persistedEventsChanged/)
 assert.match(sheetSource, /savedReminder\.value = null[\s\S]+selectedWateringEvents\.value = \[\.\.\.effectiveEvents\]/)
-assert.match(sheetSource, /<SavedWateringReminderState[\s\S]*v-if="savedReminderActive && !inputFlowOpen"/)
+assert.match(
+  sheetSource,
+  /<SavedWateringReminderState[\s\S]*v-if="savedReminderActive && !inputFlowOpen && !isOverWateringBlocked"/
+)
 assert.match(sheetSource, /:display="savedReminderDisplay"/)
 assert.match(savedStateSource, /id="watering-reminder-saved-state"/)
 assert.match(savedStateSource, /id="watering-reminder-saved-created-at"/)

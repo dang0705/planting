@@ -132,142 +132,71 @@ assert.equal(batchMap.get('shared-id')?.canonicalName, '乙（session 优先）'
 const enrichmentCalls = []
 const enrichedKnowledge = loadPlantKnowledge(async (sql, params) => {
   enrichmentCalls.push({ sql, params })
-  if (/COUNT\(\*\) AS total/i.test(sql)) {
-    return { data: { executeResultList: [{ total: 2 }] } }
-  }
-  if (/COUNT\(\*\) OVER\(\) AS total_count/i.test(sql)) {
+  if (/WITH paged_user_plants AS/i.test(sql)) {
     return {
       data: {
         executeResultList: [
           {
             id: 11,
+            record_version: 1,
             plant_identity_id: 'identity-a',
+            session_plant_id: 'session-a',
             canonical_name: '甲',
             nickname: '阳台甲',
-            created_at: '2026-08-30T10:00:00Z',
-            total_count: 2
+            source_type: 'catalog',
+            total_count: 2,
+            health_status: 'attention',
+            health_score: 0.6,
+            catalog_plant_identity_id: 'identity-a',
+            catalog_session_plant_id: 'session-a',
+            catalog_primary_display_name: '甲',
+            catalog_genus_name: '榕属',
+            care_location_id: 301,
+            care_openid: 'dev_terminal_mp_local',
+            care_plant_id: 11,
+            care_user_id: 'dev_terminal_mp_local',
+            care_location_key: 'city:shanghai',
+            care_city_name: '上海',
+            care_latitude: 31.23,
+            care_longitude: 121.47,
+            care_weather_location: 'city:shanghai',
+            care_source: 'manual_selected',
+            watering_reminder_id: 401,
+            watering_reminder_user_plant_id: 11,
+            watering_reminder_plan_id: 'water-plan-1',
+            watering_reminder_type: 'water',
+            watering_reminder_status: 'active',
+            watering_reminder_next_water_date: '2026-09-01',
+            watering_reminder_next_time: '2026-09-01 09:00:00',
+            fertilization_reminder_id: 501,
+            fertilization_reminder_user_plant_id: 11,
+            fertilization_reminder_plan_id: 'fert-plan-1',
+            fertilization_reminder_status: 'active',
+            fertilization_reminder_kind: 'normal',
+            fertilization_reminder_next_check_date: '2026-09-01',
+            fertilization_reminder_next_time: '2026-09-01 09:00:00'
           },
           {
             id: 12,
-            plant_identity_id: 'identity-b',
-            canonical_name: '乙',
-            created_at: '2026-08-29T10:00:00Z',
-            total_count: 2
-          }
-        ]
-      }
-    }
-  }
-  if (/FROM plant_identity_entities pie/i.test(sql)) {
-    return {
-      data: {
-        executeResultList: [
-          {
-            plant_identity_id: 'identity-a',
-            session_plant_id: 'session-a',
-            primary_display_name: '甲',
-            genus_name: '榕属'
-          },
-          {
+            record_version: 1,
             plant_identity_id: 'identity-b',
             session_plant_id: 'session-b',
-            primary_display_name: '乙',
-            genus_name: '榕属'
+            canonical_name: '乙',
+            source_type: 'catalog',
+            total_count: 2,
+            health_status: 'healthy',
+            health_score: 0.95,
+            catalog_plant_identity_id: 'identity-b',
+            catalog_session_plant_id: 'session-b',
+            catalog_primary_display_name: '乙',
+            catalog_genus_name: '榕属'
           }
         ]
       }
     }
   }
-  if (/FROM plant_care_locations/i.test(sql)) {
-    return {
-      data: {
-        executeResultList: [
-          {
-            id: 301,
-            _openid: 'dev_terminal_mp_local',
-            plant_id: 11,
-            user_id: 'dev_terminal_mp_local',
-            location_key: 'city:shanghai',
-            city_name: '上海',
-            latitude: 31.23,
-            longitude: 121.47,
-            weather_location: 'city:shanghai',
-            source: 'manual_selected'
-          },
-          {
-            id: 300,
-            _openid: 'dev_terminal_mp_local',
-            plant_id: 11,
-            user_id: 'dev_terminal_mp_local',
-            location_key: 'city:old-shanghai',
-            city_name: '旧上海',
-            source: 'legacy'
-          }
-        ]
-      }
-    }
-  }
-  if (/FROM user_watering_reminder_events/i.test(sql)) {
-    return {
-      data: {
-        executeResultList: [
-          {
-            id: 401,
-            user_plant_id: 11,
-            plan_id: 'water-plan-1',
-            reminder_type: 'water',
-            status: 'active',
-            next_water_date: '2026-09-01',
-            next_time: '2026-09-01 09:00:00'
-          },
-          {
-            id: 400,
-            user_plant_id: 11,
-            plan_id: 'water-plan-old',
-            reminder_type: 'water',
-            status: 'active',
-            next_water_date: '2026-08-01',
-            next_time: '2026-08-01 09:00:00'
-          }
-        ]
-      }
-    }
-  }
-  if (/FROM user_fertilization_reminder_events/i.test(sql)) {
-    return {
-      data: {
-        executeResultList: [
-          {
-            id: 501,
-            user_plant_id: 11,
-            plan_id: 'fert-plan-1',
-            status: 'active',
-            reminder_kind: 'normal',
-            next_check_date: '2026-09-01',
-            next_time: '2026-09-01 09:00:00'
-          },
-          {
-            id: 500,
-            user_plant_id: 11,
-            plan_id: 'fert-plan-old',
-            status: 'active',
-            reminder_kind: 'normal',
-            next_check_date: '2026-08-01',
-            next_time: '2026-08-01 09:00:00'
-          }
-        ]
-      }
-    }
-  }
-  if (/FROM diagnosis_sessions/i.test(sql)) {
-    return {
-      data: {
-        executeResultList: [
-          { user_plant_id: 11, health_status: 'attention', health_score: 0.6 },
-          { user_plant_id: 11, health_status: 'healthy', health_score: 0.95 }
-        ]
-      }
-    }
+  if (/COUNT\(\*\) AS total/i.test(sql)) {
+    return { data: { executeResultList: [{ total: 2 }] } }
   }
   throw new Error(`unexpected enrichment SQL: ${sql}`)
 })
@@ -299,8 +228,9 @@ assert.equal(
 assert.equal(
   enrichmentCalls.filter(call => /FROM plant_identity_entities pie/i.test(call.sql)).length,
   1,
-  '目录信息应批量读取一次'
+  '目录信息应在同一条富化查询中读取一次'
 )
+assert.match(enrichmentCalls[0].sql, /LEFT JOIN LATERAL/i)
 for (const call of enrichmentCalls) {
   assert.doesNotMatch(call.sql, /watering_events_json|planner_result_json|calendar_payload_json/)
 }

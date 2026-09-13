@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
+import { readPagesManifest } from '../../../../../helpers/pages-manifest.mjs'
 
 const repoRoot = process.cwd()
 const pageSource = fs.readFileSync(
   path.join(repoRoot, 'src/subpackages/care/airflow/index.vue'),
   'utf8'
 )
-const pagesConfig = JSON.parse(fs.readFileSync(path.join(repoRoot, 'src/pages.json'), 'utf8'))
+const pagesConfig = readPagesManifest(repoRoot)
 
 // 1. 路由只是完整空气环境组件的容器，不拆出独立的室内/室外页面
 const carePackage = pagesConfig.subPackages?.find(item => item.root === 'subpackages/care')

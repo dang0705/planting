@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
+import { readPagesManifest } from '../../../helpers/pages-manifest.mjs'
 
 const repoRoot = process.cwd()
-const pagesConfig = JSON.parse(fs.readFileSync(path.join(repoRoot, 'src/pages.json'), 'utf8'))
+const pagesConfig = readPagesManifest(repoRoot)
 const manifestSource = fs.readFileSync(path.join(repoRoot, 'src/manifest.json'), 'utf8')
 const profileSource = fs.readFileSync(path.join(repoRoot, 'src/pages/profile/profile.vue'), 'utf8')
 const reviewRoot = path.join(repoRoot, 'src/subpackages/review')

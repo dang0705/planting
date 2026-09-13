@@ -157,7 +157,7 @@ assert.match(
 
 assert.match(
   sheetSource,
-  /useWateringReminderPlanner\(\{ props, userStore, selectedWateringEventsForPlanner \}\)/,
+  /useWateringReminderPlanner\(\{[\s\S]*?props,[\s\S]*?userStore,[\s\S]*?selectedWateringEventsForPlanner/,
   'WateringReminderSheet 应通过 useWateringReminderPlanner 组合天气/planner 逻辑'
 )
 

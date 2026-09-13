@@ -3,9 +3,10 @@
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
+import { readPagesManifest } from '../../../helpers/pages-manifest.mjs'
 
 const repoRoot = process.cwd()
-const pagesConfig = JSON.parse(fs.readFileSync(path.join(repoRoot, 'src/pages.json'), 'utf8'))
+const pagesConfig = readPagesManifest(repoRoot)
 const diagnosisRoot = path.join(repoRoot, 'src/subpackages/diagnosis')
 const diagnosisPackage = pagesConfig.subPackages?.find(
   item => item.root === 'subpackages/diagnosis'
@@ -15,7 +16,7 @@ const mainPagePaths = new Set((pagesConfig.pages || []).map(page => page.path))
 assert.ok(diagnosisPackage, 'diagnosis pages must be registered under a dedicated subpackage root')
 assert.deepEqual(
   diagnosisPackage.pages.map(page => page.path),
-  ['question-package', 'flow', 'result']
+  ['question-package', 'flow']
 )
 assert.equal(mainPagePaths.has('pages/diagnose/diagnose'), true)
 assert.equal(mainPagePaths.has('pages/diagnose/question-package'), false)
@@ -80,7 +81,7 @@ assert.match(flowPageSource, /normalizeDiagnosisProfile\(options\?\.diagnosisPro
 assert.match(diagnoseTabIntakeSource, /\/subpackages\/diagnosis\/question-package\?draftKey=/)
 assert.doesNotMatch(diagnoseTabIntakeSource, /\/subpackages\/diagnosis\/flow/)
 assert.match(indexSource, /subpackages\/diagnosis\/flow\?plantId=/)
-assert.match(indexSource, /\/subpackages\/diagnosis\/result\?id=/)
-assert.match(profileSource, /\/subpackages\/diagnosis\/result\?id=/)
+assert.match(indexSource, /\/subpackages\/diagnosis\/question-package\?id=/)
+assert.match(profileSource, /\/subpackages\/diagnosis\/question-package\?id=/)
 
 console.log('diagnosis subpackage route contract tests passed')

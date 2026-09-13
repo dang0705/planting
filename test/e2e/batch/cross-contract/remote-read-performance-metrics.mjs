@@ -4,7 +4,7 @@ import {
   endpointLatencyStats,
   latencyStats,
   percentile
-} from '../../../../../test/e2e/automator/user/_shared/remote-read-performance-metrics.mjs'
+} from '../../automator/user/_shared/remote-read-performance-metrics.mjs'
 
 assert.equal(percentile([10, 20, 30, 40], 0.5), 20)
 assert.equal(percentile([], 0.95), null)

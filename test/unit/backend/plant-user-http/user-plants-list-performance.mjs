@@ -56,7 +56,7 @@ assert.doesNotMatch(
 )
 assert.match(
   readSource,
-  /plantId !== null \|\| !isTransientCloudbaseSqlConnectionError\(error\)/u,
+  /plantId === null\s*\? await runWithOneTransientRetry\(/u,
   '仅列表路径可为明确的 CloudBase 瞬态连接错误重试；详情不得扩大重试面'
 )
 assert.doesNotMatch(

@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
+import { readPagesManifest } from '../../../helpers/pages-manifest.mjs'
 
 const repoRoot = process.cwd()
-const pagesConfig = JSON.parse(fs.readFileSync(path.join(repoRoot, 'src/pages.json'), 'utf8'))
+const pagesConfig = readPagesManifest(repoRoot)
 const carePackage = pagesConfig.subPackages?.find(item => item.root === 'subpackages/care')
 const mainPagePaths = new Set((pagesConfig.pages || []).map(page => page.path))
 

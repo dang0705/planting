@@ -4,6 +4,16 @@ import path from 'node:path'
 import { spawn } from 'node:child_process'
 
 const ROOTS = ['test/unit/frontend', 'test/unit/backend']
+const PRELOADED_RUNTIME_STUB_TESTS = new Set([
+  'test/unit/backend/diagnose-http/app/diagnosis-direction-choice-runtime.mjs',
+  'test/unit/backend/diagnose-http/app/pest-question-package.mjs',
+  'test/unit/backend/diagnose-http/app/pest-response-presenter.mjs',
+  'test/unit/backend/diagnose-http/app/pest-visual-orchestrator-direct-result.mjs',
+  'test/unit/backend/diagnose-http/domain/diagnosis-mode-router-full-tiers.mjs',
+  'test/unit/backend/weather-ingestion-scheduler/routes/recent-weather-routes.mjs',
+  'test/unit/backend/weather-ingestion-scheduler/services/season-trigger-sync.mjs'
+])
+const RUNTIME_STUB_PATH = './test/helpers/register-cloudbase-and-suncalc-unit-stubs.cjs'
 
 function walk(root) {
   const entries = fs.existsSync(root) ? fs.readdirSync(root, { withFileTypes: true }) : []
@@ -117,7 +127,10 @@ function assertUnitIsolation(files) {
 
 function runTest(file) {
   return new Promise(resolve => {
-    const child = spawn(process.execPath, [file], { stdio: 'inherit' })
+    const args = PRELOADED_RUNTIME_STUB_TESTS.has(file)
+      ? ['--require', RUNTIME_STUB_PATH, file]
+      : [file]
+    const child = spawn(process.execPath, args, { stdio: 'inherit' })
     child.on('close', code => resolve({ file, code }))
     child.on('error', error => resolve({ file, code: 1, error }))
   })

@@ -59,8 +59,9 @@ assert.match(
 assert.doesNotMatch(questionPageSource, /shouldShowCareBehaviorTimeline/)
 assert.match(
   questionPageSource,
-  /<ButtonStepTrack[\s\S]*?v-if="!isCareBehaviorWateringTimelineQuestion\(currentQuestion\)"[\s\S]*?<\/ButtonStepTrack>[\s\S]*?<CareBehaviorTimeline[\s\S]*?:question="currentQuestion"/s
+  /v-if="currentQuestion && !isCareBehaviorWateringTimelineQuestion\(currentQuestion\)"[\s\S]*?<view[\s\S]*?v-else[\s\S]*?<CareBehaviorTimeline[\s\S]*?:question="currentQuestion"/s
 )
+assert.doesNotMatch(questionPageSource, /<ButtonStepTrack/)
 assert.match(questionPageSource, /currentQuestion,\s*questionProgressText/)
 assert.match(questionPageSource, /:reset-key="getCareBehaviorTimelineResetKey\(currentQuestion\)"/)
 assert.match(

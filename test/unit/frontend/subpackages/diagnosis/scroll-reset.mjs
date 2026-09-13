@@ -11,13 +11,18 @@ assert.match(
 )
 assert.match(
   source,
-  /<ButtonStepTrack[\s\S]*?v-if="!isCareBehaviorWateringTimelineQuestion\(currentQuestion\)"[\s\S]*?:fill="false"[\s\S]*?item-class="relative overflow-x-hidden"/,
-  'the step track must not own the watering timeline component'
+  /v-if="currentQuestion && !isCareBehaviorWateringTimelineQuestion\(currentQuestion\)"[\s\S]*?<view[\s\S]*?v-else[\s\S]*?<CareBehaviorTimeline/,
+  'the watering timeline must render in its own question branch'
+)
+assert.doesNotMatch(
+  source,
+  /<ButtonStepTrack/,
+  'the question page must not restore the legacy step-track wrapper'
 )
 assert.match(
   source,
-  /<\/ButtonStepTrack>[\s\S]*?<view[\s\S]*?v-else[\s\S]*?<CareBehaviorTimeline[\s\S]*?:key="`\$\{getQuestionId\(currentQuestion\)\}-\$\{activeQuestionIndex\}`"/,
-  'the active watering timeline must render outside the step-track slot with a fresh active-step identity'
+  /<CareBehaviorTimeline[\s\S]*?:key="`\$\{getQuestionId\(currentQuestion\)\}-\$\{activeQuestionIndex\}`"/,
+  'the active watering timeline must retain a fresh active-step identity'
 )
 assert.match(
   source,
