@@ -26,14 +26,18 @@ const serverSource = fs.readFileSync(
   path.join(repoRoot, 'cloudfunctions/plant-user-http/native-http-server.js'),
   'utf8'
 )
-const config = JSON.parse(fs.readFileSync(path.join(repoRoot, 'cloudbaserc.json'), 'utf8'))
-const readerConfig = config.functions.find(item => item.name === 'plant-user-http')
+const functionManifest = JSON.parse(
+  fs.readFileSync(path.join(repoRoot, 'cloudfunctions/plant-user-http/cloudbase-functions.json'), 'utf8')
+)
 const require = createRequire(import.meta.url)
 const { _test: readTest } = require('../../../../cloudfunctions/plant-user-http/read-http.js')
 
-assert.ok(readerConfig)
-assert.equal(readerConfig.vpc, undefined)
-assert.equal(readerConfig.envVariables.CLOUDBASE_DIRECT_MYSQL_READS, undefined)
+assert.equal(functionManifest.functions[0]?.name, 'plant-user-http')
+assert.deepEqual(
+  functionManifest.routes.map(route => route.path),
+  ['/user-plants', '/user-plants/health'],
+  '函数内清单必须暴露用户植物读取与健康检查入口'
+)
 assert.match(readSource, /runCloudbaseSql/u)
 assert.doesNotMatch(
   readSource,
