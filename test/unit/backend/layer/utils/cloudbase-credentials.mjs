@@ -5,91 +5,94 @@ const require = createRequire(import.meta.url)
 const cloudbase = require('../../../../../cloudfunctions/layer/utils/cloudbase.js')
 
 const runtime = cloudbase.resolveCloudbaseCredentials({
-  TENCENTCLOUD_SECRETID: 'runtime-id',
-  TENCENTCLOUD_SECRETKEY: 'runtime-key',
-  TENCENTCLOUD_SESSIONTOKEN: 'runtime-token'
+  TENCENTCLOUD_SECRETID: '__TEST_RUNTIME_SECRET_ID__',
+  TENCENTCLOUD_SECRETKEY: '__TEST_RUNTIME_SECRET_KEY__',
+  TENCENTCLOUD_SESSIONTOKEN: '__TEST_RUNTIME_SESSION_TOKEN__'
 })
 assert.deepEqual(runtime, {
-  secretId: 'runtime-id',
-  secretKey: 'runtime-key',
-  sessionToken: 'runtime-token'
+  secretId: '__TEST_RUNTIME_SECRET_ID__',
+  secretKey: '__TEST_RUNTIME_SECRET_KEY__',
+  sessionToken: '__TEST_RUNTIME_SESSION_TOKEN__'
 })
 
 const runtimeBeforeExplicit = cloudbase.resolveCloudbaseCredentials({
-  CLOUDBASE_SECRET_ID: 'configured-id',
-  CLOUDBASE_SECRET_KEY: 'configured-key',
-  TENCENTCLOUD_SECRETID: 'runtime-id',
-  TENCENTCLOUD_SECRETKEY: 'runtime-key',
-  TENCENTCLOUD_SESSIONTOKEN: 'runtime-token'
+  CLOUDBASE_SECRET_ID: '__TEST_CONFIGURED_SECRET_ID__',
+  CLOUDBASE_SECRET_KEY: '__TEST_CONFIGURED_SECRET_KEY__',
+  TENCENTCLOUD_SECRETID: '__TEST_RUNTIME_SECRET_ID__',
+  TENCENTCLOUD_SECRETKEY: '__TEST_RUNTIME_SECRET_KEY__',
+  TENCENTCLOUD_SESSIONTOKEN: '__TEST_RUNTIME_SESSION_TOKEN__'
 })
 assert.deepEqual(runtimeBeforeExplicit, {
-  secretId: 'runtime-id',
-  secretKey: 'runtime-key',
-  sessionToken: 'runtime-token'
+  secretId: '__TEST_RUNTIME_SECRET_ID__',
+  secretKey: '__TEST_RUNTIME_SECRET_KEY__',
+  sessionToken: '__TEST_RUNTIME_SESSION_TOKEN__'
 })
 
 const officialPriority = cloudbase.resolveCloudbaseCredentials({
-  CLOUDBASE_APIKEY: 'server-api-key',
-  TENCENTCLOUD_SECRETID: 'runtime-id',
-  TENCENTCLOUD_SECRETKEY: 'runtime-key',
-  TENCENTCLOUD_SESSIONTOKEN: 'runtime-token'
+  CLOUDBASE_APIKEY: '__TEST_SERVER_API_KEY__',
+  TENCENTCLOUD_SECRETID: '__TEST_RUNTIME_SECRET_ID__',
+  TENCENTCLOUD_SECRETKEY: '__TEST_RUNTIME_SECRET_KEY__',
+  TENCENTCLOUD_SESSIONTOKEN: '__TEST_RUNTIME_SESSION_TOKEN__'
 })
 assert.deepEqual(officialPriority, {
-  secretId: 'runtime-id',
-  secretKey: 'runtime-key',
-  sessionToken: 'runtime-token'
+  secretId: '__TEST_RUNTIME_SECRET_ID__',
+  secretKey: '__TEST_RUNTIME_SECRET_KEY__',
+  sessionToken: '__TEST_RUNTIME_SESSION_TOKEN__'
 })
 
 const explicit = cloudbase.resolveCloudbaseCredentials({
-  CLOUDBASE_SECRET_ID: 'local-id',
-  CLOUDBASE_SECRET_KEY: 'local-key',
-  CLOUDBASE_TOKEN: 'local-token'
+  CLOUDBASE_SECRET_ID: '__TEST_LOCAL_SECRET_ID__',
+  CLOUDBASE_SECRET_KEY: '__TEST_LOCAL_SECRET_KEY__',
+  CLOUDBASE_TOKEN: '__TEST_LOCAL_TOKEN__'
 })
 assert.deepEqual(explicit, {
-  secretId: 'local-id',
-  secretKey: 'local-key',
-  sessionToken: 'local-token'
+  secretId: '__TEST_LOCAL_SECRET_ID__',
+  secretKey: '__TEST_LOCAL_SECRET_KEY__',
+  sessionToken: '__TEST_LOCAL_TOKEN__'
 })
 
 const apiKey = cloudbase.resolveCloudbaseCredentials({
-  CLOUDBASE_APIKEY: 'server-api-key',
+  CLOUDBASE_APIKEY: '__TEST_SERVER_API_KEY__'
 })
-assert.deepEqual(apiKey, { accessKey: 'server-api-key' })
+assert.deepEqual(apiKey, { accessKey: '__TEST_SERVER_API_KEY__' })
 
 const explicitBeforeApiKey = cloudbase.resolveCloudbaseCredentials({
-  CLOUDBASE_APIKEY: 'server-api-key',
-  CLOUDBASE_SECRET_ID: 'configured-id',
-  CLOUDBASE_SECRET_KEY: 'configured-key'
+  CLOUDBASE_APIKEY: '__TEST_SERVER_API_KEY__',
+  CLOUDBASE_SECRET_ID: '__TEST_CONFIGURED_SECRET_ID__',
+  CLOUDBASE_SECRET_KEY: '__TEST_CONFIGURED_SECRET_KEY__'
 })
 assert.deepEqual(explicitBeforeApiKey, {
-  secretId: 'configured-id',
-  secretKey: 'configured-key'
+  secretId: '__TEST_CONFIGURED_SECRET_ID__',
+  secretKey: '__TEST_CONFIGURED_SECRET_KEY__'
 })
 
 const initOptions = cloudbase.buildCloudbaseInitOptions(
   { environment: { TCB_ENV: 'cloud1_dev' } },
   {
     CLOUDBASE_ENV_ID: 'cloud1_dev',
-    TENCENTCLOUD_SECRETID: 'runtime-id',
-    TENCENTCLOUD_SECRETKEY: 'runtime-key',
-    TENCENTCLOUD_SESSIONTOKEN: 'runtime-token'
+    TENCENTCLOUD_SECRETID: '__TEST_RUNTIME_SECRET_ID__',
+    TENCENTCLOUD_SECRETKEY: '__TEST_RUNTIME_SECRET_KEY__',
+    TENCENTCLOUD_SESSIONTOKEN: '__TEST_RUNTIME_SESSION_TOKEN__'
   }
 )
 assert.equal(initOptions.env, 'cloud1_dev')
-assert.equal(initOptions.secretId, 'runtime-id')
-assert.equal(initOptions.secretKey, 'runtime-key')
-assert.equal(initOptions.sessionToken, 'runtime-token')
+assert.equal(initOptions.secretId, '__TEST_RUNTIME_SECRET_ID__')
+assert.equal(initOptions.secretKey, '__TEST_RUNTIME_SECRET_KEY__')
+assert.equal(initOptions.sessionToken, '__TEST_RUNTIME_SESSION_TOKEN__')
 
 const apiKeyInitOptions = cloudbase.buildCloudbaseInitOptions(
   { environment: { TCB_ENV: 'cloud1_dev' } },
-  { CLOUDBASE_ENV_ID: 'cloud1_dev', CLOUDBASE_APIKEY: 'server-api-key' }
+  { CLOUDBASE_ENV_ID: 'cloud1_dev', CLOUDBASE_APIKEY: '__TEST_SERVER_API_KEY__' }
 )
-assert.equal(apiKeyInitOptions.accessKey, 'server-api-key')
+assert.equal(apiKeyInitOptions.accessKey, '__TEST_SERVER_API_KEY__')
 assert.equal(apiKeyInitOptions.secretId, undefined)
 
 assert.equal(cloudbase._test.resolveRequestPort(new URL('http://cloudbase.internal/admin')), 80)
 assert.equal(cloudbase._test.resolveRequestPort(new URL('https://cloudbase.example/admin')), 443)
-assert.equal(cloudbase._test.resolveRequestPort(new URL('http://cloudbase.internal:8080/admin')), 8080)
+assert.equal(
+  cloudbase._test.resolveRequestPort(new URL('http://cloudbase.internal:8080/admin')),
+  8080
+)
 assert.equal(cloudbase._test.isRetryableRunSqlError({ code: 'ECONNRESET' }), true)
 assert.equal(cloudbase._test.isRetryableRunSqlError(new Error('read ECONNRESET')), true)
 assert.equal(cloudbase._test.isRetryableRunSqlError(new Error('SQL syntax error')), false)
