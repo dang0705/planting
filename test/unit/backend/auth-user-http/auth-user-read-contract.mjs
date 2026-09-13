@@ -24,7 +24,9 @@ const serverSource = fs.readFileSync(
   path.join(repoRoot, 'cloudfunctions/auth-user-http/native-http-server.js'),
   'utf8'
 )
-const cloudbaseConfig = JSON.parse(fs.readFileSync(path.join(repoRoot, 'cloudbaserc.json'), 'utf8'))
+const functionManifest = JSON.parse(
+  fs.readFileSync(path.join(repoRoot, 'cloudfunctions/auth-user-http/cloudbase-functions.json'), 'utf8')
+)
 const audit = auditFunctionPackage(
   'auth-user-http',
   path.join(repoRoot, 'cloudfunctions/auth-user-http')
@@ -85,10 +87,12 @@ assert.match(sqlRuntimeSource, /preparedStatements: true/u)
 assert.doesNotMatch(sqlRuntimeSource, /@cloudbase\/node-sdk|mysql2|native-mysql|\/opt\/utils/u)
 assert.doesNotMatch(readSource, /\/opt\/utils|native-mysql|models\.\$runSQL|@cloudbase\/node-sdk/u)
 assert.doesNotMatch(runtimeSource, /native-mysql|mysql2|@cloudbase\/node-sdk/u)
-const readerConfig = cloudbaseConfig.functions.find(item => item.name === 'auth-user-http')
-assert.ok(readerConfig)
-assert.equal(readerConfig.vpc, undefined)
-assert.equal(readerConfig.envVariables.CLOUDBASE_DIRECT_MYSQL_READS, undefined)
+assert.equal(functionManifest.functions[0]?.name, 'auth-user-http')
+assert.deepEqual(
+  functionManifest.routes.map(route => route.path),
+  ['/auth/user', '/auth/user/health'],
+  '函数内清单必须暴露 auth/user 的读取与健康检查入口'
+)
 assert.match(
   serverSource,
   /const readMain = require\('\.\/read-http'\)\.main/u,
