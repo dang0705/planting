@@ -96,6 +96,20 @@
   min-height: 0;
 }
 
+.diagnose-flow-root {
+  height: 100%;
+  min-height: 0;
+}
+
+.diagnose-flow-root--intake {
+  overflow: hidden;
+}
+
+.diagnose-flow-content--intake {
+  box-sizing: border-box;
+  padding-top: calc(80px - var(--app-header-height));
+}
+
 .popup-footer {
   padding: 0;
   border: 0;
@@ -103,17 +117,85 @@
 }
 
 .diagnose-flow-content--with-sticky-footer {
-  padding-bottom: 112px;
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 0;
 }
 
 .diagnose-flow-footer--sticky {
-  position: fixed;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+}
+
+.diagnose-flow-footer {
+  flex-shrink: 0;
+}
+
+.diagnose-uploaded-image-list {
+  display: flex;
+  gap: 8px;
+  height: 80px;
+  box-sizing: border-box;
+  overflow: hidden;
+  padding-bottom: 16px;
+}
+
+.diagnose-uploaded-image {
+  position: relative;
+  flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.diagnose-uploaded-image-label {
+  position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 20;
   box-sizing: border-box;
-  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  min-height: 18px;
+  padding: 2px 4px;
+  background: rgba(0, 0, 0, 0.48);
+  color: #ffffff;
+  font-size: 10px;
+  line-height: 14px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.diagnose-uploaded-image-status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.78);
+  color: #2d6a4f;
+  font-size: 10px;
+  line-height: 14px;
+  text-align: center;
+}
+
+.diagnose-uploaded-image-status--error {
+  background: rgba(211, 47, 47, 0.88);
+  color: #ffffff;
+}
+
+.diagnose-submit-button-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 48px;
+  box-sizing: border-box;
+  margin: 0;
+  line-height: 24px;
+  text-align: center;
 }
 
 .slot-grid {

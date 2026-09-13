@@ -5,6 +5,7 @@ const { ANSWER_EFFECTS, OUTCOMES, ACTION_PROFILES } = require('./yellow-leaf-pac
 const { parseDiagnosisAirEnvironmentSidecar } = require('./diagnosis-air-environment-fast')
 const { getStartQuestionPackage } = require('./start-question-package-runtime-data')
 const { dispatchDeferredPersistence } = require('./deferred-persistence-dispatcher')
+const { normalizeActionProfile } = require('../domain/action-guidance-contract')
 
 const YELLOW_LEAF_MODES = new Set([
   'yellow_leaf',
@@ -71,22 +72,6 @@ function fromPublicId(prefix, value = '') {
     .replace(/\//g, '_')
     .replace(/=+$/g, '')
   return decoded && roundTrip === encoded ? decoded : ''
-}
-
-function parsePayload(request = {}) {
-  const body = request?.body
-  if (body && typeof body === 'object' && !Array.isArray(body)) {
-    return body
-  }
-  if (typeof body === 'string') {
-    try {
-      const parsed = JSON.parse(body)
-      return parsed && typeof parsed === 'object' ? parsed : {}
-    } catch {
-      return {}
-    }
-  }
-  return {}
 }
 
 function verifyContinuationToken(token, openid, sessionId) {
@@ -215,15 +200,34 @@ function buildHydrationEffects(environmentCareContext) {
   const summary = environmentCareContext?.behaviorSummary10d
   const wetPressureLoad = Number(summary?.wetPressureLoad)
   const thoroughCount = Number(summary?.thoroughWateringCount10d)
+  const rootWateringEventCount = Number(summary?.rootWateringEventCount10d)
   const lastEffectiveDaysAgo = Number(summary?.lastEffectiveRootWateredDaysAgo)
   if (!summary || !Number.isFinite(wetPressureLoad)) {
     return []
   }
-  if (wetPressureLoad >= 0.7 && thoroughCount >= 2) {
-    return [{ questionKey: 'hydration_evidence', optionKey: 'thorough_wet_pressure', outcomeKey: 'overwatering_root_pressure', routeKey: 'watering_root_pressure_route', effectType: 'support', effectStrength: 2 }]
+  // 黄叶诊断关注近期行为模式；重复高剂量浇水不能被提醒器的当前湿压衰减抵消。
+  const repeatedHighDoseWatering = thoroughCount >= 2
+  const frequentRootWatering =
+    Number.isFinite(rootWateringEventCount) && rootWateringEventCount >= 3
+  if (repeatedHighDoseWatering || (wetPressureLoad >= 0.7 && frequentRootWatering)) {
+    return [{
+      questionKey: 'hydration_evidence',
+      optionKey: repeatedHighDoseWatering ? 'repeated_high_dose_watering' : 'frequent_wet_pressure',
+      outcomeKey: 'overwatering_root_pressure',
+      routeKey: 'watering_root_pressure_route',
+      effectType: 'support',
+      effectStrength: 2
+    }]
   }
-  if (wetPressureLoad >= 0.5 && thoroughCount >= 1) {
-    return [{ questionKey: 'hydration_evidence', optionKey: 'moderate_wet_pressure', outcomeKey: 'overwatering_root_pressure', routeKey: 'watering_root_pressure_route', effectType: 'support', effectStrength: 1.5 }]
+  if (wetPressureLoad >= 0.5 && (thoroughCount >= 1 || frequentRootWatering)) {
+    return [{
+      questionKey: 'hydration_evidence',
+      optionKey: thoroughCount >= 1 ? 'moderate_wet_pressure' : 'frequent_wet_pressure',
+      outcomeKey: 'overwatering_root_pressure',
+      routeKey: 'watering_root_pressure_route',
+      effectType: 'support',
+      effectStrength: 1.5
+    }]
   }
   if (wetPressureLoad <= 0.2 && lastEffectiveDaysAgo >= 7) {
     return [{ questionKey: 'hydration_evidence', optionKey: 'dry_low_pressure', outcomeKey: 'overwatering_root_pressure', routeKey: 'watering_root_pressure_route', effectType: 'weaken', effectStrength: 0.5 }]
@@ -261,11 +265,24 @@ function buildScoreMap(effects, answers) {
     .sort((left, right) => right.score - left.score || left.outcomeKey.localeCompare(right.outcomeKey))
 }
 
+function buildRuntimeRouteAnswers(answers, environmentCareContext, runtimeModule) {
+  const safeAnswers = Array.isArray(answers) ? answers : []
+  const bridge = runtimeModule?.buildRouteAnswersFromRuntimeEnvironmentCarePayload
+  if (typeof bridge !== 'function') {
+    return safeAnswers
+  }
+  return bridge({
+    answers: safeAnswers,
+    runtimeEnvironmentCarePayload: { environmentCareContext }
+  })
+}
+
 function uniqueTexts(items = []) {
   return Array.from(new Set((Array.isArray(items) ? items : []).map(text).filter(Boolean)))
 }
 
 function buildVisibleOutcome(outcome, profile) {
+  const normalizedProfile = normalizeActionProfile(profile)
   return {
     outcomeKey: text(outcome?.outcomeKey),
     problemKey: text(outcome?.sourceProblemKey || outcome?.outcomeKey),
@@ -282,8 +299,17 @@ function buildVisibleOutcome(outcome, profile) {
         profile?.action_profile_key ||
         ''
     ),
-    actionAdviceItems: uniqueTexts(profile?.todayActions),
-    avoidAdviceItems: uniqueTexts(profile?.avoidActions)
+    actionAdviceItems: uniqueTexts([
+      ...normalizedProfile.todayActions,
+      ...normalizedProfile.threeDayActions,
+      ...normalizedProfile.sevenDayObserve
+    ]),
+    avoidAdviceItems: uniqueTexts([
+      ...normalizedProfile.avoidActions,
+      ...normalizedProfile.retakeOrEscalate
+    ]),
+    actionItems: normalizedProfile.actionItems,
+    avoidActionItems: normalizedProfile.actionItems.filter(item => item.stage === 'avoid')
   }
 }
 
@@ -314,7 +340,9 @@ function buildClientContext(payload = {}) {
   const result = {}
   for (const key of ['source', 'platform', 'reviewSourceType', 'visualInputVersion', 'diagnosisProfile', 'entrySource']) {
     const value = text(source?.[key])
-    if (value) result[key] = value
+    if (value) {
+      result[key] = value
+    }
   }
   return Object.keys(result).length ? result : null
 }
@@ -399,28 +427,33 @@ async function handleYellowLeafAnswer({ payload = {}, identity = {} } = {}) {
   // 不要仅因题目类型或天气预取加载完整环境运行时，避免冷请求把无效计算串到首包。
   const runtimeInputsExist = hasSubmittedEnvironmentCareInput(payload)
   let environmentCareContext = null
+  let runtimeModule = null
   if (runtimeInputsExist) {
     const dynamicRequire = eval('require')
-    const { resolveRuntimeEnvironmentCarePayload } = dynamicRequire('./care-runtime.js')
-    environmentCareContext = resolveRuntimeEnvironmentCarePayload({
+    runtimeModule = dynamicRequire('./care-runtime.js')
+    environmentCareContext = runtimeModule.resolveRuntimeEnvironmentCarePayload({
       payload,
       sessionState,
       plantContext: sessionState.plantContext || {}
     }).environmentCareContext
   }
 
-  const wateringContext = text(environmentCareContext?.outputs?.wateringContext)
-  const effects = ANSWER_EFFECTS.map(effect => {
-    if (effect.optionKey !== 'care_behavior_timeline' || !wateringContext) return effect
-    const optionKey = wateringContext === 'likely_too_wet' ? 'often_wet' : wateringContext === 'likely_too_dry' ? 'often_dry' : 'normal_or_stable'
-    return { ...effect, optionKey }
-  })
+  const routeAnswers = buildRuntimeRouteAnswers(answers, environmentCareContext, runtimeModule)
   const scores = buildScoreMap([
     ...buildLightHealthEffects(environmentCareContext),
     ...buildHydrationEffects(environmentCareContext),
-    ...effects
-  ], answers)
+    ...ANSWER_EFFECTS
+  ], routeAnswers)
   const visibleOutcomes = scores.map(item => buildVisibleOutcome(OUTCOMES[item.outcomeKey], ACTION_PROFILES[OUTCOMES[item.outcomeKey]?.actionProfileKey])).filter(item => item.outcomeKey)
+  const actionItems = Array.from(
+    new Map(
+      visibleOutcomes
+        .flatMap(item => item.actionItems || [])
+        .filter(item => item?.id)
+        .map(item => [item.id, item])
+    ).values()
+  )
+  const avoidActionItems = actionItems.filter(item => item.stage === 'avoid')
   const primary = visibleOutcomes[0] || null
   const outcomeType = visibleOutcomes.length ? 'problematic' : 'uncertain'
   const round = (Number(text(continuation.roundId).replace('round_', '')) || 1) + 1
@@ -459,6 +492,8 @@ async function handleYellowLeafAnswer({ payload = {}, identity = {} } = {}) {
         sevenDayObserve: visibleOutcomes.length ? ['连续观察 3-5 天，记录黄叶是否继续扩大。'] : [],
         avoidActions: uniqueTexts(visibleOutcomes.flatMap(item => item.avoidAdviceItems)),
         retakeOrEscalate: [],
+        actionItems,
+        avoidActionItems,
         conflictDetected: false
       }
     },
@@ -522,5 +557,11 @@ async function handleYellowLeafAnswer({ payload = {}, identity = {} } = {}) {
 
 module.exports = {
   handleYellowLeafAnswer,
-  _test: { hasSubmittedEnvironmentCareInput, buildVisibleOutcome }
+  _test: {
+    hasSubmittedEnvironmentCareInput,
+    buildVisibleOutcome,
+    buildRuntimeRouteAnswers,
+    buildHydrationEffects,
+    buildScoreMap
+  }
 }

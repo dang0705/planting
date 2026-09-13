@@ -179,6 +179,16 @@ const visualAdapter = {
       adapterOptions = options
     }
     const { onText } = options
+    if (isPixelBudgetFixture) {
+      options.onPromptReady?.({
+        model: 'qwen3.5-plus',
+        modelIdentity: 'cloudbase_qwen_vl:qwen3.5-plus',
+        promptText: 'unit actual visual prompt',
+        promptLength: 26,
+        promptCacheStrategy: { enabled: true },
+        promptDebugMeta: { promptCacheStaticPrefixHash: 'static_hash' }
+      })
+    }
     for (const chunk of streamedContent) {
       onText?.(chunk, chunk)
     }
@@ -270,12 +280,27 @@ try {
     onVisualEvent: (event, payload) => visualEvents.push({ event, payload })
   })
   const eventNames = visualEvents.map(item => item.event)
-  assert.deepEqual(eventNames.slice(0, 4), [
+  assert.deepEqual(eventNames.slice(0, 5), [
     'visual_input_ready',
     'visual_model_started',
+    'visual_model_prompt_ready',
     'visual_model_response_started',
     'visual_model_complete'
   ])
+  const promptReadyEvent = visualEvents.find(item => item.event === 'visual_model_prompt_ready')
+  assert.deepEqual(promptReadyEvent?.payload, {
+    sessionId: 'diag_pixel_trace_1',
+    visualCallBatchId: promptReadyEvent?.payload?.visualCallBatchId,
+    imageIndex: 0,
+    imageId: promptReadyEvent?.payload?.imageId,
+    promptText: 'unit actual visual prompt',
+    promptLength: 26,
+    promptCacheStrategy: { enabled: true },
+    promptDebugMeta: { promptCacheStaticPrefixHash: 'static_hash' },
+    model: 'qwen3.5-plus',
+    modelIdentity: 'cloudbase_qwen_vl:qwen3.5-plus'
+  })
+  assert.ok(promptReadyEvent?.payload?.imageId)
   const firstContentEvents = visualEvents.filter(
     item => item.event === 'visual_model_response_started'
   )
@@ -285,7 +310,10 @@ try {
     visualCallBatchId: firstContentEvents[0].payload.visualCallBatchId,
     imageCount: 1
   })
-  assert.doesNotMatch(JSON.stringify(firstContentEvents[0].payload), /normalized_organ|content|chunk/)
+  assert.doesNotMatch(
+    JSON.stringify(firstContentEvents[0].payload),
+    /normalized_organ|content|chunk/
+  )
   assert.deepEqual(batchResult.usageSummary, {
     imageCount: 1,
     inputTokens: 1200,
@@ -294,6 +322,8 @@ try {
     cachedTokens: 900,
     cacheCreationTokens: 0,
     cacheMissTokens: 300,
+    cacheMetricAvailable: 0,
+    cacheMetricMissingCount: 1,
     reasoningTokens: null,
     providerPromptTextTokens: null,
     providerPromptImageTokens: null,
@@ -308,6 +338,8 @@ try {
         cachedTokens: 900,
         cacheCreationTokens: 0,
         cacheMissTokens: 300,
+        cacheMetricAvailable: 0,
+        cacheEvidenceStatus: 'unreported',
         providerPromptTextTokens: null,
         providerPromptImageTokens: null
       }
@@ -317,6 +349,24 @@ try {
   assert.equal(batchResult.aiDebug[0].formattedPrompt, '')
   assert.equal(batchResult.aiDebug[0].rawTextOutput, '{"normalized_organ":"leaf"}')
   assert.deepEqual(batchResult.aiDebug[0].rawStructuredOutput, { normalized_organ: 'leaf' })
+  const modelCompleteEvent = visualEvents.find(item => item.event === 'visual_model_complete')
+  assert.deepEqual(modelCompleteEvent?.payload?.modelBusinessData, [
+    {
+      imageIndex: 0,
+      imageId: null,
+      rawTextOutput: '{"normalized_organ":"leaf"}',
+      rawStructuredOutput: { normalized_organ: 'leaf' },
+      usage: {
+        promptTokens: 1200,
+        completionTokens: 48,
+        totalTokens: 1248,
+        promptCacheHitTokens: 900,
+        promptCacheCreationInputTokens: 0,
+        promptCacheMissTokens: 300
+      },
+      promptCache: null
+    }
+  ])
 
   const leafAndSoilInputs = resolveVisualImageInputs({
     images: [
@@ -366,8 +416,14 @@ const llmSource = fs.readFileSync(
   require.resolve('../../../../../cloudfunctions/diagnose-http/utils/llm.js'),
   'utf8'
 )
-assert.match(adapterSource, /callLLMDiagnose\(\[imageRuntimeInput\], \{ onText, sessionId \}\)/)
-assert.match(llmSource, /cloudBaseClient\.callStream\(messages, \{ onText, timeoutMs, sessionId \}\)/)
+assert.match(
+  adapterSource,
+  /callLLMDiagnose\(\[imageRuntimeInput\], \{ onText, onPromptReady, sessionId \}\)/
+)
+assert.match(
+  llmSource,
+  /cloudBaseClient\.callStream\(messages, \{ onText, timeoutMs, sessionId \}\)/
+)
 const rawImageInsert = sqlCalls.find(item =>
   item.sql.includes('INSERT INTO visual_raw_image_records')
 )

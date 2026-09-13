@@ -107,14 +107,6 @@
       ]
     },
     {
-      "id": "page.subpackages.diagnosis.result",
-      "route": "subpackages/diagnosis/result",
-      "kind": "page",
-      "tabbar": false,
-      "acceptance_modes": ["live", "diagnostic"],
-      "catalog_ids": ["diagnosis.yellowing.no_image_quick", "diagnosis.pest.visual_mode_retake"]
-    },
-    {
       "id": "page.subpackages.care.watering-advisor",
       "route": "subpackages/care/watering-advisor/watering-advisor",
       "kind": "page",

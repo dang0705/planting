@@ -43,8 +43,6 @@ export function useDiagnoseComputed(ctx) {
     popup,
     result,
     visualScanning,
-    showAIDialog,
-    aiStreamDialogRef,
     pendingDiagnosePayload,
     casePreviewImages,
     questionAnswers,
@@ -217,8 +215,8 @@ export function useDiagnoseComputed(ctx) {
       !result.value &&
       Boolean(
         visualScanning.value ||
-          diagnoseMutation.isPending?.value ||
-          diagnoseMutation.isLoading?.value
+        diagnoseMutation.isPending?.value ||
+        diagnoseMutation.isLoading?.value
       )
   )
 
@@ -341,12 +339,23 @@ export function useDiagnoseComputed(ctx) {
   )
 
   const actionAdviceTexts = computed(() => {
+    const actionAdvice = result.value?.actionAdvice || {}
     const explanation = result.value?.explanation || result.value?.resultExplanation || {}
     const nextSteps = Array.isArray(result.value?.nextSteps)
       ? result.value.nextSteps.map(item => String(item?.text || '').trim()).filter(Boolean)
       : []
+    const structuredAdvice = Array.isArray(actionAdvice.actionItems)
+      ? actionAdvice.actionItems
+          .filter(item => item?.stage !== 'avoid')
+          .map(item => String(item?.text || item?.textCn || item?.text_cn || '').trim())
+          .filter(Boolean)
+      : []
     const treatmentText = String(result.value?.treatmentText || explanation?.firstAid || '').trim()
-    return uniqueStrings([...nextSteps, ...(treatmentText ? [treatmentText] : [])])
+    return uniqueStrings([
+      ...structuredAdvice,
+      ...nextSteps,
+      ...(treatmentText ? [treatmentText] : [])
+    ])
   })
 
   const resultMainIssueText = computed(() => formatOutcomeDisplayLabel(result.value?.mainIssueText))
@@ -354,12 +363,27 @@ export function useDiagnoseComputed(ctx) {
   const resultSummaryText = computed(() => formatOutcomeDisplayLabel(result.value?.summaryText))
 
   const avoidAdviceTexts = computed(() => {
+    const actionAdvice = result.value?.actionAdvice || {}
     const explanation = result.value?.explanation || result.value?.resultExplanation || {}
     const whatToAvoid = Array.isArray(result.value?.whatToAvoid)
       ? result.value.whatToAvoid.map(item => String(item || '').trim()).filter(Boolean)
       : []
+    const structuredAvoidAdvice = Array.isArray(actionAdvice.avoidActionItems)
+      ? actionAdvice.avoidActionItems
+          .map(item => String(item?.text || item?.textCn || item?.text_cn || '').trim())
+          .filter(Boolean)
+      : Array.isArray(actionAdvice.actionItems)
+        ? actionAdvice.actionItems
+            .filter(item => item?.stage === 'avoid')
+            .map(item => String(item?.text || item?.textCn || item?.text_cn || '').trim())
+            .filter(Boolean)
+        : []
     const preventionText = String(result.value?.preventionText || explanation?.avoid || '').trim()
-    return uniqueStrings([...whatToAvoid, ...(preventionText ? [preventionText] : [])])
+    return uniqueStrings([
+      ...structuredAvoidAdvice,
+      ...whatToAvoid,
+      ...(preventionText ? [preventionText] : [])
+    ])
   })
 
   const visibleOutcomeSource = computed(() =>

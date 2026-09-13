@@ -10,8 +10,6 @@ export function useDiagnoseFlowActions(ctx) {
     diagnoseStore,
     popup,
     result,
-    showAIDialog,
-    aiStreamDialogRef,
     pendingDiagnosePayload,
     casePreviewImages,
     questionAnswers,
@@ -266,7 +264,7 @@ export function useDiagnoseFlowActions(ctx) {
 
   function handleSymptomClassQuickSelect(option = null) {
     if (selectedDiagnosisProfile.value === 'pest') {
-      uni.showToast({ title: '只看虫害需要先上传照片', icon: 'none' })
+      uni.showToast({ title: '请先上传照片', icon: 'none' })
       return
     }
     selectDevSymptomClass(option?.classKey || '')
@@ -275,7 +273,7 @@ export function useDiagnoseFlowActions(ctx) {
   async function startQuestionDiagnosisFromSymptomClass() {
     const option = selectedDevSymptomClassOption.value
     if (selectedDiagnosisProfile.value === 'pest') {
-      uni.showToast({ title: '只看虫害需要先上传照片', icon: 'none' })
+      uni.showToast({ title: '请先上传照片', icon: 'none' })
       return
     }
     if (!option) {

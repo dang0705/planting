@@ -12,7 +12,8 @@ import {
   normalizeOutputEligibility,
   normalizeDiagnosticTrace,
   normalizeCoreProcess
-} from './client-normalizers'
+} from './client-normalizers.js'
+import { normalizeObservedSymptoms } from '../../utils/diagnose-evidence-normalizers.js'
 
 function normalizeHistoryAdviceSteps(detail = {}, explanation = {}) {
   const directSteps = Array.isArray(detail.nextSteps) ? detail.nextSteps : []
@@ -67,6 +68,9 @@ function normalizeHistoryDetail(detail) {
     const hasActiveQuestions =
       String(detail.stage || '').toLowerCase() === 'question_package' ||
       questions.some(item => String(item?.status || '').toLowerCase() === 'pending')
+    const observedSymptoms = normalizeObservedSymptoms(
+      detail.observedSymptoms || detail.symptoms
+    )
     const observedEvidenceSet = normalizeObservedEvidenceSet(detail.observedEvidenceSet)
     const derivedEvidenceSet = normalizeDerivedEvidenceSet(detail.derivedEvidenceSet)
     const diagnosisDirections = normalizeDiagnosisDirections(detail.diagnosisDirections)
@@ -85,7 +89,7 @@ function normalizeHistoryDetail(detail) {
       null
     const coreProcess = normalizeCoreProcess(detail.coreProcess, {
       latestVisualCallBatchId: detail.latestVisualCallBatchId || null,
-      observedSymptoms: Array.isArray(detail.observedSymptoms) ? detail.observedSymptoms : [],
+      observedSymptoms,
       observedEvidenceSet,
       derivedEvidenceSet,
       diagnosisDirections,
@@ -121,7 +125,7 @@ function normalizeHistoryDetail(detail) {
       routePrimaryAction: detail.routePrimaryAction || '',
       identityResolutionStatus: detail.identityResolutionStatus || '',
       explanation,
-      observedSymptoms: Array.isArray(detail.observedSymptoms) ? detail.observedSymptoms : [],
+      observedSymptoms,
       observedEvidenceSet,
       derivedEvidenceSet,
       diagnosisDirections,
@@ -176,6 +180,7 @@ function normalizeHistoryDetail(detail) {
 
   const diagnosisSessionId = detail._id || detail.diagnosisSessionId || ''
   const summary = String(detail.summary || '').trim()
+  const observedSymptoms = normalizeObservedSymptoms(detail.symptoms)
 
   return {
     resultId: diagnosisSessionId,
@@ -189,7 +194,7 @@ function normalizeHistoryDetail(detail) {
     status: 'closed',
     finalResult: {
       problemId: detail.topProblemKey || '',
-      displayName: detail.finalProblemCn || detail.topProblemKey || '待进一步确认',
+      displayName: detail.finalProblemCn || '待进一步确认',
       summary,
       severity: detail.healthStatus === 'danger' ? 'high' : 'medium',
       urgency: 'medium'
@@ -200,14 +205,7 @@ function normalizeHistoryDetail(detail) {
       firstAid: detail.treatment || '',
       avoid: detail.prevention || ''
     },
-    observedSymptoms: Array.isArray(detail.symptoms)
-      ? detail.symptoms.map(item => ({
-          symptomKey: item?.symptomKey || '',
-          symptomCn: item?.symptomCn || item?.symptomKey || '',
-          confidence: Number(item?.confidence || 0),
-          source: item?.evidenceSource || 'history'
-        }))
-      : [],
+    observedSymptoms,
     observedEvidenceSet: [],
     derivedEvidenceSet: [],
     diagnosisDirections: [],
@@ -227,14 +225,7 @@ function normalizeHistoryDetail(detail) {
     diagnosticTrace: [],
     coreProcess: normalizeCoreProcess(null, {
       latestVisualCallBatchId: detail.latestVisualCallBatchId || null,
-      observedSymptoms: Array.isArray(detail.symptoms)
-        ? detail.symptoms.map(item => ({
-            symptomKey: item?.symptomKey || '',
-            symptomCn: item?.symptomCn || item?.symptomKey || '',
-            confidence: Number(item?.confidence || 0),
-            source: item?.evidenceSource || 'history'
-          }))
-        : [],
+      observedSymptoms,
       observedEvidenceSet: [],
       derivedEvidenceSet: [],
       diagnosisDirections: [],

@@ -16,12 +16,17 @@ const {
   runWithQuotaGuard
 } = require('../services/request-guard')
 const { withQuestionTextConservative } = require('../app/request-normalizers')
+const {
+  buildVisualDebugPayload,
+  buildVisualEventDisplayText
+} = require('../utils/diagnosis-start-stream')
 
 const VISUAL_SSE_EVENT_NAMES = new Set([
   'visual_preparing',
   'visual_session_created',
   'visual_input_ready',
   'visual_model_started',
+  'visual_model_prompt_ready',
   'visual_model_response_started',
   'visual_model_complete',
   'visual_decision_ready',
@@ -76,7 +81,14 @@ function buildErrorPayload(error, fallbackMessage = '请求失败') {
 
 function createVisualSseEmitter(sse) {
   let terminalEventSent = false
-  const buildEvent = (event, data = {}) => ({ event, data: { event, ...data } })
+  const buildEvent = (event, data = {}) => {
+    const eventData = { event, ...data }
+    const displayText = buildVisualEventDisplayText(event, eventData)
+    if (displayText) {
+      eventData.displayText = displayText
+    }
+    return { event, data: eventData }
+  }
 
   return {
     send(event, data = {}) {
@@ -96,7 +108,13 @@ function createVisualSseEmitter(sse) {
   }
 }
 
-async function executeDiagnosisStart(request, payload, principal, onVisualEvent) {
+async function executeDiagnosisStart(
+  request,
+  payload,
+  principal,
+  onVisualEvent,
+  { includeVisualDebug = false } = {}
+) {
   assertAuthenticatedUser({ ...principal, message: '请先登录' })
   await getRefactorReadiness().ensureDiagnosisStartRefactorReady()
   const executed = await runWithQuotaGuard({
@@ -116,6 +134,12 @@ async function executeDiagnosisStart(request, payload, principal, onVisualEvent)
     sessionId: executed.sessionId || frontendData?.diagnosisSessionId || null,
     streamed: typeof onVisualEvent === 'function'
   })
+  if (includeVisualDebug) {
+    return {
+      frontendData,
+      visualDebug: buildVisualDebugPayload(executed, frontendData)
+    }
+  }
   return frontendData
 }
 
@@ -139,10 +163,17 @@ async function handleDiagnosisStartStream(request, context, payload) {
   emitter.send('visual_preparing')
   try {
     const principal = await resolveRequestPrincipal({ request, context, payload })
-    const data = await executeDiagnosisStart(request, payload, principal, (event, eventData) =>
-      emitter.send(event, eventData)
+    const execution = await executeDiagnosisStart(
+      request,
+      payload,
+      principal,
+      (event, eventData) => emitter.send(event, eventData),
+      { includeVisualDebug: true }
     )
-    emitter.end('done', { data })
+    emitter.end('done', {
+      data: execution.frontendData,
+      diagnosisDebug: execution.visualDebug
+    })
   } catch (error) {
     emitter.end('error', buildErrorPayload(error, '诊断开始失败'))
   }
@@ -210,14 +241,19 @@ async function handleDiagnosisQuestionStart(request, context, payload, resolvedP
       plantIdentityId: executed.plantIdentityId || hydratedResponse.plantIdentityId || '',
       latestVisualCallBatchId:
         executed.latestVisualCallBatchId ?? hydratedResponse.latestVisualCallBatchId ?? null
-      })
+    })
     timing?.mark('response-ready')
     timing?.finish({ statusCode: 200 })
+
+    const data = buildFrontendResponse(hydratedPublicResponse)
+    if (executed.questionPackageContinuationToken) {
+      data.questionPackageContinuationToken = executed.questionPackageContinuationToken
+    }
 
     return jsonResponse(200, {
       code: 200,
       message: '问诊初始化成功',
-      data: buildFrontendResponse(hydratedPublicResponse)
+      data
     })
   } catch (error) {
     timing?.finish({ statusCode: Number(error?.statusCode || 500), failed: true })

@@ -11,6 +11,7 @@ import {
   useUserStore
 } from './deps.js'
 import { DIAGNOSIS_IMAGE_UPLOAD_OPTIONS } from '@/utils/diagnosis-image-uploader-options.js'
+import { VISUAL_SCAN_LOADING_TEXT } from './constants.js'
 
 export function createDiagnoseFlowState() {
   const userStore = useUserStore()
@@ -18,8 +19,7 @@ export function createDiagnoseFlowState() {
   const popup = ref(null)
   const result = ref(null)
   const visualScanning = ref(false)
-  const showAIDialog = ref(false)
-  const aiStreamDialogRef = ref(null)
+  const visualScanText = ref(VISUAL_SCAN_LOADING_TEXT)
   const pendingDiagnosePayload = ref(null)
   const casePreviewImages = ref([])
   const questionAnswers = ref({})
@@ -71,8 +71,7 @@ export function createDiagnoseFlowState() {
     popup,
     result,
     visualScanning,
-    showAIDialog,
-    aiStreamDialogRef,
+    visualScanText,
     pendingDiagnosePayload,
     casePreviewImages,
     questionAnswers,

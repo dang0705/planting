@@ -6,6 +6,7 @@ const {
   resolvePestVisualRouteRoundResult,
   resolveSpecificPestRoundResult
 } = require('./diagnosis-answer-retake-runtime')
+const { loadActionProfilesByMode } = require('./action-guidance-loader')
 
 async function resolveSpecializedAnswerRoundResults({
   isTerminalQuestionPackageSubmit = false,
@@ -59,8 +60,14 @@ async function resolveSpecializedAnswerRoundResults({
           routeAnswerEffects: runtimeRouteAnswerEffects,
           questionPackageRuntimeData,
           visualAggregateResult
-        })
+      })
       : null
+  const specificPestModeKeys = [
+    ...(Array.isArray(questionPackage?.candidateModes) ? questionPackage.candidateModes : []),
+    ...(Array.isArray(questionPackageSnapshot?.candidateModes)
+      ? questionPackageSnapshot.candidateModes
+      : [])
+  ]
   const specificPestRoundResult = resolveSpecificPestRoundResult({
     isTerminalQuestionPackageSubmit,
     wiltingDroopRoundResult,
@@ -72,7 +79,8 @@ async function resolveSpecializedAnswerRoundResults({
     answerRound,
     round,
     refreshedSessionState,
-    sessionState
+    sessionState,
+    actionProfilesByMode: await loadActionProfilesByMode(specificPestModeKeys)
   })
   const pestVisualRouteRoundResult = await resolvePestVisualRouteRoundResult({
     visualExtraction,

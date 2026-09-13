@@ -71,6 +71,13 @@ function getOutOfPoolHandlers() {
 
 function publicRouteError(error) {
   const statusCode = Number(error?.statusCode || 0)
+  if (error?.code === 'SOIL_VISUAL_UNAVAILABLE') {
+    return jsonResponse(503, {
+      code: error.code,
+      message: '盆土分析暂时不可用，请稍后重试。',
+      data: null
+    })
+  }
   if (statusCode < 400 || statusCode >= 500) {
     return null
   }
@@ -203,6 +210,32 @@ async function main(event, context) {
       throw error
     }
     assertPlatformFeature(identity, path)
+
+    if (path.includes('/watering/soil-evidence')) {
+      const {
+        analyzeWateringSoilEvidence,
+        cleanupTemporaryWateringSoilEvidence
+      } = require('../services/watering-soil-visual-service')
+      if (method === 'DELETE') {
+        await cleanupTemporaryWateringSoilEvidence({
+          openid: identity.openid,
+          evidenceId: payload.evidenceId
+        })
+        return jsonResponse(200, { code: 200, message: '已清理', data: null })
+      }
+      if (method !== 'POST') {
+        return methodNotAllowed(method)
+      }
+      const result = await analyzeWateringSoilEvidence({
+        openid: identity.openid,
+        payload
+      })
+      return jsonResponse(result.code || 200, {
+        code: result.code || 200,
+        message: '盆土照片已分析',
+        data: result.data || null
+      })
+    }
 
     // 保留活动契约中的兼容入口：旧脚本仍通过 /stream/diagnose 发起 SSE，
     // /diagnose 则是历史同步入口。两者都必须复用 diagnosis/start，避免出现

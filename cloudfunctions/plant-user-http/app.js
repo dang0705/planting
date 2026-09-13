@@ -105,6 +105,14 @@ function loadWateringAdvisorService() {
   return wateringAdvisorService
 }
 
+let wateringSoilEvidenceService
+function loadWateringSoilEvidenceService() {
+  if (!wateringSoilEvidenceService) {
+    wateringSoilEvidenceService = require('./watering-soil-evidence-service')
+  }
+  return wateringSoilEvidenceService
+}
+
 let transpiration
 function loadTranspiration() {
   if (!transpiration) {
@@ -559,21 +567,32 @@ async function main(event, context) {
           }
         }
         // compute
-        const result = await loadWateringPlannerService().computeAdhocPlanner({
-          openid,
-          catalogPlantId: String(request.body.catalogPlantId || '').trim(),
-          potProfile: request.body.potProfile || null,
-          weatherDays: Array.isArray(request.body.weatherDays) ? request.body.weatherDays : [],
-          forecastDays: Array.isArray(request.body.forecastDays) ? request.body.forecastDays : [],
-          referenceDate: request.body.referenceDate || '',
-          locationKey: String(request.body.locationKey || '').trim(),
-          timezone: String(request.body.timezone || 'Asia/Shanghai').trim() || 'Asia/Shanghai',
-          lightEnvironment: request.body.lightEnvironment || null,
-          airEnvironmentOverride: request.body.airEnvironmentOverride || null,
-          wateringEvents: Array.isArray(request.body.wateringEvents)
-            ? request.body.wateringEvents
-            : []
-        })
+        const soilEvidenceId = String(request.body.soilEvidenceId || '').trim()
+        let result
+        try {
+          result = await loadWateringPlannerService().computeAdhocPlanner({
+            openid,
+            catalogPlantId: String(request.body.catalogPlantId || '').trim(),
+            potProfile: request.body.potProfile || null,
+            weatherDays: Array.isArray(request.body.weatherDays) ? request.body.weatherDays : [],
+            forecastDays: Array.isArray(request.body.forecastDays) ? request.body.forecastDays : [],
+            referenceDate: request.body.referenceDate || '',
+            locationKey: String(request.body.locationKey || '').trim(),
+            timezone: String(request.body.timezone || 'Asia/Shanghai').trim() || 'Asia/Shanghai',
+            lightEnvironment: request.body.lightEnvironment || null,
+            airEnvironmentOverride: request.body.airEnvironmentOverride || null,
+            wateringEvents: Array.isArray(request.body.wateringEvents)
+              ? request.body.wateringEvents
+              : [],
+            soilEvidenceId,
+            manualSoilConfirmed: request.body.manualSoilConfirmed === true
+          })
+        } finally {
+          await loadWateringSoilEvidenceService().cleanupTemporarySoilEvidence({
+            openid,
+            evidenceId: soilEvidenceId
+          })
+        }
         return jsonResponse(result.statusCode, {
           code: result.statusCode,
           message: result.error || '计算成功',
@@ -723,6 +742,22 @@ async function main(event, context) {
         referenceDate,
         transpirationIntervalFactor: transpiration.intervalFactor
       })
+      const soilEvidenceService = loadWateringSoilEvidenceService()
+      const { plan: fusedPlan } = await soilEvidenceService.applySoilEvidence({
+        openid,
+        evidenceId: String(request.body.soilEvidenceId || '').trim(),
+        plantId,
+        manualConfirmed: request.body.manualSoilConfirmed === true,
+        plan
+      })
+      if (fusedPlan.visualSoilEvidence?.outcome === 'wet_hold') {
+        try {
+          await loadWateringReminderService().pauseWateringReminderForSoilWetness(openid, plantId)
+        } catch (error) {
+          // 提醒暂停不应覆盖更关键的“本次不要浇水”结论；保留服务端日志供补偿处理。
+          console.warn('watering reminder pause after wet soil evidence failed:', error?.message || error)
+        }
+      }
 
       // 影子模式：计算 candidate（computedFactor）的 BASELINE 日期/窗口，用于比较但不影响业务结果。
       let candidateNextWaterDate = null
@@ -747,22 +782,24 @@ async function main(event, context) {
         code: 200,
         data: {
           planId,
-          nextWaterDate: plan.nextWaterDate,
-          nextWaterWindow: plan.nextWaterWindow,
-          nextWaterReason: plan.nextWaterReason,
-          wateringContext: plan.wateringContext,
-          action: plan.action,
-          amountRangeMl: plan.amountRangeMl,
-          soilCheck: plan.soilCheck,
-          potVolumeMl: plan.potGeometry?.potVolumeMl ?? 0,
-          stopCondition: plan.stopCondition,
-          confidenceLevel: plan.confidenceLevel,
-          reasonCodes: plan.reasonCodes,
-          effectiveHydrationLoad: plan.effectiveHydrationLoad,
-          wetPressureLoad: plan.wetPressureLoad,
-          lastEffectiveRootWateredDaysAgo: plan.lastEffectiveRootWateredDaysAgo,
-          rootZoneMoistureIndex: plan.rootZoneMoistureIndex,
-          userDoseEcho: plan.userDoseEcho,
+          nextWaterDate: fusedPlan.nextWaterDate,
+          nextWaterWindow: fusedPlan.nextWaterWindow,
+          nextWaterReason: fusedPlan.nextWaterReason,
+          wateringContext: fusedPlan.wateringContext,
+          action: fusedPlan.action,
+          amountRangeMl: fusedPlan.amountRangeMl,
+          soilCheck: fusedPlan.soilCheck,
+          potVolumeMl: fusedPlan.potGeometry?.potVolumeMl ?? 0,
+          stopCondition: fusedPlan.stopCondition,
+          confidenceLevel: fusedPlan.confidenceLevel,
+          reasonCodes: fusedPlan.reasonCodes,
+          effectiveHydrationLoad: fusedPlan.effectiveHydrationLoad,
+          wetPressureLoad: fusedPlan.wetPressureLoad,
+          lastEffectiveRootWateredDaysAgo: fusedPlan.lastEffectiveRootWateredDaysAgo,
+          rootZoneMoistureIndex: fusedPlan.rootZoneMoistureIndex,
+          userDoseEcho: fusedPlan.userDoseEcho,
+          requiresManualSoilConfirmation: fusedPlan.requiresManualSoilConfirmation === true,
+          visualSoilEvidence: soilEvidenceService.toPublicSoilEvidence(fusedPlan.visualSoilEvidence),
           // v3 蒸腾间隔修正审计字段
           transpirationIntervalFactor: plan.transpirationIntervalFactor,
           transpirationShadow: transpiration.shadow,
@@ -1007,7 +1044,7 @@ async function main(event, context) {
     return methodNotAllowed(method)
   } catch (error) {
     console.error('plant-user-http error:', error)
-    if (Number(error?.statusCode) === 400 || Number(error?.statusCode) === 409) {
+    if ([400, 403, 409, 422].includes(Number(error?.statusCode))) {
       return jsonResponse(error.statusCode, {
         code: error.code || error.statusCode,
         message: error.message || '植物信息暂时不可用，请稍后重试',

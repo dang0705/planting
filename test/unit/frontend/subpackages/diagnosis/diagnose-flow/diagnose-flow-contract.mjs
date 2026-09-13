@@ -27,8 +27,8 @@ const retakeCardSource = fs.readFileSync(
   path.join(repoRoot, 'src/subpackages/diagnosis/diagnose-flow/RetakeCard.vue'),
   'utf8'
 )
-const resultStageSource = fs.readFileSync(
-  path.join(repoRoot, 'src/subpackages/diagnosis/diagnose-flow/DiagnoseResultStage.vue'),
+const resultSource = fs.readFileSync(
+  path.join(repoRoot, 'src/subpackages/diagnosis/question-package/QuestionPackageResult.vue'),
   'utf8'
 )
 const questionPackageSectionSource = fs.readFileSync(
@@ -75,10 +75,6 @@ const directionCardSource = fs.readFileSync(
   path.join(repoRoot, 'src/subpackages/diagnosis/diagnose-flow/DirectionChoiceCard.vue'),
   'utf8'
 )
-const uploadStageSource = fs.readFileSync(
-  path.join(repoRoot, 'src/components/diagnosis/DiagnoseIntake.vue'),
-  'utf8'
-)
 const constantsSource = fs.readFileSync(
   path.join(repoRoot, 'src/constants/diagnosis-intake.js'),
   'utf8'
@@ -98,7 +94,7 @@ const popupSource = fs.readFileSync(
 assert.match(flowSource, /setupDiagnoseFlowState/)
 assert.doesNotMatch(flowSource, /components\/diagnose-popup/)
 assert.match(flowSource, /from '@\/components\/diagnosis\/DiagnoseIntake\.vue'/)
-assert.match(flowSource, /from '\.\/DiagnoseResultStage\.vue'/)
+assert.match(flowSource, /from '\.\.\/question-package\/QuestionPackageResult\.vue'/)
 assert.doesNotMatch(flowSource, /\.\.\/diagnose-popup\/style\.css/)
 assert.doesNotMatch(flowSetupSource, /diagnose-popup/)
 assert.equal(fs.existsSync(path.join(repoRoot, 'src/components/diagnose-popup')), false)
@@ -109,7 +105,8 @@ assert.ok(
   constantsSource.indexOf("classNameCn: '叶子发黄'") <
     constantsSource.indexOf("classNameCn: '发蔫或下垂'")
 )
-assert.match(uploadStageSource, /只看虫害需要照片/)
+assert.match(diagnoseImagesSource, /diagnosisProfile: selectedDiagnosisProfile\.value/)
+assert.doesNotMatch(diagnoseImagesSource, /confirmDiagnosisProfile/)
 assert.match(dialogSubmitSource, /buildDirectionChoicePayload/)
 assert.match(answerMutationSource, /selectedModeKey/)
 assert.match(directionCardSource, /图片里发现多个可能方向，建议先处理推荐项。/)
@@ -125,6 +122,8 @@ assert.match(uploaderOptionsSource, /maxImagePixels: 1638400/)
 assert.match(uploaderOptionsSource, /minimumCompressionQuality: 68/)
 assert.match(cloudUploaderSource, /compressedWidth: dimensions\.width/)
 assert.match(cloudUploaderSource, /compressedHeight: dimensions\.height/)
+assert.match(cloudUploaderSource, /原生文件上传，禁止在端上转成 Base64/u)
+assert.doesNotMatch(cloudUploaderSource, /readFileAsDataUrl|encoding:\s*['"]base64['"]/u)
 assert.match(diagnoseImagesSource, /from '@\/utils\/diagnose-structured-images\.js'/)
 assert.match(structuredImagesSource, /sourceWidth: sourceWidth \|\| null/)
 assert.match(structuredImagesSource, /sourcePixelCount: sourcePixelCount \|\| null/)
@@ -148,7 +147,9 @@ assert.match(questionFlowSource, /isOptionalFollowUpQuestion\.value/)
 assert.match(questionFlowSource, /submitAnswerMap\[questionId\] = 'unknown'/)
 assert.match(questionFlowSource, /可选追问问题跳过时提交明确 unknown/)
 assert.match(flowSetupSource, /getQuestionSafetyInstructionsText/)
-assert.match(resultStageSource, /<DiagnoseQuestionPackageSection\s+:view="view"\s*\/>/)
+assert.match(flowSource, /<DiagnoseQuestionPackageSection\s+:view="viewContext"\s*\/>/)
+assert.match(resultSource, /<slot name="after-conclusion"\s*\/>/)
+assert.match(resultSource, /<slot name="after-avoid"\s*\/>/)
 assert.match(questionPackageSectionSource, /getQuestionSafetyInstructionsText\(question\)/)
 assert.doesNotMatch(questionPackageSectionSource, /\{\{\s*question\.safetyInstructions\s*\}\}/)
 assert.match(questionPackageSectionSource, /会据此调整后续问题/)

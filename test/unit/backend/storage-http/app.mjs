@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict'
 import { createRequire } from 'node:module'
+import fs from 'node:fs/promises'
+import os from 'node:os'
 import path from 'node:path'
 import { repoRoot } from '../../../e2e/batch/workflow/dispatch-gate-contract/helpers.mjs'
 
@@ -7,7 +9,8 @@ const require = createRequire(import.meta.url)
 const Module = require('module')
 const sourcePath = path.join(repoRoot, 'cloudfunctions/storage-http/app.js')
 const originalLoad = Module._load
-const calls = { ownedImage: 0, deleteFile: 0 }
+// data_mode=unit_fake：验证存储 HTTP 的边界与非敏感性能审计字段，不触发真实存储写入。
+const calls = { ownedImage: 0, deleteFile: 0, diagnoseUpload: 0 }
 
 const models = {
   async $runSQL() {
@@ -18,6 +21,19 @@ const models = {
 const cloudbase = {
   models,
   getCloudBase: () => ({
+    async uploadFile({ fileContent }) {
+      calls.diagnoseUpload += 1
+      if (Buffer.isBuffer(fileContent)) {
+        assert.equal(fileContent.length, 12)
+        return { fileID: 'cloud://diagnose-upload-id' }
+      }
+      await new Promise((resolve, reject) => {
+        fileContent.once('error', reject)
+        fileContent.once('end', resolve)
+        fileContent.resume()
+      })
+      return { fileID: 'cloud://diagnose-upload-id' }
+    },
     async getTempFileURL() {
       return { fileList: [{ tempFileURL: 'https://temp.example.com/image' }] }
     },
@@ -83,6 +99,99 @@ try {
     () => storage._test.assertImagePayload({ base64: validPngBase64, suffix: 'jpg' }),
     error => error.statusCode === 400
   )
+
+  const uploadResponse = await storage.main(
+    {
+      path: '/storage/diagnose-images',
+      method: 'POST',
+      body: {
+        dataUrl: `data:image/png;base64,${validPngBase64}`,
+        suffix: 'png',
+        plantId: 'temp'
+      },
+      headers: {}
+    },
+    {}
+  )
+  assert.equal(uploadResponse.code, 200)
+  assert.equal(uploadResponse.data.fileId, 'cloud://diagnose-upload-id')
+  assert.equal(uploadResponse.data.size, 12)
+  assert.equal(calls.diagnoseUpload, 1)
+  assert.deepEqual(
+    {
+      contractVersion: uploadResponse.data.uploadTiming.contractVersion,
+      transport: uploadResponse.data.uploadTiming.transport,
+      binaryBytes: uploadResponse.data.uploadTiming.binaryBytes,
+      base64Bytes: uploadResponse.data.uploadTiming.base64Bytes,
+      base64ExpansionBytes: uploadResponse.data.uploadTiming.base64ExpansionBytes
+    },
+    {
+      contractVersion: 'diagnose_image_upload_timing_v1',
+      transport: 'json_base64',
+      binaryBytes: 12,
+      base64Bytes: validPngBase64.length,
+      base64ExpansionBytes: validPngBase64.length - 12
+    }
+  )
+  for (const key of [
+    'decodeAndValidateMs',
+    'tempWriteMs',
+    'cloudStorageUploadMs',
+    'tempUrlMs',
+    'uploadPipelineMs'
+  ]) {
+    assert.equal(Number.isFinite(uploadResponse.data.uploadTiming[key]), true)
+    assert.equal(uploadResponse.data.uploadTiming[key] >= 0, true)
+  }
+  assert.equal(Object.hasOwn(uploadResponse.data.uploadTiming, 'dataUrl'), false)
+  assert.equal(Object.hasOwn(uploadResponse.data.uploadTiming, 'base64'), false)
+
+  const multipartFilePath = path.join(
+    os.tmpdir(),
+    `storage-http-diagnose-${Date.now()}-${Math.random().toString(16).slice(2)}.png`
+  )
+  await fs.writeFile(
+    multipartFilePath,
+    Buffer.concat([
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+      Buffer.from('test')
+    ])
+  )
+  const multipartResponse = await storage.main(
+    {
+      path: '/storage/diagnose-images',
+      method: 'POST',
+      body: {
+        file: {
+          filepath: multipartFilePath,
+          originalFilename: 'diagnose.png',
+          mimetype: 'image/png'
+        },
+        suffix: 'png',
+        plantId: 'temp'
+      },
+      headers: {}
+    },
+    {}
+  )
+  assert.equal(multipartResponse.code, 200)
+  assert.equal(multipartResponse.data.size, 12)
+  assert.equal(calls.diagnoseUpload, 2)
+  assert.deepEqual(
+    {
+      transport: multipartResponse.data.uploadTiming.transport,
+      binaryBytes: multipartResponse.data.uploadTiming.binaryBytes,
+      base64Bytes: multipartResponse.data.uploadTiming.base64Bytes,
+      base64ExpansionBytes: multipartResponse.data.uploadTiming.base64ExpansionBytes
+    },
+    {
+      transport: 'multipart_file',
+      binaryBytes: 12,
+      base64Bytes: 0,
+      base64ExpansionBytes: 0
+    }
+  )
+  await assert.rejects(fs.access(multipartFilePath), /ENOENT/u)
 
   const response = await storage.main(
     {

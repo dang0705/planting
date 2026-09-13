@@ -431,7 +431,7 @@ primaryOutcome
 secondaryOutcomes
 finalResult
 review/list
-follow-up.vue
+question-package.vue
 diagnose.vue
 normalizeDiagnosisResult
 ```
@@ -446,7 +446,7 @@ normalizeDiagnosisResult
    - 不得只取最后一次 `finalResult` 作为最终输出。
 4. 前端验收必须覆盖 normalize 与页面消费面：
    - `src/utils/diagnose-flow.js`
-   - `src/pages/diagnose/follow-up.vue`
+   - `src/subpackages/diagnosis/question-package.vue`
    - `src/pages/diagnose/diagnose.vue`
 5. 如果既有 snapshot 单结果、新 payload 多结果并存，验收要确认前端最终展示使用最新多 outcome 契约。
 6. 如果 DNS 或网关抖动导致重复 smoke 失败，必须记录最近一次成功的 HTTP 证据、函数部署证据、DB / 日志证据，并把后续失败标为网络层风险，不能反向证明业务验收通过。

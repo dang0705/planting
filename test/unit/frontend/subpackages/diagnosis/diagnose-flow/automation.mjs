@@ -11,7 +11,7 @@ const imagesSource = fs
   .readFileSync(path.join(repoRoot, 'src/subpackages/diagnosis/diagnose-flow/images.js'), 'utf8')
   .replace(
     "import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'",
-    "const ANALYTICS_EVENTS = {}; const reportAnalyticsEvent = () => {}"
+    'const ANALYTICS_EVENTS = {}; const reportAnalyticsEvent = () => {}'
   )
   .replace(
     "import { buildStructuredImageInputs } from '@/utils/diagnose-structured-images.js'",
@@ -27,6 +27,10 @@ const imagesSource = fs
     "import { requireMvpAccess } from '@/utils/subscription-access.js'",
     'const requireMvpAccess = async () => true'
   )
+  .replace(
+    /import \{\s*VISUAL_SCAN_ERROR_TEXT,\s*VISUAL_SCAN_LOADING_TEXT\s*\} from '\.\/constants\.js'/,
+    "const VISUAL_SCAN_LOADING_TEXT = '正在检查照片...'; const VISUAL_SCAN_ERROR_TEXT = '暂时无法完成，请检查网络后重试。'"
+  )
 const { useDiagnoseAutomation } = await import(
   `data:text/javascript,${encodeURIComponent(automationSource)}`
 )
@@ -38,6 +42,11 @@ function createAutomationHarness() {
   const imageFiles = { value: [] }
   const pendingDiagnosePayload = { value: { stale: true } }
   const result = { value: { stale: true } }
+  const primaryStructuredImages = { value: [] }
+  const visualScanning = { value: false }
+  const visualScanText = { value: '' }
+  const submittedDiagnoses = []
+  let quotaUsageCount = 0
   const slotHelpers = {
     normalizeSlotType: (slotType = '', fallback = 'unknown') =>
       ['leaf', 'stem', 'whole_plant'].includes(String(slotType || '').trim())
@@ -61,9 +70,29 @@ function createAutomationHarness() {
   })
   const images = useDiagnoseImages({
     props: {},
+    userStore: {
+      useAIQuota() {
+        quotaUsageCount += 1
+      }
+    },
     imageFiles,
     hasPendingUploads: { value: false },
     hasUploadErrors: { value: false },
+    primaryStructuredImages,
+    pendingDiagnosePayload,
+    hasSelectedSymptomMode: { value: false },
+    visualScanning,
+    visualScanText,
+    diagnoseMutation: {
+      async mutateAsync(payload) {
+        submittedDiagnoses.push(payload)
+        payload.onFinish?.()
+        return { diagnosisSessionId: `session_${submittedDiagnoses.length}` }
+      }
+    },
+    completeVisualDiagnosis(resultPayload) {
+      result.value = resultPayload
+    },
     ...slotHelpers
   })
 
@@ -72,7 +101,11 @@ function createAutomationHarness() {
     images,
     imageFiles,
     pendingDiagnosePayload,
-    result
+    result,
+    primaryStructuredImages,
+    visualScanning,
+    submittedDiagnoses,
+    getQuotaUsageCount: () => quotaUsageCount
   }
 }
 
@@ -125,4 +158,29 @@ function createAutomationHarness() {
   )
 }
 
-console.log('diagnose flow automation tests passed')
+{
+  const {
+    images,
+    imageFiles,
+    primaryStructuredImages,
+    visualScanning,
+    submittedDiagnoses,
+    getQuotaUsageCount
+  } = createAutomationHarness()
+  imageFiles.value = [
+    {
+      uploaded: { tempUrl: 'https://example.invalid/full.jpg' },
+      inputSlotType: 'leaf'
+    }
+  ]
+  primaryStructuredImages.value = images.buildStructuredImageInputs(imageFiles.value)
+
+  await images.startDiagnose()
+
+  assert.equal(submittedDiagnoses.length, 1)
+  assert.equal(submittedDiagnoses[0].diagnosisProfile, 'full')
+  assert.equal(visualScanning.value, false)
+  assert.equal(getQuotaUsageCount(), 1)
+}
+
+console.log('diagnose flow automation tests passed data_mode=unit_fake')

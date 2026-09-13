@@ -1,5 +1,36 @@
 import { normalizeOutcomeType, normalizeStringList } from './diagnose-flow-shared.js'
 
+function normalizeActionItem(item = null) {
+  if (!item || typeof item !== 'object') {
+    return null
+  }
+
+  const id = String(item.id || item.actionId || item.action_id || '').trim()
+  const categoryId = String(item.categoryId || item.category_id || '').trim()
+  const categoryNameCn = String(item.categoryNameCn || item.category_name_cn || '').trim()
+  const stage = String(item.stage || '').trim()
+  const methodId = String(item.methodId || item.method_id || '').trim()
+  const text = String(item.text || item.textCn || item.text_cn || '').trim()
+  if (!id || !categoryId || !stage || !methodId || !text) {
+    return null
+  }
+
+  return {
+    id,
+    categoryId,
+    categoryNameCn,
+    stage,
+    methodId,
+    text,
+    conditionCn: String(item.conditionCn || item.condition_cn || '').trim(),
+    sourceRefIds: normalizeStringList(item.sourceRefIds || item.source_ref_ids)
+  }
+}
+
+function normalizeActionItems(values = []) {
+  return (Array.isArray(values) ? values : []).map(normalizeActionItem).filter(Boolean)
+}
+
 export function normalizeRouteDecisionCause(routeDecisionCause = null) {
   if (!routeDecisionCause || typeof routeDecisionCause !== 'object') {
     return null
@@ -49,6 +80,8 @@ export function normalizeOutcomeEntry(outcome = null) {
     actionProfileKey: String(outcome?.actionProfileKey || outcome?.action_profile_key || '').trim(),
     actionAdviceItems: normalizeStringList(outcome?.actionAdviceItems),
     avoidAdviceItems: normalizeStringList(outcome?.avoidAdviceItems),
+    actionItems: normalizeActionItems(outcome?.actionItems),
+    avoidActionItems: normalizeActionItems(outcome?.avoidActionItems),
     reassurance: String(outcome?.reassurance || '').trim()
   }
 }
@@ -68,6 +101,8 @@ export function normalizeActionAdvice(actionAdvice = null) {
     sevenDayObserve: normalizeStringList(actionAdvice?.sevenDayObserve),
     avoidActions: normalizeStringList(actionAdvice?.avoidActions),
     retakeOrEscalate: normalizeStringList(actionAdvice?.retakeOrEscalate),
+    actionItems: normalizeActionItems(actionAdvice?.actionItems),
+    avoidActionItems: normalizeActionItems(actionAdvice?.avoidActionItems),
     conflictDetected: Boolean(actionAdvice?.conflictDetected)
   }
 }

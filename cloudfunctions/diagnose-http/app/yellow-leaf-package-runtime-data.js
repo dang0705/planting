@@ -206,7 +206,7 @@ const OUTCOMES = {
   }
 }
 
-const ACTION_PROFILES = {
+const RAW_ACTION_PROFILES = {
   action_fertilizer_repot_stress: {
     actionProfileKey: 'action_fertilizer_repot_stress',
     todayActions: ['近期刚重肥或换盆时先暂停继续施肥', '保持盆土干湿和光照稳定'],
@@ -264,6 +264,77 @@ const ACTION_PROFILES = {
     retakeOrEscalate: ['若补水后仍持续萎蔫，补拍根区和盆土状态']
   }
 }
+
+const LEGACY_PROFILE_SOURCES = Object.freeze({
+  action_fertilizer_repot_stress: ['ucipm-houseplant-problems', 'umd-indoor-diagnose-2025'],
+  action_low_light_basic: ['umd-indoor-diagnose-2025', 'rhs-houseplant-leaf-damage'],
+  action_nutrient_support_basic: ['ucipm-houseplant-problems', 'umd-indoor-diagnose-2025'],
+  action_overwatering_basic: ['ucipm-houseplant-problems', 'umd-overwatered-indoor-plants'],
+  action_sunburn_basic: ['umd-indoor-diagnose-2025', 'rhs-houseplant-leaf-damage'],
+  action_uncertain_prepare: ['ucipm-houseplant-problems', 'umd-indoor-diagnose-2025'],
+  action_underwatering_basic: ['ucipm-houseplant-problems', 'umd-overwatered-indoor-plants']
+})
+
+function resolveLegacyActionCategory(text = '', { profileKey = '', stage = '' } = {}) {
+  const normalized = String(text || '').trim()
+  if (/补拍|升级|人工/iu.test(normalized)) {return 'retake_escalation'}
+  if (/检查|观察|记录|判断/iu.test(normalized)) {return 'inspection_monitoring'}
+  if (/浇水|补水|盆土|干湿|排水/iu.test(normalized)) {return 'water_adjustment'}
+  if (/施肥|重肥|追肥|营养/iu.test(normalized)) {return 'nutrition_adjustment'}
+  if (/光|暴晒|散射|通风|摆放|搬动|热源/iu.test(normalized)) {
+    return 'environment_adjustment'
+  }
+  if (stage === 'avoid' || /用药|喷药/iu.test(normalized)) {return 'treatment_safety'}
+  if (profileKey === 'action_uncertain_prepare') {return 'non_intervention'}
+  return 'inspection_monitoring'
+}
+
+function resolveLegacyActionMethod(text = '', categoryId = '') {
+  const normalized = String(text || '').trim()
+  if (/补拍/iu.test(normalized)) {return 'retake'}
+  if (/检查/iu.test(normalized)) {return 'inspection'}
+  if (/观察|记录|判断/iu.test(normalized)) {return 'monitoring'}
+  if (/浇水|补水|盆土|排水/iu.test(normalized)) {return 'water_adjustment'}
+  if (/施肥|重肥|追肥/iu.test(normalized)) {return 'nutrition_adjustment'}
+  if (/通风/iu.test(normalized)) {return 'airflow_adjustment'}
+  if (/光|暴晒|散射|摆放|搬动|热源/iu.test(normalized)) {return 'light_adjustment'}
+  return categoryId === 'treatment_safety' ? 'avoid_stress' : 'monitoring'
+}
+
+function enrichLegacyActionProfile(profile = {}) {
+  const profileKey = String(profile.actionProfileKey || '').trim()
+  const sourceRefIds = LEGACY_PROFILE_SOURCES[profileKey] || ['umd-indoor-diagnose-2025']
+  const stageFields = [
+    ['today', 'todayActions'],
+    ['three_day', 'threeDayActions'],
+    ['seven_day', 'sevenDayObserve'],
+    ['avoid', 'avoidActions'],
+    ['seven_day', 'retakeOrEscalate']
+  ]
+  const actionItems = stageFields.flatMap(([stage, field]) =>
+    (Array.isArray(profile[field]) ? profile[field] : []).map((text, index) => {
+      const categoryId = resolveLegacyActionCategory(text, { profileKey, stage })
+      return {
+        id: `act_${profileKey}_${stage}_${index + 1}`,
+        categoryId,
+        stage,
+        methodId: resolveLegacyActionMethod(text, categoryId),
+        text,
+        sourceRefIds
+      }
+    })
+  )
+  return { ...profile, actionItems }
+}
+
+const ACTION_PROFILES = Object.freeze(
+  Object.fromEntries(
+    Object.entries(RAW_ACTION_PROFILES).map(([key, profile]) => [
+      key,
+      enrichLegacyActionProfile(profile)
+    ])
+  )
+)
 
 module.exports = {
   ANSWER_EFFECTS,

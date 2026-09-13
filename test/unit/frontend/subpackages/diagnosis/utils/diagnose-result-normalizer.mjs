@@ -13,7 +13,29 @@ const directResult = normalizeDiagnosisResult({
     {
       outcomeKey: 'thrips',
       displayNameCn: '可能是蓟马',
-      actionProfileKey: 'action_pest_basic'
+      actionProfileKey: 'action_pest_basic',
+      actionItems: [
+        {
+          id: 'act_thrips_kill',
+          categoryId: 'pest_kill_treatment',
+          categoryNameCn: '杀虫/杀螨处理',
+          stage: 'today',
+          methodId: 'foliar_spray',
+          text: '确认后进行杀虫处理。',
+          sourceRefIds: ['csu-houseplant-pests-2025']
+        }
+      ],
+      avoidActionItems: [
+        {
+          id: 'act_thrips_safety',
+          categoryId: 'treatment_safety',
+          categoryNameCn: '用药注意事项',
+          stage: 'avoid',
+          methodId: 'avoid_mixing_products',
+          text: '不要混用药剂。',
+          sourceRefIds: ['ucipm-houseplant-problems']
+        }
+      ]
     }
   ],
   directionChoices: [{ modeKey: 'pest', userDisplayName: '继续细分虫害方向' }],
@@ -36,6 +58,33 @@ assert.equal(directResult.hasActiveQuestions, false)
 assert.deepEqual(directResult.directionChoices, [])
 assert.equal(directResult.candidateRefinementAvailable, false)
 assert.equal(directResult.visibleOutcomes[0].actionProfileKey, 'action_pest_basic')
+assert.equal(directResult.visibleOutcomes[0].actionItems[0].categoryNameCn, '杀虫/杀螨处理')
+assert.equal(directResult.visibleOutcomes[0].avoidActionItems[0].categoryId, 'treatment_safety')
+
+const actionAdviceResult = normalizeDiagnosisResult({
+  diagnosisSessionId: 'diag_action_advice',
+  stage: 'final',
+  status: 'completed',
+  outcomeType: 'problematic',
+  finalResult: {
+    visibleOutcomes: [],
+    actionAdvice: {
+      actionItems: [
+        {
+          id: 'act_disease_kill',
+          categoryId: 'disease_kill_treatment',
+          categoryNameCn: '杀菌处理',
+          stage: 'today',
+          methodId: 'foliar_spray',
+          text: '确认后进行杀菌处理。',
+          sourceRefIds: ['ucipm-powdery-mildew']
+        }
+      ],
+      avoidActionItems: []
+    }
+  }
+})
+assert.equal(actionAdviceResult.actionAdvice.actionItems[0].categoryNameCn, '杀菌处理')
 
 const multiOutcomeDirectResult = normalizeDiagnosisResult({
   diagnosisSessionId: 'diag_direct_visual_multi',

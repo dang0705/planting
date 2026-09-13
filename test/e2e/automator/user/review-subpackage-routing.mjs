@@ -34,7 +34,8 @@ import { getCurrentPageWithFallback } from '../_shared/page-probe.mjs'
 
 const PROFILE_PAGE = '/pages/profile/profile'
 const HOME_PAGE = '/pages/index/index'
-const MISSING_RESULT_PAGE = '/subpackages/diagnosis/result?id=__e2e_missing_diagnosis_result__'
+const MISSING_RESULT_PAGE =
+  '/subpackages/diagnosis/question-package?id=__e2e_missing_diagnosis_result__&entrySource=plant_history&mode=history'
 const HIDDEN_PROFILE_IDS = [
   'profile-menu-outOfPoolReview',
   'profile-menu-diagnosisReview',
@@ -153,11 +154,7 @@ async function run() {
       'profile-menu-myPlants',
       ROUTE_WAIT_MS
     )
-    assertCondition(
-      report,
-      '截图重连后“我的植物”入口仍可见',
-      Boolean(myPlantsEntryAfterScreenshot)
-    )
+    assertCondition(report, '截图重连后“我的植物”入口仍可见', Boolean(myPlantsEntryAfterScreenshot))
     await tapStableElement(myPlantsEntryAfterScreenshot)
     await sleep(UI_SETTLE_MS)
     const homePage = await waitForRoute(mp, HOME_PAGE)
@@ -176,11 +173,11 @@ async function run() {
     )
 
     await mp.callWxMethod('reLaunch', { url: MISSING_RESULT_PAGE })
-    const resultPage = await waitForRoute(mp, '/subpackages/diagnosis/result')
-    recordPage(report, '/subpackages/diagnosis/result')
+    const resultPage = await waitForRoute(mp, '/subpackages/diagnosis/question-package')
+    recordPage(report, '/subpackages/diagnosis/question-package')
     const retryEntry = await waitForElement(
       resultPage,
-      'diagnosis-result-page-retry',
+      'diagnose-question-package-history-retry',
       ROUTE_WAIT_MS
     )
     assertCondition(report, '不存在的诊断记录展示可重试错误态', Boolean(retryEntry))
@@ -190,7 +187,7 @@ async function run() {
     // 完成后的错误态重新渲染，避免把正常的网络时序误判为产品失败。
     const retryAfterTap = await waitForElement(
       resultPage,
-      'diagnosis-result-page-retry',
+      'diagnose-question-package-history-retry',
       ROUTE_WAIT_MS
     )
     assertCondition(report, '结果页错误态可重新发起请求', Boolean(retryAfterTap))

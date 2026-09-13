@@ -4,7 +4,24 @@ const SINGLE_GROUP_COUNT = 1
 const SINGLE_OUTCOME_COUNT = 1
 
 function normalizeText(value = '') {
+  if (value && typeof value === 'object') {
+    return String(value.text || value.textCn || value.text_cn || '').trim()
+  }
   return String(value || '').trim()
+}
+
+function normalizeStructuredActionItems(values = []) {
+  const source = Array.isArray(values) ? values : []
+  return source
+    .filter(item => item && typeof item === 'object')
+    .map(item => ({
+      id: normalizeText(item.id || item.actionId || item.action_id),
+      categoryId: normalizeText(item.categoryId || item.category_id),
+      categoryNameCn: normalizeText(item.categoryNameCn || item.category_name_cn),
+      stage: normalizeText(item.stage),
+      text: normalizeText(item.text || item.textCn || item.text_cn)
+    }))
+    .filter(item => item.id && item.categoryId && item.text)
 }
 
 function uniqueStrings(values = []) {
@@ -137,11 +154,15 @@ function materializeGroups({
         key: group.groupKey,
         adviceGroupKey: group.groupKey,
         actionProfileKey: group.actionProfileKey,
+        categoryId: group.categoryId || '',
+        categoryNameCn: group.categoryNameCn || '',
         outcomeLabel: outcomeLabels.join('、'),
         symptomLabel: (symptomLabels.length ? symptomLabels : outcomeLabels).join('、'),
-        displayLabel: (symptomLabels.length ? symptomLabels : outcomeLabels).join('、'),
+        displayLabel:
+          group.categoryNameCn || (symptomLabels.length ? symptomLabels : outcomeLabels).join('、'),
         items,
         showOutcomeLabel:
+          Boolean(group.categoryNameCn) ||
           sourceOutcomes.length > SINGLE_OUTCOME_COUNT ||
           group.outcomes.length > SINGLE_OUTCOME_COUNT
       }
@@ -157,6 +178,8 @@ function materializeGroups({
       key: '__fallback__',
       adviceGroupKey: '__fallback__',
       actionProfileKey: '',
+      categoryId: '',
+      categoryNameCn: '',
       outcomeLabel: fallbackLabel,
       symptomLabel: '',
       displayLabel: fallbackLabel,
@@ -187,23 +210,60 @@ export function buildSharedOutcomeAdviceGroups({
   const groupsByKey = new Map()
   for (const { outcome, outcomeKey } of sourceOutcomes) {
     const groupKey = resolveStableAdviceGroupKey(outcome, outcomeKey)
-    let group = groupsByKey.get(groupKey)
-    if (!group) {
-      group = {
-        groupKey,
-        actionProfileKey: normalizeText(
-          outcome.actionProfileKey || outcome.action_profile_key || ''
-        ),
-        outcomes: [],
-        actionItems: [],
-        avoidItems: [],
-        getOutcomeLabel
+    const structuredActionItems = normalizeStructuredActionItems(outcome.actionItems).filter(
+      item => item.stage !== 'avoid'
+    )
+    const structuredAvoidItems = normalizeStructuredActionItems(
+      outcome.avoidActionItems || outcome.actionItems
+    ).filter(item => item.stage === 'avoid')
+    const categoryGroups = new Map()
+    for (const item of [...structuredActionItems, ...structuredAvoidItems]) {
+      if (!categoryGroups.has(item.categoryId)) {
+        categoryGroups.set(item.categoryId, item)
       }
-      groupsByKey.set(groupKey, group)
     }
-    group.outcomes.push(outcome)
-    group.actionItems.push(...(getActionItems?.(outcome) || []))
-    group.avoidItems.push(...(getAvoidItems?.(outcome) || []))
+    const groupSpecs = categoryGroups.size
+      ? Array.from(categoryGroups.values()).map(item => ({
+          key: `${groupKey}::category:${item.categoryId}`,
+          categoryId: item.categoryId,
+          categoryNameCn: item.categoryNameCn
+        }))
+      : [{ key: groupKey, categoryId: '', categoryNameCn: '' }]
+
+    for (const spec of groupSpecs) {
+      let group = groupsByKey.get(spec.key)
+      if (!group) {
+        group = {
+          groupKey: spec.key,
+          actionProfileKey: normalizeText(
+            outcome.actionProfileKey || outcome.action_profile_key || ''
+          ),
+          categoryId: spec.categoryId,
+          categoryNameCn: spec.categoryNameCn,
+          outcomes: [],
+          actionItems: [],
+          avoidItems: [],
+          getOutcomeLabel
+        }
+        groupsByKey.set(spec.key, group)
+      }
+      group.outcomes.push(outcome)
+      const actionItems = getActionItems?.(outcome) || []
+      const avoidItems = getAvoidItems?.(outcome) || []
+      if (spec.categoryId) {
+        const categoryActionItems = structuredActionItems
+          .filter(item => item.categoryId === spec.categoryId)
+          .map(item => item.text)
+        const categoryAvoidItems = structuredAvoidItems
+          .filter(item => item.categoryId === spec.categoryId)
+          .map(item => item.text)
+        group.actionItems.push(...categoryActionItems)
+        group.avoidItems.push(...categoryAvoidItems)
+      } else {
+        group.actionItems.push(...actionItems)
+        group.avoidItems.push(...avoidItems)
+      }
+    }
   }
 
   const groups = Array.from(groupsByKey.values()).map(group => ({

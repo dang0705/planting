@@ -5,6 +5,7 @@ const {
   buildSpecificPestObservedEvidenceSet
 } = require('./pest-question-package')
 const { resolveSpecificPestAnswerResult } = require('./specific-pest-answer-resolver')
+const { loadActionProfilesByMode } = require('./action-guidance-loader')
 const { normalizeCaptureRegion } = require('../utils/capture-region-normalizer')
 
 // 给结论名加"很像"前缀，避免重复前缀（如已经是"可能是"/"很像"则不再加）。
@@ -82,7 +83,8 @@ async function buildFullCandidateFallbackResponse({
     },
     probableModes: [],
     plantContext,
-    visualAggregateResult: aggregateResult
+    visualAggregateResult: aggregateResult,
+    actionProfilesByMode: await loadActionProfilesByMode(candidateModes)
   })
   return {
     ...fallback,

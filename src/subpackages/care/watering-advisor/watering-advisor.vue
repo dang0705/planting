@@ -143,6 +143,16 @@
             />
           </scroll-view>
           <scroll-view
+            v-if="active && index === soilEvidenceStep"
+            scroll-y
+            class="box-border h-full min-h-0 px-4 pt-6 pb-[28px]"
+          >
+            <WateringSoilEvidenceStage
+              :plant-id="selectedCatalogPlant?.userPlantId || null"
+              @ready="handleSoilEvidenceReady"
+            />
+          </scroll-view>
+          <scroll-view
             v-if="active && index === resultStep"
             scroll-y
             class="box-border h-full min-h-0 px-4 pt-6 pb-[112px]"
@@ -187,6 +197,17 @@
                 </text>
               </view>
               <view
+                v-if="plannerResult?.visualSoilEvidence?.sourceLabel"
+                id="watering-advisor-result-soil-source"
+                class="mb-3 rounded-2xl border border-[#d7e6dc] bg-white px-4 py-3"
+              >
+                <text class="block text-xs leading-5 text-[#5a7868]">
+                  盆土依据：{{ plannerResult.visualSoilEvidence.sourceLabel }}。{{
+                    plannerResult.visualSoilEvidence.observation
+                  }}
+                </text>
+              </view>
+              <view
                 v-if="!plannerResult.nextWaterDate && !wateringConfirmed"
                 id="watering-advisor-result-no-history"
                 class="mb-3 rounded-2xl border border-[#f0dfbd] bg-[#fffaf0] px-4 py-3"
@@ -197,7 +218,7 @@
                 </text>
               </view>
               <view
-                v-if="!isUserPlant && !wateringConfirmed"
+                v-if="!isUserPlant && !wateringConfirmed && !isOverWateringBlocked"
                 id="watering-advisor-result-confirm-watered"
                 class="mb-3 rounded-2xl border border-[#d7e6dc] bg-white px-4 py-3"
               >
@@ -294,9 +315,9 @@
           class="m-0 h-[52px] flex-[2] rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white"
           :class="{ 'opacity-50': computing }"
           :disabled="computing"
-          @click="goToResult"
+          @click="goToSoilEvidence"
         >
-          {{ computing ? '计算中...' : '获取建议' }}
+          {{ computing ? '计算中...' : '下一步：拍盆土' }}
         </button>
       </view>
       <view
@@ -341,6 +362,7 @@ import ButtonStepTrack from '@/components/common/ButtonStepTrack.vue'
 import AirEnvironmentAssessment from '@/components/AirEnvironmentAssessment.vue'
 import AirEnvironmentSummaryCard from '@/components/AirEnvironmentSummaryCard.vue'
 import PotProfileFormCore from '@/components/pot-profile/PotProfileFormCore.vue'
+import WateringSoilEvidenceStage from '@/components/watering/WateringSoilEvidenceStage.vue'
 import { useUserStore } from '@/store/user.js'
 import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
 import { isFeatureAvailable } from '@/utils/platform-capabilities.js'
@@ -380,6 +402,8 @@ const activeStep = ref(STEP_SOURCE)
 const selectedCatalogPlant = ref(null)
 const computing = ref(false)
 const plannerResult = ref(null)
+const soilEvidence = ref(null)
+const pendingPotProfile = ref(null)
 const wateringConfirmed = ref(false)
 const confirmWateredAction = createAsyncActionGuard()
 const searchRef = ref(null)
@@ -427,9 +451,12 @@ const {
   isUserPlant
 })
 const potProfileStep = computed(() => (isUserPlant.value ? 2 : 1))
-const resultStep = computed(() => (isUserPlant.value ? 3 : 2))
+const soilEvidenceStep = computed(() => potProfileStep.value + 1)
+const resultStep = computed(() => soilEvidenceStep.value + 1)
 const stepLabels = computed(() =>
-  isUserPlant.value ? ['选植物', '空气', '盆型', '建议'] : ['选植物', '盆型', '建议']
+  isUserPlant.value
+    ? ['选植物', '空气', '盆型', '盆土', '建议']
+    : ['选植物', '盆型', '盆土', '建议']
 )
 const selectedCatalogPlantPotProfile = computed(() => {
   const plant = selectedCatalogPlant.value
@@ -446,6 +473,9 @@ const amountText = computed(() => {
   }
   return formatMlRangeToBottleText(range)
 })
+const isOverWateringBlocked = computed(
+  () => plannerResult.value?.wateringContext === 'likely_too_wet'
+)
 function selectCatalogPlant(plant) {
   if (computing.value) {
     return
@@ -453,6 +483,8 @@ function selectCatalogPlant(plant) {
   selectedCatalogPlant.value = plant
   selectedUserPlantId.value = null
   wateringConfirmed.value = false
+  soilEvidence.value = null
+  pendingPotProfile.value = null
   airEnvironment.reset()
   resetWateringAirEnvironment()
   resetWeatherDays()
@@ -477,6 +509,8 @@ async function selectUserPlant(plant) {
     potProfile: plant.potProfile || null
   }
   wateringConfirmed.value = false
+  soilEvidence.value = null
+  pendingPotProfile.value = null
   airEnvironment.reset(plant.id)
   resetWeatherDays()
   await loadForUserPlant(plant.id)
@@ -531,10 +565,27 @@ watch(activeStep, step => {
 function buildPotProfilePayload() {
   return potProfileFormRef.value?.getPayload() || null
 }
-async function goToResult() {
+function goToSoilEvidence() {
   const payload = buildPotProfilePayload()
   if (!payload || !payload.potTopDiameterCm || !payload.potHeightCm) {
     uni.showToast({ title: '请填写盆型尺寸', icon: 'none' })
+    return
+  }
+  pendingPotProfile.value = payload
+  soilEvidence.value = null
+  activeStep.value = soilEvidenceStep.value
+}
+
+async function handleSoilEvidenceReady(value) {
+  soilEvidence.value = value || null
+  await goToResult()
+}
+
+async function goToResult() {
+  const payload = pendingPotProfile.value || buildPotProfilePayload()
+  if (!soilEvidence.value?.evidenceId) {
+    uni.showToast({ title: '请先拍摄盆土照片', icon: 'none' })
+    activeStep.value = soilEvidenceStep.value
     return
   }
   computing.value = true
@@ -563,7 +614,9 @@ async function goToResult() {
         potProfile: payload,
         airEnvironmentOverride,
         locationKey: plannerLocationKey.value,
-        timezone: 'Asia/Shanghai'
+        timezone: 'Asia/Shanghai',
+        soilEvidenceId: soilEvidence.value.evidenceId,
+        manualSoilConfirmed: soilEvidence.value.manualSoilConfirmed === true
       })
       result = userPlannerResult ? normalizePlannerResultDate(userPlannerResult) : null
     } else {
@@ -577,7 +630,9 @@ async function goToResult() {
         weatherDays: weatherDays.value,
         forecastDays: forecastDays.value,
         locationKey: plannerLocationKey.value,
-        timezone: 'Asia/Shanghai'
+        timezone: 'Asia/Shanghai',
+        soilEvidenceId: soilEvidence.value.evidenceId,
+        manualSoilConfirmed: soilEvidence.value.manualSoilConfirmed === true
       })
     }
     if (result) {

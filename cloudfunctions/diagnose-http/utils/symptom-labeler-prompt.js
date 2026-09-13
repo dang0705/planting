@@ -11,7 +11,6 @@ const { normalizeCaptureRegion } = require('./capture-region-normalizer')
 const {
   FORMAL_PEST_VISUAL_EVIDENCE_KEYS,
   GENERAL_VISUAL_RULES,
-  PEST_MODE_KEYS,
   PEST_VISUAL_RULES
 } = require('../domain/diagnosis-mode-registry')
 
@@ -19,9 +18,8 @@ const {
   FULL_CASE_LOCATION_KEYS,
   LOCATION_LABEL_MAP,
   PROMPT_SYMPTOM_HINTS,
-  compileGeneralVisibleAnomalyDescriptions,
   compileGeneralVisualMapping,
-  compilePestVisibleAnomalyDescriptions,
+  compilePestVisualEvidenceHints,
   compilePestVisualMapping,
   STATIC_ROUTE_CATALOG_TEXT,
   STATIC_VISUAL_WORKFLOW_RULES,
@@ -137,26 +135,37 @@ function assertPromptPoolMatchesLocation(symptomRows = [], locationKeys = []) {
   }
 }
 
-function buildCaseSlotSummaryText(imageContext = {}) {
-  const slotSummary = Array.isArray(imageContext?.caseSlotSummary)
-    ? imageContext.caseSlotSummary
-    : []
-  if (!slotSummary.length) {
-    return ''
+function hasSameSymptomKeySet(left = [], right = []) {
+  const leftKeys = new Set(
+    (Array.isArray(left) ? left : []).map(item => normalizeText(item, '')).filter(Boolean)
+  )
+  const rightKeys = new Set(
+    (Array.isArray(right) ? right : []).map(item => normalizeText(item, '')).filter(Boolean)
+  )
+  return (
+    leftKeys.size === rightKeys.size &&
+    Boolean(leftKeys.size) &&
+    Array.from(leftKeys).every(key => rightKeys.has(key))
+  )
+}
+
+function buildAllowedSymptomKeysText({ diagnosisProfile = '', symptomKeys = [] } = {}) {
+  const normalizedKeys = Array.from(
+    new Set(
+      (Array.isArray(symptomKeys) ? symptomKeys : [])
+        .map(item => normalizeText(item, ''))
+        .filter(Boolean)
+    )
+  )
+  // 仅当当前器官范围的白名单与静态词典中的虫害证据全集严格相等时，才引用静态全集。
+  // 任一局部器官、增删键或集合不完整的情形都保留逐键列举，不能借压缩扩大允许范围。
+  if (
+    diagnosisProfile === 'pest' &&
+    hasSameSymptomKeySet(normalizedKeys, FORMAL_PEST_VISUAL_EVIDENCE_KEYS)
+  ) {
+    return '静态全局词典中的全部虫害可见证据键'
   }
-
-  const lines = slotSummary.map(item => {
-    const slotOrder = Number.isFinite(Number(item?.inputSlotOrder))
-      ? Number(item.inputSlotOrder) + 1
-      : '?'
-    const slotLabel =
-      normalizeText(item?.inputSlotLabel || '', '') ||
-      LOCATION_LABEL_MAP[normalizeLocationKey(item?.inputSlotType || '', '')] ||
-      normalizeText(item?.inputSlotType || '', '未指定')
-    return `图${slotOrder}:${slotLabel}`
-  })
-
-  return lines.join('；')
+  return normalizedKeys.join(',') || 'none'
 }
 
 function buildImageContextText(
@@ -165,19 +174,7 @@ function buildImageContextText(
   narrowedSymptoms = [],
   allowedSymptomKeys = []
 ) {
-  const totalImageCount = Number.isFinite(Number(imageContext?.totalImageCount))
-    ? Number(imageContext.totalImageCount)
-    : 1
-  const slotOrder = Number.isFinite(Number(imageContext?.inputSlotOrder))
-    ? Number(imageContext.inputSlotOrder) + 1
-    : 1
   const slotType = normalizeOrgan(imageContext?.inputSlotType, 'unknown')
-  const slotLabel =
-    normalizeText(imageContext?.inputSlotLabel || '', '') ||
-    LOCATION_LABEL_MAP[slotType] ||
-    '未指定槽位'
-  const declaredOrganType = normalizeOrgan(imageContext?.userDeclaredOrganType, 'unknown')
-  const caseSlotSummaryText = buildCaseSlotSummaryText(imageContext)
   const normalizedLocationKeys = Array.from(
     new Set(
       (Array.isArray(locationKeys) ? locationKeys : [])
@@ -196,80 +193,80 @@ function buildImageContextText(
     )
   )
   const promptContext = normalizeLlmImageTaskContext(imageContext, getLlmImagePromptContext())
-  const currentImageContext = {
-    image_id: normalizeText(imageContext?.imageId || imageContext?.image_id || ''),
-    slot_order: slotOrder,
-    total_image_count: Math.max(1, totalImageCount),
-    slot_label: slotLabel,
-    slot_type: slotType,
-    user_declared_organ: declaredOrganType,
-    capture_region: normalizeCaptureRegion(imageContext?.captureRegion || '')
+  const declaredCaptureRegion = normalizeCaptureRegion(imageContext?.captureRegion || '')
+  const taskContext = { profile: promptContext.diagnosisProfile }
+  // 每张图由独立模型调用处理，排序/总数由服务端入库链路保存，并不参与当前图证据判断。
+  // 仅在补拍时告知轮次；initial 和 unknown 都是默认值，重复发送只会增加动态输入 Token。
+  if (promptContext.analysisRound !== 'initial') {
+    taskContext.round = promptContext.analysisRound
   }
-  const taskContext = {
-    diagnosis_profile: promptContext.diagnosisProfile,
-    analysis_round: promptContext.analysisRound,
-    entry_source: promptContext.entrySource,
-    plant_context: promptContext.plantContext,
-    current_image_context: currentImageContext,
-    prior_admitted_evidence_digest: promptContext.priorAdmittedEvidenceDigest,
-    unresolved_evidence_groups: promptContext.unresolvedEvidenceGroups,
-    requested_capture_region: normalizeCaptureRegion(promptContext.requestedCaptureRegion || ''),
-    origin_visual_call_batch_id: promptContext.originVisualCallBatchId
+  taskContext.image = { slot: slotType }
+  if (declaredCaptureRegion !== 'unknown') {
+    taskContext.image.region = declaredCaptureRegion
+  }
+  const requestedCaptureRegion = normalizeCaptureRegion(promptContext.requestedCaptureRegion || '')
+  if (requestedCaptureRegion !== 'unknown') {
+    taskContext.requested_region = requestedCaptureRegion
+  }
+  if (promptContext.priorAdmittedEvidenceDigest) {
+    taskContext.prior_evidence = promptContext.priorAdmittedEvidenceDigest
+  }
+  if (promptContext.unresolvedEvidenceGroups.length) {
+    taskContext.unresolved = promptContext.unresolvedEvidenceGroups
   }
 
-  const lines = [`task_context=${JSON.stringify(taskContext)}。`]
-  lines.push(
-    '视觉识别顺序：先基于当前图片独立识别可见虫体、叶内潜道、霉层、粉层或异常变色下垂；识别明确后，若有可见虫体、霉层或粉层必须优先报告对应 mode_candidates 与正式 evidence key，不能只报同图异常而遗漏实体；只报告当前图明确可见的项，不因本条列举存在而强行报告；不得从 mode key、evidence key、器官名或文字反推画面。'
-  )
+  const lines = [
+    `task=${JSON.stringify(taskContext)}。`,
+    '视觉优先级：先独立查当前图的可见虫体、潜道、附着物和受害结构，再查黄化/下垂；同图可并存。虫害明确时保留对应 pest mode_candidates 与正式 evidence key（如 thrips/thrips_visible），各自独立评分，不能用 yellow_leaf 替代；仅当前图可见才填，不明确不猜。'
+  ]
 
   if (normalizedLocationKeys.length) {
     lines.push(`allowed_location_keys=${normalizedLocationKeys.join(',')}。`)
-    lines.push(`allowed_symptom_keys=${narrowedSymptomKeyList.join(',') || 'none'}。`)
-    lines.push('symptom_candidates 只能用上述键；跨器官写入 out_of_pool_symptom_candidates')
+    lines.push(
+      `allowed_symptom_keys=${buildAllowedSymptomKeysText({
+        diagnosisProfile: promptContext.diagnosisProfile,
+        symptomKeys: narrowedSymptomKeyList
+      })}。`
+    )
+    // 静态输出规则已锁定 symptom_candidates 只能使用动态区允许键；这里只保留
+    // 不能删的跨器官落位语义，避免逐图重复消耗动态输入 Token。
+    lines.push('跨器官仅写 out_of_pool_symptom_candidates。')
   } else {
     lines.push(
       'allowed_location_keys=none；allowed_symptom_keys=none；不要强行选择正式 symptom_candidates。'
     )
   }
 
-  if (caseSlotSummaryText) {
-    lines.push(`case_slot_summary=${caseSlotSummaryText}.`)
-  }
-
   const pestVisualMapping = compilePestVisualMapping(normalizedLocationKeys)
   if (pestVisualMapping) {
     lines.push(pestVisualMapping)
   }
+  const pestVisualEvidenceHints = compilePestVisualEvidenceHints(normalizedLocationKeys)
+  if (pestVisualEvidenceHints) {
+    lines.push(pestVisualEvidenceHints)
+  }
 
-  const generalVisualMapping = compileGeneralVisualMapping(normalizedLocationKeys)
+  // 虫害路径的允许证据键不包含黄化/下垂通用模式；发送通用映射既无路由意义又会制造冲突。
+  const generalVisualMapping =
+    promptContext.diagnosisProfile === 'pest'
+      ? ''
+      : compileGeneralVisualMapping(normalizedLocationKeys)
+  const hasYellowOrDroopRoute = GENERAL_VISUAL_RULES.some(
+    rule =>
+      ['yellow_leaf', 'wilting_droop'].includes(rule.modeKey) &&
+      rule.organKeys.some(organKey => normalizedLocationKeys.includes(organKey))
+  )
   if (generalVisualMapping) {
     lines.push(generalVisualMapping)
   }
 
-  const pestVisibleAnomalyDescriptions =
-    compilePestVisibleAnomalyDescriptions(normalizedLocationKeys)
-  if (pestVisibleAnomalyDescriptions) {
-    lines.push(pestVisibleAnomalyDescriptions)
-  }
-
-  const generalVisibleAnomalyDescriptions =
-    compileGeneralVisibleAnomalyDescriptions(normalizedLocationKeys)
-  if (generalVisibleAnomalyDescriptions) {
-    lines.push(generalVisibleAnomalyDescriptions)
-  }
-
-  if (promptContext.diagnosisProfile === 'full') {
-    lines.push(
-      'full：本图明确黄化或叶片下垂时，须同时填对应 symptom_candidates 与 yellow_leaf/wilting_droop mode_candidates；confidence 仅表示症状可见把握，非病因。'
-    )
+  if (promptContext.diagnosisProfile === 'full' && hasYellowOrDroopRoute) {
+    lines.push('full：黄化/下垂各填 symptom+mode；不代虫害')
   }
 
   if (promptContext.diagnosisProfile === 'pest') {
     lines.push(
-      `diagnosis_profile=pest 时，mode_candidates 只能使用这 8 个虫害机器键：${PEST_MODE_KEYS.join(', ')}。黄化或下垂只能作为伴随可见证据，不能输出 yellow_leaf 或 wilting_droop 作为 mode_candidates。`
-    )
-    lines.push(
-      '识别明确后，虫害 mode_candidates[].mode 只能填模式键，正式 evidence key 只能填当前器官允许的键；不能把 evidence key 当作 mode。'
+      'pest：mode 只能使用静态词典的 pest 模式；黄化或下垂仅作为 symptom，evidence key 不可填入 mode。'
     )
   }
 

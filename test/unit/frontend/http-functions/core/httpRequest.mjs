@@ -85,6 +85,33 @@ try {
   })
   assert.equal(remoteMiniProgramHeaders.Authorization, 'Bearer planting-http-v1.payload.signature')
 
+  let capturedChunkRequest = null
+  let receivedChunkListener = false
+  globalThis.wx = {
+    cloud: {},
+    request(options) {
+      capturedChunkRequest = options
+      options.success({ statusCode: 200, data: '' })
+      return {
+        onChunkReceived(callback) {
+          receivedChunkListener = typeof callback === 'function'
+        }
+      }
+    }
+  }
+  const nativeChunkModule = await loadHttpRequestModule({
+    isLocal: false,
+    devOpenid: 'dev_terminal_mp_local',
+    identity: { openid: 'wx_live_user', httpIdentityTicket: 'runtime-ticket' }
+  })
+  await nativeChunkModule.httpRequest({ auth: false, enableChunked: true })({
+    functionPath: 'diagnose-http/diagnosis/start',
+    onChunkReceived() {}
+  })
+  assert.equal(capturedChunkRequest?.enableChunked, true)
+  assert.equal(receivedChunkListener, true)
+
+  globalThis.wx = { cloud: {} }
   let capturedUnauthenticatedRequest = null
   globalThis.uni = {
     getStorageSync: () => null,
@@ -143,7 +170,10 @@ try {
     method: 'POST',
     payload: { answer: 'public-remote' }
   })
-  assert.equal(capturedPublicRequest?.url, 'https://public.example.com/diagnose-http/diagnosis/answer')
+  assert.equal(
+    capturedPublicRequest?.url,
+    'https://public.example.com/diagnose-http/diagnosis/answer'
+  )
   assert.equal(capturedPublicRequest?.method, 'POST')
   assert.equal(capturedPublicRequest?.header.Authorization, undefined)
 
@@ -197,7 +227,10 @@ try {
     payload: { answer: 'ticket-refreshed-remote' }
   })
   assert.equal(globalThis.__httpRequestIdentityRefreshCalls, 1)
-  assert.equal(capturedPublicRequest?.header['x-planting-http-identity-ticket'], 'refreshed-identity-ticket')
+  assert.equal(
+    capturedPublicRequest?.header['x-planting-http-identity-ticket'],
+    'refreshed-identity-ticket'
+  )
   assert.equal(capturedPublicRequest?.header.Authorization, 'Bearer refreshed-identity-ticket')
   assert.equal(capturedPublicRequest?.header['x-planting-platform-session'], undefined)
 
@@ -284,10 +317,7 @@ try {
     expiredTicketRequestHeaders?.['x-planting-http-identity-ticket'],
     'refreshed-after-expiry-ticket'
   )
-  assert.equal(
-    expiredTicketRequestHeaders?.Authorization,
-    'Bearer refreshed-after-expiry-ticket'
-  )
+  assert.equal(expiredTicketRequestHeaders?.Authorization, 'Bearer refreshed-after-expiry-ticket')
 
   globalThis.uni = {
     getStorageSync(key) {
@@ -413,6 +443,38 @@ try {
     headers: { 'X-Custom': 'preserved' }
   })
   assert.equal(noAuthHeaders['X-Custom'], 'preserved')
+
+  let capturedUpload = null
+  globalThis.uni = {
+    getStorageSync: () => null,
+    uploadFile(options) {
+      capturedUpload = options
+      options.success({
+        statusCode: 200,
+        data: JSON.stringify({ code: 200, data: { fileId: 'cloud://uploaded' } })
+      })
+      return {}
+    }
+  }
+  const uploadResponse = await remoteH5Module.httpUploadFile({ auth: false })({
+    functionPath: 'storage-http/storage/diagnose-images',
+    filePath: 'wxfile://diagnose.png',
+    name: 'file',
+    formData: { suffix: 'png', plantId: 'temp' },
+    headers: { 'Content-Type': 'application/json', 'X-Test': 'kept' },
+    timeout: 30000
+  })
+  assert.deepEqual(uploadResponse.data, { code: 200, data: { fileId: 'cloud://uploaded' } })
+  assert.equal(
+    capturedUpload?.url,
+    'https://public.example.com/storage-http/storage/diagnose-images'
+  )
+  assert.equal(capturedUpload?.filePath, 'wxfile://diagnose.png')
+  assert.equal(capturedUpload?.name, 'file')
+  assert.deepEqual(capturedUpload?.formData, { suffix: 'png', plantId: 'temp' })
+  assert.equal(capturedUpload?.header['Content-Type'], undefined)
+  assert.equal(capturedUpload?.header['X-Test'], 'kept')
+  assert.equal(capturedUpload?.timeout, 30000)
 
   let capturedRequest = null
   globalThis.uni = {

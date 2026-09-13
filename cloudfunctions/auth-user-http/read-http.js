@@ -14,6 +14,10 @@ const {
   hasPlatformSessionMaterial
 } = require('./read-runtime')
 const { runCloudbaseSql } = require('./read-sql-runtime')
+const {
+  isTransientCloudbaseSqlConnectionError,
+  runWithOneTransientRetry
+} = require('./read-sql-retry')
 
 const HTTP_IDENTITY_TICKET_TTL_MS = 5 * 60 * 1000
 const PUBLIC_USER_SELECT_FIELDS = [
@@ -163,19 +167,35 @@ function userResponseWithHttpIdentityTicket(user = {}, identity = {}) {
     : safeUser
 }
 
-async function readUserByField(field, value, timing = null) {
+function runReadSql(sql, params, timing, runSql = runCloudbaseSql) {
+  return runWithOneTransientRetry(() => runSql(sql, params), {
+    onRetry: error => {
+      timing?.mark('user-sql-transient-retry', {
+        code: String(error?.code || '').slice(0, 80)
+      })
+      console.warn('auth-user-http/read transient SQL connection; retrying once', {
+        code: String(error?.code || '').slice(0, 80),
+        requestId: String(error?.requestId || '').slice(0, 128)
+      })
+    }
+  })
+}
+
+async function readUserByField(field, value, timing = null, runSql = runCloudbaseSql) {
   if (!['_id', '_openid'].includes(field)) {
     const error = new Error('用户字段无效')
     error.code = 'USER_FIELD_INVALID'
     throw error
   }
   timing?.mark('user-rest-read-start', { field })
-  const result = await runCloudbaseSql(
+  const result = await runReadSql(
     `SELECT ${sqlSelect(PUBLIC_USER_SELECT_FIELDS, 'u')}
        FROM users u
       WHERE u.\`${field}\` = {{value}}
       LIMIT 1`,
-    { value }
+    { value },
+    timing,
+    runSql
   )
   const users = result?.data?.executeResultList || []
   timing?.mark('user-rest-read-ready', { field, row_count: users.length })
@@ -188,16 +208,18 @@ async function readUserByField(field, value, timing = null) {
   return user
 }
 
-async function readUserByRuntimeOpenid(openid, timing = null) {
+async function readUserByRuntimeOpenid(openid, timing = null, runSql = runCloudbaseSql) {
   timing?.mark('user-rest-read-start', { field: 'runtime-openid' })
-  const result = await runCloudbaseSql(
+  const result = await runReadSql(
     `SELECT ${sqlSelect(PUBLIC_USER_SELECT_FIELDS, 'u')}
        FROM users u
       WHERE u._openid = {{openid}}
          OR u.wechat_openid = {{openid}}
          OR u.principal_openid = {{openid}}
       LIMIT 1`,
-    { openid }
+    { openid },
+    timing,
+    runSql
   )
   const users = result?.data?.executeResultList || []
   timing?.mark('user-rest-read-ready', { field: 'runtime-openid', row_count: users.length })
@@ -210,13 +232,13 @@ async function readUserByRuntimeOpenid(openid, timing = null) {
   return user
 }
 
-async function readUserByPlatformSession(token, timing = null) {
+async function readUserByPlatformSession(token, timing = null, runSql = runCloudbaseSql) {
   const tokenHash = hashSessionToken(token)
   if (!tokenHash) {
     return null
   }
   timing?.mark('session-rest-read-start')
-  const result = await runCloudbaseSql(
+  const result = await runReadSql(
     `SELECT s.user_id AS user_id, s.platform AS session_platform, s.app_id AS session_app_id,
             ${sqlSelect(PUBLIC_USER_SELECT_FIELDS, 'u')}
        FROM user_sessions s
@@ -225,7 +247,9 @@ async function readUserByPlatformSession(token, timing = null) {
         AND s.revoked_at <=> NULL
         AND s.expires_at > {{now}}
       LIMIT 1`,
-    { tokenHash, now: Date.now() }
+    { tokenHash, now: Date.now() },
+    timing,
+    runSql
   )
   const sessions = result?.data?.executeResultList || []
   timing?.mark('session-rest-read-ready', { row_count: sessions.length })
@@ -313,4 +337,13 @@ async function main(event, context) {
   }
 }
 
-module.exports = { main }
+module.exports = {
+  main,
+  _test: {
+    isTransientCloudbaseSqlConnectionError,
+    runWithOneTransientRetry,
+    readUserByField,
+    readUserByRuntimeOpenid,
+    readUserByPlatformSession
+  }
+}

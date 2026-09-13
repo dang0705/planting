@@ -141,18 +141,6 @@ function normalizeUsage(usage) {
   }
 }
 
-function hasRemoteImage(messages = []) {
-  return messages.some(message =>
-    (message?.content || []).some(item => /^https?:\/\//i.test(text(item?.image_url?.url)))
-  )
-}
-
-function hasDataUrlImage(messages = []) {
-  return messages.some(message =>
-    (message?.content || []).some(item => /^data:/i.test(text(item?.image_url?.url)))
-  )
-}
-
 function anthropicText(payload = {}) {
   return (Array.isArray(payload.content) ? payload.content : [])
     .filter(item => item?.type === 'text')
@@ -165,8 +153,12 @@ function cloudbaseMessagesError(value, statusCode = 0) {
   const message = text(
     payload?.Response?.Error?.Message || payload?.error?.message || payload?.Error?.Message || value
   )
-  if (isImageDownloadError(message)) {
-    return new Error('CloudBase Anthropic 图片下载失败')
+  if (
+    /download multimodal content|multimodal content|图片下载失败|(?:image|图片).*(?:download|fetch)|(?:download|fetch).*(?:image|图片)/i.test(
+      message
+    )
+  ) {
+    return new Error('CloudBase Anthropic 图片地址不可访问')
   }
   return new Error(`CloudBase AI 请求失败(${Number(statusCode || 0)})`)
 }
@@ -226,16 +218,33 @@ function createCloudBaseAiOpenAiClient({
     }
     return `Bearer ${accessToken}`
   }
-  const buildImageContent = url => ({ type: 'image_url', image_url: { url } })
-  const buildPayload = (messages, stream, base64Fallback = false) =>
+  const buildImageContent = url => {
+    const imageUrl = text(url)
+    // 入口防线：模型图片仅传 URL；严禁 Base64/data URL 进入任何供应商适配器。
+    if (!/^https?:\/\//i.test(imageUrl)) {
+      throw Object.assign(new Error('视觉诊断图片必须使用可访问的 HTTP(S) URL，不接受 Base64'), {
+        code: 'cloudbase_anthropic_image_input_error'
+      })
+    }
+    const maxPixels = provider.capabilities.imageMaxPixels
+      ? positiveNumber(cloudbaseAi.imageMaxPixels)
+      : null
+    // 百炼要求 max_pixels 位于 image_url 内容块的根节点，不能嵌入 image_url。
+    // 该服务端上限必须保留：它覆盖任何绕过端上尺寸压缩的诊断图片，同时不改变 URL 传输。
+    return {
+      type: 'image_url',
+      image_url: { url: imageUrl },
+      ...(maxPixels ? { max_pixels: maxPixels } : {})
+    }
+  }
+  const buildPayload = (messages, stream) =>
     usesAnthropicMessages
       ? buildCloudbaseAnthropicPayload({
           model,
           messages,
           stream,
           llmOptions,
-          cloudbaseAi,
-          base64Fallback
+          cloudbaseAi
         })
       : buildCloudBaseAiPayload({
           model,
@@ -428,23 +437,8 @@ function createCloudBaseAiOpenAiClient({
     })
   }
   const request = async (messages, stream, options) => {
-    const initialPayload = await buildPayload(messages, stream)
-    try {
-      return {
-        ...(await send(initialPayload, options)),
-        imageInputTransport:
-          usesAnthropicMessages && hasDataUrlImage(messages) ? 'anthropic_base64_fallback' : 'url'
-      }
-    } catch (error) {
-      if (!usesAnthropicMessages || !hasRemoteImage(messages) || !isImageDownloadError(error)) {
-        throw error
-      }
-      const fallbackPayload = await buildPayload(messages, stream, true)
-      return {
-        ...(await send(fallbackPayload, options)),
-        imageInputTransport: 'anthropic_base64_fallback'
-      }
-    }
+    const payload = await buildPayload(messages, stream)
+    return { ...(await send(payload, options)), imageInputTransport: 'url' }
   }
   return {
     buildImageContent,
@@ -456,15 +450,8 @@ function createCloudBaseAiOpenAiClient({
     resolveAuthorization: authorization,
     callNonStream: (messages, options) => request(messages, false, options),
     callStream: (messages, options) => request(messages, true, options),
-    isImageDownloadError,
     isImageInputError: isCloudbaseImageInputError
   }
-}
-
-function isImageDownloadError(error) {
-  return /download multimodal content|multimodal content|图片下载失败|(?:image|图片).*(?:download|fetch)|(?:download|fetch).*(?:image|图片)/i.test(
-    text(error?.message || error)
-  )
 }
 
 module.exports = {

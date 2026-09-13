@@ -15,7 +15,17 @@
       :confirm-loading="loading || inputFlowLoading"
       @change="onPopupChange"
     >
-      <template v-if="inputFlowOpen">
+      <template v-if="!soilEvidenceReady">
+        <WateringSoilEvidenceStage
+          ref="soilEvidenceStageRef"
+          :key="soilEvidenceStageKey"
+          :plant-id="props.plant?.id || null"
+          :show-continue="false"
+          @change="handleSoilEvidenceChange"
+          @ready="handleSoilEvidenceReady"
+        />
+      </template>
+      <template v-else-if="inputFlowOpen">
         <WateringReminderInputStepper
           ref="inputStepperRef"
           :active-step="inputFlowStep"
@@ -43,6 +53,7 @@
           :amount-bottle-text="amountBottleText"
           :pot-profile-state="potProfileState"
           :soil-check-message="plannerResult?.soilCheck?.message || ''"
+          :visual-soil-evidence="plannerResult?.visualSoilEvidence || null"
         />
         <view
           v-if="calendarSyncError"
@@ -68,11 +79,22 @@
       </template>
 
       <SavedWateringReminderState
-        v-if="savedReminderActive && !inputFlowOpen"
+        v-if="savedReminderActive && !inputFlowOpen && !isOverWateringBlocked"
         :display="savedReminderDisplay"
       />
       <template #confirm>
-        <view v-if="inputFlowOpen" class="flex gap-3">
+        <view v-if="!soilEvidenceReady" class="flex gap-3">
+          <button
+            id="watering-reminder-soil-continue-button"
+            class="m-0 flex-1 rounded-[14px] bg-[#2d7a4f] py-3 text-[15px] font-semibold text-white after:border-0 disabled:bg-gray-300"
+            hover-class="none"
+            :disabled="!soilEvidenceCanContinue || loading"
+            @click="continueSoilEvidence"
+          >
+            {{ loading ? '正在检查盆土…' : '继续查看建议' }}
+          </button>
+        </view>
+        <view v-else-if="inputFlowOpen" class="flex gap-3">
           <button
             id="watering-reminder-input-previous-button"
             class="m-0 flex-1 rounded-[14px] border border-[#2d7a4f] bg-white py-3 text-[15px] font-semibold text-[#2d7a4f] after:border-0"
@@ -119,6 +141,7 @@ import SavedWateringReminderState from './SavedWateringReminderState.vue'
 import WateringReminderInputStepper from './WateringReminderInputStepper.vue'
 import WateringReminderInputSection from './WateringReminderInputSection.vue'
 import WateringReminderResultCard from './WateringReminderResultCard.vue'
+import WateringSoilEvidenceStage from '@/components/watering/WateringSoilEvidenceStage.vue'
 import { useWateringReminderCalendar } from './useWateringReminderCalendar.js'
 import { useWateringReminderInputFlow } from './useWateringReminderInputFlow.js'
 import { useWateringReminderPlanner } from './useWateringReminderPlanner.js'
@@ -139,7 +162,12 @@ const plantStore = usePlantStore()
 const plantingStore = usePlantingStore()
 const userStore = useUserStore()
 const popupRef = ref(null)
+const soilEvidenceStageRef = ref(null)
 const isSheetOpen = ref(false)
+const soilEvidenceReady = ref(false)
+const soilEvidenceCanContinue = ref(false)
+const soilEvidence = ref(null)
+const soilEvidenceStageKey = ref(0)
 const pendingReminderReload = ref(false)
 const reminderLoading = ref(false)
 const savedReminder = ref(null)
@@ -183,7 +211,12 @@ const {
   resetWeatherPlannerState,
   loadWeatherDays,
   fetchPlanner
-} = useWateringReminderPlanner({ props, userStore, selectedWateringEventsForPlanner })
+} = useWateringReminderPlanner({
+  props,
+  userStore,
+  selectedWateringEventsForPlanner,
+  soilEvidence
+})
 const {
   inputStepperRef,
   inputFlowOpen,
@@ -243,6 +276,7 @@ const canAddToCalendar = computed(
     Boolean(pendingReminderSavePayload.value) ||
     ((!savedReminderActive.value || savedReminderChanged.value) &&
       !isOverWateringBlocked.value &&
+      !plannerResult.value?.requiresManualSoilConfirmation &&
       hasRequiredWateringHistory.value &&
       Boolean(plannerResult.value?.nextWaterDate))
 )
@@ -308,6 +342,10 @@ const {
   calendarSyncError
 })
 function resetReminderState() {
+  soilEvidenceStageKey.value += 1
+  soilEvidenceReady.value = false
+  soilEvidenceCanContinue.value = false
+  soilEvidence.value = null
   selectedWateringEvents.value = []
   wateringHistoryTouched.value = false
   remoteWateringEvents.value = []
@@ -318,10 +356,27 @@ function resetReminderState() {
   resetWeatherPlannerState()
 }
 async function open() {
+  resetReminderState()
   isSheetOpen.value = true
   callComponentMethod(popupRef, 'open')
   await nextTick()
-  await loadSavedReminder()
+}
+
+function handleSoilEvidenceChange(value) {
+  soilEvidenceCanContinue.value = value?.canContinue === true
+}
+
+function continueSoilEvidence() {
+  callComponentMethod(soilEvidenceStageRef, 'continueWithEvidence')
+}
+
+async function handleSoilEvidenceReady(value) {
+  soilEvidence.value = value || null
+  soilEvidenceReady.value = Boolean(value?.evidenceId)
+  soilEvidenceCanContinue.value = soilEvidenceReady.value
+  if (soilEvidenceReady.value) {
+    await loadSavedReminder()
+  }
 }
 const close = () => callComponentMethod(popupRef, 'close')
 function onPopupChange(event) {
@@ -388,6 +443,8 @@ async function loadSavedReminder() {
       wateringHistoryTouched.value = true
       savedReminderInputSignature.value = currentReminderInputSignature.value
       mirrorSavedReminder(reminder)
+      await loadWeatherDays()
+      await fetchPlanner()
       return
     }
     savedReminder.value = null

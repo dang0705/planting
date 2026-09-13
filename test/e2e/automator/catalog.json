@@ -210,6 +210,7 @@
         "诊断分包流程页已打开",
         "黄叶业务入口已选择",
         "至少完成一轮真实问答",
+        "固定题包答案请求携带服务端续接凭据",
         "切题后滚动位置重置",
         "诊断天气窗口请求成功",
         "最近10天历史天气窗口完整返回",
@@ -221,14 +222,14 @@
         "多个结论的建议标题归拢为症状",
         "最终截图为有效 PNG"
       ],
-      "script_sha256": "1be6fad417d0a9e450f542673ebdbe69402d886872754c38ca6c0e82a314c45e",
+      "script_sha256": "348ee1b314aa48d1d3425bc95b839fa4836d567dcd0cd76cda3fe25f3b65ed0f",
       "reusable_scenarios": [],
       "id_policy": {
-        "sections": ["3.1", "3.3", "3.7"],
+        "sections": ["3.1", "3.3", "3.8"],
         "refs": [
           "docs/ai-rules/frontend-automation-id-policy.md#3.1",
           "docs/ai-rules/frontend-automation-id-policy.md#3.3",
-          "docs/ai-rules/frontend-automation-id-policy.md#3.7"
+          "docs/ai-rules/frontend-automation-id-policy.md#3.8"
         ],
         "stable_ids": ["diagnosis-yellowing-entry"],
         "stable_id_prefixes": ["diagnosis-"]
@@ -1037,11 +1038,13 @@
       "integrity_files": [
         "src/pages/index/index.vue",
         "src/pages/profile/profile.vue",
-        "src/subpackages/diagnosis/result.vue",
+        "src/subpackages/diagnosis/question-package.vue",
+        "src/subpackages/diagnosis/question-package/page-context.js",
+        "src/subpackages/diagnosis/question-package/QuestionPackageResult.vue",
         "src/pages.json",
         "src/Layout.vue"
       ],
-      "script_sha256": "8733dddd8fd656e4450dc3e98640e37037b36b9acc078a57fa32a63a1e84d05f",
+      "script_sha256": "8f0ebfd0999923a370b6d4ff101b6d15b5c6005fd5892d491857078ad7d63d77",
       "reusable_scenarios": [],
       "id_policy": {
         "sections": ["3.9", "3.8"],
@@ -1052,7 +1055,7 @@
         "stable_ids": [
           "profile-menu-myPlants",
           "profile-diagnose-history-retry",
-          "diagnosis-result-page-retry"
+          "diagnose-question-package-history-retry"
         ],
         "stable_id_prefixes": ["profile-menu-"]
       },

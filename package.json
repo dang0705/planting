@@ -89,6 +89,7 @@
     "enrich:video-knowledge-review": "node scripts/video-knowledge/enrich-video-knowledge-review.mjs",
     "dev:custom": "uni -p",
     "dev:h5": "uni",
+    "docs:api": "node tools/api-docs/server.mjs",
     "dev:h5:local-functions": "node scripts/dev/run-local-api-env.mjs -- uni",
     "dev:h5:ssr": "uni --ssr",
     "dev:mp-toutiao": "uni -p mp-toutiao",

@@ -5,7 +5,7 @@ const falseValue = () => false
 
 export const DIAGNOSE_VIEW_DEFAULTS = {
   result: null,
-  showAIDialog: false,
+  visualScanText: '',
   pendingDiagnosePayload: null,
   casePreviewImages: [],
   questionAnswers: {},
@@ -108,6 +108,7 @@ export const DIAGNOSE_VIEW_DEFAULTS = {
   setDiagnosisProfile: noop,
   handleSymptomClassQuickSelect: noop,
   chooseImage: noop,
+  resetImages: noop,
   chooseAdditionalImage: noop,
   removeImage: noop,
   removeAdditionalImage: noop,

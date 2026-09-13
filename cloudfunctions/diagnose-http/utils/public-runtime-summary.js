@@ -8,6 +8,78 @@ const {
   normalizeDiagnosisRoutePrimaryAction
 } = require('./diagnosis-contract')
 
+const PUBLIC_VISUAL_EVIDENCE_LABELS = Object.freeze({
+  visible_mite_colony: '看到螨虫聚集',
+  fine_webbing: '叶片或茎部有细网',
+  yellow_speckling: '叶片有点状白黄伤痕',
+  visible_mealybug_colony: '看到粉蚧聚集',
+  scale_shells: '看到介壳虫硬壳',
+  white_flies: '看到白粉虱',
+  fixed_oval_nymphs: '看到固定的椭圆虫体',
+  aphids_visible: '看到蚜虫',
+  thrips_visible: '看到蓟马',
+  silver_scarring: '同一区域有银白擦伤',
+  silver_streaks: '同一区域有银白擦伤',
+  black_fecal_spots: '同一区域有针尖黑点或短线',
+  tunnels_in_leaf: '叶片有潜道',
+  small_flies_soil: '盆土附近有小黑飞',
+  wet_soil_surface: '盆土表面潮湿',
+  surface_glossy_residue: '叶片或茎部表面有发亮残留',
+  sooty_mold: '叶片或茎部有黑色霉膜',
+  leaf_yellowing: '叶片均匀黄化',
+  yellowing_patchy: '叶片斑状黄化',
+  leaf_droop: '叶片整体下垂',
+  powder_white: '叶片或茎部有白色粉层',
+  holes_in_leaf: '叶片有穿透洞或缺损',
+  chewed_edges: '叶缘有缺口',
+  skeletonized_leaves: '叶片只剩叶脉',
+  black_spots_spreading: '叶片黑斑扩散',
+  brown_spots_halo: '褐斑带黄晕',
+  irregular_blotches: '叶片有不规则暗斑'
+})
+
+function resolvePublicVisualEvidenceKey(candidate = {}) {
+  return String(
+    candidate?.symptomKey ||
+      candidate?.symptom_key ||
+      candidate?.evidenceKey ||
+      candidate?.evidence_key ||
+      ''
+  ).trim()
+}
+
+function isMachineVisualEvidenceLabel(value = '', key = '') {
+  const normalizedValue = String(value || '').trim()
+  const normalizedKey = String(key || '').trim().toLowerCase()
+  if (!normalizedValue) {
+    return true
+  }
+  const lowerValue = normalizedValue.toLowerCase()
+  if (normalizedKey && lowerValue === normalizedKey) {
+    return true
+  }
+  return /^[a-z][a-z0-9]*(?:[_-][a-z0-9]+)+$/i.test(normalizedValue)
+}
+
+function resolvePublicVisualEvidenceLabel(candidate = {}) {
+  const key = resolvePublicVisualEvidenceKey(candidate)
+  const explicitLabel = String(
+    candidate?.displayNameCn ||
+      candidate?.display_name_cn ||
+      candidate?.symptomCn ||
+      candidate?.symptom_cn ||
+      candidate?.label ||
+      candidate?.displayName ||
+      candidate?.evidenceLabel ||
+      candidate?.evidence_label ||
+      ''
+  ).trim()
+  if (explicitLabel && !isMachineVisualEvidenceLabel(explicitLabel, key)) {
+    return explicitLabel
+  }
+  return PUBLIC_VISUAL_EVIDENCE_LABELS[key] || ''
+}
+
 function buildPublicShadowCompareSummary(summary = null) {
   if (!summary || typeof summary !== 'object') {
     return null
@@ -167,8 +239,12 @@ function buildPublicVisualEvidenceCandidate(candidate = {}) {
   if (!candidate || typeof candidate !== 'object') {
     return null
   }
-  const symptomKey = String(candidate?.symptom_key || candidate?.symptomKey || '').trim()
+  const symptomKey = resolvePublicVisualEvidenceKey(candidate)
   if (!symptomKey) {
+    return null
+  }
+  const displayNameCn = resolvePublicVisualEvidenceLabel(candidate)
+  if (!displayNameCn) {
     return null
   }
   const supportingSources = (
@@ -197,9 +273,7 @@ function buildPublicVisualEvidenceCandidate(candidate = {}) {
 
   return {
     symptomKey,
-    displayNameCn: String(
-      candidate?.display_name_cn || candidate?.displayNameCn || symptomKey
-    ).trim(),
+    displayNameCn,
     strengthLevel: String(
       candidate?.strength_level || candidate?.strengthLevel || ''
     ).trim(),
@@ -381,9 +455,14 @@ function buildPublicVisualAggregateSummary(summary = null) {
     shadowCompareSummary: buildPublicShadowCompareSummary(
       summary?.shadowCompareSummary || summary?.shadow_compare_summary || null
     ),
-    aggregatedSymptomCandidates: Array.isArray(summary?.aggregatedSymptomCandidates || summary?.aggregated_symptom_candidates)
-      ? (summary.aggregatedSymptomCandidates || summary.aggregated_symptom_candidates)
-      : [],
+    aggregatedSymptomCandidates: (
+      Array.isArray(summary?.aggregatedSymptomCandidates || summary?.aggregated_symptom_candidates)
+        ? (summary.aggregatedSymptomCandidates || summary.aggregated_symptom_candidates)
+        : []
+    )
+      .map(buildPublicVisualEvidenceCandidate)
+      .filter(Boolean)
+      .slice(0, 12),
     outOfPoolSymptomHints: Array.isArray(summary?.outOfPoolSymptomHints || summary?.out_of_pool_symptom_hints)
       ? (summary.outOfPoolSymptomHints || summary.out_of_pool_symptom_hints)
       : [],
@@ -399,5 +478,7 @@ function buildPublicVisualAggregateSummary(summary = null) {
 module.exports = {
   buildPublicShadowCompareSummary,
   buildPublicVisualAggregateSummary,
-  buildQuestionPackageVisualEvidenceSnapshot
+  buildQuestionPackageVisualEvidenceSnapshot,
+  resolvePublicVisualEvidenceKey,
+  resolvePublicVisualEvidenceLabel
 }

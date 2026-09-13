@@ -26,8 +26,7 @@
   - 诊断弹窗（容器）：`src/subpackages/diagnosis/components/DiagnosePopup.vue`
   - AI 流程弹窗（组件）：`src/components/AIStreamDialog.vue`
   - 养护时间线（组件）：`src/components/CareBehaviorTimeline.vue`
-  - 独立问诊页：`src/pages/diagnose/follow-up.vue`
-  - 历史结果页：`src/subpackages/diagnosis/result.vue`
+  - 统一诊断结果页：`src/subpackages/diagnosis/question-package.vue` + `src/subpackages/diagnosis/question-package/QuestionPackageResult.vue`
   - 提醒 tab：`src/pages/reminder/reminder.vue`
   - 个人中心：`src/pages/profile/profile.vue`
   - 订阅会员页：`src/subpackages/subscription/subscription.vue`
@@ -49,7 +48,7 @@
 
 | 功能模块            | 文件                                                                 | 稳定 id                                                                                                                                                                                                                                                                                                                                                                                                   | 操作 / 断言                                                   |
 | ------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| 抖音天气展开触发器  | `src/Layout.vue`                                                     | `douyin-weather-trigger` / `douyin-weather-trigger-row` / `douyin-weather-dismiss-area`                                                                                                                                                                                                                                                                                                                     | 默认收起；点击触发器展开天气，点击头部空白或页面空白收起       |
+| 抖音天气展开触发器  | `src/Layout.vue`                                                     | `douyin-weather-trigger` / `douyin-weather-trigger-row` / `douyin-weather-dismiss-area`                                                                                                                                                                                                                                                                                                                   | 默认收起；点击触发器展开天气，点击头部空白或页面空白收起      |
 | 天气位置信息        | `src/components/HeaderWeatherInfo.vue`                               | `header-weather-location-button`                                                                                                                                                                                                                                                                                                                                                                          | 点击刷新定位 / 天气                                           |
 | 天气缓存开关        | `src/components/HeaderWeatherInfo.vue`                               | `header-weather-cache-toggle`                                                                                                                                                                                                                                                                                                                                                                             | 点击切换天气缓存                                              |
 | 进入诊断入口        | `src/pages/index/index.vue`                                          | `diagnose-entry-button-{plant.id}`                                                                                                                                                                                                                                                                                                                                                                        | 点击进入诊断分包流                                            |
@@ -119,53 +118,52 @@
 
 #### A. 主流程与上传
 
-| 功能模块             | 文件                                                                                                       | 稳定 id                                                                 | 操作 / 断言                                                                                       |
-| -------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| 弹窗根容器           | `src/subpackages/diagnosis/components/DiagnosePopup.vue`                                                   | `diagnose-popup-panel`                                                  | 断言弹窗已打开                                                                                    |
-| 弹窗滚动内容         | `src/subpackages/diagnosis/components/DiagnosePopup.vue`                                                   | `diagnose-popup-scroll`                                                 | 断言主内容可见                                                                                    |
-| 诊断 Tab 实际入口    | `src/pages/diagnose/diagnose.vue`                                                                          | `diagnose-tab-page` / `diagnose-tab-intake`                             | Tab 直入并停留在真实主包照片/无图症状入口；没有自动跳转、分流或中间页                             |
-| 诊断分包真实流程页   | `src/subpackages/diagnosis/flow.vue`                                                                       | `diagnosis-flow-page` / `diagnosis-flow-page-content`                   | 首页和植物详情入口进入此真实执行页；诊断 Tab 不经过该页                                           |
-| 诊断分包页返回       | `src/subpackages/diagnosis/flow.vue`                                                                       | `diagnosis-flow-header-back-button`                                     | 按设计稿浅色页头返回上一页                                                                        |
-| 共享内核根容器       | `src/subpackages/diagnosis/diagnose-flow/DiagnoseFlow.vue`                                                 | `diagnose-flow`                                                         | 分包真实流程页和可复用诊断弹窗容器使用同一内核                                                    |
-| 主上传阶段           | `src/components/diagnosis/DiagnoseIntake.vue`                                                              | `diagnose-upload-stage`                                                 | 主包 Tab 与分包流程共用同一照片/无图症状首屏                                                      |
-| 症状模式折叠卡       | `src/components/diagnosis/DiagnoseIntake.vue`                                                              | `diagnose-symptom-section` / `diagnose-symptom-mode-toggle`             | 展开或收起症状快捷入口；与上传照片区互斥展开                                                      |
-| 上传照片折叠卡       | `src/components/diagnosis/DiagnoseIntake.vue`                                                              | `diagnose-upload-section` / `diagnose-upload-toggle`                    | 展开或收起按器官上传区；与症状模式区互斥展开                                                      |
-| 诊断方向确认         | `src/pages/index/index.vue` / `src/subpackages/plant/user-plant-detail/components/UserPlantDetailView.vue` | `diagnose-entry-button-{plantId}` / `user-plant-detail-diagnose-button` | 点击诊断后先确认是否排查虫害；确认“是”进入 `pest`，选择“否”进入 `full`；原生弹窗本身无稳定节点 id |
-| 无图快捷入口区       | `src/components/diagnosis/DiagnoseIntake.vue`                                                              | `diagnose-no-image-entry-panel`                                         | 断言症状模式展开后五个设计稿症状入口可见                                                          |
-| 无图症状快捷选择     | `src/components/diagnosis/DiagnoseIntake.vue`                                                              | `diagnose-dev-symptom-class-option-{classKey}`                          | 设计稿展示叶子发黄、枯萎、黑斑、褐斑、长势不佳；点击后由底部开始诊断统一提交                      |
-| 无图症状正式快捷入口 | `src/components/diagnosis/DiagnoseIntake.vue`                                                              | `3ef72261--diagnose-dev-symptom-class-quick-select`                     | 只负责选择症状，不自动跳转；点击底部开始诊断后再调用问题包入口                                    |
-| 快捷选择状态         | `src/components/diagnosis/DiagnoseIntake.vue`                                                              | `diagnose-dev-symptom-class-status`                                     | 断言当前已选黄叶或枯萎                                                                            |
-| 快捷选择清空         | `src/components/diagnosis/DiagnoseIntake.vue`                                                              | `diagnose-dev-symptom-class-clear-button`                               | 清除当前快捷模式                                                                                  |
-| 主图上传示意区       | `src/components/diagnosis/DiagnoseIntake.vue`                                                              | `diagnose-organ-upload-board`                                           | 断言按设计稿展示植物器官示意图和五个上传入口                                                      |
-| 主图上传按钮         | `src/components/diagnosis/DiagnoseIntake.vue`                                                              | `diagnose-upload-{slotType}-button`                                     | 点击选择图片                                                                                      |
-| 提交诊断             | `src/pages/diagnose/diagnose.vue` / `src/subpackages/diagnosis/diagnose-flow/DiagnoseFlow.vue`             | `diagnose-submit-button`                                                | 主包在原页完成真实请求后仅一次跳转直达问题包；分包内重试/重置时提交主诊断；均上报 `diagnose`      |
-| 问诊包返回           | `src/Layout.vue`                                                                                           | `layout-left-action`                                                    | 诊断 Tab 直达问诊包时返回诊断 Tab；其他既有问诊来源保持原有返回行为                               |
+| 功能模块             | 文件                                                                                           | 稳定 id                                                     | 操作 / 断言                                                                                                                       |
+| -------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| 弹窗根容器           | `src/subpackages/diagnosis/components/DiagnosePopup.vue`                                       | `diagnose-popup-panel`                                      | 断言弹窗已打开                                                                                                                    |
+| 弹窗滚动内容         | `src/subpackages/diagnosis/components/DiagnosePopup.vue`                                       | `diagnose-popup-scroll`                                     | 断言主内容可见                                                                                                                    |
+| 诊断 Tab 实际入口    | `src/pages/diagnose/diagnose.vue`                                                              | `diagnose-tab-page` / `diagnose-tab-intake`                 | Tab 直入并停留在真实主包照片/无图症状入口；没有自动跳转、分流或中间页                                                             |
+| 诊断分包真实流程页   | `src/subpackages/diagnosis/flow.vue`                                                           | `diagnosis-flow-page` / `diagnosis-flow-page-content`       | 首页和植物详情入口进入此真实执行页；诊断 Tab 不经过该页                                                                           |
+| 诊断分包页返回       | `src/subpackages/diagnosis/flow.vue`                                                           | `diagnosis-flow-header-back-button`                         | 按设计稿浅色页头返回上一页                                                                                                        |
+| 共享内核根容器       | `src/subpackages/diagnosis/diagnose-flow/DiagnoseFlow.vue`                                     | `diagnose-flow`                                             | 分包真实流程页和可复用诊断弹窗容器使用同一内核                                                                                    |
+| 主上传阶段           | `src/components/diagnosis/DiagnoseIntake.vue`                                                  | `diagnose-upload-stage`                                     | 主包 Tab 与分包流程共用同一照片/无图症状首屏                                                                                      |
+| 常见明显症状容器     | `src/components/diagnosis/DiagnoseIntake.vue`                                                  | `diagnose-symptom-section` / `diagnose-symptom-mode-toggle` | 展示 MVP 症状入口；选中后禁用并清空 AI 诊断容器                                                                                   |
+| AI 诊断容器           | `src/components/diagnosis/DiagnoseIntake.vue`                                                  | `diagnose-upload-section` / `diagnose-upload-toggle`        | 展示按器官上传区；有图片后禁用并清空常见明显症状容器                                                                               |
+| 综合诊断提交         | `src/subpackages/diagnosis/diagnose-flow/images.js`                                            | `diagnose-submit-button`                                    | 普通用户点击“开始诊断”直接按综合诊断提交，不展示虫害 / 综合确认；显式旧 profile URL 仅保留给回放兼容 |
+| 常见明显症状入口区   | `src/components/diagnosis/DiagnoseIntake.vue`                                                  | `diagnose-no-image-entry-panel`                             | 断言常见明显症状容器展示两个 MVP 症状入口                                                                                         |
+| 常见明显症状选择     | `src/components/diagnosis/DiagnoseIntake.vue`                                                  | `diagnose-dev-symptom-class-option-{classKey}`              | MVP 展示叶子发黄、枯萎；点击后由底部开始诊断统一提交                                                                              |
+| 无图症状正式快捷入口 | `src/components/diagnosis/DiagnoseIntake.vue`                                                  | `3ef72261--diagnose-dev-symptom-class-quick-select`         | 只负责选择症状，不自动跳转；点击底部开始诊断后再调用问题包入口                                                                    |
+| 快捷选择状态         | `src/components/diagnosis/DiagnoseIntake.vue`                                                  | `diagnose-dev-symptom-class-status`                         | 断言当前已选黄叶或枯萎                                                                                                            |
+| 快捷选择清空         | `src/components/diagnosis/DiagnoseIntake.vue`                                                  | `diagnose-dev-symptom-class-clear-button`                   | 清除当前快捷模式                                                                                                                  |
+| 主图上传示意区       | `src/components/diagnosis/DiagnoseIntake.vue`                                                  | `diagnose-organ-upload-board`                               | 断言按设计稿展示植物器官示意图和五个上传入口                                                                                      |
+| 主图上传按钮         | `src/components/diagnosis/DiagnoseIntake.vue`                                                  | `diagnose-upload-{slotType}-button`                         | 空卡点击选择图片；已有图片的卡片点击预览                                                                                          |
+| 主图图片预览         | `src/subpackages/diagnosis/diagnose-flow/DiagnoseFlow.vue`                                     | `diagnose-preview-image-{index}-button`                     | 点击底部缩略图放大预览；预览中的图片可左右切换                                                                                    |
+| 提交诊断             | `src/pages/diagnose/diagnose.vue` / `src/subpackages/diagnosis/diagnose-flow/DiagnoseFlow.vue` | `diagnose-submit-button`                                    | 主包在原页完成真实请求后仅一次跳转直达问题包；普通分包入口首次提交统一按综合诊断，重试/重置继续提交主诊断；均上报 `diagnose`         |
+| 问诊包返回           | `src/Layout.vue`                                                                               | `layout-left-action`                                        | 诊断 Tab 直达问诊包时返回诊断 Tab；其他既有问诊来源保持原有返回行为                                                               |
 
 #### B. 结果展示
 
-| 功能模块                                                  | 文件                                                              | 稳定 id                                 | 操作 / 断言                                                    |
-| --------------------------------------------------------- | ----------------------------------------------------------------- | --------------------------------------- | -------------------------------------------------------------- |
-| 结果阶段容器                                              | `src/subpackages/diagnosis/components/DiagnosePopup.vue`          | `diagnose-result-stage`                 | 断言诊断已有结果                                               |
-| 当前结论                                                  | `src/subpackages/diagnosis/components/DiagnosePopup.vue`          | `diagnose-result-current-conclusion`    | 断言结论标题 / 摘要可见                                        |
-| 照片证据摘要                                              | `src/subpackages/diagnosis/diagnose-flow/DiagnoseResultStage.vue` | `diagnose-result-visual-evidence`       | 断言多图线索与仍需核实内容可见                                 |
-| 处理建议                                                  | `src/subpackages/diagnosis/components/DiagnosePopup.vue`          | `diagnose-result-action-advice`         | 断言行动建议可见                                               |
-| 暂时不要做                                                | `src/subpackages/diagnosis/components/DiagnosePopup.vue`          | `diagnose-result-avoid-advice`          | 断言避免项可见                                                 |
-| 根腐诊断入口（outcomes 命中 overwatering 时显示，禁用态） | `src/subpackages/diagnosis/diagnose-flow/DiagnoseResultStage.vue` | `diagnose-result-root-rot-entry`        | 断言过浇 outcome 存在时根腐入口可见；本轮为禁用占位，无 @click |
-| 根腐诊断入口按钮（即将上线）                              | `src/subpackages/diagnosis/diagnose-flow/DiagnoseResultStage.vue` | `diagnose-result-root-rot-entry-button` | 断言禁用文案"即将上线"可见；题包完善后切换为真实 @click 入口   |
+| 功能模块     | 文件                                                                   | 稳定 id                                          | 操作 / 断言                        |
+| ------------ | ---------------------------------------------------------------------- | ------------------------------------------------ | ---------------------------------- |
+| 结果页根容器 | `src/subpackages/diagnosis/question-package/QuestionPackageResult.vue` | `diagnose-question-package-result-shell`         | 所有诊断来源共用的唯一结果内容容器 |
+| 当前结论     | `src/subpackages/diagnosis/question-package/QuestionPackageResult.vue` | `diagnose-question-package-result-outcomes`      | 断言结论标题 / 结论标签可见        |
+| 照片证据摘要 | `src/subpackages/diagnosis/question-package/QuestionPackageResult.vue` | `diagnose-question-package-result-observed`      | 断言照片线索与仍需核实内容可见     |
+| 处理建议     | `src/subpackages/diagnosis/question-package/QuestionPackageResult.vue` | `diagnose-question-package-result-action-advice` | 断言行动建议可见                   |
+| 暂时不要做   | `src/subpackages/diagnosis/question-package/QuestionPackageResult.vue` | `diagnose-question-package-result-avoid-advice`  | 断言避免项可见                     |
 
 #### C. 追问流程
 
-| 功能模块            | 文件                                                     | 稳定 id                                                           | 操作 / 断言        |
-| ------------------- | -------------------------------------------------------- | ----------------------------------------------------------------- | ------------------ |
-| 问诊容器            | `src/subpackages/diagnosis/components/DiagnosePopup.vue` | `diagnose-result-followup-required`                               | 断言进入追问阶段   |
-| 问诊问题卡          | `src/subpackages/diagnosis/components/DiagnosePopup.vue` | `diagnose-followup-question-{questionId}`                         | 断言当前问题可见   |
-| 问诊选项            | `src/subpackages/diagnosis/components/DiagnosePopup.vue` | `diagnose-followup-option-{questionId}-{optionId}`                | 点击回答选项       |
-| 追问上一题 / 下一题 | `src/subpackages/diagnosis/components/DiagnosePopup.vue` | `diagnose-followup-prev-button` / `diagnose-followup-next-button` | 导航问诊步骤       |
-| 补图区域            | `src/subpackages/diagnosis/components/DiagnosePopup.vue` | `diagnose-followup-image-section`                                 | 断言补图入口可见   |
-| 补图上传槽位        | `src/subpackages/diagnosis/components/DiagnosePopup.vue` | `diagnose-followup-upload-slot-{slotType}`                        | 断言补图槽位存在   |
-| 补图上传按钮        | `src/subpackages/diagnosis/components/DiagnosePopup.vue` | `diagnose-followup-upload-{slotType}-button`                      | 点击补图           |
-| 提交补图            | `src/subpackages/diagnosis/components/DiagnosePopup.vue` | `diagnose-followup-image-submit-button`                           | 提交补图诊断       |
-| 重置 / 完成         | `src/subpackages/diagnosis/components/DiagnosePopup.vue` | `diagnose-reset-button` / `diagnose-finish-button`                | 重新开始或关闭弹窗 |
+| 功能模块            | 文件                                                                         | 稳定 id                                                                                     | 操作 / 断言          |
+| ------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------- |
+| 问诊容器            | `src/subpackages/diagnosis/diagnose-flow/DiagnoseFlow.vue`                   | `diagnose-flow`                                                                             | 断言诊断流程容器加载 |
+| 问诊问题卡          | `src/subpackages/diagnosis/question-package.vue`                             | `diagnose-question-package-page-question-card-{questionId}`                                 | 断言当前问题可见     |
+| 问诊选项            | `src/subpackages/diagnosis/question-package/QuestionPackageOptions.vue`      | `diagnose-question-package-page-option-{questionId}-{optionId}`                             | 点击回答选项         |
+| 追问上一题 / 下一题 | `src/subpackages/diagnosis/question-package.vue`                             | `diagnose-question-package-page-prev-button` / `diagnose-question-package-page-next-button` | 导航问诊步骤         |
+| 补图区域            | `src/subpackages/diagnosis/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-question-package-image-section`                                                   | 断言补图入口可见     |
+| 补图上传槽位        | `src/subpackages/diagnosis/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-question-package-upload-slot-{slotType}`                                          | 断言补图槽位存在     |
+| 补图上传按钮        | `src/subpackages/diagnosis/diagnose-flow/DiagnoseQuestionPackageSection.vue` | `diagnose-question-package-upload-{slotType}-button`                                        | 点击补图             |
+| 提交补图            | `src/subpackages/diagnosis/diagnose-flow/DiagnoseFlow.vue`                   | `diagnose-question-package-image-submit-button`                                             | 提交补图诊断         |
+| 重置 / 完成         | `src/subpackages/diagnosis/diagnose-flow/DiagnoseFlow.vue`                   | `diagnose-reset-button` / `diagnose-finish-button`                                          | 重新开始或完成诊断   |
 
 #### D. 方向选择、动态虫害题包与补拍
 
@@ -226,10 +224,8 @@
 | 清空补图         | `src/subpackages/diagnosis/diagnose-flow/DiagnoseQuestionPackageSection.vue`         | `diagnose-question-package-clear-images-button`                                                              | 清空所有补图                                               |
 | 补图被阻止       | `src/subpackages/diagnosis/diagnose-flow/DiagnoseQuestionPackageSection.vue`         | `diagnose-question-package-upload-blocked`                                                                   | 断言当前阶段不能补图的原因                                 |
 
-| 问诊结果反馈卡 | `src/subpackages/diagnosis/components/DiagnosisFeedbackCard.vue` / `src/subpackages/diagnosis/question-package.vue` | `diagnose-question-package-result-feedback-card` | 断言完成问诊后反馈入口可见 |
+| 问诊结果反馈卡 | `src/subpackages/diagnosis/components/DiagnosisFeedbackCard.vue` / `src/subpackages/diagnosis/question-package/QuestionPackageResult.vue` | `diagnose-question-package-result-feedback-card` | 断言完成问诊后反馈入口可见 |
 | 问诊结果反馈提交 | `src/subpackages/diagnosis/components/DiagnosisFeedbackCard.vue` | `diagnose-question-package-result-feedback-submit` | 提交反馈并断言成功状态 |
-| 问诊结论反馈卡 | `src/subpackages/diagnosis/components/DiagnosisFeedbackCard.vue` / `src/subpackages/diagnosis/question-package.vue` | `diagnose-question-package-outcome-feedback-card` | 断言结论卡内反馈入口可见 |
-| 问诊结论反馈提交 | `src/subpackages/diagnosis/components/DiagnosisFeedbackCard.vue` | `diagnose-question-package-outcome-feedback-submit` | 提交反馈并断言成功状态 |
 
 ### 3.4 AIStreamDialog（诊断前确认）
 
@@ -241,23 +237,29 @@
 
 ### 3.5 浇水提醒弹框
 
-| 功能模块         | 文件                                                          | 稳定 id                                   | 操作 / 断言                                    |
-| ---------------- | ------------------------------------------------------------- | ----------------------------------------- | ---------------------------------------------- |
-| 弹框基础节点     | `src/pages/index/components/WateringReminderSheet.vue`        | `watering-reminder-sheet`                 | 断言弹框打开                                   |
-| 保存提醒按钮     | `src/pages/index/components/WateringReminderSheet.vue`        | `watering-reminder-confirm-button`        | 点击添加到手机日历                             |
-| 过往浇水日期入口 | `src/pages/index/components/WateringReminderInputSection.vue` | `watering-reminder-last-watering-row`     | 打开过往浇水日期步骤                           |
-| 浇水输入步骤容器 | `src/pages/index/components/WateringReminderInputStepper.vue` | `watering-reminder-input-stepper`         | 断言过往浇水与盆型设置共用步进流程             |
-| 浇水输入 swiper  | `src/pages/index/components/WateringReminderInputStepper.vue` | `watering-reminder-input-swiper`          | 断言步骤内容按题包式轨道切换                   |
-| 浇水输入上一步   | `src/pages/index/components/WateringReminderSheet.vue`        | `watering-reminder-input-previous-button` | 返回上一个输入步骤                             |
-| 浇水输入下一步   | `src/pages/index/components/WateringReminderSheet.vue`        | `watering-reminder-input-next-button`     | 过往浇水日期必填；完成后进入盆型或更新建议     |
-| 已保存状态回显   | `src/pages/index/components/WateringReminderSheet.vue`        | `watering-reminder-saved-state`           | 断言已保存提醒显示                             |
-| 已保存下次浇水   | `src/pages/index/components/WateringReminderSheet.vue`        | `watering-reminder-saved-next-time`       | 断言下次浇水建议显示                           |
-| 已保存原因说明   | `src/pages/index/components/WateringReminderSheet.vue`        | `watering-reminder-saved-reason`          | 断言原因回显可见                               |
-| 盆型入口         | `src/pages/index/components/WateringReminderInputSection.vue` | `watering-reminder-pot-profile-row`       | 打开盆型设置步骤                               |
-| 盆型收益提示     | `src/pages/index/components/WateringReminderResultCard.vue`   | `watering-reminder-pot-profile-benefit`   | 缺少完整盆型时，断言水量补充收益只在结果旁出现 |
-| 建议依据说明     | `src/pages/index/components/WateringReminderSheet.vue`        | `watering-reminder-planner-evidence`      | 断言当前建议依据的用户可见说明                 |
-| 建议计算失败     | `src/pages/index/components/WateringReminderSheet.vue`        | `watering-reminder-planner-error`         | 断言建议失败时只有一个可恢复错误区域           |
-| 建议水量结果     | `src/pages/index/components/WateringReminderResultCard.vue`   | `watering-reminder-result-amount`         | 完整盆型查询后断言水量建议实际显示             |
+| 功能模块         | 文件                                                                                                             | 稳定 id                                                                          | 操作 / 断言                                      |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------ |
+| 弹框基础节点     | `src/pages/index/components/WateringReminderSheet.vue`                                                           | `watering-reminder-sheet`                                                        | 断言弹框打开                                     |
+| 盆土证据阶段     | `src/components/watering/WateringSoilEvidenceStage.vue`                                                          | `watering-soil-evidence-stage`                                                   | 每次计算前必须显示；用户植物可预填最近诊断盆土图 |
+| 盆土唯一上传区   | `src/components/diagnosis/DiagnoseIntake.vue`                                                                    | `watering-soil-upload-zone`                                                      | 仅此区域可选图；点击已有预览时放大查看           |
+| 盆土更换与移除   | `src/components/diagnosis/DiagnoseIntake.vue`                                                                    | `watering-soil-replace-button` / `watering-soil-remove-button`                   | 更换新拍图或清除当前选择，不暴露诊断内部信息     |
+| 手动摸土确认     | `src/components/watering/WateringSoilEvidenceStage.vue`                                                          | `watering-soil-manual-confirmation` / `watering-soil-manual-confirmation-toggle` | 偏干、模糊或非盆土图时确认后才可继续             |
+| 盆土继续按钮     | `src/pages/index/components/WateringReminderSheet.vue` / `src/components/watering/WateringSoilEvidenceStage.vue` | `watering-reminder-soil-continue-button` / `watering-soil-continue-button`       | 提交盆土证据并开始浇水计算                       |
+| 盆土来源说明     | `src/subpackages/care/watering-advisor/watering-advisor.vue` / `src/pages/index/components/WateringReminderResultCard.vue` | `watering-advisor-result-soil-source` / `watering-reminder-result-soil-source` | 断言只展示用户可理解的照片来源和辅助结论 |
+| 保存提醒按钮     | `src/pages/index/components/WateringReminderSheet.vue`                                                           | `watering-reminder-confirm-button`                                               | 点击添加到手机日历                               |
+| 过往浇水日期入口 | `src/pages/index/components/WateringReminderInputSection.vue`                                                    | `watering-reminder-last-watering-row`                                            | 打开过往浇水日期步骤                             |
+| 浇水输入步骤容器 | `src/pages/index/components/WateringReminderInputStepper.vue`                                                    | `watering-reminder-input-stepper`                                                | 断言过往浇水与盆型设置共用步进流程               |
+| 浇水输入 swiper  | `src/pages/index/components/WateringReminderInputStepper.vue`                                                    | `watering-reminder-input-swiper`                                                 | 断言步骤内容按题包式轨道切换                     |
+| 浇水输入上一步   | `src/pages/index/components/WateringReminderSheet.vue`                                                           | `watering-reminder-input-previous-button`                                        | 返回上一个输入步骤                               |
+| 浇水输入下一步   | `src/pages/index/components/WateringReminderSheet.vue`                                                           | `watering-reminder-input-next-button`                                            | 过往浇水日期必填；完成后进入盆型或更新建议       |
+| 已保存状态回显   | `src/pages/index/components/WateringReminderSheet.vue`                                                           | `watering-reminder-saved-state`                                                  | 断言已保存提醒显示                               |
+| 已保存下次浇水   | `src/pages/index/components/WateringReminderSheet.vue`                                                           | `watering-reminder-saved-next-time`                                              | 断言下次浇水建议显示                             |
+| 已保存原因说明   | `src/pages/index/components/WateringReminderSheet.vue`                                                           | `watering-reminder-saved-reason`                                                 | 断言原因回显可见                                 |
+| 盆型入口         | `src/pages/index/components/WateringReminderInputSection.vue`                                                    | `watering-reminder-pot-profile-row`                                              | 打开盆型设置步骤                                 |
+| 盆型收益提示     | `src/pages/index/components/WateringReminderResultCard.vue`                                                      | `watering-reminder-pot-profile-benefit`                                          | 缺少完整盆型时，断言水量补充收益只在结果旁出现   |
+| 建议依据说明     | `src/pages/index/components/WateringReminderSheet.vue`                                                           | `watering-reminder-planner-evidence`                                             | 断言当前建议依据的用户可见说明                   |
+| 建议计算失败     | `src/pages/index/components/WateringReminderSheet.vue`                                                           | `watering-reminder-planner-error`                                                | 断言建议失败时只有一个可恢复错误区域             |
+| 建议水量结果     | `src/pages/index/components/WateringReminderResultCard.vue`                                                      | `watering-reminder-result-amount`                                                | 完整盆型查询后断言水量建议实际显示               |
 
 ### 3.5.1 盆型编辑共享内核
 
@@ -285,32 +287,19 @@
 | 施肥 action chip | `src/components/CareBehaviorTimeline.vue` | `diagnose-care-behavior-action-fertilize-{yyyy-mm-dd}` | 点击 / 断言指定日期施肥操作 chip                               |
 | 光照 action chip | `src/components/CareBehaviorTimeline.vue` | `diagnose-care-behavior-action-light-{yyyy-mm-dd}`     | 点击 / 断言指定日期光照操作 chip（toggle 入口）                |
 
-### 3.7 独立问诊页（follow-up）
+### 3.8 统一诊断结果页
 
-| 功能模块        | 文件                               | 稳定 id                                                                                              | 操作 / 断言                                                 |
-| --------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| 页面根容器      | `src/pages/diagnose/follow-up.vue` | `diagnose-followup-page`                                                                             | 断言深链问诊页加载                                          |
-| 题卡            | `src/pages/diagnose/follow-up.vue` | `diagnose-followup-page-question-card-{questionId 或 questionIndex}`                                 | 断言当前题可见；优先 `questionId`，缺失时用 `questionIndex` |
-| 选项            | `src/pages/diagnose/follow-up.vue` | `diagnose-followup-page-option-{questionId 或 questionIndex}-{optionId 或 optionKey 或 optionIndex}` | 点击回答选项；优先 `questionId/optionId`，缺失时按 fallback |
-| 上一题 / 下一题 | `src/pages/diagnose/follow-up.vue` | `diagnose-followup-page-prev-button` / `diagnose-followup-page-next-button`                          | 导航独立问诊步骤                                            |
-| 完成状态卡      | `src/pages/diagnose/follow-up.vue` | `diagnose-followup-result-card`                                                                      | 断言问诊完成状态可见；不是 outcome 展示区域                 |
-| 结论区域        | `src/pages/diagnose/follow-up.vue` | `diagnose-followup-result-outcomes`                                                                  | 唯一 outcome 展示区域，断言 1-N 个 outcomes 平铺展示        |
-| 行动建议        | `src/pages/diagnose/follow-up.vue` | `diagnose-followup-result-action-advice`                                                             | 断言建议按 outcome 对应展示                                 |
-| 简版完成态卡    | `src/pages/diagnose/follow-up.vue` | `diagnose-followup-outcome-card`                                                                     | 断言没有收敛明细时的完成态可见                              |
-| 简版处理建议    | `src/pages/diagnose/follow-up.vue` | `diagnose-followup-outcome-action-advice`                                                            | 断言简版完成态处理建议可见                                  |
-| 简版暂时不要做  | `src/pages/diagnose/follow-up.vue` | `diagnose-followup-outcome-avoid-advice`                                                             | 断言简版完成态避免项可见                                    |
-
-### 3.8 历史结果页
-
-| 功能模块     | 文件                                                                                                      | 稳定 id                                                                                            | 操作 / 断言                          |
-| ------------ | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| 结果页根容器 | `src/subpackages/diagnosis/result.vue`                                                                    | `diagnosis-result-page`                                                                            | 断言只读结果页加载                   |
-| 结论列表     | `src/subpackages/diagnosis/result.vue`                                                                    | `diagnosis-result-page-outcome-list`                                                               | 断言历史结果可见，允许 1-N 个结果    |
-| 空态         | `src/subpackages/diagnosis/result.vue`                                                                    | `diagnosis-result-page-empty`                                                                      | 断言无历史结果时空态可见             |
-| 加载失败重试 | `src/subpackages/diagnosis/result.vue`                                                                    | `diagnosis-result-page-retry`                                                                      | 单条诊断记录加载失败时重新请求该记录 |
-| 诊断反馈卡   | `src/subpackages/diagnosis/components/DiagnosisFeedbackCard.vue` / `src/subpackages/diagnosis/result.vue` | `diagnosis-result-page-feedback-card`                                                              | 断言反馈入口随结果展示               |
-| 诊断反馈选项 | `src/subpackages/diagnosis/components/DiagnosisFeedbackCard.vue`                                          | `diagnosis-result-page-feedback-helpful-yes/no` / `diagnosis-result-page-feedback-accurate-yes/no` | 选择有帮助程度和判断准确程度         |
-| 提交诊断反馈 | `src/subpackages/diagnosis/components/DiagnosisFeedbackCard.vue`                                          | `diagnosis-result-page-feedback-submit`                                                            | 提交后断言成功状态；重复提交禁用     |
+| 功能模块       | 文件                                                                                                                                      | 稳定 id                                                                                                                  | 操作 / 断言                            |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
+| 结果页根容器   | `src/subpackages/diagnosis/question-package.vue` / `src/subpackages/diagnosis/question-package/QuestionPackageResult.vue`                 | `diagnose-question-package-result-shell`                                                                                 | 断言问诊结果和历史结果共用同一结果内容 |
+| 结果页返回首页 | `src/subpackages/diagnosis/question-package.vue`                                                                                          | `diagnose-question-package-result-finish-button`                                                                         | 完成结果查看并返回上一层首页           |
+| 诊断结论       | `src/subpackages/diagnosis/question-package/QuestionPackageResult.vue`                                                                    | `diagnose-question-package-result-outcomes`                                                                              | 断言统一结论区域可见                   |
+| 照片证据       | `src/subpackages/diagnosis/question-package/QuestionPackageResult.vue`                                                                    | `diagnose-question-package-result-observed`                                                                              | 断言照片线索区域可见                   |
+| 加载中         | `src/subpackages/diagnosis/question-package.vue`                                                                                          | `diagnose-question-package-history-loading`                                                                              | 断言历史记录加载状态可见               |
+| 加载失败重试   | `src/subpackages/diagnosis/question-package.vue`                                                                                          | `diagnose-question-package-history-retry`                                                                                | 单条诊断记录加载失败时重新请求该记录   |
+| 诊断反馈卡     | `src/subpackages/diagnosis/components/DiagnosisFeedbackCard.vue` / `src/subpackages/diagnosis/question-package/QuestionPackageResult.vue` | `diagnose-question-package-result-feedback-card`                                                                         | 断言反馈入口随结果展示                 |
+| 诊断反馈选项   | `src/subpackages/diagnosis/components/DiagnosisFeedbackCard.vue`                                                                          | `diagnose-question-package-result-feedback-helpful-yes/no` / `diagnose-question-package-result-feedback-accurate-yes/no` | 选择有帮助程度和判断准确程度           |
+| 提交诊断反馈   | `src/subpackages/diagnosis/components/DiagnosisFeedbackCard.vue`                                                                          | `diagnose-question-package-result-feedback-submit`                                                                       | 提交后断言成功状态；重复提交禁用       |
 
 ### 3.9 个人中心
 
@@ -499,7 +488,7 @@
 
 | catalog id                                          | 脚本                                                                         | 必读 id policy 章节 |
 | --------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------- |
-| `diagnosis.yellowing.no_image_quick`                | `test/e2e/automator/diagnosis/diagnose-yellowing-mcp.mjs`                    | `3.1`、`3.3`、`3.7` |
+| `diagnosis.yellowing.no_image_quick`                | `test/e2e/automator/diagnosis/diagnose-yellowing-mcp.mjs`                    | `3.1`、`3.3`、`3.8` |
 | `diagnosis.pest.visual_mode_retake`                 | `test/e2e/automator/diagnosis/pest-mode-and-retake.mjs`                      | `3.3`、`3.12`       |
 | `care.watering.transpiration_v3.independent_advice` | `test/e2e/automator/care/watering/transpiration-v3/independent-advice.mjs`   | `3.10`              |
 | `care.watering.transpiration_v3.user_plant_planner` | `test/e2e/automator/care/watering/transpiration-v3/user-plant-planner.mjs`   | `3.10`              |

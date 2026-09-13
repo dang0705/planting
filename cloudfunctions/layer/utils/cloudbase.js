@@ -94,6 +94,7 @@ const SQL_TABLES = [
   'plant_care_locations',
   'diagnosis_weather_evidence',
   'user_watering_reminder_events',
+  'watering_visual_evidences',
   'user_fertilization_reminder_events',
   'user_fertilization_events',
   'subscription_orders'

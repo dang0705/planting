@@ -142,6 +142,33 @@ test('care behavior timeline normalizes events and last fertilized bucket', () =
   assert.equal(timeline.summary.movedToStrongerLightWithin10d, true)
 })
 
+test('care behavior summary consumes amountMl-derived doseClass for thorough watering', () => {
+  const timeline = normalizeCareBehaviorTimeline({
+    referenceDate: '2026-09-13',
+    wateringEvents10d: [
+      { date: '2026-09-11', watered: true, amount: 'normal', amountMl: 550 }
+    ]
+  })
+
+  assert.equal(timeline.wateringEvents10d[0].doseClass, 'thorough')
+  assert.equal(timeline.summary.thoroughWateringCount10d, 1)
+})
+
+test('care behavior summary counts frequent non-mist root watering separately from dose class', () => {
+  const timeline = normalizeCareBehaviorTimeline({
+    referenceDate: '2026-09-13',
+    wateringEvents10d: [
+      { date: '2026-09-03', watered: true, amount: 'normal', amountMl: 150 },
+      { date: '2026-09-04', watered: true, amount: 'normal', amountMl: 150 },
+      { date: '2026-09-09', watered: true, amount: 'normal', amountMl: 150 },
+      { date: '2026-09-10', watered: true, amount: 'normal', amountMl: 150 }
+    ]
+  })
+
+  assert.equal(timeline.summary.thoroughWateringCount10d, 0)
+  assert.equal(timeline.summary.rootWateringEventCount10d, 4)
+})
+
 test('care behavior timeline keeps today when limiting recent events', () => {
   const referenceDate = '2026-05-27'
   const wateringEvents = Array.from({ length: 11 }, (_, index) => {

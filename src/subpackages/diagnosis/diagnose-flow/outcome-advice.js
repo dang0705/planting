@@ -9,8 +9,6 @@ export function useDiagnoseOutcomeAdvice(ctx) {
     diagnoseStore,
     popup,
     result,
-    showAIDialog,
-    aiStreamDialogRef,
     pendingDiagnosePayload,
     casePreviewImages,
     questionAnswers,
@@ -246,6 +244,14 @@ export function useDiagnoseOutcomeAdvice(ctx) {
   }
 
   function buildOutcomeActionAdviceItems(outcome = {}) {
+    const structuredItems = Array.isArray(outcome?.actionItems)
+      ? outcome.actionItems
+          .filter(item => item?.stage !== 'avoid')
+          .map(item => item?.text || item?.textCn || item?.text_cn || '')
+      : []
+    if (structuredItems.length) {
+      return uniqueStrings(structuredItems)
+    }
     return uniqueStrings([
       ...normalizeTextList(outcome?.actionAdviceItems),
       ...normalizeTextList(outcome?.todayActions),
@@ -258,6 +264,12 @@ export function useDiagnoseOutcomeAdvice(ctx) {
   }
 
   function buildOutcomeAvoidAdviceItems(outcome = {}) {
+    const structuredItems = Array.isArray(outcome?.avoidActionItems)
+      ? outcome.avoidActionItems.map(item => item?.text || item?.textCn || item?.text_cn || '')
+      : []
+    if (structuredItems.length) {
+      return uniqueStrings([...structuredItems, ...normalizeTextList(outcome?.retakeOrEscalate)])
+    }
     return uniqueStrings([
       ...normalizeTextList(outcome?.avoidAdviceItems),
       ...normalizeTextList(outcome?.avoidActions),

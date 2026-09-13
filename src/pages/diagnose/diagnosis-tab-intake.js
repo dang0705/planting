@@ -6,7 +6,6 @@ import { useUserStore } from '@/store/user.js'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import { createAsyncActionGuard } from '@/utils/interaction-guard.js'
 import { requireMvpAccess } from '@/utils/subscription-access.js'
-import { confirmDiagnosisProfile } from '@/utils/diagnosis-entry-confirm.js'
 import { DIAGNOSIS_IMAGE_UPLOAD_OPTIONS } from '@/utils/diagnosis-image-uploader-options.js'
 import { buildStructuredImageInputs } from '@/utils/diagnose-structured-images.js'
 import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
@@ -25,6 +24,7 @@ import { persistDiagnosisQuestionPackageDraft } from './diagnosis-intake-draft.j
 
 const NO_IMAGES = 0
 const FIRST_IMAGE_INDEX = 0
+const DIAGNOSIS_PROFILE_FULL = 'full'
 
 function navigateToQuestionPackage(draftKey) {
   return new Promise((resolve, reject) => {
@@ -44,7 +44,7 @@ function showUploadError(error) {
   uni.showToast({ title: '选择图片失败，请重试', icon: 'none' })
 }
 
-function buildStandaloneDiagnosisPayload(structuredImages, diagnosisProfile) {
+function buildStandaloneDiagnosisPayload(structuredImages) {
   const imageIds = structuredImages.map(item => item.imageRef).filter(Boolean)
 
   return {
@@ -52,7 +52,7 @@ function buildStandaloneDiagnosisPayload(structuredImages, diagnosisProfile) {
     image: imageIds[FIRST_IMAGE_INDEX] || '',
     images: structuredImages,
     imageIds,
-    diagnosisProfile,
+    diagnosisProfile: DIAGNOSIS_PROFILE_FULL,
     entrySource: 'diagnose_tab',
     description: `共上传 ${structuredImages.length} 张照片`,
     clientContext: {
@@ -61,7 +61,7 @@ function buildStandaloneDiagnosisPayload(structuredImages, diagnosisProfile) {
       reviewSourceType: 'manual',
       visualInputVersion: 'multi_image_contract_v1',
       structuredImageCount: structuredImages.length,
-      diagnosisProfile,
+      diagnosisProfile: DIAGNOSIS_PROFILE_FULL,
       entrySource: 'diagnose_tab'
     }
   }
@@ -78,7 +78,6 @@ export function useDiagnosisTabIntake() {
     count: PRIMARY_IMAGE_LIMIT,
     ...DIAGNOSIS_IMAGE_UPLOAD_OPTIONS
   })
-  const selectedDiagnosisProfile = ref('full')
   const selectedDevSymptomClassKey = ref('')
   const isStartingDiagnosis = ref(false)
   const startDiagnosisAction = createAsyncActionGuard()
@@ -100,9 +99,6 @@ export function useDiagnosisTabIntake() {
     ) {
       return false
     }
-    if (selectedDiagnosisProfile.value === 'pest') {
-      return imageFiles.value.length > NO_IMAGES
-    }
     return imageFiles.value.length > NO_IMAGES || Boolean(selectedDevSymptomClassOption.value)
   })
 
@@ -114,12 +110,12 @@ export function useDiagnosisTabIntake() {
     return true
   }
 
-  function setDiagnosisProfile(profile = 'full') {
-    selectedDiagnosisProfile.value = profile === 'pest' ? 'pest' : 'full'
-  }
-
   function clearDevSymptomClass() {
     selectedDevSymptomClassKey.value = ''
+  }
+
+  function resetImageUploads() {
+    return uploader.reset()
   }
 
   async function chooseImage(slotType = 'other') {
@@ -164,12 +160,8 @@ export function useDiagnosisTabIntake() {
       uni.showToast({ title: '请先删除上传失败的图片', icon: 'none' })
       return false
     }
-    if (selectedDiagnosisProfile.value === 'pest' && imageFiles.value.length === NO_IMAGES) {
-      uni.showToast({ title: '只看虫害需要先上传照片', icon: 'none' })
-      return false
-    }
     if (imageFiles.value.length === NO_IMAGES && !selectedDevSymptomClassOption.value) {
-      uni.showToast({ title: '请先添加照片', icon: 'none' })
+      uni.showToast({ title: '请选择症状或上传照片', icon: 'none' })
       return false
     }
     return true
@@ -193,8 +185,6 @@ export function useDiagnosisTabIntake() {
         return false
       }
 
-      selectedDiagnosisProfile.value = await confirmDiagnosisProfile()
-
       isStartingDiagnosis.value = true
       uni.showLoading({ title: '正在准备问题...' })
       try {
@@ -206,7 +196,7 @@ export function useDiagnosisTabIntake() {
             ? await requestDiagnosisQuestionStart({
                 symptomClassKey: selectedSymptom.classKey,
                 symptomKey: selectedSymptom.symptomKey,
-                diagnosisProfile: selectedDiagnosisProfile.value,
+                diagnosisProfile: DIAGNOSIS_PROFILE_FULL,
                 entrySource: 'diagnose_tab',
                 description: `无图症状模式：${selectedSymptom.symptomCn}（${selectedSymptom.classNameCn}）`,
                 clientContext: {
@@ -215,12 +205,12 @@ export function useDiagnosisTabIntake() {
                   reviewSourceType: 'manual_symptom_mode',
                   visualInputVersion: 'manual_symptom_mode_v1',
                   structuredImageCount: NO_IMAGES,
-                  diagnosisProfile: selectedDiagnosisProfile.value,
+                  diagnosisProfile: DIAGNOSIS_PROFILE_FULL,
                   entrySource: 'diagnose_tab'
                 }
               })
             : await requestDiagnosisStart({
-                ...buildStandaloneDiagnosisPayload(structuredImages, selectedDiagnosisProfile.value)
+                ...buildStandaloneDiagnosisPayload(structuredImages)
               })
         const draftKey = persistDiagnosisQuestionPackageDraft({
           diagnosisResult,
@@ -240,19 +230,11 @@ export function useDiagnosisTabIntake() {
     })
   }
 
-  async function handleSymptomClassQuickSelect(option = null) {
+  function handleSymptomClassQuickSelect(option = null) {
     if (guardRestrictedDiagnosis()) {
       return
     }
     selectedDevSymptomClassKey.value = String(option?.classKey || '').trim()
-    if (selectedDiagnosisProfile.value === 'pest') {
-      uni.showToast({ title: '只看虫害需要先上传照片', icon: 'none' })
-      return
-    }
-    if (imageFiles.value.length > NO_IMAGES) {
-      return
-    }
-    await startDiagnosis()
   }
 
   return {
@@ -261,13 +243,12 @@ export function useDiagnosisTabIntake() {
       SYMPTOM_CLASS_QUICK_SELECT_OPTIONS,
       selectedDevSymptomClassKey,
       selectedDevSymptomClassOption,
-      selectedDiagnosisProfile,
       primarySlotGroups,
       imageFiles,
       PRIMARY_IMAGE_LIMIT,
       hasPendingUploads: uploader.hasPendingUploads,
       hasUploadErrors: uploader.hasUploadErrors,
-      setDiagnosisProfile,
+      resetImages: resetImageUploads,
       handleSymptomClassQuickSelect,
       clearDevSymptomClass,
       chooseImage,

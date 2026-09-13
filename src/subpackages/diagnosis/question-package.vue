@@ -1,5 +1,10 @@
 <template>
-  <Layout title="继续问诊" left-action="back" background-class="bg-[#f8faf9]">
+  <Layout
+    :title="pageTitle"
+    left-action="back"
+    background-class="bg-[#f8faf9]"
+    :header-style="headerStyle"
+  >
     <view
       id="diagnose-question-package-page"
       class="relative box-border h-[calc(100vh-var(--app-header-height))] min-h-0 bg-[#f8faf9]"
@@ -207,226 +212,52 @@
         @submit="submitRetakeImage"
         @restart="returnPreviousPage"
       />
-      <scroll-view
-        v-else-if="result && !result.hasActiveQuestions && !hasRouteConvergenceDetails"
-        scroll-y
-        class="h-screen"
+      <view
+        v-else-if="result && !result.hasActiveQuestions"
+        id="diagnose-question-package-result-layout"
+        class="relative h-full min-h-0"
       >
-        <view
-          id="diagnose-question-package-outcome-shell"
-          class="box-border min-h-screen px-4 py-6 pb-9"
+        <scroll-view
+          id="diagnose-question-package-result-scroll"
+          scroll-y
+          class="box-border h-full px-4 pb-[96px]"
         >
-          <view
-            id="diagnose-question-package-outcome-card"
-            class="rounded-[22px] border border-[#e7e0d1] bg-[#fffdf8] p-[18px] shadow-sm"
-          >
-            <text class="block text-[11px] font-black tracking-wide text-[#2d7a4f]"
-              >问诊已完成</text
-            >
-            <text class="mt-2 block text-[21px] font-black leading-snug text-gray-900">{{
-              outcomeDisplayTitle || '已形成诊断结论'
-            }}</text>
-            <text
-              v-if="outcomeSummaryText"
-              class="mt-2.5 block whitespace-pre-line text-[13px] leading-relaxed text-gray-600"
-            >
-              {{ outcomeSummaryText }}
-            </text>
-            <view
-              class="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-[#f8f6f0] px-3 py-3"
-            >
-              <text class="text-xs font-bold text-gray-500">当前状态</text>
-              <text class="text-xs font-black text-[#2d7a4f]">{{
-                result.healthStatusText || '待进一步确认'
-              }}</text>
-            </view>
-          </view>
-          <DiagnosisFeedbackCard
-            :result-id="feedbackResultId"
-            id-prefix="diagnose-question-package-outcome-feedback"
-          />
-          <view
-            v-if="actionAdviceGroups.length"
-            id="diagnose-question-package-outcome-action-advice"
-            class="mt-3.5 rounded-[22px] bg-emerald-50 p-4"
-          >
-            <text class="block text-[15px] font-black text-gray-900">处理建议</text>
-            <view
-              v-for="group in actionAdviceGroups"
-              :key="group.key"
-              data-advice-section="action"
-              :data-advice-group-key="group.key"
-              class="mb-3 last:mb-0"
-            >
-              <text
-                v-if="group.showOutcomeLabel"
-                class="mt-2.5 block text-xs font-extrabold leading-snug text-gray-800"
-                >{{ group.displayLabel || group.symptomLabel || group.outcomeLabel }}：</text
-              >
-              <text
-                v-for="(item, index) in group.items"
-                :key="`action_${group.key}_${index}`"
-                class="mt-1.5 block whitespace-pre-line text-xs leading-relaxed text-gray-600"
-              >
-                {{ index + 1 }}. {{ item }}
-              </text>
-            </view>
-          </view>
-          <view
-            v-if="avoidAdviceGroups.length"
-            id="diagnose-question-package-outcome-avoid-advice"
-            class="mt-3.5 rounded-[22px] bg-orange-50 p-4"
-          >
-            <text class="block text-[15px] font-black text-gray-900">暂时不要做</text>
-            <view
-              v-for="group in avoidAdviceGroups"
-              :key="group.key"
-              data-advice-section="avoid"
-              :data-advice-group-key="group.key"
-              class="mb-3 last:mb-0"
-            >
-              <text
-                v-if="group.showOutcomeLabel"
-                class="mt-2.5 block text-xs font-extrabold leading-snug text-gray-800"
-                >{{ group.displayLabel || group.symptomLabel || group.outcomeLabel }}：</text
-              >
-              <text
-                v-for="(item, index) in group.items"
-                :key="`avoid_${group.key}_${index}`"
-                class="mt-1.5 block whitespace-pre-line text-xs leading-relaxed text-gray-600"
-              >
-                {{ index + 1 }}. {{ item }}
-              </text>
-            </view>
-          </view>
-        </view>
-      </scroll-view>
-      <scroll-view v-else-if="hasCompletedDiagnosis" scroll-y class="h-screen">
+          <QuestionPackageResult :result="result" :payload="payload" />
+        </scroll-view>
         <view
-          id="diagnose-question-package-result-shell"
-          class="box-border min-h-screen px-4 py-6 pb-9"
+          id="diagnose-question-package-result-footer"
+          class="absolute bottom-0 left-0 right-0 z-30 border-t border-[rgba(45,122,79,0.15)] bg-white px-4 pb-4 pt-4"
         >
-          <view
-            v-if="showNonProblemOutcomeResultCard"
-            id="diagnose-question-package-result-card"
-            class="rounded-[22px] border border-[#e7e0d1] bg-[#fffdf8] p-[18px] shadow-sm"
+          <button
+            id="diagnose-question-package-result-finish-button"
+            class="h-12 w-full rounded-xl bg-[#2d7a4f] py-0 text-[15px] font-bold leading-12 text-white after:border-0"
+            @click="returnPreviousPage"
           >
-            <text class="block text-[11px] font-black tracking-wide text-[#2d7a4f]"
-              >问诊已完成</text
-            >
-            <text
-              v-if="nonProblemOutcomeSummaryText"
-              class="mt-2.5 block text-[13px] leading-relaxed text-gray-600"
-            >
-              {{ nonProblemOutcomeSummaryText }}
-            </text>
-            <view class="mt-4 flex gap-2.5">
-              <view class="flex-1 rounded-2xl bg-emerald-50 px-3 py-3">
-                <text class="block text-[10px] font-bold text-gray-500">当前状态</text>
-                <text class="mt-1 block text-[13px] font-black leading-snug text-[#184d39]">{{
-                  outcomeTypeText
-                }}</text>
-              </view>
-            </view>
-          </view>
-          <view
-            v-if="isProblematicOutcome && allOutcomeDisplays.length"
-            id="diagnose-question-package-result-outcomes"
-            class="mt-3.5 rounded-[22px] border border-[#e7e0d1] bg-[#fffdf8] p-4 shadow-sm"
-          >
-            <text class="block text-[15px] font-black text-gray-900">诊断结论</text>
-            <view class="mt-3 flex flex-wrap gap-2">
-              <text
-                v-for="(item, index) in allOutcomeDisplays"
-                :key="`outcome_${index}`"
-                data-diagnosis-outcome-label="true"
-                class="rounded-full bg-emerald-50 px-2.5 py-2 text-[11px] font-extrabold leading-none text-[#2d6a4f]"
-                >{{ item }}</text
-              >
-            </view>
-          </view>
-          <view
-            v-if="observedItems.length"
-            id="diagnose-question-package-result-observed"
-            class="mt-3.5 rounded-[22px] border border-[#e7e0d1] bg-[#fffdf8] p-4 shadow-sm"
-          >
-            <text class="block text-[15px] font-black text-gray-900">照片中看到</text>
-            <view class="mt-3 flex flex-wrap gap-2">
-              <text
-                v-for="item in observedItems"
-                :key="item.key"
-                class="rounded-full bg-emerald-50 px-2.5 py-2 text-[11px] font-extrabold leading-none text-[#2d6a4f]"
-              >
-                {{ item.label }}
-              </text>
-            </view>
-          </view>
-          <view
-            id="diagnose-question-package-result-action-advice"
-            class="mt-3.5 rounded-[22px] border border-[#e7e0d1] bg-[#fffdf8] p-4 shadow-sm"
-          >
-            <text class="block text-[15px] font-black text-gray-900">建议先这样做</text>
-            <view v-if="actionAdviceGroups.length" class="mt-3 flex flex-col gap-2">
-              <view
-                v-for="group in actionAdviceGroups"
-                :key="`action_group_${group.key}`"
-                data-advice-section="action"
-                :data-advice-group-key="group.key"
-                class="mb-2 last:mb-0"
-              >
-                <text
-                  v-if="group.showOutcomeLabel"
-                  class="block text-xs font-extrabold leading-snug text-gray-800"
-                  >{{ group.displayLabel || group.symptomLabel || group.outcomeLabel }}：</text
-                >
-                <text
-                  v-for="(item, index) in group.items"
-                  :key="`action_group_${group.key}_${index}`"
-                  class="mt-1.5 block whitespace-pre-line text-xs leading-relaxed text-gray-600"
-                >
-                  {{ index + 1 }}. {{ item }}
-                </text>
-              </view>
-            </view>
-            <text v-else class="mt-2.5 block text-xs leading-relaxed text-gray-600"
-              >暂时没有更具体的行动建议，建议先保持观察并避免过度处理。</text
-            >
-          </view>
-          <view
-            v-if="avoidAdviceGroups.length"
-            id="diagnose-question-package-result-avoid-advice"
-            class="mt-3.5 rounded-[22px] border border-[#e7e0d1] bg-[#fffdf8] p-4 shadow-sm"
-          >
-            <text class="block text-[15px] font-black text-gray-900">暂时避免</text>
-            <view class="mt-3 flex flex-col gap-2">
-              <view
-                v-for="group in avoidAdviceGroups"
-                :key="`avoid_group_${group.key}`"
-                data-advice-section="avoid"
-                :data-advice-group-key="group.key"
-                class="mb-2 last:mb-0"
-              >
-                <text
-                  v-if="group.showOutcomeLabel"
-                  class="block text-xs font-extrabold leading-snug text-gray-800"
-                  >{{ group.displayLabel || group.symptomLabel || group.outcomeLabel }}：</text
-                >
-                <text
-                  v-for="(item, index) in group.items"
-                  :key="`avoid_group_${group.key}_${index}`"
-                  class="mt-1.5 block whitespace-pre-line text-xs leading-relaxed text-gray-600"
-                >
-                  {{ index + 1 }}. {{ item }}
-                </text>
-              </view>
-            </view>
-          </view>
-          <DiagnosisFeedbackCard
-            :result-id="feedbackResultId"
-            id-prefix="diagnose-question-package-result-feedback"
-          />
+            返回首页
+          </button>
         </view>
-      </scroll-view>
+      </view>
+      <view
+        v-else-if="historyLoading"
+        id="diagnose-question-package-history-loading"
+        class="flex min-h-screen items-center justify-center px-6"
+      >
+        <text class="text-sm text-gray-500">正在加载诊断记录…</text>
+      </view>
+      <view
+        v-else-if="historyError"
+        id="diagnose-question-package-history-error"
+        class="px-4 py-6 text-center"
+      >
+        <text class="block text-sm leading-6 text-gray-600">{{ historyError }}</text>
+        <button
+          id="diagnose-question-package-history-retry"
+          class="mt-3 rounded-full bg-[#eef3ef] px-4 py-2 text-sm text-primary"
+          @click="loadHistoryResult()"
+        >
+          重新加载
+        </button>
+      </view>
       <QuestionPackageEmptyState v-else @back="returnPreviousPage" />
       <view
         v-if="!diagnosisFlowAvailable"
@@ -446,7 +277,6 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import Layout from '@/Layout.vue'
 import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
-import DiagnosisFeedbackCard from './components/DiagnosisFeedbackCard.vue'
 import { useDiagnoseStore } from '@/store/diagnose.js'
 import { useUserStore } from '@/store/user.js'
 import CareBehaviorTimeline from '@/components/CareBehaviorTimeline.vue'
@@ -458,10 +288,10 @@ import { useDiagnosisAnswerMutation } from './vue-query/diagnose/mutations/useDi
 import QuestionPackageEmptyState from './question-package/QuestionPackageEmptyState.vue'
 import QuestionPackageRestartRequired from './question-package/QuestionPackageRestartRequired.vue'
 import QuestionPackageProgressHeader from './question-package/QuestionPackageProgressHeader.vue'
+import QuestionPackageResult from './question-package/QuestionPackageResult.vue'
 import { useQuestionPackageFlow } from './question-package/question-flow.js'
 import { getQuestionIdentity as getQuestionId } from './utils/diagnose-question-identity.js'
 import { getQuestionHelpText, getQuestionTitle } from './question-package/question-display.js'
-import { useQuestionPackageResultView } from './question-package/result-view.js'
 import { useQuestionPackageRetake } from './question-package/retake-flow.js'
 import {
   bindQuestionPackagePageEntry,
@@ -560,31 +390,6 @@ const {
   diagnosisAnswerMutation,
   resetQuestionState
 })
-const {
-  hasCompletedDiagnosis,
-  hasRouteConvergenceDetails: routeConvergenceDetailsVisible,
-  outcomeDisplayTitle,
-  outcomeSummaryText,
-  outcomeTypeText,
-  isProblematicOutcome,
-  showNonProblemOutcomeResultCard,
-  nonProblemOutcomeSummaryText,
-  allOutcomeDisplays,
-  observedItems,
-  actionAdviceGroups,
-  avoidAdviceGroups
-} = useQuestionPackageResultView({ result, payload, routeOptions })
-const hasRouteConvergenceDetails = computed(() => routeConvergenceDetailsVisible.value)
-const feedbackResultId = computed(() =>
-  String(
-    result.value?.resultId ||
-      result.value?.diagnosisSessionId ||
-      payload.value?.diagnosisSessionId ||
-      routeOptions.value?.sessionId ||
-      ''
-  ).trim()
-)
-
 const QUESTION_PAGE_SCROLL_RESET_PULSE = 1
 const questionPageScrollTop = ref(0)
 
@@ -596,7 +401,28 @@ async function resetActiveQuestionPageScroll() {
 
 watch(activeQuestionIndex, resetActiveQuestionPageScroll, { flush: 'sync' })
 
-bindQuestionPackagePageEntry({ routeOptions, payload, images, result, resetQuestionState })
+const { historyLoading, historyError, historyRecordId, loadHistoryResult } =
+  bindQuestionPackagePageEntry({
+    routeOptions,
+    payload,
+    images,
+    result,
+    resetQuestionState
+  })
+const isFinalResult = computed(() =>
+  Boolean(result.value && !result.value.hasActiveQuestions && !result.value.retakeRequest)
+)
+const pageTitle = computed(() => {
+  if (isFinalResult.value) {
+    return '诊断结论'
+  }
+  return historyRecordId.value ? '诊断结果' : '继续问诊'
+})
+const headerStyle = computed(() =>
+  isFinalResult.value
+    ? { background: '#2d7a4f' }
+    : { background: 'linear-gradient(135deg, #2d7a4f, #52b788)' }
+)
 onMounted(() => {
   if (!diagnosisFlowAvailable.value) {
     openFeatureUnavailable('diagnosis')

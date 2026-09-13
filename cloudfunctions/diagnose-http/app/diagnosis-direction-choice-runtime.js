@@ -12,6 +12,7 @@ const {
   PEST_MODE_LABELS
 } = require('./pest-question-package')
 const { resolveSpecificPestAnswerResult } = require('./specific-pest-answer-resolver')
+const { loadActionProfilesByMode } = require('./action-guidance-loader')
 const {
   SINGLE_SELECTED_MODE_COUNT,
   selectedDirectionKey,
@@ -124,7 +125,7 @@ function attachSelectedModeIdentity(result = null, selectedModeKeys = []) {
   }
 }
 
-function buildPestModeDirectionResult({
+async function buildPestModeDirectionResult({
   selectedModeKeys = [],
   sessionId = '',
   round = 1,
@@ -132,6 +133,7 @@ function buildPestModeDirectionResult({
   aggregateResult = null,
   completedResultRefinement = false
 } = {}) {
+  const actionProfilesByMode = await loadActionProfilesByMode(selectedModeKeys)
   const selectedAggregate = buildSelectedModeAggregate(aggregateResult, selectedModeKeys)
   const selectedRoute = routeFromAggregate(selectedAggregate) || {}
   const directModeKeys = (
@@ -230,7 +232,8 @@ function buildPestModeDirectionResult({
         },
         probableModes: directModeKeys.length ? [] : confirmationModeKeys,
         plantContext,
-        visualAggregateResult: selectedAggregate
+        visualAggregateResult: selectedAggregate,
+        actionProfilesByMode
       }),
       selectedModeKeys
     )
@@ -247,7 +250,8 @@ function buildPestModeDirectionResult({
           packageQuestions: []
         },
         plantContext,
-        visualAggregateResult: selectedAggregate
+        visualAggregateResult: selectedAggregate,
+        actionProfilesByMode
       }),
       selectedModeKeys
     )
@@ -276,7 +280,8 @@ function buildPestModeDirectionResult({
             packageQuestions: []
           },
           plantContext,
-          visualAggregateResult: selectedAggregate
+          visualAggregateResult: selectedAggregate,
+          actionProfilesByMode
         }),
         selectedModeKeys
       )

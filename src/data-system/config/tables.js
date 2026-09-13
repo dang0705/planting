@@ -1031,6 +1031,7 @@ const TABLE_CONFIGS = [
       'seven_day_observe_json',
       'avoid_actions_json',
       'retake_or_escalate_json',
+      'action_items_json',
       'plant_baseline_merge_policy',
       'review_status',
       'data_status'
@@ -1043,6 +1044,7 @@ const TABLE_CONFIGS = [
       'seven_day_observe_json',
       'avoid_actions_json',
       'retake_or_escalate_json',
+      'action_items_json',
       'plant_baseline_merge_policy',
       'review_status',
       'data_status'
@@ -1053,7 +1055,8 @@ const TABLE_CONFIGS = [
       'three_day_actions_json',
       'seven_day_observe_json',
       'avoid_actions_json',
-      'retake_or_escalate_json'
+      'retake_or_escalate_json',
+      'action_items_json'
     ],
     rowMapper: identityRowMapper
   },

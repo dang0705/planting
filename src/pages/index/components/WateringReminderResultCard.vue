@@ -46,6 +46,13 @@
         {{ compactSoilCheckMessage(soilCheckMessage) }}
       </text>
     </view>
+    <text
+      v-if="visualSoilEvidence?.sourceLabel"
+      id="watering-reminder-result-soil-source"
+      class="mt-3 block text-[12px] leading-5 text-[#5a7868]"
+    >
+      盆土依据：{{ visualSoilEvidence.sourceLabel }}。{{ visualSoilEvidence.observation }}
+    </text>
   </view>
 </template>
 
@@ -65,6 +72,7 @@ defineProps({
   nextWaterDisplay: { type: String, default: '' },
   amountBottleText: { type: String, default: '' },
   potProfileState: { type: String, default: 'missing' },
-  soilCheckMessage: { type: String, default: '' }
+  soilCheckMessage: { type: String, default: '' },
+  visualSoilEvidence: { type: Object, default: null }
 })
 </script>

@@ -355,31 +355,36 @@ export function httpRequest(defaults = {}) {
     const url = createUrl(functionPath, requestQuery, requestBaseUrl)
     console.log('[http-request] request url:', url)
 
-    const dispatch = requestHeaders => new Promise((resolve, reject) => {
-      const requestTask = uni.request({
-        url,
-        method: requestMethod,
-        data: payload,
-        header: requestHeaders,
-        ...(dataType ? { dataType } : {}),
-        ...(responseType ? { responseType } : {}),
-        ...(enableChunked !== undefined ? { enableChunked } : {}),
-        ...(Number(requestTimeout) > 0 ? { timeout: Number(requestTimeout) } : {}),
-        success: response =>
-          resolve({
-            ...response,
-            data: normalizeJsonResponseData(response?.data, dataType)
-          }),
-        fail: error => reject(buildPublicTransportError(error))
-      })
+    const dispatch = requestHeaders =>
+      new Promise((resolve, reject) => {
+        const requestInvoker =
+          enableChunked && typeof wx !== 'undefined' && typeof wx?.request === 'function'
+            ? wx.request.bind(wx)
+            : uni.request.bind(uni)
+        const requestTask = requestInvoker({
+          url,
+          method: requestMethod,
+          data: payload,
+          header: requestHeaders,
+          ...(dataType ? { dataType } : {}),
+          ...(responseType ? { responseType } : {}),
+          ...(enableChunked !== undefined ? { enableChunked } : {}),
+          ...(Number(requestTimeout) > 0 ? { timeout: Number(requestTimeout) } : {}),
+          success: response =>
+            resolve({
+              ...response,
+              data: normalizeJsonResponseData(response?.data, dataType)
+            }),
+          fail: error => reject(buildPublicTransportError(error))
+        })
 
-      if (
-        typeof onChunkReceived === 'function' &&
-        typeof requestTask?.onChunkReceived === 'function'
-      ) {
-        requestTask.onChunkReceived(onChunkReceived)
-      }
-    })
+        if (
+          typeof onChunkReceived === 'function' &&
+          typeof requestTask?.onChunkReceived === 'function'
+        ) {
+          requestTask.onChunkReceived(onChunkReceived)
+        }
+      })
 
     const initialResponse = await dispatch(mergedHeaders)
     const shouldRetrySignedTicket =
@@ -394,5 +399,88 @@ export function httpRequest(defaults = {}) {
     // 客户端本地有效但服务端拒绝的短票据（如边界时钟差或刚过期）只刷新
     // 一次并重试同一只读请求；写入类请求不会进入此分支。
     return dispatch(await refreshSignedIdentityTicketHeaders(requestHeaders))
+  }
+}
+
+export function httpUploadFile(defaults = {}) {
+  return async function (options = {}) {
+    const {
+      functionPath = defaults.functionPath || '',
+      filePath = defaults.filePath || '',
+      name = defaults.name || 'file',
+      formData = defaults.formData || {},
+      headers = {},
+      auth = defaults.auth !== undefined ? defaults.auth : true,
+      requirePlatformSession = options.requirePlatformSession !== undefined
+        ? options.requirePlatformSession
+        : defaults.requirePlatformSession === true,
+      requireSignedIdentityTicket = options.requireSignedIdentityTicket !== undefined
+        ? options.requireSignedIdentityTicket
+        : defaults.requireSignedIdentityTicket === true,
+      preferPlatformSession = options.preferPlatformSession !== undefined
+        ? options.preferPlatformSession
+        : defaults.preferPlatformSession === true,
+      timeout = options.timeout !== undefined ? options.timeout : defaults.timeout,
+      baseUrl = options.baseUrl !== undefined ? options.baseUrl : defaults.baseUrl
+    } = options
+
+    if (!functionPath) {
+      throw new Error('缺少 functionPath')
+    }
+    if (!filePath) {
+      throw new Error('缺少 filePath')
+    }
+
+    // wx/uni.uploadFile 会自行生成 multipart boundary；禁止手动写入
+    // Content-Type，否则 boundary 丢失会导致云函数无法读取文件字段。
+    const uploadHeaders = {
+      Accept: 'application/json',
+      'Cache-Control': 'no-cache, no-transform',
+      ...defaults.headers,
+      ...headers
+    }
+    delete uploadHeaders['Content-Type']
+    delete uploadHeaders['content-type']
+
+    const mergedHeaders = await resolveHttpFunctionAuth({
+      auth,
+      headers: uploadHeaders,
+      requirePlatformSession,
+      requireSignedIdentityTicket,
+      preferPlatformSession
+    })
+    const requestBaseUrl =
+      baseUrl ?? (!IS_LOCAL_API_BASE_URL ? PUBLIC_HTTP_FUNCTION_BASE_URL : undefined)
+    const url = createUrl(functionPath, {}, requestBaseUrl)
+    console.log('[http-upload-file] request url:', url)
+
+    const requestInvoker =
+      typeof wx !== 'undefined' && typeof wx?.uploadFile === 'function'
+        ? wx.uploadFile.bind(wx)
+        : typeof uni !== 'undefined' && typeof uni?.uploadFile === 'function'
+          ? uni.uploadFile.bind(uni)
+          : null
+    if (!requestInvoker) {
+      throw new Error('当前运行环境不支持文件上传')
+    }
+
+    const requestTimeout = timeout === undefined ? DEFAULT_HTTP_TIMEOUT_MS : timeout
+    const response = await new Promise((resolve, reject) => {
+      requestInvoker({
+        url,
+        filePath,
+        name,
+        formData,
+        header: mergedHeaders,
+        ...(Number(requestTimeout) > 0 ? { timeout: Number(requestTimeout) } : {}),
+        success: resolve,
+        fail: error => reject(buildPublicTransportError(error))
+      })
+    })
+
+    return {
+      ...response,
+      data: normalizeJsonResponseData(response?.data, 'json')
+    }
   }
 }

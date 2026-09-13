@@ -124,17 +124,6 @@
             "navigationBarBackgroundColor": "#2D7A4F",
             "navigationBarTextStyle": "white"
           }
-        },
-        {
-          "path": "result",
-          "style": {
-            // #ifndef MP-TOUTIAO
-            "navigationStyle": "custom",
-            // #endif
-            "navigationBarTitleText": "诊断结果",
-            "navigationBarBackgroundColor": "#2D7A4F",
-            "navigationBarTextStyle": "white"
-          }
         }
       ]
     },

@@ -20,6 +20,7 @@
 // - 附加 directionChoices 细分入口，供用户在结果页选择优先处理哪个病害
 
 const { DIAGNOSIS_MODE_REGISTRY } = require('../domain/diagnosis-mode-registry')
+const { normalizeActionProfile } = require('../domain/action-guidance-contract')
 
 // 给 displayName 加"很像"前缀，避免重复前缀
 function prefixLikelyLabel(label = '') {
@@ -77,7 +78,8 @@ function buildNonPestDirectResult({
   routeResult,
   aggregateResult,
   likelyResult = false,
-  resultId = ''
+  resultId = '',
+  actionProfilesByMode = new Map()
 } = {}) {
   // 兼容旧调用：modeKeys 可为单字符串
   const modeKeyList = Array.isArray(modeKeys)
@@ -104,13 +106,26 @@ function buildNonPestDirectResult({
   const visibleOutcomes = sortedModes.map(modeKey => {
     const modeEntry = DIAGNOSIS_MODE_REGISTRY[modeKey] || {}
     const modeDisplayName = modeEntry.userDisplayName || modeKey
+    const actionProfile =
+      actionProfilesByMode instanceof Map ? actionProfilesByMode.get(modeKey) || null : null
+    const normalizedActionProfile = normalizeActionProfile(actionProfile)
     return {
       modeKey,
       outcomeKey: modeKey,
       problemKey: modeKey,
       displayNameCn: modeDisplayName,
       displayName: modeDisplayName,
-      outcomeType: 'problematic'
+      outcomeType: 'problematic',
+      actionProfileKey: normalizedActionProfile.actionProfileKey,
+      actionAdviceItems: normalizedActionProfile.todayActions.concat(
+        normalizedActionProfile.threeDayActions,
+        normalizedActionProfile.sevenDayObserve
+      ),
+      avoidAdviceItems: normalizedActionProfile.avoidActions.concat(
+        normalizedActionProfile.retakeOrEscalate
+      ),
+      actionItems: normalizedActionProfile.actionItems,
+      avoidActionItems: normalizedActionProfile.actionItems.filter(item => item.stage === 'avoid')
     }
   })
 

@@ -28,6 +28,11 @@ assert.match(
 )
 assert.match(
   diagnoseFlow,
+  /'diagnose-flow-content--intake': !embedded && !result/u,
+  '独立诊断上传态必须使用单屏内容布局'
+)
+assert.match(
+  diagnoseFlow,
   /contentPadding:\s*\{\s*type:\s*Boolean,\s*default:\s*false\s*\}/u,
   'DiagnoseFlow 默认不能启用 padding，避免弹窗复用时叠加'
 )

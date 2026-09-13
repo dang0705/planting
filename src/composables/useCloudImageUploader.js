@@ -4,6 +4,7 @@ import {
   requestDiagnoseImageDelete,
   requestDiagnoseImageUpload
 } from '@/http-functions/storage/client'
+import { useUserStore } from '@/store/user.js'
 
 const QWEN_VISUAL_PATCH_SIZE = 32
 const QWEN_VISUAL_BOUNDARY_TOKENS = 2
@@ -141,53 +142,6 @@ export async function prepareImageForPixelBudget(
   }
 }
 
-function guessMimeType(ext = '') {
-  const normalized = String(ext || '')
-    .trim()
-    .toLowerCase()
-    .replace(/^\./, '')
-
-  switch (normalized) {
-    case 'png':
-      return 'image/png'
-    case 'webp':
-      return 'image/webp'
-    case 'gif':
-      return 'image/gif'
-    case 'heic':
-      return 'image/heic'
-    default:
-      return 'image/jpeg'
-  }
-}
-
-function readFileBase64(filePath) {
-  return new Promise((resolve, reject) => {
-    try {
-      wx.getFileSystemManager().readFile({
-        filePath,
-        encoding: 'base64',
-        success: res => {
-          const base64 = String(res?.data || '').trim()
-          if (!base64) {
-            reject(new Error('读取图片失败'))
-            return
-          }
-          resolve(base64)
-        },
-        fail: reject
-      })
-    } catch (error) {
-      reject(error)
-    }
-  })
-}
-
-async function readFileAsDataUrl(filePath, ext) {
-  const base64 = await readFileBase64(filePath)
-  return `data:${guessMimeType(ext)};base64,${base64}`
-}
-
 export function useCloudImageUploader({
   count = 5,
   size = 5,
@@ -201,6 +155,7 @@ export function useCloudImageUploader({
   imageDimensionAlignment = QWEN_VISUAL_PATCH_SIZE,
   minimumCompressionQuality = 0
 } = {}) {
+  const userStore = useUserStore()
   const uploader = useImageUploader({
     count,
     size,
@@ -219,14 +174,41 @@ export function useCloudImageUploader({
               alignment: imageDimensionAlignment
             })
         : null,
-    uploadExecutor: async ({ filePath, ext, context }) => {
-      const dataUrl = await readFileAsDataUrl(filePath, ext)
-      return requestDiagnoseImageUpload({
-        dataUrl,
-        suffix: ext,
-        plantId: context?.plantId,
-        maxAge: context?.maxAge || 7200
-      })
+    uploadExecutor: async ({ filePath, ext, size, context }) => {
+      const requestStartedAt = Date.now()
+      let attempts = 0
+      try {
+        // 诊断图片必须使用原生文件上传，禁止在端上转成 Base64 后再走 JSON。
+        const uploaded = await requestDiagnoseImageUpload(
+          {
+            filePath,
+            suffix: ext,
+            plantId: context?.plantId,
+            maxAge: context?.maxAge || 7200,
+            openid: userStore.openid,
+            fileBytes: size
+          },
+          { onAttempt: attempt => (attempts = attempt) }
+        )
+        // 端上性能审计日志：只记录耗时和字节数；严禁打印 dataUrl/Base64、临时链接或鉴权信息。
+        console.log('[诊断图片上传][性能]', {
+          transport: uploaded?.uploadTiming?.transport || 'multipart_file',
+          attempts,
+          requestMs: Math.max(0, Date.now() - requestStartedAt),
+          fileBytes: Number(size || 0),
+          server: uploaded?.uploadTiming || null
+        })
+        return uploaded
+      } catch (error) {
+        console.log('[诊断图片上传][失败耗时]', {
+          transport: 'multipart_file',
+          attempts,
+          requestMs: Math.max(0, Date.now() - requestStartedAt),
+          fileBytes: Number(size || 0),
+          message: String(error?.message || '上传失败').slice(0, 120)
+        })
+        throw error
+      }
     },
     removeExecutor: async uploaded => {
       if (!uploaded?.fileId) {

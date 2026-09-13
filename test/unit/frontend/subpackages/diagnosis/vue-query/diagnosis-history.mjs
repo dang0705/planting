@@ -19,7 +19,14 @@ const diagnosisApi = fs.readFileSync(
 )
 const indexPage = fs.readFileSync(path.join(root, 'src/pages/index/index.vue'), 'utf8')
 const profilePage = fs.readFileSync(path.join(root, 'src/pages/profile/profile.vue'), 'utf8')
-const resultPage = fs.readFileSync(path.join(root, 'src/subpackages/diagnosis/result.vue'), 'utf8')
+const questionPackagePage = fs.readFileSync(
+  path.join(root, 'src/subpackages/diagnosis/question-package.vue'),
+  'utf8'
+)
+const questionPackageContext = fs.readFileSync(
+  path.join(root, 'src/subpackages/diagnosis/question-package/page-context.js'),
+  'utf8'
+)
 const submit = fs.readFileSync(
   path.join(root, 'src/subpackages/diagnosis/question-package/question-submit.js'),
   'utf8'
@@ -40,7 +47,8 @@ assert.match(indexPage, /onShow/u)
 assert.match(indexPage, /delete plantDiagnoseHistory\[key\]/u)
 assert.match(profilePage, /onShow/u)
 assert.match(profilePage, /diagnoseHistory\.value = \[\]/u)
-assert.match(resultPage, /getDiagnosisResult\(\{ id \}\)/u)
+assert.match(questionPackagePage, /QuestionPackageResult/u)
+assert.match(questionPackageContext, /getDiagnosisResult\(\{ id: recordId \}\)/u)
 assert.match(submit, /invalidateDiagnosisHistoryQueries/u)
 
 console.log(

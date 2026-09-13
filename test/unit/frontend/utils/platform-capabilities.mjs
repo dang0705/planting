@@ -13,7 +13,7 @@ const detailSource = readFileSync(
   'utf8'
 )
 const flowSource = readFileSync('src/subpackages/diagnosis/flow.vue', 'utf8')
-const resultSource = readFileSync('src/subpackages/diagnosis/result.vue', 'utf8')
+const questionPackageSource = readFileSync('src/subpackages/diagnosis/question-package.vue', 'utf8')
 const tabIntakeSource = readFileSync('src/pages/diagnose/diagnosis-tab-intake.js', 'utf8')
 
 assert.match(homeSource, /isDiagnosisAvailable\('plant_card'\)/)
@@ -37,8 +37,8 @@ assert.match(
   readFileSync('src/subpackages/diagnosis/question-package/page-context.js', 'utf8'),
   /if \(!isDiagnosisFlowAvailable\(\)\) \{/
 )
-assert.match(resultSource, /isDiagnosisAvailable\(entrySource\.value\)/)
-assert.match(resultSource, /\['plant_history', 'diagnose_tab'\]/)
+assert.match(questionPackageSource, /isDiagnosisFlowAvailable\(\)/)
+assert.match(questionPackageSource, /QuestionPackageResult/)
 assert.match(tabIntakeSource, /isDiagnosisAvailable\('diagnose_tab'\)/)
 
 globalThis.__platformCapabilitiesTestPlatform = 'douyin_mp'

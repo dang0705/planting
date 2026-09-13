@@ -4,7 +4,12 @@ const {
   normalizeOutcomeType,
   normalizeDiagnosisRoutePrimaryAction
 } = require('../utils/diagnosis-contract')
-const { buildPublicVisualAggregateSummary } = require('../utils/public-runtime-summary')
+const {
+  buildPublicVisualAggregateSummary,
+  resolvePublicVisualEvidenceKey,
+  resolvePublicVisualEvidenceLabel
+} = require('../utils/public-runtime-summary')
+const { normalizeActionItems } = require('../domain/action-guidance-contract')
 
 function buildPublicStopState(stopState = null) {
   if (!stopState || typeof stopState !== 'object') {
@@ -70,6 +75,19 @@ function compactStringList(items = []) {
   )
 }
 
+function compactActionItems(items = []) {
+  return normalizeActionItems(items).items.map(item => ({
+    id: item.id,
+    categoryId: item.categoryId,
+    categoryNameCn: item.categoryNameCn,
+    stage: item.stage,
+    methodId: item.methodId,
+    text: item.text,
+    sourceRefIds: item.sourceRefIds,
+    ...(item.conditionCn ? { conditionCn: item.conditionCn } : {})
+  }))
+}
+
 function buildCompactActionAdvice(actionAdvice = null) {
   if (!actionAdvice || typeof actionAdvice !== 'object') {return null}
 
@@ -79,6 +97,8 @@ function buildCompactActionAdvice(actionAdvice = null) {
     sevenDayObserve: compactStringList(actionAdvice.sevenDayObserve),
     avoidActions: compactStringList(actionAdvice.avoidActions),
     retakeOrEscalate: compactStringList(actionAdvice.retakeOrEscalate),
+    actionItems: compactActionItems(actionAdvice.actionItems),
+    avoidActionItems: compactActionItems(actionAdvice.avoidActionItems),
     conflictDetected: Boolean(actionAdvice.conflictDetected)
   }
   const hasText =
@@ -106,7 +126,9 @@ function buildCompactOutcomeEntry(outcome = null) {
       outcome?.action_profile_key
     ),
     actionAdviceItems: compactStringList(outcome?.actionAdviceItems),
-    avoidAdviceItems: compactStringList(outcome?.avoidAdviceItems)
+    avoidAdviceItems: compactStringList(outcome?.avoidAdviceItems),
+    actionItems: compactActionItems(outcome?.actionItems),
+    avoidActionItems: compactActionItems(outcome?.avoidActionItems)
   }
 }
 
@@ -168,17 +190,17 @@ function buildCompactVisualEvidenceItem(candidate = {}) {
   if (!candidate || typeof candidate !== 'object') {
     return null
   }
-  const symptomKey = toCompactString(candidate.symptomKey, candidate.symptom_key)
+  const symptomKey = resolvePublicVisualEvidenceKey(candidate)
   if (!symptomKey) {
+    return null
+  }
+  const displayNameCn = resolvePublicVisualEvidenceLabel(candidate)
+  if (!displayNameCn) {
     return null
   }
   return {
     symptomKey,
-    displayNameCn: toCompactString(
-      candidate.displayNameCn,
-      candidate.display_name_cn,
-      symptomKey
-    ),
+    displayNameCn,
     supportImageCount: Math.max(
       Number(candidate.supportImageCount ?? candidate.support_image_count ?? 0),
       Array.isArray(candidate.supportImageIds || candidate.support_image_ids)

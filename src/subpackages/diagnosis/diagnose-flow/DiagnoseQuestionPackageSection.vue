@@ -377,7 +377,7 @@ export default {
   },
   setup(props) {
     // 该子组件只负责渲染问诊题包 + 补图区块；所有响应式状态与方法都来自父级传入的 view。
-    // 与 DiagnoseResultStage.vue 保持同一代理策略（exposeViewProp + DIAGNOSE_VIEW_DEFAULTS 兜底）。
+    // 与统一结果组件保持同一代理策略（exposeViewProp + DIAGNOSE_VIEW_DEFAULTS 兜底）。
     return exposeViewProp(props, DIAGNOSE_VIEW_DEFAULTS)
   }
 }

@@ -281,7 +281,7 @@ function viewDiagnoseDetail(item) {
     return
   }
   uni.navigateTo({
-    url: `/subpackages/diagnosis/result?id=${item._id}`
+    url: `/subpackages/diagnosis/question-package?id=${encodeURIComponent(String(item._id))}&entrySource=plant_history&mode=history`
   })
 }
 

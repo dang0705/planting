@@ -2,6 +2,7 @@
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import { buildStructuredImageInputs } from '@/utils/diagnose-structured-images.js'
 import { requireMvpAccess } from '@/utils/subscription-access.js'
+import { VISUAL_SCAN_ERROR_TEXT, VISUAL_SCAN_LOADING_TEXT } from './constants.js'
 
 export function useDiagnoseImages(ctx) {
   const {
@@ -12,8 +13,7 @@ export function useDiagnoseImages(ctx) {
     popup,
     result,
     visualScanning,
-    showAIDialog,
-    aiStreamDialogRef,
+    visualScanText,
     pendingDiagnosePayload,
     casePreviewImages,
     questionAnswers,
@@ -93,6 +93,9 @@ export function useDiagnoseImages(ctx) {
   const selectedDiagnosisProfile = {
     get value() {
       return ctx.selectedDiagnosisProfile?.value || 'full'
+    },
+    set value(nextValue) {
+      ctx.selectedDiagnosisProfile.value = nextValue === 'pest' ? 'pest' : 'full'
     }
   }
   const currentQuestion = {
@@ -168,6 +171,10 @@ export function useDiagnoseImages(ctx) {
     }
 
     return uniqueStrings([...baseImages, ...getPreviewImagesFromFiles(additionalImageFiles.value)])
+  }
+
+  function updateVisualScanText(text = '', fullText = text) {
+    visualScanText.value = fullText
   }
 
   function detectUsedAdditionalImageSubmission(currentResult = null) {
@@ -290,7 +297,7 @@ export function useDiagnoseImages(ctx) {
       hasSelectedSymptomMode.value
     ) {
       if (isPestProfile) {
-        uni.showToast({ title: '只看虫害需要先上传照片', icon: 'none' })
+        uni.showToast({ title: '请先上传照片', icon: 'none' })
         return
       }
       await startQuestionDiagnosisFromSymptomClass()
@@ -298,7 +305,7 @@ export function useDiagnoseImages(ctx) {
     }
 
     if (isPestProfile && uploadedImageUrls.length === 0) {
-      uni.showToast({ title: '只看虫害需要先上传照片', icon: 'none' })
+      uni.showToast({ title: '请先上传照片', icon: 'none' })
       return
     }
 
@@ -343,25 +350,22 @@ export function useDiagnoseImages(ctx) {
         description: `共上传 ${imageUrls.length} 张照片`
       }
 
+      visualScanText.value = VISUAL_SCAN_LOADING_TEXT
       visualScanning.value = true
       pendingDiagnosePayload.value = diagnosePayload
-      showAIDialog.value = true
       await new Promise(resolve => setTimeout(resolve, 100))
-      aiStreamDialogRef.value?.startStream()
 
-      await diagnoseMutation.mutateAsync({
+      const diagnosisResult = await diagnoseMutation.mutateAsync({
         ...diagnosePayload,
-        onText: (text, fullText) => {
-          aiStreamDialogRef.value?.setText(fullText)
-        },
-        onFinish: diagnosisResult => {
-          aiStreamDialogRef.value?.finishStream(diagnosisResult)
+        onText: updateVisualScanText,
+        onFinish: () => {
           userStore.useAIQuota()
         },
-        onError: error => {
-          aiStreamDialogRef.value?.setError(error)
+        onError: () => {
+          visualScanText.value = VISUAL_SCAN_ERROR_TEXT
         }
       })
+      ctx.completeVisualDiagnosis?.(diagnosisResult)
     } catch (error) {
       console.error('诊断失败:', error)
       uni.hideLoading()

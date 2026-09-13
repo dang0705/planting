@@ -22,6 +22,7 @@ const {
   PEST_VISUAL_RULES
 } = require('../../../../../cloudfunctions/diagnose-http/domain/diagnosis-mode-registry.js')
 const {
+  compilePestVisualEvidenceHints,
   compilePestVisualMapping
 } = require('../../../../../cloudfunctions/diagnose-http/utils/visual-prompt-static-rules.js')
 const {
@@ -142,6 +143,36 @@ assert.deepEqual(parsed.mode_candidates, [
 ])
 assert.equal(parsed.region_ref, 'leaf_lower_surface')
 
+const compactSchemaParsed = parseLLMVisualResult(
+  JSON.stringify({
+    normalized_organ: 'leaf',
+    image_quality_grade: 'good',
+    capture_region: 'leaf_upper_surface',
+    region_ref: 'leaf_upper_surface',
+    mode_candidates: [{ mode: 'yellow_leaf', confidence: 0.82, region_ref: 'leaf_upper_surface' }]
+  })
+)
+assert.equal(compactSchemaParsed.analyzability, 'high')
+assert.deepEqual(compactSchemaParsed.route_hints, [])
+assert.deepEqual(compactSchemaParsed.missing_info_for_path, [])
+assert.deepEqual(compactSchemaParsed.visual_discriminators, [])
+
+// 综合诊断中虫害与黄化是可共存的独立候选；解析器不得因黄化存在而覆盖虫害。
+const coexistingModeParsed = parseLLMVisualResult(
+  JSON.stringify({
+    normalized_organ: 'leaf',
+    mode_candidates: [
+      { mode: 'yellow_leaf', confidence: 0.9, region_ref: 'leaf_upper_surface' },
+      { mode: 'thrips', confidence: 0.96, region_ref: 'leaf_upper_surface' }
+    ]
+  }),
+  { diagnosisProfile: 'full' }
+)
+assert.deepEqual(coexistingModeParsed.mode_candidates, [
+  { mode: 'yellow_leaf', confidence: 0.9, region_ref: 'leaf_upper_surface' },
+  { mode: 'thrips', confidence: 0.96, region_ref: 'leaf_upper_surface' }
+])
+
 const pestProfileParsed = parseLLMVisualResult(
   JSON.stringify({
     normalized_organ: 'leaf',
@@ -188,18 +219,28 @@ const promptSource = readFileSync(
   'cloudfunctions/diagnose-http/utils/symptom-labeler-prompt.js',
   'utf8'
 )
+const promptCacheContractSource = readFileSync(
+  'cloudfunctions/diagnose-http/utils/visual-prompt-cache-contract.js',
+  'utf8'
+)
 const staticRulesSource = readFileSync(
   'cloudfunctions/diagnose-http/utils/visual-prompt-static-rules.js',
   'utf8'
 )
 // Measured from this fixed full/leaf fixture.
-// 基线反映提示词再平衡（多模式诊断）后的实际长度；不允许超过当前基线。
+// 固定前缀仍高于显式缓存的最低内容量，但必须比旧版更紧凑。
 const fullLeafPromptLengthBaseline = 6006
 const fullLeafStaticPrefixLengthBaseline = 4297
-const currentStaticPrefixLengthBaseline = 4297
-const maximumPromptLength = fullLeafPromptLengthBaseline
-const maximumStaticPrefixLength = fullLeafStaticPrefixLengthBaseline
+// 为保住通用虫害召回，动态区保留精简的证据外观提示；固定缓存前缀仍不可变。
+const maximumFullLeafDynamicTailLength = 1250
+// 百炼显式缓存按模型 Token 判断；字符上限需给超过 1024 Token 的固定前缀留安全余量，
+// 同时继续约束总提示词明显低于旧版基线。
+const maximumPromptLength = 4800
+const maximumStaticPrefixLength = 3500
 const configSource = readFileSync('cloudfunctions/diagnose-http/configs/index.js', 'utf8')
+assert.match(promptCacheContractSource, /固定前缀格式的缓存契约（严禁自行变更）/)
+assert.match(promptCacheContractSource, /除非先征得用户明确同意/)
+assert.match(promptCacheContractSource, /\[Dynamic Task\]` 分界均不得修改/)
 assert.doesNotMatch(configSource, /buildVisualLlmPrompt|VISUAL_PROMPT_LINES|prompts:\s*\{/)
 assert.deepEqual(
   normalizeLlmImageTaskContext(
@@ -235,24 +276,19 @@ const contextPrompt = await withLlmImagePromptContext(
       imageContext: { inputSlotType: 'leaf' }
     })
 )
-assert.equal(contextPrompt.promptText.includes('"diagnosis_profile":"pest"'), true)
-assert.equal(
-  contextPrompt.promptText.includes('"requested_capture_region":"leaf_lower_surface"'),
-  true
-)
+assert.equal(contextPrompt.promptText.includes('"profile":"pest"'), true)
+assert.equal(contextPrompt.promptText.includes('"requested_region":"leaf_lower_surface"'), true)
 assert.match(promptSource, /taskLine: '【角色】你是植物图片的结构化可见证据标注助手。'/)
-for (const field of [
-  'diagnosis_profile',
-  'analysis_round',
-  'entry_source',
-  'plant_context',
-  'current_image_context',
-  'prior_admitted_evidence_digest',
-  'unresolved_evidence_groups',
-  'requested_capture_region',
-  'origin_visual_call_batch_id'
-]) {
+for (const field of ['profile', 'round', 'requested_region', 'prior_evidence', 'unresolved']) {
   assert.match(promptSource, new RegExp(field))
+}
+for (const removedField of [
+  'entry_source:',
+  'plant_context:',
+  'current_image_context:',
+  'origin_visual_call_batch_id:'
+]) {
+  assert.doesNotMatch(promptSource, new RegExp(removedField))
 }
 assert.doesNotMatch(promptSource, /promptTemplate/)
 assert.match(promptSource, /visual-prompt-static-rules/)
@@ -331,22 +367,25 @@ const rootPrompt = await buildSymptomLabelerPromptPayload({
   imageContext: { diagnosisProfile: 'full', analysisRound: 'initial', inputSlotType: 'root' }
 })
 assert.equal(
-  pestFollowupPrompt.promptText.includes('"requested_capture_region":"leaf_lower_surface"'),
+  pestFollowupPrompt.promptText.includes('"requested_region":"leaf_lower_surface"'),
   true
 )
 assert.equal(
   pestFollowupPrompt.promptText.includes('"origin_visual_call_batch_id":"visbatch_origin"'),
-  true
+  false
 )
 assert.equal(fullInitialPrompt.debugMeta.promptCacheStaticPrefixHash.length, 40)
 const fullInitialStaticPrefix = fullInitialPrompt.promptText.split('[Dynamic Task]')[0]
 const fullInitialDynamicTail = fullInitialPrompt.promptText.split('[Dynamic Task]')[1]
 const fullInitialPromptLength = fullInitialPrompt.promptText.length
 const fullInitialStaticPrefixLength = fullInitialStaticPrefix.trim().length
+// 固定前缀是百炼显式缓存的唯一稳定输入。未获得用户明确同意时，内容、顺序和换行都不允许变更。
+const immutableStaticPrefixHash = '980588e1c3eb1e7cd561c614aabf9f8a7cba6a69'
 assert.equal(
   fullInitialPrompt.debugMeta.promptCacheStaticPrefixHash,
   createHash('sha1').update(fullInitialStaticPrefix.trim()).digest('hex')
 )
+assert.equal(fullInitialPrompt.debugMeta.promptCacheStaticPrefixHash, immutableStaticPrefixHash)
 assert.match(fullInitialStaticPrefix, /【角色】你是植物图片的结构化可见证据标注助手。/)
 assert.match(fullInitialStaticPrefix, /\[静态输出契约\]/)
 assert.match(fullInitialStaticPrefix, /\[静态规则\]/)
@@ -362,7 +401,10 @@ assert.deepEqual(
   staticSectionOffsets,
   [...staticSectionOffsets].sort((left, right) => left - right)
 )
-assert.match(fullInitialStaticPrefix, /surface_glossy_residue 仅在图片明确可见且位于允许器官时记录/)
+assert.match(
+  fullInitialStaticPrefix,
+  /surface_glossy_residue 仅在图片明确可见且位于允许器官时记录；不确定时省略/
+)
 for (const requiredPestEvidenceKey of [
   'visible_mite_colony',
   'visible_mealybug_colony',
@@ -375,25 +417,9 @@ for (const requiredPestEvidenceKey of [
 ]) {
   assert.match(fullInitialStaticPrefix, new RegExp(requiredPestEvidenceKey))
 }
-assert.doesNotMatch(fullInitialStaticPrefix, /细密网丝＋密集白黄点刺|覆粉蜡的椭圆分节虫群/)
-assert.doesNotMatch(fullInitialStaticPrefix, /梨形或椭圆梨形软体虫群|固定附着的硬壳状凸起/)
-assert.doesNotMatch(fullInitialStaticPrefix, /叶背白色成虫|当前图清楚可见细长、窄体/)
-assert.doesNotMatch(
-  fullInitialStaticPrefix,
-  /叶肉内连续弯曲、宽度变化的潜道|盆土附近可见多只细小黑色飞虫/
-)
-assert.match(fullInitialStaticPrefix, /仅按图片判断当前图的虫体、叶内潜道、霉层、粉层和异常变色\/下垂/)
-assert.match(fullInitialStaticPrefix, /不清楚或不在图中=uncertain/)
+assert.match(fullInitialStaticPrefix, /只输出能支持路由的正向或不确定观察/)
+assert.match(fullInitialStaticPrefix, /虫体必须有可辨认、能与背景分离的实体/)
 assert.doesNotMatch(fullInitialStaticPrefix, /yellow_speckling=|surface_glossy_residue=/)
-// 硬壳 单独留作规则 #3 中虫体特征清单的合法用词；硬壳状凸起 已由上面的 378 行断言覆盖。
-assert.doesNotMatch(
-  fullInitialStaticPrefix,
-  /网丝、点刺、黑点、残留|细长|窄体|银白擦伤|梨形|椭圆|固定附着|小黑飞/
-)
-assert.doesNotMatch(
-  fullInitialStaticPrefix,
-  /细网|点状白黄伤痕|针尖黑点\/短线|表面可见发亮|黑色霉膜|盆土表面潮湿/
-)
 assert.doesNotMatch(
   fullInitialStaticPrefix,
   /Extract structured|Allowed mode_candidates|HARD REQUIREMENT/
@@ -417,13 +443,12 @@ assert.match(fullInitialStaticPrefix, /"mode":"","confidence":0,"region_ref":"un
 const schemaFieldOffsets = [
   '"normalized_organ"',
   '"image_quality_grade"',
-  '"analyzability"',
   '"capture_region"',
   '"region_ref"',
   '"mode_candidates"',
   '"symptom_candidates"',
   '"out_of_pool_symptom_candidates"',
-  '"route_hints"'
+  '"visual_discriminators"'
 ].map(field => fullInitialStaticPrefix.indexOf(field))
 assert.equal(
   schemaFieldOffsets.every(offset => offset >= 0),
@@ -449,27 +474,16 @@ for (const excludedModelField of [
   assert.equal(Object.hasOwn(JSON.parse(VISUAL_OUTPUT_SCHEMA_TEXT), excludedModelField), false)
 }
 assert.equal(Object.hasOwn(JSON.parse(VISUAL_OUTPUT_SCHEMA_TEXT), 'visual_discriminators'), true)
-assert.equal(Object.hasOwn(JSON.parse(VISUAL_OUTPUT_SCHEMA_TEXT), 'missing_info_for_path'), true)
-const schemaDiscriminatorKeys = JSON.parse(VISUAL_OUTPUT_SCHEMA_TEXT).visual_discriminators.map(
-  item => item.dimension_key
-)
-for (const requiredDimension of [
-  'insect_body_presence',
-  'insect_body_shape',
-  'insect_body_location',
-  'surface_coating_presence',
-  'surface_coating_type',
-  'leaf_anomaly_sign'
-]) {
-  assert.equal(schemaDiscriminatorKeys.includes(requiredDimension), true)
-}
-for (const excludedDimension of [
-  'lesion_presence',
-  'downy_grey',
-  'crisp_edge'
-]) {
-  assert.equal(schemaDiscriminatorKeys.includes(excludedDimension), false)
-}
+assert.equal(Object.hasOwn(JSON.parse(VISUAL_OUTPUT_SCHEMA_TEXT), 'missing_info_for_path'), false)
+assert.equal(Object.hasOwn(JSON.parse(VISUAL_OUTPUT_SCHEMA_TEXT), 'route_hints'), false)
+assert.deepEqual(JSON.parse(VISUAL_OUTPUT_SCHEMA_TEXT).visual_discriminators, [
+  {
+    dimension_key: '',
+    value_key: '',
+    confidence_band: 'high|medium|low',
+    visible_basis_cn: ''
+  }
+])
 assert.match(fullInitialStaticPrefix, /sooty_mold\|spider_mite\|mealybug/)
 assert.ok(
   fullInitialPromptLength <= maximumPromptLength,
@@ -480,8 +494,12 @@ assert.ok(
   `full/leaf static prefix ${fullInitialStaticPrefixLength} exceeds ${maximumStaticPrefixLength}`
 )
 assert.ok(
-  fullInitialStaticPrefixLength <= currentStaticPrefixLengthBaseline,
-  `full/leaf static prefix ${fullInitialStaticPrefixLength} exceeds ${currentStaticPrefixLengthBaseline}`
+  fullInitialStaticPrefixLength > 1800,
+  `full/leaf static prefix ${fullInitialStaticPrefixLength} is too short for cache creation`
+)
+assert.ok(
+  fullInitialDynamicTail.trim().length <= maximumFullLeafDynamicTailLength,
+  `full/leaf dynamic tail ${fullInitialDynamicTail.trim().length} exceeds compact budget ${maximumFullLeafDynamicTailLength}`
 )
 
 const maximumCompactFixture = {
@@ -512,7 +530,7 @@ const maximumCompactFixture = {
 }
 const maximumCompactJson = JSON.stringify(maximumCompactFixture)
 assert.doesNotThrow(() => JSON.parse(maximumCompactJson))
-assert.equal(Buffer.byteLength(maximumCompactJson) <= llm.cloudbaseAi.maxTokens, true)
+assert.equal(Buffer.byteLength(maximumCompactJson) <= llm.cloudbaseAi.maxTokens * 4, true)
 const maximumCompactParsed = parseLLMVisualResult(maximumCompactJson, {
   diagnosisProfile: 'pest'
 })
@@ -580,28 +598,34 @@ assert.match(
   pestFollowupPrompt.promptText,
   /allowed_symptom_keys=visible_mite_colony,fine_webbing,yellow_speckling,visible_mealybug_colony,scale_shells,white_flies,fixed_oval_nymphs,aphids_visible,thrips_visible,silver_scarring,black_fecal_spots,tunnels_in_leaf,surface_glossy_residue,sooty_mold/
 )
+assert.match(
+  pestInitialPrompt.promptText,
+  /allowed_symptom_keys=静态全局词典中的全部虫害可见证据键。/
+)
+assert.doesNotMatch(
+  pestInitialPrompt.promptText.split('[Dynamic Task]')[1],
+  /allowed_symptom_keys=visible_mite_colony/
+)
 assert.match(rootPrompt.promptText, /allowed_symptom_keys=small_flies_soil,root_mark/)
 assert.doesNotMatch(
   fullInitialPrompt.promptText.split('[Dynamic Task]')[0],
   /allowed_symptom_keys=|本图收窄候选/
 )
-assert.match(fullInitialDynamicTail, /【虫害映射】organ=leaf/)
-assert.match(fullInitialDynamicTail, /【当前图可见异常说明】/)
-assert.match(fullInitialDynamicTail, /【通用映射】organ=leaf/)
-assert.match(fullInitialDynamicTail, /【当前图通用可见异常说明】/)
+assert.match(fullInitialDynamicTail, /【虫害映射】:/)
+assert.match(fullInitialDynamicTail, /【通用映射】:/)
+assert.doesNotMatch(fullInitialDynamicTail, /【虫害映射】organ=|【通用映射】organ=/)
+assert.match(fullInitialDynamicTail, /跨器官仅写 out_of_pool_symptom_candidates。/)
 assert.match(
   fullInitialDynamicTail,
-  /sooty_mold→sooty_mold\(叶片或茎部表面黑色绒状或薄膜状霉层\)/
+  /视觉优先级：先独立查当前图的可见虫体、潜道、附着物和受害结构，再查黄化\/下垂；同图可并存。虫害明确时保留对应 pest mode_candidates 与正式 evidence key（如 thrips\/thrips_visible）/
 )
+assert.doesNotMatch(fullInitialDynamicTail, /【当前图可见异常说明】|【当前图通用可见异常说明】/)
+assert.match(fullInitialDynamicTail, /【虫害证据提示】/)
+assert.match(fullInitialDynamicTail, /sooty_mold→sooty_mold/)
 assert.match(fullInitialDynamicTail, /powdery_mildew→powder_white/)
 assert.match(fullInitialDynamicTail, /yellow_leaf→leaf_yellowing OR yellowing_patchy/)
 assert.match(fullInitialDynamicTail, /wilting_droop→leaf_droop/)
-assert.match(fullInitialDynamicTail, /powder_white=叶片或茎部表面白色粉状附着物/)
-assert.match(fullInitialDynamicTail, /leaf_yellowing=叶片均匀黄化/)
-assert.match(
-  fullInitialDynamicTail,
-  /识别明确后，若有可见虫体、霉层或粉层必须优先报告对应 mode_candidates 与正式 evidence key，不能只报同图异常而遗漏实体/
-)
+assert.doesNotMatch(fullInitialDynamicTail, /powder_white=|leaf_yellowing=/)
 assert.doesNotMatch(fullInitialDynamicTail, /本图收窄候选|【叶片】/)
 assert.match(
   fullInitialDynamicTail,
@@ -613,24 +637,7 @@ assert.match(
   fullInitialDynamicTail,
   /thrips→thrips_visible OR silver_scarring\+black_fecal_spots(?:;|$)/
 )
-for (const visibleAnomalyText of [
-  'fine_webbing=叶片或茎部可见细网',
-  'yellow_speckling=叶片点状白黄伤痕',
-  'silver_scarring=同区银白擦伤',
-  'black_fecal_spots=同区针尖黑点/短线',
-  'tunnels_in_leaf=叶内潜道',
-  'surface_glossy_residue=叶片或茎部表面可见发亮、近透明滴状或薄膜残留',
-  'sooty_mold=叶片或茎部可见黑色霉膜'
-]) {
-  assert.match(
-    fullInitialDynamicTail,
-    new RegExp(visibleAnomalyText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-  )
-}
-assert.doesNotMatch(
-  fullInitialDynamicTail,
-  /细长|窄体|梨形|椭圆|硬壳|固定附着|覆粉蜡|白色成虫|小黑飞|螨体/
-)
+assert.match(fullInitialDynamicTail, /thrips_visible=细长小虫体/)
 assert.doesNotMatch(fullInitialDynamicTail, /aphid→[^;]*surface_glossy_residue/)
 assert.doesNotMatch(fullInitialDynamicTail, /thrips→[^;]*yellow_speckling/)
 assert.notEqual(
@@ -642,23 +649,20 @@ assert.equal(
   false
 )
 const pestDynamicTail = pestFollowupPrompt.promptText.split('[Dynamic Task]')[1]
-assert.match(pestDynamicTail, /diagnosis_profile=pest/)
+assert.match(pestDynamicTail, /"profile":"pest"/)
 assert.doesNotMatch(pestDynamicTail, /black_spots_spreading/)
 assert.match(pestDynamicTail, /black_fecal_spots/)
-assert.match(pestDynamicTail, /mode_candidates 只能使用这 8 个虫害机器键/)
-assert.match(pestDynamicTail, /不能输出 yellow_leaf 或 wilting_droop 作为 mode_candidates/)
-assert.match(pestDynamicTail, /识别明确后，虫害 mode_candidates\[\]\.mode 只能填模式键/)
+assert.match(pestDynamicTail, /pest：mode 只能使用静态词典的 pest 模式/)
 assert.match(
   pestDynamicTail,
-  /先基于当前图片独立识别可见虫体、叶内潜道、霉层、粉层或异常变色下垂；识别明确后，若有可见虫体、霉层或粉层必须优先报告对应 mode_candidates 与正式 evidence key，不能只报同图异常而遗漏实体；只报告当前图明确可见的项，不因本条列举存在而强行报告；不得从 mode key、evidence key、器官名或文字反推画面/
+  /视觉优先级：先独立查当前图的可见虫体、潜道、附着物和受害结构，再查黄化\/下垂；同图可并存。虫害明确时保留对应 pest mode_candidates 与正式 evidence key（如 thrips\/thrips_visible）/
 )
-assert.match(pestDynamicTail, /silver_scarring=同区银白擦伤/)
-assert.match(pestDynamicTail, /black_fecal_spots=同区针尖黑点\/短线/)
-assert.doesNotMatch(pestDynamicTail, /清楚细长虫体|梨形软体虫|固定附着|覆粉蜡|白色成虫|盆土小黑飞/)
+assert.match(pestDynamicTail, /silver_scarring=银灰擦痕/)
+assert.match(pestDynamicTail, /black_fecal_spots=银灰区针尖黑点/)
 assert.doesNotMatch(fullInitialDynamicTail, /蓟马映射|mode_candidates\[\]\.mode=thrips/)
 assert.doesNotMatch(
   pestFollowupPrompt.promptText.split('[Dynamic Task]')[0],
-  /mode_candidates 只能使用这 8 个虫害机器键/
+  /pest：mode 只能使用静态词典的 pest 模式/
 )
 
 const legalOrganKeys = new Set(['leaf', 'stem', 'flower', 'soil'])
@@ -743,6 +747,7 @@ for (const rule of PEST_VISUAL_RULES) {
   }
 }
 const leafMapping = compilePestVisualMapping(['leaf'])
+const leafEvidenceHints = compilePestVisualEvidenceHints(['leaf'])
 for (const modeKey of [
   'spider_mite',
   'mealybug',
@@ -760,12 +765,17 @@ assert.match(soilMapping, /fungus_gnat→small_flies_soil(?:$|;)/)
 assert.doesNotMatch(soilMapping, /fungus_gnat→[^;]*wet_soil_surface/)
 assert.doesNotMatch(soilMapping, /spider_mite→|leaf_miner→/)
 assert.doesNotMatch(leafMapping, /细网|点状白黄伤痕|银白擦伤|针尖黑点|叶内潜道|表面可见|黑色霉膜/)
+assert.match(leafEvidenceHints, /thrips_visible=细长小虫体/)
+assert.match(leafEvidenceHints, /silver_scarring=银灰擦痕/)
+assert.match(leafEvidenceHints, /black_fecal_spots=银灰区针尖黑点/)
+assert.match(leafEvidenceHints, /tunnels_in_leaf=叶肉内连续蛇形潜道/)
 const rootDynamicTail = rootPrompt.promptText.split('[Dynamic Task]').at(1)
-assert.match(rootDynamicTail, /wet_soil_surface=盆土表面潮湿/)
+assert.match(rootDynamicTail, /allowed_symptom_keys=small_flies_soil,root_mark/)
 assert.doesNotMatch(
   rootDynamicTail,
   /fine_webbing=|yellow_speckling=|silver_scarring=|black_fecal_spots=|tunnels_in_leaf=/
 )
+assert.match(rootDynamicTail, /small_flies_soil=土表小黑飞;wet_soil_surface=土表明显湿润/)
 
 if (originalSymptomRepository) {
   require.cache[symptomRepositoryPath] = originalSymptomRepository

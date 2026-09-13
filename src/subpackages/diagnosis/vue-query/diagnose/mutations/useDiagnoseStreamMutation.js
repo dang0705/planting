@@ -61,7 +61,11 @@ export function useDiagnoseStreamMutation() {
           }
         )
 
-        return runDiagnoseSuccessCallbacks(normalizedResult, { onText, onFinish })
+        return runDiagnoseSuccessCallbacks(normalizedResult, {
+          onText,
+          onFinish,
+          updateTextOnFinish: false
+        })
       } catch (error) {
         console.error('流式诊断失败:', error)
         return handleDiagnoseError(error, { onError })

@@ -14,8 +14,6 @@ export function useDiagnoseDialogSubmit(ctx) {
     diagnoseStore,
     result,
     visualScanning,
-    showAIDialog,
-    aiStreamDialogRef,
     pendingDiagnosePayload,
     casePreviewImages,
     questionAnswers,
@@ -161,10 +159,6 @@ export function useDiagnoseDialogSubmit(ctx) {
     }
   }
 
-  function handleAIDialogClose() {
-    showAIDialog.value = false
-  }
-
   function buildDiagnosisQuestionPackageStorageKey(diagnosisSessionId = '') {
     return `${DIAGNOSIS_QUESTION_PACKAGE_STORAGE_KEY_PREFIX}${diagnosisSessionId || Date.now()}`
   }
@@ -191,7 +185,6 @@ export function useDiagnoseDialogSubmit(ctx) {
       createdAt: Date.now()
     })
 
-    showAIDialog.value = false
     pendingDiagnosePayload.value = null
     closePopup()
     uni.navigateTo({
@@ -199,13 +192,7 @@ export function useDiagnoseDialogSubmit(ctx) {
     })
   }
 
-  function handleAIDialogCancel() {
-    showAIDialog.value = false
-    pendingDiagnosePayload.value = null
-    closePopup()
-  }
-
-  function handleAIDialogConfirm(diagnosisResult) {
+  function completeVisualDiagnosis(diagnosisResult) {
     if (diagnosisResult) {
       const normalizedResult = enrichDiagnosisResult(
         normalizeDiagnosisResult(diagnosisResult, {
@@ -217,7 +204,6 @@ export function useDiagnoseDialogSubmit(ctx) {
       if (!normalizedResult.hasActiveQuestions) {
         result.value = normalizedResult
         reportAnalyticsEvent(ANALYTICS_EVENTS.DIAGNOSE_RESULT_READY)
-        showAIDialog.value = false
         pendingDiagnosePayload.value = null
         resetQuestionState([], {
           answerRevision: normalizedResult.answerRevision
@@ -227,32 +213,6 @@ export function useDiagnoseDialogSubmit(ctx) {
       }
       navigateToDiagnosisQuestionPackagePage(diagnosisResult)
       return
-    }
-    showAIDialog.value = false
-  }
-
-  function handleAIRetry() {
-    if (pendingDiagnosePayload.value) {
-      visualScanning.value = true
-      aiStreamDialogRef.value?.startStream()
-
-      const callbackOpts = {
-        ...pendingDiagnosePayload.value,
-        onText: (text, fullText) => {
-          aiStreamDialogRef.value?.setText(fullText)
-        },
-        onFinish: diagnosisResult => {
-          aiStreamDialogRef.value?.finishStream(diagnosisResult)
-        },
-        onError: error => {
-          aiStreamDialogRef.value?.setError(error)
-        }
-      }
-
-      const finishVisualScan = () => {
-        visualScanning.value = false
-      }
-      diagnoseMutation.mutateAsync(callbackOpts).then(finishVisualScan, finishVisualScan)
     }
   }
 
@@ -471,12 +431,9 @@ export function useDiagnoseDialogSubmit(ctx) {
   }
 
   return {
-    handleAIDialogClose,
     buildDiagnosisQuestionPackageStorageKey,
     navigateToDiagnosisQuestionPackagePage,
-    handleAIDialogCancel,
-    handleAIDialogConfirm,
-    handleAIRetry,
+    completeVisualDiagnosis,
     canStartDiagnose,
     canStartDiagnoseNow,
     canSubmitAdditionalImages,

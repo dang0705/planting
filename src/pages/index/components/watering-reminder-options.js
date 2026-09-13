@@ -295,7 +295,9 @@ export function buildWateringPlannerRequestPayload({
   potProfile = null,
   locationKey = '',
   timezone = 'Asia/Shanghai',
-  airEnvironmentOverride = null
+  airEnvironmentOverride = null,
+  soilEvidenceId = '',
+  manualSoilConfirmed = false
 }) {
   const payload = {
     plantId,
@@ -304,7 +306,9 @@ export function buildWateringPlannerRequestPayload({
     weatherDays,
     forecastDays,
     locationKey: String(locationKey || '').trim(),
-    timezone: String(timezone || 'Asia/Shanghai').trim() || 'Asia/Shanghai'
+    timezone: String(timezone || 'Asia/Shanghai').trim() || 'Asia/Shanghai',
+    soilEvidenceId: String(soilEvidenceId || '').trim(),
+    manualSoilConfirmed: manualSoilConfirmed === true
   }
   // 独立浇水建议流程可传入当前步骤中的盆型（默认值或用户修改值），
   // 后端优先使用此覆盖值；首页浇水提醒不传此字段，后端回退到数据库 potProfile。
@@ -325,7 +329,9 @@ export async function fetchWateringPlannerResult({
   potProfile = null,
   locationKey = '',
   timezone = 'Asia/Shanghai',
-  airEnvironmentOverride = null
+  airEnvironmentOverride = null,
+  soilEvidenceId = '',
+  manualSoilConfirmed = false
 }) {
   const response = await requestHttpFunction('plant-user-http/user-plants/watering-planner', {
     method: 'POST',
@@ -338,7 +344,9 @@ export async function fetchWateringPlannerResult({
       potProfile,
       locationKey,
       timezone,
-      airEnvironmentOverride
+      airEnvironmentOverride,
+      soilEvidenceId,
+      manualSoilConfirmed
     })
   })
   if (response?.code !== 200) {
@@ -426,7 +434,9 @@ export function buildAdhocPlannerRequestPayload({
   weatherDays,
   forecastDays,
   locationKey = '',
-  timezone = 'Asia/Shanghai'
+  timezone = 'Asia/Shanghai',
+  soilEvidenceId = '',
+  manualSoilConfirmed = false
 }) {
   return {
     catalogPlantId,
@@ -435,7 +445,9 @@ export function buildAdhocPlannerRequestPayload({
     weatherDays,
     forecastDays,
     locationKey: String(locationKey || '').trim(),
-    timezone: String(timezone || 'Asia/Shanghai').trim() || 'Asia/Shanghai'
+    timezone: String(timezone || 'Asia/Shanghai').trim() || 'Asia/Shanghai',
+    soilEvidenceId: String(soilEvidenceId || '').trim(),
+    manualSoilConfirmed: manualSoilConfirmed === true
   }
 }
 
@@ -445,7 +457,9 @@ export async function fetchAdhocPlannerResult({
   weatherDays,
   forecastDays,
   locationKey = '',
-  timezone = 'Asia/Shanghai'
+  timezone = 'Asia/Shanghai',
+  soilEvidenceId = '',
+  manualSoilConfirmed = false
 }) {
   const response = await requestHttpFunction('plant-user-http/user-plants/watering-advisor', {
     method: 'POST',
@@ -455,7 +469,9 @@ export async function fetchAdhocPlannerResult({
       weatherDays,
       forecastDays,
       locationKey,
-      timezone
+      timezone,
+      soilEvidenceId,
+      manualSoilConfirmed
     })
   })
   return response?.code === 200 ? normalizePlannerResultDate(response.data) : null

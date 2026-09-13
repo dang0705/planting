@@ -360,12 +360,19 @@ function normalizeModelVisualResult(
 
 async function analyzeImage(
   imageRuntimeInput,
-  { visualCallBatchId, sessionId = '', onText, adapterMetaOverride = {}, llmOptions = {} } = {}
+  {
+    visualCallBatchId,
+    sessionId = '',
+    onText,
+    onPromptReady,
+    adapterMetaOverride = {},
+    llmOptions = {}
+  } = {}
 ) {
   const startedAt = Date.now()
   const llmStartedAt = Date.now()
   const llmResult = await withLlmImagePromptContext(llmOptions, () =>
-    callLLMDiagnose([imageRuntimeInput], { onText, sessionId })
+    callLLMDiagnose([imageRuntimeInput], { onText, onPromptReady, sessionId })
   )
   const llmMs = Math.max(0, Date.now() - llmStartedAt)
   const adapterMeta = getAdapterMeta({

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import fs from 'node:fs'
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 
@@ -2948,23 +2949,32 @@ function testRouteExplanationFollowsRoutePrimaryOutcome() {
   assert.match(response.resultExplanation.firstAid, /移离正午直射光/)
 }
 
-function testQuestionCompletedStateUsesRouteConvergenceBranch() {
-  const source = readFileSync('./src/subpackages/diagnosis/question-package.vue', 'utf8')
-
-  assert.match(
-    source,
-    /v-else-if="result && !result\.hasActiveQuestions && !hasRouteConvergenceDetails"/
+function testAllDiagnosisResultsUseQuestionPackageResult() {
+  const questionPageSource = readFileSync(
+    './src/subpackages/diagnosis/question-package.vue',
+    'utf8'
   )
-  assert.match(source, /const hasRouteConvergenceDetails = computed\(\(\) =>/)
-}
+  const canonicalResultSource = readFileSync(
+    './src/subpackages/diagnosis/question-package/QuestionPackageResult.vue',
+    'utf8'
+  )
+  const flowSource = readFileSync(
+    './src/subpackages/diagnosis/diagnose-flow/DiagnoseFlow.vue',
+    'utf8'
+  )
 
-function testDiagnosisResultPageUsesVisibleOutcomeList() {
-  const source = readFileSync('./src/subpackages/diagnosis/result.vue', 'utf8')
-
-  assert.match(source, /function buildOutcomeDisplayItems/)
-  assert.match(source, /v-for="item in viewModel\.outcomeItems"/)
-  assert.match(source, /normalizeDiagnosisResult\(remoteResult\.value/)
-  assert.doesNotMatch(source, /mainIssue:\s*remoteResult\.value\?\.finalResult\?\.displayName/)
+  assert.match(questionPageSource, /<QuestionPackageResult :result="result" :payload="payload" \/>/)
+  assert.match(canonicalResultSource, /id="diagnose-question-package-result-outcomes"/)
+  assert.match(flowSource, /from '\.\.\/question-package\/QuestionPackageResult\.vue'/)
+  assert.doesNotMatch(
+    questionPageSource,
+    /hasRouteConvergenceDetails|showNonProblemOutcomeResultCard/
+  )
+  assert.equal(fs.existsSync('./src/subpackages/diagnosis/result.vue'), false)
+  assert.equal(
+    fs.existsSync('./src/subpackages/diagnosis/diagnose-flow/DiagnoseResultStage.vue'),
+    false
+  )
 }
 
 function testRuntimeSnapshotPersistsInternalRouteDecision() {
@@ -3026,21 +3036,22 @@ function testManualQuestionStartRouteGroupBridge() {
   assert.equal(activeSymptomKeys.includes('uniform_yellowing'), true)
   assert.equal(activeSymptomKeys.includes('leaf_yellowing'), true)
 
-  const candidateOutcomeKeys = manualQuestionStartFastPathTest.collectCandidateOutcomeKeysFromRouteGroups(
-    [
-      {
-        routeGroupKey: 'yellowing_care_split_group',
-        entrySymptomKeys: ['leaf_yellowing'],
-        candidateOutcomeKeys: [
-          'overwatering_root_pressure',
-          'underwatering',
-          'leaf_spot_problem',
-          'stable_natural_marking'
-        ]
-      }
-    ],
-    activeSymptomKeys
-  )
+  const candidateOutcomeKeys =
+    manualQuestionStartFastPathTest.collectCandidateOutcomeKeysFromRouteGroups(
+      [
+        {
+          routeGroupKey: 'yellowing_care_split_group',
+          entrySymptomKeys: ['leaf_yellowing'],
+          candidateOutcomeKeys: [
+            'overwatering_root_pressure',
+            'underwatering',
+            'leaf_spot_problem',
+            'stable_natural_marking'
+          ]
+        }
+      ],
+      activeSymptomKeys
+    )
   assert.deepEqual(candidateOutcomeKeys, ['overwatering_root_pressure', 'underwatering'])
 
   const nonYellowingCandidateOutcomeKeys =
@@ -5001,10 +5012,8 @@ async function main() {
   console.log('✓ route output uses diagnosis_outcomes and avoids candidate_outcome summary leak')
   testRouteExplanationFollowsRoutePrimaryOutcome()
   console.log('✓ route explanation follows route primary outcome')
-  testQuestionCompletedStateUsesRouteConvergenceBranch()
-  console.log('✓ package completed state uses route convergence branch')
-  testDiagnosisResultPageUsesVisibleOutcomeList()
-  console.log('✓ diagnosis result page uses visible outcome list')
+  testAllDiagnosisResultsUseQuestionPackageResult()
+  console.log('✓ all diagnosis results use the single question-package result renderer')
   testRouteFinalStopStateCloses()
   console.log('✓ route final stop state closes')
   testFormatDiagnosisResponseRouteOutputDisabled()

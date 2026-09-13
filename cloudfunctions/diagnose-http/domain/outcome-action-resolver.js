@@ -1,6 +1,7 @@
 'use strict'
 
 const { buildCareGuidance } = require('../utils/care-baseline-guidance')
+const { normalizeActionProfile } = require('./action-guidance-contract')
 const {
   normalizeRouteDecisionCause,
   isAuthoritativeRouteDecision
@@ -98,20 +99,25 @@ function buildActionProfileMap(actionProfiles = []) {
 }
 
 function buildActionAdviceItems(actionProfile = null) {
-  if (!actionProfile || typeof actionProfile !== 'object') {return []}
+  const normalizedProfile = normalizeActionProfile(actionProfile)
   return uniqKeys([
-    ...(Array.isArray(actionProfile.todayActions) ? actionProfile.todayActions : []),
-    ...(Array.isArray(actionProfile.threeDayActions) ? actionProfile.threeDayActions : []),
-    ...(Array.isArray(actionProfile.sevenDayObserve) ? actionProfile.sevenDayObserve : [])
+    ...(Array.isArray(normalizedProfile.todayActions) ? normalizedProfile.todayActions : []),
+    ...(Array.isArray(normalizedProfile.threeDayActions) ? normalizedProfile.threeDayActions : []),
+    ...(Array.isArray(normalizedProfile.sevenDayObserve) ? normalizedProfile.sevenDayObserve : [])
   ])
 }
 
 function buildAvoidAdviceItems(actionProfile = null) {
-  if (!actionProfile || typeof actionProfile !== 'object') {return []}
+  const normalizedProfile = normalizeActionProfile(actionProfile)
   return uniqKeys([
-    ...(Array.isArray(actionProfile.avoidActions) ? actionProfile.avoidActions : []),
-    ...(Array.isArray(actionProfile.retakeOrEscalate) ? actionProfile.retakeOrEscalate : [])
+    ...(Array.isArray(normalizedProfile.avoidActions) ? normalizedProfile.avoidActions : []),
+    ...(Array.isArray(normalizedProfile.retakeOrEscalate) ? normalizedProfile.retakeOrEscalate : [])
   ])
+}
+
+function buildStructuredActionItems(actionProfile = null) {
+  const normalizedProfile = normalizeActionProfile(actionProfile)
+  return Array.isArray(normalizedProfile.actionItems) ? normalizedProfile.actionItems : []
 }
 
 function mapSeverity(problem = null) {
@@ -176,13 +182,15 @@ function buildOutcomeEntry({
     normalizedOutcomeKey
   )
 
-  const actionAdviceItems = buildActionAdviceItems(actionProfile)
-  const avoidAdviceItems = buildAvoidAdviceItems(actionProfile)
+  const normalizedActionProfile = normalizeActionProfile(actionProfile)
+  const actionAdviceItems = buildActionAdviceItems(normalizedActionProfile)
+  const avoidAdviceItems = buildAvoidAdviceItems(normalizedActionProfile)
+  const actionItems = buildStructuredActionItems(normalizedActionProfile)
 
   return {
     outcomeKey: normalizedOutcomeKey,
     problemKey: normalizedOutcomeKey,
-    actionProfileKey: normalizeText(routeOutcome?.actionProfileKey || actionProfile?.actionProfileKey || ''),
+    actionProfileKey: normalizeText(routeOutcome?.actionProfileKey || normalizedActionProfile?.actionProfileKey || ''),
     outcomeType: normalizeText(routeOutcome?.outcomeType || ''),
     outcomeCategory: normalizeText(routeOutcome?.outcomeCategory || ''),
     displayNameCn: normalizeText(conservativeDisplayName),
@@ -197,6 +205,8 @@ function buildOutcomeEntry({
     ),
     actionAdviceItems,
     avoidAdviceItems,
+    actionItems,
+    avoidActionItems: actionItems.filter(item => item.stage === 'avoid'),
     reassurance: normalizeText(explanation?.reassuranceCn || '')
   }
 }
@@ -326,6 +336,8 @@ function resolveRouteOutcomePayload({
         retakeOrEscalate: [
           '先补充关键分流信息，再决定具体处理动作。'
         ],
+        actionItems: [],
+        avoidActionItems: [],
         conflictDetected: true
       }
     : {
@@ -345,6 +357,23 @@ function resolveRouteOutcomePayload({
         ]),
         retakeOrEscalate: uniqKeys(
           safeActionProfiles.flatMap(item => item?.retakeOrEscalate || [])
+        ),
+        actionItems: Array.from(
+          new Map(
+            safeActionProfiles
+              .flatMap(item => Array.isArray(item?.actionItems) ? item.actionItems : [])
+              .map(item => [normalizeKey(item?.id), item])
+              .filter(([key]) => key)
+          ).values()
+        ),
+        avoidActionItems: Array.from(
+          new Map(
+            safeActionProfiles
+              .flatMap(item => Array.isArray(item?.actionItems) ? item.actionItems : [])
+              .filter(item => item?.stage === 'avoid')
+              .map(item => [normalizeKey(item?.id), item])
+              .filter(([key]) => key)
+          ).values()
         ),
         conflictDetected: false
       }

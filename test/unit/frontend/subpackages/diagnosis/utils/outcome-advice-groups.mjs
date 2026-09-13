@@ -110,4 +110,53 @@ assert.deepEqual(fallbackGroups.avoidGroups[0].items, ['没有具体结论时的
 assert.equal(fallbackGroups.actionGroups[0].key, '__fallback__')
 assert.equal(fallbackGroups.avoidGroups[0].key, '__fallback__')
 
+const structuredPestGroups = buildSharedOutcomeAdviceGroups({
+  outcomeSources: [
+    {
+      outcomeKey: 'spider_mite',
+      actionProfileKey: 'action_spider_mite_guidance',
+      displayNameCn: '红蜘蛛（叶螨）',
+      actionItems: [
+        {
+          id: 'act_kill_mite',
+          categoryId: 'pest_kill_treatment',
+          categoryNameCn: '杀虫/杀螨处理',
+          stage: 'today',
+          methodId: 'foliar_spray',
+          text: '确认后按标签进行杀虫/杀螨处理。'
+        },
+        {
+          id: 'act_safety',
+          categoryId: 'treatment_safety',
+          categoryNameCn: '用药注意事项',
+          stage: 'avoid',
+          methodId: 'avoid_mixing_products',
+          text: '不要混用药剂。'
+        }
+      ]
+    }
+  ],
+  getOutcomeKey,
+  getOutcomeLabel,
+  getActionItems,
+  getAvoidItems
+})
+
+assert.deepEqual(
+  structuredPestGroups.actionGroups.map(group => group.categoryNameCn),
+  ['杀虫/杀螨处理'],
+  '虫害首要处理必须显示明确的杀虫/杀螨分类'
+)
+assert.deepEqual(
+  structuredPestGroups.avoidGroups.map(group => group.categoryNameCn),
+  ['用药注意事项'],
+  '规避动作必须保留明确分类'
+)
+assert.equal(structuredPestGroups.actionGroups[0].items[0], '确认后按标签进行杀虫/杀螨处理。')
+assert.equal(structuredPestGroups.avoidGroups[0].items[0], '不要混用药剂。')
+assert.ok(
+  structuredPestGroups.actionGroups.every(group => !group.items.includes('[object Object]')),
+  '结构化动作不得退化成 [object Object]'
+)
+
 console.log('outcome advice group tests passed')

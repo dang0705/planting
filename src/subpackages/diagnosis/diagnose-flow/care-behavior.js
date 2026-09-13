@@ -9,8 +9,6 @@ export function useDiagnoseCareBehavior(ctx) {
     diagnoseStore,
     popup,
     result,
-    showAIDialog,
-    aiStreamDialogRef,
     pendingDiagnosePayload,
     casePreviewImages,
     questionAnswers,

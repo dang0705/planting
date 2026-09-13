@@ -168,6 +168,27 @@ const oldPairFallbackResult = await resolveYellowLeafOutcomeResult({
 assert.equal(oldPairFallbackResult.outcomeType, 'problematic')
 assert.equal(oldPairFallbackResult.visibleOutcomes[0].outcomeKey, 'low_light_growth_weakness')
 
+const repeatedHighDoseWateringResult = await resolveYellowLeafOutcomeResult({
+  sessionId: 'session-yellow-repeated-high-dose',
+  round: 2,
+  answers: [],
+  questionPackage,
+  environmentCareContext: {
+    behaviorSummary10d: {
+      wetPressureLoad: 0.3,
+      thoroughWateringCount10d: 3,
+      rootWateringEventCount10d: 3,
+      lastEffectiveRootWateredDaysAgo: 8
+    }
+  },
+  routeAnswerEffects: []
+})
+assert.equal(repeatedHighDoseWateringResult.outcomeType, 'problematic')
+assert.equal(
+  repeatedHighDoseWateringResult.visibleOutcomes[0].outcomeKey,
+  'overwatering_root_pressure'
+)
+
 Module._load = originalModuleLoad
 
 console.log('yellow leaf outcome resolver tests passed')

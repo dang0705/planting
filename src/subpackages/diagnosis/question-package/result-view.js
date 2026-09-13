@@ -11,29 +11,35 @@ function uniqueStrings(values = []) {
 
 function formatOutcomeDisplayLabel(outcome = null) {
   if (typeof outcome === 'string') {
-    return outcome
-      .replace(/根区压力/g, '根部状态不佳')
-      .replace(/根部压力/g, '根部状态不佳')
-      .replace(/压力/g, '受影响')
-      .trim()
+    return sanitizeOutcomeDisplayLabel(outcome)
   }
   if (!outcome || typeof outcome !== 'object') {
     return ''
   }
-  return String(
-    outcome.displayNameCn ||
-      outcome.displayName ||
-      outcome.title ||
-      outcome.problemName ||
-      outcome.problemKey ||
-      outcome.outcomeKey ||
-      ''
+  return (
+    [outcome.displayNameCn, outcome.displayName, outcome.title, outcome.problemName]
+      .map(sanitizeOutcomeDisplayLabel)
+      .find(Boolean) || ''
   )
+}
+
+function sanitizeOutcomeDisplayLabel(value = '') {
+  const label = String(value || '')
     .trim()
     .replace(/根区压力/g, '根部状态不佳')
     .replace(/根部压力/g, '根部状态不佳')
     .replace(/压力/g, '受影响')
     .trim()
+  return isMachineDisplayText(label) ? '' : label
+}
+
+function isMachineDisplayText(value = '') {
+  const text = String(value || '').trim()
+  return (
+    !text ||
+    /^[a-z][a-z0-9]*(?:[_-][a-z0-9]+)+$/i.test(text) ||
+    /^(?:id|key|code|status|token|secret|openid|unionid)(?:[:：_-]|$)/i.test(text)
+  )
 }
 
 function normalizeArrayText(values = []) {
@@ -46,6 +52,52 @@ function normalizeTextList(values = []) {
   return (Array.isArray(values) ? values : [values])
     .map(item => String(item || '').trim())
     .filter(Boolean)
+}
+
+function isMachineVisualEvidenceLabel(value = '', key = '') {
+  const normalizedValue = String(value || '').trim()
+  const normalizedKey = String(key || '')
+    .trim()
+    .toLowerCase()
+  if (!normalizedValue) {
+    return true
+  }
+  const lowerValue = normalizedValue.toLowerCase()
+  if (normalizedKey && lowerValue === normalizedKey) {
+    return true
+  }
+  return /^[a-z][a-z0-9]*(?:[_-][a-z0-9]+)+$/i.test(normalizedValue)
+}
+
+export function normalizeDisplayEvidenceItem(item = {}, index = 0, source = 'item') {
+  const key = String(
+    item?.symptomKey ||
+      item?.symptom_key ||
+      item?.evidenceKey ||
+      item?.evidence_key ||
+      item?.key ||
+      item?.id ||
+      `${source}_${index}`
+  ).trim()
+  const label = String(
+    item?.displayNameCn ||
+      item?.display_name_cn ||
+      item?.symptomCn ||
+      item?.symptom_cn ||
+      item?.label ||
+      item?.displayName ||
+      item?.evidenceLabel ||
+      item?.evidence_label ||
+      ''
+  ).trim()
+  if (!key || !label || isMachineVisualEvidenceLabel(label, key)) {
+    return null
+  }
+  return {
+    key,
+    label,
+    supportImageCount: Number(item?.supportImageCount || item?.support_image_count || 0)
+  }
 }
 
 function normalizeOutcomeDisplayKey(outcome = {}, index = 0) {
@@ -102,6 +154,14 @@ export function buildOutcomeAdviceGroups({
 }
 
 function buildOutcomeActionAdviceItems(outcome = {}) {
+  const structuredItems = Array.isArray(outcome?.actionItems)
+    ? outcome.actionItems
+        .filter(item => item?.stage !== 'avoid')
+        .map(item => item?.text || item?.textCn || item?.text_cn || '')
+    : []
+  if (structuredItems.length) {
+    return uniqueStrings(structuredItems)
+  }
   return uniqueStrings([
     ...normalizeTextList(outcome?.actionAdviceItems),
     ...normalizeTextList(outcome?.todayActions),
@@ -114,6 +174,12 @@ function buildOutcomeActionAdviceItems(outcome = {}) {
 }
 
 function buildOutcomeAvoidAdviceItems(outcome = {}) {
+  const structuredItems = Array.isArray(outcome?.avoidActionItems)
+    ? outcome.avoidActionItems.map(item => item?.text || item?.textCn || item?.text_cn || '')
+    : []
+  if (structuredItems.length) {
+    return uniqueStrings([...structuredItems, ...normalizeTextList(outcome?.retakeOrEscalate)])
+  }
   return uniqueStrings([
     ...normalizeTextList(outcome?.avoidAdviceItems),
     ...normalizeTextList(outcome?.avoidActions),
@@ -125,9 +191,6 @@ function buildOutcomeAvoidAdviceItems(outcome = {}) {
 }
 
 export function useQuestionPackageResultView({ result, payload }) {
-  const hasCompletedDiagnosis = computed(
-    () => Boolean(result.value) && !result.value.hasActiveQuestions
-  )
   const finalOutcome = computed(() => result.value?.finalResult || {})
   const outcomeTypeValue = computed(() =>
     String(result.value?.outcomeType || finalOutcome.value?.outcomeType || '').trim()
@@ -142,7 +205,6 @@ export function useQuestionPackageResultView({ result, payload }) {
   const visibleOutcomeDisplays = computed(() =>
     uniqueStrings(visibleOutcomeSource.value.map(formatOutcomeDisplayLabel))
   )
-  const hasRouteConvergenceDetails = computed(() => Boolean(visibleOutcomeDisplays.value.length))
   const allOutcomeDisplays = computed(() => visibleOutcomeDisplays.value)
   const outcomeDisplayTitle = computed(() =>
     String(
@@ -158,7 +220,7 @@ export function useQuestionPackageResultView({ result, payload }) {
         formatOutcomeDisplayLabel(finalOutcome.value?.summary) ||
         formatOutcomeDisplayLabel(result.value?.summaryText) ||
         formatOutcomeDisplayLabel(result.value?.summaryCard?.subtitle) ||
-      '已根据照片和你的补充信息整理出当前结论。'
+        '已根据照片和你的补充信息整理出当前结论。'
     ).trim()
   )
   const outcomeTypeText = computed(() => {
@@ -171,20 +233,6 @@ export function useQuestionPackageResultView({ result, payload }) {
     }
     return labels[outcomeTypeValue.value] || outcomeTypeValue.value || '已生成结论'
   })
-  const isProblematicOutcome = computed(() =>
-    ['problematic', 'problem'].includes(outcomeTypeValue.value)
-  )
-  const isNonProblemOrUncertainOutcome = computed(() =>
-    ['non_problematic', 'uncertain', 'out_of_pool_no_mapping'].includes(outcomeTypeValue.value)
-  )
-  const showNonProblemOutcomeResultCard = computed(
-    () => !isProblematicOutcome.value && isNonProblemOrUncertainOutcome.value
-  )
-  const nonProblemOutcomeSummaryText = computed(() =>
-    String(
-      outcomeSummaryText.value || outcomeTypeText.value || '当前尚未见到明确问题，建议继续观察。'
-    ).trim()
-  )
   const observedItems = computed(() => {
     const source = [
       ...(Array.isArray(payload.value?.observedSymptoms) ? payload.value.observedSymptoms : []),
@@ -197,22 +245,12 @@ export function useQuestionPackageResultView({ result, payload }) {
     const seen = new Set()
     return source
       .map((item, index) => {
-        const key = String(
-          item?.symptomKey || item?.evidenceKey || item?.key || item?.id || `item_${index}`
-        ).trim()
-        const label = String(
-          item?.symptomCn ||
-            item?.label ||
-            item?.displayName ||
-            item?.evidenceKey ||
-            item?.symptomKey ||
-            ''
-        ).trim()
-        if (!key || !label || seen.has(key)) {
+        const normalized = normalizeDisplayEvidenceItem(item, index)
+        if (!normalized || seen.has(normalized.key)) {
           return null
         }
-        seen.add(key)
-        return { key, label }
+        seen.add(normalized.key)
+        return normalized
       })
       .filter(Boolean)
   })
@@ -222,7 +260,14 @@ export function useQuestionPackageResultView({ result, payload }) {
     const nextSteps = Array.isArray(result.value?.nextSteps)
       ? result.value.nextSteps.map(item => String(item?.text || '').trim()).filter(Boolean)
       : []
+    const structuredActionItems = Array.isArray(actionAdvice?.actionItems)
+      ? actionAdvice.actionItems
+          .filter(item => item?.stage !== 'avoid')
+          .map(item => String(item?.text || item?.textCn || item?.text_cn || '').trim())
+          .filter(Boolean)
+      : []
     const structuredAdvice = [
+      ...structuredActionItems,
       ...normalizeArrayText(actionAdvice?.todayActions),
       ...normalizeArrayText(actionAdvice?.threeDayActions),
       ...normalizeArrayText(actionAdvice?.sevenDayObserve),
@@ -240,7 +285,18 @@ export function useQuestionPackageResultView({ result, payload }) {
     const whatToAvoid = Array.isArray(result.value?.whatToAvoid)
       ? result.value.whatToAvoid.map(item => String(item || '').trim()).filter(Boolean)
       : []
+    const structuredAvoidItems = Array.isArray(actionAdvice?.avoidActionItems)
+      ? actionAdvice.avoidActionItems
+          .map(item => String(item?.text || item?.textCn || item?.text_cn || '').trim())
+          .filter(Boolean)
+      : Array.isArray(actionAdvice?.actionItems)
+        ? actionAdvice.actionItems
+            .filter(item => item?.stage === 'avoid')
+            .map(item => String(item?.text || item?.textCn || item?.text_cn || '').trim())
+            .filter(Boolean)
+        : []
     const structuredAdvice = [
+      ...structuredAvoidItems,
       ...normalizeArrayText(actionAdvice?.avoidActions),
       ...(actionAdvice?.conflictDetected ? normalizeArrayText(actionAdvice?.retakeOrEscalate) : []),
       ...whatToAvoid
@@ -279,17 +335,14 @@ export function useQuestionPackageResultView({ result, payload }) {
     })
   )
   return {
-    hasCompletedDiagnosis,
-    hasRouteConvergenceDetails,
     outcomeDisplayTitle,
     outcomeSummaryText,
     outcomeTypeText,
-    isProblematicOutcome,
-    showNonProblemOutcomeResultCard,
-    nonProblemOutcomeSummaryText,
     allOutcomeDisplays,
     observedItems,
+    actionAdviceTexts,
     actionAdviceGroups,
+    avoidAdviceTexts,
     avoidAdviceGroups
   }
 }

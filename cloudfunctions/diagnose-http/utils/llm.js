@@ -1,6 +1,5 @@
 'use strict'
 
-const https = require('https')
 const tencentcloud = require('tencentcloud-sdk-nodejs-hunyuan')
 const { debugLog } = require('./common')
 const { buildSymptomLabelerPromptPayload } = require('./symptom-labeler-prompt')
@@ -56,7 +55,6 @@ const USE_RUNTIME_CREDENTIALS = Boolean(
 const SECRET_ID = USE_RUNTIME_CREDENTIALS ? RUNTIME_SECRET_ID : EXPLICIT_SECRET_ID
 const SECRET_KEY = USE_RUNTIME_CREDENTIALS ? RUNTIME_SECRET_KEY : EXPLICIT_SECRET_KEY
 const SESSION_TOKEN = USE_RUNTIME_CREDENTIALS ? RUNTIME_SESSION_TOKEN : EXPLICIT_SESSION_TOKEN
-const IMAGE_HTTP_AGENT = new https.Agent({ keepAlive: true, maxSockets: 8 })
 const cloudBaseClient = isOpenAiVisionProvider(providerId)
   ? createCloudBaseAiOpenAiClient({
       model,
@@ -81,6 +79,10 @@ function normalizeImage(item = {}, index = 0) {
   const imageRef = text(source?.imageRef || source?.imageUrl || source?.url || source?.image)
   if (!imageRef) {
     return null
+  }
+  // 最上游防线：严禁把图片转为 Base64/data URL 送入模型，避免图片编码放大输入 token。
+  if (/^data:/i.test(imageRef)) {
+    throw new Error('视觉诊断图片必须使用可访问的 HTTP(S) URL，不接受 Base64')
   }
   const inputSlotOrder = Number(source?.inputSlotOrder ?? source?.orderIndex ?? index)
   const totalImageCount = Number(source?.totalImageCount)
@@ -246,10 +248,13 @@ function callHunyuanStream(messages, { onText, modelName = model } = {}) {
   })
 }
 
-async function buildRequest(images = []) {
+async function buildRequest(
+  images = [],
+  { promptBuilder = buildSymptomLabelerPromptPayload } = {}
+) {
   const normalizedImages = (Array.isArray(images) ? images : []).map(normalizeImage).filter(Boolean)
   const selectedImages = normalizedImages.slice(0, Math.max(1, Number(maxImages || 1)))
-  const prompt = await buildSymptomLabelerPromptPayload({
+  const prompt = await promptBuilder({
     imageContext: selectedImages[0] || normalizedImages[0] || null
   })
   const hunyuanContents = selectedImages.map(image => ({
@@ -284,81 +289,6 @@ function promptImageContext(images = []) {
     uploadCompression: image.uploadCompression,
     caseSlotSummary: image.caseSlotSummary.slice(0, 6)
   }))
-}
-
-function fetchImageAsDataUrl(imageUrl = '') {
-  const value = text(imageUrl)
-  if (!value) {
-    return Promise.reject(new Error('缺少图片地址'))
-  }
-  if (/^data:image\//i.test(value) || !/^https?:\/\//i.test(value)) {
-    return Promise.resolve(value)
-  }
-  const target = new URL(value)
-  const maxBytes = Number(process.env.LLM_IMAGE_DATA_URL_MAX_BYTES || 5 * 1024 * 1024)
-  return new Promise((resolve, reject) => {
-    const chunks = []
-    let size = 0
-    const request = https.get(
-      {
-        hostname: target.hostname,
-        path: `${target.pathname}${target.search}`,
-        agent: IMAGE_HTTP_AGENT
-      },
-      response => {
-        if (response.statusCode < 200 || response.statusCode >= 300) {
-          response.resume()
-          reject(new Error(`图片下载失败(${response.statusCode})`))
-          return
-        }
-        response.on('data', chunk => {
-          size += chunk.length
-          if (size > maxBytes) {
-            request.destroy(new Error(`图片过大，无法转为模型 data URL: ${size} > ${maxBytes}`))
-          } else {
-            chunks.push(chunk)
-          }
-        })
-        response.on('end', () => {
-          const buffer = Buffer.concat(chunks)
-          if (!buffer.length) {
-            reject(new Error('图片下载为空'))
-            return
-          }
-          const mimeType = text(response.headers['content-type'], 'image/jpeg').split(';')[0]
-          resolve(`data:${mimeType};base64,${buffer.toString('base64')}`)
-        })
-        response.on('error', reject)
-      }
-    )
-    request.on('error', reject)
-    request.setTimeout(Math.max(1000, requestTimeoutSec * 1000), () => {
-      request.destroy(new Error('图片下载超时'))
-    })
-  })
-}
-
-async function buildDataUrlMessages(messages = []) {
-  return Promise.all(
-    messages.map(async message => ({
-      ...message,
-      content: Array.isArray(message?.content)
-        ? await Promise.all(
-            message.content.map(async item =>
-              item?.type === 'image_url'
-                ? {
-                    ...item,
-                    image_url: {
-                      ...item.image_url,
-                      url: await fetchImageAsDataUrl(item.image_url?.url)
-                    }
-                  }
-                : item
-            )
-          )
-        : message?.content
-    }))
-  )
 }
 
 function buildPromptAudit(request) {
@@ -396,17 +326,27 @@ async function callLLMDiagnose(
   images = [],
   {
     onText,
+    onPromptReady,
     timeoutMs = null,
     sessionId = '',
     disableConservative = false,
-    disableImageDataUrlConservative = false
+    promptBuilder = buildSymptomLabelerPromptPayload
   } = {}
 ) {
   const startedAt = Date.now()
   const requestStartedAt = Date.now()
-  const request = await buildRequest(images)
+  const request = await buildRequest(images, { promptBuilder })
   const requestBuildMs = Date.now() - requestStartedAt
   const promptAudit = buildPromptAudit(request)
+  // 开发调试：prompt 已完成且即将进入首个模型请求，交给上层通过 SSE 转发到端上控制台。
+  // 这里只发送实际 prompt 文本和审计元数据；图片仍按 HTTP(S) URL 传输，禁止转成 Base64。
+  if (typeof onPromptReady === 'function') {
+    try {
+      onPromptReady(promptAudit)
+    } catch (error) {
+      debugLog('视觉 prompt 端上审计事件发送失败，继续模型调用:', error?.message || error)
+    }
+  }
   const stream = Boolean(sse && typeof onText === 'function')
   const activeService = serviceName(providerId)
   const conservativeServiceName = serviceName(conservativeService)
@@ -433,20 +373,8 @@ async function callLLMDiagnose(
       stream
         ? cloudBaseClient.callStream(messages, { onText, timeoutMs, sessionId })
         : cloudBaseClient.callNonStream(messages, { timeoutMs, sessionId })
-    try {
-      const result = await call(request.openAiMessages)
-      return { ...result, imageInputTransport: result.imageInputTransport || 'url' }
-    } catch (error) {
-      if (
-        cloudBaseClient.providerId === 'cloudbase' ||
-        !cloudBaseClient.isImageDownloadError(error) ||
-        disableImageDataUrlConservative
-      ) {
-        throw error
-      }
-      const messages = await buildDataUrlMessages(request.openAiMessages)
-      return { ...(await call(messages)), imageInputTransport: 'data_url_conservative' }
-    }
+    const result = await call(request.openAiMessages)
+    return { ...result, imageInputTransport: result.imageInputTransport || 'url' }
   }
   const conservativeCall = async error => {
     if (conservativeServiceName !== 'hunyuan') {

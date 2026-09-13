@@ -7,6 +7,7 @@ const {
   buildFrontendAnswerResponse,
   buildFrontendDiagnosisResponse
 } = require('../../../../../cloudfunctions/diagnose-http/app/frontend-response.js')
+const { buildCompactVisualAggregateSummary } = require('../../../../../cloudfunctions/diagnose-http/presenters/diagnosis-round-compact-presenter.js')
 
 const unsafeRuntimePayload = {
   diagnosisSessionId: 'diagnosis_public_1',
@@ -35,7 +36,12 @@ const unsafeRuntimePayload = {
   visualAggregateSummary: {
     suggestedFollowupCapture: ['补拍叶背细节'],
     aggregateQualityGrade: 'low',
-    routePrimaryAction: 'internal_route'
+    routePrimaryAction: 'internal_route',
+    aggregatedSymptomCandidates: [
+      { symptom_key: 'aphids_visible' },
+      { symptom_key: 'surface_glossy_residue' },
+      { symptom_key: 'unknown_internal_evidence' }
+    ]
   },
   finalResult: {
     resultId: 'result_public_1',
@@ -98,11 +104,42 @@ assert.deepEqual(diagnosisResponse.visualAggregateSummary, {
   effectiveImageCount: 0,
   aggregateAnalyzability: '',
   organCoverageSummary: null,
-  visualEvidenceItems: [],
+  visualEvidenceItems: [
+    {
+      symptomKey: 'aphids_visible',
+      displayNameCn: '看到蚜虫',
+      supportImageCount: 0,
+      supportOrgans: [],
+      primaryCaptureRegion: ''
+    },
+    {
+      symptomKey: 'surface_glossy_residue',
+      displayNameCn: '叶片或茎部表面有发亮残留',
+      supportImageCount: 0,
+      supportOrgans: [],
+      primaryCaptureRegion: ''
+    }
+  ],
   visualMissingInfoForPath: [],
   decisionSource: '',
   suggestedAdditionalImageCapture: ['补拍叶背细节']
 })
+
+assert.doesNotMatch(
+  JSON.stringify(
+    diagnosisResponse.visualAggregateSummary.visualEvidenceItems.map(item => item.displayNameCn)
+  ),
+  /unknown_internal_evidence|aphids_visible|surface_glossy_residue/,
+  '公开视觉证据的展示文案不得暴露机器 key'
+)
+
+const compactVisualSummary = buildCompactVisualAggregateSummary(
+  unsafeRuntimePayload.visualAggregateSummary
+)
+assert.deepEqual(
+  compactVisualSummary.visualEvidenceItems.map(item => item.displayNameCn),
+  ['看到蚜虫', '叶片或茎部表面有发亮残留']
+)
 assert.deepEqual(diagnosisResponse.visualBatchTrace, {
   currentVisualCallBatchId: 'batch_current',
   originVisualCallBatchId: 'batch_origin',

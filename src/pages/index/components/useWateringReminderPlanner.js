@@ -24,7 +24,12 @@ import {
  * D0 与 forecast 必须同源：优先用 plant.careLocation 拉 weather window，否则会出现
  * D0 用 plant location、forecast 用 user GPS 的拼接错位，corrupting humidity/rain/temp 摘要。
  */
-export function useWateringReminderPlanner({ props, userStore, selectedWateringEventsForPlanner }) {
+export function useWateringReminderPlanner({
+  props,
+  userStore,
+  selectedWateringEventsForPlanner,
+  soilEvidence
+}) {
   const plannerResult = ref(null)
   const hasWeatherRef = ref(false)
   const weatherDays = ref([])
@@ -177,7 +182,9 @@ export function useWateringReminderPlanner({ props, userStore, selectedWateringE
         forecastDays: forecastDays.value,
         locationKey: plannerLocationKey.value,
         timezone: plannerTimezone.value,
-        airEnvironmentOverride: props.plant?.airEnvironment?.input || null
+        airEnvironmentOverride: props.plant?.airEnvironment?.input || null,
+        soilEvidenceId: String(soilEvidence?.value?.evidenceId || '').trim(),
+        manualSoilConfirmed: soilEvidence?.value?.manualSoilConfirmed === true
       })
       if (!isCurrentRequest(requestSequence, plannerRequestSequence, plantId)) {
         return

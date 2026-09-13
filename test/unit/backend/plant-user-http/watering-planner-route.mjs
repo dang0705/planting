@@ -150,7 +150,32 @@ function loadAppWithSpies(overrides = {}) {
       return latestReminderSpy.impl(openid, plantId)
     }
   }
-  Module._load = function patchedAppLoad(request, parent, isMain) {
+  const soilEvidenceSpy = {
+    calls: [],
+    impl:
+      overrides.soilEvidenceImpl ||
+      (({ plan }) => ({
+        plan: {
+          ...plan,
+          visualSoilEvidence: {
+            source: 'temporary',
+            outcome: 'manual_check'
+          }
+        }
+      })),
+    async fn(input) {
+      soilEvidenceSpy.calls.push(input)
+      return soilEvidenceSpy.impl(input)
+    }
+  }
+  const pauseReminderSpy = {
+    calls: [],
+    async fn(openid, plantId) {
+      pauseReminderSpy.calls.push({ openid, plantId })
+      return true
+    }
+  }
+  const patchedAppLoad = function patchedAppLoad(request, parent, isMain) {
     if (request === '/opt/utils/http') {
       return {
         jsonResponse(statusCode, payload) {
@@ -158,6 +183,9 @@ function loadAppWithSpies(overrides = {}) {
         },
         notFound(path) {
           return { statusCode: 404, payload: { code: 404, message: path } }
+        },
+        internalServerError(message) {
+          return { statusCode: 500, payload: { code: 500, message } }
         },
         methodNotAllowed(method) {
           return { statusCode: 405, payload: { code: 405, message: method } }
@@ -259,6 +287,20 @@ function loadAppWithSpies(overrides = {}) {
         listAdvisorSessions: async () => ({ statusCode: 200, data: { list: [], total: 0 } })
       }
     }
+    if (request.endsWith('/watering-soil-evidence-service')) {
+      return {
+        applySoilEvidence: soilEvidenceSpy.fn,
+        cleanupTemporarySoilEvidence: async () => null,
+        toPublicSoilEvidence: audit => ({
+          sourceLabel:
+            audit?.source === 'recent_diagnosis' ? '使用最近诊断盆土图' : '使用本次拍摄的盆土图',
+          observation:
+            audit?.outcome === 'wet_hold'
+              ? '盆土表面仍明显湿润，本次先不浇水。'
+              : '盆土照片仅作辅助，已要求手动摸土确认。'
+        })
+      }
+    }
     if (request.endsWith('/care-location-service')) {
       return {
         attachCareLocation: value => value,
@@ -277,13 +319,25 @@ function loadAppWithSpies(overrides = {}) {
         attachWateringReminderStateToList: async (_openid, data) => data,
         getLatestWateringReminder: latestReminderSpy.fn,
         readWateringReminder: async () => ({ statusCode: 200, data: null }),
-        saveWateringReminder: async () => ({ statusCode: 200, message: 'ok', data: null })
+        saveWateringReminder: async () => ({ statusCode: 200, message: 'ok', data: null }),
+        pauseWateringReminderForSoilWetness: pauseReminderSpy.fn
       }
     }
     return originalLoad.call(this, request, parent, isMain)
   }
+  Module._load = patchedAppLoad
   try {
     const app = require('../../../../cloudfunctions/plant-user-http/app.js')
+    const main = app._test.main
+    app._test.main = async (...args) => {
+      const previousLoad = Module._load
+      Module._load = patchedAppLoad
+      try {
+        return await main(...args)
+      } finally {
+        Module._load = previousLoad
+      }
+    }
     return {
       app,
       transpirationSpy,
@@ -292,6 +346,8 @@ function loadAppWithSpies(overrides = {}) {
       strategySpy,
       wateringEventsSpy,
       latestReminderSpy,
+      soilEvidenceSpy,
+      pauseReminderSpy,
       airEnvironmentEvidenceSpy,
       injectD0Spy
     }
@@ -308,6 +364,7 @@ async function callPlannerRoute(app, body = {}) {
     headers: {},
     body: {
       plantId: body.plantId ?? 1,
+      soilEvidenceId: body.soilEvidenceId ?? 'soil_evidence_test',
       wateringEvents: body.wateringEvents ?? [{ date: '2026-06-30', amount: 'normal' }],
       weatherDays: body.weatherDays ?? [],
       forecastDays: body.forecastDays ?? [],
@@ -323,6 +380,27 @@ test('/watering-planner 路由不提前 404，正确调用 getUserPlantWateringS
   assert.equal(strategySpy.calls.length, 1, 'getUserPlantWateringStrategy 应被调用 1 次')
   assert.equal(strategySpy.calls[0].openid, 'openid_route_test')
   assert.equal(strategySpy.calls[0].plantId, 42)
+})
+test('可信湿润盆土证据暂停应用内活跃提醒，并只返回用户可理解的来源说明', async () => {
+  const { app, pauseReminderSpy } = loadAppWithSpies({
+    soilEvidenceImpl: ({ plan }) => ({
+      plan: {
+        ...plan,
+        nextWaterDate: null,
+        amountRangeMl: [0, 0],
+        wateringContext: 'likely_too_wet',
+        visualSoilEvidence: { source: 'recent_diagnosis', outcome: 'wet_hold' }
+      }
+    })
+  })
+  const response = await callPlannerRoute(app, { plantId: 42 })
+  assert.equal(response.statusCode, 200)
+  assert.deepEqual(pauseReminderSpy.calls, [{ openid: 'openid_route_test', plantId: 42 }])
+  assert.deepEqual(response.payload.data.amountRangeMl, [0, 0])
+  assert.deepEqual(response.payload.data.visualSoilEvidence, {
+    sourceLabel: '使用最近诊断盆土图',
+    observation: '盆土表面仍明显湿润，本次先不浇水。'
+  })
 })
 test('没有过往浇水日期时，规划路由返回 409 且不调用规划器', async () => {
   const { app, plannerSpy } = loadAppWithSpies()

@@ -90,7 +90,7 @@ stale_if_changed:
 - `src/subpackages/diagnosis/diagnose-flow/**`：完整诊断内核，负责模式选择、图片、视觉请求、方向选择、题包交接、补拍和结果状态；所有可见题包统一由公共题包页承接。
 - `src/subpackages/diagnosis/question-package.vue`：黄叶、发蔫或下垂及 1～2 题动态虫害包的公共答题页；题包只按整包 `answer_submit` 提交。
 - `src/subpackages/diagnosis/components/DiagnosePopup.vue`：可复用的 BottomSheet 诊断容器，保留 open/close/reset、植物上下文和弹窗生命周期；当前首页植物卡片和植物详情入口直接导航到 `subpackages/diagnosis/flow`，不在主包创建该弹窗。
-- `src/subpackages/diagnosis/result.vue`：诊断历史的只读结果承接页；用户植物历史入口在抖音可承接结果，不与新诊断入口页混用。
+- `src/subpackages/diagnosis/question-package.vue`：公共问诊与唯一诊断结果承接页；历史记录也通过该页展示。
 - 抖音功能门禁已移除：前端功能不可用提示和服务端 `PLATFORM_FEATURE_UNAVAILABLE` 仅继续限制小红书；抖音仍保留图片临时 URL、植物字段与返回结构等平台传输适配，以及登录、会员和支付安全校验。
 - `src/pages/reminder/reminder.vue`：五项 tab 中的提醒页；加载真实用户植物，并分别复用 `WateringReminderSheet` 与 `FertilizationMonthlySheet` 完成浇水、施肥提醒入口和保存后刷新。
 - 诊断延续页与相关目录：历史命名不定义当前产品口径，当前以问诊题包与结果展示理解。

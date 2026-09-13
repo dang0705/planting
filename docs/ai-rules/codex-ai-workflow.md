@@ -112,5 +112,5 @@ commit message 必须根据改动内容生成，精炼且不超过 50 个字符�
 2. `status`、`9222` / CDP、截图存在只能说明工具状态，不能作为通过证据；通过证据必须来自 `9420` / WebSocket / `page_stack` / `page_data` / 小程序运行时动作。
 3. 只要 `ws://127.0.0.1:9420` 可连，QA 可用 `miniprogram-automator.connect` 完成端上 UI 与 runtime evidence。
 4. API 类端上验收必须在 `miniProgram.evaluate` 内用 `wx.request` 执行，例如 `/diagnose-http/health` 返回 HTTP 200 且 body code 200；Node/curl 只能作为辅助排障。
-5. UI 可见性验收优先使用稳定 selector，例如结果页 `#diagnosis-result-page` / `#diagnosis-result-page-empty`；诊断入口按 `docs/ai-rules/frontend-automation-id-policy.md` 的第三点 id 映射定位。
+5. UI 可见性验收优先使用稳定 selector，例如统一结果页 `#diagnose-question-package-result-shell` / `#diagnose-question-package-history-error`；诊断入口按 `docs/ai-rules/frontend-automation-id-policy.md` 的第三点 id 映射定位。
 6. 入口元素可点击但业务弹窗未出现时，按 `product_or_fixture_blocker` 与 tool/session blocker 分层归因，不得归因为工具传输失败。

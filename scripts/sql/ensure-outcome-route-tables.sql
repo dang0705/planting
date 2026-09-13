@@ -130,6 +130,7 @@ CREATE TABLE IF NOT EXISTS outcome_action_profiles (
   seven_day_observe_json JSON NOT NULL COMMENT '七天观察建议 JSON',
   avoid_actions_json JSON NOT NULL COMMENT '避免动作 JSON',
   retake_or_escalate_json JSON NOT NULL COMMENT '补拍或升级建议 JSON',
+  action_items_json JSON NOT NULL COMMENT '结构化行动动作 JSON',
   plant_baseline_merge_policy VARCHAR(128) NOT NULL DEFAULT '' COMMENT '植物基线合并策略',
   review_status VARCHAR(64) NOT NULL DEFAULT 'draft' COMMENT '审核状态',
   data_status VARCHAR(64) NOT NULL DEFAULT 'active' COMMENT '数据状态',

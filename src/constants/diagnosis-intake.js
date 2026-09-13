@@ -15,3 +15,6 @@ export const SYMPTOM_CLASS_QUICK_SELECT_OPTIONS = [
 
 export const DIAGNOSIS_QUESTION_PACKAGE_STORAGE_KEY_PREFIX =
   '__plantsight_diagnose_question_package__'
+
+export const VISUAL_SCAN_LOADING_TEXT = '正在检查照片...'
+export const VISUAL_SCAN_ERROR_TEXT = '暂时无法完成，请检查网络后重试。'

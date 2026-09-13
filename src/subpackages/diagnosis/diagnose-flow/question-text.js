@@ -8,8 +8,6 @@ export function useDiagnoseQuestionText(ctx) {
     diagnoseStore,
     popup,
     result,
-    showAIDialog,
-    aiStreamDialogRef,
     pendingDiagnosePayload,
     casePreviewImages,
     questionAnswers,

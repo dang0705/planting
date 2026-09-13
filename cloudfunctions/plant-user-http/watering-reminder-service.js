@@ -6,6 +6,7 @@ const { resolveServerWateringPlan } = require('./watering-reminder-plan-service'
 const { mapReminderRow } = require('./watering-reminder-mapper')
 
 const ACTIVE_STATUS = 'active'
+const PAUSED_BY_SOIL_STATUS = 'paused_by_soil'
 const REMINDER_TYPE_WATER = 'water'
 
 function runInNativeTransaction(handler) {
@@ -396,6 +397,45 @@ async function completeWateringReminder(openid, body = {}) {
   }
 }
 
+// 手机系统日历没有可靠的跨端删除能力，因此这里只暂停青花植内的活跃提醒与
+// 植物档案中的 next_water；不会伪称已经删除用户手机日历里的既有事件。
+async function pauseWateringReminderForSoilWetness(openid, plantId) {
+  const normalizedPlantId = Number(plantId)
+  if (!normalizedPlantId) {
+    return false
+  }
+  let paused = false
+  await runInNativeTransaction(async connection => {
+    const [plantRows] = await connection.execute(
+      `SELECT id
+       FROM user_plant_instances
+       WHERE id = ? AND _openid = ?
+       FOR UPDATE`,
+      [normalizedPlantId, openid]
+    )
+    if (!plantRows?.[0]) {
+      return
+    }
+    const [result] = await connection.execute(
+      `UPDATE user_watering_reminder_events
+       SET status = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE _openid = ? AND user_plant_id = ?
+         AND reminder_type = ? AND status = ?`,
+      [PAUSED_BY_SOIL_STATUS, openid, normalizedPlantId, REMINDER_TYPE_WATER, ACTIVE_STATUS]
+    )
+    paused = Number(result?.affectedRows || 0) > 0
+    if (paused) {
+      await connection.execute(
+        `UPDATE user_plant_instances
+         SET next_water = NULL, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND _openid = ?`,
+        [normalizedPlantId, openid]
+      )
+    }
+  })
+  return paused
+}
+
 async function undoWateringReminder(openid, body = {}) {
   const plantId = Number(body.plantId)
   if (!plantId) {
@@ -489,8 +529,10 @@ async function undoWateringReminder(openid, body = {}) {
 
 module.exports = {
   ACTIVE_STATUS,
+  PAUSED_BY_SOIL_STATUS,
   attachWateringReminderStateToList,
   completeWateringReminder,
+  pauseWateringReminderForSoilWetness,
   undoWateringReminder,
   getLatestWateringReminder,
   mapReminderRow,

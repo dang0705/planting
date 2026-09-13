@@ -59,10 +59,10 @@ assert.equal(sharedProfileGroups.length, 1)
 assert.equal(sharedProfileGroups[0].key, 'action_nutrient_support_basic')
 assert.equal(sharedProfileGroups[0].displayLabel, '新叶脉间黄化、长期营养不足')
 
-const resultStageSource = readFileSync(
-  'src/subpackages/diagnosis/diagnose-flow/DiagnoseResultStage.vue',
+const resultSource = readFileSync(
+  'src/subpackages/diagnosis/question-package/QuestionPackageResult.vue',
   'utf8'
 )
-assert.equal((resultStageSource.match(/v-if="group\.showOutcomeLabel"/g) || []).length, 2)
+assert.equal((resultSource.match(/v-if="group\.showOutcomeLabel"/g) || []).length, 2)
 
 console.log('diagnose outcome advice tests passed')

@@ -247,6 +247,7 @@ function resolveVisualImageInputs(payload = {}) {
           : Number.isFinite(Number(normalizedDeclaredOrganConfidence))
             ? Number(normalizedDeclaredOrganConfidence)
             : null,
+      fileId: String(item?.fileId || item?.file_id || '').trim(),
       captureRegion: String(item?.captureRegion || item?.capture_region || '').trim(),
       ...(uploadCompression ? { uploadCompression } : {})
     })

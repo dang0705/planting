@@ -51,6 +51,49 @@ function extractWeatherWindow(request = {}) {
   )
 }
 
+function isDiagnosisAnswerRequest(request = {}) {
+  const url = String(request?.url || '')
+  return (
+    url.includes('diagnosis-answer-http/diagnosis/answer') ||
+    url.includes('diagnose-http/diagnosis/answer')
+  )
+}
+
+function summarizeAnswerRequest(request = null) {
+  const requestData = request?.data && typeof request.data === 'object' ? request.data : {}
+  const questionPackage =
+    requestData?.questionPackage || requestData?.question_package || {}
+  const responseData =
+    request?.response?.data && typeof request.response.data === 'object'
+      ? request.response.data
+      : {}
+  return {
+    present: Boolean(request),
+    transport: String(request?.transport || ''),
+    method: String(request?.method || ''),
+    statusCode: Number(request?.response?.statusCode || 0),
+    responseCode:
+      responseData?.code ??
+      (responseData?.data && typeof responseData.data === 'object'
+        ? responseData.data.code ?? null
+        : null),
+    requestMode: String(requestData?.requestMode || requestData?.mode || ''),
+    packageMode: String(
+      questionPackage?.mode || questionPackage?.sourceMode || questionPackage?.route || ''
+    ),
+    answerSubmitMode: String(
+      questionPackage?.answerSubmitMode || questionPackage?.answer_submit_mode || ''
+    ),
+    hasContinuationToken: Boolean(
+      String(
+        requestData?.questionPackageContinuationToken ||
+          requestData?.question_package_continuation_token ||
+          ''
+      ).trim()
+    )
+  }
+}
+
 function buildLeafReport(result, { wsEndpoint, projectPath, profile, maxSteps } = {}) {
   const logs = Array.isArray(result?.logs) ? result.logs : []
   const launch = logs.find(item => item.type === 'state' && item.label === 'launch')
@@ -70,11 +113,7 @@ function buildLeafReport(result, { wsEndpoint, projectPath, profile, maxSteps } 
   const resultOutcomeLabels = Array.isArray(resultAdviceEvidence?.outcomeLabels)
     ? resultAdviceEvidence.outcomeLabels
     : []
-  const expectedNutrientOutcomeLabels = [
-    '缺铁/新叶脉间黄化',
-    '缺氮/长期营养不足',
-    '营养供给偏弱'
-  ]
+  const expectedNutrientOutcomeLabels = ['缺铁/新叶脉间黄化', '缺氮/长期营养不足', '营养供给偏弱']
   const groupedAdviceUsesSymptoms =
     profile === 'nutrient' &&
     actionAdviceGroups.length === 1 &&
@@ -91,6 +130,10 @@ function buildLeafReport(result, { wsEndpoint, projectPath, profile, maxSteps } 
   ).filter(request =>
     String(request?.url || '').includes('weather-http/weather/environment-context')
   )
+  const answerRequests = (
+    Array.isArray(result?.capturedRequests) ? result.capturedRequests : []
+  ).filter(isDiagnosisAnswerRequest)
+  const answerRequest = summarizeAnswerRequest(answerRequests.at(-1) || null)
   const weatherRequest = weatherRequests.at(-1) || null
   const weatherWindow = extractWeatherWindow(weatherRequest)
   const historicalDays = Array.isArray(weatherWindow?.historicalDays)
@@ -148,6 +191,16 @@ function buildLeafReport(result, { wsEndpoint, projectPath, profile, maxSteps } 
       passed: answers.length > 0,
       detail: `answer_count=${answers.length}`
     },
+      name: '固定题包答案请求携带服务端续接凭据',
+      passed:
+        answerRequest.present &&
+        answerRequest.statusCode === 200 &&
+        Number(answerRequest.responseCode || 0) === 200 &&
+        answerRequest.requestMode === 'answer_submit' &&
+        answerRequest.answerSubmitMode === 'package' &&
+        answerRequest.hasContinuationToken === true,
+      detail: answerRequest
+    },
     {
       name: '切题后滚动位置重置',
       passed: scrollReset?.passed === true,
@@ -191,7 +244,8 @@ function buildLeafReport(result, { wsEndpoint, projectPath, profile, maxSteps } 
       passed:
         resultState?.isCompleted === true ||
         (Array.isArray(resultElements?.outcomeHits) && resultElements.outcomeHits.length > 0) ||
-        String(resultState?.path || '').includes('subpackages/diagnosis/result'),
+        String(resultState?.path || '').includes('subpackages/diagnosis/question-package') ||
+        String(resultState?.path || '').includes('subpackages/diagnosis/flow'),
       detail: resultState?.path || 'result state missing'
     },
     {
@@ -260,6 +314,7 @@ function buildLeafReport(result, { wsEndpoint, projectPath, profile, maxSteps } 
         rendered_historical_days: renderedHistoricalDays.length
       },
       scroll_reset: scrollReset || null,
+      answer_request: answerRequest,
       result_advice_groups: resultAdviceGroups,
       result_outcome_labels: resultOutcomeLabels
     }

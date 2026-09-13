@@ -46,10 +46,8 @@ const FORMAL_PEST_VISUAL_EVIDENCE_KEY_SET = new Set(FORMAL_PEST_VISUAL_EVIDENCE_
 const STRING_SHORTHAND_NOTE = 'provider_string_symptom_candidate_preserved_conservatively'
 const OUT_OF_POOL_RECOVERY_NOTE = 'locked_pest_evidence_recovered_conservatively'
 const VISUAL_OUTPUT_SCHEMA_TEXT = JSON.stringify({
-  image_id: '',
-  normalized_organ: '',
-  image_quality_grade: '',
-  analyzability: '',
+  normalized_organ: 'leaf|stem|root|root_crown|soil|whole_plant|flower|fruit|other|unknown',
+  image_quality_grade: 'good|medium|poor',
   capture_region: 'unknown',
   region_ref: 'unknown',
   mode_candidates: [{ mode: '', confidence: 0, region_ref: 'unknown' }],
@@ -58,7 +56,6 @@ const VISUAL_OUTPUT_SCHEMA_TEXT = JSON.stringify({
       symptom_key: '',
       strength_level: 'strong|medium|weak',
       confidence_band: 'high|medium|low',
-      visibility_scope: 'local|organ|whole_plant',
       region_ref: 'unknown'
     }
   ],
@@ -70,50 +67,12 @@ const VISUAL_OUTPUT_SCHEMA_TEXT = JSON.stringify({
   ],
   visual_discriminators: [
     {
-      dimension_key: 'insect_body_presence',
-      value_key: 'present|absent|uncertain',
-      confidence_band: 'high|medium|low',
-      visible_basis_cn: ''
-    },
-    {
-      dimension_key: 'insect_body_shape',
-      value_key:
-        'mite|wax_oval|hard_shell|white_fly|pear_shaped|slender|leaf_miner_tunnel|small_black_fly|none|uncertain',
-      confidence_band: 'high|medium|low',
-      visible_basis_cn: ''
-    },
-    {
-      dimension_key: 'insect_body_location',
-      value_key: 'leaf_upper|leaf_lower|stem|soil_surface|leaf_internal|unknown',
-      confidence_band: 'high|medium|low',
-      visible_basis_cn: ''
-    },
-    {
-      dimension_key: 'surface_coating_presence',
-      value_key: 'present|absent|uncertain',
-      confidence_band: 'high|medium|low',
-      visible_basis_cn: ''
-    },
-    {
-      dimension_key: 'surface_coating_type',
-      value_key: 'powdery_white|sooty_black|none|uncertain',
-      confidence_band: 'high|medium|low',
-      visible_basis_cn: ''
-    },
-    {
-      dimension_key: 'leaf_anomaly_sign',
-      value_key: 'uniform_yellow|patchy_yellow|droop_wilt|none|uncertain',
+      dimension_key: '',
+      value_key: '',
       confidence_band: 'high|medium|low',
       visible_basis_cn: ''
     }
-  ],
-  missing_info_for_path: [
-    {
-      dimension_key: 'insect_body_visibility',
-      admission_readiness: 'ready|cautious|retain_only'
-    }
-  ],
-  route_hints: [{ type: '' }]
+  ]
 })
 
 function buildRuntimeId(prefix) {

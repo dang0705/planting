@@ -73,8 +73,8 @@ assert.equal(singlePestMedium.questionBudget, 2)
 
 // ---------------------------------------------------------------------------
 // 4. 单真菌/霉菌候选（powdery_mildew，visual_direct_only）
-// 低置信 visual-direct 必须按 3/2/1 问题预算进入可解释路径，不能越过问诊。
-// 0.55 (low) → question_package (3 题)；0.85 (high) → question_package (1 题)；
+// 模型候选必须达到 0.60 才能进入症状/方向路由；0.55 仅保留为 secondary 审计候选。
+// 0.85 (high) → question_package (1 题)；
 // 0.92 (very_likely) → direct_result。
 // ---------------------------------------------------------------------------
 const singleMoldLow = resolveDiagnosisModeRoute({
@@ -82,9 +82,11 @@ const singleMoldLow = resolveDiagnosisModeRoute({
   admittedEvidence: [],
   visualModeCandidates: [{ mode: 'powdery_mildew', confidence: 0.55 }]
 })
-assert.equal(singleMoldLow.nextAction, 'question_package')
-assert.equal(singleMoldLow.confidenceTier, 'low')
-assert.equal(singleMoldLow.questionBudget, 3)
+assert.equal(singleMoldLow.nextAction, 'uncertain')
+assert.deepEqual(singleMoldLow.associatedModes, [])
+assert.equal(singleMoldLow.secondary_visual_candidates.length, 1)
+assert.equal(singleMoldLow.secondary_visual_candidates[0].modeKey, 'powdery_mildew')
+assert.equal(singleMoldLow.secondary_visual_candidates[0].confidence, 0.55)
 
 const singleMoldHigh = resolveDiagnosisModeRoute({
   diagnosisProfile: 'full',
@@ -121,32 +123,48 @@ assert.equal(directConclusionRoute.directConclusion, true)
 assert.equal(directConclusionRoute.questionBudget, 0)
 
 // ---------------------------------------------------------------------------
-// 6. 题数分档：3/2/1/0 题
+// 6. 低置信候选不进入症状/方向路由
 // ---------------------------------------------------------------------------
-// <0.60 候选 + 无证据：full profile 下合法候选无论 confidence 高低都进入路由，
-// 走 low tier（最多 3 题），不回退 uncertain。
+// <0.60 候选 + 无证据：不得进入症状/方向路由，只保留为 secondary 审计候选。
 const lowTierRoute = resolveDiagnosisModeRoute({
   diagnosisProfile: 'full',
   admittedEvidence: [],
   visualModeCandidates: [{ mode: 'spider_mite', confidence: 0.55 }]
 })
-assert.notEqual(lowTierRoute.nextAction, 'uncertain')
-assert.equal(lowTierRoute.nextAction, 'question_package')
-assert.deepEqual(lowTierRoute.associatedModes, ['spider_mite'])
-assert.equal(lowTierRoute.confidenceTier, 'low')
-assert.equal(lowTierRoute.questionBudget, 3)
+assert.equal(lowTierRoute.nextAction, 'uncertain')
+assert.deepEqual(lowTierRoute.associatedModes, [])
+assert.equal(lowTierRoute.confidenceTier, '')
+assert.equal(lowTierRoute.questionBudget, 0)
 
-// yellow_leaf 0.55（非虫害合法候选）同样进入 low tier 问诊路径
+// yellow_leaf 0.55（非虫害候选）同样不能进入症状/方向路由
 const lowTierYellowRoute = resolveDiagnosisModeRoute({
   diagnosisProfile: 'full',
   admittedEvidence: [],
   visualModeCandidates: [{ mode: 'yellow_leaf', confidence: 0.55 }]
 })
-assert.notEqual(lowTierYellowRoute.nextAction, 'uncertain')
-assert.equal(lowTierYellowRoute.nextAction, 'question_package')
-assert.deepEqual(lowTierYellowRoute.associatedModes, ['yellow_leaf'])
-assert.equal(lowTierYellowRoute.confidenceTier, 'low')
-assert.equal(lowTierYellowRoute.questionBudget, 3)
+assert.equal(lowTierYellowRoute.nextAction, 'uncertain')
+assert.deepEqual(lowTierYellowRoute.associatedModes, [])
+assert.equal(lowTierYellowRoute.confidenceTier, '')
+assert.equal(lowTierYellowRoute.questionBudget, 0)
+
+// 本次线上回归：叶片黄化 0.8 + 盆土小黑飞 0.1，盆土无小黑飞证据。
+// 低置信虫害候选不能制造跨类冲突，也不能出现在方向选择中。
+const weakFungusGnatCrossFamilyRoute = resolveDiagnosisModeRoute({
+  diagnosisProfile: 'full',
+  admittedEvidence: [],
+  visualModeCandidates: [
+    { mode: 'yellow_leaf', confidence: 0.8, imageId: 'leaf' },
+    { mode: 'fungus_gnat', confidence: 0.1, imageId: 'soil', regionRef: 'soil_surface' }
+  ]
+})
+assert.equal(weakFungusGnatCrossFamilyRoute.nextAction, 'question_package')
+assert.deepEqual(weakFungusGnatCrossFamilyRoute.associatedModes, ['yellow_leaf'])
+assert.equal(
+  weakFungusGnatCrossFamilyRoute.directionChoices.some(
+    item => item.modeKey === 'fungus_gnat'
+  ),
+  false
+)
 
 // 无合法候选（空候选 + 无证据）：仍须 uncertain
 const noCandidateRoute = resolveDiagnosisModeRoute({
@@ -312,23 +330,23 @@ assert.equal(
   }),
   true
 )
-// full profile: yellow_leaf 0.55 合法候选可进入（<0.60 走 low tier，不回退 uncertain）
+// full profile: yellow_leaf 0.55 不能进入（低置信候选不得进入症状/方向路由）
 assert.equal(
   _test.isCandidateAdmissible('yellow_leaf', 'full', {
     normalizedModeCandidates: [{ modeKey: 'yellow_leaf', confidence: 0.55 }],
     candidateOnlyModeKeys: [],
     confirmationEvidenceItems: []
   }),
-  true
+  false
 )
-// full profile: spider_mite 0.55 虫害候选同样可进入（<0.60 走 low tier）
+// full profile: spider_mite 0.55 虫害候选同样不能进入（无支持证据）
 assert.equal(
   _test.isCandidateAdmissible('spider_mite', 'full', {
     normalizedModeCandidates: [{ modeKey: 'spider_mite', confidence: 0.55 }],
     candidateOnlyModeKeys: [],
     confirmationEvidenceItems: []
   }),
-  true
+  false
 )
 // pest profile: yellow_leaf 候选不进入（非虫害）
 assert.equal(

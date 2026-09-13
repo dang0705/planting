@@ -7,13 +7,20 @@ const handlerPath =
 const originalLoad = Module._load
 let runnerCalls = 0
 let runnerImplementation = null
+let questionStartRunnerImplementation = null
 let strictReadinessCalls = 0
 const operationOrder = []
 
 const publicResponse = {
   diagnosisSessionId: 'diag_stream_1',
   routePrimaryAction: 'question_package',
-  questionRequired: true
+  questionRequired: true,
+  visualAggregateSummary: {
+    effectiveImageCount: 1,
+    visualEvidenceItems: [
+      { symptomKey: 'leaf_spot', displayNameCn: '叶片斑点', supportImageCount: 1 }
+    ]
+  }
 }
 
 Module._load = function loadDiagnosisHandlerWithStubs(request, parent, isMain) {
@@ -80,6 +87,11 @@ Module._load = function loadDiagnosisHandlerWithStubs(request, parent, isMain) {
       }
     }
   }
+  if (request === '../app/diagnosis-question-start-runner') {
+    return {
+      runQuestionStartDiagnosis: async options => questionStartRunnerImplementation(options)
+    }
+  }
   return originalLoad.call(this, request, parent, isMain)
 }
 
@@ -111,11 +123,12 @@ function buildSseContext() {
 
 try {
   delete require.cache[handlerPath]
-  const { handleDiagnosisStart } = require(handlerPath)
+  const { handleDiagnosisStart, handleDiagnosisQuestionStart } = require(handlerPath)
   const lifecycleEvents = [
     'visual_session_created',
     'visual_input_ready',
     'visual_model_started',
+    'visual_model_prompt_ready',
     'visual_model_complete',
     'visual_decision_ready',
     'visual_persisted',
@@ -129,7 +142,31 @@ try {
         onVisualEvent(event, { phase: event })
       }
     }
-    return { response: publicResponse }
+    return {
+      response: publicResponse,
+      visualUsage: {
+        imageCount: 1,
+        inputTokens: 1200,
+        outputTokens: 80,
+        totalTokens: 1280,
+        cachedTokens: 900,
+        cacheCreationTokens: 30
+      },
+      aiDebug: [
+        {
+          imageIndex: 0,
+          imageId: 'img_leaf_1',
+          formattedPrompt: '不应透传的提示词',
+          rawTextOutput: '{"leaf_spot":true}',
+          rawStructuredOutput: { leaf_spot: true },
+          usage: { promptTokens: 1200, completionTokens: 80 },
+          promptCache: {
+            cacheMetadata: 'cache_control',
+            explicitCacheRequestAudit: { compliant: 1 }
+          }
+        }
+      ]
+    }
   }
 
   const stream = buildSseContext()
@@ -154,11 +191,87 @@ try {
   )
   assert.deepEqual(stream.events[0], {
     event: 'visual_preparing',
-    data: { event: 'visual_preparing' }
+    data: {
+      event: 'visual_preparing',
+      displayText: '正在准备检查照片。'
+    }
   })
+  assert.equal(
+    stream.events.find(item => item.event === 'visual_input_ready')?.data.displayText,
+    '已收到照片，正在仔细查看。'
+  )
   assert.deepEqual(stream.events.at(-1).data.data, publicResponse)
+  assert.deepEqual(stream.events.at(-1).data.diagnosisDebug, {
+    tokenUsage: {
+      imageCount: 1,
+      inputTokens: 1200,
+      outputTokens: 80,
+      totalTokens: 1280,
+      cachedTokens: 900,
+      cacheCreationTokens: 30
+    },
+    modelBusinessData: [
+      {
+        imageIndex: 0,
+        imageId: 'img_leaf_1',
+        rawTextOutput: '{"leaf_spot":true}',
+        rawStructuredOutput: { leaf_spot: true },
+        usage: { promptTokens: 1200, completionTokens: 80 },
+        promptCache: {
+          cacheMetadata: 'cache_control',
+          explicitCacheRequestAudit: { compliant: 1 }
+        }
+      }
+    ],
+    finalVisualEvidenceData: publicResponse.visualAggregateSummary
+  })
   assert.equal(stream.events.filter(item => ['done', 'error'].includes(item.event)).length, 1)
 
+  runnerImplementation = async () => ({
+    response: {
+      ...publicResponse,
+      visualUsage: {
+        input_tokens: 1200,
+        output_tokens: 80,
+        cache_creation_input_tokens: 30
+      },
+      modelBusinessData: [{ imageId: 'img_leaf_nested', rawTextOutput: '{"leaf_spot":true}' }]
+    },
+    visualUsage: null,
+    aiDebug: []
+  })
+  const fallbackStream = buildSseContext()
+  await handleDiagnosisStart({ headers: {} }, fallbackStream.context, {
+    streamVisualDecision: true
+  })
+  assert.deepEqual(fallbackStream.events.at(-1).data.diagnosisDebug.tokenUsage, {
+    input_tokens: 1200,
+    output_tokens: 80,
+    cache_creation_input_tokens: 30
+  })
+  assert.deepEqual(fallbackStream.events.at(-1).data.diagnosisDebug.modelBusinessData, [
+    {
+      imageIndex: null,
+      imageId: 'img_leaf_nested',
+      rawTextOutput: '{"leaf_spot":true}',
+      rawStructuredOutput: null,
+      usage: null,
+      promptCache: null
+    }
+  ])
+
+  runnerImplementation = async () => ({
+    response: publicResponse,
+    visualUsage: {
+      imageCount: 1,
+      inputTokens: 1200,
+      outputTokens: 80,
+      totalTokens: 1280,
+      cachedTokens: 900,
+      cacheCreationTokens: 30
+    },
+    aiDebug: []
+  })
   const nonStreamCallsBefore = runnerCalls
   const nonStreamResult = await handleDiagnosisStart({ headers: {} }, {}, {})
   assert.equal(runnerCalls, nonStreamCallsBefore + 1)
@@ -166,6 +279,26 @@ try {
     statusCode: 200,
     body: { code: 200, message: '诊断开始成功', data: publicResponse }
   })
+
+  questionStartRunnerImplementation = async () => ({
+    response: {
+      ...publicResponse,
+      questionRequired: true,
+      questions: [{ questionKey: 'q_yellow_leaf__air_environment', text: '空气环境' }],
+      questionPackage: { mode: 'yellow_leaf', answerSubmitMode: 'package' }
+    },
+    questionPackageContinuationToken: 'signed-package-token'
+  })
+  const questionStartResult = await handleDiagnosisQuestionStart(
+    { headers: {} },
+    {},
+    { symptomClassKey: 'yellowing_mode' }
+  )
+  assert.equal(
+    questionStartResult.body.data.questionPackageContinuationToken,
+    'signed-package-token',
+    '固定题包初始化必须把服务端签发的续接凭据传给客户端'
+  )
 
   const callsBeforeUnsupported = runnerCalls
   const unsupported = await handleDiagnosisStart(
@@ -216,7 +349,13 @@ try {
   })
   assert.equal(failedResult, undefined)
   assert.deepEqual(failedStream.events, [
-    { event: 'visual_preparing', data: { event: 'visual_preparing' } },
+    {
+      event: 'visual_preparing',
+      data: {
+        event: 'visual_preparing',
+        displayText: '正在准备检查照片。'
+      }
+    },
     {
       event: 'error',
       data: {

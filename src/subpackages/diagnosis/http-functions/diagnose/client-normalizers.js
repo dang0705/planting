@@ -1,3 +1,5 @@
+import { resolveDisplaySymptomCn } from '../../utils/diagnose-flow-shared.js'
+
 function normalizeHistoryList(data) {
   if (!data || typeof data !== 'object') {
     return {
@@ -66,17 +68,21 @@ function normalizeObservedEvidenceSet(observedEvidenceSet = []) {
       ).trim(),
       evidenceType: String(item?.evidenceType || item?.evidence_type || '').trim(),
       symptomKey: String(item?.symptomKey || item?.symptom_key || '').trim(),
-      symptomCn: String(
-        item?.symptomCn ||
+      symptomCn: resolveDisplaySymptomCn(
+        item?.displayNameCn ||
+          item?.display_name_cn ||
+          item?.symptomCn ||
           item?.symptom_cn ||
           item?.displayTextCn ||
           item?.display_text_cn ||
+          item?.label ||
+          item?.evidenceLabel ||
           item?.symptomKey ||
           item?.symptom_key ||
           item?.evidenceKey ||
           item?.evidence_key ||
           ''
-      ).trim(),
+      ),
       confidence: Number(item?.confidence || 0),
       sourceType: String(item?.sourceType || item?.source_type || '').trim(),
       currentStatus: String(item?.currentStatus || item?.current_status || '').trim() || 'active',

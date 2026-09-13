@@ -68,6 +68,12 @@ assert.match(
   'auth/user 只能接受由持久会话签发的统一用户票据，旧运行时票据不得作为业务身份'
 )
 assert.match(readSource, /runCloudbaseSql/u, 'auth/user 必须走单次内部参数化 SQL')
+assert.match(readSource, /runWithOneTransientRetry/u, 'auth/user SQL 读取必须处理瞬时连接失败')
+assert.match(
+  readSource,
+  /auth-user-http\/read transient SQL connection; retrying once/u,
+  'auth/user 重试日志必须明确标记为一次瞬时连接重试'
+)
 assert.match(
   readSource,
   /qa-performance-probe[\s\S]*auth-user-http\/auth\/user/u,

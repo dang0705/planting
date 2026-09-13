@@ -8,6 +8,7 @@ const {
 } = require('../app/question-package-response')
 const { OUTCOME_EFFECT_TYPE } = require('../constants/outcome-route')
 const { filterYellowingCareEnvironmentCandidateOutcomeKeys } = require('../utils/yellowing-question-policy')
+const { normalizeActionProfile } = require('./action-guidance-contract')
 
 const LIGHT_CONTEXT_QUESTION_KEY = 'q_observed_probe__leaf_yellowing__light_change_context'
 const LIGHT_HEALTH_ROUTE_BY_DIRECTION = {
@@ -49,7 +50,33 @@ const BUILTIN_LIGHT_ACTION_PROFILES = {
     threeDayActions: [],
     sevenDayObserve: ['观察新叶颜色和徒长是否缓解。'],
     avoidActions: ['不要突然暴晒。'],
-    retakeOrEscalate: []
+    retakeOrEscalate: [],
+    actionItems: [
+      {
+        id: 'act_low_light_builtin_move_01',
+        categoryId: 'environment_adjustment',
+        stage: 'today',
+        methodId: 'light_adjustment',
+        text: '把植株移到更稳定明亮散射光处',
+        sourceRefIds: ['umd-indoor-diagnose-2025', 'rhs-houseplant-leaf-damage']
+      },
+      {
+        id: 'act_low_light_builtin_observe_01',
+        categoryId: 'inspection_monitoring',
+        stage: 'seven_day',
+        methodId: 'monitoring',
+        text: '观察新叶颜色和徒长是否缓解。',
+        sourceRefIds: ['umd-indoor-diagnose-2025']
+      },
+      {
+        id: 'act_low_light_builtin_avoid_01',
+        categoryId: 'environment_adjustment',
+        stage: 'avoid',
+        methodId: 'avoid_stress',
+        text: '不要突然暴晒。',
+        sourceRefIds: ['rhs-houseplant-leaf-damage']
+      }
+    ]
   },
   action_sunburn_basic: {
     actionProfileKey: 'action_sunburn_basic',
@@ -57,7 +84,49 @@ const BUILTIN_LIGHT_ACTION_PROFILES = {
     threeDayActions: ['3 天内观察灼伤边界是否继续扩大'],
     sevenDayObserve: ['7 天内观察新叶是否恢复正常'],
     avoidActions: ['不要马上重肥或重药'],
-    retakeOrEscalate: ['若灼伤持续扩大，补拍叶面并说明最近的光照和离窗距离变化']
+    retakeOrEscalate: ['若灼伤持续扩大，补拍叶面并说明最近的光照和离窗距离变化'],
+    actionItems: [
+      {
+        id: 'act_sunburn_builtin_move_01',
+        categoryId: 'environment_adjustment',
+        stage: 'today',
+        methodId: 'light_adjustment',
+        text: '先移离正午直射光',
+        sourceRefIds: ['rhs-houseplant-leaf-damage', 'umd-indoor-diagnose-2025']
+      },
+      {
+        id: 'act_sunburn_builtin_airflow_01',
+        categoryId: 'environment_adjustment',
+        stage: 'today',
+        methodId: 'airflow_adjustment',
+        text: '保持通风稳定',
+        sourceRefIds: ['umd-indoor-diagnose-2025']
+      },
+      {
+        id: 'act_sunburn_builtin_observe_01',
+        categoryId: 'inspection_monitoring',
+        stage: 'three_day',
+        methodId: 'monitoring',
+        text: '3 天内观察灼伤边界是否继续扩大',
+        sourceRefIds: ['rhs-houseplant-leaf-damage']
+      },
+      {
+        id: 'act_sunburn_builtin_avoid_01',
+        categoryId: 'treatment_safety',
+        stage: 'avoid',
+        methodId: 'avoid_stress',
+        text: '不要马上重肥或重药',
+        sourceRefIds: ['rhs-houseplant-leaf-damage']
+      },
+      {
+        id: 'act_sunburn_builtin_retake_01',
+        categoryId: 'retake_escalation',
+        stage: 'seven_day',
+        methodId: 'retake',
+        text: '若灼伤持续扩大，补拍叶面并说明最近的光照和离窗距离变化',
+        sourceRefIds: ['rhs-houseplant-leaf-damage']
+      }
+    ]
   }
 }
 
@@ -204,19 +273,32 @@ function buildHydrationOutcomeEffects(environmentCareContext = null) {
   const summary = environmentCareContext.behaviorSummary10d
   const wetPressureLoad = Number(summary.wetPressureLoad ?? 0)
   const thoroughCount = Number(summary.thoroughWateringCount10d ?? 0)
+  const rootWateringEventCount = Number(summary.rootWateringEventCount10d ?? 0)
   const lastEffectiveDaysAgo = Number(summary.lastEffectiveRootWateredDaysAgo ?? 0)
+  // 黄叶诊断关注近期行为模式；重复高剂量浇水不能被提醒器的当前湿压衰减抵消。
+  const repeatedHighDoseWatering = thoroughCount >= 2
+  const frequentRootWatering =
+    Number.isFinite(rootWateringEventCount) && rootWateringEventCount >= 3
 
-  if (wetPressureLoad >= 0.7 && thoroughCount >= 2) {
+  if (repeatedHighDoseWatering || (wetPressureLoad >= 0.7 && frequentRootWatering)) {
     return [
       {
         questionKey: 'hydration_evidence',
-        optionKey: 'thorough_wet_pressure',
+        optionKey: repeatedHighDoseWatering
+          ? 'repeated_high_dose_watering'
+          : 'frequent_wet_pressure',
         outcomeKey: HYDRATION_OUTCOME_KEY,
         routeKey: HYDRATION_ROUTE_KEY,
         effectType: OUTCOME_EFFECT_TYPE.SUPPORT,
         effectStrength: 2.0,
-        evidenceDimension: 'hydration_pressure',
-        evidence: { wetPressureLoad, thoroughWateringCount10d: thoroughCount }
+        evidenceDimension: repeatedHighDoseWatering
+          ? 'hydration_pattern'
+          : 'hydration_pressure',
+        evidence: {
+          wetPressureLoad,
+          thoroughWateringCount10d: thoroughCount,
+          rootWateringEventCount10d: rootWateringEventCount
+        }
       }
     ]
   }
@@ -230,7 +312,11 @@ function buildHydrationOutcomeEffects(environmentCareContext = null) {
         effectType: OUTCOME_EFFECT_TYPE.SUPPORT,
         effectStrength: 1.5,
         evidenceDimension: 'hydration_pressure',
-        evidence: { wetPressureLoad, thoroughWateringCount10d: thoroughCount }
+        evidence: {
+          wetPressureLoad,
+          thoroughWateringCount10d: thoroughCount,
+          rootWateringEventCount10d: rootWateringEventCount
+        }
       }
     ]
   }
@@ -346,6 +432,7 @@ function mergeBuiltinLightActionProfiles(actionProfileKeys = [], actionProfiles 
 }
 
 function buildVisibleOutcome(outcome = {}, actionProfile = null) {
+  const normalizedActionProfile = normalizeActionProfile(actionProfile)
   return {
     outcomeKey: normalizeText(outcome?.outcomeKey),
     problemKey: normalizeText(outcome?.sourceProblemKey || outcome?.outcomeKey),
@@ -364,8 +451,15 @@ function buildVisibleOutcome(outcome = {}, actionProfile = null) {
         actionProfile?.action_profile_key ||
         ''
     ),
-    actionAdviceItems: Array.isArray(actionProfile?.todayActions) ? actionProfile.todayActions : [],
-    avoidAdviceItems: Array.isArray(actionProfile?.avoidActions) ? actionProfile.avoidActions : []
+    actionAdviceItems: normalizedActionProfile.todayActions.concat(
+      normalizedActionProfile.threeDayActions,
+      normalizedActionProfile.sevenDayObserve
+    ),
+    avoidAdviceItems: normalizedActionProfile.avoidActions.concat(
+      normalizedActionProfile.retakeOrEscalate
+    ),
+    actionItems: normalizedActionProfile.actionItems,
+    avoidActionItems: normalizedActionProfile.actionItems.filter(item => item.stage === 'avoid')
   }
 }
 
@@ -463,6 +557,15 @@ async function resolveYellowLeafOutcomeResult({
   const avoidActions = Array.from(
     new Set(visibleOutcomes.flatMap(item => item.avoidAdviceItems || []))
   )
+  const actionItems = Array.from(
+    new Map(
+      visibleOutcomes
+        .flatMap(item => item.actionItems || [])
+        .filter(item => item?.id)
+        .map(item => [item.id, item])
+    ).values()
+  )
+  const avoidActionItems = actionItems.filter(item => item.stage === 'avoid')
   const hasVisibleOutcomes = visibleOutcomes.length > 0
   const outcomeType = hasVisibleOutcomes ? 'problematic' : 'uncertain'
   const summaryText = hasVisibleOutcomes
@@ -506,6 +609,8 @@ async function resolveYellowLeafOutcomeResult({
         sevenDayObserve: hasVisibleOutcomes ? ['连续观察 3-5 天，记录黄叶是否继续扩大。'] : [],
         avoidActions,
         retakeOrEscalate: [],
+        actionItems,
+        avoidActionItems,
         conflictDetected: false
       }
     },
@@ -521,6 +626,8 @@ async function resolveYellowLeafOutcomeResult({
       sevenDayObserve: hasVisibleOutcomes ? ['连续观察 3-5 天，记录黄叶是否继续扩大。'] : [],
       avoidActions,
       retakeOrEscalate: [],
+      actionItems,
+      avoidActionItems,
       conflictDetected: false
     },
     visibleOutcomes,

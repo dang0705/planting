@@ -18,6 +18,8 @@ function buildCacheFirstVisualPrompt({
   evidenceDirectoryText = '',
   dynamicTaskText = ''
 } = {}) {
+  // 固定前缀格式的缓存契约（严禁自行变更）：除非先征得用户明确同意，以下段名、顺序、
+  // 换行分隔和 `[Dynamic Task]` 分界均不得修改。百炼以这段稳定前缀建缓存，改动会增加输入 token。
   const staticPrefix = [
     String(taskLine || '').trim(),
     '[Static Schema]',

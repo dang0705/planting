@@ -376,7 +376,7 @@ const componentSourceFiles = [
   './src/components/care-behavior-timeline/popover-position.js',
   './src/components/care-behavior-timeline/useCareBehaviorTimeline.js',
   './src/components/care-behavior-timeline/weather.js',
-  './src/components/diagnose-popup/DiagnoseResultStage.vue'
+  './src/subpackages/diagnosis/question-package/QuestionPackageResult.vue'
 ]
 const componentSource = componentSourceFiles.map(file => readFileSync(file, 'utf8')).join('\n')
 const questionPageSource = readFileSync('./src/subpackages/diagnosis/question-package.vue', 'utf8')

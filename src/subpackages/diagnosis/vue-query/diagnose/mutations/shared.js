@@ -238,13 +238,18 @@ export function validateDiagnoseInput({
   }
 }
 
-export function runDiagnoseSuccessCallbacks(normalizedResult, { onText, onFinish } = {}) {
+export function runDiagnoseSuccessCallbacks(
+  normalizedResult,
+  { onText, onFinish, updateTextOnFinish = true } = {}
+) {
   const summary =
     normalizedResult?.finalResult?.summary ||
     normalizedResult?.summaryCard?.subtitle ||
     normalizedResult?.summaryCard?.title ||
     '诊断已更新'
-  onText?.(summary, summary)
+  if (updateTextOnFinish) {
+    onText?.(summary, summary)
+  }
   onFinish?.(normalizedResult)
   return normalizedResult
 }

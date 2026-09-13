@@ -5,6 +5,7 @@ const { sqlInList, clamp01 } = require('./sql')
 const { table } = require('../db/table-helper')
 const { resolveSchema } = require('../db/schema-resolver')
 const { OUTCOME_EFFECT_TYPE } = require('../constants/outcome-route')
+const { normalizeActionProfile } = require('../domain/action-guidance-contract')
 
 const STATIC_REPOSITORY_CACHE_TTL_MS = Math.max(
   0,
@@ -237,7 +238,7 @@ function mapAnswerEffectRow(row = {}) {
 }
 
 function mapActionProfileRow(row = {}) {
-  return {
+  return normalizeActionProfile({
     actionProfileKey: row.action_profile_key || '',
     titleCn: row.title_cn || '',
     todayActions: normalizeStringArray(row.today_actions_json),
@@ -245,10 +246,11 @@ function mapActionProfileRow(row = {}) {
     sevenDayObserve: normalizeStringArray(row.seven_day_observe_json),
     avoidActions: normalizeStringArray(row.avoid_actions_json),
     retakeOrEscalate: normalizeStringArray(row.retake_or_escalate_json),
+    actionItems: row.action_items_json,
     plantBaselineMergePolicy: row.plant_baseline_merge_policy || '',
     reviewStatus: row.review_status || '',
     dataStatus: row.data_status || ''
-  }
+  })
 }
 
 function mapDiagnosisOutcomeRow(row = {}) {
@@ -524,6 +526,7 @@ async function preloadOutcomeRouteRepositoryCache() {
             seven_day_observe_json,
             avoid_actions_json,
             retake_or_escalate_json,
+            action_items_json,
             plant_baseline_merge_policy,
             review_status,
             data_status
@@ -765,6 +768,7 @@ async function preloadDiagnosisAnswerPackageCache(questionKeys = [], additionalO
               profiles.seven_day_observe_json AS joined_seven_day_observe_json,
               profiles.avoid_actions_json AS joined_avoid_actions_json,
               profiles.retake_or_escalate_json AS joined_retake_or_escalate_json,
+              profiles.action_items_json AS joined_action_items_json,
               profiles.plant_baseline_merge_policy AS joined_plant_baseline_merge_policy,
               profiles.review_status AS joined_review_status,
               profiles.data_status AS joined_data_status
@@ -813,6 +817,7 @@ async function preloadDiagnosisAnswerPackageCache(questionKeys = [], additionalO
             seven_day_observe_json: row.joined_seven_day_observe_json,
             avoid_actions_json: row.joined_avoid_actions_json,
             retake_or_escalate_json: row.joined_retake_or_escalate_json,
+            action_items_json: row.joined_action_items_json,
             plant_baseline_merge_policy: row.joined_plant_baseline_merge_policy,
             review_status: row.joined_review_status,
             data_status: row.joined_data_status
@@ -1130,6 +1135,7 @@ async function getOutcomeActionProfiles(actionProfileKeys = []) {
         seven_day_observe_json,
         avoid_actions_json,
         retake_or_escalate_json,
+        action_items_json,
         plant_baseline_merge_policy,
         review_status,
         data_status

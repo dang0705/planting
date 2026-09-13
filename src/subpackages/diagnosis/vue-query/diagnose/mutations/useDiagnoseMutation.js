@@ -65,7 +65,11 @@ export function useDiagnoseMutation() {
               })
             : await requestDiagnosisStart(requestPayload)
 
-        return runDiagnoseSuccessCallbacks(normalizedResult, { onText, onFinish })
+        return runDiagnoseSuccessCallbacks(normalizedResult, {
+          onText,
+          onFinish,
+          updateTextOnFinish: false
+        })
       } catch (error) {
         console.error('同步诊断失败:', error)
         return handleDiagnoseError(error, { onError })

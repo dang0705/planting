@@ -10,7 +10,7 @@ const cloudUploaderSource = fs.readFileSync(
   'utf8'
 )
 const helperStart = cloudUploaderSource.indexOf('const QWEN_VISUAL_PATCH_SIZE')
-const helperEnd = cloudUploaderSource.indexOf('function guessMimeType')
+const helperEnd = cloudUploaderSource.indexOf('export function useCloudImageUploader')
 assert.ok(helperStart >= 0 && helperEnd > helperStart)
 const helperSource = cloudUploaderSource.slice(helperStart, helperEnd).replaceAll('export ', '')
 const { resolveImagePixelBudget, prepareImageForPixelBudget } = new Function(

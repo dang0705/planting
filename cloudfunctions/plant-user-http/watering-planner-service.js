@@ -23,6 +23,7 @@ const {
   resolveShadowModeFromEnv
 } = require('/opt/utils/transpiration')
 const { resolveAirEnvironmentEvidence } = require('/opt/utils/air-environment-evidence')
+const { applySoilEvidence, toPublicSoilEvidence } = require('./watering-soil-evidence-service')
 
 /**
  * 从前端天气日数据（environmentWeatherWindow.historicalDays）构建 planner 所需的摘要。
@@ -157,7 +158,9 @@ async function computeAdhocPlanner({
   timezone = 'Asia/Shanghai',
   lightEnvironment = null,
   airEnvironmentOverride = null,
-  wateringEvents = []
+  wateringEvents = [],
+  soilEvidenceId = '',
+  manualSoilConfirmed = false
 } = {}) {
   if (!catalogPlantId) {
     return { error: '缺少植物种类ID', statusCode: 400 }
@@ -230,34 +233,45 @@ async function computeAdhocPlanner({
 
   // 无历史时 nextWaterDate 保持 null；有明确传入的 wateringEvents 时才允许推导日期。
   const hasWateringHistory = resolvedWateringEvents.length > 0
+  const baseData = {
+    amountRangeMl: plan.amountRangeMl,
+    nextWaterDate: hasWateringHistory ? plan.nextWaterDate : null,
+    nextWaterWindow: hasWateringHistory ? plan.nextWaterWindow : null,
+    nextWaterReason: hasWateringHistory
+      ? plan.nextWaterReason
+      : '尚无上次浇水记录，暂不推导下次浇水日期；请先检查盆土。',
+    wateringContext: plan.wateringContext,
+    action: plan.action,
+    stopCondition: plan.stopCondition,
+    confidenceLevel: plan.confidenceLevel,
+    reasonCodes: plan.reasonCodes,
+    soilCheck: plan.soilCheck,
+    transpirationIntervalFactor: plan.transpirationIntervalFactor,
+    seasonalIntervalFactor: plan.seasonalIntervalFactor,
+    airEnvironmentAudit: airEnvironmentEvidence
+      ? {
+          evidence: airEnvironmentEvidence,
+          intervalFactor: transpiration.intervalFactor,
+          airFactor: transpiration.airFactor,
+          computedFactor: transpiration.computedFactor,
+          shadow: transpiration.shadow
+        }
+      : null,
+    todayWeatherSource,
+    todayWeatherReason
+  }
+  const { plan: fusedPlan } = await applySoilEvidence({
+    openid,
+    evidenceId: soilEvidenceId,
+    manualConfirmed: manualSoilConfirmed,
+    plan: baseData
+  })
+
   return {
     statusCode: 200,
     data: {
-      amountRangeMl: plan.amountRangeMl,
-      nextWaterDate: hasWateringHistory ? plan.nextWaterDate : null,
-      nextWaterWindow: hasWateringHistory ? plan.nextWaterWindow : null,
-      nextWaterReason: hasWateringHistory
-        ? plan.nextWaterReason
-        : '尚无上次浇水记录，暂不推导下次浇水日期；请先检查盆土。',
-      wateringContext: plan.wateringContext,
-      action: plan.action,
-      stopCondition: plan.stopCondition,
-      confidenceLevel: plan.confidenceLevel,
-      reasonCodes: plan.reasonCodes,
-      soilCheck: plan.soilCheck,
-      transpirationIntervalFactor: plan.transpirationIntervalFactor,
-      seasonalIntervalFactor: plan.seasonalIntervalFactor,
-      airEnvironmentAudit: airEnvironmentEvidence
-        ? {
-            evidence: airEnvironmentEvidence,
-            intervalFactor: transpiration.intervalFactor,
-            airFactor: transpiration.airFactor,
-            computedFactor: transpiration.computedFactor,
-            shadow: transpiration.shadow
-          }
-        : null,
-      todayWeatherSource,
-      todayWeatherReason
+      ...fusedPlan,
+      visualSoilEvidence: toPublicSoilEvidence(fusedPlan.visualSoilEvidence)
     },
     error: null
   }

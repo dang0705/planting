@@ -1,9 +1,41 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
+import { ref } from 'vue'
 
-import { buildOutcomeAdviceGroups } from '../../../../../../src/subpackages/diagnosis/question-package/result-view.js'
+import {
+  buildOutcomeAdviceGroups,
+  normalizeDisplayEvidenceItem,
+  useQuestionPackageResultView
+} from '../../../../../../src/subpackages/diagnosis/question-package/result-view.js'
 
 const getActionAdvice = outcome => outcome.actionAdviceItems
+
+assert.deepEqual(
+  normalizeDisplayEvidenceItem(
+    { symptomKey: 'aphids_visible', displayNameCn: 'aphids_visible' },
+    0,
+    'visual'
+  ),
+  null
+)
+assert.deepEqual(
+  normalizeDisplayEvidenceItem(
+    { symptomKey: 'aphids_visible', displayNameCn: '看到蚜虫', supportImageCount: 2 },
+    0,
+    'visual'
+  ),
+  { key: 'aphids_visible', label: '看到蚜虫', supportImageCount: 2 }
+)
+
+const internalOnlyResultView = useQuestionPackageResultView({
+  result: ref({
+    finalResult: { problemKey: 'aphids_visible', outcomeKey: 'pest_aphids' },
+    visibleOutcomes: [{ problemKey: 'aphids_visible', outcomeKey: 'pest_aphids' }]
+  }),
+  payload: ref({})
+})
+assert.equal(internalOnlyResultView.outcomeDisplayTitle.value, '诊断已完成')
+assert.deepEqual(internalOnlyResultView.allOutcomeDisplays.value, [])
 
 const singleOutcomeGroups = buildOutcomeAdviceGroups({
   outcomeSources: [
@@ -65,7 +97,10 @@ assert.equal(sharedProfileGroups.length, 1)
 assert.equal(sharedProfileGroups[0].key, 'action_nutrient_support_basic')
 assert.equal(sharedProfileGroups[0].displayLabel, '新叶脉间黄化、长期营养不足')
 
-const pageSource = readFileSync('src/subpackages/diagnosis/question-package.vue', 'utf8')
-assert.equal((pageSource.match(/v-if="group\.showOutcomeLabel"/g) || []).length, 4)
+const resultComponentSource = readFileSync(
+  'src/subpackages/diagnosis/question-package/QuestionPackageResult.vue',
+  'utf8'
+)
+assert.equal((resultComponentSource.match(/v-if="group\.showOutcomeLabel"/g) || []).length, 2)
 
 console.log('question package result view tests passed')

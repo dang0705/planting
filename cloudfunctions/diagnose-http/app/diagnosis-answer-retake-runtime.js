@@ -344,7 +344,8 @@ function resolveSpecificPestRoundResult({
   answerRound = 1,
   round = 2,
   refreshedSessionState = {},
-  sessionState = {}
+  sessionState = {},
+  actionProfilesByMode = new Map()
 } = {}) {
   const effectiveQuestionPackage =
     questionPackageSnapshot?.mode === 'specific_pest_visual'
@@ -389,7 +390,8 @@ function resolveSpecificPestRoundResult({
     answers: routeRuntimeAnswers,
     questionPackage: effectiveQuestionPackage,
     plantContext: refreshedSessionState.plantContext || sessionState.plantContext || {},
-    visualAggregateResult
+    visualAggregateResult,
+    actionProfilesByMode
   })
 }
 

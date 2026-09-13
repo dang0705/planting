@@ -148,12 +148,16 @@ const PROVIDER_REGISTRY = Object.freeze({
       model: 'LLM_ALIYUN_BAILIAN_MODEL'
     }),
     capabilities: Object.freeze({
-      imageMaxPixels: false,
+      // 百炼 OpenAI 兼容接口支持把 max_pixels 放在每个 image_url 内容块的根节点。
+      // 此上限与端上压缩共同兜底，且不改变模型图片必须为 HTTPS URL 的传输契约。
+      imageMaxPixels: true,
       sessionAffinity: false,
       cache: Object.freeze({
-        cacheControl: false,
+        // qwen3.5-flash 的 OpenAI 兼容接口支持在稳定 system 前缀上建立显式缓存。
+        // 这里若设为 false，适配器会主动剥离 cache_control，导致固定前缀无法建立缓存。
+        cacheControl: true,
         promptCacheKey: false,
-        strategyType: 'static_prefix_without_server_cache'
+        strategyType: 'explicit_ephemeral_static_prefix'
       }),
       // Qwen3.5 在百炼默认开启思考；诊断结构化抽取必须显式关闭，避免把
       // 原本的快速视觉调用变成长思考请求。
@@ -183,6 +187,10 @@ function resolveOpenAiVisionProvider(value = '') {
 
 function isOpenAiVisionProvider(value = '') {
   return Boolean(getOpenAiVisionProvider(value))
+}
+
+function supportsExplicitPromptCache(value = '') {
+  return Boolean(getOpenAiVisionProvider(value)?.capabilities?.cache?.cacheControl)
 }
 
 function readFirstEnvironmentValue(environment = {}, names = []) {
@@ -246,6 +254,88 @@ function staticPrefixHash(messages = []) {
   return text(staticText)
     ? crypto.createHash('sha1').update(String(staticText), 'utf8').digest('hex')
     : ''
+}
+
+function explicitCacheContentBlocks(messages = []) {
+  return (Array.isArray(messages) ? messages : []).flatMap(message =>
+    (Array.isArray(message?.content) ? message.content : []).map((content, contentIndex) => ({
+      role: message?.role || '',
+      content,
+      contentIndex
+    }))
+  )
+}
+
+/**
+ * 百炼显式缓存请求契约：Qwen3.5 只支持消息级缓存截断点。
+ * 这里仅审计不可泄露的结构、哈希和长度；固定前缀原文仍由既有审计日志保留。
+ */
+function buildAliyunExplicitCacheRequestAudit({ model = '', messages = [] } = {}) {
+  const list = Array.isArray(messages) ? messages : []
+  const systemMessages = list.filter(message => message?.role === 'system')
+  const userMessage = list.find(message => message?.role === 'user') || null
+  const cacheBlocks = explicitCacheContentBlocks(list).filter(
+    item => item?.content?.cache_control?.type === 'ephemeral'
+  )
+  const cacheBlock = cacheBlocks[0]?.content || null
+  const staticText = text(cacheBlock?.text)
+  const userContent = Array.isArray(userMessage?.content) ? userMessage.content : []
+  const imageContent = userContent.filter(item => item?.type === 'image_url')
+  const firstImageIndex = userContent.findIndex(item => item?.type === 'image_url')
+  const firstUserText = userContent.findIndex(item => item?.type === 'text')
+  const issues = []
+
+  if (systemMessages.length !== 1) {
+    issues.push('system_message_count_must_be_1')
+  }
+  if (!Array.isArray(systemMessages[0]?.content)) {
+    issues.push('system_content_must_be_array')
+  }
+  if (cacheBlocks.length !== 1) {
+    issues.push('cache_control_marker_count_must_be_1')
+  }
+  if (!staticText) {
+    issues.push('cache_control_text_must_not_be_empty')
+  }
+  if (!userMessage) {
+    issues.push('dynamic_task_user_message_required')
+  }
+  if (firstImageIndex >= 0 && (firstUserText < 0 || firstUserText > firstImageIndex)) {
+    issues.push('dynamic_text_must_precede_images')
+  }
+  if (imageContent.some(item => !/^https?:\/\//i.test(String(item?.image_url?.url || '').trim()))) {
+    issues.push('image_url_must_use_http_or_https')
+  }
+
+  return {
+    contractVersion: 'aliyun_bailian_explicit_cache_v1',
+    providerId: ALIYUN_BAILIAN_PROVIDER,
+    modelId: text(model),
+    cacheMode: 'explicit',
+    qwen35MessageLevelCutoff: Number(String(model).toLowerCase().includes('qwen3.5')),
+    systemMessageCount: systemMessages.length,
+    systemContentIsArray: Number(Array.isArray(systemMessages[0]?.content)),
+    cacheControlMarkerCount: cacheBlocks.length,
+    cacheControlType: text(cacheBlock?.cache_control?.type),
+    staticPrefixHash: staticPrefixHash(list),
+    staticPrefixLength: staticText.length,
+    staticPrefixUtf8Bytes: Buffer.byteLength(staticText, 'utf8'),
+    dynamicTextPrecedesImages: Number(
+      firstImageIndex < 0 || (firstUserText >= 0 && firstUserText < firstImageIndex)
+    ),
+    imageUrlCount: imageContent.length,
+    imageUrlTransport: imageContent.length ? 'url' : 'none',
+    compliant: Number(issues.length === 0),
+    issues
+  }
+}
+
+function assertAliyunExplicitCacheRequestContract({ model = '', messages = [] } = {}) {
+  const audit = buildAliyunExplicitCacheRequestAudit({ model, messages })
+  if (!audit.compliant) {
+    throw new Error(`aliyun_explicit_cache_contract_invalid:${audit.issues.join(',')}`)
+  }
+  return audit
 }
 
 function buildTokenHubPromptCacheKey({
@@ -319,6 +409,14 @@ function adaptOpenAiVisionMessages({
           ? 'cache_control'
           : 'none',
       cacheKeyConfigured: Boolean(cacheKey),
+      ...(provider.id === ALIYUN_BAILIAN_PROVIDER
+        ? {
+            explicitCacheRequestAudit: assertAliyunExplicitCacheRequestContract({
+              model,
+              messages: adaptedMessages
+            })
+          }
+        : {}),
       ...(cacheKey ? { cacheKeyFingerprint: promptCacheKeyFingerprint(cacheKey) } : {})
     }
   }
@@ -336,6 +434,8 @@ module.exports = {
   TOKENHUB_CHAT_COMPLETIONS_ENDPOINT,
   TOKENHUB_PROVIDER,
   adaptOpenAiVisionMessages,
+  assertAliyunExplicitCacheRequestContract,
+  buildAliyunExplicitCacheRequestAudit,
   buildTokenHubPromptCacheKey,
   buildTokenHubSessionAffinityId,
   getOpenAiVisionProvider,
@@ -344,5 +444,6 @@ module.exports = {
   resolveOpenAiVisionProvider,
   resolveProviderCredential,
   resolveProviderRuntimeConfig,
-  staticPrefixHash
+  staticPrefixHash,
+  supportsExplicitPromptCache
 }

@@ -4,6 +4,7 @@ const { models } = require('/opt/utils/cloudbase')
 const {
   llm: {
     service: configuredPrimaryService = 'hunyuan',
+    providerId: configuredPrimaryProviderId = configuredPrimaryService,
     model: configuredPrimaryModel = '',
     modelProfile: configuredPrimaryModelProfile = '',
     modelReasoningMode: configuredPrimaryModelReasoningMode = '',
@@ -12,6 +13,10 @@ const {
   } = {}
 } = require('../configs')
 const { getVisualAdapter } = require('./visual-adapters')
+const { supportsExplicitPromptCache } = require('../configs/provider-registry')
+const { settleVisualRequestsWithPromptCacheWarmup } = require('../utils/visual-prompt-cache-warmup')
+
+const MINIMUM_CACHE_WARMUP_IMAGE_COUNT = 2
 const {
   buildRuntimeId,
   stringifyJson,
@@ -396,6 +401,17 @@ function buildVisualUsageSummary(results = []) {
         cachedTokens: Number(usage.promptCacheHitTokens || 0),
         cacheCreationTokens: Number(usage.promptCacheCreationInputTokens || 0),
         cacheMissTokens: Number(usage.promptCacheMissTokens || 0),
+        cacheMetricAvailable: Number(usage.promptCacheMetricAvailable || 0),
+        cacheEvidenceStatus:
+          Number(usage.promptCacheMetricAvailable || 0) !== 1
+            ? 'unreported'
+            : Number(usage.promptCacheHitTokens || 0) > 0
+              ? 'hit'
+              : Number(usage.promptCacheCreationInputTokens || 0) > 0
+                ? 'created'
+                : Number(usage.promptCacheMissTokens || 0) > 0
+                  ? 'miss'
+                  : 'no_cache_activity',
         providerPromptTextTokens:
           usage.providerPromptTextTokens === null || usage.providerPromptTextTokens === undefined
             ? null
@@ -416,6 +432,10 @@ function buildVisualUsageSummary(results = []) {
     cachedTokens: items.reduce((sum, item) => sum + item.cachedTokens, 0),
     cacheCreationTokens: items.reduce((sum, item) => sum + item.cacheCreationTokens, 0),
     cacheMissTokens: items.reduce((sum, item) => sum + item.cacheMissTokens, 0),
+    cacheMetricAvailable: Number(
+      items.length > 0 && items.every(item => item.cacheMetricAvailable === 1)
+    ),
+    cacheMetricMissingCount: items.filter(item => item.cacheMetricAvailable !== 1).length,
     reasoningTokens: items.every(item => item.reasoningTokens === null)
       ? null
       : items.reduce((sum, item) => sum + Number(item.reasoningTokens || 0), 0),
@@ -439,6 +459,7 @@ function buildVisualAiDebug(results = []) {
       rawTextOutput: String(result?.rawTextOutput || ''),
       rawStructuredOutput: result?.rawStructuredOutput || null,
       usage: result?.llmUsage || null,
+      promptCache: result?.llmPromptAudit?.promptCacheStrategy || null,
       adapterMeta: result?.adapterMeta || null
     }))
     .filter(item => item.formattedPrompt || item.rawTextOutput || item.rawStructuredOutput)
@@ -549,6 +570,7 @@ function buildImageRuntimeInput(input = {}, index = 0) {
 
   return {
     imageRef,
+    fileId: normalizeText(input.fileId || input.file_id || '', ''),
     imageId: buildRuntimeId(`visimg${index + 1}`),
     orderIndex: Number.isFinite(normalizedOrderIndex) ? normalizedOrderIndex : index,
     inputSlotOrder: Number.isFinite(normalizedInputSlotOrder) ? normalizedInputSlotOrder : index,
@@ -789,7 +811,7 @@ function buildVisualDecisionStreamSummary(aggregateResult = {}) {
 
 async function analyzeSingleImage(
   imageRuntimeInput,
-  { visualCallBatchId, sessionId = '', onText, llmOptions = {} } = {}
+  { visualCallBatchId, sessionId = '', imageIndex = 0, onText, onVisualEvent, llmOptions = {} } = {}
 ) {
   const startedAt = Date.now()
   const primaryStartedAt = Date.now()
@@ -797,6 +819,19 @@ async function analyzeSingleImage(
     visualCallBatchId,
     sessionId,
     onText,
+    onPromptReady: promptAudit =>
+      emitVisualStreamEvent(onVisualEvent, 'visual_model_prompt_ready', {
+        sessionId,
+        visualCallBatchId,
+        imageIndex,
+        imageId: imageRuntimeInput?.imageId || null,
+        promptText: String(promptAudit?.promptText || ''),
+        promptLength: Number(promptAudit?.promptLength || 0),
+        promptCacheStrategy: promptAudit?.promptCacheStrategy || null,
+        promptDebugMeta: promptAudit?.promptDebugMeta || null,
+        model: promptAudit?.model || null,
+        modelIdentity: promptAudit?.modelIdentity || null
+      }),
     adapterMetaOverride: primaryAdapterMetaOverride,
     llmOptions
   })
@@ -886,7 +921,8 @@ function buildAggregatedSymptomCandidates(successfulResults = []) {
   for (const result of successfulResults) {
     const normalizedOrgan = normalizeOrgan(
       Number(result?.normalizedResult?.organ_conflict_flag || 0)
-        ? result?.normalizedResult?.model_detected_organ || result?.normalizedResult?.normalized_organ
+        ? result?.normalizedResult?.model_detected_organ ||
+            result?.normalizedResult?.normalized_organ
         : result?.normalizedResult?.normalized_organ,
       'unknown'
     )
@@ -976,9 +1012,7 @@ function buildAggregatedSymptomCandidates(successfulResults = []) {
         normalizedOrgan,
         candidateCaptureRegion
       ].join('::')
-      if (
-        !current.supporting_sources.some(item => item.source_key === supportSourceKey)
-      ) {
+      if (!current.supporting_sources.some(item => item.source_key === supportSourceKey)) {
         current.supporting_sources.push({
           source_key: supportSourceKey,
           image_id: imageId,
@@ -1440,7 +1474,9 @@ async function buildAggregateResult({
     sources: successfulResults.map(item => ({
       image_id: normalizeText(item?.imageId || ''),
       visual_normalized_image_result_id: normalizeText(
-        item?.visualNormalizedImageResultId || item?.normalizedResult?.visual_normalized_image_result_id || ''
+        item?.visualNormalizedImageResultId ||
+          item?.normalizedResult?.visual_normalized_image_result_id ||
+          ''
       ),
       input_slot_type: normalizeOrgan(item?.inputSlotType, 'unknown'),
       model_organ: normalizeOrgan(item?.normalizedResult?.model_detected_organ, 'unknown'),
@@ -1667,13 +1703,13 @@ async function persistVisualBatchArtifacts({
     await models.$runSQL(
       `
         INSERT INTO visual_raw_image_records (
-          visual_raw_image_record_id, _openid, session_id, visual_call_batch_id, image_ref,
+          visual_raw_image_record_id, _openid, session_id, visual_call_batch_id, image_ref, file_id,
           input_slot_type, input_slot_order, input_slot_label, user_declared_organ_type,
           user_declared_organ_confidence, source_model_provider, source_model_name, model_name,
           model_version, prompt_version, raw_text_output, raw_structured_output, call_status,
           latency_ms, error_code, created_at
         ) VALUES (
-          {{visualRawImageRecordId}}, {{openid}}, {{sessionId}}, {{visualCallBatchId}}, {{imageRef}},
+          {{visualRawImageRecordId}}, {{openid}}, {{sessionId}}, {{visualCallBatchId}}, {{imageRef}}, {{fileId}},
           {{inputSlotType}}, {{inputSlotOrder}}, {{inputSlotLabel}}, {{userDeclaredOrganType}},
           CASE
             WHEN {{userDeclaredOrganConfidenceHasValue}} = 1 THEN {{userDeclaredOrganConfidenceValue}}
@@ -1693,6 +1729,7 @@ async function persistVisualBatchArtifacts({
           sessionId,
           visualCallBatchId,
           imageRef: normalizePersistedImageRef(input.imageRef),
+          fileId: normalizeText(input.fileId || '', ''),
           inputSlotType: input.inputSlotType,
           inputSlotOrder: Number.isFinite(Number(input.inputSlotOrder ?? input.orderIndex ?? 0))
             ? Number(input.inputSlotOrder ?? input.orderIndex ?? 0)
@@ -1974,17 +2011,24 @@ async function analyzeAndPersistVisualBatch({
   })
 
   const modelFanoutStartedAt = Date.now()
+  const warmupPromptCache =
+    normalizedInputs.length >= MINIMUM_CACHE_WARMUP_IMAGE_COUNT &&
+    supportsExplicitPromptCache(configuredPrimaryProviderId)
   emitVisualStreamEvent(onVisualEvent, 'visual_model_started', {
     sessionId,
     visualCallBatchId,
-    imageCount: normalizedInputs.length
+    imageCount: normalizedInputs.length,
+    promptCacheWarmup: Number(warmupPromptCache)
   })
   let firstContentEventSent = false
-  const settledResults = await Promise.allSettled(
-    normalizedInputs.map((imageRuntimeInput, index) =>
+  const settledResults = await settleVisualRequestsWithPromptCacheWarmup(normalizedInputs, {
+    warmupFirst: warmupPromptCache,
+    execute: (imageRuntimeInput, index) =>
       analyzeSingleImage(imageRuntimeInput, {
         visualCallBatchId,
         sessionId,
+        imageIndex: index,
+        onVisualEvent,
         onText:
           normalizedInputs.length === 1 && index === 0
             ? (chunk, fullText) => {
@@ -2003,17 +2047,8 @@ async function analyzeAndPersistVisualBatch({
             : undefined,
         llmOptions
       })
-    )
-  )
-  const modelFanoutMs = Math.max(0, Date.now() - modelFanoutStartedAt)
-  emitVisualStreamEvent(onVisualEvent, 'visual_model_complete', {
-    sessionId,
-    visualCallBatchId,
-    imageCount: normalizedInputs.length,
-    fulfilledCount: settledResults.filter(item => item.status === 'fulfilled').length,
-    rejectedCount: settledResults.filter(item => item.status === 'rejected').length,
-    elapsedMs: modelFanoutMs
   })
+  const modelFanoutMs = Math.max(0, Date.now() - modelFanoutStartedAt)
 
   const canonicalizeStartedAt = Date.now()
   const symptomDisplayNameMap = await loadSymptomDisplayNameMap()
@@ -2033,6 +2068,22 @@ async function analyzeAndPersistVisualBatch({
     .map(item => item.value)
   const usageSummary = buildVisualUsageSummary(successfulResults)
   const aiDebug = buildVisualAiDebug(successfulResults)
+  emitVisualStreamEvent(onVisualEvent, 'visual_model_complete', {
+    sessionId,
+    visualCallBatchId,
+    imageCount: normalizedInputs.length,
+    fulfilledCount: settledResults.filter(item => item.status === 'fulfilled').length,
+    rejectedCount: settledResults.filter(item => item.status === 'rejected').length,
+    elapsedMs: modelFanoutMs,
+    modelBusinessData: aiDebug.map(item => ({
+      imageIndex: item.imageIndex,
+      imageId: item.imageId,
+      rawTextOutput: item.rawTextOutput,
+      rawStructuredOutput: item.rawStructuredOutput,
+      usage: item.usage,
+      promptCache: item.promptCache
+    }))
+  })
   const visualFailureSummary = buildVisualFailureSummary(
     canonicalizedSettledResults,
     normalizedInputs

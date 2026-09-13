@@ -677,8 +677,11 @@ function buildBehaviorSummary(referenceDate = '', events = {}, lastFertilizedBuc
     .sort((left, right) => String(right.date || '').localeCompare(String(left.date || '')))[0]
 
   // v2.1：使用 doseClass 枚举替代硬编码 amount 列表
-  const thoroughWateringCount10d = wateringEvents.filter(event =>
-    ['thorough', 'deep', 'soaked', '浇透', '透浇'].includes(normalizeText(event.amount))
+  const thoroughWateringCount10d = wateringEvents.filter(
+    event => resolveDoseClassFromEvent(event) === 'thorough'
+  ).length
+  const rootWateringEventCount10d = wateringEvents.filter(
+    event => resolveDoseClassFromEvent(event) !== 'mist'
   ).length
   const lastWateredDaysAgoValue = latestDaysAgo(referenceDate, wateringEvents)
 
@@ -690,6 +693,7 @@ function buildBehaviorSummary(referenceDate = '', events = {}, lastFertilizedBuc
     lastEffectiveRootWateredDaysAgo: computeLastEffectiveRootWatered(wateringEvents, referenceDate),
     rootZoneMoistureIndex: null,
     thoroughWateringCount10d,
+    rootWateringEventCount10d,
     lastWateredDaysAgo: lastWateredDaysAgoValue,
     fertilizingCount10d: fertilizingEvents.length,
     latestFertilizerStrength: normalizeText(latestFertilizingEvent?.strength || ''),

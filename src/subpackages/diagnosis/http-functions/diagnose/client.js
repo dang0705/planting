@@ -84,6 +84,7 @@ const streamDiagnoseRequester = httpRequest({
   method: 'POST',
   baseUrl: DIAGNOSIS_HTTP_BASE_URL,
   enableChunked: true,
+  dataType: 'text',
   responseType: 'text',
   // SSE 诊断同样属于写入/扣减链路，必须使用可即时吊销的持久平台会话。
   requirePlatformSession: true,

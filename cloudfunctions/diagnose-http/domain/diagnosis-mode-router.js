@@ -190,18 +190,14 @@ function resolveDiagnosisModeRoute({
       .filter(item => item.confidence >= CANDIDATE_ADMIT_CONFIDENCE)
       .map(item => item.modeKey)
   )
-  // full profile 下所有合法候选 mode key（不限 confidence），用于构造 candidateModeKeys；
-  // pest profile 仍使用 >=0.60 的 candidateOnlyModeKeys 保持严格边界。
-  const allCandidateModeKeys = unique(normalizedModeCandidates.map(item => item.modeKey))
   const candidateAdmissionContext = {
     normalizedModeCandidates,
     candidateOnlyModeKeys,
     confirmationEvidenceItems
   }
-  let candidateModeKeys = unique([
-    ...(normalizedProfile === 'full' ? allCandidateModeKeys : candidateOnlyModeKeys),
-    ...evidenceDerivedModeKeys
-  ])
+  // 模型候选进入症状/方向路由必须达到候选准入阈值；低置信候选只保留
+  // 在 secondary_visual_candidates 中供审计，不能参与冲突判断或生成用户可选方向。
+  let candidateModeKeys = unique([...candidateOnlyModeKeys, ...evidenceDerivedModeKeys])
     .filter(modeKey => !directModeKeys.includes(modeKey))
     .filter(modeKey =>
       isCandidateAdmissible(modeKey, normalizedProfile, candidateAdmissionContext)
@@ -238,7 +234,7 @@ function resolveDiagnosisModeRoute({
     matchedEvidence: supportingEvidenceForMode(modeKey, confirmationEvidenceItems)
   }))
   const topCandidateValue = topCandidateConfidence(candidateModeKeys, normalizedModeCandidates)
-  const candidateTier = candidateConfidenceTier(topCandidateValue)
+  const candidateTier = candidateModeKeys.length ? candidateConfidenceTier(topCandidateValue) : ''
   const directTier = effectiveDirectModeKeys.length ? 'direct' : ''
   const activeTier = directTier || candidateTier || ''
   const questionBudget = maxQuestionsForTier(activeTier)
@@ -318,8 +314,8 @@ function resolveDiagnosisModeRoute({
         : effectiveDirectModeKeys[0] || candidateModeKeys[0] || ''
   // directConclusion (>=0.95) 时，固定题包模式仍需走问诊路径，
   // 因为这些模式依赖结构化问诊确认。
-  // visual_direct_only 模式（如 powdery_mildew）仅在 high+ 置信（very_likely/direct）时
-  // 可直接结论；低置信 visual-direct 必须按 3/2/1 问题预算进入可解释路径，不能越过问诊。
+  // visual_direct_only 模式（如 powdery_mildew）进入路由前也必须先通过候选准入阈值；
+  // 通过后仍按 confidence tier 决定问诊或直接结论，不能越过问诊。
   const nextAction = crossFamilyConflict
     ? 'choose_direction'
     : multipleModelDirectFixedPackageModes

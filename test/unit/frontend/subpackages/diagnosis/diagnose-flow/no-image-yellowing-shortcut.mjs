@@ -74,11 +74,11 @@ assert.doesNotMatch(
 
 // 契约 3：有图时点击症状仍只更新本地选中态，开始诊断按钮走图片诊断路径。
 
-// 契约 4：只看虫害模式下黄叶快捷项必须拒绝并提示需要照片。
-assert.match(
+// 契约 4：用户入口不再触发虫害/综合确认弹窗；显式旧 pest profile 仍保留回放兼容。
+assert.doesNotMatch(
   popupActionsSource,
-  /function handleSymptomClassQuickSelect[\s\S]*?if \(selectedDiagnosisProfile\.value === 'pest'\) \{[\s\S]*?uni\.showToast\(\{ title: '只看虫害需要先上传照片'/,
-  'pest profile must reject no-image yellowing shortcut with a toast'
+  /confirmDiagnosisProfile/,
+  'symptom shortcut must not open a pest/full confirmation modal'
 )
 
 // 契约 5：黄叶快捷项的 payload 不得包含 image/images 字段。

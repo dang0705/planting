@@ -1,11 +1,11 @@
 const crypto = require('crypto')
-const http = require('http')
 const https = require('https')
 const {
   TOKENHUB_PROVIDER,
   OPENAI_CHAT_COMPLETIONS_PROTOCOL,
   CLOUDBASE_PROVIDER,
   adaptOpenAiVisionMessages,
+  assertAliyunExplicitCacheRequestContract,
   buildTokenHubPromptCacheKey,
   buildTokenHubSessionAffinityId,
   resolveOpenAiVisionProvider,
@@ -14,12 +14,7 @@ const {
 } = require('./provider-registry')
 
 const CLOUDBASE_HTTP_AGENT = new https.Agent({ keepAlive: true, maxSockets: 32 })
-const CLOUDBASE_ANTHROPIC_IMAGE_MEDIA_TYPES = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp'
-])
+const DEFAULT_VISUAL_OUTPUT_MAX_TOKENS = 480
 
 function envText(name, conservative = '') {
   const value = String(process.env[name] || '').trim()
@@ -87,13 +82,28 @@ function buildTokenHubVisionMessages({ model = '', messages = [], promptCacheStr
   })
 }
 
+/**
+ * 缓存前缀契约（严禁自行变更）：除非先征得用户明确同意，`[Dynamic Task]` 前的固定文本、
+ * 固定前缀格式、文本顺序及其作为唯一 system 消息的布局不得变化；动态任务和图片必须留在
+ * `[Dynamic Task]` 后的 user 消息。百炼依赖这段稳定前缀建立和命中缓存，改动会增加输入 token。
+ */
 function buildOpenAiVisionMessages({ promptText = '', imageContents = [] } = {}) {
   const marker = '[Dynamic Task]'
   const value = String(promptText || '').trim()
   const index = value.indexOf(marker)
   const staticText = index < 0 ? value : value.slice(0, index).trim()
   const dynamicText = index < 0 ? '' : value.slice(index).trim()
-  const images = Array.isArray(imageContents) ? imageContents.filter(Boolean) : []
+  const images = (Array.isArray(imageContents) ? imageContents : []).filter(Boolean)
+  // 模型图片输入契约：仅允许 HTTP(S) URL，严禁在此或调用链恢复 Base64/data URL，
+  // 否则图片会被编码进提示词并放大输入 token。
+  for (const image of images) {
+    if (image?.type !== 'image_url') {
+      continue
+    }
+    if (!/^https?:\/\//i.test(String(image?.image_url?.url || '').trim())) {
+      throw new Error('视觉诊断图片必须使用可访问的 HTTP(S) URL，不接受 Base64')
+    }
+  }
   const messages = staticText
     ? [
         {
@@ -132,127 +142,13 @@ function isCloudbaseImageInputError(error) {
   return error?.code === 'cloudbase_anthropic_image_input_error'
 }
 
-function cloudbaseImageMaxBytes(cloudbaseAi = {}) {
-  return positiveNumber(
-    cloudbaseAi.imageDataMaxBytes || process.env.LLM_IMAGE_DATA_URL_MAX_BYTES,
-    5 * 1024 * 1024
-  )
-}
-
-function cloudbaseImageMimeType(value = '') {
-  const mimeType = String(value || '')
-    .trim()
-    .split(';')[0]
-    .toLowerCase()
-  return CLOUDBASE_ANTHROPIC_IMAGE_MEDIA_TYPES.has(mimeType) ? mimeType : ''
-}
-
-function cloudbaseDataUrlImage(url = '', maxBytes = cloudbaseImageMaxBytes()) {
-  const match = /^data:([^;,]+);base64,([A-Za-z0-9+/]+={0,2})$/i.exec(String(url || ''))
-  if (!match || match[2].length % 4 === 1) {
-    throw cloudbaseImageInputError('CloudBase Anthropic 图片 data URL 无效')
-  }
-  const mediaType = cloudbaseImageMimeType(match[1])
-  if (!mediaType) {
-    throw cloudbaseImageInputError('CloudBase Anthropic 图片 MIME 类型不支持')
-  }
-  const data = match[2]
-  if (!data || Buffer.from(data, 'base64').length > maxBytes) {
-    throw cloudbaseImageInputError('CloudBase Anthropic 图片超过大小限制')
-  }
-  return { type: 'image', source: { type: 'base64', media_type: mediaType, data } }
-}
-
-function cloudbasePrimaryAnthropicImage(item, maxBytes) {
+function cloudbasePrimaryAnthropicImage(item) {
   const url = String(item?.image_url?.url || '').trim()
-  if (/^data:/i.test(url)) {
-    return cloudbaseDataUrlImage(url, maxBytes)
-  }
+  // Anthropic 请求也只能保留远端 URL；严禁转换为 Base64/data URL 传给模型。
   if (!/^https?:\/\//i.test(url)) {
-    throw cloudbaseImageInputError('CloudBase Anthropic 图片 URL 无效')
+    throw cloudbaseImageInputError('视觉诊断图片必须使用可访问的 HTTP(S) URL，不接受 Base64')
   }
   return { type: 'image', source: { type: 'url', url } }
-}
-
-function downloadCloudbaseImageAsBase64(url = '', { maxBytes, timeoutMs } = {}) {
-  if (/^data:/i.test(String(url || '').trim())) {
-    return Promise.resolve(cloudbaseDataUrlImage(url, maxBytes))
-  }
-  let target
-  try {
-    target = new URL(url)
-  } catch {
-    return Promise.reject(cloudbaseImageInputError('CloudBase Anthropic 图片 URL 无效'))
-  }
-  const transport = target.protocol === 'https:' ? https : target.protocol === 'http:' ? http : null
-  if (!transport) {
-    return Promise.reject(cloudbaseImageInputError('CloudBase Anthropic 图片 URL 协议不支持'))
-  }
-  return new Promise((resolve, reject) => {
-    let done = false
-    const finish = (error, result) => {
-      if (done) {
-        return
-      }
-      done = true
-      if (error) {
-        reject(error)
-      } else {
-        resolve(result)
-      }
-    }
-    const request = transport.get(
-      {
-        hostname: target.hostname,
-        port: target.port || undefined,
-        path: `${target.pathname}${target.search}`,
-        ...(target.protocol === 'https:' ? { agent: CLOUDBASE_HTTP_AGENT } : {})
-      },
-      response => {
-        if (response.statusCode < 200 || response.statusCode >= 300) {
-          response.resume()
-          finish(
-            cloudbaseImageInputError(`CloudBase Anthropic 图片下载失败(${response.statusCode})`)
-          )
-          return
-        }
-        const mediaType = cloudbaseImageMimeType(response.headers['content-type'])
-        if (!mediaType) {
-          response.resume()
-          finish(cloudbaseImageInputError('CloudBase Anthropic 图片 MIME 类型不支持'))
-          return
-        }
-        const chunks = []
-        let size = 0
-        response.on('data', chunk => {
-          size += chunk.length
-          if (size > maxBytes) {
-            request.destroy(cloudbaseImageInputError('CloudBase Anthropic 图片超过大小限制'))
-          } else {
-            chunks.push(chunk)
-          }
-        })
-        response.on('end', () => {
-          const buffer = Buffer.concat(chunks)
-          if (!buffer.length) {
-            finish(cloudbaseImageInputError('CloudBase Anthropic 图片下载为空'))
-          } else {
-            finish(null, {
-              type: 'image',
-              source: { type: 'base64', media_type: mediaType, data: buffer.toString('base64') }
-            })
-          }
-        })
-        response.on('error', () =>
-          finish(cloudbaseImageInputError('CloudBase Anthropic 图片下载失败'))
-        )
-      }
-    )
-    request.on('error', () => finish(cloudbaseImageInputError('CloudBase Anthropic 图片下载失败')))
-    request.setTimeout(Math.max(1000, Number(timeoutMs || 10000)), () =>
-      request.destroy(cloudbaseImageInputError('CloudBase Anthropic 图片下载超时'))
-    )
-  })
 }
 
 async function buildCloudbaseAnthropicPayload({
@@ -260,24 +156,13 @@ async function buildCloudbaseAnthropicPayload({
   messages = [],
   stream = false,
   llmOptions = {},
-  cloudbaseAi = {},
-  base64Fallback = false
+  cloudbaseAi = {}
 } = {}) {
-  const maxBytes = cloudbaseImageMaxBytes(cloudbaseAi)
   const system = []
   const requestMessages = []
   for (const message of messages) {
-    const content = await Promise.all(
-      (Array.isArray(message?.content) ? message.content : []).map(item =>
-        item?.type !== 'image_url'
-          ? item
-          : base64Fallback
-            ? downloadCloudbaseImageAsBase64(item.image_url?.url, {
-                maxBytes,
-                timeoutMs: cloudbaseAi.imageDownloadTimeoutMs
-              })
-            : cloudbasePrimaryAnthropicImage(item, maxBytes)
-      )
+    const content = (Array.isArray(message?.content) ? message.content : []).map(item =>
+      item?.type === 'image_url' ? cloudbasePrimaryAnthropicImage(item) : item
     )
     if (message?.role === 'system') {
       system.push(...content)
@@ -289,7 +174,8 @@ async function buildCloudbaseAnthropicPayload({
     model,
     system,
     messages: requestMessages,
-    max_tokens: positiveNumber(cloudbaseAi.maxTokens, 800),
+    // 视觉调用只返回紧凑 JSON；限制输出上限，避免空字段和重复依据吞掉两图的输出额度。
+    max_tokens: positiveNumber(cloudbaseAi.maxTokens, DEFAULT_VISUAL_OUTPUT_MAX_TOKENS),
     stream: Boolean(stream)
   }
   if (cloudbaseAi.enableThinking !== true) {
@@ -359,6 +245,10 @@ function buildCloudBaseAiPayload({
     throw new Error(`provider_protocol_requires_messages_transport:${provider.id}`)
   }
   const adapted = adaptOpenAiVisionMessages({ provider: provider.id, model, messages })
+  if (provider.id === 'aliyun_bailian') {
+    // 发送前强制复核百炼最终请求体；不满足官方显式缓存结构就拒绝调用，避免静默退化为无缓存请求。
+    assertAliyunExplicitCacheRequestContract({ model, messages: adapted.messages })
+  }
   const payload = {
     model,
     messages: adapted.messages,
@@ -459,7 +349,7 @@ module.exports = {
       aliyunBailianBaseUrl: aliyunBailianRuntime.baseUrl,
       endpointStyle: envText('LLM_CLOUDBASE_AI_ENDPOINT_STYLE', ''),
       imageMaxPixels: envNumber('LLM_CLOUDBASE_AI_IMAGE_MAX_PIXELS', 1638400),
-      maxTokens: envNumber('LLM_CLOUDBASE_AI_MAX_TOKENS', 800),
+      maxTokens: envNumber('LLM_CLOUDBASE_AI_MAX_TOKENS', DEFAULT_VISUAL_OUTPUT_MAX_TOKENS),
       enableThinking: envBoolean('LLM_QWEN_3_5_ENABLE_THINKING', false)
     },
     hfAutotrain: {

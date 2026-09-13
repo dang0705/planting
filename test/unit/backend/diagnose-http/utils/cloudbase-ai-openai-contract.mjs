@@ -36,6 +36,9 @@ const {
   buildOpenAiVisionMessages,
   createCloudBaseAiOpenAiClient
 } = require('../../../../../cloudfunctions/diagnose-http/utils/cloudbase-ai-openai-contract.js')
+const {
+  buildAliyunExplicitCacheRequestAudit
+} = require('../../../../../cloudfunctions/diagnose-http/configs/provider-registry.js')
 
 const tokenhubClientWithoutKey = createCloudBaseAiOpenAiClient({
   service: 'tokenhub',
@@ -63,7 +66,8 @@ const aliyunImageClient = createCloudBaseAiOpenAiClient({
 })
 assert.deepEqual(aliyunImageClient.buildImageContent('https://example.test/aliyun-image.jpg'), {
   type: 'image_url',
-  image_url: { url: 'https://example.test/aliyun-image.jpg' }
+  image_url: { url: 'https://example.test/aliyun-image.jpg' },
+  max_pixels: 1638400
 })
 const aliyunClientWithoutKey = createCloudBaseAiOpenAiClient({
   service: 'aliyun_bailian',
@@ -93,7 +97,7 @@ assert.equal(actualProfilePayload.model, llm.model)
 assert.deepEqual(actualProfilePayload.messages, [{ role: 'user', content: [] }])
 assert.equal(actualProfilePayload.stream, false)
 assert.equal(actualProfilePayload.enable_thinking, false)
-assert.equal(actualProfilePayload.max_tokens, 800)
+assert.equal(actualProfilePayload.max_tokens, 480)
 assert.equal(Object.hasOwn(actualProfilePayload, 'prompt_cache_key'), false)
 assert.equal(Object.hasOwn(actualProfilePayload, 'thinking'), false)
 
@@ -182,6 +186,36 @@ for (const relativePath of [
   )
 }
 
+for (const relativePath of [
+  'cloudfunctions/diagnose-http/configs/index.js',
+  'cloudfunctions/diagnose-http/utils/llm.js',
+  'cloudfunctions/diagnose-http/utils/cloudbase-ai-openai-contract.js'
+]) {
+  const source = fs.readFileSync(path.join(repoRoot, relativePath), 'utf8')
+  assert.doesNotMatch(source, /buildDataUrlMessages|data_url_conservative|toString\('base64'\)/)
+  assert.doesNotMatch(source, /source:\s*\{\s*type:\s*'base64'/)
+}
+
+const visionMessageSource = fs.readFileSync(
+  path.join(repoRoot, 'cloudfunctions/diagnose-http/configs/index.js'),
+  'utf8'
+)
+assert.match(visionMessageSource, /缓存前缀契约（严禁自行变更）/)
+assert.match(visionMessageSource, /除非先征得用户明确同意/)
+assert.match(visionMessageSource, /固定前缀格式、文本顺序及其作为唯一 system 消息的布局不得变化/)
+assert.match(visionMessageSource, /模型图片输入契约：仅允许 HTTP\(S\) URL/)
+assert.match(
+  fs.readFileSync(path.join(repoRoot, 'cloudfunctions/diagnose-http/utils/llm.js'), 'utf8'),
+  /最上游防线：严禁把图片转为 Base64\/data URL 送入模型/
+)
+assert.match(
+  fs.readFileSync(
+    path.join(repoRoot, 'cloudfunctions/diagnose-http/utils/cloudbase-ai-openai-contract.js'),
+    'utf8'
+  ),
+  /入口防线：模型图片仅传 URL；严禁 Base64\/data URL 进入任何供应商适配器/
+)
+
 const cachePrompt = buildOpenAiVisionMessages({
   promptText: 'static-prefix\n[Dynamic Task]\nruntime-tail',
   imageContents: [{ type: 'image_url', image_url: { url: 'https://example.test/image.jpg' } }]
@@ -262,7 +296,7 @@ assert.match(tokenhubCachePrompt.promptCacheStrategy.cacheKeyFingerprint, /^[a-f
 assert.equal(Object.hasOwn(tokenhubCachePrompt.promptCacheStrategy, 'promptCacheKey'), false)
 const aliyunCachePrompt = aliyunImageClient.buildVisionMessages({
   promptText: 'static-prefix\n[Dynamic Task]\nruntime-tail',
-  imageContents: [{ type: 'image_url', image_url: { url: 'https://example.test/image.jpg' } }]
+  imageContents: [aliyunImageClient.buildImageContent('https://example.test/image.jpg')]
 })
 for (const providerPrompt of [aliyunCachePrompt]) {
   assert.equal(providerPrompt.promptCacheStrategy.staticPrefixHash, expectedStaticPrefixHash)
@@ -275,14 +309,55 @@ for (const providerPrompt of [aliyunCachePrompt]) {
     providerPrompt.messages[1].content[0].text,
     tokenhubCachePrompt.messages[1].content[0].text
   )
-  assert.deepEqual(
-    providerPrompt.messages[1].content[1],
-    tokenhubCachePrompt.messages[1].content[1]
+  assert.equal(
+    providerPrompt.messages[1].content[1].image_url.url,
+    'https://example.test/image.jpg'
   )
+  assert.equal(providerPrompt.messages[1].content[1].max_pixels, 1638400)
 }
 assert.equal(aliyunCachePrompt.promptCacheStrategy.modelIdentity, `aliyun_bailian:${llm.model}`)
-assert.equal(Object.hasOwn(aliyunCachePrompt.messages[0].content[0], 'cache_control'), false)
-assert.equal(aliyunCachePrompt.promptCacheStrategy.cacheMetadata, 'none')
+assert.deepEqual(aliyunCachePrompt.messages[0].content[0].cache_control, { type: 'ephemeral' })
+assert.equal(aliyunCachePrompt.promptCacheStrategy.cacheMetadata, 'cache_control')
+assert.deepEqual(aliyunCachePrompt.promptCacheStrategy.explicitCacheRequestAudit, {
+  contractVersion: 'aliyun_bailian_explicit_cache_v1',
+  providerId: 'aliyun_bailian',
+  modelId: llm.model,
+  cacheMode: 'explicit',
+  qwen35MessageLevelCutoff: 1,
+  systemMessageCount: 1,
+  systemContentIsArray: 1,
+  cacheControlMarkerCount: 1,
+  cacheControlType: 'ephemeral',
+  staticPrefixHash: expectedStaticPrefixHash,
+  staticPrefixLength: 'static-prefix'.length,
+  staticPrefixUtf8Bytes: Buffer.byteLength('static-prefix', 'utf8'),
+  dynamicTextPrecedesImages: 1,
+  imageUrlCount: 1,
+  imageUrlTransport: 'url',
+  compliant: 1,
+  issues: []
+})
+assert.deepEqual(
+  buildAliyunExplicitCacheRequestAudit({
+    model: llm.model,
+    messages: [{ role: 'user', content: [{ type: 'text', text: 'no-cache-contract' }] }]
+  }).issues,
+  [
+    'system_message_count_must_be_1',
+    'system_content_must_be_array',
+    'cache_control_marker_count_must_be_1',
+    'cache_control_text_must_not_be_empty'
+  ]
+)
+assert.throws(
+  () =>
+    buildCloudBaseAiPayload({
+      model: llm.model,
+      service: 'aliyun_bailian',
+      messages: [{ role: 'user', content: [{ type: 'text', text: 'no-cache-contract' }] }]
+    }),
+  /aliyun_explicit_cache_contract_invalid/
+)
 const tokenhubStreamPayload = buildCloudBaseAiPayload({
   model: llm.model,
   service: 'tokenhub',
@@ -309,9 +384,9 @@ assert.equal(
   expectedTokenHubCacheKey
 )
 assert.equal(tokenhubDynamicPayload.prompt_cache_key, expectedTokenHubCacheKey)
-const aliyunCachePayload = aliyunImageClient.buildPayload(cachePrompt.messages, true)
+const aliyunCachePayload = aliyunImageClient.buildPayload(aliyunCachePrompt.messages, true)
 assert.equal(Object.hasOwn(aliyunCachePayload, 'prompt_cache_key'), false)
-assert.equal(Object.hasOwn(aliyunCachePayload.messages[0].content[0], 'cache_control'), false)
+assert.deepEqual(aliyunCachePayload.messages[0].content[0].cache_control, { type: 'ephemeral' })
 assert.equal(aliyunCachePayload.enable_thinking, false)
 assert.equal(Object.hasOwn(aliyunCachePayload, 'thinking'), false)
 
@@ -418,12 +493,16 @@ try {
     false
   )
   assert.equal(
-    Object.hasOwn(
-      JSON.parse(requestBodies[aliyunRequestIndex]).messages[0].content[0],
-      'cache_control'
-    ),
-    false
+    JSON.parse(requestBodies[aliyunRequestIndex]).messages[0].content[0].cache_control.type,
+    'ephemeral'
   )
+  const aliyunRequestBody = JSON.parse(requestBodies[aliyunRequestIndex])
+  assert.equal(
+    aliyunRequestBody.messages[1].content[1].image_url.url,
+    'https://example.test/image.jpg'
+  )
+  assert.equal(aliyunRequestBody.messages[1].content[1].max_pixels, 1638400)
+  assert.doesNotMatch(JSON.stringify(aliyunRequestBody), /data:|base64/i)
 
   streamScenario = 'usage_only'
   now = 2000

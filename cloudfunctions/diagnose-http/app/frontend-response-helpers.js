@@ -9,11 +9,16 @@ const {
   compactEnvironmentCareContextForPublic
 } = require('../presenters/diagnosis-round-presenter')
 const {
+  resolvePublicVisualEvidenceKey,
+  resolvePublicVisualEvidenceLabel
+} = require('../utils/public-runtime-summary')
+const {
   buildQuestionPackageUiHints,
   buildQuestionPackage,
   buildYellowingQuestionPackage,
   resolveResponseQuestions
 } = require('./question-package-response')
+const { normalizeActionItems } = require('../domain/action-guidance-contract')
 const {
   pickMinimalPackageQuestions,
   buildQuestionPackageSummaryCard
@@ -109,6 +114,19 @@ function pickMinimalTextItems(items = []) {
   )
 }
 
+function pickMinimalActionItems(items = []) {
+  return normalizeActionItems(items).items.map(item => ({
+    id: item.id,
+    categoryId: item.categoryId,
+    categoryNameCn: item.categoryNameCn,
+    stage: item.stage,
+    methodId: item.methodId,
+    text: item.text,
+    sourceRefIds: item.sourceRefIds,
+    ...(item.conditionCn ? { conditionCn: item.conditionCn } : {})
+  }))
+}
+
 function pickMinimalActionAdvice(actionAdvice = null) {
   if (!actionAdvice || typeof actionAdvice !== 'object') {
     return null
@@ -119,6 +137,8 @@ function pickMinimalActionAdvice(actionAdvice = null) {
     sevenDayObserve: normalizeStringList(actionAdvice.sevenDayObserve),
     avoidActions: normalizeStringList(actionAdvice.avoidActions),
     retakeOrEscalate: normalizeStringList(actionAdvice.retakeOrEscalate),
+    actionItems: pickMinimalActionItems(actionAdvice.actionItems),
+    avoidActionItems: pickMinimalActionItems(actionAdvice.avoidActionItems),
     conflictDetected: Boolean(actionAdvice.conflictDetected)
   }
   const hasText =
@@ -231,7 +251,9 @@ function pickMinimalOutcomeEntry(outcome = null) {
       outcome?.actionProfileKey || outcome?.action_profile_key || ''
     ),
     actionAdviceItems: normalizeStringList(outcome?.actionAdviceItems),
-    avoidAdviceItems: normalizeStringList(outcome?.avoidAdviceItems)
+    avoidAdviceItems: normalizeStringList(outcome?.avoidAdviceItems),
+    actionItems: pickMinimalActionItems(outcome?.actionItems),
+    avoidActionItems: pickMinimalActionItems(outcome?.avoidActionItems)
   }
 }
 
@@ -330,15 +352,17 @@ function pickMinimalVisualAggregateSummary(summary = null) {
           : []
   const evidenceItems = evidenceCandidates
     .map(item => {
-      const symptomKey = String(item?.symptomKey || item?.symptom_key || '').trim()
+      const symptomKey = resolvePublicVisualEvidenceKey(item)
       if (!symptomKey) {
+        return null
+      }
+      const displayNameCn = resolvePublicVisualEvidenceLabel(item)
+      if (!displayNameCn) {
         return null
       }
       return {
         symptomKey,
-        displayNameCn: String(
-          item?.displayNameCn || item?.display_name_cn || symptomKey
-        ).trim(),
+        displayNameCn,
         supportImageCount: Number(
           item?.supportImageCount ??
             item?.support_image_count ??

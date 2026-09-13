@@ -354,17 +354,20 @@ function maxQuestionsForTier(tier = '') {
 
 // 判断候选模式是否可进入路由。
 // pest profile 保持原严格逻辑：虫害候选需证据支撑或单候选 >=0.60。
-// full profile 放宽：合法候选无论 confidence 高低均可进入，
-// <0.60 走 low tier（最多 3 题）；证据只用于问题锁定和跳题，不凭空生成模式。
+// full profile 同样要求模型候选 >=0.60；明确证据派生的模式仍可进入，
+// 低置信候选不能凭空生成用户可见的症状/方向模式。
 function isCandidateAdmissible(modeKey = '', profile = 'full', context = {}) {
   const { normalizedModeCandidates = [], candidateOnlyModeKeys = [], confirmationEvidenceItems = [] } = context
   if (!isModeAllowedForProfile(modeKey, profile)) {
     return false
   }
+  const hasCandidate = normalizedModeCandidates.some(
+    item => item.modeKey === modeKey && item.confidence >= CANDIDATE_ADMIT_CONFIDENCE
+  )
   const hasEvidence = hasSupportingEvidenceForMode(modeKey, confirmationEvidenceItems)
   if (PEST_MODE_KEYS.includes(modeKey)) {
     if (profile === 'full') {
-      return normalizedModeCandidates.some(item => item.modeKey === modeKey) || hasEvidence
+      return hasCandidate || hasEvidence
     }
     const hasStrongCandidate = normalizedModeCandidates.some(
       item => item.modeKey === modeKey && item.confidence >= CANDIDATE_ADMIT_CONFIDENCE
@@ -374,7 +377,7 @@ function isCandidateAdmissible(modeKey = '', profile = 'full', context = {}) {
   if (profile !== 'full') {
     return false
   }
-  return normalizedModeCandidates.some(item => item.modeKey === modeKey) || hasEvidence
+  return hasCandidate || hasEvidence
 }
 
 function topCandidateConfidence(modeKeys = [], normalizedModeCandidates = []) {

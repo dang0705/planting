@@ -6,6 +6,7 @@ const {
 } = require('./pest-question-package')
 const { LOCKED_SPECIFIC_PEST_MODES } = require('../domain/diagnosis-mode-router')
 const { PEST_CATEGORY } = require('../domain/diagnosis-mode-registry')
+const { normalizeActionProfile } = require('../domain/action-guidance-contract')
 
 const HONEYDEW_EXPLANATION = '小虫可能留下甜黏的透明分泌物（也叫蜜露）。'
 const FIRST_ITEM_INDEX = 0
@@ -113,12 +114,18 @@ function hasUnknownAnswer(answers = []) {
   })
 }
 
-function buildSpecificPestOutcome(mode = '', { probable = false } = {}) {
+function buildSpecificPestOutcome(mode = '', { probable = false, actionProfile = null } = {}) {
   const displayName = PEST_MODE_LABELS[mode] || mode
-  const actionAdviceItems =
-    mode === 'fungus_gnat'
+  const normalizedActionProfile = normalizeActionProfile(actionProfile)
+  const hasStructuredAdvice = normalizedActionProfile.actionItems.length > 0
+  const actionAdviceItems = hasStructuredAdvice
+    ? normalizedActionProfile.todayActions.concat(normalizedActionProfile.threeDayActions)
+    : mode === 'fungus_gnat'
       ? ['先减少盆土长期潮湿，清理表土落叶，并观察盆土附近小飞虫是否减少。']
       : ['先隔离植株，重点检查叶背、嫩梢和茎部，避免马上混用药剂。']
+  const avoidAdviceItems = hasStructuredAdvice
+    ? normalizedActionProfile.avoidActions.concat(normalizedActionProfile.retakeOrEscalate)
+    : ['不要把普通黄叶或发蔫直接当作虫害原因处理。']
   return {
     outcomeKey: mode,
     problemKey: mode,
@@ -132,8 +139,11 @@ function buildSpecificPestOutcome(mode = '', { probable = false } = {}) {
         : `${probable ? '当前更接近' : '已保留'} ${displayName} 方向，结合照片和你的补充回答判断。`,
     severity: 'medium',
     urgency: 'observe',
+    actionProfileKey: normalizedActionProfile.actionProfileKey,
     actionAdviceItems,
-    avoidAdviceItems: ['不要把普通黄叶或发蔫直接当作虫害原因处理。']
+    avoidAdviceItems,
+    actionItems: normalizedActionProfile.actionItems,
+    avoidActionItems: normalizedActionProfile.actionItems.filter(item => item.stage === 'avoid')
   }
 }
 
@@ -144,7 +154,8 @@ function resolveSpecificPestAnswerResult({
   questionPackage = {},
   probableModes = [],
   plantContext = {},
-  visualAggregateResult = null
+  visualAggregateResult = null,
+  actionProfilesByMode = new Map()
 } = {}) {
   const lockedModes = collectLockedModes(questionPackage?.hiddenPrefilledEvidence || [])
   // dispatch-20260726 consolidated rework: 识别 >=0.95 模型直判锁定的模式，
@@ -184,7 +195,9 @@ function resolveSpecificPestAnswerResult({
       probable:
         (provisionalModes.includes(mode) && !finalModes.includes(mode)) ||
         (mode === unknownAdditionalFallbackMode && !finalModes.includes(mode)) ||
-        (mode === candidateFallbackMode && !finalModes.includes(mode))
+        (mode === candidateFallbackMode && !finalModes.includes(mode)),
+      actionProfile:
+        actionProfilesByMode instanceof Map ? actionProfilesByMode.get(mode) || null : null
     })
   )
   const unconfirmedFallbackMode = candidateFallbackMode || unknownAdditionalFallbackMode

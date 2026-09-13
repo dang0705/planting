@@ -203,6 +203,9 @@ function testDryWaterAndHeatPressure() {
   assert.ok(names.includes('降低蒸腾压力'))
   assert.ok(names.includes('全株水分压力'))
   assert.equal(result.visibleOutcomes.length >= 3, true)
+  assert.ok(result.actionAdvice.actionItems.length >= result.visibleOutcomes.length)
+  assert.ok(result.actionAdvice.actionItems.every(item => item.id && item.categoryId && item.sourceRefIds.length))
+  assert.ok(result.actionAdvice.avoidActionItems.every(item => item.stage === 'avoid'))
   assertNoPriorityFields(result)
 }
 
@@ -219,6 +222,10 @@ function testWetAndRootRotBlocksWatering() {
   assert.ok(outcomeNames(result).includes('停浇查根和排水'))
   assert.ok(result.blockedActionExplanations.some(item => item.actionText === '补足浇水'))
   assert.doesNotMatch(text, /沿盆土缓慢补水/)
+  assert.ok(
+    result.actionAdvice.avoidActionItems.some(item => item.text.includes('暂时不要补足浇水')),
+    '被冲突保护拦截的动作也必须有结构化规避项'
+  )
   assert.match(result.highRiskWarning, /高危信号/)
   assertNoPriorityFields(result)
 }

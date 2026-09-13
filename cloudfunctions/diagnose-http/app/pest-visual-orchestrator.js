@@ -24,6 +24,7 @@ const {
   buildNonPestDirectResult,
   resolveNonPestCandidateTier
 } = require('./non-pest-direct-result')
+const { loadActionProfilesByMode } = require('./action-guidance-loader')
 
 function routeFromAggregate(aggregateResult = null) {
   return (
@@ -160,7 +161,8 @@ async function buildPestRouteResponse({
           routeResult,
           aggregateResult,
           likelyResult: tierInfo.likelyResult,
-          resultId
+          resultId,
+          actionProfilesByMode: await loadActionProfilesByMode(tierInfo.eligibleModeKeys)
         })
       }
       // <0.90 保留 uncertainty，走 retake 路径
@@ -199,6 +201,7 @@ async function buildPestRouteResponse({
     if (!pestCandidateModes.length) {
       return null
     }
+    const actionProfilesByMode = await loadActionProfilesByMode(pestCandidateModes)
     const resolved = resolveSpecificPestAnswerResult({
       sessionId,
       round,
@@ -212,7 +215,8 @@ async function buildPestRouteResponse({
       },
       probableModes,
       plantContext,
-      visualAggregateResult: aggregateResult
+      visualAggregateResult: aggregateResult,
+      actionProfilesByMode
     })
     // 0.90-<0.95 很像结果：保留 1 个可选排查问题供用户确认。
     if (likelyResult) {
@@ -263,7 +267,8 @@ async function buildPestRouteResponse({
           },
           probableModes: [],
           plantContext,
-          visualAggregateResult: aggregateResult
+          visualAggregateResult: aggregateResult,
+          actionProfilesByMode: await loadActionProfilesByMode(pestCandidateModes)
         })
         return {
           ...fallback,
@@ -292,7 +297,8 @@ async function buildPestRouteResponse({
             routeResult,
             aggregateResult,
             likelyResult: tierInfo.likelyResult,
-            resultId
+            resultId,
+            actionProfilesByMode: await loadActionProfilesByMode(tierInfo.eligibleModeKeys)
           })
         }
       }

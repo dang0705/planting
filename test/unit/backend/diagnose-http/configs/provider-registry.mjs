@@ -41,7 +41,8 @@ function loadLlm(environment = {}) {
 try {
   const { buildCloudBaseAiEndpoint } = require(configPath)
   const {
-    listOpenAiVisionProviders
+    listOpenAiVisionProviders,
+    supportsExplicitPromptCache
   } = require('../../../../../cloudfunctions/diagnose-http/configs/provider-registry.js')
 
   assert.deepEqual(
@@ -49,6 +50,7 @@ try {
     ['tokenhub', 'cloudbase', 'aliyun_bailian']
   )
   assert.equal(listOpenAiVisionProviders()[1].protocol, 'anthropic_messages')
+  assert.equal(supportsExplicitPromptCache('aliyun_bailian'), true)
 
   const defaultLlm = loadLlm()
   assert.equal(defaultLlm.providerId, 'cloudbase')
@@ -85,10 +87,13 @@ try {
     })
   const fullInitialStaticPrompt = buildProductionStaticPrompt('诊断配置为综合；判读轮次为首次。')
   const pestFollowupStaticPrompt = buildProductionStaticPrompt('诊断配置为虫害；判读轮次为追问。')
-  assert.match(fullInitialStaticPrompt.staticPrefix, /【静态判读纪律与输出一致性】/)
-  assert.match(fullInitialStaticPrompt.staticPrefix, /1\. 先辨认当前图片中能够复核的对象/)
-  assert.ok(STATIC_READING_DISCIPLINE_TEXT.length >= 1200)
-  assert.ok(fullInitialStaticPrompt.staticPrefix.length >= 3600)
+  assert.match(fullInitialStaticPrompt.staticPrefix, /【判读纪律】/)
+  assert.match(fullInitialStaticPrompt.staticPrefix, /1\. 先核对对象、位置、形态/)
+  assert.ok(STATIC_READING_DISCIPLINE_TEXT.length >= 300)
+  assert.ok(fullInitialStaticPrompt.staticPrefix.length >= 1800)
+  // 百炼显式缓存按模型 Token 判断；当前前缀需保留超过 1024 Token 的安全余量，
+  // 但仍必须低于旧版固定前缀长度，避免为缓存无边界膨胀输入。
+  assert.ok(fullInitialStaticPrompt.staticPrefix.length < 3500)
   assert.ok(
     fullInitialStaticPrompt.staticPrefix.indexOf('【静态判读纪律与输出一致性】') <
       fullInitialStaticPrompt.promptText.indexOf('[Dynamic Task]')
@@ -129,16 +134,13 @@ try {
   for (const key of ['prompt_cache_key', 'stream_options', 'enable_thinking']) {
     assert.equal(Object.hasOwn(cloudbasePayload, key), false)
   }
-  await assert.rejects(
+  assert.throws(
     () =>
-      cloudbaseClient.buildPayload(
-        cloudbaseClient.buildVisionMessages({
-          promptText: 'static-prefix',
-          imageContents: [{ type: 'image_url', image_url: { url: 'data:text/plain;base64,AA==' } }]
-        }).messages,
-        false
-      ),
-    /MIME 类型不支持/
+      cloudbaseClient.buildVisionMessages({
+        promptText: 'static-prefix',
+        imageContents: [{ type: 'image_url', image_url: { url: 'data:text/plain;base64,AA==' } }]
+      }),
+    /HTTP\(S\).*Base64/
   )
 
   const https = require('node:https')
@@ -235,25 +237,13 @@ try {
     assert.equal(nonStreamResult.usage.promptCacheCreationInputTokens, 6003)
 
     scenario = 'url_failure'
-    const fallbackRequestIndex = requestBodies.length
-    const fallbackResult = await cloudbaseClient.callStream(cloudbaseVision.messages)
-    assert.equal(fallbackResult.imageInputTransport, 'anthropic_base64_fallback')
-    assert.equal(requestBodies[fallbackRequestIndex].messages[0].content[1].source.type, 'url')
-    assert.equal(
-      requestBodies[fallbackRequestIndex + 1].messages[0].content[1].source.type,
-      'base64'
+    const failedRequestIndex = requestBodies.length
+    await assert.rejects(
+      () => cloudbaseClient.callStream(cloudbaseVision.messages),
+      /图片地址不可访问/
     )
-    assert.equal(
-      requestBodies[fallbackRequestIndex + 1].messages[0].content[1].source.media_type,
-      'image/jpeg'
-    )
-    assert.equal(
-      Buffer.from(
-        requestBodies[fallbackRequestIndex + 1].messages[0].content[1].source.data,
-        'base64'
-      ).length,
-      14
-    )
+    assert.equal(requestBodies.length, failedRequestIndex + 1)
+    assert.equal(requestBodies[failedRequestIndex].messages[0].content[1].source.type, 'url')
   } finally {
     https.request = originalHttpsRequest
     https.get = originalHttpsGet

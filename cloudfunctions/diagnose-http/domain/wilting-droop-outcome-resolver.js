@@ -5,6 +5,7 @@ const {
   WILTING_DROOP_PACKAGE_MODE,
   WILTING_DROOP_PACKAGE_SOURCE_MODE
 } = require('../app/wilting-droop-question-package')
+const { ACTION_CATEGORY_DEFINITIONS } = require('./action-guidance-contract')
 
 const BLOCKED_ACTION_TEXT = Object.freeze({
   increase_watering: '补足浇水',
@@ -209,6 +210,105 @@ const OPTION_BLOCKS = Object.freeze({
   black_water_soaked_mushy_leaves: ['foliar_spray', 'keep_humid_cover']
 })
 
+function slugActionText(value = '') {
+  return String(value || '')
+    .replace(/[^a-zA-Z0-9\u4e00-\u9fff]+/gu, '_')
+    .replace(/^_+|_+$/gu, '')
+    .slice(0, 42)
+}
+
+function resolveWiltingActionCategory(text = '', { avoid = false } = {}) {
+  const normalized = String(text || '').trim()
+  if (/检查|观察|记录|判断/iu.test(normalized)) {
+    return 'inspection_monitoring'
+  }
+  if (/隔离|清理|工具|修剪/iu.test(normalized)) {
+    return 'isolation_sanitation'
+  }
+  if (/浇水|停浇|补水|喷水|盆土|排水/iu.test(normalized)) {
+    return 'water_adjustment'
+  }
+  if (/施肥|浓肥|重肥/iu.test(normalized)) {
+    return 'nutrition_adjustment'
+  }
+  if (/用药|喷药|药剂|清洁液/iu.test(normalized)) {
+    return 'treatment_safety'
+  }
+  if (/光|暴晒|风口|直吹|通风|热源|搬动|位置/iu.test(normalized)) {
+    return 'environment_adjustment'
+  }
+  return avoid ? 'treatment_safety' : 'non_intervention'
+}
+
+function resolveWiltingActionMethod(text = '', categoryId = '') {
+  const normalized = String(text || '').trim()
+  if (/检查/iu.test(normalized)) {return 'inspection'}
+  if (/观察|记录|判断/iu.test(normalized)) {return 'monitoring'}
+  if (/隔离/iu.test(normalized)) {return 'isolation'}
+  if (/清理|修剪/iu.test(normalized)) {return 'remove'}
+  if (/浇水|停浇|补水|喷水|盆土|排水/iu.test(normalized)) {return 'water_adjustment'}
+  if (/施肥/iu.test(normalized)) {return 'nutrition_adjustment'}
+  if (/风口|直吹|通风/iu.test(normalized)) {return 'airflow_adjustment'}
+  if (/光|暴晒|热源|位置|搬动/iu.test(normalized)) {return 'light_adjustment'}
+  return categoryId === 'treatment_safety' ? 'avoid_stress' : 'monitoring'
+}
+
+function resolveWiltingSourceRefIds(categoryId = '') {
+  if (categoryId === 'water_adjustment') {
+    return ['umd-overwatered-indoor-plants']
+  }
+  if (categoryId === 'environment_adjustment') {
+    return ['umd-indoor-diagnose-2025', 'rhs-houseplant-leaf-damage']
+  }
+  if (categoryId === 'isolation_sanitation' || categoryId === 'treatment_safety') {
+    return ['ucipm-houseplant-problems']
+  }
+  return ['umd-indoor-diagnose-2025']
+}
+
+function buildWiltingActionItems(values = [], { outcomeKey = '', avoid = false } = {}) {
+  return (Array.isArray(values) ? values : [])
+    .map((value, index) => {
+      const text = String(value || '').trim()
+      if (!text) {return null}
+      const categoryId = resolveWiltingActionCategory(text, { avoid })
+      return {
+        id: `act_wilting_${slugActionText(outcomeKey)}_${avoid ? 'avoid' : 'today'}_${index + 1}`,
+        categoryId,
+        categoryNameCn: ACTION_CATEGORY_DEFINITIONS[categoryId].categoryNameCn,
+        stage: avoid ? 'avoid' : 'today',
+        methodId: resolveWiltingActionMethod(text, categoryId),
+        text,
+        sourceRefIds: resolveWiltingSourceRefIds(categoryId)
+      }
+    })
+    .filter(Boolean)
+}
+
+function mergeStructuredActionItems(...lists) {
+  return Array.from(
+    new Map(
+      lists
+        .flatMap(list => (Array.isArray(list) ? list : []))
+        .filter(item => item?.id)
+        .map(item => [item.id, item])
+    ).values()
+  )
+}
+
+function buildWiltingBlockedActionItem(actionText = '', index = 0) {
+  const categoryId = resolveWiltingActionCategory(actionText, { avoid: true })
+  return {
+    id: `act_wilting_blocked_${slugActionText(actionText)}_${index + 1}`,
+    categoryId,
+    categoryNameCn: ACTION_CATEGORY_DEFINITIONS[categoryId].categoryNameCn,
+    stage: 'avoid',
+    methodId: 'avoid_stress',
+    text: `暂时不要${actionText}。`,
+    sourceRefIds: resolveWiltingSourceRefIds(categoryId)
+  }
+}
+
 function normalizeText(value = '') {
   return String(value || '').trim()
 }
@@ -252,7 +352,15 @@ function cloneOutcome(source = {}) {
     actionAdviceItems: Array.isArray(source.actionAdviceItems)
       ? source.actionAdviceItems.slice()
       : [],
-    avoidAdviceItems: Array.isArray(source.avoidAdviceItems) ? source.avoidAdviceItems.slice() : []
+    avoidAdviceItems: Array.isArray(source.avoidAdviceItems) ? source.avoidAdviceItems.slice() : [],
+    actionItems: buildWiltingActionItems(source.actionAdviceItems, {
+      outcomeKey: source.outcomeKey,
+      avoid: false
+    }),
+    avoidActionItems: buildWiltingActionItems(source.avoidAdviceItems, {
+      outcomeKey: source.outcomeKey,
+      avoid: true
+    })
   }
 }
 
@@ -293,7 +401,9 @@ function mergeOutcome(target = {}, source = {}) {
         ...(Array.isArray(target.avoidAdviceItems) ? target.avoidAdviceItems : []),
         ...(Array.isArray(source.avoidAdviceItems) ? source.avoidAdviceItems : [])
       ])
-    )
+    ),
+    actionItems: mergeStructuredActionItems(target.actionItems, source.actionItems),
+    avoidActionItems: mergeStructuredActionItems(target.avoidActionItems, source.avoidActionItems)
   }
 }
 
@@ -310,11 +420,18 @@ function removeBlockedActions(outcomes = [], blockedActionTexts = []) {
         ? outcome.actionAdviceItems
         : []
       ).filter(text => !blockedActionTexts.some(blocked => text.includes(blocked))),
+      actionItems: (Array.isArray(outcome.actionItems) ? outcome.actionItems : []).filter(
+        item => !blockedActionTexts.some(blocked => item?.text?.includes(blocked))
+      ),
       avoidAdviceItems: Array.from(
         new Set([
           ...(Array.isArray(outcome.avoidAdviceItems) ? outcome.avoidAdviceItems : []),
           ...blockedActionTexts.map(text => `暂时不要${text}。`)
         ])
+      ),
+      avoidActionItems: mergeStructuredActionItems(
+        outcome.avoidActionItems,
+        blockedActionTexts.map(buildWiltingBlockedActionItem)
       )
     }))
 }
@@ -389,6 +506,22 @@ function resolveWiltingDroopOutcomeResult({
   const observationPeriod = hasHighRisk
     ? '24-48 小时内复查软烂、异味和塌陷是否扩大。'
     : '连续观察 48-72 小时，记录挺立度、掉叶和盆土干湿变化。'
+  const actionItems = mergeStructuredActionItems(
+    visibleOutcomes.flatMap(item => item.actionItems || []),
+    visibleOutcomes.flatMap(item => item.avoidActionItems || []),
+    visibleOutcomes.length
+      ? [{
+          id: 'act_wilting_observation_01',
+          categoryId: 'inspection_monitoring',
+          categoryNameCn: ACTION_CATEGORY_DEFINITIONS.inspection_monitoring.categoryNameCn,
+          stage: 'seven_day',
+          methodId: 'monitoring',
+          text: observationPeriod,
+          sourceRefIds: ['umd-indoor-diagnose-2025']
+        }]
+      : []
+  )
+  const avoidActionItems = actionItems.filter(item => item.stage === 'avoid')
   const summaryText = visibleOutcomes.length
     ? '已根据水分行为、发蔫形态、环境点位、近期应激和高危异常整理建议行动清单。'
     : '本次回答未形成明确处理动作，建议先保持环境稳定并继续观察。'
@@ -426,6 +559,8 @@ function resolveWiltingDroopOutcomeResult({
         sevenDayObserve: [observationPeriod],
         avoidActions,
         retakeOrEscalate: [],
+        actionItems,
+        avoidActionItems,
         conflictDetected: blockedActionExplanations.length > 0
       }
     },
@@ -441,6 +576,8 @@ function resolveWiltingDroopOutcomeResult({
       sevenDayObserve: [observationPeriod],
       avoidActions,
       retakeOrEscalate: [],
+      actionItems,
+      avoidActionItems,
       conflictDetected: blockedActionExplanations.length > 0
     },
     visibleOutcomes,

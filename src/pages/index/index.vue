@@ -211,7 +211,6 @@ import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import { callComponentMethod } from '@/utils/component-ref.js'
 import { createAsyncActionGuard, createLeadingThrottle } from '@/utils/interaction-guard.js'
 import { requireMvpAccess } from '@/utils/subscription-access.js'
-import { confirmDiagnosisProfile } from '@/utils/diagnosis-entry-confirm.js'
 import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
 import { isDiagnosisAvailable, isFeatureAvailable } from '@/utils/platform-capabilities.js'
 import { getActivePlatformAccessToken } from '@/api/platform-session.js'
@@ -401,14 +400,13 @@ async function openDiagnose(plant) {
   if (!(await requireMvpAccess(userStore, { source: 'index_plant_diagnose' }))) {
     return
   }
-  const diagnosisProfile = await confirmDiagnosisProfile()
   const plantId = encodeURIComponent(String(plant.id))
   const plantCatalogId = plant.plantId
     ? `&plantCatalogId=${encodeURIComponent(String(plant.plantId))}`
     : ''
   const plantName = encodeURIComponent(plant.canonicalName || plant.displayName || '当前植物')
   uni.navigateTo({
-    url: `/subpackages/diagnosis/flow?plantId=${plantId}${plantCatalogId}&plantName=${plantName}&entrySource=plant_card&diagnosisProfile=${diagnosisProfile}`
+    url: `/subpackages/diagnosis/flow?plantId=${plantId}${plantCatalogId}&plantName=${plantName}&entrySource=plant_card`
   })
 }
 async function openPlantHistory(plant) {
@@ -455,7 +453,7 @@ async function openFertilization(plant) {
 }
 function viewDiagnoseDetail(recordId) {
   uni.navigateTo({
-    url: `/subpackages/diagnosis/result?id=${recordId}&entrySource=plant_history`
+    url: `/subpackages/diagnosis/question-package?id=${encodeURIComponent(String(recordId))}&entrySource=plant_history&mode=history`
   })
 }
 function formatTime(time) {
