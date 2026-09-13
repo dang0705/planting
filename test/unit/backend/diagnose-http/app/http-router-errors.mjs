@@ -39,17 +39,49 @@ try {
   delete require.cache[routerPath]
   const { _test, main } = require(routerPath)
 
-  assert.deepEqual(_test.publicRouteError({ statusCode: 401, message: '内部错误不应透出' }), {
-    statusCode: 401,
-    body: { code: 401, message: '请先登录', data: null }
-  })
-  assert.deepEqual(_test.publicRouteError({ statusCode: 403, message: '内部错误不应透出' }), {
-    statusCode: 403,
-    body: { code: 403, message: '无权访问该接口', data: null }
-  })
+  const expectedMessages = new Map([
+    [400, '请求参数无效'],
+    [401, '请先登录'],
+    [403, '无权访问该接口'],
+    [404, '请求资源不存在'],
+    [405, '不支持的请求方法']
+  ])
+  for (const [statusCode, message] of expectedMessages) {
+    const response = _test.publicRouteError({
+      statusCode,
+      message: '内部 SQL、token 和请求头不应透出'
+    })
+    assert.deepEqual(response, {
+      statusCode,
+      body: { code: statusCode, message, data: null }
+    })
+    assert.doesNotMatch(JSON.stringify(response.body), /内部 SQL|token|请求头/u)
+  }
+  assert.deepEqual(
+    _test.publicRouteError({
+      statusCode: 503,
+      code: 'SOIL_VISUAL_UNAVAILABLE',
+      message: '供应商密钥和原始请求不应透出'
+    }),
+    {
+      statusCode: 503,
+      body: {
+        code: 'SOIL_VISUAL_UNAVAILABLE',
+        message: '盆土分析暂时不可用，请稍后重试。',
+        data: null
+      }
+    }
+  )
   assert.equal(_test.publicRouteError({ statusCode: 500 }), null)
 
-  const asyncErrorResponse = await main({}, {})
+  const originalConsoleError = console.error
+  console.error = () => {}
+  let asyncErrorResponse
+  try {
+    asyncErrorResponse = await main({}, {})
+  } finally {
+    console.error = originalConsoleError
+  }
   assert.deepEqual(asyncErrorResponse, {
     statusCode: 403,
     body: { code: 403, message: '无权访问该接口', data: null }

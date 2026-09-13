@@ -405,6 +405,25 @@ npm run build:h5
 npm run deploy:functions:ci
 ```
 
+云函数发布前先运行以下本地门禁：
+
+```bash
+npm run check:secrets
+npm run check:cloudfunction-packages
+npm run check:diagnosis-http-splits
+npm run check:http-function-paths
+npm run check:sensitive-logs
+npm run check:cloudfunction-quality
+```
+
+`check:cloudfunction-packages` 要求所有声明生产依赖的 HTTP 云函数都有对应
+`package-lock.json`；无生产依赖的 HTTP 云函数会明确跳过 `npm ci`。诊断分拆函数的
+产物检查会在临时目录重建并逐文件比对，不会静默覆写当前产物。正式发布脚本对涉及的
+诊断分拆函数也会自动执行这项检查。`check:cloudfunction-quality` 还会校验分拆源码与
+已生成入口在本地前置条件响应上保持一致，并固定主诊断函数与两个专用函数的重叠路由归属；
+`check:http-function-paths` 会核对前端调用路径与云函数路由配置，动态拼接路径只报告未解析项；
+`check:sensitive-logs` 以报告模式扫描请求体、请求头、凭据和原始 SQL 等高风险日志，不阻断发布。
+
 小程序 CI 发布：
 
 ```bash
