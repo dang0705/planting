@@ -4,7 +4,6 @@ const {
   getHttpRequestData,
   resolveHttpUserInfo,
   jsonResponse,
-  internalServerError,
   methodNotAllowed,
   notFound,
   resolveRequestAppEnv,

@@ -289,18 +289,8 @@ try {
   ])
   const promptReadyEvent = visualEvents.find(item => item.event === 'visual_model_prompt_ready')
   assert.deepEqual(promptReadyEvent?.payload, {
-    sessionId: 'diag_pixel_trace_1',
-    visualCallBatchId: promptReadyEvent?.payload?.visualCallBatchId,
-    imageIndex: 0,
-    imageId: promptReadyEvent?.payload?.imageId,
-    promptText: 'unit actual visual prompt',
-    promptLength: 26,
-    promptCacheStrategy: { enabled: true },
-    promptDebugMeta: { promptCacheStaticPrefixHash: 'static_hash' },
-    model: 'qwen3.5-plus',
-    modelIdentity: 'cloudbase_qwen_vl:qwen3.5-plus'
+    promptText: 'unit actual visual prompt'
   })
-  assert.ok(promptReadyEvent?.payload?.imageId)
   const firstContentEvents = visualEvents.filter(
     item => item.event === 'visual_model_response_started'
   )
@@ -308,7 +298,8 @@ try {
   assert.deepEqual(firstContentEvents[0].payload, {
     sessionId: 'diag_pixel_trace_1',
     visualCallBatchId: firstContentEvents[0].payload.visualCallBatchId,
-    imageCount: 1
+    imageCount: 1,
+    promptText: 'unit actual visual prompt'
   })
   assert.doesNotMatch(
     JSON.stringify(firstContentEvents[0].payload),

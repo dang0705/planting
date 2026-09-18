@@ -117,10 +117,15 @@ const nonQwenPayload = buildCloudBaseAiPayload({
   cloudbaseAi: { enableThinking: false }
 })
 assert.equal(Object.hasOwn(nonQwenPayload, 'enable_thinking'), false)
-assert.throws(
-  () => buildCloudBaseAiPayload({ model: llm.model, service: 'cloudbase' }),
-  /provider_protocol_requires_messages_transport:cloudbase/
-)
+const cloudbaseOpenAiPayload = buildCloudBaseAiPayload({
+  model: llm.model,
+  service: 'cloudbase',
+  messages: [{ role: 'user', content: [] }],
+  cloudbaseAi: { enableThinking: false }
+})
+assert.equal(cloudbaseOpenAiPayload.model, llm.model)
+assert.equal(cloudbaseOpenAiPayload.enable_thinking, false)
+assert.equal(cloudbaseOpenAiPayload.stream, false)
 
 const completionUsage = normalizeUsage({
   prompt_tokens: 4227,

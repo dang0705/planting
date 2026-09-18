@@ -87,8 +87,10 @@ const {
 } = require('../../../../cloudfunctions/diagnose-http/services/session-result-read-service.js')
 Module._load = originalModuleLoad
 
+// Load the normalization module directly so this Node-only contract runner does
+// not traverse the Vue alias imports that belong to the bundler runtime.
 const { normalizeDiagnosisResult } =
-  await import('../../../../src/subpackages/diagnosis/utils/diagnose-flow.js')
+  await import('../../../../src/subpackages/diagnosis/utils/diagnose-result-normalizer.js')
 
 function buildObservedEvidenceSet(symptomKeys = []) {
   return (Array.isArray(symptomKeys) ? symptomKeys : []).map((symptomKey, index) => ({
@@ -3103,9 +3105,6 @@ async function testManualQuestionStartFastPathBuildsQuestionRound() {
     }
   }
   const questionRepository = {
-    async findQuestionKeysByTargetSymptoms() {
-      throw new Error('route-backed package should be used before conservative')
-    },
     async getQuestionsByKeys(questionKeys) {
       assert.deepEqual(questionKeys, [
         'q_observed_probe__leaf_yellowing__watering_frequency_context'

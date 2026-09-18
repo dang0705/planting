@@ -2,6 +2,8 @@
 
 const AIR_ENVIRONMENT_UNKNOWN_OPTION_KEY = 'air_environment_unknown'
 const AIR_ENVIRONMENT_RECORDED_OPTION_KEY = 'air_environment_recorded'
+const QUICK_QUESTION_KEY = 'air_exchange_frequency'
+const QUICK_OPTIONS = new Set(['frequent', 'regular', 'rare'])
 
 function text(value = '') {
   return String(value || '').trim()
@@ -29,19 +31,19 @@ function normalizeAirEnvironmentInput(value = {}) {
     airSource === 'window' &&
     (!['one', 'two_or_more', 'closed'].includes(windowDirectionCount) ||
       (windowDirectionCount !== 'closed' &&
-        !['daily', 'every_other_day', 'weekly_1_2', 'almost_never'].includes(
-          windowOpenFrequency
-        )))
+        !['daily', 'every_other_day', 'weekly_1_2', 'almost_never'].includes(windowOpenFrequency)))
   ) {
     return null
   }
-  const normalizedAirExchange = airSource === 'window'
-    ? {
-        source: airSource,
-        windowDirectionCount: windowDirectionCount === 'closed' ? 'one' : windowDirectionCount,
-        windowOpenFrequency: windowDirectionCount === 'closed' ? 'almost_never' : windowOpenFrequency
-      }
-    : { source: airSource, windowDirectionCount: null, windowOpenFrequency: null }
+  const normalizedAirExchange =
+    airSource === 'window'
+      ? {
+          source: airSource,
+          windowDirectionCount: windowDirectionCount === 'closed' ? 'one' : windowDirectionCount,
+          windowOpenFrequency:
+            windowDirectionCount === 'closed' ? 'almost_never' : windowOpenFrequency
+        }
+      : { source: airSource, windowDirectionCount: null, windowOpenFrequency: null }
   const sources = Array.from(
     new Set(
       (Array.isArray(deviceAirflow.sources) ? deviceAirflow.sources : [])
@@ -133,10 +135,67 @@ function resolveAirEnvironmentEvidence(input = {}) {
   }
 }
 
-function parseDiagnosisAirEnvironmentSidecar({ questionPackageSnapshot = {}, answers = [], payload = {} } = {}) {
-  const questionKeys = (Array.isArray(questionPackageSnapshot.packageQuestions)
-    ? questionPackageSnapshot.packageQuestions
-    : [])
+function normalizeAssessment(value = null) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null
+  }
+  if (Number(value.schemaVersion) !== 3) {
+    return normalizeAirEnvironmentInput(value)
+  }
+  if (value.mode === 'quick') {
+    const questionKey = text(value.quickAnswer?.questionKey)
+    const optionKey = text(value.quickAnswer?.optionKey)
+    return questionKey === QUICK_QUESTION_KEY && QUICK_OPTIONS.has(optionKey)
+      ? {
+          schemaVersion: 3,
+          mode: 'quick',
+          quickAnswer: { questionKey, optionKey },
+          advancedInput: null
+        }
+      : null
+  }
+  if (value.mode === 'advanced') {
+    const advancedInput = normalizeAirEnvironmentInput(value.advancedInput)
+    return advancedInput
+      ? { schemaVersion: 3, mode: 'advanced', quickAnswer: null, advancedInput }
+      : null
+  }
+  return null
+}
+
+function resolveAssessment(value = null) {
+  const assessment = normalizeAssessment(value)
+  if (!assessment) {
+    return null
+  }
+  if (Number(assessment.schemaVersion) !== 3) {
+    return resolveAirEnvironmentEvidence(assessment)
+  }
+  if (assessment.mode === 'advanced') {
+    return resolveAirEnvironmentEvidence(assessment.advancedInput)
+  }
+  const level = { frequent: 'high', regular: 'medium', rare: 'low' }[
+    assessment.quickAnswer.optionKey
+  ]
+  return {
+    air_exchange_level: level,
+    local_airflow_present: 'unknown',
+    stagnation_risk: 'unknown',
+    direct_airflow: null,
+    direct_airflow_sources: []
+  }
+}
+
+function parseDiagnosisAirEnvironmentSidecar({
+  questionPackageSnapshot = {},
+  answers = [],
+  payload = {}
+} = {}) {
+  const questionKeys = (
+    Array.isArray(questionPackageSnapshot.packageQuestions)
+      ? questionPackageSnapshot.packageQuestions
+      : []
+  )
     .filter(
       question =>
         text(question?.uiVariant) === 'air_environment' ||
@@ -156,9 +215,7 @@ function parseDiagnosisAirEnvironmentSidecar({ questionPackageSnapshot = {}, ans
       : {}
   const expected = new Set(questionKeys)
   if (
-    [...Object.keys(byQuestion), ...Object.keys(snapshots)].some(
-      key => !expected.has(text(key))
-    )
+    [...Object.keys(byQuestion), ...Object.keys(snapshots)].some(key => !expected.has(text(key)))
   ) {
     return { ok: false, error: '空气环境信息不属于当前问题' }
   }
@@ -180,25 +237,21 @@ function parseDiagnosisAirEnvironmentSidecar({ questionPackageSnapshot = {}, ans
     if (optionKey !== AIR_ENVIRONMENT_RECORDED_OPTION_KEY) {
       return { ok: false, error: '空气环境答案无效' }
     }
-    const input = normalizeAirEnvironmentInput(byQuestion[questionKey])
+    const input = normalizeAssessment(byQuestion[questionKey])
     const snapshot = snapshots[questionKey]
-    if (
-      !input ||
-      !snapshot ||
-      typeof snapshot !== 'object' ||
-      JSON.stringify(snapshot.input) !== JSON.stringify(input)
-    ) {
+    const snapshotInput = normalizeAssessment(snapshot?.input)
+    if (!input || !snapshotInput || JSON.stringify(snapshotInput) !== JSON.stringify(input)) {
       return { ok: false, error: '空气环境记录不完整' }
     }
     result[questionKey] = input
     resultSnapshots[questionKey] = {
-      input,
+      input: snapshotInput,
       source: text(snapshot.source),
       profileUpdatedAt: text(snapshot.profileUpdatedAt),
       locationBinding: snapshot.locationBinding || { careLocationId: '', locationKey: '' }
     }
     sourceByQuestionId[questionKey] = text(snapshot.source)
-    evidenceByQuestionId[questionKey] = resolveAirEnvironmentEvidence(input)
+    evidenceByQuestionId[questionKey] = resolveAssessment(input)
   }
   return {
     ok: true,

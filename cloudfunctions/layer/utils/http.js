@@ -246,6 +246,7 @@ async function resolveHttpUserInfo(rawHeaders, query = {}, context = null, optio
   const headers = normalizeHeaders(rawHeaders)
   const allowRuntimeIdentity = options?.allowRuntimeIdentity === true
   const allowSignedHttpIdentityTicket = options?.allowSignedHttpIdentityTicket === true
+  const allowAgentIdentityTicket = options?.allowAgentIdentityTicket === true
 
   // 持久平台会话是统一用户和数据归属的唯一默认来源。运行时注入的微信
   // OpenID 只允许在明确的身份建立入口作为兜底，不能抢在已存在会话前面。
@@ -265,12 +266,19 @@ async function resolveHttpUserInfo(rawHeaders, query = {}, context = null, optio
     }
   }
 
-  // 只有显式允许短票据的两个只读入口才能使用统一用户票据；写操作和
-  // 其他业务默认跳过票据，避免可延迟吊销的凭据绕过持久会话校验。即使同时
-  // 携带两种凭据，也先完成持久会话校验，防止旧票据覆盖当前统一账号。
+  // 只有显式允许的只读入口才能使用 planting-user 短票据；写操作和其他
+  // 业务默认跳过它，避免可延迟吊销的凭据绕过持久会话校验。agent-http
+  // 使用独立 subject，并由对应正式接口单独声明 allowAgentIdentityTicket。
   if (allowSignedHttpIdentityTicket) {
     const ticketUser = resolveHttpIdentityTicket(headers)
     if (ticketUser?.userId && ticketUser.subject === 'planting-user') {
+      return ticketUser
+    }
+  }
+
+  if (allowAgentIdentityTicket) {
+    const ticketUser = resolveHttpIdentityTicket(headers)
+    if (ticketUser?.userId && ticketUser.subject === 'planting-agent') {
       return ticketUser
     }
   }

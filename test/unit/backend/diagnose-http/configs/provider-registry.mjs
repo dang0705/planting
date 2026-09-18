@@ -49,7 +49,7 @@ try {
     listOpenAiVisionProviders().map(provider => provider.id),
     ['tokenhub', 'cloudbase', 'aliyun_bailian']
   )
-  assert.equal(listOpenAiVisionProviders()[1].protocol, 'anthropic_messages')
+  assert.equal(listOpenAiVisionProviders()[1].protocol, 'openai_chat_completions')
   assert.equal(supportsExplicitPromptCache('aliyun_bailian'), true)
 
   const defaultLlm = loadLlm()
@@ -60,7 +60,7 @@ try {
   assert.equal(Object.hasOwn(defaultLlm, 'modelProfiles'), false)
   assert.equal(
     buildCloudBaseAiEndpoint({ envId: 'cloud1-test', cloudbaseAi: defaultLlm.cloudbaseAi }),
-    'https://cloud1-test.api.tcloudbasegateway.com/v1/ai/cloudbase/v1/messages'
+    'https://cloud1-test.api.tcloudbasegateway.com/v1/ai/aliyun-bailian-custom/chat/completions'
   )
 
   const {
@@ -112,7 +112,11 @@ try {
   const cloudbaseClient = createCloudBaseAiOpenAiClient({
     model: defaultLlm.model,
     service: 'cloudbase',
-    cloudbaseAi: { apiKey: 'unit-cloudbase-key', envId: 'cloud1-test' }
+    cloudbaseAi: {
+      apiKey: 'unit-cloudbase-key',
+      envId: 'cloud1-test',
+      imageFetcher: async () => ({ mediaType: 'image/jpeg', base64: 'ZmFrZS1pbWFnZQ==' })
+    }
   })
   const cloudbaseVision = cloudbaseClient.buildVisionMessages({
     promptText: 'static-prefix\n[Dynamic Task]\nruntime-tail',
@@ -121,19 +125,18 @@ try {
     ]
   })
   const cloudbasePayload = await cloudbaseClient.buildPayload(cloudbaseVision.messages, true)
-  assert.deepEqual(cloudbasePayload.system[0], {
-    type: 'text',
-    text: 'static-prefix',
-    cache_control: { type: 'ephemeral' }
+  assert.deepEqual(cloudbasePayload.messages[0], {
+    role: 'system',
+    content: [{ type: 'text', text: 'static-prefix', cache_control: { type: 'ephemeral' } }]
   })
-  assert.equal(cloudbasePayload.messages[0].content[0].text, '[Dynamic Task]\nruntime-tail')
-  assert.deepEqual(cloudbasePayload.messages[0].content[1], {
-    type: 'image',
-    source: { type: 'url', url: 'https://example.test/plant-image.jpg' }
+  assert.equal(cloudbasePayload.messages[1].content[0].text, '[Dynamic Task]\nruntime-tail')
+  assert.deepEqual(cloudbasePayload.messages[1].content[1], {
+    type: 'image_url',
+    image_url: { url: 'https://example.test/plant-image.jpg' }
   })
-  for (const key of ['prompt_cache_key', 'stream_options', 'enable_thinking']) {
-    assert.equal(Object.hasOwn(cloudbasePayload, key), false)
-  }
+  assert.equal(cloudbasePayload.stream, true)
+  assert.equal(cloudbasePayload.enable_thinking, false)
+  assert.deepEqual(cloudbasePayload.stream_options, { include_usage: true })
   assert.throws(
     () =>
       cloudbaseClient.buildVisionMessages({
@@ -148,7 +151,6 @@ try {
   const originalHttpsGet = https.get
   const requestBodies = []
   const requestOptions = []
-  let scenario = 'success'
   const createMockRequest = (options, callback) => {
     const request = new EventEmitter()
     request.setTimeout = () => {}
@@ -157,44 +159,28 @@ try {
       const payload = JSON.parse(body)
       requestBodies.push(payload)
       requestOptions.push(options)
-      const image = payload.messages[0]?.content.find(item => item.type === 'image')
-      const shouldFailUrl = scenario === 'url_failure' && image?.source?.type === 'url'
       const response = new EventEmitter()
-      response.statusCode = shouldFailUrl ? 400 : 200
+      response.statusCode = 200
       process.nextTick(() => {
         callback(response)
-        if (shouldFailUrl) {
-          response.emit('data', Buffer.from('{"error":{"message":"failed to download image"}}'))
-        } else if (!payload.stream) {
+        if (!payload.stream) {
           response.emit(
             'data',
             Buffer.from(
-              '{"content":[{"type":"text","text":"anthropic non-stream"}],"usage":{"input_tokens":6003,"output_tokens":18,"cache_creation_input_tokens":6003}}'
+              '{"choices":[{"message":{"content":"openai non-stream"}}],"usage":{"prompt_tokens":6003,"completion_tokens":18,"prompt_tokens_details":{"cached_tokens":6003}}}'
             )
           )
         } else {
           response.emit(
             'data',
             Buffer.from(
-              'data: {"type":"content_block_delta","delta":{"type":"thinking_delta","thinking":"hidden"}}\n\n'
+              'data: {"choices":[{"delta":{"content":"{"}}]}\n\n'
             )
           )
           response.emit(
             'data',
             Buffer.from(
-              'data: {"type":"content_block_delta","delta":{"type":"signature_delta","signature":"hidden"}}\n\n'
-            )
-          )
-          response.emit(
-            'data',
-            Buffer.from(
-              'data: {"type":"content_block_delta","delta":{"type":"text_delta","text":"{"}}\n\n'
-            )
-          )
-          response.emit(
-            'data',
-            Buffer.from(
-              'data: {"type":"message_delta","usage":{"input_tokens":6003,"output_tokens":18,"cache_read_input_tokens":6003}}\n\n'
+              'data: {"usage":{"prompt_tokens":6003,"completion_tokens":18,"prompt_tokens_details":{"cached_tokens":6003}}}\n\n'
             )
           )
         }
@@ -227,23 +213,15 @@ try {
     assert.equal(streamResult.imageInputTransport, 'url')
     assert.deepEqual(deltas, ['{'])
     assert.equal(streamResult.usage.promptCacheHitTokens, 6003)
-    assert.equal(requestOptions[0].path, '/v1/ai/cloudbase/v1/messages')
-    assert.equal(requestOptions[0].headers['anthropic-version'], '2023-06-01')
-    assert.deepEqual(requestBodies[0].system[0].cache_control, { type: 'ephemeral' })
-    assert.equal(requestBodies[0].messages[0].content[1].source.type, 'url')
+    assert.equal(requestOptions[0].path, '/v1/ai/aliyun-bailian-custom/chat/completions')
+    assert.equal(requestOptions[0].headers['anthropic-version'], undefined)
+    assert.deepEqual(requestBodies[0].messages[0].content[0].cache_control, { type: 'ephemeral' })
+    assert.equal(requestBodies[0].messages[1].content[1].type, 'image_url')
 
     const nonStreamResult = await cloudbaseClient.callNonStream(cloudbaseVision.messages)
-    assert.equal(nonStreamResult.text, 'anthropic non-stream')
-    assert.equal(nonStreamResult.usage.promptCacheCreationInputTokens, 6003)
+    assert.equal(nonStreamResult.text, 'openai non-stream')
+    assert.equal(nonStreamResult.usage.promptCacheHitTokens, 6003)
 
-    scenario = 'url_failure'
-    const failedRequestIndex = requestBodies.length
-    await assert.rejects(
-      () => cloudbaseClient.callStream(cloudbaseVision.messages),
-      /图片地址不可访问/
-    )
-    assert.equal(requestBodies.length, failedRequestIndex + 1)
-    assert.equal(requestBodies[failedRequestIndex].messages[0].content[1].source.type, 'url')
   } finally {
     https.request = originalHttpsRequest
     https.get = originalHttpsGet
@@ -255,7 +233,7 @@ try {
   assert.equal(cloudbaseLlm.modelIdentity, 'cloudbase:qwen3.5-flash')
   assert.equal(
     buildCloudBaseAiEndpoint({ envId: 'cloud1-test', cloudbaseAi: cloudbaseLlm.cloudbaseAi }),
-    'https://cloud1-test.api.tcloudbasegateway.com/v1/ai/cloudbase/v1/messages'
+    'https://cloud1-test.api.tcloudbasegateway.com/v1/ai/aliyun-bailian-custom/chat/completions'
   )
   for (const tokenhubService of ['TokenHub', 'TOKENHUB']) {
     assert.equal(
@@ -268,10 +246,10 @@ try {
     )
   }
   const cloudbaseBaseUrl = 'https://cloud1-test.api.tcloudbasegateway.com/v1/ai/cloudbase'
-  for (const baseUrl of [
-    cloudbaseBaseUrl,
-    `${cloudbaseBaseUrl}/chat/completions/`,
-    `${cloudbaseBaseUrl}/v1/messages/`
+  for (const [baseUrl, expected] of [
+    [cloudbaseBaseUrl, `${cloudbaseBaseUrl}/chat/completions`],
+    [`${cloudbaseBaseUrl}/chat/completions/`, `${cloudbaseBaseUrl}/chat/completions`],
+    [`${cloudbaseBaseUrl}/v1/messages/`, `${cloudbaseBaseUrl}/v1/messages/chat/completions`]
   ]) {
     assert.equal(
       buildCloudBaseAiEndpoint({
@@ -279,7 +257,7 @@ try {
         service: 'cloudbase',
         cloudbaseAi: { baseUrl }
       }),
-      `${cloudbaseBaseUrl}/v1/messages`
+      expected
     )
   }
   assert.equal(
@@ -288,7 +266,7 @@ try {
       service: 'cloudbase',
       cloudbaseAi: { baseUrl: 'https://example.test/v1' }
     }),
-    'https://example.test/v1'
+    'https://example.test/v1/chat/completions'
   )
   assert.throws(
     () => buildCloudBaseAiEndpoint({ service: 'cloudbase', cloudbaseAi: {} }),

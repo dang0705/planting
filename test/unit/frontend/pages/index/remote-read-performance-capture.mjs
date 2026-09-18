@@ -10,10 +10,7 @@ assert.doesNotMatch(
   /qaRemoteReadCaptureToken|isQaRemoteReadCaptureReady|__plantingQaRemoteReadCaptureToken/u,
   '性能采样不得向首页植入会阻断业务初始化的令牌门禁'
 )
-assert.match(source, /onMounted\(async \(\) => \{[\s\S]*?await userStore\.ensureLogin\(\)/)
-assert.match(source, /const indexPageReady = ref\(false\)/)
-assert.match(source, /indexPageReady\.value = true/)
-assert.match(source, /indexPageReady\.value && qaPerformanceRefresh && userStore\.isAuthenticated/)
+assert.doesNotMatch(source, /indexPageReady|qaPerformanceRefresh|loadUserPlants/u)
 
 console.log(
   'remote read performance isolation source contract passed data_mode=unit_fake test_kind=source_contract'

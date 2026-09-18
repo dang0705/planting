@@ -1,0 +1,37 @@
+{
+  "env_id": "cloud1-2grufevs395a9d5e",
+  "schema": "cloud1-2grufevs395a9d5e",
+  "table": "question_option_mapping_v5_real",
+  "operation": "single_row_is_active_canary",
+  "mutation_performed": false,
+  "candidate": {
+    "id": 4,
+    "question_key": "q_spider_red_dots_visible",
+    "option_key": "yes",
+    "option_text_cn": "是",
+    "option_text_user_cn": "是，比较确定",
+    "data_status": "audited",
+    "review_status": "pending",
+    "cms_lifecycle": "legacy_compat",
+    "is_active": 1,
+    "version_tag": "cms60-mcp-20260917",
+    "row_hash": "5e9b8abfc85a11ded898fb609956fc7eac4754c126ce69b39be98d5a2d6e0b49",
+    "created_at": "2026-03-28 20:57:45",
+    "updated_at": "2026-09-17 19:47:53"
+  },
+  "update_sql": "UPDATE `question_option_mapping_v5_real` SET `is_active`=0 WHERE `id`=4 AND `is_active`=1 AND `cms_lifecycle`='legacy_compat' AND `data_status`='audited' AND `review_status`='pending';",
+  "rollback_sql": "UPDATE `question_option_mapping_v5_real` SET `is_active`=1 WHERE `id`=4 AND `is_active`=0 AND `cms_lifecycle`='legacy_compat' AND `data_status`='audited' AND `review_status`='pending' AND `row_hash`='5e9b8abfc85a11ded898fb609956fc7eac4754c126ce69b39be98d5a2d6e0b49';",
+  "safety_basis": [
+    "candidate is outside current fixed package question key",
+    "runtime eligibility requires data_status=audited and review_status=audited; candidate review_status=pending",
+    "conditional update requires original active state and lifecycle/status values",
+    "rollback is conditional on unchanged row hash and post-canary state"
+  ],
+  "post_checks": [
+    "row reads back is_active=0",
+    "row count and distinct id/_id count unchanged",
+    "current fixed package rows remain active",
+    "exact runtime audited/audited query remains successful",
+    "candidate remains excluded by runtime status predicate"
+  ]
+}

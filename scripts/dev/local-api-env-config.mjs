@@ -4,7 +4,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 export const DEFAULT_PORT = 3010
-export const DEFAULT_FUNCTION_PORT_BASE = 9000
+export const DEFAULT_FUNCTION_PORT_BASE = 9500
 export const DEFAULT_OPENID = 'dev_terminal_mp_local'
 export const LOCAL_FUNCTIONS_GATEWAY_SCRIPT = fileURLToPath(
   new URL('./local-functions-gateway.mjs', import.meta.url)
@@ -25,7 +25,8 @@ export const DEFAULT_REQUIRED_FUNCTIONS = [
   'platform-phone-bootstrap-http',
   'weather-http',
   'storage-http',
-  'subscription-http'
+  'subscription-http',
+  'agent-http'
 ]
 export const FUNCTION_HEALTH_PATHS = {
   'diagnose-http': 'diagnose-http/health',
@@ -37,7 +38,8 @@ export const FUNCTION_HEALTH_PATHS = {
   'platform-phone-bootstrap-http': 'platform-phone-bootstrap-http/auth/platform-phone/health',
   'weather-http': 'weather-http/weather/health',
   'storage-http': 'storage-http/storage/health',
-  'subscription-http': 'subscription-http/subscription/health'
+  'subscription-http': 'subscription-http/subscription/health',
+  'agent-http': 'agent-http/health'
 }
 export const FUNCTION_NAMES = [
   'diagnose-http',
@@ -51,7 +53,8 @@ export const FUNCTION_NAMES = [
   'platform-phone-bootstrap-http',
   'weather-http',
   'storage-http',
-  'subscription-http'
+  'subscription-http',
+  'agent-http'
 ]
 export const FUNCTION_PORTS = Object.fromEntries(
   FUNCTION_NAMES.map((name, index) => [name, DEFAULT_FUNCTION_PORT_BASE + index])

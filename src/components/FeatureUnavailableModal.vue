@@ -1,6 +1,6 @@
 <template>
   <view
-    v-if="modelValue"
+    v-if="modelValue && message"
     id="feature-unavailable-modal"
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-6"
   >
@@ -32,9 +32,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:modelValue'])
 
-const message = computed(
-  () => FEATURE_UNAVAILABLE_MESSAGES[props.featureKey] || '当前端暂未开放该功能，敬请期待。'
-)
+const message = computed(() => FEATURE_UNAVAILABLE_MESSAGES[props.featureKey] || '')
 
 function close() {
   emit('update:modelValue', false)

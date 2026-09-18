@@ -17,6 +17,10 @@ function appendPotProfilePayload(payload, potProfile) {
 
 async function resolvePhotoFileId({ image, imageFileId, selectedPlant, userId }) {
   const existingFileId = String(imageFileId || '').trim()
+  const catalogImageFileId = String(selectedPlant?.imageFileId || '').trim()
+  if (existingFileId && existingFileId === catalogImageFileId) {
+    return ''
+  }
   if (existingFileId) {
     return existingFileId
   }
@@ -25,7 +29,7 @@ async function resolvePhotoFileId({ image, imageFileId, selectedPlant, userId })
     return ''
   }
   if (/^https?:\/\//i.test(normalizedImage)) {
-    return selectedPlant?.imageFileId || ''
+    return ''
   }
   uni.showLoading({ title: '上传图片中...', mask: true })
   try {

@@ -438,7 +438,10 @@ function createCloudBaseAiOpenAiClient({
   }
   const request = async (messages, stream, options) => {
     const payload = await buildPayload(messages, stream)
-    return { ...(await send(payload, options)), imageInputTransport: 'url' }
+    return {
+      ...(await send(payload, options)),
+      imageInputTransport: usesAnthropicMessages ? 'base64' : 'url'
+    }
   }
   return {
     buildImageContent,

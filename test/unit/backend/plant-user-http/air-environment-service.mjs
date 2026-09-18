@@ -49,6 +49,12 @@ function loadService({ selectRows = [], selectError = null, updateError = null }
       return {
         normalizeAirEnvironmentInput(input) {
           return input?.exchange && input?.canopy && input?.device ? input : null
+        },
+        normalizeQuickAirEnvironmentAnswer(input) {
+          return input?.questionKey === 'air_exchange_frequency' &&
+            ['frequent', 'regular', 'rare'].includes(input?.optionKey)
+            ? { questionKey: input.questionKey, optionKey: input.optionKey }
+            : null
         }
       }
     }
@@ -128,4 +134,35 @@ test('PATCH if_missing 创建资料，replace_if_match 拒绝过期草稿', asyn
   assert.equal(conflictResult.statusCode, 409)
   assert.deepEqual(conflictResult.data, existing)
   assert.equal(conflictFixture.calls.length, 1)
+})
+
+test('PATCH V3 只替换诊断中完成的当前模式并保留另一模式', async () => {
+  const existing = {
+    schemaVersion: 3,
+    activeMode: 'advanced',
+    completedModes: { quick: null, advanced: VALID_INPUT },
+    locationBinding: { careLocationId: 'care_1', locationKey: 'sg_1' },
+    updatedAt: '2026-08-04T08:00:00.000Z'
+  }
+  const fixture = loadService({
+    selectRows: [{ id: 7, air_environment_json_text: JSON.stringify(existing) }]
+  })
+  const result = await fixture.service.saveUserPlantAirEnvironment('openid_1', {
+    plantId: 7,
+    airEnvironment: {
+      schemaVersion: 3,
+      mode: 'quick',
+      quickAnswer: { questionKey: 'air_exchange_frequency', optionKey: 'rare' },
+      advancedInput: null
+    },
+    writeMode: 'replace_if_match',
+    expectedUpdatedAt: existing.updatedAt
+  })
+  assert.equal(result.statusCode, 200)
+  assert.equal(result.data.activeMode, 'quick')
+  assert.deepEqual(result.data.completedModes.quick, {
+    questionKey: 'air_exchange_frequency',
+    optionKey: 'rare'
+  })
+  assert.deepEqual(result.data.completedModes.advanced, VALID_INPUT)
 })

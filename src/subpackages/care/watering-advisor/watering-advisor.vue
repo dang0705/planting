@@ -7,22 +7,33 @@
     >
       <text class="text-sm leading-6 text-[#667085]">当前端暂未开放浇水提醒，敬请期待。</text>
     </view>
-    <view v-else class="flex h-screen min-h-0 flex-col bg-[#f8faf9] pb-5">
-      <view class="flex items-center justify-center gap-2 px-4 pt-4">
-        <view v-for="(label, index) in stepLabels" :key="index" class="flex items-center gap-2">
-          <view
-            class="flex h-7 w-7 items-center justify-center rounded-full text-[12px] font-bold"
-            :class="index <= activeStep ? 'bg-[#2d7a4f] text-white' : 'bg-[#e1e9dd] text-[#53645a]'"
-          >
-            {{ index + 1 }}
+    <view v-else class="flex h-screen min-h-0 flex-col bg-[#f8faf9]">
+      <view class="flex items-start px-5 pt-4 pb-2">
+        <view
+          v-for="(label, index) in stepLabels"
+          :key="index"
+          class="flex min-w-0 flex-1 items-start"
+        >
+          <view class="flex min-w-0 flex-1 flex-col items-center">
+            <view
+              class="flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-bold"
+              :class="
+                index <= activeStep ? 'bg-[#2d7a4f] text-white' : 'bg-[#e1e9dd] text-[#53645a]'
+              "
+            >
+              {{ index + 1 }}
+            </view>
+            <text
+              class="mt-1 whitespace-nowrap text-[12px] leading-4"
+              :class="index <= activeStep ? 'font-semibold text-[#1f2933]' : 'text-[#9ca3af]'"
+            >
+              {{ label }}
+            </text>
           </view>
-          <text
-            class="text-[12px]"
-            :class="index <= activeStep ? 'font-semibold text-[#1f2933]' : 'text-[#9ca3af]'"
-          >
-            {{ label }}
-          </text>
-          <view v-if="index < stepLabels.length - 1" class="mx-1 h-[1px] w-6 bg-[#e1e9dd]" />
+          <view
+            v-if="index < stepLabels.length - 1"
+            class="mx-1 mt-3 h-[1px] flex-1 bg-[#dbe7de]"
+          />
         </view>
       </view>
       <ButtonStepTrack
@@ -32,6 +43,7 @@
         viewport-class="w-full"
         item-class="relative min-h-0 overflow-hidden"
         active-item-class="h-full"
+        @step-change="resetWateringStepScroll"
       >
         <template #step="{ index, active }">
           <view v-if="active && index === STEP_SOURCE" class="h-full">
@@ -51,7 +63,9 @@
           <scroll-view
             v-if="active && isUserPlant && index === AIR_ENVIRONMENT_STEP"
             scroll-y
-            class="box-border h-full min-h-0 px-4 pt-6 pb-[112px]"
+            :scroll-top="stepScrollTop"
+            :scroll-with-animation="false"
+            class="box-border h-full min-h-0 px-4 pt-4 pb-[112px]"
           >
             <view class="mb-4">
               <text class="block text-[20px] font-bold leading-7 text-[#1f2937]">空气环境</text>
@@ -109,7 +123,9 @@
           <scroll-view
             v-if="active && index === potProfileStep"
             scroll-y
-            class="box-border h-full min-h-0 px-4 pt-6 pb-[112px]"
+            :scroll-top="stepScrollTop"
+            :scroll-with-animation="false"
+            class="box-border h-full min-h-0 px-4 pt-4 pb-[112px]"
           >
             <view class="mb-4">
               <text class="block text-[20px] font-bold leading-7 text-[#1f2937]">盆型信息</text>
@@ -130,7 +146,7 @@
                 v-else
                 class="flex h-10 w-10 items-center justify-center rounded-lg bg-[#f0f4ed]"
               >
-                <text class="text-[16px]">🌿</text>
+                <image :src="plantLeafIcon" class="h-5 w-5" mode="aspectFit" />
               </view>
               <text class="flex-1 text-[14px] font-medium text-[#1f2933]">
                 {{ selectedCatalogPlantName }}
@@ -145,26 +161,38 @@
           <scroll-view
             v-if="active && index === soilEvidenceStep"
             scroll-y
-            class="box-border h-full min-h-0 px-4 pt-6 pb-[28px]"
+            :scroll-top="stepScrollTop"
+            :scroll-with-animation="false"
+            class="box-border h-full min-h-0 px-4 pt-4 pb-[112px]"
           >
             <WateringSoilEvidenceStage
+              ref="soilEvidenceStageRef"
+              :key="soilEvidenceResetKey"
               :plant-id="selectedCatalogPlant?.userPlantId || null"
+              :continue-request="soilEvidenceContinueRequest"
+              :show-continue="false"
+              :show-analysis-confirm="false"
+              :enable-interior-check="!isUserPlant"
+              :environment-weather-window="wateringAdvisorWeatherWindow"
               @ready="handleSoilEvidenceReady"
+              @change="handleSoilEvidenceChange"
             />
           </scroll-view>
           <scroll-view
             v-if="active && index === resultStep"
             scroll-y
-            class="box-border h-full min-h-0 px-4 pt-6 pb-[112px]"
+            :scroll-top="stepScrollTop"
+            :scroll-with-animation="false"
+            class="box-border h-full min-h-0 px-4 pt-4 pb-[112px]"
           >
             <view v-if="computing" class="flex flex-col items-center justify-center py-20">
               <text class="text-[14px] text-[#9ca3af]">正在计算浇水建议...</text>
             </view>
-            <view v-else-if="plannerResult" class="pb-6">
+            <view v-else-if="plannerResult" class="flex flex-col gap-3 pb-6">
               <view
                 v-if="isUserPlant && airEnvironmentSyncMessage"
                 id="watering-advisor-air-environment-sync-status"
-                class="mb-3 rounded-2xl border border-[rgba(45,122,79,0.14)] bg-white px-4 py-3"
+                class="rounded-[20px] border border-[rgba(45,122,79,0.14)] bg-white px-4 py-3 shadow-[0_2px_10px_rgba(45,122,79,0.04)]"
               >
                 <text class="block text-xs leading-5 text-[#5a7a68]">{{
                   airEnvironmentSyncMessage
@@ -180,37 +208,23 @@
               </view>
               <view
                 id="watering-advisor-result-amount"
-                class="mb-3 rounded-2xl border border-[#e1e9dd] bg-white p-6 text-center"
+                class="rounded-[24px] border border-[#d7e6dc] bg-white px-5 py-6 text-center shadow-[0_8px_24px_rgba(45,122,79,0.08)]"
               >
-                <text class="block text-[22px] font-bold text-[#2d7a4f]">
+                <text class="block break-words text-[30px] font-bold leading-[1.35] text-[#2d7a4f]">
                   {{ amountText || '暂无建议' }}
                 </text>
               </view>
+              <WateringSoilVisualDecision
+                v-if="wateringSoilDecision.resultText || wateringSoilDecision.actionText"
+                result-label="盆土综合判断"
+                action-label="浇水建议"
+                :result-text="wateringSoilDecision.resultText"
+                :action-text="wateringSoilDecision.actionText"
+              />
               <view
-                v-if="plannerResult?.soilCheck?.message"
-                id="watering-advisor-result-soil-check"
-                class="mb-3 rounded-2xl border border-[#d7e6dc] bg-white px-4 py-3"
-              >
-                <text class="block text-sm font-semibold text-[#2d7a4f]">浇水前先看盆土</text>
-                <text class="mt-1 block text-xs leading-5 text-[#5a7868]">
-                  {{ plannerResult.soilCheck.message }}
-                </text>
-              </view>
-              <view
-                v-if="plannerResult?.visualSoilEvidence?.sourceLabel"
-                id="watering-advisor-result-soil-source"
-                class="mb-3 rounded-2xl border border-[#d7e6dc] bg-white px-4 py-3"
-              >
-                <text class="block text-xs leading-5 text-[#5a7868]">
-                  盆土依据：{{ plannerResult.visualSoilEvidence.sourceLabel }}。{{
-                    plannerResult.visualSoilEvidence.observation
-                  }}
-                </text>
-              </view>
-              <view
-                v-if="!plannerResult.nextWaterDate && !wateringConfirmed"
+                v-if="isUserPlant && !plannerResult.nextWaterDate && !wateringConfirmed"
                 id="watering-advisor-result-no-history"
-                class="mb-3 rounded-2xl border border-[#f0dfbd] bg-[#fffaf0] px-4 py-3"
+                class="rounded-[20px] border border-l-4 border-[#f0dfbd] border-l-[#d89b3d] bg-[#fffaf0] px-4 py-3"
               >
                 <text class="block text-sm font-semibold text-[#9a6a20]">暂不安排下一次日期</text>
                 <text class="mt-1 block text-xs leading-5 text-[#8a6b36]">
@@ -218,9 +232,9 @@
                 </text>
               </view>
               <view
-                v-if="!isUserPlant && !wateringConfirmed && !isOverWateringBlocked"
+                v-if="isUserPlant && !wateringConfirmed && !isOverWateringBlocked"
                 id="watering-advisor-result-confirm-watered"
-                class="mb-3 rounded-2xl border border-[#d7e6dc] bg-white px-4 py-3"
+                class="rounded-[20px] border border-[#d7e6dc] bg-white px-4 py-4 shadow-[0_2px_10px_rgba(45,122,79,0.04)]"
               >
                 <text class="block text-sm font-semibold text-[#2d7a4f]">完成浇水后再记录</text>
                 <text class="mt-1 block text-xs leading-5 text-[#5a7868]">
@@ -228,23 +242,26 @@
                 </text>
                 <button
                   id="watering-advisor-result-confirm-watered-button"
-                  class="mt-2 h-9 rounded-lg bg-[#2d7a4f] px-3 text-xs font-semibold leading-9 text-white"
+                  class="mt-3 h-10 rounded-xl bg-[#2d7a4f] px-3 text-xs font-semibold leading-10 text-white shadow-[0_2px_6px_rgba(45,122,79,0.16)]"
                   @click="confirmWatered"
                 >
                   我已完成浇水
                 </button>
               </view>
               <view
-                v-if="wateringConfirmed"
+                v-if="isUserPlant && wateringConfirmed"
                 id="watering-advisor-result-confirm-watered-success"
-                class="mb-3 rounded-2xl border border-[#d7e6dc] bg-[#f2faf4] px-4 py-3"
+                class="rounded-[20px] border border-[#d7e6dc] bg-[#f2faf4] px-4 py-3"
               >
                 <text class="block text-sm font-semibold text-[#2d7a4f]">已记录本次浇水</text>
                 <text class="mt-1 block text-xs leading-5 text-[#5a7868]">
                   下次建议会从今天的浇水记录开始计算。
                 </text>
               </view>
-              <view class="mb-3 rounded-2xl border border-[#e1e9dd] bg-white px-4 py-3">
+              <view
+                v-if="isUserPlant"
+                class="rounded-[20px] border border-[#e1e9dd] bg-[#fbfdfb] px-4 py-3"
+              >
                 <text class="block text-xs font-semibold text-[#53645a]">建议依据</text>
                 <text class="mt-1 block text-xs leading-5 text-[#718075]">
                   {{
@@ -263,11 +280,11 @@
       </ButtonStepTrack>
       <view
         v-if="activeStep === STEP_SOURCE"
-        class="fixed bottom-0 left-0 right-0 z-[100] box-border border-t border-[#e1e9dd] bg-[#f8faf9] px-4 pb-5 pt-3"
+        class="fixed bottom-0 left-0 right-0 z-[100] box-border border-t border-[#dbe7de] bg-white px-4 pb-[calc(12px+env(safe-area-inset-bottom))] pt-3 shadow-[0_-6px_18px_rgba(20,70,40,0.06)]"
       >
         <button
           id="watering-advisor-next-button"
-          class="m-0 h-[52px] w-full rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white"
+          class="m-0 h-[52px] w-full rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white shadow-[0_2px_8px_rgba(45,122,79,0.18)]"
           :class="{ 'opacity-50': !selectedCatalogPlant || (isUserPlant && airEnvironmentLoading) }"
           :disabled="!selectedCatalogPlant || (isUserPlant && airEnvironmentLoading)"
           @click="goToNextStep"
@@ -282,7 +299,7 @@
           showSavedAirEnvironmentSummary &&
           !airEnvironmentEditorOpen
         "
-        class="fixed bottom-0 left-0 right-0 z-[100] box-border flex gap-3 border-t border-[#e1e9dd] bg-[#f8faf9] px-4 pb-5 pt-3"
+        class="fixed bottom-0 left-0 right-0 z-[100] box-border flex gap-3 border-t border-[#dbe7de] bg-white px-4 pb-[calc(12px+env(safe-area-inset-bottom))] pt-3 shadow-[0_-6px_18px_rgba(20,70,40,0.06)]"
       >
         <button
           id="watering-advisor-air-environment-back"
@@ -293,7 +310,7 @@
         </button>
         <button
           id="watering-advisor-air-environment-next"
-          class="m-0 h-[52px] flex-[2] rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white"
+          class="m-0 h-[52px] flex-[2] rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white shadow-[0_2px_8px_rgba(45,122,79,0.18)]"
           @click="goToPotProfile"
         >
           下一步：输入盆型
@@ -301,7 +318,7 @@
       </view>
       <view
         v-else-if="activeStep === potProfileStep"
-        class="fixed bottom-0 left-0 right-0 z-[100] box-border flex gap-3 border-t border-[#e1e9dd] bg-[#f8faf9] px-4 pb-5 pt-3"
+        class="fixed bottom-0 left-0 right-0 z-[100] box-border flex gap-3 border-t border-[#dbe7de] bg-white px-4 pb-[calc(12px+env(safe-area-inset-bottom))] pt-3 shadow-[0_-6px_18px_rgba(20,70,40,0.06)]"
       >
         <button
           id="watering-advisor-back-1"
@@ -312,7 +329,7 @@
         </button>
         <button
           id="watering-advisor-compute-button"
-          class="m-0 h-[52px] flex-[2] rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white"
+          class="m-0 h-[52px] flex-[2] rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white shadow-[0_2px_8px_rgba(45,122,79,0.18)]"
           :class="{ 'opacity-50': computing }"
           :disabled="computing"
           @click="goToSoilEvidence"
@@ -321,8 +338,34 @@
         </button>
       </view>
       <view
+        v-else-if="activeStep === soilEvidenceStep && soilEvidenceAwaitingAnalysis"
+        class="fixed bottom-0 left-0 right-0 z-[100] box-border border-t border-[#dbe7de] bg-white px-4 pb-[calc(12px+env(safe-area-inset-bottom))] pt-3 shadow-[0_-6px_18px_rgba(20,70,40,0.06)]"
+      >
+        <button
+          id="watering-soil-confirm-analysis-button"
+          class="m-0 h-[52px] w-full rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white shadow-[0_2px_8px_rgba(45,122,79,0.18)]"
+          @click="startSoilPhotoAnalysis"
+        >
+          确认并开始分析
+        </button>
+      </view>
+      <view
+        v-else-if="activeStep === soilEvidenceStep && soilEvidence?.evidenceId && !computing"
+        class="fixed bottom-0 left-0 right-0 z-[100] box-border border-t border-[#dbe7de] bg-white px-4 pb-[calc(12px+env(safe-area-inset-bottom))] pt-3 shadow-[0_-6px_18px_rgba(20,70,40,0.06)]"
+      >
+        <button
+          id="watering-soil-continue-button"
+          class="m-0 h-[52px] w-full rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white shadow-[0_2px_8px_rgba(45,122,79,0.18)]"
+          :class="{ 'opacity-50': !soilEvidenceCanContinue || computing }"
+          :disabled="!soilEvidenceCanContinue || computing"
+          @click="continueSoilEvidence"
+        >
+          继续查看建议
+        </button>
+      </view>
+      <view
         v-else-if="activeStep === resultStep"
-        class="fixed bottom-0 left-0 right-0 z-[100] box-border flex gap-3 border-t border-[#e1e9dd] bg-[#f8faf9] px-4 pb-5 pt-3"
+        class="fixed bottom-0 left-0 right-0 z-[100] box-border flex gap-3 border-t border-[#dbe7de] bg-white px-4 pb-[calc(12px+env(safe-area-inset-bottom))] pt-3 shadow-[0_-6px_18px_rgba(20,70,40,0.06)]"
       >
         <button
           id="watering-advisor-back-2"
@@ -335,7 +378,7 @@
         <button
           v-if="plannerResult"
           id="watering-advisor-done"
-          class="m-0 h-[52px] flex-[2] rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white"
+          class="m-0 h-[52px] flex-[2] rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white shadow-[0_2px_8px_rgba(45,122,79,0.18)]"
           @click="handleFinishAdvisor"
         >
           完成
@@ -343,7 +386,7 @@
         <button
           v-else
           id="watering-advisor-empty-retry"
-          class="m-0 h-[52px] flex-[2] rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white"
+          class="m-0 h-[52px] flex-[2] rounded-2xl bg-[#2d7a4f] p-0 text-base font-bold leading-[52px] text-white shadow-[0_2px_8px_rgba(45,122,79,0.18)]"
           @click="goBackToPotProfile"
         >
           返回重新输入
@@ -355,7 +398,7 @@
 </template>
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onShow, onUnload } from '@dcloudio/uni-app'
 import Layout from '@/Layout.vue'
 import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
 import ButtonStepTrack from '@/components/common/ButtonStepTrack.vue'
@@ -363,7 +406,12 @@ import AirEnvironmentAssessment from '@/components/AirEnvironmentAssessment.vue'
 import AirEnvironmentSummaryCard from '@/components/AirEnvironmentSummaryCard.vue'
 import PotProfileFormCore from '@/components/pot-profile/PotProfileFormCore.vue'
 import WateringSoilEvidenceStage from '@/components/watering/WateringSoilEvidenceStage.vue'
+import WateringSoilVisualDecision from '@/components/watering/WateringSoilVisualDecision.vue'
+import plantLeafIcon from '@/assets/diagnosis/diagnosis-leaf.svg'
+import { requestStorageFileDelete } from '@/http-functions/storage/client.js'
+import { cleanupTemporaryWateringSoilEvidence } from '@/http-functions/diagnose/watering-soil.js'
 import { useUserStore } from '@/store/user.js'
+import { callComponentMethod } from '@/utils/component-ref.js'
 import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
 import { isFeatureAvailable } from '@/utils/platform-capabilities.js'
 import { usePlantStore } from '@/store/plants.js'
@@ -372,6 +420,7 @@ import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
 import { createAsyncActionGuard, createLeadingThrottle } from '@/utils/interaction-guard.js'
 import CatalogPlantSearch from './components/CatalogPlantSearch.vue'
 import { formatMlRangeToBottleText } from '@/utils/water-volume-format.js'
+import { buildWateringSoilDecision } from '@/utils/watering-soil-decision.js'
 import {
   confirmAdvisorSessionWatered,
   fetchAdhocPlannerResult,
@@ -387,6 +436,10 @@ import {
 } from '@/utils/air-environment.js'
 import { useWateringAdvisorAirEnvironment } from './useWateringAdvisorAirEnvironment.js'
 import { useWateringAdvisorMyPlants } from './useWateringAdvisorMyPlants.js'
+import {
+  buildAdvisorPlantCreateUrl,
+  confirmSaveIndependentPlant
+} from './useIndependentWateringExit.js'
 const userStore = useUserStore()
 const plantStore = usePlantStore()
 const featureUnavailable = !isFeatureAvailable('watering')
@@ -398,13 +451,22 @@ const {
 const STEP_SOURCE = 0
 const AIR_ENVIRONMENT_STEP = 1
 const AMOUNT_RANGE_MIN_LENGTH = 2
+const INITIAL_SCROLL_TOP = 0
+const STEP_SCROLL_RESET_PULSE = 1
 const activeStep = ref(STEP_SOURCE)
+const stepScrollTop = ref(INITIAL_SCROLL_TOP)
 const selectedCatalogPlant = ref(null)
 const computing = ref(false)
 const plannerResult = ref(null)
 const soilEvidence = ref(null)
+const soilEvidenceResetKey = ref(0)
+const soilEvidenceContinueRequest = ref(0)
+const soilEvidenceStageRef = ref(null)
+const soilEvidenceAwaitingAnalysis = ref(false)
+const soilEvidenceCanContinue = ref(false)
 const pendingPotProfile = ref(null)
 const wateringConfirmed = ref(false)
+const independentExitPending = ref(false)
 const confirmWateredAction = createAsyncActionGuard()
 const searchRef = ref(null)
 const potProfileFormRef = ref(null)
@@ -415,8 +477,19 @@ const {
   loadError: airEnvironmentLoadError,
   loading: airEnvironmentLoading
 } = airEnvironment
-const { weatherDays, forecastDays, plannerLocationKey, loadWeatherDays, resetWeatherDays } =
-  useWateringAdvisorWeather({ selectedCatalogPlant, plantStore, userStore })
+const {
+  weatherDays,
+  forecastDays,
+  plannerLocationKey,
+  loadWeatherDays,
+  resetWeatherDays,
+  prepareWeatherOnEntry,
+  locationPermissionStatus
+} = useWateringAdvisorWeather({ selectedCatalogPlant, plantStore, userStore })
+const wateringAdvisorWeatherWindow = computed(() => ({
+  historicalDays: weatherDays.value,
+  forecastDays: forecastDays.value
+}))
 const selectedCatalogPlantName = computed(
   () =>
     selectedCatalogPlant.value?.primaryDisplayName ||
@@ -476,6 +549,14 @@ const amountText = computed(() => {
 const isOverWateringBlocked = computed(
   () => plannerResult.value?.wateringContext === 'likely_too_wet'
 )
+const wateringSoilDecision = computed(() => {
+  return buildWateringSoilDecision({
+    visualSoilEvidence: plannerResult.value?.visualSoilEvidence,
+    soilCheck: plannerResult.value?.soilCheck,
+    wateringContext: plannerResult.value?.wateringContext,
+    wateringAction: plannerResult.value?.action
+  })
+})
 function selectCatalogPlant(plant) {
   if (computing.value) {
     return
@@ -484,6 +565,8 @@ function selectCatalogPlant(plant) {
   selectedUserPlantId.value = null
   wateringConfirmed.value = false
   soilEvidence.value = null
+  soilEvidenceAwaitingAnalysis.value = false
+  soilEvidenceCanContinue.value = false
   pendingPotProfile.value = null
   airEnvironment.reset()
   resetWateringAirEnvironment()
@@ -510,6 +593,8 @@ async function selectUserPlant(plant) {
   }
   wateringConfirmed.value = false
   soilEvidence.value = null
+  soilEvidenceAwaitingAnalysis.value = false
+  soilEvidenceCanContinue.value = false
   pendingPotProfile.value = null
   airEnvironment.reset(plant.id)
   resetWeatherDays()
@@ -521,6 +606,12 @@ function goToNextStep() {
     return
   }
   activeStep.value = isUserPlant.value ? AIR_ENVIRONMENT_STEP : potProfileStep.value
+}
+
+async function resetWateringStepScroll() {
+  stepScrollTop.value = STEP_SCROLL_RESET_PULSE
+  await nextTick()
+  stepScrollTop.value = INITIAL_SCROLL_TOP
 }
 function goToPotProfile() {
   if (!isAirEnvironmentAnswerReady(airEnvironment.draft.value)) {
@@ -573,18 +664,90 @@ function goToSoilEvidence() {
   }
   pendingPotProfile.value = payload
   soilEvidence.value = null
+  soilEvidenceAwaitingAnalysis.value = false
+  soilEvidenceCanContinue.value = false
   activeStep.value = soilEvidenceStep.value
 }
 
+async function prepareSoilCalendarWeather() {
+  if (isUserPlant.value) {
+    return false
+  }
+  const prepared = await prepareWeatherOnEntry()
+  if (!prepared) {
+    return false
+  }
+  if (!weatherDays.value.length || !forecastDays.value.length) {
+    await loadWeatherDays()
+  }
+  return true
+}
+
 async function handleSoilEvidenceReady(value) {
+  if (computing.value || independentExitPending.value) {
+    return
+  }
   soilEvidence.value = value || null
+  // 盆土页只展示视觉证据，不在这里弹窗或改变证据；统一交给 advisor
+  // 计算，湿润提醒在最终建议页展示。
   await goToResult()
 }
 
+function handleSoilEvidenceChange(value) {
+  soilEvidenceAwaitingAnalysis.value = value?.awaitingAnalysis === true
+  soilEvidenceCanContinue.value = value?.canContinue === true
+  const evidenceId = String(value?.evidenceId || '').trim()
+  if (!evidenceId) {
+    return
+  }
+  const previousEvidenceId = String(soilEvidence.value?.evidenceId || '').trim()
+  // 上传/分析完成即同步父页面的当前证据，避免组件内已换图但最终计算仍提交上一次 ID。
+  soilEvidence.value = {
+    ...(soilEvidence.value || {}),
+    ...value,
+    evidenceId
+  }
+  if (evidenceId && !previousEvidenceId) {
+    prepareSoilCalendarWeather().catch(() => {})
+  }
+}
+
+function startSoilPhotoAnalysis() {
+  callComponentMethod(soilEvidenceStageRef, 'startPhotoAnalysis')
+}
+
+function continueSoilEvidence() {
+  if (!soilEvidence.value?.evidenceId || !soilEvidenceCanContinue.value || computing.value) {
+    return
+  }
+  soilEvidenceContinueRequest.value += 1
+}
+
+function resetSoilEvidenceSubmission() {
+  callComponentMethod(soilEvidenceStageRef, 'resetSubmissionGuard')
+}
+
+async function cleanupAdhocSoilEvidenceAfterClientFailure() {
+  const evidenceId = String(soilEvidence.value?.evidenceId || '').trim()
+  const fileId = String(soilEvidence.value?.temporaryFileId || '').trim()
+  await Promise.all([
+    evidenceId
+      ? cleanupTemporaryWateringSoilEvidence(evidenceId).catch(() => {})
+      : Promise.resolve(),
+    fileId ? requestStorageFileDelete({ fileId }).catch(() => {}) : Promise.resolve()
+  ])
+}
+
 async function goToResult() {
+  // 盆土组件的完成事件、快速双击或异常重放都不能并发消费同一张临时盆土图。
+  // 成功请求会清理该图；第二个请求若继续执行，就会把成功结果误替换成“照片过期”。
+  if (computing.value) {
+    return
+  }
   const payload = pendingPotProfile.value || buildPotProfilePayload()
   if (!soilEvidence.value?.evidenceId) {
     uni.showToast({ title: '请先拍摄盆土照片', icon: 'none' })
+    resetSoilEvidenceSubmission()
     activeStep.value = soilEvidenceStep.value
     return
   }
@@ -593,7 +756,13 @@ async function goToResult() {
   wateringConfirmed.value = false
   activeStep.value = resultStep.value
   try {
-    await loadWeatherDays()
+    await prepareWeatherOnEntry()
+    if (
+      locationPermissionStatus.value === 'authorized' &&
+      (!weatherDays.value.length || !forecastDays.value.length)
+    ) {
+      await loadWeatherDays()
+    }
     const selectedUserPlant = Boolean(selectedCatalogPlant.value?.userPlantId)
     const airEnvironmentOverride = selectedUserPlant
       ? frozenAirEnvironmentOverride.value ||
@@ -601,6 +770,7 @@ async function goToResult() {
       : null
     if (selectedUserPlant && !isAirEnvironmentAnswerReady(airEnvironmentOverride)) {
       uni.showToast({ title: '请完成空气环境信息', icon: 'none' })
+      resetSoilEvidenceSubmission()
       activeStep.value = AIR_ENVIRONMENT_STEP
       return
     }
@@ -608,7 +778,6 @@ async function goToResult() {
     if (selectedUserPlant) {
       const userPlannerResult = await fetchUserPlantWateringPlanner({
         plantId: selectedCatalogPlant.value.userPlantId,
-        wateringEvents: selectedCatalogPlant.value.wateringEvents,
         weatherDays: weatherDays.value,
         forecastDays: forecastDays.value,
         potProfile: payload,
@@ -616,7 +785,11 @@ async function goToResult() {
         locationKey: plannerLocationKey.value,
         timezone: 'Asia/Shanghai',
         soilEvidenceId: soilEvidence.value.evidenceId,
-        manualSoilConfirmed: soilEvidence.value.manualSoilConfirmed === true
+        manualSoilConfirmed: soilEvidence.value.manualSoilConfirmed === true,
+        forced: soilEvidence.value.forced === true,
+        soilMoistureOverride: soilEvidence.value.soilMoistureOverride || '',
+        wateringEvents: selectedCatalogPlant.value.wateringEvents || [],
+        hasWateringHistoryInput: soilEvidence.value.hasWateringHistoryInput === true
       })
       result = userPlannerResult ? normalizePlannerResultDate(userPlannerResult) : null
     } else {
@@ -632,7 +805,11 @@ async function goToResult() {
         locationKey: plannerLocationKey.value,
         timezone: 'Asia/Shanghai',
         soilEvidenceId: soilEvidence.value.evidenceId,
-        manualSoilConfirmed: soilEvidence.value.manualSoilConfirmed === true
+        manualSoilConfirmed: soilEvidence.value.manualSoilConfirmed === true,
+        forced: soilEvidence.value.forced === true,
+        soilMoistureOverride: soilEvidence.value.soilMoistureOverride || '',
+        wateringEvents: soilEvidence.value.wateringEvents || [],
+        hasWateringHistoryInput: soilEvidence.value.hasWateringHistoryInput === true
       })
     }
     if (result) {
@@ -657,19 +834,75 @@ async function goToResult() {
       }
     } else {
       uni.showToast({ title: '计算失败，请重试', icon: 'none' })
+      resetSoilEvidenceSubmission()
       activeStep.value = potProfileStep.value
     }
-  } catch {
+  } catch (error) {
+    if (Number(error?.statusCode) === 422 && String(error?.message || '').includes('过期')) {
+      soilEvidence.value = null
+      soilEvidenceAwaitingAnalysis.value = false
+      plannerResult.value = null
+      soilEvidenceResetKey.value += 1
+      resetSoilEvidenceSubmission()
+      activeStep.value = soilEvidenceStep.value
+      uni.showToast({ title: '盆土照片已过期，请重新拍摄', icon: 'none' })
+      return
+    }
+    if (!selectedCatalogPlant.value?.userPlantId) {
+      await cleanupAdhocSoilEvidenceAfterClientFailure()
+    }
     uni.showToast({ title: '计算失败，请重试', icon: 'none' })
+    resetSoilEvidenceSubmission()
     activeStep.value = potProfileStep.value
   } finally {
     computing.value = false
   }
 }
-function finishAdvisor() {
+async function finishIndependentAdvisor() {
+  if (independentExitPending.value) {
+    return
+  }
+  independentExitPending.value = true
+  const shouldSave = await confirmSaveIndependentPlant()
+  await cleanupAdhocSoilEvidenceAfterClientFailure()
+  if (!shouldSave) {
+    uni.navigateBack()
+    return
+  }
+  const catalogPlantId =
+    selectedCatalogPlant.value?.plantIdentityId || selectedCatalogPlant.value?.sessionPlantId || ''
+  const url = buildAdvisorPlantCreateUrl({
+    catalogPlantId,
+    potProfile: pendingPotProfile.value || buildPotProfilePayload()
+  })
+  if (!url) {
+    independentExitPending.value = false
+    uni.showToast({ title: '植物或盆型信息不完整，请重试', icon: 'none' })
+    return
+  }
+  uni.redirectTo({
+    url,
+    fail: () => {
+      independentExitPending.value = false
+      uni.showToast({ title: '暂时无法打开添加植物页，请重试', icon: 'none' })
+    }
+  })
+}
+
+async function finishAdvisor() {
+  if (!selectedCatalogPlant.value?.userPlantId) {
+    await finishIndependentAdvisor()
+    return
+  }
   uni.navigateBack()
 }
 const handleFinishAdvisor = createLeadingThrottle(finishAdvisor, 500)
+
+onUnload(() => {
+  if (!selectedCatalogPlant.value?.userPlantId) {
+    cleanupAdhocSoilEvidenceAfterClientFailure()
+  }
+})
 function confirmWatered() {
   return confirmWateredAction.run(async () => {
     if (isUserPlant.value || wateringConfirmed.value) {
@@ -706,6 +939,7 @@ onShow(() => {
   // return to the page so the initial lifecycle does not issue two requests.
   if (!hasShownOnce) {
     hasShownOnce = true
+    prepareWeatherOnEntry().catch(() => {})
     return
   }
   loadInitialCatalog()

@@ -49,4 +49,21 @@ const wet = buildWateringPlanner({
 assert.equal(wet.wateringContext, 'likely_too_wet')
 assert.equal(wet.nextWaterDate, null)
 assert.equal(wet.soilCheck.required, true)
+
+const visualDryOverride = buildWateringPlanner({
+  ...baseInput,
+  soilMoistureOverride: 'dry',
+  historical: { highHumidityDays: 10, maxConsecutiveHighHumidityDays: 10 },
+  behaviorTimeline: {
+    referenceDate: '2026-07-01',
+    watering_events_10d: [{ date: '2026-06-30', watered: true, amount: 'thorough' }]
+  }
+})
+assert.equal(visualDryOverride.wateringContext, 'likely_too_dry')
+assert.equal(visualDryOverride.action, 'increase_soil_check_frequency')
+assert.ok(visualDryOverride.amountRangeMl[0] > 0)
+
+const manualMoistOverride = buildWateringPlanner({ ...baseInput, soilMoistureOverride: 'moist' })
+assert.equal(manualMoistOverride.wateringContext, 'likely_too_wet')
+assert.ok(manualMoistOverride.amountRangeMl[1] > manualMoistOverride.amountRangeMl[0])
 console.log('watering planner tests passed')

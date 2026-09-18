@@ -26,21 +26,38 @@
         确认当前位置未变
       </button>
     </view>
-    <AirEnvironmentAssessment
-      v-if="!showSummary || editorOpen"
+    <AirEnvironmentDualMode
+      v-if="(!showSummary || editorOpen) && dualMode"
       :id-prefix="`diagnose-air-environment-${questionId}`"
-      layout-mode="single-page"
-      height-mode="content"
-      :model-value="modelValue"
+      :profile="profile"
+      :draft-state="draftState"
       :footer-position="footerPosition"
       :external-footer="externalFooter"
       :back-label="backLabel"
       :back-id="backId"
       :completion-label="completionLabel"
       :completion-id="completionId"
-      @change="value => emit('change', value)"
+      @draft-change="value => emit('draft-change', value)"
       @back="emit('back')"
       @complete="value => emit('complete', value)"
+    />
+    <AirEnvironmentAssessment
+      v-else-if="!showSummary || editorOpen"
+      :id-prefix="`diagnose-air-environment-${questionId}`"
+      layout-mode="single-page"
+      height-mode="content"
+      :model-value="draftState?.advancedInput"
+      :footer-position="footerPosition"
+      :external-footer="externalFooter"
+      @change="
+        value =>
+          emit('draft-change', {
+            editKind: 'answer',
+            mode: 'advanced',
+            quickAnswer: null,
+            advancedInput: value
+          })
+      "
     />
     <button
       v-if="!externalFooter"
@@ -54,12 +71,15 @@
 </template>
 
 <script setup>
+import AirEnvironmentDualMode from '@/components/AirEnvironmentDualMode.vue'
 import AirEnvironmentAssessment from '@/components/AirEnvironmentAssessment.vue'
 import AirEnvironmentSummaryCard from '@/components/AirEnvironmentSummaryCard.vue'
 
 defineProps({
   questionId: { type: String, default: '' },
-  modelValue: { type: Object, default: null },
+  profile: { type: Object, default: null },
+  draftState: { type: Object, default: null },
+  dualMode: { type: Boolean, default: false },
   footerPosition: { type: String, default: 'absolute' },
   externalFooter: { type: Boolean, default: false },
   showSummary: { type: Boolean, default: false },
@@ -71,5 +91,5 @@ defineProps({
   completionLabel: { type: String, default: '' },
   completionId: { type: String, default: '' }
 })
-const emit = defineEmits(['change', 'unknown', 'edit', 'confirm', 'back', 'complete'])
+const emit = defineEmits(['draft-change', 'unknown', 'edit', 'confirm', 'back', 'complete'])
 </script>

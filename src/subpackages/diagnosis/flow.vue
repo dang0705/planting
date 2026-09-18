@@ -1,5 +1,10 @@
 <template>
-  <Layout :title="pageTitle" background-class="bg-[#F8FAF9]" :header-style="headerStyle">
+  <Layout
+    :title="pageTitle"
+    background-class="bg-[#F8FAF9]"
+    :header-style="headerStyle"
+    custom-left-action
+  >
     <template #left-action>
       <view
         id="diagnosis-flow-header-back-button"

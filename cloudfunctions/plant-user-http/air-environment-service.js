@@ -1,7 +1,8 @@
 'use strict'
 
 const { models } = require('/opt/utils/cloudbase')
-const { normalizeAirEnvironmentInput } = require('/opt/utils/air-environment-evidence')
+const airEnvironmentEvidence = require('/opt/utils/air-environment-evidence')
+const { normalizeAirEnvironmentInput } = airEnvironmentEvidence
 
 function parseJson(value, fallback = null) {
   if (value === null || value === undefined || value === '') {
@@ -25,6 +26,35 @@ function normalizeLocationBinding(value = {}) {
 
 function readProfile(row = {}) {
   const stored = parseJson(row.air_environment_json_text ?? row.air_environment_json, null)
+  if (Number(stored?.schemaVersion) === 3) {
+    const quick = airEnvironmentEvidence.normalizeQuickAirEnvironmentAnswer?.(
+      stored?.completedModes?.quick
+    )
+    const advanced = normalizeAirEnvironmentInput(stored?.completedModes?.advanced, {
+      requireDirectSource: true
+    })
+    const requestedMode = stored.activeMode === 'quick' ? 'quick' : 'advanced'
+    const activeMode =
+      requestedMode === 'quick' && quick
+        ? 'quick'
+        : requestedMode === 'advanced' && advanced
+          ? 'advanced'
+          : quick
+            ? 'quick'
+            : advanced
+              ? 'advanced'
+              : null
+    if (!activeMode) {
+      return null
+    }
+    return {
+      schemaVersion: 3,
+      activeMode,
+      completedModes: { quick: quick || null, advanced: advanced || null },
+      locationBinding: normalizeLocationBinding(stored?.locationBinding),
+      updatedAt: String(stored?.updatedAt || row.updated_at || '').trim()
+    }
+  }
   const input = normalizeAirEnvironmentInput(stored?.input)
   if (!input) {
     return null
@@ -35,6 +65,33 @@ function readProfile(row = {}) {
     locationBinding: normalizeLocationBinding(stored?.locationBinding),
     updatedAt: String(stored?.updatedAt || row.updated_at || '').trim()
   }
+}
+
+function normalizeSubmittedAssessment(value = null) {
+  if (Number(value?.schemaVersion) === 3) {
+    if (value.mode === 'quick') {
+      const quick = airEnvironmentEvidence.normalizeQuickAirEnvironmentAnswer?.(value.quickAnswer)
+      return quick ? { mode: 'quick', quick, advanced: null } : null
+    }
+    if (value.mode === 'advanced') {
+      const advanced = normalizeAirEnvironmentInput(value.advancedInput, {
+        requireDirectSource: true
+      })
+      return advanced ? { mode: 'advanced', quick: null, advanced } : null
+    }
+    return null
+  }
+  const advanced = normalizeAirEnvironmentInput(value, { requireDirectSource: true })
+  return advanced ? { mode: 'advanced', quick: null, advanced } : null
+}
+
+function toCompletedModes(profile = null) {
+  return Number(profile?.schemaVersion) === 3
+    ? {
+        quick: profile.completedModes?.quick || null,
+        advanced: profile.completedModes?.advanced || null
+      }
+    : { quick: null, advanced: profile?.input || null }
 }
 
 function isMissingColumnError(error) {
@@ -74,13 +131,11 @@ async function readUserPlantAirEnvironment(openid, plantId) {
 
 async function saveUserPlantAirEnvironment(openid, payload = {}) {
   const plantId = Number(payload.plantId)
-  const input = normalizeAirEnvironmentInput(payload.airEnvironment, {
-    requireDirectSource: true
-  })
+  const submitted = normalizeSubmittedAssessment(payload.airEnvironment)
   if (!openid || !plantId) {
     return { statusCode: 400, message: '缺少植物ID', data: null }
   }
-  if (!input) {
+  if (!submitted) {
     return { statusCode: 400, message: '空气环境填写不完整', data: null }
   }
   const writeMode = String(payload.writeMode || '').trim()
@@ -103,9 +158,16 @@ async function saveUserPlantAirEnvironment(openid, payload = {}) {
     ) {
       return { statusCode: 409, message: '空气环境已更新，请重新读取', data: current }
     }
+    const completedModes = toCompletedModes(current)
+    if (submitted.mode === 'quick') {
+      completedModes.quick = submitted.quick
+    } else {
+      completedModes.advanced = submitted.advanced
+    }
     const profile = {
-      schemaVersion: 2,
-      input,
+      schemaVersion: 3,
+      activeMode: submitted.mode,
+      completedModes,
       locationBinding: normalizeLocationBinding(payload.locationBinding),
       updatedAt: new Date().toISOString()
     }
@@ -127,5 +189,11 @@ async function saveUserPlantAirEnvironment(openid, payload = {}) {
 module.exports = {
   readUserPlantAirEnvironment,
   saveUserPlantAirEnvironment,
-  _test: { readProfile, normalizeLocationBinding, isMissingColumnError }
+  _test: {
+    readProfile,
+    normalizeLocationBinding,
+    normalizeSubmittedAssessment,
+    toCompletedModes,
+    isMissingColumnError
+  }
 }

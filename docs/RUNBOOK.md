@@ -261,18 +261,18 @@ npm run check:mp-xhs-output
 
 当前函数 worker 端口表（各平台从上表的起始端口按顺序递增）：
 
-| 函数                     | 微信 | 抖音 | 小红书 |
-| ------------------------ | ---: | ---: | -----: |
-| `diagnose-http`          | 9000 | 9200 |   9300 |
-| `plant-catalog-http`     | 9001 | 9201 |   9301 |
-| `plant-user-http`        | 9002 | 9202 |   9302 |
-| `identify-http`          | 9003 | 9203 |   9303 |
-| `diagnosis-history-http` | 9004 | 9204 |   9304 |
-| `auth-user-http`         | 9005 | 9205 |   9305 |
+| 函数                            | 微信 | 抖音 | 小红书 |
+| ------------------------------- | ---: | ---: | -----: |
+| `diagnose-http`                 | 9000 | 9200 |   9300 |
+| `plant-catalog-http`            | 9001 | 9201 |   9301 |
+| `plant-user-http`               | 9002 | 9202 |   9302 |
+| `identify-http`                 | 9003 | 9203 |   9303 |
+| `diagnosis-history-http`        | 9004 | 9204 |   9304 |
+| `auth-user-http`                | 9005 | 9205 |   9305 |
 | `platform-phone-bootstrap-http` | 9006 | 9206 |   9306 |
-| `weather-http`           | 9007 | 9207 |   9307 |
-| `storage-http`           | 9008 | 9208 |   9308 |
-| `subscription-http`      | 9009 | 9209 |   9309 |
+| `weather-http`                  | 9007 | 9207 |   9307 |
+| `storage-http`                  | 9008 | 9208 |   9308 |
+| `subscription-http`             | 9009 | 9209 |   9309 |
 
 事实源：`scripts/dev/local-functions-gateway.mjs` 与 `scripts/dev/run-local-api-env.mjs`。
 
@@ -423,6 +423,15 @@ npm run check:cloudfunction-quality
 已生成入口在本地前置条件响应上保持一致，并固定主诊断函数与两个专用函数的重叠路由归属；
 `check:http-function-paths` 会核对前端调用路径与云函数路由配置，动态拼接路径只报告未解析项；
 `check:sensitive-logs` 以报告模式扫描请求体、请求头、凭据和原始 SQL 等高风险日志，不阻断发布。
+
+`diagnose-http` 禁止把“代码已上传到 `$LATEST`”当成发布完成。统一发布脚本会继续执行：
+发布不可变数字版本、校验 `$LATEST`/新版本/`$DEFAULT` 的 `CodeSha256` 三方一致、切换
+`$DEFAULT`、请求公开 `/health`，并从 CLS 回读真实网关日志中的 `alias=$DEFAULT` 与
+`qualifier=新版本`。任一步失败，部署清单记为 `failed`；若别名已经切换，脚本会自动回退到
+部署前版本。存在灰度路由时脚本直接停止，禁止静默覆盖。单函数发布必须使用
+`npm run deploy:function -- diagnose-http`，该兼容入口同样转入统一门禁；不得直接执行
+`fn code update` 后宣称完成。非默认环境须显式提供 `--region` 和
+`--runtime-base-url=https://...`。
 
 小程序 CI 发布：
 

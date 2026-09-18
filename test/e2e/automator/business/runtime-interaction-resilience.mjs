@@ -12,7 +12,6 @@ import {
   safeDisconnect
 } from '../care/watering/transpiration-v3/_shared/lib/automator-client.mjs'
 import {
-  findByIdPrefix,
   findViewById,
   tapStableElement,
   waitForElement
@@ -129,36 +128,10 @@ async function readScrollMetric(scroll, method, property) {
   }
 }
 
-async function waitForFirstByIdPrefix(page, prefix, timeoutMs = WAIT_MS) {
-  const deadline = Date.now() + timeoutMs
-  while (Date.now() < deadline) {
-    const match = await findByIdPrefix(page, prefix)
-    if (match?.element) {
-      return match.element
-    }
-    await sleep(300)
-  }
-  return null
-}
-
-async function waitForSwiperStep(page, expectedStep, timeoutMs = WAIT_MS) {
-  const deadline = Date.now() + timeoutMs
-  while (Date.now() < deadline) {
-    const swiper = await findViewById(page, 'add-plant-swiper')
-    const current = swiper ? Number(await swiper.property('current').catch(() => -1)) : -1
-    if (current === expectedStep) {
-      return true
-    }
-    await sleep(300)
-  }
-  return false
-}
-
 async function scrollRapidly(page, report) {
   const scrollViews = await page.$$('scroll-view').catch(() => [])
   assertCondition(report, '添加植物页存在可交互滚动容器', scrollViews.length > 0)
-  const preferredScroll = await findViewById(page, 'add-plant-selection-scroll')
-  const scrollCandidates = preferredScroll ? [preferredScroll] : scrollViews
+  const scrollCandidates = scrollViews
   const candidates = []
   for (const item of scrollCandidates) {
     const size = await item.size()
@@ -184,7 +157,7 @@ async function scrollRapidly(page, report) {
   const isHorizontal = scroll.scrollWidth > scroll.width + 1
   const scrollExtent = isHorizontal ? scroll.scrollWidth : scroll.scrollHeight
   const viewportExtent = isHorizontal ? scroll.width : scroll.height
-  assertCondition(report, '添加植物列表滚动尺寸可读', scrollExtent >= viewportExtent)
+  assertCondition(report, '添加植物页滚动尺寸可读', scrollExtent >= viewportExtent)
   const positions = [0.18, 0.46, 0.78, 1].map(ratio => Math.round(scrollExtent * ratio))
   for (const position of positions) {
     await scroll.item.scrollTo(isHorizontal ? position : 0, isHorizontal ? 0 : position)
@@ -323,20 +296,11 @@ async function main() {
       createPageCount === 1,
       JSON.stringify(stack)
     )
+    assertCondition(report, '建档页表单可见', Boolean(await findViewById(create, 'add-plant-form')))
     assertCondition(
       report,
-      '建档页根节点可见',
-      Boolean(await findViewById(create, 'add-plant-swiper'))
-    )
-    const createCard = await waitForFirstByIdPrefix(create, 'add-plant-card-')
-    assertCondition(report, '建档页存在可选植物卡片', Boolean(createCard))
-    await tapStableElement(createCard)
-    await sleep(250)
-    assertCondition(
-      report,
-      '建档页点击植物卡片后信息步骤已激活',
-      await waitForSwiperStep(create, 1),
-      'swiper.current 未稳定为 1'
+      '建档页存在 AI 植物身份入口',
+      Boolean(await findViewById(create, 'add-plant-ai-identify-button'))
     )
     const infoScrollEvidence = await scrollInfoStepToBottom(create, report)
     recordAssertion(

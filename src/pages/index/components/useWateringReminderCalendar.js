@@ -110,6 +110,27 @@ export function useWateringReminderCalendar({
         }
       }
 
+      // 湿土不在盆土检查页拦截；用户真正保存日历提醒时再确认一次。
+      if (
+        !pendingReminderSavePayload.value &&
+        plannerResult.value?.visualSoilEvidence?.wetHold === true
+      ) {
+        const confirmed = await new Promise(resolve => {
+          uni.showModal({
+            title: '盆土仍然湿润',
+            content: '模型判断盆土仍湿润，强烈不建议立即浇水。仍要设置这次日历提醒吗？',
+            cancelText: '暂不设置',
+            confirmText: '仍然设置',
+            confirmColor: '#2d7a4f',
+            success: result => resolve(Boolean(result.confirm)),
+            fail: () => resolve(false)
+          })
+        })
+        if (!confirmed) {
+          return
+        }
+      }
+
       loading.value = true
       try {
         if (!pendingReminderSavePayload.value) {

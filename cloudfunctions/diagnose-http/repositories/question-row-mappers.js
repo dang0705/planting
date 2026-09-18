@@ -182,21 +182,7 @@ function mapOptionRow(row = {}) {
   }
 }
 
-function mapStrategyRow(row = {}) {
-  return {
-    problemKey: row.problem_key,
-    questionGroupKey: row.question_group_key || '',
-    questionKey: row.question_key,
-    priorityScore: Number(row.priority_score || 0),
-    triggerType: row.trigger_type || 'candidate',
-    strategyNoteCn: row.strategy_note_cn || '',
-    dataStatus: row.data_status || 'unknown',
-    reviewStatus: row.review_status || 'unknown'
-  }
-}
-
 module.exports = {
   mapQuestionRow,
-  mapOptionRow,
-  mapStrategyRow
+  mapOptionRow
 }

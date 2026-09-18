@@ -68,6 +68,16 @@ function buildVisualModelBusinessData(aiDebug = []) {
   }))
 }
 
+function buildModelPromptText(aiDebug = []) {
+  // 调试合同：前端只接收模型已实际使用的纯文本 prompt；禁止透传图片 URL、Base64 或请求元数据。
+  // 多图诊断会产生多次视觉调用；本字段保留首张图的完整格式化 prompt，和当前前端单条审计日志一一对应。
+  return (
+    (Array.isArray(aiDebug) ? aiDebug : [])
+      .map(item => String(item?.formattedPrompt || item?.promptAudit?.promptText || '').trim())
+      .find(Boolean) || ''
+  )
+}
+
 function isDebugObject(value) {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value))
 }
@@ -225,6 +235,7 @@ function buildVisualDebugPayload(executed = {}, frontendData = {}) {
     buildVisualUsageFromModelBusinessData(modelBusinessData)
   return {
     tokenUsage: tokenUsage || null,
+    modelPromptText: buildModelPromptText(modelBusinessData),
     modelBusinessData: buildVisualModelBusinessData(modelBusinessData),
     finalVisualEvidenceData:
       frontendData?.visualAggregateSummary ||

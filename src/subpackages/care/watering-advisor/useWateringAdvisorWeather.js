@@ -1,5 +1,10 @@
 import { computed, ref } from 'vue'
-import { getEnvironmentWeatherWindow } from '@/api/weather.js'
+import {
+  checkLocationPermission,
+  getCurrentLocation,
+  getEnvironmentWeatherWindow,
+  requestLocationPermission
+} from '@/api/weather.js'
 import {
   resolveWeatherLocation,
   todayStr
@@ -20,6 +25,10 @@ export function useWateringAdvisorWeather({ selectedCatalogPlant, plantStore, us
   const weatherDays = ref([])
   const forecastDays = ref([])
   const weatherLocationKey = ref('')
+  const locationPermissionStatus = ref('notChecked')
+  const userLocationReady = ref(false)
+  const weatherEntryPrepared = ref(false)
+  let weatherEntryRequest = null
   let requestVersion = 0
 
   function clearWeather() {
@@ -66,13 +75,18 @@ export function useWateringAdvisorWeather({ selectedCatalogPlant, plantStore, us
           locationKey: plantCareLocation.locationKey || ''
         }
       : userStore.location
+    if (!plantCareLocation && !userLocationReady.value) {
+      if (version === requestVersion) {
+        clearWeather()
+      }
+      return false
+    }
     const location = resolveWeatherLocation(locationSource)
     if (!location) {
       if (version === requestVersion) {
         clearWeather()
       }
-      uni.showToast({ title: '未获取到定位，建议将使用默认天气', icon: 'none' })
-      return
+      return false
     }
     try {
       const window = await getEnvironmentWeatherWindow({
@@ -93,11 +107,58 @@ export function useWateringAdvisorWeather({ selectedCatalogPlant, plantStore, us
       weatherLocationKey.value = String(
         window?.locationKey || window?.location?.locationKey || ''
       ).trim()
+      return true
     } catch {
       if (version === requestVersion) {
         clearWeather()
       }
+      return false
     }
+  }
+
+  async function prepareWeatherOnEntry() {
+    if (weatherEntryRequest) {
+      return weatherEntryRequest
+    }
+    if (weatherEntryPrepared.value) {
+      return locationPermissionStatus.value === 'authorized'
+    }
+
+    weatherEntryRequest = (async () => {
+      try {
+        const permissionStatus = await checkLocationPermission()
+        if (permissionStatus !== 'authorized') {
+          const granted = await requestLocationPermission()
+          if (!granted) {
+            locationPermissionStatus.value = 'denied'
+            clearWeather()
+            return false
+          }
+        }
+
+        locationPermissionStatus.value = 'authorized'
+        const locationData = await getCurrentLocation()
+        userStore.setLocation({
+          province: locationData.province || '',
+          city: locationData.city || '',
+          latitude: locationData.latitude,
+          longitude: locationData.longitude
+        })
+        userLocationReady.value = true
+        await loadWeatherDays()
+        return true
+      } catch {
+        locationPermissionStatus.value = 'unavailable'
+        userLocationReady.value = false
+        clearWeather()
+        return false
+      } finally {
+        weatherEntryPrepared.value = true
+        weatherEntryRequest = null
+      }
+    })()
+
+    return weatherEntryRequest
   }
 
   function resetWeatherDays() {
@@ -111,6 +172,8 @@ export function useWateringAdvisorWeather({ selectedCatalogPlant, plantStore, us
     weatherLocationKey,
     plannerLocationKey,
     loadWeatherDays,
-    resetWeatherDays
+    resetWeatherDays,
+    prepareWeatherOnEntry,
+    locationPermissionStatus
   }
 }

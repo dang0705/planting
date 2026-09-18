@@ -1,5 +1,10 @@
 import { computed, ref } from 'vue'
-import { getEnvironmentWeatherWindow } from '@/api/weather.js'
+import {
+  checkLocationPermission,
+  getCurrentLocation,
+  getEnvironmentWeatherWindow,
+  requestLocationPermission
+} from '@/api/weather.js'
 import { estimatePotVolumeMl, formatMlRangeToBottleText } from '@/utils/water-volume-format.js'
 import {
   mergeEnvironmentWeatherWindowIntoCareBehaviorTimeline,
@@ -39,6 +44,9 @@ export function useWateringReminderPlanner({
   const weatherError = ref('')
   const plannerError = ref('')
   const loading = ref(false)
+  const locationPermissionStatus = ref('notChecked')
+  const weatherEntryPrepared = ref(false)
+  let weatherEntryRequest = null
   let weatherRequestSequence = 0
   let plannerRequestSequence = 0
 
@@ -101,14 +109,67 @@ export function useWateringReminderPlanner({
     weatherDays.value = []
     forecastDays.value = []
     environmentWeatherWindow.value = null
+    locationPermissionStatus.value = 'notChecked'
+    weatherEntryPrepared.value = false
+  }
+
+  async function prepareWeatherLocation() {
+    if (weatherEntryRequest) {
+      return weatherEntryRequest
+    }
+    if (weatherEntryPrepared.value) {
+      return locationPermissionStatus.value === 'authorized'
+    }
+
+    weatherEntryRequest = (async () => {
+      try {
+        const permissionStatus = await checkLocationPermission()
+        if (permissionStatus !== 'authorized') {
+          const granted = await requestLocationPermission()
+          if (!granted) {
+            locationPermissionStatus.value = 'denied'
+            return false
+          }
+        }
+
+        const locationData = await getCurrentLocation()
+        userStore.setLocation({
+          province: locationData.province || '',
+          city: locationData.city || '',
+          latitude: locationData.latitude,
+          longitude: locationData.longitude
+        })
+        locationPermissionStatus.value = 'authorized'
+        return true
+      } catch {
+        locationPermissionStatus.value = 'unavailable'
+        return false
+      } finally {
+        weatherEntryPrepared.value = true
+        weatherEntryRequest = null
+      }
+    })()
+
+    return weatherEntryRequest
   }
 
   async function loadWeatherDays() {
+    const locationReady = await prepareWeatherLocation()
     // D0 与 forecast 必须同源：优先用 plant.careLocation 拉 weather window，
     // 否则会出现 D0 用 plant location、forecast 用 user GPS 的拼接错位，corrupting 摘要。
     // plant 无 careLocation 时 fallback 到 userStore.location（此时 D0 也用 user location，保持同源）。
     const plantId = currentPlantId()
     const requestSequence = ++weatherRequestSequence
+    if (!locationReady) {
+      if (isCurrentRequest(requestSequence, weatherRequestSequence, plantId)) {
+        hasWeatherRef.value = false
+        weatherDays.value = []
+        forecastDays.value = []
+        environmentWeatherWindow.value = null
+        weatherError.value = '允许位置权限后，才能加载天气参考；日期仍可继续填写。'
+      }
+      return false
+    }
     const plantCareLocation = props.plant?.careLocation || null
     const plantLocationSource = plantCareLocation
       ? {
@@ -149,6 +210,7 @@ export function useWateringReminderPlanner({
       forecastDays.value = window?.forecastDays || window?.forecast_days || []
       hasWeatherRef.value = weatherDays.value.length > 0 || forecastDays.value.length > 0
       weatherError.value = resolveEnvironmentWeatherWindowNotice(window)
+      return true
     } catch {
       if (!isCurrentRequest(requestSequence, weatherRequestSequence, plantId)) {
         return
@@ -158,6 +220,7 @@ export function useWateringReminderPlanner({
       forecastDays.value = []
       hasWeatherRef.value = false
       weatherError.value = '暂时无法获取天气，日期仍可继续填写。'
+      return false
     } finally {
       if (isCurrentRequest(requestSequence, weatherRequestSequence, plantId)) {
         weatherLoading.value = false
@@ -184,7 +247,10 @@ export function useWateringReminderPlanner({
         timezone: plannerTimezone.value,
         airEnvironmentOverride: props.plant?.airEnvironment?.input || null,
         soilEvidenceId: String(soilEvidence?.value?.evidenceId || '').trim(),
-        manualSoilConfirmed: soilEvidence?.value?.manualSoilConfirmed === true
+        manualSoilConfirmed: soilEvidence?.value?.manualSoilConfirmed === true,
+        // 视觉明确判干时，阶段组件会把 dry 作为可信覆盖值传回；不能只提交
+        // evidenceId，否则服务端只能退回“还要再摸土”的旧分支。
+        soilMoistureOverride: String(soilEvidence?.value?.soilMoistureOverride || '').trim()
       })
       if (!isCurrentRequest(requestSequence, plannerRequestSequence, plantId)) {
         return

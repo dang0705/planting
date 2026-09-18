@@ -7,6 +7,7 @@ import {
   normalizeDisplayEvidenceItem,
   useQuestionPackageResultView
 } from '../../../../../../src/subpackages/diagnosis/question-package/result-view.js'
+import { normalizeHistoryDetail } from '../../../../../../src/subpackages/diagnosis/http-functions/diagnose/client-history-detail.js'
 
 const getActionAdvice = outcome => outcome.actionAdviceItems
 
@@ -96,6 +97,60 @@ const sharedProfileGroups = buildOutcomeAdviceGroups({
 assert.equal(sharedProfileGroups.length, 1)
 assert.equal(sharedProfileGroups[0].key, 'action_nutrient_support_basic')
 assert.equal(sharedProfileGroups[0].displayLabel, '新叶脉间黄化、长期营养不足')
+
+const historicalSameTextGroups = useQuestionPackageResultView({
+  result: ref(
+    normalizeHistoryDetail({
+      diagnosisSessionId: 'history_same_advice',
+      finalResult: { displayName: '虫害方向' },
+      visibleOutcomes: [
+        {
+          outcomeKey: 'spider_mite',
+          displayNameCn: '可能是红蜘蛛（叶螨）',
+          symptomLabels: ['叶面密集黄白小点'],
+          actionAdviceItems: ['先隔离植株，重点检查叶背、嫩梢和茎部，避免马上混用药剂。'],
+          avoidAdviceItems: ['不要把普通黄叶或发蔫直接当作虫害原处理。']
+        },
+        {
+          outcomeKey: 'thrips',
+          displayNameCn: '可能是蓟马',
+          symptomLabels: ['银灰条斑附近可见细小黑点'],
+          actionAdviceItems: ['先隔离植株，重点检查叶背、嫩梢和茎部，避免马上混用药剂。'],
+          avoidAdviceItems: ['不要把普通黄叶或发蔫直接当作虫害原处理。']
+        }
+      ]
+    })
+  ),
+  payload: ref({})
+})
+assert.equal(
+  historicalSameTextGroups.actionAdviceGroups.value.length,
+  1,
+  '历史结果缺少主键但建议完全相同时，建议应归并为一组'
+)
+assert.equal(
+  historicalSameTextGroups.avoidAdviceGroups.value.length,
+  1,
+  '历史结果缺少主键但暂时避免完全相同时，暂时避免应归并为一组'
+)
+assert.equal(
+  historicalSameTextGroups.actionAdviceGroups.value[0].displayLabel,
+  '叶面密集黄白小点、银灰条斑附近可见细小黑点',
+  '归并后的建议应列举对应症状'
+)
+assert.equal(
+  historicalSameTextGroups.avoidAdviceGroups.value[0].displayLabel,
+  '叶面密集黄白小点、银灰条斑附近可见细小黑点',
+  '归并后的暂时避免应列举对应症状'
+)
+assert.deepEqual(
+  historicalSameTextGroups.actionAdviceGroups.value[0].items,
+  ['先隔离植株，重点检查叶背、嫩梢和茎部，避免马上混用药剂。']
+)
+assert.deepEqual(
+  historicalSameTextGroups.avoidAdviceGroups.value[0].items,
+  ['不要把普通黄叶或发蔫直接当作虫害原处理。']
+)
 
 const resultComponentSource = readFileSync(
   'src/subpackages/diagnosis/question-package/QuestionPackageResult.vue',

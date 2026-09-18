@@ -6,7 +6,7 @@ import { readPagesManifest } from '../../../helpers/pages-manifest.mjs'
 const repoRoot = process.cwd()
 const pagesConfig = readPagesManifest(repoRoot)
 const manifestSource = fs.readFileSync(path.join(repoRoot, 'src/manifest.json'), 'utf8')
-const profileSource = fs.readFileSync(path.join(repoRoot, 'src/pages/profile/profile.vue'), 'utf8')
+const gardenSource = fs.readFileSync(path.join(repoRoot, 'src/pages/garden/garden.vue'), 'utf8')
 const reviewRoot = path.join(repoRoot, 'src/subpackages/review')
 const reviewPackage = pagesConfig.subPackages?.find(item => item.root === 'subpackages/review')
 
@@ -38,10 +38,11 @@ for (const page of reviewPackage.pages) {
     `subpackage source page is missing: ${page.path}`
   )
 }
-assert.doesNotMatch(profileSource, /\/subpackages\/review\//)
-assert.match(profileSource, /url:\s*'\/pages\/index\/index'/)
+assert.doesNotMatch(gardenSource, /\/subpackages\/review\//)
+assert.match(gardenSource, /<UserPlantsSection ref="userPlantsRef" \/>/)
+assert.doesNotMatch(gardenSource, /url:\s*'\/pages\/index\/index'/)
 assert.doesNotMatch(
-  profileSource,
+  gardenSource,
   /\/pages\/profile\/(?:out-of-pool-review|diagnosis-review|watering-review)/
 )
 assert.doesNotMatch(

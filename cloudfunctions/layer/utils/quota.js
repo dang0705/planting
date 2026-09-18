@@ -1,7 +1,7 @@
 /**
  * 用户配额管理工具
  * 根据 tiers.csv 实现三级用户体系：
- * - free: 诊断3次/天, 聊天5次/天, 月上限90次诊断
+ * - free: 诊断3次/天, 聊天20次/天, 月上限90次诊断
  * - basic: 无限诊断+聊天
  * - premium: 无限 + 优先队列
  */
@@ -13,7 +13,7 @@ const QUOTA_CONFIG = {
   free: {
     diagnoseDaily: -1,  // 不限制每日次数
     identifyDaily: -1,  // 识别和诊断共享月度配额
-    chatDaily: -1,      // 不限制聊天
+    chatDaily: 20,      // 免费用户每日 20 轮聊天
     diagnoseMonthly: 5  // 每月 5 次免费诊断（产品定义）
   },
   basic: {

@@ -22,9 +22,21 @@ import {
 import { executePatchUserPlantAirEnvironmentMutation } from '@/vue-query/plants/mutations/air-environment.js'
 import { resolvePayloadCareLocation } from '@/utils/plant-care-location.js'
 import { requestHttpFunction } from '@/api/http.js'
+import { getCurrentMiniProgramPlatform } from '@/utils/platform-capabilities.js'
 
 export function fetchPlantCatalog(keyword = '', page = 1, pageSize = 10) {
   return fetchPlantCatalogQuery(keyword, page, pageSize)
+}
+
+export function fetchPlantCatalogDetail(plantId) {
+  const platform = getCurrentMiniProgramPlatform()
+  return requestHttpFunction('plant-catalog-http/catalog/plants', {
+    query: {
+      plantId: String(plantId || '').trim(),
+      ...(platform !== 'unknown' ? { platform } : {})
+    },
+    auth: true
+  })
 }
 
 export function mapPlantCatalog(keyword) {

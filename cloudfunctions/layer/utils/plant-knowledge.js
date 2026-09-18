@@ -10,12 +10,6 @@ async function runUserPlantReadSql(sql, params = {}) {
   return models.$runSQL(sql, params)
 }
 
-async function runUserPlantReadSqlBatch(statements = []) {
-  return Promise.all(
-    statements.map(statement => models.$runSQL(statement.sql, statement.params || {}))
-  )
-}
-
 let plantImages
 function loadPlantImages() {
   if (!plantImages) {
@@ -808,10 +802,6 @@ async function createUserPlantInstance({
   potProfileConfidence = 'low',
   photos = null
 }) {
-  const ownedTemporaryPhotoFileIds = await loadPlantImages().assertOwnedTemporaryPlantImages({
-    openid,
-    fileIds: photos
-  })
   let plant = null
   const normalizedPlantId = normalizeNullableString(plantId)
   const normalizedPlantIdentityId = normalizeNullableString(plantIdentityId)
@@ -861,6 +851,21 @@ async function createUserPlantInstance({
   if (lookupCandidates.length && !plant) {
     throw new Error('植物目录中不存在该 identity / plantId')
   }
+
+  // 目录封面属于公共目录资源，不是当前用户上传的临时图片。
+  // 旧客户端可能会把它混入 photos；过滤后只对用户图片做归属校验和绑定。
+  const catalogImageFileId = normalizeNullableString(plant?.imageFileId)
+  const normalizedPhotoFileIds = Array.from(
+    new Set(
+      (Array.isArray(photos) ? photos : [])
+        .map(value => normalizeNullableString(value))
+        .filter(fileId => fileId && fileId !== catalogImageFileId)
+    )
+  )
+  const ownedTemporaryPhotoFileIds = await loadPlantImages().assertOwnedTemporaryPlantImages({
+    openid,
+    fileIds: normalizedPhotoFileIds
+  })
 
   if (plant) {
     matchedPlantId =
@@ -938,7 +943,7 @@ async function createUserPlantInstance({
     substrateType: normalizeNullableString(substrateType) || 'unknown',
     potProfileSource: normalizeNullableString(potProfileSource) || 'default',
     potProfileConfidence: normalizeNullableString(potProfileConfidence) || 'low',
-    photos: photos ? JSON.stringify(photos) : null,
+    photos: normalizedPhotoFileIds.length ? JSON.stringify(normalizedPhotoFileIds) : null,
     plantGenus,
     plantFamilyEn,
     plantLatinName
@@ -1284,7 +1289,8 @@ async function getUserPlantInstanceById(openid, id) {
   const [plant, wateringEvents, fertilizationHistory] = await Promise.all([
     plantLookupId ? getPlantCatalogById(plantLookupId) : Promise.resolve(null),
     getUserPlantWateringEvents(openid, id),
-    loadFertilizationHistory().getUserPlantFertilizationHistory(models, openid, id)
+    loadFertilizationHistory()
+      .getUserPlantFertilizationHistory(models, openid, id)
       .then(events => ({ events, status: 'available' }))
       .catch(error => ({
         events: null,
@@ -1483,263 +1489,6 @@ const USER_PLANT_CATALOG_LOOKUP_SQL = `COALESCE(
   NULLIF(NULLIF(NULLIF(TRIM(up.plant_id), ''), 'null'), 'undefined') COLLATE utf8mb4_unicode_ci,
   NULLIF(NULLIF(NULLIF(TRIM(up.session_plant_id), ''), 'null'), 'undefined') COLLATE utf8mb4_unicode_ci
 )`
-
-function buildUserPlantIdInClause(ids = []) {
-  return Array.from(
-    new Set((Array.isArray(ids) ? ids : []).map(Number).filter(Number.isInteger))
-  ).join(',')
-}
-
-function mapFirstByPlantId(rows, key) {
-  const map = new Map()
-  for (const row of rows || []) {
-    const plantId = Number(row?.[key])
-    if (!Number.isInteger(plantId) || map.has(plantId)) {
-      continue
-    }
-    map.set(plantId, row)
-  }
-  return map
-}
-
-function buildUserPlantCareReadStatement(openid, plantIds = []) {
-  const inClause = buildUserPlantIdInClause(plantIds)
-  if (!inClause) {
-    return null
-  }
-  return {
-    sql: `
-      SELECT id, _openid, plant_id, user_id, location_key, city_name, latitude, longitude,
-             weather_location, source
-      FROM (
-        SELECT id, _openid, plant_id, user_id, location_key, city_name, latitude, longitude,
-               weather_location, source,
-               ROW_NUMBER() OVER (PARTITION BY plant_id ORDER BY updated_at DESC, id DESC) AS row_rank
-        FROM plant_care_locations
-        WHERE _openid = {{openid}} AND plant_id IN (${inClause})
-      ) latest_care
-      WHERE row_rank = 1
-    `,
-    params: { openid }
-  }
-}
-
-function buildUserPlantWateringReminderReadStatement(openid, plantIds = []) {
-  const inClause = buildUserPlantIdInClause(plantIds)
-  if (!inClause) {
-    return null
-  }
-  return {
-    sql: `
-      SELECT id, user_plant_id, plan_id, reminder_type, status, last_watered,
-             next_water_date, next_time, created_at, updated_at
-      FROM (
-        SELECT id, user_plant_id, plan_id, reminder_type, status, last_watered,
-               next_water_date, next_time, created_at, updated_at,
-               ROW_NUMBER() OVER (PARTITION BY user_plant_id ORDER BY next_time DESC, created_at DESC, id DESC) AS row_rank
-        FROM user_watering_reminder_events
-        WHERE _openid = {{openid}}
-          AND user_plant_id IN (${inClause})
-          AND reminder_type = 'water'
-          AND status = 'active'
-      ) latest_watering
-      WHERE row_rank = 1
-    `,
-    params: { openid }
-  }
-}
-
-function buildUserPlantFertilizationReminderReadStatement(openid, plantIds = []) {
-  const inClause = buildUserPlantIdInClause(plantIds)
-  if (!inClause) {
-    return null
-  }
-  return {
-    sql: `
-      SELECT id, user_plant_id, plan_id, status, reminder_kind, fertilizer_type, rule_month,
-             last_applied_date, last_date_source, next_check_date, next_time,
-             completed_date, expires_at, created_at, updated_at
-      FROM (
-        SELECT id, user_plant_id, plan_id, status, reminder_kind, fertilizer_type, rule_month,
-               last_applied_date, last_date_source, next_check_date, next_time,
-               completed_date, expires_at, created_at, updated_at,
-               ROW_NUMBER() OVER (PARTITION BY user_plant_id ORDER BY created_at DESC, id DESC) AS row_rank
-        FROM user_fertilization_reminder_events
-        WHERE _openid = {{openid}}
-          AND user_plant_id IN (${inClause})
-          AND status = 'active'
-      ) latest_fertilization
-      WHERE row_rank = 1
-    `,
-    params: { openid }
-  }
-}
-
-function buildUserPlantLatestDiagnosisReadStatement(openid, plantIds = []) {
-  const inClause = buildUserPlantIdInClause(plantIds)
-  if (!inClause) {
-    return null
-  }
-  return {
-    sql: `
-      SELECT user_plant_id, health_status, health_score
-      FROM (
-        SELECT user_plant_id, health_status, health_score,
-               ROW_NUMBER() OVER (PARTITION BY user_plant_id ORDER BY created_at DESC, diagnosis_id DESC) AS row_rank
-        FROM diagnosis_sessions
-        WHERE _openid = {{openid}} AND user_plant_id IN (${inClause})
-      ) latest_diagnosis
-      WHERE row_rank = 1
-    `,
-    params: { openid }
-  }
-}
-
-async function listUserPlantCareRows(openid, plantIds = []) {
-  const statement = buildUserPlantCareReadStatement(openid, plantIds)
-  if (!statement) {
-    return []
-  }
-  const result = await runUserPlantReadSql(statement.sql, statement.params)
-  return result?.data?.executeResultList || []
-}
-
-async function listUserPlantWateringReminderRows(openid, plantIds = []) {
-  const statement = buildUserPlantWateringReminderReadStatement(openid, plantIds)
-  if (!statement) {
-    return []
-  }
-  const result = await runUserPlantReadSql(statement.sql, statement.params)
-  return result?.data?.executeResultList || []
-}
-
-async function listUserPlantFertilizationReminderRows(openid, plantIds = []) {
-  const statement = buildUserPlantFertilizationReminderReadStatement(openid, plantIds)
-  if (!statement) {
-    return []
-  }
-  const result = await runUserPlantReadSql(statement.sql, statement.params)
-  return result?.data?.executeResultList || []
-}
-
-async function listUserPlantLatestDiagnosisRows(openid, plantIds = []) {
-  const statement = buildUserPlantLatestDiagnosisReadStatement(openid, plantIds)
-  if (!statement) {
-    return []
-  }
-  const result = await runUserPlantReadSql(statement.sql, statement.params)
-  return result?.data?.executeResultList || []
-}
-
-async function listUserPlantInstancesWithEnrichmentsFast(openid, { page = 1, pageSize = 20 } = {}) {
-  const limit = Math.max(1, Number(pageSize) || 20)
-  const normalizedPage = Math.max(1, Number(page) || 1)
-  const offset = (normalizedPage - 1) * limit
-  const displayableIdentityCondition = displayableUserPlantSqlCondition('up')
-  const baseSql = `
-    SELECT
-      up.id,
-      up.record_version,
-      up.plant_id,
-      up.plant_identity_id,
-      up.session_plant_id,
-      up.canonical_name,
-      up.recognized_name,
-      up.source_type,
-      up.recognition_type,
-      up.recognition_confidence,
-      up.identity_resolution_status,
-      up.visual_call_batch_id,
-      up.nickname,
-      up.location,
-      up.plant_date,
-      up.notes,
-      CAST(up.light_environment_json AS CHAR) AS light_environment_json_text,
-      CAST(up.air_environment_json AS CHAR) AS air_environment_json_text,
-      up.photos,
-      up.last_watered,
-      up.next_water,
-      up.created_at,
-      up.plant_genus,
-      up.plant_family_en,
-      up.plant_latin_name,
-      up.pot_top_diameter_cm,
-      up.pot_bottom_diameter_cm,
-      up.pot_height_cm,
-      up.has_drainage_hole,
-      up.pot_material,
-      up.substrate_type,
-      up.pot_profile_version,
-      up.pot_profile_source,
-      up.pot_profile_confidence,
-      COUNT(*) OVER() AS total_count
-    FROM user_plant_instances up
-    WHERE up._openid = {{openid}}
-      AND ${displayableIdentityCondition}
-    ORDER BY up.created_at DESC, up.id DESC
-    LIMIT {{limit}} OFFSET {{offset}}
-  `
-  const baseResult = await runUserPlantReadSql(baseSql, { openid, limit, offset })
-  const rows = (baseResult?.data?.executeResultList || []).filter(hasDisplayableUserPlantIdentity)
-  let total = Number(rows[0]?.total_count || 0)
-  if (!rows.length) {
-    const countResult = await runUserPlantReadSql(
-      `
-        SELECT COUNT(*) AS total
-        FROM user_plant_instances up
-        WHERE up._openid = {{openid}}
-          AND ${displayableIdentityCondition}
-      `,
-      { openid }
-    )
-    total = Number(countResult?.data?.executeResultList?.[0]?.total || 0)
-  }
-  const plantIds = rows.map(row => Number(row.id)).filter(Number.isInteger)
-  const catalogIds = Array.from(new Set(rows.map(resolveUserPlantCatalogLookupId).filter(Boolean)))
-  const catalogPlan = preparePlantCatalogRead(catalogIds, { summary: true })
-  const enrichmentStatements = [
-    catalogPlan.statement,
-    buildUserPlantCareReadStatement(openid, plantIds),
-    buildUserPlantWateringReminderReadStatement(openid, plantIds),
-    buildUserPlantFertilizationReminderReadStatement(openid, plantIds),
-    buildUserPlantLatestDiagnosisReadStatement(openid, plantIds)
-  ].filter(Boolean)
-  const enrichmentResults = await runUserPlantReadSqlBatch(enrichmentStatements)
-  let enrichmentResultIndex = 0
-  const catalogMap = catalogPlan.statement
-    ? applyPlantCatalogReadResult(catalogPlan, enrichmentResults[enrichmentResultIndex++])
-    : catalogPlan.resultMap
-  const careRows = enrichmentResults[enrichmentResultIndex++]?.data?.executeResultList || []
-  const wateringRows = enrichmentResults[enrichmentResultIndex++]?.data?.executeResultList || []
-  const fertilizationRows =
-    enrichmentResults[enrichmentResultIndex++]?.data?.executeResultList || []
-  const diagnosisRows = enrichmentResults[enrichmentResultIndex++]?.data?.executeResultList || []
-  const careByPlantId = mapFirstByPlantId(careRows, 'plant_id')
-  const wateringByPlantId = mapFirstByPlantId(wateringRows, 'user_plant_id')
-  const fertilizationByPlantId = mapFirstByPlantId(fertilizationRows, 'user_plant_id')
-  const diagnosisByPlantId = mapFirstByPlantId(diagnosisRows, 'user_plant_id')
-
-  return {
-    list: rows.map(row => {
-      const diagnosis = diagnosisByPlantId.get(Number(row.id)) || {}
-      const item = mapUserPlantInstanceRow(
-        { ...row, health_status: diagnosis.health_status, health_score: diagnosis.health_score },
-        catalogMap.get(resolveUserPlantCatalogLookupId(row)) || null
-      )
-      item.fertilizationMonthly = compactFertilizationMonthlyForList(item.fertilizationMonthly)
-      item.__listEnrichment = {
-        careLocationRow: careByPlantId.get(Number(row.id)) || null,
-        wateringReminderRow: wateringByPlantId.get(Number(row.id)) || null,
-        fertilizationReminderRow: fertilizationByPlantId.get(Number(row.id)) || null
-      }
-      return item
-    }),
-    total,
-    page: normalizedPage,
-    pageSize: limit,
-    hasMore: offset + rows.length < total
-  }
-}
 
 async function listUserPlantInstancesWithEnrichments(openid, { page = 1, pageSize = 20 } = {}) {
   const limit = Math.max(1, Number(pageSize) || 20)
@@ -1987,13 +1736,19 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
   }
 
   const requestedRecordVersion = Number(updates.recordVersion)
-  if (updates.recordVersion !== undefined && (!Number.isInteger(requestedRecordVersion) || requestedRecordVersion < 1)) {
+  if (
+    updates.recordVersion !== undefined &&
+    (!Number.isInteger(requestedRecordVersion) || requestedRecordVersion < 1)
+  ) {
     const error = new Error('植物版本无效')
     error.code = 'USER_PLANT_VERSION_INVALID'
     error.statusCode = 400
     throw error
   }
-  if (updates.recordVersion !== undefined && requestedRecordVersion !== Number(existing.recordVersion || 1)) {
+  if (
+    updates.recordVersion !== undefined &&
+    requestedRecordVersion !== Number(existing.recordVersion || 1)
+  ) {
     const error = new Error('植物信息已在其他设备更新，请刷新后再试')
     error.code = 'USER_PLANT_VERSION_CONFLICT'
     error.statusCode = 409
@@ -2098,8 +1853,7 @@ async function updateUserPlantInstance(openid, id, updates = {}) {
       ${updates.recordVersion !== undefined ? 'AND record_version = {{recordVersion}}' : ''}
     `
     const writeResult = await models.$runSQL(sql, params)
-    const rawAffectedRows =
-      writeResult?.data?.rowsAffected ?? writeResult?.data?.affectedRows
+    const rawAffectedRows = writeResult?.data?.rowsAffected ?? writeResult?.data?.affectedRows
     const affectedRows = rawAffectedRows === undefined ? null : Number(rawAffectedRows)
     if (updates.recordVersion !== undefined && affectedRows === 0) {
       const error = new Error('植物信息已在其他设备更新，请刷新后再试')

@@ -25,16 +25,22 @@ function normalizeProviderName(value = '') {
   return text(value).toLowerCase()
 }
 
-function cloudbaseBuiltinMessagesEndpoint(baseUrl = '') {
+function cloudbaseBuiltinVisionEndpoint(baseUrl = '', envId = '') {
+  // 当前环境的 `cloudbase` 试用入口会把 qwen3.5 请求静默降级到纯文本 hy3，
+  // 导致 image_url 被丢弃。环境中已配置的 aliyun-bailian-custom 才是可用的视觉入口。
+  // 仍允许显式传入完整地址，便于测试和其他环境按同一协议接入。
   try {
-    const endpoint = new URL(baseUrl)
-    const pathname = endpoint.pathname.replace(/\/+$/, '')
-    if (pathname === '/v1/ai/cloudbase' || pathname === '/v1/ai/cloudbase/chat/completions') {
-      endpoint.pathname = '/v1/ai/cloudbase/v1/messages'
-    } else {
-      endpoint.pathname = pathname
+    if (text(baseUrl)) {
+      const endpoint = new URL(baseUrl)
+      const pathname = endpoint.pathname.replace(/\/+$/, '')
+      endpoint.pathname = pathname.endsWith('/chat/completions')
+        ? pathname
+        : `${pathname}/chat/completions`
+      return endpoint.toString()
     }
-    return endpoint.toString()
+    const resolvedEnvId = text(envId)
+    if (!resolvedEnvId) return ''
+    return `https://${resolvedEnvId}.api.tcloudbasegateway.com/v1/ai/aliyun-bailian-custom/chat/completions`
   } catch {
     return ''
   }
@@ -47,16 +53,11 @@ function openAiChatEndpoint(baseUrl = '') {
 
 function cloudbaseEndpoint({ envId = '', cloudbaseAi = {} } = {}) {
   const configuredBaseUrl = text(cloudbaseAi.baseUrl)
-  if (configuredBaseUrl) {
-    return (
-      cloudbaseBuiltinMessagesEndpoint(configuredBaseUrl) || configuredBaseUrl.replace(/\/+$/, '')
-    )
-  }
-  const resolvedEnvId = text(envId)
-  if (!resolvedEnvId) {
+  const endpoint = cloudbaseBuiltinVisionEndpoint(configuredBaseUrl, envId)
+  if (!endpoint) {
     throw new Error('缺少 CloudBase AI HTTP API 环境 ID 配置')
   }
-  return `https://${resolvedEnvId}.api.tcloudbasegateway.com/v1/ai/cloudbase/v1/messages`
+  return endpoint
 }
 
 function aliyunBailianEndpoint({ cloudbaseAi = {} } = {}) {
@@ -100,9 +101,8 @@ const PROVIDER_REGISTRY = Object.freeze({
       'qwen_vl'
     ]),
     logLabel: 'CloudBase AI',
-    httpTimingProvider: 'cloudbase_ai_anthropic',
-    protocol: ANTHROPIC_MESSAGES_PROTOCOL,
-    anthropicVersion: ANTHROPIC_VERSION,
+    httpTimingProvider: 'cloudbase_ai_openai',
+    protocol: OPENAI_CHAT_COMPLETIONS_PROTOCOL,
     timeoutCode: 'cloudbase_ai_timeout',
     defaultModel: 'qwen3.5-flash',
     endpoint: cloudbaseEndpoint,

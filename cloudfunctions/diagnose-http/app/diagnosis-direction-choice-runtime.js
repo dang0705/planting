@@ -80,6 +80,42 @@ function buildSelectedModeAggregate(aggregateResult = null, selectedModeKeys = [
   }
 }
 
+function hasPendingDirectionChoiceRoute(...states) {
+  return states.some(state => {
+    const routeAction = String(
+      state?.routePrimaryAction ||
+        state?.route_primary_action ||
+        state?.runtimeSnapshot?.routePrimaryAction ||
+        state?.runtimeSnapshot?.route_primary_action ||
+        ''
+    )
+      .trim()
+      .toLowerCase()
+    return routeAction === 'choose_direction'
+  })
+}
+
+function restorePendingDirectionChoiceRoute({
+  routeResult = null,
+  fallbackChoices = [],
+  fallbackChoice = null,
+  states = []
+} = {}) {
+  if (
+    routeResult?.nextAction !== 'direct_result' ||
+    !fallbackChoice ||
+    !hasPendingDirectionChoiceRoute(...states)
+  ) {
+    return routeResult
+  }
+  return {
+    ...routeResult,
+    nextAction: 'choose_direction',
+    routePrimaryAction: 'choose_direction',
+    directionChoices: fallbackChoices
+  }
+}
+
 async function buildStaticModeDirectionResult({
   selectedModeKey = '',
   sessionId = '',
@@ -369,6 +405,19 @@ async function resolveDirectionChoiceRoundResult({
       diagnosis_mode_route_result: routeResult
     }
   }
+  const restoredRouteResult = restorePendingDirectionChoiceRoute({
+    routeResult,
+    fallbackChoices,
+    fallbackChoice,
+    states: [refreshedSessionState, sessionState]
+  })
+  if (restoredRouteResult !== routeResult) {
+    routeResult = restoredRouteResult
+    effectiveAggregateResult = {
+      ...(aggregateResult && typeof aggregateResult === 'object' ? aggregateResult : {}),
+      diagnosis_mode_route_result: routeResult
+    }
+  }
   const canRefineCompletedPest =
     routeResult?.nextAction === 'direct_result' && selectedModeKey === PEST_CATEGORY
   if (!routeResult || (routeResult.nextAction !== 'choose_direction' && !canRefineCompletedPest)) {
@@ -432,6 +481,7 @@ module.exports = {
   resolveDirectionChoiceRoundResult,
   _test: {
     buildSelectedModeAggregate,
-    directionChoicesFromRoute
+    directionChoicesFromRoute,
+    restorePendingDirectionChoiceRoute
   }
 }

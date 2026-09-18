@@ -198,6 +198,9 @@ export function useDiagnoseImages(ctx) {
   }
 
   async function chooseImage(slotType = 'other') {
+    if (!(await userStore.ensureLogin({ prompt: true }))) {
+      return
+    }
     const normalizedSlotType = normalizeSlotType(slotType, 'other')
     const slotLimit = getSlotCapacity(PRIMARY_IMAGE_LIMIT)
     if (imageFiles.value.length >= PRIMARY_IMAGE_LIMIT) {
@@ -234,6 +237,9 @@ export function useDiagnoseImages(ctx) {
   }
 
   async function chooseAdditionalImage(slotType = 'whole_plant') {
+    if (!(await userStore.ensureLogin({ prompt: true }))) {
+      return
+    }
     const normalizedSlotType = normalizeSlotType(slotType, 'whole_plant')
     const slotLimit = getSlotCapacity(ADDITIONAL_IMAGE_LIMIT)
     if (additionalImageFiles.value.length >= ADDITIONAL_IMAGE_LIMIT) {

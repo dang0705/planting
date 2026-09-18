@@ -1,7 +1,9 @@
 <template>
   <AirEnvironmentQuestionInput
     :question-id="questionId"
-    :model-value="airEnvironment.getByQuestion(question)"
+    :profile="airEnvironment.profile.value"
+    :draft-state="airEnvironment.getDraftState(question)"
+    :dual-mode="dualMode"
     :show-summary="airEnvironment.isSummaryVisible(question)"
     :editor-open="airEnvironment.isEditorOpen(question)"
     :needs-confirmation="airEnvironment.needsConfirmation(question)"
@@ -12,7 +14,7 @@
     :back-id="backId"
     :completion-label="completionLabel"
     :completion-id="completionId"
-    @change="value => $emit('change', value)"
+    @draft-change="value => $emit('draft-change', value)"
     @unknown="$emit('unknown')"
     @edit="$emit('edit')"
     @confirm="$emit('confirm')"
@@ -27,10 +29,11 @@ import AirEnvironmentQuestionInput from './AirEnvironmentQuestionInput.vue'
 defineProps({
   question: { type: Object, default: () => ({}) },
   questionId: { type: String, default: '' },
+  dualMode: { type: Boolean, default: false },
   airEnvironment: {
     type: Object,
     default: () => ({
-      getByQuestion: () => null,
+      getDraftState: () => null,
       isSummaryVisible: () => false,
       isEditorOpen: () => false,
       needsConfirmation: () => false,
@@ -44,5 +47,5 @@ defineProps({
   completionLabel: { type: String, default: '' },
   completionId: { type: String, default: '' }
 })
-defineEmits(['change', 'unknown', 'edit', 'confirm', 'back', 'complete'])
+defineEmits(['draft-change', 'unknown', 'edit', 'confirm', 'back', 'complete'])
 </script>

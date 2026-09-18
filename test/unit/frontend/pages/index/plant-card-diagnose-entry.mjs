@@ -2,63 +2,56 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 
-// 镜像契约：首页植物卡诊断入口必须以真实、确定性的植物前置条件进入。
-// 只有 plantStore.hasPlants 为真（真实植物存在）时才渲染 PlantCard 与
-// diagnose-entry-button-<plantId>；点击后进入 diagnosis 分包的完整诊断页。
-// 不得改成无植物也显示匿名卡片，也不得在主包重新挂载完整诊断流。
+// 镜像契约：首页只承载常用工具；用户植物卡及其诊断入口统一位于花园 tab 的“我的植物”。
+// 植物卡仍必须以真实 userPlants 渲染，并进入 diagnosis 分包的完整诊断页。
 
 const repoRoot = process.cwd()
 const indexSource = fs.readFileSync(path.join(repoRoot, 'src/pages/index/index.vue'), 'utf8')
+const userPlantsSource = fs.readFileSync(
+  path.join(repoRoot, 'src/components/UserPlantsSection.vue'),
+  'utf8'
+)
 const plantCardSource = fs.readFileSync(
   path.join(repoRoot, 'src/pages/index/components/PlantCard.vue'),
   'utf8'
 )
 const plantsStoreSource = fs.readFileSync(path.join(repoRoot, 'src/store/plants.js'), 'utf8')
 
-// 契约 1：首页必须用 plantStore.hasPlants 作为真实植物前置条件渲染植物列表区域。
-assert.match(
-  indexSource,
-  /v-else-if="!plantStore\.hasPlants"/,
-  'index must gate the empty-state on plantStore.hasPlants (no real plants => no plant card)'
-)
-assert.match(
-  indexSource,
-  /v-else id="index-plant-list"/,
-  'index must render the plant list only when hasPlants is true'
-)
-// 确保植物列表仅在已认证且有植物时渲染，未认证走登录引导，不得出现匿名植物卡。
-assert.match(
-  indexSource,
-  /<template v-if="userStore\.isAuthenticated">[\s\S]*?v-else-if="!plantStore\.hasPlants"/,
-  'plant list must stay behind isAuthenticated + hasPlants, no anonymous plant card'
-)
+// 契约 1：首页只展示 Figma 设计中的常用工具，不能重新挂载用户植物列表。
+assert.match(indexSource, /id="index-common-tools"/)
+assert.match(indexSource, /id="index-tool-diagnosis"/)
+assert.match(indexSource, /id="index-tool-watering"/)
+assert.match(indexSource, /id="index-tool-identify"/)
+assert.doesNotMatch(indexSource, /index-plant-list|<PlantCard|loadUserPlants/)
 
-// 契约 2：首页必须 v-for 真实 userPlants 渲染 PlantCard，并通过 @diagnose 进入诊断分包。
+// 契约 2：“我的植物”必须以真实 userPlants 渲染所有植物卡和真实状态。
+assert.match(userPlantsSource, /v-else-if="!plantStore\.hasPlants"/)
+assert.match(userPlantsSource, /v-else id="garden-my-plants-list"/)
 assert.match(
-  indexSource,
+  userPlantsSource,
   /v-for="plant in plantStore\.userPlants"/,
-  'index must iterate the real plantStore.userPlants to render plant cards'
+  'profile my plants must iterate the real plantStore.userPlants to render plant cards'
 )
 assert.match(
-  indexSource,
+  userPlantsSource,
   /<PlantCard[\s\S]*?:plant="plant"[\s\S]*?@diagnose="openDiagnose"/,
-  'index must bind @diagnose on PlantCard to openDiagnose'
+  'profile my plants must bind @diagnose on PlantCard to openDiagnose'
 )
 assert.match(
-  indexSource,
+  userPlantsSource,
   /function openDiagnose\(plant\) \{[\s\S]*?plantId = encodeURIComponent\(String\(plant\.id\)\)[\s\S]*?subpackages\/diagnosis\/flow\?plantId=/,
   'openDiagnose must navigate with the real user plant id to the diagnosis subpackage'
 )
 
-// 契约 3：首页直接进入承载完整诊断流的分包 flow 页面，并保留目录植物上下文。
-assert.match(indexSource, /plantCatalogId = plant\.plantId/)
-assert.match(indexSource, /entrySource=plant_card/)
-assert.doesNotMatch(indexSource, /DiagnosePopup|diagnosePopupRef/)
+// 契约 3：花园 tab 植物卡直接进入承载完整诊断流的分包 flow 页面，并保留目录植物上下文。
+assert.match(userPlantsSource, /plantCatalogId = plant\.plantId/)
+assert.match(userPlantsSource, /entrySource=plant_card/)
+assert.doesNotMatch(userPlantsSource, /DiagnosePopup|diagnosePopupRef/)
 // 确保没有平行匿名诊断弹窗。
 assert.doesNotMatch(
-  indexSource,
+  userPlantsSource,
   /diagnose_tab_anonymous/,
-  'index must not introduce an anonymous diagnose_tab placeholder plant'
+  'profile my plants must not introduce an anonymous diagnose_tab placeholder plant'
 )
 
 // 契约 4：PlantCard 必须为每株真实植物渲染独立的 diagnose-entry-button-<plant.id>，

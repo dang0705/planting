@@ -57,6 +57,32 @@ try {
   assert.equal(ticketUser?.userId, 'unit_uid')
   assert.equal(ticketUser?.source, 'signed-http-ticket')
 
+  const agentTicket = createHttpIdentityTicket({
+    openid: 'wx_agent_user',
+    uid: 'agent_user_row',
+    subject: 'planting-agent',
+    platform: 'wechat_mp'
+  })
+  assert.equal(
+    (await resolveHttpUserInfo(
+      { 'x-planting-http-identity-ticket': agentTicket },
+      {},
+      null,
+      { allowAgentIdentityTicket: true }
+    ))?.userId,
+    'agent_user_row'
+  )
+  assert.equal(
+    await resolveHttpUserInfo(
+      { 'x-planting-http-identity-ticket': agentTicket },
+      {},
+      null,
+      { allowSignedHttpIdentityTicket: true }
+    ),
+    null,
+    'agent 内部票据不能冒充客户端统一用户票据'
+  )
+
   // 没有统一用户 subject 的旧票据即使签名有效，也只能表示运行时 openid，
   // 不能作为植物数据归属，避免旧票据把数据切到错误账号。
   const legacyTicket = createHttpIdentityTicket({

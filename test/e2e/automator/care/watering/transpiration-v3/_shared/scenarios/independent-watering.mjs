@@ -4,7 +4,7 @@
  * 独立浇水场景 —— 浇水算法 v3 蒸腾间隔修正端上验收。
  *
  * P0-1: 点击 next-button 后验证独立建议页的 inline 盆型表单已进入当前步骤。
- * P1: 结果区 allowlist 限定到第3个 swiper-item，不把前两步元素加入 allowlist。
+ * P1: 结果区 allowlist 限定到第3个 swiper-item；允许水量、盆土综合判断和浇水建议。
  */
 
 import { reLaunchTo } from '../lib/automator-client.mjs'
@@ -75,6 +75,33 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
     let page = await reLaunchTo(mp, ADVISOR_PAGE)
     await sleep(1500)
     recordPageData(report, ADVISOR_PAGE, await readPageDataSummary(mp))
+    const entryRequests = await readCapturedRequests(mp)
+    recordRequests(report, entryRequests)
+    const entryWeatherRequest = findRequestByUrl(
+      entryRequests,
+      '/weather/environment-context',
+      'POST'
+    )
+    recordAssertion(
+      report,
+      '进入浇水流程后捕获天气窗口 wx.request',
+      Boolean(entryWeatherRequest),
+      entryWeatherRequest ? `url=${entryWeatherRequest.url}` : 'not found'
+    )
+    const entryWeatherResponse = entryWeatherRequest?.response?.data || {}
+    const entryWeatherSucceeded =
+      entryWeatherRequest?.response?.statusCode === 200 && entryWeatherResponse.code === 200
+    recordAssertion(
+      report,
+      '进入浇水流程后天气窗口 wx.request 成功',
+      entryWeatherSucceeded,
+      entryWeatherRequest
+        ? 'HTTP ' +
+            (entryWeatherRequest.response?.statusCode || 'missing') +
+            ', business ' +
+            (entryWeatherResponse.code || 'missing')
+        : 'not found'
+    )
     recordScreenshot(
       report,
       await safeScreenshot(mp, artifactDir, 'independent-01-init', undefined, {
@@ -244,13 +271,15 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
       }
     }
 
-    // P1: 结果区 allowlist 限定到第3个 swiper-item，不把前两步元素加入 allowlist
+    // P1: 结果区 allowlist 限定到第3个 swiper-item，不把前两步元素加入 allowlist。
+    // 独立浇水结果按产品契约只展示水量、盆土综合判断和浇水建议，不展示日期/历史。
     const resultArea = await collectResultAreaInfo(page)
     const allowedIds = new Set([
       'watering-advisor-result-amount',
       'watering-advisor-back-2',
       'watering-advisor-done',
-      'watering-advisor-empty-retry'
+      'watering-advisor-empty-retry',
+      'watering-soil-visual-decision'
     ])
 
     if (resultArea.ids.length > 0) {
@@ -269,12 +298,23 @@ export async function runIndependentWateringScenario(mp, report, artifactDir) {
           /^完成$/,
           /^暂无建议结果$/,
           /^返回重新输入$/,
-          /^正在计算浇水建议\.\.\.$/
+          /^正在计算浇水建议\.\.\.$/,
+          /^盆土综合判断$/,
+          /^浇水建议$/,
+          /^视觉初判.*$/u,
+          /^土表仍湿.*$/u,
+          /^结合近期浇水.*$/u,
+          /^盆土整体偏湿.*$/u,
+          /^手摸确认.*$/u,
+          /^建议尽快浇水。$/u,
+          /^本次先不要浇水.*$/u,
+          /^请摸到超过盆深 1\/3.*$/u,
+          /^盆土状态需要进一步确认。$/u
         ]
         const unexpectedTexts = resultArea.texts.filter(t => !allowedTexts.some(p => p.test(t)))
         recordAssertion(
           report,
-          '结果区可见文本只包含允许的毫升数和按钮文案',
+          '结果区可见文本只包含允许的水量、综合结论、浇水建议和按钮文案',
           unexpectedTexts.length === 0,
           unexpectedTexts.length ? `unexpected=${JSON.stringify(unexpectedTexts)}` : 'clean'
         )
@@ -344,7 +384,7 @@ async function collectResultAreaInfo(page) {
     for (const el of elements) {
       try {
         const id = await el.attribute('id')
-        if (id && id.startsWith('watering-advisor-')) {
+        if (id && (id.startsWith('watering-advisor-') || id === 'watering-soil-visual-decision')) {
           ids.push(id)
         }
       } catch {

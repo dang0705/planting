@@ -9,11 +9,7 @@ const repoRoot = process.cwd()
 const source = fs.readFileSync(path.join(repoRoot, 'src/store/user.js'), 'utf8')
 let sequence = 0
 
-async function loadUserStoreModule({
-  loginWithPhone,
-  getUserById,
-  getCloudbaseUserIdentity
-}) {
+async function loadUserStoreModule({ loginWithPhone, getUserById, getCloudbaseUserIdentity }) {
   const transformed = source
     .replace(
       /const QA_PERFORMANCE_REFRESH = import\.meta\.env\.VITE_QA_PERFORMANCE_COLD_LANE === '1'/,
@@ -55,6 +51,10 @@ async function loadUserStoreModule({
       /import \{ DIAGNOSIS_HISTORY_QUERY_KEY \} from '@\/constants\/query-keys\.js'/,
       "const DIAGNOSIS_HISTORY_QUERY_KEY = ['diagnosis-history']"
     )
+    .replace(
+      /import \{ requestPhoneLogin \} from '@\/utils\/phone-login-gate\.js'/,
+      'const requestPhoneLogin = async () => false'
+    )
 
   const tmpDir = path.join(repoRoot, '.tmp', 'unit')
   fs.mkdirSync(tmpDir, { recursive: true })
@@ -84,8 +84,10 @@ try {
   globalThis.wx = { cloud: { callFunction: () => {} } }
 
   const module = await loadUserStoreModule({
-    loginWithPhone: "async () => { globalThis.__activePlatformToken = 'phone-flow-token'; return { token: 'phone-flow-token', user: { _id: 'u-phone', wechat_openid: 'wx-native', subscription_plan: 'premium' } } }",
-    getUserById: "async () => { globalThis.__legacyUserReads += 1; return { _id: 'u-phone', wechat_openid: 'wx-native', subscription_plan: 'premium' } }",
+    loginWithPhone:
+      "async () => { globalThis.__activePlatformToken = 'phone-flow-token'; return { token: 'phone-flow-token', user: { _id: 'u-phone', wechat_openid: 'wx-native', subscription_plan: 'premium' } } }",
+    getUserById:
+      "async () => { globalThis.__legacyUserReads += 1; return { _id: 'u-phone', wechat_openid: 'wx-native', subscription_plan: 'premium' } }",
     getCloudbaseUserIdentity: 'async () => ({ openid: "wx-native" })'
   })
   const pinia = createPinia()
@@ -118,9 +120,16 @@ try {
   createApp({}).use(stalePinia)
   const staleStore = staleModule.useUserStore()
   globalThis.__activePlatformToken = 'old-session'
-  staleStore.setLoginInfo({ token: 'old-session', user: { _id: 'u-old', wechat_openid: 'legacy-openid' } })
+  staleStore.setLoginInfo({
+    token: 'old-session',
+    user: { _id: 'u-old', wechat_openid: 'legacy-openid' }
+  })
   globalThis.wx = { cloud: { callFunction: () => {} } }
-  assert.equal(await staleStore.ensureLogin(), false, '运行时身份变化时不得自动走旧 OpenID 快速登录')
+  assert.equal(
+    await staleStore.ensureLogin(),
+    false,
+    '运行时身份变化时不得自动走旧 OpenID 快速登录'
+  )
   assert.equal(globalThis.__activePlatformToken, '', '身份不匹配必须清除旧会话')
 } finally {
   delete globalThis.__activePlatformToken

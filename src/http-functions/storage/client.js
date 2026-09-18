@@ -53,14 +53,11 @@ function callWechatCloudUpload({ filePath, cloudPath }) {
   })
 }
 
-function callWechatCloudTempUrl({ fileId, maxAge }) {
-  return new Promise((resolve, reject) => {
-    wx.cloud.getTempFileURL({
-      fileList: [{ fileID: fileId, maxAge }],
-      success: resolve,
-      fail: reject
-    })
-  })
+function callWechatCloudTempUrl({ fileId }) {
+  // 与现有图片链接查询共用 CloudBase 小程序 SDK 的 Promise 合同。
+  // 这里的 fileList 必须是云文件 ID 字符串数组；上传完成后先取不到
+  // 临时链接会阻断后续“登记图片 -> 盆土识别”两个请求。
+  return wx.cloud.getTempFileURL({ fileList: [fileId] })
 }
 
 async function resolveNativeWechatOpenId(payload = {}) {
@@ -80,8 +77,8 @@ async function requestNativeWechatDiagnoseImageUpload({
   openid,
   plantId,
   suffix,
-  maxAge = 7200,
-  fileBytes = 0
+  fileBytes = 0,
+  resolveTempUrl = true
 }) {
   const cloudPath = buildNativeDiagnoseCloudPath({ openid, plantId, suffix })
   if (!cloudPath) {
@@ -98,16 +95,18 @@ async function requestNativeWechatDiagnoseImageUpload({
     throw new Error('上传成功但未获取到图片 ID')
   }
 
-  const tempUrlStartedAt = Date.now()
-  const urlResult = await callWechatCloudTempUrl({
-    fileId,
-    maxAge: Math.max(300, Math.min(7200, Number(maxAge) || 7200))
-  })
-  const tempUrlFinishedAt = Date.now()
-  const file = urlResult?.fileList?.[0] || {}
-  const tempUrl = String(file.tempFileURL || file.download_url || '').trim()
-  if (!tempUrl) {
-    throw new Error('上传成功但未获取到图片访问地址')
+  let tempUrl = ''
+  let tempUrlMs = 0
+  if (resolveTempUrl) {
+    const tempUrlStartedAt = Date.now()
+    const urlResult = await callWechatCloudTempUrl({ fileId })
+    const tempUrlFinishedAt = Date.now()
+    const file = urlResult?.fileList?.[0] || {}
+    tempUrl = String(file.tempFileURL || file.download_url || '').trim()
+    if (!tempUrl) {
+      throw new Error('上传成功但未获取到图片访问地址')
+    }
+    tempUrlMs = Math.max(0, tempUrlFinishedAt - tempUrlStartedAt)
   }
 
   return {
@@ -129,7 +128,7 @@ async function requestNativeWechatDiagnoseImageUpload({
       fileValidationMs: 0,
       tempWriteMs: 0,
       cloudStorageUploadMs: Math.max(0, uploadFinishedAt - uploadStartedAt),
-      tempUrlMs: Math.max(0, tempUrlFinishedAt - tempUrlStartedAt),
+      tempUrlMs,
       uploadPipelineMs: Math.max(0, Date.now() - startedAt)
     }
   }

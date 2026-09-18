@@ -98,8 +98,14 @@ function buildWeatherSummary(dailyRecords = [], plantContext = {}) {
 async function resolveConfirmedWateringEvents({
   openid = '',
   catalogPlantId = '',
-  wateringEvents = []
+  wateringEvents = [],
+  hasWateringHistoryInput = false
 } = {}) {
+  // 用户打开“过往 10 天”日历后，哪怕一个日期都没有选，也是在明确表达
+  // 这 10 天没有浇水；不能再用旧顾问会话悄悄替换这份输入。
+  if (hasWateringHistoryInput && Array.isArray(wateringEvents)) {
+    return wateringEvents
+  }
   if (Array.isArray(wateringEvents) && wateringEvents.length) {
     return wateringEvents
   }
@@ -145,6 +151,9 @@ async function resolveConfirmedWateringEvents({
  * @param {string} params.referenceDate - 参考日期 YYYY-MM-DD
  * @param {string} params.locationKey - 地点 key（用于 D0 day file 读取）
  * @param {string} params.timezone - 时区，默认 Asia/Shanghai
+ * @param {boolean} params.forceVisualWetness - 用户明确只跳过视觉潮湿暂停
+ * @param {string} params.soilMoistureOverride - 明确盆土内部干湿结论
+ * @param {boolean} params.hasWateringHistoryInput - 用户已填写近十天日历（可为空）
  * @returns {Promise<object>} planner 计算结果 + 日期/盆土/环境审计字段
  */
 async function computeAdhocPlanner({
@@ -160,7 +169,10 @@ async function computeAdhocPlanner({
   airEnvironmentOverride = null,
   wateringEvents = [],
   soilEvidenceId = '',
-  manualSoilConfirmed = false
+  manualSoilConfirmed = false,
+  forceVisualWetness = false,
+  soilMoistureOverride = '',
+  hasWateringHistoryInput = false
 } = {}) {
   if (!catalogPlantId) {
     return { error: '缺少植物种类ID', statusCode: 400 }
@@ -183,7 +195,8 @@ async function computeAdhocPlanner({
   const resolvedWateringEvents = await resolveConfirmedWateringEvents({
     openid,
     catalogPlantId,
-    wateringEvents
+    wateringEvents,
+    hasWateringHistoryInput
   })
 
   // D0 校验：前端传完整 D0..D+14，后端剔除调用方 D0 后注入 day file latestSample
@@ -228,7 +241,8 @@ async function computeAdhocPlanner({
     potProfile: potProfile || null,
     wateringQuantization: strategy.wateringQuantization || null,
     referenceDate: resolvedReferenceDate,
-    transpirationIntervalFactor: transpiration.intervalFactor
+    transpirationIntervalFactor: transpiration.intervalFactor,
+    soilMoistureOverride
   })
 
   // 无历史时 nextWaterDate 保持 null；有明确传入的 wateringEvents 时才允许推导日期。
@@ -264,6 +278,11 @@ async function computeAdhocPlanner({
     openid,
     evidenceId: soilEvidenceId,
     manualConfirmed: manualSoilConfirmed,
+    forceVisualWetness,
+    forceDryness: soilMoistureOverride === 'dry',
+    manualSoilState: ['wet', 'moist'].includes(soilMoistureOverride)
+      ? soilMoistureOverride
+      : '',
     plan: baseData
   })
 
@@ -271,7 +290,7 @@ async function computeAdhocPlanner({
     statusCode: 200,
     data: {
       ...fusedPlan,
-      visualSoilEvidence: toPublicSoilEvidence(fusedPlan.visualSoilEvidence)
+      visualSoilEvidence: toPublicSoilEvidence(fusedPlan.visualSoilEvidence, fusedPlan)
     },
     error: null
   }

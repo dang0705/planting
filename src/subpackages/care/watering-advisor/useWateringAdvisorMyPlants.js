@@ -13,7 +13,7 @@ export function useWateringAdvisorMyPlants({ userStore, plantStore, searchRef })
 
   async function openMyPlantsList() {
     showMyPlantsList.value = true
-    if (!(await userStore.ensureLogin())) {
+    if (!(await userStore.ensureLogin({ prompt: true }))) {
       showMyPlantsList.value = false
       return
     }

@@ -28,15 +28,15 @@ PR 合并闸门必须同时要求 `Code and mini program build` 和 `Deploy Clou
 
 每个 Environment 配置同名变量，避免在 workflow 中写死环境：
 
-| 类型 | 名称 | 说明 |
-|---|---|---|
-| Variables | `CLOUDBASE_ENV_ID` | 当前 Environment 对应的 CloudBase 环境 ID |
-| Variables | `WECHAT_MINIPROGRAM_APPID` | 小程序 appid |
-| Variables | `CLOUDBASE_DEPLOY_FUNCTIONS` | 可选，逗号分隔函数列表；为空时部署 `cloudbaserc.json` 中存在本地目录的函数 |
-| Variables | `MINIPROGRAM_CI_ROBOT` | 可选，微信 CI 机器人编号，默认 `1` |
-| Secrets | `TENCENT_SECRET_ID` | CloudBase 发布专用子账号 SecretId |
-| Secrets | `TENCENT_SECRET_KEY` | CloudBase 发布专用子账号 SecretKey |
-| Secrets | `WECHAT_MINIPROGRAM_PRIVATE_KEY` | 微信小程序 CI 私钥内容 |
+| 类型      | 名称                             | 说明                                                                       |
+| --------- | -------------------------------- | -------------------------------------------------------------------------- |
+| Variables | `CLOUDBASE_ENV_ID`               | 当前 Environment 对应的 CloudBase 环境 ID                                  |
+| Variables | `WECHAT_MINIPROGRAM_APPID`       | 小程序 appid                                                               |
+| Variables | `CLOUDBASE_DEPLOY_FUNCTIONS`     | 可选，逗号分隔函数列表；为空时部署 `cloudbaserc.json` 中存在本地目录的函数 |
+| Variables | `MINIPROGRAM_CI_ROBOT`           | 可选，微信 CI 机器人编号，默认 `1`                                         |
+| Secrets   | `TENCENT_SECRET_ID`              | CloudBase 发布专用子账号 SecretId                                          |
+| Secrets   | `TENCENT_SECRET_KEY`             | CloudBase 发布专用子账号 SecretKey                                         |
+| Secrets   | `WECHAT_MINIPROGRAM_PRIVATE_KEY` | 微信小程序 CI 私钥内容                                                     |
 
 `cloudbase_env_id` 和 `wechat_miniprogram_appid` 只是非敏感保守输入。生产环境仍必须使用 Environment Variable/Secret 和最小权限子账号，不复用个人长期主账号密钥。
 
@@ -74,8 +74,10 @@ PR workflow 分为两个 job：
 6. `npm run deploy:functions:ci`
    - 仅当 `deploy_cloudbase=true` 时执行。
    - 生产环境必须显式配置 `CLOUDBASE_DEPLOY_FUNCTIONS`，禁止默认全量发布。
-   - 调用 `scripts/deploy-cloudbase-functions.mjs`。
-   - 只执行 `tcb fn code update`，避免覆盖 runtime、timeout、envVariables。
+   - 调用 `scripts/deploy-cloudbase-functions.mjs`；该脚本上传代码后，对 `diagnose-http`
+     自动发布不可变数字版本并切换 `$DEFAULT`，不会把上传 `$LATEST` 当成完成。
+   - 代码更新仍使用 `tcb fn code update` 以避免覆盖 runtime、timeout、envVariables，
+     但必须经过版本、别名、代码摘要、真实网关日志四重校验。
    - 每个函数部署后执行 `tcb fn detail`，但日志只输出函数名、状态、runtime、内存、超时、代码体积、更新时间等白名单摘要。
 7. 若部署范围包含 `diagnose-http`，运行诊断 smoke。
 8. `npm run deploy:miniprogram:ci`
@@ -115,15 +117,15 @@ node scripts/deploy-miniprogram-ci.mjs --dry-run --action=preview --appid=<appid
 
 ## 故障排查
 
-| 失败位置 | 先检查 | 处理顺序 |
-|---|---|---|
-| `npm ci --session-peer-deps` | lockfile 是否与 `package.json` 同步 | 本地重跑 `npm ci --session-peer-deps`，确认没有手工改 `node_modules` 后再提交 lockfile |
-| `npm run check:secrets` | 报错文件是否为已跟踪文件或新增待提交文件 | 移除明文值，改成环境变量或占位符；若已暴露，先轮换再继续 |
-| `npm run lint` | 是否为本次 diff 引入的新 error | 先修 error；warning 不作为当前发布阻断，但不要新增无意义 warning |
-| `build:mp-weixin:ci` | `VITE_APP_ENV`、`VITE_CLOUDBASE_ENV_ID` 是否来自目标 Environment 或手动非敏感输入 | 不要回退到 Windows `set VAR=...&&` 脚本；`prod` 不允许靠 dev 默认 envId 发布 |
-| `deploy:functions:ci` | CloudBase envId、函数列表、专用子账号权限 | 先用 `--dry-run` 确认函数列表，再查脱敏 `tcb fn detail` 摘要；生产 preview-only 必须设置 `deploy_cloudbase=false` |
-| 诊断 smoke | 目标 env、`diagnose-http` 是否已部署、匿名/测试登录是否可用 | 不要用部署成功代替 smoke；失败时保留请求 ID 和函数日志 |
-| `deploy:miniprogram:ci` | appid、私钥、IP 白名单、构建目录 | 先跑 `preview`，确认二维码 artifact；`upload` 失败时不要把私钥或完整环境变量写入日志 |
+| 失败位置                     | 先检查                                                                            | 处理顺序                                                                                                          |
+| ---------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `npm ci --session-peer-deps` | lockfile 是否与 `package.json` 同步                                               | 本地重跑 `npm ci --session-peer-deps`，确认没有手工改 `node_modules` 后再提交 lockfile                            |
+| `npm run check:secrets`      | 报错文件是否为已跟踪文件或新增待提交文件                                          | 移除明文值，改成环境变量或占位符；若已暴露，先轮换再继续                                                          |
+| `npm run lint`               | 是否为本次 diff 引入的新 error                                                    | 先修 error；warning 不作为当前发布阻断，但不要新增无意义 warning                                                  |
+| `build:mp-weixin:ci`         | `VITE_APP_ENV`、`VITE_CLOUDBASE_ENV_ID` 是否来自目标 Environment 或手动非敏感输入 | 不要回退到 Windows `set VAR=...&&` 脚本；`prod` 不允许靠 dev 默认 envId 发布                                      |
+| `deploy:functions:ci`        | CloudBase envId、函数列表、专用子账号权限                                         | 先用 `--dry-run` 确认函数列表，再查脱敏 `tcb fn detail` 摘要；生产 preview-only 必须设置 `deploy_cloudbase=false` |
+| 诊断 smoke                   | 目标 env、`diagnose-http` 是否已部署、匿名/测试登录是否可用                       | 不要用部署成功代替 smoke；失败时保留请求 ID 和函数日志                                                            |
+| `deploy:miniprogram:ci`      | appid、私钥、IP 白名单、构建目录                                                  | 先跑 `preview`，确认二维码 artifact；`upload` 失败时不要把私钥或完整环境变量写入日志                              |
 
 失败重跑时只重跑同一 commit 的 workflow。若需要改代码或改配置，重新提交后用新 commit 发布，避免本地工作区状态和 GitHub runner 状态不一致。
 

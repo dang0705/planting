@@ -10,7 +10,6 @@ const detailSource = read(
   'src/subpackages/plant/user-plant-detail/components/UserPlantDetailView.vue'
 )
 const formSource = read('src/subpackages/plant/user-plant-detail/components/PlantForm.vue')
-const catalogCardSource = read('src/subpackages/plant/user-plant-detail/components/PlantCard.vue')
 const detailFormSource = read(
   'src/subpackages/plant/user-plant-detail/components/UserPlantDetailForm.vue'
 )
@@ -25,7 +24,6 @@ assert.match(detailSource, /id="user-plant-detail-image"/)
 assert.match(detailSource, /@error="handleImageError"/)
 assert.match(formSource, /photo-preview/)
 assert.match(formSource, /@error="handleImageError"/)
-assert.match(catalogCardSource, /PlantDisplayBase/)
 assert.match(detailFormSource, /v-if="isEditMode && \(loading \|\| !currentPlant\)"/)
 assert.match(detailFormSource, /const loading = ref\(true\)/)
 

@@ -121,7 +121,7 @@ async function runWithQuotaGuard({
     // 固定题包 start 已经完成鉴权、配额检查和会话持久化；配额扣减本身不影响
     // 返回题目。先发起扣减并让它在响应组装期间完成，避免把一次额外 UPDATE
     // 数据库往返串在端上首屏响应之后。失败语义与原实现一致：只记录告警。
-    void consumeQuota(openid, { skipQuota }).then(() => {
+    consumeQuota(openid, { skipQuota }).then(() => {
       timing?.mark('quota-consumed')
     })
   } else {

@@ -316,6 +316,9 @@ async function completeTask(plantId) {
     uni.showToast({ title: '未找到可完成的任务', icon: 'none' })
     return
   }
+  if (!(await userStore.ensureLogin({ prompt: true }))) {
+    return
+  }
   captureTaskSnapshot(plant, '完成')
   actionState[plantId] = true
   try {
@@ -347,6 +350,9 @@ async function postponeTask(plantId) {
   const reminder = plant?.wateringReminder
   if (!plant || !reminder) {
     uni.showToast({ title: '未找到可推迟的提醒', icon: 'none' })
+    return
+  }
+  if (!(await userStore.ensureLogin({ prompt: true }))) {
     return
   }
   captureTaskSnapshot(plant, '推迟')

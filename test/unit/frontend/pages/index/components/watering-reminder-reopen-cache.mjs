@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 
-const indexSource = readFileSync('src/pages/index/index.vue', 'utf8')
+const userPlantsSource = readFileSync('src/components/UserPlantsSection.vue', 'utf8')
 const sheetSource = readFileSync('src/pages/index/components/WateringReminderSheet.vue', 'utf8')
 const sheetPlannerSource = readFileSync(
   'src/pages/index/components/useWateringReminderPlanner.js',
@@ -21,9 +21,12 @@ const calendarSource = readFileSync(
   'src/pages/index/components/useWateringReminderCalendar.js',
   'utf8'
 )
-assert.match(indexSource, /import \{ computed, nextTick, onMounted, reactive, ref \} from 'vue'/)
 assert.match(
-  indexSource,
+  userPlantsSource,
+  /import \{ computed, nextTick, onMounted, reactive, ref \} from 'vue'/
+)
+assert.match(
+  userPlantsSource,
   /async function openReminder\(\{ plant, type \}\)[\s\S]+currentReminderPlantId\.value = plant\.id[\s\S]+await nextTick\(\)[\s\S]+callComponentMethod\(wateringReminderRef, 'open'\)/
 )
 
@@ -49,10 +52,13 @@ assert.match(
 )
 assert.match(sheetSource, /\(!savedReminderActive\.value \|\| savedReminderChanged\.value\)/)
 assert.match(sheetSource, /persistedEventsChanged/)
-assert.match(sheetSource, /savedReminder\.value = null[\s\S]+selectedWateringEvents\.value = \[\.\.\.effectiveEvents\]/)
 assert.match(
   sheetSource,
-  /<SavedWateringReminderState[\s\S]*v-if="savedReminderActive && !inputFlowOpen && !isOverWateringBlocked"/
+  /savedReminder\.value = null[\s\S]+selectedWateringEvents\.value = \[\.\.\.effectiveEvents\]/
+)
+assert.match(
+  sheetSource,
+  /<SavedWateringReminderState[\s\S]*v-if="savedReminderActive && !inputFlowOpen"/
 )
 assert.match(sheetSource, /:display="savedReminderDisplay"/)
 assert.match(savedStateSource, /id="watering-reminder-saved-state"/)

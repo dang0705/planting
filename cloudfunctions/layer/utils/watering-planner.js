@@ -34,6 +34,7 @@ const WATERING_ACTIONS = Object.freeze({
 })
 
 const FORMULA_VERSION = 'watering_planner_v21'
+const SOIL_MOISTURE_OVERRIDE_REASON = 'DIRECT_SOIL_MOISTURE_CONFIRMATION'
 
 function buildSoilCheckGuidance(gateState) {
   if (gateState === GATE_STATE.WET) {
@@ -58,6 +59,29 @@ function buildSoilCheckGuidance(gateState) {
     message: '下次浇水前先检查盆土，表层干了再浇透。',
     reasonCode: 'CHECK_SOIL_BEFORE_WATERING'
   }
+}
+
+function applySoilMoistureOverride(gate, soilMoistureOverride = '') {
+  const state = String(soilMoistureOverride || '').trim().toLowerCase()
+  if (state === 'dry') {
+    return {
+      ...gate,
+      gateState: GATE_STATE.DRY,
+      wateringContext: 'likely_too_dry',
+      action: WATERING_ACTIONS.DRY,
+      reasonCodes: Array.from(new Set([...(gate.reasonCodes || []), SOIL_MOISTURE_OVERRIDE_REASON]))
+    }
+  }
+  if (state === 'wet' || state === 'moist') {
+    return {
+      ...gate,
+      gateState: GATE_STATE.WET,
+      wateringContext: 'likely_too_wet',
+      action: WATERING_ACTIONS.WET,
+      reasonCodes: Array.from(new Set([...(gate.reasonCodes || []), SOIL_MOISTURE_OVERRIDE_REASON]))
+    }
+  }
+  return gate
 }
 
 /* ---------- 基础工具函数（planner 专有） ---------- */
@@ -132,7 +156,8 @@ function buildWateringPlanner({
   thresholds: rawThresholds = null,
   referenceDate = '',
   resolveThresholds = null,
-  transpirationIntervalFactor = null
+  transpirationIntervalFactor = null,
+  soilMoistureOverride = ''
 } = {}) {
   const thresholds = resolveThresholds
     ? resolveThresholds(rawThresholds).watering
@@ -205,7 +230,7 @@ function buildWateringPlanner({
   )
 
   // Dry/Wet Gate 判定
-  const gate = evaluateDryWetGate({
+  let gate = evaluateDryWetGate({
     rootZoneMoistureIndex,
     effectiveHydrationLoad,
     wetPressureLoad,
@@ -217,6 +242,7 @@ function buildWateringPlanner({
     baselineIntervalDays: baseline.intervalDays,
     recentThoroughWatering
   })
+  gate = applySoilMoistureOverride(gate, soilMoistureOverride)
 
   // amountMl 与 amount 标签冲突检测（Task 修正）
   const events = timeline.watering_events_10d || timeline.wateringEvents10d || []
@@ -436,6 +462,12 @@ function buildWateringPlanner({
         },
         result: gate.gateState,
         passed: gate.gateState !== GATE_STATE.BASELINE
+      }),
+      buildPlannerFormulaStep({
+        key: 'soil_moisture_override',
+        expression: 'explicit visual/manual soil state overrides calculated gate when present',
+        inputs: { soilMoistureOverride },
+        result: gate.gateState
       })
     ]
   }

@@ -99,7 +99,7 @@ async function initialize() {
       returnToEditorWithError('缺少植物信息')
       return
     }
-    if (!(await userStore.ensureLogin())) {
+    if (!(await userStore.ensureLogin({ prompt: true }))) {
       returnToEditorWithError('请先登录')
       return
     }
@@ -132,6 +132,9 @@ async function saveAndReturn() {
   const lightEnvironment = normalizeOptionalLightEnvironment(draft.value)
   if (!id || !lightEnvironment) {
     uni.showToast({ title: '请先设置光照环境', icon: 'none' })
+    return
+  }
+  if (!(await userStore.ensureLogin({ prompt: true }))) {
     return
   }
   const confirmedLightEnvironment = markLightEnvironmentAsUser(lightEnvironment)

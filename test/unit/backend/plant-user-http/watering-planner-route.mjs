@@ -168,6 +168,13 @@ function loadAppWithSpies(overrides = {}) {
       return soilEvidenceSpy.impl(input)
     }
   }
+  const temporarySoilCleanupSpy = {
+    calls: [],
+    async fn(input) {
+      temporarySoilCleanupSpy.calls.push(input)
+      return null
+    }
+  }
   const pauseReminderSpy = {
     calls: [],
     async fn(openid, plantId) {
@@ -290,7 +297,7 @@ function loadAppWithSpies(overrides = {}) {
     if (request.endsWith('/watering-soil-evidence-service')) {
       return {
         applySoilEvidence: soilEvidenceSpy.fn,
-        cleanupTemporarySoilEvidence: async () => null,
+        cleanupTemporarySoilEvidence: temporarySoilCleanupSpy.fn,
         toPublicSoilEvidence: audit => ({
           sourceLabel:
             audit?.source === 'recent_diagnosis' ? '使用最近诊断盆土图' : '使用本次拍摄的盆土图',
@@ -347,6 +354,7 @@ function loadAppWithSpies(overrides = {}) {
       wateringEventsSpy,
       latestReminderSpy,
       soilEvidenceSpy,
+      temporarySoilCleanupSpy,
       pauseReminderSpy,
       airEnvironmentEvidenceSpy,
       injectD0Spy
@@ -381,13 +389,13 @@ test('/watering-planner 路由不提前 404，正确调用 getUserPlantWateringS
   assert.equal(strategySpy.calls[0].openid, 'openid_route_test')
   assert.equal(strategySpy.calls[0].plantId, 42)
 })
-test('可信湿润盆土证据暂停应用内活跃提醒，并只返回用户可理解的来源说明', async () => {
+test('可信湿润盆土证据保留统一水量，不自动暂停提醒，并只返回用户可理解的来源说明', async () => {
   const { app, pauseReminderSpy } = loadAppWithSpies({
     soilEvidenceImpl: ({ plan }) => ({
       plan: {
         ...plan,
-        nextWaterDate: null,
-        amountRangeMl: [0, 0],
+        nextWaterDate: '2026-07-06',
+        amountRangeMl: [80, 150],
         wateringContext: 'likely_too_wet',
         visualSoilEvidence: { source: 'recent_diagnosis', outcome: 'wet_hold' }
       }
@@ -395,12 +403,23 @@ test('可信湿润盆土证据暂停应用内活跃提醒，并只返回用户�
   })
   const response = await callPlannerRoute(app, { plantId: 42 })
   assert.equal(response.statusCode, 200)
-  assert.deepEqual(pauseReminderSpy.calls, [{ openid: 'openid_route_test', plantId: 42 }])
-  assert.deepEqual(response.payload.data.amountRangeMl, [0, 0])
+  assert.deepEqual(pauseReminderSpy.calls, [])
+  assert.deepEqual(response.payload.data.amountRangeMl, [80, 150])
   assert.deepEqual(response.payload.data.visualSoilEvidence, {
     sourceLabel: '使用最近诊断盆土图',
     observation: '盆土表面仍明显湿润，本次先不浇水。'
   })
+})
+test('视觉明确判干时，用户植物规划把干燥覆盖值传入证据融合', async () => {
+  const { app, soilEvidenceSpy } = loadAppWithSpies()
+  const response = await callPlannerRoute(app, {
+    plantId: 42,
+    soilMoistureOverride: 'dry'
+  })
+  assert.equal(response.statusCode, 200)
+  assert.equal(soilEvidenceSpy.calls.length, 1)
+  assert.equal(soilEvidenceSpy.calls[0].forceDryness, true)
+  assert.equal(soilEvidenceSpy.calls[0].manualSoilState, '')
 })
 test('没有过往浇水日期时，规划路由返回 409 且不调用规划器', async () => {
   const { app, plannerSpy } = loadAppWithSpies()
@@ -666,7 +685,7 @@ test('空气环境证据进入蒸腾间隔修正，但不改变水量或 WET/DRY
   assert.equal(response.payload.data.transpirationIntervalFactor, 1)
 })
 test('独立 /watering-advisor：保留无历史不推导日期并返回盆土检查指导', async () => {
-  const { app } = loadAppWithSpies()
+  const { app, temporarySoilCleanupSpy } = loadAppWithSpies()
   const response = await app._test.main({
     path: '/user-plants/watering-advisor',
     method: 'POST',
@@ -685,6 +704,11 @@ test('独立 /watering-advisor：保留无历史不推导日期并返回盆土�
   assert.ok('soilCheck' in response.payload.data)
   assert.ok('todayWeatherSource' in response.payload.data)
   assert.equal(response.payload.data.nextWaterDate, null)
+  assert.deepEqual(
+    temporarySoilCleanupSpy.calls,
+    [],
+    '最终建议返回前不能删除临时盆土证据，否则同一次会话的网络重试会收到 422'
+  )
 })
 test('独立 /watering-advisor：确认浇水动作返回可复用的当天事件', async () => {
   const { app } = loadAppWithSpies()

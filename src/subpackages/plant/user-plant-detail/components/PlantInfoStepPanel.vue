@@ -14,6 +14,8 @@
         </text>
       </view>
 
+      <slot name="before-form" />
+
       <PlantForm
         :model-value="modelValue"
         :city-error="cityError"

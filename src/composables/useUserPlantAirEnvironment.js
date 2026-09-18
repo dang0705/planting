@@ -6,9 +6,17 @@ import {
   normalizeAirEnvironmentLocationBinding,
   sanitizeAirEnvironmentInput
 } from '@/utils/air-environment.js'
+import {
+  getCompletedAdvancedAirEnvironmentInput,
+  normalizeAirEnvironmentProfile
+} from '@/utils/air-environment-assessment.js'
 
-function normalizeProfile(value = null) {
-  return value && typeof value === 'object' && value.input ? value : null
+function isVersionThreeAssessment(value = null) {
+  return Number(value?.schemaVersion) === 3 && ['quick', 'advanced'].includes(value?.mode)
+}
+
+function getAssessmentSignature(value = null) {
+  return isVersionThreeAssessment(value) ? JSON.stringify(value) : getAirEnvironmentSignature(value)
 }
 
 export function useUserPlantAirEnvironment({ plantStore = null } = {}) {
@@ -52,10 +60,12 @@ export function useUserPlantAirEnvironment({ plantStore = null } = {}) {
       if (version !== requestVersion || activePlantId.value !== normalizedPlantId) {
         return null
       }
-      const nextProfile = response?.code === 200 ? normalizeProfile(response.data) : null
+      const nextProfile =
+        response?.code === 200 ? normalizeAirEnvironmentProfile(response.data) : null
       profile.value = nextProfile
-      if (nextProfile?.input && (!preserveDraft || !dirty.value)) {
-        draft.value = sanitizeAirEnvironmentInput(nextProfile.input)
+      const advancedInput = getCompletedAdvancedAirEnvironmentInput(nextProfile)
+      if (advancedInput && (!preserveDraft || !dirty.value)) {
+        draft.value = sanitizeAirEnvironmentInput(advancedInput)
       }
       if (response?.code !== 200) {
         loadError.value = response?.message || '暂时无法读取空气环境'
@@ -78,7 +88,9 @@ export function useUserPlantAirEnvironment({ plantStore = null } = {}) {
     const writeMode = options.writeMode || (currentProfile ? 'replace_if_match' : 'if_missing')
     return {
       plantId: Number(plantId),
-      airEnvironment: sanitizeAirEnvironmentInput(options.input || draft.value),
+      airEnvironment: isVersionThreeAssessment(options.input)
+        ? JSON.parse(JSON.stringify(options.input))
+        : sanitizeAirEnvironmentInput(options.input || draft.value),
       locationBinding: normalizeAirEnvironmentLocationBinding(locationBinding),
       writeMode,
       ...(writeMode === 'replace_if_match' && currentProfile?.updatedAt
@@ -92,7 +104,7 @@ export function useUserPlantAirEnvironment({ plantStore = null } = {}) {
       buildSavePayload(plantId, locationBinding, options)
     )
     if (response?.code === 200 && response.data) {
-      profile.value = normalizeProfile(response.data)
+      profile.value = normalizeAirEnvironmentProfile(response.data)
       dirty.value = false
       plantStore?.applyAirEnvironmentLocal?.(Number(plantId), response.data)
     }
@@ -100,7 +112,7 @@ export function useUserPlantAirEnvironment({ plantStore = null } = {}) {
   }
 
   function saveInBackground(plantId, locationBinding = {}, options = {}) {
-    const signature = getAirEnvironmentSignature(options.input || draft.value)
+    const signature = getAssessmentSignature(options.input || draft.value)
     return save(plantId, locationBinding, options)
       .catch(() => null)
       .then(response => ({ response, signature }))

@@ -555,7 +555,19 @@ export function useQuestionPackageFlow({
   }
 
   function canProceedQuestion() {
-    if (isSubmittingQuestionAnswer.value || !isQuestionAnswered(currentQuestion.value)) {
+    if (isSubmittingQuestionAnswer.value) {
+      return false
+    }
+    if (airEnvironment.isAirEnvironmentQuestion(currentQuestion.value)) {
+      if (
+        isQuestionPackageMode.value &&
+        activeQuestionIndex.value >= questionStack.value.length - 1
+      ) {
+        return questionStack.value.slice(0, activeQuestionIndex.value).every(isQuestionAnswered)
+      }
+      return true
+    }
+    if (!isQuestionAnswered(currentQuestion.value)) {
       return false
     }
     if (
@@ -581,6 +593,9 @@ export function useQuestionPackageFlow({
   function submitQuestionAnswers() {
     return submitQuestionAnswersAction.run(async () => {
       if (!result.value || !canProceedQuestion()) {
+        return
+      }
+      if (!(await userStore.ensureLogin({ prompt: true }))) {
         return
       }
       isSubmittingQuestionAnswer.value = true
@@ -615,6 +630,13 @@ export function useQuestionPackageFlow({
   }
 
   async function handleNextQuestion() {
+    if (
+      airEnvironment.isAirEnvironmentQuestion(currentQuestion.value) &&
+      questionAnswers.value[getQuestionId(currentQuestion.value)] !== 'air_environment_unknown' &&
+      !airEnvironment.completeDraft(currentQuestion.value)
+    ) {
+      return
+    }
     if (!canProceedQuestion()) {
       return
     }
@@ -672,10 +694,11 @@ export function useQuestionPackageFlow({
     isCareBehaviorWateringTimelineQuestion,
     isLightEnvironmentQuestion,
     isAirEnvironmentQuestion: airEnvironment.isAirEnvironmentQuestion,
+    isYellowLeafAirEnvironmentQuestion: airEnvironment.isYellowLeafAirEnvironmentQuestion,
     airEnvironmentUi: airEnvironment,
     openAirEnvironmentEditor: airEnvironment.openEditor,
     confirmAirEnvironmentLocation: airEnvironment.confirmSavedProfile,
-    handleAirEnvironmentChange: airEnvironment.change,
+    handleAirEnvironmentChange: airEnvironment.changeDraft,
     selectAirEnvironmentUnknown: airEnvironment.selectUnknown,
     selectQuestionOption,
     isSelectedQuestionOption,

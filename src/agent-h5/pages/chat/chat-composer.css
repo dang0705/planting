@@ -1,0 +1,191 @@
+.agent-composer-shell {
+  flex: none;
+  border-top: 1px solid var(--agent-line);
+  background: rgba(247, 247, 245, 0.96);
+  padding: 10px 16px 0;
+}
+
+.agent-composer-shell,
+.agent-composer {
+  box-sizing: border-box;
+}
+
+.agent-composer-shell > * {
+  max-width: 760px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.agent-composer-message {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--agent-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.agent-composer-message--error {
+  color: #986b35;
+}
+
+.agent-composer-message--active {
+  color: var(--agent-green);
+}
+
+.agent-quota-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  background: #fff7e8;
+  padding: 9px 11px;
+  color: #8a642c;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.agent-quota-notice--blocked {
+  background: #f8ece8;
+  color: #985342;
+}
+
+.agent-quota-notice-detail {
+  color: inherit;
+  opacity: 0.82;
+}
+
+.agent-composer {
+  display: flex;
+  width: 100%;
+  align-items: flex-end;
+  gap: 9px;
+  border: 1px solid #dfe4de;
+  border-radius: 16px;
+  background: var(--agent-panel);
+  padding: 7px 7px 7px 13px;
+  box-shadow: 0 2px 10px rgba(39, 62, 47, 0.05);
+}
+
+.agent-chat-input {
+  min-height: 30px;
+  flex: 1;
+  box-sizing: border-box;
+  padding: 6px 0;
+  color: var(--agent-text);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.agent-chat-input::placeholder {
+  color: #9aa49b;
+}
+
+.agent-composer-action {
+  display: flex;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  border: 0;
+  border-radius: 12px;
+  padding: 0;
+  touch-action: manipulation;
+}
+
+.agent-ask-option:focus-visible,
+.agent-ask-submit:focus-visible,
+.agent-composer-action:focus-visible {
+  outline: 3px solid rgba(45, 122, 79, 0.35);
+  outline-offset: 2px;
+}
+
+.agent-composer-action--send {
+  background: var(--agent-green);
+  color: #fff;
+}
+
+.agent-composer-action--send[disabled] {
+  background: #dce5dd;
+  color: #91a096;
+}
+
+.agent-composer-action--stop {
+  background: #e8ede8;
+  color: #49604e;
+}
+
+.agent-send-glyph {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1;
+  transform: translateY(-1px);
+}
+
+.agent-stop-glyph {
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  background: currentColor;
+}
+
+.agent-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+@keyframes agent-thinking-pulse {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+
+  30% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes agent-caret-blink {
+  0%,
+  45% {
+    opacity: 1;
+  }
+
+  46%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-thinking-dot,
+  .agent-streaming-caret {
+    animation: none;
+  }
+}
+
+@media (min-width: 640px) {
+  .agent-header {
+    padding-right: 24px;
+    padding-left: 24px;
+  }
+
+  .agent-message-list {
+    padding-right: 24px;
+    padding-left: 24px;
+  }
+
+  .agent-composer-shell {
+    padding-right: 24px;
+    padding-left: 24px;
+  }
+}

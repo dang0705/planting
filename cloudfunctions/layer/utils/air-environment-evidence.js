@@ -7,6 +7,9 @@ const CANOPY_OPENNESS = new Set(['open', 'partial', 'enclosed', 'unknown'])
 const DEVICE_AIRFLOW_MODES = new Set(['none', 'circulating', 'direct', 'unknown'])
 const DEVICE_AIRFLOW_SOURCES = new Set(['fan', 'air_conditioner', 'fresh_air'])
 const DEVICE_AIRFLOW_SOURCE_MODES = new Set(['circulating', 'direct'])
+const QUICK_AIR_ENVIRONMENT_OPTIONS = new Set(['frequent', 'regular', 'rare'])
+const QUICK_AIR_ENVIRONMENT_QUESTION_KEY = 'air_exchange_frequency'
+const AIR_ENVIRONMENT_CONVERTER_VERSION = 'air_environment_v3'
 const AIR_ENVIRONMENT_RECORDED_OPTION_KEY = 'air_environment_recorded'
 const AIR_ENVIRONMENT_UNKNOWN_OPTION_KEY = 'air_environment_unknown'
 const WILTING_DROOP_AIR_ENVIRONMENT_QUESTION_KEY = 'q_wilting_droop__air_environment'
@@ -182,6 +185,89 @@ function resolveAirEnvironmentEvidence(value = {}) {
   }
 }
 
+function normalizeQuickAirEnvironmentAnswer(value = {}) {
+  const questionKey = normalizeText(value?.questionKey)
+  const optionKey = normalizeText(value?.optionKey)
+  if (
+    questionKey !== QUICK_AIR_ENVIRONMENT_QUESTION_KEY ||
+    !QUICK_AIR_ENVIRONMENT_OPTIONS.has(optionKey)
+  ) {
+    return null
+  }
+  return { questionKey, optionKey }
+}
+
+function resolveQuickAirEnvironmentEvidence(quickAnswer = {}) {
+  const answer = normalizeQuickAirEnvironmentAnswer(quickAnswer)
+  if (!answer) {
+    return null
+  }
+  const levelByOption = { frequent: 'high', regular: 'medium', rare: 'low' }
+  return {
+    evidence: {
+      air_exchange_level: levelByOption[answer.optionKey],
+      local_airflow_present: 'unknown',
+      stagnation_risk: 'unknown',
+      direct_airflow: null,
+      direct_airflow_sources: []
+    },
+    assessmentLevel: 'initial',
+    converterVersion: AIR_ENVIRONMENT_CONVERTER_VERSION
+  }
+}
+
+function resolveAdvancedAirEnvironmentEvidence(advancedInput = {}) {
+  const normalized = normalizeAirEnvironmentInput(advancedInput, { requireDirectSource: true })
+  if (!normalized) {
+    return null
+  }
+  return {
+    evidence: resolveAirEnvironmentEvidence(normalized),
+    assessmentLevel: 'detailed',
+    converterVersion: AIR_ENVIRONMENT_CONVERTER_VERSION
+  }
+}
+
+function resolveAirEnvironmentAssessment(assessment = null) {
+  if (assessment === null || assessment === undefined) {
+    return null
+  }
+  if (Number(assessment?.schemaVersion) === 3) {
+    if (assessment.mode === 'quick') {
+      return resolveQuickAirEnvironmentEvidence(assessment.quickAnswer)
+    }
+    if (assessment.mode === 'advanced') {
+      return resolveAdvancedAirEnvironmentEvidence(assessment.advancedInput)
+    }
+    return null
+  }
+  return resolveAdvancedAirEnvironmentEvidence(assessment)
+}
+
+function normalizeAirEnvironmentAssessment(assessment = null) {
+  if (!assessment || typeof assessment !== 'object' || Array.isArray(assessment)) {
+    return null
+  }
+  if (Number(assessment.schemaVersion) === 3) {
+    if (assessment.mode === 'quick') {
+      const quickAnswer = normalizeQuickAirEnvironmentAnswer(assessment.quickAnswer)
+      return quickAnswer
+        ? { schemaVersion: 3, mode: 'quick', quickAnswer, advancedInput: null }
+        : null
+    }
+    if (assessment.mode === 'advanced') {
+      const advancedInput = normalizeAirEnvironmentInput(assessment.advancedInput, {
+        requireDirectSource: true
+      })
+      return advancedInput
+        ? { schemaVersion: 3, mode: 'advanced', quickAnswer: null, advancedInput }
+        : null
+    }
+    return null
+  }
+  return normalizeAirEnvironmentInput(assessment, { requireDirectSource: true })
+}
+
 function isAirEnvironmentQuestion(question = {}) {
   return (
     normalizeText(question?.uiVariant) === 'air_environment' ||
@@ -205,7 +291,7 @@ function normalizeDiagnosisAirEnvironmentSnapshot(value = {}) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return null
   }
-  const input = normalizeAirEnvironmentInput(value.input)
+  const input = normalizeAirEnvironmentAssessment(value.input)
   const source = normalizeText(value.source)
   if (!input || !DIAGNOSIS_AIR_ENVIRONMENT_SOURCES.has(source)) {
     return null
@@ -266,14 +352,14 @@ function parseDiagnosisAirEnvironmentSidecar({
     const optionKey = getAnswerOptionKey(answer)
     if (optionKey === AIR_ENVIRONMENT_RECORDED_OPTION_KEY) {
       const snapshot = normalizeDiagnosisAirEnvironmentSnapshot(snapshotsByQuestionId[questionKey])
-      const input = normalizeAirEnvironmentInput(airEnvironmentByQuestionId[questionKey])
+      const input = normalizeAirEnvironmentAssessment(airEnvironmentByQuestionId[questionKey])
       if (!snapshot || !input || JSON.stringify(snapshot.input) !== JSON.stringify(input)) {
         return { ok: false, error: '空气环境记录不完整' }
       }
       byQuestionId[questionKey] = input
       snapshots[questionKey] = snapshot
       sourceByQuestionId[questionKey] = snapshot.source
-      evidenceByQuestionId[questionKey] = resolveAirEnvironmentEvidence(input)
+      evidenceByQuestionId[questionKey] = resolveAirEnvironmentAssessment(input)?.evidence || null
       continue
     }
     if (optionKey === AIR_ENVIRONMENT_UNKNOWN_OPTION_KEY) {
@@ -298,10 +384,13 @@ function parseDiagnosisAirEnvironmentSidecar({
 function buildAirEnvironmentRouteAnswers(airEnvironmentByQuestionId = {}) {
   const answers = []
   for (const [questionKey, input] of Object.entries(airEnvironmentByQuestionId || {})) {
-    const evidence = resolveAirEnvironmentEvidence(input)
+    const evidence = resolveAirEnvironmentAssessment(input)?.evidence || null
     // 直吹只复用发蔫固定题包既有的 move_from_direct_airflow outcome；
     // 黄叶题只把空气环境保留为证据，不能由直吹单独定因。
-    if (questionKey === WILTING_DROOP_AIR_ENVIRONMENT_QUESTION_KEY && evidence?.direct_airflow) {
+    if (
+      questionKey === WILTING_DROOP_AIR_ENVIRONMENT_QUESTION_KEY &&
+      evidence?.direct_airflow === true
+    ) {
       answers.push({
         questionKey: `${questionKey}__evidence`,
         optionKey: 'direct_airflow',
@@ -316,6 +405,11 @@ function buildAirEnvironmentRouteAnswers(airEnvironmentByQuestionId = {}) {
 module.exports = {
   normalizeAirEnvironmentInput,
   resolveAirEnvironmentEvidence,
+  normalizeQuickAirEnvironmentAnswer,
+  resolveQuickAirEnvironmentEvidence,
+  resolveAdvancedAirEnvironmentEvidence,
+  resolveAirEnvironmentAssessment,
+  normalizeAirEnvironmentAssessment,
   isAirEnvironmentQuestion,
   AIR_ENVIRONMENT_RECORDED_OPTION_KEY,
   AIR_ENVIRONMENT_UNKNOWN_OPTION_KEY,

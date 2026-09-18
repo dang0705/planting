@@ -100,6 +100,17 @@ function publicRouteError(error) {
   })
 }
 
+function isDevelopmentSoilDebugAudit(headers = {}) {
+  const requested = Object.entries(headers || {}).some(
+    ([key, value]) =>
+      String(key).toLowerCase() === 'x-planting-debug-audit' &&
+      String(value).trim() === 'soil_visual_v1'
+  )
+  // 仅开发构建会主动附带该请求头；盆土调试应与诊断 SSE 一样，把实际 prompt、
+  // token 用量和模型原始结果交给开发者工具的控制台，而不是受云函数 APP_ENV 误配影响。
+  return requested
+}
+
 function normalizeHttpPayload(payload) {
   if (!payload) {
     return {}
@@ -198,6 +209,9 @@ async function main(event, context) {
     )
     const identity = await resolveHttpUserInfo(identityHeaders, payload, context, {
       timing: requestTiming,
+      // agent-http 已在当前请求中重新校验父平台会话，并只为正式诊断
+      // 函数签发短期内部票据；不接受模型或客户端自带的 openid。
+      allowAgentIdentityTicket: true,
       // 有应用会话时禁止退回微信运行时身份，避免跨端会话失效后串到另一
       // 个微信平台用户；无应用会话时才读取 CloudBase HTTP 上下文中的真实
       // 微信身份，不需要额外调用 wechat-identity。
@@ -228,7 +242,10 @@ async function main(event, context) {
       }
       const result = await analyzeWateringSoilEvidence({
         openid: identity.openid,
-        payload
+        payload: {
+          ...payload,
+          debugAudit: isDevelopmentSoilDebugAudit(request.headers)
+        }
       })
       return jsonResponse(result.code || 200, {
         code: result.code || 200,
@@ -430,5 +447,5 @@ async function main(event, context) {
 module.exports = {
   normalizeHttpPayload,
   main,
-  _test: { publicRouteError }
+  _test: { publicRouteError, isDevelopmentSoilDebugAudit }
 }

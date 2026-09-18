@@ -18,11 +18,8 @@
     </view>
     <view class="mt-3 flex items-center justify-between">
       <text class="text-[12px] text-[#5a7868]">浇水量</text>
-      <text v-if="isOverWateringBlocked" class="text-[13px] font-medium text-[#1d2a23]">
-        近期先不浇
-      </text>
       <text
-        v-else-if="amountBottleText"
+        v-if="amountBottleText"
         id="watering-reminder-result-amount"
         class="text-[13px] font-medium text-[#1d2a23]"
       >
@@ -37,42 +34,39 @@
       </text>
       <text v-else class="text-[13px] font-medium text-[#1d2a23]">暂不提供固定水量</text>
     </view>
-    <view
-      v-if="soilCheckMessage"
-      id="watering-reminder-soil-check-guidance"
-      class="mt-3 rounded-xl border border-[#d7e6dc] bg-white px-3 py-2"
-    >
-      <text class="block text-[12px] leading-5 text-[#2d7a4f]">
-        {{ compactSoilCheckMessage(soilCheckMessage) }}
-      </text>
-    </view>
-    <text
-      v-if="visualSoilEvidence?.sourceLabel"
-      id="watering-reminder-result-soil-source"
-      class="mt-3 block text-[12px] leading-5 text-[#5a7868]"
-    >
-      盆土依据：{{ visualSoilEvidence.sourceLabel }}。{{ visualSoilEvidence.observation }}
-    </text>
+    <WateringSoilVisualDecision
+      v-if="visualSoilEvidence"
+      result-label="盆土综合判断"
+      action-label="浇水建议"
+      :result-text="soilDecision.resultText"
+      :action-text="soilDecision.actionText"
+    />
   </view>
 </template>
 
 <script setup>
-function compactSoilCheckMessage(message) {
-  const detail = String(message || '')
-    .trim()
-    .replace(/^下次浇水前先检查盆土[，,]\s*/, '')
-    .replace(/^建议现在检查盆土[，,]\s*/, '')
-    .replace(/^先检查盆土[，,]\s*/, '')
-  return detail ? `浇水前摸一下盆土，${detail}` : '浇水前摸一下盆土。'
-}
+import { computed } from 'vue'
+import WateringSoilVisualDecision from '@/components/watering/WateringSoilVisualDecision.vue'
+import { buildWateringSoilDecision } from '@/utils/watering-soil-decision.js'
 
-defineProps({
+const props = defineProps({
   isOverWateringBlocked: { type: Boolean, default: false },
   isOverdue: { type: Boolean, default: false },
   nextWaterDisplay: { type: String, default: '' },
   amountBottleText: { type: String, default: '' },
   potProfileState: { type: String, default: 'missing' },
   soilCheckMessage: { type: String, default: '' },
-  visualSoilEvidence: { type: Object, default: null }
+  visualSoilEvidence: { type: Object, default: null },
+  wateringContext: { type: String, default: '' },
+  wateringAction: { type: String, default: '' }
 })
+
+const soilDecision = computed(() =>
+  buildWateringSoilDecision({
+    visualSoilEvidence: props.visualSoilEvidence,
+    soilCheck: { message: props.soilCheckMessage },
+    wateringContext: props.wateringContext || (props.isOverWateringBlocked ? 'likely_too_wet' : ''),
+    wateringAction: props.wateringAction
+  })
+)
 </script>

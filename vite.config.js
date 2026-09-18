@@ -4,6 +4,7 @@ import { Resolver, lookup as systemLookup } from 'node:dns'
 import { copyFile, mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises'
 import { extname, resolve } from 'node:path'
 import uni from '@dcloudio/vite-plugin-uni'
+import { assertMpWeixinScopedStyleConsistency } from './scripts/dev/mp-weixin-output-validation.mjs'
 
 import { defineConfig } from 'vite'
 import { UnifiedViteWeappTailwindcssPlugin as uvwt } from 'weapp-tailwindcss/vite'
@@ -1462,6 +1463,7 @@ function createMpE2eContractPlugin() {
         return
       }
       await copyFile(source, resolve(outputDir, 'mp-e2e.contract.json'))
+      assertMpWeixinScopedStyleConsistency(outputDir)
     }
   }
 }

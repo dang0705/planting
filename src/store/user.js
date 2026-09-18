@@ -7,6 +7,7 @@ import { normalizeWeatherCoordinates } from '@/utils/weather-coordinate.js'
 import { queryClient } from '@/lib/query-client.js'
 import { USER_PLANTS_QUERY_KEY } from '@/vue-query/plants/queries/user-plants.js'
 import { DIAGNOSIS_HISTORY_QUERY_KEY } from '@/constants/query-keys.js'
+import { requestPhoneLogin } from '@/utils/phone-login-gate.js'
 
 const MINI_PROGRAM_AUTH_CACHE_MS = 30 * 1000
 // 隔离性能构建需要让每轮首页回归都真实发出 auth/user 请求；普通构建
@@ -138,7 +139,10 @@ export const useUserStore = defineStore('user', {
      * 确保用户已登录（用于需要登录的功能）
      * @returns {Promise<boolean>} 是否已登录
      */
-    async ensureLogin() {
+    async ensureLogin({ prompt = false } = {}) {
+      if (!this.isAuthenticated && prompt) {
+        await requestPhoneLogin({ message: '登录后才能继续使用青花植' })
+      }
       if (!this.isAuthenticated) {
         return false
       }
@@ -263,7 +267,8 @@ export const useUserStore = defineStore('user', {
       this.phoneNumber = user.phoneNumber || ''
 
       // token 仅来自登录响应，不联网获取
-      this.token = loginData.token || loginData.session?.accessToken || getActivePlatformAccessToken()
+      this.token =
+        loginData.token || loginData.session?.accessToken || getActivePlatformAccessToken()
 
       this.isLoggedIn = true
 

@@ -11,9 +11,6 @@ const formSource = read('src/subpackages/plant/user-plant-detail/components/Plan
 const panelSource = read(
   'src/subpackages/plant/user-plant-detail/components/PlantInfoStepPanel.vue'
 )
-const selectionSource = read(
-  'src/subpackages/plant/user-plant-detail/components/PlantSelectionStep.vue'
-)
 const pageSource = read(
   'src/subpackages/plant/user-plant-detail/components/UserPlantDetailForm.vue'
 )
@@ -43,16 +40,9 @@ assert.match(
 assert.match(pageSource, /:show-light-environment="!isEditMode && !restrictedPlatform"/)
 assert.match(pageSource, /:show-photo="!restrictedPlatform"/)
 assert.match(pageSource, /:show-pot-profile="!restrictedPlatform"/)
-assert.match(selectionSource, /:id="`add-plant-card-\$\{plant\.id\}`"/)
-assert.match(selectionSource, /@tap\.stop="handlePlantSelect\(plant\)"/)
-assert.match(
-  selectionSource,
-  /function handlePlantSelect\(plant\) \{[\s\S]*emit\('select-plant', plant\)/
-)
-assert.match(
-  pageSource,
-  /function handlePlantSelect\(plant\) \{[\s\S]*selectedPlant\.value = plant[\s\S]*activeStep\.value = INFO_STEP/
-)
+assert.match(pageSource, /<template #before-form>[\s\S]*add-plant-identity-section/u)
+assert.match(pageSource, /id="add-plant-ai-identify-button"[\s\S]*@click="useAIIdentify"/u)
+assert.doesNotMatch(pageSource, /PlantSelectionStep|PlantSearchToolbar|add-plant-selection/u)
 assert.match(
   pageSource,
   /<template #after-form>[\s\S]*<PlantEnvironmentSettingsGroup[\s\S]*v-if="isEditMode && !restrictedPlatform"/
@@ -64,11 +54,6 @@ assert.match(
   /class="box-border h-\[calc\(100vh-var\(--app-header-height\)\)\] min-h-0 bg-\[#f8faf9\]"/
 )
 assert.match(pageSource, /class="flex min-h-full items-center justify-center px-6"/)
-assert.match(pageSource, /id="add-plant-swiper"[\s\S]*class="h-full min-h-0"/)
-assert.match(
-  pageSource,
-  /<scroll-view id="add-plant-selection-scroll" scroll-y class="box-border h-full min-h-0">/
-)
 assert.match(panelSource, /:id="`\$\{idPrefix\}-info-scroll`"/)
 assert.match(panelSource, /class="box-border flex h-full min-h-0 flex-col bg-\[#f8faf9\]"/)
 assert.match(panelSource, /class="box-border min-h-0 flex-1 px-4 pb-4 pt-4"/)
@@ -82,5 +67,19 @@ assert.match(panelSource, /<\/scroll-view>[\s\S]*:id="`\$\{idPrefix\}-submit-bar
 assert.match(panelSource, /bottomPadding: \{ type: Number, default: 48 \}/)
 assert.doesNotMatch(panelSource, /class="h-screen[^\"]*"/)
 assert.doesNotMatch(pageSource, /class="min-h-screen bg-\[#f8faf9\] pb-5"/)
+assert.doesNotMatch(pageSource, /swiper|searchKeyword|loadPlants|handlePlantSelect|goInfoStep/u)
+
+// 进入新增/编辑页面后主动定位；城市修改入口仍允许用户手动调整。
+assert.match(formSource, /:id="`\$\{idPrefix\}-city-button`"[\s\S]*@click="openCitySheet"/)
+assert.match(formSource, /async function openCitySheet\(\) \{[\s\S]*await initCareLocation\(\)/)
+assert.match(formSource, /onMounted\(\(\) => \{[\s\S]*initCareLocation\(\)/)
+assert.match(formSource, /const locationLoading = ref\(false\)/)
+assert.match(formSource, /DEFAULT_PLANT_CARE_LOCATION/)
+assert.match(formSource, /applyDefaultCareLocation\(\)/)
+assert.match(
+  formSource,
+  /return selectedCareLocation\.value \? '已保存养护城市' : '点击修改获取位置'/
+)
+assert.doesNotMatch(formSource, /watch\(\s*\(\) => props\.activeStep/)
 
 console.log('user plant add/edit form section contract tests passed')

@@ -28,9 +28,7 @@ try {
   }
   assert.equal(hasMvpAccess(freeStore), false)
   assert.equal(await requireMvpAccess(freeStore, { source: 'free_entry' }), false)
-  assert.deepEqual(navigations, [
-    { url: `${SUBSCRIPTION_PAGE_PATH}?source=free_entry` }
-  ])
+  assert.deepEqual(navigations, [{ url: `${SUBSCRIPTION_PAGE_PATH}?source=free_entry` }])
   assert.deepEqual(toasts, [])
 
   const memberStore = {
@@ -46,12 +44,11 @@ try {
   }
   assert.equal(
     await requireMvpAccess(loggedOutStore, {
-      source: 'logged_out_entry',
-      loginMessage: '请先登录后使用诊断'
+      source: 'logged_out_entry'
     }),
     false
   )
-  assert.deepEqual(toasts, [{ title: '请先登录后使用诊断', icon: 'none' }])
+  assert.deepEqual(toasts, [])
 } finally {
   globalThis.uni = originalUni
 }

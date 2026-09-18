@@ -4,7 +4,7 @@
   >
     <view class="flex h-[127px] w-full overflow-hidden rounded-[11px]">
       <view
-        :id="`index-plant-card-edit-${plant.id}`"
+        :id="`${idPrefix}-plant-card-edit-${plant.id}`"
         class="h-[127px] w-[112px] flex-[0_0_112px]"
         @click.stop="$emit('edit', plant)"
       >
@@ -13,9 +13,16 @@
 
       <view class="flex h-[127px] min-w-0 flex-1 flex-col gap-2 p-3">
         <view class="flex h-[27px] items-center gap-1.5">
-          <PlantProfileCompleteness :plant="plant" @click="$emit('edit', plant)" />
+          <PlantProfileCompleteness
+            ref="profileCompletenessRef"
+            :plant="plant"
+            :id-prefix="idPrefix"
+            @complete="$emit('edit', plant)"
+          />
           <text
+            :id="`${idPrefix}-plant-card-name-${plant.id}`"
             class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-[18px] font-medium leading-[27px] text-[#0a0a0a]"
+            @click.stop="openCompletenessDetails"
           >
             {{ plant.displayName }}
           </text>
@@ -47,7 +54,7 @@
             <text>诊断</text>
           </button>
           <button
-            :id="`index-plant-card-history-${plant.id}`"
+            :id="`${idPrefix}-plant-card-history-${plant.id}`"
             class="m-0 box-border flex h-9 min-w-0 w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] border border-solid border-primary bg-white px-3 py-2 text-sm font-medium leading-5 text-[#0a0a0a] after:border-0"
             hover-class="none"
             @click.stop="$emit('history', plant)"
@@ -107,8 +114,9 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { parsePlantDateTime } from '@/utils/plant-datetime.js'
+import { callComponentMethod } from '@/utils/component-ref.js'
 import PlantDisplayBase from '@/components/PlantDisplayBase.vue'
 import PlantProfileCompleteness from './PlantProfileCompleteness.vue'
 import diagnoseIcon from '@/assets/icons/home-card-diagnose.svg'
@@ -120,6 +128,7 @@ import waterDefaultIcon from '@/assets/icons/home-card-water-default.svg'
 
 const props = defineProps({
   plant: { type: Object, required: true },
+  idPrefix: { type: String, default: 'index' },
   reminderSummary: {
     type: Object,
     default: () => ({ water: { active: false } })
@@ -128,6 +137,8 @@ const props = defineProps({
 
 defineEmits(['diagnose', 'history', 'edit', 'reminder', 'fertilization'])
 
+const idPrefix = computed(() => String(props.idPrefix || 'index').trim() || 'index')
+const profileCompletenessRef = ref(null)
 const waterReminderActive = computed(() => Boolean(props.reminderSummary?.water?.active))
 const needsWatering = computed(() => {
   const nextWater = props.plant?.nextWater || props.reminderSummary?.water?.nextWaterDate
@@ -140,6 +151,10 @@ const needsWatering = computed(() => {
 const fertilizationReminderActive = computed(() =>
   Boolean(props.reminderSummary?.fertilize?.active || props.plant?.fertilizationReminder?.active)
 )
+
+function openCompletenessDetails() {
+  callComponentMethod(profileCompletenessRef, 'open')
+}
 
 const healthPresentation = computed(() => {
   const status = String(props.plant?.healthStatus || '')

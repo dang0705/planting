@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+/* oxlint-disable no-console, no-magic-numbers */
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -135,6 +136,8 @@ assert.ok(
 )
 
 const deploySource = read('scripts/deploy-cloudbase-functions.mjs')
+const deploymentStagingSource = read('scripts/cloudbase/function-package-staging.mjs')
+const releaseGateSource = read('scripts/cloudbase/tcb-function-release.mjs')
 assert.match(deploySource, /assertDeploymentEnvironment/u)
 assert.match(deploySource, /auditFunctionPackage/u)
 assert.match(deploySource, /stageFunctionPackage/u)
@@ -143,6 +146,15 @@ assert.match(deploySource, /DEPLOYMENT_IGNORED_DIRECTORY_NAMES/u)
 assert.match(deploySource, /writeDeploymentManifest/u)
 assert.match(deploySource, /remote_readback/u)
 assert.match(deploySource, /codeSha256/u)
+assert.match(deploymentStagingSource, /FUNCTION_BUNDLED_RUNTIME_FILES/u)
+assert.match(deploymentStagingSource, /'plant-catalog-http'/u)
+assert.match(deploymentStagingSource, /target: 'catalog-image-url\.js'/u)
+assert.match(deploySource, /releaseImmutableDefaultVersion/u)
+assert.match(releaseGateSource, /PublishVersion/u)
+assert.match(releaseGateSource, /UpdateAlias/u)
+assert.match(releaseGateSource, /GetFunctionAddress/u)
+assert.match(releaseGateSource, /verifyGatewayQualifier/u)
+assert.match(releaseGateSource, /rollbackDefaultAlias/u)
 
 const packageAudit = auditConfiguredFunctions()
 assert.equal(packageAudit.status, 'PASS')

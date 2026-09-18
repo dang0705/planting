@@ -19,18 +19,12 @@ export function navigateToSubscription(source = '') {
   return true
 }
 
-export async function requireMvpAccess(
-  userStore,
-  { source = '', loginMessage = '请先登录后使用该功能', loginChecked = false } = {}
-) {
+export async function requireMvpAccess(userStore, { source = '', loginChecked = false } = {}) {
   if (!loginChecked) {
     if (!userStore || typeof userStore.ensureLogin !== 'function') {
       return false
     }
-    if (!(await userStore.ensureLogin())) {
-      if (typeof uni !== 'undefined' && typeof uni.showToast === 'function') {
-        uni.showToast({ title: loginMessage, icon: 'none' })
-      }
+    if (!(await userStore.ensureLogin({ prompt: true }))) {
       return false
     }
   }

@@ -10,10 +10,32 @@ const Module = require('module')
 const sourcePath = path.join(repoRoot, 'cloudfunctions/storage-http/app.js')
 const originalLoad = Module._load
 // data_mode=unit_fake：验证存储 HTTP 的边界与非敏感性能审计字段，不触发真实存储写入。
-const calls = { ownedImage: 0, deleteFile: 0, diagnoseUpload: 0 }
+const calls = { ownedImage: 0, deleteFile: 0, diagnoseUpload: 0, tempUrl: 0 }
+const sqlCalls = []
+const registeredPlants = new Map()
 
 const models = {
-  async $runSQL() {
+  async $runSQL(sql, params) {
+    sqlCalls.push({ sql, params })
+    if (sql.includes('SELECT _id, plantId, fileId FROM plant_images')) {
+      const plantId = registeredPlants.get(params.fileId)
+      return {
+        data: {
+          executeResultList: plantId
+            ? [{ _id: 'pimg_existing', plantId, fileId: params.fileId }]
+            : []
+        }
+      }
+    }
+    if (sql.includes('INSERT INTO plant_images')) {
+      registeredPlants.set(params.fileId, params.plantId)
+    }
+    if (sql.includes('SELECT plantId FROM plant_images')) {
+      const plantId = registeredPlants.get(params.fileId)
+      return {
+        data: { executeResultList: plantId ? [{ plantId }] : [] }
+      }
+    }
     return { data: { executeResultList: [] } }
   }
 }
@@ -35,6 +57,7 @@ const cloudbase = {
       return { fileID: 'cloud://diagnose-upload-id' }
     },
     async getTempFileURL() {
+      calls.tempUrl += 1
       return { fileList: [{ tempFileURL: 'https://temp.example.com/image' }] }
     },
     async deleteFile() {
@@ -205,6 +228,36 @@ try {
   assert.equal(response.code, 200)
   assert.equal(response.data.tempUrl, 'https://temp.example.com/image')
   assert.equal(calls.ownedImage, 1)
+
+  const tempUrlCallsBeforeRegistration = calls.tempUrl
+  const registered = await storage._test.registerDiagnosePlantImage({
+    openid: 'wx_owner',
+    plantId: 'temp',
+    fileId: 'cloud://env/bucket/diagnose/wx_owner/temp.jpg',
+    cloudPath: 'diagnose/wx_owner/temp.jpg'
+  })
+  assert.deepEqual(registered, {
+    fileId: 'cloud://env/bucket/diagnose/wx_owner/temp.jpg',
+    registered: true
+  })
+  assert.equal(
+    calls.tempUrl,
+    tempUrlCallsBeforeRegistration,
+    '登记不应再次请求临时链接'
+  )
+  assert.ok(sqlCalls.some(call => call.sql.includes('ON DUPLICATE KEY UPDATE')))
+
+  const repeated = await storage._test.registerDiagnosePlantImage({
+    openid: 'wx_owner',
+    plantId: 'temp',
+    fileId: 'cloud://env/bucket/diagnose/wx_owner/temp.jpg',
+    cloudPath: 'diagnose/wx_owner/temp.jpg'
+  })
+  assert.deepEqual(repeated, {
+    fileId: 'cloud://env/bucket/diagnose/wx_owner/temp.jpg',
+    registered: false
+  })
+  assert.equal(calls.tempUrl, tempUrlCallsBeforeRegistration)
 } finally {
   Module._load = originalLoad
   delete require.cache[sourcePath]

@@ -8,6 +8,7 @@ const source = readFileSync(
 )
 
 const airUtils = await import('../../../../../../src/utils/air-environment.js')
+const airAssessmentUtils = await import('../../../../../../src/utils/air-environment-assessment.js')
 const { getQuestionIdentity } =
   await import('../../../../../../src/subpackages/diagnosis/utils/diagnose-question-identity.js')
 
@@ -16,6 +17,8 @@ const validInput = {
   canopyOpenness: 'open',
   deviceAirflow: { mode: 'none', sources: [], directSources: [], sourceModes: {} }
 }
+
+globalThis.uni = { showToast: () => {} }
 
 function loadComposable(fetchProfile) {
   const transformed = source
@@ -29,6 +32,10 @@ function loadComposable(fetchProfile) {
       'const { describeAirEnvironmentInput, isAirEnvironmentAnswerReady, isAirEnvironmentQuestion, isCompleteAirEnvironmentProfile, isSameAirEnvironmentLocationBinding, normalizeAirEnvironmentLocationBinding, sanitizeAirEnvironmentInput } = __airUtils\n'
     )
     .replace(
+      /import \{[\s\S]*?\} from '@\/utils\/air-environment-assessment\.js'\n/,
+      'const { buildAdvancedAirEnvironmentAssessment, buildQuickAirEnvironmentAssessment, describeAirEnvironmentAssessment, getActiveAirEnvironmentAssessment, getCompletedQuickAirEnvironmentAnswer, getInitialAdvancedAirEnvironmentInput, getPreferredAirEnvironmentMode, normalizeAirEnvironmentProfile } = __airAssessmentUtils\n'
+    )
+    .replace(
       "import { getQuestionIdentity as getQuestionId } from '../utils/diagnose-question-identity.js'\n",
       'const getQuestionId = __getQuestionId\n'
     )
@@ -38,6 +45,7 @@ function loadComposable(fetchProfile) {
     '__vue',
     '__api',
     '__airUtils',
+    '__airAssessmentUtils',
     '__getQuestionId',
     `${transformed}\nreturn { useQuestionAirEnvironment }`
   )(
@@ -47,6 +55,7 @@ function loadComposable(fetchProfile) {
       patchUserPlantAirEnvironment: async () => ({ code: 200, data: null })
     },
     airUtils,
+    airAssessmentUtils,
     getQuestionIdentity
   ).useQuestionAirEnvironment
 }
@@ -84,7 +93,7 @@ async function prepare({ savedLocationBinding = {}, currentLocationBinding = {} 
   assert.equal(answers[question.questionKey], 'air_environment_recorded')
   assert.equal(air.isAnswered(question, answers[question.questionKey]), true)
   assert.equal(air.needsConfirmation(question), false)
-  assert.equal(air.getSummary(question), '新风换气，有空气流动')
+  assert.equal(air.getSummary(question), '主要靠新风 · 周围无遮挡')
   assert.equal(
     air.freezeForSubmit([question]).snapshotsByQuestionId[question.questionKey].source,
     'saved_profile'
@@ -99,6 +108,43 @@ async function prepare({ savedLocationBinding = {}, currentLocationBinding = {} 
   assert.equal(answers[question.questionKey], 'air_environment_recorded')
   assert.equal(air.needsConfirmation(question), true)
   assert.equal(air.isAnswered(question, answers[question.questionKey]), false)
+}
+
+{
+  const { air, question } = await prepare()
+  air.changeDraft(question, {
+    editKind: 'mode_switch',
+    mode: 'quick',
+    quickAnswer: null,
+    advancedInput: validInput
+  })
+  air.changeDraft(question, {
+    editKind: 'answer',
+    mode: 'quick',
+    quickAnswer: { questionKey: 'air_exchange_frequency', optionKey: 'regular' },
+    advancedInput: validInput
+  })
+  assert.equal(air.freezeForSubmit([question]).byQuestionId[question.questionKey].mode, 'advanced')
+  assert.equal(air.completeDraft(question), true)
+  assert.equal(
+    air.freezeForSubmit([question]).byQuestionId[question.questionKey].quickAnswer.optionKey,
+    'regular'
+  )
+  air.changeDraft(question, {
+    editKind: 'answer',
+    mode: 'quick',
+    quickAnswer: { questionKey: 'air_exchange_frequency', optionKey: 'rare' },
+    advancedInput: validInput
+  })
+  assert.equal(
+    air.freezeForSubmit([question]).byQuestionId[question.questionKey].quickAnswer.optionKey,
+    'regular'
+  )
+  assert.equal(air.completeDraft(question), true)
+  assert.equal(
+    air.freezeForSubmit([question]).byQuestionId[question.questionKey].quickAnswer.optionKey,
+    'rare'
+  )
 }
 
 console.log(

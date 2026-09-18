@@ -147,10 +147,9 @@ export function resolveWateringDoseText(echo, potVolumeMl) {
 export function buildPlannerSummaryRows({
   plannerResult,
   amountBottleText,
-  isOverWateringBlocked,
   potVolumeMl
 }) {
-  if (!amountBottleText || isOverWateringBlocked) {
+  if (!amountBottleText) {
     return []
   }
   const rows = []
@@ -297,7 +296,8 @@ export function buildWateringPlannerRequestPayload({
   timezone = 'Asia/Shanghai',
   airEnvironmentOverride = null,
   soilEvidenceId = '',
-  manualSoilConfirmed = false
+  manualSoilConfirmed = false,
+  soilMoistureOverride = ''
 }) {
   const payload = {
     plantId,
@@ -308,7 +308,8 @@ export function buildWateringPlannerRequestPayload({
     locationKey: String(locationKey || '').trim(),
     timezone: String(timezone || 'Asia/Shanghai').trim() || 'Asia/Shanghai',
     soilEvidenceId: String(soilEvidenceId || '').trim(),
-    manualSoilConfirmed: manualSoilConfirmed === true
+    manualSoilConfirmed: manualSoilConfirmed === true,
+    soilMoistureOverride: String(soilMoistureOverride || '').trim()
   }
   // 独立浇水建议流程可传入当前步骤中的盆型（默认值或用户修改值），
   // 后端优先使用此覆盖值；首页浇水提醒不传此字段，后端回退到数据库 potProfile。
@@ -331,7 +332,8 @@ export async function fetchWateringPlannerResult({
   timezone = 'Asia/Shanghai',
   airEnvironmentOverride = null,
   soilEvidenceId = '',
-  manualSoilConfirmed = false
+  manualSoilConfirmed = false,
+  soilMoistureOverride = ''
 }) {
   const response = await requestHttpFunction('plant-user-http/user-plants/watering-planner', {
     method: 'POST',
@@ -346,7 +348,8 @@ export async function fetchWateringPlannerResult({
       timezone,
       airEnvironmentOverride,
       soilEvidenceId,
-      manualSoilConfirmed
+      manualSoilConfirmed,
+      soilMoistureOverride
     })
   })
   if (response?.code !== 200) {
@@ -436,7 +439,11 @@ export function buildAdhocPlannerRequestPayload({
   locationKey = '',
   timezone = 'Asia/Shanghai',
   soilEvidenceId = '',
-  manualSoilConfirmed = false
+  manualSoilConfirmed = false,
+  forced = false,
+  soilMoistureOverride = '',
+  wateringEvents = [],
+  hasWateringHistoryInput = false
 }) {
   return {
     catalogPlantId,
@@ -447,7 +454,11 @@ export function buildAdhocPlannerRequestPayload({
     locationKey: String(locationKey || '').trim(),
     timezone: String(timezone || 'Asia/Shanghai').trim() || 'Asia/Shanghai',
     soilEvidenceId: String(soilEvidenceId || '').trim(),
-    manualSoilConfirmed: manualSoilConfirmed === true
+    manualSoilConfirmed: manualSoilConfirmed === true,
+    forced: forced === true,
+    soilMoistureOverride: String(soilMoistureOverride || '').trim(),
+    wateringEvents: Array.isArray(wateringEvents) ? wateringEvents : [],
+    hasWateringHistoryInput: hasWateringHistoryInput === true
   }
 }
 
@@ -459,7 +470,11 @@ export async function fetchAdhocPlannerResult({
   locationKey = '',
   timezone = 'Asia/Shanghai',
   soilEvidenceId = '',
-  manualSoilConfirmed = false
+  manualSoilConfirmed = false,
+  forced = false,
+  soilMoistureOverride = '',
+  wateringEvents = [],
+  hasWateringHistoryInput = false
 }) {
   const response = await requestHttpFunction('plant-user-http/user-plants/watering-advisor', {
     method: 'POST',
@@ -471,7 +486,11 @@ export async function fetchAdhocPlannerResult({
       locationKey,
       timezone,
       soilEvidenceId,
-      manualSoilConfirmed
+      manualSoilConfirmed,
+      forced,
+      soilMoistureOverride,
+      wateringEvents,
+      hasWateringHistoryInput
     })
   })
   return response?.code === 200 ? normalizePlannerResultDate(response.data) : null

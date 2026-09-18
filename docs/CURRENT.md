@@ -83,6 +83,8 @@ stale_if_changed:
 
 ### 3.1 前端
 
+- `src/pages/agent/agent.vue`：小青 Tab；独立 uni-app H5 为 `src/agent-h5/`，由新增 `agent-http` 服务提供页面、一次性换票和聊天转发。发布配置与验收边界见 [agent-webview.md](./agent-webview.md)。
+
 - `src/pages/index/index.vue`：首页，植物卡水滴 icon 点击打开浇水提醒弹框（不再跳转日历页）。
 - `src/pages/index/components/WateringReminderSheet.vue`：浇水提醒底部弹框，含上次浇水入口、建议下次浇水 Summary、添加至日历主操作；点击上次浇水打开二级日期选择器（复用 `CareBehaviorTimeline`）。已保存提醒会回显上次设置时间和下次浇水建议。
 - `src/pages/diagnose/diagnose.vue`：诊断 Tab 的统一入口页面，直接挂载照片/无图症状入口；微信和抖音进入完整诊断流程，小红书按能力表显示中性提示。

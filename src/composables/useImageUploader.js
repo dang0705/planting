@@ -445,7 +445,12 @@ export function useImageUploader({
 
     files.value.push(...entries)
     await Promise.all(entries.map(item => uploadEntry(item.id, context)))
-    return entries
+    // uploadEntry patches the reactive collection by replacing each entry
+    // object. Returning the original `entries` array here leaves callers with
+    // the queued snapshot (uploaded is still null), even though the upload
+    // itself has completed successfully. Return the patched records so the
+    // next request (registration / visual analysis) receives the file ID.
+    return entries.map(entry => files.value.find(item => item.id === entry.id) || entry)
   }
 
   async function removeAt(index) {

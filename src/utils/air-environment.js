@@ -178,6 +178,12 @@ export function isSameAirEnvironmentLocationBinding(saved = {}, current = {}) {
 }
 
 export function isCompleteAirEnvironmentProfile(profile = null) {
+  if (Number(profile?.schemaVersion) === 3) {
+    return profile.activeMode === 'quick'
+      ? ['frequent', 'regular', 'rare'].includes(profile.completedModes?.quick?.optionKey)
+      : profile.activeMode === 'advanced' &&
+          isAirEnvironmentAnswerReady(profile.completedModes?.advanced)
+  }
   return Boolean(profile?.input && isAirEnvironmentAnswerReady(profile.input))
 }
 

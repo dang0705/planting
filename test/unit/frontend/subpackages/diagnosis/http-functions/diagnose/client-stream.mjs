@@ -141,6 +141,7 @@ const expectedDiagnosisDebug = {
     cachedTokens: 900,
     cacheCreationTokens: 30
   },
+  modelPromptText: 'static prompt\n[Dynamic Task]\nactual runtime prompt',
   modelBusinessData: [
     {
       imageIndex: 0,
@@ -170,18 +171,8 @@ try {
       streamDiagnoseRequester: async options => {
         for (const event of lifecycleEvents) {
           if (event === 'visual_model_prompt_ready') {
-            options.onChunkReceived({
-              data: `event: ${event}\ndata: ${JSON.stringify({
-                event,
-                imageIndex: 0,
-                imageId: 'img_leaf_1',
-                promptLength: 123,
-                promptText: 'static prompt\n[Dynamic Task]\nactual runtime prompt',
-                promptCacheStrategy: { enabled: true },
-                promptDebugMeta: { promptCacheStaticPrefixHash: 'static_hash' },
-                model: 'qwen3.5-flash'
-              })}\n\n`
-            })
+            // 复现真实 CloudBase 行为：中间 prompt_ready 事件可能未抵达端上；
+            // 前端必须从最终 done 响应稳定打印完整 prompt。
             continue
           }
           const eventData = { event, imageCount: 2, displayText: `节点文案：${event}` }
@@ -218,11 +209,11 @@ assert.deepEqual(streamed, expectedResult)
 assert.equal(progress.length, lifecycleEvents.length - 1)
 assert.equal(
   frontendLogs.some(args => args[0] === '[诊断 start][节点]'),
-  true
+  false
 )
 assert.equal(
   frontendLogs.some(args => args[0] === '[诊断 start][分片]'),
-  true
+  false
 )
 assert.equal(
   frontendLogs.some(args => args[0] === '[诊断 start][token 用量]'),
@@ -232,16 +223,11 @@ assert.equal(
   frontendLogs.some(args => args[0] === '[诊断 start][模型业务数据]'),
   true
 )
-assert.deepEqual(frontendLogs.find(args => args[0] === '[诊断 start][模型调用prompt]')?.[1], {
-  imageIndex: 0,
-  imageId: 'img_leaf_1',
-  model: 'qwen3.5-flash',
-  modelIdentity: null,
-  promptLength: 123,
-  promptCacheStrategy: { enabled: true },
-  promptDebugMeta: { promptCacheStaticPrefixHash: 'static_hash' },
-  promptText: 'static prompt\n[Dynamic Task]\nactual runtime prompt'
-})
+assert.deepEqual(
+  frontendLogs.find(args => args[0] === '[诊断 start][模型调用prompt]'),
+  ['[诊断 start][模型调用prompt]', 'static prompt\n[Dynamic Task]\nactual runtime prompt']
+)
+assert.equal(frontendLogs.filter(args => args[0] === '[诊断 start][模型调用prompt]').length, 1)
 assert.equal(
   frontendLogs.some(args => args[0] === '[诊断 start][完成响应]'),
   true

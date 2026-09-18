@@ -90,6 +90,41 @@ const yellow = validateAirEnvironmentPackageSidecar({
 })
 assert.deepEqual(yellow.routeAnswers, [])
 
+const quickAssessment = {
+  schemaVersion: 3,
+  mode: 'quick',
+  quickAnswer: { questionKey: 'air_exchange_frequency', optionKey: 'rare' },
+  advancedInput: null
+}
+const quickYellow = validateAirEnvironmentPackageSidecar({
+  questionPackageSnapshot: {
+    mode: 'yellow_leaf',
+    packageVersion: 2,
+    packageQuestions: [{ questionKey: yellowQuestionKey, packageTopic: 'air_environment' }]
+  },
+  answers: [{ questionKey: yellowQuestionKey, optionKey: 'air_environment_recorded' }],
+  payload: {
+    airEnvironmentByQuestionId: { [yellowQuestionKey]: quickAssessment },
+    airEnvironmentSnapshotsByQuestionId: {
+      [yellowQuestionKey]: {
+        input: quickAssessment,
+        source: 'temporary',
+        profileUpdatedAt: '',
+        locationBinding: { careLocationId: '', locationKey: '' }
+      }
+    }
+  }
+})
+assert.equal(quickYellow.byQuestionId[yellowQuestionKey].mode, 'quick')
+assert.deepEqual(quickYellow.evidence[yellowQuestionKey], {
+  air_exchange_level: 'low',
+  local_airflow_present: 'unknown',
+  stagnation_risk: 'unknown',
+  direct_airflow: null,
+  direct_airflow_sources: []
+})
+assert.deepEqual(quickYellow.routeAnswers, [])
+
 const unknown = validateAirEnvironmentPackageSidecar({
   questionPackageSnapshot: snapshot,
   answers: [{ questionKey, optionKey: 'air_environment_unknown' }],

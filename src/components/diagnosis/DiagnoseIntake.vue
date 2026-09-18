@@ -10,23 +10,37 @@
         <view
           id="watering-soil-upload-zone"
           class="watering-soil-upload-zone"
-          :class="{ 'watering-soil-upload-zone--has-image': soilOnlyImage?.previewUrl }"
+          :class="{
+            'watering-soil-upload-zone--has-image': soilOnlyImage?.previewUrl,
+            'watering-soil-upload-zone--locked': isSoilInteractionLocked
+          }"
           @click="handleSoilOnlyZoneClick"
         >
-          <image
-            v-if="soilOnlyImage?.previewUrl"
-            :src="soilOnlyImage.previewUrl"
-            class="watering-soil-upload-preview"
-            mode="aspectFill"
-          />
-          <template v-else>
+          <template v-if="soilOnlyImage?.previewUrl && !soilUploadLoading">
+            <image
+              :src="soilOnlyImage.previewUrl"
+              class="watering-soil-upload-preview"
+              mode="aspectFill"
+            />
+            <view
+              v-if="isVisualScanning"
+              id="watering-soil-scan-overlay"
+              class="watering-soil-scan-overlay"
+            >
+              <view id="diagnose-visual-scan-line" class="diagnose-visual-scan-line" />
+            </view>
+          </template>
+          <view v-else-if="soilUploadLoading" id="watering-soil-upload-loading" class="watering-soil-upload-zone-loading">
+            <view class="diagnose-upload-spinner" />
+          </view>
+          <template v-else-if="!isVisualScanning && !soilUploadLoading">
             <image :src="diagnosisUploadIcon" class="watering-soil-upload-icon" mode="aspectFit" />
             <text class="watering-soil-upload-label">点击盆土区域上传照片</text>
           </template>
         </view>
       </view>
       <text class="watering-soil-upload-help">请俯拍盆土表面</text>
-      <view v-if="soilOnlyImage?.previewUrl" class="watering-soil-upload-actions">
+      <view v-if="soilOnlyImage?.previewUrl && !isSoilInteractionLocked" class="watering-soil-upload-actions">
         <text v-if="soilOnlyImage.sourceLabel" class="watering-soil-upload-source">
           {{ soilOnlyImage.sourceLabel }}
         </text>
@@ -35,6 +49,9 @@
           <text id="watering-soil-remove-button" @click="requestSoilRemove">移除照片</text>
         </view>
       </view>
+      <text v-else-if="soilOnlyImage?.previewUrl && soilLocked" id="watering-soil-analysis-locked-hint" class="watering-soil-analysis-locked-hint">
+        已提交盆土分析，本次不能更换照片
+      </text>
     </view>
     <view v-else id="diagnose-intake-sections" class="diagnose-intake-sections">
       <view
@@ -205,6 +222,8 @@ const INTAKE_DEFAULTS = {
   visualScanText: VISUAL_SCAN_LOADING_TEXT,
   hasPendingUploads: false,
   hasUploadErrors: false,
+  soilUploadLoading: false,
+  soilLocked: false,
   handleSymptomClassQuickSelect: () => {},
   clearDevSymptomClass: () => {},
   chooseImage: () => {},
@@ -222,6 +241,8 @@ export default {
   setup(props, { emit }) {
     const view = exposeViewProp(props, INTAKE_DEFAULTS)
     const isVisualScanning = computed(() => Boolean(view.isVisualScanning))
+    const soilUploadLoading = computed(() => Boolean(view.soilUploadLoading))
+    const soilLocked = computed(() => Boolean(view.soilLocked))
     const visualScanText = computed(() => String(view.visualScanText || VISUAL_SCAN_LOADING_TEXT))
     const selectedDevSymptomClassKey = computed(() =>
       String(view.selectedDevSymptomClassKey || '').trim()
@@ -229,6 +250,9 @@ export default {
     const selectedDevSymptomClassOption = computed(() => view.selectedDevSymptomClassOption || null)
     const soilOnly = computed(() => props.mode === 'soil-only')
     const soilOnlyImage = computed(() => props.soilImage || getSlotImage('soil'))
+    const isSoilInteractionLocked = computed(
+      () => isVisualScanning.value || soilUploadLoading.value || soilLocked.value
+    )
     const hasUploadedImages = computed(() => Boolean(view.imageFiles?.length))
     const isSymptomDisabled = computed(() => hasUploadedImages.value)
     const isAiDisabled = computed(() => Boolean(selectedDevSymptomClassKey.value))
@@ -286,6 +310,9 @@ export default {
     }
 
     function handleSoilOnlyZoneClick() {
+      if (isSoilInteractionLocked.value) {
+        return
+      }
       const image = soilOnlyImage.value
       if (image?.previewUrl) {
         previewDiagnosisImage(image, [image])
@@ -295,11 +322,15 @@ export default {
     }
 
     function requestSoilReplace() {
-      emit('soil-replace')
+      if (!isSoilInteractionLocked.value) {
+        emit('soil-replace')
+      }
     }
 
     function requestSoilRemove() {
-      emit('soil-remove')
+      if (!isSoilInteractionLocked.value) {
+        emit('soil-remove')
+      }
     }
 
     function handleSymptomModeSelect(option) {
@@ -342,6 +373,9 @@ export default {
     return {
       ...view,
       isVisualScanning,
+      soilUploadLoading,
+      soilLocked,
+      isSoilInteractionLocked,
       visualScanText,
       selectedDevSymptomClassKey,
       selectedDevSymptomClassOption,
@@ -378,8 +412,8 @@ export default {
 }
 .watering-soil-upload-board {
   position: relative;
-  width: 328px;
-  height: 416px;
+  width: 288px;
+  height: 270px;
   overflow: hidden;
   border-radius: 18px;
   background: rgba(241, 248, 244, 0.5);
@@ -387,15 +421,15 @@ export default {
 .watering-soil-upload-illustration {
   position: absolute;
   inset: 0;
-  width: 328px;
-  height: 416px;
+  width: 288px;
+  height: 270px;
   opacity: 0.34;
   filter: saturate(0.55);
 }
 .watering-soil-upload-zone {
   position: absolute;
-  top: 256px;
-  left: 86px;
+  top: 164px;
+  left: 66px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -403,7 +437,7 @@ export default {
   justify-content: center;
   gap: 7px;
   width: 156px;
-  height: 92px;
+  height: 76px;
   overflow: hidden;
   border: 2px solid #2d7a4f;
   border-radius: 46% 46% 34% 34%;
@@ -415,9 +449,23 @@ export default {
   animation: none;
   background: #eef3f0;
 }
+.watering-soil-upload-zone--locked { opacity: 0.9; }
 .watering-soil-upload-preview {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
+}
+.watering-soil-scan-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(45, 122, 79, 0.08), rgba(45, 122, 79, 0.02));
+  pointer-events: none;
+}
+.watering-soil-scan-overlay .diagnose-visual-scan-line {
+  animation-name: watering-soil-visual-scan;
 }
 .watering-soil-upload-icon {
   width: 20px;
@@ -428,6 +476,11 @@ export default {
   font-size: 13px;
   font-weight: 700;
 }
+.watering-soil-upload-zone-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 .watering-soil-upload-help {
   margin-top: 14px;
   color: #5a7a68;
@@ -436,13 +489,14 @@ export default {
 }
 .watering-soil-upload-actions {
   display: flex;
-  width: 328px;
+  width: 288px;
   align-items: center;
   justify-content: space-between;
   margin-top: 12px;
   color: #5a7a68;
   font-size: 12px;
 }
+.watering-soil-analysis-locked-hint { margin-top: 10px; color: #5a7868; font-size: 12px; line-height: 18px; }
 .watering-soil-upload-source {
   max-width: 162px;
   overflow: hidden;
@@ -467,6 +521,14 @@ export default {
   50% {
     transform: scale(1.025);
     box-shadow: 0 0 0 10px rgba(45, 122, 79, 0.16);
+  }
+}
+@keyframes watering-soil-visual-scan {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(74px);
   }
 }
 .diagnose-no-image-panel {

@@ -8,73 +8,65 @@
         <text class="text-sm text-gray-500">正在加载植物信息...</text>
       </view>
 
-      <swiper
-        v-else
-        id="add-plant-swiper"
-        class="h-full min-h-0"
-        :current="swiperStep"
-        :duration="260"
-        :disable-touch="isEditMode"
-        @change="handleSwiperChange"
-      >
-        <swiper-item v-if="!isEditMode">
-          <scroll-view id="add-plant-selection-scroll" scroll-y class="box-border h-full min-h-0">
-            <PlantSelectionStep
-              v-model:search-keyword="searchKeyword"
-              :plants="defaultPlants"
-              :plant-count="defaultPlants.length"
-              :initial-plants-loading="initialPlantsLoading"
-              :plants-loading-more="plantsLoadingMore"
-              :has-more-plants="hasMorePlants"
-              :selected-plant="selectedPlant"
-              :recognized-name="recognizedName"
-              :can-proceed="canEnterInfoStep"
-              @search-confirm="handleSearchConfirm"
-              @clear-search="clearSearch"
-              @load-more="handlePlantLoadMore"
-              @select-plant="handlePlantSelect"
-              @ai-identify="useAIIdentify"
-              @next="goInfoStep"
+      <view v-else class="box-border h-full min-h-0">
+        <PlantInfoStepPanel
+          :panel-id="formPanelId"
+          :id-prefix="pageIdPrefix"
+          :title="formTitle"
+          :subtitle="formSubtitle"
+          :model-value="formData"
+          :city-error="formErrors.careLocation"
+          :active-step="INFO_STEP"
+          :submitting="submitting"
+          :show-back="false"
+          :show-light-environment="!isEditMode && !restrictedPlatform"
+          :show-photo="!restrictedPlatform"
+          :show-pot-profile="!restrictedPlatform"
+          :submit-button-id="submitButtonId"
+          :submit-text="submitText"
+          submitting-text="保存中..."
+          @update:model-value="handleFormModelUpdate"
+          @upload-photo="uploadPhoto"
+          @city-change="formErrors.careLocation = ''"
+          @open-pot-profile="openPotProfileEditor"
+          @submit="submitForm"
+        >
+          <template #before-form>
+            <view
+              v-if="!isEditMode"
+              id="add-plant-identity-section"
+              class="mb-4 rounded-2xl border border-[rgba(45,122,79,0.15)] bg-[#f0f8f2] p-4"
+            >
+              <view class="flex items-center justify-between gap-3">
+                <view class="min-w-0 flex-1">
+                  <text class="block text-sm font-semibold text-[#1f2937]">植物</text>
+                  <text class="mt-1 block truncate text-sm text-[#5a7a68]">
+                    {{ identifiedPlantName || '还没有识别植物' }}
+                  </text>
+                </view>
+                <button
+                  id="add-plant-ai-identify-button"
+                  class="m-0 h-10 shrink-0 rounded-full bg-[#00a63e] px-4 text-sm font-semibold leading-10 text-white"
+                  @click="useAIIdentify"
+                >
+                  {{ identifiedPlantName ? '重新识别' : 'AI 拍照识别' }}
+                </button>
+              </view>
+              <text v-if="!identifiedPlantName" class="mt-2 block text-xs leading-5 text-[#6b7f73]">
+                拍一张照片，识别结果会自动带入植物信息
+              </text>
+            </view>
+          </template>
+          <template #after-form>
+            <PlantEnvironmentSettingsGroup
+              v-if="isEditMode && !restrictedPlatform"
+              :plant="currentPlant"
+              id-prefix="edit-plant-environment"
+              @open="openEnvironment"
             />
-          </scroll-view>
-        </swiper-item>
-
-        <swiper-item>
-          <PlantInfoStepPanel
-            :panel-id="formPanelId"
-            :id-prefix="pageIdPrefix"
-            :title="formTitle"
-            :subtitle="formSubtitle"
-            :model-value="formData"
-            :city-error="formErrors.careLocation"
-            :active-step="formActiveStep"
-            :submitting="submitting"
-            :show-back="!isEditMode"
-            :back-button-id="isEditMode ? '' : 'add-plant-back-to-selection-button'"
-            :show-light-environment="!isEditMode && !restrictedPlatform"
-            :show-photo="!restrictedPlatform"
-            :show-pot-profile="!restrictedPlatform"
-            :submit-button-id="submitButtonId"
-            :submit-text="submitText"
-            submitting-text="保存中..."
-            @update:model-value="handleFormModelUpdate"
-            @upload-photo="uploadPhoto"
-            @city-change="formErrors.careLocation = ''"
-            @open-pot-profile="openPotProfileEditor"
-            @back="handleFormBack"
-            @submit="submitForm"
-          >
-            <template #after-form>
-              <PlantEnvironmentSettingsGroup
-                v-if="isEditMode && !restrictedPlatform"
-                :plant="currentPlant"
-                id-prefix="edit-plant-environment"
-                @open="openEnvironment"
-              />
-            </template>
-          </PlantInfoStepPanel>
-        </swiper-item>
-      </swiper>
+          </template>
+        </PlantInfoStepPanel>
+      </view>
 
       <UserPlantPotProfileEditor
         ref="potProfileEditorRef"
@@ -97,12 +89,6 @@
         @retry="handleAIRetry"
       />
 
-      <LoginModal
-        :show="showLogin"
-        :message="loginMsg"
-        @close="showLogin = false"
-        @success="handleLoginSuccess"
-      />
       <FeatureUnavailableModal
         v-model="featureUnavailableVisible"
         :feature-key="openedFeatureKey"
@@ -114,30 +100,30 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import Layout from '@/Layout.vue'
-import { createUserPlant, fetchUserPlant, patchUserPlant } from '@/api/plants-http.js'
+import {
+  createUserPlant,
+  fetchPlantCatalogDetail,
+  fetchUserPlant,
+  patchUserPlant
+} from '@/api/plants-http.js'
 import AIStreamDialog from '@/components/AIStreamDialog.vue'
 import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
-import LoginModal from '@/components/LoginModal.vue'
 import PlantEnvironmentSettingsGroup from '@/components/PlantEnvironmentSettingsGroup.vue'
 import { ONE_MEGA_BYTE } from '@/constants'
-import { useDefaultPlants } from '@/composables/useDefaultPlants.js'
 import { usePlantStore } from '@/store/plants.js'
 import { useUserStore } from '@/store/user.js'
 import { ANALYTICS_EVENTS, reportAnalyticsEvent } from '@/utils/analytics.js'
-import { createAsyncActionGuard, createDebounced } from '@/utils/interaction-guard.js'
+import { createAsyncActionGuard } from '@/utils/interaction-guard.js'
 import { normalizePlantCareLocation } from '@/utils/plant-care-location.js'
 import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
 import { isFeatureAvailable, isRestrictedMiniProgram } from '@/utils/platform-capabilities.js'
 import PlantInfoStepPanel from './PlantInfoStepPanel.vue'
 import { buildPlantFormFromUserPlant, createInitialPlantForm } from './plant-form-model.js'
 import { buildPlantSubmitPayload, buildRestrictedManualPlantPayload } from './plant-submit.js'
-import PlantSelectionStep from './PlantSelectionStep.vue'
 import UserPlantPotProfileEditor from './UserPlantPotProfileEditor.vue'
-import { useUserPlantIdentify } from '../composables/useUserPlantIdentify.js'
+import { useUserPlantIdentify } from '@/composables/useUserPlantIdentify.js'
 
-const SELECTION_STEP = 0
 const INFO_STEP = 1
-const SEARCH_DEBOUNCE_MS = 500
 const FIRST_IMAGE_INDEX = 0
 const IMAGE_SIZE_LIMIT_MB = 5
 const HTTP_SUCCESS_CODE = 200
@@ -145,33 +131,28 @@ const SUCCESS_NAV_DELAY_MS = 1000
 
 const props = defineProps({
   mode: { type: String, default: 'create' },
-  plantId: { type: [String, Number], default: '' }
+  plantId: { type: [String, Number], default: '' },
+  initialCatalogPlantId: { type: [String, Number], default: '' },
+  initialPotProfile: { type: Object, default: null },
+  initialIdentifyImagePath: { type: String, default: '' },
+  initialIdentifyResult: { type: Object, default: null }
 })
 
 const userStore = useUserStore()
 const plantStore = usePlantStore()
-const {
-  plants: defaultPlants,
-  initialLoading: initialPlantsLoading,
-  loadingMore: plantsLoadingMore,
-  load: loadPlants,
-  loadNextPage,
-  hasMore: hasMorePlants
-} = useDefaultPlants()
+const defaultPlants = ref([])
 
 const currentPlant = ref(null)
 const loading = ref(true)
 const editFormDirty = ref(false)
-const activeStep = ref(SELECTION_STEP)
+const activeStep = ref(INFO_STEP)
 const selectedPlant = ref(null)
 const recognizedName = ref('')
 const identifyContext = ref(null)
+const initialIdentifyResultApplied = ref(false)
 const submitting = ref(false)
-const showLogin = ref(false)
-const loginMsg = ref('添加植物需要先登录')
 const showAIDialog = ref(false)
 const aiDialogRef = ref(null)
-const searchKeyword = ref('')
 const formErrors = reactive({ careLocation: '' })
 const potProfileEditorRef = ref(null)
 const potProfileSaving = ref(false)
@@ -183,11 +164,10 @@ const {
   visible: featureUnavailableVisible,
   openFeatureUnavailable
 } = useFeatureUnavailableModal()
-const debouncedLoadPlants = createDebounced(keyword => loadPlants(keyword), SEARCH_DEBOUNCE_MS)
-
 const formData = ref(createInitialPlantForm())
 const plantId = computed(() => String(props.plantId || '').trim())
 const isEditMode = computed(() => props.mode === 'edit' && Boolean(plantId.value))
+const catalogPlantId = computed(() => String(props.initialCatalogPlantId || '').trim())
 const pageTitle = computed(() => (isEditMode.value ? '编辑植物' : '添加植物'))
 const pageIdPrefix = computed(() => (isEditMode.value ? 'edit-plant' : 'add-plant'))
 const formPanelId = computed(() => `${pageIdPrefix.value}-info-panel`)
@@ -200,48 +180,116 @@ const formSubtitle = computed(() => {
     ? '养护城市必填，其他信息可随时补充'
     : '养护城市必填，光照环境可稍后补充'
 })
-const formActiveStep = computed(() => (isEditMode.value ? INFO_STEP : activeStep.value))
-const swiperStep = computed(() => (isEditMode.value ? SELECTION_STEP : activeStep.value))
 const submitButtonId = computed(() => `${pageIdPrefix.value}-submit-button`)
 const submitText = computed(() => (isEditMode.value ? '保存修改' : '完成添加'))
 const canEnterInfoStep = computed(() => Boolean(selectedPlant.value || recognizedName.value))
-const { useAIIdentify, handleAIConfirm, handleAIRetry, handleAIClose, clearPendingImage } =
-  useUserPlantIdentify({
-    userStore,
-    defaultPlants,
-    formData,
-    selectedPlant,
-    recognizedName,
-    identifyContext,
-    showLogin,
-    loginMsg,
-    showAIDialog,
-    aiDialogRef,
-    activeStep,
-    openFeatureUnavailable
-  })
+const identifiedPlantName = computed(() =>
+  String(
+    selectedPlant.value?.canonicalName ||
+      selectedPlant.value?.displayName ||
+      recognizedName.value ||
+      ''
+  ).trim()
+)
+const {
+  useAIIdentify,
+  identifyImage,
+  handleAIConfirm,
+  handleAIRetry,
+  handleAIClose,
+  clearPendingImage
+} = useUserPlantIdentify({
+  userStore,
+  defaultPlants,
+  formData,
+  selectedPlant,
+  recognizedName,
+  identifyContext,
+  showAIDialog,
+  aiDialogRef,
+  activeStep,
+  openFeatureUnavailable
+})
 
 onBeforeUnmount(() => {
-  debouncedLoadPlants.cancel()
   clearPendingImage().catch(() => {})
 })
+
+async function initializeCreatePage() {
+  if (catalogPlantId.value) {
+    await initializeCatalogPlant()
+    applyInitialPotProfile()
+    return
+  }
+  if (props.initialIdentifyResult) {
+    applyInitialIdentifyResult(props.initialIdentifyResult)
+    return
+  }
+  if (props.initialIdentifyImagePath) {
+    await identifyImage(props.initialIdentifyImagePath)
+  }
+}
+
+function applyInitialIdentifyResult(result) {
+  if (!result || initialIdentifyResultApplied.value) {
+    return
+  }
+  formData.value = {
+    ...formData.value,
+    image: String(result.formData?.image || '').trim(),
+    imageFileId: String(result.formData?.imageFileId || '').trim()
+  }
+  selectedPlant.value = result.selectedPlant || null
+  recognizedName.value = String(result.recognizedName || '').trim()
+  identifyContext.value = result.identifyContext
+    ? {
+        ...result.identifyContext,
+        selectedPlant: result.identifyContext.selectedPlant || result.selectedPlant || null
+      }
+    : null
+  activeStep.value = INFO_STEP
+  initialIdentifyResultApplied.value = true
+}
+
+function applyInitialPotProfile() {
+  const initialPotProfile = props.initialPotProfile
+  if (
+    !initialPotProfile ||
+    typeof initialPotProfile !== 'object' ||
+    Array.isArray(initialPotProfile)
+  ) {
+    return
+  }
+  // 仅独立浇水跳转到“新增植物”时带入已经填写的盆型；不覆盖用户后续编辑。
+  formData.value = {
+    ...formData.value,
+    potProfile: { ...initialPotProfile }
+  }
+}
+
+async function initializeCatalogPlant() {
+  try {
+    const response = await fetchPlantCatalogDetail(catalogPlantId.value)
+    if (response?.code !== HTTP_SUCCESS_CODE || !response.data) {
+      uni.showToast({ title: '植物信息暂时无法加载，请稍后重试', icon: 'none' })
+      return
+    }
+    selectedPlant.value = response.data
+    activeStep.value = INFO_STEP
+  } catch {
+    uni.showToast({ title: '植物信息暂时无法加载，请稍后重试', icon: 'none' })
+  }
+}
 
 onMounted(() => {
   if (isEditMode.value) {
     initializeEditPage()
     return
   }
-  loadPlants()
+  initializeCreatePage()
 })
 
 function handleBackPress() {
-  if (isEditMode.value) {
-    return false
-  }
-  if (activeStep.value === INFO_STEP) {
-    activeStep.value = SELECTION_STEP
-    return true
-  }
   return false
 }
 
@@ -262,11 +310,9 @@ async function initializeEditPage() {
   }
 
   try {
-    if (!(await userStore.ensureLogin())) {
+    if (!(await userStore.ensureLogin({ prompt: true }))) {
       currentPlant.value = null
       formData.value = createInitialPlantForm()
-      loginMsg.value = '编辑植物需要先登录'
-      showLogin.value = true
       return
     }
 
@@ -339,73 +385,12 @@ watch(recognizedName, name => {
   }
 })
 
-watch(searchKeyword, value => {
-  debouncedLoadPlants(value)
-})
-
-function handleSwiperChange(event) {
-  if (isEditMode.value) {
-    return
+watch(
+  () => props.initialIdentifyResult,
+  value => {
+    applyInitialIdentifyResult(value)
   }
-  const nextStep = Number(event?.detail?.current || SELECTION_STEP)
-  if (nextStep === INFO_STEP && !canEnterInfoStep.value) {
-    uni.showToast({ title: '请先选择或识别植物', icon: 'none' })
-    activeStep.value = SELECTION_STEP
-    return
-  }
-  activeStep.value = nextStep
-}
-
-function goInfoStep() {
-  if (!canEnterInfoStep.value) {
-    uni.showToast({ title: '请先选择或识别植物', icon: 'none' })
-    return
-  }
-  activeStep.value = INFO_STEP
-}
-
-function handleFormBack() {
-  if (!isEditMode.value) {
-    activeStep.value = SELECTION_STEP
-  }
-}
-
-function handleSearchConfirm() {
-  debouncedLoadPlants.cancel()
-  loadPlants(searchKeyword.value)
-}
-
-function clearSearch() {
-  debouncedLoadPlants.cancel()
-  searchKeyword.value = ''
-  loadPlants()
-}
-
-function handlePlantLoadMore() {
-  if (hasMorePlants.value && !plantsLoadingMore.value) {
-    loadNextPage()
-  }
-}
-
-function handlePlantSelect(plant) {
-  identifyContext.value = null
-  selectedPlant.value = plant
-  recognizedName.value = ''
-  // 卡片本身就是新增流程的主要入口：选定目录植物后立即进入信息填写。
-  // “选好了”按钮仍保留给辅助操作和识别结果等非卡片路径。
-  activeStep.value = INFO_STEP
-}
-
-function handleLoginSuccess() {
-  showLogin.value = false
-  if (isEditMode.value) {
-    initializeEditPage()
-    return
-  }
-  if (loginMsg.value.includes('AI')) {
-    useAIIdentify()
-  }
-}
+)
 
 const environmentPagePaths = Object.freeze({
   light: '/subpackages/care/plant-environment/light-environment',
@@ -442,9 +427,7 @@ function savePotProfile(profile) {
     if (!profile || potProfileSaving.value) {
       return
     }
-    if (!(await userStore.ensureLogin())) {
-      loginMsg.value = isEditMode.value ? '编辑植物需要先登录' : '添加植物需要先登录'
-      showLogin.value = true
+    if (!(await userStore.ensureLogin({ prompt: true }))) {
       return
     }
 
@@ -540,9 +523,7 @@ function submitForm() {
 
 async function submitNewPlantForm() {
   reportAnalyticsEvent(ANALYTICS_EVENTS.SAVE_USER_NEW_PLANT)
-  if (!(await userStore.ensureLogin())) {
-    loginMsg.value = '添加植物需要先登录'
-    showLogin.value = true
+  if (!(await userStore.ensureLogin({ prompt: true }))) {
     return
   }
   if (!canEnterInfoStep.value) {
@@ -598,9 +579,7 @@ async function submitEditForm() {
   if (!currentPlant.value) {
     return
   }
-  if (!(await userStore.ensureLogin())) {
-    loginMsg.value = '编辑植物需要先登录'
-    showLogin.value = true
+  if (!(await userStore.ensureLogin({ prompt: true }))) {
     return
   }
   const careLocation = normalizePlantCareLocation(formData.value.careLocation)

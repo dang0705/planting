@@ -36,6 +36,7 @@
           :initial-profile="props.plant?.potProfile"
           @update:active-step="inputFlowStep = $event"
           @history-change="onTimelineChange"
+          @step-change="handleInputStepChange"
         />
         <view
           v-if="plannerError"
@@ -54,6 +55,8 @@
           :pot-profile-state="potProfileState"
           :soil-check-message="plannerResult?.soilCheck?.message || ''"
           :visual-soil-evidence="plannerResult?.visualSoilEvidence || null"
+          :watering-context="plannerResult?.wateringContext || ''"
+          :watering-action="plannerResult?.action || ''"
         />
         <view
           v-if="calendarSyncError"
@@ -79,11 +82,11 @@
       </template>
 
       <SavedWateringReminderState
-        v-if="savedReminderActive && !inputFlowOpen && !isOverWateringBlocked"
+        v-if="savedReminderActive && !inputFlowOpen"
         :display="savedReminderDisplay"
       />
       <template #confirm>
-        <view v-if="!soilEvidenceReady" class="flex gap-3">
+        <view v-if="!soilEvidenceReady && soilEvidence?.evidenceId" class="flex gap-3">
           <button
             id="watering-reminder-soil-continue-button"
             class="m-0 flex-1 rounded-[14px] bg-[#2d7a4f] py-3 text-[15px] font-semibold text-white after:border-0 disabled:bg-gray-300"
@@ -275,7 +278,6 @@ const canAddToCalendar = computed(
   () =>
     Boolean(pendingReminderSavePayload.value) ||
     ((!savedReminderActive.value || savedReminderChanged.value) &&
-      !isOverWateringBlocked.value &&
       !plannerResult.value?.requiresManualSoilConfirmation &&
       hasRequiredWateringHistory.value &&
       Boolean(plannerResult.value?.nextWaterDate))
@@ -285,11 +287,9 @@ const addToCalendarText = computed(() =>
     ? '继续同步'
     : savedReminderActive.value && !savedReminderChanged.value
       ? '已添加到日历'
-      : isOverWateringBlocked.value
-        ? '近期过浇，暂不安排浇水'
-        : !hasRequiredWateringHistory.value || !plannerResult.value?.nextWaterDate
-          ? '先填写过往浇水日期'
-          : '添加到手机日历'
+      : !hasRequiredWateringHistory.value || !plannerResult.value?.nextWaterDate
+        ? '先填写过往浇水日期'
+        : '添加到手机日历'
 )
 const savedReminderDisplay = computed(() => buildSavedReminderDisplay(savedReminder.value))
 const isOverdue = computed(
@@ -360,14 +360,25 @@ async function open() {
   isSheetOpen.value = true
   callComponentMethod(popupRef, 'open')
   await nextTick()
+  loadWeatherDays().catch(() => {})
 }
 
 function handleSoilEvidenceChange(value) {
+  if (value?.evidenceId) {
+    soilEvidence.value = { ...(soilEvidence.value || {}), ...value }
+  }
   soilEvidenceCanContinue.value = value?.canContinue === true
 }
 
 function continueSoilEvidence() {
+  if (!soilEvidence.value?.evidenceId || !soilEvidenceCanContinue.value) {
+    return
+  }
   callComponentMethod(soilEvidenceStageRef, 'continueWithEvidence')
+}
+
+function handleInputStepChange() {
+  callComponentMethod(popupRef, 'scrollToTop')
 }
 
 async function handleSoilEvidenceReady(value) {

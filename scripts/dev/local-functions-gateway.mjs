@@ -11,12 +11,12 @@ import { createLocalFunctionLayerWatcher } from './local-function-layer-watcher.
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const projectRoot = path.resolve(__dirname, '..', '..')
 const DEFAULT_GATEWAY_PORT = 3010
-const DEFAULT_FUNCTION_PORT_BASE = 9000
+const DEFAULT_FUNCTION_PORT_BASE = 9500
 const DEFAULT_CLOUDBASE_ENV_ID = 'cloud1-2grufevs395a9d5e'
 const DEFAULT_SQL_DATABASE = 'cloud1_dev'
 const LOCAL_GATEWAY_KIND = 'planting-local-functions-gateway'
 const LOCAL_FUNCTION_LAYER_ROOT = path.join(projectRoot, 'cloudfunctions', 'layer')
-const NATIVE_HTTP_FUNCTIONS = new Set(['auth-user-http', 'plant-user-http'])
+const NATIVE_HTTP_FUNCTIONS = new Set(['auth-user-http', 'plant-user-http', 'agent-http'])
 const LOCAL_CREDENTIAL_SECRET_ID_KEYS = [
   'CLOUDBASE_SECRET_ID',
   'TENCENT_SECRET_ID',
@@ -37,7 +37,8 @@ const FUNCTIONS_REQUIRING_CLOUDBASE_CREDENTIALS = new Set([
   'plant-catalog-http',
   'plant-user-http',
   'storage-http',
-  'weather-http'
+  'weather-http',
+  'agent-http'
 ])
 
 const FUNCTION_NAMES = [
@@ -52,7 +53,8 @@ const FUNCTION_NAMES = [
   'platform-phone-bootstrap-http',
   'weather-http',
   'storage-http',
-  'subscription-http'
+  'subscription-http',
+  'agent-http'
 ]
 const FUNCTION_DIRECTORY_BY_NAME = {}
 
@@ -252,6 +254,7 @@ function buildRuntimeEnv() {
     SQL_DATABASE_DEV: DEFAULT_SQL_DATABASE,
     CLOUDBASE_SQL_DATABASE: DEFAULT_SQL_DATABASE,
     CLOUDBASE_SQL_DATABASE_DEV: DEFAULT_SQL_DATABASE,
+    AGENT_ENDPOINT: process.env.AGENT_ENDPOINT || 'http://192.168.50.175:9000/acp',
     DEBUG_LOG: process.env.DEBUG_LOG || 'false'
   }
 }
@@ -476,7 +479,12 @@ function createGatewayServer(functionRuntimes) {
     }
 
     const targetPath = `/${restPath.join('/')}${requestUrl.search}`
-    const headers = { ...req.headers, host: `127.0.0.1:${definition.port}` }
+    const headers = {
+      ...req.headers,
+      host: `127.0.0.1:${definition.port}`,
+      'x-forwarded-host': req.headers.host || '',
+      'x-forwarded-proto': 'http'
+    }
     delete headers.connection
 
     const proxyReq = http.request(

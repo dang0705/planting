@@ -135,10 +135,7 @@ async function verifyCase(mp, report, env, symptom, page) {
     symptom
   })
   const quick = diagnosisEntryPage
-    ? await findElementById(
-        diagnosisEntryPage,
-        `diagnose-dev-symptom-class-option-${symptom}`
-      )
+    ? await findElementById(diagnosisEntryPage, `diagnose-dev-symptom-class-option-${symptom}`)
     : null
   recordAssertion(
     report,
@@ -231,6 +228,61 @@ async function verifyCase(mp, report, env, symptom, page) {
     if (!airQuestionReady || !airUnknown) {
       return null
     }
+    const idPrefix = `diagnose-air-environment-${expected.exactQuestionKey}`
+    const answerRequestCount = async () =>
+      (await readAirEnvironmentFixtureRequests(mp)).filter(request =>
+        isDiagnosisEndpointRequest(request, 'answer')
+      ).length
+    const beforeDraftChanges = await answerRequestCount()
+    for (const [controlId, assertion] of [
+      [`${idPrefix}-tab-advanced`, 'yellow-leaf air question exposes the detailed tab'],
+      [`${idPrefix}-tab-quick`, 'yellow-leaf air question returns to the quick tab'],
+      [`${idPrefix}-quick-option-regular`, 'yellow-leaf quick mode selects one of three answers']
+    ]) {
+      const control = await findElementById(packagePage, controlId)
+      recordAssertion(report, assertion, Boolean(control), controlId)
+      if (!control) {
+        return null
+      }
+      await control.tap()
+    }
+    const afterDraftChanges = await answerRequestCount()
+    recordAssertion(
+      report,
+      'yellow-leaf tab switches and quick selection do not submit the package',
+      afterDraftChanges === beforeDraftChanges,
+      `before=${beforeDraftChanges}; after=${afterDraftChanges}`
+    )
+    const outerNext = await findElementById(
+      packagePage,
+      'diagnose-question-package-page-next-button'
+    )
+    recordAssertion(
+      report,
+      'yellow-leaf quick answer is completed by the outer question-flow Next button',
+      Boolean(outerNext)
+    )
+    if (!outerNext) {
+      return null
+    }
+    await outerNext.tap()
+    const quickAnswer = await waitForDiagnosisRequest(mp, request => {
+      if (!isDiagnosisEndpointRequest(request, 'answer')) {
+        return false
+      }
+      const assessment = request?.data?.airEnvironmentByQuestionId?.[expected.exactQuestionKey]
+      return (
+        assessment?.schemaVersion === 3 &&
+        assessment?.mode === 'quick' &&
+        assessment?.quickAnswer?.optionKey === 'regular'
+      )
+    })
+    recordAssertion(
+      report,
+      'yellow-leaf outer Next submits the frozen V3 quick assessment through LAN',
+      isSuccessfulLanResponse(quickAnswer),
+      requestResponseDetail(quickAnswer)
+    )
   }
   if (symptom === 'wilting_droop_mode') {
     await verifyDirectAirflowOutcome(

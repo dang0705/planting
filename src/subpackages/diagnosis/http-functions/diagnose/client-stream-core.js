@@ -6,8 +6,7 @@ import {
 import {
   buildFrontendTokenUsageSummary,
   logFrontendDiagnosisDone,
-  logFrontendVisualPrompt,
-  logFrontendVisualNode,
+  collectFrontendVisualNodeDebug,
   resolveDebugEvidence
 } from './client-stream-debug.js'
 
@@ -143,7 +142,6 @@ export function buildStreamDiagnosisPromise(payload, { onProgress, streamDiagnos
   return new Promise((resolve, reject) => {
     let settled = false
     let latestProgressText = ''
-    let receivedChunkCount = 0
     let latestVisualUsage = null
     let latestModelBusinessData = []
     let latestFinalVisualEvidenceData = null
@@ -176,12 +174,11 @@ export function buildStreamDiagnosisPromise(payload, { onProgress, streamDiagnos
       const normalizedEventName = findStreamEventName(eventName, payloadItem)
       const eventPayload = findStreamEventPayload(normalizedEventName, payloadItem)
       if (normalizedEventName === 'visual_model_prompt_ready') {
-        logFrontendVisualPrompt(eventPayload)
         return
       }
       if (normalizedEventName.startsWith('visual_')) {
         const displayText = buildVisualProgressText(normalizedEventName, payloadItem)
-        const nodeDebug = logFrontendVisualNode(normalizedEventName, eventPayload, displayText)
+        const nodeDebug = collectFrontendVisualNodeDebug(eventPayload)
         latestVisualUsage = nodeDebug.usage || latestVisualUsage
         if (nodeDebug.modelBusinessData?.length) {
           latestModelBusinessData = nodeDebug.modelBusinessData
@@ -192,9 +189,7 @@ export function buildStreamDiagnosisPromise(payload, { onProgress, streamDiagnos
         return
       }
       if (normalizedEventName === 'reply') {
-        // 模型原始片段只进入前端调试日志，不参与设计稿指定位置的渲染。
-        // 前端诊断调试日志：保留模型流式返回片段，禁止删除。
-        console.log('[诊断 start][模型返回片段]', eventPayload)
+        // 原始流片段不是最终结构化业务数据；避免污染前端调试控制台。
         return
       }
       if (normalizedEventName === 'error') {
@@ -224,12 +219,6 @@ export function buildStreamDiagnosisPromise(payload, { onProgress, streamDiagnos
         if (!chunkText) {
           return
         }
-        receivedChunkCount += 1
-        // 前端诊断调试日志：保留微信分片接收结果，确认 start 节点确实到达页面，禁止删除。
-        console.log('[诊断 start][分片]', {
-          chunkIndex: receivedChunkCount,
-          text: chunkText
-        })
         parser.push(chunkText)
       }
     })

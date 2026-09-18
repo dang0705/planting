@@ -23,6 +23,7 @@ for (const oldPath of [
 
 const entrySources = [
   fs.readFileSync(path.join(repoRoot, 'src/pages/index/index.vue'), 'utf8'),
+  fs.readFileSync(path.join(repoRoot, 'src/components/UserPlantsSection.vue'), 'utf8'),
   fs.readFileSync(
     path.join(
       repoRoot,

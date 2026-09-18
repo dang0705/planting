@@ -186,7 +186,8 @@ export function useCloudImageUploader({
             plantId: context?.plantId,
             maxAge: context?.maxAge || 7200,
             openid: userStore.openid,
-            fileBytes: size
+            fileBytes: size,
+            resolveTempUrl: context?.resolveTempUrl !== false
           },
           { onAttempt: attempt => (attempts = attempt) }
         )

@@ -606,7 +606,10 @@ assert.doesNotMatch(
   pestInitialPrompt.promptText.split('[Dynamic Task]')[1],
   /allowed_symptom_keys=visible_mite_colony/
 )
-assert.match(rootPrompt.promptText, /allowed_symptom_keys=small_flies_soil,root_mark/)
+assert.match(
+  rootPrompt.promptText,
+  /allowed_symptom_keys=root_mark；【虫害映射】中的当前器官正式虫害证据键/
+)
 assert.doesNotMatch(
   fullInitialPrompt.promptText.split('[Dynamic Task]')[0],
   /allowed_symptom_keys=|本图收窄候选/
@@ -617,7 +620,7 @@ assert.doesNotMatch(fullInitialDynamicTail, /【虫害映射】organ=|【通用�
 assert.match(fullInitialDynamicTail, /跨器官仅写 out_of_pool_symptom_candidates。/)
 assert.match(
   fullInitialDynamicTail,
-  /视觉优先级：先独立查当前图的可见虫体、潜道、附着物和受害结构，再查黄化\/下垂；同图可并存。虫害明确时保留对应 pest mode_candidates 与正式 evidence key（如 thrips\/thrips_visible）/
+  /先查【虫害映射】再查黄化\/下垂，可并存。满足虫害映射即填对应 pest mode_candidates\+正式 evidence key；不得被 yellow_leaf\/wilting_droop 替代或漏填。无清晰证据不猜。/
 )
 assert.doesNotMatch(fullInitialDynamicTail, /【当前图可见异常说明】|【当前图通用可见异常说明】/)
 assert.match(fullInitialDynamicTail, /【虫害证据提示】/)
@@ -625,6 +628,15 @@ assert.match(fullInitialDynamicTail, /sooty_mold→sooty_mold/)
 assert.match(fullInitialDynamicTail, /powdery_mildew→powder_white/)
 assert.match(fullInitialDynamicTail, /yellow_leaf→leaf_yellowing OR yellowing_patchy/)
 assert.match(fullInitialDynamicTail, /wilting_droop→leaf_droop/)
+for (const requiredThripsEvidenceKey of [
+  'thrips_visible',
+  'silver_scarring',
+  'black_fecal_spots'
+]) {
+  assert.match(fullInitialDynamicTail, new RegExp(requiredThripsEvidenceKey))
+}
+assert.match(fullInitialDynamicTail, /【虫害映射】中的当前器官正式虫害证据键/)
+assert.match(fullInitialDynamicTail, /细长虫体须填 thrips\+thrips_visible；黄化或黑点不可替代。/)
 assert.doesNotMatch(fullInitialDynamicTail, /powder_white=|leaf_yellowing=/)
 assert.doesNotMatch(fullInitialDynamicTail, /本图收窄候选|【叶片】/)
 assert.match(
@@ -655,7 +667,7 @@ assert.match(pestDynamicTail, /black_fecal_spots/)
 assert.match(pestDynamicTail, /pest：mode 只能使用静态词典的 pest 模式/)
 assert.match(
   pestDynamicTail,
-  /视觉优先级：先独立查当前图的可见虫体、潜道、附着物和受害结构，再查黄化\/下垂；同图可并存。虫害明确时保留对应 pest mode_candidates 与正式 evidence key（如 thrips\/thrips_visible）/
+  /先查【虫害映射】再查黄化\/下垂，可并存。满足虫害映射即填对应 pest mode_candidates\+正式 evidence key；不得被 yellow_leaf\/wilting_droop 替代或漏填。无清晰证据不猜。/
 )
 assert.match(pestDynamicTail, /silver_scarring=银灰擦痕/)
 assert.match(pestDynamicTail, /black_fecal_spots=银灰区针尖黑点/)
@@ -770,7 +782,10 @@ assert.match(leafEvidenceHints, /silver_scarring=银灰擦痕/)
 assert.match(leafEvidenceHints, /black_fecal_spots=银灰区针尖黑点/)
 assert.match(leafEvidenceHints, /tunnels_in_leaf=叶肉内连续蛇形潜道/)
 const rootDynamicTail = rootPrompt.promptText.split('[Dynamic Task]').at(1)
-assert.match(rootDynamicTail, /allowed_symptom_keys=small_flies_soil,root_mark/)
+assert.match(
+  rootDynamicTail,
+  /allowed_symptom_keys=root_mark；【虫害映射】中的当前器官正式虫害证据键/
+)
 assert.doesNotMatch(
   rootDynamicTail,
   /fine_webbing=|yellow_speckling=|silver_scarring=|black_fecal_spots=|tunnels_in_leaf=/

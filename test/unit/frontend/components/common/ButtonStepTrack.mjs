@@ -12,6 +12,12 @@ assert.match(source, /footerPosition === 'fixed'[\s\S]*?'fixed bottom-0 left-0 r
 assert.match(source, /footerPosition: \{ type: String, default: 'absolute' \}/)
 assert.match(source, /rootClass: \{ type: \[String, Array, Object\], default: '' \}/)
 assert.match(source, /fill: \{ type: Boolean, default: true \}/)
+assert.match(source, /defineEmits\(\['step-change'\]\)/)
+assert.match(
+  source,
+  /watch\(\s*safeActiveIndex,\s*\(nextIndex, previousIndex\) => \{[\s\S]*emit\('step-change', nextIndex\)/,
+  'step changes must be observable by the owning scroll container'
+)
 assert.match(
   source,
   /<slot\s+v-if="!items\.length \|\| items\[index\]"[\s\S]*?:item="items\[index\]"/,

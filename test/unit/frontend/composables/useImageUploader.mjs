@@ -161,7 +161,9 @@ const uploader = useImageUploader({
   }
 })
 
-await uploader.chooseAndUpload()
+const uploadedEntries = await uploader.chooseAndUpload()
+assert.equal(uploadedEntries[0]?.uploaded?.tempUrl, 'https://example.test/image.jpg')
+assert.equal(uploadedEntries[0]?.status, 'success')
 assert.deepEqual(
   compressionCalls.slice(2).map(item => item.quality),
   [72, 68]

@@ -359,7 +359,12 @@ async function main(event, context) {
       (normalizedPath === '/user-plants' || normalizedPath.endsWith('/user-plants')) &&
       !Object.prototype.hasOwnProperty.call(request.query || {}, 'id')
     const userInfo = await resolveHttpUserInfo(request.headers, request.query, context, {
-      allowSignedHttpIdentityTicket: isUserPlantsListRead
+      allowSignedHttpIdentityTicket: isUserPlantsListRead,
+      // 仅开放给 agent-http 签发的内部短票据；正式规划器仍按本函数
+      // 的 openid 归属查询用户植物、历史、盆型和环境状态。
+      allowAgentIdentityTicket:
+        isUserPlantsListRead ||
+        (method === 'POST' && normalizedPath.endsWith('/user-plants/watering-planner'))
     })
     if (!userInfo?.openid) {
       return jsonResponse(401, { code: 401, message: '请先登录', data: null })
@@ -568,31 +573,30 @@ async function main(event, context) {
         }
         // compute
         const soilEvidenceId = String(request.body.soilEvidenceId || '').trim()
-        let result
-        try {
-          result = await loadWateringPlannerService().computeAdhocPlanner({
-            openid,
-            catalogPlantId: String(request.body.catalogPlantId || '').trim(),
-            potProfile: request.body.potProfile || null,
-            weatherDays: Array.isArray(request.body.weatherDays) ? request.body.weatherDays : [],
-            forecastDays: Array.isArray(request.body.forecastDays) ? request.body.forecastDays : [],
-            referenceDate: request.body.referenceDate || '',
-            locationKey: String(request.body.locationKey || '').trim(),
-            timezone: String(request.body.timezone || 'Asia/Shanghai').trim() || 'Asia/Shanghai',
-            lightEnvironment: request.body.lightEnvironment || null,
-            airEnvironmentOverride: request.body.airEnvironmentOverride || null,
-            wateringEvents: Array.isArray(request.body.wateringEvents)
-              ? request.body.wateringEvents
-              : [],
-            soilEvidenceId,
-            manualSoilConfirmed: request.body.manualSoilConfirmed === true
-          })
-        } finally {
-          await loadWateringSoilEvidenceService().cleanupTemporarySoilEvidence({
-            openid,
-            evidenceId: soilEvidenceId
-          })
-        }
+        // 临时盆土图必须保留到用户完成本次顾问流程：网络重试、前端重渲染或
+        // 首次响应在客户端丢失时，都需要仍能用同一张已分析图片重取建议。
+        // 之前在 finally 中立即清理，导致后续请求误报“盆土照片已过期”。
+        const result = await loadWateringPlannerService().computeAdhocPlanner({
+          openid,
+          catalogPlantId: String(request.body.catalogPlantId || '').trim(),
+          potProfile: request.body.potProfile || null,
+          weatherDays: Array.isArray(request.body.weatherDays) ? request.body.weatherDays : [],
+          forecastDays: Array.isArray(request.body.forecastDays) ? request.body.forecastDays : [],
+          referenceDate: request.body.referenceDate || '',
+          locationKey: String(request.body.locationKey || '').trim(),
+          timezone: String(request.body.timezone || 'Asia/Shanghai').trim() || 'Asia/Shanghai',
+          lightEnvironment: request.body.lightEnvironment || null,
+          airEnvironmentOverride: request.body.airEnvironmentOverride || null,
+          wateringEvents: Array.isArray(request.body.wateringEvents)
+            ? request.body.wateringEvents
+            : [],
+          soilEvidenceId,
+          manualSoilConfirmed: request.body.manualSoilConfirmed === true,
+          // 潮湿照片只能由用户二次确认后继续；明确干燥则按产品规则覆盖算法门控。
+          forceVisualWetness: request.body.forced === true,
+          soilMoistureOverride: String(request.body.soilMoistureOverride || '').trim(),
+          hasWateringHistoryInput: request.body.hasWateringHistoryInput === true
+        })
         return jsonResponse(result.statusCode, {
           code: result.statusCode,
           message: result.error || '计算成功',
@@ -743,22 +747,23 @@ async function main(event, context) {
         transpirationIntervalFactor: transpiration.intervalFactor
       })
       const soilEvidenceService = loadWateringSoilEvidenceService()
+      const soilMoistureOverride = String(request.body.soilMoistureOverride || '')
+        .trim()
+        .toLowerCase()
       const { plan: fusedPlan } = await soilEvidenceService.applySoilEvidence({
         openid,
         evidenceId: String(request.body.soilEvidenceId || '').trim(),
         plantId,
         manualConfirmed: request.body.manualSoilConfirmed === true,
+        // 与独立顾问保持同一融合契约：视觉明显干燥时按产品规则直接进入
+        // DRY；手动确认有湿度时保留人工湿润暂停。
+        forceVisualWetness: request.body.forced === true,
+        forceDryness: soilMoistureOverride === 'dry',
+        manualSoilState: ['wet', 'moist'].includes(soilMoistureOverride)
+          ? soilMoistureOverride
+          : '',
         plan
       })
-      if (fusedPlan.visualSoilEvidence?.outcome === 'wet_hold') {
-        try {
-          await loadWateringReminderService().pauseWateringReminderForSoilWetness(openid, plantId)
-        } catch (error) {
-          // 提醒暂停不应覆盖更关键的“本次不要浇水”结论；保留服务端日志供补偿处理。
-          console.warn('watering reminder pause after wet soil evidence failed:', error?.message || error)
-        }
-      }
-
       // 影子模式：计算 candidate（computedFactor）的 BASELINE 日期/窗口，用于比较但不影响业务结果。
       let candidateNextWaterDate = null
       let candidateNextWaterWindow = null
@@ -799,7 +804,7 @@ async function main(event, context) {
           rootZoneMoistureIndex: fusedPlan.rootZoneMoistureIndex,
           userDoseEcho: fusedPlan.userDoseEcho,
           requiresManualSoilConfirmation: fusedPlan.requiresManualSoilConfirmation === true,
-          visualSoilEvidence: soilEvidenceService.toPublicSoilEvidence(fusedPlan.visualSoilEvidence),
+          visualSoilEvidence: soilEvidenceService.toPublicSoilEvidence(fusedPlan.visualSoilEvidence, fusedPlan),
           // v3 蒸腾间隔修正审计字段
           transpirationIntervalFactor: plan.transpirationIntervalFactor,
           transpirationShadow: transpiration.shadow,

@@ -66,6 +66,22 @@ function resolvePromptLocationKeys(imageContext = {}) {
   return ORGAN_TO_LOCATION_KEYS[inputOrganHint] || []
 }
 
+function resolveFormalPestEvidenceKeys(locationKeys = []) {
+  const normalizedLocationKeys = new Set(
+    (Array.isArray(locationKeys) ? locationKeys : []).map(normalizeLocationKey).filter(Boolean)
+  )
+  if (!normalizedLocationKeys.size) {
+    return []
+  }
+
+  const applicableKeys = new Set(
+    PEST_VISUAL_RULES.filter(rule =>
+      rule.organKeys.some(organKey => normalizedLocationKeys.has(organKey))
+    ).flatMap(rule => rule.evidence.map(item => item.evidenceKey))
+  )
+  return FORMAL_PEST_VISUAL_EVIDENCE_KEYS.filter(key => applicableKeys.has(key))
+}
+
 function resolvePromptSymptomKeys({ imageContext = {}, locationKeys = [], symptoms = [] } = {}) {
   const diagnosisProfile = normalizeText(
     imageContext?.diagnosisProfile || getLlmImagePromptContext()?.diagnosisProfile,
@@ -76,6 +92,7 @@ function resolvePromptSymptomKeys({ imageContext = {}, locationKeys = [], sympto
       (Array.isArray(locationKeys) ? locationKeys : []).map(normalizeLocationKey).filter(Boolean)
     )
   )
+  const formalPestEvidenceKeys = resolveFormalPestEvidenceKeys(normalizedLocationKeys)
 
   if (diagnosisProfile !== 'pest') {
     const symptomKeys = (Array.isArray(symptoms) ? symptoms : [])
@@ -92,21 +109,15 @@ function resolvePromptSymptomKeys({ imageContext = {}, locationKeys = [], sympto
       )
       .flatMap(rule => rule.evidence.map(item => item.evidenceKey))
       .filter(key => !symptomKeys.includes(key))
-    return [...symptomKeys, ...generalKeys]
+    // 正式虫害证据由模式注册表定义，不得因 symptoms 表漏迁移而从综合诊断白名单消失。
+    // 否则会出现“映射要求输出蓟马证据、动态白名单却禁止输出该证据”的自相矛盾 prompt。
+    return Array.from(new Set([...symptomKeys, ...generalKeys, ...formalPestEvidenceKeys]))
   }
 
   if (!normalizedLocationKeys.length) {
     return [...FORMAL_PEST_VISUAL_EVIDENCE_KEYS]
   }
-
-  const keys = new Set(
-    PEST_VISUAL_RULES.flatMap(rule =>
-      rule.organKeys.some(organKey => normalizedLocationKeys.includes(organKey))
-        ? rule.evidence.map(item => item.evidenceKey)
-        : []
-    )
-  )
-  return FORMAL_PEST_VISUAL_EVIDENCE_KEYS.filter(key => keys.has(key))
+  return formalPestEvidenceKeys
 }
 
 function assertPromptPoolMatchesLocation(symptomRows = [], locationKeys = []) {
@@ -149,7 +160,11 @@ function hasSameSymptomKeySet(left = [], right = []) {
   )
 }
 
-function buildAllowedSymptomKeysText({ diagnosisProfile = '', symptomKeys = [] } = {}) {
+function buildAllowedSymptomKeysText({
+  diagnosisProfile = '',
+  symptomKeys = [],
+  formalPestEvidenceKeys = []
+} = {}) {
   const normalizedKeys = Array.from(
     new Set(
       (Array.isArray(symptomKeys) ? symptomKeys : [])
@@ -164,6 +179,19 @@ function buildAllowedSymptomKeysText({ diagnosisProfile = '', symptomKeys = [] }
     hasSameSymptomKeySet(normalizedKeys, FORMAL_PEST_VISUAL_EVIDENCE_KEYS)
   ) {
     return '静态全局词典中的全部虫害可见证据键'
+  }
+  const normalizedFormalPestKeys = new Set(
+    (Array.isArray(formalPestEvidenceKeys) ? formalPestEvidenceKeys : [])
+      .map(item => normalizeText(item, ''))
+      .filter(Boolean)
+  )
+  if (diagnosisProfile === 'full' && normalizedFormalPestKeys.size) {
+    const nonPestKeys = normalizedKeys.filter(key => !normalizedFormalPestKeys.has(key))
+    // 正式虫害键已在同一动态区的映射与提示中逐一列出；这里用范围指代而非重复列键，
+    // 既保持“动态区允许”的合同，也避免为完整虫害召回无谓增加输入 Token。
+    return [nonPestKeys.join(','), '【虫害映射】中的当前器官正式虫害证据键']
+      .filter(Boolean)
+      .join('；')
   }
   return normalizedKeys.join(',') || 'none'
 }
@@ -217,7 +245,7 @@ function buildImageContextText(
 
   const lines = [
     `task=${JSON.stringify(taskContext)}。`,
-    '视觉优先级：先独立查当前图的可见虫体、潜道、附着物和受害结构，再查黄化/下垂；同图可并存。虫害明确时保留对应 pest mode_candidates 与正式 evidence key（如 thrips/thrips_visible），各自独立评分，不能用 yellow_leaf 替代；仅当前图可见才填，不明确不猜。'
+    '先查【虫害映射】再查黄化/下垂，可并存。满足虫害映射即填对应 pest mode_candidates+正式 evidence key；不得被 yellow_leaf/wilting_droop 替代或漏填。无清晰证据不猜。'
   ]
 
   if (normalizedLocationKeys.length) {
@@ -225,7 +253,8 @@ function buildImageContextText(
     lines.push(
       `allowed_symptom_keys=${buildAllowedSymptomKeysText({
         diagnosisProfile: promptContext.diagnosisProfile,
-        symptomKeys: narrowedSymptomKeyList
+        symptomKeys: narrowedSymptomKeyList,
+        formalPestEvidenceKeys: resolveFormalPestEvidenceKeys(normalizedLocationKeys)
       })}。`
     )
     // 静态输出规则已锁定 symptom_candidates 只能使用动态区允许键；这里只保留
@@ -262,6 +291,10 @@ function buildImageContextText(
 
   if (promptContext.diagnosisProfile === 'full' && hasYellowOrDroopRoute) {
     lines.push('full：黄化/下垂各填 symptom+mode；不代虫害')
+  }
+
+  if (normalizedLocationKeys.some(key => ['leaf', 'flower'].includes(key))) {
+    lines.push('细长虫体须填 thrips+thrips_visible；黄化或黑点不可替代。')
   }
 
   if (promptContext.diagnosisProfile === 'pest') {

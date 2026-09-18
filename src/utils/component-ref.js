@@ -3,6 +3,10 @@ function getRefValue(target) {
 }
 
 function appendCandidate(candidates, candidate) {
+  if (Array.isArray(candidate)) {
+    candidate.forEach(item => appendCandidate(candidates, item))
+    return
+  }
   if (!candidate || candidates.includes(candidate)) {
     return
   }

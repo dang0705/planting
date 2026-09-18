@@ -25,7 +25,7 @@ const flowImagesSource = read('src/subpackages/diagnosis/diagnose-flow/images.js
 const flowDialogSubmitSource = read('src/subpackages/diagnosis/diagnose-flow/dialog-submit.js')
 const flowViewDefaultsSource = read('src/subpackages/diagnosis/diagnose-flow/view-defaults.js')
 const layoutSource = read('src/Layout.vue')
-const indexSource = read('src/pages/index/index.vue')
+const userPlantsSource = read('src/components/UserPlantsSection.vue')
 const detailSource = read(
   'src/subpackages/plant/user-plant-detail/components/UserPlantDetailView.vue'
 )
@@ -33,7 +33,12 @@ const detailSource = read(
 const pagesConfig = JSON.parse(pagesJson.replace(/^\s*\/\/\s*#(?:if|endif|else).*$/gm, ''))
 assert.deepEqual(
   pagesConfig.tabBar.list.map(item => item.pagePath),
-  ['pages/index/index', 'pages/diagnose/diagnose', 'pages/profile/profile']
+  [
+    'pages/index/index',
+    'pages/garden/garden',
+    'pages/diagnose/diagnose',
+    'pages/profile/profile'
+  ]
 )
 assert.equal(
   pagesConfig.tabBar.list.some(item => item.pagePath === 'pages/calendar/calendar'),
@@ -45,13 +50,16 @@ assert.equal(
 )
 
 assert.match(pageSource, /id="diagnose-tab-page"/)
+assert.match(pageSource, /import \{ onShow \} from '@dcloudio\/uni-app'/)
+assert.match(pageSource, /requestPhoneLogin\(\{ message: '登录后才能继续使用植物状况检查' \}\)/)
+assert.match(pageSource, /if \(!userStore\.isAuthenticated\)/)
 assert.match(pageSource, /id="diagnose-tab-intake"/)
 assert.match(pageSource, /<DiagnoseIntake :view="intakeView" \/>/)
 assert.doesNotMatch(pageSource, /section-change|handleIntakeSectionChange/)
 assert.match(pageSource, /id="diagnose-submit-button"/)
 assert.match(pageSource, /@click="startDiagnosis"/)
 assert.match(pageSource, /useDiagnosisTabIntake/)
-assert.doesNotMatch(pageSource, /onShow\(/)
+assert.match(pageSource, /onShow\(/)
 assert.doesNotMatch(pageSource, /onLoad\(/)
 assert.doesNotMatch(pageSource, /redirectTo\(/)
 assert.doesNotMatch(pageSource, /navigateTo\(/)
@@ -208,7 +216,10 @@ assert.match(flowImagesSource, /diagnosisProfile: selectedDiagnosisProfile\.valu
 assert.doesNotMatch(flowImagesSource, /confirmDiagnosisProfile/)
 assert.match(flowSource, /const diagnosisProfile = ref\('full'\)/)
 assert.match(flowSource, /normalizeDiagnosisProfile\(options\?\.diagnosisProfile\)/)
-assert.doesNotMatch(indexSource, /confirmDiagnosisProfile|diagnosisProfile=\$\{diagnosisProfile\}/)
+assert.doesNotMatch(
+  userPlantsSource,
+  /confirmDiagnosisProfile|diagnosisProfile=\$\{diagnosisProfile\}/
+)
 assert.doesNotMatch(detailSource, /confirmDiagnosisProfile|diagnosisProfile=\$\{diagnosisProfile\}/)
 assert.match(flowSource, /诊断 - \$\{plantName\.value\}/)
 assert.match(flowSource, /diagnosis-flow-header-back-button/)
@@ -302,9 +313,9 @@ assert.match(layoutSource, /const DIAGNOSIS_TAB_PAGE_ROUTE = 'pages\/diagnose\/d
 assert.match(layoutSource, /previousRoute === DIAGNOSIS_TAB_PAGE_ROUTE/)
 assert.match(layoutSource, /uni\.navigateBack\(/)
 
-assert.match(indexSource, /subpackages\/diagnosis\/flow\?plantId=/)
+assert.match(userPlantsSource, /subpackages\/diagnosis\/flow\?plantId=/)
 assert.match(detailSource, /subpackages\/diagnosis\/flow\?\$\{query\}/)
-assert.doesNotMatch(indexSource, /subpackages\/diagnosis\/entry/)
+assert.doesNotMatch(userPlantsSource, /subpackages\/diagnosis\/entry/)
 assert.doesNotMatch(detailSource, /subpackages\/diagnosis\/entry/)
 
 console.log('diagnosis tab common-ui route contract tests passed')

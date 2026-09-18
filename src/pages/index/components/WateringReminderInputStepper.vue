@@ -31,6 +31,7 @@
       viewport-class="w-full"
       item-class="relative min-h-0 overflow-hidden"
       active-item-class="h-auto"
+      @step-change="handleStepChange"
     >
       <template #step="{ index, active }">
         <view v-if="active && index === HISTORY_STEP" class="pb-2">
@@ -79,7 +80,7 @@ const props = defineProps({
   idPrefix: { type: String, default: 'watering-reminder-input' }
 })
 
-const emit = defineEmits(['update:active-step', 'history-change'])
+const emit = defineEmits(['update:active-step', 'history-change', 'step-change'])
 const steps = [
   { key: 'history', label: '过往浇水日期' },
   { key: 'pot', label: '盆型设置' }
@@ -136,6 +137,10 @@ function setActiveStep(step) {
     'update:active-step',
     Math.min(Math.max(Number(step) || HISTORY_STEP, HISTORY_STEP), POT_STEP)
   )
+}
+
+function handleStepChange(step) {
+  emit('step-change', step)
 }
 
 function hasWateringHistory() {

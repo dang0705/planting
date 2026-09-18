@@ -54,6 +54,7 @@ export function useQuestionPackageRetake({
   payload,
   images,
   plantName,
+  userStore,
   diagnoseStore,
   diagnosisAnswerMutation,
   resetQuestionState
@@ -136,6 +137,9 @@ export function useQuestionPackageRetake({
     if (!retakeRequest.value || retakeAuthorizationPending.value) {
       return
     }
+    if (!(await userStore.ensureLogin({ prompt: true }))) {
+      return
+    }
     retakeAuthorizationPending.value = true
     try {
       if (!(await confirmRetakeStart(retakeRequest.value))) {
@@ -159,6 +163,9 @@ export function useQuestionPackageRetake({
     if (!retakeRequest.value) {
       return
     }
+    if (!(await userStore.ensureLogin({ prompt: true }))) {
+      return
+    }
     try {
       const skippedResult = await requestDiagnosisRetakeSkip({
         diagnosisSessionId: result.value?.diagnosisSessionId,
@@ -175,6 +182,9 @@ export function useQuestionPackageRetake({
 
   async function chooseRetakeImage() {
     if (!canChooseImage.value) {
+      return
+    }
+    if (!(await userStore.ensureLogin({ prompt: true }))) {
       return
     }
     const requestedCaptureRegion = String(retakeRequest.value?.requestedCaptureRegion || '').trim()
@@ -209,6 +219,9 @@ export function useQuestionPackageRetake({
 
   async function submitRetakeImage() {
     if (!canSubmitImage.value) {
+      return
+    }
+    if (!(await userStore.ensureLogin({ prompt: true }))) {
       return
     }
     if (retakeExpired.value) {

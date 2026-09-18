@@ -15,7 +15,10 @@ const inputFlowSource = fs.readFileSync(
   path.join(repoRoot, 'src/pages/index/components/useWateringReminderInputFlow.js'),
   'utf8'
 )
-const indexSource = fs.readFileSync(path.join(repoRoot, 'src/pages/index/index.vue'), 'utf8')
+const userPlantsSource = fs.readFileSync(
+  path.join(repoRoot, 'src/components/UserPlantsSection.vue'),
+  'utf8'
+)
 const calendarSource = fs.readFileSync(
   path.join(repoRoot, 'src/pages/index/components/useWateringReminderCalendar.js'),
   'utf8'
@@ -56,6 +59,9 @@ assert.match(source, /pendingReminderSavePayload\.value/)
 assert.match(source, /hasRequiredWateringHistory\.value/)
 assert.match(source, /WateringReminderInputStepper/)
 assert.match(source, /:loading="reminderLoading"/)
+assert.match(source, /!soilEvidenceReady && soilEvidence\?\.evidenceId/u)
+assert.match(source, /!soilEvidenceCanContinue \|\| loading/u)
+assert.match(source, /function handleSoilEvidenceChange\(value\)[\s\S]{0,180}soilEvidence\.value/u)
 assert.doesNotMatch(source, /:loading="reminderLoading \|\| weatherLoading"/)
 assert.match(source, /id="watering-reminder-input-error"/)
 assert.match(calendarSource, /不要重复添加日历/)
@@ -78,6 +84,9 @@ assert.match(
 assert.match(sheetPlannerSource, /weatherError\.value = '暂时无法获取天气，日期仍可继续填写。'/)
 assert.match(bottomSheetSource, /v-if="isFullHeightMode"[\s\S]*:scroll-y="true"/)
 assert.match(calendarSource, /当前盆型信息不完整，这个日期是暂估。仍要添加提醒吗？/)
+assert.match(calendarSource, /模型判断盆土仍湿润，强烈不建议立即浇水。仍要设置这次日历提醒吗？/)
+assert.match(calendarSource, /plannerResult\.value\?\.visualSoilEvidence\?\.wetHold === true/u)
+assert.doesNotMatch(source, /!isOverWateringBlocked\.value &&/u)
 assert.match(source, /先填写过往浇水日期/)
 assert.match(source, /继续同步/)
 assert.match(source, /if \(event\?\.show === false\)/)
@@ -112,17 +121,25 @@ assert.match(potFormSource, /Array\.isArray\(parsed\) \? parsed : \[\]/)
 assert.match(potFormSource, /function initCanvas\(\)/)
 assert.match(potFormSource, /potCanvasRef\.value\?\.initCanvas\?\./)
 assert.match(stepperSource, /ButtonStepTrack/)
+assert.match(stepperSource, /@step-change="handleStepChange"/)
+assert.match(stepperSource, /emit\('step-change', step\)/)
 assert.match(stepperSource, /:fill="false"/)
 assert.match(stepperSource, /watering-reminder-input/)
 assert.match(stepperSource, /function getPotFormTargets\(\)/)
 assert.match(stepperSource, /@change="handlePotProfileChange"/)
 assert.match(stepperSource, /const potProfileDraft = ref\(null\)/)
 assert.match(stepperSource, /function handlePotProfileChange\(payload\)/)
-assert.match(stepperSource, /return potProfileDraft\.value \|\| invokePotFormMethod\('getPayload'\)/)
+assert.match(
+  stepperSource,
+  /return potProfileDraft\.value \|\| invokePotFormMethod\('getPayload'\)/
+)
 assert.match(stepperSource, /const hasTop = Number\(payload\.potTopDiameterCm\) > 0/)
 assert.match(stepperSource, /Array\.isArray\(value\)/)
 assert.match(stepperSource, /function invokePotFormMethod\(methodName, \.\.\.args\)/)
 assert.match(stepperSource, /watch\(\s*safeActiveStep[\s\S]*invokePotFormMethod\('initCanvas'\)/)
+assert.match(source, /@step-change="handleInputStepChange"/)
+assert.match(source, /function handleInputStepChange\(\)/)
+assert.match(source, /callComponentMethod\(popupRef, 'scrollToTop'\)/)
 assert.match(stepperSource, /resolveComponentMethod\(target, methodName\)/)
 assert.match(stepperSource, /return invokePotFormMethod\('getProfileState'\)/)
 assert.match(stepperSource, /label: '过往浇水日期'/)
@@ -147,13 +164,19 @@ assert.ok(
 assert.match(inputFlowSource, /if \(!props\.plant\?\.id\)/)
 assert.match(inputFlowSource, /当前植物未加载，请关闭后重试/)
 assert.match(inputFlowSource, /盆型信息未读取，请返回重新拖动/)
-assert.match(indexSource, /Number\(plant\.id\) === Number\(currentReminderPlantId\.value\)/)
+assert.match(userPlantsSource, /Number\(plant\.id\) === Number\(currentReminderPlantId\.value\)/)
 assert.match(inputSectionSource, /过往浇水日期/)
 assert.match(inputSectionSource, /需要填写过往日期/)
 assert.doesNotMatch(inputSectionSource, /让建议更贴近你的花盆|可修改或补充更多日期/)
 assert.match(resultCardSource, /浇水量/)
-assert.match(resultCardSource, /compactSoilCheckMessage/)
-assert.doesNotMatch(resultCardSource, /为什么这样建议|plannerEvidenceText|plannerSummaryRows|reasonCodes/)
+assert.match(resultCardSource, /amountBottleText/)
+assert.match(resultCardSource, /visualSoilEvidence/)
+assert.match(resultCardSource, /result-label="盆土综合判断"/u)
+assert.match(resultCardSource, /action-label="浇水建议"/u)
+assert.doesNotMatch(
+  resultCardSource,
+  /为什么这样建议|plannerEvidenceText|plannerSummaryRows|reasonCodes/
+)
 assert.match(plannerOptionsSource, /returnErrorResponse: true/)
 assert.match(plannerOptionsSource, /requiresWateringHistory/)
 

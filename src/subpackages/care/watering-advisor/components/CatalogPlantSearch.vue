@@ -1,11 +1,12 @@
 <template>
   <view class="relative h-full">
-    <scroll-view
-      scroll-y
-      class="box-border w-full px-4 pb-[112px] pt-6"
-      style="height: calc(100vh - 132px)"
-    >
-      <text class="mb-4 block text-[20px] font-bold leading-7 text-[#1f2937]">选择植物</text>
+    <scroll-view scroll-y class="box-border h-full w-full px-4 pb-[112px] pt-4">
+      <view class="mb-4">
+        <text class="block text-[20px] font-bold leading-7 text-[#1f2937]">选择植物</text>
+        <text class="mt-1 block text-[13px] leading-5 text-[#6b7b71]">
+          选择已有植物，或搜索植物种类获取浇水建议
+        </text>
+      </view>
 
       <!-- 已有植物入口 -->
       <uni-collapse
@@ -13,14 +14,17 @@
         v-model="myPlantsCollapseName"
         accordion
         :border="false"
-        class="mb-3 overflow-hidden rounded-2xl border border-[#e1e9dd] bg-white"
+        class="mb-3 overflow-hidden rounded-[20px] border border-[#dbe7de] bg-white shadow-[0_2px_10px_rgba(45,122,79,0.04)]"
         @change="handleMyPlantsCollapseChange"
       >
         <uni-collapse-item name="my-plants" :border="false" :title-border="false">
           <template #title>
-            <view id="watering-advisor-my-plants-entry" class="flex items-center gap-3 p-4">
+            <view
+              id="watering-advisor-my-plants-entry"
+              class="flex min-h-[72px] items-center gap-3 px-4 py-3"
+            >
               <view class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e8f3ea]">
-                <text class="text-[20px]">🌱</text>
+                <image :src="plantLeafIcon" class="h-5 w-5" mode="aspectFit" />
               </view>
               <view class="min-w-0 flex-1">
                 <text class="block text-[15px] font-bold text-[#1f2933]">从我的植物选</text>
@@ -64,12 +68,12 @@
 
       <!-- 植物种类入口 -->
       <view
-        class="rounded-2xl border-2 p-4"
-        :class="selectedPlant ? 'border-[#2d7a4f] bg-[#e8f3ea]' : 'border-[#e1e9dd] bg-white'"
+        class="rounded-[20px] border p-4 shadow-[0_2px_10px_rgba(45,122,79,0.04)]"
+        :class="selectedPlant ? 'border-[#2d7a4f] bg-[#f3faf5]' : 'border-[#dbe7de] bg-white'"
       >
         <view class="mb-3 flex items-center gap-3">
           <view class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f0f4ed]">
-            <text class="text-[20px]">🔍</text>
+            <image :src="searchIcon" class="h-5 w-5" mode="aspectFit" />
           </view>
           <view class="flex-1">
             <text class="block text-[15px] font-bold text-[#1f2933]">搜索植物种类</text>
@@ -79,9 +83,9 @@
 
         <!-- 搜索框 -->
         <view
-          class="mb-3 flex items-center gap-2 rounded-xl border border-[#e1e9dd] bg-[#f7faf5] px-3 py-2"
+          class="mb-4 flex min-h-[48px] items-center gap-2 rounded-xl border border-[#e1e9dd] bg-[#f7faf5] px-3"
         >
-          <text class="text-[14px] text-[#9ca3af]">🔎</text>
+          <image :src="searchIcon" class="h-4 w-4 shrink-0 opacity-60" mode="aspectFit" />
           <input
             id="watering-advisor-search-input"
             v-model="searchKeyword"
@@ -91,23 +95,28 @@
             @confirm="handleSearchConfirm"
             @input="handleSearchInput"
           />
-          <text
+          <view
             v-if="searchKeyword"
             id="watering-advisor-search-clear"
-            class="text-[14px] text-[#9ca3af]"
+            class="flex h-[44px] w-[44px] shrink-0 items-center justify-center text-[#718075]"
             @click="clearSearch"
-            >✕</text
           >
+            <uni-icons type="closeempty" size="18" color="#718075" />
+          </view>
         </view>
 
         <!-- 搜索结果列表 -->
-        <view v-if="plants.length" class="rounded-xl border border-[#e1e9dd] bg-white">
+        <view
+          v-if="plants.length"
+          class="overflow-hidden rounded-xl border border-[#e1e9dd] bg-white"
+        >
           <view
             v-for="plant in plants"
             :key="plant.plantIdentityId || plant.sessionPlantId"
             :id="`watering-advisor-plant-item-${plant.plantIdentityId || plant.sessionPlantId || ''}`"
-            class="flex items-center gap-3 border-b border-[#f0f4ed] px-3 py-2.5"
+            class="flex min-h-[56px] items-center gap-3 border-b border-[#f0f4ed] px-3 py-2"
             :class="isSelected(plant) ? 'bg-[#e8f3ea]' : 'bg-white'"
+            hover-class="bg-[#f7faf5]"
             @click="selectPlant(plant)"
           >
             <image
@@ -117,7 +126,7 @@
               mode="aspectFill"
             />
             <view v-else class="flex h-10 w-10 items-center justify-center rounded-lg bg-[#f0f4ed]">
-              <text class="text-[16px]">🌿</text>
+              <image :src="plantLeafIcon" class="h-5 w-5" mode="aspectFit" />
             </view>
             <view class="flex-1">
               <text class="block text-[14px] font-medium text-[#1f2933]">
@@ -127,12 +136,12 @@
                 {{ plant.plantGenus }}
               </text>
             </view>
-            <text v-if="isSelected(plant)" class="text-[16px] text-[#2d7a4f]">✓</text>
+            <uni-icons v-if="isSelected(plant)" type="checkmarkempty" size="16" color="#2d7a4f" />
           </view>
           <view
             v-if="hasMore"
             id="watering-advisor-load-more"
-            class="px-3 py-2.5 text-center"
+            class="flex min-h-[44px] items-center justify-center px-3 py-2.5 text-center"
             @click="$emit('load-more')"
           >
             <text class="text-[12px] text-[#2d7a4f]">
@@ -145,7 +154,7 @@
           <text class="block text-[12px] text-[#b45309]">{{ error }}</text>
           <button
             id="watering-advisor-catalog-retry"
-            class="mt-2 rounded-lg border border-[#2d7a4f] bg-white px-3 py-2 text-xs text-[#2d7a4f]"
+            class="mt-2 h-[44px] rounded-lg border border-[#2d7a4f] bg-white px-3 text-xs leading-[44px] text-[#2d7a4f]"
             @click="load(searchKeyword.trim())"
           >
             重新加载
@@ -165,6 +174,8 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useDefaultPlants } from '@/composables/useDefaultPlants.js'
+import plantLeafIcon from '@/assets/diagnosis/diagnosis-leaf.svg'
+import searchIcon from '@/assets/icons/search.svg'
 import PlantSelectCard from './PlantSelectCard.vue'
 
 const props = defineProps({

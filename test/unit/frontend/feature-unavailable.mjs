@@ -7,6 +7,7 @@ const capabilities = readFileSync('src/utils/platform-capabilities.js', 'utf8')
 const modal = readFileSync('src/components/FeatureUnavailableModal.vue', 'utf8')
 const pages = readFileSync('src/pages.json', 'utf8')
 const home = readFileSync('src/pages/index/index.vue', 'utf8')
+const userPlants = readFileSync('src/components/UserPlantsSection.vue', 'utf8')
 const diagnosis = readFileSync('src/pages/diagnose/diagnose.vue', 'utf8')
 const phoneAuth = readFileSync('src/api/platform-phone-auth.js', 'utf8')
 const env = readFileSync('src/api/env.js', 'utf8')
@@ -24,6 +25,8 @@ for (const message of [
   assert.match(registry, new RegExp(message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
 }
 assert.match(modal, /我知道了/)
+assert.match(modal, /v-if="modelValue && message"/u)
+assert.doesNotMatch(modal, /当前端暂未开放该功能，敬请期待。/u)
 assert.doesNotMatch(modal, /微信|二维码|搜索|复制|https?:\/\//)
 assert.match(capabilities, /isRestrictedMiniProgram/)
 assert.match(capabilities, /douyin_mp/)
@@ -31,8 +34,9 @@ assert.match(capabilities, /xiaohongshu_mp/)
 assert.match(pages, /"path": "pages\/index\/index"/)
 assert.match(pages, /"path": "pages\/diagnose\/diagnose"/)
 assert.doesNotMatch(pages, /platform-lite\//)
-assert.match(home, /index-platform-phone-login-button/)
-assert.match(home, /open-type="getPhoneNumber"/)
+assert.match(userPlants, /garden-my-plants-phone-login-button/)
+assert.match(userPlants, /@click="handlePhoneLoginRequest"/)
+assert.doesNotMatch(userPlants, /open-type="getPhoneNumber"/)
 assert.match(home, /FeatureUnavailableModal/)
 assert.match(diagnosis, /FeatureUnavailableModal/)
 assert.match(phoneAuth, /function normalizePhoneAuthorizationDetail/)
@@ -45,7 +49,10 @@ assert.match(phoneAuth, /PLATFORM_PHONE_BOOTSTRAP_BASE_URL/)
 assert.match(phoneAuth, /savePlatformSession\(result\.data\.session\)/)
 assert.match(wechatFrontend, /functionPath = IS_LOCAL_API_BASE_URL/)
 assert.match(wechatFrontend, /: 'auth\/platform-phone'/)
-assert.match(wechatFrontend, /baseUrl: IS_LOCAL_API_BASE_URL \? undefined : PLATFORM_PHONE_BOOTSTRAP_BASE_URL/)
+assert.match(
+  wechatFrontend,
+  /baseUrl: IS_LOCAL_API_BASE_URL \? undefined : PLATFORM_PHONE_BOOTSTRAP_BASE_URL/
+)
 assert.doesNotMatch(
   wechatFrontend,
   /requestHttpFunction\('platform-phone-bootstrap-http\/auth\/platform-phone'/

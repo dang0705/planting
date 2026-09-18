@@ -299,7 +299,7 @@ async function loadPlant() {
       loadError.value = '未找到这株植物的信息'
       return false
     }
-    if (!(await userStore.ensureLogin())) {
+    if (!(await userStore.ensureLogin({ prompt: true }))) {
       loadError.value = '查看植物详情需要先登录'
       return false
     }
@@ -454,6 +454,9 @@ async function doWatering() {
     openFeatureUnavailable('watering')
     return
   }
+  if (!(await userStore.ensureLogin({ prompt: true }))) {
+    return
+  }
   return wateringAction.run(async () => {
     reportAnalyticsEvent(ANALYTICS_EVENTS.ENTER_USER_PLANT_WATERING)
     const result = await plantStore.completeWatering(plantId.value)
@@ -482,7 +485,10 @@ function editPlant() {
   })
 }
 
-function confirmDelete() {
+async function confirmDelete() {
+  if (!(await userStore.ensureLogin({ prompt: true }))) {
+    return
+  }
   uni.showModal({
     title: '确认删除',
     content:

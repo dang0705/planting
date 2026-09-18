@@ -144,7 +144,8 @@ function isCloudbaseImageInputError(error) {
 
 function cloudbasePrimaryAnthropicImage(item) {
   const url = String(item?.image_url?.url || '').trim()
-  // Anthropic 请求也只能保留远端 URL；严禁转换为 Base64/data URL 传给模型。
+  // 保留 Anthropic 兼容转换，供明确指定该协议的旧调用使用；默认视觉链路走
+  // CloudBase 已配置的 OpenAI 视觉入口，不在函数内复制或编码图片。
   if (!/^https?:\/\//i.test(url)) {
     throw cloudbaseImageInputError('视觉诊断图片必须使用可访问的 HTTP(S) URL，不接受 Base64')
   }

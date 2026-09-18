@@ -176,12 +176,7 @@ export function useDiagnosisTabIntake() {
         return false
       }
 
-      if (
-        !(await requireMvpAccess(userStore, {
-          source: 'diagnose_tab',
-          loginMessage: '请先登录后再开始检查'
-        }))
-      ) {
+      if (!(await requireMvpAccess(userStore, { source: 'diagnose_tab' }))) {
         return false
       }
 

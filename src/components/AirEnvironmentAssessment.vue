@@ -31,12 +31,15 @@
         :viewport-class="isContentHeight ? 'w-full' : 'w-full h-full'"
         :item-class="isContentHeight ? 'relative' : 'relative min-h-0 overflow-hidden'"
         :active-item-class="isContentHeight ? '' : 'h-full'"
+        @step-change="resetStepScroll"
       >
         <template #step="{ index, active }">
           <scroll-view
             v-if="active && index === AIR_EXCHANGE_STEP"
             :id="`${idPrefix}-exchange-step`"
             :scroll-y="!isContentHeight"
+            :scroll-top="stepScrollTop"
+            :scroll-with-animation="false"
             class="box-border pb-[112px]"
             :class="isContentHeight ? '' : 'h-full'"
             :style="stepPanelStyle"
@@ -60,6 +63,8 @@
             v-else-if="active && index === LOCAL_AIRFLOW_STEP"
             :id="`${idPrefix}-local-airflow-step`"
             :scroll-y="!isContentHeight"
+            :scroll-top="stepScrollTop"
+            :scroll-with-animation="false"
             class="box-border pb-[112px]"
             :class="isContentHeight ? '' : 'h-full'"
             :style="stepPanelStyle"
@@ -184,7 +189,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import ButtonStepTrack from '@/components/common/ButtonStepTrack.vue'
 import AirExchangeAssessment from '@/components/AirExchangeAssessment.vue'
 import AirEnvironmentOptionCard from '@/components/AirEnvironmentOptionCard.vue'
@@ -221,7 +226,10 @@ const DEFAULT_WINDOW_DIRECTION_COUNT = 'one'
 const DEFAULT_WINDOW_OPEN_FREQUENCY = 'daily'
 const DEFAULT_FRESH_AIR_SOURCE_COUNT = 1
 const FIRST_SOURCE_INDEX = 0
+const INITIAL_SCROLL_TOP = 0
+const STEP_SCROLL_RESET_PULSE = 1
 const activeStep = ref(AIR_EXCHANGE_STEP)
+const stepScrollTop = ref(INITIAL_SCROLL_TOP)
 const isSinglePage = computed(() => props.layoutMode === 'single-page')
 const isContentHeight = computed(() => props.heightMode === 'content')
 const panelStyle = computed(() =>
@@ -376,6 +384,12 @@ function setActiveStep(step) {
   }
   activeStep.value = nextStep
   emit('step-change', nextStep)
+}
+
+async function resetStepScroll() {
+  stepScrollTop.value = STEP_SCROLL_RESET_PULSE
+  await nextTick()
+  stepScrollTop.value = INITIAL_SCROLL_TOP
 }
 
 function nextStep() {

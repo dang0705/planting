@@ -17,11 +17,11 @@ function normalizeCatalogPlantForPlatform(plant, restrictedPlatform) {
   }
 }
 
-export function useDefaultPlants() {
+export function useDefaultPlants({ pageSize: initialPageSize = 10 } = {}) {
   const restrictedPlatform = isRestrictedMiniProgram()
   const keywordRef = ref('')
   const page = ref(1)
-  const pageSize = ref(10)
+  const pageSize = ref(Math.max(1, Number(initialPageSize) || 10))
   const plants = ref([])
   const total = ref(0)
   const hasMore = ref(false)

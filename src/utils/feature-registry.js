@@ -15,7 +15,11 @@ export function useFeatureUnavailableModal() {
   const visible = ref(false)
 
   function openFeatureUnavailable(featureKey) {
-    openedFeatureKey.value = FEATURE_UNAVAILABLE_MESSAGES[featureKey] ? featureKey : ''
+    const normalizedFeatureKey = String(featureKey || '').trim()
+    if (!FEATURE_UNAVAILABLE_MESSAGES[normalizedFeatureKey]) {
+      return
+    }
+    openedFeatureKey.value = normalizedFeatureKey
     visible.value = true
   }
 

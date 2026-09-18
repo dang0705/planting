@@ -2,6 +2,8 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 
+/* oxlint-disable no-console -- source contract emits a concise test result. */
+
 const root = process.cwd()
 const history = fs.readFileSync(
   path.join(root, 'src/subpackages/diagnosis/vue-query/diagnosis-history/queries/history.js'),
@@ -17,7 +19,10 @@ const diagnosisApi = fs.readFileSync(
   path.join(root, 'src/subpackages/diagnosis/api/diagnosis.js'),
   'utf8'
 )
-const indexPage = fs.readFileSync(path.join(root, 'src/pages/index/index.vue'), 'utf8')
+const userPlantsPage = fs.readFileSync(
+  path.join(root, 'src/components/UserPlantsSection.vue'),
+  'utf8'
+)
 const profilePage = fs.readFileSync(path.join(root, 'src/pages/profile/profile.vue'), 'utf8')
 const questionPackagePage = fs.readFileSync(
   path.join(root, 'src/subpackages/diagnosis/question-package.vue'),
@@ -43,8 +48,13 @@ assert.match(api, /fetchDiagnosisHistoryQuery\(page, pageSize, plantId\)/u)
 assert.doesNotMatch(api, /from ['"]@\/subpackages\//u)
 assert.match(diagnosisApi, /params\.sessionId/u)
 assert.match(diagnosisApi, /fetchDiagnosisDetailQuery\(id\)/u)
-assert.match(indexPage, /onShow/u)
-assert.match(indexPage, /delete plantDiagnoseHistory\[key\]/u)
+assert.match(userPlantsPage, /clearPlantDiagnoseHistory/u)
+assert.match(userPlantsPage, /plantDiagnoseHistory\[plant\.id\]/u)
+assert.match(userPlantsPage, /togglePlantHistory/u)
+assert.match(userPlantsPage, /garden-my-plants-history-toggle-\$\{plant\.id\}/u)
+assert.match(userPlantsPage, /diagnosis-history-panel--collapsed/u)
+assert.match(userPlantsPage, /diagnosis-history-item--visible/u)
+assert.match(userPlantsPage, /diagnosis-history-chevron/u)
 assert.match(profilePage, /onShow/u)
 assert.match(profilePage, /diagnoseHistory\.value = \[\]/u)
 assert.match(questionPackagePage, /QuestionPackageResult/u)

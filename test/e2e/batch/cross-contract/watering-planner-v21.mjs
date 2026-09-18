@@ -461,10 +461,11 @@ test('hasRecentThoroughWatering: 5天内有浇透返回 true', () => {
  * 5. computeAmountSuggestion
  * ============================================================ */
 
-test('amountSuggestion: WET 时水量为 0', () => {
+test('amountSuggestion: WET 仍返回统一水量范围，并保留强烈不浇提醒', () => {
   const geo = computePotGeometry({ potTopDiameterCm: 12, potBottomDiameterCm: 10, potHeightCm: 10 })
   const suggestion = computeAmountSuggestion(geo, GATE_STATE.WET, [5, 8])
-  assert.deepEqual(suggestion.amountRangeMl, [0, 0])
+  assert.ok(suggestion.amountRangeMl[1] > suggestion.amountRangeMl[0])
+  assert.match(suggestion.stopCondition, /不建议|不要立即浇水/u)
 })
 
 test('amountSuggestion: DRY 时建议量为体积 20~30% 且区间单调', () => {

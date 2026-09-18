@@ -59,26 +59,6 @@
         </view>
       </view>
 
-      <!-- 功能菜单 -->
-      <view class="px-4 pb-6">
-        <view class="bg-white rounded-3xl overflow-hidden shadow-sm">
-          <view
-            v-for="(item, index) in menuItems"
-            :key="item.id"
-            :id="`profile-menu-${item.action}`"
-            class="flex items-center justify-between px-4 py-4"
-            :class="{ 'border-t border-gray-100': index > 0 }"
-            @click="handleMenuClick(item)"
-          >
-            <view class="flex items-center">
-              <text class="text-2xl mr-3">{{ item.icon }}</text>
-              <text class="text-base text-gray-900">{{ item.title }}</text>
-            </view>
-            <text class="text-gray-400">›</text>
-          </view>
-        </view>
-      </view>
-
       <!-- 诊断历史 -->
       <view id="profile-diagnose-history-section" class="px-4 pb-20">
         <view class="flex items-center justify-between mb-3">
@@ -161,8 +141,10 @@ import { getDiagnosisHistory } from '@/api/diagnosis-history.js'
 import { parsePlantDateTime } from '@/utils/plant-datetime.js'
 import { useFeatureUnavailableModal } from '@/utils/feature-registry.js'
 import { isFeatureAvailable } from '@/utils/platform-capabilities.js'
-
 const userStore = useUserStore()
+const JUST_NOW_MS = 60000
+const ONE_HOUR_MS = 3600000
+const ONE_DAY_MS = 86400000
 
 // 诊断历史数据
 const diagnoseHistory = ref([])
@@ -197,16 +179,6 @@ const remainingDiagnosisQuotaText = computed(() => {
   }
   return '升级后可用'
 })
-
-// 功能菜单
-const menuItems = [
-  {
-    id: 1,
-    icon: '🌱',
-    title: '我的植物',
-    action: 'myPlants'
-  }
-]
 
 // 加载诊断历史
 onMounted(() => {
@@ -257,16 +229,6 @@ async function loadDiagnoseHistory() {
   }
 }
 
-function handleMenuClick(item) {
-  switch (item.action) {
-    case 'myPlants':
-      uni.switchTab({
-        url: '/pages/index/index'
-      })
-      break
-  }
-}
-
 function openSubscriptionPage() {
   if (!isFeatureAvailable('subscription')) {
     openFeatureUnavailable('subscription')
@@ -293,16 +255,16 @@ function formatTime(time) {
   const now = new Date()
   const diff = now - date
 
-  if (diff < 60000) {
+  if (diff < JUST_NOW_MS) {
     return '刚刚'
   }
-  if (diff < 3600000) {
-    return `${Math.floor(diff / 60000)}分钟前`
+  if (diff < ONE_HOUR_MS) {
+    return `${Math.floor(diff / JUST_NOW_MS)}分钟前`
   }
-  if (diff < 86400000) {
-    return `${Math.floor(diff / 3600000)}小时前`
+  if (diff < ONE_DAY_MS) {
+    return `${Math.floor(diff / ONE_HOUR_MS)}小时前`
   }
-  return `${Math.floor(diff / 86400000)}天前`
+  return `${Math.floor(diff / ONE_DAY_MS)}天前`
 }
 </script>
 

@@ -7,6 +7,7 @@ const HTTP_IDENTITY_TICKET_HEADER = 'x-planting-http-identity-ticket'
 const HTTP_IDENTITY_TICKET_MAX_AGE_SECONDS = 5 * 60
 const OPENID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/u
 const PLATFORM_SET = new Set(['wechat_mp', 'douyin_mp', 'xiaohongshu_mp'])
+const SUBJECT_SET = new Set(['planting-user', 'planting-agent'])
 
 function getSecret() {
   const secret = String(process.env.HTTP_IDENTITY_TICKET_SECRET || '').trim()
@@ -45,7 +46,7 @@ function createHttpIdentityTicket({
   const normalizedPlatform = PLATFORM_SET.has(String(platform || '').trim())
     ? String(platform).trim()
     : ''
-  if (normalizedSubject === 'planting-user' && (!normalizedUid || !normalizedPlatform)) {
+  if (SUBJECT_SET.has(normalizedSubject) && (!normalizedUid || !normalizedPlatform)) {
     return ''
   }
   const payload = {
@@ -98,7 +99,7 @@ function resolveHttpIdentityTicket(headers = {}) {
     return null
   }
   const subject = String(payload.subject || '').trim()
-  const userId = subject === 'planting-user' ? String(payload.uid || '').trim() : ''
+  const userId = SUBJECT_SET.has(subject) ? String(payload.uid || '').trim() : ''
   const platform = PLATFORM_SET.has(String(payload.platform || '').trim())
     ? String(payload.platform).trim()
     : ''

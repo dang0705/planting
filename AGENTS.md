@@ -20,7 +20,18 @@ inclusion: always
 - AI：视觉识别与诊断链路涉及 Qwen / 混元 Vision 等能力。
 - AI memories: OpenViking
 
-## 2. 全局行为硬规则
+## 2. TDD (development order)
+
+This repo does not treat “fix first, then add a green test” as complete work.
+
+1. Write **independent Expected** from external truth (DTO / API docs / approved live or artifacts, design hard-locks, requirements/specs, allowed OpenViking facts) plus common scenes — not from current SUT output.
+2. Put the case on **the current** product. For a bug or a hard-lock contract, it **must fail (RED)** before any product fix.
+3. Change **only that** product behavior to GREEN. Do not rewrite Expected to swallow the failure.
+4. Nail-current-behavior tests without a truth source are **characterization**, not TDD; they must be labeled as such and must not be reported as contract acceptance.
+
+The wrong layer still stops at the table below. TDD does not skip layer choice. Matrix how-to: skill `test-matrix`. E2E how-to: skill `mp-e2e-leaf-authoring`.
+
+## 3. 全局行为硬规则
 
 1. 迭代过程中的业务逻辑、数据结构变动，如 `{a:{b:1}}` 改为 `{a:[1]}` 这种结构性调整的，优先采取最彻底的解决方案，避免使用保守策略如兼容、兜底代码应对此类变动从而导致无谓的代码膨胀。
 2. 计划模式和实际开发过程中必须遵循 `如无必要、勿增实体` 的开发原则。以合理复用、扩展已有的表结构、字段、功能模块、组件为优先。确认以上实体或相似度超过80%的实体不存在、无法复用和扩展该实体或此类操作对原有实体存在污染风险的才考虑新增。
@@ -34,8 +45,9 @@ inclusion: always
 10. 输出的文案、用语减少专业词汇，尤其在 plan 模式或用户显式要求 planning时，要注重用词以通俗易懂的白话结合举例代替专业词汇。
 11. Web/云端 external implementer 即使运行时自称 main/root，也必须在本项目中承担 external implementer 角色：只按 handoff 修改代码，完成后执行实现者自检和 unit tests；有 `figma_link` 的 UI 任务必须直接使用可用的 Figma 插件 / MCP / 工具读取设计并对齐 UI，不能依赖 main 的转述。外部桥接失败不得自动改派内部 subagent。
 12. 严禁任何可能的黑箱行为，所有的设计方案都必须可视、可审计、可追溯、可回放。
+13. TDD is mandatory for product behavior changes (including bugfixes). Independent Expected on **unfixed** product first (must RED for bugs / hard-lock contracts) → then change product to GREEN. Forbidden: change a source first, then write a test that only matches the new code. Expected must not be generated from the SUT. How to author matrix cases: `test-matrix-authoring`.
 
-## 2.1 通用计划证伪门（目标模式运行时强制执行）
+## 3.1 通用计划证伪门（目标模式运行时强制执行）
 
 1. 只有任务明确进入“目标模式”时才启用本门禁：用户已要求完成一个具体目标，且预计需要连续多个行动、外部状态变更或较长执行时间。纯问答、资料说明、一次性诊断和只读审查不属于目标模式，不得借本条无故扩大流程。进入目标模式后，第一步必须是**最短路径证伪**：在开始实现、部署、批量操作或长时间等待前，写清唯一目标、关键假设、最小可判定实验、继续条件、失败条件、回退方式和硬时间上限。无法写出最小证伪实验的计划视为无效，必须先停下修正计划。
 2. 证伪实验必须优先于完整实现和大规模验证，且只能使用为回答当前假设所需的最少真实数据、请求和步骤。实验结果若已证明假设不成立、收益不足、业务链路断裂或风险超过阈值，必须立即终止该方案并按记录回退临时变更；不得以“再测一轮”“补齐工具”“完善基础设施”“已经投入很多时间”或改写目标为理由继续。
@@ -43,7 +55,7 @@ inclusion: always
 4. 每个计划必须设置自主时间盒和检查点。到达时间盒、连续一次关键实验失败，或达到任一停止条件时，必须输出基于事实的 Go/Stop 结论并停止；不得自动续期、换假设、换环境或开启新一轮长程任务。任何超出原时间盒的继续执行都需要用户明确授权，授权必须注明新增目标、上限和停止条件。
 5. 只有最小证伪实验通过且继续条件满足，才允许进入完整实现、批量采样或正式验收。每一阶段结束时必须在计划/报告中记录已证实、已证伪、未覆盖项、实际耗时和下一步唯一动作；状态复述、脚本运行、端口可达或 HTTP 200 本身不算进展。计划被证伪后不得保留未验收的候选实现，也不得为了挽救投入而扩大范围。
 
-## 3. 前端行为硬约束
+## 4. 前端行为硬约束
 
 1. 开发 `Vue` 组件时参考 `skills/uni-app` 及 `skills/vue-best-practices` ，如有概念冲突的采纳前者。
 2. css优先使用 `Tailwind CSS` 组织样式并参考 `skills/tailwindcss-base-use` ，进阶布局则参考 `skills/tailwindcss-advanced-layouts`。
@@ -64,12 +76,13 @@ inclusion: always
    </view>
    ```
 
-## 4. 后端行为硬约束
+## 5. 后端行为硬约束
 
 1. 涉及部署环境、数据库、云函数、云存储、身份权限的参考 `.codex/skills/cloudbase`
 2. 未经允许严禁开启 `CloudBase` 或任何可能导致付费的功能如云函数的预置并发。
+3. CloudBase MCP 凭证优先使用长期凭证：优先使用环境级 `api_key`（通过 `CLOUDBASE_API_KEY` 与 `CLOUDBASE_ENV_ID` 注入，或使用 MCP 的 API Key 登录；需按项目安全要求设置有效期和轮换策略），其次使用安全运行环境中的腾讯云 `SecretId` / `SecretKey`。只有长期凭证不可用、失效或用户明确要求时，才发起 device/web 短期登录。任何 API Key、SecretId、SecretKey、Token、Cookie 都不得写入仓库、聊天记录、前端代码或公开输出；不得为了省略登录而索取或回显凭证明文。
 
-## 5. QA行为约束
+## 6. QA行为约束
 
 1. 使用端上 `miniprogram-automator` / `9420` 做诊断相关自动化测试时，先读取 `docs/ai-rules/frontend-automation-id-policy.md` 的“第三点 元素 id 映射”，并按该映射执行入口定位与关键断言。
 2. `miniprogram-automator` 的目的若为了验证UI，必须对比截图。
@@ -78,7 +91,7 @@ inclusion: always
 5. automator QA 必须通过 `test/e2e/automator/catalog.json` 精确选择叶子脚本，并在 LAN/DevTools/automator 前校验 automation id policy、脚本 hash 和 execution id；直接裸跑 automator 脚本只能作为排障，不能作为验收证据。
 6. `src/**` 或 `cloudfunctions/**` 文件移动、拆分或重命名时，必须同步移动对应 `test/unit/frontend/**` 或 `test/unit/backend/**` 镜像测试；frontend/backend unit 使用同一递归镜像约定：`test/unit/frontend/<src 相对目录>/...` 对应 `src/<相对目录>/...`，`test/unit/backend/<cloudfunctions 相对目录>/...` 对应 `cloudfunctions/<相对目录>/...`。unit 文件名不得使用 `test-` 前缀；无单一源目录映射或跨 `src` 与 `cloudfunctions` 的行为必须放入 `test/e2e/batch` 或 `test/e2e/automator`。
 
-## 5.1 测试层级与真实性边界（强制）
+## 6.1 测试层级与真实性边界（强制）
 
 1. `test/unit/**` 仍以单个模块或函数的逻辑、映射和边界为主要验证对象，但允许直接使用真实 `cloud1_dev` 数据、真实 CloudBase API 和真实数据库读写；这类结果必须标记为 `unit_real_data`，不得再强制使用 mock 或假数据。真实微信运行时、真实页面交互和截图仍属于 Automator，不因使用真实数据而转化为 unit-test。unit-test 通过不等于端上功能通过，也不得单独作为端上验收证据。
 2. `test/e2e/**` 验证跨模块的真实链路，禁止伪造被测接口响应、用内存植物仓库替代服务端数据，或把 fixture 响应冒充真实 API 返回。跑批 e2e 至少调用真实配置的 API 和开发库；它只能证明服务链路，不能覆盖真实小程序 UI、登录态、页面数据和用户交互。
@@ -86,7 +99,7 @@ inclusion: always
 4. 使用 fixture 或 mock 的 Automator 叶子只能作为回归排障或组件交互诊断，必须在 catalog/报告中明确其非真实验收性质；不能与 live e2e 混称，也不能计入“端上通过”。如果 acceptance 要求真实数据，必须另有 `automator_required` 的 live 叶子覆盖同一用户路径。
 5. 测试报告或其 catalog/qa-run 证据必须明确可核验数据模式：`unit_real_data`、`unit_fake`、`e2e_real_api`、`automator_live_real_api` 或 `fixture_diagnostic`。项目默认优先使用 `unit_real_data`；只有明确需要隔离边界或离线验证时才使用 `unit_fake`。数据来源不明或接口响应被替换时，状态只能是未验收/阻断，不能记为 PASS。
 
-## 5.2 前端 UT 与真实 API E2E 硬规定
+## 6.2 前端 UT 与真实 API E2E 硬规定
 
 1. 前端 UT 只能证明前端单模块逻辑、数据映射、状态计算、序列化和源码契约。使用 `readFileSync`、正则或源码字符串断言的用例必须标记为 `data_mode=unit_fake`、`test_kind=source_contract`，不能称为页面交互测试。
 2. 前端 UT 不得宣称已经验证真实小程序页面。它不能替代以下验证：Vue 响应式状态变化、组件真实渲染、点击/输入/禁用状态、Popup 展示、页面跳转、编译产物行为、真实 `wx.request` 和截图。
@@ -96,7 +109,7 @@ inclusion: always
 6. 真实 API E2E 只能证明跨模块服务链路和真实数据契约，不能证明真实小程序 UI、登录态、页面响应式状态、跨页面操作或截图；这些仍由 `automator_live_real_api` 负责。
 7. 每个前端交互功能的测试记录必须分层列出：前端 UT、`e2e_real_api`、`automator_live_real_api`。任何一层未执行或使用了不符合该层边界的数据，状态必须标记为未验收或阻断，不得合并成一个笼统的 PASS。
 
-## 5.3 业务导向测试与缺口发现硬规定
+## 6.3 业务导向测试与缺口发现硬规定
 
 1. 所有测试脚本，无论是 `test/unit/**`、`test/e2e/**` 还是端上 Automator，都是为实际业务服务的质量工具。最终目的不只是让 happy path（正常路径）通过，而是主动发现实际业务中可能隐藏的边缘情况、失败情况、异常状态和需求断层。只覆盖 happy path 的脚本不得作为完整业务验收依据。
 2. 每个 MVP 功能都必须从多维度设计测试矩阵，至少同时检查：用户入口与可见状态、前端交互和响应式更新、页面布局与文案渲染、接口状态码与业务码、数据字段和数据来源、持久化及读回一致性、跨页面串联、缓存和异步竞态、重复操作、慢网络、超时、空数据、部分数据、过期数据、非法数据、权限/登录失效以及失败后的恢复路径。具体维度应根据该功能的真实需求和数据合同补充，不得机械套用单一模板。
@@ -106,14 +119,14 @@ inclusion: always
 6. 业务功能的最终状态必须分层报告前端单元逻辑、真实 API 链路和真实端上交互证据。任一层缺失、使用了不符合真实性边界的数据，或只验证了正常路径，整体最多只能写“部分验证/逻辑通过”，不得写成“功能验收通过”或“全量通过”。
 7. 测试设计和复盘必须反向审视“实现、接口、数据、界面、文案、用户目标”之间的 gap（差距），优先验证最可能造成错误决策、错误展示、数据丢失、状态误导或流程中断的路径。测试脚本自身的可运行性不是终点；没有发现业务问题不等于业务没有问题。
 
-## 5.4 端上接口性能验收硬规定
+## 6.4 端上接口性能验收硬规定
 
 1. 所有接口响应速度、性能优化和“是否达标”的判定，一律以真实小程序运行时实际发出的 `wx.request` 从发起到 `success`/`fail` 回调的端到端 `elapsed_ms` 为唯一验收口径。Node、curl、宿主机 HTTP、局部 gateway、云函数内部耗时和单元测试只能作为诊断证据，不能代替端上性能结论。
 2. 列表、详情及其他关键接口必须分别测量，至少覆盖冷请求与热请求；报告每次端上耗时、HTTP 状态码、业务码、关键业务字段、响应体字节数，并汇总最小值、p50、p95 和最大值。列表响应不能用详情响应的结果代替，反之亦然。
 3. 优化前后的对比必须保持相同开发环境、真实登录身份、数据集、请求参数和端上运行时；只要缺少真实 `wx.request` 端到端证据，或 p95 未达到目标，状态只能写“未达标/未验收”，不得以服务端较快的诊断结果宣称达标。
 4. 任何为降低耗时而做的字段裁剪、缓存、并行化或懒加载，都必须同时复核用户可见字段、跨页面串联、失败恢复和数据来源；不能为了数字牺牲业务闭环，也不能把缓存命中或请求未发出误报为接口响应达标。
 
-## 5.5 性能优化止损与证伪优先（绝对硬规定）
+## 6.5 性能优化止损与证伪优先（绝对硬规定）
 
 1. 性能优化的第一目标是以最短路径**证实或证伪候选假设**，不是持续采样、完善测试设施或堆叠优化手段。任何实现、部署或长时间测量前，必须在计划中写清：唯一目标接口、稳定基线、候选改动能消除的具体耗时、最小可判定实验、继续阈值、失败阈值、单函数回退包/指纹及时间上限；缺一项即停止，不得开始。
 2. 每个候选最多只有一个自主决策窗口：最多 20 分钟定位与基线核验、15 分钟实现/单元验证、10 分钟真实端上最小验证。冷启动确有必要时，只可额外使用一次预先写明的生命周期静默窗口及一次日志关联等待；不得以“等待冷启动”“补日志”“修 Automator”名义开启第二个自主窗口。总计超过 60 分钟，必须先向用户报告已获得的证据、明确的 Go/Stop 结论和剩余最小工作，并取得用户明确同意才能继续。
@@ -123,12 +136,12 @@ inclusion: always
 6. 测试、日志或 Automator 本身的修复不是性能优化成果。它只能在不改变业务且能在当前决策窗口内直接取得候选结论时进行一次最小修复；否则必须停止并请求用户决定，不得把测试基础设施工作伪装成优化进展。
 7. 每次候选结束时，计划和最终报告必须同时写出：基线、候选、真实端上数据、是否满足继续阈值、回退指纹、保留或终止的决定。没有“继续”证据就是终止，不得保留未验收候选代码或将“接口 200”“函数初始化很快”“测试已运行”表述为优化成功。
 
-## 6. 读取边界
+## 7. 读取边界
 
 1. `docs/code-logics/` 不得全量读取；先读 `INDEX.md`。
 2. `docs/new-rules/` 不得全量读取；先读 source index，再按需读取指定章节 / Sxx。
 
-## 7. 知识治理边界
+## 8. 知识治理边界
 
 1. 代码、测试、schema、配置和 package scripts 是事实源。
 2. Active docs 只解释当前契约和操作方式，不是第二事实源。
@@ -137,7 +150,7 @@ inclusion: always
 5. 任务上下文必须优先通过 `.codex/context-packs.yml` 选择最小文件包。
 6. 发生冲突时，当前事实源优先；若 OpenViking 记忆条目已过期，本轮任务应形成明确的更新或治理候选，不得静默沿用错误记忆。
 
-## 8. OpenViking 记忆内容边界
+## 9. OpenViking 记忆内容边界
 
 当前默认长期记忆源是 OpenViking `planting` peer，配置位于仓库根目录 `.openviking/config.json`，作用范围从仓库根目录开始并覆盖其子目录。
 

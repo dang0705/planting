@@ -3,14 +3,28 @@
 const crypto = require('crypto')
 let cloudbase
 try {
-  cloudbase = require('/opt/utils/cloudbase')
+  // 盆土证据访问新增视觉表；优先使用与函数同批发布的 SQL 工具，避免
+  // Layer 版本落后时因表白名单或 SQL 处理差异让请求直接返回 500。
+  cloudbase = require('../cloudbase')
 } catch {
-  cloudbase = require('../../layer/utils/cloudbase')
+  try {
+    cloudbase = require('/opt/utils/cloudbase')
+  } catch {
+    cloudbase = require('../../layer/utils/cloudbase')
+  }
 }
 const { models, getCloudBase } = cloudbase
 const { callLLMDiagnose } = require('../utils/llm')
 const { buildWateringSoilPromptPayload } = require('../utils/watering-soil-prompt')
-const { SOIL_EVIDENCE_TTL_MS } = require('../../layer/utils/watering-soil-visual')
+let soilVisual
+try {
+  soilVisual = require('/opt/utils/watering-soil-visual')
+} catch {
+  // HTTP 函数的发布包不包含仓库层目录；把这份纯工具随函数打包，避免
+  // Layer 版本与函数代码不同步时，整个盆土接口在加载阶段直接返回 500。
+  soilVisual = require('../watering-soil-visual')
+}
+const { SOIL_EVIDENCE_TTL_MS } = soilVisual
 
 const SOIL_IMAGE_RETRY_MESSAGE = '请拍摄清晰的盆土表面后再试，这张照片暂不用于浇水判断。'
 const SOIL_ANALYSIS_UNCERTAIN_MESSAGE = '盆土状态不够清楚，请重新拍摄或手动摸土确认。'
@@ -43,6 +57,14 @@ function createClientError(message, statusCode = 400) {
 
 function createEvidenceId() {
   return `wse_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`
+}
+
+function toSqlDateTime(value) {
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    throw new Error('盆土证据失效时间无效')
+  }
+  return date.toISOString().slice(0, 19).replace('T', ' ')
 }
 
 function normalizedSource(value = '') {
@@ -104,11 +126,16 @@ async function resolveRecentDiagnosisTarget({ openid, plantId }) {
   if (!normalizedPlantId) {
     throw createClientError('缺少植物信息')
   }
-  const result = await models.$runSQL(
-    `SELECT raw.visual_raw_image_record_id, raw.file_id, raw.created_at
+  let result
+  try {
+    result = await models.$runSQL(
+      `SELECT raw.visual_raw_image_record_id, raw.file_id, raw.created_at
        FROM visual_raw_image_records AS raw
        INNER JOIN diagnosis_sessions AS session
-         ON session.session_id = raw.session_id AND session._openid = raw._openid
+         -- 历史诊断表仍是 utf8mb4_unicode_ci，而视觉记录已迁移到
+         -- utf8mb4_0900_ai_ci。显式使用前者，避免复用查询因 1267 失败。
+         ON session.session_id = raw.session_id COLLATE utf8mb4_unicode_ci
+        AND session._openid = raw._openid COLLATE utf8mb4_unicode_ci
        INNER JOIN visual_normalized_image_results AS normalized
          ON normalized.visual_raw_image_record_id = raw.visual_raw_image_record_id
         AND normalized._openid = raw._openid
@@ -123,8 +150,16 @@ async function resolveRecentDiagnosisTarget({ openid, plantId }) {
         AND normalized.organ_conflict_flag = 0
       ORDER BY raw.created_at DESC
       LIMIT 1`,
-    { openid: text(openid), plantId: normalizedPlantId }
-  )
+      { openid: text(openid), plantId: normalizedPlantId }
+    )
+  } catch (error) {
+    // 复用资格无法安全确认时，宁可要求新拍，也不能因为历史诊断数据或
+    // 数据库兼容问题阻断浇水流程，更不能把未知图片当作可复用证据。
+    console.error('[watering-soil] recent diagnosis reuse lookup failed', {
+      message: String(error?.message || error).slice(0, 300)
+    })
+    return null
+  }
   const row = rows(result)[0]
   if (!row?.file_id) {
     return null
@@ -211,24 +246,26 @@ function buildStoredReview({ review, source, usage, promptAudit }) {
 
 async function persistEvidence({ openid, target, review }) {
   const evidenceId = createEvidenceId()
-  const expiresAt = new Date(Date.now() + SOIL_EVIDENCE_TTL_MS)
   await models.$runSQL(
     `INSERT INTO watering_visual_evidences (
        evidence_id, _openid, user_plant_id, source_type, source_file_id,
        source_visual_raw_image_record_id, analysis_json, analyzed_at, expires_at
      ) VALUES (
-       {{evidenceId}}, {{openid}}, {{plantId}}, {{sourceType}}, {{fileId}},
-       {{diagnosisRawImageRecordId}}, {{analysisJson}}, CURRENT_TIMESTAMP, {{expiresAt}}
+       {{evidenceId}}, {{openid}},
+       IF({{userPlantIdHasValue}} = 1, {{userPlantIdValue}}, NULL),
+       {{sourceType}}, {{fileId}},
+       {{diagnosisRawImageRecordId}}, {{analysisJson}}, CURRENT_TIMESTAMP,
+       DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 24 HOUR)
      )`,
     {
       evidenceId,
       openid: text(openid),
-      plantId: target.plantId || null,
+      userPlantIdHasValue: Number.isInteger(Number(target.plantId)) && Number(target.plantId) > 0 ? 1 : 0,
+      userPlantIdValue: Number(target.plantId) > 0 ? Number(target.plantId) : 0,
       sourceType: target.source,
       fileId: target.fileId,
       diagnosisRawImageRecordId: target.diagnosisRawImageRecordId || null,
-      analysisJson: JSON.stringify(review),
-      expiresAt
+      analysisJson: JSON.stringify(review)
     }
   )
 
@@ -257,6 +294,19 @@ function toPublicReview(review = {}) {
     visibleBasisCn: review.visibleBasisCn,
     needsManualConfirmation:
       review.surfaceState !== 'wet' && review.standingWater !== 'yes'
+  }
+}
+
+function buildFrontendDebugAudit({ result = {}, parsed = null, review = null } = {}) {
+  return {
+    providerId: text(result?.promptAudit?.providerId),
+    modelId: text(result?.promptAudit?.modelId || result?.promptAudit?.model),
+    promptText: text(result?.promptAudit?.promptText),
+    tokenUsage: result?.usage || null,
+    imageInputTransport: text(result?.promptAudit?.imageInputTransport),
+    modelReturnText: text(result?.text),
+    parsedReview: parsed || null,
+    finalReview: review ? toPublicReview(review) : null
   }
 }
 
@@ -318,7 +368,10 @@ async function analyzeWateringSoilEvidence({ openid, payload = {} } = {}) {
         : uncertain
           ? SOIL_ANALYSIS_UNCERTAIN_MESSAGE
           : '',
-      review: toPublicReview(review)
+      review: toPublicReview(review),
+      ...(payload.debugAudit === true
+        ? { debugAudit: buildFrontendDebugAudit({ result, parsed, review }) }
+        : {})
     }
   }
 }
@@ -346,7 +399,9 @@ module.exports = {
   _test: {
     normalizedSource,
     parseModelReview,
+    toSqlDateTime,
     toPublicReview,
+    buildFrontendDebugAudit,
     resolveRecentDiagnosisTarget,
     resolveOwnedPlantImageTarget
   }

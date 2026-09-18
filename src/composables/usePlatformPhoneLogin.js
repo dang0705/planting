@@ -96,12 +96,12 @@ export function usePlatformPhoneLogin({ onSuccess } = {}) {
   function openPrivacyContract() {
     const douyin = getDouyinApi()
     if (typeof douyin?.openPrivacyContract !== 'function') {
-      uni.showToast({ title: '隐私协议暂不可用，请稍后重试', icon: 'none' })
+      loginPreparationError.value = '隐私协议暂不可用，请稍后重试'
       return
     }
     douyin.openPrivacyContract({
-      fail: error => {
-        uni.showToast({ title: error?.errMsg || '隐私协议暂不可用，请稍后重试', icon: 'none' })
+      fail: () => {
+        loginPreparationError.value = '隐私协议暂不可用，请稍后重试'
       }
     })
   }
@@ -193,7 +193,7 @@ export function usePlatformPhoneLogin({ onSuccess } = {}) {
         message: String(error?.message || ''),
         name: String(error?.name || '')
       })
-      uni.showToast({ title: error?.message || '登录失败，请稍后重试', icon: 'none' })
+      loginPreparationError.value = error?.message || '登录失败，请稍后重试'
     } finally {
       loggingIn.value = false
     }

@@ -6,8 +6,7 @@ const { table } = require('../db/table-helper')
 const { resolveSchema } = require('../db/schema-resolver')
 const {
   mapQuestionRow,
-  mapOptionRow,
-  mapStrategyRow
+  mapOptionRow
 } = require('./question-row-mappers')
 
 const STATIC_REPOSITORY_CACHE_TTL_MS = Math.max(
@@ -19,12 +18,9 @@ const QUESTION_PACKAGE_CACHE_TTL_MS = Math.max(
   Number(process.env.DIAGNOSE_QUESTION_PACKAGE_CACHE_TTL_MS || 600000)
 )
 const staticCache = {
-  strategiesByProblemKey: new Map(),
   questionsByKey: new Map(),
-  questionsByGroupKey: new Map(),
   optionMappingsByQuestionKey: new Map(),
   questionPackagesBySignature: new Map(),
-  questionKeysByTargetSymptomKey: new Map(),
   preloadExpiresAtBySchema: new Map()
 }
 const pendingStaticCache = new Map()
@@ -57,6 +53,21 @@ function setCached(cache, key = '', value) {
   })
 }
 
+function clearSchemaCache(cache, schema) {
+  const prefix = `${schema}::`
+  for (const key of cache.keys()) {
+    if (String(key).startsWith(prefix)) {
+      cache.delete(key)
+    }
+  }
+}
+
+function clearQuestionRepositorySchemaCache(schema) {
+  clearSchemaCache(staticCache.questionsByKey, schema)
+  clearSchemaCache(staticCache.optionMappingsByQuestionKey, schema)
+  clearSchemaCache(staticCache.questionPackagesBySignature, schema)
+}
+
 function withPendingStaticQuery(key = '', loader) {
   const normalizedKey = buildSchemaCacheKey(key)
   if (!normalizedKey) {
@@ -84,25 +95,9 @@ async function preloadQuestionRepositoryCache() {
     const refreshedNow = Date.now()
     if (Number(staticCache.preloadExpiresAtBySchema.get(schema) || 0) > refreshedNow) {return}
 
-    const [strategyResult, questionResult, optionResult] = await Promise.all([
-      models.$runSQL(
-        `
-          SELECT
-            problem_key,
-            question_group_key,
-            question_key,
-            priority_score,
-            trigger_type,
-            strategy_note_cn,
-            data_status,
-            review_status
-          FROM ${table('question_strategy_v5_real')}
-          WHERE data_status = 'audited'
-            AND review_status = 'audited'
-          ORDER BY priority_score DESC, question_key ASC
-        `,
-        {}
-      ),
+    clearQuestionRepositorySchemaCache(schema)
+
+    const [questionResult, optionResult] = await Promise.all([
       models.$runSQL(
         `
           SELECT
@@ -123,6 +118,7 @@ async function preloadQuestionRepositoryCache() {
           FROM ${table('question_library_v5_real')}
           WHERE data_status IN ('audited', 'partial')
             AND review_status IN ('audited', 'partial')
+            AND is_active = 1
           ORDER BY priority DESC, question_key ASC
         `,
         {}
@@ -143,53 +139,20 @@ async function preloadQuestionRepositoryCache() {
           FROM ${table('question_option_mapping_v5_real')}
           WHERE data_status = 'audited'
             AND review_status = 'audited'
+            AND is_active = 1
           ORDER BY question_key ASC, option_key ASC
         `,
         {}
       )
     ])
 
-    const strategiesByProblem = new Map()
-    for (const row of (strategyResult?.data?.executeResultList || []).map(mapStrategyRow)) {
-      const key = String(row.problemKey || '').trim()
-      if (!key) {continue}
-      if (!strategiesByProblem.has(key)) {strategiesByProblem.set(key, [])}
-      strategiesByProblem.get(key).push(row)
-    }
-    for (const [key, rows] of strategiesByProblem.entries()) {
-      setCached(staticCache.strategiesByProblemKey, key, rows)
-    }
-
     const questionRows = (questionResult?.data?.executeResultList || []).map(mapQuestionRow)
-    const questionsByGroup = new Map()
-    const questionsByTargetSymptom = new Map()
     for (const row of questionRows) {
       const questionKey = String(row.questionKey || '').trim()
-      const groupKey = String(row.questionGroupKey || '').trim()
-      const targetSymptomKey = String(row.targetSymptomKey || '').trim()
       const isFullyAudited = row.dataStatus === 'audited' && row.reviewStatus === 'audited'
       if (questionKey && isFullyAudited) {
         setCached(staticCache.questionsByKey, questionKey, row)
       }
-      if (groupKey) {
-        if (!questionsByGroup.has(groupKey)) {questionsByGroup.set(groupKey, [])}
-        questionsByGroup.get(groupKey).push(row)
-      }
-      if (targetSymptomKey && isFullyAudited) {
-        if (!questionsByTargetSymptom.has(targetSymptomKey)) {questionsByTargetSymptom.set(targetSymptomKey, [])}
-        questionsByTargetSymptom.get(targetSymptomKey).push({
-          question_key: row.questionKey,
-          target_symptom_key: row.targetSymptomKey,
-          priority: row.priority,
-          data_status: row.dataStatus
-        })
-      }
-    }
-    for (const [key, rows] of questionsByGroup.entries()) {
-      setCached(staticCache.questionsByGroupKey, key, rows)
-    }
-    for (const [key, rows] of questionsByTargetSymptom.entries()) {
-      setCached(staticCache.questionKeysByTargetSymptomKey, key, rows)
     }
 
     const optionRowsByQuestion = new Map()
@@ -208,60 +171,6 @@ async function preloadQuestionRepositoryCache() {
       refreshedNow + STATIC_REPOSITORY_CACHE_TTL_MS
     )
   })
-}
-
-async function getQuestionStrategies(problemKeys = []) {
-  const safeKeys = Array.from(new Set((problemKeys || []).map(item => String(item || '').trim()).filter(Boolean)))
-  if (!safeKeys.length) {return []}
-  const cachedRows = []
-  const missingKeys = []
-  for (const key of safeKeys) {
-    const cached = getCached(staticCache.strategiesByProblemKey, key)
-    if (cached) {
-      cachedRows.push(...cached)
-    } else {
-      missingKeys.push(key)
-    }
-  }
-  if (!missingKeys.length) {return cachedRows}
-
-  const result = await withPendingStaticQuery(
-    `strategiesByProblemKey:${missingKeys.slice().sort().join('|')}`,
-    () => models.$runSQL(
-      `
-        SELECT
-          problem_key,
-          question_group_key,
-          question_key,
-          priority_score,
-          trigger_type,
-          strategy_note_cn,
-          data_status,
-          review_status
-        FROM ${table('question_strategy_v5_real')}
-        WHERE problem_key IN ${sqlInList(missingKeys)}
-          AND data_status = 'audited'
-          AND review_status = 'audited'
-        ORDER BY priority_score DESC, question_key ASC
-      `,
-      {}
-    )
-  )
-
-  const rows = (result?.data?.executeResultList || []).map(mapStrategyRow)
-  const rowsByKey = new Map()
-  for (const row of rows) {
-    const key = String(row.problemKey || '').trim()
-    if (!rowsByKey.has(key)) {rowsByKey.set(key, [])}
-    rowsByKey.get(key).push(row)
-  }
-  for (const key of missingKeys) {
-    setCached(staticCache.strategiesByProblemKey, key, rowsByKey.get(key) || [])
-  }
-  return [
-    ...cachedRows,
-    ...missingKeys.flatMap(key => getCached(staticCache.strategiesByProblemKey, key) || [])
-  ]
 }
 
 async function getQuestionsByKeys(questionKeys = []) {
@@ -302,6 +211,7 @@ async function getQuestionsByKeys(questionKeys = []) {
         WHERE question_key IN ${sqlInList(missingKeys)}
           AND data_status = 'audited'
           AND review_status = 'audited'
+          AND is_active = 1
       `,
       {}
     )
@@ -315,66 +225,6 @@ async function getQuestionsByKeys(questionKeys = []) {
   return [
     ...cachedRows,
     ...missingKeys.map(key => getCached(staticCache.questionsByKey, key)).filter(Boolean)
-  ]
-}
-
-async function getQuestionsByGroupKeys(groupKeys = []) {
-  const safeKeys = Array.from(new Set((groupKeys || []).map(item => String(item || '').trim()).filter(Boolean)))
-  if (!safeKeys.length) {return []}
-  const cachedRows = []
-  const missingKeys = []
-  for (const key of safeKeys) {
-    const cached = getCached(staticCache.questionsByGroupKey, key)
-    if (cached) {
-      cachedRows.push(...cached)
-    } else {
-      missingKeys.push(key)
-    }
-  }
-  if (!missingKeys.length) {return cachedRows}
-
-  const result = await withPendingStaticQuery(
-    `questionsByGroupKey:${missingKeys.slice().sort().join('|')}`,
-    () => models.$runSQL(
-      `
-        SELECT
-          question_key,
-          question_text_cn,
-          question_text_user_cn,
-          question_type,
-          target_symptom_key,
-          question_group_key,
-          question_level,
-          observability,
-          allow_unknown,
-          priority,
-          help_text_cn,
-          why_this_question_cn,
-          data_status,
-          review_status
-        FROM ${table('question_library_v5_real')}
-        WHERE question_group_key IN ${sqlInList(missingKeys)}
-          AND data_status IN ('audited', 'partial')
-          AND review_status IN ('audited', 'partial')
-        ORDER BY priority DESC, question_key ASC
-      `,
-      {}
-    )
-  )
-
-  const rows = (result?.data?.executeResultList || []).map(mapQuestionRow)
-  const rowsByKey = new Map()
-  for (const row of rows) {
-    const key = String(row.questionGroupKey || '').trim()
-    if (!rowsByKey.has(key)) {rowsByKey.set(key, [])}
-    rowsByKey.get(key).push(row)
-  }
-  for (const key of missingKeys) {
-    setCached(staticCache.questionsByGroupKey, key, rowsByKey.get(key) || [])
-  }
-  return [
-    ...cachedRows,
-    ...missingKeys.flatMap(key => getCached(staticCache.questionsByGroupKey, key) || [])
   ]
 }
 
@@ -412,6 +262,7 @@ async function getQuestionOptionMappings(questionKeys = []) {
         WHERE question_key IN ${sqlInList(missingKeys)}
           AND data_status = 'audited'
           AND review_status = 'audited'
+          AND is_active = 1
         ORDER BY question_key ASC, option_key ASC
       `,
       {}
@@ -496,9 +347,11 @@ async function getQuestionPackageByKeys(questionKeys = []) {
           ON options.question_key = questions.question_key
           AND options.data_status = 'audited'
           AND options.review_status = 'audited'
+          AND options.is_active = 1
         WHERE questions.question_key IN ${sqlInList(safeKeys)}
           AND questions.data_status = 'audited'
           AND questions.review_status = 'audited'
+          AND questions.is_active = 1
         ORDER BY questions.question_key ASC, options.option_key ASC
         `,
         {}
@@ -549,54 +402,9 @@ function preloadQuestionPackageCache(questionKeys = []) {
   return getQuestionPackageByKeys(questionKeys)
 }
 
-async function findQuestionKeysByTargetSymptoms(symptomKeys = []) {
-  const safeKeys = Array.from(new Set((symptomKeys || []).map(item => String(item || '').trim()).filter(Boolean)))
-  if (!safeKeys.length) {return []}
-  const cachedRows = []
-  const missingKeys = []
-  for (const key of safeKeys) {
-    const cached = getCached(staticCache.questionKeysByTargetSymptomKey, key)
-    if (cached) {
-      cachedRows.push(...cached)
-    } else {
-      missingKeys.push(key)
-    }
-  }
-  if (!missingKeys.length) {return cachedRows}
-
-  const result = await withPendingStaticQuery(
-    `questionKeysByTargetSymptomKey:${missingKeys.slice().sort().join('|')}`,
-    () => models.$runSQL(
-      `
-        SELECT question_key, target_symptom_key, priority, data_status
-        FROM ${table('question_library_v5_real')}
-        WHERE target_symptom_key IN ${sqlInList(missingKeys)}
-          AND data_status = 'audited'
-          AND review_status = 'audited'
-        ORDER BY priority DESC, question_key ASC
-      `,
-      {}
-    )
-  )
-
-  const rows = result?.data?.executeResultList || []
-  const rowsByKey = new Map()
-  for (const row of rows) {
-    const key = String(row.target_symptom_key || '').trim()
-    if (!rowsByKey.has(key)) {rowsByKey.set(key, [])}
-    rowsByKey.get(key).push(row)
-  }
-  for (const key of missingKeys) {
-    setCached(staticCache.questionKeysByTargetSymptomKey, key, rowsByKey.get(key) || [])
-  }
-  return [
-    ...cachedRows,
-    ...missingKeys.flatMap(key => getCached(staticCache.questionKeysByTargetSymptomKey, key) || [])
-  ]
-}
-
 module.exports = {
-  getQuestionStrategies, getQuestionsByKeys, getQuestionsByGroupKeys,
-  getQuestionOptionMappings, getQuestionPackageByKeys, findQuestionKeysByTargetSymptoms,
+  getQuestionsByKeys,
+  getQuestionOptionMappings,
+  getQuestionPackageByKeys,
   preloadQuestionRepositoryCache, preloadQuestionPackageCache
 }

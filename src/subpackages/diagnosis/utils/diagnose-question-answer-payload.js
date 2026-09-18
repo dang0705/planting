@@ -8,6 +8,7 @@ import {
 import { resolveDefaultQuestionOptionId } from './diagnose-flow-shared.js'
 import { getQuestionIdentity } from './diagnose-question-identity.js'
 import { isAirEnvironmentAnswerReady, isAirEnvironmentQuestion } from '@/utils/air-environment.js'
+import { isAirEnvironmentAssessmentReady } from '@/utils/air-environment-assessment.js'
 import { isLightEnvironmentQuestion } from '@/utils/light-environment.js'
 
 const AIR_ENVIRONMENT_RECORDED_OPTION_KEY = 'air_environment_recorded'
@@ -108,7 +109,8 @@ export function buildQuestionAnswerPayload(result, answerMap = {}, options = {})
   const lightQuestion = questions.find(item => isLightEnvironmentQuestion(item))
   const lightQuestionId = lightQuestion ? getQuestionIdentity(lightQuestion) : ''
   if (lightQuestionId) {
-    basePayload.recentLightChange = String(answerMap[lightQuestionId] || 'unknown').trim() || 'unknown'
+    basePayload.recentLightChange =
+      String(answerMap[lightQuestionId] || 'unknown').trim() || 'unknown'
   }
 
   const airEnvironmentByQuestionId = Object.fromEntries(
@@ -118,7 +120,7 @@ export function buildQuestionAnswerPayload(result, answerMap = {}, options = {})
         Boolean(question) &&
         (isAirEnvironmentQuestion(question) || questionId.includes('air_environment')) &&
         String(answerMap[questionId] || '').trim() === AIR_ENVIRONMENT_RECORDED_OPTION_KEY &&
-        isAirEnvironmentAnswerReady(value)
+        (isAirEnvironmentAssessmentReady(value) || isAirEnvironmentAnswerReady(value))
       )
     })
   )

@@ -1,0 +1,4 @@
+{
+  "pages": [{ "path": "pages/chat/chat", "style": { "navigationStyle": "custom" } }],
+  "globalStyle": { "navigationBarTitleText": "小青", "backgroundColor": "#F8F6F0" }
+}

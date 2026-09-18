@@ -54,7 +54,9 @@ export async function requestHttpFunction(
     return response.data
   }
 
-  throw new Error(response.data?.message || `HTTP ${response.statusCode}`)
+  const error = new Error(response.data?.message || `HTTP ${response.statusCode}`)
+  error.statusCode = Number(response.statusCode || response.data?.code || 0)
+  throw error
 }
 
 export async function requestHttpFile(

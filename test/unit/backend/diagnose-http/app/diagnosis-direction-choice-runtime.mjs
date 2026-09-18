@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict'
-import { createRequire } from 'node:module'
+import Module, { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
 const {
-  resolveDirectionChoiceRoundResult
+  resolveDirectionChoiceRoundResult,
+  _test: { restorePendingDirectionChoiceRoute }
 } = require('../../../../../cloudfunctions/diagnose-http/app/diagnosis-direction-choice-runtime.js')
 
 // ---------------------------------------------------------------------------
@@ -213,6 +214,89 @@ assert.ok(
   multiPestResult.visibleOutcomes.some(item => item.outcomeKey === 'aphid') &&
     multiPestResult.visibleOutcomes.some(item => item.outcomeKey === 'spider_mite'),
   'Case 3: visibleOutcomes 应含 aphid 和 spider_mite 两个具体 outcome'
+)
+
+// 会话快照明确仍在等待方向选择时，不能被重新读取到的视觉终态覆盖。
+// 仅恢复服务端保存的候选项，终态会话和客户端伪造项仍然保持拒绝。
+const directRouteWithPersistedChoice = {
+  ...aphidMediumRoute,
+  nextAction: 'direct_result',
+  routePrimaryAction: 'direct_result'
+}
+const persistedChoiceState = {
+  routePrimaryAction: 'choose_direction',
+  directionChoices: aphidMediumRoute.directionChoices
+}
+const restoredRoute = restorePendingDirectionChoiceRoute({
+  routeResult: directRouteWithPersistedChoice,
+  fallbackChoices: persistedChoiceState.directionChoices,
+  fallbackChoice: persistedChoiceState.directionChoices[1],
+  states: [persistedChoiceState]
+})
+assert.equal(restoredRoute.nextAction, 'choose_direction')
+assert.deepEqual(restoredRoute.directionChoices, persistedChoiceState.directionChoices)
+assert.equal(
+  restorePendingDirectionChoiceRoute({
+    routeResult: directRouteWithPersistedChoice,
+    fallbackChoices: persistedChoiceState.directionChoices,
+    fallbackChoice: persistedChoiceState.directionChoices[1],
+    states: [{ routePrimaryAction: 'direct_result' }]
+  }).nextAction,
+  'direct_result',
+  '终态会话不能仅因残留候选项重新开放方向选择'
+)
+const originalModuleLoad = Module._load
+Module._load = function loadStaticQuestionPackageForDirectionChoice(request, parent, isMain) {
+  if (request === './static-question-package-start') {
+    return {
+      buildStaticQuestionPackageStartRoundResult: async ({ sessionId, round }) => ({
+        diagnosisSessionId: sessionId,
+        roundId: `round_${round}`,
+        routePrimaryAction: 'question_package',
+        questionRequired: true,
+        questions: [{ questionKey: 'q_yellow_leaf', text: '黄叶确认问题' }],
+        questionPackage: { mode: 'yellow_leaf', questionCount: 1 }
+      })
+    }
+  }
+  return originalModuleLoad.call(this, request, parent, isMain)
+}
+try {
+  const restoredYellowLeafResult = await resolveDirectionChoiceRoundResult({
+    payload: { requestMode: 'direction_choice', selectedModeKey: 'yellow_leaf' },
+    openid: 'test_openid',
+    sessionId: 'sess_persisted_yellow_leaf_choice',
+    round: 2,
+    refreshedSessionState: {
+      ...persistedChoiceState,
+      visualAggregateResult: {
+        diagnosis_mode_route_result: directRouteWithPersistedChoice
+      }
+    },
+    sessionState: {}
+  })
+  assert.equal(restoredYellowLeafResult.selectedModeKey, 'yellow_leaf')
+  assert.equal(restoredYellowLeafResult.questionRequired, true)
+} finally {
+  Module._load = originalModuleLoad
+}
+const restoredChoiceResult = await resolveDirectionChoiceRoundResult({
+  payload: { requestMode: 'direction_choice', selectedModeKey: 'aphid' },
+  openid: 'test_openid',
+  sessionId: 'sess_persisted_direction_choice',
+  round: 2,
+  refreshedSessionState: {
+    ...persistedChoiceState,
+    visualAggregateResult: {
+      diagnosis_mode_route_result: directRouteWithPersistedChoice
+    }
+  },
+  sessionState: {}
+})
+assert.equal(
+  restoredChoiceResult.routePrimaryAction,
+  'question_package',
+  '服务端保存的待选择会话应允许继续处理，而不是返回当前会话不需要选择诊断方向'
 )
 
 console.log('diagnosis-direction-choice-runtime regression tests passed')

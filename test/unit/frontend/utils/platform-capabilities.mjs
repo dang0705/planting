@@ -7,7 +7,7 @@ const source = readFileSync('src/utils/platform-capabilities.js', 'utf8').replac
   "return globalThis.__platformCapabilitiesTestPlatform || 'unknown'"
 )
 const capabilities = await import(`data:text/javascript,${encodeURIComponent(source)}`)
-const homeSource = readFileSync('src/pages/index/index.vue', 'utf8')
+const userPlantsSource = readFileSync('src/components/UserPlantsSection.vue', 'utf8')
 const detailSource = readFileSync(
   'src/subpackages/plant/user-plant-detail/components/UserPlantDetailView.vue',
   'utf8'
@@ -16,9 +16,9 @@ const flowSource = readFileSync('src/subpackages/diagnosis/flow.vue', 'utf8')
 const questionPackageSource = readFileSync('src/subpackages/diagnosis/question-package.vue', 'utf8')
 const tabIntakeSource = readFileSync('src/pages/diagnose/diagnosis-tab-intake.js', 'utf8')
 
-assert.match(homeSource, /isDiagnosisAvailable\('plant_card'\)/)
-assert.match(homeSource, /isDiagnosisAvailable\('plant_history'\)/)
-assert.match(homeSource, /entrySource=plant_history/)
+assert.match(userPlantsSource, /isDiagnosisAvailable\('profile_my_plants'\)/)
+assert.match(userPlantsSource, /isDiagnosisAvailable\('profile_my_plants_history'\)/)
+assert.match(userPlantsSource, /entrySource=plant_card/)
 assert.match(detailSource, /isDiagnosisAvailable\('plant_detail'\)/)
 assert.match(flowSource, /isDiagnosisFlowAvailable\(\)/)
 assert.match(

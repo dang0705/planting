@@ -16,8 +16,8 @@ const preloadSource = fs.readFileSync(
   path.join(repoRoot, 'cloudfunctions/plant-catalog-http/bootstrap-preload.js'),
   'utf8'
 )
-const deploySource = fs.readFileSync(
-  path.join(repoRoot, 'scripts/deploy-cloudbase-functions.mjs'),
+const deploymentStagingSource = fs.readFileSync(
+  path.join(repoRoot, 'scripts/cloudbase/function-package-staging.mjs'),
   'utf8'
 )
 const functionConfig = JSON.parse(
@@ -36,9 +36,9 @@ assert.match(appSource, /CATALOG_IMAGE_URL_BATCH_LIMIT = 50/)
 assert.match(appSource, /resolveCatalogImageUrls/)
 assert.match(appSource, /fileId,[\s\S]*imageUrl:/)
 assert.match(appSource, /require\('\.\/catalog-image-url'\)/)
-assert.match(deploySource, /FUNCTION_BUNDLED_RUNTIME_FILES/)
-assert.match(deploySource, /'plant-catalog-http'/)
-assert.match(deploySource, /target: 'catalog-image-url\.js'/)
+assert.match(deploymentStagingSource, /FUNCTION_BUNDLED_RUNTIME_FILES/)
+assert.match(deploymentStagingSource, /'plant-catalog-http'/)
+assert.match(deploymentStagingSource, /target: 'catalog-image-url\.js'/)
 assert.ok(functionConfig.routes.some(route => route.path === '/catalog/image-urls'))
 
 console.log(

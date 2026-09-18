@@ -48,7 +48,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 
 const ZERO = 0
 const LAST_STEP_OFFSET = 1
@@ -71,6 +71,7 @@ const props = defineProps({
   },
   footerPosition: { type: String, default: 'absolute' }
 })
+const emit = defineEmits(['step-change'])
 
 const resolvedStepCount = computed(() =>
   props.items.length ? props.items.length : Math.max(Number(props.stepCount) || ZERO, ZERO)
@@ -87,5 +88,18 @@ const stepIndexes = computed(() =>
 
 const trackStyle = computed(
   () => `transform: translateX(-${safeActiveIndex.value * STEP_TRANSLATE_PERCENT}%);`
+)
+
+watch(
+  safeActiveIndex,
+  (nextIndex, previousIndex) => {
+    if (nextIndex === previousIndex) {
+      return
+    }
+    // 垂直滚动由步骤插槽里的 scroll-view 持有，不能在这里误用 pageScrollTo。
+    // 在轨道完成切换后通知真正的滚动容器执行置顶。
+    emit('step-change', nextIndex)
+  },
+  { flush: 'post' }
 )
 </script>

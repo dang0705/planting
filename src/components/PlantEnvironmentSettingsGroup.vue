@@ -57,9 +57,9 @@
 <script setup>
 import { computed } from 'vue'
 import {
-  describeAirEnvironmentInput,
-  isAirEnvironmentAnswerReady
-} from '@/utils/air-environment.js'
+  describeAirEnvironmentAssessment,
+  getActiveAirEnvironmentAssessment
+} from '@/utils/air-environment-assessment.js'
 import { describeLightEnvironment } from '@/utils/light-environment.js'
 
 const props = defineProps({
@@ -73,10 +73,10 @@ const lightSummary = computed(() => {
 })
 
 const airSummary = computed(() => {
-  const value = props.plant?.airEnvironment?.input || props.plant?.airEnvironment
-  if (!isAirEnvironmentAnswerReady(value)) {
+  const value = getActiveAirEnvironmentAssessment(props.plant?.airEnvironment)
+  if (!value) {
     return '点击查看或设置当前空气环境'
   }
-  return describeAirEnvironmentInput(value)
+  return describeAirEnvironmentAssessment(value)
 })
 </script>

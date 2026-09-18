@@ -1,0 +1,48 @@
+{
+  "operation": "runtime_is_active_contract",
+  "scope": [
+    "cloudfunctions/diagnose-http/repositories/question-repository.js",
+    "test/unit/backend/diagnose-http/repositories/question-repository-schema.mjs"
+  ],
+  "expected_source": "用户已确认的既定方案：is_active 是运行时启用/停用开关；当前固定题包必须保留，停用映射不得被问答运行时消费。",
+  "red": {
+    "command": "node test/unit/backend/diagnose-http/repositories/question-repository-schema.mjs",
+    "status": "failed_before_product_change",
+    "signal": "assertion failed because option mapping SQL lacked is_active = 1"
+  },
+  "green": {
+    "command": "node test/unit/backend/diagnose-http/repositories/question-repository-schema.mjs",
+    "status": "passed",
+    "assertions": [
+      "preload query filters is_active=1",
+      "dynamic mapping query filters is_active=1",
+      "question package LEFT JOIN filters options.is_active=1"
+    ]
+  },
+  "regression": {
+    "command": "node test/unit/run-all.mjs --filter=diagnose-http",
+    "status": "passed",
+    "passed": 51,
+    "failed": 0
+  },
+  "static_checks": {
+    "oxlint_targeted": "passed_with_existing_warnings_no_errors",
+    "function_package_integrity_diagnose_http": "PASS"
+  },
+  "live_sql_contract": {
+    "cloud1_dev_active_audited_rows": 252,
+    "formal_active_audited_rows": 252,
+    "formal_inactive_audited_rows": 4,
+    "current_fixed_package_rows": 4,
+    "current_fixed_package_rows_active": 4
+  },
+  "formal_inactive_dynamic_rows": [
+    "yellowing_progression_speed/rapid_spreading",
+    "yellowing_progression_speed/slow_stable",
+    "yellowing_progression_speed/unknown",
+    "yellowing_progression_speed/with_wilting_or_drop"
+  ],
+  "deployment": "not_performed",
+  "reason": "production behavior gate remains: formal route-question data still has 18 active audited legacy mapping rows plus four already inactive progression rows; broad is_active changes require explicit route retirement/compatibility decision before deployment",
+  "mutation_performed": false
+}

@@ -7,8 +7,10 @@ const {
   withTransaction,
   tableName,
   quoteIdentifier,
-  listTableColumns
+  listTableColumns,
+  listTableColumnMetadata
 } = require('../db/mysql')
+const { normalizeDateForColumn } = require('../db/metadata-values')
 const { parseRecordKey, buildWhereByRecordKey } = require('../diff/diff-engine')
 
 function parseJson(value, fallback = null) {
@@ -21,8 +23,17 @@ function parseJson(value, fallback = null) {
   }
 }
 
-function normalizeDateTimeValue(value) {
+function normalizeDateTimeValue(value, columnMetadata = {}) {
   if (value === null || value === undefined) {return value}
+  const normalizedValue = normalizeDateForColumn(value, columnMetadata)
+  const dataType = String(columnMetadata.dataType || columnMetadata.columnType || '')
+    .toLowerCase()
+    .split('(')[0]
+  if (!['date', 'datetime', 'timestamp'].includes(dataType)) {
+    return normalizedValue
+  }
+
+  value = normalizedValue
   if (Object.prototype.toString.call(value) === '[object Date]') {
     const d = value
     const pad = item => String(item).padStart(2, '0')
@@ -67,7 +78,7 @@ function normalizeJsonColumnValue(value) {
   }
 }
 
-function buildUpsertStatement(schema, table, row = {}, keyColumns = []) {
+function buildUpsertStatement(schema, table, row = {}, keyColumns = [], columnMetadata = {}) {
   const insertColumns = Object.keys(row).filter(column => !(column === 'id' && (row[column] === null || row[column] === undefined)))
   if (!insertColumns.length) {
     throw new Error(`rollback 无法写入 ${table}: 没有可插入字段`)
@@ -86,7 +97,7 @@ function buildUpsertStatement(schema, table, row = {}, keyColumns = []) {
 
   return {
     sql,
-    params: insertColumns.map(column => normalizeDateTimeValue(row[column] ?? null))
+    params: insertColumns.map(column => normalizeDateTimeValue(row[column] ?? null, columnMetadata[column]))
   }
 }
 
@@ -152,7 +163,8 @@ async function runRollbackEngine({ batchId } = {}) {
         continue
       }
 
-      const prodColumns = await listTableColumns(connection, PROD_SCHEMA, table).catch(() => [])
+      const prodColumnMetadata = await listTableColumnMetadata(connection, PROD_SCHEMA, table).catch(() => ({}))
+      const prodColumns = Object.keys(prodColumnMetadata)
       if (!prodColumns.length) {
         summary.skipped += 1
         continue
@@ -206,7 +218,7 @@ async function runRollbackEngine({ batchId } = {}) {
           if (!Object.prototype.hasOwnProperty.call(payload, jsonColumn)) {continue}
           payload[jsonColumn] = normalizeJsonColumnValue(payload[jsonColumn])
         }
-        const upsert = buildUpsertStatement(PROD_SCHEMA, table, payload, tableConfig.keys)
+        const upsert = buildUpsertStatement(PROD_SCHEMA, table, payload, tableConfig.keys, prodColumnMetadata)
         await connection.query(upsert.sql, upsert.params)
         summary.restored += 1
         await markDiffRollbackStatus(connection, diff.id, 'rolled_back', diffColumns)
@@ -236,7 +248,7 @@ async function runRollbackEngine({ batchId } = {}) {
             if (!Object.prototype.hasOwnProperty.call(payload, jsonColumn)) {continue}
             payload[jsonColumn] = normalizeJsonColumnValue(payload[jsonColumn])
           }
-          const upsert = buildUpsertStatement(PROD_SCHEMA, table, payload, tableConfig.keys)
+          const upsert = buildUpsertStatement(PROD_SCHEMA, table, payload, tableConfig.keys, prodColumnMetadata)
           await connection.query(upsert.sql, upsert.params)
           summary.restored += 1
           await markDiffRollbackStatus(connection, diff.id, 'rolled_back', diffColumns)
@@ -250,15 +262,20 @@ async function runRollbackEngine({ batchId } = {}) {
       summary.skipped += 1
     }
 
-    const batchColumns = await listTableColumns(connection, DEV_SCHEMA, 'publish_batches').catch(() => [])
+    const batchColumnMetadata = await listTableColumnMetadata(connection, DEV_SCHEMA, 'publish_batches').catch(() => ({}))
+    const batchColumns = Object.keys(batchColumnMetadata)
     if (batchColumns.length) {
       const payload = {}
       if (batchColumns.includes('batch_id')) {payload.batch_id = `rollback_${Date.now()}`}
       if (batchColumns.includes('version_tag')) {payload.version_tag = 'rollback'}
       if (batchColumns.includes('status')) {payload.status = 'rolled_back'}
       if (batchColumns.includes('summary_json')) {payload.summary_json = JSON.stringify(summary)}
-      if (batchColumns.includes('created_at')) {payload.created_at = new Date()}
-      if (batchColumns.includes('published_at')) {payload.published_at = new Date()}
+      if (batchColumns.includes('created_at')) {
+        payload.created_at = normalizeDateForColumn(new Date(), batchColumnMetadata.created_at)
+      }
+      if (batchColumns.includes('published_at')) {
+        payload.published_at = normalizeDateForColumn(new Date(), batchColumnMetadata.published_at)
+      }
       if (batchColumns.includes('rollback_of_batch_id')) {payload.rollback_of_batch_id = batchId}
 
       const payloadColumns = Object.keys(payload)

@@ -2,6 +2,7 @@
   <uni-popup
     ref="popupRef"
     type="bottom"
+    :animation="animation"
     :safe-area="false"
     :is-mask-click="maskClick"
     @change="handleChange"
@@ -101,6 +102,7 @@ const props = defineProps({
   showClose: { type: Boolean, default: true },
   showConfirm: { type: Boolean, default: false },
   showHeader: { type: Boolean, default: true },
+  animation: { type: Boolean, default: true },
   maskClick: { type: Boolean, default: true },
   closeOnConfirm: { type: Boolean, default: false },
   heightMode: {
@@ -129,7 +131,9 @@ const internalScrollIntoView = ref('')
 const internalScrollTop = ref(0)
 const effectiveScrollIntoView = computed(() => internalScrollIntoView.value || props.scrollIntoView)
 const effectiveScrollTop = computed(() =>
-  internalScrollIntoView.value ? internalScrollTop.value : props.scrollTop
+  internalScrollIntoView.value
+    ? internalScrollTop.value
+    : internalScrollTop.value || props.scrollTop
 )
 
 onMounted(() => {
@@ -149,6 +153,7 @@ async function scrollToAnchor(anchorId = '') {
     return
   }
   internalScrollIntoView.value = ''
+  internalScrollTop.value = 0
   await nextTick()
   internalScrollIntoView.value = nextAnchorId
 }

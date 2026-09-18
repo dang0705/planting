@@ -21,10 +21,21 @@
 </template>
 
 <script setup>
+import { onShow } from '@dcloudio/uni-app'
 import Layout from '@/Layout.vue'
 import FeatureUnavailableModal from '@/components/FeatureUnavailableModal.vue'
 import DiagnoseIntake from '@/components/diagnosis/DiagnoseIntake.vue'
+import { useUserStore } from '@/store/user.js'
+import { requestPhoneLogin } from '@/utils/phone-login-gate.js'
 import { useDiagnosisTabIntake } from './diagnosis-tab-intake.js'
+
+const userStore = useUserStore()
+
+onShow(() => {
+  if (!userStore.isAuthenticated) {
+    requestPhoneLogin({ message: '登录后才能继续使用植物状况检查' })
+  }
+})
 
 const {
   intakeView,

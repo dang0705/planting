@@ -160,6 +160,7 @@ async function handleDiagnosisStartStream(request, context, payload) {
   }
 
   const emitter = createVisualSseEmitter(sse)
+  let modelPromptText = ''
   emitter.send('visual_preparing')
   try {
     const principal = await resolveRequestPrincipal({ request, context, payload })
@@ -167,12 +168,30 @@ async function handleDiagnosisStartStream(request, context, payload) {
       request,
       payload,
       principal,
-      (event, eventData) => emitter.send(event, eventData),
+      (event, eventData) => {
+        if (event === 'visual_model_prompt_ready' && !modelPromptText) {
+          // 前端诊断调试合同：保存本次真正提交给模型的完整格式化 prompt，
+          // 并在最终 done 响应中返回。该模型 prompt 日志绝对禁止去除。
+          // 此字段只允许文本 prompt；模型图片必须继续使用 HTTP(S) URL，严禁写入 Base64。
+          const actualPromptText = String(eventData?.promptText || '')
+          if (actualPromptText.trim()) {
+            modelPromptText = actualPromptText
+          }
+        }
+        return emitter.send(event, eventData)
+      },
       { includeVisualDebug: true }
     )
+    const diagnosisDebug =
+      execution.visualDebug && typeof execution.visualDebug === 'object'
+        ? execution.visualDebug
+        : {}
     emitter.end('done', {
       data: execution.frontendData,
-      diagnosisDebug: execution.visualDebug
+      diagnosisDebug: {
+        ...diagnosisDebug,
+        modelPromptText: modelPromptText || String(diagnosisDebug.modelPromptText || '')
+      }
     })
   } catch (error) {
     emitter.end('error', buildErrorPayload(error, '诊断开始失败'))

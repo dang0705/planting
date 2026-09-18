@@ -63,9 +63,7 @@ function normalizeSoilVisualEvidence(value = {}, { now = Date.now() } = {}) {
     surfaceState: ['wet', 'moist', 'dry', 'uncertain'].includes(surfaceState)
       ? surfaceState
       : 'uncertain',
-    standingWater: ['yes', 'no', 'uncertain'].includes(standingWater)
-      ? standingWater
-      : 'uncertain',
+    standingWater: ['yes', 'no', 'uncertain'].includes(standingWater) ? standingWater : 'uncertain',
     visibility: ['clear', 'limited', 'unusable'].includes(visibility) ? visibility : 'unusable',
     confidence,
     visibleBasisCn: text(review.visibleBasisCn).slice(0, 120)
@@ -93,25 +91,78 @@ function buildVisualAudit(evidence, outcome, requiresManualSoilConfirmation) {
   }
 }
 
-function fuseWateringPlanWithSoilEvidence(plan = {}, rawEvidence = {}, { manualConfirmed = false } = {}) {
+function fuseWateringPlanWithSoilEvidence(
+  plan = {},
+  rawEvidence = {},
+  {
+    manualConfirmed = false,
+    forceVisualWetness = false,
+    forceDryness = false,
+    manualSoilState = ''
+  } = {}
+) {
   const evidence = normalizeSoilVisualEvidence(rawEvidence)
   const base = {
     ...plan,
     reasonCodes: Array.isArray(plan.reasonCodes) ? [...plan.reasonCodes] : []
   }
   const algorithmWet = base.wateringContext === 'likely_too_wet'
-  const wetVisible = evidence.trusted && (evidence.surfaceState === 'wet' || evidence.standingWater === 'yes')
+  const trustedWetVisible =
+    evidence.trusted && (evidence.surfaceState === 'wet' || evidence.standingWater === 'yes')
+  const trustedMoistVisible = evidence.trusted && evidence.surfaceState === 'moist'
+  const wetVisible = trustedWetVisible && !forceVisualWetness
+
+  // 明确的视觉干燥、用户手摸判干或用户明确跳过后，都把内部状态按干燥处理。
+  // 该分支在算法湿润保护之前执行，是产品明确授权的“干燥结果优先”。
+  if (forceDryness) {
+    return {
+      ...base,
+      soilCheck: {
+        required: false,
+        beforeWatering: false,
+        message: '盆土已按干燥处理，建议尽快浇水。',
+        reasonCode: VISUAL_DRY_REASON_CODE
+      },
+      reasonCodes: uniqueReasonCodes(base.reasonCodes, [VISUAL_DRY_REASON_CODE]),
+      requiresManualSoilConfirmation: false,
+      visualSoilEvidence: buildVisualAudit(evidence, 'dry_trusted', false)
+    }
+  }
+
+  if (
+    ['wet', 'moist'].includes(
+      String(manualSoilState || '')
+        .trim()
+        .toLowerCase()
+    )
+  ) {
+    return {
+      ...base,
+      wateringContext: 'likely_too_wet',
+      action: 'pause_watering_for_manual_soil_wetness',
+      nextWaterReason:
+        '你确认盆土里面仍有湿度，强烈不建议立即浇水；如需设置日历提醒，保存前请再次确认。',
+      stopCondition: '盆土潮湿时强烈不建议立即浇水；如确认仍要浇水，盆底有水流出即可停止',
+      soilCheck: {
+        required: true,
+        beforeWatering: true,
+        message: '你确认盆土里面仍有湿度，强烈不建议立即浇水；如需设置日历提醒，保存前请再次确认。',
+        reasonCode: VISUAL_WET_REASON_CODE
+      },
+      reasonCodes: uniqueReasonCodes(base.reasonCodes, [VISUAL_WET_REASON_CODE]),
+      visualSoilEvidence: buildVisualAudit(evidence, 'manual_wet_hold', false)
+    }
+  }
 
   if (wetVisible) {
     return {
       ...base,
-      nextWaterDate: null,
-      nextWaterWindow: null,
-      nextWaterReason: '盆土表面仍明显湿润，本次先不要浇水，也不安排浇水提醒。',
+      nextWaterReason:
+        '盆土表面仍明显湿润，强烈不建议立即浇水；如需设置日历提醒，保存前请再次确认。',
       wateringContext: 'likely_too_wet',
       action: 'pause_watering_for_visual_soil_wetness',
-      amountRangeMl: [0, 0],
-      stopCondition: '等盆土干一些后，再重新拍照并手动摸土确认。',
+      // 水量由基础规划统一计算并保留；视觉湿润只负责强提醒和日期保护。
+      stopCondition: '盆土潮湿时强烈不建议立即浇水；如确认仍要浇水，盆底有水流出即可停止',
       soilCheck: {
         required: true,
         beforeWatering: true,
@@ -123,11 +174,46 @@ function fuseWateringPlanWithSoilEvidence(plan = {}, rawEvidence = {}, { manualC
     }
   }
 
+  // moist 是可信的视觉初判：明确看到了表层湿度，但它不等同于积水或
+  // 整盆过湿。保留原规划器的 wateringContext/action，再要求用户结合
+  // 摸土或近期浇水记录确认盆内状态。
+  if (trustedMoistVisible) {
+    return {
+      ...base,
+      soilCheck: {
+        required: true,
+        beforeWatering: true,
+        message: '请摸到超过盆深 1/3 确认盆土状态后，再决定是否浇水。',
+        reasonCode: VISUAL_UNCERTAIN_REASON_CODE
+      },
+      reasonCodes: uniqueReasonCodes(base.reasonCodes, [VISUAL_UNCERTAIN_REASON_CODE]),
+      requiresManualSoilConfirmation: !manualConfirmed,
+      visualSoilEvidence: buildVisualAudit(evidence, 'moist_visible', !manualConfirmed)
+    }
+  }
+
   // 算法已经进入过湿保护时，任何“表层偏干”都不能解除保护。
   if (algorithmWet) {
     return {
       ...base,
       visualSoilEvidence: buildVisualAudit(evidence, 'algorithm_wet_protected', false)
+    }
+  }
+
+  // 用户仅能明确跳过“照片显示潮湿”的本次暂停，不能跳过算法自身的
+  // 过湿、盆器或排水保护。仍保留醒目的人工确认提示，避免把水量估算误解为浇水许可。
+  if (trustedWetVisible && forceVisualWetness) {
+    return {
+      ...base,
+      soilCheck: {
+        required: true,
+        beforeWatering: true,
+        message: '你已选择继续查看水量建议；盆土表面仍潮湿，实际浇水前请再次确认。',
+        reasonCode: VISUAL_UNCERTAIN_REASON_CODE
+      },
+      reasonCodes: uniqueReasonCodes(base.reasonCodes, [VISUAL_UNCERTAIN_REASON_CODE]),
+      requiresManualSoilConfirmation: false,
+      visualSoilEvidence: buildVisualAudit(evidence, 'wet_forced', false)
     }
   }
 
@@ -137,7 +223,7 @@ function fuseWateringPlanWithSoilEvidence(plan = {}, rawEvidence = {}, { manualC
       soilCheck: {
         required: true,
         beforeWatering: true,
-        message: '盆土表层偏干；请用手摸入约 2–3 厘米确认，再决定是否浇水。',
+        message: '盆土表层偏干；请摸到超过盆深 1/3 确认，再决定是否浇水。',
         reasonCode: VISUAL_DRY_REASON_CODE
       },
       reasonCodes: uniqueReasonCodes(base.reasonCodes, [VISUAL_DRY_REASON_CODE]),
@@ -151,7 +237,7 @@ function fuseWateringPlanWithSoilEvidence(plan = {}, rawEvidence = {}, { manualC
     soilCheck: {
       required: true,
       beforeWatering: true,
-      message: '请用手摸入约 2–3 厘米确认盆土状态后，再决定是否浇水。',
+      message: '请摸到超过盆深 1/3 确认盆土状态后，再决定是否浇水。',
       reasonCode: VISUAL_UNCERTAIN_REASON_CODE
     },
     reasonCodes: uniqueReasonCodes(base.reasonCodes, [VISUAL_UNCERTAIN_REASON_CODE]),

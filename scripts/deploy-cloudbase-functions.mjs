@@ -1,21 +1,37 @@
 #!/usr/bin/env node
 
+/* oxlint-disable no-console, no-magic-numbers */
 import fs from 'node:fs'
-import os from 'node:os'
 import path from 'node:path'
-import { spawn } from 'node:child_process'
+import {
+  DEPLOYMENT_IGNORED_DIRECTORY_NAMES,
+  DEPLOYMENT_IGNORED_FILE_NAMES,
+  installHttpFunctionDependencies,
+  stageFunctionPackage,
+  verifyDiagnosisSplitArtifacts
+} from './cloudbase/function-package-staging.mjs'
+import {
+  createTcbFunctionClient,
+  IMMUTABLE_DEFAULT_RELEASE_FUNCTIONS,
+  releaseImmutableDefaultVersion
+} from './cloudbase/tcb-function-release.mjs'
 import { auditFunctionPackage } from './qa/function-package-audit.mjs'
+import { QA_ONLINE_TARGET } from './qa/qa-backend-target.mjs'
 
 const projectRoot = path.resolve(new URL('..', import.meta.url).pathname)
 const cloudbasercPath = path.join(projectRoot, 'cloudbaserc.json')
-const tcbPackage = '@cloudbase/cli@3.2.2'
+// 旧 CLI 只负责把代码上传到 $LATEST；关键函数必须继续走不可变版本发布门禁。
+const tcbDeployPackage = '@cloudbase/cli@3.2.2'
+const tcbApiPackage = '@cloudbase/cli@3.8.1'
 
 function parseArgs(argv = []) {
   const parsed = {
     dryRun: false,
     envId: '',
     functions: [],
-    manifestFile: ''
+    manifestFile: '',
+    region: '',
+    runtimeBaseUrl: ''
   }
 
   for (const arg of argv) {
@@ -25,6 +41,10 @@ function parseArgs(argv = []) {
     }
     if (arg.startsWith('--env-id=')) {
       parsed.envId = arg.slice('--env-id='.length).trim()
+      continue
+    }
+    if (arg.startsWith('--region=')) {
+      parsed.region = arg.slice('--region='.length).trim()
       continue
     }
     if (arg.startsWith('--function=')) {
@@ -37,6 +57,10 @@ function parseArgs(argv = []) {
     }
     if (arg.startsWith('--manifest-file=')) {
       parsed.manifestFile = arg.slice('--manifest-file='.length).trim()
+      continue
+    }
+    if (arg.startsWith('--runtime-base-url=')) {
+      parsed.runtimeBaseUrl = arg.slice('--runtime-base-url='.length).trim()
     }
   }
 
@@ -57,8 +81,12 @@ function readCloudbaseRc() {
   return JSON.parse(fs.readFileSync(cloudbasercPath, 'utf8'))
 }
 
+function isUnresolvedTemplate(value = '') {
+  return /^\{\{.+\}\}$/u.test(String(value || '').trim())
+}
+
 function resolveEnvId(args, config) {
-  return String(
+  const resolved = String(
     args.envId ||
       process.env.CLOUDBASE_ENV_ID ||
       process.env.TCB_ENV ||
@@ -66,6 +94,53 @@ function resolveEnvId(args, config) {
       config.envId ||
       ''
   ).trim()
+  return isUnresolvedTemplate(resolved) ? '' : resolved
+}
+
+function resolveRegion(args, config, envId) {
+  return String(
+    args.region ||
+      process.env.CLOUDBASE_REGION ||
+      process.env.TENCENTCLOUD_REGION ||
+      config.region ||
+      (envId === QA_ONLINE_TARGET.environmentId ? QA_ONLINE_TARGET.region : '')
+  ).trim()
+}
+
+function normalizeRuntimeBaseUrl(value = '') {
+  const normalized = String(value || '')
+    .trim()
+    .replace(/\/+$/u, '')
+  if (!normalized) {
+    return ''
+  }
+  const parsed = new URL(normalized)
+  if (
+    parsed.protocol !== 'https:' ||
+    parsed.username ||
+    parsed.password ||
+    parsed.search ||
+    parsed.hash
+  ) {
+    throw new Error('云函数运行验证地址必须是不含凭据、查询参数和片段的 HTTPS 地址。')
+  }
+  return normalized
+}
+
+function resolveRuntimeBaseUrl(args, envId) {
+  const configured =
+    args.runtimeBaseUrl ||
+    process.env.CLOUDBASE_HTTP_FUNCTION_BASE_URL ||
+    process.env.QA_ONLINE_HTTP_FUNCTION_BASE_URL ||
+    process.env.VITE_PUBLIC_HTTP_FUNCTION_BASE_URL ||
+    ''
+  if (configured) {
+    return normalizeRuntimeBaseUrl(configured)
+  }
+  if (envId === QA_ONLINE_TARGET.environmentId) {
+    return QA_ONLINE_TARGET.httpFunctionBaseUrl
+  }
+  return ''
 }
 
 function resolveCredentials() {
@@ -100,6 +175,9 @@ function resolveFunctionNames(args, config) {
 
 function assertDeploymentEnvironment(envId, config) {
   const configuredEnvId = String(config.envId || '').trim()
+  if (!configuredEnvId || isUnresolvedTemplate(configuredEnvId)) {
+    return
+  }
   const allowNoncanonical = process.env.CLOUDBASE_ALLOW_NONCANONICAL_DEPLOYMENT === '1'
   if (configuredEnvId && envId !== configuredEnvId && !allowNoncanonical) {
     throw new Error(
@@ -157,280 +235,6 @@ function tcbEnv(baseEnv, envId, credentials) {
   return environment
 }
 
-function redactTcbArgs(args = []) {
-  const redacted = []
-  for (let index = 0; index < args.length; index += 1) {
-    const item = args[index]
-    redacted.push(item)
-    if (item === '--apiKeyId' || item === '--apiKey' || item === '--token') {
-      index += 1
-      redacted.push('***')
-    }
-  }
-  return redacted
-}
-
-const DEPLOYMENT_IGNORED_DIRECTORY_NAMES = new Set(['.git', '.tmp', 'dist', 'node_modules', 'logs'])
-const DEPLOYMENT_IGNORED_FILE_NAMES = new Set(['.DS_Store'])
-const READER_SQL_RUNTIME_FUNCTIONS = new Set(['auth-user-http', 'plant-user-http'])
-const READER_SQL_RUNTIME_SOURCE = path.join(projectRoot, 'cloudfunctions', 'read-sql-runtime.js')
-const FUNCTION_BUNDLED_RUNTIME_FILES = new Map([
-  [
-    'auth-user-http',
-    [
-      {
-        source: path.join(
-          projectRoot,
-          'cloudfunctions',
-          'layer',
-          'utils',
-          'http-identity-ticket.js'
-        ),
-        target: 'http-identity-ticket.js'
-      }
-    ]
-  ],
-  [
-    'plant-user-http',
-    [
-      {
-        source: path.join(
-          projectRoot,
-          'cloudfunctions',
-          'layer',
-          'utils',
-          'http-identity-ticket.js'
-        ),
-        target: 'http-identity-ticket.js'
-      }
-    ]
-  ],
-  [
-    'plant-catalog-http',
-    [
-      {
-        source: path.join(projectRoot, 'cloudfunctions', 'layer', 'utils', 'catalog-image-url.js'),
-        target: 'catalog-image-url.js'
-      }
-    ]
-  ],
-  [
-    'storage-http',
-    [
-      {
-        source: path.join(projectRoot, 'cloudfunctions', 'layer', 'utils', 'cloudbase.js'),
-        target: 'cloudbase.js'
-      },
-      {
-        source: path.join(projectRoot, 'cloudfunctions', 'layer', 'utils', 'runtime-env.js'),
-        target: 'runtime-env.js'
-      },
-      {
-        source: path.join(projectRoot, 'cloudfunctions', 'layer', 'utils', 'platform-session.js'),
-        target: 'platform-session.js'
-      }
-    ]
-  ]
-])
-
-function shouldCopyForDeployment(sourceDirectory, sourcePath) {
-  const relativePath = path.relative(sourceDirectory, sourcePath)
-  if (!relativePath) {
-    return true
-  }
-  const parts = relativePath.split(path.sep)
-  if (parts.some(part => DEPLOYMENT_IGNORED_DIRECTORY_NAMES.has(part))) {
-    return false
-  }
-  return !DEPLOYMENT_IGNORED_FILE_NAMES.has(path.basename(sourcePath))
-}
-
-function stageFunctionPackage(sourceDirectory, functionName, deploymentId) {
-  const stagingRoot = fs.mkdtempSync(
-    path.join(os.tmpdir(), `planting-cloudbase-${deploymentId}-${functionName}-`)
-  )
-  fs.cpSync(sourceDirectory, stagingRoot, {
-    recursive: true,
-    filter: sourcePath => shouldCopyForDeployment(sourceDirectory, sourcePath)
-  })
-  if (READER_SQL_RUNTIME_FUNCTIONS.has(functionName)) {
-    if (!fs.existsSync(READER_SQL_RUNTIME_SOURCE)) {
-      throw new Error(
-        `读取 SQL 运行时缺失：${path.relative(projectRoot, READER_SQL_RUNTIME_SOURCE)}`
-      )
-    }
-    fs.copyFileSync(READER_SQL_RUNTIME_SOURCE, path.join(stagingRoot, 'read-sql-runtime-core.js'))
-  }
-  for (const runtimeFile of FUNCTION_BUNDLED_RUNTIME_FILES.get(functionName) || []) {
-    if (!fs.existsSync(runtimeFile.source)) {
-      throw new Error(`函数运行时文件缺失：${path.relative(projectRoot, runtimeFile.source)}`)
-    }
-    fs.copyFileSync(runtimeFile.source, path.join(stagingRoot, runtimeFile.target))
-  }
-  return stagingRoot
-}
-
-function installHttpFunctionDependencies(stagedDirectory, functionName) {
-  if (!fs.existsSync(path.join(stagedDirectory, 'scf_bootstrap'))) {
-    return Promise.resolve()
-  }
-
-  console.log(`Installing production dependencies for HTTP function ${functionName}`)
-  return new Promise((resolve, reject) => {
-    const child = spawn('npm', ['ci', '--omit=dev', '--ignore-scripts'], {
-      cwd: stagedDirectory,
-      env: process.env,
-      stdio: 'inherit'
-    })
-    child.on('error', reject)
-    child.on('exit', code => {
-      if (code === 0) {
-        resolve()
-        return
-      }
-      reject(new Error(`npm ci for HTTP function ${functionName} exited with code ${code}`))
-    })
-  })
-}
-
-function parseJsonFromOutput(output = '') {
-  const text = String(output || '').trim()
-  if (!text) {
-    return null
-  }
-  try {
-    return JSON.parse(text)
-  } catch {
-    // CloudBase CLI may print a short banner before JSON; parse the JSON fragment below.
-  }
-
-  const firstObject = text.indexOf('{')
-  const lastObject = text.lastIndexOf('}')
-  if (firstObject >= 0 && lastObject > firstObject) {
-    return JSON.parse(text.slice(firstObject, lastObject + 1))
-  }
-
-  const firstArray = text.indexOf('[')
-  const lastArray = text.lastIndexOf(']')
-  if (firstArray >= 0 && lastArray > firstArray) {
-    return JSON.parse(text.slice(firstArray, lastArray + 1))
-  }
-
-  return null
-}
-
-function readFirstValue(source = {}, keys = []) {
-  for (const key of keys) {
-    const value = source?.[key]
-    if (value !== undefined && value !== null && String(value).trim() !== '') {
-      return value
-    }
-  }
-  return ''
-}
-
-function summarizeFunctionDetail(functionName, parsedDetail = {}) {
-  const payload = Array.isArray(parsedDetail) ? parsedDetail[0] : parsedDetail
-  const data = payload?.data || payload?.Data || payload?.result || payload?.Result || payload
-  const detail =
-    data?.Function || data?.function || data?.FunctionInfo || data?.functionInfo || data
-  return {
-    name: readFirstValue(detail, ['name', 'Name', 'FunctionName', 'functionName']) || functionName,
-    status: readFirstValue(detail, ['status', 'Status']),
-    runtime: readFirstValue(detail, ['runtime', 'Runtime']),
-    memorySize: readFirstValue(detail, ['memorySize', 'MemorySize']),
-    timeout: readFirstValue(detail, ['timeout', 'Timeout']),
-    codeSize: readFirstValue(detail, ['codeSize', 'CodeSize']),
-    codeSha256: readFirstValue(detail, ['codeSha256', 'CodeSha256']),
-    handler: readFirstValue(detail, ['handler', 'Handler']),
-    layers: Array.isArray(detail?.Layers || detail?.layers)
-      ? (detail.Layers || detail.layers).map(layer => ({
-          name: readFirstValue(layer, ['name', 'Name', 'LayerName', 'layerName']),
-          version: readFirstValue(layer, ['version', 'Version'])
-        }))
-      : [],
-    modificationTime: readFirstValue(detail, [
-      'modificationTime',
-      'ModificationTime',
-      'updateTime',
-      'UpdateTime',
-      'updatedAt',
-      'UpdatedAt'
-    ])
-  }
-}
-
-function runTcbInherited(args, env) {
-  return new Promise((resolve, reject) => {
-    const child = spawn('npx', ['--yes', '--package', tcbPackage, 'tcb', ...args], {
-      cwd: projectRoot,
-      env,
-      stdio: 'inherit'
-    })
-    child.on('error', reject)
-    child.on('exit', code => {
-      if (code === 0) {
-        resolve()
-        return
-      }
-      reject(new Error(`tcb ${redactTcbArgs(args).join(' ')} exited with code ${code}`))
-    })
-  })
-}
-
-function runTcbCaptured(args, env) {
-  return new Promise((resolve, reject) => {
-    const child = spawn('npx', ['--yes', '--package', tcbPackage, 'tcb', ...args], {
-      cwd: projectRoot,
-      env,
-      stdio: ['ignore', 'pipe', 'pipe']
-    })
-    let stdout = ''
-    let stderr = ''
-    child.stdout.on('data', chunk => {
-      stdout += String(chunk)
-    })
-    child.stderr.on('data', chunk => {
-      stderr += String(chunk)
-    })
-    child.on('error', reject)
-    child.on('exit', code => {
-      if (code === 0) {
-        resolve({ stdout, stderr })
-        return
-      }
-      reject(new Error(`tcb ${redactTcbArgs(args).join(' ')} exited with code ${code}`))
-    })
-  })
-}
-
-async function loginCloudBase(env, credentials) {
-  await runTcbInherited(
-    ['login', '--apiKeyId', credentials.secretId, '--apiKey', credentials.secretKey],
-    env
-  )
-}
-
-async function readFunctionDetail(target, envId, env) {
-  const result = await runTcbCaptured(['fn', 'detail', target.name, '-e', envId, '--json'], env)
-  const parsed = parseJsonFromOutput(result.stdout)
-  if (!parsed) {
-    throw new Error(`CloudBase fn detail for ${target.name} did not return parseable JSON.`)
-  }
-  const summary = summarizeFunctionDetail(target.name, parsed)
-  console.log('CloudBase function detail summary: ' + JSON.stringify(summary))
-  return summary
-}
-
-async function deployTarget(target, envId, env) {
-  console.log(`Deploying CloudBase function ${target.name}`)
-  await runTcbInherited(
-    ['fn', 'code', 'update', target.name, '--dir', target.stagedDir, '-e', envId, '--json'],
-    env
-  )
-  return readFunctionDetail(target, envId, env)
-}
-
 function deploymentManifestPath(args, envId) {
   if (args.manifestFile) {
     return path.resolve(projectRoot, args.manifestFile)
@@ -466,6 +270,7 @@ async function main() {
     throw new Error('缺少 CloudBase 环境 ID，请配置 CLOUDBASE_ENV_ID/TCB_ENV 或 --env-id。')
   }
   assertDeploymentEnvironment(envId, config)
+  const region = resolveRegion(args, config, envId)
 
   const names = resolveFunctionNames(args, config)
   const explicitSelection = Boolean(
@@ -483,6 +288,13 @@ async function main() {
   if (!targets.length) {
     throw new Error('没有可部署的云函数，请检查 cloudbaserc.json 或 CLOUDBASE_DEPLOY_FUNCTIONS。')
   }
+  const immutableReleaseTargets = targets.filter(target =>
+    IMMUTABLE_DEFAULT_RELEASE_FUNCTIONS.has(target.name)
+  )
+  const runtimeBaseUrl = resolveRuntimeBaseUrl(args, envId)
+  if (immutableReleaseTargets.length && (!region || !runtimeBaseUrl)) {
+    throw new Error('关键云函数发布必须配置 region 和 HTTPS 运行验证地址，禁止只上传 $LATEST。')
+  }
 
   const audits = targets.map(target => auditFunctionPackage(target.name, target.dir))
   const auditViolations = audits.flatMap(audit =>
@@ -494,6 +306,7 @@ async function main() {
   if (auditViolations.length) {
     throw new Error('部署前函数包审计失败：' + JSON.stringify(auditViolations))
   }
+  await verifyDiagnosisSplitArtifacts(targets)
 
   console.log(`CloudBase env: ${envId}`)
   console.log(`CloudBase functions: ${targets.map(target => target.name).join(', ')}`)
@@ -505,26 +318,31 @@ async function main() {
 
   const manifestFile = deploymentManifestPath(args, envId)
   const deploymentId = path.basename(manifestFile, '.json')
+  const auditByFunction = new Map(audits.map(audit => [audit.function_name, audit]))
   const stagedTargets = targets.map(target => ({
     ...target,
-    stagedDir: stageFunctionPackage(target.dir, target.name, deploymentId)
+    stagedDir: stageFunctionPackage(target.dir, target.name, deploymentId),
+    sourceFingerprint: auditByFunction.get(target.name)?.source_fingerprint || ''
   }))
   for (const target of stagedTargets) {
-    await installHttpFunctionDependencies(target.stagedDir, target.name)
+    target.dependency_install = await installHttpFunctionDependencies(target.stagedDir, target.name)
   }
   const manifest = {
-    schema_version: 1,
+    schema_version: 2,
     status: args.dryRun ? 'dry_run' : 'planned',
     deployment_id: deploymentId,
     environment_id: envId,
+    region,
     source: 'scripts/deploy-cloudbase-functions.mjs',
     target_selection: targets.map(target => target.name),
+    immutable_default_release_targets: immutableReleaseTargets.map(target => target.name),
     source_identity: audits.map(sourceIdentity),
     upload_staging: stagedTargets.map(target => ({
       function_name: target.name,
       excluded_directories: Array.from(DEPLOYMENT_IGNORED_DIRECTORY_NAMES).sort(),
       excluded_files: Array.from(DEPLOYMENT_IGNORED_FILE_NAMES).sort(),
-      staged_directory: target.stagedDir
+      staged_directory: target.stagedDir,
+      dependency_install: target.dependency_install
     })),
     remote_readback: [],
     created_at: new Date().toISOString(),
@@ -540,21 +358,51 @@ async function main() {
 
   const credentials = resolveCredentials()
   const env = tcbEnv(process.env, envId, credentials)
-  if (credentials.secretId && credentials.secretKey) {
-    await loginCloudBase(env, credentials)
-  } else {
-    console.log('Using existing CloudBase CLI login; no shell CI credential was supplied.')
-  }
-  for (const target of stagedTargets) {
-    const remote = await deployTarget(target, envId, env)
-    manifest.remote_readback.push(remote)
-    manifest.status = 'in_progress'
+  const client = createTcbFunctionClient({
+    cwd: projectRoot,
+    env,
+    envId,
+    region,
+    deployPackage: tcbDeployPackage,
+    apiPackage: tcbApiPackage
+  })
+  try {
+    if (credentials.secretId && credentials.secretKey) {
+      await client.login(credentials)
+    } else {
+      console.log('Using existing CloudBase CLI login; no shell CI credential was supplied.')
+    }
+    for (const target of stagedTargets) {
+      const remote = await client.deployTarget(target)
+      const release = IMMUTABLE_DEFAULT_RELEASE_FUNCTIONS.has(target.name)
+        ? await releaseImmutableDefaultVersion({
+            client,
+            functionName: target.name,
+            namespace: envId,
+            deploymentId,
+            sourceFingerprint: target.sourceFingerprint,
+            runtimeBaseUrl
+          })
+        : null
+      manifest.remote_readback.push({
+        ...remote,
+        codeSha256: release?.defaultCodeSha256 || remote.codeSha256 || '',
+        immutableDefaultRelease: release
+      })
+      manifest.status = 'in_progress'
+      writeDeploymentManifest(manifestFile, manifest)
+    }
+    manifest.status = 'completed'
+    manifest.completed_at = new Date().toISOString()
     writeDeploymentManifest(manifestFile, manifest)
+    console.log('Deployment manifest completed: ' + path.relative(projectRoot, manifestFile))
+  } catch (error) {
+    manifest.status = 'failed'
+    manifest.completed_at = new Date().toISOString()
+    manifest.failure = { message: String(error?.message || error).slice(0, 1000) }
+    writeDeploymentManifest(manifestFile, manifest)
+    throw error
   }
-  manifest.status = 'completed'
-  manifest.completed_at = new Date().toISOString()
-  writeDeploymentManifest(manifestFile, manifest)
-  console.log('Deployment manifest completed: ' + path.relative(projectRoot, manifestFile))
 }
 
 main().catch(error => {

@@ -1,8 +1,17 @@
 <script setup>
 import { onLaunch, onShow, onHide } from '@dcloudio/uni-app'
 
+// #ifdef MP-WEIXIN
+import { startMiniProgramUpdateCheck } from '@/utils/mini-program-update.js'
+// #endif
+
 onLaunch(() => {
   console.log('App Launch')
+
+  // #ifdef MP-WEIXIN
+  // 微信在冷启动时自动检查版本；新包下载完成后立即重启应用。
+  startMiniProgramUpdateCheck()
+  // #endif
 
   // #ifdef MP-WEIXIN
   // 云能力按需初始化，避免 App 启动时触发 DevTools 旧 access_token 校验；

@@ -1,0 +1,107 @@
+{
+  "operation": "is_active_consumer_audit",
+  "env_id": "cloud1-2grufevs395a9d5e",
+  "schemas": ["cloud1_dev", "cloud1-2grufevs395a9d5e"],
+  "table": "question_option_mapping_v5_real",
+  "read_only": true,
+  "evidence": {
+    "formal_inactive_audited_rows": {
+      "count": 4,
+      "question_key": "q_observed_probe__leaf_yellowing__yellowing_progression_speed",
+      "option_keys": [
+        "rapid_spreading",
+        "slow_stable",
+        "unknown",
+        "with_wilting_or_drop"
+      ],
+      "cms_lifecycle": "legacy_compat",
+      "is_active": 0
+    },
+    "active_audited_rows": {
+      "cloud1_dev": 252,
+      "formal": 252
+    },
+    "current_fixed_package_rows": {
+      "cloud1_dev": 4,
+      "formal": 4,
+      "all_active": true
+    },
+    "historical_runtime_snapshots": {
+      "progression_question_queue_occurrences": 1,
+      "last_seen": "2026-05-16 15:42:34",
+      "occurrences_since": {
+        "start": "2026-08-01",
+        "count": 0
+      },
+      "latest_observed_state": "asked_unanswered"
+    }
+  },
+  "source_cross_check": {
+    "current_manual_yellowing_path": "fixed_question_package",
+    "fixed_package_database_mapping": "watering_frequency_context_only",
+    "progression_topic": "still_present_in_legacy_dynamic_route_conditions_and_synthetic_option_builder",
+    "runtime_filter_change": "all_three_question_repository_mapping_reads_require_is_active=1"
+  },
+  "cloud1_dev_canary": {
+    "fixed_package_sql_read": {
+      "status": "PASS",
+      "question_key": "q_observed_probe__leaf_yellowing__watering_frequency_context",
+      "active_option_count": 4,
+      "option_keys": ["normal_or_stable", "often_dry", "often_wet", "unknown"]
+    },
+    "legacy_progression_sql_read": {
+      "status": "PASS",
+      "active_mapping_count": 0,
+      "meaning": "is_active=1 SQL filter excludes the inactive legacy rows"
+    },
+    "synthetic_fallback_mapping": {
+      "status": "PASS",
+      "option_count": 4,
+      "option_keys": [
+        "rapid_spreading",
+        "slow_stable",
+        "unknown",
+        "with_wilting_or_drop"
+      ]
+    },
+    "single_row_write_and_rollback": {
+      "status": "PASS",
+      "candidate": {
+        "id": 4,
+        "question_key": "q_spider_red_dots_visible",
+        "option_key": "yes",
+        "original_is_active": 1,
+        "row_hash": "5e9b8abfc85a11ded898fb609956fc7eac4754c126ce69b39be98d5a2d6e0b49"
+      },
+      "update_rows_affected": 1,
+      "filtered_read_after_update": 0,
+      "fixed_package_count_after_update": 4,
+      "rollback_rows_affected": 1,
+      "final_is_active": 1,
+      "final_row_hash_unchanged": true,
+      "final_dev_counts": {
+        "total": 436,
+        "active": 420,
+        "inactive": 16
+      }
+    }
+  },
+  "active_route_question_overlap": {
+    "formal": {
+      "enabled_route_question_keys": 8,
+      "active_audited_mapping_rows": 22,
+      "current_package_rows": 4,
+      "legacy_route_rows_that_must_not_be_bulk_disabled": 18
+    },
+    "cloud1_dev": {
+      "active_audited_mapping_rows_matching_dev_route_table": 12,
+      "note": "开发库与正式库的 route-question 数据不完全一致，不能用一侧结果代替另一侧。"
+    },
+    "query_note": "跨表 question_key 查询需要显式 COLLATE utf8mb4_0900_ai_ci；未显式指定时 MCP 返回 MySQL 1267 collation error。"
+  },
+  "decision": {
+    "formal_bulk_is_active_update": "STOP_BEFORE_PRODUCT_DECISION",
+    "reason": "Historical runtime evidence exists and source still exposes a legacy dynamic route; recent absence is insufficient to prove zero impact.",
+    "next_safe_action": "Run a real cloud1_dev canary against the new runtime filter and verify fixed package plus legacy dynamic fallback before any formal batch update."
+  }
+}

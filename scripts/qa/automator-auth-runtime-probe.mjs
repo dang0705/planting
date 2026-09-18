@@ -221,7 +221,7 @@ export async function createAuthRuntimeProbe({
   let dailyConnectionError = null
   const dailyRequestUrl = includeDaily
     ? resolveLocalApiBaseUrl(
-        { mode: 'lan', port: 3010, functionPortBase: 9000 },
+        { mode: 'lan', port: 3010, functionPortBase: 9500 },
         process.env
       ).replace(/\/+$/u, '') + '/plant-user-http/user-plants?page=1&pageSize=1'
     : null

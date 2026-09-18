@@ -1,0 +1,147 @@
+{
+  "generatedAt": "2026-09-18",
+  "environment": "cloud1-2grufevs395a9d5e",
+  "schema": "cloud1-2grufevs395a9d5e",
+  "table": "question_option_mapping_v5_real",
+  "relatedTable": "diagnosis_sessions",
+  "purpose": "候选白名单历史运行快照交叉核对；只读，不代表可停用授权",
+  "query": "\nSELECT\n  q.question_key,\n  COUNT(DISTINCT q.id) AS candidate_rows,\n  COUNT(DISTINCT s.session_id) AS session_count\nFROM question_option_mapping_v5_real q\nJOIN diagnosis_sessions s\n  ON JSON_SEARCH(s.runtime_snapshot_json, 'one', q.question_key) IS NOT NULL\nWHERE q.cms_lifecycle='legacy_compat'\n  AND q.is_active=1\n  AND q.data_status='audited'\n  AND q.review_status='audited'\n  AND NOT EXISTS (\n    SELECT 1 FROM outcome_route_questions r\n    WHERE r.question_key COLLATE utf8mb4_0900_ai_ci = q.question_key COLLATE utf8mb4_0900_ai_ci\n      AND r.enabled=1 AND r.data_status='active' AND r.review_status='audited'\n  )\nGROUP BY q.question_key\nORDER BY session_count DESC, q.question_key",
+  "mcp": {
+    "success": true,
+    "statementType": "SELECT",
+    "rowsReturned": 25,
+    "rowsAffected": 0
+  },
+  "aggregate": {
+    "candidateKeysSeenInHistory": 25,
+    "candidateRowsSeenInHistory": 74,
+    "sessionsWithCandidateKeys": 57
+  },
+  "rows": [
+    {
+      "candidate_rows": 2,
+      "question_key": "q_non_problematic_variegation_stability",
+      "session_count": 13
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_rust_pustules_visible",
+      "session_count": 3
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_spider_webbing_visible",
+      "session_count": 3
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_yellowing_patchy_yellow_speckling",
+      "session_count": 3
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_bacterial_water_soaked",
+      "session_count": 2
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_brown_spots_halo_confirm",
+      "session_count": 2
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_bud_drop_confirm",
+      "session_count": 2
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_bud_drop_low_humidity_damage",
+      "session_count": 2
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_edema_warty",
+      "session_count": 2
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_gnat_small_flies",
+      "session_count": 2
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_gray_mold_visible",
+      "session_count": 2
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_gray_mold_white_fuzz",
+      "session_count": 2
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_irregular_blotches_confirm",
+      "session_count": 2
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_leaf_bleaching_confirm",
+      "session_count": 2
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_leaf_margin_necrosis_confirm",
+      "session_count": 2
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_leaf_mosaic_mottling_confirm",
+      "session_count": 2
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_leaf_mosaic_mottling_distorted_growth",
+      "session_count": 2
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_soft_stem_confirm",
+      "session_count": 2
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_tunnels_in_leaf_confirm",
+      "session_count": 2
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_underwater_dry_wilt",
+      "session_count": 2
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_wind_damage_confirm",
+      "session_count": 2
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_leaf_curl_confirm",
+      "session_count": 1
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_stippling_confirm",
+      "session_count": 1
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_thrips_silver_streaks",
+      "session_count": 1
+    },
+    {
+      "candidate_rows": 3,
+      "question_key": "q_yellowing_patchy_confirm",
+      "session_count": 1
+    }
+  ]
+}

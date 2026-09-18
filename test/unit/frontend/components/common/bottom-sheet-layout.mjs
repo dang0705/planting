@@ -51,6 +51,10 @@ assert.match(bottomSheetSource, /const panelStyle = computed\(\(\) =>/)
 assert.match(bottomSheetSource, /height: panelMaxHeight\.value, maxHeight: panelMaxHeight\.value/)
 assert.match(bottomSheetSource, /const internalScrollIntoView = ref\(''\)/)
 assert.match(bottomSheetSource, /const effectiveScrollIntoView = computed/)
+assert.match(
+  bottomSheetSource,
+  /const effectiveScrollTop = computed\(\(\) =>\s*internalScrollIntoView\.value\s*\?\s*internalScrollTop\.value\s*:\s*internalScrollTop\.value \|\| props\.scrollTop/
+)
 assert.match(bottomSheetSource, /async function scrollToAnchor/)
 assert.match(bottomSheetSource, /function scrollToTop/)
 assert.match(

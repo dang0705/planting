@@ -174,23 +174,10 @@ export function resolveDebugEvidence(...sources) {
   return null
 }
 
-export function logFrontendVisualNode(eventName, payloadItem = {}, displayText = '') {
+export function collectFrontendVisualNodeDebug(payloadItem = {}) {
   const usage = resolveDebugUsage(payloadItem)
   const resolvedModelBusinessData = resolveDebugArray(payloadItem)
   const modelBusinessData = resolvedModelBusinessData.length ? resolvedModelBusinessData : null
-  const nodeLog = {
-    event: eventName,
-    displayText: String(displayText || '').trim(),
-    sessionId: payloadItem?.sessionId || null,
-    visualCallBatchId: payloadItem?.visualCallBatchId || null,
-    imageCount: payloadItem?.imageCount ?? null,
-    usage: buildFrontendTokenUsageSummary(usage),
-    modelBusinessData,
-    decision: payloadItem?.decision || null
-  }
-
-  // 前端诊断调试日志：保留 start 接口返回的每个节点和实际渲染文案，禁止删除。
-  console.log('[诊断 start][节点]', nodeLog)
   if (usage) {
     // 前端诊断调试日志：保留 token 输入、输出、总量和缓存用量，禁止删除。
     console.log('[诊断 start][token 用量]', buildFrontendTokenUsageSummary(usage))
@@ -203,18 +190,22 @@ export function logFrontendVisualNode(eventName, payloadItem = {}, displayText =
 }
 
 export function logFrontendVisualPrompt(payloadItem = {}) {
-  // 前端诊断调试日志：打印模型调用前实际发送的完整 prompt，便于核对动态区、缓存前缀和字段约束。
-  // 该日志只服务开发审计，图片地址不随 prompt 传输，也禁止在此恢复 Base64 图片。
-  console.log('[诊断 start][模型调用prompt]', {
-    imageIndex: payloadItem?.imageIndex ?? null,
-    imageId: payloadItem?.imageId || null,
-    model: payloadItem?.model || null,
-    modelIdentity: payloadItem?.modelIdentity || null,
-    promptLength: Number(payloadItem?.promptLength || String(payloadItem?.promptText || '').length),
-    promptCacheStrategy: payloadItem?.promptCacheStrategy || null,
-    promptDebugMeta: payloadItem?.promptDebugMeta || null,
-    promptText: String(payloadItem?.promptText || '')
-  })
+  // 前端诊断调试日志：只打印模型本次实际生效的完整格式化字符串 prompt，禁止改成对象或摘要。
+  // 该日志不包含图片地址；图片仍由后端按 HTTP(S) URL 传输，禁止在此恢复 Base64 图片。
+  console.log('[诊断 start][模型调用prompt]', String(payloadItem?.promptText || ''))
+}
+
+function resolveDebugPromptText(...sources) {
+  for (const source of sources) {
+    if (!source || typeof source !== 'object') {
+      continue
+    }
+    const promptText = String(source?.modelPromptText || '')
+    if (promptText.trim()) {
+      return promptText
+    }
+  }
+  return ''
 }
 
 export function logFrontendDiagnosisDone(
@@ -232,6 +223,12 @@ export function logFrontendDiagnosisDone(
     ? resolvedModelBusinessData
     : fallbackModelBusinessData
   const finalVisualEvidenceData = resolveDebugEvidence(diagnosisDebug, response) || fallbackEvidence
+  const modelPromptText = resolveDebugPromptText(diagnosisDebug, response)
+  // 前端仅从最终 done 响应打印本次实际 prompt，避免依赖可能被合并或丢失的中间 SSE 节点。
+  // 该模型 prompt 日志绝对禁止去除；只打印完整字符串，不打印节点对象或图片数据。
+  if (modelPromptText) {
+    logFrontendVisualPrompt({ promptText: modelPromptText })
+  }
   // 前端诊断调试日志：保留 start 接口最终业务响应和可用的模型审计数据，禁止删除。
   console.log('[诊断 start][完成响应]', {
     response,

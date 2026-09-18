@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import fs from 'node:fs/promises'
+import crypto from 'node:crypto'
+import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { build } from 'esbuild'
@@ -15,17 +17,43 @@ const targets = [
       projectRoot,
       'cloudfunctions/diagnose-http/app/slim-question-start-http-entry.js'
     ),
-    startSplit: true
+    startSplit: true,
+    generatedFiles: ['app.js', 'deferred-persistence.js', 'deferred-persistence-worker.js']
   },
   {
     name: 'diagnosis-answer-http',
     entry: path.join(projectRoot, 'cloudfunctions/diagnose-http/app/slim-answer-http-entry.js'),
-    answerSplit: true
+    answerSplit: true,
+    generatedFiles: [
+      'app.js',
+      'package-app.js',
+      'deferred-persistence.js',
+      'care-runtime.js',
+      'deferred-persistence-worker.js'
+    ]
   }
 ]
 
-async function buildTarget(target) {
-  const outputDir = path.join(projectRoot, 'cloudfunctions', target.name)
+function parseArgs(argv = []) {
+  const args = { check: false }
+  for (const arg of argv) {
+    if (arg === '--check') {
+      args.check = true
+      continue
+    }
+    throw new Error(`不支持的参数：${arg}`)
+  }
+  return args
+}
+
+function fingerprint(buffer) {
+  return crypto.createHash('sha256').update(buffer).digest('hex').slice(0, 12)
+}
+
+async function buildTarget(
+  target,
+  outputDir = path.join(projectRoot, 'cloudfunctions', target.name)
+) {
   await fs.mkdir(outputDir, { recursive: true })
   // This legacy fallback bundle is deliberately no longer reachable from the
   // dedicated endpoints. Remove any stale copy before every build so it is
@@ -106,6 +134,57 @@ async function buildBundle(entry, outfile, label = '') {
   return result
 }
 
-for (const target of targets) {
-  await buildTarget(target)
+async function assertArtifactMatches(target, temporaryRoot) {
+  const temporaryOutputDir = path.join(temporaryRoot, target.name)
+  const expectedOutputDir = path.join(projectRoot, 'cloudfunctions', target.name)
+  await buildTarget(target, temporaryOutputDir)
+
+  for (const fileName of target.generatedFiles) {
+    const expectedPath = path.join(expectedOutputDir, fileName)
+    const actualPath = path.join(temporaryOutputDir, fileName)
+    const [expected, actual] = await Promise.all([
+      fs.readFile(expectedPath),
+      fs.readFile(actualPath)
+    ])
+    if (!expected.equals(actual)) {
+      throw new Error(
+        `诊断分拆产物过期：${path.relative(projectRoot, expectedPath)} ` +
+          `(当前 ${fingerprint(expected)}，应为 ${fingerprint(actual)})。请先执行 npm run build:diagnosis-http-splits。`
+      )
+    }
+  }
+
+  const obsoleteBundle = path.join(expectedOutputDir, 'full-app.js')
+  try {
+    await fs.access(obsoleteBundle)
+    throw new Error(
+      `诊断分拆产物包含已废弃文件：${path.relative(projectRoot, obsoleteBundle)}。请先重新构建。`
+    )
+  } catch (error) {
+    if (error?.code !== 'ENOENT') {
+      throw error
+    }
+  }
+  console.log(`${target.name}: artifact check passed`)
 }
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2))
+  if (!args.check) {
+    for (const target of targets) {
+      await buildTarget(target)
+    }
+    return
+  }
+
+  const temporaryRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'planting-diagnosis-http-splits-'))
+  try {
+    for (const target of targets) {
+      await assertArtifactMatches(target, temporaryRoot)
+    }
+  } finally {
+    await fs.rm(temporaryRoot, { recursive: true, force: true })
+  }
+}
+
+await main()

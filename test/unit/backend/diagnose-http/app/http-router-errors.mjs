@@ -73,6 +73,12 @@ try {
     }
   )
   assert.equal(_test.publicRouteError({ statusCode: 500 }), null)
+  assert.equal(
+    _test.isDevelopmentSoilDebugAudit({ 'x-planting-debug-audit': 'soil_visual_v1' }),
+    true
+  )
+  assert.equal(_test.isDevelopmentSoilDebugAudit({ 'x-planting-debug-audit': 'wrong_value' }), false)
+  assert.equal(_test.isDevelopmentSoilDebugAudit({}), false)
 
   const originalConsoleError = console.error
   console.error = () => {}

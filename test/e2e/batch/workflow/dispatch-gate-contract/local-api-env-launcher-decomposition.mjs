@@ -3,6 +3,9 @@ import { EventEmitter } from 'node:events'
 import fs from 'node:fs'
 import path from 'node:path'
 import {
+  DEFAULT_REQUIRED_FUNCTIONS,
+  FUNCTION_HEALTH_PATHS,
+  FUNCTION_NAMES,
   parseLocalApiEnvironmentArgs,
   resolveLocalApiBaseUrl
 } from '../../../../../scripts/dev/local-api-env-config.mjs'
@@ -46,9 +49,15 @@ try {
     'the CLI entrypoint must delegate to the launcher orchestration module'
   )
   assert.equal(typeof ensureLocalRuntimeReady, 'function')
+  assert.ok(
+    DEFAULT_REQUIRED_FUNCTIONS.includes('agent-http'),
+    'the complete local runtime must require the Agent HTTP service'
+  )
+  assert.ok(FUNCTION_NAMES.includes('agent-http'), 'the local gateway must allocate an Agent port')
+  assert.equal(FUNCTION_HEALTH_PATHS['agent-http'], 'agent-http/health')
 
   const localPlatformProfiles = {
-    'mp-weixin': { port: 3010, functionPortBase: 9000 },
+    'mp-weixin': { port: 3010, functionPortBase: 9500 },
     'mp-toutiao': { port: 3020, functionPortBase: 9200 },
     'mp-xhs': { port: 3030, functionPortBase: 9300 }
   }

@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs'
 // test_kind=source_contract
 // 本用例只验证前端源码契约，不验证真实小程序渲染、点击结果或 wx.request。
 
-const indexSource = readFileSync('src/pages/index/index.vue', 'utf8')
+const userPlantsSource = readFileSync('src/components/UserPlantsSection.vue', 'utf8')
 const plantCardSource = readFileSync('src/pages/index/components/PlantCard.vue', 'utf8')
 const sheetSource = readFileSync('src/pages/index/components/FertilizationMonthlySheet.vue', 'utf8')
 const setupSource = readFileSync(
@@ -51,17 +51,17 @@ assert.match(
   'fertilization entry must emit the plant to the page'
 )
 assert.match(
-  indexSource,
+  userPlantsSource,
   /@fertilization="openFertilization"/,
   'index must connect the PlantCard fertilization event'
 )
 assert.match(
-  indexSource,
+  userPlantsSource,
   /<FertilizationMonthlySheet[\s\S]*:plant="currentFertilizationPlant"/,
   'index must mount the shared monthly fertilization sheet with the selected plant'
 )
 assert.match(
-  indexSource,
+  userPlantsSource,
   /function openFertilization\(plant\) \{[\s\S]*currentFertilizationPlantId\.value = plant\.id[\s\S]*callComponentMethod\(fertilizationMonthlyRef, 'open'\)/,
   'index must select the clicked plant before opening the sheet'
 )

@@ -545,37 +545,47 @@ async function registerDiagnosePlantImage({ openid, plantId, fileId, cloudPath =
     if (String(existingRow.plantId || '').trim() !== normalizedPlantId) {
       throw createRequestError(409, '这张照片已用于另一株植物')
     }
-    const tempUrl = await getFileTempUrl(normalizedFileId)
     return {
       fileId: normalizedFileId,
-      url: tempUrl,
-      tempUrl,
       registered: false
     }
   }
 
   const now = Date.now()
   const recordId = `pimg_${now}_${crypto.randomBytes(4).toString('hex')}`
-  const tempUrl = await getFileTempUrl(normalizedFileId)
   await models.$runSQL(
     `INSERT INTO plant_images (
       _id, _openid, plantId, fileName, fileId, url, uploadedAt, createdAt, imagePurpose
     ) VALUES (
-      {{recordId}}, {{openid}}, {{plantId}}, {{fileName}}, {{fileId}}, {{url}},
+      {{recordId}}, {{openid}}, {{plantId}}, {{fileName}}, {{fileId}}, '',
       {{uploadedAt}}, {{createdAt}}, 'watering_soil'
-    )`,
+    ) ON DUPLICATE KEY UPDATE _id = _id`,
     {
       recordId,
       openid: String(openid || '').trim(),
       plantId: normalizedPlantId,
       fileName: String(cloudPath || normalizedFileId).trim(),
       fileId: normalizedFileId,
-      url: tempUrl,
       uploadedAt: now,
       createdAt: now
     }
   )
-  return { fileId: normalizedFileId, url: tempUrl, tempUrl, registered: true }
+
+  const registered = await models.$runSQL(
+    `SELECT plantId FROM plant_images
+      WHERE _openid = {{openid}} AND fileId = {{fileId}}
+      LIMIT 1`,
+    { openid: String(openid || '').trim(), fileId: normalizedFileId }
+  )
+  const registeredRow = registered?.data?.executeResultList?.[0]
+  if (!registeredRow) {
+    throw new Error('植物图片登记后读回失败')
+  }
+  if (String(registeredRow.plantId || '').trim() !== normalizedPlantId) {
+    throw createRequestError(409, '这张照片已用于另一株植物')
+  }
+
+  return { fileId: normalizedFileId, registered: true }
 }
 
 async function assertOwnedUploadTarget({ openid, plantId }) {
@@ -795,5 +805,6 @@ module.exports._test = {
   buildDiagnoseUploadTiming,
   normalizeTempUrlAge,
   resolveImageSuffix,
-  assertOwnedDiagnoseUpload
+  assertOwnedDiagnoseUpload,
+  registerDiagnosePlantImage
 }

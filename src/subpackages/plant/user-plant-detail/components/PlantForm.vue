@@ -122,7 +122,7 @@
           <button
             :id="`${idPrefix}-city-button`"
             class="m-0 h-9 rounded-full border border-emerald-200 bg-emerald-50 px-4 text-xs font-semibold leading-9 text-[#016630]"
-            @click="showCitySheet = true"
+            @click="openCitySheet"
           >
             修改
           </button>
@@ -191,7 +191,12 @@
           </button>
         </view>
 
+        <view v-if="locationLoading" class="py-2 text-sm text-gray-500"> 正在获取可选位置... </view>
+        <view v-else-if="!cityOptions.length" class="py-2 text-sm text-gray-500">
+          暂时没有可选位置，请稍后重试
+        </view>
         <ChipsSelector
+          v-else
           :items="cityOptions"
           :model-value="selectedCityValue"
           :id-prefix="`${idPrefix}-city-option`"
@@ -207,18 +212,18 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useFileUrl } from '@/composables/useCloudFile.js'
 import { fetchHotCityWeatherLocations, resolveHotCityByGps } from '@/api/weather-hot-cities.js'
 import {
   clearSelectedPlantCareLocation,
+  DEFAULT_PLANT_CARE_LOCATION,
   normalizePlantCareLocation,
   saveSelectedPlantCareLocation
 } from '@/utils/plant-care-location.js'
 import ChipsSelector from '@/components/common/ChipsSelector.vue'
 import LightEnvironmentPicker from '@/components/LightEnvironmentPicker.vue'
 
-const INFO_STEP = 1
 const INITIAL_IMAGE_RETRY_COUNT = 0
 const IMAGE_RETRY_LIMIT = 1
 const props = defineProps({
@@ -259,7 +264,8 @@ async function handleImageError() {
 const hotCities = ref([])
 const showCitySheet = ref(false)
 const locationStatus = ref('locating')
-const weatherLocationInitialized = ref(false)
+const locationLoading = ref(false)
+const careLocationInitialized = ref(false)
 const selectedCareLocation = computed(() =>
   normalizePlantCareLocation(props.modelValue.careLocation)
 )
@@ -294,7 +300,10 @@ const locationStatusText = computed(() => {
   if (locationStatus.value === 'locate_failed') {
     return '定位不可用，请手动选择'
   }
-  return '正在尝试定位匹配'
+  if (locationStatus.value === 'defaulted') {
+    return '定位不可用，已使用默认城市'
+  }
+  return selectedCareLocation.value ? '已保存养护城市' : '点击修改获取位置'
 })
 
 function update(key, value) {
@@ -340,7 +349,12 @@ function handleCityChange(payload) {
 }
 
 async function loadHotCities() {
-  hotCities.value = await fetchHotCityWeatherLocations()
+  try {
+    const locations = await fetchHotCityWeatherLocations()
+    hotCities.value = locations.length ? locations : [DEFAULT_PLANT_CARE_LOCATION]
+  } catch {
+    hotCities.value = [DEFAULT_PLANT_CARE_LOCATION]
+  }
 }
 
 function getGpsCoordinates() {
@@ -359,45 +373,56 @@ async function matchGpsHotCity() {
     const resolved = await resolveHotCityByGps(location)
     if (resolved.matched && resolved.city) {
       applyCareLocation(resolved.city, 'gps_matched')
-      return
+      return true
     }
-    locationStatus.value = 'match_failed'
-    showCitySheet.value = true
+    return false
   } catch {
-    locationStatus.value = 'locate_failed'
-    showCitySheet.value = true
+    return false
   }
 }
 
-async function initWeatherLocation() {
-  if (weatherLocationInitialized.value) {
+function applyDefaultCareLocation() {
+  applyCareLocation(DEFAULT_PLANT_CARE_LOCATION, 'defaulted')
+}
+
+async function initCareLocation() {
+  if (careLocationInitialized.value || locationLoading.value) {
     return
   }
-  weatherLocationInitialized.value = true
+  careLocationInitialized.value = true
+  locationLoading.value = true
   const hasExistingCareLocation = Boolean(selectedCareLocation.value)
   if (!hasExistingCareLocation) {
     clearSelectedPlantCareLocation()
   }
   try {
     await loadHotCities()
-    if (!hasExistingCareLocation) {
-      await matchGpsHotCity()
-    } else {
-      locationStatus.value = selectedCareLocation.value.source || 'manual_selected'
+    const matched = await matchGpsHotCity()
+    if (!matched) {
+      if (hasExistingCareLocation) {
+        locationStatus.value = 'saved'
+      } else {
+        applyDefaultCareLocation()
+      }
     }
   } catch {
-    locationStatus.value = 'locate_failed'
-    showCitySheet.value = true
+    if (hasExistingCareLocation) {
+      locationStatus.value = 'saved'
+    } else {
+      hotCities.value = [DEFAULT_PLANT_CARE_LOCATION]
+      applyDefaultCareLocation()
+    }
+  } finally {
+    locationLoading.value = false
   }
 }
 
-watch(
-  () => props.activeStep,
-  step => {
-    if (step === INFO_STEP) {
-      initWeatherLocation()
-    }
-  },
-  { immediate: true }
-)
+async function openCitySheet() {
+  showCitySheet.value = true
+  await initCareLocation()
+}
+
+onMounted(() => {
+  initCareLocation()
+})
 </script>

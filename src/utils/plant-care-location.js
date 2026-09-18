@@ -4,6 +4,15 @@ export const CARE_LOCATION_SOURCE = {
   MANUAL_SELECTED: 'manual_selected',
   LEGACY_USER_LOCATION: 'legacy_user_location'
 }
+export const DEFAULT_PLANT_CARE_LOCATION = Object.freeze({
+  careLocationId: 'city:shanghai',
+  locationKey: 'city:shanghai',
+  cityName: '上海',
+  latitude: 31.2304,
+  longitude: 121.4737,
+  weatherLocation: '121.4737,31.2304',
+  source: CARE_LOCATION_SOURCE.MANUAL_SELECTED
+})
 const ALLOWED_CARE_LOCATION_SOURCES = new Set(Object.values(CARE_LOCATION_SOURCE))
 
 function normalizeText(value = '') {

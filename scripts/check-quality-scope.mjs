@@ -23,6 +23,19 @@ const ignoredPrefixes = [
   'test/e2e/batch/diagnosis/fixtures/'
 ]
 const checkableExtensions = new Set(['.js', '.mjs', '.cjs', '.vue', '.json', '.md'])
+// These files are owned by scripts/build-diagnosis-http-splits.mjs. They are
+// validated by the byte-for-byte artifact check, while their handwritten inputs
+// remain in the normal lint scope.
+const generatedDiagnosisSplitArtifacts = new Set([
+  'cloudfunctions/diagnosis-question-start-http/app.js',
+  'cloudfunctions/diagnosis-question-start-http/deferred-persistence.js',
+  'cloudfunctions/diagnosis-question-start-http/deferred-persistence-worker.js',
+  'cloudfunctions/diagnosis-answer-http/app.js',
+  'cloudfunctions/diagnosis-answer-http/package-app.js',
+  'cloudfunctions/diagnosis-answer-http/deferred-persistence.js',
+  'cloudfunctions/diagnosis-answer-http/care-runtime.js',
+  'cloudfunctions/diagnosis-answer-http/deferred-persistence-worker.js'
+])
 
 // The repository intentionally contains historical QA transcripts and a user-owned
 // main-package change set. Keep those out of this repair gate, while still checking
@@ -54,6 +67,7 @@ function gitFiles(command, args) {
 function shouldCheck(file) {
   return (
     !userOwnedBaselineFiles.has(file) &&
+    !generatedDiagnosisSplitArtifacts.has(file) &&
     !ignoredPrefixes.some(prefix => file.startsWith(prefix)) &&
     checkableExtensions.has(path.extname(file)) &&
     fs.existsSync(path.join(repoRoot, file))

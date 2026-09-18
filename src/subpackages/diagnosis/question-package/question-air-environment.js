@@ -1,18 +1,26 @@
 import { computed, ref } from 'vue'
 import { fetchUserPlantAirEnvironment, patchUserPlantAirEnvironment } from '@/api/plants-http.js'
 import {
-  describeAirEnvironmentInput,
-  isAirEnvironmentAnswerReady,
   isAirEnvironmentQuestion,
-  isCompleteAirEnvironmentProfile,
   isSameAirEnvironmentLocationBinding,
-  normalizeAirEnvironmentLocationBinding,
-  sanitizeAirEnvironmentInput
+  normalizeAirEnvironmentLocationBinding
 } from '@/utils/air-environment.js'
+import {
+  buildAdvancedAirEnvironmentAssessment,
+  buildQuickAirEnvironmentAssessment,
+  describeAirEnvironmentAssessment,
+  getActiveAirEnvironmentAssessment,
+  getCompletedQuickAirEnvironmentAnswer,
+  getInitialAdvancedAirEnvironmentInput,
+  getPreferredAirEnvironmentMode,
+  normalizeAirEnvironmentProfile
+} from '@/utils/air-environment-assessment.js'
 import { getQuestionIdentity as getQuestionId } from '../utils/diagnose-question-identity.js'
 
 const RECORDED_OPTION = 'air_environment_recorded'
 const UNKNOWN_OPTION = 'air_environment_unknown'
+const clone = value =>
+  value === null || value === undefined ? value : JSON.parse(JSON.stringify(value))
 
 function getBoundUserPlantId(result = {}) {
   return String(result?.plantContext?.userPlantId || result?.userPlantId || '').trim()
@@ -29,12 +37,35 @@ function getCurrentLocationBinding(result = {}, plantStore = null) {
   })
 }
 
-function cloneInput(value = {}) {
-  return sanitizeAirEnvironmentInput(value)
+export function isYellowLeafAirEnvironmentQuestion(question = {}) {
+  const questionId = getQuestionId(question)
+  return /yellow_leaf|leaf_yellowing/iu.test(questionId)
+}
+
+function buildDraftState(profile = null, allowQuick = true) {
+  return {
+    mode: allowQuick ? getPreferredAirEnvironmentMode(profile) : 'advanced',
+    quickAnswer: allowQuick ? getCompletedQuickAirEnvironmentAnswer(profile) : null,
+    advancedInput: getInitialAdvancedAirEnvironmentInput(profile)
+  }
+}
+
+function normalizeAssessment(value = null) {
+  if (Number(value?.schemaVersion) !== 3) {
+    return null
+  }
+  const result =
+    value.mode === 'quick'
+      ? buildQuickAirEnvironmentAssessment({ selectedOptionKey: value.quickAnswer?.optionKey })
+      : value.mode === 'advanced'
+        ? buildAdvancedAirEnvironmentAssessment(value.advancedInput)
+        : null
+  return result?.ok ? result.value : null
 }
 
 export function useQuestionAirEnvironment({ result, plantStore, setQuestionAnswer }) {
-  const byQuestionId = ref({})
+  const completedByQuestionId = ref({})
+  const draftByQuestionId = ref({})
   const sourceByQuestionId = ref({})
   const dirtyByQuestionId = ref({})
   const editorOpenByQuestionId = ref({})
@@ -44,10 +75,8 @@ export function useQuestionAirEnvironment({ result, plantStore, setQuestionAnswe
   let requestVersion = 0
 
   const currentLocationBinding = computed(() => getCurrentLocationBinding(result.value, plantStore))
-
-  function getAirQuestions(questions = []) {
-    return (Array.isArray(questions) ? questions : []).filter(isAirEnvironmentQuestion)
-  }
+  const getAirQuestions = questions =>
+    (Array.isArray(questions) ? questions : []).filter(isAirEnvironmentQuestion)
 
   function updateMap(target, questionId, value) {
     target.value = { ...target.value, [questionId]: value }
@@ -61,11 +90,11 @@ export function useQuestionAirEnvironment({ result, plantStore, setQuestionAnswe
 
   function setRecorded(
     questionId,
-    input,
+    assessment,
     source,
     { needsConfirmation = false, editorOpen = needsConfirmation } = {}
   ) {
-    updateMap(byQuestionId, questionId, cloneInput(input))
+    updateMap(completedByQuestionId, questionId, clone(assessment))
     updateMap(sourceByQuestionId, questionId, source)
     updateMap(requiresConfirmationByQuestionId, questionId, needsConfirmation)
     updateMap(editorOpenByQuestionId, questionId, Boolean(editorOpen))
@@ -74,7 +103,8 @@ export function useQuestionAirEnvironment({ result, plantStore, setQuestionAnswe
 
   function reset(questions = []) {
     const version = ++requestVersion
-    byQuestionId.value = {}
+    completedByQuestionId.value = {}
+    draftByQuestionId.value = {}
     sourceByQuestionId.value = {}
     dirtyByQuestionId.value = {}
     editorOpenByQuestionId.value = {}
@@ -85,6 +115,11 @@ export function useQuestionAirEnvironment({ result, plantStore, setQuestionAnswe
     for (const question of airQuestions) {
       const questionId = getQuestionId(question)
       if (questionId) {
+        updateMap(
+          draftByQuestionId,
+          questionId,
+          buildDraftState(null, isYellowLeafAirEnvironmentQuestion(question))
+        )
         setQuestionAnswer(questionId, '')
       }
     }
@@ -94,15 +129,15 @@ export function useQuestionAirEnvironment({ result, plantStore, setQuestionAnswe
     }
     fetchUserPlantAirEnvironment(userPlantId)
       .then(response => {
-        if (version !== requestVersion || response?.code !== 200 || !response?.data?.input) {
+        if (version !== requestVersion || response?.code !== 200 || !response?.data) {
           return
         }
-        const nextProfile = response.data
-        if (!isCompleteAirEnvironmentProfile(nextProfile)) {
+        const nextProfile = normalizeAirEnvironmentProfile(response.data)
+        const activeAssessment = getActiveAirEnvironmentAssessment(nextProfile)
+        if (!nextProfile || !activeAssessment) {
           return
         }
         profile.value = nextProfile
-        const input = cloneInput(nextProfile.input)
         const needsConfirmation = !isSameAirEnvironmentLocationBinding(
           nextProfile.locationBinding,
           currentLocationBinding.value
@@ -112,34 +147,34 @@ export function useQuestionAirEnvironment({ result, plantStore, setQuestionAnswe
           if (!questionId || dirtyByQuestionId.value[questionId]) {
             continue
           }
-          setRecorded(questionId, input, 'saved_profile', { needsConfirmation })
+          const allowQuick = isYellowLeafAirEnvironmentQuestion(question)
+          const draftState = buildDraftState(nextProfile, allowQuick)
+          const assessment = allowQuick
+            ? activeAssessment
+            : buildAdvancedAirEnvironmentAssessment(draftState.advancedInput).value
+          if (!assessment) {
+            continue
+          }
+          updateMap(draftByQuestionId, questionId, clone(draftState))
+          setRecorded(questionId, assessment, 'saved_profile', { needsConfirmation })
         }
       })
       .catch(() => {})
   }
 
-  function getByQuestion(question = {}) {
-    return byQuestionId.value[getQuestionId(question)] || null
-  }
-
-  function getSummary(question = {}) {
-    const input = getByQuestion(question)
-    return isAirEnvironmentAnswerReady(input) ? describeAirEnvironmentInput(input) : ''
-  }
-
-  function isEditorOpen(question = {}) {
-    return Boolean(editorOpenByQuestionId.value[getQuestionId(question)])
-  }
-
-  function needsConfirmation(question = {}) {
-    return Boolean(requiresConfirmationByQuestionId.value[getQuestionId(question)])
-  }
-
-  function isSummaryVisible(question = {}) {
+  const getCompletedByQuestion = question =>
+    completedByQuestionId.value[getQuestionId(question)] || null
+  const getDraftState = question =>
+    draftByQuestionId.value[getQuestionId(question)] ||
+    buildDraftState(profile.value, isYellowLeafAirEnvironmentQuestion(question))
+  const getSummary = question => describeAirEnvironmentAssessment(getCompletedByQuestion(question))
+  const isEditorOpen = question => Boolean(editorOpenByQuestionId.value[getQuestionId(question)])
+  const needsConfirmation = question =>
+    Boolean(requiresConfirmationByQuestionId.value[getQuestionId(question)])
+  const isSummaryVisible = question => {
     const questionId = getQuestionId(question)
-    return (
-      Boolean(questionId && byQuestionId.value[questionId]) &&
-      !editorOpenByQuestionId.value[questionId]
+    return Boolean(
+      completedByQuestionId.value[questionId] && !editorOpenByQuestionId.value[questionId]
     )
   }
 
@@ -152,7 +187,7 @@ export function useQuestionAirEnvironment({ result, plantStore, setQuestionAnswe
 
   function confirmSavedProfile(question = {}) {
     const questionId = getQuestionId(question)
-    if (!questionId || !isAirEnvironmentAnswerReady(byQuestionId.value[questionId])) {
+    if (!questionId || !normalizeAssessment(completedByQuestionId.value[questionId])) {
       return
     }
     updateMap(requiresConfirmationByQuestionId, questionId, false)
@@ -162,25 +197,43 @@ export function useQuestionAirEnvironment({ result, plantStore, setQuestionAnswe
     setQuestionAnswer(questionId, RECORDED_OPTION)
   }
 
-  function change(question = {}, value = {}) {
+  function changeDraft(question = {}, value = {}) {
     const questionId = getQuestionId(question)
     if (!questionId) {
       return
     }
-    const input = cloneInput(value)
-    updateMap(dirtyByQuestionId, questionId, true)
-    updateMap(requiresConfirmationByQuestionId, questionId, false)
+    const { editKind = 'answer', ...draftState } = value || {}
+    updateMap(draftByQuestionId, questionId, clone(draftState))
     updateMap(editorOpenByQuestionId, questionId, true)
-    // Keep the in-progress composite draft in the question-local state. The
-    // user must be able to complete the three-part assessment across several
-    // interactions; only a complete value is promoted to the answer payload.
-    updateMap(byQuestionId, questionId, input)
-    if (!isAirEnvironmentAnswerReady(input)) {
-      removeMapEntry(sourceByQuestionId, questionId)
-      setQuestionAnswer(questionId, '')
+    if (editKind === 'mode_switch') {
       return
     }
-    setRecorded(questionId, input, 'temporary', { editorOpen: true })
+    updateMap(dirtyByQuestionId, questionId, true)
+    updateMap(requiresConfirmationByQuestionId, questionId, false)
+  }
+
+  function completeDraft(question = {}) {
+    const questionId = getQuestionId(question)
+    if (!questionId) {
+      return false
+    }
+    if (needsConfirmation(question)) {
+      uni.showToast({ title: '请确认植物位置或修改空气环境', icon: 'none' })
+      return false
+    }
+    const draftState = getDraftState(question)
+    const buildResult =
+      draftState.mode === 'quick'
+        ? buildQuickAirEnvironmentAssessment({
+            selectedOptionKey: draftState.quickAnswer?.optionKey
+          })
+        : buildAdvancedAirEnvironmentAssessment(draftState.advancedInput)
+    if (!buildResult.ok) {
+      uni.showToast({ title: buildResult.userMessage, icon: 'none' })
+      return false
+    }
+    setRecorded(questionId, buildResult.value, 'temporary', { editorOpen: false })
+    return true
   }
 
   function selectUnknown(question = {}) {
@@ -188,7 +241,7 @@ export function useQuestionAirEnvironment({ result, plantStore, setQuestionAnswe
     if (!questionId) {
       return
     }
-    removeMapEntry(byQuestionId, questionId)
+    removeMapEntry(completedByQuestionId, questionId)
     removeMapEntry(sourceByQuestionId, questionId)
     removeMapEntry(requiresConfirmationByQuestionId, questionId)
     updateMap(dirtyByQuestionId, questionId, true)
@@ -201,24 +254,24 @@ export function useQuestionAirEnvironment({ result, plantStore, setQuestionAnswe
     return (
       (answer === RECORDED_OPTION &&
         !requiresConfirmationByQuestionId.value[questionId] &&
-        isAirEnvironmentAnswerReady(byQuestionId.value[questionId])) ||
+        Boolean(normalizeAssessment(completedByQuestionId.value[questionId]))) ||
       answer === UNKNOWN_OPTION
     )
   }
 
   function freezeForSubmit(questions = []) {
-    const inputs = {}
-    const snapshots = {}
+    const byQuestionId = {}
+    const snapshotsByQuestionId = {}
     for (const question of getAirQuestions(questions)) {
       const questionId = getQuestionId(question)
-      const input = byQuestionId.value[questionId]
-      if (!questionId || !isAirEnvironmentAnswerReady(input)) {
+      const assessment = normalizeAssessment(completedByQuestionId.value[questionId])
+      if (!questionId || !assessment) {
         continue
       }
       const source = sourceByQuestionId.value[questionId] || 'temporary'
-      inputs[questionId] = cloneInput(input)
-      snapshots[questionId] = {
-        input: cloneInput(input),
+      byQuestionId[questionId] = clone(assessment)
+      snapshotsByQuestionId[questionId] = {
+        input: clone(assessment),
         source,
         profileUpdatedAt: source === 'saved_profile' ? String(profile.value?.updatedAt || '') : '',
         locationBinding:
@@ -227,7 +280,7 @@ export function useQuestionAirEnvironment({ result, plantStore, setQuestionAnswe
             : currentLocationBinding.value
       }
     }
-    return { byQuestionId: inputs, snapshotsByQuestionId: snapshots }
+    return { byQuestionId, snapshotsByQuestionId }
   }
 
   function saveInBackground(questions = [], frozen = freezeForSubmit(questions)) {
@@ -240,15 +293,15 @@ export function useQuestionAirEnvironment({ result, plantStore, setQuestionAnswe
       return Boolean(dirtyByQuestionId.value[questionId] && frozen.byQuestionId[questionId])
     })
     const questionId = getQuestionId(question)
-    const input = frozen.byQuestionId[questionId]
-    if (!questionId || !input) {
+    const assessment = frozen.byQuestionId[questionId]
+    if (!questionId || !assessment) {
       return Promise.resolve({ state: 'not_needed' })
     }
     syncState.value = 'syncing'
     const currentProfile = profile.value
     return patchUserPlantAirEnvironment({
       plantId: Number(userPlantId),
-      airEnvironment: input,
+      airEnvironment: assessment,
       locationBinding: currentLocationBinding.value,
       writeMode: currentProfile ? 'replace_if_match' : 'if_missing',
       ...(currentProfile?.updatedAt ? { expectedUpdatedAt: currentProfile.updatedAt } : {})
@@ -258,7 +311,7 @@ export function useQuestionAirEnvironment({ result, plantStore, setQuestionAnswe
           syncState.value = 'failed'
           return { state: 'failed', response }
         }
-        profile.value = response.data
+        profile.value = normalizeAirEnvironmentProfile(response.data)
         plantStore.applyAirEnvironmentLocal?.(Number(userPlantId), response.data)
         syncState.value = 'saved'
         return { state: 'saved', response }
@@ -270,22 +323,23 @@ export function useQuestionAirEnvironment({ result, plantStore, setQuestionAnswe
   }
 
   return {
-    byQuestionId,
-    sourceByQuestionId,
+    profile,
     syncState,
     reset,
-    getByQuestion,
+    getDraftState,
     getSummary,
     isSummaryVisible,
     isEditorOpen,
     needsConfirmation,
     openEditor,
     confirmSavedProfile,
-    change,
+    changeDraft,
+    completeDraft,
     selectUnknown,
     isAnswered,
     freezeForSubmit,
     saveInBackground,
-    isAirEnvironmentQuestion
+    isAirEnvironmentQuestion,
+    isYellowLeafAirEnvironmentQuestion
   }
 }

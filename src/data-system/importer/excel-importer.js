@@ -17,8 +17,9 @@ const {
   withTransaction,
   quoteIdentifier,
   tableName,
-  listTableColumns
+  listTableColumnMetadata
 } = require('../db/mysql')
+const { normalizeDateForColumn } = require('../db/metadata-values')
 
 function resolveSourceKey(source = '', filePath = '') {
   const normalizedSource = String(source || '').trim().toLowerCase()
@@ -187,7 +188,8 @@ function materializePayloadRows(rawRow = {}, tableConfig = {}) {
 }
 
 async function upsertImportJob(connection, { batchId, sourceType, fileName, status, detail = null }) {
-  const columns = await listTableColumns(connection, DEV_SCHEMA, 'import_jobs').catch(() => [])
+  const columnMetadata = await listTableColumnMetadata(connection, DEV_SCHEMA, 'import_jobs').catch(() => ({}))
+  const columns = Object.keys(columnMetadata)
   if (!columns.length) {return}
 
   const payload = {}
@@ -199,9 +201,14 @@ async function upsertImportJob(connection, { batchId, sourceType, fileName, stat
   if (columns.includes('error_summary_json')) {
     payload.error_summary_json = status === 'failed' ? JSON.stringify(detail || {}) : null
   }
-  if (columns.includes('created_at')) {payload.created_at = new Date()}
+  if (columns.includes('created_at')) {
+    payload.created_at = normalizeDateForColumn(new Date(), columnMetadata.created_at)
+  }
   if (columns.includes('finished_at')) {
-    payload.finished_at = status === 'finished' || status === 'failed' ? new Date() : null
+    payload.finished_at =
+      status === 'finished' || status === 'failed'
+        ? normalizeDateForColumn(new Date(), columnMetadata.finished_at)
+        : null
   }
 
   const payloadColumns = Object.keys(payload)
@@ -273,7 +280,8 @@ async function runExcelImport(options = {}) {
             continue
           }
 
-          const dbColumns = await listTableColumns(connection, DEV_SCHEMA, config.table).catch(() => [])
+          const dbColumnMetadata = await listTableColumnMetadata(connection, DEV_SCHEMA, config.table).catch(() => ({}))
+          const dbColumns = Object.keys(dbColumnMetadata)
           if (!dbColumns.length) {
             summary.push({
               source: currentSourceKey,
@@ -338,8 +346,15 @@ async function runExcelImport(options = {}) {
                     ? 1
                     : payload.is_active
               }
-              if (dbColumnSet.has('updated_at')) {payload.updated_at = payload.updated_at || now}
-              if (dbColumnSet.has('created_at') && !payload.created_at) {payload.created_at = now}
+              if (dbColumnSet.has('updated_at')) {
+                payload.updated_at = normalizeDateForColumn(payload.updated_at || now, dbColumnMetadata.updated_at)
+              }
+              if (dbColumnSet.has('created_at') && !payload.created_at) {
+                payload.created_at = normalizeDateForColumn(now, dbColumnMetadata.created_at)
+              }
+              if (dbColumnSet.has('published_at') && payload.published_at) {
+                payload.published_at = normalizeDateForColumn(payload.published_at, dbColumnMetadata.published_at)
+              }
 
               if (dbColumnSet.has('row_hash')) {
                 payload.row_hash = computeRowHash(payload, businessColumns)

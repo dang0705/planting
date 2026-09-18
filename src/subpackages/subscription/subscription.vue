@@ -291,7 +291,7 @@ async function startPayment(plan) {
   if (paymentLoading.value || !plan?.id || !isPlanPayable(plan)) {
     return
   }
-  if (!(await userStore.ensureLogin())) {
+  if (!(await userStore.ensureLogin({ prompt: true }))) {
     paymentError.value = '请先登录后再购买会员。'
     paymentStage.value = ''
     paymentMessage.value = ''

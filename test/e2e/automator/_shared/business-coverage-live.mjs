@@ -34,6 +34,7 @@ import {
   setClassification
 } from '../care/watering/transpiration-v3/_shared/lib/reporter.mjs'
 import {
+  findRequestByUrl,
   installRequestCapture,
   readCapturedRequests,
   restoreRequest
@@ -114,6 +115,19 @@ async function waitUntilAbsent(page, id) {
     await sleep(250)
   }
   return false
+}
+
+async function waitForCapturedRequest(mp, urlFragment, method, timeoutMs = WAIT_MS) {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    const requests = await readCapturedRequests(mp)
+    const found = findRequestByUrl(requests, urlFragment, method)
+    if (found) {
+      return found
+    }
+    await sleep(250)
+  }
+  return null
 }
 
 async function waitForFirstByIdPrefix(page, prefix) {
@@ -707,7 +721,7 @@ async function runCalendarTaskAndPlan({ mp, report, env }) {
     assertCondition(
       report,
       '日历添加入口进入统一 create 详情页',
-      Boolean(await findViewById(create, 'add-plant-swiper'))
+      Boolean(await findViewById(create, 'add-plant-form'))
     )
     await mp.callWxMethod('navigateBack')
     await waitForRoute(mp, '/pages/calendar/calendar')
@@ -821,6 +835,16 @@ async function runHomeCardCareClosure({ mp, report, env }) {
     report,
     '首页浇水入口打开 WateringReminderSheet',
     Boolean(await findViewById(page, 'watering-reminder-sheet'))
+  )
+  const weatherRequest = await waitForCapturedRequest(mp, '/weather/environment-context', 'POST')
+  const weatherResponse = weatherRequest?.response?.data || {}
+  assertCondition(
+    report,
+    '首页浇水流程后天气窗口 wx.request 成功',
+    weatherRequest?.response?.statusCode === 200 && weatherResponse.code === 200,
+    weatherRequest
+      ? `HTTP ${weatherRequest.response?.statusCode || 'missing'}, business ${weatherResponse.code || 'missing'}`
+      : 'not found'
   )
   const waterClose = await waitForElement(page, 'watering-reminder-close-button', WAIT_MS)
   assertCondition(report, '首页浇水提醒弹层关闭入口可见', Boolean(waterClose))
@@ -1264,11 +1288,7 @@ async function runUserDetailModes({ mp, report, env }) {
   )
   recordPage(report, edit.path)
   const editForm = await waitForElement(edit, 'edit-plant-form', WAIT_MS)
-  assertCondition(
-    report,
-    '用户植物 edit 模式表单可达',
-    Boolean(editForm)
-  )
+  assertCondition(report, '用户植物 edit 模式表单可达', Boolean(editForm))
   assertCondition(
     report,
     '用户植物 edit 模式保存入口可达',
@@ -1298,28 +1318,12 @@ async function runUserDetailModes({ mp, report, env }) {
   assertCondition(
     report,
     '用户植物 create 模式页面可达',
-    Boolean(await findViewById(create, 'add-plant-swiper'))
+    Boolean(await findViewById(create, 'add-plant-form'))
   )
   assertCondition(
     report,
-    '用户植物 create 模式选择入口可达',
-    Boolean(await findViewById(create, 'add-plant-next-button'))
-  )
-  const createPlantCard = await waitForFirstByIdPrefix(create, 'add-plant-card-')
-  assertCondition(report, '用户植物 create 模式存在可选植物', Boolean(createPlantCard))
-  await tapStableElement(createPlantCard?.element)
-  await sleep(UI_SETTLE_MS)
-  let createCurrentStep = null
-  try {
-    const createSwiper = await findViewById(create, 'add-plant-swiper')
-    createCurrentStep = await createSwiper?.property?.('current')
-  } catch {
-    createCurrentStep = null
-  }
-  assertCondition(
-    report,
-    '用户植物 create 模式点击卡片已切换到信息步骤',
-    Number(createCurrentStep) === 1
+    '用户植物 create 模式存在 AI 植物身份入口',
+    Boolean(await findViewById(create, 'add-plant-ai-identify-button'))
   )
   const createForm = await waitForElement(create, 'add-plant-form', WAIT_MS)
   assertCondition(report, '用户植物 create 模式信息表单可见', Boolean(createForm))
@@ -1403,9 +1407,10 @@ export async function runBusinessCoverageLeaf({ scenario, catalogId } = {}) {
     }
     // 该优化验收叶子必须把真实 wx.request 和最终页面数据写入报告。
     // 只观察请求，不替换响应、不注入 fixture；其他业务叶子保持原有行为。
-    if (catalogId === 'plant.user_detail_create_edit_view_modes') {
+    const addPerformanceProbe = catalogId === 'plant.user_detail_create_edit_view_modes'
+    if (addPerformanceProbe || catalogId === 'care.home_card.water_and_fertilization_closure') {
       await installRequestCapture(mp, {
-        addProbeId: true,
+        addProbeId: addPerformanceProbe,
         probePrefix: `qa-${String(process.env.DISPATCH_QA_EXECUTION_ID || process.pid)}`
       })
       requestCaptureInstalled = true

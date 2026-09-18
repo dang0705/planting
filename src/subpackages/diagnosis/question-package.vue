@@ -2,6 +2,7 @@
   <Layout
     :title="pageTitle"
     left-action="back"
+    :back-mode="historyRecordId ? 'stack' : 'auto'"
     background-class="bg-[#f8faf9]"
     :header-style="headerStyle"
   >
@@ -79,6 +80,7 @@
                     :key="`air-${getQuestionId(currentQuestion)}`"
                     :question="currentQuestion"
                     :question-id="getQuestionId(currentQuestion)"
+                    :dual-mode="isYellowLeafAirEnvironmentQuestion(currentQuestion)"
                     :air-environment="airEnvironmentUi"
                     footer-position="fixed"
                     back-label="上一题"
@@ -86,7 +88,7 @@
                     :completion-label="nextButtonText"
                     completion-id="diagnose-question-package-page-next-button"
                     external-footer
-                    @change="payload => handleAirEnvironmentChange(currentQuestion, payload)"
+                    @draft-change="payload => handleAirEnvironmentChange(currentQuestion, payload)"
                     @unknown="selectAirEnvironmentUnknown(currentQuestion)"
                     @edit="openAirEnvironmentEditor(currentQuestion)"
                     @confirm="confirmAirEnvironmentLocation(currentQuestion)"
@@ -348,6 +350,7 @@ const {
   isCareBehaviorWateringTimelineQuestion,
   isLightEnvironmentQuestion,
   isAirEnvironmentQuestion,
+  isYellowLeafAirEnvironmentQuestion,
   airEnvironmentUi,
   selectQuestionOption,
   getSelectedQuestionOptionId,
@@ -386,6 +389,7 @@ const {
   payload,
   images,
   plantName,
+  userStore,
   diagnoseStore,
   diagnosisAnswerMutation,
   resetQuestionState

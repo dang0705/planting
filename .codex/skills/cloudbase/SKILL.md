@@ -1,9 +1,9 @@
 ---
 name: cloudbase
-description: "Use this skill for developing, deploying, debugging, migrating, or operating applications that use Tencent CloudBase/TCB/微信云开发, including Web/H5, WeChat Mini Programs, uni-app, and mobile apps. Covers CloudBase-managed auth, databases, cloud functions, CloudRun, storage, AI, and operations. Do not use for frontend-only apps, non-CloudBase backends, or generic UI, database, or AI tasks."
-description_zh: 当任务涉及腾讯云开发、CloudBase、TCB 或微信云开发的应用开发、部署、调试、迁移或运维时使用，覆盖 Web/H5、微信小程序、uni-app 和移动端，以及 CloudBase 身份、数据库、云函数、云托管、云存储、AI 与运维。不要用于纯前端、非 CloudBase 后端或通用 UI、数据库、AI 任务。
-description_en: Use this skill for development, deployment, debugging, migration, or operations involving Tencent CloudBase applications, including Web/H5, WeChat Mini Programs, uni-app, and mobile apps. It covers CloudBase auth, databases, cloud functions, CloudRun, storage, AI, and operations.
-version: 2.33.2
+description: "Use this skill when you develop, design, build, deploy, debug, migrate, or troubleshoot CloudBase (腾讯云开发, 云开发, TCB, 微信云开发) projects — Web, 微信小程序, 小程序, uni-app, mobile (iOS, Android, Flutter, React Native). Covers UI (页面, 界面, 表单, dashboard, prototype, 原型); auth (登录, 注册, OAuth, publishable key); databases (NoSQL 文档数据库, MySQL 关系型数据库, PostgreSQL/CloudBase PG, app.rdb(), queryPgDatabase/managePgDatabase, CRUD, security rules); 云函数/cloud functions (serverless, scf_bootstrap); CloudRun (云托管, Dockerfile); 云存储; built-in AI (内置大模型, AI 对话, streaming, 流式输出, 图片生成, generateText, streamText, createModel, generateImage, TokenHub, Hunyuan, DeepSeek, GLM, Kimi, Token Credits 资源包, 小程序成长计划); third-party/custom model onboarding (第三方大模型接入, 大模型调用, LLM API); AI agent (智能体, AG-UI, LangGraph); ops troubleshooting (巡检, 诊断, 日志); spec workflow (需求文档, 技术方案, requirements, tasks.md). Do NOT use for non-CloudBase projects, pure frontend without CloudBase, or self-hosted backends without CloudBase."
+description_zh: 为你的小程序和 Web/H5 提供一体化运行与部署环境，包括数据库、云函数、云存储、身份权限和静态托管
+description_en: An all-in-one runtime and deployment environment for WeChat Mini Programs and Web/H5 apps, including database, cloud functions, cloud storage, identity and access control, and static hosting.
+version: 2.34.3
 ---
 
 # CloudBase Development Guidelines

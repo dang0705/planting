@@ -12,8 +12,6 @@
       </view>
       <view v-else class="w-8" />
 
-      <HeaderWeatherInfo class="ml-2 flex-1" />
-
       <view class="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
         <text class="text-base font-semibold text-white">{{ title }}</text>
       </view>
@@ -23,7 +21,6 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import HeaderWeatherInfo from './HeaderWeatherInfo.vue'
 
 defineProps({
   showBack: { type: Boolean, default: false },

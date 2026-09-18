@@ -1,0 +1,2327 @@
+{
+  "generatedAt": "2026-09-18",
+  "environment": "cloud1-2grufevs395a9d5e",
+  "schema": "cloud1-2grufevs395a9d5e",
+  "table": "question_option_mapping_v5_real",
+  "purpose": "is_active候选只读快照；仅供审计和条件回退，不代表已批准变更",
+  "query": "\nSELECT\n  q.id,\n  q.question_key,\n  q.option_key,\n  q.row_hash,\n  q.is_active,\n  q.cms_lifecycle,\n  q.data_status,\n  q.review_status\nFROM question_option_mapping_v5_real q\nWHERE q.cms_lifecycle='legacy_compat'\n  AND q.is_active=1\n  AND q.data_status='audited'\n  AND q.review_status='audited'\n  AND NOT EXISTS (\n    SELECT 1\n    FROM outcome_route_questions r\n    WHERE r.question_key COLLATE utf8mb4_0900_ai_ci = q.question_key COLLATE utf8mb4_0900_ai_ci\n      AND r.enabled=1\n      AND r.data_status='active'\n      AND r.review_status='audited'\n  )\nORDER BY q.id",
+  "mcp": {
+    "success": true,
+    "statementType": "SELECT",
+    "rowsReturned": 230,
+    "rowsAffected": 0
+  },
+  "safety": {
+    "writesPerformed": false,
+    "deploymentPerformed": false,
+    "candidateRule": "legacy_compat + is_active=1 + data_status=audited + review_status=audited + no enabled audited outcome route reference",
+    "excludedFromCandidate": [
+      "current_package",
+      "enabled audited route references",
+      "review_status=pending",
+      "is_active=0"
+    ]
+  },
+  "rows": [
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_spider_webbing_visible",
+      "review_status": "audited",
+      "row_hash": "0906aabdc11d444729f3d9f53c84519b95a2f7240403f456ed4b3bd8f0eb1ebb"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 2,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_spider_webbing_visible",
+      "review_status": "audited",
+      "row_hash": "794454325971d9b5c775b6c6b7bb841f8b03b20e54b3f96c10077ed5f9f4ff45"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 3,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_spider_webbing_visible",
+      "review_status": "audited",
+      "row_hash": "bbd2e25460a47b983c19085cade0e49d3cba6ef1c156d0f9d4f5df70ca67528f"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 16,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_thrips_silver_streaks",
+      "review_status": "audited",
+      "row_hash": "2c2016ba25c84221cc8e642012a336b35567ea89799f1f967c228a27eb8ee310"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 17,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_thrips_silver_streaks",
+      "review_status": "audited",
+      "row_hash": "86a45fd31bef1b0142eea0a1309acc779a7fe026e1ba496f5734c96ca11a4e04"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 18,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_thrips_silver_streaks",
+      "review_status": "audited",
+      "row_hash": "51298f80888f4454bc6358d29a5db24f0812af2e603f83ff7a1f1361a6d55279"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 76,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_gnat_small_flies",
+      "review_status": "audited",
+      "row_hash": "7a5fa2e8dde12b2bb4a1a199e93d45c4a2b88382fe42981aa54c00e351916660"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 77,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_gnat_small_flies",
+      "review_status": "audited",
+      "row_hash": "ce31073638b936ef0ab3da5642f4a1fb60c8ce3059ecabfa3b20f32c2adfa46b"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 78,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_gnat_small_flies",
+      "review_status": "audited",
+      "row_hash": "e1e6c2a28b24cb86799cb6c52bb565eba539665374a0da44697161c1a1210652"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 82,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_gnat_mold_on_soil",
+      "review_status": "audited",
+      "row_hash": "cbc685090b81cee0a7c5b839e16b27c7903fbfa09b2af153e5d1a784765d1f27"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 83,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_gnat_mold_on_soil",
+      "review_status": "audited",
+      "row_hash": "08d10173f762cf62336ad01848cda2d17778ac786b7543ff7b0b9a6abb5d1fd6"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 84,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_gnat_mold_on_soil",
+      "review_status": "audited",
+      "row_hash": "26f53cf49fb3ff1b8aa8cf1d6093d62803c4481705163573feaeb30f4092b8cd"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 85,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_gnat_soil_stays_wet",
+      "review_status": "audited",
+      "row_hash": "2fb9cdb58d24b6b145cd5fd171e8bb66210c0ce98ca81565c312d57dc5835a72"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 86,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_gnat_soil_stays_wet",
+      "review_status": "audited",
+      "row_hash": "1a100bd1f6e4d72fd84b5811ecb7ce4b4e5560a412f7e60eb4860f5eec9acab9"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 87,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_gnat_soil_stays_wet",
+      "review_status": "audited",
+      "row_hash": "416ed35e612dee5f172198b5c1f51374213b184e34a00e3d36d3f7c2862443f7"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 91,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_powder_white_visible",
+      "review_status": "audited",
+      "row_hash": "9ae803f63325011e449864796499b5bd7edc73cee8d8d693ef7a90546d81a588"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 92,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_powder_white_visible",
+      "review_status": "audited",
+      "row_hash": "970482a1120e6e8c675b45f1e552f1d2581b9fb9d3bdacfff231dc8d088de0e6"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 93,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_powder_white_visible",
+      "review_status": "audited",
+      "row_hash": "768e5c03ae932fa0ef5517b49b2e12db28e49567ae3c286bd340c69ed77f90e8"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 100,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_powder_on_stems_or_buds",
+      "review_status": "audited",
+      "row_hash": "1f0e31e0c59442648622a712fcb94977dd268f382dc7d38e04ac1540429107f0"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 101,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_powder_on_stems_or_buds",
+      "review_status": "audited",
+      "row_hash": "79ac09cca9eabac221472f04dd220bde31054469d3232e14d93bef95b3dcb749"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 102,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_powder_on_stems_or_buds",
+      "review_status": "audited",
+      "row_hash": "4f8f26c88f760fe43c396243843182b85ddb9fdcee651be59ba49509a30fb5fc"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 106,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_rust_pustules_visible",
+      "review_status": "audited",
+      "row_hash": "a8ee86b69d1d096cd3b110d33bd412b61ff7b2272dea56683976b233954e8112"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 107,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_rust_pustules_visible",
+      "review_status": "audited",
+      "row_hash": "be071cb005a046c8702460cb7ba4baa4d65b5e3d5eca01fe8131fb3089d1ca67"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 108,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_rust_pustules_visible",
+      "review_status": "audited",
+      "row_hash": "5fb62e64c0029870423e70d18a2de1e766d13a1cc71275159586b6123fc3c540"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 115,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_rust_orange_spots",
+      "review_status": "audited",
+      "row_hash": "09932aa51291302a009fa7af2e2fb1e659018e13aee384c8d84bf905695a5231"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 116,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_rust_orange_spots",
+      "review_status": "audited",
+      "row_hash": "ee358f05e0e131b533801eb6065fd6d2337c84c8087928f15225bc7843d5b2f2"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 117,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_rust_orange_spots",
+      "review_status": "audited",
+      "row_hash": "8d832830e6c77a9edc48eb77774a1516fea4281ca40efab41c5e2517ab8f7ffb"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 121,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_gray_mold_visible",
+      "review_status": "audited",
+      "row_hash": "afd315facf863b3ba22def4f9b96165e629fb60d14962ef2d0f54e88cc0622b5"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 122,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_gray_mold_visible",
+      "review_status": "audited",
+      "row_hash": "168443043522feae745feec9d76aa84af16bd138088f0954ecd7b80927973982"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 123,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_gray_mold_visible",
+      "review_status": "audited",
+      "row_hash": "06083a67fd5b50278fe304a0b92c52c6faaa29220bf1dd6ae7e2ad1a52842e04"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 130,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_gray_mold_white_fuzz",
+      "review_status": "audited",
+      "row_hash": "adea48e571ad49517df1d2d8185d8ee1ba95f11eacd8db8b626933735a2e7cb6"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 131,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_gray_mold_white_fuzz",
+      "review_status": "audited",
+      "row_hash": "8fef0c6db33bf1931fc9ef8ed097b63cd92d30195b90ff72d629da99921b2a7c"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 132,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_gray_mold_white_fuzz",
+      "review_status": "audited",
+      "row_hash": "146ce9bacc1889e17cdca99763ad9347e837992a5ddedf935ea33e1dbbb53b13"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 136,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_root_rot_bad_smell",
+      "review_status": "audited",
+      "row_hash": "71699fd148fa87a7885e0b204986e3b1e12b906b58c68271911ba323b1090eb2"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 137,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_root_rot_bad_smell",
+      "review_status": "audited",
+      "row_hash": "26afad35e6204eeef5550a39c07b2f1ce457f441d76cb126781e5a8b66676cee"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 138,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_root_rot_bad_smell",
+      "review_status": "audited",
+      "row_hash": "4c1d754b248e11e8337dce3b0adda50bb9df07eb01e0164d8056f58ad41246d0"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 139,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_root_rot_black_roots",
+      "review_status": "audited",
+      "row_hash": "b08b69c8da644fc570d49eef06a366140cc578c8af3ef3ecdd93b2f89cfe47ff"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 140,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_root_rot_black_roots",
+      "review_status": "audited",
+      "row_hash": "8db620bcdb88b61746a0483a198f90ba134ea0fc8beb2d7cb16a9d9ac77ac43f"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 141,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_root_rot_black_roots",
+      "review_status": "audited",
+      "row_hash": "2003d5be4bac23e962d87ad2df0440aa9693e7468b59fe783b195b922fbd3af0"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 142,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_root_rot_mushy_roots",
+      "review_status": "audited",
+      "row_hash": "41cee604faa8014e4dbb411b3c67c1081cafb6aa4bb7a66f889c91388080f553"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 143,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_root_rot_mushy_roots",
+      "review_status": "audited",
+      "row_hash": "cde7b21d7608a5f6f1ab712687585b09dd5692883f4fa1fa1d6a3c5012322904"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 144,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_root_rot_mushy_roots",
+      "review_status": "audited",
+      "row_hash": "98673686de25fc0fbdbdc0a26e96c1340ffb7e60fb86065a6d899931b0606dde"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 154,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_bacterial_water_soaked",
+      "review_status": "audited",
+      "row_hash": "9ecab5f601bd3882d7c2b75506f45cd6314c5213b68ee994af69eece8bf5a232"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 155,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_bacterial_water_soaked",
+      "review_status": "audited",
+      "row_hash": "7e90e5abc5855510249412a88d6f832a0fd9c823ee8d6425ab1d7e6996d07798"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 156,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_bacterial_water_soaked",
+      "review_status": "audited",
+      "row_hash": "1c55469f8b3da9a350eaa23b7e1c4234ec19a85fbf8de205eb7609b6dd9df3b8"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 181,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_anthracnose_concentric",
+      "review_status": "audited",
+      "row_hash": "8eab32788d3a9337222af65861c2be2aa435d473d62bea68f40d466b97ce3b7f"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 182,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_anthracnose_concentric",
+      "review_status": "audited",
+      "row_hash": "43396105009e19be1f5bc570f08b03052ba0c3659119e0d628327a71c0502686"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 183,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_anthracnose_concentric",
+      "review_status": "audited",
+      "row_hash": "0119a9ca3a11f0ff376641b307d6214b3edd0ba2ffdee9b0745ca9caed637519"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 184,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_anthracnose_sunken",
+      "review_status": "audited",
+      "row_hash": "34f4518faf91fececf339b36ffa35bdb9c908251007bbfdfdb03257d5b707c0b"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 185,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_anthracnose_sunken",
+      "review_status": "audited",
+      "row_hash": "5c0364216d7a21ee9cb445a10932a8f05b627b1431bca49b194a797700065768"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 186,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_anthracnose_sunken",
+      "review_status": "audited",
+      "row_hash": "a40261eedb467c205eff9ed57ccffaaa31bd07ca81228283e085d405faf43a81"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 196,
+      "is_active": 1,
+      "option_key": "old",
+      "question_key": "q_nitrogen_old_leaves_yellow",
+      "review_status": "audited",
+      "row_hash": "5647c24efc3f9fe96e658205dd94ddab5303d1b695c7d1e792f72422c7e3a445"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 197,
+      "is_active": 1,
+      "option_key": "new",
+      "question_key": "q_nitrogen_old_leaves_yellow",
+      "review_status": "audited",
+      "row_hash": "09111b163a81654f2dad9e2a6f1c5ceaf92cee2dd8dc6c85a1c9cd3fe3f12c43"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 198,
+      "is_active": 1,
+      "option_key": "uniform",
+      "question_key": "q_nitrogen_old_leaves_yellow",
+      "review_status": "audited",
+      "row_hash": "0360d407910d9301b94f265b1883d7bc3fd3e7dd82053eface8b92f4bc8b589d"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 199,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_nitrogen_old_leaves_yellow",
+      "review_status": "audited",
+      "row_hash": "d0a30585f744536019c7ccb816cbd3d72d2bd6ac6ccbafcccde810b4c340e0ba"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 200,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_nitrogen_uniform_yellow",
+      "review_status": "audited",
+      "row_hash": "ac1ca9ce00b2148073b2fa050ddf9a7c6b34173c19f2c62859d6ad47ab3ce3fd"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 201,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_nitrogen_uniform_yellow",
+      "review_status": "audited",
+      "row_hash": "d6aa7b10566c8c596e31277c3a220835cb209b462326eef831794b27748e669b"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 202,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_nitrogen_uniform_yellow",
+      "review_status": "audited",
+      "row_hash": "6d2f39e8313c4c4bfe4a1d48d34067ab337b71afaec9b38ddb5b097efc219e17"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 212,
+      "is_active": 1,
+      "option_key": "old",
+      "question_key": "q_iron_new_leaves_yellow",
+      "review_status": "audited",
+      "row_hash": "e1453778b3aa9f6632b7e7b38b5b06dc14cb40b582058791e5996e4828997ca3"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 213,
+      "is_active": 1,
+      "option_key": "new",
+      "question_key": "q_iron_new_leaves_yellow",
+      "review_status": "audited",
+      "row_hash": "bf561a1598cbb95693fba987910ca7b60787a93e3e0b2aa5498d9b38040289dd"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 214,
+      "is_active": 1,
+      "option_key": "uniform",
+      "question_key": "q_iron_new_leaves_yellow",
+      "review_status": "audited",
+      "row_hash": "eaf91ded269811968b02c8ad591a0ab47493961a832e5132f287eaf3797ce7d7"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 215,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_iron_new_leaves_yellow",
+      "review_status": "audited",
+      "row_hash": "9043a28a4956625111ce051a84ec9c47ec2d0a9876ce0b1c980dcf4a27379694"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 225,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_iron_not_old_first",
+      "review_status": "audited",
+      "row_hash": "7dac9d2bb598c6c0c81f6a759eecf03c4e28f584e8ec8ec072c8602e81df4b0a"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 226,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_iron_not_old_first",
+      "review_status": "audited",
+      "row_hash": "89e91900ce18f2c57047ca654b91c1cd8741d7d447549bcd63fd8637a953cf9c"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 227,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_iron_not_old_first",
+      "review_status": "audited",
+      "row_hash": "7731a1402bd911adf0bc31726624d78ff80b67b439b1ed7629fc69990d696a18"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 228,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_edema_blisters",
+      "review_status": "audited",
+      "row_hash": "465cd9a73bdef4fe70e10af34052682e7f73b9f426eb50ad31eb7ab689e23c2f"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 229,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_edema_blisters",
+      "review_status": "audited",
+      "row_hash": "347da6f8f136292679f76f39028f5e3c661520efdfb99712212789d4e0178a39"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 230,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_edema_blisters",
+      "review_status": "audited",
+      "row_hash": "a30ad2c3e3e30d70547d911c12ea24008db263445beb7e8827ed3ab5a4678d49"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 231,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_edema_warty",
+      "review_status": "audited",
+      "row_hash": "e7d540cca200d6b0f0802be00980cb3ddd6ecfb4366e4515468c12e624a493e4"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 232,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_edema_warty",
+      "review_status": "audited",
+      "row_hash": "f3c7ffb3f9d9c52036669eaf62d93a54dbccd0aeaad59a10647dc91f786b9d28"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 233,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_edema_warty",
+      "review_status": "audited",
+      "row_hash": "caebf4677aa59a30fbd4cb3b709758a8bbe48b31e1267be8d36a900529ad995c"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 240,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_underwater_dry_wilt",
+      "review_status": "audited",
+      "row_hash": "fb0321929d2b264a0d9d9bf6196e100b12e7b26485e17541801e4b84d0f0840d"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 241,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_underwater_dry_wilt",
+      "review_status": "audited",
+      "row_hash": "7817d2330d8caa8aab7dc5b45f041e85176694ad0f60d011dd8154c4403b6d6f"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 242,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_underwater_dry_wilt",
+      "review_status": "audited",
+      "row_hash": "2eaabf526ef75f7689c83ffc8a892ef18c14b114c2b0c112025a74113b36fff7"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 485,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_black_mold_growth_confirm",
+      "review_status": "audited",
+      "row_hash": "0933530882a895ce732e3641f143b3a8881a9f3a474461d457f42341890c1257"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 486,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_black_mold_growth_confirm",
+      "review_status": "audited",
+      "row_hash": "2c48a20310902de9fd5184a24ae6f99ca0084a934ab8ea8cce24c4d08e99c391"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 487,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_black_mold_growth_confirm",
+      "review_status": "audited",
+      "row_hash": "0268a89623f8170b21e80dcd3f5b2cf5c16ac5c9d13e703437344d86d93b1525"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 488,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_blackened_stem_base_confirm",
+      "review_status": "audited",
+      "row_hash": "1ec912281dc333c50671975eda2aa5fcaf348371beaca5f6682edd39e7856ce4"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 489,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_blackened_stem_base_confirm",
+      "review_status": "audited",
+      "row_hash": "4ed8c7b4c96ee1fb71d33aa88df05382c8bccbc3383896f1e3b1cea1a8d6b1e3"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 490,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_blackened_stem_base_confirm",
+      "review_status": "audited",
+      "row_hash": "c3ce297635d418acb8503b7134e85dfd3eb757e526759ff61e40987585936729"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 491,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_blackened_stem_base_bad_root_smell",
+      "review_status": "audited",
+      "row_hash": "d4398669b0e3f99fbdc09e89797bfb14a892f8b23dc2c5e7b3d93cd9e305777f"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 492,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_blackened_stem_base_bad_root_smell",
+      "review_status": "audited",
+      "row_hash": "4d5cfafae02f4376b597c28ce4e041f01cd35761c32649d94a11d6540338cefa"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 493,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_blackened_stem_base_bad_root_smell",
+      "review_status": "audited",
+      "row_hash": "b1888b6e5a39ae1b47d76e60c7bcfb7cb99236953b443f826edd60c3bb096024"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 494,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_bud_drop_confirm",
+      "review_status": "audited",
+      "row_hash": "615fab7b6504c21d95fdb2e7e360148a3cca89658ea82372b94b3b9599bdf919"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 495,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_bud_drop_confirm",
+      "review_status": "audited",
+      "row_hash": "ebb0a92beff8f64c614629bfcb572d5f92fa62a0bd13b886febc597f80e4a417"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 496,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_bud_drop_confirm",
+      "review_status": "audited",
+      "row_hash": "35f8cd6768b76903cd5665df1e3af340092cc3c21d7515c2d2545b1396552458"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 497,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_bud_drop_low_humidity_damage",
+      "review_status": "audited",
+      "row_hash": "54b8fda324c98d300d0c81bd4ac71bd5f6b31c777f9f5cb6a7194d2538d6b142"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 498,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_bud_drop_low_humidity_damage",
+      "review_status": "audited",
+      "row_hash": "234eb3cbb3ce5029ddae557492b76fd39f0314be47268829230d7887b309b1f4"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 499,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_bud_drop_low_humidity_damage",
+      "review_status": "audited",
+      "row_hash": "e9d527745057effc5b5460f81c537f52b2fc00edde2353632f55b54650ce17e1"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 500,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_chewed_edges_confirm",
+      "review_status": "audited",
+      "row_hash": "709b5d84424910f6aa0b1b42d6351be475cf721ca9aa6405ae8486a449b68a16"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 501,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_chewed_edges_confirm",
+      "review_status": "audited",
+      "row_hash": "9a70378e41d698129e87e3aa3e8dee5b5f9851d0cfa86d9fa2e7c16495b93536"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 502,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_chewed_edges_confirm",
+      "review_status": "audited",
+      "row_hash": "722d3af063e72f82359783bd4cda7f7a126fdf0f42c838b8232fefda0d6c8598"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 503,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_flower_abort_confirm",
+      "review_status": "audited",
+      "row_hash": "38152295c5c8e5805821c9d4a65cb54887aa512bed7bb29b1c3486b343686152"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 504,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_flower_abort_confirm",
+      "review_status": "audited",
+      "row_hash": "e9ab91dde995620d68006c0b69caf27168a441834cd9b43083e17089f35ffc51"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 505,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_flower_abort_confirm",
+      "review_status": "audited",
+      "row_hash": "26843c263c10218a288b7570fea728382cd8fc10031341409393a78fad9cfcb3"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 506,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_flower_abort_low_humidity_damage",
+      "review_status": "audited",
+      "row_hash": "dfd977abae91dcb3e5fb6abb94ff8f4222ffed71c3907a8db03ded85bd720cd9"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 507,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_flower_abort_low_humidity_damage",
+      "review_status": "audited",
+      "row_hash": "ca9aeb604aac0b50e6b7a8726715fe7002585f3228d6b37239da6eaf4e85a7a4"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 508,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_flower_abort_low_humidity_damage",
+      "review_status": "audited",
+      "row_hash": "5cc80b7103408ca8225eba173b845a6e3aa7f18e8ed560ab88ea6038a96b32f9"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 512,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_leaf_bleaching_confirm",
+      "review_status": "audited",
+      "row_hash": "0c48616fe93f94afdb284773a9b38678dc441510b38dbbb9795f19b07320e40f"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 513,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_leaf_bleaching_confirm",
+      "review_status": "audited",
+      "row_hash": "86438cba6d50214c5cfccb439be18fbd77f7a378e12b6b15bbba7ef82a962993"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 514,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_leaf_bleaching_confirm",
+      "review_status": "audited",
+      "row_hash": "1cba55b029d1eccde54e84c53bae1abcd0a1b0f6bd291e897d309cab7a75b837"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 515,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_leaf_bleaching_sunburn_patch",
+      "review_status": "audited",
+      "row_hash": "758e49f2d94d37a830c107d47b5c3917cd0623dd1d4cc7563556dc53ca492971"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 516,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_leaf_bleaching_sunburn_patch",
+      "review_status": "audited",
+      "row_hash": "f59f77d9127cecf26848e6b2a4221f0dcf8730d4659950d1765832486fa64588"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 517,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_leaf_bleaching_sunburn_patch",
+      "review_status": "audited",
+      "row_hash": "5d3bfe8822b4bc929398635b7f9b267f4126ea6ab053f7895e0dea76694b41f7"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 518,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_leaf_margin_burn_confirm",
+      "review_status": "audited",
+      "row_hash": "09d42e0229218bf289bc1185baa4faeab51526d81d7d1d65508d8513e910fbfe"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 519,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_leaf_margin_burn_confirm",
+      "review_status": "audited",
+      "row_hash": "2433e2e77d968b06962a9892b8b94c79ec2160869ba043b12f9ff95da63d8867"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 520,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_leaf_margin_burn_confirm",
+      "review_status": "audited",
+      "row_hash": "2675d45567163a984b267fd52197d287c7ae97b9a38590be181087a5ef8bb6dc"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 521,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_leaf_margin_burn_crispy_edges",
+      "review_status": "audited",
+      "row_hash": "215f7d7f60176df0412552083dc49d39712e3d8d58b3915ff8f0b9da26836668"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 522,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_leaf_margin_burn_crispy_edges",
+      "review_status": "audited",
+      "row_hash": "3204f3c12a8973a71a74e89759b6c2eb11dd3465273fffaa322f72a4721f6d5e"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 523,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_leaf_margin_burn_crispy_edges",
+      "review_status": "audited",
+      "row_hash": "f85088895ae90c10f980413d4ceffcd6a183ca84ada5c356be3e8e4d6cba455b"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 524,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_leaf_margin_necrosis_confirm",
+      "review_status": "audited",
+      "row_hash": "1518cec6ac440b852fb5d77dde48cccc194bd5f3269f0009970de3dde3b996e1"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 525,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_leaf_margin_necrosis_confirm",
+      "review_status": "audited",
+      "row_hash": "5a2d17abcf71f1892bca43b3f54c3bcb58a7790966d58c7498be7f58126b9a1c"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 526,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_leaf_margin_necrosis_confirm",
+      "review_status": "audited",
+      "row_hash": "6317ef68700ea729efee6e7db55ccd62e5685867f2caa340b05bbd6d31cb704f"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 527,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_leaf_margin_necrosis_v_shaped_lesions",
+      "review_status": "audited",
+      "row_hash": "b719f050c23e9c48fe6b2000b93f1611da48c4c9c32666932eb817bd1f60e1c6"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 528,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_leaf_margin_necrosis_v_shaped_lesions",
+      "review_status": "audited",
+      "row_hash": "86e216bab88867bc4149d8fd126f2198540c8afef6f7624167c2e684355f9b56"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 529,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_leaf_margin_necrosis_v_shaped_lesions",
+      "review_status": "audited",
+      "row_hash": "c56efd5f89a3cc88c074a699095e620063ba722b38e3d3010de99829aa07b602"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 530,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_leaf_mosaic_mottling_confirm",
+      "review_status": "audited",
+      "row_hash": "eafa96d108a0dc47f619348788e690f412cb9f605a1708d72bf5d711466a91ea"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 531,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_leaf_mosaic_mottling_confirm",
+      "review_status": "audited",
+      "row_hash": "f76940c01910d2f3d76a7f5ca708cc69c3a9812bc2aad73d0f1b078903991ffd"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 532,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_leaf_mosaic_mottling_confirm",
+      "review_status": "audited",
+      "row_hash": "2e8e7b9873e0031096396b0a7d970fd878d06244fe03d552c35c8d4d72742d73"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 533,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_leaf_mosaic_mottling_distorted_growth",
+      "review_status": "audited",
+      "row_hash": "fe09e0f51fe1bb732d9cb7dca1cedbc7bb53323b8d82617544b3c4aa05d41ee7"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 534,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_leaf_mosaic_mottling_distorted_growth",
+      "review_status": "audited",
+      "row_hash": "42d36edd0d16084f5950aecc295423aa313ab689c11b3269a70bf57ddff5f755"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 535,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_leaf_mosaic_mottling_distorted_growth",
+      "review_status": "audited",
+      "row_hash": "3f2d185e326e802f3eb43f855847b624f20578d7dfefcd9298655c393740dfee"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 536,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_leaf_twist_confirm",
+      "review_status": "audited",
+      "row_hash": "882d89cbe2061de40c90da5a7129437bd9f5ce40bf4847efdd796d04f393184e"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 537,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_leaf_twist_confirm",
+      "review_status": "audited",
+      "row_hash": "8e61af41bdeb09337f97c3aa1ad5ede91b87602da88b9616cecaf55468cf8ddf"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 538,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_leaf_twist_confirm",
+      "review_status": "audited",
+      "row_hash": "23270270e95247889b7291eb6cfb75ba1e229b0e7330d461e1c8ebf21990ee65"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 539,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_leaf_twist_distorted_new_growth",
+      "review_status": "audited",
+      "row_hash": "d8ca3d0be2991fa9424ab2735ff8d4df0743f505440d300f71f1f68603c86c22"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 540,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_leaf_twist_distorted_new_growth",
+      "review_status": "audited",
+      "row_hash": "be6c2aff7f8d0e9baec0888860932d7ea74ee513eccee755807292c78e1fcf96"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 541,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_leaf_twist_distorted_new_growth",
+      "review_status": "audited",
+      "row_hash": "b18f386ccaf04f22cf39050948d59a4da060ef608a8a971a4a5546636cfb36cc"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 542,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_skeletonized_leaves_confirm",
+      "review_status": "audited",
+      "row_hash": "f07118c208377fcc7bd6432a6abf067c3c90d4a32b4ddc3ed79b6a24e704af3f"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 543,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_skeletonized_leaves_confirm",
+      "review_status": "audited",
+      "row_hash": "b5369ca93e639d8edef628def700564fc6a157186cdfb0374d3a779a337d1a41"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 544,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_skeletonized_leaves_confirm",
+      "review_status": "audited",
+      "row_hash": "e32bdfd91be43252c1709b5feffca5c80ba6d52aa39f6d4354e2f5654cb9cc9c"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 545,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_soft_stem_confirm",
+      "review_status": "audited",
+      "row_hash": "10416167f6989b5c7a1013ac2b44e6bad7402c83cf17f2a0434838d51e65729e"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 546,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_soft_stem_confirm",
+      "review_status": "audited",
+      "row_hash": "7595f69bfa57e27369325a9cd4884c9f0ebfe8a285231a2bbff9b36530b81770"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 547,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_soft_stem_confirm",
+      "review_status": "audited",
+      "row_hash": "717a634641ba5bff6fa530cf3569d778638c3f385cd785982dd1522dfe132f3a"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 548,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_soft_stem_mushy_tissue",
+      "review_status": "audited",
+      "row_hash": "c96d08754a5e56618c8261845140bed52ceb8528359f6fdd031f85d0e3fe7f59"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 549,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_soft_stem_mushy_tissue",
+      "review_status": "audited",
+      "row_hash": "378d727f90b87f88565f2be7f61808982831ad4885f367a0bfff91f7eb62ffab"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 550,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_soft_stem_mushy_tissue",
+      "review_status": "audited",
+      "row_hash": "065581fa76f068dcc41cbb8ebe53172fd882c929f5ee076e5a4e9dfb9b3fc221"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 551,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_stem_collapse_confirm",
+      "review_status": "audited",
+      "row_hash": "bbbc2cfb69e6d5f57711394ff4b111996ceb281202d26f0734b5dadcd8c6cab5"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 552,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_stem_collapse_confirm",
+      "review_status": "audited",
+      "row_hash": "6bf698d79009037ffcf226be60cf65f997966feee62987d595a916e205c14bf7"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 553,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_stem_collapse_confirm",
+      "review_status": "audited",
+      "row_hash": "441c6e144699a35fd81ec4e8bcbe361524db5612d5eda429885b7aa2c125aecd"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 554,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_stem_collapse_poor_drainage",
+      "review_status": "audited",
+      "row_hash": "44a84dd7e6a3276a8a67141ae1880ec7a1aa40302b879f68d79461deb90add3d"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 555,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_stem_collapse_poor_drainage",
+      "review_status": "audited",
+      "row_hash": "87b61d534a9f46b1a49d058e9d369d0f45761fc333644d47095d94396e197684"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 556,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_stem_collapse_poor_drainage",
+      "review_status": "audited",
+      "row_hash": "adcc7dacaa9d6abe3a7ebdab20649cc4f664ce299a2f1bf7c361cb5b40227894"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 557,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_tunnels_in_leaf_confirm",
+      "review_status": "audited",
+      "row_hash": "944e561d241136796a90d94b6d73b23a9c628c5c0a14eb6fed4329b8fa815a59"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 558,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_tunnels_in_leaf_confirm",
+      "review_status": "audited",
+      "row_hash": "fce9c7e6578a077a400fee9dbacf6f12afb3dac1cca41e9ddb974296343e8b17"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 559,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_tunnels_in_leaf_confirm",
+      "review_status": "audited",
+      "row_hash": "ed1203a727eedb918d10c3af35bac6ed8574ea710ac4732bbc33df83958224f6"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 560,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_uniform_browning_confirm",
+      "review_status": "audited",
+      "row_hash": "100024a1ad64759b7a7beff86723464c10af1b07526187ab7a78edcb140a2512"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 561,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_uniform_browning_confirm",
+      "review_status": "audited",
+      "row_hash": "f3af4befb512da14d9bf2f820c00843f79171677d6a713f7b0f8ee0a49f9d414"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 562,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_uniform_browning_confirm",
+      "review_status": "audited",
+      "row_hash": "d1a2b7775775572d3bf6d62bc77e6c83da178816202dd443f9f7119ed7e16fef"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 563,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_uniform_browning_crispy_edges",
+      "review_status": "audited",
+      "row_hash": "b53b23cd7660bcd3a24c1e72203690b4d42483eac71eb1aa1edd98ae8c8ee92f"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 564,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_uniform_browning_crispy_edges",
+      "review_status": "audited",
+      "row_hash": "16c0f52a4aebd708f227f31bc6361909854c25c93d0a769a43bd7af20e91b814"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 565,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_uniform_browning_crispy_edges",
+      "review_status": "audited",
+      "row_hash": "01ea31e8f33f9fb49b77d95bb842f4e5ddb8138878a81d8c3a49389ea842fed5"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 566,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_water_soaked_stem_confirm",
+      "review_status": "audited",
+      "row_hash": "a739c4ea1cc05dd75a2a2d7d6e5939d69e1a2d88808088c5a295c6fa0a2ab5d2"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 567,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_water_soaked_stem_confirm",
+      "review_status": "audited",
+      "row_hash": "17fc510f1715dcc56b6d88fd31961bde7a270ebeed2d233d040adda0d3563450"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 568,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_water_soaked_stem_confirm",
+      "review_status": "audited",
+      "row_hash": "5d3948b538dda511b98c004ff6bfadadcf7bf676389f8c6a2acd6e3b2ed91f95"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 569,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_wind_damage_confirm",
+      "review_status": "audited",
+      "row_hash": "b936e554894008ec56dc005d375ee273edfd62822cf4bf5e810d8522e43bf068"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 570,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_wind_damage_confirm",
+      "review_status": "audited",
+      "row_hash": "41041230ee4e294ab79918984a70f9b58f266f9bca28d7fed377ffe707a439bc"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 571,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_wind_damage_confirm",
+      "review_status": "audited",
+      "row_hash": "9328ec19c7743a872f33147ed6cad88f95408e84d1e85fee8e54048cc0e37289"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 572,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_wind_damage_crispy_edges",
+      "review_status": "audited",
+      "row_hash": "db2325df750778ebc71313279662aa1956c4d74d6a7df0ca2f71dbccaace9e0d"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 573,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_wind_damage_crispy_edges",
+      "review_status": "audited",
+      "row_hash": "a0cd825586a71143622047b3bae45c4984bae6d6594a7d41a4da6043d45f5d38"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 574,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_wind_damage_crispy_edges",
+      "review_status": "audited",
+      "row_hash": "b84a2ca7b95037e6f288761928b512f87dcc6edeb5bf4e031f803f8c4ae19861"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 575,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_yellowing_patchy_confirm",
+      "review_status": "audited",
+      "row_hash": "f4c893aa01d687159bfe739196c92db400a6ed332aa3d9ca27ebd7db945d36ed"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 576,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_yellowing_patchy_confirm",
+      "review_status": "audited",
+      "row_hash": "b4460504e0070e77cf6120800d59da22ec67e31b5e742b2cf8835c436c367c3c"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 577,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_yellowing_patchy_confirm",
+      "review_status": "audited",
+      "row_hash": "c6f645a84383d6304d35dbc3c86ad8e731020e456e5d328ab743a9e46ba6c2fb"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 578,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_yellowing_patchy_yellow_speckling",
+      "review_status": "audited",
+      "row_hash": "f26e3ad28e1b8787dcef3cee0c853725f862367d36ff1b5c7085e61eec2c5512"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 579,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_yellowing_patchy_yellow_speckling",
+      "review_status": "audited",
+      "row_hash": "abe5484fc95655bb98af7b663bbd5068505d516b82a03da6d5fd35aca3d39f19"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 580,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_yellowing_patchy_yellow_speckling",
+      "review_status": "audited",
+      "row_hash": "5794146c6eb5dae9da3bf96432b223ea0bb654c0020a83dc2eaf5a5a45c633af"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 677,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_stable_marking_pattern_confirm",
+      "review_status": "audited",
+      "row_hash": "8d42c99faf935baa4cc0baa168f6effdba2cc0c8937d9c55d42f6e1b826b8c94"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 678,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_stable_marking_pattern_confirm",
+      "review_status": "audited",
+      "row_hash": "dd7d379b5e129e104098a498883824ee438f2353bab0b2e0454d9d8f25c8326f"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 679,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_stable_marking_pattern_confirm",
+      "review_status": "audited",
+      "row_hash": "afe67c2a8d116df907e2cf277a6bf02599dcb6748165691e983802a7464287c1"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 680,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_stable_marking_new_growth_consistent",
+      "review_status": "audited",
+      "row_hash": "04926845a49621fd40efe2aa574b7128632d92b9d3e3638397657d129173734a"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 681,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_stable_marking_new_growth_consistent",
+      "review_status": "audited",
+      "row_hash": "cb9cb340bba3ed992ec8930fa058f74b2ced840fa100f1c5a716283272955a1e"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 682,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_stable_marking_new_growth_consistent",
+      "review_status": "audited",
+      "row_hash": "ad745934cb75d294deca63e36de031db3c82ba5c5e866f3c085ca78d86103ea3"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 683,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_stable_marking_no_recent_expansion",
+      "review_status": "audited",
+      "row_hash": "c96c560f77eb46dd8173e01bd2f2a25cc456ea28f5f84aa76a5d204ae8906455"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 684,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_stable_marking_no_recent_expansion",
+      "review_status": "audited",
+      "row_hash": "fe45e2c3e28d56cb8eccda3d27942d7bacc208ce50d1b9faa18ede1826275bed"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 685,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_stable_marking_no_recent_expansion",
+      "review_status": "audited",
+      "row_hash": "318b501673b3a16cc0d594343e956bea1223a07533144561588146a771983d61"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1001,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_stippling_confirm",
+      "review_status": "audited",
+      "row_hash": "9fa689b63ff697e9daad9e43198b6d6d6d01155dde7d3aa3b92ea28b646e545b"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1002,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_stippling_confirm",
+      "review_status": "audited",
+      "row_hash": "b18bba1f3f148b862a1f387b4a16a5bdcf9c1d84635bddfa62352ccf0e83e611"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1003,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_stippling_confirm",
+      "review_status": "audited",
+      "row_hash": "09f86f9a046a7ebcfd7f09ba9e5b4f0d789afd02e167b352452b47de4a5ec373"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1004,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_leaf_curl_confirm",
+      "review_status": "audited",
+      "row_hash": "0429fb2c359538ea681cbfe8cc462f028dcbd41ef1e740f4fd76642a023f4b82"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1005,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_leaf_curl_confirm",
+      "review_status": "audited",
+      "row_hash": "7f512b7ea6dc9e83d31b64df52f81b820da8af2cfdd019424ead3bec9da53fad"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1006,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_leaf_curl_confirm",
+      "review_status": "audited",
+      "row_hash": "4790342beea53739a78a8ce46f28f5e5ca266d98a877be7472aec8cc94b1f280"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1007,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_sticky_honeydew_confirm",
+      "review_status": "audited",
+      "row_hash": "98a81ef4ece7fa9fbdb864b81a6d20d8174f33206a8eb8cb18f126d9acc5d57d"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1008,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_sticky_honeydew_confirm",
+      "review_status": "audited",
+      "row_hash": "364bdb108dcfce0e9cf0694eb449603348999006ea1afd5fc17c8477a65ea95e"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1009,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_sticky_honeydew_confirm",
+      "review_status": "audited",
+      "row_hash": "bb066e276588a2def99a1fa4016627fc6015fc9a0c51012c25315c1a69afaa3a"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1010,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_sooty_mold_confirm",
+      "review_status": "audited",
+      "row_hash": "1b4a9fe214072fe00ff89452f6baf4f685549781b295c2b89c531234b0faf178"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1011,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_sooty_mold_confirm",
+      "review_status": "audited",
+      "row_hash": "7ae07eb02732160c493de9c081890864bf4406baef864b6eecc906e866a237e7"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1012,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_sooty_mold_confirm",
+      "review_status": "audited",
+      "row_hash": "d270fa0b4261c0f1014f6fc8f69353f4883397b927548ab58fc2831b0813ff2c"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1013,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_brown_spots_halo_confirm",
+      "review_status": "audited",
+      "row_hash": "eccac77412b4dcda140e2ba0fcc157f88b10de44ee44f080b409a09a96d97c29"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1014,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_brown_spots_halo_confirm",
+      "review_status": "audited",
+      "row_hash": "4725674b9eb6609f9bde66fb8dc6724396901b4689cc37ca113306c536546c48"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1015,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_brown_spots_halo_confirm",
+      "review_status": "audited",
+      "row_hash": "a2e028c4458917970d8e7e717e07ced7af05532ccd2137d5724660c57d4033e9"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1016,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_black_spots_spreading_confirm",
+      "review_status": "audited",
+      "row_hash": "9b77f8d540073138f1f8b17a11ec6550c78396f1bcc5a2a81e82bd683b3aa03c"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1017,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_black_spots_spreading_confirm",
+      "review_status": "audited",
+      "row_hash": "ad1485231aff64eb7a284d0b3b42a710eff851f5dd5758d18b2e0f02e0846b46"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1018,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_black_spots_spreading_confirm",
+      "review_status": "audited",
+      "row_hash": "57db0d0e3aafaf3e07ab2b5becf3c05f7f58469fdd85eeaba627a9907069f908"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1019,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_irregular_blotches_confirm",
+      "review_status": "audited",
+      "row_hash": "f8c9ee484cde1744e7d04bdae18f0a265363e4a519314259e41e6f951e89cb33"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1020,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_irregular_blotches_confirm",
+      "review_status": "audited",
+      "row_hash": "c4f70e45317c04940643a39914df6ada8a55873eacd7fe56d34d77ff40694bef"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1021,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_irregular_blotches_confirm",
+      "review_status": "audited",
+      "row_hash": "a98d686859e87d448ea5a38c411d11dc3a0d197c6f76ed621601208330c3b223"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1022,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_patchy_browning_confirm",
+      "review_status": "audited",
+      "row_hash": "f3b02bc530798eaf59db42b46fbacd46a85be55f31edb47663e8ebf431c426ab"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1023,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_patchy_browning_confirm",
+      "review_status": "audited",
+      "row_hash": "ef6cb5035d36ec708288959089d3bc41f36cdcea6cea4adb78fb292602e7fb04"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1024,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_patchy_browning_confirm",
+      "review_status": "audited",
+      "row_hash": "6f56dc5b581f9282995581813b7f0d13a593b1d5139a1bbe5b858c658e645e41"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1025,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_leaf_yellowing_confirm",
+      "review_status": "audited",
+      "row_hash": "098538c460162e50bc9a5ac3cdf172ed6f853b584ecb1a184c4770868bef2b47"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1026,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_leaf_yellowing_confirm",
+      "review_status": "audited",
+      "row_hash": "5f4faafbafed4f51f93de671be944d7d979649fba32e62c9fb6ca3f611d1dc23"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1027,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_leaf_yellowing_confirm",
+      "review_status": "audited",
+      "row_hash": "1f14ef129468d99c47479f8f4c54ce156577e0e6e58e2e7d0958d0078543daab"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1028,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_leaf_yellowing_new_growth_bias",
+      "review_status": "audited",
+      "row_hash": "18bd012da48460a111b2b55c31561a82f1c667f747950d24ab80b97a2770744d"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1029,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_leaf_yellowing_new_growth_bias",
+      "review_status": "audited",
+      "row_hash": "108e27606a33453c8ade8159279a7d94f7f7f74c0dd34c67ca1ae3c569a51427"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1030,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_leaf_yellowing_new_growth_bias",
+      "review_status": "audited",
+      "row_hash": "092970a9e036caef470b57bc9663f62061c82cb4085aec115955409e1f92588c"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1445,
+      "is_active": 1,
+      "option_key": "embedded",
+      "question_key": "q_black_spots_surface_layer_check",
+      "review_status": "audited",
+      "row_hash": "9ac46d2cf52c9e5e72d4ff0ad4db55b51af8d7ef4e94c9a94ea9a63616f0db8a"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1446,
+      "is_active": 1,
+      "option_key": "surface",
+      "question_key": "q_black_spots_surface_layer_check",
+      "review_status": "audited",
+      "row_hash": "f0becd9f56c98e756c16dbfdf866655f87fb50d36baadba892c18ab28a5c30a8"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1447,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_black_spots_surface_layer_check",
+      "review_status": "audited",
+      "row_hash": "115e335cf528fe6e5f785f00d3370ca2bddfc2f213a1eb3207a314e71f7f5577"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1448,
+      "is_active": 1,
+      "option_key": "dry_firm",
+      "question_key": "q_black_spots_tissue_moisture_check",
+      "review_status": "audited",
+      "row_hash": "8940a173a67dc1ba33cd61d5cf3dde6864cc1575d7911edb649ef79e2636fa46"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1449,
+      "is_active": 1,
+      "option_key": "soft_wet",
+      "question_key": "q_black_spots_tissue_moisture_check",
+      "review_status": "audited",
+      "row_hash": "85307c40ac2d95ce224fb471666915f9228b6bbf0633123ab70457e947576d90"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1450,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_black_spots_tissue_moisture_check",
+      "review_status": "audited",
+      "row_hash": "cf73dd603ed0c7e22169a5ff8b7930ca3d38c8694f2d376cf6ff91f771e99f06"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1451,
+      "is_active": 1,
+      "option_key": "more_sun",
+      "question_key": "q_leaf_yellowing_light_background",
+      "review_status": "audited",
+      "row_hash": "1930e83daafb3e94c2fc073aaaef7b033ec872ac50062cd00fbbde09b3da0437"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1452,
+      "is_active": 1,
+      "option_key": "less_light",
+      "question_key": "q_leaf_yellowing_light_background",
+      "review_status": "audited",
+      "row_hash": "e0142a4a749e456b09e61b8f17fa585c110bc9d448f620e270dbff2d4d629827"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1453,
+      "is_active": 1,
+      "option_key": "no_change",
+      "question_key": "q_leaf_yellowing_light_background",
+      "review_status": "audited",
+      "row_hash": "ce2b6c6635305ab43a715cdf6f9df292a62a08c309a9160b17f05373b50fa87e"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1454,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_leaf_yellowing_light_background",
+      "review_status": "audited",
+      "row_hash": "fc9d88e2d7cf89bd5226d79bc964eaca6c40b366090072c6d1278769caee3f30"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1455,
+      "is_active": 1,
+      "option_key": "more_wet",
+      "question_key": "q_leaf_yellowing_watering_background",
+      "review_status": "audited",
+      "row_hash": "c7f443222fc328d79a60fc37a1791aeacb0fcbf9f9296c301a83eb67fba209c0"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1456,
+      "is_active": 1,
+      "option_key": "more_dry",
+      "question_key": "q_leaf_yellowing_watering_background",
+      "review_status": "audited",
+      "row_hash": "aa72551b678a08483a3cb29e941d30ebbad25d12369f24d8fa7f6419fba7ee20"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1457,
+      "is_active": 1,
+      "option_key": "no_change",
+      "question_key": "q_leaf_yellowing_watering_background",
+      "review_status": "audited",
+      "row_hash": "9d483e1389d524d367b45e4dc8d8ade4b5aa668cd81503ee7ac23914dcfd98f4"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1458,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_leaf_yellowing_watering_background",
+      "review_status": "audited",
+      "row_hash": "728c4720f3a78fc157e1833d3c018d2b58007e721095e7031a1ae1c4be44efc1"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1459,
+      "is_active": 1,
+      "option_key": "yes",
+      "question_key": "q_leaf_yellowing_fertilization_background",
+      "review_status": "audited",
+      "row_hash": "9729dff80a2e16f6e1cd452e41bc7e5770769f6180599f71cd7e93b935f2c2d5"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1460,
+      "is_active": 1,
+      "option_key": "no",
+      "question_key": "q_leaf_yellowing_fertilization_background",
+      "review_status": "audited",
+      "row_hash": "78b36e7da2739323881f8c07410391c3cfcdd8b136b97a4015f89b4cf01d2ab9"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1461,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_leaf_yellowing_fertilization_background",
+      "review_status": "audited",
+      "row_hash": "3cf21d6847da1ffd6c5dcc9c2fee7b2e9dd25eb8896237512b26c9cc0a4af00e"
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1462,
+      "is_active": 1,
+      "option_key": "care_context",
+      "question_key": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+      "review_status": "audited",
+      "row_hash": null
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1463,
+      "is_active": 1,
+      "option_key": "pest_trace",
+      "question_key": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+      "review_status": "audited",
+      "row_hash": null
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1464,
+      "is_active": 1,
+      "option_key": "disease_trace",
+      "question_key": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+      "review_status": "audited",
+      "row_hash": null
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1465,
+      "is_active": 1,
+      "option_key": "yellowing_only",
+      "question_key": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+      "review_status": "audited",
+      "row_hash": null
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1466,
+      "is_active": 1,
+      "option_key": "unknown",
+      "question_key": "q_observed_probe__leaf_yellowing__yellowing_primary_clue_gate",
+      "review_status": "audited",
+      "row_hash": null
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1495,
+      "is_active": 1,
+      "option_key": "stable_for_weeks",
+      "question_key": "q_non_problematic_variegation_stability",
+      "review_status": "audited",
+      "row_hash": null
+    },
+    {
+      "cms_lifecycle": "legacy_compat",
+      "data_status": "audited",
+      "id": 1496,
+      "is_active": 1,
+      "option_key": "expanding_or_uncertain",
+      "question_key": "q_non_problematic_variegation_stability",
+      "review_status": "audited",
+      "row_hash": null
+    }
+  ]
+}

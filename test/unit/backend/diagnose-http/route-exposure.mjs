@@ -10,6 +10,10 @@ const readJson = relativePath => JSON.parse(read(relativePath))
 
 // data_mode=unit_fake; test_kind=source_contract
 const diagnoseConfig = readJson('cloudfunctions/diagnose-http/cloudbase-functions.json')
+const questionStartConfig = readJson(
+  'cloudfunctions/diagnosis-question-start-http/cloudbase-functions.json'
+)
+const answerConfig = readJson('cloudfunctions/diagnosis-answer-http/cloudbase-functions.json')
 const retiredConfig = readJson('cloudfunctions/diagnosis-history-http/cloudbase-functions.json')
 const diagnoseRouter = read('cloudfunctions/diagnose-http/app/http-router.js')
 const historyReader = read('cloudfunctions/diagnose-http/services/session-read-service.js')
@@ -65,6 +69,38 @@ test('兼容入口复用 diagnosis/start，且 stream 入口强制 SSE', () => {
     diagnoseRouter,
     /const \{ handleDiagnosisStart \} = getDiagnosisHandlers\(\)[\s\S]*?return (?:await )?handleDiagnosisStart\(request, context/
   )
+})
+
+test('主函数与专用诊断函数的重叠路由必须保持显式归属', () => {
+  const ownersFor = routePath =>
+    [
+      ['diagnose-http', diagnoseConfig],
+      ['diagnosis-question-start-http', questionStartConfig],
+      ['diagnosis-answer-http', answerConfig]
+    ]
+      .filter(([, config]) =>
+        (config.routes || []).some(route => String(route?.path || '').trim() === routePath)
+      )
+      .map(([functionName]) => functionName)
+
+  assert.deepEqual(ownersFor('/diagnosis/question/start'), [
+    'diagnose-http',
+    'diagnosis-question-start-http'
+  ])
+  assert.deepEqual(ownersFor('/diagnosis/answer'), ['diagnose-http', 'diagnosis-answer-http'])
+
+  for (const [functionName, config] of [
+    ['diagnosis-question-start-http', questionStartConfig],
+    ['diagnosis-answer-http', answerConfig]
+  ]) {
+    assert.deepEqual(
+      (config.functions || []).map(item => item.name),
+      [functionName],
+      `${functionName} 的路由清单必须只声明自身函数`
+    )
+    const paths = (config.routes || []).map(route => String(route?.path || '').trim())
+    assert.equal(new Set(paths).size, paths.length, `${functionName} 的路由清单不应重复`)
+  }
 })
 
 test('历史接口按 openid 隔离，并支持用户植物过滤', () => {

@@ -68,7 +68,11 @@ export function normalizeSymptomLabels(values = []) {
   return uniqueStrings(normalizeTextList(values).map(normalizeSymptomLabel))
 }
 
-export function resolveStableAdviceGroupKey(outcome = {}, outcomeKey = '') {
+export function resolveStableAdviceGroupKey(
+  outcome = {},
+  outcomeKey = '',
+  { actionItems = [], avoidItems = [] } = {}
+) {
   const actionKey = normalizeText(
     outcome.actionAdviceKey ||
       outcome.action_advice_key ||
@@ -85,6 +89,12 @@ export function resolveStableAdviceGroupKey(outcome = {}, outcomeKey = '') {
   }
   if (actionKey || avoidKey) {
     return `action:${actionKey || '__none__'}|avoid:${avoidKey || '__none__'}`
+  }
+
+  const actionTextSignature = uniqueStrings(actionItems).join('\u001f')
+  const avoidTextSignature = uniqueStrings(avoidItems).join('\u001f')
+  if (actionTextSignature || avoidTextSignature) {
+    return `text:action:${actionTextSignature}|avoid:${avoidTextSignature}`
   }
 
   return `outcome:${normalizeText(outcomeKey) || 'unknown'}`
@@ -209,7 +219,12 @@ export function buildSharedOutcomeAdviceGroups({
 
   const groupsByKey = new Map()
   for (const { outcome, outcomeKey } of sourceOutcomes) {
-    const groupKey = resolveStableAdviceGroupKey(outcome, outcomeKey)
+    const outcomeActionItems = getActionItems?.(outcome) || []
+    const outcomeAvoidItems = getAvoidItems?.(outcome) || []
+    const groupKey = resolveStableAdviceGroupKey(outcome, outcomeKey, {
+      actionItems: outcomeActionItems,
+      avoidItems: outcomeAvoidItems
+    })
     const structuredActionItems = normalizeStructuredActionItems(outcome.actionItems).filter(
       item => item.stage !== 'avoid'
     )
@@ -248,8 +263,6 @@ export function buildSharedOutcomeAdviceGroups({
         groupsByKey.set(spec.key, group)
       }
       group.outcomes.push(outcome)
-      const actionItems = getActionItems?.(outcome) || []
-      const avoidItems = getAvoidItems?.(outcome) || []
       if (spec.categoryId) {
         const categoryActionItems = structuredActionItems
           .filter(item => item.categoryId === spec.categoryId)
@@ -260,8 +273,8 @@ export function buildSharedOutcomeAdviceGroups({
         group.actionItems.push(...categoryActionItems)
         group.avoidItems.push(...categoryAvoidItems)
       } else {
-        group.actionItems.push(...actionItems)
-        group.avoidItems.push(...avoidItems)
+        group.actionItems.push(...outcomeActionItems)
+        group.avoidItems.push(...outcomeAvoidItems)
       }
     }
   }

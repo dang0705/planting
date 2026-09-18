@@ -62,7 +62,10 @@ const flowPageSource = fs.readFileSync(
   path.join(repoRoot, 'src/subpackages/diagnosis/flow.vue'),
   'utf8'
 )
-const indexSource = fs.readFileSync(path.join(repoRoot, 'src/pages/index/index.vue'), 'utf8')
+const userPlantsSource = fs.readFileSync(
+  path.join(repoRoot, 'src/components/UserPlantsSection.vue'),
+  'utf8'
+)
 const profileSource = fs.readFileSync(path.join(repoRoot, 'src/pages/profile/profile.vue'), 'utf8')
 assert.match(flowSource, /\/subpackages\/diagnosis\/question-package\?draftKey=/)
 assert.match(diagnoseTabSource, /id="diagnose-tab-page"/)
@@ -80,8 +83,8 @@ assert.match(flowPageSource, /normalizeEntrySource\(options\?\.entrySource\)/)
 assert.match(flowPageSource, /normalizeDiagnosisProfile\(options\?\.diagnosisProfile\)/)
 assert.match(diagnoseTabIntakeSource, /\/subpackages\/diagnosis\/question-package\?draftKey=/)
 assert.doesNotMatch(diagnoseTabIntakeSource, /\/subpackages\/diagnosis\/flow/)
-assert.match(indexSource, /subpackages\/diagnosis\/flow\?plantId=/)
-assert.match(indexSource, /\/subpackages\/diagnosis\/question-package\?id=/)
+assert.match(userPlantsSource, /subpackages\/diagnosis\/flow\?plantId=/)
+assert.match(userPlantsSource, /\/subpackages\/diagnosis\/question-package\?id=/)
 assert.match(profileSource, /\/subpackages\/diagnosis\/question-package\?id=/)
 
 console.log('diagnosis subpackage route contract tests passed')

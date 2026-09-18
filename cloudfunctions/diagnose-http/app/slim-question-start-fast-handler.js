@@ -94,11 +94,20 @@ function parseQuery(rawPath = '') {
 function getRequest(event = {}, context = {}) {
   const httpContext = context?.httpContext || {}
   const rawPath =
-    httpContext.path || httpContext.url || httpContext.rawPath || httpContext.reqUrl || event?.path || ''
+    httpContext.path ||
+    httpContext.url ||
+    httpContext.rawPath ||
+    httpContext.reqUrl ||
+    event?.path ||
+    ''
   return {
     path: String(rawPath),
     method: String(
-      httpContext.httpMethod || httpContext.method || event?.httpMethod || event?.requestContext?.http?.method || 'POST'
+      httpContext.httpMethod ||
+        httpContext.method ||
+        event?.httpMethod ||
+        event?.requestContext?.http?.method ||
+        'POST'
     ).toUpperCase(),
     headers: normalizeHeaders({
       ...(event?.headers && typeof event.headers === 'object' ? event.headers : {}),
@@ -125,7 +134,11 @@ function jsonResponse(statusCode, payload) {
 }
 
 function getContinuationSecret() {
-  return CONTINUATION_SECRET_ENV_KEYS.map(key => text(process.env[key])).find(value => value.length >= 32) || ''
+  return (
+    CONTINUATION_SECRET_ENV_KEYS.map(key => text(process.env[key])).find(
+      value => value.length >= 32
+    ) || ''
+  )
 }
 
 function encodePayload(payload) {
@@ -135,7 +148,12 @@ function encodePayload(payload) {
 function createContinuationToken({ openid, sessionId, response, plantContext }) {
   const secret = getContinuationSecret()
   const questionPackage = response?.questionPackage || {}
-  if (!secret || !text(openid) || !text(sessionId) || questionPackage.answerSubmitMode !== 'package') {
+  if (
+    !secret ||
+    !text(openid) ||
+    !text(sessionId) ||
+    questionPackage.answerSubmitMode !== 'package'
+  ) {
     return ''
   }
   const issuedAt = Math.floor(Date.now() / 1000)
@@ -216,15 +234,17 @@ function compactQuestion(item = {}) {
 
 function buildObservedSymptoms(mode) {
   const isWilting = mode === 'wilting_droop'
-  return [{
-    symptomKey: isWilting ? 'wilting_droop' : 'leaf_yellowing',
-    symptomCn: isWilting ? '枯萎发蔫' : '叶片发黄',
-    confidence: 0.82,
-    source: 'manual_symptom_mode',
-    evidenceSource: 'manual_symptom_mode',
-    classKey: isWilting ? 'wilting_droop_mode' : 'yellowing_mode',
-    classNameCn: isWilting ? '枯萎 / 发蔫模式' : '黄叶模式'
-  }]
+  return [
+    {
+      symptomKey: isWilting ? 'wilting_droop' : 'leaf_yellowing',
+      symptomCn: isWilting ? '枯萎发蔫' : '叶片发黄',
+      confidence: 0.82,
+      source: 'manual_symptom_mode',
+      evidenceSource: 'manual_symptom_mode',
+      classKey: isWilting ? 'wilting_droop_mode' : 'yellowing_mode',
+      classNameCn: isWilting ? '枯萎 / 发蔫模式' : '黄叶模式'
+    }
+  ]
 }
 
 function buildObservedEvidenceSet(mode) {
@@ -233,32 +253,46 @@ function buildObservedEvidenceSet(mode) {
   const classKey = isWilting ? 'wilting_droop_mode' : 'yellowing_mode'
   const classNameCn = isWilting ? '枯萎 / 发蔫模式' : '黄叶模式'
   const symptomCn = isWilting ? '枯萎发蔫' : '叶片发黄'
-  return [{
-    observedEvidenceSetId: `manual_symptom_mode::${classKey}::${symptomKey}`,
-    evidenceKey: symptomKey,
-    evidenceType: 'symptom',
-    symptomKey,
-    symptomCn,
-    confidence: 0.82,
-    sourceType: 'manual_symptom_mode',
-    currentStatus: 'active',
-    targetLayer: 'observed_evidence_set',
-    sourceRecordId: classKey,
-    firstSeenStage: 'manual_symptom_mode',
-    enteredRuntime: 1,
-    enteredExplanation: 1,
-    isKeyEvidence: 1,
-    symptomClassKey: classKey,
-    symptomClassNameCn: classNameCn
-  }]
+  return [
+    {
+      observedEvidenceSetId: `manual_symptom_mode::${classKey}::${symptomKey}`,
+      evidenceKey: symptomKey,
+      evidenceType: 'symptom',
+      symptomKey,
+      symptomCn,
+      confidence: 0.82,
+      sourceType: 'manual_symptom_mode',
+      currentStatus: 'active',
+      targetLayer: 'observed_evidence_set',
+      sourceRecordId: classKey,
+      firstSeenStage: 'manual_symptom_mode',
+      enteredRuntime: 1,
+      enteredExplanation: 1,
+      isKeyEvidence: 1,
+      symptomClassKey: classKey,
+      symptomClassNameCn: classNameCn
+    }
+  ]
 }
 
 function buildClientContext(payload = {}) {
-  const source = payload?.clientContext && typeof payload.clientContext === 'object' ? payload.clientContext : payload
+  const source =
+    payload?.clientContext && typeof payload.clientContext === 'object'
+      ? payload.clientContext
+      : payload
   const result = {}
-  for (const key of ['source', 'platform', 'reviewSourceType', 'visualInputVersion', 'diagnosisProfile', 'entrySource']) {
+  for (const key of [
+    'source',
+    'platform',
+    'reviewSourceType',
+    'visualInputVersion',
+    'diagnosisProfile',
+    'entrySource'
+  ]) {
     const value = text(source?.[key])
-    if (value) result[key] = value
+    if (value) {
+      result[key] = value
+    }
   }
   return Object.keys(result).length ? result : null
 }
@@ -290,15 +324,22 @@ function attachAfterResponse(response, task) {
 }
 
 function resolveStartMode(payload = {}) {
-  const classKey = text(payload.symptomClassKey || payload.symptom_class_key || payload.classKey || payload.class_key)
-  if (classKey === 'yellowing_mode') return 'yellow_leaf'
-  if (classKey === 'wilting_droop_mode') return 'wilting_droop'
+  const classKey = text(
+    payload.symptomClassKey || payload.symptom_class_key || payload.classKey || payload.class_key
+  )
+  if (classKey === 'yellowing_mode') {
+    return 'yellow_leaf'
+  }
+  if (classKey === 'wilting_droop_mode') {
+    return 'wilting_droop'
+  }
   return ''
 }
 
 function buildPlantContext(payload = {}) {
   const requestedPlantId = text(payload.plantCatalogId || payload.catalogPlantId || payload.plantId)
-  const plantId = requestedPlantId && requestedPlantId !== 'diagnose_tab_anonymous' ? requestedPlantId : null
+  const plantId =
+    requestedPlantId && requestedPlantId !== 'diagnose_tab_anonymous' ? requestedPlantId : null
   return {
     plantId,
     userPlantId: text(payload.userPlantId),
@@ -307,13 +348,16 @@ function buildPlantContext(payload = {}) {
   }
 }
 
-async function handleFastQuestionStart({ request, payload, identity } = {}) {
+async function handleFastQuestionStart({ payload, identity } = {}) {
   const mode = resolveStartMode(payload)
   const config = PACKAGE_CONFIG[mode]
-  if (!config) return null
+  if (!config) {
+    return null
+  }
 
   const plantContext = buildPlantContext(payload)
-  const allowsAnonymousPlantContext = text(payload.entrySource || payload.entry_source) === 'diagnose_tab'
+  const allowsAnonymousPlantContext =
+    text(payload.entrySource || payload.entry_source) === 'diagnose_tab'
   if (!plantContext.userPlantId && !plantContext.plantId && !allowsAnonymousPlantContext) {
     throw Object.assign(new Error('缺少 userPlantId 或 plantCatalogId'), { statusCode: 400 })
   }
@@ -373,12 +417,14 @@ async function handleFastQuestionStart({ request, payload, identity } = {}) {
         visibleOutcomeKeys: [],
         requiresQuestionPackage: true,
         decisionCause: {
-          decisionCauseKey: mode === 'wilting_droop'
-            ? 'static_wilting_droop_question_package'
-            : 'static_yellowing_question_package',
-          decisionCauseText: mode === 'wilting_droop'
-            ? '枯萎 / 发蔫手动入口使用模块级静态固定题包。'
-            : '黄叶手动入口使用模块级静态固定题包。'
+          decisionCauseKey:
+            mode === 'wilting_droop'
+              ? 'static_wilting_droop_question_package'
+              : 'static_yellowing_question_package',
+          decisionCauseText:
+            mode === 'wilting_droop'
+              ? '枯萎 / 发蔫手动入口使用模块级静态固定题包。'
+              : '黄叶手动入口使用模块级静态固定题包。'
         }
       }
     },
@@ -389,11 +435,14 @@ async function handleFastQuestionStart({ request, payload, identity } = {}) {
     },
     plantContext
   }
-  Object.assign(response, buildRuntimeArtifacts(response, {
-    observedEvidenceSet,
-    derivedEvidenceSet: [],
-    diagnosisDirections: []
-  }))
+  Object.assign(
+    response,
+    buildRuntimeArtifacts(response, {
+      observedEvidenceSet,
+      derivedEvidenceSet: [],
+      diagnosisDirections: []
+    })
+  )
 
   const continuationToken = createContinuationToken({
     openid: identity.openid,
@@ -405,34 +454,43 @@ async function handleFastQuestionStart({ request, payload, identity } = {}) {
     throw Object.assign(new Error('题包续接凭据不可用'), { statusCode: 500 })
   }
   const publicQuestions = questions.map(compactQuestion)
-  return attachAfterResponse(jsonResponse(200, {
-    code: 200,
-    message: '问诊初始化成功',
-    data: {
-      diagnosisSessionId: sessionId,
-      roundId: 'round_1',
-      ...(plantContext.userPlantId ? { userPlantId: plantContext.userPlantId } : {}),
-      ...(response.plantId ? { plantId: response.plantId } : {}),
-      ...(plantContext.plantId ? { plantCatalogId: plantContext.plantId } : {}),
-      stage: 'question_package',
-      status: 'active',
-      stopReason: 'await_package_answers',
-      questions: publicQuestions,
-      questionPackage,
-      summaryCard: {
-        title: '诊断问题',
-        subtitle: `需要回答 ${publicQuestions.length} 道问题`,
-        severity: 'low',
-        statusText: ''
-      },
-      airEnvironmentByQuestionId: {},
-      airEnvironmentSnapshotsByQuestionId: {},
-      airEnvironmentSnapshotSourceByQuestionId: {},
-      airEnvironmentEvidence: null,
-      uiHints: response.uiHints,
-      questionPackageContinuationToken: continuationToken
-    }
-  }), buildDeferredPersistenceTask({ sessionId, openid: identity.openid, plantContext, response, payload }))
+  return attachAfterResponse(
+    jsonResponse(200, {
+      code: 200,
+      message: '问诊初始化成功',
+      data: {
+        diagnosisSessionId: sessionId,
+        roundId: 'round_1',
+        ...(plantContext.userPlantId ? { userPlantId: plantContext.userPlantId } : {}),
+        ...(response.plantId ? { plantId: response.plantId } : {}),
+        ...(plantContext.plantId ? { plantCatalogId: plantContext.plantId } : {}),
+        stage: 'question_package',
+        status: 'active',
+        stopReason: 'await_package_answers',
+        questions: publicQuestions,
+        questionPackage,
+        summaryCard: {
+          title: '诊断问题',
+          subtitle: `需要回答 ${publicQuestions.length} 道问题`,
+          severity: 'low',
+          statusText: ''
+        },
+        airEnvironmentByQuestionId: {},
+        airEnvironmentSnapshotsByQuestionId: {},
+        airEnvironmentSnapshotSourceByQuestionId: {},
+        airEnvironmentEvidence: null,
+        uiHints: response.uiHints,
+        questionPackageContinuationToken: continuationToken
+      }
+    }),
+    buildDeferredPersistenceTask({
+      sessionId,
+      openid: identity.openid,
+      plantContext,
+      response,
+      payload
+    })
+  )
 }
 
 module.exports = { getRequest, jsonResponse, resolveStartMode, handleFastQuestionStart }

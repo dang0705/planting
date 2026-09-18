@@ -5,11 +5,21 @@ const { URL } = require('node:url')
 const processStartedAt = Date.now()
 const { main } = require('./app')
 const appLoadMs = Date.now() - processStartedAt
-const performanceLogEnabled = ['1', 'true', 'yes', 'on'].includes(String(process.env.DIAGNOSIS_PERF_LOG || '').trim().toLowerCase())
+const performanceLogEnabled = ['1', 'true', 'yes', 'on'].includes(
+  String(process.env.DIAGNOSIS_PERF_LOG || '')
+    .trim()
+    .toLowerCase()
+)
 let hasServedRequest = false
 
 if (performanceLogEnabled) {
-  console.log(JSON.stringify({ event: 'diagnosis_http_process_ready', functionName: 'diagnosis-question-start-http', appLoadMs }))
+  console.log(
+    JSON.stringify({
+      event: 'diagnosis_http_process_ready',
+      functionName: 'diagnosis-question-start-http',
+      appLoadMs
+    })
+  )
 }
 
 function readRequestBody(request) {
@@ -24,25 +34,32 @@ function readRequestBody(request) {
 function writeResponse(response, result) {
   const statusCode = Number(result?.statusCode || 200)
   const headers = normalizeResponseHeaders(result?.headers)
-  const body = typeof result?.body === 'string' ? result.body : JSON.stringify(result?.body ?? result)
+  const body =
+    typeof result?.body === 'string' ? result.body : JSON.stringify(result?.body ?? result)
   scheduleAfterResponse(response, result?.afterResponse)
   response.writeHead(statusCode, headers)
   response.end(body)
 }
 
 function scheduleAfterResponse(response, task) {
-  if (typeof task !== 'function') return
+  if (typeof task !== 'function') {
+    return
+  }
   let started = false
   const run = () => {
-    if (started) return
+    if (started) {
+      return
+    }
     started = true
     const schedule = typeof setImmediate === 'function' ? setImmediate : queueMicrotask
     schedule(() => {
       Promise.resolve()
         .then(task)
-        .catch(error => console.error('diagnosis-question-start-http after-response task failed:', {
-          message: String(error?.message || error)
-        }))
+        .catch(error =>
+          console.error('diagnosis-question-start-http after-response task failed:', {
+            message: String(error?.message || error)
+          })
+        )
     })
   }
   response.once('finish', run)
@@ -81,17 +98,19 @@ const server = http.createServer(async (request, response) => {
     const handlerStartedAt = Date.now()
     const result = await main(event, {})
     if (performanceLogEnabled) {
-      console.log(JSON.stringify({
-        event: 'diagnosis_http_request_timing',
-        functionName: 'diagnosis-question-start-http',
-        firstRequest,
-        processAgeMs: Date.now() - processStartedAt,
-        handlerMs: Date.now() - handlerStartedAt
-      }))
+      console.log(
+        JSON.stringify({
+          event: 'diagnosis_http_request_timing',
+          functionName: 'diagnosis-question-start-http',
+          firstRequest,
+          processAgeMs: Date.now() - processStartedAt,
+          handlerMs: Date.now() - handlerStartedAt
+        })
+      )
     }
     writeResponse(response, result)
   } catch (error) {
-  writeResponse(response, {
+    writeResponse(response, {
       statusCode: 500,
       headers: {
         'Content-Type': 'application/json; charset=utf-8',

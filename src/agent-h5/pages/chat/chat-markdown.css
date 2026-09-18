@@ -1,0 +1,86 @@
+.agent-markdown {
+  display: inline;
+  overflow-wrap: anywhere;
+}
+
+.agent-markdown h1,
+.agent-markdown h2,
+.agent-markdown h3,
+.agent-markdown h4,
+.agent-markdown h5,
+.agent-markdown h6 {
+  margin: 0.3rem 0 0.7rem;
+  color: var(--agent-text);
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.agent-markdown h1 {
+  font-size: 1.25rem;
+}
+
+.agent-markdown h2 {
+  font-size: 1.1rem;
+}
+
+.agent-markdown h3,
+.agent-markdown h4,
+.agent-markdown h5,
+.agent-markdown h6 {
+  font-size: 1rem;
+}
+
+.agent-markdown p {
+  margin: 0 0 0.7rem;
+}
+
+.agent-markdown p:last-child {
+  margin-bottom: 0;
+}
+
+.agent-markdown ul,
+.agent-markdown ol {
+  margin: 0.4rem 0 0.8rem;
+  padding-left: 1.35rem;
+}
+
+.agent-markdown li {
+  margin: 0.25rem 0;
+}
+
+.agent-markdown blockquote {
+  margin: 0.7rem 0;
+  border-left: 3px solid #a8c9ae;
+  padding-left: 0.8rem;
+  color: #5d6f61;
+}
+
+.agent-markdown pre {
+  margin: 0.8rem 0;
+  overflow-x: auto;
+  border-radius: 0.7rem;
+  background: #22352a;
+  padding: 0.8rem;
+  color: #f4fbf3;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.agent-markdown code {
+  border-radius: 0.25rem;
+  background: #edf2ea;
+  padding: 0.1rem 0.25rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+}
+
+.agent-markdown pre code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
+
+.agent-markdown a {
+  color: var(--agent-green);
+  text-decoration: underline;
+}

@@ -69,16 +69,17 @@ assert.match(plantPageSource, /const response = await createUserPlant\(requestPa
 assert.match(plantPageSource, /patchUserPlant\(\{ id: Number\(plantId\.value\)/)
 assert.match(plantPageSource, /returnTo=user-plant-detail/)
 assert.match(plantPageSource, /:show-light-environment="!isEditMode && !restrictedPlatform"/)
-assert.match(plantPageSource, /:show-back="!isEditMode"/)
+assert.match(plantPageSource, /:show-back="false"/)
+assert.match(plantPageSource, /id="add-plant-identity-section"/)
+assert.match(plantPageSource, /id="add-plant-ai-identify-button"/)
 assert.match(detailSource, /mode=edit&id=/)
 assert.match(
   plantPageSource,
   /class="box-border h-\[calc\(100vh-var\(--app-header-height\)\)\] min-h-0 bg-\[#f8faf9\]"/
 )
-assert.match(plantPageSource, /id="add-plant-swiper"[\s\S]*class="h-full min-h-0"/)
-assert.match(
+assert.doesNotMatch(
   plantPageSource,
-  /<scroll-view id="add-plant-selection-scroll" scroll-y class="box-border h-full min-h-0">/
+  /PlantSelectionStep|PlantSearchToolbar|swiper|add-plant-selection/u
 )
 assert.match(plantInfoPanelSource, /:id="`\$\{idPrefix\}-info-scroll`"/)
 assert.match(plantInfoPanelSource, /class="box-border flex h-full min-h-0 flex-col bg-\[#f8faf9\]"/)

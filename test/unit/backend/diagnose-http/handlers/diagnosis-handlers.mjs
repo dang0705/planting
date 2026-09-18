@@ -139,7 +139,12 @@ try {
   runnerImplementation = async ({ onVisualEvent }) => {
     if (onVisualEvent) {
       for (const event of lifecycleEvents) {
-        onVisualEvent(event, { phase: event })
+        onVisualEvent(
+          event,
+          event === 'visual_model_prompt_ready'
+            ? { promptText: 'static prompt\n[Dynamic Task]\nactual runtime prompt' }
+            : { phase: event }
+        )
       }
     }
     return {
@@ -156,7 +161,6 @@ try {
         {
           imageIndex: 0,
           imageId: 'img_leaf_1',
-          formattedPrompt: '不应透传的提示词',
           rawTextOutput: '{"leaf_spot":true}',
           rawStructuredOutput: { leaf_spot: true },
           usage: { promptTokens: 1200, completionTokens: 80 },
@@ -189,6 +193,10 @@ try {
     stream.events.map(item => item.event),
     [...streamEvents, 'done']
   )
+  assert.deepEqual(stream.events.find(item => item.event === 'visual_model_prompt_ready')?.data, {
+    event: 'visual_model_prompt_ready',
+    promptText: 'static prompt\n[Dynamic Task]\nactual runtime prompt'
+  })
   assert.deepEqual(stream.events[0], {
     event: 'visual_preparing',
     data: {
@@ -210,6 +218,7 @@ try {
       cachedTokens: 900,
       cacheCreationTokens: 30
     },
+    modelPromptText: 'static prompt\n[Dynamic Task]\nactual runtime prompt',
     modelBusinessData: [
       {
         imageIndex: 0,
@@ -259,6 +268,7 @@ try {
       promptCache: null
     }
   ])
+  assert.equal(fallbackStream.events.at(-1).data.diagnosisDebug.modelPromptText, '')
 
   runnerImplementation = async () => ({
     response: publicResponse,

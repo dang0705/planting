@@ -141,9 +141,6 @@ function resolveDoseClass(event = {}, potVolumeMl = 0) {
   return resolveDoseClassWithConflict(event, potVolumeMl).doseClass
 }
 
-/** doseClass → 数值 rank，用于冲突判定（mist=0 ... thorough=3）。 */
-const DOSE_RANK = { mist: 0, small: 1, normal: 2, thorough: 3, unknown: -1 }
-
 /**
  * 解析 doseClass 并检测 amountMl 与 amount 标签的冲突。
  *
@@ -579,43 +576,33 @@ function computeAmountSuggestion(
 ) {
   const volumeMl = Number(potGeometry.potVolumeMl) || 0
   const volumeConfidence = potGeometry.volumeConfidence || 'low'
+  // 水量是规划结果的统一输出，不因盆土视觉状态而消失。
+  // WET 仍保留在 gate 中负责提醒/日期保护，但水量按 BASELINE 的
+  // 盆型算法计算，供最终建议页展示；它不代表允许立即浇水。
+  const amountGateState = gateState === GATE_STATE.WET ? GATE_STATE.BASELINE : gateState
+  const wetStopCondition =
+    '盆土潮湿时强烈不建议立即浇水；如确认仍要浇水，盆底有水流出即可停止'
 
   // 无盆型体积：无法可靠估算，按 gate 保守给区间
   if (volumeMl <= 0) {
-    if (gateState === GATE_STATE.WET) {
-      return {
-        amountRangeMl: [0, 0],
-        stopCondition: '暂停浇水，检查土壤干湿后再决定',
-        confidenceLevel: 'low'
-      }
-    }
-    if (gateState === GATE_STATE.DRY) {
+    if (amountGateState === GATE_STATE.DRY) {
       return {
         amountRangeMl: [100, 200],
-        stopCondition: '盆底出水即可停止',
+        stopCondition: gateState === GATE_STATE.WET ? wetStopCondition : '盆底出水即可停止',
         confidenceLevel: 'low'
       }
     }
     return {
       amountRangeMl: [50, 150],
-      stopCondition: '盆土表面湿润即可停止',
+      stopCondition: gateState === GATE_STATE.WET ? wetStopCondition : '盆土表面湿润即可停止',
       confidenceLevel: 'low'
-    }
-  }
-
-  // WET 恒暂停
-  if (gateState === GATE_STATE.WET) {
-    return {
-      amountRangeMl: [0, 0],
-      stopCondition: '暂停浇水，检查土壤干湿后再决定',
-      confidenceLevel: volumeConfidence
     }
   }
 
   // 按 gate 定倍率算建议量区间
   let amountRangeMl
   let stopCondition
-  if (gateState === GATE_STATE.DRY) {
+  if (amountGateState === GATE_STATE.DRY) {
     amountRangeMl = [Math.round(volumeMl * 0.2), Math.round(volumeMl * 0.3)]
     stopCondition = '盆底有水流出即可停止'
   } else {
@@ -625,7 +612,7 @@ function computeAmountSuggestion(
 
   // 天气偏湿水量压制（仅 DRY 生效，BASELINE 不压）
   const wetFactor = resolveWeatherWetAmountFactor(
-    gateState,
+    amountGateState,
     Number(options.weatherWetPressureHitCount) || 0
   )
   if (wetFactor < 1.0) {
@@ -633,7 +620,7 @@ function computeAmountSuggestion(
       Math.round(amountRangeMl[0] * wetFactor),
       Math.round(amountRangeMl[1] * wetFactor)
     ]
-    if (gateState === GATE_STATE.DRY && Number(options.weatherWetPressureHitCount) >= 2) {
+    if (amountGateState === GATE_STATE.DRY && Number(options.weatherWetPressureHitCount) >= 2) {
       stopCondition = '先查土，确认表层 3-5cm 干透后再浇；不要按毫升一次倒完'
     }
   }
@@ -683,7 +670,7 @@ function computeAmountSuggestion(
 
   return {
     amountRangeMl,
-    stopCondition,
+    stopCondition: gateState === GATE_STATE.WET ? wetStopCondition : stopCondition,
     confidenceLevel: volumeConfidence,
     reasonCodes
   }

@@ -1,0 +1,54 @@
+{
+  "env_id": "cloud1-2grufevs395a9d5e",
+  "schema": "cloud1-2grufevs395a9d5e",
+  "table": "question_option_mapping_v5_real",
+  "operation": "formal_schema_restore_and_single_row_is_active_canary",
+  "mutation_summary": {
+    "ddl_rows_affected": 0,
+    "canary_update_rows_affected": 1,
+    "canary_rollback_rows_affected": 1,
+    "net_row_data_change": false,
+    "net_is_active_change": false
+  },
+  "schema_restore": {
+    "success": true,
+    "canonical_columns_present": 18,
+    "runtime_query_success": true,
+    "sample_runtime_row": {
+      "question_key": "q_anthracnose_concentric",
+      "option_key": "no",
+      "option_text_user_cn": "不是的",
+      "data_status": "audited",
+      "review_status": "audited"
+    },
+    "index_check": {
+      "idx_qom_status_column": "data_status",
+      "unique_business_key_index_present": true,
+      "primary_key_present": true,
+      "cloudbase_id_index_present": true
+    }
+  },
+  "canary": {
+    "id": 4,
+    "question_key": "q_spider_red_dots_visible",
+    "option_key": "yes",
+    "classification": "legacy_compat",
+    "runtime_eligible_before": false,
+    "write_result": "is_active 1 -> 0",
+    "readback_result": "is_active=0",
+    "rollback_result": "is_active 0 -> 1",
+    "readback_after_rollback": "is_active=1",
+    "row_hash_unchanged": true
+  },
+  "post_counts": {
+    "total": 429,
+    "distinct_ids": 429,
+    "distinct_cloudbase_ids": 429,
+    "active_count": 420,
+    "inactive_count": 9,
+    "current_package_active_rows": 4
+  },
+  "mutation_performed": true,
+  "business_state_restored": true,
+  "next_gate": "do_not_bulk_update_is_active_until_runtime_contract_or_sync_policy_is_decided"
+}

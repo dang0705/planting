@@ -67,15 +67,20 @@ assert.doesNotMatch(
   '页面挂载时不得准备平台手机号登录凭证'
 )
 
-const indexPage = read('src/pages/index/index.vue')
-assert.match(indexPage, /:open-type="loginCodeReady \? 'getPhoneNumber' : ''"/u)
-assert.match(indexPage, /@click="handlePlatformLoginTap"/u)
+const userPlantsPage = read('src/components/UserPlantsSection.vue')
+assert.match(userPlantsPage, /@click="handlePhoneLoginRequest"/u)
+assert.doesNotMatch(userPlantsPage, /open-type="getPhoneNumber"/u)
 
 const loginModal = read('src/components/LoginModal.vue')
 assert.doesNotMatch(loginModal, /import \{ ref, watch \}/u)
-assert.doesNotMatch(loginModal, /watch\(\s*\(\) => props\.show/u)
+assert.match(loginModal, /import \{ nextTick, onMounted, ref, watch \} from 'vue'/u)
+assert.match(loginModal, /watch\(\s*\(\) => props\.show/u)
 assert.match(loginModal, /<PlatformPrivacyModal\s+v-if="show"/u)
 assert.match(loginModal, /:open-type="loginCodeReady \? 'getPhoneNumber' : ''"/u)
 assert.match(loginModal, /@click="handlePlatformLoginTap"/u)
+assert.match(loginModal, /id="login-modal-panel"/u)
+assert.match(loginModal, /id="login-modal-agreement"/u)
+assert.doesNotMatch(loginModal, /uni\.showToast/u)
+assert.doesNotMatch(composable, /uni\.showToast/u)
 
 console.log('platform phone login lifecycle contract passed data_mode=unit_fake')

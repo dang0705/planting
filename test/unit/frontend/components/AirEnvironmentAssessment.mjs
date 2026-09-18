@@ -14,6 +14,9 @@ assert.match(
   /import ButtonStepTrack from '@\/components\/common\/ButtonStepTrack\.vue'/
 )
 assert.match(componentSource, /<ButtonStepTrack/)
+assert.match(componentSource, /@step-change="resetStepScroll"/)
+assert.match(componentSource, /:scroll-top="stepScrollTop"/)
+assert.match(componentSource, /:scroll-with-animation="false"/)
 assert.match(
   componentSource,
   /import AirEnvironmentSinglePagePrototype from '@\/components\/AirEnvironmentSinglePagePrototype\.vue'/

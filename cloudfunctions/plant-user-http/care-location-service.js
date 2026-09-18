@@ -71,14 +71,16 @@ async function savePlantCareLocation({ openid = '', plantId = '', careLocation =
     return null
   }
 
+  const nowMs = Date.now()
+
   await models.$runSQL(
     `
       INSERT INTO plant_care_locations (
         _openid, plant_id, user_id, location_key, city_name, latitude, longitude,
-        weather_location, source
+        weather_location, source, created_at, updated_at
       ) VALUES (
         {{openid}}, {{plantId}}, {{openid}}, {{locationKey}}, {{cityName}},
-        {{latitude}}, {{longitude}}, {{weatherLocation}}, {{source}}
+        {{latitude}}, {{longitude}}, {{weatherLocation}}, {{source}}, {{createdAt}}, {{updatedAt}}
       )
       ON DUPLICATE KEY UPDATE
         user_id = VALUES(user_id),
@@ -88,11 +90,13 @@ async function savePlantCareLocation({ openid = '', plantId = '', careLocation =
         longitude = VALUES(longitude),
         weather_location = VALUES(weather_location),
         source = VALUES(source),
-        updated_at = CURRENT_TIMESTAMP
+        updated_at = {{updatedAt}}
     `,
     {
       plantId: normalizedPlantId,
       openid,
+      createdAt: nowMs,
+      updatedAt: nowMs,
       ...normalized
     }
   )

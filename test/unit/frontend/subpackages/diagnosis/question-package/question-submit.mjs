@@ -206,6 +206,6 @@ const airEnvironmentStepSource = readFileSync(
   'utf8'
 )
 assert.match(airEnvironmentStepSource, /airEnvironment: \{[\s\S]*?type: Object,[\s\S]*?default:/)
-assert.match(airEnvironmentStepSource, /getByQuestion: \(\) => null/)
+assert.match(airEnvironmentStepSource, /getDraftState: \(\) => null/)
 
 console.log('question package submit tests passed')

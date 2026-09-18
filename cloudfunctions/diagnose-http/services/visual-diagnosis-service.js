@@ -811,7 +811,15 @@ function buildVisualDecisionStreamSummary(aggregateResult = {}) {
 
 async function analyzeSingleImage(
   imageRuntimeInput,
-  { visualCallBatchId, sessionId = '', imageIndex = 0, onText, onVisualEvent, llmOptions = {} } = {}
+  {
+    visualCallBatchId,
+    sessionId = '',
+    imageIndex = 0,
+    onText,
+    onVisualEvent,
+    onPromptReady,
+    llmOptions = {}
+  } = {}
 ) {
   const startedAt = Date.now()
   const primaryStartedAt = Date.now()
@@ -819,19 +827,14 @@ async function analyzeSingleImage(
     visualCallBatchId,
     sessionId,
     onText,
-    onPromptReady: promptAudit =>
+    onPromptReady: promptAudit => {
+      const promptText = String(promptAudit?.promptText || '')
+      onPromptReady?.(promptText)
       emitVisualStreamEvent(onVisualEvent, 'visual_model_prompt_ready', {
-        sessionId,
-        visualCallBatchId,
-        imageIndex,
-        imageId: imageRuntimeInput?.imageId || null,
-        promptText: String(promptAudit?.promptText || ''),
-        promptLength: Number(promptAudit?.promptLength || 0),
-        promptCacheStrategy: promptAudit?.promptCacheStrategy || null,
-        promptDebugMeta: promptAudit?.promptDebugMeta || null,
-        model: promptAudit?.model || null,
-        modelIdentity: promptAudit?.modelIdentity || null
-      }),
+        // 端上只审计本次实际生效的完整提示词；不夹带节点、会话或模型元数据噪音。
+        promptText
+      })
+    },
     adapterMetaOverride: primaryAdapterMetaOverride,
     llmOptions
   })
@@ -2021,6 +2024,7 @@ async function analyzeAndPersistVisualBatch({
     promptCacheWarmup: Number(warmupPromptCache)
   })
   let firstContentEventSent = false
+  let firstPromptText = ''
   const settledResults = await settleVisualRequestsWithPromptCacheWarmup(normalizedInputs, {
     warmupFirst: warmupPromptCache,
     execute: (imageRuntimeInput, index) =>
@@ -2029,6 +2033,12 @@ async function analyzeAndPersistVisualBatch({
         sessionId,
         imageIndex: index,
         onVisualEvent,
+        onPromptReady:
+          normalizedInputs.length === 1 && index === 0
+            ? promptText => {
+                firstPromptText = String(promptText || '')
+              }
+            : undefined,
         onText:
           normalizedInputs.length === 1 && index === 0
             ? (chunk, fullText) => {
@@ -2037,7 +2047,10 @@ async function analyzeAndPersistVisualBatch({
                   emitVisualStreamEvent(onVisualEvent, 'visual_model_response_started', {
                     sessionId,
                     visualCallBatchId,
-                    imageCount: 1
+                    imageCount: 1,
+                    // 该事件已在真实端上稳定到达；携带同一完整 prompt 作为 prompt_ready
+                    // 事件的可靠兜底，前端会按字符串去重后打印一次。
+                    promptText: firstPromptText
                   })
                 }
                 if (typeof onText === 'function') {

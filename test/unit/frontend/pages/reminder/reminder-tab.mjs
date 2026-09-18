@@ -12,7 +12,10 @@ const plantCardSource = fs.readFileSync(
   path.join(repoRoot, 'src/pages/index/components/PlantCard.vue'),
   'utf8'
 )
-const indexSource = fs.readFileSync(path.join(repoRoot, 'src/pages/index/index.vue'), 'utf8')
+const userPlantsSource = fs.readFileSync(
+  path.join(repoRoot, 'src/components/UserPlantsSection.vue'),
+  'utf8'
+)
 const pagesConfig = readPagesManifest(repoRoot)
 const reminderTab = pagesConfig.tabBar.list.find(
   item => item.pagePath === 'pages/reminder/reminder'
@@ -32,4 +35,4 @@ assert.equal(
 assert.match(reminderSource, /<FertilizationMonthlySheet/)
 assert.match(reminderSource, /reminder-tab-fertilization-/)
 assert.match(plantCardSource, /fertilizeActiveIcon/)
-assert.doesNotMatch(indexSource, /getPlantReminderState\(plant\.id, 'fertilize'\)/)
+assert.doesNotMatch(userPlantsSource, /getPlantReminderState\(plant\.id, 'fertilize'\)/)

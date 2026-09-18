@@ -97,7 +97,8 @@ const SQL_TABLES = [
   'watering_visual_evidences',
   'user_fertilization_reminder_events',
   'user_fertilization_events',
-  'subscription_orders'
+  'subscription_orders',
+  'agent_web_sessions'
 ]
 
 function qualifySqlTableNames(sql, databaseName) {
@@ -692,6 +693,7 @@ module.exports = {
   models,
   ai,
   storage,
+  invokeFunctionLightweight,
   getUserInfo,
   resolveCloudbaseCredentials,
   buildCloudbaseInitOptions,
@@ -699,6 +701,7 @@ module.exports = {
   runCloudbaseRestTableQuery,
   _test: {
     resolveRequestPort,
-    isRetryableRunSqlError
+    isRetryableRunSqlError,
+    qualifySqlTableNames
   }
 }

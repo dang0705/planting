@@ -39,6 +39,38 @@ try {
   assert.deepEqual(reused.photos, ['cloud://existing-file'])
   assert.equal(uploads.length, 0)
 
+  const catalogCover = await buildPlantSubmitPayload({
+    formData: {
+      image: 'https://cdn.example.com/catalog/green-plant.jpg',
+      imageFileId: 'cloud://catalog-cover',
+      careLocation: { city: '上海' },
+      plantDate: '2026-08-28',
+      notes: ''
+    },
+    selectedPlant: {
+      id: 'plant-1',
+      canonicalName: '绿萝',
+      imageFileId: 'cloud://catalog-cover'
+    },
+    userId: 'wx_owner'
+  })
+  assert.equal(catalogCover.photos, null)
+  assert.equal(uploads.length, 0)
+
+  const catalogCoverUrlOnly = await buildPlantSubmitPayload({
+    formData: {
+      image: 'https://cdn.example.com/catalog/green-plant.jpg',
+      imageFileId: '',
+      careLocation: { city: '上海' },
+      plantDate: '2026-08-28',
+      notes: ''
+    },
+    selectedPlant: { id: 'plant-1', canonicalName: '绿萝' },
+    userId: 'wx_owner'
+  })
+  assert.equal(catalogCoverUrlOnly.photos, null)
+  assert.equal(uploads.length, 0)
+
   const uploaded = await buildPlantSubmitPayload({
     formData: {
       image: 'wxfile://new-photo',

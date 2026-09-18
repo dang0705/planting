@@ -562,7 +562,8 @@ WET 阻断逻辑：
 
 天气数据流：
 
-- 前端 `WateringReminderSheet` 在点击"上次浇水"入口时调 `getEnvironmentWeatherWindow({ mode: 'environment' })`
+- 进入首页/提醒页的浇水提醒弹层或独立 `watering-advisor` 流程后，前端先检查位置授权；授权通过并取得当前位置后，才调 `getEnvironmentWeatherWindow({ mode: 'environment' })`
+- 用户未授权或定位失败时不发天气窗口请求，浇水日期填写和建议流程仍可继续
 - `historicalDays` → `weatherDays` → planner `historical`
 - `forecastDays` → `forecastDays` → planner `forecast`
 - 后端 `buildWeatherSummary` 从日数据提取 highHumidityDays/coldHumidDays/rainyDays/hotDryDays 等摘要

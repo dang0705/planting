@@ -60,7 +60,7 @@
     "usingComponents": true,
     "permission": {
       "scope.userLocation": {
-        "desc": "用于获取您的位置信息以提供天气服务"
+        "desc": "仅在编辑植物养护城市时用于获取位置"
       }
     },
     "requiredPrivateInfos": ["getLocation"]
@@ -77,7 +77,7 @@
     "usePrivacyCheck": true,
     "permission": {
       "scope.userLocation": {
-        "desc": "用于获取您的位置信息以提供天气服务"
+        "desc": "仅在编辑植物养护城市时用于获取位置"
       }
     },
     "requiredPrivateInfos": ["scope.userLocation"]
