@@ -1,23 +1,32 @@
 'use strict'
 
-function normalizeText(value = '', fallback = '') {
+let buildFertilizationDecision
+try {
+  ;({ buildFertilizationDecision } = require('/opt/utils/fertilization-reminder-planner'))
+} catch {
+  ;({ buildFertilizationDecision } = require('../../layer/utils/fertilization-reminder-planner'))
+}
+
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function normalizeStringList(values = []) {
   return Array.from(
     new Set(
-      (Array.isArray(values) ? values : [])
-        .map(item => normalizeText(item, ''))
-        .filter(Boolean)
+      (Array.isArray(values) ? values : []).map(item => normalizeText(item, '')).filter(Boolean)
     )
   )
 }
 
 function formatRange(range = [], unit = '') {
-  const list = Array.isArray(range) ? range.map(item => Number(item || 0)).filter(item => item > 0) : []
-  if (!list.length) {return ''}
+  const list = Array.isArray(range)
+    ? range.map(item => Number(item || 0)).filter(item => item > 0)
+    : []
+  if (!list.length) {
+    return ''
+  }
   if (list.length === 1 || list[0] === list[list.length - 1]) {
     return `${list[0]}${unit}`
   }
@@ -25,7 +34,9 @@ function formatRange(range = [], unit = '') {
 }
 
 function summarizeWateringStrategy(strategy = null) {
-  if (!strategy || typeof strategy !== 'object') {return ''}
+  if (!strategy || typeof strategy !== 'object') {
+    return ''
+  }
 
   const way = normalizeText(strategy?.way)
   const verb = normalizeText(strategy?.verb, '浇')
@@ -39,7 +50,9 @@ function summarizeWateringStrategy(strategy = null) {
 }
 
 function summarizeFertilizationStrategy(strategy = null) {
-  if (!strategy || typeof strategy !== 'object') {return ''}
+  if (!strategy || typeof strategy !== 'object') {
+    return ''
+  }
 
   const type = normalizeText(strategy?.type, '薄肥')
   const unit = normalizeText(strategy?.unit)
@@ -56,7 +69,9 @@ function summarizeFertilizationStrategy(strategy = null) {
 }
 
 function summarizeLightStrategy(strategy = null) {
-  if (!strategy || typeof strategy !== 'object') {return ''}
+  if (!strategy || typeof strategy !== 'object') {
+    return ''
+  }
 
   const way = normalizeText(strategy?.way, '按植株反应调整光照')
   const unit = normalizeText(strategy?.unit)
@@ -73,18 +88,22 @@ function summarizeLightStrategy(strategy = null) {
 }
 
 function summarizeAirflowStrategy(strategy = null) {
-  if (!strategy || typeof strategy !== 'object') {return ''}
+  if (!strategy || typeof strategy !== 'object') {
+    return ''
+  }
 
-  const levelText = {
-    low: '通风要求偏低',
-    medium: '通风要求中等',
-    high: '通风要求较高'
-  }[normalizeText(strategy?.level).toLowerCase()] || '需保持稳定通风'
-  const sensitivityText = {
-    low: '对闷湿不太敏感',
-    medium: '对闷湿较敏感',
-    high: '对闷湿非常敏感'
-  }[normalizeText(strategy?.sensitivity).toLowerCase()] || ''
+  const levelText =
+    {
+      low: '通风要求偏低',
+      medium: '通风要求中等',
+      high: '通风要求较高'
+    }[normalizeText(strategy?.level).toLowerCase()] || '需保持稳定通风'
+  const sensitivityText =
+    {
+      low: '对闷湿不太敏感',
+      medium: '对闷湿较敏感',
+      high: '对闷湿非常敏感'
+    }[normalizeText(strategy?.sensitivity).toLowerCase()] || ''
   return [levelText, sensitivityText].filter(Boolean).join('，')
 }
 
@@ -132,6 +151,13 @@ function buildCareGuidance({
   const activeSymptomKeys = collectActiveSymptomKeys(observedEvidenceSet)
   const normalizedPrimaryProblemKey = normalizeText(primaryProblemKey, '')
   const normalizedOutcomeType = normalizeText(outcomeType, '')
+  const fertilizationDecision = buildFertilizationDecision({
+    plantContext,
+    referenceDate:
+      plantContext?.diagnosisDate ||
+      plantContext?.referenceDate ||
+      new Date().toISOString().slice(0, 10)
+  })
   const environmentDeviationHints = []
   const nextSteps = []
   const whatToAvoid = []
@@ -157,8 +183,7 @@ function buildCareGuidance({
     ['sunburn', 'heat_stress'].includes(normalizedPrimaryProblemKey)
 
   const lowLightContext =
-    activeSymptomKeys.has('low_light_context') ||
-    normalizedPrimaryProblemKey === 'low_light'
+    activeSymptomKeys.has('low_light_context') || normalizedPrimaryProblemKey === 'low_light'
 
   const nutrientProblemKeys = ['iron_deficiency', 'nitrogen_deficiency', 'nutrient_deficiency']
   const hasYellowingEvidence =
@@ -199,16 +224,37 @@ function buildCareGuidance({
     environmentDeviationHints.push(
       `当前线索更像光照偏弱或近期光位变暗，可对照属级基线“${careBaselineSummary.light}”回看最近是否移到了更阴的位置或长期缺少明亮散射光。`
     )
-    nextSteps.push('先回看最近 1-2 周的摆放位置，确认是否长期处在更阴、更远离窗边的位置。')
+    nextSteps.push('先回看最近 1-2 周的光照和离窗距离，确认是否长期处在更阴、更远离窗边的位置。')
     whatToAvoid.push('不要在没确认方向前同时猛补肥和频繁加大浇水。')
   }
 
-  if (fertilizationContext && careBaselineSummary.fertilization) {
-    environmentDeviationHints.push(
-      `若近期长期未施肥或换盆后恢复较慢，可结合属级基线“${careBaselineSummary.fertilization}”回看营养供给是否偏弱。`
-    )
-    nextSteps.push('回看最近 1-2 个生长周期的施肥与换盆记录，再决定是否需要温和补肥。')
-    whatToAvoid.push('不要在证据不足时直接重肥猛补。')
+  const fertilizationStatus = fertilizationDecision?.status || 'monthly_no_reliable_rule'
+  if (
+    fertilizationContext &&
+    careBaselineSummary.fertilization &&
+    fertilizationStatus === 'monthly_first_confirmation'
+  ) {
+    environmentDeviationHints.push('目前没有可靠的上次施肥日期，先在植物卡设置首次确认提醒。')
+    whatToAvoid.push('在首次确认前不要直接增加施肥量。')
+  } else if (
+    fertilizationContext &&
+    careBaselineSummary.fertilization &&
+    fertilizationStatus === 'monthly_due_check'
+  ) {
+    nextSteps.push('打开植物卡查看本月施肥表，再决定是否施肥。')
+  } else if (
+    fertilizationContext &&
+    [
+      'monthly_deferred',
+      'monthly_pause',
+      'monthly_avoid',
+      'monthly_history_unavailable',
+      'monthly_no_reliable_rule',
+      'monthly_conditions_pending'
+    ].includes(fertilizationStatus)
+  ) {
+    // 月表不允许自动施肥时，不能再用基础间隔推导“补肥”动作。
+    whatToAvoid.push('当前先不要根据基础间隔自行补肥。')
   }
 
   if (

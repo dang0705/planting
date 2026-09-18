@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="340.123" height="107.691" viewBox="0 0 340.123 107.691">
+<g opacity="0.85" fill="none" stroke="#2D7A4F" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="8 8">
+<path id="left-airflow" d="M170 22 C166 38 139 52 112 84" stroke-dashoffset="16"><animate attributeName="stroke-dashoffset" from="16" to="0" dur="2.4s" begin="0s" repeatCount="indefinite" calcMode="linear"/></path>
+<path id="center-airflow" d="M170 22 C168 41 169 61 170 87" stroke-dashoffset="16"><animate attributeName="stroke-dashoffset" from="16" to="0" dur="2.8s" begin="0.4s" repeatCount="indefinite" calcMode="linear"/></path>
+<path id="right-airflow" d="M170 22 C176 38 201 53 228 85" stroke-dashoffset="16"><animate attributeName="stroke-dashoffset" from="16" to="0" dur="3.1s" begin="0.9s" repeatCount="indefinite" calcMode="linear"/></path>
+</g>
+<g opacity="0.6" fill="none" stroke="#5A7A68" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="6 9">
+<path id="return-airflow" d="M236 84 C218 58 197 43 174 35 V22" stroke-dashoffset="0"><animate attributeName="stroke-dashoffset" from="0" to="-15" dur="3.2s" repeatCount="indefinite"/></path>
+</g>
+</svg>

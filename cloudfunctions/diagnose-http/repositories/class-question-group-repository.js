@@ -4,9 +4,9 @@ const { models } = require('/opt/utils/cloudbase')
 const { sqlInList } = require('./sql')
 const { table } = require('../db/table-helper')
 
-function normalizeText(value = '', fallback = '') {
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value ?? '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function normalizeBoolean(value) {
@@ -16,7 +16,7 @@ function normalizeBoolean(value) {
   return normalized === '1' || normalized === 'true' || normalized === 'yes'
 }
 
-function normalizeFollowupMode(value = '') {
+function normalizeQuestionMode(value = '') {
   const normalized = String(value || '').trim().toLowerCase()
   if (normalized === 'full' || normalized === 'limited' || normalized === 'explanation_only') {
     return normalized
@@ -34,7 +34,7 @@ function mapGroupStrategyRow(row = {}) {
     allowWhenAiLocked: normalizeBoolean(row.allow_when_ai_locked),
     maxQuestionsPerRound: Math.max(1, Number(row.max_questions_per_round || 1)),
     activationCondition: normalizeText(row.activation_condition),
-    classGateType: normalizeText(row.class_gate_type, 'soft'),
+    classConditionType: normalizeText(row.class_condition_type, 'soft'),
     classSwitchAllowed: normalizeBoolean(row.class_switch_allowed),
     unknownSwitchPolicy: normalizeText(row.unknown_switch_policy),
     aiLockedConfirmPenalty: Number(row.ai_locked_confirm_penalty || 0),
@@ -42,7 +42,7 @@ function mapGroupStrategyRow(row = {}) {
     dataStatus: normalizeText(row.data_status, 'unknown'),
     dataSource: normalizeText(row.data_source),
     auditNote: normalizeText(row.audit_note),
-    followupModeV1: normalizeFollowupMode(row.followup_mode_v1),
+    questionModeV1: normalizeQuestionMode(row.question_mode_v1),
     classLevelAllowsRuntimeV1: normalizeBoolean(row.class_level_allows_runtime_v1),
     groupRuntimeEligibilityRule: normalizeText(row.group_runtime_eligibility_rule),
     assetValidationRequired: normalizeBoolean(row.asset_validation_required),
@@ -122,7 +122,7 @@ async function getClassQuestionGroupStrategies(classKeys = []) {
             allow_when_ai_locked,
             max_questions_per_round,
             activation_condition,
-            class_gate_type,
+            class_condition_type,
             class_switch_allowed,
             unknown_switch_policy,
             ai_locked_confirm_penalty,
@@ -130,7 +130,7 @@ async function getClassQuestionGroupStrategies(classKeys = []) {
             data_status,
             data_source,
             audit_note,
-            followup_mode_v1,
+            question_mode_v1,
             class_level_allows_runtime_v1,
             group_runtime_eligibility_rule,
             asset_validation_required,
@@ -156,7 +156,7 @@ async function getClassQuestionGroupStrategies(classKeys = []) {
     return rows
   } catch (error) {
     if (isMissingRuntimeTableError(error)) {
-      console.warn('class question group strategy table not ready, fallback to legacy flow:', error.message)
+      console.warn('class question group strategy table not ready, conservative to session flow:', error.message)
       return []
     }
     throw error

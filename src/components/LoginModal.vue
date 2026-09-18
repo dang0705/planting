@@ -1,88 +1,125 @@
 <template>
-  <view v-if="show" class="fixed inset-0 z-50 flex items-center justify-center">
-    <!-- 遮罩层 -->
-    <view class="absolute inset-0 bg-black/50" @click="handleCancel"></view>
-
-    <!-- 登录弹窗 -->
-    <view class="relative bg-white rounded-3xl p-8 mx-6 w-full max-w-sm shadow-2xl">
-      <!-- 关闭按钮 -->
+  <BottomSheet
+    ref="bottomSheetRef"
+    panel-id="login-modal-panel"
+    content-id="login-modal-content"
+    close-id="login-modal-close-button"
+    :show-header="false"
+    :show-close="false"
+    :animation="true"
+    :mask-click="!isLoggingIn && !platformLoggingIn"
+    @close="handleSheetClose"
+  >
+    <view id="login-modal" class="w-full px-2 pb-4">
       <view
         id="login-modal-close-button"
-        class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center"
+        class="absolute right-5 top-5 flex size-9 items-center justify-center rounded-full active:bg-[#F4F8F5]"
         @click="handleCancel"
       >
-        <text class="text-2xl text-gray-400">×</text>
+        <uni-icons type="closeempty" size="20" color="#8A9A90" />
       </view>
 
-      <!-- 图标 -->
-      <view class="flex justify-center mb-6">
-        <view class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center">
-          <text class="text-4xl">🌱</text>
+      <view class="mt-7 flex flex-col items-center">
+        <view class="flex size-16 items-center justify-center rounded-2xl bg-[#E8F5E9]">
+          <image :src="leafIcon" class="size-7" mode="aspectFit" />
         </view>
+        <text class="mt-4 text-xl font-semibold leading-7 text-[#1F2933]">手机号登录</text>
+        <text class="mt-2 text-center text-sm leading-5 text-[#5A7A68]">
+          {{ message || '登录后可同步您的植物养护记录' }}
+        </text>
       </view>
 
-      <!-- 标题 -->
-      <text class="block text-2xl font-bold text-center text-gray-900 mb-2">需要登录</text>
-      <text class="block text-sm text-center text-gray-600 mb-8">
-        {{ message || '使用 AI 功能需要先登录' }}
-      </text>
-
-      <!-- 登录按钮 -->
       <!-- #ifdef MP-WEIXIN -->
       <button
         v-if="!isLoggingIn"
         id="login-modal-phone-login-button"
-        class="w-full bg-primary text-white font-semibold py-4 rounded-2xl mb-3 flex items-center justify-center"
+        class="m-0 mt-7 h-[52px] w-full rounded-2xl bg-[#2D7A4F] p-0 text-base font-semibold leading-[52px] text-white active:bg-[#256340]"
         open-type="getPhoneNumber"
         @getphonenumber="handleGetPhoneNumber"
       >
-        <text class="text-base">📱 微信手机号登录</text>
+        使用手机号登录
       </button>
       <!-- #endif -->
 
-      <!-- #ifndef MP-WEIXIN -->
+      <!-- #ifdef MP-TOUTIAO || MP-XHS -->
       <button
-        v-if="!isLoggingIn"
-        id="login-modal-phone-login-unavailable-button"
-        class="w-full bg-gray-100 text-gray-500 font-semibold py-4 rounded-2xl mb-3 flex items-center justify-center"
-        @click="handlePhoneLoginUnavailable"
+        v-if="!platformLoggingIn"
+        id="login-modal-platform-phone-login-button"
+        class="m-0 mt-7 h-[52px] w-full rounded-2xl bg-[#2D7A4F] p-0 text-base font-semibold leading-[52px] text-white active:bg-[#256340]"
+        :class="{ 'opacity-60': platformLoggingIn }"
+        :disabled="platformLoggingIn"
+        :open-type="loginCodeReady ? 'getPhoneNumber' : ''"
+        @click="handlePlatformLoginTap"
+        @getphonenumber="handlePlatformGetPhoneNumber"
       >
-        <text class="text-base">📱 手机号登录接入中</text>
+        {{ loginCodeReady ? '使用手机号登录' : '准备手机号登录' }}
       </button>
+      <text v-if="loginPreparationError" class="mt-2 block text-center text-xs text-[#B42318]">
+        {{ loginPreparationError }}
+      </text>
       <!-- #endif -->
 
-      <!-- 快速登录按钮 -->
-      <button
-        v-if="!isLoggingIn"
-        id="login-modal-quick-login-button"
-        class="w-full bg-gray-100 text-gray-700 font-semibold py-4 rounded-2xl flex items-center justify-center"
-        @click="handleQuickLogin"
+      <text
+        v-if="loginError"
+        id="login-modal-error"
+        class="mt-2 block text-center text-xs text-[#B42318]"
       >
-        <text class="text-base">⚡ 快速登录</text>
-      </button>
+        {{ loginError }}
+      </text>
 
-      <!-- 登录中 -->
-      <view v-if="isLoggingIn" class="flex flex-col items-center py-4">
-        <view
-          class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-3"
-        ></view>
-        <text class="text-sm text-gray-600">登录中...</text>
+      <view
+        v-if="!isLoggingIn && !platformLoggingIn"
+        id="login-modal-other-phone-login-button"
+        class="mt-5 flex h-6 items-center justify-center active:opacity-60"
+        @click="handleOtherPhoneLogin"
+      >
+        <text class="text-sm font-medium leading-6 text-[#2D7A4F]">其他手机号登录</text>
       </view>
 
-      <!-- 提示信息 -->
-      <text class="block text-xs text-center text-gray-500 mt-4">
-        微信端支持手机号桥接登录，其他小程序端会后续接入。
-      </text>
-      <text class="block text-xs text-center text-gray-500 mt-2">
-        登录即表示同意《用户协议》和《隐私政策》
-      </text>
+      <view v-if="isLoggingIn || platformLoggingIn" class="mt-7 flex flex-col items-center py-3">
+        <view
+          class="size-9 rounded-full border-4 border-[#2D7A4F] border-t-transparent animate-spin"
+        />
+        <text class="mt-3 text-sm text-[#667085]">正在登录…</text>
+      </view>
+
+      <view id="login-modal-agreement" class="mt-7 flex items-start justify-center gap-2">
+        <view
+          class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-[#2D7A4F]"
+        >
+          <uni-icons type="checkmarkempty" size="11" color="#FFFFFF" />
+        </view>
+        <text class="text-center text-xs leading-5 text-[#667085]">
+          已阅读并同意
+          <text class="text-[#2D7A4F]">《用户协议》</text>
+          和
+          <text class="text-[#2D7A4F]">《隐私政策》</text>
+        </text>
+      </view>
+      <view id="login-modal-security-note" class="mt-3 flex items-center justify-center gap-1">
+        <uni-icons type="locked" size="13" color="#8A9A90" />
+        <text class="text-[11px] leading-4 text-[#8A9A90]">我们将严格保护您的个人信息安全</text>
+      </view>
     </view>
-  </view>
+  </BottomSheet>
+  <!-- #ifdef MP-TOUTIAO -->
+  <PlatformPrivacyModal
+    v-if="show"
+    :model-value="privacyVisible"
+    @open-contract="openPrivacyContract"
+    @agree="agreePrivacyAuthorization"
+  />
+  <!-- #endif -->
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { nextTick, onMounted, ref, watch } from 'vue'
+import BottomSheet from '@/components/common/BottomSheet.vue'
 import { useUserStore } from '@/store/user'
+import PlatformPrivacyModal from '@/components/PlatformPrivacyModal.vue'
+import leafIcon from '@/assets/diagnosis/diagnosis-leaf.svg'
+import { getActivePlatformAccessToken } from '@/api/platform-session.js'
+import { usePlatformPhoneLogin } from '@/composables/usePlatformPhoneLogin.js'
 
 const props = defineProps({
   show: {
@@ -96,83 +133,97 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'success'])
-
+const bottomSheetRef = ref(null)
 const userStore = useUserStore()
 const isLoggingIn = ref(false)
+const loginError = ref('')
+const {
+  loginCodeReady,
+  loginPreparationError,
+  loggingIn: platformLoggingIn,
+  handleGetPhoneNumber: handlePlatformGetPhoneNumber,
+  privacyVisible,
+  openPrivacyContract,
+  agreePrivacyAuthorization,
+  prepareLoginCode
+} = usePlatformPhoneLogin({
+  onSuccess: async user => {
+    await userStore.setLoginInfo({
+      user,
+      token: getActivePlatformAccessToken()
+    })
+    emit('success')
+    emit('close')
+  }
+})
 
-/**
- * 处理获取手机号
- */
-async function handleGetPhoneNumber(e) {
+watch(
+  () => props.show,
+  async visible => {
+    if (visible) {
+      loginError.value = ''
+    }
+    await nextTick()
+    if (visible) {
+      bottomSheetRef.value?.open?.()
+    } else {
+      bottomSheetRef.value?.close?.()
+    }
+  },
+  { immediate: true }
+)
+
+onMounted(() => {
+  if (props.show) {
+    bottomSheetRef.value?.open?.()
+  }
+})
+
+async function handlePlatformLoginTap() {
+  if (loginCodeReady.value || platformLoggingIn.value) {
+    return
+  }
+  await prepareLoginCode()
+}
+
+async function handleGetPhoneNumber(event) {
   const phonePayload = {
-    code: e?.detail?.code || '',
-    cloudId: e?.detail?.cloudID || e?.detail?.cloudId || ''
+    code: event?.detail?.code || '',
+    cloudId: event?.detail?.cloudID || event?.detail?.cloudId || ''
   }
 
   if (!phonePayload.code && !phonePayload.cloudId) {
-    console.log('用户取消授权手机号或未返回有效桥接参数:', e?.detail)
+    loginError.value = '未完成手机号授权，请重试'
     return
   }
 
+  loginError.value = ''
   isLoggingIn.value = true
   try {
     await userStore.phoneLogin(phonePayload)
-
-    uni.showToast({
-      title: '登录成功',
-      icon: 'success'
-    })
-
     emit('success')
     emit('close')
   } catch (error) {
     console.error('手机号登录失败:', error)
-    uni.showToast({
-      title: error.message || '登录失败',
-      icon: 'none'
-    })
+    loginError.value = '登录失败，请稍后重试'
   } finally {
     isLoggingIn.value = false
   }
 }
 
-function handlePhoneLoginUnavailable() {
-  uni.showToast({
-    title: '当前平台手机号登录接入中',
-    icon: 'none'
-  })
+function handleOtherPhoneLogin() {
+  loginError.value = '请使用当前平台绑定的手机号完成登录'
 }
 
-/**
- * 快速登录（使用 code）
- */
-async function handleQuickLogin() {
-  try {
-    await userStore.wechatLogin()
-    uni.showToast({
-      title: '登录成功',
-      icon: 'success'
-    })
-    isLoggingIn.value = true
-    emit('success')
-    emit('close')
-  } catch (error) {
-    console.error('快速登录失败:', error)
-    uni.showToast({
-      title: error.message || '登录失败',
-      icon: 'none'
-    })
-  } finally {
-    isLoggingIn.value = false
-  }
-}
-
-/**
- * 取消登录
- */
 function handleCancel() {
-  if (!isLoggingIn.value) {
+  if (!isLoggingIn.value && !platformLoggingIn.value) {
     emit('close')
+  }
+}
+
+function handleSheetClose() {
+  if (props.show) {
+    handleCancel()
   }
 }
 </script>

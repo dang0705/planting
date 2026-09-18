@@ -143,8 +143,8 @@ batch_20260328_001
 
 - `problem_name`
 - `problem_cn`
-- `genus_compatibility`
-- `host_compatibility`
+- `genus_suitabilityibility`
+- `host_suitabilityibility`
 - `plant_id`
 - `final_prior_score`
 - `relation_strength`
@@ -155,7 +155,7 @@ batch_20260328_001
 
 ### 7.1 当前建议
 
-row_hash 是发布系统推荐能力，但第一版必须采取**兼容式接入**。
+row_hash 是发布系统推荐能力，但第一版必须采取**适配式接入**。
 
 也就是说：
 
@@ -356,7 +356,7 @@ is_active = 0
 
 ---
 
-## 13. schema 路由与诊断系统兼容
+## 13. schema 路由与诊断系统适配
 
 ### 13.1 必须补一个统一 schema 选择层
 
@@ -366,7 +366,7 @@ is_active = 0
 SELECT * FROM problems
 ```
 
-这与双 schema 架构不兼容。
+这与双 schema 架构不适配。
 
 必须新增统一能力：
 
@@ -439,7 +439,7 @@ Codex 必须按以下顺序实现：
 
 - 先强改表字段名
 - 先假设 row_hash 已全部存在
-- 先按旧 spec 重命名数据库字段
+- 先按既有 spec 重命名数据库字段
 
 ---
 

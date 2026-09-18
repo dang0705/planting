@@ -1,0 +1,583 @@
+{
+  "contractVersion": 4,
+  "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30
+  },
+  "subtitle": {
+    "defaultPosition": "偏底部",
+    "font": "PingFang SC",
+    "fontSize": 63,
+    "outline": 4
+  },
+  "audio": {
+    "keepLeadingSilence": 0.08,
+    "keepTrailingSilence": 0.2,
+    "retalkMinAudioDuration": 2.1
+  },
+  "voices": {
+    "default": "zh-CN-Xiaoxiao2:DragonHDFlashLatestNeural",
+    "defaultNarrator": "zh-CN-Xiaoxiao2:DragonHDFlashLatestNeural",
+    "女性": "zh-CN-Xiaoxiao2:DragonHDFlashLatestNeural",
+    "男性": "zh-CN-Yunhan:DragonHDFlashLatestNeural",
+    "legacyMale": "zh-CN-Yunxi:DragonHDFlashLatestNeural"
+  },
+  "wan": {
+    "modelRegistry": "config/wan-models.json",
+    "routingPolicy": "quota-first",
+    "plantResolution": "720P",
+    "personVoiceoverResolution": "720P",
+    "personDialogueResolution": "1080P",
+    "personDialogue": {
+      "lipSync": "videoretalk",
+      "visualAudioGuidance": "auto"
+    }
+  },
+  "retalk": {
+    "costPerSecondCny": 0.08
+  },
+  "budget": {
+    "maxEstimatedVideoCostCny": 20
+  },
+  "transitions": {
+    "lightDurationSec": 0.18
+  },
+  "performance": {
+    "version": 5,
+    "azure": {
+      "modelFamily": "DragonHDFlash",
+      "temperature": 0.2,
+      "strictStyle": false,
+      "allowEmpiricalStyles": true,
+      "allowCandidateStyles": true,
+      "allowUnverifiedStyles": true,
+      "globalStylePool": [
+        "amazed",
+        "amused",
+        "angry",
+        "annoyed",
+        "anxious",
+        "appreciative",
+        "calm",
+        "cautious",
+        "concerned",
+        "confident",
+        "confused",
+        "curious",
+        "defeated",
+        "defensive",
+        "defiant",
+        "determined",
+        "disappointed",
+        "disgusted",
+        "doubtful",
+        "ecstatic",
+        "encouraging",
+        "excited",
+        "fast",
+        "fearful",
+        "frustrated",
+        "happy",
+        "hesitant",
+        "hurt",
+        "impatient",
+        "impressed",
+        "intrigued",
+        "joking",
+        "laughing",
+        "optimistic",
+        "painful",
+        "panicked",
+        "panting",
+        "pleading",
+        "proud",
+        "quiet",
+        "reassuring",
+        "reflective",
+        "relieved",
+        "remorseful",
+        "resigned",
+        "sad",
+        "sarcastic",
+        "secretive",
+        "serious",
+        "shocked",
+        "shouting",
+        "shy",
+        "skeptical",
+        "slow",
+        "struggling",
+        "surprised",
+        "suspicious",
+        "sympathetic",
+        "terrified",
+        "upset",
+        "urgent",
+        "whispering"
+      ],
+      "paralinguistics": [
+        "laughter",
+        "coughing",
+        "throat_clearing",
+        "breathing",
+        "sighing",
+        "yawning"
+      ],
+      "voiceProfiles": {
+        "zh-CN-Xiaoxiao2:DragonHDFlashLatestNeural": {
+          "gender": "女性",
+          "officialStyles": [
+            "affectionate",
+            "angry",
+            "anxious",
+            "cheerful",
+            "curious",
+            "disappointed",
+            "empathetic",
+            "encouraging",
+            "excited",
+            "fearful",
+            "guilty",
+            "lonely",
+            "poetry-reading",
+            "sad",
+            "sentimental",
+            "sorry",
+            "story",
+            "surprised",
+            "tired",
+            "whispering"
+          ],
+          "empiricalStyles": [
+            "anxious",
+            "confused",
+            "concerned",
+            "impatient",
+            "relieved"
+          ],
+          "candidateStyles": [
+            "calm",
+            "quiet",
+            "doubtful",
+            "hesitant",
+            "cautious",
+            "panicked",
+            "amazed",
+            "shocked",
+            "defeated",
+            "ecstatic",
+            "reassuring",
+            "sympathetic"
+          ]
+        },
+        "zh-CN-Yunhan:DragonHDFlashLatestNeural": {
+          "gender": "男性",
+          "officialStyles": [
+            "angry",
+            "cheerful",
+            "curious",
+            "empathetic",
+            "encouraging",
+            "excited",
+            "serious",
+            "surprised",
+            "tired",
+            "whispering"
+          ],
+          "empiricalStyles": [],
+          "candidateStyles": [
+            "anxious",
+            "confused",
+            "concerned",
+            "impatient",
+            "disappointed",
+            "relieved"
+          ]
+        },
+        "zh-CN-Yunxi:DragonHDFlashLatestNeural": {
+          "gender": "男性",
+          "legacy": true,
+          "officialStyles": [
+            "angry",
+            "chat",
+            "cheerful",
+            "complaining",
+            "depressed",
+            "fearful",
+            "news",
+            "sad",
+            "shy",
+            "strict",
+            "voice-assistant"
+          ],
+          "empiricalStyles": [
+            "impatient"
+          ],
+          "candidateStyles": []
+        }
+      }
+    },
+    "rhythms": {
+      "紧凑": {
+        "ttsRatePct": 3,
+        "keepLeadingSilence": 0.05,
+        "keepTrailingSilence": 0.12,
+        "wanPrompt": "同一镜头允许2到3个连续的小动作事件，例如视线切换、一次手部调整、抬眼；动作衔接利落，事件之间只留短暂停顿，反应及时；不要新增大幅动作或机械倍速"
+      },
+      "自然": {
+        "ttsRatePct": 0,
+        "keepLeadingSilence": 0.08,
+        "keepTrailingSilence": 0.2,
+        "wanPrompt": "同一镜头保持1到2个主要动作事件，例如一次视线切换和一次抬眼或手部动作；动作之间有短暂自然停顿，动作密度和速度都符合真实生活"
+      },
+      "舒缓": {
+        "ttsRatePct": -3,
+        "keepLeadingSilence": 0.12,
+        "keepTrailingSilence": 0.3,
+        "wanPrompt": "同一镜头只保留1个主要动作和最多1次视线变化；动作缓慢从容，动作完成后保持姿态较长，不要继续增加额外动作，不要用僵硬慢动作模拟舒缓"
+      }
+    },
+    "emotions": {
+      "平静": {
+        "azure": {
+          "primary": {
+            "style": "calm",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物眉眼放松，视线稳定，握持动作轻且自然；嘴角保持中性或极轻微自然弧度，不主动表现紧张、兴奋或烦躁"
+      },
+      "放松": {
+        "azure": {
+          "primary": {
+            "style": "calm",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物明显松弛，肩颈和眉眼放松，动作自然舒展"
+      },
+      "安心": {
+        "azure": {
+          "primary": {
+            "style": "relieved",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物已经确认情况没有想象中严重；眉间完全舒展，肩颈和面部明显放松；轻轻呼气，嘴角出现很轻的自然微笑，动作从容，整个镜头始终处于安心、如释重负的状态"
+      },
+      "高兴": {
+        "azure": {
+          "primary": {
+            "style": "cheerful",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物自然高兴，轻松微笑，眼神明亮，动作轻快但不过度表演"
+      },
+      "兴奋": {
+        "azure": {
+          "primary": {
+            "style": "excited",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物明显兴奋，表情明亮，动作更积极轻快，保持生活化"
+      },
+      "自信": {
+        "azure": {
+          "primary": {
+            "style": "confident",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物状态稳定自信，目光明确，动作果断但不端着"
+      },
+      "疑惑": {
+        "azure": {
+          "primary": {
+            "style": "confused",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物有明显疑惑，眉头轻微收紧，视线带有确认和思考感"
+      },
+      "怀疑": {
+        "azure": {
+          "primary": {
+            "style": "skeptical",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物带有质疑和不完全相信的状态，观察更谨慎，避免敌意"
+      },
+      "犹豫": {
+        "azure": {
+          "primary": {
+            "style": "hesitant",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物明显拿不准，动作有短暂停顿和反复确认感"
+      },
+      "惊讶": {
+        "azure": {
+          "primary": {
+            "style": "surprised",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物自然惊讶，眉眼短暂抬起，动作有轻微停顿，不夸张张嘴"
+      },
+      "担心": {
+        "azure": {
+          "primary": {
+            "style": "concerned",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物表现出轻微担心，神情谨慎，动作略有迟疑但不过度紧张"
+      },
+      "心烦": {
+        "azure": {
+          "primary": {
+            "style": "complaining",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物有明显抱怨型心烦，反复纠结，表情不爽但不过火"
+      },
+      "烦躁": {
+        "azure": {
+          "primary": {
+            "style": "annoyed",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物明显烦躁和不爽，动作略急，但仍保持可控"
+      },
+      "不耐烦": {
+        "azure": {
+          "primary": {
+            "style": "impatient",
+            "styleDegree": 1.3
+          },
+          "variance": "high"
+        },
+        "wanPrompt": "人物短暂皱眉并轻轻抿嘴；快速看一眼植物，再看手中的水壶；握水壶的手做一次短促但克制的调整动作，随后带着不耐烦重新抬眼。动作略急，但不要演成愤怒爆发"
+      },
+      "无奈": {
+        "azure": {
+          "primary": {
+            "style": "resigned",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物有明显无奈感，神态略疲惫，动作带停顿，像接受了现实"
+      },
+      "失望": {
+        "azure": {
+          "primary": {
+            "style": "disappointed",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物有期待落空后的失望，情绪下沉但不戏剧化"
+      },
+      "挫败": {
+        "azure": {
+          "primary": {
+            "style": "defeated",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物表现出受挫和无力感，动作幅度减少，避免夸张颓丧"
+      },
+      "伤心": {
+        "azure": {
+          "primary": {
+            "style": "sad",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物表现出自然伤心和难过，表情收敛，不哭喊"
+      },
+      "焦虑": {
+        "azure": {
+          "primary": {
+            "style": "anxious",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物轻皱眉，眉间明显收紧；视线在植物叶片和手中水壶之间快速来回确认一次；握水壶的手指轻微收紧，抬眼时仍带明显担忧。动作克制，不能大幅张嘴或夸张惊恐"
+      },
+      "紧张": {
+        "azure": {
+          "primary": {
+            "style": "anxious",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物神情紧张，动作谨慎略快，注意力集中，保持真实克制"
+      },
+      "害怕": {
+        "azure": {
+          "primary": {
+            "style": "fearful",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物出现明确害怕感，动作收紧，避免夸张惊恐"
+      },
+      "慌张": {
+        "azure": {
+          "primary": {
+            "style": "panicked",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物明显慌张，动作加快且出现急促确认，但不要失控"
+      },
+      "愤怒": {
+        "azure": {
+          "primary": {
+            "style": "angry",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物表现出克制但明确的愤怒，眉头收紧，动作有力度，避免咆哮"
+      },
+      "暴躁": {
+        "azure": {
+          "primary": {
+            "style": "angry",
+            "styleDegree": 1.3
+          }
+        },
+        "wanPrompt": "人物明显急躁、火气上升，动作更快更用力，但保持可控"
+      }
+    },
+    "stances": {
+      "默认": {
+        "azure": {
+          "primary": {
+            "style": null,
+            "styleDegree": null
+          }
+        },
+        "wanPrompt": ""
+      },
+      "安抚": {
+        "azure": {
+          "primary": {
+            "style": "reassuring",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "说话姿态以安抚对方为主，表情稳定可信，减少紧张感"
+      },
+      "鼓励": {
+        "azure": {
+          "primary": {
+            "style": "encouraging",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "说话姿态积极鼓励，表情有支持感，不要像广告口号"
+      },
+      "共情": {
+        "azure": {
+          "primary": {
+            "style": "sympathetic",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "说话姿态体现理解和共情，神态柔和，不要过度煽情"
+      }
+    },
+    "expressions": {
+      "默认": {
+        "azure": {
+          "primary": {
+            "style": null,
+            "styleDegree": null
+          }
+        },
+        "wanPrompt": ""
+      },
+      "低声": {
+        "azure": {
+          "primary": {
+            "style": "quiet",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物降低表达强度，动作和表情收敛，保持低刺激感"
+      },
+      "耳语": {
+        "azure": {
+          "primary": {
+            "style": "whispering",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物以耳语状态表达，嘴部动作小，身体姿态靠近且克制"
+      },
+      "喊叫": {
+        "azure": {
+          "primary": {
+            "style": "shouting",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物明显提高表达强度，动作和口型更有力度，但避免失控夸张"
+      },
+      "玩笑": {
+        "azure": {
+          "primary": {
+            "style": "joking",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物带轻松玩笑感，表情自然灵动，避免夸张喜剧表演"
+      },
+      "秘密感": {
+        "azure": {
+          "primary": {
+            "style": "secretive",
+            "styleDegree": 1.0
+          }
+        },
+        "wanPrompt": "人物像在分享一个小秘密，动作收敛，视线和表情带轻微神秘感"
+      }
+    },
+    "wanVisual": {
+      "version": 1,
+      "seedMode": "deterministic",
+      "seedSalt": "qinghuazhi-wan-v1",
+      "identityLock": "严格保持首帧人物身份一致：五官、脸型、发型、肤色、服装、体型不变化；保持室内背景、绿植位置、光线方向和整体色调一致；不新增人物、道具或文字",
+      "cameraByShotType": {
+        "person_dialogue": "固定镜头，中近景，人物脸部始终清晰，不切镜，不摇镜，不快速推拉，不改变机位",
+        "person_voiceover": "固定镜头或仅允许极轻微自然推进，人物脸部始终清晰，不切镜，不突然变焦",
+        "plant": "固定镜头，主体植物始终处于清晰可见区域，不切镜，不突然变焦"
+      },
+      "mouthByShotType": {
+        "person_dialogue": "本阶段不说话，嘴部保持自然闭合或只有轻微自然呼吸动作，不要主动生成明确口型，不要大幅张嘴；后续由口型同步模型处理",
+        "person_voiceover": "人物不说话，嘴部保持自然，避免持续张嘴或明显口型"
+      },
+      "sameSceneSamePersonContinuity": "若属于同一 Scene 的同一人物连续镜头，继续保持相同人物身份、发型、服装、背景、光线和色调；只改变当前镜头明确要求的表情和动作，情绪变化自然，不突然夸张变脸",
+      "negativePromptPerson": "新增人物，多余人物，身份变化，脸部变形，五官漂移，发型变化，服装变化，背景变化，光照突变，过度夸张表情，持续大幅张嘴，错误口型，频繁剧烈眨眼，手指畸形，多余手指，多余手臂，身体比例异常，剧烈摇镜，快速推拉，镜头切换，场景切换，文字，字幕，水印，低清晰度，模糊",
+      "negativePromptPlant": "新增叶片，新增黄叶，新增虫害，症状加重，症状消失，叶片颜色改变，植物品种变化，花盆变化，背景变化，镜头切换，文字，字幕，水印，低清晰度，模糊，形态扭曲",
+      "warmupSecByShotType": {
+        "person_dialogue": 0.35,
+        "person_voiceover": 0.25,
+        "plant": 0
+      },
+      "mouthByMode": {
+        "dialogue_silent": "本阶段不说话，嘴部保持自然闭合或只有轻微自然呼吸动作；不要主动生成明确口型，不要持续大幅张嘴，后续由口型同步模型处理",
+        "dialogue_driven": "根据驱动音频自然说话，嘴型、下颌动作和停顿必须与音频一致；不要额外说话，不要在静音段持续张嘴，不要夸张口型",
+        "voiceover": "人物不说话，嘴部保持自然，避免持续张嘴或明显口型"
+      }
+    }
+  }
+}

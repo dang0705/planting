@@ -34,8 +34,8 @@ module.exports = {
     urgencyHintCn: 'string'
   },
   prior: {
-    genusCompatibility: 'number',
-    hostCompatibility: 'number',
+    genusSuitability: 'number',
+    hostSuitability: 'number',
     sourceLayer: 'string'
   },
   question: {

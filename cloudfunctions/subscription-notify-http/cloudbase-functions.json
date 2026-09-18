@@ -1,0 +1,15 @@
+{
+  "functionsRoot": ".",
+  "functions": [
+    {
+      "name": "subscription-notify-http",
+      "directory": "."
+    }
+  ],
+  "routes": [
+    {
+      "functionName": "subscription-notify-http",
+      "path": "/subscription/notify"
+    }
+  ]
+}

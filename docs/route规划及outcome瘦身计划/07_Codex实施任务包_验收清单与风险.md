@@ -5,7 +5,7 @@
 - 当前代码压缩包：`Archive 2.zip`
 - 项目规则压缩包：`rules.zip`
 - 诊断运行时粗文档：`diagnosis-runtime-code-logic.md`
-- 本次会话中关于“主动瘦身、养护类主轴、outcome 路径规划、gate 守卫、LLM prompt 职责边界”的讨论结论
+- 本次会话中关于“主动瘦身、养护类主轴、outcome 路径规划、condition 守卫、LLM prompt 职责边界”的讨论结论
 
 权威优先级：**当前代码 > 项目 rules > 已有运行时说明 > 本次设计讨论**。如果后续实施时发现文档和代码冲突，必须以代码为准，并同步修正文档。
 
@@ -14,11 +14,11 @@
 
 这次不是普通小改，而是诊断主链口径变化。Codex 执行时必须遵守：
 
-1. 不允许直接删除旧 ranking 模式。
+1. 不允许直接删除既有 ranking 模式。
 2. 不允许绕过正式证据准入。
 3. 不允许让 LLM 输出主 outcome / 可见候选 outcome。
 4. 不允许把 routeTrace 当成用户可见结果。
-5. 不允许把黄叶、孔洞、宽泛斑块等守卫删掉后不补 gate。
+5. 不允许把黄叶、孔洞、宽泛斑块等守卫删掉后不补 condition。
 6. 每个改动阶段必须能回滚。
 
 ## 二、建议分支与 feature flag
@@ -88,7 +88,7 @@ src/data-system/config/tables.js
 
 ```text
 outcome_routes
-outcome_route_gates
+outcome_route_conditions
 outcome_route_questions
 outcome_answer_effects
 outcome_action_profiles
@@ -133,12 +133,12 @@ getDiagnosisOutcomesByKeys(outcomeKeys)
 - data_status / enabled 过滤明确。
 - 返回字段做 normalize，不把数据库 snake_case 泄漏到 domain 层。
 
-### Task 4：新增 gate evaluator
+### Task 4：新增 condition evaluator
 
 新增文件：
 
 ```text
-cloudfunctions/diagnose-http/domain/outcome-gate-evaluator.js
+cloudfunctions/diagnose-http/domain/outcome-condition-evaluator.js
 ```
 
 方法：
@@ -152,8 +152,8 @@ evaluateOutcomeRouteGate()
 
 验收：
 
-- gate 不直接读取数据库。
-- gate 只消费 `routeEvidenceContext`。
+- condition 不直接读取数据库。
+- condition 只消费 `routeEvidenceContext`。
 - blocker 优先级高于 closure。
 - 缺失信息返回 `needsMoreInfo` 而不是强行失败。
 
@@ -214,7 +214,7 @@ metrics.routeDecision
 
 验收：
 
-- 所有旧测试/批跑结果不变。
+- 所有既有测试/批跑结果不变。
 - routeDecision 可在日志或开发响应中查看。
 
 ### Task 7：route 接管追问
@@ -224,23 +224,23 @@ metrics.routeDecision
 ```text
 cloudfunctions/diagnose-http/domain/diagnosis-engine.js
 cloudfunctions/diagnose-http/domain/question-selector.js
-cloudfunctions/diagnose-http/domain/question-queue/question-queue-planner.js
-cloudfunctions/diagnose-http/repositories/question-queue-repository.js
+cloudfunctions/diagnose-http/domain/question-package-snapshot/question-package-snapshot-planner.js
+cloudfunctions/diagnose-http/repositories/question-package-snapshot-repository.js
 ```
 
 改动：
 
 ```text
 routeDecision.nextQuestionKeys 优先
-旧 buildFollowUps fallback
-queue item 写入 outcomeKey/routeKey/gateKey
+既有 buildFollowUps fallback
+pendingList item 写入 outcomeKey/routeKey/conditionKey
 ```
 
 验收：
 
 - 每轮仍只展示一个问题。
 - 已问过的问题不重复。
-- 用户改答后 queue 能失效或重算。
+- 用户改答后 pendingList 能失效或重算。
 
 ### Task 8：route 接管输出
 
@@ -258,12 +258,12 @@ cloudfunctions/diagnose-http/domain/stop-state/output-eligibility-evaluator.js
 ```text
 routeDecision.visibleOutcomeKeys / primaryOutcomeKey 优先输出
 stopDecision 增加 route_visible_outcomes_ready、route_uncertain_with_candidates
-outputEligibility 支持 display gate、closure gate、action safety gate
+outputEligibility 支持 display condition、closure condition、action safety condition
 ```
 
 验收：
 
-- ranking 第一名不能绕过 route gate。
+- ranking 第一名不能绕过 route condition。
 - uncertain 不显示 topProblem。
 - non-problematic 不显示治疗型建议。
 - action profile 缺失时不得输出假建议，应不确定或 fallback 保守建议。
@@ -292,9 +292,9 @@ cloudfunctions/diagnose-http/services/visual-diagnosis-service.js
 
 - prompt 明确禁止诊断、病因、治疗建议。
 - parser 能处理缺失字段。
-- 新字段不会破坏旧视觉结果。
+- 新字段不会破坏既有视觉结果。
 
-### Task 10：前端契约兼容
+### Task 10：前端契约适配
 
 涉及文件：
 
@@ -318,7 +318,7 @@ normalize primaryOutcome / secondaryOutcomes / visibleOutcomes / actionAdvice / 
 
 - 老响应不崩。
 - 新响应能展示。
-- 不展示 routeKey/gateKey/internal ranking。
+- 不展示 routeKey/conditionKey/internal ranking。
 
 ## 四、黄金样例验收
 
@@ -331,7 +331,7 @@ normalize primaryOutcome / secondaryOutcomes / visibleOutcomes / actionAdvice / 
 问诊路径
 预期 outcome
 预期 route
-预期 gate
+预期 condition
 预期追问
 预期行动建议
 禁止输出
@@ -348,7 +348,7 @@ normalize primaryOutcome / secondaryOutcomes / visibleOutcomes / actionAdvice / 
 7. 焦斑 + 最近暴晒 → 晒伤/强光刺激。
 8. 焦边 + 空气干/靠空调 → 叶尖焦枯/环境压力。
 9. 斑点扩散 + 通风差/喷水 → 叶斑类问题。
-10. 孔洞 + 无虫迹 + 不扩散 → 结构损伤/旧伤。
+10. 孔洞 + 无虫迹 + 不扩散 → 结构损伤/既有伤。
 11. 孔洞 + 虫体/虫粪/继续变多 → 疑似虫害痕迹。
 12. 艺斑/正常斑纹 → 非问题。
 13. 宽泛斑块 + 无法确认 → 不确定。
@@ -368,7 +368,7 @@ normalize primaryOutcome / secondaryOutcomes / visibleOutcomes / actionAdvice / 
 ### 数据层
 
 - [ ] 每个 final outcome 有 action profile。
-- [ ] 每条 route 有 gate。
+- [ ] 每条 route 有 condition。
 - [ ] 中间节点没有被标记为 final output。
 - [ ] route 表中中文说明完整。
 - [ ] 未审核 route 不启用。
@@ -385,7 +385,7 @@ normalize primaryOutcome / secondaryOutcomes / visibleOutcomes / actionAdvice / 
 - [ ] 不展示 internal ranking。
 - [ ] 不展示 routeTrace 给用户。
 - [ ] uncertain 不显示 topProblem。
-- [ ] actionAdvice 缺失有兜底。
+- [ ] actionAdvice 缺失有保守。
 
 ## 六、高风险点与处理
 
@@ -405,7 +405,7 @@ normalize primaryOutcome / secondaryOutcomes / visibleOutcomes / actionAdvice / 
 
 ```text
 每个 outcome 2～4 条 route。
-每条 route 1～2 个 gate。
+每条 route 1～2 个 condition。
 最多 2 轮问诊。
 ```
 
@@ -427,12 +427,12 @@ prompt 文档和代码注释明确禁止 outcome_key。
 单测检查视觉响应中 outcome_key 被忽略或报错。
 ```
 
-### 风险 5：删除旧守卫后出现越级输出
+### 风险 5：删除既有守卫后出现越级输出
 
 处理：
 
 ```text
-守卫只能迁移到 gate，不能无替代删除。
+守卫只能迁移到 condition，不能无替代删除。
 ```
 
 ## 七、建议给 code logic knowledge subagent 的审查问题
@@ -441,7 +441,7 @@ prompt 文档和代码注释明确禁止 outcome_key。
 
 1. 这次改动有没有绕过 `observedEvidenceSet`？
 2. 有没有让 ranking 继续直接决定主 outcome / 可见候选 outcome？
-3. route gate 是否能解释为什么问这个问题？
+3. route condition 是否能解释为什么问这个问题？
 4. 用户否定后是否能阻断或转向？
 5. 不确定结果是否仍然隐藏内部 top problem？
 6. 同一个 outcome 的行动建议是否冲突？
@@ -452,8 +452,8 @@ prompt 文档和代码注释明确禁止 outcome_key。
 
 只有同时满足以下条件，才能认为 ranking 到 route 改造完成：
 
-1. 主要 MVP outcome 由 route group、route、gate 管理候选收敛，并通过展示/闭合/行动安全 gate 后才可前端可见。
-2. 追问优先来自 route group 下的关键分流 gate。
+1. 主要 MVP outcome 由 route group、route、condition 管理候选收敛，并通过展示/闭合/行动安全 condition 后才可前端可见。
+2. 追问优先来自 route group 下的关键分流 condition。
 3. ranking 只作为候选排序和审计，不作为最终裁判。
 4. 结果输出以 primaryOutcome、secondaryOutcomes、visibleOutcomes 和 actionProfile 为中心。
 5. 黄金样例通过。

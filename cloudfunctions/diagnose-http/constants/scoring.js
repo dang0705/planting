@@ -23,7 +23,7 @@ module.exports = {
   routeSelection: {
     maxQuestionsPerRound: 1,
     maxRounds: 4,
-    maxFollowUpRounds: 0,
+    maxQuestionRounds: 0,
     supportRolesAsTop1: ['root_cause', 'secondary_issue'],
     contributingRoles: ['predisposing_factor'],
     intermediateRoles: ['result_state', 'aggregate_cluster']
@@ -31,7 +31,7 @@ module.exports = {
   unknownFlow: {
     groupUnknownThreshold: 2
   },
-  followUpSelection: {
+  questionSelection: {
     visualLockThreshold: 0.78,
     highSpecificityThreshold: 0.72,
     strongOverlapPenalty: 0.85,

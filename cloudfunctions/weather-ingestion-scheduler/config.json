@@ -1,0 +1,44 @@
+{
+  "triggers": [
+    {
+      "name": "weather-ingestion-recent-10d",
+      "type": "timer",
+      "config": "0 20 0/6 * * * *"
+    },
+    {
+      "name": "weather-d0-now-sunrise-sweep",
+      "type": "timer",
+      "config": "0 */10 4-7 * * * *"
+    },
+    {
+      "name": "weather-d0-now-morning-0720",
+      "type": "timer",
+      "config": "0 20 7 * * * *"
+    },
+    {
+      "name": "weather-d0-now-forenoon-1120",
+      "type": "timer",
+      "config": "0 20 11 * * * *"
+    },
+    {
+      "name": "weather-d0-now-noon-1420",
+      "type": "timer",
+      "config": "0 20 14 * * * *"
+    },
+    {
+      "name": "weather-d0-now-afternoon-1620",
+      "type": "timer",
+      "config": "0 20 16 * * * *"
+    },
+    {
+      "name": "weather-d0-now-sunset-sweep",
+      "type": "timer",
+      "config": "0 */10 17-20 * * * *"
+    },
+    {
+      "name": "weather-d0-now-finalize-2130",
+      "type": "timer",
+      "config": "0 30 21 * * * *"
+    }
+  ]
+}

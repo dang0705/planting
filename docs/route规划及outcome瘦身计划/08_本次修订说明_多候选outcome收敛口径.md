@@ -13,7 +13,7 @@
 最新设计应为：
 
 ```text
-系统先形成多个候选 outcome，再通过 route group、route、gate 和问诊回答逐步增强、削弱、阻断，最终收窄到 1～3 个前端可见 outcome。
+系统先形成多个候选 outcome，再通过 route group、route、condition 和问诊回答逐步增强、削弱、阻断，最终收窄到 1～3 个前端可见 outcome。
 ```
 
 因此，本次修订把相关文档统一改为：
@@ -83,9 +83,9 @@ route group = 同一入口场景下的一组分流路径。
 
 ---
 
-### 3. gate 的角色修正
+### 3. condition 的角色修正
 
-gate 不只判断“能不能闭合”，还要判断：
+condition 不只判断“能不能闭合”，还要判断：
 
 ```text
 是否增强某个候选 outcome
@@ -100,9 +100,9 @@ gate 不只判断“能不能闭合”，还要判断：
 因此需要补充：
 
 ```text
-display_gate
-action_safety_gate
-split_gate
+display_condition
+action_safety_condition
+split_condition
 ```
 
 ---
@@ -174,4 +174,4 @@ split_gate
 7. 多个可见 outcome 的行动建议不得互相冲突。
 8. LLM 不得输出主 outcome 或前端可见候选 outcome。
 9. ranking 只能辅助候选排序和审计，不得直接决定公开结果。
-10. 不确定结果可以展示通过 gate 的可排查方向，但不得泄漏内部最高 ranking。
+10. 不确定结果可以展示通过 condition 的可排查方向，但不得泄漏内部最高 ranking。

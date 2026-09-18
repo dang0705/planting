@@ -1,0 +1,3958 @@
+{
+  "task": "watering-transpiration-v3-e2e-trae-20260713",
+  "gitHead": "e21c5605c6077bf8a5eb14da83c476738e824ee0",
+  "branch": "sprint-ai-workflow",
+  "baseHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "projectPath": "/Users/jay/WebstormProjects/planting/.tmp/dispatch-task/qa-runtime-sessions/fertilization-full-interaction-20260811-r49-dwyZZT/project",
+  "mode": "fertilization-reminder-setup",
+  "wsEndpoint": "ws://127.0.0.1:55161",
+  "startedAt": "2026-08-11T14:33:43.240Z",
+  "endedAt": "2026-08-11T14:34:27.324Z",
+  "pages": [],
+  "pageDataSummaries": [],
+  "capturedRequests": [
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants?page=1&pageSize=50",
+      "method": "GET",
+      "data": {},
+      "time": 1786458823258,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": {
+            "list": [
+              {
+                "id": 95001,
+                "plantId": "genus_care_026e7432408d56ad",
+                "canonicalName": "龟背竹",
+                "displayName": "龟背竹",
+                "recognizedName": "Monstera deliciosa",
+                "nickname": "施肥表验收龟背竹",
+                "genus": "Monstera",
+                "familyCn": "天南星科",
+                "familyEn": "Araceae",
+                "latinName": "Monstera deliciosa",
+                "sourceType": "catalog",
+                "identityResolutionStatus": "matched",
+                "location": "室内",
+                "plantDate": "2026-05-01",
+                "createdAt": "2026-05-01T00:00:00.000Z",
+                "notes": "",
+                "photos": [],
+                "imageFileId": "",
+                "lastWatered": null,
+                "nextWater": null,
+                "watering": {
+                  "way": "表层2–3cm微干后浇透",
+                  "freq": [
+                    5,
+                    10
+                  ],
+                  "unit": "天"
+                },
+                "fertilization": {
+                  "freq": [
+                    30,
+                    45
+                  ],
+                  "type": "1/2浓度均衡肥",
+                  "unit": "天",
+                  "other": "生长期为主；休眠/低温/弱光期减量或暂停"
+                },
+                "fertilizationMonthly": {
+                  "available": true,
+                  "scopeLabel": "温带室内盆栽参考（龟背竹属）",
+                  "scopeType": "indoor",
+                  "adjustmentMode": "phenology",
+                  "scopeGuidance": "本表按温带室内盆栽的季节和生长节点整理。月份是参考，请结合植物是否正在长新叶或新芽调整施肥。表中某一格标为“暂停施肥”或“暂停追加”时，表示该栏对应的肥料在该月默认不追加；本功能不会为这类月份建立提醒。若植物仍持续长新叶或新芽，请人工参考同一张表中最近的生长期固定周期；找不到对应固定周期时，不要使用该肥料。",
+                  "choiceGuidance": "液体肥和缓释肥选一种，不要同时使用。",
+                  "publicNote": "",
+                  "rows": [
+                    {
+                      "month": 1,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 2,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 3,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 4,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 5,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 6,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 7,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 8,
+                      "liquid": {
+                        "displayText": "每月1次",
+                        "sourceNames": [
+                          "RHS",
+                          "UMN Extension"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 1,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 1,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "约3个月1次（长新叶或新芽时）",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 3,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 3,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "month": 9,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 10,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 11,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 12,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    }
+                  ],
+                  "sourceNames": [
+                    "RHS",
+                    "UMN Extension"
+                  ]
+                },
+                "sunning": {
+                  "way": "明亮散射光/半阴",
+                  "freq": [
+                    3,
+                    6
+                  ],
+                  "unit": "小时/天"
+                },
+                "ventilation": {
+                  "level": "medium",
+                  "sensitivity": "medium"
+                },
+                "temperatureMin": 18,
+                "temperatureMax": 30,
+                "humidityMin": 50,
+                "humidityMax": 80,
+                "potProfile": {
+                  "potTopDiameterCm": 18,
+                  "potBottomDiameterCm": 15,
+                  "potHeightCm": 16,
+                  "hasDrainageHole": "true",
+                  "potMaterial": "plastic",
+                  "substrateType": "general"
+                },
+                "fertilizationReminder": null
+              }
+            ],
+            "total": 1,
+            "page": 1,
+            "pageSize": 50
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants/fertilization-reminders?plantId=95001",
+      "method": "GET",
+      "data": {},
+      "time": 1786458829852,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": null
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants?page=1&pageSize=50",
+      "method": "GET",
+      "data": {},
+      "time": 1786458834107,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": {
+            "list": [
+              {
+                "id": 95001,
+                "plantId": "genus_care_026e7432408d56ad",
+                "canonicalName": "龟背竹",
+                "displayName": "龟背竹",
+                "recognizedName": "Monstera deliciosa",
+                "nickname": "施肥表验收龟背竹",
+                "genus": "Monstera",
+                "familyCn": "天南星科",
+                "familyEn": "Araceae",
+                "latinName": "Monstera deliciosa",
+                "sourceType": "catalog",
+                "identityResolutionStatus": "matched",
+                "location": "室内",
+                "plantDate": "2026-05-01",
+                "createdAt": "2026-05-01T00:00:00.000Z",
+                "notes": "",
+                "photos": [],
+                "imageFileId": "",
+                "lastWatered": null,
+                "nextWater": null,
+                "watering": {
+                  "way": "表层2–3cm微干后浇透",
+                  "freq": [
+                    5,
+                    10
+                  ],
+                  "unit": "天"
+                },
+                "fertilization": {
+                  "freq": [
+                    30,
+                    45
+                  ],
+                  "type": "1/2浓度均衡肥",
+                  "unit": "天",
+                  "other": "生长期为主；休眠/低温/弱光期减量或暂停"
+                },
+                "fertilizationMonthly": {
+                  "available": false,
+                  "rows": [],
+                  "scopeLabel": "",
+                  "scopeGuidance": "",
+                  "sourceNames": []
+                },
+                "sunning": {
+                  "way": "明亮散射光/半阴",
+                  "freq": [
+                    3,
+                    6
+                  ],
+                  "unit": "小时/天"
+                },
+                "ventilation": {
+                  "level": "medium",
+                  "sensitivity": "medium"
+                },
+                "temperatureMin": 18,
+                "temperatureMax": 30,
+                "humidityMin": 50,
+                "humidityMax": 80,
+                "potProfile": {
+                  "potTopDiameterCm": 18,
+                  "potBottomDiameterCm": 15,
+                  "potHeightCm": 16,
+                  "hasDrainageHole": "true",
+                  "potMaterial": "plastic",
+                  "substrateType": "general"
+                },
+                "fertilizationReminder": null
+              }
+            ],
+            "total": 1,
+            "page": 1,
+            "pageSize": 50
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants/fertilization-reminders?plantId=95001",
+      "method": "GET",
+      "data": {},
+      "time": 1786458840656,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": null
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants?page=1&pageSize=50",
+      "method": "GET",
+      "data": {},
+      "time": 1786458841807,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": {
+            "list": [
+              {
+                "id": 95001,
+                "plantId": "genus_care_026e7432408d56ad",
+                "canonicalName": "龟背竹",
+                "displayName": "龟背竹",
+                "recognizedName": "Monstera deliciosa",
+                "nickname": "施肥表验收龟背竹",
+                "genus": "Monstera",
+                "familyCn": "天南星科",
+                "familyEn": "Araceae",
+                "latinName": "Monstera deliciosa",
+                "sourceType": "catalog",
+                "identityResolutionStatus": "matched",
+                "location": "室内",
+                "plantDate": "2026-05-01",
+                "createdAt": "2026-05-01T00:00:00.000Z",
+                "notes": "",
+                "photos": [],
+                "imageFileId": "",
+                "lastWatered": null,
+                "nextWater": null,
+                "watering": {
+                  "way": "表层2–3cm微干后浇透",
+                  "freq": [
+                    5,
+                    10
+                  ],
+                  "unit": "天"
+                },
+                "fertilization": {
+                  "freq": [
+                    30,
+                    45
+                  ],
+                  "type": "1/2浓度均衡肥",
+                  "unit": "天",
+                  "other": "生长期为主；休眠/低温/弱光期减量或暂停"
+                },
+                "fertilizationMonthly": {
+                  "available": true,
+                  "scopeLabel": "温带室内盆栽参考（龟背竹属）",
+                  "scopeType": "indoor",
+                  "adjustmentMode": "phenology",
+                  "scopeGuidance": "本表按温带室内盆栽的季节和生长节点整理。月份是参考，请结合植物是否正在长新叶或新芽调整施肥。表中某一格标为“暂停施肥”或“暂停追加”时，表示该栏对应的肥料在该月默认不追加；本功能不会为这类月份建立提醒。若植物仍持续长新叶或新芽，请人工参考同一张表中最近的生长期固定周期；找不到对应固定周期时，不要使用该肥料。",
+                  "choiceGuidance": "液体肥和缓释肥选一种，不要同时使用。",
+                  "publicNote": "",
+                  "rows": [
+                    {
+                      "month": 1,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 2,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 3,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 4,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 5,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 6,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 7,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 8,
+                      "liquid": {
+                        "displayText": "请在长出新叶后少量补充",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "conditional"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "换盆稳定后施1次",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "event"
+                        }
+                      }
+                    },
+                    {
+                      "month": 9,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 10,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 11,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 12,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    }
+                  ],
+                  "sourceNames": [
+                    "RHS",
+                    "UMN Extension"
+                  ]
+                },
+                "sunning": {
+                  "way": "明亮散射光/半阴",
+                  "freq": [
+                    3,
+                    6
+                  ],
+                  "unit": "小时/天"
+                },
+                "ventilation": {
+                  "level": "medium",
+                  "sensitivity": "medium"
+                },
+                "temperatureMin": 18,
+                "temperatureMax": 30,
+                "humidityMin": 50,
+                "humidityMax": 80,
+                "potProfile": {
+                  "potTopDiameterCm": 18,
+                  "potBottomDiameterCm": 15,
+                  "potHeightCm": 16,
+                  "hasDrainageHole": "true",
+                  "potMaterial": "plastic",
+                  "substrateType": "general"
+                },
+                "fertilizationReminder": null
+              }
+            ],
+            "total": 1,
+            "page": 1,
+            "pageSize": 50
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants/fertilization-reminders?plantId=95001",
+      "method": "GET",
+      "data": {},
+      "time": 1786458844799,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": null
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants?page=1&pageSize=50",
+      "method": "GET",
+      "data": {},
+      "time": 1786458845954,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": {
+            "list": [
+              {
+                "id": 95001,
+                "plantId": "genus_care_026e7432408d56ad",
+                "canonicalName": "龟背竹",
+                "displayName": "龟背竹",
+                "recognizedName": "Monstera deliciosa",
+                "nickname": "施肥表验收龟背竹",
+                "genus": "Monstera",
+                "familyCn": "天南星科",
+                "familyEn": "Araceae",
+                "latinName": "Monstera deliciosa",
+                "sourceType": "catalog",
+                "identityResolutionStatus": "matched",
+                "location": "室内",
+                "plantDate": "2026-05-01",
+                "createdAt": "2026-05-01T00:00:00.000Z",
+                "notes": "",
+                "photos": [],
+                "imageFileId": "",
+                "lastWatered": null,
+                "nextWater": null,
+                "watering": {
+                  "way": "表层2–3cm微干后浇透",
+                  "freq": [
+                    5,
+                    10
+                  ],
+                  "unit": "天"
+                },
+                "fertilization": {
+                  "freq": [
+                    30,
+                    45
+                  ],
+                  "type": "1/2浓度均衡肥",
+                  "unit": "天",
+                  "other": "生长期为主；休眠/低温/弱光期减量或暂停"
+                },
+                "fertilizationMonthly": {
+                  "available": true,
+                  "scopeLabel": "温带室内盆栽参考（龟背竹属）",
+                  "scopeType": "indoor",
+                  "adjustmentMode": "phenology",
+                  "scopeGuidance": "本表按温带室内盆栽的季节和生长节点整理。月份是参考，请结合植物是否正在长新叶或新芽调整施肥。表中某一格标为“暂停施肥”或“暂停追加”时，表示该栏对应的肥料在该月默认不追加；本功能不会为这类月份建立提醒。若植物仍持续长新叶或新芽，请人工参考同一张表中最近的生长期固定周期；找不到对应固定周期时，不要使用该肥料。",
+                  "choiceGuidance": "液体肥和缓释肥选一种，不要同时使用。",
+                  "publicNote": "",
+                  "rows": [
+                    {
+                      "month": 1,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 2,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 3,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 4,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 5,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 6,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 7,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 8,
+                      "liquid": {
+                        "displayText": "每月1次",
+                        "sourceNames": [
+                          "RHS",
+                          "UMN Extension"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 1,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 1,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "约3个月1次（长新叶或新芽时）",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 3,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 3,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "month": 9,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 10,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 11,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 12,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    }
+                  ],
+                  "sourceNames": [
+                    "RHS",
+                    "UMN Extension"
+                  ]
+                },
+                "sunning": {
+                  "way": "明亮散射光/半阴",
+                  "freq": [
+                    3,
+                    6
+                  ],
+                  "unit": "小时/天"
+                },
+                "ventilation": {
+                  "level": "medium",
+                  "sensitivity": "medium"
+                },
+                "temperatureMin": 18,
+                "temperatureMax": 30,
+                "humidityMin": 50,
+                "humidityMax": 80,
+                "potProfile": {
+                  "potTopDiameterCm": 18,
+                  "potBottomDiameterCm": 15,
+                  "potHeightCm": 16,
+                  "hasDrainageHole": "true",
+                  "potMaterial": "plastic",
+                  "substrateType": "general"
+                },
+                "fertilizationReminder": null
+              }
+            ],
+            "total": 1,
+            "page": 1,
+            "pageSize": 50
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants/fertilization-reminders?plantId=95001",
+      "method": "GET",
+      "data": {},
+      "time": 1786458848939,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": null
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants/fertilization-reminders/preview",
+      "method": "POST",
+      "data": {
+        "plantId": 95001,
+        "fertilizerType": "slowRelease"
+      },
+      "time": 1786458849988,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": {
+            "planId": "fixture-normal-preview-95001",
+            "plantId": 95001,
+            "fertilizerType": "slowRelease",
+            "reminderKind": "normal",
+            "confirmationReasons": [],
+            "nextCheckDate": "2026-08-22",
+            "nextTime": "2026-08-22T09:00:00",
+            "dueNow": false,
+            "lastDateSource": "recorded",
+            "ruleSnapshot": {
+              "reminderKind": "normal",
+              "confirmationReasons": [],
+              "displayText": "每月1次",
+              "sourceNames": [
+                "RHS",
+                "UMN Extension"
+              ],
+              "schedule": {
+                "schemaVersion": 1,
+                "kind": "interval",
+                "interval": {
+                  "min": {
+                    "value": 1,
+                    "unit": "month"
+                  },
+                  "max": {
+                    "value": 1,
+                    "unit": "month"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants/fertilization-reminders/cancel",
+      "method": "POST",
+      "data": {
+        "planId": "fixture-normal-preview-95001"
+      },
+      "time": 1786458850452,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": null
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants?page=1&pageSize=50",
+      "method": "GET",
+      "data": {},
+      "time": 1786458851440,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": {
+            "list": [
+              {
+                "id": 95001,
+                "plantId": "genus_care_026e7432408d56ad",
+                "canonicalName": "龟背竹",
+                "displayName": "龟背竹",
+                "recognizedName": "Monstera deliciosa",
+                "nickname": "施肥表验收龟背竹",
+                "genus": "Monstera",
+                "familyCn": "天南星科",
+                "familyEn": "Araceae",
+                "latinName": "Monstera deliciosa",
+                "sourceType": "catalog",
+                "identityResolutionStatus": "matched",
+                "location": "室内",
+                "plantDate": "2026-05-01",
+                "createdAt": "2026-05-01T00:00:00.000Z",
+                "notes": "",
+                "photos": [],
+                "imageFileId": "",
+                "lastWatered": null,
+                "nextWater": null,
+                "watering": {
+                  "way": "表层2–3cm微干后浇透",
+                  "freq": [
+                    5,
+                    10
+                  ],
+                  "unit": "天"
+                },
+                "fertilization": {
+                  "freq": [
+                    30,
+                    45
+                  ],
+                  "type": "1/2浓度均衡肥",
+                  "unit": "天",
+                  "other": "生长期为主；休眠/低温/弱光期减量或暂停"
+                },
+                "fertilizationMonthly": {
+                  "available": true,
+                  "scopeLabel": "温带室内盆栽参考（龟背竹属）",
+                  "scopeType": "indoor",
+                  "adjustmentMode": "phenology",
+                  "scopeGuidance": "本表按温带室内盆栽的季节和生长节点整理。月份是参考，请结合植物是否正在长新叶或新芽调整施肥。表中某一格标为“暂停施肥”或“暂停追加”时，表示该栏对应的肥料在该月默认不追加；本功能不会为这类月份建立提醒。若植物仍持续长新叶或新芽，请人工参考同一张表中最近的生长期固定周期；找不到对应固定周期时，不要使用该肥料。",
+                  "choiceGuidance": "液体肥和缓释肥选一种，不要同时使用。",
+                  "publicNote": "",
+                  "rows": [
+                    {
+                      "month": 1,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 2,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 3,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 4,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 5,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 6,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 7,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 8,
+                      "liquid": {
+                        "displayText": "每月1次",
+                        "sourceNames": [
+                          "RHS",
+                          "UMN Extension"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 1,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 1,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "约3个月1次（长新叶或新芽时）",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 3,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 3,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "month": 9,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 10,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 11,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 12,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    }
+                  ],
+                  "sourceNames": [
+                    "RHS",
+                    "UMN Extension"
+                  ]
+                },
+                "sunning": {
+                  "way": "明亮散射光/半阴",
+                  "freq": [
+                    3,
+                    6
+                  ],
+                  "unit": "小时/天"
+                },
+                "ventilation": {
+                  "level": "medium",
+                  "sensitivity": "medium"
+                },
+                "temperatureMin": 18,
+                "temperatureMax": 30,
+                "humidityMin": 50,
+                "humidityMax": 80,
+                "potProfile": {
+                  "potTopDiameterCm": 18,
+                  "potBottomDiameterCm": 15,
+                  "potHeightCm": 16,
+                  "hasDrainageHole": "true",
+                  "potMaterial": "plastic",
+                  "substrateType": "general"
+                },
+                "fertilizationReminder": null
+              }
+            ],
+            "total": 1,
+            "page": 1,
+            "pageSize": 50
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants/fertilization-reminders?plantId=95001",
+      "method": "GET",
+      "data": {},
+      "time": 1786458854431,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": null
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants/fertilization-reminders/preview",
+      "method": "POST",
+      "data": {
+        "plantId": 95001,
+        "fertilizerType": "liquid"
+      },
+      "time": 1786458855028,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": {
+            "planId": "fixture-normal-preview-95001",
+            "plantId": 95001,
+            "fertilizerType": "liquid",
+            "reminderKind": "normal",
+            "confirmationReasons": [],
+            "nextCheckDate": "2026-08-11",
+            "nextTime": "2026-08-22T09:00:00",
+            "dueNow": true,
+            "lastDateSource": "recorded",
+            "ruleSnapshot": {
+              "reminderKind": "normal",
+              "confirmationReasons": [],
+              "displayText": "每月1次",
+              "sourceNames": [
+                "RHS",
+                "UMN Extension"
+              ],
+              "schedule": {
+                "schemaVersion": 1,
+                "kind": "interval",
+                "interval": {
+                  "min": {
+                    "value": 1,
+                    "unit": "month"
+                  },
+                  "max": {
+                    "value": 1,
+                    "unit": "month"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants/fertilization-reminders/confirm",
+      "method": "POST",
+      "data": {
+        "plantId": 95001,
+        "planId": "fixture-normal-preview-95001",
+        "calendarPayload": null
+      },
+      "time": 1786458855488,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": {
+            "planId": "fixture-normal-preview-95001",
+            "plantId": 95001,
+            "fertilizerType": "liquid",
+            "reminderKind": "normal",
+            "confirmationReasons": [],
+            "nextCheckDate": "2026-08-11",
+            "nextTime": "2026-08-22T09:00:00",
+            "dueNow": true,
+            "lastDateSource": "recorded",
+            "ruleSnapshot": {
+              "reminderKind": "normal",
+              "confirmationReasons": [],
+              "displayText": "每月1次",
+              "sourceNames": [
+                "RHS",
+                "UMN Extension"
+              ],
+              "schedule": {
+                "schemaVersion": 1,
+                "kind": "interval",
+                "interval": {
+                  "min": {
+                    "value": 1,
+                    "unit": "month"
+                  },
+                  "max": {
+                    "value": 1,
+                    "unit": "month"
+                  }
+                }
+              }
+            },
+            "active": true,
+            "calendarPayload": null,
+            "isDue": false
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants?page=1&pageSize=50",
+      "method": "GET",
+      "data": {},
+      "time": 1786458855513,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": {
+            "list": [
+              {
+                "id": 95001,
+                "plantId": "genus_care_026e7432408d56ad",
+                "canonicalName": "龟背竹",
+                "displayName": "龟背竹",
+                "recognizedName": "Monstera deliciosa",
+                "nickname": "施肥表验收龟背竹",
+                "genus": "Monstera",
+                "familyCn": "天南星科",
+                "familyEn": "Araceae",
+                "latinName": "Monstera deliciosa",
+                "sourceType": "catalog",
+                "identityResolutionStatus": "matched",
+                "location": "室内",
+                "plantDate": "2026-05-01",
+                "createdAt": "2026-05-01T00:00:00.000Z",
+                "notes": "",
+                "photos": [],
+                "imageFileId": "",
+                "lastWatered": null,
+                "nextWater": null,
+                "watering": {
+                  "way": "表层2–3cm微干后浇透",
+                  "freq": [
+                    5,
+                    10
+                  ],
+                  "unit": "天"
+                },
+                "fertilization": {
+                  "freq": [
+                    30,
+                    45
+                  ],
+                  "type": "1/2浓度均衡肥",
+                  "unit": "天",
+                  "other": "生长期为主；休眠/低温/弱光期减量或暂停"
+                },
+                "fertilizationMonthly": {
+                  "available": true,
+                  "scopeLabel": "温带室内盆栽参考（龟背竹属）",
+                  "scopeType": "indoor",
+                  "adjustmentMode": "phenology",
+                  "scopeGuidance": "本表按温带室内盆栽的季节和生长节点整理。月份是参考，请结合植物是否正在长新叶或新芽调整施肥。表中某一格标为“暂停施肥”或“暂停追加”时，表示该栏对应的肥料在该月默认不追加；本功能不会为这类月份建立提醒。若植物仍持续长新叶或新芽，请人工参考同一张表中最近的生长期固定周期；找不到对应固定周期时，不要使用该肥料。",
+                  "choiceGuidance": "液体肥和缓释肥选一种，不要同时使用。",
+                  "publicNote": "",
+                  "rows": [
+                    {
+                      "month": 1,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 2,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 3,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 4,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 5,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 6,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 7,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 8,
+                      "liquid": {
+                        "displayText": "每月1次",
+                        "sourceNames": [
+                          "RHS",
+                          "UMN Extension"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 1,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 1,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "约3个月1次（长新叶或新芽时）",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 3,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 3,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "month": 9,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 10,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 11,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 12,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    }
+                  ],
+                  "sourceNames": [
+                    "RHS",
+                    "UMN Extension"
+                  ]
+                },
+                "sunning": {
+                  "way": "明亮散射光/半阴",
+                  "freq": [
+                    3,
+                    6
+                  ],
+                  "unit": "小时/天"
+                },
+                "ventilation": {
+                  "level": "medium",
+                  "sensitivity": "medium"
+                },
+                "temperatureMin": 18,
+                "temperatureMax": 30,
+                "humidityMin": 50,
+                "humidityMax": 80,
+                "potProfile": {
+                  "potTopDiameterCm": 18,
+                  "potBottomDiameterCm": 15,
+                  "potHeightCm": 16,
+                  "hasDrainageHole": "true",
+                  "potMaterial": "plastic",
+                  "substrateType": "general"
+                },
+                "fertilizationReminder": {
+                  "planId": "fixture-normal-preview-95001",
+                  "plantId": 95001,
+                  "fertilizerType": "liquid",
+                  "reminderKind": "normal",
+                  "confirmationReasons": [],
+                  "nextCheckDate": "2026-08-11",
+                  "nextTime": "2026-08-22T09:00:00",
+                  "dueNow": true,
+                  "lastDateSource": "recorded",
+                  "ruleSnapshot": {
+                    "reminderKind": "normal",
+                    "confirmationReasons": [],
+                    "displayText": "每月1次",
+                    "sourceNames": [
+                      "RHS",
+                      "UMN Extension"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 1,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 1,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  },
+                  "active": true,
+                  "calendarPayload": null,
+                  "isDue": false
+                }
+              }
+            ],
+            "total": 1,
+            "page": 1,
+            "pageSize": 50
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants?page=1&pageSize=50",
+      "method": "GET",
+      "data": {},
+      "time": 1786458856448,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": {
+            "list": [
+              {
+                "id": 95001,
+                "plantId": "genus_care_026e7432408d56ad",
+                "canonicalName": "龟背竹",
+                "displayName": "龟背竹",
+                "recognizedName": "Monstera deliciosa",
+                "nickname": "施肥表验收龟背竹",
+                "genus": "Monstera",
+                "familyCn": "天南星科",
+                "familyEn": "Araceae",
+                "latinName": "Monstera deliciosa",
+                "sourceType": "catalog",
+                "identityResolutionStatus": "matched",
+                "location": "室内",
+                "plantDate": "2026-05-01",
+                "createdAt": "2026-05-01T00:00:00.000Z",
+                "notes": "",
+                "photos": [],
+                "imageFileId": "",
+                "lastWatered": null,
+                "nextWater": null,
+                "watering": {
+                  "way": "表层2–3cm微干后浇透",
+                  "freq": [
+                    5,
+                    10
+                  ],
+                  "unit": "天"
+                },
+                "fertilization": {
+                  "freq": [
+                    30,
+                    45
+                  ],
+                  "type": "1/2浓度均衡肥",
+                  "unit": "天",
+                  "other": "生长期为主；休眠/低温/弱光期减量或暂停"
+                },
+                "fertilizationMonthly": {
+                  "available": true,
+                  "scopeLabel": "温带室内盆栽参考（龟背竹属）",
+                  "scopeType": "indoor",
+                  "adjustmentMode": "phenology",
+                  "scopeGuidance": "本表按温带室内盆栽的季节和生长节点整理。月份是参考，请结合植物是否正在长新叶或新芽调整施肥。表中某一格标为“暂停施肥”或“暂停追加”时，表示该栏对应的肥料在该月默认不追加；本功能不会为这类月份建立提醒。若植物仍持续长新叶或新芽，请人工参考同一张表中最近的生长期固定周期；找不到对应固定周期时，不要使用该肥料。",
+                  "choiceGuidance": "液体肥和缓释肥选一种，不要同时使用。",
+                  "publicNote": "",
+                  "rows": [
+                    {
+                      "month": 1,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 2,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 3,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 4,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 5,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 6,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 7,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 8,
+                      "liquid": {
+                        "displayText": "每月1次",
+                        "sourceNames": [
+                          "RHS",
+                          "UMN Extension"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 1,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 1,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "约3个月1次（长新叶或新芽时）",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 3,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 3,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "month": 9,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 10,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 11,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 12,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    }
+                  ],
+                  "sourceNames": [
+                    "RHS",
+                    "UMN Extension"
+                  ]
+                },
+                "sunning": {
+                  "way": "明亮散射光/半阴",
+                  "freq": [
+                    3,
+                    6
+                  ],
+                  "unit": "小时/天"
+                },
+                "ventilation": {
+                  "level": "medium",
+                  "sensitivity": "medium"
+                },
+                "temperatureMin": 18,
+                "temperatureMax": 30,
+                "humidityMin": 50,
+                "humidityMax": 80,
+                "potProfile": {
+                  "potTopDiameterCm": 18,
+                  "potBottomDiameterCm": 15,
+                  "potHeightCm": 16,
+                  "hasDrainageHole": "true",
+                  "potMaterial": "plastic",
+                  "substrateType": "general"
+                },
+                "fertilizationReminder": null
+              }
+            ],
+            "total": 1,
+            "page": 1,
+            "pageSize": 50
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants/fertilization-reminders?plantId=95001",
+      "method": "GET",
+      "data": {},
+      "time": 1786458859426,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": null
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants/fertilization-reminders/preview",
+      "method": "POST",
+      "data": {
+        "plantId": 95001,
+        "fertilizerType": "liquid"
+      },
+      "time": 1786458860028,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": {
+            "planId": "fixture-normal-preview-95001",
+            "plantId": 95001,
+            "fertilizerType": "liquid",
+            "reminderKind": "normal",
+            "confirmationReasons": [],
+            "nextCheckDate": "2026-08-22",
+            "nextTime": "2026-08-22T09:00:00",
+            "dueNow": false,
+            "lastDateSource": "recorded",
+            "ruleSnapshot": {
+              "reminderKind": "normal",
+              "confirmationReasons": [],
+              "displayText": "每月1次",
+              "sourceNames": [
+                "RHS",
+                "UMN Extension"
+              ],
+              "schedule": {
+                "schemaVersion": 1,
+                "kind": "interval",
+                "interval": {
+                  "min": {
+                    "value": 1,
+                    "unit": "month"
+                  },
+                  "max": {
+                    "value": 1,
+                    "unit": "month"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants/fertilization-reminders/confirm",
+      "method": "POST",
+      "data": {
+        "plantId": 95001,
+        "planId": "fixture-normal-preview-95001",
+        "calendarPayload": {
+          "title": "龟背竹施肥提醒",
+          "startTime": 1787360400,
+          "endTime": 1787362200,
+          "description": "按属级月度表生成。打开青花植查看当月施肥规则。\n如果本月提示暂停或没有固定周期，请不要直接施肥。\n本次参考：每月1次",
+          "allDay": false
+        }
+      },
+      "time": 1786458860496,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 503,
+          "message": "模拟应用内同步失败",
+          "data": null
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants/fertilization-reminders/confirm",
+      "method": "POST",
+      "data": {
+        "plantId": 95001,
+        "planId": "fixture-normal-preview-95001",
+        "calendarPayload": {
+          "title": "龟背竹施肥提醒",
+          "startTime": 1787360400,
+          "endTime": 1787362200,
+          "description": "按属级月度表生成。打开青花植查看当月施肥规则。\n如果本月提示暂停或没有固定周期，请不要直接施肥。\n本次参考：每月1次",
+          "allDay": false
+        }
+      },
+      "time": 1786458860929,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": {
+            "planId": "fixture-normal-preview-95001",
+            "plantId": 95001,
+            "fertilizerType": "liquid",
+            "reminderKind": "normal",
+            "confirmationReasons": [],
+            "nextCheckDate": "2026-08-22",
+            "nextTime": "2026-08-22T09:00:00",
+            "dueNow": false,
+            "lastDateSource": "recorded",
+            "ruleSnapshot": {
+              "reminderKind": "normal",
+              "confirmationReasons": [],
+              "displayText": "每月1次",
+              "sourceNames": [
+                "RHS",
+                "UMN Extension"
+              ],
+              "schedule": {
+                "schemaVersion": 1,
+                "kind": "interval",
+                "interval": {
+                  "min": {
+                    "value": 1,
+                    "unit": "month"
+                  },
+                  "max": {
+                    "value": 1,
+                    "unit": "month"
+                  }
+                }
+              }
+            },
+            "active": true,
+            "calendarPayload": {
+              "title": "龟背竹施肥提醒",
+              "startTime": 1787360400,
+              "endTime": 1787362200,
+              "description": "按属级月度表生成。打开青花植查看当月施肥规则。\n如果本月提示暂停或没有固定周期，请不要直接施肥。\n本次参考：每月1次",
+              "allDay": false
+            },
+            "isDue": false
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants?page=1&pageSize=50",
+      "method": "GET",
+      "data": {},
+      "time": 1786458860954,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": {
+            "list": [
+              {
+                "id": 95001,
+                "plantId": "genus_care_026e7432408d56ad",
+                "canonicalName": "龟背竹",
+                "displayName": "龟背竹",
+                "recognizedName": "Monstera deliciosa",
+                "nickname": "施肥表验收龟背竹",
+                "genus": "Monstera",
+                "familyCn": "天南星科",
+                "familyEn": "Araceae",
+                "latinName": "Monstera deliciosa",
+                "sourceType": "catalog",
+                "identityResolutionStatus": "matched",
+                "location": "室内",
+                "plantDate": "2026-05-01",
+                "createdAt": "2026-05-01T00:00:00.000Z",
+                "notes": "",
+                "photos": [],
+                "imageFileId": "",
+                "lastWatered": null,
+                "nextWater": null,
+                "watering": {
+                  "way": "表层2–3cm微干后浇透",
+                  "freq": [
+                    5,
+                    10
+                  ],
+                  "unit": "天"
+                },
+                "fertilization": {
+                  "freq": [
+                    30,
+                    45
+                  ],
+                  "type": "1/2浓度均衡肥",
+                  "unit": "天",
+                  "other": "生长期为主；休眠/低温/弱光期减量或暂停"
+                },
+                "fertilizationMonthly": {
+                  "available": true,
+                  "scopeLabel": "温带室内盆栽参考（龟背竹属）",
+                  "scopeType": "indoor",
+                  "adjustmentMode": "phenology",
+                  "scopeGuidance": "本表按温带室内盆栽的季节和生长节点整理。月份是参考，请结合植物是否正在长新叶或新芽调整施肥。表中某一格标为“暂停施肥”或“暂停追加”时，表示该栏对应的肥料在该月默认不追加；本功能不会为这类月份建立提醒。若植物仍持续长新叶或新芽，请人工参考同一张表中最近的生长期固定周期；找不到对应固定周期时，不要使用该肥料。",
+                  "choiceGuidance": "液体肥和缓释肥选一种，不要同时使用。",
+                  "publicNote": "",
+                  "rows": [
+                    {
+                      "month": 1,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 2,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 3,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 4,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 5,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 6,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 7,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 8,
+                      "liquid": {
+                        "displayText": "每月1次",
+                        "sourceNames": [
+                          "RHS",
+                          "UMN Extension"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 1,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 1,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "约3个月1次（长新叶或新芽时）",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 3,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 3,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "month": 9,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 10,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 11,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 12,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    }
+                  ],
+                  "sourceNames": [
+                    "RHS",
+                    "UMN Extension"
+                  ]
+                },
+                "sunning": {
+                  "way": "明亮散射光/半阴",
+                  "freq": [
+                    3,
+                    6
+                  ],
+                  "unit": "小时/天"
+                },
+                "ventilation": {
+                  "level": "medium",
+                  "sensitivity": "medium"
+                },
+                "temperatureMin": 18,
+                "temperatureMax": 30,
+                "humidityMin": 50,
+                "humidityMax": 80,
+                "potProfile": {
+                  "potTopDiameterCm": 18,
+                  "potBottomDiameterCm": 15,
+                  "potHeightCm": 16,
+                  "hasDrainageHole": "true",
+                  "potMaterial": "plastic",
+                  "substrateType": "general"
+                },
+                "fertilizationReminder": {
+                  "planId": "fixture-normal-preview-95001",
+                  "plantId": 95001,
+                  "fertilizerType": "liquid",
+                  "reminderKind": "normal",
+                  "confirmationReasons": [],
+                  "nextCheckDate": "2026-08-22",
+                  "nextTime": "2026-08-22T09:00:00",
+                  "dueNow": false,
+                  "lastDateSource": "recorded",
+                  "ruleSnapshot": {
+                    "reminderKind": "normal",
+                    "confirmationReasons": [],
+                    "displayText": "每月1次",
+                    "sourceNames": [
+                      "RHS",
+                      "UMN Extension"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 1,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 1,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  },
+                  "active": true,
+                  "calendarPayload": {
+                    "title": "龟背竹施肥提醒",
+                    "startTime": 1787360400,
+                    "endTime": 1787362200,
+                    "description": "按属级月度表生成。打开青花植查看当月施肥规则。\n如果本月提示暂停或没有固定周期，请不要直接施肥。\n本次参考：每月1次",
+                    "allDay": false
+                  },
+                  "isDue": false
+                }
+              }
+            ],
+            "total": 1,
+            "page": 1,
+            "pageSize": 50
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants?page=1&pageSize=50",
+      "method": "GET",
+      "data": {},
+      "time": 1786458861893,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": {
+            "list": [
+              {
+                "id": 95001,
+                "plantId": "genus_care_026e7432408d56ad",
+                "canonicalName": "龟背竹",
+                "displayName": "龟背竹",
+                "recognizedName": "Monstera deliciosa",
+                "nickname": "施肥表验收龟背竹",
+                "genus": "Monstera",
+                "familyCn": "天南星科",
+                "familyEn": "Araceae",
+                "latinName": "Monstera deliciosa",
+                "sourceType": "catalog",
+                "identityResolutionStatus": "matched",
+                "location": "室内",
+                "plantDate": "2026-05-01",
+                "createdAt": "2026-05-01T00:00:00.000Z",
+                "notes": "",
+                "photos": [],
+                "imageFileId": "",
+                "lastWatered": null,
+                "nextWater": null,
+                "watering": {
+                  "way": "表层2–3cm微干后浇透",
+                  "freq": [
+                    5,
+                    10
+                  ],
+                  "unit": "天"
+                },
+                "fertilization": {
+                  "freq": [
+                    30,
+                    45
+                  ],
+                  "type": "1/2浓度均衡肥",
+                  "unit": "天",
+                  "other": "生长期为主；休眠/低温/弱光期减量或暂停"
+                },
+                "fertilizationMonthly": {
+                  "available": true,
+                  "scopeLabel": "温带室内盆栽参考（龟背竹属）",
+                  "scopeType": "indoor",
+                  "adjustmentMode": "phenology",
+                  "scopeGuidance": "本表按温带室内盆栽的季节和生长节点整理。月份是参考，请结合植物是否正在长新叶或新芽调整施肥。表中某一格标为“暂停施肥”或“暂停追加”时，表示该栏对应的肥料在该月默认不追加；本功能不会为这类月份建立提醒。若植物仍持续长新叶或新芽，请人工参考同一张表中最近的生长期固定周期；找不到对应固定周期时，不要使用该肥料。",
+                  "choiceGuidance": "液体肥和缓释肥选一种，不要同时使用。",
+                  "publicNote": "",
+                  "rows": [
+                    {
+                      "month": 1,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 2,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 3,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 4,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 5,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 6,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 7,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 8,
+                      "liquid": {
+                        "displayText": "每月1次",
+                        "sourceNames": [
+                          "RHS",
+                          "UMN Extension"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 1,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 1,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "约3个月1次（长新叶或新芽时）",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 3,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 3,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "month": 9,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 10,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 11,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 12,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    }
+                  ],
+                  "sourceNames": [
+                    "RHS",
+                    "UMN Extension"
+                  ]
+                },
+                "sunning": {
+                  "way": "明亮散射光/半阴",
+                  "freq": [
+                    3,
+                    6
+                  ],
+                  "unit": "小时/天"
+                },
+                "ventilation": {
+                  "level": "medium",
+                  "sensitivity": "medium"
+                },
+                "temperatureMin": 18,
+                "temperatureMax": 30,
+                "humidityMin": 50,
+                "humidityMax": 80,
+                "potProfile": {
+                  "potTopDiameterCm": 18,
+                  "potBottomDiameterCm": 15,
+                  "potHeightCm": 16,
+                  "hasDrainageHole": "true",
+                  "potMaterial": "plastic",
+                  "substrateType": "general"
+                },
+                "fertilizationReminder": null
+              }
+            ],
+            "total": 1,
+            "page": 1,
+            "pageSize": 50
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants/fertilization-reminders?plantId=95001",
+      "method": "GET",
+      "data": {},
+      "time": 1786458864866,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": null
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants/fertilization-reminders/preview",
+      "method": "POST",
+      "data": {
+        "plantId": 95001,
+        "fertilizerType": "liquid"
+      },
+      "time": 1786458865462,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": {
+            "planId": "fixture-normal-preview-95001",
+            "plantId": 95001,
+            "fertilizerType": "liquid",
+            "reminderKind": "normal",
+            "confirmationReasons": [],
+            "nextCheckDate": "2026-08-22",
+            "nextTime": "2026-08-22T09:00:00",
+            "dueNow": false,
+            "lastDateSource": "recorded",
+            "ruleSnapshot": {
+              "reminderKind": "normal",
+              "confirmationReasons": [],
+              "displayText": "每月1次",
+              "sourceNames": [
+                "RHS",
+                "UMN Extension"
+              ],
+              "schedule": {
+                "schemaVersion": 1,
+                "kind": "interval",
+                "interval": {
+                  "min": {
+                    "value": 1,
+                    "unit": "month"
+                  },
+                  "max": {
+                    "value": 1,
+                    "unit": "month"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants/fertilization-reminders/confirm",
+      "method": "POST",
+      "data": {
+        "plantId": 95001,
+        "planId": "fixture-normal-preview-95001",
+        "calendarPayload": {
+          "title": "龟背竹施肥提醒",
+          "startTime": 1787360400,
+          "endTime": 1787362200,
+          "description": "按属级月度表生成。打开青花植查看当月施肥规则。\n如果本月提示暂停或没有固定周期，请不要直接施肥。\n本次参考：每月1次",
+          "allDay": false
+        }
+      },
+      "time": 1786458865919,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 409,
+          "message": "模拟应用内同步失败",
+          "data": null
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants/fertilization-reminders/cancel",
+      "method": "POST",
+      "data": {
+        "planId": "fixture-normal-preview-95001"
+      },
+      "time": 1786458866377,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": null
+        }
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "name": "提醒页施肥入口打开统一月度表",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T14:33:50.388Z"
+    },
+    {
+      "name": "提醒页施肥入口截图有效",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T14:33:53.492Z"
+    },
+    {
+      "name": "提醒页入口复用施肥时间表弹框",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T14:33:53.496Z"
+    },
+    {
+      "name": "无可靠月表不展示提醒设置",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T14:34:01.214Z"
+    },
+    {
+      "name": "无可靠月表时只展示基础建议",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T14:34:01.215Z"
+    },
+    {
+      "name": "条件和事件型规则隐藏提醒初检",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T14:34:05.356Z"
+    },
+    {
+      "name": "条件和事件型规则不允许预设周期提醒",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T14:34:05.357Z"
+    },
+    {
+      "name": "缓释肥选择传入初检且正常提醒不标为首次确认",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T14:34:10.376Z"
+    },
+    {
+      "name": "用户取消待确认提醒会取消计划且回到设置区",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T14:34:10.839Z"
+    },
+    {
+      "name": "切换缓释肥后可生成正常提醒并由用户取消",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T14:34:10.840Z"
+    },
+    {
+      "name": "到期提醒使用保存施肥提醒文案",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T14:34:15.412Z"
+    },
+    {
+      "name": "到期提醒不会写手机日历但会保存应用内提醒",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T14:34:15.842Z"
+    },
+    {
+      "name": "到期即检查提醒不写手机日历而直接保存",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T14:34:15.845Z"
+    },
+    {
+      "name": "首次同步失败后显示重试同步",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T14:34:20.851Z"
+    },
+    {
+      "name": "重试不会重复写系统日历且第二次同步保存 active",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T14:34:21.284Z"
+    },
+    {
+      "name": "日历已写入但首次同步失败时允许幂等重试",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T14:34:21.287Z"
+    },
+    {
+      "name": "计划失效时阻止错误重试并说明旧日历处理",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T14:34:26.303Z"
+    },
+    {
+      "name": "终态失败取消后不会留下 active 提醒",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T14:34:26.731Z"
+    },
+    {
+      "name": "计划失效时要求取消本次设置后重来",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T14:34:26.733Z"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/watering-transpiration-v3/fertilization-reminder-reminder-tab.png",
+      "time": "2026-08-11T14:33:53.492Z"
+    }
+  ],
+  "classification": "PASS",
+  "blockerReason": null,
+  "status": "passed",
+  "failure_kind": null,
+  "business_assertions_reached": true
+}

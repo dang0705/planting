@@ -2,15 +2,15 @@
 
 const { clamp01 } = require('./sql')
 const {
-  normalizeQuestionTargetDimension,
-  normalizeQuestionRoutingScope,
-  normalizeQuestionRole,
-  normalizeQuestionEffectMode,
-  inferQuestionTargetDimension,
-  inferQuestionRoutingScope,
-  inferQuestionRole,
-  inferQuestionEffectMode
-} = require('../utils/question-target-dimension')
+  normalizeQuestionPackageTopic,
+  normalizeQuestionPackageSection,
+  normalizeRoutePackageRole,
+  normalizeQuestionPackageEffect,
+  inferQuestionPackageTopic,
+  inferQuestionPackageSection,
+  inferRoutePackageRole,
+  inferQuestionPackageEffect
+} = require('../utils/question-package-topic')
 
 const AUDITED_DIRECT_PROBLEM_ADJUSTMENTS = {
   q_gnat_soil_stays_wet: {
@@ -116,17 +116,17 @@ function resolveAuditedDirectProblemAdjustments(questionKey = '', optionKey = ''
 function mapQuestionRow(row = {}) {
   const questionKey = row.question_key || ''
   const targetSymptomKey = row.target_symptom_key || ''
-  const targetDimension = normalizeQuestionTargetDimension(
-    row.target_dimension,
-    inferQuestionTargetDimension(questionKey, targetSymptomKey)
+  const packageTopic = normalizeQuestionPackageTopic(
+    row.package_topic,
+    inferQuestionPackageTopic(questionKey, targetSymptomKey)
   )
-  const routingScope = normalizeQuestionRoutingScope(
-    row.routing_scope,
-    inferQuestionRoutingScope(questionKey, targetSymptomKey)
+  const packageSection = normalizeQuestionPackageSection(
+    row.package_section,
+    inferQuestionPackageSection(questionKey, targetSymptomKey)
   )
-  const questionRole = normalizeQuestionRole(
-    row.question_role,
-    inferQuestionRole(targetDimension, routingScope)
+  const routePackageRole = normalizeRoutePackageRole(
+    row.route_package_role,
+    inferRoutePackageRole(packageTopic, packageSection)
   )
 
   return {
@@ -138,12 +138,12 @@ function mapQuestionRow(row = {}) {
     questionGroupKey: row.question_group_key || '',
     questionLevel: Number(row.question_level || 1),
     observability: row.observability || 'medium',
-    targetDimension,
-    routingScope,
-    questionRole,
-    effectMode: normalizeQuestionEffectMode(
-      row.effect_mode,
-      inferQuestionEffectMode(questionRole, targetDimension)
+    packageTopic,
+    packageSection,
+    routePackageRole,
+    packageEffect: normalizeQuestionPackageEffect(
+      row.package_effect,
+      inferQuestionPackageEffect(routePackageRole, packageTopic)
     ),
     allowUnknown: Number(row.allow_unknown || 0) === 1,
     priority: Number(row.priority || 0),
@@ -182,21 +182,7 @@ function mapOptionRow(row = {}) {
   }
 }
 
-function mapStrategyRow(row = {}) {
-  return {
-    problemKey: row.problem_key,
-    questionGroupKey: row.question_group_key || '',
-    questionKey: row.question_key,
-    priorityScore: Number(row.priority_score || 0),
-    triggerType: row.trigger_type || 'candidate',
-    strategyNoteCn: row.strategy_note_cn || '',
-    dataStatus: row.data_status || 'unknown',
-    reviewStatus: row.review_status || 'unknown'
-  }
-}
-
 module.exports = {
   mapQuestionRow,
-  mapOptionRow,
-  mapStrategyRow
+  mapOptionRow
 }

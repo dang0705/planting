@@ -1,0 +1,6 @@
+{
+  "name": "diagnosis-question-start-http",
+  "version": "1.0.0",
+  "private": true,
+  "main": "app.js"
+}

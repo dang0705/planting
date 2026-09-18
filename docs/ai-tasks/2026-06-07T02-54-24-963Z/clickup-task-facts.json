@@ -1,0 +1,282 @@
+{
+  "loaded": true,
+  "source": "api",
+  "taskId": "86exvnqag",
+  "url": "https://app.clickup.com/t/86exvnqag",
+  "title": "优化 diagnose-http/question/start 接口响应：免费能力内压到 500ms 内",
+  "status": "backlog",
+  "statusType": "open",
+  "priority": {
+    "id": "2",
+    "priority": "high",
+    "color": "#f8ae00",
+    "orderIndex": "2"
+  },
+  "assignees": [],
+  "tags": [],
+  "requirementSummary": "背景\n\n当前 `diagnose-http/diagnosis/question/start` 接口响应非常慢，已影响问诊启动体验。\n\n该接口位于问诊链路的入口阶段，用户点击开始问诊后，前端需要尽快拿到当前模式的题包或起始问答数据。如果该接口继续承担过多动态诊断、数据库查询、既有状态机适配、运行时组装等职责，会导致首屏等待明显变长。\n\n本任务从架构角度优化接口响应速度，前提是：\n\n不启用任何付费功能。\n不依赖 Redis、付费缓存、云函数升配、付费 CDN、付费数据库能力等方案。\n优先通过职责收敛、静态化、预计算、代码路径裁剪和免费缓存策略优化响应。\n\n目标\n\n优化 `diagnose-http/diagnosis/question/start` 接口响应速度，使其在常规热启动路径下达到 500ms 内响应。\n\n需要明确区分：\n\n热启动 / 常规请求：目标 <= 500ms。\n冷启动：尽量优化，但在不开启付费保活、升配等能力前提下，不承诺绝对 <= 500ms。\n\n范围\n\n必须做\n\n梳理 `diagnose-http/diagnosis/question/start` 接口入口与完整调用链。\n测量当前接口耗时，区分冷启动、热启动、数据库查询、业务计算、序列化、日志等耗时来源。\n梳理该接口当前是否仍经过既有 diagnosis-engine、动态下一题、复杂状态机、数据库读取或不必要的运行时组装。\n将 start 接口职责收敛为：根据 mode / route 返回当前模式固定题包或最小启动数据。\n黄叶模式等固定题包优先走静态配置或模块级预加载结构，避免每次请求重复查询和重复构建。\n移除或绕开 start 接口中不必要的动态诊断逻辑、既有适配分支、N+1 查询、外部服务调用和重型对象转换。\n避免 start 接口调用天气、养护、图片识别、支付、登录等无关模块。\n减少响应体字段，只返回前端启动问诊所需的最小数据。\n对固定题包建立免费缓存策略，例如：模块级内存缓存、启动时静态常量、构建期生成数据或轻量本地映射。\n确保缓存策略不依赖付费服务，并能在云函数实例重启后自动恢复。\n补充最小性能验证脚本或手动验证方法，记录优化前后耗时。\n确保接口语义不变：不改变 outcome / route 判定权重，不改变数据库发布链路。\n\n不做\n\n不启用 Redis、付费缓存、云函数付费保活、云函数升配、付费 CDN 或其他付费功能。\n不重写黄叶 outcome / route 判定权重。\n不新增诊断评分系统。\n不修改数据库发布链路。\n不扩大到养护算法、天气算法、图片识别、支付、登录等无关模块。\n不为了性能把所有模式题库无边界全量下发给前端。\n不牺牲问诊模式边界：只能返回当前 mode / route 所需题包或启动数据。\n\n建议架构方向\n\n一、先定位慢点\n\n优先在接口关键节点增加临时耗时日志或本地性能埋点：\n\n入口接收请求。\n参数解析完成。\nmode / route 解析完成。\n题包获取完成。\n业务适配完成。\n响应序列化前。\n接口结束。\n\n输出示例：\n\nstart.totalMs\nstart.parseMs\nstart.resolveModeMs\nstart.loadPackageMs\nstart.adaptResponseMs\nstart.serializeMs\n\n不要长期保留噪音日志，最终只保留必要的性能诊断信息或删除临时日志。\n\n二、收敛 start 接口职责\n\n`/diagnosis/question/start` 不应再承担完整诊断推理。它应尽量退化为：\n\n校验入参。\n解析 mode / route。\n读取当前模式固定题包。\n返回最小启动响应。\n\n理想结构：\n\ngetQuestionPackageByMode(mode)\n\n而不是：\n\nresolveDynamicBranch()\ngetCurrentQuestion()\ngetNextQuestion()\nadvanceDiagnosisState()\nmergeRuntimeContext()\nqueryDiagnosisRulesAtRuntime()\n\n三、题包静态化 / 预计算\n\n对于黄叶等固定题包：\n\n优先放在代码内静态配置、JSON 常量或轻量模块映射中。\n在云函数实例加载时完成一次性初始化。\n请求进来时只做 O(1) 映射读取。\n避免每次请求访问数据库组装固定题包。\n避免每次请求深拷贝大对象，必要时返回只读结构或轻量 copy。\n\n四、响应体瘦身\n\n接口只返回前端启动问诊必要字段，例如：\n\nmode\nroute\nquestions\noutcomePolicy 或最小扩展信息\nversion / packageVersion（如已有必要）\n\n不要返回：\n\n所有模式题库。\n调试字段。\n既有状态机上下文。\n未被前端消费的中间结构。\n历史适配字段。\n大段规则说明。\n\n五、免费缓存边界\n\n允许使用：\n\n模块级内存缓存。\n静态常量。\n构建期生成文件。\n轻量本地映射。\n无付费依赖的基础云函数运行时缓存。\n\n不允许使用：\n\nRedis。\n付费云缓存。\n云函数付费保活。\n云函数升配作为主要解决方案。\n付费 CDN 或边缘函数。\n\nCheckList\n\n- [ ] 定位 `diagnose-http/diagnosis/question/start` 接口入口。\n- [ ] 梳理 start 接口完整调用链。\n- [ ] 记录优化前接口耗时，至少区分冷启动与热启动。\n- [ ] 识别是否存在数据库查询、外部服务调用、动态下一题、复杂状态机、重复题包组装等慢点。\n- [ ] 确认 start 接口不应调用天气、养护、图片识别、支付、登录等无关模块。\n- [ ] 将 start 接口职责收敛…",
+  "requirementFacts": {
+    "scopeMustDo": [],
+    "scopeMustNotDo": [],
+    "dataStructureNotes": [],
+    "frontendStateNotes": [],
+    "cleanupTargets": [],
+    "acceptanceCriteria": [],
+    "risksAndNotes": [],
+    "codexExecutionHints": []
+  },
+  "factsQuality": {
+    "status": "blocked",
+    "score": 56,
+    "weakStructure": false,
+    "highRisk": true,
+    "missingFacts": [
+      "missing_goal_or_positive_scope"
+    ],
+    "warnings": [
+      "missing_negative_scope_or_non_goal_boundary",
+      "missing_execution_hints",
+      "weak_markdown_section_structure"
+    ],
+    "requiredHumanActions": [
+      "补充明确目标或必须做范围。 ",
+      "高风险任务必须补充不做范围 / 禁止事项 / 非目标边界。 "
+    ],
+    "sectionMatches": {}
+  },
+  "weakStructure": false,
+  "missingFacts": [
+    "missing_goal_or_positive_scope"
+  ],
+  "figmaLinks": [],
+  "subtaskSummary": [],
+  "checklistItems": [
+    {
+      "checklistId": "a96f3cdf-df73-443b-bd81-d42140f63f52",
+      "checklistName": "Checklist",
+      "itemId": "56f7877c-150c-4037-b98e-19206f624035",
+      "itemName": "定位 diagnose-http/diagnosis/question/start 接口入口。",
+      "resolved": false
+    },
+    {
+      "checklistId": "a96f3cdf-df73-443b-bd81-d42140f63f52",
+      "checklistName": "Checklist",
+      "itemId": "f375c129-a7a2-483a-b01f-57f70b0e71c2",
+      "itemName": "梳理 start 接口完整调用链。",
+      "resolved": false
+    },
+    {
+      "checklistId": "a96f3cdf-df73-443b-bd81-d42140f63f52",
+      "checklistName": "Checklist",
+      "itemId": "47a284da-d4ff-41b0-a4d1-229724f033ed",
+      "itemName": "记录优化前接口耗时，至少区分冷启动与热启动。",
+      "resolved": false
+    },
+    {
+      "checklistId": "a96f3cdf-df73-443b-bd81-d42140f63f52",
+      "checklistName": "Checklist",
+      "itemId": "6bf2e1fb-92ec-48a9-aefa-45599b13b86d",
+      "itemName": "识别是否存在数据库查询、外部服务调用、动态下一题、复杂状态机、重复题包组装等慢点。",
+      "resolved": false
+    },
+    {
+      "checklistId": "a96f3cdf-df73-443b-bd81-d42140f63f52",
+      "checklistName": "Checklist",
+      "itemId": "27716140-d71c-4e8d-8177-ce7b450762d4",
+      "itemName": "确认 start 接口不应调用天气、养护、图片识别、支付、登录等无关模块。",
+      "resolved": false
+    },
+    {
+      "checklistId": "a96f3cdf-df73-443b-bd81-d42140f63f52",
+      "checklistName": "Checklist",
+      "itemId": "3ec024f6-a598-4f9d-96a1-4951e387078d",
+      "itemName": "将 start 接口职责收敛为按 mode / route 返回当前模式题包或最小启动数据。",
+      "resolved": false
+    },
+    {
+      "checklistId": "a96f3cdf-df73-443b-bd81-d42140f63f52",
+      "checklistName": "Checklist",
+      "itemId": "db993299-0028-458a-b947-fd0c88aa7239",
+      "itemName": "固定题包改为静态配置、模块级缓存或等价免费方案读取。",
+      "resolved": false
+    },
+    {
+      "checklistId": "a96f3cdf-df73-443b-bd81-d42140f63f52",
+      "checklistName": "Checklist",
+      "itemId": "5575a7f1-ab38-411a-954d-45f0c9a59d3d",
+      "itemName": "避免每次请求重复构建固定题包。",
+      "resolved": false
+    },
+    {
+      "checklistId": "a96f3cdf-df73-443b-bd81-d42140f63f52",
+      "checklistName": "Checklist",
+      "itemId": "893df773-7b6d-4769-a9a3-4b91b1f8f4d9",
+      "itemName": "避免每次请求读取数据库获取固定题包，除非已有明确必要且耗时可控。",
+      "resolved": false
+    },
+    {
+      "checklistId": "a96f3cdf-df73-443b-bd81-d42140f63f52",
+      "checklistName": "Checklist",
+      "itemId": "8235a064-ee39-4db2-85f0-a3a09f89264d",
+      "itemName": "删除或绕开既有动态诊断流中的无用分支。",
+      "resolved": false
+    },
+    {
+      "checklistId": "a96f3cdf-df73-443b-bd81-d42140f63f52",
+      "checklistName": "Checklist",
+      "itemId": "a91545f4-70b9-4a5a-9cd6-3845767978a8",
+      "itemName": "删除或绕开既有逐题推进状态机中的无用逻辑。",
+      "resolved": false
+    },
+    {
+      "checklistId": "a96f3cdf-df73-443b-bd81-d42140f63f52",
+      "checklistName": "Checklist",
+      "itemId": "cf57f346-2ce3-4db0-a8b2-3fce9a81ae53",
+      "itemName": "精简响应体字段，只保留前端启动问诊必要数据。",
+      "resolved": false
+    },
+    {
+      "checklistId": "a96f3cdf-df73-443b-bd81-d42140f63f52",
+      "checklistName": "Checklist",
+      "itemId": "ffb4952b-d391-49b8-9dad-8547bbce3b14",
+      "itemName": "确认不会把所有模式题库无边界全量下发。",
+      "resolved": false
+    },
+    {
+      "checklistId": "a96f3cdf-df73-443b-bd81-d42140f63f52",
+      "checklistName": "Checklist",
+      "itemId": "e9a8a62f-52c8-437e-9b70-e903a28b4236",
+      "itemName": "确认不修改 outcome / route 判定权重。",
+      "resolved": false
+    },
+    {
+      "checklistId": "a96f3cdf-df73-443b-bd81-d42140f63f52",
+      "checklistName": "Checklist",
+      "itemId": "58d72dd4-3df0-4621-9880-bc84a5994de0",
+      "itemName": "确认不修改数据库发布链路。",
+      "resolved": false
+    },
+    {
+      "checklistId": "a96f3cdf-df73-443b-bd81-d42140f63f52",
+      "checklistName": "Checklist",
+      "itemId": "a0a8d565-cb24-4090-ac70-3b0bb550f13c",
+      "itemName": "补充最小性能验证方式。",
+      "resolved": false
+    },
+    {
+      "checklistId": "a96f3cdf-df73-443b-bd81-d42140f63f52",
+      "checklistName": "Checklist",
+      "itemId": "2831a0ae-1c2b-4b13-b0fb-b09e374056e4",
+      "itemName": "记录优化后热启动接口耗时。",
+      "resolved": false
+    },
+    {
+      "checklistId": "a96f3cdf-df73-443b-bd81-d42140f63f52",
+      "checklistName": "Checklist",
+      "itemId": "9fb53dca-7f64-43ad-abfa-e02411ff9406",
+      "itemName": "目标验证：常规热启动请求 <= 500ms。",
+      "resolved": false
+    },
+    {
+      "checklistId": "a96f3cdf-df73-443b-bd81-d42140f63f52",
+      "checklistName": "Checklist",
+      "itemId": "d032685d-dac1-4826-b9b9-a30de9714fb8",
+      "itemName": "如冷启动仍超过 500ms，需要记录原因，并说明在不启用付费能力前提下的剩余边界。",
+      "resolved": false
+    },
+    {
+      "checklistId": "a96f3cdf-df73-443b-bd81-d42140f63f52",
+      "checklistName": "Checklist",
+      "itemId": "5fd68897-7954-4a68-97c9-3068d0a618db",
+      "itemName": "运行 lint / 类型检查。",
+      "resolved": false
+    },
+    {
+      "checklistId": "a96f3cdf-df73-443b-bd81-d42140f63f52",
+      "checklistName": "Checklist",
+      "itemId": "5d33242f-b5bd-45fa-9f58-a823b2a732ba",
+      "itemName": "手动验证前端开始问诊流程正常。",
+      "resolved": false
+    },
+    {
+      "checklistId": "a96f3cdf-df73-443b-bd81-d42140f63f52",
+      "checklistName": "Checklist",
+      "itemId": "cccfc491-01d8-4c74-b2d0-596fa7669856",
+      "itemName": "在任务结果中记录：慢点来源、删除/简化了哪些代码、最终耗时数据、未解决的冷启动边界。",
+      "resolved": false
+    }
+  ],
+  "hardConstraints": [
+    {
+      "quote": "该接口位于问诊链路的入口阶段，用户点击开始问诊后，前端需要尽快拿到当前模式的题包或起始问答数据。如果该接口继续承担过多动态诊断、数据库查询、既有状态机适配、运行时组装等职责，会导致首屏等待明显变长。",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "需要明确区分：",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "必须做",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "不要长期保留噪音日志，最终只保留必要的性能诊断信息或删除临时日志。",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "不要返回：",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "- [ ] 如冷启动仍超过 500ms，需要记录原因，并说明在不启用付费能力前提下的剩余边界。",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "验收标准",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "任务结果中必须包含优化前后耗时对比。",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "性能优化必须保持问诊业务边界：当前模式题包可以返回，但不能无边界返回所有模式题库。",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "不要全量扫描无关模块。不要扩大到天气、养护、支付、登录、图片识别等模块。优先用测量结果驱动优化。",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    }
+  ],
+  "counts": {
+    "subtasks": 0,
+    "comments": 0,
+    "attachments": 0,
+    "linkedTasks": 0,
+    "dependencies": 0,
+    "nativeChecklistItems": 22,
+    "externalLinks": 0,
+    "figmaLinks": 0,
+    "hardConstraints": 10
+  },
+  "readBlockers": [
+    "clickup_facts_quality_blocked:missing_goal_or_positive_scope"
+  ],
+  "sizePolicy": {
+    "kind": "model_light_facts",
+    "maxRecommendedBytes": 80000,
+    "fullFactsFile": "clickup-task-full-facts.json",
+    "rawTaskFile": "clickup-task.raw.limited.json",
+    "rawCommentsFile": "clickup-comments.raw.limited.json"
+  }
+}

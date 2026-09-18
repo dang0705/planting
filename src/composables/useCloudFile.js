@@ -1,4 +1,10 @@
-import { ref } from 'vue'
+import { getCurrentInstance, onBeforeUnmount, ref } from 'vue'
+import {
+  fetchCloudFileUrlQuery,
+  invalidateCloudFileUrlQuery
+} from '@/vue-query/storage/queries/file-urls.js'
+
+const TEMP_URL_REFRESH_SAFETY_MS = 5 * 60 * 1000
 
 /**
  * 批量将 fileId 转换为临时 URL
@@ -6,14 +12,20 @@ import { ref } from 'vue'
  * @returns {Promise<Record<string, string>>} fileId -> tempUrl 映射
  */
 export async function getFileUrls(fileIds) {
-  const ids = fileIds.filter(Boolean)
-  if (!ids.length) {return {}}
+  const ids = [
+    ...new Set((fileIds || []).map(fileId => String(fileId || '').trim()).filter(Boolean))
+  ]
+  if (!ids.length) {
+    return {}
+  }
   try {
-    const res = await wx.cloud.getTempFileURL({ fileList: ids })
-    const map = {}
-    res.fileList?.forEach(f => {
-      if (f.fileID && f.tempFileURL) {map[f.fileID] = f.tempFileURL}
-    })
+    const entries = await Promise.all(
+      ids.map(async fileId => {
+        const result = await fetchCloudFileUrlQuery(fileId)
+        return [fileId, result.url]
+      })
+    )
+    const map = Object.fromEntries(entries.filter(([, url]) => url))
     return map
   } catch (e) {
     console.error('获取文件URL失败:', e)
@@ -27,9 +39,12 @@ export async function getFileUrls(fileIds) {
  * @returns {Promise<string>}
  */
 export async function getFileUrl(fileId) {
-  if (!fileId) {return ''}
-  const map = await getFileUrls([fileId])
-  return map[fileId] || ''
+  const normalizedFileId = String(fileId || '').trim()
+  if (!normalizedFileId) {
+    return ''
+  }
+  const map = await getFileUrls([normalizedFileId])
+  return map[normalizedFileId] || ''
 }
 
 /**
@@ -56,19 +71,65 @@ export function useFileUrl(initialFileId = '') {
   const fileId = ref(initialFileId)
   const url = ref('')
   const loading = ref(false)
+  const refreshTimer = { value: null }
 
-  async function resolve(id) {
-    if (id) {fileId.value = id}
+  function clearRefreshTimer() {
+    if (refreshTimer.value) {
+      clearTimeout(refreshTimer.value)
+      refreshTimer.value = null
+    }
+  }
+
+  function scheduleRefresh(result) {
+    clearRefreshTimer()
+    if (!result?.expiresAt || !fileId.value) {
+      return
+    }
+    const delay = Math.max(1000, result.expiresAt - Date.now() - TEMP_URL_REFRESH_SAFETY_MS)
+    refreshTimer.value = setTimeout(() => {
+      resolve(fileId.value, { force: true })
+    }, delay)
+  }
+
+  async function resolve(id = fileId.value, { force = false } = {}) {
+    const nextFileId = String(id || '').trim()
+    fileId.value = nextFileId
     if (!fileId.value) {
       url.value = ''
+      clearRefreshTimer()
       return
     }
     loading.value = true
-    url.value = await getFileUrl(fileId.value)
-    loading.value = false
+    try {
+      const result = await fetchCloudFileUrlQuery(fileId.value, { force })
+      if (result.fileId !== fileId.value) {
+        return
+      }
+      url.value = result.url
+      scheduleRefresh(result)
+    } catch (error) {
+      if (fileId.value === nextFileId) {
+        url.value = ''
+      }
+      console.error('获取文件URL失败:', error)
+    } finally {
+      if (fileId.value === nextFileId) {
+        loading.value = false
+      }
+    }
   }
 
-  if (initialFileId) {resolve()}
+  async function refresh() {
+    await invalidateCloudFileUrlQuery(fileId.value)
+    return resolve(fileId.value, { force: true })
+  }
 
-  return { fileId, url, loading, resolve }
+  if (initialFileId) {
+    resolve()
+  }
+  if (getCurrentInstance()) {
+    onBeforeUnmount(clearRefreshTimer)
+  }
+
+  return { fileId, url, loading, resolve, refresh }
 }

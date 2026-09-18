@@ -1,0 +1,106 @@
+{
+  "generatedAt": "2026-09-18",
+  "environment": "cloud1-2grufevs395a9d5e",
+  "scope": "现行生产问诊入口、题包生成、答案提交/历史审核可达性；只读审计",
+  "correction": "源码命中、题库存在和历史记录出现，只能证明曾经或可能被使用，不能单独证明当前新问诊运行时会消费。",
+  "currentRuntime": {
+    "manualEntry": {
+      "entry": "POST /diagnosis/question/start",
+      "reachableModes": ["yellow_leaf", "wilting_droop"],
+      "packageKind": "fixed package",
+      "databaseBackedQuestionKeys": [
+        "q_observed_probe__leaf_yellowing__watering_frequency_context"
+      ],
+      "codeGeneratedQuestionKeys": [
+        "q_observed_probe__leaf_yellowing__light_change_context",
+        "q_observed_probe__leaf_yellowing__fertilization_growth_context",
+        "q_yellow_leaf__air_environment",
+        "q_wilting_droop__shape",
+        "q_wilting_droop__rhythm_environment",
+        "q_wilting_droop__air_environment",
+        "q_wilting_droop__recent_stress",
+        "q_wilting_droop__high_risk"
+      ]
+    },
+    "visualEntry": {
+      "entry": "POST /diagnosis/start",
+      "pestPackageKeyPattern": "q_specific_pest__*",
+      "legacyCandidateKeyOverlap": 0
+    },
+    "currentPackageSnapshot": {
+      "formalRecentSessions": [
+        {"routePrimaryAction": "finalize", "sessionCount": 7, "firstCreatedAt": "2026-09-04 11:00:07", "lastCreatedAt": "2026-09-04 11:39:11"}
+      ],
+      "verifiedRecentPackageModes": ["yellow_leaf", "specific_pest_visual"],
+      "legacyCandidateKeysGeneratedByCurrentNewPackage": 0
+    }
+  },
+  "candidateSet": {
+    "formalRows": 230,
+    "formalQuestionKeys": 75,
+    "formalEnabledRouteOverlap": 0,
+    "formalLegacyCandidateDefinition": "cms_lifecycle=legacy_compat AND is_active=1 AND data_status=audited AND review_status=audited AND no enabled/audited active outcome_route_questions row",
+    "currentPackageOverlap": 0
+  },
+  "runtimeCompatibilityEvidence": {
+    "formalRuntimeSnapshot": {
+      "sessionsContainingCandidateKeys": 57,
+      "openAwaitingFollowUpSessions": 47,
+      "completedSessions": 10,
+      "candidateKeysObserved": 25,
+      "keyHitCount": 60,
+      "note": "开放会话在 runtime_snapshot_json 中仍保存候选旧键；即使 diagnosis_follow_ups 当前无对应行，也不能据此否定答案继续/重算路径。"
+    },
+    "answerAndReviewConsumers": [
+      "diagnosis-answer-runner.js 依据提交答案或历史会话 questionKey 读取选项映射并校验",
+      "diagnosis-engine.js 在缺少题包映射或处理历史答案时读取选项映射",
+      "diagnosis-review/question-detail-loaders.js 读取历史问题键对应的选项映射"
+    ],
+    "sourceCompatibilityGroups": {
+      "contextRequiredProblemGuard": {
+        "questionKeyCount": 13,
+        "rowCount": 40,
+        "decision": "保留；属于旧会话/兼容回退可达路径"
+      },
+      "otherServiceRecognizedCompatibility": {
+        "questionKeyCount": 9,
+        "rowCount": 27,
+        "decision": "保留；被 question-package-topic、diagnosis-engine 或 question-row-mappers 识别"
+      },
+      "notFoundInCurrentDiagnoseHttpSource": {
+        "questionKeyCount": 44,
+        "rowCount": 133,
+        "decision": "仅表示没有当前源码字面命中；仍需排除历史会话/回放/审核输入后才能停用"
+      }
+    }
+  },
+  "deadCodeFinding": {
+    "confirmedProductionUnreachableModules": [
+      "cloudfunctions/diagnose-http/domain/question-selector.js",
+      "cloudfunctions/diagnose-http/domain/question-selector-helpers.js",
+      "cloudfunctions/diagnose-http/domain/question-selector-coverage.js"
+    ],
+    "evidence": [
+      "当前 cloudfunctions 产品模块没有导入链",
+      "当前新问诊入口由固定题包或 q_specific_pest__* 动态题包生成问题",
+      "question-selector 仅由 test/e2e/batch/diagnosis/check-diagnose-business-guards.mjs 引用",
+      "runDiagnosisRound 最终不再输出旧 selector 生成的问题列表"
+    ],
+    "notDead": [
+      "pest-question-package.js",
+      "diagnosis-direction-choice-runtime.js",
+      "question-package-topic.js",
+      "context-required-problem-guard.js",
+      "diagnosis-answer-runner.js",
+      "diagnosis-review/question-detail-loaders.js"
+    ],
+    "deletionGuard": "已移除 selector 生产模块，并同步移除仅依赖它们的旧批量测试检查；完成 diagnose-http 全量 node --check 与函数包完整性检查；本审计未部署任何代码。"
+  },
+  "decision": {
+    "databaseBatchIsActiveZero": "STOP",
+    "reason": "当前新题包确实不生成候选旧键，但正式库仍有 47 条未结束会话快照携带 25 个候选键；答案继续、答案重算和审核路径仍会读取映射。批量停用会造成可见业务回退。",
+    "codeCleanup": "DONE_LOCAL_NOT_DEPLOYED",
+    "nextSafeAction": "数据库 is_active 维持不变，直到开放会话有明确关闭/迁移策略；后续如需部署代码，先执行当前诊断入口回归和独立发布审查。",
+    "writesPerformed": false
+  }
+}

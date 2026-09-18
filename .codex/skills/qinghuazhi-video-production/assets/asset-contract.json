@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "categories": {
+    "person": {
+      "directory": "assets/person/<roleId>/",
+      "purpose": "稳定人物标准图；同一 roleId 跨 Shot 复用",
+      "sourcePolicy": "bundled-or-imported"
+    },
+    "plant": {
+      "directory": "assets/plant/<plant>/",
+      "purpose": "真实植物主体素材",
+      "sourcePolicy": "imported-or-user-provided"
+    },
+    "symptom": {
+      "directory": "assets/symptom/<symptom>/<plant>/",
+      "purpose": "真实植物症状/虫害证据素材",
+      "sourcePolicy": "imported-or-user-provided"
+    },
+    "app_capture": {
+      "directory": "assets/app-capture/<feature>/",
+      "purpose": "真实青花植小程序录屏",
+      "sourcePolicy": "real-host-capture-or-imported"
+    }
+  },
+  "rules": [
+    "Plan 阶段不扫描 catalog",
+    "Prepare 阶段才解析实际素材",
+    "app_capture 必须是真实青花植界面",
+    "symptom/plant 中承担诊断证据的视觉事实不得由 Wan 创造或修改"
+  ]
+}

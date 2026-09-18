@@ -1,0 +1,42 @@
+{
+  "name": "miniprogram-e2e",
+  "version": "0.1.0-rc.0",
+  "description": "Compiled-asset E2E runtime for WeChat Mini Programs",
+  "type": "module",
+  "main": "./src/index.mjs",
+  "exports": {
+    ".": "./src/index.mjs",
+    "./contracts": "./src/contracts/index.mjs",
+    "./wechat": "./src/platforms/wechat/index.mjs",
+    "./macos": "./src/hosts/macos/index.mjs"
+  },
+  "bin": {
+    "mp-e2e": "./src/cli/mp-e2e.mjs"
+  },
+  "files": [
+    "src",
+    "schemas",
+    "fixtures",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "peerDependencies": {
+    "miniprogram-automator": ">=0.12.0"
+  },
+  "peerDependenciesMeta": {
+    "miniprogram-automator": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "pack-check": "node src/cli/mp-e2e.mjs pack-check"
+  },
+  "license": "UNLICENSED"
+}

@@ -1,0 +1,226 @@
+{
+  "loaded": true,
+  "source": "api",
+  "taskId": "86exvt6fe",
+  "url": "https://app.clickup.com/t/86exvt6fe",
+  "title": "实现枯萎/发蔫问诊 route 模式：多 outcomes + 高危 block 防呆",
+  "status": "backlog",
+  "statusType": "open",
+  "priority": null,
+  "assignees": [],
+  "tags": [],
+  "requirementSummary": "目标：本任务不做：\n*   长势不佳模式\n*   虫害完整问诊模式\n*   病斑完整问诊模式\n*   黄叶模式重构\n*   新 ranking 引擎\n*   新 AI 推理链路\n*   数据库 route 权重设计\n* * *\n不做：本任务不得引入：；权重排序；置信度排序；主因排序；最可能原因排序；特异性分数；复杂规则引擎",
+  "requirementFacts": {
+    "background": "青花植已基本完成黄叶模式问诊，并沉淀出基于：\n*   植物属级养护数据\n*   用户浇水频率\n*   和风天气时光机过去 10 天温湿度\n*   温湿度叠加浇水算法\n*   可视化浇水行为诊断组件的水分行为判断能力。\n下一步准备开发 **枯萎 / 发蔫** 问诊方向。\n* * *",
+    "goal": "本任务不做：\n*   长势不佳模式\n*   虫害完整问诊模式\n*   病斑完整问诊模式\n*   黄叶模式重构\n*   新 ranking 引擎\n*   新 AI 推理链路\n*   数据库 route 权重设计\n* * *",
+    "scopeMustDo": [],
+    "scopeMustNotDo": [
+      "本任务不得引入：",
+      "权重排序",
+      "置信度排序",
+      "主因排序",
+      "最可能原因排序",
+      "特异性分数",
+      "复杂规则引擎"
+    ],
+    "dataStructureNotes": [],
+    "frontendStateNotes": [],
+    "cleanupTargets": [],
+    "acceptanceCriteria": [],
+    "risksAndNotes": [],
+    "codexExecutionHints": []
+  },
+  "factsQuality": {
+    "status": "weak",
+    "score": 100,
+    "weakStructure": true,
+    "highRisk": true,
+    "missingFacts": [],
+    "warnings": [
+      "missing_execution_hints"
+    ],
+    "requiredHumanActions": [],
+    "sectionMatches": {
+      "background": {
+        "title": "背景",
+        "alias": "背景"
+      },
+      "goal": {
+        "title": "非目标",
+        "alias": "目标"
+      },
+      "scopeMustNotDo": {
+        "title": "1\\. 不做 ranking",
+        "alias": "不做"
+      },
+      "acceptanceCriteria": {
+        "title": "验收标准",
+        "alias": "验收标准"
+      }
+    }
+  },
+  "weakStructure": true,
+  "missingFacts": [],
+  "figmaLinks": [],
+  "subtaskSummary": [
+    {
+      "id": "86exvt78z",
+      "name": "子任务 1：定义枯萎 / 发蔫 route 配置产出： Q0–Q4 问题配置  answer → outcome 映射  高危 block 列表",
+      "status": "backlog",
+      "statusType": "open"
+    },
+    {
+      "id": "86exvt6z0",
+      "name": "子任务 2：实现 outcome resolver产出： outcome 收集  去重  block 处理  同类 actionGroup 合并",
+      "status": "backlog",
+      "statusType": "open"
+    },
+    {
+      "id": "86exvt6zg",
+      "name": "子任务 3：接入水分行为组件产出： 读取水分组件输出  将缺水 / 过浇 / 基本合理 / 信息不足转为 route outcome",
+      "status": "backlog",
+      "statusType": "open"
+    },
+    {
+      "id": "86exvt70t",
+      "name": "子任务 4：结果页展示产出： 多 outcomes 行动清单  高危提醒  观察周期  被 block 动作解释",
+      "status": "backlog",
+      "statusType": "open"
+    },
+    {
+      "id": "86exvt716",
+      "name": "子任务 5：测试产出： 缺水 + 光热压力  过浇 + 根腐高危  浇水基本合理 + 空调直吹 + 刚换盆  局部发蔫 + 虫害  缺水倾向 + 土壤异味 block 补水",
+      "status": "backlog",
+      "statusType": "open"
+    }
+  ],
+  "checklistItems": [
+    {
+      "checklistId": "424f70c0-3f76-4610-80c1-c5055634fa45",
+      "checklistName": "Checklist",
+      "itemId": "d36193f4-95ff-43f8-8cc0-ea42dfe09221",
+      "itemName": "枯萎 / 发蔫问诊包含 Q0 水分行为组件 + Q1–Q4 题包。",
+      "resolved": false
+    },
+    {
+      "checklistId": "424f70c0-3f76-4610-80c1-c5055634fa45",
+      "checklistName": "Checklist",
+      "itemId": "dc05c2d1-0cca-4026-ba04-46c9961af2c6",
+      "itemName": "每个有效答案都能独立触发 outcome。",
+      "resolved": false
+    },
+    {
+      "checklistId": "424f70c0-3f76-4610-80c1-c5055634fa45",
+      "checklistName": "Checklist",
+      "itemId": "5f8bcdd4-a385-4745-b6de-a867b534e004",
+      "itemName": "最终结果支持多个 outcomes 同时输出。",
+      "resolved": false
+    },
+    {
+      "checklistId": "424f70c0-3f76-4610-80c1-c5055634fa45",
+      "checklistName": "Checklist",
+      "itemId": "43d59cd5-0914-450f-9b0d-e0f8a81b64d9",
+      "itemName": "不出现 ranking、概率排序、主因排序。",
+      "resolved": false
+    },
+    {
+      "checklistId": "424f70c0-3f76-4610-80c1-c5055634fa45",
+      "checklistName": "Checklist",
+      "itemId": "07c2093a-16f7-4ca5-a16c-55e2ca35e6bd",
+      "itemName": "高危异常可 block 冲突动作。",
+      "resolved": false
+    },
+    {
+      "checklistId": "424f70c0-3f76-4610-80c1-c5055634fa45",
+      "checklistName": "Checklist",
+      "itemId": "bd6f4e8e-a35a-4c37-bad1-522c08a7bc83",
+      "itemName": "命中腐烂 / 异味 / 水渍软烂时，不输出“直接增加浇水”类行动。",
+      "resolved": false
+    },
+    {
+      "checklistId": "424f70c0-3f76-4610-80c1-c5055634fa45",
+      "checklistName": "Checklist",
+      "itemId": "b2f524b9-5a53-4a63-bc89-311941ffb82c",
+      "itemName": "刚换盆 / 修根 route 命中时，不输出“立即施肥 / 再次换盆 / 暴晒”类行动。",
+      "resolved": false
+    },
+    {
+      "checklistId": "424f70c0-3f76-4610-80c1-c5055634fa45",
+      "checklistName": "Checklist",
+      "itemId": "9a42e31a-7b4f-48cd-8859-5ede62287887",
+      "itemName": "浓肥 / 药剂 route 命中时，不输出“继续施肥 / 继续喷药”类行动。",
+      "resolved": false
+    }
+  ],
+  "hardConstraints": [
+    {
+      "quote": "本任务不得引入：",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "因此需要一个极简 block 机制：",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "## Q0：复用黄叶模式首题问题和前端组件 - CareBehaviorTimeline.vue",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "# 必须避免的方向",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "不得做：",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "# 验收标准",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "## 功能验收",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "## 代码验收",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "## 文案验收",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    },
+    {
+      "quote": "*   用户不需要理解 route、block 等内部概念。",
+      "source": "clickup_task_description",
+      "handling": "keep_original_constraint_without_lossy_compression"
+    }
+  ],
+  "counts": {
+    "subtasks": 5,
+    "comments": 0,
+    "attachments": 0,
+    "linkedTasks": 0,
+    "dependencies": 0,
+    "nativeChecklistItems": 8,
+    "externalLinks": 5,
+    "figmaLinks": 0,
+    "hardConstraints": 10
+  },
+  "readBlockers": [],
+  "sizePolicy": {
+    "kind": "model_light_facts",
+    "maxRecommendedBytes": 80000,
+    "fullFactsFile": "clickup-task-full-facts.json",
+    "rawTaskFile": "clickup-task.raw.limited.json",
+    "rawCommentsFile": "clickup-comments.raw.limited.json"
+  }
+}

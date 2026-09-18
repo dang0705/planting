@@ -1,0 +1,15 @@
+{
+  "audit_type": "runtime_query_contract_readonly",
+  "captured_at": "2026-09-17T15:30:33.332Z",
+  "query": "SELECT question_key, option_key, option_text_cn, option_text_user_cn, maps_to_symptom_key, value, association_strength, answer_effect_cn, data_status, review_status FROM question_option_mapping_v5_real WHERE data_status='audited' AND review_status='audited' ORDER BY question_key, option_key LIMIT 1",
+  "mutation_performed": false,
+  "development": {
+    "success": true,
+    "row_count": 1
+  },
+  "production": {
+    "success": false,
+    "error_code": "UNKNOWN_COLUMN",
+    "error_message": "production query did not complete"
+  }
+}

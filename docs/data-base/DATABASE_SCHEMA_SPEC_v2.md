@@ -51,8 +51,8 @@ MySQL
 
 - `problem_name`，不能改成 `problem_name_en`
 - `problem_cn`，不能改成 `problem_name_cn`
-- `genus_compatibility`，不能改成 `compatibility`
-- `host_compatibility`，不能改成 `host_weight`
+- `genus_suitabilityibility`，不能改成 `suitabilityibility`
+- `host_suitabilityibility`，不能改成 `host_weight`
 - `plant_id`，不能改成 `plant_key`
 - `final_prior_score`，不能改成 `weight`
 - `relation_strength`，不能改成 `weight`
@@ -67,7 +67,7 @@ MySQL
 
 ### 3.3 发布系统新增元数据字段
 
-知识库表允许新增以下字段，用于发布系统；新增时必须保证旧代码不受影响：
+知识库表允许新增以下字段，用于发布系统；新增时必须保证既有代码不受影响：
 
 - `source_type`
 - `source_batch_id`
@@ -254,8 +254,8 @@ DDL 不要求此刻 100% 一次性落库，但字段命名必须完全对齐。
 - `id`
 - `genus`
 - `problem_key`
-- `genus_compatibility`
-- `compatibility_level`
+- `genus_suitabilityibility`
+- `suitabilityibility_level`
 - `data_status`
 - `data_source`
 - `audit_note`
@@ -275,8 +275,8 @@ DDL 不要求此刻 100% 一次性落库，但字段命名必须完全对齐。
 
 ### 说明
 
-- 字段名必须使用 `genus_compatibility`
-- 不得改成 `compatibility`
+- 字段名必须使用 `genus_suitabilityibility`
+- 不得改成 `suitabilityibility`
 
 ---
 
@@ -288,8 +288,8 @@ DDL 不要求此刻 100% 一次性落库，但字段命名必须完全对齐。
 - `problem_key`
 - `host_level`
 - `host_name`
-- `host_compatibility`
-- `compatibility_level`
+- `host_suitabilityibility`
+- `suitabilityibility_level`
 - `data_status`
 - `data_source`
 - `evidence_basis`
@@ -309,7 +309,7 @@ DDL 不要求此刻 100% 一次性落库，但字段命名必须完全对齐。
 
 ### 说明
 
-- 字段名必须使用 `host_compatibility`
+- 字段名必须使用 `host_suitabilityibility`
 - 不得改成 `host_weight`
 
 ---
@@ -324,8 +324,8 @@ DDL 不要求此刻 100% 一次性落库，但字段命名必须完全对齐。
 - `family`
 - `category`
 - `problem_key`
-- `genus_compatibility`
-- `host_compatibility`
+- `genus_suitabilityibility`
+- `host_suitabilityibility`
 - `final_prior_score`
 - `matched_host_level`
 - `source_layer`
@@ -668,7 +668,7 @@ Codex 必须按本 v2 文档执行：
 1. 先校正数据库字段名与 Excel 完全一致
 2. 补齐问诊与解释表，不得只实现 7 张核心表
 3. 为 repository 层引入 schema 前缀能力
-4. 不得直接按旧 spec 重命名字段
+4. 不得直接按既有 spec 重命名字段
 5. DDL / migration / schema checker 必须以 Excel 为真源
 
 ---

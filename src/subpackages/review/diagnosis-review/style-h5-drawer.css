@@ -1,0 +1,270 @@
+.drawer-shell {
+  padding: 24px;
+  background: #f4efe6;
+  min-height: 100%;
+}
+
+.drawer-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.drawer-title {
+  font-size: 34px;
+}
+
+.drawer-summary-grid {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.drawer-panel {
+  margin-top: 18px;
+  border: 1px solid #d8c9b4;
+  background: rgba(255, 251, 244, 0.92);
+  padding: 18px 20px;
+}
+
+.drawer-panel-title,
+.drawer-detail-title {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #8d745e;
+}
+
+.drawer-image-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.drawer-image,
+.drawer-empty-box {
+  width: 100%;
+  min-height: 140px;
+  border: 1px solid #d8c9b4;
+  background: #ebe1d3;
+}
+
+.drawer-empty-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6d6256;
+  font-size: 13px;
+}
+
+.drawer-detail-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.compare-panel {
+  overflow: hidden;
+}
+
+.compare-head,
+.compare-controls {
+  display: flex;
+  gap: 12px;
+}
+
+.compare-head {
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.compare-controls {
+  margin-top: 14px;
+  align-items: center;
+}
+
+.compare-select {
+  flex: 1 1 420px;
+}
+
+.compare-input {
+  flex: 0 1 320px;
+}
+
+.compare-table-shell {
+  margin-top: 14px;
+  overflow-x: auto;
+  border: 1px solid #d8c9b4;
+  background: #f8f3eb;
+}
+
+.compare-row {
+  display: grid;
+  grid-template-columns: 190px repeat(3, minmax(260px, 1fr));
+  min-width: 980px;
+  border-top: 1px solid #e2d5c3;
+}
+
+.compare-row:first-child {
+  border-top: 0;
+}
+
+.compare-row-head {
+  background: #efe5d6;
+}
+
+.compare-label,
+.compare-cell {
+  padding: 12px 14px;
+  border-left: 1px solid #e2d5c3;
+  color: #1f3a33;
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.compare-label {
+  border-left: 0;
+  background: rgba(239, 229, 214, 0.72);
+}
+
+.compare-label span,
+.compare-session-head span {
+  display: block;
+  margin-top: 4px;
+}
+
+.compare-session-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.drawer-detail-card {
+  border: 1px solid #e2d5c3;
+  background: #f8f3eb;
+  padding: 14px 16px;
+}
+
+.process-field-list,
+.route-path-list,
+.environment-care-shell,
+.raw-ai-card,
+.question-history-row {
+  margin-top: 14px;
+}
+
+.process-field-row,
+.raw-ai-card,
+.question-history-row {
+  border: 1px solid #e2d5c3;
+  background: #f8f3eb;
+  padding: 14px 16px;
+}
+
+.process-field-row + .process-field-row,
+.route-path-list .process-field-row + .process-field-row,
+.question-history-row + .question-history-row {
+  margin-top: 10px;
+}
+
+.process-field-title,
+.question-history-title {
+  color: #1f3a33;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.process-field-key {
+  margin-left: 10px;
+  color: #8d745e;
+  font-family: var(--desktop-mono-font);
+  font-size: 11px;
+}
+
+.process-field-meaning,
+.process-field-value {
+  margin: 8px 0 0;
+  color: #40554d;
+  font-size: 13px;
+  line-height: 1.72;
+}
+
+.process-field-value {
+  color: #1f3a33;
+  font-weight: 600;
+}
+
+.formula-line-list {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.formula-line {
+  margin: 0;
+  border: 1px solid #d8c9b4;
+  background: #fffaf2;
+  padding: 10px 12px;
+  color: #1f3a33;
+  font-family: var(--desktop-mono-font);
+  font-size: 12px;
+  line-height: 1.7;
+  word-break: break-word;
+}
+
+.formula-line-title {
+  display: block;
+  color: #8d745e;
+  font-family: var(--desktop-sans-font);
+  font-size: 11px;
+  letter-spacing: 0;
+}
+
+.formula-line-expression,
+.formula-line-substitution,
+.formula-line-process {
+  display: block;
+}
+
+.formula-line-substitution {
+  color: #365f51;
+  font-weight: 700;
+}
+
+.formula-line-process {
+  margin-top: 4px;
+  color: #51665d;
+}
+
+.raw-ai-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.raw-json-preview {
+  max-height: 280px;
+  margin: 12px 0 0;
+  overflow: auto;
+  border: 1px solid #d8c9b4;
+  background: #1f3a33;
+  color: #f7f4ed;
+  padding: 12px;
+  font-family: var(--desktop-mono-font);
+  font-size: 12px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.drawer-loading {
+  margin-top: 18px;
+}
+/* #endif */

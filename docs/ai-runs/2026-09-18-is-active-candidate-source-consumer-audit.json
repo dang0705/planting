@@ -1,0 +1,291 @@
+{
+  "generatedAt": "2026-09-18",
+  "scope": "formal candidate whitelist vs product source only",
+  "candidateQuestionKeys": 75,
+  "keysWithProductSourceHits": 31,
+  "hits": [
+    {
+      "question_key": "q_spider_webbing_visible",
+      "files": [
+        "cloudfunctions/diagnose-http/utils/context-required-problem-guard.js"
+      ]
+    },
+    {
+      "question_key": "q_thrips_silver_streaks",
+      "files": [
+        "cloudfunctions/diagnose-http/utils/context-required-problem-guard.js"
+      ]
+    },
+    {
+      "question_key": "q_gnat_soil_stays_wet",
+      "files": [
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/domain/diagnosis-engine.js",
+        "cloudfunctions/diagnose-http/utils/context-required-problem-guard.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js",
+        "cloudfunctions/diagnose-http/repositories/question-row-mappers.js"
+      ]
+    },
+    {
+      "question_key": "q_powder_white_visible",
+      "files": [
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js"
+      ]
+    },
+    {
+      "question_key": "q_root_rot_bad_smell",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/domain/diagnosis-engine.js",
+        "cloudfunctions/diagnose-http/repositories/question-row-mappers.js",
+        "cloudfunctions/diagnose-http/utils/context-required-problem-guard.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js"
+      ]
+    },
+    {
+      "question_key": "q_root_rot_black_roots",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/domain/diagnosis-engine.js",
+        "cloudfunctions/diagnose-http/repositories/question-row-mappers.js",
+        "cloudfunctions/diagnose-http/utils/context-required-problem-guard.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js"
+      ]
+    },
+    {
+      "question_key": "q_root_rot_mushy_roots",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/domain/diagnosis-engine.js",
+        "cloudfunctions/diagnose-http/utils/context-required-problem-guard.js",
+        "cloudfunctions/diagnose-http/repositories/question-row-mappers.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js"
+      ]
+    },
+    {
+      "question_key": "q_bacterial_water_soaked",
+      "files": [
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/domain/diagnosis-engine.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js"
+      ]
+    },
+    {
+      "question_key": "q_nitrogen_old_leaves_yellow",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js",
+        "cloudfunctions/diagnose-http/utils/yellowing-question-policy.js"
+      ]
+    },
+    {
+      "question_key": "q_nitrogen_uniform_yellow",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js",
+        "cloudfunctions/diagnose-http/utils/yellowing-question-policy.js"
+      ]
+    },
+    {
+      "question_key": "q_iron_new_leaves_yellow",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/utils/yellowing-question-policy.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js"
+      ]
+    },
+    {
+      "question_key": "q_iron_not_old_first",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js",
+        "cloudfunctions/diagnose-http/utils/yellowing-question-policy.js"
+      ]
+    },
+    {
+      "question_key": "q_underwater_dry_wilt",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/domain/diagnosis-engine.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js"
+      ]
+    },
+    {
+      "question_key": "q_black_mold_growth_confirm",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js"
+      ]
+    },
+    {
+      "question_key": "q_blackened_stem_base_bad_root_smell",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js",
+        "cloudfunctions/diagnose-http/utils/context-required-problem-guard.js"
+      ]
+    },
+    {
+      "question_key": "q_chewed_edges_confirm",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/utils/context-required-problem-guard.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js"
+      ]
+    },
+    {
+      "question_key": "q_leaf_bleaching_sunburn_patch",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/utils/context-required-problem-guard.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js"
+      ]
+    },
+    {
+      "question_key": "q_skeletonized_leaves_confirm",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/utils/context-required-problem-guard.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js"
+      ]
+    },
+    {
+      "question_key": "q_stem_collapse_poor_drainage",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/domain/diagnosis-engine.js",
+        "cloudfunctions/diagnose-http/repositories/question-row-mappers.js",
+        "cloudfunctions/diagnose-http/utils/context-required-problem-guard.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js"
+      ]
+    },
+    {
+      "question_key": "q_tunnels_in_leaf_confirm",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/utils/context-required-problem-guard.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js"
+      ]
+    },
+    {
+      "question_key": "q_yellowing_patchy_yellow_speckling",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js"
+      ]
+    },
+    {
+      "question_key": "q_sticky_honeydew_confirm",
+      "files": [
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js",
+        "cloudfunctions/diagnose-http/utils/context-required-problem-guard.js"
+      ]
+    },
+    {
+      "question_key": "q_sooty_mold_confirm",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js",
+        "cloudfunctions/diagnose-http/utils/context-required-problem-guard.js"
+      ]
+    },
+    {
+      "question_key": "q_brown_spots_halo_confirm",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/repositories/question-row-mappers.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js"
+      ]
+    },
+    {
+      "question_key": "q_black_spots_spreading_confirm",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js"
+      ]
+    },
+    {
+      "question_key": "q_leaf_yellowing_new_growth_bias",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js",
+        "cloudfunctions/diagnose-http/utils/yellowing-question-policy.js"
+      ]
+    },
+    {
+      "question_key": "q_black_spots_surface_layer_check",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/repositories/question-row-mappers.js",
+        "cloudfunctions/diagnose-http/domain/diagnosis-engine.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js"
+      ]
+    },
+    {
+      "question_key": "q_black_spots_tissue_moisture_check",
+      "files": [
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/repositories/question-row-mappers.js",
+        "cloudfunctions/diagnose-http/domain/diagnosis-engine.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js"
+      ]
+    },
+    {
+      "question_key": "q_leaf_yellowing_light_background",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/utils/yellowing-question-policy.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js"
+      ]
+    },
+    {
+      "question_key": "q_leaf_yellowing_watering_background",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js",
+        "cloudfunctions/diagnose-http/utils/context-required-problem-guard.js"
+      ]
+    },
+    {
+      "question_key": "q_leaf_yellowing_fertilization_background",
+      "files": [
+        "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+        "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+        "cloudfunctions/diagnose-http/utils/context-required-problem-guard.js",
+        "cloudfunctions/diagnose-http/domain/diagnosis-engine.js",
+        "cloudfunctions/diagnose-http/utils/question-package-topic.js"
+      ]
+    }
+  ],
+  "interpretation": "命中表示源码仍包含该问题键或其固定处理规则；不能将这些行直接判定为可停用。测试报告、历史清单和旧产物未纳入本统计。"
+}

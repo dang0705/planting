@@ -7,15 +7,15 @@ function round(value, digits = 6) {
   return Number(Number(value || 0).toFixed(digits))
 }
 
-function computeGenusFactor(genusCompatibility) {
+function computeGenusFactor(genusSuitability) {
   return round(
-    priorConfig.genusBase + priorConfig.genusWeight * clamp01(genusCompatibility)
+    priorConfig.genusBase + priorConfig.genusWeight * clamp01(genusSuitability)
   )
 }
 
-function computeHostFactor(hostCompatibility) {
+function computeHostFactor(hostSuitability) {
   return round(
-    priorConfig.hostBase + priorConfig.hostWeight * clamp01(hostCompatibility)
+    priorConfig.hostBase + priorConfig.hostWeight * clamp01(hostSuitability)
   )
 }
 

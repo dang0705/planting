@@ -1,12 +1,12 @@
-CREATE TABLE IF NOT EXISTS question_queue (
-  question_queue_id VARCHAR(64) PRIMARY KEY COMMENT '追问队列ID',
+CREATE TABLE IF NOT EXISTS question_package_state (
+  question_package_state_id VARCHAR(64) PRIMARY KEY COMMENT '追问队列ID',
   _openid VARCHAR(64) NOT NULL DEFAULT '' COMMENT '云开发用户标识',
   session_id VARCHAR(64) NOT NULL COMMENT '会话ID',
   diagnosis_id VARCHAR(64) NOT NULL COMMENT '诊断ID（当前与session_id同值）',
   round_id VARCHAR(64) NOT NULL COMMENT '轮次ID',
   round_index INT NOT NULL DEFAULT 1 COMMENT '轮次序号',
   route_primary_action VARCHAR(64) NOT NULL DEFAULT '' COMMENT '当前主路由动作',
-  queue_status VARCHAR(64) NOT NULL DEFAULT 'active' COMMENT '队列状态',
+  package_state_status VARCHAR(64) NOT NULL DEFAULT 'active' COMMENT '队列状态',
   service_target VARCHAR(64) NOT NULL DEFAULT '' COMMENT '主要服务对象',
   exhausted_reason VARCHAR(128) NULL COMMENT '队列耗尽/阻断原因',
   question_items_json JSON NOT NULL COMMENT '问题项快照JSON',
@@ -16,10 +16,10 @@ CREATE TABLE IF NOT EXISTS question_queue (
   invalidated_item_count INT NOT NULL DEFAULT 0 COMMENT '已失效问题数',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  UNIQUE KEY uk_question_queue_round (session_id, round_id),
-  KEY idx_question_queue_openid (_openid),
-  KEY idx_question_queue_round_index (session_id, round_index),
-  KEY idx_question_queue_status (queue_status)
+  UNIQUE KEY uk_question_package_state_round (session_id, round_id),
+  KEY idx_question_package_state_openid (_openid),
+  KEY idx_question_package_state_round_index (session_id, round_index),
+  KEY idx_question_package_state_status (package_state_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='诊断追问队列表';
 
 CREATE TABLE IF NOT EXISTS stop_state (

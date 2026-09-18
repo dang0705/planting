@@ -1,0 +1,126 @@
+{
+  "tool": "mcp-automator-direct-9420",
+  "startedAt": "2026-06-12T11:59:30.791Z",
+  "iterations": 3,
+  "port": 9420,
+  "projectPath": "/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin",
+  "results": [
+    {
+      "iteration": 1,
+      "startAt": "2026-06-12T11:58:58.693Z",
+      "steps": [
+        {
+          "step": 1,
+          "action": "launch",
+          "path": "pages/index/index"
+        },
+        {
+          "step": 2,
+          "action": "open-popup-via-ref",
+          "opened": true
+        },
+        {
+          "step": 3,
+          "action": "select-yellowing"
+        },
+        {
+          "step": 4,
+          "action": "tap-start-button"
+        },
+        {
+          "step": 1,
+          "action": "break-not-question-package",
+          "reason": "not-question-package",
+          "path": "pages/index/index"
+        },
+        {
+          "action": "done",
+          "endPath": "pages/index/index",
+          "answerCount": 0
+        }
+      ],
+      "errors": [],
+      "endPath": "pages/index/index",
+      "answerCount": 0,
+      "success": true
+    },
+    {
+      "iteration": 2,
+      "startAt": "2026-06-12T11:59:09.368Z",
+      "steps": [
+        {
+          "step": 1,
+          "action": "launch",
+          "path": "pages/index/index"
+        },
+        {
+          "step": 2,
+          "action": "open-popup-via-ref",
+          "opened": true
+        },
+        {
+          "step": 3,
+          "action": "select-yellowing"
+        },
+        {
+          "step": 4,
+          "action": "tap-start-button"
+        },
+        {
+          "step": 1,
+          "action": "break-not-question-package",
+          "reason": "not-question-package",
+          "path": "pages/index/index"
+        },
+        {
+          "action": "done",
+          "endPath": "pages/index/index",
+          "answerCount": 0
+        }
+      ],
+      "errors": [],
+      "endPath": "pages/index/index",
+      "answerCount": 0,
+      "success": true
+    },
+    {
+      "iteration": 3,
+      "startAt": "2026-06-12T11:59:20.054Z",
+      "steps": [
+        {
+          "step": 1,
+          "action": "launch",
+          "path": "pages/index/index"
+        },
+        {
+          "step": 2,
+          "action": "open-popup-via-ref",
+          "opened": true
+        },
+        {
+          "step": 3,
+          "action": "select-yellowing"
+        },
+        {
+          "step": 4,
+          "action": "tap-start-button"
+        },
+        {
+          "step": 1,
+          "action": "break-not-question-package",
+          "reason": "not-question-package",
+          "path": "pages/index/index"
+        },
+        {
+          "action": "done",
+          "endPath": "pages/index/index",
+          "answerCount": 0
+        }
+      ],
+      "errors": [],
+      "endPath": "pages/index/index",
+      "answerCount": 0,
+      "success": true
+    }
+  ]
+}

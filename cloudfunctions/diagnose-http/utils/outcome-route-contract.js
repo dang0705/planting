@@ -1,8 +1,8 @@
 'use strict'
 
-function normalizeText(value = '', fallback = '') {
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function normalizeKey(value = '') {
@@ -37,8 +37,8 @@ function isAuthoritativeRouteDecision(routeDecision = null) {
     return false
   }
 
-  const fallbackPolicy = normalizeText(routeDecision.fallbackPolicy)
-  if (!fallbackPolicy) {return true}
+  const conservativePolicy = normalizeText(routeDecision.conservativePolicy)
+  if (!conservativePolicy) {return true}
 
   return false
 }

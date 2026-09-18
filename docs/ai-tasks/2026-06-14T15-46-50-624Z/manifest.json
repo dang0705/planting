@@ -1,0 +1,130 @@
+{
+  "script": "scripts/clickup-fetch-task.ts",
+  "envLoad": {
+    "cwd": "/Users/jay/WebstormProjects/codex-thin-pipeline",
+    "loadedFiles": [
+      {
+        "path": "/Users/jay/WebstormProjects/codex-thin-pipeline/.env.local",
+        "loadedKeys": [
+          "REPO_PATH",
+          "TASK",
+          "CLICKUP_API_TOKEN",
+          "FIGMA_TOKEN"
+        ],
+        "skippedExistingKeys": []
+      }
+    ],
+    "missingFiles": []
+  },
+  "readonly": true,
+  "callsCodex": false,
+  "createdAt": "2026-06-14T15:46:52.103Z",
+  "options": {
+    "taskId": "86exy7xr3",
+    "outDir": "/Users/jay/WebstormProjects/codex-thin-pipeline/runs/clickup-fetch/2026-06-14T15-46-50-624Z",
+    "commentsPages": 1,
+    "includeRaw": true,
+    "maxRawBytes": 1048576,
+    "maxFactsBytes": 524288,
+    "timeoutMs": 30000
+  },
+  "lookup": {
+    "taskId": "86exy7xr3",
+    "source": "task_id_arg"
+  },
+  "counts": {
+    "comments": 0,
+    "subtasks": 0,
+    "attachments": 0,
+    "nativeChecklistItems": 0,
+    "hardConstraints": 21,
+    "requestRecords": 2
+  },
+  "factsQuality": {
+    "status": "pass",
+    "score": 100,
+    "weakStructure": false,
+    "highRisk": true,
+    "missingFacts": [],
+    "warnings": [],
+    "requiredHumanActions": [],
+    "sectionMatches": {
+      "background": {
+        "title": "背景",
+        "alias": "背景"
+      },
+      "goal": {
+        "title": "推荐目标架构",
+        "alias": "目标"
+      },
+      "scopeMustDo": {
+        "title": "必须做",
+        "alias": "必须做"
+      },
+      "scopeMustNotDo": {
+        "title": "不做",
+        "alias": "不做"
+      },
+      "suggestedSolution": {
+        "title": "实现自有历史天气缓存：D-1 到 D-10 滚动窗口（低成本对象存储方案）",
+        "alias": "方案"
+      },
+      "acceptanceCriteria": {
+        "title": "验收标准",
+        "alias": "验收标准"
+      },
+      "risksAndNotes": {
+        "title": "风险与注意事项",
+        "alias": "风险与注意事项"
+      },
+      "codexExecutionHints": {
+        "title": "Codex 执行提示",
+        "alias": "Codex 执行提示"
+      }
+    }
+  },
+  "writes": [
+    {
+      "file": "/Users/jay/WebstormProjects/codex-thin-pipeline/runs/clickup-fetch/2026-06-14T15-46-50-624Z/clickup-task-facts.json",
+      "originalBytes": 13945,
+      "writtenBytes": 13945,
+      "limited": false
+    },
+    {
+      "file": "/Users/jay/WebstormProjects/codex-thin-pipeline/runs/clickup-fetch/2026-06-14T15-46-50-624Z/clickup-task-full-facts.json",
+      "originalBytes": 80274,
+      "writtenBytes": 80274,
+      "limited": false
+    },
+    {
+      "file": "/Users/jay/WebstormProjects/codex-thin-pipeline/runs/clickup-fetch/2026-06-14T15-46-50-624Z/clickup-request-records.json",
+      "originalBytes": 2415,
+      "writtenBytes": 2415,
+      "limited": false
+    },
+    {
+      "file": "/Users/jay/WebstormProjects/codex-thin-pipeline/runs/clickup-fetch/2026-06-14T15-46-50-624Z/clickup-task.raw.limited.json",
+      "originalBytes": 46422,
+      "writtenBytes": 46422,
+      "limited": false
+    },
+    {
+      "file": "/Users/jay/WebstormProjects/codex-thin-pipeline/runs/clickup-fetch/2026-06-14T15-46-50-624Z/clickup-comments.raw.limited.json",
+      "originalBytes": 92,
+      "writtenBytes": 92,
+      "limited": false
+    },
+    {
+      "file": "/Users/jay/WebstormProjects/codex-thin-pipeline/runs/clickup-fetch/2026-06-14T15-46-50-624Z/clickup-description.md",
+      "originalBytes": 14791,
+      "writtenBytes": 14791,
+      "limited": false
+    },
+    {
+      "file": "/Users/jay/WebstormProjects/codex-thin-pipeline/runs/clickup-fetch/2026-06-14T15-46-50-624Z/summary.md",
+      "originalBytes": 4170,
+      "writtenBytes": 4170,
+      "limited": false
+    }
+  ]
+}

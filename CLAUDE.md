@@ -8,6 +8,13 @@ inclusion: always
 
 # CloudBase AI Development Rules Guide
 
+## AI Memory
+
+- 默认长期记忆源是 OpenViking，项目 peer 为 `planting`。
+- 配置位于仓库根目录 `.openviking/config.json`，共享范围从仓库根目录开始并覆盖其子目录。
+- 记忆只提供上下文和导航；代码、测试、schema、配置与运行证据始终优先。
+- 只记录经过当前事实源和实际验证确认、且未来仍有复用价值的稳定知识。
+
 ## 🗂️ Rule File Path Resolution Strategy
 
 **CRITICAL: All rule file paths in this document follow a smart resolution strategy to support multiple AI editors.**

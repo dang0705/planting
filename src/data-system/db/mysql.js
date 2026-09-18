@@ -65,6 +65,31 @@ async function listTableColumns(connectionOrPool, schema, table) {
   return rows.map(item => item.COLUMN_NAME)
 }
 
+async function listTableColumnMetadata(connectionOrPool, schema, table) {
+  const [rows] = await connectionOrPool.query(
+    `
+      SELECT COLUMN_NAME, DATA_TYPE, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT
+      FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = ?
+        AND TABLE_NAME = ?
+      ORDER BY ORDINAL_POSITION ASC
+    `,
+    [schema, table]
+  )
+
+  return Object.fromEntries(
+    rows.map(item => [
+      item.COLUMN_NAME,
+      {
+        dataType: item.DATA_TYPE,
+        columnType: item.COLUMN_TYPE,
+        isNullable: item.IS_NULLABLE,
+        defaultValue: item.COLUMN_DEFAULT
+      }
+    ])
+  )
+}
+
 async function listTablePrimaryOrUniqueColumns(connectionOrPool, schema, table) {
   const [rows] = await connectionOrPool.query(
     `
@@ -101,7 +126,7 @@ module.exports = {
   quoteIdentifier,
   tableName,
   listTableColumns,
+  listTableColumnMetadata,
   listTablePrimaryOrUniqueColumns,
   closePool
 }
-

@@ -59,24 +59,36 @@
   },
   "overrides": [
     {
-      "files": [
-        "**/*.vue"
-      ],
+      "files": ["**/*.vue"],
       "rules": {
         "no-undef": "error",
         "no-unused-vars": "error"
       }
     },
     {
-      "files": [
-        "**/*.js",
-        "**/*.cjs",
-        "**/*.mjs"
-      ]
+      "files": ["**/*.js", "**/*.cjs", "**/*.mjs"]
     }
   ],
   "ignorePatterns": [
     ".github",
+    ".agents",
+    ".brv",
+    ".brv-backup",
+    ".zcode",
+    ".tmp",
+    ".e2e-artifacts",
+    "test/batch-results",
+    "test/e2e/batch/diagnosis/_history",
+    "test/e2e/batch/diagnosis/manifests",
+    "test/e2e/batch/diagnosis/fixtures",
+    "cloudfunctions/diagnosis-question-start-http/app.js",
+    "cloudfunctions/diagnosis-question-start-http/deferred-persistence.js",
+    "cloudfunctions/diagnosis-question-start-http/deferred-persistence-worker.js",
+    "cloudfunctions/diagnosis-answer-http/app.js",
+    "cloudfunctions/diagnosis-answer-http/package-app.js",
+    "cloudfunctions/diagnosis-answer-http/deferred-persistence.js",
+    "cloudfunctions/diagnosis-answer-http/care-runtime.js",
+    "cloudfunctions/diagnosis-answer-http/deferred-persistence-worker.js",
     "uni_modules",
     "node_modules",
     "dist",

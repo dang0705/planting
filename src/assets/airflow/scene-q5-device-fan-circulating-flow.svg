@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="104" height="72" viewBox="0 0 104 72">
+  <g transform="scale(0.9463 0.9464)">
+    <g transform="translate(15.2,66) scale(0.82) translate(-15.2,-66)">
+      <path d="M0.686904 12.4763C9.1402 -0.203667 22.8768 -2.31699 37.6701 4.02298" transform="translate(25.37,24)" fill="none" stroke="#2D7A4F" stroke-width="1.37366" stroke-linecap="round" stroke-dasharray="4.23 5.28" opacity="0.7">
+        <animate attributeName="stroke-dashoffset" values="0;-9.51" dur="1.5s" begin="0s" repeatCount="indefinite"/>
+      </path>
+    </g>
+  </g>
+</svg>

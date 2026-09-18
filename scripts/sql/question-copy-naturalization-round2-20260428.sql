@@ -100,14 +100,14 @@ SET
     ELSE `question_text_user_cn`
   END,
   `help_text_cn` = CASE `question_key`
-    WHEN 'q_chewed_edges_confirm' THEN '只确认边缘有没有真实缺口；发干、发焦、变色或旧伤痕迹不算真实缺口。'
-    WHEN 'q_holes_in_leaf_confirm' THEN '只确认是否真的破洞或缺失；表面斑点、焦边或旧伤造成的外观变化不算真实破洞。'
+    WHEN 'q_chewed_edges_confirm' THEN '只确认边缘有没有真实缺口；发干、发焦、变色或既有伤痕迹不算真实缺口。'
+    WHEN 'q_holes_in_leaf_confirm' THEN '只确认是否真的破洞或缺失；表面斑点、焦边或既有伤造成的外观变化不算真实破洞。'
     WHEN 'q_irregular_blotches_confirm' THEN '如果更像规则的小圆斑，不按“不规则斑块”处理。'
     WHEN 'q_leaf_yellowing_confirm' THEN '先排除拍摄反光、光线偏色或只是轻微变浅。'
     WHEN 'q_patchy_browning_confirm' THEN '如果整片叶子一起变褐，不按“局部褐斑”处理。'
     WHEN 'q_root_rot_black_roots' THEN '健康根通常偏白或浅色；泥土染色需要结合手感和气味判断。'
-    WHEN 'q_skeletonized_leaves_confirm' THEN '只确认是否出现网状缺失；单纯变薄、焦枯或旧伤痕迹不算。'
-    WHEN 'q_stable_marking_new_growth_consistent' THEN '如果只有旧叶有、新叶没有，稳定固有花纹的可能性会降低。'
+    WHEN 'q_skeletonized_leaves_confirm' THEN '只确认是否出现网状缺失；单纯变薄、焦枯或既有伤痕迹不算。'
+    WHEN 'q_stable_marking_new_growth_consistent' THEN '如果只有既有叶有、新叶没有，稳定固有花纹的可能性会降低。'
     WHEN 'q_stable_marking_pattern_confirm' THEN '重点回想它是否最近才突然变多、变乱或变深。'
     WHEN 'q_uniform_browning_confirm' THEN '如果只是零散小斑点，不按整叶变褐处理。'
     WHEN 'q_uniform_browning_crispy_edges' THEN '只确认干脆卷边这个事实，不直接要求用户判断病斑或灼伤。'

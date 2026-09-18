@@ -1,0 +1,96 @@
+{
+  "task": "air-environment-v2-question-packages",
+  "gitHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "branch": "sprint-ai-workflow",
+  "projectPath": "/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin",
+  "wsEndpoint": "ws://127.0.0.1:9420",
+  "startedAt": "2026-08-05T11:00:55.425Z",
+  "endedAt": "2026-08-05T11:01:15.152Z",
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "time": "2026-08-05T11:00:59.803Z"
+    },
+    {
+      "path": "pages/index/index",
+      "time": "2026-08-05T11:00:59.803Z"
+    }
+  ],
+  "pageDataSummaries": [
+    {
+      "path": "pages/index/index",
+      "summary": {
+        "automatorBootstrapRoute": {
+          "expectedRoute": "pages/index/index",
+          "observedRoute": "pages/index/index",
+          "routeReady": true,
+          "navigation_channel": "native_tabbar",
+          "native_tab_path": "pages/index/index",
+          "navigation_error": null
+        }
+      },
+      "time": "2026-08-05T11:00:55.685Z"
+    },
+    {
+      "path": "/pages/index/index",
+      "summary": {
+        "isAuthenticated": true,
+        "isLoggedIn": true,
+        "fixturePlantId": 94021,
+        "plantIds": [
+          94021
+        ],
+        "fixturePlantPresent": true,
+        "indexPlantListPresent": false,
+        "targetPlantCardPresent": false,
+        "targetEntryId": "diagnose-entry-button-94021",
+        "targetEntryPresent": false
+      },
+      "time": "2026-08-05T11:01:14.928Z"
+    }
+  ],
+  "assertions": [
+    {
+      "name": "switchTab home route",
+      "passed": true,
+      "detail": "{\"expectedRoute\":\"pages/index/index\",\"observedRoute\":\"pages/index/index\",\"routeReady\":true,\"navigation_channel\":\"native_tabbar\",\"native_tab_path\":\"pages/index/index\",\"navigation_error\":null}",
+      "time": "2026-08-05T11:00:55.685Z"
+    },
+    {
+      "name": "fixture plant entered the real plant store before homepage interaction",
+      "passed": true,
+      "detail": "{\"ok\":true,\"fixturePlantId\":94021,\"plantIds\":[94021],\"fixturePlantPresent\":true,\"userPlantsRequestObserved\":true,\"storeLoad\":{\"status\":\"resolved\",\"error\":null,\"invalidationError\":null},\"requestCount\":1,\"reason\":null}",
+      "time": "2026-08-05T11:00:59.803Z"
+    },
+    {
+      "name": "yellowing_mode: home readiness exposes the known diagnosis entry id",
+      "passed": false,
+      "detail": "{\"isAuthenticated\":true,\"isLoggedIn\":true,\"fixturePlantId\":94021,\"plantIds\":[94021],\"fixturePlantPresent\":true,\"indexPlantListPresent\":false,\"targetPlantCardPresent\":false,\"targetEntryId\":\"diagnose-entry-button-94021\",\"targetEntryPresent\":false}",
+      "time": "2026-08-05T11:01:14.928Z"
+    },
+    {
+      "name": "yellowing_mode: formal no-image question-start response is observable",
+      "passed": false,
+      "detail": "request was not observed",
+      "time": "2026-08-05T11:01:14.932Z"
+    },
+    {
+      "name": "fixture state, cache and request patches were restored",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-05T11:01:15.151Z"
+    }
+  ],
+  "screenshots": [],
+  "classification": "BLOCKED_ENV",
+  "blockerReason": "yellowing_mode: home readiness did not expose diagnose-entry-button-94021: {\"isAuthenticated\":true,\"isLoggedIn\":true,\"fixturePlantId\":94021,\"plantIds\":[94021],\"fixturePlantPresent\":true,\"indexPlantListPresent\":false,\"targetPlantCardPresent\":false,\"targetEntryId\":\"diagnose-entry-button-94021\",\"targetEntryPresent\":false}",
+  "status": "failed",
+  "failure_kind": "failed_environment",
+  "business_assertions_reached": false,
+  "formal_principal": {
+    "principal_source": "local_dev_identity_default",
+    "principal_fingerprint": "794cf0e3e5db9fa7",
+    "storage_key": "user",
+    "credentials_persisted": false
+  }
+}

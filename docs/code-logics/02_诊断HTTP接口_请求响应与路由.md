@@ -1,112 +1,69 @@
-# 02 诊断 HTTP 接口、请求响应与路由
+# 02｜诊断 HTTP 接口、请求响应与路由
 
-> 文档口径：本组文档基于 `Archive 2.zip` 中可见的 CloudBase 云函数代码、`rules.zip` 中的实施规范、以及现有粗文档 `diagnosis-runtime-code-logic.md` 整理。中文概念优先，英文函数名、字段名、路径只用于定位代码。
->
-> 重要限制：压缩包内未发现 uni-app/小程序前端页面源码，因此前端实现只能按后端接口契约、返回结构和小程序接入规范反推，不写成“已确认源码行为”。
+更新时间：2026-06-07
 
-## 一、诊断服务入口
+## 1. HTTP 入口总览
 
-入口文件：`cloudfunctions/diagnose-http/app.js`。`main(event, context)` 负责解析 CloudBase HTTP 请求、路径、方法、query、body、当前用户身份，然后按路径分发到对应 handler，最后返回统一 JSON 或 SSE 响应。
+当前问诊相关的核心入口是：
 
-## 二、主要路由
+- `/diagnosis/start`：从图片/既有上下文进入诊断主链。
+- `/diagnosis/question/start`：从手动症状模式进入问诊，当前黄叶 4 题题包与枯萎/发蔫 5 题题包由此入口产生。
+- `/diagnosis/answer`：提交题包答案或非 package 当前回答后重跑诊断主链。
 
-| 路由片段 | 处理函数 | 说明 |
-|---|---|---|
-| `/health` | 健康检查 | 返回服务可用状态和重构准备状态 |
-| `/diagnosis/start` | `handleDiagnosisStart()` | 开始一次诊断，通常包含图片、植物上下文、客户端上下文 |
-| `/diagnosis/question/start` | `handleDiagnosisQuestionStart()` | 无图症状模式直接创建问诊，不调用视觉模型 |
-| `/diagnosis/answer` | `handleDiagnosisAnswer()` | 提交某一轮追问答案，进入下一轮诊断 |
-| `/diagnosis/result` | `handleDiagnosisResult()` | 读取指定诊断结果 |
-| `/diagnosis/history` | `handleDiagnosisHistory()` | 读取用户诊断历史 |
-| `/diagnosis/feedback` | `handleDiagnosisFeedback()` | 保存用户对结果的反馈 |
-| `/diagnosis/review/list` | `handleDiagnosisReviewList()` | 审计用诊断会话列表 |
-| `/diagnosis/review/images` | `handleDiagnosisReviewImages()` | 审计用图片列表 |
-| `/diagnosis/review/detail` | `handleDiagnosisReviewDetail()` | 审计用诊断详情 |
-| `/diagnosis/review/import` | `handleDiagnosisReviewImportBatch()` | 批量导入审计结果 |
-| `/visual/out-of-pool/list` | `handleOutOfPoolCandidateList()` | 池外视觉候选列表 |
-| `/visual/out-of-pool/image` | `handleOutOfPoolCandidateImage()` | 池外候选图片读取 |
-| `/visual/out-of-pool/review` | `handleOutOfPoolCandidateReview()` | 池外异常审核 |
-| `/visual/out-of-pool/proxy-mappings/list` | `handleOutOfPoolProxyMappingList()` | 池外 proxy 映射列表 |
-| `/visual/out-of-pool/proxy-mappings/upsert` | `handleOutOfPoolProxyMappingUpsert()` | 新增或更新池外 proxy 映射 |
-| `/visual/out-of-pool/proxy-mappings/disable` | `handleOutOfPoolProxyMappingDisable()` | 禁用池外 proxy 映射 |
-| `/stream/diagnose` | `handleDiagnosisStartStream()` | 流式诊断进度输出 |
-| `/diagnose` | `handleLegacyDiagnose()` / `handleLegacyDiagnoseStream()` | 旧诊断接口兼容 |
+这些入口不是同一套响应包装路径，差异会影响题包是否能完整透出。
 
-## 三、开始诊断主流程
+## 2. `/diagnosis/start`
 
-`handleDiagnosisStart()` 调用 `runStartDiagnosis()`，流程是：
+`handleDiagnosisStart` 调用 `runStartDiagnosis`，随后经过 `presentDiagnosisRoundResponse`，最后调用 `buildFrontendResponse`。该路径会进入 presenter 的公开响应整理逻辑。
 
-1. 解析图片输入。支持结构化 `images` / `imageInputs`，也兼容 `imageIds` 和单个 `image`。
-2. 解析植物上下文，包括 `plantId`、`userPlantId`、植物显示名、属、科、类目、养护基线等。
-3. 调用视觉诊断服务，将图片送入视觉分析并持久化批次结果。
-4. 把视觉聚合结果传入 `runDiagnosisRound()`。
-5. 持久化本轮运行时、问题队列、结果和会话状态。
-6. 通过 presenter 返回公开响应。
+代码来源：`cloudfunctions/diagnose-http/handlers/diagnosis-handlers.js` 32-57。
 
-图片输入归一函数包括 `normalizeUploadCompression()`、`resolveVisualImageInputs()`、`resolveImagesFromPayload()`。
+## 3. `/diagnosis/question/start`
 
-### 3.1 无图症状模式直接问诊入口
+`handleDiagnosisQuestionStart` 调用 `runQuestionStartDiagnosis` 后，直接调用 `buildFrontendResponse`，没有经过 `presentDiagnosisRoundResponse`。
 
-`POST /diagnosis/question/start` 是正式无图症状模式直接诊断入口，前端正式入口为 quick select `id="3ef72261--diagnose-dev-symptom-class-quick-select"`。该接口用于用户主动选择症状模式后直接进入问诊：
+代码来源：`cloudfunctions/diagnose-http/handlers/diagnosis-handlers.js` 67-104。
 
-1. 不调用 `/diagnosis/start`。
-2. 不走 `/stream/diagnose`、SSE 进度弹窗或视觉模型。
-3. 初始证据来源写为 `sourceType=manual_symptom_mode`，表示用户选择的症状证据，不是视觉证据。
-4. 接口返回首轮问诊或可公开结果；后续用户答案继续走 `/diagnosis/answer`。
-5. QA 验收必须覆盖：点击 quick select 后进入问诊、没有 AI/SSE 过程、会话证据中存在 `manual_symptom_mode`、后续回答链路仍由 `/diagnosis/answer` 推进。
+这个差异是固定题包能从手动入口完整到前端的关键原因之一：`question-start` 的静态题包启动路径已经把 `questions` 与 `questionPackage` 放进 result，handler 直接交给前端响应构造层。当前已覆盖 `yellow_leaf` 4 题和 `wilting_droop` 5 题。
 
-## 四、回答追问主流程
+## 4. `/diagnosis/answer`
 
-`handleDiagnosisAnswer()` 调用 `runAnswerDiagnosis()`，流程是：
+`handleDiagnosisAnswer` 调用 `runAnswerDiagnosis`，随后经过 `presentDiagnosisAnswerResponse`，最后调用 `buildFrontendResponse`。
 
-1. 校验用户身份。
-2. 读取会话状态。
-3. 校验本次回答是否属于当前会话和当前问题。
-4. 标记问题答案，推进 answer revision。
-5. 从会话中恢复上一轮植物上下文、视觉批次、已观察证据、症状模式状态、已问问题等。
-6. 再次调用 `runDiagnosisRound()`。
-7. 持久化新一轮运行时与会话状态。
-8. 返回下一题或最终结果。
+代码来源：`cloudfunctions/diagnose-http/handlers/diagnosis-handlers.js` 114-140。
 
-## 五、公开响应裁剪
+回答入口会做严格归属校验：必须有 `diagnosisSessionId`，必须加载 session，必须校验当前轮次、问题 key、option key 与题包 snapshot 或非 package 当前行归属。package answer submit 会作为当前题包轮次的终止提交状态传入诊断引擎；该入口不能被文档描述成“前端传什么答案都可进入 route 重算”。
 
-`buildFrontendDiagnosisResponse()` 把完整领域响应裁剪成前端稳定结构，保留会话轮次、是否需要追问、本轮问题、最终结果卡片、摘要卡片、建议步骤、避免事项、视觉批次追踪、视觉聚合摘要和输出资格摘要。
+## 5. 手动症状模式入口
 
-前端不应直接依赖完整领域对象中的私有字段，否则后端内部重构会拖累页面。
+`runQuestionStartDiagnosis` 的当前事实：
 
-## 六、SSE 流式输出
+1. `resolveManualSymptomMode` 从 `symptomClassKey` 解析固定手动症状模式，并校验可选 `symptomKey`。
+2. 若命中 `yellowing_mode`，固定用 `static-question-package-start.js` 构造模块级静态 4 题 `yellow_leaf` package；若命中枯萎/发蔫模式，构造 5 题 `wilting_droop` package，`sourceMode` 为 `manual_wilting_droop_route_package`。
+3. 默认路径通过 `persistRoundRuntime(..., { questionPackageSnapshotOnly: true })` 保存题包 snapshot；该静态路径不加载 prior repository、manual fast path 或 `diagnosis-engine`。
+4. 当前未配置固定题包的手动模式返回 501，不再把 start 主路径转入 `runDiagnosisRound`。
 
-`/stream/diagnose` 与旧 `/diagnose` 的流式模式使用 `createSseEmitter()`、`buildVisualProgressContent()`、`createVisualStreamBridge()`。流式输出只负责体验层进度反馈，最终业务结果仍以 `runDiagnosisRound()` 为准。
+代码来源：`cloudfunctions/diagnose-http/app/diagnosis-question-start-runner.js` 3-20、148-170、173-328；`cloudfunctions/diagnose-http/app/static-question-package-start.js` 82-119、159-233。
 
-## 七、review 与 answer 契约（本轮修复补充）
+## 6. 当前响应契约
 
-### `/diagnosis/review/detail`
+`buildFrontendDiagnosisResponse` 的关键逻辑：
 
-`handleDiagnosisReviewDetail()` 返回审计详情时，必须把可选片段的读取改为“超时/异常不拖垮主响应”模型：
+- 读取 `resolveResponseQuestions(publicResponse)`；该 helper 只接受 `publicResponse.questions`。
+- 通过 `getQuestionPackageByMode(mode)` 尝试构造固定 `questionPackage`。
+- 有题包时按 `questionPackage.questionCount` 保留 `questions`；无题包时默认只保留 1 题。
+- package 响应返回 `questions`、`questionPackage` 与 `uiHints`。
 
-1. 所有可选片段（如图片批次、图片摘要、规则摘要、路由决策快照、问题队列）按独立异步任务或容错路径读取。
-2. 任一片段超时或异常时，整体接口仍返回 HTTP 200，且附带：
-   - `partial: true`
-   - `degradedSections: [{ section, reason }]`
-3. 只要主链路 session 数据可读，`/diagnosis/review/detail` 不得返回 500；失败归因需写入函数日志。
-4. 前端展示层必须按 `partial` 与 `degradedSections` 进行降级展示，不能用单段异常阻断详情页。
+代码来源：`cloudfunctions/diagnose-http/app/frontend-response.js` 341-390；题包构造来源 `cloudfunctions/diagnose-http/app/question-package-response.js` 5-82。
 
-### `/diagnosis/review/list`
+## 7. 文档必须保留的接口差异
 
-`handleDiagnosisReviewList()` 主查询改为“列表专用紧凑输出”：
+| 入口 | 是否经过 presenter | 常规题数 | 固定题包 |
+|---|---:|---:|---|
+| `/diagnosis/start` | 是 | 1 | 不作为手动固定题包主入口 |
+| `/diagnosis/question/start` | 否，直接 `buildFrontendResponse` | 非 package 当前不转入 start 当前诊断 | 静态 package start 返回 active `questions`：黄叶 4 题，枯萎/发蔫 5 题 |
+| `/diagnosis/answer` | 是 | 1 | 整包提交后重算或进入专用 resolver；后端按 package snapshot ownership 校验 |
 
-1. 列表主响应默认返回 compact payload，包含列表行元信息与可读索引字段，不再返回完整 `coreSummary`、`routeDecisionSummary` 等重载字段。
-2. 图片二进制/大对象、深度路由摘要、过往快照大字段仅在 `/diagnosis/review/images` 或 detail 按需补齐。
-3. 列表侧必须支持 SQL fallback：超时或查询失败返回降级空列表时保持 200，并在 `degradedSections`/日志里记录原因，避免前端空白。
+## 8. 风险边界
 
-### `/diagnosis/review/images`
-
-审计页图片数据采用 lazy fetch，图片接口只返回图片级最小元数据和可用性标志；列表与详情不得依赖一次性 inline 重放图。
-
-### `/diagnosis/answer`
-
-`handleDiagnosisAnswer()` 的 answer-only / no-image 场景按以下约定执行：
-
-1. 增加 timing 指标（函数内和子链路耗时），用于监控 P50/P95。
-2. 命中 warm path 时启用 route fast path 与静态 route/outcome 缓存，避免重复做完整慢链路。
-3. `answer` 与 `queue` 持久化允许并行化，减少整体尾延迟，目标将无图追问路径控制在 1 秒以内。
+文档必须明确：黄叶 4 题包与枯萎/发蔫 5 题包已经是 `getQuestionPackageByMode(mode)` 驱动的固定 package 协议，响应、前端展示/提交、package snapshot 与归属校验均应允许包内全部题目。黄叶 4 题语义不因新增 `wilting_droop` 改变。非 package 当前路径仍按单题 package state-anchor 语义工作，不能把 package 规则外推到所有模式。

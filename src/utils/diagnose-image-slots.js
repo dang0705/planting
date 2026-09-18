@@ -1,15 +1,25 @@
+/* oxlint-disable no-magic-numbers */
+
 const PRIMARY_IMAGE_LIMIT = 3
-const FOLLOW_UP_IMAGE_LIMIT = 1
+const ADDITIONAL_IMAGE_LIMIT = 1
 const SLOT_IMAGE_LIMIT = 2
 
-const PRIMARY_SLOT_SEQUENCE = ['whole_plant', 'leaf', 'stem', 'root_crown', 'other']
-const FOLLOW_UP_SLOT_SEQUENCE = ['whole_plant', 'leaf', 'stem', 'root_crown', 'other']
+const PRIMARY_SLOT_SEQUENCE = ['whole_plant', 'leaf', 'stem', 'root_crown', 'soil', 'other']
+const ADDITIONAL_IMAGE_SLOT_SEQUENCE = [
+  'whole_plant',
+  'leaf',
+  'stem',
+  'root_crown',
+  'soil',
+  'other'
+]
 
 const ORGAN_SLOT_OPTIONS = [
   { value: 'leaf', label: '叶片图' },
   { value: 'stem', label: '茎部图' },
   { value: 'root', label: '根部图' },
   { value: 'root_crown', label: '根 / 根颈图' },
+  { value: 'soil', label: '盆土 / 盆面图' },
   { value: 'whole_plant', label: '全株图' },
   { value: 'flower', label: '花部图' },
   { value: 'fruit', label: '果部图' },
@@ -17,9 +27,9 @@ const ORGAN_SLOT_OPTIONS = [
   { value: 'unknown', label: '未指定' }
 ]
 
-const ORGAN_SLOT_LABEL_MAP = ORGAN_SLOT_OPTIONS.reduce((acc, item) => {
-  acc[item.value] = item.label
-  return acc
+const ORGAN_SLOT_LABEL_MAP = ORGAN_SLOT_OPTIONS.reduce((accumulator, item) => {
+  accumulator[item.value] = item.label
+  return accumulator
 }, {})
 
 const SLOT_HINT_TEXT_MAP = {
@@ -28,6 +38,7 @@ const SLOT_HINT_TEXT_MAP = {
   stem: '优先拍茎节、裂口、病斑或腐烂位置。',
   root: '优先拍根系颜色、腐烂与异常附着物。',
   root_crown: '优先拍根颈与盆土交界处的状态。',
+  soil: '优先拍土表、盆沿和茎与土接触的位置。',
   flower: '优先拍花部褪色、霉斑和畸形细节。',
   fruit: '优先拍果部斑点、皱缩和腐烂细节。',
   other: '难归类的局部异常可放在这里。'
@@ -36,32 +47,29 @@ const SLOT_HINT_TEXT_MAP = {
 function uniqueStrings(values = []) {
   return Array.from(
     new Set(
-      (Array.isArray(values) ? values : [])
-        .map(item => String(item || '').trim())
-        .filter(Boolean)
+      (Array.isArray(values) ? values : []).map(value => String(value || '').trim()).filter(Boolean)
     )
   )
 }
 
-function getOrganOptionLabel(value = '', fallback = '未指定') {
+export function getOrganOptionLabel(value = '', fallback = '未指定') {
   return ORGAN_SLOT_LABEL_MAP[String(value || '').trim()] || fallback
 }
 
-function normalizeSlotType(slotType = '', fallback = 'unknown') {
+export function normalizeSlotType(slotType = '', fallback = 'unknown') {
   const normalized = String(slotType || '').trim()
   return ORGAN_SLOT_LABEL_MAP[normalized] ? normalized : fallback
 }
 
-function getSlotHintText(slotType = 'other') {
-  const normalizedSlotType = normalizeSlotType(slotType, 'other')
-  return SLOT_HINT_TEXT_MAP[normalizedSlotType] || SLOT_HINT_TEXT_MAP.other
+export function getSlotHintText(slotType = 'other') {
+  return SLOT_HINT_TEXT_MAP[normalizeSlotType(slotType, 'other')] || SLOT_HINT_TEXT_MAP.other
 }
 
-function getSlotCapacity(totalLimit = PRIMARY_IMAGE_LIMIT) {
+export function getSlotCapacity(totalLimit = PRIMARY_IMAGE_LIMIT) {
   return Math.min(SLOT_IMAGE_LIMIT, Math.max(1, Number(totalLimit || 1)))
 }
 
-function getSlotFileCount(files = [], slotType = 'unknown') {
+export function getSlotFileCount(files = [], slotType = 'unknown') {
   const normalizedSlotType = normalizeSlotType(slotType, 'unknown')
   return (Array.isArray(files) ? files : []).filter(item => {
     const currentSlotType = normalizeSlotType(
@@ -72,7 +80,7 @@ function getSlotFileCount(files = [], slotType = 'unknown') {
   }).length
 }
 
-function buildSlotGroups(files = [], slotTypes = [], totalLimit = PRIMARY_IMAGE_LIMIT) {
+export function buildSlotGroups(files = [], slotTypes = [], totalLimit = PRIMARY_IMAGE_LIMIT) {
   const normalizedFiles = Array.isArray(files) ? files : []
   const totalCount = normalizedFiles.length
   const capacity = getSlotCapacity(totalLimit)
@@ -106,7 +114,7 @@ function buildSlotGroups(files = [], slotTypes = [], totalLimit = PRIMARY_IMAGE_
   })
 }
 
-function buildSlotMetadata(slotType = 'unknown', index = 0) {
+export function buildSlotMetadata(slotType = 'unknown', index = 0) {
   const normalizedSlotType = normalizeSlotType(slotType, 'unknown')
   const label = getOrganOptionLabel(normalizedSlotType, '图片')
 
@@ -118,31 +126,45 @@ function buildSlotMetadata(slotType = 'unknown', index = 0) {
   }
 }
 
-function inferFollowUpSlotTypeFromSuggestion(suggestion = '', fallback = 'whole_plant') {
+export function inferAdditionalImageSlotTypeFromSuggestion(
+  suggestion = '',
+  fallback = 'whole_plant'
+) {
   const normalized = String(suggestion || '').trim()
-  if (!normalized) {return fallback}
-  if (normalized.includes('根颈')) {return 'root_crown'}
-  if (normalized.includes('根')) {return 'root'}
-  if (normalized.includes('茎')) {return 'stem'}
-  if (normalized.includes('全株') || normalized.includes('整株')) {return 'whole_plant'}
-  if (normalized.includes('花')) {return 'flower'}
-  if (normalized.includes('果')) {return 'fruit'}
-  if (normalized.includes('叶')) {return 'leaf'}
+  if (!normalized) {
+    return fallback
+  }
+  if (normalized.includes('根颈')) {
+    return 'root_crown'
+  }
+  if (normalized.includes('根')) {
+    return 'root'
+  }
+  if (normalized.includes('盆土') || normalized.includes('土表') || normalized.includes('土壤')) {
+    return 'soil'
+  }
+  if (normalized.includes('茎')) {
+    return 'stem'
+  }
+  if (normalized.includes('全株') || normalized.includes('整株')) {
+    return 'whole_plant'
+  }
+  if (normalized.includes('花')) {
+    return 'flower'
+  }
+  if (normalized.includes('果')) {
+    return 'fruit'
+  }
+  if (normalized.includes('叶')) {
+    return 'leaf'
+  }
   return fallback
 }
 
 export {
   PRIMARY_IMAGE_LIMIT,
-  FOLLOW_UP_IMAGE_LIMIT,
+  ADDITIONAL_IMAGE_LIMIT,
   SLOT_IMAGE_LIMIT,
   PRIMARY_SLOT_SEQUENCE,
-  FOLLOW_UP_SLOT_SEQUENCE,
-  getOrganOptionLabel,
-  normalizeSlotType,
-  getSlotCapacity,
-  getSlotFileCount,
-  getSlotHintText,
-  buildSlotGroups,
-  buildSlotMetadata,
-  inferFollowUpSlotTypeFromSuggestion
+  ADDITIONAL_IMAGE_SLOT_SEQUENCE
 }

@@ -35,18 +35,18 @@ function buildLikelyManualOpenIdClause(alias = 'sessions') {
   return `${safeAlias}._openid REGEXP {{likelyMiniProgramOpenIdPattern}}`
 }
 
-function buildSafeJsonText(jsonExpr = '', jsonPath = '', fallback = '') {
+function buildSafeJsonText(jsonExpr = '', jsonPath = '', conservative = '') {
   const safePath = String(jsonPath || '').trim().replace(/'/g, "\\'")
-  const safeFallback = String(fallback || '').trim()
+  const safeConservative = String(conservative || '').trim()
 
-  return `CASE WHEN JSON_VALID(${jsonExpr}) THEN NULLIF(JSON_UNQUOTE(JSON_EXTRACT(${jsonExpr}, '${safePath}')), 'null') ELSE '${safeFallback}' END`
+  return `CASE WHEN JSON_VALID(${jsonExpr}) THEN NULLIF(JSON_UNQUOTE(JSON_EXTRACT(${jsonExpr}, '${safePath}')), 'null') ELSE '${safeConservative}' END`
 }
 
 const EMPTY_REVIEW_SUMMARY = Object.freeze({
   total: 0,
   manualCount: 0,
   batchCount: 0,
-  legacyCount: 0,
+  sessionCount: 0,
   finalizedCount: 0,
   pendingCount: 0,
   problematicCount: 0,
@@ -90,7 +90,7 @@ function buildReviewSourceEvidenceSql(alias = 'sessions') {
     WHEN ${reviewSourceSql} = 'manual' THEN 'platform_tagged'
     WHEN ${clientPlatformSql} IN (${miniProgramPlatforms}) THEN 'platform_tagged'
     WHEN ${likelyManualOpenIdClause} THEN 'openid_inferred_manual'
-    ELSE 'openid_inferred_legacy'
+    ELSE 'openid_inferred_session'
   END`
 }
 
@@ -206,10 +206,10 @@ function toSqlText(value, { nullable = false } = {}) {
   return `'${escapeSqlString(value)}'`
 }
 
-function toSqlNumber(value, fallback = 0) {
+function toSqlNumber(value, conservative = 0) {
   const normalized = Number(value)
   if (!Number.isFinite(normalized)) {
-    return String(fallback)
+    return String(conservative)
   }
   return String(normalized)
 }
@@ -292,7 +292,7 @@ function buildBatchDiagnosisReviewSelectLite({ batchWhereClause = '' } = {}) {
   `
 }
 
-function buildLegacyDiagnosisReviewSelectLite({ manualWhereClause = '' } = {}) {
+function buildSessionDiagnosisReviewSelectLite({ manualWhereClause = '' } = {}) {
   const humanManualSourceClause = buildHumanManualSourceClause('sessions')
   const manualPlatformGuardClause = buildManualPlatformGuardClause('sessions')
   const clientPlatformSql = buildClientPlatformSql('sessions')
@@ -307,9 +307,9 @@ function buildLegacyDiagnosisReviewSelectLite({ manualWhereClause = '' } = {}) {
       NULL AS latest_feedback_is_accurate,
       '' AS latest_feedback_note,
       NULL AS latest_feedback_created_at,
-      'legacy' AS review_source_type,
+      'session' AS review_source_type,
       ${clientPlatformSql} AS client_platform,
-      'openid_inferred_legacy' AS review_source_evidence,
+      'openid_inferred_session' AS review_source_evidence,
       '' AS batch_source,
       '' AS batch_sample_label,
       '' AS batch_sample_file_name,
@@ -356,12 +356,12 @@ function buildBatchDiagnosisReviewSummarySelect({ batchWhereClause = '' } = {}) 
   `
 }
 
-function buildLegacyDiagnosisReviewSummarySelect({ manualWhereClause = '' } = {}) {
+function buildSessionDiagnosisReviewSummarySelect({ manualWhereClause = '' } = {}) {
   const humanManualSourceClause = buildHumanManualSourceClause('sessions')
   const manualPlatformGuardClause = buildManualPlatformGuardClause('sessions')
 
   return `
-    SELECT sessions.outcome_type, 'legacy' AS source_type
+    SELECT sessions.outcome_type, 'session' AS source_type
     FROM ${table('diagnosis_sessions')} AS sessions
     ${manualWhereClause}
     ${manualWhereClause ? 'AND' : 'WHERE'} NOT EXISTS (
@@ -413,10 +413,10 @@ module.exports = {
   toSqlDateTime,
   buildManualDiagnosisReviewSelectLite,
   buildBatchDiagnosisReviewSelectLite,
-  buildLegacyDiagnosisReviewSelectLite,
+  buildSessionDiagnosisReviewSelectLite,
   buildManualDiagnosisReviewSummarySelect,
   buildBatchDiagnosisReviewSummarySelect,
-  buildLegacyDiagnosisReviewSummarySelect,
+  buildSessionDiagnosisReviewSummarySelect,
   buildInClause,
   buildCollatedInClause
 }

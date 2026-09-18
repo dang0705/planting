@@ -2,6 +2,7 @@
 
 const { safeJsonParse } = require('../../utils/stored-value')
 const { normalizeReviewLlmUsage, safeStringify } = require('./normalizers')
+const { normalizeUsage } = require('../../utils/cloudbase-ai-openai-contract')
 const {
   canonicalizeReviewSymptomCandidates,
   canonicalizeReviewVisualPayload
@@ -9,7 +10,16 @@ const {
 
 function normalizeVisualLlmAudit(row = {}) {
   const promptText = String(row.llm_prompt_text || '').trim()
-  const usage = normalizeReviewLlmUsage(safeJsonParse(row.llm_usage_json, null))
+  const rawUsage = safeJsonParse(row.llm_usage_json, null)
+  const reviewUsage = normalizeReviewLlmUsage(rawUsage)
+  const usageBreakdown = normalizeUsage(rawUsage?.rawUsage || rawUsage)
+  const usage = reviewUsage
+    ? {
+        ...reviewUsage,
+        reasoningTokens: usageBreakdown?.reasoningTokens ?? null,
+        visibleCompletionTokens: usageBreakdown?.visibleCompletionTokens ?? null
+      }
+    : usageBreakdown
   const promptDebugMeta = safeJsonParse(row.llm_prompt_debug_meta_json, null)
   const imageContext = safeJsonParse(row.llm_prompt_image_context_json, null)
   const promptLength = Number(row.llm_prompt_length || 0) || promptText.length || 0
@@ -19,18 +29,21 @@ function normalizeVisualLlmAudit(row = {}) {
   }
 
   return {
-    sourceModelProvider: String(row.llm_source_model_provider || row.source_model_provider || '').trim(),
+    sourceModelProvider: String(
+      row.llm_source_model_provider || row.source_model_provider || ''
+    ).trim(),
     sourceModelName: String(row.llm_source_model_name || row.source_model_name || '').trim(),
     promptVersion: String(row.llm_prompt_version || row.prompt_version || '').trim(),
     promptText,
     promptLength,
     promptPreview: String(row.llm_prompt_preview || '').trim(),
-    promptDebugMeta: promptDebugMeta && typeof promptDebugMeta === 'object' ? promptDebugMeta : null,
+    promptDebugMeta:
+      promptDebugMeta && typeof promptDebugMeta === 'object' ? promptDebugMeta : null,
     imageContext: imageContext && typeof imageContext === 'object' ? imageContext : null,
     usage,
     promptCacheStatus: usage?.promptCacheStatus || null,
     qwenCacheStatus: usage?.promptCacheStatus || null
-    }
+  }
 }
 
 function resolveLlmPromptAuditFromRawStructuredOutput(rawStructuredOutput = null) {
@@ -38,9 +51,12 @@ function resolveLlmPromptAuditFromRawStructuredOutput(rawStructuredOutput = null
     rawStructuredOutput && typeof rawStructuredOutput === 'object'
       ? rawStructuredOutput
       : safeJsonParse(rawStructuredOutput, null)
-  if (!parsed || typeof parsed !== 'object') {return null}
+  if (!parsed || typeof parsed !== 'object') {
+    return null
+  }
 
-  const prompt = parsed?.llm_prompt && typeof parsed.llm_prompt === 'object' ? parsed.llm_prompt : null
+  const prompt =
+    parsed?.llm_prompt && typeof parsed.llm_prompt === 'object' ? parsed.llm_prompt : null
   const usage = parsed?.llm_usage && typeof parsed.llm_usage === 'object' ? parsed.llm_usage : null
   const promptDebugMeta = parsed?.llm_prompt_debug_meta || prompt?.promptDebugMeta || null
   const imageContext = parsed?.llm_prompt_image_context || prompt?.imageContext || null
@@ -54,15 +70,11 @@ function resolveLlmPromptAuditFromRawStructuredOutput(rawStructuredOutput = null
         ? String(sourceModelProvider).trim()
         : '',
     sourceModelName:
-      sourceModelName && typeof sourceModelName === 'string'
-        ? String(sourceModelName).trim()
-        : '',
-    promptVersion:
-      typeof promptVersion === 'string' ? promptVersion.trim() : '',
+      sourceModelName && typeof sourceModelName === 'string' ? String(sourceModelName).trim() : '',
+    promptVersion: typeof promptVersion === 'string' ? promptVersion.trim() : '',
     promptText:
       prompt?.promptText && typeof prompt.promptText === 'string' ? prompt.promptText.trim() : '',
-    promptLength:
-      Number(prompt?.promptLength || 0) || 0,
+    promptLength: Number(prompt?.promptLength || 0) || 0,
     promptPreview:
       prompt?.promptPreview && typeof prompt.promptPreview === 'string'
         ? prompt.promptPreview.trim()
@@ -85,24 +97,16 @@ function normalizeReviewPromptColumns(row = {}, { promptAudit = null } = {}) {
   const llmPromptVersion = String(
     sourceRow.llm_prompt_version || sourceRow.prompt_version || audit?.promptVersion || ''
   ).trim()
-  const llmPromptText = String(
-    sourceRow.llm_prompt_text || audit?.promptText || ''
-  ).trim()
-  const llmPromptPreview = String(
-    sourceRow.llm_prompt_preview || audit?.promptPreview || ''
-  ).trim()
+  const llmPromptText = String(sourceRow.llm_prompt_text || audit?.promptText || '').trim()
+  const llmPromptPreview = String(sourceRow.llm_prompt_preview || audit?.promptPreview || '').trim()
   const promptLengthCandidate = Number(
-    sourceRow.llm_prompt_length ||
-      audit?.promptLength ||
-      llmPromptText.length ||
-      0
+    sourceRow.llm_prompt_length || audit?.promptLength || llmPromptText.length || 0
   )
-  const llmPromptDebugMetaJson = sourceRow.llm_prompt_debug_meta_json ??
-    safeStringify(audit?.promptDebugMeta)
-  const llmPromptImageContextJson = sourceRow.llm_prompt_image_context_json ??
-    safeStringify(audit?.imageContext)
-  const llmUsageJson = sourceRow.llm_usage_json ??
-    safeStringify(audit?.usage)
+  const llmPromptDebugMetaJson =
+    sourceRow.llm_prompt_debug_meta_json ?? safeStringify(audit?.promptDebugMeta)
+  const llmPromptImageContextJson =
+    sourceRow.llm_prompt_image_context_json ?? safeStringify(audit?.imageContext)
+  const llmUsageJson = sourceRow.llm_usage_json ?? safeStringify(audit?.usage)
 
   return {
     ...sourceRow,
@@ -145,7 +149,9 @@ function resolveReplayPreviewImage(row = {}) {
 }
 
 function redactLargeVisualValues(value, depth = 0) {
-  if (depth > 8) {return '[depth_omitted]'}
+  if (depth > 8) {
+    return '[depth_omitted]'
+  }
   if (typeof value === 'string') {
     if (/^data:image\//i.test(value)) {
       return '[data_image_omitted]'
@@ -180,9 +186,7 @@ function parseVisualRawStructuredPayload(row = {}) {
     return {}
   }
 
-  const wrappedTailPayload = tailPayload.startsWith('{')
-    ? tailPayload
-    : `{${tailPayload}`
+  const wrappedTailPayload = tailPayload.startsWith('{') ? tailPayload : `{${tailPayload}`
   return safeJsonParse(wrappedTailPayload, {}) || {}
 }
 
@@ -203,7 +207,9 @@ function mapVisualRawReviewRow(row = {}, displayNameMap = new Map()) {
     inputSlotOrder: Number(row.input_slot_order || 0),
     inputSlotLabel: String(row.input_slot_label || '').trim(),
     sourceModelProvider: String(row.source_model_provider || '').trim(),
-    sourceModelName: String(row.source_model_name || row.model_name || row.model_version || '').trim(),
+    sourceModelName: String(
+      row.source_model_name || row.model_name || row.model_version || ''
+    ).trim(),
     promptVersion: String(row.prompt_version || '').trim(),
     llmPromptAudit: normalizeVisualLlmAudit(normalizedRow),
     rawTextOutput: String(row.raw_text_output || '').slice(0, 6000),

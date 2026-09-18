@@ -1,0 +1,22 @@
+[
+  {
+    "id": "clickup.get_task",
+    "provider": "clickup",
+    "method": "GET",
+    "url": "https://api.clickup.com/api/v2/task/86exvt6fe",
+    "status": "success",
+    "inputSummary": "读取 ClickUp task 86exvt6fe",
+    "statusCode": 200,
+    "outputSummary": "{\"id\":\"86exvt6fe\",\"custom_id\":null,\"custom_item_id\":0,\"name\":\"实现枯萎/发蔫问诊 route 模式：多 outcomes + 高危 block 防呆\",\"text_content\":\"任务描述\\n背景\\n青花植已基本完成黄叶模式问诊，并沉淀出基于：\\n 植物属级养护数据 \\n 用户浇水频率 \\n 和风天气时光机过去 10 天温湿度 \\n 温湿度叠加浇水算法 \\n 可视化浇水行为诊断组件的水分行为判断能力。\\n下一步准备开发 枯萎 / 发蔫 问诊方向。\\n核心原则\\n1. 不做 ranking\\n本任务不得引入：\\n 权重排序 \\n 置信度排序 \\n 主因排序 \\n 最可能原因排序 \\n 特异性分数 \\n 复杂规则引擎 \\n2. route 命中即产出 outcome\\n每个题包答案都可以独立触发一个或多个可行动 outcomes。\\n最终结果是 outcome 集合，不是唯一诊断。\\n3. 高危 block 只做动作冲突防呆\\n枯萎 / 发蔫场景中，部分动作存在明显冲突。\\n例如：\\n补足浇水\\nvs\\n停浇查根\\n\\n因此需要一个极简 block 机制：\\n普通 route：只产出 outcome\\n高危 route：产出 outcome，并 block 冲突 action\\n\\n这不是 ranking，只是 safety guard。\\n推荐问诊结构\\nQ0：复用黄叶模式首题问题和前端组件 - CareBehaviorTimeline.vue\\n对应 outcomes：保持和黄叶模式一样\\n\\n\\nQ1：发蔫形态\\n问题：\\n你现在看到的状态更接近哪一种？\\n\\n选项与 outcomes：\\n\\n[table-embed:1:1 选项| 1:2 outcome| 2:1 整株软塌下垂| 2:2 全株水分压力："
+  },
+  {
+    "id": "clickup.get_task_comments",
+    "provider": "clickup",
+    "method": "GET",
+    "url": "https://api.clickup.com/api/v2/task/86exvt6fe/comment",
+    "status": "success",
+    "inputSummary": "读取 ClickUp task comments 86exvt6fe",
+    "statusCode": 200,
+    "outputSummary": "{\"comments\":[]}"
+  }
+]

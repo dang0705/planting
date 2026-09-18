@@ -3,16 +3,16 @@
 const {
   ROUTE_MODE,
   ROUTE_STATUS,
-  GATE_RESULT
+  CONDITION_RESULT
 } = require('../constants/outcome-route')
-const { evaluateOutcomeRouteGate } = require('./outcome-gate-evaluator')
+const { evaluateOutcomeRouteCondition } = require('./outcome-condition-evaluator')
 const {
-  buildFallbackDecision,
+  buildConservativeDecision,
   buildRouteDecisionCause,
   buildRouteEvidenceContext,
   collectVisualRouteSymptomKeys,
   dedupeKeys,
-  isGateContradictedByAnsweredSplit,
+  isConditionContradictedByAnsweredSplit,
   normalizeKey,
   sortCandidateStates
 } = require('./outcome-route-planner-helpers')
@@ -44,7 +44,6 @@ async function planOutcomeRoutes({
   routeRepository = null,
   maxVisibleOutcomes = 3,
   maxQuestionCount = 1,
-  canAskAnotherFollowUpRound = false,
   featureFlags = {}
 } = {}) {
   const effectiveRouteRepository = routeRepository || require('../repositories/outcome-route-repository')
@@ -56,17 +55,17 @@ async function planOutcomeRoutes({
     normalizedCandidateOutcomeKeys.map((outcomeKey, index) => [outcomeKey, index])
   )
   if (!normalizedCandidateOutcomeKeys.length) {
-    return buildFallbackDecision({
+    return buildConservativeDecision({
       candidateOutcomeKeys: [],
       candidateOutcomes: [],
-      decisionCauseKey: 'route_fallback_no_candidates',
+      decisionCauseKey: 'route_conservative_no_candidates',
       decisionCauseText: '缺少候选 outcome，转保守不确定输出'
     })
   }
 
   const routePlanningEnabled = featureFlags.routePlanningEnabled === true
   if (!routePlanningEnabled) {
-    return buildFallbackDecision({
+    return buildConservativeDecision({
       candidateOutcomeKeys: normalizedCandidateOutcomeKeys,
       candidateOutcomes: normalizedCandidateOutcomeKeys.map(problemKey => ({ problemKey })),
       decisionCauseKey: 'route_planning_disabled',
@@ -95,39 +94,38 @@ async function planOutcomeRoutes({
       : normalizedCandidateOutcomeKeys
     const routes = await effectiveRouteRepository.getOutcomeRoutesByOutcomeKeys(expandedCandidateOutcomeKeys)
     if (!routes.length) {
-      return buildFallbackDecision({
+      return buildConservativeDecision({
         candidateOutcomeKeys: expandedCandidateOutcomeKeys,
         candidateOutcomes: expandedCandidateOutcomeKeys.map(problemKey => ({ problemKey })),
-        decisionCauseKey: 'route_fallback_no_routes',
+        decisionCauseKey: 'route_conservative_no_routes',
         decisionCauseText: '未命中可用 route，转保守不确定输出'
       })
     }
 
     const routeKeys = dedupeKeys(routes.map(item => item.routeKey))
     const routeGroupKeys = dedupeKeys(routes.map(item => item.routeGroupKey))
-    const [gates, routeQuestions, routeGroups] = await Promise.all([
-      effectiveRouteRepository.getOutcomeRouteGates(routeKeys),
+    const [conditions, routeQuestions, routeGroups] = await Promise.all([
+      effectiveRouteRepository.getOutcomeRouteConditions(routeKeys),
       effectiveRouteRepository.getOutcomeRouteQuestions(routeKeys),
       routeGroupCandidates.length
         ? Promise.resolve(routeGroupCandidates.filter(item => routeGroupKeys.includes(normalizeKey(item.routeGroupKey))))
         : effectiveRouteRepository.getOutcomeRouteGroupsByKeys(routeGroupKeys)
     ])
 
-    const gateResults = gates.map(gate =>
-      evaluateOutcomeRouteGate({
-        gate,
-        routeEvidenceContext,
-        canAskAnotherFollowUpRound
+    const conditionResults = conditions.map(condition =>
+      evaluateOutcomeRouteCondition({
+        condition,
+        routeEvidenceContext
       })
     )
-    const gateResultsByRouteKey = new Map()
-    for (const gateResult of gateResults) {
-      const routeKey = normalizeKey(gateResult.routeKey)
+    const conditionResultsByRouteKey = new Map()
+    for (const conditionResult of conditionResults) {
+      const routeKey = normalizeKey(conditionResult.routeKey)
       if (!routeKey) {continue}
-      if (!gateResultsByRouteKey.has(routeKey)) {
-        gateResultsByRouteKey.set(routeKey, [])
+      if (!conditionResultsByRouteKey.has(routeKey)) {
+        conditionResultsByRouteKey.set(routeKey, [])
       }
-      gateResultsByRouteKey.get(routeKey).push(gateResult)
+      conditionResultsByRouteKey.get(routeKey).push(conditionResult)
     }
 
     const routeQuestionsByRouteKey = new Map()
@@ -154,52 +152,51 @@ async function planOutcomeRoutes({
     for (const outcomeKey of expandedCandidateOutcomeKeys) {
       const matchedRoutes = routes.filter(item => normalizeKey(item.outcomeKey) === outcomeKey)
       const matchedRouteKeys = dedupeKeys(matchedRoutes.map(item => item.routeKey))
-      const matchedGates = gates.filter(gate => matchedRouteKeys.includes(normalizeKey(gate.routeKey)))
-      const matchedGateResults = matchedRouteKeys.flatMap(routeKey => gateResultsByRouteKey.get(routeKey) || [])
-      const routeGateStates = matchedRouteKeys.map(routeKey => {
-        const routeGateResults = gateResultsByRouteKey.get(routeKey) || []
-        const routeGates = matchedGates.filter(gate => normalizeKey(gate.routeKey) === routeKey)
-        const hasContradictedSplit = routeGates.some(gate =>
-          isGateContradictedByAnsweredSplit(gate, routeEvidenceContext)
+      const matchedConditions = conditions.filter(condition => matchedRouteKeys.includes(normalizeKey(condition.routeKey)))
+      const matchedConditionResults = matchedRouteKeys.flatMap(routeKey => conditionResultsByRouteKey.get(routeKey) || [])
+      const routeConditionStates = matchedRouteKeys.map(routeKey => {
+        const routeConditionResults = conditionResultsByRouteKey.get(routeKey) || []
+        const routeConditions = matchedConditions.filter(condition => normalizeKey(condition.routeKey) === routeKey)
+        const hasContradictedSplit = routeConditions.some(condition =>
+          isConditionContradictedByAnsweredSplit(condition, routeEvidenceContext)
         )
         const hasRawBlocker =
           hasContradictedSplit ||
-          routeGateResults.some(item => item.result === GATE_RESULT.BLOCK)
-        const hasPass = routeGateResults.some(item => item.result === GATE_RESULT.PASS)
+          routeConditionResults.some(item => item.result === CONDITION_RESULT.BLOCK)
+        const hasPass = routeConditionResults.some(item => item.result === CONDITION_RESULT.PASS)
         return {
           routeKey,
           hasRawBlocker,
           hasPass
         }
       })
-      const passedRouteKeys = routeGateStates
+      const passedRouteKeys = routeConditionStates
         .filter(item => item.hasPass && !item.hasRawBlocker)
         .map(item => item.routeKey)
-      const hasRawBlocker = routeGateStates.some(item => item.hasRawBlocker)
+      const hasRawBlocker = routeConditionStates.some(item => item.hasRawBlocker)
       const hasPass = passedRouteKeys.length > 0
       const hasBlocker = hasRawBlocker && !hasPass
-      const hasNeedMoreInfo = matchedGateResults.some(item => item.result === GATE_RESULT.NEED_MORE_INFO)
-      const missingGateKeys = dedupeKeys(
-        matchedGateResults
-          .filter(item => item.result === GATE_RESULT.NEED_MORE_INFO || item.result === GATE_RESULT.FAIL)
-          .map(item => item.gateKey)
+      const missingConditionKeys = dedupeKeys(
+        matchedConditionResults
+          .filter(item => item.result === CONDITION_RESULT.FAIL)
+          .map(item => item.conditionKey)
       )
       const candidateQuestions = matchedRouteKeys.flatMap(routeKey => {
         const routeQuestionRows = routeQuestionsByRouteKey.get(routeKey) || []
         const relevantRows = routeQuestionRows.filter(item => {
-          const gateKey = normalizeKey(item.gateKey)
-          return !gateKey || missingGateKeys.includes(gateKey)
+          const conditionKey = normalizeKey(item.conditionKey)
+          return !conditionKey || missingConditionKeys.includes(conditionKey)
         })
         const rowsToUse = relevantRows.length ? relevantRows : routeQuestionRows
         return rowsToUse.map(item => ({
           questionKey: normalizeKey(item.questionKey),
-          targetDimension: normalizeKey(item.targetDimension || item.target_dimension),
+          packageTopic: normalizeKey(item.packageTopic || item.package_topic),
           targetSymptomKey: normalizeKey(item.targetSymptomKey || item.target_symptom_key),
           questionTextUserCn: normalizeKey(item.questionTextUserCn || item.question_text_user_cn),
           routeKey,
-          gateKey: normalizeKey(item.gateKey),
+          conditionKey: normalizeKey(item.conditionKey),
           outcomeKey,
-          questionRole: normalizeKey(item.questionRole),
+          routePackageRole: normalizeKey(item.routePackageRole),
           askPriority: Number(item.askPriority || 0),
           stepNo: Number(item.stepNo || 0),
           requiredForClosure: Boolean(item.requiredForClosure)
@@ -211,17 +208,15 @@ async function planOutcomeRoutes({
         )
       })
 
-      if (hasNeedMoreInfo && !hasBlocker) {
+      if (missingConditionKeys.length && !hasBlocker) {
         nextQuestionCandidates.push(...candidateQuestions)
       }
 
       const state = hasBlocker
         ? ROUTE_STATUS.BLOCKED
-        : hasNeedMoreInfo
-          ? ROUTE_STATUS.NEEDS_QUESTION
-          : hasPass
-            ? ROUTE_STATUS.DISPLAY_ELIGIBLE
-            : ROUTE_STATUS.CANDIDATE
+        : hasPass
+          ? ROUTE_STATUS.DISPLAY_ELIGIBLE
+          : ROUTE_STATUS.CANDIDATE
 
       if (hasBlocker) {
         blockedOutcomeKeys.push(outcomeKey)
@@ -256,28 +251,28 @@ async function planOutcomeRoutes({
         outcomeKey,
         state,
         routeKeys: matchedRouteKeys,
-        missingGateKeys,
-        nextQuestionKeys: dedupeKeys(candidateQuestions.map(item => item.questionKey))
+        missingConditionKeys,
+        questionEvidenceKeys: dedupeKeys(candidateQuestions.map(item => item.questionKey))
       })
 
       routeTrace.push({
         outcomeKey,
         routeKeys: matchedRouteKeys,
-        gateResults: matchedGateResults.map(item => ({
-          gateKey: item.gateKey,
-          gateRole: item.gateRole,
+        conditionResults: matchedConditionResults.map(item => ({
+          conditionKey: item.conditionKey,
+          conditionRole: item.conditionRole,
           result: item.result
         }))
       })
     }
 
-    for (const gate of gates) {
-      const conflictOutcomeKeys = dedupeKeys(gate.conflictOutcomeKeys)
+    for (const condition of conditions) {
+      const conflictOutcomeKeys = dedupeKeys(condition.conflictOutcomeKeys)
       if (conflictOutcomeKeys.length < 2) {continue}
       conflictingOutcomePairs.push(conflictOutcomeKeys.slice(0, 2))
     }
 
-    const nextQuestions = nextQuestionCandidates
+    const rankedQuestionEvidence = nextQuestionCandidates
       .sort((a, b) => {
         const priorityA = Number(a.askPriority || 0)
         const priorityB = Number(b.askPriority || 0)
@@ -297,10 +292,6 @@ async function planOutcomeRoutes({
         index === list.findIndex(candidate => candidate.questionKey === item.questionKey)
       )
       .slice(0, Math.max(0, Number(maxQuestionCount || 1)))
-    const nextQuestionKeys = dedupeKeys(nextQuestions.map(item => item.questionKey)).slice(
-      0,
-      Math.max(0, Number(maxQuestionCount || 1))
-    )
     const sortedStates = sortCandidateStates(candidateOutcomeStates, candidateOutcomeOrderMap)
     const sortedVisibleOutcomeKeys = dedupeKeys(visibleOutcomeKeys).sort((a, b) => {
       const orderA = Number(candidateOutcomeOrderMap.get(a) ?? Number.MAX_SAFE_INTEGER)
@@ -324,12 +315,7 @@ async function planOutcomeRoutes({
       .filter(Boolean)
     const hasActionConflict = dedupeKeys(limitedActionConflictGroups).length > 1
     const limitedVisibleOutcomeCount = limitedVisibleOutcomeKeys.length
-    const hasRequiredNextQuestion = nextQuestions.some(item => Boolean(item?.requiredForClosure))
-    const requiresFollowUp = Boolean(
-      canAskAnotherFollowUpRound &&
-      nextQuestionKeys.length &&
-      (hasRequiredNextQuestion || limitedVisibleOutcomeCount < 1 || hasActionConflict)
-    )
+    const requiresQuestion = false
 
     const activeRouteGroupKeys = dedupeKeys(
       routes
@@ -342,10 +328,10 @@ async function planOutcomeRoutes({
       candidateOutcomeStates: sortedStates,
       activeRouteGroupKeys,
       visibleOutcomeKeys: limitedVisibleOutcomeKeys,
-      requiresFollowUp,
-      nextQuestionKeys: requiresFollowUp ? nextQuestionKeys : [],
-      nextQuestions: requiresFollowUp ? nextQuestions : [],
-      gateResults,
+      requiresQuestion,
+      nextQuestions: [],
+      questionEvidenceKeys: dedupeKeys(rankedQuestionEvidence.map(item => item.questionKey)),
+      conditionResults,
       blockedOutcomeKeys: dedupeKeys(blockedOutcomeKeys),
       conflictingOutcomePairs: dedupeKeys(conflictingOutcomePairs.map(item => item.join('::')))
         .map(item => item.split('::'))
@@ -356,7 +342,7 @@ async function planOutcomeRoutes({
       ),
       visibleActionConflictGroups: dedupeKeys(limitedActionConflictGroups),
       routeTrace,
-      fallbackPolicy: '',
+      conservativePolicy: '',
       decisionCause: buildRouteDecisionCause({
         decisionCauseKey: hasActionConflict
           ? 'route_action_conflict_unresolved'
@@ -365,16 +351,14 @@ async function planOutcomeRoutes({
             : 'route_visible_outcomes_ready',
         decisionCauseText: hasActionConflict
           ? (
-              requiresFollowUp
-                ? '候选方向的行动建议存在冲突，先继续追问分流。'
-                : '候选方向的行动建议存在冲突，当前改为不确定并给出保守建议。'
+              '候选方向的行动建议存在冲突，当前改为不确定并给出保守建议。'
             )
           : limitedVisibleOutcomeCount < 1
-            ? '当前未命中可展示候选 outcome，需继续追问以收窄范围。'
+            ? '当前未命中可展示候选 outcome，按保守不确定输出。'
             : 'route 已形成可展示 outcome。',
         details: {
           routeCount: routes.length,
-          gateCount: gates.length,
+          conditionCount: conditions.length,
           routeGroupCount: activeRouteGroupKeys.length,
           actionConflictGroups: dedupeKeys(limitedActionConflictGroups),
           symptomMatchedRouteGroupKeys: dedupeKeys(
@@ -390,10 +374,10 @@ async function planOutcomeRoutes({
       message: String(error?.message || error || ''),
       stack: String(error?.stack || '')
     })
-    return buildFallbackDecision({
+    return buildConservativeDecision({
       candidateOutcomeKeys: normalizedCandidateOutcomeKeys,
       candidateOutcomes: normalizedCandidateOutcomeKeys.map(problemKey => ({ problemKey })),
-      decisionCauseKey: 'route_query_error_fallback',
+      decisionCauseKey: 'route_query_error_conservative',
       decisionCauseText: 'route 查询失败，转保守不确定输出'
     })
   }

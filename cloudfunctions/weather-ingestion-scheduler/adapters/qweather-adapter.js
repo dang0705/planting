@@ -1,0 +1,260 @@
+'use strict'
+
+const axios = require('axios')
+const { normalizeQWeatherLocation } = require('../services/weather-cache-paths.js')
+
+const DEFAULT_QWEATHER_BASE_URL = 'https://n773jqqeap.re.qweatherapi.com'
+const LOCATION_ID_CACHE = new Map()
+
+function normalizeBaseUrl(value = '') {
+  return String(value || DEFAULT_QWEATHER_BASE_URL).replace(/\/+$/, '')
+}
+
+function toNumber(value) {
+  if (value === null || value === undefined || value === '') {
+    return undefined
+  }
+  const number = Number(value)
+  return Number.isFinite(number) ? number : undefined
+}
+
+function toDate8(value = '') {
+  return String(value || '')
+    .replace(/-/g, '')
+    .slice(0, 8)
+}
+
+function normalizeLocation({ lat, lng } = {}) {
+  return normalizeQWeatherLocation({ lat, lng })
+}
+
+function formatQWeatherError(error, path) {
+  if (error.response) {
+    const status = error.response.status
+    const code = error.response.data && error.response.data.code
+    const details = [code ? `code=${code}` : null, `status=${status}`].filter(Boolean).join(' ')
+    return `和风天气API错误: ${details} path=${path}`
+  }
+  if (error.message) {
+    return `和风天气API错误: ${error.message}`
+  }
+  return '和风天气API错误'
+}
+
+function pruneUndefined(payload = {}) {
+  return Object.fromEntries(
+    Object.entries(payload).filter(([, value]) => value !== undefined && value !== '')
+  )
+}
+
+function normalizeForecastDaily(record = {}, source = 'qweather_forecast_15d') {
+  return pruneUndefined({
+    date: record.fxDate || record.date,
+    tempMaxC: toNumber(record.tempMax),
+    tempMinC: toNumber(record.tempMin),
+    humidity: toNumber(record.humidity),
+    precipMm: toNumber(record.precip),
+    pressure: toNumber(record.pressure),
+    visibilityKm: toNumber(record.vis),
+    cloud: toNumber(record.cloud),
+    uvIndex: toNumber(record.uvIndex),
+    iconDay: record.iconDay || '',
+    textDay: record.textDay || '',
+    iconNight: record.iconNight || '',
+    textNight: record.textNight || '',
+    wind360Day: toNumber(record.wind360Day),
+    windDirDay: record.windDirDay || '',
+    windScaleDay: record.windScaleDay || '',
+    windSpeedDay: toNumber(record.windSpeedDay),
+    wind360Night: toNumber(record.wind360Night),
+    windDirNight: record.windDirNight || '',
+    windScaleNight: record.windScaleNight || '',
+    windSpeedNight: toNumber(record.windSpeedNight),
+    source
+  })
+}
+
+function normalizeHistoricalDaily(record = {}, date = '') {
+  return pruneUndefined({
+    date: record.date || date,
+    tempMaxC: toNumber(record.tempMax),
+    tempMinC: toNumber(record.tempMin),
+    humidity: toNumber(record.humidity),
+    precipMm: toNumber(record.precip),
+    textDay: record.textDay || record.text || '',
+    textNight: record.textNight || '',
+    source: 'qweather_historical_weather'
+  })
+}
+
+function normalizeCurrentWeather(data = {}, source = 'qweather_weather_now') {
+  const now = data.now || data
+  return pruneUndefined({
+    tempC: toNumber(now.temp),
+    feelsLikeC: toNumber(now.feelsLike),
+    icon: now.icon || '',
+    text: now.text || '',
+    wind360: toNumber(now.wind360),
+    windDir: now.windDir || '',
+    windScale: now.windScale || '',
+    windSpeed: toNumber(now.windSpeed),
+    humidity: toNumber(now.humidity),
+    precipMm: toNumber(now.precip),
+    pressure: toNumber(now.pressure),
+    visibilityKm: toNumber(now.vis),
+    cloud: toNumber(now.cloud),
+    dew: toNumber(now.dew),
+    obsTime: now.obsTime || '',
+    source
+  })
+}
+
+function normalizeHourlyWeather(record = {}) {
+  return pruneUndefined({
+    fxTime: record.fxTime || record.time || '',
+    temp: toNumber(record.temp),
+    icon: record.icon || '',
+    text: record.text || '',
+    wind360: toNumber(record.wind360),
+    windDir: record.windDir || '',
+    windScale: record.windScale || '',
+    windSpeed: toNumber(record.windSpeed),
+    humidity: toNumber(record.humidity),
+    precip: toNumber(record.precip),
+    pop: toNumber(record.pop),
+    pressure: toNumber(record.pressure),
+    cloud: toNumber(record.cloud),
+    dew: toNumber(record.dew),
+    source: 'qweather_weather_24h'
+  })
+}
+
+function createQWeatherAdapter({
+  apiKey = '',
+  baseUrl = DEFAULT_QWEATHER_BASE_URL,
+  timeout = 10000,
+  httpClient = axios
+} = {}) {
+  const normalizedBaseUrl = normalizeBaseUrl(baseUrl)
+
+  async function request(path, params = {}) {
+    if (!apiKey) {
+      throw new Error('缺少环境变量 QWEATHER_API_KEY')
+    }
+    let response
+    try {
+      response = await httpClient.get(`${normalizedBaseUrl}${path}`, {
+        timeout,
+        params: {
+          ...params,
+          key: apiKey
+        },
+        headers: {
+          'Accept-Encoding': 'gzip, deflate',
+          'User-Agent': 'CloudBase-Weather/1.0'
+        }
+      })
+    } catch (error) {
+      throw new Error(formatQWeatherError(error, path))
+    }
+
+    const data = response.data || {}
+    if (data.code && data.code !== '200') {
+      throw new Error(`和风天气API错误: code=${data.code} status=${response.status} path=${path}`)
+    }
+    return data
+  }
+
+  async function resolveLocationId(location) {
+    const cacheKey = normalizeLocation(location)
+    if (LOCATION_ID_CACHE.has(cacheKey)) {
+      return LOCATION_ID_CACHE.get(cacheKey)
+    }
+
+    const lookupPromise = (async () => {
+      const data = await request('/geo/v2/city/lookup', {
+        location: cacheKey
+      })
+      const locationId =
+        data && Array.isArray(data.location) && data.location[0] && data.location[0].id
+      if (!locationId) {
+        throw new Error(
+          `和风天气历史定位失败: code=${data.code || 'UNKNOWN'} status=200 path=/geo/v2/city/lookup`
+        )
+      }
+      return String(locationId)
+    })()
+
+    LOCATION_ID_CACHE.set(cacheKey, lookupPromise)
+
+    lookupPromise.catch(() => {
+      LOCATION_ID_CACHE.delete(cacheKey)
+    })
+
+    return lookupPromise
+  }
+
+  return {
+    async fetchCurrentWeather({ lat, lng }) {
+      return normalizeCurrentWeather(
+        await request('/v7/weather/now', {
+          location: normalizeLocation({ lat, lng })
+        })
+      )
+    },
+
+    async fetchGridWeatherNow({ lat, lng }) {
+      return normalizeCurrentWeather(
+        await request('/v7/grid-weather/now', {
+          location: normalizeLocation({ lat, lng })
+        }),
+        'qweather_grid_weather_now'
+      )
+    },
+
+    async fetchForecast15d({ lat, lng }) {
+      const data = await request('/v7/weather/15d', {
+        location: normalizeLocation({ lat, lng })
+      })
+      return (Array.isArray(data.daily) ? data.daily : []).map(normalizeForecastDaily)
+    },
+
+    async fetchForecast10d({ locationId, lat, lng }) {
+      const location = String(locationId || '').trim() || normalizeLocation({ lat, lng })
+      const data = await request('/v7/weather/10d', { location })
+      return {
+        raw: data,
+        daily: (Array.isArray(data.daily) ? data.daily : []).map(record =>
+          normalizeForecastDaily(record, 'qweather_forecast_10d')
+        )
+      }
+    },
+
+    async fetchWeather24h({ locationId, lat, lng }) {
+      const location = String(locationId || '').trim() || normalizeLocation({ lat, lng })
+      const data = await request('/v7/weather/24h', { location })
+      return {
+        raw: data,
+        hourly: (Array.isArray(data.hourly) ? data.hourly : []).map(normalizeHourlyWeather)
+      }
+    },
+
+    async fetchHistoricalWeather({ locationId, lat, lng, date }) {
+      const resolvedLocationId =
+        String(locationId || '').trim() || (await resolveLocationId({ lat, lng }))
+      const data = await request('/v7/historical/weather', {
+        location: resolvedLocationId,
+        date: toDate8(date)
+      })
+      return normalizeHistoricalDaily(data.weatherDaily || data.daily || {}, date)
+    }
+  }
+}
+
+module.exports = {
+  createQWeatherAdapter,
+  normalizeForecastDaily,
+  normalizeHistoricalDaily,
+  normalizeHourlyWeather,
+  normalizeCurrentWeather
+}

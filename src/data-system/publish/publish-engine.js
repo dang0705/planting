@@ -7,8 +7,10 @@ const {
   withTransaction,
   tableName,
   quoteIdentifier,
-  listTableColumns
+  listTableColumns,
+  listTableColumnMetadata
 } = require('../db/mysql')
+const { normalizeDateMetadataPayload, normalizeDateForColumn } = require('../db/metadata-values')
 const { parseRecordKey, buildWhereByRecordKey } = require('../diff/diff-engine')
 
 function parseJsonPayload(value, fallback = null) {
@@ -66,7 +68,8 @@ function buildUpsertStatement(schema, table, row = {}, keyColumns = []) {
 }
 
 async function writePublishBatch(connection, { batchId, versionTag, status, summary = null, rollbackOfBatchId = null }) {
-  const columns = await listTableColumns(connection, DEV_SCHEMA, 'publish_batches').catch(() => [])
+  const columnMetadata = await listTableColumnMetadata(connection, DEV_SCHEMA, 'publish_batches').catch(() => ({}))
+  const columns = Object.keys(columnMetadata)
   if (!columns.length) {return}
 
   const payload = {}
@@ -75,8 +78,12 @@ async function writePublishBatch(connection, { batchId, versionTag, status, summ
   if (columns.includes('source_batch_id')) {payload.source_batch_id = batchId}
   if (columns.includes('status')) {payload.status = status}
   if (columns.includes('summary_json')) {payload.summary_json = summary ? JSON.stringify(summary) : null}
-  if (columns.includes('created_at')) {payload.created_at = new Date()}
-  if (columns.includes('published_at') && status === 'published') {payload.published_at = new Date()}
+  if (columns.includes('created_at')) {
+    payload.created_at = normalizeDateForColumn(new Date(), columnMetadata.created_at)
+  }
+  if (columns.includes('published_at') && status === 'published') {
+    payload.published_at = normalizeDateForColumn(new Date(), columnMetadata.published_at)
+  }
   if (columns.includes('rollback_of_batch_id')) {payload.rollback_of_batch_id = rollbackOfBatchId}
 
   const payloadColumns = Object.keys(payload)
@@ -186,7 +193,8 @@ async function runPublishEngine({ batchId, versionTag = null, allowPending = fal
         continue
       }
 
-      const prodColumns = await listTableColumns(connection, PROD_SCHEMA, table).catch(() => [])
+      const prodColumnMetadata = await listTableColumnMetadata(connection, PROD_SCHEMA, table).catch(() => ({}))
+      const prodColumns = Object.keys(prodColumnMetadata)
       if (!prodColumns.length) {
         summary.skipped += 1
         continue
@@ -202,7 +210,7 @@ async function runPublishEngine({ batchId, versionTag = null, allowPending = fal
           const params = []
           if (prodColumnSet.has('updated_at')) {
             setClauses.push('updated_at = ?')
-            params.push(new Date())
+            params.push(normalizeDateForColumn(new Date(), prodColumnMetadata.updated_at))
           }
           await connection.query(
             `
@@ -235,12 +243,13 @@ async function runPublishEngine({ batchId, versionTag = null, allowPending = fal
         if (column === 'id') {continue}
         payload[column] = devRow[column]
       }
+      Object.assign(payload, normalizeDateMetadataPayload(payload, prodColumnMetadata))
       for (const jsonColumn of tableConfig.jsonColumns || []) {
         if (!Object.prototype.hasOwnProperty.call(payload, jsonColumn)) {continue}
         payload[jsonColumn] = normalizeJsonColumnValue(payload[jsonColumn])
       }
       if (prodColumnSet.has('updated_at')) {
-        payload.updated_at = new Date()
+        payload.updated_at = normalizeDateForColumn(new Date(), prodColumnMetadata.updated_at)
       }
       if (prodColumnSet.has('version_tag') && versionTag) {
         payload.version_tag = versionTag
@@ -249,7 +258,7 @@ async function runPublishEngine({ batchId, versionTag = null, allowPending = fal
         payload.published_batch_id = batchId
       }
       if (prodColumnSet.has('published_at')) {
-        payload.published_at = new Date()
+        payload.published_at = normalizeDateForColumn(new Date(), prodColumnMetadata.published_at)
       }
 
       const upsert = buildUpsertStatement(PROD_SCHEMA, table, payload, tableConfig.keys)

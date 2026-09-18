@@ -1,0 +1,8 @@
+#!/bin/sh
+
+exec /var/lang/node18/bin/node --require=./bootstrap-preload.js node_modules/@cloudbase/functions-framework/bin/tcb-ff.js \
+  --port=9000 \
+  --logDirname=/tmp/logs \
+  --interceptOutput=false \
+  --extendedContextKey=X-Cloudbase-Context \
+  --functionsConfigFile=cloudbase-functions.json

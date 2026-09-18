@@ -338,12 +338,12 @@ function normalizeClassRows(rows = []) {
       question_mode: row.question_mode || row.questionMode || '',
       class_level: row.class_level || row.classLevel || 'mode',
       parent_class_key: row.parent_class_key || row.parentClassKey || '',
-      followup_enabled_v1: sqlBoolean(row.followup_enabled_v1 || row.followupEnabledV1),
+      question_enabled_v1: sqlBoolean(row.question_enabled_v1 || row.questionEnabledV1),
       data_status: row.data_status || row.dataStatus || 'unknown',
       data_source: row.data_source || row.dataSource || '',
       audit_note: row.audit_note || row.auditNote || '',
-      followup_mode_v1: row.followup_mode_v1 || row.followupModeV1 || 'disabled',
-      runtime_gate_rule: row.runtime_gate_rule || row.runtimeGateRule || '',
+      question_mode_v1: row.question_mode_v1 || row.questionModeV1 || 'disabled',
+      runtime_condition_rule: row.runtime_condition_rule || row.runtimeConditionRule || '',
       runtime_notes: row.runtime_notes || row.runtimeNotes || ''
     }))
     .filter(item => item.class_key)
@@ -362,11 +362,11 @@ function normalizeMappingRows(rows = []) {
       visual_scoring_allowed: sqlBoolean(row.visual_scoring_allowed || row.visualScoringAllowed),
       question_activation_allowed: sqlBoolean(row.question_activation_allowed || row.questionActivationAllowed),
       explanation_only_allowed: sqlBoolean(row.explanation_only_allowed || row.explanationOnlyAllowed),
-      followup_enabled_v1: sqlBoolean(row.followup_enabled_v1 || row.followupEnabledV1),
+      question_enabled_v1: sqlBoolean(row.question_enabled_v1 || row.questionEnabledV1),
       data_status: row.data_status || row.dataStatus || 'unknown',
       data_source: row.data_source || row.dataSource || '',
       audit_note: row.audit_note || row.auditNote || '',
-      followup_mode_v1: row.followup_mode_v1 || row.followupModeV1 || 'disabled',
+      question_mode_v1: row.question_mode_v1 || row.questionModeV1 || 'disabled',
       explanation_only_semantic: row.explanation_only_semantic || row.explanationOnlySemantic || '',
       effective_question_activation_v1: sqlBoolean(row.effective_question_activation_v1 || row.effectiveQuestionActivationV1),
       runtime_policy: row.runtime_policy || row.runtimePolicy || '',
@@ -388,7 +388,7 @@ function normalizeStrategyRows(rows = []) {
       allow_when_ai_locked: sqlBoolean(row.allow_when_ai_locked || row.allowWhenAiLocked),
       max_questions_per_round: sqlNumber(row.max_questions_per_round || row.maxQuestionsPerRound, 1),
       activation_condition: row.activation_condition || row.activationCondition || '',
-      class_gate_type: row.class_gate_type || row.classGateType || '',
+      class_condition_type: row.class_condition_type || row.classConditionType || '',
       class_switch_allowed: sqlBoolean(row.class_switch_allowed || row.classSwitchAllowed),
       unknown_switch_policy: row.unknown_switch_policy || row.unknownSwitchPolicy || '',
       ai_locked_confirm_penalty: sqlNumber(row.ai_locked_confirm_penalty || row.aiLockedConfirmPenalty, 0),
@@ -396,7 +396,7 @@ function normalizeStrategyRows(rows = []) {
       data_status: row.data_status || row.dataStatus || 'unknown',
       data_source: row.data_source || row.dataSource || '',
       audit_note: row.audit_note || row.auditNote || '',
-      followup_mode_v1: row.followup_mode_v1 || row.followupModeV1 || 'disabled',
+      question_mode_v1: row.question_mode_v1 || row.questionModeV1 || 'disabled',
       class_level_allows_runtime_v1: sqlBoolean(row.class_level_allows_runtime_v1 || row.classLevelAllowsRuntimeV1),
       group_runtime_eligibility_rule: row.group_runtime_eligibility_rule || row.groupRuntimeEligibilityRule || '',
       asset_validation_required: sqlBoolean(row.asset_validation_required || row.assetValidationRequired),
@@ -546,12 +546,12 @@ async function syncData() {
     'question_mode',
     'class_level',
     'parent_class_key',
-    'followup_enabled_v1',
+    'question_enabled_v1',
     'data_status',
     'data_source',
     'audit_note',
-    'followup_mode_v1',
-    'runtime_gate_rule',
+    'question_mode_v1',
+    'runtime_condition_rule',
     'runtime_notes'
   ]
 
@@ -566,11 +566,11 @@ async function syncData() {
     'visual_scoring_allowed',
     'question_activation_allowed',
     'explanation_only_allowed',
-    'followup_enabled_v1',
+    'question_enabled_v1',
     'data_status',
     'data_source',
     'audit_note',
-    'followup_mode_v1',
+    'question_mode_v1',
     'explanation_only_semantic',
     'effective_question_activation_v1',
     'runtime_policy',
@@ -588,7 +588,7 @@ async function syncData() {
     'allow_when_ai_locked',
     'max_questions_per_round',
     'activation_condition',
-    'class_gate_type',
+    'class_condition_type',
     'class_switch_allowed',
     'unknown_switch_policy',
     'ai_locked_confirm_penalty',
@@ -596,7 +596,7 @@ async function syncData() {
     'data_status',
     'data_source',
     'audit_note',
-    'followup_mode_v1',
+    'question_mode_v1',
     'class_level_allows_runtime_v1',
     'group_runtime_eligibility_rule',
     'asset_validation_required',
@@ -622,12 +622,12 @@ async function syncData() {
       mapped.question_mode = sqlString(mapped.question_mode)
       mapped.class_level = sqlString(mapped.class_level)
       mapped.parent_class_key = mapped.parent_class_key ? sqlString(mapped.parent_class_key) : 'NULL'
-      mapped.followup_enabled_v1 = mapped.followup_enabled_v1
+      mapped.question_enabled_v1 = mapped.question_enabled_v1
       mapped.data_status = sqlString(mapped.data_status)
       mapped.data_source = mapped.data_source ? sqlString(mapped.data_source) : 'NULL'
       mapped.audit_note = mapped.audit_note ? sqlString(mapped.audit_note) : 'NULL'
-      mapped.followup_mode_v1 = sqlString(mapped.followup_mode_v1)
-      mapped.runtime_gate_rule = mapped.runtime_gate_rule ? sqlString(mapped.runtime_gate_rule) : 'NULL'
+      mapped.question_mode_v1 = sqlString(mapped.question_mode_v1)
+      mapped.runtime_condition_rule = mapped.runtime_condition_rule ? sqlString(mapped.runtime_condition_rule) : 'NULL'
       mapped.runtime_notes = mapped.runtime_notes ? sqlString(mapped.runtime_notes) : 'NULL'
       return mapped
     }),
@@ -652,11 +652,11 @@ async function syncData() {
       mapped.visual_scoring_allowed = mapped.visual_scoring_allowed
       mapped.question_activation_allowed = mapped.question_activation_allowed
       mapped.explanation_only_allowed = mapped.explanation_only_allowed
-      mapped.followup_enabled_v1 = mapped.followup_enabled_v1
+      mapped.question_enabled_v1 = mapped.question_enabled_v1
       mapped.data_status = sqlString(mapped.data_status)
       mapped.data_source = mapped.data_source ? sqlString(mapped.data_source) : 'NULL'
       mapped.audit_note = mapped.audit_note ? sqlString(mapped.audit_note) : 'NULL'
-      mapped.followup_mode_v1 = sqlString(mapped.followup_mode_v1)
+      mapped.question_mode_v1 = sqlString(mapped.question_mode_v1)
       mapped.explanation_only_semantic = mapped.explanation_only_semantic ? sqlString(mapped.explanation_only_semantic) : 'NULL'
       mapped.effective_question_activation_v1 = mapped.effective_question_activation_v1
       mapped.runtime_policy = mapped.runtime_policy ? sqlString(mapped.runtime_policy) : 'NULL'
@@ -684,7 +684,7 @@ async function syncData() {
       mapped.allow_when_ai_locked = mapped.allow_when_ai_locked
       mapped.max_questions_per_round = mapped.max_questions_per_round
       mapped.activation_condition = mapped.activation_condition ? sqlString(mapped.activation_condition) : 'NULL'
-      mapped.class_gate_type = sqlString(mapped.class_gate_type)
+      mapped.class_condition_type = sqlString(mapped.class_condition_type)
       mapped.class_switch_allowed = mapped.class_switch_allowed
       mapped.unknown_switch_policy = mapped.unknown_switch_policy ? sqlString(mapped.unknown_switch_policy) : 'NULL'
       mapped.ai_locked_confirm_penalty = mapped.ai_locked_confirm_penalty
@@ -692,7 +692,7 @@ async function syncData() {
       mapped.data_status = sqlString(mapped.data_status)
       mapped.data_source = mapped.data_source ? sqlString(mapped.data_source) : 'NULL'
       mapped.audit_note = mapped.audit_note ? sqlString(mapped.audit_note) : 'NULL'
-      mapped.followup_mode_v1 = sqlString(mapped.followup_mode_v1)
+      mapped.question_mode_v1 = sqlString(mapped.question_mode_v1)
       mapped.class_level_allows_runtime_v1 = mapped.class_level_allows_runtime_v1
       mapped.group_runtime_eligibility_rule = mapped.group_runtime_eligibility_rule
         ? sqlString(mapped.group_runtime_eligibility_rule)

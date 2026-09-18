@@ -1,0 +1,23 @@
+{
+  "generatedAt": "2026-09-18",
+  "environment": "cloud1-2grufevs395a9d5e",
+  "scope": "formal is_active candidate whitelist vs current question library",
+  "purpose": "判断候选映射是否仍可能被动态题库读取；只读",
+  "query": "\nSELECT\n  COUNT(DISTINCT q.question_key) AS candidate_keys,\n  COUNT(DISTINCT CASE WHEN l.question_key IS NOT NULL THEN q.question_key END) AS active_library_keys,\n  COUNT(DISTINCT CASE WHEN l.question_key IS NULL THEN q.question_key END) AS missing_library_keys,\n  COUNT(DISTINCT q.id) AS candidate_rows,\n  COUNT(DISTINCT CASE WHEN l.question_key IS NOT NULL THEN q.id END) AS active_library_rows\nFROM question_option_mapping_v5_real q\nLEFT JOIN question_library_v5_real l\n  ON l.question_key COLLATE utf8mb4_0900_ai_ci = q.question_key COLLATE utf8mb4_0900_ai_ci\n AND l.data_status IN ('audited','partial')\n AND l.review_status IN ('audited','partial')\nWHERE q.cms_lifecycle='legacy_compat'\n  AND q.is_active=1\n  AND q.data_status='audited'\n  AND q.review_status='audited'\n  AND NOT EXISTS (\n    SELECT 1 FROM outcome_route_questions r\n    WHERE r.question_key COLLATE utf8mb4_0900_ai_ci = q.question_key COLLATE utf8mb4_0900_ai_ci\n      AND r.enabled=1 AND r.data_status='active' AND r.review_status='audited'\n  )",
+  "mcp": {
+    "success": true,
+    "statementType": "SELECT",
+    "rowsReturned": 1,
+    "rowsAffected": 0
+  },
+  "aggregate": {
+    "candidateKeys": 75,
+    "candidateRows": 230,
+    "activeAuditedLibraryKeys": 74,
+    "activeAuditedLibraryRows": 228,
+    "missingLibraryKeys": 1,
+    "missingLibraryRows": 2
+  },
+  "missingLibraryKey": "q_non_problematic_variegation_stability",
+  "decision": "不能把候选集合视为零影响停用集合；当前动态仓储按question_key读取审核映射，存在题库键即可形成潜在消费路径"
+}

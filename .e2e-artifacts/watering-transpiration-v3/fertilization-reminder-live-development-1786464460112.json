@@ -1,0 +1,28 @@
+{
+  "task": "watering-transpiration-v3-e2e-trae-20260713",
+  "gitHead": "e21c5605c6077bf8a5eb14da83c476738e824ee0",
+  "branch": "sprint-ai-workflow",
+  "baseHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "projectPath": "/Users/jay/WebstormProjects/planting/.tmp/dispatch-task/qa-runtime-sessions/fertilization-real-api-20260812-r2-Y2nmne/project",
+  "mode": "fertilization-reminder-live-development",
+  "wsEndpoint": "ws://127.0.0.1:58288",
+  "startedAt": "2026-08-11T16:07:37.220Z",
+  "endedAt": "2026-08-11T16:07:40.112Z",
+  "pages": [],
+  "pageDataSummaries": [],
+  "capturedRequests": [],
+  "assertions": [
+    {
+      "name": "真实开发账户存在可设置施肥提醒的植物入口",
+      "passed": false,
+      "detail": "discovered plantIds=none",
+      "time": "2026-08-11T16:07:40.109Z"
+    }
+  ],
+  "screenshots": [],
+  "classification": "FAIL_PRODUCT",
+  "blockerReason": "真实账户没有可设置固定周期施肥提醒的植物：none",
+  "status": "failed",
+  "failure_kind": "failed_product",
+  "business_assertions_reached": false
+}

@@ -1,0 +1,70 @@
+{
+  "task": "watering-transpiration-v3-e2e-trae-20260713",
+  "gitHead": "b5bcbe4a343d04bf1ec9a1b73bdfd56cd45c377c",
+  "branch": "sprint-ai-workflow",
+  "baseHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "projectPath": "/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin",
+  "mode": "shadow",
+  "wsEndpoint": "ws://127.0.0.1:63384",
+  "startedAt": "2026-08-09T04:46:30.568Z",
+  "endedAt": "2026-08-09T04:46:54.207Z",
+  "pages": [
+    {
+      "path": "/pages/watering-advisor/watering-advisor",
+      "time": "2026-08-09T04:46:30.572Z"
+    }
+  ],
+  "pageDataSummaries": [
+    {
+      "path": "/pages/watering-advisor/watering-advisor",
+      "summary": {
+        "route": "pages/watering-advisor/watering-advisor",
+        "source": "public_page_path"
+      },
+      "time": "2026-08-09T04:46:35.949Z"
+    }
+  ],
+  "capturedRequests": [],
+  "assertions": [
+    {
+      "name": "搜索输入框存在",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:46:39.120Z"
+    },
+    {
+      "name": "植物列表至少有一个条目",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:46:40.181Z"
+    },
+    {
+      "name": "下一步按钮存在",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:46:44.164Z"
+    },
+    {
+      "name": "盆型编辑器 pot-profile-editor-sheet 自动打开",
+      "passed": false,
+      "detail": "not found",
+      "time": "2026-08-09T04:46:51.032Z"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/watering-transpiration-v3/independent-01-init.png",
+      "time": "2026-08-09T04:46:39.072Z"
+    },
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/watering-transpiration-v3/independent-02-plant-selected.png",
+      "time": "2026-08-09T04:46:44.159Z"
+    },
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/watering-transpiration-v3/independent-03-pot-editor-opened.png",
+      "time": "2026-08-09T04:46:54.201Z"
+    }
+  ],
+  "classification": "BLOCKED_ENV",
+  "blockerReason": "PotProfileEditor 未自动打开"
+}

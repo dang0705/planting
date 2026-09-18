@@ -5,7 +5,7 @@
 - 当前代码压缩包：`Archive 2.zip`
 - 项目规则压缩包：`rules.zip`
 - 诊断运行时粗文档：`diagnosis-runtime-code-logic.md`
-- 本次会话中关于“主动瘦身、养护类主轴、多候选 outcome 收敛式路径规划、gate 守卫、LLM prompt 职责边界”的讨论结论
+- 本次会话中关于“主动瘦身、养护类主轴、多候选 outcome 收敛式路径规划、condition 守卫、LLM prompt 职责边界”的讨论结论
 
 权威优先级：**当前代码 > 项目 rules > 已有运行时说明 > 本次设计讨论**。如果后续实施时发现文档和代码冲突，必须以代码为准，并同步修正文档。
 
@@ -23,7 +23,7 @@
 改成：
 
 ```text
-候选 outcome 集合 → route group 分流 → route/gate 增强、削弱、阻断、展示或不确定 → 收窄为 1～3 个前端可见 outcome
+候选 outcome 集合 → route group 分流 → route/condition 增强、削弱、阻断、展示或不确定 → 收窄为 1～3 个前端可见 outcome
 ```
 
 ### 2. 非目标
@@ -38,7 +38,7 @@
 
 ### 3. 过渡原则
 
-第一阶段推荐保持代码兼容：
+第一阶段推荐保持代码适配：
 
 ```text
 代码字段 problemKey 暂时可保留
@@ -50,8 +50,8 @@
 推荐路线：
 
 ```text
-Phase 1：problemKey 作为 outcomeKey 兼容运行
-Phase 2：新增 route/gate 表，route 引用 problem_key/outcome_key
+Phase 1：problemKey 作为 outcomeKey 适配运行
+Phase 2：新增 route/condition 表，route 引用 problem_key/outcome_key
 Phase 3：result-formatter 增加 primaryOutcome、secondaryOutcomes、visibleOutcomes
 Phase 4：再决定是否独立 diagnosis_outcomes 表
 ```
@@ -94,10 +94,10 @@ buildCandidatePriors()
 
 | 新文件 | 职责 |
 |---|---|
-| `cloudfunctions/diagnose-http/constants/outcome-route.js` | route 状态、gate 结果、effect 类型等枚举。 |
-| `cloudfunctions/diagnose-http/repositories/outcome-route-repository.js` | 读取 outcome route、gate、route question、answer effect、action profile。 |
+| `cloudfunctions/diagnose-http/constants/outcome-route.js` | route 状态、condition 结果、effect 类型等枚举。 |
+| `cloudfunctions/diagnose-http/repositories/outcome-route-repository.js` | 读取 outcome route、condition、route question、answer effect、action profile。 |
 | `cloudfunctions/diagnose-http/domain/outcome-route-planner.js` | 根据正式证据生成候选 outcome 集合，展开 route group，评估 route 决策。 |
-| `cloudfunctions/diagnose-http/domain/outcome-gate-evaluator.js` | 判断候选 outcome / route 是否增强、削弱、阻断、可展示、可闭合、需要追问或转不确定。 |
+| `cloudfunctions/diagnose-http/domain/outcome-condition-evaluator.js` | 判断候选 outcome / route 是否增强、削弱、阻断、可展示、可闭合、需要追问或转不确定。 |
 | `cloudfunctions/diagnose-http/domain/outcome-action-resolver.js` | 根据 primaryOutcome、secondaryOutcomes、visibleOutcomes 找行动建议，合并植物养护基线并执行冲突检查。 |
 | `cloudfunctions/diagnose-http/utils/outcome-route-contract.js` | 公开字段和内部字段的归一化工具。 |
 
@@ -156,7 +156,7 @@ module.exports = {
 cloudfunctions/diagnose-http/domain/outcome-route-planner.js
 ```
 
-职责：把当前运行时证据整理成 route/gate 容易消费的结构。
+职责：把当前运行时证据整理成 route/condition 容易消费的结构。
 
 输入建议：
 
@@ -198,7 +198,7 @@ function buildRouteEvidenceContext({
 中文说明：
 
 - `activeSymptomKeys` 只包括 `enteredRuntime=1` 且未废弃的正式证据。
-- `answerEffectIndex` 把用户回答整理成 route gate 的支持、削弱、排除、转向信号。
+- `answerEffectIndex` 把用户回答整理成 route condition 的支持、削弱、排除、转向信号。
 - `rankingIndex` 只是候选排序辅助，不得直接闭合 outcome。
 
 ### 2. `planOutcomeRoutes()`
@@ -209,7 +209,7 @@ function buildRouteEvidenceContext({
 cloudfunctions/diagnose-http/domain/outcome-route-planner.js
 ```
 
-职责：综合候选 outcome、route group、route 表、gate 表、当前证据，返回本轮多候选收敛决策。
+职责：综合候选 outcome、route group、route 表、condition 表、当前证据，返回本轮多候选收敛决策。
 
 方法签名建议：
 
@@ -237,7 +237,7 @@ async function planOutcomeRoutes({
   secondaryOutcomeKeys,
   requiresFollowUp,
   nextQuestionKeys,
-  gateResults,
+  conditionResults,
   blockedOutcomeKeys,
   conflictingOutcomePairs,
   routeTrace,
@@ -250,7 +250,7 @@ async function planOutcomeRoutes({
 中文约束：
 
 - `candidateOutcomeStates` 是 route 模式的核心，不允许只维护一个 active outcome。
-- `visibleOutcomeKeys` 最多 1～3 个，且必须通过展示 gate。
+- `visibleOutcomeKeys` 最多 1～3 个，且必须通过展示 condition。
 - `primaryOutcomeKey` 最多 1 个，`secondaryOutcomeKeys` 最多 2 个。
 - 如果候选 outcome 的公开行动建议冲突，必须优先问分流题；不能继续问时输出不确定。
 
@@ -259,7 +259,7 @@ async function planOutcomeRoutes({
 建议位置：
 
 ```text
-cloudfunctions/diagnose-http/domain/outcome-gate-evaluator.js
+cloudfunctions/diagnose-http/domain/outcome-condition-evaluator.js
 ```
 
 方法签名建议：
@@ -267,7 +267,7 @@ cloudfunctions/diagnose-http/domain/outcome-gate-evaluator.js
 ```js
 function evaluateOutcomeRouteGate({
   route,
-  gate,
+  condition,
   routeEvidenceContext,
   answerEffects
 })
@@ -277,8 +277,8 @@ function evaluateOutcomeRouteGate({
 
 ```js
 {
-  gateKey,
-  gateRole,
+  conditionKey,
+  conditionRole,
   result,
   passed,
   blocked,
@@ -299,15 +299,15 @@ function evaluateOutcomeRouteGate({
 cloudfunctions/diagnose-http/domain/outcome-route-planner.js
 ```
 
-职责：当多个候选 outcome 经过 route/gate 评估后，决定哪些 outcome 可以前端可见，哪个作为主方向，哪些作为伴随观察方向，或者是否应输出不确定。
+职责：当多个候选 outcome 经过 route/condition 评估后，决定哪些 outcome 可以前端可见，哪个作为主方向，哪些作为伴随观察方向，或者是否应输出不确定。
 
 规则：
 
 1. 多条 route 收敛到同一个 outcome：合并证据，提升该 outcome 的展示资格和可信度。
-2. 多个 outcome 同时满足展示 gate 且行动建议相容：允许前端展示 1～3 个；其中最多 1 个为主方向，其余为伴随观察方向。
-3. 多个 outcome 同时满足展示 gate 但行动建议冲突：优先问关键分流题；不能再问时输出不确定 + 保守建议，不同时给互相冲突的动作。
-4. 被 blocker gate 阻断的 outcome 不得前端展示。
-5. 不确定结果中可以展示“最值得排查的方向”，但必须通过展示 gate，且不得泄漏内部最高 ranking。
+2. 多个 outcome 同时满足展示 condition 且行动建议相容：允许前端展示 1～3 个；其中最多 1 个为主方向，其余为伴随观察方向。
+3. 多个 outcome 同时满足展示 condition 但行动建议冲突：优先问关键分流题；不能再问时输出不确定 + 保守建议，不同时给互相冲突的动作。
+4. 被 blocker condition 阻断的 outcome 不得前端展示。
+5. 不确定结果中可以展示“最值得排查的方向”，但必须通过展示 condition，且不得泄漏内部最高 ranking。
 
 ## 五、现有文件逐项改造表
 
@@ -318,17 +318,17 @@ cloudfunctions/diagnose-http/domain/outcome-route-planner.js
 | 约第 4376 行 `runDiagnosisRound()` | 主运行入口 | 增加 route mode 运行分支，但不要复制整条主链。 |
 | 约第 4448 行 | `observedEvidenceForResolution` | 保留；route 只能使用正式证据。 |
 | 约第 4493 行 | `diagnosisDirectionsForResolution` | 作为 route 入口条件。 |
-| 约第 4500 行 | `symptomClassRuntime` | 作为 route 入口条件和 gate 上下文。 |
+| 约第 4500 行 | `symptomClassRuntime` | 作为 route 入口条件和 condition 上下文。 |
 | 约第 4822 行 | `candidatePriors` | 过渡期继续生成候选；语义改为候选 outcome 先验。 |
 | 约第 4838 行 | `candidateProblemKeys` | 新增别名 `candidateOutcomeKeys`，不要立即全局重命名。 |
 | 约第 4924 行 | `visualScores` | 保留；输入 `routeEvidenceContext`。 |
-| 约第 4932 行 | `questionScores, penalties, answerEffects` | 保留；`answerEffects` 是 gate 判断核心输入。 |
+| 约第 4932 行 | `questionScores, penalties, answerEffects` | 保留；`answerEffects` 是 condition 判断核心输入。 |
 | 约第 4954 行 | `rankings` | 降级为候选排序和审计。 |
 | 约第 5120 行 | `shouldAskFollowUpByRanking` | 改为 `shouldAskFollowUp = routeDecision.requiresFollowUp || fallbackRankingAsk`。 |
-| 约第 5282 行 | `buildFollowUps()` | route 模式下先生成 route 问题，旧逻辑作为 fallback。 |
-| 约第 5350 行 | `evaluateFollowUpStopPolicy()` | 增加 routeDecision 输入；候选集合已收窄至可展示范围，且通过 action safety gate 时允许停止。 |
-| 约第 5423 行后 | 输出 ranking 守卫 | 保留高风险守卫；但优先判断候选 outcome 是否通过展示 gate、闭合 gate 和行动安全 gate。 |
-| 约第 5967 行 | `stopDecision` | 增加 `stopReason='route_visible_outcomes_ready'`、`route_uncertain_closed` 等停止原因；`decisionCause` 来源于 route/gate。 |
+| 约第 5282 行 | `buildFollowUps()` | route 模式下先生成 route 问题，既有逻辑作为 fallback。 |
+| 约第 5350 行 | `evaluateFollowUpStopPolicy()` | 增加 routeDecision 输入；候选集合已收窄至可展示范围，且通过 action safety condition 时允许停止。 |
+| 约第 5423 行后 | 输出 ranking 守卫 | 保留高风险守卫；但优先判断候选 outcome 是否通过展示 condition、闭合 condition 和行动安全 condition。 |
+| 约第 5967 行 | `stopDecision` | 增加 `stopReason='route_visible_outcomes_ready'`、`route_uncertain_closed` 等停止原因；`decisionCause` 来源于 route/condition。 |
 | 约第 6000 行 | `formatDiagnosisResponse()` | 传入 `primaryOutcome`、`secondaryOutcomes`、`visibleOutcomes`、`routeDecision`。 |
 
 建议新增引用：
@@ -414,7 +414,7 @@ computeQuestionEvidenceAndPenalty()，约第 172 行
 
 1. 不要删除。
 2. 不再让分数直接决定最终结果。
-3. 新增 route evidence 消费函数时优先放在新文件，不污染旧评分逻辑。
+3. 新增 route evidence 消费函数时优先放在新文件，不污染既有评分逻辑。
 
 可选新增方法：
 
@@ -457,7 +457,7 @@ strategyNoteCn
 
 1. 增加一个入口参数：`routeDecision` 或 `routePlannedQuestionKeys`。
 2. 如果 route 已经给出 `nextQuestionKeys`，优先按这些 key 取题。
-3. 旧的通用候选池作为 fallback。
+3. 既有的通用候选池作为 fallback。
 
 建议函数语义：
 
@@ -513,7 +513,7 @@ formatDiagnosisResponse({
 ```text
 primaryOutcome / visibleOutcomes 存在 → 使用 routeDecision 构造公开结果
 secondaryOutcomes 只作为伴随观察方向，不抢主方向
-governedLowConfidence / uncertain → 不展示 topProblem，但可展示通过 gate 的可排查方向
+governedLowConfidence / uncertain → 不展示 topProblem，但可展示通过 condition 的可排查方向
 否则才回退 primary ranking
 ```
 
@@ -526,18 +526,18 @@ visibleOutcomes
 outcomeMode
 routeDecisionCause
 routeTrace // debug only
-gateResults // debug only
+conditionResults // debug only
 rankingsForAudit // debug only
 ```
 
-注意：`routeTrace`、`gateResults`、`rankingsForAudit` 初期只在 debug 或开发态返回，用户侧不展示。
+注意：`routeTrace`、`conditionResults`、`rankingsForAudit` 初期只在 debug 或开发态返回，用户侧不展示。
 
-### 6. `domain/question-queue/question-queue-planner.js`
+### 6. `domain/question-package-snapshot/question-package-snapshot-planner.js`
 
 当前方法：
 
 ```text
-planQuestionQueue(response)，约第 89 行
+planQuestionPackageSnapshot(response)，约第 89 行
 ```
 
 改造动作：
@@ -548,7 +548,7 @@ planQuestionQueue(response)，约第 89 行
 {
   outcomeKey,
   routeKey,
-  gateKey,
+  conditionKey,
   serviceTarget: 'outcome_route_confirmation'
 }
 ```
@@ -582,7 +582,7 @@ route_action_safe_closed
 ```text
 routeDecision.visibleOutcomeKeys 长度为 1～3
 + routeDecision.requiresFollowUp=false
-+ 所有可见 outcome 通过 action safety gate
++ 所有可见 outcome 通过 action safety condition
 + stopDecision.outcomeVisible=true
 → 可停止
 ```
@@ -600,10 +600,10 @@ evaluateOutputEligibility()，约第 73 行
 新增 route 输出资格：
 
 ```text
-route gate 通过
+route condition 通过
 + outcome 是 final output
 + action profile 不冲突
-+ 未触发 blocker gate
++ 未触发 blocker condition
 ```
 
 ### 9. `constants/tables.js`
@@ -614,7 +614,7 @@ route gate 通过
 
 ```js
 'outcome_routes',
-'outcome_route_gates',
+'outcome_route_conditions',
 'outcome_route_questions',
 'outcome_answer_effects',
 'outcome_action_profiles'
@@ -759,13 +759,13 @@ routeDecisionCause
 - 结果更粗，但建议更明确。
 - 不确定结果仍不泄漏 topProblem。
 
-### Phase 2：新增 route/gate 数据表和仓库
+### Phase 2：新增 route/condition 数据表和仓库
 
 动作：
 
-1. 新增 route/gate/action profile 表。
+1. 新增 route/condition/action profile 表。
 2. 新增 `outcome-route-repository.js`。
-3. 编写基础单元测试或脚本校验：每个 final outcome 至少有一条 route；每条 route 有 gate；每个 final outcome 有 action profile。
+3. 编写基础单元测试或脚本校验：每个 final outcome 至少有一条 route；每条 route 有 condition；每个 final outcome 有 action profile。
 
 ### Phase 3：route planner 只读接入
 
@@ -785,8 +785,8 @@ routeDecisionCause
 动作：
 
 1. 若 `routeDecision.nextQuestionKeys` 存在，优先生成 route 问题。
-2. 旧 `buildFollowUps()` 作为 fallback。
-3. 问题队列记录 `outcomeKey/routeKey/gateKey`。
+2. 既有 `buildFollowUps()` 作为 fallback。
+3. 问题队列记录 `outcomeKey/routeKey/conditionKey`。
 
 验收：
 
@@ -804,8 +804,8 @@ routeDecisionCause
 
 验收：
 
-- 前端可见 outcome 必须通过 display gate 和 action safety gate。
-- ranking 第一名不能越过 gate 输出。
+- 前端可见 outcome 必须通过 display condition 和 action safety condition。
+- ranking 第一名不能越过 condition 输出。
 
 ### Phase 6：prompt 与视觉路径输入增强
 
@@ -820,13 +820,13 @@ routeDecisionCause
 - LLM 不输出 outcome。
 - 视觉字段能帮助选择问题，但不能直接闭合。
 
-### Phase 7：删除或降级旧 ranking 终局逻辑
+### Phase 7：删除或降级既有 ranking 终局逻辑
 
 动作：
 
-1. 旧 ranking 保留为审计字段。
+1. 既有 ranking 保留为审计字段。
 2. 具体病害 ranking 不再主导最终输出。
-3. 特殊守卫从“结果后拦截”逐步前移为 route gate。
+3. 特殊守卫从“结果后拦截”逐步前移为 route condition。
 
 验收：
 
@@ -855,8 +855,8 @@ ROUTE_OUTPUT_ENABLED=0/1
 
 ## 八、关键验收标准
 
-1. 任何前端可见 outcome 都必须有 route/gate 依据或明确的不确定兜底。
-2. 任何 route 闭合都必须有 gate 结果。
+1. 任何前端可见 outcome 都必须有 route/condition 依据或明确的不确定保守。
+2. 任何 route 闭合都必须有 condition 结果。
 3. 视觉原始结果不得直接闭合 outcome，也不得直接生成前端可见候选 outcome。
 4. 同一个 outcome 下的行动建议不得互相冲突；多个可见 outcome 同屏展示时，公开行动建议也不得互相冲突。
 5. 用户否定某方向后，不得无证据跳到无关 outcome。

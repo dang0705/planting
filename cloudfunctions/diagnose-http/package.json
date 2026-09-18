@@ -10,6 +10,6 @@
     "tencentcloud-sdk-nodejs-hunyuan": "^4.1.188"
   },
   "scripts": {
-    "start": "node node_modules/@cloudbase/functions-framework/bin/tcb-ff.js --port=9000 --functionsConfigFile=cloudbase-functions.json"
+    "start": "node ../../node_modules/@cloudbase/functions-framework/bin/tcb-ff.js --port=9000 --functionsConfigFile=cloudbase-functions.json"
   }
 }

@@ -1,0 +1,33 @@
+{
+  "task": "watering-transpiration-v3-e2e-trae-20260713",
+  "gitHead": "e21c5605c6077bf8a5eb14da83c476738e824ee0",
+  "branch": "sprint-ai-workflow",
+  "baseHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "projectPath": "/Users/jay/WebstormProjects/planting/.tmp/dispatch-task/qa-runtime-sessions/fertilization-global-chain-20260811-r15-2iWWkt/project",
+  "mode": "fertilization-monthly",
+  "wsEndpoint": "ws://127.0.0.1:65244",
+  "startedAt": "2026-08-11T11:05:36.893Z",
+  "endedAt": "2026-08-11T11:05:47.049Z",
+  "pages": [
+    {
+      "path": "/pages/index/index",
+      "time": "2026-08-11T11:05:36.913Z"
+    }
+  ],
+  "pageDataSummaries": [],
+  "capturedRequests": [],
+  "assertions": [
+    {
+      "name": "首页通过真实 plant store 展示 Monstera 夹具植物",
+      "passed": false,
+      "detail": null,
+      "time": "2026-08-11T11:05:47.036Z"
+    }
+  ],
+  "screenshots": [],
+  "classification": "BLOCKED_FIXTURE",
+  "blockerReason": "首页未加载施肥月度表验收夹具",
+  "status": "failed",
+  "failure_kind": "failed_environment",
+  "business_assertions_reached": false
+}

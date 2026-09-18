@@ -7,9 +7,9 @@ const {
   insertDiagnosisFeedbackRecord
 } = require('../repositories/session-finalization-repository')
 const { buildSnapshotPayload } = require('./session-runtime-snapshot-codec')
-const { getFollowUpSnapshotRows } = require('./session-follow-up-service')
+const { getQuestionSnapshotRows } = require('./session-question-service')
 
-function normalizeFollowUpSnapshotRows(rows = []) {
+function normalizeQuestionSnapshotRows(rows = []) {
   return (Array.isArray(rows) ? rows : []).map(row => ({
     questionOrder: Number(row?.questionOrder ?? row?.question_order ?? 0),
     questionText: row?.questionText || row?.question_text || '',
@@ -23,16 +23,16 @@ async function saveFinalDiagnosisSnapshot({
   openid,
   plantContext,
   response,
-  followUpRows = null
+  questionRows = null
 } = {}) {
-  const followUps = Array.isArray(followUpRows)
-    ? normalizeFollowUpSnapshotRows(followUpRows)
-    : await getFollowUpSnapshotRows(sessionId)
+  const questions = Array.isArray(questionRows)
+    ? normalizeQuestionSnapshotRows(questionRows)
+    : await getQuestionSnapshotRows(sessionId)
   const snapshot = buildSnapshotPayload({
     sessionId,
     plantContext,
     response,
-    followUps
+    questions
   })
 
   try {
@@ -44,7 +44,8 @@ async function saveFinalDiagnosisSnapshot({
       dataBundleVersion: versionMetadata.dataBundleVersion,
       questionSystemVersion: versionMetadata.questionSystemVersion,
       resultExplanationVersion: versionMetadata.resultExplanationVersion,
-      legacyAdapterVersion: versionMetadata.legacyAdapterVersion
+      legacyAdapterVersion: versionMetadata.legacyAdapterVersion,
+      sessionAdapterVersion: versionMetadata.sessionAdapterVersion
     })
   } catch (error) {
     console.warn('写入 diagnosis_result_snapshots 失败（已降级忽略）:', error.message)
@@ -64,7 +65,12 @@ async function saveDiagnosisFeedback(openid, { resultId, feedback } = {}) {
       note: feedback?.note || ''
     })
   } catch (error) {
-    console.warn('写入 diagnosis_feedback 失败（已降级忽略）:', error.message)
+    console.warn('写入 diagnosis_feedback 失败:', error.message)
+    return {
+      ok: false,
+      errorCode: 'DIAGNOSIS_FEEDBACK_STORAGE_UNAVAILABLE',
+      message: '反馈暂未保存，请稍后重试。'
+    }
   }
 
   return { ok: true }

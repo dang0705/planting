@@ -12,9 +12,9 @@ module.exports = [
     requiresNoObservedEvidence: true,
     requiresNoDerivedEvidence: true,
     maxCompetingProblemDirectionConfidence: 0.18,
-    summary: '当前图片里暂未见到足够稳定的问题性视觉证据，整体更像当前未见明显问题。若后续出现扩展、新发斑点、虫体、霉层或持续恶化，再重新诊断更稳妥。',
+    summary: '当前照片中暂未看到明确问题。若斑点扩大、出现虫体或霉层，或状态持续变差，建议重新检查。',
     explanation: {
-      whyItHappens: '当前输入更像“暂未见明显问题”的状态，而不是已经形成稳定的问题性诊断对象。此结论来自非问题性方向信号领先，且没有正式问题性视觉证据进入事实层。',
+      whyItHappens: '当前照片和你的补充信息暂未显示明确异常，可以先保持正常养护并继续观察。',
       whatToCheckNext: '继续观察 3-7 天，看是否出现新发黄化、扩展性病斑、虫体、叶背异常、霉层或明显长势下滑。',
       firstAid: '维持当前养护稳定，不要因为一次诊断没有发现明显问题就突然猛改浇水、施肥或连续上药。',
       avoid: '不要把“暂未见明显问题”理解成永远无需观察；也不要在没有明确异常时过度处理。',

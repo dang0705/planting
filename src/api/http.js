@@ -1,6 +1,8 @@
-import { httpRequest } from '@/http-functions/core/httpRequest'
+import { httpRequest, httpUploadFile } from '@/http-functions/core/httpRequest'
+import { IS_LOCAL_API_BASE_URL, PUBLIC_HTTP_FUNCTION_BASE_URL } from '@/api/env'
 
 const defaultHttpFunctionRequester = httpRequest()
+const defaultHttpFileUploader = httpUploadFile()
 
 export async function requestHttpFunction(
   functionPath,
@@ -11,12 +13,20 @@ export async function requestHttpFunction(
     payload,
     headers,
     auth = true,
+    preferPlatformSession = false,
+    requirePlatformSession = false,
+    requireSignedIdentityTicket = false,
+    dataType,
     responseType,
     enableChunked,
     timeout,
+    baseUrl,
+    returnErrorResponse = false,
     onChunkReceived
   } = {}
 ) {
+  const publicBaseUrl =
+    baseUrl ?? (!IS_LOCAL_API_BASE_URL ? PUBLIC_HTTP_FUNCTION_BASE_URL : undefined)
   const response = await defaultHttpFunctionRequester({
     functionPath,
     method,
@@ -24,13 +34,68 @@ export async function requestHttpFunction(
     payload: payload ?? body,
     headers,
     auth,
+    preferPlatformSession,
+    requirePlatformSession,
+    requireSignedIdentityTicket,
+    dataType,
     responseType,
     enableChunked,
     timeout,
+    baseUrl: publicBaseUrl,
+    returnErrorResponse,
     onChunkReceived
   })
 
   if (response.statusCode >= 200 && response.statusCode < 300) {
+    return response.data
+  }
+
+  if (returnErrorResponse) {
+    return response.data
+  }
+
+  const error = new Error(response.data?.message || `HTTP ${response.statusCode}`)
+  error.statusCode = Number(response.statusCode || response.data?.code || 0)
+  throw error
+}
+
+export async function requestHttpFile(
+  functionPath,
+  {
+    filePath,
+    name = 'file',
+    formData,
+    headers,
+    auth = true,
+    preferPlatformSession = false,
+    requirePlatformSession = false,
+    requireSignedIdentityTicket = false,
+    timeout,
+    baseUrl,
+    returnErrorResponse = false
+  } = {}
+) {
+  const publicBaseUrl =
+    baseUrl ?? (!IS_LOCAL_API_BASE_URL ? PUBLIC_HTTP_FUNCTION_BASE_URL : undefined)
+  const response = await defaultHttpFileUploader({
+    functionPath,
+    filePath,
+    name,
+    formData,
+    headers,
+    auth,
+    preferPlatformSession,
+    requirePlatformSession,
+    requireSignedIdentityTicket,
+    timeout,
+    baseUrl: publicBaseUrl
+  })
+
+  if (response.statusCode >= 200 && response.statusCode < 300) {
+    return response.data
+  }
+
+  if (returnErrorResponse) {
     return response.data
   }
 

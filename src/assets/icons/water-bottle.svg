@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="512" viewBox="0 0 256 512" fill="none">
+  <title>矿泉水瓶线性图标</title>
+  <desc>粗黑描边、无填充、小瓶盖、宽瓶身、平底瓶身，瓶身内部标注 0.5L 的矿泉水瓶 SVG 图标。</desc>
+
+  <!-- cap: smaller than previous version -->
+  <rect x="100" y="24" width="56" height="34" rx="5" ry="5"
+        stroke="currentColor" stroke-width="16" fill="none"/>
+  <rect x="112" y="56" width="32" height="28"
+        stroke="currentColor" stroke-width="16" fill="none"/>
+
+  <!-- shoulders -->
+  <path d="M112 84 L46 176 H210 L144 84 Z"
+        stroke="currentColor" stroke-width="16" stroke-linejoin="round" fill="none"/>
+
+  <!-- body outer: wider body with flat bottom -->
+  <path d="M46 176 H210 V488 H46 Z"
+        stroke="currentColor" stroke-width="16" stroke-linejoin="round" fill="none"/>
+
+  <!-- volume mark -->
+  <text x="128" y="332"
+        text-anchor="middle"
+        dominant-baseline="middle"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="72"
+        font-weight="700"
+        fill="currentColor">0.5L</text>
+</svg>

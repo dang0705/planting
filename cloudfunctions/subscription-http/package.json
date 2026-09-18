@@ -1,0 +1,12 @@
+{
+  "name": "subscription-http",
+  "version": "1.0.0",
+  "description": "青花植微信支付订阅后端链路",
+  "main": "app.js",
+  "scripts": {
+    "start": "node ../../node_modules/@cloudbase/functions-framework/bin/tcb-ff.js --port=9008 --functionsConfigFile=cloudbase-functions.json"
+  },
+  "dependencies": {
+    "@cloudbase/functions-framework": "^1.18.0"
+  }
+}

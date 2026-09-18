@@ -1,0 +1,30 @@
+{
+  "status": "failed_environment",
+  "ws": "ws://127.0.0.1:9420",
+  "projectPath": "/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin",
+  "assertions": [
+    {
+      "name": "提醒分支夹具安装成功",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "到期正常提醒显示已设置状态",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "name": "到期正常提醒显示当前月规则",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "name": "到期正常提醒显示今天已施肥和本次跳过",
+      "passed": false,
+      "detail": ""
+    }
+  ],
+  "requests": [],
+  "scenarios": [],
+  "error": "TypeError: Cannot read properties of null (reading 'tap')\n    at file:///Users/jay/WebstormProjects/planting/[eval1]:117:18"
+}

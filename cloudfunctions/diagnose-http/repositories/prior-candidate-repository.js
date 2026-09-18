@@ -119,15 +119,15 @@ async function getLinkedCandidatePriors(plantContext = {}) {
 
     const links = await getLinkedDiagnosisTargets(plantContext?.plantIdentityId)
     if (!links.length) {
-      const fallbackResult = {
+      const conservativeResult = {
         hasAnyLinks: false,
         hasReviewedLinks: false,
         selectedLevel: '',
         weakBackgroundOnly: false,
         priors: []
       }
-      setCacheEntry(priorCache.linkedCandidatePriorsByPlantIdentity, cacheKey, fallbackResult)
-      return fallbackResult
+      setCacheEntry(priorCache.linkedCandidatePriorsByPlantIdentity, cacheKey, conservativeResult)
+      return conservativeResult
     }
 
     const bridge = resolveLinkedDiagnosisBridge(links, plantContext)

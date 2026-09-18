@@ -3,9 +3,9 @@
 const { unknownFlow } = require('../constants/scoring')
 const classSwitchRules = require('../constants/class-switch-rules')
 
-function normalizeText(value = '', fallback = '') {
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value ?? '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function clamp01(value) {
@@ -29,10 +29,10 @@ function dedupeStrings(values = []) {
   )
 }
 
-function normalizeClassGateMode(value = '') {
+function normalizeClassConditionMode(value = '') {
   const normalized = normalizeText(value, 'soft').toLowerCase()
   if (normalized === 'verified_hard') {
-    return classSwitchRules.classGateTypes.hard
+    return classSwitchRules.classConditionTypes.hard
   }
   if (['soft', 'hard', 'disabled'].includes(normalized)) {
     return normalized
@@ -40,7 +40,7 @@ function normalizeClassGateMode(value = '') {
   return 'soft'
 }
 
-function normalizeClassGateSourceMode(value = '') {
+function normalizeClassConditionSourceMode(value = '') {
   const normalized = normalizeText(value, 'soft').toLowerCase()
   if (normalized === 'verified_hard') {return 'verified_hard'}
   if (['soft', 'hard', 'disabled'].includes(normalized)) {
@@ -49,12 +49,12 @@ function normalizeClassGateSourceMode(value = '') {
   return 'soft'
 }
 
-function isHardGateMode(value = '') {
-  const normalized = normalizeClassGateMode(value)
-  return normalized === classSwitchRules.classGateTypes.hard
+function isHardConditionMode(value = '') {
+  const normalized = normalizeClassConditionMode(value)
+  return normalized === classSwitchRules.classConditionTypes.hard
 }
 
-function isHardGateCandidate(value = '') {
+function isHardConditionCandidate(value = '') {
   const normalized = normalizeText(value, '').toLowerCase()
   return normalized === 'hard' || normalized === 'verified_hard'
 }
@@ -128,8 +128,8 @@ function normalizeObservedSymptoms(observedSymptoms = []) {
     .filter(item => item.symptomKey)
 }
 
-function isRuntimeEligibleClassMode(followupModeV1 = '', round = 1) {
-  const normalizedMode = normalizeText(followupModeV1).toLowerCase()
+function isRuntimeEligibleClassMode(questionModeV1 = '', round = 1) {
+  const normalizedMode = normalizeText(questionModeV1).toLowerCase()
   if (classSwitchRules.activeFollowupModes.includes(normalizedMode)) {
     return true
   }
@@ -152,10 +152,10 @@ module.exports = {
   clamp01,
   roundNum,
   dedupeStrings,
-  normalizeClassGateMode,
-  normalizeClassGateSourceMode,
-  isHardGateMode,
-  isHardGateCandidate,
+  normalizeClassConditionMode,
+  normalizeClassConditionSourceMode,
+  isHardConditionMode,
+  isHardConditionCandidate,
   parseUnknownSwitchPolicy,
   shouldBlockGroupByUnknownPolicy,
   getUnknownPolicyPriorityPenalty,

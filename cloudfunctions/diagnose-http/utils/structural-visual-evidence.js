@@ -34,9 +34,9 @@ const GENERIC_STRUCTURAL_PHRASES = [
   '有洞叶片'
 ]
 
-function normalizeText(value = '', fallback = '') {
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function normalizeStringList(values = []) {

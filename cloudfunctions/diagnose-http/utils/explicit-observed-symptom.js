@@ -7,7 +7,7 @@ function normalizeText(value = '') {
 function isExplicitObservedEvidenceSourceType(sourceType = '') {
   const normalizedSourceType = normalizeText(sourceType).toLowerCase()
   return [
-    'legacy_observed_symptom',
+    'session_observed_symptom',
     'manual_symptom_mode',
     'user_selected_symptom_mode',
     'user_answer',

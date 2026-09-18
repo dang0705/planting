@@ -1,5 +1,6 @@
 import { requestHttpFunction } from '@/api/http'
 import { runVueQueryMutation } from '@/lib/vue-query-runtime.js'
+import { invalidateUserPlantsQuery } from '@/vue-query/plants/queries/user-plants.js'
 
 function buildUserPlantsMutationOptions() {
   return {
@@ -12,22 +13,28 @@ function buildUserPlantsMutationOptions() {
   }
 }
 
+async function runUserPlantsMutation(variables) {
+  const response = await runVueQueryMutation(buildUserPlantsMutationOptions(), variables)
+  await invalidateUserPlantsQuery()
+  return response
+}
+
 export function executeCreateUserPlantMutation(payload) {
-  return runVueQueryMutation(buildUserPlantsMutationOptions(), {
+  return runUserPlantsMutation({
     method: 'POST',
     payload
   })
 }
 
 export function executePatchUserPlantMutation(payload) {
-  return runVueQueryMutation(buildUserPlantsMutationOptions(), {
+  return runUserPlantsMutation({
     method: 'PATCH',
     payload
   })
 }
 
 export function executeRemoveUserPlantMutation(id) {
-  return runVueQueryMutation(buildUserPlantsMutationOptions(), {
+  return runUserPlantsMutation({
     method: 'DELETE',
     payload: { id }
   })

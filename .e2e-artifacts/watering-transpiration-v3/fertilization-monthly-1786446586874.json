@@ -1,0 +1,68 @@
+{
+  "task": "watering-transpiration-v3-e2e-trae-20260713",
+  "gitHead": "e21c5605c6077bf8a5eb14da83c476738e824ee0",
+  "branch": "sprint-ai-workflow",
+  "baseHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "projectPath": "/Users/jay/WebstormProjects/planting/.tmp/dispatch-task/qa-runtime-sessions/fertilization-global-chain-20260811-r17-6YAku4/project",
+  "mode": "fertilization-monthly",
+  "wsEndpoint": "ws://127.0.0.1:50041",
+  "startedAt": "2026-08-11T11:09:42.973Z",
+  "endedAt": "2026-08-11T11:09:46.874Z",
+  "pages": [
+    {
+      "path": "/pages/index/index",
+      "time": "2026-08-11T11:09:43.005Z"
+    }
+  ],
+  "pageDataSummaries": [],
+  "capturedRequests": [],
+  "assertions": [
+    {
+      "name": "首页通过真实 plant store 展示 Monstera 夹具植物",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:09:43.030Z"
+    },
+    {
+      "name": "首页夹具截图有效",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:09:46.135Z"
+    },
+    {
+      "name": "截图 handoff 后首页植物卡片仍可定位",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:09:46.179Z"
+    },
+    {
+      "name": "首页植物卡片显示施肥入口",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:09:46.194Z"
+    },
+    {
+      "name": "首页底部施肥弹框打开",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T11:09:46.870Z"
+    },
+    {
+      "name": "首页弹框显示月度施肥表",
+      "passed": false,
+      "detail": null,
+      "time": "2026-08-11T11:09:46.870Z"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/watering-transpiration-v3/fertilization-monthly-home.png",
+      "time": "2026-08-11T11:09:46.135Z"
+    }
+  ],
+  "classification": "FAIL_PRODUCT",
+  "blockerReason": "首页施肥弹框或月度表未渲染",
+  "status": "failed",
+  "failure_kind": "failed_product",
+  "business_assertions_reached": false
+}

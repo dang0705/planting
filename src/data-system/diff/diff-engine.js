@@ -10,8 +10,10 @@ const {
   withTransaction,
   tableName,
   quoteIdentifier,
-  listTableColumns
+  listTableColumns,
+  listTableColumnMetadata
 } = require('../db/mysql')
+const { normalizeDateForColumn } = require('../db/metadata-values')
 
 function stableRecordKey(row = {}, keyColumns = []) {
   const payload = {}
@@ -98,7 +100,8 @@ function buildWhereByRecordKey(recordKeyPayload = {}) {
 async function insertDiffRows(connection, rows = []) {
   if (!rows.length) {return}
 
-  const columns = await listTableColumns(connection, DEV_SCHEMA, 'publish_diffs')
+  const columnMetadata = await listTableColumnMetadata(connection, DEV_SCHEMA, 'publish_diffs')
+  const columns = Object.keys(columnMetadata)
   if (!columns.length) {
     throw new Error('cloud1_dev.publish_diffs 不存在，无法写入 diff 结果')
   }
@@ -114,7 +117,9 @@ async function insertDiffRows(connection, rows = []) {
     if (columns.includes('old_hash')) {payload.old_hash = row.old_hash}
     if (columns.includes('new_hash')) {payload.new_hash = row.new_hash}
     if (columns.includes('status')) {payload.status = 'pending'}
-    if (columns.includes('created_at')) {payload.created_at = new Date()}
+    if (columns.includes('created_at')) {
+      payload.created_at = normalizeDateForColumn(new Date(), columnMetadata.created_at)
+    }
 
     const payloadColumns = Object.keys(payload)
     if (!payloadColumns.length) {continue}

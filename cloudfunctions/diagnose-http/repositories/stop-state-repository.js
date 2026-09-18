@@ -3,9 +3,9 @@
 const { models } = require('/opt/utils/cloudbase')
 const { safeJsonParse } = require('../utils/stored-value')
 
-function normalizeText(value = '', fallback = '') {
+function normalizeText(value = '', conservative = '') {
   const normalized = String(value || '').trim()
-  return normalized || fallback
+  return normalized || conservative
 }
 
 function hydrateStopState(row = null) {

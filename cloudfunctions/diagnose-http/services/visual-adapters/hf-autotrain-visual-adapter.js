@@ -285,8 +285,8 @@ function normalizeModelVisualResult(
     ),
     symptom_candidates: mappedCandidates,
     route_hints: routeHints,
-    suggested_followup_capture: normalizeSuggestedFollowupCapture(
-      rawStructuredOutput?.suggested_followup_capture || []
+    suggested_question_capture: normalizeSuggestedFollowupCapture(
+      rawStructuredOutput?.suggested_question_capture || []
     ),
     normalization_notes: normalizationNotes
   }

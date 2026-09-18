@@ -6,6 +6,7 @@ import pinia from './store/index.js'
 import './styles/global.css'
 import { createPersistedState } from 'pinia-plugin-persistedstate'
 import { queryClient } from './lib/query-client.js'
+import { installPhoneLoginNavigationGate } from './utils/phone-login-gate.js'
 // #ifdef H5
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
@@ -30,6 +31,7 @@ export function createApp() {
   )
   app.use(pinia)
   app.use(VueQueryPlugin, { queryClient })
+  installPhoneLoginNavigationGate(uni)
   // #ifdef H5
   app.use(ElementPlus)
   // #endif

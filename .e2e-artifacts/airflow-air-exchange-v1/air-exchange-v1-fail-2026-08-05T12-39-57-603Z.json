@@ -1,0 +1,117 @@
+{
+  "task": "airflow-air-exchange-v1-e2e",
+  "gitHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "branch": "sprint-ai-workflow",
+  "projectPath": "/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin",
+  "wsEndpoint": "ws://127.0.0.1:9420",
+  "startedAt": "2026-08-05T12:39:49.778Z",
+  "endedAt": "2026-08-05T12:39:57.603Z",
+  "pages": [
+    {
+      "path": "/pages/airflow/index",
+      "time": "2026-08-05T12:39:53.645Z"
+    }
+  ],
+  "pageDataSummaries": [],
+  "assertions": [
+    {
+      "name": "component-scope:air-exchange-assessment",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-05T12:39:53.648Z"
+    },
+    {
+      "name": "stable-id-present:airflow-assessment",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-05T12:39:53.651Z"
+    },
+    {
+      "name": "stable-id-present:airflow-source-window",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-05T12:39:53.665Z"
+    },
+    {
+      "name": "stable-id-present:airflow-source-fresh_air",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-05T12:39:53.676Z"
+    },
+    {
+      "name": "stable-id-present:airflow-source-unknown",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-05T12:39:53.687Z"
+    },
+    {
+      "name": "legacy-closed-source-card-removed",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-05T12:39:53.698Z"
+    },
+    {
+      "name": "stable-id-present:airflow-submit-button",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-05T12:39:53.700Z"
+    },
+    {
+      "name": "submit-disabled-initial",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-05T12:39:53.702Z"
+    },
+    {
+      "name": "unknown-result-text",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-05T12:39:54.142Z"
+    },
+    {
+      "name": "unknown-not-no-window",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-05T12:39:54.142Z"
+    },
+    {
+      "name": "fresh-air-result-text",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-05T12:39:54.835Z"
+    },
+    {
+      "name": "fresh-air-no-outlet-or-draft",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-05T12:39:54.835Z"
+    },
+    {
+      "name": "window-none-recorded",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-05T12:39:55.927Z"
+    },
+    {
+      "name": "window-double-daily-recorded",
+      "passed": false,
+      "detail": null,
+      "time": "2026-08-05T12:39:57.136Z"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/airflow-air-exchange-v1/screenshots/airflow-window-recorded-2026-08-05T12-39-57-137Z.png",
+      "time": "2026-08-05T12:39:57.380Z"
+    },
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/airflow-air-exchange-v1/screenshots/airflow-final-2026-08-05T12-39-57-380Z.png",
+      "time": "2026-08-05T12:39:57.603Z"
+    }
+  ],
+  "classification": "FAIL_PRODUCT",
+  "blockerReason": "one or more assertions failed",
+  "status": "failed",
+  "failure_kind": "failed_product",
+  "business_assertions_reached": false
+}

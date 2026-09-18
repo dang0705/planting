@@ -6,8 +6,8 @@ module.exports = {
   runtimeFollowupModes: ['full', 'limited'],
   activeClassScoreFloor: 0.16,
   secondaryClassScoreFloor: 0.1,
-  hardGateActivationScoreFloor: 0.22,
-  hardGateStickyPreviousFloor: 0.14,
+  hardConditionActivationScoreFloor: 0.22,
+  hardConditionStickyPreviousFloor: 0.14,
   maxSecondaryClasses: 3,
   groupRolePriorityBoost: {
     differentiate: 26,
@@ -15,7 +15,7 @@ module.exports = {
     context: 10,
     confirm: 2
   },
-  classGateTypes: {
+  classConditionTypes: {
     soft: 'soft',
     hard: 'hard',
     disabled: 'disabled'

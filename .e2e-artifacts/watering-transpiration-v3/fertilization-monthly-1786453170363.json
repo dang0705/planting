@@ -1,0 +1,2329 @@
+{
+  "task": "watering-transpiration-v3-e2e-trae-20260713",
+  "gitHead": "e21c5605c6077bf8a5eb14da83c476738e824ee0",
+  "branch": "sprint-ai-workflow",
+  "baseHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "projectPath": "/Users/jay/WebstormProjects/planting/.tmp/dispatch-task/qa-runtime-sessions/fertilization-global-chain-20260811-r40-u6qGhD/project",
+  "mode": "fertilization-monthly",
+  "wsEndpoint": "ws://127.0.0.1:53502",
+  "startedAt": "2026-08-11T12:58:58.512Z",
+  "endedAt": "2026-08-11T12:59:30.363Z",
+  "pages": [
+    {
+      "path": "/pages/index/index",
+      "time": "2026-08-11T12:59:01.423Z"
+    },
+    {
+      "path": "pages/user-plant-detail/user-plant-detail",
+      "time": "2026-08-11T12:59:10.032Z"
+    },
+    {
+      "path": "/pages/index/index",
+      "time": "2026-08-11T12:59:16.429Z"
+    },
+    {
+      "path": "/pages/user-plant-detail/user-plant-detail?mode=view&id=95001",
+      "time": "2026-08-11T12:59:22.743Z"
+    },
+    {
+      "path": "/pages/user-plant-detail/user-plant-detail?mode=view&id=95001",
+      "time": "2026-08-11T12:59:30.286Z"
+    }
+  ],
+  "pageDataSummaries": [
+    {
+      "path": "/pages/index/index",
+      "summary": {
+        "fertilizationPopup": true,
+        "monthlyRowCount": 12,
+        "tableText": "月份 液体肥 缓释肥 1月 2月 3月 4月 5月 6月 7月 8月 9月 10月 11月 12月 暂停施肥 每月1次 暂停施肥 暂停追加 约3个月1次（长新叶或新芽时） 暂停追加 适用范围：温带室内盆栽参考（龟背竹属） 液体肥和缓释肥选一种，不要同时使用。 本表按温带室内盆栽的季节和生长节点整理。月份是参考，请结合植物是否正在长新叶或新芽调整施肥。表中某一格标为“暂停施肥”或“暂停追加”时，表示该栏对应的肥料在该月默认不追加；本功能不会为这类月份建立提醒。若植物仍持续长新叶或新芽，请人工参考同一张表中最近的生长期固定周期；找不到对应固定周期时，不要使用该肥料。 数据来源：RHS、UMN Extension"
+      },
+      "time": "2026-08-11T12:59:05.202Z"
+    },
+    {
+      "path": "/pages/user-plant-detail/user-plant-detail?mode=view&id=95001",
+      "summary": {
+        "route": "pages/user-plant-detail/user-plant-detail",
+        "monthlyRowCount": 12,
+        "cardText": "🧪 施肥建议 1/2浓度均衡肥 · 30-45天 · 生长期为主；休眠/低温/弱光期减量或暂停 施肥时间表 月份 液体肥 缓释肥 1月 2月 3月 4月 5月 6月 7月 8月 9月 10月 11月 12月 暂停施肥 每月1次 暂停施肥 暂停追加 约3个月1次（长新叶或新芽时） 暂停追加 适用范围：温带室内盆栽参考（龟背竹属） 液体肥和缓释肥选一种，不要同时使用。 本表按温带室内盆栽的季节和生长节点整理。月份是参考，请结合植物是否正在长新叶或新芽调整施肥。表中某一格标为“暂停施肥”或“暂停追加”时，表示该栏对应的肥料在该月默认不追加；本功能不会为这类月份建立提醒。若植物仍持续长新叶或新芽，请人工参考同一张表中最近的生长期固定周期；找不到对应固定周期时，不要使用该肥料。 数据来源：RHS、UMN Extension",
+        "tableText": "施肥时间表 月份 液体肥 缓释肥 1月 2月 3月 4月 5月 6月 7月 8月 9月 10月 11月 12月 暂停施肥 每月1次 暂停施肥 暂停追加 约3个月1次（长新叶或新芽时） 暂停追加 适用范围：温带室内盆栽参考（龟背竹属） 液体肥和缓释肥选一种，不要同时使用。 本表按温带室内盆栽的季节和生长节点整理。月份是参考，请结合植物是否正在长新叶或新芽调整施肥。表中某一格标为“暂停施肥”或“暂停追加”时，表示该栏对应的肥料在该月默认不追加；本功能不会为这类月份建立提醒。若植物仍持续长新叶或新芽，请人工参考同一张表中最近的生长期固定周期；找不到对应固定周期时，不要使用该肥料。 数据来源：RHS、UMN Extension"
+      },
+      "time": "2026-08-11T12:59:23.893Z"
+    }
+  ],
+  "capturedRequests": [
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants?page=1&pageSize=50",
+      "method": "GET",
+      "data": {},
+      "time": 1786453138532,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": {
+            "list": [
+              {
+                "id": 95001,
+                "plantId": "genus_care_026e7432408d56ad",
+                "canonicalName": "龟背竹",
+                "displayName": "龟背竹",
+                "recognizedName": "Monstera deliciosa",
+                "nickname": "施肥表验收龟背竹",
+                "genus": "Monstera",
+                "familyCn": "天南星科",
+                "familyEn": "Araceae",
+                "latinName": "Monstera deliciosa",
+                "sourceType": "catalog",
+                "identityResolutionStatus": "matched",
+                "location": "室内",
+                "plantDate": "2026-05-01",
+                "createdAt": "2026-05-01T00:00:00.000Z",
+                "notes": "",
+                "photos": [],
+                "imageFileId": "",
+                "lastWatered": null,
+                "nextWater": null,
+                "watering": {
+                  "way": "表层2–3cm微干后浇透",
+                  "freq": [
+                    5,
+                    10
+                  ],
+                  "unit": "天"
+                },
+                "fertilization": {
+                  "freq": [
+                    30,
+                    45
+                  ],
+                  "type": "1/2浓度均衡肥",
+                  "unit": "天",
+                  "other": "生长期为主；休眠/低温/弱光期减量或暂停"
+                },
+                "fertilizationMonthly": {
+                  "available": true,
+                  "scopeLabel": "温带室内盆栽参考（龟背竹属）",
+                  "scopeType": "indoor",
+                  "adjustmentMode": "phenology",
+                  "scopeGuidance": "本表按温带室内盆栽的季节和生长节点整理。月份是参考，请结合植物是否正在长新叶或新芽调整施肥。表中某一格标为“暂停施肥”或“暂停追加”时，表示该栏对应的肥料在该月默认不追加；本功能不会为这类月份建立提醒。若植物仍持续长新叶或新芽，请人工参考同一张表中最近的生长期固定周期；找不到对应固定周期时，不要使用该肥料。",
+                  "choiceGuidance": "液体肥和缓释肥选一种，不要同时使用。",
+                  "publicNote": "",
+                  "rows": [
+                    {
+                      "month": 1,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 2,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 3,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 4,
+                      "liquid": {
+                        "displayText": "每月1次",
+                        "sourceNames": [
+                          "RHS",
+                          "UMN Extension"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 1,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 1,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "约3个月1次（长新叶或新芽时）",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 3,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 3,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "month": 5,
+                      "liquid": {
+                        "displayText": "每月1次",
+                        "sourceNames": [
+                          "RHS",
+                          "UMN Extension"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 1,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 1,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "约3个月1次（长新叶或新芽时）",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 3,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 3,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "month": 6,
+                      "liquid": {
+                        "displayText": "每月1次",
+                        "sourceNames": [
+                          "RHS",
+                          "UMN Extension"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 1,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 1,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "约3个月1次（长新叶或新芽时）",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 3,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 3,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "month": 7,
+                      "liquid": {
+                        "displayText": "每月1次",
+                        "sourceNames": [
+                          "RHS",
+                          "UMN Extension"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 1,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 1,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "约3个月1次（长新叶或新芽时）",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 3,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 3,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "month": 8,
+                      "liquid": {
+                        "displayText": "每月1次",
+                        "sourceNames": [
+                          "RHS",
+                          "UMN Extension"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 1,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 1,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "约3个月1次（长新叶或新芽时）",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 3,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 3,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "month": 9,
+                      "liquid": {
+                        "displayText": "每月1次",
+                        "sourceNames": [
+                          "RHS",
+                          "UMN Extension"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 1,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 1,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "约3个月1次（长新叶或新芽时）",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 3,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 3,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "month": 10,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 11,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 12,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    }
+                  ],
+                  "sourceNames": [
+                    "RHS",
+                    "UMN Extension"
+                  ]
+                },
+                "sunning": {
+                  "way": "明亮散射光/半阴",
+                  "freq": [
+                    3,
+                    6
+                  ],
+                  "unit": "小时/天"
+                },
+                "ventilation": {
+                  "level": "medium",
+                  "sensitivity": "medium"
+                },
+                "temperatureMin": 18,
+                "temperatureMax": 30,
+                "humidityMin": 50,
+                "humidityMax": 80,
+                "potProfile": {
+                  "potTopDiameterCm": 18,
+                  "potBottomDiameterCm": 15,
+                  "potHeightCm": 16,
+                  "hasDrainageHole": "true",
+                  "potMaterial": "plastic",
+                  "substrateType": "general"
+                }
+              }
+            ],
+            "total": 1,
+            "page": 1,
+            "pageSize": 50
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants/fertilization-reminders?plantId=95001",
+      "method": "GET",
+      "data": {},
+      "time": 1786453144638,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": null
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants/fertilization-reminders/preview",
+      "method": "POST",
+      "data": {
+        "plantId": 95001,
+        "fertilizerType": "liquid"
+      },
+      "time": 1786453145317,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": {
+            "planId": "fixture-fertilization-plan-95001",
+            "plantId": 95001,
+            "fertilizerType": "liquid",
+            "reminderKind": "first_confirmation",
+            "confirmationReasons": [
+              "first_confirmation"
+            ],
+            "nextCheckDate": "2026-08-22",
+            "nextTime": "2026-08-22T09:00:00",
+            "dueNow": false,
+            "lastDateSource": "estimated",
+            "ruleSnapshot": {
+              "reminderKind": "first_confirmation",
+              "confirmationReasons": [
+                "first_confirmation"
+              ],
+              "displayText": "每月1次",
+              "sourceNames": [
+                "RHS",
+                "UMN Extension"
+              ],
+              "schedule": {
+                "schemaVersion": 1,
+                "kind": "interval",
+                "interval": {
+                  "min": {
+                    "value": 1,
+                    "unit": "month"
+                  },
+                  "max": {
+                    "value": 1,
+                    "unit": "month"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants?id=95001",
+      "method": "GET",
+      "data": {},
+      "time": 1786453149443,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": {
+            "id": 95001,
+            "plantId": "genus_care_026e7432408d56ad",
+            "canonicalName": "龟背竹",
+            "displayName": "龟背竹",
+            "recognizedName": "Monstera deliciosa",
+            "nickname": "施肥表验收龟背竹",
+            "genus": "Monstera",
+            "familyCn": "天南星科",
+            "familyEn": "Araceae",
+            "latinName": "Monstera deliciosa",
+            "sourceType": "catalog",
+            "identityResolutionStatus": "matched",
+            "location": "室内",
+            "plantDate": "2026-05-01",
+            "createdAt": "2026-05-01T00:00:00.000Z",
+            "notes": "",
+            "photos": [],
+            "imageFileId": "",
+            "lastWatered": null,
+            "nextWater": null,
+            "watering": {
+              "way": "表层2–3cm微干后浇透",
+              "freq": [
+                5,
+                10
+              ],
+              "unit": "天"
+            },
+            "fertilization": {
+              "freq": [
+                30,
+                45
+              ],
+              "type": "1/2浓度均衡肥",
+              "unit": "天",
+              "other": "生长期为主；休眠/低温/弱光期减量或暂停"
+            },
+            "fertilizationMonthly": {
+              "available": true,
+              "scopeLabel": "温带室内盆栽参考（龟背竹属）",
+              "scopeType": "indoor",
+              "adjustmentMode": "phenology",
+              "scopeGuidance": "本表按温带室内盆栽的季节和生长节点整理。月份是参考，请结合植物是否正在长新叶或新芽调整施肥。表中某一格标为“暂停施肥”或“暂停追加”时，表示该栏对应的肥料在该月默认不追加；本功能不会为这类月份建立提醒。若植物仍持续长新叶或新芽，请人工参考同一张表中最近的生长期固定周期；找不到对应固定周期时，不要使用该肥料。",
+              "choiceGuidance": "液体肥和缓释肥选一种，不要同时使用。",
+              "publicNote": "",
+              "rows": [
+                {
+                  "month": 1,
+                  "liquid": {
+                    "displayText": "暂停施肥",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "暂停追加",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  }
+                },
+                {
+                  "month": 2,
+                  "liquid": {
+                    "displayText": "暂停施肥",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "暂停追加",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  }
+                },
+                {
+                  "month": 3,
+                  "liquid": {
+                    "displayText": "暂停施肥",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "暂停追加",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  }
+                },
+                {
+                  "month": 4,
+                  "liquid": {
+                    "displayText": "每月1次",
+                    "sourceNames": [
+                      "RHS",
+                      "UMN Extension"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 1,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 1,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "约3个月1次（长新叶或新芽时）",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 3,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 3,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "month": 5,
+                  "liquid": {
+                    "displayText": "每月1次",
+                    "sourceNames": [
+                      "RHS",
+                      "UMN Extension"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 1,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 1,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "约3个月1次（长新叶或新芽时）",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 3,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 3,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "month": 6,
+                  "liquid": {
+                    "displayText": "每月1次",
+                    "sourceNames": [
+                      "RHS",
+                      "UMN Extension"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 1,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 1,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "约3个月1次（长新叶或新芽时）",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 3,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 3,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "month": 7,
+                  "liquid": {
+                    "displayText": "每月1次",
+                    "sourceNames": [
+                      "RHS",
+                      "UMN Extension"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 1,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 1,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "约3个月1次（长新叶或新芽时）",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 3,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 3,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "month": 8,
+                  "liquid": {
+                    "displayText": "每月1次",
+                    "sourceNames": [
+                      "RHS",
+                      "UMN Extension"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 1,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 1,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "约3个月1次（长新叶或新芽时）",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 3,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 3,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "month": 9,
+                  "liquid": {
+                    "displayText": "每月1次",
+                    "sourceNames": [
+                      "RHS",
+                      "UMN Extension"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 1,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 1,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "约3个月1次（长新叶或新芽时）",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 3,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 3,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "month": 10,
+                  "liquid": {
+                    "displayText": "暂停施肥",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "暂停追加",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  }
+                },
+                {
+                  "month": 11,
+                  "liquid": {
+                    "displayText": "暂停施肥",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "暂停追加",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  }
+                },
+                {
+                  "month": 12,
+                  "liquid": {
+                    "displayText": "暂停施肥",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "暂停追加",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  }
+                }
+              ],
+              "sourceNames": [
+                "RHS",
+                "UMN Extension"
+              ]
+            },
+            "sunning": {
+              "way": "明亮散射光/半阴",
+              "freq": [
+                3,
+                6
+              ],
+              "unit": "小时/天"
+            },
+            "ventilation": {
+              "level": "medium",
+              "sensitivity": "medium"
+            },
+            "temperatureMin": 18,
+            "temperatureMax": 30,
+            "humidityMin": 50,
+            "humidityMax": 80,
+            "potProfile": {
+              "potTopDiameterCm": 18,
+              "potBottomDiameterCm": 15,
+              "potHeightCm": 16,
+              "hasDrainageHole": "true",
+              "potMaterial": "plastic",
+              "substrateType": "general"
+            }
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants?page=1&pageSize=50",
+      "method": "GET",
+      "data": {},
+      "time": 1786453153177,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": {
+            "list": [
+              {
+                "id": 95001,
+                "plantId": "genus_care_026e7432408d56ad",
+                "canonicalName": "龟背竹",
+                "displayName": "龟背竹",
+                "recognizedName": "Monstera deliciosa",
+                "nickname": "施肥表验收龟背竹",
+                "genus": "Monstera",
+                "familyCn": "天南星科",
+                "familyEn": "Araceae",
+                "latinName": "Monstera deliciosa",
+                "sourceType": "catalog",
+                "identityResolutionStatus": "matched",
+                "location": "室内",
+                "plantDate": "2026-05-01",
+                "createdAt": "2026-05-01T00:00:00.000Z",
+                "notes": "",
+                "photos": [],
+                "imageFileId": "",
+                "lastWatered": null,
+                "nextWater": null,
+                "watering": {
+                  "way": "表层2–3cm微干后浇透",
+                  "freq": [
+                    5,
+                    10
+                  ],
+                  "unit": "天"
+                },
+                "fertilization": {
+                  "freq": [
+                    30,
+                    45
+                  ],
+                  "type": "1/2浓度均衡肥",
+                  "unit": "天",
+                  "other": "生长期为主；休眠/低温/弱光期减量或暂停"
+                },
+                "fertilizationMonthly": {
+                  "available": true,
+                  "scopeLabel": "温带室内盆栽参考（龟背竹属）",
+                  "scopeType": "indoor",
+                  "adjustmentMode": "phenology",
+                  "scopeGuidance": "本表按温带室内盆栽的季节和生长节点整理。月份是参考，请结合植物是否正在长新叶或新芽调整施肥。表中某一格标为“暂停施肥”或“暂停追加”时，表示该栏对应的肥料在该月默认不追加；本功能不会为这类月份建立提醒。若植物仍持续长新叶或新芽，请人工参考同一张表中最近的生长期固定周期；找不到对应固定周期时，不要使用该肥料。",
+                  "choiceGuidance": "液体肥和缓释肥选一种，不要同时使用。",
+                  "publicNote": "",
+                  "rows": [
+                    {
+                      "month": 1,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 2,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 3,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 4,
+                      "liquid": {
+                        "displayText": "每月1次",
+                        "sourceNames": [
+                          "RHS",
+                          "UMN Extension"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 1,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 1,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "约3个月1次（长新叶或新芽时）",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 3,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 3,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "month": 5,
+                      "liquid": {
+                        "displayText": "每月1次",
+                        "sourceNames": [
+                          "RHS",
+                          "UMN Extension"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 1,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 1,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "约3个月1次（长新叶或新芽时）",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 3,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 3,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "month": 6,
+                      "liquid": {
+                        "displayText": "每月1次",
+                        "sourceNames": [
+                          "RHS",
+                          "UMN Extension"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 1,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 1,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "约3个月1次（长新叶或新芽时）",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 3,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 3,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "month": 7,
+                      "liquid": {
+                        "displayText": "每月1次",
+                        "sourceNames": [
+                          "RHS",
+                          "UMN Extension"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 1,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 1,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "约3个月1次（长新叶或新芽时）",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 3,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 3,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "month": 8,
+                      "liquid": {
+                        "displayText": "每月1次",
+                        "sourceNames": [
+                          "RHS",
+                          "UMN Extension"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 1,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 1,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "约3个月1次（长新叶或新芽时）",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 3,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 3,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "month": 9,
+                      "liquid": {
+                        "displayText": "每月1次",
+                        "sourceNames": [
+                          "RHS",
+                          "UMN Extension"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 1,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 1,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "约3个月1次（长新叶或新芽时）",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "interval",
+                          "interval": {
+                            "min": {
+                              "value": 3,
+                              "unit": "month"
+                            },
+                            "max": {
+                              "value": 3,
+                              "unit": "month"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "month": 10,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 11,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    },
+                    {
+                      "month": 12,
+                      "liquid": {
+                        "displayText": "暂停施肥",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      },
+                      "slowRelease": {
+                        "displayText": "暂停追加",
+                        "sourceNames": [
+                          "RHS"
+                        ],
+                        "schedule": {
+                          "schemaVersion": 1,
+                          "kind": "pause"
+                        }
+                      }
+                    }
+                  ],
+                  "sourceNames": [
+                    "RHS",
+                    "UMN Extension"
+                  ]
+                },
+                "sunning": {
+                  "way": "明亮散射光/半阴",
+                  "freq": [
+                    3,
+                    6
+                  ],
+                  "unit": "小时/天"
+                },
+                "ventilation": {
+                  "level": "medium",
+                  "sensitivity": "medium"
+                },
+                "temperatureMin": 18,
+                "temperatureMax": 30,
+                "humidityMin": 50,
+                "humidityMax": 80,
+                "potProfile": {
+                  "potTopDiameterCm": 18,
+                  "potBottomDiameterCm": 15,
+                  "potHeightCm": 16,
+                  "hasDrainageHole": "true",
+                  "potMaterial": "plastic",
+                  "substrateType": "general"
+                }
+              }
+            ],
+            "total": 1,
+            "page": 1,
+            "pageSize": 50
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.66:3010/plant-user-http/user-plants?id=95001",
+      "method": "GET",
+      "data": {},
+      "time": 1786453159520,
+      "fixture": true,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "data": {
+            "id": 95001,
+            "plantId": "genus_care_026e7432408d56ad",
+            "canonicalName": "龟背竹",
+            "displayName": "龟背竹",
+            "recognizedName": "Monstera deliciosa",
+            "nickname": "施肥表验收龟背竹",
+            "genus": "Monstera",
+            "familyCn": "天南星科",
+            "familyEn": "Araceae",
+            "latinName": "Monstera deliciosa",
+            "sourceType": "catalog",
+            "identityResolutionStatus": "matched",
+            "location": "室内",
+            "plantDate": "2026-05-01",
+            "createdAt": "2026-05-01T00:00:00.000Z",
+            "notes": "",
+            "photos": [],
+            "imageFileId": "",
+            "lastWatered": null,
+            "nextWater": null,
+            "watering": {
+              "way": "表层2–3cm微干后浇透",
+              "freq": [
+                5,
+                10
+              ],
+              "unit": "天"
+            },
+            "fertilization": {
+              "freq": [
+                30,
+                45
+              ],
+              "type": "1/2浓度均衡肥",
+              "unit": "天",
+              "other": "生长期为主；休眠/低温/弱光期减量或暂停"
+            },
+            "fertilizationMonthly": {
+              "available": true,
+              "scopeLabel": "温带室内盆栽参考（龟背竹属）",
+              "scopeType": "indoor",
+              "adjustmentMode": "phenology",
+              "scopeGuidance": "本表按温带室内盆栽的季节和生长节点整理。月份是参考，请结合植物是否正在长新叶或新芽调整施肥。表中某一格标为“暂停施肥”或“暂停追加”时，表示该栏对应的肥料在该月默认不追加；本功能不会为这类月份建立提醒。若植物仍持续长新叶或新芽，请人工参考同一张表中最近的生长期固定周期；找不到对应固定周期时，不要使用该肥料。",
+              "choiceGuidance": "液体肥和缓释肥选一种，不要同时使用。",
+              "publicNote": "",
+              "rows": [
+                {
+                  "month": 1,
+                  "liquid": {
+                    "displayText": "暂停施肥",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "暂停追加",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  }
+                },
+                {
+                  "month": 2,
+                  "liquid": {
+                    "displayText": "暂停施肥",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "暂停追加",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  }
+                },
+                {
+                  "month": 3,
+                  "liquid": {
+                    "displayText": "暂停施肥",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "暂停追加",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  }
+                },
+                {
+                  "month": 4,
+                  "liquid": {
+                    "displayText": "每月1次",
+                    "sourceNames": [
+                      "RHS",
+                      "UMN Extension"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 1,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 1,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "约3个月1次（长新叶或新芽时）",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 3,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 3,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "month": 5,
+                  "liquid": {
+                    "displayText": "每月1次",
+                    "sourceNames": [
+                      "RHS",
+                      "UMN Extension"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 1,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 1,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "约3个月1次（长新叶或新芽时）",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 3,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 3,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "month": 6,
+                  "liquid": {
+                    "displayText": "每月1次",
+                    "sourceNames": [
+                      "RHS",
+                      "UMN Extension"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 1,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 1,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "约3个月1次（长新叶或新芽时）",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 3,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 3,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "month": 7,
+                  "liquid": {
+                    "displayText": "每月1次",
+                    "sourceNames": [
+                      "RHS",
+                      "UMN Extension"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 1,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 1,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "约3个月1次（长新叶或新芽时）",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 3,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 3,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "month": 8,
+                  "liquid": {
+                    "displayText": "每月1次",
+                    "sourceNames": [
+                      "RHS",
+                      "UMN Extension"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 1,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 1,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "约3个月1次（长新叶或新芽时）",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 3,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 3,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "month": 9,
+                  "liquid": {
+                    "displayText": "每月1次",
+                    "sourceNames": [
+                      "RHS",
+                      "UMN Extension"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 1,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 1,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "约3个月1次（长新叶或新芽时）",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "interval",
+                      "interval": {
+                        "min": {
+                          "value": 3,
+                          "unit": "month"
+                        },
+                        "max": {
+                          "value": 3,
+                          "unit": "month"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "month": 10,
+                  "liquid": {
+                    "displayText": "暂停施肥",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "暂停追加",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  }
+                },
+                {
+                  "month": 11,
+                  "liquid": {
+                    "displayText": "暂停施肥",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "暂停追加",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  }
+                },
+                {
+                  "month": 12,
+                  "liquid": {
+                    "displayText": "暂停施肥",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  },
+                  "slowRelease": {
+                    "displayText": "暂停追加",
+                    "sourceNames": [
+                      "RHS"
+                    ],
+                    "schedule": {
+                      "schemaVersion": 1,
+                      "kind": "pause"
+                    }
+                  }
+                }
+              ],
+              "sourceNames": [
+                "RHS",
+                "UMN Extension"
+              ]
+            },
+            "sunning": {
+              "way": "明亮散射光/半阴",
+              "freq": [
+                3,
+                6
+              ],
+              "unit": "小时/天"
+            },
+            "ventilation": {
+              "level": "medium",
+              "sensitivity": "medium"
+            },
+            "temperatureMin": 18,
+            "temperatureMax": 30,
+            "humidityMin": 50,
+            "humidityMax": 80,
+            "potProfile": {
+              "potTopDiameterCm": 18,
+              "potBottomDiameterCm": 15,
+              "potHeightCm": 16,
+              "hasDrainageHole": "true",
+              "potMaterial": "plastic",
+              "substrateType": "general"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "name": "首页通过真实 plant store 展示 Monstera 夹具植物",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:01.451Z"
+    },
+    {
+      "name": "首页夹具截图有效",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:04.525Z"
+    },
+    {
+      "name": "截图 handoff 后首页植物卡片仍可定位",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:04.554Z"
+    },
+    {
+      "name": "首页植物卡片显示施肥入口",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:04.571Z"
+    },
+    {
+      "name": "首页底部施肥弹框打开",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:05.201Z"
+    },
+    {
+      "name": "首页弹框显示月度施肥表",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:05.201Z"
+    },
+    {
+      "name": "首页弹框包含 1—12 月",
+      "passed": true,
+      "detail": "found 12/12 months",
+      "time": "2026-08-11T12:59:05.202Z"
+    },
+    {
+      "name": "首页弹框显示来源名称",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:05.202Z"
+    },
+    {
+      "name": "首页弹框显示月度表适用范围和调整提示",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:05.202Z"
+    },
+    {
+      "name": "首页弹框不展示内部证据字段",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:05.202Z"
+    },
+    {
+      "name": "首页弹框使用施肥提醒文案",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:05.224Z"
+    },
+    {
+      "name": "施肥提醒只展示当前月的固定周期选项",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:05.261Z"
+    },
+    {
+      "name": "施肥提醒可请求提醒日期预览",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:05.261Z"
+    },
+    {
+      "name": "施肥提醒显示提醒日期预览",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:05.658Z"
+    },
+    {
+      "name": "无历史日期时显示首次确认提醒",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:05.658Z"
+    },
+    {
+      "name": "首页施肥弹框截图有效",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:08.719Z"
+    },
+    {
+      "name": "首页施肥弹框可关闭",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:08.783Z"
+    },
+    {
+      "name": "关闭施肥弹框后首页植物卡片仍可定位",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:09.175Z"
+    },
+    {
+      "name": "首页真实植物卡片入口可进入 user-plant-detail 路由",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:10.032Z"
+    },
+    {
+      "name": "植物详情页和施肥建议卡渲染",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:23.891Z"
+    },
+    {
+      "name": "已审核月度施肥表渲染",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:23.891Z"
+    },
+    {
+      "name": "月度表包含 1—12 月",
+      "passed": true,
+      "detail": "found 12/12 months",
+      "time": "2026-08-11T12:59:23.893Z"
+    },
+    {
+      "name": "基础属级施肥间隔仍保留",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:23.893Z"
+    },
+    {
+      "name": "液体肥生长期规则正确显示",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:23.893Z"
+    },
+    {
+      "name": "停肥期规则正确显示",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:23.893Z"
+    },
+    {
+      "name": "缓释肥规则正确显示",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:23.893Z"
+    },
+    {
+      "name": "表格底部总结显示全部来源且去重",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:23.893Z"
+    },
+    {
+      "name": "详情页月度表显示适用范围和调整提示",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:23.893Z"
+    },
+    {
+      "name": "用户侧不展示 URL、证据定位或内部字段",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:23.893Z"
+    },
+    {
+      "name": "详情页滚动到施肥月度表位置",
+      "passed": true,
+      "detail": "tableTop=2164.5625, scrollTop=2044",
+      "time": "2026-08-11T12:59:23.893Z"
+    },
+    {
+      "name": "详情页月度表截图有效",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:27.425Z"
+    },
+    {
+      "name": "再次进入详情页仍能显示月度施肥表",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-11T12:59:30.355Z"
+    },
+    {
+      "name": "真实 wx.request 命中用户植物列表和详情接口夹具",
+      "passed": true,
+      "detail": "http://192.168.50.66:3010/plant-user-http/user-plants?page=1&pageSize=50, http://192.168.50.66:3010/plant-user-http/user-plants/fertilization-reminders?plantId=95001, http://192.168.50.66:3010/plant-user-http/user-plants/fertilization-reminders/preview, http://192.168.50.66:3010/plant-user-http/user-plants?id=95001, http://192.168.50.66:3010/plant-user-http/user-plants?page=1&pageSize=50, http://192.168.50.66:3010/plant-user-http/user-plants?id=95001",
+      "time": "2026-08-11T12:59:30.356Z"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/watering-transpiration-v3/fertilization-monthly-home.png",
+      "time": "2026-08-11T12:59:04.525Z"
+    },
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/watering-transpiration-v3/fertilization-monthly-popup.png",
+      "time": "2026-08-11T12:59:08.719Z"
+    },
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/watering-transpiration-v3/fertilization-monthly-detail.png",
+      "time": "2026-08-11T12:59:27.425Z"
+    }
+  ],
+  "classification": "PASS",
+  "blockerReason": null,
+  "status": "passed",
+  "failure_kind": null,
+  "business_assertions_reached": true
+}

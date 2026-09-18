@@ -1,0 +1,894 @@
+{
+  "task": "watering-transpiration-v3-e2e-trae-20260713",
+  "gitHead": "b5bcbe4a343d04bf1ec9a1b73bdfd56cd45c377c",
+  "branch": "sprint-ai-workflow",
+  "baseHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "projectPath": "/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin",
+  "mode": "shadow",
+  "wsEndpoint": "ws://127.0.0.1:65094",
+  "startedAt": "2026-08-09T04:50:07.111Z",
+  "endedAt": "2026-08-09T04:50:35.884Z",
+  "pages": [
+    {
+      "path": "/pages/watering-advisor/watering-advisor",
+      "time": "2026-08-09T04:50:07.118Z"
+    }
+  ],
+  "pageDataSummaries": [
+    {
+      "path": "/pages/watering-advisor/watering-advisor",
+      "summary": {
+        "route": "pages/watering-advisor/watering-advisor",
+        "source": "public_page_path"
+      },
+      "time": "2026-08-09T04:50:12.500Z"
+    }
+  ],
+  "capturedRequests": [
+    {
+      "url": "http://192.168.50.80:3010/weather-http/weather/environment-context",
+      "method": "POST",
+      "data": {
+        "lat": 31.22,
+        "lng": 121.46,
+        "diagnosisDate": "2026-08-09",
+        "city": "上海",
+        "province": "",
+        "mode": "environment",
+        "locationKey": "",
+        "careLocationId": "",
+        "source": "",
+        "plantId": ""
+      },
+      "header": {
+        "Content-Type": "application/json",
+        "x-app-env": "development",
+        "x-env": "development",
+        "x-terminal-e2e": "true",
+        "x-anonymous-dev-identity": "true",
+        "x-wx-openid": "dev_terminal_mp_local",
+        "x-openid": "dev_terminal_mp_local"
+      },
+      "time": 1786251028718,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "message": "获取成功",
+          "data": {
+            "locationKey": "city:shanghai",
+            "meta": {
+              "diagnosisDate": "2026-08-09",
+              "historicalWindow": {
+                "start": "2026-07-30",
+                "end": "2026-08-08"
+              },
+              "forecastWindow": {
+                "start": "2026-08-09",
+                "end": "2026-08-23"
+              },
+              "todaySource": "forecast_15d_with_weather_now",
+              "recordCounts": {
+                "historicalDays": 10,
+                "forecastDays": 15,
+                "totalDailyRecords": 25
+              },
+              "lat": 31.22,
+              "lng": 121.46,
+              "warnings": []
+            },
+            "historicalDays": [
+              {
+                "date": "2026-07-30",
+                "tempMaxC": 37,
+                "tempMinC": 29,
+                "humidity": 65,
+                "precipMm": 8,
+                "source": "qweather_historical_weather"
+              },
+              {
+                "date": "2026-07-31",
+                "tempMaxC": 36,
+                "tempMinC": 29,
+                "humidity": 64,
+                "precipMm": 0,
+                "source": "qweather_historical_weather"
+              },
+              {
+                "date": "2026-08-01",
+                "tempMaxC": 37,
+                "tempMinC": 26,
+                "humidity": 70,
+                "precipMm": 11,
+                "source": "qweather_historical_weather"
+              },
+              {
+                "date": "2026-08-02",
+                "tempMaxC": 36,
+                "tempMinC": 27,
+                "humidity": 70,
+                "precipMm": 1,
+                "source": "qweather_historical_weather"
+              },
+              {
+                "date": "2026-08-03",
+                "tempMaxC": 36,
+                "tempMinC": 28,
+                "humidity": 62,
+                "precipMm": 0,
+                "source": "qweather_historical_weather"
+              },
+              {
+                "date": "2026-08-04",
+                "tempMaxC": 34,
+                "tempMinC": 27,
+                "humidity": 72,
+                "precipMm": 0,
+                "source": "qweather_historical_weather"
+              },
+              {
+                "date": "2026-08-05",
+                "tempMaxC": 34,
+                "tempMinC": 28,
+                "humidity": 72,
+                "precipMm": 0,
+                "source": "qweather_historical_weather"
+              },
+              {
+                "date": "2026-08-06",
+                "tempMaxC": 34,
+                "tempMinC": 29,
+                "humidity": 71,
+                "precipMm": 0,
+                "source": "qweather_historical_weather"
+              },
+              {
+                "date": "2026-08-07",
+                "tempMaxC": 34,
+                "tempMinC": 29,
+                "humidity": 68,
+                "precipMm": 0,
+                "source": "qweather_historical_weather"
+              },
+              {
+                "date": "2026-08-08",
+                "tempMaxC": 32,
+                "tempMinC": 29,
+                "humidity": 70,
+                "precipMm": 0,
+                "source": "qweather_historical_weather"
+              }
+            ],
+            "forecastDays": [
+              {
+                "date": "2026-08-09",
+                "tempMaxC": 27,
+                "tempMinC": 25,
+                "humidity": 93,
+                "precipMm": 18.2,
+                "uvIndex": 2,
+                "textDay": "暴雨",
+                "textNight": "暴雨",
+                "source": "qweather_forecast_15d"
+              },
+              {
+                "date": "2026-08-10",
+                "tempMaxC": 28,
+                "tempMinC": 26,
+                "humidity": 96,
+                "precipMm": 40.8,
+                "uvIndex": 3,
+                "textDay": "暴雨",
+                "textNight": "小雨",
+                "source": 1
+              },
+              {
+                "date": "2026-08-11",
+                "tempMaxC": 30,
+                "tempMinC": 26,
+                "humidity": 87,
+                "precipMm": 7.7,
+                "uvIndex": 3,
+                "textDay": "小雨",
+                "textNight": "小雨",
+                "source": 2
+              },
+              {
+                "date": "2026-08-12",
+                "tempMaxC": 30,
+                "tempMinC": 26,
+                "humidity": 94,
+                "precipMm": 7.4,
+                "uvIndex": 4,
+                "textDay": "中雨",
+                "textNight": "小雨",
+                "source": 3
+              },
+              {
+                "date": "2026-08-13",
+                "tempMaxC": 30,
+                "tempMinC": 26,
+                "humidity": 91,
+                "precipMm": 0,
+                "uvIndex": 5,
+                "textDay": "小雨",
+                "textNight": "阴",
+                "source": 4
+              },
+              {
+                "date": "2026-08-14",
+                "tempMaxC": 32,
+                "tempMinC": 25,
+                "humidity": 83,
+                "precipMm": 0.2,
+                "uvIndex": 11,
+                "textDay": "小雨",
+                "textNight": "小雨",
+                "source": 5
+              },
+              {
+                "date": "2026-08-15",
+                "tempMaxC": 32,
+                "tempMinC": 26,
+                "humidity": 82,
+                "precipMm": 9.1,
+                "uvIndex": 9,
+                "textDay": "阴",
+                "textNight": "多云",
+                "source": 6
+              },
+              {
+                "date": "2026-08-16",
+                "tempMaxC": 32,
+                "tempMinC": 25,
+                "humidity": 94,
+                "precipMm": 1.5,
+                "uvIndex": 11,
+                "textDay": "多云",
+                "textNight": "小雨",
+                "source": 7
+              },
+              {
+                "date": "2026-08-17",
+                "tempMaxC": 32,
+                "tempMinC": 26,
+                "humidity": 89,
+                "precipMm": 3.7,
+                "uvIndex": 9,
+                "textDay": "小雨",
+                "textNight": "阴",
+                "source": 8
+              },
+              {
+                "date": "2026-08-18",
+                "tempMaxC": 33,
+                "tempMinC": 28,
+                "humidity": 85,
+                "precipMm": 2.3,
+                "uvIndex": 10,
+                "textDay": "阴",
+                "textNight": "小雨",
+                "source": 9
+              },
+              {
+                "date": "2026-08-19",
+                "tempMaxC": 33,
+                "tempMinC": 28,
+                "humidity": 84,
+                "precipMm": 1.6,
+                "uvIndex": 9,
+                "textDay": "小雨",
+                "textNight": "小雨",
+                "source": 10
+              },
+              {
+                "date": "2026-08-20",
+                "tempMaxC": 34,
+                "tempMinC": 27,
+                "humidity": 86,
+                "precipMm": 1.2,
+                "uvIndex": 9,
+                "textDay": "阴",
+                "textNight": "阴",
+                "source": 11
+              },
+              {
+                "date": "2026-08-21",
+                "tempMaxC": 34,
+                "tempMinC": 28,
+                "humidity": 85,
+                "precipMm": 0,
+                "uvIndex": 10,
+                "textDay": "阴",
+                "textNight": "小雨",
+                "source": 12
+              },
+              {
+                "date": "2026-08-22",
+                "tempMaxC": 34,
+                "tempMinC": 27,
+                "humidity": 86,
+                "precipMm": 0,
+                "uvIndex": 6,
+                "textDay": "小雨",
+                "textNight": "小雨",
+                "source": 13
+              },
+              {
+                "date": "2026-08-23",
+                "tempMaxC": 30,
+                "tempMinC": 27,
+                "humidity": 79,
+                "precipMm": 0.6,
+                "uvIndex": 10,
+                "textDay": "小雨",
+                "textNight": "小雨",
+                "source": 14
+              }
+            ],
+            "currentWeather": {
+              "tempC": 26,
+              "feelsLikeC": 24,
+              "icon": "307",
+              "text": "大雨",
+              "wind360": 0,
+              "windDir": "北风",
+              "windScale": "5",
+              "windSpeed": 34,
+              "humidity": 93,
+              "precipMm": 32,
+              "pressure": 998,
+              "visibilityKm": 4,
+              "cloud": 100,
+              "dew": 24,
+              "obsTime": "2026-08-09T12:44+08:00",
+              "source": "qweather_weather_now"
+            },
+            "timestamp": "2026-08-09T04:50:29.199Z"
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.80:3010/plant-user-http/user-plants/watering-advisor",
+      "method": "POST",
+      "data": {
+        "catalogPlantId": "plant_identity_bfae80168f4b7a73",
+        "potProfile": {
+          "potTopDiameterCm": "20",
+          "potBottomDiameterCm": "10",
+          "potHeightCm": "15",
+          "hasDrainageHole": "true",
+          "substrateType": "unknown"
+        },
+        "referenceDate": "2026-08-09",
+        "weatherDays": [
+          {
+            "date": "2026-07-30",
+            "tempMaxC": 37,
+            "tempMinC": 29,
+            "humidity": 65,
+            "precipMm": 8,
+            "source": "qweather_historical_weather"
+          },
+          {
+            "date": "2026-07-31",
+            "tempMaxC": 36,
+            "tempMinC": 29,
+            "humidity": 64,
+            "precipMm": 0,
+            "source": "qweather_historical_weather"
+          },
+          {
+            "date": "2026-08-01",
+            "tempMaxC": 37,
+            "tempMinC": 26,
+            "humidity": 70,
+            "precipMm": 11,
+            "source": "qweather_historical_weather"
+          },
+          {
+            "date": "2026-08-02",
+            "tempMaxC": 36,
+            "tempMinC": 27,
+            "humidity": 70,
+            "precipMm": 1,
+            "source": "qweather_historical_weather"
+          },
+          {
+            "date": "2026-08-03",
+            "tempMaxC": 36,
+            "tempMinC": 28,
+            "humidity": 62,
+            "precipMm": 0,
+            "source": "qweather_historical_weather"
+          },
+          {
+            "date": "2026-08-04",
+            "tempMaxC": 34,
+            "tempMinC": 27,
+            "humidity": 72,
+            "precipMm": 0,
+            "source": "qweather_historical_weather"
+          },
+          {
+            "date": "2026-08-05",
+            "tempMaxC": 34,
+            "tempMinC": 28,
+            "humidity": 72,
+            "precipMm": 0,
+            "source": "qweather_historical_weather"
+          },
+          {
+            "date": "2026-08-06",
+            "tempMaxC": 34,
+            "tempMinC": 29,
+            "humidity": 71,
+            "precipMm": 0,
+            "source": "qweather_historical_weather"
+          },
+          {
+            "date": "2026-08-07",
+            "tempMaxC": 34,
+            "tempMinC": 29,
+            "humidity": 68,
+            "precipMm": 0,
+            "source": "qweather_historical_weather"
+          },
+          {
+            "date": "2026-08-08",
+            "tempMaxC": 32,
+            "tempMinC": 29,
+            "humidity": 70,
+            "precipMm": 0,
+            "source": "qweather_historical_weather"
+          }
+        ],
+        "forecastDays": [
+          {
+            "date": "2026-08-10",
+            "tempMaxC": 28,
+            "tempMinC": 26,
+            "humidity": 96,
+            "precipMm": 40.8,
+            "uvIndex": 3,
+            "textDay": "暴雨",
+            "textNight": "小雨",
+            "source": 1
+          },
+          {
+            "date": "2026-08-11",
+            "tempMaxC": 30,
+            "tempMinC": 26,
+            "humidity": 87,
+            "precipMm": 7.7,
+            "uvIndex": 3,
+            "textDay": "小雨",
+            "textNight": "小雨",
+            "source": 2
+          },
+          {
+            "date": "2026-08-12",
+            "tempMaxC": 30,
+            "tempMinC": 26,
+            "humidity": 94,
+            "precipMm": 7.4,
+            "uvIndex": 4,
+            "textDay": "中雨",
+            "textNight": "小雨",
+            "source": 3
+          },
+          {
+            "date": "2026-08-13",
+            "tempMaxC": 30,
+            "tempMinC": 26,
+            "humidity": 91,
+            "precipMm": 0,
+            "uvIndex": 5,
+            "textDay": "小雨",
+            "textNight": "阴",
+            "source": 4
+          },
+          {
+            "date": "2026-08-14",
+            "tempMaxC": 32,
+            "tempMinC": 25,
+            "humidity": 83,
+            "precipMm": 0.2,
+            "uvIndex": 11,
+            "textDay": "小雨",
+            "textNight": "小雨",
+            "source": 5
+          },
+          {
+            "date": "2026-08-15",
+            "tempMaxC": 32,
+            "tempMinC": 26,
+            "humidity": 82,
+            "precipMm": 9.1,
+            "uvIndex": 9,
+            "textDay": "阴",
+            "textNight": "多云",
+            "source": 6
+          },
+          {
+            "date": "2026-08-16",
+            "tempMaxC": 32,
+            "tempMinC": 25,
+            "humidity": 94,
+            "precipMm": 1.5,
+            "uvIndex": 11,
+            "textDay": "多云",
+            "textNight": "小雨",
+            "source": 7
+          },
+          {
+            "date": "2026-08-17",
+            "tempMaxC": 32,
+            "tempMinC": 26,
+            "humidity": 89,
+            "precipMm": 3.7,
+            "uvIndex": 9,
+            "textDay": "小雨",
+            "textNight": "阴",
+            "source": 8
+          },
+          {
+            "date": "2026-08-18",
+            "tempMaxC": 33,
+            "tempMinC": 28,
+            "humidity": 85,
+            "precipMm": 2.3,
+            "uvIndex": 10,
+            "textDay": "阴",
+            "textNight": "小雨",
+            "source": 9
+          },
+          {
+            "date": "2026-08-19",
+            "tempMaxC": 33,
+            "tempMinC": 28,
+            "humidity": 84,
+            "precipMm": 1.6,
+            "uvIndex": 9,
+            "textDay": "小雨",
+            "textNight": "小雨",
+            "source": 10
+          },
+          {
+            "date": "2026-08-20",
+            "tempMaxC": 34,
+            "tempMinC": 27,
+            "humidity": 86,
+            "precipMm": 1.2,
+            "uvIndex": 9,
+            "textDay": "阴",
+            "textNight": "阴",
+            "source": 11
+          },
+          {
+            "date": "2026-08-21",
+            "tempMaxC": 34,
+            "tempMinC": 28,
+            "humidity": 85,
+            "precipMm": 0,
+            "uvIndex": 10,
+            "textDay": "阴",
+            "textNight": "小雨",
+            "source": 12
+          },
+          {
+            "date": "2026-08-22",
+            "tempMaxC": 34,
+            "tempMinC": 27,
+            "humidity": 86,
+            "precipMm": 0,
+            "uvIndex": 6,
+            "textDay": "小雨",
+            "textNight": "小雨",
+            "source": 13
+          },
+          {
+            "date": "2026-08-23",
+            "tempMaxC": 30,
+            "tempMinC": 27,
+            "humidity": 79,
+            "precipMm": 0.6,
+            "uvIndex": 10,
+            "textDay": "小雨",
+            "textNight": "小雨",
+            "source": 14
+          }
+        ],
+        "locationKey": "city:shanghai",
+        "timezone": "Asia/Shanghai"
+      },
+      "header": {
+        "Content-Type": "application/json",
+        "x-app-env": "development",
+        "x-env": "development",
+        "x-terminal-e2e": "true",
+        "x-anonymous-dev-identity": "true",
+        "x-wx-openid": "dev_terminal_mp_local",
+        "x-openid": "dev_terminal_mp_local"
+      },
+      "time": 1786251029208,
+      "response": {
+        "statusCode": 200,
+        "data": {
+          "code": 200,
+          "message": "计算成功",
+          "data": {
+            "amountRangeMl": [
+              550,
+              825
+            ],
+            "nextWaterDate": null,
+            "nextWaterWindow": null,
+            "nextWaterReason": "尚无上次浇水记录，暂不推导下次浇水日期；请先检查盆土。",
+            "wateringContext": "likely_too_dry",
+            "action": "increase_soil_check_frequency",
+            "stopCondition": "盆底有水流出即可停止",
+            "confidenceLevel": "high",
+            "reasonCodes": [
+              "INCREASE_WATERING_FREQUENCY",
+              "NO_RECENT_WATERING",
+              "MIST_DOES_NOT_OFFSET_DRY"
+            ],
+            "soilCheck": {
+              "required": true,
+              "beforeWatering": true,
+              "message": "建议现在检查盆土，确认干了再一次浇透。",
+              "reasonCode": "CHECK_SOIL_BEFORE_WATERING"
+            },
+            "transpirationIntervalFactor": 1,
+            "seasonalIntervalFactor": 1,
+            "airEnvironmentAudit": null,
+            "todayWeatherSource": "day_latest_sample",
+            "todayWeatherReason": "day_latest_sample_present"
+          }
+        }
+      }
+    },
+    {
+      "url": "http://192.168.50.80:3010/plant-user-http/user-plants/watering-advisor",
+      "method": "POST",
+      "data": {
+        "action": "save",
+        "catalogPlantId": "plant_identity_bfae80168f4b7a73",
+        "catalogPlantName": "绿萝",
+        "potProfile": {
+          "potTopDiameterCm": "20",
+          "potBottomDiameterCm": "10",
+          "potHeightCm": "15",
+          "hasDrainageHole": "true",
+          "substrateType": "unknown"
+        },
+        "weatherSummary": {},
+        "plannerResult": {
+          "amountRangeMl": [
+            550,
+            825
+          ],
+          "nextWaterDate": null,
+          "nextWaterWindow": null,
+          "nextWaterReason": "尚无上次浇水记录，暂不推导下次浇水日期；请先检查盆土。",
+          "wateringContext": "likely_too_dry",
+          "action": "increase_soil_check_frequency",
+          "stopCondition": "盆底有水流出即可停止",
+          "confidenceLevel": "high",
+          "reasonCodes": [
+            "INCREASE_WATERING_FREQUENCY",
+            "NO_RECENT_WATERING",
+            "MIST_DOES_NOT_OFFSET_DRY"
+          ],
+          "soilCheck": {
+            "required": true,
+            "beforeWatering": true,
+            "message": "建议现在检查盆土，确认干了再一次浇透。",
+            "reasonCode": "CHECK_SOIL_BEFORE_WATERING"
+          },
+          "transpirationIntervalFactor": 1,
+          "seasonalIntervalFactor": 1,
+          "airEnvironmentAudit": null,
+          "todayWeatherSource": "day_latest_sample",
+          "todayWeatherReason": "day_latest_sample_present"
+        }
+      },
+      "header": {
+        "Content-Type": "application/json",
+        "x-app-env": "development",
+        "x-env": "development",
+        "x-terminal-e2e": "true",
+        "x-anonymous-dev-identity": "true",
+        "x-wx-openid": "dev_terminal_mp_local",
+        "x-openid": "dev_terminal_mp_local"
+      },
+      "time": 1786251030755,
+      "response": {
+        "statusCode": 500,
+        "data": {
+          "code": 500,
+          "message": "保存失败，请稍后重试",
+          "data": null
+        }
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "name": "搜索输入框存在",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:50:15.674Z"
+    },
+    {
+      "name": "植物列表至少有一个条目",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:50:16.752Z"
+    },
+    {
+      "name": "下一步按钮存在",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:50:20.746Z"
+    },
+    {
+      "name": "inline 盆型表单已进入当前步骤",
+      "passed": true,
+      "detail": "found",
+      "time": "2026-08-09T04:50:22.376Z"
+    },
+    {
+      "name": "inline 盆型排水孔选项存在",
+      "passed": true,
+      "detail": "found",
+      "time": "2026-08-09T04:50:22.376Z"
+    },
+    {
+      "name": "获取建议按钮存在",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:50:28.645Z"
+    },
+    {
+      "name": "捕获到 /watering-advisor POST wx.request",
+      "passed": true,
+      "detail": "url=http://192.168.50.80:3010/plant-user-http/user-plants/watering-advisor",
+      "time": "2026-08-09T04:50:32.721Z"
+    },
+    {
+      "name": "HTTP 包装层 response.data.data 存在",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:50:32.721Z"
+    },
+    {
+      "name": "响应 data 业务 key 精确等于 [\"amountRangeMl\"]",
+      "passed": false,
+      "detail": "actual=[\"action\",\"airEnvironmentAudit\",\"amountRangeMl\",\"confidenceLevel\",\"nextWaterDate\",\"nextWaterReason\",\"nextWaterWindow\",\"reasonCodes\",\"seasonalIntervalFactor\",\"soilCheck\",\"stopCondition\",\"todayWeatherReason\",\"todayWeatherSource\",\"transpirationIntervalFactor\",\"wateringContext\"]",
+      "time": "2026-08-09T04:50:32.721Z"
+    },
+    {
+      "name": "结果区 result-amount 存在",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:50:32.723Z"
+    },
+    {
+      "name": "结果区 back-2 存在",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:50:32.725Z"
+    },
+    {
+      "name": "结果区 done 存在",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:50:32.728Z"
+    },
+    {
+      "name": "结果区文本存在",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:50:32.733Z"
+    },
+    {
+      "name": "结果文本表达建议毫升数",
+      "passed": true,
+      "detail": "text=\"825ml（1.5 × 矿泉水瓶）\"",
+      "time": "2026-08-09T04:50:32.733Z"
+    },
+    {
+      "name": "结果文本不展示日期",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:50:32.733Z"
+    },
+    {
+      "name": "结果文本不展示间隔",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:50:32.733Z"
+    },
+    {
+      "name": "结果文本不展示盆土判断",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:50:32.733Z"
+    },
+    {
+      "name": "结果文本不展示光照",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:50:32.733Z"
+    },
+    {
+      "name": "结果文本不展示蒸腾",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:50:32.733Z"
+    },
+    {
+      "name": "结果文本不展示植物名",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:50:32.734Z"
+    },
+    {
+      "name": "结果文本不展示策略标签",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:50:32.734Z"
+    },
+    {
+      "name": "结果文本不展示瓶/桶换算",
+      "passed": false,
+      "detail": null,
+      "time": "2026-08-09T04:50:32.734Z"
+    },
+    {
+      "name": "结果文本不展示水滴图标",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:50:32.734Z"
+    },
+    {
+      "name": "结果区三个稳定 ID 同时存在（fallback：仅验证 ID，由截图交给 QA 对比）",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:50:32.735Z"
+    },
+    {
+      "name": "结果页截图成功保存",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-09T04:50:35.881Z"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/watering-transpiration-v3/independent-01-init.png",
+      "time": "2026-08-09T04:50:15.623Z"
+    },
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/watering-transpiration-v3/independent-02-plant-selected.png",
+      "time": "2026-08-09T04:50:20.743Z"
+    },
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/watering-transpiration-v3/independent-03-pot-editor-opened.png",
+      "time": "2026-08-09T04:50:25.532Z"
+    },
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/watering-transpiration-v3/independent-04-pot-profile-completed.png",
+      "time": "2026-08-09T04:50:28.641Z"
+    },
+    {
+      "path": "/Users/jay/WebstormProjects/planting/.e2e-artifacts/watering-transpiration-v3/independent-05-result.png",
+      "time": "2026-08-09T04:50:35.881Z"
+    }
+  ],
+  "classification": "FAIL_PRODUCT",
+  "blockerReason": "2 assertions failed: 响应 data 业务 key 精确等于 [\"amountRangeMl\"], 结果文本不展示瓶/桶换算"
+}

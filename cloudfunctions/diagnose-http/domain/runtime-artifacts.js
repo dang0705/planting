@@ -1,6 +1,5 @@
 'use strict'
 
-const { planQuestionQueue } = require('./question-queue/question-queue-planner')
 const { evaluateStopState } = require('./stop-state/stop-state-evaluator')
 const { evaluateOutputEligibility } = require('./stop-state/output-eligibility-evaluator')
 
@@ -8,7 +7,6 @@ function buildDiagnosticTrace({
   response = {},
   derivedEvidenceSet = [],
   diagnosisDirections = [],
-  questionQueue = null,
   stopState = null,
   outputEligibility = null
 } = {}) {
@@ -31,12 +29,11 @@ function buildDiagnosticTrace({
       }
     },
     {
-      eventType: 'question_queue_evaluated',
+      eventType: 'question_package_questions_evaluated',
       roundId: response?.roundId || 'round_1',
       payload: {
-        questionQueueId: questionQueue?.questionQueueId || '',
-        queueStatus: questionQueue?.queueStatus || '',
-        itemCount: Array.isArray(questionQueue?.questionItems) ? questionQueue.questionItems.length : 0
+        itemCount: Array.isArray(response?.questions) ? response.questions.length : 0,
+        terminalQuestioningState: response?.terminalQuestioningState || null
       }
     },
     {
@@ -76,18 +73,15 @@ function buildRuntimeArtifacts(
     derivedEvidenceSet,
     diagnosisDirections
   }
-  const questionQueue = planQuestionQueue(responseWithEvidence)
-  const stopState = evaluateStopState({ response: responseWithEvidence, questionQueue })
+  const stopState = evaluateStopState({ response: responseWithEvidence })
   const outputEligibility = evaluateOutputEligibility({
     response: responseWithEvidence,
-    questionQueue,
     stopState
   })
   const diagnosticTrace = buildDiagnosticTrace({
     response: responseWithEvidence,
     derivedEvidenceSet,
     diagnosisDirections,
-    questionQueue,
     stopState,
     outputEligibility
   })
@@ -95,7 +89,6 @@ function buildRuntimeArtifacts(
   return {
     derivedEvidenceSet,
     diagnosisDirections,
-    questionQueue,
     stopState,
     outputEligibility,
     diagnosticTrace

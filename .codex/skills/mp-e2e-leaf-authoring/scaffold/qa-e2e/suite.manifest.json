@@ -1,0 +1,11 @@
+{
+  "suiteVersion": 1,
+  "id": "babolat-formal-asset-suite",
+  "leaves": [
+    {
+      "id": "platform.live_runtime_proof",
+      "module": "leaves/live-runtime-proof.mjs",
+      "fixtures": []
+    }
+  ]
+}

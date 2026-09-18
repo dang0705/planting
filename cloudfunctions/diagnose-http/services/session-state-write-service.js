@@ -1,11 +1,10 @@
 'use strict'
 
+const { models } = require('/opt/utils/cloudbase')
 const { resolveLatestVisualCallBatchId } = require('../utils/visual-batch-id')
 const { normalizeStoredNullableText } = require('../utils/stored-value')
 const { normalizePersistedImageUrl } = require('./session-service-helpers')
-const {
-  upsertDiagnosisSessionRecord
-} = require('../repositories/diagnosis-session-repository')
+const { upsertDiagnosisSessionRecord } = require('../repositories/diagnosis-session-repository')
 const {
   resolveSessionIdentityStatus,
   resolveSessionRoute,
@@ -13,11 +12,52 @@ const {
   buildOutcomePayload,
   buildRuntimeSnapshotPayload
 } = require('./session-runtime-snapshot-codec')
+let fertilizationPlanner
+try {
+  fertilizationPlanner = require('/opt/utils/fertilization-reminder-planner')
+} catch {
+  fertilizationPlanner = require('../../layer/utils/fertilization-reminder-planner')
+}
+
+async function writeFertilizationGuard(openid, userPlantId, guard) {
+  await models.$runSQL(
+    `UPDATE user_plant_instances
+     SET fertilization_guard_json = {{guardJson}}, updated_at = CURRENT_TIMESTAMP
+     WHERE id = {{userPlantId}} AND _openid = {{openid}}`,
+    {
+      openid,
+      userPlantId: Number(userPlantId),
+      guardJson: guard ? JSON.stringify(guard) : null
+    }
+  )
+}
+
+async function persistDiagnosisFertilizationGuard({ sessionId, openid, plantContext, response }) {
+  const userPlantId = normalizeNullableSqlInteger(plantContext?.userPlantId)
+  if (userPlantId === null) {
+    return null
+  }
+  const guard = fertilizationPlanner.resolveDiagnosisFertilizationGuard({
+    response,
+    diagnosisId: sessionId,
+    referenceDate: response?.diagnosisDate || plantContext?.diagnosisDate
+  })
+  if (!guard) {
+    return null
+  }
+  const previousGuard = plantContext?.fertilizationGuard || null
+  await writeFertilizationGuard(openid, userPlantId, guard)
+  return { guard, previousGuard, userPlantId }
+}
 
 function toNullableDateTimeString(value) {
-  if (value === null || value === undefined || value === '') {return ''}
+  if (value === null || value === undefined || value === '') {
+    return ''
+  }
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {return ''}
+  if (Number.isNaN(date.getTime())) {
+    return ''
+  }
   return date.toISOString().slice(0, 19).replace('T', ' ')
 }
 
@@ -26,7 +66,9 @@ function normalizeNullableSqlText(value) {
 }
 
 function normalizeNullableSqlNumber(value) {
-  if (value === null || value === undefined || value === '') {return null}
+  if (value === null || value === undefined || value === '') {
+    return null
+  }
   const num = Number(value)
   return Number.isFinite(num) ? num : null
 }
@@ -47,10 +89,13 @@ function normalizeAdviceText(value = '') {
 
 function pickAdviceTextFromSteps(items = []) {
   for (const item of Array.isArray(items) ? items : []) {
-    const text = typeof item === 'string'
-      ? normalizeAdviceText(item)
-      : normalizeAdviceText(item?.text || item?.title || item?.label || '')
-    if (text) {return text}
+    const text =
+      typeof item === 'string'
+        ? normalizeAdviceText(item)
+        : normalizeAdviceText(item?.text || item?.title || item?.label || '')
+    if (text) {
+      return text
+    }
   }
   return ''
 }
@@ -58,7 +103,9 @@ function pickAdviceTextFromSteps(items = []) {
 function pickAdviceTextFromStrings(items = []) {
   for (const item of Array.isArray(items) ? items : []) {
     const text = normalizeAdviceText(item)
-    if (text) {return text}
+    if (text) {
+      return text
+    }
   }
   return ''
 }
@@ -129,58 +176,74 @@ async function upsertDiagnosisSession({
     clientContext
   })
 
-  await upsertDiagnosisSessionRecord({
-    diagnosisId: sessionId,
+  const guardMutation = await persistDiagnosisFertilizationGuard({
     sessionId,
     openid,
-    userPlantIdValue: normalizedUserPlantId === null ? 0 : normalizedUserPlantId,
-    userPlantIdHasValue: normalizedUserPlantId === null ? 0 : 1,
-    plantId: normalizeNullableSqlText(plantContext?.plantId),
-    diagnosisMode: mode,
-    plantGenus: plantContext?.genus || '',
-    plantFamily: plantContext?.family || '',
-    plantCategory: plantContext?.category || '',
-    currentPlantIdentityId: normalizeNullableSqlText(
-      plantContext?.plantIdentityId || response?.plantIdentityId
-    ),
-    currentIdentityResolutionStatus: identityResolutionStatus,
-    currentRoutePrimaryAction: routePrimaryAction,
-    currentRoundId: response?.roundId || `round_${Number(round || 1)}`,
-    currentRoundIndex: Number(round || 1),
-    latestVisualCallBatchIdValue: resolvedLatestVisualCallBatchId || '',
-    latestVisualCallBatchIdHasValue: resolvedLatestVisualCallBatchId ? 1 : 0,
-    imageUrl: normalizePersistedImageUrl(image || ''),
-    userDescription: description || '',
-    aiSummary: finalResult?.summary || topProblem?.summary || '',
-    healthStatus:
-      response?.followUpRequired
-        ? (topProblem ? 'warning' : 'unknown')
-        : (isProblematicOutcome && topProblem ? 'warning' : 'unknown'),
-    topProblemKey: topProblem?.problemId || null,
-    topProblemScoreValue: normalizedTopProblemScore === null ? 0 : normalizedTopProblemScore,
-    topProblemScoreHasValue: normalizedTopProblemScore === null ? 0 : 1,
-    reliabilityScore: Number(reliabilityScore || 0),
-    followUpRound: Number(round || 1),
-    needsFollowUp: response?.followUpRequired ? 1 : 0,
-    outcomeType: normalizeNullableSqlText(outcomeType),
-    outcomePayloadJson,
-    stopReason: normalizeNullableSqlText(response?.stopReason),
-    sessionStatus,
-    runtimeSnapshotJson,
-    finalProblemKey: normalizeNullableSqlText(
-      !response?.followUpRequired && isProblematicOutcome
-        ? (finalResult?.problemId || topProblem?.problemId)
-        : null
-    ),
-    finalProblemCn: normalizeNullableSqlText(
-      !response?.followUpRequired
-        ? (finalResult?.displayName || topProblem?.displayName)
-        : null
-    ),
-    treatment: persistedAdvice.treatment,
-    prevention: persistedAdvice.prevention,
-    endedAtFlag: shouldMarkEnded ? 1 : 0
+    plantContext,
+    response
   })
+  try {
+    await upsertDiagnosisSessionRecord({
+      diagnosisId: sessionId,
+      sessionId,
+      openid,
+      userPlantIdValue: normalizedUserPlantId === null ? 0 : normalizedUserPlantId,
+      userPlantIdHasValue: normalizedUserPlantId === null ? 0 : 1,
+      // 空植物上下文必须落成 SQL NULL。使用空字符串作为绑定值，避免
+      // CloudBase SQL 模板把 JavaScript null 当作对象参数传入，触发 plant_catalog 外键错误。
+      plantId: normalizeNullableSqlText(plantContext?.plantId) || '',
+      diagnosisMode: mode,
+      plantGenus: plantContext?.genus || '',
+      plantFamily: plantContext?.family || '',
+      plantCategory: plantContext?.category || '',
+      currentPlantIdentityId: normalizeNullableSqlText(
+        plantContext?.plantIdentityId || response?.plantIdentityId
+      ),
+      currentIdentityResolutionStatus: identityResolutionStatus,
+      currentRoutePrimaryAction: routePrimaryAction,
+      currentRoundId: response?.roundId || `round_${Number(round || 1)}`,
+      currentRoundIndex: Number(round || 1),
+      latestVisualCallBatchIdValue: resolvedLatestVisualCallBatchId || '',
+      latestVisualCallBatchIdHasValue: resolvedLatestVisualCallBatchId ? 1 : 0,
+      imageUrl: normalizePersistedImageUrl(image || ''),
+      userDescription: description || '',
+      aiSummary: finalResult?.summary || topProblem?.summary || '',
+      healthStatus: response?.questionRequired
+        ? topProblem
+          ? 'warning'
+          : 'unknown'
+        : isProblematicOutcome && topProblem
+          ? 'warning'
+          : 'unknown',
+      topProblemKey: topProblem?.problemId || null,
+      topProblemScoreValue: normalizedTopProblemScore === null ? 0 : normalizedTopProblemScore,
+      topProblemScoreHasValue: normalizedTopProblemScore === null ? 0 : 1,
+      reliabilityScore: Number(reliabilityScore || 0),
+      questionRound: Number(round || 1),
+      needsQuestion: response?.questionRequired ? 1 : 0,
+      outcomeType: normalizeNullableSqlText(outcomeType),
+      outcomePayloadJson,
+      stopReason: normalizeNullableSqlText(response?.stopReason),
+      sessionStatus,
+      runtimeSnapshotJson,
+      finalProblemKey: normalizeNullableSqlText(
+        !response?.questionRequired && isProblematicOutcome
+          ? finalResult?.problemId || topProblem?.problemId
+          : null
+      ),
+      finalProblemCn: normalizeNullableSqlText(
+        !response?.questionRequired ? finalResult?.displayName || topProblem?.displayName : null
+      ),
+      treatment: persistedAdvice.treatment,
+      prevention: persistedAdvice.prevention,
+      endedAtFlag: shouldMarkEnded ? 1 : 0
+    })
+  } catch (error) {
+    if (guardMutation) {
+      await writeFertilizationGuard(openid, guardMutation.userPlantId, guardMutation.previousGuard)
+    }
+    throw error
+  }
 }
 
 module.exports = {
@@ -189,6 +252,7 @@ module.exports = {
   normalizeNullableSqlText,
   normalizeNullableSqlDateTime,
   _test: {
-    resolvePersistedAdviceTexts
+    resolvePersistedAdviceTexts,
+    persistDiagnosisFertilizationGuard
   }
 }

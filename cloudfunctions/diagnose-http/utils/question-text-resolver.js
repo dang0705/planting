@@ -2,12 +2,12 @@
 
 const { fromQuestionId } = require('../mappers/public-id-mapper')
 
-const { normalizeQuestionTargetDimension } = require('./question-target-dimension')
+const { normalizeQuestionPackageTopic } = require('./question-package-topic')
 const {
   buildOrthogonalProbeText,
   isSyntheticObservedProbeQuestionKey,
   parseSyntheticObservedProbeQuestionKey
-} = require('./synthetic-follow-up')
+} = require('./synthetic-question-package')
 
 function normalizeText(value = '') {
   return String(value || '').trim()
@@ -101,10 +101,10 @@ function resolveSyntheticObservedProbeQuestionText(questionKey = '', item = {}) 
     return ''
   }
 
-  const { symptomKey, targetDimension } = parseSyntheticObservedProbeQuestionKey(normalizedQuestionKey)
+  const { symptomKey, packageTopic } = parseSyntheticObservedProbeQuestionKey(normalizedQuestionKey)
   const normalizedSymptomKey = normalizeText(symptomKey)
-  const normalizedTargetDimension = normalizeQuestionTargetDimension(targetDimension)
-  if (!normalizedSymptomKey || !normalizedTargetDimension) {
+  const normalizedPackageTopic = normalizeQuestionPackageTopic(packageTopic)
+  if (!normalizedSymptomKey || !normalizedPackageTopic) {
     return ''
   }
 
@@ -115,7 +115,7 @@ function resolveSyntheticObservedProbeQuestionText(questionKey = '', item = {}) 
       locationKey: item?.locationKey || '',
       patternKey: item?.patternKey || ''
     },
-    normalizedTargetDimension,
+    normalizedPackageTopic,
     item?.context || {}
   )
 

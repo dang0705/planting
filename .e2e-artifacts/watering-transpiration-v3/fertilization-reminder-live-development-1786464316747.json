@@ -1,0 +1,28 @@
+{
+  "task": "watering-transpiration-v3-e2e-trae-20260713",
+  "gitHead": "e21c5605c6077bf8a5eb14da83c476738e824ee0",
+  "branch": "sprint-ai-workflow",
+  "baseHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "projectPath": "/Users/jay/WebstormProjects/planting/.tmp/dispatch-task/qa-runtime-sessions/fertilization-real-api-20260812-r1-s2lCwP/project",
+  "mode": "fertilization-reminder-live-development",
+  "wsEndpoint": "ws://127.0.0.1:57562",
+  "startedAt": "2026-08-11T16:05:03.846Z",
+  "endedAt": "2026-08-11T16:05:16.747Z",
+  "pages": [],
+  "pageDataSummaries": [],
+  "capturedRequests": [],
+  "assertions": [
+    {
+      "name": "真实开发账户存在独立施肥 QA 植物入口",
+      "passed": false,
+      "detail": "plantId=9",
+      "time": "2026-08-11T16:05:16.741Z"
+    }
+  ],
+  "screenshots": [],
+  "classification": "FAIL_PRODUCT",
+  "blockerReason": "真实开发账户存在独立施肥 QA 植物入口: plantId=9",
+  "status": "failed",
+  "failure_kind": "failed_product",
+  "business_assertions_reached": false
+}

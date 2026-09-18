@@ -1,22 +1,22 @@
 'use strict'
 
-function safeJsonParse(value, fallback = null) {
-  if (value === null || value === undefined || value === '') {return fallback}
+function safeJsonParse(value, conservative = null) {
+  if (value === null || value === undefined || value === '') {return conservative}
   if (typeof value === 'object') {return value}
 
   try {
     return JSON.parse(value)
   } catch {
-    return fallback
+    return conservative
   }
 }
 
-function normalizeStoredNullableText(value, fallback = null) {
-  if (value === null || value === undefined) {return fallback}
+function normalizeStoredNullableText(value, conservative = null) {
+  if (value === null || value === undefined) {return conservative}
 
   const normalized = String(value).trim()
   if (!normalized || normalized.toLowerCase() === 'null' || normalized.toLowerCase() === 'undefined') {
-    return fallback
+    return conservative
   }
 
   return normalized

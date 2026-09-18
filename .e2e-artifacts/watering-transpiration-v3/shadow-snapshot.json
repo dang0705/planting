@@ -1,0 +1,36 @@
+{
+  "type": "shadow-baseline",
+  "savedAt": "2026-08-09T07:03:38.804Z",
+  "snapshot": {
+    "plantId": 9,
+    "inputHash": "9c9c7a41d1ca31532ee9af705a10b022b614c49b9207f3a8669afa365410af3a",
+    "signature": {
+      "hash": "9c9c7a41d1ca31532ee9af705a10b022b614c49b9207f3a8669afa365410af3a",
+      "urlPath": "http://192.168.50.80:3010/plant-user-http/user-plants/watering-planner",
+      "method": "POST",
+      "plantId": 9,
+      "referenceDate": "2026-08-09",
+      "wateringEventsCount": 0,
+      "weatherDaysCount": 10,
+      "forecastDaysCount": 14
+    },
+    "wateringContext": "likely_too_dry",
+    "amountRangeMl": [
+      100,
+      200
+    ],
+    "nextWaterDate": "2026-08-10",
+    "nextWaterWindow": [
+      1,
+      5
+    ],
+    "transpirationIntervalFactor": 1,
+    "transpirationShadow": true,
+    "transpirationComputedFactor": 1.01,
+    "transpirationCandidateNextWaterDate": "2026-08-10",
+    "transpirationCandidateNextWaterWindow": [
+      1,
+      5
+    ]
+  }
+}

@@ -1,0 +1,224 @@
+{
+  "task": "air-environment-v2-question-packages",
+  "gitHead": "3260d639c23e51883935a0373b71d68fafbc8d6e",
+  "branch": "sprint-ai-workflow",
+  "projectPath": "/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin",
+  "wsEndpoint": "ws://127.0.0.1:9420",
+  "startedAt": "2026-08-05T10:46:56.279Z",
+  "endedAt": "2026-08-05T10:47:22.891Z",
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "time": "2026-08-05T10:47:00.797Z"
+    },
+    {
+      "path": "pages/index/index",
+      "time": "2026-08-05T10:47:00.797Z"
+    },
+    {
+      "path": "pages/diagnose/question-package",
+      "time": "2026-08-05T10:47:01.985Z"
+    }
+  ],
+  "pageDataSummaries": [
+    {
+      "path": "pages/index/index",
+      "summary": {
+        "automatorBootstrapRoute": {
+          "expectedRoute": "pages/index/index",
+          "observedRoute": "pages/index/index",
+          "routeReady": true,
+          "navigation_channel": "native_tabbar",
+          "native_tab_path": "pages/index/index",
+          "navigation_error": null
+        }
+      },
+      "time": "2026-08-05T10:46:56.513Z"
+    },
+    {
+      "path": "/pages/index/index",
+      "summary": {
+        "isAuthenticated": true,
+        "isLoggedIn": true,
+        "fixturePlantId": 94021,
+        "plantIds": [
+          94021
+        ],
+        "fixturePlantPresent": true,
+        "indexPlantListPresent": true,
+        "targetPlantCardPresent": true,
+        "targetEntryId": "diagnose-entry-button-94021",
+        "targetEntryPresent": true
+      },
+      "time": "2026-08-05T10:47:00.806Z"
+    },
+    {
+      "path": "/pages/index/index",
+      "summary": {
+        "diagnosePopupQuickEntry": {
+          "targetQuickEntryId": "diagnose-dev-symptom-class-option-yellowing_mode",
+          "componentPath": [
+            {
+              "selector": "diagnose-popup",
+              "present": true
+            },
+            {
+              "selector": "bottom-sheet",
+              "present": true
+            },
+            {
+              "selector": "diagnose-flow",
+              "present": true
+            },
+            {
+              "selector": "diagnose-upload-stage",
+              "present": true
+            }
+          ],
+          "targetQuickEntryPresent": true
+        }
+      },
+      "time": "2026-08-05T10:47:00.902Z"
+    }
+  ],
+  "assertions": [
+    {
+      "name": "switchTab home route",
+      "passed": true,
+      "detail": "{\"expectedRoute\":\"pages/index/index\",\"observedRoute\":\"pages/index/index\",\"routeReady\":true,\"navigation_channel\":\"native_tabbar\",\"native_tab_path\":\"pages/index/index\",\"navigation_error\":null}",
+      "time": "2026-08-05T10:46:56.513Z"
+    },
+    {
+      "name": "fixture plant entered the real plant store before homepage interaction",
+      "passed": true,
+      "detail": "{\"ok\":true,\"fixturePlantId\":94021,\"plantIds\":[94021],\"fixturePlantPresent\":true,\"userPlantsRequestObserved\":true,\"storeLoad\":{\"status\":\"resolved\",\"error\":null,\"invalidationError\":null},\"requestCount\":1,\"reason\":null}",
+      "time": "2026-08-05T10:47:00.797Z"
+    },
+    {
+      "name": "yellowing_mode: home readiness exposes the known diagnosis entry id",
+      "passed": true,
+      "detail": "{\"isAuthenticated\":true,\"isLoggedIn\":true,\"fixturePlantId\":94021,\"plantIds\":[94021],\"fixturePlantPresent\":true,\"indexPlantListPresent\":true,\"targetPlantCardPresent\":true,\"targetEntryId\":\"diagnose-entry-button-94021\",\"targetEntryPresent\":true}",
+      "time": "2026-08-05T10:47:00.806Z"
+    },
+    {
+      "name": "yellowing_mode: DiagnosePopup component path exposes the known no-image entry id",
+      "passed": true,
+      "detail": "{\"targetQuickEntryId\":\"diagnose-dev-symptom-class-option-yellowing_mode\",\"componentPath\":[{\"selector\":\"diagnose-popup\",\"present\":true},{\"selector\":\"bottom-sheet\",\"present\":true},{\"selector\":\"diagnose-flow\",\"present\":true},{\"selector\":\"diagnose-upload-stage\",\"present\":true}],\"targetQuickEntryPresent\":true}",
+      "time": "2026-08-05T10:47:00.902Z"
+    },
+    {
+      "name": "yellowing_mode: actual LAN question-start request passed through the fixture",
+      "passed": true,
+      "detail": "statusCode=200; response={\"code\":200,\"message\":\"问诊初始化成功\",\"data\":{\"diagnosisSessionId\":\"diag_1785926820975_nq0z37rc\",\"roundId\":\"round_1\",\"userPlantId\":94021,\"plantId\":94021,\"plantCatalogId\":94021,\"stage\":\"question_package\",\"status\":\"active\",\"stopReason\":\"await_package_answers\",\"questions\":[{\"questionKey\":\"q_observed_probe__leaf_yellowing__watering_frequency_context\",\"questionType\":\"single_choice\",\"packageTopic\":\"watering_frequency_context\",\"defaultOptionKey\":\"care_behavior_timeline\",\"defaultOptionId\":\"opt_Y2FyZV9iZWhhdmlvcl90aW1lbGluZQ\",\"uiVariant\":\"care_behavior_timeline\",\"riskLevel\":\"\",\"riskNotice\":\"\",\"safetyInstructions\":[],\"requiresExplicitConsent\":false,\"skipOptionEnabled\":false,\"skipAnswerValue\":\"\",\"candidateModes\":[],\"requiredEvidenceKeys\":[],\"text\":\"最近 2 周，你的浇水情况更接近哪一种？\",\"helpText\":\"只按最近实际情况选择，不用先判断对错；系统会结合黄叶线索判断偏湿、稳定或偏干方向。\",\"options\":[{\"optionId\":\"normal_or_stable\",\"optionKey\":\"normal_or_stable\",\"text\":\"等土表发干再浇，最近节奏基本稳定\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0},{\"optionId\":\"often_dry\",\"optionKey\":\"often_dry\",\"text\":\"常常干很久才浇，或这两周几乎没浇几次\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0},{\"optionId\":\"often_wet\",\"optionKey\":\"often_wet\",\"text\":\"土还没怎么干就会再浇，或这两周一直偏湿\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0},{\"optionId\":\"unknown\",\"optionKey\":\"unknown\",\"text\":\"说不清/没留意\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0}]},{\"questionKey\":\"q_observed_probe__leaf_yellowing__light_change_context\",\"questionType\":\"single_choice\",\"packageTopic\":\"light_change_context\",\"defaultOptionKey\":\"\",\"defaultOptionId\":\"\",\"uiVariant\":\"\",\"riskLevel\":\"\",\"riskNotice\":\"\",\"safetyInstructions\":[],\"requiresExplicitConsent\":false,\"skipOptionEnabled\":false,\"skipAnswerValue\":\"\",\"candidateModes\":[],\"requiredEvidenceKeys\":[],\"text\":\"黄叶和光照有关时，先看最近摆放位置和直射情况。最近 1-2 周，这盆植物更接近哪种光照？\",\"helpText\":\"直接按全日光、散光、全阴或离窗远近选择；后端会结合这类植物的养护基线判断偏强或偏弱。\",\"options\":[{\"optionId\":\"stronger_direct_light\",\"optionKey\":\"stronger_direct_light\",\"text\":\"全日光，或每天直射很多\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0},{\"optionId\":\"no_clear_change\",\"optionKey\":\"no_clear_change\",\"text\":\"散光为主，最近基本没变\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0},{\"optionId\":\"weaker_light\",\"optionKey\":\"weaker_light\",\"text\":\"全阴、离窗较远，或最近更暗\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0},{\"optionId\":\"unknown\",\"optionKey\":\"unknown\",\"text\":\"说不清/没留意\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0}]},{\"questionKey\":\"q_observed_probe__leaf_yellowing__fertilization_growth_context\",\"questionType\":\"single_choice\",\"packageTopic\":\"fertilization_growth_context\",\"defaultOptionKey\":\"\",\"defaultOptionId\":\"\",\"uiVariant\":\"\",\"riskLevel\":\"\",\"riskNotice\":\"\",\"safetyInstructions\":[],\"requiresExplicitConsent\":false,\"skipOptionEnabled\":false,\"skipAnswerValue\":\"\",\"candidateModes\":[],\"requiredEvidenceKeys\":[],\"text\":\"黄叶和营养有关时，既可能是长期没补肥，也可能是近期重肥或换盆刺激。最近 1 个月，施肥情况更接近哪一种？\",\"helpText\":\"用施肥次数和近期换盆/重肥记录营养背景，不直接把黄叶等同于缺肥。\",\"options\":[{\"optionId\":\"low_or_no_fertilizer\",\"optionKey\":\"low_or_no_fertilizer\",\"text\":\"近 1 个月 0 次（很少施肥）\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0},{\"optionId\":\"normal_light_fertilizer\",\"optionKey\":\"normal_light_fertilizer\",\"text\":\"近 1 个月 1-2 次（偏稳）\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0},{\"optionId\":\"recent_heavy_fertilizer_or_repot\",\"optionKey\":\"recent_heavy_fertilizer_or_repot\",\"text\":\"近 1 个月 2 次以上（重肥/换盆换土）\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0},{\"optionId\":\"unknown\",\"optionKey\":\"unknown\",\"text\":\"说不清/没留意\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0}]},{\"questionKey\":\"q_yellow_leaf__air_environment\",\"questionType\":\"air_environment\",\"packageTopic\":\"air_environment\",\"defaultOptionKey\":\"air_environment_unknown\",\"defaultOptionId\":\"opt_YWlyX2Vudmlyb25tZW50X3Vua25vd24\",\"uiVariant\":\"air_environment\",\"riskLevel\":\"\",\"riskNotice\":\"\",\"safetyInstructions\":[],\"requiresExplicitConsent\":false,\"skipOptionEnabled\":false,\"skipAnswerValue\":\"\",\"candidateModes\":[],\"requiredEvidenceKeys\":[],\"text\":\"植物周围的空气环境怎样？\",\"helpText\":\"请按植物所在位置填写换气、周围空间和设备风。\",\"options\":[{\"optionId\":\"opt_YWlyX2Vudmlyb25tZW50X3JlY29yZGVk\",\"optionKey\":\"air_environment_recorded\",\"text\":\"已填写空气环境\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0},{\"optionId\":\"opt_YWlyX2Vudmlyb25tZW50X3Vua25vd24\",\"optionKey\":\"air_environment_unknown\",\"text\":\"不确定\",\"description\":\"\",\"isDefault\":true,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0}]}],\"questionPackage\":{\"mode\":\"yellow_leaf\",\"route\":\"yellow_leaf\",\"sourceMode\":\"manual_yellowing_care_environment_frontloaded\",\"questionCount\":4,\"packageVersion\":2,\"packageTopics\":[\"watering_frequency_context\",\"light_change_context\",\"fertilization_growth_context\",\"air_environment\"],\"answerSubmitMode\":\"package\",\"questionDisplayMode\":\"package\",\"fixedQuestionPackage\":true,\"outcomePolicy\":{\"allowMultipleOutcomes\":true,\"preferSingleOutcome\":false}},\"summaryCard\":{\"title\":\"诊断问题\",\"subtitle\":\"需要回答 4 道问题\",\"severity\":\"low\",\"statusText\":\"\"},\"airEnvironmentByQuestionId\":{},\"airEnvironmentSnapshotsByQuestionId\":{},\"airEnvironmentSnapshotSourceByQuestionId\":{},\"airEnvironmentEvidence\":null,\"uiHints\":{\"canUploadMoreImages\":false,\"maxQuestionsThisRound\":4,\"questionDisplayMode\":\"package\",\"answerSubmitMode\":\"package\",\"optionLayout\":\"vertical\",\"transition\":\"swiper\"}}}",
+      "time": "2026-08-05T10:47:01.730Z"
+    },
+    {
+      "name": "yellowing_mode: LAN question-start response provides the ordered v2 question keys",
+      "passed": true,
+      "detail": "[\"q_observed_probe__leaf_yellowing__watering_frequency_context\",\"q_observed_probe__leaf_yellowing__light_change_context\",\"q_observed_probe__leaf_yellowing__fertilization_growth_context\",\"q_yellow_leaf__air_environment\"]",
+      "time": "2026-08-05T10:47:01.730Z"
+    },
+    {
+      "name": "yellowing_mode: active question package page opens",
+      "passed": true,
+      "detail": "pages/diagnose/question-package",
+      "time": "2026-08-05T10:47:01.985Z"
+    },
+    {
+      "name": "yellowing_mode: question package opens",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-05T10:47:02.007Z"
+    },
+    {
+      "name": "yellowing_mode: formal question count",
+      "passed": true,
+      "detail": "actual=4",
+      "time": "2026-08-05T10:47:02.040Z"
+    },
+    {
+      "name": "yellowing_mode: exact air question key is rendered",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-05T10:47:02.040Z"
+    },
+    {
+      "name": "yellowing_mode: first LAN question key matches the visible active marker",
+      "passed": true,
+      "detail": "diagnose-question-package-page-active-question-q_observed_probe__leaf_yellowing__watering_frequency_context",
+      "time": "2026-08-05T10:47:02.048Z"
+    },
+    {
+      "name": "wilting LAN question sequence places air-environment after three ordinary questions",
+      "passed": true,
+      "detail": "[\"q_observed_probe__leaf_yellowing__watering_frequency_context\",\"q_observed_probe__leaf_yellowing__light_change_context\",\"q_observed_probe__leaf_yellowing__fertilization_growth_context\",\"q_yellow_leaf__air_environment\"]",
+      "time": "2026-08-05T10:47:02.048Z"
+    },
+    {
+      "name": "ordinary question 1 unknown option is available: current question marker",
+      "passed": true,
+      "detail": "diagnose-question-package-page-active-question-q_observed_probe__leaf_yellowing__watering_frequency_context",
+      "time": "2026-08-05T10:47:02.051Z"
+    },
+    {
+      "name": "ordinary question 1 unknown option is available",
+      "passed": true,
+      "detail": "diagnose-question-package-page-option-q_observed_probe__leaf_yellowing__watering_frequency_context-unknown",
+      "time": "2026-08-05T10:47:02.055Z"
+    },
+    {
+      "name": "advance ordinary question 1: current question marker",
+      "passed": true,
+      "detail": "diagnose-question-package-page-active-question-q_observed_probe__leaf_yellowing__watering_frequency_context",
+      "time": "2026-08-05T10:47:02.124Z"
+    },
+    {
+      "name": "advance ordinary question 1",
+      "passed": true,
+      "detail": "diagnose-question-package-page-next-button",
+      "time": "2026-08-05T10:47:02.126Z"
+    },
+    {
+      "name": "ordinary question 2 unknown option is available: current question marker",
+      "passed": true,
+      "detail": "diagnose-question-package-page-active-question-q_observed_probe__leaf_yellowing__light_change_context",
+      "time": "2026-08-05T10:47:02.206Z"
+    },
+    {
+      "name": "ordinary question 2 unknown option is available",
+      "passed": false,
+      "detail": "diagnose-question-package-page-option-q_observed_probe__leaf_yellowing__light_change_context-unknown",
+      "time": "2026-08-05T10:47:12.485Z"
+    },
+    {
+      "name": "yellowing_mode: air-environment question exposes the user uncertainty control when active",
+      "passed": false,
+      "detail": "air environment active control missing",
+      "time": "2026-08-05T10:47:22.651Z"
+    },
+    {
+      "name": "yellowing_mode: formal no-image question-start response is observable",
+      "passed": true,
+      "detail": "statusCode=200; response={\"code\":200,\"message\":\"问诊初始化成功\",\"data\":{\"diagnosisSessionId\":\"diag_1785926820975_nq0z37rc\",\"roundId\":\"round_1\",\"userPlantId\":94021,\"plantId\":94021,\"plantCatalogId\":94021,\"stage\":\"question_package\",\"status\":\"active\",\"stopReason\":\"await_package_answers\",\"questions\":[{\"questionKey\":\"q_observed_probe__leaf_yellowing__watering_frequency_context\",\"questionType\":\"single_choice\",\"packageTopic\":\"watering_frequency_context\",\"defaultOptionKey\":\"care_behavior_timeline\",\"defaultOptionId\":\"opt_Y2FyZV9iZWhhdmlvcl90aW1lbGluZQ\",\"uiVariant\":\"care_behavior_timeline\",\"riskLevel\":\"\",\"riskNotice\":\"\",\"safetyInstructions\":[],\"requiresExplicitConsent\":false,\"skipOptionEnabled\":false,\"skipAnswerValue\":\"\",\"candidateModes\":[],\"requiredEvidenceKeys\":[],\"text\":\"最近 2 周，你的浇水情况更接近哪一种？\",\"helpText\":\"只按最近实际情况选择，不用先判断对错；系统会结合黄叶线索判断偏湿、稳定或偏干方向。\",\"options\":[{\"optionId\":\"normal_or_stable\",\"optionKey\":\"normal_or_stable\",\"text\":\"等土表发干再浇，最近节奏基本稳定\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0},{\"optionId\":\"often_dry\",\"optionKey\":\"often_dry\",\"text\":\"常常干很久才浇，或这两周几乎没浇几次\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0},{\"optionId\":\"often_wet\",\"optionKey\":\"often_wet\",\"text\":\"土还没怎么干就会再浇，或这两周一直偏湿\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0},{\"optionId\":\"unknown\",\"optionKey\":\"unknown\",\"text\":\"说不清/没留意\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0}]},{\"questionKey\":\"q_observed_probe__leaf_yellowing__light_change_context\",\"questionType\":\"single_choice\",\"packageTopic\":\"light_change_context\",\"defaultOptionKey\":\"\",\"defaultOptionId\":\"\",\"uiVariant\":\"\",\"riskLevel\":\"\",\"riskNotice\":\"\",\"safetyInstructions\":[],\"requiresExplicitConsent\":false,\"skipOptionEnabled\":false,\"skipAnswerValue\":\"\",\"candidateModes\":[],\"requiredEvidenceKeys\":[],\"text\":\"黄叶和光照有关时，先看最近摆放位置和直射情况。最近 1-2 周，这盆植物更接近哪种光照？\",\"helpText\":\"直接按全日光、散光、全阴或离窗远近选择；后端会结合这类植物的养护基线判断偏强或偏弱。\",\"options\":[{\"optionId\":\"stronger_direct_light\",\"optionKey\":\"stronger_direct_light\",\"text\":\"全日光，或每天直射很多\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0},{\"optionId\":\"no_clear_change\",\"optionKey\":\"no_clear_change\",\"text\":\"散光为主，最近基本没变\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0},{\"optionId\":\"weaker_light\",\"optionKey\":\"weaker_light\",\"text\":\"全阴、离窗较远，或最近更暗\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0},{\"optionId\":\"unknown\",\"optionKey\":\"unknown\",\"text\":\"说不清/没留意\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0}]},{\"questionKey\":\"q_observed_probe__leaf_yellowing__fertilization_growth_context\",\"questionType\":\"single_choice\",\"packageTopic\":\"fertilization_growth_context\",\"defaultOptionKey\":\"\",\"defaultOptionId\":\"\",\"uiVariant\":\"\",\"riskLevel\":\"\",\"riskNotice\":\"\",\"safetyInstructions\":[],\"requiresExplicitConsent\":false,\"skipOptionEnabled\":false,\"skipAnswerValue\":\"\",\"candidateModes\":[],\"requiredEvidenceKeys\":[],\"text\":\"黄叶和营养有关时，既可能是长期没补肥，也可能是近期重肥或换盆刺激。最近 1 个月，施肥情况更接近哪一种？\",\"helpText\":\"用施肥次数和近期换盆/重肥记录营养背景，不直接把黄叶等同于缺肥。\",\"options\":[{\"optionId\":\"low_or_no_fertilizer\",\"optionKey\":\"low_or_no_fertilizer\",\"text\":\"近 1 个月 0 次（很少施肥）\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0},{\"optionId\":\"normal_light_fertilizer\",\"optionKey\":\"normal_light_fertilizer\",\"text\":\"近 1 个月 1-2 次（偏稳）\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0},{\"optionId\":\"recent_heavy_fertilizer_or_repot\",\"optionKey\":\"recent_heavy_fertilizer_or_repot\",\"text\":\"近 1 个月 2 次以上（重肥/换盆换土）\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0},{\"optionId\":\"unknown\",\"optionKey\":\"unknown\",\"text\":\"说不清/没留意\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0}]},{\"questionKey\":\"q_yellow_leaf__air_environment\",\"questionType\":\"air_environment\",\"packageTopic\":\"air_environment\",\"defaultOptionKey\":\"air_environment_unknown\",\"defaultOptionId\":\"opt_YWlyX2Vudmlyb25tZW50X3Vua25vd24\",\"uiVariant\":\"air_environment\",\"riskLevel\":\"\",\"riskNotice\":\"\",\"safetyInstructions\":[],\"requiresExplicitConsent\":false,\"skipOptionEnabled\":false,\"skipAnswerValue\":\"\",\"candidateModes\":[],\"requiredEvidenceKeys\":[],\"text\":\"植物周围的空气环境怎样？\",\"helpText\":\"请按植物所在位置填写换气、周围空间和设备风。\",\"options\":[{\"optionId\":\"opt_YWlyX2Vudmlyb25tZW50X3JlY29yZGVk\",\"optionKey\":\"air_environment_recorded\",\"text\":\"已填写空气环境\",\"description\":\"\",\"isDefault\":false,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0},{\"optionId\":\"opt_YWlyX2Vudmlyb25tZW50X3Vua25vd24\",\"optionKey\":\"air_environment_unknown\",\"text\":\"不确定\",\"description\":\"\",\"isDefault\":true,\"answerValue\":\"\",\"mapsToModes\":[],\"mapsToEvidenceKeys\":[],\"value\":0}]}],\"questionPackage\":{\"mode\":\"yellow_leaf\",\"route\":\"yellow_leaf\",\"sourceMode\":\"manual_yellowing_care_environment_frontloaded\",\"questionCount\":4,\"packageVersion\":2,\"packageTopics\":[\"watering_frequency_context\",\"light_change_context\",\"fertilization_growth_context\",\"air_environment\"],\"answerSubmitMode\":\"package\",\"questionDisplayMode\":\"package\",\"fixedQuestionPackage\":true,\"outcomePolicy\":{\"allowMultipleOutcomes\":true,\"preferSingleOutcome\":false}},\"summaryCard\":{\"title\":\"诊断问题\",\"subtitle\":\"需要回答 4 道问题\",\"severity\":\"low\",\"statusText\":\"\"},\"airEnvironmentByQuestionId\":{},\"airEnvironmentSnapshotsByQuestionId\":{},\"airEnvironmentSnapshotSourceByQuestionId\":{},\"airEnvironmentEvidence\":null,\"uiHints\":{\"canUploadMoreImages\":false,\"maxQuestionsThisRound\":4,\"questionDisplayMode\":\"package\",\"answerSubmitMode\":\"package\",\"optionLayout\":\"vertical\",\"transition\":\"swiper\"}}}",
+      "time": "2026-08-05T10:47:22.658Z"
+    },
+    {
+      "name": "fixture state, cache and request patches were restored",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-05T10:47:22.890Z"
+    }
+  ],
+  "screenshots": [],
+  "classification": "FAIL_PRODUCT",
+  "blockerReason": "one or more assertions failed",
+  "status": "failed",
+  "failure_kind": "failed_product",
+  "business_assertions_reached": true,
+  "formal_principal": {
+    "principal_source": "E2E_TEST_OPENID",
+    "principal_fingerprint": "794cf0e3e5db9fa7",
+    "storage_key": "user",
+    "credentials_persisted": false
+  }
+}

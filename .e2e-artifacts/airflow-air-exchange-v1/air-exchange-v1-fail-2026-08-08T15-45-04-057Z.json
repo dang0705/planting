@@ -1,0 +1,114 @@
+{
+  "task": "airflow-air-exchange-v1-e2e",
+  "gitHead": "b5bcbe4a343d04bf1ec9a1b73bdfd56cd45c377c",
+  "branch": "sprint-ai-workflow",
+  "projectPath": "/Users/jay/WebstormProjects/planting/dist/dev/mp-weixin",
+  "wsEndpoint": "ws://127.0.0.1:9420",
+  "startedAt": "2026-08-08T15:42:51.608Z",
+  "endedAt": "2026-08-08T15:45:04.057Z",
+  "pages": [
+    {
+      "path": "/pages/airflow/index",
+      "time": "2026-08-08T15:42:55.429Z"
+    }
+  ],
+  "pageDataSummaries": [],
+  "assertions": [
+    {
+      "name": "component-scope:air-environment-assessment",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-08T15:42:55.435Z"
+    },
+    {
+      "name": "stable-id-present:airflow-assessment",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-08T15:42:55.439Z"
+    },
+    {
+      "name": "stable-id-present:airflow-single-page",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-08T15:42:55.491Z"
+    },
+    {
+      "name": "stable-id-present:airflow-single-exchange",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-08T15:42:55.525Z"
+    },
+    {
+      "name": "stable-id-present:airflow-single-exchange-window",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-08T15:42:55.585Z"
+    },
+    {
+      "name": "stable-id-present:airflow-single-canopy-open",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-08T15:42:55.618Z"
+    },
+    {
+      "name": "stable-id-present:airflow-single-device-mode-none",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-08T15:42:55.646Z"
+    },
+    {
+      "name": "stable-id-present:airflow-submit-button",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-08T15:42:55.675Z"
+    },
+    {
+      "name": "submit-disabled-initial",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-08T15:42:55.705Z"
+    },
+    {
+      "name": "almost-never-keeps-single-scene-slot",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-08T15:42:56.084Z"
+    },
+    {
+      "name": "almost-never-result-text",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-08T15:42:56.705Z"
+    },
+    {
+      "name": "fresh-air-result-text",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-08T15:42:58.476Z"
+    },
+    {
+      "name": "fresh-air-no-outlet-or-draft",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-08T15:42:58.476Z"
+    },
+    {
+      "name": "window-none-recorded",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-08T15:43:00.086Z"
+    },
+    {
+      "name": "window-double-daily-recorded",
+      "passed": true,
+      "detail": null,
+      "time": "2026-08-08T15:43:02.613Z"
+    }
+  ],
+  "screenshots": [],
+  "classification": "BLOCKED_ENV",
+  "blockerReason": "screenshot failed: screenshot_worker_timeout",
+  "status": "failed",
+  "failure_kind": "failed_environment",
+  "business_assertions_reached": false
+}

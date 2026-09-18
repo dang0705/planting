@@ -2,101 +2,53 @@
 
 const crypto = require('crypto')
 
+const { getPromptSymptomDictionary } = require('../repositories/symptom-repository')
+const { filterPromptSymptomsByLocation } = require('./prompt-symptom-pool')
+const { getLlmImagePromptContext, normalizeLlmImageTaskContext } = require('./llm-image-context')
+const { buildCacheFirstVisualPrompt } = require('./visual-prompt-cache-contract')
+const { VISUAL_OUTPUT_SCHEMA_TEXT } = require('./visual-contract')
+const { normalizeCaptureRegion } = require('./capture-region-normalizer')
 const {
-  getPromptSymptomDictionary
-} = require('../repositories/symptom-repository')
-const {
-  filterPromptSymptomsByLocation
-} = require('./prompt-symptom-pool')
-const {
-  prompts: { llm: promptTemplate }
-} = require('../configs')
+  FORMAL_PEST_VISUAL_EVIDENCE_KEYS,
+  GENERAL_VISUAL_RULES,
+  PEST_VISUAL_RULES
+} = require('../domain/diagnosis-mode-registry')
 
-const FULL_CASE_LOCATION_KEYS = ['leaf', 'stem', 'flower', 'soil']
+const {
+  FULL_CASE_LOCATION_KEYS,
+  LOCATION_LABEL_MAP,
+  PROMPT_SYMPTOM_HINTS,
+  compileGeneralVisualMapping,
+  compilePestVisualEvidenceHints,
+  compilePestVisualMapping,
+  STATIC_ROUTE_CATALOG_TEXT,
+  STATIC_VISUAL_WORKFLOW_RULES,
+  localizeStaticPromptSections
+} = require('./visual-prompt-static-rules')
 
 const ORGAN_TO_LOCATION_KEYS = {
   leaf: ['leaf'],
   stem: ['stem'],
   flower: ['flower'],
-  root: ['soil'],
-  root_crown: ['stem', 'soil'],
+  root: ['root', 'soil'],
+  root_crown: ['root', 'stem', 'soil'],
+  soil: ['soil'],
   whole_plant: FULL_CASE_LOCATION_KEYS,
   fruit: [],
-  other: [],
+  other: FULL_CASE_LOCATION_KEYS,
   unknown: []
 }
 
-const LOCATION_LABEL_MAP = {
-  leaf: '叶片',
-  stem: '茎部',
-  flower: '花部',
-  soil: '盆土 / 根际'
+function normalizeText(value = '', conservative = '') {
+  return String(value || '').trim() || conservative
 }
 
-const LEAF_STRUCTURAL_PRIORITY_KEYS = [
-  'holes_in_leaf',
-  'chewed_edges',
-  'skeletonized_leaves',
-  'tunnels_in_leaf'
-]
-
-const PROMPT_SYMPTOM_HINTS = {
-  holes_in_leaf: '穿透洞/缺损',
-  chewed_edges: '叶缘缺口',
-  skeletonized_leaves: '只剩叶脉',
-  tunnels_in_leaf: '蛇形潜道',
-  black_spots_spreading: '完整组织黑斑',
-  brown_spots_halo: '褐斑黄晕',
-  irregular_blotches: '不规则暗斑'
-}
-const MAX_PROMPT_DISPLAY_TEXT_LENGTH = 18
-const ROUTE_PATH_SCHEMA_APPENDIX = `
-额外输出要求：
-1. 只输出路径输入，不允许输出 final_outcome_key、diagnosis_key、treatment_plan。
-2. 结构化 JSON 中必须额外包含：
-{
-  "visual_discriminators": [],
-  "missing_info_for_path": []
-}
-3. visual_discriminators 用于描述图片里可见、可帮助路径分流的形态事实。
-4. missing_info_for_path 用于描述“图片看不出来、需要追问”的缺失信息。
-5. 如果当前图片无法提供这两类信息，字段保留空数组，不要省略。
-`.trim()
-
-function normalizeText(value = '', fallback = '') {
-  const normalized = String(value || '').trim()
-  return normalized || fallback
+function normalizeOrgan(value = '', conservative = 'unknown') {
+  return normalizeText(value, conservative).toLowerCase() || conservative
 }
 
-function normalizeOrgan(value = '', fallback = 'unknown') {
-  const normalized = normalizeText(value, fallback).toLowerCase()
-  return normalized || fallback
-}
-
-function normalizeLocationKey(value = '', fallback = '') {
-  return normalizeText(value, fallback).toLowerCase()
-}
-
-function compactDisplayText(value = '') {
-  const normalized = normalizeText(value, '')
-    .replace(/[（(].*?[）)]/g, '')
-    .replace(/\s+/g, '')
-  if (!normalized) {return ''}
-  return normalized.length > MAX_PROMPT_DISPLAY_TEXT_LENGTH
-    ? normalized.slice(0, MAX_PROMPT_DISPLAY_TEXT_LENGTH)
-    : normalized
-}
-
-function buildSymptomOptionText(symptom) {
-  const symptomKey = normalizeText(symptom?.symptomKey, '')
-  const discriminatorHint = PROMPT_SYMPTOM_HINTS[normalizeText(symptom?.symptomKey, '')]
-  if (!symptomKey) {
-    return ''
-  }
-
-  return discriminatorHint
-    ? `${symptomKey}=${discriminatorHint}`
-    : `${symptomKey}=${compactDisplayText(symptom?.displayTextCn || symptom?.symptomCn || symptomKey) || symptomKey}`
+function normalizeLocationKey(value = '', conservative = '') {
+  return normalizeText(value, conservative).toLowerCase()
 }
 
 function buildLocationCounts(symptomRows = []) {
@@ -109,16 +61,72 @@ function buildLocationCounts(symptomRows = []) {
 
 function resolvePromptLocationKeys(imageContext = {}) {
   const inputOrganHint = normalizeOrgan(
-    imageContext?.inputSlotType || imageContext?.userDeclaredOrganType || 'unknown',
-    'unknown'
+    imageContext?.inputSlotType || imageContext?.userDeclaredOrganType || 'unknown'
   )
-
   return ORGAN_TO_LOCATION_KEYS[inputOrganHint] || []
+}
+
+function resolveFormalPestEvidenceKeys(locationKeys = []) {
+  const normalizedLocationKeys = new Set(
+    (Array.isArray(locationKeys) ? locationKeys : []).map(normalizeLocationKey).filter(Boolean)
+  )
+  if (!normalizedLocationKeys.size) {
+    return []
+  }
+
+  const applicableKeys = new Set(
+    PEST_VISUAL_RULES.filter(rule =>
+      rule.organKeys.some(organKey => normalizedLocationKeys.has(organKey))
+    ).flatMap(rule => rule.evidence.map(item => item.evidenceKey))
+  )
+  return FORMAL_PEST_VISUAL_EVIDENCE_KEYS.filter(key => applicableKeys.has(key))
+}
+
+function resolvePromptSymptomKeys({ imageContext = {}, locationKeys = [], symptoms = [] } = {}) {
+  const diagnosisProfile = normalizeText(
+    imageContext?.diagnosisProfile || getLlmImagePromptContext()?.diagnosisProfile,
+    'full'
+  ).toLowerCase()
+  const normalizedLocationKeys = Array.from(
+    new Set(
+      (Array.isArray(locationKeys) ? locationKeys : []).map(normalizeLocationKey).filter(Boolean)
+    )
+  )
+  const formalPestEvidenceKeys = resolveFormalPestEvidenceKeys(normalizedLocationKeys)
+
+  if (diagnosisProfile !== 'pest') {
+    const symptomKeys = (Array.isArray(symptoms) ? symptoms : [])
+      .map(item => normalizeText(item?.symptomKey, ''))
+      .filter(Boolean)
+    // full profile 下合并当前器官相关的通用视觉证据键（leaf_yellowing、yellowing_patchy、
+    // powder_white 等），确保非虫害模式的证据键可用于 symptom_candidates 和 mode 路由。
+    // 这些键可能未在 symptoms 表中设置 ai_visual_pool='yes'，需要在此补充。
+    const generalKeys = (Array.isArray(GENERAL_VISUAL_RULES) ? GENERAL_VISUAL_RULES : [])
+      .filter(rule =>
+        normalizedLocationKeys.length
+          ? rule.organKeys.some(organKey => normalizedLocationKeys.includes(organKey))
+          : true
+      )
+      .flatMap(rule => rule.evidence.map(item => item.evidenceKey))
+      .filter(key => !symptomKeys.includes(key))
+    // 正式虫害证据由模式注册表定义，不得因 symptoms 表漏迁移而从综合诊断白名单消失。
+    // 否则会出现“映射要求输出蓟马证据、动态白名单却禁止输出该证据”的自相矛盾 prompt。
+    return Array.from(new Set([...symptomKeys, ...generalKeys, ...formalPestEvidenceKeys]))
+  }
+
+  if (!normalizedLocationKeys.length) {
+    return [...FORMAL_PEST_VISUAL_EVIDENCE_KEYS]
+  }
+  return formalPestEvidenceKeys
 }
 
 function assertPromptPoolMatchesLocation(symptomRows = [], locationKeys = []) {
   const normalizedLocationKeys = Array.from(
-    new Set((Array.isArray(locationKeys) ? locationKeys : []).map(item => normalizeLocationKey(item)).filter(Boolean))
+    new Set(
+      (Array.isArray(locationKeys) ? locationKeys : [])
+        .map(item => normalizeLocationKey(item))
+        .filter(Boolean)
+    )
   )
 
   if (!normalizedLocationKeys.length) {
@@ -138,162 +146,184 @@ function assertPromptPoolMatchesLocation(symptomRows = [], locationKeys = []) {
   }
 }
 
-function buildCaseSlotSummaryText(imageContext = {}) {
-  const slotSummary = Array.isArray(imageContext?.caseSlotSummary)
-    ? imageContext.caseSlotSummary
-    : []
-  if (!slotSummary.length) {return ''}
-
-  const lines = slotSummary.map(item => {
-    const slotOrder = Number.isFinite(Number(item?.inputSlotOrder))
-      ? Number(item.inputSlotOrder) + 1
-      : '?'
-    const slotLabel =
-      normalizeText(item?.inputSlotLabel || '', '') ||
-      LOCATION_LABEL_MAP[normalizeLocationKey(item?.inputSlotType || '', '')] ||
-      normalizeText(item?.inputSlotType || '', '未指定')
-    return `图${slotOrder}:${slotLabel}`
-  })
-
-  return lines.join('；')
-}
-
-function buildImageContextText(imageContext = {}, locationKeys = []) {
-  const totalImageCount = Number.isFinite(Number(imageContext?.totalImageCount))
-    ? Number(imageContext.totalImageCount)
-    : 1
-  const slotOrder = Number.isFinite(Number(imageContext?.inputSlotOrder))
-    ? Number(imageContext.inputSlotOrder) + 1
-    : 1
-  const slotType = normalizeOrgan(imageContext?.inputSlotType, 'unknown')
-  const slotLabel =
-    normalizeText(imageContext?.inputSlotLabel || '', '') ||
-    LOCATION_LABEL_MAP[slotType] ||
-    '未指定槽位'
-  const declaredOrganType = normalizeOrgan(imageContext?.userDeclaredOrganType, 'unknown')
-  const caseSlotSummaryText = buildCaseSlotSummaryText(imageContext)
-  const normalizedLocationKeys = Array.from(
-    new Set((Array.isArray(locationKeys) ? locationKeys : []).map(item => normalizeLocationKey(item)).filter(Boolean))
+function hasSameSymptomKeySet(left = [], right = []) {
+  const leftKeys = new Set(
+    (Array.isArray(left) ? left : []).map(item => normalizeText(item, '')).filter(Boolean)
   )
-  const locationLabels = normalizedLocationKeys
-    .map(item => LOCATION_LABEL_MAP[normalizeLocationKey(item)] || item)
-    .filter(Boolean)
-
-  const lines = ['Normalize only the current image in this multi-image case.']
-  lines.push(`current_image=${slotOrder}/${Math.max(1, totalImageCount)}; slot=${slotLabel}.`)
-  lines.push(`slot_type=${slotType}; user_declared_organ=${declaredOrganType}.`)
-
-  if (normalizedLocationKeys.length) {
-    lines.push(`allowed_location_keys=${normalizedLocationKeys.join(',')}; allowed_labels=${locationLabels.join(',')}.`)
-    lines.push('For symptom_candidates, use only entries under allowed_location_keys in the static Candidate Catalog.')
-  } else {
-    lines.push('allowed_location_keys=none; do not force a formal symptom_candidate.')
-  }
-
-  lines.push('Visible abnormalities outside allowed entries must go to out_of_pool_symptom_candidates.')
-
-  if (caseSlotSummaryText) {
-    lines.push(`case_slot_summary=${caseSlotSummaryText}.`)
-  }
-
-  lines.push('Do not project features from other images into this image.')
-
-  return lines.join('\n')
+  const rightKeys = new Set(
+    (Array.isArray(right) ? right : []).map(item => normalizeText(item, '')).filter(Boolean)
+  )
+  return (
+    leftKeys.size === rightKeys.size &&
+    Boolean(leftKeys.size) &&
+    Array.from(leftKeys).every(key => rightKeys.has(key))
+  )
 }
 
-function buildGroupedSymptomOptionsText(symptomRows = []) {
-  const locationOrder = ['leaf', 'stem', 'flower', 'soil']
-  const groupedMap = new Map()
+function buildAllowedSymptomKeysText({
+  diagnosisProfile = '',
+  symptomKeys = [],
+  formalPestEvidenceKeys = []
+} = {}) {
+  const normalizedKeys = Array.from(
+    new Set(
+      (Array.isArray(symptomKeys) ? symptomKeys : [])
+        .map(item => normalizeText(item, ''))
+        .filter(Boolean)
+    )
+  )
+  // 仅当当前器官范围的白名单与静态词典中的虫害证据全集严格相等时，才引用静态全集。
+  // 任一局部器官、增删键或集合不完整的情形都保留逐键列举，不能借压缩扩大允许范围。
+  if (
+    diagnosisProfile === 'pest' &&
+    hasSameSymptomKeySet(normalizedKeys, FORMAL_PEST_VISUAL_EVIDENCE_KEYS)
+  ) {
+    return '静态全局词典中的全部虫害可见证据键'
+  }
+  const normalizedFormalPestKeys = new Set(
+    (Array.isArray(formalPestEvidenceKeys) ? formalPestEvidenceKeys : [])
+      .map(item => normalizeText(item, ''))
+      .filter(Boolean)
+  )
+  if (diagnosisProfile === 'full' && normalizedFormalPestKeys.size) {
+    const nonPestKeys = normalizedKeys.filter(key => !normalizedFormalPestKeys.has(key))
+    // 正式虫害键已在同一动态区的映射与提示中逐一列出；这里用范围指代而非重复列键，
+    // 既保持“动态区允许”的合同，也避免为完整虫害召回无谓增加输入 Token。
+    return [nonPestKeys.join(','), '【虫害映射】中的当前器官正式虫害证据键']
+      .filter(Boolean)
+      .join('；')
+  }
+  return normalizedKeys.join(',') || 'none'
+}
 
-  for (const symptom of Array.isArray(symptomRows) ? symptomRows : []) {
-    const locationKey = normalizeLocationKey(symptom?.locationKey, 'unknown')
-    const list = groupedMap.get(locationKey) || []
-    list.push(symptom)
-    groupedMap.set(locationKey, list)
+function buildImageContextText(
+  imageContext = {},
+  locationKeys = [],
+  narrowedSymptoms = [],
+  allowedSymptomKeys = []
+) {
+  const slotType = normalizeOrgan(imageContext?.inputSlotType, 'unknown')
+  const normalizedLocationKeys = Array.from(
+    new Set(
+      (Array.isArray(locationKeys) ? locationKeys : [])
+        .map(item => normalizeLocationKey(item))
+        .filter(Boolean)
+    )
+  )
+  const narrowedSymptomKeyList = Array.from(
+    new Set(
+      (Array.isArray(allowedSymptomKeys) && allowedSymptomKeys.length
+        ? allowedSymptomKeys
+        : narrowedSymptoms
+      )
+        .map(item => normalizeText(item?.symptomKey || item, ''))
+        .filter(Boolean)
+    )
+  )
+  const promptContext = normalizeLlmImageTaskContext(imageContext, getLlmImagePromptContext())
+  const declaredCaptureRegion = normalizeCaptureRegion(imageContext?.captureRegion || '')
+  const taskContext = { profile: promptContext.diagnosisProfile }
+  // 每张图由独立模型调用处理，排序/总数由服务端入库链路保存，并不参与当前图证据判断。
+  // 仅在补拍时告知轮次；initial 和 unknown 都是默认值，重复发送只会增加动态输入 Token。
+  if (promptContext.analysisRound !== 'initial') {
+    taskContext.round = promptContext.analysisRound
+  }
+  taskContext.image = { slot: slotType }
+  if (declaredCaptureRegion !== 'unknown') {
+    taskContext.image.region = declaredCaptureRegion
+  }
+  const requestedCaptureRegion = normalizeCaptureRegion(promptContext.requestedCaptureRegion || '')
+  if (requestedCaptureRegion !== 'unknown') {
+    taskContext.requested_region = requestedCaptureRegion
+  }
+  if (promptContext.priorAdmittedEvidenceDigest) {
+    taskContext.prior_evidence = promptContext.priorAdmittedEvidenceDigest
+  }
+  if (promptContext.unresolvedEvidenceGroups.length) {
+    taskContext.unresolved = promptContext.unresolvedEvidenceGroups
   }
 
-  const orderedLocationKeys = [
-    ...locationOrder.filter(item => groupedMap.has(item)),
-    ...Array.from(groupedMap.keys()).filter(item => !locationOrder.includes(item))
+  const lines = [
+    `task=${JSON.stringify(taskContext)}。`,
+    '先查【虫害映射】再查黄化/下垂，可并存。满足虫害映射即填对应 pest mode_candidates+正式 evidence key；不得被 yellow_leaf/wilting_droop 替代或漏填。无清晰证据不猜。'
   ]
 
-  if (groupedMap.has('leaf')) {
-    const leafRows = groupedMap.get('leaf') || []
-    const prioritizedLeafRows = []
-    const remainingLeafRows = []
-
-    for (const symptom of leafRows) {
-      if (LEAF_STRUCTURAL_PRIORITY_KEYS.includes(normalizeText(symptom?.symptomKey, ''))) {
-        prioritizedLeafRows.push(symptom)
-      } else {
-        remainingLeafRows.push(symptom)
-      }
-    }
-
-    groupedMap.set('leaf', [...prioritizedLeafRows, ...remainingLeafRows])
+  if (normalizedLocationKeys.length) {
+    lines.push(`allowed_location_keys=${normalizedLocationKeys.join(',')}。`)
+    lines.push(
+      `allowed_symptom_keys=${buildAllowedSymptomKeysText({
+        diagnosisProfile: promptContext.diagnosisProfile,
+        symptomKeys: narrowedSymptomKeyList,
+        formalPestEvidenceKeys: resolveFormalPestEvidenceKeys(normalizedLocationKeys)
+      })}。`
+    )
+    // 静态输出规则已锁定 symptom_candidates 只能使用动态区允许键；这里只保留
+    // 不能删的跨器官落位语义，避免逐图重复消耗动态输入 Token。
+    lines.push('跨器官仅写 out_of_pool_symptom_candidates。')
+  } else {
+    lines.push(
+      'allowed_location_keys=none；allowed_symptom_keys=none；不要强行选择正式 symptom_candidates。'
+    )
   }
 
-  let globalIndex = 0
-  if (orderedLocationKeys.length === 1) {
-    const onlyKey = orderedLocationKeys[0]
-    const onlyList = groupedMap.get(onlyKey) || []
-    const title = LOCATION_LABEL_MAP[onlyKey] || onlyKey || '未分组'
-    const leadHint =
-      onlyKey === 'leaf'
-        ? '先判结构损伤再看spots。'
-        : ''
-    return `【${title}】${leadHint}${onlyList.map(symptom => buildSymptomOptionText(symptom, globalIndex++)).join('、')}`
+  const pestVisualMapping = compilePestVisualMapping(normalizedLocationKeys)
+  if (pestVisualMapping) {
+    lines.push(pestVisualMapping)
+  }
+  const pestVisualEvidenceHints = compilePestVisualEvidenceHints(normalizedLocationKeys)
+  if (pestVisualEvidenceHints) {
+    lines.push(pestVisualEvidenceHints)
   }
 
-  return orderedLocationKeys
-    .map(locationKey => {
-      const list = groupedMap.get(locationKey) || []
-      if (!list.length) {return ''}
-
-      const title = LOCATION_LABEL_MAP[locationKey] || locationKey || '未分组'
-      const leadHint =
-        locationKey === 'leaf'
-          ? '先判结构损伤再看spots。'
-          : ''
-      const lines = list.map(symptom => {
-        const line = buildSymptomOptionText(symptom, globalIndex)
-        globalIndex += 1
-        return line
-      })
-
-      return `【${title}】${leadHint}${lines.join('、')}`
-    })
-    .filter(Boolean)
-    .join('\n')
-}
-
-function buildPromptSymptomOptionsText(symptomRows = []) {
-  const groupedText = buildGroupedSymptomOptionsText(symptomRows)
-  if (groupedText) {
-    return groupedText
+  // 虫害路径的允许证据键不包含黄化/下垂通用模式；发送通用映射既无路由意义又会制造冲突。
+  const generalVisualMapping =
+    promptContext.diagnosisProfile === 'pest'
+      ? ''
+      : compileGeneralVisualMapping(normalizedLocationKeys)
+  const hasYellowOrDroopRoute = GENERAL_VISUAL_RULES.some(
+    rule =>
+      ['yellow_leaf', 'wilting_droop'].includes(rule.modeKey) &&
+      rule.organKeys.some(organKey => normalizedLocationKeys.includes(organKey))
+  )
+  if (generalVisualMapping) {
+    lines.push(generalVisualMapping)
   }
 
-  return '当前 location_key 对应的正式 symptom 候选为空。不要跨器官硬选；若看到明确异常，只允许写入 out_of_pool_symptom_candidates。'
-}
+  if (promptContext.diagnosisProfile === 'full' && hasYellowOrDroopRoute) {
+    lines.push('full：黄化/下垂各填 symptom+mode；不代虫害')
+  }
 
-function buildCandidateCatalogText(symptomRows = []) {
-  const groupedText = buildGroupedSymptomOptionsText(symptomRows)
-  return groupedText || 'No formal candidate catalog.'
+  if (normalizedLocationKeys.some(key => ['leaf', 'flower'].includes(key))) {
+    lines.push('细长虫体须填 thrips+thrips_visible；黄化或黑点不可替代。')
+  }
+
+  if (promptContext.diagnosisProfile === 'pest') {
+    lines.push(
+      'pest：mode 只能使用静态词典的 pest 模式；黄化或下垂仅作为 symptom，evidence key 不可填入 mode。'
+    )
+  }
+
+  return lines.join('\n')
 }
 
 function buildPromptDebugMeta({
   imageContext = null,
   locationKeys = [],
   filteredSymptoms = [],
-  symptomOptionsText = '',
-  candidateCatalogText = '',
   dynamicTaskText = ''
 } = {}) {
   const safeImageContext = imageContext && typeof imageContext === 'object' ? imageContext : {}
   const candidatePairs = (Array.isArray(filteredSymptoms) ? filteredSymptoms : [])
     .map(item => ({
       symptomKey: normalizeText(item?.symptomKey, ''),
-      displayText: normalizeText(item?.displayTextCn || item?.symptomCn || item?.symptomKey || '', '')
+      displayText: normalizeText(
+        PROMPT_SYMPTOM_HINTS[normalizeText(item?.symptomKey, '')] ||
+          item?.displayTextCn ||
+          item?.symptomCn ||
+          item?.symptomKey ||
+          '',
+        ''
+      )
     }))
     .filter(item => item.symptomKey)
   const candidateSymptomKeys = candidatePairs.map(item => item.symptomKey)
@@ -303,22 +333,13 @@ function buildPromptDebugMeta({
     .update(candidateSymptomKeys.join('|'))
     .digest('hex')
     .slice(0, 16)
-  const candidatePromptFragments = (Array.isArray(filteredSymptoms) ? filteredSymptoms : [])
-    .map((item, index) => buildSymptomOptionText(item, index))
-    .filter(Boolean)
   const candidateDisplayFragments = candidatePairs
     .map(item => `${item.symptomKey}=${item.displayText}`)
     .filter(Boolean)
-  const candidatePoolText = normalizeText(symptomOptionsText, '')
+  const candidatePoolText = candidateSymptomKeys.join(',')
   const candidatePoolTextChecksum = crypto
     .createHash('sha1')
     .update(candidatePoolText)
-    .digest('hex')
-    .slice(0, 16)
-  const catalogText = normalizeText(candidateCatalogText, '')
-  const candidateCatalogTextChecksum = crypto
-    .createHash('sha1')
-    .update(catalogText)
     .digest('hex')
     .slice(0, 16)
   const taskText = normalizeText(dynamicTaskText, '')
@@ -326,11 +347,11 @@ function buildPromptDebugMeta({
   return {
     promptPoolSource: 'symptoms.ai_visual_pool=yes',
     tokenMeasureBasis: 'actual_full_promptLength_and_model_usage_promptTokens',
-    promptLayout: 'static_rules_schema_catalog_then_dynamic_task',
+    promptLayout: 'static_rules_schema_directory_then_dynamic_task',
     candidatePoolTextLength: candidatePoolText.length,
     candidatePoolTextChecksum,
-    staticCandidateCatalogLength: catalogText.length,
-    staticCandidateCatalogChecksum: candidateCatalogTextChecksum,
+    staticCandidateCatalogLength: 0,
+    staticCandidateCatalogChecksum: '',
     dynamicTaskLength: taskText.length,
     inputSlotType: normalizeOrgan(safeImageContext?.inputSlotType, 'unknown'),
     inputSlotLabel: normalizeText(safeImageContext?.inputSlotLabel || '', ''),
@@ -354,7 +375,11 @@ function buildPromptDebugMeta({
       }))
       .slice(0, 6),
     locationKeys: Array.from(
-      new Set((Array.isArray(locationKeys) ? locationKeys : []).map(item => normalizeLocationKey(item)).filter(Boolean))
+      new Set(
+        (Array.isArray(locationKeys) ? locationKeys : [])
+          .map(item => normalizeLocationKey(item))
+          .filter(Boolean)
+      )
     ),
     locationLabels: Array.from(
       new Set(
@@ -372,52 +397,53 @@ function buildPromptDebugMeta({
     candidateKeyDisplayPairsHead: candidatePairs.slice(0, 16),
     candidateKeyDisplayPairsTail: candidatePairs.slice(-16),
     candidateKeyDisplayPairsAll: includeAllCandidateSymptomKeys ? candidatePairs : undefined,
-    candidatePromptTextSample: candidatePromptFragments.slice(0, 10),
+    candidatePromptTextSample: candidateSymptomKeys.slice(0, 10),
     candidateDisplayTextSample: candidateDisplayFragments.slice(0, 10)
   }
 }
 
 async function buildSymptomLabelerPromptPayload({ imageContext = null } = {}) {
   const symptomDictionary = await getPromptSymptomDictionary()
+  const visualSymptomDictionary = symptomDictionary.filter(
+    item => normalizeText(item?.symptomKey, '').toLowerCase() !== 'sticky_honeydew'
+  )
   const locationKeys = resolvePromptLocationKeys(imageContext)
-  const filteredSymptoms = filterPromptSymptomsByLocation(symptomDictionary, locationKeys)
+  const filteredSymptoms = filterPromptSymptomsByLocation(visualSymptomDictionary, locationKeys)
+  const allowedSymptomKeys = resolvePromptSymptomKeys({
+    imageContext,
+    locationKeys,
+    symptoms: filteredSymptoms
+  })
   assertPromptPoolMatchesLocation(filteredSymptoms, locationKeys)
-  const symptomOptionsText = buildPromptSymptomOptionsText(filteredSymptoms)
-  const candidateCatalogText = buildCandidateCatalogText(symptomDictionary)
-  const imageContextText = buildImageContextText(imageContext, locationKeys)
-  const dynamicTaskText = `${imageContextText}\n\n${ROUTE_PATH_SCHEMA_APPENDIX}`.trim()
+  const imageContextText = buildImageContextText(
+    imageContext,
+    locationKeys,
+    filteredSymptoms,
+    allowedSymptomKeys
+  )
+  const dynamicTaskText = imageContextText.trim()
   const debugMeta = buildPromptDebugMeta({
     imageContext,
     locationKeys,
     filteredSymptoms,
-    symptomOptionsText,
-    candidateCatalogText,
     dynamicTaskText
   })
-  let promptText = ''
-
-  if (typeof promptTemplate === 'function') {
-    promptText = promptTemplate({
-      symptomOptionsText,
-      imageContextText,
-      candidateCatalogText,
-      dynamicTaskText
-    })
-  } else {
-    const basePrompt = String(promptTemplate || '').replace(
-      '[这里插入你筛选过的 symptom_key + 简短说明]',
-      symptomOptionsText
-    )
-
-    promptText = `${imageContextText}\n\n${basePrompt}`.trim()
-  }
-  debugMeta.staticPrefixLength = Math.max(
-    0,
-    String(promptText || '').length -
-      String(candidateCatalogText || '').length -
-      String(dynamicTaskText || '').length
-  )
-  debugMeta.narrowedCandidatePoolTextLength = String(symptomOptionsText || '').length
+  const baseCachePrompt = buildCacheFirstVisualPrompt({
+    taskLine: '【角色】你是植物图片的结构化可见证据标注助手。',
+    schemaText: VISUAL_OUTPUT_SCHEMA_TEXT,
+    ruleText: STATIC_VISUAL_WORKFLOW_RULES,
+    evidenceDirectoryText: STATIC_ROUTE_CATALOG_TEXT,
+    dynamicTaskText
+  })
+  const localizedCachePrompt = localizeStaticPromptSections(baseCachePrompt)
+  const promptText = localizedCachePrompt.promptText
+  debugMeta.staticPrefixLength =
+    String(promptText || '')
+      .split('[Dynamic Task]')[0]
+      ?.trim().length || 0
+  debugMeta.narrowedCandidatePoolTextLength = debugMeta.candidatePoolTextLength
+  debugMeta.promptCacheStaticPrefixHash = localizedCachePrompt.staticPrefixHash
+  debugMeta.promptCacheDynamicTailHash = localizedCachePrompt.dynamicTailHash
 
   return {
     promptText,
@@ -426,8 +452,7 @@ async function buildSymptomLabelerPromptPayload({ imageContext = null } = {}) {
 }
 
 async function buildSymptomLabelerPrompt({ imageContext = null } = {}) {
-  const payload = await buildSymptomLabelerPromptPayload({ imageContext })
-  return payload.promptText
+  return (await buildSymptomLabelerPromptPayload({ imageContext })).promptText
 }
 
 module.exports = {

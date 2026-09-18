@@ -1,44 +1,13 @@
 'use strict'
 
-function summarizeQuestionQueue(questionQueue = null) {
-  if (!questionQueue || typeof questionQueue !== 'object') {
-    return {
-      totalItems: 0,
-      activeItems: 0,
-      askedItems: 0,
-      answeredItems: 0,
-      invalidatedItems: 0
-    }
-  }
-
-  const questionItems = Array.isArray(questionQueue?.questionItems)
-    ? questionQueue.questionItems
-    : []
-  const askedItems = questionItems.filter(item => Number(item?.asked || 0) ? 1 : 0).length
-  const answeredItems = questionItems.filter(item => Number(item?.answered || 0) ? 1 : 0).length
-  const invalidatedItems = questionItems.filter(item => Number(item?.invalidated || 0) ? 1 : 0).length
-  const activeItems = questionItems.filter(item => {
-    const status = String(item?.status || '').trim().toLowerCase()
-    return Number(item?.asked || 0) && !Number(item?.answered || 0) && !Number(item?.invalidated || 0) && status !== 'answered' && status !== 'invalidated'
-  }).length
-
-  return {
-    totalItems: questionItems.length,
-    activeItems: Number(questionQueue?.activeItemCount || activeItems || 0),
-    askedItems: Number(questionQueue?.askedItemCount || askedItems || 0),
-    answeredItems: Number(questionQueue?.answeredItemCount || answeredItems || 0),
-    invalidatedItems: Number(questionQueue?.invalidatedItemCount || invalidatedItems || 0)
-  }
-}
-
 function summarizeQuestionCountByDbFields(row = {}) {
   if (!row || typeof row !== 'object') {
     return {
-      totalItems: 0,
-      activeItems: 0,
-      askedItems: 0,
-      answeredItems: 0,
-      invalidatedItems: 0
+      questionTotal: 0,
+      questionPending: 0,
+      questionAsked: 0,
+      questionAnswered: 0,
+      questionInvalidated: 0
     }
   }
 
@@ -54,25 +23,21 @@ function summarizeQuestionCountByDbFields(row = {}) {
   }
 
   return {
-    totalItems: Number(row.question_total_count || 0),
-    activeItems: Number(row.question_active_count || 0),
-    askedItems: Number(row.question_asked_count || 0),
-    answeredItems: Number(row.question_answered_count || 0),
-    invalidatedItems: Number(row.question_invalidated_count || 0)
+    questionTotal: Number(row.question_total_count || 0),
+    questionPending: Number(row.question_active_count || 0),
+    questionAsked: Number(row.question_asked_count || 0),
+    questionAnswered: Number(row.question_answered_count || 0),
+    questionInvalidated: Number(row.question_invalidated_count || 0)
   }
 }
 
-function resolveQuestionCountSummary(row = {}, runtimeSnapshot = null) {
-  const dbSummary = summarizeQuestionCountByDbFields(row)
-  const queueSummary = summarizeQuestionQueue(runtimeSnapshot?.questionQueue || runtimeSnapshot || null)
-  if (!dbSummary) {return queueSummary}
-
-  return {
-    totalItems: Math.max(Number(dbSummary.totalItems || 0), Number(queueSummary.totalItems || 0)),
-    activeItems: Math.max(Number(dbSummary.activeItems || 0), Number(queueSummary.activeItems || 0)),
-    askedItems: Math.max(Number(dbSummary.askedItems || 0), Number(queueSummary.askedItems || 0)),
-    answeredItems: Math.max(Number(dbSummary.answeredItems || 0), Number(queueSummary.answeredItems || 0)),
-    invalidatedItems: Math.max(Number(dbSummary.invalidatedItems || 0), Number(queueSummary.invalidatedItems || 0))
+function resolveQuestionCountSummary(row = {}) {
+  return summarizeQuestionCountByDbFields(row) || {
+    questionTotal: 0,
+    questionPending: 0,
+    questionAsked: 0,
+    questionAnswered: 0,
+    questionInvalidated: 0
   }
 }
 
@@ -102,15 +67,14 @@ function buildSymptomClassRuntimeReviewPayload(symptomClassRuntime = null) {
     classSwitchHistory: Array.isArray(symptomClassRuntime?.classSwitchHistory)
       ? symptomClassRuntime.classSwitchHistory
       : [],
-    classGateDecision: symptomClassRuntime?.classGateDecision &&
-      typeof symptomClassRuntime.classGateDecision === 'object'
-      ? symptomClassRuntime.classGateDecision
+    classConditionDecision: symptomClassRuntime?.classConditionDecision &&
+      typeof symptomClassRuntime.classConditionDecision === 'object'
+      ? symptomClassRuntime.classConditionDecision
       : null
   }
 }
 
 module.exports = {
-  summarizeQuestionQueue,
   summarizeQuestionCountByDbFields,
   resolveQuestionCountSummary,
   buildSymptomClassRuntimeReviewPayload

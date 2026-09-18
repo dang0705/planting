@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.example.invalid/miniprogram-e2e/mp-e2e.contract.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "platform",
+    "projectConfigPath",
+    "appConfigPath",
+    "selectorPolicy",
+    "capabilities",
+    "adapter"
+  ],
+  "properties": {
+    "contractVersion": { "const": 1 },
+    "platform": { "const": "wechat-miniprogram" },
+    "projectConfigPath": { "type": "string", "minLength": 1 },
+    "appConfigPath": { "type": "string", "minLength": 1 },
+    "selectorPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "compiledIdMode"],
+      "properties": {
+        "kind": { "const": "semantic-id" },
+        "compiledIdMode": { "enum": ["exact", "scoped", "exact-or-scoped"] }
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "enum": ["navigate", "interact", "screenshot", "runtime-request"]
+      },
+      "uniqueItems": true
+    },
+    "adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "apiVersion"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "apiVersion": { "const": 1 }
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+.DS_Store
+.env
+.env.local
+assets/catalog.json
+runtime/wan-routing-state.json
+runtime/wan-quota-ledger.json
+workflows/*/renders/*/audio/*.mp3

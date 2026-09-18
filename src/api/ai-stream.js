@@ -133,7 +133,7 @@ function compressDiagnoseImage(filePath) {
 
 function fetchImageAsDataUrl(url) {
   return new Promise((resolve, reject) => {
-    wx.request({
+    uni.request({
       url,
       method: 'GET',
       responseType: 'arraybuffer',

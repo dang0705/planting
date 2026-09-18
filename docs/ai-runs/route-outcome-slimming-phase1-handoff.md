@@ -40,7 +40,7 @@ Dispatch Plan:
 - [cloudfunctions/diagnose-http/constants/tables.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/constants/tables.js)
 - [cloudfunctions/diagnose-http/constants/outcome-route.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/constants/outcome-route.js)
 - [cloudfunctions/diagnose-http/repositories/outcome-route-repository.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/repositories/outcome-route-repository.js)
-- [cloudfunctions/diagnose-http/domain/outcome-gate-evaluator.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/outcome-gate-evaluator.js)
+- [cloudfunctions/diagnose-http/domain/outcome-condition-evaluator.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/outcome-condition-evaluator.js)
 - [cloudfunctions/diagnose-http/domain/outcome-route-planner.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/outcome-route-planner.js)
 - [cloudfunctions/diagnose-http/domain/diagnosis-engine.js](/Users/jay/WebstormProjects/planting/cloudfunctions/diagnose-http/domain/diagnosis-engine.js)
 - [src/data-system/config/tables.js](/Users/jay/WebstormProjects/planting/src/data-system/config/tables.js)
@@ -67,7 +67,7 @@ Dispatch Plan:
   - `src/data-system/config/tables.js` 新增 `outcome_route_*` 与 `diagnosis_outcomes` 导入配置，且均为 `enabledByDefault: false`
   - `cloudfunctions/diagnose-http/domain/diagnosis-engine.js` 在 ranking 后插入 `planOutcomeRoutes`，仅通过 `metrics.routeDecision` 暴露，不改变最终输出结构
   - `cloudfunctions/diagnose-http/domain/outcome-route-planner.js` 提供 `buildRouteEvidenceContext/planOutcomeRoutes/buildFallbackDecision` 双轨观测
-  - `cloudfunctions/diagnose-http/domain/outcome-gate-evaluator.js` 提供 gate 评估与 blocker/pass/fail/need_more_info 判断
+  - `cloudfunctions/diagnose-http/domain/outcome-condition-evaluator.js` 提供 condition 评估与 blocker/pass/fail/need_more_info 判断
 
 ## 已完成
 

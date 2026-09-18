@@ -1,0 +1,118 @@
+{
+  "env_id": "cloud1-2grufevs395a9d5e",
+  "schema": "cloud1-2grufevs395a9d5e",
+  "table": "question_option_mapping_v5_real",
+  "operation": "reversible_column_rename_only",
+  "mutation_performed": false,
+  "value_mutation": false,
+  "row_mutation": false,
+  "is_active_mutation": false,
+  "forward_sql": "ALTER TABLE `question_option_mapping_v5_real`\n  CHANGE COLUMN `data_status-drop-1789656713` `data_status` VARCHAR(32) NULL,\n  CHANGE COLUMN `data_source-drop-1789656713` `data_source` TEXT NULL,\n  CHANGE COLUMN `note-drop-1789656713` `note` TEXT NULL,\n  CHANGE COLUMN `option_text_user_cn-drop-1789656713` `option_text_user_cn` TEXT NULL,\n  CHANGE COLUMN `answer_effect_cn-drop-1789656713` `answer_effect_cn` TEXT NULL,\n  CHANGE COLUMN `option_description_user_cn-drop-1789656713` `option_description_user_cn` TEXT NULL,\n  CHANGE COLUMN `display_order-drop-1789656713` `display_order` INT NULL,\n  CHANGE COLUMN `is_default-drop-1789656713` `is_default` TINYINT(1) NULL DEFAULT 0,\n  CHANGE COLUMN `source_type-drop-1789656713` `source_type` VARCHAR(20) NULL,\n  CHANGE COLUMN `source_batch_id-drop-1789656713` `source_batch_id` VARCHAR(64) NULL,\n  CHANGE COLUMN `version_tag-drop-1789656713` `version_tag` VARCHAR(32) NULL,\n  CHANGE COLUMN `row_hash-drop-1789656713` `row_hash` CHAR(64) NULL,\n  CHANGE COLUMN `review_status-drop-1789656713` `review_status` VARCHAR(20) NULL,\n  CHANGE COLUMN `review_note-drop-1789656713` `review_note` TEXT NULL,\n  CHANGE COLUMN `created_at-drop-1789656713` `created_at` DATETIME NULL,\n  CHANGE COLUMN `updated_at-drop-1789656713` `updated_at` DATETIME NULL,\n  CHANGE COLUMN `published_at-drop-1789656713` `published_at` DATETIME NULL,\n  CHANGE COLUMN `published_batch_id-drop-1789656713` `published_batch_id` VARCHAR(64) NULL;",
+  "rollback_sql": "ALTER TABLE `question_option_mapping_v5_real`\n  CHANGE COLUMN `data_status` `data_status-drop-1789656713` VARCHAR(32) NULL,\n  CHANGE COLUMN `data_source` `data_source-drop-1789656713` TEXT NULL,\n  CHANGE COLUMN `note` `note-drop-1789656713` TEXT NULL,\n  CHANGE COLUMN `option_text_user_cn` `option_text_user_cn-drop-1789656713` TEXT NULL,\n  CHANGE COLUMN `answer_effect_cn` `answer_effect_cn-drop-1789656713` TEXT NULL,\n  CHANGE COLUMN `option_description_user_cn` `option_description_user_cn-drop-1789656713` TEXT NULL,\n  CHANGE COLUMN `display_order` `display_order-drop-1789656713` INT NULL,\n  CHANGE COLUMN `is_default` `is_default-drop-1789656713` TINYINT(1) NULL DEFAULT 0,\n  CHANGE COLUMN `source_type` `source_type-drop-1789656713` VARCHAR(20) NULL,\n  CHANGE COLUMN `source_batch_id` `source_batch_id-drop-1789656713` VARCHAR(64) NULL,\n  CHANGE COLUMN `version_tag` `version_tag-drop-1789656713` VARCHAR(32) NULL,\n  CHANGE COLUMN `row_hash` `row_hash-drop-1789656713` CHAR(64) NULL,\n  CHANGE COLUMN `review_status` `review_status-drop-1789656713` VARCHAR(20) NULL,\n  CHANGE COLUMN `review_note` `review_note-drop-1789656713` TEXT NULL,\n  CHANGE COLUMN `created_at` `created_at-drop-1789656713` DATETIME NULL,\n  CHANGE COLUMN `updated_at` `updated_at-drop-1789656713` DATETIME NULL,\n  CHANGE COLUMN `published_at` `published_at-drop-1789656713` DATETIME NULL,\n  CHANGE COLUMN `published_batch_id` `published_batch_id-drop-1789656713` VARCHAR(64) NULL;",
+  "pairs": [
+    {
+      "physical_name": "data_status-drop-1789656713",
+      "canonical_name": "data_status",
+      "definition": "VARCHAR(32) NULL"
+    },
+    {
+      "physical_name": "data_source-drop-1789656713",
+      "canonical_name": "data_source",
+      "definition": "TEXT NULL"
+    },
+    {
+      "physical_name": "note-drop-1789656713",
+      "canonical_name": "note",
+      "definition": "TEXT NULL"
+    },
+    {
+      "physical_name": "option_text_user_cn-drop-1789656713",
+      "canonical_name": "option_text_user_cn",
+      "definition": "TEXT NULL"
+    },
+    {
+      "physical_name": "answer_effect_cn-drop-1789656713",
+      "canonical_name": "answer_effect_cn",
+      "definition": "TEXT NULL"
+    },
+    {
+      "physical_name": "option_description_user_cn-drop-1789656713",
+      "canonical_name": "option_description_user_cn",
+      "definition": "TEXT NULL"
+    },
+    {
+      "physical_name": "display_order-drop-1789656713",
+      "canonical_name": "display_order",
+      "definition": "INT NULL"
+    },
+    {
+      "physical_name": "is_default-drop-1789656713",
+      "canonical_name": "is_default",
+      "definition": "TINYINT(1) NULL DEFAULT 0"
+    },
+    {
+      "physical_name": "source_type-drop-1789656713",
+      "canonical_name": "source_type",
+      "definition": "VARCHAR(20) NULL"
+    },
+    {
+      "physical_name": "source_batch_id-drop-1789656713",
+      "canonical_name": "source_batch_id",
+      "definition": "VARCHAR(64) NULL"
+    },
+    {
+      "physical_name": "version_tag-drop-1789656713",
+      "canonical_name": "version_tag",
+      "definition": "VARCHAR(32) NULL"
+    },
+    {
+      "physical_name": "row_hash-drop-1789656713",
+      "canonical_name": "row_hash",
+      "definition": "CHAR(64) NULL"
+    },
+    {
+      "physical_name": "review_status-drop-1789656713",
+      "canonical_name": "review_status",
+      "definition": "VARCHAR(20) NULL"
+    },
+    {
+      "physical_name": "review_note-drop-1789656713",
+      "canonical_name": "review_note",
+      "definition": "TEXT NULL"
+    },
+    {
+      "physical_name": "created_at-drop-1789656713",
+      "canonical_name": "created_at",
+      "definition": "DATETIME NULL"
+    },
+    {
+      "physical_name": "updated_at-drop-1789656713",
+      "canonical_name": "updated_at",
+      "definition": "DATETIME NULL"
+    },
+    {
+      "physical_name": "published_at-drop-1789656713",
+      "canonical_name": "published_at",
+      "definition": "DATETIME NULL"
+    },
+    {
+      "physical_name": "published_batch_id-drop-1789656713",
+      "canonical_name": "published_batch_id",
+      "definition": "VARCHAR(64) NULL"
+    }
+  ],
+  "preconditions": [
+    "canonical columns absent in formal schema",
+    "each suffixed column exists with matching type",
+    "no duplicate (question_key, option_key) business keys",
+    "snapshot and rollback SQL stored before execution",
+    "rerun exact runtime SELECT after DDL before any is_active write"
+  ],
+  "post_checks": [
+    "SHOW COLUMNS has all canonical names and no suffixed names",
+    "idx_qom_status points to data_status",
+    "row count and id/key/hash counts unchanged",
+    "exact runtime SELECT succeeds in formal schema",
+    "CMS model read remains available"
+  ]
+}

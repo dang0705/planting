@@ -1,9 +1,6 @@
 {
   "name": "wechat-identity",
   "version": "1.0.0",
-  "description": "Mini-program identity bridge via CloudBase Node SDK auth.getUserInfo()",
-  "main": "index.js",
-  "dependencies": {
-    "@cloudbase/node-sdk": "^3.6.3"
-  }
+  "description": "Mini-program identity bridge via the shared CloudBase runtime layer",
+  "main": "index.js"
 }

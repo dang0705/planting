@@ -2,109 +2,50 @@
  * 微信登录 API
  * 集成微信登录、获取手机号等功能
  */
+import { getWechatPhoneProfile, refreshPlatformHttpIdentity } from '@/utils/cloudbase-auth'
 import {
-  getCloudbaseAccessToken,
-  getCloudbaseUserIdentity,
-  getWechatPhoneProfile
-} from '@/utils/cloudbase-auth'
+  clearPlatformSession,
+  getActivePlatformAccessToken,
+  getActivePlatformIdentityTicket,
+  savePlatformIdentityTicket,
+  savePlatformSession
+} from '@/api/platform-session'
+import { IS_LOCAL_API_BASE_URL, PLATFORM_PHONE_BOOTSTRAP_BASE_URL } from '@/api/env'
+import { requestHttpFunction } from '@/api/http'
 import { executeAuthUserMutation } from '@/vue-query/auth/mutations/user.js'
 import { fetchAuthUserByOpenidQuery } from '@/vue-query/auth/queries/user.js'
 
-export async function wechatLogin() {
-  return new Promise((resolve, reject) => {
-    wx.login({
-      success: res => {
-        if (res.code) {
-          resolve(res.code)
-        } else {
-          reject(new Error('获取登录 code 失败'))
-        }
-      },
-      fail: err => {
-        reject(err)
-      }
-    })
-  })
-}
-
-export async function getAccessToken() {
-  try {
-    return await getCloudbaseAccessToken()
-  } catch (error) {
-    console.error('获取 access token 失败:', error)
-    throw error
-  }
-}
-
-export async function getUserInfo() {
-  return new Promise((resolve, reject) => {
-    wx.getUserInfo({
-      success: res => {
-        resolve(res.userInfo)
-      },
-      fail: err => {
-        reject(err)
-      }
-    })
-  })
-}
-
-export async function getPhoneNumber(e) {
-  if (e.detail.code) {
-    return {
-      code: e.detail.code,
-      errMsg: e.detail.errMsg
-    }
-  }
-  throw new Error(e.detail.errMsg || '获取手机号失败')
-}
-
-export async function loginWithCode() {
-  try {
-    const identity = await getCloudbaseUserIdentity()
-    const result = await executeAuthUserMutation({
-      method: 'POST',
-      action: 'wechatLogin',
-      data: identity
-    })
-
-    if (result.code === 200) {
-      return result.data
-    }
-    throw new Error(result.message || '登录失败')
-  } catch (error) {
-    console.error('微信登录失败:', error)
-    throw error
-  }
-}
-
 export async function loginWithPhone(phoneCode) {
   try {
-    const identity = await getCloudbaseUserIdentity()
+    // 手机号授权必须以当前微信运行时身份核验，不能让旧 Bearer 会话抢占身份解析。
+    clearPlatformSession()
     const phoneProfile = await getWechatPhoneProfile({
       code: typeof phoneCode === 'string' ? phoneCode : phoneCode?.code || '',
       cloudId: typeof phoneCode === 'object' ? phoneCode?.cloudId || phoneCode?.cloudID || '' : ''
     })
 
-    const result = await executeAuthUserMutation({
+    const functionPath = IS_LOCAL_API_BASE_URL
+      ? 'platform-phone-bootstrap-http/auth/platform-phone'
+      : 'auth/platform-phone'
+    const result = await requestHttpFunction(functionPath, {
       method: 'POST',
-      action: 'phoneLogin',
-      data: identity
-        ? {
-            ...identity,
-            phoneNumber: phoneProfile.phoneNumber,
-            countryCode: phoneProfile.countryCode,
-            phoneSource: 'wechat_phone_bridge'
-          }
-        : {
-            phoneNumber: phoneProfile.phoneNumber,
-            countryCode: phoneProfile.countryCode,
-            phoneSource: 'wechat_phone_bridge'
-          }
+      auth: false,
+      baseUrl: IS_LOCAL_API_BASE_URL ? undefined : PLATFORM_PHONE_BOOTSTRAP_BASE_URL,
+      body: {
+        action: 'platformPhoneLogin',
+        data: {
+          platform: 'wechat_mp',
+          phoneProof: phoneProfile.phoneProof
+        }
+      }
     })
 
     if (result.code === 200) {
-      return result.data
+      savePlatformSession(result.data?.session)
+      return {
+        ...result.data,
+        token: result.data?.session?.accessToken || ''
+      }
     }
     throw new Error(result.message || '登录失败')
   } catch (error) {
@@ -146,8 +87,31 @@ export async function updateUserPhoneNumber(userId, phoneNumber) {
 }
 
 export async function getUserById(userId) {
+  // 持久会话首次换取短票据时，刷新接口已经返回完整用户资料；复用这份结果，
+  // 避免先刷新 auth/user 再用同一 userId 重复请求 auth/user。
+  if (
+    !IS_LOCAL_API_BASE_URL &&
+    getActivePlatformAccessToken() &&
+    !getActivePlatformIdentityTicket()
+  ) {
+    const refreshedIdentity = await refreshPlatformHttpIdentity()
+    const refreshedUser = refreshedIdentity?.user || null
+    const refreshedUserId = String(refreshedUser?._id || refreshedUser?.id || '').trim()
+    if (refreshedUser && refreshedUserId && refreshedUserId === String(userId || '').trim()) {
+      savePlatformIdentityTicket(
+        refreshedIdentity.httpIdentityTicket,
+        refreshedIdentity.httpIdentityTicketExpiresAt
+      )
+      return refreshedUser
+    }
+  }
+
   const result = await fetchAuthUserByOpenidQuery(userId)
   if (result.code === 200) {
+    savePlatformIdentityTicket(
+      result.data?.httpIdentityTicket,
+      result.data?.httpIdentityTicketExpiresAt
+    )
     return result.data
   }
   throw new Error(result.message || '获取用户信息失败')

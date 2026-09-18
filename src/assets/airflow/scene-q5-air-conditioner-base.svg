@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="104" height="72" viewBox="0 0 104 72">
+  <g transform="scale(0.9463 0.9464)">
+    <g transform="translate(104,23) scale(0.82) translate(-104,-23)">
+      <g transform="translate(70.8,9.51)">
+        <path d="M30.062 0.475498H3.64549C1.89475 0.475498 0.475498 1.89475 0.475498 3.64549V9.98546C0.475498 11.7362 1.89475 13.1554 3.64549 13.1554H30.062C31.8128 13.1554 33.232 11.7362 33.232 9.98546V3.64549C33.232 1.89475 31.8128 0.475498 30.062 0.475498Z" fill="white" stroke="#2D7A4F" stroke-opacity="0.15" stroke-width="0.950996"/>
+      </g>
+      <rect x="72.38" y="19.02" width="29.59" height="3.276" rx="1.638" fill="#F1F8F4" stroke="#2D7A4F" stroke-opacity="0.15" stroke-width="0.528"/>
+      <path d="M76.5 12.14H79.78M81.74 12.14H85.02M86.98 12.14H90.26" stroke="#5A7A68" stroke-opacity="0.6" stroke-width="0.74" stroke-linecap="round"/>
+      <rect x="90.9" y="12.67" width="9.51" height="4.227" rx="1.057" fill="#2D7A4F" opacity="0.55"/>
+      <path d="M74.3 19.28L76.4 22.03M79.55 19.28L81.65 22.03M84.8 19.28L86.9 22.03M90.05 19.28L92.15 22.03M95.3 19.28L97.4 22.03" stroke="#5A7A68" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
+    </g>
+  </g>
+</svg>

@@ -50,16 +50,16 @@ const stableMarkingQuestions = [
   {
     questionKey: 'q_stable_marking_new_growth_consistent',
     targetSymptomKey: 'stable_trait_new_growth_consistent',
-    questionTextCn: '新叶是否也持续保持类似花纹，而不是只有旧叶有这种斑驳？',
-    questionTextUserCn: '新叶也一直保持类似花纹，而不是只有旧叶才有这种斑驳吗？',
+    questionTextCn: '新叶是否也持续保持类似花纹，而不是只有既有叶有这种斑驳？',
+    questionTextUserCn: '新叶也一直保持类似花纹，而不是只有既有叶才有这种斑驳吗？',
     questionGroupKey: 'stable_marking_new_growth_group',
     questionLevel: 2,
     observability: 'medium',
     priority: 96,
     helpTextCn:
-      '重点看最近长出的叶片。若新叶也延续类似斑纹，更支持这是稳定特征，而不是旧叶残留问题。',
+      '重点看最近长出的叶片。若新叶也延续类似斑纹，更支持这是稳定特征，而不是既有叶残留问题。',
     whyThisQuestionCn:
-      'RHS 对 variegated plants 的描述强调新生叶也会延续既有花纹；如果只有旧叶有而新叶紊乱，就不能按稳定正常斑纹处理。',
+      'RHS 对 variegated plants 的描述强调新生叶也会延续既有花纹；如果只有既有叶有而新叶紊乱，就不能按稳定正常斑纹处理。',
     problemKey: 'stable_natural_marking',
     strategyPriority: 94,
     engineRuleKey: 'eg_stable_marking_new_growth_consistent'

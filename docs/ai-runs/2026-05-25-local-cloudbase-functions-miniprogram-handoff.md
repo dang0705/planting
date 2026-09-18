@@ -17,7 +17,7 @@
   - 必须验证证据：本地 gateway HTTP 200、诊断 smoke、mp-weixin local/cloud build、H5 build、production fail-fast、touched-file lint
   - 非目标：不改线上函数部署逻辑，不改诊断业务规则，不修改 CloudBase 生产 layer，不提交密钥
 选择的 subagent：code_explorer、architect_reviewer、docs_keeper、qa_reviewer
-实现闭环：main agent 直接实现；architect_reviewer 做实现前分析与实现后 review
+实现闭环：`main agent` 直接实现；architect_reviewer 做实现前分析与实现后 review
 文档同步计划：新增本地调试文档与 README 入口；docs_keeper 只读复核
 ```
 

@@ -8,9 +8,9 @@
 
 1. 先读 `INDEX.md`。
 2. `docs/code-logics/` 只读取索引命中的 1～2 个具体文档；`docs/new-rules/` 只读取 `source_index.json` 命中的 1～2 个 All-in-One 章节或 Sxx。
-3. 如果需要超过 2 个具体文档，main agent 必须提供摘要或说明原因。
+3. 如果需要超过 2 个具体文档，`main agent` 必须提供摘要或说明原因。
 4. 下游 agent 优先读上游摘要，不重复读源文档。
-5. 索引无法定位时，subagent 必须请求 main agent 指定路径，不得自行扫目录。
+5. 索引无法定位时，subagent 必须请求 `main agent` 指定路径，不得自行扫目录。
 
 ## 3. 建议在 subagent 中加入的规则
 
@@ -18,7 +18,7 @@
 涉及 `docs/code-logics/` 时，必须先读取 `docs/code-logics/INDEX.md`；涉及 `docs/new-rules/` 时，必须先读取 `docs/new-rules/planting_ai_diagnosis_source_index.json`。
 不得全量读取整个目录。
 每次默认最多读取 1～2 个命中文档、章节或 Sxx。
-若索引无法定位，停止并请求 main agent 补充摘要或指定路径。
+若索引无法定位，停止并请求 `main agent` 补充摘要或指定路径。
 ```
 
 

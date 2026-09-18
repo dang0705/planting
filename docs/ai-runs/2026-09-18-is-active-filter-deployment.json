@@ -1,0 +1,76 @@
+{
+  "generatedAt": "2026-09-17T21:34:00.000Z",
+  "environment": "cloud1-2grufevs395a9d5e",
+  "scope": "发布问诊映射 is_active=1 运行时过滤契约；同步校准实际网关绑定的三个诊断函数",
+  "authorization": "用户已明确同意核对实际绑定函数并发布过滤契约",
+  "source": {
+    "repository": "cloudfunctions/diagnose-http/repositories/question-repository.js",
+    "filterLocations": [146, 416, 501],
+    "sourceSha256": "c895e2671c9b61d103fb4bd779cfe28dce4be54c38640482c688f5b97ad7836f",
+    "splitCheck": "npm run check:diagnosis-http-splits PASS",
+    "packageIntegrity": "node scripts/qa/function-package-integrity.mjs PASS",
+    "targetedSyntaxCheck": "node --check cloudfunctions/diagnose-http/repositories/question-repository.js PASS"
+  },
+  "runtimeBindingAudit": {
+    "gatewayDomain": "cloud1-2grufevs395a9d5e-1403815561.ap-shanghai.app.tcloudbase.com",
+    "routes": [
+      {"path": "/diagnose-http", "upstream": "diagnose-http", "enabled": true},
+      {"path": "/diagnosis-question-start-http", "upstream": "diagnosis-question-start-http", "enabled": true},
+      {"path": "/diagnosis-answer-http", "upstream": "diagnosis-answer-http", "enabled": true}
+    ],
+    "consumerSplit": "固定黄叶/萎蔫题包优先走专用函数；非专用、动态题、兼容与审核回放走 diagnose-http",
+    "requiredFunctions": ["diagnose-http", "diagnosis-question-start-http", "diagnosis-answer-http"]
+  },
+  "deployments": [
+    {
+      "functionName": "diagnose-http",
+      "requestId": "73d6e726-942a-4860-9285-a9dbaeee586e",
+      "status": "Active",
+      "availableStatus": "Available",
+      "modTime": "2026-09-18 05:29:53",
+      "codeSize": 14896234,
+      "verificationRequestId": "c20d19cd-7c24-41af-baf9-6e9dca6d52fd"
+    },
+    {
+      "functionName": "diagnosis-question-start-http",
+      "requestId": "92ba2482-4ac0-407a-bde4-70286a349c15",
+      "status": "Active",
+      "availableStatus": "Available",
+      "modTime": "2026-09-18 05:29:50",
+      "codeSize": 66058,
+      "verificationRequestId": "33be225c-7525-4084-ade2-8c3c158f629d"
+    },
+    {
+      "functionName": "diagnosis-answer-http",
+      "requestId": "7f287a7f-dd7f-4e19-b975-2555e5027a17",
+      "status": "Active",
+      "availableStatus": "Available",
+      "modTime": "2026-09-18 05:29:55",
+      "codeSize": 111303,
+      "verificationRequestId": "0ed75b91-d6fb-4084-bb5f-33352476bc75"
+    }
+  ],
+  "liveSmoke": {
+    "diagnosisQuestionStart": {"httpStatus": 400, "businessCode": "UNSUPPORTED_QUESTION_PACKAGE_MODE", "requestId": "f2053baf-6d75-4c6b-95db-494ed376367b"},
+    "diagnosisAnswer": {"httpStatus": 400, "businessCode": "UNSUPPORTED_ANSWER_MODE", "requestId": "938eb14a-a352-4ae4-bf97-925ccce501c7"},
+    "diagnoseCompatibility": {"httpStatus": 401, "message": "请先登录", "requestId": "6ff95332-ef59-48b9-9828-8c2bbf3e0e04"},
+    "interpretation": "三条真实网关路径均到达对应函数；主兼容入口的 401 是无登录态请求触发的预期身份拒绝，发生在题包/数据库读取之前，因此不能作为 is_active 过滤失败证据"
+  },
+  "databaseReadback": {
+    "table": "question_option_mapping_v5_real",
+    "totalRows": 429,
+    "activeRows": 340,
+    "inactiveRows": 89,
+    "firstDisableTargetRows": 80,
+    "firstDisableTargetStillActive": 0,
+    "currentFixedPackageActiveRows": 4,
+    "readRequestIds": ["7dd5e295-5a2d-48ac-b9c9-55566b00e7ed", "d7c49efd-5f51-4577-92e1-e2a489f49ca9"],
+    "snapshot": "docs/ai-runs/2026-09-18-is-active-safe-disable-snapshot.json",
+    "rollbackExecuted": false
+  },
+  "safetyNotes": [
+    "没有删除问题键，没有修改开发库，没有修改网关、权限、环境变量或数据库结构。",
+    "开发库中的对应 80 条仍为 is_active=1；在下一次数据模型发布前必须先做环境差异阻断或经过审计的开发库对齐，否则发布差异可能把正式库状态写回。",
+    "本次 live smoke 只验证网关到函数及输入校验，不替代带真实登录态的完整问诊端上验收；若真实已登录用户仍收到 401，应另行检查身份票据链路。"
+  ]
+}

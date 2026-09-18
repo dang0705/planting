@@ -1,3 +1,5 @@
+/* global global, self, window */
+
 class MiniAbortSignal {
   constructor() {
     this.aborted = false
@@ -7,17 +9,23 @@ class MiniAbortSignal {
   }
 
   addEventListener(type, listener) {
-    if (type !== 'abort' || typeof listener !== 'function') {return}
+    if (type !== 'abort' || typeof listener !== 'function') {
+      return
+    }
     this._listeners.add(listener)
   }
 
   removeEventListener(type, listener) {
-    if (type !== 'abort' || typeof listener !== 'function') {return}
+    if (type !== 'abort' || typeof listener !== 'function') {
+      return
+    }
     this._listeners.delete(listener)
   }
 
   dispatchEvent(event) {
-    if (!event || event.type !== 'abort') {return true}
+    if (!event || event.type !== 'abort') {
+      return true
+    }
     for (const listener of this._listeners) {
       listener.call(this, event)
     }
@@ -34,17 +42,39 @@ class MiniAbortController {
   }
 
   abort(reason) {
-    if (this.signal.aborted) {return}
+    if (this.signal.aborted) {
+      return
+    }
     this.signal.aborted = true
     this.signal.reason = reason
     this.signal.dispatchEvent({ type: 'abort' })
   }
 }
 
-if (typeof globalThis !== 'undefined' && typeof globalThis.AbortController === 'undefined') {
-  globalThis.AbortController = MiniAbortController
+function resolveGlobalObjects() {
+  const globalObjects = []
+  if (typeof globalThis !== 'undefined') {
+    globalObjects.push(globalThis)
+  }
+  if (typeof global !== 'undefined') {
+    globalObjects.push(global)
+  }
+  if (typeof self !== 'undefined') {
+    globalObjects.push(self)
+  }
+  if (typeof window !== 'undefined') {
+    globalObjects.push(window)
+  }
+  return [...new Set(globalObjects)]
 }
 
-if (typeof globalThis !== 'undefined' && typeof globalThis.AbortSignal === 'undefined') {
-  globalThis.AbortSignal = MiniAbortSignal
+const globalObjects = resolveGlobalObjects()
+
+for (const globalObject of globalObjects) {
+  if (typeof globalObject.AbortController === 'undefined') {
+    globalObject.AbortController = MiniAbortController
+  }
+  if (typeof globalObject.AbortSignal === 'undefined') {
+    globalObject.AbortSignal = MiniAbortSignal
+  }
 }
