@@ -1,0 +1,55 @@
+# 青花植后端 v2 实施资料导航
+
+本文件是本次重构的唯一发现入口（Implementation Entry）。它负责告诉 agent 从哪里开始读、下一层读什么以及哪些内容暂不读取；它不是计划正文，也不允许复制计划正文。
+
+根目录的 Master Plan 是唯一计划正文（Canonical Master Plan）。本目录的所有子文件只能把正文拆成可按需读取的实施资料，不能新增、删改或重新解释业务语义。
+
+## 唯一基线
+
+- 文件：[青花植后端v2底层架构重构计划_融合闭环终版.md](/Users/jay/WebstormProjects/planting/青花植后端v2底层架构重构计划_融合闭环终版.md)
+- 基线标题：`青花植后端 v2 底层架构重构计划（完整融合闭环终版）`
+- 基线 SHA-256：`e8ee3511ee544ee4a5edcd12bf8cad0b3c02c397fb85eb459193ea854f29f428`
+- 基线行数：2111
+- 入口角色：agent 必须先读本文件；禁止绕过本文件直接进入 `.codex/plans/**`、旧副本或本目录子目录。
+- 正文角色：只有根目录 Master Plan 可以作为完整计划正文；`BASELINE.lock` 是其机器可核对的锁，不是第二份计划。
+
+## 入口核对
+
+开始任何实施任务前，运行：
+
+```bash
+node docs/backend-v2/verify-entrypoint.mjs
+```
+
+该命令只读核对 Master Plan 的标题、行数、SHA-256、导航入口和进度数据；失败时必须停止并报告 `BLOCKED_PLAN_BASELINE`，不得自行修复或选择其他版本。
+
+## 渐进式读取顺序
+
+```text
+Master Plan
+→ architecture/ 架构模块
+→ contracts/ 业务与接口合同
+→ data/ 数据、状态与处置
+→ implementation/ 实施细节
+→ testing/ 测试与验收
+→ phases/ 当前阶段
+→ clickup/ 任务绑定
+→ tracker/ 可视化追踪
+```
+
+Master Plan 保留完整目标、架构、边界、Phase、风险和完成标准；本目录只承载实施时需要按模块读取的细节。
+
+## 渐进式披露纪律
+
+1. 先读本文件和 `BASELINE.lock`。
+2. 按 ticket 的 Phase 与模块，只打开一个直接子入口（例如 `phases/P1-contracts-identity-foundation.md`）。
+3. 子入口只列出下一层文件名；只有验收标准明确需要时，才继续读取其中一个具体文件，并记录扩展原因。
+4. 不得为了“了解全局”递归读取全部目录；未读取范围必须写在任务开始和交接记录中。
+5. 入口、Master Plan、架构、合同、Expected 或 ticket 状态冲突时，停止实现，交由主代理裁决。
+
+## 当前准备状态
+
+- 代码实现：未开始。
+- 数据库/CMS/Storage/网关写入：未开始。
+- ClickUp：尚未获得可用管理连接器，不能伪造 ticket。
+- 前端：不在本阶段范围。

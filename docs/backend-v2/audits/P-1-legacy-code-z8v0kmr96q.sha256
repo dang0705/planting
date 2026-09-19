@@ -1,0 +1,16 @@
+d27faef402b8789dfc93bd55a341a778e5a101371784e4947473f5c64db8b74b  docs/backend-v2/audits/P-1-legacy-code-z8v0kmr96q.md
+f5f71df9e3477c97a9206a7fc6b61a35d6572afdd5c4d7c1291930b247d86da7  docs/backend-v2/audits/P-1-legacy-code-z8v0kmr96q.manifest.json
+eb968b32823d3e76c8c3d9dcab0cc8ef786ab72be660934c084c9ce4e96d0090  docs/backend-v2/phases/P-1-audit.md
+19d66dd89854dd1d31b8e0818edc0ac7da2d2a5f7cdbf08aaa4434c0f4b9c86c  docs/backend-v2/data/legacy-disposition.md
+33ea0b2cc4d58907d8215b776c46154b53d89d0a46b84d197eae67b197fd74c8  docs/backend-v2/agents/handoff-contract.md
+78d9c452c9160ed9f57e2bd4a1d68e34a6c942fa0dfc99a35bd9903aa1625332  docs/backend-v2/architecture/infrastructure.md
+e2fb933794fc17da54b0c59f2d43d58f27701a8dee406a26cb2d8065b580cce3  docs/backend-v2/architecture/business-to-technical-map.md
+1f428f6ed24d1067275c62f1cdc667fc9ebd98724d1d6331d05fd6a4ff28d3c7  docs/backend-v2/data/table-ownership.md
+cbe75d7d95855e041532a51d05b7ce2956a4ccd4ac30503ff7a66193921ac5c1  docs/backend-v2/phases/P1-contracts-identity-foundation.md
+9679d2c2d5ffd28aab3316d3ea0fb583fbb2134e7c26a5eb2c942fa0137e4032  docs/backend-v2/phases/P2-core-domains.md
+a0cdfc83de57b7a0faba3d810c92a849afdb96dd7916110f1c4a04e7b1e9984e  docs/backend-v2/phases/P4-care-diagnosis-agent.md
+04e9c375a0eebd068ab73d73903fdcb7d8853d6bf87db802a18eae6b15a3bf5f  docs/backend-v2/phases/P6-api-freeze-cleanup.md
+8a8ecd1dee5cbaaf7eab9bd7a5662b8e571d1b8850532733c0215d3e049b4e28  cloudbaserc.json
+a723cbe07dca7582e15c64333fcbd99d88584a116afd04a30271b71615229e39  scripts/qa/check-http-function-paths.mjs
+98918272dd1a6a1c25ef027f960b07b641ba053b08c2e2ac4ac3c093ea768aa4  scripts/dev/local-functions-gateway.mjs
+609da160e60ea74c7543d89679d218b3c7a1706e633ae6cf80dc6017da69d934  scripts/dev/local-api-env-config.mjs

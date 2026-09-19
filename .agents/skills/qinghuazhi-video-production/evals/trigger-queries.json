@@ -1,0 +1,82 @@
+[
+  {
+    "query": "给青花植做一条‘天气一变不知道该不该浇水’的25秒抖音视频，先出剧本。",
+    "should_trigger": true
+  },
+  {
+    "query": "把 watering-newbie 的 draft-003 改成女主更焦虑、产品更早出现，但不要覆盖原稿。",
+    "should_trigger": true
+  },
+  {
+    "query": "我批准刚才展示的青花植 draft-006，继续准备素材。",
+    "should_trigger": true
+  },
+  {
+    "query": "继续上次没跑完的青花植视频，先查状态再往下走。",
+    "should_trigger": true
+  },
+  {
+    "query": "审查这份青花植小红书获客视频 Plan，看看 Scene 和 Shot 是否拆对。",
+    "should_trigger": true
+  },
+  {
+    "query": "做一条绿萝黄叶的三平台共同母版，真实录屏展示青花植。",
+    "should_trigger": true
+  },
+  {
+    "query": "青花植这个 approved plan 素材已经补齐，生成最终 mp4。",
+    "should_trigger": true
+  },
+  {
+    "query": "这条植物诊断视频的焦虑到安心太突然，帮我调整镜头因果。",
+    "should_trigger": true
+  },
+  {
+    "query": "帮我把青花植视频的字幕、人物对白和 app 录屏安排成可执行 Plan。",
+    "should_trigger": true
+  },
+  {
+    "query": "$qinghuazhi-video-production 给我创建一个新的浇水获客 Draft。",
+    "should_trigger": true
+  },
+  {
+    "query": "绿萝黄叶一般是什么原因？",
+    "should_trigger": false
+  },
+  {
+    "query": "抖音视频前三秒应该怎么做？",
+    "should_trigger": false
+  },
+  {
+    "query": "帮我剪一下这段婚礼视频。",
+    "should_trigger": false
+  },
+  {
+    "query": "写一篇小红书植物养护图文笔记。",
+    "should_trigger": false
+  },
+  {
+    "query": "分析 Azure Dragon HD 的 anxious 风格。",
+    "should_trigger": false
+  },
+  {
+    "query": "修复项目里的 React 组件报错。",
+    "should_trigger": false
+  },
+  {
+    "query": "帮我生成一张绿萝产品海报。",
+    "should_trigger": false
+  },
+  {
+    "query": "评估 Wan 2.7 和 2.6 的价格差异。",
+    "should_trigger": false
+  },
+  {
+    "query": "小程序浇水算法应该考虑哪些变量？",
+    "should_trigger": false
+  },
+  {
+    "query": "给一个完全不相关的餐饮品牌做抖音广告视频。",
+    "should_trigger": false
+  }
+]

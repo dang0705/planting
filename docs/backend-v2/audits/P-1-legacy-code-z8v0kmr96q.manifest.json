@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "ticketId": "z8v0kmr96q",
+  "head": "f09edecb4fcfa98d1ab6736afa77b66893319e5e",
+  "auditScript": "scripts/qa/function-package-audit.mjs",
+  "configuredFunctionNames": [
+    "auth-user-http",
+    "auth-user-write-http",
+    "diagnose-http",
+    "diagnosis-answer-http",
+    "diagnosis-history-http",
+    "diagnosis-question-start-http",
+    "identify-http",
+    "plant-catalog-http",
+    "plant-user-http",
+    "plant-user-write-http",
+    "platform-phone-bootstrap-http",
+    "storage-http",
+    "subscription-http",
+    "subscription-notify-http",
+    "weather-http",
+    "weather-ingestion-scheduler",
+    "wechat-identity",
+    "wechat-phone"
+  ],
+  "directoryAliases": [
+    {
+      "names": [
+        "auth-user-http",
+        "auth-user-write-http"
+      ],
+      "directory": "cloudfunctions/auth-user-http"
+    },
+    {
+      "names": [
+        "plant-user-http",
+        "plant-user-write-http"
+      ],
+      "directory": "cloudfunctions/plant-user-http"
+    }
+  ],
+  "localExtraDirectories": [
+    "cloudfunctions/agent-http",
+    "cloudfunctions/diagnose-route-regression-runner"
+  ],
+  "assets": [
+    {
+      "name": "agent-http",
+      "directory": "cloudfunctions/agent-http",
+      "sourceFingerprint": "cfb01c4a177291295d6192c1ff6357b0688ed7bb4f7cf77c07063fc064367cf2",
+      "fileCount": 19,
+      "sourceBytes": 357080
+    },
+    {
+      "name": "auth-user-http",
+      "directory": "cloudfunctions/auth-user-http",
+      "sourceFingerprint": "97bcc808491c88776db12346fc50aa7e4ca889d2a4202f508814ff7688bbd770",
+      "fileCount": 12,
+      "sourceBytes": 65565
+    },
+    {
+      "name": "diagnose-http",
+      "directory": "cloudfunctions/diagnose-http",
+      "sourceFingerprint": "323f2c2fa49d52ae4cb6192957ff32d87ef99c0599b2e15a637424f528caeecf",
+      "fileCount": 250,
+      "sourceBytes": 2247876
+    },
+    {
+      "name": "diagnose-route-regression-runner",
+      "directory": "cloudfunctions/diagnose-route-regression-runner",
+      "sourceFingerprint": "14a9ea9ad3e4f5183ff216fe91c3699e6039867cb14d5d7a6315339cc0cbaf05",
+      "fileCount": 2,
+      "sourceBytes": 21823
+    },
+    {
+      "name": "diagnosis-answer-http",
+      "directory": "cloudfunctions/diagnosis-answer-http",
+      "sourceFingerprint": "bb73ca2558a1a09a30a742ea7b8fa7435751d09a14aad3f03000384eea0199cb",
+      "fileCount": 10,
+      "sourceBytes": 333526
+    },
+    {
+      "name": "diagnosis-history-http",
+      "directory": "cloudfunctions/diagnosis-history-http",
+      "sourceFingerprint": "65579128432b9adfebc4deec16559a0859a92e0ba6b7f0227cb1afef351a2cb4",
+      "fileCount": 5,
+      "sourceBytes": 131659
+    },
+    {
+      "name": "diagnosis-question-start-http",
+      "directory": "cloudfunctions/diagnosis-question-start-http",
+      "sourceFingerprint": "095291bf8b7fea9847096122e406d21ac899d0fae2d5cc8a61dd64afa1f2907d",
+      "fileCount": 8,
+      "sourceBytes": 196703
+    },
+    {
+      "name": "identify-http",
+      "directory": "cloudfunctions/identify-http",
+      "sourceFingerprint": "90fcc9f9df642222cd0eea2e0789c2d876f7ad703f8da883da4fbb6f555cad0a",
+      "fileCount": 5,
+      "sourceBytes": 138582
+    },
+    {
+      "name": "plant-catalog-http",
+      "directory": "cloudfunctions/plant-catalog-http",
+      "sourceFingerprint": "5c2cb06235ef88b9778849dd39826b05c81ec7365983f370795cb0a3054424a5",
+      "fileCount": 6,
+      "sourceBytes": 133806
+    },
+    {
+      "name": "plant-user-http",
+      "directory": "cloudfunctions/plant-user-http",
+      "sourceFingerprint": "0465bc1dca9285b0a370969a579cab0d754ae43828745b865b839f65e75b00b6",
+      "fileCount": 26,
+      "sourceBytes": 197433
+    },
+    {
+      "name": "platform-phone-bootstrap-http",
+      "directory": "cloudfunctions/platform-phone-bootstrap-http",
+      "sourceFingerprint": "38d972bf2fcb69e22156c2c8111f8a28f89ab0405dd3fc41e4a334072e600a0b",
+      "fileCount": 6,
+      "sourceBytes": 144279
+    },
+    {
+      "name": "storage-http",
+      "directory": "cloudfunctions/storage-http",
+      "sourceFingerprint": "e648d8df421c57383cc10a2ec643f9bbe80311133b66a4e4197d967649893676",
+      "fileCount": 6,
+      "sourceBytes": 154697
+    },
+    {
+      "name": "subscription-http",
+      "directory": "cloudfunctions/subscription-http",
+      "sourceFingerprint": "b53fdbb1e1f1d78d825f52cd352d1d0dda15dd94167f1317ded40f6cb832e7dc",
+      "fileCount": 9,
+      "sourceBytes": 157520
+    },
+    {
+      "name": "subscription-notify-http",
+      "directory": "cloudfunctions/subscription-notify-http",
+      "sourceFingerprint": "575a03e98ecd5d9c1afcc203339baa2904b6258925bfd4ea756abcb807ca431f",
+      "fileCount": 6,
+      "sourceBytes": 127807
+    },
+    {
+      "name": "weather-http",
+      "directory": "cloudfunctions/weather-http",
+      "sourceFingerprint": "02febb1991f543b61562d30807ed26825996060dbb3a25fd6cdb3fd1ffce8b6f",
+      "fileCount": 30,
+      "sourceBytes": 306251
+    },
+    {
+      "name": "weather-ingestion-scheduler",
+      "directory": "cloudfunctions/weather-ingestion-scheduler",
+      "sourceFingerprint": "22c85798646d3aeeab0392472d0d1d184f17b21b6a23c549bc8a731dba489610",
+      "fileCount": 35,
+      "sourceBytes": 413843
+    },
+    {
+      "name": "wechat-identity",
+      "directory": "cloudfunctions/wechat-identity",
+      "sourceFingerprint": "644881b58b9305493d239b06510fb09894f020fbf2b974ca955d322ab0924d49",
+      "fileCount": 2,
+      "sourceBytes": 1079
+    },
+    {
+      "name": "wechat-phone",
+      "directory": "cloudfunctions/wechat-phone",
+      "sourceFingerprint": "355eebbc0a4c8823842a9d80611701fc81df486a430317f403812d5039f28303",
+      "fileCount": 2,
+      "sourceBytes": 3713
+    }
+  ],
+  "sharedLayer": {
+    "directory": "cloudfunctions/layer",
+    "sourceFingerprint": "313c2539d223ae3146ede5c8d7557639bb2fe72693339ddbf0792e02d20a84dc",
+    "fileCount": 39,
+    "sourceBytes": 421472
+  }
+}

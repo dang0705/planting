@@ -1,0 +1,369 @@
+{
+  "generatedAt": "2026-09-19T14:50:05.220Z",
+  "snapshotSource": "docs/backend-v2/tracker/heartbeats/*.json（主代理汇总）",
+  "trackerOwner": "主代理 /root（各 ticket 子代理写独立心跳；主代理校验、汇总并处理超时）",
+  "clickUpStatus": "CREATED",
+  "clickUpTaskStatuses": {
+    "z8v0kmr96q": "blocked",
+    "z8v0kmr96r": "blocked",
+    "z8v0kmr96t": "blocked",
+    "z8v0kmr96u": "codex running",
+    "z8v0kmr96v": "blocked",
+    "z8v0kmr96w": "backlog",
+    "z8v0kmr96x": "backlog",
+    "z8v0kmr96y": "backlog",
+    "z8v0kmr96z": "backlog",
+    "z8v0kmr970": "backlog",
+    "z8v0kmr971": "backlog",
+    "z8v0kmr972": "backlog",
+    "z8v0kmr973": "backlog",
+    "z8v0kmr974": "backlog",
+    "z8v0kmr975": "backlog",
+    "z8v0kmr976": "backlog",
+    "z8v0kmr977": "backlog",
+    "z8v0kmr978": "backlog",
+    "z8v0kmr979": "backlog"
+  },
+  "agentRegistry": [
+    {
+      "name": "p1_data_cms_close_luna",
+      "path": "/root/p1_data_cms_close_luna",
+      "model": "gpt-5.6-luna / max",
+      "status": "review_needed",
+      "ticketIds": [
+        "z8v0kmr96r"
+      ],
+      "lastObservedAt": "2026-09-19T22:46:50+08:00",
+      "blockers": [
+        "CLICKUP_BLOCKED：连接器当日配额已达 100/100；不重试、不伪造同步。",
+        "e2e 原始 INFORMATION_SCHEMA/CMS schema、完整题包/路由交叉、release batch/hash 与 Storage 反向引用尚未附带，不能宣称已验证。"
+      ]
+    },
+    {
+      "name": "p1_taxonomy_close_terra",
+      "path": "/root/p1_taxonomy_close_terra",
+      "model": "gpt-5.6-terra / medium",
+      "status": "in_progress",
+      "ticketIds": [
+        "z8v0kmr96v"
+      ],
+      "lastObservedAt": "2026-09-19T22:44:00+08:00",
+      "blockers": [
+        "全量 200 条可回放 authority evidence manifest、冲突/重复决定、空库导入读回及运行时隔离门尚未完成，故 Phase P1 退出条件与 active release 均不可验收。",
+        "CLICKUP_SYNC_QUOTA：ClickUp 同步受限；不阻断本地审计，且不得伪造同步。"
+      ]
+    },
+    {
+      "name": "p1_legacy_close_luna",
+      "path": "/root/p1_legacy_close_luna",
+      "model": "gpt-5.6-luna / max",
+      "status": "in_progress",
+      "ticketIds": [
+        "z8v0kmr96q"
+      ],
+      "lastObservedAt": "2026-09-19T22:43:12+08:00",
+      "blockers": []
+    },
+    {
+      "name": "p1_external_close_luna",
+      "path": "/root/p1_external_close_luna",
+      "model": "gpt-5.6-luna / max",
+      "status": "in_progress",
+      "ticketIds": [
+        "z8v0kmr96t"
+      ],
+      "lastObservedAt": "2026-09-19T22:49:55+08:00",
+      "blockers": [
+        "live-readback 仅证明脱敏配置键名存在，未证明供应商值、账户、额度或真实/沙箱调用；本次按只读授权不发起供应商写入或登录。",
+        "subscription-http 与 subscription-notify-http 同时声明 /subscription/notify，单一回调 owner 尚未由线上路由回放确认。"
+      ]
+    },
+    {
+      "name": "p1_storage_close_luna",
+      "path": "/root/p1_storage_close_luna",
+      "model": "gpt-5.6-luna / max",
+      "status": "in_progress",
+      "ticketIds": [
+        "z8v0kmr96u"
+      ],
+      "lastObservedAt": "2026-09-19T22:42:59+08:00",
+      "blockers": []
+    }
+  ],
+  "modules": [
+    {
+      "id": "identity",
+      "name": "身份与主体",
+      "phase": "P2",
+      "plannedAgent": "identity_terra",
+      "agent": null,
+      "progress": 0,
+      "status": "未启动（当前没有已登记子代理）",
+      "lastUpdatedAt": null,
+      "tickets": [
+        {
+          "id": "z8v0kmr970",
+          "title": "[P2] 统一身份 Principal",
+          "url": "https://app.clickup.com/t/z8v0kmr970",
+          "plannedAgent": "identity_terra",
+          "agent": null,
+          "status": "未分配",
+          "progress": null,
+          "lastUpdatedAt": null
+        },
+        {
+          "id": "z8v0kmr975",
+          "title": "[P5] 身份越权、绑定冲突和跨平台回放审查",
+          "url": "https://app.clickup.com/t/z8v0kmr975",
+          "plannedAgent": "identity_review_luna",
+          "agent": null,
+          "status": "未分配",
+          "progress": null,
+          "lastUpdatedAt": null
+        }
+      ]
+    },
+    {
+      "id": "plant-knowledge",
+      "name": "植物知识、分类与 CMS",
+      "phase": "P1/P2/P3",
+      "plannedAgent": "knowledge_terra",
+      "agent": "p1_data_cms_close_luna、p1_taxonomy_close_terra",
+      "progress": 93,
+      "status": "P-1 审计进行中；主代理正在协调解除阻断",
+      "lastUpdatedAt": "2026-09-19T22:46:50+08:00",
+      "tickets": [
+        {
+          "id": "z8v0kmr96r",
+          "title": "[P-1] SQL、数据模型、CMS 和内容资产审计",
+          "url": "https://app.clickup.com/t/z8v0kmr96r",
+          "plannedAgent": "audit_data_cms_luna",
+          "agent": "p1_data_cms_close_luna",
+          "status": "review_needed：已复核 P-1-data-cms 与 CloudBase live readback；资产盘点、字段映射、双轴处置、测试数据边界、关键计数/模型存在性和状态门可由既有只读证据闭合。逐字段/逐模型原始 JSON、题包/路由交叉、不可变 release、Storage 引用链转为 P1-P6 验收项；报告已追加收口分流并重算 SHA-256，等待主代理验收。",
+          "progress": 95,
+          "lastUpdatedAt": "2026-09-19T22:46:50+08:00"
+        },
+        {
+          "id": "z8v0kmr96v",
+          "title": "[P-1] 植物分类权威来源与身份准确性审计",
+          "url": "https://app.clickup.com/t/z8v0kmr96v",
+          "plannedAgent": "taxonomy_inventory_luna",
+          "agent": "p1_taxonomy_close_terra",
+          "status": "in_progress：已完成既有分类审计、live readback 与运行时准入缺口的本地复核，并形成可验收的 NOT_ADMITTED 结论、硬性 QUARANTINE 门及 P0 证伪输入；代表性样本未被外推为 200 条通过。",
+          "progress": 90,
+          "lastUpdatedAt": "2026-09-19T22:44:00+08:00"
+        },
+        {
+          "id": "z8v0kmr96x",
+          "title": "[P0] 植物分类权威来源与身份审计证伪",
+          "url": "https://app.clickup.com/t/z8v0kmr96x",
+          "plannedAgent": "taxonomy_inventory_luna",
+          "agent": null,
+          "status": "未分配",
+          "progress": null,
+          "lastUpdatedAt": null
+        },
+        {
+          "id": "z8v0kmr971",
+          "title": "[P2] CMS 分类、百科和发布",
+          "url": "https://app.clickup.com/t/z8v0kmr971",
+          "plannedAgent": "knowledge_terra",
+          "agent": null,
+          "status": "未分配",
+          "progress": null,
+          "lastUpdatedAt": null
+        }
+      ]
+    },
+    {
+      "id": "user-plant",
+      "name": "用户植物",
+      "phase": "P1/P2/P3",
+      "plannedAgent": "user_plant_terra",
+      "agent": null,
+      "progress": 0,
+      "status": "未启动（当前没有已登记子代理）",
+      "lastUpdatedAt": null,
+      "tickets": [
+        {
+          "id": "z8v0kmr96y",
+          "title": "[P1] 用户植物、身份和游客认领合同",
+          "url": "https://app.clickup.com/t/z8v0kmr96y",
+          "plannedAgent": "user_plant_terra",
+          "agent": null,
+          "status": "未分配",
+          "progress": null,
+          "lastUpdatedAt": null
+        }
+      ]
+    },
+    {
+      "id": "care",
+      "name": "养护与盆土视觉",
+      "phase": "P4",
+      "plannedAgent": "care_terra",
+      "agent": null,
+      "progress": 0,
+      "status": "未启动（当前没有已登记子代理）",
+      "lastUpdatedAt": null,
+      "tickets": [
+        {
+          "id": "z8v0kmr973",
+          "title": "[P4] 盆土视觉和四类养护能力",
+          "url": "https://app.clickup.com/t/z8v0kmr973",
+          "plannedAgent": "care_terra",
+          "agent": null,
+          "status": "未分配",
+          "progress": null,
+          "lastUpdatedAt": null
+        }
+      ]
+    },
+    {
+      "id": "diagnosis",
+      "name": "诊断与小青工具",
+      "phase": "P4",
+      "plannedAgent": "diagnosis_terra",
+      "agent": null,
+      "progress": 0,
+      "status": "未启动（当前没有已登记子代理）",
+      "lastUpdatedAt": null,
+      "tickets": [
+        {
+          "id": "z8v0kmr974",
+          "title": "[P4] 固定/动态问诊与小青工具",
+          "url": "https://app.clickup.com/t/z8v0kmr974",
+          "plannedAgent": "diagnosis_terra",
+          "agent": null,
+          "status": "未分配",
+          "progress": null,
+          "lastUpdatedAt": null
+        }
+      ]
+    },
+    {
+      "id": "subscription",
+      "name": "会员、积分与 AI 额度",
+      "phase": "P1/P2/P3",
+      "plannedAgent": "subscription_terra",
+      "agent": null,
+      "progress": 0,
+      "status": "未启动（当前没有已登记子代理）",
+      "lastUpdatedAt": null,
+      "tickets": [
+        {
+          "id": "z8v0kmr96z",
+          "title": "[P1] 统一 AI 额度和奖励事件合同",
+          "url": "https://app.clickup.com/t/z8v0kmr96z",
+          "plannedAgent": "subscription_terra",
+          "agent": null,
+          "status": "未分配",
+          "progress": null,
+          "lastUpdatedAt": null
+        },
+        {
+          "id": "z8v0kmr972",
+          "title": "[P3] 游客、试用、会员和奖励闭环",
+          "url": "https://app.clickup.com/t/z8v0kmr972",
+          "plannedAgent": "subscription_terra",
+          "agent": null,
+          "status": "未分配",
+          "progress": null,
+          "lastUpdatedAt": null
+        }
+      ]
+    },
+    {
+      "id": "foundation",
+      "name": "HTTP、数据库、事件与可观测性",
+      "phase": "P0/P1/P5/P6",
+      "plannedAgent": "foundation_terra",
+      "agent": "p1_legacy_close_luna、p1_external_close_luna、p1_storage_close_luna",
+      "progress": 87,
+      "status": "P-1 审计进行中；主代理正在协调解除阻断",
+      "lastUpdatedAt": "2026-09-19T22:49:55+08:00",
+      "tickets": [
+        {
+          "id": "z8v0kmr96q",
+          "title": "[P-1] 旧函数、路由、测试和原子依赖审计",
+          "url": "https://app.clickup.com/t/z8v0kmr96q",
+          "plannedAgent": "audit_legacy_code_luna",
+          "agent": "p1_legacy_close_luna",
+          "status": "in_progress：已启动 P-1 旧函数、路由、测试和原子依赖审计；沿用现有审计报告 85% 基线，正在按实施入口复核遗漏与 live readback。",
+          "progress": 85,
+          "lastUpdatedAt": "2026-09-19T22:43:12+08:00"
+        },
+        {
+          "id": "z8v0kmr96t",
+          "title": "[P-1] 外部供应商、来源和回调边界审计",
+          "url": "https://app.clickup.com/t/z8v0kmr96t",
+          "plannedAgent": "audit_external_sources_luna",
+          "agent": "p1_external_close_luna",
+          "status": "in_progress：已完成百度识别、和风天气、CloudBase AI/百炼/TokenHub、微信支付、微信/抖音/小红书身份来源的代码与配置键存在性盘点；现有单测通过，敏感日志检查保留 1 项天气请求体发现，正在落盘处置矩阵、失败/超时/成本边界和 SHA-256 清单。",
+          "progress": 82,
+          "lastUpdatedAt": "2026-09-19T22:49:55+08:00"
+        },
+        {
+          "id": "z8v0kmr96u",
+          "title": "[P-1] 云存储、私有资产和 OpenViking 审计",
+          "url": "https://app.clickup.com/t/z8v0kmr96u",
+          "plannedAgent": "audit_storage_memory_luna",
+          "agent": "p1_storage_close_luna",
+          "status": "in_progress：已按后端 v2 唯一入口启动 P-1 云存储、私有资产和 OpenViking 审计收口；沿用现有 95% 基线，正在复核报告、只读 live readback 与 sha256 manifest，并区分可闭合结论与后续验证项。",
+          "progress": 95,
+          "lastUpdatedAt": "2026-09-19T22:42:59+08:00"
+        },
+        {
+          "id": "z8v0kmr96w",
+          "title": "[P0] TypeScript/Node22/CloudBase 构建证伪",
+          "url": "https://app.clickup.com/t/z8v0kmr96w",
+          "plannedAgent": "foundation_terra",
+          "agent": null,
+          "status": "未分配",
+          "progress": null,
+          "lastUpdatedAt": null
+        },
+        {
+          "id": "z8v0kmr976",
+          "title": "[P5] 安全、脱敏、防刷和权限合同审查",
+          "url": "https://app.clickup.com/t/z8v0kmr976",
+          "plannedAgent": "security_review_terra",
+          "agent": null,
+          "status": "未分配",
+          "progress": null,
+          "lastUpdatedAt": null
+        },
+        {
+          "id": "z8v0kmr977",
+          "title": "[P5] 真实 MySQL 并发、事务、重放和读回",
+          "url": "https://app.clickup.com/t/z8v0kmr977",
+          "plannedAgent": "real_db_runner_luna",
+          "agent": null,
+          "status": "未分配",
+          "progress": null,
+          "lastUpdatedAt": null
+        },
+        {
+          "id": "z8v0kmr978",
+          "title": "[P5] 真实 MySQL/API/安全/性能验收",
+          "url": "https://app.clickup.com/t/z8v0kmr978",
+          "plannedAgent": "real_api_runner_luna",
+          "agent": null,
+          "status": "未分配",
+          "progress": null,
+          "lastUpdatedAt": null
+        },
+        {
+          "id": "z8v0kmr979",
+          "title": "[P6] OpenAPI 冻结与精确清理",
+          "url": "https://app.clickup.com/t/z8v0kmr979",
+          "plannedAgent": "docs_diff_luna",
+          "agent": null,
+          "status": "未分配",
+          "progress": null,
+          "lastUpdatedAt": null
+        }
+      ]
+    }
+  ]
+}

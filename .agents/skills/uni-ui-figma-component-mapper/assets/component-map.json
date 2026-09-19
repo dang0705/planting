@@ -1,0 +1,1343 @@
+{
+  "meta": {
+    "name": "uni-ui-figma-component-mapper",
+    "version": "1.0.0",
+    "language": "zh-CN",
+    "purpose": "Map Figma UI signals to official DCloud uni-ui components for uni-app/Vue implementation.",
+    "defaultPlatformPriority": [
+      "微信小程序",
+      "H5",
+      "App"
+    ]
+  },
+  "components": [
+    {
+      "name": "uni-badge",
+      "cn": "数字角标",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-badge.html",
+      "category": "状态/提示",
+      "codeBlock": "uBadge",
+      "useWhen": "图标、列表项、宫格、按钮右上出现数字、红点、99+、未读数、购物车数量。",
+      "figmaSignals": [
+        "小圆点",
+        "右上角数字",
+        "红色角标",
+        "消息数",
+        "未读",
+        "99+",
+        "购物车数量",
+        "badge"
+      ],
+      "props": [
+        "text",
+        "type",
+        "size",
+        "is-dot",
+        "max-num",
+        "inverted",
+        "absolute",
+        "offset",
+        "custom-style"
+      ],
+      "events": [
+        "@click"
+      ],
+      "skeleton": "<uni-badge :text=\"count\" type=\"error\" absolute=\"rightTop\"><uni-icons type=\"chat\" size=\"24\" /></uni-badge>",
+      "avoid": "纯文本标签不要用；用 uni-tag。只是状态色块不要用。nvue 不支持 absolute。"
+    },
+    {
+      "name": "uni-breadcrumb",
+      "cn": "面包屑",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-breadcrumb.html",
+      "category": "导航",
+      "codeBlock": "uBreadcrumb",
+      "useWhen": "页面顶部显示层级路径，可点击返回上级或任意祖先页面。多用于后台、管理页、PC/H5。",
+      "figmaSignals": [
+        "首页 / 分类 / 详情",
+        "路径层级",
+        "面包屑",
+        "breadcrumb",
+        "返回上级路径"
+      ],
+      "props": [
+        "separator"
+      ],
+      "events": [],
+      "skeleton": "<uni-breadcrumb separator=\"/\"><uni-breadcrumb-item v-for=\"r in routes\" :key=\"r.to\" :to=\"r.to\">{{ r.name }}</uni-breadcrumb-item></uni-breadcrumb>",
+      "avoid": "移动端单页只需要返回按钮时优先用 nav-bar 或原生导航。"
+    },
+    {
+      "name": "uni-calendar",
+      "cn": "日历",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-calendar.html",
+      "category": "日期/选择",
+      "codeBlock": "uCalendar",
+      "useWhen": "展示整月日历、日期范围、打点标记、签到、预约、过去/未来日期选择。",
+      "figmaSignals": [
+        "月历",
+        "日期格子",
+        "日期范围",
+        "打卡",
+        "签到",
+        "预约日期",
+        "酒店日期",
+        "calendar dots"
+      ],
+      "props": [
+        "date",
+        "start-date",
+        "end-date",
+        "insert",
+        "range",
+        "selected",
+        "lunar",
+        "clear-date"
+      ],
+      "events": [
+        "@change",
+        "@confirm",
+        "@monthSwitch"
+      ],
+      "skeleton": "<uni-calendar :insert=\"false\" :range=\"true\" :selected=\"marks\" @confirm=\"onConfirm\" />",
+      "avoid": "只选择单个日期/时间且不需要月历视图时，优先 uni-datetime-picker 或原生 picker。"
+    },
+    {
+      "name": "uni-card",
+      "cn": "卡片",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-card.html",
+      "category": "内容容器",
+      "codeBlock": "uCard",
+      "useWhen": "独立信息块：文章/商品/植物/诊断结果卡片，有标题、缩略图、摘要、操作区。",
+      "figmaSignals": [
+        "白色圆角卡片",
+        "阴影卡片",
+        "独立内容块",
+        "封面图+标题",
+        "作者时间",
+        "card"
+      ],
+      "props": [
+        "title",
+        "sub-title",
+        "extra",
+        "thumbnail",
+        "cover",
+        "is-full",
+        "is-shadow",
+        "spacing",
+        "margin"
+      ],
+      "events": [
+        "@click"
+      ],
+      "skeleton": "<uni-card :title=\"title\" :sub-title=\"subtitle\" :thumbnail=\"thumb\" @click=\"openDetail\"><view>{{ summary }}</view></uni-card>",
+      "avoid": "只是分组间距用 uni-group；重复简单列表行用 uni-list。APP-NVUE 安卓不支持阴影。"
+    },
+    {
+      "name": "uni-collapse",
+      "cn": "折叠面板",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-collapse.html",
+      "category": "内容容器/交互",
+      "codeBlock": "uCollapse",
+      "useWhen": "FAQ、详情字段、长说明、分类内容需要展开/收起。",
+      "figmaSignals": [
+        "展开收起",
+        "手风琴",
+        "FAQ",
+        "箭头下拉",
+        "长内容折叠",
+        "collapse",
+        "accordion"
+      ],
+      "props": [
+        "accordion",
+        "value",
+        "show-animation"
+      ],
+      "events": [
+        "@change"
+      ],
+      "skeleton": "<uni-collapse accordion><uni-collapse-item title=\"养护说明\"><view>{{ content }}</view></uni-collapse-item></uni-collapse>",
+      "avoid": "小程序内容动态变化后需 resize；App 动画可能卡顿；uni-collapse-item 不要单独使用。"
+    },
+    {
+      "name": "uni-combox",
+      "cn": "组合框",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-combox.html",
+      "category": "表单/选择",
+      "codeBlock": "uCombox",
+      "useWhen": "既允许从候选项中选择，又允许手动输入的表单项。",
+      "figmaSignals": [
+        "输入+下拉建议",
+        "可搜索输入框",
+        "城市候选",
+        "自定义输入",
+        "combo box",
+        "autocomplete"
+      ],
+      "props": [
+        "label",
+        "labelWidth",
+        "placeholder",
+        "candidates",
+        "emptyTips",
+        "value"
+      ],
+      "events": [
+        "@input"
+      ],
+      "skeleton": "<uni-combox label=\"城市\" :candidates=\"cityOptions\" placeholder=\"请选择或输入\" v-model=\"form.city\" />",
+      "avoid": "不支持 nvue；纯下拉选择用 uni-data-select；多级选择用 uni-data-picker。"
+    },
+    {
+      "name": "uni-countdown",
+      "cn": "倒计时",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-countdown.html",
+      "category": "状态/时间",
+      "codeBlock": "uCountDown",
+      "useWhen": "活动结束、支付剩余时间、限时优惠、任务倒计时。",
+      "figmaSignals": [
+        "倒计时",
+        "天 时 分 秒",
+        "剩余时间",
+        "限时",
+        "countdown",
+        "D:H:M:S"
+      ],
+      "props": [
+        "day",
+        "hour",
+        "minute",
+        "second",
+        "show-day",
+        "color",
+        "background-color",
+        "border-color"
+      ],
+      "events": [
+        "@timeup"
+      ],
+      "skeleton": "<uni-countdown :show-day=\"false\" :hour=\"12\" :minute=\"30\" :second=\"0\" @timeup=\"onTimeup\" />",
+      "avoid": "只是格式化展示一个日期，用 uni-dateformat。"
+    },
+    {
+      "name": "uni-data-checkbox",
+      "cn": "数据选择器",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-data-checkbox.html",
+      "category": "表单/选择",
+      "codeBlock": "uDataCheckbox",
+      "useWhen": "单选/多选候选项，样式可为普通、button、tag；需要和 uni-forms 校验配合。",
+      "figmaSignals": [
+        "单选",
+        "多选",
+        "复选框组",
+        "胶囊选项",
+        "tag 风格选项",
+        "radio group",
+        "checkbox group"
+      ],
+      "props": [
+        "v-model",
+        "localdata",
+        "mode",
+        "multiple",
+        "min",
+        "max",
+        "selectedColor",
+        "map"
+      ],
+      "events": [
+        "@change"
+      ],
+      "skeleton": "<uni-data-checkbox v-model=\"form.light\" :localdata=\"lightOptions\" mode=\"tag\" @change=\"onChange\" />",
+      "avoid": "选项很多或需要下拉时用 uni-data-select；级联层级用 uni-data-picker。样式高度定制时可能要自写。"
+    },
+    {
+      "name": "uni-data-picker",
+      "cn": "级联选择器",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-data-picker.html",
+      "category": "表单/选择",
+      "codeBlock": "uDataPicker",
+      "useWhen": "地址、省市区、植物分类、病虫害层级、无限层级级联，支持懒加载/本地/云端数据。",
+      "figmaSignals": [
+        "省市区",
+        "多列选择",
+        "级联",
+        "分类选择",
+        "地址选择",
+        "picker columns",
+        "cascader"
+      ],
+      "props": [
+        "v-model",
+        "localdata",
+        "readonly",
+        "clear-icon",
+        "ellipsis",
+        "popup-title",
+        "map",
+        "collection",
+        "field",
+        "where"
+      ],
+      "events": [
+        "@change",
+        "@nodeclick",
+        "@popupopened",
+        "@popupclosed"
+      ],
+      "skeleton": "<uni-data-picker v-model=\"form.region\" :localdata=\"regionTree\" popup-title=\"请选择地区\" @change=\"onRegionChange\" />",
+      "avoid": "单层少量选项用 uni-data-checkbox 或 uni-data-select；不要为了普通枚举引入级联复杂度。"
+    },
+    {
+      "name": "uni-data-select",
+      "cn": "下拉框",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-data-select.html",
+      "category": "表单/选择",
+      "codeBlock": "uDataSelect",
+      "useWhen": "选项较多但只有单层，需下拉展示；可与 uni-forms 校验配合。",
+      "figmaSignals": [
+        "下拉框",
+        "选择框",
+        "select",
+        "dropdown",
+        "更多选项",
+        "表单枚举"
+      ],
+      "props": [
+        "v-model",
+        "localdata",
+        "clear",
+        "placeholder",
+        "placement",
+        "multiple",
+        "format"
+      ],
+      "events": [
+        "@change"
+      ],
+      "skeleton": "<uni-data-select v-model=\"form.type\" :localdata=\"typeOptions\" placeholder=\"请选择类型\" @change=\"onTypeChange\" />",
+      "avoid": "可输入可选择用 uni-combox；多级选择用 uni-data-picker；少量显性选项用 uni-data-checkbox。"
+    },
+    {
+      "name": "uni-dateformat",
+      "cn": "日期格式化",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-dateformat.html",
+      "category": "文本/时间",
+      "codeBlock": "uDateformat",
+      "useWhen": "把时间戳或日期字符串渲染成“刚刚、xx分钟前、yyyy/MM/dd”等文本。",
+      "figmaSignals": [
+        "发布时间",
+        "刚刚",
+        "分钟前",
+        "日期文字",
+        "更新时间",
+        "date text",
+        "relative time"
+      ],
+      "props": [
+        "date",
+        "format",
+        "threshold"
+      ],
+      "events": [],
+      "skeleton": "<uni-dateformat :date=\"item.createdAt\" format=\"yyyy-MM-dd hh:mm\" />",
+      "avoid": "需要用户选择日期时不用它，改用 calendar/datetime-picker。"
+    },
+    {
+      "name": "uni-datetime-picker",
+      "cn": "日期选择器",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-datetime-picker.html",
+      "category": "日期/选择",
+      "codeBlock": "uDatetimePicker",
+      "useWhen": "表单中选择日期、日期时间、日期时间范围；需要时间戳输入/输出。",
+      "figmaSignals": [
+        "日期选择",
+        "时间选择",
+        "开始结束时间",
+        "日期范围",
+        "datetime picker",
+        "range picker"
+      ],
+      "props": [
+        "v-model",
+        "type",
+        "start",
+        "end",
+        "return-type",
+        "rangeSeparator",
+        "clear-icon"
+      ],
+      "events": [
+        "@change",
+        "@maskClick"
+      ],
+      "skeleton": "<uni-datetime-picker v-model=\"form.range\" type=\"datetimerange\" return-type=\"timestamp\" @change=\"onDateChange\" />",
+      "avoid": "2.0 后不支持单独 type=time；单独时间选择用原生 picker。整月日历/打点用 uni-calendar。"
+    },
+    {
+      "name": "uni-drawer",
+      "cn": "抽屉",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-drawer.html",
+      "category": "弹层/导航",
+      "codeBlock": "uDrawer",
+      "useWhen": "侧滑菜单、筛选面板、右侧详情栏、侧边导航。",
+      "figmaSignals": [
+        "侧边栏",
+        "从左/右滑出",
+        "抽屉",
+        "筛选面板",
+        "drawer",
+        "side panel"
+      ],
+      "props": [
+        "mode",
+        "width",
+        "mask-click"
+      ],
+      "events": [
+        "@change"
+      ],
+      "skeleton": "<uni-drawer ref=\"filterDrawer\" mode=\"right\" :mask-click=\"true\"><scroll-view scroll-y class=\"drawer-body\">...</scroll-view></uni-drawer>",
+      "avoid": "普通居中/底部弹窗用 uni-popup；nvue 动态 width 不生效。"
+    },
+    {
+      "name": "uni-easyinput",
+      "cn": "增强输入框",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-easyinput.html",
+      "category": "表单/输入",
+      "codeBlock": "uEasyinput",
+      "useWhen": "表单输入框，需要边框、清除按钮、前后图标、密码、多行、校验联动。",
+      "figmaSignals": [
+        "输入框",
+        "搜索外普通输入",
+        "清除按钮",
+        "前缀图标",
+        "后缀图标",
+        "密码",
+        "textarea",
+        "input"
+      ],
+      "props": [
+        "v-model",
+        "placeholder",
+        "type",
+        "clearable",
+        "prefixIcon",
+        "suffixIcon",
+        "disabled",
+        "maxlength",
+        "trim"
+      ],
+      "events": [
+        "@input",
+        "@focus",
+        "@blur",
+        "@confirm",
+        "@iconClick"
+      ],
+      "skeleton": "<uni-easyinput v-model=\"form.name\" placeholder=\"请输入名称\" prefixIcon=\"person\" @iconClick=\"onIconClick\" />",
+      "avoid": "搜索栏用 uni-search-bar；数字步进用 uni-number-box；选择型输入不用 easyinput 伪装。"
+    },
+    {
+      "name": "uni-fab",
+      "cn": "悬浮按钮",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-fab.html",
+      "category": "操作入口",
+      "codeBlock": "uFab",
+      "useWhen": "页面角落固定主操作按钮，可展开多个快捷操作。",
+      "figmaSignals": [
+        "悬浮加号",
+        "右下角按钮",
+        "展开菜单",
+        "floating action button",
+        "FAB"
+      ],
+      "props": [
+        "pattern",
+        "content",
+        "horizontal",
+        "vertical",
+        "direction",
+        "popMenu"
+      ],
+      "events": [
+        "@fabClick",
+        "@trigger"
+      ],
+      "skeleton": "<uni-fab :pattern=\"fabPattern\" :content=\"fabActions\" horizontal=\"right\" vertical=\"bottom\" @trigger=\"onFabTrigger\" />",
+      "avoid": "不要动态频繁改属性；展开项最多建议 4 个；展开菜单图标用图片路径更稳。"
+    },
+    {
+      "name": "uni-fav",
+      "cn": "收藏按钮",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-fav.html",
+      "category": "状态/操作",
+      "codeBlock": "uFav",
+      "useWhen": "收藏/取消收藏、喜欢/已喜欢的切换按钮。",
+      "figmaSignals": [
+        "收藏",
+        "爱心",
+        "星标",
+        "喜欢",
+        "favorite",
+        "like toggle"
+      ],
+      "props": [
+        "checked",
+        "circle",
+        "bgColor",
+        "bgColorChecked",
+        "fgColor",
+        "fgColorChecked"
+      ],
+      "events": [
+        "@click"
+      ],
+      "skeleton": "<uni-fav :checked=\"isFav\" circle @click=\"toggleFav\" />",
+      "avoid": "评分用 uni-rate；普通图标按钮可用 button + uni-icons。"
+    },
+    {
+      "name": "uni-file-picker",
+      "cn": "文件选择上传",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-file-picker.html",
+      "category": "上传",
+      "codeBlock": "uFilePicker",
+      "useWhen": "选择/上传图片、视频、文件；图片宫格上传；表单附件上传。",
+      "figmaSignals": [
+        "上传图片",
+        "添加照片",
+        "上传文件",
+        "九宫格图片",
+        "附件",
+        "camera upload",
+        "file picker"
+      ],
+      "props": [
+        "v-model",
+        "file-mediatype",
+        "file-extname",
+        "limit",
+        "mode",
+        "auto-upload",
+        "image-styles",
+        "del-icon"
+      ],
+      "events": [
+        "@select",
+        "@progress",
+        "@success",
+        "@fail",
+        "@delete"
+      ],
+      "skeleton": "<uni-file-picker v-model=\"images\" file-mediatype=\"image\" :limit=\"3\" mode=\"grid\" @select=\"onSelect\" />",
+      "avoid": "不绑定服务空间时 autoUpload 默认 false 且不可改；文件选择只支持 H5 和微信小程序；微信用 wx.chooseMessageFile。"
+    },
+    {
+      "name": "uni-forms",
+      "cn": "表单",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-forms.html",
+      "category": "表单/校验",
+      "codeBlock": "uForms",
+      "related": [
+        "uni-forms-item",
+        "uni-easyinput",
+        "uni-data-checkbox",
+        "uni-group"
+      ],
+      "useWhen": "页面有多个字段、校验、错误提示、分组表单、提交。",
+      "figmaSignals": [
+        "表单",
+        "必填星号",
+        "错误提示",
+        "输入项组",
+        "提交表单",
+        "form validation"
+      ],
+      "props": [
+        "ref",
+        "model",
+        "rules",
+        "label-position",
+        "label-width",
+        "validate-trigger"
+      ],
+      "events": [
+        "validate",
+        "submit via methods"
+      ],
+      "skeleton": "<uni-forms ref=\"formRef\" :model=\"form\" :rules=\"rules\"><uni-forms-item label=\"名称\" name=\"name\"><uni-easyinput v-model=\"form.name\" /></uni-forms-item></uni-forms>",
+      "avoid": "每个 uni-forms-item 只放一个表单项；纯布局不要套 forms；分组视觉用 uni-group。"
+    },
+    {
+      "name": "uni-goods-nav",
+      "cn": "商品导航",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-goods-nav.html",
+      "category": "电商",
+      "codeBlock": "uGoodsNav",
+      "useWhen": "商品详情页底部固定“客服/店铺/购物车 + 加入购物车/立即购买”。",
+      "figmaSignals": [
+        "加入购物车",
+        "立即购买",
+        "底部商品操作栏",
+        "客服 店铺 购物车",
+        "goods nav",
+        "buy bar"
+      ],
+      "props": [
+        "options",
+        "buttonGroup",
+        "fill"
+      ],
+      "events": [
+        "@click",
+        "@buttonClick"
+      ],
+      "skeleton": "<uni-goods-nav :options=\"navOptions\" :buttonGroup=\"buyButtons\" @click=\"onNavClick\" @buttonClick=\"onBuyClick\" />",
+      "avoid": "普通底部 tabbar 不用它；非电商主操作条更适合自定义或 button 组合。"
+    },
+    {
+      "name": "uni-grid",
+      "cn": "宫格",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-grid.html",
+      "category": "布局/导航",
+      "codeBlock": "uGrid",
+      "related": [
+        "uni-grid-item"
+      ],
+      "useWhen": "2-5 列功能入口、分类入口、九宫格菜单。",
+      "figmaSignals": [
+        "九宫格",
+        "功能宫格",
+        "分类图标网格",
+        "四宫格",
+        "grid menu",
+        "app launcher"
+      ],
+      "props": [
+        "column",
+        "show-border",
+        "square",
+        "highlight"
+      ],
+      "events": [
+        "@change"
+      ],
+      "skeleton": "<uni-grid :column=\"4\" :show-border=\"false\"><uni-grid-item v-for=\"item in menus\" :key=\"item.id\"><view class=\"grid-item\">...</view></uni-grid-item></uni-grid>",
+      "avoid": "复杂响应式布局用 uni-row/uni-col；角标需自己或搭配 uni-badge；列数最好不超过 5。"
+    },
+    {
+      "name": "uni-group",
+      "cn": "分组",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-group.html",
+      "category": "内容容器",
+      "codeBlock": "uGroup",
+      "useWhen": "把表单项、列表区块、设置项分组并形成间隔。",
+      "figmaSignals": [
+        "分组标题",
+        "区块间距",
+        "设置分区",
+        "表单分区",
+        "group section"
+      ],
+      "props": [
+        "title",
+        "top",
+        "mode"
+      ],
+      "events": [],
+      "skeleton": "<uni-group title=\"基础信息\" top=\"20\"><view>...</view></uni-group>",
+      "avoid": "需要标题栏装饰用 uni-section；独立内容卡片用 uni-card。"
+    },
+    {
+      "name": "uni-icons",
+      "cn": "图标",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-icons.html",
+      "category": "基础视觉",
+      "codeBlock": "uIcons",
+      "useWhen": "设计中出现 DCloud 内置图标语义：返回、搜索、日历、购物车、聊天、关闭、勾选等。",
+      "figmaSignals": [
+        "icon",
+        "矢量图标",
+        "返回箭头",
+        "搜索图标",
+        "日历图标",
+        "购物车",
+        "关闭",
+        "勾选"
+      ],
+      "props": [
+        "type",
+        "size",
+        "color",
+        "custom-prefix",
+        "font-family"
+      ],
+      "events": [
+        "@click"
+      ],
+      "skeleton": "<uni-icons type=\"search\" size=\"20\" color=\"#999\" @click=\"onIconClick\" />",
+      "avoid": "设计使用品牌/自定义 SVG 时不要强行替换；需确认内置 type 是否存在。"
+    },
+    {
+      "name": "uni-indexed-list",
+      "cn": "索引列表",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-indexed-list.html",
+      "category": "列表",
+      "codeBlock": "uIndexedList",
+      "useWhen": "城市/联系人/机场等按 A-Z 侧边索引的大列表。",
+      "figmaSignals": [
+        "A-Z 索引",
+        "城市列表",
+        "通讯录",
+        "字母索引条",
+        "indexed list"
+      ],
+      "props": [
+        "options",
+        "showSelect"
+      ],
+      "events": [
+        "@click"
+      ],
+      "skeleton": "<uni-indexed-list :options=\"indexedOptions\" :showSelect=\"false\" @click=\"onIndexedClick\" />",
+      "avoid": "普通列表不要用；如果没有字母索引，优先 uni-list。"
+    },
+    {
+      "name": "uni-link",
+      "cn": "超链接",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-link.html",
+      "category": "文本/跳转",
+      "codeBlock": "uLink",
+      "useWhen": "外部网页链接，在小程序复制 URL，App 打开外部浏览器，H5 打开新页面。",
+      "figmaSignals": [
+        "外链",
+        "网址",
+        "协议链接",
+        "帮助链接",
+        "external link",
+        "URL"
+      ],
+      "props": [
+        "href",
+        "text",
+        "download",
+        "showUnderLine",
+        "copyTips",
+        "color",
+        "fontSize"
+      ],
+      "events": [],
+      "skeleton": "<uni-link href=\"https://example.com\" text=\"查看官方说明\" color=\"#2979ff\" />",
+      "avoid": "应用内页面跳转不要用 uni-link，用 navigator 或 uni.navigateTo。"
+    },
+    {
+      "name": "uni-list",
+      "cn": "列表",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-list.html",
+      "category": "列表",
+      "codeBlock": "uList",
+      "related": [
+        "uni-list-item",
+        "uni-badge",
+        "uni-icons",
+        "uni-list-chat"
+      ],
+      "useWhen": "设置项、导航项、消息项、联系人项、重复行、带右箭头/副标题/缩略图/switch/badge 的列表。",
+      "figmaSignals": [
+        "列表行",
+        "右箭头",
+        "设置项",
+        "消息列表",
+        "缩略图+标题+摘要",
+        "list item",
+        "cell"
+      ],
+      "props": [
+        "border",
+        "title",
+        "note",
+        "thumb",
+        "showBadge",
+        "badgeText",
+        "showArrow",
+        "clickable",
+        "to",
+        "rightText"
+      ],
+      "events": [
+        "@click",
+        "@switchChange"
+      ],
+      "skeleton": "<uni-list><uni-list-item v-for=\"item in list\" :key=\"item.id\" :title=\"item.title\" :note=\"item.note\" showArrow clickable @click=\"open(item)\" /></uni-list>",
+      "avoid": "不含下拉刷新/上拉翻页；翻页状态用 uni-load-more；大图复杂新闻/电商列表用插槽定制。"
+    },
+    {
+      "name": "uni-load-more",
+      "cn": "加载更多",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-load-more.html",
+      "category": "列表/状态",
+      "codeBlock": "uLoadMore",
+      "useWhen": "列表底部显示“上拉加载更多/正在加载/没有更多”。",
+      "figmaSignals": [
+        "加载更多",
+        "没有更多",
+        "上拉加载",
+        "loading at list bottom",
+        "infinite list"
+      ],
+      "props": [
+        "status",
+        "showIcon",
+        "showText",
+        "iconType",
+        "contentText",
+        "color"
+      ],
+      "events": [
+        "@clickLoadMore"
+      ],
+      "skeleton": "<uni-load-more :status=\"loadStatus\" :contentText=\"loadText\" @clickLoadMore=\"loadMore\" />",
+      "avoid": "全屏加载用自定义 loading 或页面骨架；不是列表底部不要用。"
+    },
+    {
+      "name": "uni-nav-bar",
+      "cn": "自定义导航栏",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-nav-bar.html",
+      "category": "导航",
+      "codeBlock": "uNavBar",
+      "useWhen": "页面顶部自定义导航栏：标题、左右按钮、图标、深色/阴影。",
+      "figmaSignals": [
+        "顶部导航",
+        "返回按钮+标题",
+        "navbar",
+        "header bar",
+        "右上按钮",
+        "自定义头部"
+      ],
+      "props": [
+        "title",
+        "left-text",
+        "right-text",
+        "left-icon",
+        "right-icon",
+        "fixed",
+        "statusBar",
+        "shadow",
+        "dark",
+        "backgroundColor",
+        "color"
+      ],
+      "events": [
+        "@clickLeft",
+        "@clickRight"
+      ],
+      "skeleton": "<uni-nav-bar title=\"诊断详情\" left-icon=\"left\" right-text=\"保存\" @clickLeft=\"goBack\" @clickRight=\"save\" />",
+      "avoid": "不要在组件内部使用，宽度可能错误；依赖 sass 和 uni-icons；文字大小不支持 props。"
+    },
+    {
+      "name": "uni-notice-bar",
+      "cn": "通告栏",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-notice-bar.html",
+      "category": "提示",
+      "codeBlock": "uNoticeBar",
+      "useWhen": "顶部/卡片内公告、滚动文字、可关闭提示、查看更多。",
+      "figmaSignals": [
+        "公告栏",
+        "黄色提示条",
+        "滚动通知",
+        "喇叭图标",
+        "notice bar",
+        "banner alert"
+      ],
+      "props": [
+        "text",
+        "single",
+        "scrollable",
+        "show-icon",
+        "show-close",
+        "show-get-more",
+        "color",
+        "background-color"
+      ],
+      "events": [
+        "@click",
+        "@close",
+        "@getmore"
+      ],
+      "skeleton": "<uni-notice-bar show-icon scrollable single text=\"今日天气变化较大，请关注浇水频率\" @click=\"openNotice\" />",
+      "avoid": "强确认对话用 uni-popup-dialog；表单错误用 forms 校验。"
+    },
+    {
+      "name": "uni-number-box",
+      "cn": "数字输入框",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-number-box.html",
+      "category": "表单/输入",
+      "codeBlock": "uNumberBox",
+      "useWhen": "数量加减、购买数量、步进器、评分以外的数字范围输入。",
+      "figmaSignals": [
+        "加减按钮",
+        "数量选择",
+        "Stepper",
+        "步进器",
+        "number input",
+        "- 1 +"
+      ],
+      "props": [
+        "v-model",
+        "min",
+        "max",
+        "step",
+        "disabled",
+        "disabledInput"
+      ],
+      "events": [
+        "@change"
+      ],
+      "skeleton": "<uni-number-box v-model=\"quantity\" :min=\"1\" :max=\"99\" @change=\"onQuantityChange\" />",
+      "avoid": "普通数字键盘输入可用 easyinput type=number；评分用 uni-rate。"
+    },
+    {
+      "name": "uni-pagination",
+      "cn": "分页器",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-pagination.html",
+      "category": "列表/分页",
+      "codeBlock": "uPagination",
+      "useWhen": "分页列表、表格分页，显示页码/上一页下一页。",
+      "figmaSignals": [
+        "分页",
+        "上一页 下一页",
+        "页码",
+        "pagination",
+        "page control"
+      ],
+      "props": [
+        "total",
+        "current",
+        "pageSize",
+        "show-icon",
+        "title"
+      ],
+      "events": [
+        "@change"
+      ],
+      "skeleton": "<uni-pagination :total=\"total\" :current=\"page\" show-icon @change=\"onPageChange\" />",
+      "avoid": "移动端无限滚动列表优先 uni-load-more；轮播指示点不是分页器。"
+    },
+    {
+      "name": "uni-popup",
+      "cn": "弹出层",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-popup.html",
+      "category": "弹层/反馈",
+      "codeBlock": "uPopup",
+      "related": [
+        "uni-popup-dialog",
+        "uni-popup-message",
+        "uni-popup-share",
+        "uni-transition"
+      ],
+      "useWhen": "居中弹窗、底部弹层、顶部消息、确认框、分享面板、轻提示。",
+      "figmaSignals": [
+        "弹窗",
+        "底部抽起",
+        "遮罩",
+        "确认框",
+        "Toast-like message",
+        "modal",
+        "bottom sheet",
+        "dialog"
+      ],
+      "props": [
+        "type",
+        "is-mask-click",
+        "background-color",
+        "safe-area",
+        "mask-background-color"
+      ],
+      "events": [
+        "@change",
+        "@maskClick"
+      ],
+      "skeleton": "<uni-popup ref=\"popup\" type=\"bottom\" background-color=\"#fff\"><view class=\"popup-body\">...</view></uni-popup>",
+      "avoid": "侧边菜单用 uni-drawer；弹出后不能完全阻止后面滚动，需额外处理；open 建议 mounted/onReady 后调用。"
+    },
+    {
+      "name": "uni-rate",
+      "cn": "评分",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-rate.html",
+      "category": "表单/评价",
+      "codeBlock": "uRate",
+      "related": [
+        "uni-icons"
+      ],
+      "useWhen": "星级评分、商品/服务评价、满意度。",
+      "figmaSignals": [
+        "星星评分",
+        "五星",
+        "半星",
+        "rate",
+        "rating",
+        "review stars"
+      ],
+      "props": [
+        "v-model",
+        "value",
+        "size",
+        "max",
+        "margin",
+        "color",
+        "active-color",
+        "allow-half",
+        "touchable",
+        "readonly"
+      ],
+      "events": [
+        "@change"
+      ],
+      "skeleton": "<uni-rate v-model=\"score\" allow-half :max=\"5\" @change=\"onScoreChange\" />",
+      "avoid": "不支持零星选择；图标暂不支持修改；不是评价场景不要用来做进度。"
+    },
+    {
+      "name": "uni-row / uni-col",
+      "cn": "布局-行/列",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-row.html",
+      "category": "布局",
+      "codeBlock": "uRow / uCol",
+      "useWhen": "24 栅格、响应式列布局、比例分栏、复杂表单左右布局。",
+      "figmaSignals": [
+        "两列布局",
+        "三列布局",
+        "栅格",
+        "响应式列",
+        "24-grid",
+        "column layout"
+      ],
+      "props": [
+        "gutter",
+        "span",
+        "offset",
+        "push",
+        "pull",
+        "xs",
+        "sm",
+        "md",
+        "lg",
+        "xl"
+      ],
+      "events": [],
+      "skeleton": "<uni-row :gutter=\"12\"><uni-col :span=\"12\">左</uni-col><uni-col :span=\"12\">右</uni-col></uni-row>",
+      "avoid": "普通 flex 布局用 view 更轻；功能入口固定宫格用 uni-grid。"
+    },
+    {
+      "name": "uni-search-bar",
+      "cn": "搜索栏",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-search-bar.html",
+      "category": "表单/搜索",
+      "codeBlock": "uSearchBar",
+      "useWhen": "页面顶部搜索、列表搜索、可取消/清除/确认搜索。",
+      "figmaSignals": [
+        "搜索框",
+        "放大镜",
+        "取消按钮",
+        "清除按钮",
+        "search bar",
+        "搜索植物"
+      ],
+      "props": [
+        "v-model",
+        "placeholder",
+        "focus",
+        "radius",
+        "clearButton",
+        "cancelButton",
+        "bgColor"
+      ],
+      "events": [
+        "@confirm",
+        "@input",
+        "@blur",
+        "@focus",
+        "@cancel",
+        "@change",
+        "@clear"
+      ],
+      "skeleton": "<uni-search-bar v-model=\"keyword\" placeholder=\"搜索植物\" @confirm=\"search\" @clear=\"clearKeyword\" />",
+      "avoid": "普通表单输入不要用；带候选输入用 uni-combox。"
+    },
+    {
+      "name": "uni-section",
+      "cn": "标题栏",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-section.html",
+      "category": "标题/区块",
+      "codeBlock": "uSection",
+      "useWhen": "文章/列表/详情区块标题，副标题，线性装饰，标题下插槽内容。",
+      "figmaSignals": [
+        "区块标题",
+        "副标题",
+        "竖线标题",
+        "section header",
+        "分区标题"
+      ],
+      "props": [
+        "title",
+        "sub-title",
+        "type",
+        "padding"
+      ],
+      "events": [
+        "@click"
+      ],
+      "skeleton": "<uni-section title=\"光照情况\" sub-title=\"根据近 10 天数据判断\" type=\"line\" padding>...</uni-section>",
+      "avoid": "页面 h1/h2 标题用 uni-title；纯分组间距用 uni-group。"
+    },
+    {
+      "name": "uni-segmented-control",
+      "cn": "分段器",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-segmented-control.html",
+      "category": "导航/切换",
+      "codeBlock": "uSegmentedControl",
+      "useWhen": "同一页面内切换不同视图或筛选维度，2-4 个互斥选项。",
+      "figmaSignals": [
+        "分段控件",
+        "顶部 tab 胶囊",
+        "互斥切换",
+        "segmented control",
+        "tab switch"
+      ],
+      "props": [
+        "current",
+        "values",
+        "styleType",
+        "activeColor"
+      ],
+      "events": [
+        "@clickItem"
+      ],
+      "skeleton": "<uni-segmented-control :current=\"current\" :values=\"tabs\" styleType=\"button\" @clickItem=\"onTabClick\" />",
+      "avoid": "页面级底部 tabbar 不用；复杂顶部导航可自定义或用其他组件。"
+    },
+    {
+      "name": "uni-steps",
+      "cn": "步骤条",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-steps.html",
+      "category": "进度",
+      "codeBlock": "uSteps",
+      "useWhen": "流程进度、订单状态、诊断步骤、时间线式步骤。",
+      "figmaSignals": [
+        "步骤条",
+        "第 1 步/第 2 步",
+        "流程进度",
+        "订单进度",
+        "timeline steps",
+        "progress steps"
+      ],
+      "props": [
+        "options",
+        "active",
+        "direction",
+        "active-color"
+      ],
+      "events": [],
+      "skeleton": "<uni-steps :options=\"steps\" :active=\"activeStep\" direction=\"column\" />",
+      "avoid": "连续数值进度条需自写或用其他组件；只是分页点用 swiper-dot。"
+    },
+    {
+      "name": "uni-swipe-action",
+      "cn": "滑动操作",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-swipe-action.html",
+      "category": "列表/手势",
+      "codeBlock": "uSwipeAction / uSwipeActionItem",
+      "related": [
+        "uni-swipe-action-item"
+      ],
+      "useWhen": "列表行左滑/右滑出现删除、置顶、编辑等操作。",
+      "figmaSignals": [
+        "左滑删除",
+        "右滑操作",
+        "列表行操作",
+        "swipe to delete",
+        "slide actions"
+      ],
+      "props": [
+        "right-options",
+        "left-options",
+        "disabled",
+        "autoClose",
+        "show"
+      ],
+      "events": [
+        "@click",
+        "@change"
+      ],
+      "skeleton": "<uni-swipe-action><uni-swipe-action-item :right-options=\"actions\" @click=\"onAction\"><uni-list-item title=\"条目\" /></uni-swipe-action-item></uni-swipe-action>",
+      "avoid": "不能嵌套在 swiper 中；长列表慎用 autoClose；普通按钮操作无需用滑动手势。"
+    },
+    {
+      "name": "uni-swiper-dot",
+      "cn": "轮播图指示点",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-swiper-dot.html",
+      "category": "轮播",
+      "codeBlock": "uSwiperDot",
+      "useWhen": "原生 swiper 外层需要自定义点/条/数字等轮播指示器。",
+      "figmaSignals": [
+        "轮播点",
+        "banner 指示点",
+        "carousel dots",
+        "swiper indicator",
+        "分页圆点"
+      ],
+      "props": [
+        "info",
+        "current",
+        "field",
+        "mode",
+        "dotsStyles"
+      ],
+      "events": [],
+      "skeleton": "<uni-swiper-dot :info=\"banners\" :current=\"current\" field=\"title\" mode=\"dot\"><swiper @change=\"onSwiperChange\">...</swiper></uni-swiper-dot>",
+      "avoid": "必须配合 swiper；不支持垂直指示点；swiper-item 过多会溢出。"
+    },
+    {
+      "name": "uni-table",
+      "cn": "表格",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-table.html",
+      "category": "数据展示",
+      "codeBlock": "uTable",
+      "related": [
+        "uni-tr",
+        "uni-th",
+        "uni-td"
+      ],
+      "useWhen": "多条结构类似的数据，需要列/行/表头，例如参数表、记录表。",
+      "figmaSignals": [
+        "表格",
+        "数据列",
+        "表头",
+        "行列",
+        "table",
+        "data grid"
+      ],
+      "props": [
+        "border",
+        "stripe",
+        "emptyText",
+        "loading",
+        "type"
+      ],
+      "events": [
+        "@selection-change"
+      ],
+      "skeleton": "<uni-table border stripe emptyText=\"暂无数据\"><uni-tr><uni-th>日期</uni-th><uni-th>状态</uni-th></uni-tr><uni-tr v-for=\"row in rows\" :key=\"row.id\"><uni-td>{{ row.date }}</uni-td><uni-td>{{ row.status }}</uni-td></uni-tr></uni-table>",
+      "avoid": "卡片式移动端信息优先 uni-card/list；表格结构必须 table > tr > th/td。"
+    },
+    {
+      "name": "uni-tag",
+      "cn": "标签",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-tag.html",
+      "category": "状态/分类",
+      "codeBlock": "uTag",
+      "useWhen": "商品分类、状态标签、筛选标签、重点文字标记，可点击切换。",
+      "figmaSignals": [
+        "标签",
+        "胶囊",
+        "状态标识",
+        "筛选 chip",
+        "tag",
+        "chip",
+        "pill"
+      ],
+      "props": [
+        "text",
+        "size",
+        "type",
+        "disabled",
+        "inverted",
+        "custom-style",
+        "circle",
+        "mark"
+      ],
+      "events": [
+        "@click"
+      ],
+      "skeleton": "<uni-tag text=\"需浇水\" type=\"warning\" :circle=\"true\" @click=\"onTagClick\" />",
+      "avoid": "数量提示/未读数用 uni-badge；大段通知用 notice-bar。"
+    },
+    {
+      "name": "uni-title",
+      "cn": "章节标题",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-title.html",
+      "category": "标题/文本",
+      "codeBlock": "uTitle",
+      "useWhen": "页面/章节 H1-H5 标题，或者需要接入 uni 统计的页面标题。",
+      "figmaSignals": [
+        "大标题",
+        "h1/h2",
+        "页面标题文本",
+        "章节标题",
+        "title heading"
+      ],
+      "props": [
+        "type",
+        "title",
+        "align",
+        "color",
+        "stat"
+      ],
+      "events": [],
+      "skeleton": "<uni-title type=\"h2\" title=\"诊断结果\" align=\"center\" color=\"#333\" />",
+      "avoid": "区块标题带副标题和装饰用 uni-section；多个 title 统计可能上报错误。"
+    },
+    {
+      "name": "uni-tooltip",
+      "cn": "文字提示",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-tooltip.html",
+      "category": "提示",
+      "codeBlock": "utooltip",
+      "useWhen": "鼠标 hover/点击说明，解释图标、字段、按钮含义。PC/H5 更常见。",
+      "figmaSignals": [
+        "tooltip",
+        "气泡提示",
+        "问号说明",
+        "hover hint",
+        "字段说明"
+      ],
+      "props": [
+        "content",
+        "placement"
+      ],
+      "events": [],
+      "skeleton": "<uni-tooltip content=\"用于判断光照不足\" placement=\"top\"><uni-icons type=\"help\" /></uni-tooltip>",
+      "avoid": "遮挡不住原生组件；移动端关键说明不要只靠 hover。"
+    },
+    {
+      "name": "uni-transition",
+      "cn": "过渡动画",
+      "doc": "https://uniapp.dcloud.net.cn/component/uniui/uni-transition.html",
+      "category": "动效",
+      "codeBlock": "uTransition",
+      "useWhen": "元素出现/隐藏过渡，淡入、滑入、缩放、组合动画。",
+      "figmaSignals": [
+        "fade",
+        "slide",
+        "scale",
+        "动画出现",
+        "过渡",
+        "transition",
+        "show hide animation"
+      ],
+      "props": [
+        "show",
+        "mode-class",
+        "duration",
+        "styles",
+        "custom-class"
+      ],
+      "events": [
+        "@change",
+        "@click"
+      ],
+      "skeleton": "<uni-transition :show=\"show\" mode-class=\"fade\" :styles=\"boxStyles\" @change=\"onTransitionChange\" />",
+      "avoid": "组件需 sass；小程序 rotate 不写 deg；nvue 不支持 custom-class，用 styles。"
+    }
+  ]
+}

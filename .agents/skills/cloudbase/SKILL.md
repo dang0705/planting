@@ -144,15 +144,10 @@ Prefer CloudBase MCP for management/deploy when tools are loaded in the current 
 - Verify with `npx mcporter list | grep cloudbase` or the IDE MCP panel. If `npm`/`npx` are missing, see `references/tooling-fallback.md` (install Node LTS or use IDE marketplace MCP). If MCP is missing or not yet visible after config, **still proceed**: finish install/config, tell the user a restart unlocks MCP next time, and use `tcb` CLI now via `cloudbase-cli` domain skills — **do not** recommend `tcb deploy`.
 - Prefer device-code login via MCP `auth` when available; otherwise `tcb login`. Do not hard-code secrets.
 
-## CMS 数据模型与 MySQL 同步
-
-当任务涉及 CloudBase CMS 数据模型、模型发布、SQL 初始化、日期/数字字段异常、`tinyint(1)`、`BIGINT UNSIGNED` 或批量同步时，先读取 `references/data-model-number-conversion/SKILL.md`，再读取 `references/relational-database-mcp-cloudbase/SKILL.md`。必须先完成模型 schema 与物理表 schema 的双向校对，再执行单行同步和 CMS 页面验收。
-
 ## On-demand references
 
 Load only when needed (do not expand this entry):
 
-- `references/data-model-number-conversion/SKILL.md` — CloudBase CMS 数据模型绑定 MySQL 时的数字、日期、布尔类型校对、迁移和最小验收门
 - `references/tooling-fallback.md` — MCP vs `tcb` CLI decision tree for first session / missing tools
 - `references/deployment-workflow.md` — deploy backend/frontend, `manageApps` vs hosting, URL/docs updates, optional post-deployment Deployment Share offer (§5)
 - `references/console-links.md` — console hash paths after creating resources
@@ -166,7 +161,6 @@ All packaged reference files (required for skill lint reachability):
 
 - [activation-map.yaml](references/activation-map.yaml)
 - [console-links.md](references/console-links.md)
-- [data-model-number-conversion/SKILL.md](references/data-model-number-conversion/SKILL.md)
 - [deployment-workflow.md](references/deployment-workflow.md)
 - [mcp-setup.md](references/mcp-setup.md)
 - [scenarios.md](references/scenarios.md)

@@ -1,0 +1,252 @@
+{
+  "contractVersion": 4,
+  "contentId": "watering-newbie",
+  "targetPlatforms": [
+    "douyin",
+    "xiaohongshu",
+    "wechat_channels"
+  ],
+  "title": "天气一变，新手浇水真的太难了",
+  "goal": "从新手不知道何时浇水的焦虑切入，用真实青花植浇水功能展示更明确的下一步。",
+  "targetDurationSec": 25,
+  "tone": "生活化、真实、先焦虑后安心、可信",
+  "subtitlePosition": "偏底部",
+  "scenes": [
+    {
+      "id": "scene-01",
+      "role": "钩子",
+      "purpose": "前三秒直接交付观看理由，并用植物细节兑现问题。",
+      "shots": [
+        {
+          "id": "shot-01",
+          "type": "person_dialogue",
+          "visual": {
+            "category": "person",
+            "role": "female-a",
+            "gender": "女性",
+            "plant": "",
+            "symptom": "",
+            "feature": "",
+            "description": "年轻女性站在室内绿植旁，先看植物再抬眼，明显拿不准今天是否需要浇水；画面不依赖跨镜头保持一致的新增道具。"
+          },
+          "speech": {
+            "mode": "dialogue",
+            "speaker": "新手",
+            "text": "今天到底该不该浇水啊？",
+            "voice": ""
+          },
+          "durationHintSec": 3,
+          "prompt": "人物基本正面，中近景，脸部清晰；轻皱眉并反复确认植物状态，焦虑但生活化。",
+          "rhythm": "紧凑",
+          "emotion": "焦虑",
+          "stance": "默认",
+          "expression": "默认",
+          "transitionAfter": "硬切"
+        },
+        {
+          "id": "shot-02",
+          "type": "plant",
+          "visual": {
+            "category": "plant",
+            "role": "",
+            "gender": "",
+            "plant": "绿萝",
+            "symptom": "",
+            "feature": "盆土与叶片",
+            "description": "绿萝和盆土近景，只展示素材中真实存在的叶片与盆土状态，不新增黄叶、病斑或虫害。"
+          },
+          "speech": {
+            "mode": "voiceover",
+            "speaker": "旁白",
+            "text": "天气一潮湿怕浇多，一干燥又怕它缺水。",
+            "voice": ""
+          },
+          "durationHintSec": 3,
+          "prompt": "保持植物品种、叶片颜色和现有状态不变，只做轻微自然镜头推进。",
+          "rhythm": "紧凑",
+          "emotion": "担心",
+          "stance": "默认",
+          "expression": "默认",
+          "transitionAfter": "硬切"
+        }
+      ]
+    },
+    {
+      "id": "scene-02",
+      "role": "问题展开",
+      "purpose": "说明固定周期和凭感觉处理为什么会让新手越来越没有把握。",
+      "shots": [
+        {
+          "id": "shot-03",
+          "type": "person_voiceover",
+          "visual": {
+            "category": "person",
+            "role": "female-a",
+            "gender": "女性",
+            "plant": "",
+            "symptom": "",
+            "feature": "查看盆土",
+            "description": "年轻女性蹲在植物旁观察盆土，手停在盆边，没有继续执行浇水动作。"
+          },
+          "speech": {
+            "mode": "voiceover",
+            "speaker": "旁白",
+            "text": "靠感觉反复猜，越养越没底。",
+            "voice": ""
+          },
+          "durationHintSec": 3,
+          "prompt": "人物不说话，只表现查看盆土和犹豫；动作自然，嘴部保持自然闭合。",
+          "rhythm": "自然",
+          "emotion": "无奈",
+          "stance": "默认",
+          "expression": "默认",
+          "transitionAfter": "硬切"
+        },
+        {
+          "id": "shot-04",
+          "type": "plant",
+          "visual": {
+            "category": "symptom",
+            "role": "",
+            "gender": "",
+            "plant": "绿萝",
+            "symptom": "黄叶",
+            "feature": "叶片近景",
+            "description": "绿萝黄叶真实症状近景，症状程度严格以素材为准。"
+          },
+          "speech": {
+            "mode": "voiceover",
+            "speaker": "旁白",
+            "text": "黄叶也不等于一定缺水，继续乱浇反而可能更难判断。",
+            "voice": ""
+          },
+          "durationHintSec": 3,
+          "prompt": "保持现有黄叶证据，不新增、不加重、不减轻症状。",
+          "rhythm": "自然",
+          "emotion": "担心",
+          "stance": "默认",
+          "expression": "默认",
+          "transitionAfter": "硬切"
+        }
+      ]
+    },
+    {
+      "id": "scene-03",
+      "role": "产品展示",
+      "purpose": "用真实录屏展示青花植如何给出可参考的浇水信息。",
+      "shots": [
+        {
+          "id": "shot-05",
+          "type": "existing_video",
+          "visual": {
+            "category": "app_capture",
+            "role": "",
+            "gender": "",
+            "plant": "",
+            "symptom": "",
+            "feature": "浇水入口",
+            "description": "青花植真实小程序录屏：进入植物的浇水功能。"
+          },
+          "speech": {
+            "mode": "voiceover",
+            "speaker": "旁白",
+            "text": "后来我先打开青花植的浇水功能。",
+            "voice": ""
+          },
+          "durationHintSec": 4,
+          "prompt": "",
+          "rhythm": "自然",
+          "emotion": "平静",
+          "stance": "默认",
+          "expression": "默认",
+          "transitionAfter": "硬切"
+        },
+        {
+          "id": "shot-06",
+          "type": "existing_video",
+          "visual": {
+            "category": "app_capture",
+            "role": "",
+            "gender": "",
+            "plant": "",
+            "symptom": "",
+            "feature": "浇水建议",
+            "description": "青花植真实小程序录屏：查看当前植物对应的浇水建议和判断信息。"
+          },
+          "speech": {
+            "mode": "voiceover",
+            "speaker": "旁白",
+            "text": "先看建议，再决定这次到底要不要浇。",
+            "voice": ""
+          },
+          "durationHintSec": 4,
+          "prompt": "",
+          "rhythm": "自然",
+          "emotion": "安心",
+          "stance": "默认",
+          "expression": "默认",
+          "transitionAfter": "轻柔"
+        }
+      ]
+    },
+    {
+      "id": "scene-04",
+      "role": "结果收益",
+      "purpose": "用已经安心的人物状态收束，并给出单一轻量行动引导。",
+      "shots": [
+        {
+          "id": "shot-07",
+          "type": "person_dialogue",
+          "visual": {
+            "category": "person",
+            "role": "female-a",
+            "gender": "女性",
+            "plant": "",
+            "symptom": "",
+            "feature": "查看结果后放松",
+            "description": "年轻女性已经看完建议，眉间舒展，神情安心，轻微自然微笑。"
+          },
+          "speech": {
+            "mode": "dialogue",
+            "speaker": "新手",
+            "text": "终于不用每天靠猜了。",
+            "voice": ""
+          },
+          "durationHintSec": 3,
+          "prompt": "人物从镜头开始就处于安心状态，不在单个 Shot 内重新表演从焦虑到安心的转变。",
+          "rhythm": "舒缓",
+          "emotion": "安心",
+          "stance": "默认",
+          "expression": "默认",
+          "transitionAfter": "硬切"
+        },
+        {
+          "id": "shot-08",
+          "type": "existing_video",
+          "visual": {
+            "category": "app_capture",
+            "role": "",
+            "gender": "",
+            "plant": "",
+            "symptom": "",
+            "feature": "浇水建议",
+            "description": "青花植真实浇水建议页面短录屏，用于承接单一行动引导。"
+          },
+          "speech": {
+            "mode": "voiceover",
+            "speaker": "旁白",
+            "text": "新手养植物，先看建议，再决定要不要浇。",
+            "voice": ""
+          },
+          "durationHintSec": 2,
+          "prompt": "",
+          "rhythm": "紧凑",
+          "emotion": "自信",
+          "stance": "鼓励",
+          "expression": "默认",
+          "transitionAfter": "硬切"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "ticketId": "z8v0kmr96r",
+  "agent": "p1_data_cms_close_luna",
+  "status": "review_needed",
+  "progress": 95,
+  "summary": "已复核 P-1-data-cms 与 CloudBase live readback；资产盘点、字段映射、双轴处置、测试数据边界、关键计数/模型存在性和状态门可由既有只读证据闭合。逐字段/逐模型原始 JSON、题包/路由交叉、不可变 release、Storage 引用链转为 P1-P6 验收项；报告已追加收口分流并重算 SHA-256，等待主代理验收。",
+  "blockers": [
+    "CLICKUP_BLOCKED：连接器当日配额已达 100/100；不重试、不伪造同步。",
+    "e2e 原始 INFORMATION_SCHEMA/CMS schema、完整题包/路由交叉、release batch/hash 与 Storage 反向引用尚未附带，不能宣称已验证。"
+  ],
+  "updatedAt": "2026-09-19T22:46:50+08:00"
+}

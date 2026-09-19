@@ -87,6 +87,7 @@
     "dev:functions:install": "node scripts/dev/install-local-functions.mjs",
     "dev:functions": "node scripts/dev/local-functions-gateway.mjs",
     "dev:functions:diagnose": "node scripts/dev/local-functions-gateway.mjs --functions=diagnose-http",
+    "tracker:backend-v2": "node scripts/dev/backend-v2-tracker.mjs",
     "verify:ai-visual-pool-coverage": "node scripts/verify-ai-visual-pool-stable-gap-closure.mjs",
     "report:ai-visual-pool-coverage": "node scripts/render-ai-visual-pool-coverage-artifacts.mjs",
     "backfill:out-of-pool-replay": "node scripts/backfill-out-of-pool-replay-images.mjs",

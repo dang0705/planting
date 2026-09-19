@@ -1,0 +1,12 @@
+{
+  "ticketId": "z8v0kmr96t",
+  "agent": "p1_external_close_luna",
+  "status": "in_progress",
+  "progress": 82,
+  "summary": "已完成百度识别、和风天气、CloudBase AI/百炼/TokenHub、微信支付、微信/抖音/小红书身份来源的代码与配置键存在性盘点；现有单测通过，敏感日志检查保留 1 项天气请求体发现，正在落盘处置矩阵、失败/超时/成本边界和 SHA-256 清单。",
+  "blockers": [
+    "live-readback 仅证明脱敏配置键名存在，未证明供应商值、账户、额度或真实/沙箱调用；本次按只读授权不发起供应商写入或登录。",
+    "subscription-http 与 subscription-notify-http 同时声明 /subscription/notify，单一回调 owner 尚未由线上路由回放确认。"
+  ],
+  "updatedAt": "2026-09-19T22:49:55+08:00"
+}
