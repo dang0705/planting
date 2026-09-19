@@ -1,0 +1,14 @@
+{
+  "promptVersion": "diagnosis-visual/v1",
+  "normalizedSha256": "11c58cebe3b3c41097d6f6d6b3c5b5d7eb16248e4f07bacd497868a647ccc964",
+  "resultSchemaVersion": "diagnosis-model-output/v1",
+  "language": "zh-CN",
+  "normalization": "UTF-8；CRLF 与 CR 统一为 LF；保留唯一末尾换行。",
+  "boundaries": {
+    "visibleEvidenceOnly": true,
+    "inferCauseOrTreatment": false,
+    "strictJsonOnly": true,
+    "createsCareFact": false,
+    "createsCarePlan": false
+  }
+}

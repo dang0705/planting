@@ -1,0 +1,41 @@
+{
+  "ticketId": "p0-audit-findings-triage",
+  "agent": "p0_audit_findings_triage_luna",
+  "status": "done",
+  "progress": 100,
+  "ticketStatus": "PASS",
+  "contractStatus": "STOP",
+  "integrationStatus": "STOP",
+  "releaseStatus": "STOP",
+  "summary": "只读完成 QWEATHER_API_KEY 与 P-1 外部来源 sidecar 分诊。已确认误输出项属于天气供应商 API 密钥/凭证材料；未读取或记录值，保持 SECURITY_STOP，关闭条件为控制面轮换/撤销旧 key、更新批准配置并脱敏验证旧 key 被拒绝、新 key 成功。sidecar 唯一失败项为 README 合法状态更新造成的哈希漂移，应在输入冻结后重签。",
+  "verified": [
+    "git 跟踪边界检查完成：.env.local 与 cloudbaserc.json 均未跟踪且被忽略，未读取其内容",
+    "跟踪文件中天气配置仅保留环境变量名/读取逻辑，示例密钥为空值；QWEATHER_API_KEY 的值未被复制或输出",
+    "来源代理在不重读值的情况下确认误输出变量为 QWEATHER_API_KEY，类别为天气供应商 API 密钥/凭证材料",
+    "P-1-external-sources-z8v0kmr96t.sha256 逐项核对完成：仅 README.md 当前哈希与旧记录不一致，其余项通过",
+    "README.md 工作树差异为准备状态文本更新，无架构、Master Plan、业务语义或合同规则改写",
+    "未修改源文件、既有报告、既有 sidecar、代码、ClickUp、云端、数据库、CMS、Storage 或 OpenViking"
+  ],
+  "unverified": [
+    "QWEATHER_API_KEY 当前值是否仍有效；本次不读取、不验证该值本身",
+    "供应商控制面轮换/撤销旧 key、批准配置更新及旧拒绝/新成功的脱敏回放尚未执行",
+    "被忽略本地配置的内容、供应商账户状态、云端密钥状态和轮换结果"
+  ],
+  "blockers": [
+    "SECURITY_STOP：QWEATHER_API_KEY 已确认是天气供应商 API 密钥/凭证材料，必须完成控制面轮换并撤销旧 key",
+    "SECURITY_STOP 关闭条件：批准配置已更新，且脱敏回放证明旧 key 被拒绝、新 key 成功",
+    "RE_SIGN_REQUIRED：P-1 外部来源 sidecar 记录的 README 输入哈希过期，输入冻结后需重算并复核"
+  ],
+  "outOfScope": [
+    "没有读取 .env.local、cloudbaserc.json 或任何其他凭证内容",
+    "没有执行供应商/CloudBase 密钥轮换、云端写入、部署、删除或权限变更",
+    "没有修改既有报告、既有 sidecar、业务代码、计划、ClickUp 或 tracker/module-status.json"
+  ],
+  "artifacts": {
+    "report": "docs/backend-v2/audits/P0-audit-findings-triage.md",
+    "reportSha256File": "docs/backend-v2/audits/P0-audit-findings-triage.sha256",
+    "heartbeat": "docs/backend-v2/tracker/heartbeats/p0-audit-findings-triage.json"
+  },
+  "nextStep": "在批准控制面轮换并撤销 QWEATHER_API_KEY 旧 key，更新批准配置，完成旧 key 被拒绝/新 key 成功的脱敏回放；README 状态冻结后重签 P-1 sidecar。",
+  "updatedAt": "2026-09-19T23:52:38+08:00"
+}

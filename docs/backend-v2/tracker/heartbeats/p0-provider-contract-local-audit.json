@@ -1,0 +1,44 @@
+{
+  "ticketId": "p0-provider-contract-local-audit",
+  "agent": "p0_provider_contract_audit_luna",
+  "status": "review_needed",
+  "progress": 100,
+  "summary": "只读完成百度植物识别、和风天气、微信支付的本地供应商合同审计；三项均保持 CONTRACT_STOP + INTEGRATION_STOP。已交付报告、SHA-256 sidecar 与本地 heartbeat，未读取或写入云端/供应商/ClickUp。",
+  "verified": [
+    "已读取 docs/backend-v2/README.md、BASELINE.lock，并执行 verify-entrypoint.mjs 通过：Master Plan 2111 行、SHA-256 匹配",
+    "已读取 P0 外部能力卡及出口门、P-1 external-sources 报告；确认 P0-EXT-04/05/08 均为 CONTRACT_STOP + INTEGRATION_STOP",
+    "百度本地事实：OAuth 与组合识别 endpoint、输入输出映射、候选归一化路径、无显式 timeout/retry、raw/image/openid 落库和缺少幂等已回读",
+    "和风本地事实：v7 endpoint 集合、字段/source 归一化、适配器 10 秒 timeout、D0 层 4 次总尝试与 10 秒间隔、缓存/调度配置和 request_body 日志发现已回读",
+    "微信支付本地事实：V3 JSAPI 下单/查单、RSA-SHA256、300 秒回调时间窗、AES-256-GCM、商户/金额/币种/payer 校验、事务幂等，以及两个 /subscription/notify owner 已回读",
+    "本地测试：百度 2 项通过；天气 adapter/cache/environment/retry 3 项通过；支付 config/wechat-pay/service/app/notify 5 项通过；scheduler trigger-sync 因缺少 suncalc 为 BLOCKED_ENV",
+    "静态检查：verify-entrypoint PASS、P0 card verifier PASS、tracked secret scan PASS；sensitive-log report-only 保留 weather-http/app.js:412 request_body finding",
+    "sha256sum -c docs/backend-v2/audits/P0-provider-contract-local-audit.sha256 全部 OK"
+  ],
+  "unverified": [
+    "百度真实成功/拒绝/额度/成本/限流和供应商 raw 留存授权",
+    "和风真实账户、当前/历史/预报边界、freshness、时区/地点授权、费用/限额和云端 timer/storage 读回",
+    "微信支付商户/沙箱、线上唯一 route winner、匿名规则、坏签名/乱序/并发/数据库失败重放、退款和对账",
+    "三项能力的 v2 正式 timeout/retry/幂等/成本参数以及用户确认",
+    "目标 CloudBase Node.js 22、/api/v2 与真实 MySQL 事务闭环"
+  ],
+  "blockers": [
+    "三张 provider contract card 的设计值仍未由用户/产品 owner 冻结；代码中的数字只能作为 characterization",
+    "没有 S4 真实供应商/支付 sandbox/线上 route winner 证据，不能标 INTEGRATION_GO",
+    "微信支付存在 subscription-http 与 subscription-notify-http 双 callback owner，单 owner 读回和观察窗口未完成",
+    "scheduler trigger-sync 单测受当前环境缺少已声明依赖 suncalc 阻断；本轮不安装依赖",
+    "按用户范围不写 ClickUp、module-status、外部能力卡或云端资源"
+  ],
+  "outOfScope": [
+    "业务代码、前端、P0 外部能力卡、module-status.json、ClickUp 和任何云端状态变更",
+    "供应商真实请求、支付 sandbox、路由切换、Storage/MySQL 写入、部署、DDL、迁移和删除",
+    "读取、记录或输出任何凭证值、私图 URL、支付原文、原始模型响应或平台主体"
+  ],
+  "artifacts": {
+    "audit": "docs/backend-v2/audits/P0-provider-contract-local-audit.md",
+    "auditSha256": "fa596e00bf9018c2f9fd109e3c7987beecc2d4d15e7c0cdfd4ba2bd9320de65a",
+    "auditSha256File": "docs/backend-v2/audits/P0-provider-contract-local-audit.sha256",
+    "heartbeat": "docs/backend-v2/tracker/heartbeats/p0-provider-contract-local-audit.json"
+  },
+  "nextStep": "主代理审阅本地审计；由用户/产品 owner 冻结百度、和风、微信支付的未决合同参数，再在批准账户/沙箱和只读线上路由证据下逐能力取得 S4。",
+  "updatedAt": "2026-09-19T23:48:16+08:00"
+}

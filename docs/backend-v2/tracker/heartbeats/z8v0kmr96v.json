@@ -1,9 +1,9 @@
 {
   "ticketId": "z8v0kmr96v",
   "agent": "p1_taxonomy_close_terra",
-  "status": "in_progress",
-  "progress": 90,
-  "summary": "已完成既有分类审计、live readback 与运行时准入缺口的本地复核，并形成可验收的 NOT_ADMITTED 结论、硬性 QUARANTINE 门及 P0 证伪输入；代表性样本未被外推为 200 条通过。",
-  "blockers": ["全量 200 条可回放 authority evidence manifest、冲突/重复决定、空库导入读回及运行时隔离门尚未完成，故 Phase P1 退出条件与 active release 均不可验收。", "CLICKUP_SYNC_QUOTA：ClickUp 同步受限；不阻断本地审计，且不得伪造同步。"],
-  "updatedAt": "2026-09-19T22:44:00+08:00"
+  "status": "done",
+  "progress": 100,
+  "summary": "P-1 植物分类来源与身份输入审计已通过独立出口门验收；候选集保持 NOT_ADMITTED，代表样本未外推，全量准确性硬门已明确转交 P0/P1。",
+  "blockers": [],
+  "updatedAt": "2026-09-19T23:27:30+08:00"
 }

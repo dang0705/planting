@@ -1,0 +1,48 @@
+{
+  "ticketId": "p0-external-cards-exit-gate",
+  "sourceTicketId": "z8v0kmr9dv",
+  "agent": "p0_integration_review_luna",
+  "model": "gpt-5.6-luna / max",
+  "status": "done",
+  "progress": 100,
+  "ticketStatus": "PASS",
+  "integrationStatus": "STOP",
+  "releaseStatus": "STOP",
+  "summary": "最终独立复验：P0 ticket 合同/证伪出口 PASS；真实集成出口 STOP。14 张卡精确覆盖、ID/标题唯一、15 个字段非空；五类 mutation 各自 exit=1，正向 verifier exit=0，所有显式 TTL/数值子项均 CONTRACT_STOP；14 张卡均 INTEGRATION_STOP。",
+  "verified": [
+    "独立解析得到 14 张卡，P0-EXT-01..14 与标题精确 mapping，ID/标题唯一，15 个必需字段逐卡非空，STOP 原因完整",
+    "node docs/backend-v2/audits/P0-external-capability-cards-z8v0kmr9dv.verify.mjs 返回 PASS、exit=0",
+    "verifier --self-test 返回 PASS、exit=0",
+    "--mutation-duplicate-id、--mutation-fake-id、--mutation-integration-go-s3、--mutation-go-placeholder、--mutation-remove-owner 均按预期 exit=1",
+    "GO=>S4 规则通过：实际没有 INTEGRATION_GO；强制 INTEGRATION_GO+S3 mutation 被捕获",
+    "P0-EXT-03 已分层 CloudBase 匿名主体、独立 guest_session/claim context 与统一 user_id；guest_session TTL 独立 CONTRACT_STOP",
+    "P0-EXT-03、09、11、12、13、14 的全部显式 TTL/数值子项均为 CONTRACT_STOP；另 7 张卡为卡片级 CONTRACT_STOP",
+    "sha256sum -c docs/backend-v2/decisions/P0-external-capability-cards.sha256 返回 OK；出口门 SHA 已同步",
+    "官方资料核对匿名身份、Storage TTL、MySQL 事务边界、HTTP Node22.21/9000/scf_bootstrap 四项事实",
+    "未修改原卡、业务代码、云端、CloudBase/MySQL、module-status.json 或 ClickUp 状态"
+  ],
+  "unverified": [
+    "14 张卡均没有本 ticket 新取得的 S4：真实供应商成功/拒绝/限额/费用、支付 sandbox 与线上唯一 callback route winner",
+    "目标 CloudBase Agent 工具 allowlist、短票据、跨用户拒绝、审计和费用上限",
+    "目标 Storage bucket/规则、端侧上传/读回、实际 TTL 和删除补偿",
+    "真实测试 MySQL 的 DDL、事务回滚、并发、outbox/inbox 故障注入和写后读回",
+    "Qwen/供应商精确模型、endpoint、Prompt hash、Schema、预算与额度策略的真实回放"
+  ],
+  "blockers": [
+    "真实集成仍逐能力 INTEGRATION_STOP；不得用官方文档、配置键、health 200、mock 或 unit_fake 改写为 GO",
+    "各卡显式 CONTRACT_STOP 和数值子项 STOP 继续阻断对应未决模型、成本、TTL、容量、支付、Agent 或可靠事件启用；不扩大到无关业务路径",
+    "P0 ticket PASS 仅关闭合同/证伪登记册，不构成发布授权或真实外部能力通过"
+  ],
+  "outOfScope": [
+    "未修改原卡、业务代码、云端、CloudBase/MySQL、module-status.json 或 ClickUp 状态",
+    "未执行真实供应商请求、支付 sandbox、Storage 写入删除、Agent 工具调用、MySQL DDL/故障注入或发布"
+  ],
+  "artifacts": {
+    "exitGate": "docs/backend-v2/decisions/P0-external-capability-cards-exit-gate.md",
+    "exitGateSha256": "80d163c2558677441651abbe090cbd240405a6fd3181eba652f540b7143cf278",
+    "exitGateSha256File": "docs/backend-v2/decisions/P0-external-capability-cards-exit-gate.sha256",
+    "sourceCardSha256": "978aab7dbcd2bc05dc1a2bb56b8c65986553758c797561b929d0a47224ef7025"
+  },
+  "nextStep": "按 integrationStatus=STOP 逐能力取得脱敏 S4；实现侧只能引用具体 CONTRACT_STOP/数值子项 STOP 范围，不得把 ticket PASS 扩写为发布 GO。",
+  "updatedAt": "2026-09-19T23:45:00+08:00"
+}

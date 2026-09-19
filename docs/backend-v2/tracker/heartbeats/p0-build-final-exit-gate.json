@@ -1,0 +1,24 @@
+{
+  "ticketId": "p0-build-final-exit-gate",
+  "sourceTicketId": "z8v0kmr96w",
+  "agent": "p0_build_final_review_luna",
+  "status": "pass",
+  "progress": 100,
+  "allowRegression": true,
+  "summary": "独立最终复核 PASS：npm run verify 通过，Node 22.21.1 下 Vitest 8/8 通过，npm audit 漏洞总数为 0，部署清单门禁通过，既有三项审计制品 SHA-256 校验通过。未部署 CloudBase，真实集成/发布保持 STOP，不阻断本地构建退出闸门。",
+  "verified": [
+    "cloudfunctions-v2: npm run verify 退出码 0",
+    "cloudfunctions-v2: Node 22.21.1 Vitest 1 个文件、8/8 测试通过",
+    "cloudfunctions-v2: npm audit --json 漏洞总数 0",
+    "package-manifest.json: 955 个文件，顶层无 src/、test/，无 typescript、vitest、esbuild、@types 开发包目录",
+    "原 P0 审计报告、runtime-evidence 和 verify 脚本 SHA-256 均 OK",
+    "最终报告 SHA-256 已写入同名 sha256 制品"
+  ],
+  "stop": [
+    "未部署 CloudBase，未验证真实云端实例、入口、日志或读回；该 STOP 仅属于真实集成/发布，不阻断本地构建 PASS"
+  ],
+  "outOfScope": [
+    "源码、测试、owner 报告、ClickUp、云端资源和部署配置修改"
+  ],
+  "updatedAt": "2026-09-20T00:02:30+08:00"
+}

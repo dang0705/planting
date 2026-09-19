@@ -1,0 +1,23 @@
+{
+  "ticketId": "z8v0kmr9gm",
+  "agent": "root + p1_taxonomy_ddl_close_terra + p1_taxonomy_authority_pipeline_terra",
+  "model": "root + gpt-5.6-terra / medium-high",
+  "status": "review_needed",
+  "progress": 100,
+  "summary": "P1 taxonomy 技术准备已完成并进入真实人工审核：200 条遗留候选已用固定 WCVP 2026-06-04 与 WFO 2026-06 官方制品真实回放，四个审核建议分片和两组独立反向审计均通过。建议汇总 REUSE_AS_IS=113、TRANSFORM=7、QUARANTINE=80；代理建议不等于人类批准，批准前 200 条仍全部 QUARANTINE、seedEligible=0、active release=STOP_PENDING_HUMAN_APPROVAL。",
+  "blockers": [],
+  "unverified": [
+    "人工审批/最终 admission 尚未发生；200 条保持 QUARANTINE、seedEligible=0、STOP_PENDING_HUMAN_APPROVAL。",
+    "CloudBase MySQL 兼容性、运行时 API 隔离与实际 active release 切换属于后续环境门。"
+  ],
+  "updatedAt": "2026-09-20T06:57:31+08:00",
+  "verified": [
+    "固定版本 WCVP/WFO 官方制品真实回放：200 条、WCVP 精确匹配 179、WFO 科/属/种交叉核对 158；自动匹配与栽培品种均未直接放行。",
+    "四个审核建议分片已完成并通过主代理校验；建议汇总 REUSE_AS_IS=113、TRANSFORM=7、QUARANTINE=80；200 条最终终态仍 QUARANTINE，seedEligible=0，active release STOP_PENDING_HUMAN_APPROVAL。",
+    "人工批准包已生成；代理建议不构成人类批准或 active release 发布授权。",
+    "两组独立反向审计分别覆盖前、后 100 条中的 60 个非隔离建议，合计 120/120 通过，未发现误放行；原 Luna usage limit 已由 Terra 重试和主代理程序化复核排除。",
+    "人工批准审核包及 SHA-256 sidecar 已生成，完整列出 113 条原样复用、7 条转换和 80 条隔离明细。",
+    "Node.js 22 全量 17 个文件、68 个测试通过；lint 为 0 error，54 条 warning 为仓库既有 warning。"
+  ],
+  "next": "产品负责人按人工批准包明确批准 source IDs；未批准项继续 QUARANTINE。批准落盘后，主代理生成可重复种子并执行空库导入、重新导出、引用和哈希验证。"
+}

@@ -1,0 +1,31 @@
+{
+  "name": "@qinghuazhi/backend-v2-foundation",
+  "version": "0.0.0",
+  "private": true,
+  "description": "青花植后端 v2 的 CloudBase HTTP 云函数构建基线",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
+    "lint": "oxlint src test",
+    "format": "oxfmt src test",
+    "format:check": "oxfmt --check src test",
+    "build": "node scripts/build.mjs",
+    "test": "vitest run --config vitest.config.mjs",
+    "test:red": "vitest run --config vitest.red.config.mjs",
+    "verify": "npm run typecheck && npm run lint && npm run build && npm run test && node ../docs/backend-v2/audits/P0-typescript-node22-cloudbase-z8v0kmr96w.verify.mjs"
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "pino": "10.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.3",
+    "esbuild": "0.28.2",
+    "oxfmt": "0.35.0",
+    "oxlint": "1.50.0",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  }
+}

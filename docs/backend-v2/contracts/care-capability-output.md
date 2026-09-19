@@ -1,5 +1,9 @@
 # 统一养护能力输出合同
 
+- 合同版本：`care-capability-result/v1`
+- 所有者：`care`
+- 适用能力：`watering`、`fertilizing`、`lighting`、`ventilation`。
+
 适用于浇水、施肥、光照和通风。
 
 ```ts
@@ -9,13 +13,13 @@
  */
 type CareCapabilityResult = {
   /** 能力类型：浇水、施肥、光照或通风。 */
-  capabilityType: string;
+  capabilityType: 'watering' | 'fertilizing' | 'lighting' | 'ventilation';
   /** 对外合同版本。 */
-  contractVersion: string;
+  contractVersion: 'care-capability-result/v1';
   /** 当前结论状态。 */
-  status: string;
+  status: 'ready' | 'insufficient_evidence' | 'temporarily_unavailable';
   /** 可信程度，不允许伪造精确分数。 */
-  confidence: string;
+  confidence: 'low' | 'medium' | 'high';
   /** 参与结论的证据摘要。 */
   evidenceSummary: string[];
   /** 用户可执行的建议动作。 */
@@ -24,6 +28,8 @@ type CareCapabilityResult = {
   generatedAt: string;
   /** 结果有效截止时间。 */
   validUntil: string | null;
+  /** 能力详情结构版本；算法变化不能静默改变 details。 */
+  detailsSchemaVersion: string;
   /** 能力专属字段，随新合同版本演进。 */
   details: Record<string, unknown>;
 };
@@ -31,3 +37,21 @@ type CareCapabilityResult = {
 
 光照必须使用用户环境、植物需求和天气光照证据；通风必须使用室内空气交换、空间开放度、局部风源和直吹风险，不能把室外风速直接等同为室内通风。
 
+## 稳定边界
+
+- 同一 `contractVersion` 不得删除字段、改变单位、改变枚举语义或把缺证据伪装成低置信度结论。
+- `evidenceSummary` 只返回脱敏摘要，不暴露供应商原文、模型输入、图片地址或内部规则权重。
+- `recommendedActions` 是建议，不直接创建事实、计划或提醒。
+- `status=insufficient_evidence` 时必须明确缺少哪类用户可补充证据；不得返回猜测性养护结论。
+- 算法新增输入或内部评分不要求升级外壳版本；只要 `details` 形状变化，就必须升级 `detailsSchemaVersion` 并保留旧读者兼容。
+
+## 能力专属 details 最低语义
+
+| 能力 | 最低稳定语义 | 明确禁止 |
+|---|---|---|
+| `watering` | 盆土状态、是否建议浇水、建议复查时间、视觉证据有效期 | 只凭固定天数直接要求浇水 |
+| `fertilizing` | 是否处于可施肥窗口、植物状态禁忌、建议复查时间 | 把施肥计划当成已施肥事实 |
+| `lighting` | 当前光照区间、植物需求区间、天气/环境证据和调整方向 | 仅用室外天气推断室内实际光照 |
+| `ventilation` | 空气交换、空间开放度、局部风源、直吹风险和调整方向 | 把室外风速直接等同室内通风 |
+
+游客模式可以使用临时的基础 watering 结果，但不创建用户植物、事实或计划；登录后只有通过游客案例认领，结果才获得派生归属。

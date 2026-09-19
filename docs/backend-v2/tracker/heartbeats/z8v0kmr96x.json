@@ -1,0 +1,10 @@
+{
+  "ticketId": "z8v0kmr96x",
+  "agent": "p1_taxonomy_close_terra",
+  "status": "done",
+  "progress": 100,
+  "allowRegression": true,
+  "summary": "P0 证伪出口已验收完成：八类要求已映射至六组代表样本，WFO/RHS 2xx 原始响应、元数据与 SHA 已保存并逐项校验。此完成不等于身份发布准入；当前 active release 仍为 STOP/NOT_ADMITTED。",
+  "blockers": ["P1 全量审计仍需完成 200 条可回放 authority evidence manifest、冲突/重复决定、POWO 主来源可用证据、适用 ICRA/物种 parent 证据、空库导入读回与运行时隔离门。", "当前身份准入仍 STOP：Brassica 存在跨源冲突，RHS 为 NO_VERSION_PUBLISHED，访问时间不得替代来源版本。"],
+  "updatedAt": "2026-09-19T23:13:00+08:00"
+}

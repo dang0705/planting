@@ -1,25 +1,25 @@
 {
   "ticketId": "p1-exit-gate",
   "agent": "p1_exit_gate_review_luna",
-  "status": "review_needed",
-  "progress": 85,
-  "summary": "已按唯一入口完成 P-1 出口独立复核并新增 P-1-exit-gate 报告及 SHA sidecar；四项退出条件为 FAIL、PASS、PASS、FAIL，整体 P-1 尚未退出。五个 ticket 已明确判定：q/r/u/v 为 PARTIAL，t 因缺失审计报告与 sidecar 为 FAIL。",
+  "status": "done",
+  "progress": 100,
+  "summary": "已按 Master Plan 校正阶段边界并完成 t 制品后的最终重跑：q/r/t/u/v 在 P-1 资产审计范围内均 PASS，四项退出条件全部 PASS，P-1 资产审计出口满足；真实供应商、P1 全量身份硬门及 P5 真实 API/安全/端上/并发仍明确留在后续阶段。",
   "clickup": "CLICKUP_BLOCKED：本次仅维护本地出口门 heartbeat，未伪造 ClickUp 回写。",
   "verified": [
     "node docs/backend-v2/verify-entrypoint.mjs 通过",
-    "现有 P-1 报告、closure、CloudBase live readback 与 SHA-256 sidecar 已逐项核对；现有 sidecar sha256sum -c 全部 OK",
+    "现有 P-1 报告、外部来源报告、closure、CloudBase live readback、legacy manifest 与 SHA-256 sidecar 已逐项核对；sha256sum -c 全部 OK",
     "内容资产未因测试数据一刀切删除，用户运行流水未作为 v2 迁移源",
+    "已将 P0 代表性权威样本、P1 全量身份硬门/RED/空库、P5 真实 API/安全/端上/并发从 P-1 退出条件中移出",
+    "z8v0kmr96t 外部来源注册表、处置矩阵、Expected/替代物、删除前置和 live-readback 边界已具备并通过 sidecar",
     "未修改业务代码、云端、既有审计报告或 tracker/module-status.json"
   ],
   "unverified": [
-    "z8v0kmr96t 外部来源/供应商/回调审计报告、SHA sidecar 和读回证据缺失",
-    "z8v0kmr96q/r/u/v 的部分逐项原始读回、对象内容/引用 manifest、全量 taxonomy evidence 尚未闭合",
-    "后续 P0/P1/P5 实现与真实 API/端上验收不在本次出口门判定范围"
+    "后续 P0/P1/P5/P6 实现与真实供应商/沙箱、身份全量硬门、对象 content hash/恶意扫描、真实 API/安全/端上/并发验收不在本次出口门判定范围"
   ],
   "blockers": [
-    "P1_EXIT_GATE_NOT_MET：缺少 t ticket 独立制品，且已有制品的原始读回/全量证据不足",
+    "无 P-1 资产审计阻断；后续阶段未验证项不得回写为 P-1 已验收",
     "CLICKUP_BLOCKED：不得把本地 heartbeat 当作 ClickUp 已同步"
   ],
-  "nextStep": "先补 z8v0kmr96t 独立外部来源审计及 SHA，再补 q/r/u/v 的 P-1 原始读回和全量 manifest；完成后重新复核四项退出条件并由主代理验收。",
-  "updatedAt": "2026-09-19T22:50:27+08:00"
+  "nextStep": "P-1-exit-gate 已完成并交主代理验收；后续按 P0/P1/P5/P6 各自门禁继续，不修改 module-status.json。",
+  "updatedAt": "2026-09-19T23:12:00+08:00"
 }

@@ -1,0 +1,153 @@
+{
+  "ticketId": "z8v0kmr96x",
+  "title": "P0 植物分类权威来源与身份审计证伪代表证据 manifest",
+  "capturedAt": "2026-09-19T23:10:51+08:00",
+  "scope": "代表性证伪；不构成 200 条目录候选的全量 authority evidence manifest。",
+  "rawCitationBoundary": "evidenceArtifacts 中的 body 文件是所列 HTTP GET 在 capturedAt 的响应 body；rawResponseSha256 是该文件的 SHA-256。状态非 2xx、抓取失败或只获得网页检索摘要时，绝不视为可发布的原始证据。POWO 403 响应没有被保存为分类证据。",
+  "captureMethod": "本机 curl：GET、follow redirects、接受压缩响应；HTTP status、最终 URL、content-type、body bytes 与 SHA-256 均在同次审计会话记录。",
+  "evidenceArtifacts": [
+    {
+      "file": "evidence/p0-taxonomy/epipremnum-wfo.body",
+      "url": "https://www.worldfloraonline.org/taxon/wfo-0000952367",
+      "capturedAt": "2026-09-19T23:10:26+08:00",
+      "httpStatus": 200,
+      "sourceVersion": "WFO 2026",
+      "stableId": "wfo-0000952367",
+      "bodyBytes": 51017,
+      "bodySha256": "510d8b595a9c892fc4265a4f5c71f4500d39c62155f31f18ed3ebc8a918ec0d6"
+    },
+    {
+      "file": "evidence/p0-taxonomy/brassica-wfo.body",
+      "url": "https://www.worldfloraonline.org/taxon/wfo-0000571556",
+      "capturedAt": "2026-09-19T23:10:39+08:00",
+      "httpStatus": 200,
+      "sourceVersion": "WFO 2026",
+      "stableId": "wfo-0000571556",
+      "bodyBytes": 28468,
+      "bodySha256": "a6a3833cc8e1d801e886124dca867048ed7ae86f9ad0c37ab458414a7df905d9"
+    },
+    {
+      "file": "evidence/p0-taxonomy/lithops-wfo.body",
+      "url": "https://www.worldfloraonline.org/taxon/wfo-4000021986",
+      "capturedAt": "2026-09-19T23:10:45+08:00",
+      "httpStatus": 200,
+      "sourceVersion": "WFO 2026",
+      "stableId": "wfo-4000021986",
+      "bodyBytes": 31116,
+      "bodySha256": "fac0f0c822e617335a27fbe4885e19623962956e7d064657774836c1911a0e94"
+    },
+    {
+      "file": "evidence/p0-taxonomy/rhs-bonnie.body",
+      "url": "https://www.rhs.org.uk/plants/191491/chlorophytum-comosum-bonnie-v/details",
+      "capturedAt": "2026-09-19T23:10:51+08:00",
+      "httpStatus": 200,
+      "sourceVersion": "NO_VERSION_PUBLISHED",
+      "stableId": "RHS plant profile 191491",
+      "bodyBytes": 206652,
+      "bodySha256": "88fec6d7e5fe596a9b9a4ffedfdbfe2b77b727942e48c9f23a10b8b7b2aec7c2"
+    }
+  ],
+  "sources": [
+    {
+      "localRecordIds": [1],
+      "coverage": ["family", "genus", "species", "synonym"],
+      "localName": "Epipremnum aureum",
+      "authority": "WFO",
+      "sourceVersion": "WFO 2026",
+      "stableId": "wfo-0000952367",
+      "url": "https://www.worldfloraonline.org/taxon/wfo-0000952367",
+      "listedAccessedAt": "2026-09-19T23:10:26+08:00",
+      "httpStatus": 200,
+      "rawResponseSha256": "510d8b595a9c892fc4265a4f5c71f4500d39c62155f31f18ed3ebc8a918ec0d6",
+      "parentChain": ["Araceae", "Epipremnum", "Epipremnum aureum"],
+      "facts": ["WFO 页面列出 Epipremnum aureum 及 Pothos aureus、Rhaphidophora aurea、Scindapsus aureus 等 synonym。"],
+      "decision": "QUARANTINE",
+      "reason": "WFO 交叉核对可用；POWO/WCVP 主来源的本机原始响应获取为 403，且未保存任何原始制品，不能满足可回放 release 证据。"
+    },
+    {
+      "localRecordIds": [112],
+      "coverage": ["genus", "spp."],
+      "localName": "Lithops spp.",
+      "authority": "WFO",
+      "sourceVersion": "WFO 2026",
+      "stableId": "wfo-4000021986",
+      "url": "https://www.worldfloraonline.org/taxon/wfo-4000021986",
+      "listedAccessedAt": "2026-09-19T23:10:45+08:00",
+      "httpStatus": 200,
+      "rawResponseSha256": "fac0f0c822e617335a27fbe4885e19623962956e7d064657774836c1911a0e94",
+      "parentChain": ["Aizoaceae", "Lithops"],
+      "facts": ["官方页面将 Lithops 表示为 genus 并列出 subordinate taxa；这不能识别任何 concrete species。", "本轮重试已获取并保存 HTTP 200 原始响应；它只证明属级，不消除 spp. 的隔离要求。"],
+      "decision": "QUARANTINE",
+      "reason": "spp. 不得作为 species；即使有属级 2xx 证据也只能作为 genus/species_group 候选。"
+    },
+    {
+      "localRecordIds": [181, 182],
+      "coverage": ["infraspecific", "synonym_conflict"],
+      "localName": "Brassica rapa subsp. chinensis",
+      "authority": "WFO",
+      "sourceVersion": "WFO 2026；页面数据提供者含 Brassicaceae 2022 与 WFO 2026",
+      "stableId": "wfo-0000571556",
+      "url": "https://www.worldfloraonline.org/taxon/wfo-0000571556",
+      "listedAccessedAt": "2026-09-19T23:10:39+08:00",
+      "httpStatus": 200,
+      "rawResponseSha256": "a6a3833cc8e1d801e886124dca867048ed7ae86f9ad0c37ab458414a7df905d9",
+      "parentChain": ["Brassicaceae", "Brassica", "Brassica rapa", "Brassica rapa subsp. chinensis"],
+      "facts": ["WFO 将该名称置于 Brassica rapa 的 included subspecies / classification 链。", "POWO/WCVP 2026 的官方网页检索结果称同名为 Brassica rapa 的 synonym；其本机 endpoint 返回 403。"],
+      "decision": "QUARANTINE",
+      "reason": "已发现跨权威来源 accepted/synonym 冲突；不得由模型自动裁决。"
+    },
+    {
+      "localRecordIds": [131],
+      "coverage": ["hybrid"],
+      "localName": "Viola × wittrockiana",
+      "authority": "POWO/WCVP",
+      "sourceVersion": "WCVP 2026（官方网页检索结果）",
+      "stableId": "urn:lsid:ipni.org:names:869552-1",
+      "url": "https://powo.science.kew.org/taxon/urn%3Alsid%3Aipni.org%3Anames%3A869552-1/general-information",
+      "listedAccessedAt": "2026-09-19T23:02:55.992Z",
+      "httpStatus": 403,
+      "rawResponseSha256": "bdf4037a9c39316e6409ae2847e6a9b30c384810194ded04e3e5baddf222c5d0",
+      "parentChain": ["Violaceae", "Viola", "Viola × wittrockiana"],
+      "facts": ["官方网页检索结果确认该稳定 ID 和 hybrid 名称；本机直接请求仅获得 403 响应。"],
+      "decision": "QUARANTINE",
+      "reason": "没有可用的 2xx POWO 原始响应或可读回 hybrid formula/parent relation；不能把 hybrid 伪装为 species。"
+    },
+    {
+      "localRecordIds": [104],
+      "coverage": ["cultivar"],
+      "localName": "Chlorophytum comosum 'Bonnie'",
+      "authority": "RHS",
+      "sourceVersion": "NO_VERSION_PUBLISHED",
+      "stableId": "RHS plant profile 191491",
+      "url": "https://www.rhs.org.uk/plants/191491/chlorophytum-comosum-bonnie-v/details",
+      "listedAccessedAt": "2026-09-19T23:10:51+08:00",
+      "httpStatus": 200,
+      "rawResponseSha256": "88fec6d7e5fe596a9b9a4ffedfdbfe2b77b727942e48c9f23a10b8b7b2aec7c2",
+      "parentChain": ["Asparagaceae", "Chlorophytum", "Chlorophytum comosum", "'Bonnie'"],
+      "facts": ["RHS profile 将 Name Status 标为 Accepted，给出 family Asparagaceae、genus Chlorophytum。", "RHS 官方 spider-plant guide 将 C. comosum 'Bonnie' 称为 compact cultivar。"],
+      "decision": "QUARANTINE",
+      "reason": "RHS 明确为 NO_VERSION_PUBLISHED；访问时间不能替代来源版本。未取得适用 ICRA 的注册记录或其不存在的权威证明，且 POWO 物种 parent 原始响应未取得。"
+    },
+    {
+      "localRecordIds": [32],
+      "coverage": ["mixed_group_negative"],
+      "localName": "Crassulaceae 等",
+      "authority": null,
+      "sourceVersion": null,
+      "stableId": null,
+      "url": null,
+      "listedAccessedAt": "2026-09-19T23:03:11+08:00",
+      "httpStatus": null,
+      "rawResponseSha256": null,
+      "parentChain": [],
+      "facts": ["这是本地混合/群组字符串，不是可查询的单一 taxon。"],
+      "decision": "QUARANTINE",
+      "reason": "合同禁止混合分类作为具体 species 或 active release identity。"
+    }
+  ],
+  "nonEvidence": [
+    "POWO endpoint 的 403 body hash 仅证明访问被拒绝，不证明页面中的分类事实。",
+    "ISHS ICRA 目录检索未获得 Chlorophytum 的适用注册记录；这不是“未注册”或“不存在 ICRA”的证明。",
+    "代表性 6 组记录不覆盖 200 条目录候选，不能替代全量 evidence manifest。"
+  ]
+}

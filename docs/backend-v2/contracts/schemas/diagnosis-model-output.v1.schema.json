@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "diagnosis-model-output/v1",
+  "title": "青花植 AI 视觉与文本诊断模型输出 v1",
+  "description": "模型适配器可接收的最小脱敏输出形状。它只表达证据、候选结论、不确定性与建议动作；不得承载 Prompt、原始模型输出、内部主键、养护事实或养护计划。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "evidence",
+    "conclusionCandidates",
+    "uncertainty",
+    "recommendedActions"
+  ],
+  "properties": {
+    "contractVersion": {
+      "description": "模型输出合同版本，用于让适配器拒绝未知结构。",
+      "const": "diagnosis-model-output/v1"
+    },
+    "evidence": {
+      "description": "参与本次候选结论的脱敏证据列表；每项只记录可复述观察，不保存图片地址、供应商原文或内部资产键。",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/evidence"
+      }
+    },
+    "conclusionCandidates": {
+      "description": "诊断结论候选列表；候选不是已确认事实，也不是确定性诊断。",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/conclusionCandidate"
+      }
+    },
+    "uncertainty": {
+      "description": "本次模型输出的不确定性、原因与仍需补充的证据；不得以低置信度代替缺失说明。",
+      "$ref": "#/$defs/uncertainty"
+    },
+    "recommendedActions": {
+      "description": "用户可阅读的建议动作；每项都必须等待用户确认，且声明不会直接形成养护事实或计划。",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/recommendedAction"
+      }
+    }
+  },
+  "$defs": {
+    "confidence": {
+      "description": "离散置信度，用于表达模型对单条证据或候选结论的可信程度，不使用伪精确分数。",
+      "type": "string",
+      "enum": ["low", "medium", "high"]
+    },
+    "evidence": {
+      "description": "一条脱敏诊断证据；evidenceKey 仅在本次模型输出内关联候选结论，不能映射为数据库主键或用户资产标识。",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidenceKey", "source", "observation", "confidence"],
+      "properties": {
+        "evidenceKey": {
+          "description": "模型输出内的局部证据键，供候选结论列举其依据；不是任何持久化或平台内部标识。",
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "description": "证据来源类别：视觉输入、文本输入或服务端已受控的上下文。",
+          "type": "string",
+          "enum": ["visual", "text", "controlled_context"]
+        },
+        "observation": {
+          "description": "对可用于诊断归约的观察摘要，不得粘贴供应商原始响应、Prompt 或私有图片地址。",
+          "type": "string",
+          "minLength": 1
+        },
+        "confidence": {
+          "description": "该条证据观察的离散置信度。",
+          "$ref": "#/$defs/confidence"
+        }
+      }
+    },
+    "conclusionCandidate": {
+      "description": "一个尚待诊断领域归约的结论候选；它必须列出支持自己的局部证据键。",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidateKey", "summary", "confidence", "supportingEvidenceKeys"],
+      "properties": {
+        "candidateKey": {
+          "description": "候选结论的稳定语义键，仅描述候选类别，不能使用数据库主键、规则内部键或模型会话标识。",
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "description": "面向诊断归约层的候选结论摘要；不得把建议、计划或事实写成已发生结果。",
+          "type": "string",
+          "minLength": 1
+        },
+        "confidence": {
+          "description": "该候选结论的离散置信度。",
+          "$ref": "#/$defs/confidence"
+        },
+        "supportingEvidenceKeys": {
+          "description": "支持该候选结论的局部证据键列表；Adapter 必须在写入前核验每个键都存在于 evidence。",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "description": "一项本次输出内 evidence 的局部证据键。",
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "uncertainty": {
+      "description": "模型对当前材料不足、冲突或可见性限制的明确说明。",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "reasons", "missingEvidence"],
+      "properties": {
+        "level": {
+          "description": "本次整体不确定性等级；低不确定性也不等同于已经确认的事实。",
+          "$ref": "#/$defs/confidence"
+        },
+        "reasons": {
+          "description": "造成不确定性的可解释原因列表；为空表示模型没有识别到额外限制，诊断领域仍需独立校验。",
+          "type": "array",
+          "items": {
+            "description": "一条用户可理解的不确定性原因。",
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "missingEvidence": {
+          "description": "仍需补充的证据类别列表；为空表示模型没有提出额外证据请求，不代表可跳过领域安全门。",
+          "type": "array",
+          "items": {
+            "description": "一条需要补充的证据类别说明。",
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "recommendedAction": {
+      "description": "一条只能作为建议呈现的用户动作，禁止由模型输出直接创建养护事实、计划或提醒。",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actionKey",
+        "instruction",
+        "purpose",
+        "requiresUserConfirmation",
+        "producesCareFact",
+        "producesCarePlan"
+      ],
+      "properties": {
+        "actionKey": {
+          "description": "建议动作的稳定语义键，不得使用内部计划、事实、用户植物或资产标识。",
+          "type": "string",
+          "minLength": 1
+        },
+        "instruction": {
+          "description": "提供给用户或后续受控编排层的建议动作说明。",
+          "type": "string",
+          "minLength": 1
+        },
+        "purpose": {
+          "description": "建议动作的诊断目的或拟补充的证据说明。",
+          "type": "string",
+          "minLength": 1
+        },
+        "requiresUserConfirmation": {
+          "description": "固定为 true，表示用户必须另行确认，模型输出本身没有执行权。",
+          "const": true
+        },
+        "producesCareFact": {
+          "description": "固定为 false，表示该建议不能直接形成养护事实。",
+          "const": false
+        },
+        "producesCarePlan": {
+          "description": "固定为 false，表示该建议不能直接形成养护计划或提醒。",
+          "const": false
+        }
+      }
+    }
+  }
+}

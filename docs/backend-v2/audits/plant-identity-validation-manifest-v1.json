@@ -1,0 +1,68 @@
+{
+  "manifestVersion": "plant-identity-validation-manifest/v1",
+  "storageModel": "sharded",
+  "generatedAt": "2026-09-20T03:10:00+08:00",
+  "ticketId": "z8v0kmr9gm",
+  "sourceSnapshot": {
+    "ref": "git:HEAD:docs/plant_catalog.csv",
+    "sha256": "de5ad55fa4589ac56481ce684b030d46213fc2bf6d3838d5217248c813f3fac1",
+    "recordCount": 200
+  },
+  "authorityEvidence": {
+    "ref": "/private/tmp/qinghuazhi-taxonomy-z8v0kmr9gm/out-genus-final/taxonomy-authority-manifest.json",
+    "sha256": "f42c3978a2293d15318a283c7a1df0fd38d41a3471d9780450ba8453ad2052cb",
+    "recordCount": 200,
+    "replayTool": "docs/backend-v2/audits/taxonomy-authority-replay.mjs",
+    "note": "临时目录中的逐条清单由已锁定官方制品和回放工具重建；大体积官方制品不进入仓库。"
+  },
+  "reviewPolicy": {
+    "ref": "docs/backend-v2/audits/taxonomy-review/README.md",
+    "sha256": "46dee6fa697b9a64f062911da1e7a8e065c32d0b06e5f91e43e7e3eea05e8463",
+    "agentRecommendationIsHumanApproval": false,
+    "pendingHumanApprovalDisposition": "QUARANTINE"
+  },
+  "recordShards": [
+    {
+      "ref": "docs/backend-v2/audits/taxonomy-review/batch-001-050.json",
+      "sha256": "2be62ad49b6dcfa2b4d4b86634a60f62dc257f777987ab86a7bc3551d20ded14",
+      "startIndex": 0,
+      "endIndex": 49,
+      "recordCount": 50
+    },
+    {
+      "ref": "docs/backend-v2/audits/taxonomy-review/batch-051-100.json",
+      "sha256": "7a4b5d6cc1f5fe3728147ffb10b780e7710520c217f4234b72f634a84aff297a",
+      "startIndex": 50,
+      "endIndex": 99,
+      "recordCount": 50
+    },
+    {
+      "ref": "docs/backend-v2/audits/taxonomy-review/batch-101-150.json",
+      "sha256": "190a43c2940d333dd4d6645843bd40879f550467f2ef470068f7fb035bb496bc",
+      "startIndex": 100,
+      "endIndex": 149,
+      "recordCount": 50
+    },
+    {
+      "ref": "docs/backend-v2/audits/taxonomy-review/batch-151-200.json",
+      "sha256": "d23541dcfbacb3b96ce78f80c7e760ae640d21f5d341687d8085108ea2d10c88",
+      "startIndex": 150,
+      "endIndex": 199,
+      "recordCount": 50
+    }
+  ],
+  "humanApprovals": [],
+  "summary": {
+    "total": 200,
+    "recommendedReuseAsIs": 113,
+    "recommendedTransform": 7,
+    "recommendedQuarantine": 80,
+    "reuseAsIs": 0,
+    "transform": 0,
+    "quarantine": 200,
+    "seedEligible": 0,
+    "humanApprovalPending": 120
+  },
+  "virtualMergedManifestSha256": "643a0506f2b48a9fd4cf5dbef03eb1d47309f302cafd63781a0ac89aaad053f8",
+  "releaseStatus": "STOP_PENDING_HUMAN_APPROVAL"
+}

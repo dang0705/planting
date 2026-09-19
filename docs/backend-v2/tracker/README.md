@@ -8,4 +8,8 @@
 
 进度由 ticket 负责人写入 `heartbeats/<ticket-id>.json`，开始时、重大里程碑以及不晚于 30 分钟更新一次；主代理 `/root` 运行 `node docs/backend-v2/tracker/sync-heartbeats.mjs` 校验并汇总到 `module-status.json`，同时负责漏报、超时、冲突裁决和最终兜底。代理重启不得把已有进度归零；若证据推翻原结论，必须用 `allowRegression: true` 明确说明降级。页面每 30 分钟重新读取汇总快照，但不会凭空生成进度。ClickUp 不可用时必须标记 `CLICKUP_BLOCKED`，不得伪造同步。ClickUp 仍为 `backlog` 的任务，不得在本地伪装成已经进入 `codex running`。Phase-P-1 当前状态全集固定为：`backlog`、`ready for codex`、`codex running`、`human required`、`blocked`、`review needed`、`done`。
 
-模块进度条显示“已有明确进度的 ticket 平均值”，并同时显示已报告任务数/模块总任务数。尚未进入当前 Phase、没有负责人或没有进度报告的未来任务不参与平均值，但仍计入总任务数；当一个模块没有任何已报告 ticket 时，页面显示“尚未启动”，不再显示容易误判的 `0%`。
+只有 `done` 任务可以显示 `100%`。`review_needed` 最高显示 `95%`；`in_progress`、`codex running`、`human required` 和 `blocked` 最高显示 `94%`；其他未识别的非完成状态最高显示 `99%`。这项限制在汇总脚本中强制执行，旧心跳中的 `100%` 不能让未验收任务伪装成完成。
+
+模块进度条按模块内全部 ticket 求平均，尚未进入当前 Phase、没有负责人或没有进度报告的任务统一按 `0%` 计入；页面同时显示已报告任务数/模块总任务数。总体完成度按所有模块的全部 ticket 直接求平均，不先计算模块平均值再二次平均，避免不同模块任务量不同造成权重失真。
+
+ClickUp 状态由专职次级模型代理 `clickup_status_keeper_luna` 维护，固定使用 `gpt-5.6-luna / medium`，每 15 分钟核对一次。该代理是 `module-status.json.clickUpTaskStatuses` 的唯一维护者；业务代理只写自己的 ticket heartbeat，不得直接改 ClickUp 状态快照。专职代理只允许通过用户 Chrome 的 `default/main` 主 profile 使用 Chrome MCP；它不承担业务实现，只依据本地 ticket 心跳、当前代理状态和可验证产物更新 ClickUp。Chrome 的浏览器家族连接不能证明具体 profile，因此代理必须复用用户已在 `default/main` 中打开且已登录的 ClickUp 标签页，禁止主动新建窗口或标签页；找不到既有标签页、跳转登录页或无法确认会话时，必须记录 `BLOCKED_PROFILE_OR_AUTH` 并保留上次已验证快照。每轮必须回读远端最终状态，把覆盖全部已登记 ticket 的 `ticketStatuses` 完整映射写入 `heartbeats/clickup-status-keeper.json`，然后运行汇总脚本；汇总脚本只接受已登记 ticket 和 ClickUp 合法状态，自动同步到模块进度页。

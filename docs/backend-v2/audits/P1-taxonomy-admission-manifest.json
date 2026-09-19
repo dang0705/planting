@@ -1,0 +1,5134 @@
+{
+  "manifestVersion": "p1-taxonomy-admission/v1",
+  "generatedAt": "2026-09-20T00:00:00+08:00",
+  "ticketId": "z8v0kmr9gm",
+  "scope": "P1 当前候选种子的逐条负向准入审计；不构成任何分类学正向裁决或种子导入文件。",
+  "sourceSnapshot": {
+    "path": "git:HEAD:docs/plant_catalog.csv",
+    "expectedSha256": "de5ad55fa4589ac56481ce684b030d46213fc2bf6d3838d5217248c813f3fac1",
+    "observedSha256": "de5ad55fa4589ac56481ce684b030d46213fc2bf6d3838d5217248c813f3fac1",
+    "availability": "PRESENT_AS_VERIFIED_GIT_HISTORY_REFERENCE",
+    "allowedPurpose": "仅做 P1 遗留参考审计；不得恢复到工作树、不得直接导入 v2。"
+  },
+  "authorityEvidenceBoundary": {
+    "p0EvidenceManifest": "docs/backend-v2/audits/P0-taxonomy-evidence-z8v0kmr96x.json",
+    "statement": "P0 仅覆盖代表性证伪；代表性证据不得外推为 200 条种子的准入证据。"
+  },
+  "ddlStaticContract": {
+    "status": "STATIC_CONTRACT_PASS_NOT_ADMISSION",
+    "actualMySqlVerification": "NOT_RUN_IN_THIS_TICKET"
+  },
+  "summary": {
+    "declaredSourceRecordCount": 200,
+    "admitted": 0,
+    "quarantined": 200,
+    "rejectedFromTaxonomySeed": 0,
+    "legacyRowsBoundToExactSnapshot": 200
+  },
+  "records": [
+    {
+      "sourceRecordId": 1,
+      "legacyReference": {
+        "displayNameZh": "绿萝",
+        "scientificName": "Epipremnum aureum",
+        "familyNameCanonical": "Araceae",
+        "genusName": "Epipremnum",
+        "legacyRowSha256": "a487d87a148c6881d7efa2f0064852f6c1c2c4c3abf95a044527ee432127ad40"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "REPRESENTATIVE_EVIDENCE_CANNOT_ADMIT_FULL_SEED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE",
+        "REPRESENTATIVE_EVIDENCE_ONLY"
+      ],
+      "representativeEvidenceRef": "P0-TAX-E01",
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 2,
+      "legacyReference": {
+        "displayNameZh": "生菜",
+        "scientificName": "Lactuca sativa",
+        "familyNameCanonical": "Asteraceae",
+        "genusName": "Lactuca",
+        "legacyRowSha256": "ff2fd30a3aea11786d34f8fe3b547d1c71a320b06570d12d8e7e829d38543aa0"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 3,
+      "legacyReference": {
+        "displayNameZh": "罗勒",
+        "scientificName": "Ocimum basilicum",
+        "familyNameCanonical": "Lamiaceae",
+        "genusName": "Ocimum",
+        "legacyRowSha256": "75baee9468b93c1808563e9ee8a3c3fb9dfb9cf648631bae9f6fae66fd9f2b47"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 4,
+      "legacyReference": {
+        "displayNameZh": "韭菜",
+        "scientificName": "Allium tuberosum",
+        "familyNameCanonical": "Amaryllidaceae",
+        "genusName": "Allium",
+        "legacyRowSha256": "98ec650f27d1d83d9dba27ad8d2fe095680a65bd1f58f38fce6c58fd89d2ae85"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 5,
+      "legacyReference": {
+        "displayNameZh": "香菜",
+        "scientificName": "Coriandrum sativum",
+        "familyNameCanonical": "Apiaceae",
+        "genusName": "Coriandrum",
+        "legacyRowSha256": "9738259905a2ecc8ee07245bc99958d93f6a1beafda2c27b76fe792ca479c4fc"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 6,
+      "legacyReference": {
+        "displayNameZh": "薄荷",
+        "scientificName": "Mentha canadensis",
+        "familyNameCanonical": "Lamiaceae",
+        "genusName": "Mentha",
+        "legacyRowSha256": "838d7a0a4c774210e53cc4682de8c59b934a787d157efa1e52d84b850ae3c7f4"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 7,
+      "legacyReference": {
+        "displayNameZh": "常春藤",
+        "scientificName": "Hedera helix",
+        "familyNameCanonical": "Araliaceae",
+        "genusName": "Hedera",
+        "legacyRowSha256": "dd1b66c265d85b3ec56110d0c17b8ac8a4ec0d68e2bd0d8bf424cd13abd1cccf"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 8,
+      "legacyReference": {
+        "displayNameZh": "橡皮树",
+        "scientificName": "Ficus elastica",
+        "familyNameCanonical": "Moraceae",
+        "genusName": "Ficus",
+        "legacyRowSha256": "2d740eeb125e796bcd27f2a9bc3d55d2a15c4425ca55318828b5cc8fccfa868e"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 9,
+      "legacyReference": {
+        "displayNameZh": "万年青",
+        "scientificName": "Aglaonema modestum",
+        "familyNameCanonical": "Araceae",
+        "genusName": "Aglaonema",
+        "legacyRowSha256": "5da27ddddf63bd07342f0958d8820fa91966ce1a77ee6bc988b2530bad169bdd"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "DUPLICATE_MERGE_OR_SPLIT_UNDECIDED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE",
+        "R1_DUPLICATE_SCIENTIFIC_NAME"
+      ],
+      "duplicateGroup": "D08_Aglaonema_modestum",
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 10,
+      "legacyReference": {
+        "displayNameZh": "小香葱",
+        "scientificName": "Allium fistulosum",
+        "familyNameCanonical": "Amaryllidaceae",
+        "genusName": "Allium",
+        "legacyRowSha256": "6c607e04eb68266715b089c83109621aed5357ed8e1a66b03d230cd5077c4162"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 11,
+      "legacyReference": {
+        "displayNameZh": "虎皮兰",
+        "scientificName": "Dracaena trifasciata",
+        "familyNameCanonical": "Asparagaceae",
+        "genusName": "Dracaena",
+        "legacyRowSha256": "efecc86e10d9a4005b90d13486d8af57db3ed52eb565456180d0436fed959469"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 12,
+      "legacyReference": {
+        "displayNameZh": "矮生辣椒",
+        "scientificName": "Capsicum annuum var. grossum",
+        "familyNameCanonical": "Solanaceae",
+        "genusName": "Capsicum",
+        "legacyRowSha256": "d75c8e28ace6abf3db38a342540c361681b6139ca892d30fd5f34b0093c13a55"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 13,
+      "legacyReference": {
+        "displayNameZh": "芦荟",
+        "scientificName": "Aloe vera",
+        "familyNameCanonical": "Asphodelaceae",
+        "genusName": "Aloe",
+        "legacyRowSha256": "ef3a87ecb9915b3d01143f87b50e776751a729b1351a0cf79afb07b9963cd08c"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 14,
+      "legacyReference": {
+        "displayNameZh": "铜钱草",
+        "scientificName": "Hydrocotyle vulgaris",
+        "familyNameCanonical": "Araliaceae",
+        "genusName": "Hydrocotyle",
+        "legacyRowSha256": "c0f31009de1acf2c572dc71d48b02a29a65e3e321f382284dba3315184deec0e"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "DUPLICATE_MERGE_OR_SPLIT_UNDECIDED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE",
+        "R1_DUPLICATE_SCIENTIFIC_NAME"
+      ],
+      "duplicateGroup": "D01_Hydrocotyle_vulgaris",
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 15,
+      "legacyReference": {
+        "displayNameZh": "幸福树",
+        "scientificName": "Radermachera sinica",
+        "familyNameCanonical": "Bignoniaceae",
+        "genusName": "Radermachera",
+        "legacyRowSha256": "19439f166a7cb5500c14a191e8c6e4970b524982fa8d1d4337a323fe80cdf661"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 16,
+      "legacyReference": {
+        "displayNameZh": "金钱树",
+        "scientificName": "Zamioculcas zamiifolia",
+        "familyNameCanonical": "Araceae",
+        "genusName": "Zamioculcas",
+        "legacyRowSha256": "1367f657a5f44e60668204139d84158b1ee2c6207e8e6429af86b7ba90c6b27a"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 17,
+      "legacyReference": {
+        "displayNameZh": "巴西木",
+        "scientificName": "Dracaena fragrans",
+        "familyNameCanonical": "Asparagaceae",
+        "genusName": "Dracaena",
+        "legacyRowSha256": "7510a8b5e496030de7da4e141a4e46fb2c1991a768ea12fba79ba58517d7bba8"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 18,
+      "legacyReference": {
+        "displayNameZh": "君子兰",
+        "scientificName": "Clivia miniata",
+        "familyNameCanonical": "Amaryllidaceae",
+        "genusName": "Clivia",
+        "legacyRowSha256": "9f3c2f4d70f049cf7a39a98b892b8ee6a6f5b5f857d6ff7e360479793adee842"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 19,
+      "legacyReference": {
+        "displayNameZh": "蝴蝶兰",
+        "scientificName": "Phalaenopsis spp.",
+        "familyNameCanonical": "Orchidaceae",
+        "genusName": "Phalaenopsis",
+        "legacyRowSha256": "f99dc9f52911d7e1fb95293c6e0615698501c6a3174e06ab0cfacc76ba342ce0"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 20,
+      "legacyReference": {
+        "displayNameZh": "仙客来",
+        "scientificName": "Cyclamen persicum",
+        "familyNameCanonical": "Primulaceae",
+        "genusName": "Cyclamen",
+        "legacyRowSha256": "df3d7af98814c96955fd179d59bb4db63899d02125d8b77a02f0a653c123a5b1"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 21,
+      "legacyReference": {
+        "displayNameZh": "吊兰",
+        "scientificName": "Chlorophytum comosum",
+        "familyNameCanonical": "Asparagaceae",
+        "genusName": "Chlorophytum",
+        "legacyRowSha256": "527846ac69236f44c47fc7e44157968dccee61be5a3639b9d5af615fbd225110"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 22,
+      "legacyReference": {
+        "displayNameZh": "非洲堇",
+        "scientificName": "Streptocarpus ionanthus",
+        "familyNameCanonical": "Gesneriaceae",
+        "genusName": "Streptocarpus",
+        "legacyRowSha256": "1151e48bb1da9c858b401ff4137b4d0d47c4ce3900cfaf5871abe4d225d1bd92"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 23,
+      "legacyReference": {
+        "displayNameZh": "月季",
+        "scientificName": "Rosa chinensis",
+        "familyNameCanonical": "null",
+        "genusName": "Rosa",
+        "legacyRowSha256": "1be6b867fcb077a12ba117c270071a2c06e16636c12affafd19997136ae438c8"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "PARENT_CHAIN_UNVERIFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE",
+        "R1_FAMILY_CANONICAL_MISSING"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 24,
+      "legacyReference": {
+        "displayNameZh": "栀子花",
+        "scientificName": "Gardenia jasminoides",
+        "familyNameCanonical": "null",
+        "genusName": "Gardenia",
+        "legacyRowSha256": "7ec112b2e11434ecb39cb1f41d2477e96f01b6fc8593c3e7eccbee74329ab18c"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "PARENT_CHAIN_UNVERIFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE",
+        "R1_FAMILY_CANONICAL_MISSING"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 25,
+      "legacyReference": {
+        "displayNameZh": "茉莉花",
+        "scientificName": "Jasminum sambac",
+        "familyNameCanonical": "Oleaceae",
+        "genusName": "Jasminum",
+        "legacyRowSha256": "596f8c08289ddbb11e05cd28e3689f5b798e6bb7fc87051ee3e59df95dab444c"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 26,
+      "legacyReference": {
+        "displayNameZh": "玫瑰",
+        "scientificName": "Rosa rugosa",
+        "familyNameCanonical": "null",
+        "genusName": "Rosa",
+        "legacyRowSha256": "e95ff12d58c6c9a4758710b7b5c0507a2edac097012cdee3b9f7a07a1a539c84"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "PARENT_CHAIN_UNVERIFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE",
+        "R1_FAMILY_CANONICAL_MISSING"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 27,
+      "legacyReference": {
+        "displayNameZh": "康乃馨",
+        "scientificName": "Dianthus caryophyllus",
+        "familyNameCanonical": "null",
+        "genusName": "Dianthus",
+        "legacyRowSha256": "671d461b77ecdc8c5cbbf4f15aed779ba97d1144e2a23ba523b79078c7d2f813"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "PARENT_CHAIN_UNVERIFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE",
+        "R1_FAMILY_CANONICAL_MISSING"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 28,
+      "legacyReference": {
+        "displayNameZh": "郁金香",
+        "scientificName": "Tulipa spp.",
+        "familyNameCanonical": "Liliaceae",
+        "genusName": "Tulipa",
+        "legacyRowSha256": "0721b95e4674a73c2eedd85b22630a8f8fd02ea762a226de44790187f25c2d48"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 29,
+      "legacyReference": {
+        "displayNameZh": "水仙",
+        "scientificName": "Narcissus tazetta",
+        "familyNameCanonical": "Amaryllidaceae",
+        "genusName": "Narcissus",
+        "legacyRowSha256": "21a25736446f36026b9f052aa7a84fae3128ac3443013b77d046648d50280cc6"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 30,
+      "legacyReference": {
+        "displayNameZh": "风信子",
+        "scientificName": "Hyacinthus orientalis",
+        "familyNameCanonical": "Asparagaceae",
+        "genusName": "Hyacinthus",
+        "legacyRowSha256": "cc42afb097527bd54adb742d670a0efa668e8657623b58d4d03505266c24636b"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 31,
+      "legacyReference": {
+        "displayNameZh": "百合",
+        "scientificName": "Lilium spp.",
+        "familyNameCanonical": "Liliaceae",
+        "genusName": "Lilium",
+        "legacyRowSha256": "3a33da38d306166ff0f002feb59a647dd9a3e598ad565258b45bf7b2923c4c81"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 32,
+      "legacyReference": {
+        "displayNameZh": "多肉",
+        "scientificName": "Crassulaceae 等",
+        "familyNameCanonical": "null",
+        "genusName": "Crassulaceae",
+        "legacyRowSha256": "66ea7a16e299cdb24533ab01465efab40693ef56fb5a48fed77b62c347d74540"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE",
+        "PARENT_CHAIN_UNVERIFIED",
+        "REPRESENTATIVE_EVIDENCE_CANNOT_ADMIT_FULL_SEED",
+        "MIXED_GROUP_NOT_A_SINGLE_TAXON"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED",
+        "R1_FAMILY_CANONICAL_MISSING",
+        "REPRESENTATIVE_EVIDENCE_ONLY"
+      ],
+      "representativeEvidenceRef": "P0-TAX-E06",
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 33,
+      "legacyReference": {
+        "displayNameZh": "扶郎花",
+        "scientificName": "Gerbera jamesonii",
+        "familyNameCanonical": "Asteraceae",
+        "genusName": "Gerbera",
+        "legacyRowSha256": "ed0e02ec1a62b125d7ff803690c896f1496369dd1485277e3e51eeab1af5b0cb"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 34,
+      "legacyReference": {
+        "displayNameZh": "绣球花",
+        "scientificName": "Hydrangea macrophylla",
+        "familyNameCanonical": "Hydrangeaceae",
+        "genusName": "Hydrangea",
+        "legacyRowSha256": "2e2683e3d65bd70a949b0735dcac56614e6f1b6de8f933a2e1352b2f0ad13321"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 35,
+      "legacyReference": {
+        "displayNameZh": "杜鹃花",
+        "scientificName": "Rhododendron simsii",
+        "familyNameCanonical": "Ericaceae",
+        "genusName": "Rhododendron",
+        "legacyRowSha256": "e5c3fe9ac575feca50ae1f759c874f2fdc80f2ca27d4b2fc790bbfb0b446cecd"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 36,
+      "legacyReference": {
+        "displayNameZh": "茶花",
+        "scientificName": "Camellia japonica",
+        "familyNameCanonical": "Theaceae",
+        "genusName": "Camellia",
+        "legacyRowSha256": "d3e6ac803c0538a050ac76ba1c8c4b1c89a2e91d7c759985b610a0d47e0f3d89"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 37,
+      "legacyReference": {
+        "displayNameZh": "蟹爪兰",
+        "scientificName": "Schlumbergera truncata",
+        "familyNameCanonical": "Cactaceae",
+        "genusName": "Schlumbergera",
+        "legacyRowSha256": "99b37d81a61f0c5222c71ec7f20ae2f45984534a9e35adf5e57f5b512ef671cd"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 38,
+      "legacyReference": {
+        "displayNameZh": "长寿花",
+        "scientificName": "Kalanchoe blossfeldiana",
+        "familyNameCanonical": "Crassulaceae",
+        "genusName": "Kalanchoe",
+        "legacyRowSha256": "149f1c283d484adb96dd0c61a50f20d4bace8c851a8e2e20ff4abae96fe7f68f"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 39,
+      "legacyReference": {
+        "displayNameZh": "一品红",
+        "scientificName": "Euphorbia pulcherrima",
+        "familyNameCanonical": "Euphorbiaceae",
+        "genusName": "Euphorbia",
+        "legacyRowSha256": "c1175993c77e969f2586c2eab1b3b3ec01fdf0514d53c4d3b237fb90a602cb1c"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 40,
+      "legacyReference": {
+        "displayNameZh": "红掌",
+        "scientificName": "Anthurium andraeanum",
+        "familyNameCanonical": "Araceae",
+        "genusName": "Anthurium",
+        "legacyRowSha256": "5e6c8b8c969ffbeba199fccb325a1bb20fc4c7077bb5dd5c576d82cf3a3c20e3"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 41,
+      "legacyReference": {
+        "displayNameZh": "花烛",
+        "scientificName": "Anthurium spp.",
+        "familyNameCanonical": "Araceae",
+        "genusName": "Anthurium",
+        "legacyRowSha256": "559d54d6f800ca25fea3c3223370aa3a33ff1d4615066ac12c4b63a9c0542965"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 42,
+      "legacyReference": {
+        "displayNameZh": "龟背竹",
+        "scientificName": "Monstera deliciosa",
+        "familyNameCanonical": "Araceae",
+        "genusName": "Monstera",
+        "legacyRowSha256": "ffa6a4d9a3f80be768f8e1305e3bffe710063aa004bce55f94b57a48ab6467b2"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 43,
+      "legacyReference": {
+        "displayNameZh": "马蹄莲",
+        "scientificName": "Zantedeschia aethiopica",
+        "familyNameCanonical": "Araceae",
+        "genusName": "Zantedeschia",
+        "legacyRowSha256": "5fb92c65e24b1f42ac9506dd59597b8b8c6f3c67f5880e327a5e5807f4fd81ff"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 44,
+      "legacyReference": {
+        "displayNameZh": "彩叶芋",
+        "scientificName": "Caladium bicolor",
+        "familyNameCanonical": "Araceae",
+        "genusName": "Caladium",
+        "legacyRowSha256": "40ac38f1480a971e1161324eed75ff55dbc4f31f6f6ca1ee6ac7ec1a8c77e385"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 45,
+      "legacyReference": {
+        "displayNameZh": "合果芋",
+        "scientificName": "Syngonium podophyllum",
+        "familyNameCanonical": "Araceae",
+        "genusName": "Syngonium",
+        "legacyRowSha256": "accd22cc295405a882034372f83b823fde3cac673bb88427c43d640eb9b9d1b6"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "DUPLICATE_MERGE_OR_SPLIT_UNDECIDED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE",
+        "R1_DUPLICATE_SCIENTIFIC_NAME"
+      ],
+      "duplicateGroup": "D05_Syngonium_podophyllum",
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 46,
+      "legacyReference": {
+        "displayNameZh": "心叶藤",
+        "scientificName": "Philodendron hederaceum",
+        "familyNameCanonical": "Araceae",
+        "genusName": "Philodendron",
+        "legacyRowSha256": "496ee2c4c3349d618d8d14e65147ba8078bc6a75b18e06edd3cc0414a2c06ba1"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "DUPLICATE_MERGE_OR_SPLIT_UNDECIDED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE",
+        "R1_DUPLICATE_SCIENTIFIC_NAME"
+      ],
+      "duplicateGroup": "D06_Philodendron_hederaceum",
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 47,
+      "legacyReference": {
+        "displayNameZh": "春羽",
+        "scientificName": "Thaumatophyllum bipinnatifidum",
+        "familyNameCanonical": "Araceae",
+        "genusName": "Thaumatophyllum",
+        "legacyRowSha256": "87c9e9cd4d15ff45eeaec00895c98099f967ab545d3931b050cd925b0693f2d6"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "DUPLICATE_MERGE_OR_SPLIT_UNDECIDED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE",
+        "R1_DUPLICATE_SCIENTIFIC_NAME"
+      ],
+      "duplicateGroup": "D07_Thaumatophyllum_bipinnatifidum",
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 48,
+      "legacyReference": {
+        "displayNameZh": "琴叶榕",
+        "scientificName": "Ficus lyrata",
+        "familyNameCanonical": "Moraceae",
+        "genusName": "Ficus",
+        "legacyRowSha256": "efa2665da488fa63e240786eded9265ebb4dde868ae6475447ecb634678b2eda"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 49,
+      "legacyReference": {
+        "displayNameZh": "龙血树",
+        "scientificName": "Dracaena marginata",
+        "familyNameCanonical": "Asparagaceae",
+        "genusName": "Dracaena",
+        "legacyRowSha256": "2f0e5a4aab37b81099733ab8df56eb12a41befb2b8c6ed594397541190eb18ee"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 50,
+      "legacyReference": {
+        "displayNameZh": "散尾葵",
+        "scientificName": "Dypsis lutescens",
+        "familyNameCanonical": "Arecaceae",
+        "genusName": "Dypsis",
+        "legacyRowSha256": "06d597c79ef67aa663d243ebcc72a6d07f5ac74292c6ac68a21e448e31b65b2a"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 51,
+      "legacyReference": {
+        "displayNameZh": "棕竹",
+        "scientificName": "Rhapis excelsa",
+        "familyNameCanonical": "Arecaceae",
+        "genusName": "Rhapis",
+        "legacyRowSha256": "828752cc56676016dbc3a22aa8d190728bfbbdb1053fc4a53ce29e0a82ef1fc0"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 52,
+      "legacyReference": {
+        "displayNameZh": "发财树",
+        "scientificName": "Pachira aquatica",
+        "familyNameCanonical": "Malvaceae",
+        "genusName": "Pachira",
+        "legacyRowSha256": "4459b9cf7d1ccd94b75eb8ab28594438785097f08c2e6079681ed9cb0807775a"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 53,
+      "legacyReference": {
+        "displayNameZh": "袖珍椰子",
+        "scientificName": "Chamaedorea elegans",
+        "familyNameCanonical": "Arecaceae",
+        "genusName": "Chamaedorea",
+        "legacyRowSha256": "a1e196d25a3c1a3da19578f5c40ae92aa6d480c9e636609cc3d45933ef62abe2"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 54,
+      "legacyReference": {
+        "displayNameZh": "铁线莲",
+        "scientificName": "Clematis spp.",
+        "familyNameCanonical": "Ranunculaceae",
+        "genusName": "Clematis",
+        "legacyRowSha256": "7c808b5b584580ead37e1dfc236f75a8a1d4b18872d00de776eaa0ec7846fac1"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 55,
+      "legacyReference": {
+        "displayNameZh": "凌霄",
+        "scientificName": "Campsis grandiflora",
+        "familyNameCanonical": "Bignoniaceae",
+        "genusName": "Campsis",
+        "legacyRowSha256": "7df2cf7fa094470ca35248938132a3f6495bd94e153c92c5c356328c335cf820"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 56,
+      "legacyReference": {
+        "displayNameZh": "牵牛花",
+        "scientificName": "Ipomoea nil",
+        "familyNameCanonical": "Convolvulaceae",
+        "genusName": "Ipomoea",
+        "legacyRowSha256": "7797abb7d2413a0d9f0c1ce6f3f3e7cd66a0716269a5b98593d1970f8d7b304d"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 57,
+      "legacyReference": {
+        "displayNameZh": "炮仗花",
+        "scientificName": "Pyrostegia venusta",
+        "familyNameCanonical": "Bignoniaceae",
+        "genusName": "Pyrostegia",
+        "legacyRowSha256": "c9f54c956e3be00e10e5f5a812ec6242e6efb71de17fed8db2d8633b2fced1ee"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 58,
+      "legacyReference": {
+        "displayNameZh": "三角梅",
+        "scientificName": "Bougainvillea spectabilis",
+        "familyNameCanonical": "Nyctaginaceae",
+        "genusName": "Bougainvillea",
+        "legacyRowSha256": "58a81daec81d0b8e2ae7a726b9da5e54be5abe23116e91bdd20e2106689d88b3"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 59,
+      "legacyReference": {
+        "displayNameZh": "鸡蛋花",
+        "scientificName": "Plumeria rubra",
+        "familyNameCanonical": "Apocynaceae",
+        "genusName": "Plumeria",
+        "legacyRowSha256": "23ef69e3a274eae07cf5917d4f893cfb9442b092952655bde21d6457c7381b5c"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 60,
+      "legacyReference": {
+        "displayNameZh": "夹竹桃",
+        "scientificName": "Nerium oleander",
+        "familyNameCanonical": "Apocynaceae",
+        "genusName": "Nerium",
+        "legacyRowSha256": "d8b0716b41e94c5e130ee4de17ff932f607cae0828cad1bd7f2b2ebf263523d8"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 61,
+      "legacyReference": {
+        "displayNameZh": "紫薇",
+        "scientificName": "Lagerstroemia indica",
+        "familyNameCanonical": "Lythraceae",
+        "genusName": "Lagerstroemia",
+        "legacyRowSha256": "47e055320e8ac4f16721505b448f5e3461a15ab06676d0461125e670ac5ce882"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 62,
+      "legacyReference": {
+        "displayNameZh": "木槿",
+        "scientificName": "Hibiscus syriacus",
+        "familyNameCanonical": "Malvaceae",
+        "genusName": "Hibiscus",
+        "legacyRowSha256": "03cd0b1a610f109764eee207971d24281850b966072db5e951fe1a9f8c7a412f"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 63,
+      "legacyReference": {
+        "displayNameZh": "空气凤梨",
+        "scientificName": "Tillandsia spp.",
+        "familyNameCanonical": "Bromeliaceae",
+        "genusName": "Tillandsia",
+        "legacyRowSha256": "9cdea5ad8c5bb1316ffc59e00e85bea2802582861858e7093801b68c0d4e2081"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 64,
+      "legacyReference": {
+        "displayNameZh": "木芙蓉",
+        "scientificName": "Hibiscus mutabilis",
+        "familyNameCanonical": "Malvaceae",
+        "genusName": "Hibiscus",
+        "legacyRowSha256": "90d27bd02e33cc301d561115854e68a2c21352b25b591fcc324c5375d659b112"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 65,
+      "legacyReference": {
+        "displayNameZh": "荷花",
+        "scientificName": "Nelumbo nucifera",
+        "familyNameCanonical": "Nelumbonaceae",
+        "genusName": "Nelumbo",
+        "legacyRowSha256": "3c89e5dfdfb86f3aee7c5427d722d8adb4d40dbe37396d8257ea3852f48eead7"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "DUPLICATE_MERGE_OR_SPLIT_UNDECIDED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE",
+        "R1_DUPLICATE_SCIENTIFIC_NAME"
+      ],
+      "duplicateGroup": "D02_Nelumbo_nucifera",
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 66,
+      "legacyReference": {
+        "displayNameZh": "睡莲",
+        "scientificName": "Nymphaea spp.",
+        "familyNameCanonical": "Nymphaeaceae",
+        "genusName": "Nymphaea",
+        "legacyRowSha256": "2faf7b72f3142dda46d463587f0bbd2d98124e99611cd435631b6b632c10248f"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 67,
+      "legacyReference": {
+        "displayNameZh": "凤眼莲",
+        "scientificName": "Eichhornia crassipes",
+        "familyNameCanonical": "Pontederiaceae",
+        "genusName": "Eichhornia",
+        "legacyRowSha256": "4de56259e87c09d9f0ebe78c4be933dd5309cbebca1f085b77a50dd098bc13cb"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 68,
+      "legacyReference": {
+        "displayNameZh": "铜钱草",
+        "scientificName": "Hydrocotyle vulgaris",
+        "familyNameCanonical": "Araliaceae",
+        "genusName": "Hydrocotyle",
+        "legacyRowSha256": "97b32bd1b91e31e382920b6ac0887f21961468318b136b851ff4824f127ef181"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "DUPLICATE_MERGE_OR_SPLIT_UNDECIDED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE",
+        "R1_DUPLICATE_SCIENTIFIC_NAME"
+      ],
+      "duplicateGroup": "D01_Hydrocotyle_vulgaris",
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 69,
+      "legacyReference": {
+        "displayNameZh": "矮生番茄",
+        "scientificName": "Solanum lycopersicum var. cerasiforme",
+        "familyNameCanonical": "Solanaceae",
+        "genusName": "Solanum",
+        "legacyRowSha256": "efe6efa256d156a1071dbdba1dfb9ca0b346beabfbc497a86df5e0311fe07008"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE",
+        "DUPLICATE_MERGE_OR_SPLIT_UNDECIDED"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED",
+        "R1_DUPLICATE_SCIENTIFIC_NAME"
+      ],
+      "duplicateGroup": "D04_Solanum_lycopersicum_var_cerasiforme",
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 70,
+      "legacyReference": {
+        "displayNameZh": "小青菜",
+        "scientificName": "Brassica rapa var. chinensis",
+        "familyNameCanonical": "Brassicaceae",
+        "genusName": "Brassica",
+        "legacyRowSha256": "4d64c011a3e7dd27df4616e69d399f4336f58147c55b1387aac3f12910b3ed42"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 71,
+      "legacyReference": {
+        "displayNameZh": "白掌",
+        "scientificName": "Spathiphyllum wallisii",
+        "familyNameCanonical": "Araceae",
+        "genusName": "Spathiphyllum",
+        "legacyRowSha256": "717b930a07fbdb74544bfc526f961a36828a05106e6afde5ac5fe628d4375eae"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 72,
+      "legacyReference": {
+        "displayNameZh": "广东万年青",
+        "scientificName": "Aglaonema modestum",
+        "familyNameCanonical": "Araceae",
+        "genusName": "Aglaonema",
+        "legacyRowSha256": "c8db0474f0be75d5a5f0f5a7e067b8bfd2b84caf1b14becf755b703053ca2b83"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "DUPLICATE_MERGE_OR_SPLIT_UNDECIDED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE",
+        "R1_DUPLICATE_SCIENTIFIC_NAME"
+      ],
+      "duplicateGroup": "D08_Aglaonema_modestum",
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 73,
+      "legacyReference": {
+        "displayNameZh": "银皇后",
+        "scientificName": "Aglaonema commutatum",
+        "familyNameCanonical": "Araceae",
+        "genusName": "Aglaonema",
+        "legacyRowSha256": "61beb81993abf032591d4b910423a932296871ac1395b4d95e88d589ba2baae7"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 74,
+      "legacyReference": {
+        "displayNameZh": "黛粉叶",
+        "scientificName": "Dieffenbachia seguine",
+        "familyNameCanonical": "Araceae",
+        "genusName": "Dieffenbachia",
+        "legacyRowSha256": "6a591ffd05e4571225a28c906dfd9f0bd663530d7821b34fe4332537ac6cb697"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 75,
+      "legacyReference": {
+        "displayNameZh": "白蝶合果芋",
+        "scientificName": "Syngonium podophyllum",
+        "familyNameCanonical": "Araceae",
+        "genusName": "Syngonium",
+        "legacyRowSha256": "eccb634352d8552612e35fb6eda7c5fcae634f996417f3eafa7ea9031bfbd5ba"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "DUPLICATE_MERGE_OR_SPLIT_UNDECIDED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE",
+        "R1_DUPLICATE_SCIENTIFIC_NAME"
+      ],
+      "duplicateGroup": "D05_Syngonium_podophyllum",
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 76,
+      "legacyReference": {
+        "displayNameZh": "蔓绿绒",
+        "scientificName": "Philodendron hederaceum",
+        "familyNameCanonical": "Araceae",
+        "genusName": "Philodendron",
+        "legacyRowSha256": "2895e49d27187055e6dc6f29bc7a5851b2e3c1e914a71807a0fb1f841ad2f516"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "DUPLICATE_MERGE_OR_SPLIT_UNDECIDED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE",
+        "R1_DUPLICATE_SCIENTIFIC_NAME"
+      ],
+      "duplicateGroup": "D06_Philodendron_hederaceum",
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 77,
+      "legacyReference": {
+        "displayNameZh": "裂叶喜林芋",
+        "scientificName": "Thaumatophyllum bipinnatifidum",
+        "familyNameCanonical": "Araceae",
+        "genusName": "Thaumatophyllum",
+        "legacyRowSha256": "b1d9372f5db0e1d3bc4fbf6e7d6cb7bf46f182d2b678dadd9f5b6b6c8c18a06b"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "DUPLICATE_MERGE_OR_SPLIT_UNDECIDED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE",
+        "R1_DUPLICATE_SCIENTIFIC_NAME"
+      ],
+      "duplicateGroup": "D07_Thaumatophyllum_bipinnatifidum",
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 78,
+      "legacyReference": {
+        "displayNameZh": "姬龟背",
+        "scientificName": "Rhaphidophora tetrasperma",
+        "familyNameCanonical": "Araceae",
+        "genusName": "Rhaphidophora",
+        "legacyRowSha256": "bb4f0430716e10df478278a55b6408292279871187b41a0199635361f1c4addf"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 79,
+      "legacyReference": {
+        "displayNameZh": "海芋",
+        "scientificName": "Alocasia macrorrhizos",
+        "familyNameCanonical": "Araceae",
+        "genusName": "Alocasia",
+        "legacyRowSha256": "f3a37c438b9bb0f0f9abba28760864f7b9669611cf861993b00cb027bf378b85"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 80,
+      "legacyReference": {
+        "displayNameZh": "滴水观音",
+        "scientificName": "Alocasia odora",
+        "familyNameCanonical": "Araceae",
+        "genusName": "Alocasia",
+        "legacyRowSha256": "18f93c0ea9ff2356183f7a171b4ad9d9caa44f378efd52dffb44b07966dda1f3"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 81,
+      "legacyReference": {
+        "displayNameZh": "花叶椒草",
+        "scientificName": "Peperomia obtusifolia",
+        "familyNameCanonical": "Piperaceae",
+        "genusName": "Peperomia",
+        "legacyRowSha256": "fb58462848a415b2f31444ddfd43164481ee4734556fcde100c206e41830ba80"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 82,
+      "legacyReference": {
+        "displayNameZh": "西瓜皮椒草",
+        "scientificName": "Peperomia argyreia",
+        "familyNameCanonical": "Piperaceae",
+        "genusName": "Peperomia",
+        "legacyRowSha256": "849c30101be2be18052834ccbd3d7b628f453cf8d7d154207054ec35bc826da7"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 83,
+      "legacyReference": {
+        "displayNameZh": "网纹草",
+        "scientificName": "Fittonia albivenis",
+        "familyNameCanonical": "Acanthaceae",
+        "genusName": "Fittonia",
+        "legacyRowSha256": "c4a790c15551f3e08173759e2e1d8eb64e632f725980d934704035622fbdff6d"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 84,
+      "legacyReference": {
+        "displayNameZh": "冷水花",
+        "scientificName": "Pilea cadierei",
+        "familyNameCanonical": "Urticaceae",
+        "genusName": "Pilea",
+        "legacyRowSha256": "9f6769259552cec3faa8dfe002b4f61c0a2e7d4c3dee39453d67885ee9f7854a"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 85,
+      "legacyReference": {
+        "displayNameZh": "镜面草",
+        "scientificName": "Pilea peperomioides",
+        "familyNameCanonical": "Urticaceae",
+        "genusName": "Pilea",
+        "legacyRowSha256": "5dd1d33651443eb44195bb9c1d2a7499fe0341203dfebce4dae7383cdd113c86"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 86,
+      "legacyReference": {
+        "displayNameZh": "吊竹梅",
+        "scientificName": "Tradescantia zebrina",
+        "familyNameCanonical": "Commelinaceae",
+        "genusName": "Tradescantia",
+        "legacyRowSha256": "74afe6b63f9d2eb5991af8d5896cf4e8ac4ce929159240a856faeaa071352aae"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 87,
+      "legacyReference": {
+        "displayNameZh": "紫露草",
+        "scientificName": "Tradescantia pallida",
+        "familyNameCanonical": "Commelinaceae",
+        "genusName": "Tradescantia",
+        "legacyRowSha256": "83dc7ea62503d87b29a31ada2ba190d93711c37e84b84c5c30b4363623b4c89e"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 88,
+      "legacyReference": {
+        "displayNameZh": "文竹",
+        "scientificName": "Asparagus setaceus",
+        "familyNameCanonical": "Asparagaceae",
+        "genusName": "Asparagus",
+        "legacyRowSha256": "b62a07ab026de2cf23dc9f770613efba7a9252303992eac5193726bfcbb9a6e0"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 89,
+      "legacyReference": {
+        "displayNameZh": "鸟巢蕨",
+        "scientificName": "Asplenium nidus",
+        "familyNameCanonical": "Aspleniaceae",
+        "genusName": "Asplenium",
+        "legacyRowSha256": "0a18f2ebbc9a3ffb4a0a508887498cf5dee60fd9b6067b67cb100cd89fdedb04"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 90,
+      "legacyReference": {
+        "displayNameZh": "鹿角蕨",
+        "scientificName": "Platycerium bifurcatum",
+        "familyNameCanonical": "Polypodiaceae",
+        "genusName": "Platycerium",
+        "legacyRowSha256": "7cf1df4b035f8a1f2d0d1fd52746dc65a1635fd9663ce31e9cbc7356b77fa6e6"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 91,
+      "legacyReference": {
+        "displayNameZh": "波士顿蕨",
+        "scientificName": "Nephrolepis exaltata",
+        "familyNameCanonical": "Nephrolepidaceae",
+        "genusName": "Nephrolepis",
+        "legacyRowSha256": "41819075a6378731f8624b7739c6e95a994b317af55be0b1a863fd809495ed55"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 92,
+      "legacyReference": {
+        "displayNameZh": "铁线蕨",
+        "scientificName": "Adiantum raddianum",
+        "familyNameCanonical": "Pteridaceae",
+        "genusName": "Adiantum",
+        "legacyRowSha256": "52db3ba2d003ec751589323ce0ffc7e07bfe42ce70a78a832d150bf974d2c519"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 93,
+      "legacyReference": {
+        "displayNameZh": "孔雀竹芋",
+        "scientificName": "Goeppertia makoyana",
+        "familyNameCanonical": "Marantaceae",
+        "genusName": "Goeppertia",
+        "legacyRowSha256": "899fefbe6e0f9b763038baa0761f8a1e38b856e73aeb63c5e6533a4912ff03f7"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 94,
+      "legacyReference": {
+        "displayNameZh": "青苹果竹芋",
+        "scientificName": "Goeppertia orbifolia",
+        "familyNameCanonical": "Marantaceae",
+        "genusName": "Goeppertia",
+        "legacyRowSha256": "54c2f1ac0fbec34ef5346b1c2b598bab47c677ec8af5ba229cc8b21caa062490"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 95,
+      "legacyReference": {
+        "displayNameZh": "祈祷草",
+        "scientificName": "Maranta leuconeura",
+        "familyNameCanonical": "Marantaceae",
+        "genusName": "Maranta",
+        "legacyRowSha256": "7b6c292fed83880bae7762cbc8e2bf64430a273cef341a55837954f37d0a9131"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 96,
+      "legacyReference": {
+        "displayNameZh": "富贵竹",
+        "scientificName": "Dracaena sanderiana",
+        "familyNameCanonical": "Asparagaceae",
+        "genusName": "Dracaena",
+        "legacyRowSha256": "076f0ec8e8d6c4b4384d34fe12101bbfb69bb82875554c96ca8f378e597343d6"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 97,
+      "legacyReference": {
+        "displayNameZh": "酒瓶兰",
+        "scientificName": "Beaucarnea recurvata",
+        "familyNameCanonical": "Asparagaceae",
+        "genusName": "Beaucarnea",
+        "legacyRowSha256": "63c4307b034a38de9b51f213c8144156e4f10f0ff5df9ead6eb5f42cc1cd8f90"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 98,
+      "legacyReference": {
+        "displayNameZh": "狐尾天门冬",
+        "scientificName": "Asparagus densiflorus",
+        "familyNameCanonical": "Asparagaceae",
+        "genusName": "Asparagus",
+        "legacyRowSha256": "c6a69a4d5ace77fc6606fec637817baf9e0dc8a2f705839c15ef2a33b542f37f"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 99,
+      "legacyReference": {
+        "displayNameZh": "鹅掌柴",
+        "scientificName": "Schefflera arboricola",
+        "familyNameCanonical": "Araliaceae",
+        "genusName": "Schefflera",
+        "legacyRowSha256": "5c61614ed43247224e88b88114778eab22b89876307e25a0facbefc5467c4f88"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 100,
+      "legacyReference": {
+        "displayNameZh": "福禄桐",
+        "scientificName": "Polyscias fruticosa",
+        "familyNameCanonical": "Araliaceae",
+        "genusName": "Polyscias",
+        "legacyRowSha256": "26b7e560974cd0b8eb959848b4c9aeb87ae271836c72d36e5264fa868ebef41a"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 101,
+      "legacyReference": {
+        "displayNameZh": "豆瓣绿",
+        "scientificName": "Peperomia tetraphylla",
+        "familyNameCanonical": "Piperaceae",
+        "genusName": "Peperomia",
+        "legacyRowSha256": "4d5c7a2073816051cd12b459f2517730ae7d8a720582f61693a7e2300bf7524c"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 102,
+      "legacyReference": {
+        "displayNameZh": "金钻蔓绿绒",
+        "scientificName": "Philodendron erubescens",
+        "familyNameCanonical": "Araceae",
+        "genusName": "Philodendron",
+        "legacyRowSha256": "ef28db7cb86cdeb1b564cc3731be0cbe56f95ae165bc856df0c7591cbdb8daa2"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 103,
+      "legacyReference": {
+        "displayNameZh": "白脉椒草",
+        "scientificName": "Peperomia puteolata",
+        "familyNameCanonical": "Piperaceae",
+        "genusName": "Peperomia",
+        "legacyRowSha256": "cb39ba9fe51a8c1d41b4c8d9a7c5d0e57215bfb173ca6b58f78312ea676352d8"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 104,
+      "legacyReference": {
+        "displayNameZh": "卷叶吊兰",
+        "scientificName": "Chlorophytum comosum 'Bonnie'",
+        "familyNameCanonical": "Asparagaceae",
+        "genusName": "Chlorophytum",
+        "legacyRowSha256": "ff1059b2eefcb00552d4db0dedb93b6c38ed0231e14518c3478e53d7de419f4d"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE",
+        "REPRESENTATIVE_EVIDENCE_CANNOT_ADMIT_FULL_SEED"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED",
+        "REPRESENTATIVE_EVIDENCE_ONLY"
+      ],
+      "representativeEvidenceRef": "P0-TAX-E05",
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 105,
+      "legacyReference": {
+        "displayNameZh": "卷柏",
+        "scientificName": "Selaginella tamariscina",
+        "familyNameCanonical": "Selaginellaceae",
+        "genusName": "Selaginella",
+        "legacyRowSha256": "d545275dad6dc27c0917d99f21e7c77d67da61838a231f5f4f0c817ad2c03ad6"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 106,
+      "legacyReference": {
+        "displayNameZh": "络石",
+        "scientificName": "Trachelospermum jasminoides",
+        "familyNameCanonical": "Apocynaceae",
+        "genusName": "Trachelospermum",
+        "legacyRowSha256": "8a6d83a00d8e83f159fbd0486272aae4980b28034b4fa504c09a1053dd20bd0a"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 107,
+      "legacyReference": {
+        "displayNameZh": "球兰",
+        "scientificName": "Hoya carnosa",
+        "familyNameCanonical": "Apocynaceae",
+        "genusName": "Hoya",
+        "legacyRowSha256": "70049991e947d96f8378245f7df1f188c4536165fc72f622c138805699af3367"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 108,
+      "legacyReference": {
+        "displayNameZh": "玉树",
+        "scientificName": "Crassula ovata",
+        "familyNameCanonical": "Crassulaceae",
+        "genusName": "Crassula",
+        "legacyRowSha256": "6b7428c558aa4977fab9311cf71ac7604547f6335902fb65e2a22ad4bc617f33"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 109,
+      "legacyReference": {
+        "displayNameZh": "虹之玉",
+        "scientificName": "Sedum rubrotinctum",
+        "familyNameCanonical": "Crassulaceae",
+        "genusName": "Sedum",
+        "legacyRowSha256": "456683493fb73f5d676a7790f0e26c68ab45a80867becb0c17de20f7dfa81e16"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 110,
+      "legacyReference": {
+        "displayNameZh": "乙女心",
+        "scientificName": "Sedum pachyphyllum",
+        "familyNameCanonical": "Crassulaceae",
+        "genusName": "Sedum",
+        "legacyRowSha256": "44816b47f6350acd9350783009d78ffa343a763d8820ff655cdefd69fc31a29f"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 111,
+      "legacyReference": {
+        "displayNameZh": "胧月",
+        "scientificName": "Graptopetalum paraguayense",
+        "familyNameCanonical": "Crassulaceae",
+        "genusName": "Graptopetalum",
+        "legacyRowSha256": "cd84733acb21efcc7a2cf37e4c058ec8c0d213fa8a98d5bdd8ed7d217dafd22b"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 112,
+      "legacyReference": {
+        "displayNameZh": "生石花",
+        "scientificName": "Lithops spp.",
+        "familyNameCanonical": "Aizoaceae",
+        "genusName": "Lithops",
+        "legacyRowSha256": "a2f9f81df470a0616a433e7239df6a97c6f0f20d87a75e50a2ccddf04695f2b5"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE",
+        "REPRESENTATIVE_EVIDENCE_CANNOT_ADMIT_FULL_SEED"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED",
+        "REPRESENTATIVE_EVIDENCE_ONLY"
+      ],
+      "representativeEvidenceRef": "P0-TAX-E02",
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 113,
+      "legacyReference": {
+        "displayNameZh": "条纹十二卷",
+        "scientificName": "Haworthiopsis attenuata",
+        "familyNameCanonical": "Asphodelaceae",
+        "genusName": "Haworthiopsis",
+        "legacyRowSha256": "9d37d0a96d3ed9ccef7acabfe165aed323669f253868038f46ca0d988e238285"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 114,
+      "legacyReference": {
+        "displayNameZh": "瓦松",
+        "scientificName": "Orostachys japonica",
+        "familyNameCanonical": "Crassulaceae",
+        "genusName": "Orostachys",
+        "legacyRowSha256": "4dfd312e0ab387bccd3157fbe0ca4511c2731543cba4bef66117b831693f440c"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 115,
+      "legacyReference": {
+        "displayNameZh": "长生草",
+        "scientificName": "Sempervivum tectorum",
+        "familyNameCanonical": "Crassulaceae",
+        "genusName": "Sempervivum",
+        "legacyRowSha256": "3f9dfaa3ef3ffecaf69970f3a94298657630350d474a6688761f517f5be67b0e"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 116,
+      "legacyReference": {
+        "displayNameZh": "吉娃娃",
+        "scientificName": "Echeveria chihuahuaensis",
+        "familyNameCanonical": "Crassulaceae",
+        "genusName": "Echeveria",
+        "legacyRowSha256": "9c87ec3e60211aca79e01b0befec7365ddd9a02236c45cd7ec5e0fcec2552ba4"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 117,
+      "legacyReference": {
+        "displayNameZh": "桃蛋",
+        "scientificName": "Pachyphytum oviferum",
+        "familyNameCanonical": "Crassulaceae",
+        "genusName": "Pachyphytum",
+        "legacyRowSha256": "243f0e9b161c31e1fb9875a3aea6cb49d8078238b69e912b8d57237acbe0ed46"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 118,
+      "legacyReference": {
+        "displayNameZh": "玉缀",
+        "scientificName": "Sedum morganianum",
+        "familyNameCanonical": "Crassulaceae",
+        "genusName": "Sedum",
+        "legacyRowSha256": "de0ea4956039cd92c928c85f49b7be6151d258b205250617c960b6feea83d733"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 119,
+      "legacyReference": {
+        "displayNameZh": "金枝玉叶",
+        "scientificName": "Portulacaria afra",
+        "familyNameCanonical": "Portulacaceae",
+        "genusName": "Portulacaria",
+        "legacyRowSha256": "21571469f5422921a8684bc3c2ab942521f5d2a6acfa688d6829dcb9d5cdbc35"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 120,
+      "legacyReference": {
+        "displayNameZh": "量天尺",
+        "scientificName": "Selenicereus undatus",
+        "familyNameCanonical": "Cactaceae",
+        "genusName": "Selenicereus",
+        "legacyRowSha256": "c6bc9baab1570a03d808b0a59ea788506744c0cdba46dd62827ffaf219bb5e41"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 121,
+      "legacyReference": {
+        "displayNameZh": "仙人球",
+        "scientificName": "Echinopsis oxygona",
+        "familyNameCanonical": "Cactaceae",
+        "genusName": "Echinopsis",
+        "legacyRowSha256": "100a7ed96753fa48c53f82846eb9dfc1bf2d8884846bd3ceca436487072b936d"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 122,
+      "legacyReference": {
+        "displayNameZh": "金琥",
+        "scientificName": "Echinocactus grusonii",
+        "familyNameCanonical": "Cactaceae",
+        "genusName": "Echinocactus",
+        "legacyRowSha256": "19b7e1b5221ee2ebc7b313a0af3689f97238cdb393e5fc4ca63a99399dd4d7bc"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 123,
+      "legacyReference": {
+        "displayNameZh": "绯牡丹",
+        "scientificName": "Gymnocalycium mihanovichii",
+        "familyNameCanonical": "Cactaceae",
+        "genusName": "Gymnocalycium",
+        "legacyRowSha256": "b8d5e715f08baaccf1e6c693a0f430b7c8e4c884c02ea0bbe9677654ff001b35"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 124,
+      "legacyReference": {
+        "displayNameZh": "白鸟",
+        "scientificName": "Mammillaria plumosa",
+        "familyNameCanonical": "Cactaceae",
+        "genusName": "Mammillaria",
+        "legacyRowSha256": "37caf38e20046092d3ca40895499fd6299410573cca814faeb87876e93793d0b"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 125,
+      "legacyReference": {
+        "displayNameZh": "龙骨",
+        "scientificName": "Euphorbia lactea",
+        "familyNameCanonical": "Euphorbiaceae",
+        "genusName": "Euphorbia",
+        "legacyRowSha256": "58ee98842fc88781cef0aa21b98d3e945cdd85de4b0e205e3f06d086550f0d4b"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 126,
+      "legacyReference": {
+        "displayNameZh": "虎刺梅",
+        "scientificName": "Euphorbia milii",
+        "familyNameCanonical": "Euphorbiaceae",
+        "genusName": "Euphorbia",
+        "legacyRowSha256": "c74236c223a73c5f9cbb16c76edec9beaec69635181ec4db0be27817b028b7cf"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 127,
+      "legacyReference": {
+        "displayNameZh": "佛珠",
+        "scientificName": "Curio rowleyanus",
+        "familyNameCanonical": "Asteraceae",
+        "genusName": "Curio",
+        "legacyRowSha256": "34ea4e464f307b47d49f3d7576ff3de0358d7f390a662e911626252b8355d688"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 128,
+      "legacyReference": {
+        "displayNameZh": "碰碰香",
+        "scientificName": "Plectranthus amboinicus",
+        "familyNameCanonical": "Lamiaceae",
+        "genusName": "Plectranthus",
+        "legacyRowSha256": "95b546ca6836906d6da42c267878ad8f4888ad0c0fee07ad4ea35b2179e56f98"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 129,
+      "legacyReference": {
+        "displayNameZh": "不死鸟",
+        "scientificName": "Kalanchoe daigremontiana",
+        "familyNameCanonical": "Crassulaceae",
+        "genusName": "Kalanchoe",
+        "legacyRowSha256": "43fa23cf092d386ccd7a566e3cb2aaaa6e0acdf4107687e0299d5cce88ff2b05"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 130,
+      "legacyReference": {
+        "displayNameZh": "落地生根",
+        "scientificName": "Kalanchoe pinnata",
+        "familyNameCanonical": "Crassulaceae",
+        "genusName": "Kalanchoe",
+        "legacyRowSha256": "8e79edf53a20d1302c79ba5c4b11c7ff975e6eae57aea37f8bc5d4e5d1c5b9b9"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 131,
+      "legacyReference": {
+        "displayNameZh": "三色堇",
+        "scientificName": "Viola × wittrockiana",
+        "familyNameCanonical": "Violaceae",
+        "genusName": "Viola",
+        "legacyRowSha256": "0290aa4db9f6b916977507d6ce5d039e975e569b83329974170fe47fe461b4cb"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE",
+        "REPRESENTATIVE_EVIDENCE_CANNOT_ADMIT_FULL_SEED"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED",
+        "REPRESENTATIVE_EVIDENCE_ONLY"
+      ],
+      "representativeEvidenceRef": "P0-TAX-E04",
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 132,
+      "legacyReference": {
+        "displayNameZh": "矮牵牛",
+        "scientificName": "Petunia × atkinsiana",
+        "familyNameCanonical": "Solanaceae",
+        "genusName": "Petunia",
+        "legacyRowSha256": "735010e1abc67710f578129994fb4dead60a15bb38ead2e9349cc2311cec56e8"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 133,
+      "legacyReference": {
+        "displayNameZh": "天竺葵",
+        "scientificName": "Pelargonium × hortorum",
+        "familyNameCanonical": "Geraniaceae",
+        "genusName": "Pelargonium",
+        "legacyRowSha256": "e24c875ef53299d4779fabadb639441fd69efc7088c2f3c4ffa142bfebcedbb7"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 134,
+      "legacyReference": {
+        "displayNameZh": "长春花",
+        "scientificName": "Catharanthus roseus",
+        "familyNameCanonical": "Apocynaceae",
+        "genusName": "Catharanthus",
+        "legacyRowSha256": "00e2d11170b396c202edf86afc726d3df3fef737adc70783df65ee0a9072c2f9"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 135,
+      "legacyReference": {
+        "displayNameZh": "金鱼草",
+        "scientificName": "Antirrhinum majus",
+        "familyNameCanonical": "Plantaginaceae",
+        "genusName": "Antirrhinum",
+        "legacyRowSha256": "8ab6c84189e9759e702999f33bf2d0e8a7041e9bfbf50d92c41eafd5dacff60b"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 136,
+      "legacyReference": {
+        "displayNameZh": "雏菊",
+        "scientificName": "Bellis perennis",
+        "familyNameCanonical": "Asteraceae",
+        "genusName": "Bellis",
+        "legacyRowSha256": "0daf6f05430d673fca0d7455472f01c206f5b7f30cf397ac3aff1277b6455b63"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 137,
+      "legacyReference": {
+        "displayNameZh": "玛格丽特",
+        "scientificName": "Argyranthemum frutescens",
+        "familyNameCanonical": "Asteraceae",
+        "genusName": "Argyranthemum",
+        "legacyRowSha256": "c6e6769e4f8812ffcdeddbea2551f0a3d6e1bc4c2b8104f97a7c87b84e61f3f6"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 138,
+      "legacyReference": {
+        "displayNameZh": "金盏花",
+        "scientificName": "Calendula officinalis",
+        "familyNameCanonical": "Asteraceae",
+        "genusName": "Calendula",
+        "legacyRowSha256": "2614a016ae004f5724d13c1ff13f0c1a5ce16f9524d4bf37d44249f92d2be4fa"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 139,
+      "legacyReference": {
+        "displayNameZh": "向日葵",
+        "scientificName": "Helianthus annuus",
+        "familyNameCanonical": "Asteraceae",
+        "genusName": "Helianthus",
+        "legacyRowSha256": "0cf312645917e0d5d333808fc1f049b29b320099b83e44dfcf745cc22ce8bf24"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 140,
+      "legacyReference": {
+        "displayNameZh": "百日草",
+        "scientificName": "Zinnia elegans",
+        "familyNameCanonical": "Asteraceae",
+        "genusName": "Zinnia",
+        "legacyRowSha256": "af8a1632899c7c0f52d0c15159bbf6010222cf2f8d9a0732fd25d79c3998b54a"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 141,
+      "legacyReference": {
+        "displayNameZh": "鸡冠花",
+        "scientificName": "Celosia argentea",
+        "familyNameCanonical": "Amaranthaceae",
+        "genusName": "Celosia",
+        "legacyRowSha256": "ea40e9847432bec0fc0ffaf27af03eb7a5ad82164a7755614857da3ec44cc53c"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 142,
+      "legacyReference": {
+        "displayNameZh": "石竹",
+        "scientificName": "Dianthus chinensis",
+        "familyNameCanonical": "Caryophyllaceae",
+        "genusName": "Dianthus",
+        "legacyRowSha256": "faee5c90649241a240486a2fa7719816842688db1cba9cc123156f03df1b13c0"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 143,
+      "legacyReference": {
+        "displayNameZh": "紫罗兰",
+        "scientificName": "Matthiola incana",
+        "familyNameCanonical": "Brassicaceae",
+        "genusName": "Matthiola",
+        "legacyRowSha256": "161f36059ad71d13b784f17c42afb1df91a5737366ce1ef73fb12302bc34706e"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 144,
+      "legacyReference": {
+        "displayNameZh": "四季海棠",
+        "scientificName": "Begonia cucullata",
+        "familyNameCanonical": "Begoniaceae",
+        "genusName": "Begonia",
+        "legacyRowSha256": "9dbe6f2b5c2274fabdafd10e42f639cbc702f046e86f82c1c2da301a9437472b"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 145,
+      "legacyReference": {
+        "displayNameZh": "丽格海棠",
+        "scientificName": "Begonia × hiemalis",
+        "familyNameCanonical": "Begoniaceae",
+        "genusName": "Begonia",
+        "legacyRowSha256": "fd861203a223289cd1b073cc72f0396560ce110c97101522bd90247c21a66179"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 146,
+      "legacyReference": {
+        "displayNameZh": "大岩桐",
+        "scientificName": "Sinningia speciosa",
+        "familyNameCanonical": "Gesneriaceae",
+        "genusName": "Sinningia",
+        "legacyRowSha256": "cb7d04be89f197894251c80469a6e4e309fc77ff4c7b1d0ab8df8e80e39d6a2b"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 147,
+      "legacyReference": {
+        "displayNameZh": "倒挂金钟",
+        "scientificName": "Fuchsia hybrida",
+        "familyNameCanonical": "Onagraceae",
+        "genusName": "Fuchsia",
+        "legacyRowSha256": "911b211c9c27cf43bf46b86b0b77e234180e0c8e741e025e9c947f673bd3890d"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 148,
+      "legacyReference": {
+        "displayNameZh": "蓝雪花",
+        "scientificName": "Plumbago auriculata",
+        "familyNameCanonical": "Plumbaginaceae",
+        "genusName": "Plumbago",
+        "legacyRowSha256": "bd20ece45e704839dfa0cd1f74b69d227a1ccc6ebc14e49e03b9a55735d56daa"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 149,
+      "legacyReference": {
+        "displayNameZh": "茑萝",
+        "scientificName": "Ipomoea quamoclit",
+        "familyNameCanonical": "Convolvulaceae",
+        "genusName": "Ipomoea",
+        "legacyRowSha256": "d85a0136e029b7102ed5acccf7a929c17712be20a616bf3dc345b67c3fe265b2"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 150,
+      "legacyReference": {
+        "displayNameZh": "旱金莲",
+        "scientificName": "Tropaeolum majus",
+        "familyNameCanonical": "Tropaeolaceae",
+        "genusName": "Tropaeolum",
+        "legacyRowSha256": "5004d72e743b7ee7848963b6b3ad55240609c02450397d29505419e1a651176f"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 151,
+      "legacyReference": {
+        "displayNameZh": "木香花",
+        "scientificName": "Rosa banksiae",
+        "familyNameCanonical": "Rosaceae",
+        "genusName": "Rosa",
+        "legacyRowSha256": "193acda4c61151966534e8e295362fd729aeab04cb7dc1c6a41c9296e3d3ea1a"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 152,
+      "legacyReference": {
+        "displayNameZh": "金银花",
+        "scientificName": "Lonicera japonica",
+        "familyNameCanonical": "Caprifoliaceae",
+        "genusName": "Lonicera",
+        "legacyRowSha256": "d1d7523b924705e1a54a8e814060b8d775683a96eeb073dc0b24ae62789fdf07"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 153,
+      "legacyReference": {
+        "displayNameZh": "夜来香",
+        "scientificName": "Cestrum nocturnum",
+        "familyNameCanonical": "Solanaceae",
+        "genusName": "Cestrum",
+        "legacyRowSha256": "b6a773391302c23e28a23579e5092962cbc379533d61bcf99d21717d9184a1f5"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 154,
+      "legacyReference": {
+        "displayNameZh": "桂花",
+        "scientificName": "Osmanthus fragrans",
+        "familyNameCanonical": "Oleaceae",
+        "genusName": "Osmanthus",
+        "legacyRowSha256": "9c1dfc6e4deac620f36127d3e3c276facba6048b6a2c46f38d1c2bece5de958c"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 155,
+      "legacyReference": {
+        "displayNameZh": "朱顶红",
+        "scientificName": "Hippeastrum × hybridum",
+        "familyNameCanonical": "Amaryllidaceae",
+        "genusName": "Hippeastrum",
+        "legacyRowSha256": "88e9f71f1fa134318bfc060a124654ccd92d19b27bb1a3a0e037dd3d07e783f3"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 156,
+      "legacyReference": {
+        "displayNameZh": "番红花",
+        "scientificName": "Crocus spp.",
+        "familyNameCanonical": "Iridaceae",
+        "genusName": "Crocus",
+        "legacyRowSha256": "98b20fa0978bc881faf27cf98f778d27bf558f6a7ebd5002420b6be05debeb49"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 157,
+      "legacyReference": {
+        "displayNameZh": "唐菖蒲",
+        "scientificName": "Gladiolus × hortulanus",
+        "familyNameCanonical": "Iridaceae",
+        "genusName": "Gladiolus",
+        "legacyRowSha256": "0951eb4930c8e24c831484855ca31b5762f65ffa5ceb9dd14435625239a10a72"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 158,
+      "legacyReference": {
+        "displayNameZh": "大丽花",
+        "scientificName": "Dahlia pinnata",
+        "familyNameCanonical": "Asteraceae",
+        "genusName": "Dahlia",
+        "legacyRowSha256": "426d73235f7ab4a639571a47969120625ae34e38ec808deb46fe8337d3cf2457"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 159,
+      "legacyReference": {
+        "displayNameZh": "美人蕉",
+        "scientificName": "Canna indica",
+        "familyNameCanonical": "Cannaceae",
+        "genusName": "Canna",
+        "legacyRowSha256": "efe499e2c5de22d8853bb54c070f7ca325d7a728a68a3707317eab0389d30a1c"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 160,
+      "legacyReference": {
+        "displayNameZh": "姜荷花",
+        "scientificName": "Curcuma alismatifolia",
+        "familyNameCanonical": "Zingiberaceae",
+        "genusName": "Curcuma",
+        "legacyRowSha256": "5891098f871a3f59b7a50c46703568fd3018e350afc09462f4c6ecac0d18e1f0"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 161,
+      "legacyReference": {
+        "displayNameZh": "鸢尾",
+        "scientificName": "Iris germanica",
+        "familyNameCanonical": "Iridaceae",
+        "genusName": "Iris",
+        "legacyRowSha256": "d4d6be85fc29f5e0497a5c8cff7dcc2ad9ecfc80c17583b9b2588c43aae34c5d"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 162,
+      "legacyReference": {
+        "displayNameZh": "再力花",
+        "scientificName": "Thalia dealbata",
+        "familyNameCanonical": "Marantaceae",
+        "genusName": "Thalia",
+        "legacyRowSha256": "1f9571a3a4b124baa196f266645736a62565f6d1b9ce48c9a64c3d3182dc24d2"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 163,
+      "legacyReference": {
+        "displayNameZh": "梭鱼草",
+        "scientificName": "Pontederia cordata",
+        "familyNameCanonical": "Pontederiaceae",
+        "genusName": "Pontederia",
+        "legacyRowSha256": "e5638612e380267e9fd352f12158b3dbfbedefbff1f75a772daaaee8fe089433"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 164,
+      "legacyReference": {
+        "displayNameZh": "水葱",
+        "scientificName": "Schoenoplectus tabernaemontani",
+        "familyNameCanonical": "Cyperaceae",
+        "genusName": "Schoenoplectus",
+        "legacyRowSha256": "81886f12954e6a81344e428f0533b4d96c6799422bd95705f30523c25204e48b"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 165,
+      "legacyReference": {
+        "displayNameZh": "碗莲",
+        "scientificName": "Nelumbo nucifera",
+        "familyNameCanonical": "Nelumbonaceae",
+        "genusName": "Nelumbo",
+        "legacyRowSha256": "79f87423656faa22273a85a82b582a8b31899a4c749684d18b8cedf3dc740ff6"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "DUPLICATE_MERGE_OR_SPLIT_UNDECIDED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE",
+        "R1_DUPLICATE_SCIENTIFIC_NAME"
+      ],
+      "duplicateGroup": "D02_Nelumbo_nucifera",
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 166,
+      "legacyReference": {
+        "displayNameZh": "金钱蒲",
+        "scientificName": "Acorus gramineus",
+        "familyNameCanonical": "Acoraceae",
+        "genusName": "Acorus",
+        "legacyRowSha256": "2fbad394195998c59b61c3347a2ffe402283d8f4208624074d699560aeff3597"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 167,
+      "legacyReference": {
+        "displayNameZh": "旱伞草",
+        "scientificName": "Cyperus alternifolius",
+        "familyNameCanonical": "Cyperaceae",
+        "genusName": "Cyperus",
+        "legacyRowSha256": "0b51fd95beddcbab1a6f4ef108f428d6875b2d28f0e62c1837a24dd595c36755"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 168,
+      "legacyReference": {
+        "displayNameZh": "迷迭香",
+        "scientificName": "Salvia rosmarinus",
+        "familyNameCanonical": "Lamiaceae",
+        "genusName": "Salvia",
+        "legacyRowSha256": "8b62d5fc5f9b221d419a47f612c8d06bdcba7cc1b949d34f6e2bc4fcc7a31ad4"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 169,
+      "legacyReference": {
+        "displayNameZh": "百里香",
+        "scientificName": "Thymus vulgaris",
+        "familyNameCanonical": "Lamiaceae",
+        "genusName": "Thymus",
+        "legacyRowSha256": "10be365637ee76f0e293d403716a39057a2ce0704d22b459b466af886ee0cfa7"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 170,
+      "legacyReference": {
+        "displayNameZh": "牛至",
+        "scientificName": "Origanum vulgare",
+        "familyNameCanonical": "Lamiaceae",
+        "genusName": "Origanum",
+        "legacyRowSha256": "23b7b65e8919a26b5576a4bfb631120fd638a515270631f194998f2d18aa85a5"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 171,
+      "legacyReference": {
+        "displayNameZh": "鼠尾草",
+        "scientificName": "Salvia officinalis",
+        "familyNameCanonical": "Lamiaceae",
+        "genusName": "Salvia",
+        "legacyRowSha256": "8f41f76cbc798c31a477a2464d3137a2ddc9e5608a1ed25faebd9d5e749ad9a6"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 172,
+      "legacyReference": {
+        "displayNameZh": "紫苏",
+        "scientificName": "Perilla frutescens",
+        "familyNameCanonical": "Lamiaceae",
+        "genusName": "Perilla",
+        "legacyRowSha256": "41793e183950297a416ef860f72b4032e8d9cea85407149cbaeca747ac54413a"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 173,
+      "legacyReference": {
+        "displayNameZh": "欧芹",
+        "scientificName": "Petroselinum crispum",
+        "familyNameCanonical": "Apiaceae",
+        "genusName": "Petroselinum",
+        "legacyRowSha256": "8a643158fe0c9fd57a29373a25823a0d186652c8607d8281657fc14874251d7a"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 174,
+      "legacyReference": {
+        "displayNameZh": "莳萝",
+        "scientificName": "Anethum graveolens",
+        "familyNameCanonical": "Apiaceae",
+        "genusName": "Anethum",
+        "legacyRowSha256": "a1439666588429aa9ab5ac872a273c9a72f47e750cc5b6a43d21977343dffc49"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 175,
+      "legacyReference": {
+        "displayNameZh": "细香葱",
+        "scientificName": "Allium schoenoprasum",
+        "familyNameCanonical": "Amaryllidaceae",
+        "genusName": "Allium",
+        "legacyRowSha256": "633b00e7ac5bdeef5ec4627e44bbbf2b597ca77a301a68c0f2395b6fd5b14f52"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 176,
+      "legacyReference": {
+        "displayNameZh": "柠檬香蜂草",
+        "scientificName": "Melissa officinalis",
+        "familyNameCanonical": "Lamiaceae",
+        "genusName": "Melissa",
+        "legacyRowSha256": "aea6d662fb78c51ddca88f5d20256b8329f59c3bd7c263e44d0bafca7eb106a2"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 177,
+      "legacyReference": {
+        "displayNameZh": "茴香",
+        "scientificName": "Foeniculum vulgare",
+        "familyNameCanonical": "Apiaceae",
+        "genusName": "Foeniculum",
+        "legacyRowSha256": "287c28b0c3ab0c1efd7f5efd6ac46b25936af5907a98e9ae5ca709d4b946f3bb"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 178,
+      "legacyReference": {
+        "displayNameZh": "芝麻菜",
+        "scientificName": "Eruca vesicaria",
+        "familyNameCanonical": "Brassicaceae",
+        "genusName": "Eruca",
+        "legacyRowSha256": "de5ebcb535392476502a53adebd10eb2d4e90dba6a895125c812c2ecc2b08b4f"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 179,
+      "legacyReference": {
+        "displayNameZh": "菠菜",
+        "scientificName": "Spinacia oleracea",
+        "familyNameCanonical": "Amaranthaceae",
+        "genusName": "Spinacia",
+        "legacyRowSha256": "891ec76158c56fd1543e8a92f54fbc7db02325a20fb9d3f2367d3a0e97d6d8de"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 180,
+      "legacyReference": {
+        "displayNameZh": "油麦菜",
+        "scientificName": "Lactuca sativa var. longifolia",
+        "familyNameCanonical": "Asteraceae",
+        "genusName": "Lactuca",
+        "legacyRowSha256": "bf63b1953b537f8c2d1e17878c45962d64a370dd4423ca2af920f8fd42c21db1"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 181,
+      "legacyReference": {
+        "displayNameZh": "小白菜",
+        "scientificName": "Brassica rapa subsp. chinensis",
+        "familyNameCanonical": "Brassicaceae",
+        "genusName": "Brassica",
+        "legacyRowSha256": "aef0c161cc21b6c80a3febce8a0a8d09ac3eb70abd1c0262010ce269ff5e7314"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE",
+        "DUPLICATE_MERGE_OR_SPLIT_UNDECIDED",
+        "REPRESENTATIVE_EVIDENCE_CANNOT_ADMIT_FULL_SEED"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED",
+        "R1_DUPLICATE_SCIENTIFIC_NAME",
+        "REPRESENTATIVE_EVIDENCE_ONLY"
+      ],
+      "duplicateGroup": "D03_Brassica_rapa_subsp_chinensis",
+      "representativeEvidenceRef": "P0-TAX-E03",
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 182,
+      "legacyReference": {
+        "displayNameZh": "上海青",
+        "scientificName": "Brassica rapa subsp. chinensis",
+        "familyNameCanonical": "Brassicaceae",
+        "genusName": "Brassica",
+        "legacyRowSha256": "4a8de9a813e4a8d275d2a745fe50ca75eec6a081084edc37b19946167b19a87f"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE",
+        "DUPLICATE_MERGE_OR_SPLIT_UNDECIDED",
+        "REPRESENTATIVE_EVIDENCE_CANNOT_ADMIT_FULL_SEED"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED",
+        "R1_DUPLICATE_SCIENTIFIC_NAME",
+        "REPRESENTATIVE_EVIDENCE_ONLY"
+      ],
+      "duplicateGroup": "D03_Brassica_rapa_subsp_chinensis",
+      "representativeEvidenceRef": "P0-TAX-E03",
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 183,
+      "legacyReference": {
+        "displayNameZh": "羽衣甘蓝",
+        "scientificName": "Brassica oleracea var. acephala",
+        "familyNameCanonical": "Brassicaceae",
+        "genusName": "Brassica",
+        "legacyRowSha256": "b4775ca7a51aa30b70065ddf7736ba7813a2553eee66b5783e1b79d6031df30c"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 184,
+      "legacyReference": {
+        "displayNameZh": "茄子",
+        "scientificName": "Solanum melongena",
+        "familyNameCanonical": "Solanaceae",
+        "genusName": "Solanum",
+        "legacyRowSha256": "8914b49b4f074b82104d66f89162c3a02f917da5d546f83356ae3802874c2e6d"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 185,
+      "legacyReference": {
+        "displayNameZh": "黄瓜",
+        "scientificName": "Cucumis sativus",
+        "familyNameCanonical": "Cucurbitaceae",
+        "genusName": "Cucumis",
+        "legacyRowSha256": "bc2d7faa4ef28493b685a3f12b62bd56e95847cfd203cb9461d1cd37160d4dcc"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 186,
+      "legacyReference": {
+        "displayNameZh": "苦瓜",
+        "scientificName": "Momordica charantia",
+        "familyNameCanonical": "Cucurbitaceae",
+        "genusName": "Momordica",
+        "legacyRowSha256": "221420c896fc11b62148c7e1e2bdaa16d4a394aa7890155ed363235c63373a39"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 187,
+      "legacyReference": {
+        "displayNameZh": "丝瓜",
+        "scientificName": "Luffa aegyptiaca",
+        "familyNameCanonical": "Cucurbitaceae",
+        "genusName": "Luffa",
+        "legacyRowSha256": "757a530f5d6a18a2cdffd344603a0f4a1c99f89a0f862a37eabdde8a100aa3f3"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 188,
+      "legacyReference": {
+        "displayNameZh": "南瓜",
+        "scientificName": "Cucurbita moschata",
+        "familyNameCanonical": "Cucurbitaceae",
+        "genusName": "Cucurbita",
+        "legacyRowSha256": "9101485ba5f3cc40b3bf31cea52f3d9b30edd572826ee92c218de70e83d67730"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 189,
+      "legacyReference": {
+        "displayNameZh": "西葫芦",
+        "scientificName": "Cucurbita pepo",
+        "familyNameCanonical": "Cucurbitaceae",
+        "genusName": "Cucurbita",
+        "legacyRowSha256": "df5357b84b6ec2329eb93071df2012ee59214ceb45f8a34a4e974e2abf7ff30f"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 190,
+      "legacyReference": {
+        "displayNameZh": "豌豆",
+        "scientificName": "Pisum sativum",
+        "familyNameCanonical": "Fabaceae",
+        "genusName": "Pisum",
+        "legacyRowSha256": "72a91a33a5707ad7711b4572bcaad5df892ebe61008a7c65b71dec6ac5e44e43"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 191,
+      "legacyReference": {
+        "displayNameZh": "四季豆",
+        "scientificName": "Phaseolus vulgaris",
+        "familyNameCanonical": "Fabaceae",
+        "genusName": "Phaseolus",
+        "legacyRowSha256": "30d3d63d44709cb20cde3be3d04cf332638de7ed9d6549c35d5e2878477b2365"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 192,
+      "legacyReference": {
+        "displayNameZh": "豆角",
+        "scientificName": "Vigna unguiculata subsp. sesquipedalis",
+        "familyNameCanonical": "Fabaceae",
+        "genusName": "Vigna",
+        "legacyRowSha256": "435d70dfcb7cb1cdf8d5a26f6dc69e0d59ad925294ae37d9deeed0996c80c042"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 193,
+      "legacyReference": {
+        "displayNameZh": "秋葵",
+        "scientificName": "Abelmoschus esculentus",
+        "familyNameCanonical": "Malvaceae",
+        "genusName": "Abelmoschus",
+        "legacyRowSha256": "58b3c36467360baf91c2f0d647ad52188b89d13dfaf6ac563e08d619db7e174f"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 194,
+      "legacyReference": {
+        "displayNameZh": "甜椒",
+        "scientificName": "Capsicum annuum",
+        "familyNameCanonical": "Solanaceae",
+        "genusName": "Capsicum",
+        "legacyRowSha256": "b4b9cc91e2fa4bc2368ae269ff7340da271568189c0857c3d686bfa6921be0a2"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 195,
+      "legacyReference": {
+        "displayNameZh": "樱桃番茄",
+        "scientificName": "Solanum lycopersicum var. cerasiforme",
+        "familyNameCanonical": "Solanaceae",
+        "genusName": "Solanum",
+        "legacyRowSha256": "83aa3654bbdfc009d1947a445af7287798014e518120a3707a3dc3caab88c6c2"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE",
+        "DUPLICATE_MERGE_OR_SPLIT_UNDECIDED"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED",
+        "R1_DUPLICATE_SCIENTIFIC_NAME"
+      ],
+      "duplicateGroup": "D04_Solanum_lycopersicum_var_cerasiforme",
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 196,
+      "legacyReference": {
+        "displayNameZh": "草莓",
+        "scientificName": "Fragaria × ananassa",
+        "familyNameCanonical": "Rosaceae",
+        "genusName": "Fragaria",
+        "legacyRowSha256": "4784b5064e2139eadebba5610303694c6266f0287211b8f4816d01171fbb10c9"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 197,
+      "legacyReference": {
+        "displayNameZh": "金边富贵竹",
+        "scientificName": "Dracaena sanderiana 'Variegata'",
+        "familyNameCanonical": "Asparagaceae",
+        "genusName": "Dracaena",
+        "legacyRowSha256": "71e2a7c1edb637ab540e293ee85aa3ef371067a82260d8897bc1f55cd30d5e28"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 198,
+      "legacyReference": {
+        "displayNameZh": "白玉虎皮兰",
+        "scientificName": "Dracaena trifasciata 'Moonshine'",
+        "familyNameCanonical": "Asparagaceae",
+        "genusName": "Dracaena",
+        "legacyRowSha256": "b81942192e7ce59ae5508a6e2aae9c2ada563f7a96004a0eece710837e2f2aae"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 199,
+      "legacyReference": {
+        "displayNameZh": "油画吊兰",
+        "scientificName": "Tradescantia fluminensis 'Tricolor'",
+        "familyNameCanonical": "Commelinaceae",
+        "genusName": "Tradescantia",
+        "legacyRowSha256": "fd22e10a17ea94bb8bdb066c60689ef02feaeef44e7e566f77bfdc2caebe247b"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED",
+        "RANK_OR_GROUP_REQUIRES_EXPLICIT_EVIDENCE"
+      ],
+      "riskTags": [
+        "R0_SPECIAL_RANK_OR_MIXED"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    },
+    {
+      "sourceRecordId": 200,
+      "legacyReference": {
+        "displayNameZh": "鹿角海棠",
+        "scientificName": "Oscularia deltoides",
+        "familyNameCanonical": "Aizoaceae",
+        "genusName": "Oscularia",
+        "legacyRowSha256": "910a79417298cfa77c1509d7fd4158ff62e96dd7a2a83ec6a5e0bf4d2f016d39"
+      },
+      "decision": "QUARANTINE",
+      "decisionReasons": [
+        "AUTHORITY_EVIDENCE_MISSING",
+        "RELEASE_PREDICATE_UNSATISFIED"
+      ],
+      "riskTags": [
+        "R2_NO_AUTHORITY_EVIDENCE"
+      ],
+      "representativeEvidenceRef": null,
+      "requiredForReconsideration": [
+        "可读回的原始种子行与 SHA-256",
+        "权威来源、稳定标识、来源版本与原始制品 SHA-256",
+        "明确分类等级、接受名或异名状态与完整父链",
+        "无歧义别名与人工审核裁决"
+      ]
+    }
+  ]
+}

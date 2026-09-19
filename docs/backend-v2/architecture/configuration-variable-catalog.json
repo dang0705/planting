@@ -1,0 +1,4947 @@
+{
+  "schemaVersion": "configuration-variable-catalog/v1",
+  "catalogVersion": "2026-09-20.3",
+  "language": "zh-CN",
+  "description": "青花植后端 v2 业务关键变量唯一目录。confirmed 表示已冻结，pending 表示必须在所属阶段冻结后才能实现对应范围，hard_rule 表示任何配置均不得覆盖。",
+  "validationMetadata": {
+    "variable": {
+      "level": "unit_real_data",
+      "expectedSource": "每项 expected 与 sourceRefs；已冻结值只接受 P0 决策、已冻结合同或可复算事实源。",
+      "coverage": "校验变量 ID、状态、来源、ClickUp 绑定、pending 阻断范围与生成阅读版的一致性。",
+      "notCovered": "不证明策略运行时解析、DDL、CloudBase 读回或真实业务调用。"
+    },
+    "providerProfile": {
+      "level": "unit_real_data",
+      "expectedSource": "每个 Provider 的 sourceRefs、输出合同、失败边界与 P0 外部能力证伪卡。",
+      "coverage": "校验首批 Provider 档案字段、来源引用、阻断范围与生成阅读版的一致性。",
+      "notCovered": "不证明凭证有效、网络可达、超时重试、成本计量或真实供应商调用。"
+    }
+  },
+  "variables": [
+    {
+      "id": "identity.guest.session_ttl_hours",
+      "chineseName": "游客会话有效期",
+      "domain": "identity",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "小时",
+      "status": "confirmed",
+      "currentValue": 24,
+      "allowed": "24",
+      "owner": "identity",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/guest-session-claim.md",
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "consumers": [
+        "identity",
+        "plant-knowledge",
+        "care",
+        "diagnosis",
+        "user-plant"
+      ],
+      "changePolicy": "发布新身份策略，仅影响新签发会话",
+      "fallback": "无有效策略时拒绝签发游客会话",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "达到 expiresAt 后拒绝继续使用和认领",
+      "decisionGroup": "identity_sessions"
+    },
+    {
+      "id": "identity.guest.proof_rotation_grace_seconds",
+      "chineseName": "游客持有证明轮换宽限期",
+      "domain": "identity",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "秒",
+      "status": "confirmed",
+      "currentValue": 300,
+      "allowed": "0..300",
+      "owner": "identity",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/guest-session-claim.md"
+      ],
+      "consumers": [
+        "identity",
+        "user-plant"
+      ],
+      "changePolicy": "发布新游客身份策略，仅影响轮换后新宽限期",
+      "fallback": "策略不可用时不接受上一版证明，当前证明仍按会话有效期校验",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "上一版证明最多接受 300 秒，超时后清除摘要并拒绝",
+      "decisionGroup": "identity_sessions"
+    },
+    {
+      "id": "identity.user.session_ttl_hours",
+      "chineseName": "登录用户会话有效期",
+      "domain": "identity",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "小时",
+      "status": "confirmed",
+      "currentValue": 24,
+      "allowed": "24",
+      "owner": "identity",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/principal-and-capability.md"
+      ],
+      "consumers": [
+        "identity",
+        "全部公开业务域"
+      ],
+      "changePolicy": "身份策略新版本向前生效",
+      "fallback": "策略不可用时拒绝签发新会话，不延长旧会话",
+      "phase": "P1",
+      "ticketTitle": "[P2] 统一身份 Principal",
+      "expected": "过期会话返回 PRINCIPAL_INVALID",
+      "decisionGroup": "identity_sessions"
+    },
+    {
+      "id": "identity.user.refresh_window_hours",
+      "chineseName": "登录会话续期窗口",
+      "domain": "identity",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "小时",
+      "status": "confirmed",
+      "currentValue": 0,
+      "allowed": "0（MVP 禁止静默续期）",
+      "owner": "identity",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/principal-and-capability.md"
+      ],
+      "consumers": [
+        "identity"
+      ],
+      "changePolicy": "启用续期必须发布新身份合同和策略版本，并新增轮换与撤销测试",
+      "fallback": "禁止静默续期；过期后重新验证平台凭证并签发新会话",
+      "phase": "P1",
+      "ticketTitle": "[P2] 统一身份 Principal",
+      "expected": "MVP 所有续期请求均失败且不延长旧会话",
+      "decisionGroup": "identity_sessions"
+    },
+    {
+      "id": "identity.service_signature.clock_skew_seconds",
+      "chineseName": "内部服务签名允许时钟偏差",
+      "domain": "identity",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "秒",
+      "status": "confirmed",
+      "currentValue": 300,
+      "allowed": "60..300",
+      "owner": "identity",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/http-api.md"
+      ],
+      "consumers": [
+        "Agent API",
+        "Job API",
+        "Callback API"
+      ],
+      "changePolicy": "安全策略审批发布",
+      "fallback": "无值时拒绝内部签名请求",
+      "phase": "P1",
+      "ticketTitle": "[P1] 公共 HTTP 合同与 OpenAPI 路由骨架",
+      "expected": "请求时间与服务端 UTC 时间绝对差超过 300 秒时返回 401",
+      "decisionGroup": "identity_sessions"
+    },
+    {
+      "id": "identity.service_signature.nonce_ttl_seconds",
+      "chineseName": "内部签名防重放 nonce 有效期",
+      "domain": "identity",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "秒",
+      "status": "confirmed",
+      "currentValue": 600,
+      "allowed": "600..900",
+      "owner": "identity",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/http-api.md"
+      ],
+      "consumers": [
+        "Agent API",
+        "Job API",
+        "Callback API"
+      ],
+      "changePolicy": "安全策略审批发布",
+      "fallback": "无值时拒绝内部签名请求",
+      "phase": "P1",
+      "ticketTitle": "[P1] 公共 HTTP 合同与 OpenAPI 路由骨架",
+      "expected": "同一服务的 nonce 从首次验签成功起至少保留 600 秒且只能接受一次，更换 key_id 也不得重放",
+      "decisionGroup": "identity_sessions"
+    },
+    {
+      "id": "identity.platform_subject.single_owner",
+      "chineseName": "平台主体唯一归属规则",
+      "domain": "identity",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": true,
+      "owner": "identity",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/principal-and-capability.md",
+        "AGENTS.md"
+      ],
+      "consumers": [
+        "identity",
+        "全部业务域"
+      ],
+      "changePolicy": "不可配置，变更需架构重审",
+      "fallback": "冲突进入人工裁决",
+      "phase": "P1",
+      "ticketTitle": "[P2] 统一身份 Principal",
+      "expected": "同平台主体不能绑定多个 user_id",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "subscription.entitlement.precedence",
+      "chineseName": "权益层级优先顺序",
+      "domain": "subscription",
+      "layer": "hard_rule",
+      "valueType": "ordered_enum",
+      "status": "hard_rule",
+      "currentValue": [
+        "member",
+        "trial",
+        "free",
+        "guest"
+      ],
+      "owner": "subscription",
+      "sourceRefs": [
+        "README.md",
+        "docs/backend-v2/contracts/principal-and-capability.md"
+      ],
+      "consumers": [
+        "subscription",
+        "全部业务域"
+      ],
+      "changePolicy": "不可由配置逆转语义",
+      "fallback": "无法判定时使用最低合法层级",
+      "phase": "P1",
+      "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
+      "expected": "会员优先于试用，试用优先于免费和游客",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "subscription.trial.duration_hours",
+      "chineseName": "一次性试用有效期",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "小时",
+      "status": "confirmed",
+      "currentValue": 24,
+      "allowed": "24",
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-02",
+        "docs/backend-v2/contracts/principal-and-capability.md"
+      ],
+      "consumers": [
+        "identity",
+        "subscription",
+        "diagnosis",
+        "CloudBase Agent"
+      ],
+      "changePolicy": "新策略只向前生效，既有绝对到期时间不重算",
+      "fallback": "策略不可用时不授予试用",
+      "phase": "P1",
+      "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
+      "expected": "每个 user_id 终身一次且绝对到期",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "id": "subscription.trial.ai_points",
+      "chineseName": "试用 AI 点数",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "AI 点",
+      "status": "confirmed",
+      "currentValue": 200,
+      "allowed": "200",
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-02",
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "subscription",
+        "diagnosis",
+        "CloudBase Agent"
+      ],
+      "changePolicy": "发布新试用策略，不覆盖已发 grant",
+      "fallback": "额度策略不可用时不授予生成式试用",
+      "phase": "P1",
+      "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
+      "expected": "发放 200 点且并发下只发一次",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "id": "subscription.trial.ai_scopes",
+      "chineseName": "试用 AI 能力范围",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "enum_array",
+      "status": "confirmed",
+      "currentValue": [
+        "USER_AGENT_TEXT",
+        "USER_DIAGNOSIS_TEXT",
+        "USER_DIAGNOSIS_VISUAL"
+      ],
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-02"
+      ],
+      "consumers": [
+        "subscription",
+        "diagnosis",
+        "CloudBase Agent"
+      ],
+      "changePolicy": "不可变策略版本",
+      "fallback": "scope 不匹配时拒绝预占",
+      "phase": "P1",
+      "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
+      "expected": "内部 CMS 与分类能力不在试用 scope",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "id": "subscription.member.price_cny",
+      "chineseName": "会员订阅价格",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "decimal_string",
+      "unit": "人民币元/订阅周期",
+      "status": "confirmed",
+      "currentValue": "9.90",
+      "owner": "subscription",
+      "sourceRefs": [
+        "README.md",
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md"
+      ],
+      "consumers": [
+        "subscription",
+        "微信支付适配器"
+      ],
+      "changePolicy": "价格版本与订单快照绑定，不覆盖历史订单",
+      "fallback": "价格策略不可用时停止新下单",
+      "phase": "P1",
+      "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
+      "expected": "客户端不能提交价格",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "id": "subscription.member.ai_points_per_cycle",
+      "chineseName": "会员每周期 AI 点数",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "AI 点/订阅周期",
+      "status": "confirmed",
+      "currentValue": 2000,
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md",
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "subscription",
+        "diagnosis",
+        "CloudBase Agent"
+      ],
+      "changePolicy": "新套餐版本向前生效，历史 grant 不覆盖",
+      "fallback": "策略缺失时不发会员额度",
+      "phase": "P1",
+      "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
+      "expected": "无日限额、周限额且周期结束不结转",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "id": "subscription.member.rollover_enabled",
+      "chineseName": "会员额度跨周期结转",
+      "domain": "subscription",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": false,
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "subscription"
+      ],
+      "changePolicy": "不可配置",
+      "fallback": "周期结束将未消费会员 grant 置过期",
+      "phase": "P1",
+      "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
+      "expected": "下一周期不继承上一周期余额",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "subscription.reward.ai_scopes",
+      "chineseName": "奖励额度可用能力范围",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "enum_array",
+      "status": "confirmed",
+      "currentValue": [
+        "USER_AGENT_TEXT",
+        "USER_DIAGNOSIS_TEXT",
+        "USER_DIAGNOSIS_VISUAL"
+      ],
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-04"
+      ],
+      "consumers": [
+        "subscription",
+        "diagnosis",
+        "CloudBase Agent"
+      ],
+      "changePolicy": "新策略不扩张旧 grant scope",
+      "fallback": "不匹配时拒绝预占",
+      "phase": "P1",
+      "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
+      "expected": "不含 CMS_ENRICHMENT、分类审核、天气和百度识别",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "id": "subscription.reward.expiry_calendar_months",
+      "chineseName": "CMS、等级与兑换奖励有效期",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "日历月",
+      "status": "confirmed",
+      "currentValue": 3,
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "subscription"
+      ],
+      "changePolicy": "新策略只影响新 grant",
+      "fallback": "无法解析时不发 grant",
+      "phase": "P1",
+      "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
+      "expected": "从实际入账日加三个月，会员到期不提前失效",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "id": "subscription.points.first_profile",
+      "chineseName": "首株有效档案积分",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "积分",
+      "status": "confirmed",
+      "currentValue": 20,
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "user-plant",
+        "subscription"
+      ],
+      "changePolicy": "按事件 occurredAt 锁定不可变策略",
+      "fallback": "策略无法解析则隔离事件",
+      "phase": "P1",
+      "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
+      "expected": "每用户终身只发一次",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "id": "subscription.points.due_soil_check",
+      "chineseName": "到期盆土与浇水检查积分",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "积分",
+      "status": "confirmed",
+      "currentValue": 5,
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "care",
+        "subscription"
+      ],
+      "changePolicy": "按事件发生时策略",
+      "fallback": "策略不可用则不入账并进入重试",
+      "phase": "P1",
+      "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
+      "expected": "浇水与暂不浇水奖励相同",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "id": "subscription.points.due_fertilizer_check",
+      "chineseName": "到期施肥条件检查积分",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "积分",
+      "status": "confirmed",
+      "currentValue": 5,
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "care",
+        "subscription"
+      ],
+      "changePolicy": "按事件发生时策略",
+      "fallback": "策略不可用则不入账并进入重试",
+      "phase": "P1",
+      "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
+      "expected": "无需实际施肥即可获得正确检查奖励",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "id": "subscription.points.fixed_diagnosis",
+      "chineseName": "有效固定题包问诊积分",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "积分",
+      "status": "confirmed",
+      "currentValue": 10,
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "diagnosis",
+        "subscription"
+      ],
+      "changePolicy": "按事件发生时策略",
+      "fallback": "策略不可用则隔离事件",
+      "phase": "P1",
+      "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
+      "expected": "同植物同症状窗口内最多一次",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "id": "subscription.points.fixed_diagnosis_window_hours",
+      "chineseName": "固定题包积分防刷窗口",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "小时",
+      "status": "confirmed",
+      "currentValue": 720,
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "diagnosis",
+        "subscription"
+      ],
+      "changePolicy": "新积分策略",
+      "fallback": "按更严格窗口拒绝重复奖励",
+      "phase": "P1",
+      "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
+      "expected": "30×24 小时内同一植物同一症状只奖励一次",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "id": "subscription.points.expiry_enabled",
+      "chineseName": "积分是否过期",
+      "domain": "subscription",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": false,
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "subscription"
+      ],
+      "changePolicy": "不可配置",
+      "fallback": "积分持续有效",
+      "phase": "P1",
+      "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
+      "expected": "时间推进不减少积分",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "subscription.level.thresholds",
+      "chineseName": "养护等级阈值与奖励",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "object_array",
+      "status": "confirmed",
+      "currentValue": [
+        {
+          "code": "L0",
+          "name": "萌芽",
+          "points": 0,
+          "aiReward": 0
+        },
+        {
+          "code": "L1",
+          "name": "扎根",
+          "points": 100,
+          "aiReward": 50
+        },
+        {
+          "code": "L2",
+          "name": "展叶",
+          "points": 300,
+          "aiReward": 100
+        },
+        {
+          "code": "L3",
+          "name": "生长",
+          "points": 800,
+          "aiReward": 150
+        },
+        {
+          "code": "L4",
+          "name": "茂盛",
+          "points": 1800,
+          "aiReward": 250
+        },
+        {
+          "code": "L5",
+          "name": "共生",
+          "points": 4000,
+          "aiReward": 400
+        }
+      ],
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "subscription"
+      ],
+      "changePolicy": "版本化发布，已发等级奖励不可重复",
+      "fallback": "策略无效时停止升级和奖励，不改积分账本",
+      "phase": "P1",
+      "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
+      "expected": "五级总奖励 950 点且每级终身一次",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "id": "subscription.redemption.catalog",
+      "chineseName": "MVP 积分兑换目录",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "object_array",
+      "status": "confirmed",
+      "currentValue": [],
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-05"
+      ],
+      "consumers": [
+        "subscription"
+      ],
+      "changePolicy": "新增档位必须独立成本审批和真实并发验收",
+      "fallback": "返回稳定空目录",
+      "phase": "P1",
+      "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
+      "expected": "MVP 不接受任何积分兑换",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "id": "subscription.ai_cost.point_base_cny",
+      "chineseName": "单个 AI 点对应基础成本",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "decimal_string",
+      "unit": "人民币元",
+      "status": "confirmed",
+      "currentValue": "0.001",
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "subscription",
+        "AI 成本对账"
+      ],
+      "changePolicy": "新成本策略版本，不重算已结算动作",
+      "fallback": "价目或策略缺失则停止新增生成式消费",
+      "phase": "P1",
+      "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
+      "expected": "使用人民币微元整数计算",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "id": "subscription.ai_cost.safety_factor",
+      "chineseName": "AI 成本安全系数",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "decimal_string",
+      "unit": "倍",
+      "status": "confirmed",
+      "currentValue": "1.25",
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "subscription",
+        "AI 成本对账"
+      ],
+      "changePolicy": "新成本策略只影响新动作",
+      "fallback": "无有效策略不发起模型调用",
+      "phase": "P1",
+      "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
+      "expected": "点数=向上取整(costMicros/800)",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "id": "subscription.ai_budget.monthly_cny",
+      "chineseName": "平台 AI 月预算",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "人民币元/月",
+      "status": "confirmed",
+      "currentValue": 500,
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-10"
+      ],
+      "consumers": [
+        "subscription",
+        "observability",
+        "所有生成式能力"
+      ],
+      "changePolicy": "预算策略审批后按自然月生效",
+      "fallback": "预算事实不可用时停止新增 AI 消费",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "达到 500 元停止新增 AI 消费",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "id": "subscription.ai_budget.warning_cny",
+      "chineseName": "AI 月预算告警线",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "人民币元/月",
+      "status": "confirmed",
+      "currentValue": 400,
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-10"
+      ],
+      "consumers": [
+        "observability"
+      ],
+      "changePolicy": "与月预算同版本",
+      "fallback": "无法计算时按最高风险告警",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "累计成本达到 400 元产生告警",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "id": "subscription.ai_budget.restrict_cny",
+      "chineseName": "AI 月预算限制线",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "人民币元/月",
+      "status": "confirmed",
+      "currentValue": 450,
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-10"
+      ],
+      "consumers": [
+        "subscription",
+        "所有生成式能力"
+      ],
+      "changePolicy": "与月预算同版本",
+      "fallback": "达到后仅保留必要对账",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "累计成本达到 450 元限制新增消费",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "id": "subscription.ai_reservation.ttl_seconds",
+      "chineseName": "AI 额度预占有效期",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "秒",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "subscription",
+        "diagnosis",
+        "CloudBase Agent"
+      ],
+      "changePolicy": "成本策略版本",
+      "fallback": "未冻结前不开放真实模型调用",
+      "phase": "P3",
+      "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
+      "expected": "过期预占只能经对账结算或释放",
+      "pendingReason": "合同定义 expiresAt 但未冻结时长",
+      "blockingScope": "生成式 AI 调用",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "id": "subscription.ai_action.required_budget_fields",
+      "chineseName": "AI 产品动作成本策略必填字段",
+      "domain": "subscription",
+      "layer": "hard_rule",
+      "valueType": "enum_array",
+      "status": "hard_rule",
+      "currentValue": [
+        "modelFamily",
+        "providerCode",
+        "maxInputTokens",
+        "maxOutputTokens",
+        "maxImages",
+        "maxModelLoops",
+        "maxCostMicros",
+        "estimatedPoints",
+        "costPolicyVersion"
+      ],
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "diagnosis",
+        "CloudBase Agent",
+        "subscription"
+      ],
+      "changePolicy": "不可配置；具体动作值通过各动作不可变策略配置",
+      "fallback": "缺任一字段的产品动作不得开放",
+      "phase": "P1",
+      "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
+      "expected": "所有生成式产品动作使用同一组审计字段",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "user-plant.free.active_limit",
+      "chineseName": "免费用户活跃植物上限",
+      "domain": "user-plant",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "株",
+      "status": "confirmed",
+      "currentValue": 1,
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-03",
+        "docs/backend-v2/contracts/principal-and-capability.md"
+      ],
+      "consumers": [
+        "user-plant",
+        "subscription"
+      ],
+      "changePolicy": "新策略只限制未来创建，不删除既有植物",
+      "fallback": "策略不可用时拒绝新增植物",
+      "phase": "P1",
+      "ticketTitle": "[P1] 用户植物、身份和游客认领合同",
+      "expected": "archived/deleted 不占 active 上限",
+      "decisionGroup": "userplant_limits"
+    },
+    {
+      "id": "user-plant.profile.minimum_completeness",
+      "chineseName": "有效档案最低完整度",
+      "domain": "user-plant",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "status": "confirmed",
+      "currentValue": {
+        "profileVersion": "user-plant-profile/v1",
+        "requiredFields": [
+          "identityStatus",
+          "pot",
+          "location",
+          "lightingEnvironment",
+          "ventilationEnvironment"
+        ],
+        "acceptedIdentityStates": [
+          "unidentified",
+          "candidate_pending",
+          "confirmed"
+        ],
+        "rewardOncePerUser": true
+      },
+      "allowed": "user-plant-profile/v1 精确字段集合；身份状态允许 unidentified、candidate_pending、confirmed；每个 user_id 仅奖励一次",
+      "owner": "user-plant",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md",
+        "docs/backend-v2/contracts/user-plant.md"
+      ],
+      "consumers": [
+        "user-plant",
+        "subscription"
+      ],
+      "changePolicy": "用户植物档案策略版本",
+      "fallback": "未冻结前不发首株有效档案积分",
+      "phase": "P1",
+      "ticketTitle": "[P1] 用户植物、身份和游客认领合同",
+      "expected": "服务端仅在合法身份状态、盆器、位置、光照环境、通风与空气环境全部具备时判定首次有效档案；每个 user_id 仅奖励一次",
+      "decisionGroup": "userplant_limits"
+    },
+    {
+      "id": "user-plant.assets.max_count_per_plant",
+      "chineseName": "单株植物资产数量上限",
+      "domain": "user-plant",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "个",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "user-plant",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-07"
+      ],
+      "consumers": [
+        "user-plant",
+        "storage"
+      ],
+      "changePolicy": "资产策略版本",
+      "fallback": "未冻结前只允许最小封面资产集合",
+      "phase": "P2",
+      "ticketTitle": "[P1] 用户植物、身份和游客认领合同",
+      "expected": "超过上限返回稳定业务错误",
+      "pendingReason": "容量与成本尚未测量",
+      "blockingScope": "多资产上传",
+      "decisionGroup": "userplant_limits"
+    },
+    {
+      "id": "user-plant.lifecycle.owner_guard",
+      "chineseName": "用户植物归属校验不可绕过",
+      "domain": "user-plant",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": true,
+      "owner": "user-plant",
+      "sourceRefs": [
+        "AGENTS.md",
+        "docs/backend-v2/contracts/user-plant.md"
+      ],
+      "consumers": [
+        "全部用户植物相关域"
+      ],
+      "changePolicy": "不可配置",
+      "fallback": "归属无法证明返回 404",
+      "phase": "P1",
+      "ticketTitle": "[P1] 用户植物、身份和游客认领合同",
+      "expected": "跨用户访问不泄露对象存在性",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "user-plant.guest_claim.once",
+      "chineseName": "游客案例只能认领一次",
+      "domain": "user-plant",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": true,
+      "owner": "user-plant",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/guest-session-claim.md"
+      ],
+      "consumers": [
+        "user-plant",
+        "care",
+        "diagnosis"
+      ],
+      "changePolicy": "不可配置",
+      "fallback": "重复认领返回首次确定结果或冲突",
+      "phase": "P1",
+      "ticketTitle": "[P1] 用户植物、身份和游客认领合同",
+      "expected": "事务内不重复建植物或绑定临时对象",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "plant-knowledge.cms.identity_reward_points",
+      "chineseName": "新增规范植物身份奖励",
+      "domain": "plant-knowledge",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "AI 点",
+      "status": "confirmed",
+      "currentValue": 100,
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-06",
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "plant-knowledge",
+        "subscription"
+      ],
+      "changePolicy": "新奖励策略只影响未来 release",
+      "fallback": "release/唯一键不可证明时不发奖",
+      "phase": "P1",
+      "ticketTitle": "[P1] 植物分类与身份准入硬门",
+      "expected": "首次实际发布且全局唯一",
+      "decisionGroup": "cms_worker_content"
+    },
+    {
+      "id": "plant-knowledge.cms.content_reward_points",
+      "chineseName": "基础展示内容补全奖励",
+      "domain": "plant-knowledge",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "AI 点",
+      "status": "confirmed",
+      "currentValue": 50,
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-06",
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "plant-knowledge",
+        "subscription"
+      ],
+      "changePolicy": "按内容结构版本发布新策略",
+      "fallback": "未实际 release 不发奖",
+      "phase": "P1",
+      "ticketTitle": "[P1] 植物分类与身份准入硬门",
+      "expected": "同身份同内容结构版本全局只奖励一次",
+      "decisionGroup": "cms_worker_content"
+    },
+    {
+      "id": "plant-knowledge.taxonomy.authority_priority",
+      "chineseName": "植物分类权威来源角色与冲突策略",
+      "domain": "plant-knowledge",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "status": "confirmed",
+      "currentValue": {
+        "primaryClassification": [
+          "POWO",
+          "WCVP"
+        ],
+        "crossCheck": [
+          "WFO"
+        ],
+        "cultivarAuthority": [
+          "RHS_ICRA"
+        ],
+        "conflictResolution": "QUARANTINE_AND_HUMAN_REVIEW"
+      },
+      "owner": "plant-knowledge",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/plant-taxonomy.md",
+        "docs/backend-v2/audits/P0-taxonomy-exit-gate.md"
+      ],
+      "consumers": [
+        "plant-knowledge",
+        "CMS 发布"
+      ],
+      "changePolicy": "分类证据策略经人工审核发布",
+      "fallback": "来源冲突进入 QUARANTINE",
+      "phase": "P1",
+      "ticketTitle": "[P1] 植物分类与身份准入硬门",
+      "expected": "模型不得裁决权威来源冲突",
+      "decisionGroup": "taxonomy_governance"
+    },
+    {
+      "id": "plant-knowledge.identity.baidu_candidate_thresholds",
+      "chineseName": "百度识别候选置信阈值映射",
+      "domain": "plant-knowledge",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "plant-knowledge",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "consumers": [
+        "plant-knowledge"
+      ],
+      "changePolicy": "识别准入策略版本",
+      "fallback": "只返回候选，不创建规范身份",
+      "phase": "P3",
+      "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
+      "expected": "阈值变化不能越过人工身份准入",
+      "pendingReason": "真实百度响应和映射尚未 S4 验证",
+      "blockingScope": "自动候选排序",
+      "decisionGroup": "taxonomy_governance"
+    },
+    {
+      "id": "plant-knowledge.cms.content_schema_version",
+      "chineseName": "植物百科展示内容结构版本",
+      "domain": "plant-knowledge",
+      "layer": "domain_policy",
+      "valueType": "string",
+      "status": "confirmed",
+      "currentValue": "plant-encyclopedia-display/v1",
+      "allowed": "仅接受 docs/backend-v2/contracts/schemas/plant-encyclopedia-display.v1.schema.json 严格校验通过的展示字段",
+      "owner": "plant-knowledge",
+      "sourceRefs": [
+        "README.md",
+        "docs/backend-v2/implementation/cms-enrichment-worker.md",
+        "docs/backend-v2/contracts/schemas/plant-encyclopedia-display.v1.schema.json"
+      ],
+      "consumers": [
+        "plant-knowledge",
+        "CMS",
+        "subscription"
+      ],
+      "changePolicy": "不可变结构 release",
+      "fallback": "未知版本草稿不得发布",
+      "phase": "P1",
+      "ticketTitle": "[P1] 植物分类与身份准入硬门",
+      "expected": "展示内容只允许简介、外观、分布和 1 至 3 条问答；奖励主题键包含结构版本；分类、养护、安全和诊断字段拒绝",
+      "decisionGroup": "cms_worker_content"
+    },
+    {
+      "id": "plant-knowledge.cms.qa_target_count",
+      "chineseName": "基础展示百科问答目标数量",
+      "domain": "plant-knowledge",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "条",
+      "status": "confirmed",
+      "currentValue": 3,
+      "allowed": "1..3",
+      "owner": "plant-knowledge",
+      "sourceRefs": [
+        "README.md",
+        "青花植后端v2底层架构重构计划_融合闭环终版.md"
+      ],
+      "consumers": [
+        "百科补全 Worker",
+        "CMS"
+      ],
+      "changePolicy": "内容结构版本",
+      "fallback": "结构不符合则整份草稿拒绝",
+      "phase": "P1",
+      "ticketTitle": "[P1] 植物分类与身份准入硬门",
+      "expected": "只生成简短展示型问答",
+      "decisionGroup": "cms_worker_content"
+    },
+    {
+      "id": "plant-knowledge.cms.forbidden_fields",
+      "chineseName": "Qwen 百科草稿禁区字段",
+      "domain": "plant-knowledge",
+      "layer": "hard_rule",
+      "valueType": "enum_array",
+      "status": "hard_rule",
+      "currentValue": [
+        "family",
+        "genus",
+        "species",
+        "authority_source",
+        "authority_taxon_id",
+        "accepted_scientific_name",
+        "scientific_name_mutation",
+        "taxonomy_review_status",
+        "release_status",
+        "toxicity",
+        "edibility",
+        "medicinal_claim",
+        "child_safety",
+        "pet_safety",
+        "watering_frequency",
+        "fertilizing_frequency",
+        "lighting_requirement",
+        "ventilation_requirement",
+        "temperature_requirement",
+        "humidity_requirement",
+        "pest_or_disease_fact",
+        "diagnosis_basis",
+        "treatment_claim",
+        "safety_fact"
+      ],
+      "owner": "plant-knowledge",
+      "sourceRefs": [
+        "README.md",
+        "AGENTS.md"
+      ],
+      "consumers": [
+        "百科补全 Worker",
+        "CMS 发布校验"
+      ],
+      "changePolicy": "不可通过运营配置缩小禁区",
+      "fallback": "出现任一禁区字段整份拒绝",
+      "phase": "P1",
+      "ticketTitle": "[P1] 植物分类与身份准入硬门",
+      "expected": "任一分类、养护、安全、食药用、病虫害、诊断治疗、审核或发布字段出现时整份草稿拒绝",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "plant-knowledge.enrichment.queue_lease_seconds",
+      "chineseName": "CMS 补全任务租约时长",
+      "domain": "plant-knowledge",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "秒",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "plant-knowledge",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md",
+        "docs/backend-v2/implementation/cms-enrichment-worker.md"
+      ],
+      "consumers": [
+        "百科补全 Worker"
+      ],
+      "changePolicy": "队列运行策略版本",
+      "fallback": "未冻结时不启动自动 Worker",
+      "phase": "P3",
+      "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
+      "expected": "租约过期可接管且不重复发布",
+      "pendingReason": "数值子项仍 CONTRACT_STOP",
+      "blockingScope": "自动 CMS 补全",
+      "decisionGroup": "cms_worker_content"
+    },
+    {
+      "id": "plant-knowledge.enrichment.max_attempts",
+      "chineseName": "CMS 补全任务最大尝试次数",
+      "domain": "plant-knowledge",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "次",
+      "status": "confirmed",
+      "currentValue": 3,
+      "owner": "plant-knowledge",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "consumers": [
+        "百科补全 Worker"
+      ],
+      "changePolicy": "队列运行策略版本",
+      "fallback": "达到 3 次后进入人工队列，不再自动调用模型",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "同一任务自动尝试最多 3 次",
+      "allowed": "3",
+      "decisionGroup": "cms_worker_content"
+    },
+    {
+      "id": "plant-knowledge.enrichment.monthly_budget_cny",
+      "chineseName": "CMS 补全真实模型启用预算",
+      "domain": "plant-knowledge",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "人民币元/月",
+      "status": "confirmed",
+      "currentValue": 0,
+      "owner": "plant-knowledge",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "consumers": [
+        "百科补全 Worker",
+        "observability"
+      ],
+      "changePolicy": "平台内容预算策略",
+      "fallback": "预算为 0 时暂停生成并继续聚合需求",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "未经独立批准不得产生真实模型成本",
+      "allowed": "0",
+      "decisionGroup": "cms_worker_content"
+    },
+    {
+      "id": "plant-knowledge.identity.release_required",
+      "chineseName": "规范身份必须通过不可变发布准入",
+      "domain": "plant-knowledge",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": true,
+      "owner": "plant-knowledge",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/plant-taxonomy.md",
+        "README.md"
+      ],
+      "consumers": [
+        "plant-knowledge",
+        "user-plant",
+        "care",
+        "diagnosis"
+      ],
+      "changePolicy": "不可配置",
+      "fallback": "未准入身份保持候选或隔离",
+      "phase": "P1",
+      "ticketTitle": "[P1] 植物分类与身份准入硬门",
+      "expected": "百度和 Qwen 均不能直接创建分类事实",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "care.soil_evidence.ttl_hours",
+      "chineseName": "盆土视觉证据有效期",
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "小时",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "care",
+      "sourceRefs": [
+        "青花植后端v2底层架构重构计划_融合闭环终版.md",
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "consumers": [
+        "care",
+        "独立浇水顾问"
+      ],
+      "changePolicy": "证据策略新版本，只影响新计算",
+      "fallback": "有效期无法证明时要求重新检查",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "expected": "过期证据不得参与浇水决策",
+      "pendingReason": "架构只冻结短时证据语义，未冻结具体小时数",
+      "blockingScope": "盆土视觉证据复用",
+      "decisionGroup": "care_algorithms"
+    },
+    {
+      "id": "care.weather.current_freshness_minutes",
+      "chineseName": "实时天气证据新鲜度",
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "分钟",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "care",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "consumers": [
+        "care",
+        "天气快照"
+      ],
+      "changePolicy": "天气证据策略版本",
+      "fallback": "返回证据不足而非伪造实时天气",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "expected": "过期天气明确标记 stale",
+      "pendingReason": "和风实时接口与业务新鲜度尚未真实验证",
+      "blockingScope": "依赖实时天气的养护结论",
+      "decisionGroup": "care_algorithms"
+    },
+    {
+      "id": "care.weather.forecast_freshness_minutes",
+      "chineseName": "天气预报证据新鲜度",
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "分钟",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "care",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "consumers": [
+        "care",
+        "天气快照"
+      ],
+      "changePolicy": "天气证据策略版本",
+      "fallback": "缺失时降低可信度",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "expected": "新鲜度进入 evidenceSummary",
+      "pendingReason": "预报边界未冻结",
+      "blockingScope": "天气增强养护",
+      "decisionGroup": "care_algorithms"
+    },
+    {
+      "id": "care.watering.algorithm_version",
+      "chineseName": "浇水算法版本",
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "string",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "care",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-capability-output.md"
+      ],
+      "consumers": [
+        "care"
+      ],
+      "changePolicy": "算法 release 不可变，输出合同独立版本化",
+      "fallback": "无已发布算法返回 temporarily_unavailable",
+      "phase": "P2",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "expected": "输出保留 care-capability-result/v1",
+      "pendingReason": "v2 算法尚未冻结",
+      "blockingScope": "v2 浇水实现",
+      "decisionGroup": "care_algorithms"
+    },
+    {
+      "id": "care.fertilizing.algorithm_version",
+      "chineseName": "施肥算法版本",
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "string",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "care",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-capability-output.md"
+      ],
+      "consumers": [
+        "care"
+      ],
+      "changePolicy": "算法 release 不可变",
+      "fallback": "无算法返回 temporarily_unavailable",
+      "phase": "P2",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "expected": "计划不等同已施肥事实",
+      "pendingReason": "v2 算法尚未冻结",
+      "blockingScope": "v2 施肥实现",
+      "decisionGroup": "care_algorithms"
+    },
+    {
+      "id": "care.lighting.algorithm_version",
+      "chineseName": "光照算法版本",
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "string",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "care",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-capability-output.md"
+      ],
+      "consumers": [
+        "care"
+      ],
+      "changePolicy": "算法 release 不可变",
+      "fallback": "证据不足返回 insufficient_evidence",
+      "phase": "P2",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "expected": "同时使用环境、植物需求和天气证据",
+      "pendingReason": "v2 算法尚未冻结",
+      "blockingScope": "v2 光照实现",
+      "decisionGroup": "care_algorithms"
+    },
+    {
+      "id": "care.ventilation.algorithm_version",
+      "chineseName": "通风算法版本",
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "string",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "care",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-capability-output.md"
+      ],
+      "consumers": [
+        "care"
+      ],
+      "changePolicy": "算法 release 不可变",
+      "fallback": "证据不足返回 insufficient_evidence",
+      "phase": "P2",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "expected": "室外风速不得直接等同室内通风",
+      "pendingReason": "v2 算法尚未冻结",
+      "blockingScope": "v2 通风实现",
+      "decisionGroup": "care_algorithms"
+    },
+    {
+      "id": "care.output.contract_version",
+      "chineseName": "四类养护统一输出合同版本",
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "string",
+      "status": "confirmed",
+      "currentValue": "care-capability-result/v1",
+      "owner": "care",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-capability-output.md"
+      ],
+      "consumers": [
+        "care",
+        "未来前端",
+        "CloudBase Agent"
+      ],
+      "changePolicy": "破坏性变化必须升版本并保留兼容读取",
+      "fallback": "未知版本不对外返回",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "算法变化不改变稳定外壳",
+      "decisionGroup": "care_algorithms"
+    },
+    {
+      "id": "care.recommendation.write_fact_directly",
+      "chineseName": "建议是否可直接写入事实",
+      "domain": "care",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": false,
+      "owner": "care",
+      "sourceRefs": [
+        "AGENTS.md",
+        "docs/backend-v2/contracts/care-capability-output.md"
+      ],
+      "consumers": [
+        "care",
+        "diagnosis",
+        "CloudBase Agent"
+      ],
+      "changePolicy": "不可配置",
+      "fallback": "只返回建议，等待用户确认",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "建议不能自动创建养护事件、计划或提醒",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "diagnosis.model.family",
+      "chineseName": "AI 问诊产品模型家族",
+      "domain": "diagnosis",
+      "layer": "domain_policy",
+      "valueType": "string",
+      "status": "confirmed",
+      "currentValue": "qwen3.5-flash",
+      "owner": "diagnosis",
+      "sourceRefs": [
+        "README.md",
+        "AGENTS.md",
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "consumers": [
+        "diagnosis",
+        "Bailian Adapter"
+      ],
+      "changePolicy": "模型与 Prompt、Schema 组成不可变 release",
+      "fallback": "模型不可用时不静默换模",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "产品层锁定 Qwen 3.5 Flash，真实调用仍校验 Provider 精确 model_code",
+      "decisionGroup": "diagnosis_releases"
+    },
+    {
+      "id": "diagnosis.prompt.release_sha256",
+      "chineseName": "AI 问诊提示词发布哈希",
+      "domain": "diagnosis",
+      "layer": "domain_policy",
+      "valueType": "sha256",
+      "status": "confirmed",
+      "currentValue": "11c58cebe3b3c41097d6f6d6b3c5b5d7eb16248e4f07bacd497868a647ccc964",
+      "allowed": "diagnosis-visual/v1 规范化 UTF-8 Prompt 的精确 SHA-256",
+      "owner": "diagnosis",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md",
+        "docs/backend-v2/contracts/prompts/diagnosis-visual.v1.release.json"
+      ],
+      "consumers": [
+        "diagnosis",
+        "Bailian Adapter"
+      ],
+      "changePolicy": "不可变 Prompt release",
+      "fallback": "哈希缺失或不匹配时阻断 AI 问诊",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "调用审计只记录 diagnosis-visual/v1 与规范化 SHA-256，不记录 Prompt 全文；哈希不匹配时拒绝调用",
+      "decisionGroup": "diagnosis_releases"
+    },
+    {
+      "id": "diagnosis.result.schema_version",
+      "chineseName": "AI 问诊结构化结果版本",
+      "domain": "diagnosis",
+      "layer": "domain_policy",
+      "valueType": "string",
+      "status": "confirmed",
+      "currentValue": "diagnosis-model-output/v1",
+      "allowed": "仅接受 docs/backend-v2/contracts/schemas/diagnosis-model-output.v1.schema.json 严格校验通过的结果",
+      "owner": "diagnosis",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md",
+        "docs/backend-v2/contracts/schemas/diagnosis-model-output.v1.schema.json"
+      ],
+      "consumers": [
+        "diagnosis",
+        "Bailian Adapter"
+      ],
+      "changePolicy": "不可变 JSON Schema release",
+      "fallback": "校验失败整份拒绝",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "只接受证据、候选结论、不确定性和需用户确认的建议动作；校验失败整份拒绝，原始模型输出不进入公开响应",
+      "decisionGroup": "diagnosis_releases"
+    },
+    {
+      "id": "diagnosis.visual.max_images",
+      "chineseName": "单次视觉问诊最大图片数",
+      "domain": "diagnosis",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "张",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "diagnosis",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/http-api.md",
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md"
+      ],
+      "consumers": [
+        "diagnosis",
+        "storage",
+        "AI 成本策略"
+      ],
+      "changePolicy": "产品动作成本策略版本",
+      "fallback": "未冻结前不开放多图视觉问诊",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "expected": "图片上限与最大成本同时校验",
+      "pendingReason": "动作上限和真实成本未冻结",
+      "blockingScope": "视觉问诊",
+      "decisionGroup": "diagnosis_releases"
+    },
+    {
+      "id": "diagnosis.fixed_packages.release_refs",
+      "chineseName": "黄叶与萎蔫固定题包发布引用",
+      "domain": "diagnosis",
+      "layer": "domain_policy",
+      "valueType": "object_map",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "diagnosis",
+      "sourceRefs": [
+        "README.md",
+        "青花植后端v2底层架构重构计划_融合闭环终版.md"
+      ],
+      "consumers": [
+        "diagnosis"
+      ],
+      "changePolicy": "题包不可变 release + active 指针",
+      "fallback": "无已发布题包则该症状入口不可用",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "expected": "只读取已发布题包",
+      "pendingReason": "旧题包需审计后初始化 v2 release",
+      "blockingScope": "固定问诊",
+      "decisionGroup": "diagnosis_releases"
+    },
+    {
+      "id": "diagnosis.dynamic_pest.max_rounds",
+      "chineseName": "动态虫害问诊最大轮次",
+      "domain": "diagnosis",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "轮",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "diagnosis",
+      "sourceRefs": [
+        "青花植后端v2底层架构重构计划_融合闭环终版.md"
+      ],
+      "consumers": [
+        "diagnosis"
+      ],
+      "changePolicy": "动态题包策略版本",
+      "fallback": "达到上限返回可解释的中止结果",
+      "phase": "P2",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "expected": "循环有上限且可恢复",
+      "pendingReason": "动态题包合同尚未冻结",
+      "blockingScope": "动态虫害问诊",
+      "decisionGroup": "diagnosis_releases"
+    },
+    {
+      "id": "diagnosis.advice.direct_fact_write",
+      "chineseName": "诊断建议是否可直接写事实",
+      "domain": "diagnosis",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": false,
+      "owner": "diagnosis",
+      "sourceRefs": [
+        "AGENTS.md",
+        "README.md"
+      ],
+      "consumers": [
+        "diagnosis",
+        "care"
+      ],
+      "changePolicy": "不可配置",
+      "fallback": "等待用户确认后由 care 写事实",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "诊断结束不自动生成养护事实",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "storage.upload.allowed_mime_types",
+      "chineseName": "私有图片允许的 MIME 类型",
+      "domain": "storage",
+      "layer": "domain_policy",
+      "valueType": "enum_array",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "shared-storage",
+      "sourceRefs": [
+        "docs/backend-v2/implementation/storage-security.md",
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-07"
+      ],
+      "consumers": [
+        "user-plant",
+        "care",
+        "diagnosis",
+        "plant-knowledge"
+      ],
+      "changePolicy": "资产安全策略版本",
+      "fallback": "未冻结时拒绝 v2 图片上传",
+      "phase": "P3",
+      "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
+      "expected": "文件魔数与声明 MIME 一致",
+      "pendingReason": "MIME 白名单未冻结",
+      "blockingScope": "v2 图片上传",
+      "decisionGroup": "retention_security"
+    },
+    {
+      "id": "storage.upload.max_image_bytes",
+      "chineseName": "单张私有图片最大字节数",
+      "domain": "storage",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "字节",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "shared-storage",
+      "sourceRefs": [
+        "docs/backend-v2/implementation/storage-security.md",
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-07"
+      ],
+      "consumers": [
+        "user-plant",
+        "care",
+        "diagnosis",
+        "plant-knowledge"
+      ],
+      "changePolicy": "资产安全策略版本",
+      "fallback": "未冻结时拒绝 v2 图片上传",
+      "phase": "P3",
+      "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
+      "expected": "超限在处理前拒绝",
+      "pendingReason": "图片规格与成本未冻结",
+      "blockingScope": "v2 图片上传",
+      "decisionGroup": "retention_security"
+    },
+    {
+      "id": "storage.upload.credential_ttl_seconds",
+      "chineseName": "直传凭证有效期",
+      "domain": "storage",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "秒",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "shared-storage",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-07"
+      ],
+      "consumers": [
+        "storage",
+        "各图片业务域"
+      ],
+      "changePolicy": "资产安全策略版本",
+      "fallback": "凭证策略缺失则不签发",
+      "phase": "P3",
+      "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
+      "expected": "凭证过期、跨路径和跨用户均拒绝",
+      "pendingReason": "短时有效期尚未冻结",
+      "blockingScope": "客户端直传",
+      "decisionGroup": "retention_security"
+    },
+    {
+      "id": "storage.unbound_retention_hours",
+      "chineseName": "未绑定上传保留期",
+      "domain": "storage",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "小时",
+      "status": "confirmed",
+      "currentValue": 24,
+      "owner": "shared-storage",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-09"
+      ],
+      "consumers": [
+        "storage cleanup"
+      ],
+      "changePolicy": "生命周期策略版本",
+      "fallback": "无法安全删除时隔离并告警",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "到期后标记删除、清理和对账",
+      "decisionGroup": "retention_security"
+    },
+    {
+      "id": "storage.failed_retention_days",
+      "chineseName": "失败或隔离上传保留期",
+      "domain": "storage",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "天",
+      "status": "confirmed",
+      "currentValue": 7,
+      "owner": "shared-storage",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-09"
+      ],
+      "consumers": [
+        "storage cleanup"
+      ],
+      "changePolicy": "生命周期策略版本",
+      "fallback": "清理失败进入补偿队列",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "7 天后执行可审计清理",
+      "decisionGroup": "retention_security"
+    },
+    {
+      "id": "storage.raw_evidence_retention_days",
+      "chineseName": "诊断与盆土原始证据保留期",
+      "domain": "storage",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "天",
+      "status": "confirmed",
+      "currentValue": 30,
+      "owner": "shared-storage",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-09"
+      ],
+      "consumers": [
+        "care",
+        "diagnosis",
+        "storage cleanup"
+      ],
+      "changePolicy": "生命周期策略版本",
+      "fallback": "物理删除不安全时先隔离",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "业务结果与原始资产分开治理",
+      "decisionGroup": "retention_security"
+    },
+    {
+      "id": "storage.user_delete_cleanup_days",
+      "chineseName": "用户删除后清理窗口",
+      "domain": "storage",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "天",
+      "status": "confirmed",
+      "currentValue": 30,
+      "owner": "shared-storage",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-09"
+      ],
+      "consumers": [
+        "全部持久化域",
+        "storage cleanup"
+      ],
+      "changePolicy": "生命周期策略版本与隐私审批",
+      "fallback": "未完成反向引用核对不物理删除",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "先标记删除、禁新写、清理、对账",
+      "decisionGroup": "retention_security"
+    },
+    {
+      "id": "storage.private_assets.public_cms_allowed",
+      "chineseName": "用户私图是否允许进入公共 CMS",
+      "domain": "storage",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": false,
+      "owner": "shared-storage",
+      "sourceRefs": [
+        "AGENTS.md",
+        "docs/backend-v2/implementation/storage-security.md"
+      ],
+      "consumers": [
+        "plant-knowledge",
+        "CMS",
+        "storage"
+      ],
+      "changePolicy": "不可配置",
+      "fallback": "发现关联立即拒绝发布",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "任何用户私图均不能成为公共内容资产",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "provider.baidu_plant.timeout_ms",
+      "chineseName": "百度植物识别超时",
+      "domain": "plant-knowledge",
+      "layer": "provider_runtime",
+      "valueType": "integer",
+      "unit": "毫秒",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "consumers": [
+        "BaiduIdentifyAdapter"
+      ],
+      "changePolicy": "Provider release",
+      "fallback": "超时返回暂不可用，不写植物身份",
+      "phase": "P3",
+      "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
+      "expected": "有限超时且不无限重试",
+      "pendingReason": "真实接口 S4 未验证",
+      "blockingScope": "百度识别真实接入",
+      "decisionGroup": "provider_runtime"
+    },
+    {
+      "id": "provider.baidu_plant.max_attempts",
+      "chineseName": "百度植物识别最大尝试次数",
+      "domain": "plant-knowledge",
+      "layer": "provider_runtime",
+      "valueType": "integer",
+      "unit": "次",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "consumers": [
+        "BaiduIdentifyAdapter"
+      ],
+      "changePolicy": "Provider release",
+      "fallback": "未知结果不盲重试",
+      "phase": "P3",
+      "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
+      "expected": "重试有上限且计入平台预算",
+      "pendingReason": "错误分类和幂等性未实测",
+      "blockingScope": "百度识别真实接入",
+      "decisionGroup": "provider_runtime"
+    },
+    {
+      "id": "provider.qweather.timeout_ms",
+      "chineseName": "和风天气调用超时",
+      "domain": "care",
+      "layer": "provider_runtime",
+      "valueType": "integer",
+      "unit": "毫秒",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "consumers": [
+        "WeatherAdapter"
+      ],
+      "changePolicy": "Provider release",
+      "fallback": "使用仍有效缓存或返回证据不足",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "expected": "超时不伪造天气成功",
+      "pendingReason": "真实调用未 S4 验证",
+      "blockingScope": "天气增强能力",
+      "decisionGroup": "provider_runtime"
+    },
+    {
+      "id": "provider.bailian.model_code",
+      "chineseName": "云百炼精确模型标识",
+      "domain": "diagnosis",
+      "layer": "provider_runtime",
+      "valueType": "string",
+      "status": "confirmed",
+      "currentValue": "qwen3.5-flash-2026-02-23",
+      "allowed": "阿里云百炼不可变日期快照；禁止使用可滚动别名或静默替换模型",
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "README.md",
+        "AGENTS.md",
+        "docs/backend-v2/audits/P1-bailian-qwen35-flash-freeze.md"
+      ],
+      "consumers": [
+        "BailianDiagnosisAdapter",
+        "EncyclopediaQwenAdapter"
+      ],
+      "changePolicy": "每个能力独立 Provider release，禁止静默替换",
+      "fallback": "未冻结精确模型标识时不进行真实调用",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "产品家族固定 qwen3.5-flash，供应商 model_code 固定 qwen3.5-flash-2026-02-23；真实调用仍须独立验证凭证、endpoint、配额和账单",
+      "decisionGroup": "provider_runtime"
+    },
+    {
+      "id": "observability.ai.total_deadline_max_seconds",
+      "chineseName": "生成式 AI 请求总截止时间上限",
+      "domain": "observability",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "秒",
+      "status": "confirmed",
+      "currentValue": 60,
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-10"
+      ],
+      "consumers": [
+        "所有生成式能力",
+        "监控"
+      ],
+      "changePolicy": "SLO 策略版本；不替代每个 Provider 的连接、读取和首包超时",
+      "fallback": "截止后进入额度对账，不盲重试",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "业务请求总 deadline 不超过 60 秒",
+      "decisionGroup": "slo_capacity"
+    },
+    {
+      "id": "provider.wechat_pay.enabled_platforms",
+      "chineseName": "会员支付开放平台",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "enum_array",
+      "status": "confirmed",
+      "currentValue": [
+        "wechat_miniprogram"
+      ],
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-08"
+      ],
+      "consumers": [
+        "subscription",
+        "PaymentAdapter"
+      ],
+      "changePolicy": "新增平台需独立支付与对账合同",
+      "fallback": "非微信平台不提供购买入口",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "抖音和小红书不绕行微信支付",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "id": "provider.wechat_pay.timeout_ms",
+      "chineseName": "微信支付调用超时",
+      "domain": "subscription",
+      "layer": "provider_runtime",
+      "valueType": "integer",
+      "unit": "毫秒",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "consumers": [
+        "PaymentAdapter"
+      ],
+      "changePolicy": "Provider release",
+      "fallback": "未知结果只查单，不重新下单",
+      "phase": "P5",
+      "ticketTitle": "[P5] 真实 MySQL/API/安全/性能验收",
+      "expected": "超时不会重复创建订单或授予权益",
+      "pendingReason": "sandbox 真实回放未完成",
+      "blockingScope": "订阅支付",
+      "decisionGroup": "provider_runtime"
+    },
+    {
+      "id": "provider.notification.max_attempts",
+      "chineseName": "平台通知最大尝试次数",
+      "domain": "subscription",
+      "layer": "provider_runtime",
+      "valueType": "integer",
+      "unit": "次",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "README.md"
+      ],
+      "consumers": [
+        "NotifyAdapter"
+      ],
+      "changePolicy": "Provider release",
+      "fallback": "记录未送达，不伪造成功",
+      "phase": "P3",
+      "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
+      "expected": "失败可审计且重试有上限",
+      "pendingReason": "平台通知范围尚未证伪",
+      "blockingScope": "主动通知",
+      "decisionGroup": "provider_runtime"
+    },
+    {
+      "id": "provider.credentials.storage_mode",
+      "chineseName": "第三方凭证保存方式",
+      "domain": "configuration",
+      "layer": "hard_rule",
+      "valueType": "enum",
+      "status": "hard_rule",
+      "currentValue": "credential_ref_only",
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/architecture/configuration-and-providers.md",
+        "AGENTS.md"
+      ],
+      "consumers": [
+        "全部 Provider Adapter"
+      ],
+      "changePolicy": "不可配置",
+      "fallback": "缺失 credential_ref 时拒绝调用",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "配置、数据库、日志和响应均不出现密钥原文",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "deployment.cloudbase.env_id",
+      "chineseName": "P0-P5 验证 CloudBase 环境 ID",
+      "domain": "configuration",
+      "layer": "deployment_secret",
+      "valueType": "string",
+      "status": "confirmed",
+      "currentValue": "cloud1-2grufevs395a9d5e",
+      "owner": "platform-admin",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-01"
+      ],
+      "consumers": [
+        "部署脚本",
+        "云函数",
+        "数据库",
+        "CMS",
+        "Storage"
+      ],
+      "changePolicy": "用户明确授权后修改部署配置",
+      "fallback": "环境不匹配立即 BLOCKED_ENV",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "所有云端证据显式记录 EnvId，且不称为生产",
+      "decisionGroup": "deployment_environment"
+    },
+    {
+      "id": "deployment.cloudbase.region",
+      "chineseName": "CloudBase 地域",
+      "domain": "configuration",
+      "layer": "deployment_secret",
+      "valueType": "string",
+      "status": "confirmed",
+      "currentValue": "ap-shanghai",
+      "owner": "platform-admin",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-01"
+      ],
+      "consumers": [
+        "部署脚本",
+        "云函数"
+      ],
+      "changePolicy": "随环境部署配置变更",
+      "fallback": "地域不一致停止操作",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "环境与地域同时核验",
+      "decisionGroup": "deployment_environment"
+    },
+    {
+      "id": "http.json_body_limit_bytes",
+      "chineseName": "普通 JSON 请求体上限",
+      "domain": "http",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "字节",
+      "status": "confirmed",
+      "currentValue": 1048576,
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/http-api.md",
+        "青花植后端v2底层架构重构计划_融合闭环终版.md"
+      ],
+      "consumers": [
+        "全部 HTTP 云函数"
+      ],
+      "changePolicy": "HTTP 合同版本变更",
+      "fallback": "超限返回 413",
+      "phase": "P1",
+      "ticketTitle": "[P1] 公共 HTTP 合同与 OpenAPI 路由骨架",
+      "expected": "读取完整请求前执行大小限制",
+      "decisionGroup": "http_runtime"
+    },
+    {
+      "id": "http.list.default_page_size",
+      "chineseName": "列表默认分页大小",
+      "domain": "http",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "条",
+      "status": "confirmed",
+      "currentValue": 20,
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/http-api.md"
+      ],
+      "consumers": [
+        "全部列表 API"
+      ],
+      "changePolicy": "HTTP 合同版本变更",
+      "fallback": "未传参数使用 20",
+      "phase": "P1",
+      "ticketTitle": "[P1] 公共 HTTP 合同与 OpenAPI 路由骨架",
+      "expected": "响应分页字段稳定",
+      "decisionGroup": "http_runtime"
+    },
+    {
+      "id": "http.list.max_page_size",
+      "chineseName": "列表最大分页大小",
+      "domain": "http",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "条",
+      "status": "confirmed",
+      "currentValue": 50,
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/http-api.md"
+      ],
+      "consumers": [
+        "全部列表 API"
+      ],
+      "changePolicy": "HTTP 合同版本变更",
+      "fallback": "超过 50 返回校验错误",
+      "phase": "P1",
+      "ticketTitle": "[P1] 公共 HTTP 合同与 OpenAPI 路由骨架",
+      "expected": "客户端不能绕过最大值",
+      "decisionGroup": "http_runtime"
+    },
+    {
+      "id": "http.agent_tool_token_ttl_seconds",
+      "chineseName": "小青工具令牌有效期",
+      "domain": "http",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "秒",
+      "status": "confirmed",
+      "currentValue": 300,
+      "owner": "identity",
+      "sourceRefs": [
+        "青花植后端v2底层架构重构计划_融合闭环终版.md"
+      ],
+      "consumers": [
+        "CloudBase Agent",
+        "Agent API"
+      ],
+      "changePolicy": "内部服务授权策略版本",
+      "fallback": "过期立即拒绝",
+      "phase": "P1",
+      "ticketTitle": "[P1] 公共 HTTP 合同与 OpenAPI 路由骨架",
+      "expected": "令牌绑定用户范围和工具 allowlist",
+      "decisionGroup": "http_runtime"
+    },
+    {
+      "id": "http.processing_order.fixed",
+      "chineseName": "HTTP 请求处理顺序固定",
+      "domain": "http",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": true,
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "AGENTS.md",
+        "docs/backend-v2/contracts/http-api.md"
+      ],
+      "consumers": [
+        "全部 HTTP 云函数"
+      ],
+      "changePolicy": "不可配置",
+      "fallback": "任何步骤缺失均拒绝发布",
+      "phase": "P1",
+      "ticketTitle": "[P1] 公共 HTTP 合同与 OpenAPI 路由骨架",
+      "expected": "大小/MIME→认证→主体→归属→DTO→用例→领域→事务→脱敏",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "reliable-events.dispatch.interval_seconds",
+      "chineseName": "可靠事件派发周期",
+      "domain": "reliable-events",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "秒",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md",
+        "docs/backend-v2/contracts/reward-events.md"
+      ],
+      "consumers": [
+        "各域 outbox dispatcher"
+      ],
+      "changePolicy": "可靠事件运行策略",
+      "fallback": "未冻结时不启动自动派发",
+      "phase": "P3",
+      "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
+      "expected": "派发停止不回滚业务事实",
+      "pendingReason": "数值子项仍 CONTRACT_STOP",
+      "blockingScope": "跨域奖励自动入账",
+      "decisionGroup": "reliability_ops"
+    },
+    {
+      "id": "reliable-events.dispatch.lease_seconds",
+      "chineseName": "可靠事件派发租约时长",
+      "domain": "reliable-events",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "秒",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md",
+        "docs/backend-v2/contracts/reward-events.md"
+      ],
+      "consumers": [
+        "outbox dispatcher"
+      ],
+      "changePolicy": "可靠事件运行策略",
+      "fallback": "租约不明确时不并发派发",
+      "phase": "P3",
+      "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
+      "expected": "租约过期可接管且消费端幂等",
+      "pendingReason": "真实故障注入未完成",
+      "blockingScope": "跨域奖励自动入账",
+      "decisionGroup": "reliability_ops"
+    },
+    {
+      "id": "reliable-events.backlog.alert_count",
+      "chineseName": "可靠事件积压告警阈值",
+      "domain": "reliable-events",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "条",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "consumers": [
+        "observability",
+        "outbox dispatcher"
+      ],
+      "changePolicy": "可靠事件运行策略",
+      "fallback": "阈值未知时按异常积压告警",
+      "phase": "P3",
+      "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
+      "expected": "积压可见且不丢事件",
+      "pendingReason": "容量基线未测量",
+      "blockingScope": "跨域奖励运维",
+      "decisionGroup": "reliability_ops"
+    },
+    {
+      "id": "reliable-events.delivery.semantics",
+      "chineseName": "可靠事件投递语义",
+      "domain": "reliable-events",
+      "layer": "hard_rule",
+      "valueType": "enum",
+      "status": "hard_rule",
+      "currentValue": "at_least_once_with_idempotent_consumer",
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/reward-events.md",
+        "青花植后端v2底层架构重构计划_融合闭环终版.md"
+      ],
+      "consumers": [
+        "全部奖励生产域",
+        "subscription"
+      ],
+      "changePolicy": "不可配置",
+      "fallback": "重复事件由 inbox 唯一键吸收",
+      "phase": "P1",
+      "ticketTitle": "[P1] 统一 AI 额度和奖励事件合同",
+      "expected": "不得宣称 exactly-once",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "observability.api.non_ai_p95_ms",
+      "chineseName": "非 AI API p95 目标",
+      "domain": "observability",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "毫秒",
+      "status": "confirmed",
+      "currentValue": 800,
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-10"
+      ],
+      "consumers": [
+        "全部非 AI API",
+        "监控"
+      ],
+      "changePolicy": "SLO 策略版本",
+      "fallback": "不达标阻断发布但不篡改响应",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "真实环境 p95 不超过 800ms",
+      "decisionGroup": "slo_capacity"
+    },
+    {
+      "id": "observability.api.non_ai_p99_ms",
+      "chineseName": "非 AI API p99 目标",
+      "domain": "observability",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "毫秒",
+      "status": "confirmed",
+      "currentValue": 1500,
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-10"
+      ],
+      "consumers": [
+        "全部非 AI API",
+        "监控"
+      ],
+      "changePolicy": "SLO 策略版本",
+      "fallback": "不达标阻断发布",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "真实环境 p99 不超过 1500ms",
+      "decisionGroup": "slo_capacity"
+    },
+    {
+      "id": "observability.ai.first_visible_event_p95_ms",
+      "chineseName": "AI 首个可见事件 p95 目标",
+      "domain": "observability",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "毫秒",
+      "status": "confirmed",
+      "currentValue": 3000,
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-10"
+      ],
+      "consumers": [
+        "diagnosis",
+        "CloudBase Agent",
+        "监控"
+      ],
+      "changePolicy": "SLO 策略版本",
+      "fallback": "不达标进入性能整改，不伪造首包",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "真实流式调用 p95 不超过 3 秒",
+      "decisionGroup": "slo_capacity"
+    },
+    {
+      "id": "observability.sql.slow_query_ms",
+      "chineseName": "慢 SQL 记录阈值",
+      "domain": "observability",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "毫秒",
+      "status": "confirmed",
+      "currentValue": 200,
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-10"
+      ],
+      "consumers": [
+        "DB",
+        "监控"
+      ],
+      "changePolicy": "SLO 策略版本",
+      "fallback": "超过阈值记录脱敏结构化事件",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "SQL 参数与敏感值不进入日志",
+      "decisionGroup": "slo_capacity"
+    },
+    {
+      "id": "observability.db.connection_safety_ratio",
+      "chineseName": "数据库连接安全占比",
+      "domain": "observability",
+      "layer": "domain_policy",
+      "valueType": "decimal_string",
+      "unit": "比例",
+      "status": "confirmed",
+      "currentValue": "0.70",
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-10"
+      ],
+      "consumers": [
+        "DB",
+        "CloudBase 函数部署"
+      ],
+      "changePolicy": "连接预算策略",
+      "fallback": "总连接上限未读回前连接池数值保持 STOP",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "实例数×池上限 < 数据库总连接上限×70%",
+      "decisionGroup": "slo_capacity"
+    },
+    {
+      "id": "observability.db.pool_size",
+      "chineseName": "单实例数据库连接池上限",
+      "domain": "observability",
+      "layer": "deployment_secret",
+      "valueType": "integer",
+      "unit": "连接数",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "platform-admin",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-10"
+      ],
+      "consumers": [
+        "DB",
+        "全部云函数"
+      ],
+      "changePolicy": "部署配置，须基于真实连接上限计算",
+      "fallback": "未读回总连接上限前不配置并发部署",
+      "phase": "P5",
+      "ticketTitle": "[P5] 真实 MySQL/API/安全/性能验收",
+      "expected": "满足 70% 安全不等式",
+      "pendingReason": "CloudBase MySQL 总连接上限未读回",
+      "blockingScope": "真实并发部署",
+      "decisionGroup": "deployment_environment"
+    },
+    {
+      "id": "configuration.request_snapshot.immutable",
+      "chineseName": "单次请求配置快照不可变",
+      "domain": "configuration",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": true,
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/architecture/configuration-and-providers.md"
+      ],
+      "consumers": [
+        "全部应用服务与 Adapter"
+      ],
+      "changePolicy": "不可配置",
+      "fallback": "解析失败按能力失败关闭或显式降级",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "同一请求内不得混用两个策略或 Provider 版本",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "configuration.release.sha256_required",
+      "chineseName": "配置发布必须带 SHA-256",
+      "domain": "configuration",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": true,
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/architecture/configuration-and-providers.md"
+      ],
+      "consumers": [
+        "全部策略注册表",
+        "Provider 注册表"
+      ],
+      "changePolicy": "不可配置",
+      "fallback": "哈希不匹配拒绝激活",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "release 内容不可原地修改",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "configuration.last_known_good.max_age_seconds",
+      "chineseName": "最近有效配置最大可复用时长",
+      "domain": "configuration",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "秒",
+      "status": "confirmed",
+      "currentValue": 300,
+      "allowed": "0..300；身份、权限、支付、AI 成本和写操作仅允许使用仍在 300 秒内且哈希已验证的最近有效版本",
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/architecture/configuration-and-providers.md"
+      ],
+      "consumers": [
+        "ConfigResolver",
+        "全部应用服务"
+      ],
+      "changePolicy": "配置治理策略版本",
+      "fallback": "身份、支付、权限、AI 成本和写操作无安全版本时失败关闭",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "最近有效配置最多复用 300 秒；身份、权限、支付、AI 成本和写操作在无安全版本时失败关闭",
+      "decisionGroup": "configuration_governance"
+    },
+    {
+      "id": "configuration.emergency_switch.max_ttl_minutes",
+      "chineseName": "紧急关闭开关最长有效期",
+      "domain": "configuration",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "分钟",
+      "status": "confirmed",
+      "currentValue": 240,
+      "allowed": "1..240；仅允许关闭能力，不允许绕过身份、权限、额度、预算或安全规则",
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/architecture/configuration-and-providers.md"
+      ],
+      "consumers": [
+        "全部高成本或高风险能力"
+      ],
+      "changePolicy": "紧急审批且必须记录 owner、原因与解除条件",
+      "fallback": "到期自动失效或转人工审批，不允许永久开关",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "无 owner、原因、解除条件或 expiresAt 的开关拒绝发布；最长 240 分钟后自动失效",
+      "decisionGroup": "configuration_governance"
+    },
+    {
+      "id": "configuration.generic_kv_allowed",
+      "chineseName": "是否允许万能键值配置表",
+      "domain": "configuration",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": false,
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/architecture/configuration-and-providers.md"
+      ],
+      "consumers": [
+        "全部业务域"
+      ],
+      "changePolicy": "不可配置",
+      "fallback": "新增策略必须有类型、Schema、owner 和迁移",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "任意字符串键值表无法通过架构检查",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "configuration.active_pointer.atomic",
+      "chineseName": "配置生效指针原子切换",
+      "domain": "configuration",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": true,
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/architecture/configuration-and-providers.md"
+      ],
+      "consumers": [
+        "策略注册表",
+        "Provider 注册表"
+      ],
+      "changePolicy": "不可配置",
+      "fallback": "切换失败保留原 active release",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "不能出现半发布或同键双 active",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "configuration.cache.ttl_seconds",
+      "chineseName": "已验证配置缓存有效期",
+      "domain": "configuration",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "秒",
+      "status": "confirmed",
+      "currentValue": 30,
+      "allowed": "0..30；缓存项必须同时绑定 releaseVersion 与 contentSha256",
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/architecture/configuration-and-providers.md"
+      ],
+      "consumers": [
+        "ConfigResolver"
+      ],
+      "changePolicy": "配置治理策略版本",
+      "fallback": "缓存过期后重新解析 active release，禁止把缓存当事实源",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "缓存最多 30 秒且必须校验版本和哈希；过期后重新解析 active release",
+      "decisionGroup": "configuration_governance"
+    },
+    {
+      "id": "configuration.snapshot.retention_days",
+      "chineseName": "配置快照审计保留期",
+      "domain": "configuration",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "天",
+      "status": "confirmed",
+      "currentValue": 365,
+      "allowed": "至少 365 天；仍被业务结果、账本、支付或审计记录引用时禁止物理删除",
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/architecture/configuration-and-providers.md"
+      ],
+      "consumers": [
+        "配置审计",
+        "业务结果回放"
+      ],
+      "changePolicy": "审计保留策略与法务确认",
+      "fallback": "未冻结前不物理删除快照引用",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "配置快照至少保留 365 天，且所有引用解除前不得物理删除，使业务结果可回放其策略与 Provider 版本",
+      "decisionGroup": "configuration_governance"
+    },
+    {
+      "id": "configuration.release.approval_policy",
+      "chineseName": "配置发布审批规则",
+      "domain": "configuration",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "status": "confirmed",
+      "currentValue": {
+        "standard": {
+          "requiredOwnerApprovals": 1,
+          "explicitUserApproval": false
+        },
+        "highRisk": {
+          "requiredOwnerApprovals": 1,
+          "explicitUserApproval": true
+        },
+        "emergencyDisable": {
+          "requiredOwnerApprovals": 1,
+          "explicitUserApproval": false,
+          "maxTtlMinutes": 240
+        }
+      },
+      "allowed": "高风险包括身份、权限、支付、价格、额度、积分、Provider、模型、Prompt、Schema 与数据保留；紧急路径只能关闭能力",
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/architecture/configuration-and-providers.md"
+      ],
+      "consumers": [
+        "配置发布流水线"
+      ],
+      "changePolicy": "配置治理规则需用户批准",
+      "fallback": "无审批规则时禁止激活新 release",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "标准发布至少一名 owner；高风险发布还须显式用户批准；发布记录包含审批人、原因和生效时间",
+      "decisionGroup": "configuration_governance"
+    },
+    {
+      "id": "configuration.rollback.allowed_window_hours",
+      "chineseName": "配置快速回滚窗口",
+      "domain": "configuration",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "小时",
+      "status": "confirmed",
+      "currentValue": 24,
+      "allowed": "0..24；只允许切回内容哈希已验证且仍兼容当前 Schema 的历史 release",
+      "owner": "shared-infrastructure",
+      "sourceRefs": [
+        "docs/backend-v2/architecture/configuration-and-providers.md"
+      ],
+      "consumers": [
+        "配置发布流水线"
+      ],
+      "changePolicy": "配置治理策略版本",
+      "fallback": "窗口外仍可走完整审批发布旧版本的新 active 记录",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "发布后 24 小时内可快速切回已验证兼容版本；回滚追加审计且不覆盖历史",
+      "decisionGroup": "configuration_governance"
+    },
+    {
+      "id": "deployment.cloudbase.mysql.connection_deadline_ms",
+      "chineseName": "CloudBase MySQL 建连截止时间",
+      "domain": "configuration",
+      "layer": "deployment_secret",
+      "valueType": "integer",
+      "unit": "毫秒",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "platform-admin",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "consumers": [
+        "DB"
+      ],
+      "changePolicy": "受控部署配置",
+      "fallback": "未冻结时不进行真实并发部署",
+      "phase": "P5",
+      "ticketTitle": "[P5] 真实 MySQL/API/安全/性能验收",
+      "expected": "建连超时可观测且不无限等待",
+      "pendingReason": "真实网络和数据库基线未测量",
+      "blockingScope": "真实 MySQL 部署",
+      "decisionGroup": "deployment_environment"
+    },
+    {
+      "id": "deployment.cloudbase.mysql.transaction_deadline_ms",
+      "chineseName": "CloudBase MySQL 事务截止时间",
+      "domain": "configuration",
+      "layer": "deployment_secret",
+      "valueType": "integer",
+      "unit": "毫秒",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "platform-admin",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "consumers": [
+        "DB",
+        "全部写用例"
+      ],
+      "changePolicy": "受控部署配置并受业务事务合同上限约束",
+      "fallback": "未冻结时不得宣称真实事务性能通过",
+      "phase": "P5",
+      "ticketTitle": "[P5] 真实 MySQL/API/安全/性能验收",
+      "expected": "超时事务完整回滚",
+      "pendingReason": "真实事务时延未测量",
+      "blockingScope": "真实写入部署",
+      "decisionGroup": "deployment_environment"
+    },
+    {
+      "id": "deployment.cloudbase.function.max_instances",
+      "chineseName": "HTTP 云函数最大实例数",
+      "domain": "configuration",
+      "layer": "deployment_secret",
+      "valueType": "integer",
+      "unit": "实例",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "platform-admin",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-10"
+      ],
+      "consumers": [
+        "CloudBase 部署",
+        "DB 连接预算"
+      ],
+      "changePolicy": "用户明确授权后的部署配置",
+      "fallback": "未冻结时禁止预置并发和生产扩容",
+      "phase": "P5",
+      "ticketTitle": "[P5] 真实 MySQL/API/安全/性能验收",
+      "expected": "与连接池共同满足 70% 安全不等式",
+      "pendingReason": "套餐与真实容量未读回",
+      "blockingScope": "真实并发部署",
+      "decisionGroup": "deployment_environment"
+    },
+    {
+      "id": "deployment.cloudbase.storage.access_mode",
+      "chineseName": "CloudBase Storage 访问模式",
+      "domain": "configuration",
+      "layer": "deployment_secret",
+      "valueType": "enum",
+      "status": "confirmed",
+      "currentValue": "private",
+      "owner": "platform-admin",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-07",
+        "docs/backend-v2/implementation/storage-security.md"
+      ],
+      "consumers": [
+        "CloudBase Storage",
+        "全部图片业务域"
+      ],
+      "changePolicy": "不可在业务运行时切换；变更需安全重审",
+      "fallback": "非 private 状态阻断用户私图能力",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "用户图片只通过短时授权访问",
+      "decisionGroup": "deployment_environment"
+    },
+    {
+      "id": "deployment.cloudbase.credential_resolver_ref",
+      "chineseName": "受控凭证解析器引用",
+      "domain": "configuration",
+      "layer": "deployment_secret",
+      "valueType": "string",
+      "status": "confirmed",
+      "currentValue": "cloudbase-runtime-credential-resolver/v1",
+      "allowed": "仅为解析器合同引用；实际密钥由 CloudBase 受控运行环境承载，不得进入配置 release、数据库、日志、测试或响应",
+      "owner": "platform-admin",
+      "sourceRefs": [
+        "docs/backend-v2/architecture/configuration-and-providers.md",
+        "AGENTS.md"
+      ],
+      "consumers": [
+        "全部 Provider Adapter"
+      ],
+      "changePolicy": "受控部署配置和凭证轮换流程",
+      "fallback": "解析器缺失时 Provider 调用失败关闭",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "Adapter 只依赖 cloudbase-runtime-credential-resolver/v1；解析失败时调用失败关闭，任何公开或审计制品不含凭证原文",
+      "decisionGroup": "deployment_environment"
+    },
+    {
+      "owner": "identity",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "identity.cloudbase_auth.anonymous_enabled",
+      "chineseName": "CloudBase 匿名身份启用",
+      "domain": "identity",
+      "layer": "domain_policy",
+      "valueType": "boolean",
+      "status": "confirmed",
+      "currentValue": true,
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "consumers": [
+        "identity",
+        "游客入口"
+      ],
+      "changePolicy": "发布新的不可变领域策略版本，只向前生效",
+      "fallback": "策略不可用时停止对应能力，不使用隐式默认值",
+      "expected": "游客请求先获得可验证的匿名主体",
+      "decisionGroup": "identity_sessions"
+    },
+    {
+      "owner": "subscription",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "subscription.guest.forbidden_ownership",
+      "chineseName": "游客禁止拥有正式业务资产",
+      "domain": "subscription",
+      "layer": "hard_rule",
+      "valueType": "enum_or_object",
+      "status": "hard_rule",
+      "currentValue": {
+        "user_id": false,
+        "userPlant": false,
+        "membership": false,
+        "points": false,
+        "personalAgentContext": false
+      },
+      "sourceRefs": [
+        "docs/backend-v2/contracts/principal-and-capability.md"
+      ],
+      "consumers": [
+        "全部业务域"
+      ],
+      "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
+      "fallback": "违反时拒绝请求、发布或状态转换",
+      "expected": "游客 Principal 不能获得正式用户资产",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "owner": "subscription",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "subscription.capability.catalog",
+      "chineseName": "四级主体能力目录",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "status": "confirmed",
+      "currentValue": {
+        "catalogVersion": "subscription-capability-catalog/v1",
+        "capabilities": [
+          {
+            "code": "PLANT_IDENTIFICATION",
+            "tiers": [
+              "guest",
+              "free",
+              "trial",
+              "member"
+            ],
+            "consumesAiPoints": false,
+            "scope": "public"
+          },
+          {
+            "code": "FIXED_DIAGNOSIS",
+            "tiers": [
+              "guest",
+              "free",
+              "trial",
+              "member"
+            ],
+            "consumesAiPoints": false,
+            "scope": "public"
+          },
+          {
+            "code": "INDEPENDENT_WATERING",
+            "tiers": [
+              "guest",
+              "free",
+              "trial",
+              "member"
+            ],
+            "consumesAiPoints": false,
+            "scope": "public"
+          },
+          {
+            "code": "SOIL_VISUAL_EVIDENCE",
+            "tiers": [
+              "guest",
+              "free",
+              "trial",
+              "member"
+            ],
+            "consumesAiPoints": false,
+            "scope": "public"
+          },
+          {
+            "code": "USER_PLANT_CREATE",
+            "tiers": [
+              "free",
+              "trial",
+              "member"
+            ],
+            "consumesAiPoints": false,
+            "scope": "user_plant"
+          },
+          {
+            "code": "POINTS_LEVEL_QUERY",
+            "tiers": [
+              "free",
+              "trial",
+              "member"
+            ],
+            "consumesAiPoints": false,
+            "scope": "user"
+          },
+          {
+            "code": "REWARDED_AI",
+            "tiers": [
+              "free",
+              "trial",
+              "member"
+            ],
+            "consumesAiPoints": true,
+            "scope": "reward_grant"
+          },
+          {
+            "code": "USER_AGENT_TEXT",
+            "tiers": [
+              "trial",
+              "member"
+            ],
+            "consumesAiPoints": true,
+            "scope": "user"
+          },
+          {
+            "code": "USER_DIAGNOSIS_TEXT",
+            "tiers": [
+              "trial",
+              "member"
+            ],
+            "consumesAiPoints": true,
+            "scope": "user_plant"
+          },
+          {
+            "code": "USER_DIAGNOSIS_VISUAL",
+            "tiers": [
+              "trial",
+              "member"
+            ],
+            "consumesAiPoints": true,
+            "scope": "user_plant"
+          }
+        ],
+        "unknownCapabilityPolicy": "deny"
+      },
+      "sourceRefs": [
+        "docs/backend-v2/contracts/principal-and-capability.md"
+      ],
+      "consumers": [
+        "subscription",
+        "全部业务域"
+      ],
+      "changePolicy": "发布新的不可变领域策略版本，只向前生效",
+      "fallback": "只开放单独已冻结的能力，不把 ALL_PAID_CAPABILITIES 当作运行值",
+      "expected": "十个 capabilityCode 逐项明确层级、是否扣 AI 点和消费 scope；未知能力失败关闭",
+      "decisionGroup": "entitlements_cost_rewards",
+      "allowed": "subscription-capability-catalog/v1 精确白名单；禁止通配符和目录外能力"
+    },
+    {
+      "owner": "subscription",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "subscription.trial.once_per_user",
+      "chineseName": "试用每个统一用户终身一次",
+      "domain": "subscription",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": true,
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md"
+      ],
+      "consumers": [
+        "identity",
+        "subscription"
+      ],
+      "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
+      "fallback": "违反时拒绝请求、发布或状态转换",
+      "expected": "同一 user_id 无论平台和设备都只能获得一次试用",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "owner": "subscription",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "subscription.trial.anchor",
+      "chineseName": "试用起算锚点",
+      "domain": "subscription",
+      "layer": "hard_rule",
+      "valueType": "enum_or_object",
+      "status": "hard_rule",
+      "currentValue": "user_created_at",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md"
+      ],
+      "consumers": [
+        "identity",
+        "subscription"
+      ],
+      "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
+      "fallback": "违反时拒绝请求、发布或状态转换",
+      "expected": "只按服务端统一用户创建时间起算",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "owner": "subscription",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "subscription.trial.reset_on_context_change",
+      "chineseName": "换平台、设备、重装或重新登录是否重置试用",
+      "domain": "subscription",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": false,
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md"
+      ],
+      "consumers": [
+        "identity",
+        "subscription"
+      ],
+      "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
+      "fallback": "违反时拒绝请求、发布或状态转换",
+      "expected": "任何上下文变化都不重置试用",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "owner": "user-plant",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "user-plant.identity.current_states",
+      "chineseName": "用户植物当前身份状态集合",
+      "domain": "user-plant",
+      "layer": "hard_rule",
+      "valueType": "enum_or_object",
+      "status": "hard_rule",
+      "currentValue": [
+        "unidentified",
+        "candidate_pending",
+        "confirmed"
+      ],
+      "sourceRefs": [
+        "docs/backend-v2/contracts/user-plant.md",
+        "docs/backend-v2/contracts/guest-session-claim.md"
+      ],
+      "consumers": [
+        "user-plant",
+        "plant-knowledge"
+      ],
+      "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
+      "fallback": "违反时拒绝请求、发布或状态转换",
+      "expected": "暂未识别是合法状态，当前状态不含 superseded",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "owner": "user-plant",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "user-plant.identity.superseded_history_only",
+      "chineseName": "superseded 只属于身份历史",
+      "domain": "user-plant",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": true,
+      "sourceRefs": [
+        "docs/backend-v2/contracts/user-plant.md",
+        "docs/backend-v2/contracts/guest-session-claim.md"
+      ],
+      "consumers": [
+        "user-plant",
+        "plant-knowledge"
+      ],
+      "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
+      "fallback": "违反时拒绝请求、发布或状态转换",
+      "expected": "superseded 不能成为当前身份状态",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "owner": "user-plant",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "user-plant.lifecycle.states",
+      "chineseName": "用户植物生命周期状态集合",
+      "domain": "user-plant",
+      "layer": "hard_rule",
+      "valueType": "enum_or_object",
+      "status": "hard_rule",
+      "currentValue": [
+        "active",
+        "archived",
+        "deleting",
+        "deleted"
+      ],
+      "sourceRefs": [
+        "docs/backend-v2/contracts/user-plant.md",
+        "docs/backend-v2/contracts/guest-session-claim.md"
+      ],
+      "consumers": [
+        "user-plant",
+        "care",
+        "diagnosis"
+      ],
+      "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
+      "fallback": "违反时拒绝请求、发布或状态转换",
+      "expected": "只允许合同定义的状态迁移",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "owner": "user-plant",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "user-plant.lifecycle.deleted_recoverable",
+      "chineseName": "已删除用户植物是否可恢复",
+      "domain": "user-plant",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": false,
+      "sourceRefs": [
+        "docs/backend-v2/contracts/user-plant.md",
+        "docs/backend-v2/contracts/guest-session-claim.md"
+      ],
+      "consumers": [
+        "user-plant"
+      ],
+      "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
+      "fallback": "违反时拒绝请求、发布或状态转换",
+      "expected": "deleted 不可恢复或接受新写入",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "owner": "user-plant",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "user-plant.guest_claim.retroactive_points",
+      "chineseName": "游客认领是否追溯积分",
+      "domain": "user-plant",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": false,
+      "sourceRefs": [
+        "docs/backend-v2/contracts/user-plant.md",
+        "docs/backend-v2/contracts/guest-session-claim.md"
+      ],
+      "consumers": [
+        "user-plant",
+        "subscription"
+      ],
+      "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
+      "fallback": "违反时拒绝请求、发布或状态转换",
+      "expected": "认领只增加归属，不追溯奖励",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "owner": "user-plant",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "user-plant.guest_claim.direct_fact_or_plan_write",
+      "chineseName": "游客认领是否自动写事实或计划",
+      "domain": "user-plant",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": false,
+      "sourceRefs": [
+        "docs/backend-v2/contracts/user-plant.md",
+        "docs/backend-v2/contracts/guest-session-claim.md"
+      ],
+      "consumers": [
+        "user-plant",
+        "care",
+        "diagnosis"
+      ],
+      "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
+      "fallback": "违反时拒绝请求、发布或状态转换",
+      "expected": "认领不改变候选、结果和建议语义",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "owner": "plant-knowledge",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "plant-knowledge.taxonomy.authority_allowlist",
+      "chineseName": "分类权威来源白名单",
+      "domain": "plant-knowledge",
+      "layer": "domain_policy",
+      "valueType": "enum_array",
+      "status": "confirmed",
+      "currentValue": [
+        "POWO",
+        "WCVP",
+        "WFO",
+        "RHS_ICRA"
+      ],
+      "sourceRefs": [
+        "docs/backend-v2/contracts/plant-taxonomy.md"
+      ],
+      "consumers": [
+        "plant-knowledge"
+      ],
+      "changePolicy": "发布新的不可变领域策略版本，只向前生效",
+      "fallback": "策略不可用时停止对应能力，不使用隐式默认值",
+      "expected": "新增来源必须经过独立证据审计",
+      "decisionGroup": "taxonomy_governance"
+    },
+    {
+      "owner": "plant-knowledge",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "plant-knowledge.taxonomy.authority_key_unique",
+      "chineseName": "权威分类键唯一",
+      "domain": "plant-knowledge",
+      "layer": "hard_rule",
+      "valueType": "enum_or_object",
+      "status": "hard_rule",
+      "currentValue": "authority_source + authority_taxon_id",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/plant-taxonomy.md"
+      ],
+      "consumers": [
+        "plant-knowledge",
+        "MySQL"
+      ],
+      "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
+      "fallback": "违反时拒绝请求、发布或状态转换",
+      "expected": "同一权威分类键只能有一个实体",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "owner": "plant-knowledge",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "plant-knowledge.taxonomy.parent_chain_required",
+      "chineseName": "分类父链完整性",
+      "domain": "plant-knowledge",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": true,
+      "sourceRefs": [
+        "docs/backend-v2/contracts/plant-taxonomy.md"
+      ],
+      "consumers": [
+        "plant-knowledge"
+      ],
+      "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
+      "fallback": "违反时拒绝请求、发布或状态转换",
+      "expected": "除 family 外缺父链不得 ACTIVE",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "owner": "plant-knowledge",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "plant-knowledge.taxonomy.spp_is_species",
+      "chineseName": "spp. 是否可作为具体物种",
+      "domain": "plant-knowledge",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": false,
+      "sourceRefs": [
+        "docs/backend-v2/contracts/plant-taxonomy.md"
+      ],
+      "consumers": [
+        "plant-knowledge"
+      ],
+      "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
+      "fallback": "违反时拒绝请求、发布或状态转换",
+      "expected": "spp. 只能表示属级或物种组",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "owner": "plant-knowledge",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "plant-knowledge.taxonomy.conflict_auto_resolve",
+      "chineseName": "来源冲突是否自动裁决",
+      "domain": "plant-knowledge",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": false,
+      "sourceRefs": [
+        "docs/backend-v2/contracts/plant-taxonomy.md"
+      ],
+      "consumers": [
+        "plant-knowledge"
+      ],
+      "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
+      "fallback": "违反时拒绝请求、发布或状态转换",
+      "expected": "冲突进入人工审核和 QUARANTINE",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "owner": "plant-knowledge",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "plant-knowledge.taxonomy.candidate_writers",
+      "chineseName": "外部候选写入边界",
+      "domain": "plant-knowledge",
+      "layer": "hard_rule",
+      "valueType": "enum_or_object",
+      "status": "hard_rule",
+      "currentValue": {
+        "baidu": "candidate_only",
+        "qwen": "candidate_only",
+        "client": "candidate_only"
+      },
+      "sourceRefs": [
+        "docs/backend-v2/contracts/plant-taxonomy.md"
+      ],
+      "consumers": [
+        "plant-knowledge"
+      ],
+      "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
+      "fallback": "违反时拒绝请求、发布或状态转换",
+      "expected": "外部来源不能写权威分类事实或 active release",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "owner": "plant-knowledge",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "plant-knowledge.enrichment.worker_concurrency",
+      "chineseName": "CMS 补全 Worker 并发数",
+      "domain": "plant-knowledge",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "个 Worker",
+      "status": "confirmed",
+      "currentValue": 1,
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "consumers": [
+        "百科补全 Worker"
+      ],
+      "changePolicy": "发布新的不可变领域策略版本，只向前生效",
+      "fallback": "策略不可用时停止对应能力，不使用隐式默认值",
+      "expected": "同一时刻只有一个 Worker 生成",
+      "decisionGroup": "cms_worker_content"
+    },
+    {
+      "owner": "plant-knowledge",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "plant-knowledge.enrichment.sort_order",
+      "chineseName": "CMS 补全需求排序",
+      "domain": "plant-knowledge",
+      "layer": "domain_policy",
+      "valueType": "ordered_fields",
+      "status": "confirmed",
+      "currentValue": [
+        "distinct_logged_in_users_30d DESC",
+        "valid_evidence_count DESC",
+        "hits_30d DESC",
+        "first_waiting_at ASC",
+        "candidate_ref ASC"
+      ],
+      "sourceRefs": [
+        "青花植后端v2底层架构重构计划_融合闭环终版.md"
+      ],
+      "consumers": [
+        "百科补全队列"
+      ],
+      "changePolicy": "发布新的不可变领域策略版本，只向前生效",
+      "fallback": "策略不可用时停止对应能力，不使用隐式默认值",
+      "expected": "相同输入产生稳定排序",
+      "decisionGroup": "cms_worker_content"
+    },
+    {
+      "owner": "plant-knowledge",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "plant-knowledge.enrichment.user_candidate_count_window_hours",
+      "chineseName": "同用户同候选需求计数窗口",
+      "domain": "plant-knowledge",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "小时",
+      "status": "confirmed",
+      "currentValue": 24,
+      "sourceRefs": [
+        "青花植后端v2底层架构重构计划_融合闭环终版.md"
+      ],
+      "consumers": [
+        "百科补全需求聚合"
+      ],
+      "changePolicy": "发布新的不可变领域策略版本，只向前生效",
+      "fallback": "策略不可用时停止对应能力，不使用隐式默认值",
+      "expected": "同一用户对同一候选每天最多贡献一次计数",
+      "decisionGroup": "cms_worker_content"
+    },
+    {
+      "owner": "plant-knowledge",
+      "phase": "P3",
+      "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
+      "id": "plant-knowledge.enrichment.backlog_alert_count",
+      "chineseName": "CMS 补全积压告警阈值",
+      "domain": "plant-knowledge",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "条",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "consumers": [
+        "百科补全 Worker",
+        "observability"
+      ],
+      "changePolicy": "取得真实证据后发布不可变领域策略版本",
+      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
+      "expected": "达到阈值告警并阻止无界积压",
+      "pendingReason": "容量基线尚未测量",
+      "blockingScope": "自动 CMS 补全",
+      "decisionGroup": "cms_worker_content"
+    },
+    {
+      "owner": "plant-knowledge",
+      "phase": "P3",
+      "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
+      "id": "plant-knowledge.enrichment.budget_resume_cny",
+      "chineseName": "CMS 补全预算恢复门",
+      "domain": "plant-knowledge",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "人民币元/月",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "consumers": [
+        "百科补全 Worker"
+      ],
+      "changePolicy": "取得真实证据后发布不可变领域策略版本",
+      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
+      "expected": "只有独立批准且预算恢复后才调用真实模型",
+      "pendingReason": "当前预算固定为 0，恢复值未获批准",
+      "blockingScope": "真实 CMS 模型生成",
+      "decisionGroup": "cms_worker_content"
+    },
+    {
+      "owner": "care",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "care.soil_evidence.states",
+      "chineseName": "盆土视觉状态集合",
+      "domain": "care",
+      "layer": "hard_rule",
+      "valueType": "enum_or_object",
+      "status": "hard_rule",
+      "currentValue": [
+        "wet",
+        "moist",
+        "dry",
+        "uncertain"
+      ],
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "consumers": [
+        "care",
+        "独立浇水顾问"
+      ],
+      "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
+      "fallback": "违反时拒绝请求、发布或状态转换",
+      "expected": "模型只能输出四态之一",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "owner": "care",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "care.output.status_values",
+      "chineseName": "养护输出状态集合",
+      "domain": "care",
+      "layer": "hard_rule",
+      "valueType": "enum_or_object",
+      "status": "hard_rule",
+      "currentValue": [
+        "ready",
+        "insufficient_evidence",
+        "temporarily_unavailable"
+      ],
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-capability-output.md"
+      ],
+      "consumers": [
+        "care",
+        "未来前端",
+        "CloudBase Agent"
+      ],
+      "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
+      "fallback": "违反时拒绝请求、发布或状态转换",
+      "expected": "证据不足不能伪装成 ready",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "owner": "care",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "care.output.confidence_values",
+      "chineseName": "养护输出可信度集合",
+      "domain": "care",
+      "layer": "hard_rule",
+      "valueType": "enum_or_object",
+      "status": "hard_rule",
+      "currentValue": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-capability-output.md"
+      ],
+      "consumers": [
+        "care",
+        "未来前端",
+        "CloudBase Agent"
+      ],
+      "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
+      "fallback": "违反时拒绝请求、发布或状态转换",
+      "expected": "不得伪造精确概率分数",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "owner": "care",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "id": "care.watering.recheck_window_hours",
+      "chineseName": "浇水建议复查窗口",
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "unit": "小时",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-capability-output.md"
+      ],
+      "consumers": [
+        "care"
+      ],
+      "changePolicy": "取得真实证据后发布不可变领域策略版本",
+      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
+      "expected": "按证据和策略给出可解释复查时间",
+      "pendingReason": "不同盆土状态和环境的窗口尚未冻结",
+      "blockingScope": "v2 浇水建议",
+      "decisionGroup": "care_algorithms"
+    },
+    {
+      "owner": "care",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "id": "care.lighting.match_thresholds",
+      "chineseName": "光照需求匹配阈值",
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "unit": "标准化区间",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-capability-output.md"
+      ],
+      "consumers": [
+        "care"
+      ],
+      "changePolicy": "取得真实证据后发布不可变领域策略版本",
+      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
+      "expected": "综合用户环境、植物需求和天气证据",
+      "pendingReason": "v2 光照算法阈值尚未冻结",
+      "blockingScope": "v2 光照建议",
+      "decisionGroup": "care_algorithms"
+    },
+    {
+      "owner": "care",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "id": "care.ventilation.risk_thresholds",
+      "chineseName": "通风与直吹风险阈值",
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "unit": "标准化等级",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-capability-output.md"
+      ],
+      "consumers": [
+        "care"
+      ],
+      "changePolicy": "取得真实证据后发布不可变领域策略版本",
+      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
+      "expected": "综合换气、开放度、局部风源、闷湿和直吹",
+      "pendingReason": "v2 通风算法阈值尚未冻结",
+      "blockingScope": "v2 通风建议",
+      "decisionGroup": "care_algorithms"
+    },
+    {
+      "owner": "care",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "id": "care.reminder.delivery_window",
+      "chineseName": "养护提醒允许触达窗口",
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "unit": "本地时间窗口",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "sourceRefs": [
+        "青花植后端v2底层架构重构计划_融合闭环终版.md"
+      ],
+      "consumers": [
+        "care",
+        "NotifyAdapter"
+      ],
+      "changePolicy": "取得真实证据后发布不可变领域策略版本",
+      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
+      "expected": "只在用户时区的允许窗口发送",
+      "pendingReason": "提醒时段和免打扰规则尚未冻结",
+      "blockingScope": "主动养护提醒",
+      "decisionGroup": "care_algorithms"
+    },
+    {
+      "owner": "diagnosis",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "id": "diagnosis.package.route_priority",
+      "chineseName": "问诊题包路由优先级",
+      "domain": "diagnosis",
+      "layer": "domain_policy",
+      "valueType": "ordered_enum",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "sourceRefs": [
+        "青花植后端v2底层架构重构计划_融合闭环终版.md"
+      ],
+      "consumers": [
+        "diagnosis"
+      ],
+      "changePolicy": "取得真实证据后发布不可变领域策略版本",
+      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
+      "expected": "固定黄叶/萎蔫和动态虫害按稳定规则选择",
+      "pendingReason": "题包路由优先级尚未冻结",
+      "blockingScope": "问诊会话路由",
+      "decisionGroup": "diagnosis_releases"
+    },
+    {
+      "owner": "diagnosis",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "id": "diagnosis.visual.retake_limit",
+      "chineseName": "视觉问诊补拍上限",
+      "domain": "diagnosis",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "次",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "sourceRefs": [
+        "青花植后端v2底层架构重构计划_融合闭环终版.md"
+      ],
+      "consumers": [
+        "diagnosis",
+        "storage"
+      ],
+      "changePolicy": "取得真实证据后发布不可变领域策略版本",
+      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
+      "expected": "补拍达到上限后返回明确不确定结果",
+      "pendingReason": "视觉证据合同尚未冻结",
+      "blockingScope": "视觉问诊",
+      "decisionGroup": "diagnosis_releases"
+    },
+    {
+      "owner": "diagnosis",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "diagnosis.result.terminal_states",
+      "chineseName": "问诊终态集合",
+      "domain": "diagnosis",
+      "layer": "hard_rule",
+      "valueType": "enum_or_object",
+      "status": "hard_rule",
+      "currentValue": [
+        "conclusive",
+        "uncertain",
+        "user_declined",
+        "invalid_input",
+        "temporarily_unavailable"
+      ],
+      "sourceRefs": [
+        "青花植后端v2底层架构重构计划_融合闭环终版.md"
+      ],
+      "consumers": [
+        "diagnosis"
+      ],
+      "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
+      "fallback": "违反时拒绝请求、发布或状态转换",
+      "expected": "未知、拒答、非法输入和暂不可用必须显式表达",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "owner": "diagnosis",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "id": "diagnosis.session.resume_ttl_hours",
+      "chineseName": "问诊中断恢复有效期",
+      "domain": "diagnosis",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "小时",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "sourceRefs": [
+        "青花植后端v2底层架构重构计划_融合闭环终版.md"
+      ],
+      "consumers": [
+        "diagnosis"
+      ],
+      "changePolicy": "取得真实证据后发布不可变领域策略版本",
+      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
+      "expected": "有效期内恢复同一题包/策略/证据快照",
+      "pendingReason": "恢复期限尚未冻结",
+      "blockingScope": "问诊中断恢复",
+      "decisionGroup": "diagnosis_releases"
+    },
+    {
+      "owner": "shared-infrastructure",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "http.idempotency.retention_hours",
+      "chineseName": "幂等记录保留期",
+      "domain": "http",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "小时",
+      "status": "confirmed",
+      "currentValue": 168,
+      "allowed": "168；支付和供应商回调若有更长法定或对账窗口，使用各自 inbox/账本保留策略而非缩短到本通用值",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/http-api.md"
+      ],
+      "consumers": [
+        "全部写 API"
+      ],
+      "changePolicy": "取得真实证据后发布不可变领域策略版本",
+      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
+      "expected": "通用写 API 的幂等结果保留 168 小时；保留期内同键同参返回首次确定结果，同键异参冲突",
+      "decisionGroup": "http_runtime"
+    },
+    {
+      "owner": "shared-infrastructure",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "http.internal_body_limit_bytes",
+      "chineseName": "内部 Job/Callback 请求体上限",
+      "domain": "http",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "unit": "字节",
+      "status": "confirmed",
+      "currentValue": {
+        "agentApi": 262144,
+        "jobApi": 262144,
+        "callbackApi": 262144
+      },
+      "allowed": "每个内部入口固定 262144 字节；图片和文件禁止 Base64 进入 JSON 请求体",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/http-api.md"
+      ],
+      "consumers": [
+        "Job API",
+        "Callback API"
+      ],
+      "changePolicy": "取得真实证据后发布不可变领域策略版本",
+      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
+      "expected": "Agent、Job 和 Callback API 均在验签和 JSON 解析前拒绝超过 262144 字节的请求",
+      "decisionGroup": "http_runtime"
+    },
+    {
+      "owner": "shared-infrastructure",
+      "phase": "P3",
+      "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
+      "id": "http.guest_abuse_limits",
+      "chineseName": "游客能力宽松防滥用阈值",
+      "domain": "http",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "unit": "请求/时间窗",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "consumers": [
+        "植物识别",
+        "固定题包",
+        "独立浇水",
+        "盆土视觉"
+      ],
+      "changePolicy": "取得真实证据后发布不可变领域策略版本",
+      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
+      "expected": "正常用户无感，异常机器流量被限流",
+      "pendingReason": "缺少真实游客流量基线",
+      "blockingScope": "游客公开能力",
+      "decisionGroup": "http_runtime"
+    },
+    {
+      "owner": "shared-infrastructure",
+      "phase": "P3",
+      "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
+      "id": "reliable-events.dispatch.batch_size",
+      "chineseName": "可靠事件单批派发数量",
+      "domain": "reliable-events",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "条",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/reward-events.md"
+      ],
+      "consumers": [
+        "outbox dispatcher"
+      ],
+      "changePolicy": "取得真实证据后发布不可变领域策略版本",
+      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
+      "expected": "批次有界且失败可重放",
+      "pendingReason": "真实容量未测量",
+      "blockingScope": "自动奖励事件派发",
+      "decisionGroup": "reliability_ops"
+    },
+    {
+      "owner": "shared-infrastructure",
+      "phase": "P3",
+      "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
+      "id": "reliable-events.dispatch.max_attempts",
+      "chineseName": "可靠事件最大投递次数",
+      "domain": "reliable-events",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "次",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/reward-events.md"
+      ],
+      "consumers": [
+        "outbox dispatcher"
+      ],
+      "changePolicy": "取得真实证据后发布不可变领域策略版本",
+      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
+      "expected": "超过上限进入人工对账而不丢事件",
+      "pendingReason": "故障注入未完成",
+      "blockingScope": "自动奖励事件派发",
+      "decisionGroup": "reliability_ops"
+    },
+    {
+      "owner": "shared-infrastructure",
+      "phase": "P3",
+      "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
+      "id": "reliable-events.dispatch.backoff_policy",
+      "chineseName": "可靠事件重试退避策略",
+      "domain": "reliable-events",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "unit": "时间",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/reward-events.md"
+      ],
+      "consumers": [
+        "outbox dispatcher"
+      ],
+      "changePolicy": "取得真实证据后发布不可变领域策略版本",
+      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
+      "expected": "重试有界且不形成热循环",
+      "pendingReason": "故障注入未完成",
+      "blockingScope": "自动奖励事件派发",
+      "decisionGroup": "reliability_ops"
+    },
+    {
+      "owner": "shared-infrastructure",
+      "phase": "P3",
+      "ticketTitle": "[P3] 游客、试用、会员和奖励闭环",
+      "id": "reliable-events.replay.window_days",
+      "chineseName": "可靠事件自动重放窗口",
+      "domain": "reliable-events",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "天",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/reward-events.md"
+      ],
+      "consumers": [
+        "outbox dispatcher",
+        "subscription inbox"
+      ],
+      "changePolicy": "取得真实证据后发布不可变领域策略版本",
+      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
+      "expected": "窗口外进入人工对账",
+      "pendingReason": "审计保留和运营响应尚未冻结",
+      "blockingScope": "自动历史重放",
+      "decisionGroup": "reliability_ops"
+    },
+    {
+      "owner": "subscription",
+      "phase": "P5",
+      "ticketTitle": "[P5] 真实 MySQL/API/安全/性能验收",
+      "id": "storage.payment_record.retention_policy",
+      "chineseName": "支付记录法定保留策略",
+      "domain": "storage",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "unit": "期限与依据",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md"
+      ],
+      "consumers": [
+        "subscription",
+        "审计清理"
+      ],
+      "changePolicy": "取得真实证据后发布不可变领域策略版本",
+      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
+      "expected": "按适用法规和支付合同治理",
+      "pendingReason": "法定期限尚未完成专项确认",
+      "blockingScope": "支付记录物理清理",
+      "decisionGroup": "retention_security"
+    },
+    {
+      "owner": "shared-infrastructure",
+      "phase": "P5",
+      "ticketTitle": "[P5] 真实 MySQL/API/安全/性能验收",
+      "id": "storage.business_audit.retention_policy",
+      "chineseName": "业务审计记录保留策略",
+      "domain": "storage",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "unit": "期限与依据",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md"
+      ],
+      "consumers": [
+        "全部业务域",
+        "审计清理"
+      ],
+      "changePolicy": "取得真实证据后发布不可变领域策略版本",
+      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
+      "expected": "按记录类别分别保留",
+      "pendingReason": "审计类别和法定期限尚未冻结",
+      "blockingScope": "审计物理清理",
+      "decisionGroup": "retention_security"
+    },
+    {
+      "owner": "subscription",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "id": "storage.immutable_ledgers.delete_by_ttl",
+      "chineseName": "积分与 AI 额度账本能否按普通 TTL 删除",
+      "domain": "storage",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": false,
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "subscription",
+        "审计清理"
+      ],
+      "changePolicy": "不可配置；如需改变必须回到业务架构和合同重审",
+      "fallback": "违反时拒绝请求、发布或状态转换",
+      "expected": "不可变账本不套用普通资产 TTL",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "owner": "subscription",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "id": "subscription.ai_action.agent_text",
+      "chineseName": "小青标准文本动作",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "unit": "成本策略",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "subscription",
+        "diagnosis",
+        "CloudBase Agent"
+      ],
+      "changePolicy": "取得真实证据后发布不可变领域策略版本",
+      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
+      "expected": "逐项冻结 modelFamily、providerCode、maxInputTokens、maxOutputTokens、maxImages、maxModelLoops、maxCostMicros、estimatedPoints、costPolicyVersion，并在调用前原子预占",
+      "pendingReason": "真实价目、Prompt/Schema 和动作上限尚未共同冻结",
+      "blockingScope": "生成式动作 USER_AGENT_TEXT",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "owner": "subscription",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "id": "subscription.ai_action.diagnosis_text",
+      "chineseName": "用户文本诊断动作",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "unit": "成本策略",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "subscription",
+        "diagnosis",
+        "CloudBase Agent"
+      ],
+      "changePolicy": "取得真实证据后发布不可变领域策略版本",
+      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
+      "expected": "逐项冻结 modelFamily、providerCode、maxInputTokens、maxOutputTokens、maxImages、maxModelLoops、maxCostMicros、estimatedPoints、costPolicyVersion，并在调用前原子预占",
+      "pendingReason": "真实价目、Prompt/Schema 和动作上限尚未共同冻结",
+      "blockingScope": "生成式动作 USER_DIAGNOSIS_TEXT",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "owner": "subscription",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "id": "subscription.ai_action.diagnosis_visual_single",
+      "chineseName": "用户单图视觉诊断动作",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "unit": "成本策略",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "subscription",
+        "diagnosis",
+        "CloudBase Agent"
+      ],
+      "changePolicy": "取得真实证据后发布不可变领域策略版本",
+      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
+      "expected": "逐项冻结 modelFamily、providerCode、maxInputTokens、maxOutputTokens、maxImages、maxModelLoops、maxCostMicros、estimatedPoints、costPolicyVersion，并在调用前原子预占",
+      "pendingReason": "真实价目、Prompt/Schema 和动作上限尚未共同冻结",
+      "blockingScope": "生成式动作 USER_DIAGNOSIS_VISUAL",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "owner": "subscription",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "id": "subscription.ai_action.diagnosis_visual_multi",
+      "chineseName": "用户多图视觉诊断动作",
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "unit": "成本策略",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "subscription",
+        "diagnosis",
+        "CloudBase Agent"
+      ],
+      "changePolicy": "取得真实证据后发布不可变领域策略版本",
+      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
+      "expected": "逐项冻结 modelFamily、providerCode、maxInputTokens、maxOutputTokens、maxImages、maxModelLoops、maxCostMicros、estimatedPoints、costPolicyVersion，并在调用前原子预占",
+      "pendingReason": "真实价目、Prompt/Schema 和动作上限尚未共同冻结",
+      "blockingScope": "生成式动作 USER_DIAGNOSIS_VISUAL",
+      "decisionGroup": "entitlements_cost_rewards"
+    },
+    {
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "enum_array",
+      "status": "confirmed",
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/principal-and-capability.md"
+      ],
+      "changePolicy": "发布新能力目录版本，只向前生效",
+      "fallback": "策略不可用时拒绝未明确能力",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "decisionGroup": "entitlements_cost_rewards",
+      "id": "subscription.capability.guest",
+      "chineseName": "游客能力集合",
+      "currentValue": [
+        "PLANT_IDENTIFICATION",
+        "FIXED_DIAGNOSIS",
+        "INDEPENDENT_WATERING",
+        "SOIL_VISUAL_EVIDENCE"
+      ],
+      "consumers": [
+        "subscription",
+        "游客业务入口"
+      ],
+      "expected": "游客只有四类临时基础能力且不扣用户 AI 点"
+    },
+    {
+      "domain": "subscription",
+      "layer": "domain_policy",
+      "valueType": "enum_array",
+      "status": "confirmed",
+      "owner": "subscription",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/principal-and-capability.md"
+      ],
+      "changePolicy": "发布新能力目录版本，只向前生效",
+      "fallback": "策略不可用时拒绝未明确能力",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "decisionGroup": "entitlements_cost_rewards",
+      "id": "subscription.capability.free",
+      "chineseName": "登录免费用户能力集合",
+      "currentValue": [
+        "PLANT_IDENTIFICATION",
+        "FIXED_DIAGNOSIS",
+        "INDEPENDENT_WATERING",
+        "SOIL_VISUAL_EVIDENCE",
+        "USER_PLANT_CREATE",
+        "POINTS_LEVEL_QUERY",
+        "REWARDED_AI"
+      ],
+      "consumers": [
+        "subscription",
+        "登录业务入口"
+      ],
+      "expected": "免费用户继承游客能力并增加用户植物、积分等级查询和有效奖励额度"
+    }
+  ],
+  "providerProfiles": [
+    {
+      "providerCode": "baidu_plant",
+      "chineseName": "百度植物识别",
+      "owner": "plant-knowledge",
+      "capabilityCodes": [
+        "PLANT_IDENTIFICATION_CANDIDATES"
+      ],
+      "status": "pending",
+      "endpointProfile": "P1_PENDING",
+      "credentialRef": "P1_PENDING",
+      "connectTimeoutMs": "P1_PENDING",
+      "readTimeoutMs": "P1_PENDING",
+      "totalDeadlineMs": "P1_PENDING",
+      "maxAttempts": "P1_PENDING",
+      "backoffPolicy": "P1_PENDING",
+      "rateLimitPolicy": "P1_PENDING",
+      "circuitBreakerPolicy": "P1_PENDING",
+      "costPolicy": "P1_PENDING",
+      "monthlyBudgetCny": "P1_PENDING",
+      "warningThresholdCny": "P1_PENDING",
+      "fallbackChain": [],
+      "outputContractVersion": "P1_PENDING",
+      "auditRetentionDays": "P1_PENDING",
+      "fallback": "返回识别暂不可用或候选不足，绝不写规范身份",
+      "blockingScope": "百度识别真实调用",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md",
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-10"
+      ],
+      "decisionGroup": "provider_runtime",
+      "releaseVersion": "P1_PENDING",
+      "releaseSha256": "P1_PENDING",
+      "effectiveAt": "P1_PENDING",
+      "expiresAt": "P1_PENDING",
+      "releaseStatus": "P1_PENDING"
+    },
+    {
+      "providerCode": "taxonomy_authority",
+      "chineseName": "植物分类权威来源",
+      "owner": "plant-knowledge",
+      "capabilityCodes": [
+        "TAXONOMY_EVIDENCE_QUERY"
+      ],
+      "status": "pending",
+      "endpointProfile": "P1_PENDING",
+      "credentialRef": "P1_PENDING",
+      "connectTimeoutMs": "P1_PENDING",
+      "readTimeoutMs": "P1_PENDING",
+      "totalDeadlineMs": "P1_PENDING",
+      "maxAttempts": "P1_PENDING",
+      "backoffPolicy": "P1_PENDING",
+      "rateLimitPolicy": "P1_PENDING",
+      "circuitBreakerPolicy": "P1_PENDING",
+      "costPolicy": "not_applicable_or_P1_PENDING",
+      "monthlyBudgetCny": "not_applicable_or_P1_PENDING",
+      "warningThresholdCny": "not_applicable_or_P1_PENDING",
+      "fallbackChain": [],
+      "outputContractVersion": "P1_PENDING",
+      "auditRetentionDays": "P1_PENDING",
+      "fallback": "来源冲突或不可用时进入 QUARANTINE，禁止模型裁决",
+      "blockingScope": "植物身份准入",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/plant-taxonomy.md",
+        "docs/backend-v2/audits/P0-taxonomy-exit-gate.md"
+      ],
+      "decisionGroup": "provider_runtime",
+      "releaseVersion": "P1_PENDING",
+      "releaseSha256": "P1_PENDING",
+      "effectiveAt": "P1_PENDING",
+      "expiresAt": "P1_PENDING",
+      "releaseStatus": "P1_PENDING"
+    },
+    {
+      "providerCode": "bailian_qwen_diagnosis",
+      "chineseName": "云百炼 Qwen 问诊",
+      "owner": "diagnosis",
+      "capabilityCodes": [
+        "USER_DIAGNOSIS_TEXT",
+        "USER_DIAGNOSIS_VISUAL"
+      ],
+      "status": "pending",
+      "endpointProfile": "P1_PENDING",
+      "credentialRef": "P1_PENDING",
+      "connectTimeoutMs": "P1_PENDING",
+      "readTimeoutMs": "P1_PENDING",
+      "totalDeadlineMs": "P1_PENDING",
+      "maxAttempts": "P1_PENDING",
+      "backoffPolicy": "P1_PENDING",
+      "rateLimitPolicy": "P1_PENDING",
+      "circuitBreakerPolicy": "P1_PENDING",
+      "costPolicy": "P1_PENDING",
+      "monthlyBudgetCny": 500,
+      "warningThresholdCny": 400,
+      "fallbackChain": [],
+      "outputContractVersion": "diagnosis-model-output/v1",
+      "auditRetentionDays": "P1_PENDING",
+      "modelCode": "qwen3.5-flash-2026-02-23",
+      "promptReleaseSha256": "11c58cebe3b3c41097d6f6d6b3c5b5d7eb16248e4f07bacd497868a647ccc964",
+      "resultSchemaVersion": "diagnosis-model-output/v1",
+      "maxInputTokens": "P1_PENDING",
+      "maxOutputTokens": "P1_PENDING",
+      "maxImages": "P1_PENDING",
+      "maxModelLoops": "P1_PENDING",
+      "tariffSnapshotRef": "P1_PENDING",
+      "fallback": "模型、Prompt、Schema、价目或额度任一缺失即停止对应 AI 动作，不静默换模",
+      "blockingScope": "AI 问诊",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards-exit-gate.md",
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md",
+        "docs/backend-v2/contracts/schemas/diagnosis-model-output.v1.schema.json",
+        "docs/backend-v2/contracts/prompts/diagnosis-visual.v1.release.json",
+        "docs/backend-v2/audits/P1-bailian-qwen35-flash-freeze.md"
+      ],
+      "decisionGroup": "provider_runtime",
+      "productModelFamily": "qwen3.5-flash",
+      "releaseVersion": "P1_PENDING",
+      "releaseSha256": "P1_PENDING",
+      "effectiveAt": "P1_PENDING",
+      "expiresAt": "P1_PENDING",
+      "releaseStatus": "P1_PENDING"
+    },
+    {
+      "providerCode": "bailian_qwen_enrichment",
+      "chineseName": "云百炼 Qwen 百科补全",
+      "owner": "plant-knowledge",
+      "capabilityCodes": [
+        "CMS_ENRICHMENT"
+      ],
+      "status": "pending",
+      "endpointProfile": "P1_PENDING",
+      "credentialRef": "P1_PENDING",
+      "connectTimeoutMs": "P1_PENDING",
+      "readTimeoutMs": "P1_PENDING",
+      "totalDeadlineMs": "P1_PENDING",
+      "maxAttempts": "P1_PENDING",
+      "backoffPolicy": "P1_PENDING",
+      "rateLimitPolicy": "P1_PENDING",
+      "circuitBreakerPolicy": "P1_PENDING",
+      "costPolicy": "P1_PENDING",
+      "monthlyBudgetCny": "P1_PENDING",
+      "warningThresholdCny": "P1_PENDING",
+      "fallbackChain": [],
+      "outputContractVersion": "plant-encyclopedia-display/v1",
+      "auditRetentionDays": "P1_PENDING",
+      "modelCode": "qwen3.5-flash-2026-02-23",
+      "promptReleaseSha256": "P1_PENDING",
+      "resultSchemaVersion": "plant-encyclopedia-display/v1",
+      "maxInputTokens": "P1_PENDING",
+      "maxOutputTokens": "P1_PENDING",
+      "maxModelLoops": "P1_PENDING",
+      "tariffSnapshotRef": "P1_PENDING",
+      "fallback": "暂停后台补全，不影响已发布百科读取；禁区字段整份拒绝",
+      "blockingScope": "自动 CMS 百科补全",
+      "sourceRefs": [
+        "docs/backend-v2/implementation/cms-enrichment-worker.md",
+        "docs/backend-v2/decisions/P0-external-capability-cards-exit-gate.md",
+        "docs/backend-v2/contracts/schemas/plant-encyclopedia-display.v1.schema.json",
+        "docs/backend-v2/audits/P1-bailian-qwen35-flash-freeze.md"
+      ],
+      "decisionGroup": "provider_runtime",
+      "productModelFamily": "qwen3.5-flash",
+      "releaseVersion": "P1_PENDING",
+      "releaseSha256": "P1_PENDING",
+      "effectiveAt": "P1_PENDING",
+      "expiresAt": "P1_PENDING",
+      "releaseStatus": "P1_PENDING"
+    },
+    {
+      "providerCode": "qweather",
+      "chineseName": "和风天气",
+      "owner": "care",
+      "capabilityCodes": [
+        "WEATHER_CURRENT",
+        "WEATHER_FORECAST",
+        "WEATHER_HISTORY"
+      ],
+      "status": "pending",
+      "endpointProfile": "P1_PENDING",
+      "credentialRef": "P1_PENDING",
+      "connectTimeoutMs": "P1_PENDING",
+      "readTimeoutMs": "P1_PENDING",
+      "totalDeadlineMs": "P1_PENDING",
+      "maxAttempts": "P1_PENDING",
+      "backoffPolicy": "P1_PENDING",
+      "rateLimitPolicy": "P1_PENDING",
+      "circuitBreakerPolicy": "P1_PENDING",
+      "costPolicy": "P1_PENDING",
+      "monthlyBudgetCny": "P1_PENDING",
+      "warningThresholdCny": "P1_PENDING",
+      "fallbackChain": [],
+      "outputContractVersion": "P1_PENDING",
+      "auditRetentionDays": "P1_PENDING",
+      "fallback": "使用仍在有效期内的标准化快照，否则返回证据不足",
+      "blockingScope": "天气增强养护",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-external-capability-cards.md",
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-10"
+      ],
+      "decisionGroup": "provider_runtime",
+      "releaseVersion": "P1_PENDING",
+      "releaseSha256": "P1_PENDING",
+      "effectiveAt": "P1_PENDING",
+      "expiresAt": "P1_PENDING",
+      "releaseStatus": "P1_PENDING"
+    },
+    {
+      "providerCode": "wechat_pay",
+      "chineseName": "微信支付 v3",
+      "owner": "subscription",
+      "capabilityCodes": [
+        "MINIPROGRAM_SUBSCRIPTION_PAYMENT",
+        "PAYMENT_QUERY",
+        "PAYMENT_REFUND"
+      ],
+      "status": "pending",
+      "endpointProfile": "P1_PENDING",
+      "credentialRef": "P1_PENDING",
+      "connectTimeoutMs": "P1_PENDING",
+      "readTimeoutMs": "P1_PENDING",
+      "totalDeadlineMs": "P1_PENDING",
+      "maxAttempts": "P1_PENDING",
+      "backoffPolicy": "P1_PENDING",
+      "rateLimitPolicy": "P1_PENDING",
+      "circuitBreakerPolicy": "P1_PENDING",
+      "costPolicy": "P1_PENDING",
+      "monthlyBudgetCny": "not_applicable_or_P1_PENDING",
+      "warningThresholdCny": "not_applicable_or_P1_PENDING",
+      "fallbackChain": [],
+      "outputContractVersion": "P1_PENDING",
+      "auditRetentionDays": "P1_PENDING",
+      "fallback": "未知结果只查单和对账，禁止自动重下单或跨 Provider 回退",
+      "blockingScope": "订阅支付",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-08",
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "decisionGroup": "provider_runtime",
+      "releaseVersion": "P1_PENDING",
+      "releaseSha256": "P1_PENDING",
+      "effectiveAt": "P1_PENDING",
+      "expiresAt": "P1_PENDING",
+      "releaseStatus": "P1_PENDING"
+    },
+    {
+      "providerCode": "platform_notification",
+      "chineseName": "多平台通知",
+      "owner": "subscription",
+      "capabilityCodes": [
+        "CARE_REMINDER_NOTIFICATION",
+        "SUBSCRIPTION_NOTIFICATION"
+      ],
+      "status": "pending",
+      "endpointProfile": "P1_PENDING",
+      "credentialRef": "P1_PENDING",
+      "connectTimeoutMs": "P1_PENDING",
+      "readTimeoutMs": "P1_PENDING",
+      "totalDeadlineMs": "P1_PENDING",
+      "maxAttempts": "P1_PENDING",
+      "backoffPolicy": "P1_PENDING",
+      "rateLimitPolicy": "P1_PENDING",
+      "circuitBreakerPolicy": "P1_PENDING",
+      "costPolicy": "P1_PENDING",
+      "monthlyBudgetCny": "P1_PENDING",
+      "warningThresholdCny": "P1_PENDING",
+      "fallbackChain": [],
+      "outputContractVersion": "P1_PENDING",
+      "auditRetentionDays": "P1_PENDING",
+      "fallback": "记录未送达，不把提醒触达伪造成养护事实",
+      "blockingScope": "主动通知",
+      "sourceRefs": [
+        "README.md",
+        "docs/backend-v2/architecture/infrastructure.md"
+      ],
+      "decisionGroup": "provider_runtime",
+      "releaseVersion": "P1_PENDING",
+      "releaseSha256": "P1_PENDING",
+      "effectiveAt": "P1_PENDING",
+      "expiresAt": "P1_PENDING",
+      "releaseStatus": "P1_PENDING"
+    },
+    {
+      "providerCode": "cloudbase_storage",
+      "chineseName": "CloudBase 云存储",
+      "owner": "shared-storage",
+      "capabilityCodes": [
+        "PRIVATE_UPLOAD",
+        "PRIVATE_READ",
+        "ASSET_DELETE"
+      ],
+      "status": "pending",
+      "endpointProfile": "cloudbase_server_sdk",
+      "credentialRef": "P1_PENDING",
+      "connectTimeoutMs": "P1_PENDING",
+      "readTimeoutMs": "P1_PENDING",
+      "totalDeadlineMs": "P1_PENDING",
+      "maxAttempts": "P1_PENDING",
+      "backoffPolicy": "P1_PENDING",
+      "rateLimitPolicy": "P1_PENDING",
+      "circuitBreakerPolicy": "P1_PENDING",
+      "costPolicy": "P1_PENDING",
+      "monthlyBudgetCny": "P1_PENDING",
+      "warningThresholdCny": "P1_PENDING",
+      "fallbackChain": [],
+      "outputContractVersion": "asset-registry/v1_PENDING",
+      "auditRetentionDays": "P1_PENDING",
+      "accessMode": "private",
+      "fallback": "停止图像增强，禁止退回 Base64 或任意 URL 抓取",
+      "blockingScope": "真实图片上传、读取与删除",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-07",
+        "docs/backend-v2/implementation/storage-security.md"
+      ],
+      "decisionGroup": "provider_runtime",
+      "releaseVersion": "P1_PENDING",
+      "releaseSha256": "P1_PENDING",
+      "effectiveAt": "P1_PENDING",
+      "expiresAt": "P1_PENDING",
+      "releaseStatus": "P1_PENDING"
+    },
+    {
+      "providerCode": "cloudbase_cms",
+      "chineseName": "CloudBase CMS",
+      "owner": "plant-knowledge",
+      "capabilityCodes": [
+        "CMS_DRAFT_WRITE",
+        "CMS_RELEASE_READ",
+        "CMS_PUBLISH_CALLBACK"
+      ],
+      "status": "pending",
+      "endpointProfile": "cloudbase_cms_api",
+      "credentialRef": "P1_PENDING",
+      "connectTimeoutMs": "P1_PENDING",
+      "readTimeoutMs": "P1_PENDING",
+      "totalDeadlineMs": "P1_PENDING",
+      "maxAttempts": "P1_PENDING",
+      "backoffPolicy": "P1_PENDING",
+      "rateLimitPolicy": "P1_PENDING",
+      "circuitBreakerPolicy": "P1_PENDING",
+      "costPolicy": "P1_PENDING",
+      "monthlyBudgetCny": "P1_PENDING",
+      "warningThresholdCny": "P1_PENDING",
+      "fallbackChain": [],
+      "outputContractVersion": "P1_PENDING",
+      "auditRetentionDays": "P1_PENDING",
+      "fallback": "暂停草稿/发布写入，继续读取最后已验证不可变 release",
+      "blockingScope": "CMS 自动补全与发布回调",
+      "sourceRefs": [
+        "docs/backend-v2/implementation/cms-enrichment-worker.md",
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "decisionGroup": "provider_runtime",
+      "releaseVersion": "P1_PENDING",
+      "releaseSha256": "P1_PENDING",
+      "effectiveAt": "P1_PENDING",
+      "expiresAt": "P1_PENDING",
+      "releaseStatus": "P1_PENDING"
+    },
+    {
+      "providerCode": "cloudbase_agent",
+      "chineseName": "CloudBase 小青 Agent",
+      "owner": "identity",
+      "capabilityCodes": [
+        "AGENT_TOOL_CALL"
+      ],
+      "status": "pending",
+      "endpointProfile": "cloudbase_agent_tool_api",
+      "credentialRef": "P1_PENDING",
+      "connectTimeoutMs": "P1_PENDING",
+      "readTimeoutMs": "P1_PENDING",
+      "totalDeadlineMs": "P1_PENDING",
+      "maxAttempts": "P1_PENDING",
+      "backoffPolicy": "P1_PENDING",
+      "rateLimitPolicy": "P1_PENDING",
+      "circuitBreakerPolicy": "P1_PENDING",
+      "costPolicy": "P1_PENDING",
+      "monthlyBudgetCny": 500,
+      "warningThresholdCny": 400,
+      "fallbackChain": [],
+      "outputContractVersion": "P1_PENDING",
+      "auditRetentionDays": "P1_PENDING",
+      "toolTokenTtlSeconds": 300,
+      "fallback": "用户范围、工具 allowlist、额度或签名无法证明时只开放公共知识",
+      "blockingScope": "小青个人数据与写工具",
+      "sourceRefs": [
+        "README.md",
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "decisionGroup": "provider_runtime",
+      "releaseVersion": "P1_PENDING",
+      "releaseSha256": "P1_PENDING",
+      "effectiveAt": "P1_PENDING",
+      "expiresAt": "P1_PENDING",
+      "releaseStatus": "P1_PENDING"
+    },
+    {
+      "providerCode": "cloudbase_mysql",
+      "chineseName": "CloudBase MySQL",
+      "owner": "shared-infrastructure",
+      "capabilityCodes": [
+        "TRANSACTIONAL_REPOSITORY"
+      ],
+      "status": "pending",
+      "endpointProfile": "cloudbase_mysql_private",
+      "credentialRef": "P1_PENDING",
+      "connectTimeoutMs": "P1_PENDING",
+      "readTimeoutMs": "P1_PENDING",
+      "totalDeadlineMs": "P1_PENDING",
+      "transactionDeadlineMs": "P1_PENDING",
+      "maxAttempts": 1,
+      "backoffPolicy": "no_automatic_transaction_retry",
+      "rateLimitPolicy": "connection_budget",
+      "circuitBreakerPolicy": "P1_PENDING",
+      "costPolicy": "cloudbase_resource_budget_PENDING",
+      "monthlyBudgetCny": "P1_PENDING",
+      "warningThresholdCny": "P1_PENDING",
+      "fallbackChain": [],
+      "outputContractVersion": "repository-transaction/v1_PENDING",
+      "auditRetentionDays": "P1_PENDING",
+      "poolSize": "P1_PENDING",
+      "maxInstances": "P1_PENDING",
+      "connectionSafetyRatio": "0.70",
+      "fallback": "连接或事务结果不确定时失败关闭并对账，禁止跨库降级",
+      "blockingScope": "真实并发写入",
+      "sourceRefs": [
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-10",
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "decisionGroup": "provider_runtime",
+      "releaseVersion": "P1_PENDING",
+      "releaseSha256": "P1_PENDING",
+      "effectiveAt": "P1_PENDING",
+      "expiresAt": "P1_PENDING",
+      "releaseStatus": "P1_PENDING"
+    },
+    {
+      "providerCode": "cloudbase_auth",
+      "chineseName": "CloudBase 身份认证",
+      "owner": "identity",
+      "capabilityCodes": [
+        "ANONYMOUS_PRINCIPAL",
+        "PLATFORM_LOGIN_PRINCIPAL"
+      ],
+      "status": "pending",
+      "endpointProfile": "cloudbase_auth_v2",
+      "credentialRef": "P1_PENDING",
+      "connectTimeoutMs": "P1_PENDING",
+      "readTimeoutMs": "P1_PENDING",
+      "totalDeadlineMs": "P1_PENDING",
+      "maxAttempts": "P1_PENDING",
+      "backoffPolicy": "P1_PENDING",
+      "rateLimitPolicy": "P1_PENDING",
+      "circuitBreakerPolicy": "P1_PENDING",
+      "costPolicy": "cloudbase_resource_budget_PENDING",
+      "monthlyBudgetCny": "P1_PENDING",
+      "warningThresholdCny": "P1_PENDING",
+      "fallbackChain": [],
+      "outputContractVersion": "principal-capability/v1",
+      "auditRetentionDays": "P1_PENDING",
+      "releaseVersion": "P1_PENDING",
+      "releaseSha256": "P1_PENDING",
+      "effectiveAt": "P1_PENDING",
+      "expiresAt": "P1_PENDING",
+      "releaseStatus": "P1_PENDING",
+      "fallback": "认证不可用时拒绝签发 Principal；不得以设备、IP、Cookie 或匿名 UID 伪造 user_id",
+      "blockingScope": "游客匿名主体与平台登录真实接入",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/principal-and-capability.md",
+        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "decisionGroup": "provider_runtime"
+    }
+  ],
+  "ticketBindings": {
+    "[P1] 业务策略与统一 Provider 配置架构": {
+      "id": "z8v0kmr9gn",
+      "url": "https://app.clickup.com/t/90182453517/z8v0kmr9gn",
+      "agents": [
+        "root",
+        "config_business_luna",
+        "provider_config_terra"
+      ]
+    },
+    "[P1] 公共 HTTP 合同与 OpenAPI 路由骨架": {
+      "id": "z8v0kmr9ge",
+      "url": "https://app.clickup.com/t/90182453517/z8v0kmr9ge",
+      "agents": [
+        "root"
+      ]
+    },
+    "[P1] 植物分类与身份准入硬门": {
+      "id": "z8v0kmr9gm",
+      "url": "https://app.clickup.com/t/90182453517/z8v0kmr9gm",
+      "agents": [
+        "taxonomy_gate_terra",
+        "root"
+      ]
+    },
+    "[P1] 用户植物、身份和游客认领合同": {
+      "id": "z8v0kmr96y",
+      "url": "https://app.clickup.com/t/z8v0kmr96y",
+      "agents": [
+        "user_plant_terra",
+        "root"
+      ]
+    },
+    "[P1] 统一 AI 额度和奖励事件合同": {
+      "id": "z8v0kmr96z",
+      "url": "https://app.clickup.com/t/z8v0kmr96z",
+      "agents": [
+        "subscription_terra",
+        "root"
+      ]
+    },
+    "[P2] 统一身份 Principal": {
+      "id": "z8v0kmr970",
+      "url": "https://app.clickup.com/t/z8v0kmr970",
+      "agents": [
+        "identity_terra"
+      ]
+    },
+    "[P3] 游客、试用、会员和奖励闭环": {
+      "id": "z8v0kmr972",
+      "url": "https://app.clickup.com/t/z8v0kmr972",
+      "agents": [
+        "subscription_terra"
+      ]
+    },
+    "[P4] 盆土视觉和四类养护能力": {
+      "id": "z8v0kmr973",
+      "url": "https://app.clickup.com/t/z8v0kmr973",
+      "agents": [
+        "care_terra"
+      ]
+    },
+    "[P4] 固定/动态问诊与小青工具": {
+      "id": "z8v0kmr974",
+      "url": "https://app.clickup.com/t/z8v0kmr974",
+      "agents": [
+        "diagnosis_terra"
+      ]
+    },
+    "[P5] 真实 MySQL/API/安全/性能验收": {
+      "id": "z8v0kmr978",
+      "url": "https://app.clickup.com/t/z8v0kmr978",
+      "agents": [
+        "real_api_runner_luna"
+      ]
+    }
+  },
+  "expectedContract": {
+    "requiredFields": [
+      "expected",
+      "sourceRefs",
+      "phase",
+      "ticketTitle"
+    ],
+    "testLayers": [
+      "unit_fake",
+      "unit_real_data",
+      "e2e_real_api"
+    ],
+    "rule": "具体实现测试必须在测试矩阵中补充真实经过路径、替换边界、覆盖与未覆盖范围；变量目录不复制测试矩阵。"
+  },
+  "configurationDecisionGroups": {
+    "hard_business_rule": {
+      "decision": "not_configurable",
+      "realChangeSource": "只有业务架构或安全边界被正式推翻时才会变化，不属于运行期调整",
+      "benefit": "保持单一语义、权限和数据一致性",
+      "complexity": "配置化会引入越权、漂移和误操作风险，收益远低于复杂度"
+    },
+    "identity_sessions": {
+      "decision": "configurable",
+      "realChangeSource": "登录平台安全要求、会话风险和用户体验基线会变化",
+      "benefit": "可在不改业务代码时缩短/延长会话并快速止损",
+      "complexity": "需版本、签发时快照和撤销测试，收益高于复杂度"
+    },
+    "entitlements_cost_rewards": {
+      "decision": "configurable",
+      "realChangeSource": "套餐、成本、奖励和运营策略会随验证数据调整",
+      "benefit": "保持历史账本不变的同时发布新策略并控制成本",
+      "complexity": "需不可变策略、原子账本和审计，财务与运营收益显著高于复杂度"
+    },
+    "userplant_limits": {
+      "decision": "configurable",
+      "realChangeSource": "用户层级、容量成本和档案产品策略可能调整",
+      "benefit": "不删除历史数据即可调整未来创建和资产限制",
+      "complexity": "需快照和边界测试，收益高于少量复杂度"
+    },
+    "taxonomy_governance": {
+      "decision": "mixed",
+      "realChangeSource": "权威来源和证据策略可能新增，但分类唯一性和准入安全不可放松",
+      "benefit": "允许经过审计地扩展来源，同时保持分类事实可靠",
+      "complexity": "来源列表可版本化，唯一键/父链/隔离保留硬规则"
+    },
+    "cms_worker_content": {
+      "decision": "configurable",
+      "realChangeSource": "内容结构、队列容量、平台预算和审核流程会随运营变化",
+      "benefit": "可暂停成本、调整背压和升级展示结构而不影响已发布读取",
+      "complexity": "需要队列、Schema、审计和回滚，成本治理收益更高"
+    },
+    "care_algorithms": {
+      "decision": "configurable",
+      "realChangeSource": "养护算法、证据新鲜度和阈值会随验证数据迭代",
+      "benefit": "在稳定外部合同下独立发布算法和阈值并可回放",
+      "complexity": "需算法 release 和回归矩阵，长期算法迭代收益显著"
+    },
+    "diagnosis_releases": {
+      "decision": "configurable",
+      "realChangeSource": "题包、Prompt、Schema、模型产品选择和动作成本会版本化升级",
+      "benefit": "可以灰度/回滚且保证历史问诊可回放",
+      "complexity": "需组合版本与严格校验，但医疗式建议风险和 AI 成本收益更高"
+    },
+    "retention_security": {
+      "decision": "configurable",
+      "realChangeSource": "数据最短必要期限、容量和合规要求会调整",
+      "benefit": "可按对象类别执行可审计保留和清理",
+      "complexity": "需补偿、反向引用和法务确认，隐私收益高于复杂度"
+    },
+    "provider_runtime": {
+      "decision": "configurable",
+      "realChangeSource": "供应商端点、套餐、限流、故障和价目会变化",
+      "benefit": "统一止损、切换合格 Provider、控制超时与成本",
+      "complexity": "需 Registry、Adapter、快照和真实验证，外部依赖风险收益显著"
+    },
+    "http_runtime": {
+      "decision": "mixed",
+      "realChangeSource": "请求容量与防滥用基线会随真实流量变化，但安全处理顺序不可变",
+      "benefit": "可调整资源和防刷阈值而不改协议语义",
+      "complexity": "数值版本化，安全顺序保留硬规则"
+    },
+    "reliability_ops": {
+      "decision": "configurable",
+      "realChangeSource": "事件吞吐、积压和故障恢复基线会变化",
+      "benefit": "可调批次、租约和退避而保持至少一次加幂等语义",
+      "complexity": "运行参数配置化，投递语义保留硬规则"
+    },
+    "slo_capacity": {
+      "decision": "configurable",
+      "realChangeSource": "真实负载、套餐和数据库容量会变化",
+      "benefit": "可在证据基础上调整告警与容量，防止成本或连接雪崩",
+      "complexity": "需要压测和监控，可靠性收益明显"
+    },
+    "configuration_governance": {
+      "decision": "mixed",
+      "realChangeSource": "缓存与发布运营参数会变化，但不可变 release、SHA 和原子指针不可放松",
+      "benefit": "兼顾快速发布回滚与可追溯性",
+      "complexity": "运行参数配置化，治理不变量保留硬规则"
+    },
+    "deployment_environment": {
+      "decision": "configurable_outside_business_runtime",
+      "realChangeSource": "CloudBase 环境、地域、容量和凭证轮换会变化",
+      "benefit": "通过受控部署实现环境隔离与密钥轮换",
+      "complexity": "不进入 CMS 或业务表，部署治理收益高于复杂度"
+    }
+  }
+}

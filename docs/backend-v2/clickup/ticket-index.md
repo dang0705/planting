@@ -4,7 +4,7 @@
 
 https://app.clickup.com/90182453517/v/o/f/1100440000000586
 
-当前状态：`CREATED`。已通过 ClickUp 官方 MCP 收到全部 19 个后端重构 ticket 的创建成功响应；其中前 7 个已完成详情回读核验，后 12 个因 ClickUp MCP 当日调用上限暂未完成详情回读，但均已有真实任务 ID 和链接。阶段列表和真实任务链接如下。
+当前状态：`CREATED`。全部 24 个后端重构 ticket 均已有真实任务 ID 和链接。原有 19 个通过 ClickUp 官方 MCP 创建；P0 覆盖审计发现两项既有计划要求没有 ticket 后，通过用户 Chrome `default/main` 主 profile 补建“关键产品参数”和“外部能力合同”；本轮又补建 P1 公共 HTTP 合同、植物分类身份准入硬门和统一 Provider 配置架构三项 ticket。原有后 12 个仍保留“尚未逐项详情回读”的证据边界，不以创建成功冒充验收完成。
 
 阶段列表：
 
@@ -28,8 +28,13 @@ https://app.clickup.com/90182453517/v/o/f/1100440000000586
 | P-1 | [植物分类权威来源与身份准确性审计](https://app.clickup.com/t/z8v0kmr96v) | plant-knowledge | taxonomy_inventory_luna | 已创建 |
 | P0 | [TypeScript/Node22/CloudBase 构建证伪](https://app.clickup.com/t/z8v0kmr96w) | foundation | foundation_terra | 已创建 |
 | P0 | [植物分类权威来源与身份审计证伪](https://app.clickup.com/t/z8v0kmr96x) | plant-knowledge | taxonomy_inventory_luna | 已创建 |
+| P0 | [关键产品参数与成本边界冻结](https://app.clickup.com/t/90182453517/z8v0kmr9dq) | foundation | product_decisions_terra | 已创建并回读 |
+| P0 | [外部能力合同与可靠事件证伪](https://app.clickup.com/t/90182453517/z8v0kmr9dv) | foundation | integration_probe_terra | 已创建并回读 |
 | P1 | [用户植物、身份和游客认领合同](https://app.clickup.com/t/z8v0kmr96y) | user-plant | user_plant_terra | 已创建 |
 | P1 | [统一 AI 额度和奖励事件合同](https://app.clickup.com/t/z8v0kmr96z) | subscription | subscription_terra | 已创建 |
+| P1 | [公共 HTTP 合同与 OpenAPI 路由骨架](https://app.clickup.com/t/90182453517/z8v0kmr9ge) | foundation | root | 已创建并回读，`codex running` |
+| P1 | [植物分类与身份准入硬门](https://app.clickup.com/t/90182453517/z8v0kmr9gm) | plant-knowledge | taxonomy_gate_terra + root | 已创建并回读，`backlog` |
+| P1 | [业务策略与统一 Provider 配置架构](https://app.clickup.com/t/90182453517/z8v0kmr9gn) | foundation | root + config_business_luna + provider_config_terra | 已创建并回读，`codex running` |
 | P2 | [统一身份 Principal](https://app.clickup.com/t/z8v0kmr970) | identity | identity_terra | 已创建 |
 | P2 | [CMS 分类、百科和发布](https://app.clickup.com/t/z8v0kmr971) | plant-knowledge | knowledge_terra | 已创建 |
 | P3 | [游客、试用、会员和奖励闭环](https://app.clickup.com/t/z8v0kmr972) | subscription | subscription_terra | 已创建 |

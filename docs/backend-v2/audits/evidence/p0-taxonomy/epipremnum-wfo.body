@@ -1,0 +1,380 @@
+<!DOCTYPE HTML SYSTEM "about:legacy-compat">
+<html dir="ltr" lang="en" class="no-js"><meta content="IE=edge" http-equiv="X-UA-Compatible"/><head><script defer="true" src="https://www.googletagmanager.com/gtag/js?id=G-ZPPZDJMM4D">/* */</script><script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+		gtag('config', 'G-ZPPZDJMM4D');
+        //gtag('config', 'UA-114340265-1');
+	</script><script>
+        /**
+         * Function that tracks a click on an outbound link in Analytics.
+         * This function takes a valid URL string as an argument, and uses that URL string
+         * as the event label. Setting the transport method to 'beacon' lets the hit be sent
+         * using 'navigator.sendBeacon' in browser that support it.
+         */
+        var trackOutboundLink = function(url) {
+            gtag('event', 'click', {
+                'event_category': 'outbound',
+                'event_label': url,
+                'transport_type': 'beacon',
+                'event_callback': function(){document.location = url;}
+            });
+        }
+    </script><meta charset="utf-8"/><meta content="text/html; charset=utf-8" http-equiv="Content-Type"/><meta content="en" http-equiv="Content-Language"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Epipremnum aureum (Linden & André) G.S.Bunting</title><link href="/css/images/favicon_shadow.ico" rel="alternate icon"/><link href="/css/images/svgs/favicon.svg" type="image/svg+xml" rel="icon"/><link href="/css/style.css" media="screen" type="text/css" rel="stylesheet"/>
+	<!--[if lt IE 10]>
+	<link href="/css/ie9.css" media="all" type="text/css" rel="stylesheet"/>
+	<![endif]-->
+	<link href="/css/print.css" media="print" type="text/css" rel="stylesheet"/><script src="/js/header.js" type="text/javascript">/* */</script><noscript><style>
+			.sortNoJS{display:none;}
+			#images{display:none;}
+			#map{
+				height: 0px;
+				width: 0px;
+				}
+		</style></noscript></head><body data-offset="100" data-target=".subnav" data-spy="scroll"><div class="navbar main-site-header"><script>
+    $("document").ready(function () {
+        $("ul.dropdown-menu > li > a ").hover(function () {
+            $(this).find('i').toggleClass('white');
+        });
+    });
+    </script><nav class="inter-site-nav"><ul class="nav-items"><li class="wfo-portal active"><a href="/">Explore the data</a></li><li class="wfo-about"><a href="https://about.worldfloraonline.org">Find out about</a></li><li class="wfo-plant-list wfo-plant-list"><a href="https://wfoplantlist.org/">Check a plant name</a></li></ul></nav><div class="masthead"><a href="/"><div class="logo-lettering"><img src="/css/images/svgs/wfo_lettering_rev.svg"/></div><h1 class="headline">The World Flora Online</h1></a><div class="logo-roundel"><div class="wrapper"><img src="/css/images/svgs/wfo_roundel.svg"/></div></div></div><nav class="main"><div class="navbar-inner"><div class="container"><div id="ham-men"><button data-target=".nav-collapse" data-toggle="collapse" class="btn btn-navbar no-print" type="button"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button></div><div class="no-print"><?xml version="1.0" encoding="UTF-8"?>
+<div><form method="GET" action="/search;jsessionid=77182D670E518FC253C54F4F8E68AA47" class="navbar-search pull-right"><script type="text/javascript">
+        $(document).ready(function() {
+            $("#navbarQuery").autocomplete({
+                source : "/autocomplete;jsessionid=77182D670E518FC253C54F4F8E68AA47",
+                minLength : 2
+            });
+            $["ui"]["autocomplete"].prototype["_renderItem"] = function( ul, item) {
+                return $( "<li/>" )
+                .data( "item.autocomplete", item )
+                .append( $( "<a/>" ).html( item.label ) )
+                .appendTo( ul );
+            };
+        });
+    </script><input placeholder="Search everything" value="" type="text" class="search-query" name="query" id="navbarQuery"/></form></div><div class="pull-right no-print"><a class="btn" href="/login;jsessionid=77182D670E518FC253C54F4F8E68AA47">Sign in</a></div></div><div class="collapse nav-collapse"><ul class="nav"><li><a href="/classification;jsessionid=77182D670E518FC253C54F4F8E68AA47">Browse Classification</a></li><li><a href="/search;jsessionid=77182D670E518FC253C54F4F8E68AA47?facet=base.class_s%3aorg.emonocot.model.Image">Browse Images</a></li><li><a href="/contribute;jsessionid=77182D670E518FC253C54F4F8E68AA47">Contribute Data</a></li><li><a href="/downloadData;jsessionid=77182D670E518FC253C54F4F8E68AA47">Download Data</a></li><li><a href="https://about.worldfloraonline.org/articles">Stories</a></li></ul></div></div></div></nav></div><?xml version="1.0" encoding="UTF-8"?>
+<div itemid="wfo-0000952367" itemtype="http://rs.tdwg.org/dwc/terms/Taxon" itemscope="itemscope"><div class="page-banner no-print"><div class="page-banner-inner"><div class="container"><div class="row"><div class="span12"><div class="page-header"><h2 id="page-title"><a href="https://list.worldfloraonline.org/wfo-0000952367"><b class="WFOID">wfo-0000952367</b></a><br/><a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(Epipremnum aureum (Linden & André) G.S.Bunting)').attr('selected', true); return true;" title="Comment on Epipremnum aureum." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a><i class="glyphicons-icon leaf"></i><em itemprop="scientificName" class="taxonName">Epipremnum aureum</em> <span itemprop="scientificNameAuthorship">(Linden & André) G.S.Bunting</span><ul class="unstyled"><p><li><small class="protologueText"><span itemprop="namePublishedIn" id="protologue">Ann. Missouri Bot. Gard.  50: 28 (1964)</span> <span content="Valid" itemprop="nomenclaturalStatus"></span></small></li></p><p><li><small class="taxonomicStatusText"><div id="taxonomicStatus"><section><p>
+
+														This name is reported by <a href="/organisation/Araceae;jsessionid=77182D670E518FC253C54F4F8E68AA47">Araceae</a> as an accepted name
+													
+
+													in the genus
+													<a href="/taxon/wfo-4000013633;jsessionid=77182D670E518FC253C54F4F8E68AA47">Epipremnum</a>
+													(family <a href="/taxon/wfo-7000000042;jsessionid=77182D670E518FC253C54F4F8E68AA47">Araceae</a>).
+
+												</p><p>
+											The record derives from <b>WCSP</b>
+												(data supplied on 2025-12-15)
+											
+											which
+											
+													reports it as an accepted
+													name
+												(record <a href="http://apps.kew.org/wcsp/namedetail.do?name_id=70476" rel="external">70476</a>)
+											</p></section></div></small></li></p></ul></h2></div></div></div></div></div></div><section class="hide print" id="printHeader"><h2 id="page-title"><i class="glyphicons-icon leaf"></i><em>Epipremnum aureum</em> <span>(Linden & André) G.S.Bunting</span><ul class="unstyled"><li><small><span id="protologue">Ann. Missouri Bot. Gard.  50: 28 (1964)</span> <span></span></small></li><li></li></ul></h2></section><div class="container"><header id="overview" class="subhead clearfix"><div class="subnav no-print"><ul class="nav nav-pills"><li><a href="#local">Local Descriptions</a></li><li><a href="#distributionMap">Distribution map</a></li><li><a href="#synonyms">Synonyms</a></li><li><a href="#bibliography">Bibliography</a></li></ul></div></header><script type="text/javascript">
+			$(document).ready(function(){
+				$('#clickMe').toggle(
+						function(){
+							$('#textBox').hide();
+							$('#clickMe').text('Show details');
+						},
+						function(){
+							$('#textBox').show();
+							$('#clickMe').text('Hide details');
+						});
+			});
+
+			$(document).ready(function() {
+				$("a[href^='#']").click(function(event) {
+					var targetId = $(this).attr('href');
+					var section = $(targetId);
+					section.css('scroll-margin', '2.5rem');
+					event.preventDefault();
+					smoothScroll(targetId);
+					if(history.pushState) {
+						history.pushState(null, null, targetId);
+					}
+					else {
+						location.hash = targetId;
+					}
+				});
+			});
+
+			function smoothScroll(selector){
+				document.querySelector(selector).scrollIntoView({
+					behavior: "smooth", block: "start", inline: "nearest"
+				});
+			}
+		</script><div class="modal modal-gallery hide fade modal-fullscreen modal-fullscreen-stretch no-print" id="modal-gallery"><div class="modal-header"><a data-dismiss="modal" class="close">×</a></div><div class="modal-body"><div class="modal-image"></div><div class="carousel-caption modal-title"><label style="text-align:center">Press ESC to exit</label><label class="pull-right" id="clickMe">Hide details</label><ul style="text-align:left;" class="unstyled" id="textBox"><li><a class="modal-download"><i class="modal-icon"> </i><span class="modal-caption"> </span></a></li><li><em>Creator</em> <span class="modal-creator"> </span></li><li><em>Licence</em> <span class="modal-license-icon"> </span><a data-slideshow="3000" class="btn btn-success modal-play modal-slideshow pull-right"><i class="icon-white icon-play"></i></a></li></ul></div></div></div><br/><div class="citation-text">
+					Cite taxon page as 'WFO (2026):  Epipremnum aureum <span>(Linden & André) G.S.Bunting</span>. Published on the Internet;<a href="http://www.worldfloraonline.org/taxon/wfo-0000952367">http://www.worldfloraonline.org/taxon/wfo-0000952367</a>.
+					Accessed on: 19 Sep 2026'
+				</div><div class="row"><div class="span8"><div style="padding-bottom: 19px !important;" class="inner"><details open="true"><summary><h4 style="display:inline-block;">Local Descriptions</h4></summary><p><section class="section-box" id="local"><div class="inner"><div class="box clearfix"><div><span style="color:white;margin-top: 10px;margin-left: 20px" class="pull-left">Order descriptions by:</span><ul style="background-color:gray;color:white" class="nav nav-tabs"><li class="active"><a style="color:white" data-toggle="tab" href="#3">type</a></li><li><a style="color:white" data-toggle="tab" href="#4">source</a></li></ul></div><div class="tab-content"><div id="3" class="tab-pane active"><div class="inner"><div id="general"><h2><span>General Information</span><a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(General Information)').attr('selected', true); return true;" title="Comment on General Information." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a></h2><div class="description-with-citations"><p class="justified">Very large root-climbing secondary hemiepiphyte to 16 m. Stem (adult) 5–40 mm diam., with prominent irregular whitish longitudinal crests, active portions of stem mid-green to pale yellow-green, sometimes with large obscure dull yellow to white variegations, depending on leaf variegation, older stems with distinctive matte to sub-lustrous orange-brown papery epidermis; flagellate foraging shoots common, arising high in the canopy and reaching the ground. Leaves scattered on lower stem, becoming clustered distally; petiole 19.5–50 cm by 3–15 mm, canaliculate, smooth, mid-green to rather bright yellow-green, apical and basal pulvini barely greater in diameter than petiole; petiolar sheath extending to mid-way along apical geniculum, at first submembranaceous, soon drying chartaceous and degrading to untidy, slightly netted weak fibres, then falling to leave a smooth, mid-brown scar; leaf blade 10–93 by 5–60 cm, entire (juvenile) to irregularly pinnatifid, ovate to elliptic in outline, sub-coriaceous, apex acute to acuminate, base moderately cordate, divisions pinnatifid to pinnatipartite; pinnae up to half the length of the lamina wide, apex truncate, dull to somewhat glossy mid-green, usually irregularly yellow or white variegated, rarely entirely mid-green; pinnae each with 1 (very rarely more except for the terminal pinna) compound primary lateral vein and several to rather many interprimary veins, individual elements of the compound vein diverging at ca 10° from various points along the pinna; interprimary and secondary venation mostly remaining sub-parallel to compound primary vein; higher order venation reticulate. Inflorescences almost never produced.</p><li style="list-style: none;  margin: 0px;  float: right; color: #888;">Provided by: [<a href="#C">C</a>].<a href="#C">e-Flora of Thailand</a></li><ul class="citations">Source: [<li><a href="#citation4">4</a></li>]. 
+													</ul></div></div></div><div class="inner"><div id="ecology"><h2><span>Ecology</span><a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(Ecology)').attr('selected', true); return true;" title="Comment on Ecology." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a></h2><div class="description-with-citations"><p class="justified">Wet hill forest; ca 500 m alt.</p><li style="list-style: none;  margin: 0px;  float: right; color: #888;">Provided by: [<a href="#C">C</a>].<a href="#C">e-Flora of Thailand</a></li><ul class="citations">Source: [<li><a href="#citation4">4</a></li>]. 
+													</ul></div></div></div><div class="inner"><div id="distribution"><h2><span>Distribution</span><a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(Distribution)').attr('selected', true); return true;" title="Comment on Distribution." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a></h2><div class="description-with-citations"><p class="justified">French Polynesia, but now cultivated and frequently naturalized in many tropical and subtropical regions. For a discussion of the synonomy see Boyce, Aroideana 27, 199–205. 2004.</p><li style="list-style: none;  margin: 0px;  float: right; color: #888;">Provided by: [<a href="#C">C</a>].<a href="#C">e-Flora of Thailand</a></li><ul class="citations">Source: [<li><a href="#citation4">4</a></li>]. 
+													</ul></div></div></div><div class="inner"><div id="use"><h2><span>Uses</span><a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(Uses)').attr('selected', true); return true;" title="Comment on Uses." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a></h2><div class="description-with-citations"><p class="justified">Ornamental.</p><li style="list-style: none;  margin: 0px;  float: right; color: #888;">Provided by: [<a href="#C">C</a>].<a href="#C">e-Flora of Thailand</a></li><ul class="citations">Source: [<li><a href="#citation4">4</a></li>]. 
+													</ul></div></div></div></div><div id="4" class="tab-pane"><div class="inner"><div class="box clearfix"><div class="inner"><div id="org.emonocot.model.registry.Organisation@76802680"><details><summary><b style="display:inline-block;"><a href="#C">e-Flora of Thailand</a></b></summary><b style="display:inline-block;">Uses<span style="margin-left: 100px;" class="pull-right"><a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(use)').attr('selected', true); return true;" title="Comment on use." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a></span></b><div class="description-with-citations"><p class="justified">Ornamental.</p></div><b style="display:inline-block;">Ecology<span style="margin-left: 100px;" class="pull-right"><a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(ecology)').attr('selected', true); return true;" title="Comment on ecology." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a></span></b><div class="description-with-citations"><p class="justified">Wet hill forest; ca 500 m alt.</p></div><b style="display:inline-block;">Distribution<span style="margin-left: 100px;" class="pull-right"><a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(distribution)').attr('selected', true); return true;" title="Comment on distribution." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a></span></b><div class="description-with-citations"><p class="justified">French Polynesia, but now cultivated and frequently naturalized in many tropical and subtropical regions. For a discussion of the synonomy see Boyce, Aroideana 27, 199–205. 2004.</p></div><b style="display:inline-block;">General Information<span style="margin-left: 100px;" class="pull-right"><a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(general)').attr('selected', true); return true;" title="Comment on general." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a></span></b><div class="description-with-citations"><p class="justified">Very large root-climbing secondary hemiepiphyte to 16 m. Stem (adult) 5–40 mm diam., with prominent irregular whitish longitudinal crests, active portions of stem mid-green to pale yellow-green, sometimes with large obscure dull yellow to white variegations, depending on leaf variegation, older stems with distinctive matte to sub-lustrous orange-brown papery epidermis; flagellate foraging shoots common, arising high in the canopy and reaching the ground. Leaves scattered on lower stem, becoming clustered distally; petiole 19.5–50 cm by 3–15 mm, canaliculate, smooth, mid-green to rather bright yellow-green, apical and basal pulvini barely greater in diameter than petiole; petiolar sheath extending to mid-way along apical geniculum, at first submembranaceous, soon drying chartaceous and degrading to untidy, slightly netted weak fibres, then falling to leave a smooth, mid-brown scar; leaf blade 10–93 by 5–60 cm, entire (juvenile) to irregularly pinnatifid, ovate to elliptic in outline, sub-coriaceous, apex acute to acuminate, base moderately cordate, divisions pinnatifid to pinnatipartite; pinnae up to half the length of the lamina wide, apex truncate, dull to somewhat glossy mid-green, usually irregularly yellow or white variegated, rarely entirely mid-green; pinnae each with 1 (very rarely more except for the terminal pinna) compound primary lateral vein and several to rather many interprimary veins, individual elements of the compound vein diverging at ca 10° from various points along the pinna; interprimary and secondary venation mostly remaining sub-parallel to compound primary vein; higher order venation reticulate. Inflorescences almost never produced.</p></div></details></div></div></div></div></div></div></div></div></section></p></details></div><section class="section-box" id="distributionMap"><div class="inner"><div class="box clearfix"><h2><i class="glyphicons-icon globe"></i> Distribution Map
+									<a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(Distribution Map)').attr('selected', true); return true;" title="Comment on Distribution Map." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a></h2><div id="map-wrapper"><div data-tour-next="3" data-tour-prev="1" data-tour-placement="top" data-tour-content="Use the map to search for results that are present in the area you select. Use SHIFT + drag to draw a box around the area you are interested in. You can pan and zoom in and out of the map." data-tour-title="Map" class="no-print taxon-page-map tourHelp" id="map"> </div><script type="text/javascript">
+		var google = new OpenLayers.Projection("EPSG:3857");
+		var wgs84 = new OpenLayers.Projection("EPSG:4326");
+		
+		$(document).ready(function() {
+			var map;
+			
+					var originalExtent = new OpenLayers.Bounds(-20037508,-3397377,20037508,4349387);
+				
+			
+			OpenLayers.Map.prototype.zoomToMaxExtent = function() {
+				this.zoomToExtent(originalExtent);
+			};
+			OpenLayers.ImgPath = "/css/images/OpenLayers/;jsessionid=77182D670E518FC253C54F4F8E68AA47";
+			
+			
+			
+			var map = new OpenLayers.Map('map',
+					{
+						controls : [new OpenLayers.Control.Navigation({zoomWheelEnabled : false}),
+									new OpenLayers.Control.PanZoomBar({zoomWorldIcon: true})],
+						units: "m",
+						numZoomLevels: 5,
+						projection : new OpenLayers.Projection("EPSG:3857"),
+						maxResolution: 39135.758475,
+						maxExtent: new OpenLayers.Bounds(-20037500,
+								-20037500,
+								20037500,
+								20037500),
+					});
+			
+			var base_layer = new OpenLayers.Layer.TMS(
+					'MapBox Layer', [ "http://www.worldfloraonline.org/tiles/" ],
+					{ 'layername': 'eMonocot',
+						'type': 'png',
+						'isBaseLayer' : true,
+						'wrapDateLine': true,
+						'serverResolutions' : [
+									156543.0339,
+									78271.51695,
+									39135.758475,
+									19567.8792375,
+									9783.93961875,
+									4891.969809375,
+									2445.9849046875
+									]}
+					);
+			
+			var layer_style = OpenLayers.Util.extend({}, OpenLayers.Feature.Vector.style['default']);
+			layer_style.fillOpacity = 0;
+			layer_style.graphicOpacity = 1;
+			layer_style.strokeColor = "#FE3A7F";
+			layer_style.strokeDashstyle = "dotted";
+			//layer_style.fillColor = "blue";
+			var vector_layer = new OpenLayers.Layer.Vector("Vector Layer", {style: layer_style});
+			
+			map.addLayers([base_layer,vector_layer]);
+			
+			//create an overview map control with the default options
+			var overview = new OpenLayers.Control.OverviewMap({
+				maximized: true,
+				maximizeTitle: 'Show the overview map',
+				minimizeTitle: 'Hide the overview map',
+				mapOptions: {
+					minRatio: 1.0,
+					projection : new OpenLayers.Projection("EPSG:3857"),
+					maxResolution: 156543.0339
+				}
+			});
+			
+			map.addControl(overview);
+			
+			
+			
+			
+				
+	var level3_native = new OpenLayers.Layer.WMS("level3_native","/geoserver/wms",
+		{
+			layers : "tdwg:level3",
+			transparent : "true",
+			format : "image/png",
+			tiled: "yes",
+			tilesorigin: [map.maxExtent.left, map.maxExtent.bottom]
+		},
+		{
+			isBaseLayer : false,
+			displayInLayerSwitcher : false,
+			wrapDateLine: true
+		}
+	);
+	
+	level3_native.params.STYLES = "eMonocot3_native";
+	level3_native.params.FEATUREID = "287";
+	map.addLayers([ level3_native ]);
+	var wfsUrl =  location.protocol + '//' + location.host + '/geoserver/wfs?' + 
+		decodeURIComponent(
+			$.param({
+				"request": "GetFeature",
+				"version": "1.1.0",
+				"typeName": "tdwg:level3",
+				"outputFormat": "JSON",
+				"FEATUREID": "287"
+			})
+	);
+	
+
+	$.ajax({
+		url: wfsUrl,
+		beforeSend: function(xhr){
+                    if (xhr.overrideMimeType)
+                    {
+                      xhr.overrideMimeType("application/json");
+                    }
+        },
+        dataType: 'json',
+		success: function (result) {
+                        jsonObj = new OpenLayers.Format.GeoJSON();
+                        jsonObj = jsonObj.read(result);
+                        var geomCollection = new OpenLayers.Geometry.Collection();
+                        $.each( jsonObj, function( key, value ) {
+                                geomCollection.addComponent(value.geometry);
+                        });
+                        geomCollection.calculateBounds();
+                        map.zoomToExtent(geomCollection.bounds);
+
+		},
+		
+		
+		error: function (data) {
+			console.log(data);
+		}
+	});														
+	
+	
+	var level3_introduced = new OpenLayers.Layer.WMS("level3_introduced","/geoserver/wms",
+		{
+			layers : "tdwg:level3",
+			transparent : "true",
+			format : "image/png",
+			tiled: "yes",
+			tilesorigin: [map.maxExtent.left, map.maxExtent.bottom]
+		},
+		{
+			isBaseLayer : false,
+			displayInLayerSwitcher : false,
+			wrapDateLine: true
+		}
+	);
+	
+	level3_introduced.params.STYLES = "eMonocot3_introduced";
+	level3_introduced.params.FEATUREID = "55,94,231,22,323,137,145,30,46,300,106,328,28,176,154,126,268,172,79,348,303,249,83,75,129,174,71,63,323,293,77,309,269,47,87,108,329,128,98,192";
+	map.addLayers([ level3_introduced ]);
+	var wfsUrl =  location.protocol + '//' + location.host + '/geoserver/wfs?' + 
+		decodeURIComponent(
+			$.param({
+				"request": "GetFeature",
+				"version": "1.1.0",
+				"typeName": "tdwg:level3",
+				"outputFormat": "JSON",
+				"FEATUREID": "55,94,231,22,323,137,145,30,46,300,106,328,28,176,154,126,268,172,79,348,303,249,83,75,129,174,71,63,323,293,77,309,269,47,87,108,329,128,98,192"
+			})
+	);
+	
+
+	$.ajax({
+		url: wfsUrl,
+		beforeSend: function(xhr){
+                    if (xhr.overrideMimeType)
+                    {
+                      xhr.overrideMimeType("application/json");
+                    }
+        },
+        dataType: 'json',
+		success: function (result) {
+                        jsonObj = new OpenLayers.Format.GeoJSON();
+                        jsonObj = jsonObj.read(result);
+                        var geomCollection = new OpenLayers.Geometry.Collection();
+                        $.each( jsonObj, function( key, value ) {
+                                geomCollection.addComponent(value.geometry);
+                        });
+                        geomCollection.calculateBounds();
+                        map.zoomToExtent(geomCollection.bounds);
+
+		},
+		
+		
+		error: function (data) {
+			console.log(data);
+		}
+	});														
+	
+
+			
+			
+		map.zoomToExtent(originalExtent);
+	
+	});
+		
+	</script></div><div class="row"><div class="span7"><ul id="distribution-map-key"><li><div style="background-color: #6F9449" class="distribution-map-key"></div>Native distribution</li><li><div style="background-color: #9A9261" class="distribution-map-key"></div>Introduced distribution</li></ul></div></div><div class="row"><div class="span7"><h5>Found in</h5><ul class="distribution-textual"><li><strong>Pacific </strong><em>South-Central Pacific </em>Society Is.</li></ul></div></div><div class="row"><div class="span7"><h5>Introduced into</h5><ul class="distribution-textual"><li><strong>Africa </strong><em>East Tropical Africa </em>Kenya</li><li><em>West Tropical Africa </em>Guinea</li><li>Ivory Coast</li><li><em>West-Central Tropical Africa </em>Cameroon</li><li><em>Western Indian Ocean </em>Chagos Archipelago</li><li>Comoros</li><li>Seychelles</li><li><strong>Asia-Temperate </strong><em>China </em>China Southeast</li><li><em>Eastern Asia </em>Nansei-shoto</li><li>Ogasawara-shoto</li><li><strong>Asia-Tropical </strong><em>Indian Subcontinent </em>Assam</li><li>Bangladesh</li><li>India</li><li>Sri Lanka</li><li><em>Indo-China </em>Thailand</li><li><em>Malesia </em>Lesser Sunda Is.</li><li>Malaya</li><li><em>Papuasia </em>Solomon Is.</li><li><strong>Australasia </strong><em>Australia </em>Queensland</li><li><strong>Northern America </strong><em>Southeastern U.S.A. </em>Florida</li><li><strong>Pacific </strong><em>North-Central Pacific </em>Hawaii</li><li><em>Northwestern Pacific </em>Caroline Is.</li><li><em>South-Central Pacific </em>Cook Is.</li><li>Line Is.</li><li>Tuamotu</li><li><em>Southwestern Pacific </em>Fiji</li><li><strong>Southern America </strong><em>Brazil </em>Brazil Northeast</li><li>Brazil Southeast</li><li><em>Caribbean </em>Bermuda</li><li>Cuba</li><li>Dominican Republic</li><li>Haiti</li><li>Leeward Is.</li><li>Puerto Rico</li><li>Trinidad-Tobago</li><li>Venezuelan Antilles</li><li><em>Central America </em>Costa Rica</li><li><em>Northern South America </em>Suriname</li><li><em>Western South America </em>Ecuador</li></ul></div></div><div class="row"><div class="span7"></div></div><ul class="citations">Provided by: <li><a href="#B">[B].e-Flora of Thailand</a></li><li><a href="#D">[D].The World Checklist of Vascular Plants (WCVP)</a></li><li><a href="#citation1">1</a></li></ul></div></div></section><section class="section-box" id="synonyms"><div class="inner"><div class="box clearfix"><section class="section-box"><div class="inner"><h2>Synonyms
+													<a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(Synonyms)').attr('selected', true); return true;" title="Comment on Synonyms." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a></h2><ul class="unstyled"><li><a href="/taxon/wfo-0000952397;jsessionid=77182D670E518FC253C54F4F8E68AA47">   <em>Epipremnum mooreense</em> Nadeaud
+																		</a> 
+																	</li><li><a href="/taxon/wfo-0000281232;jsessionid=77182D670E518FC253C54F4F8E68AA47">   <em>Pothos aureus</em> Linden & André
+																		</a> 
+																	</li><li><a href="/taxon/wfo-0000295904;jsessionid=77182D670E518FC253C54F4F8E68AA47">   <em>Rhaphidophora aurea</em> (Linden & André) Birdsey
+																		</a> 
+																	</li><li><a href="/taxon/wfo-0000307218;jsessionid=77182D670E518FC253C54F4F8E68AA47">   <em>Scindapsus aureus</em> (Linden & André) Engl.
+																		</a> 
+																	</li></ul><ul class="citations">Provided by: <li><a href="#A">[A].Araceae</a></li></ul></div></section></div></div></section><section class="section-box" id="bibliography"><div class="inner"><div class="box clearfix"><h2><i class="glyphicons-icon book"> </i> Bibliography
+									<a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(Bibliography)').attr('selected', true); return true;" title="Comment on Bibliography." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a></h2><ul><li><a id="citation1">1</a>
+													
+												</li><li><a id="citation2">2</a><a onClick="trackOutboundLink(&#039;http://www.biodiversitylibrary.org/openurl?ctx_ver=Z39.88-2004&rft_id=http://www.biodiversitylibrary.org/page/20101971&rft_val_fmt=info:ofi/fmt:kev:mtx:book&url_ver=z39.88-2004&#039;); return false;" href="http://www.biodiversitylibrary.org/openurl?ctx_ver=Z39.88-2004&rft_id=http://www.biodiversitylibrary.org/page/20101971&rft_val_fmt=info:ofi/fmt:kev:mtx:book&url_ver=z39.88-2004">
+														Ann. Missouri Bot. Gard. 50(1): 28. 1964 [dt. 1963; publ. 31 Jan 1964]</a></li><li><a id="citation3">3</a><a onClick="trackOutboundLink(&#039;https://www.researchgate.net/publication/283563815_Flora_of_Thailand_-_Araceae_Acoraceae&#039;); return false;" href="https://www.researchgate.net/publication/283563815_Flora_of_Thailand_-_Araceae_Acoraceae">
+														Boyce, P.C., Sookchaloem, D., Hetterscheid, W.L.A., Gusman, G., Jacobsen, N., Idei, T. & Nguyen, V.D. (2012). Flora of Thailand 11(2): 101-325. The Forest Herbarium, National Park, Wildlife and Plant Conservation Department, Bangkok.</a></li><li><a id="citation4">4</a><a onClick="trackOutboundLink(&#039;https://www.dnp.go.th/botany/eflora/floraspecies.html?tdcode=04981&#039;); return false;" href="https://www.dnp.go.th/botany/eflora/floraspecies.html?tdcode=04981">
+														Epipremnum aureum . Flora of Thailand. Vol. 11. Part 2, 2012. Pg. 233. Accessed 2022-04-21</a></li><li><a id="citation5">5</a><a onClick="trackOutboundLink(&#039;http://www.wikidata.org/entity/Q4077471&#039;); return false;" href="http://www.wikidata.org/entity/Q4077471">
+														George Sydney Bunting (1927-2015)</a></li><li><a id="citation6">6</a><a onClick="trackOutboundLink(&#039;https://api.semanticscholar.org/CorpusID:83052121&#039;); return false;" href="https://api.semanticscholar.org/CorpusID:83052121">
+														Govaerts, R.H., Frodin, D.G., & Bogner, J. (2002). World checklist and bibliography of Araceae (and Acoraceae).</a></li><li><a id="citation7">7</a><a onClick="trackOutboundLink(&#039;https://www.ipni.org/n/87014-1&#039;); return false;" href="https://www.ipni.org/n/87014-1">
+														IPNI record: 87014-1</a></li><li><a id="citation8">8</a><a onClick="trackOutboundLink(&#039;http://www.wikidata.org/entity/Q781362&#039;); return false;" href="http://www.wikidata.org/entity/Q781362">
+														Jean Jules Linden (1817-1898)</a></li><li><a id="citation9">9</a><a onClick="trackOutboundLink(&#039;https://powo.science.kew.org/taxon/urn:lsid:ipni.org:names:87014-1&#039;); return false;" href="https://powo.science.kew.org/taxon/urn:lsid:ipni.org:names:87014-1">
+														POWO record for urn:lsid:ipni.org:names:87014-1</a></li><li><a id="citation10">10</a><a onClick="trackOutboundLink(&#039;https://www.checklistbank.org/dataset/2039/taxon/kew-70476#1.1&#039;); return false;" href="https://www.checklistbank.org/dataset/2039/taxon/kew-70476#1.1">
+														The Plant List v1.1 record kew-70476</a></li><li><a id="citation11">11</a><a onClick="trackOutboundLink(&#039;https://www.checklistbank.org/dataset/2039/taxon/kew-70476#1.0&#039;); return false;" href="https://www.checklistbank.org/dataset/2039/taxon/kew-70476#1.0">
+														The Plant List version 1.0, record: kew-70476</a></li><li><a id="citation12">12</a><a onClick="trackOutboundLink(&#039;http://www.wikidata.org/entity/Q274317&#039;); return false;" href="http://www.wikidata.org/entity/Q274317">
+														Édouard André (1840-1911)</a></li></ul></div></div></section><section class="section-box" id="sources"><div class="inner"><div class="box clearfix"><h2><i class="glyphicons-icon group"> </i>Information From</h2><dl><dt><a href="/organisation/Araceae;jsessionid=77182D670E518FC253C54F4F8E68AA47">Araceae</a></dt><dd><a onClick="trackOutboundLink(&#039;https://powo.science.kew.org/&#039;); return false;" href="https://powo.science.kew.org/">https://powo.science.kew.org/ </a></dd><dd>World Flora Online Data. 2022.</dd><dd><ul class="unstyled"><li id="A"><span>A</span>
+					CC0 1.0 Universal (CC0 1.0).
+					<a href="https://creativecommons.org/publicdomain/zero/1.0" class="licenseLogo"><img alt="public" src="/css/images/creativeCommonsLogos/cc-zero.png;jsessionid=77182D670E518FC253C54F4F8E68AA47" class="cclogos"/></a></li></ul></dd><dt><a href="/organisation/e-Flora of Thailand;jsessionid=77182D670E518FC253C54F4F8E68AA47">e-Flora of Thailand</a></dt><dd><a onClick="trackOutboundLink(&#039;&#039;); return false;" href=""> </a></dd><dd>World Flora Online Data. 2026.</dd><dd><ul class="unstyled"><li id="B"><span>B</span>
+					
+					All Rights Reserved</li><li id="C"><span>C</span>
+					Forest Herbarium
+					
+							All rights reserved
+						</li></ul></dd><dt><a href="/organisation/WCVP;jsessionid=77182D670E518FC253C54F4F8E68AA47">The World Checklist of Vascular Plants (WCVP)</a></dt><dd><a onClick="trackOutboundLink(&#039;https://www.kew.org/&#039;); return false;" href="https://www.kew.org/">https://www.kew.org/ </a></dd><dd>The World Checklist of Vascular Plants (WCVP) Facilitated by the Royal Botanic Gardens, Kew. Published on the Internet; https://doi.org/10.34885/jdh2-dr22 Retrieved 28 September 2023.</dd><dd><ul class="unstyled"><li id="D"><span>D</span>
+					
+					All Rights Reserved</li></ul></dd><dt><a href="/organisation/WFO;jsessionid=77182D670E518FC253C54F4F8E68AA47">World Flora Online consortium</a></dt><dd><a onClick="trackOutboundLink(&#039;http://www.worldfloraonline.org/organisation/WFO&#039;); return false;" href="http://www.worldfloraonline.org/organisation/WFO">http://www.worldfloraonline.org/organisation/WFO </a></dd><dd>World Flora Online Data. 2026.</dd><dd><ul class="unstyled"><li id="E"><span>E</span>
+					CC0 1.0 Universal (CC0 1.0).
+					<a href="https://creativecommons.org/publicdomain/zero/1.0" class="licenseLogo"><img alt="public" src="/css/images/creativeCommonsLogos/cc-zero.png;jsessionid=77182D670E518FC253C54F4F8E68AA47" class="cclogos"/></a></li></ul></dd></dl></div></div></section></div><div class="span4 sidebar" id="sidebar"><div class="inner"><div class="box" id="classificationBox"><section id="taxonomicTree" class="sidebarBox"><h2 id="sectionHeader"><i class="glyphicons-icon classify"></i>Classification
+									<a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(Classification)').attr('selected', true); return true;" title="Comment on Classification." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a></h2><ul id="taxonHierarchy"><li><a href="/taxon/wfo-4100001250;jsessionid=77182D670E518FC253C54F4F8E68AA47" class="ancestorsList"><em>Plantae</em> Haeckel</a><ul><li><a href="/taxon/wfo-4100003335;jsessionid=77182D670E518FC253C54F4F8E68AA47" class="ancestorsList"><em>Pteridobiotina</em> Britton & Brown</a><ul><li><a href="/taxon/wfo-9949999999;jsessionid=77182D670E518FC253C54F4F8E68AA47" class="ancestorsList"><em>Angiosperms</em> </a><ul><li><a href="/taxon/wfo-9000000013;jsessionid=77182D670E518FC253C54F4F8E68AA47" class="ancestorsList"><em>Alismatales</em> R.Br. ex Bercht. & J.Presl</a><ul><li><a href="/taxon/wfo-7000000042;jsessionid=77182D670E518FC253C54F4F8E68AA47" class="ancestorsList"><em>Araceae</em> Juss.</a><ul><li><a href="/taxon/wfo-4000013633;jsessionid=77182D670E518FC253C54F4F8E68AA47" class="ancestorsList"><em>Epipremnum</em> Schott</a><ul><li><span class="currentTaxon"/><em>Epipremnum aureum</em> (Linden & André) G.S.Bunting
+			</li></ul></li></ul></li></ul></li></ul></li></ul></li></ul></li></ul><ul class="citations">Provided by: <li><a href="#A">[A].Araceae</a></li><li><a href="#E">[E].World Flora Online consortium</a></li></ul><div style="clear: both"/></section></div></div><div class="inner"><div class="box dataBox"><section id="taxonData" class="sidebarBox"><h2><i class="glyphicons-icon table"></i>Data
+								<a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(Data)').attr('selected', true); return true;" title="Comment on Data." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a></h2><table id="data" class="table"><tbody><tr><th class="span1">Habitat</th><td><ul class="unstyled" id="Habitat"></ul></td><td></td></tr><tr><th class="span1">Life Form</th><td><ul class="unstyled" id="Lifeform"></ul></td><td></td></tr><tr><th class="span1">IUCN Red List Status</th><td><ul class="unstyled" id="threatStatus"></ul></td><td></td></tr></tbody></table></section></div></div><div class="inner no-print"><div class="box linksBox"><section id="externalLinks" class="sidebarBox"><h2><i class="glyphicons-icon link"></i>External Links</h2><ul class="unstyled"><li><a onClick="trackOutboundLink(&#039;http://www.ncbi.nlm.nih.gov/gquery/gquery.fcgi?term=Epipremnum+aureum%5borgn%5d&#039;); return false;" href="http://www.ncbi.nlm.nih.gov/gquery/gquery.fcgi?term=Epipremnum+aureum%5borgn%5d" id="NCBILink">NCBI - National Center for Biotechnology Information</a></li><li><a onClick="trackOutboundLink(&#039;http://www.boldsystems.org/index.php/Taxbrowser_Taxonpage?taxon=Epipremnum+aureum&#039;); return false;" href="http://www.boldsystems.org/index.php/Taxbrowser_Taxonpage?taxon=Epipremnum+aureum" id="boldLink">BOLD Systems - Barcode of Life Data Systems</a></li><li><a onClick="trackOutboundLink(&#039;http://www.gbif.org/species/search?dataset_key=d7dddbf4-2cf0-4f39-9b2a-bb099caae36c&highertaxon_key=6&q=Epipremnum aureum&#039;); return false;" href="http://www.gbif.org/species/search?dataset_key=d7dddbf4-2cf0-4f39-9b2a-bb099caae36c&highertaxon_key=6&q=Epipremnum aureum" id="GBIFLink">GBIF - Global Biodiversity Information Facility</a></li><li><a onClick="trackOutboundLink(&#039;http://www.ipni.org/ipni/idPlantNameSearch.do?id=urn%3alsid%3aipni.org%3anames%3a87014-1&#039;); return false;" href="http://www.ipni.org/ipni/idPlantNameSearch.do?id=urn%3alsid%3aipni.org%3anames%3a87014-1" id="IPNILink">IPNI - urn:lsid:ipni.org:names:87014-1</a></li><li><a onClick="trackOutboundLink(&#039;http://www.theplantlist.org/tpl1.1/record/kew-70476&#039;); return false;" href="http://www.theplantlist.org/tpl1.1/record/kew-70476" id="TPLLink">TPL v.1.1 - The Plant List v.1.1</a></li></ul></section></div></div><div class="inner no-print"><div class="box linksBox"><section id="sourceUrl" class="sidebarBox"><h2><i class="glyphicons-icon link"></i>Taxon Name Source Link</h2><a onClick="trackOutboundLink(&#039;https://powo.science.kew.org/taxon/urn:lsid:ipni.org:names:87014-1&#039;); return false;" href="https://powo.science.kew.org/taxon/urn:lsid:ipni.org:names:87014-1" id="sourceUrl">
+									https://powo.science.kew.org/taxon/ urn:lsid:ipni.org:names:87014-1</a></section></div></div><script type="text/javascript">
+					$(document).ready(function(){
+						$.ajax({
+							dataType: "json",
+							url: "/ncbi;jsessionid=77182D670E518FC253C54F4F8E68AA47?query=Epipremnum+aureum",
+							beforeSend: function(xhr) {
+								xhr.setRequestHeader('Accept', 'application/json');
+								xhr.setRequestHeader('Content-Type', 'application/json');
+							},
+							success: function( data ) {
+								var items = [];
+								items.push( "<li>" + data.nucleotideEntries + " nucleotides</li>" );
+								items.push( "<li>" + data.protienEntries + " proteins</li>" );
+								items.push( "<li>" + data.pubMedEntries + " publications</li>" );
+								$( "<ul/>", {
+									html: items.join( "" )
+								}).appendTo( "#NCBILink" );
+							}
+						});
+					});
+				</script></div></div></div><div class="modal hide fade no-print" id="feedbackModal"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="halflings-icon remove"></i></button><h3><i class="glyphicons-icon comments"></i>Comment</h3></div><form method="post" action="/comment;jsessionid=77182D670E518FC253C54F4F8E68AA47" class="modal-form"><div class="modal-body"><div class="control-group"><span class="label label-important">You will need to log in before your comment is sent!</span><label for="select01" class="control-label">Comment on</label><div class="controls"><input value="wfo-0000952367" name="commentPageIdentifier" type="hidden"/><select name="aboutData"><option value="wfo-0000952367" id="aboutData_taxon">Epipremnum aureum (Linden & André) G.S.Bunting</option><option value="descriptions" id="aboutData_descriptions">Description</option><option value="f6f6e6fb-7019-439f-b1bb-9b3c2a0b2531" id="aboutData_f6f6e6fb-7019-439f-b1bb-9b3c2a0b2531">General Information: 
+											Very large root-climbing second …</option><option value="2a86a954-689c-4592-a802-cfce700d170f" id="aboutData_2a86a954-689c-4592-a802-cfce700d170f">Ecology: 
+											Wet hill forest; ca 500 m alt.</option><option value="5bd774df-8e78-47a1-bdbf-a9bf9fdc1c2f" id="aboutData_5bd774df-8e78-47a1-bdbf-a9bf9fdc1c2f">Distribution: 
+											French Polynesia, but now culti …</option><option value="871b60fe-7f54-4c2b-9a09-b5bf704989cb" id="aboutData_871b60fe-7f54-4c2b-9a09-b5bf704989cb">Uses: 
+											Ornamental.</option><option value="distribution" id="aboutData_distribution">Distribution Map</option><option value="3855e8d4-f7df-4b6d-b545-c334d16b6c1d" id="aboutData_3855e8d4-f7df-4b6d-b545-c334d16b6c1d">Chagos Archipelago</option><option value="2ee2b57e-91e2-4268-97c6-1f31cfd7d516" id="aboutData_2ee2b57e-91e2-4268-97c6-1f31cfd7d516">Dominican Republic</option><option value="73b8f924-8118-481d-ae63-7553689394cd" id="aboutData_73b8f924-8118-481d-ae63-7553689394cd">Nansei-shoto</option><option value="34397977-2335-486d-a50a-882e6f7b8ca4" id="aboutData_34397977-2335-486d-a50a-882e6f7b8ca4">Assam</option><option value="7663bbb0-ab66-4df1-ab97-f7f2ad70a29b" id="aboutData_7663bbb0-ab66-4df1-ab97-f7f2ad70a29b">Thailand</option><option value="4f1ddba3-cf75-41f0-98d7-3f7ee4a637e1" id="aboutData_4f1ddba3-cf75-41f0-98d7-3f7ee4a637e1">India</option><option value="1a2b64c1-58c7-485c-b224-b8529900ae02" id="aboutData_1a2b64c1-58c7-485c-b224-b8529900ae02">Ivory Coast</option><option value="4c8b1096-a166-482d-acf3-c6377b3d2efd" id="aboutData_4c8b1096-a166-482d-acf3-c6377b3d2efd">Bermuda</option><option value="cad69105-bc0c-4a9b-bcb3-3b48bfa55cdf" id="aboutData_cad69105-bc0c-4a9b-bcb3-3b48bfa55cdf">Brazil Northeast</option><option value="3025dd75-3abf-4206-a3c7-2ff2442aab3a" id="aboutData_3025dd75-3abf-4206-a3c7-2ff2442aab3a">Solomon Is.</option><option value="8307d434-f8f0-4a55-a9c8-ecf32b8d8039" id="aboutData_8307d434-f8f0-4a55-a9c8-ecf32b8d8039">Fiji</option><option value="2e8d3404-752b-4ba4-9fec-9b710f346dd7" id="aboutData_2e8d3404-752b-4ba4-9fec-9b710f346dd7">Trinidad-Tobago</option><option value="2a490005-400f-40a5-a24a-8966d6666bf3" id="aboutData_2a490005-400f-40a5-a24a-8966d6666bf3">Bangladesh</option><option value="c33d977e-3a35-4429-826a-8c26aac17a87" id="aboutData_c33d977e-3a35-4429-826a-8c26aac17a87">Lesser Sunda Is.</option><option value="c8a038f2-d48e-40ae-a260-4559ce0a95f5" id="aboutData_c8a038f2-d48e-40ae-a260-4559ce0a95f5">Kenya</option><option value="6ad5c585-37a9-4a93-a4a5-a82300ab0419" id="aboutData_6ad5c585-37a9-4a93-a4a5-a82300ab0419">Guinea</option><option value="cb052c06-1b3f-4ba8-a634-5589d8927579" id="aboutData_cb052c06-1b3f-4ba8-a634-5589d8927579">Puerto Rico</option><option value="857d371e-1c40-4694-a5a7-bc6369275ea8" id="aboutData_857d371e-1c40-4694-a5a7-bc6369275ea8">Leeward Is.</option><option value="732598e9-d951-43b5-8782-ff0853ea4ae5" id="aboutData_732598e9-d951-43b5-8782-ff0853ea4ae5">Costa Rica</option><option value="5467ef84-b7de-4398-8fdf-a7b97c36ece0" id="aboutData_5467ef84-b7de-4398-8fdf-a7b97c36ece0">Venezuelan Antilles</option><option value="ddc3d87e-8210-46a0-b85d-bd14f8f5ddd8" id="aboutData_ddc3d87e-8210-46a0-b85d-bd14f8f5ddd8">Sri Lanka</option><option value="42dd067a-93e1-4dd5-b3a5-6ff3792965a7" id="aboutData_42dd067a-93e1-4dd5-b3a5-6ff3792965a7">Ogasawara-shoto</option><option value="14249e6b-3c5f-4cc1-b6ee-1d59522e5649" id="aboutData_14249e6b-3c5f-4cc1-b6ee-1d59522e5649">Caroline Is.</option><option value="a1432147-61fb-478e-af7a-5e96bf64ca6d" id="aboutData_a1432147-61fb-478e-af7a-5e96bf64ca6d">Comoros</option><option value="5b8b1c52-e390-4b9b-ae90-53b9f16c757d" id="aboutData_5b8b1c52-e390-4b9b-ae90-53b9f16c757d">Hawaii</option><option value="9aeaf219-9c75-46af-9d86-7499c22a23d4" id="aboutData_9aeaf219-9c75-46af-9d86-7499c22a23d4">Society Is.</option><option value="c94621ac-2c58-4077-a218-888e4cb131ed" id="aboutData_c94621ac-2c58-4077-a218-888e4cb131ed">Line Is.</option><option value="c585b067-267b-4985-a682-45768cef40db" id="aboutData_c585b067-267b-4985-a682-45768cef40db">Cameroon</option><option value="0bfecd08-b852-4183-b618-d7fbcd281d98" id="aboutData_0bfecd08-b852-4183-b618-d7fbcd281d98">China Southeast</option><option value="f8c34919-14e3-4455-b64f-5820d4fed3cc" id="aboutData_f8c34919-14e3-4455-b64f-5820d4fed3cc">Thailand</option><option value="f31f2de0-ab81-48bd-bb0c-3ef929181d5f" id="aboutData_f31f2de0-ab81-48bd-bb0c-3ef929181d5f">Seychelles</option><option value="80cb7422-3e82-433a-8bfb-4186703fe939" id="aboutData_80cb7422-3e82-433a-8bfb-4186703fe939">Cook Is.</option><option value="16cfee88-56fb-448b-9dbe-fdd1b4322cc6" id="aboutData_16cfee88-56fb-448b-9dbe-fdd1b4322cc6">Suriname</option><option value="67c662fe-693d-4c7f-82ab-b59ba2bace7c" id="aboutData_67c662fe-693d-4c7f-82ab-b59ba2bace7c">Queensland</option><option value="a370e766-bdc0-4812-a2e4-eb60dbd51d31" id="aboutData_a370e766-bdc0-4812-a2e4-eb60dbd51d31">Brazil Southeast</option><option value="7d3a0c85-974f-420e-b0dc-8ff76f75cc42" id="aboutData_7d3a0c85-974f-420e-b0dc-8ff76f75cc42">Cuba</option><option value="dde1baaa-5b08-4b7c-ae2b-b28430f00bed" id="aboutData_dde1baaa-5b08-4b7c-ae2b-b28430f00bed">Florida</option><option value="6b91012a-54fe-4d50-8bf0-c1d3c7e98112" id="aboutData_6b91012a-54fe-4d50-8bf0-c1d3c7e98112">Tuamotu</option><option value="9b5c34e4-ec33-4d6c-ac61-aaeed69a129b" id="aboutData_9b5c34e4-ec33-4d6c-ac61-aaeed69a129b">Haiti</option><option value="c22a7c85-d728-4e53-a531-5bb28a4b2ffe" id="aboutData_c22a7c85-d728-4e53-a531-5bb28a4b2ffe">Ecuador</option><option value="e22c037c-aba6-4f21-8155-92cf442db17f" id="aboutData_e22c037c-aba6-4f21-8155-92cf442db17f">Malaya</option><option value="synonymNameUsages" id="aboutData_wfo-0000952367">Synonyms</option><option value="wfo-0000952397" id="wfo-0000952397">Epipremnum mooreense Nadeaud</option><option value="wfo-0000281232" id="wfo-0000281232">Pothos aureus Linden & André</option><option value="wfo-0000295904" id="wfo-0000295904">Rhaphidophora aurea (Linden & André) Birdsey</option><option value="wfo-0000307218" id="wfo-0000307218">Scindapsus aureus (Linden & André) Engl.</option><option value="higherClassification" id="aboutData_higherClassification">Classification</option><option value="measurementsOrFacts" id="aboutData_measurementsOrFacts">Data</option><option value="references" id="aboutData_references">Bibliography</option><option value="other" id="aboutData_other">Other</option></select></div></div><div class="control-group"><div class="controls"><textarea rows="3" name="comment" class="input-xlarge"></textarea></div></div></div><div class="modal-footer"><button data-dismiss="modal" class="btn">Cancel</button><button class="btn btn-primary" type="submit">Submit</button></div></form></div></div><footer class="navbar navbar-inverse main"><div class="partner-logos"><div class="logo-item wfo-logo-mono-rev"><img src="/css/images/svgs/wfo_logo_mono_rev.svg"/></div><div class="logo-item gspc-logo-rev"><img src="/css/images/svgs/GSPC_rev.svg"/></div><div class="logo-item cobd-logo-rev"><img src="/css/images/svgs/COBD_rev.svg"/></div><div class="logo-item undob-logo-rev"><img src="/css/images/svgs/UNDoB_mono.svg"/></div></div><nav class="footer-nav"><div class="social"><a style="display:none" target="_blank" href="https://www.instagram.com/worldfloraonline/"><img src="/css/images/svgs/instagram_rev.svg"/></a><a target="_blank" href="https://twitter.com/TheWorldFlora"><img src="/css/images/svgs/twitter_rev.svg"/></a><a target="_blank" href="https://www.facebook.com/WorldFloraOnline"><img src="/css/images/svgs/facebook_rev.svg"/></a></div><div class="footer-nav-items"><ul class="footer-items"><li class=""><a href="mailto:contact@worldfloraonline.org" class="nav-item">Contact WFO</a></li><li><a href="/visualise;jsessionid=77182D670E518FC253C54F4F8E68AA47">Visualise Data</a></li><li><a href="/organisation;jsessionid=77182D670E518FC253C54F4F8E68AA47">Data Providers</a></li><li><a href="/resource;jsessionid=77182D670E518FC253C54F4F8E68AA47">Resources</a></li><li><a href="/comment;jsessionid=77182D670E518FC253C54F4F8E68AA47">Comments</a></li><li><a href="/termsOfUse;jsessionid=77182D670E518FC253C54F4F8E68AA47">Terms of Use</a></li></ul></div></nav><div class="copyright-and-credits"><p class="copyright">
+			Unless otherwise noted, text and images are licenced: <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></p><p class="how-to-cite">
+					Cite taxon page as 'WFO (2026):  Epipremnum aureum <span>(Linden & André) G.S.Bunting</span>. Published on the Internet;<br/><a style="color:white;" href="http://www.worldfloraonline.org/taxon/wfo-0000952367">http://www.worldfloraonline.org/taxon/wfo-0000952367</a>.
+					Accessed on: 19 Sep 2026'
+				</p></div><div/></footer><a href="/url.html" style='display:none'>login</a></body></html>

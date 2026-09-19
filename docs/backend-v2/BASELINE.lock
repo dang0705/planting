@@ -1,7 +1,7 @@
 基线标题: 青花植后端 v2 底层架构重构计划（完整融合闭环终版）
 基线文件: 青花植后端v2底层架构重构计划_融合闭环终版.md
-基线行数: 2111
-基线 SHA-256: e8ee3511ee544ee4a5edcd12bf8cad0b3c02c397fb85eb459193ea854f29f428
-确认规则: 本次准备阶段只拆分实施细节，不修改 Master Plan 业务语义
+基线行数: 2199
+基线 SHA-256: 1a8382b83eb7720425f201afef9920e148e8eda3b15618e112516839fac10357
+确认规则: 本次准备阶段以完整融合闭环终版为唯一计划源；已纳入业务关键变量、类型化策略与统一 Provider 配置治理，不改变原业务语义
 ClickUp 文件夹: https://app.clickup.com/90182453517/v/o/f/1100440000000586
-ClickUp 状态: PENDING_CLICKUP_ACCESS
+ClickUp 状态: 24_TICKETS_CREATED

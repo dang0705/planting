@@ -1,0 +1,3246 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "青花植后端 v2 P1 API 骨架",
+    "version": "p1",
+    "description": "仅冻结具体路由、owner、安全级别和合同引用；完整字段与示例在 P6 发布。"
+  },
+  "servers": [
+    {
+      "url": "/api/v2",
+      "description": "CloudBase HTTP Gateway 相对路径"
+    }
+  ],
+  "paths": {
+    "/api/v2/identity/sessions": {
+      "post": {
+        "operationId": "createIdentitySession",
+        "summary": "identity 域：createIdentitySession",
+        "tags": [
+          "identity"
+        ],
+        "x-owner": "identity",
+        "x-phase": "P2",
+        "x-security": "public",
+        "x-request-contract": "CreateIdentitySessionRequest",
+        "x-response-contract": "IdentitySessionResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/identity/bindings": {
+      "post": {
+        "operationId": "createIdentityBinding",
+        "summary": "identity 域：createIdentityBinding",
+        "tags": [
+          "identity"
+        ],
+        "x-owner": "identity",
+        "x-phase": "P2",
+        "x-security": "authenticated",
+        "x-request-contract": "CreateIdentityBindingRequest",
+        "x-response-contract": "IdentityBindingResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "IDEMPOTENCY_CONFLICT",
+          "IDENTITY_BINDING_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/identity/bindings/{platform}": {
+      "delete": {
+        "operationId": "deleteIdentityBinding",
+        "summary": "identity 域：deleteIdentityBinding",
+        "tags": [
+          "identity"
+        ],
+        "x-owner": "identity",
+        "x-phase": "P2",
+        "x-security": "authenticated",
+        "x-request-contract": "DeleteIdentityBindingRequest",
+        "x-response-contract": "IdentityBindingDeletionResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "IDEMPOTENCY_CONFLICT",
+          "IDENTITY_LAST_BINDING_REQUIRED"
+        ],
+        "parameters": [
+          {
+            "name": "platform",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/me": {
+      "get": {
+        "operationId": "getCurrentUser",
+        "summary": "identity 域：getCurrentUser",
+        "tags": [
+          "identity"
+        ],
+        "x-owner": "identity",
+        "x-phase": "P2",
+        "x-security": "authenticated",
+        "x-request-contract": "EmptyRequest",
+        "x-response-contract": "CurrentUserResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "PRINCIPAL_INVALID",
+          "CAPABILITY_DENIED"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/plant-knowledge/search": {
+      "get": {
+        "operationId": "searchPublishedPlants",
+        "summary": "plant-knowledge 域：searchPublishedPlants",
+        "tags": [
+          "plant-knowledge"
+        ],
+        "x-owner": "plant-knowledge",
+        "x-phase": "P3",
+        "x-security": "public",
+        "x-request-contract": "PlantSearchQuery",
+        "x-response-contract": "PlantSearchResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "SERVICE_UNAVAILABLE"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/plant-knowledge/plants/{plantIdentityRef}": {
+      "get": {
+        "operationId": "getPublishedPlant",
+        "summary": "plant-knowledge 域：getPublishedPlant",
+        "tags": [
+          "plant-knowledge"
+        ],
+        "x-owner": "plant-knowledge",
+        "x-phase": "P3",
+        "x-security": "public",
+        "x-request-contract": "PlantIdentityPath",
+        "x-response-contract": "PublishedPlantResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "NOT_FOUND"
+        ],
+        "parameters": [
+          {
+            "name": "plantIdentityRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/plant-knowledge/identifications": {
+      "post": {
+        "operationId": "identifyPlant",
+        "summary": "plant-knowledge 域：identifyPlant",
+        "tags": [
+          "plant-knowledge"
+        ],
+        "x-owner": "plant-knowledge",
+        "x-phase": "P3",
+        "x-security": "guest_or_authenticated",
+        "x-request-contract": "IdentifyPlantRequest",
+        "x-response-contract": "PlantIdentificationResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "IDEMPOTENCY_CONFLICT",
+          "SERVICE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "guestBearer": []
+          },
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/user-plants": {
+      "get": {
+        "operationId": "listUserPlants",
+        "summary": "user-plant 域：listUserPlants",
+        "tags": [
+          "user-plant"
+        ],
+        "x-owner": "user-plant",
+        "x-phase": "P2",
+        "x-security": "authenticated",
+        "x-request-contract": "UserPlantListQuery",
+        "x-response-contract": "UserPlantListResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "createUserPlant",
+        "summary": "user-plant 域：createUserPlant",
+        "tags": [
+          "user-plant"
+        ],
+        "x-owner": "user-plant",
+        "x-phase": "P2",
+        "x-security": "authenticated",
+        "x-request-contract": "CreateUserPlantRequest",
+        "x-response-contract": "UserPlantResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "CAPABILITY_DENIED",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/user-plants/{userPlantRef}": {
+      "get": {
+        "operationId": "getUserPlant",
+        "summary": "user-plant 域：getUserPlant",
+        "tags": [
+          "user-plant"
+        ],
+        "x-owner": "user-plant",
+        "x-phase": "P2",
+        "x-security": "authenticated",
+        "x-request-contract": "UserPlantPath",
+        "x-response-contract": "UserPlantResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "USER_PLANT_NOT_FOUND"
+        ],
+        "parameters": [
+          {
+            "name": "userPlantRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "updateUserPlant",
+        "summary": "user-plant 域：updateUserPlant",
+        "tags": [
+          "user-plant"
+        ],
+        "x-owner": "user-plant",
+        "x-phase": "P2",
+        "x-security": "authenticated",
+        "x-request-contract": "UpdateUserPlantRequest",
+        "x-response-contract": "UserPlantResponse",
+        "x-idempotency": "required_header_and_version",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "USER_PLANT_NOT_FOUND",
+          "USER_PLANT_VERSION_CONFLICT",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "name": "userPlantRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "deleteUserPlant",
+        "summary": "user-plant 域：deleteUserPlant",
+        "tags": [
+          "user-plant"
+        ],
+        "x-owner": "user-plant",
+        "x-phase": "P2",
+        "x-security": "authenticated",
+        "x-request-contract": "DeleteUserPlantRequest",
+        "x-response-contract": "UserPlantDeletionResponse",
+        "x-idempotency": "required_header_and_version",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "USER_PLANT_NOT_FOUND",
+          "USER_PLANT_VERSION_CONFLICT",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "name": "userPlantRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/user-plants/{userPlantRef}/archive": {
+      "post": {
+        "operationId": "archiveUserPlant",
+        "summary": "user-plant 域：archiveUserPlant",
+        "tags": [
+          "user-plant"
+        ],
+        "x-owner": "user-plant",
+        "x-phase": "P2",
+        "x-security": "authenticated",
+        "x-request-contract": "UserPlantVersionRequest",
+        "x-response-contract": "UserPlantResponse",
+        "x-idempotency": "required_header_and_version",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "USER_PLANT_NOT_FOUND",
+          "USER_PLANT_VERSION_CONFLICT",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "name": "userPlantRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/user-plants/{userPlantRef}/restore": {
+      "post": {
+        "operationId": "restoreUserPlant",
+        "summary": "user-plant 域：restoreUserPlant",
+        "tags": [
+          "user-plant"
+        ],
+        "x-owner": "user-plant",
+        "x-phase": "P2",
+        "x-security": "authenticated",
+        "x-request-contract": "UserPlantVersionRequest",
+        "x-response-contract": "UserPlantResponse",
+        "x-idempotency": "required_header_and_version",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "USER_PLANT_NOT_FOUND",
+          "USER_PLANT_VERSION_CONFLICT",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "name": "userPlantRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/user-plants/{userPlantRef}/identity-confirmations": {
+      "post": {
+        "operationId": "confirmUserPlantIdentity",
+        "summary": "user-plant 域：confirmUserPlantIdentity",
+        "tags": [
+          "user-plant"
+        ],
+        "x-owner": "user-plant",
+        "x-phase": "P2",
+        "x-security": "authenticated",
+        "x-request-contract": "ConfirmUserPlantIdentityRequest",
+        "x-response-contract": "UserPlantResponse",
+        "x-idempotency": "required_header_and_version",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "USER_PLANT_NOT_FOUND",
+          "USER_PLANT_VERSION_CONFLICT",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "name": "userPlantRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/user-plants/{userPlantRef}/assets": {
+      "post": {
+        "operationId": "bindUserPlantAsset",
+        "summary": "user-plant 域：bindUserPlantAsset",
+        "tags": [
+          "user-plant"
+        ],
+        "x-owner": "user-plant",
+        "x-phase": "P2",
+        "x-security": "authenticated",
+        "x-request-contract": "BindUserPlantAssetRequest",
+        "x-response-contract": "UserPlantAssetResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "USER_PLANT_NOT_FOUND",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "name": "userPlantRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/user-plants/{userPlantRef}/timeline": {
+      "get": {
+        "operationId": "listUserPlantTimeline",
+        "summary": "user-plant 域：listUserPlantTimeline",
+        "tags": [
+          "user-plant"
+        ],
+        "x-owner": "user-plant",
+        "x-phase": "P2",
+        "x-security": "authenticated",
+        "x-request-contract": "TimelineQuery",
+        "x-response-contract": "TimelineResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "USER_PLANT_NOT_FOUND"
+        ],
+        "parameters": [
+          {
+            "name": "userPlantRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/user-plants/claims": {
+      "post": {
+        "operationId": "claimGuestPlantCase",
+        "summary": "user-plant 域：claimGuestPlantCase",
+        "tags": [
+          "user-plant"
+        ],
+        "x-owner": "user-plant",
+        "x-phase": "P2",
+        "x-security": "authenticated",
+        "x-request-contract": "ClaimGuestPlantCaseRequest",
+        "x-response-contract": "ClaimGuestPlantCaseResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "GUEST_SESSION_EXPIRED",
+          "GUEST_SESSION_NOT_CLAIMABLE",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/care/watering-advice": {
+      "post": {
+        "operationId": "createWateringAdvice",
+        "summary": "care 域：createWateringAdvice",
+        "tags": [
+          "care"
+        ],
+        "x-owner": "care",
+        "x-phase": "P4",
+        "x-security": "guest_or_authenticated",
+        "x-request-contract": "WateringAdviceRequest",
+        "x-response-contract": "CareCapabilityResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "IDEMPOTENCY_CONFLICT",
+          "SERVICE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "guestBearer": []
+          },
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/care/soil-assessments": {
+      "post": {
+        "operationId": "createSoilAssessment",
+        "summary": "care 域：createSoilAssessment",
+        "tags": [
+          "care"
+        ],
+        "x-owner": "care",
+        "x-phase": "P4",
+        "x-security": "guest_or_authenticated",
+        "x-request-contract": "SoilAssessmentRequest",
+        "x-response-contract": "SoilAssessmentResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "IDEMPOTENCY_CONFLICT",
+          "SERVICE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "guestBearer": []
+          },
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/user-plants/{userPlantRef}/care/summary": {
+      "get": {
+        "operationId": "getUserPlantCareSummary",
+        "summary": "care 域：getUserPlantCareSummary",
+        "tags": [
+          "care"
+        ],
+        "x-owner": "care",
+        "x-phase": "P4",
+        "x-security": "authenticated",
+        "x-request-contract": "UserPlantPath",
+        "x-response-contract": "CareSummaryResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "USER_PLANT_NOT_FOUND"
+        ],
+        "parameters": [
+          {
+            "name": "userPlantRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/user-plants/{userPlantRef}/care/facts": {
+      "post": {
+        "operationId": "createCareFact",
+        "summary": "care 域：createCareFact",
+        "tags": [
+          "care"
+        ],
+        "x-owner": "care",
+        "x-phase": "P4",
+        "x-security": "authenticated",
+        "x-request-contract": "CreateCareFactRequest",
+        "x-response-contract": "CareFactResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "USER_PLANT_NOT_FOUND",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "name": "userPlantRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/user-plants/{userPlantRef}/care/plans": {
+      "get": {
+        "operationId": "listCarePlans",
+        "summary": "care 域：listCarePlans",
+        "tags": [
+          "care"
+        ],
+        "x-owner": "care",
+        "x-phase": "P4",
+        "x-security": "authenticated",
+        "x-request-contract": "CarePlanListQuery",
+        "x-response-contract": "CarePlanListResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "USER_PLANT_NOT_FOUND"
+        ],
+        "parameters": [
+          {
+            "name": "userPlantRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/user-plants/{userPlantRef}/care/proposals/{proposalRef}/confirmations": {
+      "post": {
+        "operationId": "confirmCareProposal",
+        "summary": "care 域：confirmCareProposal",
+        "tags": [
+          "care"
+        ],
+        "x-owner": "care",
+        "x-phase": "P4",
+        "x-security": "authenticated",
+        "x-request-contract": "ConfirmCareProposalRequest",
+        "x-response-contract": "CareConfirmationResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "USER_PLANT_NOT_FOUND",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "name": "userPlantRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "proposalRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/user-plants/{userPlantRef}/care/plans/{planRef}/completions": {
+      "post": {
+        "operationId": "completeCarePlan",
+        "summary": "care 域：completeCarePlan",
+        "tags": [
+          "care"
+        ],
+        "x-owner": "care",
+        "x-phase": "P4",
+        "x-security": "authenticated",
+        "x-request-contract": "CompleteCarePlanRequest",
+        "x-response-contract": "CarePlanResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "USER_PLANT_NOT_FOUND",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "name": "userPlantRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "planRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/diagnosis/sessions": {
+      "post": {
+        "operationId": "createDiagnosisSession",
+        "summary": "diagnosis 域：createDiagnosisSession",
+        "tags": [
+          "diagnosis"
+        ],
+        "x-owner": "diagnosis",
+        "x-phase": "P4",
+        "x-security": "guest_or_authenticated",
+        "x-request-contract": "CreateDiagnosisSessionRequest",
+        "x-response-contract": "DiagnosisSessionResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "IDEMPOTENCY_CONFLICT",
+          "SERVICE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "guestBearer": []
+          },
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/diagnosis/sessions/{diagnosisSessionRef}/answers": {
+      "post": {
+        "operationId": "answerDiagnosisQuestion",
+        "summary": "diagnosis 域：answerDiagnosisQuestion",
+        "tags": [
+          "diagnosis"
+        ],
+        "x-owner": "diagnosis",
+        "x-phase": "P4",
+        "x-security": "guest_or_authenticated",
+        "x-request-contract": "DiagnosisAnswerRequest",
+        "x-response-contract": "DiagnosisSessionResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "name": "diagnosisSessionRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "guestBearer": []
+          },
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/diagnosis/sessions/{diagnosisSessionRef}/result": {
+      "get": {
+        "operationId": "getDiagnosisResult",
+        "summary": "diagnosis 域：getDiagnosisResult",
+        "tags": [
+          "diagnosis"
+        ],
+        "x-owner": "diagnosis",
+        "x-phase": "P4",
+        "x-security": "guest_or_authenticated",
+        "x-request-contract": "DiagnosisSessionPath",
+        "x-response-contract": "DiagnosisResultResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "NOT_FOUND"
+        ],
+        "parameters": [
+          {
+            "name": "diagnosisSessionRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "guestBearer": []
+          },
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/user-plants/{userPlantRef}/diagnoses": {
+      "get": {
+        "operationId": "listUserPlantDiagnoses",
+        "summary": "diagnosis 域：listUserPlantDiagnoses",
+        "tags": [
+          "diagnosis"
+        ],
+        "x-owner": "diagnosis",
+        "x-phase": "P4",
+        "x-security": "authenticated",
+        "x-request-contract": "DiagnosisListQuery",
+        "x-response-contract": "DiagnosisListResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "USER_PLANT_NOT_FOUND"
+        ],
+        "parameters": [
+          {
+            "name": "userPlantRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "createUserPlantDiagnosis",
+        "summary": "diagnosis 域：createUserPlantDiagnosis",
+        "tags": [
+          "diagnosis"
+        ],
+        "x-owner": "diagnosis",
+        "x-phase": "P4",
+        "x-security": "authenticated",
+        "x-request-contract": "CreateUserPlantDiagnosisRequest",
+        "x-response-contract": "DiagnosisSessionResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "USER_PLANT_NOT_FOUND",
+          "AI_QUOTA_INSUFFICIENT",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "name": "userPlantRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/subscription/plans": {
+      "get": {
+        "operationId": "listSubscriptionPlans",
+        "summary": "subscription 域：listSubscriptionPlans",
+        "tags": [
+          "subscription"
+        ],
+        "x-owner": "subscription",
+        "x-phase": "P3",
+        "x-security": "public",
+        "x-request-contract": "EmptyRequest",
+        "x-response-contract": "SubscriptionPlanListResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "SERVICE_UNAVAILABLE"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/subscription/trials": {
+      "post": {
+        "operationId": "activateTrial",
+        "summary": "subscription 域：activateTrial",
+        "tags": [
+          "subscription"
+        ],
+        "x-owner": "subscription",
+        "x-phase": "P3",
+        "x-security": "authenticated",
+        "x-request-contract": "ActivateTrialRequest",
+        "x-response-contract": "EntitlementResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "CAPABILITY_DENIED",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/subscription/entitlements": {
+      "get": {
+        "operationId": "getEntitlements",
+        "summary": "subscription 域：getEntitlements",
+        "tags": [
+          "subscription"
+        ],
+        "x-owner": "subscription",
+        "x-phase": "P3",
+        "x-security": "authenticated",
+        "x-request-contract": "EmptyRequest",
+        "x-response-contract": "PublicCapabilityResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "PRINCIPAL_INVALID"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/subscription/orders": {
+      "post": {
+        "operationId": "createSubscriptionOrder",
+        "summary": "subscription 域：createSubscriptionOrder",
+        "tags": [
+          "subscription"
+        ],
+        "x-owner": "subscription",
+        "x-phase": "P5",
+        "x-security": "authenticated",
+        "x-request-contract": "CreateSubscriptionOrderRequest",
+        "x-response-contract": "SubscriptionOrderResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "IDEMPOTENCY_CONFLICT",
+          "SERVICE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/subscription/orders/{orderRef}": {
+      "get": {
+        "operationId": "getSubscriptionOrder",
+        "summary": "subscription 域：getSubscriptionOrder",
+        "tags": [
+          "subscription"
+        ],
+        "x-owner": "subscription",
+        "x-phase": "P5",
+        "x-security": "authenticated",
+        "x-request-contract": "SubscriptionOrderPath",
+        "x-response-contract": "SubscriptionOrderResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "NOT_FOUND"
+        ],
+        "parameters": [
+          {
+            "name": "orderRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/subscription/rewards/summary": {
+      "get": {
+        "operationId": "getRewardSummary",
+        "summary": "subscription 域：getRewardSummary",
+        "tags": [
+          "subscription"
+        ],
+        "x-owner": "subscription",
+        "x-phase": "P3",
+        "x-security": "authenticated",
+        "x-request-contract": "EmptyRequest",
+        "x-response-contract": "RewardSummaryResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "PRINCIPAL_INVALID"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/subscription/rewards/ledger": {
+      "get": {
+        "operationId": "listRewardLedger",
+        "summary": "subscription 域：listRewardLedger",
+        "tags": [
+          "subscription"
+        ],
+        "x-owner": "subscription",
+        "x-phase": "P3",
+        "x-security": "authenticated",
+        "x-request-contract": "RewardLedgerQuery",
+        "x-response-contract": "RewardLedgerResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/subscription/rewards/catalog": {
+      "get": {
+        "operationId": "getRewardCatalog",
+        "summary": "subscription 域：getRewardCatalog",
+        "tags": [
+          "subscription"
+        ],
+        "x-owner": "subscription",
+        "x-phase": "P3",
+        "x-security": "authenticated",
+        "x-request-contract": "EmptyRequest",
+        "x-response-contract": "RewardCatalogResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "PRINCIPAL_INVALID"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/subscription/rewards/redemptions": {
+      "post": {
+        "operationId": "createRewardRedemption",
+        "summary": "subscription 域：createRewardRedemption",
+        "tags": [
+          "subscription"
+        ],
+        "x-owner": "subscription",
+        "x-phase": "P3",
+        "x-security": "authenticated",
+        "x-request-contract": "CreateRewardRedemptionRequest",
+        "x-response-contract": "RewardRedemptionResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "CAPABILITY_DENIED",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/subscription/ai-quota": {
+      "get": {
+        "operationId": "getAiQuota",
+        "summary": "subscription 域：getAiQuota",
+        "tags": [
+          "subscription"
+        ],
+        "x-owner": "subscription",
+        "x-phase": "P3",
+        "x-security": "authenticated",
+        "x-request-contract": "EmptyRequest",
+        "x-response-contract": "AiQuotaResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "PRINCIPAL_INVALID"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/subscription/callbacks/{provider}": {
+      "post": {
+        "operationId": "receivePaymentCallback",
+        "summary": "subscription 域：receivePaymentCallback",
+        "tags": [
+          "subscription"
+        ],
+        "x-owner": "subscription",
+        "x-phase": "P5",
+        "x-security": "service",
+        "x-required-scope": "subscription.payment-callback.receive",
+        "x-request-contract": "RawPaymentCallback",
+        "x-response-contract": "PaymentCallbackResponse",
+        "x-idempotency": "provider_event_id",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "IDEMPOTENCY_CONFLICT",
+          "SERVICE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "serviceSignature": []
+          }
+        ]
+      }
+    },
+    "/api/v2/internal/identity/resolve": {
+      "post": {
+        "operationId": "resolvePrincipalInternal",
+        "summary": "identity 域：resolvePrincipalInternal",
+        "tags": [
+          "identity"
+        ],
+        "x-owner": "identity",
+        "x-phase": "P2",
+        "x-security": "service",
+        "x-required-scope": "identity.resolve",
+        "x-request-contract": "ResolvePrincipalInternalRequest",
+        "x-response-contract": "ResolvePrincipalInternalResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "serviceSignature": []
+          }
+        ]
+      }
+    },
+    "/api/v2/internal/user-plants/{userPlantRef}/context": {
+      "get": {
+        "operationId": "getUserPlantContextInternal",
+        "summary": "user-plant 域：getUserPlantContextInternal",
+        "tags": [
+          "user-plant"
+        ],
+        "x-owner": "user-plant",
+        "x-phase": "P2",
+        "x-security": "service",
+        "x-required-scope": "user-plant.context.read",
+        "x-request-contract": "ScopedUserPlantContextQuery",
+        "x-response-contract": "UserPlantContextInternalResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "USER_PLANT_NOT_FOUND"
+        ],
+        "parameters": [
+          {
+            "name": "userPlantRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "serviceSignature": []
+          }
+        ]
+      }
+    },
+    "/api/v2/internal/user-plants/{userPlantRef}/agent-context": {
+      "get": {
+        "operationId": "getAgentPlantContextInternal",
+        "summary": "user-plant 域：getAgentPlantContextInternal",
+        "tags": [
+          "user-plant"
+        ],
+        "x-owner": "user-plant",
+        "x-phase": "P4",
+        "x-security": "service",
+        "x-required-scope": "user-plant.agent-context.read",
+        "x-request-contract": "ScopedAgentContextQuery",
+        "x-response-contract": "AgentPlantContextResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "USER_PLANT_NOT_FOUND",
+          "CAPABILITY_DENIED"
+        ],
+        "parameters": [
+          {
+            "name": "userPlantRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "serviceSignature": []
+          }
+        ]
+      }
+    },
+    "/api/v2/internal/subscription/ai-quota/reservations": {
+      "post": {
+        "operationId": "reserveAiQuotaInternal",
+        "summary": "subscription 域：reserveAiQuotaInternal",
+        "tags": [
+          "subscription"
+        ],
+        "x-owner": "subscription",
+        "x-phase": "P3",
+        "x-security": "service",
+        "x-required-scope": "subscription.ai-quota.reserve",
+        "x-request-contract": "ReserveAiQuotaCommand",
+        "x-response-contract": "AiQuotaReservationResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "AI_QUOTA_INSUFFICIENT",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "serviceSignature": []
+          }
+        ]
+      }
+    },
+    "/api/v2/internal/subscription/ai-quota/reservations/{reservationRef}/settlements": {
+      "post": {
+        "operationId": "settleAiQuotaInternal",
+        "summary": "subscription 域：settleAiQuotaInternal",
+        "tags": [
+          "subscription"
+        ],
+        "x-owner": "subscription",
+        "x-phase": "P5",
+        "x-security": "service",
+        "x-required-scope": "subscription.ai-quota.settle",
+        "x-request-contract": "SettleAiQuotaCommand",
+        "x-response-contract": "AiQuotaSettlementResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "name": "reservationRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "serviceSignature": []
+          }
+        ]
+      }
+    },
+    "/api/v2/internal/subscription/ai-quota/reservations/{reservationRef}/releases": {
+      "post": {
+        "operationId": "releaseAiQuotaInternal",
+        "summary": "subscription 域：releaseAiQuotaInternal",
+        "tags": [
+          "subscription"
+        ],
+        "x-owner": "subscription",
+        "x-phase": "P5",
+        "x-security": "service",
+        "x-required-scope": "subscription.ai-quota.release",
+        "x-request-contract": "ReleaseAiQuotaCommand",
+        "x-response-contract": "AiQuotaReleaseResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "name": "reservationRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "serviceSignature": []
+          }
+        ]
+      }
+    },
+    "/api/v2/internal/subscription/reward-events": {
+      "post": {
+        "operationId": "consumeRewardEventInternal",
+        "summary": "subscription 域：consumeRewardEventInternal",
+        "tags": [
+          "subscription"
+        ],
+        "x-owner": "subscription",
+        "x-phase": "P3",
+        "x-security": "service",
+        "x-required-scope": "subscription.reward-event.consume",
+        "x-request-contract": "RewardableDomainEvent",
+        "x-response-contract": "RewardEventConsumptionResponse",
+        "x-idempotency": "event_id",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "serviceSignature": []
+          }
+        ]
+      }
+    },
+    "/api/v2/internal/plant-knowledge/enrichment-jobs/leases": {
+      "post": {
+        "operationId": "leaseEnrichmentJobsInternal",
+        "summary": "plant-knowledge 域：leaseEnrichmentJobsInternal",
+        "tags": [
+          "plant-knowledge"
+        ],
+        "x-owner": "plant-knowledge",
+        "x-phase": "P3",
+        "x-security": "service",
+        "x-required-scope": "plant-knowledge.enrichment.lease",
+        "x-request-contract": "LeaseEnrichmentJobsRequest",
+        "x-response-contract": "LeaseEnrichmentJobsResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "serviceSignature": []
+          }
+        ]
+      }
+    },
+    "/api/v2/internal/plant-knowledge/enrichment-jobs/{jobRef}/results": {
+      "post": {
+        "operationId": "submitEnrichmentResultInternal",
+        "summary": "plant-knowledge 域：submitEnrichmentResultInternal",
+        "tags": [
+          "plant-knowledge"
+        ],
+        "x-owner": "plant-knowledge",
+        "x-phase": "P3",
+        "x-security": "service",
+        "x-required-scope": "plant-knowledge.enrichment.submit",
+        "x-request-contract": "SubmitEnrichmentResultRequest",
+        "x-response-contract": "EnrichmentJobResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "IDEMPOTENCY_CONFLICT"
+        ],
+        "parameters": [
+          {
+            "name": "jobRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "serviceSignature": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "guestBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "CloudBase anonymous token"
+      },
+      "userBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "CloudBase user token"
+      },
+      "serviceSignature": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-QHZ-Signature"
+      }
+    },
+    "parameters": {
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128
+        },
+        "description": "同一主体、方法、规范化路径和业务动作范围内的幂等键。"
+      }
+    },
+    "schemas": {
+      "SuccessEnvelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {}
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "type",
+              "message"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "VALIDATION_FAILED",
+                  "PRINCIPAL_INVALID",
+                  "CAPABILITY_DENIED",
+                  "NOT_FOUND",
+                  "USER_PLANT_NOT_FOUND",
+                  "METHOD_NOT_ALLOWED",
+                  "GUEST_SESSION_EXPIRED",
+                  "PAYLOAD_TOO_LARGE",
+                  "UNSUPPORTED_MEDIA_TYPE",
+                  "IDEMPOTENCY_CONFLICT",
+                  "USER_PLANT_VERSION_CONFLICT",
+                  "CAPABILITY_SNAPSHOT_EXPIRED",
+                  "GUEST_SESSION_NOT_CLAIMABLE",
+                  "AI_QUOTA_INSUFFICIENT",
+                  "INTERNAL_ERROR",
+                  "SERVICE_UNAVAILABLE"
+                ]
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

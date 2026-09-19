@@ -9,12 +9,17 @@
     body { margin: 0; background: #f5f7f4; color: #183025; }
     main { max-width: 1080px; margin: 0 auto; padding: 32px 20px; }
     .notice { background: #fff8e6; border: 1px solid #e8c46a; padding: 12px 16px; border-radius: 8px; }
+    .overall { background: white; border-radius: 12px; padding: 18px; margin-top: 16px; box-shadow: 0 2px 10px #18302512; }
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-top: 20px; }
     .module { background: white; border-radius: 12px; padding: 18px; box-shadow: 0 2px 10px #18302512; }
     .meta { color: #587063; font-size: 13px; }
     .bar { height: 10px; background: #dce8df; border-radius: 99px; overflow: hidden; margin: 12px 0; }
     .fill { height: 100%; background: #3c9b69; transition: width .2s ease; }
     .ticket { border-top: 1px solid #e6eee8; padding-top: 10px; margin-top: 10px; }
+    .ticket-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .ticket-heading strong { flex: 0 0 auto; font-size: 13px; color: #315b46; }
+    .ticket-progress-bar { height: 7px; background: #e5ece7; border-radius: 99px; overflow: hidden; margin: 7px 0; }
+    .ticket-progress-fill { height: 100%; background: #62ad7f; transition: width .2s ease; }
     .agent-missing { color: #9a5a00; }
     a { color: #18794e; }
   </style>
@@ -24,37 +29,25 @@
     <h1>青花植后端 v2 模块进度</h1>
     <p>按后端架构模块列举任务，不还原 Mermaid。数据来自 <code>module-status.json</code>。</p>
     <div id="notice" class="notice">正在读取状态……</div>
+    <section id="overall" class="overall">正在计算总体完成度……</section>
     <section id="modules" class="grid"></section>
   </main>
   <script>
     const REFRESH_INTERVAL_MS = 30 * 60 * 1000;
 
-    function normalizeProgress(value, fallback = 0) {
+    function normalizeProgress(value) {
+      if (value === null || value === undefined) return 0;
       const parsed = Number(value);
-      if (!Number.isFinite(parsed)) return fallback;
+      if (!Number.isFinite(parsed)) return 0;
       return Math.min(100, Math.max(0, parsed));
     }
 
-    function hasProgress(value) {
+    function hasReportedProgress(value) {
       return value !== null && value !== undefined && Number.isFinite(Number(value));
     }
 
     function progressLabel(value) {
-      return hasProgress(value) ? `${normalizeProgress(value)}%` : '未报告';
-    }
-
-    // 模块进度按已报告的 ticket 计算，避免未来阶段尚未启动的任务把当前执行进度错误显示为 0%。
-    function summarizeTicketProgress(tickets, fallback = 0) {
-      const reported = tickets.filter((ticket) => hasProgress(ticket.progress));
-      if (!reported.length) {
-        return { progress: null, reported: 0, total: tickets.length };
-      }
-      const total = reported.reduce((sum, ticket) => sum + normalizeProgress(ticket.progress), 0);
-      return {
-        progress: Math.round(total / reported.length),
-        reported: reported.length,
-        total: tickets.length
-      };
+      return `${normalizeProgress(value)}%`;
     }
 
     // 追踪页使用 innerHTML 渲染状态文件，所有动态文本都先转义，避免状态内容破坏页面结构。
@@ -74,6 +67,12 @@
       const agents = new Map((data.agentRegistry || []).map((agent) => [agent.name, agent]));
       const snapshotTime = data.generatedAt || '未知';
       document.querySelector('#notice').textContent = `追踪表负责人：${data.trackerOwner || '主代理 /root'}；ClickUp 状态：${data.clickUpStatus || '未知'}；代理快照：${snapshotTime}；页面每 30 分钟自动刷新`;
+      const overall = data.overallProgress || { progress: 0, reported: 0, total: 0 };
+      document.querySelector('#overall').innerHTML = `
+        <strong>总体完成度：${overall.progress}%</strong>
+        <div class="bar" aria-label="总体完成进度"><div class="fill" style="width:${overall.progress}%"></div></div>
+        <div class="meta">全部任务：${overall.total}；已上报：${overall.reported}；未开始或未上报任务统一按 0% 计入</div>
+      `;
       document.querySelector('#modules').innerHTML = (data.modules || []).map((module) => {
         const moduleStatus = module.status || '准备中';
         const moduleAgentNames = [...new Set((module.tickets || []).map((ticket) => ticket.agent).filter(Boolean))];
@@ -88,17 +87,21 @@
             title: ticket.title || '未命名任务',
             url: ticket.url || '#',
             status: ticket.status || moduleStatus,
-            progress: hasProgress(ticket.progress) ? normalizeProgress(ticket.progress) : null,
+            progress: hasReportedProgress(ticket.progress) ? normalizeProgress(ticket.progress) : null,
             agentLabel,
             agentState: agent ? agent.status : '未在当前代理快照中',
             agentIsCurrent,
             clickUpStatus
           };
         });
-        const progressSummary = summarizeTicketProgress(tickets, module.progress);
+        const progressSummary = {
+          progress: normalizeProgress(module.progress),
+          reported: Number(module.reportedTicketCount || 0),
+          total: Number(module.totalTicketCount ?? tickets.length)
+        };
         const moduleProgress = progressSummary.progress;
-        const moduleProgressWidth = moduleProgress === null ? 0 : moduleProgress;
-        const moduleProgressText = moduleProgress === null ? '尚未启动' : `${moduleProgress}%`;
+        const moduleProgressWidth = moduleProgress;
+        const moduleProgressText = `${moduleProgress}%`;
 
         return `
         <article class="module">
@@ -107,9 +110,16 @@
           <div class="meta">计划角色：${escapeHtml(module.plannedAgent || '未指定')}　当前子代理：${escapeHtml(moduleAgent)}</div>
           <div class="bar" aria-label="完成进度"><div class="fill" style="width:${moduleProgressWidth}%"></div></div>
           <div>${escapeHtml(moduleProgressText)}　${escapeHtml(moduleStatus)}</div>
-          <div class="meta">当前已报告任务：${progressSummary.reported}/${progressSummary.total}；进度条为已报告任务平均值</div>
+          <div class="meta">已上报任务：${progressSummary.reported}/${progressSummary.total}；未开始或未上报任务按 0% 计入模块完成度</div>
           <div class="meta">最后更新：${escapeHtml(module.lastUpdatedAt || '尚未开始')}</div>
-          ${tickets.map((ticket) => `<div class="ticket"><a href="${escapeHtml(ticket.url)}" target="_blank" rel="noreferrer">${escapeHtml(ticket.title)}</a><div class="meta ${ticket.agentIsCurrent ? '' : 'agent-missing'}">ClickUp：${escapeHtml(ticket.clickUpStatus)} · 本地：${escapeHtml(ticket.status)} · ${progressLabel(ticket.progress)} · ${escapeHtml(ticket.agentLabel)} · ${escapeHtml(ticket.agentState)}</div></div>`).join('')}
+          ${tickets.map((ticket) => {
+            const ticketProgress = normalizeProgress(ticket.progress);
+            return `<div class="ticket">
+              <div class="ticket-heading"><a href="${escapeHtml(ticket.url)}" target="_blank" rel="noreferrer">${escapeHtml(ticket.title)}</a><strong>${progressLabel(ticket.progress)}</strong></div>
+              <div class="ticket-progress-bar" role="progressbar" aria-label="任务完成进度：${escapeHtml(ticket.title)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${ticketProgress}"><div class="ticket-progress-fill" style="width:${ticketProgress}%"></div></div>
+              <div class="meta ${ticket.agentIsCurrent ? '' : 'agent-missing'}">ClickUp：${escapeHtml(ticket.clickUpStatus)} · 本地：${escapeHtml(ticket.status)} · ${escapeHtml(ticket.agentLabel)} · ${escapeHtml(ticket.agentState)}</div>
+            </div>`;
+          }).join('')}
         </article>`;
       }).join('');
     }

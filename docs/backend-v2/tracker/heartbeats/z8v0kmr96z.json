@@ -1,0 +1,14 @@
+{
+  "ticketId": "z8v0kmr96z",
+  "agent": "subscription_terra + root",
+  "model": "gpt-5.6-terra / medium",
+  "status": "done",
+  "progress": 100,
+  "summary": "主代理已完成独立验收并接受 P1 额度、会员与积分奖励静态合同/DDL：24 小时试用、2,000 月额度、CMS 100/50 奖励、3 个日历月有效期、grant/预占/账本守恒及 outbox/inbox 双重幂等均冻结；定向 16/16、P1 总 DDL、typecheck、manifest 与审计哈希均通过。支付、真实 Provider 成本、真实 MySQL 并发回放和 HTTP 运行时仍按后续阶段验收。",
+  "blockers": [],
+  "unverified": [
+    "支付 sandbox/验签/查单/对账、真实模型成本与点数换算、预算闸门演练和私有视觉资产闭环属于后续能力门，对应能力继续 STOP。",
+    "真实并发预占、死锁重试与 outbox/inbox 回放尚未验收，转交 P5 真实 MySQL 并发与回放任务，不倒灌为 P1 合同总阻断。"
+  ],
+  "updatedAt": "2026-09-20T07:02:14+08:00"
+}

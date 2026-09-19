@@ -1,0 +1,381 @@
+{
+  "agent": "clickup_status_keeper_luna",
+  "model": "gpt-5.6-luna / medium",
+  "checkedAt": "2026-09-20T07:35:44+08:00",
+  "nextCheckAt": "2026-09-20T07:50:44+08:00",
+  "channel": "用户 Chrome default/main 主 profile + Chrome MCP",
+  "scope": [
+    "Phase-P-1 全部 5 个 ticket、Phase-P1 全部 5 个 ticket及其登记状态",
+    "z8v0kmr9ge、z8v0kmr9gm、z8v0kmr9gn 的创建、描述和远端状态回读",
+    "z8v0kmr9dq、z8v0kmr9dv、z8v0kmr96w、z8v0kmr96x",
+    "本地 tracker/module-status.json、heartbeats/*.json",
+    "当前可验证子代理与产物"
+  ],
+  "ticketStatuses": {
+    "z8v0kmr96q": "done",
+    "z8v0kmr96r": "done",
+    "z8v0kmr96t": "done",
+    "z8v0kmr96u": "done",
+    "z8v0kmr96v": "done",
+    "z8v0kmr96w": "done",
+    "z8v0kmr96x": "done",
+    "z8v0kmr9dq": "done",
+    "z8v0kmr9dv": "done",
+    "z8v0kmr96y": "review needed",
+    "z8v0kmr96z": "review needed",
+    "z8v0kmr9ge": "review needed",
+    "z8v0kmr9gm": "human required",
+    "z8v0kmr9gn": "review needed",
+    "z8v0kmr970": "backlog",
+    "z8v0kmr971": "backlog",
+    "z8v0kmr972": "backlog",
+    "z8v0kmr973": "backlog",
+    "z8v0kmr974": "backlog",
+    "z8v0kmr975": "backlog",
+    "z8v0kmr976": "backlog",
+    "z8v0kmr977": "backlog",
+    "z8v0kmr978": "backlog",
+    "z8v0kmr979": "backlog"
+  },
+  "changes": [
+    {
+      "ticketId": "z8v0kmr96w",
+      "from": "review needed",
+      "to": "human required",
+      "reason": "只读证伪已完成，但冻结依赖安装需用户批准；ClickUp 已回读 HUMAN REQUIRED。"
+    },
+    {
+      "ticketId": "z8v0kmr9dq",
+      "from": "codex running",
+      "to": "human required",
+      "reason": "P0 产品参数决策等待用户确认；ClickUp 已回读 HUMAN REQUIRED。"
+    },
+    {
+      "ticketId": "z8v0kmr9dv",
+      "from": "codex running",
+      "to": "codex running",
+      "reason": "第二次独立复验仍在修 verifier；本轮回读为 CODEX RUNNING，未修改。"
+    },
+    {
+      "ticketId": "z8v0kmr96q",
+      "from": "blocked",
+      "to": "done",
+      "reason": "owner heartbeat done/100，P-1 独立出口门 PASS；ClickUp 回读 DONE。旧配额文字不再作为当前阻断。"
+    },
+    {
+      "ticketId": "z8v0kmr96r",
+      "from": "blocked",
+      "to": "done",
+      "reason": "owner heartbeat done/100，P-1 独立出口门 PASS；ClickUp 回读 DONE。旧配额文字不再作为当前阻断。"
+    },
+    {
+      "ticketId": "z8v0kmr96t",
+      "from": "blocked",
+      "to": "done",
+      "reason": "owner heartbeat done/100，P-1 独立出口门 PASS；ClickUp 回读 DONE。旧配额文字不再作为当前阻断。"
+    },
+    {
+      "ticketId": "z8v0kmr96u",
+      "from": "codex running",
+      "to": "done",
+      "reason": "owner heartbeat done/100，P-1 独立出口门 PASS；ClickUp 回读 DONE。旧配额文字不再作为当前阻断。"
+    },
+    {
+      "ticketId": "z8v0kmr96v",
+      "from": "blocked",
+      "to": "done",
+      "reason": "owner heartbeat done/100，P-1 独立出口门 PASS；ClickUp 回读 DONE。旧配额文字不再作为当前阻断。"
+    },
+    {
+      "ticketId": "z8v0kmr9dq",
+      "from": "backlog",
+      "to": "codex running",
+      "reason": "product_decisions_terra 已正式承接；本地 heartbeat 为 in_progress/1%；ClickUp 页面活动记录已确认。"
+    },
+    {
+      "ticketId": "z8v0kmr9dv",
+      "from": "backlog",
+      "to": "codex running",
+      "reason": "integration_probe_terra 已正式承接；本地 heartbeat 为 in_progress/5%；ClickUp 页面活动记录已确认。"
+    },
+    {
+      "ticketId": "z8v0kmr96w",
+      "from": "codex running",
+      "to": "review needed",
+      "reason": "本地 heartbeat 为 review_needed/100%；P0 构建证伪报告已生成，等待主代理验收。"
+    },
+    {
+      "ticketId": "z8v0kmr96x",
+      "from": "review needed",
+      "to": "done",
+      "reason": "负责人 heartbeat 已更新为 done/100%，独立最终 gate 已由主代理接受；ClickUp 页面已回读 DONE。身份准入 STOP 保留为能力边界，不改变 ticket 完成状态。"
+    },
+    {
+      "ticketId": "z8v0kmr96w",
+      "from": "human required",
+      "to": "codex running",
+      "reason": "用户已确认允许安装冻结依赖；ClickUp 页面已回读 CODEX RUNNING。"
+    },
+    {
+      "ticketId": "z8v0kmr9dq",
+      "from": "human required",
+      "to": "codex running",
+      "reason": "用户已确认全部 P0 产品参数及 AI 月预算 500 元；ClickUp 页面已回读 CODEX RUNNING。"
+    },
+    {
+      "ticketId": "z8v0kmr9dq",
+      "from": "codex running",
+      "to": "done",
+      "reason": "负责人 heartbeat 为 done/100 且无 blockers；ClickUp 页面已回读 DONE。"
+    },
+    {
+      "ticketId": "z8v0kmr9dv",
+      "from": "codex running",
+      "to": "done",
+      "reason": "负责人 heartbeat 为 done/100 且无 blockers；ClickUp 页面已回读 DONE。"
+    },
+    {
+      "ticketId": "z8v0kmr96w",
+      "from": "codex running",
+      "to": "done",
+      "reason": "负责人 heartbeat 为 done/100 且无 blockers；最终独立退出闸门 PASS；ClickUp 页面已回读 DONE。真实 CloudBase 部署仍保持 STOP，不改变本地构建票据结论。"
+    },
+    {
+      "ticketId": "z8v0kmr96y",
+      "from": "backlog",
+      "to": "codex running",
+      "reason": "负责人 heartbeat 为 in_progress/70%；ClickUp 页面已回读 CODEX RUNNING。现有 CONTRACT_STOP 作为能力阻断保留，不改变任务执行状态。"
+    },
+    {
+      "ticketId": "z8v0kmr96z",
+      "from": "backlog",
+      "to": "codex running",
+      "reason": "负责人 heartbeat 为 in_progress/55%；ClickUp 页面已回读 CODEX RUNNING。真实支付、模型成本、预算和并发能力仍按 heartbeat 保持 STOP。"
+    },
+    {
+      "ticketId": "z8v0kmr96y",
+      "from": "codex running",
+      "to": "review needed",
+      "reason": "本轮 Chrome 回读显示负责人 user_plant_terra 的本地 heartbeat 为 review_needed/95%，ClickUp 远端已校正为 REVIEW NEEDED，等待主代理独立验收。"
+    },
+    {
+      "ticketId": "z8v0kmr9ge",
+      "from": "not registered",
+      "to": "codex running",
+      "reason": "主代理已授权通过用户 Chrome default/main 主 profile 创建并回读 P1 公共 HTTP 合同与 OpenAPI 路由骨架 ticket；等待 root heartbeat。"
+    },
+    {
+      "ticketId": "z8v0kmr9gm",
+      "from": "not registered",
+      "to": "backlog",
+      "reason": "主代理已授权通过用户 Chrome default/main 主 profile 创建并回读 P1 植物分类与身份准入硬门 ticket；尚未执行，等待 taxonomy_gate_terra + root 承接。"
+    },
+    {
+      "ticketId": "z8v0kmr9gn",
+      "from": "not registered",
+      "to": "codex running",
+      "reason": "主代理已授权通过用户 Chrome default/main 主 profile 创建并回读 P1 业务策略与统一 Provider 配置架构 ticket；等待 root、config_business_luna、provider_config_terra heartbeat。"
+    },
+    {
+      "ticketId": "z8v0kmr9gn",
+      "from": "codex running",
+      "to": "codex running",
+      "reason": "本轮通过用户 Chrome default/main 主 profile 回读 ticket 状态仍为 CODEX RUNNING，并将负责人本地 heartbeat 的 85% 进度与摘要回写到 ClickUp 描述；未改变状态。"
+    },
+    {
+      "ticketId": "z8v0kmr9gn",
+      "from": "codex running",
+      "to": "codex running",
+      "reason": "本轮依据最新负责人 heartbeat 将 ClickUp 进度更新为 90%，同步正式测试迁移与 19/19 绿色回归摘要，并保持 CODEX RUNNING。"
+    },
+    {
+      "ticketId": "z8v0kmr9gn",
+      "from": "codex running",
+      "to": "codex running",
+      "reason": "本轮仅依据最新本地 heartbeat 回读并同步 Provider ticket：进度 94%，摘要更新为 162 项目录可追溯性门禁，且明确 33/36 Vitest 中 3 项 SHA 未同步阻断；远端状态保持 CODEX RUNNING。"
+    },
+    {
+      "ticketId": "z8v0kmr9gn",
+      "from": "codex running",
+      "to": "codex running",
+      "reason": "本轮仅依据最新 heartbeat 补充全量 typecheck 的并发测试类型错误阻断（test/p1-guest-session-claim.red.spec.ts:42）；ClickUp 状态保持 CODEX RUNNING。"
+    },
+    {
+      "ticketId": "z8v0kmr9ge",
+      "from": "codex running",
+      "to": "review needed",
+      "reason": "本地 heartbeat 为 review_needed/100%，已通过用户 Chrome default/main 主 profile 将 ClickUp 状态更新为 REVIEW NEEDED，并回写 100% 进度与本地验收摘要。"
+    },
+    {
+      "ticketId": "z8v0kmr9gm",
+      "from": "backlog",
+      "to": "review needed",
+      "reason": "本地 heartbeat 为 review_needed/95%，已通过用户 Chrome default/main 主 profile 将 ClickUp 状态更新为 REVIEW NEEDED，并回写 95% 进度、ADMIT=0/QUARANTINE=200/active release STOP 与可操作阻断；ADMISSION_STOP 不等于 done。"
+    },
+    {
+      "ticketId": "z8v0kmr96y",
+      "from": "review needed",
+      "to": "review needed",
+      "reason": "本地 heartbeat 更新为实际 agent p1_guest_claim_consistency_luna + root、review_needed/95、无 blockers；ClickUp 状态保持 REVIEW NEEDED，摘要与进度已按证据回写。"
+    },
+    {
+      "ticketId": "z8v0kmr9gn",
+      "from": "codex running",
+      "to": "codex running",
+      "reason": "本地 heartbeat 已移除并发临时 blockers，补充 TypeScript/oxlint、Vitest 44/44、Node22、隔离 MySQL 86 表和能力策略复合 FK 证据；ClickUp 保持 CODEX RUNNING/94，65 个 pending 仍未冻结。"
+    },
+    {
+      "ticketId": "z8v0kmr96z",
+      "from": "codex running",
+      "to": "review needed",
+      "reason": "本地 heartbeat 为 subscription_terra + root、review_needed/95、无 blockers；已通过用户 Chrome default/main 主 profile 将 ClickUp 校正为 REVIEW NEEDED，并回写 95% 进度、全量 Vitest 13 文件/47 项测试、typecheck、lint 0 error 与隔离 MySQL 8.4 非法写入拒绝证据。"
+    },
+    {
+      "ticketId": "z8v0kmr9gn",
+      "from": "codex running",
+      "to": "review needed",
+      "reason": "本地 heartbeat 为 review_needed/95、无 blockers，且本地 Foundation 已通过；已通过用户 Chrome default/main 主 profile 将 ClickUp 校正为 REVIEW NEEDED，并回写 95% 进度、配置变量/Provider 证据与隔离 MySQL 8.4 86 表复验。"
+    },
+    {
+      "ticketId": "z8v0kmr9gm",
+      "from": "review needed",
+      "to": "codex running",
+      "reason": "本地 heartbeat 已恢复为 in_progress/95、无 blockers；200 条遗留候选的 WCVP/WFO 离线权威核验流水线正在执行，active release 继续 STOP。已通过用户 Chrome default/main 主 profile 将 ClickUp 保持 CODEX RUNNING；ADMISSION_STOP 不等于 done。"
+    },
+    {
+      "ticketId": "z8v0kmr9ge",
+      "from": "review needed",
+      "to": "review needed",
+      "reason": "最新本地 heartbeat 为 review_needed/100（02:36）、无 blockers；ClickUp 保持 REVIEW NEEDED，并回写普通 JSON 精确 1,048,576 字节（1 MiB）进入 DTO、超 1 字节 413、非 JSON 优先 415 的真实 9000 端口 RED→GREEN 证据，未误标 done。"
+    },
+    {
+      "ticketId": "z8v0kmr9gm",
+      "from": "codex running",
+      "to": "codex running",
+      "reason": "最新本地 heartbeat 为 in_progress/98、无 blockers；200 条候选已按固定 WCVP 2026-06-04/WFO 2026-06 制品真实回放（WCVP 精确匹配 179、WFO 科属种交叉核对 158、QUARANTINE=200、ACTIVE=0）。ClickUp 保持 CODEX RUNNING；四批逐条审核建议与批次校验器中第 1 批已完成、其余三批执行中，active release 仍 STOP，未标 done。"
+    },
+    {
+      "ticketId": "z8v0kmr9gm",
+      "from": "codex running",
+      "to": "human required",
+      "reason": "本轮确认 taxonomy 仍为 HUMAN_TAXONOMY_APPROVAL_STOP：200 条候选全部 QUARANTINE、seedEligible=0、active release=STOP_PENDING_HUMAN_APPROVAL；审批准备代理不等于人工批准。ClickUp 已回读 HUMAN REQUIRED。"
+    }
+  ],
+  "failures": [
+    {
+      "code": "BLOCKED_AUTH",
+      "at": "2026-09-20T06:59:20+08:00",
+      "message": "Chrome MCP default/main 主 profile 访问 ClickUp 后重定向至 https://app.clickup.com/login；本轮无法逐票回读远端状态。",
+      "scope": "全部已登记 ClickUp ticket",
+      "recovery": "用户在同一 Chrome default/main 主 profile 完成 ClickUp 登录后重试；不得读取 Cookie/token，不得切换 profile 或认证通道。"
+    }
+  ],
+  "blockers": [
+    "BLOCKED_AUTH：ClickUp 页面当前要求登录，远端状态未回读；本地 ticketStatuses 完整映射按上次已验证快照保留，不得视为本轮远端确认。"
+  ],
+  "localAgentStatusReadback": [
+    {
+      "ticketId": "z8v0kmr9ge",
+      "agent": "root",
+      "status": "review_needed",
+      "progress": 100,
+      "updatedAt": "2026-09-20T02:36:00+08:00",
+      "clickUpStatus": "review needed",
+      "summary": "P1 公共 HTTP 合同与 OpenAPI 路由骨架已完成本地验收：50 条具体路由无通配符，四类安全边界、统一错误结构、幂等与服务签名合同已冻结；普通 JSON 请求体上限已按配置目录和合同统一为 1 MiB，并通过真实 9000 端口的恰好上限、超 1 字节及 MIME 优先级 RED→GREEN。",
+      "blockers": []
+    },
+    {
+      "ticketId": "z8v0kmr96y",
+      "agent": "p1_guest_claim_consistency_luna + root",
+      "status": "review_needed",
+      "progress": 95,
+      "updatedAt": "2026-09-20T01:55:47+08:00",
+      "clickUpStatus": "review needed",
+      "summary": "guest-session-claim 一致性子任务已完成：合同、003_user_plant.sql、schema manifest 与合同登记册 SHA 已同步；已冻结 guest_claim_commands 的唯一公开 claim_ref、guest_case_claims 的不可变成功事实、guest_plant_cases 的当前投影三表关系，并覆盖事务原子性、失败回滚、processing lease、proof_version 与 requested/final target 一致性。正式专项 8/8、P1 DDL/合同专项、默认全量 Vitest 44/44 及 typecheck 均通过；等待主代理复核。",
+      "blockers": []
+    },
+    {
+      "ticketId": "z8v0kmr9gm",
+      "agent": "root + p1_taxonomy_ddl_close_terra + p1_taxonomy_authority_pipeline_terra",
+      "status": "in_progress",
+      "progress": 98,
+      "updatedAt": "2026-09-20T03:00:00+08:00",
+      "clickUpStatus": "codex running",
+      "summary": "P1 taxonomy 合同、DDL、来源角色与本地 MySQL 已闭环；200 条遗留候选已用固定 WCVP 2026-06-04 与 WFO 2026-06 官方制品真实回放。结果 WCVP 精确匹配 179、WFO 科/属/种交叉核对 158、QUARANTINE=200、ACTIVE=0；自动匹配和栽培品种均未放行，人工审核与 active release 继续 STOP。",
+      "blockers": []
+    },
+    {
+      "ticketId": "z8v0kmr96y",
+      "agent": "p1_guest_claim_consistency_luna + root",
+      "status": "review_needed",
+      "progress": 95,
+      "updatedAt": "2026-09-20T01:55:47+08:00",
+      "clickUpStatus": "review needed",
+      "summary": "guest-session-claim 一致性子任务已完成：合同、003_user_plant.sql、schema manifest 与合同登记册 SHA 已同步；已冻结 guest_claim_commands 的唯一公开 claim_ref、guest_case_claims 的不可变成功事实、guest_plant_cases 的当前投影三表关系，并覆盖事务原子性、失败回滚、processing lease、proof_version 与 requested/final target 一致性。正式专项 8/8、P1 DDL/合同专项、默认全量 Vitest 44/44 及 typecheck 均通过；等待主代理复核。",
+      "blockers": []
+    },
+    {
+      "ticketId": "z8v0kmr96z",
+      "agent": "subscription_terra + root",
+      "status": "review_needed",
+      "progress": 95,
+      "updatedAt": "2026-09-20T02:13:00+08:00",
+      "clickUpStatus": "review needed",
+      "summary": "P1 额度与奖励合同、本地 DDL 和 RED→GREEN 已闭环：六类 grant 绝对到期且晚于发放、grant/预占/分摊/账本守恒、会员周期、兑换终态、奖励 inbox 双重幂等和终态字段组合均已冻结。全量 Vitest 13 个文件/47 项测试、typecheck、lint 0 error；隔离 MySQL 8.4 已真实拒绝非法 grant 到期、allocation 守恒、兑换终态和奖励收件状态。",
+      "blockers": []
+    },
+    {
+      "ticketId": "z8v0kmr9gn",
+      "agent": "root + config_business_luna + provider_config_terra",
+      "status": "review_needed",
+      "progress": 95,
+      "updatedAt": "2026-09-20T02:12:00+08:00",
+      "clickUpStatus": "review needed",
+      "summary": "已建立配置化裁决硬门、162 项业务/治理变量目录（59 项已冻结、64 项待冻结、39 项不可配置硬规则）和 12 个首批 Provider 独立档案；分类权威已分层冻结，pending 仅按各自 blockingScope 局部阻断。",
+      "blockers": []
+    }
+  ],
+  "missingP1Tickets": [],
+  "createdP1Tickets": [
+    {
+      "ticketId": "z8v0kmr9ge",
+      "title": "[P1] 公共 HTTP 合同与 OpenAPI 路由骨架",
+      "url": "https://app.clickup.com/t/90182453517/z8v0kmr9ge",
+      "status": "review needed",
+      "agents": ["root"],
+      "createdVia": "用户 Chrome default/main 主 profile"
+    },
+    {
+      "ticketId": "z8v0kmr9gm",
+      "title": "[P1] 植物分类与身份准入硬门",
+      "url": "https://app.clickup.com/t/90182453517/z8v0kmr9gm",
+      "status": "codex running",
+      "agents": ["taxonomy_gate_terra", "root"],
+      "createdVia": "用户 Chrome default/main 主 profile"
+    },
+    {
+      "ticketId": "z8v0kmr9gn",
+      "title": "[P1] 业务策略与统一 Provider 配置架构",
+      "url": "https://app.clickup.com/t/90182453517/z8v0kmr9gn",
+      "status": "review needed",
+      "agents": ["root", "config_business_luna", "provider_config_terra"],
+      "createdVia": "用户 Chrome default/main 主 profile"
+    }
+  ],
+  "evidence": [
+    "ClickUp Phase-P-1 五个票据逐项回读均为 DONE；状态菜单包含 backlog、ready for codex、codex running、human required、blocked、review needed、done。",
+    "ClickUp Phase-P1 列表 1100440000000761 在本轮 Chrome 回读的五个票据实际状态：z8v0kmr96y、z8v0kmr9ge、z8v0kmr96z、z8v0kmr9gn 为 REVIEW NEEDED，z8v0kmr9gm 为 CODEX RUNNING；列表实际分组计数为 backlog 0、codex running 1、review needed 4。",
+    "z8v0kmr9dq heartbeat：agent=product_decisions_terra，status=in_progress，progress=1。",
+    "z8v0kmr9dv heartbeat：agent=integration_probe_terra，status=in_progress，progress=5。",
+    "z8v0kmr96w heartbeat：status=review_needed，progress=100，等待主代理验收。",
+    "z8v0kmr96x heartbeat：status=done，progress=100；独立最终 gate=PASS。",
+    "ClickUp 页面 z8v0kmr96x 已回读 DONE。",
+    "本轮通过用户 Chrome default/main 主 profile + Chrome MCP 创建并回读 z8v0kmr9ge、z8v0kmr9gm、z8v0kmr9gn，并回读既有 z8v0kmr96y 与 z8v0kmr96z；未读取、记录或输出 Cookie、令牌或其他认证材料。",
+    "本轮通过用户 Chrome default/main 主 profile 回读 z8v0kmr9gn 为 REVIEW NEEDED；本地 heartbeat=review_needed/95、无 blockers且本地 Foundation 通过，ClickUp 描述已回写 95%、59 项已冻结/64 项待冻结/39 项不可配置、12 个 Provider、全量 13 文件/47 项测试、Node22、隔离 MySQL 8.4 86 表和能力策略复合 FK 证据。",
+    "本轮通过用户 Chrome default/main 主 profile 回读 z8v0kmr9ge：最新本地 heartbeat=review_needed/100%（02:36），ClickUp 保持 REVIEW NEEDED，描述已回写 1 MiB 合同摘要与真实 9000 端口证据：恰好 1,048,576 字节进入 DTO、超 1 字节返回 413、非 JSON 优先返回 415；tracker 对 review_needed 按进度上限 95% 展示，原始 heartbeat 保留 100%。",
+    "本轮通过用户 Chrome default/main 主 profile 回读 z8v0kmr96z 为 REVIEW NEEDED；本地 heartbeat=review_needed/95、无 blockers，描述已回写全量 Vitest 13 文件/47 项测试、typecheck、lint 0 error 和隔离 MySQL 8.4 非法 grant 到期、allocation 守恒、兑换终态、奖励收件状态拒绝证据；heartbeat 02:13 较旧，tracker 按超时规则投影心跳超时，未改写 ClickUp 状态。",
+    "本轮通过用户 Chrome default/main 主 profile 回读 z8v0kmr9gm 为 CODEX RUNNING；最新本地 heartbeat=in_progress/98、无 blockers，描述已回写 200 条固定版本 WCVP/WFO 回放（179/158）、QUARANTINE=200、ACTIVE=0、四批审核第 1 批完成其余三批执行中、active release STOP；明确不得标 done。",
+    "本轮负责人 heartbeat 读取：z8v0kmr96z 为 subscription_terra + root、review_needed/95、无 blockers；z8v0kmr9gn 为 review_needed/95、无 blockers且本地 Foundation 通过；z8v0kmr9gm 为 root + p1_taxonomy_ddl_close_terra + p1_taxonomy_authority_pipeline_terra、in_progress/98、无 blockers；z8v0kmr9ge 为 root、review_needed/100、无 blockers，已新增 1 MiB RED→GREEN 合同证据；z8v0kmr96y 为 p1_guest_claim_consistency_luna + root、review_needed/95、无 blockers。z8v0kmr96y、z8v0kmr96z、z8v0kmr9gn 的旧 heartbeat 被 tracker 按超时规则投影为心跳超时，但 ClickUp 实际状态均保持 REVIEW NEEDED；Phase-P1 列表实际回读为 CODEX RUNNING 1、REVIEW NEEDED 4、BACKLOG 0。"
+  ],
+  "policy": "只有可验证执行证据才进入 codex running；实现完成待验收统一为 review needed；不以旧 ClickUp 状态覆盖本地强证据；本轮新增 ticket 已获主代理明确授权并完成远端创建/回读；新 ticket 未有负责人 heartbeat 时保留未报告进度，不伪造完成或验收状态；所有 CloudBase 写入保持未授权边界。"
+}

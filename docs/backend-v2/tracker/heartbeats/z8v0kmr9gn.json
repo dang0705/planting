@@ -1,0 +1,30 @@
+{
+  "ticketId": "z8v0kmr9gn",
+  "agent": "root + config_business_luna + provider_config_terra",
+  "model": "root + gpt-5.6-luna/max + gpt-5.6-terra/medium",
+  "status": "done",
+  "progress": 100,
+  "summary": "主代理已完成独立验收并接受配置架构与本地 Foundation：162 项目录（59 项已冻结、64 项待冻结、39 项不可配置硬规则）、12 个 Provider 档案、配置快照合同与局部阻断规则均可追溯；定向测试、typecheck、入口校验、架构 10/10 与 DDL 7/7 哈希均通过。64 项 pending 继续按 blockingScope 阻断对应后续实现，不被本票据完成状态绕过。",
+  "blockers": [],
+  "verified": [
+    "配置定向 Vitest 通过；当前全量 Vitest 为 13 个文件、47 项测试全部通过，TypeScript typecheck 通过，lint 为 0 error",
+    "P1 configuration architecture 定向 Vitest 通过；RED 证据保存在 audits/evidence/P1-configuration-architecture-red.md",
+    "每项 sourceRefs 的仓库内路径与 Markdown 片段均可解析，Expected 非空且 ticketTitle/URL 精确解析到真实 ClickUp ID",
+    "配置变量与 Provider 档案的 unit_real_data 元数据明确 Expected 来源、静态覆盖范围与真实环境未覆盖范围",
+    "CMS Worker 已冻结值为并发 1、最多 3 次、真实模型预算 0",
+    "Qwen 产品模型选择与 Provider 精确 model_code 已分层",
+    "taxonomy authority 已冻结为 POWO/WCVP 并列主要来源、WFO 交叉核对、RHS_ICRA 仅栽培品种；冲突 QUARANTINE 加人工审核",
+    "业务策略/Provider release、active 指针和请求级快照 DDL 已建立；能力快照以复合外键锁定能力策略发布",
+    "Docker Desktop 29.8.0 的官方 mysql:8.4（服务端 8.4.11）一次性容器中，当前 manifest 在两个独立空库均创建 86 表；两份规范化结构导出 SHA-256 均为 b17279bb57e7c3fc78d23423d00f391022810600ad162741a849a311259b62aa，字节完全一致",
+    "当前 Docker 空库读回：表/字段缺中文注释均为 0、非 utf8mb4 表为 0、缺内部 id 和受控 _openid 均为 0、_openid 索引为 0，并实际建立 104 个外键、87 个 CHECK 与 142 个 UNIQUE",
+    "能力策略复合外键读回成功且错误内容 SHA 插入被拒绝",
+    "按当前 7 份 manifest DDL 复验：trial_entitlements 的 starts_at_ms 必须等于 users.created_at_ms，错误起算时间由外键拒绝；不足 24 小时由 CHECK 拒绝；能力策略错误 content SHA 由复合外键拒绝",
+    "001 的 REGEXP_LIKE 修复与 manifest SHA 已在 MySQL 8.4.11 空库验证；当前 7 DDL 建成 86 表，WCVP 插入成功、未知来源拒绝，AI grant 到期、allocation 守恒、兑换终态和 reward inbox applied/rejected 字段一致性负向写入均被对应约束拒绝"
+  ],
+  "unverified": [
+    "目录中 64 项 pending 仍须在各自 blockingScope 实现前取得真实证据并冻结；P4/P5/S4 后续数值与环境验收不倒灌为 P1 总 blocker",
+    "真实 CloudBase MySQL 配置发布、回滚和请求级读回属于后续环境验收；本轮仅完成本地隔离 MySQL 与静态合同"
+  ],
+  "next": "配置架构与本地 Foundation 已由主代理验收；继续按领域裁决 64 个 pending 变量，只有冻结后的值才能进入对应 Adapter 或领域实现。",
+  "updatedAt": "2026-09-20T07:10:30+08:00"
+}

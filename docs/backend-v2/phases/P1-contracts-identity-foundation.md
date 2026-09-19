@@ -4,5 +4,19 @@
 
 必须冻结 Principal、CapabilitySnapshot、User Plant、Guest Claim、Taxonomy、Identity、CMS release、Care Capability Result、Care Points、Level、Redemption、AI Quota、Reward Event、Outbox、Inbox、状态机和表所有权。
 
-退出条件：植物身份准确性审计通过，空库建表通过，代表性 RED 已保存，所有合同有 SHA-256，`AGENTS.md` 已对齐 TypeScript。
+业务关键变量与 Provider 配置是 P1 前置硬门：必须建立覆盖全部业务域的逐项目录，区分已冻结、待冻结和不可配置硬规则；每项具备 owner、来源、消费方、变更/回退、阻断范围、Phase、ClickUp ticket 与 Expected。随后才能设计类型化策略 Schema、Provider release、active 指针、请求级快照与相关 DDL。禁止万能 KV、密钥入库和目录外隐式默认值。
 
+退出条件：植物身份准确性审计通过，业务关键变量 100% 分类且 P1 实现依赖项全部冻结，空库建表通过，代表性 RED 已保存，所有合同和架构制品有 SHA-256，`AGENTS.md` 已对齐 TypeScript 与配置治理。
+
+实施入口：
+
+- [P1 合同注册表](../contracts/contract-registry.json)
+- [总数据字典](../data/v2-data-dictionary.md)
+- [总 DDL](../schema/README.md)
+- [具体路由与 OpenAPI 骨架](../api/README.md)
+- [HTTP API 骨架退出闸门](../audits/P1-http-api-openapi-exit-gate.md)
+- [植物分类人工批准与种子清单工作流](../implementation/taxonomy-human-approval-workflow.md)
+- [业务策略与 Provider 配置架构](../architecture/configuration-and-providers.md)
+- [业务关键变量目录](../architecture/configuration-variable-catalog.md)
+- [配置架构退出闸门](../audits/P1-configuration-architecture-exit-gate.md)
+- [P1 跨票据总退出闸门](../audits/P1-cross-ticket-exit-gate.md)

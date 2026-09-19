@@ -73,7 +73,7 @@
 | 对象范围 | 当前读回 | 内容处置 | 资源处置 | 调用方/依赖 | 删除或切换前置条件与回退 |
 |---|---:|---|---|---|---|
 | `plants/catalog/**` | 188 个，138,093,026 bytes；SQL 有 188 个 `cover_image_ref` | `TRANSFORM`：确认权属、许可证、MIME 和 canonical catalog 前缀后再纳入 v2 plant-knowledge | `KEEP`；旧前缀在切换完成前不得删 | `plant_identity_entities`、`plant-catalog-http`、目录图片 URL resolver、目录展示页 | 权属/来源/发布版本/读回哈希完整；先写新资产映射，保留旧 ref 直到调用方归零；回退为恢复旧 ref 和临时 URL 解析 |
-| `plants/<legacy-owner-A>/**` | 360 个，125,369,728 bytes；当前 `plant_images` 实时行数为 0 | `QUARANTINE`：不能当 v2 用户植物迁移源 | `DELETE_CANDIDATE`，本次不删 | 旧植物上传路径；没有完整反向索引证明无其他引用 | 精确 DB/CMS/代码/测试反查、用户/测试保留策略、逐对象 manifest、两阶段标记删除/阻止新写/清理/对账；失败回退依赖 manifest，未完成前只读保留 |
+| `plants/<legacy-owner-A>/**` | 360 个，125,369,728 bytes；当前全表 `plant_images` 有 44 行，但尚未完成按对象 key 的反向索引，不能据此证明该前缀无引用 | `QUARANTINE`：不能当 v2 用户植物迁移源 | `DELETE_CANDIDATE`，本次不删 | 旧植物上传路径；没有完整反向索引证明无其他引用 | 精确 DB/CMS/代码/测试反查、用户/测试保留策略、逐对象 manifest、两阶段标记删除/阻止新写/清理/对账；失败回退依赖 manifest，未完成前只读保留 |
 | `plants/<legacy-owner-B>/**` | 10 个，2,078,936 bytes；对应主体有 123 个 diagnosis session、44 个 result snapshot、3 个 identify session、1 个 user plant | `REBUILD`：登记为私有资产候选，待统一 `user_id`/`user_plant_id` 归属 | `KEEP_PRIVATE`；禁止进入 CMS release | storage-http、diagnosis、identify、user-plant | 完成身份映射、逐对象资产登记和引用迁移；保留旧对象和映射 manifest，验收后才可归档；不得按“测试环境”删除 |
 | 根 `plants/多肉.jpg`、`plants/绿萝.jpg`、`plants/虎皮兰.jpg`、`plants/龟背竹.jpeg` | 4 个，1,448,597 bytes；4 个非 canonical `cover_image_ref` | `TRANSFORM/REPLACE`：确认四张图的权属后改到明确 catalog asset boundary | `ARCHIVE` 旧路径；不执行删除 | 4 条 plant identity cover ref、旧目录展示 | 新 canonical ref 写入并读回，旧调用方归零，CMS release 权限/许可证通过；保留旧对象作为回退，不能直接移动覆盖 |
 | `diagnose/<legacy-owner-B>/**` | 307 个，58,750,851 bytes；至少 49 个 diagnosis `image_url` 引用该诊断前缀 | `REBUILD`：诊断原图保持私有，建立统一资产、保留期限和 `user_plant_id` 关联 | `KEEP_PRIVATE`；不得进入 CMS | diagnosis session/snapshot、soil evidence 复用链 | 逐 session/visual record/soil evidence 反向核对，完成新资产映射和保留策略；临时 URL 失效不等于对象可删 |
@@ -155,7 +155,7 @@
 
 ### 4.2 已有但不完整的回退链
 
-`plant-deletion-service.js` 已提供部分安全模式：事务锁定用户植物，删除 DB 子记录，写入 `user_plant_file_deletion_jobs`，提交后调用 `deleteFile`，失败保留 pending 并以安全错误码重试。实时 MySQL 读回：`user_plant_file_deletion_jobs=0`、`plant_images=0`、`watering_visual_evidences=0`、`visual_raw_image_records=237`。
+`plant-deletion-service.js` 已提供部分安全模式：事务锁定用户植物，删除 DB 子记录，写入 `user_plant_file_deletion_jobs`，提交后调用 `deleteFile`，失败保留 pending 并以安全错误码重试。最新只读 MySQL 读回（`cloud1_dev`）为：`user_plant_file_deletion_jobs=0`、`plant_images=44`（其中 34 条指向 `diagnose/`、10 条指向非 catalog `plants/`）、`watering_visual_evidences=31`（31 条 `source_file_id` 指向 `diagnose/` 且均已过期）、`visual_raw_image_records=9027`。后者 9027 行的 `file_id` 全为空而 `image_ref` 非空，因此不能作为 Storage 对象逐项反向索引。报告早期快照中的 `plant_images=0`、`watering_visual_evidences=0`、`visual_raw_image_records=237` 已被本次读回明确取代，不得再用作删除安全证据。
 
 该链只能覆盖事务中收集到的 `plant_images.fileId`，不能证明历史孤儿对象、diagnose 临时图、静态 smoke 图和未登记对象已覆盖。`watering-soil-evidence-service.js` 对 temporary evidence 仍有直接删行和 `deleteFile`，失败只写 warning；需由 v2 asset registry/cleanup 统一接管。
 
@@ -279,3 +279,25 @@ node test/unit/backend/plant-user-http/plant-deletion-service.mjs
 - 静态托管缺失 `garden/agent` 图标的发布完整性未修复；不在本 ticket 内扩展为前端改动。
 
 继续条件：先冻结 v2 asset registry、public catalog whitelist、发布权属/许可证和 delete compensation 合同；再由同一环境重新生成逐对象 manifest 和真实 e2e Expected。任何删除条件、公共发布条件或身份映射缺失时，保持 `QUARANTINE/KEEP_PRIVATE`。
+
+## 8. 2026-09-19 22:47 复核读回（只读）
+
+本节是对前述审计快照的当前环境复核，不是新的迁移或发布授权。目标环境为 `cloud1-2grufevs395a9d5e`（`ap-shanghai`），环境状态 `NORMAL`；本次 CloudBase、MySQL、OpenViking 操作为只读，未执行上传、删除、权限变更、DDL、发布或记忆写入。
+
+- Storage 根清单当前仍为 7345 个对象、350,449,336 bytes；`plants/catalog/` 为 188 个、138,093,026 bytes，`plants/` 为 563 个、266,990,287 bytes，`diagnose/` 为 316 个、60,481,649 bytes，`weather-cache/` 为 6464 个、21,642,091 bytes。主桶 ACL 当前读回为 `PRIVATE`。
+- 静态托管当前状态为 `online`，网站配置返回 `statusCode=200` 且 `accessUrlReachable=true`；按 `__auth/`、`adminportal/`、`assets/`、`cloud-admin/`、`smoke/`、`static/` 与根 `index.html` 分页汇总为 129 个、17,055,776 bytes。该站点可达性不等于主 Storage 私有对象可公开访问。
+- `manageDataModel list` 当前仍为 23 个模型；`plant_identity_entities` schema 当前仍为 8 个 userFields、16 个 totalFields。`cloud1_dev.plant_identity_entities` 当前为 192 行，192 行 active、192 行 pending、188 条 `cloud://.../plants/catalog/` 引用、4 条根 `plants/*.jpg|jpeg` 引用、0 条空 cover。
+- OpenViking 当前 health 为 healthy；项目树 91 个节点，glob 读回 63 个 Markdown 和 1 个 `migration-manifest.json`。排序 URI 哈希仍为 Markdown `f743fabc072854514cac1c56dfa8d4fc70cdd7d725d67479034573675ab9a961`、JSON `5fd5294095c49385bf9eba467f1337525e815c0b883fd9e0b5460712c328ddd4`；迁移 manifest 仍显示 `listed/selected/converted=63`。grep 当前命中 23 处 `openid`（3 个文件），因此旧知识继续按 `ARCHIVE/HISTORICAL` 处理，不能作为 v2 稳定事实。
+
+### 8.1 复核裁决与后续移交
+
+当前可闭合的是：入口/基线核验、源码与调用方静态盘点、对象/托管/权限/CMS/OpenViking 只读可达性、URI 与本地审计制品哈希核对，以及“私有资产不得直接进入公共 release”的边界结论。当前不能闭合的是：逐对象内容 SHA-256/MIME、完整 DB/CMS/代码/测试反向引用、统一 `user_id + user_plant_id` 归属、真实端上上传—绑定—临时 URL 过期—删除补偿回放、CMS 权属/许可证/不可变 release、OpenViking 精确替换或删除。
+
+后续 owner 与继续条件：
+
+1. `identity` / `user-plant` 后续合同与实现：先产出旧平台主体到统一 `user_id` 的权威映射，未经映射不得迁移 `plants/<legacy-owner-*>/**` 或 `diagnose/<legacy-owner-*>/**`。
+2. `plant-knowledge` / CMS release：建立 catalog 白名单、权属/许可证、MIME/content hash、审批与不可变 release 记录；修复未认证目录图片端点可把任意 `plants/` fileId 换成临时 URL 的风险，并保留私有前缀 negative e2e。
+3. `care` / `diagnosis` / asset registry：建立逐对象登记、`user_plant_id` 归属、保留期限、标记删除—禁止新写—清理—对账—补偿状态机；把 44 条 `plant_images`、31 条过期 `watering_visual_evidences` 和 9027 条缺 `file_id` 的 `visual_raw_image_records` 纳入反向索引设计，不能以当前 0 个 deletion job 判定无待清理对象。
+4. P5/P6 验收 owner：在同一测试环境生成逐对象 manifest（含内容哈希与 MIME），执行跨用户/跨植物 negative case 和真实 API 回放；OpenViking 只允许在 v2 合同、代码、schema、测试共同通过后按精确 URI `REPLACE`，删除仍需单独批准。
+
+因此本 ticket 保持 `PARTIAL_AUDIT / P1_GATE_REQUIRED`，交接状态为 `REVIEW_NEEDED`；任何对象删除、公共发布、OpenViking forget 或迁移动作均未获本报告授权。

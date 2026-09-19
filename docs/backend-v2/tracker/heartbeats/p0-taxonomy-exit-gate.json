@@ -1,0 +1,46 @@
+{
+  "ticketId": "p0-taxonomy-exit-gate",
+  "sourceTicketId": "z8v0kmr96x",
+  "agent": "p0_taxonomy_reviewer_luna",
+  "status": "done",
+  "progress": 100,
+  "conclusion": "PASS",
+  "ticketFalsification": "PASS",
+  "identityAdmission": "STOP / NOT_ADMITTED",
+  "activeRelease": "STOP",
+  "summary": "P0 ticket 的代表性证伪、八类到六组映射、四份原始 2xx body 读回和边界处理均通过独立复验；因此 gate 为 PASS。POWO 403 不作分类证据，RHS 为 NO_VERSION_PUBLISHED，Brassica 冲突未裁决；身份准入继续 STOP/NOT_ADMITTED，未外推 200 条全量。",
+  "verified": [
+    "README、BASELINE.lock、P0 ticket spec 和入口校验已按边界读取；verify-entrypoint 通过",
+    "八类要求已逐类映射到五个复用样本组，并含 ID 32 额外混合群组负例，合计六组",
+    "manifest 引用的四份 body 均存在，实际 bytes 与 bodySha256 全部匹配：Epipremnum、Brassica、Lithops、RHS Bonnie",
+    "四份 body 内的 WFO 稳定 ID/版本/访问日期/父链/异名以及 RHS 191491、canonical URL 和 parentTaxon 均可读回",
+    "Lithops URL 现场 GET 于 2026-09-19T23:17:25+08:00 返回 HTTP 200，stable ID、学名、版本、父级和 Included Species 可回放",
+    "P0-taxonomy-falsification、P0-taxonomy-evidence 和最终 P0-taxonomy-exit-gate 三个 SHA-256 sidecar 均通过",
+    "POWO/WCVP 403 仅保留为访问边界，未被当作 hybrid 或 synonym 的分类证据",
+    "RHS 无发布版本与 Brassica accepted/synonym 冲突均保持 QUARANTINE，未由模型自动裁决",
+    "manifest scope 明确为代表性证伪；没有把六组样本外推为 200 条 active release"
+  ],
+  "unverified": [
+    "POWO/WCVP hybrid 与物种 parent 的可回放 2xx authority record：属于身份准入 STOP，不是本 ticket 证伪 gate 的失败",
+    "RHS 191491 的发布版本、适用 ICRA 注册和完整物种 parent 权威证据：属于身份准入 STOP",
+    "200 条候选的逐条 authority evidence manifest、空库导入、持久化读回和真实 API 隔离验证：属于后续 Phase 范围"
+  ],
+  "blockers": [
+    "身份准入仍 STOP/NOT_ADMITTED：POWO/WCVP 2xx record 缺失、RHS NO_VERSION_PUBLISHED、Brassica 跨来源冲突未解决",
+    "所有当前代表记录必须继续 QUARANTINE；catalog、identify、CMS、care、diagnosis 不得读取隔离身份"
+  ],
+  "outOfScope": [
+    "P1 的 200 条全量 authority manifest 与分类准确性硬门",
+    "P1/P5 的空库、真实 API、安全、端上和并发验收",
+    "任何业务代码、云端资源和 tracker/module-status.json 修改"
+  ],
+  "artifacts": {
+    "falsificationSha256": "0380e82ff492a7cb0be7811d00af617fcc7520a85fb7c2832a7a10e6bd0c98b7",
+    "evidenceManifestSha256": "269f11ce47a5c84d880579dd55af7fad33c3bc03926467023bbeee83493af05c",
+    "finalGateSha256": "2a3f64dcdaa1aa34ffe6cedcf3090dc247108138b2ed80e3d10538cab7987f15",
+    "raw2xxBodyCount": 4,
+    "manifestSourceGroupCount": 6
+  },
+  "nextStep": "进入 P1 时对 200 条候选逐条建立可回放 authority evidence；在身份准入 STOP 解除前保持 QUARANTINE/NOT_ADMITTED，不修改业务、云端或 module-status.json。",
+  "updatedAt": "2026-09-19T23:17:25+08:00"
+}

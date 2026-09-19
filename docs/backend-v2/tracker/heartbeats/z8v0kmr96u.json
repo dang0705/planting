@@ -1,9 +1,9 @@
 {
   "ticketId": "z8v0kmr96u",
   "agent": "p1_storage_close_luna",
-  "status": "in_progress",
-  "progress": 95,
-  "summary": "已按后端 v2 唯一入口启动 P-1 云存储、私有资产和 OpenViking 审计收口；沿用现有 95% 基线，正在复核报告、只读 live readback 与 sha256 manifest，并区分可闭合结论与后续验证项。",
+  "status": "done",
+  "progress": 100,
+  "summary": "P-1 云存储、私有资产和 OpenViking 审计已通过独立出口门验收；精确前缀、URI、处置边界、只读读回与 SHA-256 可回放，逐对象和真实端上验证已转交后续 Phase；ClickUp 回读同步已由专职状态代理完成。",
   "blockers": [],
-  "updatedAt": "2026-09-19T22:42:59+08:00"
+  "updatedAt": "2026-09-19T23:27:26+08:00"
 }

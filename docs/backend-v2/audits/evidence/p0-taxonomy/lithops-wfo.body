@@ -1,0 +1,185 @@
+<!DOCTYPE HTML SYSTEM "about:legacy-compat">
+<html dir="ltr" lang="en" class="no-js"><meta content="IE=edge" http-equiv="X-UA-Compatible"/><head><script defer="true" src="https://www.googletagmanager.com/gtag/js?id=G-ZPPZDJMM4D">/* */</script><script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+		gtag('config', 'G-ZPPZDJMM4D');
+        //gtag('config', 'UA-114340265-1');
+	</script><script>
+        /**
+         * Function that tracks a click on an outbound link in Analytics.
+         * This function takes a valid URL string as an argument, and uses that URL string
+         * as the event label. Setting the transport method to 'beacon' lets the hit be sent
+         * using 'navigator.sendBeacon' in browser that support it.
+         */
+        var trackOutboundLink = function(url) {
+            gtag('event', 'click', {
+                'event_category': 'outbound',
+                'event_label': url,
+                'transport_type': 'beacon',
+                'event_callback': function(){document.location = url;}
+            });
+        }
+    </script><meta charset="utf-8"/><meta content="text/html; charset=utf-8" http-equiv="Content-Type"/><meta content="en" http-equiv="Content-Language"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Lithops N.E.Br.</title><link href="/css/images/favicon_shadow.ico" rel="alternate icon"/><link href="/css/images/svgs/favicon.svg" type="image/svg+xml" rel="icon"/><link href="/css/style.css" media="screen" type="text/css" rel="stylesheet"/>
+	<!--[if lt IE 10]>
+	<link href="/css/ie9.css" media="all" type="text/css" rel="stylesheet"/>
+	<![endif]-->
+	<link href="/css/print.css" media="print" type="text/css" rel="stylesheet"/><script src="/js/header.js" type="text/javascript">/* */</script><noscript><style>
+			.sortNoJS{display:none;}
+			#images{display:none;}
+			#map{
+				height: 0px;
+				width: 0px;
+				}
+		</style></noscript></head><body data-offset="100" data-target=".subnav" data-spy="scroll"><div class="navbar main-site-header"><script>
+    $("document").ready(function () {
+        $("ul.dropdown-menu > li > a ").hover(function () {
+            $(this).find('i').toggleClass('white');
+        });
+    });
+    </script><nav class="inter-site-nav"><ul class="nav-items"><li class="wfo-portal active"><a href="/">Explore the data</a></li><li class="wfo-about"><a href="https://about.worldfloraonline.org">Find out about</a></li><li class="wfo-plant-list wfo-plant-list"><a href="https://wfoplantlist.org/">Check a plant name</a></li></ul></nav><div class="masthead"><a href="/"><div class="logo-lettering"><img src="/css/images/svgs/wfo_lettering_rev.svg"/></div><h1 class="headline">The World Flora Online</h1></a><div class="logo-roundel"><div class="wrapper"><img src="/css/images/svgs/wfo_roundel.svg"/></div></div></div><nav class="main"><div class="navbar-inner"><div class="container"><div id="ham-men"><button data-target=".nav-collapse" data-toggle="collapse" class="btn btn-navbar no-print" type="button"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button></div><div class="no-print"><?xml version="1.0" encoding="UTF-8"?>
+<div><form method="GET" action="/search;jsessionid=B71843D5E597A85117059366BAC958A3" class="navbar-search pull-right"><script type="text/javascript">
+        $(document).ready(function() {
+            $("#navbarQuery").autocomplete({
+                source : "/autocomplete;jsessionid=B71843D5E597A85117059366BAC958A3",
+                minLength : 2
+            });
+            $["ui"]["autocomplete"].prototype["_renderItem"] = function( ul, item) {
+                return $( "<li/>" )
+                .data( "item.autocomplete", item )
+                .append( $( "<a/>" ).html( item.label ) )
+                .appendTo( ul );
+            };
+        });
+    </script><input placeholder="Search everything" value="" type="text" class="search-query" name="query" id="navbarQuery"/></form></div><div class="pull-right no-print"><a class="btn" href="/login;jsessionid=B71843D5E597A85117059366BAC958A3">Sign in</a></div></div><div class="collapse nav-collapse"><ul class="nav"><li><a href="/classification;jsessionid=B71843D5E597A85117059366BAC958A3">Browse Classification</a></li><li><a href="/search;jsessionid=B71843D5E597A85117059366BAC958A3?facet=base.class_s%3aorg.emonocot.model.Image">Browse Images</a></li><li><a href="/contribute;jsessionid=B71843D5E597A85117059366BAC958A3">Contribute Data</a></li><li><a href="/downloadData;jsessionid=B71843D5E597A85117059366BAC958A3">Download Data</a></li><li><a href="https://about.worldfloraonline.org/articles">Stories</a></li></ul></div></div></div></nav></div><?xml version="1.0" encoding="UTF-8"?>
+<div itemid="wfo-4000021986" itemtype="http://rs.tdwg.org/dwc/terms/Taxon" itemscope="itemscope"><div class="page-banner no-print"><div class="page-banner-inner"><div class="container"><div class="row"><div class="span12"><div class="page-header"><h2 id="page-title"><a href="https://list.worldfloraonline.org/wfo-4000021986"><b class="WFOID">wfo-4000021986</b></a><br/><a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(Lithops N.E.Br.)').attr('selected', true); return true;" title="Comment on Lithops." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a><i class="glyphicons-icon leaf"></i><em itemprop="scientificName" class="taxonName">Lithops</em> <span itemprop="scientificNameAuthorship">N.E.Br.</span><ul class="unstyled"><p><li><small class="protologueText"><span itemprop="namePublishedIn" id="protologue">in Gard. Chron., ser. 3, 71: 44. 1922.</span> <span content="Valid" itemprop="nomenclaturalStatus"></span></small></li></p><p><li><small class="taxonomicStatusText"><div id="taxonomicStatus"><section><p>
+												The genus <i>Lithops</i> is in the family
+												<a href="/taxon/wfo-7000000010;jsessionid=B71843D5E597A85117059366BAC958A3">Aizoaceae</a> in the major group
+												<a href="/taxon/wfo-9949999999;jsessionid=B71843D5E597A85117059366BAC958A3">Angiosperms</a>
+												by <a href="/organisation/Aizoaceae;jsessionid=B71843D5E597A85117059366BAC958A3">Aizoaceae</a>.
+											</p><p>
+											The record derives from <b>Caryophyllales.org</b>
+												(data supplied on 2023-12-01)
+											
+											which
+											
+													reports it as an accepted
+													name
+												(record 
+													c2faff41-a2de-4f65-8641-6fbb86cb4ed9
+												)
+											</p></section></div></small></li></p></ul></h2></div></div></div></div></div></div><section class="hide print" id="printHeader"><h2 id="page-title"><i class="glyphicons-icon leaf"></i><em>Lithops</em> <span>N.E.Br.</span><ul class="unstyled"><li><small><span id="protologue">in Gard. Chron., ser. 3, 71: 44. 1922.</span> <span></span></small></li><li></li></ul></h2></section><div class="container"><header id="overview" class="subhead clearfix"><div class="subnav no-print"><ul class="nav nav-pills"><li><a href="#children">Included&#160;Species</a></li><li><a href="#bibliography">Bibliography</a></li></ul></div></header><script type="text/javascript">
+			$(document).ready(function(){
+				$('#clickMe').toggle(
+						function(){
+							$('#textBox').hide();
+							$('#clickMe').text('Show details');
+						},
+						function(){
+							$('#textBox').show();
+							$('#clickMe').text('Hide details');
+						});
+			});
+
+			$(document).ready(function() {
+				$("a[href^='#']").click(function(event) {
+					var targetId = $(this).attr('href');
+					var section = $(targetId);
+					section.css('scroll-margin', '2.5rem');
+					event.preventDefault();
+					smoothScroll(targetId);
+					if(history.pushState) {
+						history.pushState(null, null, targetId);
+					}
+					else {
+						location.hash = targetId;
+					}
+				});
+			});
+
+			function smoothScroll(selector){
+				document.querySelector(selector).scrollIntoView({
+					behavior: "smooth", block: "start", inline: "nearest"
+				});
+			}
+		</script><div class="modal modal-gallery hide fade modal-fullscreen modal-fullscreen-stretch no-print" id="modal-gallery"><div class="modal-header"><a data-dismiss="modal" class="close">×</a></div><div class="modal-body"><div class="modal-image"></div><div class="carousel-caption modal-title"><label style="text-align:center">Press ESC to exit</label><label class="pull-right" id="clickMe">Hide details</label><ul style="text-align:left;" class="unstyled" id="textBox"><li><a class="modal-download"><i class="modal-icon"> </i><span class="modal-caption"> </span></a></li><li><em>Creator</em> <span class="modal-creator"> </span></li><li><em>Licence</em> <span class="modal-license-icon"> </span><a data-slideshow="3000" class="btn btn-success modal-play modal-slideshow pull-right"><i class="icon-white icon-play"></i></a></li></ul></div></div></div><br/><div class="citation-text">
+					Cite taxon page as 'WFO (2026):  Lithops <span>N.E.Br</span>. Published on the Internet;<a href="http://www.worldfloraonline.org/taxon/wfo-4000021986">http://www.worldfloraonline.org/taxon/wfo-4000021986</a>.
+					Accessed on: 19 Sep 2026'
+				</div><div class="row"><div class="span8"><section class="section-box" id="children"><div class="inner"><div class="box clearfix"><h2>
+									Included&#160;Species
+									<a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(Included&#160;)').attr('selected', true); return true;" title="Comment on Included&#160;." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a></h2><ul class="unstyled"><li><a href="/taxon/wfo-0000361415;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops amicorum</em> D.T.Cole
+											</a></li><li><a href="/taxon/wfo-0001293518;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops aucampiae</em> L.Bolus
+											</a></li><li><a href="/taxon/wfo-0001293520;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops bromfieldii</em> L.Bolus
+											</a></li><li><a href="/taxon/wfo-0001260443;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops coleorum</em> S.A.Hammer & Uijs
+											</a></li><li><a href="/taxon/wfo-0001293522;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops comptonii</em> L.Bolus
+											</a></li><li><a href="/taxon/wfo-0001293524;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops dinteri</em> Schwantes
+											</a></li><li><a href="/taxon/wfo-0001293526;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops divergens</em> L.Bolus
+											</a></li><li><a href="/taxon/wfo-0001293528;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops dorotheae</em> Nel
+											</a></li><li><a href="/taxon/wfo-0001293529;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops francisci</em> (Dinter & Schwantes) N.E.Br.
+											</a></li><li><a href="/taxon/wfo-0001293530;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops fulviceps</em> (N.E.Br.) N.E.Br.
+											</a></li><li><a href="/taxon/wfo-0000361252;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops gesineae</em> de Boer
+											</a></li><li><a href="/taxon/wfo-0000361254;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops geyeri</em> Nel
+											</a></li><li><a href="/taxon/wfo-0001293532;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops gracilidelineata</em> Dinter
+											</a></li><li><a href="/taxon/wfo-0000361277;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops halenbergensis</em> Tischer
+											</a></li><li><a href="/taxon/wfo-0001293534;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops hallii</em> de Boer
+											</a></li><li><a href="/taxon/wfo-0001293536;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops helmutii</em> L.Bolus
+											</a></li><li><a href="/taxon/wfo-0000361279;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops hermetica</em> D.T.Cole
+											</a></li><li><a href="/taxon/wfo-0001293537;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops herrei</em> L.Bolus
+											</a></li><li><a href="/taxon/wfo-0000360448;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops hookeri</em> (A.Berger) Schwantes
+											</a></li><li><a href="/taxon/wfo-0001293539;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops julii</em> (Dinter & Schwantes) N.E.Br.
+											</a></li><li><a href="/taxon/wfo-0001293540;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops karasmontana</em> (Dinter & Schwantes) N.E.Br.
+											</a></li><li><a href="/taxon/wfo-0001293542;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops lesliei</em> (N.E.Br.) N.E.Br.
+											</a></li><li><a href="/taxon/wfo-0001293544;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops localis</em> (N.E.Br.) Schwantes
+											</a></li><li><a href="/taxon/wfo-0001293545;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops marmorata</em> (N.E.Br.) N.E.Br.
+											</a></li><li><a href="/taxon/wfo-0001293547;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops meyeri</em> L.Bolus
+											</a></li><li><a href="/taxon/wfo-0000360454;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops naureeniae</em> D.T.Cole
+											</a></li><li><a href="/taxon/wfo-0001293548;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops olivacea</em> L.Bolus
+											</a></li><li><a href="/taxon/wfo-0001435540;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops optica</em> (Marloth) N.E.Br.
+											</a></li><li><a href="/taxon/wfo-0001293550;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops otzeniana</em> Nel
+											</a></li><li><a href="/taxon/wfo-0001293551;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops pseudotruncatella</em> (A.Berger) N.E.Br.
+											</a></li><li><a href="/taxon/wfo-0001293553;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops ruschiorum</em> (Dinter & Schwantes) N.E.Br.
+											</a></li><li><a href="/taxon/wfo-0001293555;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops salicola</em> L.Bolus
+											</a></li><li><a href="/taxon/wfo-0000360423;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops schwantesii</em> Dinter
+											</a></li><li><a href="/taxon/wfo-0000360416;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops turbiniformis</em> (Haw.) N.E.Br.
+											</a></li><li><a href="/taxon/wfo-0001293557;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops vallis-mariae</em> (Dinter & Schwantes) N.E.Br.
+											</a></li><li><a href="/taxon/wfo-0001293559;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops verruculosa</em> Nel
+											</a></li><li><a href="/taxon/wfo-0001293561;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops villetii</em> L.Bolus
+											</a></li><li><a href="/taxon/wfo-0001293563;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops viridis</em> H.A.Lückh.
+											</a></li><li><a href="/taxon/wfo-0001293564;jsessionid=B71843D5E597A85117059366BAC958A3"><em>Lithops werneri</em> Schwantes & H.Jacobsen
+											</a></li></ul><ul class="citations">Provided by: <li><a href="#A">[A].Aizoaceae</a></li></ul></div></div></section><section class="section-box" id="bibliography"><div class="inner"><div class="box clearfix"><h2><i class="glyphicons-icon book"> </i> Bibliography
+									<a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(Bibliography)').attr('selected', true); return true;" title="Comment on Bibliography." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a></h2><ul><li><a id="citation1">1</a><a onClick="trackOutboundLink(&#039;https://caryophyllales.org/?q=cdm_dataportal/name/c2faff41-a2de-4f65-8641-6fbb86cb4ed9&#039;); return false;" href="https://caryophyllales.org/?q=cdm_dataportal/name/c2faff41-a2de-4f65-8641-6fbb86cb4ed9">
+														Caryophyllales TEN record for Lithops N.E.Br.</a></li><li><a id="citation2">2</a><a onClick="trackOutboundLink(&#039;https://doi.org/10.1007/978-3-662-49260-4_81&#039;); return false;" href="https://doi.org/10.1007/978-3-662-49260-4_81">
+														Cole, D. T. & Cole, N. A. 2017: Lithops. Pp.  in Hartmann, H. E. K. Illustrated handbook of succulent plants. Aizoaceae. Springer: Berlin.</a></li><li><a id="citation3">3</a><a onClick="trackOutboundLink(&#039;http://www.wikidata.org/entity/Q721850&#039;); return false;" href="http://www.wikidata.org/entity/Q721850">
+														Nicholas Edward Brown (1849-1934)</a></li></ul></div></div></section><section class="section-box" id="sources"><div class="inner"><div class="box clearfix"><h2><i class="glyphicons-icon group"> </i>Information From</h2><dl><dt><a href="/organisation/Aizoaceae;jsessionid=B71843D5E597A85117059366BAC958A3">Aizoaceae</a></dt><dd><a onClick="trackOutboundLink(&#039;https://about.worldfloraonline.org/tens/caryophyllales-org&#039;); return false;" href="https://about.worldfloraonline.org/tens/caryophyllales-org">https://about.worldfloraonline.org/tens/caryophyllales-org </a></dd><dd>World Flora Online Data. 2022.</dd><dd><ul class="unstyled"><li id="A"><span>A</span>
+					CC0 1.0 Universal (CC0 1.0).
+					<a href="https://creativecommons.org/publicdomain/zero/1.0" class="licenseLogo"><img alt="public" src="/css/images/creativeCommonsLogos/cc-zero.png;jsessionid=B71843D5E597A85117059366BAC958A3" class="cclogos"/></a></li></ul></dd><dt><a href="/organisation/WFO;jsessionid=B71843D5E597A85117059366BAC958A3">World Flora Online consortium</a></dt><dd><a onClick="trackOutboundLink(&#039;http://www.worldfloraonline.org/organisation/WFO&#039;); return false;" href="http://www.worldfloraonline.org/organisation/WFO">http://www.worldfloraonline.org/organisation/WFO </a></dd><dd>World Flora Online Data. 2026.</dd><dd><ul class="unstyled"><li id="B"><span>B</span>
+					CC0 1.0 Universal (CC0 1.0).
+					<a href="https://creativecommons.org/publicdomain/zero/1.0" class="licenseLogo"><img alt="public" src="/css/images/creativeCommonsLogos/cc-zero.png;jsessionid=B71843D5E597A85117059366BAC958A3" class="cclogos"/></a></li></ul></dd></dl></div></div></section></div><div class="span4 sidebar" id="sidebar"><div class="inner"><div class="box" id="classificationBox"><section id="taxonomicTree" class="sidebarBox"><h2 id="sectionHeader"><i class="glyphicons-icon classify"></i>Classification
+									<a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(Classification)').attr('selected', true); return true;" title="Comment on Classification." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a></h2><ul id="taxonHierarchy"><li><a href="/taxon/wfo-4100001250;jsessionid=B71843D5E597A85117059366BAC958A3" class="ancestorsList"><em>Plantae</em> Haeckel</a><ul><li><a href="/taxon/wfo-4100003335;jsessionid=B71843D5E597A85117059366BAC958A3" class="ancestorsList"><em>Pteridobiotina</em> Britton & Brown</a><ul><li><a href="/taxon/wfo-9949999999;jsessionid=B71843D5E597A85117059366BAC958A3" class="ancestorsList"><em>Angiosperms</em> </a><ul><li><a href="/taxon/wfo-9000000088;jsessionid=B71843D5E597A85117059366BAC958A3" class="ancestorsList"><em>Caryophyllales</em> Juss. ex Bercht. & J.Presl</a><ul><li><a href="/taxon/wfo-7000000010;jsessionid=B71843D5E597A85117059366BAC958A3" class="ancestorsList"><em>Aizoaceae</em> Martinov</a><ul><li><a href="/taxon/wfo-6500000989;jsessionid=B71843D5E597A85117059366BAC958A3" class="ancestorsList"><em>Ruschioideae</em> Schwantes ex Bittrich & H.E.K.Hartmann</a><ul><li><span class="currentTaxon"/><em>Lithops</em> N.E.Br.
+			<ul><li><a href="#children" class="childrenList">39 subordinate taxa</a></li></ul></li></ul></li></ul></li></ul></li></ul></li></ul></li></ul></li></ul><ul class="citations">Provided by: <li><a href="#A">[A].Aizoaceae</a></li><li><a href="#B">[B].World Flora Online consortium</a></li></ul><div style="clear: both"/></section></div></div><div class="inner"><div class="box dataBox"><section id="taxonData" class="sidebarBox"><h2><i class="glyphicons-icon table"></i>Data
+								<a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(Data)').attr('selected', true); return true;" title="Comment on Data." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a></h2><table id="data" class="table"><tbody><tr><th class="span1">Habitat</th><td><ul class="unstyled" id="Habitat"></ul></td><td></td></tr><tr><th class="span1">Life Form</th><td><ul class="unstyled" id="Lifeform"></ul></td><td></td></tr><tr><th class="span1">IUCN Red List Status</th><td><ul class="unstyled" id="threatStatus"></ul></td><td></td></tr></tbody></table></section></div></div><div class="inner no-print"><div class="box linksBox"><section id="externalLinks" class="sidebarBox"><h2><i class="glyphicons-icon link"></i>External Links</h2><ul class="unstyled"><li><a onClick="trackOutboundLink(&#039;http://www.ncbi.nlm.nih.gov/gquery/gquery.fcgi?term=Lithops%5borgn%5d&#039;); return false;" href="http://www.ncbi.nlm.nih.gov/gquery/gquery.fcgi?term=Lithops%5borgn%5d" id="NCBILink">NCBI - National Center for Biotechnology Information</a></li><li><a onClick="trackOutboundLink(&#039;http://www.boldsystems.org/index.php/Taxbrowser_Taxonpage?taxon=Lithops&#039;); return false;" href="http://www.boldsystems.org/index.php/Taxbrowser_Taxonpage?taxon=Lithops" id="boldLink">BOLD Systems - Barcode of Life Data Systems</a></li><li><a onClick="trackOutboundLink(&#039;http://www.gbif.org/species/search?dataset_key=d7dddbf4-2cf0-4f39-9b2a-bb099caae36c&highertaxon_key=6&q=Lithops&#039;); return false;" href="http://www.gbif.org/species/search?dataset_key=d7dddbf4-2cf0-4f39-9b2a-bb099caae36c&highertaxon_key=6&q=Lithops" id="GBIFLink">GBIF - Global Biodiversity Information Facility</a></li><li><a onClick="trackOutboundLink(&#039;http://www.ipni.org/ipni/idPlantNameSearch.do?id=urn%3alsid%3aipni.org%3anames%3a16237-1&#039;); return false;" href="http://www.ipni.org/ipni/idPlantNameSearch.do?id=urn%3alsid%3aipni.org%3anames%3a16237-1" id="IPNILink">IPNI - urn:lsid:ipni.org:names:16237-1</a></li></ul></section></div></div><div class="inner no-print"><div class="box linksBox"><section id="sourceUrl" class="sidebarBox"><h2><i class="glyphicons-icon link"></i>Taxon Name Source Link</h2><a onClick="trackOutboundLink(&#039;https://caryophyllales.org/?q=cdm_dataportal/name/c2faff41-a2de-4f65-8641-6fbb86cb4ed9&#039;); return false;" href="https://caryophyllales.org/?q=cdm_dataportal/name/c2faff41-a2de-4f65-8641-6fbb86cb4ed9" id="sourceUrl">
+									https://caryophyllales.org/ ?q=cdm_dataportal/name/ c2faff41-a2de-4f65-8641-6fbb86cb4ed9</a></section></div></div><script type="text/javascript">
+					$(document).ready(function(){
+						$.ajax({
+							dataType: "json",
+							url: "/ncbi;jsessionid=B71843D5E597A85117059366BAC958A3?query=Lithops",
+							beforeSend: function(xhr) {
+								xhr.setRequestHeader('Accept', 'application/json');
+								xhr.setRequestHeader('Content-Type', 'application/json');
+							},
+							success: function( data ) {
+								var items = [];
+								items.push( "<li>" + data.nucleotideEntries + " nucleotides</li>" );
+								items.push( "<li>" + data.protienEntries + " proteins</li>" );
+								items.push( "<li>" + data.pubMedEntries + " publications</li>" );
+								$( "<ul/>", {
+									html: items.join( "" )
+								}).appendTo( "#NCBILink" );
+							}
+						});
+					});
+				</script></div></div></div><div class="modal hide fade no-print" id="feedbackModal"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="halflings-icon remove"></i></button><h3><i class="glyphicons-icon comments"></i>Comment</h3></div><form method="post" action="/comment;jsessionid=B71843D5E597A85117059366BAC958A3" class="modal-form"><div class="modal-body"><div class="control-group"><span class="label label-important">You will need to log in before your comment is sent!</span><label for="select01" class="control-label">Comment on</label><div class="controls"><input value="wfo-4000021986" name="commentPageIdentifier" type="hidden"/><select name="aboutData"><option value="wfo-4000021986" id="aboutData_taxon">Lithops N.E.Br.</option><option value="childNameUsages" id="aboutData_childNameUsages">Included&#160;</option><option value="wfo-0000361415" id="aboutData_wfo-0000361415">Lithops amicorum D.T.Cole</option><option value="wfo-0001293518" id="aboutData_wfo-0001293518">Lithops aucampiae L.Bolus</option><option value="wfo-0001293520" id="aboutData_wfo-0001293520">Lithops bromfieldii L.Bolus</option><option value="wfo-0001260443" id="aboutData_wfo-0001260443">Lithops coleorum S.A.Hammer & Uijs</option><option value="wfo-0001293522" id="aboutData_wfo-0001293522">Lithops comptonii L.Bolus</option><option value="wfo-0001293524" id="aboutData_wfo-0001293524">Lithops dinteri Schwantes</option><option value="wfo-0001293526" id="aboutData_wfo-0001293526">Lithops divergens L.Bolus</option><option value="wfo-0001293528" id="aboutData_wfo-0001293528">Lithops dorotheae Nel</option><option value="wfo-0001293529" id="aboutData_wfo-0001293529">Lithops francisci (Dinter & Schwantes) N.E.Br.</option><option value="wfo-0001293530" id="aboutData_wfo-0001293530">Lithops fulviceps (N.E.Br.) N.E.Br.</option><option value="wfo-0000361252" id="aboutData_wfo-0000361252">Lithops gesineae de Boer</option><option value="wfo-0000361254" id="aboutData_wfo-0000361254">Lithops geyeri Nel</option><option value="wfo-0001293532" id="aboutData_wfo-0001293532">Lithops gracilidelineata Dinter</option><option value="wfo-0000361277" id="aboutData_wfo-0000361277">Lithops halenbergensis Tischer</option><option value="wfo-0001293534" id="aboutData_wfo-0001293534">Lithops hallii de Boer</option><option value="wfo-0001293536" id="aboutData_wfo-0001293536">Lithops helmutii L.Bolus</option><option value="wfo-0000361279" id="aboutData_wfo-0000361279">Lithops hermetica D.T.Cole</option><option value="wfo-0001293537" id="aboutData_wfo-0001293537">Lithops herrei L.Bolus</option><option value="wfo-0000360448" id="aboutData_wfo-0000360448">Lithops hookeri (A.Berger) Schwantes</option><option value="wfo-0001293539" id="aboutData_wfo-0001293539">Lithops julii (Dinter & Schwantes) N.E.Br.</option><option value="wfo-0001293540" id="aboutData_wfo-0001293540">Lithops karasmontana (Dinter & Schwantes) N.E.Br.</option><option value="wfo-0001293542" id="aboutData_wfo-0001293542">Lithops lesliei (N.E.Br.) N.E.Br.</option><option value="wfo-0001293544" id="aboutData_wfo-0001293544">Lithops localis (N.E.Br.) Schwantes</option><option value="wfo-0001293545" id="aboutData_wfo-0001293545">Lithops marmorata (N.E.Br.) N.E.Br.</option><option value="wfo-0001293547" id="aboutData_wfo-0001293547">Lithops meyeri L.Bolus</option><option value="wfo-0000360454" id="aboutData_wfo-0000360454">Lithops naureeniae D.T.Cole</option><option value="wfo-0001293548" id="aboutData_wfo-0001293548">Lithops olivacea L.Bolus</option><option value="wfo-0001435540" id="aboutData_wfo-0001435540">Lithops optica (Marloth) N.E.Br.</option><option value="wfo-0001293550" id="aboutData_wfo-0001293550">Lithops otzeniana Nel</option><option value="wfo-0001293551" id="aboutData_wfo-0001293551">Lithops pseudotruncatella (A.Berger) N.E.Br.</option><option value="wfo-0001293553" id="aboutData_wfo-0001293553">Lithops ruschiorum (Dinter & Schwantes) N.E.Br.</option><option value="wfo-0001293555" id="aboutData_wfo-0001293555">Lithops salicola L.Bolus</option><option value="wfo-0000360423" id="aboutData_wfo-0000360423">Lithops schwantesii Dinter</option><option value="wfo-0000360416" id="aboutData_wfo-0000360416">Lithops turbiniformis (Haw.) N.E.Br.</option><option value="wfo-0001293557" id="aboutData_wfo-0001293557">Lithops vallis-mariae (Dinter & Schwantes) N.E.Br.</option><option value="wfo-0001293559" id="aboutData_wfo-0001293559">Lithops verruculosa Nel</option><option value="wfo-0001293561" id="aboutData_wfo-0001293561">Lithops villetii L.Bolus</option><option value="wfo-0001293563" id="aboutData_wfo-0001293563">Lithops viridis H.A.Lückh.</option><option value="wfo-0001293564" id="aboutData_wfo-0001293564">Lithops werneri Schwantes & H.Jacobsen</option><option value="higherClassification" id="aboutData_higherClassification">Classification</option><option value="measurementsOrFacts" id="aboutData_measurementsOrFacts">Data</option><option value="references" id="aboutData_references">Bibliography</option><option value="other" id="aboutData_other">Other</option></select></div></div><div class="control-group"><div class="controls"><textarea rows="3" name="comment" class="input-xlarge"></textarea></div></div></div><div class="modal-footer"><button data-dismiss="modal" class="btn">Cancel</button><button class="btn btn-primary" type="submit">Submit</button></div></form></div></div><footer class="navbar navbar-inverse main"><div class="partner-logos"><div class="logo-item wfo-logo-mono-rev"><img src="/css/images/svgs/wfo_logo_mono_rev.svg"/></div><div class="logo-item gspc-logo-rev"><img src="/css/images/svgs/GSPC_rev.svg"/></div><div class="logo-item cobd-logo-rev"><img src="/css/images/svgs/COBD_rev.svg"/></div><div class="logo-item undob-logo-rev"><img src="/css/images/svgs/UNDoB_mono.svg"/></div></div><nav class="footer-nav"><div class="social"><a style="display:none" target="_blank" href="https://www.instagram.com/worldfloraonline/"><img src="/css/images/svgs/instagram_rev.svg"/></a><a target="_blank" href="https://twitter.com/TheWorldFlora"><img src="/css/images/svgs/twitter_rev.svg"/></a><a target="_blank" href="https://www.facebook.com/WorldFloraOnline"><img src="/css/images/svgs/facebook_rev.svg"/></a></div><div class="footer-nav-items"><ul class="footer-items"><li class=""><a href="mailto:contact@worldfloraonline.org" class="nav-item">Contact WFO</a></li><li><a href="/visualise;jsessionid=B71843D5E597A85117059366BAC958A3">Visualise Data</a></li><li><a href="/organisation;jsessionid=B71843D5E597A85117059366BAC958A3">Data Providers</a></li><li><a href="/resource;jsessionid=B71843D5E597A85117059366BAC958A3">Resources</a></li><li><a href="/comment;jsessionid=B71843D5E597A85117059366BAC958A3">Comments</a></li><li><a href="/termsOfUse;jsessionid=B71843D5E597A85117059366BAC958A3">Terms of Use</a></li></ul></div></nav><div class="copyright-and-credits"><p class="copyright">
+			Unless otherwise noted, text and images are licenced: <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></p><p class="how-to-cite">
+					Cite taxon page as 'WFO (2026):  Lithops <span>N.E.Br</span>. Published on the Internet;<br/><a style="color:white;" href="http://www.worldfloraonline.org/taxon/wfo-4000021986">http://www.worldfloraonline.org/taxon/wfo-4000021986</a>.
+					Accessed on: 19 Sep 2026'
+				</p></div><div/></footer><a href="/url.html" style='display:none'>login</a></body></html>

@@ -1,0 +1,13 @@
+{
+  "ticketId": "z8v0kmr96y",
+  "agent": "p1_guest_claim_consistency_luna + root",
+  "model": "gpt-5.6-luna / max",
+  "status": "done",
+  "progress": 100,
+  "summary": "主代理已完成独立验收并接受 P1 游客会话与登录后认领合同/Schema：三表唯一事实源、同一事务、回滚、租约、proof_version、目标一致性与幂等约束均冻结；定向 18/18、全量 68/68、typecheck、Schema 与合同登记册哈希均通过。真实 CloudBase MySQL、HTTP 身份/proof、Storage 绑定与并发回放仍按 P2/P5 验收，不被本票据冒充。",
+  "unverified": [
+    "真实 CloudBase MySQL/HTTP/Storage/auth 属于后续 P5 验收，本轮不以静态合同或本地 Vitest 冒充。"
+  ],
+  "blockers": [],
+  "updatedAt": "2026-09-20T07:02:14+08:00"
+}

@@ -1,0 +1,46 @@
+{
+  "ticketId": "p0-model-contract-local-audit",
+  "agent": "p0_model_contract_audit_luna",
+  "status": "done",
+  "progress": 100,
+  "ticketStatus": "PASS",
+  "contractStatus": "STOP",
+  "integrationStatus": "STOP",
+  "releaseStatus": "STOP",
+  "summary": "planting 本地模型合同审计完成：Qwen 诊断、Qwen CMS 百科补全和 CloudBase Agent 的当前 owner、环境变量名、模型 ID、endpoint 路径、Prompt/Schema 来源、超时/重试/额度策略及缺口均已记录；没有凭证值、真实外部请求或云端写入。三项能力继续 CONTRACT_STOP/INTEGRATION_STOP。",
+  "verified": [
+    "docs/backend-v2/verify-entrypoint.mjs exit=0，Master Plan 2111 行与基线 SHA 可回放",
+    "P0 external capability cards verifier exit=0，P0 card SHA sidecar OK",
+    "Qwen provider registry、CloudBase AI contract、Prompt/视觉、Agent 会话/额度/工具/ACP 现有测试均通过；均为 unit_fake/source_contract 或本地假 upstream",
+    "planting 的 cloudbaserc.json Agent 配置与 agent-http ACP bridge 已核对；未读取 /Users/jay/WebstormProjects/my-agent",
+    "审计报告和非秘密输入快照 SHA-256 已记录；可能承载凭证的本地配置文件已从哈希清单排除；未修改业务代码、能力卡、module-status、云端、MySQL、CMS 或 Storage"
+  ],
+  "unverified": [
+    "Qwen 诊断真实成功/拒绝/超时/未知计费对账、账户/价格/额度和日志运行时脱敏",
+    "Qwen CMS worker、真实队列、模型预算、CMS draft→审核→immutable release→发布读回",
+    "CloudBase Agent 真实 allowlist、五分钟工具令牌、跨用户/过期拒绝、审计读回、费用上限与并发",
+    "所有真实供应商、CloudBase、CMS、数据库和端上 S4 证据"
+  ],
+  "blockers": [
+    "P0 要求的精确模型/endpoint/Prompt SHA-256/Schema hash/成本与额度合同仍未冻结",
+    "当前视觉路径存在 Prompt/原始模型返回日志和可伪造 debugAudit 响应风险",
+    "CMS 百科补全只有合同文档，没有当前 v2 可回放实现",
+    "agent-http 当前 ticket TTL 60 秒、无独立五分钟 CapabilitySnapshot 工具令牌；Agent 额度只有 daily_turns reserve，没有 settle/release/reconcile",
+    "P-1 external-source sidecar 的 README 输入 hash 与当前 README 不匹配，不能作为全量当前快照证明"
+  ],
+  "outOfScope": [
+    "未读取 /Users/jay/WebstormProjects/my-agent",
+    "未修改 docs/backend-v2/decisions/P0-external-capability-cards.md、module-status.json 或业务代码",
+    "未登录、部署、发起真实模型/Agent/CMS 请求，未执行 DDL、云端写入、删除、支付 sandbox 或密钥轮换"
+  ],
+  "artifacts": {
+    "report": "docs/backend-v2/audits/P0-model-contract-local-audit.md",
+    "reportSha256": "9b92b57212dc1c1fef017c607b9a6ac1b4b3c0aced0b895165a9350a0c160c8e",
+    "reportSha256File": "docs/backend-v2/audits/P0-model-contract-local-audit.sha256",
+    "entrypointSha256": "e8ee3511ee544ee4a5edcd12bf8cad0b3c02c397fb85eb459193ea854f29f428",
+    "p0CardsSha256": "978aab7dbcd2bc05dc1a2bb56b8c65986553758c797561b929d0a47224ef7025",
+    "p1ExternalSourcesSha256": "9c8f9115fc94080b38bedeade1053e3e18db9abd554e6b320973780ba972ccc6"
+  },
+  "nextStep": "主代理按三项能力分别冻结合同并取得脱敏 S4；在此之前不得把本地 audit PASS、静态测试 PASS 或配置键名存在扩写为能力 GO。",
+  "updatedAt": "2026-09-19T23:49:32+08:00"
+}

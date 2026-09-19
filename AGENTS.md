@@ -7,7 +7,8 @@ inclusion: always
 
 # 青花植后端 v2 重构期宪章
 
-# ***文档、计划、代码注释，中文是一等公民***
+# **_文档、计划、代码注释，中文是一等公民_**
+
 ## 1. 本阶段目标与范围
 
 - 本阶段只重构后端：CloudBase HTTP 云函数、Node.js、CloudBase MySQL、CMS/云存储服务端适配、数据库迁移、后端测试和 API 合同。
@@ -23,7 +24,7 @@ inclusion: always
 - Language：TypeScript、Node.js。
 - Backend / Cloud：Tencent CloudBase、HTTP 云函数、CloudBase MySQL、CMS、云存储。
 - Runtime：新建 HTTP 云函数默认 Node.js 22、CommonJS、原生 `node:http`、监听端口 9000，并使用 `scf_bootstrap`。
-- Lint：oxlint；formatter：oxformat；测试：Vitest。
+- Lint：oxlint；formatter：oxformat；测试：TypeScript（`*.spec.ts`）+ Vitest。正式的合同、领域、Repository、HTTP 与数据结构测试不得使用 JavaScript/`.mjs`；`.mjs` 仅允许用于文档生成、哈希与读回、构建/部署校验或尚未转绿且不计入通过证据的 RED 探针。
 - AI：问诊使用已锁定的模型与提示词版本；小青使用 CloudBase Agent；OpenViking 用于长期项目知识治理。
 - HTTP 云函数调用 CloudBase 服务端 SDK 时必须使用受控的显式凭证；不得把凭证写进仓库、日志、测试输出或公开响应。
 
@@ -42,7 +43,9 @@ inclusion: always
 测试矩阵使用 `test-matrix` skill。任何测试都必须说明 Expected 来源、真实经过路径、替换了什么边界、覆盖了什么以及明确未覆盖什么。
 
 ## 4. 后端开发范式
-### 所有关键的逻辑、实现、字段含义、TS类型及其内部属性等都必须用中文详细的做注释。
+
+### 所有关键的逻辑、实现、字段含义、TS类型/interface及其内部属性等都必须用中文做详细的注释。
+
 每个 HTTP 请求固定经过：
 
 ```text
@@ -101,6 +104,16 @@ inclusion: always
 - 所有架构、数据关系、迁移和删除决策必须可视、可审计、可追溯、可回放；禁止黑箱实现。
 - 目标模式任务开始前必须写明：唯一目标、关键假设、最小验证、继续条件、失败条件、回退方式和时间上限。未证实、环境异常或验证冲突时必须停止扩张实现，并明确标记为未验收或 `BLOCKED_ENV`。
 - 不因既有投入而保留已被 v2 替代的代码、表、函数或记忆；但删除必须在替代物已验证后进行。
+
+## 8.1 业务配置与第三方 Provider 治理
+
+- **开发前置硬规则：任何功能进入 DTO、领域实现或 DDL 前，首先判断其中是否存在应被合理配置化的变量。** 只有当该变量在真实业务场景中确有变化可能，并且版本化配置带来的运营、安全、成本、兼容或回滚收益明显大于新增类型、校验、发布、测试和运维复杂度时，才允许配置化；否则保留为清晰的代码常量或不可配置硬规则，禁止为了“灵活”制造配置。
+- 配置化裁决由主代理负责并写入 `docs/backend-v2/architecture/configuration-variable-catalog.json`：明确哪些可配置、属于哪一层、当前值/状态、owner、来源、消费方、变更/回退、阻断范围、Phase、ClickUp ticket 与 Expected。领域子代理可以提交缺口证据，但无权自行新增配置项、开关、默认值或扩大可配置范围。
+- 实现任何后端业务域前，必须先读取 `docs/backend-v2/architecture/configuration-variable-catalog.md` 中对应领域；只有需要核验字段时再读取机器事实源 JSON 和该项 `sourceRefs`，禁止无目的深读全部引用。
+- 目录中的 `confirmed` 才能进入实现；`pending` 只能补证据、合同和 RED，严禁在源码、环境变量或数据库中私设默认值；`hard_rule` 必须由代码、数据库约束和测试共同保证，任何配置均不得覆盖。
+- 新增阈值、时限、次数、预算、价格、积分、额度、算法版本、题包版本、模型、Prompt、Schema、Provider、重试、超时、限流或保留期前，必须先写入目录并登记中文含义、owner、来源、消费方、变更/回退、阻断范围、Phase、ClickUp ticket 与 Expected。
+- 禁止万能 KV/JSON 配置表。每类领域策略须有独立 TypeScript 类型、AJV Schema、不可变 release、SHA-256、active 指针和回滚审计；同一请求必须锁定一个只读配置快照。
+- 所有第三方能力统一经 Provider Registry 与受控 Adapter；配置只保存 `credential_ref`，密钥、Cookie、token 和证书原文不得进入 MySQL、CMS、代码、日志、测试或响应。
 
 ## 9. 读取边界
 

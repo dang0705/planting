@@ -1,0 +1,187 @@
+<!DOCTYPE HTML SYSTEM "about:legacy-compat">
+<html dir="ltr" lang="en" class="no-js"><meta content="IE=edge" http-equiv="X-UA-Compatible"/><head><script defer="true" src="https://www.googletagmanager.com/gtag/js?id=G-ZPPZDJMM4D">/* */</script><script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+		gtag('config', 'G-ZPPZDJMM4D');
+        //gtag('config', 'UA-114340265-1');
+	</script><script>
+        /**
+         * Function that tracks a click on an outbound link in Analytics.
+         * This function takes a valid URL string as an argument, and uses that URL string
+         * as the event label. Setting the transport method to 'beacon' lets the hit be sent
+         * using 'navigator.sendBeacon' in browser that support it.
+         */
+        var trackOutboundLink = function(url) {
+            gtag('event', 'click', {
+                'event_category': 'outbound',
+                'event_label': url,
+                'transport_type': 'beacon',
+                'event_callback': function(){document.location = url;}
+            });
+        }
+    </script><meta charset="utf-8"/><meta content="text/html; charset=utf-8" http-equiv="Content-Type"/><meta content="en" http-equiv="Content-Language"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Brassica rapa subsp. chinensis (L.) Hanelt</title><link href="/css/images/favicon_shadow.ico" rel="alternate icon"/><link href="/css/images/svgs/favicon.svg" type="image/svg+xml" rel="icon"/><link href="/css/style.css" media="screen" type="text/css" rel="stylesheet"/>
+	<!--[if lt IE 10]>
+	<link href="/css/ie9.css" media="all" type="text/css" rel="stylesheet"/>
+	<![endif]-->
+	<link href="/css/print.css" media="print" type="text/css" rel="stylesheet"/><script src="/js/header.js" type="text/javascript">/* */</script><noscript><style>
+			.sortNoJS{display:none;}
+			#images{display:none;}
+			#map{
+				height: 0px;
+				width: 0px;
+				}
+		</style></noscript></head><body data-offset="100" data-target=".subnav" data-spy="scroll"><div class="navbar main-site-header"><script>
+    $("document").ready(function () {
+        $("ul.dropdown-menu > li > a ").hover(function () {
+            $(this).find('i').toggleClass('white');
+        });
+    });
+    </script><nav class="inter-site-nav"><ul class="nav-items"><li class="wfo-portal active"><a href="/">Explore the data</a></li><li class="wfo-about"><a href="https://about.worldfloraonline.org">Find out about</a></li><li class="wfo-plant-list wfo-plant-list"><a href="https://wfoplantlist.org/">Check a plant name</a></li></ul></nav><div class="masthead"><a href="/"><div class="logo-lettering"><img src="/css/images/svgs/wfo_lettering_rev.svg"/></div><h1 class="headline">The World Flora Online</h1></a><div class="logo-roundel"><div class="wrapper"><img src="/css/images/svgs/wfo_roundel.svg"/></div></div></div><nav class="main"><div class="navbar-inner"><div class="container"><div id="ham-men"><button data-target=".nav-collapse" data-toggle="collapse" class="btn btn-navbar no-print" type="button"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button></div><div class="no-print"><?xml version="1.0" encoding="UTF-8"?>
+<div><form method="GET" action="/search;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897" class="navbar-search pull-right"><script type="text/javascript">
+        $(document).ready(function() {
+            $("#navbarQuery").autocomplete({
+                source : "/autocomplete;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897",
+                minLength : 2
+            });
+            $["ui"]["autocomplete"].prototype["_renderItem"] = function( ul, item) {
+                return $( "<li/>" )
+                .data( "item.autocomplete", item )
+                .append( $( "<a/>" ).html( item.label ) )
+                .appendTo( ul );
+            };
+        });
+    </script><input placeholder="Search everything" value="" type="text" class="search-query" name="query" id="navbarQuery"/></form></div><div class="pull-right no-print"><a class="btn" href="/login;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">Sign in</a></div></div><div class="collapse nav-collapse"><ul class="nav"><li><a href="/classification;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">Browse Classification</a></li><li><a href="/search;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897?facet=base.class_s%3aorg.emonocot.model.Image">Browse Images</a></li><li><a href="/contribute;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">Contribute Data</a></li><li><a href="/downloadData;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">Download Data</a></li><li><a href="https://about.worldfloraonline.org/articles">Stories</a></li></ul></div></div></div></nav></div><?xml version="1.0" encoding="UTF-8"?>
+<div itemid="wfo-0000571556" itemtype="http://rs.tdwg.org/dwc/terms/Taxon" itemscope="itemscope"><div class="page-banner no-print"><div class="page-banner-inner"><div class="container"><div class="row"><div class="span12"><div class="page-header"><h2 id="page-title"><a href="https://list.worldfloraonline.org/wfo-0000571556"><b class="WFOID">wfo-0000571556</b></a><br/><a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(Brassica rapa subsp. chinensis (L.) Hanelt)').attr('selected', true); return true;" title="Comment on Brassica rapa subsp. chinensis." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a><i class="glyphicons-icon leaf"></i><em itemprop="scientificName" class="taxonName">Brassica rapa subsp. chinensis</em> <span itemprop="scientificNameAuthorship">(L.) Hanelt</span><ul class="unstyled"><p><li><small class="protologueText"><span itemprop="namePublishedIn" id="protologue">Verz. Landwirtsch. Gärtn. Kulturpfl., ed. 2, 1: 304 (1986)</span> <span content="Valid" itemprop="nomenclaturalStatus"></span></small></li></p><p><li><small class="taxonomicStatusText"><div id="taxonomicStatus"><section><p>
+															This name is the accepted name of an infraspecific taxon
+															of the species
+																<a href="/taxon/wfo-0000571544;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">Brassica rapa
+																	L.
+																</a>
+
+													in the genus
+													<a href="/taxon/wfo-4000005345;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">Brassica</a>
+													(family <a href="/taxon/wfo-7000000082;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">Brassicaceae</a>).
+
+												</p><p>
+											The record derives from <b>WCSP (in review)</b>
+												(data supplied on 2025-12-15)
+											
+											which
+											
+													reports it as an accepted
+													name</p></section></div></small></li></p></ul></h2></div></div></div></div></div></div><section class="hide print" id="printHeader"><h2 id="page-title"><i class="glyphicons-icon leaf"></i><em>Brassica rapa subsp. chinensis</em> <span>(L.) Hanelt</span><ul class="unstyled"><li><small><span id="protologue">Verz. Landwirtsch. Gärtn. Kulturpfl., ed. 2, 1: 304 (1986)</span> <span></span></small></li><li></li></ul></h2></section><div class="container"><header id="overview" class="subhead clearfix"><div class="subnav no-print"><ul class="nav nav-pills"><li><a href="#synonyms">Synonyms</a></li><li><a href="#bibliography">Bibliography</a></li></ul></div></header><script type="text/javascript">
+			$(document).ready(function(){
+				$('#clickMe').toggle(
+						function(){
+							$('#textBox').hide();
+							$('#clickMe').text('Show details');
+						},
+						function(){
+							$('#textBox').show();
+							$('#clickMe').text('Hide details');
+						});
+			});
+
+			$(document).ready(function() {
+				$("a[href^='#']").click(function(event) {
+					var targetId = $(this).attr('href');
+					var section = $(targetId);
+					section.css('scroll-margin', '2.5rem');
+					event.preventDefault();
+					smoothScroll(targetId);
+					if(history.pushState) {
+						history.pushState(null, null, targetId);
+					}
+					else {
+						location.hash = targetId;
+					}
+				});
+			});
+
+			function smoothScroll(selector){
+				document.querySelector(selector).scrollIntoView({
+					behavior: "smooth", block: "start", inline: "nearest"
+				});
+			}
+		</script><div class="modal modal-gallery hide fade modal-fullscreen modal-fullscreen-stretch no-print" id="modal-gallery"><div class="modal-header"><a data-dismiss="modal" class="close">×</a></div><div class="modal-body"><div class="modal-image"></div><div class="carousel-caption modal-title"><label style="text-align:center">Press ESC to exit</label><label class="pull-right" id="clickMe">Hide details</label><ul style="text-align:left;" class="unstyled" id="textBox"><li><a class="modal-download"><i class="modal-icon"> </i><span class="modal-caption"> </span></a></li><li><em>Creator</em> <span class="modal-creator"> </span></li><li><em>Licence</em> <span class="modal-license-icon"> </span><a data-slideshow="3000" class="btn btn-success modal-play modal-slideshow pull-right"><i class="icon-white icon-play"></i></a></li></ul></div></div></div><br/><div class="citation-text">
+					Cite taxon page as 'WFO (2026):  Brassica rapa subsp. chinensis <span>(L.) Hanelt</span>. Published on the Internet;<a href="http://www.worldfloraonline.org/taxon/wfo-0000571556">http://www.worldfloraonline.org/taxon/wfo-0000571556</a>.
+					Accessed on: 19 Sep 2026'
+				</div><div class="row"><div class="span8"><section class="section-box" id="synonyms"><div class="inner"><div class="box clearfix"><section class="section-box"><div class="inner"><h2>Synonyms
+													<a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(Synonyms)').attr('selected', true); return true;" title="Comment on Synonyms." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a></h2><ul class="unstyled"><li><a href="/taxon/wfo-0000570874;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">   <em>Brassica antiquorum</em> H.Lév.
+																		</a> 
+																	</li><li><a href="/taxon/wfo-0001261029;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">   <em>Brassica campestris subsp. chinensis</em> (L.) Makino
+																		</a> 
+																	</li><li><a href="/taxon/wfo-0000570952;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">   <em>Brassica campestris var. chinensis</em> (L.) N.Busch
+																		</a> 
+																	</li><li><a href="/taxon/wfo-1200109257;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">   <em>Brassica campestris var. chinensis</em> (L.) T.Ito
+																		</a> 
+																	</li><li><a href="/taxon/wfo-0001261031;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">   <em>Brassica campestris var. parachinensis</em> (L.H.Bailey) Makino
+																		</a> 
+																	</li><li><a href="/taxon/wfo-0000571014;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">   <em>Brassica chinensis</em> L.
+																		</a> 
+																	</li><li><a href="/taxon/wfo-0001325961;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">   <em>Brassica chinensis f. chifu</em> M.Hiroe
+																		</a> 
+																	</li><li><a href="/taxon/wfo-0001415509;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">   <em>Brassica chinensis var. communis</em> Tsen & S.H.Lee
+																		</a> 
+																	</li><li><a href="/taxon/wfo-1200109151;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">   <em>Brassica chinensis var. pakchoi</em> Maire & Weiller
+																		</a> 
+																	</li><li><a href="/taxon/wfo-0001261032;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">   <em>Brassica chinensis var. parachinensis</em> (L.H.Bailey) Sinskaya
+																		</a> 
+																	</li><li><a href="/taxon/wfo-0000571028;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">   <em>Brassica chinensis var. rosularis</em> Tsen & S.H.Lee
+																		</a> 
+																	</li><li><a href="/taxon/wfo-0000571278;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">   <em>Brassica napus var. chinensis</em> (L.) O.E.Schulz
+																		</a> 
+																	</li><li><a href="/taxon/wfo-0000571373;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">   <em>Brassica oleracea var. chinensis</em> (L.) Prain
+																		</a> 
+																	</li><li><a href="/taxon/wfo-0000571491;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">   <em>Brassica parachinensis</em> L.H.Bailey
+																		</a> 
+																	</li><li><div><a href="/taxon/wfo-0000571555;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">   <b><em>Brassica rapa var. chinensis</em> (L.) Kitam.
+																			</b></a> 
+																			<a title="Descriptions" href="/taxon/wfo-0000571555;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897#description"><img style="width: 16px; height: 16px; " alt="WFO descriptions" src="/css/images/content/description.png;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897"/></a> 
+																			</div></li><li><a href="/taxon/wfo-1200109261;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">   <em>Brassica rapa var. chinensis</em> (L.H.Bailey) Hanelt
+																		</a> 
+																	</li><li><a href="/taxon/wfo-0000571602;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">   <em>Brassica rapa var. rosularis</em> (Tsen & S.H.Lee) Hanelt
+																		</a> 
+																	</li><li><a href="/taxon/wfo-0000402500;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">   <em>Raphanus chinensis</em> (L.) Crantz
+																		</a> 
+																	</li></ul><ul class="citations">Provided by: <li><a href="#A">[A].Brassicaceae</a></li></ul></div></section></div></div></section><section class="section-box" id="bibliography"><div class="inner"><div class="box clearfix"><h2><i class="glyphicons-icon book"> </i> Bibliography
+									<a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(Bibliography)').attr('selected', true); return true;" title="Comment on Bibliography." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a></h2><ul><li><a id="citation1">1</a><a onClick="trackOutboundLink(&#039;https://brassibase.cos.uni-heidelberg.de/bb2/names/get/id/bb-spc-24436&#039;); return false;" href="https://brassibase.cos.uni-heidelberg.de/bb2/names/get/id/bb-spc-24436">
+														Brassibase record for Brassica rapa subsp. chinensis (L.) Hanelt</a></li><li><a id="citation2">2</a><a onClick="trackOutboundLink(&#039;http://www.wikidata.org/entity/Q1043&#039;); return false;" href="http://www.wikidata.org/entity/Q1043">
+														Carl Linnaeus (1707-1778)</a></li><li><a id="citation3">3</a><a onClick="trackOutboundLink(&#039;https://www.ipni.org/n/953223-1&#039;); return false;" href="https://www.ipni.org/n/953223-1">
+														IPNI record: 953223-1</a></li><li><a id="citation4">4</a><a onClick="trackOutboundLink(&#039;http://www.wikidata.org/entity/Q13402873&#039;); return false;" href="http://www.wikidata.org/entity/Q13402873">
+														Peter Hanelt (1930-2019)</a></li><li><a id="citation5">5</a><a onClick="trackOutboundLink(&#039;https://www.checklistbank.org/dataset/2039/taxon/kew-2682663#1.1&#039;); return false;" href="https://www.checklistbank.org/dataset/2039/taxon/kew-2682663#1.1">
+														The Plant List v1.1 record kew-2682663</a></li><li><a id="citation6">6</a><a onClick="trackOutboundLink(&#039;https://www.checklistbank.org/dataset/2039/taxon/kew-2682663#1.0&#039;); return false;" href="https://www.checklistbank.org/dataset/2039/taxon/kew-2682663#1.0">
+														The Plant List version 1.0, record: kew-2682663</a></li></ul></div></div></section><section class="section-box" id="sources"><div class="inner"><div class="box clearfix"><h2><i class="glyphicons-icon group"> </i>Information From</h2><dl><dt><a href="/organisation/Brassicaceae;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">Brassicaceae</a></dt><dd><a onClick="trackOutboundLink(&#039;https://brassibase.cos.uni-heidelberg.de/&#039;); return false;" href="https://brassibase.cos.uni-heidelberg.de/">https://brassibase.cos.uni-heidelberg.de/ </a></dd><dd>World Flora Online Data. 2022.</dd><dd><ul class="unstyled"><li id="A"><span>A</span>
+					CC0 1.0 Universal (CC0 1.0).
+					<a href="https://creativecommons.org/publicdomain/zero/1.0" class="licenseLogo"><img alt="public" src="/css/images/creativeCommonsLogos/cc-zero.png;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897" class="cclogos"/></a></li></ul></dd><dt><a href="/organisation/WFO;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">World Flora Online consortium</a></dt><dd><a onClick="trackOutboundLink(&#039;http://www.worldfloraonline.org/organisation/WFO&#039;); return false;" href="http://www.worldfloraonline.org/organisation/WFO">http://www.worldfloraonline.org/organisation/WFO </a></dd><dd>World Flora Online Data. 2026.</dd><dd><ul class="unstyled"><li id="B"><span>B</span>
+					CC0 1.0 Universal (CC0 1.0).
+					<a href="https://creativecommons.org/publicdomain/zero/1.0" class="licenseLogo"><img alt="public" src="/css/images/creativeCommonsLogos/cc-zero.png;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897" class="cclogos"/></a></li></ul></dd></dl></div></div></section></div><div class="span4 sidebar" id="sidebar"><div class="inner"><div class="box" id="classificationBox"><section id="taxonomicTree" class="sidebarBox"><h2 id="sectionHeader"><i class="glyphicons-icon classify"></i>Classification
+									<a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(Classification)').attr('selected', true); return true;" title="Comment on Classification." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a></h2><ul id="taxonHierarchy"><a href="/taxon/wfo-7000000082;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897" class="ancestorsList">4 higher taxa</a><li><a href="/taxon/wfo-7000000082;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897" class="ancestorsList"><em>Brassicaceae</em> Burnett</a><ul><li><a href="/taxon/wfo-4100002156;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897" class="ancestorsList"><em>Brassicoideae</em> Prantl & Karl</a><ul><li><a href="/taxon/wfo-5500000028;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897" class="ancestorsList"><em>Brassicodae</em> V.E.Avet.</a><ul><li><a href="/taxon/wfo-4100004711;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897" class="ancestorsList"><em>Brassiceae</em> DC.</a><ul><li><a href="/taxon/wfo-4000005345;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897" class="ancestorsList"><em>Brassica</em> L.</a><ul><li><a href="/taxon/wfo-0000571544;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897" class="ancestorsList"><em>Brassica rapa</em> L.</a><ul><li><span class="currentTaxon"/><em>Brassica rapa subsp. chinensis</em> (L.) Hanelt
+			</li></ul></li></ul></li></ul></li></ul></li></ul></li></ul></li></ul><ul class="citations">Provided by: <li><a href="#A">[A].Brassicaceae</a></li><li><a href="#B">[B].World Flora Online consortium</a></li></ul><div style="clear: both"/></section></div></div><div class="inner"><div class="box dataBox"><section id="taxonData" class="sidebarBox"><h2><i class="glyphicons-icon table"></i>Data
+								<a href="#feedbackModal" data-toggle="modal" onclick="$('option:contains(Data)').attr('selected', true); return true;" title="Comment on Data." data-placement="right" rel="tooltip" class="pull-right"><i class="halflings-icon comments submitComment"></i></a></h2><table id="data" class="table"><tbody><tr><th class="span1">Habitat</th><td><ul class="unstyled" id="Habitat"></ul></td><td></td></tr><tr><th class="span1">Life Form</th><td><ul class="unstyled" id="Lifeform"></ul></td><td></td></tr><tr><th class="span1">IUCN Red List Status</th><td><ul class="unstyled" id="threatStatus"></ul></td><td></td></tr></tbody></table></section></div></div><div class="inner no-print"><div class="box linksBox"><section id="externalLinks" class="sidebarBox"><h2><i class="glyphicons-icon link"></i>External Links</h2><ul class="unstyled"><li><a onClick="trackOutboundLink(&#039;http://www.ncbi.nlm.nih.gov/gquery/gquery.fcgi?term=Brassica+rapa+subsp.+chinensis%5borgn%5d&#039;); return false;" href="http://www.ncbi.nlm.nih.gov/gquery/gquery.fcgi?term=Brassica+rapa+subsp.+chinensis%5borgn%5d" id="NCBILink">NCBI - National Center for Biotechnology Information</a></li><li><a onClick="trackOutboundLink(&#039;http://www.boldsystems.org/index.php/Taxbrowser_Taxonpage?taxon=Brassica+rapa+subsp.+chinensis&#039;); return false;" href="http://www.boldsystems.org/index.php/Taxbrowser_Taxonpage?taxon=Brassica+rapa+subsp.+chinensis" id="boldLink">BOLD Systems - Barcode of Life Data Systems</a></li><li><a onClick="trackOutboundLink(&#039;http://www.gbif.org/species/search?dataset_key=d7dddbf4-2cf0-4f39-9b2a-bb099caae36c&highertaxon_key=6&q=Brassica rapa subsp. chinensis&#039;); return false;" href="http://www.gbif.org/species/search?dataset_key=d7dddbf4-2cf0-4f39-9b2a-bb099caae36c&highertaxon_key=6&q=Brassica rapa subsp. chinensis" id="GBIFLink">GBIF - Global Biodiversity Information Facility</a></li><li><a onClick="trackOutboundLink(&#039;http://www.ipni.org/ipni/idPlantNameSearch.do?id=urn%3alsid%3aipni.org%3anames%3a953223-1&#039;); return false;" href="http://www.ipni.org/ipni/idPlantNameSearch.do?id=urn%3alsid%3aipni.org%3anames%3a953223-1" id="IPNILink">IPNI - urn:lsid:ipni.org:names:953223-1</a></li><li><a onClick="trackOutboundLink(&#039;http://www.theplantlist.org/tpl1.1/record/kew-2682663&#039;); return false;" href="http://www.theplantlist.org/tpl1.1/record/kew-2682663" id="TPLLink">TPL v.1.1 - The Plant List v.1.1</a></li></ul></section></div></div><div class="inner no-print"><div class="box linksBox"><section id="sourceUrl" class="sidebarBox"><h2><i class="glyphicons-icon link"></i>Taxon Name Source Link</h2><a onClick="trackOutboundLink(&#039;https://brassibase.cos.uni-heidelberg.de/bb2/names/get/id/bb-spc-24436&#039;); return false;" href="https://brassibase.cos.uni-heidelberg.de/bb2/names/get/id/bb-spc-24436" id="sourceUrl">
+									https://brassibase.cos.uni-heidelberg.de/ bb2/names/get/id/bb-spc-24436</a></section></div></div><script type="text/javascript">
+					$(document).ready(function(){
+						$.ajax({
+							dataType: "json",
+							url: "/ncbi;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897?query=Brassica+rapa+subsp.+chinensis",
+							beforeSend: function(xhr) {
+								xhr.setRequestHeader('Accept', 'application/json');
+								xhr.setRequestHeader('Content-Type', 'application/json');
+							},
+							success: function( data ) {
+								var items = [];
+								items.push( "<li>" + data.nucleotideEntries + " nucleotides</li>" );
+								items.push( "<li>" + data.protienEntries + " proteins</li>" );
+								items.push( "<li>" + data.pubMedEntries + " publications</li>" );
+								$( "<ul/>", {
+									html: items.join( "" )
+								}).appendTo( "#NCBILink" );
+							}
+						});
+					});
+				</script></div></div></div><div class="modal hide fade no-print" id="feedbackModal"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="halflings-icon remove"></i></button><h3><i class="glyphicons-icon comments"></i>Comment</h3></div><form method="post" action="/comment;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897" class="modal-form"><div class="modal-body"><div class="control-group"><span class="label label-important">You will need to log in before your comment is sent!</span><label for="select01" class="control-label">Comment on</label><div class="controls"><input value="wfo-0000571556" name="commentPageIdentifier" type="hidden"/><select name="aboutData"><option value="wfo-0000571556" id="aboutData_taxon">Brassica rapa subsp. chinensis (L.) Hanelt</option><option value="synonymNameUsages" id="aboutData_wfo-0000571556">Synonyms</option><option value="wfo-0000570874" id="wfo-0000570874">Brassica antiquorum H.Lév.</option><option value="wfo-0001261029" id="wfo-0001261029">Brassica campestris subsp. chinensis (L.) Makino</option><option value="wfo-0000570952" id="wfo-0000570952">Brassica campestris var. chinensis (L.) N.Busch</option><option value="wfo-1200109257" id="wfo-1200109257">Brassica campestris var. chinensis (L.) T.Ito</option><option value="wfo-0001261031" id="wfo-0001261031">Brassica campestris var. parachinensis (L.H.Bailey) Makino</option><option value="wfo-0000571014" id="wfo-0000571014">Brassica chinensis L.</option><option value="wfo-0001325961" id="wfo-0001325961">Brassica chinensis f. chifu M.Hiroe</option><option value="wfo-0001415509" id="wfo-0001415509">Brassica chinensis var. communis Tsen & S.H.Lee</option><option value="wfo-1200109151" id="wfo-1200109151">Brassica chinensis var. pakchoi Maire & Weiller</option><option value="wfo-0001261032" id="wfo-0001261032">Brassica chinensis var. parachinensis (L.H.Bailey) Sinskaya</option><option value="wfo-0000571028" id="wfo-0000571028">Brassica chinensis var. rosularis Tsen & S.H.Lee</option><option value="wfo-0000571278" id="wfo-0000571278">Brassica napus var. chinensis (L.) O.E.Schulz</option><option value="wfo-0000571373" id="wfo-0000571373">Brassica oleracea var. chinensis (L.) Prain</option><option value="wfo-0000571491" id="wfo-0000571491">Brassica parachinensis L.H.Bailey</option><option value="wfo-0000571555" id="wfo-0000571555">Brassica rapa var. chinensis (L.) Kitam.</option><option value="wfo-1200109261" id="wfo-1200109261">Brassica rapa var. chinensis (L.H.Bailey) Hanelt</option><option value="wfo-0000571602" id="wfo-0000571602">Brassica rapa var. rosularis (Tsen & S.H.Lee) Hanelt</option><option value="wfo-0000402500" id="wfo-0000402500">Raphanus chinensis (L.) Crantz</option><option value="higherClassification" id="aboutData_higherClassification">Classification</option><option value="measurementsOrFacts" id="aboutData_measurementsOrFacts">Data</option><option value="references" id="aboutData_references">Bibliography</option><option value="other" id="aboutData_other">Other</option></select></div></div><div class="control-group"><div class="controls"><textarea rows="3" name="comment" class="input-xlarge"></textarea></div></div></div><div class="modal-footer"><button data-dismiss="modal" class="btn">Cancel</button><button class="btn btn-primary" type="submit">Submit</button></div></form></div></div><footer class="navbar navbar-inverse main"><div class="partner-logos"><div class="logo-item wfo-logo-mono-rev"><img src="/css/images/svgs/wfo_logo_mono_rev.svg"/></div><div class="logo-item gspc-logo-rev"><img src="/css/images/svgs/GSPC_rev.svg"/></div><div class="logo-item cobd-logo-rev"><img src="/css/images/svgs/COBD_rev.svg"/></div><div class="logo-item undob-logo-rev"><img src="/css/images/svgs/UNDoB_mono.svg"/></div></div><nav class="footer-nav"><div class="social"><a style="display:none" target="_blank" href="https://www.instagram.com/worldfloraonline/"><img src="/css/images/svgs/instagram_rev.svg"/></a><a target="_blank" href="https://twitter.com/TheWorldFlora"><img src="/css/images/svgs/twitter_rev.svg"/></a><a target="_blank" href="https://www.facebook.com/WorldFloraOnline"><img src="/css/images/svgs/facebook_rev.svg"/></a></div><div class="footer-nav-items"><ul class="footer-items"><li class=""><a href="mailto:contact@worldfloraonline.org" class="nav-item">Contact WFO</a></li><li><a href="/visualise;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">Visualise Data</a></li><li><a href="/organisation;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">Data Providers</a></li><li><a href="/resource;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">Resources</a></li><li><a href="/comment;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">Comments</a></li><li><a href="/termsOfUse;jsessionid=B760EE70245B41FE2B9ED46BCC8E0897">Terms of Use</a></li></ul></div></nav><div class="copyright-and-credits"><p class="copyright">
+			Unless otherwise noted, text and images are licenced: <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></p><p class="how-to-cite">
+					Cite taxon page as 'WFO (2026):  Brassica rapa subsp. chinensis <span>(L.) Hanelt</span>. Published on the Internet;<br/><a style="color:white;" href="http://www.worldfloraonline.org/taxon/wfo-0000571556">http://www.worldfloraonline.org/taxon/wfo-0000571556</a>.
+					Accessed on: 19 Sep 2026'
+				</p></div><div/></footer><a href="/url.html" style='display:none'>login</a></body></html>

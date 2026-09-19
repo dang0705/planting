@@ -1,0 +1,10 @@
+{
+  "ticketId": "z8v0kmr9dv",
+  "agent": "integration_probe_terra",
+  "model": "gpt-5.6-terra / medium",
+  "status": "done",
+  "progress": 100,
+  "summary": "P0 票据的合同/证伪出口已由独立复验判定 PASS：14 张双轴卡、精确 ID/证据等级门和五类负向变异均已通过。本票据已完成；真实供应商、支付 sandbox、CloudBase/Storage/Agent、MySQL 与 outbox/inbox 的 INTEGRATION_STOP 保留在各能力卡中，属于后续真实集成/公开发布门，不再作为本票据 blocker。",
+  "blockers": [],
+  "updatedAt": "2026-09-19T23:13:25+08:00"
+}

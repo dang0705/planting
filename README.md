@@ -28,15 +28,20 @@ flowchart TB
   MemberGrant --> EffectiveEntitlement
 
   CapabilityCatalog[能力目录<br/>适用层级 / 是否消耗 AI 点数] --> CapabilityGate[能力决策]
+  BusinessPolicyGovernance[关键业务策略治理<br/>类型化草稿 / 审核 / 生效时间 / 回滚] --> BusinessPolicyRelease[已发布业务策略<br/>不可变版本 / SHA-256 / 负责人]
+  BusinessPolicyRelease --> CapabilityCatalog
+  BusinessPolicyRelease --> TrialGrant
+  BusinessPolicyRelease --> MemberGrant
+  BusinessPolicyRelease --> GenerativeGate
   Visitor --> CapabilityGate
   Identity --> CapabilityGate
   EffectiveEntitlement --> CapabilityGate
 
-  TrialGrant --> TrialAIBudget[试用 AI 算力池<br/>数值须在 Phase 0 冻结]
+  TrialGrant --> TrialAIBudget[试用 AI 算力池<br/>一次性 200 点 / 24 小时]
   MemberGrant --> MemberAIBudget[会员 AI 算力池<br/>每订阅周期 2,000<br/>无日限额 / 周限额]
   TrialAIBudget --> GenerativeGate[生成式 AI 成本门<br/>原子预占 / 结算 / 释放]
   MemberAIBudget --> GenerativeGate
-  ContributionReward[内容贡献奖励额度<br/>新增规范植物 100 / 基础展示内容 50<br/>审核通过后发放 / 三个月有效] --> GenerativeGate
+  ContributionReward[内容贡献奖励额度<br/>新增规范植物 100 / 基础展示内容 50<br/>实际 release 后发放 / 三个月有效] --> GenerativeGate
 
 
   %% ========== 游客与独立临时能力 ==========
@@ -320,12 +325,33 @@ flowchart TB
     Cache[Cache<br/>版本内容 / 热数据缓存<br/>永不作为事实源]
   end
 
+  %% ========== 配置治理 ==========
+  subgraph Configuration["配置治理 Configuration Governance<br/>不新增万能配置云函数"]
+    PolicyRegistry[领域业务策略注册表<br/>类型化 release / active 指针<br/>owner 属于各业务域]
+    ProviderRegistry[统一 Provider 注册表<br/>能力 / Adapter / 端点档案<br/>超时 / 重试 / 限流 / 成本 / 回退]
+    ConfigValidator[配置发布校验<br/>AJV / 语义 / 引用 / SHA-256]
+    ConfigSnapshot[请求级配置快照<br/>策略版本 / Provider 版本<br/>一次请求内不可变]
+    CredentialStore[受控凭证系统<br/>只通过 credential_ref 引用<br/>密钥不进入配置表]
+    LastKnownGood[最近一个已验证版本<br/>有界回退 / 安全能力失败关闭]
+  end
+
+  PolicyRegistry --> ConfigValidator
+  ProviderRegistry --> ConfigValidator
+  ConfigValidator --> ConfigSnapshot
+  LastKnownGood --> ConfigSnapshot
+
   IdentityApp --> Shared
   KnowledgeApp --> Shared
   UserPlantApp --> Shared
   CareApp --> Shared
   DiagnosisApp --> Shared
   SubscriptionApp --> Shared
+  IdentityApp --> ConfigSnapshot
+  KnowledgeApp --> ConfigSnapshot
+  UserPlantApp --> ConfigSnapshot
+  CareApp --> ConfigSnapshot
+  DiagnosisApp --> ConfigSnapshot
+  SubscriptionApp --> ConfigSnapshot
 
 
   %% ========== 持久化与所有权 ==========
@@ -336,6 +362,7 @@ flowchart TB
     CareStore[(fact / care / weather / evidence<br/>临时养护会话 / 认领状态)]
     DiagnosisStore[(diagnosis / 临时问诊会话<br/>认领状态 / AI audit tables)]
     SubscriptionStore[(trial / entitlement / subscription / payment<br/>AI account / reservation / ledger / reward grants)]
+    ConfigurationStore[(不可变策略 / Provider release<br/>active 指针 / 发布审计)]
     MySQL[(CloudBase MySQL<br/>planting_v2)]
 
     IdentityStore --> MySQL
@@ -344,6 +371,7 @@ flowchart TB
     CareStore --> MySQL
     DiagnosisStore --> MySQL
     SubscriptionStore --> MySQL
+    ConfigurationStore --> MySQL
   end
 
   IdentityApp --> IdentityStore
@@ -352,6 +380,8 @@ flowchart TB
   CareApp --> CareStore
   DiagnosisApp --> DiagnosisStore
   SubscriptionApp --> SubscriptionStore
+  PolicyRegistry --> ConfigurationStore
+  ProviderRegistry --> ConfigurationStore
 
   UserPlantApp --> Storage[CloudBase 云存储]
   CareApp --> Storage
@@ -381,35 +411,49 @@ flowchart TB
   %% ========== 外部能力、标准化证据与事实来源 ==========
   KnowledgeApp --> IdentifyAdapter[植物识别 Adapter]
   IdentifyAdapter --> BaiduIdentify[百度植物识别<br/>当前候选来源]
+  ProviderRegistry -.受控配置.-> IdentifyAdapter
+  CredentialStore -.凭证引用.-> IdentifyAdapter
   IdentifyAdapter --> IdentifySnapshot[识别候选快照<br/>提供方 / 置信度 / 映射结果]
   IdentifySnapshot --> KnowledgeApp
   IdentifySnapshot --> SpeciesCandidateRepo[新增种类候选聚合<br/>去重 / 来源 / 登录贡献人]
   SpeciesCandidateRepo --> CMS
 
   EncyclopediaQwenAdapter --> Bailian
+  ProviderRegistry -.受控配置.-> EncyclopediaQwenAdapter
+  CredentialStore -.凭证引用.-> EncyclopediaQwenAdapter
 
   DiagnosisApp --> DiagnosisVisionAdapter[诊断视觉 Adapter]
   DiagnosisVisionAdapter --> Bailian[云百炼<br/>锁定 Qwen 3.5 Flash + 提示词]
+  ProviderRegistry -.受控配置.-> DiagnosisVisionAdapter
+  CredentialStore -.凭证引用.-> DiagnosisVisionAdapter
   DiagnosisVisionAdapter --> DiagnosisEvidence[诊断模型证据<br/>模型 / 提示词 / release / schema]
   DiagnosisEvidence --> DiagnosisApp
 
   CareApp --> SoilVisionAdapter[盆土视觉 Adapter]
   SoilVisionAdapter --> Bailian
+  ProviderRegistry -.受控配置.-> SoilVisionAdapter
+  CredentialStore -.凭证引用.-> SoilVisionAdapter
   SoilVisionAdapter --> SoilEvidence[短时盆土证据<br/>user_plant_id / 时间 / 有效期]
   SoilEvidence --> CareApp
 
   CareApp --> WeatherAdapter[Weather Adapter]
   WeatherAdapter --> QWeather[和风天气<br/>当前观测与预报来源]
+  ProviderRegistry -.受控配置.-> WeatherAdapter
+  CredentialStore -.凭证引用.-> WeatherAdapter
   WeatherAdapter --> WeatherSnapshot[标准化天气快照<br/>提供方 / 地点 / 时间 / 新鲜度]
   WeatherSnapshot --> CareApp
 
   SubscriptionApp --> PaymentAdapter[Payment Adapter]
   PaymentAdapter --> WechatPay[微信支付 v3<br/>当前支付来源]
+  ProviderRegistry -.受控配置.-> PaymentAdapter
+  CredentialStore -.凭证引用.-> PaymentAdapter
   PaymentAdapter --> VerifiedPayment[已验签支付事实]
   VerifiedPayment --> SubscriptionApp
 
   SubscriptionApp --> NotifyAdapter[Notification Adapter]
   NotifyAdapter --> PlatformNotify[微信 / 抖音等平台通知能力]
+  ProviderRegistry -.受控配置.-> NotifyAdapter
+  CredentialStore -.凭证引用.-> NotifyAdapter
 
   PrincipalResolver --> Auth
 
@@ -429,3 +473,15 @@ flowchart TB
   Observability --> Monitor[监控 / 告警]
   Security --> Audit[(审计记录)]
 ```
+
+## 配置治理实施入口
+
+两张架构图只表达关系，不在图中重复当前 161 项业务/治理变量和 12 个首批 Provider 配置档案。实施时必须从以下入口渐进读取：
+
+- [配置与 Provider 总合同](docs/backend-v2/architecture/configuration-and-providers.md)
+- [业务关键变量中文目录](docs/backend-v2/architecture/configuration-variable-catalog.md)
+- [业务关键变量机器事实源](docs/backend-v2/architecture/configuration-variable-catalog.json)
+
+目录中的 `confirmed` 才能实现，`pending` 的阻断范围必须保持停止，`hard_rule` 不得被 CMS、环境变量或数据库配置覆盖。任何目录外的关键业务常量必须先完成归属、来源、变更和失败边界登记。
+
+配置化不是默认答案：只有变量在真实场景中确有变化可能，且运营、安全、成本、兼容或回滚收益明显高于新增类型、校验、发布、测试和运维复杂度时，才由主代理批准进入目录；否则保持为清晰代码常量或不可配置硬规则。

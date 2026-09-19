@@ -2,6 +2,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  capProgressByStatus,
+  isHeartbeatFresh,
+  summarizeModulesProgress,
+  summarizeTicketProgress
+} from './progress.mjs';
+import { mergeClickUpTaskStatuses } from './clickup-status-sync.mjs';
+
 const trackerDirectory = path.dirname(fileURLToPath(import.meta.url));
 const statusPath = path.join(trackerDirectory, 'module-status.json');
 const heartbeatDirectory = path.join(trackerDirectory, 'heartbeats');
@@ -15,13 +23,27 @@ const heartbeatFiles = fs.existsSync(heartbeatDirectory)
 
 const heartbeats = heartbeatFiles.map((name) => {
   const heartbeat = JSON.parse(fs.readFileSync(path.join(heartbeatDirectory, name), 'utf8'));
-  const updatedAtMs = Date.parse(heartbeat.updatedAt);
-  const isFresh = Number.isFinite(updatedAtMs) && now.getTime() - updatedAtMs <= staleAfterMs;
+  const isFresh = isHeartbeatFresh(heartbeat.status, heartbeat.updatedAt, now.getTime(), staleAfterMs);
   return { ...heartbeat, isFresh };
 });
 
 const heartbeatByTicket = new Map(heartbeats.map((heartbeat) => [heartbeat.ticketId, heartbeat]));
 const agentRegistry = [];
+
+const knownTicketIds = new Set(
+  (status.modules ?? []).flatMap((module) => (module.tickets ?? []).map((ticket) => ticket.id))
+);
+const clickUpKeeperHeartbeat = heartbeats.find(
+  (heartbeat) => heartbeat.agent?.startsWith('clickup_status_keeper_luna')
+);
+status.clickUpTaskStatuses = mergeClickUpTaskStatuses(
+  status.clickUpTaskStatuses,
+  clickUpKeeperHeartbeat,
+  knownTicketIds
+);
+if (clickUpKeeperHeartbeat?.checkedAt) {
+  status.clickUpLastSyncedAt = clickUpKeeperHeartbeat.checkedAt;
+}
 
 function hasProgress(value) {
   return value !== null && value !== undefined && Number.isFinite(Number(value));
@@ -41,9 +63,10 @@ for (const module of status.modules ?? []) {
     const oldProgress = hasProgress(ticket.progress) ? Number(ticket.progress) : null;
     const reportedProgress = hasProgress(heartbeat.progress) ? Number(heartbeat.progress) : null;
     // 代理重启不能让已有审计进度归零。只有显式声明 allowRegression 才允许证据驱动的降级。
-    ticket.progress = heartbeat.allowRegression
+    const mergedProgress = heartbeat.allowRegression
       ? reportedProgress
       : Math.max(oldProgress ?? 0, reportedProgress ?? 0);
+    ticket.progress = capProgressByStatus(heartbeat.status, mergedProgress);
     ticket.agent = heartbeat.agent;
     ticket.status = heartbeat.isFresh
       ? `${heartbeat.status}：${heartbeat.summary}`
@@ -61,11 +84,12 @@ for (const module of status.modules ?? []) {
     });
   }
 
+  const moduleProgress = summarizeTicketProgress(module.tickets ?? []);
+  module.progress = moduleProgress.progress;
+  module.reportedTicketCount = moduleProgress.reported;
+  module.totalTicketCount = moduleProgress.total;
   const reportedTickets = (module.tickets ?? []).filter((ticket) => hasProgress(ticket.progress));
   if (reportedTickets.length > 0) {
-    module.progress = Math.round(
-      reportedTickets.reduce((sum, ticket) => sum + Number(ticket.progress), 0) / reportedTickets.length
-    );
     module.lastUpdatedAt = reportedTickets
       .map((ticket) => ticket.lastUpdatedAt)
       .filter(Boolean)
@@ -78,9 +102,19 @@ for (const module of status.modules ?? []) {
     .filter((heartbeat) => heartbeat?.isFresh)
     .map((heartbeat) => heartbeat.agent))];
   module.agent = activeAgents.length > 0 ? activeAgents.join('、') : null;
+
+  const currentPhaseHeartbeats = (module.tickets ?? [])
+    .map((ticket) => heartbeatByTicket.get(ticket.id))
+    .filter(Boolean);
+  if (currentPhaseHeartbeats.length > 0 && currentPhaseHeartbeats.every((heartbeat) => heartbeat.status === 'done')) {
+    module.status = '当前执行阶段已完成；后续阶段任务尚未启动';
+  } else if (currentPhaseHeartbeats.some((heartbeat) => heartbeat.status === 'in_progress')) {
+    module.status = '当前执行阶段进行中';
+  }
 }
 
 status.generatedAt = now.toISOString();
+status.overallProgress = summarizeModulesProgress(status.modules ?? []);
 status.snapshotSource = 'docs/backend-v2/tracker/heartbeats/*.json（主代理汇总）';
 status.trackerOwner = '主代理 /root（各 ticket 子代理写独立心跳；主代理校验、汇总并处理超时）';
 status.agentRegistry = agentRegistry;

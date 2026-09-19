@@ -1,0 +1,11 @@
+{
+  "ticketId": "z8v0kmr96w",
+  "agent": "p0_build_probe_terra",
+  "model": "gpt-5.6-terra / medium",
+  "status": "done",
+  "progress": 100,
+  "allowRegression": true,
+  "summary": "本地构建证伪 PASS：npm run verify、Node 22.21.1 下 8 条真实 HTTP 测试、完整及 production audit 0、955 文件部署清单与 SHA 均已通过。真实 CloudBase 集成与发布仍 STOP，未部署且未验证云端运行实例、HTTP 入口、日志或读回。",
+  "blockers": [],
+  "updatedAt": "2026-09-20T00:03:41+08:00"
+}

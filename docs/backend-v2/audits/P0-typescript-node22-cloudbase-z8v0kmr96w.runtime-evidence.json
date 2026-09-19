@@ -1,0 +1,17 @@
+{
+  "ticketId": "z8v0kmr96w",
+  "kind": "official_runtime_support_snapshot",
+  "url": "https://docs.cloudbase.net/cloud-function/runtime-support",
+  "accessedAt": "2026-09-19T23:14:47+08:00",
+  "retrievalCommand": "curl --fail --location --silent --show-error --max-time 30 https://docs.cloudbase.net/cloud-function/runtime-support | shasum -a 256",
+  "responseSha256": "2dff3788d77878c3d389fb12c26e8f7ce897890a3ef3f8c2fc7526aafc8a3084",
+  "assertions": {
+    "scope": "HTTP 云函数",
+    "nodeRuntime": "Node.js 22.21",
+    "scfBootstrapNodePath": "/var/lang/node22/bin/node"
+  },
+  "localOfficialSkill": {
+    "path": ".codex/skills/cloudbase/references/cloud-functions/references/http-functions.md",
+    "sha256": "76fd162d98a0d6cc7254af47e4e22daa4451dc290bdbacfc907f34176c18ef90"
+  }
+}

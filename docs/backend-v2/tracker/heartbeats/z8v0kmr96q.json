@@ -1,13 +1,9 @@
 {
   "ticketId": "z8v0kmr96q",
   "agent": "p1_legacy_close_luna",
-  "status": "review_needed",
-  "progress": 85,
-  "summary": "已按后端 v2 唯一入口完成 P-1 静态收口：补入 agent-http 源指纹、配置外目录关系、Agent 原子依赖、8 个单元测试及本地凭据集合差异；有效 manifest 与报告 SHA-256 已重算，等待主代理验收。",
-  "blockers": [
-    "CLICKUP_BLOCKED：ClickUp 连接器当日配额受限；未重试、未伪造同步。",
-    "BLOCKED_ENV：CloudBase 函数逐项版本/入口映射、MySQL/Storage 归属读回、Agent health/SSE/工具续接和端上 e2e 仍未完成；静态证据不能替代实时业务闭环。",
-    "本地 path gate 仍为 FAIL（67 refs、5 dynamic unresolved、1 undeclared agent），local gateway route contract 仍因旧 native set 预期失败；不改测试或业务代码吞掉失败。"
-  ],
-  "updatedAt": "2026-09-19T22:51:22+08:00"
+  "status": "done",
+  "progress": 100,
+  "summary": "P-1 旧函数、路由、测试与原子依赖审计已通过独立出口门验收；有效 manifest、报告和 SHA-256 均可回放，运行验证已转交对应后续 Phase；ClickUp 回读同步已由专职状态代理完成。",
+  "blockers": [],
+  "updatedAt": "2026-09-19T23:28:13+08:00"
 }

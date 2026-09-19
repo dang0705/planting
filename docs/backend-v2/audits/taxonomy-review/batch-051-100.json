@@ -1,0 +1,1384 @@
+{
+  "batch": {
+    "ticketId": "z8v0kmr9gm",
+    "manifestIndexStart": 50,
+    "manifestIndexEnd": 99,
+    "recordCount": 50,
+    "authorityManifest": "/private/tmp/qinghuazhi-taxonomy-z8v0kmr9gm/out-genus-final/taxonomy-authority-manifest.json",
+    "authorityManifestVersion": "taxonomy-authority-replay/v1",
+    "reviewRules": "docs/backend-v2/audits/taxonomy-review/README.md"
+  },
+  "ruleVersion": "docs/backend-v2/audits/taxonomy-review/README.md（P1 植物分类人工裁决批次说明）",
+  "authorityManifest": "/private/tmp/qinghuazhi-taxonomy-z8v0kmr9gm/out-genus-final/taxonomy-authority-manifest.json#taxonomy-authority-replay/v1",
+  "reviews": [
+    {
+      "manifestIndex": 50,
+      "sourceRecordId": "144",
+      "sourceLineSha256": "9dbe6f2b5c2274fabdafd10e42f639cbc702f046e86f82c1c2da301a9437472b",
+      "rawScientificName": "Begonia cucullata",
+      "legacyDisplayNameZh": "四季海棠",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": "Begonia cucullata",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "361362",
+      "rank": "species",
+      "genus": "Begonia",
+      "family": "Begoniaceae",
+      "decisionReasons": [
+        "本地 WFO 精确匹配存在歧义，无法完成双源交叉核对。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 51,
+      "sourceRecordId": "145",
+      "sourceLineSha256": "fd861203a223289cd1b073cc72f0396560ce110c97101522bd90247c21a66179",
+      "rawScientificName": "Begonia × hiemalis",
+      "legacyDisplayNameZh": "丽格海棠",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "本地 WCVP 状态为 Artificial Hybrid，不属于 Accepted 或 Synonym，不能作为准入依据。",
+        "本地 WFO 无精确匹配，无法完成双源交叉核对。",
+        "原始学名为杂交体特殊等级；本批规则禁止直接准入。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": false,
+        "legacyFamilyMatches": false,
+        "specialRankOrCultivar": true,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 52,
+      "sourceRecordId": "146",
+      "sourceLineSha256": "cb7d04be89f197894251c80469a6e4e309fc77ff4c7b1d0ab8df8e80e39d6a2b",
+      "rawScientificName": "Sinningia speciosa",
+      "legacyDisplayNameZh": "大岩桐",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Sinningia speciosa",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2589014",
+      "rank": "species",
+      "genus": "Sinningia",
+      "family": "Gesneriaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 53,
+      "sourceRecordId": "147",
+      "sourceLineSha256": "911b211c9c27cf43bf46b86b0b77e234180e0c8e741e025e9c947f673bd3890d",
+      "rawScientificName": "Fuchsia hybrida",
+      "legacyDisplayNameZh": "倒挂金钟",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "本地 WCVP 无精确匹配，缺少 WCVP 证据。",
+        "本地 WFO 无精确匹配，无法完成双源交叉核对。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": false,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": false,
+        "legacyFamilyMatches": false,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 54,
+      "sourceRecordId": "148",
+      "sourceLineSha256": "bd20ece45e704839dfa0cd1f74b69d227a1ccc6ebc14e49e03b9a55735d56daa",
+      "rawScientificName": "Plumbago auriculata",
+      "legacyDisplayNameZh": "蓝雪花",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": "Plumbago auriculata",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2570524",
+      "rank": "species",
+      "genus": "Plumbago",
+      "family": "Plumbaginaceae",
+      "decisionReasons": [
+        "本地 WFO 精确匹配存在歧义，无法完成双源交叉核对。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 55,
+      "sourceRecordId": "149",
+      "sourceLineSha256": "d85a0136e029b7102ed5acccf7a929c17712be20a616bf3dc345b67c3fe265b2",
+      "rawScientificName": "Ipomoea quamoclit",
+      "legacyDisplayNameZh": "茑萝",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Ipomoea quamoclit",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "482262",
+      "rank": "species",
+      "genus": "Ipomoea",
+      "family": "Convolvulaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 56,
+      "sourceRecordId": "15",
+      "sourceLineSha256": "19439f166a7cb5500c14a191e8c6e4970b524982fa8d1d4337a323fe80cdf661",
+      "rawScientificName": "Radermachera sinica",
+      "legacyDisplayNameZh": "幸福树",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Radermachera sinica",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "317294",
+      "rank": "species",
+      "genus": "Radermachera",
+      "family": "Bignoniaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 57,
+      "sourceRecordId": "150",
+      "sourceLineSha256": "5004d72e743b7ee7848963b6b3ad55240609c02450397d29505419e1a651176f",
+      "rawScientificName": "Tropaeolum majus",
+      "legacyDisplayNameZh": "旱金莲",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Tropaeolum majus",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2522052",
+      "rank": "species",
+      "genus": "Tropaeolum",
+      "family": "Tropaeolaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 58,
+      "sourceRecordId": "151",
+      "sourceLineSha256": "193acda4c61151966534e8e295362fd729aeab04cb7dc1c6a41c9296e3d3ea1a",
+      "rawScientificName": "Rosa banksiae",
+      "legacyDisplayNameZh": "木香花",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Rosa banksiae",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2965732",
+      "rank": "species",
+      "genus": "Rosa",
+      "family": "Rosaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 59,
+      "sourceRecordId": "152",
+      "sourceLineSha256": "d1d7523b924705e1a54a8e814060b8d775683a96eeb073dc0b24ae62789fdf07",
+      "rawScientificName": "Lonicera japonica",
+      "legacyDisplayNameZh": "金银花",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "本地 WCVP 精确匹配存在歧义，无法确认唯一权威 taxon。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": false,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": false,
+        "legacyFamilyMatches": false,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 60,
+      "sourceRecordId": "153",
+      "sourceLineSha256": "b6a773391302c23e28a23579e5092962cbc379533d61bcf99d21717d9184a1f5",
+      "rawScientificName": "Cestrum nocturnum",
+      "legacyDisplayNameZh": "夜来香",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": "Cestrum nocturnum",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2713666",
+      "rank": "species",
+      "genus": "Cestrum",
+      "family": "Solanaceae",
+      "decisionReasons": [
+        "本地 WFO 精确匹配存在歧义，无法完成双源交叉核对。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 61,
+      "sourceRecordId": "154",
+      "sourceLineSha256": "9c1dfc6e4deac620f36127d3e3c276facba6048b6a2c46f38d1c2bece5de958c",
+      "rawScientificName": "Osmanthus fragrans",
+      "legacyDisplayNameZh": "桂花",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "本地 WCVP 精确匹配存在歧义，无法确认唯一权威 taxon。",
+        "本地 WFO 精确匹配存在歧义，无法完成双源交叉核对。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": false,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": false,
+        "legacyFamilyMatches": false,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 62,
+      "sourceRecordId": "155",
+      "sourceLineSha256": "88e9f71f1fa134318bfc060a124654ccd92d19b27bb1a3a0e037dd3d07e783f3",
+      "rawScientificName": "Hippeastrum × hybridum",
+      "legacyDisplayNameZh": "朱顶红",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "本地 WCVP 无精确匹配，缺少 WCVP 证据。",
+        "本地 WFO 无精确匹配，无法完成双源交叉核对。",
+        "原始学名为杂交体特殊等级；本批规则禁止直接准入。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": false,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": false,
+        "legacyFamilyMatches": false,
+        "specialRankOrCultivar": true,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 63,
+      "sourceRecordId": "156",
+      "sourceLineSha256": "98b20fa0978bc881faf27cf98f778d27bf558f6a7ebd5002420b6be05debeb49",
+      "rawScientificName": "Crocus spp.",
+      "legacyDisplayNameZh": "番红花",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": "Crocus",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "327117",
+      "rank": "genus",
+      "genus": "Crocus",
+      "family": "Iridaceae",
+      "decisionReasons": [
+        "原始学名含 spp.，属于属级商品组，不能映射为单一权威 taxon。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": true,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 64,
+      "sourceRecordId": "157",
+      "sourceLineSha256": "0951eb4930c8e24c831484855ca31b5762f65ffa5ceb9dd14435625239a10a72",
+      "rawScientificName": "Gladiolus × hortulanus",
+      "legacyDisplayNameZh": "唐菖蒲",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "本地 WCVP 状态为 Unplaced，不属于 Accepted 或 Synonym，不能作为准入依据。",
+        "本地 WFO 无精确匹配，无法完成双源交叉核对。",
+        "原始学名为杂交体特殊等级；本批规则禁止直接准入。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": false,
+        "legacyFamilyMatches": false,
+        "specialRankOrCultivar": true,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 65,
+      "sourceRecordId": "158",
+      "sourceLineSha256": "426d73235f7ab4a639571a47969120625ae34e38ec808deb46fe8337d3cf2457",
+      "rawScientificName": "Dahlia pinnata",
+      "legacyDisplayNameZh": "大丽花",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Dahlia pinnata",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "3117675",
+      "rank": "species",
+      "genus": "Dahlia",
+      "family": "Asteraceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 66,
+      "sourceRecordId": "159",
+      "sourceLineSha256": "efe499e2c5de22d8853bb54c070f7ca325d7a728a68a3707317eab0389d30a1c",
+      "rawScientificName": "Canna indica",
+      "legacyDisplayNameZh": "美人蕉",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Canna indica",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "223906",
+      "rank": "species",
+      "genus": "Canna",
+      "family": "Cannaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 67,
+      "sourceRecordId": "16",
+      "sourceLineSha256": "1367f657a5f44e60668204139d84158b1ee2c6207e8e6429af86b7ba90c6b27a",
+      "rawScientificName": "Zamioculcas zamiifolia",
+      "legacyDisplayNameZh": "金钱树",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Zamioculcas zamiifolia",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "215525",
+      "rank": "species",
+      "genus": "Zamioculcas",
+      "family": "Araceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 68,
+      "sourceRecordId": "160",
+      "sourceLineSha256": "5891098f871a3f59b7a50c46703568fd3018e350afc09462f4c6ecac0d18e1f0",
+      "rawScientificName": "Curcuma alismatifolia",
+      "legacyDisplayNameZh": "姜荷花",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Curcuma alismatifolia",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "235187",
+      "rank": "species",
+      "genus": "Curcuma",
+      "family": "Zingiberaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 69,
+      "sourceRecordId": "161",
+      "sourceLineSha256": "d4d6be85fc29f5e0497a5c8cff7dcc2ad9ecfc80c17583b9b2588c43aae34c5d",
+      "rawScientificName": "Iris germanica",
+      "legacyDisplayNameZh": "鸢尾",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "本地 WCVP 无精确匹配，缺少 WCVP 证据。",
+        "本地 WFO 无精确匹配，无法完成双源交叉核对。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": false,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": false,
+        "legacyFamilyMatches": false,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 70,
+      "sourceRecordId": "162",
+      "sourceLineSha256": "1f9571a3a4b124baa196f266645736a62565f6d1b9ce48c9a64c3d3182dc24d2",
+      "rawScientificName": "Thalia dealbata",
+      "legacyDisplayNameZh": "再力花",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "本地 WCVP 精确匹配存在歧义，无法确认唯一权威 taxon。",
+        "本地 WFO 精确匹配存在歧义，无法完成双源交叉核对。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": false,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": false,
+        "legacyFamilyMatches": false,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 71,
+      "sourceRecordId": "163",
+      "sourceLineSha256": "e5638612e380267e9fd352f12158b3dbfbedefbff1f75a772daaaee8fe089433",
+      "rawScientificName": "Pontederia cordata",
+      "legacyDisplayNameZh": "梭鱼草",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "本地 WCVP 精确匹配存在歧义，无法确认唯一权威 taxon。",
+        "本地 WFO 精确匹配存在歧义，无法完成双源交叉核对。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": false,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": false,
+        "legacyFamilyMatches": false,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 72,
+      "sourceRecordId": "164",
+      "sourceLineSha256": "81886f12954e6a81344e428f0533b4d96c6799422bd95705f30523c25204e48b",
+      "rawScientificName": "Schoenoplectus tabernaemontani",
+      "legacyDisplayNameZh": "水葱",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Schoenoplectus tabernaemontani",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "263102",
+      "rank": "species",
+      "genus": "Schoenoplectus",
+      "family": "Cyperaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 73,
+      "sourceRecordId": "165",
+      "sourceLineSha256": "79f87423656faa22273a85a82b582a8b31899a4c749684d18b8cedf3dc740ff6",
+      "rawScientificName": "Nelumbo nucifera",
+      "legacyDisplayNameZh": "碗莲",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": "Nelumbo nucifera",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2384945",
+      "rank": "species",
+      "genus": "Nelumbo",
+      "family": "Nelumbonaceae",
+      "decisionReasons": [
+        "遗留清单标记为重复组 D02_Nelumbo_nucifera；按规则不得仅凭名称合并，留待产品身份层 merge/split 裁决。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 74,
+      "sourceRecordId": "166",
+      "sourceLineSha256": "2fbad394195998c59b61c3347a2ffe402283d8f4208624074d699560aeff3597",
+      "rawScientificName": "Acorus gramineus",
+      "legacyDisplayNameZh": "金钱蒲",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Acorus gramineus",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2322",
+      "rank": "species",
+      "genus": "Acorus",
+      "family": "Acoraceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 75,
+      "sourceRecordId": "167",
+      "sourceLineSha256": "0b51fd95beddcbab1a6f4ef108f428d6875b2d28f0e62c1837a24dd595c36755",
+      "rawScientificName": "Cyperus alternifolius",
+      "legacyDisplayNameZh": "旱伞草",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "本地 WCVP 精确匹配存在歧义，无法确认唯一权威 taxon。",
+        "本地 WFO 精确匹配存在歧义，无法完成双源交叉核对。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": false,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": false,
+        "legacyFamilyMatches": false,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 76,
+      "sourceRecordId": "168",
+      "sourceLineSha256": "8b62d5fc5f9b221d419a47f612c8d06bdcba7cc1b949d34f6e2bc4fcc7a31ad4",
+      "rawScientificName": "Salvia rosmarinus",
+      "legacyDisplayNameZh": "迷迭香",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Salvia rosmarinus",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "183733",
+      "rank": "species",
+      "genus": "Salvia",
+      "family": "Lamiaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 77,
+      "sourceRecordId": "169",
+      "sourceLineSha256": "10be365637ee76f0e293d403716a39057a2ce0704d22b459b466af886ee0cfa7",
+      "rawScientificName": "Thymus vulgaris",
+      "legacyDisplayNameZh": "百里香",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Thymus vulgaris",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "205645",
+      "rank": "species",
+      "genus": "Thymus",
+      "family": "Lamiaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 78,
+      "sourceRecordId": "17",
+      "sourceLineSha256": "7510a8b5e496030de7da4e141a4e46fb2c1991a768ea12fba79ba58517d7bba8",
+      "rawScientificName": "Dracaena fragrans",
+      "legacyDisplayNameZh": "巴西木",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Dracaena fragrans",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "304662",
+      "rank": "species",
+      "genus": "Dracaena",
+      "family": "Asparagaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 79,
+      "sourceRecordId": "170",
+      "sourceLineSha256": "23b7b65e8919a26b5576a4bfb631120fd638a515270631f194998f2d18aa85a5",
+      "rawScientificName": "Origanum vulgare",
+      "legacyDisplayNameZh": "牛至",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Origanum vulgare",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "143954",
+      "rank": "species",
+      "genus": "Origanum",
+      "family": "Lamiaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 80,
+      "sourceRecordId": "171",
+      "sourceLineSha256": "8f41f76cbc798c31a477a2464d3137a2ddc9e5608a1ed25faebd9d5e749ad9a6",
+      "rawScientificName": "Salvia officinalis",
+      "legacyDisplayNameZh": "鼠尾草",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Salvia officinalis",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "183353",
+      "rank": "species",
+      "genus": "Salvia",
+      "family": "Lamiaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 81,
+      "sourceRecordId": "172",
+      "sourceLineSha256": "41793e183950297a416ef860f72b4032e8d9cea85407149cbaeca747ac54413a",
+      "rawScientificName": "Perilla frutescens",
+      "legacyDisplayNameZh": "紫苏",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Perilla frutescens",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "150299",
+      "rank": "species",
+      "genus": "Perilla",
+      "family": "Lamiaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 82,
+      "sourceRecordId": "173",
+      "sourceLineSha256": "8a643158fe0c9fd57a29373a25823a0d186652c8607d8281657fc14874251d7a",
+      "rawScientificName": "Petroselinum crispum",
+      "legacyDisplayNameZh": "欧芹",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": "Petroselinum crispum",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2898243",
+      "rank": "species",
+      "genus": "Petroselinum",
+      "family": "Apiaceae",
+      "decisionReasons": [
+        "本地 WFO 精确匹配存在歧义，无法完成双源交叉核对。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 83,
+      "sourceRecordId": "174",
+      "sourceLineSha256": "a1439666588429aa9ab5ac872a273c9a72f47e750cc5b6a43d21977343dffc49",
+      "rawScientificName": "Anethum graveolens",
+      "legacyDisplayNameZh": "莳萝",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "本地 WCVP 精确匹配存在歧义，无法确认唯一权威 taxon。",
+        "本地 WFO 精确匹配存在歧义，无法完成双源交叉核对。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": false,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": false,
+        "legacyFamilyMatches": false,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 84,
+      "sourceRecordId": "175",
+      "sourceLineSha256": "633b00e7ac5bdeef5ec4627e44bbbf2b597ca77a301a68c0f2395b6fd5b14f52",
+      "rawScientificName": "Allium schoenoprasum",
+      "legacyDisplayNameZh": "细香葱",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Allium schoenoprasum",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "296525",
+      "rank": "species",
+      "genus": "Allium",
+      "family": "Amaryllidaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 85,
+      "sourceRecordId": "176",
+      "sourceLineSha256": "aea6d662fb78c51ddca88f5d20256b8329f59c3bd7c263e44d0bafca7eb106a2",
+      "rawScientificName": "Melissa officinalis",
+      "legacyDisplayNameZh": "柠檬香蜂草",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Melissa officinalis",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "124103",
+      "rank": "species",
+      "genus": "Melissa",
+      "family": "Lamiaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 86,
+      "sourceRecordId": "177",
+      "sourceLineSha256": "287c28b0c3ab0c1efd7f5efd6ac46b25936af5907a98e9ae5ca709d4b946f3bb",
+      "rawScientificName": "Foeniculum vulgare",
+      "legacyDisplayNameZh": "茴香",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": "Foeniculum vulgare",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2813604",
+      "rank": "species",
+      "genus": "Foeniculum",
+      "family": "Apiaceae",
+      "decisionReasons": [
+        "本地 WFO 精确匹配存在歧义，无法完成双源交叉核对。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 87,
+      "sourceRecordId": "178",
+      "sourceLineSha256": "de5ebcb535392476502a53adebd10eb2d4e90dba6a895125c812c2ecc2b08b4f",
+      "rawScientificName": "Eruca vesicaria",
+      "legacyDisplayNameZh": "芝麻菜",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Eruca vesicaria",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2798757",
+      "rank": "species",
+      "genus": "Eruca",
+      "family": "Brassicaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 88,
+      "sourceRecordId": "179",
+      "sourceLineSha256": "891ec76158c56fd1543e8a92f54fbc7db02325a20fb9d3f2367d3a0e97d6d8de",
+      "rawScientificName": "Spinacia oleracea",
+      "legacyDisplayNameZh": "菠菜",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": "Spinacia oleracea",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2483900",
+      "rank": "species",
+      "genus": "Spinacia",
+      "family": "Amaranthaceae",
+      "decisionReasons": [
+        "本地 WCVP 与 WFO 的接受名、分类等级、属或科存在冲突，不能准入或转换。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 89,
+      "sourceRecordId": "18",
+      "sourceLineSha256": "9f3c2f4d70f049cf7a39a98b892b8ee6a6f5b5f857d6ff7e360479793adee842",
+      "rawScientificName": "Clivia miniata",
+      "legacyDisplayNameZh": "君子兰",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Clivia miniata",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "302703",
+      "rank": "species",
+      "genus": "Clivia",
+      "family": "Amaryllidaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 90,
+      "sourceRecordId": "180",
+      "sourceLineSha256": "bf63b1953b537f8c2d1e17878c45962d64a370dd4423ca2af920f8fd42c21db1",
+      "rawScientificName": "Lactuca sativa var. longifolia",
+      "legacyDisplayNameZh": "油麦菜",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": "Lactuca sativa",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2912742",
+      "rank": "species",
+      "genus": "Lactuca",
+      "family": "Asteraceae",
+      "decisionReasons": [
+        "原始学名含种下特殊等级（var./subsp.）；本批规则不能直接准入，原名必须保留。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": true,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 91,
+      "sourceRecordId": "181",
+      "sourceLineSha256": "aef0c161cc21b6c80a3febce8a0a8d09ac3eb70abd1c0262010ce269ff5e7314",
+      "rawScientificName": "Brassica rapa subsp. chinensis",
+      "legacyDisplayNameZh": "小白菜",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": "Brassica rapa",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2682652",
+      "rank": "species",
+      "genus": "Brassica",
+      "family": "Brassicaceae",
+      "decisionReasons": [
+        "本地 WCVP 与 WFO 的接受名、分类等级、属或科存在冲突，不能准入或转换。",
+        "原始学名含种下特殊等级（var./subsp.）；本批规则不能直接准入，原名必须保留。",
+        "遗留清单标记为重复组 D03_Brassica_rapa_subsp_chinensis；按规则不得仅凭名称合并，留待产品身份层 merge/split 裁决。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": true,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 92,
+      "sourceRecordId": "182",
+      "sourceLineSha256": "4a8de9a813e4a8d275d2a745fe50ca75eec6a081084edc37b19946167b19a87f",
+      "rawScientificName": "Brassica rapa subsp. chinensis",
+      "legacyDisplayNameZh": "上海青",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": "Brassica rapa",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2682652",
+      "rank": "species",
+      "genus": "Brassica",
+      "family": "Brassicaceae",
+      "decisionReasons": [
+        "本地 WCVP 与 WFO 的接受名、分类等级、属或科存在冲突，不能准入或转换。",
+        "原始学名含种下特殊等级（var./subsp.）；本批规则不能直接准入，原名必须保留。",
+        "遗留清单标记为重复组 D03_Brassica_rapa_subsp_chinensis；按规则不得仅凭名称合并，留待产品身份层 merge/split 裁决。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": true,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 93,
+      "sourceRecordId": "183",
+      "sourceLineSha256": "b4775ca7a51aa30b70065ddf7736ba7813a2553eee66b5783e1b79d6031df30c",
+      "rawScientificName": "Brassica oleracea var. acephala",
+      "legacyDisplayNameZh": "羽衣甘蓝",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": "Brassica oleracea",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2682457",
+      "rank": "species",
+      "genus": "Brassica",
+      "family": "Brassicaceae",
+      "decisionReasons": [
+        "本地 WCVP 与 WFO 的接受名、分类等级、属或科存在冲突，不能准入或转换。",
+        "原始学名含种下特殊等级（var./subsp.）；本批规则不能直接准入，原名必须保留。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": true,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 94,
+      "sourceRecordId": "184",
+      "sourceLineSha256": "8914b49b4f074b82104d66f89162c3a02f917da5d546f83356ae3802874c2e6d",
+      "rawScientificName": "Solanum melongena",
+      "legacyDisplayNameZh": "茄子",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "本地 WCVP 精确匹配存在歧义，无法确认唯一权威 taxon。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": false,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": false,
+        "legacyFamilyMatches": false,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 95,
+      "sourceRecordId": "185",
+      "sourceLineSha256": "bc2d7faa4ef28493b685a3f12b62bd56e95847cfd203cb9461d1cd37160d4dcc",
+      "rawScientificName": "Cucumis sativus",
+      "legacyDisplayNameZh": "黄瓜",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Cucumis sativus",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2747062",
+      "rank": "species",
+      "genus": "Cucumis",
+      "family": "Cucurbitaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 96,
+      "sourceRecordId": "186",
+      "sourceLineSha256": "221420c896fc11b62148c7e1e2bdaa16d4a394aa7890155ed363235c63373a39",
+      "rawScientificName": "Momordica charantia",
+      "legacyDisplayNameZh": "苦瓜",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Momordica charantia",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2372864",
+      "rank": "species",
+      "genus": "Momordica",
+      "family": "Cucurbitaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 97,
+      "sourceRecordId": "187",
+      "sourceLineSha256": "757a530f5d6a18a2cdffd344603a0f4a1c99f89a0f862a37eabdde8a100aa3f3",
+      "rawScientificName": "Luffa aegyptiaca",
+      "legacyDisplayNameZh": "丝瓜",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Luffa aegyptiaca",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2338901",
+      "rank": "species",
+      "genus": "Luffa",
+      "family": "Cucurbitaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 98,
+      "sourceRecordId": "188",
+      "sourceLineSha256": "9101485ba5f3cc40b3bf31cea52f3d9b30edd572826ee92c218de70e83d67730",
+      "rawScientificName": "Cucurbita moschata",
+      "legacyDisplayNameZh": "南瓜",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Cucurbita moschata",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2747174",
+      "rank": "species",
+      "genus": "Cucurbita",
+      "family": "Cucurbitaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    },
+    {
+      "manifestIndex": 99,
+      "sourceRecordId": "189",
+      "sourceLineSha256": "df5357b84b6ec2329eb93071df2012ee59214ceb45f8a34a4e974e2abf7ff30f",
+      "rawScientificName": "Cucurbita pepo",
+      "legacyDisplayNameZh": "西葫芦",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Cucurbita pepo",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2747186",
+      "rank": "species",
+      "genus": "Cucurbita",
+      "family": "Cucurbitaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_051_100_luna",
+      "reviewedAt": "2026-09-20T03:05:00+08:00"
+    }
+  ]
+}
+

@@ -1,0 +1,38 @@
+{
+  "ticketId": "p0-product-decisions-exit-gate",
+  "sourceTicketId": "z8v0kmr9dq",
+  "agent": "p1_exit_gate_review_luna",
+  "model": "gpt-5.6-luna / low",
+  "status": "done",
+  "progress": 100,
+  "conclusion": "PASS",
+  "summary": "用户已确认 D-02/03/04/05/07/08/09/10 的产品参数；产品与成本边界票据出口 PASS。D-10 AI 月预算为 500 元，400 元告警、450 元限制新增消费、500 元停止新增消费。支付、Storage、真实成本、连接上限、压测和公开发布仍按能力级 STOP，不阻断本产品参数票据闭环。",
+  "verified": [
+    "README 唯一入口校验通过，Master Plan 基线 SHA 为 e8ee3511ee544ee4a5edcd12bf8cad0b3c02c397fb85eb459193ea854f29f428",
+    "产品登记册 SHA 与 sidecar 一致：e301b0970c9d7f54972e74f5acd20c431e9682f48031edc81c8b90419efda252",
+    "用户确认时间为 2026-09-19T23:42:35+08:00，确认范围覆盖 D-02、D-03、D-04、D-05、D-07、D-08、D-09、D-10",
+    "登记册当前没有 PROPOSED_NEEDS_USER 状态；D-01/D-06 为 CONFIRMED_FROM_REQUIREMENT，其余八项为 CONFIRMED_FROM_USER",
+    "D-02 试用为 200 点/24 小时/三项用户生成式能力；D-03 免费用户 1 个 active 用户植物；D-04 奖励 scope 为三项用户生成式能力",
+    "D-05 MVP 无公开积分兑换档位；D-07 私有 Storage 直传 fileID；D-08 仅微信小程序支付范围；D-09 采用修订后的分级留存；D-10 采用 500 元预算和 80/90/100%阈值",
+    "独立出口门已明确产品 PASS 与技术 STOP 双轴，不把用户确认、安装授权或 HTTP/静态证据当作部署或真实集成授权"
+  ],
+  "unverified": [
+    "真实供应商单价、余额和账单映射",
+    "支付资质、sandbox、唯一回调 owner、查单和对账",
+    "Storage 私有上传、临时链接、删除补偿和真实回放",
+    "数据库总连接上限、函数最大实例数、真实 P95/P99、预算告警演练和端到端业务闭环"
+  ],
+  "blockers": [
+    "TECHNICAL_ACCEPTANCE_REQUIRED：上述能力仍按登记册逐项 STOP，不得公开发布；该阻断不影响产品参数票据 PASS"
+  ],
+  "outOfScope": [
+    "修改产品决策登记册、Master Plan、业务代码、测试或云端",
+    "ClickUp 状态与评论写入，由专职状态维护代理处理"
+  ],
+  "artifacts": {
+    "decisionSha256": "e301b0970c9d7f54972e74f5acd20c431e9682f48031edc81c8b90419efda252",
+    "exitGateSha256": "b8f4ea0effa35a67a3210f933730eb0ad90e69ad50170415f744b401f5091589"
+  },
+  "nextStep": "主代理可将产品参数票据推进至完成；后续仅按各能力 STOP 条件开展技术实现和真实验收。新增产品数值、公开兑换档位、支付平台或数据生命周期变更时，重新创建用户确认记录和 policyVersion。",
+  "updatedAt": "2026-09-19T23:50:00+08:00"
+}

@@ -1,0 +1,36 @@
+{
+  "ticketId": "p0-build-exit-gate",
+  "sourceTicketId": "z8v0kmr96w",
+  "agent": "p0_build_review_luna",
+  "model": "gpt-5.6-luna",
+  "status": "review_needed",
+  "progress": 100,
+  "allowRegression": true,
+  "summary": "独立复验结论为 PARTIAL：当前 CloudBase 官方运行时页及同 SHA fresh readback 证实 HTTP 云函数支持 Node.js 22.21 与 /var/lang/node22/bin/node；P0 verify 的 RED 只指向当前 checkout 缺少严格后端 tsconfig、显式构建/运行依赖、dist/server.cjs、Node22 scf_bootstrap 和 manifest 等本地闭环，不证明平台不支持 Node22。八个任务给定精确版本均可从 npm registry 读回，但 Master Plan 仍写 @types/node 22.20.3，任务候选为 22.20.4，需用户/主代理批准并对齐来源后再建独立 v2 lock。",
+  "verified": [
+    "node docs/backend-v2/verify-entrypoint.mjs 通过",
+    "原报告三文件 .sha256 在 docs/backend-v2/audits 目录内核对通过",
+    "runtime-evidence.json 的官方响应 SHA-256 与 2026-09-19 23:22 fresh curl 读回一致：2dff3788d77878c3d389fb12c26e8f7ce897890a3ef3f8c2fc7526aafc8a3084",
+    "P0 verify 独立执行退出码为 1；Node22 runtime/bootstrap 两项为真，其余本地构建门槛为真缺口",
+    "任务给定的 typescript@5.9.3、@types/node@22.20.4、esbuild@0.28.2、@cloudbase/node-sdk@3.18.3、mysql2@3.24.4、ajv@8.20.0、pino@10.3.1、vitest@3.2.7 均经 npm view 只读读回",
+    "根仓 npm audit --package-lock-only --omit=dev 读回 58 项（low 22、moderate 19、high 17、critical 0），且未将其冒充 v2 独立包审计",
+    "本轮未安装依赖、未修改 package.json/package-lock、未部署、未调用云端管理 API、未修改原报告/业务代码/module-status.json"
+  ],
+  "unverified": [
+    "用户/主代理是否批准精确依赖候选及新 HTTP 函数目录边界",
+    "Master Plan 的 @types/node 22.20.3 与任务候选 22.20.4 的计划/登记源对齐",
+    "v2 独立最小 package/lock、严格 tsc、CommonJS 构建、9000 启动、包 manifest、production lock audit 和 CloudBase 端上运行"
+  ],
+  "blockers": [
+    "依赖和新 HTTP 函数目录边界尚未获用户/主代理批准",
+    "@types/node 的当前 Master Plan 版本为 22.20.3，任务候选为 22.20.4；不可静默改写计划或锁文件",
+    "P0 本地构建闭环尚未建立；当前 RED 是负向门禁，不是正向构建验收"
+  ],
+  "outOfScope": [
+    "安装依赖或写入任一 package.json/lock",
+    "业务代码、前端、旧函数和云端配置修改",
+    "CloudBase 部署、运行时切换、真实 API、生产 DDL 和生产数据"
+  ],
+  "next": "用户/主代理批准候选与目录边界并明确 @types/node 22.20.4 的计划登记后，仅在本地建立独立 v2 最小包；先保存 RED/Expected，再完成 strict tsc、CommonJS dist/server.cjs、Node22 scf_bootstrap、9000 启动、manifest 和 production lock audit。",
+  "updatedAt": "2026-09-19T23:22:40+08:00"
+}

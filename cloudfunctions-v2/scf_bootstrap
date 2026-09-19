@@ -1,0 +1,4 @@
+#!/bin/bash
+set -eu
+
+exec /var/lang/node22/bin/node --enable-source-maps dist/server.cjs

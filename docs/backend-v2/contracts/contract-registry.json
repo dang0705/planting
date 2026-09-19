@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-20T07:18:00+08:00",
+  "contracts": [
+    {
+      "id": "principal-and-capability",
+      "version": "principal-capability/v1",
+      "file": "principal-and-capability.md",
+      "owner": "identity + subscription",
+      "sha256": "9e4613451a0b0b0af5ba83fcb8f32cacea5e52536c559ea5cf8ef19d355825e2"
+    },
+    {
+      "id": "user-plant",
+      "version": "user-plant/v1",
+      "file": "user-plant.md",
+      "owner": "user-plant",
+      "sha256": "704355797729e7a13d218f9a2cac96fc3e65b1833250ed85c205e7a5e8b18878"
+    },
+    {
+      "id": "guest-session-claim",
+      "version": "guest-session-claim/v1",
+      "file": "guest-session-claim.md",
+      "owner": "plant-knowledge + user-plant + care + diagnosis",
+      "sha256": "b0b4e53d44cc84556f8e13104cdd7f700430a1ac3451e78fc52e7f1469da395b"
+    },
+    {
+      "id": "care-points-and-ai-quota",
+      "version": "care-points-ai-quota/v1",
+      "file": "care-points-and-ai-quota.md",
+      "owner": "subscription",
+      "sha256": "3f1f240781f2e65d483a9a5a611d40b2f7d2b8c34fb43814f0b1e513f2476ac3"
+    },
+    {
+      "id": "reward-events",
+      "version": "reward-events/v1",
+      "file": "reward-events.md",
+      "owner": "subscription",
+      "sha256": "31cc366331f73328b6183dee688c00efd2fee1f68317b3d0574345a5fe26c71e"
+    },
+    {
+      "id": "plant-taxonomy",
+      "version": "plant-taxonomy/v1",
+      "file": "plant-taxonomy.md",
+      "owner": "plant-knowledge",
+      "sha256": "b39ed8eefe9b91980692904310491d05f34aac58277ed10bc96d9e108955b20e"
+    },
+    {
+      "id": "care-capability-output",
+      "version": "care-capability-result/v1",
+      "file": "care-capability-output.md",
+      "owner": "care",
+      "sha256": "760ff38b8d6e8b749e72a2d70f51e9eac052f58cba28d17187e17aa6d24c66d2"
+    },
+    {
+      "id": "http-api",
+      "version": "http-api/v1",
+      "file": "http-api.md",
+      "owner": "shared-http + all application services",
+      "sha256": "0ecf6dc11211f9276bde005bdcd92f0ae5a30e82c9b65888dd54c74a6058a8ee"
+    },
+    {
+      "id": "plant-encyclopedia-display",
+      "version": "plant-encyclopedia-display/v1",
+      "file": "schemas/plant-encyclopedia-display.v1.schema.json",
+      "owner": "plant-knowledge",
+      "sha256": "d9f7e2dddda5d01ae39de112eb8b50326c984e292c1eeab0138480199e8920b1"
+    },
+    {
+      "id": "diagnosis-model-output",
+      "version": "diagnosis-model-output/v1",
+      "file": "schemas/diagnosis-model-output.v1.schema.json",
+      "owner": "diagnosis",
+      "sha256": "68d7dd54aac76aeba00bc681b88d334bd45bf05158004582915ed309b00197b7"
+    },
+    {
+      "id": "diagnosis-visual-prompt",
+      "version": "diagnosis-visual/v1",
+      "file": "prompts/diagnosis-visual.v1.release.json",
+      "owner": "diagnosis",
+      "sha256": "e0b2eb20e6f59aac9bbb96916b29e5f1e76a59d935926f0cb12e736b989dcc04"
+    }
+  ]
+}

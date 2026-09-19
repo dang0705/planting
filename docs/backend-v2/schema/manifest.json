@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "backend-v2-schema/v1",
+  "generatedAt": "2026-09-20T02:08:56+08:00",
+  "database": "CloudBase MySQL",
+  "timeStorage": "UTC epoch milliseconds",
+  "files": [
+    {
+      "order": 1,
+      "owner": "identity",
+      "file": "001_identity.sql",
+      "sha256": "e1adf7fc04a33cfd1bb0945c9298e4c6a832edc28096d874973eb420890466d6"
+    },
+    {
+      "order": 2,
+      "owner": "plant-knowledge",
+      "file": "002_plant_knowledge.sql",
+      "sha256": "db0d10afba8cb351ae319714014a2cf30a1e965b09a64c0b3020df21ce71f389"
+    },
+    {
+      "order": 3,
+      "owner": "user-plant",
+      "file": "003_user_plant.sql",
+      "sha256": "2e8494c23e7bd7a26871e2031b934ab2746a89b2d7af5ca4a9abbd469cc5c6b2"
+    },
+    {
+      "order": 4,
+      "owner": "care + diagnosis",
+      "file": "004_care_diagnosis.sql",
+      "sha256": "85c3eed941bede4e2cebc213b33b667f4655c018c54e24d2c9c1432f16d5ee42"
+    },
+    {
+      "order": 5,
+      "owner": "shared configuration governance",
+      "file": "007_configuration.sql",
+      "sha256": "0f4ea88f030dd409a37f396c5e7a1c140d970ad9a9c52844d87498a2bef310d0"
+    },
+    {
+      "order": 6,
+      "owner": "subscription",
+      "file": "005_subscription.sql",
+      "sha256": "c7638d5a8ff51080c81becf458205ba00bdc705fe772af5661843e2357b70fdb"
+    },
+    {
+      "order": 7,
+      "owner": "各写域 + shared security",
+      "file": "006_reliable_events.sql",
+      "sha256": "304dbc8ebd0cae1a464302cd7d932ac572e563b1df3a0f2338320798db537f39"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "version": "backend-architecture/v2-config-1",
+  "algorithm": "sha256",
+  "files": {
+    "README.md": "f251745f32aea191b2f74ada9d970f9dedfa22fe4089887a13f683ff72ded527",
+    "青花植后端v2底层架构重构计划_融合闭环终版.md": "1a8382b83eb7720425f201afef9920e148e8eda3b15618e112516839fac10357",
+    "architecture/README.md": "a38124b1b4de0650b5283f8ee4dc2c1a0a4e34fc9705492c375a1684a67ed48c",
+    "business-domain.md": "a1c850101a861432c8d90079c26ab1e779fd8658dd6fb149241ce112177759fa",
+    "infrastructure.md": "260768e90f10153249331e556d50e46604a340e6fa03cb6d5ba54276eea6c0af",
+    "business-to-technical-map.md": "ce9c88aef107e00c8ef2c633cbc3943197ed2ae97ecc2d43f3c38fdf998cb2ad",
+    "architecture-rules.md": "87e5f18c3e978ffa678f75fbdec8dc21b8122a76dce809e950e13b34cf9a7a04",
+    "configuration-and-providers.md": "677f32ded19440c3f3140a5d594555bc5f44bb7376fafcfce5f3400004f120ce",
+    "configuration-variable-catalog.json": "4bb465e7763febd3d3f4e17ad4c596eab72815ac362b4fffea12e859921be7fc",
+    "configuration-variable-catalog.md": "b6d7728ca439a4d3b98e6831fadcbc9ac4de154c1e9f3e80a381d8feb6d28897"
+  }
+}

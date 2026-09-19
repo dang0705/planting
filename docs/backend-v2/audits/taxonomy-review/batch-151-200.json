@@ -1,0 +1,1370 @@
+{
+  "batch": {
+    "ticketId": "z8v0kmr9gm",
+    "manifestIndexStart": 150,
+    "manifestIndexEnd": 199,
+    "recordCount": 50,
+    "authorityManifest": "/private/tmp/qinghuazhi-taxonomy-z8v0kmr9gm/out-genus-final/taxonomy-authority-manifest.json",
+    "authorityManifestVersion": "taxonomy-authority-replay/v1",
+    "reviewRules": "docs/backend-v2/audits/taxonomy-review/README.md"
+  },
+  "reviews": [
+    {
+      "manifestIndex": 150,
+      "sourceRecordId": "54",
+      "sourceLineSha256": "7c808b5b584580ead37e1dfc236f75a8a1d4b18872d00de776eaa0ec7846fac1",
+      "rawScientificName": "Clematis spp.",
+      "legacyDisplayNameZh": "铁线莲",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "原始学名含 spp.，属于属级商品组，不能映射为单一权威 taxon。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": true,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 151,
+      "sourceRecordId": "55",
+      "sourceLineSha256": "7df2cf7fa094470ca35248938132a3f6495bd94e153c92c5c356328c335cf820",
+      "rawScientificName": "Campsis grandiflora",
+      "legacyDisplayNameZh": "凌霄",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Campsis grandiflora",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "320344",
+      "rank": "species",
+      "genus": "Campsis",
+      "family": "Bignoniaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 152,
+      "sourceRecordId": "56",
+      "sourceLineSha256": "7797abb7d2413a0d9f0c1ce6f3f3e7cd66a0716269a5b98593d1970f8d7b304d",
+      "rawScientificName": "Ipomoea nil",
+      "legacyDisplayNameZh": "牵牛花",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Ipomoea nil",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "481602",
+      "rank": "species",
+      "genus": "Ipomoea",
+      "family": "Convolvulaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 153,
+      "sourceRecordId": "57",
+      "sourceLineSha256": "c9f54c956e3be00e10e5f5a812ec6242e6efb71de17fed8db2d8633b2fced1ee",
+      "rawScientificName": "Pyrostegia venusta",
+      "legacyDisplayNameZh": "炮仗花",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Pyrostegia venusta",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "317830",
+      "rank": "species",
+      "genus": "Pyrostegia",
+      "family": "Bignoniaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 154,
+      "sourceRecordId": "58",
+      "sourceLineSha256": "58a81daec81d0b8e2ae7a726b9da5e54be5abe23116e91bdd20e2106689d88b3",
+      "rawScientificName": "Bougainvillea spectabilis",
+      "legacyDisplayNameZh": "三角梅",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Bougainvillea spectabilis",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2680780",
+      "rank": "species",
+      "genus": "Bougainvillea",
+      "family": "Nyctaginaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 155,
+      "sourceRecordId": "59",
+      "sourceLineSha256": "23ef69e3a274eae07cf5917d4f893cfb9442b092952655bde21d6457c7381b5c",
+      "rawScientificName": "Plumeria rubra",
+      "legacyDisplayNameZh": "鸡蛋花",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Plumeria rubra",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "161631",
+      "rank": "species",
+      "genus": "Plumeria",
+      "family": "Apocynaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 156,
+      "sourceRecordId": "6",
+      "sourceLineSha256": "838d7a0a4c774210e53cc4682de8c59b934a787d157efa1e52d84b850ae3c7f4",
+      "rawScientificName": "Mentha canadensis",
+      "legacyDisplayNameZh": "薄荷",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Mentha canadensis",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "124520",
+      "rank": "species",
+      "genus": "Mentha",
+      "family": "Lamiaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 157,
+      "sourceRecordId": "60",
+      "sourceLineSha256": "d8b0716b41e94c5e130ee4de17ff932f607cae0828cad1bd7f2b2ebf263523d8",
+      "rawScientificName": "Nerium oleander",
+      "legacyDisplayNameZh": "夹竹桃",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Nerium oleander",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "135196",
+      "rank": "species",
+      "genus": "Nerium",
+      "family": "Apocynaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 158,
+      "sourceRecordId": "61",
+      "sourceLineSha256": "47e055320e8ac4f16721505b448f5e3461a15ab06676d0461125e670ac5ce882",
+      "rawScientificName": "Lagerstroemia indica",
+      "legacyDisplayNameZh": "紫薇",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Lagerstroemia indica",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2354050",
+      "rank": "species",
+      "genus": "Lagerstroemia",
+      "family": "Lythraceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 159,
+      "sourceRecordId": "62",
+      "sourceLineSha256": "03cd0b1a610f109764eee207971d24281850b966072db5e951fe1a9f8c7a412f",
+      "rawScientificName": "Hibiscus syriacus",
+      "legacyDisplayNameZh": "木槿",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Hibiscus syriacus",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2850597",
+      "rank": "species",
+      "genus": "Hibiscus",
+      "family": "Malvaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 160,
+      "sourceRecordId": "63",
+      "sourceLineSha256": "9cdea5ad8c5bb1316ffc59e00e85bea2802582861858e7093801b68c0d4e2081",
+      "rawScientificName": "Tillandsia spp.",
+      "legacyDisplayNameZh": "空气凤梨",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "原始学名含 spp.，属于属级商品组，不能映射为单一权威 taxon。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": true,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 161,
+      "sourceRecordId": "64",
+      "sourceLineSha256": "90d27bd02e33cc301d561115854e68a2c21352b25b591fcc324c5375d659b112",
+      "rawScientificName": "Hibiscus mutabilis",
+      "legacyDisplayNameZh": "木芙蓉",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Hibiscus mutabilis",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2850227",
+      "rank": "species",
+      "genus": "Hibiscus",
+      "family": "Malvaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 162,
+      "sourceRecordId": "65",
+      "sourceLineSha256": "3c89e5dfdfb86f3aee7c5427d722d8adb4d40dbe37396d8257ea3852f48eead7",
+      "rawScientificName": "Nelumbo nucifera",
+      "legacyDisplayNameZh": "荷花",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "遗留清单标记为重复组 D02_Nelumbo_nucifera；按规则不得仅凭名称合并，留待产品身份层 merge/split 裁决。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 163,
+      "sourceRecordId": "66",
+      "sourceLineSha256": "2faf7b72f3142dda46d463587f0bbd2d98124e99611cd435631b6b632c10248f",
+      "rawScientificName": "Nymphaea spp.",
+      "legacyDisplayNameZh": "睡莲",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "原始学名含 spp.，属于属级商品组，不能映射为单一权威 taxon。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": true,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 164,
+      "sourceRecordId": "67",
+      "sourceLineSha256": "4de56259e87c09d9f0ebe78c4be933dd5309cbebca1f085b77a50dd098bc13cb",
+      "rawScientificName": "Eichhornia crassipes",
+      "legacyDisplayNameZh": "凤眼莲",
+      "reviewDecision": "TRANSFORM_TO_ACCEPTED",
+      "acceptedScientificName": "Pontederia crassipes",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "259467",
+      "rank": "species",
+      "genus": "Pontederia",
+      "family": "Pontederiaceae",
+      "decisionReasons": [
+        "本地 WCVP 明确将原名列为异名并给出唯一接受名；WFO 对该接受名的等级、属和科交叉核对为 MATCH，原名仅保留为异名。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": false,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 165,
+      "sourceRecordId": "68",
+      "sourceLineSha256": "97b32bd1b91e31e382920b6ac0887f21961468318b136b851ff4824f127ef181",
+      "rawScientificName": "Hydrocotyle vulgaris",
+      "legacyDisplayNameZh": "铜钱草",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "遗留清单标记为重复组 D01_Hydrocotyle_vulgaris；按规则不得仅凭名称合并，留待产品身份层 merge/split 裁决。",
+        "本地 WCVP 精确匹配存在歧义。",
+        "本地 WFO 精确匹配存在歧义。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": false,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": false,
+        "legacyFamilyMatches": false,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 166,
+      "sourceRecordId": "69",
+      "sourceLineSha256": "efe6efa256d156a1071dbdba1dfb9ca0b346beabfbc497a86df5e0311fe07008",
+      "rawScientificName": "Solanum lycopersicum var. cerasiforme",
+      "legacyDisplayNameZh": "矮生番茄",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "原始学名属于 variety 特殊等级；本批没有其准入所需的唯一权威登记证据。",
+        "遗留清单标记为重复组 D04_Solanum_lycopersicum_var_cerasiforme；按规则不得仅凭名称合并，留待产品身份层 merge/split 裁决。",
+        "本地 WFO 精确匹配存在歧义。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": true,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 167,
+      "sourceRecordId": "7",
+      "sourceLineSha256": "dd1b66c265d85b3ec56110d0c17b8ac8a4ec0d68e2bd0d8bf424cd13abd1cccf",
+      "rawScientificName": "Hedera helix",
+      "legacyDisplayNameZh": "常春藤",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "本地 WCVP 精确匹配存在歧义。",
+        "本地 WFO 精确匹配存在歧义。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": false,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": false,
+        "legacyFamilyMatches": false,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 168,
+      "sourceRecordId": "70",
+      "sourceLineSha256": "4d64c011a3e7dd27df4616e69d399f4336f58147c55b1387aac3f12910b3ed42",
+      "rawScientificName": "Brassica rapa var. chinensis",
+      "legacyDisplayNameZh": "小青菜",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "原始学名属于 variety 特殊等级；本批没有其准入所需的唯一权威登记证据。",
+        "本地 WFO 精确匹配存在歧义。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": true,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 169,
+      "sourceRecordId": "71",
+      "sourceLineSha256": "717b930a07fbdb74544bfc526f961a36828a05106e6afde5ac5fe628d4375eae",
+      "rawScientificName": "Spathiphyllum wallisii",
+      "legacyDisplayNameZh": "白掌",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Spathiphyllum wallisii",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "193215",
+      "rank": "species",
+      "genus": "Spathiphyllum",
+      "family": "Araceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 170,
+      "sourceRecordId": "72",
+      "sourceLineSha256": "c8db0474f0be75d5a5f0f5a7e067b8bfd2b84caf1b14becf755b703053ca2b83",
+      "rawScientificName": "Aglaonema modestum",
+      "legacyDisplayNameZh": "广东万年青",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "遗留清单标记为重复组 D08_Aglaonema_modestum；按规则不得仅凭名称合并，留待产品身份层 merge/split 裁决。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 171,
+      "sourceRecordId": "73",
+      "sourceLineSha256": "61beb81993abf032591d4b910423a932296871ac1395b4d95e88d589ba2baae7",
+      "rawScientificName": "Aglaonema commutatum",
+      "legacyDisplayNameZh": "银皇后",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Aglaonema commutatum",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "4614",
+      "rank": "species",
+      "genus": "Aglaonema",
+      "family": "Araceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 172,
+      "sourceRecordId": "74",
+      "sourceLineSha256": "6a591ffd05e4571225a28c906dfd9f0bd663530d7821b34fe4332537ac6cb697",
+      "rawScientificName": "Dieffenbachia seguine",
+      "legacyDisplayNameZh": "黛粉叶",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Dieffenbachia seguine",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "61779",
+      "rank": "species",
+      "genus": "Dieffenbachia",
+      "family": "Araceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 173,
+      "sourceRecordId": "75",
+      "sourceLineSha256": "eccb634352d8552612e35fb6eda7c5fcae634f996417f3eafa7ea9031bfbd5ba",
+      "rawScientificName": "Syngonium podophyllum",
+      "legacyDisplayNameZh": "白蝶合果芋",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "遗留清单标记为重复组 D05_Syngonium_podophyllum；按规则不得仅凭名称合并，留待产品身份层 merge/split 裁决。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 174,
+      "sourceRecordId": "76",
+      "sourceLineSha256": "2895e49d27187055e6dc6f29bc7a5851b2e3c1e914a71807a0fb1f841ad2f516",
+      "rawScientificName": "Philodendron hederaceum",
+      "legacyDisplayNameZh": "蔓绿绒",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "遗留清单标记为重复组 D06_Philodendron_hederaceum；按规则不得仅凭名称合并，留待产品身份层 merge/split 裁决。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 175,
+      "sourceRecordId": "77",
+      "sourceLineSha256": "b1d9372f5db0e1d3bc4fbf6e7d6cb7bf46f182d2b678dadd9f5b6b6c8c18a06b",
+      "rawScientificName": "Thaumatophyllum bipinnatifidum",
+      "legacyDisplayNameZh": "裂叶喜林芋",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "遗留清单标记为重复组 D07_Thaumatophyllum_bipinnatifidum；按规则不得仅凭名称合并，留待产品身份层 merge/split 裁决。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": false,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 176,
+      "sourceRecordId": "78",
+      "sourceLineSha256": "bb4f0430716e10df478278a55b6408292279871187b41a0199635361f1c4addf",
+      "rawScientificName": "Rhaphidophora tetrasperma",
+      "legacyDisplayNameZh": "姬龟背",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Rhaphidophora tetrasperma",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "177879",
+      "rank": "species",
+      "genus": "Rhaphidophora",
+      "family": "Araceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 177,
+      "sourceRecordId": "79",
+      "sourceLineSha256": "f3a37c438b9bb0f0f9abba28760864f7b9669611cf861993b00cb027bf378b85",
+      "rawScientificName": "Alocasia macrorrhizos",
+      "legacyDisplayNameZh": "海芋",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Alocasia macrorrhizos",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "6775",
+      "rank": "species",
+      "genus": "Alocasia",
+      "family": "Araceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 178,
+      "sourceRecordId": "8",
+      "sourceLineSha256": "2d740eeb125e796bcd27f2a9bc3d55d2a15c4425ca55318828b5cc8fccfa868e",
+      "rawScientificName": "Ficus elastica",
+      "legacyDisplayNameZh": "橡皮树",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Ficus elastica",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2810307",
+      "rank": "species",
+      "genus": "Ficus",
+      "family": "Moraceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 179,
+      "sourceRecordId": "80",
+      "sourceLineSha256": "18f93c0ea9ff2356183f7a171b4ad9d9caa44f378efd52dffb44b07966dda1f3",
+      "rawScientificName": "Alocasia odora",
+      "legacyDisplayNameZh": "滴水观音",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Alocasia odora",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "6798",
+      "rank": "species",
+      "genus": "Alocasia",
+      "family": "Araceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 180,
+      "sourceRecordId": "81",
+      "sourceLineSha256": "fb58462848a415b2f31444ddfd43164481ee4734556fcde100c206e41830ba80",
+      "rawScientificName": "Peperomia obtusifolia",
+      "legacyDisplayNameZh": "花叶椒草",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "本地 WCVP 精确匹配存在歧义。",
+        "本地 WFO 精确匹配存在歧义。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": false,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": false,
+        "legacyFamilyMatches": false,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 181,
+      "sourceRecordId": "82",
+      "sourceLineSha256": "849c30101be2be18052834ccbd3d7b628f453cf8d7d154207054ec35bc826da7",
+      "rawScientificName": "Peperomia argyreia",
+      "legacyDisplayNameZh": "西瓜皮椒草",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "本地 WCVP 状态为 Illegitimate，不是可准入的 Accepted 或可转换的 Synonym。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": false,
+        "legacyFamilyMatches": false,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 182,
+      "sourceRecordId": "83",
+      "sourceLineSha256": "c4a790c15551f3e08173759e2e1d8eb64e632f725980d934704035622fbdff6d",
+      "rawScientificName": "Fittonia albivenis",
+      "legacyDisplayNameZh": "网纹草",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Fittonia albivenis",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2813190",
+      "rank": "species",
+      "genus": "Fittonia",
+      "family": "Acanthaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 183,
+      "sourceRecordId": "84",
+      "sourceLineSha256": "9f6769259552cec3faa8dfe002b4f61c0a2e7d4c3dee39453d67885ee9f7854a",
+      "rawScientificName": "Pilea cadierei",
+      "legacyDisplayNameZh": "冷水花",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Pilea cadierei",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2546093",
+      "rank": "species",
+      "genus": "Pilea",
+      "family": "Urticaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 184,
+      "sourceRecordId": "85",
+      "sourceLineSha256": "5dd1d33651443eb44195bb9c1d2a7499fe0341203dfebce4dae7383cdd113c86",
+      "rawScientificName": "Pilea peperomioides",
+      "legacyDisplayNameZh": "镜面草",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Pilea peperomioides",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "2546688",
+      "rank": "species",
+      "genus": "Pilea",
+      "family": "Urticaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 185,
+      "sourceRecordId": "86",
+      "sourceLineSha256": "74afe6b63f9d2eb5991af8d5896cf4e8ac4ce929159240a856faeaa071352aae",
+      "rawScientificName": "Tradescantia zebrina",
+      "legacyDisplayNameZh": "吊竹梅",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "本地 WFO 精确匹配存在歧义。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 186,
+      "sourceRecordId": "87",
+      "sourceLineSha256": "83dc7ea62503d87b29a31ada2ba190d93711c37e84b84c5c30b4363623b4c89e",
+      "rawScientificName": "Tradescantia pallida",
+      "legacyDisplayNameZh": "紫露草",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Tradescantia pallida",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "270389",
+      "rank": "species",
+      "genus": "Tradescantia",
+      "family": "Commelinaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 187,
+      "sourceRecordId": "88",
+      "sourceLineSha256": "b62a07ab026de2cf23dc9f770613efba7a9252303992eac5193726bfcbb9a6e0",
+      "rawScientificName": "Asparagus setaceus",
+      "legacyDisplayNameZh": "文竹",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Asparagus setaceus",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "275292",
+      "rank": "species",
+      "genus": "Asparagus",
+      "family": "Asparagaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 188,
+      "sourceRecordId": "89",
+      "sourceLineSha256": "0a18f2ebbc9a3ffb4a0a508887498cf5dee60fd9b6067b67cb100cd89fdedb04",
+      "rawScientificName": "Asplenium nidus",
+      "legacyDisplayNameZh": "鸟巢蕨",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "本地 WFO 精确匹配存在歧义。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 189,
+      "sourceRecordId": "9",
+      "sourceLineSha256": "5da27ddddf63bd07342f0958d8820fa91966ce1a77ee6bc988b2530bad169bdd",
+      "rawScientificName": "Aglaonema modestum",
+      "legacyDisplayNameZh": "万年青",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "遗留清单标记为重复组 D08_Aglaonema_modestum；按规则不得仅凭名称合并，留待产品身份层 merge/split 裁决。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 190,
+      "sourceRecordId": "90",
+      "sourceLineSha256": "7cf1df4b035f8a1f2d0d1fd52746dc65a1635fd9663ce31e9cbc7356b77fa6e6",
+      "rawScientificName": "Platycerium bifurcatum",
+      "legacyDisplayNameZh": "鹿角蕨",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Platycerium bifurcatum",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "3153569",
+      "rank": "species",
+      "genus": "Platycerium",
+      "family": "Polypodiaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 191,
+      "sourceRecordId": "91",
+      "sourceLineSha256": "41819075a6378731f8624b7739c6e95a994b317af55be0b1a863fd809495ed55",
+      "rawScientificName": "Nephrolepis exaltata",
+      "legacyDisplayNameZh": "波士顿蕨",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "本地 WCVP 与 WFO 的接受名、分类等级、属或科存在冲突。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": false,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 192,
+      "sourceRecordId": "92",
+      "sourceLineSha256": "52db3ba2d003ec751589323ce0ffc7e07bfe42ce70a78a832d150bf974d2c519",
+      "rawScientificName": "Adiantum raddianum",
+      "legacyDisplayNameZh": "铁线蕨",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Adiantum raddianum",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "3144691",
+      "rank": "species",
+      "genus": "Adiantum",
+      "family": "Pteridaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 193,
+      "sourceRecordId": "93",
+      "sourceLineSha256": "899fefbe6e0f9b763038baa0761f8a1e38b856e73aeb63c5e6533a4912ff03f7",
+      "rawScientificName": "Goeppertia makoyana",
+      "legacyDisplayNameZh": "孔雀竹芋",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Goeppertia makoyana",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "494234",
+      "rank": "species",
+      "genus": "Goeppertia",
+      "family": "Marantaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 194,
+      "sourceRecordId": "94",
+      "sourceLineSha256": "54c2f1ac0fbec34ef5346b1c2b598bab47c677ec8af5ba229cc8b21caa062490",
+      "rawScientificName": "Goeppertia orbifolia",
+      "legacyDisplayNameZh": "青苹果竹芋",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Goeppertia orbifolia",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "494179",
+      "rank": "species",
+      "genus": "Goeppertia",
+      "family": "Marantaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 195,
+      "sourceRecordId": "95",
+      "sourceLineSha256": "7b6c292fed83880bae7762cbc8e2bf64430a273cef341a55837954f37d0a9131",
+      "rawScientificName": "Maranta leuconeura",
+      "legacyDisplayNameZh": "祈祷草",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Maranta leuconeura",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "253360",
+      "rank": "species",
+      "genus": "Maranta",
+      "family": "Marantaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 196,
+      "sourceRecordId": "96",
+      "sourceLineSha256": "076f0ec8e8d6c4b4384d34fe12101bbfb69bb82875554c96ca8f378e597343d6",
+      "rawScientificName": "Dracaena sanderiana",
+      "legacyDisplayNameZh": "富贵竹",
+      "reviewDecision": "QUARANTINE",
+      "acceptedScientificName": null,
+      "authoritySource": null,
+      "authorityTaxonId": null,
+      "rank": null,
+      "genus": null,
+      "family": null,
+      "decisionReasons": [
+        "本地 WCVP 与 WFO 的接受名、分类等级、属或科存在冲突。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": false,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": true
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 197,
+      "sourceRecordId": "97",
+      "sourceLineSha256": "63c4307b034a38de9b51f213c8144156e4f10f0ff5df9ead6eb5f42cc1cd8f90",
+      "rawScientificName": "Beaucarnea recurvata",
+      "legacyDisplayNameZh": "酒瓶兰",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Beaucarnea recurvata",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "300353",
+      "rank": "species",
+      "genus": "Beaucarnea",
+      "family": "Asparagaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 198,
+      "sourceRecordId": "98",
+      "sourceLineSha256": "c6a69a4d5ace77fc6606fec637817baf9e0dc8a2f705839c15ef2a33b542f37f",
+      "rawScientificName": "Asparagus densiflorus",
+      "legacyDisplayNameZh": "狐尾天门冬",
+      "reviewDecision": "ADMIT_AS_ACCEPTED",
+      "acceptedScientificName": "Asparagus densiflorus",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "275016",
+      "rank": "species",
+      "genus": "Asparagus",
+      "family": "Asparagaceae",
+      "decisionReasons": [
+        "本地 WCVP 为唯一精确的 Accepted 记录；WFO 交叉核对为 MATCH，接受名、等级、属和科一致，且遗留属科一致。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": true,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    },
+    {
+      "manifestIndex": 199,
+      "sourceRecordId": "99",
+      "sourceLineSha256": "5c61614ed43247224e88b88114778eab22b89876307e25a0facbefc5467c4f88",
+      "rawScientificName": "Schefflera arboricola",
+      "legacyDisplayNameZh": "鹅掌柴",
+      "reviewDecision": "TRANSFORM_TO_ACCEPTED",
+      "acceptedScientificName": "Heptapleurum arboricola",
+      "authoritySource": "WCVP",
+      "authorityTaxonId": "98359",
+      "rank": "species",
+      "genus": "Heptapleurum",
+      "family": "Araliaceae",
+      "decisionReasons": [
+        "本地 WCVP 明确将原名列为异名并给出唯一接受名；WFO 对该接受名的等级、属和科交叉核对为 MATCH，原名仅保留为异名。"
+      ],
+      "evidenceChecks": {
+        "wcvpExactUnambiguous": true,
+        "wfoCrossCheckMatch": true,
+        "legacyGenusMatches": false,
+        "legacyFamilyMatches": true,
+        "specialRankOrCultivar": false,
+        "unresolvedConflict": false
+      },
+      "reviewerAgent": "p1_taxonomy_review_151_200_terra",
+      "reviewedAt": "2026-09-20T03:15:00+08:00"
+    }
+  ]
+}
