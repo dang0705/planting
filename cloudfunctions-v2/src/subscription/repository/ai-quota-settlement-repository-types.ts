@@ -4,6 +4,7 @@ import type { TransactionExecutionContext } from '../../foundation/database/tran
 export type AiQuotaSettlementPersistenceErrorType =
   | 'INTERNAL_DATA_INVALID'
   | 'SETTLEMENT_CONFLICT'
+  | 'COMMIT_RESULT_UNKNOWN'
   | 'WRITE_CONFLICT'
 
 /** 额度结算持久化错误只能由应用层映射为脱敏公开错误。 */

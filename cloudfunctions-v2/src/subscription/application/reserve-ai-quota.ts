@@ -1,9 +1,14 @@
 import type { UserGenerativeCapability, UserRef } from '../../contracts/types.js'
 import {
+  DatabaseCommitResultUnknownError,
   runDatabaseTransaction,
   type DatabaseTransactionDriver,
   type TransactionExecutionContext
 } from '../../foundation/database/transaction-runner.js'
+import {
+  reconcileAiQuotaReservationCommitResult,
+  type AiQuotaReservationCommitUnknownReadOnlyRepository
+} from './ai-quota-commit-unknown-reconciliation.js'
 import { planAiQuotaAllocation } from '../domain/plan-ai-quota-allocation.js'
 import type {
   ApplyAllocatedReservationInput,
@@ -84,6 +89,8 @@ export type ReserveAiQuotaDependencies<TTransaction extends TransactionExecution
   readonly createReservationRef: () => string
   /** 为一个已选额度批次生成不可变账本公开引用。 */
   readonly createLedgerRef: (grantRef: string) => string
+  /** COMMIT 结果未知时只用新连接读取已提交预占，禁止复用旧事务。 */
+  readonly commitUnknownReadOnlyRepository: AiQuotaReservationCommitUnknownReadOnlyRepository
 }
 
 /** 将领域计划重新绑定到已锁定批次的内部键与版本。 */
@@ -121,8 +128,9 @@ function buildPersistedAllocations(
 export function createReserveAiQuotaUseCase<TTransaction extends TransactionExecutionContext>(
   dependencies: ReserveAiQuotaDependencies<TTransaction>
 ): (command: ReserveAiQuotaCommand) => Promise<ReserveAiQuotaResult> {
-  return command =>
-    runDatabaseTransaction(dependencies.driver, async transaction => {
+  return async command => {
+    try {
+      return await runDatabaseTransaction(dependencies.driver, async transaction => {
       const account = await dependencies.repository.lockAccount(transaction, command.userRef)
       const existingReservation = await dependencies.repository.readExistingReservation(
         transaction,
@@ -186,5 +194,27 @@ export function createReserveAiQuotaUseCase<TTransaction extends TransactionExec
         costPolicyVersion: command.costPolicyVersion,
         expiresAtMs: command.expiresAtMs
       }
-    })
+      })
+    } catch (error: unknown) {
+      if (!(error instanceof DatabaseCommitResultUnknownError)) {
+        throw error
+      }
+      const reconciliation = await reconcileAiQuotaReservationCommitResult(
+        dependencies.commitUnknownReadOnlyRepository,
+        {
+          userRef: command.userRef,
+          productActionId: command.productActionId,
+          idempotencyKey: command.idempotencyKey,
+          requestHash: command.requestHash
+        }
+      )
+      if (reconciliation.kind === 'replay') {
+        return { kind: 'replayed', ...reconciliation.reservation }
+      }
+      throw new AiQuotaReservationPersistenceError(
+        'COMMIT_RESULT_UNKNOWN',
+        '额度预占提交结果暂时无法确认'
+      )
+    }
+  }
 }

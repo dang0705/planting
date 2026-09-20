@@ -1,7 +1,11 @@
 import { describe, expect, test, vi } from 'vitest'
 
 import type { UserRef } from '../../src/contracts/types.js'
-import type { DatabaseTransactionDriver } from '../../src/foundation/database/transaction-runner.js'
+import {
+  DatabaseCommitResultUnknownError,
+  type DatabaseTransactionDriver
+} from '../../src/foundation/database/transaction-runner.js'
+import type { AiQuotaReservationCommitUnknownRecord } from '../../src/subscription/application/ai-quota-commit-unknown-reconciliation.js'
 import type {
   MysqlAiQuotaReservationRepository,
   LockedAiQuotaAccount,
@@ -54,6 +58,10 @@ function createDependencies(options?: {
   >
   /** 覆盖默认额度批次，用于余额不足路径。 */
   readonly grants?: readonly LockedAiQuotaGrantCandidate[]
+  /** 模拟 COMMIT 已发送但结果无法确认。 */
+  readonly commitError?: DatabaseCommitResultUnknownError
+  /** 新连接只读对账返回的已提交预占。 */
+  readonly reconciliationRecord?: AiQuotaReservationCommitUnknownRecord | null
 }) {
   const callOrder: string[] = []
   const driver: DatabaseTransactionDriver<TestTransaction> = {
@@ -64,6 +72,9 @@ function createDependencies(options?: {
     commitTransaction: vi.fn(received => {
       expect(received).toBe(transaction)
       callOrder.push('commit')
+      if (options?.commitError !== undefined) {
+        throw options.commitError
+      }
     }),
     rollbackTransaction: vi.fn(received => {
       expect(received).toBe(transaction)
@@ -92,7 +103,13 @@ function createDependencies(options?: {
       callOrder.push('apply')
     })
   }
-  return { callOrder, driver, repository }
+  const commitUnknownReadOnlyRepository = {
+    read: vi.fn(async () => {
+      callOrder.push('reconcile')
+      return options?.reconciliationRecord ?? null
+    })
+  }
+  return { callOrder, driver, repository, commitUnknownReadOnlyRepository }
 }
 
 /** 返回所有测试共享的可信内部命令。 */
@@ -113,7 +130,7 @@ function command() {
 /**
  * Expected 来源：`care-points-ai-quota/v1` 与额度 Repository 已冻结的锁顺序、幂等和原子分摊规则。
  * 测试层次：L2 / `unit_fake`；替换事务驱动、Repository 与高熵引用生成器。
- * 明确未覆盖：真实 MySQL 行锁、唯一约束、提交结果未知后的新连接只读对账、HTTP 和模型调用。
+ * 明确未覆盖：真实 MySQL 行锁、唯一约束、真实新连接读回、HTTP 和模型调用。
  */
 describe('AI 额度预占应用用例', () => {
   test('同键同摘要重放已有预占，不读取 grants、不生成引用且不再次写入', async () => {
@@ -253,5 +270,57 @@ describe('AI 额度预占应用用例', () => {
       'apply',
       'rollback'
     ])
+  })
+
+  test('提交结果未知时只用新连接读回同一预占且不重跑领域写入', async () => {
+    const expected = command()
+    const dependencies = createDependencies({
+      commitError: new DatabaseCommitResultUnknownError('socket closed after COMMIT'),
+      reconciliationRecord: {
+        requestHash: expected.requestHash,
+        reservationRef: 'aqr_subscription_001',
+        status: 'reserved',
+        estimatedAmount: expected.estimatedAmount,
+        capability: expected.capability,
+        costPolicyVersion: expected.costPolicyVersion,
+        expiresAtMs: expected.expiresAtMs
+      }
+    })
+    const reserve = createReserveAiQuotaUseCase({
+      ...dependencies,
+      createReservationRef: () => 'aqr_subscription_001',
+      createLedgerRef: grantRef => `aql_for_${grantRef}`
+    })
+
+    await expect(reserve(expected)).resolves.toEqual(
+      expect.objectContaining({ kind: 'replayed', reservationRef: 'aqr_subscription_001' })
+    )
+    expect(dependencies.callOrder).toEqual([
+      'begin',
+      'lockAccount',
+      'readExisting',
+      'readGrants',
+      'apply',
+      'commit',
+      'reconcile'
+    ])
+    expect(dependencies.repository.applyAllocatedReservation).toHaveBeenCalledOnce()
+    expect(dependencies.driver.rollbackTransaction).not.toHaveBeenCalled()
+  })
+
+  test('提交结果未知且新连接无法证明提交时失败关闭且不自动重跑', async () => {
+    const dependencies = createDependencies({
+      commitError: new DatabaseCommitResultUnknownError('socket closed after COMMIT'),
+      reconciliationRecord: null
+    })
+    const reserve = createReserveAiQuotaUseCase({
+      ...dependencies,
+      createReservationRef: () => 'aqr_subscription_001',
+      createLedgerRef: grantRef => `aql_for_${grantRef}`
+    })
+
+    await expect(reserve(command())).rejects.toMatchObject({ type: 'COMMIT_RESULT_UNKNOWN' })
+    expect(dependencies.repository.applyAllocatedReservation).toHaveBeenCalledOnce()
+    expect(dependencies.driver.rollbackTransaction).not.toHaveBeenCalled()
   })
 })

@@ -1,9 +1,14 @@
 import type { UserRef } from '../../contracts/types.js'
 import {
+  DatabaseCommitResultUnknownError,
   runDatabaseTransaction,
   type DatabaseTransactionDriver,
   type TransactionExecutionContext
 } from '../../foundation/database/transaction-runner.js'
+import {
+  reconcileAiQuotaSettlementCommitResult,
+  type AiQuotaSettlementCommitUnknownReadOnlyRepository
+} from './ai-quota-commit-unknown-reconciliation.js'
 import { planAiQuotaSettlement } from '../domain/plan-ai-quota-settlement.js'
 import type { MysqlAiQuotaReservationRepository } from '../repository/mysql-ai-quota-reservation-repository.js'
 import type {
@@ -85,6 +90,8 @@ export type SettleAiQuotaDependencies<TTransaction extends TransactionExecutionC
   readonly settlementRepository: MysqlAiQuotaSettlementRepository<TTransaction>
   /** 为一次结算或释放账本生成高熵公开引用。 */
   readonly createLedgerRef: (entryType: 'settle' | 'release', grantRef: string) => string
+  /** COMMIT 结果未知时只用新连接读取已提交终态，禁止复用旧事务。 */
+  readonly commitUnknownReadOnlyRepository: AiQuotaSettlementCommitUnknownReadOnlyRepository
 }
 
 /** 判断已存在终态是否与本次供应商证据完全一致。 */
@@ -156,8 +163,9 @@ function bindSettlementAllocations(
 export function createSettleAiQuotaUseCase<TTransaction extends TransactionExecutionContext>(
   dependencies: SettleAiQuotaDependencies<TTransaction>
 ): (command: SettleAiQuotaCommand) => Promise<SettleAiQuotaResult> {
-  return command =>
-    runDatabaseTransaction(dependencies.driver, async transaction => {
+  return async command => {
+    try {
+      return await runDatabaseTransaction(dependencies.driver, async transaction => {
       const account = await dependencies.reservationRepository.lockAccount(
         transaction,
         command.userRef
@@ -238,5 +246,34 @@ export function createSettleAiQuotaUseCase<TTransaction extends TransactionExecu
         settledAmount: plan.settledAmount,
         releasedAmount: plan.releasedAmount
       }
-    })
+      })
+    } catch (error: unknown) {
+      if (!(error instanceof DatabaseCommitResultUnknownError)) {
+        throw error
+      }
+      const reconciliation = await reconcileAiQuotaSettlementCommitResult(
+        dependencies.commitUnknownReadOnlyRepository,
+        {
+          userRef: command.userRef,
+          reservationRef: command.reservationRef,
+          settledAmount: command.settledAmount,
+          actualCostMicros: command.actualCostMicros,
+          usageEvidenceRef: command.usageEvidenceRef,
+          platformAbsorbedCostMicros: command.platformAbsorbedCostMicros
+        }
+      )
+      if (reconciliation.kind === 'replay') {
+        return {
+          kind: 'replayed',
+          reservationRef: command.reservationRef,
+          status: reconciliation.status,
+          settledAmount: reconciliation.settledAmount
+        }
+      }
+      throw new AiQuotaSettlementPersistenceError(
+        'COMMIT_RESULT_UNKNOWN',
+        '额度结算提交结果暂时无法确认'
+      )
+    }
+  }
 }

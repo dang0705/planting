@@ -1,7 +1,11 @@
 import { describe, expect, test, vi } from 'vitest'
 
 import type { UserRef } from '../../src/contracts/types.js'
-import type { DatabaseTransactionDriver } from '../../src/foundation/database/transaction-runner.js'
+import {
+  DatabaseCommitResultUnknownError,
+  type DatabaseTransactionDriver
+} from '../../src/foundation/database/transaction-runner.js'
+import type { AiQuotaSettlementCommitUnknownRecord } from '../../src/subscription/application/ai-quota-commit-unknown-reconciliation.js'
 import { createSettleAiQuotaUseCase } from '../../src/subscription/application/settle-ai-quota.js'
 import type { MysqlAiQuotaReservationRepository } from '../../src/subscription/repository/mysql-ai-quota-reservation-repository.js'
 import type { MysqlAiQuotaSettlementRepository } from '../../src/subscription/repository/mysql-ai-quota-settlement-repository.js'
@@ -28,6 +32,10 @@ function createDependencies(options?: {
   readonly storedUsageEvidenceRef?: string | null
   /** 覆盖平台承担成本。 */
   readonly storedPlatformAbsorbedCostMicros?: number
+  /** 模拟 COMMIT 已发送但结果无法确认。 */
+  readonly commitError?: DatabaseCommitResultUnknownError
+  /** 新连接只读对账返回的已提交结算终态。 */
+  readonly reconciliationRecord?: AiQuotaSettlementCommitUnknownRecord | null
 }) {
   const callOrder: string[] = []
   const driver: DatabaseTransactionDriver<TestTransaction> = {
@@ -37,6 +45,9 @@ function createDependencies(options?: {
     }),
     commitTransaction: vi.fn(() => {
       callOrder.push('commit')
+      if (options?.commitError !== undefined) {
+        throw options.commitError
+      }
     }),
     rollbackTransaction: vi.fn(() => {
       callOrder.push('rollback')
@@ -109,7 +120,19 @@ function createDependencies(options?: {
       callOrder.push('markPending')
     })
   }
-  return { callOrder, driver, reservationRepository, settlementRepository }
+  const commitUnknownReadOnlyRepository = {
+    read: vi.fn(async () => {
+      callOrder.push('reconcile')
+      return options?.reconciliationRecord ?? null
+    })
+  }
+  return {
+    callOrder,
+    driver,
+    reservationRepository,
+    settlementRepository,
+    commitUnknownReadOnlyRepository
+  }
 }
 
 /** 返回标准结算内部命令。 */
@@ -128,7 +151,7 @@ function command(settledAmount = Number('6')) {
 /**
  * Expected 来源：`care-points-ai-quota/v1` 的结算、释放、待对账及终态幂等规则。
  * 测试层次：L2 / `unit_fake`；替换事务驱动、Repository 和账本引用生成器。
- * 明确未覆盖：真实 MySQL、Provider 成本换算、HTTP、CloudBase 和提交结果未知对账。
+ * 明确未覆盖：真实 MySQL 新连接、Provider 成本换算、HTTP 和 CloudBase。
  */
 describe('AI 额度结算应用用例', () => {
   test('实际额度小于预占时原子结算并释放剩余额度', async () => {
@@ -242,5 +265,49 @@ describe('AI 额度结算应用用例', () => {
 
     await expect(settle(command())).rejects.toMatchObject({ type: 'SETTLEMENT_CONFLICT' })
     expect(dependencies.callOrder).toEqual(['begin', 'lockAccount', 'lockReservation', 'rollback'])
+  })
+
+  test('提交结果未知时只用新连接证明同一结算终态且不重跑写入', async () => {
+    const dependencies = createDependencies({
+      commitError: new DatabaseCommitResultUnknownError('socket closed after COMMIT'),
+      reconciliationRecord: {
+        reservationRef: 'aqr_subscription_001',
+        status: 'settled',
+        estimatedAmount: 8,
+        settledAmount: 6,
+        actualCostMicros: 4800,
+        usageEvidenceRef: 'usage_bailian_001',
+        platformAbsorbedCostMicros: 0
+      }
+    })
+    const settle = createSettleAiQuotaUseCase({
+      ...dependencies,
+      createLedgerRef: (entryType, grantRef) => `aql_${entryType}_${grantRef}`
+    })
+
+    await expect(settle(command())).resolves.toEqual({
+      kind: 'replayed',
+      reservationRef: 'aqr_subscription_001',
+      status: 'settled',
+      settledAmount: 6
+    })
+    expect(dependencies.settlementRepository.applySettlement).toHaveBeenCalledOnce()
+    expect(dependencies.driver.rollbackTransaction).not.toHaveBeenCalled()
+    expect(dependencies.callOrder.at(Number('-1'))).toBe('reconcile')
+  })
+
+  test('提交结果未知且新连接无法证明终态时失败关闭', async () => {
+    const dependencies = createDependencies({
+      commitError: new DatabaseCommitResultUnknownError('socket closed after COMMIT'),
+      reconciliationRecord: null
+    })
+    const settle = createSettleAiQuotaUseCase({
+      ...dependencies,
+      createLedgerRef: (entryType, grantRef) => `aql_${entryType}_${grantRef}`
+    })
+
+    await expect(settle(command())).rejects.toMatchObject({ type: 'COMMIT_RESULT_UNKNOWN' })
+    expect(dependencies.settlementRepository.applySettlement).toHaveBeenCalledOnce()
+    expect(dependencies.driver.rollbackTransaction).not.toHaveBeenCalled()
   })
 })

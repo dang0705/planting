@@ -215,7 +215,7 @@ function createSettlementSqlExecutor(): AiQuotaSettlementSqlExecutor<MysqlTestTr
  * Expected 来源：`care-points-ai-quota/v1` 的单用户账户串行锁、最早到期批次优先与原子预占规则。
  * 测试层次：L3 / `unit_real_data`；执行真实 MySQL 8.4、真实 DDL、真实 Repository 和应用用例。
  * 替换边界：仅以本地一次性 MySQL 替代 CloudBase MySQL；高熵引用生成器使用确定性测试实现。
- * 明确未覆盖：CloudBase 网络、HTTP、成本策略 Provider、模型调用、结算/释放和提交结果未知对账。
+ * 明确未覆盖：CloudBase 网络、HTTP、成本策略 Provider、模型调用、预占过期释放和提交结果未知对账。
  */
 describe('AI 额度预占的真实 MySQL 并发闭环', () => {
   beforeAll(async () => {
@@ -298,7 +298,8 @@ describe('AI 额度预占的真实 MySQL 并发闭环', () => {
       driver: createTransactionDriver(),
       repository,
       createReservationRef: () => `aqr_subscription_real_${String(++reservationSequence)}`,
-      createLedgerRef: () => `aql_subscription_real_${String(++ledgerSequence)}`
+      createLedgerRef: () => `aql_subscription_real_${String(++ledgerSequence)}`,
+      commitUnknownReadOnlyRepository: { read: async () => null }
     })
     const commands = ['a', 'b'].map(suffix => ({
       userRef: 'usr_subscription_real' as UserRef,
@@ -336,7 +337,8 @@ describe('AI 额度预占的真实 MySQL 并发闭环', () => {
       reservationRepository: repository,
       settlementRepository: createMysqlAiQuotaSettlementRepository(createSettlementSqlExecutor()),
       createLedgerRef: entryType =>
-        `aql_subscription_${entryType}_${String(++settlementLedgerSequence)}`
+        `aql_subscription_${entryType}_${String(++settlementLedgerSequence)}`,
+      commitUnknownReadOnlyRepository: { read: async () => null }
     })
     const settlementCommand = {
       userRef: 'usr_subscription_real' as UserRef,

@@ -7,6 +7,7 @@ export type AiQuotaReservationPersistenceErrorType =
   | 'PRINCIPAL_INVALID'
   | 'INTERNAL_DATA_INVALID'
   | 'IDEMPOTENCY_CONFLICT'
+  | 'COMMIT_RESULT_UNKNOWN'
   | 'WRITE_CONFLICT'
 
 /** Repository 错误只能由应用层映射为脱敏公开错误。 */
