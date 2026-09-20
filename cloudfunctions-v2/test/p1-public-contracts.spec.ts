@@ -183,6 +183,33 @@ describe("P1 公开 DTO 与 AJV Schema", () => {
     ).toBe(false);
   });
 
+  // Expected：guest-session-claim/v1；认领结果只能公开 command 的 claimRef、目标用户植物公开引用、
+  // 白名单对象类别摘要和重放标志，不能透出数据库内部键、user_id、proof、租约或请求哈希。
+  test("游客认领结果严格脱敏且可表达同键重放", () => {
+    const result = {
+      claimRef: "gcl_01J8Z3H4R57V4G2QPG6C5W8K9M",
+      userPlantId: "upl_01J8Z3H4R57V4G2QPG6C5W8K9M",
+      claimedObjectKinds: ["identification_candidate", "fixed_diagnosis_result"],
+      replayed: false,
+    };
+
+    expect(validators.guestClaimResult(result)).toBe(true);
+    expect(validators.guestClaimResult({ ...result, replayed: true })).toBe(true);
+
+    for (const internalField of [
+      "claim_command_internal_id",
+      "guest_plant_case_internal_id",
+      "user_internal_id",
+      "user_id",
+      "proof_version",
+      "processing_lease_owner_hash",
+      "processing_lease_expires_at_ms",
+      "request_hash",
+    ]) {
+      expect(validators.guestClaimResult({ ...result, [internalField]: "forbidden" })).toBe(false);
+    }
+  });
+
   // Expected：reward-events/v1；生产域只能发送事实，不能提交奖励分值。
   test("奖励事件拒绝客户端或生产域注入分值", () => {
     const event = {

@@ -6,14 +6,16 @@
 
 ## 固定输入与来源角色
 
-候选输入必须从 Git 固定版本明确导出，而不是读取工作区可能已删除或被改写的文件：
+候选输入文件已从工作树删除；回放只能从下列不可变 Git blob 读取，不能依赖
+`HEAD:路径`，也不能恢复旧文件到工作树或把它导入 v2：
 
 ```sh
-git show HEAD:docs/plant_catalog.csv > /tmp/qinghuazhi-taxonomy/plant_catalog.HEAD.csv
-shasum -a 256 /tmp/qinghuazhi-taxonomy/plant_catalog.HEAD.csv
+git cat-file blob ba8b7c0cc8f8c8c3ab0c5e9105804806f496b877 \
+  > /tmp/qinghuazhi-taxonomy/plant_catalog.legacy-blob.csv
+shasum -a 256 /tmp/qinghuazhi-taxonomy/plant_catalog.legacy-blob.csv
 ```
 
-当前 HEAD 快照为 200 条、SHA-256
+该 blob 是已删除 `docs/plant_catalog.csv` 的唯一遗留参考快照，包含 200 条、SHA-256
 `de5ad55fa4589ac56481ce684b030d46213fc2bf6d3838d5217248c813f3fac1`。
 CSV 没有表头，工具固定按 14 列解析；列数、必填 ID 或科学名不符合即失败关闭。
 
@@ -65,7 +67,7 @@ SHA 与 ZIP SHA 一起写入输出 manifest，不能用人工转抄的版本字�
 
 ```sh
 node docs/backend-v2/audits/taxonomy-authority-replay.mjs \
-  --candidate /tmp/qinghuazhi-taxonomy/plant_catalog.HEAD.csv \
+  --candidate /tmp/qinghuazhi-taxonomy/plant_catalog.legacy-blob.csv \
   --candidate-sha256 <candidate-sha256> \
   --output /tmp/qinghuazhi-taxonomy/out-2026-06 \
   --wcvp-artifact /tmp/qinghuazhi-taxonomy/wcvp_dwca.zip \

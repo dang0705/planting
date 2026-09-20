@@ -12,22 +12,61 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
-const APPROVAL_VERSION = 'p1-taxonomy-human-approval/v1'
+const APPROVAL_VERSION = 'p1-taxonomy-human-approval/v2'
 const SEED_MANIFEST_VERSION = 'plant-taxonomy-seed/v1'
 const REVIEW_PACKET_VERSION = 'plant-identity-validation-manifest/v1'
 const EXPECTED_TICKET_ID = 'z8v0kmr9gm'
 const EXPECTED_RECORD_COUNT = 200
-const EXPECTED_COUNTS = Object.freeze({
+const EXPECTED_RECOMMENDATION_COUNTS = Object.freeze({
   REUSE_AS_IS: 113,
   TRANSFORM: 7,
   QUARANTINE: 80
 })
+const EXPECTED_APPROVAL_COUNTS = Object.freeze({
+  REUSE_AS_IS: 99,
+  TRANSFORM: 7,
+  TRANSFORM_PENDING: 4,
+  QUARANTINE: 90
+})
+const TRANSFORM_PENDING_TARGETS = Object.freeze({
+  '29': Object.freeze({
+    canonicalScientificName: 'Narcissus tazetta subsp. chinensis',
+    identityLevel: 'subspecies'
+  }),
+  '73': Object.freeze({
+    canonicalScientificName: "Aglaonema commutatum 'Silver Queen'",
+    identityLevel: 'cultivar'
+  }),
+  '98': Object.freeze({
+    canonicalScientificName: "Asparagus densiflorus 'Myersii'",
+    identityLevel: 'cultivar'
+  }),
+  '123': Object.freeze({
+    canonicalScientificName: 'Gymnocalycium stenopleurum',
+    identityLevel: 'species'
+  })
+})
+const ADDITIONAL_QUARANTINE_IDS = new Set([
+  '79',
+  '84',
+  '87',
+  '90',
+  '92',
+  '102',
+  '114',
+  '124',
+  '169',
+  '171'
+])
 const REVIEW_TO_DISPOSITION = Object.freeze({
   ADMIT_AS_ACCEPTED: 'REUSE_AS_IS',
   TRANSFORM_TO_ACCEPTED: 'TRANSFORM',
   QUARANTINE: 'QUARANTINE'
 })
-const ALLOWED_DISPOSITIONS = new Set(Object.values(REVIEW_TO_DISPOSITION))
+const ALLOWED_DISPOSITIONS = new Set([
+  ...Object.values(REVIEW_TO_DISPOSITION),
+  'TRANSFORM_PENDING'
+])
 
 function isRecord(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
@@ -109,8 +148,16 @@ function exactCounts(reviews) {
   return counts
 }
 
-function countsMatchExpected(counts) {
-  return Object.keys(EXPECTED_COUNTS).every(key => counts[key] === EXPECTED_COUNTS[key])
+function countsMatch(counts, expectedCounts) {
+  return Object.keys(expectedCounts).every(key => counts[key] === expectedCounts[key])
+}
+
+function expectedApprovedDisposition(review) {
+  if (Object.hasOwn(TRANSFORM_PENDING_TARGETS, review.sourceRecordId)) {
+    return 'TRANSFORM_PENDING'
+  }
+  if (ADDITIONAL_QUARANTINE_IDS.has(review.sourceRecordId)) return 'QUARANTINE'
+  return REVIEW_TO_DISPOSITION[review.reviewDecision]
 }
 
 function assertReviewShape(review, expectedIndex, seenIds) {
@@ -196,16 +243,16 @@ export function loadReviewPacket({ projectRoot, reviewPacketPath, reviewPacketSh
     throw new Error(`审核包必须覆盖 ${EXPECTED_RECORD_COUNT} 条记录`)
   }
   const counts = exactCounts(reviews)
-  if (!countsMatchExpected(counts)) {
+  if (!countsMatch(counts, EXPECTED_RECOMMENDATION_COUNTS)) {
     throw new Error(
-      `代理建议集合不精确：实际 ${JSON.stringify(counts)}，期望 ${JSON.stringify(EXPECTED_COUNTS)}`
+      `代理建议集合不精确：实际 ${JSON.stringify(counts)}，期望 ${JSON.stringify(EXPECTED_RECOMMENDATION_COUNTS)}`
     )
   }
   const expectedSummary = {
     total: EXPECTED_RECORD_COUNT,
-    recommendedReuseAsIs: EXPECTED_COUNTS.REUSE_AS_IS,
-    recommendedTransform: EXPECTED_COUNTS.TRANSFORM,
-    recommendedQuarantine: EXPECTED_COUNTS.QUARANTINE
+    recommendedReuseAsIs: EXPECTED_RECOMMENDATION_COUNTS.REUSE_AS_IS,
+    recommendedTransform: EXPECTED_RECOMMENDATION_COUNTS.TRANSFORM,
+    recommendedQuarantine: EXPECTED_RECOMMENDATION_COUNTS.QUARANTINE
   }
   for (const [key, expected] of Object.entries(expectedSummary)) {
     if (packet.summary?.[key] !== expected) {
@@ -247,14 +294,16 @@ function sameSet(left, right) {
 /**
  * 校验人工批准制品。
  *
- * 批准范围必须逐条覆盖审核包的 200 条记录；其中 113 条必须明确批准为
- * REUSE_AS_IS，7 条明确批准为 TRANSFORM，80 条明确保持 QUARANTINE。
+ * 批准范围必须逐条覆盖审核包的 200 条记录；最终裁决为 99 条
+ * REUSE_AS_IS、7 条 TRANSFORM、4 条 TRANSFORM_PENDING 和 90 条
+ * QUARANTINE。四条待转换记录必须绑定新的 canonical 目标与权威来源，
+ * 在重新生成稳定 ID、身份层级和证据哈希前不得进入 seed。
  * 任何缺项、额外项、错配、代理主体或审核包 SHA 错误都会返回失败，调用方
  * 不得在失败状态下写入任何文件。
  */
 export function validateApprovalArtifact({ approval, packet }) {
   const errors = []
-  const counts = { REUSE_AS_IS: 0, TRANSFORM: 0, QUARANTINE: 0 }
+  const counts = { REUSE_AS_IS: 0, TRANSFORM: 0, TRANSFORM_PENDING: 0, QUARANTINE: 0 }
   if (!isRecord(approval)) {
     return { valid: false, errors: ['人工批准制品必须是对象'], counts }
   }
@@ -329,7 +378,7 @@ export function validateApprovalArtifact({ approval, packet }) {
       }
       for (const review of packet.reviews) {
         const actualDisposition = decisions[review.sourceRecordId]
-        const expectedDisposition = REVIEW_TO_DISPOSITION[review.reviewDecision]
+        const expectedDisposition = expectedApprovedDisposition(review)
         if (!ALLOWED_DISPOSITIONS.has(actualDisposition)) {
           errors.push(`sourceRecordId=${review.sourceRecordId} 人工处置非法`)
           continue
@@ -337,15 +386,45 @@ export function validateApprovalArtifact({ approval, packet }) {
         counts[actualDisposition] += 1
         if (actualDisposition !== expectedDisposition) {
           errors.push(
-            `sourceRecordId=${review.sourceRecordId} 人工处置与审核建议不一致；不能把代理建议改写为批准`
+            `sourceRecordId=${review.sourceRecordId} 人工处置与已采纳的 106/4/90 裁决不一致`
           )
         }
       }
     }
+    const transformPending = approval.scope.transformPendingBySourceRecordId
+    const expectedPendingIds = Object.keys(TRANSFORM_PENDING_TARGETS)
+    if (!isRecord(transformPending) || !sameSet(Object.keys(transformPending), expectedPendingIds)) {
+      errors.push('四条 TRANSFORM_PENDING 的目标键集合必须精确为 29、73、98、123')
+    } else {
+      for (const sourceRecordId of expectedPendingIds) {
+        const target = transformPending[sourceRecordId]
+        const expectedTarget = TRANSFORM_PENDING_TARGETS[sourceRecordId]
+        if (!isRecord(target)) {
+          errors.push(`sourceRecordId=${sourceRecordId} 缺少待转换目标`)
+          continue
+        }
+        if (
+          target.canonicalScientificName !== expectedTarget.canonicalScientificName ||
+          target.identityLevel !== expectedTarget.identityLevel
+        ) {
+          errors.push(`sourceRecordId=${sourceRecordId} 的 canonical 或身份层级与人工裁决不一致`)
+        }
+        if (target.requiresStableIdRegeneration !== true) {
+          errors.push(`sourceRecordId=${sourceRecordId} 必须重新生成稳定 ID`)
+        }
+        if (
+          !Array.isArray(target.authorityRefs) ||
+          target.authorityRefs.length === 0 ||
+          target.authorityRefs.some(ref => typeof ref !== 'string' || !/^https:\/\//u.test(ref))
+        ) {
+          errors.push(`sourceRecordId=${sourceRecordId} 缺少 HTTPS 权威来源`)
+        }
+      }
+    }
   }
-  if (!countsMatchExpected(counts)) {
+  if (!countsMatch(counts, EXPECTED_APPROVAL_COUNTS)) {
     errors.push(
-      `人工批准集合不精确：实际 ${JSON.stringify(counts)}，期望 ${JSON.stringify(EXPECTED_COUNTS)}`
+      `人工批准集合不精确：实际 ${JSON.stringify(counts)}，期望 ${JSON.stringify(EXPECTED_APPROVAL_COUNTS)}`
     )
   }
   return { valid: errors.length === 0, errors, counts }
@@ -365,7 +444,8 @@ export function buildSeedManifest({ approval, packet }) {
   const approvalSha256 = sha256Json(approval)
   const records = packet.reviews.map(review => {
     const approvedDisposition = approval.scope.dispositionBySourceRecordId[review.sourceRecordId]
-    const seedEligible = approvedDisposition !== 'QUARANTINE'
+    const seedEligible =
+      approvedDisposition === 'REUSE_AS_IS' || approvedDisposition === 'TRANSFORM'
     return {
       manifestIndex: review.manifestIndex,
       sourceRecordId: review.sourceRecordId,
@@ -380,6 +460,10 @@ export function buildSeedManifest({ approval, packet }) {
       family: review.family ?? null,
       recommendedDisposition: REVIEW_TO_DISPOSITION[review.reviewDecision],
       approvedDisposition,
+      transformTarget:
+        approvedDisposition === 'TRANSFORM_PENDING'
+          ? approval.scope.transformPendingBySourceRecordId[review.sourceRecordId]
+          : null,
       seedEligible
     }
   })
@@ -396,10 +480,11 @@ export function buildSeedManifest({ approval, packet }) {
       total: records.length,
       reuseAsIs: validation.counts.REUSE_AS_IS,
       transform: validation.counts.TRANSFORM,
+      transformPending: validation.counts.TRANSFORM_PENDING,
       quarantine: validation.counts.QUARANTINE,
       seedEligible: records.filter(record => record.seedEligible).length
     },
-    releaseStatus: 'SEED_READY_NOT_ACTIVE',
+    releaseStatus: 'SEED_PARTIALLY_READY_NOT_ACTIVE',
     activeRelease: 'STOP',
     records
   }

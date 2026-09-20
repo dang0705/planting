@@ -2,8 +2,10 @@ import type { JSONSchemaType } from "ajv";
 
 import type {
   CapabilitySnapshotDto,
+  ClaimedGuestObjectKind,
   ClaimGuestSessionCommandDto,
   ErrorResponseDto,
+  GuestClaimResultDto,
   GuestPrincipalDto,
   PublicAiActionRequestDto,
   ReserveAiQuotaCommandDto,
@@ -30,6 +32,12 @@ const USER_CAPABILITIES = [
   "USER_DIAGNOSIS_TEXT",
   "USER_DIAGNOSIS_VISUAL",
 ] as const;
+const CLAIMED_GUEST_OBJECT_KINDS: ClaimedGuestObjectKind[] = [
+  "identification_candidate",
+  "fixed_diagnosis_result",
+  "independent_watering_advice",
+  "soil_visual_evidence",
+];
 
 /** http-api/v1 的严格公开错误 Schema；额外内部字段一律拒绝。 */
 export const errorResponseSchema: JSONSchemaType<ErrorResponseDto> = {
@@ -370,6 +378,23 @@ export const claimGuestSessionCommandSchema: JSONSchemaType<ClaimGuestSessionCom
       ],
     },
     idempotencyKey: { type: "string", minLength: 8, maxLength: 128 },
+  },
+};
+
+/** 游客认领结果 Schema；只允许认领公开引用、目标植物、对象类别摘要与重放标志。 */
+export const guestClaimResultSchema: JSONSchemaType<GuestClaimResultDto> = {
+  type: "object",
+  additionalProperties: false,
+  required: ["claimRef", "userPlantId", "claimedObjectKinds", "replayed"],
+  properties: {
+    claimRef: { type: "string", pattern: `^gcl_${PUBLIC_REF_SUFFIX}$` },
+    userPlantId: { type: "string", pattern: `^upl_${PUBLIC_REF_SUFFIX}$` },
+    claimedObjectKinds: {
+      type: "array",
+      uniqueItems: true,
+      items: { type: "string", enum: CLAIMED_GUEST_OBJECT_KINDS },
+    },
+    replayed: { type: "boolean" },
   },
 };
 

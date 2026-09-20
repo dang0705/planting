@@ -1,0 +1,8 @@
+{
+  "workflowVersion": "p1-taxonomy-human-approval/v2",
+  "status": "COMMITTED",
+  "approvalArtifactSha256": "684d4a1287db832b09bd346eb96ff07867271d69408129be186f87c6f4b3d922",
+  "seedManifestSha256": "7c5965e3d5edacfe3387d9c08cee40274e0133d794602220c770514d70a4ac27",
+  "activeRelease": "STOP",
+  "committedAt": "2026-09-20T08:02:40+08:00"
+}

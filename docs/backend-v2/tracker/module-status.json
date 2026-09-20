@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-19T23:36:07.781Z",
+  "generatedAt": "2026-09-20T00:07:53.047Z",
   "snapshotSource": "docs/backend-v2/tracker/heartbeats/*.json（主代理汇总）",
   "trackerOwner": "主代理 /root（各 ticket 子代理写独立心跳；主代理校验、汇总并处理超时）",
   "clickUpStatus": "CREATED",
@@ -13,10 +13,10 @@
     "z8v0kmr96x": "done",
     "z8v0kmr9dq": "done",
     "z8v0kmr9dv": "done",
-    "z8v0kmr96y": "review needed",
-    "z8v0kmr96z": "review needed",
+    "z8v0kmr96y": "codex running",
+    "z8v0kmr96z": "done",
     "z8v0kmr9ge": "review needed",
-    "z8v0kmr9gm": "human required",
+    "z8v0kmr9gm": "review needed",
     "z8v0kmr9gn": "review needed",
     "z8v0kmr970": "backlog",
     "z8v0kmr971": "backlog",
@@ -27,7 +27,10 @@
     "z8v0kmr976": "backlog",
     "z8v0kmr977": "backlog",
     "z8v0kmr978": "backlog",
-    "z8v0kmr979": "backlog"
+    "z8v0kmr979": "backlog",
+    "z8v0kmr9mj": "backlog",
+    "z8v0kmr9mh": "backlog",
+    "z8v0kmr9mk": "backlog"
   },
   "agentRegistry": [
     {
@@ -70,11 +73,11 @@
       "name": "root + p1_taxonomy_ddl_close_terra + p1_taxonomy_authority_pipeline_terra",
       "path": "/root/root + p1_taxonomy_ddl_close_terra + p1_taxonomy_authority_pipeline_terra",
       "model": "root + gpt-5.6-terra / medium-high",
-      "status": "heartbeat_stale",
+      "status": "review_needed",
       "ticketIds": [
         "z8v0kmr9gm"
       ],
-      "lastObservedAt": "2026-09-20T06:57:31+08:00",
+      "lastObservedAt": "2026-09-20T08:12:00+08:00",
       "blockers": []
     },
     {
@@ -228,10 +231,10 @@
       "name": "植物知识、分类与 CMS",
       "phase": "P1/P2/P3",
       "plannedAgent": "knowledge_terra",
-      "agent": "p1_data_cms_close_luna、p1_taxonomy_close_terra",
+      "agent": "p1_data_cms_close_luna、p1_taxonomy_close_terra、root + p1_taxonomy_ddl_close_terra + p1_taxonomy_authority_pipeline_terra",
       "progress": 79,
       "status": "当前执行阶段进行中",
-      "lastUpdatedAt": "2026-09-20T06:57:31+08:00",
+      "lastUpdatedAt": "2026-09-20T08:12:00+08:00",
       "tickets": [
         {
           "id": "z8v0kmr96r",
@@ -269,9 +272,9 @@
           "url": "https://app.clickup.com/t/90182453517/z8v0kmr9gm",
           "plannedAgent": "taxonomy_gate_terra + root",
           "agent": "root + p1_taxonomy_ddl_close_terra + p1_taxonomy_authority_pipeline_terra",
-          "status": "心跳超时：P1 taxonomy 技术准备已完成并进入真实人工审核：200 条遗留候选已用固定 WCVP 2026-06-04 与 WFO 2026-06 官方制品真实回放，四个审核建议分片和两组独立反向审计均通过。建议汇总 REUSE_AS_IS=113、TRANSFORM=7、QUARANTINE=80；代理建议不等于人类批准，批准前 200 条仍全部 QUARANTINE、seedEligible=0、active release=STOP_PENDING_HUMAN_APPROVAL。",
+          "status": "review_needed：P1 taxonomy 人工裁决已采纳：200 条候选最终为 REUSE_AS_IS=99、TRANSFORM=7、TRANSFORM_PENDING=4、QUARANTINE=90，当前 seedEligible=106。人工采纳决策与 seed manifest 已落盘，但完整审批制品仍待主代理验收；active release=STOP，未宣称 done。",
           "progress": 95,
-          "lastUpdatedAt": "2026-09-20T06:57:31+08:00"
+          "lastUpdatedAt": "2026-09-20T08:12:00+08:00"
         },
         {
           "id": "z8v0kmr971",
@@ -293,7 +296,7 @@
       "phase": "P1/P2/P3",
       "plannedAgent": "user_plant_terra",
       "agent": "p1_guest_claim_consistency_luna + root",
-      "progress": 100,
+      "progress": 50,
       "status": "当前执行阶段已完成；后续阶段任务尚未启动",
       "lastUpdatedAt": "2026-09-20T07:02:14+08:00",
       "tickets": [
@@ -306,10 +309,20 @@
           "status": "done：主代理已完成独立验收并接受 P1 游客会话与登录后认领合同/Schema：三表唯一事实源、同一事务、回滚、租约、proof_version、目标一致性与幂等约束均冻结；定向 18/18、全量 68/68、typecheck、Schema 与合同登记册哈希均通过。真实 CloudBase MySQL、HTTP 身份/proof、Storage 绑定与并发回放仍按 P2/P5 验收，不被本票据冒充。",
           "progress": 100,
           "lastUpdatedAt": "2026-09-20T07:02:14+08:00"
+        },
+        {
+          "id": "z8v0kmr9mj",
+          "title": "[P2] 用户植物核心实现",
+          "url": "https://app.clickup.com/t/90182453517/z8v0kmr9mj",
+          "plannedAgent": "user_plant_terra",
+          "agent": null,
+          "status": "未分配",
+          "progress": null,
+          "lastUpdatedAt": null
         }
       ],
       "reportedTicketCount": 1,
-      "totalTicketCount": 1
+      "totalTicketCount": 2
     },
     {
       "id": "care",
@@ -365,7 +378,7 @@
       "phase": "P1/P2/P3",
       "plannedAgent": "subscription_terra",
       "agent": "subscription_terra + root",
-      "progress": 50,
+      "progress": 33,
       "status": "当前执行阶段已完成；后续阶段任务尚未启动",
       "lastUpdatedAt": "2026-09-20T07:02:14+08:00",
       "tickets": [
@@ -388,18 +401,28 @@
           "status": "未分配",
           "progress": null,
           "lastUpdatedAt": null
+        },
+        {
+          "id": "z8v0kmr9mh",
+          "title": "[P2] 订阅、积分与 AI 额度核心实现",
+          "url": "https://app.clickup.com/t/90182453517/z8v0kmr9mh",
+          "plannedAgent": "subscription_terra",
+          "agent": null,
+          "status": "未分配",
+          "progress": null,
+          "lastUpdatedAt": null
         }
       ],
       "reportedTicketCount": 1,
-      "totalTicketCount": 2
+      "totalTicketCount": 3
     },
     {
       "id": "foundation",
       "name": "HTTP、数据库、事件与可观测性",
-      "phase": "P0/P1/P5/P6",
+      "phase": "P0/P1/P2/P5/P6",
       "plannedAgent": "foundation_terra",
       "agent": "p1_legacy_close_luna、p1_external_close_luna、p1_storage_close_luna、p0_build_probe_terra、product_decisions_terra、integration_probe_terra、root、root + config_business_luna + provider_config_terra",
-      "progress": 67,
+      "progress": 62,
       "status": "当前执行阶段已完成；后续阶段任务尚未启动",
       "lastUpdatedAt": "2026-09-20T07:10:30+08:00",
       "tickets": [
@@ -522,16 +545,26 @@
           "status": "未分配",
           "progress": null,
           "lastUpdatedAt": null
+        },
+        {
+          "id": "z8v0kmr9mk",
+          "title": "[P2] 共享基础设施实现",
+          "url": "https://app.clickup.com/t/90182453517/z8v0kmr9mk",
+          "plannedAgent": "foundation_terra",
+          "agent": null,
+          "status": "未分配",
+          "progress": null,
+          "lastUpdatedAt": null
         }
       ],
       "reportedTicketCount": 8,
-      "totalTicketCount": 12
+      "totalTicketCount": 13
     }
   ],
   "overallProgress": {
-    "progress": 58,
+    "progress": 52,
     "reported": 14,
-    "total": 24
+    "total": 27
   },
-  "clickUpLastSyncedAt": "2026-09-20T07:35:44+08:00"
+  "clickUpLastSyncedAt": "2026-09-20T08:07:24+08:00"
 }

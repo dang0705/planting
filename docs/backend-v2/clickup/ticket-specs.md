@@ -1,6 +1,6 @@
 # Phase Ticket 预创建规格
 
-以下规格是 ClickUp ticket 的完整内容模板。当前 24 个 ticket 均已生成真实 ID；其中本文件末尾的三项 P1 补建 ticket 已通过用户 Chrome `default/main` 主 profile 创建并回读，状态以 ticket-index 与 tracker 心跳为准。
+以下规格是 ClickUp ticket 的完整内容模板。当前 27 个 ticket 均已生成真实 ID；其中本文件中的三项 P2 补建 ticket 已通过用户 Chrome `default/main` 主 profile 创建并逐项回读，状态以 ticket-index 与 tracker 心跳为准。
 
 ## P-1 / 遗留资产审计
 
@@ -121,12 +121,25 @@
 
 实现多平台身份到统一 `user_id` 的解析、绑定、解绑、session 轮换和游客主体隔离。
 
-### 验收
+### 边界与依赖
 
-- 同一平台主体不能绑定多个用户。
-- 用户可绑定多个平台。
-- 解绑和失效 session 不能继续访问业务数据。
-- 业务域不能自行解析平台身份。
+- 模块：`identity`；负责 agent：`identity_terra`；已创建 ClickUp：`z8v0kmr970`。
+- 依赖 P1 Principal/Capability、公共 HTTP 合同、`schema/001_identity.sql` 和 P2 foundation 的受控 Repository/事务能力；不实现用户植物、积分、会员、CMS 或诊断业务。
+- 平台凭证验证与平台主体解析只在 identity 域；业务域只能接收已解析的 `user_id` 与 Principal，不得读取、猜测或返回 OpenID 等平台主体标识。
+
+### Expected 与 TDD
+
+- Expected 来源：Master Plan 的 P2 identity 并行域、`contracts/principal-and-capability.md`、P1 身份 DDL 不变量和公开 HTTP 合同；不从现有实现反推。
+- 先落盘 `unit_fake` 的绑定/解绑/轮换/冲突 RED，再实现；随后以 `unit_real_data` 验证 Repository SQL、唯一约束、事务回滚与脱敏读回。真实 HTTP/CloudBase 身份验证属于后续 `e2e_real_api`，不得以 mock 或 200 代替。
+
+### 详细验收
+
+- 同一 `(platform, platform_subject_id)` 只能绑定一个 `user_id`；同一用户可绑定多个平台，竞争绑定必须由唯一约束和事务安全拒绝。
+- 绑定、解绑、session 轮换和撤销均有明确幂等键/版本规则：同键同参返回同一公开结果，同键异参返回 `409 IDEMPOTENCY_CONFLICT`，重复解绑不恢复访问。
+- Repository 是 identity SQL 的唯一入口；写操作在事务内完成身份绑定、session 失效与审计/outbox 记录，失败回滚后读回不得留下半绑定或可用旧 session。
+- 解绑、过期、撤销或轮换后的 session 不能解析为可访问 Principal；跨用户、非法平台、过期凭证和缺失字段均按公开错误合同拒绝。
+- 成功与错误响应、结构化日志、审计/outbox 仅使用公开业务语义；不得暴露数据库主键、平台主体标识、session/追踪 ID、凭证、SQL 或内部状态。
+- 测试覆盖正常路径、归属/权限、空值/非法输入、并发/重复提交、失败恢复、持久化读回和公开响应脱敏，并保留 RED 证据与测试层次标记。
 
 ## P2 / CMS 分类、百科和发布
 
@@ -134,13 +147,103 @@
 
 实现分类实体、产品身份、证据、候选池、展示百科补全、Qwen 禁区校验、CMS 审核和不可变 release。
 
-### 验收
+### 边界与依赖
 
-- 百度只产生候选。
-- Qwen 不得输出分类、养护、安全和诊断字段。
-- 身份未发布不得生成百科任务。
-- 私有图片不能进入公共 release。
-- release 发布成功后才能产生贡献奖励事件。
+- 模块：`plant-knowledge`；负责 agent：`knowledge_terra`；已创建 ClickUp：`z8v0kmr971`。
+- P1 taxonomy 人工裁决已冻结为 `99 REUSE_AS_IS + 7 TRANSFORM + 4 TRANSFORM_PENDING + 90 QUARANTINE`，当前 `seedEligible=106`。4 条待转换记录完成 canonical、稳定 ID、身份层级、父链和证据哈希重建并复核后，才允许提升为 110；active release 仍为 `STOP`。因此正式发布、百科补全、贡献奖励真实输入和依赖 active taxonomy 的对外读取继续受阻，但 Repository、事务、幂等、隔离读和发布基础设施可继续实现与测试。
+- 依赖 `contracts/plant-taxonomy.md`、P1 taxonomy 准入证据、`schema/002_plant_knowledge.sql`、P2 foundation 事务/outbox；不实现用户植物、会员积分账本或诊断建议。
+
+### Expected 与 TDD
+
+- Expected 来源：Master Plan P2 plant-knowledge 域、植物分类合同和 P1 taxonomy 准入硬门；任何未批准候选均是负向 Expected。
+- 先为候选隔离、身份状态迁移、release 指针、私有资产拒绝和 outbox 去重写 RED；再实现最小逻辑。Repository/事务/读回使用 `unit_real_data`，真实 CMS/供应商调用仅能作为后续 `e2e_real_api` 证据。
+
+### 详细验收
+
+- 百度识别只产生候选，不能直接创建 active 身份或发布；Qwen 仅可补全展示百科，且不得输出分类、养护、安全或诊断字段。
+- Repository 是分类、产品身份、证据、候选池、CMS 作业和 release SQL 的唯一入口；状态迁移、不可变 release 创建、active 指针切换与 outbox 写入在同一事务内，失败回滚后读回无半发布。
+- 发布请求有版本/幂等语义：同键同参重放返回同一公开 release 结果，同键异参 `409 IDEMPOTENCY_CONFLICT`；并发发布不能产生多个 active 指针或重复奖励事件。
+- 未发布/隔离身份不得生成百科任务、catalog/identify/CMS/care/diagnosis/Agent 查询或奖励；私有图片及原始供应商响应不得进入公共 release。
+- release 持久化读回必须证明 SHA、单 active 指针、版本固定和回退审计；仅在发布事务成功后写入可去重的贡献奖励 outbox，消费者失败可重试但不得重复产生业务事件。
+- 公开响应、日志与错误不得暴露内部主键、来源原文、供应商凭证、Prompt、模型原文、追踪 ID 或未授权用户数据；测试覆盖正常、权限、非法输入、幂等、失败恢复、读回与脱敏。
+
+## P2 / 订阅、积分与 AI 额度核心实现
+
+### 模块与负责人
+
+- 模块：`subscription`；负责 agent：`subscription_terra`（`gpt-5.6-terra`）。
+- ClickUp：[订阅、积分与 AI 额度核心实现](https://app.clickup.com/t/90182453517/z8v0kmr9mh)；已创建并逐项回读。
+- 依赖：P1 `contracts/care-points-and-ai-quota.md`、`contracts/reward-events.md`、`schema/005_subscription.sql`、P2 identity Principal 与 P2 foundation 事务/幂等/outbox；不实现支付、CMS 发布或端上页面。
+
+### 任务目的与边界
+
+实现已冻结合同内的 grant、AI 额度预占/分配/结算/释放、积分不可变账本、等级投影、兑换与奖励 inbox；业务域不得自行写余额或积分，外部支付和真实 Provider 调用留给后续阶段。
+
+### Expected 与 TDD
+
+- Expected 来源：P1 额度与奖励合同、P1 DDL、Master Plan P2/P3 边界；不以旧表或旧业务代码作为实现真相。
+- 先写 `unit_fake` 正常/权限/非法/并发重放 RED，再实现；以 `unit_real_data` 验证 Repository 事务、唯一约束、余额守恒和读回。真实 MySQL/API 并发回放由 P5 `e2e_real_api` 验收，不得以 mock 或 HTTP 200 冒充。
+
+### 详细验收
+
+- 仅已解析 Principal 可读取或操作其 `user_id` 的权益、额度、积分和兑换；跨用户、游客越权、无 scope/过期 grant、非法金额和缺失请求字段均拒绝且不泄露内部数据。
+- Repository 是 subscription SQL 唯一入口；预占、分配、结算、释放、积分账本、等级投影、兑换终态和 inbox/outbox 在明确事务边界内写入，失败回滚后读回不得有负余额、悬挂预占或半写事件。
+- 所有写操作具备幂等键/业务唯一约束：同键同参重放返回同一公开结果，同键异参 `409 IDEMPOTENCY_CONFLICT`；并发预占/兑换/奖励不超发、不重复扣减、不重复升级。
+- 积分账本不可变，等级奖励每级仅一次；outbox/inbox 消费可重放、乱序和失败恢复，但业务事件按唯一事件键至多生效一次。
+- 公开响应、日志、审计和错误均脱敏：不得返回数据库主键、账本内部流水、session/追踪 ID、Provider 凭证或未授权余额明细。
+- 测试明确标注 Expected 来源及 `unit_fake`/`unit_real_data`/`e2e_real_api` 层级，并覆盖正常、权限/归属、空值非法、重复/并发、失败恢复、持久化读回和脱敏。
+
+## P2 / 用户植物核心实现
+
+### 模块与负责人
+
+- 模块：`user-plant`；负责 agent：`user_plant_terra`（`gpt-5.6-terra`）。
+- ClickUp：[用户植物核心实现](https://app.clickup.com/t/90182453517/z8v0kmr9mj)；已创建并逐项回读。
+- 依赖：P1 `contracts/user-plant.md`、`contracts/guest-session-claim.md`、`schema/003_user_plant.sql`、P2 identity Principal 与 P2 foundation 事务/幂等/outbox；不实现养护事实、诊断建议、积分奖励或前端。
+
+### 任务目的与边界
+
+实现登录用户的用户植物、档案、生命周期、环境、资产引用和时间线，落实 `user_id + user_plant_id` 长期归属与已冻结游客认领合同。临时识别/问诊上下文不得伪造为用户植物。
+
+### Expected 与 TDD
+
+- Expected 来源：P1 用户植物/游客认领合同、P1 DDL、Master Plan P2 user-plant 域；旧记录仅可帮助识别字段形状，绝不是迁移或行为 Expected。
+- 先写 `unit_fake` 的创建、更新、归属、版本冲突、游客认领和失败回滚 RED；随后以 `unit_real_data` 验证 Repository SQL、事务、唯一约束和读回。真实 HTTP/MySQL 并发闭环留给 P5 `e2e_real_api`。
+
+### 详细验收
+
+- 只有已解析的登录 `user_id` 可以创建、读取、更新、归档自己的 `user_plant_id`；跨用户、无效/不存在植物、游客直接创建长期植物和平台主体冒充均拒绝。
+- Repository 是用户植物、档案、环境、资产引用和时间线 SQL 的唯一入口；创建/更新/认领在事务内完成归属和必要 outbox，失败回滚后读回不得出现孤儿资产、半认领或跨用户可见记录。
+- 关键写操作采用 `Idempotency-Key`、唯一约束和/或版本号：同键同参重放返回同一公开结果，同键异参 `409 IDEMPOTENCY_CONFLICT`，并发编辑返回合同规定的版本冲突且不覆盖他人更新。
+- 同会话游客登录后仅能按合同显式一次性认领；过期、跨会话、跨用户、重复或同键异参认领被拒绝或幂等返回，且不把建议转为养护事实、不追溯积分。
+- 时间线只记录已授权的用户植物业务事件；资产仅保存受控引用，公开响应、日志、错误和 outbox 不得包含数据库主键、平台主体标识、session/追踪 ID、私有对象路径或未授权数据。
+- 测试覆盖正常、归属/权限、空值非法、重复/并发、失败恢复、持久化读回和脱敏，并标注测试层级和未覆盖的真实 API 边界。
+
+## P2 / 共享基础设施实现
+
+### 模块与负责人
+
+- 模块：`foundation`；负责 agent：`foundation_terra`（`gpt-5.6-terra`）。
+- ClickUp：[共享基础设施实现](https://app.clickup.com/t/90182453517/z8v0kmr9mk)；已创建并逐项回读。
+- 依赖：P1 `contracts/http-api.md`、OpenAPI 路由骨架、配置/Provider 架构、`schema/006_reliable_events.sql`；为 P2 五域提供受控共享边界，不承载领域决策、不新增万能服务层。
+
+### 任务目的与边界
+
+实现 Node.js 22 HTTP 请求链的可复用协议能力：请求大小/类型限制、Principal 注入、DTO/AJV、公开错误、Repository 事务封装、幂等记录、可靠 outbox、公开响应脱敏和结构化审计。它不拥有 identity、用户植物、知识、订阅或养护领域规则，也不执行未授权 CloudBase 部署、DDL、迁移或供应商写入。
+
+### Expected 与 TDD
+
+- Expected 来源：Master Plan 固定请求链、P1 公共 HTTP 合同、配置目录中已确认的 foundation 项和可靠事件 schema；`pending` 配置只能阻断对应能力，不能私设默认值。
+- 先写 `unit_fake` 的协议/幂等/outbox RED，再实现；`unit_real_data` 验证事务、唯一约束、失败回滚与公开读回。真实 CloudBase 网关、MySQL 与 HTTP 路径留给 P5 `e2e_real_api`，不得以本地 200 代替。
+
+### 详细验收
+
+- 每个请求按固定顺序执行：大小/类型限制 → 身份认证 → 平台身份解析为统一 `user_id` → 用户植物归属校验 → DTO → 用例 → 领域规则 → Repository/事务 → 脱敏响应、结构化日志和审计事件；缺少适用步骤必须显式说明而非静默跳过。
+- DTO/AJV、公开错误与响应封套和 OpenAPI 路由登记一致；非法 Content-Type/超限 body/缺失字段/未知字段/无效 Principal 均在进入领域或 SQL 前按合同拒绝。
+- Repository 事务边界支持原子业务写入、幂等记录与 outbox 同事务持久化；事务失败读回无业务半写、无已确认幂等结果、无孤儿 outbox。Repository 不能承载领域 SQL 的旁路。
+- 共享幂等规则强制同键同参重放为同一公开结果、同键异参 `409 IDEMPOTENCY_CONFLICT`；并发请求不重复提交领域命令或 outbox，消费者失败可重试且业务事件按唯一键去重。
+- outbox 仅记录脱敏事件载荷和可审计状态；投递失败、重复、乱序和重启恢复均可观察、可回放，且不泄露凭证、内部主键、Prompt、模型原文、SQL、session/追踪 ID。
+- 测试覆盖正常、权限、非法输入、重复/并发、失败恢复、事务读回、响应/日志脱敏；每项声明 Expected 来源、替换边界和未覆盖的真实 CloudBase/API 验收。
 
 ## P3 / 游客、试用、会员和奖励闭环
 
@@ -240,11 +343,13 @@
 
 - 模块：`plant-knowledge`；负责 agent：`taxonomy_gate_terra + root`。
 - ClickUp：[植物分类与身份准入硬门](https://app.clickup.com/t/90182453517/z8v0kmr9gm)。
-- 入口：`contracts/plant-taxonomy.md`、`audits/P0-taxonomy-exit-gate.md`、`audits/P0-taxonomy-evidence-z8v0kmr96x.json`。
+- 入口：`contracts/plant-taxonomy.md`、`audits/P1-taxonomy-human-decision-2026-09-20.md`、`audits/P1-taxonomy-human-approval-2026-09-20.json`、`audits/taxonomy-approval-2026-09-20/seed-manifest.json`、`implementation/taxonomy-transform-pending-rebuild.md`。
 
 ### 目的
 
 对 200 条候选逐条建立 authority evidence、稳定 ID、版本、等级、父链、accepted/synonym、冲突与审核决定；代表性 P0 证伪 PASS 不得外推为身份准入 GO，未证明记录保持 `QUARANTINE/NOT_ADMITTED`。
+
+人工裁决已冻结为 `99 REUSE_AS_IS + 7 TRANSFORM + 4 TRANSFORM_PENDING + 90 QUARANTINE`。当前 106 条只获准进入本地未激活 seed；来源记录 29、73、98、123 必须完成独立身份重建和复核后才能把 `seedEligible` 提升到 110，active release 在独立验收前始终为 `STOP`。
 
 ### 验收
 
@@ -257,6 +362,7 @@
 - 隔离 v2 空库导入与持久化读回证明隔离记录不会被 catalog/identify/CMS/care/diagnosis/Agent 查询。
 - 缺证据、断父链、冲突、重复、伪造版本和跨 release 读取均有负向 Expected/RED；通过 manifest/sidecar 核验。
 - 失败时保留 STOP 原因、影响能力和恢复条件，不自动发布或发奖励。
+- 29、73、98、123 的新 authority key、原始制品 SHA、来源版本、完整父链、中文规范展示名和名称关系逐条闭环；两条栽培品种缺可版本化 RHS/ICRA 登记证据时必须失败关闭。
 - 未授权 CloudBase、MySQL/CMS/Storage、云函数、网关、DDL、迁移、部署、删除、凭证和真实供应商写入。
 
 ## P1 / 业务策略与统一 Provider 配置架构（z8v0kmr9gn）

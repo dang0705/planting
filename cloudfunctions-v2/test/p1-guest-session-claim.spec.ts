@@ -61,6 +61,23 @@ test("游客认领只保留一个 claim_ref 事实源，成功事实和当前投
   assert.match(currentProjection, /`claimed_user_plant_internal_id` BIGINT UNSIGNED NULL/u);
 });
 
+test("用户植物生命周期和当前身份状态只能落入冻结枚举", () => {
+  const { schema } = readGuestClaimArtifacts();
+  const userPlants = tableBody(schema, "user_plants");
+
+  // Break：直接写入数据库时把 current_identity_status 写成未冻结值，公开 DTO 虽会拒绝，
+  // 但持久化投影已被污染。
+  // Mutation：删除状态枚举 CHECK，或把任意字符串重新纳入允许集合。
+  assert.match(
+    userPlants,
+    /CONSTRAINT `ck_user_plant_lifecycle_status` CHECK \(`lifecycle_status` IN \('active', 'archived', 'deleting', 'deleted'\)\)/u,
+  );
+  assert.match(
+    userPlants,
+    /CONSTRAINT `ck_user_plant_current_identity_status` CHECK \(`current_identity_status` IN \('unidentified', 'candidate_pending', 'confirmed'\)\)/u,
+  );
+});
+
 test("成功事实必须同时匹配命令的案例、用户和最终目标", () => {
   const { contract, schema } = readGuestClaimArtifacts();
   const command = tableBody(schema, "guest_claim_commands");

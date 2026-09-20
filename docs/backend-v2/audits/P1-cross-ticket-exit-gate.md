@@ -1,14 +1,14 @@
 # P1 合同、身份准确性、Schema 与 Foundation 总退出闸门
 
 - 审计日期：2026-09-20
-- 当前结论：`TECHNICAL_PRECONDITIONS_PASS / HUMAN_TAXONOMY_APPROVAL_STOP`
+- 当前结论：`TECHNICAL_PRECONDITIONS_PASS / HUMAN_TAXONOMY_APPROVAL_PASS / TRANSFORM_REBUILD_REVIEW_STOP`
 - 适用范围：仅判断 `docs/backend-v2/phases/P1-contracts-identity-foundation.md` 的退出条件；不外推为 P2-P5 业务实现、CloudBase 真实环境或发布完成。
 
 ## 退出条件逐项核对
 
 | P1 退出条件 | 当前证据 | 结论 |
 |---|---|---|
-| 植物身份准确性审计通过 | 200 条候选均完成 WCVP/WFO 权威证据回放与独立复核；113 条建议原样复用、7 条建议转换、80 条建议隔离；但尚无产品负责人明确批准记录，当前 `seedEligible=0`、active release STOP | **STOP：只缺真实人工批准** |
+| 植物身份准确性审计通过 | 产品负责人已把原始 113/7/80 建议改判并采纳为 `99 REUSE_AS_IS + 7 TRANSFORM + 4 TRANSFORM_PENDING + 90 QUARANTINE`；完整 200 条批准制品和未激活 seed 已生成并通过 SHA-256 读回，当前 `seedEligible=106`、active release STOP | **部分通过：人工裁决已闭环；4 条待转换记录仍须重建并复核** |
 | 业务关键变量 100% 分类且 P1 实现依赖项全部冻结 | 162 项全部分类；74 项 confirmed、49 项后续阶段 pending、39 项 hard_rule；P1 pending=0；后续 pending 已按首次消费点改挂 P3/P4/P5 且保留 `blockingScope` | PASS |
 | 空库建表通过 | 官方 MySQL 8.4.11 双空库各执行 7 份 DDL，均生成 86 张表；规范化结构导出 SHA-256 完全一致 | PASS |
 | 代表性 RED 已保存 | `docs/backend-v2/audits/evidence/` 保存合同、状态/数据、API 与 DDL RED；新百科、诊断 Schema、Prompt、能力目录和配置冻结均先观察 RED 再转绿 | PASS |
@@ -25,22 +25,25 @@
 - 百炼精确快照：`qwen3.5-flash-2026-02-23`；产品模型家族与供应商精确代码分层，禁止静默换模。
 - Docker 本地 MySQL 验证：Docker 29.8.0、MySQL 8.4.11、无宿主端口、临时数据目录、验证后容器清理。
 
-## 唯一未闭合门
+## 尚未闭合门
 
-产品负责人必须审阅 `P1-taxonomy-human-approval-packet.md` 并给出明确批准范围。建议的最小安全批准语句为：
+人工批准已闭环，不再是 blocker。当前只剩以下四条 `TRANSFORM_PENDING` 的身份重建与复核：
 
 ```text
-批准 113 条 REUSE_AS_IS 和 7 条 TRANSFORM 进入 v2 taxonomy seed；80 条 QUARANTINE 继续隔离，不得进入 active release。
+29  水仙       → Narcissus tazetta subsp. chinensis
+73  银皇后     → Aglaonema commutatum 'Silver Queen'
+98  狐尾天门冬 → Asparagus densiflorus 'Myersii'
+123 绯牡丹     → Gymnocalycium stenopleurum
 ```
 
-批准后的本地落盘必须经过 `taxonomy-human-approval-workflow.mjs`：它会把批准主体、时间、完整的 200 条逐项处置与当前审核包 SHA-256 绑定，只生成 `SEED_READY_NOT_ACTIVE`、`activeRelease=STOP` 的种子清单。代理名称、缺项、SHA 不一致或任意处置漂移均失败关闭；该工作流本身不激活分类发布。
+本地落盘已经经过 `taxonomy-human-approval-workflow.mjs`：批准主体、时间、200 条逐项处置与审核包 SHA-256 已绑定，结果固定为 `SEED_PARTIALLY_READY_NOT_ACTIVE`、`activeRelease=STOP`。代理名称、缺项、SHA 不一致、待转换目标缺失或任意处置漂移均失败关闭；该工作流本身不激活分类发布。
 
-在该批准落盘、批准批次 SHA-256 生成、seed manifest 更新并重新验证前：
+在四条记录完成 canonical、稳定 ID、`identity_level`、父链和证据哈希重建并重新验证前：
 
-- 不得把 120 条建议项改成已批准；
+- 不得把当前 `seedEligible=106` 改成 110；
 - 不得生成可激活 taxonomy release；
 - 不得把本报告状态改为 GO；
-- 不得绕过该门进入依赖规范植物身份 seed 的 P2/P3 实现。
+- 不得绕过该门进入依赖这四条身份或 active taxonomy 的 P2/P3 路径；不依赖 active taxonomy 的 P2 工作继续推进。
 
 ## 验证边界
 

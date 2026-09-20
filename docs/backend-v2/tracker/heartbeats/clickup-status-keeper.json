@@ -1,8 +1,8 @@
 {
   "agent": "clickup_status_keeper_luna",
   "model": "gpt-5.6-luna / medium",
-  "checkedAt": "2026-09-20T07:35:44+08:00",
-  "nextCheckAt": "2026-09-20T07:50:44+08:00",
+  "checkedAt": "2026-09-20T08:07:24+08:00",
+  "nextCheckAt": "2026-09-20T08:22:24+08:00",
   "channel": "用户 Chrome default/main 主 profile + Chrome MCP",
   "scope": [
     "Phase-P-1 全部 5 个 ticket、Phase-P1 全部 5 个 ticket及其登记状态",
@@ -21,10 +21,10 @@
     "z8v0kmr96x": "done",
     "z8v0kmr9dq": "done",
     "z8v0kmr9dv": "done",
-    "z8v0kmr96y": "review needed",
-    "z8v0kmr96z": "review needed",
+    "z8v0kmr96y": "codex running",
+    "z8v0kmr96z": "done",
     "z8v0kmr9ge": "review needed",
-    "z8v0kmr9gm": "human required",
+    "z8v0kmr9gm": "review needed",
     "z8v0kmr9gn": "review needed",
     "z8v0kmr970": "backlog",
     "z8v0kmr971": "backlog",
@@ -35,7 +35,10 @@
     "z8v0kmr976": "backlog",
     "z8v0kmr977": "backlog",
     "z8v0kmr978": "backlog",
-    "z8v0kmr979": "backlog"
+    "z8v0kmr979": "backlog",
+    "z8v0kmr9mj": "backlog",
+    "z8v0kmr9mh": "backlog",
+    "z8v0kmr9mk": "backlog"
   },
   "changes": [
     {
@@ -259,6 +262,24 @@
       "from": "codex running",
       "to": "human required",
       "reason": "本轮确认 taxonomy 仍为 HUMAN_TAXONOMY_APPROVAL_STOP：200 条候选全部 QUARANTINE、seedEligible=0、active release=STOP_PENDING_HUMAN_APPROVAL；审批准备代理不等于人工批准。ClickUp 已回读 HUMAN REQUIRED。"
+    },
+    {
+      "ticketId": "z8v0kmr96y",
+      "from": "review needed",
+      "to": "codex running",
+      "reason": "主审发现两个静态硬缺口，修复代理正在以 TDD 实现；ClickUp 页面已回读 CODEX RUNNING。"
+    },
+    {
+      "ticketId": "z8v0kmr96z",
+      "from": "review needed",
+      "to": "done",
+      "reason": "主代理已验收 P1 合同/DDL 范围；真实并发、Provider、CMS 闭环明确属于后续 P2/P3/P5，不构成本票据阻断。ClickUp 页面已回读 DONE。"
+    },
+    {
+      "ticketId": "z8v0kmr9gm",
+      "from": "human required",
+      "to": "review needed",
+      "reason": "人工已采纳 99/7/4/90，seed manifest 已生成但 active release 仍 STOP，完整审批与 seed 制品仍待主代理生成/验收；ClickUp 页面已回读 REVIEW NEEDED，不标记 done。"
     }
   ],
   "failures": [

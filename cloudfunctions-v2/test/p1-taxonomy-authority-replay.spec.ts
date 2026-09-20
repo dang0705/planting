@@ -15,6 +15,9 @@ const FOURTH_RECORD_INDEX = 3;
 const SHA256_HEX_LENGTH = 64;
 const MD5_HEX_LENGTH = 32;
 const GIT_CANDIDATE_RECORD_COUNT = 200;
+const LEGACY_CANDIDATE_BLOB = "ba8b7c0cc8f8c8c3ab0c5e9105804806f496b877";
+const LEGACY_CANDIDATE_SHA256 =
+  "de5ad55fa4589ac56481ce684b030d46213fc2bf6d3838d5217248c813f3fac1";
 const WFO_ZENODO_RECORD_ID = 20_782_718;
 const WFO_ARTIFACT_FILE_NAME = "wfo_plantlist_2026-06.zip";
 
@@ -491,7 +494,7 @@ describe("P1 分类权威来源离线回放流水线", () => {
 
   test("真实 Git 候选快照保持 200 条且无人工裁决时不能被自动放行", async () => {
     const fixture = makeFixture();
-    const candidates = execFileSync("git", ["show", "HEAD:docs/plant_catalog.csv"], {
+    const candidates = execFileSync("git", ["cat-file", "blob", LEGACY_CANDIDATE_BLOB], {
       cwd: projectRoot,
       encoding: "utf8",
     });
@@ -500,7 +503,7 @@ describe("P1 分类权威来源离线回放流水线", () => {
 
     const result = await runTaxonomyAuthorityReplay({
       candidatePath: fixture.candidatePath,
-      expectedCandidateSha256: "de5ad55fa4589ac56481ce684b030d46213fc2bf6d3838d5217248c813f3fac1",
+      expectedCandidateSha256: LEGACY_CANDIDATE_SHA256,
       wcvp: {
         artifactPath: fixture.wcvpArtifactPath,
         expectedArtifactSha256: sha256(fs.readFileSync(fixture.wcvpArtifactPath, "utf8")),

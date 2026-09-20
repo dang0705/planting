@@ -21,7 +21,7 @@
       "version": "guest-session-claim/v1",
       "file": "guest-session-claim.md",
       "owner": "plant-knowledge + user-plant + care + diagnosis",
-      "sha256": "b0b4e53d44cc84556f8e13104cdd7f700430a1ac3451e78fc52e7f1469da395b"
+      "sha256": "639726193f00c2dd309b56dcd686f12e6b4173e0b6a3ebdb3b70b57a8881b1c6"
     },
     {
       "id": "care-points-and-ai-quota",

@@ -4,10 +4,11 @@
   "ticketId": "z8v0kmr9gm",
   "scope": "P1 当前候选种子的逐条负向准入审计；不构成任何分类学正向裁决或种子导入文件。",
   "sourceSnapshot": {
-    "path": "git:HEAD:docs/plant_catalog.csv",
+    "path": "git:blob:ba8b7c0cc8f8c8c3ab0c5e9105804806f496b877",
+    "sourceFile": "docs/plant_catalog.csv (已删除；仅由不可变 Git blob 回放)",
     "expectedSha256": "de5ad55fa4589ac56481ce684b030d46213fc2bf6d3838d5217248c813f3fac1",
     "observedSha256": "de5ad55fa4589ac56481ce684b030d46213fc2bf6d3838d5217248c813f3fac1",
-    "availability": "PRESENT_AS_VERIFIED_GIT_HISTORY_REFERENCE",
+    "availability": "PRESENT_AS_IMMUTABLE_GIT_BLOB",
     "allowedPurpose": "仅做 P1 遗留参考审计；不得恢复到工作树、不得直接导入 v2。"
   },
   "authorityEvidenceBoundary": {

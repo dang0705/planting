@@ -4,7 +4,8 @@
   "generatedAt": "2026-09-20T03:10:00+08:00",
   "ticketId": "z8v0kmr9gm",
   "sourceSnapshot": {
-    "ref": "git:HEAD:docs/plant_catalog.csv",
+    "ref": "git:blob:ba8b7c0cc8f8c8c3ab0c5e9105804806f496b877",
+    "sourceFile": "docs/plant_catalog.csv (已删除；仅由不可变 Git blob 回放)",
     "sha256": "de5ad55fa4589ac56481ce684b030d46213fc2bf6d3838d5217248c813f3fac1",
     "recordCount": 200
   },

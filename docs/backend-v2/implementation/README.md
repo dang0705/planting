@@ -9,3 +9,7 @@
 - [可观测性](observability.md)
 - [P1 植物分类权威来源离线回放](taxonomy-authority-replay.md)
 - [P1 植物分类人工批准与种子清单工作流](taxonomy-human-approval-workflow.md)
+- [P1 植物身份人工裁决](../audits/P1-taxonomy-human-decision-2026-09-20.md)
+- [P1 植物身份逐条批准制品](../audits/P1-taxonomy-human-approval-2026-09-20.json)
+- [P1 植物身份未激活 seed](../audits/taxonomy-approval-2026-09-20/seed-manifest.json)
+- [P1 四条待转换植物身份重建](taxonomy-transform-pending-rebuild.md)

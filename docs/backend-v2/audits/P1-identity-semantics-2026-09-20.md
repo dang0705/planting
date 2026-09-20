@@ -14,7 +14,7 @@
 | 当前事实源 | SHA-256 |
 |---|---|
 | `docs/backend-v2/contracts/principal-and-capability.md` | `dff62758dd223ed2249ebd0d9717548109bd57873fab042d49907865ff0d5524` |
-| `docs/backend-v2/contracts/guest-session-claim.md` | `b0b4e53d44cc84556f8e13104cdd7f700430a1ac3451e78fc52e7f1469da395b` |
+| `docs/backend-v2/contracts/guest-session-claim.md` | `639726193f00c2dd309b56dcd686f12e6b4173e0b6a3ebdb3b70b57a8881b1c6` |
 | `docs/backend-v2/contracts/user-plant.md` | `704355797729e7a13d218f9a2cac96fc3e65b1833250ed85c205e7a5e8b18878` |
 | `docs/backend-v2/contracts/http-api.md` | `0ecf6dc11211f9276bde005bdcd92f0ae5a30e82c9b65888dd54c74a6058a8ee` |
 | `docs/backend-v2/data/state-machines.md` | `c14b685993e5178e52e5bfcb683674b736c3020ac76eab9b60105bbe9a89d5d9` |
@@ -22,13 +22,13 @@
 | `docs/backend-v2/data/manifest.json` | `ace61653cedc5f7d73f5560a98eae53c0b16aa4c86fcca48a6d9d4e1ae0cd387` |
 | `docs/backend-v2/architecture/configuration-variable-catalog.json` | `7f51103ed728465e4645b853cadac008765cb61ed4abfc2df4ee686a9e4d9c9e` |
 | `docs/backend-v2/schema/001_identity.sql` | `e1adf7fc04a33cfd1bb0945c9298e4c6a832edc28096d874973eb420890466d6` |
-| `docs/backend-v2/schema/003_user_plant.sql` | `2e8494c23e7bd7a26871e2031b934ab2746a89b2d7af5ca4a9abbd469cc5c6b2` |
-| `docs/backend-v2/schema/manifest.json` | `ad7e0e8a198ce6b14db7ab6abf0cbffb93e33fbbce640572ab123a18bd173f77` |
-| `cloudfunctions-v2/src/contracts/types.ts` | `81ed6d656be12ce6bdeaa2870d6b33c96819953e5f6534a4dcfd11869d374b75` |
-| `cloudfunctions-v2/src/contracts/schemas.ts` | `d156dd0d224234669975e9e239fd8de04827192c2ee2db79188baf90d30892af` |
+| `docs/backend-v2/schema/003_user_plant.sql` | `a621039bc2b81cfd4a0c373ac452299ac7d1a9a9729c15ac4240eafb4ec0b9f1` |
+| `docs/backend-v2/schema/manifest.json` | `ad35c751e2545fb3ae0447506b89156285d5b7b35799806a2c6c811be68355ad` |
+| `cloudfunctions-v2/src/contracts/types.ts` | `34229c37b41271d2d94b7aab33b208c7d0e34635932707a0ae0095eaf60ffe3b` |
+| `cloudfunctions-v2/src/contracts/schemas.ts` | `f790230bff3d8f0019c86aeb713952ff8578ee829e983b8554b2018b20d1c237` |
 | `cloudfunctions-v2/test/p1-identity-foundation.spec.ts` | `8b5ae09e92eb1c3c34adbad3198741e558a1a4cb7625e2dcfb086c0a0286ed3d` |
-| `cloudfunctions-v2/test/p1-public-contracts.spec.ts` | `e0d063d7b00d56b5050d09ff2bba4d626713841cd9b4a2a6e2f289c1becfb1cb` |
-| `cloudfunctions-v2/test/p1-guest-session-claim.spec.ts` | `e2b6da58ce3ca54839ec69bb61f32496059a0a2ca8c2e04ca6b3e87d24498245` |
+| `cloudfunctions-v2/test/p1-public-contracts.spec.ts` | `957686ff7e7c86a3b6e5baff372d2d22236531b25b414c82f94381e4613ffb58` |
+| `cloudfunctions-v2/test/p1-guest-session-claim.spec.ts` | `1b655c728978e8b082255e22b972cf34086b937a2e4d2ba60b27e99b0419af73` |
 | `cloudfunctions-v2/test/p1-state-and-data-dictionary.spec.ts` | `e2d791d823f5dc930b282aa5cc0f364f7fffddc765e2eff41d1524a9dac9cea0` |
 
 ## 2. 当前已冻结的身份语义
@@ -45,14 +45,14 @@
 
 - `X-QHZ-Guest-Proof` 是唯一证明传输位置；URL、JSON、日志和错误响应不得携带原始 proof。服务端只保存 SHA-256、proof version 和最多 300 秒的上一版摘要宽限期。
 - `ClaimGuestSessionCommand` 不接收 `proof_version`、`user_id` 或内部主键；服务端从锁定会话的验证结果写入 proof version。003 DDL 保存 proof version、processing lease、attempt count、失败原因和目标一致性约束。
-- `guest_claim_commands` 是唯一公开 `claim_ref` 事实源；`guest_case_claims` 是不可变成功事实；`guest_plant_cases` 的 claimed owner 是可重建当前投影。合同要求新建植物、成功事实、案例投影和命令完成状态同一事务提交或全部回滚。
+- `guest_claim_commands` 是唯一公开 `claim_ref` 事实源；`guest_case_claims` 是不可变成功事实；`guest_plant_cases` 的 claimed owner 是可重建当前投影。合同要求新建植物、成功事实、案例投影和命令完成状态同一事务提交或全部回滚。`GuestClaimResultDto` 只允许公开 claim 引用、目标用户植物引用、对象类别摘要和重放标志。
 
 ### 2.3 service 签名与 CapabilitySnapshot
 
 - service 合同固定 `key_id/timestamp/nonce/body_sha256/scope/signature`、HMAC-SHA-256 规范化串、正负 300 秒时钟窗口、至少 600 秒 nonce 保留和 `(service_name, nonce_hash)` 不含 `key_id` 的唯一消费键。
 - `ServicePrincipalDto` 的类型和 AJV Schema 按服务分支收窄为单一 scope；未知 scope、跨服务 scope、多个 scope 和 `ALL_*` 均拒绝；路由 registry 的 `requiredScope` 与服务白名单逐项对应。
 - `CapabilitySnapshotDto` 已存在于 `types.ts`；Schema 严格区分 guest/user，guest 禁止 `user_id` 且植物上限为 0，user 必须有 `usr_...`；校验包装器拒绝 `generatedAt >= validUntil`。005 DDL 进一步约束主体形状、有效期和已发布能力策略复合外键。
-- 公开 `UserPlantDto` 只返回 `upl_...`、生命周期、身份状态、版本和时间；内部 `user_internal_id`、平台主体、session_ref、proof、nonce 和快照内部引用不得进入公开响应。
+- 公开 `UserPlantDto` 只返回 `upl_...`、生命周期、身份状态、版本和时间；`GuestClaimResultDto` 仅返回白名单结果字段；内部 `user_internal_id`、平台主体、session_ref、proof、nonce、租约、请求哈希和快照内部引用不得进入公开响应。
 
 ## 3. P1 身份语义的当前静态裁决
 
@@ -68,7 +68,7 @@
 | `P1-ID-06` | 静态已定：合同与001已固定外部凭证验证后按 bearer SHA-256 读取 session，复合外键和24h session约束已落盘。 | CloudBase bearer 验证、session签发/撤销运行链路未验证。 |
 | `P1-ID-07` | 静态已定：001 已有 users、binding、session、nonce 的枚举、摘要和时间 CHECK；identity foundation 测试覆盖约束文本。 | 跨表状态一致性、版本递增和非法转换的真实事务未验证。 |
 | `P1-ID-08` | 静态已定：guest 合同已固定 proof header、哈希、版本、300秒宽限和常量时间比较边界；003 保存对应摘要/版本。 | 匿名主体绑定、proof 生成轮换和24h边界未在 CloudBase 运行验证。 |
-| `P1-ID-09` | 静态已定：guest 合同与003已固定唯一事实源、三表复合一致性、租约恢复和失败不写成功事实；专项 guest claim 测试覆盖静态约束。 | MySQL 事务崩溃恢复、租约竞争和重复回放未验证。 |
+| `P1-ID-09` | 静态已定：guest 合同与003已固定唯一事实源、三表复合一致性、租约恢复和失败不写成功事实；专项测试覆盖静态约束。本地 MySQL 8.4 空库已拒绝非法用户植物生命周期与身份状态写入。 | MySQL 事务崩溃恢复、租约竞争和重复回放未验证。 |
 | `P1-ID-10` | 静态已定：HTTP 合同、001 和 identity foundation 测试已覆盖 key_id、请求时间、body hash、scope、nonce唯一键和签名版本字段。 | 验签成功与 nonce 原子占用、密钥轮换和真实服务请求未验证。 |
 | `P1-ID-11` | 静态已定：types/schemas 按服务白名单收窄 scope，route registry 已登记逐路由 requiredScope。 | 真实 middleware 执行、scope 与业务 handler 的联动未验证。 |
 | `P1-ID-12` | 静态已定：CapabilitySnapshot 类型、AJV 互斥分支、时间顺序包装器、005 DDL主体/策略外键和测试均已存在。 | 能力快照运行生成、过期重新裁决和公开投影未验证。 |
@@ -79,8 +79,8 @@
 ## 4. 当前本地测试证据
 
 - `p1-identity-foundation.spec.ts`：读取真实 001/003/005 DDL、状态机并通过 CapabilitySnapshot、服务 scope、proof、状态/时间 CHECK 的静态 Expected。
-- `p1-public-contracts.spec.ts`：通过 guest/user/service principal、UserPlant 脱敏、认领目标、奖励事件和 AI 动作边界的 AJV 负向 Expected。
-- `p1-guest-session-claim.spec.ts`：通过 guest claim 单一事实源、三表复合关联、事务文字合同、processing lease、proof version 和 target 一致性的静态 Expected。
+- `p1-public-contracts.spec.ts`：通过 guest/user/service principal、UserPlant 脱敏、认领目标、认领结果白名单脱敏、奖励事件和 AI 动作边界的 AJV 负向 Expected。
+- `p1-guest-session-claim.spec.ts`：通过 guest claim 单一事实源、三表复合关联、事务文字合同、processing lease、proof version、target 一致性及用户植物精确状态枚举的静态 Expected。
 - `p1-state-and-data-dictionary.spec.ts`：通过状态机、数据字典和 `data/manifest.json` 的 SHA 读回；新鲜度测试还核验本审计 sidecar。
 - 所有上述测试层级为 `unit_real_data` 或 `unit_fake`；它们不连接 CloudBase/MySQL，不把 HTTP 200、字符串存在或 SHA 一致当作身份运行时通过。
 

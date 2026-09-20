@@ -16,6 +16,8 @@ CREATE TABLE `user_plants` (
   UNIQUE KEY `uq_user_plant_public_ref` (`public_user_plant_id`),
   UNIQUE KEY `uq_user_plant_owner_pair` (`user_internal_id`, `id`),
   KEY `idx_user_plant_list` (`user_internal_id`, `lifecycle_status`, `updated_at_ms`),
+  CONSTRAINT `ck_user_plant_lifecycle_status` CHECK (`lifecycle_status` IN ('active', 'archived', 'deleting', 'deleted')),
+  CONSTRAINT `ck_user_plant_current_identity_status` CHECK (`current_identity_status` IN ('unidentified', 'candidate_pending', 'confirmed')),
   CONSTRAINT `ck_user_plant_identity_projection` CHECK ((`current_identity_status` = 'confirmed' AND `confirmed_identity_internal_id` IS NOT NULL) OR (`current_identity_status` <> 'confirmed' AND `confirmed_identity_internal_id` IS NULL)),
   CONSTRAINT `fk_user_plant_user` FOREIGN KEY (`user_internal_id`) REFERENCES `users` (`id`),
   CONSTRAINT `fk_user_plant_identity` FOREIGN KEY (`confirmed_identity_internal_id`) REFERENCES `plant_identities` (`id`)

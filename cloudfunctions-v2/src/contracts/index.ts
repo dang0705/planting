@@ -4,6 +4,7 @@ import {
   capabilitySnapshotSchema,
   claimGuestSessionCommandSchema,
   errorResponseSchema,
+  guestClaimResultSchema,
   guestPrincipalSchema,
   publicAiActionRequestSchema,
   reserveAiQuotaCommandSchema,
@@ -16,6 +17,7 @@ import type {
   CapabilitySnapshotDto,
   ClaimGuestSessionCommandDto,
   ErrorResponseDto,
+  GuestClaimResultDto,
   GuestPrincipalDto,
   PublicAiActionRequestDto,
   ReserveAiQuotaCommandDto,
@@ -30,6 +32,7 @@ export {
   capabilitySnapshotSchema,
   claimGuestSessionCommandSchema,
   errorResponseSchema,
+  guestClaimResultSchema,
   guestPrincipalSchema,
   publicAiActionRequestSchema,
   reserveAiQuotaCommandSchema,
@@ -58,6 +61,8 @@ export function createPublicContractValidators(): {
   userPlant: ValidateFunction<UserPlantDto>;
   /** 游客会话认领命令校验器；保证新建植物与绑定已有植物的目标形状互斥。 */
   claimGuestSession: ValidateFunction<ClaimGuestSessionCommandDto>;
+  /** 游客认领公开结果校验器；拒绝数据库内部键、用户归属、proof、租约和请求哈希。 */
+  guestClaimResult: ValidateFunction<GuestClaimResultDto>;
   /** 奖励资格领域事件校验器；拒绝 points、amount 等由 subscription 计算的结果字段。 */
   rewardableDomainEvent: ValidateFunction<RewardableDomainEventDto>;
   /** 公开 AI 动作请求校验器；客户端只能声明动作和能力，不能提交成本或点数。 */
@@ -100,6 +105,7 @@ export function createPublicContractValidators(): {
     servicePrincipal: ajv.compile(servicePrincipalSchema),
     userPlant: ajv.compile(userPlantSchema),
     claimGuestSession: ajv.compile(claimGuestSessionCommandSchema),
+    guestClaimResult: ajv.compile(guestClaimResultSchema),
     rewardableDomainEvent: ajv.compile(rewardableDomainEventSchema),
     publicAiAction: ajv.compile(publicAiActionRequestSchema),
     reserveAiQuota: ajv.compile(reserveAiQuotaCommandSchema),

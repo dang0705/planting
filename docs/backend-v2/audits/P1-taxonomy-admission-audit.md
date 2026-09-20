@@ -5,9 +5,11 @@
 > 审计性质：`unit_real_data` 输入完整性与准入审计；不写 CloudBase、CMS、MySQL、公共合同、总 DDL 或运行时代码。  
 > Expected 来源：`contracts/plant-taxonomy.md` 的 release 准入谓词、`data/phase-1-identity-audit.md` 的 GO/STOP 条件、P0/P-1 的“代表性证据不可外推”结论。
 
+> 状态说明：本文与同名 manifest 保存的是**人工裁决前的否决性准入快照**，不是当前 seed 状态。2026-09-20 产品负责人完成全量人工改判后，当前权威结果已切换为 [人工裁决](P1-taxonomy-human-decision-2026-09-20.md)、[逐条批准制品](P1-taxonomy-human-approval-2026-09-20.json) 与 [未激活 seed](taxonomy-approval-2026-09-20/seed-manifest.json)：`99 REUSE_AS_IS + 7 TRANSFORM + 4 TRANSFORM_PENDING + 90 QUARANTINE`，当前 `seedEligible=106`，active release 仍为 `STOP`。
+
 ## 1. 结论
 
-**当前没有任何植物身份种子可准入 v2 active release。**
+**本快照生成时没有任何植物身份种子可准入；当前仍没有任何 active release，但已有 106 条获准进入本地未激活 seed。**
 
 | 裁决 | 数量 | 含义 |
 |---|---:|---|
@@ -15,7 +17,7 @@
 | `QUARANTINE` | 200 | 仅保留为待补证或待人工裁决的候选，禁止 catalog、identify、CMS、care、diagnosis 与 Agent 读取；包含 ID 32 的混合群组负例。 |
 | `REJECTED` | 0 | 本轮没有擅自作最终删除/拒绝裁决；ID 32 仅被禁止作为单一 taxon 准入，后续如仍有产品展示价值，须走独立 `product_group` 人工建模。 |
 
-逐条裁决的机器可读证据在 [P1-taxonomy-admission-manifest.json](P1-taxonomy-admission-manifest.json)。清单包含 `sourceRecordId=1..200` 的 200 个独立对象，每条均绑定到 `git:HEAD:docs/plant_catalog.csv` 的原始行与行级 SHA-256；**没有通过范围、代表样本或名称字符串推断其他记录**。该历史对象只能作为遗留参考输入，不得恢复到旧路径，更不得直接导入 v2。
+逐条裁决的机器可读证据在 [P1-taxonomy-admission-manifest.json](P1-taxonomy-admission-manifest.json)。清单包含 `sourceRecordId=1..200` 的 200 个独立对象，每条均绑定到已删除 `docs/plant_catalog.csv` 的不可变 Git blob `ba8b7c0cc8f8c8c3ab0c5e9105804806f496b877` 的原始行与行级 SHA-256；**没有通过范围、代表样本或名称字符串推断其他记录**。该历史对象只能由 blob 审计读取，不得恢复到旧路径，更不得直接导入 v2。
 
 ## 2. 输入完整性：可复核遗留输入不等于可准入 v2 种子
 

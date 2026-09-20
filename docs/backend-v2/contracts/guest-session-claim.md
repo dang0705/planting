@@ -61,6 +61,25 @@ export type ClaimGuestSessionCommand = {
 }
 ```
 
+认领成功或同键同参重放时，公开结果固定为以下白名单字段。`claimedObjectKinds` 只说明
+哪些临时对象类别已获得派生归属，不能返回对象内部主键、对象内容、模型输出、持有证明、
+租约或请求哈希。
+
+```ts
+export type GuestClaimResult = {
+  /** 认领命令的唯一公开引用；同键同参重放必须保持不变。 */
+  claimRef: string
+  /** 最终归属的用户植物公开引用。 */
+  userPlantId: string
+  /** 已绑定临时对象的白名单类别摘要；不包含对象 ID、内容或内部状态。 */
+  claimedObjectKinds: Array<
+    'identification_candidate' | 'fixed_diagnosis_result' | 'independent_watering_advice' | 'soil_visual_evidence'
+  >
+  /** true 表示同键同参重放回读，false 表示本次首次成功完成认领。 */
+  replayed: boolean
+}
+```
+
 事务规则：
 
 - 登录前后的请求必须持有同一匿名会话证明；仅知道 `guestSessionRef` 不足以认领。

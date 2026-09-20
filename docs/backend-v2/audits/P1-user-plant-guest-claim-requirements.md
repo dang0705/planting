@@ -3,8 +3,8 @@
 > ClickUp ticket：`z8v0kmr96y`  
 > 负责 agent：`p1_user_plant_terra`  
 > 审计时间：2026-09-20（Asia/Shanghai）  
-> 范围：P1 领域审计、guest-session-claim/v1 合同、003 user-plant DDL、专项 Vitest Expected 与本地制品核验；未涉及公共 DTO/types/schema、API route registry、Master Plan、配置目录、前端、CloudBase 资源或 ClickUp。  
-> 本地结论：`CONTRACT_AND_SCHEMA_CONSISTENCY_IMPLEMENTED / REAL_MYSQL_AND_HTTP_PENDING`。本报告不替代真实 API、身份、MySQL 事务或云存储验收。
+> 范围：P1 领域审计、guest-session-claim/v1 合同、003 user-plant DDL、公开 DTO/AJV、专项 Vitest Expected 与本地制品核验；未涉及 API route registry、前端、CloudBase 资源或 ClickUp。
+> 本地结论：`CONTRACT_SCHEMA_AND_LOCAL_MYSQL_CONSTRAINT_PASS / REAL_MYSQL_TRANSACTION_AND_HTTP_PENDING`。本报告不替代真实 API、身份、MySQL 事务或云存储验收。
 
 ## 1. 结论先行
 
@@ -12,7 +12,7 @@
 2. 游客不能拥有用户植物。游客只能在短期临时会话内持有识别候选、固定题包结果、独立浇水建议及受限盆土视觉证据；登录后必须由用户显式选择“新建植物”或“已有植物”并执行一次性认领。
 3. 认领只补充归属：不能将候选、问诊结果、浇水建议、提醒、通知或模型输出改写为植物事实、养护计划或已执行行为；也不能对游客时期的行为追溯积分、等级、AI 额度或 CMS 贡献奖励。
 4. 身份状态允许“暂未识别”，这是正确的风险控制，而不是数据缺陷。身份不足时宁停在未知或属级，不能错误确认到物种。候选必须保留在识别会话，只有用户明确确认后才成为当前已确认身份。
-5. 当前 `user-plant/v1`、`guest-session-claim/v1` 与合同登记册已冻结公开引用、24 小时未绑定会话保留、单一认领编排、案例整体认领、跨域派生归属和身份历史 `superseded` 语义。P1-UPC-01 至 P1-UPC-05 均已闭合；本轮已补齐游客认领三表唯一事实源、目标一致性、processing lease 与事务回滚 Expected，真实 MySQL/API 验收仍待后续阶段。
+5. 当前 `user-plant/v1`、`guest-session-claim/v1` 与合同登记册已冻结公开引用、24 小时未绑定会话保留、单一认领编排、案例整体认领、跨域派生归属和身份历史 `superseded` 语义。`user_plants` 的生命周期和当前身份状态已各自收紧为精确枚举；`GuestClaimResultDto` 仅公开 claim 引用、目标植物引用、对象类别摘要和重放标志。真实 MySQL 事务/API 验收仍待后续阶段。
 
 ## 2. 本次读取边界与 Expected 来源
 
@@ -144,7 +144,7 @@ CloudBase 匿名主体、设备 ID、IP、UA 和客户端静态签名都不是 `
 
 ### 7.1 DTO / API 合同
 
-主代理已冻结基础领域语义；以下仍须作为可执行 DTO/API 文档、Expected 和测试输入固化，本审计不创建它们：
+以下 DTO/API 语义已作为可执行 TypeScript/AJV 合同固化；路由接线仍由后续阶段实现：
 
 - `UserPlantPublicRef`：公开 `user_plant_id` 的不透明格式与不可枚举要求；
 - `UserPlantIdentitySnapshot`：当前身份状态、已确认规范身份公开引用、候选会话公开引用、历史版本语义；
@@ -175,7 +175,7 @@ CloudBase 匿名主体、设备 ID、IP、UA 和客户端静态签名都不是 `
 | `diagnosis` | 临时问诊会话、答案、结果、证据 | 认领只补充归属；结果保持结果。 |
 | 受控基础设施 | 审计事件、幂等记录、outbox/inbox（如采用） | 同键同参可回放、同键异参冲突、失败可补偿且不重奖。 |
 
-本轮已补充游客认领所需的外键/唯一约束、复合归属约束、`UNIQUE(user, case, idempotency_key)`、规范化载荷哈希、认领后目标不可更换的数据库关系、processing lease 不变量和空库静态 Expected；真实空库读回、软删除/清理索引与 API 仍待后续验收。
+本轮已补充游客认领所需的外键/唯一约束、复合归属约束、`UNIQUE(user, case, idempotency_key)`、规范化载荷哈希、认领后目标不可更换的数据库关系、processing lease 不变量，以及用户植物生命周期和当前身份状态的精确 CHECK 枚举。隔离本地 MySQL 8.4 已拒绝两项非法状态写入；真实 CloudBase、事务回滚、并发和 API 仍待后续验收。
 
 ### 7.4 Expected 与测试
 
@@ -195,7 +195,7 @@ CloudBase 匿名主体、设备 ID、IP、UA 和客户端静态签名都不是 `
 
 ## 8. 后续验收边界与不应做的事
 
-1. 公共 DTO/API、状态机和路由仍由主代理按已冻结合同独立验收；本轮不修改公共 types/schema 或 API registry。
+1. 公共 DTO/Schema 已完成本轮脱敏与状态形状验收；API 路由仍由后续阶段按已冻结合同独立验收。
 2. 认领实现必须保持本合同的单一 user-plant 编排、三表关系和同一 MySQL 事务边界，不能借用旧 `plant-user-http` 的混合职责。
 3. 后续才进行真实 MySQL 与 HTTP 认领回放、Storage 验证/绑定/清理和 CloudBase 匿名身份验证；静态 Vitest 不得冒充这些证据。
 4. 未通过真实证据前，不部署、不迁移云端数据、不删除旧资源、不把测试数据作为 v2 迁移源。
@@ -211,10 +211,12 @@ CloudBase 匿名主体、设备 ID、IP、UA 和客户端静态签名都不是 `
 - `guest_plant_cases.claimed_user_internal_id + claimed_user_plant_internal_id` 是可重建当前 owner 投影；成功事实以复合外键要求它与案例投影完全一致，投影不能单独产生认领结论。
 - `proof_version` 只记录服务端实际验证的游客持有证明版本；请求体不接受该字段。processing lease 由 owner hash、过期时间和递增 `attempt_count` 组成，过期可由同一命令恢复。
 - existing target 的 requested/final target 必须一致；new target 只能在同一事务中新建后写回。命令、用户植物、案例投影和成功事实提交失败时一起回滚。
+- `GuestClaimResultDto` 只允许 `claimRef`、`userPlantId`、`claimedObjectKinds` 和 `replayed`；内部 BIGINT、`user_id`、proof、租约与 `request_hash` 均由严格 Schema 拒绝。
 
 ### 9.2 可执行 RED/GREEN 与验证范围
 
-- 专项：`cloudfunctions-v2/test/p1-guest-session-claim.spec.ts`，层次 `unit_real_data`，读取真实合同/003 DDL；正式测试转入默认回归前的历史 RED 探针为 8/8 失败，补齐制品后 GREEN 为 8/8。
-- 已通过：`npm --prefix cloudfunctions-v2 run typecheck`；`npm --prefix cloudfunctions-v2 test -- --run test/p1-total-ddl.spec.ts`；专项 `test:red`。
-- `docs/backend-v2/schema/manifest.json` 已同步 `003_user_plant.sql` SHA-256 `2e8494c23e7bd7a26871e2031b934ab2746a89b2d7af5ca4a9abbd469cc5c6b2`。
-- 未覆盖：真实 CloudBase MySQL 建表/并发/回读、真实 HTTP 身份与 proof 传输、Storage 绑定清理；这些结论必须标为 `BLOCKED_ENV` 或后续 `e2e_real_api`，不能由本专项静态测试替代。
+- RED 证据：`audits/evidence/P1-user-plant-guest-claim-hardening-red.md` 固定了缺少状态枚举 CHECK 与 `guestClaimResult` validator 时的 2 项失败。
+- GREEN：`cloudfunctions-v2/test/p1-guest-session-claim.spec.ts`（9 项）与 `p1-public-contracts.spec.ts`（10 项）通过，`typecheck` 通过；`p1-total-ddl.spec.ts` 在 manifest 同步后通过。
+- `docs/backend-v2/schema/manifest.json` 已同步 `003_user_plant.sql` SHA-256 `a621039bc2b81cfd4a0c373ac452299ac7d1a9a9729c15ac4240eafb4ec0b9f1`。
+- 隔离本地 MySQL 8.4 空库按 manifest 建表后，`invalid_identity` 与 `invalid_lifecycle` 两次写入均由对应 CHECK 拒绝，且 `user_plants` 读回为 0 行；见 `audits/evidence/P1-user-plant-guest-claim-hardening-green.md`。
+- 未覆盖：CloudBase MySQL、真实认领事务回滚/并发/重放、真实 HTTP 身份与 proof 传输、Storage 绑定清理；这些结论必须标为 `BLOCKED_ENV` 或后续 `e2e_real_api`，不能由本专项静态测试替代。

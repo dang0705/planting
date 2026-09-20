@@ -41,6 +41,20 @@ type ApprovalScope = {
   sourceRecordIds: string[]
   /** 每个源记录的人工最终处置，键集合必须与 sourceRecordIds 完全相同。 */
   dispositionBySourceRecordId: Record<string, string>
+  /** 四条新增转换的目标与重新生成稳定身份要求；这些记录在复核前不得进入 seed。 */
+  transformPendingBySourceRecordId: Record<
+    string,
+    {
+      /** 人工裁决后的 canonical 学名。 */
+      canonicalScientificName: string
+      /** 目标身份层级。 */
+      identityLevel: 'species' | 'subspecies' | 'cultivar'
+      /** 支撑人工裁决的权威来源链接。 */
+      authorityRefs: string[]
+      /** 必须重新生成稳定 ID，禁止沿用旧 WCVP ID。 */
+      requiresStableIdRegeneration: true
+    }
+  >
   /** 范围内明确处理的记录数。 */
   approvedRecordCount: number
 }
@@ -184,8 +198,14 @@ function makeApproval(projectRoot: string): ApprovalArtifact {
     }
     dispositionBySourceRecordId[review.sourceRecordId] = disposition
   }
+  for (const sourceRecordId of ['79', '84', '87', '90', '92', '102', '114', '124', '169', '171']) {
+    dispositionBySourceRecordId[sourceRecordId] = 'QUARANTINE'
+  }
+  for (const sourceRecordId of ['29', '73', '98', '123']) {
+    dispositionBySourceRecordId[sourceRecordId] = 'TRANSFORM_PENDING'
+  }
   return {
-    approvalVersion: 'p1-taxonomy-human-approval/v1',
+    approvalVersion: 'p1-taxonomy-human-approval/v2',
     batch: {
       batchId: 'z8v0kmr9gm-test-full-20260920',
       ticketId: 'z8v0kmr9gm',
@@ -199,6 +219,38 @@ function makeApproval(projectRoot: string): ApprovalArtifact {
       kind: 'FULL_REVIEW_PACKET',
       sourceRecordIds: packet.reviews.map(review => review.sourceRecordId),
       dispositionBySourceRecordId,
+      transformPendingBySourceRecordId: {
+        '29': {
+          canonicalScientificName: 'Narcissus tazetta subsp. chinensis',
+          identityLevel: 'subspecies',
+          authorityRefs: [
+            'https://www.iplant.cn/info/Narcissus%20tazetta%20subsp.%20chinensis?t=z'
+          ],
+          requiresStableIdRegeneration: true
+        },
+        '73': {
+          canonicalScientificName: "Aglaonema commutatum 'Silver Queen'",
+          identityLevel: 'cultivar',
+          authorityRefs: [
+            'https://www.rhs.org.uk/plants/704/aglaonema-commutatum-silver-queen/details'
+          ],
+          requiresStableIdRegeneration: true
+        },
+        '98': {
+          canonicalScientificName: "Asparagus densiflorus 'Myersii'",
+          identityLevel: 'cultivar',
+          authorityRefs: [
+            'https://www.rhs.org.uk/plants/28198/asparagus-densiflorus-myersii/details'
+          ],
+          requiresStableIdRegeneration: true
+        },
+        '123': {
+          canonicalScientificName: 'Gymnocalycium stenopleurum',
+          identityLevel: 'species',
+          authorityRefs: ['https://wfoplantlist.org/'],
+          requiresStableIdRegeneration: true
+        }
+      },
       approvedRecordCount: 200
     },
     reviewPacket: {
@@ -209,7 +261,7 @@ function makeApproval(projectRoot: string): ApprovalArtifact {
 }
 
 describe('P1 分类人工批准落盘与种子清单工作流', () => {
-  test('真实审核包必须精确保持 113 原样、7 转换、80 隔离', async () => {
+  test('原审核包保持 113/7/80，但人工改判必须精确为 99/7/4/90', async () => {
     const projectRoot = findProjectRoot()
     const workflow = await loadWorkflow()
     const packet = loadRealPacket(projectRoot)
@@ -232,7 +284,12 @@ describe('P1 分类人工批准落盘与种子清单工作流', () => {
     })
     expect(validation).toMatchObject({
       valid: true,
-      counts: { REUSE_AS_IS: 113, TRANSFORM: 7, QUARANTINE: 80 }
+      counts: {
+        REUSE_AS_IS: 99,
+        TRANSFORM: 7,
+        TRANSFORM_PENDING: 4,
+        QUARANTINE: 90
+      }
     })
   })
 
@@ -252,13 +309,34 @@ describe('P1 分类人工批准落盘与种子清单工作流', () => {
 
     expect(seedManifest.summary).toMatchObject({
       total: 200,
-      reuseAsIs: 113,
+      reuseAsIs: 99,
       transform: 7,
-      quarantine: 80,
-      seedEligible: 120
+      transformPending: 4,
+      quarantine: 90,
+      seedEligible: 106
     })
-    expect(seedManifest.releaseStatus).toBe('SEED_READY_NOT_ACTIVE')
+    expect(seedManifest.releaseStatus).toBe('SEED_PARTIALLY_READY_NOT_ACTIVE')
     expect(seedManifest.activeRelease).toBe('STOP')
+  })
+
+  test('四条新增转换缺少目标证据或被提前计入 seed 时必须失败关闭', async () => {
+    const projectRoot = findProjectRoot()
+    const workflow = await loadWorkflow()
+    const packet = loadRealPacket(projectRoot)
+    const loaded = workflow.loadReviewPacket({
+      projectRoot,
+      reviewPacketPath: path.relative(projectRoot, packet.packetPath),
+      reviewPacketSha256: packet.packetSha256
+    })
+    const approval = makeApproval(projectRoot)
+    delete approval.scope.transformPendingBySourceRecordId['29']
+    expect(workflow.validateApprovalArtifact({ approval, packet: loaded }).valid).toBe(false)
+
+    const earlyAdmission = makeApproval(projectRoot)
+    earlyAdmission.scope.dispositionBySourceRecordId['29'] = 'TRANSFORM'
+    expect(workflow.validateApprovalArtifact({ approval: earlyAdmission, packet: loaded }).valid).toBe(
+      false
+    )
   })
 
   test('缺少人工批准或篡改批准范围必须失败关闭', async () => {
@@ -364,7 +442,7 @@ describe('P1 分类人工批准落盘与种子清单工作流', () => {
     expect(fs.existsSync(path.join(outputDirectory, 'approval-record.json'))).toBe(true)
     expect(fs.existsSync(path.join(outputDirectory, 'seed-manifest.json'))).toBe(true)
     expect(fs.readFileSync(path.join(outputDirectory, 'seed-manifest.json'), 'utf8')).toContain(
-      'SEED_READY_NOT_ACTIVE'
+      'SEED_PARTIALLY_READY_NOT_ACTIVE'
     )
     const seedManifestBytes = fs.readFileSync(path.join(outputDirectory, 'seed-manifest.json'))
     const seedSidecar = fs.readFileSync(path.join(outputDirectory, 'seed-manifest.sha256'), 'utf8')

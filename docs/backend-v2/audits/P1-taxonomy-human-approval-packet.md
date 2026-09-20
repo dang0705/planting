@@ -1,13 +1,13 @@
-# P1 分类法真实人工批准审核包
+# P1 分类法人工审核输入包
 
-> 用途：供产品负责人在 ClickUp "z8v0kmr9gm" 对 P1 taxonomy admission 做真实人工批准。本文是代理审核建议的可审计呈现，不是人工批准记录。
+> 用途：保存产品负责人实施人工裁决时使用的完整 200 条原始审核输入。最终有效裁决、逐条机器可读批准和未激活 seed 分别见 `P1-taxonomy-human-decision-2026-09-20.md`、`P1-taxonomy-human-approval-2026-09-20.json` 与 `taxonomy-approval-2026-09-20/seed-manifest.json`。本文中的 113/7/80 仅是原始代理建议，不是当前准入状态。
 
-## 1. 批准边界与当前闸门
+## 1. 输入边界与当前裁决
 
-- 代理建议不等于人类批准：以下 REUSE_AS_IS、TRANSFORM、QUARANTINE 仅来自批次审核 JSON 的建议，产品负责人必须逐项核阅权威证据和业务语义后，另行明确选择批准项。
+- 代理建议不等于人类批准：以下 REUSE_AS_IS、TRANSFORM、QUARANTINE 仅来自批次审核 JSON 的原始建议。
 - 本包覆盖 200 条 legacy source records：113 条 REUSE_AS_IS、7 条 TRANSFORM、80 条 QUARANTINE，合计 113 + 7 + 80 = 200。
-- 当前安全默认：全部隔离（quarantine=200）、seedEligible=0、active release STOP；未取得明确人工批准前，不得写入可发布 taxonomy seed 或推进 active release。
-- REUSE_AS_IS 仍须人工批准后才可准入；TRANSFORM 只有接受名、稳定 ID、原名保留关系经人工确认后才可准入；QUARANTINE 默认保持隔离。
+- 产品负责人已经完成改判并采纳 `99 REUSE_AS_IS + 7 TRANSFORM + 4 TRANSFORM_PENDING + 90 QUARANTINE`；当前本地未激活 seed 的 `seedEligible=106`。
+- 4 条 `TRANSFORM_PENDING` 在重新生成 canonical、稳定 ID、身份层级、父链和证据哈希并复核前不得进入 seed；active release 继续为 `STOP`。
 
 ## 2. 人工批准选项语义与风险
 
@@ -335,4 +335,3 @@ source IDs：91, 96
 - QUARANTINE：80 条。
 - 总数：113 + 7 + 80 = 200 条。
 - admission manifest 当前状态：admitted=0、quarantined=200、seedEligible=0、active release STOP。
-

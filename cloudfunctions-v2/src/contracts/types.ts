@@ -15,6 +15,8 @@ export type UserPlantRef = PublicRef<"user-plant">;
 export type GuestSessionRef = PublicRef<"guest-session">;
 /** 游客植物案例公开引用；用于认领前的临时案例关联和幂等重放。 */
 export type GuestPlantCaseRef = PublicRef<"guest-plant-case">;
+/** 游客认领命令公开引用；同键同参重放必须回读同一个引用。 */
+export type GuestClaimRef = PublicRef<"guest-claim">;
 /** 已发布植物规范身份公开引用；不等同于用户植物，也不能单独授予用户归属。 */
 export type PlantIdentityRef = PublicRef<"plant-identity">;
 /** 领域事件公开引用；用于事件去重、审计和跨域关联，不是数据库主键。 */
@@ -194,6 +196,25 @@ export type ClaimGuestSessionCommandDto = {
       };
   /** 客户端重试用的幂等键；同一会话、同一命令键只能产生一次认领结果，不能放入秘密信息。 */
   idempotencyKey: string;
+};
+
+/** 游客认领结果中允许返回的临时对象类别；不携带任何对象内容或内部键。 */
+export type ClaimedGuestObjectKind =
+  | "identification_candidate"
+  | "fixed_diagnosis_result"
+  | "independent_watering_advice"
+  | "soil_visual_evidence";
+
+/** 游客案例认领的严格公开结果；只返回白名单摘要，禁止泄露命令、用户或租约内部状态。 */
+export type GuestClaimResultDto = {
+  /** 唯一公开认领引用；同键同参重放必须稳定回读该值。 */
+  claimRef: GuestClaimRef;
+  /** 最终归属的用户植物公开引用；不暴露数据库内部 BIGINT。 */
+  userPlantId: UserPlantRef;
+  /** 已获得派生归属的临时对象类别白名单；不返回对象 ID、内容、模型输出或内部状态。 */
+  claimedObjectKinds: ClaimedGuestObjectKind[];
+  /** 是否为同键同参请求的结果重放。 */
+  replayed: boolean;
 };
 
 /** 可触发奖励资格裁决的领域事件类型；事件本身不携带最终积分或 AI 点数。 */
