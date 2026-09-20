@@ -17,6 +17,7 @@ import type {
   TransactionExecutionContext
 } from '../../src/foundation/database/transaction-runner.js'
 import { createReserveAiQuotaUseCase } from '../../src/subscription/application/reserve-ai-quota.js'
+import { createResolvePendingAiQuotaUseCase } from '../../src/subscription/application/resolve-pending-ai-quota.js'
 import { createSettleAiQuotaUseCase } from '../../src/subscription/application/settle-ai-quota.js'
 import type {
   AiQuotaReservationSqlExecutor,
@@ -32,7 +33,9 @@ import type {
 import { createMysqlAiQuotaSettlementRepository } from '../../src/subscription/repository/mysql-ai-quota-settlement-repository.js'
 import { findProjectRoot } from '../support/project-root.js'
 import {
+  expectPendingReconciliationState,
   expectReservedQuotaState,
+  expectResolvedPendingState,
   expectSettledQuotaState
 } from '../support/subscription-quota-mysql-assertions.js'
 
@@ -404,56 +407,34 @@ describe('AI 额度预占的真实 MySQL 并发闭环', () => {
     })
     expect(settlementLedgerSequence).toBe(Number('3'))
 
-    const [pendingRows] = await pool.query<RowDataPacket[]>(
-      `
-        SELECT
-          a.available_amount,
-          a.reserved_amount,
-          a.consumed_amount,
-          r.status AS reservation_status,
-          r.settled_amount,
-          r.actual_cost_micros,
-          r.usage_evidence_ref,
-          r.platform_absorbed_cost_micros,
-          SUM(ra.remaining_amount) AS allocation_remaining,
-          SUM(ra.settled_amount) AS allocation_settled,
-          SUM(ra.released_amount) AS allocation_released
-        FROM ai_quota_reservations r
-        JOIN ai_quota_accounts a ON a.user_internal_id = r.user_internal_id
-        JOIN ai_quota_reservation_allocations ra ON ra.reservation_internal_id = r.id
-        WHERE r.reservation_ref = ?
-        GROUP BY a.id, r.id
-      `,
-      [pendingReservation.reservationRef]
-    )
-    expect(pendingRows).toEqual([
-      expect.objectContaining({
-        available_amount: 0,
-        reserved_amount: 4,
-        consumed_amount: 6,
-        reservation_status: 'pending_reconciliation',
-        settled_amount: null,
-        actual_cost_micros: 5600,
-        usage_evidence_ref: 'usage_bailian_real_pending_001',
-        platform_absorbed_cost_micros: 1600,
-        allocation_remaining: '4',
-        allocation_settled: '0',
-        allocation_released: '0'
-      })
-    ])
+    await expectPendingReconciliationState(pool, pendingReservation.reservationRef)
 
-    const [pendingLedgerRows] = await pool.query<RowDataPacket[]>(
-      `
-        SELECT entry_type, COUNT(*) AS entry_count
-        FROM ai_quota_ledger
-        WHERE reservation_internal_id = (
-          SELECT id FROM ai_quota_reservations WHERE reservation_ref = ?
-        )
-        GROUP BY entry_type
-        ORDER BY entry_type
-      `,
-      [pendingReservation.reservationRef]
-    )
-    expect(pendingLedgerRows).toEqual([{ entry_type: 'reserve', entry_count: 1 }])
+    const resolvePending = createResolvePendingAiQuotaUseCase({
+      driver: createTransactionDriver(),
+      reservationRepository: repository,
+      settlementRepository: createMysqlAiQuotaSettlementRepository(createSettlementSqlExecutor()),
+      createLedgerRef: entryType =>
+        `aql_subscription_${entryType}_${String(++settlementLedgerSequence)}`,
+      commitUnknownReadOnlyRepository: { read: async () => null }
+    })
+    await expect(
+      resolvePending({
+        userRef: 'usr_subscription_real' as UserRef,
+        reservationRef: pendingReservation.reservationRef,
+        resolution: 'settle_user_cap',
+        actualCostMicros: 5600,
+        finalEvidenceRef: 'billing_bailian_real_final_001',
+        platformAbsorbedCostMicros: 1600,
+        occurredAtMs: nowMs + Number('400')
+      })
+    ).resolves.toEqual({
+      kind: 'settled',
+      reservationRef: pendingReservation.reservationRef,
+      settledAmount: 4,
+      releasedAmount: 0,
+      platformAbsorbedCostMicros: 1600
+    })
+    expect(settlementLedgerSequence).toBe(Number('4'))
+    await expectResolvedPendingState(pool, pendingReservation.reservationRef)
   })
 })

@@ -200,6 +200,8 @@ export type ApplyAiQuotaSettlementInput = {
   readonly reservationRef: string
   /** 预占锁定时版本。 */
   readonly reservationVersion: number
+  /** 本次写入允许离开的唯一源状态。 */
+  readonly expectedReservationStatus: 'reserved' | 'pending_reconciliation'
   /** 原预占额度总额。 */
   readonly estimatedAmount: number
   /** 本次结算额度总额。 */
@@ -210,6 +212,8 @@ export type ApplyAiQuotaSettlementInput = {
   readonly actualCostMicros: number
   /** 脱敏供应商用量证据引用。 */
   readonly usageEvidenceRef: string
+  /** 最终裁决后仍由平台承担的成本微元；普通首次结算固定为零。 */
+  readonly platformAbsorbedCostMicros: number
   /** 服务端可信业务发生时间，UTC 毫秒。 */
   readonly occurredAtMs: number
   /** 全部分摊的确定性终态。 */

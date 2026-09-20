@@ -159,11 +159,13 @@ describe('AI 额度结算 MySQL Repository', () => {
         reservationInternalId: '91',
         reservationRef: 'aqr_subscription_001',
         reservationVersion: 1,
+        expectedReservationStatus: 'reserved',
         estimatedAmount: 8,
         settledAmount: 6,
         releasedAmount: 2,
         actualCostMicros: 4800,
         usageEvidenceRef: 'usage_bailian_001',
+        platformAbsorbedCostMicros: 0,
         occurredAtMs: nowMs,
         allocations: [
           {
@@ -229,5 +231,47 @@ describe('AI 额度结算 MySQL Repository', () => {
     expect(records[zero]?.sql).toContain("`status` = 'pending_reconciliation'")
     expect(records[zero]?.sql).not.toContain('UPDATE `ai_quota_grants`')
     expect(records[zero]?.sql).not.toContain('INSERT INTO `ai_quota_ledger`')
+  })
+
+  test('最终证据可从待对账状态结算用户上限并保留平台承担成本', async () => {
+    const { executor, records } = createExecutor({
+      writeResults: Array.from({ length: Number('5') }, () => one)
+    })
+    const repository = createMysqlAiQuotaSettlementRepository(executor)
+
+    await expect(
+      repository.applySettlement(transaction, {
+        userInternalId: '41',
+        accountInternalId: '71',
+        accountVersion: 4,
+        reservationInternalId: '91',
+        reservationRef: 'aqr_subscription_001',
+        reservationVersion: 2,
+        expectedReservationStatus: 'pending_reconciliation',
+        estimatedAmount: 8,
+        settledAmount: 8,
+        releasedAmount: 0,
+        actualCostMicros: 9000,
+        usageEvidenceRef: 'billing_bailian_final_001',
+        platformAbsorbedCostMicros: 2600,
+        occurredAtMs: nowMs,
+        allocations: [
+          {
+            allocationInternalId: '101',
+            grantInternalId: '81',
+            grantRef: 'aqg_subscription_a',
+            grantVersion: 2,
+            remainingAmount: 8,
+            settledAmount: 8,
+            releasedAmount: 0,
+            settleLedgerRef: 'aql_settle_final_a'
+          }
+        ]
+      })
+    ).resolves.toBeUndefined()
+
+    expect(records[Number('3')]?.sql).toContain('`status` = ?')
+    expect(records[Number('3')]?.parameters).toContain('pending_reconciliation')
+    expect(records[Number('3')]?.parameters).toContain(Number('2600'))
   })
 })

@@ -117,12 +117,15 @@ function verifyApplyInput(input: ApplyAiQuotaSettlementInput): void {
     input.accountVersion < one ||
     !Number.isSafeInteger(input.reservationVersion) ||
     input.reservationVersion < one ||
+    (input.expectedReservationStatus !== 'reserved' &&
+      input.expectedReservationStatus !== 'pending_reconciliation') ||
     !Number.isSafeInteger(input.estimatedAmount) ||
     input.estimatedAmount <= zero ||
     !isSafeNonNegativeInteger(input.settledAmount) ||
     !isSafeNonNegativeInteger(input.releasedAmount) ||
     input.settledAmount + input.releasedAmount !== input.estimatedAmount ||
     !isSafeNonNegativeInteger(input.actualCostMicros) ||
+    !isSafeNonNegativeInteger(input.platformAbsorbedCostMicros) ||
     !evidenceRefFormat.test(input.usageEvidenceRef) ||
     !isSafeNonNegativeInteger(input.occurredAtMs) ||
     input.allocations.length === zero

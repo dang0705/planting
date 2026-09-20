@@ -9,16 +9,14 @@ import {
   reconcileAiQuotaSettlementCommitResult,
   type AiQuotaSettlementCommitUnknownReadOnlyRepository
 } from './ai-quota-commit-unknown-reconciliation.js'
+import { bindAiQuotaSettlementAllocations } from './bind-ai-quota-settlement-allocations.js'
 import { planAiQuotaSettlement } from '../domain/plan-ai-quota-settlement.js'
 import type { MysqlAiQuotaReservationRepository } from '../repository/mysql-ai-quota-reservation-repository.js'
 import type {
   LockedAiQuotaSettlementReservation,
-  MysqlAiQuotaSettlementRepository,
-  PersistAiQuotaSettlementAllocationInput
+  MysqlAiQuotaSettlementRepository
 } from '../repository/mysql-ai-quota-settlement-repository.js'
 import { AiQuotaSettlementPersistenceError } from '../repository/mysql-ai-quota-settlement-repository.js'
-
-const zero = Number('0')
 
 /** 一次模型调用完成后发起额度结算的可信内部命令。 */
 export type SettleAiQuotaCommand = {
@@ -118,47 +116,6 @@ function isTerminalReplay(
   return false
 }
 
-/** 把纯领域终态重新绑定到已锁定的内部键、版本和账本引用。 */
-function bindSettlementAllocations(
-  lockedAllocations: Awaited<
-    ReturnType<MysqlAiQuotaSettlementRepository<TransactionExecutionContext>['lockAllocations']>
-  >,
-  plannedAllocations: readonly {
-    /** 被结算或释放批次的公开引用。 */
-    readonly grantRef: string
-    /** 本次结算额度。 */
-    readonly settledAmount: number
-    /** 本次释放额度。 */
-    readonly releasedAmount: number
-  }[],
-  createLedgerRef: (entryType: 'settle' | 'release', grantRef: string) => string
-): readonly PersistAiQuotaSettlementAllocationInput[] {
-  return plannedAllocations.map(planned => {
-    const locked = lockedAllocations.find(candidate => candidate.grantRef === planned.grantRef)
-    if (locked === undefined) {
-      throw new AiQuotaSettlementPersistenceError(
-        'INTERNAL_DATA_INVALID',
-        '额度结算计划无法绑定已锁定分摊'
-      )
-    }
-    return {
-      allocationInternalId: locked.allocationInternalId,
-      grantInternalId: locked.grantInternalId,
-      grantRef: locked.grantRef,
-      grantVersion: locked.grantVersion,
-      remainingAmount: locked.remainingAmount,
-      settledAmount: planned.settledAmount,
-      releasedAmount: planned.releasedAmount,
-      ...(planned.settledAmount > zero
-        ? { settleLedgerRef: createLedgerRef('settle', locked.grantRef) }
-        : {}),
-      ...(planned.releasedAmount > zero
-        ? { releaseLedgerRef: createLedgerRef('release', locked.grantRef) }
-        : {})
-    }
-  })
-}
-
 /** 创建 AI 额度结算应用用例。 */
 export function createSettleAiQuotaUseCase<TTransaction extends TransactionExecutionContext>(
   dependencies: SettleAiQuotaDependencies<TTransaction>
@@ -234,7 +191,9 @@ export function createSettleAiQuotaUseCase<TTransaction extends TransactionExecu
         actualCostMicros: command.actualCostMicros,
         usageEvidenceRef: command.usageEvidenceRef,
         occurredAtMs: command.occurredAtMs,
-        allocations: bindSettlementAllocations(
+        expectedReservationStatus: 'reserved',
+        platformAbsorbedCostMicros: 0,
+        allocations: bindAiQuotaSettlementAllocations(
           lockedAllocations,
           plan.allocations,
           dependencies.createLedgerRef

@@ -143,20 +143,22 @@ export async function applyAiQuotaSettlement<TTransaction extends TransactionExe
         transaction,
         `UPDATE \`ai_quota_reservations\`
          SET \`settled_amount\` = ?, \`actual_cost_micros\` = ?, \`usage_evidence_ref\` = ?,
-             \`platform_absorbed_cost_micros\` = 0,
+             \`platform_absorbed_cost_micros\` = ?,
              \`status\` = ?, \`version\` = \`version\` + 1, \`updated_at_ms\` = ?
          WHERE \`id\` = ? AND \`user_internal_id\` = ? AND \`reservation_ref\` = ?
-           AND \`version\` = ? AND \`status\` = 'reserved'`,
+           AND \`version\` = ? AND \`status\` = ?`,
         [
           input.settledAmount,
           input.actualCostMicros,
           input.usageEvidenceRef,
+          input.platformAbsorbedCostMicros,
           input.settledAmount === zero ? 'released' : 'settled',
           input.occurredAtMs,
           input.reservationInternalId,
           input.userInternalId,
           input.reservationRef,
-          input.reservationVersion
+          input.reservationVersion,
+          input.expectedReservationStatus
         ]
       )
     ).affectedRows,

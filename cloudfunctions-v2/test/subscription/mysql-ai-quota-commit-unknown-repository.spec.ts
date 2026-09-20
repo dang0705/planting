@@ -79,7 +79,7 @@ describe('AI 额度提交未知 MySQL 只读 Repository', () => {
         settled_amount: '6',
         actual_cost_micros: '4800',
         usage_evidence_ref: 'usage_bailian_001',
-        platform_absorbed_cost_micros: '0'
+        platform_absorbed_cost_micros: '2600'
       }
     ])
     const repository = createMysqlAiQuotaSettlementCommitUnknownReadOnlyRepository(
@@ -95,7 +95,7 @@ describe('AI 额度提交未知 MySQL 只读 Repository', () => {
       settledAmount: 6,
       actualCostMicros: 4800,
       usageEvidenceRef: 'usage_bailian_001',
-      platformAbsorbedCostMicros: 0
+      platformAbsorbedCostMicros: 2600
     })
     expect(testDouble.records[Number('0')]?.sql).not.toContain('FOR UPDATE')
     expect(testDouble.records[Number('0')]?.parameters).toEqual([

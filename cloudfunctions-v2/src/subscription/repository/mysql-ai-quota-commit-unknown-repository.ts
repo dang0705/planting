@@ -164,8 +164,7 @@ function mapSettlementRow(
       settledAmount !== null &&
       settledAmount > zero &&
       settledAmount <= estimatedAmount &&
-      hasEvidence &&
-      platformAbsorbedCostMicros === zero) ||
+      hasEvidence) ||
     (row.status === 'released' &&
       settledAmount === zero &&
       hasEvidence &&
