@@ -5,6 +5,7 @@
 - 领域入口：`cloudfunctions-v2/src/identity/domain/resolve-user-principal.ts`。
 - 应用入口：`cloudfunctions-v2/src/identity/application/resolve-user-principal.ts`。
 - MySQL Repository：`cloudfunctions-v2/src/identity/repository/mysql-user-principal-repository.ts`。
+- 平台绑定 Repository：`cloudfunctions-v2/src/identity/repository/mysql-platform-identity-binding-repository.ts`。
 - TDD：`cloudfunctions-v2/test/identity/resolve-user-principal.spec.ts`、`resolve-user-principal-application.spec.ts`、`mysql-user-principal-repository.spec.ts`。
 - 真实 MySQL：`cloudfunctions-v2/test/e2e/identity-principal.mysql.spec.ts`。
 - 审计证据：`docs/backend-v2/audits/P2-identity-resolve-user-principal-2026-09-20.md`。
@@ -21,12 +22,15 @@
 
 真实 MySQL 8.4 已证明摘要命中后可解析 Principal，会话撤销后同一 Bearer 立即拒绝，错误 Bearer 不命中；数据库只保存 SHA-256 摘要，不保存原始 Bearer。
 
+平台绑定 Repository 已固定执行“活跃用户 → 平台主体唯一行 → 当前用户同平台/应用 active 槽位”的锁顺序：同一用户同一 active 主体安全重放，已撤销的原主体只能为原用户恢复，跨用户主体或同槽位其他主体一律返回绑定冲突。解绑会先锁定该用户全部 active 入口；最后一个入口拒绝删除，其余解绑在同一事务内撤销目标绑定、把逻辑过期会话推进为 expired、撤销其余 active 会话并递增 `users.session_version`。真实 MySQL 已证明新建第三个平台入口、解绑后版本递增和会话撤销，以及最后入口拒绝时零状态变更。
+
 ## 下一步实施顺序
 
 1. 冻结微信、抖音、小红书和手机号统一 Provider 端口，以及 HMAC 当前/退役密钥版本轮换合同。
 2. 接入受控平台凭证 Provider；业务域不得自行解析平台凭证或主体字段。
-3. 实现会话签发、绑定、恢复和解绑事务，解绑时原子递增会话版本并撤销全部 active 会话。
-4. 接入 identity 独立 HTTP 云函数与共享请求链，并补真实 Provider、CloudBase MySQL 与 HTTP 验证。
+3. 为绑定/恢复/解绑接入共享 HTTP 幂等记录和应用层事务；当前 Repository 已实现 SQL 原子边界，但尚不能作为公开接口调用。
+4. 实现新会话签发事务；解绑时的版本递增和会话撤销已经在 Repository/真实 MySQL 层证明。
+5. 接入 identity 独立 HTTP 云函数与共享请求链，并补真实 Provider、CloudBase MySQL 与 HTTP 验证。
 
 ## 禁止事项
 

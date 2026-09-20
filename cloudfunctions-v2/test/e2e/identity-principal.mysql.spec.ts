@@ -3,10 +3,27 @@ import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { createPool, type Pool, type RowDataPacket } from 'mysql2/promise'
+import {
+  createPool,
+  type Pool,
+  type PoolConnection,
+  type ResultSetHeader,
+  type RowDataPacket
+} from 'mysql2/promise'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 
+import type { UserRef } from '../../src/contracts/types.js'
 import { createResolveUserPrincipalUseCase } from '../../src/identity/application/resolve-user-principal.js'
+import {
+  runDatabaseTransaction,
+  type DatabaseTransactionDriver,
+  type TransactionExecutionContext
+} from '../../src/foundation/database/transaction-runner.js'
+import {
+  createMysqlPlatformIdentityBindingRepository,
+  type PlatformIdentitySqlExecutor,
+  type PlatformIdentitySqlRow
+} from '../../src/identity/repository/mysql-platform-identity-binding-repository.js'
 import {
   createMysqlUserPrincipalRepository,
   type UserPrincipalSqlRow
@@ -23,6 +40,12 @@ const issuedAtMs = Date.parse('2026-09-20T03:00:00.000Z')
 const expiresAtMs = Date.parse('2026-09-21T03:00:00.000Z')
 const nowMs = Date.parse('2026-09-20T04:00:00.000Z')
 let pool: Pool
+
+/** 真实 MySQL 连接承载的身份写事务。 */
+type MysqlIdentityTransaction = TransactionExecutionContext & {
+  /** 当前事务独占连接。 */
+  readonly connection: PoolConnection
+}
 
 /** 执行一次性 MySQL 容器命令并保留可诊断错误。 */
 function runDocker(args: readonly string[], input?: string): string {
@@ -87,6 +110,59 @@ function createRepository() {
       return rows as unknown as readonly UserPrincipalSqlRow[]
     }
   })
+}
+
+/** 创建真实 MySQL 事务驱动，确保失败时回滚并释放连接。 */
+function createTransactionDriver(): DatabaseTransactionDriver<MysqlIdentityTransaction> {
+  return {
+    beginTransaction: async () => {
+      const connection = await pool.getConnection()
+      await connection.beginTransaction()
+      return { transactionContext: true, connection }
+    },
+    commitTransaction: async transaction => {
+      try {
+        await transaction.connection.commit()
+      } finally {
+        transaction.connection.release()
+      }
+    },
+    rollbackTransaction: async transaction => {
+      try {
+        await transaction.connection.rollback()
+      } finally {
+        transaction.connection.release()
+      }
+    },
+    recordRollbackFailure: () => undefined
+  }
+}
+
+/** 把事务连接适配为平台身份绑定 Repository 的参数化 SQL 端口。 */
+function createBindingExecutor(): PlatformIdentitySqlExecutor<MysqlIdentityTransaction> {
+  const resolveParameters = (parameters: readonly unknown[]): (string | number | null)[] =>
+    parameters.map(parameter => {
+      if (parameter === null || typeof parameter === 'string' || typeof parameter === 'number') {
+        return parameter
+      }
+      throw new Error('平台身份绑定 Repository 产生了不受支持的 SQL 参数')
+    })
+  return {
+    executeQuery: async (transaction, sql, parameters) => {
+      const [rows] = await transaction.connection.execute<RowDataPacket[]>(
+        sql,
+        resolveParameters(parameters)
+      )
+      return rows as unknown as readonly PlatformIdentitySqlRow[]
+    },
+    executeWrite: async (transaction, sql, parameters) => {
+      const [result] = await transaction.connection.execute<ResultSetHeader>(
+        sql,
+        resolveParameters(parameters)
+      )
+      return { affectedRows: result.affectedRows }
+    }
+  }
 }
 
 /**
@@ -161,6 +237,36 @@ describe('统一用户 Principal 真实 MySQL 解析', () => {
        WHERE u.public_user_id = 'usr_identity_mysql_001'`,
       [sessionRefHash, issuedAtMs, expiresAtMs, issuedAtMs, issuedAtMs]
     )
+    await pool.execute(
+      `INSERT INTO users
+       (public_user_id, status, session_version, created_at_ms, updated_at_ms)
+       VALUES ('usr_identity_binding_mysql', 'active', 1, ?, ?)`,
+      [issuedAtMs - Number('1000'), issuedAtMs - Number('1000')]
+    )
+    for (const [platform, hash] of [
+      ['wechat', 'c'.repeat(Number('64'))],
+      ['phone', 'd'.repeat(Number('64'))]
+    ] as const) {
+      await pool.execute(
+        `INSERT INTO platform_identities
+         (user_internal_id, platform, platform_subject_hash, subject_hash_key_version,
+          platform_subject_ciphertext, app_scope, binding_status, bound_at_ms,
+          created_at_ms, updated_at_ms)
+         SELECT id, ?, ?, ?, NULL, 'qhz-main', 'active', ?, ?, ?
+         FROM users WHERE public_user_id = 'usr_identity_binding_mysql'`,
+        [platform, hash, subjectHashKeyVersion, issuedAtMs, issuedAtMs, issuedAtMs]
+      )
+    }
+    await pool.execute(
+      `INSERT INTO user_sessions
+       (session_ref_hash, user_internal_id, platform_identity_internal_id,
+        session_version, authenticated_via, status, issued_at_ms, expires_at_ms,
+        created_at_ms, updated_at_ms)
+       SELECT ?, u.id, p.id, 1, 'wechat', 'active', ?, ?, ?, ?
+       FROM users AS u JOIN platform_identities AS p ON p.user_internal_id = u.id
+       WHERE u.public_user_id = 'usr_identity_binding_mysql' AND p.platform = 'wechat'`,
+      ['e'.repeat(Number('64')), issuedAtMs, expiresAtMs, issuedAtMs, issuedAtMs]
+    )
   }, Number('30000'))
 
   afterAll(async () => {
@@ -217,5 +323,78 @@ describe('统一用户 Principal 真实 MySQL 解析', () => {
       [rawBearer]
     )
     expect(Number(rows[Number('0')]?.raw_count)).toBe(Number('0'))
+  })
+
+  test('真实事务创建第三个平台绑定并在解绑时递增版本、撤销全部会话', async () => {
+    const repository = createMysqlPlatformIdentityBindingRepository(createBindingExecutor())
+    const driver = createTransactionDriver()
+    await expect(
+      runDatabaseTransaction(driver, transaction =>
+        repository.bindOrRestore(transaction, {
+          userRef: 'usr_identity_binding_mysql' as UserRef,
+          platform: 'xiaohongshu',
+          appScope: 'qhz-main',
+          platformSubjectHash: 'f'.repeat(Number('64')),
+          subjectHashKeyVersion,
+          platformSubjectCiphertext: null,
+          occurredAtMs: nowMs
+        })
+      )
+    ).resolves.toMatchObject({ kind: 'created', platform: 'xiaohongshu' })
+    await expect(
+      runDatabaseTransaction(driver, transaction =>
+        repository.revoke(transaction, {
+          userRef: 'usr_identity_binding_mysql' as UserRef,
+          platform: 'wechat',
+          appScope: 'qhz-main',
+          occurredAtMs: nowMs
+        })
+      )
+    ).resolves.toEqual({
+      platform: 'wechat',
+      appScope: 'qhz-main',
+      nextSessionVersion: 2
+    })
+    const [rows] = await pool.query<RowDataPacket[]>(`
+      SELECT
+        (SELECT session_version FROM users
+         WHERE public_user_id = 'usr_identity_binding_mysql') AS session_version,
+        (SELECT binding_status FROM platform_identities AS p JOIN users AS u
+           ON u.id = p.user_internal_id
+         WHERE u.public_user_id = 'usr_identity_binding_mysql'
+           AND p.platform = 'wechat' AND p.app_scope = 'qhz-main') AS wechat_status,
+        (SELECT s.status FROM user_sessions AS s JOIN users AS u ON u.id = s.user_internal_id
+         WHERE u.public_user_id = 'usr_identity_binding_mysql') AS session_status,
+        (SELECT COUNT(*) FROM platform_identities AS p JOIN users AS u
+           ON u.id = p.user_internal_id
+         WHERE u.public_user_id = 'usr_identity_binding_mysql'
+           AND p.binding_status = 'active') AS active_bindings
+    `)
+    expect(rows).toEqual([
+      {
+        session_version: 2,
+        wechat_status: 'revoked',
+        session_status: 'revoked',
+        active_bindings: '2'
+      }
+    ])
+  })
+
+  test('真实事务拒绝删除最后一个 active 登录入口且不改变版本', async () => {
+    const repository = createMysqlPlatformIdentityBindingRepository(createBindingExecutor())
+    await expect(
+      runDatabaseTransaction(createTransactionDriver(), transaction =>
+        repository.revoke(transaction, {
+          userRef: 'usr_identity_mysql_001' as UserRef,
+          platform: 'wechat',
+          appScope: 'wx-app-qhz',
+          occurredAtMs: nowMs
+        })
+      )
+    ).rejects.toMatchObject({ type: 'IDENTITY_LAST_BINDING_REQUIRED' })
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT session_version FROM users WHERE public_user_id = 'usr_identity_mysql_001'`
+    )
+    expect(rows).toEqual([{ session_version: 3 }])
   })
 })
