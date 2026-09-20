@@ -3,8 +3,8 @@
   "agent": "root",
   "model": "gpt-5",
   "status": "in_progress",
-  "progress": 25,
-  "summary": "显式加入花园的纯领域切片与公开创建合同均已完成：请求固定为空对象，响应固定为六字段 active/unidentified/version 1 初态，路由和 OpenAPI 已引用具体 Schema；Repository、同事务幂等和 HTTP 接线仍待完成。",
+  "progress": 40,
+  "summary": "显式加入花园的领域规则、公开合同与 MySQL Repository 已完成：请求为空对象，响应为固定六字段初态；Repository 先锁统一用户行再统计 active 数量，并完成固定初态插入和脱敏读回。同事务幂等应用编排和 HTTP 接线仍待完成。",
   "blockers": [],
   "verified": [
     "create-unidentified-user-plant.ts 已实现登录主体、能力快照、同一 user_id、有效期和 active 数量上限校验。",
@@ -13,12 +13,16 @@
     "CreateUserPlantRequestDto 与 AJV 只接受严格空 JSON 对象；幂等键误放请求体会被拒绝。",
     "CreateUserPlantResponseDto、路由登记和 OpenAPI 已冻结六字段初态、200 成功信封、必填 Idempotency-Key 与 CAPABILITY_SNAPSHOT_EXPIRED。",
     "创建合同目标测试 3/3、全量 31 个测试文件 168 项测试、TypeScript、构建和 Node 22 制品门均通过。",
-    "响应生命周期常量负向突变使目标测试 RED，完整恢复后 GREEN。"
+    "响应生命周期常量负向突变使目标测试 RED，完整恢复后 GREEN。",
+    "mysql-user-plant-repository.ts 已实现 users 行锁、active 数量读取、固定初态插入和统一用户归属读回；6 条 L3 unit_fake 通过。",
+    "隔离 MySQL 8.4.11 已真实执行 001/002/003 DDL，验证锁定读取、0→1 active 数量、固定初态读回、回滚后零残留和非法 confirmed 投影被 3819 拒绝。",
+    "用户状态判断负向突变使 2 条 Repository 测试 RED，恢复后全量 32 个文件 174 项测试 GREEN。"
   ],
   "unverified": [
-    "用户植物事务写入、归属校验、共享幂等接线和 Repository 尚未完成。",
+    "共享幂等占位、领域规则、Repository 写入与幂等完成记录尚未编排进同一事务。",
+    "两个真实并发连接争抢 active 数量上限与提交结果未知只读对账尚未完成。",
     "真实 CloudBase MySQL、HTTP 身份和并发验证属于后续环境门。"
   ],
-  "updatedAt": "2026-09-20T21:20:31+08:00",
-  "next": "实现用户植物 MySQL Repository 和应用命令，把数量上限读取、聚合写入与幂等完成记录接入同一事务；随后补并发与读回验证。"
+  "updatedAt": "2026-09-20T21:25:42+08:00",
+  "next": "实现创建用户植物应用用例，把共享幂等占位、用户行锁、领域决策、聚合写入、公开读回与幂等完成记录放入同一事务；随后补并发与提交未知对账。"
 }

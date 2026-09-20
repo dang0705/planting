@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-20T13:20:55.874Z",
+  "generatedAt": "2026-09-20T13:26:08.194Z",
   "snapshotSource": "docs/backend-v2/tracker/heartbeats/*.json（主代理汇总）",
   "trackerOwner": "主代理 /root（各 ticket 子代理写独立心跳；主代理校验、汇总并处理超时）",
   "clickUpStatus": "CREATED",
@@ -99,7 +99,7 @@
       "ticketIds": [
         "z8v0kmr9mj"
       ],
-      "lastObservedAt": "2026-09-20T21:20:31+08:00",
+      "lastObservedAt": "2026-09-20T21:25:42+08:00",
       "blockers": []
     },
     {
@@ -318,9 +318,9 @@
       "phase": "P1/P2/P3",
       "plannedAgent": "user_plant_terra",
       "agent": "p1_guest_claim_consistency_luna + root、root",
-      "progress": 63,
+      "progress": 70,
       "status": "当前执行阶段进行中",
-      "lastUpdatedAt": "2026-09-20T21:20:31+08:00",
+      "lastUpdatedAt": "2026-09-20T21:25:42+08:00",
       "tickets": [
         {
           "id": "z8v0kmr96y",
@@ -338,9 +338,9 @@
           "url": "https://app.clickup.com/t/90182453517/z8v0kmr9mj",
           "plannedAgent": "user_plant_terra",
           "agent": "root",
-          "status": "in_progress：显式加入花园的纯领域切片与公开创建合同均已完成：请求固定为空对象，响应固定为六字段 active/unidentified/version 1 初态，路由和 OpenAPI 已引用具体 Schema；Repository、同事务幂等和 HTTP 接线仍待完成。",
-          "progress": 25,
-          "lastUpdatedAt": "2026-09-20T21:20:31+08:00"
+          "status": "in_progress：显式加入花园的领域规则、公开合同与 MySQL Repository 已完成：请求为空对象，响应为固定六字段初态；Repository 先锁统一用户行再统计 active 数量，并完成固定初态插入和脱敏读回。同事务幂等应用编排和 HTTP 接线仍待完成。",
+          "progress": 40,
+          "lastUpdatedAt": "2026-09-20T21:25:42+08:00"
         }
       ],
       "reportedTicketCount": 2,
@@ -584,7 +584,7 @@
     }
   ],
   "overallProgress": {
-    "progress": 54,
+    "progress": 55,
     "reported": 16,
     "total": 27
   },
