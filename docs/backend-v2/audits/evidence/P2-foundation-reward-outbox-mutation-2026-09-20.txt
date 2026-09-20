@@ -1,0 +1,31 @@
+
+> @qinghuazhi/backend-v2-foundation@0.0.0 test
+> vitest run --config vitest.config.mjs --run test/foundation/reward-outbox.spec.ts
+
+
+ RUN  v4.1.11 /Users/jay/WebstormProjects/planting/cloudfunctions-v2
+
+ ❯ test/foundation/reward-outbox.spec.ts (21 tests | 1 failed) 6ms
+     × 接受生产域 care 对应的已登记事件类型 care.soil_check_completed.v1 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/foundation/reward-outbox.spec.ts > 奖励事件 outbox 机械合同 > 接受生产域 care 对应的已登记事件类型 care.soil_check_completed.v1
+奖励事件合同错误: 奖励事件类型与生产域不匹配
+ ❯ 创建待投递奖励事件记录 src/foundation/outbox/reward-outbox.ts:119:11
+    117|
+    118|   if (事件生产域映射[事件.eventType] !== 当前生产域) {
+    119|     throw new 奖励事件合同错误('奖励事件类型与生产域不匹配')
+       |           ^
+    120|   }
+    121|
+ ❯ test/foundation/reward-outbox.spec.ts:81:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 20 passed (21)
+   Start at  20:27:44
+   Duration  108ms (transform 19ms, setup 0ms, import 29ms, tests 6ms, environment 0ms)
+

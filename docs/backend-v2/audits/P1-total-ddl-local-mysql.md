@@ -36,7 +36,7 @@ done < "$ddl_files_from_current_manifest"
 2026-09-20 在同一个全新一次性容器中创建两个独立空库，每个空库都严格按当前 manifest 的顺序执行全部 8 份 DDL。两个数据库均创建 `87` 张表；使用容器内 `mysqldump --no-data --skip-comments --skip-add-locks --skip-set-charset --compact` 导出后，两个结构导出的 SHA-256 均为：
 
 ```text
-0f5815a61bed2482d053476778fbd7a8b295e8893f134a343abc4a8bf4146dbb
+16c46880a2034146ac17b64097d28e7c9ff754b0d22901a56e61f8bb866c46c6
 ```
 
 字节比较结果为一致。`qhz_v2_p1_a` 的 `INFORMATION_SCHEMA` 读回如下：
@@ -51,8 +51,8 @@ done < "$ddl_files_from_current_manifest"
 | 缺受控 `_openid` 的表 | 0 |
 | `_openid` 索引 | 0 |
 | 外键 | 104 |
-| CHECK 约束 | 93 |
-| UNIQUE 约束 | 143 |
+| CHECK 约束 | 116 |
+| UNIQUE 约束 | 139 |
 
 ## 001 → 005 试用权益约束
 
@@ -86,6 +86,8 @@ SHA-256 全部匹配的游客能力快照，插入成功。随后保持其他发
 `001_identity.sql` 使用 MySQL 8.4 可执行的 `REGEXP_LIKE`。使用全新隔离空库按当前 8 份 DDL 执行成功，`INFORMATION_SCHEMA.TABLES` 读回为 `87` 张表。以下是当前合同的真实写入结果：
 
 Foundation 幂等表在同版 MySQL 中完成额外读回：合法 `processing → completed` 转换成功，168 小时到期差值为 `604800000` 毫秒；同作用域重复占位由 UNIQUE 拒绝，处理中携带响应与完成态缺失 JSON 均由 CHECK 拒绝。
+
+四张奖励生产域 outbox 也在当前版本完成真实读回：合法 care pending 事件可无损读回事件版本、生产域、统一用户、用户植物、发生引用和策略版本；同域重复事件、错误生产域、缺失用户植物以及 pending 携带租约分别由 UNIQUE/CHECK 拒绝。identity 与 subscription 的通用 outbox 未被错误套用奖励事件专属字段。
 
 | 场景 | 真实结果 | 证明的约束 |
 |---|---|---|

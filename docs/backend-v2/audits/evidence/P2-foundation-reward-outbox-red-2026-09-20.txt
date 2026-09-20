@@ -1,0 +1,29 @@
+
+> @qinghuazhi/backend-v2-foundation@0.0.0 test
+> vitest run --config vitest.config.mjs --run test/foundation/reward-outbox.spec.ts
+
+
+ RUN  v4.1.11 /Users/jay/WebstormProjects/planting/cloudfunctions-v2
+
+ ❯ test/foundation/reward-outbox.spec.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/foundation/reward-outbox.spec.ts [ test/foundation/reward-outbox.spec.ts ]
+Error: Cannot find module '../../src/foundation/outbox/reward-outbox.js' imported from /Users/jay/WebstormProjects/planting/cloudfunctions-v2/test/foundation/reward-outbox.spec.ts
+ ❯ test/foundation/reward-outbox.spec.ts:8:1
+      6|
+      7| import type { RewardableDomainEventDto } from '../../src/contracts/typ…
+      8| import {
+       | ^
+      9|   创建待投递奖励事件记录,
+     10|   奖励事件合同错误
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  20:22:01
+   Duration  109ms (transform 14ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)
+

@@ -3,8 +3,8 @@
   "agent": "root",
   "model": "gpt-5",
   "status": "in_progress",
-  "progress": 30,
-  "summary": "共享 HTTP 请求链、事务生命周期与 HTTP 幂等协议/DDL 已形成可验证切片：同键同参重放、同键异参 409、处理中禁止重复执行，且 MySQL 8.4 真实唯一键/CHECK 已读回。Repository 占位与完成读回、可靠事件和 CloudBase/HTTP 接线仍未完成。",
+  "progress": 40,
+  "summary": "共享 HTTP 请求链、事务生命周期、HTTP 幂等协议/DDL 与四个奖励生产域 outbox 机械合同已形成可验证切片。MySQL 8.4 已实测奖励事件信封读回、生产域/用户植物/状态 CHECK 和事件唯一键。Repository 原子写入、提交结果未知对账、CloudBase/HTTP 接线仍未完成。",
   "blockers": [],
   "verified": [
     "cloudfunctions-v2/src/foundation/http/request-chain.ts 已实现可复用固定请求链与稳定公开错误映射。",
@@ -15,13 +15,18 @@
     "008_foundation.sql 建立独立 http_idempotency_records，仅保存主体/幂等键摘要和脱敏公开结果；当前 8 份 DDL 在两个 MySQL 8.4.11 空库各创建 87 表，结构 SHA 一致。",
     "幂等唯一作用域重复由 UNIQUE 拒绝，processing 携带响应与 completed 缺失 JSON 由 CHECK 拒绝；168 小时读回为 604800000 毫秒。",
     "执行反写将请求摘要比较从 !== 临时反转为 === 后 3 条测试 RED，完整还原后全量 26 文件 121 测试 GREEN。",
+    "reward-outbox.ts 已锁定五类奖励事件与四个生产域映射、跨域拒绝、用户植物要求和敏感载荷字段拒绝；负向变异可被测试捕获。",
+    "四张奖励生产域 outbox 已补齐 event_version、producer_domain、user/user_plant、occurrence、policy_version 和状态组合约束；identity/subscription 通用 outbox 未被错误套用奖励字段。",
+    "当前 8 份 DDL 在两个 MySQL 8.4.11 空库各创建 87 表且结构 SHA 一致；重复事件、错误生产域、缺失用户植物和 pending 携带租约均被真实约束拒绝。",
+    "完整验证为 27 个测试文件、142 项测试通过；新增源码与测试 oxlint 0 错误 0 告警，TypeScript 类型检查与中文 TSDoc 门通过。",
     "新增源码与测试 oxlint 0 错误 0 告警，TypeScript 类型检查通过。",
     "docs/backend-v2/audits/P2-foundation-request-chain-2026-09-20.md 已记录 RED/GREEN 与未覆盖边界。"
   ],
   "unverified": [
-    "Repository 的原子占位/完成读回、业务写入/outbox/幂等结果同事务和可靠事件实现尚未形成可验收制品。",
+    "Repository 的原子占位/完成读回、真实业务写入/outbox/幂等结果同事务尚未形成可验收制品。",
+    "自动 dispatcher 的周期、租约、批量、重试、退避、dead-letter 和重放参数仍为 P3 待冻结配置，P2 未启动自动派发。",
     "本地 MySQL 8.4 已验证 DDL，但真实 CloudBase MySQL、HTTP 端到端和云端并发仍属后续环境门。"
   ],
-  "updatedAt": "2026-09-20T20:15:47+08:00",
-  "next": "实施 Foundation 可靠事件协议与域 outbox 公用约束，随后把幂等占位、业务写入、域 outbox 和完成公开结果放入同一真实 Repository 事务。"
+  "updatedAt": "2026-09-20T20:30:30+08:00",
+  "next": "实现 Repository 的 HTTP 幂等占位/完成读回端口，并与首个真实领域命令、所属域 outbox 放入同一 MySQL 事务；同时处理提交结果未知后的只读对账。"
 }
