@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-20T03:58:17.007Z",
+  "generatedAt": "2026-09-20T04:01:10.116Z",
   "snapshotSource": "docs/backend-v2/tracker/heartbeats/*.json（主代理汇总）",
   "trackerOwner": "主代理 /root（各 ticket 子代理写独立心跳；主代理校验、汇总并处理超时）",
   "clickUpStatus": "CREATED",
@@ -28,7 +28,7 @@
     "z8v0kmr977": "backlog",
     "z8v0kmr978": "backlog",
     "z8v0kmr979": "backlog",
-    "z8v0kmr9mj": "backlog",
+    "z8v0kmr9mj": "codex running",
     "z8v0kmr9mh": "backlog",
     "z8v0kmr9mk": "codex running"
   },
@@ -89,6 +89,17 @@
         "z8v0kmr96y"
       ],
       "lastObservedAt": "2026-09-20T07:02:14+08:00",
+      "blockers": []
+    },
+    {
+      "name": "root",
+      "path": "/root/root",
+      "model": "gpt-5",
+      "status": "in_progress",
+      "ticketIds": [
+        "z8v0kmr9mj"
+      ],
+      "lastObservedAt": "2026-09-20T12:00:42+08:00",
       "blockers": []
     },
     {
@@ -306,10 +317,10 @@
       "name": "用户植物",
       "phase": "P1/P2/P3",
       "plannedAgent": "user_plant_terra",
-      "agent": "p1_guest_claim_consistency_luna + root",
-      "progress": 50,
-      "status": "当前执行阶段已完成；后续阶段任务尚未启动",
-      "lastUpdatedAt": "2026-09-20T07:02:14+08:00",
+      "agent": "p1_guest_claim_consistency_luna + root、root",
+      "progress": 55,
+      "status": "当前执行阶段进行中",
+      "lastUpdatedAt": "2026-09-20T12:00:42+08:00",
       "tickets": [
         {
           "id": "z8v0kmr96y",
@@ -326,13 +337,13 @@
           "title": "[P2] 用户植物核心实现",
           "url": "https://app.clickup.com/t/90182453517/z8v0kmr9mj",
           "plannedAgent": "user_plant_terra",
-          "agent": null,
-          "status": "未分配",
-          "progress": null,
-          "lastUpdatedAt": null
+          "agent": "root",
+          "status": "in_progress：显式加入花园后创建 active/unidentified/version 1 的纯领域切片已落盘并通过 7 条测试；公开 DTO、Repository、幂等、真实事务和 HTTP 接线仍未完成。",
+          "progress": 10,
+          "lastUpdatedAt": "2026-09-20T12:00:42+08:00"
         }
       ],
-      "reportedTicketCount": 1,
+      "reportedTicketCount": 2,
       "totalTicketCount": 2
     },
     {
@@ -573,9 +584,9 @@
     }
   ],
   "overallProgress": {
-    "progress": 52,
-    "reported": 15,
+    "progress": 53,
+    "reported": 16,
     "total": 27
   },
-  "clickUpLastSyncedAt": "2026-09-20T08:12:46+08:00"
+  "clickUpLastSyncedAt": "2026-09-20T11:59:49+08:00"
 }

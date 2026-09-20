@@ -1,0 +1,20 @@
+{
+  "ticketId": "z8v0kmr9mj",
+  "agent": "root",
+  "model": "gpt-5",
+  "status": "in_progress",
+  "progress": 10,
+  "summary": "显式加入花园后创建 active/unidentified/version 1 的纯领域切片已落盘并通过 7 条测试；公开 DTO、Repository、幂等、真实事务和 HTTP 接线仍未完成。",
+  "blockers": [],
+  "verified": [
+    "create-unidentified-user-plant.ts 已实现登录主体、能力快照、同一 user_id、有效期和 active 数量上限校验。",
+    "create-unidentified-user-plant.spec.ts 的 7 条 L1/unit_fake 测试通过，新增文件 oxlint 0 错误 0 告警。",
+    "公开投影固定为 active/unidentified/version 1，且不返回 user_id、内部主键或 confirmedIdentityRef。"
+  ],
+  "unverified": [
+    "CreateUserPlantRequest 公开字段合同、事务写入、归属校验、通用幂等和 Repository 尚未完成。",
+    "真实 CloudBase MySQL、HTTP 身份和并发验证属于后续环境门。"
+  ],
+  "updatedAt": "2026-09-20T12:00:42+08:00",
+  "next": "先冻结 CreateUserPlantRequest 与内部应用命令边界，再接入 Foundation 事务和通用幂等 Repository。"
+}

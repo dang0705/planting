@@ -4,6 +4,7 @@
 - [CloudBase 认证通道](cloudbase-authentication.md)
 - [HTTP 云函数模板](http-function.md)
 - [共享 HTTP 请求链](foundation-request-chain.md)
+- [用户植物核心](user-plant-core.md)
 - [奖励事件可靠投递](reward-events.md)
 - [CMS 补全 Worker](cms-enrichment-worker.md)
 - [云存储安全](storage-security.md)
