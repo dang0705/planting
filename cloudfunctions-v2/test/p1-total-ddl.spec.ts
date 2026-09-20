@@ -122,6 +122,7 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
     'ai_quota_reservations',
     'ai_quota_reservation_allocations',
     'subscription_reward_inbox',
+    'http_idempotency_records',
     'identity_outbox',
     'plant_knowledge_outbox',
     'user_plant_outbox',
@@ -171,7 +172,8 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
     'UNIQUE KEY `uq_guest_case_claim_once` (`guest_plant_case_internal_id`)',
     'UNIQUE KEY `uq_reservation_idempotency` (`user_internal_id`, `product_action_id`, `idempotency_key`)',
     'UNIQUE KEY `uq_reward_event` (`event_id`)',
-    'UNIQUE KEY `uq_allocation_pair` (`reservation_internal_id`, `grant_internal_id`)'
+    'UNIQUE KEY `uq_allocation_pair` (`reservation_internal_id`, `grant_internal_id`)',
+    'UNIQUE KEY `uq_http_idempotency_scope` (`principal_type`, `principal_scope_hash`, `http_method`, `normalized_path`, `operation_id`, `idempotency_key_hash`)'
   ]) {
     assert.ok(sql.includes(requiredRule), `总 DDL 缺少关键唯一约束：${requiredRule}`)
   }

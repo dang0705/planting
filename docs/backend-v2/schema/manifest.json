@@ -1,6 +1,6 @@
 {
   "schemaVersion": "backend-v2-schema/v1",
-  "generatedAt": "2026-09-20T02:08:56+08:00",
+  "generatedAt": "2026-09-20T17:48:00+08:00",
   "database": "CloudBase MySQL",
   "timeStorage": "UTC epoch milliseconds",
   "files": [
@@ -45,6 +45,12 @@
       "owner": "各写域 + shared security",
       "file": "006_reliable_events.sql",
       "sha256": "304dbc8ebd0cae1a464302cd7d932ac572e563b1df3a0f2338320798db537f39"
+    },
+    {
+      "order": 8,
+      "owner": "shared-infrastructure",
+      "file": "008_foundation.sql",
+      "sha256": "1a78f116de7c3e330179598f006544dcf0e81fdb7312fc4f4795c03d82eff76d"
     }
   ]
 }

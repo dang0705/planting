@@ -2,7 +2,7 @@
 
 - 当前结论：`LOCAL_MYSQL_EMPTY_DATABASE_PASS`。
 - 证据等级：本机隔离 MySQL `8.4.11` 的真实空库验证；不是 CloudBase MySQL、不是公开 API、不是发布授权。
-- DDL 版本：`backend-v2-schema/v1`，按当前 manifest 的 7 份 SQL 执行：`001 → 002 → 003 → 004 → 007 → 005 → 006`。
+- DDL 版本：`backend-v2-schema/v1`，按当前 manifest 的 8 份 SQL 执行：`001 → 002 → 003 → 004 → 007 → 005 → 006 → 008`。
 - 环境边界：使用 Docker Desktop `29.8.0` 启动一次性官方 `mysql:8.4` 容器，不映射宿主端口，数据目录为容器内临时文件系统；镜像摘要为 `sha256:85b9bf2e29cf836ecb8c2a15a935d4ba0c606631dff1dd79531a11983c638f2a`，实际服务端为 MySQL `8.4.11`。未连接、读取或修改 CloudBase。
 
 ## 实际执行命令
@@ -27,23 +27,23 @@ done < "$ddl_files_from_current_manifest"
 
 | 检查 | 真实结果 |
 |---|---:|
-| `INFORMATION_SCHEMA.TABLES`（当前 Docker 复验库 `qhz_v2_p1_a`） | `86` 张表 |
+| `INFORMATION_SCHEMA.TABLES`（当前 Docker 复验库） | `87` 张表 |
 | `trial_entitlements` 有效插入 | `user_internal_id=1`，`starts_at_ms=1700000000000`，`expires_at_ms=1700086400000` |
 | 能力快照有效插入 | `1` 条，引用 `subscription/capability_catalog` 已发布策略 |
 
 ## Docker 双空库确定性复验
 
-2026-09-20 在同一个全新一次性容器中，分别创建 `qhz_v2_p1_a` 与 `qhz_v2_p1_b`，每个空库都严格按当前 manifest 的顺序执行全部 7 份 DDL。两个数据库均创建 `86` 张表；使用容器内 `mysqldump --no-data --skip-comments --skip-add-locks --skip-set-charset --compact` 导出并移除数据库选择语句后，两个结构导出的 SHA-256 均为：
+2026-09-20 在同一个全新一次性容器中创建两个独立空库，每个空库都严格按当前 manifest 的顺序执行全部 8 份 DDL。两个数据库均创建 `87` 张表；使用容器内 `mysqldump --no-data --skip-comments --skip-add-locks --skip-set-charset --compact` 导出后，两个结构导出的 SHA-256 均为：
 
 ```text
-b17279bb57e7c3fc78d23423d00f391022810600ad162741a849a311259b62aa
+0f5815a61bed2482d053476778fbd7a8b295e8893f134a343abc4a8bf4146dbb
 ```
 
 字节比较结果为一致。`qhz_v2_p1_a` 的 `INFORMATION_SCHEMA` 读回如下：
 
 | 检查 | 结果 |
 |---|---:|
-| 表 | 86 |
+| 表 | 87 |
 | 缺表中文注释 | 0 |
 | 缺字段中文注释 | 0 |
 | 非 `utf8mb4` 表 | 0 |
@@ -51,8 +51,8 @@ b17279bb57e7c3fc78d23423d00f391022810600ad162741a849a311259b62aa
 | 缺受控 `_openid` 的表 | 0 |
 | `_openid` 索引 | 0 |
 | 外键 | 104 |
-| CHECK 约束 | 87 |
-| UNIQUE 约束 | 142 |
+| CHECK 约束 | 93 |
+| UNIQUE 约束 | 143 |
 
 ## 001 → 005 试用权益约束
 
@@ -83,7 +83,9 @@ SHA-256 全部匹配的游客能力快照，插入成功。随后保持其他发
 
 ## 当前 DDL 修订的新增约束复验
 
-`001_identity.sql` 已改为 MySQL 8.4 可执行的 `REGEXP_LIKE` 并同步 manifest SHA。使用全新隔离空库按当前 7 份 DDL 一次执行成功，`INFORMATION_SCHEMA.TABLES` 读回仍为 `86` 张表。以下是当前修订的真实写入结果：
+`001_identity.sql` 使用 MySQL 8.4 可执行的 `REGEXP_LIKE`。使用全新隔离空库按当前 8 份 DDL 执行成功，`INFORMATION_SCHEMA.TABLES` 读回为 `87` 张表。以下是当前合同的真实写入结果：
+
+Foundation 幂等表在同版 MySQL 中完成额外读回：合法 `processing → completed` 转换成功，168 小时到期差值为 `604800000` 毫秒；同作用域重复占位由 UNIQUE 拒绝，处理中携带响应与完成态缺失 JSON 均由 CHECK 拒绝。
 
 | 场景 | 真实结果 | 证明的约束 |
 |---|---|---|

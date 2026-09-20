@@ -15,3 +15,5 @@
 5. 保存数据库版本、环境标识、执行时间和脱敏证据；未完成不得宣称 P1 空库门通过。
 
 业务策略与 Provider 配置分别使用类型化发布表和 active 指针，不允许万能 KV；`configuration_json` 只能包含已通过对应 Schema 的非密钥值，凭证仅保存 `credential_ref`。当前 manifest 将 `007_configuration.sql` 放在 `005_subscription.sql` 前：`capability_snapshots` 必须以外键锁定 `business_policy_releases` 中的能力目录发布（内部键、发布引用、版本和内容 SHA-256），因此发布表必须先建。该顺序只解决空库依赖，不授权启动时 DDL、`ALTER` 或对既有库原地升级。
+
+`008_foundation.sql` 独立保存共享 HTTP 幂等记录，不复用服务 nonce、业务命令表或各域 outbox。数据库只保存主体作用域和幂等键的不可逆摘要，以及已脱敏公开结果。`http.idempotency.retention_hours=168` 由请求锁定的已发布策略计算为 `expires_at_ms`；DDL 不硬编码保留时长，也不把该时长错用到 outbox/inbox。

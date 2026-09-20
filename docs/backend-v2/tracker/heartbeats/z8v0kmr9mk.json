@@ -3,21 +3,25 @@
   "agent": "root",
   "model": "gpt-5",
   "status": "in_progress",
-  "progress": 20,
-  "summary": "共享 HTTP 请求链、API 合同断层和事务生命周期编排已闭环：固定顺序、失败短路、统一错误、服务签名参数、OpenAPI 一致性及提交/回滚语义均有测试；真实 MySQL、幂等、可靠事件和云端接线仍未完成。",
+  "progress": 30,
+  "summary": "共享 HTTP 请求链、事务生命周期与 HTTP 幂等协议/DDL 已形成可验证切片：同键同参重放、同键异参 409、处理中禁止重复执行，且 MySQL 8.4 真实唯一键/CHECK 已读回。Repository 占位与完成读回、可靠事件和 CloudBase/HTTP 接线仍未完成。",
   "blockers": [],
   "verified": [
     "cloudfunctions-v2/src/foundation/http/request-chain.ts 已实现可复用固定请求链与稳定公开错误映射。",
     "cloudfunctions-v2/test/foundation/request-chain.spec.ts 的 7 条 unit_fake 测试通过。",
     "12 条登录路由补齐 PRINCIPAL_INVALID，OpenAPI 根地址、内部签名头与错误枚举已由 p1-api-skeleton.spec.ts 锁定。",
     "transaction-runner.ts 已实现适配器无关的开始、提交、回滚和回滚失败观测协议，5 条 unit_fake 测试通过。",
+    "http-idempotency.ts 以联合类型冻结 reserve/replay/conflict/wait_for_winner 四种决策，新增源码与测试 oxlint 0 错误 0 告警。",
+    "008_foundation.sql 建立独立 http_idempotency_records，仅保存主体/幂等键摘要和脱敏公开结果；当前 8 份 DDL 在两个 MySQL 8.4.11 空库各创建 87 表，结构 SHA 一致。",
+    "幂等唯一作用域重复由 UNIQUE 拒绝，processing 携带响应与 completed 缺失 JSON 由 CHECK 拒绝；168 小时读回为 604800000 毫秒。",
+    "执行反写将请求摘要比较从 !== 临时反转为 === 后 3 条测试 RED，完整还原后全量 26 文件 121 测试 GREEN。",
     "新增源码与测试 oxlint 0 错误 0 告警，TypeScript 类型检查通过。",
     "docs/backend-v2/audits/P2-foundation-request-chain-2026-09-20.md 已记录 RED/GREEN 与未覆盖边界。"
   ],
   "unverified": [
-    "真实 HTTP 适配器接线、Repository 事务、幂等和可靠事件实现及其 TDD 证据尚未形成可验收制品。",
-    "真实 CloudBase、MySQL 和 HTTP 集成验证属于后续环境门。"
+    "Repository 的原子占位/完成读回、业务写入/outbox/幂等结果同事务和可靠事件实现尚未形成可验收制品。",
+    "本地 MySQL 8.4 已验证 DDL，但真实 CloudBase MySQL、HTTP 端到端和云端并发仍属后续环境门。"
   ],
-  "updatedAt": "2026-09-20T11:57:57+08:00",
-  "next": "把请求链接入真实 HTTP 适配器并为重复安全头和 CORS 写 RED，再推进通用幂等与事务切片。"
+  "updatedAt": "2026-09-20T20:15:47+08:00",
+  "next": "实施 Foundation 可靠事件协议与域 outbox 公用约束，随后把幂等占位、业务写入、域 outbox 和完成公开结果放入同一真实 Repository 事务。"
 }
