@@ -3,19 +3,21 @@
   "agent": "root",
   "model": "gpt-5",
   "status": "in_progress",
-  "progress": 15,
-  "summary": "订阅核心实现已启动。先修复额度分摊 DDL 无法表达合法初始预占的结构矛盾：新增 remaining_amount，并用真实 MySQL 8.4 证明初态可写、破坏守恒必被拒绝、合法结算/释放终态可读回。Repository、并发预占和账本事务尚未实现。",
+  "progress": 20,
+  "summary": "订阅核心实现已启动。额度分摊 DDL 守恒矛盾已修复并通过真实 MySQL 8.4；最早到期优先、能力范围、开区间失效和余额不足无半分摊的纯领域计划也已完成。Repository、并发预占和账本事务尚未实现。",
   "blockers": [],
   "verified": [
     "静态合同测试先行进入 RED：旧 DDL 缺少 remaining_amount，无法满足完整预占守恒 Expected。",
     "额度分摊守恒公式已冻结为 reserved_amount = remaining_amount + settled_amount + released_amount。",
     "隔离 MySQL 8.4 已验证初态 10=10+0+0 可插入、非法 10!=5+3+1 被 CHECK 拒绝、终态 10=0+7+3 可读回。",
-    "订阅语义、合同登记册、DDL manifest、类型检查和目标测试均通过。"
+    "订阅语义、合同登记册、DDL manifest、类型检查和目标测试均通过。",
+    "纯领域分摊按失效时间、发放时间和批次引用稳定排序；不足时 allocations 固定为空，4/4 测试通过。",
+    "将失效开区间错误突变为闭区间后边界测试 RED，恢复后 GREEN。"
   ],
   "unverified": [
     "subscription Repository、稳定额度批次锁顺序、跨批次预占、结算、释放和不可变账本尚未实现。",
     "并发、事务回滚、提交结果未知、CloudBase MySQL、HTTP 与真实 Provider 调用尚未验证。"
   ],
-  "updatedAt": "2026-09-20T22:10:00+08:00",
-  "next": "先以 TDD 实现额度批次的稳定锁定与单事务预占 Repository，再扩展结算、释放和未知结果对账。"
+  "updatedAt": "2026-09-20T22:15:00+08:00",
+  "next": "以 TDD 实现额度批次的稳定锁定与单事务预占 Repository，把纯领域分摊一次性应用到 grant、reservation、allocation、account 和 ledger。"
 }
