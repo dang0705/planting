@@ -138,6 +138,8 @@ pending_reconciliation → settled / released
 
 - 模型调用前必须完成原子预占；额度不足时不得发起供应商调用。
 - 未知供应商结果进入 `pending_reconciliation`，禁止猜测结算或立即释放。
+- `reserved → pending_reconciliation` 必须记录原因：观察成本超额、TTL 到期或供应商结果未知；TTL 到期只触发对账，不触发额度释放、分摊变更或账本写入。
+- `pending_reconciliation → settled / released` 只能由最终证据裁决；终态保留内部待对账原因作为历史审计字段。
 - 结算不能让用户额度为负；超出预占的已发生成本进入平台差额对账。
 
 ## 6. 积分、等级与兑换

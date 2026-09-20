@@ -146,6 +146,8 @@ grantedAmount = availableAmount + reservedAmount + consumedAmount
 - `estimatedAmount` 必须来自不可变 `costPolicyVersion` 的产品动作上限，而不是模型适配器临时猜测；多图诊断仍是一个产品动作。
 - 模型调用开始前可以在剩余可用额度内原子补占；补占失败必须停止尚未发生的后续模型循环。
 - 已发生调用的可审计成本若意外超过预占，不得制造用户负余额或静默多扣；预占进入 `pending_reconciliation`，超额先记平台差额，待价格/用量对账策略裁决。
+- 预占 TTL 到期只表示该记录需要对账，不证明模型调用未发生；扫描任务必须把仍为 `reserved` 的到期记录原子改为 `pending_reconciliation` 并记录 `reservation_ttl_expired`，不得自动释放额度。只有最终证据确认未调用后才允许释放。
+- `pending_reconciliation` 必须记录内部待对账原因：观察成本超额为 `observed_cost_overage`，预占 TTL 到期为 `reservation_ttl_expired`，供应商结果未知为 `provider_result_unknown`；进入最终 `settled` 或 `released` 后保留历史原因用于审计，但不得进入公开响应。
 
 ### AI 点数换算与产品动作上限
 

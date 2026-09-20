@@ -18,7 +18,14 @@ import type {
 } from '../../src/foundation/database/transaction-runner.js'
 import { createReserveAiQuotaUseCase } from '../../src/subscription/application/reserve-ai-quota.js'
 import { createResolvePendingAiQuotaUseCase } from '../../src/subscription/application/resolve-pending-ai-quota.js'
+import { createScanExpiredAiQuotaReservationsUseCase } from '../../src/subscription/application/scan-expired-ai-quota-reservations.js'
 import { createSettleAiQuotaUseCase } from '../../src/subscription/application/settle-ai-quota.js'
+import type {
+  AiQuotaExpirySqlExecutor,
+  AiQuotaExpirySqlWriteResult,
+  ExpiredAiQuotaReservationSqlRow
+} from '../../src/subscription/repository/mysql-ai-quota-expiry-repository.js'
+import { createMysqlAiQuotaExpiryRepository } from '../../src/subscription/repository/mysql-ai-quota-expiry-repository.js'
 import type {
   AiQuotaReservationSqlExecutor,
   AiQuotaReservationSqlRow,
@@ -210,6 +217,35 @@ function createSettlementSqlExecutor(): AiQuotaSettlementSqlExecutor<MysqlTestTr
         resolveParameters(parameters)
       )
       return { affectedRows: result.affectedRows } satisfies AiQuotaSettlementSqlWriteResult
+    }
+  }
+}
+
+/** 把同一真实 mysql2 连接适配为 TTL 扫描 Repository 的参数化 SQL 端口。 */
+function createExpirySqlExecutor(): AiQuotaExpirySqlExecutor<MysqlTestTransaction> {
+  /** TTL Repository 只允许绑定 MySQL 可直接接受的原子参数。 */
+  const resolveParameters = (parameters: readonly unknown[]): (string | number | null)[] =>
+    parameters.map(parameter => {
+      if (parameter === null || typeof parameter === 'string' || typeof parameter === 'number') {
+        return parameter
+      }
+      throw new Error('TTL Repository 产生了不受支持的 SQL 参数')
+    })
+
+  return {
+    executeQuery: async (transaction, sql, parameters) => {
+      const [rows] = await transaction.connection.execute<RowDataPacket[]>(
+        sql,
+        resolveParameters(parameters)
+      )
+      return rows as unknown as readonly ExpiredAiQuotaReservationSqlRow[]
+    },
+    executeWrite: async (transaction, sql, parameters) => {
+      const [result] = await transaction.connection.execute<ResultSetHeader>(
+        sql,
+        resolveParameters(parameters)
+      )
+      return { affectedRows: result.affectedRows } satisfies AiQuotaExpirySqlWriteResult
     }
   }
 }
@@ -421,7 +457,8 @@ describe('AI 额度预占的真实 MySQL 并发闭环', () => {
       resolvePending({
         userRef: 'usr_subscription_real' as UserRef,
         reservationRef: pendingReservation.reservationRef,
-        resolution: 'settle_user_cap',
+        resolution: 'settle_final_evidence',
+        settledAmount: 4,
         actualCostMicros: 5600,
         finalEvidenceRef: 'billing_bailian_real_final_001',
         platformAbsorbedCostMicros: 1600,
@@ -436,5 +473,69 @@ describe('AI 额度预占的真实 MySQL 并发闭环', () => {
     })
     expect(settlementLedgerSequence).toBe(Number('4'))
     await expectResolvedPendingState(pool, pendingReservation.reservationRef)
+  })
+
+  test('TTL 边界扫描只把到期预占转入待对账，重复扫描不释放额度', async () => {
+    const expiredRef = 'aqr_subscription_expired_real'
+    await pool.execute(
+      `INSERT INTO ai_quota_reservations
+        (_openid, reservation_ref, user_internal_id, product_action_id, cost_policy_version,
+         capability, estimated_amount, settled_amount, actual_cost_micros, usage_evidence_ref,
+         platform_absorbed_cost_micros, idempotency_key, request_hash, status,
+         reconciliation_reason, expires_at_ms, version, created_at_ms, updated_at_ms)
+       SELECT '', ?, id, 'action_subscription_expired_real', 'ai-cost/2026-09-20.1',
+              'USER_AGENT_TEXT', 3, NULL, NULL, NULL, 0,
+              'idem_subscription_expired_real', ?, 'reserved', NULL, ?, 1, ?, ?
+       FROM users WHERE public_user_id = 'usr_subscription_real'`,
+      [expiredRef, 'd'.repeat(Number('64')), nowMs, nowMs - Number('1000'), nowMs]
+    )
+    const [beforeRows] = await pool.query<RowDataPacket[]>(`
+      SELECT
+        (SELECT SUM(available_amount) FROM ai_quota_accounts) AS account_available,
+        (SELECT SUM(reserved_amount) FROM ai_quota_accounts) AS account_reserved,
+        (SELECT SUM(available_amount) FROM ai_quota_grants) AS grant_available,
+        (SELECT SUM(reserved_amount) FROM ai_quota_grants) AS grant_reserved,
+        (SELECT COUNT(*) FROM ai_quota_ledger) AS ledger_count
+    `)
+    const scan = createScanExpiredAiQuotaReservationsUseCase({
+      driver: createTransactionDriver(),
+      repository: createMysqlAiQuotaExpiryRepository(createExpirySqlExecutor())
+    })
+
+    await expect(scan({ occurredAtMs: nowMs, batchLimit: Number('10') })).resolves.toEqual({
+      pendingCount: 1,
+      reservationRefs: [expiredRef]
+    })
+    await expect(scan({ occurredAtMs: nowMs, batchLimit: Number('10') })).resolves.toEqual({
+      pendingCount: 0,
+      reservationRefs: []
+    })
+
+    const [reservationRows] = await pool.query<RowDataPacket[]>(
+      `SELECT status, reconciliation_reason, settled_amount, actual_cost_micros,
+              usage_evidence_ref, platform_absorbed_cost_micros, version
+       FROM ai_quota_reservations WHERE reservation_ref = ?`,
+      [expiredRef]
+    )
+    expect(reservationRows).toEqual([
+      {
+        status: 'pending_reconciliation',
+        reconciliation_reason: 'reservation_ttl_expired',
+        settled_amount: null,
+        actual_cost_micros: null,
+        usage_evidence_ref: null,
+        platform_absorbed_cost_micros: 0,
+        version: 2
+      }
+    ])
+    const [afterRows] = await pool.query<RowDataPacket[]>(`
+      SELECT
+        (SELECT SUM(available_amount) FROM ai_quota_accounts) AS account_available,
+        (SELECT SUM(reserved_amount) FROM ai_quota_accounts) AS account_reserved,
+        (SELECT SUM(available_amount) FROM ai_quota_grants) AS grant_available,
+        (SELECT SUM(reserved_amount) FROM ai_quota_grants) AS grant_reserved,
+        (SELECT COUNT(*) FROM ai_quota_ledger) AS ledger_count
+    `)
+    expect(afterRows).toEqual(beforeRows)
   })
 })

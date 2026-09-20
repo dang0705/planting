@@ -209,6 +209,7 @@ export async function markAiQuotaPendingReconciliation<
         `UPDATE \`ai_quota_reservations\`
          SET \`actual_cost_micros\` = ?, \`usage_evidence_ref\` = ?,
              \`platform_absorbed_cost_micros\` = ?, \`status\` = 'pending_reconciliation',
+             \`reconciliation_reason\` = 'observed_cost_overage',
              \`version\` = \`version\` + 1, \`updated_at_ms\` = ?
          WHERE \`id\` = ? AND \`user_internal_id\` = ? AND \`reservation_ref\` = ?
            AND \`version\` = ? AND \`status\` = 'reserved' AND \`settled_amount\` IS NULL`,

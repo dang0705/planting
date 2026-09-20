@@ -3,7 +3,7 @@
 ## 1. 任务与当前切片
 
 - ClickUp：[`[P2] 会员、试用、积分、奖励与 AI 额度`](https://app.clickup.com/t/90182453517/z8v0kmr9mh)
-- 当前切片：额度预占、结算、释放与超额待对账的领域规则、Repository、应用编排和本地真实 MySQL 已形成闭环；下一步处理提交结果未知的只读对账，仍不得越过尚未冻结的真实 Provider 与 HTTP 边界。
+- 当前切片：额度预占、结算、释放、超额待对账与 TTL 到期待对账扫描的领域规则、Repository、应用编排和本地真实 MySQL 已形成闭环；仍不得越过尚未冻结的真实 Provider 与 HTTP 边界。
 - Expected：`care-points-ai-quota/v1`、`docs/backend-v2/data/v2-data-dictionary.md`、`005_subscription.sql`。
 
 ## 2. 已验证边界
@@ -30,9 +30,11 @@
 - 待对账预占现在只能由独立最终证据裁决：确认已调用时最多结算原预占上限并保留平台承担差额；确认调用未发生时才全量释放。普通 `reserved` 预占不能绕过首次结算流程调用该用例。
 - 真实 MySQL 已证明 `pending_reconciliation → settled` 的账户、批次、分摊与 settle ledger 守恒，最终账单证据替换观察证据但平台差额继续保留。
 - TTL 领域门已经固定：只有 `reserved` 在 `[expiresAt, +∞)` 命中“需要待对账”；结果不携带任何结算或释放金额，其他状态和未到期预占均无动作。
+- TTL 批量扫描按 `expires_at_ms, id` 稳定排序并使用 `FOR UPDATE SKIP LOCKED`；批量上限必须由已批准任务配置显式传入，Repository 不提供默认值。命中记录只写 `pending_reconciliation + reservation_ttl_expired` 和版本时间，不修改账户、额度批次、分摊或账本。
+- 本地真实 MySQL 已证明：到期边界精确命中，第一次扫描转入待对账，第二次扫描零写入，扫描前后的账户、批次和账本投影完全相同。
 
 ## 3. 尚未覆盖与继续条件
 
-- 尚未实现 TTL 到期后的 MySQL 批量扫描、抢占和原因持久化；最终证据裁决及其中“确认未调用后释放”已经具备应用和 Repository 路径。按冻结合同，TTL 到期不得自动释放原预占；当前已证明关闭旧连接后的本地 MySQL 只读读回，但尚未模拟 COMMIT 响应在真实网络中途断开，也不得冒充 CloudBase 连接池验收。
+- 最终证据裁决及其中“确认未调用后释放”已经具备应用和 Repository 路径；当前已证明关闭旧连接后的本地 MySQL 只读读回，但尚未模拟 COMMIT 响应在真实网络中途断开，也不得冒充 CloudBase 连接池验收。
 - 尚未验证公开 HTTP 合同、真实 Provider 或 CloudBase MySQL；本地 MySQL 证据不得冒充云环境验收。
 - AI 动作成本策略与预占过期时长在配置目录冻结前，不得私设默认值或开放真实模型消费。

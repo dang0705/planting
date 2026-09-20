@@ -1,6 +1,6 @@
 {
   "schemaVersion": "backend-v2-schema/v1",
-  "generatedAt": "2026-09-20T22:08:30+08:00",
+  "generatedAt": "2026-09-20T23:27:00+08:00",
   "database": "CloudBase MySQL",
   "timeStorage": "UTC epoch milliseconds",
   "files": [
@@ -38,7 +38,7 @@
       "order": 6,
       "owner": "subscription",
       "file": "005_subscription.sql",
-      "sha256": "ba24fcb0b7cb09a09c11ea55f54a0ef8f4447545846e0d2ce39536ec457c9808"
+      "sha256": "f871c896b0eae418c11162ff35620027483b131d48b84c86b23fae6db84f38e3"
     },
     {
       "order": 7,

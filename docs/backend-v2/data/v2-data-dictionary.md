@@ -102,7 +102,7 @@
 
 ### `ai_quota_reservations` — AI 额度预占
 
-保存产品动作、能力、成本策略版本、预估值、结算值、实际成本微元、用量证据引用、平台承担差额、幂等键、状态和到期时间。`settled_amount` 不得超过 `estimated_amount`；`reserved`/`pending_reconciliation` 不得伪造结算额，`settled` 必须有结算额，`released` 的结算额固定为 0。实际成本超过预占时禁止多扣用户，进入 `pending_reconciliation` 并把差额计入平台承担成本。
+保存产品动作、能力、成本策略版本、预估值、结算值、实际成本微元、用量证据引用、平台承担差额、幂等键、状态、待对账原因和到期时间。`settled_amount` 不得超过 `estimated_amount`；`reserved`/`pending_reconciliation` 不得伪造结算额，`settled` 必须有结算额，`released` 的结算额固定为 0。`reserved` 禁止携带待对账原因，`pending_reconciliation` 必须记录 `observed_cost_overage`、`reservation_ttl_expired` 或 `provider_result_unknown` 之一；进入最终结算或释放后保留该历史原因用于审计。实际成本超过预占时禁止多扣用户，进入 `pending_reconciliation` 并把差额计入平台承担成本；TTL 到期只进入待对账，不能自动释放。
 
 ### `ai_quota_reservation_allocations` — 预占到额度批次的分摊
 

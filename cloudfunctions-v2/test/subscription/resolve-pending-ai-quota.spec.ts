@@ -115,7 +115,7 @@ function createDependencies(status: 'reserved' | 'pending_reconciliation' = 'pen
  * 明确未覆盖：真实 Provider 账单、真实 MySQL、HTTP、CloudBase 与定时扫描。
  */
 describe('AI 额度待对账最终裁决', () => {
-  test('最终证据确认已调用时最多结算原预占且保留平台差额', async () => {
+  test('最终证据确认已调用时按证据部分结算并释放余额', async () => {
     const dependencies = createDependencies()
     const resolve = createResolvePendingAiQuotaUseCase({
       ...dependencies,
@@ -127,7 +127,8 @@ describe('AI 额度待对账最终裁决', () => {
       resolve({
         userRef: 'usr_subscription_001' as UserRef,
         reservationRef: 'aqr_subscription_001',
-        resolution: 'settle_user_cap',
+        resolution: 'settle_final_evidence',
+        settledAmount: 6,
         actualCostMicros: 9000,
         finalEvidenceRef: 'billing_bailian_final_001',
         platformAbsorbedCostMicros: 2600,
@@ -136,16 +137,16 @@ describe('AI 额度待对账最终裁决', () => {
     ).resolves.toEqual({
       kind: 'settled',
       reservationRef: 'aqr_subscription_001',
-      settledAmount: 8,
-      releasedAmount: 0,
+      settledAmount: 6,
+      releasedAmount: 2,
       platformAbsorbedCostMicros: 2600
     })
     expect(dependencies.settlementRepository.applySettlement).toHaveBeenCalledWith(
       transaction,
       expect.objectContaining({
         expectedReservationStatus: 'pending_reconciliation',
-        settledAmount: 8,
-        releasedAmount: 0,
+        settledAmount: 6,
+        releasedAmount: 2,
         platformAbsorbedCostMicros: 2600,
         usageEvidenceRef: 'billing_bailian_final_001'
       })

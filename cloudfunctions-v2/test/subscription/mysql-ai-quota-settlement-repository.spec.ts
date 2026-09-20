@@ -229,6 +229,9 @@ describe('AI 额度结算 MySQL Repository', () => {
     expect(records).toHaveLength(one)
     expect(records[zero]?.sql).toContain('UPDATE `ai_quota_reservations`')
     expect(records[zero]?.sql).toContain("`status` = 'pending_reconciliation'")
+    expect(records[zero]?.sql).toContain(
+      "`reconciliation_reason` = 'observed_cost_overage'"
+    )
     expect(records[zero]?.sql).not.toContain('UPDATE `ai_quota_grants`')
     expect(records[zero]?.sql).not.toContain('INSERT INTO `ai_quota_ledger`')
   })

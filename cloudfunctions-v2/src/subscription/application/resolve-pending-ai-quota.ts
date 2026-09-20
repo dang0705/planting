@@ -17,14 +17,12 @@ import { bindAiQuotaSettlementAllocations } from './bind-ai-quota-settlement-all
 
 const zero = Number('0')
 
-/** 最终供应商证据对待对账预占作出的封闭裁决命令。 */
-export type ResolvePendingAiQuotaCommand = {
+/** 待对账最终裁决命令共有的可信字段。 */
+type ResolvePendingAiQuotaCommandBase = {
   /** 已由身份域解析的统一用户公开引用。 */
   readonly userRef: UserRef
   /** 要裁决的高熵额度预占公开引用。 */
   readonly reservationRef: string
-  /** `settle_user_cap` 最多消费原预占；`release_no_call` 证明调用未发生。 */
-  readonly resolution: 'settle_user_cap' | 'release_no_call'
   /** 最终供应商账单证明的实际成本微元；未调用时固定为零。 */
   readonly actualCostMicros: number
   /** 最终且脱敏的供应商账单或未调用证据引用。 */
@@ -34,6 +32,25 @@ export type ResolvePendingAiQuotaCommand = {
   /** 服务端可信业务发生时间，UTC 毫秒。 */
   readonly occurredAtMs: number
 }
+
+/** 最终证据确认调用已发生，并给出不超过原预占的用户结算额。 */
+export type SettlePendingAiQuotaCommand = ResolvePendingAiQuotaCommandBase & {
+  /** 固定为按最终证据结算。 */
+  readonly resolution: 'settle_final_evidence'
+  /** 最终由用户承担的正整数额度；不得超过锁定后的原预占。 */
+  readonly settledAmount: number
+}
+
+/** 最终证据确认供应商调用未发生，可以全量释放原预占。 */
+export type ReleasePendingAiQuotaCommand = ResolvePendingAiQuotaCommandBase & {
+  /** 固定为确认未调用后释放。 */
+  readonly resolution: 'release_no_call'
+}
+
+/** 最终供应商证据对待对账预占作出的封闭裁决命令。 */
+export type ResolvePendingAiQuotaCommand =
+  | SettlePendingAiQuotaCommand
+  | ReleasePendingAiQuotaCommand
 
 /** 首次完成待对账最终裁决后的结果。 */
 export type ResolvedPendingAiQuotaResult = {
@@ -92,9 +109,10 @@ function verifyResolutionCommand(command: ResolvePendingAiQuotaCommand): void {
     Number.isSafeInteger(command.occurredAtMs) &&
     command.occurredAtMs >= zero
   const resolutionValid =
-    (command.resolution === 'settle_user_cap' &&
-      command.actualCostMicros > zero &&
-      command.platformAbsorbedCostMicros > zero) ||
+    (command.resolution === 'settle_final_evidence' &&
+      Number.isSafeInteger(command.settledAmount) &&
+      command.settledAmount > zero &&
+      command.actualCostMicros > zero) ||
     (command.resolution === 'release_no_call' &&
       command.actualCostMicros === zero &&
       command.platformAbsorbedCostMicros === zero)
@@ -137,7 +155,13 @@ export function createResolvePendingAiQuotaUseCase<
           estimatedAmount: reservation.estimatedAmount
         })
         const requestedSettlementAmount =
-          command.resolution === 'settle_user_cap' ? reservation.estimatedAmount : zero
+          command.resolution === 'settle_final_evidence' ? command.settledAmount : zero
+        if (requestedSettlementAmount > reservation.estimatedAmount) {
+          throw new AiQuotaSettlementPersistenceError(
+            'INTERNAL_DATA_INVALID',
+            '最终证据结算额度超过原预占上限'
+          )
+        }
         attemptedSettlementAmount = requestedSettlementAmount
         const plan = planAiQuotaSettlement({
           estimatedAmount: reservation.estimatedAmount,
