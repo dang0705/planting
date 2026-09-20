@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-20T12:32:23.574Z",
+  "generatedAt": "2026-09-20T13:07:41.578Z",
   "snapshotSource": "docs/backend-v2/tracker/heartbeats/*.json（主代理汇总）",
   "trackerOwner": "主代理 /root（各 ticket 子代理写独立心跳；主代理校验、汇总并处理超时）",
   "clickUpStatus": "CREATED",
@@ -209,7 +209,7 @@
       "ticketIds": [
         "z8v0kmr9mk"
       ],
-      "lastObservedAt": "2026-09-20T20:30:30+08:00",
+      "lastObservedAt": "2026-09-20T21:05:06+08:00",
       "blockers": []
     }
   ],
@@ -446,7 +446,7 @@
       "agent": "p1_legacy_close_luna、p1_external_close_luna、p1_storage_close_luna、p0_build_probe_terra、product_decisions_terra、integration_probe_terra、root、root + config_business_luna + provider_config_terra",
       "progress": 65,
       "status": "当前执行阶段进行中",
-      "lastUpdatedAt": "2026-09-20T20:30:30+08:00",
+      "lastUpdatedAt": "2026-09-20T21:05:06+08:00",
       "tickets": [
         {
           "id": "z8v0kmr96q",
@@ -574,9 +574,9 @@
           "url": "https://app.clickup.com/t/90182453517/z8v0kmr9mk",
           "plannedAgent": "foundation_terra",
           "agent": "root",
-          "status": "in_progress：共享 HTTP 请求链、事务生命周期、HTTP 幂等协议/DDL 与四个奖励生产域 outbox 机械合同已形成可验证切片。MySQL 8.4 已实测奖励事件信封读回、生产域/用户植物/状态 CHECK 和事件唯一键。Repository 原子写入、提交结果未知对账、CloudBase/HTTP 接线仍未完成。",
-          "progress": 40,
-          "lastUpdatedAt": "2026-09-20T20:30:30+08:00"
+          "status": "in_progress：共享 HTTP 请求链、事务生命周期、HTTP 幂等协议/DDL、共享幂等 MySQL Repository 与四个奖励生产域 outbox 机械合同已形成可验证切片。唯一占位、锁定读回、同参重放、异参冲突、完成结果哈希和失败关闭已通过测试及隔离 MySQL 8.4.11 读回；业务写/outbox/幂等完成同事务、提交结果未知对账和 CloudBase/HTTP 接线仍未完成。",
+          "progress": 50,
+          "lastUpdatedAt": "2026-09-20T21:05:06+08:00"
         }
       ],
       "reportedTicketCount": 9,
@@ -584,9 +584,9 @@
     }
   ],
   "overallProgress": {
-    "progress": 53,
+    "progress": 54,
     "reported": 16,
     "total": 27
   },
-  "clickUpLastSyncedAt": "2026-09-20T20:19:48+08:00"
+  "clickUpLastSyncedAt": "2026-09-20T21:07:31+08:00"
 }
