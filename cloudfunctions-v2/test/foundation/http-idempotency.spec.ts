@@ -5,16 +5,16 @@ import path from 'node:path'
 import { describe, expect, test } from 'vitest'
 
 import {
-  判定HTTP幂等请求,
-  type HTTP幂等已存记录
+  determineHttpIdempotencyRequest,
+  type HttpIdempotencyStoredRecord
 } from '../../src/foundation/idempotency/http-idempotency.js'
 import { findProjectRoot } from '../support/project-root.js'
 
 /** SHA-256 十六进制摘要的固定字符数。 */
-const SHA256十六进制长度 = Number('64')
+const sha256HexLength = Number('64')
 
 /** 公开幂等冲突的固定 HTTP 状态码。 */
-const 幂等冲突HTTP状态码 = Number('409')
+const idempotencyConflictHTTPStatusCode = Number('409')
 
 /**
  * Expected 来源：`docs/backend-v2/contracts/http-api.md` 第 4 节与 P2 共享基础设施 ticket。
@@ -22,51 +22,51 @@ const 幂等冲突HTTP状态码 = Number('409')
  * 明确未覆盖：真实 MySQL 并发唯一键、轮询等待、HTTP 接线与业务事务。
  */
 describe('共享 HTTP 幂等协议判定', () => {
-  const 首次公开结果 = {
+  const firstPublicResult = {
     status: 201,
     body: { data: { userPlantRef: 'upl_01' } }
   } as const
 
   test('无历史记录时只允许当前请求尝试占位', () => {
-    expect(判定HTTP幂等请求(null, 'a'.repeat(SHA256十六进制长度))).toEqual({
+    expect(determineHttpIdempotencyRequest(null, 'a'.repeat(sha256HexLength))).toEqual({
       kind: 'reserve'
     })
   })
 
   test('同请求摘要已完成时精确重放首次公开结果', () => {
-    const 记录: HTTP幂等已存记录 = {
-      requestHash: 'a'.repeat(SHA256十六进制长度),
+    const record: HttpIdempotencyStoredRecord = {
+      requestHash: 'a'.repeat(sha256HexLength),
       state: 'completed',
-      response: 首次公开结果
+      response: firstPublicResult
     }
 
-    expect(判定HTTP幂等请求(记录, 'a'.repeat(SHA256十六进制长度))).toEqual({
+    expect(determineHttpIdempotencyRequest(record, 'a'.repeat(sha256HexLength))).toEqual({
       kind: 'replay',
-      response: 首次公开结果
+      response: firstPublicResult
     })
   })
 
   test('同作用域幂等键对应不同请求摘要时稳定返回 409 冲突', () => {
-    const 记录: HTTP幂等已存记录 = {
-      requestHash: 'a'.repeat(SHA256十六进制长度),
+    const record: HttpIdempotencyStoredRecord = {
+      requestHash: 'a'.repeat(sha256HexLength),
       state: 'completed',
-      response: 首次公开结果
+      response: firstPublicResult
     }
 
-    expect(判定HTTP幂等请求(记录, 'b'.repeat(SHA256十六进制长度))).toEqual({
+    expect(determineHttpIdempotencyRequest(record, 'b'.repeat(sha256HexLength))).toEqual({
       kind: 'conflict',
       errorType: 'IDEMPOTENCY_CONFLICT',
-      httpStatus: 幂等冲突HTTP状态码
+      httpStatus: idempotencyConflictHTTPStatusCode
     })
   })
 
   test('同参请求仍在处理时等待唯一获胜者，不重复执行领域命令', () => {
-    const 记录: HTTP幂等已存记录 = {
-      requestHash: 'a'.repeat(SHA256十六进制长度),
+    const record: HttpIdempotencyStoredRecord = {
+      requestHash: 'a'.repeat(sha256HexLength),
       state: 'processing'
     }
 
-    expect(判定HTTP幂等请求(记录, 'a'.repeat(SHA256十六进制长度))).toEqual({
+    expect(determineHttpIdempotencyRequest(record, 'a'.repeat(sha256HexLength))).toEqual({
       kind: 'wait_for_winner'
     })
   })
@@ -79,8 +79,8 @@ describe('共享 HTTP 幂等协议判定', () => {
  */
 describe('共享 HTTP 幂等持久化合同', () => {
   test('使用 foundation 独立表和最小安全作用域，不复用 nonce 或业务表', () => {
-    const 项目根目录 = findProjectRoot()
-    const schemaRoot = path.join(项目根目录, 'docs/backend-v2/schema')
+    const projectRootDirectory = findProjectRoot()
+    const schemaRoot = path.join(projectRootDirectory, 'docs/backend-v2/schema')
     const manifest = JSON.parse(fs.readFileSync(path.join(schemaRoot, 'manifest.json'), 'utf8'))
     const foundationEntry = manifest.files.find(
       (entry: { owner: string }) => entry.owner === 'shared-infrastructure'

@@ -1,44 +1,44 @@
 import { describe, expect, test } from 'vitest'
 
 import {
-  数据库提交结果未知错误,
-  执行数据库事务,
-  type 数据库事务驱动,
-  type 事务执行上下文
+  DatabaseCommitResultUnknownError,
+  runDatabaseTransaction,
+  type DatabaseTransactionDriver,
+  type TransactionExecutionContext
 } from '../../src/foundation/database/transaction-runner.js'
 
-type 测试事务 = 事务执行上下文 & {
+type TestTransaction = TransactionExecutionContext & {
   /** 仅用于测试验证同一个事务对象贯穿完整回调。 */
   testRef: string
 }
 
 /** 创建一个只记录生命周期、不模拟 SQL 行为的事务驱动。 */
-function 创建测试驱动(
-  事件: string[],
-  错误: { 开始错误?: Error; 提交错误?: Error; 回滚错误?: Error } = {}
-): 数据库事务驱动<测试事务> {
+function createTestDriver(
+  event: string[],
+  error: { beginError?: Error; commitError?: Error; rollbackError?: Error } = {}
+): DatabaseTransactionDriver<TestTransaction> {
   return {
-    async 开始事务() {
-      事件.push('开始')
-      if (错误.开始错误) {
-        throw 错误.开始错误
+    async beginTransaction() {
+      event.push('开始')
+      if (error.beginError) {
+        throw error.beginError
       }
       return { transactionContext: true, testRef: 'tx_test' }
     },
-    async 提交事务() {
-      事件.push('提交')
-      if (错误.提交错误) {
-        throw 错误.提交错误
+    async commitTransaction() {
+      event.push('提交')
+      if (error.commitError) {
+        throw error.commitError
       }
     },
-    async 回滚事务() {
-      事件.push('回滚')
-      if (错误.回滚错误) {
-        throw 错误.回滚错误
+    async rollbackTransaction() {
+      event.push('回滚')
+      if (error.rollbackError) {
+        throw error.rollbackError
       }
     },
-    async 记录回滚失败() {
-      事件.push('记录回滚失败')
+    async recordRollbackFailure() {
+      event.push('记录回滚失败')
     }
   }
 }
@@ -50,75 +50,75 @@ function 创建测试驱动(
  */
 describe('共享数据库事务编排器', () => {
   test('业务回调成功时只提交一次并返回回调结果', async () => {
-    const 事件: string[] = []
-    const 驱动 = 创建测试驱动(事件)
+    const event: string[] = []
+    const driver = createTestDriver(event)
 
-    const 结果 = await 执行数据库事务(驱动, async 事务 => {
-      事件.push(`业务:${事务.testRef}`)
+    const result = await runDatabaseTransaction(driver, async transaction => {
+      event.push(`业务:${transaction.testRef}`)
       return { userPlantRef: 'upl_test' }
     })
 
-    expect(结果).toEqual({ userPlantRef: 'upl_test' })
-    expect(事件).toEqual(['开始', '业务:tx_test', '提交'])
+    expect(result).toEqual({ userPlantRef: 'upl_test' })
+    expect(event).toEqual(['开始', '业务:tx_test', '提交'])
   })
 
   test('业务回调失败时回滚且不提交，并保留原始内部异常供上层统一脱敏', async () => {
-    const 事件: string[] = []
-    const 驱动 = 创建测试驱动(事件)
-    const 原始错误 = new Error('repository failed')
+    const event: string[] = []
+    const driver = createTestDriver(event)
+    const rawError = new Error('repository failed')
 
     await expect(
-      执行数据库事务(驱动, async () => {
-        事件.push('业务失败')
-        throw 原始错误
+      runDatabaseTransaction(driver, async () => {
+        event.push('业务失败')
+        throw rawError
       })
-    ).rejects.toBe(原始错误)
-    expect(事件).toEqual(['开始', '业务失败', '回滚'])
+    ).rejects.toBe(rawError)
+    expect(event).toEqual(['开始', '业务失败', '回滚'])
   })
 
   test('提交失败时尝试回滚并抛出提交错误', async () => {
-    const 事件: string[] = []
-    const 提交错误 = new Error('commit failed')
-    const 驱动 = 创建测试驱动(事件, { 提交错误 })
+    const event: string[] = []
+    const commitError = new Error('commit failed')
+    const driver = createTestDriver(event, { commitError })
 
-    await expect(执行数据库事务(驱动, async () => 'result')).rejects.toBe(提交错误)
-    expect(事件).toEqual(['开始', '提交', '回滚'])
+    await expect(runDatabaseTransaction(driver, async () => 'result')).rejects.toBe(commitError)
+    expect(event).toEqual(['开始', '提交', '回滚'])
   })
 
   test('提交结果未知时禁止回滚和自动重跑，原样交给新连接只读对账', async () => {
-    const 事件: string[] = []
-    const 提交错误 = new 数据库提交结果未知错误('提交响应在网络断开后未知')
-    const 驱动 = 创建测试驱动(事件, { 提交错误 })
+    const event: string[] = []
+    const commitError = new DatabaseCommitResultUnknownError('提交响应在网络断开后未知')
+    const driver = createTestDriver(event, { commitError })
 
-    await expect(执行数据库事务(驱动, async () => 'result')).rejects.toBe(提交错误)
-    expect(事件).toEqual(['开始', '提交'])
+    await expect(runDatabaseTransaction(driver, async () => 'result')).rejects.toBe(commitError)
+    expect(event).toEqual(['开始', '提交'])
   })
 
   test('回滚失败不会覆盖最先发生的业务错误', async () => {
-    const 事件: string[] = []
-    const 业务错误 = new Error('domain failed')
-    const 驱动 = 创建测试驱动(事件, { 回滚错误: new Error('rollback failed') })
+    const event: string[] = []
+    const businessError = new Error('domain failed')
+    const driver = createTestDriver(event, { rollbackError: new Error('rollback failed') })
 
     await expect(
-      执行数据库事务(驱动, async () => {
-        throw 业务错误
+      runDatabaseTransaction(driver, async () => {
+        throw businessError
       })
-    ).rejects.toBe(业务错误)
-    expect(事件).toEqual(['开始', '回滚', '记录回滚失败'])
+    ).rejects.toBe(businessError)
+    expect(event).toEqual(['开始', '回滚', '记录回滚失败'])
   })
 
   test('开始事务失败时不执行回调、提交或回滚', async () => {
-    const 事件: string[] = []
-    const 开始错误 = new Error('begin failed')
-    const 驱动 = 创建测试驱动(事件, { 开始错误 })
-    let 回调已执行 = false
+    const event: string[] = []
+    const beginError = new Error('begin failed')
+    const driver = createTestDriver(event, { beginError })
+    let callbackExecuted = false
 
     await expect(
-      执行数据库事务(驱动, async () => {
-        回调已执行 = true
+      runDatabaseTransaction(driver, async () => {
+        callbackExecuted = true
       })
-    ).rejects.toBe(开始错误)
-    expect(回调已执行).toBe(false)
-    expect(事件).toEqual(['开始'])
+    ).rejects.toBe(beginError)
+    expect(callbackExecuted).toBe(false)
+    expect(event).toEqual(['开始'])
   })
 })

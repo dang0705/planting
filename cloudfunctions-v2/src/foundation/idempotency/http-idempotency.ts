@@ -1,5 +1,5 @@
 /** 公开幂等冲突的固定 HTTP 状态码。 */
-const 幂等冲突HTTP状态码 = Number('409')
+const idempotencyConflictHTTPStatusCode = Number('409')
 
 /**
  * 已完成请求可被安全重放的公开 HTTP 结果。
@@ -7,7 +7,7 @@ const 幂等冲突HTTP状态码 = Number('409')
  * 这里只允许保存已经过脱敏和公开合同校验的响应；数据库内部主键、平台主体标识、
  * 追踪标识、凭证、SQL、Prompt 或模型原文不得进入该快照。
  */
-export type HTTP幂等公开响应快照 = {
+export type HttpIdempotencyPublicResponseSnapshot = {
   /** 首次请求已确定的 HTTP 状态码，重放时不得重新计算。 */
   readonly status: number
   /** 首次请求已经脱敏的公开 JSON 响应包装。 */
@@ -19,7 +19,7 @@ export type HTTP幂等公开响应快照 = {
  *
  * 联合类型确保只有完成态携带公开响应；处理态不能伪造可重放结果。
  */
-export type HTTP幂等已存记录 =
+export type HttpIdempotencyStoredRecord =
   | {
       /** 规范化请求内容的 SHA-256，用于区分同键同参与同键异参。 */
       readonly requestHash: string
@@ -32,7 +32,7 @@ export type HTTP幂等已存记录 =
       /** `completed` 表示首次请求已在业务事务内落下确定公开结果。 */
       readonly state: 'completed'
       /** 必须原样重放的首次脱敏公开响应。 */
-      readonly response: HTTP幂等公开响应快照
+      readonly response: HttpIdempotencyPublicResponseSnapshot
     }
 
 /**
@@ -41,7 +41,7 @@ export type HTTP幂等已存记录 =
  * `wait_for_winner` 只禁止重复执行领域命令；等待、读回和超时由 Repository/HTTP
  * 适配器在已冻结的运行策略下实现，本模块不私设超时默认值。
  */
-export type HTTP幂等决策 =
+export type HttpIdempotencyDecision =
   | {
       /** 当前请求可以尝试写入唯一处理占位；占位冲突后必须重新读取。 */
       readonly kind: 'reserve'
@@ -50,7 +50,7 @@ export type HTTP幂等决策 =
       /** 当前请求与首次请求完全同参，不得再执行领域命令。 */
       readonly kind: 'replay'
       /** 首次确定结果，HTTP 适配器必须原样返回。 */
-      readonly response: HTTP幂等公开响应快照
+      readonly response: HttpIdempotencyPublicResponseSnapshot
     }
   | {
       /** 同一幂等作用域已绑定不同请求，禁止执行任何业务写入。 */
@@ -70,24 +70,24 @@ export type HTTP幂等决策 =
  *
  * 本函数不访问数据库、不执行领域命令，也不会把处理中状态误报成成功。
  */
-export function 判定HTTP幂等请求(
-  已存记录: HTTP幂等已存记录 | null,
-  当前请求摘要: string
-): HTTP幂等决策 {
-  if (已存记录 === null) {
+export function determineHttpIdempotencyRequest(
+  storedRecord: HttpIdempotencyStoredRecord | null,
+  currentRequestDigest: string
+): HttpIdempotencyDecision {
+  if (storedRecord === null) {
     return { kind: 'reserve' }
   }
 
-  if (已存记录.requestHash !== 当前请求摘要) {
+  if (storedRecord.requestHash !== currentRequestDigest) {
     return {
       kind: 'conflict',
       errorType: 'IDEMPOTENCY_CONFLICT',
-      httpStatus: 幂等冲突HTTP状态码
+      httpStatus: idempotencyConflictHTTPStatusCode
     }
   }
 
-  if (已存记录.state === 'completed') {
-    return { kind: 'replay', response: 已存记录.response }
+  if (storedRecord.state === 'completed') {
+    return { kind: 'replay', response: storedRecord.response }
   }
 
   return { kind: 'wait_for_winner' }
