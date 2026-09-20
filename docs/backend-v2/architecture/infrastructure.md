@@ -13,6 +13,22 @@
 
 小青继续使用 CloudBase Agent，不新增第七个函数。
 
+## care 内部环境证据管线
+
+原子环境事实与派生环境指标都属于 `care`，不新增云函数，也不得下沉到无业务规则的 shared foundation。
+
+```text
+Weather / 盆土视觉 / 用户植物配置 / 已确认养护事实
+→ EnvironmentEvidenceAssembler（来源、范围、单位、新鲜度校验）
+→ 原子环境事实 Repository
+→ 不可变输入快照
+→ EnvironmentDomain（版本化纯计算）
+→ 派生环境指标 Repository
+→ CareDomain / Diagnosis 冻结合同消费
+```
+
+网络与 Provider 调用只发生在 Adapter；`EnvironmentDomain` 不访问网络和数据库。Repository 是观察、快照和派生记录的唯一 SQL 入口。室外天气快照保持 `outdoor` 范围，不能在组装层被重标记为室内证据。算法变化不得更新旧派生行或原子事实，而是基于同一 `inputSnapshotHash` 与新的算法 release 追加派生记录。
+
 ## 请求固定流程
 
 ```text

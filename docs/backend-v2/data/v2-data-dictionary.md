@@ -141,16 +141,21 @@ Qwen 草稿仅可写基础展示介绍和约三个简短问答。毒性、浇水
 
 ## 6. 养护与诊断域
 
+- `care_environment_observations`：不可变原子环境事实；一行只表达一种光照、空气温度、相对湿度、空气运动、盆器、基质、排水或盆土表面因素，并保存用户植物归属、来源类型/引用、空间范围、单位、置信度、观察时间、有效期和规范化证据 SHA-256。室外天气始终保持 `outdoor`，不能冒充室内或植物周围实测。
+- `care_environment_snapshots`：一次养护/诊断计算锁定的不可变输入清单；保存用户植物、养护环境配置版本、原子观察引用清单、最近事实/盆土/天气/知识/配置 release 引用及 `input_manifest_sha256`。同一请求不得中途替换证据。
+- `care_environment_derivations`：基于一条输入快照和不可变算法 release 追加的派生环境指标；首批包括 VPD、光照暴露、空气交换、基质干燥特征、环境干燥需求和预计干湿周期。保存算法 release、输入清单哈希、结果结构版本、结果 SHA-256、置信度和有效期；不得更新原子事实或伪装为永久植物属性。
 - `care_facts`：浇水、施肥、换盆、位置变化和用户观察等已发生事实。
 - `care_proposals`：算法建议；不等于事实。
 - `care_plans` / `reminder_jobs`：用户确认后的未来动作与提醒。
 - `watering_visual_evidence`：盆土视觉证据、私有文件引用、有效期和算法版本。
-- `temporary_care_sessions` / `temporary_care_results` / `temporary_watering_visual_evidence`：游客临时养护对象，只关联 `guest_plant_case_ref`。
+- `temporary_care_sessions` / `temporary_care_results` / `temporary_watering_visual_evidence`：游客临时养护对象，只关联 `guest_plant_case_ref`。已生成的临时结果必须内联保存原子输入清单、算法 release 清单、派生环境指标及各自 SHA-256，使游客结果可回放；登录认领只增加归属投影，不改写该结果。
 - `diagnosis_sessions` / `diagnosis_answers` / `diagnosis_results`：问诊过程、证据和结果。
 - `diagnosis_visual_evidence`：私有诊断图片引用及保留期。
 - `temporary_diagnosis_sessions` / `temporary_diagnosis_answers` / `temporary_diagnosis_results` / `temporary_diagnosis_visual_evidence`：游客临时问诊对象，只关联 `guest_plant_case_ref`。
 
 所有长期记录必须归属 `user_plant_id`；游客临时结果只能归属 `guest_plant_case_ref`，在认领后通过归属投影解释。
+
+原子环境事实、输入快照、派生环境指标和已生成的游客临时养护结果采用只追加模型：Repository 不提供更新用例，数据库触发器拒绝 `UPDATE`。修正事实、更换证据或升级算法时必须追加新记录，不得保持时间戳不变后篡改原行。
 
 ## 7. 可靠事件与审计
 

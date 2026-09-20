@@ -3,7 +3,7 @@
 - 机器事实源：`configuration-variable-catalog.json`
 - Schema：`configuration-variable-catalog/v1`
 - 目录版本：`2026-09-20.3`
-- 当前共 162 项业务/治理变量、12 个 Provider 配置档案：已冻结 74 项、待冻结 49 项、不可配置硬规则 39 项。
+- 当前共 168 项业务/治理变量、12 个 Provider 配置档案：已冻结 74 项、待冻结 52 项、不可配置硬规则 42 项。
 
 本文件由同目录生成脚本从 JSON 生成，便于中文阅读。实施 Agent 必须先按领域读取本文件，再只深读该变量引用的合同或决策；不得把 `P1_PENDING` 猜成默认值。待冻结项必须带原因与阻断范围，未冻结前只能推进不依赖该值的工作。
 
@@ -150,6 +150,12 @@
 
 | 配置 ID | 中文名称 | 裁决组 | 层级 / 状态 | 当前值 | 所有者 | 消费方 | 变更与失败边界 | Phase / Ticket |
 |---|---|---|---|---|---|---|---|---|
+| `care.environment.atomic_facts_immutable` | 原子环境事实不可改写 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `true` | care | care、diagnosis | 不可配置；修正只能追加新事实；失败：拒绝 UPDATE 并保留原记录 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
+| `care.environment.weather_scope_must_be_outdoor` | 天气 Provider 证据必须保留室外空间范围 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `true` | care | Weather Adapter、care、diagnosis | 不可配置；失败：缺少室内证据时降级或返回 insufficient_evidence | P1 / [P1] 业务策略与统一 Provider 配置架构 |
+| `care.environment.derivation_must_not_overwrite_fact` | 派生环境指标不得回写原子事实 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `true` | care | care、diagnosis | 不可配置；失败：派生失败时不写任何事实、计划或提醒 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
+| `care.environment.reference_conditions_release` | 植物基准干湿周期标准参考环境版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care、plant-knowledge | 不可变参考环境 release；升级后只影响新计算；失败：无已发布参考环境时不生成预计干湿周期；待冻结原因：v2 标准室内环境、盆器与基质参考条件尚未通过数据验证；阻断：预计干湿周期与浇水算法 | P4 / [P4] 盆土视觉和四类养护能力 |
+| `care.environment.derivation_algorithm_release` | 派生环境指标算法发布版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care、diagnosis | 按派生类型发布不可变 release，请求锁定具体版本与 SHA-256；失败：无已发布算法时对应能力返回 temporarily_unavailable；待冻结原因：VPD、光照暴露、空气交换、干燥需求和预计干湿周期算法尚未分别冻结；阻断：派生环境指标运行时 | P4 / [P4] 盆土视觉和四类养护能力 |
+| `care.environment.factor_freshness_policy_release` | 各类原子环境证据新鲜度策略版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care、diagnosis | 按原子因素与来源类型发布不可变策略；失败：无法证明新鲜度时排除证据并降低结论置信度；待冻结原因：不同证据类型有效窗口尚未通过真实数据验证；阻断：原子证据过期判定 | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.soil_evidence.ttl_hours` | 盆土视觉证据有效期 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING 小时 | care | care、独立浇水顾问 | 证据策略新版本，只影响新计算；失败：有效期无法证明时要求重新检查；待冻结原因：架构只冻结短时证据语义，未冻结具体小时数；阻断：盆土视觉证据复用 | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.weather.current_freshness_minutes` | 实时天气证据新鲜度 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING 分钟 | care | care、天气快照 | 天气证据策略版本；失败：返回证据不足而非伪造实时天气；待冻结原因：和风实时接口与业务新鲜度尚未真实验证；阻断：依赖实时天气的养护结论 | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.weather.forecast_freshness_minutes` | 天气预报证据新鲜度 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING 分钟 | care | care、天气快照 | 天气证据策略版本；失败：缺失时降低可信度；待冻结原因：预报边界未冻结；阻断：天气增强养护 | P4 / [P4] 盆土视觉和四类养护能力 |

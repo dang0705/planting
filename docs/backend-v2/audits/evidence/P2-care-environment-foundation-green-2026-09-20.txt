@@ -1,0 +1,29 @@
+P2 养护原子环境事实底座 GREEN 证据
+
+1. TypeScript/Vitest 合同门
+
+npm test -- --run test/p2-care-environment-foundation.spec.ts test/p1-contract-foundation.spec.ts test/p1-configuration-architecture.spec.ts test/p1-total-ddl.spec.ts
+
+结果：4 个测试文件、8 条测试全部通过。
+
+2. 本机隔离 MySQL 8.4.11
+
+- 官方 mysql:8.4 容器，不映射宿主端口，不连接 CloudBase。
+- 按 schema manifest 顺序在 qhz_env_a / qhz_env_b 两个空库完整执行 8 份 DDL。
+- 两个结构导出 SHA-256 均为 4bce86b3082ab46426d50c8ac1fd9ef428b2a2ed3e855ffa5d9d95e3ddca52c4。
+- 读回：90 张表、107 个外键、137 个 CHECK、146 个 UNIQUE、4 个不可变触发器。
+
+3. 有效路径
+
+- 同一全局天气快照 `wxs_environment_shared` 成功被两株用户植物分别引用为 `outdoor` 原子观察。
+- 1 条不可变输入快照、1 条 VPD 派生指标和 1 条带输入/算法/派生/结果哈希的游客临时养护结果写入成功。
+
+4. 负向路径
+
+- weather_adapter + indoor：CHECK `ck_environment_observation_weather_scope` 拒绝。
+- 同一用户植物重复写入同一来源观察：UNIQUE 拒绝。
+- 游客输入哈希非 64 位小写十六进制：CHECK `ck_temporary_care_input_sha` 拒绝。
+- UPDATE 原子事实：SQLSTATE 45000，“原子环境事实不可修改”。
+- UPDATE 输入快照：SQLSTATE 45000，“养护环境输入快照不可修改”。
+- UPDATE 派生指标：SQLSTATE 45000，“派生环境指标不可修改”。
+- UPDATE 游客临时结果：SQLSTATE 45000，“已生成的游客临时养护结果不可修改”。

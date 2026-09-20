@@ -1289,6 +1289,153 @@
       "decisionGroup": "hard_business_rule"
     },
     {
+      "id": "care.environment.atomic_facts_immutable",
+      "chineseName": "原子环境事实不可改写",
+      "domain": "care",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": true,
+      "owner": "care",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-environment-foundation.md",
+        "docs/backend-v2/schema/004_care_diagnosis.sql"
+      ],
+      "consumers": [
+        "care",
+        "diagnosis"
+      ],
+      "changePolicy": "不可配置；修正只能追加新事实",
+      "fallback": "拒绝 UPDATE 并保留原记录",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "算法升级或证据修正不得改写原子环境事实",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "care.environment.weather_scope_must_be_outdoor",
+      "chineseName": "天气 Provider 证据必须保留室外空间范围",
+      "domain": "care",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": true,
+      "owner": "care",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-environment-foundation.md",
+        "docs/backend-v2/schema/004_care_diagnosis.sql"
+      ],
+      "consumers": [
+        "Weather Adapter",
+        "care",
+        "diagnosis"
+      ],
+      "changePolicy": "不可配置",
+      "fallback": "缺少室内证据时降级或返回 insufficient_evidence",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "weather_adapter 不得冒充 indoor 或 plant_zone 实测",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "care.environment.derivation_must_not_overwrite_fact",
+      "chineseName": "派生环境指标不得回写原子事实",
+      "domain": "care",
+      "layer": "hard_rule",
+      "valueType": "boolean",
+      "status": "hard_rule",
+      "currentValue": true,
+      "owner": "care",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-environment-foundation.md"
+      ],
+      "consumers": [
+        "care",
+        "diagnosis"
+      ],
+      "changePolicy": "不可配置",
+      "fallback": "派生失败时不写任何事实、计划或提醒",
+      "phase": "P1",
+      "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
+      "expected": "新算法只能基于已锁定快照追加新派生结果",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "care.environment.reference_conditions_release",
+      "chineseName": "植物基准干湿周期标准参考环境版本",
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "string",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "care",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-environment-foundation.md"
+      ],
+      "consumers": [
+        "care",
+        "plant-knowledge"
+      ],
+      "changePolicy": "不可变参考环境 release；升级后只影响新计算",
+      "fallback": "无已发布参考环境时不生成预计干湿周期",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "expected": "任何植物基准周期都能说明对应的标准参考环境",
+      "pendingReason": "v2 标准室内环境、盆器与基质参考条件尚未通过数据验证",
+      "blockingScope": "预计干湿周期与浇水算法",
+      "decisionGroup": "care_algorithms"
+    },
+    {
+      "id": "care.environment.derivation_algorithm_release",
+      "chineseName": "派生环境指标算法发布版本",
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "string",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "care",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-environment-foundation.md"
+      ],
+      "consumers": [
+        "care",
+        "diagnosis"
+      ],
+      "changePolicy": "按派生类型发布不可变 release，请求锁定具体版本与 SHA-256",
+      "fallback": "无已发布算法时对应能力返回 temporarily_unavailable",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "expected": "每条派生指标可回放输入快照、算法 release 与结果哈希",
+      "pendingReason": "VPD、光照暴露、空气交换、干燥需求和预计干湿周期算法尚未分别冻结",
+      "blockingScope": "派生环境指标运行时",
+      "decisionGroup": "care_algorithms"
+    },
+    {
+      "id": "care.environment.factor_freshness_policy_release",
+      "chineseName": "各类原子环境证据新鲜度策略版本",
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "string",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "care",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-environment-foundation.md"
+      ],
+      "consumers": [
+        "care",
+        "diagnosis"
+      ],
+      "changePolicy": "按原子因素与来源类型发布不可变策略",
+      "fallback": "无法证明新鲜度时排除证据并降低结论置信度",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "expected": "光照、温湿度、空气运动、盆器基质与盆土证据按来源显式判断新鲜度",
+      "pendingReason": "不同证据类型有效窗口尚未通过真实数据验证",
+      "blockingScope": "原子证据过期判定",
+      "decisionGroup": "care_algorithms"
+    },
+    {
       "id": "care.soil_evidence.ttl_hours",
       "chineseName": "盆土视觉证据有效期",
       "domain": "care",

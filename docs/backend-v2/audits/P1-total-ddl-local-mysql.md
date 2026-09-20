@@ -27,7 +27,7 @@ done < "$ddl_files_from_current_manifest"
 
 | 检查 | 真实结果 |
 |---|---:|
-| `INFORMATION_SCHEMA.TABLES`（当前 Docker 复验库） | `87` 张表 |
+| `INFORMATION_SCHEMA.TABLES`（当前 Docker 复验库） | `90` 张表 |
 | `trial_entitlements` 有效插入 | `user_internal_id=1`，`starts_at_ms=1700000000000`，`expires_at_ms=1700086400000` |
 | 能力快照有效插入 | `1` 条，引用 `subscription/capability_catalog` 已发布策略 |
 
@@ -36,23 +36,24 @@ done < "$ddl_files_from_current_manifest"
 2026-09-20 在同一个全新一次性容器中创建两个独立空库，每个空库都严格按当前 manifest 的顺序执行全部 8 份 DDL。两个数据库均创建 `87` 张表；使用容器内 `mysqldump --no-data --skip-comments --skip-add-locks --skip-set-charset --compact` 导出后，两个结构导出的 SHA-256 均为：
 
 ```text
-16c46880a2034146ac17b64097d28e7c9ff754b0d22901a56e61f8bb866c46c6
+4bce86b3082ab46426d50c8ac1fd9ef428b2a2ed3e855ffa5d9d95e3ddca52c4
 ```
 
 字节比较结果为一致。`qhz_v2_p1_a` 的 `INFORMATION_SCHEMA` 读回如下：
 
 | 检查 | 结果 |
 |---|---:|
-| 表 | 87 |
+| 表 | 90 |
 | 缺表中文注释 | 0 |
 | 缺字段中文注释 | 0 |
 | 非 `utf8mb4` 表 | 0 |
 | 缺内部 `id` 的表 | 0 |
 | 缺受控 `_openid` 的表 | 0 |
 | `_openid` 索引 | 0 |
-| 外键 | 104 |
-| CHECK 约束 | 116 |
-| UNIQUE 约束 | 139 |
+| 外键 | 107 |
+| CHECK 约束 | 137 |
+| UNIQUE 约束 | 146 |
+| 不可变触发器 | 4 |
 
 ## 001 → 005 试用权益约束
 
@@ -83,7 +84,7 @@ SHA-256 全部匹配的游客能力快照，插入成功。随后保持其他发
 
 ## 当前 DDL 修订的新增约束复验
 
-`001_identity.sql` 使用 MySQL 8.4 可执行的 `REGEXP_LIKE`。使用全新隔离空库按当前 8 份 DDL 执行成功，`INFORMATION_SCHEMA.TABLES` 读回为 `87` 张表。以下是当前合同的真实写入结果：
+`001_identity.sql` 使用 MySQL 8.4 可执行的 `REGEXP_LIKE`。使用全新隔离空库按当前 8 份 DDL 执行成功，`INFORMATION_SCHEMA.TABLES` 读回为 `90` 张表。以下是当前合同的真实写入结果：
 
 Foundation 幂等表在同版 MySQL 中完成额外读回：合法 `processing → completed` 转换成功，168 小时到期差值为 `604800000` 毫秒；同作用域重复占位由 UNIQUE 拒绝，处理中携带响应与完成态缺失 JSON 均由 CHECK 拒绝。
 
@@ -101,3 +102,14 @@ Foundation 幂等表在同版 MySQL 中完成额外读回：合法 `processing �
 | `status='rejected'` 但 `rejection_code` 为空的奖励收件 | MySQL CHECK 拒绝 | `ck_reward_inbox_status` 强制 rejected 的拒绝代码且禁止成功字段。 |
 
 能力策略复合外键、试用起算锚点和 24 小时窗口也在同一当前修订空库复验：错误策略内容 SHA 与错误试用起算分别由外键拒绝，不足 24 小时试用窗口由 CHECK 拒绝。最终有效记录数为：WCVP 分类 `1`、试用 `1`、能力快照 `1`、AI grant `1`；allocation、兑换和奖励收件的非法行均为 `0`。
+
+## 养护原子环境事实新增复验
+
+当前 DDL 新增 `care_environment_observations`、`care_environment_snapshots` 和 `care_environment_derivations`，并为游客临时养护结果增加输入、算法、派生与结果哈希。MySQL 8.4.11 已验证：
+
+- 同一全局天气快照可被两株用户植物分别引用，同一植物重复来源依然由 UNIQUE 拒绝。
+- `weather_adapter` 写入 `indoor` 由 CHECK 拒绝。
+- 非法游客输入哈希由 CHECK 拒绝。
+- 原子事实、输入快照、派生指标和已生成游客结果的 `UPDATE` 均由 SQLSTATE `45000` 触发器拒绝。
+
+详细字段与负向路径见 `P2-care-environment-foundation-2026-09-20.md`。

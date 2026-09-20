@@ -34,8 +34,8 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
     assert.ok(content.includes('DEFAULT CHARSET=utf8mb4'), `${entry.file} 必须固定 utf8mb4`)
     assert.doesNotMatch(
       content,
-      /\b(?:DROP|ALTER|INSERT|UPDATE|DELETE)\b/iu,
-      `${entry.file} 只允许空库 CREATE`
+      /^(?:DROP|ALTER|INSERT|UPDATE|DELETE)\b/imu,
+      `${entry.file} 只允许空库 CREATE；允许 CREATE TRIGGER 中的 BEFORE UPDATE 不可变门禁`
     )
     assert.doesNotMatch(
       content,
@@ -87,6 +87,9 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
     'reminder_jobs',
     'watering_visual_evidence',
     'weather_snapshots',
+    'care_environment_observations',
+    'care_environment_snapshots',
+    'care_environment_derivations',
     'temporary_care_sessions',
     'temporary_care_results',
     'temporary_watering_visual_evidence',

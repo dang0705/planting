@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-20T07:18:00+08:00",
+  "generatedAt": "2026-09-20T20:43:38+08:00",
   "contracts": [
     {
       "id": "principal-and-capability",
@@ -45,11 +45,18 @@
       "sha256": "b39ed8eefe9b91980692904310491d05f34aac58277ed10bc96d9e108955b20e"
     },
     {
+      "id": "care-environment-foundation",
+      "version": "care-environment-foundation/v1",
+      "file": "care-environment-foundation.md",
+      "owner": "care",
+      "sha256": "9600f9a3953b85013f5295bbda9de741d9b9c0fded393d4c7b6af8c6d3528b55"
+    },
+    {
       "id": "care-capability-output",
       "version": "care-capability-result/v1",
       "file": "care-capability-output.md",
       "owner": "care",
-      "sha256": "760ff38b8d6e8b749e72a2d70f51e9eac052f58cba28d17187e17aa6d24c66d2"
+      "sha256": "b83669dffe52cfe7765955a15691479d2a56c17923008145bccd4b816af73d13"
     },
     {
       "id": "http-api",

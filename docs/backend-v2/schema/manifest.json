@@ -1,6 +1,6 @@
 {
   "schemaVersion": "backend-v2-schema/v1",
-  "generatedAt": "2026-09-20T17:48:00+08:00",
+  "generatedAt": "2026-09-20T20:43:38+08:00",
   "database": "CloudBase MySQL",
   "timeStorage": "UTC epoch milliseconds",
   "files": [
@@ -26,7 +26,7 @@
       "order": 4,
       "owner": "care + diagnosis",
       "file": "004_care_diagnosis.sql",
-      "sha256": "85c3eed941bede4e2cebc213b33b667f4655c018c54e24d2c9c1432f16d5ee42"
+      "sha256": "45f3231283554fafe7b8f433ef815cb52237634484bbc2f4e7bd18d440faa944"
     },
     {
       "order": 5,

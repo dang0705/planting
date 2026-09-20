@@ -6,6 +6,7 @@
 - [共享 HTTP 请求链](foundation-request-chain.md)
 - [共享 HTTP 幂等协议与持久化](foundation-http-idempotency.md)
 - [用户植物核心](user-plant-core.md)
+- [养护原子环境事实底座](care-environment-foundation.md)
 - [奖励事件可靠投递](reward-events.md)
 - [CMS 补全 Worker](cms-enrichment-worker.md)
 - [云存储安全](storage-security.md)

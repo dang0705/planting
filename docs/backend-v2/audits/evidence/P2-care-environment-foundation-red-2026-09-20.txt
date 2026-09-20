@@ -1,0 +1,763 @@
+
+> @qinghuazhi/backend-v2-foundation@0.0.0 test
+> vitest run --config vitest.config.mjs --run test/p2-care-environment-foundation.spec.ts
+
+
+ RUN  v4.1.11 /Users/jay/WebstormProjects/planting/cloudfunctions-v2
+
+ ❯ test/p2-care-environment-foundation.spec.ts (4 tests | 4 failed) 14ms
+     × 业务与技术架构都以原子事实到派生指标再到养护能力为固定方向 8ms
+     × 独立合同冻结来源、时间、单位、置信度和推导可回放边界 1ms
+     × 数据字典与 DDL 分离不可变观察、输入快照和派生结果 3ms
+     × P4 任务要求先建设环境事实层再实现四类养护算法 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/p2-care-environment-foundation.spec.ts > 原子环境事实与派生指标架构合同 > 业务与技术架构都以原子事实到派生指标再到养护能力为固定方向
+AssertionError: expected '# 青花植架构\n\n青花植同时维护两套不可混用、但必须相互映射的架构：\…' to contain '原子环境事实'
+
+- Expected
++ Received
+
+- 原子环境事实
++ # 青花植架构
++
++ 青花植同时维护两套不可混用、但必须相互映射的架构：
++
++ - 业务领域架构描述业务事实、业务能力、业务关系与业务流，是产品和领域合同的事实源。
++ - 后端基础设施架构描述业务能力如何由 CloudBase、应用服务、领域核心、共享基础设施、持久化和外部适配器实现，是后端技术设计的事实源。
++ - 后端基础设施架构必须实现业务领域架构，但不得增删或改写业务语义；业务领域架构不得包含具体框架、数据库访问或部署细节。
++ - 中文是业务、架构和文档的首要表达语言。图中的英文只作为程序标识或行业缩写保留，必须由同一节点中的中文名称解释，不得让英文术语承担唯一业务含义。
++
++ ## 业务领域架构
++
++ ```mermaid
++ flowchart TB
++
++   %% ========== 访问主体、身份与权益 ==========
++   Visitor[游客<br/>匿名访问主体<br/>不是正式用户] --> VisitorGrant[游客基础能力]
++   PlatformIdentity[平台身份绑定<br/>微信 / 抖音 / 小红书 / 手机号] --> Identity[统一用户主体<br/>user_id]
++   Identity --> FreeGrant[登录免费能力<br/>含用户植物创建]
++   Identity --> RegistrationFact[注册事实<br/>服务端 user_created_at]
++   RegistrationFact --> TrialGrant[一次性 24 小时试用<br/>绝对到期 / 不随设备或平台重置]
++   Identity -->|拥有| PlantRoot
++
++   Subscription[会员与支付事实] --> MemberGrant[会员权益<br/>9.9 元 / 订阅周期]
++
++   VisitorGrant --> EffectiveEntitlement[生效权益投影<br/>会员 ＞ 试用 ＞ 登录免费 ＞ 游客]
++   FreeGrant --> EffectiveEntitlement
++   TrialGrant --> EffectiveEntitlement
++   MemberGrant --> EffectiveEntitlement
++
++   CapabilityCatalog[能力目录<br/>适用层级 / 是否消耗 AI 点数] --> CapabilityGate[能力决策]
++   BusinessPolicyGovernance[关键业务策略治理<br/>类型化草稿 / 审核 / 生效时间 / 回滚] --> BusinessPolicyRelease[已发布业务策略<br/>不可变版本 / SHA-256 / 负责人]
++   BusinessPolicyRelease --> CapabilityCatalog
++   BusinessPolicyRelease --> TrialGrant
++   BusinessPolicyRelease --> MemberGrant
++   BusinessPolicyRelease --> GenerativeGate
++   Visitor --> CapabilityGate
++   Identity --> CapabilityGate
++   EffectiveEntitlement --> CapabilityGate
++
++   TrialGrant --> TrialAIBudget[试用 AI 算力池<br/>一次性 200 点 / 24 小时]
++   MemberGrant --> MemberAIBudget[会员 AI 算力池<br/>每订阅周期 2,000<br/>无日限额 / 周限额]
++   TrialAIBudget --> GenerativeGate[生成式 AI 成本门<br/>原子预占 / 结算 / 释放]
++   MemberAIBudget --> GenerativeGate
++   ContributionReward[内容贡献奖励额度<br/>新增规范植物 100 / 基础展示内容 50<br/>实际 release 后发放 / 三个月有效] --> GenerativeGate
++
++
++   %% ========== 游客与独立临时能力 ==========
++   Visitor --> EphemeralCase[临时植物会话<br/>有有效期 / 不生成 user_plant_id]
++   CapabilityGate -->|所有层级 / 不扣 AI 点数| Identify
++   CapabilityGate -->|已发布基础题包 / 不扣 AI 点数| TemporaryDiagnosis[独立基础问诊<br/>不写植物事实]
++   CapabilityGate -->|游客与免费用户基础能力| TemporaryCare[独立浇水顾问<br/>不写事实 / 计划 / 提醒]
++   CapabilityGate -->|登录后允许创建| CreatePlant[创建用户植物用例]
++   CreatePlant --> PlantRoot
++
++   EphemeralCase --> Identify
++   EphemeralCase --> TemporaryDiagnosis
++   EphemeralCase --> TemporaryCare
++   TemporaryDiagnosis --> TemporaryDiagnosisResult[临时问诊结果<br/>游客阶段不写植物事实]
++   TemporaryCare --> TemporaryAdvice[临时浇水建议<br/>游客阶段不写植物事实]
++
++   EphemeralCase --> SessionClaim[同一会话登录后认领<br/>用户确认 / 一次性 / 可审计]
++   SessionClaim --> CreatePlant
++   SessionClaim -->|绑定来源记录，不改变记录语义| PlantRoot
++   TemporaryDiagnosisResult --> SessionClaim
++   TemporaryAdvice --> SessionClaim
++
++
++   %% ========== 用户植物核心 ==========
++   subgraph Core["核心：用户植物 User Plant"]
++     PlantRoot[用户植物<br/>user_plant_id<br/>一株真实植物的稳定身份]
++
++     Profile[个体档案<br/>昵称 / 封面 / 种植日期 / 备注]
++     Lifecycle[生命周期<br/>活跃 / 归档 / 删除中 / 已删除]
++     PlantState[当前状态投影<br/>完整度 / 活跃状态 / 最近活动]
++     PlantIdentity[当前植物身份<br/>已确认 / 待确认 / 暂未识别]
++     CareContext[养护环境配置<br/>位置 / 盆器 / 介质 / 栽培方式<br/>光照 / 通风与空气环境]
++
++     PlantRoot --> Profile
++     PlantRoot --> Lifecycle
++     PlantRoot --> PlantState
++     PlantRoot --> PlantIdentity
++     PlantRoot --> CareContext
++   end
++
++
++   %% ========== 植物知识、识别与百科自丰富 ==========
++   IdentityCatalog[规范植物身份<br/>分类 / 科学名 / 别名 / taxon_key] --> IdentityProposal
++   PublicEncyclopedia[展示型植物百科<br/>简介 / 外观 / 分布 / 约 3 个 Q&A] --> EncyclopediaLookup
++   InternalKnowledge[内部维护知识<br/>毒性 / 浇水 / 施肥 / 光照 / 通风<br/>诊断与安全基本面] --> CareInput
++   InternalKnowledge --> Diagnosis
++
++   IdentifyEvidence[百度识别结果<br/>仅作为外部候选证据] --> Identify[植物识别能力]
++   Identify --> IdentityProposal[身份候选<br/>强匹配 / 弱匹配 / 未识别]
++   IdentityProposal -->|用户确认规范候选| PlantIdentity
++   IdentityProposal -->|规范身份已确定| EncyclopediaLookup[已发布百科查询]
++   IdentityProposal -->|现有身份无法解释| SpeciesCandidatePool[新增植物种类候选池<br/>聚合 / 去重 / 来源证据]
++   SpeciesCandidatePool --> IdentityReview[CMS 身份候选审核<br/>关联已有 / 新增身份 / 驳回]
++   IdentityReview -->|审核通过新增身份| IdentityCatalog
++
++   EncyclopediaLookup -->|命中| EncyclopediaDisplay[百科展示]
++   EncyclopediaLookup -->|缺失且由登录用户触发| KnowledgeGap[展示百科内容缺口]
++   KnowledgeGap --> PlatformContentBudget[平台内容预算<br/>不扣触发用户 AI 点数]
++   PlatformContentBudget --> QwenEncyclopedia[Qwen 展示百科草稿<br/>固定结构 / 禁止养护与安全字段]
++   QwenEncyclopedia --> DisplayValidation[结构 / 长度 / 禁区 / 来源校验]
++   DisplayValidation --> CMSDraft[CMS 草稿<br/>可审核 / 可驳回 / 可追溯]
++   CMSDraft --> ContributionReview[登录用户贡献审核<br/>记录 user_id / 贡献类型 / 幂等键]
++   IdentityReview --> ContributionReview
++   ContributionReview -->|新增规范植物审核通过| PlantReward[奖励 100 AI 点数]
++   ContributionReview -->|基础展示内容审核通过| ContentReward[奖励 50 AI 点数]
++   PlantReward --> ContributionReward
++   ContentReward --> ContributionReward
++
++
++   %% ========== 植物事实 ==========
++   PlantRoot --> Facts[植物事实记录<br/>浇水 / 施肥 / 换盆 / 位置变化 / 用户观察]
++   CareContext -->|配置变更形成不可变事件| Facts
++
++   Facts --> PlantState
++   Lifecycle --> PlantState
++   Profile --> PlantState
++   CareContext --> PlantState
++
++
++   %% ========== 天气、视觉与养护上下文 ==========
++   CareContext --> Weather[天气能力<br/>位置绑定 / 历史观测 / 预报]
++   WeatherObservation[外部天气观测与预报<br/>带提供方 / 时间 / 地点] --> WeatherSnapshot[标准化天气快照<br/>可追溯 / 有新鲜度]
++   WeatherSnapshot --> Weather
++
++   PlantRoot --> SoilVisual[盆土表面视觉评估<br/>图片质量 / 湿润度 / 积水迹象]
++   Storage --> SoilVisual
++   SoilVisual --> SoilEvidence[短时盆土视觉证据<br/>绑定用户植物 / 采集时间 / 有效期]
++
++   Facts --> CareInput[养护上下文组装]
++   PlantRoot --> CareInput
++   CareContext --> CareInput
++   Weather --> CareInput
++   SoilEvidence --> CareInput
++
++
++   %% ========== 养护能力 ==========
++   CareInput --> Watering[浇水规划<br/>水量 / 时机 / 盆土安全门]
++   CareInput --> Fertilizing[施肥规划]
++   CareInput --> Lighting[光照评估与调整建议<br/>暴露估算 / 需求匹配]
++   CareInput --> Ventilation[通风评估与调整建议<br/>换气 / 闷湿 / 直吹风险]
++
++   Watering --> Proposal[养护建议 Proposal]
++   Fertilizing --> Proposal
++   Lighting --> Proposal
++   Ventilation --> Proposal
++
++   Watering --> StableCareOutput[统一养护能力合同<br/>稳定外壳 / 明确版本 / 中文语义]
++   Fertilizing --> StableCareOutput
++   Lighting --> StableCareOutput
++   Ventilation --> StableCareOutput
++
++   EphemeralCase --> TemporaryCareInput[临时浇水输入<br/>候选身份 / 盆器介质 / 用户回答<br/>手工盆土状态或受控视觉]
++   TemporaryCareInput --> TemporaryCare
++
++
++   %% ========== 诊断 ==========
++   PlantRoot --> Diagnosis[植物诊断<br/>症状 / 题包 / 证据 / 结论]
++   Facts --> Diagnosis
++   CareContext --> Diagnosis
++   Weather --> Diagnosis
++   Diagnosis --> Proposal
++   CapabilityGate -->|已发布题包与对应能力| Diagnosis
++   GenerativeGate --> DiagnosisAI[AI 视觉诊断 / 生成式解释]
++   DiagnosisAI --> Diagnosis
++
++
++   %% ========== 建议 / 计划 / 实际行为 ==========
++   Proposal --> Confirmation[用户确认]
++
++   Confirmation --> CarePlan[养护计划 / 待办<br/>未来动作]
++   CarePlan --> Reminder[提醒任务]
++   Reminder --> Notification[平台通知<br/>触达不等于已执行]
++   Subscription --> Notification
++
++   Confirmation -->|确认已实际发生| CareEvent[养护事件<br/>真实行为记录]
++   CareEvent --> Facts
++
++
++   %% ========== 时间线与状态 ==========
++   Facts --> Timeline[植物时间线<br/>历史事实与重要结果的展示视图]
++   Diagnosis --> Timeline
++   Profile --> Timeline
++   CarePlan --> Timeline
++
++   Diagnosis --> PlantState
++   CarePlan --> PlantState
++
++
++   %% ========== 小青 ==========
++   PlantRoot --> AgentContext[小青植物上下文]
++   PlantState --> AgentContext
++   Facts --> AgentContext
++   Timeline --> AgentContext
++   Proposal --> AgentContext
++   Diagnosis --> AgentContext
++   CarePlan --> AgentContext
++
++   AgentContext --> Xiaoqing[小青 Agent]
++   Xiaoqing --> AgentUI[流式对话]
++   Xiaoqing --> ToolProposal[工具操作建议]
++   GenerativeGate --> Xiaoqing
++
++   ToolProposal --> Confirmation
++
++
++   %% ========== 内容发布 ==========
++   CMSDraft --> CMS[CMS 发布系统]
++   CMS --> PublishedPublic[已发布展示百科<br/>版本化 / 可回滚]
++   InternalEditorial[内部维护与审核] --> CMS
++   CMS --> PublishedInternal[已发布内部知识<br/>版本化 / 可回滚]
++
++   PublishedPublic --> PublicEncyclopedia
++   PublishedInternal --> IdentityCatalog
++   PublishedInternal --> InternalKnowledge
++   PublishedInternal --> Diagnosis
++   PublishedInternal --> Watering
++   PublishedInternal --> Fertilizing
++   PublishedInternal --> Lighting
++   PublishedInternal --> Ventilation
++
++
++   %% ========== 文件资产 ==========
++   Storage[云存储] --> Profile
++   Storage --> Diagnosis
++ ```
++
++ ## 后端基础设施架构
++
++ ```mermaid
++ flowchart TB
++
++   %% ========== 外部入口 ==========
++   Client[多平台小程序<br/>uni-app<br/>微信 / 抖音 / 小红书] --> CloudBaseAuth[CloudBase Auth v2<br/>匿名主体 / 平台登录主体]
++   Client --> Gateway[CloudBase HTTP Gateway<br/>/api/v2]
++   CloudBaseAuth --> Gateway
++   Gateway --> RoutePolicy[路由访问级别<br/>公开 / 游客 / 登录用户 / 内部服务]
++
++   Agent[CloudBase 小青 Agent] --> AgentAPI[Agent API<br/>用户范围令牌 + 服务签名]
++
++   Scheduler[Scheduler<br/>CloudBase 定时任务 / 受控外部调度] --> JobAPI[Job API<br/>HMAC / 内部签名]
++
++   Provider[支付 / 第三方回调] --> CallbackAPI[Callback API<br/>签名验证 / 幂等处理]
++
++
++   %% ========== 接入层 ==========
++   RoutePolicy --> PrincipalResolver[Principal Resolver<br/>GuestPrincipal / UserPrincipal / ServicePrincipal]
++   PrincipalResolver --> IdentityApp
++   PrincipalResolver --> KnowledgeApp
++   PrincipalResolver --> UserPlantApp
++   PrincipalResolver --> CareApp
++   PrincipalResolver --> DiagnosisApp
++   PrincipalResolver --> SubscriptionApp
++
++   AgentAPI --> UserPlantApp
++   AgentAPI --> CareApp
++   AgentAPI --> DiagnosisApp
++
++   JobAPI --> CareApp
++   JobAPI --> SubscriptionApp
++
++   CallbackAPI --> SubscriptionApp
++
++
++   %% ========== 应用服务 ==========
++   subgraph Application["业务服务层 Application Services"]
++     IdentityApp[identity<br/>匿名/正式主体解析<br/>统一身份 / session]
++     KnowledgeApp[plant-knowledge<br/>植物身份 / 百科 / 内部知识<br/>识别 / 内容补全]
++     UserPlantApp[user-plant<br/>用户植物 / 档案 / 生命周期]
++     CareApp[care<br/>临时与用户植物养护<br/>事实 / 浇水 / 施肥 / 光照 / 通风 / 计划]
++     DiagnosisApp[diagnosis<br/>临时与用户植物问诊<br/>题包 / 证据 / 结果]
++     SubscriptionApp[subscription<br/>试用 / 会员 / 支付 / 通知<br/>能力判定 / AI 点数账本]
++   end
++
++   IdentityApp --> PrincipalContract[冻结 Principal 合同]
++   PrincipalContract --> SubscriptionApp
++   SubscriptionApp --> CapabilitySnapshot[生效能力快照<br/>会员 ＞ 试用 ＞ 免费 ＞ 游客]
++   CapabilitySnapshot -.能力判定.-> KnowledgeApp
++   CapabilitySnapshot -.能力判定.-> UserPlantApp
++   CapabilitySnapshot -.能力判定.-> CareApp
++   CapabilitySnapshot -.能力判定.-> DiagnosisApp
++
++   CareApp -.AI 预占 / 结算.-> SubscriptionApp
++   DiagnosisApp -.AI 预占 / 结算.-> SubscriptionApp
++   AgentAPI -.AI 预占 / 结算.-> SubscriptionApp
++   KnowledgeApp -.审核通过后发放贡献奖励.-> SubscriptionApp
++
++   CareApp -.用户植物查询.-> UserPlantApp
++   DiagnosisApp -.用户植物查询.-> UserPlantApp
++   CareApp -.植物知识查询.-> KnowledgeApp
++   DiagnosisApp -.植物知识查询.-> KnowledgeApp
++   CareApp -.诊断结果引用校验.-> DiagnosisApp
++
++
++   %% ========== 领域核心 ==========
++   subgraph Domain["领域核心 Domain Core<br/>不直接访问网络 / 数据库"]
++     IdentityDomain[Identity Domain<br/>游客主体 / 统一用户 / 平台绑定]
++     EntitlementDomain[Entitlement Domain<br/>试用 / 会员 / 能力 / AI 点数账本]
++     PlantDomain[User Plant Core<br/>植物实例 / 生命周期 / 当前配置]
++     CareDomain[Care Domain<br/>事实 / 浇水 / 施肥 / 光照<br/>通风 / 建议 / 计划规则]
++     DiagnosisDomain[Diagnosis Domain<br/>诊断规则 / 状态约束 / 结果归约]
++     KnowledgeDomain[Plant Knowledge Domain<br/>植物身份与知识模型]
++   end
++
++   IdentityApp --> IdentityDomain
++   SubscriptionApp --> EntitlementDomain
++   UserPlantApp --> PlantDomain
++   CareApp --> CareDomain
++   DiagnosisApp --> DiagnosisDomain
++   KnowledgeApp --> KnowledgeDomain
++
++
++   %% ========== 共享基础设施 ==========
++   subgraph Shared["共享基础设施 Shared Infrastructure<br/>禁止包含业务规则和事实判断"]
++     HTTP[HTTP<br/>路由 / CORS / 请求限制]
++     Auth[Auth<br/>Token 与服务签名机械校验<br/>不判断会员和试用业务规则]
++     Validation[Validation<br/>AJV DTO 校验]
++     Logging[Logging<br/>Pino 脱敏日志]
++     DB[DB<br/>Repository / Transaction]
++     Security[Security<br/>幂等 / 内部签名 / 防滥用 / 审计]
++     Observability[Observability<br/>指标 / Trace / 告警]
++     Cache[Cache<br/>版本内容 / 热数据缓存<br/>永不作为事实源]
++   end
++
++   %% ========== 配置治理 ==========
++   subgraph Configuration["配置治理 Configuration Governance<br/>不新增万能配置云函数"]
++     PolicyRegistry[领域业务策略注册表<br/>类型化 release / active 指针<br/>owner 属于各业务域]
++     ProviderRegistry[统一 Provider 注册表<br/>能力 / Adapter / 端点档案<br/>超时 / 重试 / 限流 / 成本 / 回退]
++     ConfigValidator[配置发布校验<br/>AJV / 语义 / 引用 / SHA-256]
++     ConfigSnapshot[请求级配置快照<br/>策略版本 / Provider 版本<br/>一次请求内不可变]
++     CredentialStore[受控凭证系统<br/>只通过 credential_ref 引用<br/>密钥不进入配置表]
++     LastKnownGood[最近一个已验证版本<br/>有界回退 / 安全能力失败关闭]
++   end
++
++   PolicyRegistry --> ConfigValidator
++   ProviderRegistry --> ConfigValidator
++   ConfigValidator --> ConfigSnapshot
++   LastKnownGood --> ConfigSnapshot
++
++   IdentityApp --> Shared
++   KnowledgeApp --> Shared
++   UserPlantApp --> Shared
++   CareApp --> Shared
++   DiagnosisApp --> Shared
++   SubscriptionApp --> Shared
++   IdentityApp --> ConfigSnapshot
++   KnowledgeApp --> ConfigSnapshot
++   UserPlantApp --> ConfigSnapshot
++   CareApp --> ConfigSnapshot
++   DiagnosisApp --> ConfigSnapshot
++   SubscriptionApp --> ConfigSnapshot
++
++
++   %% ========== 持久化与所有权 ==========
++   subgraph Persistence["持久化与表所有权"]
++     IdentityStore[(users / platform identities<br/>principal mapping)]
++     KnowledgeStore[(identity / encyclopedia / internal knowledge<br/>release / enrichment jobs)]
++     UserPlantStore[(user-plant / asset tables)]
++     CareStore[(fact / care / weather / evidence<br/>临时养护会话 / 认领状态)]
++     DiagnosisStore[(diagnosis / 临时问诊会话<br/>认领状态 / AI audit tables)]
++     SubscriptionStore[(trial / entitlement / subscription / payment<br/>AI account / reservation / ledger / reward grants)]
++     ConfigurationStore[(不可变策略 / Provider release<br/>active 指针 / 发布审计)]
++     MySQL[(CloudBase MySQL<br/>planting_v2)]
++
++     IdentityStore --> MySQL
++     KnowledgeStore --> MySQL
++     UserPlantStore --> MySQL
++     CareStore --> MySQL
++     DiagnosisStore --> MySQL
++     SubscriptionStore --> MySQL
++     ConfigurationStore --> MySQL
++   end
++
++   IdentityApp --> IdentityStore
++   KnowledgeApp --> KnowledgeStore
++   UserPlantApp --> UserPlantStore
++   CareApp --> CareStore
++   DiagnosisApp --> DiagnosisStore
++   SubscriptionApp --> SubscriptionStore
++   PolicyRegistry --> ConfigurationStore
++   ProviderRegistry --> ConfigurationStore
++
++   UserPlantApp --> Storage[CloudBase 云存储]
++   CareApp --> Storage
++   DiagnosisApp --> Storage
++
++
++   %% ========== 内容补全与发布 ==========
++   KnowledgeApp --> Published[已发布版本内容]
++   CareApp --> Published
++   DiagnosisApp --> Published
++
++   KnowledgeApp --> EncyclopediaQuery[已发布展示百科查询]
++   EncyclopediaQuery -->|规范身份缺失百科| EnrichmentJob[幂等补全任务<br/>generation_key / lease]
++   EnrichmentJob --> PlatformBudgetGuard[平台内容预算与频率保护<br/>不走用户 AI 点数]
++   PlatformBudgetGuard --> EncyclopediaWorker[百科补全 Worker<br/>仍属于 plant-knowledge]
++   EncyclopediaWorker --> EncyclopediaQwenAdapter[Qwen 展示内容 Adapter<br/>锁定模型 / prompt / schema]
++   EncyclopediaQwenAdapter --> EncyclopediaValidator[AJV / 中文 / 长度 / 禁区校验]
++   EncyclopediaValidator --> EncyclopediaDraft[(展示百科不可变草稿)]
++   EncyclopediaDraft --> CMS
++   CMS --> ContributionApproval[贡献审核结果<br/>user_id / contribution_id / contribution_type]
++   ContributionApproval --> KnowledgeApp
++
++   CMS[CloudBase CMS] --> PublishPipeline[发布校验 / 版本记录]
++   PublishPipeline --> Published
++
++
++   %% ========== 外部能力、标准化证据与事实来源 ==========
++   KnowledgeApp --> IdentifyAdapter[植物识别 Adapter]
++   IdentifyAdapter --> BaiduIdentify[百度植物识别<br/>当前候选来源]
++   ProviderRegistry -.受控配置.-> IdentifyAdapter
++   CredentialStore -.凭证引用.-> IdentifyAdapter
++   IdentifyAdapter --> IdentifySnapshot[识别候选快照<br/>提供方 / 置信度 / 映射结果]
++   IdentifySnapshot --> KnowledgeApp
++   IdentifySnapshot --> SpeciesCandidateRepo[新增种类候选聚合<br/>去重 / 来源 / 登录贡献人]
++   SpeciesCandidateRepo --> CMS
++
++   EncyclopediaQwenAdapter --> Bailian
++   ProviderRegistry -.受控配置.-> EncyclopediaQwenAdapter
++   CredentialStore -.凭证引用.-> EncyclopediaQwenAdapter
++
++   DiagnosisApp --> DiagnosisVisionAdapter[诊断视觉 Adapter]
++   DiagnosisVisionAdapter --> Bailian[云百炼<br/>锁定 Qwen 3.5 Flash + 提示词]
++   ProviderRegistry -.受控配置.-> DiagnosisVisionAdapter
++   CredentialStore -.凭证引用.-> DiagnosisVisionAdapter
++   DiagnosisVisionAdapter --> DiagnosisEvidence[诊断模型证据<br/>模型 / 提示词 / release / schema]
++   DiagnosisEvidence --> DiagnosisApp
++
++   CareApp --> SoilVisionAdapter[盆土视觉 Adapter]
++   SoilVisionAdapter --> Bailian
++   ProviderRegistry -.受控配置.-> SoilVisionAdapter
++   CredentialStore -.凭证引用.-> SoilVisionAdapter
++   SoilVisionAdapter --> SoilEvidence[短时盆土证据<br/>user_plant_id / 时间 / 有效期]
++   SoilEvidence --> CareApp
++
++   CareApp --> WeatherAdapter[Weather Adapter]
++   WeatherAdapter --> QWeather[和风天气<br/>当前观测与预报来源]
++   ProviderRegistry -.受控配置.-> WeatherAdapter
++   CredentialStore -.凭证引用.-> WeatherAdapter
++   WeatherAdapter --> WeatherSnapshot[标准化天气快照<br/>提供方 / 地点 / 时间 / 新鲜度]
++   WeatherSnapshot --> CareApp
++
++   SubscriptionApp --> PaymentAdapter[Payment Adapter]
++   PaymentAdapter --> WechatPay[微信支付 v3<br/>当前支付来源]
++   ProviderRegistry -.受控配置.-> PaymentAdapter
++   CredentialStore -.凭证引用.-> PaymentAdapter
++   PaymentAdapter --> VerifiedPayment[已验签支付事实]
++   VerifiedPayment --> SubscriptionApp
++
++   SubscriptionApp --> NotifyAdapter[Notification Adapter]
++   NotifyAdapter --> PlatformNotify[微信 / 抖音等平台通知能力]
++   ProviderRegistry -.受控配置.-> NotifyAdapter
++   CredentialStore -.凭证引用.-> NotifyAdapter
++
++   PrincipalResolver --> Auth
++
++
++   %% ========== 工程知识治理 ==========
++   subgraph Governance["工程知识治理，不进入用户运行时事实"]
++     Contracts[架构 / DTO / Schema / OpenAPI<br/>当前事实源]
++     LegacyDisposition[旧代码 / 数据 / 资源处置清单]
++     OpenViking[OpenViking<br/>稳定知识与决策导航<br/>不保存用户植物事实]
++
++     Contracts --> LegacyDisposition
++     Contracts --> OpenViking
++   end
++
++
++   %% ========== 运行约束 ==========
++   Observability --> Monitor[监控 / 告警]
++   Security --> Audit[(审计记录)]
++ ```
++
++ ## 配置治理实施入口
++
++ 两张架构图只表达关系，不在图中重复当前 161 项业务/治理变量和 12 个首批 Provider 配置档案。实施时必须从以下入口渐进读取：
++
++ - [配置与 Provider 总合同](docs/backend-v2/architecture/configuration-and-providers.md)
++ - [业务关键变量中文目录](docs/backend-v2/architecture/configuration-variable-catalog.md)
++ - [业务关键变量机器事实源](docs/backend-v2/architecture/configuration-variable-catalog.json)
++
++ 目录中的 `confirmed` 才能实现，`pending` 的阻断范围必须保持停止，`hard_rule` 不得被 CMS、环境变量或数据库配置覆盖。任何目录外的关键业务常量必须先完成归属、来源、变更和失败边界登记。
++
++ 配置化不是默认答案：只有变量在真实场景中确有变化可能，且运营、安全、成本、兼容或回滚收益明显高于新增类型、校验、发布、测试和运维复杂度时，才由主代理批准进入目录；否则保持为清晰代码常量或不可配置硬规则。
++
+
+ ❯ test/p2-care-environment-foundation.spec.ts:38:18
+     36|
+     37|     for (const 文档 of [根架构, 业务架构, 技术架构, 主计划]) {
+     38|       expect(文档).toContain('原子环境事实')
+       |                  ^
+     39|       expect(文档).toContain('派生环境指标')
+     40|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  test/p2-care-environment-foundation.spec.ts > 原子环境事实与派生指标架构合同 > 独立合同冻结来源、时间、单位、置信度和推导可回放边界
+Error: ENOENT: no such file or directory, open '/Users/jay/WebstormProjects/planting/docs/backend-v2/contracts/care-environment-foundation.md'
+ ❯ 读取事实源 test/p2-care-environment-foundation.spec.ts:10:13
+      8| /** 读取仓库内 UTF-8 事实源，缺失文件必须直接使合同测试失败。 */
+      9| function 读取事实源(项目根目录: string, 相对路径: string): string {
+     10|   return fs.readFileSync(path.join(项目根目录, 相对路径), 'utf8')
+       |             ^
+     11| }
+     12|
+ ❯ test/p2-care-environment-foundation.spec.ts:47:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  test/p2-care-environment-foundation.spec.ts > 原子环境事实与派生指标架构合同 > 数据字典与 DDL 分离不可变观察、输入快照和派生结果
+AssertionError: expected '# 青花植后端 v2 数据字典\n\n- 数据字典版本：`backend-…' to contain '`care_environment_observations`'
+
+- Expected
++ Received
+
+- `care_environment_observations`
++ # 青花植后端 v2 数据字典
++
++ - 数据字典版本：`backend-v2-data/v1`
++ - 状态：Phase 1 合同冻结输入；具体 DDL 必须通过独立 TDD 和空库验证后才能执行。
++ - 原则：用户植物是一等公民；统一用户与平台身份分离；Repository 是唯一 SQL 入口。
++
++ ## 1. 全局约定
++
++ | 约定 | 固定规则 |
++ |---|---|
++ | 内部主键 | 每张核心表使用 `BIGINT UNSIGNED` 自增或受控生成的内部主键，只用于数据库关联。内部主键永不进入公开响应。 |
++ | 公开引用 | API 使用带类型前缀的高熵字符串；`public_user_id` 固定为 `usr_` 加至少 8 位 ASCII `[A-Za-z0-9_-]`，禁止暴露记录数量或创建顺序。 |
++ | 用户归属 | 业务表只能使用统一用户内部键关联 `users`；平台 OpenID 等只存在于 `platform_identities`。 |
++ | 时间 | 数据库存储 UTC 毫秒或具有同等精度的 UTC 时间；API 统一输出 ISO 8601。 |
++ | 金额与额度 | 使用整数最小单位，禁止浮点数；AI 点数、积分和人民币分相互独立。 |
++ | 版本 | 可并发修改的聚合必须有 `version`；更新条件包含旧版本号。 |
++ | 软删除 | 只在合同明确要求恢复或审计时使用；不得以软删除代替数据清理策略。 |
++ | 字段说明 | 所有 DDL 表和字段必须有中文注释；所有关键 TS 类型和属性必须有中文注释。 |
++ | 公开安全 | 原始模型输出、提示词、供应商响应、内部状态、内部主键和平台主体标识均不进入公开响应。 |
++
++ ## 2. 身份域 identity
++
++ ### `users` — 统一用户主体
++
++ | 字段 | 含义与约束 |
++ |---|---|
++ | `id` | 内部 `BIGINT UNSIGNED` 主键。 |
++ | `public_user_id` | 对外 `usr_` 加至少 8 位 ASCII `[A-Za-z0-9_-]`，全局唯一、不可猜测；001 DDL 以 CHECK 拒绝其他格式。 |
++ | `status` | `active / suspended / deleting / deleted`。 |
++ | `session_version` | 会话撤销版本，必须大于 0；解绑或风险处置时由同一事务递增。 |
++ | `created_at` / `updated_at` | UTC 毫秒；`updated_at_ms >= created_at_ms`。 |
++
++ ### `platform_identities` — 平台身份绑定
++
++ | 字段 | 含义与约束 |
++ |---|---|
++ | `user_internal_id` | 关联 `users.id`。 |
++ | `platform` | `wechat / douyin / xiaohongshu / phone`。 |
++ | `platform_subject_hash` | 规范化平台主体标识的 HMAC-SHA-256 检索摘要，固定为 64 位小写十六进制；原值不得进入业务域与日志。 |
++ | `subject_hash_algorithm` / `subject_hash_key_version` | 算法固定为 `HMAC-SHA-256`；密钥版本只保存 `[A-Za-z0-9._-]` 引用，不保存密钥材料。 |
++ | `platform_subject_ciphertext` | 仅在供应商回调确有需要时保存的服务端密文；不得参与公开响应。 |
++ | `app_scope` | 平台应用范围，避免不同小程序或应用主体的同名标识混淆。 |
++ | `binding_status` | `active / revoked / conflicted`；active 必须没有 `revoked_at_ms`，revoked 必须有撤销时间，conflicted 不携带撤销时间。 |
++ | 时间 | `bound_at_ms >= created_at_ms`、`updated_at_ms >= created_at_ms`；撤销时间若存在必须不早于绑定时间。 |
++ | 唯一约束 | `(platform, app_scope, platform_subject_hash)` 全局唯一；撤销后更新原记录，不允许换用户重建映射。 |
++
++ 身份会话、服务 nonce 和匿名认证材料使用独立表；仅保存验证所需最小信息和失效时间。
++
++ - `user_sessions`：只保存 bearer 会话令牌 SHA-256（64 位小写十六进制）、统一用户、平台身份绑定、会话版本（大于 0）、轮换来源及签发/失效/撤销时间；`expires_at_ms > issued_at_ms`，签发和更新时间不早于记录创建时间，撤销时间位于签发与失效开区间内；复合外键保证会话用户、平台身份所有者和认证平台一致，轮换链也不得跨用户；不保存原始令牌。
++ - `service_replay_nonces`：服务名、密钥版本标识、nonce 摘要（64 位小写十六进制）、请求时间、请求体 SHA-256（64 位小写十六进制）、最小 scope、签名版本与失效时间；`expires_at_ms > verified_at_ms >= created_at_ms` 且更新时间不早于创建时间；`(service_name, nonce_hash)` 唯一且必须与验签原子写入，更换 `key_id` 不得重复消费同一 nonce。
++ - 同一平台主体撤销后只能恢复到原统一用户，不允许静默转绑其他用户。
++
++ ## 3. 用户植物域 user-plant
++
++ ### `user_plants` — 用户植物聚合根
++
++ | 字段 | 含义与约束 |
++ |---|---|
++ | `id` | 内部 `BIGINT UNSIGNED` 主键。 |
++ | `public_user_plant_id` | 对外 `upl_...`，全局唯一。 |
++ | `user_internal_id` | 所属统一用户；所有访问先做归属校验。 |
++ | `lifecycle_status` | `active / archived / deleting / deleted`。 |
++ | `current_identity_status` | `unidentified / candidate_pending / confirmed`。 |
++ | `version` | 乐观并发版本。 |
++
++ 相关表：
++
++ - `user_plant_profiles`：昵称、展示图、盆器、介质等个体档案。
++ - `user_plant_care_contexts`：位置、栽培方式、光照、通风等当前养护环境。
++ - `user_plant_identity_history`：候选、确认、来源证据和被替代历史；`superseded` 只在此处出现。
++ - `user_plant_assets`：用户植物私有文件引用、用途、状态和清理时间，不保存公开 URL。
++ - `user_plant_timeline_projection`：可重建时间线投影，不作为事实写入口。
++ - `guest_sessions`：匿名主体摘要、当前及宽限期上一版持有证明摘要、单调递增证明版本、状态与 24 小时失效时间；状态不含 claimed。
++ - `guest_plant_cases`：游客临时植物案例、到期时间和认领状态，不伪造 `user_id` 或 `user_plant_id`。
++ - `guest_claim_commands`：认领命令、已验证证明版本、幂等键、目标用户植物和失败原因；同一案例仅能完成一次。
++ - `guest_case_claims`：只保存成功认领投影，对 `guest_plant_case_internal_id` 建唯一约束；失败命令不会永久阻断后续重新认领。
++
++ 临时 care/diagnosis 结果只保存 `guest_plant_case_ref`。认领后由 `user-plant` 提供签名内部查询解析归属，禁止跨域直接改表。
++
++ ## 4. 订阅、积分与 AI 额度域 subscription
++
++ ### `capability_snapshots` — 请求级能力裁决快照
++
++ 保存游客或登录用户在一次请求内使用的只读能力裁决，包括层级、允许能力、奖励 AI 范围、
++ 活跃用户植物上限、策略发布内部键/高熵发布引用/版本/内容 SHA-256、有效期和规范化快照内容 SHA-256。
++ 快照以复合外键锁定 `business_policy_releases` 中 `subscription/capability_catalog` 的同一不可变发布；
++ 不能只保存无法核验的策略版本字符串，也不复制 `policy_json` 形成第二份策略事实源。游客必须没有
++ `user_internal_id`、层级固定为 `guest` 且植物上限固定为 0；登录用户必须关联统一用户。
++ 该表只用于内部审计和回放，不是公开查询模型，也不代替会员、积分或额度账本。
++
++ ### `care_point_ledger` — 不可变积分账本
++
++ 保存 `grant / spend / reverse`、业务唯一键、策略版本、整数分值及原记录引用。客户端不能提交积分值。
++
++ ### `care_point_accounts` — 积分投影
++
++ 保存可用积分、累计净获得积分、等级和版本；可以从账本重建。
++
++ ### `ai_quota_grants` — AI 额度批次
++
++ 保存来源、范围、发放值、可用值、已预占值、已消费值、发放/到期时间、策略版本和状态。`available_amount` 是当前可扣余额，不包含 `reserved_amount`；审计未消费额为两者之和。三部分必须与发放值整数守恒；试用、会员、CMS、等级奖励必须分批记录。`source_type`、状态和正金额由 CHECK 固定为合同枚举；六类来源均在发放时写入绝对 `expires_at_ms`，且必须晚于 `granted_at_ms`，不得产生永久额度。
++
++ ### `ai_quota_reservations` — AI 额度预占
++
++ 保存产品动作、能力、成本策略版本、预估值、结算值、实际成本微元、用量证据引用、平台承担差额、幂等键、状态和到期时间。`settled_amount` 不得超过 `estimated_amount`；`reserved`/`pending_reconciliation` 不得伪造结算额，`settled` 必须有结算额，`released` 的结算额固定为 0。实际成本超过预占时禁止多扣用户，进入 `pending_reconciliation` 并把差额计入平台承担成本。
++
++ ### `ai_quota_reservation_allocations` — 预占到额度批次的分摊
++
++ 记录一次预占从一个或多个 grant 锁定的正整数额度；唯一键防止同一预占重复分摊。每行必须满足 `reserved_amount = settled_amount + released_amount`，因此不能结算超过分摊额或丢失释放额。
++
++ ### `subscription_reward_inbox` — 奖励事件收件箱
++
++ 保存事件唯一键、事件类型、主体、事实载荷摘要、策略版本、处理状态和结果引用。它是 subscription 接收其他域奖励事实的唯一入口。`event_id` 与 `business_unique_key` 分别阻止同事件重放和不同事件 ID 的同一业务事实重复入账；`received`、`applied`、`rejected` 与结果/拒绝字段组合受 CHECK 约束。
++
++ 其他表：
++
++ - `trial_entitlements`：每个统一用户终身一次的 24 小时试用；`starts_at_ms` 通过复合外键固定等于 `users.created_at_ms`，`expires_at_ms` 必须精确等于起算时间加 86,400,000 毫秒，不能由首次打开功能、换设备、换平台或重新登录推迟。
++ - `subscriptions` / `subscription_periods`：会员及其周期。
++ - `payment_orders` / `payment_callback_inbox`：订单、验签后的回调和幂等处理。
++ - `care_level_grants`：终身一次的等级 AI 奖励发放记录。
++ - `care_redemptions`：积分兑换；MVP 目录为空但合同保留。状态固定 `requested / committed / rejected / reversed`；仅 `committed` 可关联积分 spend 账本，`reversed` 必须同时关联原 spend 和反向账本。
++ - `ai_quota_accounts`：用户级额度汇总投影，可由 grant 与 ledger 重建。
++ - `ai_quota_ledger`：预占、结算、释放、过期和冲正的不可变额度账本。
++ - `ai_provider_tariff_snapshots`：供应商、精确模型、输入/输出单价、币种、生效时间、来源证据和不可变价目 SHA-256。
++ - `ai_cost_policies`：绑定价目快照、安全系数、舍入规则、状态、生效区间和不可变发布 SHA-256。
++ - `ai_cost_policy_actions`：按小青文本、问诊文本、单图和多图等产品动作冻结 Token、图片、循环、最大成本和预占额度上限。
++ - `cms_contribution_reward_decisions`：由 plant-knowledge 持有的全局首发贡献奖励裁决，不由 subscription 直接写。
++
++ 额度消费按到期时间、发放时间和批次引用稳定排序；权益层级只决定能力，不改变消费顺序。试用从统一用户 `created_at_ms` 起算 24 小时；会员额度在订阅周期末到期且不结转；贡献奖励从入账时起 3 个日历月有效。会员订阅和周期状态必须属于各自冻结枚举，且周期 `ends_at_ms` 必须晚于 `starts_at_ms`。
++
++ ## 5. 植物知识与 CMS 域 plant-knowledge
++
++ - `plant_taxa`：科、属、种/栽培品种的规范身份与权威来源证据。
++ - `plant_taxon_aliases`：中文名、学名、别名和供应商名称到规范身份的映射。
++ - `plant_identity_candidates`：识别候选及证据，不能直接成为已确认身份。
++ - `cms_enrichment_requests`：缺口聚合、预算、租约、状态和贡献用户；游客触发时 `contributor_user_id` 必须为空。
++ - `content_drafts` / `content_releases`：草稿与不可变发布版本分离。
++ - `question_packages` / `question_package_releases`：题包及已发布版本。
++
++ Qwen 草稿仅可写基础展示介绍和约三个简短问答。毒性、浇水、施肥、光照、通风和诊断基本面必须来自内部维护并经过审核的内容。
++
++ ## 6. 养护与诊断域
++
++ - `care_facts`：浇水、施肥、换盆、位置变化和用户观察等已发生事实。
++ - `care_proposals`：算法建议；不等于事实。
++ - `care_plans` / `reminder_jobs`：用户确认后的未来动作与提醒。
++ - `watering_visual_evidence`：盆土视觉证据、私有文件引用、有效期和算法版本。
++ - `temporary_care_sessions` / `temporary_care_results` / `temporary_watering_visual_evidence`：游客临时养护对象，只关联 `guest_plant_case_ref`。
++ - `diagnosis_sessions` / `diagnosis_answers` / `diagnosis_results`：问诊过程、证据和结果。
++ - `diagnosis_visual_evidence`：私有诊断图片引用及保留期。
++ - `temporary_diagnosis_sessions` / `temporary_diagnosis_answers` / `temporary_diagnosis_results` / `temporary_diagnosis_visual_evidence`：游客临时问诊对象，只关联 `guest_plant_case_ref`。
++
++ 所有长期记录必须归属 `user_plant_id`；游客临时结果只能归属 `guest_plant_case_ref`，在认领后通过归属投影解释。
++
++ ## 7. 可靠事件与审计
++
++ 每个写域拥有自己的 `domain_outbox`；每个消费域拥有 inbox 或业务唯一键。事件必须包含事件公开引用、聚合公开引用、聚合版本、事件类型、schema 版本、发生时间和脱敏载荷。
++
++ 审计记录只保留安全主体引用、动作、对象公开引用、结果和时间；不得保存凭证、Cookie、平台主体标识、请求体、原始模型输入输出或数据库内部主键。
++
++ ## 8. 配置治理
++
++ - `business_policy_releases`：保存通过具体 TypeScript/AJV Schema 校验的领域策略发布、版本、内容 SHA-256 和生效区间；禁止任意万能键值。能力快照以发布内部键、领域/策略代码、发布引用、版本与内容 SHA-256 的复合外键回放其中的 `subscription/capability_catalog` 发布。
++ - `active_business_policy_releases`：按业务域和策略代码保存唯一 active 指针，使用版本号完成原子切换。
++ - `provider_config_releases`：保存 Provider endpoint 档案、`credential_ref`、超时/重试/限流/熔断/成本/回退等类型化配置及 SHA-256；不得保存密钥正文。
++ - `active_provider_config_releases`：按 Provider 和能力保存唯一 active 指针，切换时同时核对版本和 SHA-256。
++ - `configuration_request_snapshots`：保存一次请求实际使用的策略/Provider 发布清单及组合 SHA-256；不保存用户数据、追踪标识和凭证。
++ - `configuration_release_audit_records`：记录验证、激活、回滚和退役动作及脱敏证据引用。
++
++ 一次请求开始后使用的配置快照不可变。身份、权限、支付、AI 成本与写操作无有效配置时失败关闭；天气、通知等能力只能按已发布回退合同受控降级。
++
++ ## 9. 保留与删除基线
++
++ - 未认领游客案例：24 小时到期；失败/隔离材料最多保留 7 天。
++ - 诊断和盆土视觉证据：默认 30 天，除非后续法规/产品决策缩短。
++ - 用户删除：进入 30 天清理流程；支付法定审计材料按独立政策处理。
++ - 测试数据不是 v2 迁移源；植物主数据、题包和经审计身份数据必须经过旧资产处置与准确性闸门后才可初始化 v2。
++
++ 具体 DDL 必须逐表补充外键、唯一约束、索引、中文 COMMENT、删除顺序和回退方案，并在全新空库上可重复执行。
++
+
+ ❯ test/p2-care-environment-foundation.spec.ts:88:20
+     86|       'care_environment_derivations'
+     87|     ]) {
+     88|       expect(数据字典).toContain(`\`${tableName}\``)
+       |                    ^
+     89|       expect(ddl).toContain(`CREATE TABLE \`${tableName}\``)
+     90|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  test/p2-care-environment-foundation.spec.ts > 原子环境事实与派生指标架构合同 > P4 任务要求先建设环境事实层再实现四类养护算法
+AssertionError: expected '# P4 养护、诊断与小青\n\n范围：盆土视觉、浇水、施肥、光照、通风、…' to contain '原子环境事实'
+
+- Expected
++ Received
+
+- 原子环境事实
++ # P4 养护、诊断与小青
++
++ 范围：盆土视觉、浇水、施肥、光照、通风、黄叶/萎蔫题包、动态虫害题包、建议确认、计划、提醒、事实、小青工具和四类可奖励业务事件。
++
++ 退出条件：诊断不直接写事实，视觉不自动记录浇水，四类养护合同稳定，跨用户/跨植物访问被拒绝，奖励事件可重放且不重复。
++
++
+
+ ❯ test/p2-care-environment-foundation.spec.ts:111:18
+    109|
+    110|     for (const 文档 of [phase, ticket]) {
+    111|       expect(文档).toContain('原子环境事实')
+       |                  ^
+    112|       expect(文档).toContain('派生环境指标')
+    113|       expect(文档).toContain('先事实、后推导、再建议')
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  20:33:50
+   Duration  115ms (transform 15ms, setup 0ms, import 21ms, tests 14ms, environment 0ms)
+

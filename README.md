@@ -121,7 +121,7 @@ flowchart TB
   CareContext --> PlantState
 
 
-  %% ========== 天气、视觉与养护上下文 ==========
+  %% ========== 天气、视觉、原子环境事实与派生指标 ==========
   CareContext --> Weather[天气能力<br/>位置绑定 / 历史观测 / 预报]
   WeatherObservation[外部天气观测与预报<br/>带提供方 / 时间 / 地点] --> WeatherSnapshot[标准化天气快照<br/>可追溯 / 有新鲜度]
   WeatherSnapshot --> Weather
@@ -130,11 +130,16 @@ flowchart TB
   Storage --> SoilVisual
   SoilVisual --> SoilEvidence[短时盆土视觉证据<br/>绑定用户植物 / 采集时间 / 有效期]
 
+  CareContext --> EnvironmentAtoms[原子环境事实<br/>光照 / 温度 / 相对湿度 / 空气运动<br/>盆器 / 基质 / 排水 / 盆土表面<br/>来源 / 空间范围 / 时间 / 单位 / 置信度]
+  Weather -->|保持 outdoor 来源范围| EnvironmentAtoms
+  SoilEvidence --> EnvironmentAtoms
+  EnvironmentAtoms --> EnvironmentSnapshot[不可变环境输入快照<br/>观察引用清单 / 配置版本 / SHA-256]
+  EnvironmentSnapshot --> EnvironmentDerived[派生环境指标<br/>VPD / 光照暴露 / 空气交换<br/>基质干燥特征 / 环境干燥需求 / 预计干湿周期]
+
   Facts --> CareInput[养护上下文组装]
   PlantRoot --> CareInput
-  CareContext --> CareInput
-  Weather --> CareInput
-  SoilEvidence --> CareInput
+  EnvironmentSnapshot --> CareInput
+  EnvironmentDerived --> CareInput
 
 
   %% ========== 养护能力 ==========
@@ -154,14 +159,15 @@ flowchart TB
   Ventilation --> StableCareOutput
 
   EphemeralCase --> TemporaryCareInput[临时浇水输入<br/>候选身份 / 盆器介质 / 用户回答<br/>手工盆土状态或受控视觉]
-  TemporaryCareInput --> TemporaryCare
+  TemporaryCareInput --> EnvironmentAtoms
+  EnvironmentDerived --> TemporaryCare
 
 
   %% ========== 诊断 ==========
   PlantRoot --> Diagnosis[植物诊断<br/>症状 / 题包 / 证据 / 结论]
   Facts --> Diagnosis
-  CareContext --> Diagnosis
-  Weather --> Diagnosis
+  EnvironmentSnapshot --> Diagnosis
+  EnvironmentDerived --> Diagnosis
   Diagnosis --> Proposal
   CapabilityGate -->|已发布题包与对应能力| Diagnosis
   GenerativeGate --> DiagnosisAI[AI 视觉诊断 / 生成式解释]
@@ -271,6 +277,7 @@ flowchart TB
     KnowledgeApp[plant-knowledge<br/>植物身份 / 百科 / 内部知识<br/>识别 / 内容补全]
     UserPlantApp[user-plant<br/>用户植物 / 档案 / 生命周期]
     CareApp[care<br/>临时与用户植物养护<br/>事实 / 浇水 / 施肥 / 光照 / 通风 / 计划]
+    EnvironmentAssembler[环境证据组装<br/>原子事实 / 输入快照 / 来源与新鲜度]
     DiagnosisApp[diagnosis<br/>临时与用户植物问诊<br/>题包 / 证据 / 结果]
     SubscriptionApp[subscription<br/>试用 / 会员 / 支付 / 通知<br/>能力判定 / AI 点数账本]
   end
@@ -293,6 +300,7 @@ flowchart TB
   CareApp -.植物知识查询.-> KnowledgeApp
   DiagnosisApp -.植物知识查询.-> KnowledgeApp
   CareApp -.诊断结果引用校验.-> DiagnosisApp
+  DiagnosisApp -.只读环境快照查询.-> CareApp
 
 
   %% ========== 领域核心 ==========
@@ -300,6 +308,7 @@ flowchart TB
     IdentityDomain[Identity Domain<br/>游客主体 / 统一用户 / 平台绑定]
     EntitlementDomain[Entitlement Domain<br/>试用 / 会员 / 能力 / AI 点数账本]
     PlantDomain[User Plant Core<br/>植物实例 / 生命周期 / 当前配置]
+    EnvironmentDomain[养护环境事实核心<br/>原子事实校验 / 派生指标<br/>不访问网络和数据库]
     CareDomain[Care Domain<br/>事实 / 浇水 / 施肥 / 光照<br/>通风 / 建议 / 计划规则]
     DiagnosisDomain[Diagnosis Domain<br/>诊断规则 / 状态约束 / 结果归约]
     KnowledgeDomain[Plant Knowledge Domain<br/>植物身份与知识模型]
@@ -308,7 +317,9 @@ flowchart TB
   IdentityApp --> IdentityDomain
   SubscriptionApp --> EntitlementDomain
   UserPlantApp --> PlantDomain
-  CareApp --> CareDomain
+  CareApp --> EnvironmentAssembler
+  EnvironmentAssembler --> EnvironmentDomain
+  EnvironmentDomain --> CareDomain
   DiagnosisApp --> DiagnosisDomain
   KnowledgeApp --> KnowledgeDomain
 
@@ -359,7 +370,7 @@ flowchart TB
     IdentityStore[(users / platform identities<br/>principal mapping)]
     KnowledgeStore[(identity / encyclopedia / internal knowledge<br/>release / enrichment jobs)]
     UserPlantStore[(user-plant / asset tables)]
-    CareStore[(fact / care / weather / evidence<br/>临时养护会话 / 认领状态)]
+    CareStore[(环境观察 / 输入快照 / 派生指标<br/>fact / care / weather / evidence<br/>临时养护会话 / 认领状态)]
     DiagnosisStore[(diagnosis / 临时问诊会话<br/>认领状态 / AI audit tables)]
     SubscriptionStore[(trial / entitlement / subscription / payment<br/>AI account / reservation / ledger / reward grants)]
     ConfigurationStore[(不可变策略 / Provider release<br/>active 指针 / 发布审计)]
@@ -434,14 +445,14 @@ flowchart TB
   ProviderRegistry -.受控配置.-> SoilVisionAdapter
   CredentialStore -.凭证引用.-> SoilVisionAdapter
   SoilVisionAdapter --> SoilEvidence[短时盆土证据<br/>user_plant_id / 时间 / 有效期]
-  SoilEvidence --> CareApp
+  SoilEvidence --> EnvironmentAssembler
 
   CareApp --> WeatherAdapter[Weather Adapter]
   WeatherAdapter --> QWeather[和风天气<br/>当前观测与预报来源]
   ProviderRegistry -.受控配置.-> WeatherAdapter
   CredentialStore -.凭证引用.-> WeatherAdapter
   WeatherAdapter --> WeatherSnapshot[标准化天气快照<br/>提供方 / 地点 / 时间 / 新鲜度]
-  WeatherSnapshot --> CareApp
+  WeatherSnapshot --> EnvironmentAssembler
 
   SubscriptionApp --> PaymentAdapter[Payment Adapter]
   PaymentAdapter --> WechatPay[微信支付 v3<br/>当前支付来源]
@@ -473,6 +484,8 @@ flowchart TB
   Observability --> Monitor[监控 / 告警]
   Security --> Audit[(审计记录)]
 ```
+
+养护域固定遵循：`原子环境事实 --> 派生环境指标 --> 养护上下文`。室外天气不得冒充室内实测；算法变化不得改写原子事实，只能基于同一不可变输入快照生成新版本派生指标。浇水、施肥、光照、通风和诊断复用这层证据，但各自仍按独立领域规则输出稳定合同。
 
 ## 配置治理实施入口
 
