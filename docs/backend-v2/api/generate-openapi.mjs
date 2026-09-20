@@ -9,6 +9,15 @@ const openapiPath = path.join(apiDirectory, 'openapi.p1.json')
 const manifestPath = path.join(apiDirectory, 'manifest.json')
 const registryText = fs.readFileSync(registryPath, 'utf8')
 const registry = JSON.parse(registryText)
+const printableAsciiPattern = '^[\\x20-\\x7E]+$'
+
+const requestSchemaRefByContract = {
+  CreateUserPlantRequest: '#/components/schemas/CreateUserPlantRequest',
+}
+
+const successSchemaRefByContract = {
+  CreateUserPlantResponse: '#/components/schemas/CreateUserPlantSuccess',
+}
 
 const parametersByPath = (routePath) => [...routePath.matchAll(/\{([^}]+)\}/gu)].map((match) => ({
   name: match[1],
@@ -21,6 +30,7 @@ const paths = {}
 for (const route of registry.routes) {
   const method = route.method.toLowerCase()
   const isWrite = ['post', 'patch', 'delete', 'put'].includes(method)
+  const successSchemaRef = successSchemaRefByContract[route.responseContract]
   const operation = {
     operationId: route.operationId,
     summary: `${route.owner} 域：${route.operationId}`,
@@ -37,7 +47,11 @@ for (const route of registry.routes) {
     responses: {
       '200': {
         description: '成功；具体 data 结构由 x-response-contract 指向的合同冻结',
-        content: { 'application/json': { schema: { $ref: '#/components/schemas/SuccessEnvelope' } } },
+        content: {
+          'application/json': {
+            schema: { $ref: successSchemaRef ?? '#/components/schemas/SuccessEnvelope' },
+          },
+        },
       },
       default: {
         description: '稳定公开错误',
@@ -46,9 +60,16 @@ for (const route of registry.routes) {
     },
   }
   if (isWrite && route.requestContract !== 'EmptyRequest' && route.requestContract !== 'RawPaymentCallback') {
+    const requestSchemaRef = requestSchemaRefByContract[route.requestContract]
     operation.requestBody = {
       required: true,
-      content: { 'application/json': { schema: { type: 'object', additionalProperties: false } } },
+      content: {
+        'application/json': {
+          schema: requestSchemaRef
+            ? { $ref: requestSchemaRef }
+            : { type: 'object', additionalProperties: false },
+        },
+      },
     }
   }
   if (route.idempotency.startsWith('required_header')) {
@@ -101,7 +122,7 @@ const openapi = {
     parameters: {
       IdempotencyKey: {
         name: 'Idempotency-Key', in: 'header', required: true,
-        schema: { type: 'string', minLength: 8, maxLength: 128 },
+        schema: { type: 'string', minLength: 8, maxLength: 128, pattern: printableAsciiPattern },
         description: '同一主体、方法、规范化路径和业务动作范围内的幂等键。',
       },
       ServiceKeyId: serviceHeaderParameter('X-QHZ-Key-Id', '当前允许的内部服务签名密钥版本。'),
@@ -115,6 +136,31 @@ const openapi = {
       SuccessEnvelope: {
         type: 'object', additionalProperties: false, required: ['data'],
         properties: { data: {} },
+      },
+      CreateUserPlantRequest: {
+        type: 'object',
+        additionalProperties: false,
+        maxProperties: 0,
+        properties: {},
+      },
+      CreateUserPlantResponse: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['user_plant_id', 'lifecycle', 'identityStatus', 'version', 'createdAt', 'updatedAt'],
+        properties: {
+          user_plant_id: { type: 'string', pattern: '^upl_[A-Za-z0-9_-]{8,}$' },
+          lifecycle: { type: 'string', const: 'active' },
+          identityStatus: { type: 'string', const: 'unidentified' },
+          version: { type: 'integer', const: 1 },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreateUserPlantSuccess: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['data'],
+        properties: { data: { $ref: '#/components/schemas/CreateUserPlantResponse' } },
       },
       ErrorResponse: {
         type: 'object', additionalProperties: false, required: ['error'],

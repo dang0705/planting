@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-20T13:07:41.578Z",
+  "generatedAt": "2026-09-20T13:20:55.874Z",
   "snapshotSource": "docs/backend-v2/tracker/heartbeats/*.json（主代理汇总）",
   "trackerOwner": "主代理 /root（各 ticket 子代理写独立心跳；主代理校验、汇总并处理超时）",
   "clickUpStatus": "CREATED",
@@ -95,11 +95,11 @@
       "name": "root",
       "path": "/root/root",
       "model": "gpt-5",
-      "status": "heartbeat_stale",
+      "status": "in_progress",
       "ticketIds": [
         "z8v0kmr9mj"
       ],
-      "lastObservedAt": "2026-09-20T12:00:42+08:00",
+      "lastObservedAt": "2026-09-20T21:20:31+08:00",
       "blockers": []
     },
     {
@@ -317,10 +317,10 @@
       "name": "用户植物",
       "phase": "P1/P2/P3",
       "plannedAgent": "user_plant_terra",
-      "agent": "p1_guest_claim_consistency_luna + root",
-      "progress": 55,
+      "agent": "p1_guest_claim_consistency_luna + root、root",
+      "progress": 63,
       "status": "当前执行阶段进行中",
-      "lastUpdatedAt": "2026-09-20T12:00:42+08:00",
+      "lastUpdatedAt": "2026-09-20T21:20:31+08:00",
       "tickets": [
         {
           "id": "z8v0kmr96y",
@@ -338,9 +338,9 @@
           "url": "https://app.clickup.com/t/90182453517/z8v0kmr9mj",
           "plannedAgent": "user_plant_terra",
           "agent": "root",
-          "status": "心跳超时：显式加入花园后创建 active/unidentified/version 1 的纯领域切片已落盘并通过 7 条测试；公开 DTO、Repository、幂等、真实事务和 HTTP 接线仍未完成。",
-          "progress": 10,
-          "lastUpdatedAt": "2026-09-20T12:00:42+08:00"
+          "status": "in_progress：显式加入花园的纯领域切片与公开创建合同均已完成：请求固定为空对象，响应固定为六字段 active/unidentified/version 1 初态，路由和 OpenAPI 已引用具体 Schema；Repository、同事务幂等和 HTTP 接线仍待完成。",
+          "progress": 25,
+          "lastUpdatedAt": "2026-09-20T21:20:31+08:00"
         }
       ],
       "reportedTicketCount": 2,

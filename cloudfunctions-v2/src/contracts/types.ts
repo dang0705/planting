@@ -176,6 +176,38 @@ export type ConfirmedUserPlantDto = UserPlantBaseDto & {
 /** 用户植物公开投影；通过身份状态区分未确认和已确认两种互斥形状。 */
 export type UserPlantDto = UnconfirmedUserPlantDto | ConfirmedUserPlantDto;
 
+/** 新建用户植物聚合的初始乐观锁版本。 */
+// oxlint-disable-next-line no-magic-numbers -- user-plant/v1 已冻结的合同字面量。
+export const USER_PLANT_INITIAL_VERSION = 1 as const;
+
+/**
+ * 创建用户植物请求固定为空对象。
+ * 身份、能力、数量上限、幂等键和初始字段全部来自服务端可信上下文或 HTTP Header。
+ */
+export type CreateUserPlantRequestDto = Record<string, never>;
+
+/** 登录用户明确加入花园后返回的新建用户植物初始公开投影。 */
+export type CreateUserPlantResponseDto = {
+  /** 服务端生成的高熵用户植物公开引用；不是数据库 BIGINT 内部主键。 */
+  user_plant_id: UserPlantRef;
+  /** 新建用户植物固定处于 active 生命周期。 */
+  lifecycle: "active";
+  /** 未经用户确认植物身份时固定为暂未识别。 */
+  identityStatus: "unidentified";
+  /** 新聚合的初始乐观锁版本，固定为 USER_PLANT_INITIAL_VERSION。 */
+  version: typeof USER_PLANT_INITIAL_VERSION;
+  /** 服务端生成的 UTC 创建时间。 */
+  createdAt: string;
+  /** 初次创建时与 createdAt 相同的 UTC 更新时间。 */
+  updatedAt: string;
+};
+
+/** 创建用户植物成功信封；不返回 user_id、内部主键或能力快照。 */
+export type CreateUserPlantSuccessDto = {
+  /** 创建成功后的用户植物初始公开投影。 */
+  data: CreateUserPlantResponseDto;
+};
+
 /** 游客案例可新建用户植物，或绑定当前用户已经拥有的植物。 */
 export type ClaimGuestSessionCommandDto = {
   /** 待认领的游客会话公开引用；服务端必须校验它属于当前认证主体且未过期。 */

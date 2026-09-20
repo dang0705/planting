@@ -29,6 +29,35 @@ export type PublicUserPlant = {
 
 公开 DTO 不返回 `user_id`。服务端仍在内部聚合和 Repository 中保存统一用户归属，并在每次访问时以当前认证主体执行 `user_id + user_plant_id` 归属校验；调用方不能通过响应枚举或关联其他用户。
 
+## 创建用户植物
+
+`POST /api/v2/user-plants` 只表达登录用户明确执行“加入花园”。请求体固定为严格空 JSON 对象 `{}`；身份、能力、数量上限、公开引用、初始状态和时间全部由服务端可信上下文生成。
+
+```ts
+/** 创建请求不接受任何客户端业务字段。 */
+export type CreateUserPlantRequest = Record<string, never>
+
+/** 创建成功只返回新建用户植物的初始公开投影。 */
+export type CreateUserPlantResponse = {
+  /** 服务端生成的高熵用户植物公开引用。 */
+  user_plant_id: string
+  /** 新建植物固定处于 active 生命周期。 */
+  lifecycle: 'active'
+  /** 未经过用户确认的身份固定为暂未识别。 */
+  identityStatus: 'unidentified'
+  /** 新聚合的初始乐观锁版本固定为 1。 */
+  version: 1
+  /** 服务端生成的 UTC 创建时间。 */
+  createdAt: string
+  /** 初次创建时与 createdAt 相同的 UTC 更新时间。 */
+  updatedAt: string
+}
+```
+
+客户端不得在创建请求中提交 `user_id`、植物身份、生命周期、版本、时间、数量上限、能力快照、内部主键、档案、照片、盆器、位置、光照、通风或幂等键。`Idempotency-Key` 只允许作为必填 HTTP Header；误放入 JSON 请求体必须返回 `VALIDATION_FAILED`，不得静默丢弃。
+
+成功状态固定为 `200`，响应使用统一 `{ data: CreateUserPlantResponse }` 信封。同键同参必须重放相同公开响应；同键异参返回 `IDEMPOTENCY_CONFLICT`。能力快照在执行前失效时返回 `CAPABILITY_SNAPSHOT_EXPIRED`。
+
 ## 身份状态
 
 ```text

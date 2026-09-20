@@ -4,6 +4,8 @@ import type {
   CapabilitySnapshotDto,
   ClaimedGuestObjectKind,
   ClaimGuestSessionCommandDto,
+  CreateUserPlantRequestDto,
+  CreateUserPlantResponseDto,
   ErrorResponseDto,
   GuestClaimResultDto,
   GuestPrincipalDto,
@@ -14,6 +16,7 @@ import type {
   UserPlantDto,
   UserPrincipalDto,
 } from "./types.js";
+import { USER_PLANT_INITIAL_VERSION } from "./types.js";
 
 const ISO_UTC_PATTERN = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?Z$";
 const PUBLIC_REF_SUFFIX = "[A-Za-z0-9_-]{8,}";
@@ -348,6 +351,37 @@ export const userPlantSchema: JSONSchemaType<UserPlantDto> = {
       },
     },
   ],
+};
+
+/** 创建用户植物请求 Schema；任何客户端业务字段或放错位置的幂等键都必须拒绝。 */
+export const createUserPlantRequestSchema: JSONSchemaType<CreateUserPlantRequestDto> = {
+  type: "object",
+  additionalProperties: false,
+  maxProperties: 0,
+  required: [],
+  properties: {},
+};
+
+/** 创建用户植物响应 Schema；固定为 active、暂未识别和初始版本。 */
+export const createUserPlantResponseSchema: JSONSchemaType<CreateUserPlantResponseDto> = {
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "user_plant_id",
+    "lifecycle",
+    "identityStatus",
+    "version",
+    "createdAt",
+    "updatedAt",
+  ],
+  properties: {
+    user_plant_id: { type: "string", pattern: `^upl_${PUBLIC_REF_SUFFIX}$` },
+    lifecycle: { type: "string", const: "active" },
+    identityStatus: { type: "string", const: "unidentified" },
+    version: { type: "integer", const: USER_PLANT_INITIAL_VERSION },
+    createdAt: { type: "string", pattern: ISO_UTC_PATTERN },
+    updatedAt: { type: "string", pattern: ISO_UTC_PATTERN },
+  },
 };
 
 /** 游客案例认领命令 Schema；target 的两种形状严格互斥。 */

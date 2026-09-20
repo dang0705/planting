@@ -3,6 +3,8 @@ import Ajv, { type ValidateFunction } from "ajv";
 import {
   capabilitySnapshotSchema,
   claimGuestSessionCommandSchema,
+  createUserPlantRequestSchema,
+  createUserPlantResponseSchema,
   errorResponseSchema,
   guestClaimResultSchema,
   guestPrincipalSchema,
@@ -16,6 +18,8 @@ import {
 import type {
   CapabilitySnapshotDto,
   ClaimGuestSessionCommandDto,
+  CreateUserPlantRequestDto,
+  CreateUserPlantResponseDto,
   ErrorResponseDto,
   GuestClaimResultDto,
   GuestPrincipalDto,
@@ -31,6 +35,8 @@ export type * from "./types.js";
 export {
   capabilitySnapshotSchema,
   claimGuestSessionCommandSchema,
+  createUserPlantRequestSchema,
+  createUserPlantResponseSchema,
   errorResponseSchema,
   guestClaimResultSchema,
   guestPrincipalSchema,
@@ -59,6 +65,10 @@ export function createPublicContractValidators(): {
   servicePrincipal: ValidateFunction<ServicePrincipalDto>;
   /** 用户植物公开投影校验器；保证未确认态与已确认身份引用互斥。 */
   userPlant: ValidateFunction<UserPlantDto>;
+  /** 创建用户植物请求校验器；只接受严格空 JSON 对象。 */
+  createUserPlantRequest: ValidateFunction<CreateUserPlantRequestDto>;
+  /** 创建用户植物响应校验器；只接受服务端生成的固定初始投影。 */
+  createUserPlantResponse: ValidateFunction<CreateUserPlantResponseDto>;
   /** 游客会话认领命令校验器；保证新建植物与绑定已有植物的目标形状互斥。 */
   claimGuestSession: ValidateFunction<ClaimGuestSessionCommandDto>;
   /** 游客认领公开结果校验器；拒绝数据库内部键、用户归属、proof、租约和请求哈希。 */
@@ -104,6 +114,8 @@ export function createPublicContractValidators(): {
     userPrincipal: ajv.compile(userPrincipalSchema),
     servicePrincipal: ajv.compile(servicePrincipalSchema),
     userPlant: ajv.compile(userPlantSchema),
+    createUserPlantRequest: ajv.compile(createUserPlantRequestSchema),
+    createUserPlantResponse: ajv.compile(createUserPlantResponseSchema),
     claimGuestSession: ajv.compile(claimGuestSessionCommandSchema),
     guestClaimResult: ajv.compile(guestClaimResultSchema),
     rewardableDomainEvent: ajv.compile(rewardableDomainEventSchema),

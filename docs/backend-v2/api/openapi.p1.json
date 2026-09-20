@@ -473,12 +473,13 @@
         "x-phase": "P2",
         "x-security": "authenticated",
         "x-request-contract": "CreateUserPlantRequest",
-        "x-response-contract": "UserPlantResponse",
+        "x-response-contract": "CreateUserPlantResponse",
         "x-idempotency": "required_header",
         "x-errors": [
           "VALIDATION_FAILED",
           "PRINCIPAL_INVALID",
           "CAPABILITY_DENIED",
+          "CAPABILITY_SNAPSHOT_EXPIRED",
           "IDEMPOTENCY_CONFLICT"
         ],
         "parameters": [
@@ -492,7 +493,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessEnvelope"
+                  "$ref": "#/components/schemas/CreateUserPlantSuccess"
                 }
               }
             }
@@ -513,8 +514,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false
+                "$ref": "#/components/schemas/CreateUserPlantRequest"
               }
             }
           }
@@ -3373,7 +3373,8 @@
         "schema": {
           "type": "string",
           "minLength": 8,
-          "maxLength": 128
+          "maxLength": 128,
+          "pattern": "^[\\x20-\\x7E]+$"
         },
         "description": "同一主体、方法、规范化路径和业务动作范围内的幂等键。"
       },
@@ -3453,6 +3454,62 @@
         ],
         "properties": {
           "data": {}
+        }
+      },
+      "CreateUserPlantRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "maxProperties": 0,
+        "properties": {}
+      },
+      "CreateUserPlantResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "user_plant_id",
+          "lifecycle",
+          "identityStatus",
+          "version",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "user_plant_id": {
+            "type": "string",
+            "pattern": "^upl_[A-Za-z0-9_-]{8,}$"
+          },
+          "lifecycle": {
+            "type": "string",
+            "const": "active"
+          },
+          "identityStatus": {
+            "type": "string",
+            "const": "unidentified"
+          },
+          "version": {
+            "type": "integer",
+            "const": 1
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateUserPlantSuccess": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CreateUserPlantResponse"
+          }
         }
       },
       "ErrorResponse": {
