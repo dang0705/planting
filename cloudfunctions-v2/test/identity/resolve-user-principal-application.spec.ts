@@ -44,8 +44,12 @@ describe('统一用户 Principal 应用用例', () => {
         verifiedIdentity: {
           platform: 'wechat',
           appScope: 'wx-app-qhz',
-          platformSubjectHash: 'a'.repeat(Number('64')),
-          subjectHashKeyVersion: 'identity-hmac.2026-09-20.1'
+          hashCandidates: [
+            {
+              platformSubjectHash: 'a'.repeat(Number('64')),
+              subjectHashKeyVersion: 'identity-hmac.2026-09-20.1'
+            }
+          ]
         },
         bearerToken: rawBearer,
         nowMs: currentTime
@@ -75,8 +79,12 @@ describe('统一用户 Principal 应用用例', () => {
       verifiedIdentity: {
         platform: 'wechat' as const,
         appScope: 'wx-app-qhz',
-        platformSubjectHash: 'a'.repeat(Number('64')),
-        subjectHashKeyVersion: 'identity-hmac.2026-09-20.1'
+        hashCandidates: [
+          {
+            platformSubjectHash: 'a'.repeat(Number('64')),
+            subjectHashKeyVersion: 'identity-hmac.2026-09-20.1'
+          }
+        ]
       },
       bearerToken: rawBearer,
       nowMs: currentTime
@@ -86,8 +94,74 @@ describe('统一用户 Principal 应用用例', () => {
     await expect(
       resolvePrincipal({
         ...validInput,
-        verifiedIdentity: { ...validInput.verifiedIdentity, platformSubjectHash: 'not-a-digest' }
+        verifiedIdentity: {
+          ...validInput.verifiedIdentity,
+          hashCandidates: [
+            {
+              platformSubjectHash: 'not-a-digest',
+              subjectHashKeyVersion: 'identity-hmac.2026-09-20.1'
+            }
+          ]
+        }
       })
     ).rejects.toMatchObject({ type: 'INTERNAL_IDENTITY_DATA_INVALID' })
+  })
+
+  test('当前与退役密钥均完成查询，只允许唯一快照进入领域裁决', async () => {
+    const snapshot = {
+      user: {
+        user_id: 'usr_identity_rotation_001' as UserRef,
+        status: 'active' as const,
+        sessionVersion: 4
+      },
+      binding: {
+        user_id: 'usr_identity_rotation_001' as UserRef,
+        platform: 'wechat' as const,
+        status: 'active' as const
+      },
+      session: {
+        user_id: 'usr_identity_rotation_001' as UserRef,
+        authenticatedVia: 'wechat' as const,
+        status: 'active' as const,
+        sessionVersion: 4,
+        issuedAtMs: Date.parse('2026-09-20T03:00:00.000Z'),
+        expiresAtMs: Date.parse('2026-09-21T03:00:00.000Z')
+      }
+    }
+    const repository = {
+      read: vi.fn(async input =>
+        input.subjectHashKeyVersion === 'identity-hmac.retiring' ? snapshot : null
+      )
+    }
+    const resolvePrincipal = createResolveUserPrincipalUseCase({ repository })
+    const command = {
+      verifiedIdentity: {
+        platform: 'wechat' as const,
+        appScope: 'wx-app-qhz',
+        hashCandidates: [
+          {
+            platformSubjectHash: 'a'.repeat(Number('64')),
+            subjectHashKeyVersion: 'identity-hmac.current'
+          },
+          {
+            platformSubjectHash: 'b'.repeat(Number('64')),
+            subjectHashKeyVersion: 'identity-hmac.retiring'
+          }
+        ]
+      },
+      bearerToken: rawBearer,
+      nowMs: currentTime
+    }
+
+    await expect(resolvePrincipal(command)).resolves.toMatchObject({
+      user_id: 'usr_identity_rotation_001',
+      sessionVersion: 4
+    })
+    expect(repository.read).toHaveBeenCalledTimes(Number('2'))
+
+    repository.read.mockImplementation(async () => snapshot)
+    await expect(resolvePrincipal(command)).rejects.toMatchObject({
+      type: 'INTERNAL_IDENTITY_DATA_INVALID'
+    })
   })
 })

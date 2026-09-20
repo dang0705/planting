@@ -280,8 +280,7 @@ describe('统一用户 Principal 真实 MySQL 解析', () => {
       verifiedIdentity: {
         platform: 'wechat' as const,
         appScope: 'wx-app-qhz',
-        platformSubjectHash,
-        subjectHashKeyVersion
+        hashCandidates: [{ platformSubjectHash, subjectHashKeyVersion }]
       },
       bearerToken: rawBearer,
       nowMs
@@ -311,8 +310,7 @@ describe('统一用户 Principal 真实 MySQL 解析', () => {
         verifiedIdentity: {
           platform: 'wechat',
           appScope: 'wx-app-qhz',
-          platformSubjectHash,
-          subjectHashKeyVersion
+          hashCandidates: [{ platformSubjectHash, subjectHashKeyVersion }]
         },
         bearerToken: 'different-raw-bearer-identity-real-mysql',
         nowMs

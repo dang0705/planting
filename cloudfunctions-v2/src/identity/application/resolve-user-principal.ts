@@ -6,24 +6,13 @@ import {
   UnifiedUserPrincipalResolveError,
   type PlatformAuthenticationEntry
 } from '../domain/resolve-user-principal.js'
+import type { VerifiedPlatformIdentityEvidence } from '../provider/platform-credential-evidence.js'
 import type { UserPrincipalRepository } from '../repository/mysql-user-principal-repository.js'
-
-/** Provider 完成外部凭证验证后交给 identity 应用层的最小安全结果。 */
-export type VerifiedPlatformIdentity = {
-  /** 已验证的平台入口。 */
-  readonly platform: PlatformAuthenticationEntry
-  /** 当前小程序或应用的稳定范围。 */
-  readonly appScope: string
-  /** 平台主体原文经受控密钥生成的 HMAC-SHA-256。 */
-  readonly platformSubjectHash: string
-  /** HMAC 密钥版本引用，不含任何密钥材料。 */
-  readonly subjectHashKeyVersion: string
-}
 
 /** 解析登录用户 Principal 的应用输入。 */
 export type ResolveUserPrincipalCommand = {
-  /** 外部 Provider 已验证且完成主体 HMAC 的结果。 */
-  readonly verifiedIdentity: VerifiedPlatformIdentity
+  /** 外部 Provider 已验证且按当前/退役密钥生成的主体摘要候选。 */
+  readonly verifiedIdentity: VerifiedPlatformIdentityEvidence
   /** 当前请求携带的原始高熵 Bearer；仅在当前调用栈内摘要，绝不传给 Repository。 */
   readonly bearerToken: string
   /** 服务端可信时钟的当前 UTC 毫秒。 */
@@ -56,17 +45,30 @@ function hashBearerToken(bearerToken: string): string {
 }
 
 /** 防御性复核 Provider 输出，避免损坏摘要进入 Repository 或日志链路。 */
-function verifyIdentityEvidence(identity: VerifiedPlatformIdentity): void {
+function verifyIdentityEvidence(identity: VerifiedPlatformIdentityEvidence): void {
   if (
     !supportedPlatforms.has(identity.platform) ||
     !/^[A-Za-z0-9._-]{1,64}$/u.test(identity.appScope) ||
-    !/^[a-f0-9]{64}$/u.test(identity.platformSubjectHash) ||
-    !/^[A-Za-z0-9._-]{1,64}$/u.test(identity.subjectHashKeyVersion)
+    identity.hashCandidates.length === Number('0')
   ) {
     throw new UnifiedUserPrincipalResolveError(
       'INTERNAL_IDENTITY_DATA_INVALID',
       '平台身份验证证据不合法'
     )
+  }
+  const keyVersions = new Set<string>()
+  for (const candidate of identity.hashCandidates) {
+    if (
+      !/^[a-f0-9]{64}$/u.test(candidate.platformSubjectHash) ||
+      !/^[A-Za-z0-9._-]{1,64}$/u.test(candidate.subjectHashKeyVersion) ||
+      keyVersions.has(candidate.subjectHashKeyVersion)
+    ) {
+      throw new UnifiedUserPrincipalResolveError(
+        'INTERNAL_IDENTITY_DATA_INVALID',
+        '平台身份摘要候选不合法'
+      )
+    }
+    keyVersions.add(candidate.subjectHashKeyVersion)
   }
 }
 
@@ -77,15 +79,27 @@ export function createResolveUserPrincipalUseCase(
   return async command => {
     verifyIdentityEvidence(command.verifiedIdentity)
     const sessionRefHash = hashBearerToken(command.bearerToken)
-    const snapshot = await dependencies.repository.read({
-      platform: command.verifiedIdentity.platform,
-      appScope: command.verifiedIdentity.appScope,
-      platformSubjectHash: command.verifiedIdentity.platformSubjectHash,
-      subjectHashKeyVersion: command.verifiedIdentity.subjectHashKeyVersion,
-      sessionRefHash
-    })
-    if (snapshot === null) {
+    const snapshots = await Promise.all(
+      command.verifiedIdentity.hashCandidates.map(candidate =>
+        dependencies.repository.read({
+          platform: command.verifiedIdentity.platform,
+          appScope: command.verifiedIdentity.appScope,
+          platformSubjectHash: candidate.platformSubjectHash,
+          subjectHashKeyVersion: candidate.subjectHashKeyVersion,
+          sessionRefHash
+        })
+      )
+    )
+    const matchingSnapshots = snapshots.filter(snapshot => snapshot !== null)
+    if (matchingSnapshots.length === Number('0')) {
       throw new UnifiedUserPrincipalResolveError('PRINCIPAL_INVALID', '登录会话无效')
+    }
+    const snapshot = matchingSnapshots[Number('0')]
+    if (matchingSnapshots.length !== Number('1') || snapshot === undefined) {
+      throw new UnifiedUserPrincipalResolveError(
+        'INTERNAL_IDENTITY_DATA_INVALID',
+        '平台身份摘要匹配结果不唯一'
+      )
     }
     return resolveUnifiedUserPrincipal({ ...snapshot, nowMs: command.nowMs })
   }
