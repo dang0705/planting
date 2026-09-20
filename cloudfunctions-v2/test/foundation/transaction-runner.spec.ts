@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 
 import {
+  数据库提交结果未知错误,
   执行数据库事务,
   type 数据库事务驱动,
   type 事务执行上下文
@@ -82,6 +83,15 @@ describe('共享数据库事务编排器', () => {
 
     await expect(执行数据库事务(驱动, async () => 'result')).rejects.toBe(提交错误)
     expect(事件).toEqual(['开始', '提交', '回滚'])
+  })
+
+  test('提交结果未知时禁止回滚和自动重跑，原样交给新连接只读对账', async () => {
+    const 事件: string[] = []
+    const 提交错误 = new 数据库提交结果未知错误('提交响应在网络断开后未知')
+    const 驱动 = 创建测试驱动(事件, { 提交错误 })
+
+    await expect(执行数据库事务(驱动, async () => 'result')).rejects.toBe(提交错误)
+    expect(事件).toEqual(['开始', '提交'])
   })
 
   test('回滚失败不会覆盖最先发生的业务错误', async () => {

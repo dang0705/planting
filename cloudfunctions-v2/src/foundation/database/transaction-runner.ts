@@ -7,6 +7,19 @@ export type 事务执行上下文 = {
   readonly transactionContext: true
 }
 
+/**
+ * 数据库已经收到 COMMIT、但调用方因网络或连接中断无法确认最终结果。
+ *
+ * 只有数据库驱动能够创建该错误。上层收到后不得在原连接回滚，也不得自动重跑领域命令；
+ * 必须销毁原连接，并使用新连接按幂等唯一作用域只读对账。
+ */
+export class 数据库提交结果未知错误 extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = '数据库提交结果未知错误'
+  }
+}
+
 /** 回滚失败时交给结构化日志或告警适配器的内部事件。 */
 export type 回滚失败事件<T事务 extends 事务执行上下文> = {
   /** 当前发生回滚失败的事务上下文；不得进入公开响应。 */
@@ -44,12 +57,17 @@ export async function 执行数据库事务<T事务 extends 事务执行上下�
   工作: (事务: T事务) => T结果 | Promise<T结果>
 ): Promise<T结果> {
   const 事务 = await 驱动.开始事务()
+  let 已进入提交阶段 = false
 
   try {
     const 结果 = await 工作(事务)
+    已进入提交阶段 = true
     await 驱动.提交事务(事务)
     return 结果
   } catch (原始错误: unknown) {
+    if (已进入提交阶段 && 原始错误 instanceof 数据库提交结果未知错误) {
+      throw 原始错误
+    }
     try {
       await 驱动.回滚事务(事务)
     } catch (回滚错误: unknown) {

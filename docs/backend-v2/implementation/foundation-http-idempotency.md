@@ -6,7 +6,7 @@
 - Expected：`contracts/http-api.md` 第 4 节、`http.idempotency.retention_hours=168` 已冻结策略与 P2 Foundation 验收。
 - 已完成幂等决策协议、独立 DDL、MySQL 8.4 约束证据和共享幂等表 Repository。
 - Repository 只负责参数化 SQL、唯一占位、锁定读回、同参重放、异参冲突、完成结果完整性；它不拥有任何领域表或领域 outbox。
-- 当前仍不实现 HTTP 轮询、云端清理任务、CloudBase 部署、业务命令/outbox 同事务编排或提交结果未知后的新连接对账。
+- 当前仍不实现 HTTP 轮询、云端清理任务、CloudBase 部署或提交结果未知后的新连接对账。首个无 outbox 的用户植物创建命令已经完成“幂等占位 → 业务写 → 幂等完成”的同事务应用编排；需要 outbox 的奖励事实仍须在所属域独立证明。
 
 ## 唯一作用域
 
@@ -44,3 +44,5 @@
 - Repository RED/GREEN 与隔离 MySQL 证据：`docs/backend-v2/audits/P2-foundation-http-idempotency-repository-2026-09-20.md`
 
 下一切片必须把“占位 → 业务写入 → 域 outbox → 完成公开结果”放入同一真实事务，并验证回滚后无已确认幂等结果、无孤儿 outbox、无业务半写。提交调用出现网络错误等不确定结果时，禁止自动重跑领域命令；必须在新连接只读对账，只有同请求摘要的 completed 结果可以重放。
+
+事务运行器现已提供 `数据库提交结果未知错误`：驱动在 COMMIT 已发送但因网络或连接中断无法确认结果时必须抛出该类型。运行器不会在旧连接回滚，也不会重跑工作回调。新连接只读对账器尚未实现，因此上层当前只能返回脱敏 `SERVICE_UNAVAILABLE`，不能猜测提交成功或失败。
