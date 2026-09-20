@@ -112,6 +112,10 @@
 
 保存事件唯一键、事件类型/版本、生产域、主体、用户植物、聚合引用、发生引用、事实发生时间、载荷摘要、生产域策略版本、`subscription` 独立解析的奖励策略版本与内容 SHA-256、处理状态和结果引用。它是 subscription 接收其他域奖励事实的唯一入口。生产域策略只证明业务事实如何形成，不能指定奖励分值；奖励策略必须按 `occurred_at_ms` 首次锁定并在重放时保持不变。`event_id` 与 `business_unique_key` 分别阻止同事件重放和不同事件 ID 的同一业务事实重复入账；`received`、`applied`、`rejected` 与结果/拒绝字段组合受 CHECK 约束。
 
+### `care_point_ledger` / `care_point_accounts` — 积分事实与账户投影
+
+`care_point_ledger` 只追加 `grant / spend / reverse` 事实，禁止原地改写历史；MVP 奖励来源固定为 `FIRST_PROFILE`、`DUE_SOIL_CHECK`、`DUE_FERTILIZER_CHECK`、`FIXED_DIAGNOSIS`，合同外来源由 CHECK 拒绝。`care_point_accounts` 保存可由账本重建的可用积分、累计净获得积分、等级和最后账本位置；普通消费只降低可用积分，不降低累计等级。
+
 其他表：
 
 - `trial_entitlements`：每个统一用户终身一次的 24 小时试用；`starts_at_ms` 通过复合外键固定等于 `users.created_at_ms`，`expires_at_ms` 必须精确等于起算时间加 86,400,000 毫秒，不能由首次打开功能、换设备、换平台或重新登录推迟。

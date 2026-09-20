@@ -145,7 +145,7 @@ CREATE TABLE `care_point_ledger` (
   `user_internal_id` BIGINT UNSIGNED NOT NULL COMMENT '统一用户内部主键',
   `entry_type` VARCHAR(16) NOT NULL COMMENT '账本类型：grant、spend、reverse',
   `amount` INT NOT NULL COMMENT '整数积分变化，正负方向由类型约束',
-  `source_type` VARCHAR(32) NOT NULL COMMENT '积分来源类型',
+  `source_type` VARCHAR(32) NOT NULL COMMENT '积分来源：FIRST_PROFILE、DUE_SOIL_CHECK、DUE_FERTILIZER_CHECK、FIXED_DIAGNOSIS',
   `source_ref` VARCHAR(128) NOT NULL COMMENT '来源业务唯一引用',
   `business_unique_key` VARCHAR(191) NOT NULL COMMENT '跨重放业务唯一键',
   `original_ledger_internal_id` BIGINT UNSIGNED NULL COMMENT '冲正所引用的原账本记录',
@@ -158,6 +158,7 @@ CREATE TABLE `care_point_ledger` (
   UNIQUE KEY `uq_care_point_business` (`business_unique_key`),
   KEY `idx_care_point_user_time` (`user_internal_id`, `occurred_at_ms`),
   CONSTRAINT `ck_care_point_ledger_entry` CHECK ((`entry_type` = 'grant' AND `amount` > 0 AND `original_ledger_internal_id` IS NULL) OR (`entry_type` = 'spend' AND `amount` < 0 AND `original_ledger_internal_id` IS NULL) OR (`entry_type` = 'reverse' AND `amount` <> 0 AND `original_ledger_internal_id` IS NOT NULL)),
+  CONSTRAINT `ck_care_point_source_type` CHECK (`source_type` IN ('FIRST_PROFILE', 'DUE_SOIL_CHECK', 'DUE_FERTILIZER_CHECK', 'FIXED_DIAGNOSIS')),
   CONSTRAINT `fk_care_point_user` FOREIGN KEY (`user_internal_id`) REFERENCES `users` (`id`),
   CONSTRAINT `fk_care_point_original` FOREIGN KEY (`original_ledger_internal_id`) REFERENCES `care_point_ledger` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='青花植 v2 不可变养护积分账本';
