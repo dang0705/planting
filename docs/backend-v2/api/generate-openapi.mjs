@@ -56,13 +56,26 @@ for (const route of registry.routes) {
   }
   if (route.security === 'authenticated') operation.security = [{ userBearer: [] }]
   if (route.security === 'guest_or_authenticated') operation.security = [{ guestBearer: [] }, { userBearer: [] }]
-  if (route.security === 'service') operation.security = [{ serviceSignature: [] }]
+  if (route.security === 'service') {
+    operation.security = [{ serviceSignature: [] }]
+    for (const parameterName of [
+      'ServiceKeyId',
+      'ServiceTimestamp',
+      'ServiceNonce',
+      'ServiceBodySha256',
+      'ServiceScope',
+      'ServiceSignature',
+    ]) {
+      operation.parameters.push({ $ref: `#/components/parameters/${parameterName}` })
+    }
+  }
   paths[route.path] ??= {}
   paths[route.path][method] = operation
 }
 
 const errorTypes = [
-  'VALIDATION_FAILED', 'PRINCIPAL_INVALID', 'CAPABILITY_DENIED', 'NOT_FOUND',
+  'VALIDATION_FAILED', 'PRINCIPAL_INVALID', 'CAPABILITY_DENIED',
+  'IDENTITY_BINDING_CONFLICT', 'IDENTITY_LAST_BINDING_REQUIRED', 'NOT_FOUND',
   'USER_PLANT_NOT_FOUND', 'METHOD_NOT_ALLOWED', 'GUEST_SESSION_EXPIRED',
   'PAYLOAD_TOO_LARGE', 'UNSUPPORTED_MEDIA_TYPE', 'IDEMPOTENCY_CONFLICT',
   'USER_PLANT_VERSION_CONFLICT', 'CAPABILITY_SNAPSHOT_EXPIRED',
@@ -77,7 +90,7 @@ const openapi = {
     version: 'p1',
     description: '仅冻结具体路由、owner、安全级别和合同引用；完整字段与示例在 P6 发布。',
   },
-  servers: [{ url: '/api/v2', description: 'CloudBase HTTP Gateway 相对路径' }],
+  servers: [{ url: '/', description: 'CloudBase HTTP Gateway 根相对路径' }],
   paths,
   components: {
     securitySchemes: {
@@ -91,6 +104,12 @@ const openapi = {
         schema: { type: 'string', minLength: 8, maxLength: 128 },
         description: '同一主体、方法、规范化路径和业务动作范围内的幂等键。',
       },
+      ServiceKeyId: serviceHeaderParameter('X-QHZ-Key-Id', '当前允许的内部服务签名密钥版本。'),
+      ServiceTimestamp: serviceHeaderParameter('X-QHZ-Timestamp', '签名使用的十进制 UTC 秒时间戳。'),
+      ServiceNonce: serviceHeaderParameter('X-QHZ-Nonce', '同一内部服务在有效窗口内不可重复使用的随机值。'),
+      ServiceBodySha256: serviceHeaderParameter('X-QHZ-Body-Sha256', '原始请求正文的 SHA-256 十六进制摘要。'),
+      ServiceScope: serviceHeaderParameter('X-QHZ-Scope', '必须与路由登记的唯一 requiredScope 完全一致。'),
+      ServiceSignature: serviceHeaderParameter('X-QHZ-Signature', '规范化签名明文的 HMAC-SHA-256 base64url 结果。'),
     },
     schemas: {
       SuccessEnvelope: {
@@ -111,6 +130,16 @@ const openapi = {
       },
     },
   },
+}
+
+function serviceHeaderParameter(name, description) {
+  return {
+    name,
+    in: 'header',
+    required: true,
+    schema: { type: 'string', minLength: 1, maxLength: 512 },
+    description,
+  }
 }
 
 const openapiText = `${JSON.stringify(openapi, null, 2)}\n`

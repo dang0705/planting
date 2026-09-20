@@ -55,7 +55,16 @@ const registry = JSON.parse(registryText) as {
 const openapi = JSON.parse(openapiText) as {
   openapi: string
   info: { version: string }
-  components: { schemas: { ErrorResponse: { additionalProperties: boolean } } }
+  servers: Array<{ url: string }>
+  components: {
+    parameters: Record<string, unknown>
+    schemas: {
+      ErrorResponse: {
+        additionalProperties: boolean
+        properties: { error: { properties: { type: { enum: string[] } } } }
+      }
+    }
+  }
   paths: Record<string, Record<string, OpenApiOperation>>
 }
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as {
@@ -95,6 +104,9 @@ for (const route of registry.routes) {
   assert.ok(allowedSecurity.has(route.security), `${route.path} security 非法`)
   assert.ok(allowedPhases.has(route.phase), `${route.path} phase 非法`)
   assert.ok(Array.isArray(route.errors) && route.errors.length > 0, `${route.path} 缺少错误集合`)
+  if (route.security === 'authenticated') {
+    assert.ok(route.errors.includes('PRINCIPAL_INVALID'), `${route.path} 登录路由缺少 PRINCIPAL_INVALID`)
+  }
   if (route.security === 'service') {
     assert.equal(typeof route.requiredScope, 'string', `${route.path} 缺少唯一 requiredScope`)
     assert.doesNotMatch(route.requiredScope ?? '', /^ALL_/u, `${route.path} 禁止万能 scope`)
@@ -119,8 +131,25 @@ assert.ok(deleteBindingRoute?.errors.includes('IDENTITY_LAST_BINDING_REQUIRED'),
 
 assert.equal(openapi.openapi, '3.1.0')
 assert.equal(openapi.info.version, 'p1')
+assert.deepEqual(openapi.servers, [{ url: '/', description: 'CloudBase HTTP Gateway 根相对路径' }])
 assert.ok(openapi.components?.schemas?.ErrorResponse, 'OpenAPI 缺少 ErrorResponse')
 assert.equal(openapi.components.schemas.ErrorResponse.additionalProperties, false)
+const openapiErrorTypes = new Set(openapi.components.schemas.ErrorResponse.properties.error.properties.type.enum)
+for (const route of registry.routes) {
+  for (const errorType of route.errors) {
+    assert.ok(openapiErrorTypes.has(errorType as string), `${route.path} 的 ${String(errorType)} 未进入 OpenAPI 错误枚举`)
+  }
+}
+for (const parameterName of [
+  'ServiceKeyId',
+  'ServiceTimestamp',
+  'ServiceNonce',
+  'ServiceBodySha256',
+  'ServiceScope',
+  'ServiceSignature',
+]) {
+  assert.ok(openapi.components.parameters[parameterName], `OpenAPI 缺少内部服务签名参数 ${parameterName}`)
+}
 
 const openapiRouteKeys = new Set()
 for (const [routePath, pathItem] of Object.entries(openapi.paths)) {
@@ -133,6 +162,20 @@ for (const [routePath, pathItem] of Object.entries(openapi.paths)) {
     }
     if (operation['x-security'] === 'service') {
       assert.equal(typeof operation['x-required-scope'], 'string', `${method.toUpperCase()} ${routePath} 缺少 x-required-scope`)
+      const parameterRefs = (operation.parameters as Array<{ $ref?: string }>).map(parameter => parameter.$ref)
+      for (const parameterName of [
+        'ServiceKeyId',
+        'ServiceTimestamp',
+        'ServiceNonce',
+        'ServiceBodySha256',
+        'ServiceScope',
+        'ServiceSignature',
+      ]) {
+        assert.ok(
+          parameterRefs.includes(`#/components/parameters/${parameterName}`),
+          `${method.toUpperCase()} ${routePath} 缺少 ${parameterName}`,
+        )
+      }
     }
     assert.ok(operation.responses?.default, `${method.toUpperCase()} ${routePath} 缺少默认错误响应`)
     openapiRouteKeys.add(`${method.toUpperCase()} ${routePath}`)

@@ -1,0 +1,22 @@
+{
+  "ticketId": "z8v0kmr9mk",
+  "agent": "root",
+  "model": "gpt-5",
+  "status": "in_progress",
+  "progress": 15,
+  "summary": "共享 HTTP 请求链首个 TDD 切片及其 API 合同断层已闭环：固定顺序、失败短路、统一错误、服务签名参数和 OpenAPI 路径一致性均有测试；真实事务、幂等、可靠事件和云端接线仍未完成。",
+  "blockers": [],
+  "verified": [
+    "cloudfunctions-v2/src/foundation/http/request-chain.ts 已实现可复用固定请求链与稳定公开错误映射。",
+    "cloudfunctions-v2/test/foundation/request-chain.spec.ts 的 7 条 unit_fake 测试通过。",
+    "12 条登录路由补齐 PRINCIPAL_INVALID，OpenAPI 根地址、内部签名头与错误枚举已由 p1-api-skeleton.spec.ts 锁定。",
+    "新增源码与测试 oxlint 0 错误 0 告警，TypeScript 类型检查通过。",
+    "docs/backend-v2/audits/P2-foundation-request-chain-2026-09-20.md 已记录 RED/GREEN 与未覆盖边界。"
+  ],
+  "unverified": [
+    "真实 HTTP 适配器接线、Repository 事务、幂等和可靠事件实现及其 TDD 证据尚未形成可验收制品。",
+    "真实 CloudBase、MySQL 和 HTTP 集成验证属于后续环境门。"
+  ],
+  "updatedAt": "2026-09-20T11:17:31+08:00",
+  "next": "把请求链接入真实 HTTP 适配器并为重复安全头和 CORS 写 RED，再推进通用幂等与事务切片。"
+}

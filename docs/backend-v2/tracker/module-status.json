@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-20T00:07:53.047Z",
+  "generatedAt": "2026-09-20T03:17:47.172Z",
   "snapshotSource": "docs/backend-v2/tracker/heartbeats/*.json（主代理汇总）",
   "trackerOwner": "主代理 /root（各 ticket 子代理写独立心跳；主代理校验、汇总并处理超时）",
   "clickUpStatus": "CREATED",
@@ -30,7 +30,7 @@
     "z8v0kmr979": "backlog",
     "z8v0kmr9mj": "backlog",
     "z8v0kmr9mh": "backlog",
-    "z8v0kmr9mk": "backlog"
+    "z8v0kmr9mk": "codex running"
   },
   "agentRegistry": [
     {
@@ -73,7 +73,7 @@
       "name": "root + p1_taxonomy_ddl_close_terra + p1_taxonomy_authority_pipeline_terra",
       "path": "/root/root + p1_taxonomy_ddl_close_terra + p1_taxonomy_authority_pipeline_terra",
       "model": "root + gpt-5.6-terra / medium-high",
-      "status": "review_needed",
+      "status": "heartbeat_stale",
       "ticketIds": [
         "z8v0kmr9gm"
       ],
@@ -189,6 +189,17 @@
       ],
       "lastObservedAt": "2026-09-20T07:10:30+08:00",
       "blockers": []
+    },
+    {
+      "name": "root",
+      "path": "/root/root",
+      "model": "gpt-5",
+      "status": "in_progress",
+      "ticketIds": [
+        "z8v0kmr9mk"
+      ],
+      "lastObservedAt": "2026-09-20T11:17:31+08:00",
+      "blockers": []
     }
   ],
   "modules": [
@@ -231,7 +242,7 @@
       "name": "植物知识、分类与 CMS",
       "phase": "P1/P2/P3",
       "plannedAgent": "knowledge_terra",
-      "agent": "p1_data_cms_close_luna、p1_taxonomy_close_terra、root + p1_taxonomy_ddl_close_terra + p1_taxonomy_authority_pipeline_terra",
+      "agent": "p1_data_cms_close_luna、p1_taxonomy_close_terra",
       "progress": 79,
       "status": "当前执行阶段进行中",
       "lastUpdatedAt": "2026-09-20T08:12:00+08:00",
@@ -272,7 +283,7 @@
           "url": "https://app.clickup.com/t/90182453517/z8v0kmr9gm",
           "plannedAgent": "taxonomy_gate_terra + root",
           "agent": "root + p1_taxonomy_ddl_close_terra + p1_taxonomy_authority_pipeline_terra",
-          "status": "review_needed：P1 taxonomy 人工裁决已采纳：200 条候选最终为 REUSE_AS_IS=99、TRANSFORM=7、TRANSFORM_PENDING=4、QUARANTINE=90，当前 seedEligible=106。人工采纳决策与 seed manifest 已落盘，但完整审批制品仍待主代理验收；active release=STOP，未宣称 done。",
+          "status": "心跳超时：P1 taxonomy 人工裁决已采纳：200 条候选最终为 REUSE_AS_IS=99、TRANSFORM=7、TRANSFORM_PENDING=4、QUARANTINE=90，当前 seedEligible=106。人工采纳决策与 seed manifest 已落盘，但完整审批制品仍待主代理验收；active release=STOP，未宣称 done。",
           "progress": 95,
           "lastUpdatedAt": "2026-09-20T08:12:00+08:00"
         },
@@ -422,9 +433,9 @@
       "phase": "P0/P1/P2/P5/P6",
       "plannedAgent": "foundation_terra",
       "agent": "p1_legacy_close_luna、p1_external_close_luna、p1_storage_close_luna、p0_build_probe_terra、product_decisions_terra、integration_probe_terra、root、root + config_business_luna + provider_config_terra",
-      "progress": 62,
-      "status": "当前执行阶段已完成；后续阶段任务尚未启动",
-      "lastUpdatedAt": "2026-09-20T07:10:30+08:00",
+      "progress": 63,
+      "status": "当前执行阶段进行中",
+      "lastUpdatedAt": "2026-09-20T11:17:31+08:00",
       "tickets": [
         {
           "id": "z8v0kmr96q",
@@ -551,20 +562,20 @@
           "title": "[P2] 共享基础设施实现",
           "url": "https://app.clickup.com/t/90182453517/z8v0kmr9mk",
           "plannedAgent": "foundation_terra",
-          "agent": null,
-          "status": "未分配",
-          "progress": null,
-          "lastUpdatedAt": null
+          "agent": "root",
+          "status": "in_progress：共享 HTTP 请求链首个 TDD 切片及其 API 合同断层已闭环：固定顺序、失败短路、统一错误、服务签名参数和 OpenAPI 路径一致性均有测试；真实事务、幂等、可靠事件和云端接线仍未完成。",
+          "progress": 15,
+          "lastUpdatedAt": "2026-09-20T11:17:31+08:00"
         }
       ],
-      "reportedTicketCount": 8,
+      "reportedTicketCount": 9,
       "totalTicketCount": 13
     }
   ],
   "overallProgress": {
     "progress": 52,
-    "reported": 14,
+    "reported": 15,
     "total": 27
   },
-  "clickUpLastSyncedAt": "2026-09-20T08:07:24+08:00"
+  "clickUpLastSyncedAt": "2026-09-20T08:12:46+08:00"
 }

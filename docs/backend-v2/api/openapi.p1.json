@@ -7,8 +7,8 @@
   },
   "servers": [
     {
-      "url": "/api/v2",
-      "description": "CloudBase HTTP Gateway 相对路径"
+      "url": "/",
+      "description": "CloudBase HTTP Gateway 根相对路径"
     }
   ],
   "paths": {
@@ -746,6 +746,7 @@
         "x-idempotency": "required_header_and_version",
         "x-errors": [
           "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
           "USER_PLANT_NOT_FOUND",
           "USER_PLANT_VERSION_CONFLICT",
           "IDEMPOTENCY_CONFLICT"
@@ -820,6 +821,7 @@
         "x-idempotency": "required_header_and_version",
         "x-errors": [
           "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
           "USER_PLANT_NOT_FOUND",
           "USER_PLANT_VERSION_CONFLICT",
           "IDEMPOTENCY_CONFLICT"
@@ -894,6 +896,7 @@
         "x-idempotency": "required_header_and_version",
         "x-errors": [
           "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
           "USER_PLANT_NOT_FOUND",
           "USER_PLANT_VERSION_CONFLICT",
           "IDEMPOTENCY_CONFLICT"
@@ -968,6 +971,7 @@
         "x-idempotency": "required_header",
         "x-errors": [
           "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
           "USER_PLANT_NOT_FOUND",
           "IDEMPOTENCY_CONFLICT"
         ],
@@ -1041,6 +1045,7 @@
         "x-idempotency": "not_applicable",
         "x-errors": [
           "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
           "USER_PLANT_NOT_FOUND"
         ],
         "parameters": [
@@ -1298,6 +1303,7 @@
         "x-idempotency": "not_applicable",
         "x-errors": [
           "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
           "USER_PLANT_NOT_FOUND"
         ],
         "parameters": [
@@ -1356,6 +1362,7 @@
         "x-idempotency": "required_header",
         "x-errors": [
           "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
           "USER_PLANT_NOT_FOUND",
           "IDEMPOTENCY_CONFLICT"
         ],
@@ -1429,6 +1436,7 @@
         "x-idempotency": "not_applicable",
         "x-errors": [
           "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
           "USER_PLANT_NOT_FOUND"
         ],
         "parameters": [
@@ -1487,6 +1495,7 @@
         "x-idempotency": "required_header",
         "x-errors": [
           "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
           "USER_PLANT_NOT_FOUND",
           "IDEMPOTENCY_CONFLICT"
         ],
@@ -1570,6 +1579,7 @@
         "x-idempotency": "required_header",
         "x-errors": [
           "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
           "USER_PLANT_NOT_FOUND",
           "IDEMPOTENCY_CONFLICT"
         ],
@@ -1858,6 +1868,7 @@
         "x-idempotency": "not_applicable",
         "x-errors": [
           "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
           "USER_PLANT_NOT_FOUND"
         ],
         "parameters": [
@@ -1914,6 +1925,7 @@
         "x-idempotency": "required_header",
         "x-errors": [
           "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
           "USER_PLANT_NOT_FOUND",
           "AI_QUOTA_INSUFFICIENT",
           "IDEMPOTENCY_CONFLICT"
@@ -2526,6 +2538,24 @@
               "minLength": 8,
               "maxLength": 100
             }
+          },
+          {
+            "$ref": "#/components/parameters/ServiceKeyId"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceTimestamp"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceNonce"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceBodySha256"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceScope"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceSignature"
           }
         ],
         "responses": {
@@ -2579,6 +2609,24 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceKeyId"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceTimestamp"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceNonce"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceBodySha256"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceScope"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceSignature"
           }
         ],
         "responses": {
@@ -2650,6 +2698,24 @@
               "minLength": 8,
               "maxLength": 100
             }
+          },
+          {
+            "$ref": "#/components/parameters/ServiceKeyId"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceTimestamp"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceNonce"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceBodySha256"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceScope"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceSignature"
           }
         ],
         "responses": {
@@ -2711,6 +2777,24 @@
               "minLength": 8,
               "maxLength": 100
             }
+          },
+          {
+            "$ref": "#/components/parameters/ServiceKeyId"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceTimestamp"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceNonce"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceBodySha256"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceScope"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceSignature"
           }
         ],
         "responses": {
@@ -2765,6 +2849,24 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceKeyId"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceTimestamp"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceNonce"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceBodySha256"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceScope"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceSignature"
           }
         ],
         "responses": {
@@ -2839,6 +2941,24 @@
           },
           {
             "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceKeyId"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceTimestamp"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceNonce"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceBodySha256"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceScope"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceSignature"
           }
         ],
         "responses": {
@@ -2913,6 +3033,24 @@
           },
           {
             "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceKeyId"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceTimestamp"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceNonce"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceBodySha256"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceScope"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceSignature"
           }
         ],
         "responses": {
@@ -2974,7 +3112,26 @@
           "PRINCIPAL_INVALID",
           "IDEMPOTENCY_CONFLICT"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ServiceKeyId"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceTimestamp"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceNonce"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceBodySha256"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceScope"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceSignature"
+          }
+        ],
         "responses": {
           "200": {
             "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
@@ -3037,6 +3194,24 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceKeyId"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceTimestamp"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceNonce"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceBodySha256"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceScope"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceSignature"
           }
         ],
         "responses": {
@@ -3111,6 +3286,24 @@
           },
           {
             "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceKeyId"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceTimestamp"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceNonce"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceBodySha256"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceScope"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceSignature"
           }
         ],
         "responses": {
@@ -3183,6 +3376,72 @@
           "maxLength": 128
         },
         "description": "同一主体、方法、规范化路径和业务动作范围内的幂等键。"
+      },
+      "ServiceKeyId": {
+        "name": "X-QHZ-Key-Id",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "description": "当前允许的内部服务签名密钥版本。"
+      },
+      "ServiceTimestamp": {
+        "name": "X-QHZ-Timestamp",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "description": "签名使用的十进制 UTC 秒时间戳。"
+      },
+      "ServiceNonce": {
+        "name": "X-QHZ-Nonce",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "description": "同一内部服务在有效窗口内不可重复使用的随机值。"
+      },
+      "ServiceBodySha256": {
+        "name": "X-QHZ-Body-Sha256",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "description": "原始请求正文的 SHA-256 十六进制摘要。"
+      },
+      "ServiceScope": {
+        "name": "X-QHZ-Scope",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "description": "必须与路由登记的唯一 requiredScope 完全一致。"
+      },
+      "ServiceSignature": {
+        "name": "X-QHZ-Signature",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "description": "规范化签名明文的 HMAC-SHA-256 base64url 结果。"
       }
     },
     "schemas": {
@@ -3217,6 +3476,8 @@
                   "VALIDATION_FAILED",
                   "PRINCIPAL_INVALID",
                   "CAPABILITY_DENIED",
+                  "IDENTITY_BINDING_CONFLICT",
+                  "IDENTITY_LAST_BINDING_REQUIRED",
                   "NOT_FOUND",
                   "USER_PLANT_NOT_FOUND",
                   "METHOD_NOT_ALLOWED",

@@ -51,9 +51,11 @@ Master Plan 保留完整目标、架构、边界、Phase、风险和完成标准
 5. 入口、Master Plan、架构、合同、Expected 或 ticket 状态冲突时，停止实现，交由主代理裁决。
 6. 涉及业务数值、阈值、期限、上限、预算、版本、Provider、超时或重试时，先在中文变量目录定位单项，再按该项 `sourceRefs` 深读；禁止一次性深读全部变量引用。
 
-## 当前准备状态
+## 当前实施状态
 
-- P-1 资产审计与 P0 决策/证伪：均已通过独立出口门；当前进入 P1 合同、身份准确性、Schema 与 Foundation 阶段，业务域实现尚未开始。
+- P-1 资产审计、P0 决策/证伪和 P1 合同/Schema 已通过对应出口门；当前已进入 P2 核心领域与共享基础设施实现。
+- 植物分类人工裁决已形成 106 条本地未激活种子候选；4 条待转换记录仍需重建和复核，active release 保持 `STOP`。该局部门禁不阻断 `identity`、`subscription`、`user-plant` 与 `foundation`。
+- P2 Foundation 已开始首个 TDD 切片；进度和未覆盖范围以 `implementation/foundation-request-chain.md` 与对应 ticket 心跳为准，不以模块存在冒充整项完成。
 - 数据库/CMS/Storage/网关写入：未开始。
-- ClickUp：24 个任务均已创建；专职状态维护子代理每 15 分钟通过 Chrome `default/main` 核对并同步实际状态。
+- ClickUp：27 个任务均已创建；专职状态维护子代理每 15 分钟通过 Chrome `default/main` 核对并同步实际状态。
 - 前端：不在本阶段范围。
