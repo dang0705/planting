@@ -4,10 +4,15 @@ import type {
   UserPrincipalDto
 } from '../../contracts/types.js'
 import {
+  数据库提交结果未知错误,
   执行数据库事务,
   type 数据库事务驱动,
   type 事务执行上下文
 } from '../../foundation/database/transaction-runner.js'
+import {
+  对账HTTP幂等提交结果,
+  type HTTP幂等提交未知只读Repository
+} from '../../foundation/idempotency/commit-unknown-reconciliation.js'
 import type {
   HTTP幂等完成输入,
   HTTP幂等占位输入,
@@ -51,6 +56,8 @@ export type 创建用户植物应用依赖<T事务 extends 事务执行上下文
   readonly 幂等Repository: MySQLHTTP幂等Repository<T事务>
   /** user-plant 域拥有的聚合根 Repository。 */
   readonly 用户植物Repository: MySQL用户植物Repository<T事务>
+  /** 提交结果未知后使用新连接、无锁读取已提交幂等记录的只读 Repository。 */
+  readonly 提交未知只读Repository: HTTP幂等提交未知只读Repository
 }
 
 /** 应用编排违反同事务不变量时抛出的内部错误。 */
@@ -132,61 +139,88 @@ async function 完成确定结果<T事务 extends 事务执行上下文>(
 export function 创建用户植物应用服务<T事务 extends 事务执行上下文>(
   依赖: 创建用户植物应用依赖<T事务>
 ): (输入: 创建用户植物应用输入) => Promise<HTTP幂等公开响应快照> {
-  return async (输入) =>
-    执行数据库事务(依赖.驱动, async (事务) => {
-      const 幂等决策 = await 依赖.幂等Repository.尝试占位(事务, 输入.idempotency)
-      if (幂等决策.kind === 'replay') {
-        return 幂等决策.response
-      }
-      if (幂等决策.kind === 'conflict') {
-        return 公开错误响应(
-          幂等决策.httpStatus,
-          幂等决策.errorType,
-          '幂等键已用于其他请求'
-        )
-      }
-      if (幂等决策.kind === 'wait_for_winner') {
-        return 公开错误响应(
-          服务不可用HTTP状态码,
-          'SERVICE_UNAVAILABLE',
-          '请求仍在处理中，请稍后重试'
-        )
-      }
-
-      try {
-        const 已锁定 = await 依赖.用户植物Repository.锁定用户并统计Active数量(
-          事务,
-          输入.principal.user_id
-        )
-        创建暂未识别用户植物({
-          principal: 输入.principal,
-          capabilitySnapshot: 输入.capabilitySnapshot,
-          currentActiveCount: 已锁定.activeCount,
-          newUserPlantRef: 输入.newUserPlantRef,
-          occurredAtMs: 输入.occurredAtMs
-        })
-        await 依赖.用户植物Repository.插入暂未识别用户植物(事务, {
-          userInternalId: 已锁定.userInternalId,
-          userPlantRef: 输入.newUserPlantRef,
-          occurredAtMs: 输入.occurredAtMs
-        })
-        const 创建投影 = await 依赖.用户植物Repository.读取创建初始投影(
-          事务,
-          输入.principal.user_id,
-          输入.newUserPlantRef
-        )
-        return await 完成确定结果(
-          事务,
-          输入,
-          { status: 成功HTTP状态码, body: { data: 创建投影 } },
-          依赖.幂等Repository
-        )
-      } catch (error: unknown) {
-        const 确定拒绝 = 映射确定拒绝(error)
-        if (确定拒绝 === null) {
-          throw error
+  return async (输入) => {
+    try {
+      return await 执行数据库事务(依赖.驱动, async (事务) => {
+        const 幂等决策 = await 依赖.幂等Repository.尝试占位(事务, 输入.idempotency)
+        if (幂等决策.kind === 'replay') {
+          return 幂等决策.response
         }
-        return await 完成确定结果(事务, 输入, 确定拒绝, 依赖.幂等Repository)
+        if (幂等决策.kind === 'conflict') {
+          return 公开错误响应(
+            幂等决策.httpStatus,
+            幂等决策.errorType,
+            '幂等键已用于其他请求'
+          )
+        }
+        if (幂等决策.kind === 'wait_for_winner') {
+          return 公开错误响应(
+            服务不可用HTTP状态码,
+            'SERVICE_UNAVAILABLE',
+            '请求仍在处理中，请稍后重试'
+          )
+        }
+
+        try {
+          const 已锁定 = await 依赖.用户植物Repository.锁定用户并统计Active数量(
+            事务,
+            输入.principal.user_id
+          )
+          创建暂未识别用户植物({
+            principal: 输入.principal,
+            capabilitySnapshot: 输入.capabilitySnapshot,
+            currentActiveCount: 已锁定.activeCount,
+            newUserPlantRef: 输入.newUserPlantRef,
+            occurredAtMs: 输入.occurredAtMs
+          })
+          await 依赖.用户植物Repository.插入暂未识别用户植物(事务, {
+            userInternalId: 已锁定.userInternalId,
+            userPlantRef: 输入.newUserPlantRef,
+            occurredAtMs: 输入.occurredAtMs
+          })
+          const 创建投影 = await 依赖.用户植物Repository.读取创建初始投影(
+            事务,
+            输入.principal.user_id,
+            输入.newUserPlantRef
+          )
+          return await 完成确定结果(
+            事务,
+            输入,
+            { status: 成功HTTP状态码, body: { data: 创建投影 } },
+            依赖.幂等Repository
+          )
+        } catch (error: unknown) {
+          const 确定拒绝 = 映射确定拒绝(error)
+          if (确定拒绝 === null) {
+            throw error
+          }
+          return await 完成确定结果(事务, 输入, 确定拒绝, 依赖.幂等Repository)
+        }
+      })
+    } catch (error: unknown) {
+      if (!(error instanceof 数据库提交结果未知错误)) {
+        throw error
       }
-    })
+      const 幂等 = 输入.idempotency
+      const 对账结果 = await 对账HTTP幂等提交结果(依赖.提交未知只读Repository, {
+        scope: {
+          principalType: 幂等.principalType,
+          principalScopeHash: 幂等.principalScopeHash,
+          httpMethod: 幂等.httpMethod,
+          normalizedPath: 幂等.normalizedPath,
+          operationId: 幂等.operationId,
+          idempotencyKeyHash: 幂等.idempotencyKeyHash
+        },
+        requestHash: 幂等.requestHash
+      })
+      if (对账结果.kind === 'replay') {
+        return 对账结果.response
+      }
+      return 公开错误响应(
+        服务不可用HTTP状态码,
+        'SERVICE_UNAVAILABLE',
+        '提交结果暂时无法确认，请使用相同幂等键重试'
+      )
+    }
+  }
 }

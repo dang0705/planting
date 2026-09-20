@@ -4,7 +4,9 @@ import { describe, expect, test } from 'vitest'
 
 import {
   HTTP幂等数据损坏错误,
+  创建MySQLHTTP幂等提交未知只读Repository,
   创建MySQLHTTP幂等Repository,
+  type HTTP幂等只读SQL执行器,
   type HTTP幂等SQL执行器,
   type HTTP幂等SQL行
 } from '../../src/foundation/idempotency/mysql-http-idempotency-repository.js'
@@ -262,5 +264,33 @@ describe('共享 HTTP 幂等 MySQL Repository', () => {
         expiresAtMs: Number('605801000')
       })
     ).rejects.toBeInstanceOf(HTTP幂等数据损坏错误)
+  })
+
+  test('提交未知只读 Repository 使用无事务新连接且绝不申请 FOR UPDATE', async () => {
+    const SQL记录: Array<{ readonly sql: string; readonly parameters: readonly unknown[] }> = []
+    const 执行器: HTTP幂等只读SQL执行器 = {
+      async 执行查询(sql, parameters) {
+        SQL记录.push({ sql, parameters })
+        return [创建已完成行()]
+      }
+    }
+    const repository = 创建MySQLHTTP幂等提交未知只读Repository(执行器)
+
+    await expect(repository.读取(幂等作用域)).resolves.toEqual({
+      requestHash: 请求摘要,
+      state: 'completed',
+      response: { status: Number('201'), body: { data: { userPlantRef: 'upl_test' } } }
+    })
+    expect(SQL记录).toHaveLength(一)
+    expect(SQL记录[零]?.sql).toContain('FROM `http_idempotency_records`')
+    expect(SQL记录[零]?.sql).not.toContain('FOR UPDATE')
+    expect(SQL记录[零]?.parameters).toEqual([
+      幂等作用域.principalType,
+      幂等作用域.principalScopeHash,
+      幂等作用域.httpMethod,
+      幂等作用域.normalizedPath,
+      幂等作用域.operationId,
+      幂等作用域.idempotencyKeyHash
+    ])
   })
 })

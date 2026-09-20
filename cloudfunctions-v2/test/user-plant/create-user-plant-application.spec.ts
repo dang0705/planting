@@ -7,7 +7,13 @@ import type {
   UserRef
 } from '../../src/contracts/types.js'
 import { USER_PLANT_INITIAL_VERSION } from '../../src/contracts/types.js'
-import type { 数据库事务驱动, 事务执行上下文 } from '../../src/foundation/database/transaction-runner.js'
+import {
+  数据库提交结果未知错误,
+  type 数据库事务驱动,
+  type 事务执行上下文
+} from '../../src/foundation/database/transaction-runner.js'
+import type { HTTP幂等提交未知只读Repository } from '../../src/foundation/idempotency/commit-unknown-reconciliation.js'
+import type { HTTP幂等已存记录 } from '../../src/foundation/idempotency/http-idempotency.js'
 import type {
   HTTP幂等完成输入,
   HTTP幂等占位输入,
@@ -23,6 +29,8 @@ const 当前用户 = 'usr_userplant_app_001' as UserRef
 const 当前植物 = 'upl_userplant_app_001' as UserPlantRef
 const 当前时间 = Date.parse('2026-09-20T04:00:00.000Z')
 const 一 = Number('1')
+/** 数组最后一项的标准负索引，避免测试散落魔法数字。 */
+const LAST_ITEM_INDEX = Number('-1')
 
 /** 测试事务携带可观察引用，用于证明所有依赖共享同一事务对象。 */
 type 测试事务 = 事务执行上下文 & {
@@ -93,6 +101,10 @@ function 创建依赖(覆盖: {
   readonly activeCount?: number
   /** 用户植物插入时抛出的基础设施错误。 */
   readonly insertError?: Error
+  /** 驱动在 COMMIT 后无法确认结果时抛出的显式错误。 */
+  readonly commitError?: 数据库提交结果未知错误
+  /** 新连接只读对账返回的已提交记录；null 表示仍无法证明提交结果。 */
+  readonly reconciliationRecord?: HTTP幂等已存记录 | null
 } = {}) {
   const 事件: string[] = []
   const 事务: 测试事务 = { transactionContext: true, testRef: 'tx_create_user_plant' }
@@ -103,6 +115,9 @@ function 创建依赖(覆盖: {
     },
     async 提交事务(收到事务) {
       事件.push(`提交:${收到事务.testRef}`)
+      if (覆盖.commitError) {
+        throw 覆盖.commitError
+      }
     },
     async 回滚事务(收到事务) {
       事件.push(`回滚:${收到事务.testRef}`)
@@ -147,13 +162,19 @@ function 创建依赖(覆盖: {
       }
     }
   }
-  return { 事件, 驱动, 幂等Repository, 用户植物Repository }
+  const 提交未知只读Repository: HTTP幂等提交未知只读Repository = {
+    async 读取() {
+      事件.push('新连接只读对账')
+      return 覆盖.reconciliationRecord ?? null
+    }
+  }
+  return { 事件, 驱动, 幂等Repository, 用户植物Repository, 提交未知只读Repository }
 }
 
 /**
  * Expected 来源：`user-plant/v1` 创建合同与 `http-api/v1` 幂等合同。
  * 测试层次：L3 / `unit_fake`；真实执行应用编排、领域函数和事务运行器，替换 SQL/驱动边界。
- * 明确未覆盖：真实 MySQL 行锁、并发、提交结果未知后的新连接对账、CloudBase 与 HTTP。
+ * 明确未覆盖：真实 MySQL 行锁、并发、真实连接池销毁与网络故障、CloudBase 与 HTTP。
  */
 describe('创建用户植物应用服务', () => {
   test('首次请求在同一事务依次完成占位、用户锁、领域决策、写入、读回和幂等完成', async () => {
@@ -251,5 +272,49 @@ describe('创建用户植物应用服务', () => {
       '插入植物:tx_create_user_plant',
       '回滚:tx_create_user_plant'
     ])
+  })
+
+  test('提交结果未知时只用新连接读回相同 completed 结果，且绝不重跑创建命令', async () => {
+    const 首次响应 = {
+      status: Number('200'),
+      body: { data: { user_plant_id: 当前植物, lifecycle: 'active' } }
+    }
+    const 依赖 = 创建依赖({
+      commitError: new 数据库提交结果未知错误('socket closed after COMMIT'),
+      reconciliationRecord: {
+        requestHash: 创建幂等输入().requestHash,
+        state: 'completed',
+        response: 首次响应
+      }
+    })
+    const 服务 = 创建用户植物应用服务(依赖)
+
+    await expect(服务(创建输入())).resolves.toEqual(首次响应)
+    expect(依赖.事件).toEqual([
+      '开始',
+      '幂等占位:tx_create_user_plant',
+      '用户锁与计数:tx_create_user_plant',
+      '插入植物:tx_create_user_plant',
+      '公开读回:tx_create_user_plant',
+      '幂等完成:tx_create_user_plant:200',
+      '提交:tx_create_user_plant',
+      '新连接只读对账'
+    ])
+  })
+
+  test('提交结果未知且新连接不能证明 completed 时返回稳定 503，不重跑或回滚旧连接', async () => {
+    const 依赖 = 创建依赖({
+      commitError: new 数据库提交结果未知错误('socket closed after COMMIT'),
+      reconciliationRecord: null
+    })
+    const 服务 = 创建用户植物应用服务(依赖)
+
+    await expect(服务(创建输入())).resolves.toEqual({
+      status: Number('503'),
+      body: { error: { type: 'SERVICE_UNAVAILABLE', message: '提交结果暂时无法确认，请使用相同幂等键重试' } }
+    })
+    expect(依赖.事件.filter(item => item.startsWith('插入植物'))).toHaveLength(一)
+    expect(依赖.事件).not.toContain('回滚:tx_create_user_plant')
+    expect(依赖.事件.at(LAST_ITEM_INDEX)).toBe('新连接只读对账')
   })
 })

@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 
 import type { 事务执行上下文 } from '../database/transaction-runner.js'
+import type { HTTP幂等提交未知只读Repository } from './commit-unknown-reconciliation.js'
 import {
   判定HTTP幂等请求,
   type HTTP幂等决策,
@@ -57,6 +58,20 @@ export type HTTP幂等SQL执行器<T事务 extends 事务执行上下文> = {
   /** 在指定事务内执行参数化 SELECT；行锁生命周期必须服从该事务。 */
   readonly 执行查询: (
     事务: T事务,
+    sql: string,
+    parameters: readonly unknown[]
+  ) => Promise<readonly HTTP幂等SQL行[]>
+}
+
+/**
+ * 提交结果未知时使用的新连接参数化只读 SQL 端口。
+ *
+ * 该端口刻意不接收事务上下文、不提供写入方法，具体适配器必须从连接池获取并在查询后释放
+ * 一条全新连接，不得复用提交结果未知的旧连接。
+ */
+export type HTTP幂等只读SQL执行器 = {
+  /** 在新连接上执行无锁参数化 SELECT；禁止隐式开始业务事务。 */
+  readonly 执行查询: (
     sql: string,
     parameters: readonly unknown[]
   ) => Promise<readonly HTTP幂等SQL行[]>
@@ -287,6 +302,39 @@ function 提取稳定错误类型(response: HTTP幂等公开响应快照): strin
     throw new HTTP幂等数据损坏错误('失败响应缺少稳定公开错误类型')
   }
   return error.type
+}
+
+/**
+ * 创建只供未知提交对账使用的无锁 MySQL Repository。
+ *
+ * 查询仅恢复数据库当前已提交视图；不使用 `FOR UPDATE`、不占位、不等待，也不修改任何记录。
+ */
+export function 创建MySQLHTTP幂等提交未知只读Repository(
+  执行器: HTTP幂等只读SQL执行器
+): HTTP幂等提交未知只读Repository {
+  return {
+    async 读取(作用域) {
+      验证作用域(作用域)
+      const rows = await 执行器.执行查询(
+        `SELECT \`request_hash\`, \`state\`, \`response_status\`, \`response_json\`, \`response_hash\`, \`stable_error_type\`
+         FROM \`http_idempotency_records\`
+         WHERE \`principal_type\` = ?
+           AND \`principal_scope_hash\` = ?
+           AND \`http_method\` = ?
+           AND \`normalized_path\` = ?
+           AND \`operation_id\` = ?
+           AND \`idempotency_key_hash\` = ?`,
+        生成作用域参数(作用域)
+      )
+      if (rows.length === 零) {
+        return null
+      }
+      if (rows.length !== 一) {
+        throw new HTTP幂等数据损坏错误('唯一幂等作用域只读对账返回多条记录')
+      }
+      return 映射数据库行(rows[零] as HTTP幂等SQL行)
+    }
+  }
 }
 
 /** 创建只访问共享幂等表的 MySQL Repository。 */
