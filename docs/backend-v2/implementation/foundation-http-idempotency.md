@@ -46,6 +46,6 @@
 - Repository RED/GREEN 与隔离 MySQL 证据：`docs/backend-v2/audits/P2-foundation-http-idempotency-repository-2026-09-20.md`
 - 提交未知 RED/GREEN 与应用接入证据：`docs/backend-v2/audits/P2-foundation-commit-unknown-reconciliation-2026-09-20.md`
 
-下一切片必须把“占位 → 业务写入 → 域 outbox → 完成公开结果”放入同一真实事务，并验证回滚后无已确认幂等结果、无孤儿 outbox、无业务半写。还需在隔离 MySQL 以两个真实连接验证同键并发、用户植物数量上限竞争和未知提交读回；本地 fake 不能替代该证据。
+下一切片必须把“占位 → 业务写入 → 域 outbox → 完成公开结果”放入同一真实事务，并验证回滚后无已确认幂等结果、无孤儿 outbox、无业务半写。隔离 MySQL 已用两个真实连接验证用户植物数量上限竞争，并用独立新连接读回 completed 幂等结果；同键并发的完整应用代码路径和真实未知提交网络故障仍需后续适配器验证。
 
 事务运行器提供 `数据库提交结果未知错误`：驱动在 COMMIT 已发送但因网络或连接中断无法确认结果时必须抛出该类型。运行器不会在旧连接回滚，也不会重跑工作回调。对账 Repository 不接收旧事务、不提供写方法，也不使用 `FOR UPDATE`；只有新连接读到相同请求摘要的 `completed` 记录才原样重放。缺失、仍处理中、摘要不一致、数据损坏或读取失败全部返回脱敏 `SERVICE_UNAVAILABLE`，不能猜测提交成功或失败。

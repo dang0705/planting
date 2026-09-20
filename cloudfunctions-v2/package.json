@@ -13,6 +13,7 @@
     "format:check": "oxfmt --check src test",
     "build": "node scripts/build.mjs",
     "test": "vitest run --config vitest.config.mjs",
+    "test:mysql": "vitest run --config vitest.mysql.config.mjs",
     "test:red": "vitest run --config vitest.red.config.mjs",
     "verify": "npm run typecheck && npm run lint && npm run build && npm run test && node ../docs/backend-v2/audits/P0-typescript-node22-cloudbase-z8v0kmr96w.verify.mjs"
   },
