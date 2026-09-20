@@ -275,8 +275,8 @@ export type RewardableDomainEventDto = {
   aggregateRef: string;
   /** 业务发生实例的去重引用；同一事实重试时保持不变，避免重复触发奖励。 */
   occurrenceRef: string;
-  /** 产生该事件时采用的奖励策略版本，用于回放；不能由客户端篡改。 */
-  policyVersion: string;
+  /** 生产域形成该业务事实时使用的策略版本；subscription 不得把它当作奖励分值策略。 */
+  producerPolicyVersion: string;
   /** 业务事实发生时间，使用带 Z 的 ISO 8601 UTC 字符串，不等同于服务接收时间。 */
   occurredAt: string;
   /** 仅承载该事件所需的原始业务事实；禁止注入积分、金额、AI 额度、凭证或未授权用户数据。 */

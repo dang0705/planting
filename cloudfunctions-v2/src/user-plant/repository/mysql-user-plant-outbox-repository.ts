@@ -117,7 +117,7 @@ export function createMysqlUserPlantOutboxRepository<TTransaction extends Transa
         transaction,
         `INSERT INTO \`user_plant_outbox\`
           (\`_openid\`, \`event_id\`, \`event_version\`, \`producer_domain\`, \`user_ref\`, \`user_plant_ref\`,
-           \`aggregate_ref\`, \`aggregate_version\`, \`occurrence_ref\`, \`event_type\`, \`policy_version\`,
+           \`aggregate_ref\`, \`aggregate_version\`, \`occurrence_ref\`, \`event_type\`, \`producer_policy_version\`,
            \`payload_json\`, \`payload_hash\`, \`status\`, \`lease_owner\`, \`lease_until_ms\`, \`attempt_count\`,
            \`next_attempt_at_ms\`, \`occurred_at_ms\`, \`delivered_at_ms\`, \`terminal_reason_code\`,
            \`created_at_ms\`, \`updated_at_ms\`)
@@ -132,7 +132,7 @@ export function createMysqlUserPlantOutboxRepository<TTransaction extends Transa
           aggregateVersion,
           pendingRecord.event.occurrenceRef,
           pendingRecord.event.eventType,
-          pendingRecord.event.policyVersion,
+          pendingRecord.event.producerPolicyVersion,
           payloadJson,
           pendingRecord.event.payloadHash,
           resolveOccurredAtMs(pendingRecord.event.occurredAt),

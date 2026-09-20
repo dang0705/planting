@@ -221,7 +221,7 @@ describe("P1 公开 DTO 与 AJV Schema", () => {
       userPlantRef: "upl_01J8Z3H4R57V4G2QPG6C5W8K9M",
       aggregateRef: "cpl_01J8Z3H4R57V4G2QPG6C5W8K9M",
       occurrenceRef: "occ_01J8Z3H4R57V4G2QPG6C5W8K9M",
-      policyVersion: "care-points/2026-09-20",
+      producerPolicyVersion: "care-soil-check/2026-09-20.1",
       occurredAt: "2026-09-20T10:00:00.000Z",
       payload: { decision: "defer_watering" },
       payloadHash: "a".repeat(64),
@@ -229,6 +229,13 @@ describe("P1 公开 DTO 与 AJV Schema", () => {
 
     expect(validators.rewardableDomainEvent(event)).toBe(true);
     expect(validators.rewardableDomainEvent({ ...event, points: 999_999 })).toBe(false);
+    expect(
+      validators.rewardableDomainEvent({
+        ...event,
+        producerPolicyVersion: undefined,
+        policyVersion: "care-points/forged",
+      }),
+    ).toBe(false);
   });
 
   // Expected：care-points-ai-quota/v1；公开动作只描述产品意图，预算必须由服务端策略计算。

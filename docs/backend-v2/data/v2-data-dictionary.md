@@ -110,7 +110,7 @@
 
 ### `subscription_reward_inbox` — 奖励事件收件箱
 
-保存事件唯一键、事件类型、主体、事实载荷摘要、策略版本、处理状态和结果引用。它是 subscription 接收其他域奖励事实的唯一入口。`event_id` 与 `business_unique_key` 分别阻止同事件重放和不同事件 ID 的同一业务事实重复入账；`received`、`applied`、`rejected` 与结果/拒绝字段组合受 CHECK 约束。
+保存事件唯一键、事件类型/版本、生产域、主体、用户植物、聚合引用、发生引用、事实发生时间、载荷摘要、生产域策略版本、`subscription` 独立解析的奖励策略版本与内容 SHA-256、处理状态和结果引用。它是 subscription 接收其他域奖励事实的唯一入口。生产域策略只证明业务事实如何形成，不能指定奖励分值；奖励策略必须按 `occurred_at_ms` 首次锁定并在重放时保持不变。`event_id` 与 `business_unique_key` 分别阻止同事件重放和不同事件 ID 的同一业务事实重复入账；`received`、`applied`、`rejected` 与结果/拒绝字段组合受 CHECK 约束。
 
 其他表：
 

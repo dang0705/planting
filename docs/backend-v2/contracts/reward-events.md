@@ -33,7 +33,8 @@ export type RewardableDomainEvent = {
   userPlantRef?: string
   aggregateRef: string
   occurrenceRef: string
-  policyVersion: string
+  /** 生产域形成事实时采用的策略版本；不能决定 subscription 的奖励分值。 */
+  producerPolicyVersion: string
   occurredAt: string
   /** 只含奖励资格判断需要的最小业务事实，不含分值、凭证、图片或模型原文。 */
   payload: Record<string, unknown>
@@ -50,7 +51,7 @@ export type RewardableDomainEvent = {
 - inbox、积分账本、积分账户、等级奖励和 AI grant 必须在同一 `subscription` 事务内提交。
 - 消费端提交成功后，源域才标记 delivered；标记失败允许重放，不能重复入账。
 - `knowledge.contribution_released.v1` 可不含 `userPlantRef`；其余养护奖励事件必须携带合法用户植物引用。
-- 首次接收事件时按 `occurredAt` 锁定已发布策略版本及 SHA-256；后续重放沿用该快照，禁止使用新策略重算旧事件。
+- 首次接收事件时，`subscription` 按 `occurredAt` 独立锁定已发布奖励策略版本及 SHA-256；后续重放沿用该快照，禁止使用新策略重算旧事件。事件携带的 `producerPolicyVersion` 只证明生产域形成业务事实时使用的规则，不能指定积分或奖励策略。
 
 ## 业务唯一键
 

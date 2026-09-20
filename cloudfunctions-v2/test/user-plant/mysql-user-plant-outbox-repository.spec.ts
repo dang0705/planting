@@ -41,7 +41,7 @@ function profileCompletedEvent(): RewardableDomainEventDto {
     userPlantRef: 'upl_profile_completed_0001' as UserPlantRef,
     aggregateRef: 'upl_profile_completed_0001',
     occurrenceRef: 'first-profile:usr_profile_completed_0001',
-    policyVersion: 'user-plant-profile/v1',
+    producerPolicyVersion: 'user-plant-profile/v1',
     occurredAt: '2026-09-20T12:00:00.000Z',
     payload,
     payloadHash: payloadHash(payload)

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "backend-v2-schema/v1",
-  "generatedAt": "2026-09-20T23:27:00+08:00",
+  "generatedAt": "2026-09-20T23:36:30+08:00",
   "database": "CloudBase MySQL",
   "timeStorage": "UTC epoch milliseconds",
   "files": [
@@ -38,13 +38,13 @@
       "order": 6,
       "owner": "subscription",
       "file": "005_subscription.sql",
-      "sha256": "f871c896b0eae418c11162ff35620027483b131d48b84c86b23fae6db84f38e3"
+      "sha256": "3eef92160832e811f8b5563ce0d4ad4a08e4493d05e848984e167a699a8f1284"
     },
     {
       "order": 7,
       "owner": "各写域 + shared security",
       "file": "006_reliable_events.sql",
-      "sha256": "8f35b0dd3fc03848c4fe882776f6b8fac3e11f5085698948b14a70553316b8ad"
+      "sha256": "8889e8c51254ed0464dd9955abee4fc35da247b6ffb802af68716e5a4059c993"
     },
     {
       "order": 8,

@@ -39,7 +39,7 @@ function createUserPlantRewardEvent(): RewardableDomainEventDto {
     userPlantRef: 'upl_reward_outbox_0001' as UserPlantRef,
     aggregateRef: 'upl_reward_outbox_0001',
     occurrenceRef: 'profile_completed_0001',
-    policyVersion: 'care-points/2026-09-20',
+    producerPolicyVersion: 'user-plant-profile/2026-09-20.1',
     occurredAt: '2026-09-20T12:00:00.000Z',
     payload: { profileCompleted: true },
     payloadHash: testPayloadDigest
@@ -176,7 +176,7 @@ describe('四个奖励生产域 outbox DDL 合同', () => {
         '`user_ref` VARCHAR(64) NOT NULL',
         '`user_plant_ref` VARCHAR(64) NULL',
         '`occurrence_ref` VARCHAR(100) NOT NULL',
-        '`policy_version` VARCHAR(100) NOT NULL',
+        '`producer_policy_version` VARCHAR(100) NOT NULL',
         '`next_attempt_at_ms` BIGINT UNSIGNED NULL'
       ]) {
         expect(tableBody).toContain(requiredColumn)
