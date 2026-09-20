@@ -17,13 +17,24 @@ import type {
   TransactionExecutionContext
 } from '../../src/foundation/database/transaction-runner.js'
 import { createReserveAiQuotaUseCase } from '../../src/subscription/application/reserve-ai-quota.js'
+import { createSettleAiQuotaUseCase } from '../../src/subscription/application/settle-ai-quota.js'
 import type {
   AiQuotaReservationSqlExecutor,
   AiQuotaReservationSqlRow,
   AiQuotaReservationSqlWriteResult
 } from '../../src/subscription/repository/mysql-ai-quota-reservation-repository.js'
 import { createMysqlAiQuotaReservationRepository } from '../../src/subscription/repository/mysql-ai-quota-reservation-repository.js'
+import type {
+  AiQuotaSettlementSqlExecutor,
+  AiQuotaSettlementSqlRow,
+  AiQuotaSettlementSqlWriteResult
+} from '../../src/subscription/repository/mysql-ai-quota-settlement-repository.js'
+import { createMysqlAiQuotaSettlementRepository } from '../../src/subscription/repository/mysql-ai-quota-settlement-repository.js'
 import { findProjectRoot } from '../support/project-root.js'
+import {
+  expectReservedQuotaState,
+  expectSettledQuotaState
+} from '../support/subscription-quota-mysql-assertions.js'
 
 const PROJECT_ROOT = findProjectRoot()
 const MYSQL_IMAGE = 'mysql:8.4'
@@ -171,6 +182,35 @@ function createSqlExecutor(): AiQuotaReservationSqlExecutor<MysqlTestTransaction
   }
 }
 
+/** 把同一真实 mysql2 连接适配为结算 Repository 的参数化 SQL 端口。 */
+function createSettlementSqlExecutor(): AiQuotaSettlementSqlExecutor<MysqlTestTransaction> {
+  /** 结算 Repository 只允许绑定 MySQL 可直接接受的原子参数。 */
+  const resolveParameters = (parameters: readonly unknown[]): (string | number | null)[] =>
+    parameters.map(parameter => {
+      if (parameter === null || typeof parameter === 'string' || typeof parameter === 'number') {
+        return parameter
+      }
+      throw new Error('结算 Repository 产生了不受支持的 SQL 参数')
+    })
+
+  return {
+    executeQuery: async (transaction, sql, parameters) => {
+      const [rows] = await transaction.connection.execute<RowDataPacket[]>(
+        sql,
+        resolveParameters(parameters)
+      )
+      return rows as unknown as readonly AiQuotaSettlementSqlRow[]
+    },
+    executeWrite: async (transaction, sql, parameters) => {
+      const [result] = await transaction.connection.execute<ResultSetHeader>(
+        sql,
+        resolveParameters(parameters)
+      )
+      return { affectedRows: result.affectedRows } satisfies AiQuotaSettlementSqlWriteResult
+    }
+  }
+}
+
 /**
  * Expected 来源：`care-points-ai-quota/v1` 的单用户账户串行锁、最早到期批次优先与原子预占规则。
  * 测试层次：L3 / `unit_real_data`；执行真实 MySQL 8.4、真实 DDL、真实 Repository 和应用用例。
@@ -250,7 +290,7 @@ describe('AI 额度预占的真实 MySQL 并发闭环', () => {
     spawnSync('docker', ['rm', '--force', CONTAINER_NAME], { encoding: 'utf8' })
   })
 
-  test('两个不同幂等键并发争用同一账户时只有一个完整预占，随后同键安全重放', async () => {
+  test('并发预占、部分结算和超额待对账均保持账户与账本守恒', async () => {
     const repository = createMysqlAiQuotaReservationRepository(createSqlExecutor())
     let reservationSequence = Number('0')
     let ledgerSequence = Number('0')
@@ -287,54 +327,131 @@ describe('AI 额度预占的真实 MySQL 并发闭环', () => {
     })
     expect(reservationSequence).toBe(Number('1'))
 
-    const [accountRows] = await pool.query<RowDataPacket[]>(`
-      SELECT available_amount, reserved_amount, version, last_ledger_internal_id
-      FROM ai_quota_accounts
-    `)
-    expect(accountRows).toEqual([
-      expect.objectContaining({
-        available_amount: 2,
-        reserved_amount: 8,
-        version: 2
-      })
-    ])
-    expect(accountRows[Number('0')]?.last_ledger_internal_id).not.toBeNull()
+    await expectReservedQuotaState(pool)
 
-    const [grantRows] = await pool.query<RowDataPacket[]>(`
-      SELECT grant_ref, available_amount, reserved_amount, status, version
-      FROM ai_quota_grants ORDER BY grant_ref
-    `)
-    expect(grantRows).toEqual([
+    const reservationRef = reservedResult?.kind === 'reserved' ? reservedResult.reservationRef : ''
+    let settlementLedgerSequence = Number('0')
+    const settle = createSettleAiQuotaUseCase({
+      driver: createTransactionDriver(),
+      reservationRepository: repository,
+      settlementRepository: createMysqlAiQuotaSettlementRepository(createSettlementSqlExecutor()),
+      createLedgerRef: entryType =>
+        `aql_subscription_${entryType}_${String(++settlementLedgerSequence)}`
+    })
+    const settlementCommand = {
+      userRef: 'usr_subscription_real' as UserRef,
+      reservationRef,
+      settledAmount: 6,
+      actualCostMicros: 4800,
+      usageEvidenceRef: 'usage_bailian_real_001',
+      platformAbsorbedCostMicros: 0,
+      occurredAtMs: nowMs + Number('100')
+    }
+    await expect(settle(settlementCommand)).resolves.toEqual({
+      kind: 'settled',
+      reservationRef,
+      settledAmount: 6,
+      releasedAmount: 2
+    })
+    await expect(settle(settlementCommand)).resolves.toEqual({
+      kind: 'replayed',
+      reservationRef,
+      status: 'settled',
+      settledAmount: 6
+    })
+    expect(settlementLedgerSequence).toBe(Number('3'))
+
+    await expectSettledQuotaState(pool, reservationRef)
+
+    const pendingReserveCommand = {
+      userRef: 'usr_subscription_real' as UserRef,
+      productActionId: 'action_subscription_real_pending',
+      costPolicyVersion: 'ai-cost/2026-09-20.1',
+      capability: 'USER_AGENT_TEXT' as const,
+      estimatedAmount: 4,
+      idempotencyKey: 'idem_subscription_real_pending',
+      requestHash: 'c'.repeat(Number('64')),
+      expiresAtMs: nowMs + Number('60000'),
+      occurredAtMs: nowMs + Number('200')
+    }
+    const pendingReservation = await reserve(pendingReserveCommand)
+    expect(pendingReservation.kind).toBe('reserved')
+    if (pendingReservation.kind !== 'reserved') {
+      throw new Error('待对账真实数据库测试未能建立额度预占')
+    }
+    const pendingCommand = {
+      userRef: 'usr_subscription_real' as UserRef,
+      reservationRef: pendingReservation.reservationRef,
+      settledAmount: 6,
+      actualCostMicros: 5600,
+      usageEvidenceRef: 'usage_bailian_real_pending_001',
+      platformAbsorbedCostMicros: 1600,
+      occurredAtMs: nowMs + Number('300')
+    }
+    await expect(settle(pendingCommand)).resolves.toEqual({
+      kind: 'pending_reconciliation',
+      reservationRef: pendingReservation.reservationRef,
+      requestedSettlementAmount: 6,
+      quotaShortfallAmount: 2
+    })
+    await expect(settle(pendingCommand)).resolves.toEqual({
+      kind: 'replayed',
+      reservationRef: pendingReservation.reservationRef,
+      status: 'pending_reconciliation',
+      settledAmount: null
+    })
+    expect(settlementLedgerSequence).toBe(Number('3'))
+
+    const [pendingRows] = await pool.query<RowDataPacket[]>(
+      `
+        SELECT
+          a.available_amount,
+          a.reserved_amount,
+          a.consumed_amount,
+          r.status AS reservation_status,
+          r.settled_amount,
+          r.actual_cost_micros,
+          r.usage_evidence_ref,
+          r.platform_absorbed_cost_micros,
+          SUM(ra.remaining_amount) AS allocation_remaining,
+          SUM(ra.settled_amount) AS allocation_settled,
+          SUM(ra.released_amount) AS allocation_released
+        FROM ai_quota_reservations r
+        JOIN ai_quota_accounts a ON a.user_internal_id = r.user_internal_id
+        JOIN ai_quota_reservation_allocations ra ON ra.reservation_internal_id = r.id
+        WHERE r.reservation_ref = ?
+        GROUP BY a.id, r.id
+      `,
+      [pendingReservation.reservationRef]
+    )
+    expect(pendingRows).toEqual([
       expect.objectContaining({
-        grant_ref: 'aqg_subscription_real_a',
         available_amount: 0,
-        reserved_amount: 5,
-        status: 'partially_used',
-        version: 2
-      }),
-      expect.objectContaining({
-        grant_ref: 'aqg_subscription_real_b',
-        available_amount: 2,
-        reserved_amount: 3,
-        status: 'partially_used',
-        version: 2
+        reserved_amount: 4,
+        consumed_amount: 6,
+        reservation_status: 'pending_reconciliation',
+        settled_amount: null,
+        actual_cost_micros: 5600,
+        usage_evidence_ref: 'usage_bailian_real_pending_001',
+        platform_absorbed_cost_micros: 1600,
+        allocation_remaining: '4',
+        allocation_settled: '0',
+        allocation_released: '0'
       })
     ])
 
-    const [countRows] = await pool.query<RowDataPacket[]>(`
-      SELECT
-        (SELECT COUNT(*) FROM ai_quota_reservations) AS reservation_count,
-        (SELECT COUNT(*) FROM ai_quota_reservation_allocations) AS allocation_count,
-        (SELECT COUNT(*) FROM ai_quota_ledger WHERE entry_type = 'reserve') AS ledger_count,
-        (SELECT COALESCE(SUM(reserved_amount), 0) FROM ai_quota_reservation_allocations) AS allocated_amount
-    `)
-    expect(countRows).toEqual([
-      expect.objectContaining({
-        reservation_count: 1,
-        allocation_count: 2,
-        ledger_count: 2,
-        allocated_amount: '8'
-      })
-    ])
+    const [pendingLedgerRows] = await pool.query<RowDataPacket[]>(
+      `
+        SELECT entry_type, COUNT(*) AS entry_count
+        FROM ai_quota_ledger
+        WHERE reservation_internal_id = (
+          SELECT id FROM ai_quota_reservations WHERE reservation_ref = ?
+        )
+        GROUP BY entry_type
+        ORDER BY entry_type
+      `,
+      [pendingReservation.reservationRef]
+    )
+    expect(pendingLedgerRows).toEqual([{ entry_type: 'reserve', entry_count: 1 }])
   })
 })
