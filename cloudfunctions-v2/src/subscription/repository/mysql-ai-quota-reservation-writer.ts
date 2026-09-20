@@ -18,6 +18,7 @@ export async function applyAiQuotaAllocation<TTransaction extends TransactionExe
       `UPDATE \`ai_quota_grants\`
        SET \`available_amount\` = \`available_amount\` - ?,
            \`reserved_amount\` = \`reserved_amount\` + ?,
+           \`status\` = 'partially_used',
            \`version\` = \`version\` + 1, \`updated_at_ms\` = ?
        WHERE \`id\` = ? AND \`user_internal_id\` = ? AND \`grant_ref\` = ?
          AND \`version\` = ? AND \`status\` IN ('active', 'partially_used')
