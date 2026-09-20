@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-20T13:38:49.541Z",
+  "generatedAt": "2026-09-20T13:56:47.500Z",
   "snapshotSource": "docs/backend-v2/tracker/heartbeats/*.json（主代理汇总）",
   "trackerOwner": "主代理 /root（各 ticket 子代理写独立心跳；主代理校验、汇总并处理超时）",
   "clickUpStatus": "CREATED",
@@ -99,7 +99,7 @@
       "ticketIds": [
         "z8v0kmr9mj"
       ],
-      "lastObservedAt": "2026-09-20T21:39:00+08:00",
+      "lastObservedAt": "2026-09-20T21:56:18+08:00",
       "blockers": []
     },
     {
@@ -209,7 +209,7 @@
       "ticketIds": [
         "z8v0kmr9mk"
       ],
-      "lastObservedAt": "2026-09-20T21:39:00+08:00",
+      "lastObservedAt": "2026-09-20T21:56:18+08:00",
       "blockers": []
     }
   ],
@@ -318,9 +318,9 @@
       "phase": "P1/P2/P3",
       "plannedAgent": "user_plant_terra",
       "agent": "p1_guest_claim_consistency_luna + root、root",
-      "progress": 80,
+      "progress": 88,
       "status": "当前执行阶段进行中",
-      "lastUpdatedAt": "2026-09-20T21:39:00+08:00",
+      "lastUpdatedAt": "2026-09-20T21:56:18+08:00",
       "tickets": [
         {
           "id": "z8v0kmr96y",
@@ -338,9 +338,9 @@
           "url": "https://app.clickup.com/t/90182453517/z8v0kmr9mj",
           "plannedAgent": "user_plant_terra",
           "agent": "root",
-          "status": "in_progress：显式加入花园的领域规则、公开合同、MySQL Repository 与同事务应用编排已完成：同一事务依次执行幂等占位、统一用户行锁、active 数量统计、领域裁决、固定初态写入、脱敏读回和幂等结果完成；确定性拒绝也会提交可重放结果。提交结果未知的只读对账、真实并发与 HTTP 接线仍待完成。",
-          "progress": 60,
-          "lastUpdatedAt": "2026-09-20T21:39:00+08:00"
+          "status": "in_progress：显式加入花园的领域规则、公开合同、MySQL Repository、同事务应用编排、提交未知只读对账和隔离 MySQL 双连接并发验证已完成。两个事务争抢同一用户行锁后只允许一株 active 用户植物；独立新连接可读回 completed 幂等记录。HTTP 与 CloudBase MySQL 接线仍待完成。",
+          "progress": 75,
+          "lastUpdatedAt": "2026-09-20T21:56:18+08:00"
         }
       ],
       "reportedTicketCount": 2,
@@ -444,9 +444,9 @@
       "phase": "P0/P1/P2/P5/P6",
       "plannedAgent": "foundation_terra",
       "agent": "p1_legacy_close_luna、p1_external_close_luna、p1_storage_close_luna、p0_build_probe_terra、product_decisions_terra、integration_probe_terra、root、root + config_business_luna + provider_config_terra",
-      "progress": 66,
+      "progress": 67,
       "status": "当前执行阶段进行中",
-      "lastUpdatedAt": "2026-09-20T21:39:00+08:00",
+      "lastUpdatedAt": "2026-09-20T21:56:18+08:00",
       "tickets": [
         {
           "id": "z8v0kmr96q",
@@ -574,9 +574,9 @@
           "url": "https://app.clickup.com/t/90182453517/z8v0kmr9mk",
           "plannedAgent": "foundation_terra",
           "agent": "root",
-          "status": "in_progress：共享 HTTP 请求链、事务生命周期、HTTP 幂等协议/DDL、共享幂等 MySQL Repository 与四个奖励生产域 outbox 机械合同已形成可验证切片。用户植物创建已证明业务写与幂等完成结果使用同一事务；事务执行器已显式区分提交结果未知并禁止在旧连接回滚。新连接只读对账、奖励业务命令的 outbox 同事务与 CloudBase/HTTP 接线仍未完成。",
-          "progress": 60,
-          "lastUpdatedAt": "2026-09-20T21:39:00+08:00"
+          "status": "in_progress：共享 HTTP 请求链、事务生命周期、HTTP 幂等协议/DDL、共享幂等 MySQL Repository、四个奖励生产域 outbox 机械合同和提交未知只读对账均已形成可验证切片。用户植物创建已完成同事务编排与隔离 MySQL 双连接竞争验证；奖励业务命令的 outbox 同事务与 CloudBase/HTTP 接线仍未完成。",
+          "progress": 68,
+          "lastUpdatedAt": "2026-09-20T21:56:18+08:00"
         }
       ],
       "reportedTicketCount": 9,
@@ -584,7 +584,7 @@
     }
   ],
   "overallProgress": {
-    "progress": 56,
+    "progress": 57,
     "reported": 16,
     "total": 27
   },
