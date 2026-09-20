@@ -38,8 +38,11 @@ Foundation 已冻结并执行以下不含业务分值的约束：
 ## P2 subscription 已实现边界
 
 - `subscription_reward_inbox` 已分离生产域事实策略版本与 `subscription` 奖励策略版本/内容 SHA-256，并保存事件版本、聚合引用、发生引用和事实发生时间，具备首次策略快照的持久化载体。
+- `mysql-reward-inbox-repository.ts` 已实现事务内固定锁顺序：先按 `user_id` 锁定活跃统一用户，再按事件 ID/业务唯一键锁定 inbox；既有记录在写入前分类为安全重放、业务事实重复或幂等冲突，不依赖 MySQL `affectedRows` 猜测首次写入。
+- 新事件使用不吞约束错误的 `INSERT ... ON DUPLICATE KEY UPDATE` 作为跨主体竞争的最后一道唯一键保护，写后必须读回完整事实、策略快照和状态；同事件载荷摘要或策略被改写时失败关闭。
+- `subscription-reward-inbox.mysql.spec.ts` 已在一次性 MySQL 8.4 中回放真实 DDL，证明两个并发同事件投递只产生一条 inbox：一个首次预留、一个安全重放；不同事件命中同一业务唯一键不新增，同事件合法但不同载荷被拒绝。
 - `planRewardEventApplication` 已按不可变等级策略计算积分账户终态和本次跨越的未发等级奖励；积分消费历史不降低由累计净获得积分决定的等级，已发等级终身不重复。
 
 ## P2 subscription 尚未实现边界
 
-inbox 的原子预留/重放/篡改隔离、积分不可变账本、积分账户投影、等级 AI grant、真实 MySQL 并发和跨域 HTTP 消费仍未完成。当前纯领域计划不能冒充奖励已经入账。
+积分不可变账本、积分账户投影、等级 AI grant、贡献 AI 奖励、兑换命令、跨域 HTTP 消费与提交结果未知对账仍未完成。当前 inbox 和纯领域计划不能冒充奖励已经完整入账。
