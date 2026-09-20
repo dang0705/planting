@@ -18,6 +18,7 @@ import {
   type DatabaseTransactionDriver,
   type TransactionExecutionContext
 } from '../../src/foundation/database/transaction-runner.js'
+import { createApplyRewardPointsEventUseCase } from '../../src/subscription/application/apply-reward-points-event.js'
 import {
   createMysqlRewardInboxRepository,
   type ReserveRewardInboxInput,
@@ -26,6 +27,12 @@ import {
   type RewardInboxSqlRow,
   type RewardInboxSqlWriteResult
 } from '../../src/subscription/repository/mysql-reward-inbox-repository.js'
+import {
+  createMysqlRewardPointsRepository,
+  type RewardPointsSqlExecutor,
+  type RewardPointsSqlRow,
+  type RewardPointsSqlWriteResult
+} from '../../src/subscription/repository/mysql-reward-points-repository.js'
 import { findProjectRoot } from '../support/project-root.js'
 
 const projectRoot = findProjectRoot()
@@ -178,6 +185,34 @@ function createSqlExecutor(): RewardInboxSqlExecutor<MysqlTestTransaction> {
   }
 }
 
+/** 把 mysql2 连接适配为奖励积分 Repository 的参数化 SQL 端口。 */
+function createRewardPointsSqlExecutor(): RewardPointsSqlExecutor<MysqlTestTransaction> {
+  const resolveParameters = (parameters: readonly unknown[]): (string | number | null)[] =>
+    parameters.map(parameter => {
+      if (parameter === null || typeof parameter === 'string' || typeof parameter === 'number') {
+        return parameter
+      }
+      throw new Error('奖励积分 Repository 产生了不受支持的 SQL 参数')
+    })
+
+  return {
+    executeQuery: async (transaction, sql, parameters) => {
+      const [rows] = await transaction.connection.execute<RowDataPacket[]>(
+        sql,
+        resolveParameters(parameters)
+      )
+      return rows as unknown as readonly RewardPointsSqlRow[]
+    },
+    executeWrite: async (transaction, sql, parameters) => {
+      const [result] = await transaction.connection.execute<ResultSetHeader>(
+        sql,
+        resolveParameters(parameters)
+      )
+      return { affectedRows: result.affectedRows } satisfies RewardPointsSqlWriteResult
+    }
+  }
+}
+
 /** 构造通过事件 Schema 与奖励策略解析后的固定输入。 */
 function createInput(overrides: Partial<ReserveRewardInboxInput> = {}): ReserveRewardInboxInput {
   return {
@@ -236,6 +271,20 @@ describe('奖励事件 inbox 的真实 MySQL 并发幂等', () => {
       INSERT INTO users (_openid, public_user_id, status, session_version, created_at_ms, updated_at_ms)
       VALUES ('', 'usr_reward_mysql_0001', 'active', 1, 1000, 1000)
     `)
+    await pool.execute(`
+      INSERT INTO care_point_accounts
+        (_openid, user_internal_id, available_points, lifetime_net_earned, level_code,
+         version, last_ledger_internal_id, created_at_ms, updated_at_ms)
+      SELECT '', id, 80, 80, 'L0', 1, NULL, 1000, 1000
+      FROM users WHERE public_user_id = 'usr_reward_mysql_0001'
+    `)
+    await pool.execute(`
+      INSERT INTO ai_quota_accounts
+        (_openid, user_internal_id, available_amount, reserved_amount, consumed_amount,
+         version, last_ledger_internal_id, created_at_ms, updated_at_ms)
+      SELECT '', id, 0, 0, 0, 1, NULL, 1000, 1000
+      FROM users WHERE public_user_id = 'usr_reward_mysql_0001'
+    `)
   })
 
   afterAll(async () => {
@@ -283,5 +332,114 @@ describe('奖励事件 inbox 的真实 MySQL 并发幂等', () => {
         )
       )
     ).rejects.toMatchObject({ type: 'IDEMPOTENCY_CONFLICT' })
+  })
+
+  test('积分、跨级 AI 奖励与账户投影在一个真实事务中守恒落盘', async () => {
+    const applyReward = createApplyRewardPointsEventUseCase({
+      driver: createTransactionDriver(),
+      inboxRepository: createMysqlRewardInboxRepository(createSqlExecutor()),
+      pointsRepository: createMysqlRewardPointsRepository(createRewardPointsSqlExecutor()),
+      createPointLedgerRef: () => 'cpl_reward_mysql_0001',
+      createLevelGrantRef: levelCode => `clg_reward_mysql_${levelCode}`,
+      createAiGrantRef: levelCode => `aqg_reward_mysql_${levelCode}`,
+      createAiLedgerRef: levelCode => `aql_reward_mysql_${levelCode}`
+    })
+    const rewardCommand = {
+      inbox: createInput({
+        eventId: 'evt_reward_points_mysql_0001' as EventRef,
+        aggregateRef: 'care_plan_reward_points_mysql_0001',
+        occurrenceRef: 'soil_check_reward_points_mysql_0001',
+        businessUniqueKey: 'soil-check:soil_check_reward_points_mysql_0001',
+        occurredAtMs: occurredAtMs + Number('100'),
+        receivedAtMs: occurredAtMs + Number('150')
+      }),
+      pointsAmount: 250,
+      levelPolicy: [
+        { code: 'L0', threshold: 0, aiReward: 0 },
+        { code: 'L1', threshold: 100, aiReward: 50 },
+        { code: 'L2', threshold: 300, aiReward: 100 }
+      ],
+      levelRewardExpiresAtMs: occurredAtMs + Number('7776000000'),
+      appliedAtMs: occurredAtMs + Number('200')
+    } as const
+    await expect(applyReward(rewardCommand)).resolves.toMatchObject({
+      kind: 'applied',
+      resultRef: 'cpl_reward_mysql_0001',
+      awardedLevels: ['L1', 'L2']
+    })
+    await expect(applyReward(rewardCommand)).resolves.toEqual({
+      kind: 'replayed',
+      status: 'applied',
+      resultRef: 'cpl_reward_mysql_0001'
+    })
+
+    const [summaryRows] = await pool.query<RowDataPacket[]>(`
+      SELECT
+        (SELECT available_points FROM care_point_accounts) AS available_points,
+        (SELECT lifetime_net_earned FROM care_point_accounts) AS lifetime_net_earned,
+        (SELECT level_code FROM care_point_accounts) AS level_code,
+        (SELECT available_amount FROM ai_quota_accounts) AS ai_available,
+        (SELECT COUNT(*) FROM care_point_ledger) AS point_ledger_count,
+        (SELECT COUNT(*) FROM care_level_grants) AS level_grant_count,
+        (SELECT COUNT(*) FROM ai_quota_grants WHERE source_type = 'CARE_LEVEL') AS ai_grant_count,
+        (SELECT COUNT(*) FROM ai_quota_ledger WHERE entry_type = 'grant') AS ai_ledger_count,
+        (SELECT status FROM subscription_reward_inbox
+         WHERE event_id = 'evt_reward_points_mysql_0001') AS inbox_status
+    `)
+    expect(summaryRows).toEqual([
+      {
+        available_points: 330,
+        lifetime_net_earned: 330,
+        level_code: 'L2',
+        ai_available: 150,
+        point_ledger_count: 1,
+        level_grant_count: 2,
+        ai_grant_count: 2,
+        ai_ledger_count: 2,
+        inbox_status: 'applied'
+      }
+    ])
+  })
+
+  test('等级唯一键中途冲突会回滚此前积分账本与账户更新', async () => {
+    const repository = createMysqlRewardPointsRepository(createRewardPointsSqlExecutor())
+    await expect(
+      runDatabaseTransaction(createTransactionDriver(), async transaction => {
+        const state = await repository.lockState(transaction, 'usr_reward_mysql_0001' as UserRef)
+        await repository.apply(transaction, {
+          ...state,
+          pointLedgerRef: 'cpl_reward_mysql_rollback',
+          sourceType: 'DUE_SOIL_CHECK',
+          sourceRef: 'soil_check_reward_mysql_rollback',
+          businessUniqueKey: 'soil-check:soil_check_reward_mysql_rollback',
+          pointsAmount: 5,
+          currentAvailablePoints: state.availablePoints,
+          currentLifetimeNetEarned: state.lifetimeNetEarned,
+          nextAvailablePoints: 335,
+          nextLifetimeNetEarned: 335,
+          nextLevelCode: 'L2',
+          policyVersion: 'care-points/2026-09-20.1',
+          occurredAtMs: occurredAtMs + Number('200'),
+          levelRewards: [
+            {
+              levelCode: 'L2',
+              amount: 100,
+              levelGrantRef: 'clg_reward_mysql_rollback',
+              aiGrantRef: 'aqg_reward_mysql_rollback',
+              aiLedgerRef: 'aql_reward_mysql_rollback',
+              expiresAtMs: occurredAtMs + Number('7776000000')
+            }
+          ]
+        })
+      })
+    ).rejects.toMatchObject({ code: 'ER_DUP_ENTRY' })
+
+    const [rows] = await pool.query<RowDataPacket[]>(`
+      SELECT
+        (SELECT available_points FROM care_point_accounts) AS available_points,
+        (SELECT COUNT(*) FROM care_point_ledger) AS point_ledger_count,
+        (SELECT COUNT(*) FROM ai_quota_grants) AS ai_grant_count
+    `)
+    expect(rows).toEqual([{ available_points: 330, point_ledger_count: 1, ai_grant_count: 2 }])
   })
 })

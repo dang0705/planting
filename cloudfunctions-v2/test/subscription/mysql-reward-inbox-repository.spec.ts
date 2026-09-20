@@ -196,4 +196,17 @@ describe('奖励事件 inbox MySQL Repository', () => {
     ).rejects.toMatchObject({ type: 'INTERNAL_DATA_INVALID' })
     expect(calls).toEqual([])
   })
+
+  test('应用结果只能把 received 原子推进为 applied 并保存公开结果引用', async () => {
+    const { executor, calls } = createExecutor({ affectedRows: one, queryResults: [] })
+    const repository = createMysqlRewardInboxRepository(executor)
+
+    await expect(
+      repository.markApplied(transaction, '91', 'cpl_reward_0001', receivedAtMs)
+    ).resolves.toBeUndefined()
+    expect(calls).toHaveLength(one)
+    expect(calls[zero]?.sql).toContain("SET `status` = 'applied'")
+    expect(calls[zero]?.sql).toContain("AND `status` = 'received'")
+    expect(calls[zero]?.parameters).toEqual(['cpl_reward_0001', receivedAtMs, receivedAtMs, '91'])
+  })
 })

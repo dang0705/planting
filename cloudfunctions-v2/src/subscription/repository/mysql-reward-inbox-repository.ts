@@ -184,6 +184,13 @@ export type MysqlRewardInboxRepository<TTransaction extends TransactionExecution
     transaction: TTransaction,
     input: ReserveRewardInboxInput
   ) => Promise<ReserveRewardInboxResult>
+  /** 在同一事务内把首次收件原子推进为已应用，并保存公开结果引用。 */
+  readonly markApplied: (
+    transaction: TTransaction,
+    inboxInternalId: string,
+    resultRef: string,
+    appliedAtMs: number
+  ) => Promise<void>
 }
 
 const eventProducerDomainMap = {
@@ -415,5 +422,32 @@ export function createMysqlRewardInboxRepository<TTransaction extends Transactio
     return resolveExistingRow(row, input)
   }
 
-  return { reserve }
+  const markApplied = async (
+    transaction: TTransaction,
+    inboxInternalId: string,
+    resultRef: string,
+    appliedAtMs: number
+  ): Promise<void> => {
+    if (
+      !/^[1-9][0-9]*$/u.test(inboxInternalId) ||
+      !/^(?:cpl|aqg)_[A-Za-z0-9_-]{8,}$/u.test(resultRef) ||
+      !Number.isSafeInteger(appliedAtMs) ||
+      appliedAtMs < zero
+    ) {
+      throw new RewardInboxPersistenceError('INTERNAL_DATA_INVALID', '奖励事件应用结果不合法')
+    }
+    const result = await executor.executeWrite(
+      transaction,
+      `UPDATE \`subscription_reward_inbox\`
+       SET \`status\` = 'applied', \`result_ref\` = ?, \`applied_at_ms\` = ?, \`updated_at_ms\` = ?
+       WHERE \`id\` = ? AND \`status\` = 'received'
+         AND \`result_ref\` IS NULL AND \`rejection_code\` IS NULL AND \`applied_at_ms\` IS NULL`,
+      [resultRef, appliedAtMs, appliedAtMs, inboxInternalId]
+    )
+    if (result.affectedRows !== one) {
+      throw new RewardInboxPersistenceError('WRITE_CONFLICT', '奖励事件应用状态更新冲突')
+    }
+  }
+
+  return { reserve, markApplied }
 }
