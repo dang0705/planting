@@ -2,9 +2,9 @@
  * 青花植后端公开引用的不透明类型。
  * 这些值是高熵字符串，不等于数据库 BIGINT 内部主键；品牌字段只在编译期存在。
  */
-export type PublicRef<Kind extends string> = string & {
+export type PublicRef<TKind extends string> = string & {
   /** 仅供 TypeScript 编译期区分不同公开引用种类；运行时不生成该属性，禁止把它当作数据库字段。 */
-  readonly __publicRefKind: Kind;
+  readonly __publicRefKind: TKind;
 };
 
 /** 平台无关的统一用户公开引用；外部边界只使用不透明引用，不暴露数据库内部键。 */

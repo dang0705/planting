@@ -8,7 +8,7 @@
     "pino": "10.3.1"
   },
   "artifacts": {
-    "dist/server.cjs": "5cf29964b75fb0b0a5c0f1885ba50597900481c6021a9c190799b8ca45cf88b2"
+    "dist/server.cjs": "5a47260aa0290ba71ddfc30e0f14e3cf6f7abac75f744240161a64fde2e4a219"
   },
   "files": [
     "dist/server.cjs",
