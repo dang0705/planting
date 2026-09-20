@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-20T04:01:10.116Z",
+  "generatedAt": "2026-09-20T08:39:07.106Z",
   "snapshotSource": "docs/backend-v2/tracker/heartbeats/*.json（主代理汇总）",
   "trackerOwner": "主代理 /root（各 ticket 子代理写独立心跳；主代理校验、汇总并处理超时）",
   "clickUpStatus": "CREATED",
@@ -16,7 +16,7 @@
     "z8v0kmr96y": "codex running",
     "z8v0kmr96z": "done",
     "z8v0kmr9ge": "review needed",
-    "z8v0kmr9gm": "review needed",
+    "z8v0kmr9gm": "codex running",
     "z8v0kmr9gn": "review needed",
     "z8v0kmr970": "backlog",
     "z8v0kmr971": "backlog",
@@ -73,11 +73,11 @@
       "name": "root + p1_taxonomy_ddl_close_terra + p1_taxonomy_authority_pipeline_terra",
       "path": "/root/root + p1_taxonomy_ddl_close_terra + p1_taxonomy_authority_pipeline_terra",
       "model": "root + gpt-5.6-terra / medium-high",
-      "status": "heartbeat_stale",
+      "status": "codex_running",
       "ticketIds": [
         "z8v0kmr9gm"
       ],
-      "lastObservedAt": "2026-09-20T08:12:00+08:00",
+      "lastObservedAt": "2026-09-20T16:12:54+08:00",
       "blockers": []
     },
     {
@@ -95,7 +95,7 @@
       "name": "root",
       "path": "/root/root",
       "model": "gpt-5",
-      "status": "in_progress",
+      "status": "heartbeat_stale",
       "ticketIds": [
         "z8v0kmr9mj"
       ],
@@ -205,7 +205,7 @@
       "name": "root",
       "path": "/root/root",
       "model": "gpt-5",
-      "status": "in_progress",
+      "status": "heartbeat_stale",
       "ticketIds": [
         "z8v0kmr9mk"
       ],
@@ -253,10 +253,10 @@
       "name": "植物知识、分类与 CMS",
       "phase": "P1/P2/P3",
       "plannedAgent": "knowledge_terra",
-      "agent": "p1_data_cms_close_luna、p1_taxonomy_close_terra",
+      "agent": "p1_data_cms_close_luna、p1_taxonomy_close_terra、root + p1_taxonomy_ddl_close_terra + p1_taxonomy_authority_pipeline_terra",
       "progress": 79,
       "status": "当前执行阶段进行中",
-      "lastUpdatedAt": "2026-09-20T08:12:00+08:00",
+      "lastUpdatedAt": "2026-09-20T16:12:54+08:00",
       "tickets": [
         {
           "id": "z8v0kmr96r",
@@ -294,9 +294,9 @@
           "url": "https://app.clickup.com/t/90182453517/z8v0kmr9gm",
           "plannedAgent": "taxonomy_gate_terra + root",
           "agent": "root + p1_taxonomy_ddl_close_terra + p1_taxonomy_authority_pipeline_terra",
-          "status": "心跳超时：P1 taxonomy 人工裁决已采纳：200 条候选最终为 REUSE_AS_IS=99、TRANSFORM=7、TRANSFORM_PENDING=4、QUARANTINE=90，当前 seedEligible=106。人工采纳决策与 seed manifest 已落盘，但完整审批制品仍待主代理验收；active release=STOP，未宣称 done。",
-          "progress": 95,
-          "lastUpdatedAt": "2026-09-20T08:12:00+08:00"
+          "status": "codex_running：产品负责人已明确确认完整人工审核结论：200 条候选最终为 REUSE_AS_IS=99、TRANSFORM=7、TRANSFORM_PENDING=4、QUARANTINE=90，当前 seedEligible=106。主代理已回读审批制品、seed manifest 和 SHA-256，人工审批门已闭环；整票仍因 4 条待转换身份和未激活发布继续执行。",
+          "progress": 94,
+          "lastUpdatedAt": "2026-09-20T16:12:54+08:00"
         },
         {
           "id": "z8v0kmr971",
@@ -317,7 +317,7 @@
       "name": "用户植物",
       "phase": "P1/P2/P3",
       "plannedAgent": "user_plant_terra",
-      "agent": "p1_guest_claim_consistency_luna + root、root",
+      "agent": "p1_guest_claim_consistency_luna + root",
       "progress": 55,
       "status": "当前执行阶段进行中",
       "lastUpdatedAt": "2026-09-20T12:00:42+08:00",
@@ -338,7 +338,7 @@
           "url": "https://app.clickup.com/t/90182453517/z8v0kmr9mj",
           "plannedAgent": "user_plant_terra",
           "agent": "root",
-          "status": "in_progress：显式加入花园后创建 active/unidentified/version 1 的纯领域切片已落盘并通过 7 条测试；公开 DTO、Repository、幂等、真实事务和 HTTP 接线仍未完成。",
+          "status": "心跳超时：显式加入花园后创建 active/unidentified/version 1 的纯领域切片已落盘并通过 7 条测试；公开 DTO、Repository、幂等、真实事务和 HTTP 接线仍未完成。",
           "progress": 10,
           "lastUpdatedAt": "2026-09-20T12:00:42+08:00"
         }
@@ -574,7 +574,7 @@
           "url": "https://app.clickup.com/t/90182453517/z8v0kmr9mk",
           "plannedAgent": "foundation_terra",
           "agent": "root",
-          "status": "in_progress：共享 HTTP 请求链、API 合同断层和事务生命周期编排已闭环：固定顺序、失败短路、统一错误、服务签名参数、OpenAPI 一致性及提交/回滚语义均有测试；真实 MySQL、幂等、可靠事件和云端接线仍未完成。",
+          "status": "心跳超时：共享 HTTP 请求链、API 合同断层和事务生命周期编排已闭环：固定顺序、失败短路、统一错误、服务签名参数、OpenAPI 一致性及提交/回滚语义均有测试；真实 MySQL、幂等、可靠事件和云端接线仍未完成。",
           "progress": 20,
           "lastUpdatedAt": "2026-09-20T11:57:57+08:00"
         }
@@ -588,5 +588,5 @@
     "reported": 16,
     "total": 27
   },
-  "clickUpLastSyncedAt": "2026-09-20T11:59:49+08:00"
+  "clickUpLastSyncedAt": "2026-09-20T16:22:19+08:00"
 }

@@ -2,22 +2,23 @@
   "ticketId": "z8v0kmr9gm",
   "agent": "root + p1_taxonomy_ddl_close_terra + p1_taxonomy_authority_pipeline_terra",
   "model": "root + gpt-5.6-terra / medium-high",
-  "status": "review_needed",
+  "status": "codex_running",
   "progress": 95,
-  "summary": "P1 taxonomy 人工裁决已采纳：200 条候选最终为 REUSE_AS_IS=99、TRANSFORM=7、TRANSFORM_PENDING=4、QUARANTINE=90，当前 seedEligible=106。人工采纳决策与 seed manifest 已落盘，但完整审批制品仍待主代理验收；active release=STOP，未宣称 done。",
+  "summary": "产品负责人已明确确认完整人工审核结论：200 条候选最终为 REUSE_AS_IS=99、TRANSFORM=7、TRANSFORM_PENDING=4、QUARANTINE=90，当前 seedEligible=106。主代理已回读审批制品、seed manifest 和 SHA-256，人工审批门已闭环；整票仍因 4 条待转换身份和未激活发布继续执行。",
   "blockers": [],
   "unverified": [
-    "4 条 TRANSFORM_PENDING 仍不得进入 seed，完整审批制品和最终 seed 验收尚未完成。",
+    "4 条 TRANSFORM_PENDING 仍不得进入 seed；它们的 canonical、稳定 ID、identity_level、父链与证据哈希尚未完成重建和再次复核。",
     "CloudBase MySQL 兼容性、运行时 API 隔离与实际 active release 切换属于后续环境门；当前 active release=STOP。"
   ],
-  "updatedAt": "2026-09-20T08:12:00+08:00",
+  "updatedAt": "2026-09-20T16:12:54+08:00",
   "verified": [
     "固定版本 WCVP/WFO 官方制品真实回放：200 条、WCVP 精确匹配 179、WFO 科/属/种交叉核对 158；自动匹配与栽培品种均未直接放行。",
     "人工裁决已落盘并核对为 REUSE_AS_IS=99、TRANSFORM=7、TRANSFORM_PENDING=4、QUARANTINE=90；seedEligible=106。",
-    "人工审核结论文件、结构化审批包及 SHA-256 sidecar 已生成；seed manifest 已生成，但完整审批与 seed 制品仍待主代理验收。",
+    "用户明确声明附件是本批真实人工审核结论；主代理回读后确认与结构化审批包逐项统计一致。",
+    "人工审核结论文件、结构化审批包、approval record、seed manifest 及各自 SHA-256 sidecar 已回读验收。",
     "两组独立反向审计分别覆盖前、后 100 条中的 60 个非隔离建议，合计 120/120 通过，未发现误放行；原 Luna usage limit 已由 Terra 重试和主代理程序化复核排除。",
     "最终人工审核文件完整列出 99 条原样复用、7 条转换、4 条待转换和 90 条隔离明细；不得将 4 条待转换计入 seed。",
     "Node.js 22 全量 17 个文件、68 个测试通过；lint 为 0 error，54 条 warning 为仓库既有 warning。"
   ],
-  "next": "主代理完成完整审批与 seed 制品验收，确认 106 条可入 seed、90 条隔离及 4 条待转换不越权进入 seed；随后再执行空库导入、重新导出、引用和哈希验证。"
+  "next": "按已冻结的四条转换目标重建 29、73、98、123 的分类身份制品，逐条完成机器校验与人工复核；仅在通过后将 seedEligible 提升到 110，再执行空库导入、隔离读回和 active release 独立验收。"
 }

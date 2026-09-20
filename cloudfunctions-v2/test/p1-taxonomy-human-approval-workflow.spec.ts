@@ -334,9 +334,9 @@ describe('P1 分类人工批准落盘与种子清单工作流', () => {
 
     const earlyAdmission = makeApproval(projectRoot)
     earlyAdmission.scope.dispositionBySourceRecordId['29'] = 'TRANSFORM'
-    expect(workflow.validateApprovalArtifact({ approval: earlyAdmission, packet: loaded }).valid).toBe(
-      false
-    )
+    expect(
+      workflow.validateApprovalArtifact({ approval: earlyAdmission, packet: loaded }).valid
+    ).toBe(false)
   })
 
   test('缺少人工批准或篡改批准范围必须失败关闭', async () => {
