@@ -39,4 +39,11 @@
 - 类型检查通过；新增源码和测试的 oxlint 为 0 错误、0 告警。
 - 身份、归属、DTO、领域、事务和审计端口均为可观测假边界；不得据此宣称真实 MySQL 回滚、CloudBase 身份或 HTTP 端到端已经通过。
 
-下一切片先处理合同断层与 HTTP 适配器接线，再独立实施通用幂等、事务和可靠事件。
+## 5. 事务编排切片
+
+- 源码：`cloudfunctions-v2/src/foundation/database/transaction-runner.ts`
+- 测试：`cloudfunctions-v2/test/foundation/transaction-runner.spec.ts`
+- 已保证：开始失败不执行回调；成功只提交；业务或提交失败尝试回滚；回滚失败进入独立内部可观测端口且不覆盖最先异常。
+- 当前只冻结适配器无关的生命周期协议；不含 MySQL 连接、SQL、隔离级别、连接池、唯一约束或真实写后读回。
+
+下一切片先处理 HTTP 适配器接线，再独立实施通用幂等、真实 MySQL 事务适配器和可靠事件。

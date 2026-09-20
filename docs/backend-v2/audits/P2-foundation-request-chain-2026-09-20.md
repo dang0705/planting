@@ -50,3 +50,10 @@ npm test -- --run test/foundation/request-chain.spec.ts
 - 所有路由声明的错误类型都必须存在于 OpenAPI 错误枚举。
 
 重新生成 `openapi.p1.json` 与 `manifest.json` 后，目标测试和 TypeScript 类型检查通过。
+
+## 事务编排 RED / GREEN
+
+在 `transaction-runner.ts` 不存在时，目标测试因无法导入模块形成 RED。实现后 5 条
+`unit_fake` 测试通过，覆盖成功提交、业务失败回滚、提交失败回滚、回滚失败保留原始异常和开始失败短路；新增源码与测试 oxlint 0 错误、0 告警，TypeScript 类型检查通过。
+
+该证据只验证事务生命周期编排。MySQL 连接、SQL、隔离级别、唯一约束、业务写入/outbox/幂等结果的同事务读回仍须由后续 `unit_real_data` 与 `e2e_real_api` 验证。

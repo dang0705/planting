@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-20T03:17:47.172Z",
+  "generatedAt": "2026-09-20T03:58:17.007Z",
   "snapshotSource": "docs/backend-v2/tracker/heartbeats/*.json（主代理汇总）",
   "trackerOwner": "主代理 /root（各 ticket 子代理写独立心跳；主代理校验、汇总并处理超时）",
   "clickUpStatus": "CREATED",
@@ -198,7 +198,7 @@
       "ticketIds": [
         "z8v0kmr9mk"
       ],
-      "lastObservedAt": "2026-09-20T11:17:31+08:00",
+      "lastObservedAt": "2026-09-20T11:57:57+08:00",
       "blockers": []
     }
   ],
@@ -435,7 +435,7 @@
       "agent": "p1_legacy_close_luna、p1_external_close_luna、p1_storage_close_luna、p0_build_probe_terra、product_decisions_terra、integration_probe_terra、root、root + config_business_luna + provider_config_terra",
       "progress": 63,
       "status": "当前执行阶段进行中",
-      "lastUpdatedAt": "2026-09-20T11:17:31+08:00",
+      "lastUpdatedAt": "2026-09-20T11:57:57+08:00",
       "tickets": [
         {
           "id": "z8v0kmr96q",
@@ -563,9 +563,9 @@
           "url": "https://app.clickup.com/t/90182453517/z8v0kmr9mk",
           "plannedAgent": "foundation_terra",
           "agent": "root",
-          "status": "in_progress：共享 HTTP 请求链首个 TDD 切片及其 API 合同断层已闭环：固定顺序、失败短路、统一错误、服务签名参数和 OpenAPI 路径一致性均有测试；真实事务、幂等、可靠事件和云端接线仍未完成。",
-          "progress": 15,
-          "lastUpdatedAt": "2026-09-20T11:17:31+08:00"
+          "status": "in_progress：共享 HTTP 请求链、API 合同断层和事务生命周期编排已闭环：固定顺序、失败短路、统一错误、服务签名参数、OpenAPI 一致性及提交/回滚语义均有测试；真实 MySQL、幂等、可靠事件和云端接线仍未完成。",
+          "progress": 20,
+          "lastUpdatedAt": "2026-09-20T11:57:57+08:00"
         }
       ],
       "reportedTicketCount": 9,
