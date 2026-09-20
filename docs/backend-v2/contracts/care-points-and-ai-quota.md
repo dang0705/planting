@@ -104,6 +104,7 @@ grantedAmount = availableAmount + reservedAmount + consumedAmount
 - 预占只允许 `availableAmount → reservedAmount`。
 - 结算只允许 `reservedAmount → consumedAmount`。
 - 释放只允许 `reservedAmount → availableAmount`。
+- 每条跨 grant 分摊必须保存 `remainingAmount`，并始终满足 `reservedAmount = remainingAmount + settledAmount + releasedAmount`；初始预占全部进入 remaining，结算或释放只允许从 remaining 转出，终态 remaining 必须为 0。
 - 过期和冲正必须追加 `ai_quota_ledger` 记录，禁止原地抹掉历史。
 - `ai_quota_accounts` 是按用户汇总的可重建投影，不是扣费事实源；grant、allocation 与不可变 ledger 才是事实源。
 - `capabilityScope` 是至少一项、去重且排序稳定的能力集合，不是单一字符串。

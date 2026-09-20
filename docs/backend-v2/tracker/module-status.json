@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-20T13:56:47.500Z",
+  "generatedAt": "2026-09-20T14:10:46.817Z",
   "snapshotSource": "docs/backend-v2/tracker/heartbeats/*.json（主代理汇总）",
   "trackerOwner": "主代理 /root（各 ticket 子代理写独立心跳；主代理校验、汇总并处理超时）",
   "clickUpStatus": "CREATED",
@@ -29,7 +29,7 @@
     "z8v0kmr978": "backlog",
     "z8v0kmr979": "backlog",
     "z8v0kmr9mj": "codex running",
-    "z8v0kmr9mh": "backlog",
+    "z8v0kmr9mh": "codex running",
     "z8v0kmr9mk": "codex running"
   },
   "agentRegistry": [
@@ -99,7 +99,7 @@
       "ticketIds": [
         "z8v0kmr9mj"
       ],
-      "lastObservedAt": "2026-09-20T21:56:18+08:00",
+      "lastObservedAt": "2026-09-20T22:10:00+08:00",
       "blockers": []
     },
     {
@@ -111,6 +111,17 @@
         "z8v0kmr96z"
       ],
       "lastObservedAt": "2026-09-20T07:02:14+08:00",
+      "blockers": []
+    },
+    {
+      "name": "root",
+      "path": "/root/root",
+      "model": "gpt-5",
+      "status": "in_progress",
+      "ticketIds": [
+        "z8v0kmr9mh"
+      ],
+      "lastObservedAt": "2026-09-20T22:10:00+08:00",
       "blockers": []
     },
     {
@@ -318,9 +329,9 @@
       "phase": "P1/P2/P3",
       "plannedAgent": "user_plant_terra",
       "agent": "p1_guest_claim_consistency_luna + root、root",
-      "progress": 88,
+      "progress": 90,
       "status": "当前执行阶段进行中",
-      "lastUpdatedAt": "2026-09-20T21:56:18+08:00",
+      "lastUpdatedAt": "2026-09-20T22:10:00+08:00",
       "tickets": [
         {
           "id": "z8v0kmr96y",
@@ -338,9 +349,9 @@
           "url": "https://app.clickup.com/t/90182453517/z8v0kmr9mj",
           "plannedAgent": "user_plant_terra",
           "agent": "root",
-          "status": "in_progress：显式加入花园的领域规则、公开合同、MySQL Repository、同事务应用编排、提交未知只读对账和隔离 MySQL 双连接并发验证已完成。两个事务争抢同一用户行锁后只允许一株 active 用户植物；独立新连接可读回 completed 幂等记录。HTTP 与 CloudBase MySQL 接线仍待完成。",
-          "progress": 75,
-          "lastUpdatedAt": "2026-09-20T21:56:18+08:00"
+          "status": "in_progress：用户植物创建闭环已有领域规则、公开合同、MySQL Repository、同事务应用编排、提交未知只读对账和隔离 MySQL 并发证据；最低档案完整度纯领域规则也已冻结并通过变异验证。档案字段 Schema、持久化与奖励 outbox 同事务、HTTP 和 CloudBase MySQL 仍待完成。",
+          "progress": 79,
+          "lastUpdatedAt": "2026-09-20T22:10:00+08:00"
         }
       ],
       "reportedTicketCount": 2,
@@ -399,10 +410,10 @@
       "name": "会员、积分与 AI 额度",
       "phase": "P1/P2/P3",
       "plannedAgent": "subscription_terra",
-      "agent": "subscription_terra + root",
-      "progress": 33,
-      "status": "当前执行阶段已完成；后续阶段任务尚未启动",
-      "lastUpdatedAt": "2026-09-20T07:02:14+08:00",
+      "agent": "subscription_terra + root、root",
+      "progress": 38,
+      "status": "当前执行阶段进行中",
+      "lastUpdatedAt": "2026-09-20T22:10:00+08:00",
       "tickets": [
         {
           "id": "z8v0kmr96z",
@@ -429,13 +440,13 @@
           "title": "[P2] 订阅、积分与 AI 额度核心实现",
           "url": "https://app.clickup.com/t/90182453517/z8v0kmr9mh",
           "plannedAgent": "subscription_terra",
-          "agent": null,
-          "status": "未分配",
-          "progress": null,
-          "lastUpdatedAt": null
+          "agent": "root",
+          "status": "in_progress：订阅核心实现已启动。先修复额度分摊 DDL 无法表达合法初始预占的结构矛盾：新增 remaining_amount，并用真实 MySQL 8.4 证明初态可写、破坏守恒必被拒绝、合法结算/释放终态可读回。Repository、并发预占和账本事务尚未实现。",
+          "progress": 15,
+          "lastUpdatedAt": "2026-09-20T22:10:00+08:00"
         }
       ],
-      "reportedTicketCount": 1,
+      "reportedTicketCount": 2,
       "totalTicketCount": 3
     },
     {
@@ -584,9 +595,9 @@
     }
   ],
   "overallProgress": {
-    "progress": 57,
-    "reported": 16,
+    "progress": 58,
+    "reported": 17,
     "total": 27
   },
-  "clickUpLastSyncedAt": "2026-09-20T21:15:00+08:00"
+  "clickUpLastSyncedAt": "2026-09-20T22:10:20+08:00"
 }

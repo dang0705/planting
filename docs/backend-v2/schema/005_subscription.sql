@@ -374,6 +374,7 @@ CREATE TABLE `ai_quota_reservation_allocations` (
   `reservation_internal_id` BIGINT UNSIGNED NOT NULL COMMENT '所属 AI 额度预占',
   `grant_internal_id` BIGINT UNSIGNED NOT NULL COMMENT '被锁定的 AI 额度批次',
   `reserved_amount` INT UNSIGNED NOT NULL COMMENT '从该批次预占的额度',
+  `remaining_amount` INT UNSIGNED NOT NULL COMMENT '仍被该预占锁定、尚未结算或释放的额度',
   `settled_amount` INT UNSIGNED NOT NULL DEFAULT 0 COMMENT '从该批次结算的额度',
   `released_amount` INT UNSIGNED NOT NULL DEFAULT 0 COMMENT '退回该批次的额度',
   `created_at_ms` BIGINT UNSIGNED NOT NULL COMMENT '创建时间，UTC 毫秒',
@@ -382,7 +383,7 @@ CREATE TABLE `ai_quota_reservation_allocations` (
   UNIQUE KEY `uq_allocation_pair` (`reservation_internal_id`, `grant_internal_id`),
   KEY `idx_allocation_grant` (`grant_internal_id`),
   CONSTRAINT `ck_ai_allocation_positive` CHECK (`reserved_amount` > 0),
-  CONSTRAINT `ck_ai_allocation_conservation` CHECK (`reserved_amount` = `settled_amount` + `released_amount`),
+  CONSTRAINT `ck_ai_allocation_conservation` CHECK (`reserved_amount` = `remaining_amount` + `settled_amount` + `released_amount`),
   CONSTRAINT `fk_allocation_reservation` FOREIGN KEY (`reservation_internal_id`) REFERENCES `ai_quota_reservations` (`id`),
   CONSTRAINT `fk_allocation_grant` FOREIGN KEY (`grant_internal_id`) REFERENCES `ai_quota_grants` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='青花植 v2 AI 预占跨额度批次分摊';

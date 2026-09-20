@@ -1,8 +1,8 @@
 {
   "agent": "clickup_status_keeper_luna",
   "model": "gpt-5.6-luna / medium",
-  "checkedAt": "2026-09-20T21:15:00+08:00",
-  "nextCheckAt": "2026-09-20T21:30:00+08:00",
+  "checkedAt": "2026-09-20T22:10:20+08:00",
+  "nextCheckAt": "2026-09-20T22:25:20+08:00",
   "channel": "ClickUp MCP",
   "scope": [
     "Phase-P-1 全部 5 个 ticket、Phase-P1 全部 5 个 ticket及其登记状态",
@@ -37,10 +37,16 @@
     "z8v0kmr978": "backlog",
     "z8v0kmr979": "backlog",
     "z8v0kmr9mj": "codex running",
-    "z8v0kmr9mh": "backlog",
+    "z8v0kmr9mh": "codex running",
     "z8v0kmr9mk": "codex running"
   },
   "changes": [
+    {
+      "ticketId": "z8v0kmr9mh",
+      "from": "backlog",
+      "to": "codex running",
+      "reason": "ClickUp MCP 更新并回读确认；本地 heartbeat 为 root/in_progress/15%，已有额度分摊 DDL 守恒修复与隔离 MySQL 8.4 证据。"
+    },
     {
       "ticketId": "z8v0kmr96y",
       "from": "codex running",
@@ -419,7 +425,8 @@
     "本轮 ClickUp MCP 回读 z8v0kmr96z 为 DONE；本地 heartbeat 仍保留额度/奖励合同与隔离 MySQL 证据。",
     "本轮 ClickUp MCP 回读 z8v0kmr9gm 为 CODEX RUNNING；taxonomy active release STOP 仍是能力边界，不将其误报为完成。",
     "本轮及上一轮均使用 ClickUp MCP：z8v0kmr9ge=done、z8v0kmr9gn=done、z8v0kmr970=codex running、z8v0kmr96y=done、z8v0kmr96z=done、z8v0kmr9gm=codex running、z8v0kmr9mk=codex running、z8v0kmr9mj=codex running。未使用 Chrome，未凭本地状态伪造远端状态。",
-    "本轮负责人 heartbeat 读取与 ClickUp MCP 远端状态已分离记录：本地 heartbeat 是执行证据，远端 status 仅接受 MCP 回读；未用本地 review_needed 覆盖远端 DONE，也未将 taxonomy STOP 误写为 ticket 完成。"
+    "本轮负责人 heartbeat 读取与 ClickUp MCP 远端状态已分离记录：本地 heartbeat 是执行证据，远端 status 仅接受 MCP 回读；未用本地 review_needed 覆盖远端 DONE，也未将 taxonomy STOP 误写为 ticket 完成。",
+    "本轮 ClickUp MCP 更新并回读 z8v0kmr9mh=CODEX RUNNING；本地 heartbeat 为 root/in_progress/15%，已记录额度分摊 DDL 守恒 RED→GREEN 与隔离 MySQL 8.4 三项验证；不得标记 review 或 done。"
   ],
   "policy": "只有可验证执行证据才进入 codex running；实现完成待验收统一为 review needed；不以旧 ClickUp 状态覆盖本地强证据；本轮新增 ticket 已获主代理明确授权并完成远端创建/回读；新 ticket 未有负责人 heartbeat 时保留未报告进度，不伪造完成或验收状态；所有 CloudBase 写入保持未授权边界。"
 }

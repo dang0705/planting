@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-20T21:18:43+08:00",
+  "generatedAt": "2026-09-20T22:08:30+08:00",
   "contracts": [
     {
       "id": "principal-and-capability",
@@ -28,7 +28,7 @@
       "version": "care-points-ai-quota/v1",
       "file": "care-points-and-ai-quota.md",
       "owner": "subscription",
-      "sha256": "3f1f240781f2e65d483a9a5a611d40b2f7d2b8c34fb43814f0b1e513f2476ac3"
+      "sha256": "728fad85d441d948b645b357d95f232394447eb11f6622837c2bdbb94cfe8c91"
     },
     {
       "id": "reward-events",

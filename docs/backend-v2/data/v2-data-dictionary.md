@@ -106,7 +106,7 @@
 
 ### `ai_quota_reservation_allocations` — 预占到额度批次的分摊
 
-记录一次预占从一个或多个 grant 锁定的正整数额度；唯一键防止同一预占重复分摊。每行必须满足 `reserved_amount = settled_amount + released_amount`，因此不能结算超过分摊额或丢失释放额。
+记录一次预占从一个或多个 grant 锁定的正整数额度；唯一键防止同一预占重复分摊。每行必须满足 `reserved_amount = remaining_amount + settled_amount + released_amount`。创建预占时 `remaining_amount = reserved_amount` 且结算、释放均为 0；后续只能把 remaining 转入 settled 或 released，终态 remaining 必须归零，因此既允许合法初始预占，也不能结算超过分摊额或丢失释放额。
 
 ### `subscription_reward_inbox` — 奖励事件收件箱
 

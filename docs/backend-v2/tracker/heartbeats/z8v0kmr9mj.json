@@ -3,8 +3,8 @@
   "agent": "root",
   "model": "gpt-5",
   "status": "in_progress",
-  "progress": 75,
-  "summary": "显式加入花园的领域规则、公开合同、MySQL Repository、同事务应用编排、提交未知只读对账和隔离 MySQL 双连接并发验证已完成。两个事务争抢同一用户行锁后只允许一株 active 用户植物；独立新连接可读回 completed 幂等记录。HTTP 与 CloudBase MySQL 接线仍待完成。",
+  "progress": 79,
+  "summary": "用户植物创建闭环已有领域规则、公开合同、MySQL Repository、同事务应用编排、提交未知只读对账和隔离 MySQL 并发证据；最低档案完整度纯领域规则也已冻结并通过变异验证。档案字段 Schema、持久化与奖励 outbox 同事务、HTTP 和 CloudBase MySQL 仍待完成。",
   "blockers": [],
   "verified": [
     "create-unidentified-user-plant.ts 已实现登录主体、能力快照、同一 user_id、有效期和 active 数量上限校验。",
@@ -21,12 +21,15 @@
     "应用编排 6 条测试与事务执行器 6 条测试通过；active 数量和提交结果未知分支的负向突变均能使目标测试转红，恢复后全量 33 个文件 181 项测试、typecheck、build 与 Node 22 制品门通过。",
     "提交结果未知只读对账已实现：仅相同请求摘要的 completed 记录允许重放，缺失、处理中、摘要不一致、数据损坏或读取失败均返回脱敏 503，且零次重跑创建命令。",
     "隔离 MySQL 8.4 双连接测试已证明两个创建事务先竞争同一 users 行锁；首个事务提交一株后，第二个事务读到 active 数量为 1 且条件插入影响 0 行，最终恰有一株 active 用户植物。",
-    "独立新连接已真实读回 completed 幂等记录；MySQL 专项测试 1 个文件 2 项测试通过，完整 verify 为 34 个文件 188 项测试通过。"
+    "独立新连接已真实读回 completed 幂等记录；MySQL 专项测试 1 个文件 2 项测试通过，完整 verify 为 34 个文件 188 项测试通过。",
+    "最低档案完整度固定为身份状态、盆器与介质、位置、光照环境和通风环境；unidentified 不构成阻断，同一统一用户只有首次完整档案具备奖励资格。",
+    "最低档案规则 9/9 通过；移除通风缺项判断的负向突变能使目标测试 RED，完整恢复后 GREEN。"
   ],
   "unverified": [
     "真实网络中断造成的 COMMIT 结果未知仍需 CloudBase MySQL 适配器验证；本地只证明对账决策和独立连接读回。",
-    "真实 CloudBase MySQL、HTTP 身份和并发验证属于后续环境门。"
+    "真实 CloudBase MySQL、HTTP 身份和并发验证属于后续环境门。",
+    "档案字段 Schema、Repository 用户行锁、首次完成时间与奖励 outbox 的同一真实事务尚未实现。"
   ],
-  "updatedAt": "2026-09-20T21:56:18+08:00",
-  "next": "实现首株完整档案业务命令，使档案事实、user-plant 域 outbox 和 HTTP 幂等完成记录在同一事务提交；随后接入 HTTP 与 CloudBase MySQL 适配器。"
+  "updatedAt": "2026-09-20T22:10:00+08:00",
+  "next": "冻结档案字段 Schema 并实现完整档案 Repository/应用命令，使首次完成时间、user-plant 域 outbox 和 HTTP 幂等完成记录在同一事务提交；随后接入 HTTP 与 CloudBase MySQL 适配器。"
 }
