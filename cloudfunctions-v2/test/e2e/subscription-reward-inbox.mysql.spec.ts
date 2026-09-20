@@ -14,11 +14,16 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 
 import type { EventRef, UserPlantRef, UserRef } from '../../src/contracts/types.js'
 import {
+  DatabaseCommitResultUnknownError,
   runDatabaseTransaction,
   type DatabaseTransactionDriver,
   type TransactionExecutionContext
 } from '../../src/foundation/database/transaction-runner.js'
 import { createApplyRewardPointsEventUseCase } from '../../src/subscription/application/apply-reward-points-event.js'
+import {
+  createMysqlRewardCommitUnknownReadOnlyRepository,
+  type RewardCommitUnknownSqlRow
+} from '../../src/subscription/repository/mysql-reward-commit-unknown-repository.js'
 import {
   createMysqlRewardInboxRepository,
   type ReserveRewardInboxInput,
@@ -150,6 +155,18 @@ function createTransactionDriver(): DatabaseTransactionDriver<MysqlTestTransacti
   }
 }
 
+/** 模拟数据库已提交、但客户端在收到提交确认前断线的真实危险边界。 */
+function createCommitUnknownAfterCommitDriver(): DatabaseTransactionDriver<MysqlTestTransaction> {
+  const driver = createTransactionDriver()
+  return {
+    ...driver,
+    commitTransaction: async transaction => {
+      await driver.commitTransaction(transaction)
+      throw new DatabaseCommitResultUnknownError('连接在 COMMIT 成功后中断')
+    }
+  }
+}
+
 /** 把 mysql2 连接适配为奖励 inbox Repository 的参数化 SQL 端口。 */
 function createSqlExecutor(): RewardInboxSqlExecutor<MysqlTestTransaction> {
   const resolveParameters = (parameters: readonly unknown[]): (string | number | null)[] =>
@@ -213,6 +230,22 @@ function createRewardPointsSqlExecutor(): RewardPointsSqlExecutor<MysqlTestTrans
   }
 }
 
+/** 把连接池新连接适配为奖励提交未知无事务只读端口。 */
+function createRewardCommitUnknownReadOnlyExecutor() {
+  return {
+    executeQuery: async (sql: string, parameters: readonly unknown[]) => {
+      const safeParameters = parameters.map(parameter => {
+        if (parameter === null || typeof parameter === 'string' || typeof parameter === 'number') {
+          return parameter
+        }
+        throw new Error('奖励提交未知 Repository 产生了不受支持的 SQL 参数')
+      })
+      const [rows] = await pool.execute<RowDataPacket[]>(sql, safeParameters)
+      return rows as unknown as readonly RewardCommitUnknownSqlRow[]
+    }
+  }
+}
+
 /** 构造通过事件 Schema 与奖励策略解析后的固定输入。 */
 function createInput(overrides: Partial<ReserveRewardInboxInput> = {}): ReserveRewardInboxInput {
   return {
@@ -240,7 +273,7 @@ function createInput(overrides: Partial<ReserveRewardInboxInput> = {}): ReserveR
  * Expected 来源：`reward-events/v1` 的至少一次投递、双唯一键去重和同事件防篡改合同。
  * 测试层次：L3 / `unit_real_data`；执行真实 MySQL 8.4、真实 DDL、事务和 Repository。
  * 替换边界：仅以本地一次性 MySQL 替代 CloudBase MySQL。
- * 明确未覆盖：积分账本、等级奖励、dispatcher、HTTP、CloudBase 网络和提交结果未知对账。
+ * 明确未覆盖：dispatcher、HTTP 与 CloudBase 网络；本文件覆盖积分、等级奖励和提交未知只读对账。
  */
 describe('奖励事件 inbox 的真实 MySQL 并发幂等', () => {
   beforeAll(async () => {
@@ -339,6 +372,9 @@ describe('奖励事件 inbox 的真实 MySQL 并发幂等', () => {
       driver: createTransactionDriver(),
       inboxRepository: createMysqlRewardInboxRepository(createSqlExecutor()),
       pointsRepository: createMysqlRewardPointsRepository(createRewardPointsSqlExecutor()),
+      commitUnknownReadOnlyRepository: createMysqlRewardCommitUnknownReadOnlyRepository(
+        createRewardCommitUnknownReadOnlyExecutor()
+      ),
       createPointLedgerRef: () => 'cpl_reward_mysql_0001',
       createLevelGrantRef: levelCode => `clg_reward_mysql_${levelCode}`,
       createAiGrantRef: levelCode => `aqg_reward_mysql_${levelCode}`,
@@ -441,5 +477,52 @@ describe('奖励事件 inbox 的真实 MySQL 并发幂等', () => {
         (SELECT COUNT(*) FROM ai_quota_grants) AS ai_grant_count
     `)
     expect(rows).toEqual([{ available_points: 330, point_ledger_count: 1, ai_grant_count: 2 }])
+  })
+
+  test('真实 MySQL 已提交但确认中断时只读对账并且不重复入账', async () => {
+    const applyReward = createApplyRewardPointsEventUseCase({
+      driver: createCommitUnknownAfterCommitDriver(),
+      inboxRepository: createMysqlRewardInboxRepository(createSqlExecutor()),
+      pointsRepository: createMysqlRewardPointsRepository(createRewardPointsSqlExecutor()),
+      commitUnknownReadOnlyRepository: createMysqlRewardCommitUnknownReadOnlyRepository(
+        createRewardCommitUnknownReadOnlyExecutor()
+      ),
+      createPointLedgerRef: () => 'cpl_reward_mysql_commit_unknown',
+      createLevelGrantRef: levelCode => `clg_reward_mysql_commit_unknown_${levelCode}`,
+      createAiGrantRef: levelCode => `aqg_reward_mysql_commit_unknown_${levelCode}`,
+      createAiLedgerRef: levelCode => `aql_reward_mysql_commit_unknown_${levelCode}`
+    })
+    const command = {
+      inbox: createInput({
+        eventId: 'evt_reward_mysql_commit_unknown' as EventRef,
+        aggregateRef: 'care_plan_reward_mysql_commit_unknown',
+        occurrenceRef: 'soil_check_reward_mysql_commit_unknown',
+        businessUniqueKey: 'soil-check:reward_mysql_commit_unknown',
+        occurredAtMs: occurredAtMs + Number('300'),
+        receivedAtMs: occurredAtMs + Number('350')
+      }),
+      pointsAmount: 5,
+      levelPolicy: [
+        { code: 'L0', threshold: 0, aiReward: 0 },
+        { code: 'L1', threshold: 100, aiReward: 50 },
+        { code: 'L2', threshold: 300, aiReward: 100 }
+      ],
+      levelRewardExpiresAtMs: occurredAtMs + Number('7776000000'),
+      appliedAtMs: occurredAtMs + Number('400')
+    } as const
+
+    await expect(applyReward(command)).resolves.toEqual({
+      kind: 'replayed',
+      status: 'applied',
+      resultRef: 'cpl_reward_mysql_commit_unknown'
+    })
+    const [rows] = await pool.query<RowDataPacket[]>(`
+      SELECT
+        (SELECT available_points FROM care_point_accounts) AS available_points,
+        (SELECT COUNT(*) FROM care_point_ledger) AS point_ledger_count,
+        (SELECT COUNT(*) FROM subscription_reward_inbox
+         WHERE event_id = 'evt_reward_mysql_commit_unknown' AND status = 'applied') AS inbox_count
+    `)
+    expect(rows).toEqual([{ available_points: 335, point_ledger_count: 2, inbox_count: 1 }])
   })
 })

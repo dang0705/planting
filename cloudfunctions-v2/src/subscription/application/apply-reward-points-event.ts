@@ -1,8 +1,13 @@
 import type { TransactionExecutionContext } from '../../foundation/database/transaction-runner.js'
 import {
+  DatabaseCommitResultUnknownError,
   runDatabaseTransaction,
   type DatabaseTransactionDriver
 } from '../../foundation/database/transaction-runner.js'
+import {
+  reconcileRewardCommitResult,
+  type RewardCommitUnknownReadOnlyRepository
+} from './reward-commit-unknown-reconciliation.js'
 import {
   planRewardEventApplication,
   type CareLevelPolicyEntry
@@ -73,6 +78,8 @@ export type ApplyRewardPointsEventDependencies<TTransaction extends TransactionE
   readonly inboxRepository: MysqlRewardInboxRepository<TTransaction>
   /** 锁定账户并持久化积分、等级与 AI 奖励。 */
   readonly pointsRepository: MysqlRewardPointsRepository<TTransaction>
+  /** 提交结果未知后使用全新连接无锁读取 inbox 终态。 */
+  readonly commitUnknownReadOnlyRepository: RewardCommitUnknownReadOnlyRepository
   /** 生成本次积分账本的高熵公开引用。 */
   readonly createPointLedgerRef: () => string
   /** 按等级生成终身一次等级奖励公开引用。 */
@@ -126,80 +133,108 @@ export function createApplyRewardPointsEventUseCase<
 >(
   dependencies: ApplyRewardPointsEventDependencies<TTransaction>
 ): (command: ApplyRewardPointsEventCommand) => Promise<ApplyRewardPointsEventResult> {
-  return command =>
-    runDatabaseTransaction(dependencies.driver, async transaction => {
-      const sourceType = resolvePointSource(command.inbox)
-      const inboxResult = await dependencies.inboxRepository.reserve(transaction, command.inbox)
-      if (inboxResult.kind !== 'reserved') {
-        if (
-          inboxResult.status !== 'applied' ||
-          inboxResult.resultRef === null ||
-          !/^cpl_[A-Za-z0-9_-]{8,}$/u.test(inboxResult.resultRef)
-        ) {
-          throw new RewardInboxPersistenceError(
-            'INTERNAL_DATA_INVALID',
-            '既有积分奖励事件未处于可重放终态'
-          )
+  return async command => {
+    try {
+      return await runDatabaseTransaction(dependencies.driver, async transaction => {
+        const sourceType = resolvePointSource(command.inbox)
+        const inboxResult = await dependencies.inboxRepository.reserve(transaction, command.inbox)
+        if (inboxResult.kind !== 'reserved') {
+          if (
+            inboxResult.status !== 'applied' ||
+            inboxResult.resultRef === null ||
+            !/^cpl_[A-Za-z0-9_-]{8,}$/u.test(inboxResult.resultRef)
+          ) {
+            throw new RewardInboxPersistenceError(
+              'INTERNAL_DATA_INVALID',
+              '既有积分奖励事件未处于可重放终态'
+            )
+          }
+          return {
+            kind: 'replayed',
+            status: 'applied',
+            resultRef: inboxResult.resultRef
+          }
         }
+
+        const state = await dependencies.pointsRepository.lockState(
+          transaction,
+          command.inbox.userRef
+        )
+        const plan = planRewardEventApplication({
+          pointsAmount: command.pointsAmount,
+          availablePoints: state.availablePoints,
+          lifetimeNetEarned: state.lifetimeNetEarned,
+          currentLevelCode: state.currentLevelCode,
+          previouslyGrantedLevelCodes: state.previouslyGrantedLevelCodes,
+          levelPolicy: command.levelPolicy
+        })
+        const pointLedgerRef = dependencies.createPointLedgerRef()
+        const levelRewards = buildPersistedLevelRewards(
+          dependencies,
+          plan.newLevelRewards,
+          command.levelRewardExpiresAtMs
+        )
+        await dependencies.pointsRepository.apply(transaction, {
+          userInternalId: state.userInternalId,
+          pointAccountInternalId: state.pointAccountInternalId,
+          pointAccountVersion: state.pointAccountVersion,
+          aiAccountInternalId: state.aiAccountInternalId,
+          aiAccountVersion: state.aiAccountVersion,
+          pointLedgerRef,
+          sourceType,
+          sourceRef: command.inbox.occurrenceRef,
+          businessUniqueKey: command.inbox.businessUniqueKey,
+          pointsAmount: plan.pointsAmount,
+          currentAvailablePoints: state.availablePoints,
+          currentLifetimeNetEarned: state.lifetimeNetEarned,
+          nextAvailablePoints: plan.nextAvailablePoints,
+          nextLifetimeNetEarned: plan.nextLifetimeNetEarned,
+          nextLevelCode: plan.nextLevelCode,
+          policyVersion: command.inbox.rewardPolicyVersion,
+          occurredAtMs: command.inbox.occurredAtMs,
+          levelRewards
+        })
+        await dependencies.inboxRepository.markApplied(
+          transaction,
+          inboxResult.inboxInternalId,
+          pointLedgerRef,
+          command.appliedAtMs
+        )
+        return {
+          kind: 'applied',
+          resultRef: pointLedgerRef,
+          pointsAmount: plan.pointsAmount,
+          nextAvailablePoints: plan.nextAvailablePoints,
+          nextLifetimeNetEarned: plan.nextLifetimeNetEarned,
+          nextLevelCode: plan.nextLevelCode,
+          awardedLevels: levelRewards.map(reward => reward.levelCode)
+        }
+      })
+    } catch (error: unknown) {
+      if (!(error instanceof DatabaseCommitResultUnknownError)) {
+        throw error
+      }
+      const reconciliation = await reconcileRewardCommitResult(
+        dependencies.commitUnknownReadOnlyRepository,
+        {
+          userRef: command.inbox.userRef,
+          eventId: command.inbox.eventId,
+          payloadHash: command.inbox.payloadHash,
+          rewardPolicyVersion: command.inbox.rewardPolicyVersion,
+          rewardPolicyContentSha256: command.inbox.rewardPolicyContentSha256
+        }
+      )
+      if (reconciliation.kind === 'replay') {
         return {
           kind: 'replayed',
           status: 'applied',
-          resultRef: inboxResult.resultRef
+          resultRef: reconciliation.resultRef
         }
       }
-
-      const state = await dependencies.pointsRepository.lockState(
-        transaction,
-        command.inbox.userRef
+      throw new RewardInboxPersistenceError(
+        'COMMIT_RESULT_UNKNOWN',
+        '奖励积分事务提交结果暂时无法确认'
       )
-      const plan = planRewardEventApplication({
-        pointsAmount: command.pointsAmount,
-        availablePoints: state.availablePoints,
-        lifetimeNetEarned: state.lifetimeNetEarned,
-        currentLevelCode: state.currentLevelCode,
-        previouslyGrantedLevelCodes: state.previouslyGrantedLevelCodes,
-        levelPolicy: command.levelPolicy
-      })
-      const pointLedgerRef = dependencies.createPointLedgerRef()
-      const levelRewards = buildPersistedLevelRewards(
-        dependencies,
-        plan.newLevelRewards,
-        command.levelRewardExpiresAtMs
-      )
-      await dependencies.pointsRepository.apply(transaction, {
-        userInternalId: state.userInternalId,
-        pointAccountInternalId: state.pointAccountInternalId,
-        pointAccountVersion: state.pointAccountVersion,
-        aiAccountInternalId: state.aiAccountInternalId,
-        aiAccountVersion: state.aiAccountVersion,
-        pointLedgerRef,
-        sourceType,
-        sourceRef: command.inbox.occurrenceRef,
-        businessUniqueKey: command.inbox.businessUniqueKey,
-        pointsAmount: plan.pointsAmount,
-        currentAvailablePoints: state.availablePoints,
-        currentLifetimeNetEarned: state.lifetimeNetEarned,
-        nextAvailablePoints: plan.nextAvailablePoints,
-        nextLifetimeNetEarned: plan.nextLifetimeNetEarned,
-        nextLevelCode: plan.nextLevelCode,
-        policyVersion: command.inbox.rewardPolicyVersion,
-        occurredAtMs: command.inbox.occurredAtMs,
-        levelRewards
-      })
-      await dependencies.inboxRepository.markApplied(
-        transaction,
-        inboxResult.inboxInternalId,
-        pointLedgerRef,
-        command.appliedAtMs
-      )
-      return {
-        kind: 'applied',
-        resultRef: pointLedgerRef,
-        pointsAmount: plan.pointsAmount,
-        nextAvailablePoints: plan.nextAvailablePoints,
-        nextLifetimeNetEarned: plan.nextLifetimeNetEarned,
-        nextLevelCode: plan.nextLevelCode,
-        awardedLevels: levelRewards.map(reward => reward.levelCode)
-      }
-    })
+    }
+  }
 }

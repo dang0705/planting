@@ -1,8 +1,12 @@
 import { describe, expect, test, vi } from 'vitest'
 
 import type { EventRef, UserPlantRef, UserRef } from '../../src/contracts/types.js'
-import type { DatabaseTransactionDriver } from '../../src/foundation/database/transaction-runner.js'
+import {
+  DatabaseCommitResultUnknownError,
+  type DatabaseTransactionDriver
+} from '../../src/foundation/database/transaction-runner.js'
 import { createApplyRewardPointsEventUseCase } from '../../src/subscription/application/apply-reward-points-event.js'
+import type { RewardCommitUnknownReadOnlyRecord } from '../../src/subscription/application/reward-commit-unknown-reconciliation.js'
 import type { MysqlRewardInboxRepository } from '../../src/subscription/repository/mysql-reward-inbox-repository.js'
 import type { MysqlRewardPointsRepository } from '../../src/subscription/repository/mysql-reward-points-repository.js'
 
@@ -53,7 +57,12 @@ function command() {
 }
 
 /** 构造可观察的事务与两个 Repository 端口。 */
-function createDependencies(options?: { readonly replay?: boolean; readonly failApply?: boolean }) {
+function createDependencies(options?: {
+  readonly replay?: boolean
+  readonly failApply?: boolean
+  readonly commitError?: DatabaseCommitResultUnknownError
+  readonly reconciliationRecord?: RewardCommitUnknownReadOnlyRecord | null
+}) {
   const callOrder: string[] = []
   const driver: DatabaseTransactionDriver<TestTransaction> = {
     beginTransaction: vi.fn(() => {
@@ -62,6 +71,9 @@ function createDependencies(options?: { readonly replay?: boolean; readonly fail
     }),
     commitTransaction: vi.fn(() => {
       callOrder.push('commit')
+      if (options?.commitError !== undefined) {
+        throw options.commitError
+      }
     }),
     rollbackTransaction: vi.fn(() => {
       callOrder.push('rollback')
@@ -107,13 +119,24 @@ function createDependencies(options?: { readonly replay?: boolean; readonly fail
       }
     })
   }
-  return { callOrder, driver, inboxRepository, pointsRepository }
+  return {
+    callOrder,
+    driver,
+    inboxRepository,
+    pointsRepository,
+    commitUnknownReadOnlyRepository: {
+      read: vi.fn(async () => {
+        callOrder.push('reconcile')
+        return options?.reconciliationRecord ?? null
+      })
+    }
+  }
 }
 
 /**
  * Expected 来源：`reward-events/v1` 与 `care-points-ai-quota/v1` 的 inbox、积分、等级和 AI grant 同事务合同。
  * 测试层次：L2 / `unit_fake`；替换事务驱动、Repository 和高熵引用生成器。
- * 明确未覆盖：真实 MySQL、策略发布读取、跨域 HTTP、CloudBase 和提交结果未知只读对账。
+ * 明确未覆盖：真实 MySQL、策略发布读取、跨域 HTTP 与 CloudBase；提交未知新连接由独立真实 MySQL 测试覆盖。
  */
 describe('奖励积分事件应用用例', () => {
   test('首次事件在同一事务中完成 inbox、积分、跨级奖励和应用状态', async () => {
@@ -203,5 +226,63 @@ describe('奖励积分事件应用用例', () => {
       'rollback'
     ])
     expect(dependencies.inboxRepository.markApplied).not.toHaveBeenCalled()
+  })
+
+  test('提交结果未知时只用新连接证明相同 applied 终态且不重跑奖励写入', async () => {
+    const expected = command()
+    const dependencies = createDependencies({
+      commitError: new DatabaseCommitResultUnknownError('socket closed after COMMIT'),
+      reconciliationRecord: {
+        eventId: expected.inbox.eventId,
+        userRef: expected.inbox.userRef,
+        payloadHash: expected.inbox.payloadHash,
+        rewardPolicyVersion: expected.inbox.rewardPolicyVersion,
+        rewardPolicyContentSha256: expected.inbox.rewardPolicyContentSha256,
+        status: 'applied',
+        resultRef: 'cpl_reward_apply_0001'
+      }
+    })
+    const applyReward = createApplyRewardPointsEventUseCase({
+      ...dependencies,
+      createPointLedgerRef: () => 'cpl_reward_apply_0001',
+      createLevelGrantRef: levelCode => `clg_reward_apply_${levelCode}`,
+      createAiGrantRef: levelCode => `aqg_reward_apply_${levelCode}`,
+      createAiLedgerRef: levelCode => `aql_reward_apply_${levelCode}`
+    })
+
+    await expect(applyReward(expected)).resolves.toEqual({
+      kind: 'replayed',
+      status: 'applied',
+      resultRef: 'cpl_reward_apply_0001'
+    })
+    expect(dependencies.callOrder).toEqual([
+      'begin',
+      'reserveInbox',
+      'lockState',
+      'applyPoints',
+      'markApplied',
+      'commit',
+      'reconcile'
+    ])
+    expect(dependencies.pointsRepository.apply).toHaveBeenCalledOnce()
+    expect(dependencies.driver.rollbackTransaction).not.toHaveBeenCalled()
+  })
+
+  test('提交结果未知且新连接不能证明相同终态时失败关闭且不自动重跑', async () => {
+    const dependencies = createDependencies({
+      commitError: new DatabaseCommitResultUnknownError('socket closed after COMMIT'),
+      reconciliationRecord: null
+    })
+    const applyReward = createApplyRewardPointsEventUseCase({
+      ...dependencies,
+      createPointLedgerRef: () => 'cpl_reward_apply_0001',
+      createLevelGrantRef: levelCode => `clg_reward_apply_${levelCode}`,
+      createAiGrantRef: levelCode => `aqg_reward_apply_${levelCode}`,
+      createAiLedgerRef: levelCode => `aql_reward_apply_${levelCode}`
+    })
+
+    await expect(applyReward(command())).rejects.toMatchObject({ type: 'COMMIT_RESULT_UNKNOWN' })
+    expect(dependencies.pointsRepository.apply).toHaveBeenCalledOnce()
+    expect(dependencies.driver.rollbackTransaction).not.toHaveBeenCalled()
   })
 })

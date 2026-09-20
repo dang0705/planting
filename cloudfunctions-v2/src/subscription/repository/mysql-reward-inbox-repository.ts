@@ -14,6 +14,7 @@ export type RewardInboxPersistenceErrorType =
   | 'INTERNAL_DATA_INVALID'
   | 'PRINCIPAL_INVALID'
   | 'IDEMPOTENCY_CONFLICT'
+  | 'COMMIT_RESULT_UNKNOWN'
   | 'WRITE_CONFLICT'
 
 /** 奖励事件 inbox 错误只允许由应用层映射为脱敏公开错误。 */
