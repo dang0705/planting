@@ -154,8 +154,8 @@ Qwen 草稿仅可写基础展示介绍和约三个简短问答。毒性、浇水
 - `watering_visual_evidence`：盆土视觉证据、私有文件引用、有效期和算法版本。
 - `temporary_care_sessions` / `temporary_care_results` / `temporary_watering_visual_evidence`：游客临时养护对象，只关联 `guest_plant_case_ref`。已生成的临时结果必须内联保存原子输入清单、算法 release 清单、派生环境指标及各自 SHA-256，使游客结果可回放；登录认领只增加归属投影，不改写该结果。
 - `diagnosis_sessions` / `diagnosis_answers` / `diagnosis_results`：问诊过程、证据和结果。
-- 诊断知识增量（**P1 待冻结，当前 004 DDL 尚未覆盖，不得视为已建表**）：症状入口与园艺原因双轴目录、来源主档与可定位的来源主张、Outcome 结论、Action 行动、结论到行动的适用/禁忌映射，以及诊断域专用兼容发布包/active 指针。每项须有稳定代码、中文释义、来源定位与核验时间、适用植物范围、审核/发布版本和 SHA-256；CMS 审核凭据须绑定候选修订内容哈希。具体表拆分、字段、外键、唯一键、索引和旧内容处置必须先通过[诊断知识来源合同](../contracts/diagnosis-knowledge-sources.md)与新增 Phase-P1 ClickUp ticket 冻结，再追加独立迁移并做空库读回。现有 `diagnosis_results.conclusion_json` / `proposal_json` 只保存一次结果，通用 `content_releases.diagnosis_rule` 不承载完整诊断知识发布包，均不能替代可治理的来源主张、人工审核和兼容发布包。
-- 诊断知识的逻辑表归属、逐项来源关联、审核摘要和发布事务进一步见[诊断知识持久化与发布合同](../contracts/diagnosis-knowledge-persistence.md)；该合同不表示结构已建表或发布已验收。
+- 诊断知识增量（**已建 v2 空库 DDL，P1 语义和真实发布仍待冻结**）：[009 诊断知识迁移](../schema/009_diagnosis_knowledge.sql)已拆出来源主档与精确主张修订、园艺原因、Outcome、Action、受审映射、逐项来源关联、绑定候选摘要的人工审核凭据、不可变发布包与 active 指针；[010 审核撤销迁移](../schema/010_diagnosis_review_revocations.sql)另存对既有批准的撤销事实，原批准不改写。`revocation_ref` 全局唯一、目标已批准审核至多撤销一次，撤销记录含规范化请求摘要、受控管理员摘要、中文理由和 UTC 毫秒时间。两份迁移已在本地 MySQL 8.4 隔离空库验证，不代表已在 CloudBase 建表、CMS 已验权或发布事务已实现。具体字段值对象、题包版本、来源许可和应用层撤销/发布竞争仍需按[知识来源合同](../contracts/diagnosis-knowledge-sources.md)及 Phase-P1 ClickUp 任务冻结。现有 `diagnosis_results.conclusion_json` / `proposal_json` 只保存一次结果，通用 `content_releases.diagnosis_rule` 不承载完整诊断知识发布包，均不能替代可治理的来源主张、人工审核和兼容发布包。
+- 诊断知识的逻辑表归属、逐项来源关联、审核摘要和发布事务进一步见[诊断知识持久化与发布合同](../contracts/diagnosis-knowledge-persistence.md)；本地空库结构通过不等于 CMS 或真实发布已验收。
 - `diagnosis_visual_evidence`：私有诊断图片引用及保留期。
 - `temporary_diagnosis_sessions` / `temporary_diagnosis_answers` / `temporary_diagnosis_results` / `temporary_diagnosis_visual_evidence`：游客临时问诊对象，只关联 `guest_plant_case_ref`。
 

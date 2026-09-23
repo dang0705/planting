@@ -2,7 +2,7 @@
 
 - 绑定任务：[诊断知识来源、园艺原因及 Outcome/Action 合同](https://app.clickup.com/t/z8v0kmrg8a)。
 - 依据：[诊断知识来源合同](diagnosis-knowledge-sources.md)、[Outcome/Action 字段边界](diagnosis-outcome-fields.md)、[独立 Expected 草案](../testing/P1-diagnosis-knowledge-expected.md)。
-- 状态：已形成 [独立空库 DDL](../schema/009_diagnosis_knowledge.sql)，并在本地 MySQL 8.4 验证关键外键及全量 manifest 顺序执行；**CMS 审核交换、版本化 JSON Schema、应用事务、CloudBase MySQL 和已发布知识仍未验收**。本合同不能代替这些层级的验收。
+- 状态：已形成 [诊断知识空库 DDL](../schema/009_diagnosis_knowledge.sql)与[独立审核撤销迁移](../schema/010_diagnosis_review_revocations.sql)，并在本地 MySQL 8.4 验证关键外键及撤销约束；**CMS 管理员真实性、候选完整 JSON Schema、应用发布事务、CloudBase MySQL 和已发布知识仍未验收**。本合同不能代替这些层级的验收。
 
 ## 所有权与最小数据分层
 
@@ -19,11 +19,12 @@
 | `diagnosis_outcome_action_mappings` | 候选修订、稳定映射代码、同版 Outcome/Action 引用、命中条件、禁忌优先级、行动顺序 | 映射代码唯一；数据库外键与发布校验共同阻断跨候选/跨类型引用；不能仅凭 Outcome 命中就跳过禁忌 |
 | `diagnosis_claim_links` | 候选修订、条目类型及稳定代码、精确来源主张修订、支持/反驳/限制/安全角色 | 一条主张可供多条知识复用，但必须逐项指出用途；发布前验证类型、条目与主张均存在且许可、适用范围有效 |
 | `diagnosis_review_attestations` | 受控 CMS 审核引用、审核主体引用、审核决定与时间、候选引用、**被审完整内容摘要**、审核协议版本 | 审核只能批准原样内容；批准凭据与候选摘要不完全一致、被撤销或来源不明均不得发布；重复审核引用幂等 |
+| `diagnosis_review_revocations` | 独立撤销引用、目标已批准审核、请求摘要、服务端验证的管理员摘要、中文理由、审核证据及时间 | 一个已批准审核最多一条撤销事实；原批准不改写；驳回审核不能撤销。发布事务必须锁定并检查该表，不能仅凭批准外键认定仍可发布 |
 | `diagnosis_knowledge_releases` | 不可变发布引用、版本、来源候选、整包结构版本、规范化发布内容及 SHA-256、发布时间 | 版本、引用与同一范围内的内容摘要唯一；保存可回放的完整包，不依赖后来被改动的草稿 |
 | `active_diagnosis_knowledge_releases` | `bundleCode`、当前 release、乐观并发版本、激活时间 | 每个包范围至多一个活动指针；切换只能指向同范围、已审核、未撤回的完整发布 |
 | `diagnosis_release_activation_audit` | 命令幂等引用、操作者、预期旧版、新版本、动作（激活/回滚）、理由和时间 | 追加记录，不覆盖旧审计；提交结果不明时按命令引用新连接只读对账，不盲目再执行 |
 
-上述名称现已对应 [009 独立迁移](../schema/009_diagnosis_knowledge.sql) 中的 SQL 表，并通过本地 MySQL 8.4 空库验证；这不代表 CloudBase 环境已建表、CMS 已接线或诊断知识已发布。表仍须满足统一的中文列注释、内部 `BIGINT UNSIGNED` 主键、受控空 `_openid`、UTC 毫秒、外键/唯一键/索引约束。公开 API 只使用受控公开引用或业务代码，不返回内部主键、CMS 审核主体或来源证据内部路径。
+上述名称对应 [009 知识迁移](../schema/009_diagnosis_knowledge.sql)和[010 撤销迁移](../schema/010_diagnosis_review_revocations.sql)的 SQL 表，并通过本地 MySQL 8.4 空库约束读回；这不代表 CloudBase 环境已建表、CMS 已接线或诊断知识已发布。009 的审核凭据从建表起就没有可变的撤销时间列，010 以独立撤销记录作为唯一撤销事实源；两份文件只按 manifest 用于全新空库，不作为现有环境的无损原地升级脚本。表仍须满足统一的中文列注释、内部 `BIGINT UNSIGNED` 主键、受控空 `_openid`、UTC 毫秒、外键/唯一键/索引约束。公开 API 只使用受控公开引用或业务代码，不返回内部主键、CMS 审核主体或来源证据内部路径。
 
 ## 哪些关系必须由表约束，哪些允许版本化 JSON
 
@@ -45,11 +46,11 @@ CMS 编辑候选 → diagnosis 固定候选修订与完整内容摘要
 ```
 
 1. 发布命令要有幂等引用和期望的活动指针版本。同键同参只能读回同一结果，同键异参拒绝；并发争用只能一方切换成功。
-2. 审核通过**不等于**发布。被审核候选在审核后发生任何变化、审核凭据撤销、来源/许可失效或安全禁忌未覆盖时，发布必须失败且原活动指针不变。
+2. 审核通过**不等于**发布。被审核候选在审核后发生任何变化、该批准存在独立撤销事实、来源/许可失效或安全禁忌未覆盖时，发布必须失败且原活动指针不变。发布与撤销并发时须在同一审核目标上串行化，不能在撤销事务提交后仍依据旧快照新建发布；本地 DDL 的外键不能单独证明这一业务门。
 3. MySQL 事务提交结果未知时，禁止在原连接上假定失败并重试；用新连接按幂等引用、release 引用和活动指针只读对账。无法确定时保持未验收并停止再次对外发布。
 4. 回滚是同样带幂等引用、预期指针版本的原子切换，目标必须是同范围仍有效的旧 release，且追加审计；不能 UPDATE 旧 release 内容或删除被历史结果引用的包。
 5. 撤回知识用新发布及指针切换表达。历史结果保存当时的 release 引用与摘要，回放使用当时的不可变包；对已知危险内容可停止继续展示，但不得静默改写当时记录。
 
 ## 下一层实施门
 
-P1 已补独立有序 DDL 与审核摘要、跨候选审核、驳回审核和同包活动指针的本地真实 MySQL 约束验证，证据见[本地空库与外键读回](../audits/evidence/P1-diagnosis-knowledge-ddl-local-mysql.md)。仍须补齐候选和发布包的版本化 JSON Schema、CMS 审核凭据传递和鉴权、所有列的字段字典与类型确认，并把 `DK-01` 至 `DK-09` 中相关 Expected 固定为 TypeScript 测试。应用层发布/回滚事务、并发切换、失败恢复和历史结果回放尚未实现；CloudBase CMS 的真实接口/权限、端到端发布和 HTTP 诊断仍须分别读回验证，不能用静态 DDL 或本地 MySQL 绿灯冒充完成。
+P1 已补独立有序 DDL 与审核摘要、跨候选审核、驳回审核、同包活动指针及独立撤销表的本地真实 MySQL 约束验证，证据见[本地空库与外键读回](../audits/evidence/P1-diagnosis-knowledge-ddl-local-mysql.md)和[审核撤销本地证据](../testing/P1-diagnosis-review-revocation-mysql-evidence.md)。仍须补齐候选和发布包的版本化 JSON Schema、CMS 审核凭据传递和鉴权、所有列的字段字典与类型确认，并把 `DK-01` 至 `DK-09` 中相关 Expected 固定为 TypeScript 测试。应用层的撤销/发布串行化、发布/回滚事务、并发切换、失败恢复和历史结果回放尚未实现；CloudBase CMS 的真实接口/权限、端到端发布和 HTTP 诊断仍须分别读回验证，不能用静态 DDL 或本地 MySQL 绿灯冒充完成。

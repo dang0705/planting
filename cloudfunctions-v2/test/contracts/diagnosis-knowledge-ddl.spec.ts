@@ -63,3 +63,27 @@ test('诊断知识 DDL 独立保存来源、审核摘要和原子发布指针', 
   assert.match(active, /`version` INT UNSIGNED NOT NULL/u, '活动指针必须具有并发切换版本')
   assert.match(active, /FOREIGN KEY .*REFERENCES `diagnosis_knowledge_releases`/u)
 })
+
+/**
+ * Expected 来源：诊断知识 CMS 人工审核交换合同中的独立撤销命令。
+ * 撤销应追加精确目标的受控记录，不得把 approved 改写成 revoked。
+ */
+test('诊断知识撤销迁移独立保存目标批准、理由和幂等摘要', () => {
+  const schemaRoot = path.join(findProjectRoot(), 'docs/backend-v2/schema')
+  const manifest = JSON.parse(fs.readFileSync(path.join(schemaRoot, 'manifest.json'), 'utf8')) as {
+    files: Array<{ order: number; owner: string; file: string }>
+  }
+  const revocationMigration = manifest.files.find(entry =>
+    entry.owner === 'diagnosis' && /^010_diagnosis_review_revocations\.sql$/u.test(entry.file)
+  )
+
+  assert.ok(revocationMigration, '审核撤销须有独立有序迁移，不得改写原 009 审核决定')
+  const sql = fs.readFileSync(path.join(schemaRoot, revocationMigration.file), 'utf8')
+  const revocation = tableBody(sql, 'diagnosis_review_revocations')
+  assert.match(revocation, /`revocation_ref` VARCHAR\(96\) NOT NULL/u)
+  assert.match(revocation, /`target_review_internal_id` BIGINT UNSIGNED NOT NULL/u)
+  assert.match(revocation, /`reason_zh` TEXT NOT NULL/u)
+  assert.match(revocation, /`request_sha256` CHAR\(64\) NOT NULL/u)
+  assert.match(revocation, /UNIQUE KEY .*`target_review_internal_id`/u)
+  assert.match(revocation, /FOREIGN KEY .*REFERENCES `diagnosis_review_attestations`/u)
+})

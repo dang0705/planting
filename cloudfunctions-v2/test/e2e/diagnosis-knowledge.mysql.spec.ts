@@ -87,19 +87,25 @@ describe('诊断知识审核和发布的真实 MySQL 约束', () => {
       path.join(findProjectRoot(), 'docs/backend-v2/schema/009_diagnosis_knowledge.sql'), 'utf8',
     )
     runMysql(migration)
+    const revocationMigration = fs.readFileSync(
+      path.join(findProjectRoot(), 'docs/backend-v2/schema/010_diagnosis_review_revocations.sql'), 'utf8',
+    )
+    runMysql(revocationMigration)
     runMysql(`
       INSERT INTO diagnosis_knowledge_candidates
         (_openid, candidate_ref, bundle_code, revision_no, schema_version, content_sha256,
          candidate_json, candidate_state, created_at_ms)
       VALUES
         ('', 'candidate_a', 'yellow_leaf', 1, 'diagnosis-knowledge/v1', '${HASH_A}', '{}', 'reviewed', 1000),
-        ('', 'candidate_b', 'yellow_leaf', 2, 'diagnosis-knowledge/v1', '${HASH_B}', '{}', 'reviewed', 1001);
+        ('', 'candidate_b', 'yellow_leaf', 2, 'diagnosis-knowledge/v1', '${HASH_B}', '{}', 'reviewed', 1001),
+        ('', 'candidate_c', 'yellow_leaf', 3, 'diagnosis-knowledge/v1', '${HASH_C}', '{}', 'reviewed', 1002);
       INSERT INTO diagnosis_review_attestations
         (_openid, review_ref, reviewer_ref_hash, candidate_internal_id, content_sha256,
          decision, protocol_version, decided_at_ms)
       VALUES
         ('', 'review_a_approved', '${HASH_A}', 1, '${HASH_A}', 'approved', 'cms-review/v1', 1100),
-        ('', 'review_b_rejected', '${HASH_B}', 2, '${HASH_B}', 'rejected', 'cms-review/v1', 1101);
+        ('', 'review_b_rejected', '${HASH_B}', 2, '${HASH_B}', 'rejected', 'cms-review/v1', 1101),
+        ('', 'review_c_approved', '${HASH_C}', 3, '${HASH_C}', 'approved', 'cms-review/v1', 1102);
     `)
   })
 
@@ -172,5 +178,43 @@ describe('诊断知识审核和发布的真实 MySQL 约束', () => {
         (_openid, bundle_code, release_internal_id, version, activated_at_ms)
       VALUES ('', 'yellow_leaf', ${releaseId}, 1, 1401);
     `)
+  })
+
+  test('撤销只接受批准凭据且不改写原审核记录', () => {
+    expectMysqlRejection(`
+      INSERT INTO diagnosis_review_revocations
+        (_openid, revocation_ref, target_review_internal_id, target_decision,
+         request_sha256, revoked_by_ref_hash, reason_zh, revoked_at_ms)
+      VALUES ('', 'revoke_empty_reason', 1, 'approved', '${HASH_E}', '${HASH_D}', '  ', 1499);
+    `)
+    expect(runMysql('SELECT COUNT(*) FROM diagnosis_review_revocations;')).toBe('0')
+    runMysql(`
+      INSERT INTO diagnosis_review_revocations
+        (_openid, revocation_ref, target_review_internal_id, target_decision,
+         request_sha256, revoked_by_ref_hash, reason_zh, revoked_at_ms)
+      VALUES ('', 'revoke_approved_a', 1, 'approved', '${HASH_C}', '${HASH_D}', '来源主张失效。', 1500);
+    `)
+    expect(runMysql("SELECT decision FROM diagnosis_review_attestations WHERE review_ref = 'review_a_approved';")).toBe('approved')
+    expect(runMysql("SELECT reason_zh FROM diagnosis_review_revocations WHERE revocation_ref = 'revoke_approved_a';")).toBe('来源主张失效。')
+
+    expectMysqlRejection(`
+      INSERT INTO diagnosis_review_revocations
+        (_openid, revocation_ref, target_review_internal_id, target_decision,
+         request_sha256, revoked_by_ref_hash, reason_zh, revoked_at_ms)
+      VALUES ('', 'revoke_rejected_b', 2, 'approved', '${HASH_E}', '${HASH_D}', '不能撤销驳回。', 1501);
+    `)
+    expectMysqlRejection(`
+      INSERT INTO diagnosis_review_revocations
+        (_openid, revocation_ref, target_review_internal_id, target_decision,
+         request_sha256, revoked_by_ref_hash, reason_zh, revoked_at_ms)
+      VALUES ('', 'revoke_approved_a_again', 1, 'approved', '${HASH_F}', '${HASH_D}', '重复撤销。', 1502);
+    `)
+    expectMysqlRejection(`
+      INSERT INTO diagnosis_review_revocations
+        (_openid, revocation_ref, target_review_internal_id, target_decision,
+         request_sha256, revoked_by_ref_hash, reason_zh, revoked_at_ms)
+      VALUES ('', 'revoke_approved_a', 3, 'approved', '${HASH_E}', '${HASH_D}', '同引用异参。', 1503);
+    `)
+    expect(runMysql('SELECT COUNT(*) FROM diagnosis_review_revocations;')).toBe('1')
   })
 })

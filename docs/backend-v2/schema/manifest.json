@@ -1,6 +1,6 @@
 {
   "schemaVersion": "backend-v2-schema/v1",
-  "generatedAt": "2026-09-24T00:56:00+08:00",
+  "generatedAt": "2026-09-24T07:31:00+08:00",
   "database": "CloudBase MySQL",
   "timeStorage": "UTC epoch milliseconds",
   "files": [
@@ -56,7 +56,13 @@
       "order": 9,
       "owner": "diagnosis",
       "file": "009_diagnosis_knowledge.sql",
-      "sha256": "ff3ccdd7be74375e1fdd0b305f6453bcd200316e38ca3fb8573528766ae979aa"
+      "sha256": "260ffb47a03b0eab2ca24f2852fe4e66052ace25305c41e14c6780d07c413266"
+    },
+    {
+      "order": 10,
+      "owner": "diagnosis",
+      "file": "010_diagnosis_review_revocations.sql",
+      "sha256": "645d3766668af04ce68b64ccb726a8400d3c65ccb3bf18bcde9514c110f64c77"
     }
   ]
 }
