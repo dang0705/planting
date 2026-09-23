@@ -13,6 +13,50 @@
 
 [游客临时会话认领合同](guest-session-claim.md)使用经验证的匿名主体与 `X-QHZ-Guest-Proof`。已登录临时案例必须以会话中的统一 `user_id` 和创建时记录的同一用户归属证明持有权；不能要求或伪造游客匿名证明，也不能仅凭案例公开引用授权。游客登录后的认领仍走原游客合同。两条路径由 `user-plant` 单一编排，跨域临时结果只读取成功绑定投影，不各自更新归属。
 
+## 最小公共命令与结果边界
+
+已登录主体新建临时案例是一个显式写命令：请求使用 `Idempotency-Key`，但不接收 `user_id`、平台 OpenID、`user_plant_id` 或游客持有证明。服务端只从经验证的 `UserPrincipal` 取得归属；一次新命令只创建一株临时案例，同键同参重放返回同一公开引用。是否填写植物候选、照片或题包答案属于后续各能力的独立命令，不允许在创建案例时把这些未验证输入自动写入现有用户植物。
+
+```ts
+export type CreateAuthenticatedEphemeralPlantCaseCommand = {
+  /** HTTP Idempotency-Key 的规范化副本；不携带 user_id 或任何植物身份推断。 */
+  idempotencyKey: string
+}
+
+export type CreateAuthenticatedEphemeralPlantCaseResult = {
+  /** 本次单株临时案例的不透明公开引用；不包含用户或数据库内部主键。 */
+  ephemeralPlantCaseRef: string
+  /** 当前已发布保留策略计算的失效时间，ISO 8601；本合同尚未冻结具体时长。 */
+  expiresAt: string
+  /** 同键同参重放时为 true；首次创建时为 false。 */
+  replayed: boolean
+}
+
+export type PromoteAuthenticatedEphemeralPlantCaseCommand = {
+  /** 仅定位已由当前 user_id 创建、仍有效且未绑定的单株临时案例。 */
+  ephemeralPlantCaseRef: string
+  /** 用户明确选择新建植物或绑定本人已有植物；内部主键不作为输入。 */
+  target: { type: 'new_user_plant' } | { type: 'existing_user_plant'; userPlantId: string }
+  /** HTTP Idempotency-Key 的规范化副本；同键异参必须冲突。 */
+  idempotencyKey: string
+}
+
+export type AuthenticatedEphemeralPlantPromotionResult = {
+  /** 本次绑定命令的唯一公开引用，同键同参重放必须保持不变。 */
+  promotionRef: string
+  /** 新建或选定的用户植物公开引用。 */
+  userPlantId: string
+  /** 获得派生归属的临时对象类别摘要，不包含对象内容或内部主键。 */
+  linkedObjectKinds: Array<
+    'identification_candidate' | 'fixed_diagnosis_result' | 'independent_watering_advice' | 'soil_visual_evidence'
+  >
+  /** 同键同参重放时为 true；首次成功绑定时为 false。 */
+  replayed: boolean
+}
+```
+
+上述类型只冻结公共语义，不表示具体路由、TypeScript 源码、数据库结构或默认有效期已冻结。`user-plant` 在同一事务内完成目标归属与一次性绑定事实；跨域临时对象只由该绑定事实派生归属，不能重写原时间、证据、结果或建议。绑定结果不声称用户执行过建议，也不能触发养护事件、计划、提醒或积分。公开错误至少区分非法输入、本人案例不可用、案例过期、已有植物不属当前用户、同键异参，以及提交结果未知；无权访问与不存在不得暴露其他用户案例细节。
+
 ## P1 必须冻结的增量
 
 1. 公共 `CreateEphemeralPlantCase` 与 `PromoteEphemeralPlantCase` DTO、身份/归属错误、幂等键和公开响应白名单；两种主体的身份凭证只能由服务端解析。

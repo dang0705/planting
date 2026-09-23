@@ -24,6 +24,14 @@
       "sha256": "639726193f00c2dd309b56dcd686f12e6b4173e0b6a3ebdb3b70b57a8881b1c6"
     },
     {
+      "id": "authenticated-ephemeral-plant-case",
+      "version": "authenticated-ephemeral-plant-case/p1-draft",
+      "file": "authenticated-ephemeral-plant-case.md",
+      "owner": "user-plant",
+      "status": "P1_PENDING",
+      "sha256": "f58e3a24674b974ca0d82ff121545f5679fe7b78b738782c4058dc2833d2c98b"
+    },
+    {
       "id": "care-points-and-ai-quota",
       "version": "care-points-ai-quota/v1",
       "file": "care-points-and-ai-quota.md",
