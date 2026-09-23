@@ -2,7 +2,7 @@
 
 - 任务：[诊断知识来源、园艺原因及 Outcome/Action 合同](https://app.clickup.com/t/z8v0kmrg8a)。
 - 独立 Expected：Master Plan P1 诊断知识治理门、[知识来源合同](../../contracts/diagnosis-knowledge-sources.md)及[持久化与发布逻辑合同](../../contracts/diagnosis-knowledge-persistence.md)要求来源、主张、候选、审核准确摘要、不可变发布包、活动指针和审计由 `diagnosis` 专属结构承载；不能由一次诊断结果 JSON 或通用内容槽位代替。
-- 探针：`cloudfunctions-v2/test/contracts/diagnosis-knowledge-ddl.red.spec.ts`，TypeScript + Vitest。测试层次为 `unit_real_data`：读真实 SQL manifest 与 SQL 文件；**不连接** MySQL/CMS，也不验证事务实际原子性。
+- 探针当时位于 `cloudfunctions-v2/test/contracts/diagnosis-knowledge-ddl.red.spec.ts`；转绿后已移入默认回归套件 `cloudfunctions-v2/test/contracts/diagnosis-knowledge-ddl.spec.ts`。该静态测试读取真实 SQL manifest 与 SQL 文件，**不连接** MySQL/CMS，也不验证事务实际原子性。
 - 执行：`npm run test:red -- --run test/contracts/diagnosis-knowledge-ddl.red.spec.ts`，2026-09-24 本地运行，1 条失败。失败点：`独立的 diagnosis 知识迁移尚未登记`。这是预期 RED，不能报成测试通过或 P1 诊断知识完成。
 - 同轮静态门：`npm run typecheck` 通过；单文件 oxlint 为 0 警告、0 错误。执行时宿主 `node` 为 v24.21.0；Node.js 22 运行与真实 MySQL 需另验。
 

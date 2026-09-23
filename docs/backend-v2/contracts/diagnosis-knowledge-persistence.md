@@ -2,7 +2,7 @@
 
 - 绑定任务：[诊断知识来源、园艺原因及 Outcome/Action 合同](https://app.clickup.com/t/z8v0kmrg8a)。
 - 依据：[诊断知识来源合同](diagnosis-knowledge-sources.md)、[Outcome/Action 字段边界](diagnosis-outcome-fields.md)、[独立 Expected 草案](../testing/P1-diagnosis-knowledge-expected.md)。
-- 状态：**逻辑数据合同，尚非已执行 DDL、CMS 接口或已发布知识**。精确列长、JSON Schema、审核交换接线和空库验证须在本合同下继续完成，不能以本文件替代验收。
+- 状态：已形成 [独立空库 DDL](../schema/009_diagnosis_knowledge.sql)，并在本地 MySQL 8.4 验证关键外键及全量 manifest 顺序执行；**CMS 审核交换、版本化 JSON Schema、应用事务、CloudBase MySQL 和已发布知识仍未验收**。本合同不能代替这些层级的验收。
 
 ## 所有权与最小数据分层
 
@@ -50,4 +50,4 @@ CMS 编辑候选 → diagnosis 固定候选修订与完整内容摘要
 
 ## 下一层实施门
 
-P1 先补齐每列的类型/可空/长度、候选和发布包 JSON Schema、CMS 审核凭据传递和鉴权方式、逐表外键与唯一键矩阵，并把 `DK-01` 至 `DK-08` 中相关 Expected 固定为 TypeScript 测试。然后追加独立有序 DDL，在本地真实 MySQL 空库验证约束、并发切换、失败回滚和历史读回。CloudBase CMS 的真实接口/权限、端到端发布和 HTTP 诊断须分别读回验证，不能用此逻辑合同或静态 DDL 测试冒充完成。
+P1 已补独立有序 DDL 与审核摘要、跨候选审核、驳回审核和同包活动指针的本地真实 MySQL 约束验证，证据见[本地空库与外键读回](../audits/evidence/P1-diagnosis-knowledge-ddl-local-mysql.md)。仍须补齐候选和发布包的版本化 JSON Schema、CMS 审核凭据传递和鉴权、所有列的字段字典与类型确认，并把 `DK-01` 至 `DK-09` 中相关 Expected 固定为 TypeScript 测试。应用层发布/回滚事务、并发切换、失败恢复和历史结果回放尚未实现；CloudBase CMS 的真实接口/权限、端到端发布和 HTTP 诊断仍须分别读回验证，不能用静态 DDL 或本地 MySQL 绿灯冒充完成。

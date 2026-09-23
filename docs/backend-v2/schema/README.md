@@ -18,4 +18,4 @@
 
 `008_foundation.sql` 独立保存共享 HTTP 幂等记录，不复用服务 nonce、业务命令表或各域 outbox。数据库只保存主体作用域和幂等键的不可逆摘要，以及已脱敏公开结果。`http.idempotency.retention_hours=168` 由请求锁定的已发布策略计算为 `expires_at_ms`；DDL 不硬编码保留时长，也不把该时长错用到 outbox/inbox。
 
-诊断 Outcome/Action 知识来源、园艺原因目录与兼容发布包属于新增 P1 合同门，当前 `004_care_diagnosis.sql` **尚无对应结构**。不得把现有结果 JSON 或通用内容发布槽位当作实现完成；在独立 Expected、字段字典和 Phase-P1 ticket 冻结后，才以新增的顺序迁移文件扩展空库 manifest，并重做约束、发布回滚和真实 MySQL 读回。
+诊断 Outcome/Action 知识来源、园艺原因目录与兼容发布包由 `009_diagnosis_knowledge.sql` 独立承载，不复用 `004_care_diagnosis.sql` 的一次结果 JSON 或通用内容发布槽位。该迁移已通过本地 MySQL 8.4 独立空库和全量 manifest 顺序执行；关键审核与发布约束另有真实 MySQL 测试。此结果不证明 CMS 审核交换、发布/回滚事务、CloudBase MySQL 或真实 HTTP 闭环；P1 仍须完成字段字典、版本化 JSON Schema 和剩余合同验收。

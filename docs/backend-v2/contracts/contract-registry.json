@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-24T00:41:57+08:00",
+  "generatedAt": "2026-09-24T00:56:00+08:00",
   "contracts": [
     {
       "id": "principal-and-capability",
@@ -101,7 +101,7 @@
       "file": "diagnosis-knowledge-persistence.md",
       "owner": "diagnosis",
       "status": "P1_PENDING",
-      "sha256": "8d3340b112b80da4a646a4cbfea7372034ffcda206baf9c685d1e2c964860b2a"
+      "sha256": "0866113439bf6d1e755cee617dc24e1a238eff86e71a827e0634e36aa161e9a7"
     },
     {
       "id": "diagnosis-cms-review-exchange",
@@ -117,7 +117,7 @@
       "file": "diagnosis-outcome-fields.md",
       "owner": "diagnosis",
       "status": "P1_PENDING",
-      "sha256": "afe4823c10c8082cf95e93361e235f606334f1a46f04d51a49bb4a2e0c164091"
+      "sha256": "d21c6ca00f5a3a7cd3d11cecfd917403f204f48ca8d3c339fe11de0bcf9bb3e8"
     },
     {
       "id": "diagnosis-visual-prompt",

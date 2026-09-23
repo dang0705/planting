@@ -20,8 +20,8 @@ function tableBody(sql: string, table: string): string {
 /**
  * Expected 来源：Master Plan P1 诊断知识发布门，以及
  * `docs/backend-v2/contracts/diagnosis-knowledge-persistence.md` 的逻辑表与审核摘要硬锁。
- * 测试层次：unit_real_data；读取真实 DDL 文件与 manifest，不连接 MySQL/CMS。
- * 本文件是刻意保持 RED 的结构探针，不能作为真实事务或发布验收。
+ * 测试层次：unit_real_data（真实 DDL 文件）；不连接 MySQL/CMS。
+ * 只证明结构登记；真实外键约束另由 diagnosis-knowledge.mysql.spec.ts 验证。
  */
 test('诊断知识 DDL 独立保存来源、审核摘要和原子发布指针', () => {
   const schemaRoot = path.join(findProjectRoot(), 'docs/backend-v2/schema')
