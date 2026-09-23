@@ -149,7 +149,7 @@
       "file": "diagnosis-outcome-fields.md",
       "owner": "diagnosis",
       "status": "P1_PENDING",
-      "sha256": "0dc60f558566aca4e1cbaf34d29b93faa9f4b7d44b7a11c014b33b1cf4591fd9"
+      "sha256": "c358c97e2a09eeb613ac2319f1f1c7f7e2f95bdffd1dfb96c16aaa63c44ab66c"
     },
     {
       "id": "diagnosis-visual-prompt",
