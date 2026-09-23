@@ -197,18 +197,20 @@ flowchart TB
   %% ========== 建议 / 计划 / 实际行为 ==========
   Proposal --> Confirmation[用户确认]
 
-  Confirmation --> CarePlan[养护计划 / 待办<br/>未来动作]
+  Confirmation --> PlantWriteGate{已有 user_plant_id<br/>且归属校验通过?}
+  PlantWriteGate -->|否 · 维持临时结果| EphemeralResultOnly[仅保留临时建议<br/>不创建计划或事实]
+  PlantWriteGate -->|是 · 未来动作| CarePlan[养护计划 / 待办<br/>未来动作]
   CarePlan --> Reminder[提醒任务]
   Reminder --> Notification[平台通知<br/>触达不等于已执行]
   Subscription --> Notification
 
-  Confirmation -->|确认已实际发生| CareEvent[养护事件<br/>真实行为记录]
+  PlantWriteGate -->|是 · 确认已实际发生| CareEvent[养护事件<br/>真实行为记录]
   CareEvent --> Facts
 
 
   %% ========== 时间线与状态 ==========
   Facts --> Timeline[植物时间线<br/>历史事实与重要结果的展示视图]
-  Diagnosis --> Timeline
+  Diagnosis -->|仅归属长期植物的结果| Timeline
   Profile --> Timeline
   CarePlan --> Timeline
 
@@ -307,7 +309,7 @@ flowchart TB
     IdentityApp[identity<br/>匿名/正式主体解析<br/>统一身份 / session]
     KnowledgeApp[plant-knowledge<br/>植物身份 / 百科 / 内部知识<br/>识别 / 内容补全]
     UserPlantApp[user-plant<br/>植物入口 / 临时案例 / 显式绑定<br/>用户植物 / 档案 / 生命周期]
-    PlantEntryService[user-plant 内部入口用例与上下文组装<br/>先分主体，再选临时或长期<br/>按能力提供只读运行时植物上下文]
+    PlantEntryService[user-plant 内部入口与归属用例<br/>先分主体，再选临时或长期<br/>提供作用域与植物归属证明]
     CareApp[care<br/>临时与用户植物养护<br/>事实 / 浇水 / 施肥 / 光照 / 通风 / 计划]
     EnvironmentAssembler[环境证据组装<br/>原子事实 / 输入快照 / 来源与新鲜度]
     DiagnosisApp[diagnosis<br/>临时与用户植物问诊<br/>题包 / 证据 / 结果]
@@ -324,9 +326,9 @@ flowchart TB
 
   UserPlantApp --> PlantEntryService
   PrincipalContract --> PlantEntryService
-  PlantEntryService -.只读运行时植物上下文.-> KnowledgeApp
-  PlantEntryService -.只读运行时植物上下文.-> CareApp
-  PlantEntryService -.只读运行时植物上下文.-> DiagnosisApp
+  PlantEntryService -.作用域证明；各域按能力组装只读上下文.-> KnowledgeApp
+  PlantEntryService -.作用域证明；各域按能力组装只读上下文.-> CareApp
+  PlantEntryService -.作用域证明；各域按能力组装只读上下文.-> DiagnosisApp
 
   CareApp -.AI 预占 / 结算.-> SubscriptionApp
   DiagnosisApp -.AI 预占 / 结算.-> SubscriptionApp
