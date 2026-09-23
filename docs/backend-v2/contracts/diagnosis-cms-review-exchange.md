@@ -19,12 +19,18 @@ CMS 是诊断草稿的**人工编辑与审阅控制面**，不是运行时知识
 | `candidateRef` | `diagnosis` 已冻结的候选修订引用；不能只传 CMS 可变行号 |
 | `contentSha256` | 审核员看到并批准或驳回的**完整候选内容** SHA-256；服务端从不可变候选重算并作完全相等比较 |
 | `decision` | `approved`、`rejected` 或 `revoked`；撤销只能阻止未来发布/使用，不能抹掉历史审核与结果 |
-| `reviewerRef` | 经服务端验证的管理员主体引用；不能单靠请求体自报姓名或 CMS 页面字符串 |
-| `reviewedAtMs` | UTC 毫秒审核时间，由受控服务端记录或核验时钟窗口，不接纳任意客户端时间作事实 |
+| `reviewerRef` | 审核记录中的管理员主体引用，由服务端从已验证的管理员身份生成；请求体自报姓名或 CMS 页面字符串无效 |
+| `reviewedAtMs` | 审核记录中的 UTC 毫秒时间，由受控服务端生成；请求体时间不能充当审核事实 |
 | `reasonZh` | 中文审核理由；驳回或撤销时必填，不能出现凭证或私有图片路径 |
 | `reviewEvidenceRef` | 指向受控审核记录/页面快照的内部引用；只用于追责，不进入用户响应 |
 
 传输层必须经内部服务身份和权限范围校验、HMAC/等效服务签名、请求限制、幂等与审计；普通用户、游客、小青工具和展示百科 Worker 均无权提交审核决定。服务端再次读取本域候选并校验 `candidateRef + contentSha256`，不信任调用方传来的已审核全文。若当前 CMS 没有可信管理员身份或不可变审核轨迹，须由已认证管理员在查看冻结候选后，通过专门的受控审核命令作出决定；不能把一枚可编辑的 `approved` 字段当凭据。
+
+## 审核命令的最小合同
+
+审核请求只接受 `protocolVersion`、`reviewRef`、`candidateRef`、`contentSha256`、`decision`、`reasonZh` 和可选的 `reviewEvidenceRef`。`reviewerRef` 与 `reviewedAtMs` **不属于客户端可写 DTO**，只能由已经校验服务身份与管理员权限的服务端填入不可变审核记录。`reviewRef` 是幂等键，不是审核员身份凭据；重复同参返回原审核记录的公开状态，同引用异参返回冲突，不能覆盖原记录。
+
+成功响应只包含受控的 `reviewRef`、`candidateRef`、`decision` 和候选是否仍具发布资格；不得返回内部主键、管理员主体标识、审核截图路径或完整知识包。协议错误按稳定机器码区分：`REVIEW_PROTOCOL_UNSUPPORTED`（未知协议版本）、`REVIEW_FORBIDDEN`（服务或管理员无权）、`CANDIDATE_NOT_FOUND`、`CANDIDATE_HASH_MISMATCH`、`REVIEW_REF_CONFLICT`、`REVIEW_DECISION_INVALID` 和 `REVIEW_EVIDENCE_UNAVAILABLE`。公开错误仍用中文说明，且无权或不存在时不得泄露候选内容。错误码、请求/响应 Schema 与鉴权适配须在 TypeScript 合同测试中固定；本段仅是 P1 协议设计，不代表接口已实现。
 
 ## 状态与失败处理
 

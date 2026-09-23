@@ -83,9 +83,9 @@
       "id": "diagnosis-knowledge-sources",
       "version": "diagnosis-knowledge-sources/p1-draft",
       "file": "diagnosis-knowledge-sources.md",
-      "owner": "diagnosis + CMS publication channel",
+      "owner": "diagnosis + CMS editorial control plane",
       "status": "P1_PENDING",
-      "sha256": "2782201a7396dcccaa53dbfe261ff49d491c286bfad5b47657d3e65f16d9818a"
+      "sha256": "128fe0fd45ea0eb15ad781b67db2175ec3d199fc423e2fa6041edc33ba858302"
     },
     {
       "id": "diagnosis-knowledge-persistence",
@@ -101,7 +101,7 @@
       "file": "diagnosis-cms-review-exchange.md",
       "owner": "diagnosis + CMS editorial control plane",
       "status": "P1_PENDING",
-      "sha256": "3d6fc6c32a961134b6f2df6cdae091a8f1ab8f7d7d41e1fd03c70d5c818bb41e"
+      "sha256": "a87f0ef7a393ae5adb17e902a80d9ccd0648e05521107eb9d3562c89010d13bc"
     },
     {
       "id": "diagnosis-outcome-fields",
