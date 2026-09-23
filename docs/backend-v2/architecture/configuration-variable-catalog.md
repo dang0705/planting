@@ -2,8 +2,8 @@
 
 - 机器事实源：`configuration-variable-catalog.json`
 - Schema：`configuration-variable-catalog/v1`
-- 目录版本：`2026-09-20.3`
-- 当前共 168 项业务/治理变量、12 个 Provider 配置档案：已冻结 74 项、待冻结 52 项、不可配置硬规则 42 项。
+- 目录版本：`2026-09-23.1`
+- 当前共 169 项业务/治理变量、12 个 Provider 配置档案：已冻结 74 项、待冻结 53 项、不可配置硬规则 42 项。
 
 本文件由同目录生成脚本从 JSON 生成，便于中文阅读。实施 Agent 必须先按领域读取本文件，再只深读该变量引用的合同或决策；不得把 `P1_PENDING` 猜成默认值。待冻结项必须带原因与阻断范围，未冻结前只能推进不依赖该值的工作。
 
@@ -183,6 +183,7 @@
 | `diagnosis.result.schema_version` | AI 问诊结构化结果版本 | `diagnosis_releases` | 领域策略 / 已冻结 | diagnosis-model-output/v1 | diagnosis | diagnosis、Bailian Adapter | 不可变 JSON Schema release；失败：校验失败整份拒绝 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
 | `diagnosis.visual.max_images` | 单次视觉问诊最大图片数 | `diagnosis_releases` | 领域策略 / 待冻结 | P1_PENDING 张 | diagnosis | diagnosis、storage、AI 成本策略 | 产品动作成本策略版本；失败：未冻结前不开放多图视觉问诊；待冻结原因：动作上限和真实成本未冻结；阻断：视觉问诊 | P4 / [P4] 固定/动态问诊与小青工具 |
 | `diagnosis.fixed_packages.release_refs` | 黄叶与萎蔫固定题包发布引用 | `diagnosis_releases` | 领域策略 / 待冻结 | P1_PENDING | diagnosis | diagnosis | 题包不可变 release + active 指针；失败：无已发布题包则该症状入口不可用；待冻结原因：旧题包需审计后初始化 v2 release；阻断：固定问诊 | P4 / [P4] 固定/动态问诊与小青工具 |
+| `diagnosis.knowledge.bundle_release_ref` | 诊断原因、结论、行动和映射的兼容知识发布包 | `diagnosis_releases` | 领域策略 / 待冻结 | P1_PENDING | diagnosis | diagnosis、CloudBase CMS 发布校验 | 原因目录、Outcome、Action 和映射作为兼容不可变 release 发布，请求锁定单一快照及 SHA-256；失败：无已审核的兼容发布包时不开放相应诊断结果，不以模型自由生成内容兜底；待冻结原因：P1 诊断知识来源增量合同、旧资产审计与首版内容审核尚未冻结；阻断：黄叶、萎蔫和虫害诊断知识发布与结果验收 | P4 / [P4] 固定/动态问诊与小青工具 |
 | `diagnosis.dynamic_pest.max_rounds` | 动态虫害问诊最大轮次 | `diagnosis_releases` | 领域策略 / 待冻结 | P1_PENDING 轮 | diagnosis | diagnosis | 动态题包策略版本；失败：达到上限返回可解释的中止结果；待冻结原因：动态题包合同尚未冻结；阻断：动态虫害问诊 | P2 / [P4] 固定/动态问诊与小青工具 |
 | `diagnosis.advice.direct_fact_write` | 诊断建议是否可直接写事实 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `false` | diagnosis | diagnosis、care | 不可配置；失败：等待用户确认后由 care 写事实 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
 | `provider.bailian.model_code` | 云百炼精确模型标识 | `provider_runtime` | 第三方运行配置 / 已冻结 | qwen3.5-flash-2026-02-23 | shared-infrastructure | BailianDiagnosisAdapter、EncyclopediaQwenAdapter | 每个能力独立 Provider release，禁止静默替换；失败：未冻结精确模型标识时不进行真实调用 | P1 / [P1] 业务策略与统一 Provider 配置架构 |

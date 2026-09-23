@@ -2,23 +2,24 @@
   "version": "backend-architecture/v2-config-1",
   "algorithm": "sha256",
   "files": {
-    "README.md": "aaff4c9b799da144e8dfade936418bf1db86ff3cb7c6b408660fa3360bd7a18a",
-    "青花植后端v2底层架构重构计划_融合闭环终版.md": "3a99912df326c69d36f918984e7d7d86a7847ea0a1f8b92bfa872867c1bcbb22",
+    "README.md": "6d4a6ab3295b9b5edb1c2b8bed97c0aa8bead729d6d2f755baf870663ef9609e",
+    "青花植后端v2底层架构重构计划_融合闭环终版.md": "3d3895edd06c067facdeb4583fc475da6f7b48ee9d557288b8351eddfbb4086e",
     "architecture/README.md": "f0222cc2b0d1d76ae9e9474085b668cb3c08071f70aed2eb84c3806b07325339",
-    "business-domain.md": "cad13b300697287fd04e70cb3bef8d3faf699e69a11d3f1f4dd34880d51eed5f",
+    "business-domain.md": "8288aec7ad327b432dc0729199a59b0ce95e1ea08569e0214872f5e3b0066f06",
     "business-domain-layers.md": "42bc6e155a0ad2da26c35001dd666ddaabcc80cae60b52e2b1cf2fb7e97a1fa1",
-    "phases/first-release-scope.md": "96ca29c9d2de50f4d8b3e787dcc91686f4200d7ee84e3065d3472687146e756a",
-    "contracts/diagnosis-rich-response-experiment.md": "9c442798790cf97d736273b8fcf92811e4484e7ebf1be4177499807708a26a9b",
+    "phases/first-release-scope.md": "e775a72ba93fb09c473b21e36b4a0d4021f4686391e95d520cb732bb6366cd3f",
+    "contracts/diagnosis-rich-response-experiment.md": "d3777d2991e4532702770bb39761fbe127425f00830a1b7f644758e93d4c6430",
+    "contracts/diagnosis-knowledge-sources.md": "b791330a7003aeba2c56dad17f958746ed8c378d13ae6dba15a11fefeacabeb0",
     "contracts/authenticated-ephemeral-plant-case.md": "87c88625423084ba393cc560e7769f48b7cad33c43a3f53eb86f75b908f6e395",
-    "infrastructure.md": "14655fe7a6db78b9a807c0d2050249194a292b93bd0e1473ac2d49c5b16f1c80",
-    "business-to-technical-map.md": "98113e0f0b23ced2c708f9d507df88f8879d89883c4f4585b0034004cef1e40e",
+    "infrastructure.md": "eaa6f783bcaddf1292d83e9c9146af29cc7b25e6ae04cdfaf14bb0f7c45e39a7",
+    "business-to-technical-map.md": "ee3d2a2917bfe94fb6290965f5db8fa9c84ab55cc50fe09d218c5e173f292f34",
     "architecture-rules.md": "87e5f18c3e978ffa678f75fbdec8dc21b8122a76dce809e950e13b34cf9a7a04",
     "configuration-and-providers.md": "677f32ded19440c3f3140a5d594555bc5f44bb7376fafcfce5f3400004f120ce",
-    "configuration-variable-catalog.json": "a038ad3fb87cc837e0c7297178c7000d90e0c68323357d50b3fac5d899e7d58d",
-    "configuration-variable-catalog.md": "b5ac637b0319168e36cad68b88a815e818821c36e02a82cde91568373b1561cb"
+    "configuration-variable-catalog.json": "414b98a53b88417dca3c7e3a1b448fcab4dc9a0fc8a6e81b3d48a78983d828f8",
+    "configuration-variable-catalog.md": "f998269d142d5a8363fe99b72ba76dc852c1f4c57d210a0783c974d0e8aaed92"
   },
   "diagrams": {
-    "business": "2fe47dd614b98e6699e65a6e32e1ca09fbba816d7490841541a626f90798f1f5",
-    "infrastructure": "35e586cc3c6b8b4687dd312af66f12137060e856b3cfa9f06b17e421a7cc0a9c"
+    "business": "3d4cecabdf4af6bc9390b8821b031ddf22c1fe7366041f750893c28cfd10b67e",
+    "infrastructure": "17b8caa6c18a6c865bfba4ca539b0f103003749fc6bc200cc114dedf7f5697d8"
   }
 }

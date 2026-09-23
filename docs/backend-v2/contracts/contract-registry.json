@@ -80,6 +80,14 @@
       "sha256": "68d7dd54aac76aeba00bc681b88d334bd45bf05158004582915ed309b00197b7"
     },
     {
+      "id": "diagnosis-knowledge-sources",
+      "version": "diagnosis-knowledge-sources/p1-draft",
+      "file": "diagnosis-knowledge-sources.md",
+      "owner": "diagnosis + CMS publication channel",
+      "status": "P1_PENDING",
+      "sha256": "b791330a7003aeba2c56dad17f958746ed8c378d13ae6dba15a11fefeacabeb0"
+    },
+    {
       "id": "diagnosis-visual-prompt",
       "version": "diagnosis-visual/v1",
       "file": "prompts/diagnosis-visual.v1.release.json",

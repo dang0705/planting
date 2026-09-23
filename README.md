@@ -184,6 +184,16 @@ flowchart TB
 
 
   %% ========== 诊断 ==========
+  SymptomEntry[症状入口与题包<br/>黄叶 / 萎蔫 / 疑似虫害<br/>收集证据，不等于病因] --> Diagnosis
+  SourceClaims[已审核园艺来源主张<br/>原文定位 / 适用范围 / 核验时间] --> HorticulturalCauses[园艺原因分类<br/>非生物性 / 害虫 / 病原相关<br/>混合 / 待判定]
+  HorticulturalCauses --> OutcomeCatalog[已发布 Outcome 结论库<br/>适用植物 / 证据条件 / 来源]
+  OutcomeCatalog --> Diagnosis
+  ActionCatalog[已发布 Action 行动库<br/>步骤 / 禁忌 / 复查 / 来源] --> Diagnosis
+  SourceClaims --> OutcomeCatalog
+  SourceClaims --> ActionCatalog
+  OutcomeCatalog --> OutcomeActionMapping[受审核结论-行动映射<br/>适用条件 / 禁忌 / 版本]
+  ActionCatalog --> OutcomeActionMapping
+  OutcomeActionMapping --> Diagnosis
   PlantRoot --> Diagnosis[植物诊断<br/>症状 / 题包 / 证据 / 结论]
   Facts --> Diagnosis
   EnvironmentSnapshot --> Diagnosis
@@ -256,6 +266,10 @@ flowchart TB
   PublishedInternal --> IdentityCatalog
   PublishedInternal --> InternalKnowledge
   PublishedInternal --> Diagnosis
+  PublishedInternal --> SourceClaims
+  PublishedInternal --> HorticulturalCauses
+  PublishedInternal --> OutcomeCatalog
+  PublishedInternal --> ActionCatalog
   PublishedInternal --> Watering
   PublishedInternal --> Fertilizing
   PublishedInternal --> Lighting
@@ -457,6 +471,10 @@ flowchart TB
 
   CMS[CloudBase CMS] --> PublishPipeline[发布校验 / 版本记录]
   PublishPipeline --> Published
+  CMS --> DiagnosisKnowledgeReview[诊断知识人工审核<br/>来源主张 / 症状与原因<br/>Outcome / Action / 映射]
+  DiagnosisKnowledgeReview --> DiagnosisKnowledgeRelease[不可变诊断知识发布包<br/>来源 / 适用性 / 禁忌校验<br/>兼容版本与 SHA-256]
+  DiagnosisKnowledgeRelease --> DiagnosisApp
+  DiagnosisKnowledgeRelease --> DiagnosisStore
 
 
   %% ========== 外部能力、标准化证据与事实来源 ==========
@@ -532,7 +550,7 @@ flowchart TB
 
 ## 配置治理实施入口
 
-两张架构图只表达关系，不在图中重复当前 161 项业务/治理变量和 12 个首批 Provider 配置档案。实施时必须从以下入口渐进读取：
+两张架构图只表达关系，不在图中重复当前 169 项业务/治理变量和 12 个首批 Provider 配置档案。实施时必须从以下入口渐进读取：
 
 - [配置与 Provider 总合同](docs/backend-v2/architecture/configuration-and-providers.md)
 - [业务关键变量中文目录](docs/backend-v2/architecture/configuration-variable-catalog.md)

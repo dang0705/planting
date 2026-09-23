@@ -16,6 +16,8 @@ Phase 文档
 
 ## Phase-P1 当前绑定（2026-09-20）
 
+新版诊断知识来源增量门已登记在 `ticket-specs.md`，但尚无可回读的真实 ClickUp ID；在 Phase-P1 建票并指定负责人前不计入“已绑定”，不得开始该增量实现。下表为既有已绑定票据，不把新增要求伪装成其历史已验收范围。
+
 | Ticket | 模块 | 负责 agent | 实施/Expected 入口 | ClickUp 状态 |
 |---|---|---|---|---|
 | `z8v0kmr96y` [用户植物、身份和游客认领合同](https://app.clickup.com/t/z8v0kmr96y) | user-plant | `user_plant_terra` | `contracts/user-plant.md`、`contracts/guest-session-claim.md` | `review needed` |

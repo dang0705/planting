@@ -8,11 +8,14 @@
 
 新版业务架构新增[已登录用户临时植物案例合同补充门](../contracts/authenticated-ephemeral-plant-case.md)：先冻结与游客路径不同的主体证明、临时案例归属、DTO、状态机、DDL、事务与 RED Expected，再允许 P3 实现这条首版核心路径。此前已验证的其他 P1 合同继续有效；此增量门未通过时不能把“已登录临时使用→绑定用户植物”列为已验收。
 
+诊断另设[Outcome/Action 知识来源合同增量门](../contracts/diagnosis-knowledge-sources.md)：冻结“症状入口 ≠ 园艺原因”双轴、来源与适用性字段、结论/行动/映射 DTO、CMS 发布/回滚边界及独立 Expected。未完成只阻断其所依赖的诊断知识发布与 P4 问诊产品验收，不推翻其他已通过的 P1 合同；旧黄叶/萎蔫题包和虫害候选先审计，不直接作为 v2 发布事实。
+
 退出条件：植物身份准确性审计通过，业务关键变量 100% 分类且 P1 实现依赖项全部冻结，空库建表通过，代表性 RED 已保存，所有合同和架构制品有 SHA-256，`AGENTS.md` 已对齐 TypeScript 与配置治理。
 
 实施入口：
 
 - [P1 合同注册表](../contracts/contract-registry.json)
+- [诊断 Outcome/Action 知识来源合同](../contracts/diagnosis-knowledge-sources.md)
 - [总数据字典](../data/v2-data-dictionary.md)
 - [总 DDL](../schema/README.md)
 - [具体路由与 OpenAPI 骨架](../api/README.md)

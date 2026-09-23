@@ -19,6 +19,8 @@ https://app.clickup.com/90182453517/v/o/f/1100440000000586
 
 每个 ticket 的完整目的和验收标准见 [ticket-specs.md](ticket-specs.md)。
 
+新增的 P1“诊断知识来源、园艺原因及 Outcome/Action 合同”目前仅有[本地待建规格](ticket-specs.md)，尚无远端 ClickUp ID、未进入下表 27 张已创建任务或模块进度分母；真实建票与回读完成后再登记 ID 和负责人。P2 CMS 与 P4 问诊既有票据的增量验收须同步更新远端描述，不能因本地规格变更宣称远端已同步。
+
 | Phase | Ticket 标题 | 模块 | Agent | 状态 |
 |---|---|---|---|---|
 | P-1 | [旧函数、路由、测试和原子依赖审计](https://app.clickup.com/t/z8v0kmr96q) | foundation | audit_legacy_code_luna | 已创建 |

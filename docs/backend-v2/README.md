@@ -8,8 +8,8 @@
 
 - 文件：[青花植后端v2底层架构重构计划_融合闭环终版.md](/Users/jay/WebstormProjects/planting/青花植后端v2底层架构重构计划_融合闭环终版.md)
 - 基线标题：`青花植后端 v2 底层架构重构计划（完整融合闭环终版）`
-- 基线 SHA-256：`3a99912df326c69d36f918984e7d7d86a7847ea0a1f8b92bfa872867c1bcbb22`
-- 基线行数：2293
+- 基线 SHA-256：`3d3895edd06c067facdeb4583fc475da6f7b48ee9d557288b8351eddfbb4086e`
+- 基线行数：2317
 - 入口角色：agent 必须先读本文件；禁止绕过本文件直接进入 `.codex/plans/**`、旧副本或本目录子目录。
 - 正文角色：只有根目录 Master Plan 可以作为完整计划正文；`BASELINE.lock` 是其机器可核对的锁，不是第二份计划。
 

@@ -14,6 +14,7 @@
 | AI 额度 | subscription | Entitlement/Reward Domain | ai_quota_* | P2/P5 quota |
 | 养护 | care | Care Domain | facts/plans/evidence | P4 care |
 | 诊断 | diagnosis | Diagnosis Domain | sessions/results | P4 diagnosis |
+| 症状入口 → 园艺原因 → Outcome/Action | diagnosis 拥有内容语义与结果归约；plant-knowledge 复用 CMS 编辑发布通道 | Diagnosis Domain | 来源证据 / 原因目录 / Outcome / Action / 审核映射 / 兼容 release；结果锁定版本 | P1 诊断知识来源增量合同 / P2 CMS 发布基础设施 / P4 诊断内容底线 / P5 真实回放 |
 | 诊断生成式丰富解释 | diagnosis + subscription | 诊断证据账本与 AI 额度合同 | versioned prompt/schema/cost policy；按单一 productActionId 归集成本与额度 | P4 受控实验；动作级成本/额度上限、真实成本对照与回退门 |
 | 小青 | CloudBase Agent | 受控工具合同 | signed internal API | P4 agent |
 | 领域业务策略 | 各所属应用服务 | 各领域规则 | typed policy release / active pointer | P1 config contract + 各 Phase |

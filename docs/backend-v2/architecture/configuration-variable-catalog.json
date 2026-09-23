@@ -1,6 +1,6 @@
 {
   "schemaVersion": "configuration-variable-catalog/v1",
-  "catalogVersion": "2026-09-20.3",
+  "catalogVersion": "2026-09-23.1",
   "language": "zh-CN",
   "description": "青花植后端 v2 业务关键变量唯一目录。confirmed 表示已冻结，pending 表示必须在所属阶段冻结后才能实现对应范围，hard_rule 表示任何配置均不得覆盖。",
   "validationMetadata": {
@@ -1785,6 +1785,32 @@
       "expected": "只读取已发布题包",
       "pendingReason": "旧题包需审计后初始化 v2 release",
       "blockingScope": "固定问诊",
+      "decisionGroup": "diagnosis_releases"
+    },
+    {
+      "id": "diagnosis.knowledge.bundle_release_ref",
+      "chineseName": "诊断原因、结论、行动和映射的兼容知识发布包",
+      "domain": "diagnosis",
+      "layer": "domain_policy",
+      "valueType": "string",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "diagnosis",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/diagnosis-knowledge-sources.md",
+        "青花植后端v2底层架构重构计划_融合闭环终版.md"
+      ],
+      "consumers": [
+        "diagnosis",
+        "CloudBase CMS 发布校验"
+      ],
+      "changePolicy": "原因目录、Outcome、Action 和映射作为兼容不可变 release 发布，请求锁定单一快照及 SHA-256",
+      "fallback": "无已审核的兼容发布包时不开放相应诊断结果，不以模型自由生成内容兜底",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "expected": "黄叶、萎蔫和虫害结果的每个可见结论及行动均可回溯已发布来源与兼容版本；禁忌动作被抑制",
+      "pendingReason": "P1 诊断知识来源增量合同、旧资产审计与首版内容审核尚未冻结",
+      "blockingScope": "黄叶、萎蔫和虫害诊断知识发布与结果验收",
       "decisionGroup": "diagnosis_releases"
     },
     {
