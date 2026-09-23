@@ -93,7 +93,7 @@
       "file": "schemas/diagnosis-result.v1.schema.json",
       "owner": "diagnosis",
       "status": "P1_PENDING",
-      "sha256": "5fe1ef46a3d976a4cf10d716be3975b2ca39cffae3680fa7ed23b370c2e96c9a"
+      "sha256": "e639a374c4632e295c832391d271b6da2eed8c601af7c957b019f6d91cb05ff9"
     },
     {
       "id": "diagnosis-knowledge-sources",
@@ -109,7 +109,7 @@
       "file": "diagnosis-knowledge-persistence.md",
       "owner": "diagnosis",
       "status": "P1_PENDING",
-      "sha256": "bef4e6b6f3a25eac4e8bf11c9b0a952236d5070512c5bd8f0cd84fc5cd2c4ce0"
+      "sha256": "6628fc1a0dd9d40d176f8be0044ea1362486ca0dc8a1f2011a13ef6d11991b42"
     },
     {
       "id": "diagnosis-cms-review-exchange",

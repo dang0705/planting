@@ -135,16 +135,20 @@
     "recommendedAction": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["displayCategory", "titleZh", "purposeZh", "stepsZh", "selectionReasonZh", "safetyNotesZh", "contraindicationsZh", "followUpZh", "requiresUserConfirmation"],
+      "required": ["displayCategory", "titleZh", "purposeZh", "stepsZh", "selectionReasonZh", "applicabilityZh", "riskLevel", "safetyNotesZh", "contraindicationsZh", "stopConditionsZh", "followUpZh", "publicSources", "requiresUserConfirmation"],
       "properties": {
         "displayCategory": { "enum": ["immediate", "ongoing", "prevention", "caution"], "description": "截图展示分区，不决定行动的适用性。" },
         "titleZh": { "$ref": "#/$defs/chineseText", "description": "受审行动名称。" },
         "purposeZh": { "$ref": "#/$defs/chineseText", "description": "为何建议该行动。" },
         "stepsZh": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/chineseText" }, "description": "可执行且经审核的步骤。" },
         "selectionReasonZh": { "$ref": "#/$defs/chineseText", "description": "本次结论和证据为何命中该行动。" },
+        "applicabilityZh": { "$ref": "#/$defs/chineseText", "description": "该行动对本次植物、部位和环境的适用范围说明。" },
+        "riskLevel": { "enum": ["low", "moderate", "high"], "description": "已审核行动的风险级别，不得由模型自行给出。" },
         "safetyNotesZh": { "$ref": "#/$defs/textList", "description": "用户可见安全提示。" },
         "contraindicationsZh": { "$ref": "#/$defs/textList", "description": "已核验的禁忌与暂停条件。" },
+        "stopConditionsZh": { "$ref": "#/$defs/textList", "description": "出现何种信号时必须停止该行动并重新评估。" },
         "followUpZh": { "$ref": "#/$defs/chineseText", "description": "行动后的复查观察点或停止条件。" },
+        "publicSources": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/publicSource" }, "description": "逐项关联该行动的已审核公开来源；不使用整页通用来源冒充。" },
         "requiresUserConfirmation": { "const": true, "description": "建议不能自动写成养护事实、计划或提醒。" }
       }
     },

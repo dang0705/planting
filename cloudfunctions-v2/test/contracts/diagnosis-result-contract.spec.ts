@@ -55,9 +55,19 @@ const validResult = {
       purposeZh: '补充会改变结论的证据。',
       stepsZh: ['检查叶背，并记录盆土表面状态。'],
       selectionReasonZh: '现有证据不足，优先补充观察。',
+      applicabilityZh: '仅适用于用户能安全观察到的叶片和盆土表面。',
+      riskLevel: 'low',
       safetyNotesZh: [],
       contraindicationsZh: [],
+      stopConditionsZh: ['发现迅速扩大的损伤时停止按原结论处理并重新问诊。'],
       followUpZh: '观察新叶是否继续出现类似损伤。',
+      publicSources: [
+        {
+          sourceTypeZh: '园艺机构资料',
+          titleZh: '经审核的检查建议示例',
+          applicabilityZh: '支持先补充观察，再选择具体处置。'
+        }
+      ],
       requiresUserConfirmation: true
     }
   ],
@@ -143,6 +153,24 @@ describe('本次诊断结果公开结构合同', () => {
     const result = {
       ...validResult,
       recommendedActions: [{ ...firstAction, requiresUserConfirmation: false }]
+    }
+    expect(createValidator()(result)).toBe(false)
+  })
+
+  // Reverse：行动投影丢掉风险、适用范围或逐项来源时不能作为公开建议。
+  test.each(['applicabilityZh', 'riskLevel', 'stopConditionsZh', 'publicSources'])(
+    '拒绝缺少行动安全与来源字段：%s',
+    field => {
+      const action = { ...firstAction } as Record<string, unknown>
+      delete action[field]
+      expect(createValidator()({ ...validResult, recommendedActions: [action] })).toBe(false)
+    }
+  )
+
+  test('拒绝没有逐项公开来源的行动', () => {
+    const result = {
+      ...validResult,
+      recommendedActions: [{ ...firstAction, publicSources: [] }]
     }
     expect(createValidator()(result)).toBe(false)
   })
