@@ -19,4 +19,4 @@
 
 在本机 Docker 可用的前提下执行 `npm --prefix cloudfunctions-v2 run test:mysql`：7 个 MySQL 8.4 测试文件、19 条测试全部通过。测试各自使用隔离的临时数据库或容器；这次运行没有访问 CloudBase 数据库。覆盖的已实现切片包括统一身份解析与绑定事务、用户植物创建上限竞争、AI 额度预占/分配/结算/待对账，以及奖励 inbox、积分和等级事务回滚。具体可回放用例位于 `cloudfunctions-v2/test/e2e/*.mysql.spec.ts`。
 
-这不是本页全部验收项的完成证明：CMS 发布与隔离读取、全域 outbox 投递恢复、完整 HTTP→身份→Repository 路径、CloudBase MySQL 连接和跨域真实 API 回放仍须分别验证。上述测试不能替代 P5 的云端与供应商验收。同期完整本地 `npm --prefix cloudfunctions-v2 run verify` 为 59 个测试文件、294 条测试通过；lint 有 73 条告警、0 错误，运行构建时本机 Node 24 与目标 Node 22 的 engine 提示仍在，故不将本机结果表述为 Node 22 云函数运行验收。
+这不是本页全部验收项的完成证明：CMS 发布与隔离读取、全域 outbox 投递恢复、完整 HTTP→身份→Repository 路径、CloudBase MySQL 连接和跨域真实 API 回放仍须分别验证。上述测试不能替代 P5 的云端与供应商验收。同期完整本地 `npm --prefix cloudfunctions-v2 run verify` 为 59 个测试文件、294 条测试通过；lint 有 73 条告警、0 错误。另用独立的 Node.js `22.21.1` 运行时重新执行相同 `verify` 与 `test:mysql`，分别再次通过 294/294 和 19/19；这证明本地目标 Node 版本上的构建及隔离库测试，不证明 CloudBase 函数部署或云端 MySQL 连通。
