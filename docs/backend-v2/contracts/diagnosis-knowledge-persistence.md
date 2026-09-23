@@ -2,11 +2,11 @@
 
 - 绑定任务：[诊断知识来源、园艺原因及 Outcome/Action 合同](https://app.clickup.com/t/z8v0kmrg8a)。
 - 依据：[诊断知识来源合同](diagnosis-knowledge-sources.md)、[Outcome/Action 字段边界](diagnosis-outcome-fields.md)、[独立 Expected 草案](../testing/P1-diagnosis-knowledge-expected.md)。
-- 状态：**逻辑数据合同，尚非已执行 DDL、CMS 接口或已发布知识**。精确列长、JSON Schema、审核凭据交换和空库验证须在本合同下继续完成，不能以本文件替代验收。
+- 状态：**逻辑数据合同，尚非已执行 DDL、CMS 接口或已发布知识**。精确列长、JSON Schema、审核交换接线和空库验证须在本合同下继续完成，不能以本文件替代验收。
 
 ## 所有权与最小数据分层
 
-`diagnosis` 是下列知识表的唯一写者和发布者。CMS 只编辑候选并产生绑定确切内容摘要的审核凭据；`plant-knowledge` 的展示型百科补缺 Worker、现有 `cms_review_items` 与通用 `content_releases` 都不能写入或替代这些诊断表。诊断运行时只读取一个已发布的兼容知识包，不热读 CMS 草稿。
+`diagnosis` 是下列专属知识表的唯一服务端写者和发布者。CMS 编辑**独立草稿控制面**，`diagnosis` 导入并冻结候选，受控人工审核命令形成绑定确切内容摘要的本域凭据；交换边界见[诊断知识 CMS 人工审核交换合同](diagnosis-cms-review-exchange.md)。`plant-knowledge` 的展示型百科补缺 Worker、现有 `cms_review_items` 与通用 `content_releases` 都不能写入或替代这些诊断表。诊断运行时只读取一个已发布的兼容知识包，不热读 CMS 草稿。
 
 | 逻辑表 | 必须独立保存的字段或关系 | 关键约束与用途 |
 |---|---|---|

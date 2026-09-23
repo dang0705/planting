@@ -17,6 +17,7 @@
 - [P1 合同注册表](../contracts/contract-registry.json)
 - [诊断 Outcome/Action 知识来源合同](../contracts/diagnosis-knowledge-sources.md)
 - [诊断知识持久化与发布逻辑合同](../contracts/diagnosis-knowledge-persistence.md)
+- [诊断知识 CMS 人工审核交换合同](../contracts/diagnosis-cms-review-exchange.md)
 - [诊断旧资产候选盘点](../audits/P1-diagnosis-legacy-candidates-2026-09-24.md)
 - [黄叶水分方向来源主张候选](../audits/P1-yellow-leaf-water-source-claims-2026-09-24.md)
 - [诊断知识独立 Expected 草案](../testing/P1-diagnosis-knowledge-expected.md)

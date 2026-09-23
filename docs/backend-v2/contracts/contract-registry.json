@@ -93,7 +93,15 @@
       "file": "diagnosis-knowledge-persistence.md",
       "owner": "diagnosis",
       "status": "P1_PENDING",
-      "sha256": "4b6621f6e853a82d13a7016cd9146af51626c11f21316c0639759d7fa51387f9"
+      "sha256": "8d3340b112b80da4a646a4cbfea7372034ffcda206baf9c685d1e2c964860b2a"
+    },
+    {
+      "id": "diagnosis-cms-review-exchange",
+      "version": "diagnosis-cms-review-exchange/p1-draft",
+      "file": "diagnosis-cms-review-exchange.md",
+      "owner": "diagnosis + CMS editorial control plane",
+      "status": "P1_PENDING",
+      "sha256": "3d6fc6c32a961134b6f2df6cdae091a8f1ab8f7d7d41e1fd03c70d5c818bb41e"
     },
     {
       "id": "diagnosis-outcome-fields",
