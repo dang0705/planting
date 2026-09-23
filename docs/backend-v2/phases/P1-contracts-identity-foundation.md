@@ -15,6 +15,7 @@
 实施入口：
 
 - [P1 合同注册表](../contracts/contract-registry.json)
+- [已登录临时植物独立 Expected 草案](../testing/P1-authenticated-ephemeral-expected.md)
 - [诊断 Outcome/Action 知识来源合同](../contracts/diagnosis-knowledge-sources.md)
 - [诊断知识持久化与发布逻辑合同](../contracts/diagnosis-knowledge-persistence.md)
 - [诊断知识 CMS 人工审核交换合同](../contracts/diagnosis-cms-review-exchange.md)
