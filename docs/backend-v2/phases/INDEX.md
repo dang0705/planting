@@ -13,3 +13,4 @@
 
 同一时间只有一个 Phase 为 ACTIVE；后续 Phase 保持 DRAFT。
 
+[首版运行边界](first-release-scope.md)横跨各 Phase：目标架构与核心合同保持完整，首版仅对已列出的能力开放和验收；延后项保留后续任务，不冒充已完成。

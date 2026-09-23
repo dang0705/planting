@@ -6,6 +6,8 @@
 
 业务关键变量与 Provider 配置是 P1 前置硬门：必须建立覆盖全部业务域的逐项目录，区分已冻结、待冻结和不可配置硬规则；每项具备 owner、来源、消费方、变更/回退、阻断范围、Phase、ClickUp ticket 与 Expected。随后才能设计类型化策略 Schema、Provider release、active 指针、请求级快照与相关 DDL。禁止万能 KV、密钥入库和目录外隐式默认值。
 
+新版业务架构新增[已登录用户临时植物案例合同补充门](../contracts/authenticated-ephemeral-plant-case.md)：先冻结与游客路径不同的主体证明、临时案例归属、DTO、状态机、DDL、事务与 RED Expected，再允许 P3 实现这条首版核心路径。此前已验证的其他 P1 合同继续有效；此增量门未通过时不能把“已登录临时使用→绑定用户植物”列为已验收。
+
 退出条件：植物身份准确性审计通过，业务关键变量 100% 分类且 P1 实现依赖项全部冻结，空库建表通过，代表性 RED 已保存，所有合同和架构制品有 SHA-256，`AGENTS.md` 已对齐 TypeScript 与配置治理。
 
 实施入口：

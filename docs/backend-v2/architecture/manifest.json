@@ -2,15 +2,23 @@
   "version": "backend-architecture/v2-config-1",
   "algorithm": "sha256",
   "files": {
-    "README.md": "ef9f318898380fa4d9cef3a51cc700cda52c0c328e48172005a7c53539310666",
-    "青花植后端v2底层架构重构计划_融合闭环终版.md": "a268cefe9ec83cf4de33e806b96097cb033eae0310c6a77db7f2469a4598e89d",
-    "architecture/README.md": "a38124b1b4de0650b5283f8ee4dc2c1a0a4e34fc9705492c375a1684a67ed48c",
-    "business-domain.md": "5766d6ed1545f9a3b510e3b77f1e5f8c782381e4a9a6ad316f81fd3d34f28279",
-    "infrastructure.md": "afa51826b5c09e8f0093b5609829aa649b928ac7078a2224ec26bda89e4db621",
-    "business-to-technical-map.md": "ce9c88aef107e00c8ef2c633cbc3943197ed2ae97ecc2d43f3c38fdf998cb2ad",
+    "README.md": "ce530b1dd06e1db9363412a4db01da662e6524c8fcfa3f5476a389f670ecfbbb",
+    "青花植后端v2底层架构重构计划_融合闭环终版.md": "6978591ac53062c31bfec8caa663a946bf9eae61178910c252920eaebfdf80dd",
+    "architecture/README.md": "f0222cc2b0d1d76ae9e9474085b668cb3c08071f70aed2eb84c3806b07325339",
+    "business-domain.md": "cad13b300697287fd04e70cb3bef8d3faf699e69a11d3f1f4dd34880d51eed5f",
+    "business-domain-layers.md": "42bc6e155a0ad2da26c35001dd666ddaabcc80cae60b52e2b1cf2fb7e97a1fa1",
+    "phases/first-release-scope.md": "96ca29c9d2de50f4d8b3e787dcc91686f4200d7ee84e3065d3472687146e756a",
+    "contracts/diagnosis-rich-response-experiment.md": "9c442798790cf97d736273b8fcf92811e4484e7ebf1be4177499807708a26a9b",
+    "contracts/authenticated-ephemeral-plant-case.md": "87c88625423084ba393cc560e7769f48b7cad33c43a3f53eb86f75b908f6e395",
+    "infrastructure.md": "14655fe7a6db78b9a807c0d2050249194a292b93bd0e1473ac2d49c5b16f1c80",
+    "business-to-technical-map.md": "98113e0f0b23ced2c708f9d507df88f8879d89883c4f4585b0034004cef1e40e",
     "architecture-rules.md": "87e5f18c3e978ffa678f75fbdec8dc21b8122a76dce809e950e13b34cf9a7a04",
     "configuration-and-providers.md": "677f32ded19440c3f3140a5d594555bc5f44bb7376fafcfce5f3400004f120ce",
     "configuration-variable-catalog.json": "a038ad3fb87cc837e0c7297178c7000d90e0c68323357d50b3fac5d899e7d58d",
     "configuration-variable-catalog.md": "b5ac637b0319168e36cad68b88a815e818821c36e02a82cde91568373b1561cb"
+  },
+  "diagrams": {
+    "business": "422443bd0a812da8bbef288e2ca50fd9b487738a903ad05b895ec744cf1a3c4c",
+    "infrastructure": "ed670a0dd898b9b4403ba42c2042d17b39a249c46bcf3fb01006b6da892d1c65"
   }
 }

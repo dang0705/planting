@@ -51,7 +51,7 @@ function hasProgress(value) {
 
 function inferModel(agentName) {
   if (agentName.endsWith('_terra')) return 'gpt-5.6-terra / medium';
-  if (agentName.endsWith('_luna')) return 'gpt-5.6-luna / max';
+  if (agentName.endsWith('_luna')) return 'gpt-6-luna / max';
   return '以运行时代理清单为准';
 }
 

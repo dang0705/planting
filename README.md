@@ -1,5 +1,7 @@
 # 青花植架构
 
+> 产品主张：**Everything is for your plant**。识别、临时问诊和浇水可以先提供一次性价值；当用户愿意长期照顾这株植物时，创建或绑定用户植物，让后续事实、状态、建议、行动与反馈都回到同一株真实植物。完整目标架构保持稳定，首版上线范围另见 [首版运行边界](docs/backend-v2/phases/first-release-scope.md)。
+
 青花植同时维护两套不可混用、但必须相互映射的架构：
 
 - 业务领域架构描述业务事实、业务能力、业务关系与业务流，是产品和领域合同的事实源。
@@ -45,7 +47,14 @@ flowchart TB
 
 
   %% ========== 游客与独立临时能力 ==========
-  Visitor --> EphemeralCase[临时植物会话<br/>有有效期 / 不生成 user_plant_id]
+  CapabilityGate --> PlantEntry[植物业务入口<br/>识别 / 问诊 / 养护]
+  PlantEntry --> SubjectGate{当前主体已有 user_id?}
+  SubjectGate -->|否 · 游客| EphemeralCase[临时植物会话<br/>游客 / 已登录用户均可使用<br/>有有效期 / 不生成 user_plant_id]
+  SubjectGate -->|是 · 已登录| PlantModeGate{本次是否绑定长期植物?}
+  PlantModeGate -->|否 · 临时使用| EphemeralCase
+  PlantModeGate -->|是 · 长期使用| PlantSelection[选择已有或创建用户植物]
+  PlantSelection -->|选择已有| PlantRoot
+  PlantSelection -->|创建新株| CreatePlant
   CapabilityGate -->|所有层级 / 不扣 AI 点数| Identify
   CapabilityGate -->|已发布基础题包 / 不扣 AI 点数| TemporaryDiagnosis[独立基础问诊<br/>不写植物事实]
   CapabilityGate -->|游客与免费用户基础能力| TemporaryCare[独立浇水顾问<br/>不写事实 / 计划 / 提醒]
@@ -55,10 +64,10 @@ flowchart TB
   EphemeralCase --> Identify
   EphemeralCase --> TemporaryDiagnosis
   EphemeralCase --> TemporaryCare
-  TemporaryDiagnosis --> TemporaryDiagnosisResult[临时问诊结果<br/>游客阶段不写植物事实]
-  TemporaryCare --> TemporaryAdvice[临时浇水建议<br/>游客阶段不写植物事实]
+  TemporaryDiagnosis --> TemporaryDiagnosisResult[临时问诊结果<br/>不写用户植物事实]
+  TemporaryCare --> TemporaryAdvice[临时浇水建议<br/>不写用户植物事实]
 
-  EphemeralCase --> SessionClaim[同一会话登录后认领<br/>用户确认 / 一次性 / 可审计]
+  EphemeralCase --> SessionClaim[同一会话显式归属 / 绑定<br/>游客先登录；已登录用户可直接选择目标<br/>两类主体分别验权 / 一次性 / 可审计]
   SessionClaim --> CreatePlant
   SessionClaim -->|绑定来源记录，不改变记录语义| PlantRoot
   TemporaryDiagnosisResult --> SessionClaim
@@ -81,6 +90,16 @@ flowchart TB
     PlantRoot --> PlantIdentity
     PlantRoot --> CareContext
   end
+
+  PlantRoot --> PersistentPlantContext[长期植物上下文<br/>身份 / 档案 / 环境 / 事实 / 状态]
+  EphemeralCase --> EphemeralPlantContext[临时植物上下文<br/>本次输入与结果 / 有效期内可显式绑定]
+  PersistentPlantContext --> RuntimePlantContext[本次运行植物上下文<br/>按能力只读组装 / 不新增植物实体]
+  EphemeralPlantContext --> RuntimePlantContext
+  RuntimePlantContext --> Identify
+  RuntimePlantContext --> TemporaryDiagnosis
+  RuntimePlantContext --> TemporaryCare
+  RuntimePlantContext --> CareInput
+  RuntimePlantContext --> Diagnosis
 
 
   %% ========== 植物知识、识别与百科自丰富 ==========
@@ -105,8 +124,8 @@ flowchart TB
   DisplayValidation --> CMSDraft[CMS 草稿<br/>可审核 / 可驳回 / 可追溯]
   CMSDraft --> ContributionReview[登录用户贡献审核<br/>记录 user_id / 贡献类型 / 幂等键]
   IdentityReview --> ContributionReview
-  ContributionReview -->|新增规范植物审核通过| PlantReward[奖励 100 AI 点数]
-  ContributionReview -->|基础展示内容审核通过| ContentReward[奖励 50 AI 点数]
+  ContributionReview -->|新增规范植物实际发布且唯一性核验通过| PlantReward[奖励 100 AI 点数]
+  ContributionReview -->|基础展示内容实际发布且唯一性核验通过| ContentReward[奖励 50 AI 点数]
   PlantReward --> ContributionReward
   ContentReward --> ContributionReward
 
@@ -159,7 +178,8 @@ flowchart TB
   Ventilation --> StableCareOutput
 
   EphemeralCase --> TemporaryCareInput[临时浇水输入<br/>候选身份 / 盆器介质 / 用户回答<br/>手工盆土状态或受控视觉]
-  TemporaryCareInput --> EnvironmentAtoms
+  TemporaryCareInput --> TemporaryEnvironmentAtoms[临时原子环境输入<br/>仅属于本次案例 / 不回写已有植物]
+  TemporaryEnvironmentAtoms --> EnvironmentSnapshot
   EnvironmentDerived --> TemporaryCare
 
 
@@ -194,6 +214,17 @@ flowchart TB
 
   Diagnosis --> PlantState
   CarePlan --> PlantState
+
+
+  %% ========== 目标架构保留，首版不开放的积分与等级 ==========
+  PlantRoot --> RewardableAction[可奖励的有效养护行为<br/>检查与判断 / 不鼓励反复浇水]
+  RewardableAction --> CarePoints[积分账户与不可变账本<br/>目标能力 / 首版延后]
+  CarePoints --> CareLevel[养护等级<br/>目标能力 / 首版延后]
+  CarePoints --> RewardCatalog[积分兑换<br/>目标能力 / 首版延后]
+  CareLevel --> LevelReward[等级 AI 奖励额度<br/>目标能力 / 首版延后]
+  RewardCatalog --> RedemptionReward[兑换 AI 奖励额度<br/>目标能力 / 首版延后]
+  LevelReward --> GenerativeGate
+  RedemptionReward --> GenerativeGate
 
 
   %% ========== 小青 ==========
@@ -275,7 +306,8 @@ flowchart TB
   subgraph Application["业务服务层 Application Services"]
     IdentityApp[identity<br/>匿名/正式主体解析<br/>统一身份 / session]
     KnowledgeApp[plant-knowledge<br/>植物身份 / 百科 / 内部知识<br/>识别 / 内容补全]
-    UserPlantApp[user-plant<br/>用户植物 / 档案 / 生命周期]
+    UserPlantApp[user-plant<br/>植物入口 / 临时案例 / 显式绑定<br/>用户植物 / 档案 / 生命周期]
+    PlantEntryService[user-plant 内部入口用例与上下文组装<br/>先分主体，再选临时或长期<br/>按能力提供只读运行时植物上下文]
     CareApp[care<br/>临时与用户植物养护<br/>事实 / 浇水 / 施肥 / 光照 / 通风 / 计划]
     EnvironmentAssembler[环境证据组装<br/>原子事实 / 输入快照 / 来源与新鲜度]
     DiagnosisApp[diagnosis<br/>临时与用户植物问诊<br/>题包 / 证据 / 结果]
@@ -289,6 +321,12 @@ flowchart TB
   CapabilitySnapshot -.能力判定.-> UserPlantApp
   CapabilitySnapshot -.能力判定.-> CareApp
   CapabilitySnapshot -.能力判定.-> DiagnosisApp
+
+  UserPlantApp --> PlantEntryService
+  PrincipalContract --> PlantEntryService
+  PlantEntryService -.只读运行时植物上下文.-> KnowledgeApp
+  PlantEntryService -.只读运行时植物上下文.-> CareApp
+  PlantEntryService -.只读运行时植物上下文.-> DiagnosisApp
 
   CareApp -.AI 预占 / 结算.-> SubscriptionApp
   DiagnosisApp -.AI 预占 / 结算.-> SubscriptionApp
@@ -369,10 +407,10 @@ flowchart TB
   subgraph Persistence["持久化与表所有权"]
     IdentityStore[(users / platform identities<br/>principal mapping)]
     KnowledgeStore[(identity / encyclopedia / internal knowledge<br/>release / enrichment jobs)]
-    UserPlantStore[(user-plant / asset tables)]
-    CareStore[(环境观察 / 输入快照 / 派生指标<br/>fact / care / weather / evidence<br/>临时养护会话 / 认领状态)]
-    DiagnosisStore[(diagnosis / 临时问诊会话<br/>认领状态 / AI audit tables)]
-    SubscriptionStore[(trial / entitlement / subscription / payment<br/>AI account / reservation / ledger / reward grants)]
+    UserPlantStore[(用户植物 / 资产 / 临时案例<br/>主体与有效期 / 显式绑定状态)]
+    CareStore[(环境观察 / 输入快照 / 派生指标<br/>事实 / 计划 / 天气 / 临时养护结果)]
+    DiagnosisStore[(诊断 / 临时问诊结果<br/>证据 / AI 审计)]
+    SubscriptionStore[(试用 / 权益 / 订阅 / 支付<br/>AI 账户 / 预占 / 账本 / 奖励<br/>积分与等级为目标能力，首版延后)]
     ConfigurationStore[(不可变策略 / Provider release<br/>active 指针 / 发布审计)]
     MySQL[(CloudBase MySQL<br/>planting_v2)]
 
@@ -439,6 +477,9 @@ flowchart TB
   CredentialStore -.凭证引用.-> DiagnosisVisionAdapter
   DiagnosisVisionAdapter --> DiagnosisEvidence[诊断模型证据<br/>模型 / 提示词 / release / schema]
   DiagnosisEvidence --> DiagnosisApp
+  DiagnosisApp --> RichResponseExperiment[结构化诊断解释实验<br/>证据约束 / 行动建议 / 不确定性<br/>独立 Prompt 与 Schema 版本]
+  RichResponseExperiment -.同一产品动作预占与结算.-> SubscriptionApp
+  RichResponseExperiment --> DiagnosisVisionAdapter
 
   CareApp --> SoilVisionAdapter[盆土视觉 Adapter]
   SoilVisionAdapter --> Bailian

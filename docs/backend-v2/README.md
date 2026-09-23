@@ -8,8 +8,8 @@
 
 - 文件：[青花植后端v2底层架构重构计划_融合闭环终版.md](/Users/jay/WebstormProjects/planting/青花植后端v2底层架构重构计划_融合闭环终版.md)
 - 基线标题：`青花植后端 v2 底层架构重构计划（完整融合闭环终版）`
-- 基线 SHA-256：`a268cefe9ec83cf4de33e806b96097cb033eae0310c6a77db7f2469a4598e89d`
-- 基线行数：2239
+- 基线 SHA-256：`6978591ac53062c31bfec8caa663a946bf9eae61178910c252920eaebfdf80dd`
+- 基线行数：2291
 - 入口角色：agent 必须先读本文件；禁止绕过本文件直接进入 `.codex/plans/**`、旧副本或本目录子目录。
 - 正文角色：只有根目录 Master Plan 可以作为完整计划正文；`BASELINE.lock` 是其机器可核对的锁，不是第二份计划。
 
@@ -53,7 +53,7 @@ Master Plan 保留完整目标、架构、边界、Phase、风险和完成标准
 
 ## 当前实施状态
 
-- P-1 资产审计、P0 决策/证伪和 P1 合同/Schema 已通过对应出口门；当前已进入 P2 核心领域与共享基础设施实现。
+- P-1 资产审计、P0 决策/证伪和既有 P1 合同/Schema 已通过对应出口门；当前已进入 P2 核心领域与共享基础设施实现。新版架构新增“已登录用户临时植物”P1 增量合同门，未冻结前不得开展该路径的 P3 实现或验收；不使其他已通过 P1 合同自动失效。
 - 植物分类人工裁决已形成 106 条本地未激活种子候选；4 条待转换记录仍需重建和复核，active release 保持 `STOP`。该局部门禁不阻断 `identity`、`subscription`、`user-plant` 与 `foundation`。
 - P2 Foundation 已开始首个 TDD 切片；进度和未覆盖范围以 `implementation/foundation-request-chain.md` 与对应 ticket 心跳为准，不以模块存在冒充整项完成。
 - 数据库/CMS/Storage/网关写入：未开始。

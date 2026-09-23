@@ -1,5 +1,7 @@
 # 奖励事件合同
 
+本合同定义目标态跨域奖励事件。首版积分、等级和兑换运行延后，业务事实不能因为存在奖励事件类型就自动发分；CMS 贡献 AI 奖励随已审核发布的扩种实验单独验收。首版边界见[首版运行边界](../phases/first-release-scope.md)。
+
 - 合同版本：`reward-events/v1`
 - 交付语义：至少一次（at-least-once）投递 + `subscription` inbox 幂等；不宣称恰好一次。
 

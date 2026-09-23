@@ -28,14 +28,14 @@
       "version": "care-points-ai-quota/v1",
       "file": "care-points-and-ai-quota.md",
       "owner": "subscription",
-      "sha256": "ce28844d6fc86aa0dfe6d79542d1d9069a38b2049c6ba3389d9397132f05870d"
+      "sha256": "731d1752cce8ac88177e597f5795868a39141a6c8a7104b4525e88119270cd55"
     },
     {
       "id": "reward-events",
       "version": "reward-events/v1",
       "file": "reward-events.md",
       "owner": "subscription",
-      "sha256": "1414d00115e6e06f572e139517e80a5a482b310bffb9bea3108ce59725d97026"
+      "sha256": "3e7ccf62926ce0efb118cb123af7a528e41ad07c75dc882e7bb45f60fe79999f"
     },
     {
       "id": "plant-taxonomy",
