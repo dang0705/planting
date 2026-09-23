@@ -11,6 +11,7 @@
 - [积分、等级与 AI 额度](care-points-and-ai-quota.md)
 - [诊断内容增强的首版实验合同](diagnosis-rich-response-experiment.md)
 - [诊断结论与行动建议的知识来源合同](diagnosis-knowledge-sources.md)
+- [诊断知识持久化与发布逻辑合同](diagnosis-knowledge-persistence.md)
 - [诊断 Outcome 字段设计与结果呈现边界](diagnosis-outcome-fields.md)
 - [奖励事件](reward-events.md)
 - [HTTP API 公共合同](http-api.md)
