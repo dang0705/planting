@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qinghuazhi.local/contracts/diagnosis-cms-review-decision.v1.schema.json",
+  "title": "诊断知识人工审核决定请求 v1",
+  "description": "仅约束批准或驳回确切候选的请求结构；管理员真实性、内容摘要重算及审核持久化由服务端验证。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "reviewRef", "candidateRef", "contentSha256", "decision", "reasonZh"],
+  "properties": {
+    "protocolVersion": { "const": "diagnosis-cms-review/v1", "description": "审核交换协议版本，未知版本拒绝。" },
+    "reviewRef": { "type": "string", "minLength": 1, "description": "本次批准或驳回的幂等引用；不是审核员身份。" },
+    "candidateRef": { "type": "string", "minLength": 1, "description": "诊断域已冻结的候选修订引用，不是可变 CMS 行号。" },
+    "contentSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "审核员所见完整候选内容的 SHA-256；服务端必须重算并比对。" },
+    "decision": { "enum": ["approved", "rejected"], "description": "批准或驳回；撤销既有批准必须走独立命令。" },
+    "reasonZh": { "type": "string", "minLength": 1, "description": "审核决定的中文理由；不得包含凭证或私有资产路径。" },
+    "reviewEvidenceRef": { "type": "string", "minLength": 1, "description": "可选的受控审核证据引用，不是公开资源地址。" }
+  }
+}

@@ -13,6 +13,8 @@
 - [诊断结论与行动建议的知识来源合同](diagnosis-knowledge-sources.md)
 - [诊断知识持久化与发布逻辑合同](diagnosis-knowledge-persistence.md)
 - [诊断知识 CMS 人工审核交换合同](diagnosis-cms-review-exchange.md)
+- [诊断 CMS 审核决定 v1 结构 Schema](schemas/diagnosis-cms-review-decision.v1.schema.json)
+- [诊断 CMS 既有批准撤销 v1 结构 Schema](schemas/diagnosis-cms-review-revocation.v1.schema.json)
 - [诊断 Outcome 字段设计与结果呈现边界](diagnosis-outcome-fields.md)
 - [本次诊断公开结果 v1 结构 Schema](schemas/diagnosis-result.v1.schema.json)
 - [诊断知识单候选关系索引 v1 结构 Schema](schemas/diagnosis-knowledge-reference-index.v1.schema.json)

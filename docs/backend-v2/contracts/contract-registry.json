@@ -125,7 +125,23 @@
       "file": "diagnosis-cms-review-exchange.md",
       "owner": "diagnosis + CMS editorial control plane",
       "status": "P1_PENDING",
-      "sha256": "a87f0ef7a393ae5adb17e902a80d9ccd0648e05521107eb9d3562c89010d13bc"
+      "sha256": "b58cbeb285ab3969f2a885f0b6adaabdc1b9bb3349ca888167e78adf65c9b3b8"
+    },
+    {
+      "id": "diagnosis-cms-review-decision-schema",
+      "version": "diagnosis-cms-review/v1",
+      "file": "schemas/diagnosis-cms-review-decision.v1.schema.json",
+      "owner": "diagnosis + CMS editorial control plane",
+      "status": "P1_PENDING",
+      "sha256": "4bf4a77d0fbe98196922ba9650a8bc2d597da320cd32e26eaa3993bb55af7340"
+    },
+    {
+      "id": "diagnosis-cms-review-revocation-schema",
+      "version": "diagnosis-cms-review/v1",
+      "file": "schemas/diagnosis-cms-review-revocation.v1.schema.json",
+      "owner": "diagnosis + CMS editorial control plane",
+      "status": "P1_PENDING",
+      "sha256": "8500c249f552c9f15c7bdaf697167b2e52ab8ea7a3c5ffd4fe5282b5a286163b"
     },
     {
       "id": "diagnosis-outcome-fields",

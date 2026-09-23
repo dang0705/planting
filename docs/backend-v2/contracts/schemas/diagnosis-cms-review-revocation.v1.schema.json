@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qinghuazhi.local/contracts/diagnosis-cms-review-revocation.v1.schema.json",
+  "title": "诊断知识既有批准撤销请求 v1",
+  "description": "撤销是对既有批准的独立、不可变命令；本结构不决定已在线发布包的停用策略。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "revocationRef", "targetReviewRef", "reasonZh"],
+  "properties": {
+    "protocolVersion": { "const": "diagnosis-cms-review/v1", "description": "审核交换协议版本，未知版本拒绝。" },
+    "revocationRef": { "type": "string", "minLength": 1, "description": "本次撤销的独立幂等引用，不得复用审核决定引用。" },
+    "targetReviewRef": { "type": "string", "minLength": 1, "description": "既有批准的审核引用；服务端必须解析并验证目标及其状态。" },
+    "reasonZh": { "type": "string", "minLength": 1, "description": "撤销既有批准的中文理由，必须保留以供追责。" },
+    "reviewEvidenceRef": { "type": "string", "minLength": 1, "description": "可选的受控撤销证据引用，不是公开资源地址。" }
+  }
+}
