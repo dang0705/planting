@@ -20,6 +20,7 @@
 - [诊断旧资产候选盘点](../audits/P1-diagnosis-legacy-candidates-2026-09-24.md)
 - [黄叶水分方向来源主张候选](../audits/P1-yellow-leaf-water-source-claims-2026-09-24.md)
 - [诊断知识独立 Expected 草案](../testing/P1-diagnosis-knowledge-expected.md)
+- [诊断知识 DDL 先行 RED 证据](../audits/evidence/P1-diagnosis-knowledge-ddl-red.md)
 - [总数据字典](../data/v2-data-dictionary.md)
 - [总 DDL](../schema/README.md)
 - [具体路由与 OpenAPI 骨架](../api/README.md)
