@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-20T23:52:17+08:00",
+  "generatedAt": "2026-09-23T23:42:37+08:00",
   "contracts": [
     {
       "id": "principal-and-capability",
@@ -85,7 +85,15 @@
       "file": "diagnosis-knowledge-sources.md",
       "owner": "diagnosis + CMS publication channel",
       "status": "P1_PENDING",
-      "sha256": "b791330a7003aeba2c56dad17f958746ed8c378d13ae6dba15a11fefeacabeb0"
+      "sha256": "4dde7f8c6692965a3e76fbfcc868853d26c6d9636d07642476c5c319cdeca7e2"
+    },
+    {
+      "id": "diagnosis-outcome-fields",
+      "version": "diagnosis-outcome-fields/p1-draft",
+      "file": "diagnosis-outcome-fields.md",
+      "owner": "diagnosis",
+      "status": "P1_PENDING",
+      "sha256": "2b608c15815f8a84b926114b4ee766b7f752a19c4d59c8ec6b6df0b92b7a41c3"
     },
     {
       "id": "diagnosis-visual-prompt",

@@ -15,6 +15,7 @@ const 文件 = {
   'phases/first-release-scope.md': path.join(项目根目录, 'docs/backend-v2/phases/first-release-scope.md'),
   'contracts/diagnosis-rich-response-experiment.md': path.join(项目根目录, 'docs/backend-v2/contracts/diagnosis-rich-response-experiment.md'),
   'contracts/diagnosis-knowledge-sources.md': path.join(项目根目录, 'docs/backend-v2/contracts/diagnosis-knowledge-sources.md'),
+  'contracts/diagnosis-outcome-fields.md': path.join(项目根目录, 'docs/backend-v2/contracts/diagnosis-outcome-fields.md'),
   'contracts/authenticated-ephemeral-plant-case.md': path.join(项目根目录, 'docs/backend-v2/contracts/authenticated-ephemeral-plant-case.md'),
   'infrastructure.md': path.join(当前目录, 'infrastructure.md'),
   'business-to-technical-map.md': path.join(当前目录, 'business-to-technical-map.md'),

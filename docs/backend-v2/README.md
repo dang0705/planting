@@ -57,5 +57,5 @@ Master Plan 保留完整目标、架构、边界、Phase、风险和完成标准
 - 植物分类人工裁决已形成 106 条本地未激活种子候选；4 条待转换记录仍需重建和复核，active release 保持 `STOP`。该局部门禁不阻断 `identity`、`subscription`、`user-plant` 与 `foundation`。
 - P2 Foundation 已开始首个 TDD 切片；进度和未覆盖范围以 `implementation/foundation-request-chain.md` 与对应 ticket 心跳为准，不以模块存在冒充整项完成。
 - 数据库/CMS/Storage/网关写入：未开始。
-- ClickUp：27 个任务均已创建；专职状态维护子代理每 30 分钟通过 Chrome `default/main` 核对并同步实际状态。
+- ClickUp：28 个任务均已创建；专职状态维护子代理每 30 分钟核对并同步实际状态。远端任务是否进入执行、审核或完成，以逐项读回的真实状态为准。
 - 前端：不在本阶段范围。

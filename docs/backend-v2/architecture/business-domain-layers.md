@@ -615,7 +615,7 @@ flowchart TB
   mapping --> result
 ```
 
-> **边界/说明：** 题包不能直接决定病虫害分类；模型只能提出待审候选，不能直接发布 Outcome、Action 或结论-行动映射。详细合同见 [诊断知识来源合同](../contracts/diagnosis-knowledge-sources.md)。
+> **边界/说明：** 题包不能直接决定病虫害分类；模型只能提出待审候选，不能直接发布 Outcome、Action 或结论-行动映射。详细合同见 [诊断知识来源合同](../contracts/diagnosis-knowledge-sources.md) 与 [Outcome 字段设计](../contracts/diagnosis-outcome-fields.md)。
 
 ### L2｜Multi-image Evidence
 
