@@ -96,6 +96,14 @@
       "sha256": "e639a374c4632e295c832391d271b6da2eed8c601af7c957b019f6d91cb05ff9"
     },
     {
+      "id": "diagnosis-knowledge-reference-index",
+      "version": "diagnosis-knowledge-reference-index/v1",
+      "file": "schemas/diagnosis-knowledge-reference-index.v1.schema.json",
+      "owner": "diagnosis",
+      "status": "P1_PENDING",
+      "sha256": "2a87328ad2f8444abe8f9b918208be4428d8c229f61cba4e6c28e49f3dff207b"
+    },
+    {
       "id": "diagnosis-knowledge-sources",
       "version": "diagnosis-knowledge-sources/p1-draft",
       "file": "diagnosis-knowledge-sources.md",
@@ -109,7 +117,7 @@
       "file": "diagnosis-knowledge-persistence.md",
       "owner": "diagnosis",
       "status": "P1_PENDING",
-      "sha256": "6628fc1a0dd9d40d176f8be0044ea1362486ca0dc8a1f2011a13ef6d11991b42"
+      "sha256": "748c3d027bf1eb98afb32fe3782ba79ae7c7dbfcda53cedbe8827fca42d0429c"
     },
     {
       "id": "diagnosis-cms-review-exchange",

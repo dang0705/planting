@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qinghuazhi.local/contracts/diagnosis-knowledge-reference-index.v1.schema.json",
+  "title": "诊断知识单候选关系索引 v1",
+  "description": "仅验证已投影关系索引的结构；不替代完整候选 JSON Schema、来源许可及适用性核验、题包发布读回或人工审核。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["publishedSymptomModes", "verifiedClaimRevisions", "causes", "outcomes", "actions", "mappings", "claimLinks"],
+  "properties": {
+    "publishedSymptomModes": { "type": "array", "items": { "$ref": "#/$defs/symptomMode" }, "description": "已由上游核实发布状态的症状入口及精确题包发布引用。" },
+    "verifiedClaimRevisions": { "type": "array", "items": { "$ref": "#/$defs/claimRevision" }, "description": "已由上游核实来源、许可和适用性的精确主张修订。" },
+    "causes": { "type": "array", "items": { "$ref": "#/$defs/cause" }, "description": "本候选内的园艺原因与父原因关系。" },
+    "outcomes": { "type": "array", "items": { "$ref": "#/$defs/outcome" }, "description": "本候选内的结论、原因、症状入口及鉴别关系。" },
+    "actions": { "type": "array", "items": { "$ref": "#/$defs/action" }, "description": "本候选内的行动代码与已审核风险级别；空数组允许只给有界待判定结论。" },
+    "mappings": { "type": "array", "items": { "$ref": "#/$defs/mapping" }, "description": "本候选内的结论—行动映射；不能强制每个结论产生行动。" },
+    "claimLinks": { "type": "array", "items": { "$ref": "#/$defs/claimLink" }, "description": "每条知识对应的精确来源主张修订及用途。" }
+  },
+  "$defs": {
+    "code": { "type": "string", "minLength": 1, "maxLength": 96, "description": "非空稳定业务代码，与当前 SQL VARCHAR(96) 边界一致。" },
+    "releaseRef": { "type": "string", "minLength": 1, "maxLength": 64, "description": "不可变题包发布引用，与诊断会话 SQL VARCHAR(64) 边界一致。" },
+    "revisionNo": { "type": "integer", "minimum": 0, "maximum": 4294967295, "description": "精确主张修订号，符合 SQL INT UNSIGNED；是否从一开始由发布规则另定。" },
+    "symptomMode": {
+      "type": "object", "additionalProperties": false,
+      "required": ["symptomModeCode", "questionPackageReleaseRef"],
+      "properties": {
+        "symptomModeCode": { "$ref": "#/$defs/code", "description": "症状入口业务代码，不是园艺病因。" },
+        "questionPackageReleaseRef": { "$ref": "#/$defs/releaseRef", "description": "该入口已发布的精确题包版本引用。" }
+      }
+    },
+    "claimRevision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sourceCode", "claimCode", "revisionNo"],
+      "properties": {
+        "sourceCode": { "$ref": "#/$defs/code", "description": "稳定资料来源代码。" },
+        "claimCode": { "$ref": "#/$defs/code", "description": "该来源下的稳定主张代码。" },
+        "revisionNo": { "$ref": "#/$defs/revisionNo", "description": "不得自动改为最新的具体主张修订。" }
+      }
+    },
+    "cause": {
+      "type": "object", "additionalProperties": false,
+      "required": ["causeCode", "parentCauseCode"],
+      "properties": {
+        "causeCode": { "$ref": "#/$defs/code", "description": "候选内唯一的园艺原因代码。" },
+        "parentCauseCode": { "oneOf": [{ "$ref": "#/$defs/code" }, { "type": "null" }], "description": "同候选父原因；根原因明确使用 null。" }
+      }
+    },
+    "outcome": {
+      "type": "object", "additionalProperties": false,
+      "required": ["outcomeCode", "causeCode", "symptomModeRefs", "differentialOutcomeCodes"],
+      "properties": {
+        "outcomeCode": { "$ref": "#/$defs/code", "description": "候选内唯一的诊断结论代码。" },
+        "causeCode": { "$ref": "#/$defs/code", "description": "同候选园艺原因代码。" },
+        "symptomModeRefs": { "type": "array", "items": { "$ref": "#/$defs/symptomMode" }, "description": "该结论可进入的症状入口和题包精确版本。" },
+        "differentialOutcomeCodes": { "type": "array", "items": { "$ref": "#/$defs/code" }, "description": "同候选需要鉴别的其他结论代码。" }
+      }
+    },
+    "action": {
+      "type": "object", "additionalProperties": false,
+      "required": ["actionCode", "riskLevel"],
+      "properties": {
+        "actionCode": { "$ref": "#/$defs/code", "description": "候选内唯一的行动代码。" },
+        "riskLevel": { "enum": ["low", "moderate", "high"], "description": "受审风险级别；高风险行动还须经独立安全主张与适用性门。" }
+      }
+    },
+    "mapping": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mappingCode", "outcomeCode", "actionCode"],
+      "properties": {
+        "mappingCode": { "$ref": "#/$defs/code", "description": "候选内唯一的结论—行动映射代码。" },
+        "outcomeCode": { "$ref": "#/$defs/code", "description": "同候选的诊断结论代码。" },
+        "actionCode": { "$ref": "#/$defs/code", "description": "同候选的行动代码。" }
+      }
+    },
+    "claimLink": {
+      "type": "object", "additionalProperties": false,
+      "required": ["targetKind", "targetCode", "sourceCode", "claimCode", "revisionNo", "linkRole"],
+      "properties": {
+        "targetKind": { "enum": ["cause", "outcome", "action", "mapping"], "description": "被主张关联的知识条目类型。" },
+        "targetCode": { "$ref": "#/$defs/code", "description": "同候选、对应类型下的目标稳定代码。" },
+        "sourceCode": { "$ref": "#/$defs/code", "description": "精确主张的资料来源代码。" },
+        "claimCode": { "$ref": "#/$defs/code", "description": "来源内的稳定主张代码。" },
+        "revisionNo": { "$ref": "#/$defs/revisionNo", "description": "精确主张修订号。" },
+        "linkRole": { "enum": ["support", "oppose", "limit", "safety"], "description": "该主张对此条知识的支持、反驳、限制或安全作用。" }
+      }
+    }
+  }
+}
