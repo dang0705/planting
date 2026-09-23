@@ -2,16 +2,16 @@
   "version": "backend-architecture/v2-config-1",
   "algorithm": "sha256",
   "files": {
-    "README.md": "6d4a6ab3295b9b5edb1c2b8bed97c0aa8bead729d6d2f755baf870663ef9609e",
-    "青花植后端v2底层架构重构计划_融合闭环终版.md": "3d3895edd06c067facdeb4583fc475da6f7b48ee9d557288b8351eddfbb4086e",
-    "architecture/README.md": "f0222cc2b0d1d76ae9e9474085b668cb3c08071f70aed2eb84c3806b07325339",
+    "README.md": "36ca6673c0a47c23f66a9b4d4b9d02ae3736ff604889775c875fe6dcc3886c60",
+    "青花植后端v2底层架构重构计划_融合闭环终版.md": "0b94c71ea83e02134237c9c41b357e0a30e7d60250d6bc21eedca73d2d4c0732",
+    "architecture/README.md": "79b1571d6de17fdba694193def79ce62f1f2fa01052557485bb6eb7c8d447b01",
     "business-domain.md": "8288aec7ad327b432dc0729199a59b0ce95e1ea08569e0214872f5e3b0066f06",
-    "business-domain-layers.md": "42bc6e155a0ad2da26c35001dd666ddaabcc80cae60b52e2b1cf2fb7e97a1fa1",
+    "business-domain-layers.md": "aa3f1292a14fd9a475491df56b86f6bac41f8a427f52bd2e29a4439bc5d2373c",
     "phases/first-release-scope.md": "e775a72ba93fb09c473b21e36b4a0d4021f4686391e95d520cb732bb6366cd3f",
     "contracts/diagnosis-rich-response-experiment.md": "d3777d2991e4532702770bb39761fbe127425f00830a1b7f644758e93d4c6430",
     "contracts/diagnosis-knowledge-sources.md": "b791330a7003aeba2c56dad17f958746ed8c378d13ae6dba15a11fefeacabeb0",
     "contracts/authenticated-ephemeral-plant-case.md": "87c88625423084ba393cc560e7769f48b7cad33c43a3f53eb86f75b908f6e395",
-    "infrastructure.md": "eaa6f783bcaddf1292d83e9c9146af29cc7b25e6ae04cdfaf14bb0f7c45e39a7",
+    "infrastructure.md": "c8ede4bad0174e7cd5c1607f12b3b6f22eeef00cef824a4b22a2ee3fe22cd048",
     "business-to-technical-map.md": "ee3d2a2917bfe94fb6290965f5db8fa9c84ab55cc50fe09d218c5e173f292f34",
     "architecture-rules.md": "87e5f18c3e978ffa678f75fbdec8dc21b8122a76dce809e950e13b34cf9a7a04",
     "configuration-and-providers.md": "677f32ded19440c3f3140a5d594555bc5f44bb7376fafcfce5f3400004f120ce",
@@ -19,7 +19,7 @@
     "configuration-variable-catalog.md": "f998269d142d5a8363fe99b72ba76dc852c1f4c57d210a0783c974d0e8aaed92"
   },
   "diagrams": {
-    "business": "3d4cecabdf4af6bc9390b8821b031ddf22c1fe7366041f750893c28cfd10b67e",
-    "infrastructure": "17b8caa6c18a6c865bfba4ca539b0f103003749fc6bc200cc114dedf7f5697d8"
+    "business": "880213ee0d4edb2a7c25e67da78719645ff43b042883331ed95cf72137c7d0de",
+    "infrastructure": "c17fce2dff3ac7a0a8a0a18707477a048955510acce9f4f7b902d6ee71d18beb"
   }
 }

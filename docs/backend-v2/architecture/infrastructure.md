@@ -71,7 +71,7 @@ identity Principal
 
 `diagnosis` 生成式丰富解释只按受控实验开放：事实边界、版本发布、独立 Expected、成本对照、关闭与回退遵循[诊断内容增强实验合同](../contracts/diagnosis-rich-response-experiment.md)。一次用户产品动作以同一个 `productActionId` 归集图片、模型循环、Token、预占与结算；达到已冻结的动作级成本/额度上限时，必须在下一次模型调用前停止，不得把内部追加调用重复计费。上限未进入已确认变量目录且真实成本门未通过时，增强版保持关闭，继续使用最近已验证版本。
 
-诊断知识由 `diagnosis` 域拥有语义与发布准入，复用 CloudBase CMS 的编辑/审核通道，不让 CMS 热表成为运行时事实源。症状题包、园艺原因、Outcome、Action 和映射构成一个可兼容校验的不可变发布包；`diagnosis` 请求只读取锁定的 release 快照并在结果里记录来源版本。`plant-knowledge` 的 Qwen 展示百科补全 Worker 不得触碰这条知识链；模型仅能整理受限证据和已发布知识。合同见[诊断知识来源](../contracts/diagnosis-knowledge-sources.md)。
+诊断知识由 `diagnosis` 域拥有语义与发布准入，复用 CloudBase CMS 的编辑/审核通道，不让 CMS 热表成为运行时事实源。CMS 审核通过不等于立即发布；`diagnosis` 的单一写者还须完成来源、适用性、禁忌和兼容校验，并通过本域 Repository 写入不可变发布包及 active 指针。症状题包、园艺原因、Outcome、Action 和映射构成一个可兼容校验的不可变发布包；`diagnosis` 请求只读取锁定的 release 快照并在结果里记录来源版本。`plant-knowledge` 的 Qwen 展示百科补全 Worker 不得触碰这条知识链；模型仅能整理受限证据和已发布知识。合同见[诊断知识来源](../contracts/diagnosis-knowledge-sources.md)。
 
 ## 配置解析与 Provider 注册
 

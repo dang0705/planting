@@ -51,11 +51,15 @@ flowchart TB
   L109 -. "下钻" .-> L2_8
   L2_9["L2｜Public Encyclopedia"]
   L109 -. "下钻" .-> L2_9
+  L2_10["L2｜诊断来源、园艺原因与 Outcome/Action"]
+  L107 -. "下钻" .-> L2_10
+  L2_11["L2｜诊断知识审核与发布"]
+  L109 -. "下钻" .-> L2_11
 ```
 
 ## L0｜青花植总业务架构
 
-只保留核心主体、业务域和关键关系；内部流程由后续 L1/L2 解释。
+只保留核心主体、业务域和关键关系；内部流程由后续 L1/L2 解释。访问主体先分游客和已有 `user_id` 的用户：游客只能使用临时植物上下文，登录用户既可临时使用，也可选择长期用户植物。临时结果只有经过明确创建或绑定才进入长期植物；长期档案、事实、状态、养护、诊断与小青上下文围绕 `user_plant_id` 组织。症状问诊依赖已审核的园艺原因、结论与行动知识；CMS 负责带版本发布，不让生成式草稿直接成为安全事实。
 
 ```mermaid
 flowchart TB
@@ -81,7 +85,9 @@ flowchart TB
   catalog["Plant Catalog<br/>规范身份 / 植物知识"]
   weather["天气与外部环境能力"]
   cms["CMS 内容与规则治理"]
-  published["版本化已发布内容"]
+  published["版本化已发布植物内容"]
+  diagpublished["独立诊断知识发布包"]
+  diagknowledge["已审核诊断知识<br/>来源主张 / 园艺原因 / 结论与行动"]
 
   client --> principal
   principal --> visitor
@@ -113,9 +119,11 @@ flowchart TB
   weather -.-> care
   weather -.-> diagnosis
   cms --> published
+  cms --> diagpublished
   published -.-> catalog
   published -.-> care
-  published -.-> diagnosis
+  diagpublished -.-> diagknowledge
+  diagknowledge -. "证据条件与适用性" .-> diagnosis
 ```
 
 ## L1-01｜访问主体、身份与权益
@@ -247,6 +255,7 @@ flowchart TB
   plant --> env
   plant --> cult
   plant --> facts
+  plant -->|长期记录归属| records
   facts --> state
   records --> state
   facts --> timeline
@@ -533,12 +542,13 @@ flowchart TB
 
 > 父级：L0 → **植物诊断**
 
-解释 L0 的诊断域：先建立模式内证据账本，再判断证据是否足够；不足时才进入对应题包。固定题包与虫害动态题包边界保持不变。结论之后必须给用户可执行、可复查的建议；生成式丰富解释是独立版本的受控候选，不替代证据与用户确认。
+解释 L0 的诊断域：黄叶、萎蔫和疑似虫害是收集证据的症状入口，不直接等于园艺原因。先建立模式内证据账本，再判断证据是否足够；不足时才进入对应题包。固定题包与虫害动态题包边界保持不变。结论和行动必须从已审核的来源主张、园艺原因分类、Outcome 结论库、Action 行动库及受审映射中选取；生成式丰富解释是独立版本的受控候选，不替代证据、来源或用户确认。
 
 ```mermaid
 flowchart TB
   ctx["Runtime Plant Context"]
-  knowledge["Diagnosis Knowledge"]
+  knowledge["已发布诊断知识<br/>题包 / 规则 / Outcome / Action / 来源"]
+  symptom["症状模式入口<br/>黄叶 / 萎蔫 / 疑似虫害"]
   start["Start Diagnosis"]
   initial["初始诊断证据"]
   mode["确定当前诊断模式"]
@@ -548,13 +558,14 @@ flowchart TB
   route{"题包类型"}
   fixed["固定题包"]
   pest["虫害动态题包"]
-  advice["诊断结果与行动建议<br/>依据 / 先做 / 暂不做 / 复查"]
+  advice["诊断结果与行动建议<br/>证据理由 / 可公开来源 / 先做 / 暂不做 / 复查"]
   confirm["用户明确确认"]
   care["care 创建计划或已发生行为<br/>建议本身不是事实"]
   rich["生成式丰富解释候选<br/>独立 Prompt / Schema / 成本版本"]
   quota["同一产品动作的额度预占与结算"]
 
   ctx --> start
+  symptom --> start
   knowledge -->|题包 / Evidence / 规则| start
   start --> initial
   initial --> mode
@@ -566,7 +577,7 @@ flowchart TB
   route -->|虫害模式| pest
   fixed -->|回答回写| ledger
   pest -->|回答回写| ledger
-  resolve --> advice
+  resolve -->|依据已审核结论-行动映射| advice
   advice --> confirm
   confirm --> care
   resolve -.已接纳证据.-> rich
@@ -575,6 +586,36 @@ flowchart TB
 ```
 
 > **边界/说明：** Diagnosis Record 是诊断判断，不是 Plant Fact。视觉证据、用户回答、历史事实都进入同一 Mode Evidence Ledger。
+
+### L2｜诊断来源、园艺原因与 Outcome/Action
+
+> 父级：L1-07｜Diagnosis
+
+症状模式负责收集证据，园艺原因负责解释可能机制；二者不是同一分类轴。每条来源主张须能定位原文、说明适用植物与条件、记录核验时间；结论与行动分别审查，再以明确适用条件、禁忌和版本的映射相连。证据不足时保留待判定，不用生成式内容填补确定性。
+
+```mermaid
+flowchart TB
+  symptom["黄叶 / 萎蔫 / 疑似虫害<br/>症状模式与证据入口"]
+  ledger["模式证据账本"]
+  source["已审核园艺来源主张<br/>原文定位 / 适用范围 / 核验时间"]
+  cause["园艺原因分类<br/>非生物性 / 害虫 / 病原相关<br/>混合 / 待判定"]
+  outcome["已发布 Outcome 结论<br/>证据条件 / 适用植物 / 来源"]
+  action["已发布 Action 行动<br/>步骤 / 禁忌 / 复查 / 来源"]
+  mapping["受审核结论-行动映射<br/>条件 / 禁忌 / 版本"]
+  result["有依据的诊断结果与建议"]
+
+  symptom --> ledger
+  source --> cause
+  source --> outcome
+  source --> action
+  cause --> outcome
+  outcome --> mapping
+  action --> mapping
+  ledger -->|证据满足条件| result
+  mapping --> result
+```
+
+> **边界/说明：** 题包不能直接决定病虫害分类；模型只能提出待审候选，不能直接发布 Outcome、Action 或结论-行动映射。详细合同见 [诊断知识来源合同](../contracts/diagnosis-knowledge-sources.md)。
 
 ### L2｜Multi-image Evidence
 
@@ -640,7 +681,7 @@ flowchart TB
 
 > 父级：L0 → **CMS 内容与规则治理**
 
-解释 L0 中 CMS 如何接收治理候选并发布版本化内容。植物识别会向 CMS 提交 Catalog 扩种候选和植物百科缺口；CMS 审核发布后分别回流 Catalog 与用户百科，并继续供 Care、Diagnosis 消费其规则与知识。
+解释 L0 中 CMS 如何接收治理候选并发布版本化内容。植物识别会向 CMS 提交 Catalog 扩种候选和植物百科缺口；诊断内容还需单独治理来源主张、园艺原因、Outcome、Action 与映射。CMS 审核发布后分别回流 Catalog、用户百科、Care 与 Diagnosis；展示百科不得越权成为诊断安全事实。
 
 ```mermaid
 flowchart TB
@@ -652,10 +693,13 @@ flowchart TB
   knowledge["内部植物知识"]
   care["养护规则"]
   diag["诊断规则 / 题包"]
+  diagknowledge["来源主张 / 园艺原因<br/>Outcome / Action / 映射"]
   validation["对应类型校验 / 审核"]
   review{"审核通过?"}
   revision["修订 / 驳回"]
-  publish["版本化发布"]
+  publish["按内容类型版本化发布"]
+  diagRelease["诊断知识独立发布包<br/>由 diagnosis 负责准入"]
+  diagnosis["L1-07 诊断读取锁定版本"]
 
   source --> draft
   draft --> type
@@ -664,15 +708,19 @@ flowchart TB
   type -->|内部知识| knowledge
   type -->|养护规则| care
   type -->|诊断规则| diag
+  type -->|诊断知识| diagknowledge
   identity --> validation
   ency --> validation
   knowledge --> validation
   care --> validation
   diag --> validation
+  diagknowledge --> validation
   validation --> review
   review -->|否| revision
   review -->|是| publish
   revision --> draft
+  publish -->|诊断知识| diagRelease
+  diagRelease --> diagnosis
 ```
 
 > **边界/说明：** Qwen 可以生成候选草稿，但不能直接成为规范 Identity、内部养护知识或安全事实的真相源。
@@ -726,6 +774,38 @@ flowchart TB
   gate -->|否| display
   gate -->|是| draft
   draft --> review
+```
+
+### L2｜诊断知识审核与发布
+
+> 父级：L1-09｜CMS / Published Content Governance
+
+诊断知识补全可以从已发现的结论或行动缺口开始，但外部资料与模型输出只能形成草稿。审核须分别检查来源可追溯性、症状与原因分类、植物适用性、行动禁忌和结论-行动映射，再形成不可变发布包；发布版本与诊断记录关联，便于回放和纠错。
+
+```mermaid
+flowchart TB
+  gap["诊断结论 / 行动知识缺口"]
+  source["园艺来源定位与主张草稿"]
+  classify["症状入口与园艺原因分轴归类"]
+  outcomes["Outcome 结论草稿"]
+  actions["Action 行动草稿"]
+  mapping["结论-行动映射草稿"]
+  review["人工审核<br/>来源 / 适用性 / 禁忌 / 冲突"]
+  gate{"审核通过?"}
+  release["不可变诊断知识发布包<br/>版本 / SHA-256 / 可回滚"]
+  diagnosis["Diagnosis 读取已发布版本"]
+
+  gap --> source
+  source --> classify
+  classify --> outcomes
+  classify --> actions
+  outcomes --> mapping
+  actions --> mapping
+  mapping --> review
+  review --> gate
+  gate -->|否| gap
+  gate -->|是| release
+  release --> diagnosis
 ```
 
 ## 阅读约定

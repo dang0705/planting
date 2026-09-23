@@ -117,11 +117,11 @@
 - 积分账本不可变，等级奖励每级只发一次。
 - outbox/inbox 重放不重复入账。
 
-## P1 / 诊断知识来源、园艺原因及 Outcome/Action 合同（待建 ClickUp）
+## P1 / 诊断知识来源、园艺原因及 Outcome/Action 合同（z8v0kmrg8a）
 
 ### 目的
 
-为黄叶、萎蔫与动态虫害问诊冻结“症状入口”和“园艺原因”两条分类轴，逐项定义可追溯来源、Outcome 结论、Action 行动、适用植物与禁忌条件、映射、DTO、数据字典和不可变发布/回滚合同。该 P1 增量门由 `diagnosis` 负责语义，复用 `plant-knowledge` 的 CMS 编辑发布通道；未创建真实 Phase-P1 ticket、确定负责人和冻结 Expected 前，不得进入对应知识运行实现。原有 P1 已验收部分不因此失效。
+为黄叶、萎蔫与动态虫害问诊冻结“症状入口”和“园艺原因”两条分类轴，逐项定义可追溯来源、Outcome 结论、Action 行动、适用植物与禁忌条件、映射、DTO、数据字典和不可变发布/回滚合同。该 P1 增量门由 `diagnosis` 负责语义，执行代理为 `diagnosis_terra`，复用 `plant-knowledge` 的 CMS 编辑发布通道；ClickUp 绑定为[诊断知识来源、园艺原因及 Outcome/Action 合同](https://app.clickup.com/t/z8v0kmrg8a)。票据已创建不等于合同或 Expected 已冻结；DTO、数据字典和独立 Expected 审核冻结前，不得进入对应知识运行实现。原有 P1 已验收部分不因此失效。
 
 ### 验收
 

@@ -187,8 +187,7 @@ flowchart TB
   SymptomEntry[症状入口与题包<br/>黄叶 / 萎蔫 / 疑似虫害<br/>收集证据，不等于病因] --> Diagnosis
   SourceClaims[已审核园艺来源主张<br/>原文定位 / 适用范围 / 核验时间] --> HorticulturalCauses[园艺原因分类<br/>非生物性 / 害虫 / 病原相关<br/>混合 / 待判定]
   HorticulturalCauses --> OutcomeCatalog[已发布 Outcome 结论库<br/>适用植物 / 证据条件 / 来源]
-  OutcomeCatalog --> Diagnosis
-  ActionCatalog[已发布 Action 行动库<br/>步骤 / 禁忌 / 复查 / 来源] --> Diagnosis
+  ActionCatalog[已发布 Action 行动库<br/>步骤 / 禁忌 / 复查 / 来源]
   SourceClaims --> OutcomeCatalog
   SourceClaims --> ActionCatalog
   OutcomeCatalog --> OutcomeActionMapping[受审核结论-行动映射<br/>适用条件 / 禁忌 / 版本]
@@ -260,16 +259,19 @@ flowchart TB
   CMSDraft --> CMS[CMS 发布系统]
   CMS --> PublishedPublic[已发布展示百科<br/>版本化 / 可回滚]
   InternalEditorial[内部维护与审核] --> CMS
-  CMS --> PublishedInternal[已发布内部知识<br/>版本化 / 可回滚]
+  CMS --> PublishedInternal[已发布植物内部知识<br/>版本化 / 可回滚]
+  CMS --> DiagnosisEditorial[诊断知识独立审校<br/>来源 / 原因 / 结论 / 行动 / 映射]
+  DiagnosisEditorial --> PublishedDiagnosis[已发布诊断知识包<br/>独立版本 / 可回滚 / 可追溯]
 
   PublishedPublic --> PublicEncyclopedia
   PublishedInternal --> IdentityCatalog
   PublishedInternal --> InternalKnowledge
-  PublishedInternal --> Diagnosis
-  PublishedInternal --> SourceClaims
-  PublishedInternal --> HorticulturalCauses
-  PublishedInternal --> OutcomeCatalog
-  PublishedInternal --> ActionCatalog
+  PublishedDiagnosis --> Diagnosis
+  PublishedDiagnosis --> SourceClaims
+  PublishedDiagnosis --> HorticulturalCauses
+  PublishedDiagnosis --> OutcomeCatalog
+  PublishedDiagnosis --> ActionCatalog
+  PublishedDiagnosis --> OutcomeActionMapping
   PublishedInternal --> Watering
   PublishedInternal --> Fertilizing
   PublishedInternal --> Lighting
@@ -425,7 +427,7 @@ flowchart TB
     KnowledgeStore[(identity / encyclopedia / internal knowledge<br/>release / enrichment jobs)]
     UserPlantStore[(用户植物 / 资产 / 临时案例<br/>主体与有效期 / 显式绑定状态)]
     CareStore[(环境观察 / 输入快照 / 派生指标<br/>事实 / 计划 / 天气 / 临时养护结果)]
-    DiagnosisStore[(诊断 / 临时问诊结果<br/>证据 / AI 审计)]
+    DiagnosisStore[(长期结果归属 user_id + user_plant_id<br/>临时结果归属案例 / 证据 / AI 审计)]
     SubscriptionStore[(试用 / 权益 / 订阅 / 支付<br/>AI 账户 / 预占 / 账本 / 奖励<br/>积分与等级为目标能力，首版延后)]
     ConfigurationStore[(不可变策略 / Provider release<br/>active 指针 / 发布审计)]
     MySQL[(CloudBase MySQL<br/>planting_v2)]
@@ -472,9 +474,10 @@ flowchart TB
   CMS[CloudBase CMS] --> PublishPipeline[发布校验 / 版本记录]
   PublishPipeline --> Published
   CMS --> DiagnosisKnowledgeReview[诊断知识人工审核<br/>来源主张 / 症状与原因<br/>Outcome / Action / 映射]
-  DiagnosisKnowledgeReview --> DiagnosisKnowledgeRelease[不可变诊断知识发布包<br/>来源 / 适用性 / 禁忌校验<br/>兼容版本与 SHA-256]
+  DiagnosisKnowledgeReview --> DiagnosisKnowledgePublisher[diagnosis 发布准入<br/>领域单一写者 / 兼容校验]
+  DiagnosisApp --> DiagnosisKnowledgePublisher
+  DiagnosisKnowledgePublisher --> DiagnosisKnowledgeRelease[不可变诊断知识发布包<br/>来源 / 适用性 / 禁忌校验<br/>兼容版本与 SHA-256]
   DiagnosisKnowledgeRelease --> DiagnosisApp
-  DiagnosisKnowledgeRelease --> DiagnosisStore
 
 
   %% ========== 外部能力、标准化证据与事实来源 ==========
