@@ -154,7 +154,7 @@ Qwen 草稿仅可写基础展示介绍和约三个简短问答。毒性、浇水
 - `watering_visual_evidence`：盆土视觉证据、私有文件引用、有效期和算法版本。
 - `temporary_care_sessions` / `temporary_care_results` / `temporary_watering_visual_evidence`：游客临时养护对象，只关联 `guest_plant_case_ref`。已生成的临时结果必须内联保存原子输入清单、算法 release 清单、派生环境指标及各自 SHA-256，使游客结果可回放；登录认领只增加归属投影，不改写该结果。
 - `diagnosis_sessions` / `diagnosis_answers` / `diagnosis_results`：问诊过程、证据和结果。
-- 诊断知识增量（**P1 待冻结，当前 004 DDL 尚未覆盖，不得视为已建表**）：症状入口与园艺原因双轴目录、来源主档与可定位的来源主张、Outcome 结论、Action 行动、结论到行动的适用/禁忌映射，以及兼容发布包/active 指针。每项须有稳定代码、中文释义、来源定位与核验时间、适用植物范围、审核/发布版本和 SHA-256；具体表拆分、字段、外键、唯一键、索引和旧内容处置必须先通过[诊断知识来源合同](../contracts/diagnosis-knowledge-sources.md)与新增 Phase-P1 ClickUp ticket 冻结，再追加独立迁移并做空库读回。现有 `diagnosis_results.conclusion_json` / `proposal_json` 只保存一次结果，通用 `content_releases.diagnosis_rule` 只提供发布容器，均不能替代可治理的来源主张、人工审核和兼容发布包。
+- 诊断知识增量（**P1 待冻结，当前 004 DDL 尚未覆盖，不得视为已建表**）：症状入口与园艺原因双轴目录、来源主档与可定位的来源主张、Outcome 结论、Action 行动、结论到行动的适用/禁忌映射，以及诊断域专用兼容发布包/active 指针。每项须有稳定代码、中文释义、来源定位与核验时间、适用植物范围、审核/发布版本和 SHA-256；CMS 审核凭据须绑定候选修订内容哈希。具体表拆分、字段、外键、唯一键、索引和旧内容处置必须先通过[诊断知识来源合同](../contracts/diagnosis-knowledge-sources.md)与新增 Phase-P1 ClickUp ticket 冻结，再追加独立迁移并做空库读回。现有 `diagnosis_results.conclusion_json` / `proposal_json` 只保存一次结果，通用 `content_releases.diagnosis_rule` 不承载完整诊断知识发布包，均不能替代可治理的来源主张、人工审核和兼容发布包。
 - `diagnosis_visual_evidence`：私有诊断图片引用及保留期。
 - `temporary_diagnosis_sessions` / `temporary_diagnosis_answers` / `temporary_diagnosis_results` / `temporary_diagnosis_visual_evidence`：游客临时问诊对象，只关联 `guest_plant_case_ref`。
 
