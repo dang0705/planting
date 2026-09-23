@@ -2,6 +2,8 @@
 
 本文件为 [诊断知识来源合同](diagnosis-knowledge-sources.md) 的字段级展开，属于 P1 设计输入，不代表 DTO、DDL、CMS 模型或公开 API 已验收。参考样本是用户提供的“一隅植物志”结果页截图（2026-09-23）：它展示了问题类型、约 75% 置信度、主要证据、紧急程度、是否隔离、识别依据、立即处理、后续养护、预防、注意事项和其他可能。截图只能证明这些**页面信息分区**，不能证明一隅的真实数据库字段、接口 Schema 或准确率。
 
+本次结果的初版[公开结构 Schema](schemas/diagnosis-result.v1.schema.json)与[独立合同测试](../../../cloudfunctions-v2/test/contracts/diagnosis-result-contract.spec.ts)已落盘。它们只验证字段结构、未知状态、建议确认和脱敏边界；**不验证**结论是否正确、行动是否适用、来源是否真实、知识是否已发布，也不代表下文的 Outcome/Action 知识条目 Schema 已冻结。
+
 ## 三种对象必须分开
 
 | 对象 | 回答的问题 | 所有者 | 不得混入 |

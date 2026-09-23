@@ -14,5 +14,6 @@
 - [诊断知识持久化与发布逻辑合同](diagnosis-knowledge-persistence.md)
 - [诊断知识 CMS 人工审核交换合同](diagnosis-cms-review-exchange.md)
 - [诊断 Outcome 字段设计与结果呈现边界](diagnosis-outcome-fields.md)
+- [本次诊断公开结果 v1 结构 Schema](schemas/diagnosis-result.v1.schema.json)
 - [奖励事件](reward-events.md)
 - [HTTP API 公共合同](http-api.md)

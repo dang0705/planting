@@ -23,7 +23,7 @@
 | `active_diagnosis_knowledge_releases` | `bundleCode`、当前 release、乐观并发版本、激活时间 | 每个包范围至多一个活动指针；切换只能指向同范围、已审核、未撤回的完整发布 |
 | `diagnosis_release_activation_audit` | 命令幂等引用、操作者、预期旧版、新版本、动作（激活/回滚）、理由和时间 | 追加记录，不覆盖旧审计；提交结果不明时按命令引用新连接只读对账，不盲目再执行 |
 
-上述是**逻辑表名**，不是已存在的 SQL 表。所有实际 SQL 表仍须满足统一的中文列注释、内部 `BIGINT UNSIGNED` 主键、受控空 `_openid`、UTC 毫秒、外键/唯一键/索引约束。公开 API 只使用受控公开引用或业务代码，不返回内部主键、CMS 审核主体或来源证据内部路径。
+上述名称现已对应 [009 独立迁移](../schema/009_diagnosis_knowledge.sql) 中的 SQL 表，并通过本地 MySQL 8.4 空库验证；这不代表 CloudBase 环境已建表、CMS 已接线或诊断知识已发布。表仍须满足统一的中文列注释、内部 `BIGINT UNSIGNED` 主键、受控空 `_openid`、UTC 毫秒、外键/唯一键/索引约束。公开 API 只使用受控公开引用或业务代码，不返回内部主键、CMS 审核主体或来源证据内部路径。
 
 ## 哪些关系必须由表约束，哪些允许版本化 JSON
 

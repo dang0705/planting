@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-24T00:56:00+08:00",
+  "generatedAt": "2026-09-24T01:02:00+08:00",
   "contracts": [
     {
       "id": "principal-and-capability",
@@ -88,6 +88,14 @@
       "sha256": "68d7dd54aac76aeba00bc681b88d334bd45bf05158004582915ed309b00197b7"
     },
     {
+      "id": "diagnosis-result",
+      "version": "diagnosis-result/v1",
+      "file": "schemas/diagnosis-result.v1.schema.json",
+      "owner": "diagnosis",
+      "status": "P1_PENDING",
+      "sha256": "5fe1ef46a3d976a4cf10d716be3975b2ca39cffae3680fa7ed23b370c2e96c9a"
+    },
+    {
       "id": "diagnosis-knowledge-sources",
       "version": "diagnosis-knowledge-sources/p1-draft",
       "file": "diagnosis-knowledge-sources.md",
@@ -101,7 +109,7 @@
       "file": "diagnosis-knowledge-persistence.md",
       "owner": "diagnosis",
       "status": "P1_PENDING",
-      "sha256": "0866113439bf6d1e755cee617dc24e1a238eff86e71a827e0634e36aa161e9a7"
+      "sha256": "bef4e6b6f3a25eac4e8bf11c9b0a952236d5070512c5bd8f0cd84fc5cd2c4ce0"
     },
     {
       "id": "diagnosis-cms-review-exchange",
@@ -117,7 +125,7 @@
       "file": "diagnosis-outcome-fields.md",
       "owner": "diagnosis",
       "status": "P1_PENDING",
-      "sha256": "d21c6ca00f5a3a7cd3d11cecfd917403f204f48ca8d3c339fe11de0bcf9bb3e8"
+      "sha256": "0dc60f558566aca4e1cbaf34d29b93faa9f4b7d44b7a11c014b33b1cf4591fd9"
     },
     {
       "id": "diagnosis-visual-prompt",

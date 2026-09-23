@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qinghuazhi.local/contracts/diagnosis-result.v1.schema.json",
+  "title": "本次诊断公开结果 v1 结构合同",
+  "description": "仅约束公开结果的结构和脱敏边界；不证明诊断结论、园艺行动、来源或百分比的真实性。运行时必须另行核验已发布知识、证据门和禁忌门。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "titleZh",
+    "summaryZh",
+    "problemType",
+    "causeCategory",
+    "certaintyLevel",
+    "certaintyReasonZh",
+    "severityLevel",
+    "urgencyLevel",
+    "urgencyReasonZh",
+    "isolationDecision",
+    "isolationReasonZh",
+    "evidenceFindings",
+    "evidenceLimitations",
+    "missingEvidence",
+    "alternativeOutcomes",
+    "recommendedActions",
+    "followUp",
+    "publicSources",
+    "knowledgeVersionZh"
+  ],
+  "properties": {
+    "contractVersion": { "const": "diagnosis-result/v1", "description": "公开结果结构版本，不等于诊断知识发布版本。" },
+    "titleZh": { "$ref": "#/$defs/chineseText", "description": "本次有界结论的中文标题。" },
+    "summaryZh": { "$ref": "#/$defs/chineseText", "description": "本次证据支持的中文摘要，不得暗示已执行行动。" },
+    "problemType": { "$ref": "#/$defs/chineseText", "description": "受审的问题类型展示名；症状入口不能冒充病因。" },
+    "causeCategory": { "$ref": "#/$defs/chineseText", "description": "园艺原因方向，证据不足时允许待判定。" },
+    "certaintyLevel": {
+      "enum": ["likely", "possible", "unconfirmed"],
+      "description": "证据归约后的定性确定性，不接收未经校准的模型百分比。"
+    },
+    "certaintyReasonZh": { "$ref": "#/$defs/chineseText", "description": "确定性档位的中文证据理由。" },
+    "severityLevel": {
+      "enum": ["low", "medium", "high", "unknown"],
+      "description": "植物受损程度；与处理紧急程度分离。"
+    },
+    "urgencyLevel": {
+      "enum": ["immediate", "soon", "monitor", "unknown"],
+      "description": "依已发布紧急程度规则计算，证据不足时必须可表达未知。"
+    },
+    "urgencyReasonZh": { "$ref": "#/$defs/chineseText", "description": "本次紧急程度判定理由。" },
+    "isolationDecision": {
+      "enum": ["required", "not_required", "undetermined"],
+      "description": "依本次证据判定隔离，未观察到虫体不自动等于无需隔离。"
+    },
+    "isolationReasonZh": { "$ref": "#/$defs/chineseText", "description": "本次隔离决定的中文理由。" },
+    "evidenceFindings": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/evidenceFinding" },
+      "description": "本次实际观察到的支持或反驳证据，不得把推断写为观察。"
+    },
+    "evidenceLimitations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/evidenceLimitation" },
+      "description": "图片、角度、部位或时间覆盖不足及其对结论的影响。"
+    },
+    "missingEvidence": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/missingEvidence" },
+      "description": "会改变判断的待补观察或回答。"
+    },
+    "alternativeOutcomes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/alternativeOutcome" },
+      "description": "其他已发布候选及支持、反驳和待核对信息，不并列伪确诊。"
+    },
+    "recommendedActions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/recommendedAction" },
+      "description": "仅限已发布且通过适用、禁忌及安全门的行动建议；不是养护事实或计划。"
+    },
+    "followUp": { "$ref": "#/$defs/followUp", "description": "复查观察点和升级处理条件。" },
+    "publicSources": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/publicSource" },
+      "description": "经过公开许可和适用性校验的来源展示，不含内部证据路径。"
+    },
+    "knowledgeVersionZh": { "$ref": "#/$defs/chineseText", "description": "面向用户的已发布知识版本说明，不含内部主键或内容哈希。" }
+  },
+  "$defs": {
+    "chineseText": { "type": "string", "minLength": 1 },
+    "textList": { "type": "array", "items": { "$ref": "#/$defs/chineseText" } },
+    "evidenceFinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observationZh", "affectedPartZh", "sourceType", "direction", "coverageZh"],
+      "properties": {
+        "observationZh": { "$ref": "#/$defs/chineseText", "description": "照片、回答或事实中直接可观察的内容。" },
+        "affectedPartZh": { "$ref": "#/$defs/chineseText", "description": "观察实际覆盖的植物部位。" },
+        "sourceType": { "enum": ["image", "answer", "care_fact", "environment"], "description": "证据来源类别，不暴露资产键。" },
+        "direction": { "enum": ["supports", "opposes", "neutral"], "description": "相对于本次主结论的证据方向。" },
+        "coverageZh": { "$ref": "#/$defs/chineseText", "description": "该证据覆盖的范围与不能外推的边界。" }
+      }
+    },
+    "evidenceLimitation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["limitationZh", "impactZh", "nextEvidenceZh"],
+      "properties": {
+        "limitationZh": { "$ref": "#/$defs/chineseText", "description": "具体证据局限。" },
+        "impactZh": { "$ref": "#/$defs/chineseText", "description": "这项局限影响了哪项判断。" },
+        "nextEvidenceZh": { "$ref": "#/$defs/chineseText", "description": "可弥补局限的具体补证方式。" }
+      }
+    },
+    "missingEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["needZh", "reasonZh"],
+      "properties": {
+        "needZh": { "$ref": "#/$defs/chineseText", "description": "尚缺的观察或回答。" },
+        "reasonZh": { "$ref": "#/$defs/chineseText", "description": "该证据为何会改变判断。" }
+      }
+    },
+    "alternativeOutcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["titleZh", "supportingZh", "opposingZh", "toVerifyZh"],
+      "properties": {
+        "titleZh": { "$ref": "#/$defs/chineseText", "description": "已发布备选结论的中文名称。" },
+        "supportingZh": { "$ref": "#/$defs/textList", "description": "本次支持备选结论的观察。" },
+        "opposingZh": { "$ref": "#/$defs/textList", "description": "本次反驳或减弱备选结论的观察。" },
+        "toVerifyZh": { "$ref": "#/$defs/textList", "description": "区分主结论和备选结论所需补证。" }
+      }
+    },
+    "recommendedAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["displayCategory", "titleZh", "purposeZh", "stepsZh", "selectionReasonZh", "safetyNotesZh", "contraindicationsZh", "followUpZh", "requiresUserConfirmation"],
+      "properties": {
+        "displayCategory": { "enum": ["immediate", "ongoing", "prevention", "caution"], "description": "截图展示分区，不决定行动的适用性。" },
+        "titleZh": { "$ref": "#/$defs/chineseText", "description": "受审行动名称。" },
+        "purposeZh": { "$ref": "#/$defs/chineseText", "description": "为何建议该行动。" },
+        "stepsZh": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/chineseText" }, "description": "可执行且经审核的步骤。" },
+        "selectionReasonZh": { "$ref": "#/$defs/chineseText", "description": "本次结论和证据为何命中该行动。" },
+        "safetyNotesZh": { "$ref": "#/$defs/textList", "description": "用户可见安全提示。" },
+        "contraindicationsZh": { "$ref": "#/$defs/textList", "description": "已核验的禁忌与暂停条件。" },
+        "followUpZh": { "$ref": "#/$defs/chineseText", "description": "行动后的复查观察点或停止条件。" },
+        "requiresUserConfirmation": { "const": true, "description": "建议不能自动写成养护事实、计划或提醒。" }
+      }
+    },
+    "followUp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observationsZh", "escalationZh"],
+      "properties": {
+        "observationsZh": { "$ref": "#/$defs/textList", "description": "后续需观察的变化。" },
+        "escalationZh": { "$ref": "#/$defs/chineseText", "description": "恶化时的重新评估或升级处理条件。" }
+      }
+    },
+    "publicSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceTypeZh", "titleZh", "applicabilityZh"],
+      "properties": {
+        "sourceTypeZh": { "$ref": "#/$defs/chineseText", "description": "资料机构或来源类型的公开说明。" },
+        "titleZh": { "$ref": "#/$defs/chineseText", "description": "获准公开的资料标题或审阅说明。" },
+        "applicabilityZh": { "$ref": "#/$defs/chineseText", "description": "该资料对本次判断的适用理由。" },
+        "url": { "type": "string", "pattern": "^https://", "description": "仅在许可和安全校验通过时提供 HTTPS 公开链接；域名白名单由运行时另行校验。" }
+      }
+    }
+  }
+}
