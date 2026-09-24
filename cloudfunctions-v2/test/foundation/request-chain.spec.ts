@@ -234,17 +234,29 @@ describe('后端 v2 公共 HTTP 请求链', () => {
     const executedStep: string[] = []
     const attemptedEvents: RequestChainAuditEvent[] = []
     const reportedFailures: RequestChainAuditEvent[] = []
+    let attemptedResolve: () => void = () => undefined
+    let reportedResolve: () => void = () => undefined
+    const attempted = new Promise<void>(resolve => {
+      attemptedResolve = resolve
+    })
+    const reported = new Promise<void>(resolve => {
+      reportedResolve = resolve
+    })
     const config = Object.assign(createDefaultRequestChain(executedStep), {
       writeAudit: async (event: RequestChainAuditEvent) => {
         attemptedEvents.push(event)
+        attemptedResolve()
         throw new Error('private audit sink connection details')
       },
       reportAuditFailure: async (event: RequestChainAuditEvent) => {
         reportedFailures.push(event)
+        reportedResolve()
       }
     })
 
     const result = await executeRequestChain(config)
+    await attempted
+    await reported
 
     expect(result).toEqual({ status: 200, body: { data: { userPlantRef: 'upl_create' } } })
     expect(attemptedEvents).toEqual([{ outcome: 'allowed' }])
@@ -256,20 +268,32 @@ describe('后端 v2 公共 HTTP 请求链', () => {
     const executedStep: string[] = []
     const attemptedEvents: RequestChainAuditEvent[] = []
     const reportedFailures: RequestChainAuditEvent[] = []
+    let attemptedResolve: () => void = () => undefined
+    let reportedResolve: () => void = () => undefined
+    const attempted = new Promise<void>(resolve => {
+      attemptedResolve = resolve
+    })
+    const reported = new Promise<void>(resolve => {
+      reportedResolve = resolve
+    })
     const config = Object.assign(createDefaultRequestChain(executedStep), {
       identityValidate: executeStep('身份校验', executedStep, () => {
         throw new PublicRequestError(identityErrorStatusCode, 'PRINCIPAL_INVALID', '身份凭证无效')
       }),
       writeAudit: async (event: RequestChainAuditEvent) => {
         attemptedEvents.push(event)
+        attemptedResolve()
         throw new Error('private audit sink connection details')
       },
       reportAuditFailure: async (event: RequestChainAuditEvent) => {
         reportedFailures.push(event)
+        reportedResolve()
       }
     })
 
     const result = await executeRequestChain(config)
+    await attempted
+    await reported
 
     expect(result).toEqual({
       status: 401,
@@ -280,8 +304,123 @@ describe('后端 v2 公共 HTTP 请求链', () => {
     expect(JSON.stringify(result)).not.toContain('private audit sink')
   })
 
+  test('已确定的成功结果不等待永不完成的请求结果事件写入', async () => {
+    let writeStartedResolve: () => void = () => undefined
+    const writeStarted = new Promise<void>(resolve => {
+      writeStartedResolve = resolve
+    })
+    const neverSettles = new Promise<void>(() => undefined)
+    const config = Object.assign(createDefaultRequestChain([]), {
+      writeAudit: (event: RequestChainAuditEvent) => {
+        expect(event).toEqual({ outcome: 'allowed' })
+        writeStartedResolve()
+        return neverSettles
+      }
+    })
+
+    const requestResult = executeRequestChain(config)
+    await writeStarted
+    const observed = await Promise.race([
+      requestResult.then(result => ({ kind: 'completed' as const, result })),
+      new Promise<{ kind: 'next_turn' }>(resolve => {
+        setImmediate(() => resolve({ kind: 'next_turn' }))
+      })
+    ])
+
+    expect(observed).toEqual({
+      kind: 'completed',
+      result: { status: 200, body: { data: { userPlantRef: 'upl_create' } } }
+    })
+  })
+
+  test('已确定的拒绝结果不等待永不完成的脱敏告警', async () => {
+    let reportStartedResolve: () => void = () => undefined
+    const reportStarted = new Promise<void>(resolve => {
+      reportStartedResolve = resolve
+    })
+    const neverSettles = new Promise<void>(() => undefined)
+    const config = Object.assign(createDefaultRequestChain([]), {
+      identityValidate: executeStep('身份校验', [], () => {
+        throw new PublicRequestError(identityErrorStatusCode, 'PRINCIPAL_INVALID', '身份凭证无效')
+      }),
+      writeAudit: async () => {
+        throw new Error('private audit connection details')
+      },
+      reportAuditFailure: (event: RequestChainAuditEvent) => {
+        expect(event).toEqual({ outcome: 'denied', errorType: 'PRINCIPAL_INVALID' })
+        reportStartedResolve()
+        return neverSettles
+      }
+    })
+
+    const requestResult = executeRequestChain(config)
+    await reportStarted
+    const observed = await Promise.race([
+      requestResult.then(result => ({ kind: 'completed' as const, result })),
+      new Promise<{ kind: 'next_turn' }>(resolve => {
+        setImmediate(() => resolve({ kind: 'next_turn' }))
+      })
+    ])
+
+    expect(observed).toEqual({
+      kind: 'completed',
+      result: {
+        status: identityErrorStatusCode,
+        body: { error: { type: 'PRINCIPAL_INVALID', message: '身份凭证无效' } }
+      }
+    })
+  })
+
+  test('异步审计与告警拒绝均被消费且只发固定脱敏警告', async () => {
+    const unhandledReasons: unknown[] = []
+    let reportStartedResolve: () => void = () => undefined
+    const reportStarted = new Promise<void>(resolve => {
+      reportStartedResolve = resolve
+    })
+    const onUnhandledRejection = (reason: unknown): void => {
+      unhandledReasons.push(reason)
+    }
+    const warningSpy = vi.spyOn(process, 'emitWarning').mockImplementation(() => undefined)
+    process.on('unhandledRejection', onUnhandledRejection)
+
+    try {
+      const config = Object.assign(createDefaultRequestChain([]), {
+        identityValidate: executeStep('身份校验', [], () => {
+          throw new PublicRequestError(identityErrorStatusCode, 'PRINCIPAL_INVALID', '身份凭证无效')
+        }),
+        writeAudit: async () => {
+          throw new Error('private audit connection details')
+        },
+        reportAuditFailure: async () => {
+          reportStartedResolve()
+          throw new Error('private reporter connection details')
+        }
+      })
+      const result = await executeRequestChain(config)
+      await reportStarted
+      await new Promise<void>(resolve => setImmediate(resolve))
+
+      expect(result).toEqual({
+        status: identityErrorStatusCode,
+        body: { error: { type: 'PRINCIPAL_INVALID', message: '身份凭证无效' } }
+      })
+      expect(warningSpy).toHaveBeenCalledWith('请求结果事件与脱敏告警均写入失败', {
+        code: 'REQUEST_AUDIT_REPORT_FAILED'
+      })
+      expect(unhandledReasons).toEqual([])
+    } finally {
+      process.off('unhandledRejection', onUnhandledRejection)
+      warningSpy.mockRestore()
+    }
+  })
+
   test('告警端口和运行时警告均失效时仍不改写已确定的业务结果', async () => {
+    let warningResolve: () => void = () => undefined
+    const warningCalled = new Promise<void>(resolve => {
+      warningResolve = resolve
+    })
     const warningSpy = vi.spyOn(process, 'emitWarning').mockImplementation(() => {
+      warningResolve()
       throw new Error('private warning sink details')
     })
     try {
@@ -294,6 +433,7 @@ describe('后端 v2 公共 HTTP 请求链', () => {
         }
       })
       const result = await executeRequestChain(config)
+      await warningCalled
       expect(result).toEqual({ status: 200, body: { data: { userPlantRef: 'upl_create' } } })
       expect(warningSpy).toHaveBeenCalled()
       expect(JSON.stringify(result)).not.toContain('private')

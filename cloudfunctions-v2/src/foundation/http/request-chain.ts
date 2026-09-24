@@ -227,20 +227,36 @@ export async function executeRequestChain<
     }
   }
 
-  /** 链尾可观测性失败不得重解释已经确定的业务成功或拒绝。 */
-  const reportRequestOutcome = async (event: RequestChainAuditEvent): Promise<void> => {
-    try {
-      await config.writeAudit(event)
-    } catch {
+  /**
+   * 在后台尽力记录已确定的请求结果；调用方不得等待此 Promise。
+   * 端口永不完成时事件可能一直未确认，但不能拖住公开业务响应。
+   */
+  const dispatchRequestOutcome = (event: RequestChainAuditEvent): Promise<void> => {
+    const reportAuditFailure = (): Promise<void> => {
       try {
-        if (config.reportAuditFailure) {
-          await config.reportAuditFailure(event)
-        } else {
+        const report = config.reportAuditFailure
+        if (!report) {
           emitSafeWarning('请求结果事件写入失败', 'REQUEST_AUDIT_WRITE_FAILED')
+          return Promise.resolve()
         }
+
+        return Promise.resolve(report(event))
+          .catch(() => {
+            emitSafeWarning('请求结果事件与脱敏告警均写入失败', 'REQUEST_AUDIT_REPORT_FAILED')
+          })
+          .catch(() => undefined)
       } catch {
         emitSafeWarning('请求结果事件与脱敏告警均写入失败', 'REQUEST_AUDIT_REPORT_FAILED')
+        return Promise.resolve()
       }
+    }
+
+    try {
+      return Promise.resolve(config.writeAudit(event))
+        .catch(() => reportAuditFailure())
+        .catch(() => undefined)
+    } catch {
+      return reportAuditFailure().catch(() => undefined)
     }
   }
 
@@ -258,14 +274,14 @@ export async function executeRequestChain<
     })
     const publicData = await runStep(config.publicResponse, persistenceResult)
 
-    await reportRequestOutcome({ outcome: 'allowed' })
+    dispatchRequestOutcome({ outcome: 'allowed' }).catch(() => undefined)
     return { status: 200, body: { data: publicData } }
   } catch (error: unknown) {
     const publicError = mapPublicError(error)
-    await reportRequestOutcome({
+    dispatchRequestOutcome({
       outcome: publicError.status >= internalErrorStatusCode ? 'failed' : 'denied',
       errorType: publicError.type
-    })
+    }).catch(() => undefined)
     return {
       status: publicError.status,
       body: { error: { type: publicError.type, message: publicError.message } }

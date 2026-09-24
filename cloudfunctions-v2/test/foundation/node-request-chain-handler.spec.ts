@@ -113,6 +113,8 @@ const payloadTooLargeStatusCode = 413
 const internalErrorStatusCode = 500
 const outerHandledStatusCode = 202
 const ephemeralPort = 0
+/** 仅用于让失败的本机 HTTP 测试在当前测试超时前返回；不是产品请求时限。 */
+const pendingAuditRegressionGuardMilliseconds = 1_000
 
 const expectedStageOrder = [
   'requestLimits',
@@ -456,6 +458,37 @@ describe('Node HTTP 请求链适配器', () => {
     expect(observedStages).toContain('reportAuditFailure:allowed')
     expect(result.text).not.toContain(rawFailureMarker)
   })
+
+  test('真实 HTTP 成功响应不等待永不完成的请求结果事件写入', async () => {
+    let writeStartedResolve: () => void = () => undefined
+    const writeStarted = new Promise<void>(resolve => {
+      writeStartedResolve = resolve
+    })
+    const neverSettles = new Promise<void>(() => undefined)
+    const observedStages: string[] = []
+    const steps = Object.assign(createRequestChainSteps(observedStages), {
+      writeAudit: (event: RequestChainAuditEvent) => {
+        observedStages.push(`writeAudit:${event.outcome}`)
+        writeStartedResolve()
+        return neverSettles
+      }
+    })
+
+    const response = sendHttpRequest(createNodeRequestChainHandler(steps), {
+      method: 'POST',
+      headers: { authorization: authorizationMarker },
+      body: requestBody,
+      // 仅作测试保护：若回归导致响应悬挂，尽快中止本机请求；不是产品等待时限。
+      signal: AbortSignal.timeout(pendingAuditRegressionGuardMilliseconds)
+    })
+    await writeStarted
+    const result = await response
+
+    expect(result.status).toBe(successStatusCode)
+    expect(JSON.parse(result.text)).toEqual({ data: { userPlantRef: 'upl_test_water' } })
+    expect(observedStages).toContain('writeAudit:allowed')
+  })
+
   test('响应无法序列化时返回泛化内部错误而不泄露原始运行异常', async () => {
     const observedStages: string[] = []
     const handler = createNodeRequestChainHandler(
