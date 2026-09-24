@@ -4,6 +4,7 @@ import type {
   UserPlantDto,
   UserPlantRef
 } from '../../contracts/types.js'
+import { isUserPlantCapacityReached } from './user-plant-capacity.js'
 
 /** 创建用户植物领域规则可以产生的稳定拒绝类型。 */
 export type UserPlantCreateErrorType =
@@ -89,7 +90,9 @@ export function createUnidentifiedUserPlant(input: CreateUnidentifiedUserPlantIn
     throw new UserPlantCreateError('CAPABILITY_SNAPSHOT_EXPIRED', '能力快照已失效')
   }
 
-  if (input.currentActiveCount >= capabilitySnapshot.activeUserPlantLimit) {
+  if (
+    isUserPlantCapacityReached(input.currentActiveCount, capabilitySnapshot.activeUserPlantLimit)
+  ) {
     throw new UserPlantCreateError('CAPABILITY_DENIED', '当前可创建的用户植物数量已达上限')
   }
 
