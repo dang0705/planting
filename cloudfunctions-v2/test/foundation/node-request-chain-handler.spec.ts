@@ -126,7 +126,6 @@ const expectedStageOrder = [
   'publicResponse',
   'writeAudit:allowed'
 ]
-
 const handlersToClose = new Set<ReturnType<typeof createServer>>()
 
 /** 构造 UTF-8 字节数精确为目标值的合法 JSON 正文。 */
@@ -435,6 +434,28 @@ describe('Node HTTP 请求链适配器', () => {
     expect(result.text).not.toContain(authorizationMarker)
   })
 
+  test('真实 HTTP 成功响应不被链尾请求事件写入失败改成 500', async () => {
+    const observedStages: string[] = []
+    const steps = Object.assign(createRequestChainSteps(observedStages), {
+      writeAudit: async (event: RequestChainAuditEvent) => {
+        observedStages.push(`writeAudit:${event.outcome}`)
+        throw new Error(rawFailureMarker)
+      },
+      reportAuditFailure: async (event: RequestChainAuditEvent) => {
+        observedStages.push(`reportAuditFailure:${event.outcome}`)
+      }
+    })
+    const result = await sendHttpRequest(createNodeRequestChainHandler(steps), {
+      method: 'POST',
+      headers: { authorization: authorizationMarker },
+      body: requestBody
+    })
+    expect(result.status).toBe(successStatusCode)
+    expect(JSON.parse(result.text)).toEqual({ data: { userPlantRef: 'upl_test_water' } })
+    expect(observedStages).toContain('writeAudit:allowed')
+    expect(observedStages).toContain('reportAuditFailure:allowed')
+    expect(result.text).not.toContain(rawFailureMarker)
+  })
   test('响应无法序列化时返回泛化内部错误而不泄露原始运行异常', async () => {
     const observedStages: string[] = []
     const handler = createNodeRequestChainHandler(

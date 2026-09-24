@@ -161,8 +161,10 @@ export type RequestChainConfig<
   transactionPersistence: RequestChainStep<TransactionPersistenceContext<TDomainDecision, TPrincipal>, TPersistenceResult>
   /** 第九步：把内部结果转换为不含内部主键和敏感字段的公开 DTO。 */
   publicResponse: RequestChainStep<TPersistenceResult, TPublicData>
-  /** 最后写入白名单审计事件；调用方负责选择可靠的持久化实现。 */
+  /** 最后尝试写入脱敏请求结果事件；可靠的业务安全审计必须在领域事务内完成。 */
   writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
+  /** 请求结果事件写入失败时的脱敏告警端口；不得接收原始异常或改变业务结果。 */
+  reportAuditFailure?: (event: RequestChainAuditEvent) => void | Promise<void>
 }
 
 const internalErrorStatusCode = 500
@@ -216,6 +218,32 @@ export async function executeRequestChain<
     TPublicData
   >
 ): Promise<RequestChainResult<TPublicData>> {
+  /** 最后的运行时告警也可能失效；此时仍须保留已确定的业务结果。 */
+  const emitSafeWarning = (message: string, code: string): void => {
+    try {
+      process.emitWarning(message, { code })
+    } catch {
+      return
+    }
+  }
+
+  /** 链尾可观测性失败不得重解释已经确定的业务成功或拒绝。 */
+  const reportRequestOutcome = async (event: RequestChainAuditEvent): Promise<void> => {
+    try {
+      await config.writeAudit(event)
+    } catch {
+      try {
+        if (config.reportAuditFailure) {
+          await config.reportAuditFailure(event)
+        } else {
+          emitSafeWarning('请求结果事件写入失败', 'REQUEST_AUDIT_WRITE_FAILED')
+        }
+      } catch {
+        emitSafeWarning('请求结果事件与脱敏告警均写入失败', 'REQUEST_AUDIT_REPORT_FAILED')
+      }
+    }
+  }
+
   try {
     const restrictedInput = await runStep(config.requestLimits, config.rawRequest)
     const identityCredentials = await runStep(config.identityValidate, restrictedInput)
@@ -230,11 +258,11 @@ export async function executeRequestChain<
     })
     const publicData = await runStep(config.publicResponse, persistenceResult)
 
-    await config.writeAudit({ outcome: 'allowed' })
+    await reportRequestOutcome({ outcome: 'allowed' })
     return { status: 200, body: { data: publicData } }
   } catch (error: unknown) {
     const publicError = mapPublicError(error)
-    await config.writeAudit({
+    await reportRequestOutcome({
       outcome: publicError.status >= internalErrorStatusCode ? 'failed' : 'denied',
       errorType: publicError.type
     })
