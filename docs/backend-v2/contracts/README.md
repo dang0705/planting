@@ -9,6 +9,7 @@
 - [植物分类与身份](plant-taxonomy.md)
 - [统一养护能力输出](care-capability-output.md)
 - [养护原子环境事实与派生指标](care-environment-foundation.md)
+- [手工盆土表面原子观察窄合同](care-manual-soil-observation.md)
 - [积分、等级与 AI 额度](care-points-and-ai-quota.md)
 - [诊断内容增强的首版实验合同](diagnosis-rich-response-experiment.md)
 - [诊断结论与行动建议的知识来源合同](diagnosis-knowledge-sources.md)

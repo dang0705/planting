@@ -67,6 +67,14 @@
       "sha256": "9600f9a3953b85013f5295bbda9de741d9b9c0fded393d4c7b6af8c6d3528b55"
     },
     {
+      "id": "care-manual-soil-observation",
+      "version": "care-manual-soil-observation/v1",
+      "file": "care-manual-soil-observation.md",
+      "owner": "care",
+      "status": "P4_NARROW_SLICE",
+      "sha256": "dd65dee4bcbd93fb0fd5bf9296136716145b26d3b6bd3ec2d990a34118540381"
+    },
+    {
       "id": "care-capability-output",
       "version": "care-capability-result/v1",
       "file": "care-capability-output.md",
