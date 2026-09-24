@@ -2,8 +2,8 @@
 
 - 机器事实源：`configuration-variable-catalog.json`
 - Schema：`configuration-variable-catalog/v1`
-- 目录版本：`2026-09-23.1`
-- 当前共 169 项业务/治理变量、12 个 Provider 配置档案：已冻结 74 项、待冻结 53 项、不可配置硬规则 42 项。
+- 目录版本：`2026-09-24.1`
+- 当前共 170 项业务/治理变量、12 个 Provider 配置档案：已冻结 74 项、待冻结 54 项、不可配置硬规则 42 项。
 
 本文件由同目录生成脚本从 JSON 生成，便于中文阅读。实施 Agent 必须先按领域读取本文件，再只深读该变量引用的合同或决策；不得把 `P1_PENDING` 猜成默认值。待冻结项必须带原因与阻断范围，未冻结前只能推进不依赖该值的工作。
 
@@ -108,6 +108,7 @@
 | `user-plant.free.active_limit` | 免费用户活跃植物上限 | `userplant_limits` | 领域策略 / 已冻结 | `1` 株 | subscription | user-plant、subscription | 新策略只限制未来创建，不删除既有植物；失败：策略不可用时拒绝新增植物 | P1 / [P1] 用户植物、身份和游客认领合同 |
 | `user-plant.profile.minimum_completeness` | 有效档案最低完整度 | `userplant_limits` | 领域策略 / 已冻结 | `{"profileVersion":"user-plant-profile/v1","requiredFields":["identityStatus","pot","location","lightingEnvironment","ventilationEnvironment"],"acceptedIdentityStates":["unidentified","candidate_pending","confirmed"],"rewardOncePerUser":true}` | user-plant | user-plant、subscription | 用户植物档案策略版本；失败：未冻结前不发首株有效档案积分 | P1 / [P1] 用户植物、身份和游客认领合同 |
 | `user-plant.assets.max_count_per_plant` | 单株植物资产数量上限 | `userplant_limits` | 领域策略 / 待冻结 | P1_PENDING 个 | user-plant | user-plant、storage | 资产策略版本；失败：未冻结前只允许最小封面资产集合；待冻结原因：容量与成本尚未测量；阻断：多资产上传 | P2 / [P1] 用户植物、身份和游客认领合同 |
+| `user-plant.authenticated_ephemeral.case_ttl_hours` | 已登录用户临时植物案例有效期 | `userplant_limits` | 领域策略 / 待冻结 | P1_PENDING 小时 | user-plant | user-plant、care、diagnosis | 发布不可变临时案例策略版本；新值只影响新建案例，已签发案例保留原失效时间；失败：无已冻结策略时拒绝新建已登录临时植物案例，不影响游客临时路径和长期用户植物；待冻结原因：业务尚未裁决已登录临时案例的独立保留时长及成本、清理和回滚边界；阻断：已登录临时植物案例创建、失效时间签发及其后的保存绑定运行路径 | P3 / [P1] 用户植物、身份和游客认领合同 |
 | `user-plant.lifecycle.owner_guard` | 用户植物归属校验不可绕过 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `true` | user-plant | 全部用户植物相关域 | 不可配置；失败：归属无法证明返回 404 | P1 / [P1] 用户植物、身份和游客认领合同 |
 | `user-plant.guest_claim.once` | 游客案例只能认领一次 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `true` | user-plant | user-plant、care、diagnosis | 不可配置；失败：重复认领返回首次确定结果或冲突 | P1 / [P1] 用户植物、身份和游客认领合同 |
 | `user-plant.identity.current_states` | 用户植物当前身份状态集合 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `["unidentified","candidate_pending","confirmed"]` | user-plant | user-plant、plant-knowledge | 不可配置；如需改变必须回到业务架构和合同重审；失败：违反时拒绝请求、发布或状态转换 | P1 / [P1] 业务策略与统一 Provider 配置架构 |

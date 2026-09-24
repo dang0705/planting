@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qinghuazhi.local/contracts/diagnosis-knowledge-candidate.v1.schema.json",
+  "title": "诊断知识完整候选 v1",
+  "description": "约束提交人工审核的诊断知识候选内容。结构合格不代表来源许可、植物适用性、题包发布状态、跨引用或人工审核通过。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "bundleCode", "revisionNo", "symptomModeRefs", "causes", "outcomes", "actions", "mappings", "claimLinks"],
+  "properties": {
+    "schemaVersion": { "const": "diagnosis-knowledge-candidate/v1", "description": "候选内容的不可变结构版本。" },
+    "bundleCode": { "$ref": "#/$defs/code", "description": "诊断知识包的稳定业务代码，不是用户或植物身份。" },
+    "revisionNo": { "type": "integer", "minimum": 1, "maximum": 4294967295, "description": "同一知识包内的候选修订号。" },
+    "symptomModeRefs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/symptomModeRef" }, "description": "候选依赖的症状入口及题包精确发布引用；发布前须核实存在且兼容。" },
+    "causes": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/cause" }, "description": "与症状入口分轴的园艺原因目录。" },
+    "outcomes": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/outcome" }, "description": "有证据门的诊断结论；允许待判定结论。" },
+    "actions": { "type": "array", "items": { "$ref": "#/$defs/action" }, "description": "经逐项审核的行动建议；安全的待判定结论允许为空。" },
+    "mappings": { "type": "array", "items": { "$ref": "#/$defs/mapping" }, "description": "同一候选的结论与行动映射；不强迫每个结论产生行动。" },
+    "claimLinks": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/claimLink" }, "description": "逐项指向来源主张的精确修订；有效性须由发布前查询校验。" }
+  },
+  "$defs": {
+    "code": { "type": "string", "minLength": 1, "maxLength": 96, "pattern": "\\S", "description": "非空稳定业务代码。" },
+    "textZh": { "type": "string", "minLength": 1, "pattern": "\\S", "description": "非空、可阅读的受审中文文案；语言质量仍需人工审核。" },
+    "symptomModeRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["symptomModeCode", "questionPackageReleaseRef"],
+      "properties": {
+        "symptomModeCode": { "$ref": "#/$defs/code", "description": "黄叶、萎蔫等症状入口代码，不代表病因。" },
+        "questionPackageReleaseRef": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "\\S", "description": "不可变题包发布引用。" }
+      }
+    },
+    "plantScope": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mode", "taxa", "allowUnknownIdentity"],
+      "properties": {
+        "mode": { "enum": ["all_reviewed", "taxa"], "description": "适用范围是经审核的通用规则，或只限指定植物分类。" },
+        "taxa": { "type": "array", "items": { "$ref": "#/$defs/code" }, "description": "适用的植物分类公开代码；发布前须逐项核验身份及层级。" },
+        "allowUnknownIdentity": { "type": "boolean", "description": "植物身份尚未确认时，是否允许使用本条知识。" }
+      }
+    },
+    "cause": {
+      "type": "object", "additionalProperties": false,
+      "required": ["causeCode", "parentCauseCode", "causeCategory", "displayNameZh", "definitionZh", "applicablePlantScope"],
+      "properties": {
+        "causeCode": { "$ref": "#/$defs/code", "description": "候选内唯一的园艺原因代码。" },
+        "parentCauseCode": { "oneOf": [{ "$ref": "#/$defs/code" }, { "type": "null" }], "description": "同候选父原因代码；根节点用 null，存在性及无环由跨引用校验。" },
+        "causeCategory": { "enum": ["abiotic", "pest", "pathogen", "mixed", "undetermined"], "description": "非生物、害虫、病原、混合或待判定原因，与 SQL 约束一致。" },
+        "displayNameZh": { "type": "string", "minLength": 1, "maxLength": 191, "pattern": "\\S", "description": "经审核的中文原因名称；与 SQL VARCHAR(191) 一致。" },
+        "definitionZh": { "$ref": "#/$defs/textZh", "description": "有界的原因定义，不直接生成诊断结论。" },
+        "applicablePlantScope": { "$ref": "#/$defs/plantScope", "description": "该原因适用的植物分类范围。" }
+      }
+    },
+    "evidenceRules": {
+      "type": "object", "additionalProperties": false,
+      "required": ["required", "supporting", "opposing"],
+      "properties": {
+        "required": { "type": "array", "items": { "$ref": "#/$defs/evidenceCondition" }, "description": "作出结论必须满足的观察条件。" },
+        "supporting": { "type": "array", "items": { "$ref": "#/$defs/evidenceCondition" }, "description": "增强结论但不能替代必需证据的条件。" },
+        "opposing": { "type": "array", "items": { "$ref": "#/$defs/evidenceCondition" }, "description": "反驳或降低结论确定性的条件。" }
+      }
+    },
+    "evidenceCondition": {
+      "type": "object", "additionalProperties": false,
+      "required": ["evidenceCode", "findingCode", "sourceKind", "affectedPartCodes"],
+      "properties": {
+        "evidenceCode": { "$ref": "#/$defs/code", "description": "可独立追溯的条件代码。" },
+        "findingCode": { "$ref": "#/$defs/code", "description": "受控观察结果代码，不接受自由模型文案作判断键。" },
+        "sourceKind": { "enum": ["visual", "answer", "environment", "care_fact"], "description": "视觉、问答、环境或已确认养护事实的证据来源类别。" },
+        "affectedPartCodes": { "type": "array", "items": { "$ref": "#/$defs/code" }, "description": "条件覆盖的受损部位；空数组表示该条件不限定部位。" }
+      }
+    },
+    "decisionPolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["rules", "fallback"],
+      "properties": {
+        "rules": { "type": "array", "items": { "$ref": "#/$defs/policyRule" }, "description": "已审核的条件到决定的规则；具体归约仍须领域测试。" },
+        "fallback": { "type": "string", "minLength": 1, "pattern": "\\S", "description": "证据不足时的明确退路，不得靠空值推断为低风险或无需隔离。" }
+      }
+    },
+    "policyRule": {
+      "type": "object", "additionalProperties": false,
+      "required": ["conditionCode", "decisionCode", "reasonZh"],
+      "properties": {
+        "conditionCode": { "$ref": "#/$defs/code", "description": "受审条件代码，语义和依赖由发布校验解析。" },
+        "decisionCode": { "$ref": "#/$defs/code", "description": "命中条件后的受控决定代码。" },
+        "reasonZh": { "$ref": "#/$defs/textZh", "description": "向用户解释该决定的受审中文理由。" }
+      }
+    },
+    "followUp": {
+      "type": "object", "additionalProperties": false,
+      "required": ["observationCode", "instructionZh"],
+      "properties": {
+        "observationCode": { "$ref": "#/$defs/code", "description": "复查时应观察的指标代码。" },
+        "instructionZh": { "$ref": "#/$defs/textZh", "description": "受审的复查说明；不得无依据增加固定时间或剂量。" }
+      }
+    },
+    "outcome": {
+      "type": "object", "additionalProperties": false,
+      "required": ["outcomeCode", "causeCode", "displayNameZh", "summaryZh", "problemTypeCode", "symptomModeRefs", "affectedPartCodes", "applicablePlantScope", "evidenceRules", "conflictPolicy", "uncertaintyPolicy", "severityCriteria", "urgencyPolicy", "isolationPolicy", "differentialOutcomeCodes", "followUpCriteria"],
+      "properties": {
+        "outcomeCode": { "$ref": "#/$defs/code", "description": "候选内唯一的结论代码。" },
+        "causeCode": { "$ref": "#/$defs/code", "description": "同候选园艺原因引用；发布前须校验存在。" },
+        "displayNameZh": { "type": "string", "minLength": 1, "maxLength": 191, "pattern": "\\S", "description": "经审核的中文结论名称；与 SQL VARCHAR(191) 一致。" },
+        "summaryZh": { "$ref": "#/$defs/textZh", "description": "有界结论摘要，不包含具体操作。" },
+        "problemTypeCode": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "\\S", "description": "由原因分类受审投影出的用户可理解问题类型；与 SQL VARCHAR(64) 一致。" },
+        "symptomModeRefs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/symptomModeRef" }, "description": "可进入本结论的症状入口与精确题包版本。" },
+        "affectedPartCodes": { "type": "array", "items": { "$ref": "#/$defs/code" }, "description": "适用的受损部位，不从结论标题推断未观察部位。" },
+        "applicablePlantScope": { "$ref": "#/$defs/plantScope", "description": "适用植物身份范围。" },
+        "evidenceRules": { "$ref": "#/$defs/evidenceRules", "description": "必须、支持和反驳证据门。" },
+        "conflictPolicy": { "enum": ["defer", "show_alternatives", "reduce_certainty"], "description": "证据冲突时的受审退路，禁止静默选择最高模型分数。" },
+        "uncertaintyPolicy": { "enum": ["unconfirmed_when_insufficient", "ask_for_evidence", "limit_to_possible"], "description": "证据不足或冲突时的结论表达边界。" },
+        "severityCriteria": { "type": "array", "items": { "$ref": "#/$defs/policyRule" }, "description": "受损程度的有界分级条件，不等于紧急程度。" },
+        "urgencyPolicy": {
+          "allOf": [
+            { "$ref": "#/$defs/decisionPolicy" },
+            { "type": "object", "properties": { "fallback": { "const": "unknown" } } }
+          ],
+          "description": "处理紧急程度的受审判定条件；无规则命中时只能标记未知。"
+        },
+        "isolationPolicy": {
+          "allOf": [
+            { "$ref": "#/$defs/decisionPolicy" },
+            { "type": "object", "properties": { "fallback": { "const": "undetermined" } } }
+          ],
+          "description": "隔离、不隔离或待判定的受审判定条件；无规则命中时只能保持待判定。"
+        },
+        "differentialOutcomeCodes": { "type": "array", "items": { "$ref": "#/$defs/code" }, "description": "同候选需鉴别的其他结论代码。" },
+        "followUpCriteria": { "type": "array", "items": { "$ref": "#/$defs/followUp" }, "description": "复查观察点与停止或恶化条件。" }
+      }
+    },
+    "action": {
+      "type": "object", "additionalProperties": false,
+      "required": ["actionCode", "displayCategory", "titleZh", "purposeZh", "stepsZh", "applicabilityConditions", "contraindications", "stopConditions", "riskLevel", "safetyNotesZh", "followUpCriteria"],
+      "properties": {
+        "actionCode": { "$ref": "#/$defs/code", "description": "同候选唯一行动代码。" },
+        "displayCategory": { "enum": ["immediate", "aftercare", "prevention", "caution"], "description": "面向用户的展示分区，不决定是否适用。" },
+        "titleZh": { "type": "string", "minLength": 1, "maxLength": 191, "pattern": "\\S", "description": "经审核的中文行动标题；与 SQL VARCHAR(191) 一致。" },
+        "purposeZh": { "$ref": "#/$defs/textZh", "description": "行动目的及建议理由。" },
+        "stepsZh": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/textZh" }, "description": "逐条受审的中文步骤；药剂、剂量、不可逆操作不能自由注入。" },
+        "applicabilityConditions": { "type": "array", "items": { "$ref": "#/$defs/evidenceCondition" }, "description": "植物、部位、环境或证据的适用条件。" },
+        "contraindications": { "type": "array", "items": { "$ref": "#/$defs/evidenceCondition" }, "description": "命中时必须先于行动推荐生效的禁忌条件。" },
+        "stopConditions": { "type": "array", "items": { "$ref": "#/$defs/evidenceCondition" }, "description": "应暂停或升级处理的条件。" },
+        "riskLevel": { "enum": ["low", "moderate", "high"], "description": "行动风险级别；高风险还须经来源、安全与人工准入。" },
+        "safetyNotesZh": { "type": "string", "description": "用户可见的受审安全提醒；低风险行动可为空串，高风险行动须由发布前来源及安全门进一步核验。" },
+        "followUpCriteria": { "type": "array", "items": { "$ref": "#/$defs/followUp" }, "description": "复查指标与有来源的后续条件。" }
+      }
+    },
+    "mapping": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mappingCode", "outcomeCode", "actionCode", "matchingConditions", "contraindicationPriority", "sequenceNo"],
+      "properties": {
+        "mappingCode": { "$ref": "#/$defs/code", "description": "候选内唯一的结论—行动映射代码。" },
+        "outcomeCode": { "$ref": "#/$defs/code", "description": "同候选结论代码。" },
+        "actionCode": { "$ref": "#/$defs/code", "description": "同候选行动代码。" },
+        "matchingConditions": { "type": "array", "items": { "$ref": "#/$defs/evidenceCondition" }, "description": "推荐该行动前还须满足的证据条件。" },
+        "contraindicationPriority": { "type": "integer", "minimum": 0, "maximum": 65535, "description": "禁忌优先级，与 SQL SMALLINT UNSIGNED 一致。" },
+        "sequenceNo": { "type": "integer", "minimum": 0, "maximum": 65535, "description": "建议展示顺序，与 SQL SMALLINT UNSIGNED 一致。" }
+      }
+    },
+    "claimLink": {
+      "type": "object", "additionalProperties": false,
+      "required": ["targetKind", "targetCode", "sourceCode", "claimCode", "revisionNo", "linkRole"],
+      "properties": {
+        "targetKind": { "enum": ["cause", "outcome", "action", "mapping"], "description": "该来源主张指向的知识条目类型。" },
+        "targetCode": { "$ref": "#/$defs/code", "description": "同候选、同类型的目标稳定代码。" },
+        "sourceCode": { "$ref": "#/$defs/code", "description": "稳定来源资料代码。" },
+        "claimCode": { "$ref": "#/$defs/code", "description": "来源内的稳定主张代码。" },
+        "revisionNo": { "type": "integer", "minimum": 0, "maximum": 4294967295, "description": "精确主张修订号，不自动追随最新修订。" },
+        "linkRole": { "enum": ["support", "oppose", "limit", "safety"], "description": "该主张对知识条目的支持、反驳、限制或安全用途。" }
+      }
+    }
+  }
+}

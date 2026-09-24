@@ -2,7 +2,7 @@
 
 - 绑定任务：[诊断知识来源、园艺原因及 Outcome/Action 合同](https://app.clickup.com/t/z8v0kmrg8a)。
 - 依据：[诊断知识来源合同](diagnosis-knowledge-sources.md)、[Outcome/Action 字段边界](diagnosis-outcome-fields.md)、[独立 Expected 草案](../testing/P1-diagnosis-knowledge-expected.md)。
-- 状态：已形成 [诊断知识空库 DDL](../schema/009_diagnosis_knowledge.sql)与[独立审核撤销迁移](../schema/010_diagnosis_review_revocations.sql)，并在本地 MySQL 8.4 验证关键外键及撤销约束；**CMS 管理员真实性、候选完整 JSON Schema、应用发布事务、CloudBase MySQL 和已发布知识仍未验收**。本合同不能代替这些层级的验收。
+- 状态：已形成 [诊断知识空库 DDL](../schema/009_diagnosis_knowledge.sql)与[独立审核撤销迁移](../schema/010_diagnosis_review_revocations.sql)，并在本地 MySQL 8.4 验证关键外键及撤销约束；[候选结构 v1 Schema](schemas/diagnosis-knowledge-candidate.v1.schema.json)已有独立结构测试。单候选关系索引和候选→题包/来源关系闭合已有纯函数及单元测试，但外部依赖仅由调用方提供“已验证”输入，**没有真实 CMS/题包读回**。候选值对象的规则执行语义、真实外部依赖与植物适用性、CMS 管理员真实性、发布包 Schema、应用发布事务、CloudBase MySQL 和已发布知识仍未验收。本合同不能代替这些层级的验收。
 
 ## 所有权与最小数据分层
 
@@ -34,6 +34,8 @@
 - 包内所有引用、植物身份范围、题包版本及已发布来源必须在发布前一次性解析和校验；缺一项就拒绝整个发布，不生成半个可见包。
 - 原因父链必须停在无父节点的原因，不能成环；候选内稳定代码不得重复，Outcome 的原因、备选结论和症状入口、结论—行动映射以及逐项来源主张修订都必须能在同一候选及其已验证依赖中解析。此项是不可配置的发布准入规则；具体候选 JSON 字段形状仍由后续版本化 Schema 冻结。
 - [单候选关系索引 v1 结构 Schema](schemas/diagnosis-knowledge-reference-index.v1.schema.json)只约束上述关系校验函数的输入投影：字段类型、枚举、代码/版本引用长度与数组元素形状。候选完整内容的值对象、CMS 审核输入、来源许可与题包发布状态不由该 Schema 验证；应用层必须先完成形状校验，再调用跨引用校验，并独立读回外部依赖。
+- [候选结构 v1 Schema](schemas/diagnosis-knowledge-candidate.v1.schema.json)约束原因、Outcome、Action、映射和精确来源引用的必填值对象、数组元素及危险自由字段。其 `urgencyPolicy` 在没有规则命中时只能是 `unknown`，`isolationPolicy` 只能是 `undetermined`；Schema 通过不意味着条件已可执行、来源与植物适用性已核实或内容获人工批准。首次真正发布前还须冻结条件代码的可执行语义、与 SQL JSON 列的映射及独立发布包 Schema。
+- 候选声明与逐条 Outcome 的题包引用通过 `validateCandidateReferenceClosure` 按症状代码和精确发布引用成对核对，并复用同候选关系索引的父原因、来源主张修订和映射校验。该函数假定完整候选已先通过结构 Schema；传入的已发布题包与已核验来源主张只是应用层输入，不能把单元测试中的受控数据冒充真实发布目录或来源状态。
 
 ## 审核、发布与回滚的事务边界
 
@@ -53,4 +55,4 @@ CMS 编辑候选 → diagnosis 固定候选修订与完整内容摘要
 
 ## 下一层实施门
 
-P1 已补独立有序 DDL 与审核摘要、跨候选审核、驳回审核、同包活动指针及独立撤销表的本地真实 MySQL 约束验证，证据见[本地空库与外键读回](../audits/evidence/P1-diagnosis-knowledge-ddl-local-mysql.md)和[审核撤销本地证据](../testing/P1-diagnosis-review-revocation-mysql-evidence.md)。仍须补齐候选和发布包的版本化 JSON Schema、CMS 审核凭据传递和鉴权、所有列的字段字典与类型确认，并把 `DK-01` 至 `DK-09` 中相关 Expected 固定为 TypeScript 测试。应用层的撤销/发布串行化、发布/回滚事务、并发切换、失败恢复和历史结果回放尚未实现；CloudBase CMS 的真实接口/权限、端到端发布和 HTTP 诊断仍须分别读回验证，不能用静态 DDL 或本地 MySQL 绿灯冒充完成。
+P1 已补独立有序 DDL 与审核摘要、跨候选审核、驳回审核、同包活动指针及独立撤销表的本地真实 MySQL 约束验证，证据见[本地空库与外键读回](../audits/evidence/P1-diagnosis-knowledge-ddl-local-mysql.md)和[审核撤销本地证据](../testing/P1-diagnosis-review-revocation-mysql-evidence.md)。候选结构 v1 Schema、候选题包引用闭合及其 TypeScript 测试已落盘，但仍须补齐规则执行语义与 SQL 映射、发布包 Schema、CMS 审核凭据传递和鉴权、所有列的字段字典与类型确认，并把 `DK-01` 至 `DK-09` 中尚缺的 Expected 固定为 TypeScript 测试。应用层的撤销/发布串行化、发布/回滚事务、并发切换、失败恢复和历史结果回放尚未实现；CloudBase CMS 的真实接口/权限、端到端发布和 HTTP 诊断仍须分别读回验证，不能用静态 DDL 或本地 MySQL 绿灯冒充完成。

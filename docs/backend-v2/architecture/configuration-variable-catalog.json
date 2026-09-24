@@ -1,6 +1,6 @@
 {
   "schemaVersion": "configuration-variable-catalog/v1",
-  "catalogVersion": "2026-09-23.1",
+  "catalogVersion": "2026-09-24.1",
   "language": "zh-CN",
   "description": "青花植后端 v2 业务关键变量唯一目录。confirmed 表示已冻结，pending 表示必须在所属阶段冻结后才能实现对应范围，hard_rule 表示任何配置均不得覆盖。",
   "validationMetadata": {
@@ -926,6 +926,34 @@
       "expected": "超过上限返回稳定业务错误",
       "pendingReason": "容量与成本尚未测量",
       "blockingScope": "多资产上传",
+      "decisionGroup": "userplant_limits"
+    },
+    {
+      "id": "user-plant.authenticated_ephemeral.case_ttl_hours",
+      "chineseName": "已登录用户临时植物案例有效期",
+      "domain": "user-plant",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "小时",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "user-plant",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/authenticated-ephemeral-plant-case.md",
+        "docs/backend-v2/testing/P1-authenticated-ephemeral-expected.md"
+      ],
+      "consumers": [
+        "user-plant",
+        "care",
+        "diagnosis"
+      ],
+      "changePolicy": "发布不可变临时案例策略版本；新值只影响新建案例，已签发案例保留原失效时间",
+      "fallback": "无已冻结策略时拒绝新建已登录临时植物案例，不影响游客临时路径和长期用户植物",
+      "phase": "P3",
+      "ticketTitle": "[P1] 用户植物、身份和游客认领合同",
+      "expected": "创建已登录临时案例前必须取得已冻结有效期策略；不得隐式继承游客会话的 24 小时；已创建案例的失效时间不随策略变更而漂移",
+      "pendingReason": "业务尚未裁决已登录临时案例的独立保留时长及成本、清理和回滚边界",
+      "blockingScope": "已登录临时植物案例创建、失效时间签发及其后的保存绑定运行路径",
       "decisionGroup": "userplant_limits"
     },
     {
