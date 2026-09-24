@@ -72,8 +72,8 @@ const memberPolicySchema: JSONSchemaType<MemberAiQuotaPolicy> = {
   }
 }
 
-/** 发布版本遵守 `{policy-domain}/YYYY-MM-DD.revision`，且受 DDL 长度限制。 */
-const releaseVersionPattern = /^subscription\.member\.ai_points_per_cycle\/\d{4}-\d{2}-\d{2}\.\d+$/u
+/** 发布版本遵守合同通用 `{policy-domain}/YYYY-MM-DD.revision`，策略身份由独立字段校验。 */
+const releaseVersionPattern = /^[a-z][a-z0-9.-]*\/\d{4}-\d{2}-\d{2}\.\d+$/u
 /** SHA-256 规范小写十六进制格式。 */
 const sha256Pattern = /^[a-f0-9]{64}$/u
 /** 策略发布版本字段的 DDL 最大长度。 */

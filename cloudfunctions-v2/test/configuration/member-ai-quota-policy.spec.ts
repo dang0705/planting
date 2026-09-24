@@ -11,7 +11,7 @@ const approvedPointsPerCycle = 2000
 /** 对字面 JSON `{"aiPointsPerCycle":2000}` 独立计算并冻结的 SHA-256 黄金向量。 */
 const approvedContentSha256 = 'db2b796591e1132665d7c39aa9b5504a0f3d524f5c3b28c0018708a5559c126a'
 /** 测试夹具版本仅用于证明版本透传，不代表生产已发布版本。 */
-const fixtureReleaseVersion = 'subscription.member.ai_points_per_cycle/2026-09-24.1'
+const fixtureReleaseVersion = 'member-ai-quota/2026-09-24.1'
 /** 生效窗口内的固定测试时间，UTC 毫秒。 */
 const validNowMs = Date.parse('2026-09-24T12:00:00.000Z')
 /** SHA-256 十六进制摘要的固定字符数。 */
@@ -80,6 +80,7 @@ describe('会员周期 AI 额度策略发布', () => {
     for (const invalid of [
       { ...release, policyCode: 'subscription.other' },
       { ...release, schemaVersion: 'member-ai-quota-policy/v2' },
+      { ...release, releaseVersion: 'not-a-version', activeReleaseVersion: 'not-a-version' },
       { ...release, contentSha256: 'a'.repeat(sha256HexLength) },
       { ...release, activeReleaseVersion: 'other/2026-09-24.1' },
       { ...release, activeContentSha256: 'b'.repeat(sha256HexLength) },
