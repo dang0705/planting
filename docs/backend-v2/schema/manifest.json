@@ -75,6 +75,12 @@
       "owner": "plant-knowledge",
       "file": "013_plant_encyclopedia_review_binding.sql",
       "sha256": "609fa20c7288d1c327e4cb40b5f4822a5fc4fa36f160cc407f96bf5ad8cb8cad"
+    },
+    {
+      "order": 13,
+      "owner": "plant-knowledge",
+      "file": "014_plant_knowledge_release_immutability.sql",
+      "sha256": "d19c5b8ceeaec560043a034048d18e48b7d93882bf16712d724c26569fab1241"
     }
   ]
 }
