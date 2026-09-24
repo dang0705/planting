@@ -118,7 +118,7 @@ grantedAmount = availableAmount + reservedAmount + consumedAmount
 
 | 来源 | 业务唯一键 |
 |---|---|
-| `TRIAL` | `user_id + trial_policy_version`，终身一次 |
+| `TRIAL` | `user_id + trial_ref`，其中 `trial_ref` 来自每用户唯一的试用物化记录、跨策略版本保持不变；终身一次 |
 | `MEMBER` | `user_id + verified_subscription_cycle_ref` |
 | `CMS_IDENTITY` | `reward_type + reward_subject_key` |
 | `CMS_CONTENT` | `reward_type + reward_subject_key`，主题键包含内容结构版本 |
@@ -126,6 +126,13 @@ grantedAmount = availableAmount + reservedAmount + consumedAmount
 | `CARE_REDEMPTION` | `user_id + committed_redemption_ref` |
 
 - 经核验的退款、欺诈或错误 release 只能通过反向 ledger 撤销尚未消费的可用额度，不能删除原 grant 或篡改已消费历史。
+
+### 首次试用的资格与账本边界
+
+- 试用资格不是 `trial_entitlements` 行是否存在的同义词。Subscription 根据受控 Identity 只读边界提供的统一用户创建时间和状态，按注册时刻适用的已发布试用策略，在 `[created_at_ms, created_at_ms + 24 小时)` 内即时判定；身份会话、公开 bearer、客户端时间或首次打开时间都不得改变起算点。跨域读取须走带用户范围和服务签名的内部 API，不允许 Subscription 业务层直接读写 Identity 表。
+- `trial_entitlements` 只在 Subscription 需要审计/物化资格时按需建立，固定每用户一条，`starts_at_ms` 必须等于可信统一用户 `created_at_ms`。`POST /subscription/trials` 若继续保留，只能确保/读回既有资格，不能重新激活或延长试用。到期后不得为首次 AI 操作新建试用 grant。
+- 首次有效 AI 额度操作在 Subscription 的同一事务中确保试用记录、发放 200 点 `TRIAL` grant、追加账本、更新账户投影并预占本次额度；grant 的 `source_ref` 固定为该唯一记录的 `trial_ref`，策略发布版本只锁入 `policy_version`。同用户并发、重复命令或策略换版均不得产生第二条试用记录或 grant；若用户从未使用生成式 AI，则不产生无用 grant/账本。
+- 会员与试用同时有效时，能力层级以会员为准；已建立的试用 grant 不删除、不延长，额度仍按匹配能力且最早到期优先消费。试用到期后不得创建新预占；到期前已建立的预占继续按结算、释放或对账合同闭合，不因到期而直接作废。
 - grant 尚有预占时不能直接进入 `reversed`；相关 reservation 先结算、释放或进入 `pending_reconciliation`。
 - 已发生且可审计的供应商成本由平台承担，不得通过退款或冲正制造用户负余额。
 - 会员退款只停止未来使用并撤销尚未消费额度；不追溯删除用户植物、事实、积分、等级或已经合法消费的额度。
