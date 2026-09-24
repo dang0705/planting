@@ -1,0 +1,196 @@
+{
+  "schemaVersion": "qinghuazhi.taxonomy-identity-evidence/v1",
+  "evidenceId": "p1-taxonomy-source-record-29",
+  "preparedOn": "2026-09-24",
+  "scope": {
+    "sourceRecordNumber": 29,
+    "targetScientificName": "Narcissus tazetta subsp. chinensis",
+    "targetRank": "subspecies",
+    "classificationDecision": "EVIDENCE_CANDIDATE_NOT_APPROVED",
+    "canonicalDisplayNameZh": {
+      "status": "PENDING_OWNER_SELECTION"
+    },
+    "mayEnterSeed": false,
+    "mayActivate": false
+  },
+  "recordHashMethod": "SHA-256 over the UTF-8 logical source record after physical CRLF/CR line endings are normalized to LF, followed by exactly one LF byte; table-file SHA-256 separately locks original bytes.",
+  "sources": {
+    "wcvp": {
+      "provider": "World Checklist of Vascular Plants (WCVP), facilitated by the Royal Botanic Gardens, Kew",
+      "datasetVersion": "16.0",
+      "publishedDate": "2026-06-04",
+      "downloadUrl": "https://sftp.kew.org/pub/data-repositories/WCVP/wcvp_dwca.zip",
+      "license": {
+        "name": "Creative Commons Attribution 3.0 Unported (CC BY 3.0)",
+        "url": "https://creativecommons.org/licenses/by/3.0/",
+        "source": "Release EML metadata",
+        "requiredAttribution": "The World Checklist of Vascular Plants (WCVP) facilitated by the Royal Botanic Gardens, Kew. Published on the Internet; https://doi.org/10.34885/egs6-cp24. Retrieved 04 Jun 2026.",
+        "noticeZh": "保留来源署名和许可链接；不得暗示 Kew 背书；数据按来源提供，Kew 不保证无误。"
+      },
+      "archive": {
+        "fileName": "wcvp_dwca.zip",
+        "sha256": "6ff1e084d7e1de5bce526a9952c96fbb0f13b4f2c615b0fc30c055f88bfb5483",
+        "requiredEntries": ["wcvp_taxon.csv", "eml.xml"]
+      },
+      "taxonTable": {
+        "entry": "wcvp_taxon.csv",
+        "sha256": "71d5662935deeb25aaff03e512fc2437d79984ed738e85f03da83afdd168d704",
+        "recordHashNoteZh": "该发布表使用 CRLF 行尾；逐记录哈希先将行尾规范化为 LF，再追加单个 LF 字节。旧的 CRLF 原始行哈希与本规范化哈希不可混用；表文件 SHA 仍覆盖发布制品原始字节。"
+      },
+      "eml": {
+        "entry": "eml.xml",
+        "sha256": "aa6dc4c18d3cd127f477a041777357435b86fea6da7c342f301902cb994a6c85"
+      },
+      "records": [
+        {
+          "taxonId": "282547",
+          "scientificName": "Narcissus",
+          "rank": "Genus",
+          "status": "Accepted",
+          "acceptedTaxonId": "282547",
+          "parentTaxonId": null,
+          "scientificNameId": "ipni:1558-1",
+          "familyLabel": "Amaryllidaceae",
+          "recordSha256": "cb1e9f957f5421354218a4aebca0f2427e6d5bc3497e354697c63d3116e507b6"
+        },
+        {
+          "taxonId": "282289",
+          "scientificName": "Narcissus tazetta",
+          "rank": "Species",
+          "status": "Accepted",
+          "acceptedTaxonId": "282289",
+          "parentTaxonId": "282547",
+          "scientificNameId": "ipni:66240-1",
+          "familyLabel": "Amaryllidaceae",
+          "recordSha256": "08455558dc3c78d5e72b92bc51e6d57a48c595a0a192ea8b04ad4a05d613921b"
+        },
+        {
+          "taxonId": "310501",
+          "scientificName": "Narcissus tazetta subsp. chinensis",
+          "rank": "Subspecies",
+          "status": "Accepted",
+          "acceptedTaxonId": "310501",
+          "parentTaxonId": "282289",
+          "scientificNameId": "ipni:77189681-1",
+          "familyLabel": "Amaryllidaceae",
+          "recordSha256": "b0c7768531d8bfdf5f72908337c8be711b36f342dc1f998f2d74636ba60e5e14"
+        }
+      ]
+    },
+    "wfo": {
+      "provider": "World Flora Online Taxonomic Backbone",
+      "datasetVersion": "2026-06",
+      "zenodoRecordId": 20782718,
+      "releaseApiUrl": "https://zenodo.org/api/records/20782718",
+      "license": {
+        "name": "CC0 1.0 Universal",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "source": "Zenodo release metadata and WFO Taxonomic Backbone terms",
+        "termsUrl": "https://www.worldfloraonline.org/termsOfUse",
+        "noticeZh": "此处只留分类骨干的最小记录字段；WFO 页面其他描述、图片或提供方内容可能具有不同权利，不随本证据包复用。"
+      },
+      "releaseMetadata": {
+        "sha256": "84a08ce713c073649deba8d155ef40b75600cb9ee2f13d2417ba019af1269662",
+        "previousAuditSha256": "74474a9e17d7fc1d8ea0fdd8ab346d13451e8fd2ed96b17514fa506d45d250bc",
+        "shaComparisonNoteZh": "2026-09-24 对同一官方 Zenodo API 地址连续两次获取的当前原始响应 SHA 均为 84a08ce713c073649deba8d155ef40b75600cb9ee2f13d2417ba019af1269662；旧审计记录的 74474a9e17d7fc1d8ea0fdd8ab346d13451e8fd2ed96b17514fa506d45d250bc 无对应留存原始字节，不能复现，也不可当作当前响应哈希。当前响应的记录号、许可证、版本标题、包名、大小和 MD5 与锁定版本一致；差异只影响旧元数据响应字节的可追溯性，不改变分类包/表哈希或本条的分类判断，但旧元数据哈希不能继续声称已复核。",
+        "archiveFileName": "wfo_plantlist_2026-06.zip",
+        "archiveSizeBytes": 132643291,
+        "archiveMd5": "02f989b01b8eb142ec5934bd634b3876"
+      },
+      "archive": {
+        "sha256": "75f1ad1f371978c9e46f3044152c07ed276fe57be9fb9a15b3621b19cf231987",
+        "requiredEntries": ["taxon.tsv", "name.tsv", "synonym.tsv"]
+      },
+      "tables": [
+        {
+          "entry": "taxon.tsv",
+          "sha256": "0d23bddb2ab8d7e6505e741acb54b6603ca9523751be555a734ee4019fa61c23"
+        },
+        {
+          "entry": "name.tsv",
+          "sha256": "c506eb9e21efe9e268e20f8cd9bc65f91b55e1722d19c27d58a6681f8b680ed8"
+        },
+        {
+          "entry": "synonym.tsv",
+          "sha256": "dba9a8562d173971ae57705dbdb68aa866e76295294742834b6f55f7182595ca"
+        }
+      ],
+      "records": [
+        {
+          "taxonId": "wfo-7000000018",
+          "nameId": "wfo-7000000018",
+          "parentTaxonId": "wfo-9000000036",
+          "scientificName": "Amaryllidaceae",
+          "rank": "family",
+          "taxonRecordSha256": "d4e50b56c13d6734df823e8ff61cac107040f07f5db0d0cc2d41a881c50a976b",
+          "nameRecordSha256": "361919dff68b3ad0b19998247cf65e256574af935c2fbc5fdbb7a41993b44bc8"
+        },
+        {
+          "taxonId": "wfo-4000025329",
+          "nameId": "wfo-4000025329",
+          "parentTaxonId": "wfo-7000000018",
+          "scientificName": "Narcissus",
+          "rank": "genus",
+          "taxonRecordSha256": "e210d475e0b246231a7b99d3c1d6d2146038b6cda06fa26d002940af27f3b39c",
+          "nameRecordSha256": "ebba80ae43f5d478dafe8c8d18c6397b9565e68df4da9104b135b61e278d77a0"
+        },
+        {
+          "taxonId": "wfo-0000700066",
+          "nameId": "wfo-0000700066",
+          "parentTaxonId": "wfo-4000025329",
+          "scientificName": "Narcissus tazetta",
+          "rank": "species",
+          "taxonRecordSha256": "3b2d32b56aa5504de74c220a09a8b87cfbcc8c36e88e8e2eaacd4f319ac67421",
+          "nameRecordSha256": "08b6ab5cd64dcf8c0fcde393821f3f3a96f90aa3fd7fd59edec59e9c9de687c0"
+        },
+        {
+          "taxonId": "wfo-0000771854",
+          "nameId": "wfo-0000771854",
+          "parentTaxonId": "wfo-0000700066",
+          "scientificName": "Narcissus tazetta subsp. chinensis",
+          "rank": "subspecies",
+          "taxonRecordSha256": "ccc0042fde96838f4119736f4ec3e4916386f0cc0c00b84884f412fb509cc29b",
+          "nameRecordSha256": "4905b8179e33af9a298db712d77304da043a1e2ec1ba5b45e4db8c48757dcb7c"
+        }
+      ]
+    },
+    "powo": {
+      "provider": "Plants of the World Online (POWO), Kew",
+      "taxonUrl": "https://powo.science.kew.org/taxon/urn:lsid:ipni.org:names:77189681-1",
+      "accessedOn": "2026-09-24",
+      "observedSourceLabel": "The International Plant Names Index and World Checklist of Vascular Plants 2026",
+      "dataLicense": "CC BY 3.0, as stated for the Kew Backbone Names and Taxonomic Backbone on this page",
+      "lineageNoteZh": "POWO 是 WCVP/IPNI 的 Kew 展示面；只作人工阅读入口，不算独立于 WCVP 的第二个分类权威。页面原文、分布叙述、图片均未复制。",
+      "responseBodySha256": null,
+      "responseBodyHashNoteZh": "本次命令行请求返回 HTTP 403，未取得可保存的原始页面字节；因此不编造页面哈希。官方网页仍可由人工访问复核。"
+    },
+    "iplantChineseNameReview": {
+      "provider": "iPlant 植物智",
+      "pageUrl": "https://www.iplant.cn/info/Narcissus%20tazetta%20subsp.%20chinensis?t=z",
+      "accessedOn": "2026-09-24",
+      "pageVersion": null,
+      "responseBodySha256": "b5cdd867fe8e189e25f652a718a50b378d1662244288eaa0a1673d921a7545bf",
+      "licenseReview": "未找到该页面可复用的明确数据许可；不作法律许可结论。",
+      "retainedPageBody": false,
+      "retainedScreenshot": false,
+      "candidateNameLiteralsStored": false,
+      "use": "仅供负责人人工查看中文名与中国植物志语义；不得作为科属种分类关系证据。",
+      "replayCommand": "curl --fail --location --silent --show-error 'https://www.iplant.cn/info/Narcissus%20tazetta%20subsp.%20chinensis?t=z' | shasum -a 256"
+    }
+  },
+  "hierarchy": {
+    "direction": "family_to_subspecies",
+    "nodes": [
+      { "rank": "family", "name": "Amaryllidaceae", "source": "WFO", "authorityTaxonId": "wfo-7000000018" },
+      { "rank": "genus", "name": "Narcissus", "source": "WFO", "authorityTaxonId": "wfo-4000025329" },
+      { "rank": "species", "name": "Narcissus tazetta", "source": "WFO", "authorityTaxonId": "wfo-0000700066" },
+      { "rank": "subspecies", "name": "Narcissus tazetta subsp. chinensis", "source": "WFO", "authorityTaxonId": "wfo-0000771854" }
+    ],
+    "edges": [
+      { "childRank": "genus", "childTaxonId": "wfo-4000025329", "parentRank": "family", "parentTaxonId": "wfo-7000000018", "evidence": "WFO taxon.tsv parentID", "recordSha256": "e210d475e0b246231a7b99d3c1d6d2146038b6cda06fa26d002940af27f3b39c" },
+      { "childRank": "species", "childTaxonId": "wfo-0000700066", "parentRank": "genus", "parentTaxonId": "wfo-4000025329", "evidence": "WFO taxon.tsv parentID", "recordSha256": "3b2d32b56aa5504de74c220a09a8b87cfbcc8c36e88e8e2eaacd4f319ac67421" },
+      { "childRank": "subspecies", "childTaxonId": "wfo-0000771854", "parentRank": "species", "parentTaxonId": "wfo-0000700066", "evidence": "WFO taxon.tsv parentID", "recordSha256": "ccc0042fde96838f4119736f4ec3e4916386f0cc0c00b84884f412fb509cc29b" }
+    ],
+    "crossSourceSummaryZh": "WCVP 接受亚种 310501→种 282289→属 282547，并在记录字段标注科名 Amaryllidaceae；WFO 提供科、属、种、亚种四个稳定节点及三条父级边。POWO 与 WCVP 同源，不计作独立交叉证据。"
+  }
+}
