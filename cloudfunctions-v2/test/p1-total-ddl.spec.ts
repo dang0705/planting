@@ -30,8 +30,12 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
       entry.sha256,
       `${entry.file} SHA 不一致`
     )
-    assert.ok(content.includes('ENGINE=InnoDB'), `${entry.file} 必须固定 InnoDB`)
-    assert.ok(content.includes('DEFAULT CHARSET=utf8mb4'), `${entry.file} 必须固定 utf8mb4`)
+    if (/CREATE TABLE\b/u.test(content)) {
+      assert.ok(content.includes('ENGINE=InnoDB'), `${entry.file} 建表必须固定 InnoDB`)
+      assert.ok(content.includes('DEFAULT CHARSET=utf8mb4'), `${entry.file} 建表必须固定 utf8mb4`)
+    } else {
+      assert.match(content, /CREATE TRIGGER\b/u, `${entry.file} 必须是建表或新增门禁触发器`)
+    }
     assert.doesNotMatch(
       content,
       /^(?:DROP|ALTER|INSERT|UPDATE|DELETE)\b/imu,

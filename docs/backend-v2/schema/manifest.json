@@ -1,6 +1,6 @@
 {
   "schemaVersion": "backend-v2-schema/v1",
-  "generatedAt": "2026-09-24T07:31:00+08:00",
+  "generatedAt": "2026-09-24T10:10:33+08:00",
   "database": "CloudBase MySQL",
   "timeStorage": "UTC epoch milliseconds",
   "files": [
@@ -63,6 +63,12 @@
       "owner": "diagnosis",
       "file": "010_diagnosis_review_revocations.sql",
       "sha256": "645d3766668af04ce68b64ccb726a8400d3c65ccb3bf18bcde9514c110f64c77"
+    },
+    {
+      "order": 11,
+      "owner": "plant-knowledge",
+      "file": "012_plant_encyclopedia_revision_immutability.sql",
+      "sha256": "82abb988fb75aa0d2382ee9c78056485678714822bfa685a485b7fd17a23dfb3"
     }
   ]
 }
