@@ -105,7 +105,7 @@
 
 | 配置 ID | 中文名称 | 裁决组 | 层级 / 状态 | 当前值 | 所有者 | 消费方 | 变更与失败边界 | Phase / Ticket |
 |---|---|---|---|---|---|---|---|---|
-| `user-plant.free.active_limit` | 免费用户活跃植物上限 | `userplant_limits` | 领域策略 / 已冻结 | `1` 株 | subscription | user-plant、subscription | 新策略只限制未来创建，不删除既有植物；失败：策略不可用时拒绝新增植物 | P1 / [P1] 用户植物、身份和游客认领合同 |
+| `user-plant.free.active_limit` | 免费用户活跃植物上限 | `userplant_limits` | 领域策略 / 已冻结 | `1` 株 | subscription | user-plant、subscription | 新策略限制未来创建及归档后重新激活，不删除或自动归档既有活跃植物；失败：策略不可用时拒绝新增及重新激活植物 | P1 / [P1] 用户植物、身份和游客认领合同 |
 | `user-plant.profile.minimum_completeness` | 有效档案最低完整度 | `userplant_limits` | 领域策略 / 已冻结 | `{"profileVersion":"user-plant-profile/v1","requiredFields":["identityStatus","pot","location","lightingEnvironment","ventilationEnvironment"],"acceptedIdentityStates":["unidentified","candidate_pending","confirmed"],"rewardOncePerUser":true}` | user-plant | user-plant、subscription | 用户植物档案策略版本；失败：未冻结前不发首株有效档案积分 | P1 / [P1] 用户植物、身份和游客认领合同 |
 | `user-plant.assets.max_count_per_plant` | 单株植物资产数量上限 | `userplant_limits` | 领域策略 / 待冻结 | P1_PENDING 个 | user-plant | user-plant、storage | 资产策略版本；失败：未冻结前只允许最小封面资产集合；待冻结原因：容量与成本尚未测量；阻断：多资产上传 | P2 / [P1] 用户植物、身份和游客认领合同 |
 | `user-plant.authenticated_ephemeral.case_ttl_hours` | 已登录用户临时植物案例有效期 | `userplant_limits` | 领域策略 / 待冻结 | P1_PENDING 小时 | user-plant | user-plant、care、diagnosis | 发布不可变临时案例策略版本；新值只影响新建案例，已签发案例保留原失效时间；失败：无已冻结策略时拒绝新建已登录临时植物案例，不影响游客临时路径和长期用户植物；待冻结原因：业务尚未裁决已登录临时案例的独立保留时长及成本、清理和回滚边界；阻断：已登录临时植物案例创建、失效时间签发及其后的保存绑定运行路径 | P3 / [P1] 用户植物、身份和游客认领合同 |

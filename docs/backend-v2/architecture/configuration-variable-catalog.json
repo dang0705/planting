@@ -855,8 +855,8 @@
         "user-plant",
         "subscription"
       ],
-      "changePolicy": "新策略只限制未来创建，不删除既有植物",
-      "fallback": "策略不可用时拒绝新增植物",
+      "changePolicy": "新策略限制未来创建及归档后重新激活，不删除或自动归档既有活跃植物",
+      "fallback": "策略不可用时拒绝新增及重新激活植物",
       "phase": "P1",
       "ticketTitle": "[P1] 用户植物、身份和游客认领合同",
       "expected": "archived/deleted 不占 active 上限",
