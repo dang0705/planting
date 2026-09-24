@@ -47,6 +47,7 @@
     }
 
     function progressLabel(value) {
+      if (!hasReportedProgress(value)) return '0%（按 0 计入、非 owner 上报）';
       return `${normalizeProgress(value)}%`;
     }
 
@@ -71,7 +72,7 @@
       document.querySelector('#overall').innerHTML = `
         <strong>总体完成度：${overall.progress}%</strong>
         <div class="bar" aria-label="总体完成进度"><div class="fill" style="width:${overall.progress}%"></div></div>
-        <div class="meta">全部任务：${overall.total}；已上报：${overall.reported}；未开始或未上报任务统一按 0% 计入</div>
+        <div class="meta">全部任务：${overall.total}；已上报：${overall.reported}；未开始或未上报按 0% 计入；未上报的 0% 为统计规则，非 owner 上报</div>
       `;
       document.querySelector('#modules').innerHTML = (data.modules || []).map((module) => {
         const moduleStatus = module.status || '准备中';
@@ -110,7 +111,7 @@
           <div class="meta">计划角色：${escapeHtml(module.plannedAgent || '未指定')}　当前子代理：${escapeHtml(moduleAgent)}</div>
           <div class="bar" aria-label="完成进度"><div class="fill" style="width:${moduleProgressWidth}%"></div></div>
           <div>${escapeHtml(moduleProgressText)}　${escapeHtml(moduleStatus)}</div>
-          <div class="meta">已上报任务：${progressSummary.reported}/${progressSummary.total}；未开始或未上报任务按 0% 计入模块完成度</div>
+          <div class="meta">已上报任务：${progressSummary.reported}/${progressSummary.total}；未开始或未上报按 0% 计入模块完成度；未上报的 0% 为统计规则，非 owner 上报</div>
           <div class="meta">最后更新：${escapeHtml(module.lastUpdatedAt || '尚未开始')}</div>
           ${tickets.map((ticket) => {
             const ticketProgress = normalizeProgress(ticket.progress);

@@ -11,6 +11,25 @@ import {
 import { mergeClickUpTaskStatuses } from './clickup-status-sync.mjs';
 
 const trackerDirectory = path.dirname(fileURLToPath(import.meta.url));
+const SCRIPT_PATH_ARGUMENT_INDEX = 1;
+
+/** 按 heartbeat 内容识别 ClickUp keeper；优先现用代理名，旧名只作兼容回退。 */
+export function selectClickUpKeeperHeartbeat(heartbeats = []) {
+  const currentHeartbeat = heartbeats.find(
+    (heartbeat) => heartbeat.agent === 'clickup_status_keeper_gpt6'
+  );
+  if (currentHeartbeat) return currentHeartbeat;
+
+  return heartbeats.find(
+    (heartbeat) => heartbeat.agent?.startsWith('clickup_status_keeper_luna')
+  );
+}
+
+const scriptPathArgument = process.argv[SCRIPT_PATH_ARGUMENT_INDEX];
+const isDirectInvocation = scriptPathArgument
+  ? path.resolve(scriptPathArgument) === fileURLToPath(import.meta.url)
+  : false;
+
 const statusPath = path.join(trackerDirectory, 'module-status.json');
 const heartbeatDirectory = path.join(trackerDirectory, 'heartbeats');
 const staleAfterMs = 35 * 60 * 1000;
@@ -33,9 +52,7 @@ const agentRegistry = [];
 const knownTicketIds = new Set(
   (status.modules ?? []).flatMap((module) => (module.tickets ?? []).map((ticket) => ticket.id))
 );
-const clickUpKeeperHeartbeat = heartbeats.find(
-  (heartbeat) => heartbeat.agent?.startsWith('clickup_status_keeper_luna')
-);
+const clickUpKeeperHeartbeat = selectClickUpKeeperHeartbeat(heartbeats);
 status.clickUpTaskStatuses = mergeClickUpTaskStatuses(
   status.clickUpTaskStatuses,
   clickUpKeeperHeartbeat,
@@ -119,5 +136,7 @@ status.snapshotSource = 'docs/backend-v2/tracker/heartbeats/*.json（主代理�
 status.trackerOwner = '主代理 /root（各 ticket 子代理写独立心跳；主代理校验、汇总并处理超时）';
 status.agentRegistry = agentRegistry;
 
-fs.writeFileSync(statusPath, `${JSON.stringify(status, null, 2)}\n`);
-console.log(`已汇总 ${heartbeats.length} 个 ticket 心跳到 ${path.relative(process.cwd(), statusPath)}`);
+if (isDirectInvocation) {
+  fs.writeFileSync(statusPath, `${JSON.stringify(status, null, 2)}\n`);
+  console.log(`已汇总 ${heartbeats.length} 个 ticket 心跳到 ${path.relative(process.cwd(), statusPath)}`);
+}
