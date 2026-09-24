@@ -67,9 +67,17 @@ flowchart TB
   TemporaryDiagnosis --> TemporaryDiagnosisResult[临时问诊结果<br/>不写用户植物事实]
   TemporaryCare --> TemporaryAdvice[临时浇水建议<br/>不写用户植物事实]
 
-  EphemeralCase --> SessionClaim[同一会话显式归属 / 绑定<br/>游客先登录；已登录用户可直接选择目标<br/>两类主体分别验权 / 一次性 / 可审计]
-  SessionClaim --> CreatePlant
-  SessionClaim -->|绑定来源记录，不改变记录语义| PlantRoot
+  EphemeralCase --> PlantPromotion[用户显式保存本次临时体验<br/>不自动创建或绑定植物]
+  PlantPromotion --> PromotionSubjectGate{已有 user_id?}
+  PromotionSubjectGate -->|否 · 游客先登录| PromotionLogin[登录并取得统一用户主体]
+  PromotionSubjectGate -->|是 · 已登录| PromotionTarget{选择长期归属目标}
+  PromotionLogin --> PromotionTarget
+  PromotionTarget -->|创建新植物| PromotionCreatePlant[复用创建用户植物用例<br/>提升路径]
+  PromotionTarget -->|绑定本人已有植物| ExistingPlantTarget[本人已有用户植物<br/>须校验目标归属]
+  PromotionCreatePlant --> PlantRoot
+  PromotionCreatePlant -->|创建目标后认领| SessionClaim[同一会话一次性归属命令<br/>两类主体分别验权 / 幂等 / 可审计]
+  ExistingPlantTarget --> SessionClaim
+  SessionClaim -->|只增加来源记录归属，不改变记录语义| PlantRoot
   TemporaryDiagnosisResult --> SessionClaim
   TemporaryAdvice --> SessionClaim
 

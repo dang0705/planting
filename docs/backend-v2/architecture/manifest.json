@@ -2,7 +2,7 @@
   "version": "backend-architecture/v2-config-1",
   "algorithm": "sha256",
   "files": {
-    "README.md": "36ca6673c0a47c23f66a9b4d4b9d02ae3736ff604889775c875fe6dcc3886c60",
+    "README.md": "df229d759bc3d407a149ffb20090ebe4e2567054d63205c3ea34e7506251b8bc",
     "青花植后端v2底层架构重构计划_融合闭环终版.md": "0b94c71ea83e02134237c9c41b357e0a30e7d60250d6bc21eedca73d2d4c0732",
     "architecture/README.md": "79b1571d6de17fdba694193def79ce62f1f2fa01052557485bb6eb7c8d447b01",
     "business-domain.md": "8288aec7ad327b432dc0729199a59b0ce95e1ea08569e0214872f5e3b0066f06",
@@ -10,7 +10,7 @@
     "phases/first-release-scope.md": "e775a72ba93fb09c473b21e36b4a0d4021f4686391e95d520cb732bb6366cd3f",
     "contracts/diagnosis-rich-response-experiment.md": "d3777d2991e4532702770bb39761fbe127425f00830a1b7f644758e93d4c6430",
     "contracts/diagnosis-knowledge-sources.md": "128fe0fd45ea0eb15ad781b67db2175ec3d199fc423e2fa6041edc33ba858302",
-    "contracts/diagnosis-outcome-fields.md": "0d4c74012d03e0fd81bc1d46cad2b62ccf6df665d78fa730e835bebdd7e6d3fe",
+    "contracts/diagnosis-outcome-fields.md": "3ae1749a54b37dfb45edd1132ad7c27a8470a53571c1300f647eea1348c60cd1",
     "contracts/authenticated-ephemeral-plant-case.md": "da571e12b67e25369aa8f17bfaa3914ff5cecc65d89a9d780b773720ebb05f84",
     "infrastructure.md": "c8ede4bad0174e7cd5c1607f12b3b6f22eeef00cef824a4b22a2ee3fe22cd048",
     "business-to-technical-map.md": "ee3d2a2917bfe94fb6290965f5db8fa9c84ab55cc50fe09d218c5e173f292f34",
@@ -20,7 +20,7 @@
     "configuration-variable-catalog.md": "851ee4965d68376148647116728ac84fcc7a3b9f6a097e1116a7f2df287d099b"
   },
   "diagrams": {
-    "business": "880213ee0d4edb2a7c25e67da78719645ff43b042883331ed95cf72137c7d0de",
+    "business": "9b452fbfca8c6540e506703fa48945e50a1030d06249c4f01c1fca6991579097",
     "infrastructure": "c17fce2dff3ac7a0a8a0a18707477a048955510acce9f4f7b902d6ee71d18beb"
   }
 }
