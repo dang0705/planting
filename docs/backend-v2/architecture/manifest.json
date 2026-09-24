@@ -3,7 +3,7 @@
   "algorithm": "sha256",
   "files": {
     "README.md": "bfa6960e0dc424f5bdaa0ed2e0c8572614be1b066c8e23362d21e18a6f62d33c",
-    "青花植后端v2底层架构重构计划_融合闭环终版.md": "0b94c71ea83e02134237c9c41b357e0a30e7d60250d6bc21eedca73d2d4c0732",
+    "青花植后端v2底层架构重构计划_融合闭环终版.md": "505e4f879502f0f42e6013df60fbd35597276d3a0a23ac6431b42fb00388edc8",
     "architecture/README.md": "79b1571d6de17fdba694193def79ce62f1f2fa01052557485bb6eb7c8d447b01",
     "business-domain.md": "8288aec7ad327b432dc0729199a59b0ce95e1ea08569e0214872f5e3b0066f06",
     "business-domain-layers.md": "eabf262e3b0613f9d86822ffc6f765acf6e838997f30186203b3a652fb469e41",
