@@ -294,6 +294,7 @@ CREATE TABLE `plant_knowledge_releases` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_knowledge_release_ref` (`release_ref`),
   UNIQUE KEY `uq_knowledge_release_hash` (`release_kind`, `artifact_hash`),
+  UNIQUE KEY `uq_knowledge_release_kind_hash` (`id`, `release_kind`, `artifact_hash`),
   CONSTRAINT `ck_knowledge_release_kind` CHECK (`release_kind` IN ('taxonomy', 'identity', 'encyclopedia', 'internal_knowledge'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='青花植 v2 植物知识不可变发布';
 
@@ -330,7 +331,7 @@ CREATE TABLE `active_plant_knowledge_releases` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_active_knowledge_release` (`release_kind`),
   CONSTRAINT `ck_active_knowledge_release_kind` CHECK (`release_kind` IN ('taxonomy', 'identity', 'encyclopedia', 'internal_knowledge')),
-  CONSTRAINT `fk_active_knowledge_release` FOREIGN KEY (`release_internal_id`) REFERENCES `plant_knowledge_releases` (`id`)
+  CONSTRAINT `fk_active_knowledge_release` FOREIGN KEY (`release_internal_id`, `release_kind`, `active_artifact_sha256`) REFERENCES `plant_knowledge_releases` (`id`, `release_kind`, `artifact_hash`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='青花植 v2 当前生效植物知识发布指针';
 
 CREATE TABLE `knowledge_gap_aggregates` (
@@ -429,7 +430,8 @@ CREATE TABLE `content_releases` (
   `updated_at_ms` BIGINT UNSIGNED NOT NULL COMMENT '更新时间，UTC 毫秒',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_content_release_ref` (`release_ref`),
-  UNIQUE KEY `uq_content_release_hash` (`content_kind`, `content_key`, `payload_hash`)
+  UNIQUE KEY `uq_content_release_hash` (`content_kind`, `content_key`, `payload_hash`),
+  UNIQUE KEY `uq_content_release_kind_key` (`id`, `content_kind`, `content_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='青花植 v2 通用不可变内容发布';
 
 CREATE TABLE `active_content_releases` (
@@ -444,5 +446,5 @@ CREATE TABLE `active_content_releases` (
   `updated_at_ms` BIGINT UNSIGNED NOT NULL COMMENT '更新时间，UTC 毫秒',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_active_content_pointer` (`content_kind`, `content_key`),
-  CONSTRAINT `fk_active_content_release` FOREIGN KEY (`content_release_internal_id`) REFERENCES `content_releases` (`id`)
+  CONSTRAINT `fk_active_content_release` FOREIGN KEY (`content_release_internal_id`, `content_kind`, `content_key`) REFERENCES `content_releases` (`id`, `content_kind`, `content_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='青花植 v2 活动内容发布指针';
