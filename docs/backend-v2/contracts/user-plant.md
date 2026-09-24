@@ -103,6 +103,33 @@ active ↔ archived → deleting → deleted
 - `deleted` 不可恢复；公开查询视为不存在。
 - 删除跨域数据使用明确清单与补偿，不使用无界级联删除。
 
+## 归档与恢复公开接口
+
+`POST /api/v2/user-plants/{userPlantRef}/archive` 与
+`POST /api/v2/user-plants/{userPlantRef}/restore` 共用严格请求 DTO：
+
+```ts
+/** 归档或恢复时调用方最后读到的用户植物版本。 */
+export type UserPlantVersionRequest = {
+  /** 正安全整数；不匹配时返回 409 USER_PLANT_VERSION_CONFLICT。 */
+  expectedVersion: number
+}
+```
+
+JSON 请求体只允许 `expectedVersion`，且必须是大于等于 1 的 JavaScript 安全整数。
+`userPlantRef` 只从路径读取，`Idempotency-Key` 只从必需请求头读取；请求体不得接收
+`user_id`、主体、能力快照、公开植物引用、内部主键或其他字段。主体由认证层解析，
+恢复所需的能力快照只由服务端从 subscription 能力服务注入，不得由客户端声明。
+
+两个操作都返回 HTTP `200` 和 `{ "data": UserPlantResponse }`。归档只允许当前 owner
+的 `active` 植物按 `expectedVersion` 转为 `archived`；恢复只允许当前 owner 的
+`archived` 植物按 `expectedVersion` 转为 `active`，并在同一用户锁下重新核验当前能力快照与
+active 植物数量上限。跨用户或不存在的植物统一返回 `404 USER_PLANT_NOT_FOUND`；版本过期
+返回 `409 USER_PLANT_VERSION_CONFLICT`；同一幂等键异参返回 `409 IDEMPOTENCY_CONFLICT`。
+
+恢复额外允许 `403 CAPABILITY_DENIED` 和 `409 CAPABILITY_SNAPSHOT_EXPIRED`；归档路由不声明
+这两项能力错误。上述状态码以 `contracts/http-api.md` 错误目录为准。
+
 ## 事实边界
 
 - 档案和环境变化是用户植物配置，不等于养护事实。

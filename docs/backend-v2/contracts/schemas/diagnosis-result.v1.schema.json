@@ -14,6 +14,7 @@
     "certaintyLevel",
     "certaintyReasonZh",
     "severityLevel",
+    "severityReasonZh",
     "urgencyLevel",
     "urgencyReasonZh",
     "isolationDecision",
@@ -41,6 +42,12 @@
     "severityLevel": {
       "enum": ["low", "medium", "high", "unknown"],
       "description": "植物受损程度；与处理紧急程度分离。"
+    },
+    "severityReasonZh": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S",
+      "description": "本次严重程度判定的中文理由；须由本次证据与命中的受审 severityCriteria 归约，unknown 时说明证据不足。"
     },
     "urgencyLevel": {
       "enum": ["immediate", "soon", "monitor", "unknown"],

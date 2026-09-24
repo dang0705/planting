@@ -49,7 +49,7 @@
 | 字段 | 中文含义与约束 | 来源与校验 |
 |---|---|---|
 | `actionCode` | 稳定行动代码；内容修订保留历史版本，改变行动目的或安全边界时另立代码 | 发布域唯一；历史结果可回放 |
-| `displayCategory` | 展示分区：立即处理、后续养护、预防或注意事项 | 只是展示分类，不决定是否适用或能否执行 |
+| `displayCategory` | 展示分区：立即处理、后续养护、预防或注意事项 | 只是展示分类，不决定是否适用或能否执行；候选到公开结果的值映射见下表 |
 | `titleZh`、`purposeZh` | 中文行动名称与目的；说明为什么建议检查或操作 | 必须有对应的已审核结论或安全的待判定路径 |
 | `stepsZh` | 用户可执行的步骤；需要药剂、剪切、用量或时间时不得写含糊指令 | 逐步骤核验来源、目标植物和本地适用性；无依据则不发布 |
 | `applicabilityConditions` | 行动自身适用的植物、部位、环境和证据条件；可关联哪些结论由单独的结论—行动映射决定 | 不能把一条通用图文动作套给全部黄叶、萎蔫或虫害 |
@@ -58,6 +58,17 @@
 | `sequence`、`followUpCriteria` | 执行顺序、复查观察点及有依据的时间条件 | 不得仅因竞品截图给出固定天数、温度、湿度或剂量 |
 | `sourceClaimRefs` | 分别支持该行动、限制条件和禁忌的已审核来源主张 | 需定位到具体资料位置；不能只给整个结果挂一篇文章 |
 | `reviewState`、`releaseRef` | 审核状态与不可变发布包版本 | 只允许读取已发布且与当前 Outcome 兼容的版本 |
+
+候选 Action 与公开 `recommendedActions[].displayCategory` 之间仅允许以下四项穷尽映射；转换必须按代码值执行，不能依据中文标题、步骤或相似文案猜测：
+
+| 候选 `displayCategory` | 公开结果 `displayCategory` |
+|---|---|
+| `immediate` | `immediate` |
+| `aftercare` | `ongoing` |
+| `prevention` | `prevention` |
+| `caution` | `caution` |
+
+新增候选分类或任何未列出的输入值必须由合同变更明确加入映射；在此之前拒绝该值。候选侧 `aftercare` 保持不变，公开 DTO 仍使用 `ongoing`。
 
 结论—行动映射另有稳定代码、Outcome 与 Action 版本引用、命中条件、禁忌优先级、来源主张及发布版本；它不是简单的关联表。一次结果中的每条 `recommendedActions[]` 还须记录“本次为何命中”、已通过的适用/禁忌/风险检查和对应的公开来源。图中的剪叶、剪口施用粉剂、停肥两周、固定温湿度等属于**待独立核验的具体处置主张**，不能因截图出现就自动成为青花植的 Action 或默认值。
 
@@ -70,7 +81,7 @@
 | `titleZh`、`summaryZh` | 结论标题与一句话摘要 | 来自已发布 Outcome 的受审文案，结合本次证据有界表达 |
 | `problemType`、`causeCategory` | 问题类型与园艺原因方向 | 由已发布分类投影；症状入口另列，不伪装成原因 |
 | `certaintyLevel`、`certaintyReasonZh` | “较可能/可能/待确认”及为什么 | 由证据门与冲突规则归约；MVP 不展示模型自评 `75%` 等未校准百分比 |
-| `severityLevel`、`urgencyLevel`、`urgencyReasonZh` | 受损程度、处理紧急程度及依据 | 严重程度与紧急性分开；不能因文案听起来严重就自动判“紧急” |
+| `severityLevel`、`severityReasonZh`、`urgencyLevel`、`urgencyReasonZh` | 受损程度及理由、处理紧急程度及理由 | `severityReasonZh` 必须由本次实际证据与已命中的受审 `severityCriteria` 归约；`severityLevel=unknown` 时说明证据不足。严重程度与紧急性分开；不能因文案听起来严重就自动判“紧急” |
 | `isolationDecision`、`isolationReasonZh` | 需要隔离 / 不需要 / 尚不能判断，以及原因 | 依照已发布隔离条件和本次证据；证据不足不填“否” |
 | `evidenceFindings[]` | 本次识别依据 | 每项有观察、受损部位、来源类型、采集/有效时间、支持或反驳方向及证据覆盖范围；不得把推断写成观察事实。单张叶片照片中“未见菌丝/虫体”只能表示该画面未观察到，不能排除整株、叶背或根区病虫害。叶片受损面积等百分比，只有测量方法、分母定义和验证依据明确时才可输出，否则改用定性描述 |
 | `evidenceLimitations[]` | 图片模糊、截图、角度缺失或未拍到关键部位等限制 | 逐项说明哪项判断受限、建议补拍什么；不能用通用免责声明代替具体缺口 |

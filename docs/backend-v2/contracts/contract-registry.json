@@ -21,7 +21,7 @@
       "version": "user-plant/v1",
       "file": "user-plant.md",
       "owner": "user-plant",
-      "sha256": "19e0e94504d04bf846b1e907ed42413133710c0a8c2b91256864a733d96e914d"
+      "sha256": "422ee5dd26cb639af285e72bb8ec70166c21bfb180b3a84bcc2df9bd3bd0c9db"
     },
     {
       "id": "guest-session-claim",
@@ -100,7 +100,7 @@
       "file": "schemas/diagnosis-result.v1.schema.json",
       "owner": "diagnosis",
       "status": "P1_PENDING",
-      "sha256": "e639a374c4632e295c832391d271b6da2eed8c601af7c957b019f6d91cb05ff9"
+      "sha256": "87e498cdd45ce74f285b1ac084078f21e42e7c0642e627ff65b329cc8bfd11c2"
     },
     {
       "id": "diagnosis-knowledge-reference-index",
@@ -156,7 +156,7 @@
       "file": "diagnosis-outcome-fields.md",
       "owner": "diagnosis",
       "status": "P1_PENDING",
-      "sha256": "c358c97e2a09eeb613ac2319f1f1c7f7e2f95bdffd1dfb96c16aaa63c44ab66c"
+      "sha256": "3ae1749a54b37dfb45edd1132ad7c27a8470a53571c1300f647eea1348c60cd1"
     },
     {
       "id": "diagnosis-visual-prompt",

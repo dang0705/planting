@@ -793,8 +793,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false
+                "$ref": "#/components/schemas/UserPlantVersionRequest"
               }
             }
           }
@@ -824,7 +823,9 @@
           "PRINCIPAL_INVALID",
           "USER_PLANT_NOT_FOUND",
           "USER_PLANT_VERSION_CONFLICT",
-          "IDEMPOTENCY_CONFLICT"
+          "IDEMPOTENCY_CONFLICT",
+          "CAPABILITY_DENIED",
+          "CAPABILITY_SNAPSHOT_EXPIRED"
         ],
         "parameters": [
           {
@@ -868,8 +869,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false
+                "$ref": "#/components/schemas/UserPlantVersionRequest"
               }
             }
           }
@@ -3461,6 +3461,21 @@
         "additionalProperties": false,
         "maxProperties": 0,
         "properties": {}
+      },
+      "UserPlantVersionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expectedVersion"
+        ],
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "调用方最后读到的用户植物版本，必须是正安全整数。"
+          }
+        }
       },
       "CreateUserPlantResponse": {
         "type": "object",

@@ -11,8 +11,11 @@ const registryText = fs.readFileSync(registryPath, 'utf8')
 const registry = JSON.parse(registryText)
 const printableAsciiPattern = '^[\\x20-\\x7E]+$'
 
+/** 仅为已冻结字段级请求合同提供组件引用；其他合同继续使用严格空对象骨架。 */
 const requestSchemaRefByContract = {
   CreateUserPlantRequest: '#/components/schemas/CreateUserPlantRequest',
+  /** 归档/恢复仅允许调用方提交最后读到的植物版本。 */
+  UserPlantVersionRequest: '#/components/schemas/UserPlantVersionRequest',
 }
 
 const successSchemaRefByContract = {
@@ -142,6 +145,19 @@ const openapi = {
         additionalProperties: false,
         maxProperties: 0,
         properties: {},
+      },
+      UserPlantVersionRequest: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['expectedVersion'],
+        properties: {
+          expectedVersion: {
+            type: 'integer',
+            minimum: 1,
+            maximum: Number.MAX_SAFE_INTEGER,
+            description: '调用方最后读到的用户植物版本，必须是正安全整数。',
+          },
+        },
       },
       CreateUserPlantResponse: {
         type: 'object',

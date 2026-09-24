@@ -26,6 +26,7 @@ const validResult = {
   certaintyLevel: 'unconfirmed',
   certaintyReasonZh: '缺少叶背、盆土和近期养护信息。',
   severityLevel: 'unknown',
+  severityReasonZh: '现有画面不能判断整株受损范围，受损程度暂无法分级。',
   urgencyLevel: 'unknown',
   urgencyReasonZh: '现有画面不能判断整株受损范围。',
   isolationDecision: 'undetermined',
@@ -102,14 +103,22 @@ describe('本次诊断结果公开结构合同', () => {
   })
 
   // Edge U1：结论不能靠缺省值填成「低风险」或「不需隔离」。
-  test.each(['certaintyReasonZh', 'urgencyReasonZh', 'isolationReasonZh', 'evidenceLimitations'])(
-    '拒绝缺少判断依据或证据限制：%s',
-    field => {
-      const result = { ...validResult } as Record<string, unknown>
-      delete result[field]
-      expect(createValidator()(result)).toBe(false)
-    }
-  )
+  test.each([
+    'certaintyReasonZh',
+    'severityReasonZh',
+    'urgencyReasonZh',
+    'isolationReasonZh',
+    'evidenceLimitations'
+  ])('拒绝缺少判断依据或证据限制：%s', field => {
+    const result = { ...validResult } as Record<string, unknown>
+    delete result[field]
+    expect(createValidator()(result)).toBe(false)
+  })
+
+  // Edge U2：严重程度理由不能为空或仅含空白，unknown 也必须解释证据不足。
+  test.each(['', '   '])('拒绝空白的严重程度理由：%j', severityReasonZh => {
+    expect(createValidator()({ ...validResult, severityReasonZh })).toBe(false)
+  })
 
   // Edge U1：证据数组的元素洞不能被过滤后当作有效证据。
   test('拒绝证据数组中的空元素及没有公开来源的结果', () => {
