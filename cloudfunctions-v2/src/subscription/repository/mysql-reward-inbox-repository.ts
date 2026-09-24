@@ -287,6 +287,23 @@ function isSameEvent(row: RewardInboxSqlRow, input: ReserveRewardInboxInput): bo
   )
 }
 
+/** 判断相同奖励业务键是否仍描述同一条不可变业务事实。 */
+function isSameRewardBusinessFact(row: RewardInboxSqlRow, input: ReserveRewardInboxInput): boolean {
+  return (
+    row.event_type === input.eventType &&
+    row.event_version === String(input.eventVersion) &&
+    row.producer_domain === input.producerDomain &&
+    row.user_ref === input.userRef &&
+    row.user_plant_ref === (input.userPlantRef ?? null) &&
+    row.aggregate_ref === input.aggregateRef &&
+    row.occurrence_ref === input.occurrenceRef &&
+    row.business_unique_key === input.businessUniqueKey &&
+    row.payload_hash === input.payloadHash &&
+    row.producer_policy_version === input.producerPolicyVersion &&
+    row.occurred_at_ms === String(input.occurredAtMs)
+  )
+}
+
 /** 把已锁定的既有行分类为同事件重放或同业务事实重复。 */
 function resolveExistingRow(
   row: RewardInboxSqlRow,
@@ -306,6 +323,15 @@ function resolveExistingRow(
   }
   if (row.business_unique_key !== input.businessUniqueKey) {
     throw new RewardInboxPersistenceError('INTERNAL_DATA_INVALID', '奖励事件唯一键读回不一致')
+  }
+  if (row.user_ref !== input.userRef) {
+    throw new RewardInboxPersistenceError('INTERNAL_DATA_INVALID', '奖励业务唯一键归属冲突')
+  }
+  if (!isSameRewardBusinessFact(row, input)) {
+    throw new RewardInboxPersistenceError(
+      'IDEMPOTENCY_CONFLICT',
+      '奖励业务唯一键对应的事件事实发生冲突'
+    )
   }
   return {
     kind: 'duplicate_business',

@@ -222,7 +222,9 @@ function createSettlementSqlExecutor(): AiQuotaSettlementSqlExecutor<MysqlTestTr
 }
 
 /** 把同一真实 mysql2 连接适配为 TTL 扫描 Repository 的参数化 SQL 端口。 */
-function createExpirySqlExecutor(): AiQuotaExpirySqlExecutor<MysqlTestTransaction> {
+function createExpirySqlExecutor(
+  afterSelect?: () => Promise<void>
+): AiQuotaExpirySqlExecutor<MysqlTestTransaction> {
   /** TTL Repository 只允许绑定 MySQL 可直接接受的原子参数。 */
   const resolveParameters = (parameters: readonly unknown[]): (string | number | null)[] =>
     parameters.map(parameter => {
@@ -238,7 +240,9 @@ function createExpirySqlExecutor(): AiQuotaExpirySqlExecutor<MysqlTestTransactio
         sql,
         resolveParameters(parameters)
       )
-      return rows as unknown as readonly ExpiredAiQuotaReservationSqlRow[]
+      const parsedRows = rows as unknown as readonly ExpiredAiQuotaReservationSqlRow[]
+      await afterSelect?.()
+      return parsedRows
     },
     executeWrite: async (transaction, sql, parameters) => {
       const [result] = await transaction.connection.execute<ResultSetHeader>(
@@ -535,6 +539,128 @@ describe('AI 额度预占的真实 MySQL 并发闭环', () => {
         (SELECT SUM(available_amount) FROM ai_quota_grants) AS grant_available,
         (SELECT SUM(reserved_amount) FROM ai_quota_grants) AS grant_reserved,
         (SELECT COUNT(*) FROM ai_quota_ledger) AS ledger_count
+    `)
+    expect(afterRows).toEqual(beforeRows)
+  })
+
+  /**
+   * Expected 来源：`data/state-machines.md` §5 明确 TTL 到期只能转入待对账，不能释放、改变分摊或写账本；
+   * `clickup/ticket-specs.md` 中 subscription 票据要求并发任务不重复扣减并验证持久化读回。
+   * 测试层次：L3 / `unit_real_data`；两个独立 mysql2 连接、真实 MySQL 8.4、真实 DDL、Repository 与应用用例。
+   * 替换边界：仅使用本地临时 MySQL 替代 CloudBase MySQL；测试屏障只暂停真实 SELECT 后的事务，不替换 SQL 锁或写入。
+   * 明确未覆盖：CloudBase Scheduler/HTTP、租约认证、Provider 与 CloudBase 部署。
+   */
+  test('两个并发 TTL 扫描器对同一到期预占至多产生一次待对账结果且不动额度账本', async () => {
+    const expiredRef = 'aqr_subscription_expired_concurrent_real'
+    await pool.execute(
+      `INSERT INTO ai_quota_reservations
+        (_openid, reservation_ref, user_internal_id, product_action_id, cost_policy_version,
+         capability, estimated_amount, settled_amount, actual_cost_micros, usage_evidence_ref,
+         platform_absorbed_cost_micros, idempotency_key, request_hash, status,
+         reconciliation_reason, expires_at_ms, version, created_at_ms, updated_at_ms)
+       SELECT '', ?, id, 'action_subscription_expired_concurrent_real', 'ai-cost/2026-09-20.1',
+              'USER_AGENT_TEXT', 2, NULL, NULL, NULL, 0,
+              'idem_subscription_expired_concurrent_real', ?, 'reserved', NULL, ?, 1, ?, ?
+       FROM users WHERE public_user_id = 'usr_subscription_real'`,
+      [expiredRef, 'e'.repeat(Number('64')), nowMs, nowMs - Number('1000'), nowMs]
+    )
+
+    const [beforeRows] = await pool.query<RowDataPacket[]>(`
+      SELECT
+        (SELECT SUM(available_amount) FROM ai_quota_accounts) AS account_available,
+        (SELECT SUM(reserved_amount) FROM ai_quota_accounts) AS account_reserved,
+        (SELECT SUM(available_amount) FROM ai_quota_grants) AS grant_available,
+        (SELECT SUM(reserved_amount) FROM ai_quota_grants) AS grant_reserved,
+        (SELECT COUNT(*) FROM ai_quota_ledger) AS ledger_count,
+        (SELECT COUNT(*) FROM ai_quota_reservation_allocations) AS allocation_count
+    `)
+
+    let selectedCount = Number('0')
+    let releaseScans: () => void = () => undefined
+    let signalBothSelected: () => void = () => undefined
+    const scansMayContinue = new Promise<void>(resolve => {
+      releaseScans = resolve
+    })
+    const bothWorkersSelected = new Promise<void>(resolve => {
+      signalBothSelected = resolve
+    })
+    const waitAtSelectionBarrier = async (): Promise<void> => {
+      selectedCount += Number('1')
+      if (selectedCount === Number('2')) {
+        signalBothSelected()
+      }
+      await scansMayContinue
+    }
+    const createScanner = () =>
+      createScanExpiredAiQuotaReservationsUseCase({
+        driver: createTransactionDriver(),
+        repository: createMysqlAiQuotaExpiryRepository(
+          createExpirySqlExecutor(waitAtSelectionBarrier)
+        )
+      })
+
+    const scannerA = createScanner()
+    const scannerB = createScanner()
+    const scanA = scannerA({ occurredAtMs: nowMs, batchLimit: Number('10') })
+    const scanB = scannerB({ occurredAtMs: nowMs, batchLimit: Number('10') })
+    let barrierFallback: ReturnType<typeof setTimeout> | undefined
+    try {
+      await Promise.race([
+        bothWorkersSelected,
+        new Promise<void>(resolve => {
+          barrierFallback = setTimeout(resolve, Number('2000'))
+        })
+      ])
+    } finally {
+      if (barrierFallback !== undefined) {
+        clearTimeout(barrierFallback)
+      }
+      releaseScans()
+    }
+
+    const outcomes = await Promise.allSettled([scanA, scanB])
+    const pendingResults = outcomes.filter(
+      outcome => outcome.status === 'fulfilled' && outcome.value.pendingCount === Number('1')
+    )
+    const safeLoserResults = outcomes.filter(
+      outcome =>
+        (outcome.status === 'fulfilled' && outcome.value.pendingCount === Number('0')) ||
+        (outcome.status === 'rejected' &&
+          outcome.reason instanceof Error &&
+          'type' in outcome.reason &&
+          outcome.reason.type === 'WRITE_CONFLICT')
+    )
+    expect(pendingResults).toHaveLength(Number('1'))
+    expect(pendingResults[Number('0')]).toMatchObject({
+      status: 'fulfilled',
+      value: { pendingCount: 1, reservationRefs: [expiredRef] }
+    })
+    expect(safeLoserResults).toHaveLength(Number('1'))
+
+    const [reservationRows] = await pool.query<RowDataPacket[]>(
+      `SELECT status, reconciliation_reason, settled_amount, actual_cost_micros,
+              usage_evidence_ref, platform_absorbed_cost_micros
+       FROM ai_quota_reservations WHERE reservation_ref = ?`,
+      [expiredRef]
+    )
+    expect(reservationRows).toEqual([
+      {
+        status: 'pending_reconciliation',
+        reconciliation_reason: 'reservation_ttl_expired',
+        settled_amount: null,
+        actual_cost_micros: null,
+        usage_evidence_ref: null,
+        platform_absorbed_cost_micros: 0
+      }
+    ])
+    const [afterRows] = await pool.query<RowDataPacket[]>(`
+      SELECT
+        (SELECT SUM(available_amount) FROM ai_quota_accounts) AS account_available,
+        (SELECT SUM(reserved_amount) FROM ai_quota_accounts) AS account_reserved,
+        (SELECT SUM(available_amount) FROM ai_quota_grants) AS grant_available,
+        (SELECT SUM(reserved_amount) FROM ai_quota_grants) AS grant_reserved,
+        (SELECT COUNT(*) FROM ai_quota_ledger) AS ledger_count,
+        (SELECT COUNT(*) FROM ai_quota_reservation_allocations) AS allocation_count
     `)
     expect(afterRows).toEqual(beforeRows)
   })

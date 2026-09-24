@@ -10,7 +10,7 @@ import {
   type ResultSetHeader,
   type RowDataPacket
 } from 'mysql2/promise'
-import { afterAll, beforeAll, describe, expect, test } from 'vitest'
+import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest'
 
 import type { EventRef, UserPlantRef, UserRef } from '../../src/contracts/types.js'
 import {
@@ -49,6 +49,8 @@ const mysqlReadyIntervalMs = Number('250')
 const occurredAtMs = Number('1758376800000')
 const receivedAtMs = Number('1758376801000')
 const payloadJson = '{"decision":"defer_watering"}'
+const crossUserOwnerRef = 'usr_reward_mysql_cross_owner_0001' as UserRef
+const crossUserOtherRef = 'usr_reward_mysql_cross_other_0001' as UserRef
 
 /** 真实 MySQL 连接承载的事务上下文。 */
 type MysqlTestTransaction = TransactionExecutionContext & {
@@ -269,13 +271,72 @@ function createInput(overrides: Partial<ReserveRewardInboxInput> = {}): ReserveR
   }
 }
 
+/** 每个用例后清理跨用户冲突专用数据，避免污染本文件其他真实 MySQL 场景。 */
+async function cleanupCrossUserFixture(): Promise<void> {
+  if (pool === undefined) {
+    return
+  }
+  const userRefs = [crossUserOwnerRef, crossUserOtherRef]
+  await pool.execute(
+    `UPDATE care_point_accounts SET last_ledger_internal_id = NULL
+     WHERE user_internal_id IN (SELECT id FROM users WHERE public_user_id IN (?, ?))`,
+    userRefs
+  )
+  await pool.execute(
+    `UPDATE ai_quota_accounts SET last_ledger_internal_id = NULL
+     WHERE user_internal_id IN (SELECT id FROM users WHERE public_user_id IN (?, ?))`,
+    userRefs
+  )
+  await pool.execute(
+    `DELETE FROM care_level_grants
+     WHERE user_internal_id IN (SELECT id FROM users WHERE public_user_id IN (?, ?))`,
+    userRefs
+  )
+  await pool.execute(
+    `DELETE FROM subscription_reward_inbox
+     WHERE user_internal_id IN (SELECT id FROM users WHERE public_user_id IN (?, ?))`,
+    userRefs
+  )
+  await pool.execute(
+    `DELETE FROM care_point_ledger
+     WHERE user_internal_id IN (SELECT id FROM users WHERE public_user_id IN (?, ?))`,
+    userRefs
+  )
+  await pool.execute(
+    `DELETE FROM ai_quota_ledger
+     WHERE user_internal_id IN (SELECT id FROM users WHERE public_user_id IN (?, ?))`,
+    userRefs
+  )
+  await pool.execute(
+    `DELETE FROM ai_quota_grants
+     WHERE user_internal_id IN (SELECT id FROM users WHERE public_user_id IN (?, ?))`,
+    userRefs
+  )
+  await pool.execute(
+    `DELETE FROM care_point_accounts
+     WHERE user_internal_id IN (SELECT id FROM users WHERE public_user_id IN (?, ?))`,
+    userRefs
+  )
+  await pool.execute(
+    `DELETE FROM ai_quota_accounts
+     WHERE user_internal_id IN (SELECT id FROM users WHERE public_user_id IN (?, ?))`,
+    userRefs
+  )
+  await pool.execute('DELETE FROM users WHERE public_user_id IN (?, ?)', userRefs)
+}
+
 /**
- * Expected 来源：`reward-events/v1` 的至少一次投递、双唯一键去重和同事件防篡改合同。
- * 测试层次：L3 / `unit_real_data`；执行真实 MySQL 8.4、真实 DDL、事务和 Repository。
- * 替换边界：仅以本地一次性 MySQL 替代 CloudBase MySQL。
- * 明确未覆盖：dispatcher、HTTP 与 CloudBase 网络；本文件覆盖积分、等级奖励和提交未知只读对账。
+ * Expected 来源：P2 订阅票据的同键异参冲突要求，以及 `reward-events/v1` 的至少一次投递、双唯一键去重和事件不可变合同。
+ * 测试层次：L3 / `unit_real_data`；执行真实应用用例、MySQL 8.4、真实 DDL、事务和 Repository。
+ * 替换边界：仅以本地一次性 MySQL 替代 CloudBase MySQL，不替换订阅应用、Repository 或事务行为。
+ * 明确未覆盖：dispatcher、HTTP、CloudBase 网络和生产 MySQL 驱动；本文件覆盖积分、等级奖励和提交未知只读对账。
+ * 新增反向用例：同用户、同业务唯一键但事件事实改写必须报幂等冲突，且积分/等级/AI 额度均不得二次变化。
  */
 describe('奖励事件 inbox 的真实 MySQL 并发幂等', () => {
+  afterEach(async () => {
+    await cleanupCrossUserFixture()
+  })
+
   beforeAll(async () => {
     runDocker([
       'run',
@@ -348,6 +409,260 @@ describe('奖励事件 inbox 的真实 MySQL 并发幂等', () => {
       'SELECT COUNT(*) AS row_count FROM subscription_reward_inbox'
     )
     expect(Number(countRows[Number('0')]?.row_count)).toBe(Number('1'))
+  })
+
+  test.each([
+    {
+      name: '载荷内容改变',
+      changeInput: (input: ReserveRewardInboxInput): ReserveRewardInboxInput => {
+        const changedPayloadJson = '{"decision":"water_now"}'
+        return {
+          ...input,
+          payloadJson: changedPayloadJson,
+          payloadHash: createHash('sha256').update(changedPayloadJson).digest('hex')
+        }
+      }
+    },
+    {
+      name: '业务发生编号改变',
+      changeInput: (input: ReserveRewardInboxInput): ReserveRewardInboxInput => ({
+        ...input,
+        occurrenceRef: 'soil_check_same_business_changed_0001'
+      })
+    }
+  ])('同一用户同一业务唯一键的不同事件载荷异参必须冲突：$name', async ({ name, changeInput }) => {
+    const userRef = crossUserOwnerRef
+    const businessUniqueKey = `soil-check:same-user-changed-${name === '载荷内容改变' ? 'payload' : 'occurrence'}-0001`
+    await pool.execute(
+      `INSERT INTO users
+        (_openid, public_user_id, status, session_version, created_at_ms, updated_at_ms)
+       VALUES ('', ?, 'active', 1, ?, ?)`,
+      [userRef, occurredAtMs, occurredAtMs]
+    )
+    await pool.execute(
+      `INSERT INTO care_point_accounts
+        (_openid, user_internal_id, available_points, lifetime_net_earned, level_code,
+         version, last_ledger_internal_id, created_at_ms, updated_at_ms)
+       SELECT '', id, 30, 30, 'L0', 1, NULL, ?, ?
+       FROM users WHERE public_user_id = ?`,
+      [occurredAtMs, occurredAtMs, userRef]
+    )
+    await pool.execute(
+      `INSERT INTO ai_quota_accounts
+        (_openid, user_internal_id, available_amount, reserved_amount, consumed_amount,
+         version, last_ledger_internal_id, created_at_ms, updated_at_ms)
+       SELECT '', id, 0, 0, 0, 1, NULL, ?, ?
+       FROM users WHERE public_user_id = ?`,
+      [occurredAtMs, occurredAtMs, userRef]
+    )
+
+    let pointLedgerSequence = Number('0')
+    const applyReward = createApplyRewardPointsEventUseCase({
+      driver: createTransactionDriver(),
+      inboxRepository: createMysqlRewardInboxRepository(createSqlExecutor()),
+      pointsRepository: createMysqlRewardPointsRepository(createRewardPointsSqlExecutor()),
+      commitUnknownReadOnlyRepository: createMysqlRewardCommitUnknownReadOnlyRepository(
+        createRewardCommitUnknownReadOnlyExecutor()
+      ),
+      createPointLedgerRef: () => `cpl_same_business_changed_${String(++pointLedgerSequence)}`,
+      createLevelGrantRef: levelCode => `clg_same_business_changed_${levelCode}`,
+      createAiGrantRef: levelCode => `aqg_same_business_changed_${levelCode}`,
+      createAiLedgerRef: levelCode => `aql_same_business_changed_${levelCode}`
+    })
+    const originalInbox = createInput({
+      eventId: 'evt_reward_same_business_original_0001' as EventRef,
+      userRef,
+      aggregateRef: 'care_plan_same_business_original_0001',
+      occurrenceRef: 'soil_check_same_business_original_0001',
+      businessUniqueKey,
+      payloadJson,
+      payloadHash: createHash('sha256').update(payloadJson).digest('hex'),
+      occurredAtMs: occurredAtMs + Number('100'),
+      receivedAtMs: receivedAtMs + Number('100')
+    })
+    const rewardCommand = {
+      inbox: originalInbox,
+      pointsAmount: Number('300'),
+      levelPolicy: [
+        { code: 'L0', threshold: Number('0'), aiReward: Number('0') },
+        { code: 'L1', threshold: Number('100'), aiReward: Number('50') },
+        { code: 'L2', threshold: Number('300'), aiReward: Number('100') }
+      ],
+      levelRewardExpiresAtMs: occurredAtMs + Number('7776000000'),
+      appliedAtMs: occurredAtMs + Number('200')
+    } as const
+    const changedInbox = {
+      ...changeInput(originalInbox),
+      eventId: 'evt_reward_same_business_changed_0001' as EventRef,
+      receivedAtMs: receivedAtMs + Number('300')
+    }
+
+    await expect(applyReward(rewardCommand)).resolves.toMatchObject({
+      kind: 'applied',
+      resultRef: 'cpl_same_business_changed_1',
+      awardedLevels: ['L1', 'L2']
+    })
+    await expect(applyReward({ ...rewardCommand, inbox: changedInbox })).rejects.toMatchObject({
+      type: 'IDEMPOTENCY_CONFLICT'
+    })
+
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT point_account.available_points, point_account.lifetime_net_earned,
+              point_account.level_code, quota_account.available_amount,
+              (SELECT COUNT(*) FROM subscription_reward_inbox AS inbox
+               WHERE inbox.user_internal_id = user_row.id
+                 AND inbox.business_unique_key = ?) AS inbox_count,
+              (SELECT COUNT(*) FROM care_point_ledger AS point_ledger
+               WHERE point_ledger.user_internal_id = user_row.id) AS point_ledger_count,
+              (SELECT COUNT(*) FROM care_level_grants AS level_grant
+               WHERE level_grant.user_internal_id = user_row.id) AS level_grant_count,
+              (SELECT COUNT(*) FROM ai_quota_grants AS quota_grant
+               WHERE quota_grant.user_internal_id = user_row.id) AS ai_grant_count,
+              (SELECT COUNT(*) FROM ai_quota_ledger AS quota_ledger
+               WHERE quota_ledger.user_internal_id = user_row.id) AS ai_ledger_count
+       FROM users AS user_row
+       JOIN care_point_accounts AS point_account ON point_account.user_internal_id = user_row.id
+       JOIN ai_quota_accounts AS quota_account ON quota_account.user_internal_id = user_row.id
+       WHERE user_row.public_user_id = ?`,
+      [businessUniqueKey, userRef]
+    )
+    expect(rows).toEqual([
+      {
+        available_points: Number('330'),
+        lifetime_net_earned: Number('330'),
+        level_code: 'L2',
+        available_amount: Number('150'),
+        inbox_count: Number('1'),
+        point_ledger_count: Number('1'),
+        level_grant_count: Number('2'),
+        ai_grant_count: Number('2'),
+        ai_ledger_count: Number('2')
+      }
+    ])
+  })
+
+  test('不同用户碰撞同一奖励业务唯一键时失败关闭且不泄露既有账本引用', async () => {
+    const userA = crossUserOwnerRef
+    const userB = crossUserOtherRef
+    const businessUniqueKey = 'soil-check:cross-user-reward-unique-0001'
+    await pool.execute(
+      `INSERT INTO users
+        (_openid, public_user_id, status, session_version, created_at_ms, updated_at_ms)
+       VALUES ('', ?, 'active', 1, ?, ?), ('', ?, 'active', 1, ?, ?)`,
+      [userA, occurredAtMs, occurredAtMs, userB, occurredAtMs, occurredAtMs]
+    )
+    await pool.execute(
+      `INSERT INTO care_point_accounts
+        (_openid, user_internal_id, available_points, lifetime_net_earned, level_code,
+         version, last_ledger_internal_id, created_at_ms, updated_at_ms)
+       SELECT '', id, 30, 30, 'L0', 1, NULL, ?, ?
+       FROM users WHERE public_user_id IN (?, ?)`,
+      [occurredAtMs, occurredAtMs, userA, userB]
+    )
+    await pool.execute(
+      `INSERT INTO ai_quota_accounts
+        (_openid, user_internal_id, available_amount, reserved_amount, consumed_amount,
+         version, last_ledger_internal_id, created_at_ms, updated_at_ms)
+       SELECT '', id, 0, 0, 0, 1, NULL, ?, ?
+       FROM users WHERE public_user_id IN (?, ?)`,
+      [occurredAtMs, occurredAtMs, userA, userB]
+    )
+
+    let pointLedgerSequence = Number('0')
+    const applyReward = createApplyRewardPointsEventUseCase({
+      driver: createTransactionDriver(),
+      inboxRepository: createMysqlRewardInboxRepository(createSqlExecutor()),
+      pointsRepository: createMysqlRewardPointsRepository(createRewardPointsSqlExecutor()),
+      commitUnknownReadOnlyRepository: createMysqlRewardCommitUnknownReadOnlyRepository(
+        createRewardCommitUnknownReadOnlyExecutor()
+      ),
+      createPointLedgerRef: () => `cpl_reward_cross_user_${String(++pointLedgerSequence)}`,
+      createLevelGrantRef: levelCode => `clg_reward_cross_user_${levelCode}`,
+      createAiGrantRef: levelCode => `aqg_reward_cross_user_${levelCode}`,
+      createAiLedgerRef: levelCode => `aql_reward_cross_user_${levelCode}`
+    })
+    const levelPolicy = [
+      { code: 'L0', threshold: Number('0'), aiReward: Number('0') },
+      { code: 'L1', threshold: Number('100'), aiReward: Number('0') }
+    ] as const
+    const commandA = {
+      inbox: createInput({
+        eventId: 'evt_reward_cross_user_owner_0001' as EventRef,
+        userRef: userA,
+        aggregateRef: 'care_plan_cross_user_owner_0001',
+        occurrenceRef: 'soil_check_cross_user_owner_0001',
+        businessUniqueKey,
+        occurredAtMs: occurredAtMs + Number('100'),
+        receivedAtMs: receivedAtMs + Number('100')
+      }),
+      pointsAmount: Number('5'),
+      levelPolicy,
+      levelRewardExpiresAtMs: occurredAtMs + Number('7776000000'),
+      appliedAtMs: occurredAtMs + Number('200')
+    } as const
+    const commandB = {
+      inbox: createInput({
+        eventId: 'evt_reward_cross_user_other_0001' as EventRef,
+        userRef: userB,
+        userPlantRef: 'upl_reward_cross_other_0001' as UserPlantRef,
+        aggregateRef: 'care_plan_cross_user_other_0001',
+        occurrenceRef: 'soil_check_cross_user_other_0001',
+        businessUniqueKey,
+        occurredAtMs: occurredAtMs + Number('300'),
+        receivedAtMs: receivedAtMs + Number('350')
+      }),
+      pointsAmount: Number('5'),
+      levelPolicy,
+      levelRewardExpiresAtMs: occurredAtMs + Number('7776000000'),
+      appliedAtMs: occurredAtMs + Number('400')
+    } as const
+
+    await expect(applyReward(commandA)).resolves.toMatchObject({
+      kind: 'applied',
+      resultRef: 'cpl_reward_cross_user_1'
+    })
+    await expect(applyReward(commandB)).rejects.toMatchObject({ type: 'INTERNAL_DATA_INVALID' })
+
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT user_row.public_user_id, point_account.available_points,
+              point_account.lifetime_net_earned, point_account.level_code,
+              quota_account.available_amount,
+              (SELECT COUNT(*) FROM care_point_ledger AS point_ledger
+               WHERE point_ledger.user_internal_id = user_row.id) AS point_ledger_count,
+              (SELECT COUNT(*) FROM ai_quota_grants AS quota_grant
+               WHERE quota_grant.user_internal_id = user_row.id) AS quota_grant_count,
+              (SELECT COUNT(*) FROM subscription_reward_inbox AS inbox
+               WHERE inbox.user_internal_id = user_row.id
+                 AND inbox.business_unique_key = ?) AS owned_inbox_count
+       FROM users AS user_row
+       JOIN care_point_accounts AS point_account ON point_account.user_internal_id = user_row.id
+       JOIN ai_quota_accounts AS quota_account ON quota_account.user_internal_id = user_row.id
+       WHERE user_row.public_user_id IN (?, ?)
+       ORDER BY user_row.public_user_id`,
+      [businessUniqueKey, userA, userB]
+    )
+    expect(rows).toEqual([
+      {
+        public_user_id: userB,
+        available_points: Number('30'),
+        lifetime_net_earned: Number('30'),
+        level_code: 'L0',
+        available_amount: Number('0'),
+        point_ledger_count: Number('0'),
+        quota_grant_count: Number('0'),
+        owned_inbox_count: Number('0')
+      },
+      {
+        public_user_id: userA,
+        available_points: Number('35'),
+        lifetime_net_earned: Number('35'),
+        level_code: 'L0',
+        available_amount: Number('0'),
+        point_ledger_count: Number('1'),
+        quota_grant_count: Number('0'),
+        owned_inbox_count: Number('1')
+      }
+    ])
   })
 
   test('同一事件 ID 的合法但不同载荷被识别为幂等冲突', async () => {
