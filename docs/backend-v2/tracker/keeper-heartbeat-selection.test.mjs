@@ -9,7 +9,7 @@ import {
   mergeClickUpTaskStatuses,
   validateClickUpTaskSnapshot
 } from './clickup-status-sync.mjs'
-import { selectClickUpKeeperHeartbeat } from './sync-heartbeats.mjs'
+import { markTicketHeartbeatMissing, selectClickUpKeeperHeartbeat } from './sync-heartbeats.mjs'
 
 const EXPECTED_TICKET_COUNT = 28
 const trackerDirectory = path.dirname(fileURLToPath(import.meta.url))
@@ -149,4 +149,25 @@ test('H5 labels local progress and does not disguise missing remote status as Ba
   assert.match(html, /本地任务进度/u)
   assert.match(html, /未核实/u)
   assert.doesNotMatch(html, /clickUpTaskStatuses\?\.\[ticket\.id\] \|\| 'Backlog'/u)
+})
+
+test('missing owner heartbeat preserves historical progress but marks the value as stale', () => {
+  const ticket = {
+    id: 'ticket-fixture',
+    agent: 'former_agent',
+    progress: 43,
+    status: '执行中',
+    lastUpdatedAt: '2026-09-24T00:00:00Z'
+  }
+  const marked = markTicketHeartbeatMissing(ticket)
+  assert.equal(marked.progress, 43)
+  assert.equal(marked.agent, 'former_agent')
+  assert.equal(marked.heartbeatState, 'missing')
+  assert.match(marked.status, /心跳缺失/u)
+  assert.equal(marked.lastUpdatedAt, '2026-09-24T00:00:00Z')
+})
+
+test('H5 distinguishes an old per-ticket estimate from a current owner report', () => {
+  const html = fs.readFileSync(path.join(trackerDirectory, 'index.html'), 'utf8')
+  assert.match(html, /历史值；心跳缺失/u)
 })

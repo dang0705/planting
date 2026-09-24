@@ -46,8 +46,10 @@
       return value !== null && value !== undefined && Number.isFinite(Number(value));
     }
 
-    function progressLabel(value) {
+    function progressLabel(value, heartbeatState) {
       if (!hasReportedProgress(value)) return '0%（按 0 计入、非 owner 上报）';
+      if (heartbeatState === 'missing') return `${normalizeProgress(value)}%（历史值；心跳缺失）`;
+      if (heartbeatState === 'stale') return `${normalizeProgress(value)}%（历史值；心跳超时）`;
       return `${normalizeProgress(value)}%`;
     }
 
@@ -116,7 +118,7 @@
           ${tickets.map((ticket) => {
             const ticketProgress = normalizeProgress(ticket.progress);
             return `<div class="ticket">
-              <div class="ticket-heading"><a href="${escapeHtml(ticket.url)}" target="_blank" rel="noreferrer">${escapeHtml(ticket.title)}</a><strong>${progressLabel(ticket.progress)}</strong></div>
+              <div class="ticket-heading"><a href="${escapeHtml(ticket.url)}" target="_blank" rel="noreferrer">${escapeHtml(ticket.title)}</a><strong>${progressLabel(ticket.progress, ticket.heartbeatState)}</strong></div>
               <div class="ticket-progress-bar" role="progressbar" aria-label="本地任务进度：${escapeHtml(ticket.title)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${ticketProgress}"><div class="ticket-progress-fill" style="width:${ticketProgress}%"></div></div>
               <div class="meta ${ticket.agentIsCurrent ? '' : 'agent-missing'}">ClickUp（上次远端回读）：${escapeHtml(ticket.clickUpStatus)} · 本地：${escapeHtml(ticket.status)} · ${escapeHtml(ticket.agentLabel)} · ${escapeHtml(ticket.agentState)}</div>
             </div>`;

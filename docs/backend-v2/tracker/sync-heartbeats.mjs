@@ -25,6 +25,15 @@ export function selectClickUpKeeperHeartbeat(heartbeats = []) {
   );
 }
 
+/** 负责人心跳文件缺失时只保留历史数值，不再把它显示为当前上报。 */
+export function markTicketHeartbeatMissing(ticket) {
+  return {
+    ...ticket,
+    heartbeatState: 'missing',
+    status: '心跳缺失：保留历史进度，当前执行状态未核实'
+  };
+}
+
 const scriptPathArgument = process.argv[SCRIPT_PATH_ARGUMENT_INDEX];
 const isDirectInvocation = scriptPathArgument
   ? path.resolve(scriptPathArgument) === fileURLToPath(import.meta.url)
@@ -72,7 +81,10 @@ function inferModel(agentName) {
 for (const module of status.modules ?? []) {
   for (const ticket of module.tickets ?? []) {
     const heartbeat = heartbeatByTicket.get(ticket.id);
-    if (!heartbeat) continue;
+    if (!heartbeat) {
+      Object.assign(ticket, markTicketHeartbeatMissing(ticket));
+      continue;
+    }
 
     const oldProgress = hasProgress(ticket.progress) ? Number(ticket.progress) : null;
     const reportedProgress = hasProgress(heartbeat.progress) ? Number(heartbeat.progress) : null;
@@ -86,6 +98,7 @@ for (const module of status.modules ?? []) {
       ? `${heartbeat.status}：${heartbeat.summary}`
       : `心跳超时：${heartbeat.summary}`;
     ticket.lastUpdatedAt = heartbeat.updatedAt;
+    ticket.heartbeatState = heartbeat.isFresh ? 'fresh' : 'stale';
 
     agentRegistry.push({
       name: heartbeat.agent,
