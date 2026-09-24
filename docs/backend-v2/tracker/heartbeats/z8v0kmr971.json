@@ -2,8 +2,8 @@
   "ticketId": "z8v0kmr971",
   "agent": "root",
   "status": "in_progress",
-  "progress": 15,
-  "summary": "P2 CMS 分类、百科和发布已有展示百科修订/审核绑定及发布头/明细不可变的本地 TDD 与真实 MySQL 证据。15% 是本地执行估算，不是 ClickUp 原生进度。CLICKUP_BLOCKED：MCP 当日 100/100 限额，远端仍保留上次回读的 backlog，未伪造同步。分类 active release 仍 STOP，真实 CMS 审核/发布事务、Qwen、奖励和 HTTP 尚未验收。",
+  "progress": 20,
+  "summary": "P2 CMS 分类、百科和发布新增植物身份双 active release 明细准入 Repository：真实 MySQL 6/6、完整 MySQL 18 文件/70 项通过；展示百科修订/审核绑定与发布不可变证据仍有效。20% 是本地执行估算，不是 ClickUp 原生进度。CLICKUP_BLOCKED：MCP 当日 100/100 限额，远端仅保留上次已核实的 backlog，待配额恢复后同步；分类 active release 仍 STOP，真实 CMS 审核/发布事务、Qwen、奖励和 HTTP 尚未验收。",
   "blockers": [],
   "verified": [
     "百科修订内容不可改写：012 触发器在隔离 MySQL 验证，历史修订必须新建并重新审核。",
@@ -11,12 +11,13 @@
     "013 审核绑定：旧 DDL 错配插入 RED；首版允许整体改绑再次 RED；最终 MySQL 目标 6/6、全量 16 文件/61 项、非 MySQL 84 文件/477 项通过。",
     "临时关闭旧绑定门禁时改绑测试 RED，完整恢复后 013 文件 SHA-256 与 manifest 一致，目标 6/6 GREEN。",
     "014 发布头/明细不可变：旧 DDL 目标 3/3 RED，新增触发器后目标 3/3 GREEN；无引用发布头删除亦由数据库拒绝，活动指针仍可独立更新。",
-    "完整本地 MySQL 17 文件/64 项、非 MySQL 84 文件/477 项、TypeScript 类型检查、目标 lint/format、13 文件 manifest SHA 与入口校验均通过。"
+    "双 active release 读取准入：真实 Repository 参数化查询 + 全量 manifest 的隔离 MySQL，正常、空指针、缺身份明细、隔离分类和非法引用 6/6；身份明细关联执行反写 RED，恢复哈希后 GREEN。",
+    "完整本地 MySQL 18 文件/70 项、非 MySQL 84 文件/477 项、TypeScript 类型检查、目标 lint/format、13 文件 manifest SHA 与入口校验均通过。"
   ],
   "unverified": [
     "CloudBase CMS 管理员身份与审核权限、真实草稿读回、发布事务、active 指针切换、outbox 奖励、Qwen 受限生成、真实 HTTP 均未验收。",
     "P1 taxonomy 四条 TRANSFORM_PENDING 未批准，active release 保持 STOP；不得开启对外发布。"
   ],
-  "updatedAt": "2026-09-24T02:37:48Z",
-  "next": "先实现 P1 taxonomy STOP 下的百科发布失败关闭用例及 Repository/事务读回，再冻结正向发布包摘要和审核入口；不写真实 CMS 或 active release。ClickUp 远端状态待 MCP 配额恢复后由专职 keeper 回读。"
+  "updatedAt": "2026-09-24T02:52:10Z",
+  "next": "继续实现 P1 taxonomy STOP 下的百科发布失败关闭用例及 Repository/事务读回；先裁决正向发布包摘要、record_count、审核决定引用和审核状态不可变语义。ClickUp 远端状态待专职 keeper 回读，不把本地 20% 当成远端状态。"
 }
