@@ -346,7 +346,8 @@
       "owner": "subscription",
       "sourceRefs": [
         "docs/backend-v2/decisions/P0-product-cost-boundaries.md",
-        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md",
+        "docs/backend-v2/contracts/schemas/member-ai-quota-policy.v1.schema.json"
       ],
       "consumers": [
         "subscription",

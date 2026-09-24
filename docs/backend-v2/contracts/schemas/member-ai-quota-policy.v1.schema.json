@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qinghuazhi.local/contracts/member-ai-quota-policy.v1.schema.json",
+  "title": "会员每订阅周期 AI 额度策略",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["aiPointsPerCycle"],
+  "properties": {
+    "aiPointsPerCycle": {
+      "description": "每个已核验会员订阅周期发放的 AI 点数；不允许客户端指定。",
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

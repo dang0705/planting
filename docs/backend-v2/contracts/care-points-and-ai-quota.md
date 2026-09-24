@@ -130,6 +130,13 @@ grantedAmount = availableAmount + reservedAmount + consumedAmount
 - 已发生且可审计的供应商成本由平台承担，不得通过退款或冲正制造用户负余额。
 - 会员退款只停止未来使用并撤销尚未消费额度；不追溯删除用户植物、事实、积分、等级或已经合法消费的额度。
 
+### 会员周期额度的发放边界
+
+- `subscription.member.ai_points_per_cycle` 是类型化业务策略代码。每次发放只接受已验证、已生效且尚未结束的订阅周期，以及当时有效的不可变策略发布；不允许从客户端传入额度数或策略版本。策略发布的 `domain_code` 固定为 `subscription`，`policy_code` 固定为 `subscription.member.ai_points_per_cycle`，`schema_version` 固定为 `member-ai-quota-policy/v1`，正文须通过 `member-ai-quota-policy.v1.schema.json`；当前批准值为 `2000`，日后改变须先批准新值并发布新版本。生产发布版本由正式发布流程生成；测试夹具版本不得冒充生产版本。
+- `MEMBER` grant 的 `source_ref` 固定为已核验周期的 `period_ref`，`policy_version` 固定为该策略的 `release_version`，发放时间必须落在 `[starts_at_ms, ends_at_ms)`，到期时间固定为 `ends_at_ms`，范围为三种已登记生成式能力。同一周期重放只读回既有发放，不再次增加账户或追加账本；切换策略版本不得改写既有 grant。
+- 发放前必须核对周期、订阅和统一用户三者归属一致；仅 `subscription_periods.status=active` 不足以证明支付已验签及对账认可。当前“已核验周期”的数据库准入至少要求：周期关联支付订单、订单所属用户与周期一致、订单有 `paid_at_ms`、存在同一订单 `status=applied` 的支付回调收件记录。只有受控支付回调适配器完成验签、订单核对与对账后，才允许把该收件记录置为 `applied`；额度用例不能自行把待处理订单或收件记录提升状态。策略缺失、摘要不符、版本不符、归属冲突、周期尚未开始或已经结束时均失败关闭，不产生 grant、账本或账户增量。
+- grant、`ai_quota_ledger` 的 `grant` 条目和 `ai_quota_accounts` 投影更新必须处于同一 MySQL 事务。提交结果未知时，不得直接重试写入；应在新连接按 `(user_id, MEMBER, period_ref)` 及账本唯一键只读对账。
+
 固定流程：
 
 ```text
