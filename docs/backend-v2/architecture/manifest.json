@@ -2,7 +2,7 @@
   "version": "backend-architecture/v2-config-1",
   "algorithm": "sha256",
   "files": {
-    "README.md": "df229d759bc3d407a149ffb20090ebe4e2567054d63205c3ea34e7506251b8bc",
+    "README.md": "bfa6960e0dc424f5bdaa0ed2e0c8572614be1b066c8e23362d21e18a6f62d33c",
     "青花植后端v2底层架构重构计划_融合闭环终版.md": "0b94c71ea83e02134237c9c41b357e0a30e7d60250d6bc21eedca73d2d4c0732",
     "architecture/README.md": "79b1571d6de17fdba694193def79ce62f1f2fa01052557485bb6eb7c8d447b01",
     "business-domain.md": "8288aec7ad327b432dc0729199a59b0ce95e1ea08569e0214872f5e3b0066f06",
@@ -20,7 +20,7 @@
     "configuration-variable-catalog.md": "851ee4965d68376148647116728ac84fcc7a3b9f6a097e1116a7f2df287d099b"
   },
   "diagrams": {
-    "business": "9b452fbfca8c6540e506703fa48945e50a1030d06249c4f01c1fca6991579097",
+    "business": "57cfe9b88cb74092e23bd0b44883b284a2532adef6eebcdebd90a8b8fc71463b",
     "infrastructure": "c17fce2dff3ac7a0a8a0a18707477a048955510acce9f4f7b902d6ee71d18beb"
   }
 }

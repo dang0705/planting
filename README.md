@@ -78,8 +78,8 @@ flowchart TB
   PromotionCreatePlant -->|创建目标后认领| SessionClaim[同一会话一次性归属命令<br/>两类主体分别验权 / 幂等 / 可审计]
   ExistingPlantTarget --> SessionClaim
   SessionClaim -->|只增加来源记录归属，不改变记录语义| PlantRoot
-  TemporaryDiagnosisResult --> SessionClaim
-  TemporaryAdvice --> SessionClaim
+  TemporaryDiagnosisResult --> PlantPromotion
+  TemporaryAdvice --> PlantPromotion
 
 
   %% ========== 用户植物核心 ==========
