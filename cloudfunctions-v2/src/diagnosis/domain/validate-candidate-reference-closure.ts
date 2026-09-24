@@ -40,6 +40,19 @@ function symptomModeKey(mode: PublishedSymptomMode): string {
   return JSON.stringify([mode.symptomModeCode, mode.questionPackageReleaseRef])
 }
 
+/** Schema 外的脏数组只允许失败关闭，不能在关系投影中解引用空元素。 */
+function hasMissingArrayElement(items: unknown): boolean {
+  if (!Array.isArray(items)) {
+    return true
+  }
+  for (const item of items) {
+    if (item === null || item === undefined) {
+      return true
+    }
+  }
+  return false
+}
+
 /**
  * 校验单候选声明、逐条结论和应用层已核实依赖之间的引用闭合。
  * 调用方必须先用候选 v1 Schema 校验完整内容；本纯函数不读取 CMS、MySQL 或网络，
@@ -49,6 +62,27 @@ export function validateCandidateReferenceClosure(
   candidate: CandidateReferenceContent,
   dependencies: VerifiedReferenceDependencies
 ): KnowledgeReferenceIssue[] {
+  const candidateArrays = [
+    candidate.symptomModeRefs,
+    candidate.causes,
+    candidate.outcomes,
+    candidate.actions,
+    candidate.mappings,
+    candidate.claimLinks,
+    dependencies.publishedSymptomModes,
+    dependencies.verifiedClaimRevisions
+  ]
+  if (
+    candidateArrays.some(hasMissingArrayElement) ||
+    candidate.outcomes.some(
+      outcome =>
+        hasMissingArrayElement(outcome.symptomModeRefs) ||
+        hasMissingArrayElement(outcome.differentialOutcomeCodes)
+    )
+  ) {
+    return [{ code: 'INVALID_CANDIDATE_REFERENCE_SHAPE', path: 'candidate' }]
+  }
+
   const issues: KnowledgeReferenceIssue[] = []
   const publishedRefs = new Set(dependencies.publishedSymptomModes.map(symptomModeKey))
   const declaredRefs = new Set(candidate.symptomModeRefs.map(symptomModeKey))

@@ -95,6 +95,12 @@ describe('完整诊断候选的题包与来源引用闭合', () => {
     expect(issueCodes(candidate)).toContain('UNDECLARED_OUTCOME_QUESTION_PACKAGE')
   })
 
+  test('候选数组含空元素时返回结构错误而不抛异常', () => {
+    const candidate = validCandidate()
+    candidate.symptomModeRefs = [null] as unknown as CandidateReferenceContent['symptomModeRefs']
+    expect(issueCodes(candidate)).toContain('INVALID_CANDIDATE_REFERENCE_SHAPE')
+  })
+
   test('精确来源修订缺失时继续拒绝，而非默认追随最新版', () => {
     const candidate = validCandidate()
     const [claimLink] = candidate.claimLinks
