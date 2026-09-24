@@ -119,7 +119,8 @@ describe('植物百科修订的审核前后不可改稿边界', () => {
     for (const fileName of [
       '001_identity.sql',
       '002_plant_knowledge.sql',
-      '012_plant_encyclopedia_revision_immutability.sql'
+      '012_plant_encyclopedia_revision_immutability.sql',
+      '013_plant_encyclopedia_review_binding.sql'
     ]) {
       runMysql(
         fs.readFileSync(path.join(findProjectRoot(), 'docs/backend-v2/schema', fileName), 'utf8')
@@ -183,5 +184,63 @@ describe('植物百科修订的审核前后不可改稿边界', () => {
     expect(
       runMysql("SELECT status FROM plant_encyclopedia_revisions WHERE revision_ref = 'revision_1';")
     ).toBe('review_pending')
+  })
+
+  test('审核项必须同时绑定同一条百科修订的内部键和公开引用', () => {
+    expectMysqlRejection(`
+      INSERT INTO cms_review_items
+        (_openid, review_item_ref, subject_type, subject_ref, draft_revision_internal_id,
+         status, created_at_ms, updated_at_ms)
+      VALUES ('', 'review_mismatch', 'encyclopedia', 'revision_other', 1,
+              'review_pending', 1000, 1000);
+    `)
+    expectMysqlRejection(`
+      UPDATE cms_review_items SET subject_ref = 'revision_other'
+      WHERE review_item_ref = 'review_1';
+    `)
+    expectMysqlRejection(`
+      INSERT INTO cms_review_items
+        (_openid, review_item_ref, subject_type, subject_ref, status,
+         created_at_ms, updated_at_ms)
+      VALUES ('', 'review_without_revision', 'encyclopedia', 'revision_1',
+              'review_pending', 1000, 1000);
+    `)
+    expect(
+      runMysql("SELECT subject_ref FROM cms_review_items WHERE review_item_ref = 'review_1';")
+    ).toBe('revision_1')
+  })
+
+  test('相同修订引用可以建立另一条独立审核项', () => {
+    runMysql(`
+      INSERT INTO cms_review_items
+        (_openid, review_item_ref, subject_type, subject_ref, draft_revision_internal_id,
+         status, created_at_ms, updated_at_ms)
+      VALUES ('', 'review_2', 'encyclopedia', 'revision_1', 1,
+              'review_pending', 2000, 2000);
+    `)
+    expect(
+      runMysql("SELECT subject_ref FROM cms_review_items WHERE review_item_ref = 'review_2';")
+    ).toBe('revision_1')
+  })
+
+  test('修改正文产生新修订后，旧审核项不能整体改绑到新修订', () => {
+    runMysql(`
+      INSERT INTO plant_encyclopedia_revisions
+        (_openid, revision_ref, plant_identity_internal_id, structure_version,
+         display_content_json, source_kind, content_hash, status, created_at_ms, updated_at_ms)
+      VALUES ('', 'revision_2', 1, 'plant-encyclopedia-display/v1',
+              '{"introduction":"新修订","appearance":"绿色叶片","distribution":"热带地区","qa":[{"question":"叶形如何？","answer":"心形。"}]}',
+              'qwen_draft', '${CHANGED_HASH}', 'draft', 2000, 2000);
+    `)
+    expectMysqlRejection(`
+      UPDATE cms_review_items
+      SET draft_revision_internal_id = 2, subject_ref = 'revision_2'
+      WHERE review_item_ref = 'review_1';
+    `)
+    expect(
+      runMysql(
+        "SELECT CONCAT(draft_revision_internal_id, ':', subject_ref) FROM cms_review_items WHERE review_item_ref = 'review_1';"
+      )
+    ).toBe('1:revision_1')
   })
 })

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "backend-v2-schema/v1",
-  "generatedAt": "2026-09-24T10:10:33+08:00",
+  "generatedAt": "2026-09-24T10:29:31+08:00",
   "database": "CloudBase MySQL",
   "timeStorage": "UTC epoch milliseconds",
   "files": [
@@ -69,6 +69,12 @@
       "owner": "plant-knowledge",
       "file": "012_plant_encyclopedia_revision_immutability.sql",
       "sha256": "82abb988fb75aa0d2382ee9c78056485678714822bfa685a485b7fd17a23dfb3"
+    },
+    {
+      "order": 12,
+      "owner": "plant-knowledge",
+      "file": "013_plant_encyclopedia_review_binding.sql",
+      "sha256": "609fa20c7288d1c327e4cb40b5f4822a5fc4fa36f160cc407f96bf5ad8cb8cad"
     }
   ]
 }
