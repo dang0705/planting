@@ -1,13 +1,20 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-24T01:02:00+08:00",
+  "generatedAt": "2026-09-24T08:41:04+08:00",
   "contracts": [
     {
       "id": "principal-and-capability",
       "version": "principal-capability/v1",
       "file": "principal-and-capability.md",
       "owner": "identity + subscription",
-      "sha256": "9e4613451a0b0b0af5ba83fcb8f32cacea5e52536c559ea5cf8ef19d355825e2"
+      "sha256": "857af1184296df768ea0afea652cf0528dba5016239eb8c9274098f42a2bee63"
+    },
+    {
+      "id": "identity-session-policy",
+      "version": "identity-session-policy/v1",
+      "file": "identity-session-policy.md",
+      "owner": "identity",
+      "sha256": "7900569427f53cb6c212dec33950089bf58fa87f59256a3601cdafbeb9787432"
     },
     {
       "id": "user-plant",

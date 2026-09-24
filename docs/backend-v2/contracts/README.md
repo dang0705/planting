@@ -2,6 +2,7 @@
 
 - [合同版本与 SHA-256 注册表](contract-registry.json)
 - [访问主体与能力快照](principal-and-capability.md)
+- [登录用户会话策略发布与请求快照](identity-session-policy.md)
 - [用户植物](user-plant.md)
 - [游客临时会话认领](guest-session-claim.md)
 - [已登录用户临时植物案例补充门](authenticated-ephemeral-plant-case.md)
