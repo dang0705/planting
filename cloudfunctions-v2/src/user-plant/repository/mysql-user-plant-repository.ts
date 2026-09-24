@@ -1,6 +1,8 @@
 import {
   USER_PLANT_INITIAL_VERSION,
   type CreateUserPlantResponseDto,
+  type PlantIdentityRef,
+  type UserPlantDto,
   type UserPlantRef,
   type UserRef
 } from '../../contracts/types.js'
@@ -12,6 +14,7 @@ const userPublicRefFormat = /^usr_[A-Za-z0-9_-]{8,}$/u
 const userPlantPublicRefFormat = /^upl_[A-Za-z0-9_-]{8,}$/u
 const positiveIntegerTextFormat = /^[1-9][0-9]*$/u
 const nonNegativeIntegerTextFormat = /^(?:0|[1-9][0-9]*)$/u
+const plantIdentityPublicRefFormat = /^pid_[A-Za-z0-9_-]{8,}$/u
 
 /** 用户植物持久化层可以产生的稳定内部错误类型。 */
 export type UserPlantPersistenceErrorType =
@@ -76,11 +79,32 @@ export type UserPlantCreateProjectionSqlRow = {
   readonly updated_at_ms: string
 }
 
+/** 单株读取查询返回的最小、已脱敏投影行。 */
+export type UserPlantReadProjectionSqlRow = {
+  /** SQL 行判别字段，不对应数据库列。 */
+  readonly kind: 'read-plant'
+  /** 用户植物高熵公开引用。 */
+  readonly public_user_plant_id: string
+  /** 数据库生命周期原值；普通用户查询仅允许 active/archived。 */
+  readonly lifecycle_status: string
+  /** 用户植物当前身份状态原值。 */
+  readonly current_identity_status: string
+  /** 乐观锁版本的十进制文本。 */
+  readonly version: string
+  /** 创建时间 UTC 毫秒的十进制文本。 */
+  readonly created_at_ms: string
+  /** 更新时间 UTC 毫秒的十进制文本。 */
+  readonly updated_at_ms: string
+  /** 只有确认身份时才允许返回的已发布植物身份公开引用；无确认身份时必须为空。 */
+  readonly confirmed_identity_ref: string | null
+}
+
 /** 用户植物 Repository 的全部受控 SQL 行联合类型。 */
 export type UserPlantSqlRow =
   | UserPlantUserSqlRow
   | UserPlantCountSqlRow
   | UserPlantCreateProjectionSqlRow
+  | UserPlantReadProjectionSqlRow
 
 /** 用户植物 Repository 使用的参数化 SQL 执行端口。 */
 export type UserPlantSqlExecutor<TTransaction extends TransactionExecutionContext> = {
@@ -116,7 +140,7 @@ export type InsertUnidentifiedUserPlantInput = {
   readonly occurredAtMs: number
 }
 
-/** MySQL 用户植物 Repository 的最小创建切片端口。 */
+/** MySQL 用户植物 Repository 的创建和单株读取端口。 */
 export type MysqlUserPlantRepository<TTransaction extends TransactionExecutionContext> = {
   /** 锁定统一用户行后读取 active 数量，串行化同一用户的并发创建。 */
   readonly lockUserAndCountActive: (
@@ -134,6 +158,12 @@ export type MysqlUserPlantRepository<TTransaction extends TransactionExecutionCo
     userRef: UserRef,
     userPlantRef: UserPlantRef
   ) => Promise<CreateUserPlantResponseDto>
+  /** 以统一用户和公开植物引用执行归属查询，并遮蔽删除中或已删除资源。 */
+  readonly getOwnedUserPlant: (
+    transaction: TTransaction,
+    userRef: UserRef,
+    userPlantRef: UserPlantRef
+  ) => Promise<UserPlantDto>
 }
 
 /** 把数据库 BIGINT 文本验证为正整数，但不转换成可能丢精度的 JavaScript number。 */
@@ -153,6 +183,25 @@ function resolveSafeNonNegativeInteger(value: string, message: string): number {
     throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', message)
   }
   return parsed
+}
+
+/** 把数据库十进制文本验证为安全正整数。 */
+function resolveSafePositiveInteger(value: string, message: string): number {
+  const parsed = resolveSafeNonNegativeInteger(value, message)
+  if (parsed === zero) {
+    throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', message)
+  }
+  return parsed
+}
+
+/** 将数据库 UTC 毫秒严格转换为可表示的标准 ISO-8601 时间。 */
+function resolveUtcTimestamp(value: string, message: string): string {
+  const milliseconds = resolveSafeNonNegativeInteger(value, message)
+  const date = new Date(milliseconds)
+  if (Number.isNaN(date.getTime())) {
+    throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', message)
+  }
+  return date.toISOString()
 }
 
 /** 要求查询恰好返回一个指定判别类型的行。 */
@@ -284,5 +333,89 @@ export function createMysqlUserPlantRepository<TTransaction extends TransactionE
     }
   }
 
-  return { lockUserAndCountActive, insertUnidentifiedUserPlant, readCreateInitialProjection }
+  const getOwnedUserPlant = async (
+    transaction: TTransaction,
+    userRef: UserRef,
+    userPlantRef: UserPlantRef
+  ): Promise<UserPlantDto> => {
+    if (!userPublicRefFormat.test(userRef) || !userPlantPublicRefFormat.test(userPlantRef)) {
+      throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', '用户植物公开引用不合法')
+    }
+    const rows = await executor.executeQuery(
+      transaction,
+      `SELECT 'read-plant' AS \`kind\`, \`p\`.\`public_user_plant_id\`, \`p\`.\`lifecycle_status\`,
+              \`p\`.\`current_identity_status\`, CAST(\`p\`.\`version\` AS CHAR) AS \`version\`,
+              CAST(\`p\`.\`created_at_ms\` AS CHAR) AS \`created_at_ms\`,
+              CAST(\`p\`.\`updated_at_ms\` AS CHAR) AS \`updated_at_ms\`,
+              \`i\`.\`public_identity_ref\` AS \`confirmed_identity_ref\`
+       FROM \`user_plants\` AS \`p\`
+       JOIN \`users\` AS \`u\` ON \`u\`.\`id\` = \`p\`.\`user_internal_id\`
+       LEFT JOIN \`plant_identities\` AS \`i\` ON \`i\`.\`id\` = \`p\`.\`confirmed_identity_internal_id\`
+       WHERE \`u\`.\`public_user_id\` = ?
+         AND \`p\`.\`public_user_plant_id\` = ?
+         AND \`p\`.\`lifecycle_status\` IN ('active', 'archived')`,
+      [userRef, userPlantRef]
+    )
+    if (rows.length === zero) {
+      throw new UserPlantPersistenceError('USER_PLANT_NOT_FOUND', '用户植物不可见')
+    }
+    const row = readSingleRow(rows, 'read-plant', '用户植物读取投影不唯一或不完整')
+    if (row.public_user_plant_id !== userPlantRef) {
+      throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', '用户植物公开引用读回不一致')
+    }
+    if (row.lifecycle_status === 'deleting' || row.lifecycle_status === 'deleted') {
+      throw new UserPlantPersistenceError('USER_PLANT_NOT_FOUND', '用户植物不可见')
+    }
+    if (row.lifecycle_status !== 'active' && row.lifecycle_status !== 'archived') {
+      throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', '用户植物生命周期不合法')
+    }
+    const version = resolveSafePositiveInteger(row.version, '用户植物版本不合法')
+    const createdAtMs = resolveSafeNonNegativeInteger(row.created_at_ms, '用户植物创建时间不合法')
+    const updatedAtMs = resolveSafeNonNegativeInteger(row.updated_at_ms, '用户植物更新时间不合法')
+    if (updatedAtMs < createdAtMs) {
+      throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', '用户植物更新时间早于创建时间')
+    }
+    const createdAt = resolveUtcTimestamp(row.created_at_ms, '用户植物创建时间不合法')
+    const updatedAt = resolveUtcTimestamp(row.updated_at_ms, '用户植物更新时间不合法')
+
+    if (row.current_identity_status === 'confirmed') {
+      if (
+        row.confirmed_identity_ref === null ||
+        !plantIdentityPublicRefFormat.test(row.confirmed_identity_ref)
+      ) {
+        throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', '已确认植物身份引用不合法')
+      }
+      return {
+        user_plant_id: userPlantRef,
+        lifecycle: row.lifecycle_status,
+        identityStatus: 'confirmed',
+        confirmedIdentityRef: row.confirmed_identity_ref as PlantIdentityRef,
+        version,
+        createdAt,
+        updatedAt
+      }
+    }
+    if (
+      (row.current_identity_status !== 'unidentified' &&
+        row.current_identity_status !== 'candidate_pending') ||
+      row.confirmed_identity_ref !== null
+    ) {
+      throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', '用户植物身份投影不合法')
+    }
+    return {
+      user_plant_id: userPlantRef,
+      lifecycle: row.lifecycle_status,
+      identityStatus: row.current_identity_status,
+      version,
+      createdAt,
+      updatedAt
+    }
+  }
+
+  return {
+    lockUserAndCountActive,
+    insertUnidentifiedUserPlant,
+    readCreateInitialProjection,
+    getOwnedUserPlant
+  }
 }
