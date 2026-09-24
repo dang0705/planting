@@ -21,9 +21,12 @@ const nowMs = Number('1758376800000')
 const observedActualCostMicros = Number('9000')
 const observedPlatformCostMicros = Number('2600')
 const zero = Number('0')
+const six = Number('6')
 
 /** 构造已经进入待对账的预占及可观察事务依赖。 */
-function createDependencies(status: 'reserved' | 'pending_reconciliation' = 'pending_reconciliation') {
+function createDependencies(
+  status: 'reserved' | 'pending_reconciliation' | 'settled' | 'released' = 'pending_reconciliation'
+) {
   const callOrder: string[] = []
   const driver: DatabaseTransactionDriver<TestTransaction> = {
     beginTransaction: vi.fn(() => {
@@ -57,13 +60,27 @@ function createDependencies(status: 'reserved' | 'pending_reconciliation' = 'pen
         reservationInternalId: '91',
         reservationRef: 'aqr_subscription_001',
         estimatedAmount: 8,
-        settledAmount: null,
+        settledAmount: status === 'released' ? zero : status === 'settled' ? six : null,
         actualCostMicros:
-          status === 'pending_reconciliation' ? observedActualCostMicros : null,
+          status === 'pending_reconciliation'
+            ? observedActualCostMicros
+            : status === 'released'
+              ? zero
+              : status === 'settled'
+                ? observedActualCostMicros
+                : null,
         usageEvidenceRef:
-          status === 'pending_reconciliation' ? 'usage_bailian_observed_001' : null,
+          status === 'pending_reconciliation'
+            ? 'usage_bailian_observed_001'
+            : status === 'released'
+              ? 'billing_bailian_no_call_001'
+              : status === 'settled'
+                ? 'billing_bailian_final_001'
+                : null,
         platformAbsorbedCostMicros:
-          status === 'pending_reconciliation' ? observedPlatformCostMicros : zero,
+          status === 'pending_reconciliation' || status === 'settled'
+            ? observedPlatformCostMicros
+            : zero,
         status,
         reservationVersion: 2
       }
@@ -137,7 +154,7 @@ describe('AI 额度待对账最终裁决', () => {
     ).resolves.toEqual({
       kind: 'settled',
       reservationRef: 'aqr_subscription_001',
-      settledAmount: 6,
+      settledAmount: Number('6'),
       releasedAmount: 2,
       platformAbsorbedCostMicros: 2600
     })
@@ -187,6 +204,116 @@ describe('AI 额度待对账最终裁决', () => {
         platformAbsorbedCostMicros: 0
       })
     )
+  })
+
+  test('相同 release_no_call 最终证据重放已释放结果且不重写账本', async () => {
+    const dependencies = createDependencies('released')
+    const createLedgerRef = vi.fn(() => 'aql_should_not_be_generated')
+    const resolve = createResolvePendingAiQuotaUseCase({
+      ...dependencies,
+      createLedgerRef,
+      commitUnknownReadOnlyRepository: { read: async () => null }
+    })
+
+    await expect(
+      resolve({
+        userRef: 'usr_subscription_001' as UserRef,
+        reservationRef: 'aqr_subscription_001',
+        resolution: 'release_no_call',
+        actualCostMicros: 0,
+        finalEvidenceRef: 'billing_bailian_no_call_001',
+        platformAbsorbedCostMicros: 0,
+        occurredAtMs: nowMs
+      })
+    ).resolves.toEqual({
+      kind: 'replayed',
+      reservationRef: 'aqr_subscription_001',
+      status: 'released',
+      settledAmount: 0
+    })
+    expect(dependencies.settlementRepository.lockAllocations).not.toHaveBeenCalled()
+    expect(dependencies.settlementRepository.applySettlement).not.toHaveBeenCalled()
+    expect(createLedgerRef).not.toHaveBeenCalled()
+  })
+
+  test('已释放预占的最终证据不同则冲突且不重写账本', async () => {
+    const dependencies = createDependencies('released')
+    const createLedgerRef = vi.fn(() => 'aql_should_not_be_generated')
+    const resolve = createResolvePendingAiQuotaUseCase({
+      ...dependencies,
+      createLedgerRef,
+      commitUnknownReadOnlyRepository: { read: async () => null }
+    })
+
+    await expect(
+      resolve({
+        userRef: 'usr_subscription_001' as UserRef,
+        reservationRef: 'aqr_subscription_001',
+        resolution: 'release_no_call',
+        actualCostMicros: 0,
+        finalEvidenceRef: 'billing_bailian_no_call_other_001',
+        platformAbsorbedCostMicros: 0,
+        occurredAtMs: nowMs
+      })
+    ).rejects.toMatchObject({ type: 'SETTLEMENT_CONFLICT' })
+    expect(dependencies.settlementRepository.lockAllocations).not.toHaveBeenCalled()
+    expect(dependencies.settlementRepository.applySettlement).not.toHaveBeenCalled()
+    expect(createLedgerRef).not.toHaveBeenCalled()
+  })
+
+  test('已结算待对账预占只按相同金额和最终证据重放', async () => {
+    const dependencies = createDependencies('settled')
+    const resolve = createResolvePendingAiQuotaUseCase({
+      ...dependencies,
+      createLedgerRef: vi.fn(() => 'aql_should_not_be_generated'),
+      commitUnknownReadOnlyRepository: { read: async () => null }
+    })
+
+    await expect(
+      resolve({
+        userRef: 'usr_subscription_001' as UserRef,
+        reservationRef: 'aqr_subscription_001',
+        resolution: 'settle_final_evidence',
+        settledAmount: 6,
+        actualCostMicros: observedActualCostMicros,
+        finalEvidenceRef: 'billing_bailian_final_001',
+        platformAbsorbedCostMicros: observedPlatformCostMicros,
+        occurredAtMs: nowMs
+      })
+    ).resolves.toEqual({
+      kind: 'replayed',
+      reservationRef: 'aqr_subscription_001',
+      status: 'settled',
+      settledAmount: 6
+    })
+    expect(dependencies.settlementRepository.lockAllocations).not.toHaveBeenCalled()
+    expect(dependencies.settlementRepository.applySettlement).not.toHaveBeenCalled()
+  })
+
+  test('已结算待对账预占的结算金额不同则冲突且不重写账本', async () => {
+    const dependencies = createDependencies('settled')
+    const createLedgerRef = vi.fn(() => 'aql_should_not_be_generated')
+    const resolve = createResolvePendingAiQuotaUseCase({
+      ...dependencies,
+      createLedgerRef,
+      commitUnknownReadOnlyRepository: { read: async () => null }
+    })
+
+    await expect(
+      resolve({
+        userRef: 'usr_subscription_001' as UserRef,
+        reservationRef: 'aqr_subscription_001',
+        resolution: 'settle_final_evidence',
+        settledAmount: 5,
+        actualCostMicros: observedActualCostMicros,
+        finalEvidenceRef: 'billing_bailian_final_001',
+        platformAbsorbedCostMicros: observedPlatformCostMicros,
+        occurredAtMs: nowMs
+      })
+    ).rejects.toMatchObject({ type: 'SETTLEMENT_CONFLICT' })
+    expect(dependencies.settlementRepository.lockAllocations).not.toHaveBeenCalled()
+    expect(dependencies.settlementRepository.applySettlement).not.toHaveBeenCalled()
+    expect(createLedgerRef).not.toHaveBeenCalled()
   })
 
   test('普通 reserved 预占不得绕过首次结算流程调用最终裁决', async () => {

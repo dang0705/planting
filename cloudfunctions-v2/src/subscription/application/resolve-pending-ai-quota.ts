@@ -7,7 +7,10 @@ import {
 } from '../../foundation/database/transaction-runner.js'
 import { planAiQuotaSettlement } from '../domain/plan-ai-quota-settlement.js'
 import type { MysqlAiQuotaReservationRepository } from '../repository/mysql-ai-quota-reservation-repository.js'
-import type { MysqlAiQuotaSettlementRepository } from '../repository/mysql-ai-quota-settlement-repository.js'
+import type {
+  LockedAiQuotaSettlementReservation,
+  MysqlAiQuotaSettlementRepository
+} from '../repository/mysql-ai-quota-settlement-repository.js'
 import { AiQuotaSettlementPersistenceError } from '../repository/mysql-ai-quota-settlement-repository.js'
 import {
   reconcileAiQuotaSettlementCommitResult,
@@ -84,9 +87,7 @@ export type ResolvePendingAiQuotaResult =
   | ReplayedPendingAiQuotaResolutionResult
 
 /** 待对账最终裁决所需的事务、Repository 和引用生成端口。 */
-export type ResolvePendingAiQuotaDependencies<
-  TTransaction extends TransactionExecutionContext
-> = {
+export type ResolvePendingAiQuotaDependencies<TTransaction extends TransactionExecutionContext> = {
   /** 管理唯一数据库事务生命周期。 */
   readonly driver: DatabaseTransactionDriver<TTransaction>
   /** 锁定统一用户额度账户。 */
@@ -124,6 +125,29 @@ function verifyResolutionCommand(command: ResolvePendingAiQuotaCommand): void {
   }
 }
 
+/** 仅精确匹配已完成的最终证据才可重放；pending 仍未裁决，不得当作成功终态。 */
+function isTerminalReplay(
+  reservation: LockedAiQuotaSettlementReservation,
+  command: ResolvePendingAiQuotaCommand
+): boolean {
+  if (command.resolution === 'release_no_call') {
+    return (
+      reservation.status === 'released' &&
+      reservation.settledAmount === zero &&
+      reservation.actualCostMicros === zero &&
+      reservation.usageEvidenceRef === command.finalEvidenceRef &&
+      reservation.platformAbsorbedCostMicros === zero
+    )
+  }
+  return (
+    reservation.status === 'settled' &&
+    reservation.settledAmount === command.settledAmount &&
+    reservation.actualCostMicros === command.actualCostMicros &&
+    reservation.usageEvidenceRef === command.finalEvidenceRef &&
+    reservation.platformAbsorbedCostMicros === command.platformAbsorbedCostMicros
+  )
+}
+
 /** 创建待对账额度的最终证据裁决用例。 */
 export function createResolvePendingAiQuotaUseCase<
   TTransaction extends TransactionExecutionContext
@@ -144,10 +168,24 @@ export function createResolvePendingAiQuotaUseCase<
           reservationRef: command.reservationRef
         })
         if (reservation.status !== 'pending_reconciliation') {
-          throw new AiQuotaSettlementPersistenceError(
-            'SETTLEMENT_CONFLICT',
-            '额度预占不处于待对账状态'
-          )
+          if (reservation.status !== 'settled' && reservation.status !== 'released') {
+            throw new AiQuotaSettlementPersistenceError(
+              'SETTLEMENT_CONFLICT',
+              '额度预占不处于待对账状态'
+            )
+          }
+          if (!isTerminalReplay(reservation, command)) {
+            throw new AiQuotaSettlementPersistenceError(
+              'SETTLEMENT_CONFLICT',
+              '额度预占终态证据冲突'
+            )
+          }
+          return {
+            kind: 'replayed',
+            reservationRef: reservation.reservationRef,
+            status: reservation.status,
+            settledAmount: reservation.settledAmount
+          }
         }
         const allocations = await dependencies.settlementRepository.lockAllocations(transaction, {
           userInternalId: account.userInternalId,
