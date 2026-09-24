@@ -4,7 +4,11 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import test from 'node:test'
 
-import { mergeClickUpTaskStatuses } from './clickup-status-sync.mjs'
+import {
+  applyVerifiedClickUpSnapshot,
+  mergeClickUpTaskStatuses,
+  validateClickUpTaskSnapshot
+} from './clickup-status-sync.mjs'
 import { selectClickUpKeeperHeartbeat } from './sync-heartbeats.mjs'
 
 const EXPECTED_TICKET_COUNT = 28
@@ -18,6 +22,12 @@ const knownTicketIds = new Set(
   moduleStatus.modules.flatMap(module => module.tickets.map(ticket => ticket.id))
 )
 const existingStatuses = moduleStatus.clickUpTaskStatuses
+const completeTicketDetails = Object.fromEntries(
+  moduleStatus.modules.flatMap(module => module.tickets.map(ticket => [
+    ticket.id,
+    { title: ticket.title, url: ticket.url }
+  ]))
+)
 
 test('prefers the current keeper agent over the legacy agent, independent of heartbeat file name', () => {
   const currentHeartbeat = { ...keeperHeartbeat, agent: 'clickup_status_keeper_gpt6' }
@@ -67,4 +77,76 @@ test('does not overwrite known mappings or add unknown tickets from invalid/unre
 
   assert.deepEqual(mergedStatuses, existingStatuses)
   assert.equal(Object.keys(mergedStatuses).length, EXPECTED_TICKET_COUNT)
+})
+
+test('rejects partial, extra and invalid ClickUp readbacks before advancing freshness', () => {
+  const complete = Object.fromEntries([...knownTicketIds].map(id => [id, 'backlog']))
+  assert.deepEqual(validateClickUpTaskSnapshot(complete, knownTicketIds), { valid: true })
+
+  const [knownTicketId] = knownTicketIds
+  const partial = { ...complete }
+  delete partial[knownTicketId]
+  assert.equal(validateClickUpTaskSnapshot(partial, knownTicketIds).valid, false)
+  assert.equal(
+    validateClickUpTaskSnapshot({ ...complete, unknown_ticket: 'done' }, knownTicketIds).valid,
+    false
+  )
+  assert.equal(
+    validateClickUpTaskSnapshot({ ...complete, [knownTicketId]: 'CLICKUP_BLOCKED' }, knownTicketIds).valid,
+    false
+  )
+})
+
+test('incomplete readback preserves the last verified time and statuses', () => {
+  const [knownTicketId] = knownTicketIds
+  const next = applyVerifiedClickUpSnapshot(
+    { clickUpTaskStatuses: existingStatuses, clickUpLastSyncedAt: '2026-09-24T00:00:00Z' },
+    { checkedAt: '2026-09-24T01:00:00Z', ticketStatuses: { [knownTicketId]: 'done' } },
+    knownTicketIds
+  )
+  assert.deepEqual(next.clickUpTaskStatuses, existingStatuses)
+  assert.equal(next.clickUpLastSyncedAt, '2026-09-24T00:00:00Z')
+  assert.match(next.clickUpSyncError, /数量不一致/u)
+})
+
+test('complete readback replaces the full status map and advances freshness once', () => {
+  const complete = Object.fromEntries([...knownTicketIds].map(id => [id, 'ready for codex']))
+  const next = applyVerifiedClickUpSnapshot(
+    { clickUpTaskStatuses: existingStatuses, clickUpLastSyncedAt: '2026-09-24T00:00:00Z' },
+    { checkedAt: '2026-09-24T01:00:00Z', ticketStatuses: complete,
+      ticketDetails: completeTicketDetails },
+    knownTicketIds
+  )
+  assert.deepEqual(next.clickUpTaskStatuses, complete)
+  assert.equal(next.clickUpLastSyncedAt, '2026-09-24T01:00:00Z')
+  assert.equal(next.clickUpSyncError, undefined)
+})
+
+test('new remote readback requires all titles and task links before freshness advances', () => {
+  const complete = Object.fromEntries([...knownTicketIds].map(id => [id, 'backlog']))
+  const snapshot = { ...moduleStatus, clickUpLastSyncedAt: '2026-09-24T00:00:00Z' }
+  const missingDetails = applyVerifiedClickUpSnapshot(snapshot, {
+    checkedAt: '2026-09-24T01:00:00Z', ticketStatuses: complete
+  }, knownTicketIds)
+  assert.equal(missingDetails.clickUpLastSyncedAt, snapshot.clickUpLastSyncedAt)
+  assert.match(missingDetails.clickUpSyncError, /任务名称与链接/u)
+
+  const [firstId] = knownTicketIds
+  const renamed = applyVerifiedClickUpSnapshot(snapshot, {
+    checkedAt: '2026-09-24T01:00:00Z', ticketStatuses: complete,
+    ticketDetails: {
+      ...completeTicketDetails,
+      [firstId]: { title: '远端已核实的新名称', url: `https://app.clickup.com/t/${firstId}` }
+    }
+  }, knownTicketIds)
+  assert.equal(renamed.clickUpLastSyncedAt, '2026-09-24T01:00:00Z')
+  const renamedTicket = renamed.modules.flatMap(module => module.tickets).find(ticket => ticket.id === firstId)
+  assert.equal(renamedTicket.title, '远端已核实的新名称')
+})
+
+test('H5 labels local progress and does not disguise missing remote status as Backlog', () => {
+  const html = fs.readFileSync(path.join(trackerDirectory, 'index.html'), 'utf8')
+  assert.match(html, /本地任务进度/u)
+  assert.match(html, /未核实/u)
+  assert.doesNotMatch(html, /clickUpTaskStatuses\?\.\[ticket\.id\] \|\| 'Backlog'/u)
 })

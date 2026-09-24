@@ -63,6 +63,6 @@ assert.deepEqual(
 // 页面必须为每个独立 ClickUp ticket 渲染可访问的进度条，而不只显示文字百分比。
 const trackerHtml = fs.readFileSync('docs/backend-v2/tracker/index.html', 'utf8')
 assert.match(trackerHtml, /class="ticket-progress-bar"/)
-assert.match(trackerHtml, /aria-label="任务完成进度：\$\{escapeHtml\(ticket\.title\)\}"/)
+assert.match(trackerHtml, /aria-label="本地任务进度：\$\{escapeHtml\(ticket\.title\)\}"/)
 
 process.stdout.write('backend-v2 tracker progress: passed\n')

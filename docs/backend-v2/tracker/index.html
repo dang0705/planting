@@ -67,10 +67,10 @@
       const data = await response.json();
       const agents = new Map((data.agentRegistry || []).map((agent) => [agent.name, agent]));
       const snapshotTime = data.generatedAt || '未知';
-      document.querySelector('#notice').textContent = `追踪表负责人：${data.trackerOwner || '主代理 /root'}；ClickUp 远端上次确认：${data.clickUpLastSyncedAt || '未核实'}（此后状态不保证实时）；本地代理快照：${snapshotTime}；页面每 30 分钟自动刷新`;
+      document.querySelector('#notice').textContent = `追踪表负责人：${data.trackerOwner || '主代理 /root'}；ClickUp 远端上次确认：${data.clickUpLastSyncedAt || '未核实'}（此后状态不保证实时）${data.clickUpSyncError ? `；同步异常：${data.clickUpSyncError}` : ''}；本地代理快照：${snapshotTime}；页面每 30 分钟自动刷新`;
       const overall = data.overallProgress || { progress: 0, reported: 0, total: 0 };
       document.querySelector('#overall').innerHTML = `
-        <strong>总体完成度：${overall.progress}%</strong>
+        <strong>总体本地任务进度：${overall.progress}%</strong>
         <div class="bar" aria-label="总体完成进度"><div class="fill" style="width:${overall.progress}%"></div></div>
         <div class="meta">全部任务：${overall.total}；已上报：${overall.reported}；未开始或未上报按 0% 计入；未上报的 0% 为统计规则，非 owner 上报</div>
       `;
@@ -82,7 +82,7 @@
           const agent = ticket.agent ? agents.get(ticket.agent) : null;
           const agentLabel = ticket.agent || `未分配（计划角色：${ticket.plannedAgent || '未指定'}）`;
           const agentIsCurrent = !ticket.agent || Boolean(agent);
-          const clickUpStatus = data.clickUpTaskStatuses?.[ticket.id] || 'Backlog';
+          const clickUpStatus = data.clickUpTaskStatuses?.[ticket.id] ?? '未核实';
           return {
             ...ticket,
             title: ticket.title || '未命名任务',
@@ -117,7 +117,7 @@
             const ticketProgress = normalizeProgress(ticket.progress);
             return `<div class="ticket">
               <div class="ticket-heading"><a href="${escapeHtml(ticket.url)}" target="_blank" rel="noreferrer">${escapeHtml(ticket.title)}</a><strong>${progressLabel(ticket.progress)}</strong></div>
-              <div class="ticket-progress-bar" role="progressbar" aria-label="任务完成进度：${escapeHtml(ticket.title)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${ticketProgress}"><div class="ticket-progress-fill" style="width:${ticketProgress}%"></div></div>
+              <div class="ticket-progress-bar" role="progressbar" aria-label="本地任务进度：${escapeHtml(ticket.title)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${ticketProgress}"><div class="ticket-progress-fill" style="width:${ticketProgress}%"></div></div>
               <div class="meta ${ticket.agentIsCurrent ? '' : 'agent-missing'}">ClickUp（上次远端回读）：${escapeHtml(ticket.clickUpStatus)} · 本地：${escapeHtml(ticket.status)} · ${escapeHtml(ticket.agentLabel)} · ${escapeHtml(ticket.agentState)}</div>
             </div>`;
           }).join('')}

@@ -8,7 +8,7 @@ import {
   summarizeModulesProgress,
   summarizeTicketProgress
 } from './progress.mjs';
-import { mergeClickUpTaskStatuses } from './clickup-status-sync.mjs';
+import { applyVerifiedClickUpSnapshot } from './clickup-status-sync.mjs';
 
 const trackerDirectory = path.dirname(fileURLToPath(import.meta.url));
 const SCRIPT_PATH_ARGUMENT_INDEX = 1;
@@ -53,13 +53,10 @@ const knownTicketIds = new Set(
   (status.modules ?? []).flatMap((module) => (module.tickets ?? []).map((ticket) => ticket.id))
 );
 const clickUpKeeperHeartbeat = selectClickUpKeeperHeartbeat(heartbeats);
-status.clickUpTaskStatuses = mergeClickUpTaskStatuses(
-  status.clickUpTaskStatuses,
-  clickUpKeeperHeartbeat,
-  knownTicketIds
-);
-if (clickUpKeeperHeartbeat?.checkedAt) {
-  status.clickUpLastSyncedAt = clickUpKeeperHeartbeat.checkedAt;
+const verifiedClickUpSnapshot = applyVerifiedClickUpSnapshot(status, clickUpKeeperHeartbeat, knownTicketIds);
+Object.assign(status, verifiedClickUpSnapshot);
+if (!Object.hasOwn(verifiedClickUpSnapshot, 'clickUpSyncError')) {
+  delete status.clickUpSyncError;
 }
 
 function hasProgress(value) {
