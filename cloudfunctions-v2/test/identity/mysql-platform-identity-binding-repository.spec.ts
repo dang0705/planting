@@ -18,7 +18,10 @@ const transaction: TestTransaction = { transactionContext: true, ref: 'tx_identi
 const occurredAtMs = Date.parse('2026-09-20T05:00:00.000Z')
 
 /** 构造可观察 SQL 执行器。 */
-function createExecutor(rows: readonly (readonly PlatformIdentitySqlRow[])[]) {
+function createExecutor(
+  rows: readonly (readonly PlatformIdentitySqlRow[])[],
+  writeFailure?: unknown
+) {
   let queryIndex = Number('0')
   const calls: Array<{
     readonly kind: 'query' | 'write'
@@ -34,6 +37,9 @@ function createExecutor(rows: readonly (readonly PlatformIdentitySqlRow[])[]) {
     }),
     executeWrite: vi.fn(async (_transaction, sql: string, parameters: readonly unknown[]) => {
       calls.push({ kind: 'write' as const, sql, parameters })
+      if (writeFailure !== undefined) {
+        throw writeFailure
+      }
       return { affectedRows: Number('1') }
     })
   }
@@ -75,6 +81,7 @@ describe('平台身份绑定 MySQL Repository', () => {
     expect(testDouble.calls.map(call => call.kind)).toEqual(['query', 'query', 'query', 'write'])
     expect(testDouble.calls[Number('0')]?.sql).toContain('FROM `users`')
     expect(testDouble.calls[Number('1')]?.sql).toContain('`platform_subject_hash` = ?')
+    expect(testDouble.calls[Number('1')]?.sql).not.toContain('FOR UPDATE')
     expect(testDouble.calls[Number('2')]?.sql).toContain('`active_slot` = 1')
     expect(testDouble.calls[Number('3')]?.sql).toContain('INSERT INTO `platform_identities`')
   })
@@ -93,10 +100,12 @@ describe('平台身份绑定 MySQL Repository', () => {
     const restoreDouble = createExecutor([
       [{ kind: 'user', user_internal_id: '11', session_version: '3' }],
       [revokedRow],
+      [revokedRow],
       []
     ])
     const replayDouble = createExecutor([
       [{ kind: 'user', user_internal_id: '11', session_version: '3' }],
+      [{ ...revokedRow, binding_status: 'active' as const }],
       [{ ...revokedRow, binding_status: 'active' as const }],
       [{ ...revokedRow, binding_status: 'active' as const }]
     ])
@@ -107,6 +116,7 @@ describe('平台身份绑定 MySQL Repository', () => {
         bindInput
       )
     ).resolves.toMatchObject({ kind: 'restored' })
+    expect(restoreDouble.calls[Number('2')]?.sql).toContain('WHERE `id` = ? FOR UPDATE')
     expect(restoreDouble.calls.at(Number('-1'))?.sql).toContain("`binding_status` = 'active'")
     await expect(
       createMysqlPlatformIdentityBindingRepository(replayDouble.executor).bindOrRestore(
@@ -114,7 +124,7 @@ describe('平台身份绑定 MySQL Repository', () => {
         bindInput
       )
     ).resolves.toMatchObject({ kind: 'replayed' })
-    expect(replayDouble.calls).toHaveLength(Number('3'))
+    expect(replayDouble.calls).toHaveLength(Number('4'))
   })
 
   test('主体属于其他用户或 active 槽位已有另一主体时拒绝静默转绑', async () => {
@@ -131,6 +141,7 @@ describe('平台身份绑定 MySQL Repository', () => {
     const ownedSlot = { ...otherBinding, binding_internal_id: '23', owner_internal_id: '11' }
     const crossUser = createExecutor([
       [{ kind: 'user', user_internal_id: '11', session_version: '3' }],
+      [otherBinding],
       [otherBinding]
     ])
     const slotConflict = createExecutor([
@@ -151,6 +162,34 @@ describe('平台身份绑定 MySQL Repository', () => {
         bindInput
       )
     ).rejects.toMatchObject({ type: 'IDENTITY_BINDING_CONFLICT' })
+  })
+
+  test('只把 MySQL 唯一键冲突转换为绑定冲突，不把死锁伪装成 409', async () => {
+    const userRow = { kind: 'user' as const, user_internal_id: '11', session_version: '3' }
+    const emptySubjectRows = [[userRow], [], []] as const
+    const duplicateError = Object.assign(new Error('duplicate key'), {
+      code: 'ER_DUP_ENTRY',
+      errno: 1062
+    })
+    const deadlockError = Object.assign(new Error('deadlock'), {
+      code: 'ER_LOCK_DEADLOCK',
+      errno: 1213
+    })
+    const duplicateExecutor = createExecutor(emptySubjectRows, duplicateError)
+    const deadlockExecutor = createExecutor(emptySubjectRows, deadlockError)
+
+    await expect(
+      createMysqlPlatformIdentityBindingRepository(duplicateExecutor.executor).bindOrRestore(
+        transaction,
+        bindInput
+      )
+    ).rejects.toMatchObject({ type: 'IDENTITY_BINDING_CONFLICT' })
+    await expect(
+      createMysqlPlatformIdentityBindingRepository(deadlockExecutor.executor).bindOrRestore(
+        transaction,
+        bindInput
+      )
+    ).rejects.toBe(deadlockError)
   })
 
   test('解绑拒绝删除最后入口，否则原子撤销绑定、递增版本并失效全部会话', async () => {

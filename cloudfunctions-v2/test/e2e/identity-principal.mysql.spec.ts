@@ -47,6 +47,14 @@ type MysqlIdentityTransaction = TransactionExecutionContext & {
   readonly connection: PoolConnection
 }
 
+/** 仅供本文件核验真实 Repository 实际执行到的 SQL 边界。 */
+type IdentitySqlTrace = {
+  /** 查询或写入种类，不包含 SQL 参数或身份材料。 */
+  readonly kind: 'query' | 'write'
+  /** Repository 实际交给 MySQL 的参数化 SQL。 */
+  readonly sql: string
+}
+
 /** 执行一次性 MySQL 容器命令并保留可诊断错误。 */
 function runDocker(args: readonly string[], input?: string): string {
   const result = spawnSync('docker', [...args], {
@@ -139,7 +147,9 @@ function createTransactionDriver(): DatabaseTransactionDriver<MysqlIdentityTrans
 }
 
 /** 把事务连接适配为平台身份绑定 Repository 的参数化 SQL 端口。 */
-function createBindingExecutor(): PlatformIdentitySqlExecutor<MysqlIdentityTransaction> {
+function createBindingExecutor(
+  trace?: IdentitySqlTrace[]
+): PlatformIdentitySqlExecutor<MysqlIdentityTransaction> {
   const resolveParameters = (parameters: readonly unknown[]): (string | number | null)[] =>
     parameters.map(parameter => {
       if (parameter === null || typeof parameter === 'string' || typeof parameter === 'number') {
@@ -149,6 +159,7 @@ function createBindingExecutor(): PlatformIdentitySqlExecutor<MysqlIdentityTrans
     })
   return {
     executeQuery: async (transaction, sql, parameters) => {
+      trace?.push({ kind: 'query', sql })
       const [rows] = await transaction.connection.execute<RowDataPacket[]>(
         sql,
         resolveParameters(parameters)
@@ -156,12 +167,39 @@ function createBindingExecutor(): PlatformIdentitySqlExecutor<MysqlIdentityTrans
       return rows as unknown as readonly PlatformIdentitySqlRow[]
     },
     executeWrite: async (transaction, sql, parameters) => {
+      trace?.push({ kind: 'write', sql })
       const [result] = await transaction.connection.execute<ResultSetHeader>(
         sql,
         resolveParameters(parameters)
       )
       return { affectedRows: result.affectedRows }
     }
+  }
+}
+
+/** 在两个独立事务都读到缺失的同一主体后再放行，稳定重现唯一键竞争窗口。 */
+function createContendedBindingExecutor(): PlatformIdentitySqlExecutor<MysqlIdentityTransaction> {
+  const baseExecutor = createBindingExecutor()
+  let missingSubjectReads = Number('0')
+  let releaseContenders: (() => void) | undefined
+  const bothTransactionsReadMissingSubject = new Promise<void>(resolve => {
+    releaseContenders = resolve
+  })
+
+  return {
+    executeQuery: async (transaction, sql, parameters) => {
+      const rows = await baseExecutor.executeQuery(transaction, sql, parameters)
+      const isSubjectLookup = sql.includes('`platform_subject_hash` = ?')
+      if (isSubjectLookup && rows.length === Number('0')) {
+        missingSubjectReads += Number('1')
+        if (missingSubjectReads === Number('2')) {
+          releaseContenders?.()
+        }
+        await bothTransactionsReadMissingSubject
+      }
+      return rows
+    },
+    executeWrite: baseExecutor.executeWrite
   }
 }
 
@@ -241,6 +279,12 @@ describe('统一用户 Principal 真实 MySQL 解析', () => {
       `INSERT INTO users
        (public_user_id, status, session_version, created_at_ms, updated_at_ms)
        VALUES ('usr_identity_binding_mysql', 'active', 1, ?, ?)`,
+      [issuedAtMs - Number('1000'), issuedAtMs - Number('1000')]
+    )
+    await pool.execute(
+      `INSERT INTO users
+       (public_user_id, status, session_version, created_at_ms, updated_at_ms)
+       VALUES ('usr_identity_race_002', 'active', 1, ?, ?)`,
       [issuedAtMs - Number('1000'), issuedAtMs - Number('1000')]
     )
     for (const [platform, hash] of [
@@ -324,7 +368,8 @@ describe('统一用户 Principal 真实 MySQL 解析', () => {
   })
 
   test('真实事务创建第三个平台绑定并在解绑时递增版本、撤销全部会话', async () => {
-    const repository = createMysqlPlatformIdentityBindingRepository(createBindingExecutor())
+    const trace: IdentitySqlTrace[] = []
+    const repository = createMysqlPlatformIdentityBindingRepository(createBindingExecutor(trace))
     const driver = createTransactionDriver()
     await expect(
       runDatabaseTransaction(driver, transaction =>
@@ -339,6 +384,14 @@ describe('统一用户 Principal 真实 MySQL 解析', () => {
         })
       )
     ).resolves.toMatchObject({ kind: 'created', platform: 'xiaohongshu' })
+    expect(
+      trace.some(
+        call =>
+          call.kind === 'query' &&
+          call.sql.includes('`platform_subject_hash` = ?') &&
+          !call.sql.includes('FOR UPDATE')
+      )
+    ).toBe(true)
     await expect(
       runDatabaseTransaction(driver, transaction =>
         repository.revoke(transaction, {
@@ -353,6 +406,14 @@ describe('统一用户 Principal 真实 MySQL 解析', () => {
       appScope: 'qhz-main',
       nextSessionVersion: 2
     })
+    expect(
+      trace.some(
+        call =>
+          call.kind === 'query' &&
+          call.sql.includes('WHERE `user_internal_id` = ?') &&
+          call.sql.includes('ORDER BY `id` FOR UPDATE')
+      )
+    ).toBe(true)
     const [rows] = await pool.query<RowDataPacket[]>(`
       SELECT
         (SELECT session_version FROM users
@@ -378,6 +439,34 @@ describe('统一用户 Principal 真实 MySQL 解析', () => {
     ])
   })
 
+  test('已有主体重放前仍按主键锁定绑定行', async () => {
+    const trace: IdentitySqlTrace[] = []
+    const repository = createMysqlPlatformIdentityBindingRepository(createBindingExecutor(trace))
+
+    await expect(
+      runDatabaseTransaction(createTransactionDriver(), transaction =>
+        repository.bindOrRestore(transaction, {
+          userRef: 'usr_identity_mysql_001' as UserRef,
+          platform: 'wechat',
+          appScope: 'wx-app-qhz',
+          platformSubjectHash,
+          subjectHashKeyVersion,
+          platformSubjectCiphertext: null,
+          occurredAtMs: nowMs
+        })
+      )
+    ).resolves.toMatchObject({ kind: 'replayed' })
+
+    expect(
+      trace.some(
+        call =>
+          call.kind === 'query' &&
+          call.sql.includes('FROM `platform_identities`') &&
+          call.sql.includes('WHERE `id` = ? FOR UPDATE')
+      )
+    ).toBe(true)
+  })
+
   test('真实事务拒绝删除最后一个 active 登录入口且不改变版本', async () => {
     const repository = createMysqlPlatformIdentityBindingRepository(createBindingExecutor())
     await expect(
@@ -394,5 +483,59 @@ describe('统一用户 Principal 真实 MySQL 解析', () => {
       `SELECT session_version FROM users WHERE public_user_id = 'usr_identity_mysql_001'`
     )
     expect(rows).toEqual([{ session_version: 3 }])
+  })
+
+  /**
+   * Expected 来源：P2 统一身份 Principal 票据与 `principal-capability/v1` 的主体唯一归属和 409 冲突合同。
+   * 测试层次：L3 / `unit_real_data`；经过真实 Repository、双 MySQL 事务、唯一索引和读回。
+   * 替换边界：只使用本地 MySQL 8.4 代替 CloudBase MySQL；Provider 已验证摘要作为测试制品。
+   * 明确未覆盖：真实平台凭证、HTTP 公开错误封套、CloudBase 网络与部署。
+   */
+  test('不同用户并发绑定同一平台主体时只允许一个归属并把竞争者明确拒绝', async () => {
+    const repository = createMysqlPlatformIdentityBindingRepository(
+      createContendedBindingExecutor()
+    )
+    const driver = createTransactionDriver()
+    const contestedSubjectHash = '8'.repeat(Number('64'))
+    const contestedAppScope = 'identity-race-app'
+    const bind = (userRef: UserRef, occurredAtMs: number) =>
+      runDatabaseTransaction(driver, transaction =>
+        repository.bindOrRestore(transaction, {
+          userRef,
+          platform: 'xiaohongshu',
+          appScope: contestedAppScope,
+          platformSubjectHash: contestedSubjectHash,
+          subjectHashKeyVersion,
+          platformSubjectCiphertext: null,
+          occurredAtMs
+        })
+      )
+
+    const outcomes = await Promise.allSettled([
+      bind('usr_identity_binding_mysql' as UserRef, nowMs),
+      bind('usr_identity_race_002' as UserRef, nowMs + Number('1'))
+    ])
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT COUNT(*) AS binding_count,
+              COUNT(DISTINCT user_internal_id) AS owner_count
+       FROM platform_identities
+       WHERE platform = 'xiaohongshu' AND app_scope = ?
+         AND platform_subject_hash = ? AND binding_status = 'active'`,
+      [contestedAppScope, contestedSubjectHash]
+    )
+    const fulfilled = outcomes.filter(outcome => outcome.status === 'fulfilled')
+    const rejected = outcomes.filter(outcome => outcome.status === 'rejected')
+
+    expect(fulfilled).toHaveLength(Number('1'))
+    expect(fulfilled[Number('0')]).toMatchObject({
+      status: 'fulfilled',
+      value: { kind: 'created', platform: 'xiaohongshu', appScope: contestedAppScope }
+    })
+    expect(rejected).toHaveLength(Number('1'))
+    expect(rejected[Number('0')]).toMatchObject({
+      status: 'rejected',
+      reason: { type: 'IDENTITY_BINDING_CONFLICT' }
+    })
+    expect(rows).toEqual([{ binding_count: '1', owner_count: '1' }])
   })
 })

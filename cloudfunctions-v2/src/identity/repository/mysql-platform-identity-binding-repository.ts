@@ -264,6 +264,15 @@ function assertSingleWrite(result: PlatformIdentitySqlWriteResult, message: stri
   }
 }
 
+/** 识别 MySQL 唯一键拒绝；仅在身份绑定 INSERT 边界转换为稳定的业务冲突。 */
+function isMysqlUniqueConstraintViolation(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) {
+    return false
+  }
+  const mysqlError = error as { readonly code?: unknown; readonly errno?: unknown }
+  return mysqlError.code === 'ER_DUP_ENTRY' || mysqlError.errno === Number('1062')
+}
+
 /** 创建只访问 identity 用户、平台身份和会话表的 Repository。 */
 export function createMysqlPlatformIdentityBindingRepository<
   TTransaction extends TransactionExecutionContext
@@ -276,38 +285,75 @@ export function createMysqlPlatformIdentityBindingRepository<
   ): Promise<BindOrRestorePlatformIdentityResult> => {
     verifyBindInput(input)
     const user = await lockUser(executor, transaction, input.userRef)
-    const subjectRows = await executor.executeQuery(
+    // 先用普通一致性读探测主体；缺失唯一键上的 FOR UPDATE 可能在 InnoDB 下锁住间隙，
+    // 让并发创建互相等待甚至死锁。已有记录会在下方按主键重新读取并加行锁。
+    const observedSubjectRows = await executor.executeQuery(
       transaction,
       `SELECT 'binding' AS \`kind\`, CAST(\`id\` AS CHAR) AS \`binding_internal_id\`,
               CAST(\`user_internal_id\` AS CHAR) AS \`owner_internal_id\`, \`platform\`,
               \`app_scope\`, \`platform_subject_hash\`, \`subject_hash_key_version\`,
               \`binding_status\`
        FROM \`platform_identities\`
-       WHERE \`platform\` = ? AND \`app_scope\` = ? AND \`platform_subject_hash\` = ?
-       FOR UPDATE`,
+       WHERE \`platform\` = ? AND \`app_scope\` = ? AND \`platform_subject_hash\` = ?`,
       [input.platform, input.appScope, input.platformSubjectHash]
     )
-    if (subjectRows.length > one || subjectRows.some(row => row.kind !== 'binding')) {
+    if (
+      observedSubjectRows.length > one ||
+      observedSubjectRows.some(row => row.kind !== 'binding')
+    ) {
       throw new PlatformIdentityBindingPersistenceError(
         'INTERNAL_IDENTITY_DATA_INVALID',
         '平台主体唯一绑定记录损坏'
       )
     }
-    const subjectRow = subjectRows[zero] as PlatformIdentityBindingSqlRow | undefined
-    if (subjectRow !== undefined) {
-      verifyBindingRow(subjectRow)
+    const observedSubjectRow = observedSubjectRows[zero] as
+      | PlatformIdentityBindingSqlRow
+      | undefined
+    let subjectRow: PlatformIdentityBindingSqlRow | undefined
+    if (observedSubjectRow !== undefined) {
+      verifyBindingRow(observedSubjectRow)
+      // 只对已确认存在的记录按主键做当前读并锁行，保护重放、恢复与并发解绑的状态判断。
+      const lockedSubjectRows = await executor.executeQuery(
+        transaction,
+        `SELECT 'binding' AS \`kind\`, CAST(\`id\` AS CHAR) AS \`binding_internal_id\`,
+                CAST(\`user_internal_id\` AS CHAR) AS \`owner_internal_id\`, \`platform\`,
+                \`app_scope\`, \`platform_subject_hash\`, \`subject_hash_key_version\`,
+                \`binding_status\`
+         FROM \`platform_identities\`
+         WHERE \`id\` = ? FOR UPDATE`,
+        [observedSubjectRow.binding_internal_id]
+      )
+      if (lockedSubjectRows.length !== one || lockedSubjectRows[zero]?.kind !== 'binding') {
+        throw new PlatformIdentityBindingPersistenceError(
+          'INTERNAL_IDENTITY_DATA_INVALID',
+          '平台主体锁定行在事务中消失或损坏'
+        )
+      }
+      const lockedSubjectRow = verifyBindingRow(
+        lockedSubjectRows[zero] as PlatformIdentityBindingSqlRow
+      )
       if (
-        subjectRow.owner_internal_id !== user.userInternalId ||
-        subjectRow.platform !== input.platform ||
-        subjectRow.app_scope !== input.appScope ||
-        subjectRow.platform_subject_hash !== input.platformSubjectHash ||
-        subjectRow.binding_status === 'conflicted'
+        lockedSubjectRow.binding_internal_id !== observedSubjectRow.binding_internal_id ||
+        lockedSubjectRow.owner_internal_id !== observedSubjectRow.owner_internal_id ||
+        lockedSubjectRow.platform !== input.platform ||
+        lockedSubjectRow.app_scope !== input.appScope ||
+        lockedSubjectRow.platform_subject_hash !== input.platformSubjectHash
+      ) {
+        throw new PlatformIdentityBindingPersistenceError(
+          'INTERNAL_IDENTITY_DATA_INVALID',
+          '平台主体锁定行与查询主体不一致'
+        )
+      }
+      if (
+        lockedSubjectRow.owner_internal_id !== user.userInternalId ||
+        lockedSubjectRow.binding_status === 'conflicted'
       ) {
         throw new PlatformIdentityBindingPersistenceError(
           'IDENTITY_BINDING_CONFLICT',
           '平台主体已经绑定或处于冲突状态'
         )
       }
+      subjectRow = lockedSubjectRow
     }
     const slotRows = await executor.executeQuery(
       transaction,
@@ -364,8 +410,9 @@ export function createMysqlPlatformIdentityBindingRepository<
       )
       return { kind: 'restored', platform: input.platform, appScope: input.appScope }
     }
-    assertSingleWrite(
-      await executor.executeWrite(
+    let insertResult: PlatformIdentitySqlWriteResult
+    try {
+      insertResult = await executor.executeWrite(
         transaction,
         `INSERT INTO \`platform_identities\`
          (\`_openid\`, \`user_internal_id\`, \`platform\`, \`platform_subject_hash\`,
@@ -384,9 +431,18 @@ export function createMysqlPlatformIdentityBindingRepository<
           input.occurredAtMs,
           input.occurredAtMs
         ]
-      ),
-      '平台身份创建冲突'
-    )
+      )
+    } catch (error: unknown) {
+      // 仅将数据库明确报告的唯一键冲突映射为稳定业务冲突；死锁等错误须原样上抛并由事务层回滚。
+      if (isMysqlUniqueConstraintViolation(error)) {
+        throw new PlatformIdentityBindingPersistenceError(
+          'IDENTITY_BINDING_CONFLICT',
+          '平台主体或当前用户登录槽位已被其他绑定占用'
+        )
+      }
+      throw error
+    }
+    assertSingleWrite(insertResult, '平台身份创建冲突')
     return { kind: 'created', platform: input.platform, appScope: input.appScope }
   }
 
