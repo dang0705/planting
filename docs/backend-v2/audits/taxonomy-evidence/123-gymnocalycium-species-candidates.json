@@ -1,0 +1,183 @@
+{
+  "schemaVersion": "qinghuazhi.taxonomy-identity-evidence/v1",
+  "evidenceId": "p1-taxonomy-source-record-123-candidates",
+  "preparedOn": "2026-09-24",
+  "scope": {
+    "sourceRecordNumber": 123,
+    "candidateTaxa": [
+      {
+        "scientificName": "Gymnocalycium mihanovichii",
+        "rank": "species"
+      },
+      {
+        "scientificName": "Gymnocalycium stenopleurum",
+        "rank": "species"
+      }
+    ],
+    "classificationDecision": "SOURCE_CONFLICT_REQUIRES_OWNER_DECISION",
+    "canonicalDisplayNameZh": {
+      "status": "PENDING_OWNER_SELECTION"
+    },
+    "sourceIdentityMapped": false,
+    "mayEnterSeed": false,
+    "mayActivate": false
+  },
+  "recordHashMethod": "SHA-256 over the UTF-8 logical source record after physical CRLF/CR line endings are normalized to LF, followed by exactly one LF byte; whole-table and archive SHA-256 values separately lock original release bytes.",
+  "sources": {
+    "wcvp": {
+      "provider": "World Checklist of Vascular Plants (WCVP), facilitated by the Royal Botanic Gardens, Kew",
+      "datasetVersion": "16.0",
+      "publishedDate": "2026-06-04",
+      "downloadUrl": "https://sftp.kew.org/pub/data-repositories/WCVP/wcvp_dwca.zip",
+      "license": {
+        "name": "Creative Commons Attribution 3.0 Unported (CC BY 3.0)",
+        "url": "https://creativecommons.org/licenses/by/3.0/",
+        "source": "The official release EML metadata",
+        "requiredAttribution": "The World Checklist of Vascular Plants (WCVP) facilitated by the Royal Botanic Gardens, Kew. Published on the Internet; https://doi.org/10.34885/egs6-cp24. Retrieved 04 Jun 2026.",
+        "noticeZh": "仅保留分类身份所需的最小记录字段；保留上述署名和许可链接，不暗示 Kew 背书。"
+      },
+      "archive": {
+        "fileName": "wcvp_dwca.zip",
+        "sha256": "6ff1e084d7e1de5bce526a9952c96fbb0f13b4f2c615b0fc30c055f88bfb5483",
+        "requiredEntries": ["wcvp_taxon.csv", "eml.xml"]
+      },
+      "taxonTable": {
+        "entry": "wcvp_taxon.csv",
+        "sha256": "71d5662935deeb25aaff03e512fc2437d79984ed738e85f03da83afdd168d704"
+      },
+      "eml": {
+        "entry": "eml.xml",
+        "sha256": "aa6dc4c18d3cd127f477a041777357435b86fea6da7c342f301902cb994a6c85"
+      },
+      "records": [
+        {
+          "taxonId": "2835511",
+          "scientificName": "Gymnocalycium",
+          "rank": "Genus",
+          "status": "Accepted",
+          "acceptedTaxonId": "2835511",
+          "parentTaxonId": null,
+          "scientificNameId": "ipni:30001559-2",
+          "familyLabel": "Cactaceae",
+          "recordSha256": "b40378215a775f89a3fa4c7bec5bd7ce6bf78e3aa06a1d4622260d9b2e0e34aa"
+        },
+        {
+          "taxonId": "2835702",
+          "scientificName": "Gymnocalycium mihanovichii",
+          "rank": "Species",
+          "status": "Accepted",
+          "acceptedTaxonId": "2835702",
+          "parentTaxonId": "2835511",
+          "scientificNameId": "ipni:115434-2",
+          "familyLabel": "Cactaceae",
+          "recordSha256": "d19b89bf18ea6a8ff8d0aa39de0bf52f3d6d2d061f7f81ec82dab20d88a70455"
+        },
+        {
+          "taxonId": "2835856",
+          "scientificName": "Gymnocalycium stenopleurum",
+          "rank": "Species",
+          "status": "Accepted",
+          "acceptedTaxonId": "2835856",
+          "parentTaxonId": "2835511",
+          "scientificNameId": "ipni:115502-2",
+          "familyLabel": "Cactaceae",
+          "recordSha256": "e52f1e46609663ab239b534d0c4ec38dff85836805740c31d05437ffca35ae57"
+        }
+      ],
+      "lineageLimitsZh": "此 WCVP 发布表给出物种到属的 parentnameusageid，并在记录上给出 Cactaceae 科名；该表未提供科级稳定 taxon ID，故不伪造科级主键。"
+    },
+    "wfo": {
+      "provider": "World Flora Online Taxonomic Backbone",
+      "datasetVersion": "2026-06",
+      "zenodoRecordId": 20782718,
+      "releaseApiUrl": "https://zenodo.org/api/records/20782718",
+      "releaseMetadataSha256": "84a08ce713c073649deba8d155ef40b75600cb9ee2f13d2417ba019af1269662",
+      "license": {
+        "name": "CC0 1.0 Universal",
+        "licenseId": "cc-zero",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "termsUrl": "https://www.worldfloraonline.org/termsOfUse",
+        "noticeZh": "仅保留分类骨干的最小名称、等级、稳定 ID、父级和异名关系字段；WFO 页面中的图片、描述及第三方内容不随本证据包复用。"
+      },
+      "archive": {
+        "fileName": "wfo_plantlist_2026-06.zip",
+        "sha256": "75f1ad1f371978c9e46f3044152c07ed276fe57be9fb9a15b3621b19cf231987",
+        "sizeBytes": 132643291,
+        "md5": "02f989b01b8eb142ec5934bd634b3876",
+        "requiredEntries": ["taxon.tsv", "name.tsv", "synonym.tsv"]
+      },
+      "tables": [
+        {
+          "entry": "taxon.tsv",
+          "sha256": "0d23bddb2ab8d7e6505e741acb54b6603ca9523751be555a734ee4019fa61c23"
+        },
+        {
+          "entry": "name.tsv",
+          "sha256": "c506eb9e21efe9e268e20f8cd9bc65f91b55e1722d19c27d58a6681f8b680ed8"
+        },
+        {
+          "entry": "synonym.tsv",
+          "sha256": "dba9a8562d173971ae57705dbdb68aa866e76295294742834b6f55f7182595ca"
+        }
+      ],
+      "acceptedTaxa": [
+        {
+          "taxonId": "wfo-7000000098",
+          "nameId": "wfo-7000000098",
+          "parentTaxonId": "wfo-9000000088",
+          "scientificName": "Cactaceae",
+          "rank": "family",
+          "taxonRecordSha256": "749b2328580093810144f4242573e8caeb701236958d480e817206f134974b0c",
+          "nameRecordSha256": "6974db2fa849c4a822cd244e1fde4b1cf2d10848951f0fcf18e9454ccfc7677c"
+        },
+        {
+          "taxonId": "wfo-4000016452",
+          "nameId": "wfo-4000016452",
+          "parentTaxonId": "wfo-7000000098",
+          "scientificName": "Gymnocalycium",
+          "rank": "genus",
+          "taxonRecordSha256": "27f964333d32ce8c851f2bb9d405b47068dcf76a32ff7ac50d26293bb165a1d4",
+          "nameRecordSha256": "4089741ad950ac9393e61ca4c752cd1e703fd380e6a552a172483cbdb406de92"
+        },
+        {
+          "taxonId": "wfo-0000712540",
+          "nameId": "wfo-0000712540",
+          "parentTaxonId": "wfo-4000016452",
+          "scientificName": "Gymnocalycium mihanovichii",
+          "rank": "species",
+          "taxonRecordSha256": "a8eb5895ef18d2c083a9c94857e718844f42f9754a02c48b67dc2661457feb0e",
+          "nameRecordSha256": "ac390b37f6017a46b92c187df0141319d373386238b477af8b568388a20f7a28"
+        },
+        {
+          "taxonId": "wfo-0000712461",
+          "nameId": "wfo-0000712461",
+          "parentTaxonId": "wfo-4000016452",
+          "scientificName": "Gymnocalycium friedrichii",
+          "rank": "species",
+          "taxonRecordSha256": "725f5aedc0219690a62d2d22c78ec41f1b2bd72b5ea753742fda9943a459fb5a",
+          "nameRecordSha256": "cfa42c7bc00804f65e145b277ff9f87d6caeaef12c185d18e69daf1f8184d4db"
+        }
+      ],
+      "candidateName": {
+        "nameId": "wfo-0000712693",
+        "scientificName": "Gymnocalycium stenopleurum",
+        "rank": "species",
+        "nameRecordSha256": "6c3cfb5aaa9af2643c8cd361ed5f4e57eaf8c4fbb89d323dbc9a812529b574bb",
+        "hasTaxonRecord": false
+      },
+      "synonymEdge": {
+        "synonymRecordId": "wfo-0000712693-2026-06",
+        "nameId": "wfo-0000712693",
+        "acceptedTaxonId": "wfo-0000712461",
+        "recordSha256": "d68ca6191bbf7c35f449274f96b67baa48ba062abae5a865e7d062bf2c888b3e"
+      },
+      "dataModelSource": {
+        "url": "https://about.worldfloraonline.org/images/uploads/documents/WFOGuidelinesForTaxonomicBackboneContributorsV._2.06.pdf",
+        "interpretationZh": "WFO 指南说明 taxon 表在实际含义上是名称表，并同时容纳接受名与异名；parentNameUsageID 表示接受分类名的上一级，synonym 记录通过 accepted taxon ID 指向所采用的接受分类单元。回放因此必须同时查 taxon/name/synonym 三表，不能仅凭名称行推断接受状态。"
+      },
+      "interpretationZh": "本 WFO 发布中，mihanovichii 有接受分类实体；stenopleurum 只有名称记录，并由明确的 synonym 关系指向 friedrichii。该 WFO 版本与 Kew/WCVP 对 stenopleurum 的接受状态不一致。这里只记录各来源版本的关系，不将二者合并为同一权威结论，也不把任何关系映射到来源业务身份。"
+    }
+  },
+  "sourceConflictNoteZh": "Kew/WCVP 2026-06 把 Gymnocalycium mihanovichii 与 G. stenopleurum 分别列为 Accepted species，且都属 Cactaceae / Gymnocalycium；WFO 2026-06 将 G. mihanovichii 保留为 taxon 实体，但将 G. stenopleurum 名称映射为 G. friedrichii 的 synonym。源记录 123 的实际身份、是否映射和中文规范展示名仍待负责人裁决。",
+  "replayCommand": "node docs/backend-v2/audits/taxonomy-evidence/replay-123-gymnocalycium.mjs --evidence <path> --wcvp-archive <official-wcvp.zip> --wcvp-taxon <extracted-wcvp_taxon.csv> --wcvp-eml <extracted-eml.xml> --wfo-archive <official-wfo.zip> --wfo-taxon <extracted-taxon.tsv> --wfo-name <extracted-name.tsv> --wfo-synonym <extracted-synonym.tsv> --wfo-release <raw-zenodo-api-response.json>"
+}
