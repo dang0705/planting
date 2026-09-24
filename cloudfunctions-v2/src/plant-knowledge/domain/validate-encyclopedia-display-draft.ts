@@ -1,6 +1,10 @@
 import Ajv from 'ajv'
 
 import displaySchema from '../../../../docs/backend-v2/contracts/schemas/plant-encyclopedia-display.v1.schema.json'
+import {
+  calculateCanonicalJsonSha256,
+  type CanonicalJsonObject
+} from '../../foundation/json/canonical-json-sha256.js'
 
 /** 展示型植物百科中的单条简短问答，不承载养护、诊断或安全事实。 */
 export interface EncyclopediaDisplayQuestion {
@@ -43,6 +47,17 @@ export type EncyclopediaDisplayDraftValidation =
   | ValidEncyclopediaDisplayDraft
   | InvalidEncyclopediaDisplayDraft
 
+/** 可写入待审核修订的确定性内容与摘要；不代表人工批准或正式发布。 */
+export interface PreparedEncyclopediaDisplayRevision extends ValidEncyclopediaDisplayDraft {
+  /** 已校验完整展示正文的规范 JSON SHA-256，不包含审核状态或行外元数据。 */
+  readonly contentHash: string
+}
+
+/** 修订内容准备结果；越界草稿和未知版本均不能获得可发布摘要。 */
+export type EncyclopediaDisplayRevisionPreparation =
+  | PreparedEncyclopediaDisplayRevision
+  | InvalidEncyclopediaDisplayDraft
+
 const ajv = new Ajv({ allErrors: true, strict: true })
 const validateDisplayContent = ajv.compile<EncyclopediaDisplayContent>(displaySchema)
 
@@ -62,4 +77,22 @@ export function validateEncyclopediaDisplayDraft(
     return { ok: false, code: 'INVALID_DISPLAY_CONTENT' }
   }
   return { ok: true, content: structuredClone(content) }
+}
+
+/**
+ * 先按展示型 Schema 准入，再对独立复制的完整正文计算规范摘要。
+ * 审核与发布必须自行校验身份、来源、审核决定及数据库读回，不能只凭摘要放行。
+ */
+export function prepareEncyclopediaDisplayRevision(
+  structureVersion: string,
+  content: unknown
+): EncyclopediaDisplayRevisionPreparation {
+  const validated = validateEncyclopediaDisplayDraft(structureVersion, content)
+  if (!validated.ok) {
+    return validated
+  }
+  return {
+    ...validated,
+    contentHash: calculateCanonicalJsonSha256(validated.content as unknown as CanonicalJsonObject)
+  }
 }
