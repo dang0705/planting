@@ -1,0 +1,49 @@
+{
+  "ticketId": "z8v0kmr970",
+  "agent": "root",
+  "model": "主代理",
+  "status": "blocked",
+  "progress": 55,
+  "allowRegression": true,
+  "summary": "微信小程序首个真实登录切片暂停在实施边界确认门前。统一 Principal 解析及平台绑定/解绑的核心规则已有单元与真实 MySQL 证据；首次微信凭证验真、登录 HTTP、用户/绑定/会话原子签发和试用能力快照生成仍未实现或验收。v2 网关为公开入口，不能凭可伪造的请求头建立身份。55% 是历史估算，不代表当前正在实施或端到端完成。",
+  "verified": [
+    "唯一 Master Plan 入口校验通过；P2 identity 任务合同、Principal 合同与 identity 配置目录已按需读取。",
+    "先前的真实 MySQL RED 证明缺失主体 FOR UPDATE 会在双事务竞争中产生 ER_LOCK_DEADLOCK；移除缺失行间隙锁后，同一竞争探针在两个事务均读到缺失后再放行，得到 1 次创建、1 次 IDENTITY_BINDING_CONFLICT，数据库读回 binding_count=1、owner_count=1。",
+    "已有主体重放仍执行 WHERE id = ? FOR UPDATE；解绑仍执行该用户 active 绑定的 ORDER BY id FOR UPDATE；均有本地 MySQL SQL trace 断言。",
+    "INSERT 仅将 MySQL ER_DUP_ENTRY/1062 转为 IDENTITY_BINDING_CONFLICT；1213 ER_LOCK_DEADLOCK 保持原错上抛，由 runDatabaseTransaction 回滚，不误映射为 409。",
+    "身份单元测试 30/30、两份真实 MySQL 身份测试 8/8、TypeScript typecheck、oxlint、oxfmt 与 diff check 通过。",
+    "主代理指出的 manage-platform-identity-binding.ts 无关 import 已恢复为 HEAD 中的 ../../contracts/types.js；身份绑定逻辑未触碰。",
+    "登录策略测试先于实现落盘；RED 输出为 Vitest 无法导入尚不存在的 identity-session-policy.js（0 tests），随后加入严格 Schema、SHA 重算和版本快照实现。",
+    "登录策略单测 8/8、三个既有配置/合同邻接测试 5/5；四个测试文件合计 13/13。TypeScript 源码与测试类型检查、目标 oxlint（0 warning/error）、oxfmt --check、git diff --check 均通过。",
+    "identity-session-policy.md 与 principal-and-capability.md 的合同注册 SHA 已读回匹配；测试只经过 unit_fake 解析/Schema/哈希/快照路径。",
+    "新增会话材料 Expected 先落于 cloudfunctions-v2/test/identity/user-session-issuance-material.spec.ts；首次探针因模块不存在停在 import（0 tests），明确不计作行为 RED。",
+    "对摘要编码作受控反向突变：把 `.digest('hex')` 暂改为 `.digest('base64url')` 后，定向测试 1/6 按独立 SHA-256 Expected 失败；恢复后源码 SHA-256 为 652cd6827bd61d0b1b1aed37fc3e91a755b82b8e5dde22f0d303e4762f82cc64，定向材料测试 6/6、identity 全域测试 36/36、source/test typecheck、定向 oxlint、oxfmt 与 diff check 通过。",
+    "新增 Identity 会话签发合同草案，明确 001 user_sessions 无策略发布/SHA 列；`policySnapshotSha256` 当前只是请求内材料、尚未持久化，不以此宣称版本已落盘。",
+    "新增首次试用跨域裁决草案，回读 005：trial_entitlements.uq_trial_user_once(user_internal_id) 与 ai_quota_grants.uq_ai_grant_source(user_internal_id, source_type, source_ref) 是不同约束；trial source_ref 不得包含 policy release；Subscription 现有 Repository 已读取 users 行。",
+    "按 ticket-specs.md 验收项 1、4 核对：统一 Principal 解析已覆盖用户/平台绑定/会话状态、有效期、撤销版本和脱敏；真实 MySQL 测试覆盖摘要命中、撤销后拒绝、错误 Bearer 不命中。",
+    "按 ticket-specs.md 验收项 1、2、3、6 核对：平台绑定、恢复、竞争冲突、解绑、最后入口保护、会话版本递增及绑定/解绑幂等已有 unit_fake 与真实 MySQL 证据；该证据不覆盖首次登录创建会话事务。",
+    "按 ticket-specs.md 验收项 5 核对：现有 Principal/绑定路径有脱敏与冲突错误测试；首次登录公开响应、日志和审计的完整 HTTP 路径尚不存在，不能据此宣称全项完成。",
+    "已核对可复用的后置链：createResolveUserPrincipalUseCase 在进程内摘要 Bearer 后读取 Principal；createMysqlUserPrincipalRepository 通过 user_sessions、users、platform_identities 的归属 JOIN 解析统一用户；现有 user-plant GET 按 user_id 读取本人对象、他人对象统一 404。其 MySQL HTTP 测试手工预置会话，不证明登录签发。",
+    "身份绑定 Repository 可在事务内基于现成 userRef 创建/恢复平台绑定，但不创建 users；会话材料函数可生成 256-bit CSPRNG Bearer 与 SHA-256 写入投影，二者尚无首次登录应用编排与 user_sessions 写入 Repository。",
+    "当前 state-machines/v1 §1 与 identity-session-issuance 草案均要求首次成功仅披露一次 Bearer、同键安全重试返回 409；Identity outbox 不属于最小登录事务。公开 DTO、真实微信验真与策略版本持久关联仍待实施。",
+    "公开登录路由的安全分类与错误目录已对齐：route-registry.json 将 POST /api/v2/identity/sessions 登记为 credential_exchange，引用 CreateIdentitySessionRequest / IdentitySessionResponse、required_header，并包含 IDENTITY_SESSION_RESULT_UNAVAILABLE；contracts/http-api.md §2–4 定义同一安全级别、首次一次性 Bearer 披露及安全重试错误；OpenAPI 生成源将 userBearer 描述为青花植自签不透明用户会话令牌。字段级 DTO 与实际 identity HTTP handler 仍未实现，不能把合同骨架当作可运行登录接口。",
+    "001_identity.sql 的 user_sessions 无策略发布/请求快照引用字段；identity-session-issuance 草案明确 policySnapshotSha256 目前只在内存材料中，未持久化，策略版本与会话的落盘关系待主代理裁决。"
+  ],
+  "unverified": [
+    "CloudBase MySQL 网络/隔离级别及部署运行路径；当前真实数据库验证为本地 MySQL 8.4。",
+    "ticket-specs.md 的验收项 2、3、6：首次登录用户/绑定/会话同事务签发、会话轮换，以及对应失败回滚、并发、幂等和安全重试的真实持久化读回；当前只有 Bearer 材料生成函数，没有签发应用用例或 user_sessions 写入 Repository。",
+    "ticket-specs.md 的验收项 4、6：真实平台凭证验证及微信、抖音、小红书/手机号 Provider Adapter；当前只有通用端口与 unit_fake 证据，没有真实供应商验真。",
+    "ticket-specs.md 的验收项 5、6：首次登录 HTTP/OpenAPI 的错误封套、一次性 Bearer 响应脱敏和端到端验证；当前没有 identity HTTP entry/server。CloudBase/真实 HTTP 证据仍未完成。",
+    "`user_sessions` 没有策略发布引用列；当前会话材料的策略摘要只存在于请求内，尚未证明会话策略版本可从数据库回放。",
+    "尚无现成 identity 登录 HTTP server/入口或首次登录应用用例；若测试仅 import 尚不存在的模块，将是 0 tests 的加载失败，不是有效行为 RED。主代理需选择可运行的测试边界并先落独立 Expected。",
+    "最小身份登录事务不要求 Identity outbox；会话策略发布版本的持久关联、字段级公开登录 DTO 和真实 Provider 接入尚未完成。",
+    "公开登录路由的字段级请求/响应 DTO、平台凭证字段和实际 HTTP handler 尚未实现；当前 Route Registry/OpenAPI 已登记 credential_exchange 与错误合同，但仍是合同名称和通用响应封套，不能证明运行时登录闭环。",
+    "真实微信/抖音/小红书/手机号凭证验真及其供应商端点、凭证引用、超时/重试配置没有实现或真实供应商验收；测试替身不能宣称真实 Provider 登录闭环。",
+    "试用合同已经确定按可信 users.created_at_ms 即时派生资格、按需物化试用记录，并在首次实际 AI 额度操作时建立 grant；这条链路的运行时快照生成和 CloudBase 读回尚未实现。"
+  ],
+  "blockers": [
+    "待用户确认首次微信登录改动仅限 v2 测试环境的具体范围；确认前不修改身份 HTTP、凭证验真、能力快照或云端函数。"
+  ],
+  "updatedAt": "2026-09-27T12:58:39+08:00",
+  "next": "等待用户确认仅 v2 测试环境的实施边界；获确认后先冻结微信登录字段级公开 DTO 与独立 Expected，再按 RED→GREEN 接通服务端凭证验真、会话签发和试用能力快照，并分别验收真实 Provider、MySQL 与 CloudBase HTTP。"
+}
