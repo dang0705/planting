@@ -34,19 +34,19 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 22,
+      "version": 23,
       "status": "codex running",
-      "note": "E04：018补齐养护决策派生数据库不可变保护\n旧017真实UPDATE成功导致RED；补迁移后9场景GREEN\nNode22真实MySQL9项；后端909/909；类型检查通过\n已有记录迁移前后完全一致；原值与内容更新均拒绝\n没有生产DDL；下一步按用户要求优先DHI及室内衰减",
-      "commentId": "1100440000089915",
-      "commentFingerprint": "5230b84994f8dd3f2fcc8418fd20f306e3ff8c77ea26b3a209451b8117021181",
-      "readback": "Chrome状态codex running及完整五行评论1100440000089915已读回"
+      "note": "E04：DHI真实时段→均匀天空窗外散射候选已实现\n20新用例；全部倾角固定一半导致4项RED→恢复GREEN\n后端120文件929/929；Node22新20项；类型构建通过\n明确无遮挡均匀天空假设；只到窗外，不冒充室内估算\n优先继续天空遮挡、玻璃窗帘与植物位置传播及光照合并",
+      "commentId": "1100440000089944",
+      "commentFingerprint": "a5fff7119b71f0448154be826120230700e17e47a40cf5fb53915cae1a88e5d8",
+      "readback": "Chrome状态codex running及完整五行评论1100440000089944已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T13:29:22.133089+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T13:32:14.904397+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "3ee973a1d78778e60b6907399958ba938a1eacb22c400acd4892aee955859856",
-    "sourceRevision": 35,
-    "sourceUpdatedAt": "2026-10-04T13:26:06.292434+00:00"
+    "fingerprint": "f1ec32ccdabd87dd216d00b919e5008b2045b09c9d6ee6892ca328d759f2b56f",
+    "sourceRevision": 36,
+    "sourceUpdatedAt": "2026-10-04T13:31:50.667592+00:00"
   }
 }

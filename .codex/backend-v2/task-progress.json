@@ -1,20 +1,20 @@
 {
-  "revision": 35,
+  "revision": 36,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-04T13:26:06.292434+00:00",
+  "updatedAt": "2026-10-04T13:31:50.667592+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "E04长期派生记录版本与输入快照关联持久化",
+    "goal": "按用户要求补DHI散射链路首段",
     "assumptions": [
-      "物理存储依据已冻结DDL",
-      "存储夹具不能证明算法已经发布"
+      "显式选择均匀无外遮挡天空候选",
+      "窗外平面不等于植物平面"
     ],
-    "minimumVerification": "先独立Expected，实际MySQL归属与版本追加、摘要与不可变记录验证",
-    "continueWhen": "快照版本与哈希关联真实核验，后端全量GREEN",
-    "failWhen": "把实验模型当发布或把决策派生写环境表",
-    "rollback": "仅隔离库验证，无生产DDL",
-    "timeLimit": "45分钟检查点"
+    "minimumVerification": "pvlib独立数学基准、24真实时段回放、固定一半突变RED、全量GREEN",
+    "continueWhen": "929项全绿，类型及构建通过",
+    "failWhen": "把候选当发布或把窗外量称为室内最终光照",
+    "rollback": "纯离线无事实写入，撤销候选不影响正式发布",
+    "timeLimit": "30分钟检查点"
   },
   "tasks": [
     {
@@ -121,7 +121,7 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 22,
+      "version": 23,
       "priority": "normal",
       "status": "codex running",
       "stage": "验证与持久化读回",
@@ -145,19 +145,20 @@
         ".codex/backend-v2/evidence/E04-dry-cycle-replay.json",
         ".codex/backend-v2/evidence/E04-environment-snapshot.json",
         ".codex/backend-v2/evidence/E04-json-snapshot-integrity.json",
-        ".codex/backend-v2/evidence/E04-decision-immutability.json"
+        ".codex/backend-v2/evidence/E04-decision-immutability.json",
+        ".codex/backend-v2/evidence/E04-window-diffuse.json"
       ],
       "summary": [
-        "E04：018补齐养护决策派生数据库不可变保护",
-        "旧017真实UPDATE成功导致RED；补迁移后9场景GREEN",
-        "Node22真实MySQL9项；后端909/909；类型检查通过",
-        "已有记录迁移前后完全一致；原值与内容更新均拒绝",
-        "没有生产DDL；下一步按用户要求优先DHI及室内衰减"
+        "E04：DHI真实时段→均匀天空窗外散射候选已实现",
+        "20新用例；全部倾角固定一半导致4项RED→恢复GREEN",
+        "后端120文件929/929；Node22新20项；类型构建通过",
+        "明确无遮挡均匀天空假设；只到窗外，不冒充室内估算",
+        "优先继续天空遮挡、玻璃窗帘与植物位置传播及光照合并"
       ],
       "blockingReason": null,
-      "nextAction": "按用户最新要求优先补DHI窗面散射、室内衰减与DNI/DHI合并；派生Repository后续承接",
-      "ticketReadback": "Chrome状态codex running及完整五行评论1100440000089915已读回",
-      "milestoneCommit": "24503099"
+      "nextAction": "优先推进DHI方向加权天空遮挡及有限窗口到植物位置的传播，再接玻璃窗帘与DNI/DHI合并；无确认参数不设默认",
+      "ticketReadback": "Chrome状态codex running及完整五行评论1100440000089944已读回",
+      "milestoneCommit": "25eddc5f"
     }
   ],
   "queue": [
@@ -261,7 +262,7 @@
       ]
     }
   ],
-  "nextAction": "按用户最新要求优先补DHI窗面散射、室内衰减与DNI/DHI合并；派生Repository后续承接",
+  "nextAction": "优先推进DHI方向加权天空遮挡及有限窗口到植物位置的传播，再接玻璃窗帘与DNI/DHI合并；无确认参数不设默认",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",

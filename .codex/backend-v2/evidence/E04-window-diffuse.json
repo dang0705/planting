@@ -1,0 +1,57 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "accepted": false,
+  "milestone": "DHI真实时段→均匀天空窗外散射候选",
+  "updatedAt": "2026-10-04T13:31:50.667592+00:00",
+  "expectedSource": "https://pvlib-python.readthedocs.io/en/v0.16.1/reference/generated/pvlib.irradiance.isotropic.html",
+  "explicitAssumption": "uniform_unobstructed_sky；只窗外候选，不是实际天空误差界限",
+  "tdd": {
+    "path": "fast",
+    "testsWrittenBeforeProduct": true,
+    "mutation": {
+      "change": "所有倾角误用固定0.5",
+      "failed": 4,
+      "log": "/tmp/planting-dhi-fixed-half-red.log"
+    },
+    "restoration": "cmp逐字节相同，随后全量GREEN"
+  },
+  "checks": {
+    "related": 20,
+    "node22Related": 20,
+    "fullBackend": {
+      "files": 120,
+      "passed": 929,
+      "exitCode": 0,
+      "log": "/tmp/planting-dhi-full-green.log"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "/tmp/planting-dhi-typecheck.log"
+    },
+    "lint": {
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 979,
+      "log": "/tmp/planting-dhi-lint.log"
+    },
+    "build": {
+      "exitCode": 0,
+      "log": "/tmp/planting-dhi-build.log"
+    }
+  },
+  "realDataPath": "已保存实际Open-Meteo制品24条→原归一化→DHI窗外公式；无计算模块替身",
+  "productionAdmission": false,
+  "notAccepted": [
+    "天空外遮挡",
+    "有限窗口及植物位置散射传播",
+    "玻璃、窗帘",
+    "DNI+DHI的PPFD/DLI合并",
+    "正式发布和现场上下界"
+  ],
+  "sourceHashes": {
+    "cloudfunctions-v2/src/care/light/project-window-diffuse.ts": "a730b516517e4efde2365b851eacbe8a9a519a4fe5b4f6151a0338267bcb0d10",
+    "cloudfunctions-v2/test/care/project-window-diffuse.spec.ts": "1fdda956fd4c4cc5435ec03d3f75adeaf840fa6010ee806f8f2bc2a942114e9a",
+    "cloudfunctions-v2/models/care/window-diffuse-candidate-contract.md": "259dd158fc96072d50314066968417e7c1fb249978980eaa492bdc050b9931b8"
+  }
+}
