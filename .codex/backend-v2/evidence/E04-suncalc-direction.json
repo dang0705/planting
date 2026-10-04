@@ -1,0 +1,60 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "verifiedAt": "2026-10-04T12:51:36.070984+00:00",
+  "scope": "SunCalc版本与角度语义明确的太阳方向及瞬时窗面协作",
+  "classification": "unit_fake L1和内部L3；真实SunCalc与窗面模块，无替身；DNI为构造数学案例，非Provider协议验收",
+  "expectedSources": [
+    "cloudfunctions-v2/models/care/suncalc-direction-contract.md",
+    "https://docs.nlr.gov/docs/fy08osti/34302.pdf 附录A.5",
+    "https://github.com/mourner/suncalc#sun-position"
+  ],
+  "testFirst": {
+    "path": "独立Expected先落盘；北起方位错误增加180度突变使3项失败；完整字节还原后GREEN",
+    "redTests": [
+      "NREL独立太阳方向",
+      "NREL瞬时窗面投影",
+      "窗背面无直射"
+    ]
+  },
+  "results": {
+    "newTests": 19,
+    "fullFiles": 115,
+    "fullTests": 848,
+    "skipped": 0,
+    "node22RelatedFiles": 3,
+    "node22RelatedTests": 46,
+    "node22Version": "22.21.1",
+    "typecheck": "passed",
+    "build": "passed",
+    "lintErrors": 0,
+    "lintWarnings": 849
+  },
+  "riskMatrix": {
+    "U1": "缺时刻、地点和DNI分别验证",
+    "U2": "经纬度、时刻、夜间方向与窗背面",
+    "U3": "非法类型、超范围、均值混入瞬时拒绝",
+    "U4": "等价UTC时刻确定性",
+    "U5": "冻结输入不修改；无写操作",
+    "U6": "N/A 无共享可变状态",
+    "U7": "N/A 不持有编辑态"
+  },
+  "logs": [
+    "/tmp/planting-suncalc-direction-mutation-red.log",
+    "/tmp/planting-suncalc-direction-full-green.log",
+    "/tmp/planting-suncalc-direction-node22-green.log",
+    "/tmp/planting-suncalc-direction-typecheck.log",
+    "/tmp/planting-suncalc-direction-build.log",
+    "/tmp/planting-suncalc-direction-lint.log"
+  ],
+  "notVerified": [
+    "SunCalc完整时段界限及真实辐射均值回放",
+    "实际玻璃与植物位置传播",
+    "全球天文精度；单例0.1度为粗回归比较，不是误差保证",
+    "正式Care算法发布与HTTP闭环"
+  ],
+  "sourceHashes": {
+    "cloudfunctions-v2/src/care/light/derive-suncalc-direction.ts": "39c23595de944e9dbd3b40f8988028f74164caf11080439c555d896191e52087",
+    "cloudfunctions-v2/src/care/application/project-suncalc-window-direct.ts": "70e896aa5cf6cd86c7ee018a8dfbd0321cc51bdcf4d51729feef37bf09722dbd"
+  }
+}

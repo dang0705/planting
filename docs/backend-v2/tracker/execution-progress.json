@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T12:46:35.313778+00:00",
-  "sourceRevision": 28,
-  "sourceUpdatedAt": "2026-10-04T12:46:35.313778+00:00",
+  "generatedAt": "2026-10-04T12:51:36.070984+00:00",
+  "sourceRevision": 29,
+  "sourceUpdatedAt": "2026-10-04T12:51:36.070984+00:00",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -114,16 +114,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 15,
+      "version": 16,
       "status": "codex running",
       "stage": "验证与持久化读回",
       "accepted": false,
       "summary": [
-        "E04：实际内盆、几何与排水三值安全判定已实现",
-        "新增32项；未知排水误判safe的突变RED→还原GREEN",
-        "后端113文件829/829；Node22全量829/829，类型构建通过",
-        "SunCalc 2.1.0已批准安装；Node22导入及四个部署包读回通过",
-        "太阳计算替换及时段界限、保水策略与DMN行为仍待验收"
+        "E04：SunCalc太阳方向→瞬时窗面直射协作已实现",
+        "独立NREL基准与19新用例；错方位突变3项RED→还原GREEN",
+        "后端115文件848/848；Node22相关46项，类型构建通过",
+        "SunCalc 2.1.0使用度、北起方位与折射校正高度",
+        "SunCalc时段界限及均值回放、保水策略与正式建议待验收"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -137,22 +137,19 @@
         ".codex/backend-v2/evidence/E04-solar-interval-bound.json",
         ".codex/backend-v2/evidence/E04-plant-direct-composition.json",
         ".codex/backend-v2/evidence/E04-plant-direct-interval.json",
-        ".codex/backend-v2/evidence/E04-pot-safety-suncalc.json"
+        ".codex/backend-v2/evidence/E04-pot-safety-suncalc.json",
+        ".codex/backend-v2/evidence/E04-suncalc-direction.json"
       ],
       "blockingReason": null,
-      "nextAction": "按完整日照模型切换SunCalc太阳位置；独立验证角度及完整时段界限，不套NOAA界限",
+      "nextAction": "验证SunCalc完整时段方向界限并接真实辐射均值回放；NOAA仅保留离线比较用途",
       "sync": {
-        "version": 14,
+        "version": 16,
         "status": "codex running",
-        "matched": false,
-        "readback": "Chrome当前E04/E06票codex running，完整五行评论1100440000089704已读回"
+        "matched": true,
+        "readback": "Chrome当前E04/E06票codex running；完整五行评论1100440000089749已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T12:26:14.710413+00:00",
-  "lastFailure": {
-    "ticketId": "z8v0kmr973",
-    "reason": "版本15评论发送尚无新comment ID读回；保留版本14确认状态，不重发",
-    "at": "2026-10-04T12:47:40.890460+00:00"
-  }
+  "lastSuccessfulSyncAt": "2026-10-04T12:52:40.176018+00:00",
+  "lastFailure": null
 }

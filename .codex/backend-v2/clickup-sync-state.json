@@ -34,23 +34,19 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 14,
+      "version": 16,
       "status": "codex running",
-      "note": "E04：完整时段植物点可达性与真实辐射均值回放已接通\n新增27项；去时段界限2项RED、漏资格门1项RED→恢复GREEN\nCare217项；后端全量112文件、797/797通过\n类型与构建通过；Node22独立10项；lint零错误829警告\n仅几何直射范围；玻璃、散射、光谱换算及正式策略待验收",
-      "commentId": "1100440000089704",
-      "commentFingerprint": "8a02c1d06be456431f67cbeb07b347a1fbe268f944dfaa35204a42075809da47",
-      "readback": "Chrome当前E04/E06票codex running，完整五行评论1100440000089704已读回"
+      "note": "E04：SunCalc太阳方向→瞬时窗面直射协作已实现\n独立NREL基准与19新用例；错方位突变3项RED→还原GREEN\n后端115文件848/848；Node22相关46项，类型构建通过\nSunCalc 2.1.0使用度、北起方位与折射校正高度\nSunCalc时段界限及均值回放、保水策略与正式建议待验收",
+      "commentId": "1100440000089749",
+      "commentFingerprint": "9a8207960d2328255aff159f5dbad35c670bd5ac46b3e351dd376ad7d5c6a7be",
+      "readback": "Chrome当前E04/E06票codex running；完整五行评论1100440000089749已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T12:26:14.710413+00:00",
-  "lastFailure": {
-    "ticketId": "z8v0kmr973",
-    "reason": "版本15评论发送尚无新comment ID读回；保留版本14确认状态，不重发",
-    "at": "2026-10-04T12:47:40.890460+00:00"
-  },
+  "lastSuccessfulSyncAt": "2026-10-04T12:52:40.176018+00:00",
+  "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "a7cba3b9f3b565864abf56ef331e2a6795afc3c4f77ad66811cc66377e29fdd7",
-    "sourceRevision": 28,
-    "sourceUpdatedAt": "2026-10-04T12:46:35.313778+00:00"
+    "fingerprint": "2e8bc44b7abbc635393465e149f421b2944b0587c2505886c1db97cfe0e4c78f",
+    "sourceRevision": 29,
+    "sourceUpdatedAt": "2026-10-04T12:51:36.070984+00:00"
   }
 }
