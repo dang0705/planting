@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T15:31:02.884471+00:00",
-  "sourceRevision": 53,
-  "sourceUpdatedAt": "2026-10-04T15:31:02.884471+00:00",
+  "generatedAt": "2026-10-04T15:35:41.331007+00:00",
+  "sourceRevision": 54,
+  "sourceUpdatedAt": "2026-10-04T15:35:41.331007+00:00",
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
   "tasks": [
@@ -199,31 +199,32 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 3,
+      "version": 4,
       "status": "codex running",
-      "stage": "空气复合答案证据验证",
+      "stage": "整包复合证据验证",
       "accepted": false,
       "summary": [
-        "E05只复用V1三类题包；空气简易和详细表单已接校验",
-        "服务端题包授权，表单与采集快照一致；拒绝缺失和额外证据",
-        "客户端保存申报不构成服务端证明；不继承旧耗水倍率",
-        "新增18项；一致性突变1项RED→恢复，全量1104/1104",
-        "时间线、档案来源核验、答案持久化和HTTP待验收"
+        "E05复用V1题包：空气和时间线全部通过才准入提交",
+        "缺日期不补今天、未知用量不补默认量；用户申报不写care事实",
+        "同日冲突和别名冲突拒绝；黄叶及萎蔫真实题目链路通过",
+        "新增20项；冲突1项RED及守卫突变16项RED→恢复，全量1124/1124",
+        "答案持久化、幂等、来源发布及真实HTTP待验收"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
-        ".codex/backend-v2/evidence/E05-air-answer-evidence.json"
+        ".codex/backend-v2/evidence/E05-air-answer-evidence.json",
+        ".codex/backend-v2/evidence/E05-timeline-answer-evidence.json"
       ],
       "blockingReason": null,
-      "nextAction": "补浇水时间线复合证据及受控来源，再接答案提交持久化",
+      "nextAction": "接真实答案持久化、会话归属与重复提交规则",
       "sync": {
-        "version": 3,
+        "version": 4,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING及五行评论1100440000090238已读回"
+        "readback": "Chrome CODEX RUNNING及五行评论1100440000090245已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T15:31:45.185684+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T15:36:30.973876+00:00",
   "lastFailure": null
 }

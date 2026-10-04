@@ -1,0 +1,54 @@
+{
+  "ticket": "z8v0kmr974",
+  "scope": "V1题包养护时间线及整包证据准入",
+  "verifiedAt": "2026-10-04T15:35:41.331007+00:00",
+  "truthSources": [
+    "cloudfunctions-v2/models/diagnosis/timeline-answer-contract.md",
+    "用户批准复用V1三类题包",
+    "src/utils/care-behavior-timeline/timeline-core.js",
+    "src/utils/care-behavior-timeline/sidecar.js"
+  ],
+  "tests": {
+    "new": 20,
+    "fullBackend": 1124,
+    "node22Diagnosis": 102,
+    "layers": [
+      "unit_fake",
+      "unit_real_data"
+    ],
+    "boundary": "领域证据与真实V1题目制品；没有HTTP、提交事务或实际care事实"
+  },
+  "tdd": {
+    "testFirst": true,
+    "classicRed": {
+      "failed": 1,
+      "rule": "每日未发生声明与同日事件冲突",
+      "log": "/tmp/planting-e05-timeline-conflict-red.log"
+    },
+    "mutationRed": {
+      "failed": 16,
+      "rule": "缺少时间线不得通过整包提交",
+      "log": "/tmp/planting-e05-timeline-mutation.log"
+    },
+    "restoredGreen": "/tmp/planting-e05-timeline-full.log"
+  },
+  "checks": {
+    "typecheck": "passed",
+    "lintErrors": 0,
+    "lintWarnings": 1337,
+    "build": "passed"
+  },
+  "rules": [
+    "日期与未知用量不得补默认",
+    "用户申报不成为care事实",
+    "成员、空气和时间线全部通过才进入持久化",
+    "同日冲突及别名冲突拒绝"
+  ],
+  "notAccepted": [
+    "服务端来源核验",
+    "答案持久化及幂等",
+    "CMS审核发布",
+    "真实HTTP诊断"
+  ],
+  "migration": "本轮无DDL"
+}

@@ -50,19 +50,19 @@
       "readback": "Chrome CODEX RUNNING及五行评论1100440000090220已读回"
     },
     "z8v0kmr974": {
-      "version": 3,
+      "version": 4,
       "status": "codex running",
-      "note": "E05只复用V1三类题包；空气简易和详细表单已接校验\n服务端题包授权，表单与采集快照一致；拒绝缺失和额外证据\n客户端保存申报不构成服务端证明；不继承旧耗水倍率\n新增18项；一致性突变1项RED→恢复，全量1104/1104\n时间线、档案来源核验、答案持久化和HTTP待验收",
-      "commentId": "1100440000090238",
-      "commentFingerprint": "8d8c807db02cd515e7a595c6a10132fe0ed9e38af17a9545681f603fff022131",
-      "readback": "Chrome CODEX RUNNING及五行评论1100440000090238已读回"
+      "note": "E05复用V1题包：空气和时间线全部通过才准入提交\n缺日期不补今天、未知用量不补默认量；用户申报不写care事实\n同日冲突和别名冲突拒绝；黄叶及萎蔫真实题目链路通过\n新增20项；冲突1项RED及守卫突变16项RED→恢复，全量1124/1124\n答案持久化、幂等、来源发布及真实HTTP待验收",
+      "commentId": "1100440000090245",
+      "commentFingerprint": "cf6da90c8252fdb5fa43d6c9dccbd0a593002a7d5eedd680270fbfda2e0c89dd",
+      "readback": "Chrome CODEX RUNNING及五行评论1100440000090245已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T15:31:45.185684+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T15:36:30.973876+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "837345fd8a5007c3803d4d785bdf587e51c732ac15f26f9d079d834d4a6057bd",
-    "sourceRevision": 53,
-    "sourceUpdatedAt": "2026-10-04T15:31:02.884471+00:00"
+    "fingerprint": "091cf4093c65b1698dd023d62fa4764f1e0a624381b51842a14c17075aa368b3",
+    "sourceRevision": 54,
+    "sourceUpdatedAt": "2026-10-04T15:35:41.331007+00:00"
   }
 }
