@@ -1,0 +1,64 @@
+{
+  "step": "E05",
+  "ticketId": "z8v0kmr974",
+  "milestone": "归属视觉证据读取与模型输出合同校验",
+  "verifiedAt": "2026-10-04T17:07:16.665506+00:00",
+  "sources": [
+    "schema/003_user_plant.sql:user_plant_assets",
+    "schema/004_care_diagnosis.sql:diagnosis_sessions,diagnosis_visual_evidence",
+    "contracts/schemas/diagnosis-model-output.v1.schema.json",
+    "cloudfunctions-v2/models/diagnosis/owned-visual-evidence-contract.md"
+  ],
+  "configurationDecision": "复用confirmed输出Schema；无新增参数、阈值、默认期限或视觉调用",
+  "tdd": {
+    "path": "fast_path",
+    "testFirst": "test/diagnosis/owned-visual-evidence.spec.ts先于两份实现落盘",
+    "red": "去除候选证据引用闭合守卫后dangling场景失败，28绿1红；完整恢复",
+    "log": "/tmp/planting-e05-owned-visual-mutation.log"
+  },
+  "checks": {
+    "related": {
+      "passed": 278,
+      "exitCode": 0,
+      "runtime": "Node22",
+      "log": "/tmp/planting-e05-owned-visual-related.log"
+    },
+    "mysql": {
+      "passed": 25,
+      "exitCode": 0,
+      "engine": "隔离MySQL8.4",
+      "boundary": "实际003资产与004会话/视觉表；users/user_plants仅外键归属夹具；模型JSON是Schema场景夹具，不是Provider响应",
+      "log": "/tmp/planting-e05-owned-visual-mysql.log"
+    },
+    "fullUnit": {
+      "files": 148,
+      "passed": 1277,
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-owned-visual-full-ut.log"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-owned-visual-typecheck.log"
+    },
+    "build": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-owned-visual-build.log",
+      "boundary": "现有构建入口通过，不证明新增读取已部署"
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 1647,
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-owned-visual-lint.log"
+    }
+  },
+  "productionChanges": false,
+  "acceptedParent": false,
+  "remaining": [
+    "模型与Prompt兼容发布组及视觉成本准入",
+    "证据局部键到V1观察的审核映射",
+    "可信选题档位准入",
+    "先创建会话再采证与一次题包锁定的生命周期",
+    "真实视觉Provider与动态HTTP及CMS发布"
+  ]
+}
