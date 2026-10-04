@@ -1,15 +1,15 @@
 {
-  "revision": 24,
+  "revision": 25,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-04T11:57:42.521247+00:00",
+  "updatedAt": "2026-10-04T12:09:26.779794+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "E04实际地点/时刻太阳方向→瞬时窗面投影的离线闭环",
+    "goal": "E04完整时段太阳模型界限→真实辐射均值回放里程碑",
     "assumptions": [
-      "NOAA通用公式为近似模型，不作为现场精度认证或整段界限"
+      "界限覆盖NOAA近似模型自身，不覆盖现场误差或浮点认证"
     ],
-    "minimumVerification": "独立NOAA数值基准、真太阳正午/夜间/闰年、时间与坐标校验；代表性突变RED；真实制品仅点时刻实验不冒充均值",
+    "minimumVerification": "独立导数界限、UTC跨年与地平线、突变及空序列RED/GREEN、真实制品回放",
     "continueWhen": "独立Expected、相关及全量Vitest、类型与Node22检查通过",
     "failWhen": "把近似单点包装成完整区间均值或精度保证",
     "rollback": "离线用例保持隔离，不接正式Care建议",
@@ -120,7 +120,7 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 11,
+      "version": 12,
       "priority": "normal",
       "status": "codex running",
       "stage": "验证与持久化读回",
@@ -133,18 +133,19 @@
         ".codex/backend-v2/evidence/E04-radiation-normalization.json",
         ".codex/backend-v2/evidence/E04-mean-direct.json",
         ".codex/backend-v2/evidence/E04-window-radiation-replay.json",
-        ".codex/backend-v2/evidence/E04-solar-direction.json"
+        ".codex/backend-v2/evidence/E04-solar-direction.json",
+        ".codex/backend-v2/evidence/E04-solar-interval-bound.json"
       ],
       "summary": [
-        "E04：地点/UTC时刻→太阳方向→瞬时窗面直射已接通",
-        "新增27场景；经度突变4项RED、日期溢出RED→GREEN",
-        "Care149项；后端全量107文件、729/729",
-        "类型与构建通过；Node22独立5项；lint零错误647警告",
-        "完整时段界限及散射仍待实现；正式模型未发布"
+        "E04：真实辐射均值→完整时段太阳模型界限→窗面回放已接通",
+        "新增22场景；半径突变3项RED及空序列3项RED→GREEN",
+        "Care171项；后端全量109文件、751/751通过",
+        "类型与构建通过；Node22独立7项；lint零错误731警告",
+        "仅离线近似模型；玻璃、散射及正式策略仍未验收"
       ],
       "blockingReason": null,
-      "nextAction": "形成可靠完整时段几何界限并串联均值回放；同时保留太阳近似误差与发布边界",
-      "ticketReadback": "Chrome当前E04/E06票codex running，完整五行评论1100440000089646已读回",
+      "nextAction": "接通植物位置直射可达性与窗面回放；pending玻璃及散射参数保持隔离",
+      "ticketReadback": "Chrome当前E04/E06票codex running，完整五行评论1100440000089688已读回",
       "milestoneCommit": "f7c38e9b"
     }
   ],
@@ -249,7 +250,7 @@
       ]
     }
   ],
-  "nextAction": "形成可靠完整时段几何界限并串联均值回放；同时保留太阳近似误差与发布边界",
+  "nextAction": "接通植物位置直射可达性与窗面回放；pending玻璃及散射参数保持隔离",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -311,8 +312,8 @@
     "runner": "cloudfunctions-v2 已锁定 Vitest",
     "testDirectory": "cloudfunctions-v2/test/",
     "lastResult": {
-      "passed": 729,
-      "total": 729,
+      "passed": 751,
+      "total": 751,
       "skipped": 0
     }
   },

@@ -1,0 +1,54 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "scope": "离线完整时段太阳模型界限与真实辐射制品均值回放",
+  "acceptedAt": "2026-10-04T12:09:26.779794+00:00",
+  "classification": "unit_fake + L3 unit_real_data；未证明真实外网调用或CloudBase HTTP闭环",
+  "expectedSources": [
+    "cloudfunctions-v2/models/care/solar-interval-bound-contract.md",
+    "NOAA General Solar Position 官方系数及独立数学导数上界",
+    "已保存真实Open-Meteo制品及来源元数据"
+  ],
+  "testFirst": {
+    "method": "新增界限测试先落盘后实现；快速路径突变RED→完整恢复GREEN；空序列缺陷经典RED→GREEN",
+    "mutation": "临时将时段变化半径设为0，正午、日出、奇数毫秒3项失败；已恢复原公式",
+    "classic": "空序列非法纬度、经度、窗面3项在修复前失败；补充无数据时守卫后通过"
+  },
+  "results": {
+    "newTests": 22,
+    "careTests": 171,
+    "careFiles": 10,
+    "fullTests": 751,
+    "fullFiles": 109,
+    "skipped": 0,
+    "typecheck": "passed",
+    "build": "passed",
+    "lintErrors": 0,
+    "lintWarnings": 731,
+    "node22": {
+      "version": "22.23.3",
+      "independentChecks": 7,
+      "fullVitestOnNode22": false
+    }
+  },
+  "logs": [
+    "/tmp/planting-solar-bound-mutation-red.log",
+    "/tmp/planting-solar-empty-red.log",
+    "/tmp/planting-solar-bound-related-green.log",
+    "/tmp/planting-solar-bound-full-green.log",
+    "/tmp/planting-solar-bound-typecheck.log",
+    "/tmp/planting-solar-bound-build.log",
+    "/tmp/planting-solar-bound-lint.log"
+  ],
+  "remaining": [
+    "真实太阳相对近似模型的误差及浮点认证未覆盖",
+    "玻璃、植物位置直射传播与散射未串联",
+    "PPFD/Lux换算参数与正式Care策略尚未发布",
+    "DMN行为一致性及Modeler往返未验收"
+  ],
+  "sideEffects": "无网络、数据库、计划、事实或生产发布写入",
+  "sourceHashes": {
+    "cloudfunctions-v2/src/care/light/bound-solar-window-interval.ts": "6bda9b7aced4697d092f01eba759f3ebd1e7420dedfc783914c1c79ce74d8ce7",
+    "cloudfunctions-v2/src/care/application/replay-solar-window-radiation.ts": "6e4d0ec47e524b5acdd78d15dc5833123850f46806517d61b66a6c215e7a83fc"
+  }
+}

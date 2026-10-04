@@ -4757,14 +4757,16 @@
         "edgeResult": "boundary",
         "meanProjectionMethod": "nonnegative_whole_interval_bounds",
         "experimentalSolarPosition": "noaa_general_solar_position",
-        "solarTimeStandard": "UTC"
+        "solarTimeStandard": "UTC",
+        "experimentalIntervalMethod": "harmonic_global_rate_bound_UTC_year_segments"
       },
       "owner": "care",
       "sourceRefs": [
         "cloudfunctions-v2/models/care/window-direct-contract.md",
         "cloudfunctions-v2/models/care/direct-reach-contract.md",
         "cloudfunctions-v2/models/care/window-mean-direct-contract.md",
-        "cloudfunctions-v2/models/care/solar-direction-contract.md"
+        "cloudfunctions-v2/models/care/solar-direction-contract.md",
+        "cloudfunctions-v2/models/care/solar-interval-bound-contract.md"
       ],
       "consumers": [
         "care 离线窗面直射计算",
@@ -4775,7 +4777,7 @@
       "phase": "P4",
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "clickUpTicketId": "z8v0kmr973",
-      "expected": "竖窗正对高度60度太阳，600 DNI 投影为300 W/m²；背面截断；时刻错配拒绝；连窗墙体不当作玻璃，距离参与射线可达性而非平方衰减；区间平均DNI只乘同一完整区间的可靠投影上下界，不以均值乘均值冒充精确结果；NOAA近似太阳方向仅供离线实验，UTC、闰年、未定义方位与瞬时/均值语义不得混用",
+      "expected": "竖窗正对高度60度太阳，600 DNI 投影为300 W/m²；背面截断；时刻错配拒绝；连窗墙体不当作玻璃，距离参与射线可达性而非平方衰减；区间平均DNI只乘同一完整区间的可靠投影上下界，不以均值乘均值冒充精确结果；NOAA近似太阳方向仅供离线实验，UTC、闰年、未定义方位与瞬时/均值语义不得混用；完整时段界限由谐波导数全局上界构造，跨UTC年分段，地平线门单独处理；只覆盖近似模型",
       "decisionGroup": "hard_business_rule"
     },
     {
