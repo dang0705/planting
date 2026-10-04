@@ -1,0 +1,24 @@
+{
+  "scope": "E03位置/光照/通风事实档案合同",
+  "layers": {
+    "L0": "planting针对位置、光照和通风Schema的level=[0,1,2]find超时，未提供该层上下文",
+    "L1": "planting针对位置、光照和通风Schema的level=[0,1,2]find超时，未提供该层上下文",
+    "L2": "planting针对位置、光照和通风Schema的level=[0,1,2]find超时，未提供该层上下文"
+  },
+  "missing": [
+    "公开环境事实已有字段/清除语义",
+    "当前事实归属存储列与版本关系"
+  ],
+  "allowed": [
+    "contracts/user-plant.md仅档案/位置/环境章节",
+    "schema/003_user_plant.sql仅user_plant_profiles与user_plant_care_contexts列",
+    "architecture/configuration-variable-catalog.json仅location/light/ventilation输入相关条目及其直接合同字段章节"
+  ],
+  "prohibited": "不读取全目录、全领域或全部图",
+  "findings": [
+    "现有用户植物合同只冻结环境字段类别，完整公开字段Schema缺失",
+    "003 care_context列强制位置、栽培方式、光照和通风成组存在；不能用隐式默认支持片段写入",
+    "已向用户确认是否复用V1事实字段；等待确认期间独立推进已冻结临时绑定分支"
+  ],
+  "bindingContextReuse": "复用E03-promotion-context已记录L0/L1/L2失败与016定向准入，016三张绑定相关表的归属、唯一约束、时间、投影/命令/事实列为本次事务必需；未扩大到其他架构"
+}

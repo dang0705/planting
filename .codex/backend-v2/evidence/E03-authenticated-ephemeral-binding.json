@@ -1,0 +1,65 @@
+{
+  "ticket": "z8v0kmr9mj",
+  "step": "E03",
+  "verifiedAt": "2026-10-04T21:16:42.073788+00:00",
+  "scope": "已登录临时案例显式绑定本人已有植物的三表事务持久化",
+  "expected": [
+    "统一计划临时到长期显式绑定/不修改原结果/不自动写行为规则",
+    "016三表归属、并发唯一及成功关系外键",
+    "authenticated-ephemeral-binding-contract.md"
+  ],
+  "configuration": "无新参数或默认TTL；只消费既有案例绝对expires_at_ms与现有归属/生命周期约束，幂等键只保存摘要，请求摘要由Repository计算",
+  "context": ".codex/backend-v2/evidence/E03-environment-profile-context.json",
+  "verification": {
+    "tdd": {
+      "path": "独立Expected先落盘；快速路径实际移除期限守卫，真实SQL精确截止1项RED；finally逐字节恢复9项GREEN",
+      "mutationLog": "/tmp/planting-e03-ephemeral-binding-expiry-mutation-red.log",
+      "restoredBeforeTSDocSha256": "53e158ad4b1097c72a358fcfcfa0a026aa401d43b20df12b6b91d7791597fc34",
+      "unitTests": 12
+    },
+    "mysql": {
+      "tests": 9,
+      "layer": "unit_real_data",
+      "log": "/tmp/planting-e03-ephemeral-binding-mysql-restored.log",
+      "path": "隔离MySQL8.4显式事务→本人案例/目标行锁→规范摘要命令→bound投影→唯一绑定事实→同事务读回；并发单赢家及末步触发器失败整体回滚",
+      "replaced": "统一用户/身份表仅FK桩；测试直接调用Repository，未证明Principal或HTTP。发布/TTL策略未被虚构"
+    },
+    "rootUT": {
+      "files": 179,
+      "tests": 1646,
+      "exit": 0
+    },
+    "node22UT": {
+      "files": 179,
+      "tests": 1646,
+      "exit": 0
+    },
+    "typecheck": {
+      "exit": 0
+    },
+    "lint": {
+      "exit": 0,
+      "errors": 0,
+      "warnings": 2508
+    },
+    "build": {
+      "exit": 0,
+      "limit": "子npm仍Node24 engine警告，不是CloudBase运行证明"
+    },
+    "finalLogsPrefix": "/tmp/planting-e03-ephemeral-binding-final-"
+  },
+  "boundaries": [
+    "绑定应用编排/HTTP/真实登录尚未接入",
+    "新建目标植物分支与游客认领仍待实现",
+    "临时案例创建TTL仍待确认，本用例不决定或延长TTL",
+    "环境档案字段承接方式等待用户确认",
+    "不改原结果、不创建植物、行为、计划、奖励或生产资源",
+    "H5仅轻量数据投影，无当前页面运行证据"
+  ],
+  "hashes": {
+    "cloudfunctions-v2/models/user-plant/authenticated-ephemeral-binding-contract.md": "210bf2ec6f64a9e9a531ef7dc05ec53f24d1394e382205489792aca29029f4bc",
+    "cloudfunctions-v2/src/user-plant/repository/mysql-authenticated-ephemeral-binding-repository.ts": "629a47d5069ae518cd72711218ee026f8147cda9772c6b9b7bc27810c48729ad",
+    "cloudfunctions-v2/test/user-plant/authenticated-ephemeral-binding-repository.spec.ts": "a2fb22ac4d02eb08218feb425edff0de7d20cc7004b06f60eb457bb59c6651a9",
+    "cloudfunctions-v2/test/e2e/authenticated-ephemeral-binding.mysql.spec.ts": "2c922fff716b49e00a5246d074ff8774b87713d59b9f2e59ec186702b736129f"
+  }
+}

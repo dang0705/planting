@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T21:07:19.975089+00:00",
-  "sourceRevision": 96,
-  "sourceUpdatedAt": "2026-10-04T21:07:19.975089+00:00",
+  "generatedAt": "2026-10-04T21:16:42.073788+00:00",
+  "sourceRevision": 97,
+  "sourceUpdatedAt": "2026-10-04T21:16:42.073788+00:00",
   "currentStep": "E03",
   "currentTicketId": "z8v0kmr9mj",
   "tasks": [
@@ -264,16 +264,16 @@
     {
       "id": "z8v0kmr9mj",
       "step": "E03",
-      "version": 8,
+      "version": 9,
       "status": "codex running",
-      "stage": "档案PATCH正式入口已接只读发布策略；完整档案和真实登录待验收",
+      "stage": "登录临时案例绑定已有植物的三表事务通过；应用/HTTP待接",
       "accepted": false,
       "summary": [
-        "E03：PATCH入口已接HTTP/档案两份活动发布快照",
-        "同请求只读一次；缺失/损坏/失效策略拒绝，未补默认",
-        "真实MySQL8项；摘要守卫突变1项RED→逐字节恢复GREEN",
-        "根与Node22全量1634/1634；类型/检查/构建通过",
-        "正式发布与登录未验收；完整档案、临时TTL和认领待补齐"
+        "E03：登录临时案例→本人已有植物的三表事务已实现",
+        "原期限/结果保留；同键超期重放、异目标及并发单赢家",
+        "真实MySQL9项；到期守卫1项RED→逐字节恢复GREEN",
+        "根与Node22全量1646/1646；类型/检查/构建通过",
+        "绑定应用/HTTP和新建分支待接；完整档案承接方式待确认"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E03-promotion-context.json",
@@ -285,18 +285,19 @@
         ".codex/backend-v2/evidence/E03-profile-patch.json",
         ".codex/backend-v2/evidence/E03-public-profile-read.json",
         ".codex/backend-v2/evidence/E03-profile-update-http.json",
-        ".codex/backend-v2/evidence/E03-profile-write-policy-read.json"
+        ".codex/backend-v2/evidence/E03-profile-write-policy-read.json",
+        ".codex/backend-v2/evidence/E03-authenticated-ephemeral-binding.json"
       ],
       "blockingReason": null,
-      "nextAction": "冻结并接入剩余位置、光照及通风档案字段；真实登录/策略发布、临时TTL和认领分别完成验收",
+      "nextAction": "接显式绑定应用/HTTP与创建目标容量校验；环境档案字段等待一次承接方式确认",
       "sync": {
-        "version": 8,
+        "version": 9,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING与五行评论1100440000090914已读回"
+        "readback": "Chrome CODEX RUNNING及五行评论1100440000090925已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T21:07:45.955991+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T21:17:10.498564+00:00",
   "lastFailure": null
 }
