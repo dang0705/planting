@@ -1,0 +1,48 @@
+{
+  "ticket": "z8v0kmr974",
+  "step": "E05",
+  "accepted": false,
+  "verifiedAt": "2026-10-04T17:59:57.428201+00:00",
+  "target": "已冻结固定题包创建和作答运行接线",
+  "assumptions": [
+    "复用共享事务、幂等、身份域及已确认HTTP规则",
+    "固定发布缺失仍不可用，不准入视觉Provider"
+  ],
+  "checks": {
+    "testFirst": "运行服务用例先于实现落盘；缺模块RED制品 /tmp/planting-e05-server-red.log",
+    "mutation": "真实HTTP创建接线临时改为503，1项失败/43项通过；完整恢复后44项通过",
+    "mysql": "1文件44项；真实SQL与HTTP，身份为受控替身，隔离发布非正式审核",
+    "fullUnit": "155文件1370项全部通过",
+    "related": "27文件348项通过",
+    "typecheck": "exit 0",
+    "lint": {
+      "errors": 0,
+      "warnings": 1781
+    },
+    "build": "独立diagnosis CommonJS函数产物，目标Nodejs22.21",
+    "artifactProbe": {
+      "health": true,
+      "unauthenticatedStatus": 401,
+      "runtime": "v24.21.0",
+      "limits": "未取得本地Node22运行器，不声称Node22实测；不连接真实数据库、不证明云端部署"
+    }
+  },
+  "logs": [
+    "/tmp/planting-e05-server-red.log",
+    "/tmp/planting-e05-server-mutation.log",
+    "/tmp/planting-e05-server-mysql-restored.log",
+    "/tmp/planting-e05-server-full.log",
+    "/tmp/planting-e05-server-related-restored.log",
+    "/tmp/planting-e05-server-build-restored.log"
+  ],
+  "continueCondition": "正式Provider与结果生成分别满足策略及兼容发布准入",
+  "failureCondition": "归属、发布摘要、原子事务或公开合同不一致即拒绝",
+  "rollback": "还原诊断服务接线及构建入口，不改数据库",
+  "timebox": "本增量仅组装既有创建和作答路径",
+  "limits": [
+    "无部署或生产DDL",
+    "无完整诊断结果生成/读取",
+    "004结果表未提供已冻结结果回放所需完整审计字段，需要在结果持久化增量明确映射",
+    "临时案例、小青、奖励与正式CMS发布未验收"
+  ]
+}

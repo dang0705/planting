@@ -26,7 +26,8 @@ const functionsDir = join(buildDir, 'functions')
 const functionEntries = [
   { name: 'identity', entry: 'src/entries/identity.ts' },
   { name: 'plant-knowledge', entry: 'src/entries/plant-knowledge.ts' },
-  { name: 'user-plant', entry: 'src/entries/user-plant.ts' }
+  { name: 'user-plant', entry: 'src/entries/user-plant.ts' },
+  { name: 'diagnosis', entry: 'src/entries/diagnosis.ts' }
 ]
 
 /** 生产依赖锁定版本；必须与 package.json 的 dependencies 完全一致。 */

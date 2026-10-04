@@ -1,8 +1,9 @@
+import { createDiagnosisServer } from '../../src/diagnosis/http/server.js'
 import { createMysqlDynamicPestReleaseReader } from '../../src/diagnosis/repository/mysql-dynamic-pest-release-reader.js'
 import { projectPestQuestionPackage } from '../../src/diagnosis/http/pest-question-public-projection.js'
 import { selectV1PestQuestionSnapshot } from '../../src/diagnosis/domain/pest-question-eligibility.js'
 import { createIdempotentDiagnosisCreationService, calculateDiagnosisCreationRequestHash } from '../../src/diagnosis/application/idempotent-create-diagnosis.js'
-import { createDiagnosisCreationRouteHandler, diagnosisCreationRoute, projectDiagnosisCreationResponse } from '../../src/diagnosis/http/create-session-route.js'
+import { projectDiagnosisCreationResponse } from '../../src/diagnosis/http/create-session-route.js'
 import { spawnSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -377,12 +378,8 @@ describe('固定会话创建到作答纵向链路',()=>{
     return {...input,idempotency:{principalType:'user' as const,principalScopeHash:createHash('sha256').update(input.userRef).digest('hex'),httpMethod:'POST',normalizedPath:'/api/v2/diagnosis/sessions',operationId:'createDiagnosisSession',idempotencyKeyHash:createHash('sha256').update(key).digest('hex'),requestHash:calculateDiagnosisCreationRequestHash(input),createdAtMs:2500,expiresAtMs:5000}}
   }
   test('真实HTTP创建、重放旧题包、归属拒绝与四题答案读回',async()=>{
-    const deps=creationDependencies();const createSession=createIdempotentDiagnosisCreationService(deps)
     const resolvePrincipal=async(command:{bearerToken:string})=>({principalType:'user',user_id:command.bearerToken==='owner-token'?'usr_owner123':'usr_other123',sessionVersion:1,authenticatedVia:'wechat',issuedAt:'2026-10-04T00:00:00Z',expiresAt:'2026-10-05T00:00:00Z'} as UserPrincipalDto)
-    const server=createServer(createRouteDispatcher([
-      {route:diagnosisCreationRoute,handler:createDiagnosisCreationRouteHandler({now:()=>2500,writeAudit:()=>undefined,resolvePrincipal,createSession})},
-      {route:diagnosisAnswerRoute,handler:createDiagnosisAnswerRouteHandler({now:()=>2500,writeAudit:()=>undefined,resolvePrincipal,submitAnswers:input=>createIdempotentDiagnosisAnswerService({...deps,projectPublicResponse:r=>projectDiagnosisAnswerResponse(input.diagnosisRef,r)})(input)})}
-    ]))
+    const server=createDiagnosisServer({connectionSource:source,resolvePrincipal,now:()=>2500,writeAudit:()=>undefined,recordRollbackFailure:()=>undefined})
     await new Promise<void>(r=>server.listen(0,'127.0.0.1',r))
     try{
       const base=`http://127.0.0.1:${(server.address() as AddressInfo).port}/api/v2/diagnosis/sessions`
