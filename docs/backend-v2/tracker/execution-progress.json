@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T17:35:54.440220+00:00",
-  "sourceRevision": 68,
-  "sourceUpdatedAt": "2026-10-04T17:35:54.440220+00:00",
+  "generatedAt": "2026-10-04T17:44:35.445962+00:00",
+  "sourceRevision": 69,
+  "sourceUpdatedAt": "2026-10-04T17:44:35.445962+00:00",
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
   "tasks": [
@@ -199,16 +199,16 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 17,
+      "version": 18,
       "status": "codex running",
-      "stage": "虫害创建共享幂等真实MySQL验收",
+      "stage": "虫害公开创建HTTP与真实MySQL切片验证",
       "accepted": false,
       "summary": [
-        "E05虫害原子创建共享幂等已通过真实MySQL验收",
-        "同键并发只建一次；换图409；会话/视觉/账本共同回滚",
-        "两组真实SQL83项，全量1327/1327，类型与lint通过",
-        "重放守卫3项真实SQL突变RED→完整还原后GREEN",
-        "正式虫害HTTP、模型/Prompt溯源和准备准入仍未验收"
+        "E05虫害创建HTTP接共享幂等/原子用例与安全题目投影",
+        "真实HTTP/MySQL两组84项；跨用户404、换图409、重放通过",
+        "相关330项，全量1352/1352，类型/构建及lint通过",
+        "经典HTTP8项RED、字段守卫12项突变RED→完整恢复",
+        "模型准备与兼容发布未准入的运行入口仍503；E05未收口"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
@@ -226,18 +226,19 @@
         ".codex/backend-v2/evidence/E05-owned-visual-evidence.json",
         ".codex/backend-v2/evidence/E05-atomic-pest-session.json",
         ".codex/backend-v2/evidence/E05-pest-creation-idempotency.json",
-        ".codex/backend-v2/evidence/E05-pest-creation-idempotency-mysql.json"
+        ".codex/backend-v2/evidence/E05-pest-creation-idempotency-mysql.json",
+        ".codex/backend-v2/evidence/E05-pest-creation-http.json"
       ],
       "blockingReason": null,
-      "nextAction": "冻结虫害公开创建DTO及零题响应，再接已有幂等创建用例；正式准备适配器与模型/Prompt溯源仍须准入",
+      "nextAction": "核验受控虫害准备的模型/Prompt兼容发布与证据语义、档位、成本和保留准入，再实现正式适配器；其余诊断结论及临时案例继续推进",
       "sync": {
-        "version": 17,
+        "version": 18,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING与五行评论1100440000090435已读回"
+        "readback": "Chrome CODEX RUNNING与五行评论1100440000090441已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T17:36:26.699548+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T17:45:42.115107+00:00",
   "lastFailure": null
 }

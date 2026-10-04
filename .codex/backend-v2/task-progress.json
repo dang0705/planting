@@ -1,19 +1,19 @@
 {
-  "revision": 68,
+  "revision": 69,
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
-  "updatedAt": "2026-10-04T17:35:54.440220+00:00",
+  "updatedAt": "2026-10-04T17:44:35.445962+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "虫害原子创建共享幂等真实MySQL验收",
+    "target": "已登录用户植物的虫害公开创建合同与已有HTTP路由接线",
     "assumptions": [
-      "共享账本唯一约束和既有事务支持该切片",
-      "Provider准备保持受控端口替身"
+      "模式specific_pest_visual与V1复用题包一致",
+      "无正式准备适配器时明确503"
     ],
-    "minimumValidation": "同请求重放和并发仅一组业务记录；冲突拒绝；失败回滚；未知提交只读对账",
-    "continueCondition": "复用现有表及运行适配器，不新增业务配置",
-    "failureCondition": "测试显示孤立业务写入或需绕过019时先修复真实缺陷",
-    "rollback": "隔离容器测试完成自动清理，生产库不变",
+    "minimumValidation": "独立Expected先落盘、非法客户端证据拒绝、真实HTTP/SQL重放和权限验证",
+    "continueCondition": "保持固定症状合同、复用既有路由和共享幂等",
+    "failureCondition": "需要猜测视觉或成本策略时不开放对应运行适配器",
+    "rollback": "回退本增量HTTP接线，无生产DDL和部署",
     "timeLimitMinutes": 40
   },
   "tasks": [
@@ -200,10 +200,10 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 17,
+      "version": 18,
       "priority": "normal",
       "status": "codex running",
-      "stage": "虫害创建共享幂等真实MySQL验收",
+      "stage": "虫害公开创建HTTP与真实MySQL切片验证",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
@@ -221,18 +221,19 @@
         ".codex/backend-v2/evidence/E05-owned-visual-evidence.json",
         ".codex/backend-v2/evidence/E05-atomic-pest-session.json",
         ".codex/backend-v2/evidence/E05-pest-creation-idempotency.json",
-        ".codex/backend-v2/evidence/E05-pest-creation-idempotency-mysql.json"
+        ".codex/backend-v2/evidence/E05-pest-creation-idempotency-mysql.json",
+        ".codex/backend-v2/evidence/E05-pest-creation-http.json"
       ],
       "summary": [
-        "E05虫害原子创建共享幂等已通过真实MySQL验收",
-        "同键并发只建一次；换图409；会话/视觉/账本共同回滚",
-        "两组真实SQL83项，全量1327/1327，类型与lint通过",
-        "重放守卫3项真实SQL突变RED→完整还原后GREEN",
-        "正式虫害HTTP、模型/Prompt溯源和准备准入仍未验收"
+        "E05虫害创建HTTP接共享幂等/原子用例与安全题目投影",
+        "真实HTTP/MySQL两组84项；跨用户404、换图409、重放通过",
+        "相关330项，全量1352/1352，类型/构建及lint通过",
+        "经典HTTP8项RED、字段守卫12项突变RED→完整恢复",
+        "模型准备与兼容发布未准入的运行入口仍503；E05未收口"
       ],
       "blockingReason": null,
-      "nextAction": "冻结虫害公开创建DTO及零题响应，再接已有幂等创建用例；正式准备适配器与模型/Prompt溯源仍须准入",
-      "ticketReadback": "Chrome CODEX RUNNING与五行评论1100440000090435已读回",
+      "nextAction": "核验受控虫害准备的模型/Prompt兼容发布与证据语义、档位、成本和保留准入，再实现正式适配器；其余诊断结论及临时案例继续推进",
+      "ticketReadback": "Chrome CODEX RUNNING与五行评论1100440000090441已读回",
       "milestoneCommit": "91987513"
     }
   ],
@@ -337,7 +338,7 @@
       ]
     }
   ],
-  "nextAction": "冻结虫害公开创建DTO及零题响应，再接已有幂等创建用例；正式准备适配器与模型/Prompt溯源仍须准入",
+  "nextAction": "核验受控虫害准备的模型/Prompt兼容发布与证据语义、档位、成本和保留准入，再实现正式适配器；其余诊断结论及临时案例继续推进",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -825,5 +826,20 @@
     "missing": "隔离SQL验证需使用已确认http_idempotency_records表的实际DDL",
     "allowed": "仅定位008_foundation.sql中http_idempotency_records CREATE TABLE；复用已获准003资产、004会话/视觉、007发布和019长期会话约束的定向测试载体",
     "prohibited": "不读取其他表DDL或整个目录"
+  },
+  "diagnosisPestCreationHttpReadAdmission": {
+    "task": "E05 z8v0kmr974 虫害公开创建合同与HTTP",
+    "layers": {
+      "L0": "当前任务level=[0,1,2] find连接失败或超时，未提供API字段",
+      "L1": "同次定向检索未返回概述；复用既有创建合同读取准入",
+      "L2": "同次定向检索未返回原文；已有本地冻结虫害创建合同可用"
+    },
+    "missing": "createDiagnosisSession的公开虫害字段、零题响应以及OpenAPI具体Schema装配",
+    "allowed": [
+      "api/route-registry.json仅createDiagnosisSession",
+      "api/generate-openapi.mjs仅CreateDiagnosisSessionRequest和DiagnosisSessionResponse及相关import",
+      "api/manifest.json仅对应制品摘要"
+    ],
+    "prohibited": "不读取全目录或其他路由"
   }
 }

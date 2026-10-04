@@ -18,14 +18,16 @@ import { UnifiedUserPrincipalResolveError } from '../../identity/domain/resolve-
 import type { ResolveUserPrincipalCommand } from '../../identity/application/resolve-user-principal.js'
 import {
   calculateDiagnosisCreationRequestHash,
-  type IdempotentDiagnosisCreationInput
+  calculatePestDiagnosisCreationRequestHash,
+  type IdempotentDiagnosisCreationInput,
+  type IdempotentPestDiagnosisCreationInput
 } from '../application/idempotent-create-diagnosis.js'
 import {
-  validateCreateDiagnosisSessionRequest,
-  validateDiagnosisSessionCreationResponse,
-  type CreateDiagnosisSessionRequestDto,
-  type DiagnosisSessionCreationResponseDto
-} from './create-session-contract.js'
+  validatePublicDiagnosisCreationRequest,
+  validatePublicDiagnosisCreationResponse,
+  type PublicDiagnosisCreationRequest,
+  type PublicDiagnosisCreationResponse
+} from './pest-create-session-contract.js'
 export { projectDiagnosisCreationResponse } from './create-session-contract.js'
 
 /** 与登记一致的会话创建操作；游客分支未接入时明确不可用，不伪装非法身份。 */
@@ -44,6 +46,10 @@ export interface DiagnosisCreationRouteDependencies {
   /** 受控应用用例：发布准入、归属与会话创建及幂等保存；此处理器不会自己发布题包。 */
   readonly createSession: (
     input: IdempotentDiagnosisCreationInput
+  ) => Promise<HttpIdempotencyPublicResponseSnapshot>
+  /** 缺正式准备准入时不提供此端口；不能用固定症状创建冒充虫害。 */
+  readonly createPestSession?: (
+    input: IdempotentPestDiagnosisCreationInput
   ) => Promise<HttpIdempotencyPublicResponseSnapshot>
   /** 服务端时钟，不采纳客户端时间。 */
   readonly now: () => number
@@ -99,7 +105,7 @@ function parse(input: Restricted) {
   }
   const key = input.headers['idempotency-key']
   if (
-    !validateCreateDiagnosisSessionRequest(body) ||
+    !validatePublicDiagnosisCreationRequest(body) ||
     typeof key !== 'string' ||
     !keyPattern.test(key)
   ) {
@@ -108,9 +114,7 @@ function parse(input: Restricted) {
   return { body, key }
 }
 /** 严格检查用例的公开投影，拒绝内部字段及非法状态码穿透。 */
-function unwrap(
-  result: HttpIdempotencyPublicResponseSnapshot
-): DiagnosisSessionCreationResponseDto {
+function unwrap(result: HttpIdempotencyPublicResponseSnapshot): PublicDiagnosisCreationResponse {
   if ('error' in result.body) {
     if (
       !validators.errorResponse(result.body) ||
@@ -139,7 +143,7 @@ function unwrap(
     }
     throw new PublicRequestError(result.status, type, messages[type])
   }
-  if (result.status !== 200 || !validateDiagnosisSessionCreationResponse(result.body.data)) {
+  if (result.status !== 200 || !validatePublicDiagnosisCreationResponse(result.body.data)) {
     throw new Error('诊断公开确认非法')
   }
   return result.body.data
@@ -153,11 +157,11 @@ export function createDiagnosisCreationRouteHandler(
       Restricted,
       ResolveUserPrincipalCommand,
       UserPrincipalDto | GuestPrincipalDto,
-      { body: CreateDiagnosisSessionRequestDto; key: string },
-      IdempotentDiagnosisCreationInput,
-      IdempotentDiagnosisCreationInput,
+      { body: PublicDiagnosisCreationRequest; key: string },
+      IdempotentDiagnosisCreationInput | IdempotentPestDiagnosisCreationInput,
+      IdempotentDiagnosisCreationInput | IdempotentPestDiagnosisCreationInput,
       HttpIdempotencyPublicResponseSnapshot,
-      DiagnosisSessionCreationResponseDto
+      PublicDiagnosisCreationResponse
     >({
       requestLimits: { kind: 'execute', run: raw => restricted(raw, path) },
       identityValidate: {
@@ -194,13 +198,15 @@ export function createDiagnosisCreationRouteHandler(
           if (principal.principalType !== 'user') {
             throw new PublicRequestError(503, 'SERVICE_UNAVAILABLE', '临时问诊创建暂不可用')
           }
-          const { userPlantRef, mode } = dto.body
+          const { userPlantRef } = dto.body
           const startedAtMs = deps.now()
           const input = {
             userRef: principal.user_id,
             userPlantRef,
-            mode,
-            startedAtMs
+            startedAtMs,
+            ...(dto.body.mode === 'specific_pest_visual'
+              ? { mode: 'pest' as const, assetRef: dto.body.assetRef }
+              : { mode: dto.body.mode })
           }
           return {
             ...input,
@@ -211,7 +217,10 @@ export function createDiagnosisCreationRouteHandler(
               normalizedPath: diagnosisCreationRoute.path,
               operationId: diagnosisCreationRoute.operationId,
               idempotencyKeyHash: digest(dto.key),
-              requestHash: calculateDiagnosisCreationRequestHash(input),
+              requestHash:
+                input.mode === 'pest'
+                  ? calculatePestDiagnosisCreationRequestHash(input)
+                  : calculateDiagnosisCreationRequestHash(input),
               createdAtMs: startedAtMs,
               expiresAtMs: startedAtMs + retentionMs
             }
@@ -221,7 +230,32 @@ export function createDiagnosisCreationRouteHandler(
       domainRule: { kind: 'execute', run: ({ command }) => command },
       transactionPersistence: {
         kind: 'execute',
-        run: ({ domainDecision }) => deps.createSession(domainDecision)
+        run: async ({ domainDecision }) => {
+          const result =
+            domainDecision.mode === 'pest'
+              ? deps.createPestSession
+                ? await deps.createPestSession(domainDecision)
+                : {
+                    status: 503,
+                    body: { error: { type: 'SERVICE_UNAVAILABLE', message: '虫害问诊暂不可用' } }
+                  }
+              : await deps.createSession(domainDecision)
+          if (result.status === 200 && 'data' in result.body) {
+            const data = result.body.data
+            const expectedMode =
+              domainDecision.mode === 'pest' ? 'specific_pest_visual' : domainDecision.mode
+            if (
+              data === null ||
+              typeof data !== 'object' ||
+              Array.isArray(data) ||
+              !('mode' in data) ||
+              data.mode !== expectedMode
+            ) {
+              throw new Error('创建响应模式与请求不匹配')
+            }
+          }
+          return result
+        }
       },
       publicResponse: { kind: 'execute', run: unwrap },
       writeAudit: deps.writeAudit

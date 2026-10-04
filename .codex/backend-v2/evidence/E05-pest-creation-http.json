@@ -1,0 +1,85 @@
+{
+  "ticketId": "z8v0kmr974",
+  "step": "E05",
+  "verifiedAt": "2026-10-04T17:44:35.445962+00:00",
+  "scope": "已登录长期植物的虫害创建HTTP请求与安全题包响应、共享幂等真实MySQL",
+  "expectedSource": [
+    "cloudfunctions-v2/models/diagnosis/pest-create-http-contract.md",
+    "既有V1虫害题目安全提示与用户批准题数",
+    "既有createDiagnosisSession路由、错误和共享HTTP限制"
+  ],
+  "proofBoundary": {
+    "level": [
+      "unit_fake/L3 HTTP协议",
+      "unit_real_data/L1 V1题目公开投影",
+      "e2e_real_api/L3 本地HTTP与隔离MySQL"
+    ],
+    "realPath": "Node请求链→统一主体→DTO→受控虫害用例→共享事务/账本→资产/发布/选题→会话/视觉/首次响应→公开投影",
+    "replaced": "身份解析与分析准备是场景替身；未运行真实模型",
+    "notProven": [
+      "正式视觉Provider、模型/Prompt兼容发布和成本准入",
+      "CloudBase diagnosis构建入口与部署",
+      "游客/登录临时案例",
+      "问诊结论与后续养护写入"
+    ]
+  },
+  "tdd": {
+    "path": "HTTP代表性Expected先于产品落盘，经典RED与受控字段守卫突变后完整恢复",
+    "initialHttpRed": {
+      "failed": 8,
+      "passed": 13,
+      "log": "/tmp/planting-e05-pest-http-red.log"
+    },
+    "openapiRed": {
+      "failed": 1,
+      "log": "/tmp/planting-e05-pest-openapi-red.log"
+    },
+    "mutation": {
+      "break": "跳过请求DTO拒绝分支",
+      "failed": 12,
+      "passed": 9,
+      "log": "/tmp/planting-e05-pest-http-mutation.log",
+      "restored": true
+    }
+  },
+  "checks": {
+    "related": {
+      "files": 25,
+      "passed": 330,
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-pest-http-related.log"
+    },
+    "mysql": {
+      "files": 2,
+      "passed": 84,
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-pest-http-mysql.log"
+    },
+    "fullUnit": {
+      "files": 153,
+      "passed": 1352,
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-pest-http-full-ut.log"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-pest-http-typecheck.log"
+    },
+    "build": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-pest-http-build.log"
+    },
+    "lint": {
+      "errors": 0,
+      "log": "/tmp/planting-e05-pest-http-lint.log",
+      "warnings": 1775
+    }
+  },
+  "configurationDecision": "复用既有请求大小、幂等期限、操作和路径；assetRef长度依据003表VARCHAR(64)，不新增运营参数或Provider默认值",
+  "nextAction": "核验受控虫害准备的模型/Prompt兼容发布与证据语义、档位、成本和保留准入，再实现正式适配器；其余诊断结论及临时案例继续推进",
+  "ticketReadback": {
+    "commentId": "1100440000090441",
+    "status": "codex running",
+    "note": "E05虫害创建HTTP接共享幂等/原子用例与安全题目投影\n真实HTTP/MySQL两组84项；跨用户404、换图409、重放通过\n相关330项，全量1352/1352，类型/构建及lint通过\n经典HTTP8项RED、字段守卫12项突变RED→完整恢复\n模型准备与兼容发布未准入的运行入口仍503；E05未收口"
+  }
+}

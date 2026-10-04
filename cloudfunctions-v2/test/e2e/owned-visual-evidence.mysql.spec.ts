@@ -5,6 +5,7 @@ import { createMysqlDynamicPestReleaseReader } from '../../src/diagnosis/reposit
 import { calculateCanonicalJsonSha256 } from '../../src/foundation/json/canonical-json-sha256.js'
 import { projectPestQuestionPackage } from '../../src/diagnosis/http/pest-question-public-projection.js'
 import { registerPestIdempotencyMysqlTests } from '../support/pest-creation-idempotency-mysql-cases.js'
+import { registerPestCreationHttpMysqlTests } from '../support/pest-creation-http-mysql-cases.js'
 import { spawnSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -403,3 +404,4 @@ test('资产内容变化使旧分析准备失效，事务不留下新会话', as
 })
 
 registerPestIdempotencyMysqlTests({ atomicDependencies, counts, database: () => db })
+registerPestCreationHttpMysqlTests({ atomicDependencies, counts })

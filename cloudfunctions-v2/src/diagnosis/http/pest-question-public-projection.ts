@@ -29,7 +29,7 @@ export interface PublicPestQuestionPackage {
 }
 const base =
   diagnosisSessionCreationResponseSchema.properties.questionPackage.properties.questions.items
-const schema = {
+export const publicPestQuestionSchema = {
   ...base,
   required: [
     ...base.required,
@@ -52,7 +52,7 @@ const schema = {
     skipOptionEnabled: { const: true }
   }
 }
-const validate = new Ajv({ allErrors: true }).compile<PublicPestQuestion>(schema)
+const validate = new Ajv({ allErrors: true }).compile<PublicPestQuestion>(publicPestQuestionSchema)
 /** 原快照必须完整且摘要一致；缺安全字段不能返回半题包。 */
 export function projectPestQuestionPackage(
   locked: LockedQuestionPackageSnapshot

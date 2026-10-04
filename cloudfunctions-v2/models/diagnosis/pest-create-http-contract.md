@@ -1,0 +1,11 @@
+# 虫害会话公开创建合同
+
+E05原票z8v0kmr974沿用POST /api/v2/diagnosis/sessions及createDiagnosisSession，不新增路由。固定黄叶与萎蔫请求、响应保持原合同。虫害请求仅包含userPlantRef、mode=specific_pest_visual、assetRef；私有资产引用为非空字符串，最大长度按既有SQL字段64字符。不接受客户端身份、档位、模型输出、候选、证据键、题目、日期或发布引用。固定症状请求不能携带assetRef。
+
+身份域提供统一用户，服务端构造mode=pest的内部命令；归属由原事务重新核验。共享幂等请求摘要包含资产引用，同键重放返回首次公开题包。未提供受控虫害创建用例时返回503 SERVICE_UNAVAILABLE。游客临时创建仍待独立接入，不伪造长期植物。
+
+创建成功返回200：data包含diagnosisSessionRef、mode=specific_pest_visual、questionPackage。题包包含questionCount和questions，题数必须等于数组长度且至少一题。每题保留已有公开显示字段以及riskLevel、riskNotice、safetyInstructions、requiresExplicitConsent、skipOptionEnabled；风险、同意、跳过不可省略。不得返回发布引用、摘要、资产、内部病因映射或原始模型输出。成功模式必须与请求相符。
+
+no_questions不创建会话、不确认病因；正式诊断结果用例尚未接入，当前公开创建响应为503 SERVICE_UNAVAILABLE，不返回空成功题包或虚构会话。not_found统一404，unavailable统一503，非法请求400，同键异参409，错误原文不公开。未来结果能力的开放须独立修订合同与验收。
+
+真实HTTP验收分别报告：替身身份/数据库场景与真实MySQL场景。正式视觉准备适配器、模型/Prompt兼容发布及生产部署均不由本合同宣称完成。

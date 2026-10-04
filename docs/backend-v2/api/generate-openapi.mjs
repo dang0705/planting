@@ -465,6 +465,31 @@ function serviceHeaderParameter(name, description) {
   }
 }
 
+/** 虫害创建使用条件资产字段和独立安全题目分支；固定症状形状保持原合同。 */
+const creationRequest = openapi.components.schemas.CreateDiagnosisSessionRequest
+creationRequest.properties.mode.enum.push('specific_pest_visual')
+creationRequest.properties.assetRef = { type: 'string', minLength: 1, maxLength: 64, pattern: '\\S' }
+creationRequest.allOf = [{
+  if: { properties: { mode: { const: 'specific_pest_visual' } } },
+  then: { required: ['assetRef'] },
+  else: { not: { required: ['assetRef'] } },
+}]
+const creationResponse = openapi.components.schemas.DiagnosisSessionCreationResponse
+const fixedCreationData = creationResponse.properties.data
+const pestCreationData = structuredClone(fixedCreationData)
+pestCreationData.properties.mode = { const: 'specific_pest_visual' }
+const pestQuestions = pestCreationData.properties.questionPackage.properties.questions
+pestQuestions.minItems = 1
+pestQuestions.items.required.push('riskLevel', 'riskNotice', 'safetyInstructions', 'requiresExplicitConsent', 'skipOptionEnabled')
+Object.assign(pestQuestions.items.properties, {
+  riskLevel: { enum: ['low', 'medium', 'high'] },
+  riskNotice: { type: 'string', minLength: 1, pattern: '\\S' },
+  safetyInstructions: { type: 'array', minItems: 1, items: { type: 'string', minLength: 1, pattern: '\\S' } },
+  requiresExplicitConsent: { type: 'boolean' },
+  skipOptionEnabled: { const: true },
+})
+creationResponse.properties.data = { oneOf: [fixedCreationData, pestCreationData] }
+
 const openapiText = `${JSON.stringify(openapi, null, 2)}\n`
 fs.writeFileSync(openapiPath, openapiText)
 const manifest = {
