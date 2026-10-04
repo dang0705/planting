@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T15:26:01.609087+00:00",
-  "sourceRevision": 52,
-  "sourceUpdatedAt": "2026-10-04T15:26:01.609087+00:00",
+  "generatedAt": "2026-10-04T15:31:02.884471+00:00",
+  "sourceRevision": 53,
+  "sourceUpdatedAt": "2026-10-04T15:31:02.884471+00:00",
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
   "tasks": [
@@ -199,30 +199,31 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 2,
+      "version": 3,
       "status": "codex running",
-      "stage": "验证与持久化读回",
+      "stage": "空气复合答案证据验证",
       "accepted": false,
       "summary": [
-        "E05仅复用V1黄叶、萎蔫和虫害；本轮锁定实际题包快照",
-        "019只补两类会话快照，旧行不补造；内容及归属不可改写",
-        "真实MySQL七项通过；归属2项RED→修复，摘要突变1项RED→恢复",
-        "后端全量1086/1086，Node22诊断64项；类型检查及构建通过",
-        "正式发布、复合证据、答案提交及HTTP待验收；里程碑记录、每小时同步"
+        "E05只复用V1三类题包；空气简易和详细表单已接校验",
+        "服务端题包授权，表单与采集快照一致；拒绝缺失和额外证据",
+        "客户端保存申报不构成服务端证明；不继承旧耗水倍率",
+        "新增18项；一致性突变1项RED→恢复，全量1104/1104",
+        "时间线、档案来源核验、答案持久化和HTTP待验收"
       ],
       "evidence": [
-        ".codex/backend-v2/evidence/E05-question-package-snapshot.json"
+        ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
+        ".codex/backend-v2/evidence/E05-air-answer-evidence.json"
       ],
       "blockingReason": null,
-      "nextAction": "接服务端快照的答案成员及复合证据校验，再接幂等持久化和HTTP",
+      "nextAction": "补浇水时间线复合证据及受控来源，再接答案提交持久化",
       "sync": {
-        "version": 2,
+        "version": 3,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING及五行评论1100440000090230已读回"
+        "readback": "Chrome CODEX RUNNING及五行评论1100440000090238已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T15:26:22.272798+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T15:31:45.185684+00:00",
   "lastFailure": null
 }

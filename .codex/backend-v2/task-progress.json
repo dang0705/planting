@@ -1,19 +1,18 @@
 {
-  "revision": 52,
+  "revision": 53,
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
-  "updatedAt": "2026-10-04T15:26:01.609087+00:00",
+  "updatedAt": "2026-10-04T15:31:02.884471+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "补服务端题包快照的持久化与不可变约束",
+    "goal": "完成空气题复合证据校验",
     "assumptions": [
-      "V1三类内容复用，不新增题目",
-      "快照内容与精确发布引用绑定"
+      "V1题包内容和表单枚举复用；客户端来源不授权"
     ],
-    "minimumVerification": "独立Expected先落、快照哈希及成员规则、真实MySQL约束和读回",
-    "continueWhen": "不改旧迁移，新迁移独立且历史缺快照失败关闭",
-    "failWhen": "客户端题包授权、替换历史快照或写入诊断结论",
-    "rollback": "回退代码；迁移只应用隔离空库，生产不执行",
+    "minimumVerification": "独立Expected与一致性突变RED、完整题包路径及全量GREEN",
+    "continueWhen": "纯证据输入不计算诊断或环境倍率",
+    "failWhen": "申报来源被当作保存成功或新增题库",
+    "rollback": "回退本增量纯函数；无数据库变更",
     "timeLimit": "30分钟检查点"
   },
   "tasks": [
@@ -200,25 +199,26 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 2,
+      "version": 3,
       "priority": "normal",
       "status": "codex running",
-      "stage": "验证与持久化读回",
+      "stage": "空气复合答案证据验证",
       "accepted": false,
       "evidence": [
-        ".codex/backend-v2/evidence/E05-question-package-snapshot.json"
+        ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
+        ".codex/backend-v2/evidence/E05-air-answer-evidence.json"
       ],
       "summary": [
-        "E05仅复用V1黄叶、萎蔫和虫害；本轮锁定实际题包快照",
-        "019只补两类会话快照，旧行不补造；内容及归属不可改写",
-        "真实MySQL七项通过；归属2项RED→修复，摘要突变1项RED→恢复",
-        "后端全量1086/1086，Node22诊断64项；类型检查及构建通过",
-        "正式发布、复合证据、答案提交及HTTP待验收；里程碑记录、每小时同步"
+        "E05只复用V1三类题包；空气简易和详细表单已接校验",
+        "服务端题包授权，表单与采集快照一致；拒绝缺失和额外证据",
+        "客户端保存申报不构成服务端证明；不继承旧耗水倍率",
+        "新增18项；一致性突变1项RED→恢复，全量1104/1104",
+        "时间线、档案来源核验、答案持久化和HTTP待验收"
       ],
       "blockingReason": null,
-      "nextAction": "接服务端快照的答案成员及复合证据校验，再接幂等持久化和HTTP",
-      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090230已读回",
-      "milestoneCommit": "84f9b729"
+      "nextAction": "补浇水时间线复合证据及受控来源，再接答案提交持久化",
+      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090238已读回",
+      "milestoneCommit": "fac44843"
     }
   ],
   "queue": [
@@ -322,7 +322,7 @@
       ]
     }
   ],
-  "nextAction": "接服务端锁定题包的答案和复合证据；不增加V1以外题包",
+  "nextAction": "补时间线复合证据、服务端来源核验与答案提交持久化",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -384,8 +384,8 @@
     "runner": "cloudfunctions-v2 已锁定 Vitest",
     "testDirectory": "cloudfunctions-v2/test/",
     "lastResult": {
-      "passed": 1086,
-      "total": 1086,
+      "passed": 1104,
+      "total": 1104,
       "skipped": 0
     }
   },

@@ -1,0 +1,43 @@
+{
+  "ticket": "z8v0kmr974",
+  "scope": "只复用V1三类题包的空气复合答案校验",
+  "verifiedAt": "2026-10-04T15:31:02.884471+00:00",
+  "truthSources": [
+    "cloudfunctions-v2/models/diagnosis/compound-answer-contract.md",
+    "cloudfunctions/layer/utils/air-environment-evidence.js",
+    "用户明确批准复用V1黄叶、萎蔫与虫害题包"
+  ],
+  "sourceSha256": "0c4ca77e5cbd94852a3f64d599a07f1b506f79a1377f6b2465c6f9bd9c3e708a",
+  "tests": {
+    "new": 18,
+    "backendFull": 1104,
+    "node22Diagnosis": 82,
+    "layers": [
+      "unit_fake",
+      "unit_real_data"
+    ],
+    "boundary": "领域校验与真实题目制品；不是HTTP、档案归属或数据库写入验收"
+  },
+  "tdd": {
+    "path": "fast_path",
+    "testFirst": true,
+    "mutation": "去除规范输入一致性比较",
+    "redFailed": 1,
+    "log": "/tmp/planting-e05-air-mutation.log",
+    "restoredFullGreen": "/tmp/planting-e05-air-full.log"
+  },
+  "checks": {
+    "typecheck": "passed",
+    "lintErrors": 0,
+    "lintWarnings": 1333,
+    "build": "passed"
+  },
+  "notAccepted": [
+    "时间线复合证据",
+    "服务端档案来源核验",
+    "答案持久化及幂等",
+    "CMS审核发布",
+    "真实HTTP问诊"
+  ],
+  "rule": "客户端申报保存成功不能成为服务端证明；无新增默认参数或题库"
+}
