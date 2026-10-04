@@ -16,6 +16,11 @@ import { createSubmitDiagnosisAnswersService } from '../../src/diagnosis/applica
 import { createMysqlDiagnosisAnswerRepository } from '../../src/diagnosis/repository/mysql-diagnosis-answer-repository.js'
 import { createMysqlTransactionDriver } from '../../src/foundation/database/mysql-transaction-driver.js'
 import { lockQuestionPackageSnapshot } from '../../src/diagnosis/domain/question-package-snapshot.js'
+import { createServer } from 'node:http'
+import type { AddressInfo } from 'node:net'
+import { createRouteDispatcher } from '../../src/foundation/http/route-dispatcher.js'
+import { createDiagnosisAnswerRouteHandler, diagnosisAnswerRoute, projectDiagnosisAnswerResponse } from '../../src/diagnosis/http/answer-route.js'
+import type { UserPrincipalDto } from '../../src/contracts/types.js'
 
 /** unit_real_data / L3：真实MySQL8.4、指定会话表和019迁移；父归属表为最小夹具，不验收完整建库链或HTTP。 */
 const container = `qhz-diag-snapshot-${process.pid}`
@@ -212,6 +217,26 @@ function idempotentDependencies() {
       ?{status:200,body:{data:{answersAccepted:true}}}:{status:400,body:{error:{type:'VALIDATION_FAILED',message:'答案无法保存'}}}}
 }
 describe('真实共享幂等与答案同事务',()=>{
+  test('Node HTTP→真实答案与幂等SQL：重放确认一致，跨用户零写入',async()=>{
+    await db.query("INSERT INTO users VALUES (3,'usr_owner123','active'),(4,'usr_other123','active')")
+    await db.query("INSERT INTO user_plants VALUES (4,3,'upl_owner123','active')")
+    await append('diagnosis-http-example','usr_owner123','upl_owner123');const deps=idempotentDependencies()
+    const handler=createDiagnosisAnswerRouteHandler({now:()=>2500,writeAudit:()=>undefined,
+      resolvePrincipal:async command=>({principalType:'user',user_id:command.bearerToken==='owner-token'?'usr_owner123':'usr_other123',sessionVersion:1,authenticatedVia:'wechat',issuedAt:'2026-10-04T00:00:00Z',expiresAt:'2026-10-05T00:00:00Z'} as UserPrincipalDto),
+      submitAnswers:input=>createIdempotentDiagnosisAnswerService({...deps,projectPublicResponse:result=>projectDiagnosisAnswerResponse(input.diagnosisRef,result)})(input)})
+    const server=createServer(createRouteDispatcher([{route:diagnosisAnswerRoute,handler}]))
+    await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve))
+    try{
+      const url=`http://127.0.0.1:${(server.address() as AddressInfo).port}/api/v2/diagnosis/sessions/diagnosis-http-example/answers`
+      const body={userPlantRef:'upl_owner123',...answerInput('diagnosis-http-example').submitted}
+      const post=(token:string,key:string)=>fetch(url,{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${token}`,'idempotency-key':key},body:JSON.stringify(body)})
+      const first=await post('owner-token','http-owner-key');expect(first.status).toBe(200)
+      const expected={data:{diagnosisSessionRef:'diagnosis-http-example',answersRecorded:true}}
+      expect(await first.json()).toEqual(expected);expect(await (await post('owner-token','http-owner-key')).json()).toEqual(expected)
+      const other=await post('other-token','http-other-key');expect(other.status).toBe(404);expect(await other.json()).toEqual({error:{type:'NOT_FOUND',message:'问诊会话不存在'}})
+      expect(await answerCount('diagnosis-http-example')).toBe(4)
+    }finally{server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()))}
+  })
   test('同键首次和重放响应完全一致；异参冲突，答案只保存四行',async()=>{
     await append('ledger-once');const run=createIdempotentDiagnosisAnswerService(idempotentDependencies());const input=idempotentInput('ledger-once','ledger-once')
     const first=await run(input);expect(first.status).toBe(200);expect(await run(input)).toEqual(first)

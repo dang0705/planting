@@ -13,6 +13,7 @@ const printableAsciiPattern = '^[\\x20-\\x7E]+$'
 
 /** 仅为已冻结字段级请求合同提供组件引用；其他合同继续使用严格空对象骨架。 */
 const requestSchemaRefByContract = {
+  DiagnosisAnswerRequest: '#/components/schemas/DiagnosisAnswerRequest',
   CreateUserPlantRequest: '#/components/schemas/CreateUserPlantRequest',
   CreateIdentitySessionRequest: '#/components/schemas/CreateIdentitySessionRequest',
   /** 归档/恢复仅允许调用方提交最后读到的植物版本。 */
@@ -35,7 +36,8 @@ const paths = {}
 for (const route of registry.routes) {
   const method = route.method.toLowerCase()
   const isWrite = ['post', 'patch', 'delete', 'put'].includes(method)
-  const successSchemaRef = successSchemaRefByContract[route.responseContract]
+  const isAnswer = route.operationId === 'answerDiagnosisQuestion'
+  const successSchemaRef = isAnswer ? '#/components/schemas/DiagnosisSessionAnswerResponse' : successSchemaRefByContract[route.responseContract]
   const operation = {
     operationId: route.operationId,
     summary: `${route.owner} 域：${route.operationId}`,
@@ -46,12 +48,13 @@ for (const route of registry.routes) {
     ...(route.requiredScope ? { 'x-required-scope': route.requiredScope } : {}),
     'x-request-contract': route.requestContract,
     'x-response-contract': route.responseContract,
+    ...(isAnswer ? { 'x-response-variant': 'answers_recorded' } : {}),
     'x-idempotency': route.idempotency,
     'x-errors': route.errors,
     parameters: parametersByPath(route.path),
     responses: {
       '200': {
-        description: '成功；具体 data 结构由 x-response-contract 指向的合同冻结',
+        description: isAnswer ? '整包答案已记录；首次与重放相同，不代表诊断完成' : '成功；具体 data 结构由 x-response-contract 指向的合同冻结',
         content: {
           'application/json': {
             schema: { $ref: successSchemaRef ?? '#/components/schemas/SuccessEnvelope' },
@@ -138,6 +141,99 @@ const openapi = {
       ServiceSignature: serviceHeaderParameter('X-QHZ-Signature', '规范化签名明文的 HMAC-SHA-256 base64url 结果。'),
     },
     schemas: {
+      DiagnosisAnswerRequest: {
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "userPlantRef",
+    "requestMode",
+    "answers"
+  ],
+  "properties": {
+    "userPlantRef": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^upl_[A-Za-z0-9_-]{8,}$"
+    },
+    "requestMode": {
+      "type": "string",
+      "enum": [
+        "answer_submit"
+      ]
+    },
+    "answers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "questionKey",
+          "optionKey"
+        ],
+        "properties": {
+          "questionKey": {
+            "type": "string",
+            "minLength": 1
+          },
+          "optionKey": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "airEnvironmentByQuestionId": {
+      "type": "object",
+      "description": "复合证据继续按服务端题包与对应领域合同校验"
+    },
+    "airEnvironmentSnapshotsByQuestionId": {
+      "type": "object",
+      "description": "复合证据继续按服务端题包与对应领域合同校验"
+    },
+    "careBehaviorTimeline": {
+      "type": "object",
+      "description": "复合证据继续按服务端题包与对应领域合同校验"
+    },
+    "care_behavior_timeline": {
+      "type": "object",
+      "description": "复合证据继续按服务端题包与对应领域合同校验"
+    }
+  },
+  "description": "长期用户植物答案提交；不允许客户端题包或用户身份",
+  "x-source-contract": "cloudfunctions-v2/models/diagnosis/answer-http-contract.md"
+},
+      DiagnosisSessionAnswerResponse: {
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "data"
+  ],
+  "properties": {
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "diagnosisSessionRef",
+        "answersRecorded"
+      ],
+      "properties": {
+        "diagnosisSessionRef": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 100
+        },
+        "answersRecorded": {
+          "type": "boolean",
+          "enum": [
+            true
+          ]
+        }
+      }
+    }
+  },
+  "description": "DiagnosisSessionResponse在答案提交操作中的确认分支；不表示诊断结果已生成",
+  "x-source-contract": "cloudfunctions-v2/models/diagnosis/answer-http-contract.md"
+},
       SuccessEnvelope: {
         type: 'object', additionalProperties: false, required: ['data'],
         properties: { data: {} },

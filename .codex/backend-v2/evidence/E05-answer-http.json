@@ -1,0 +1,51 @@
+{
+  "ticket": "z8v0kmr974",
+  "scope": "长期问诊答案公开合同、可注入Node HTTP协议适配及真实SQL接线",
+  "verifiedAt": "2026-10-04T16:03:54.724919+00:00",
+  "truthSource": "cloudfunctions-v2/models/diagnosis/answer-http-contract.md",
+  "tests": {
+    "newUnit": 13,
+    "backendFull": 1158,
+    "node22Diagnosis": 136,
+    "realMysql": 18,
+    "newRealHttpMysql": 1,
+    "boundary": "真实Node HTTP→答案用例→MySQL事务与共享账本；身份为替身、题包为测试制品；非已发布运行入口、真实平台验真或CMS验收"
+  },
+  "tdd": {
+    "testFirst": true,
+    "path": "fast_path_and_classic",
+    "classicGuardRed": 2,
+    "generatorClassicRed": 1,
+    "mutation": "放开DTO根字段限制",
+    "redLog": "/tmp/planting-e05-answer-http-mutation-red.log",
+    "restoredGreen": "/tmp/planting-e05-answer-http-restored-green.log",
+    "classicLog": "/tmp/planting-e05-answer-http-guard-red.log",
+    "generatorRedLog": "/tmp/planting-e05-answer-generator-red.log",
+    "mutationRedFailed": 2
+  },
+  "checks": {
+    "typecheck": "passed",
+    "lintErrors": 0,
+    "lintWarnings": 1441,
+    "build": "passed",
+    "openapiGeneration": "只在临时目录用固定路由制品验证；不扫描架构目录"
+  },
+  "verified": [
+    "长期答案公开DTO禁止额外身份/题包字段",
+    "固定成功确认不表示诊断完成",
+    "请求大小和媒体类型先于认证",
+    "真实HTTP同键重放与跨用户404、答案四行读回",
+    "合法错误结构仍过滤依赖敏感原文",
+    "OpenAPI精确答案Schema与生成器可重建；其他会话操作不冒充答案确认"
+  ],
+  "notAccepted": [
+    "题包不可变发布与active准入",
+    "正式会话创建与读取入口",
+    "临时案例答案HTTP提交",
+    "正式构建与运行入口",
+    "真实identity认证端到端",
+    "诊断结果和安全行动、Agent及奖励"
+  ],
+  "migration": "无新DDL；本地MySQL隔离制品",
+  "questionScope": "V2仅复用V1黄叶、萎蔫和虫害内容，不使用旧业务记录初始化"
+}

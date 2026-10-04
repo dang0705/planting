@@ -1787,11 +1787,11 @@
         ],
         "responses": {
           "200": {
-            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "description": "整包答案已记录；首次与重放相同，不代表诊断完成",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessEnvelope"
+                  "$ref": "#/components/schemas/DiagnosisSessionAnswerResponse"
                 }
               }
             }
@@ -1812,8 +1812,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false
+                "$ref": "#/components/schemas/DiagnosisAnswerRequest"
               }
             }
           }
@@ -1825,7 +1824,8 @@
           {
             "userBearer": []
           }
-        ]
+        ],
+        "x-response-variant": "answers_recorded"
       }
     },
     "/api/v2/diagnosis/sessions/{diagnosisSessionRef}/result": {
@@ -3798,6 +3798,99 @@
             }
           }
         }
+      },
+      "DiagnosisAnswerRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "userPlantRef",
+          "requestMode",
+          "answers"
+        ],
+        "properties": {
+          "userPlantRef": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^upl_[A-Za-z0-9_-]{8,}$"
+          },
+          "requestMode": {
+            "type": "string",
+            "enum": [
+              "answer_submit"
+            ]
+          },
+          "answers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "questionKey",
+                "optionKey"
+              ],
+              "properties": {
+                "questionKey": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "optionKey": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          },
+          "airEnvironmentByQuestionId": {
+            "type": "object",
+            "description": "复合证据继续按服务端题包与对应领域合同校验"
+          },
+          "airEnvironmentSnapshotsByQuestionId": {
+            "type": "object",
+            "description": "复合证据继续按服务端题包与对应领域合同校验"
+          },
+          "careBehaviorTimeline": {
+            "type": "object",
+            "description": "复合证据继续按服务端题包与对应领域合同校验"
+          },
+          "care_behavior_timeline": {
+            "type": "object",
+            "description": "复合证据继续按服务端题包与对应领域合同校验"
+          }
+        },
+        "description": "长期用户植物答案提交；不允许客户端题包或用户身份",
+        "x-source-contract": "cloudfunctions-v2/models/diagnosis/answer-http-contract.md"
+      },
+      "DiagnosisSessionAnswerResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "diagnosisSessionRef",
+              "answersRecorded"
+            ],
+            "properties": {
+              "diagnosisSessionRef": {
+                "type": "string",
+                "minLength": 8,
+                "maxLength": 100
+              },
+              "answersRecorded": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              }
+            }
+          }
+        },
+        "description": "DiagnosisSessionResponse在答案提交操作中的确认分支；不表示诊断结果已生成",
+        "x-source-contract": "cloudfunctions-v2/models/diagnosis/answer-http-contract.md"
       }
     }
   }

@@ -1,19 +1,19 @@
 {
-  "revision": 56,
+  "revision": 57,
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
-  "updatedAt": "2026-10-04T15:53:10.388062+00:00",
+  "updatedAt": "2026-10-04T16:03:54.724919+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "问诊答案共享幂等同事务与未知提交核对",
+    "goal": "长期答案HTTP协议与真实SQL接线",
     "assumptions": [
-      "只复用V1三类题包",
-      "复用既有共享账本与事务驱动"
+      "复用三类V1题包内容",
+      "不将未发布制品开放运行"
     ],
-    "minimumVerification": "独立Expected、重放突变RED、真实并发/回滚/未知提交及全量GREEN",
-    "continueWhen": "正式响应投影由明确合同提供，不伪造HTTP验收",
-    "failWhen": "重复领域写入、未知提交自动重试或把协议夹具当正式DTO",
-    "rollback": "回退本轮服务接线；无新DDL",
+    "minimumVerification": "独立Expected、字段突变与经典RED、真实HTTP/SQL及全量GREEN",
+    "continueWhen": "公开确认只表示记录答案，不冒充诊断完成",
+    "failWhen": "内部字段泄漏、跨用户写入或把替身身份当真实验真",
+    "rollback": "回退答案协议和OpenAPI增量；无新DDL",
     "timeLimit": "30分钟检查点"
   },
   "tasks": [
@@ -200,29 +200,30 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 6,
+      "version": 7,
       "priority": "normal",
       "status": "codex running",
-      "stage": "共享幂等与未知提交真实MySQL验证",
+      "stage": "答案公开合同与Node HTTP→真实MySQL验证",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
         ".codex/backend-v2/evidence/E05-air-answer-evidence.json",
         ".codex/backend-v2/evidence/E05-timeline-answer-evidence.json",
         ".codex/backend-v2/evidence/E05-answer-persistence.json",
-        ".codex/backend-v2/evidence/E05-answer-idempotency.json"
+        ".codex/backend-v2/evidence/E05-answer-idempotency.json",
+        ".codex/backend-v2/evidence/E05-answer-http.json"
       ],
       "summary": [
-        "E05答案与共享幂等首次响应已接同一事务",
-        "真实MySQL17项通过：同键并发只执行一次、失败整包回滚",
-        "真实COMMIT后确认丢失，新连接只读核对且不重复写入",
-        "新增11项；重放突变1项RED→恢复，全量1145/1145",
-        "正式HTTP合同、题包发布准入及临时案例提交待验收"
+        "E05已补答案公开合同与Node HTTP协议适配",
+        "真实HTTP→MySQL同键重放及跨用户拒绝通过；数据库18项",
+        "拒绝客户端身份/题包，过滤内部字段和敏感错误原文",
+        "新增13项；独立RED及恢复GREEN，全量1158/1158",
+        "题包发布准入、会话创建与临时路径仍待验收"
       ],
       "blockingReason": null,
-      "nextAction": "冻结正式题包会话DTO并接HTTP；补发布准入及临时案例提交",
-      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090263已读回",
-      "milestoneCommit": "5526ac2c"
+      "nextAction": "接不可变题包发布准入与会话创建；补临时案例路径及正式构建入口",
+      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090295已读回",
+      "milestoneCommit": "ae94cae0"
     }
   ],
   "queue": [
@@ -326,7 +327,7 @@
       ]
     }
   ],
-  "nextAction": "冻结正式题包会话DTO并接HTTP；补发布准入及临时案例提交",
+  "nextAction": "接不可变题包发布准入与会话创建；补临时案例路径及正式构建入口",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -644,5 +645,26 @@
       "schema/008_foundation.sql仅http_idempotency_records"
     ],
     "scope": "仅本次答案幂等实现；不读取其他路由、架构或全目录"
+  },
+  "diagnosisHttpReadAdmission": {
+    "task": "E05正式答案请求与会话响应合同",
+    "layers": {
+      "L0": "backend-v2 abstract仅实施导航，没有字段",
+      "L1": "contracts overview完整导航无diagnosis合同",
+      "L2": "context-tree/diagnosis/_index只列旧版且声明非v2合同；configuration-providers不镜像变量目录"
+    },
+    "missing": [
+      "DiagnosisAnswerRequest与DiagnosisSessionResponse精确字段",
+      "诊断入口配置已确认项",
+      "生成器是否保留答案精确Schema"
+    ],
+    "localAllowed": [
+      "api/openapi相关DiagnosisAnswerRequest/DiagnosisSessionResponse定义",
+      "contracts仅诊断会话API合同",
+      "architecture/configuration-variable-catalog.md/json仅diagnosis及共享HTTP限制对应项",
+      "api/generate-openapi.mjs仅答案请求/成功Schema装配环节",
+      "api/manifest.json仅路由登记与OpenAPI生成制品哈希"
+    ],
+    "scope": "只读题包会话与答案提交环节，不读取架构包或其他领域"
   }
 }
