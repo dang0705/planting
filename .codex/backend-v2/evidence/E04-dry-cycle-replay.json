@@ -1,0 +1,72 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "accepted": false,
+  "milestone": "历史干湿循环资格与未校准预测区间残差回放",
+  "updatedAt": "2026-10-04T13:11:33.525840+00:00",
+  "expectedSources": [
+    "批准计划第四及六节：可靠完成循环、条件变化与版本资格、避免个体校准自我反馈",
+    "独立区间减法与毫秒秒单位定义"
+  ],
+  "scope": "unit_fake；真实资格判断及残差计算，无数据库、Provider、DMN或HTTP替代证明",
+  "checks": {
+    "related": {
+      "passed": 20
+    },
+    "fullBackend": {
+      "files": 118,
+      "passed": 902,
+      "skipped": 0,
+      "exitCode": 0,
+      "log": "/tmp/planting-dry-cycle-full-green.log"
+    },
+    "mutations": [
+      {
+        "change": "错误相减端点",
+        "failed": 4,
+        "log": "/tmp/planting-dry-cycle-math-red.log"
+      },
+      {
+        "change": "遗漏未加入个体校准资格门",
+        "failed": 1,
+        "log": "/tmp/planting-dry-cycle-feedback-red.log"
+      }
+    ],
+    "restoration": "两次突变后均还原原始源码，cmp确认相同；随后仅补中文属性注释，全量GREEN",
+    "node22": {
+      "version": "22.21.1",
+      "passed": 20,
+      "log": "/tmp/planting-dry-cycle-node22-green.log"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "/tmp/planting-dry-cycle-typecheck.log"
+    },
+    "lint": {
+      "exitCode": 0,
+      "warnings": 923,
+      "errors": 0,
+      "log": "/tmp/planting-dry-cycle-lint.log"
+    },
+    "build": {
+      "exitCode": 0,
+      "log": "/tmp/planting-dry-cycle-build.log"
+    }
+  },
+  "contextRetrieval": {
+    "health": "connected healthy",
+    "target": "planting干湿循环/残差/个体校准定向检索",
+    "find": "60秒超时，未读取docs/backend-v2；依据本会话批准计划的明确规则继续"
+  },
+  "hashes": {
+    "cloudfunctions-v2/src/care/application/replay-completed-dry-cycle.ts": "14f30835d999d735309a7715085ac317a50f24adf94b5759bbc6c536b766f15d",
+    "cloudfunctions-v2/test/care/replay-completed-dry-cycle.spec.ts": "b566389131cf4240a5e0c0306047fe3cdef3f09a5c45d2b70c02ad47933c7d24",
+    "cloudfunctions-v2/models/care/dry-cycle-replay-contract.md": "9a8f5a189ff182321ddfd03c8a691ddfdca7de03e9f207a63ca535dc28e439e7"
+  },
+  "notAccepted": [
+    "真实完成循环及输入归属验证",
+    "可靠性阈值和样本充分性",
+    "正式个体倍率拟合及发布",
+    "DMN行为与HTTP闭环"
+  ]
+}

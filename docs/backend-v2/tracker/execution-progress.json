@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T13:07:18.064999+00:00",
-  "sourceRevision": 31,
-  "sourceUpdatedAt": "2026-10-04T13:07:18.064999+00:00",
+  "generatedAt": "2026-10-04T13:11:33.525840+00:00",
+  "sourceRevision": 32,
+  "sourceUpdatedAt": "2026-10-04T13:11:33.525840+00:00",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -114,16 +114,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 18,
+      "version": 19,
       "status": "codex running",
       "stage": "验证与持久化读回",
       "accepted": false,
       "summary": [
-        "E04：实测内盆尺寸→圆台体积→排水安全门已接通",
-        "19新用例；直径误当半径3项RED→恢复GREEN",
-        "后端117文件882/882；Node22相关19项；类型构建通过",
-        "缺尺寸不猜测；外盆不归属；容积不冒充持水量",
-        "保水策略、DMN行为和正式建议未验收，不标Done"
+        "E04：历史循环资格→未校准预测区间残差已实现",
+        "20新用例；错端点4项RED、漏反馈门1项RED→恢复GREEN",
+        "后端118文件902/902；Node22相关20项；类型构建通过",
+        "缺起点、条件变化或版本冲突不校准；保留残差区间",
+        "未发布策略只离线回放，不生成倍率；整票未验收"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -140,18 +140,19 @@
         ".codex/backend-v2/evidence/E04-pot-safety-suncalc.json",
         ".codex/backend-v2/evidence/E04-suncalc-direction.json",
         ".codex/backend-v2/evidence/E04-suncalc-mean-candidate.json",
-        ".codex/backend-v2/evidence/E04-measured-pot.json"
+        ".codex/backend-v2/evidence/E04-measured-pot.json",
+        ".codex/backend-v2/evidence/E04-dry-cycle-replay.json"
       ],
       "blockingReason": null,
-      "nextAction": "推进历史干湿循环资格及独立残差回放，pending校准策略不设默认",
+      "nextAction": "接续不可变输入快照与回放持久化边界，核验实际Repository及准入策略；不以孤立函数代替养护闭环",
       "sync": {
-        "version": 18,
+        "version": 19,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome状态codex running及完整五行评论1100440000089823已读回"
+        "readback": "Chrome当前状态codex running及完整五行评论1100440000089834已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T13:07:42.254147+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T13:12:01.419810+00:00",
   "lastFailure": null
 }
