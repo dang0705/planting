@@ -1,0 +1,53 @@
+{
+  "ticketId": "z8v0kmr974",
+  "step": "E05",
+  "accepted": false,
+  "scope": "受控活动知识读取→单一冻结包→所有Outcome证据条件计算；非最终诊断",
+  "expectedSources": [
+    "cloudfunctions-v2/models/diagnosis/active-outcome-evaluation-contract.md",
+    "cloudfunctions-v2/models/diagnosis/active-knowledge-contract.md",
+    "cloudfunctions-v2/models/diagnosis/outcome-evidence-match-contract.md"
+  ],
+  "tdd": {
+    "path": "测试先落盘，缺模块RED；异步输入隔离突变1项RED，恢复GREEN",
+    "redLog": "/tmp/planting-e05-active-outcomes-red.log",
+    "mutationLog": "/tmp/planting-e05-active-outcomes-mutation.log",
+    "restoredLog": "/tmp/planting-e05-active-outcomes-restored.log"
+  },
+  "verification": {
+    "newTests": 4,
+    "relatedTests": 14,
+    "root": {
+      "files": 166,
+      "tests": 1444,
+      "exit": 0
+    },
+    "node22": {
+      "version": "22.21.1",
+      "files": 166,
+      "tests": 1444,
+      "exit": 0
+    },
+    "typecheck": 0,
+    "lint": {
+      "exit": 0,
+      "errors": 0,
+      "warnings": 2136
+    },
+    "build": 0,
+    "logs": "/tmp/planting-e05-active-outcomes-final-{root-test,node22-vitest,typecheck,lint,build}.log"
+  },
+  "truthBoundary": {
+    "classification": "unit_fake",
+    "actual": "活动知识应用、唯一候选/依赖Schema、摘要、完整包锁定、证据条件匹配",
+    "replaced": "事务驱动、知识SQL及依赖Reader；结构样本不是园艺发布内容",
+    "notCovered": [
+      "真实答案/视觉归一",
+      "实际MySQL与正式CMS知识准入",
+      "植物适用性与题包范围筛选",
+      "严重度/行动执行定义与最终归约",
+      "结果生成持久化及正式HTTP旅程"
+    ]
+  },
+  "productionChanges": false
+}

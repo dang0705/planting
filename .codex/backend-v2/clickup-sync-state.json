@@ -50,19 +50,19 @@
       "readback": "Chrome CODEX RUNNING及五行评论1100440000090220已读回"
     },
     "z8v0kmr974": {
-      "version": 29,
+      "version": 30,
       "status": "codex running",
-      "note": "E05：实际计算Outcome必需/支持/反驳证据条件\n6项Schema/匹配Expected；来源隔离突变RED→恢复\n代码/来源/部位精确匹配；缺证据与冲突显式返回\n根及Node22全量1440/1440；类型/构建/lint零错误\n真实归一、规则语义/结果生成与正式准入仍未验收",
-      "commentId": "1100440000090646",
-      "commentFingerprint": "d043fbcfbdcb396dbc7a9c9c27f1bee86b4f429e0c5d88a25c78720ab0185740",
-      "readback": "Chrome CODEX RUNNING与五行评论1100440000090646已读回"
+      "note": "E05：活动知识包→全部结论证据条件计算已接通\n4项新Expected；异步输入隔离突变RED→恢复\n满足/缺失/冲突结论并存，锁定包版本和证据引用\n根及Node22全量1444/1444；类型/构建/lint零错误\n实际归一、适用性/最终归约与正式诊断仍未验收",
+      "commentId": "1100440000090648",
+      "commentFingerprint": "df909eb89ae6fffcb72697e9ad293f78912d162b520d1cc2be4e19f16855d44b",
+      "readback": "Chrome CODEX RUNNING与五行评论1100440000090648已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T19:19:45.131Z",
+  "lastSuccessfulSyncAt": "2026-10-04T19:24:11.617Z",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "d2206da75d37ea5f0aa0974a0f3edb8bf8a25b09ccbbd13ac38de00ea8607d1d",
-    "sourceRevision": 80,
-    "sourceUpdatedAt": "2026-10-04T19:17:45.187047+00:00"
+    "fingerprint": "664ea43ae3c764ed2ffecacd5c360606846dc5ee94d47cdfc4137d7caab08b16",
+    "sourceRevision": 81,
+    "sourceUpdatedAt": "2026-10-04T19:23:43.893Z"
   }
 }
