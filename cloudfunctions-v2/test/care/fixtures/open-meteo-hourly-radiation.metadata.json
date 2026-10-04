@@ -1,0 +1,16 @@
+{
+  "source": "https://api.open-meteo.com/v1/forecast",
+  "documentation": "https://open-meteo.com/en/docs",
+  "fetchedAt": "2026-10-04T11:14:48.337064+00:00",
+  "sha256": "2c3631dac57e7c9a1d4064aa1be6df612fb086c0c721af0d88a4a9fde1665bb2",
+  "timeformat": "unixtime",
+  "timezone": "Asia/Shanghai",
+  "location": "公开上海城区网格，非用户位置",
+  "scope": "unit_real_data 的真实公开 Provider 制品；非线上 Care 验收",
+  "variables": [
+    "shortwave_radiation",
+    "direct_normal_irradiance",
+    "diffuse_radiation"
+  ],
+  "attribution": "Weather data by Open-Meteo，见官方数据许可与来源说明"
+}
