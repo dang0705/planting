@@ -1,0 +1,56 @@
+{
+  "scope": "E03绑定HTTP前置：已登录临时案例归属只读端口",
+  "verifiedAt": "2026-10-04T21:32:21.474453+00:00",
+  "expectedSource": "cloudfunctions-v2/models/user-plant/authenticated-ephemeral-ownership-contract.md",
+  "configurationDecision": "没有新运行参数；复用归属硬规则与既有存储容量；不决定TTL或临时创建资格",
+  "testFirst": {
+    "missingImplementationRed": "/tmp/planting-e03-ownership-unit-red.log",
+    "actualProductRed": "/tmp/planting-e03-ephemeral-ownership-mysql-green.log",
+    "actualProductFailedScenarios": 1,
+    "rootCauseEvidence": "/tmp/planting-e03-ephemeral-ownership-row-diagnostic.log",
+    "rootCause": "mysql2大整数字符串读取将SQL整数1投影为字符串；查询明确DOUBLE标记后独立owned期望通过"
+  },
+  "mutation": {
+    "redLog": "/tmp/planting-e03-ephemeral-ownership-mutation-red.log",
+    "failedScenarios": 1,
+    "restoredSha256": "d1f4fb862d4db97d7f96b77592bd9124468aeee863317a1a11a56df6e937d757",
+    "restoredGreenLog": "/tmp/planting-e03-ephemeral-ownership-final-mysql.log"
+  },
+  "verification": {
+    "unit_fake": 16,
+    "unit_real_data_mysql": 16,
+    "rootUnitTests": 1682,
+    "rootFiles": 181,
+    "node22UnitTests": 1682,
+    "typecheckExit": 0,
+    "lintErrors": 0,
+    "lintWarnings": 2528,
+    "buildExit": 0,
+    "logPrefix": "/tmp/planting-e03-ephemeral-ownership-final-"
+  },
+  "boundaries": [
+    "身份为可信夹具；真实SQL只证明归属端口与相邻绑定应用",
+    "本人任意生命周期可通过归属前置，是否可新绑定仍由事务校验",
+    "单SELECT无锁零写，不延长有效期、不改诊断/养护结果",
+    "绑定HTTP、新建分支、真实登录及完整环境档案未验收"
+  ],
+  "accepted": false,
+  "readAdmission": {
+    "task": "E03显式绑定已有植物HTTP合同",
+    "layers": {
+      "L0": "本轮abstract仅目录导航，无临时绑定协议",
+      "L1": "本轮contracts overview六项不含用户植物临时绑定",
+      "L2": "两次定向find超时；已有应用合同仅内部输入和事务，不含公开路由"
+    },
+    "missing": [
+      "是否已有临时认领/绑定路由及请求响应",
+      "归属/错误及配置登记边界"
+    ],
+    "allowed": [
+      "api/route-registry.json仅ephemeral/claim/promotion/bind操作",
+      "contracts仅定位用户植物临时绑定/认领章节",
+      "architecture/configuration-variable-catalog.md/json仅user-plant临时认领及HTTP写限制项"
+    ],
+    "scope": "仅显式绑定已有植物；不读取其他领域或整目录"
+  }
+}

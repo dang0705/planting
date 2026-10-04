@@ -1,15 +1,15 @@
 {
-  "revision": 98,
+  "revision": 99,
   "currentStep": "E03",
   "currentTicketId": "z8v0kmr9mj",
-  "updatedAt": "2026-10-04T21:25:03.755931+00:00",
+  "updatedAt": "2026-10-04T21:32:35.202791+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "E03绑定应用与提交未知核对",
-    "minimumVerification": "可信主体、事务回滚、新连接只读、零写重试及真实持久化",
-    "result": "应用切片通过；HTTP及整体E03未验收",
-    "rollback": "撤回本增量应用和核对Reader；无部署、DDL或删除",
-    "nextAction": "冻结并登记显式绑定HTTP合同，接严格请求链；环境档案承接等待确认"
+    "target": "E03绑定HTTP案例归属前置",
+    "minimumVerification": "精确本人归属、生命周期独立、单SELECT无锁零写、真实隔离反例",
+    "result": "归属前置通过；HTTP及整体E03未验收",
+    "rollback": "撤回新增只读Reader；无部署、DDL或删除",
+    "nextAction": "登记登录临时案例绑定公开合同，接严格HTTP链与可信身份；完整环境档案等待承接确认"
   },
   "tasks": [
     {
@@ -256,10 +256,10 @@
     {
       "id": "z8v0kmr9mj",
       "step": "E03",
-      "version": 10,
+      "version": 11,
       "priority": "high",
       "status": "codex running",
-      "stage": "应用事务与提交未知核对通过；HTTP待接",
+      "stage": "绑定HTTP归属前置已验证；公开合同与请求链待接",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E03-promotion-context.json",
@@ -273,18 +273,19 @@
         ".codex/backend-v2/evidence/E03-profile-update-http.json",
         ".codex/backend-v2/evidence/E03-profile-write-policy-read.json",
         ".codex/backend-v2/evidence/E03-authenticated-ephemeral-binding.json",
-        ".codex/backend-v2/evidence/E03-authenticated-ephemeral-application.json"
+        ".codex/backend-v2/evidence/E03-authenticated-ephemeral-application.json",
+        ".codex/backend-v2/evidence/E03-authenticated-ephemeral-ownership.json"
       ],
       "summary": [
-        "E03：临时案例绑定应用已接真实事务及提交未知只读核对",
-        "实际提交后回包未知恢复原结果；未提交无收据不重绑",
-        "真实MySQL13项；旁路核对2项RED→逐字节恢复GREEN",
-        "根与Node22全量1666/1666；类型/检查/构建通过",
-        "HTTP/新建目标/真实登录未验收；环境档案承接待确认"
+        "E03：临时案例归属只读已实现，过期不阻断原收据重放",
+        "跨用户/停用/技术主体拒绝；单SELECT无锁零写",
+        "真实MySQL16项；去除归属连接1项RED→恢复GREEN",
+        "根与Node22全量1682/1682；类型/检查/构建通过",
+        "绑定HTTP/新建目标/真实登录仍待验收"
       ],
       "blockingReason": null,
-      "nextAction": "冻结并登记显式绑定HTTP合同，接严格请求链；环境档案承接等待确认",
-      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090927已读回",
+      "nextAction": "登记登录临时案例绑定公开合同，接严格HTTP链与可信身份；完整环境档案等待承接确认",
+      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090931已读回",
       "priorityReason": "当前用户植物纵向切片的必要合同前置，未等待无关CMS"
     }
   ],
@@ -389,7 +390,7 @@
       ]
     }
   ],
-  "nextAction": "冻结并登记显式绑定HTTP合同，接严格请求链；环境档案承接等待确认",
+  "nextAction": "登记登录临时案例绑定公开合同，接严格HTTP链与可信身份；完整环境档案等待承接确认",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",

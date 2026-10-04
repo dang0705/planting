@@ -17,6 +17,7 @@ import {
 } from '../../src/user-plant/repository/mysql-authenticated-ephemeral-binding-repository.js'
 import { createAuthenticatedEphemeralBindingApplicationService } from '../../src/user-plant/application/bind-authenticated-ephemeral-case.js'
 import type { UserPrincipalDto, UserRef } from '../../src/contracts/types.js'
+import { createMysqlAuthenticatedEphemeralCaseOwnershipReader } from '../../src/user-plant/repository/mysql-authenticated-ephemeral-case-ownership-reader.js'
 
 /** L3/unit_real_data；Expected来自本轮明确绑定生命周期与003/016约束。
  * 真实mysql2/事务/行锁/唯一绑定；users和plant_identities是FK桩，不证明Principal解析、HTTP或CloudBase。
@@ -436,4 +437,46 @@ test('只读核对跨用户及同键异目标均不冒充原绑定成功，三�
   expect(app.connectionCounts()).toEqual({ transactionConnections: 0, readonlyConnections: 2 })
   expect(app.readonlyQueries).toHaveLength(2)
   expect(app.readonlyWrites).toEqual([])
+})
+
+/** Expected来自冻结归属前置：仅核验active统一用户与精确案例归属，不判断TTL/资格，允许历史重放。 */
+async function readCaseOwnership(userRef = 'usr_binding_owner01', ephemeralCaseRef = 'epc_binding_case01') {
+  const queries: string[] = [], writes: string[] = []
+  const guarded: typeof source = { getConnection: async () => {
+    const c = await source.getConnection()
+    return { ...c, query: async (sql, args) => {
+      queries.push(sql)
+      if (!/^\s*SELECT\b/iu.test(sql) || /\bFOR\s+(UPDATE|SHARE)\b/iu.test(sql)) { throw new Error('归属前置必须无锁只读') }
+      return c.query(sql, args)
+    }, execute: async sql => { writes.push(sql); throw new Error('归属前置禁止写入') } }
+  } }
+  const before = await bindingSnapshot()
+  const result = await createMysqlAuthenticatedEphemeralCaseOwnershipReader(guarded).readOwned({ userRef, ephemeralCaseRef })
+  expect(queries).toHaveLength(1); expect(writes).toEqual([])
+  expect(await bindingSnapshot()).toEqual(before)
+  return result
+}
+test('归属前置本人所有案例状态均owned，历史过期不阻断重放', async () => {
+  for (const status of ['active', 'completed', 'failed', 'expired']) {
+    await db.execute('UPDATE authenticated_ephemeral_plant_cases SET status=? WHERE id=1', [status])
+    expect(await readCaseOwnership()).toEqual({ status: 'owned' })
+  }
+  await db.execute("UPDATE authenticated_ephemeral_plant_cases SET status='completed' WHERE id=1")
+  await bind()
+  expect(await readCaseOwnership()).toEqual({ status: 'owned' })
+})
+test('归属前置跨用户/不存在/大小写伪引用均not_found，零写且无锁', async () => {
+  expect(await readCaseOwnership('usr_binding_owner01', 'epc_binding_other01')).toEqual({ status: 'not_found' })
+  expect(await readCaseOwnership('usr_binding_owner02')).toEqual({ status: 'not_found' })
+  expect(await readCaseOwnership('usr_binding_owner01', 'epc_binding_missing01')).toEqual({ status: 'not_found' })
+  expect(await readCaseOwnership('usr_binding_owner01', 'EPC_binding_case01')).toEqual({ status: 'not_found' })
+})
+test('归属前置停用用户及非空技术openid不能当成合法归属', async () => {
+  await db.execute("UPDATE users SET status='suspended' WHERE id=1")
+  expect(await readCaseOwnership()).toEqual({ status: 'not_found' })
+  await db.execute("UPDATE users SET status='active',_openid='technical-subject' WHERE id=1")
+  expect(await readCaseOwnership()).toEqual({ status: 'not_found' })
+  await db.execute("UPDATE users SET status='active',_openid='' WHERE id=1")
+  await db.execute("UPDATE authenticated_ephemeral_plant_cases SET _openid='technical-case-subject' WHERE id=1")
+  expect(await readCaseOwnership()).toEqual({ status: 'not_found' })
 })
