@@ -29,14 +29,14 @@ export type PublishedFirstUsePolicyReader = {
 
 /** 发布表及活动指针的窄投影；BIGINT 仍以文本接收。 */
 type PolicyRow = {
-  /** 高熵发布引用。 */ readonly release_ref: string
+  /** 经过唯一约束保护的高熵策略发布引用，不包含用户或凭证原文。 */ readonly release_ref: string
   /** 策略所属业务域。 */ readonly domain_code: string
   /** 类型化策略代码。 */ readonly policy_code: string
   /** 发布正文 Schema 版本。 */ readonly schema_version: string
   /** 不可变发布版本。 */ readonly release_version: string
   /** 规范 JSON 正文摘要。 */ readonly content_sha256: string
   /** mysql2 可能返回对象或 JSON 文本。 */ readonly policy_json: unknown
-  /** 发布状态。 */ readonly status: string
+  /** 不可变策略发布的审核状态，仅读取符合当前用例准入条件的记录。 */ readonly status: string
   /** UTC 生效时刻。 */ readonly effective_at_ms: string
   /** UTC 失效时刻；无截止为 null。 */ readonly expires_at_ms: string | null
   /** UTC 验真时刻；未验真为 null。 */ readonly verified_at_ms: string | null
@@ -45,7 +45,10 @@ type PolicyRow = {
 }
 
 /** 试用时长的类型化发布正文。 */
-type TrialDocument = { readonly durationHours: number }
+type TrialDocument = {
+  /** 当前不可变试用策略明确提供的有效小时数，不得从源码补默认值。 */
+  readonly durationHours: number
+}
 
 /** 活跃用户植物上限的类型化发布正文。 */
 type PlantLimitDocument = {

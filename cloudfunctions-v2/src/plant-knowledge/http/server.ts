@@ -8,10 +8,19 @@ import {
 import type { RequestChainAuditEvent } from '../../foundation/http/request-chain.js'
 import { createRouteDispatcher } from '../../foundation/http/route-dispatcher.js'
 import { createGetPublishedPlantRouteHandler } from '../application/get-published-plant.js'
+import { createGetPlantEncyclopediaRouteHandler } from '../application/get-plant-encyclopedia.js'
+import { createMysqlPlantEncyclopediaRepository } from '../repository/mysql-plant-encyclopedia-repository.js'
+import { createSearchPlantCatalogRouteHandler } from '../application/search-plant-catalog.js'
+import { createMysqlPlantCatalogRepository } from '../repository/mysql-plant-catalog-repository.js'
 import { createSearchPublishedPlantsRouteHandler } from '../application/search-published-plants.js'
 import { createMysqlPublishedPlantRepository } from '../repository/mysql-published-plant-repository.js'
 import { createMysqlPublishedPlantSearchRepository } from '../repository/mysql-published-plant-search-repository.js'
-import { getPublishedPlantRoute, searchPublishedPlantsRoute } from './routes.js'
+import {
+  getPublishedPlantRoute,
+  getPlantEncyclopediaRoute,
+  searchPublishedPlantsRoute,
+  searchPlantCatalogRoute
+} from './routes.js'
 
 /** plant-knowledge 云函数 HTTP 服务依赖。 */
 export type PlantKnowledgeServerDependencies = {
@@ -26,6 +35,26 @@ const okStatus = 200
 /** 组装 plant-knowledge 函数的 HTTP 服务：`/health` 探针加冻结路由分发，不监听端口。 */
 export function createPlantKnowledgeServer(dependencies: PlantKnowledgeServerDependencies): Server {
   const dispatch = createRouteDispatcher([
+    {
+      route: getPlantEncyclopediaRoute,
+      handler: createGetPlantEncyclopediaRouteHandler({
+        getPlantEncyclopedia: query =>
+          withReadConnection(dependencies.connectionSource, connection =>
+            createMysqlPlantEncyclopediaRepository(connection).getPlantEncyclopedia(query)
+          ),
+        writeAudit: dependencies.writeAudit
+      })
+    },
+    {
+      route: searchPlantCatalogRoute,
+      handler: createSearchPlantCatalogRouteHandler({
+        searchPlantCatalog: query =>
+          withReadConnection(dependencies.connectionSource, connection =>
+            createMysqlPlantCatalogRepository(connection).searchPlantCatalog(query)
+          ),
+        writeAudit: dependencies.writeAudit
+      })
+    },
     {
       route: searchPublishedPlantsRoute,
       handler: createSearchPublishedPlantsRouteHandler({
