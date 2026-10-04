@@ -1,0 +1,106 @@
+{
+  "taskId": "z8v0kmr971",
+  "scope": "完整诊断候选提交及待审读回内部切片",
+  "accepted": false,
+  "boundaryVerified": true,
+  "verifiedAt": "2026-10-04T19:58:57.766Z",
+  "configurationDecision": "无新配置变量；不设置审核协议或Provider默认值。候选引用/版本使用既有009列约束，时钟使用既有安全UTC毫秒规则",
+  "contextReuse": "复用已核验的 E02-review-candidate-context.json 中 OpenViking L0/L1/L2 与009候选表范围；未重读架构包或配置全文",
+  "behavior": [
+    "完整 Schema 与纯JSON校验、规范摘要、第一次异步操作前递归冻结",
+    "新提交复核精确来源和题包依赖，原样保存为 submitted 并读回完整收据",
+    "引用和包/修订唯一约束阻止覆盖；重复正文返回原时间，不重新待审或发布",
+    "业务失败回滚；并发失败和未知提交仅新连接只读核对，不盲目重写"
+  ],
+  "tdd": {
+    "path": "fast_path",
+    "expectedSource": "统一重构计划、009候选唯一约束与候选提交合同；候选为已冻结Schema结构制品",
+    "testBeforeProduct": true,
+    "mutation": "取消 prepared_for_review 来源/题包准入门",
+    "redFailed": 2,
+    "restoredGreen": true,
+    "log": "/tmp/planting-e02-submit-candidate-mutation.log"
+  },
+  "verification": {
+    "unit": {
+      "layer": "L3/unit_fake",
+      "tests": 14,
+      "realPath": "完整候选Schema/冻结→来源准入→事务编排",
+      "replaced": [
+        "Repository",
+        "来源/题包依赖边界"
+      ]
+    },
+    "relatedUnit": {
+      "files": 4,
+      "tests": 58
+    },
+    "mysql": {
+      "layer": "L3/unit_real_data",
+      "tests": 7,
+      "realPath": "实际009候选表→隔离MySQL8.4→mysql2→提交/读回/待审查询/新连接对账",
+      "replaced": [
+        "来源/题包Reader为明确替身",
+        "园艺正文为结构制品",
+        "响应丢失通过真实COMMIT后异常模拟"
+      ],
+      "scenarios": [
+        "新提交到待审原样读回",
+        "驳回后历史重放不重新提交",
+        "同引用或包修订冲突不覆盖",
+        "无来源主张不保存",
+        "实际INSERT后业务失败回滚",
+        "实际COMMIT后响应丢失只读对账且只写一次",
+        "并发同键一行及稳定重放"
+      ],
+      "relatedFiles": 3,
+      "relatedTests": 26
+    },
+    "root": {
+      "exitCode": 0,
+      "files": 170,
+      "tests": 1490
+    },
+    "node22": {
+      "version": "22.21.1",
+      "exitCode": 0,
+      "files": 170,
+      "tests": 1490
+    },
+    "typecheck": 0,
+    "lint": {
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 2204
+    },
+    "build": {
+      "exitCode": 0,
+      "limitation": "npm构建子进程仍有Node24与声明22的版本提示，不能证明云端Node22运行时验收"
+    },
+    "logs": [
+      "/tmp/planting-e02-submit-candidate-restored.log",
+      "/tmp/planting-e02-submit-candidate-mysql.log",
+      "/tmp/planting-e02-submit-candidate-related-mysql.log",
+      "/tmp/planting-e02-submit-candidate-final-root-test.log",
+      "/tmp/planting-e02-submit-candidate-final-node22-vitest.log",
+      "/tmp/planting-e02-submit-candidate-final-typecheck.log",
+      "/tmp/planting-e02-submit-candidate-final-lint.log",
+      "/tmp/planting-e02-submit-candidate-final-build.log"
+    ]
+  },
+  "notAccepted": [
+    "正式CMS管理员/审核协议",
+    "人工审核批准写入及正式CMS入口",
+    "真实题包和来源Provider完整接线",
+    "正式园艺内容、知识发布和最终诊断",
+    "生产DDL、迁移或部署"
+  ],
+  "sourceSha256": {
+    "cloudfunctions-v2/models/diagnosis/candidate-submission-contract.md": "37ee897bb845653ba79d70756e67de36a2f71fbb51c8c7ef64d11aa14036ee3b",
+    "cloudfunctions-v2/src/diagnosis/domain/candidate-submission.ts": "0736eaf01ee47ea65a3edade3525b6fbc50587f30a618eb08cc572ce9c32555e",
+    "cloudfunctions-v2/src/diagnosis/application/submit-candidate.ts": "da0cc156b5ceee27d6c29f73205c16f82e5033b77235d0370aa72fd60f395b30",
+    "cloudfunctions-v2/src/diagnosis/repository/mysql-candidate-submission-repository.ts": "d10b392f769462c1b62544e9905eee86f3c693ddb35aa5c16e86be2a5d8018e5",
+    "cloudfunctions-v2/test/diagnosis/submit-candidate.spec.ts": "57404510a436b37e40e866f58e462accdf7400eb5f899fc09e8a2a5455f0e8ca",
+    "cloudfunctions-v2/test/e2e/diagnosis-candidate-submission.mysql.spec.ts": "888a72471f4b1783429b0c907a082887d41a85d55599486babb7f90dd3abfc35"
+  }
+}
