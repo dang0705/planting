@@ -1,0 +1,48 @@
+{
+  "ticket": "z8v0kmr974",
+  "scope": "已有长期会话答案表的原子提交及读回",
+  "verifiedAt": "2026-10-04T15:42:49.654736+00:00",
+  "truthSource": "cloudfunctions-v2/models/diagnosis/answer-persistence-contract.md",
+  "tests": {
+    "newUnit": 10,
+    "backendFull": 1134,
+    "node22Diagnosis": 112,
+    "realMysql": 13,
+    "newRealMysql": 6,
+    "engine": "MySQL 8.4",
+    "boundary": "父表最小制品；004指定会话/答案表及017/019相关结构；非完整建库链或HTTP/CMS验收"
+  },
+  "tdd": {
+    "testFirst": true,
+    "path": "fast_path",
+    "mutation": "绕过完整答案正文相等校验",
+    "redFailed": 2,
+    "redLog": "/tmp/planting-e05-answer-mutation.log",
+    "restoredGreen": "/tmp/planting-e05-answer-full.log"
+  },
+  "checks": {
+    "typecheck": "passed",
+    "lintErrors": 0,
+    "lintWarnings": 1364,
+    "build": "passed"
+  },
+  "verified": [
+    "四题整包追加并读回",
+    "真实并发首次与重放",
+    "同内容不新增、改内容不覆盖",
+    "跨用户/植物与SQL通配输入拒绝",
+    "归档植物禁止提交",
+    "缺复合证据零写入",
+    "实际插入后抛错整包回滚",
+    "缺快照及损坏正文失败关闭"
+  ],
+  "notAccepted": [
+    "HTTP共享幂等账本及未知提交对账",
+    "CMS知识审核发布",
+    "临时案例答案提交",
+    "HTTP诊断入口",
+    "诊断结论及行动",
+    "Agent与奖励"
+  ],
+  "migration": "无新DDL；只执行本地隔离数据库制品"
+}

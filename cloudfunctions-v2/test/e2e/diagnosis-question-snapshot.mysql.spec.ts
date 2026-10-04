@@ -6,6 +6,9 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { findProjectRoot } from '../support/project-root.js'
 import { createMysql2ConnectionSource } from '../../src/foundation/database/mysql2-connection-source.js'
 import { createMysqlDiagnosisQuestionSnapshotRepository } from '../../src/diagnosis/repository/mysql-diagnosis-question-snapshot-repository.js'
+import { createSubmitDiagnosisAnswersService } from '../../src/diagnosis/application/submit-diagnosis-answers.js'
+import { createMysqlDiagnosisAnswerRepository } from '../../src/diagnosis/repository/mysql-diagnosis-answer-repository.js'
+import { createMysqlTransactionDriver } from '../../src/foundation/database/mysql-transaction-driver.js'
 import { lockQuestionPackageSnapshot } from '../../src/diagnosis/domain/question-package-snapshot.js'
 
 /** unit_real_data / L3：真实MySQL8.4、指定会话表和019迁移；父归属表为最小夹具，不验收完整建库链或HTTP。 */
@@ -39,7 +42,7 @@ beforeAll(async () => {
   await db.query('CREATE TABLE guest_plant_cases (id BIGINT UNSIGNED PRIMARY KEY)')
   await db.query('CREATE TABLE authenticated_ephemeral_plant_cases (id BIGINT UNSIGNED PRIMARY KEY)')
   const ddl = readFileSync(join(root,'docs/backend-v2/schema/004_care_diagnosis.sql'),'utf8')
-  for (const name of ['diagnosis_sessions','temporary_diagnosis_sessions']) {
+  for (const name of ['diagnosis_sessions','temporary_diagnosis_sessions','diagnosis_answers']) {
     const start = ddl.indexOf('CREATE TABLE `'+name+'` ('); const end = ddl.indexOf(';',start)
     if (start < 0 || end < 0) { throw new Error('指定会话表缺失') }
     await db.query(ddl.slice(start,end+1))
@@ -117,5 +120,64 @@ describe('真实数据库锁定题包快照', () => {
       await connection.execute('INSERT INTO diagnosis_sessions (diagnosis_ref,user_internal_id,user_plant_internal_id,symptom_type,question_package_release_ref,status,started_at_ms,created_at_ms,updated_at_ms,question_package_snapshot_json,question_package_snapshot_sha256) VALUES (?,1,1,?,?,\'active\',2000,2000,2000,CAST(? AS JSON),?)',['bad-hash','yellow_leaf','question-yellow/v1',JSON.stringify(locked.snapshot),'a'.repeat(64)])
     } finally { connection.release() }
     expect(await createMysqlDiagnosisQuestionSnapshotRepository(source).read('usr-owner','upl-owner','bad-hash')).toEqual({ status:'invalid_snapshot' })
+  })
+})
+
+/** 真实MySQL：原归属会话→锁定题包→整包证据→整包SQL追加→读回；不验收HTTP/CMS或完整迁移链。 */
+function answerInput(diagnosisRef:string) {
+  const questions=catalog.fixed.yellow_leaf as {questionKey:string;options:{optionKey:string}[]}[]
+  return {userRef:'usr-owner',userPlantRef:'upl-owner',diagnosisRef,occurredAtMs:2500,
+    submitted:{requestMode:'answer_submit',answers:questions.map(q=>({questionKey:q.questionKey,
+      optionKey:q.options.find(option=>option.optionKey==='air_environment_unknown')?.optionKey??q.options[0]!.optionKey}))}}
+}
+function answerService() {
+  return createSubmitDiagnosisAnswersService({driver:createMysqlTransactionDriver(source,()=>undefined),repository:createMysqlDiagnosisAnswerRepository()})
+}
+async function answerCount(ref:string) {
+  const [rows]=await db.execute('SELECT COUNT(*) AS n FROM diagnosis_answers a JOIN diagnosis_sessions s ON s.id=a.diagnosis_session_internal_id WHERE s.diagnosis_ref=?',[ref])
+  return (rows as {n:number}[])[0]!.n
+}
+describe('真实数据库整包答案保存',()=>{
+  test('首次四题持久化读回，相同重放不新增；不同答案不能覆盖',async()=>{
+    await append('answers-once');const run=answerService();const input=answerInput('answers-once')
+    expect(await run(input)).toEqual({status:'recorded',answerCount:4})
+    expect(await run({...input,occurredAtMs:2600})).toEqual({status:'replayed',answerCount:4})
+    const changed=structuredClone(input);changed.submitted.answers[0]!.optionKey='often_wet'
+    expect(await run(changed)).toEqual({status:'conflict'});expect(await answerCount('answers-once')).toBe(4)
+  })
+  test('真实并发整包提交只有一个首次写入，另一个读回重放',async()=>{
+    await append('answers-concurrent');const run=answerService();const input=answerInput('answers-concurrent')
+    const results=await Promise.all([run(input),run(input)])
+    expect(results.map(r=>r.status).sort()).toEqual(['recorded','replayed']);expect(await answerCount('answers-concurrent')).toBe(4)
+  })
+  test('跨用户或跨植物拒绝，不新增答案；归档植物拒绝',async()=>{
+    await append('answers-owner');const run=answerService();const input=answerInput('answers-owner')
+    expect(await run({...input,userRef:'usr-other'})).toEqual({status:'not_found'})
+    expect(await run({...input,userPlantRef:'upl-other'})).toEqual({status:'not_found'})
+    expect(await run({...input,diagnosisRef:"' OR '1'='1"})).toEqual({status:'not_found'})
+    await db.query("UPDATE user_plants SET lifecycle_status='archived' WHERE id=1")
+    try {expect(await run(input)).toEqual({status:'not_found'})}
+    finally {await db.query("UPDATE user_plants SET lifecycle_status='active' WHERE id=1")}
+    expect(await answerCount('answers-owner')).toBe(0)
+  })
+  test('复合证据缺失时零写入，旧会话缺快照也不能生成答案',async()=>{
+    await append('answers-invalid');const run=answerService();const input=answerInput('answers-invalid')
+    input.submitted.answers[0]!.optionKey='care_behavior_timeline'
+    expect(await run(input)).toEqual({status:'invalid_timeline_evidence'});expect(await answerCount('answers-invalid')).toBe(0)
+    expect(await run(answerInput('legacy'))).toEqual({status:'missing_snapshot'})
+  })
+  test('真实插入后发生错误时回滚四题，不留下部分答案或伪报已保存',async()=>{
+    await append('answers-rollback');const actual=createMysqlDiagnosisAnswerRepository()
+    const repo={...actual,appendAnswers:async(...args:Parameters<typeof actual.appendAnswers>)=>{await actual.appendAnswers(...args);throw new Error('写入后失败探针')}}
+    const run=createSubmitDiagnosisAnswersService({driver:createMysqlTransactionDriver(source,()=>undefined),repository:repo})
+    await expect(run(answerInput('answers-rollback'))).rejects.toThrow('写入后失败探针')
+    expect(await answerCount('answers-rollback')).toBe(0)
+  })
+  test('已完成会话不允许首次写入；损坏正文不能仅凭摘要重放',async()=>{
+    await append('answers-completed');await db.execute("UPDATE diagnosis_sessions SET status='completed' WHERE diagnosis_ref=?",['answers-completed'])
+    expect(await answerService()(answerInput('answers-completed'))).toEqual({status:'session_not_active'})
+    await append('answers-corrupt');const run=answerService();const input=answerInput('answers-corrupt');await run(input)
+    await db.execute("UPDATE diagnosis_answers a JOIN diagnosis_sessions s ON s.id=a.diagnosis_session_internal_id SET a.answer_json=JSON_OBJECT('bad',TRUE) WHERE s.diagnosis_ref=?",['answers-corrupt'])
+    expect(await run(input)).toEqual({status:'conflict'})
   })
 })
