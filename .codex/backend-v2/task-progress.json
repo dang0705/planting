@@ -1,8 +1,8 @@
 {
-  "revision": 59,
+  "revision": 60,
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
-  "updatedAt": "2026-10-04T16:21:53.223593+00:00",
+  "updatedAt": "2026-10-04T16:32:53.932484+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
     "goal": "固定题包已审核发布数据库保护",
@@ -200,10 +200,10 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 9,
+      "version": 10,
       "priority": "normal",
       "status": "codex running",
-      "stage": "固定题包发布020迁移真实MySQL验证",
+      "stage": "固定题包创建HTTP与答案SQL纵向验证",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
@@ -213,19 +213,20 @@
         ".codex/backend-v2/evidence/E05-answer-idempotency.json",
         ".codex/backend-v2/evidence/E05-answer-http.json",
         ".codex/backend-v2/evidence/E05-fixed-question-release.json",
-        ".codex/backend-v2/evidence/E05-fixed-question-immutability.json"
+        ".codex/backend-v2/evidence/E05-fixed-question-immutability.json",
+        ".codex/backend-v2/evidence/E05-create-session-http.json"
       ],
       "summary": [
-        "E05新增020迁移：审核后固定题包发布不可改写或删除",
-        "真实MySQL39项通过；保护字段、退役回滚、草稿及其他域验证",
-        "迁移前后发布内容与行数一致；生产无DDL或数据操作",
-        "经典13项RED→真实SQL恢复，全量1179/1179",
-        "下一步创建共享幂等与题包HTTP；正式审核激活仍待验收"
+        "E05：V1黄叶/萎蔫创建HTTP→真实会话SQL→四题答案读回",
+        "共享幂等同事务；并发只创建一次，改发布仍重放首次题目",
+        "公开题目白名单；跨用户拒绝、失败回滚及提交丢失核对",
+        "重放突变RED→恢复；全量1197/1197，MySQL42项通过",
+        "正式审核激活、临时案例、动态虫害及诊断结果仍待验收"
       ],
       "blockingReason": null,
-      "nextAction": "接会话创建共享幂等、公开题包白名单DTO及HTTP",
-      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090327已读回",
-      "milestoneCommit": "67a795f9"
+      "nextAction": "接V1虫害动态选题创建和复合证据，保持无新增题包范围",
+      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090341已读回",
+      "milestoneCommit": "d89489d7"
     }
   ],
   "queue": [
@@ -329,7 +330,7 @@
       ]
     }
   ],
-  "nextAction": "接会话创建共享幂等、公开题包白名单DTO及HTTP",
+  "nextAction": "接V1虫害动态选题创建和复合证据，保持无新增题包范围",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -703,5 +704,22 @@
       "schema/manifest.json仅最后一条迁移登记格式和下一个序号"
     ],
     "scope": "只新增固定题包保护，不扫描其他业务表或架构图"
+  },
+  "diagnosisCreateHttpReadAdmission": {
+    "task": "E05会话创建共享幂等和公开题包DTO",
+    "layers": {
+      "L0": "已缓存OV backend-v2摘要只有实施导航",
+      "L1": "已核验contracts overview没有诊断会话字段合同",
+      "L2": "已核验context-tree/diagnosis仅旧版索引，不能提供v2创建路由和公开Schema"
+    },
+    "missing": [
+      "会话创建登记的operationId、请求和响应合同名"
+    ],
+    "localAllowed": [
+      "api/route-registry.json仅POST /api/v2/diagnosis/sessions及对应OpenAPI操作",
+      "api/generate-openapi.mjs仅创建操作Schema装配",
+      "api/manifest.json仅对应制品哈希"
+    ],
+    "scope": "只补创建与公开题包，禁止读取其他路由或架构"
   }
 }

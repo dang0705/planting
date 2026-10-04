@@ -13,6 +13,7 @@ const printableAsciiPattern = '^[\\x20-\\x7E]+$'
 
 /** 仅为已冻结字段级请求合同提供组件引用；其他合同继续使用严格空对象骨架。 */
 const requestSchemaRefByContract = {
+  CreateDiagnosisSessionRequest: '#/components/schemas/CreateDiagnosisSessionRequest',
   DiagnosisAnswerRequest: '#/components/schemas/DiagnosisAnswerRequest',
   CreateUserPlantRequest: '#/components/schemas/CreateUserPlantRequest',
   CreateIdentitySessionRequest: '#/components/schemas/CreateIdentitySessionRequest',
@@ -37,7 +38,8 @@ for (const route of registry.routes) {
   const method = route.method.toLowerCase()
   const isWrite = ['post', 'patch', 'delete', 'put'].includes(method)
   const isAnswer = route.operationId === 'answerDiagnosisQuestion'
-  const successSchemaRef = isAnswer ? '#/components/schemas/DiagnosisSessionAnswerResponse' : successSchemaRefByContract[route.responseContract]
+  const isCreate = route.operationId === 'createDiagnosisSession'
+  const successSchemaRef = isCreate ? '#/components/schemas/DiagnosisSessionCreationResponse' : isAnswer ? '#/components/schemas/DiagnosisSessionAnswerResponse' : successSchemaRefByContract[route.responseContract]
   const operation = {
     operationId: route.operationId,
     summary: `${route.owner} 域：${route.operationId}`,
@@ -48,13 +50,14 @@ for (const route of registry.routes) {
     ...(route.requiredScope ? { 'x-required-scope': route.requiredScope } : {}),
     'x-request-contract': route.requestContract,
     'x-response-contract': route.responseContract,
+    ...(isCreate ? { 'x-response-variant': 'fixed_question_package' } : {}),
     ...(isAnswer ? { 'x-response-variant': 'answers_recorded' } : {}),
     'x-idempotency': route.idempotency,
     'x-errors': route.errors,
     parameters: parametersByPath(route.path),
     responses: {
       '200': {
-        description: isAnswer ? '整包答案已记录；首次与重放相同，不代表诊断完成' : '成功；具体 data 结构由 x-response-contract 指向的合同冻结',
+        description: isCreate ? '创建已锁定的V1黄叶或萎蔫题包；虫害由独立动态选题承接' : isAnswer ? '整包答案已记录；首次与重放相同，不代表诊断完成' : '成功；具体 data 结构由 x-response-contract 指向的合同冻结',
         content: {
           'application/json': {
             schema: { $ref: successSchemaRef ?? '#/components/schemas/SuccessEnvelope' },
@@ -141,6 +144,135 @@ const openapi = {
       ServiceSignature: serviceHeaderParameter('X-QHZ-Signature', '规范化签名明文的 HMAC-SHA-256 base64url 结果。'),
     },
     schemas: {
+      CreateDiagnosisSessionRequest: {
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "userPlantRef",
+    "mode"
+  ],
+  "properties": {
+    "userPlantRef": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^upl_[A-Za-z0-9_-]{8,}$"
+    },
+    "mode": {
+      "enum": [
+        "yellow_leaf",
+        "wilting_droop"
+      ]
+    }
+  }
+},
+      DiagnosisSessionCreationResponse: {
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "data"
+  ],
+  "properties": {
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "diagnosisSessionRef",
+        "mode",
+        "questionPackage"
+      ],
+      "properties": {
+        "diagnosisSessionRef": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 100
+        },
+        "mode": {
+          "enum": [
+            "yellow_leaf",
+            "wilting_droop"
+          ]
+        },
+        "questionPackage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "questionCount",
+            "questions"
+          ],
+          "properties": {
+            "questionCount": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "questions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "questionKey",
+                  "text",
+                  "inputKind",
+                  "options"
+                ],
+                "properties": {
+                  "questionKey": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "text": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "inputKind": {
+                    "enum": [
+                      "choice",
+                      "care_behavior_timeline",
+                      "air_environment"
+                    ]
+                  },
+                  "helpText": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "whyThisQuestion": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "options": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "optionKey",
+                        "text"
+                      ],
+                      "properties": {
+                        "optionKey": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "text": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+},
       DiagnosisAnswerRequest: {
   "type": "object",
   "additionalProperties": false,

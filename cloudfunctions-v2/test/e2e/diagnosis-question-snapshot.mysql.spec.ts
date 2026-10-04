@@ -1,3 +1,5 @@
+import { createIdempotentDiagnosisCreationService, calculateDiagnosisCreationRequestHash } from '../../src/diagnosis/application/idempotent-create-diagnosis.js'
+import { createDiagnosisCreationRouteHandler, diagnosisCreationRoute, projectDiagnosisCreationResponse } from '../../src/diagnosis/http/create-session-route.js'
 import { spawnSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -358,5 +360,59 @@ describe('真实共享幂等与答案同事务',()=>{
       submitInTransaction:async(tx,input)=>{calls+=1;return deps.submitInTransaction(tx,input)}})
     expect((await run(idempotentInput('ledger-unknown','ledger-unknown'))).status).toBe(200)
     expect(calls).toBe(1);expect(await answerCount('ledger-unknown')).toBe(4)
+  })
+})
+
+/** unit_real_data / L3：真实HTTP与MySQL创建→作答；身份为受控替身，发布仅隔离夹具。 */
+describe('固定会话创建到作答纵向链路',()=>{
+  function creationDependencies(){
+    const deps=idempotentDependencies();const repo=createMysqlDiagnosisQuestionSnapshotRepository(source)
+    return {...deps,createInTransaction:createFixedQuestionSessionInTransaction({published:createMysqlFixedQuestionReleaseReader().read,append:repo.append,read:repo.readInTransaction}),projectPublicResponse:projectDiagnosisCreationResponse}
+  }
+  function creationInput(key:string){
+    const input={userRef:'usr_owner123',userPlantRef:'upl_owner123',mode:'yellow_leaf' as const,startedAtMs:2500}
+    return {...input,idempotency:{principalType:'user' as const,principalScopeHash:createHash('sha256').update(input.userRef).digest('hex'),httpMethod:'POST',normalizedPath:'/api/v2/diagnosis/sessions',operationId:'createDiagnosisSession',idempotencyKeyHash:createHash('sha256').update(key).digest('hex'),requestHash:calculateDiagnosisCreationRequestHash(input),createdAtMs:2500,expiresAtMs:5000}}
+  }
+  test('真实HTTP创建、重放旧题包、归属拒绝与四题答案读回',async()=>{
+    const deps=creationDependencies();const createSession=createIdempotentDiagnosisCreationService(deps)
+    const resolvePrincipal=async(command:{bearerToken:string})=>({principalType:'user',user_id:command.bearerToken==='owner-token'?'usr_owner123':'usr_other123',sessionVersion:1,authenticatedVia:'wechat',issuedAt:'2026-10-04T00:00:00Z',expiresAt:'2026-10-05T00:00:00Z'} as UserPrincipalDto)
+    const server=createServer(createRouteDispatcher([
+      {route:diagnosisCreationRoute,handler:createDiagnosisCreationRouteHandler({now:()=>2500,writeAudit:()=>undefined,resolvePrincipal,createSession})},
+      {route:diagnosisAnswerRoute,handler:createDiagnosisAnswerRouteHandler({now:()=>2500,writeAudit:()=>undefined,resolvePrincipal,submitAnswers:input=>createIdempotentDiagnosisAnswerService({...deps,projectPublicResponse:r=>projectDiagnosisAnswerResponse(input.diagnosisRef,r)})(input)})}
+    ]))
+    await new Promise<void>(r=>server.listen(0,'127.0.0.1',r))
+    try{
+      const base=`http://127.0.0.1:${(server.address() as AddressInfo).port}/api/v2/diagnosis/sessions`
+      const post=(url:string,body:unknown,key:string,token='owner-token')=>fetch(url,{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${token}`,'idempotency-key':key},body:JSON.stringify(body)})
+      const body={userPlantRef:'upl_owner123',mode:'yellow_leaf'}
+      const first=await post(base,body,'create-real-http');expect(first.status).toBe(200)
+      const response=await first.json() as {data:{diagnosisSessionRef:string;questionPackage:{questionCount:number;questions:unknown[]}}}
+      expect(response.data.questionPackage.questionCount).toBe(4);expect(JSON.stringify(response)).not.toMatch(/routeKey|outcomeKey|releaseRef|snapshotSha/)
+      expect(await (await post(base,body,'create-real-http')).json()).toEqual(response)
+      expect((await post(base,body,'create-wrong-owner','other-token')).status).toBe(404)
+      const ref=response.data.diagnosisSessionRef
+      const answered=await post(`${base}/${ref}/answers`,{userPlantRef:'upl_owner123',...answerInput(ref).submitted},'create-answer-real')
+      expect(answered.status).toBe(200);expect(await answered.json()).toEqual({data:{diagnosisSessionRef:ref,answersRecorded:true}});expect(await answerCount(ref)).toBe(4)
+      const [count]=await db.execute('SELECT COUNT(*) AS n FROM diagnosis_sessions WHERE diagnosis_ref=?',[ref]);expect(count).toEqual([{n:1}])
+    }finally{server.closeAllConnections();await new Promise<void>(r=>server.close(()=>r()))}
+  })
+  test('真实并发同键只创建一次，发布改变后仍重放首次题目',async()=>{
+    const deps=creationDependencies();let calls=0
+    const run=createIdempotentDiagnosisCreationService({...deps,createInTransaction:async(tx,input)=>{calls+=1;return deps.createInTransaction(tx,input)}})
+    const input=creationInput('create-concurrent');const results=await Promise.all([run(input),run(input)])
+    expect(results[0]!.status).toBe(200);expect(results[0]).toEqual(results[1]);expect(calls).toBe(1)
+    const next=structuredClone(fixedPolicyContent);next.sourceRef+='#create-replay-next';next.packages.yellow_leaf[0].text='新发布的问题'
+    await seedFixedRelease('bpr_create_next123','create-next',next)
+    expect(await run(input)).toEqual(results[0]);expect(calls).toBe(1)
+  })
+  test('首次响应失败回滚会话和账本，提交确认丢失只读原结果',async()=>{
+    const deps=creationDependencies();const input=creationInput('create-rollback');const [before]=await db.query('SELECT COUNT(*) AS n FROM diagnosis_sessions')
+    const original=deps.idempotencyRepository.completionFirstResult
+    const failed=createIdempotentDiagnosisCreationService({...deps,idempotencyRepository:{...deps.idempotencyRepository,completionFirstResult:async(...args:Parameters<typeof original>)=>{await original(...args);throw new Error('失败探针')}}})
+    expect((await failed(input)).status).toBe(503);expect((await db.query('SELECT COUNT(*) AS n FROM diagnosis_sessions'))[0]).toEqual(before)
+    expect((await db.execute('SELECT COUNT(*) AS n FROM http_idempotency_records WHERE idempotency_key_hash=?',[input.idempotency.idempotencyKeyHash]))[0]).toEqual([{n:0}])
+    let calls=0;const commit=deps.driver.commitTransaction
+    const uncertain=createIdempotentDiagnosisCreationService({...deps,driver:{...deps.driver,commitTransaction:async tx=>{await commit(tx);throw new DatabaseCommitResultUnknownError('确认丢失')}},createInTransaction:async(tx,value)=>{calls+=1;return deps.createInTransaction(tx,value)}})
+    expect((await uncertain(creationInput('create-unknown'))).status).toBe(200);expect(calls).toBe(1)
   })
 })

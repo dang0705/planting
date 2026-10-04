@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T16:21:53.223593+00:00",
-  "sourceRevision": 59,
-  "sourceUpdatedAt": "2026-10-04T16:21:53.223593+00:00",
+  "generatedAt": "2026-10-04T16:32:53.932484+00:00",
+  "sourceRevision": 60,
+  "sourceUpdatedAt": "2026-10-04T16:32:53.932484+00:00",
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
   "tasks": [
@@ -199,16 +199,16 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 9,
+      "version": 10,
       "status": "codex running",
-      "stage": "固定题包发布020迁移真实MySQL验证",
+      "stage": "固定题包创建HTTP与答案SQL纵向验证",
       "accepted": false,
       "summary": [
-        "E05新增020迁移：审核后固定题包发布不可改写或删除",
-        "真实MySQL39项通过；保护字段、退役回滚、草稿及其他域验证",
-        "迁移前后发布内容与行数一致；生产无DDL或数据操作",
-        "经典13项RED→真实SQL恢复，全量1179/1179",
-        "下一步创建共享幂等与题包HTTP；正式审核激活仍待验收"
+        "E05：V1黄叶/萎蔫创建HTTP→真实会话SQL→四题答案读回",
+        "共享幂等同事务；并发只创建一次，改发布仍重放首次题目",
+        "公开题目白名单；跨用户拒绝、失败回滚及提交丢失核对",
+        "重放突变RED→恢复；全量1197/1197，MySQL42项通过",
+        "正式审核激活、临时案例、动态虫害及诊断结果仍待验收"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
@@ -218,18 +218,19 @@
         ".codex/backend-v2/evidence/E05-answer-idempotency.json",
         ".codex/backend-v2/evidence/E05-answer-http.json",
         ".codex/backend-v2/evidence/E05-fixed-question-release.json",
-        ".codex/backend-v2/evidence/E05-fixed-question-immutability.json"
+        ".codex/backend-v2/evidence/E05-fixed-question-immutability.json",
+        ".codex/backend-v2/evidence/E05-create-session-http.json"
       ],
       "blockingReason": null,
-      "nextAction": "接会话创建共享幂等、公开题包白名单DTO及HTTP",
+      "nextAction": "接V1虫害动态选题创建和复合证据，保持无新增题包范围",
       "sync": {
-        "version": 9,
+        "version": 10,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING及五行评论1100440000090327已读回"
+        "readback": "Chrome CODEX RUNNING及五行评论1100440000090341已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T16:22:53.726147+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T16:33:29.644824+00:00",
   "lastFailure": null
 }

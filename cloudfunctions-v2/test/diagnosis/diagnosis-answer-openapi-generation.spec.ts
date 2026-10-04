@@ -11,10 +11,14 @@ test('重新生成保留答案精确合同，其他会话操作不冒充答案�
  try{
   writeFileSync(join(directory,'generate-openapi.mjs'),readFileSync(join(findProjectRoot(),'docs/backend-v2/api/generate-openapi.mjs')))
   const route={method:'POST',path:'/api/v2/diagnosis/sessions/{diagnosisSessionRef}/answers',operationId:'answerDiagnosisQuestion',owner:'diagnosis',phase:'P4',security:'guest_or_authenticated',requestContract:'DiagnosisAnswerRequest',responseContract:'DiagnosisSessionResponse',idempotency:'required_header',errors:['VALIDATION_FAILED','PRINCIPAL_INVALID','IDEMPOTENCY_CONFLICT']}
-  writeFileSync(join(directory,'route-registry.json'),JSON.stringify({generatedAt:'2026-10-05T00:00:00+08:00',routes:[route,{...route,method:'GET',path:'/api/v2/diagnosis/sessions/{diagnosisSessionRef}',operationId:'getDiagnosisSession',requestContract:'EmptyRequest',idempotency:'not_required'}]}))
+  writeFileSync(join(directory,'route-registry.json'),JSON.stringify({generatedAt:'2026-10-05T00:00:00+08:00',routes:[{...route,path:'/api/v2/diagnosis/sessions',operationId:'createDiagnosisSession',requestContract:'CreateDiagnosisSessionRequest'},route,{...route,method:'GET',path:'/api/v2/diagnosis/sessions/{diagnosisSessionRef}',operationId:'getDiagnosisSession',requestContract:'EmptyRequest',idempotency:'not_required'}]}))
   const run=spawnSync(process.execPath,[join(directory,'generate-openapi.mjs')],{encoding:'utf8'})
   expect(run.status,run.stderr).toBe(0)
   const generated=JSON.parse(readFileSync(join(directory,'openapi.p1.json'),'utf8'))
+  const create=generated.paths['/api/v2/diagnosis/sessions'].post
+  expect(create.requestBody.content['application/json'].schema).toEqual({$ref:'#/components/schemas/CreateDiagnosisSessionRequest'})
+  expect(create.responses['200'].content['application/json'].schema).toEqual({$ref:'#/components/schemas/DiagnosisSessionCreationResponse'})
+  expect(generated.components.schemas.CreateDiagnosisSessionRequest.properties.mode.enum).toEqual(['yellow_leaf','wilting_droop'])
   const operation=generated.paths[route.path].post
   expect(operation.requestBody.content['application/json'].schema).toEqual({$ref:'#/components/schemas/DiagnosisAnswerRequest'})
   expect(operation.responses['200'].content['application/json'].schema).toEqual({$ref:'#/components/schemas/DiagnosisSessionAnswerResponse'})

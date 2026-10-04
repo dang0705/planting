@@ -1702,7 +1702,8 @@
           "VALIDATION_FAILED",
           "PRINCIPAL_INVALID",
           "IDEMPOTENCY_CONFLICT",
-          "SERVICE_UNAVAILABLE"
+          "SERVICE_UNAVAILABLE",
+          "NOT_FOUND"
         ],
         "parameters": [
           {
@@ -1711,11 +1712,11 @@
         ],
         "responses": {
           "200": {
-            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "description": "创建已锁定的V1黄叶或萎蔫题包；虫害由独立动态选题承接",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessEnvelope"
+                  "$ref": "#/components/schemas/DiagnosisSessionCreationResponse"
                 }
               }
             }
@@ -1736,8 +1737,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false
+                "$ref": "#/components/schemas/CreateDiagnosisSessionRequest"
               }
             }
           }
@@ -1749,7 +1749,8 @@
           {
             "userBearer": []
           }
-        ]
+        ],
+        "x-response-variant": "fixed_question_package"
       }
     },
     "/api/v2/diagnosis/sessions/{diagnosisSessionRef}/answers": {
@@ -3891,6 +3892,135 @@
         },
         "description": "DiagnosisSessionResponse在答案提交操作中的确认分支；不表示诊断结果已生成",
         "x-source-contract": "cloudfunctions-v2/models/diagnosis/answer-http-contract.md"
+      },
+      "CreateDiagnosisSessionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "userPlantRef",
+          "mode"
+        ],
+        "properties": {
+          "userPlantRef": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^upl_[A-Za-z0-9_-]{8,}$"
+          },
+          "mode": {
+            "enum": [
+              "yellow_leaf",
+              "wilting_droop"
+            ]
+          }
+        }
+      },
+      "DiagnosisSessionCreationResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "diagnosisSessionRef",
+              "mode",
+              "questionPackage"
+            ],
+            "properties": {
+              "diagnosisSessionRef": {
+                "type": "string",
+                "minLength": 8,
+                "maxLength": 100
+              },
+              "mode": {
+                "enum": [
+                  "yellow_leaf",
+                  "wilting_droop"
+                ]
+              },
+              "questionPackage": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "questionCount",
+                  "questions"
+                ],
+                "properties": {
+                  "questionCount": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "questions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "questionKey",
+                        "text",
+                        "inputKind",
+                        "options"
+                      ],
+                      "properties": {
+                        "questionKey": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "text": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "inputKind": {
+                          "enum": [
+                            "choice",
+                            "care_behavior_timeline",
+                            "air_environment"
+                          ]
+                        },
+                        "helpText": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "whyThisQuestion": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "options": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "optionKey",
+                              "text"
+                            ],
+                            "properties": {
+                              "optionKey": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "text": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "description": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }

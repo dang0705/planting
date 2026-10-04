@@ -454,7 +454,8 @@
         "VALIDATION_FAILED",
         "PRINCIPAL_INVALID",
         "IDEMPOTENCY_CONFLICT",
-        "SERVICE_UNAVAILABLE"
+        "SERVICE_UNAVAILABLE",
+        "NOT_FOUND"
       ]
     },
     {

@@ -1,0 +1,53 @@
+{
+  "step": "E05",
+  "ticketId": "z8v0kmr974",
+  "scope": "只复用V1黄叶、萎蔫及虫害；本轮只接固定黄叶/萎蔫创建入口，虫害动态路径仍待验收",
+  "validatedAt": "2026-10-04T16:32:53.932484+00:00",
+  "truthSource": "models/diagnosis/create-session-http-contract.md、V1复用题目制品与已登记createDiagnosisSession操作",
+  "tdd": {
+    "path": "Expected先落盘；重放分支受控突变RED→恢复GREEN；OpenAPI生成合同经典RED→GREEN",
+    "redEvidence": [
+      "/tmp/planting-e05-create-replay-mutation-red.log",
+      "/tmp/planting-e05-create-openapi-red.log"
+    ],
+    "restored": true
+  },
+  "checks": {
+    "backendFullVitest": {
+      "files": 144,
+      "passed": 1197
+    },
+    "node22Diagnosis": {
+      "files": 16,
+      "passed": 175
+    },
+    "realMysql": {
+      "passed": 42,
+      "new": 3,
+      "database": "隔离MySQL8.4",
+      "path": "真实NodeHTTP→归属/发布读取→会话SQL→公开题包→答案SQL→持久化读回",
+      "replaced": "身份Provider为受控替身；发布由隔离夹具构造"
+    },
+    "typecheck": "passed",
+    "lint": {
+      "errors": 0,
+      "warnings": 1556
+    },
+    "build": "passed"
+  },
+  "behaviors": [
+    "创建和首次题目响应与共享幂等在同一事务",
+    "同键并发只创建一次；活动发布改变仍重放首次题目",
+    "跨用户创建拒绝；公开题目只含显示和作答白名单",
+    "首次响应写失败整包回滚；真实COMMIT确认丢失新连接只读核对"
+  ],
+  "notAccepted": [
+    "正式身份验真",
+    "生产发布审核及激活",
+    "游客与登录用户临时路径",
+    "动态虫害HTTP创建",
+    "诊断结果和行动建议",
+    "实际部署"
+  ],
+  "productionChanged": false
+}
