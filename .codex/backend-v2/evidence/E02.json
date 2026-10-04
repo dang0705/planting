@@ -29,5 +29,12 @@
     "完整迁移应用",
     "整票 CMS 验收",
     "图片许可准入"
-  ]
+  ],
+  "latestFullVitest": {
+    "passed": 702,
+    "files": 105,
+    "failed": 0,
+    "log": "/tmp/planting-window-replay-final-full-green.log"
+  },
+  "scopeBoundary": "当前SQL百科只读子项已验证；共享原票CMS发布等范围尚未验收，不标整票完成"
 }

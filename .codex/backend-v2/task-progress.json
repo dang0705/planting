@@ -1,8 +1,8 @@
 {
-  "revision": 22,
+  "revision": 23,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-04T11:44:43.524450+00:00",
+  "updatedAt": "2026-10-04T11:49:42.640704+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
     "goal": "E04 区间平均辐射与窗口几何的保守上下界及真实制品回放",
@@ -45,7 +45,8 @@
       "acceptanceRecord": {
         "acceptedAt": "2026-10-04T11:43:11.473203+00:00",
         "evidence": ".codex/backend-v2/evidence/E00-acceptance.json"
-      }
+      },
+      "milestoneCommit": "11c0add5"
     },
     {
       "id": "z8v0kmtktd",
@@ -72,12 +73,13 @@
       "acceptanceRecord": {
         "acceptedAt": "2026-10-04T11:43:30.938533+00:00",
         "evidence": ".codex/backend-v2/evidence/E01.json"
-      }
+      },
+      "milestoneCommit": "fc84bb2e"
     },
     {
       "id": "z8v0kmr971",
       "step": "E02",
-      "version": 2,
+      "version": 3,
       "priority": "normal",
       "status": "codex running",
       "stage": "验证与持久化读回",
@@ -86,13 +88,13 @@
         ".codex/backend-v2/evidence/E02.json"
       ],
       "summary": [
-        "E02：SQL 百科公开只读已实现；原 CMS 票其他子项保留",
-        "9 场景经典 RED→GREEN；真实 MySQL→HTTP 新增 5 场景通过",
-        "Node22 合计 44 场景通过；类型检查、构建通过",
-        "图片保持空值；全量未全绿，尚未部署"
+        "E02当前子项：目录引用+slug+SQL百科只读已验证",
+        "9项隔离HTTP、5项真实MySQL/HTTP场景通过",
+        "后端全量702/702；共享原票CMS发布等范围仍未验收",
+        "图片保持空值；封面同步及浇水来源边界待核验"
       ],
-      "ticketReadback": "Chrome 已读回 ID、Normal、codex running",
-      "nextAction": "同步本子项验证结果，不将原 CMS 整票标成完成",
+      "ticketReadback": "Chrome当前E02/E05原票保持codex running，完整四行评论1100440000089636读回",
+      "nextAction": "定向核验封面同步字段所有权、浇水来源保护及CMS发布剩余子项",
       "blockingReason": null
     },
     {
@@ -142,7 +144,8 @@
       ],
       "blockingReason": null,
       "nextAction": "实现可靠太阳位置时序与全区间几何界限，接入直射可达性；不补猜测参数",
-      "ticketReadback": "Chrome原E04/E06票保持codex running，完整五行评论1100440000089627已读回"
+      "ticketReadback": "Chrome原E04/E06票保持codex running，完整五行评论1100440000089627已读回",
+      "milestoneCommit": "f7c38e9b"
     }
   ],
   "queue": [

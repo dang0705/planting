@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T11:44:43.524450+00:00",
-  "sourceRevision": 22,
-  "sourceUpdatedAt": "2026-10-04T11:44:43.524450+00:00",
+  "generatedAt": "2026-10-04T11:49:42.640704+00:00",
+  "sourceRevision": 23,
+  "sourceUpdatedAt": "2026-10-04T11:49:42.640704+00:00",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -64,26 +64,26 @@
     {
       "id": "z8v0kmr971",
       "step": "E02",
-      "version": 2,
+      "version": 3,
       "status": "codex running",
       "stage": "验证与持久化读回",
       "accepted": false,
       "summary": [
-        "E02：SQL 百科公开只读已实现；原 CMS 票其他子项保留",
-        "9 场景经典 RED→GREEN；真实 MySQL→HTTP 新增 5 场景通过",
-        "Node22 合计 44 场景通过；类型检查、构建通过",
-        "图片保持空值；全量未全绿，尚未部署"
+        "E02当前子项：目录引用+slug+SQL百科只读已验证",
+        "9项隔离HTTP、5项真实MySQL/HTTP场景通过",
+        "后端全量702/702；共享原票CMS发布等范围仍未验收",
+        "图片保持空值；封面同步及浇水来源边界待核验"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E02.json"
       ],
       "blockingReason": null,
-      "nextAction": "同步本子项验证结果，不将原 CMS 整票标成完成",
+      "nextAction": "定向核验封面同步字段所有权、浇水来源保护及CMS发布剩余子项",
       "sync": {
-        "version": 2,
+        "version": 3,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome 已读回同一票据 codex running 与完整四行验证评论"
+        "readback": "Chrome当前E02/E05原票保持codex running，完整四行评论1100440000089636读回"
       }
     },
     {
@@ -144,6 +144,6 @@
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T11:48:05.705686+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T11:50:29.186194+00:00",
   "lastFailure": null
 }

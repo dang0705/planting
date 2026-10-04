@@ -18,12 +18,12 @@
       "readback": "Chrome同一E01状态done、前置E00 done及完整验收评论1100440000089626读回"
     },
     "z8v0kmr971": {
-      "version": 2,
+      "version": 3,
       "status": "codex running",
-      "note": "E02：SQL 百科公开只读已实现；原 CMS 票其他子项保留\n9 场景经典 RED→GREEN；真实 MySQL→HTTP 新增 5 场景通过\nNode22 合计 44 场景通过；类型检查、构建通过\n图片保持空值；全量未全绿，尚未部署",
-      "commentId": "1100440000088814",
-      "commentFingerprint": "cc648930e0470c870abca72ed22cf6e43120ef1b35a7aaa648410b4aa0ea5854",
-      "readback": "Chrome 已读回同一票据 codex running 与完整四行验证评论"
+      "note": "E02当前子项：目录引用+slug+SQL百科只读已验证\n9项隔离HTTP、5项真实MySQL/HTTP场景通过\n后端全量702/702；共享原票CMS发布等范围仍未验收\n图片保持空值；封面同步及浇水来源边界待核验",
+      "commentId": "1100440000089636",
+      "commentFingerprint": "a351310d225194ffe4c7ec8668eeae569d7dd6e5ebd24616010c44a911910263",
+      "readback": "Chrome当前E02/E05原票保持codex running，完整四行评论1100440000089636读回"
     },
     "z8v0kmr970": {
       "version": 2,
@@ -42,11 +42,11 @@
       "readback": "Chrome原E04/E06票保持codex running，完整五行评论1100440000089627已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T11:48:05.705686+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T11:50:29.186194+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "4c45b589f8395a1b59fd17c62616b2280de9544549fbfa41380fa1a11f52a97e",
-    "sourceRevision": 22,
-    "sourceUpdatedAt": "2026-10-04T11:44:43.524450+00:00"
+    "fingerprint": "db8cc514429e312f423f838d3f5ba9fb5f2dfae6d5014fad24259313c90a6c72",
+    "sourceRevision": 23,
+    "sourceUpdatedAt": "2026-10-04T11:49:42.640704+00:00"
   }
 }
