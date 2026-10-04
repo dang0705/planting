@@ -58,19 +58,19 @@
       "readback": "Chrome HUMAN REQUIRED与五行评论1100440000090656已读回"
     },
     "z8v0kmr9mj": {
-      "version": 13,
+      "version": 14,
       "status": "codex running",
-      "note": "E03：显式新建植物与临时案例绑定已接同一HTTP\n真实HTTP/MySQL35项；满额拒绝、并发与原结果重放通过\n协议5项RED；容量2项/HTTP2项突变RED→恢复GREEN\n根与Node22全量1745/1745；类型/检查/构建通过\n真实登录/临时创建TTL/游客认领与整体E03仍未验收",
-      "commentId": "1100440000091008",
-      "commentFingerprint": "bb282e2df210c3389af2955a071483232c791a7467efcfad8d68653cfbd7627e",
-      "readback": "Chrome CODEX RUNNING及五行评论1100440000091008已读回"
+      "note": "E03：游客认领会话锁定与持有证明准入已实现\n真实MySQL9项；匿名主体/当前与上一版/到期及行锁通过\n失效旧证明1项经典RED；匿名旁路3项RED→恢复GREEN\n根与Node22全量1782/1782；类型/检查/构建通过\n完整认领命令/目标事务/真实身份与HTTP尚未验收",
+      "commentId": "1100440000091095",
+      "commentFingerprint": "1ff9a5c536792fc82cb18f9ffa5cd74519b9f4cce449b8e1075a87a92bf712b8",
+      "readback": "Chrome CODEX RUNNING及五行评论1100440000091095已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T21:57:02.312615+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T22:09:30.413970+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "378300fd385ddbc46a0fcbf2191c3d2eea93d31c4201d4b7c8cc3fbdd2752329",
-    "sourceRevision": 101,
-    "sourceUpdatedAt": "2026-10-04T21:56:22.102717+00:00"
+    "fingerprint": "95a28e0f1014a9208409e8f304df4f8c8f2a83a959979728940f4041ad10271e",
+    "sourceRevision": 102,
+    "sourceUpdatedAt": "2026-10-04T22:09:16.347055+00:00"
   }
 }

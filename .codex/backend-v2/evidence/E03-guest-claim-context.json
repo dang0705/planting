@@ -1,0 +1,21 @@
+{
+  "task": "E03游客认领持有证明与事务实现",
+  "at": "2026-10-04T22:00:54.630979+00:00",
+  "projectUri": "viking://resources/projects/planting",
+  "layers": {
+    "L0": "正确项目定向find level=[0,1,2]返回Native MCP超时，未提供任务所需信息",
+    "L1": "正确项目定向find level=[0,1,2]返回Native MCP超时，未提供任务所需信息",
+    "L2": "正确项目定向find level=[0,1,2]返回Native MCP超时，未提供任务所需信息"
+  },
+  "missing": [
+    "游客认领持有证明版本与有效期",
+    "三表事务与命令重放规则",
+    "相关配置准入状态与实际列"
+  ],
+  "allowed": [
+    "contracts/guest-session-claim.md仅持有证明、原结果重放、事务、拒绝规则章节",
+    "architecture/configuration-variable-catalog.json仅guest claim及proof相关配置项",
+    "schema/按合同sourceRefs唯一guest表迁移，仅guest_sessions/guest_plant_cases/guest_claim_commands/guest_case_claims"
+  ],
+  "scope": "禁止扩大到文档全目录或整领域"
+}

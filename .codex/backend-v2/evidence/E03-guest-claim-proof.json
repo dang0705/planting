@@ -1,0 +1,52 @@
+{
+  "scope": "E03游客认领事务内会话锁定与证明准入",
+  "ticketId": "z8v0kmr9mj",
+  "verifiedAt": "2026-10-04T22:09:16.347055+00:00",
+  "expectedSource": "cloudfunctions-v2/models/user-plant/guest-claim-proof-contract.md",
+  "authoritySource": "guest-session-claim/v1：匿名主体摘要、SHA-256持有证明、版本/宽限期和SELECT FOR UPDATE",
+  "contextEvidence": ".codex/backend-v2/evidence/E03-guest-claim-context.json",
+  "configurationDecision": "复用confirmed identity.guest.proof_rotation_grace_seconds；缺快照只阻断上一版；无新增配置/default",
+  "testFirst": {
+    "missingDomainRed": "/tmp/planting-e03-guest-proof-red.log",
+    "missingRepositoryRed": "/tmp/planting-e03-guest-proof-repository-red.log",
+    "missingModuleIsBusinessRed": false,
+    "malformedHashClassicRed": "/tmp/planting-e03-guest-proof-hash-type-red.log",
+    "malformedHashFailed": 1,
+    "stalePreviousClassicRed": "/tmp/planting-e03-guest-proof-stale-previous-red.log",
+    "stalePreviousFailed": 1,
+    "unitGreen": "/tmp/planting-e03-guest-proof-unit-green.log"
+  },
+  "verification": {
+    "domainUnitFake": 28,
+    "repositoryUnitFake": 9,
+    "realMysql": 9,
+    "rootFiles": 186,
+    "rootUnitTests": 1782,
+    "node22UnitTests": 1782,
+    "typecheckExit": 0,
+    "lintErrors": 0,
+    "lintWarnings": 2733,
+    "buildExit": 0,
+    "finalLogPrefix": "/tmp/planting-e03-guest-proof-final-"
+  },
+  "boundaries": [
+    "原始持有证明仅在当前内存使用，不入SQL/返回/日志",
+    "SQL只锁定既有会话；不签发匿名主体/证明，不创建用户植物或认领命令",
+    "真实匿名Provider验真、策略发布、证明轮换/清除与完整认领事务尚未接线",
+    "当前不是公开HTTP认领验收；无生产DDL/部署/删除"
+  ],
+  "remaining": [
+    "认领命令状态机/租约",
+    "目标与案例三表原子认领",
+    "提交未知只读核对",
+    "真实匿名与登录接线",
+    "到期旧证明清除及公开认领HTTP"
+  ],
+  "accepted": false,
+  "mutation": {
+    "redLog": "/tmp/planting-e03-guest-proof-anonymous-mutation-red.log",
+    "failedScenarios": 3,
+    "restoredDomainSha256": "9ee5f40029ee0adefe742b2fa0c5b314f77823009e674f8fe7ab3cbbaab55c40"
+  },
+  "buildBoundary": "Node22构建通过，子npm使用Node24产生25次引擎警告；不构成CloudBase运行证据"
+}
