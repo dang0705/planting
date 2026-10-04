@@ -50,19 +50,19 @@
       "readback": "Chrome CODEX RUNNING及五行评论1100440000090220已读回"
     },
     "z8v0kmr974": {
-      "version": 11,
+      "version": 12,
       "status": "codex running",
-      "note": "E05虫害复用八类十四条素材，按候选与已有证据动态筛选\n用户批准限题3/2/1/1/0；无档位拒绝，零题不自动直判\n跨候选所选两题→真实快照SQL→整包作答/重放通过\n证据守卫突变4项RED→恢复；全量1220/1220，MySQL43项\n动态HTTP、安全提示公开投影、审核发布及视觉准入待验收",
-      "commentId": "1100440000090357",
-      "commentFingerprint": "56504f9abe5b079fd2fce033670eedd518b55d02b7794c704a9303c53e0460b9",
-      "readback": "Chrome CODEX RUNNING及五行评论1100440000090357已读回"
+      "note": "E05动态虫害专属发布Reader：题目、限题、证据组同版锁定\n真实活动指针SQL→选题→公开风险/同意/跳过提示通过\n缺安全提示或发布损坏拒绝；不启用本地题目或旧置信度\n指针1项/安全4项突变RED→恢复；全量1248/1248，MySQL44项\n动态发布DB保护、视觉准入、创建HTTP及正式激活待验收",
+      "commentId": "1100440000090367",
+      "commentFingerprint": "a068fe3dee394dbdd28d6826a72c392e674c938aae1bd3e2d8492a797b48c05a",
+      "readback": "Chrome CODEX RUNNING及五行评论1100440000090367已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T16:44:03.059912+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T16:50:38.938557+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "b101c94b45c4194e919ff03b76c4ad3f9361d2704f723754659d0ea104b0fda2",
-    "sourceRevision": 61,
-    "sourceUpdatedAt": "2026-10-04T16:43:04.027260+00:00"
+    "fingerprint": "8f32c09b895166ec9d66585ba0443aeb133cb2063bceec120ce11317c6bb1671",
+    "sourceRevision": 62,
+    "sourceUpdatedAt": "2026-10-04T16:49:41.648759+00:00"
   }
 }

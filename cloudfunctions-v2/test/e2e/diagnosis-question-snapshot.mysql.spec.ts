@@ -1,3 +1,5 @@
+import { createMysqlDynamicPestReleaseReader } from '../../src/diagnosis/repository/mysql-dynamic-pest-release-reader.js'
+import { projectPestQuestionPackage } from '../../src/diagnosis/http/pest-question-public-projection.js'
 import { selectV1PestQuestionSnapshot } from '../../src/diagnosis/domain/pest-question-eligibility.js'
 import { createIdempotentDiagnosisCreationService, calculateDiagnosisCreationRequestHash } from '../../src/diagnosis/application/idempotent-create-diagnosis.js'
 import { createDiagnosisCreationRouteHandler, diagnosisCreationRoute, projectDiagnosisCreationResponse } from '../../src/diagnosis/http/create-session-route.js'
@@ -433,5 +435,25 @@ describe('V1虫害所选快照持久化与作答',()=>{
     expect(await answerService()(command)).toEqual({status:'recorded',answerCount:2});expect(await answerCount(command.diagnosisRef)).toBe(2)
     expect(await answerService()(command)).toEqual({status:'replayed',answerCount:2})
     expect(await repo.read('usr_other123','upl_owner123',command.diagnosisRef)).toEqual({status:'not_found'})
+  })
+})
+
+/** unit_real_data / L3：真实活动发布读取→动态选题→公开风险提示；发布由隔离夹具构造。 */
+describe('动态虫害活动发布真实读取',()=>{
+  test('原事务读取且验证范围/摘要，所选题目公开保留安全提示',async()=>{
+    const content=JSON.parse(readFileSync(join(root,'cloudfunctions-v2/models/diagnosis/v1-reuse/questions.json'),'utf8'))
+    const body={contractVersion:'diagnosis-dynamic-pest-question-packages/v1',sourceRef:'pest-fixture/v1',sourceSha256:'40385731fe0ed7d20c9331b1be6aee10c13ebb900350a4576c14edd0ea07107f',questions:content.pestQuestions,tierQuestionLimits:{low:3,medium:2,high:1,very_likely:1,direct:0},evidenceGroupByKey:{}}
+    const sha=calculateCanonicalJsonSha256(body)
+    await db.execute("INSERT INTO business_policy_releases (release_ref,domain_code,policy_code,schema_version,release_version,content_sha256,policy_json,status,effective_at_ms,verified_at_ms,created_at_ms,updated_at_ms) VALUES (?,'diagnosis','dynamic_pest_question_packages',?,'pest-v1',?,CAST(? AS JSON),'active',1000,900,800,1000)",['bpr_pestreader123',body.contractVersion,sha,JSON.stringify(body)])
+    await db.execute("INSERT INTO active_business_policy_releases (domain_code,policy_code,release_internal_id,active_release_version,active_content_sha256,version,activated_at_ms,created_at_ms,updated_at_ms) SELECT domain_code,policy_code,id,release_version,content_sha256,1,1000,1000,1000 FROM business_policy_releases WHERE release_ref=?",['bpr_pestreader123'])
+    const reader=createMysqlDynamicPestReleaseReader();const driver=createMysqlTransactionDriver(source,()=>undefined)
+    await runDatabaseTransaction(driver,async tx=>{
+      const r=await reader.read(tx,2500);expect(r.status).toBe('available');if(r.status!=='available'){throw new Error('未准入')}
+      const selected=selectV1PestQuestionSnapshot({questions:r.release.questions,candidateModes:['whitefly'],lockedEvidenceKeys:[],lockedEvidenceGroups:[],directMatchedModes:[],evidenceGroupByKey:r.release.evidenceGroupByKey,tier:'high',limits:r.release.tierQuestionLimits,questionPackageReleaseRef:r.release.releaseRef})
+      const publicPackage=projectPestQuestionPackage(selected.snapshot);expect(publicPackage.questionCount).toBe(1);expect(publicPackage.questions[0]!.requiresExplicitConsent).toBe(true);expect(publicPackage.questions[0]!.skipOptionEnabled).toBe(true)
+    })
+    await db.query("UPDATE active_business_policy_releases SET active_content_sha256=REPEAT('a',64) WHERE policy_code='dynamic_pest_question_packages'")
+    expect((await runDatabaseTransaction(driver,tx=>reader.read(tx,2500))).status).toBe('invalid')
+    await db.execute("UPDATE active_business_policy_releases SET active_content_sha256=? WHERE policy_code='dynamic_pest_question_packages'",[sha])
   })
 })

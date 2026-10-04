@@ -1,0 +1,43 @@
+{
+  "step": "E05",
+  "ticketId": "z8v0kmr974",
+  "scope": "V1虫害受控发布读取与安全提示白名单，复用既有业务策略两表",
+  "validatedAt": "2026-10-04T16:49:41.648759+00:00",
+  "truthSource": "models/diagnosis/dynamic-pest-release-contract.md、用户已批准题数及V1复用制品",
+  "tdd": {
+    "path": "Expected先落盘，指针摘要突变1项RED及安全校验突变4项RED→恢复GREEN",
+    "redEvidence": [
+      "/tmp/planting-e05-pest-release-pointer-red.log",
+      "/tmp/planting-e05-pest-public-safety-red.log"
+    ],
+    "restored": true
+  },
+  "checks": {
+    "newUnitCases": 28,
+    "backendFullVitest": {
+      "files": 147,
+      "passed": 1248
+    },
+    "node22Diagnosis": 226,
+    "realMysql": {
+      "passed": 44,
+      "new": 1,
+      "path": "原事务锁定活动指针/发布SQL→筛选限题→所选快照→公开风险/同意/跳过提示",
+      "notCovered": "实际视觉Provider、生产审核/激活、动态创建HTTP、发布数据库不可变"
+    },
+    "typecheck": "passed",
+    "lint": {
+      "errors": 0,
+      "warnings": 1604
+    },
+    "build": "passed"
+  },
+  "notAccepted": [
+    "动态发布数据库不可变保护",
+    "正式审核发布与激活",
+    "视觉输入准入与分档",
+    "动态创建HTTP",
+    "直判/最终诊断及行动"
+  ],
+  "productionChanged": false
+}

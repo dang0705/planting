@@ -1,19 +1,19 @@
 {
-  "revision": 61,
+  "revision": 62,
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
-  "updatedAt": "2026-10-04T16:43:04.027260+00:00",
+  "updatedAt": "2026-10-04T16:49:41.648759+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "V1虫害动态选题到所选快照与答案保存",
+    "goal": "动态虫害专属发布读取与公开安全提示",
     "assumptions": [
-      "只复用八类十四条素材",
-      "已批准题数上限不等于审核发布、视觉分档或自动直判"
+      "只有真实active兼容发布可消费",
+      "公开安全提示来自已锁定V1题目"
     ],
-    "minimumVerification": "独立题数/证据Expected、突变RED→恢复、真实快照和答案SQL、全量GREEN",
-    "continueWhen": "所选快照与限题来源明确且无默认值，进入受控发布与动态HTTP",
-    "failWhen": "客户端授权候选/证据、自动启用旧阈值或零题伪造结论",
-    "rollback": "移除未激活的独立选题消费，不修改历史持久化快照或旧题包来源",
+    "minimumVerification": "独立Expected、指针与安全守卫突变RED、实际活动发布SQL及全量GREEN",
+    "continueWhen": "读取与投影已验证，再补发布不可变和动态创建用例",
+    "failWhen": "默认启用本地题目、丢失用户安全提示或用Reader代替整个HTTP闭环",
+    "rollback": "撤下尚未接入运行入口的独立Reader和投影；不改历史快照",
     "timeLimit": "30分钟检查点"
   },
   "tasks": [
@@ -200,10 +200,10 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 11,
+      "version": 12,
       "priority": "normal",
       "status": "codex running",
-      "stage": "V1虫害动态筛选、已批准限题与快照作答验证",
+      "stage": "动态虫害受控发布读取及公开安全提示验证",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
@@ -215,19 +215,20 @@
         ".codex/backend-v2/evidence/E05-fixed-question-release.json",
         ".codex/backend-v2/evidence/E05-fixed-question-immutability.json",
         ".codex/backend-v2/evidence/E05-create-session-http.json",
-        ".codex/backend-v2/evidence/E05-dynamic-pest-selection.json"
+        ".codex/backend-v2/evidence/E05-dynamic-pest-selection.json",
+        ".codex/backend-v2/evidence/E05-dynamic-pest-release.json"
       ],
       "summary": [
-        "E05虫害复用八类十四条素材，按候选与已有证据动态筛选",
-        "用户批准限题3/2/1/1/0；无档位拒绝，零题不自动直判",
-        "跨候选所选两题→真实快照SQL→整包作答/重放通过",
-        "证据守卫突变4项RED→恢复；全量1220/1220，MySQL43项",
-        "动态HTTP、安全提示公开投影、审核发布及视觉准入待验收"
+        "E05动态虫害专属发布Reader：题目、限题、证据组同版锁定",
+        "真实活动指针SQL→选题→公开风险/同意/跳过提示通过",
+        "缺安全提示或发布损坏拒绝；不启用本地题目或旧置信度",
+        "指针1项/安全4项突变RED→恢复；全量1248/1248，MySQL44项",
+        "动态发布DB保护、视觉准入、创建HTTP及正式激活待验收"
       ],
       "blockingReason": null,
-      "nextAction": "接动态虫害题包受控发布读取、视觉证据准入及安全提示白名单，再接创建HTTP",
-      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090357已读回",
-      "milestoneCommit": "fbd4067f"
+      "nextAction": "补动态虫害发布的数据库不可变保护，再接受控视觉证据和动态创建HTTP",
+      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090367已读回",
+      "milestoneCommit": "77431f6b"
     }
   ],
   "queue": [
@@ -331,7 +332,7 @@
       ]
     }
   ],
-  "nextAction": "接动态虫害题包受控发布读取、视觉证据准入及安全提示白名单，再接创建HTTP",
+  "nextAction": "补动态虫害发布的数据库不可变保护，再接受控视觉证据和动态创建HTTP",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
