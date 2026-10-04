@@ -1,0 +1,40 @@
+{
+  "ticket": "z8v0kmr973",
+  "scope": "真实活动玻璃策略读取及发布摘要兼容",
+  "contract": "cloudfunctions-v2/models/care/mvp-glass-policy-contract.md",
+  "path": "真实MySQL8.4→活动指针JOIN→正文AJV/规范摘要→只读策略快照",
+  "hash": "复用键排序规范JSON SHA-256，数据库与配置快照一致",
+  "tests": {
+    "readerUnit": 13,
+    "policyUnitAndComposition": 20,
+    "mysqlNode22": 5,
+    "full": {
+      "files": 127,
+      "tests": 1016,
+      "exit": 0
+    },
+    "typecheckExit": 0,
+    "buildExit": 0,
+    "lint": {
+      "errors": 0,
+      "warnings": 1164
+    }
+  },
+  "tdd": {
+    "canonical": "独立规范摘要测试先落盘，旧固定顺序实现RED，再统一摘要GREEN",
+    "repository": "测试先落盘，移除verified_at核验使2项RED，逐字节恢复后GREEN",
+    "logs": [
+      "/tmp/planting-glass-db-canonical-red.log",
+      "/tmp/planting-glass-reader-mutation-red.log",
+      "/tmp/planting-glass-reader-mysql.log",
+      "/tmp/planting-glass-reader-full-green.log"
+    ]
+  },
+  "notProven": [
+    "真实生产策略发布",
+    "HTTP入口",
+    "科学精度或现场误差",
+    "E04其他模型验收"
+  ],
+  "updatedAt": "2026-10-04T14:27:00.470390+00:00"
+}

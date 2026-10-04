@@ -12,7 +12,9 @@
 
 两个透射率必须为有限的0至1数值，零是有效完全阻挡，不以真假判断补值。不要求双层值总小于单层值：数值范围来自具体策略，不能把普通透明玻璃关系扩大成所有玻璃的硬规则。
 
-发布记录同时包含非空 `releaseVersion`、小写SHA-256 `contentSha256`、`releaseStatus`（draft/verified/active/retired）、合法UTC `effectiveAt` 和可选 `expiresAt`。正文摘要按固定字段顺序JSON序列化上述载荷六字段；版本、状态和时间为发布元数据，不进入正文摘要。来源必须纳入正文摘要。未知字段拒绝，日期不接受自动归一化。
+发布记录同时包含非空 `releaseVersion`、小写SHA-256 `contentSha256`、`releaseStatus`（draft/verified/active/retired）、合法UTC `effectiveAt` 和可选 `expiresAt`。正文摘要复用既有策略发布规范：上述六字段按键排序后紧凑JSON序列化，再对UTF-8计算SHA-256；版本、状态和时间为发布元数据，不进入正文摘要。来源必须纳入正文摘要。未知字段拒绝，日期不接受自动归一化。
+
+数据库复用 `business_policy_releases` / `active_business_policy_releases`，类型范围为 `domain_code=care`、`policy_code=mvp_glass`、`schema_version=mvp-glass-policy/v1`。正文仅含六个载荷字段；发布状态、版本、生效与失效时间来自列。读取只接受唯一活动指针，指针冗余版本和摘要必须匹配；发布域、类型和Schema必须匹配，`verified_at_ms`不能缺失。SQL均经Repository参数化查询。数据库BIGINT时间只接受非负安全整数，转换UTC后交给已有解析器；无记录或完整性不可信均拒绝，不补默认。读回结果保留数据库发布引用，不混入公开响应。
 
 请求捕获时刻必须合法UTC。只有active且满足 `effectiveAt <= capturedAt < expiresAt` 的版本可解析。缺发布、非active或过期返回 `unavailable`；结构、摘要、时间非法返回 `invalid`；未来生效返回 `not_effective`。不提供隐式回退。
 

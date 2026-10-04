@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T14:20:47.871002+00:00",
-  "sourceRevision": 44,
-  "sourceUpdatedAt": "2026-10-04T14:20:47.871002+00:00",
+  "generatedAt": "2026-10-04T14:27:00.470390+00:00",
+  "sourceRevision": 45,
+  "sourceUpdatedAt": "2026-10-04T14:27:00.470390+00:00",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -114,16 +114,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 31,
+      "version": 32,
       "status": "codex running",
-      "stage": "验证与策略读回准备",
+      "stage": "真实策略持久化读回",
       "accepted": false,
       "summary": [
-        "E04：MVP单双层策略解析及现有传播接线完成",
-        "核验active、摘要与UTC有效期；缺策略不启用默认",
-        "专业参数保留；未知层数为null；锁定版本与来源",
-        "19新用例；分类接线2项RED→恢复；全量1002/1002",
-        "Node22相关42项、类型构建通过；生产发布及HTTP未验收"
+        "E04：玻璃策略真实MySQL活动指针读取已完成",
+        "发布与快照统一规范正文SHA；保留来源与版本",
+        "真实MySQL5项；指针冲突、未验证、篡改均拒绝",
+        "摘要经典RED、Repository突变2项RED→恢复；全量1016/1016",
+        "类型构建通过；零lint错误；生产发布和HTTP仍未验收"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -153,18 +153,19 @@
         ".codex/backend-v2/evidence/E04-light-parameter-review.json",
         "cloudfunctions-v2/models/care/light-parameter-evidence-review.md",
         ".codex/backend-v2/evidence/E04-mvp-glass-candidate.json",
-        ".codex/backend-v2/evidence/E04-mvp-glass-policy.json"
+        ".codex/backend-v2/evidence/E04-mvp-glass-policy.json",
+        ".codex/backend-v2/evidence/E04-mvp-glass-mysql-reader.json"
       ],
       "blockingReason": null,
-      "nextAction": "承接玻璃策略真实Repository读回与正式运行链路；继续PPFD换算及DMN准入，保持整体未验收",
+      "nextAction": "将真实策略读取接到完整光照回放用例，补日光近似换算策略及正式入口前置；不伪称生产发布",
       "sync": {
-        "version": 31,
+        "version": 32,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome codex running及五行评论1100440000090104已读回"
+        "readback": "Chrome codex running及五行评论1100440000090120已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T14:21:33.969684+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T14:27:48.101087+00:00",
   "lastFailure": null
 }

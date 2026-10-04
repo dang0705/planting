@@ -6,14 +6,20 @@ import { resolveMvpGlassPolicy, selectMvpGlassTransmission } from '../../src/con
 import { replayMvpIndoorNaturalLight } from '../../src/care/application/replay-mvp-indoor-natural-light.js'
 import { findProjectRoot } from '../support/project-root.js'
 
-/** 独立Expected来自mvp-glass-policy-contract.md；用Node计算合同规定正文，不调用被测摘要函数造答案。 */
+/** 独立Expected来自mvp-glass-policy-contract.md；按合同键排序构造平面正文，不调用被测摘要函数造答案。 */
 const sourceRef = 'lbl-clear-glass-experiment'
 const body = { contractVersion: 'mvp-glass-policy/v1', scopeCode: 'care_mvp_glass', approximation: 'clear_glass_broadband_proxy', singleTransmission: 0.83, doubleTransmission: 0.70, sourceRef }
-const sha = createHash('sha256').update(JSON.stringify(body)).digest('hex')
+const canonicalBody = (payload: object) => JSON.stringify(Object.fromEntries(Object.entries(payload).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)))
+const sha = createHash('sha256').update(canonicalBody(body)).digest('hex')
 const release = { ...body, releaseVersion: 'experiment-1', contentSha256: sha, releaseStatus: 'active', effectiveAt: '2026-10-04T00:00:00Z', expiresAt: '2026-10-05T00:00:00Z' }
 const capturedAt = '2026-10-04T12:00:00Z'
 
 describe('unit_fake MVP玻璃版本解析与层数选择', () => {
+  it('数据库规范键排序摘要可解析，固定字段顺序摘要不能冒充同一发布', () => {
+    expect(resolveMvpGlassPolicy(release, capturedAt).status).toBe('available')
+    const incompatible = { ...release, contentSha256: createHash('sha256').update(JSON.stringify(body)).digest('hex') }
+    expect(resolveMvpGlassPolicy(incompatible, capturedAt).status).toBe('invalid')
+  })
   it('锁定正文摘要、来源和通用配置快照，单层双层选择各自值且只读', () => {
     const result = resolveMvpGlassPolicy(release, capturedAt)
     expect(result.status).toBe('available')
@@ -54,7 +60,7 @@ describe('unit_fake MVP玻璃版本解析与层数选择', () => {
   })
   it('零透射不补默认；不强制双层必须小于单层，返回内容与发布原对象隔离', () => {
     const payload = { ...body, singleTransmission: 0, doubleTransmission: 1 }
-    const candidate = { ...release, ...payload, contentSha256: createHash('sha256').update(JSON.stringify(payload)).digest('hex') }
+    const candidate = { ...release, ...payload, contentSha256: createHash('sha256').update(canonicalBody(payload)).digest('hex') }
     const result = resolveMvpGlassPolicy(candidate, capturedAt)
     if (result.status !== 'available') {throw new Error('Expected available')}
     candidate.singleTransmission = 0.9

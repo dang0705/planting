@@ -1,19 +1,19 @@
 {
-  "revision": 44,
+  "revision": 45,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-04T14:20:47.871002+00:00",
+  "updatedAt": "2026-10-04T14:27:00.470390+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "用户只确认层数，后端按有效版本解析并接入双通道传播",
+    "goal": "复用已有发布表完成真实玻璃策略读回",
     "assumptions": [
-      "候选不等于真实生产发布",
-      "专业参数继续保留"
+      "不新增表或生产参数",
+      "活动指针与规范摘要必须一致"
     ],
-    "minimumVerification": "独立合同、AJV/摘要/时间验证、真实制品接线、突变RED、全量GREEN",
-    "continueWhen": "1002全绿并有Node22证据",
-    "failWhen": "出现默认、绕过版本或未知层数被猜测",
-    "rollback": "回退本增量，不改变已存在专业接口",
+    "minimumVerification": "独立Expected、经典和突变RED、真实MySQL5项、1016全量GREEN",
+    "continueWhen": "类型构建和数据库验证通过",
+    "failWhen": "篡改可用或以单独active行代替活动指针",
+    "rollback": "回退本次读取器；没有生产变更",
     "timeLimit": "30分钟检查点"
   },
   "tasks": [
@@ -121,10 +121,10 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 31,
+      "version": 32,
       "priority": "normal",
       "status": "codex running",
-      "stage": "验证与策略读回准备",
+      "stage": "真实策略持久化读回",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -154,19 +154,20 @@
         ".codex/backend-v2/evidence/E04-light-parameter-review.json",
         "cloudfunctions-v2/models/care/light-parameter-evidence-review.md",
         ".codex/backend-v2/evidence/E04-mvp-glass-candidate.json",
-        ".codex/backend-v2/evidence/E04-mvp-glass-policy.json"
+        ".codex/backend-v2/evidence/E04-mvp-glass-policy.json",
+        ".codex/backend-v2/evidence/E04-mvp-glass-mysql-reader.json"
       ],
       "summary": [
-        "E04：MVP单双层策略解析及现有传播接线完成",
-        "核验active、摘要与UTC有效期；缺策略不启用默认",
-        "专业参数保留；未知层数为null；锁定版本与来源",
-        "19新用例；分类接线2项RED→恢复；全量1002/1002",
-        "Node22相关42项、类型构建通过；生产发布及HTTP未验收"
+        "E04：玻璃策略真实MySQL活动指针读取已完成",
+        "发布与快照统一规范正文SHA；保留来源与版本",
+        "真实MySQL5项；指针冲突、未验证、篡改均拒绝",
+        "摘要经典RED、Repository突变2项RED→恢复；全量1016/1016",
+        "类型构建通过；零lint错误；生产发布和HTTP仍未验收"
       ],
       "blockingReason": null,
-      "nextAction": "承接玻璃策略真实Repository读回与正式运行链路；继续PPFD换算及DMN准入，保持整体未验收",
-      "ticketReadback": "Chrome codex running及五行评论1100440000090104已读回",
-      "milestoneCommit": "bb30a152"
+      "nextAction": "将真实策略读取接到完整光照回放用例，补日光近似换算策略及正式入口前置；不伪称生产发布",
+      "ticketReadback": "Chrome codex running及五行评论1100440000090120已读回",
+      "milestoneCommit": "b0a39f80"
     }
   ],
   "queue": [
@@ -513,5 +514,17 @@
       "architecture/manifest.json 仅配置目录哈希"
     ],
     "scope": "只处理玻璃策略选值与来源，不读取其他领域"
+  },
+  "mvpGlassRepositoryReadAdmission": {
+    "layers": {
+      "L0": "既有backend-v2摘要无策略表SQL字段",
+      "L1": "既有架构导航只有configuration-providers；本轮schema路径不存在",
+      "L2": "configuration-providers 115–150说明不可变release及指针切换，不含具体DDL"
+    },
+    "missing": "真实数据库测试所需业务策略发布和活动指针两表DDL",
+    "localAllowed": [
+      "schema/007_configuration.sql仅business_policy_releases和active_business_policy_releases表定义"
+    ],
+    "scope": "不读取其他Provider、审计表或整份迁移"
   }
 }

@@ -1,5 +1,5 @@
-import { createHash } from 'node:crypto'
 import Ajv, { type JSONSchemaType } from 'ajv'
+import { calculateCanonicalJsonSha256 } from '../foundation/json/canonical-json-sha256.js'
 import { createConfigurationSnapshot } from './index.js'
 import type { ConfigurationSnapshot } from './types.js'
 import type { TransmissionEvidence } from '../care/application/replay-indoor-natural-light.js'
@@ -20,7 +20,7 @@ export interface MvpGlassPolicyRelease {
   sourceRef: string
   /** 不可变发布版本。 */
   releaseVersion: string
-  /** 固定字段顺序正文的SHA-256。 */
+  /** 规范键排序正文的SHA-256，与策略发布表一致。 */
   contentSha256: string
   /** 只有活动版本可用于请求解析。 */
   releaseStatus: 'draft' | 'verified' | 'active' | 'retired'
@@ -77,13 +77,13 @@ export const mvpGlassPolicySchema: JSONSchemaType<MvpGlassPolicyRelease> = {
 /** 编译一次校验器，不为每次调用新建解析实例。 */
 const validate = new Ajv({ strict: true, allErrors: true, strictNumbers: true }).compile(mvpGlassPolicySchema)
 
-/** 仅按载荷字段固定顺序计算正文摘要；发布元数据独立记录。 */
+/** 仅对载荷字段计算规范JSON摘要；键排序复用既有策略发布规范。 */
 export function calculateMvpGlassPolicySha256(policy: Pick<MvpGlassPolicyRelease, 'contractVersion' | 'scopeCode' | 'approximation' | 'singleTransmission' | 'doubleTransmission' | 'sourceRef'>): string {
-  return createHash('sha256').update(JSON.stringify({
+  return calculateCanonicalJsonSha256({
     contractVersion: policy.contractVersion, scopeCode: policy.scopeCode,
     approximation: policy.approximation, singleTransmission: policy.singleTransmission,
     doubleTransmission: policy.doubleTransmission, sourceRef: policy.sourceRef,
-  })).digest('hex')
+  })
 }
 
 /** UTC日期往返校验；拒绝Date.parse将2月30日等自动修正。 */

@@ -4853,7 +4853,10 @@
           null
         ],
         "implicitDefault": false,
-        "professionalParametersRetained": true
+        "professionalParametersRetained": true,
+        "domainCode": "care",
+        "policyCode": "mvp_glass",
+        "contentDigest": "canonical_sorted_json_sha256"
       },
       "owner": "care",
       "sourceRefs": [
@@ -4861,7 +4864,8 @@
         "cloudfunctions-v2/models/care/light-parameter-evidence-review.md"
       ],
       "consumers": [
-        "care MVP玻璃策略解析与回放"
+        "care MVP玻璃策略解析与回放",
+        "care MySQL活动玻璃策略读取器"
       ],
       "changePolicy": "分类与准入规则不可配置；具体透射值由独立不可变策略发布，不在源码填默认",
       "fallback": "没有有效active策略明确不可用；层数未确认保留null",
