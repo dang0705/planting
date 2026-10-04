@@ -1,15 +1,15 @@
 {
-  "revision": 92,
+  "revision": 93,
   "currentStep": "E03",
   "currentTicketId": "z8v0kmr9mj",
-  "updatedAt": "2026-10-04T20:38:45.183818+00:00",
+  "updatedAt": "2026-10-04T20:43:52.935672+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "既有E03票昵称/测量档案应用持久化闭环",
-    "minimumVerification": "同事务收据、重复请求/并发、未知提交新连接、整体回滚",
-    "result": "已验证内部应用切片；不等同正式HTTP",
-    "rollback": "撤回本次应用接线，不改已应用DDL或历史记录",
-    "nextAction": "冻结其余档案事实及严格公开更新/读回DTO，再接HTTP；正式身份/策略及临时TTL继续分别待确认"
+    "target": "E03已冻结事实部分更新，保持省略/清除语义",
+    "minimumVerification": "严格DTO、真实SQL省略保留与首次不补造测量、共享幂等回归",
+    "result": "内部部分更新已验证，整票未验收",
+    "rollback": "撤回本次请求/局部写入接线，不改历史数据库或已应用DDL",
+    "nextAction": "完成归属受控档案读取投影和严格公开响应，再接PATCH/GET HTTP；其余档案字段、正式身份/策略及临时TTL继续补齐"
   },
   "tasks": [
     {
@@ -256,10 +256,10 @@
     {
       "id": "z8v0kmr9mj",
       "step": "E03",
-      "version": 4,
+      "version": 5,
       "priority": "high",
       "status": "codex running",
-      "stage": "档案保存同事务幂等与未知提交核对已验证；完整DTO/HTTP未验收",
+      "stage": "严格部分更新请求与实际省略/清除持久化已验证；完整响应及HTTP未验收",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E03-promotion-context.json",
@@ -267,18 +267,19 @@
         "cloudfunctions-v2/models/user-plant/profile-update-contract-draft.md",
         ".codex/backend-v2/evidence/E03-measured-pot-profile.json",
         ".codex/backend-v2/evidence/E03-measured-profile-persistence.json",
-        ".codex/backend-v2/evidence/E03-measured-profile-application.json"
+        ".codex/backend-v2/evidence/E03-measured-profile-application.json",
+        ".codex/backend-v2/evidence/E03-profile-patch.json"
       ],
       "summary": [
-        "E03：档案保存已接共享幂等与提交未知新连接只读核对",
-        "真实MySQL10项：重放/异参/并发/收据失败整体回滚",
-        "绕过重放突变2项RED→恢复10项GREEN；新增应用10项",
-        "根与Node22全量1539/1539；类型/检查/构建通过",
-        "完整档案DTO、HTTP及真实身份仍未验收，整票进行中"
+        "E03：已冻结字段支持只改昵称或只改完整测量事实",
+        "省略保留原值；首次无测量不补造null，原专业参数保留",
+        "严格DTO新增16项；真实SQL12项，原实现2项RED→GREEN",
+        "根与Node22全量1555/1555；类型/检查/构建通过",
+        "完整档案响应、HTTP及真实身份未验收，整票进行中"
       ],
       "blockingReason": null,
-      "nextAction": "冻结其余档案事实及严格公开更新/读回DTO，再接HTTP；正式身份/策略及临时TTL继续分别待确认",
-      "ticketReadback": "Chrome CODEX RUNNING与五行评论1100440000090888已读回",
+      "nextAction": "完成归属受控档案读取投影和严格公开响应，再接PATCH/GET HTTP；其余档案字段、正式身份/策略及临时TTL继续补齐",
+      "ticketReadback": "Chrome CODEX RUNNING与五行评论1100440000090894已读回",
       "priorityReason": "当前用户植物纵向切片的必要合同前置，未等待无关CMS"
     }
   ],
@@ -383,7 +384,7 @@
       ]
     }
   ],
-  "nextAction": "冻结其余档案事实及严格公开更新/读回DTO，再接HTTP；正式身份/策略及临时TTL继续分别待确认",
+  "nextAction": "完成归属受控档案读取投影和严格公开响应，再接PATCH/GET HTTP；其余档案字段、正式身份/策略及临时TTL继续补齐",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",

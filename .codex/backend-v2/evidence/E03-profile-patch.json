@@ -1,0 +1,71 @@
+{
+  "ticket": "z8v0kmr9mj",
+  "step": "E03",
+  "verifiedAt": "2026-10-04T20:43:52.935672+00:00",
+  "scope": "已冻结昵称/实测盆器事实的严格部分更新及持久化省略语义",
+  "expected": [
+    "整体计划省略与清除字段规则",
+    "profile-patch-contract",
+    "已冻结measured-pot-profile/v1与SQL昵称/版本容量"
+  ],
+  "configuration": "无新增运营参数或默认；首次空昵称沿用已验证SQL初值，不填造未知测量",
+  "contextReuse": "复用E03已核验003聚合/档案及E03-measured-profile-application-context准入的008幂等表；无新架构目录读取",
+  "verification": {
+    "tdd": {
+      "path": "经典RED：两个真实SQL用例先落盘，在原始要求全部字段的实现上失败",
+      "red": 2,
+      "log": "/tmp/planting-e03-profile-patch-red-mysql.log",
+      "green": 12,
+      "greenLog": "/tmp/planting-e03-profile-patch-green-mysql.log"
+    },
+    "unit": {
+      "new": 16,
+      "related": 32,
+      "layer": "unit_fake",
+      "replaced": "请求准入无替身；相邻应用/Repository测试隔离SQL"
+    },
+    "mysql": {
+      "tests": 12,
+      "layer": "unit_real_data",
+      "path": "严格输入→应用事务/共享幂等→实际局部档案SQL→读回",
+      "fixture": "users/identities为明确FK表桩；003实际聚合/档案表和008实际幂等表"
+    },
+    "rootUT": {
+      "files": 175,
+      "tests": 1555,
+      "exit": 0
+    },
+    "node22UT": {
+      "files": 175,
+      "tests": 1555,
+      "exit": 0
+    },
+    "typecheck": {
+      "exit": 0
+    },
+    "lint": {
+      "exit": 0,
+      "errors": 0,
+      "warnings": 2331
+    },
+    "build": {
+      "exit": 0,
+      "limit": "子npm有Node24 engine警告；不是CloudBase运行证明"
+    }
+  },
+  "notAccepted": [
+    "完整档案基质/材质/位置/光照/通风字段",
+    "完整公开读取/更新响应DTO与HTTP",
+    "真实用户登录验真与正式策略发布",
+    "临时案例TTL与保存绑定"
+  ],
+  "hashes": {
+    "cloudfunctions-v2/models/user-plant/profile-patch-contract.md": "9ba704fe3c1aabc399d926e920687c524686540cfbcc4d510e067be10efe25a7",
+    "cloudfunctions-v2/models/user-plant/profile-patch.v1.schema.json": "cbdd374992006c452bc0e2f533a14f9625368e3553eff7ea81a81674cf172909",
+    "cloudfunctions-v2/src/user-plant/domain/profile-patch.ts": "863af02fb153fd049fecc62f7263590933901e452ca6346ba8bfb2ad9921fdda",
+    "cloudfunctions-v2/src/user-plant/repository/mysql-measured-profile-repository.ts": "111d74a72ac9eef73af7425c24e382e3d07c96ad5c904a99dfa43ecf874f1d94",
+    "cloudfunctions-v2/src/user-plant/application/save-measured-profile.ts": "5fd556a323af697f34df7033286b5edaa3e31449b1a6a4e2c03a5862bd400ba6",
+    "cloudfunctions-v2/test/user-plant/profile-patch.spec.ts": "78e29ed04ba3eac1558bb342f2f640c3c396343dd57e12a7e172ca1fad41ee1a",
+    "cloudfunctions-v2/test/e2e/measured-profile.mysql.spec.ts": "47818e0f941a32061a1d86d6fe4853e85756c212795023693e08f02667eac9a6"
+  }
+}

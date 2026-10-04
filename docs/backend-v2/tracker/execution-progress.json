@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T20:38:45.183818+00:00",
-  "sourceRevision": 92,
-  "sourceUpdatedAt": "2026-10-04T20:38:45.183818+00:00",
+  "generatedAt": "2026-10-04T20:43:52.935672+00:00",
+  "sourceRevision": 93,
+  "sourceUpdatedAt": "2026-10-04T20:43:52.935672+00:00",
   "currentStep": "E03",
   "currentTicketId": "z8v0kmr9mj",
   "tasks": [
@@ -264,16 +264,16 @@
     {
       "id": "z8v0kmr9mj",
       "step": "E03",
-      "version": 4,
+      "version": 5,
       "status": "codex running",
-      "stage": "档案保存同事务幂等与未知提交核对已验证；完整DTO/HTTP未验收",
+      "stage": "严格部分更新请求与实际省略/清除持久化已验证；完整响应及HTTP未验收",
       "accepted": false,
       "summary": [
-        "E03：档案保存已接共享幂等与提交未知新连接只读核对",
-        "真实MySQL10项：重放/异参/并发/收据失败整体回滚",
-        "绕过重放突变2项RED→恢复10项GREEN；新增应用10项",
-        "根与Node22全量1539/1539；类型/检查/构建通过",
-        "完整档案DTO、HTTP及真实身份仍未验收，整票进行中"
+        "E03：已冻结字段支持只改昵称或只改完整测量事实",
+        "省略保留原值；首次无测量不补造null，原专业参数保留",
+        "严格DTO新增16项；真实SQL12项，原实现2项RED→GREEN",
+        "根与Node22全量1555/1555；类型/检查/构建通过",
+        "完整档案响应、HTTP及真实身份未验收，整票进行中"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E03-promotion-context.json",
@@ -281,18 +281,19 @@
         "cloudfunctions-v2/models/user-plant/profile-update-contract-draft.md",
         ".codex/backend-v2/evidence/E03-measured-pot-profile.json",
         ".codex/backend-v2/evidence/E03-measured-profile-persistence.json",
-        ".codex/backend-v2/evidence/E03-measured-profile-application.json"
+        ".codex/backend-v2/evidence/E03-measured-profile-application.json",
+        ".codex/backend-v2/evidence/E03-profile-patch.json"
       ],
       "blockingReason": null,
-      "nextAction": "冻结其余档案事实及严格公开更新/读回DTO，再接HTTP；正式身份/策略及临时TTL继续分别待确认",
+      "nextAction": "完成归属受控档案读取投影和严格公开响应，再接PATCH/GET HTTP；其余档案字段、正式身份/策略及临时TTL继续补齐",
       "sync": {
-        "version": 4,
+        "version": 5,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING与五行评论1100440000090888已读回"
+        "readback": "Chrome CODEX RUNNING与五行评论1100440000090894已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T20:39:03.186422+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T20:44:16.353535+00:00",
   "lastFailure": null
 }

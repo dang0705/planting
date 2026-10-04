@@ -61,7 +61,7 @@ beforeAll(async () => {
   const idemStart = foundation.indexOf('CREATE TABLE `http_idempotency_records`')
   await db.query(foundation.slice(idemStart, foundation.indexOf(';\n', idemStart) + 1))
   await db.query("INSERT INTO users(id,public_user_id,status) VALUES(1,'usr_profile_owner01','active'),(2,'usr_profile_owner02','active')")
-  for (const [index, name] of ['created01', 'preserve1', 'guards001', 'race00001', 'rollback1', 'archived1', 'idem00001', 'receipt01', 'unknown01', 'idemrace1'].entries()) {
+  for (const [index, name] of ['created01', 'preserve1', 'guards001', 'race00001', 'rollback1', 'archived1', 'idem00001', 'receipt01', 'unknown01', 'idemrace1', 'nickonly1', 'potonly01'].entries()) {
     await db.query("INSERT INTO user_plants(id,public_user_plant_id,user_internal_id,lifecycle_status,current_identity_status,version,created_at_ms,updated_at_ms) VALUES(?,?,1,?,'unidentified',1,1000,1000)", [index + 1, `upl_profile_${name}`, name === 'archived1' ? 'archived' : 'active'])
   }
   source = createMysql2ConnectionSource({ host: '127.0.0.1', port, user: 'root', password: '', database: 'measured_profile' })
@@ -170,4 +170,23 @@ test('真实并发同幂等键返回同一赢家收据，只产生一次新版�
   expect(results[0]!.status).toBe(200); expect(results[1]).toEqual(results[0])
   const [rows] = await db.query('SELECT p.version AS aggregate,f.version AS profile FROM user_plants p JOIN user_plant_profiles f ON f.user_plant_internal_id=p.id WHERE p.id=10')
   expect(rows).toEqual([{ aggregate: 2, profile: 1 }])
+})
+test('首次仅昵称不补造测量，后续仅测量保留昵称和原事实', async () => {
+  const { service } = application(), first = appInput('nickonly1')
+  const { measuredPot: _ignored, ...nicknameCommand } = first.command
+  const initial = await service({ ...first, command: nicknameCommand })
+  expect(initial).toEqual({ status: 200, body: { data: { userPlantRef: 'upl_profile_nickonly1', version: 2, nickname: '小青' } } })
+  const [rows] = await db.query('SELECT nickname,pot_profile_json FROM user_plant_profiles WHERE user_plant_internal_id=11')
+  expect(rows).toEqual([{ nickname: '小青', pot_profile_json: {} }])
+  const { nickname: _unused, ...potCommand } = first.command
+  const next = await service({ command: { ...potCommand, expectedVersion: 2, occurredAtMs: 4000 }, idempotency: { ...first.idempotency, idempotencyKeyHash: 'd'.repeat(64), requestHash: 'e'.repeat(64), createdAtMs: 4000 } })
+  expect(next).toEqual({ status: 200, body: { data: { userPlantRef: 'upl_profile_nickonly1', version: 3, nickname: '小青', measuredPot } } })
+})
+test('首次仅测量遵守SQL空昵称，后续清除昵称不改变测量事实', async () => {
+  const { service } = application(), first = appInput('potonly01')
+  const { nickname: _ignored, ...potCommand } = first.command
+  expect(await service({ ...first, command: potCommand })).toEqual({ status: 200, body: { data: { userPlantRef: 'upl_profile_potonly01', version: 2, nickname: '', measuredPot } } })
+  const { measuredPot: _unused, ...nicknameCommand } = first.command
+  const next = await service({ command: { ...nicknameCommand, nickname: '', expectedVersion: 2, occurredAtMs: 4000 }, idempotency: { ...first.idempotency, idempotencyKeyHash: 'f'.repeat(64), requestHash: 'a'.repeat(64), createdAtMs: 4000 } })
+  expect(next).toEqual({ status: 200, body: { data: { userPlantRef: 'upl_profile_potonly01', version: 3, nickname: '', measuredPot } } })
 })

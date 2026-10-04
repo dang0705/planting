@@ -36,7 +36,7 @@ export function createMeasuredProfileApplicationService<T extends TransactionExe
         const result = await dependencies.profileRepository.save(tx, command)
         let response: HttpIdempotencyPublicResponseSnapshot
         switch (result.status) {
-          case 'saved': response = { status: 200, body: { data: { userPlantRef: result.userPlantRef, version: result.version, nickname: result.nickname, measuredPot: result.measuredPot } } }; break
+          case 'saved': response = { status: 200, body: { data: { userPlantRef: result.userPlantRef, version: result.version, nickname: result.nickname, ...(result.measuredPot === undefined ? {} : { measuredPot: result.measuredPot }) } } }; break
           case 'not_found': response = error(404, 'USER_PLANT_NOT_FOUND', '用户植物不存在'); break
           case 'version_conflict': response = error(409, 'USER_PLANT_VERSION_CONFLICT', '植物档案已更新，请重新读取'); break
           case 'unavailable': throw new Error('档案持久化不可用，必须整体回滚')

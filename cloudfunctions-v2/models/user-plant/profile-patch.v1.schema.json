@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:qinghuazhi:user-plant:profile-patch:v1",
+  "title": "用户植物已冻结档案字段部分更新",
+  "description": "省略表示不修改；仅开放昵称和实测盆器事实，不代表完整档案或HTTP验收。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version"],
+  "minProperties": 2,
+  "properties": {
+    "version": { "type": "integer", "minimum": 1, "maximum": 4294967295, "description": "旧聚合版本，无符号SQL整数容量。" },
+    "nickname": { "type": "string", "maxLength": 80, "description": "昵称原文，空字符串清除，不截断。" },
+    "measuredPot": { "$ref": "urn:qinghuazhi:user-plant:measured-pot-profile:v1", "description": "完整实测子结构，未知成员显式null；省略整个字段保留原值。" }
+  }
+}

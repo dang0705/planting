@@ -58,19 +58,19 @@
       "readback": "Chrome HUMAN REQUIRED与五行评论1100440000090656已读回"
     },
     "z8v0kmr9mj": {
-      "version": 4,
+      "version": 5,
       "status": "codex running",
-      "note": "E03：档案保存已接共享幂等与提交未知新连接只读核对\n真实MySQL10项：重放/异参/并发/收据失败整体回滚\n绕过重放突变2项RED→恢复10项GREEN；新增应用10项\n根与Node22全量1539/1539；类型/检查/构建通过\n完整档案DTO、HTTP及真实身份仍未验收，整票进行中",
-      "commentId": "1100440000090888",
-      "commentFingerprint": "742f4b00bcc6650e6eb419de1318c0806b6272fecad11c585ec4da239e14aae6",
-      "readback": "Chrome CODEX RUNNING与五行评论1100440000090888已读回"
+      "note": "E03：已冻结字段支持只改昵称或只改完整测量事实\n省略保留原值；首次无测量不补造null，原专业参数保留\n严格DTO新增16项；真实SQL12项，原实现2项RED→GREEN\n根与Node22全量1555/1555；类型/检查/构建通过\n完整档案响应、HTTP及真实身份未验收，整票进行中",
+      "commentId": "1100440000090894",
+      "commentFingerprint": "94c25f1a6f1831a94cd5fdabbbb7b1ecac8a4c4827187c126ad84218be0b62b2",
+      "readback": "Chrome CODEX RUNNING与五行评论1100440000090894已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T20:39:03.186422+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T20:44:16.353535+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "a566f5938bd5463ebdc31045210ecccb72dc3584d20f178921356ea6f947d5d9",
-    "sourceRevision": 92,
-    "sourceUpdatedAt": "2026-10-04T20:38:45.183818+00:00"
+    "fingerprint": "710451672bd28c2e8cdf7c64a99c02302960d70807a798b841ae99b2a339e88e",
+    "sourceRevision": 93,
+    "sourceUpdatedAt": "2026-10-04T20:43:52.935672+00:00"
   }
 }
