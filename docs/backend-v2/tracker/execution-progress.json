@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T20:30:19.080974+00:00",
-  "sourceRevision": 91,
-  "sourceUpdatedAt": "2026-10-04T20:30:19.080974+00:00",
+  "generatedAt": "2026-10-04T20:38:45.183818+00:00",
+  "sourceRevision": 92,
+  "sourceUpdatedAt": "2026-10-04T20:38:45.183818+00:00",
   "currentStep": "E03",
   "currentTicketId": "z8v0kmr9mj",
   "tasks": [
@@ -264,34 +264,35 @@
     {
       "id": "z8v0kmr9mj",
       "step": "E03",
-      "version": 3,
+      "version": 4,
       "status": "codex running",
-      "stage": "昵称/测量事实真实SQL持久化已验证；应用幂等和HTTP未验收",
+      "stage": "档案保存同事务幂等与未知提交核对已验证；完整DTO/HTTP未验收",
       "accepted": false,
       "summary": [
-        "E03：昵称/测量事实→实际SQL→新聚合版本读回通过",
-        "局部更新保留基质/材质/专业参数及首次完成/创建时间",
-        "真实MySQL6项覆盖归属、并发单赢家及失败整体回滚",
-        "整份JSON覆盖突变1项RED→恢复；全量1529/1529",
-        "外层幂等、完整档案及HTTP仍未验收，原票保持进行中"
+        "E03：档案保存已接共享幂等与提交未知新连接只读核对",
+        "真实MySQL10项：重放/异参/并发/收据失败整体回滚",
+        "绕过重放突变2项RED→恢复10项GREEN；新增应用10项",
+        "根与Node22全量1539/1539；类型/检查/构建通过",
+        "完整档案DTO、HTTP及真实身份仍未验收，整票进行中"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E03-promotion-context.json",
         ".codex/backend-v2/evidence/E03-profile-update-gap.json",
         "cloudfunctions-v2/models/user-plant/profile-update-contract-draft.md",
         ".codex/backend-v2/evidence/E03-measured-pot-profile.json",
-        ".codex/backend-v2/evidence/E03-measured-profile-persistence.json"
+        ".codex/backend-v2/evidence/E03-measured-profile-persistence.json",
+        ".codex/backend-v2/evidence/E03-measured-profile-application.json"
       ],
       "blockingReason": null,
-      "nextAction": "接共享幂等的档案更新应用用例及提交未知新连接核对，再完成严格公开DTO/HTTP；其余档案字段和临时TTL仍分别待冻结",
+      "nextAction": "冻结其余档案事实及严格公开更新/读回DTO，再接HTTP；正式身份/策略及临时TTL继续分别待确认",
       "sync": {
-        "version": 3,
+        "version": 4,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING与五行评论1100440000090874已读回"
+        "readback": "Chrome CODEX RUNNING与五行评论1100440000090888已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T20:32:36.266224+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T20:39:03.186422+00:00",
   "lastFailure": null
 }

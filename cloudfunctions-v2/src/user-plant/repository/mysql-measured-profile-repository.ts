@@ -46,7 +46,7 @@ function jsonObject(value: unknown): Record<string, CanonicalJsonValue> {
   return JSON.parse(serializeCanonicalJson(parsed as CanonicalJsonValue)) as Record<string, CanonicalJsonValue>
 }
 /** 在首次异步数据库读取前锁定输入，拒绝客户端扩展内部命令字段。 */
-function lockInput(input: unknown): Readonly<MeasuredProfileSaveInput> {
+export function lockMeasuredProfileSaveInput(input: unknown): Readonly<MeasuredProfileSaveInput> {
   const value = JSON.parse(serializeCanonicalJson(input as CanonicalJsonValue)) as MeasuredProfileSaveInput
   const fields = ['userRef', 'userPlantRef', 'expectedVersion', 'nickname', 'measuredPot', 'profileVersion', 'occurredAtMs']
   if (!value || typeof value !== 'object' || Array.isArray(value)
@@ -67,7 +67,7 @@ export function createMysqlMeasuredProfileRepository() {
   return {
     /** 归属锁→旧版本检查→局部保存→新版本读回，异常须由外层驱动整体回滚。 */
     async save(tx: MysqlTransactionContext<Mysql2QueryConnection>, input: unknown): Promise<MeasuredProfileSaveResult> {
-      const command = lockInput(input)
+      const command = lockMeasuredProfileSaveInput(input)
       if (tx.transactionContext !== true || !tx.connection) { throw new TypeError('档案保存需要显式事务') }
       const c = tx.connection
       const rows = await c.query(`SELECT CAST(p.id AS CHAR) AS plant_id,CAST(u.id AS CHAR) AS user_id,

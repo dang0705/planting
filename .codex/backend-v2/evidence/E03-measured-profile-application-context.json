@@ -1,0 +1,22 @@
+{
+  "ticket": "z8v0kmr9mj",
+  "target": "档案保存与共享幂等同事务、新连接对账",
+  "time": "2026-10-04T20:36:04.767417+00:00",
+  "openViking": {
+    "health": "healthy",
+    "query": "planting backend-v2 foundation 008_foundation.sql http_idempotency_records 档案更新 幂等事务 表字段",
+    "target": "viking://resources/planting",
+    "layers": {
+      "0": "本次定向find请求覆盖该层，但连接超时，未返回所需上下文",
+      "1": "本次定向find请求覆盖该层，但连接超时，未返回所需上下文",
+      "2": "本次定向find请求覆盖该层，但连接超时，未返回所需上下文"
+    }
+  },
+  "missing": "真实SQL测试所需http_idempotency_records当前字段、索引、约束",
+  "admission": {
+    "file": "docs/backend-v2/schema/008_foundation.sql",
+    "section": "仅CREATE TABLE http_idempotency_records",
+    "purpose": "隔离MySQL测试初始化；不得读取其余表、章节或架构资料"
+  },
+  "configuration": "不新增默认值、阈值或策略；共享幂等过期时间由受信调用方提供，正式HTTP待验收"
+}

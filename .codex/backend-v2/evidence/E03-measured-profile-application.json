@@ -1,0 +1,66 @@
+{
+  "ticket": "z8v0kmr9mj",
+  "step": "E03",
+  "verifiedAt": "2026-10-04T20:38:45.183818+00:00",
+  "scope": "昵称/测量事实保存应用编排：共享幂等占位、同事务完成收据、提交未知新连接只读对账",
+  "context": ".codex/backend-v2/evidence/E03-measured-profile-application-context.json",
+  "expected": [
+    "整体计划同事务幂等和未知提交规则",
+    "cloudfunctions-v2/models/user-plant/measured-profile-application-contract.md"
+  ],
+  "configuration": "没有新配置/默认值；已验证策略引用、主体作用域、请求摘要及保留时间须由受信调用方提供，正式HTTP尚未接线",
+  "checks": {
+    "newUnit": {
+      "tests": 10,
+      "layer": "unit_fake",
+      "replaced": "SQL存储/连接"
+    },
+    "mysql": {
+      "tests": 10,
+      "layer": "unit_real_data",
+      "path": "应用→实际共享幂等Repository→归属/版本档案Repository→MySQL8.4→读回；users和identities仍为明确FK表桩",
+      "log": "/tmp/planting-e03-profile-app-restored-mysql.log"
+    },
+    "tdd": {
+      "path": "测试先落盘；受控突变绕过首次收据重放",
+      "redTests": 2,
+      "redLog": "/tmp/planting-e03-profile-app-mutation.log",
+      "restoredGreen": 10
+    },
+    "rootUT": {
+      "files": 174,
+      "tests": 1539,
+      "exit": 0
+    },
+    "node22UT": {
+      "files": 174,
+      "tests": 1539,
+      "exit": 0
+    },
+    "typecheck": {
+      "exit": 0
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 2321,
+      "exit": 0
+    },
+    "build": {
+      "exit": 0,
+      "limitation": "子npm仍使用Node24产生engine警告；不代表CloudBase运行验收"
+    }
+  },
+  "boundaries": [
+    "未实现完整档案字段和HTTP请求/响应DTO",
+    "未验真实身份登录或正式档案策略发布",
+    "不生成首次档案完成、奖励、行为事实或计划",
+    "没有生产DDL/部署/推送"
+  ],
+  "hashes": {
+    "cloudfunctions-v2/models/user-plant/measured-profile-application-contract.md": "dbfc93b768171af0a2d89d688d31ff8ae34ee13b06f57473e26889e8fffac614",
+    "cloudfunctions-v2/src/user-plant/application/save-measured-profile.ts": "2982cffba9430c111dfd1535fb2b0dd4a561f418ac40a2bc6675782cf1cc78f2",
+    "cloudfunctions-v2/src/user-plant/repository/mysql-measured-profile-repository.ts": "d746c464d10e7f4f8783ba58700f2df47b53886978e09f126466734865ee9414",
+    "cloudfunctions-v2/test/user-plant/save-measured-profile.spec.ts": "956de434c719e7532a57c1a1bc1422027ff294d5c97576aad66ac0fd8597daf1",
+    "cloudfunctions-v2/test/e2e/measured-profile.mysql.spec.ts": "b70d70ee5e13821a796f875871290504b1f26d42e3d1e4afda7e0bc9a0213c22"
+  }
+}

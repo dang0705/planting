@@ -4,14 +4,18 @@ import { join } from 'node:path'
 import { createConnection, type Connection } from 'mysql2/promise'
 import { afterAll, beforeAll, expect, test } from 'vitest'
 import { findProjectRoot } from '../support/project-root.js'
-import { createMysql2ConnectionSource, type Mysql2QueryConnection } from '../../src/foundation/database/mysql2-connection-source.js'
+import { createMysql2ConnectionSource, toSqlParameters, type Mysql2QueryConnection } from '../../src/foundation/database/mysql2-connection-source.js'
 import { createMysqlTransactionDriver } from '../../src/foundation/database/mysql-transaction-driver.js'
 import { runDatabaseTransaction } from '../../src/foundation/database/transaction-runner.js'
 import { createMysqlMeasuredProfileRepository } from '../../src/user-plant/repository/mysql-measured-profile-repository.js'
+import { createMeasuredProfileApplicationService } from '../../src/user-plant/application/save-measured-profile.js'
+import { createMysqlHttpIdempotencyRepository, createMysqlHttpIdempotencyCommitUnknownReadOnlyRepository, type HttpIdempotencySqlRow } from '../../src/foundation/idempotency/mysql-http-idempotency-repository.js'
+import type { MysqlTransactionContext } from '../../src/foundation/database/mysql-transaction-driver.js'
+import { createHash } from 'node:crypto'
 
 /** L3/unit_real_data：实际003聚合/档案DDL、mysql2、行锁与事务。
  * users及plant_identities仅为明确的归属/FK表桩，不证明身份域Schema或登录验真。
- * 不运行整份迁移、不调用生产，不证明HTTP幂等或完整档案；当前所有业务记录为合成制品。 */
+ * 使用008共享幂等表验证应用收据；不运行整份迁移、不调用生产，不证明HTTP或完整档案；业务记录为合成制品。 */
 const container = `qhz-measured-profile-${process.pid}`, root = findProjectRoot()
 let db: Connection, source: ReturnType<typeof createMysql2ConnectionSource>
 const repository = createMysqlMeasuredProfileRepository()
@@ -52,8 +56,12 @@ beforeAll(async () => {
     const start = ddl.indexOf('CREATE TABLE `' + name + '`')
     await db.query(ddl.slice(start, ddl.indexOf(';\n', start) + 1))
   }
+  // 定向准入见E03-measured-profile-application-context；只提取当前测试需要的一张表。
+  const foundation = readFileSync(join(root, 'docs/backend-v2/schema/008_foundation.sql'), 'utf8')
+  const idemStart = foundation.indexOf('CREATE TABLE `http_idempotency_records`')
+  await db.query(foundation.slice(idemStart, foundation.indexOf(';\n', idemStart) + 1))
   await db.query("INSERT INTO users(id,public_user_id,status) VALUES(1,'usr_profile_owner01','active'),(2,'usr_profile_owner02','active')")
-  for (const [index, name] of ['created01', 'preserve1', 'guards001', 'race00001', 'rollback1', 'archived1'].entries()) {
+  for (const [index, name] of ['created01', 'preserve1', 'guards001', 'race00001', 'rollback1', 'archived1', 'idem00001', 'receipt01', 'unknown01', 'idemrace1'].entries()) {
     await db.query("INSERT INTO user_plants(id,public_user_plant_id,user_internal_id,lifecycle_status,current_identity_status,version,created_at_ms,updated_at_ms) VALUES(?,?,1,?,'unidentified',1,1000,1000)", [index + 1, `upl_profile_${name}`, name === 'archived1' ? 'archived' : 'active'])
   }
   source = createMysql2ConnectionSource({ host: '127.0.0.1', port, user: 'root', password: '', database: 'measured_profile' })
@@ -105,4 +113,61 @@ test('归档植物只改档案，不恢复生命周期或更改身份', async ()
   expect(await save(input('archived1'))).toMatchObject({ status: 'saved', version: 2 })
   const [rows] = await db.query('SELECT lifecycle_status,current_identity_status FROM user_plants WHERE id=6')
   expect(rows).toEqual([{ lifecycle_status: 'archived', current_identity_status: 'unidentified' }])
+})
+
+/** 真实SQL适配器与现有事务驱动；模式仅在已提交响应丢失/收据失败的边界注入故障。 */
+function application(mode?: 'unknown' | 'receipt') {
+  let reads = 0
+  const driver = createMysqlTransactionDriver({ getConnection: async () => {
+    const c = await source.getConnection()
+    return { ...c, commit: async () => { await c.commit(); if (mode === 'unknown') { throw new Error('提交响应丢失') } }, execute: async (sql: string, args: readonly (string | number | null)[]) => {
+      if (mode === 'receipt' && sql.includes('UPDATE `http_idempotency_records`')) { throw new Error('完成收据失败') }
+      return c.execute(sql, args)
+    } }
+  } }, () => undefined)
+  const idem = createMysqlHttpIdempotencyRepository<MysqlTransactionContext<Mysql2QueryConnection>>({
+    executeWrite: (tx, sql, args) => tx.connection.execute(sql, toSqlParameters(args)),
+    executeQuery: async (tx, sql, args) => await tx.connection.query(sql, toSqlParameters(args)) as unknown as readonly HttpIdempotencySqlRow[]
+  })
+  const readOnly = createMysqlHttpIdempotencyCommitUnknownReadOnlyRepository({ executeQuery: async (sql, args) => {
+    reads++; const c = await source.getConnection()
+    try { return await c.query(sql, toSqlParameters(args)) as unknown as readonly HttpIdempotencySqlRow[] } finally { c.release() }
+  } })
+  const service = createMeasuredProfileApplicationService({ driver, profileRepository: repository, idempotencyRepository: idem, commitUnknownReadOnlyRepository: readOnly })
+  return { service, readCount: () => reads }
+}
+/** 合成请求摘要/保留期仅供已冻结内部端口测试，不成为正式HTTP策略。 */
+function appInput(name: string) {
+  const hash = (value: string) => createHash('sha256').update(value).digest('hex')
+  return { command: input(name), idempotency: { principalType: 'user' as const, principalScopeHash: hash('usr_profile_owner01'), httpMethod: 'PATCH', normalizedPath: '/api/v2/user-plants/{userPlantRef}', operationId: 'updateUserPlant', idempotencyKeyHash: hash(name), requestHash: hash(`request-${name}`), createdAtMs: 3000, expiresAtMs: 6000 } }
+}
+test('实际幂等同键重放旧版本成功收据，异参冲突不增档案版本', async () => {
+  const { service } = application(), request = appInput('idem00001')
+  const first = await service(request)
+  expect(first).toEqual({ status: 200, body: { data: { userPlantRef: 'upl_profile_idem00001', version: 2, nickname: '小青', measuredPot } } })
+  expect(await service(request)).toEqual(first)
+  expect((await service({ ...request, idempotency: { ...request.idempotency, requestHash: 'f'.repeat(64) } })).status).toBe(409)
+  const [rows] = await db.query('SELECT p.version AS aggregate,f.version AS profile FROM user_plants p JOIN user_plant_profiles f ON f.user_plant_internal_id=p.id WHERE p.id=7')
+  expect(rows).toEqual([{ aggregate: 2, profile: 1 }])
+})
+test('完成收据失败回滚真实档案、聚合版本和占位', async () => {
+  const request = appInput('receipt01')
+  await expect(application('receipt').service(request)).rejects.toThrow('完成收据失败')
+  const [plants] = await db.query('SELECT version FROM user_plants WHERE id=8')
+  const [profiles] = await db.query('SELECT COUNT(*) AS n FROM user_plant_profiles WHERE user_plant_internal_id=8')
+  const [receipts] = await db.execute('SELECT COUNT(*) AS n FROM http_idempotency_records WHERE idempotency_key_hash=?', [request.idempotency.idempotencyKeyHash])
+  expect(plants).toEqual([{ version: 1 }]); expect(profiles).toEqual([{ n: 0 }]); expect(receipts).toEqual([{ n: 0 }])
+})
+test('实际提交后响应丢失用新连接只读成功收据，业务只写一次', async () => {
+  const f = application('unknown'), request = appInput('unknown01')
+  expect((await f.service(request)).status).toBe(200); expect(f.readCount()).toBe(1)
+  const [rows] = await db.query('SELECT p.version AS aggregate,f.version AS profile FROM user_plants p JOIN user_plant_profiles f ON f.user_plant_internal_id=p.id WHERE p.id=9')
+  expect(rows).toEqual([{ aggregate: 2, profile: 1 }])
+})
+test('真实并发同幂等键返回同一赢家收据，只产生一次新版本', async () => {
+  const { service } = application(), request = appInput('idemrace1')
+  const results = await Promise.all([service(request), service(request)])
+  expect(results[0]!.status).toBe(200); expect(results[1]).toEqual(results[0])
+  const [rows] = await db.query('SELECT p.version AS aggregate,f.version AS profile FROM user_plants p JOIN user_plant_profiles f ON f.user_plant_internal_id=p.id WHERE p.id=10')
+  expect(rows).toEqual([{ aggregate: 2, profile: 1 }])
 })
