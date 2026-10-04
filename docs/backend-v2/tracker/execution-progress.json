@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T19:23:43.893Z",
-  "sourceRevision": 81,
-  "sourceUpdatedAt": "2026-10-04T19:23:43.893Z",
+  "generatedAt": "2026-10-04T19:29:35.530Z",
+  "sourceRevision": 82,
+  "sourceUpdatedAt": "2026-10-04T19:29:35.530Z",
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
   "tasks": [
@@ -199,16 +199,16 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 30,
+      "version": 31,
       "status": "codex running",
-      "stage": "活动知识已接整包证据计算，归一与最终诊断仍未验收",
+      "stage": "真实完整答案读回已验证，受控映射与最终诊断仍未验收",
       "accepted": false,
       "summary": [
-        "E05：活动知识包→全部结论证据条件计算已接通",
-        "4项新Expected；异步输入隔离突变RED→恢复",
-        "满足/缺失/冲突结论并存，锁定包版本和证据引用",
-        "根及Node22全量1444/1444；类型/构建/lint零错误",
-        "实际归一、适用性/最终归约与正式诊断仍未验收"
+        "E05：真实会话→完整已存答案→诊断输入读取已接通",
+        "6项新Expected；正文/摘要守卫突变RED→恢复",
+        "MySQL46项通过；新事务读回、归属/坏摘要/缺行拒绝",
+        "根及Node22全量1450/1450；类型/构建/lint零错误",
+        "正式归一、最终结论生成与模型准入仍未验收"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
@@ -239,18 +239,19 @@
         ".codex/backend-v2/evidence/E05-knowledge-rollback.json",
         ".codex/backend-v2/evidence/E05-active-knowledge.json",
         ".codex/backend-v2/evidence/E05-outcome-evidence-match.json",
-        ".codex/backend-v2/evidence/E05-active-outcome-evaluation.json"
+        ".codex/backend-v2/evidence/E05-active-outcome-evaluation.json",
+        ".codex/backend-v2/evidence/E05-read-answer-evidence.json"
       ],
       "blockingReason": null,
-      "nextAction": "继续E05受控答案/视觉归一映射和结论归约；无已审核映射时先整理最小审核草案，不猜病因/严重度阈值",
+      "nextAction": "继续E05最小受控答案/视觉归一映射审核与结论归约，复用已完成真实答案读取，不继承V1硬编码病因/行动",
       "sync": {
-        "version": 30,
+        "version": 31,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING与五行评论1100440000090648已读回"
+        "readback": "Chrome CODEX RUNNING与五行评论1100440000090653已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T19:24:11.617Z",
+  "lastSuccessfulSyncAt": "2026-10-04T19:29:54.354Z",
   "lastFailure": null
 }

@@ -1,0 +1,56 @@
+{
+  "ticketId": "z8v0kmr974",
+  "step": "E05",
+  "accepted": false,
+  "scope": "真实归属会话与原题包→完整已存答案读回及重新核验；供受控归一消费",
+  "expectedSources": [
+    "cloudfunctions-v2/models/diagnosis/read-answer-evidence-contract.md",
+    "cloudfunctions-v2/models/diagnosis/answer-persistence-contract.md"
+  ],
+  "tdd": {
+    "path": "Expected测试先落盘，缺模块RED；正文/摘要比对守卫突变1项RED→恢复GREEN",
+    "redLog": "/tmp/planting-e05-read-answer-evidence-red.log",
+    "mutationLog": "/tmp/planting-e05-read-answer-evidence-mutation.log",
+    "restoredLog": "/tmp/planting-e05-read-answer-evidence-restored.log"
+  },
+  "verification": {
+    "unitFake": {
+      "newTests": 6,
+      "relatedTests": 54,
+      "actual": "真实快照/成员/复合证据/提交摘要/应用读取，替换事务与SQL"
+    },
+    "unitRealData": {
+      "suiteTests": 46,
+      "newTests": 2,
+      "log": "/tmp/planting-e05-read-answer-evidence-mysql.log",
+      "actual": "隔离MySQL8.4，原答案用例保存→独立短事务精确引用/时间读回，跨用户/植物、坏摘要/缺行拒绝",
+      "replaced": "父归属表最小夹具、来源题包制品不是正式CMS发布内容"
+    },
+    "root": {
+      "files": 167,
+      "tests": 1450,
+      "exit": 0
+    },
+    "node22": {
+      "version": "22.21.1",
+      "files": 167,
+      "tests": 1450,
+      "exit": 0
+    },
+    "typecheck": 0,
+    "lint": {
+      "exit": 0,
+      "errors": 0,
+      "warnings": 2161
+    },
+    "build": 0,
+    "logs": "/tmp/planting-e05-read-answer-evidence-final-{root-test,node22-vitest,typecheck,lint,build}.log"
+  },
+  "unaccepted": [
+    "答案/视觉findingCode映射",
+    "最终Outcome/Action归约及计算结果生成",
+    "正式CMS、Provider参数和模型调用",
+    "正式HTTP旅程/临时案例/生产部署"
+  ],
+  "productionChanges": false
+}

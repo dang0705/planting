@@ -31,6 +31,8 @@ import { createMysqlFixedQuestionReleaseReader } from '../../src/diagnosis/repos
 import { createFixedQuestionSessionInTransaction } from '../../src/diagnosis/application/create-fixed-question-session.js'
 import { runDatabaseTransaction } from '../../src/foundation/database/transaction-runner.js'
 import { calculateCanonicalJsonSha256 } from '../../src/foundation/json/canonical-json-sha256.js'
+import { createReadDiagnosisAnswerEvidence } from '../../src/diagnosis/application/read-answer-evidence.js'
+import { createMysqlDiagnosisAnswerEvidenceRepository } from '../../src/diagnosis/repository/mysql-diagnosis-answer-evidence-repository.js'
 
 /** unit_real_data / L3：真实MySQL8.4、指定会话表和019迁移；父归属表为最小夹具，不验收完整建库链或HTTP。 */
 const container = `qhz-diag-snapshot-${process.pid}`
@@ -250,6 +252,32 @@ function answerInput(diagnosisRef:string) {
 function answerService() {
   return createSubmitDiagnosisAnswersService({driver:createMysqlTransactionDriver(source,()=>undefined),repository:createMysqlDiagnosisAnswerRepository()})
 }
+/** unit_real_data：真实保存→独立事务读取；不是正式归一或诊断生成。 */
+function answerEvidenceService() {
+  return createReadDiagnosisAnswerEvidence({driver:createMysqlTransactionDriver(source,()=>undefined),repository:createMysqlDiagnosisAnswerEvidenceRepository()})
+}
+test('真实整包保存后新事务读取四题及精确答案引用，跨用户/植物拒绝',async()=>{
+  await append('read-answer-evidence'); const input=answerInput('read-answer-evidence')
+  expect(await answerService()(input)).toEqual({status:'recorded',answerCount:4})
+  const run=answerEvidenceService(),r=await run(input)
+  if(r.status!=='evidence_ready'){throw new Error('真实答案应可读回')}
+  expect(r.answers.map(a=>({questionKey:a.questionKey,optionKey:a.body.optionKey}))).toEqual(input.submitted.answers)
+  const [rows]=await db.execute('SELECT a.answer_ref FROM diagnosis_answers a JOIN diagnosis_sessions s ON s.id=a.diagnosis_session_internal_id WHERE s.diagnosis_ref=?',['read-answer-evidence'])
+  expect(r.answers.map(a=>a.evidenceRef).sort()).toEqual((rows as {answer_ref:string}[]).map(a=>a.answer_ref).sort())
+  expect(r.answers.every(a=>a.answeredAtMs===2500)).toBe(true)
+  expect(await run({...input,userRef:'usr-other'})).toEqual({status:'not_found'})
+  expect(await run({...input,userPlantRef:'upl-other'})).toEqual({status:'not_found'})
+})
+test('真实SQL坏提交摘要及缺行拒绝，未作答不冒充空证据',async()=>{
+  await append('read-answer-empty');const run=answerEvidenceService()
+  expect(await run(answerInput('read-answer-empty'))).toEqual({status:'evidence_not_ready'})
+  await append('read-answer-corrupt');await answerService()(answerInput('read-answer-corrupt'))
+  await db.execute('UPDATE diagnosis_answers a JOIN diagnosis_sessions s ON s.id=a.diagnosis_session_internal_id SET a.answer_json=JSON_SET(a.answer_json,\'$.submissionSha256\',?) WHERE s.diagnosis_ref=?',['f'.repeat(64),'read-answer-corrupt'])
+  expect(await run(answerInput('read-answer-corrupt'))).toEqual({status:'invalid_evidence'})
+  await append('read-answer-partial');await answerService()(answerInput('read-answer-partial'))
+  await db.execute('DELETE a FROM diagnosis_answers a JOIN diagnosis_sessions s ON s.id=a.diagnosis_session_internal_id WHERE s.diagnosis_ref=? AND a.question_key=?',['read-answer-partial',answerInput('read-answer-partial').submitted.answers[0]!.questionKey])
+  expect(await run(answerInput('read-answer-partial'))).toEqual({status:'invalid_evidence'})
+})
 async function answerCount(ref:string) {
   const [rows]=await db.execute('SELECT COUNT(*) AS n FROM diagnosis_answers a JOIN diagnosis_sessions s ON s.id=a.diagnosis_session_internal_id WHERE s.diagnosis_ref=?',[ref])
   return (rows as {n:number}[])[0]!.n
