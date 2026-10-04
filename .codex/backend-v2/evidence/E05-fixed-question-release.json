@@ -1,0 +1,48 @@
+{
+  "ticket": "z8v0kmr974",
+  "scope": "固定题包发布读取→长期会话创建→原事务快照读回",
+  "verifiedAt": "2026-10-04T16:14:12.458500+00:00",
+  "truthSource": "cloudfunctions-v2/models/diagnosis/fixed-question-release-contract.md",
+  "tests": {
+    "newUnit": 21,
+    "backendFull": 1179,
+    "node22Diagnosis": 157,
+    "realMysql": 22,
+    "newRealMysql": 4,
+    "boundary": "真实业务策略表、活动指针、会话及快照；发布元数据为隔离测试制品，不证明CMS审核、真实平台身份、正式发布或创建HTTP"
+  },
+  "tdd": {
+    "testFirst": true,
+    "path": "fast_path_and_classic",
+    "mutation": "移除活动指针与发布正文摘要的一致性守卫",
+    "mutationRedFailed": 1,
+    "redLog": "/tmp/planting-e05-fixed-release-mutation-red.log",
+    "classicReadbackRedFailed": 1,
+    "classicLog": "/tmp/planting-e05-fixed-session-content-red.log",
+    "restoredGreen": "/tmp/planting-e05-fixed-release-full.log"
+  },
+  "checks": {
+    "typecheck": "passed",
+    "lintErrors": 0,
+    "lintWarnings": 1474,
+    "build": "passed"
+  },
+  "verified": [
+    "保留V1黄叶4题和萎蔫6题；虫害不伪装为固定包",
+    "活动发布范围、摘要、验证时间及生效区间严格校验",
+    "原事务FOR SHARE锁定发布与活动指针",
+    "服务端生成高熵会话引用，归属追加及原事务读回",
+    "读回比较正文与摘要，损坏时抛错供调用方回滚",
+    "活动版本切换后旧会话保持原题目",
+    "无发布或损坏指针不回退本地源文件"
+  ],
+  "notAccepted": [
+    "正式题包审核与active激活",
+    "发布行数据库不可变约束",
+    "公开会话创建共享幂等与HTTP",
+    "临时案例路径",
+    "虫害动态选题运行",
+    "诊断结果、安全行动、Agent及奖励"
+  ],
+  "migration": "无新DDL；只在隔离数据库执行既有007和会话相关制品；生产无操作"
+}

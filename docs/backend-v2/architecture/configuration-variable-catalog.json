@@ -1855,7 +1855,8 @@
       "owner": "diagnosis",
       "sourceRefs": [
         "README.md",
-        "青花植后端v2底层架构重构计划_融合闭环终版.md"
+        "青花植后端v2底层架构重构计划_融合闭环终版.md",
+        "cloudfunctions-v2/models/diagnosis/fixed-question-release-contract.md"
       ],
       "consumers": [
         "diagnosis"
@@ -1865,8 +1866,8 @@
       "phase": "P4",
       "ticketTitle": "[P4] 固定/动态问诊与小青工具",
       "expected": "只读取已发布题包",
-      "pendingReason": "旧题包需审计后初始化 v2 release",
-      "blockingScope": "固定问诊",
+      "pendingReason": "V1复用内容已固化；正式发布审核、激活及发布行数据库不可变约束尚未验收",
+      "blockingScope": "固定问诊正式运行入口",
       "decisionGroup": "diagnosis_releases"
     },
     {

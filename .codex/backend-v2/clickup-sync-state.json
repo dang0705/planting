@@ -50,19 +50,19 @@
       "readback": "Chrome CODEX RUNNING及五行评论1100440000090220已读回"
     },
     "z8v0kmr974": {
-      "version": 7,
+      "version": 8,
       "status": "codex running",
-      "note": "E05已补答案公开合同与Node HTTP协议适配\n真实HTTP→MySQL同键重放及跨用户拒绝通过；数据库18项\n拒绝客户端身份/题包，过滤内部字段和敏感错误原文\n新增13项；独立RED及恢复GREEN，全量1158/1158\n题包发布准入、会话创建与临时路径仍待验收",
-      "commentId": "1100440000090295",
-      "commentFingerprint": "5ce6c4335a2b6495abfde6c2c324d5fa16dabfe1aa05adb83076e2db03bc4baf",
-      "readback": "Chrome CODEX RUNNING及五行评论1100440000090295已读回"
+      "note": "E05已接固定题包活动发布读取→长期会话创建→原事务读回\n真实MySQL22项通过：黄叶4题、萎蔫6题及版本切换保留历史\n缺发布或损坏指针不创建，不自动启用本地题目文件\n新增21项；摘要突变与正文读回RED→恢复，全量1179/1179\n正式审核/激活、发布不可变约束及创建HTTP仍待验收",
+      "commentId": "1100440000090318",
+      "commentFingerprint": "e1126674917272bf90d5b4e4e9cfd0319037aaefe01a469373e6fadaa7da778a",
+      "readback": "Chrome CODEX RUNNING及五行评论1100440000090318已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T16:04:26.772588+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T16:14:42.494617+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "72d61f016a7e6fe09c06d404ca92e986bd7383aa85c649d7d7ff4cccfba8a835",
-    "sourceRevision": 57,
-    "sourceUpdatedAt": "2026-10-04T16:03:54.724919+00:00"
+    "fingerprint": "40610a6be4975bc234f82ff7d4b6dcb5844779aba1b0cb6be52e2b1865d251ec",
+    "sourceRevision": 58,
+    "sourceUpdatedAt": "2026-10-04T16:14:12.458500+00:00"
   }
 }

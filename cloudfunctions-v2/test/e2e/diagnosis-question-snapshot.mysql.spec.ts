@@ -21,6 +21,10 @@ import type { AddressInfo } from 'node:net'
 import { createRouteDispatcher } from '../../src/foundation/http/route-dispatcher.js'
 import { createDiagnosisAnswerRouteHandler, diagnosisAnswerRoute, projectDiagnosisAnswerResponse } from '../../src/diagnosis/http/answer-route.js'
 import type { UserPrincipalDto } from '../../src/contracts/types.js'
+import { createMysqlFixedQuestionReleaseReader } from '../../src/diagnosis/repository/mysql-fixed-question-release-reader.js'
+import { createFixedQuestionSessionInTransaction } from '../../src/diagnosis/application/create-fixed-question-session.js'
+import { runDatabaseTransaction } from '../../src/foundation/database/transaction-runner.js'
+import { calculateCanonicalJsonSha256 } from '../../src/foundation/json/canonical-json-sha256.js'
 
 /** unit_real_data / L3：真实MySQL8.4、指定会话表和019迁移；父归属表为最小夹具，不验收完整建库链或HTTP。 */
 const container = `qhz-diag-snapshot-${process.pid}`
@@ -74,6 +78,12 @@ beforeAll(async () => {
   const idempotencyStart=foundationDdl.indexOf('CREATE TABLE `http_idempotency_records` (')
   if(idempotencyStart<0) {throw new Error('共享幂等表缺失')}
   await db.query(foundationDdl.slice(idempotencyStart,foundationDdl.indexOf(';',idempotencyStart)+1))
+  const policyDdl=readFileSync(join(root,'docs/backend-v2/schema/007_configuration.sql'),'utf8')
+  for(const name of ['business_policy_releases','active_business_policy_releases']){
+    const start=policyDdl.indexOf('CREATE TABLE `'+name+'` (')
+    if(start<0){throw new Error('指定业务策略表缺失')}
+    await db.query(policyDdl.slice(start,policyDdl.indexOf(';',start)+1))
+  }
   source = createMysql2ConnectionSource({ host:'127.0.0.1',port,user:'root',password:'',database:'qhz_diag_snapshot' })
 },40_000)
 afterAll(async () => { await db?.end(); spawnSync('docker',['rm','-f',container],{encoding:'utf8'}) })
@@ -136,6 +146,45 @@ describe('真实数据库锁定题包快照', () => {
     } finally { connection.release() }
     expect(await createMysqlDiagnosisQuestionSnapshotRepository(source).read('usr-owner','upl-owner','bad-hash')).toEqual({ status:'invalid_snapshot' })
   })
+})
+
+/** 只在隔离数据库构造发布制品，不是CMS或生产激活。 */
+const fixedPolicyContent={contractVersion:'diagnosis-fixed-question-packages/v1',sourceRef:'models/diagnosis/v1-reuse/questions.json',sourceSha256:'40385731fe0ed7d20c9331b1be6aee10c13ebb900350a4576c14edd0ea07107f',packages:JSON.parse(readFileSync(join(root,'cloudfunctions-v2/models/diagnosis/v1-reuse/questions.json'),'utf8')).fixed}
+async function seedFixedRelease(ref='bpr_question123',version='v1',content=fixedPolicyContent){
+  const sha=calculateCanonicalJsonSha256(content)
+  const [insert]=await db.execute("INSERT INTO business_policy_releases (release_ref,domain_code,policy_code,schema_version,release_version,content_sha256,policy_json,status,effective_at_ms,verified_at_ms,created_at_ms,updated_at_ms) VALUES (?,'diagnosis','fixed_question_packages','diagnosis-fixed-question-packages/v1',?,?,CAST(? AS JSON),'active',1000,900,800,1000)",[ref,version,sha,JSON.stringify(content)])
+  await db.execute("INSERT INTO active_business_policy_releases (domain_code,policy_code,release_internal_id,active_release_version,active_content_sha256,activated_at_ms,created_at_ms,updated_at_ms) VALUES ('diagnosis','fixed_question_packages',?,?,?,1000,1000,1000) ON DUPLICATE KEY UPDATE release_internal_id=VALUES(release_internal_id),active_release_version=VALUES(active_release_version),active_content_sha256=VALUES(active_content_sha256),version=version+1",[(insert as {insertId:number}).insertId,version,sha])
+}
+function startFixed(mode:'yellow_leaf'|'wilting_droop'){
+ const repository=createMysqlDiagnosisQuestionSnapshotRepository(source)
+ const create=createFixedQuestionSessionInTransaction({published:createMysqlFixedQuestionReleaseReader().read,append:repository.append,read:repository.readInTransaction})
+ return runDatabaseTransaction(createMysqlTransactionDriver(source,()=>undefined),tx=>create(tx,{userRef:'usr-owner',userPlantRef:'upl-owner',mode,startedAtMs:2500}))
+}
+describe('真实固定题包发布→长期会话快照',()=>{
+ test('没有活动发布时不创建会话',async()=>{expect(await startFixed('yellow_leaf')).toEqual({status:'unavailable'})})
+ test('同事务锁定真实发布并创建两类题包，各自读回完整内容',async()=>{
+  await seedFixedRelease()
+  for(const [mode,count] of [['yellow_leaf',4],['wilting_droop',6]] as const){
+   const result=await startFixed(mode);expect(result.status).toBe('created');if(result.status!=='created'){throw new Error('创建失败')}
+   expect(result.snapshot.snapshot.questionCount).toBe(count)
+   expect(await createMysqlDiagnosisQuestionSnapshotRepository(source).read('usr-owner','upl-owner',result.diagnosisRef)).toEqual({status:'found',snapshot:result.snapshot})
+  }
+ })
+ test('活动指针摘要损坏拒绝，而不是回退源文件',async()=>{
+  const sha=calculateCanonicalJsonSha256(fixedPolicyContent)
+  await db.execute("UPDATE active_business_policy_releases SET active_content_sha256=? WHERE domain_code='diagnosis' AND policy_code='fixed_question_packages'",['a'.repeat(64)])
+  try{expect(await startFixed('yellow_leaf')).toEqual({status:'unavailable'})}
+  finally{await db.execute("UPDATE active_business_policy_releases SET active_content_sha256=? WHERE domain_code='diagnosis' AND policy_code='fixed_question_packages'",[sha])}
+ })
+ test('活动版本切换后，已有会话保持旧题包内容',async()=>{
+  const old=await startFixed('yellow_leaf');if(old.status!=='created'){throw new Error('旧会话未创建')}
+  const next=structuredClone(fixedPolicyContent);next.sourceRef='models/diagnosis/v1-reuse/questions.json#fixture-v2'
+  next.packages.yellow_leaf[0].text='仅测试制品的新显示文本'
+  await seedFixedRelease('bpr_question456','v2',next)
+  const current=await startFixed('yellow_leaf');expect(current.status).toBe('created');if(current.status!=='created'){throw new Error('新会话未创建')}
+  expect(current.snapshot.snapshot.questionPackageReleaseRef).toBe('bpr_question456')
+  expect(await createMysqlDiagnosisQuestionSnapshotRepository(source).read('usr-owner','upl-owner',old.diagnosisRef)).toEqual({status:'found',snapshot:old.snapshot})
+ })
 })
 
 /** 真实MySQL：原归属会话→锁定题包→整包证据→整包SQL追加→读回；不验收HTTP/CMS或完整迁移链。 */
