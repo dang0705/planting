@@ -61,8 +61,8 @@
   "lastSuccessfulSyncAt": "2026-10-04T17:18:41.513188+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "8c847b389e4060f97a7bb08ddb79c5199f657338999fe0804fc238ddc02351f1",
-    "sourceRevision": 65,
-    "sourceUpdatedAt": "2026-10-04T17:17:46.858656+00:00"
+    "fingerprint": "33384e5fee2b607c92fa1a4e1b882a7719bc69736f4b9ed3414768c118f51949",
+    "sourceRevision": 66,
+    "sourceUpdatedAt": "2026-10-04T17:23:10.667767+00:00"
   }
 }

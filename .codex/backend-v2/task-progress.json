@@ -1,8 +1,8 @@
 {
-  "revision": 65,
+  "revision": 66,
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
-  "updatedAt": "2026-10-04T17:17:46.858656+00:00",
+  "updatedAt": "2026-10-04T17:23:10.667767+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
     "target": "E05受控资产分析后原子创建虫害题包与视觉证据",
@@ -801,5 +801,16 @@
     ],
     "scope": "动态创建事务实现；不改任何DDL或空会话保护",
     "finding": "019拒绝新空快照并禁止修改，先生成选定题包，再原子保存会话与视觉证据"
-  }
+  },
+  "retiredTasks": [
+    {
+      "id": "z8v0kmr9gm",
+      "title": "[P1] 植物分类与身份准入硬门",
+      "disposition": "archived_scope_cancelled",
+      "accepted": false,
+      "evidence": ".codex/backend-v2/evidence/P1-retired-legacy-plant-batch.json",
+      "reason": "Tropicals已承接目录与百科；旧200条及后续106条自建候选批次退出，不再补证据或导入",
+      "verifiedAt": "2026-10-04T17:23:10.667767+00:00"
+    }
+  ]
 }
