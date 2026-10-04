@@ -28,3 +28,5 @@
 
 `014_plant_knowledge_release_immutability.sql` 令知识发布头与发布明细只追加，数据库直接拒绝原地更新和删除；更正内容必须创建新发布。活动指针不在这一不可变边界内，仍须由应用层通过事务、版本比较和审计受控切换。此迁移不证明发布候选已通过 CMS 审核、制品摘要正确或事务没有半发布；这些仍须单独验证。已验证本地隔离 MySQL 8.4 的更新、删除拒绝与活动指针独立更新。
 `016_authenticated_ephemeral_plant_case.sql` 新增已登录用户主动临时使用的 backing case、幂等 promotion command 与唯一不可变 binding fact；不修改游客匿名 proof 语义。`017_care_v2_ephemeral_and_derivations.sql` 让临时 care/diagnosis 物理表支持 guest/authenticated 两种 Ephemeral backing case（二选一），并把 Care 派生拆成两层：`care_environment_derivations` 只保存 Estimated Indoor、Air VPD、Window Plane、PPFD/DLI、AirMovement、EnvironmentDemand、CultivationRetention；`care_decision_derivations` 保存 GrowthActivity、PersonalCalibration 与 DryProgress。两份都是**迁移设计制品**，仍需在目标 CloudBase MySQL 上完成真实执行与约束读回后才能宣称运行验收。
+
+`018_care_decision_derivation_immutability.sql` 在 017 之后为养护决策派生增加禁止 UPDATE 的触发器，确保新算法只能追加结果。它不改变列、索引或行数据；切换前须核对记录数、触发器存在及旧结果读回，并验证写回原值和改写结果均被拒绝。创建失败不改行数据；生产回退必须停写并另行批准，不得静默解除保护。本迁移只有隔离 MySQL 约束验证，不代表生产已执行或算法已发布。

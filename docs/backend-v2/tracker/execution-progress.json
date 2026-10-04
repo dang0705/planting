@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T13:21:34.331797+00:00",
-  "sourceRevision": 34,
-  "sourceUpdatedAt": "2026-10-04T13:21:34.331797+00:00",
+  "generatedAt": "2026-10-04T13:26:06.292434+00:00",
+  "sourceRevision": 35,
+  "sourceUpdatedAt": "2026-10-04T13:26:06.292434+00:00",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -114,16 +114,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 21,
+      "version": 22,
       "status": "codex running",
       "stage": "验证与持久化读回",
       "accepted": false,
       "summary": [
-        "E04：修复非JSON对象被摘要压为空清单的真实缺陷",
-        "独立7场景；修复前5项RED→修复后GREEN",
-        "后端119文件909/909；真实MySQL8项；Node22新7项",
-        "Date、Map、Set及类实例拒绝；合法JSON摘要保持一致",
-        "派生存储与正式策略未验收，整票仍进行中"
+        "E04：018补齐养护决策派生数据库不可变保护",
+        "旧017真实UPDATE成功导致RED；补迁移后9场景GREEN",
+        "Node22真实MySQL9项；后端909/909；类型检查通过",
+        "已有记录迁移前后完全一致；原值与内容更新均拒绝",
+        "没有生产DDL；下一步按用户要求优先DHI及室内衰减"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -143,18 +143,19 @@
         ".codex/backend-v2/evidence/E04-measured-pot.json",
         ".codex/backend-v2/evidence/E04-dry-cycle-replay.json",
         ".codex/backend-v2/evidence/E04-environment-snapshot.json",
-        ".codex/backend-v2/evidence/E04-json-snapshot-integrity.json"
+        ".codex/backend-v2/evidence/E04-json-snapshot-integrity.json",
+        ".codex/backend-v2/evidence/E04-decision-immutability.json"
       ],
       "blockingReason": null,
-      "nextAction": "核验回放版本清单及派生结果持久化合同；实验结果与正式发布分开，继续真实MySQL路径",
+      "nextAction": "按用户最新要求优先补DHI窗面散射、室内衰减与DNI/DHI合并；派生Repository后续承接",
       "sync": {
-        "version": 21,
+        "version": 22,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome状态codex running及完整五行评论1100440000089901已读回"
+        "readback": "Chrome状态codex running及完整五行评论1100440000089915已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T13:22:07.618911+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T13:29:22.133089+00:00",
   "lastFailure": null
 }

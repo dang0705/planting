@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { createConnection, type Connection } from 'mysql2/promise'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -13,6 +13,7 @@ const container = `qhz-care-snapshot-${process.pid}`
 let db: Connection
 let repository: ReturnType<typeof createMysqlEnvironmentSnapshotRepository>
 let source: ReturnType<typeof createMysql2ConnectionSource>
+let decisionProtection: string | undefined
 const pot = { actualInnerPotConfirmed: true, drainageAvailable: false, potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 12 }
 const snapshot = {
   snapshotRef: 'ces_test_original', userRef: 'usr_test_owner', userPlantRef: 'upl_test_owner',
@@ -82,6 +83,22 @@ beforeAll(async () => {
   }
   await db.query(table)
   await db.query(trigger.replace(/\$\$$/u, ''))
+  // 只取决策派生表；017 的临时案例 ALTER 不属于此隔离持久化验证。
+  const decisionDdl = readFileSync(join(findProjectRoot(), 'docs/backend-v2/schema/017_care_v2_ephemeral_and_derivations.sql'), 'utf8')
+    .match(/CREATE TABLE `care_decision_derivations` \([\s\S]*?ENGINE=InnoDB[^;]+;/u)?.[0]
+  if (!decisionDdl) {
+    throw new Error('决策派生表定义缺失')
+  }
+  await db.query(decisionDdl)
+  const protectionPath = join(findProjectRoot(), 'docs/backend-v2/schema/018_care_decision_derivation_immutability.sql')
+  if (existsSync(protectionPath)) {
+    const protection = readFileSync(protectionPath, 'utf8')
+      .match(/CREATE TRIGGER `trg_care_decision_derivations_reject_update`[\s\S]*?END\$\$/u)?.[0]
+    if (!protection) {
+      throw new Error('决策派生不可变保护迁移内容缺失')
+    }
+    decisionProtection = protection.replace(/\$\$$/u, '')
+  }
   source = createMysql2ConnectionSource({ host: '127.0.0.1', port, database: 'care_snapshot_fixture', user: 'root', password: '' })
   repository = createMysqlEnvironmentSnapshotRepository(source)
 }, 30_000)
@@ -140,5 +157,22 @@ describe('unit_real_data 长期养护输入快照不可变持久化', () => {
   it('数据库清单摘要不符时拒绝回放，不相信合法外形的 SHA', async () => {
     await db.query("INSERT INTO care_environment_snapshots (snapshot_ref,user_internal_id,user_plant_internal_id,care_context_version,configuration_snapshot_ref,input_manifest_json,input_manifest_sha256,evidence_window_start_ms,evidence_window_end_ms,generated_at_ms,valid_until_ms,created_at_ms,updated_at_ms) VALUES ('ces_test_bad_sha',1,1,1,'cfg_test_only',JSON_OBJECT('bad',true),?,1000,2000,3000,4000,3000,3000)", ['f'.repeat(64)])
     await expect(repository.read(snapshot.userRef, snapshot.userPlantRef, 'ces_test_bad_sha')).rejects.toThrow('摘要')
+  })
+
+  it('决策派生也拒绝 UPDATE，不能只保护环境派生', async () => {
+    // 仅为存储约束夹具，不代表算法已发布或已产生正式个体校准。
+    const sha = 'a'.repeat(64)
+    await db.query("INSERT INTO care_decision_derivations (derivation_ref,user_internal_id,user_plant_internal_id,environment_snapshot_internal_id,derivation_type,algorithm_release_ref,algorithm_release_sha256,input_manifest_sha256,result_schema_version,result_json,result_sha256,confidence_band,generated_at_ms,valid_until_ms,created_at_ms,updated_at_ms) SELECT 'cdd_test_immutable',user_internal_id,user_plant_internal_id,id,'dry_progress','fixture_storage_only',?,input_manifest_sha256,'fixture/v1',JSON_OBJECT('fixture',true),?,'low',3000,4000,3000,3000 FROM care_environment_snapshots WHERE snapshot_ref=?", [sha, sha, snapshot.snapshotRef])
+    const [before] = await db.query('SELECT * FROM care_decision_derivations')
+    if (decisionProtection) {
+      await db.query(decisionProtection)
+    }
+    const [after] = await db.query('SELECT * FROM care_decision_derivations')
+    expect(after).toEqual(before)
+    expect((after as unknown[]).length).toBe(1)
+    await expect(db.query('UPDATE care_decision_derivations SET updated_at_ms=created_at_ms WHERE derivation_ref=?', ['cdd_test_immutable'])).rejects.toThrow('不可修改')
+    await expect(db.query('UPDATE care_decision_derivations SET result_json=JSON_OBJECT() WHERE derivation_ref=?', ['cdd_test_immutable'])).rejects.toThrow('不可修改')
+    const [rows] = await db.query('SELECT result_json FROM care_decision_derivations WHERE derivation_ref=?', ['cdd_test_immutable'])
+    expect((rows as Array<{ result_json: unknown }>)[0]?.result_json).toEqual({ fixture: true })
   })
 })

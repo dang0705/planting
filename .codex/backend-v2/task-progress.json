@@ -1,20 +1,20 @@
 {
-  "revision": 34,
+  "revision": 35,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-04T13:21:34.331797+00:00",
+  "updatedAt": "2026-10-04T13:26:06.292434+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "修复快照摘要非JSON输入损失",
+    "goal": "E04长期派生记录版本与输入快照关联持久化",
     "assumptions": [
-      "JSON树不包含日期集合或类实例",
-      "合法JSON摘要保持兼容"
+      "物理存储依据已冻结DDL",
+      "存储夹具不能证明算法已经发布"
     ],
-    "minimumVerification": "独立Expected先落盘、旧实现5项RED、全量GREEN、隔离MySQL拒绝非法Date",
-    "continueWhen": "909全绿、MySQL8项通过、类型与构建通过",
-    "failWhen": "非法对象变成空对象或修改合法JSON摘要",
-    "rollback": "仅回退本次输入校验改动；不改历史数据库或发布指针",
-    "timeLimit": "30分钟检查点"
+    "minimumVerification": "先独立Expected，实际MySQL归属与版本追加、摘要与不可变记录验证",
+    "continueWhen": "快照版本与哈希关联真实核验，后端全量GREEN",
+    "failWhen": "把实验模型当发布或把决策派生写环境表",
+    "rollback": "仅隔离库验证，无生产DDL",
+    "timeLimit": "45分钟检查点"
   },
   "tasks": [
     {
@@ -121,7 +121,7 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 21,
+      "version": 22,
       "priority": "normal",
       "status": "codex running",
       "stage": "验证与持久化读回",
@@ -144,19 +144,20 @@
         ".codex/backend-v2/evidence/E04-measured-pot.json",
         ".codex/backend-v2/evidence/E04-dry-cycle-replay.json",
         ".codex/backend-v2/evidence/E04-environment-snapshot.json",
-        ".codex/backend-v2/evidence/E04-json-snapshot-integrity.json"
+        ".codex/backend-v2/evidence/E04-json-snapshot-integrity.json",
+        ".codex/backend-v2/evidence/E04-decision-immutability.json"
       ],
       "summary": [
-        "E04：修复非JSON对象被摘要压为空清单的真实缺陷",
-        "独立7场景；修复前5项RED→修复后GREEN",
-        "后端119文件909/909；真实MySQL8项；Node22新7项",
-        "Date、Map、Set及类实例拒绝；合法JSON摘要保持一致",
-        "派生存储与正式策略未验收，整票仍进行中"
+        "E04：018补齐养护决策派生数据库不可变保护",
+        "旧017真实UPDATE成功导致RED；补迁移后9场景GREEN",
+        "Node22真实MySQL9项；后端909/909；类型检查通过",
+        "已有记录迁移前后完全一致；原值与内容更新均拒绝",
+        "没有生产DDL；下一步按用户要求优先DHI及室内衰减"
       ],
       "blockingReason": null,
-      "nextAction": "核验回放版本清单及派生结果持久化合同；实验结果与正式发布分开，继续真实MySQL路径",
-      "ticketReadback": "Chrome状态codex running及完整五行评论1100440000089901已读回",
-      "milestoneCommit": "067c1844"
+      "nextAction": "按用户最新要求优先补DHI窗面散射、室内衰减与DNI/DHI合并；派生Repository后续承接",
+      "ticketReadback": "Chrome状态codex running及完整五行评论1100440000089915已读回",
+      "milestoneCommit": "24503099"
     }
   ],
   "queue": [
@@ -260,7 +261,7 @@
       ]
     }
   ],
-  "nextAction": "核验回放版本清单及派生结果持久化合同；实验结果与正式发布分开，继续真实MySQL路径",
+  "nextAction": "按用户最新要求优先补DHI窗面散射、室内衰减与DNI/DHI合并；派生Repository后续承接",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -459,5 +460,22 @@
       "architecture/configuration-variable-catalog.json 上述两项"
     ],
     "scope": "只定位本次长期快照持久化环节，不读其他领域或整份架构"
+  },
+  "derivationPersistenceReadAdmission": {
+    "layers": {
+      "L0": "此前backend-v2摘要仅给用途，不含派生表SQL",
+      "L1": "此前contracts导航仅定位环境合同，无派生表字段",
+      "L2": "本轮合同4.8与7给分表与版本边界，无实际SQL列及约束"
+    },
+    "missing": "决策表缺少不可变触发器；018顺序迁移及索引的具体登记格式",
+    "localAllowed": [
+      "004_care_diagnosis.sql仅care_environment_derivations表及触发器",
+      "017_care_v2_ephemeral_and_derivations.sql仅环境类型调整和care_decision_derivations表及触发器",
+      "configuration-variable-catalog.json仅care.environment.derivation_algorithm_release",
+      "schema/manifest.json迁移条目结构与018新增条目",
+      "schema/README.md顺序迁移清单新增018条目",
+      "schema/018_care_decision_derivation_immutability.sql新增触发器"
+    ],
+    "scope": "只定位派生结果持久化，不读取其他表或整个架构"
   }
 }

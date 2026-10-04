@@ -1,0 +1,60 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "accepted": false,
+  "milestone": "补齐决策派生数据库不可变保护",
+  "updatedAt": "2026-10-04T13:26:06.292434+00:00",
+  "expectedSource": "care-environment-foundation/v2第4.8节及批准计划的不可变派生记录要求",
+  "tdd": {
+    "path": "classic",
+    "red": {
+      "failed": 1,
+      "passed": 8,
+      "log": "/tmp/planting-decision-immutability-classic-red.log",
+      "beforeMigrationWritten": true,
+      "failure": "真实MySQL旧017表允许UPDATE"
+    },
+    "green": {
+      "realMysql": 9,
+      "node22RealMysql": 9,
+      "fullBackend": 909,
+      "files": 119
+    }
+  },
+  "migration": {
+    "file": "018_care_decision_derivation_immutability.sql",
+    "manifestOrder": 17,
+    "doesNotModifyAppliedMigration": true,
+    "recordCountBefore": 1,
+    "recordCountAfter": 1,
+    "sampleBeforeAfter": "SELECT完整行一致",
+    "constraints": "BEFORE UPDATE触发器；原值更新与结果清单改写均被拒绝",
+    "productionApplied": false,
+    "rollback": "创建失败不改数据；生产解除保护需停写及单独批准"
+  },
+  "checks": {
+    "mysqlLog": "/tmp/planting-decision-immutability-mysql-green.log",
+    "node22Log": "/tmp/planting-decision-immutability-node22-green.log",
+    "fullLog": "/tmp/planting-decision-immutability-full-green.log",
+    "typecheck": {
+      "exitCode": 0,
+      "log": "/tmp/planting-decision-immutability-typecheck.log"
+    },
+    "lint": {
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 951,
+      "log": "/tmp/planting-decision-immutability-lint.log"
+    }
+  },
+  "notAccepted": [
+    "派生Repository运行路径",
+    "算法发布，当前配置仍pending",
+    "完整迁移与CloudBase HTTP"
+  ],
+  "sourceHashes": {
+    "docs/backend-v2/schema/018_care_decision_derivation_immutability.sql": "9ca462d0740a19dc9ac70da5f320e9f2720d8117762d28341794010a3605e307",
+    "docs/backend-v2/schema/manifest.json": "9e732085eef4425b93d234ee38e6161c4a024d02fd965fd1fc41fbac0ba3dcea",
+    "cloudfunctions-v2/test/e2e/care-environment-snapshot.mysql.spec.ts": "8cbf0728bae6928f6cc4f7dc946dc8b316e8abba19e17478f384e92ccf5c1ed3"
+  }
+}
