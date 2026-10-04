@@ -34,25 +34,27 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 33,
+      "version": 35,
       "status": "codex running",
-      "note": "E04：真实玻璃策略→双通道PPFD→当地日积分已串通\n一次读取锁定版本；缺策略不默认，未知层数保留缺证据\n真实天气缺1小时不输出全天DLI；合成24小时积分验证通过\n应用6项、真实MySQL7项；强制单层2项RED→恢复\n后端1022/1022；Node22相关49项；生产发布与HTTP未验收",
-      "commentId": "1100440000090138",
-      "commentFingerprint": "ea4443720e356143b9f01227836bc832398f5f64ff6a60cb312ed9aa8890fd96",
-      "readback": "Chrome codex running及五行评论1100440000090138已读回"
+      "note": "E04：批准的dmnlint@1.0.0已独立安装，不进入云函数\n五个DMN逐个结构校验零问题；实际锁文件审计零通报\n专业参数与证据保留，MVP不启用复杂输入\nFEEL执行、可视化保存重开及完整行为一致性仍未验收\nE04保持进行中；先承接E05独立知识审核准备",
+      "commentId": "1100440000090179",
+      "commentFingerprint": "9d359287e5bde4435fc3425a3a6add3f31bc5572865b42da735c3158115fdf7f",
+      "readback": "Chrome CODEX RUNNING及五行评论1100440000090179已读回"
+    },
+    "z8v0kmrg8a": {
+      "version": 1,
+      "status": "codex running",
+      "note": "E05：完整候选Schema→锁定内容→引用闭合→摘要已接通\n异步期间修改原输入不影响快照；缺题包或来源拒绝\n先落10项Expected；移除引用拒绝2项RED→恢复\nNode22相关33项；全量1032/1032、类型构建及lint通过\n真实来源Repository、CMS审核发布及HTTP仍未验收",
+      "commentId": "1100440000090175",
+      "commentFingerprint": "74f5f2308ad11308ff2329a0038aeb52169961c6e3202e8f005aa25a972362e0",
+      "readback": "Chrome CODEX RUNNING及五行评论1100440000090175已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T14:32:45.394099+00:00",
-  "lastFailure": {
-    "ticketId": "z8v0kmr973",
-    "version": 34,
-    "at": "2026-10-04T14:42:43.104240+00:00",
-    "reason": "Chrome评论仍在编辑器，未获得新评论ID；版本33成功记录保持，版本34待读回核对",
-    "requiresReadbackBeforeRetry": true
-  },
+  "lastSuccessfulSyncAt": "2026-10-04T14:54:15.579052+00:00",
+  "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "ff047504f5617006c940a060a06c2891eb861dbdf9ef6dc39fd6f736a4d2fe46",
-    "sourceRevision": 47,
-    "sourceUpdatedAt": "2026-10-04T14:41:33.188563+00:00"
+    "fingerprint": "56a29c9ba418cbe0b2359e27396904fc7d77afad1bbd751d190650ffc0ef7d27",
+    "sourceRevision": 48,
+    "sourceUpdatedAt": "2026-10-04T14:51:53.831662+00:00"
   }
 }

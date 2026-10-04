@@ -1,20 +1,20 @@
 {
-  "revision": 47,
-  "currentStep": "E04",
-  "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-04T14:41:33.188563+00:00",
+  "revision": 48,
+  "currentStep": "E05",
+  "currentTicketId": "z8v0kmrg8a",
+  "updatedAt": "2026-10-04T14:51:53.831662+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "明确四类模型与实际后端节点对应关系和未验收范围",
+    "goal": "完成E05候选审核准备应用链路及E04工具结构验收",
     "assumptions": [
-      "DMN尚未执行，不凭XML推断行为",
-      "MVP保留但不启用专业参数"
+      "候选不是已审核知识",
+      "dmnlint仅结构校验"
     ],
-    "minimumVerification": "确定性合成、源码对应关系与后端全量测试",
-    "continueWhen": "实际节点与说明相符，生成哈希不变",
-    "failWhen": "把候选计算或结构检查宣称生产模型验收",
-    "rollback": "回退本次模型说明和进度记录；不改计算行为",
-    "timeLimit": "20分钟检查点"
+    "minimumVerification": "独立Expected、引用突变RED→恢复、Node22和全量测试、五个模型真实lint",
+    "continueWhen": "真实候选字段与冻结Schema一致，内容摘要锁定",
+    "failWhen": "未审核候选进入正式知识或猜默认发布版本",
+    "rollback": "回退本次应用用例及校验工具目录，不改线上资源",
+    "timeLimit": "30分钟检查点"
   },
   "tasks": [
     {
@@ -121,7 +121,7 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 34,
+      "version": 35,
       "priority": "normal",
       "status": "codex running",
       "stage": "DMN与后端实现对应关系核验",
@@ -157,19 +157,43 @@
         ".codex/backend-v2/evidence/E04-mvp-glass-policy.json",
         ".codex/backend-v2/evidence/E04-mvp-glass-mysql-reader.json",
         ".codex/backend-v2/evidence/E04-published-mvp-light-day.json",
-        ".codex/backend-v2/evidence/E04-dmn-runtime-mapping.json"
+        ".codex/backend-v2/evidence/E04-dmn-runtime-mapping.json",
+        ".codex/backend-v2/evidence/E04-dmnlint.json"
       ],
       "summary": [
-        "E04：四个DMN源与15个决策的实际实现边界已核验",
-        "DNI/DHI双通道日回放已有；保水倍率及浇水决策仍缺实现",
-        "专业参数与证据全部保留；MVP只选单双玻璃，不启用专业能力",
-        "合成两次哈希一致；未把XML检查冒充FEEL或Modeler验收",
-        "后端128文件1022/1022；dmnlint批准与规则执行验证待完成"
+        "E04：批准的dmnlint@1.0.0已独立安装，不进入云函数",
+        "五个DMN逐个结构校验零问题；实际锁文件审计零通报",
+        "专业参数与证据保留，MVP不启用复杂输入",
+        "FEEL执行、可视化保存重开及完整行为一致性仍未验收",
+        "E04保持进行中；先承接E05独立知识审核准备"
       ],
       "blockingReason": null,
-      "nextAction": "dmnlint批准后做结构校验；未批准期间推进已有票据内独立业务切片，不私装工具或替换FEEL引擎",
-      "ticketReadback": "当前增量尚未同步；保留前一版本读回证据于同步记录",
+      "nextAction": "取得兼容规则执行环境后验收FEEL和同场景一致性，不把结构检查等同规则执行",
+      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090179已读回",
       "milestoneCommit": "858f79de"
+    },
+    {
+      "id": "z8v0kmrg8a",
+      "step": "E05",
+      "version": 1,
+      "priority": "normal",
+      "status": "codex running",
+      "stage": "候选审核准备应用链路验证",
+      "accepted": false,
+      "evidence": [
+        ".codex/backend-v2/evidence/E05-candidate-preparation.json"
+      ],
+      "summary": [
+        "E05：完整候选Schema→锁定内容→引用闭合→摘要已接通",
+        "异步期间修改原输入不影响快照；缺题包或来源拒绝",
+        "先落10项Expected；移除引用拒绝2项RED→恢复",
+        "Node22相关33项；全量1032/1032、类型构建及lint通过",
+        "真实来源Repository、CMS审核发布及HTTP仍未验收"
+      ],
+      "blockingReason": null,
+      "nextAction": "实现来源与题包的真实读取接线，再衔接人工审核及发布事务",
+      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090175已读回",
+      "milestoneCommit": "706c4814"
     }
   ],
   "queue": [
@@ -273,7 +297,7 @@
       ]
     }
   ],
-  "nextAction": "dmnlint批准后做结构校验；未批准期间推进已有票据内独立业务切片，不私装工具或替换FEEL引擎",
+  "nextAction": "实现来源与题包的真实读取接线，再衔接人工审核及发布事务",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -528,5 +552,20 @@
       "schema/007_configuration.sql仅business_policy_releases和active_business_policy_releases表定义"
     ],
     "scope": "不读取其他Provider、审计表或整份迁移"
+  },
+  "diagnosisCandidateReadAdmission": {
+    "layers": {
+      "L0": "backend-v2 abstract仅含导航，未提供诊断候选字段",
+      "L1": "contracts overview完整六项导航无诊断合同；architecture文件列表无诊断资料",
+      "L2": "configuration-providers原文说明目录不镜像；定向诊断检索超时，glob未命中诊断文件"
+    },
+    "missing": "完整候选和关系索引Schema、候选准入硬规则配置状态",
+    "localAllowed": [
+      "contracts/schemas/diagnosis-knowledge-candidate.v1.schema.json",
+      "contracts/schemas/diagnosis-knowledge-reference-index.v1.schema.json",
+      "architecture/configuration-variable-catalog.md仅diagnosis对应条目",
+      "architecture/configuration-variable-catalog.json仅diagnosis对应条目"
+    ],
+    "scope": "仅候选准入，不读取其他合同、整目录或架构图"
   }
 }

@@ -1,0 +1,38 @@
+{
+  "verifiedAt": "2026-10-04T14:51:53.831662+00:00",
+  "ticketId": "z8v0kmrg8a",
+  "scope": "完整候选审核准备：Schema→不可变内容→依赖读取→引用闭合→完整摘要",
+  "expectedSources": [
+    "冻结诊断候选v1和引用索引v1 Schema",
+    "E05原票候选及发布不变量"
+  ],
+  "testFirst": true,
+  "path": "fast_path",
+  "mutationRed": {
+    "change": "移除引用问题的拒绝分支",
+    "failedCases": 2,
+    "log": "/tmp/planting-e05-candidate-mutation-red.log",
+    "restoredExactly": true
+  },
+  "green": {
+    "applicationCases": 10,
+    "relatedCases": 33,
+    "node22RelatedCases": 33,
+    "fullSuiteFiles": 129,
+    "fullSuiteCases": 1032,
+    "fullSuiteExitCode": 0,
+    "typecheckExitCode": 0,
+    "lintErrors": 0,
+    "lintWarnings": 1202,
+    "buildExitCode": 0
+  },
+  "replacedBoundary": "题包与来源独立核验读取接口",
+  "notVerified": [
+    "真实MySQL来源读取",
+    "CMS人工审核与发布事务",
+    "条件执行语义与植物适用性",
+    "诊断HTTP",
+    "正式知识发布"
+  ],
+  "configurationDecision": "没有新阈值、超时或默认发布引用；只消费冻结结构与引用规则"
+}

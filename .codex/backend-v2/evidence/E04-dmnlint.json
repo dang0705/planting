@@ -1,0 +1,64 @@
+{
+  "verifiedAt": "2026-10-04T14:51:53.831662+00:00",
+  "tool": "dmnlint",
+  "version": "1.0.0",
+  "nodeRequirement": ">=24",
+  "productionDependency": false,
+  "ruleSet": "dmnlint:recommended",
+  "files": [
+    {
+      "file": "light.dmn",
+      "exitCode": 0,
+      "output": "\n"
+    },
+    {
+      "file": "pot.dmn",
+      "exitCode": 0,
+      "output": "\n"
+    },
+    {
+      "file": "dry-cycle.dmn",
+      "exitCode": 0,
+      "output": "\n"
+    },
+    {
+      "file": "watering.dmn",
+      "exitCode": 0,
+      "output": "\n"
+    },
+    {
+      "file": "care-models.dmn",
+      "exitCode": 0,
+      "output": "\n"
+    }
+  ],
+  "lockSha256": "40d2a3ef75500d08409a2d7880a2fe373e969852b20b2caa9ba5cb1ca45278fa",
+  "dependencies": {
+    "node_modules/chalk": "5.6.2",
+    "node_modules/cli-table": "0.3.11",
+    "node_modules/colors": "1.0.3",
+    "node_modules/dmn-moddle": "9.1.0",
+    "node_modules/dmnlint": "1.0.0",
+    "node_modules/dmnlint-utils": "0.1.0",
+    "node_modules/meow": "14.1.0",
+    "node_modules/min-dash": "3.8.1",
+    "node_modules/moddle": "5.0.4",
+    "node_modules/moddle-xml": "8.0.8",
+    "node_modules/pluralize": "8.0.0",
+    "node_modules/saxen": "8.1.2"
+  },
+  "auditVulnerabilities": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "unverified": [
+    "FEEL执行",
+    "命中策略覆盖与冲突",
+    "Desktop Modeler保存与重开",
+    "DMN/TypeScript完整同场景一致性"
+  ]
+}
