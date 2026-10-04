@@ -1,0 +1,48 @@
+{
+  "createdAt": "2026-10-04T13:55:02.112979+00:00",
+  "scope": "双通道共享明确矩形遮挡投影",
+  "accepted": false,
+  "tests": {
+    "new": 13,
+    "full": 981,
+    "files": 124,
+    "skipped": 0,
+    "node22Related": 34,
+    "mutations": [
+      {
+        "name": "投影比例固定为1",
+        "red": 3
+      },
+      {
+        "name": "直射绕过可见开口",
+        "red": 1
+      }
+    ],
+    "restored": true
+  },
+  "typecheck": "exit 0",
+  "build": "exit 0",
+  "lint": {
+    "errors": 0,
+    "warnings": 1125
+  },
+  "configurationDecision": "坐标与空间形状为明确事实输入，相似三角形和集合差是数学定义；不新增运营阈值、默认遮挡倍率或生产发布策略",
+  "logs": [
+    "/tmp/planting-obstruction-initial-red.log",
+    "/tmp/planting-obstruction-projection-red.log",
+    "/tmp/planting-obstruction-direct-bypass-red.log",
+    "/tmp/planting-obstruction-full-green.log",
+    "/tmp/planting-obstruction-node22-green.log",
+    "/tmp/planting-obstruction-typecheck.log",
+    "/tmp/planting-obstruction-build.log",
+    "/tmp/planting-obstruction-lint.log"
+  ],
+  "notVerified": [
+    "实际遮挡测量与用户确认",
+    "斜面曲面及半透明遮挡",
+    "非均匀天空",
+    "场景变化和现场误差",
+    "光谱与传播参数正式准入",
+    "正式Care HTTP闭环"
+  ]
+}

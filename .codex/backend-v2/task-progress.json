@@ -1,19 +1,19 @@
 {
-  "revision": 39,
+  "revision": 40,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-04T13:50:32.840236+00:00",
+  "updatedAt": "2026-10-04T13:55:37.416173+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "接通双通道候选光谱换算与完整当地日积分",
+    "goal": "让双通道消费同一实际空间遮挡证据",
     "assumptions": [
-      "换算区间需明确来源，无默认系数",
-      "完整覆盖不代表正式模型或现场精度"
+      "只接受明确位置与来源的平行不透光矩形",
+      "省略输入是未评估，不是确认无遮挡"
     ],
-    "minimumVerification": "独立常量积分、真实缺段、时区夏令时、混用系数突变RED、全量GREEN",
-    "continueWhen": "968全绿，Node22相关41项、类型构建通过",
-    "failWhen": "用缺段积分冒充完整DLI或候选冒充正式光照",
-    "rollback": "离线无事实写入，撤销用例不影响现有发布",
+    "minimumVerification": "相似三角形、集合差、真实正直射宽窗完全遮挡、投影和直射绕过突变RED、全量GREEN",
+    "continueWhen": "981全绿，Node22相关34项、类型构建通过",
+    "failWhen": "未知遮挡补默认或只遮挡散射漏掉直射",
+    "rollback": "离线无事实写入，撤销遮挡候选不影响正式发布",
     "timeLimit": "30分钟检查点"
   },
   "tasks": [
@@ -121,7 +121,7 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 26,
+      "version": 27,
       "priority": "normal",
       "status": "codex running",
       "stage": "验证与回放",
@@ -149,19 +149,20 @@
         ".codex/backend-v2/evidence/E04-window-diffuse.json",
         ".codex/backend-v2/evidence/E04-finite-window-diffuse.json",
         ".codex/backend-v2/evidence/E04-indoor-natural-light.json",
-        ".codex/backend-v2/evidence/E04-indoor-ppfd-day.json"
+        ".codex/backend-v2/evidence/E04-indoor-ppfd-day.json",
+        ".codex/backend-v2/evidence/E04-window-obstruction.json"
       ],
       "summary": [
-        "E04：双通道自然光→显式光谱区间→PPFD及当地日积分已接通",
-        "保留直射散射积分和缺段；真实制品缺最后1小时不输出全天DLI",
-        "10新用例；系数混用3项RED→恢复；全量968/968",
-        "Node22相关41项、类型构建通过；夏令时23小时日验证通过",
-        "仍为实验候选；外部遮挡、正式参数准入及现场误差待完成"
+        "E04：明确矩形内外遮挡共用投影，直射散射消费同一可见窗洞",
+        "缺遮挡输入保持未评估；完全遮挡同时阻断两通道已知贡献",
+        "13新用例；距离投影3项、直射绕过1项RED→恢复GREEN",
+        "后端124文件981/981；Node22相关34项；类型构建通过",
+        "只支持明确平行不透光矩形，正式参数和现场误差仍未验收"
       ],
       "blockingReason": null,
-      "nextAction": "继续方向遮挡与传播事实准入，落实缺失参数的来源审校和发布；不把当前候选积分当正式光照建议",
-      "ticketReadback": "Chrome状态codex running及完整五行评论1100440000090019已读回",
-      "milestoneCommit": "26a263dc"
+      "nextAction": "核验玻璃光谱、天空模型与传播参数的来源和准入；补足未确认事实及正式发布条件，不将矩形候选当完整模型",
+      "ticketReadback": "Chrome状态codex running及完整五行评论1100440000090034已读回",
+      "milestoneCommit": "f9b5b24f"
     }
   ],
   "queue": [

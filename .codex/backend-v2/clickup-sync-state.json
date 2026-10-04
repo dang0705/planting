@@ -34,19 +34,19 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 26,
+      "version": 27,
       "status": "codex running",
-      "note": "E04：双通道自然光→显式光谱区间→PPFD及当地日积分已接通\n保留直射散射积分和缺段；真实制品缺最后1小时不输出全天DLI\n10新用例；系数混用3项RED→恢复；全量968/968\nNode22相关41项、类型构建通过；夏令时23小时日验证通过\n仍为实验候选；外部遮挡、正式参数准入及现场误差待完成",
-      "commentId": "1100440000090019",
-      "commentFingerprint": "5f17e5352ee00acc33a8a9e9261ce733c3d21dd73d3e4b7199b75226507eb8e5",
-      "readback": "Chrome状态codex running及完整五行评论1100440000090019已读回"
+      "note": "E04：明确矩形内外遮挡共用投影，直射散射消费同一可见窗洞\n缺遮挡输入保持未评估；完全遮挡同时阻断两通道已知贡献\n13新用例；距离投影3项、直射绕过1项RED→恢复GREEN\n后端124文件981/981；Node22相关34项；类型构建通过\n只支持明确平行不透光矩形，正式参数和现场误差仍未验收",
+      "commentId": "1100440000090034",
+      "commentFingerprint": "42331cbbf3e48a6474f07988ba3208cb11441d66bf0833ddded2f17800c3f18e",
+      "readback": "Chrome状态codex running及完整五行评论1100440000090034已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T13:50:32.840236+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T13:55:37.416173+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "e5f85ad77945a805297519f1d7366388dbc0bef2bef456278e7da37f574be2f2",
-    "sourceRevision": 39,
-    "sourceUpdatedAt": "2026-10-04T13:50:32.840236+00:00"
+    "fingerprint": "81146a1b7fbbd307be15385828162259d43fc190e9b46085972f22f4ebe647a9",
+    "sourceRevision": 40,
+    "sourceUpdatedAt": "2026-10-04T13:55:37.416173+00:00"
   }
 }

@@ -5,11 +5,14 @@ import { projectSunCalcWindowDirect } from './project-suncalc-window-direct.js'
 import { estimateThreePointMean } from './replay-suncalc-mean-candidate.js'
 import type { SolarWindowReplayLocation } from './replay-solar-window-radiation.js'
 import type { IrradianceRange } from '../light/project-window-direct.js'
+import { projectWindowObstructions, type WindowParallelObstacle, type WindowObstructionProjection } from '../light/project-window-obstructions.js'
 
 /** 同一个实际竖窗坐标系及目标点，不把窗外平面量直接当作植物光照。 */
 export interface IndoorLightTarget extends SolarWindowReplayLocation, Pick<IsotropicApertureInput, 'plant' | 'apertures' | 'skyModel'> {
   /** 目标植物点引用；输出数学接收面与窗面平行。 */
   readonly plantReference: string
+  /** 可选的明确平行遮挡几何；省略表示未评估，不是确认无遮挡。 */
+  readonly obstacles?: readonly WindowParallelObstacle[]
 }
 
 /** 明确来源的实验透过率区间；直射与散射不能共用未经说明的倍率。 */
@@ -64,6 +67,10 @@ export interface IndoorNaturalLightReplay {
   readonly transmission: IndoorTransmission
   /** 未获得透过率的分支；不制造默认值。 */
   readonly missingTransmission: readonly string[]
+  /** 几何已评估的形状范围；未输入时明确保留未评估。 */
+  readonly obstructionScope: 'not_evaluated' | 'explicit_parallel_rectangles'
+  /** 输入来源、投影和剩余开口；没有遮挡输入时为null。 */
+  readonly visibility: WindowObstructionProjection | null
   /** 每条真实区间的自然光候选；没有 PPFD 换算或全天补齐。 */
   readonly intervals: readonly IndoorLightInterval[]
 }
@@ -94,13 +101,16 @@ function attenuate(value: number | null, first: IrradianceRange | null, second: 
 /**
  * 实际气象归一化→同轮 SunCalc/窗洞直射→均匀天空有限窗洞散射→显式玻璃和窗帘→同面相加。
  * 直射仍采用分段恒定 DNI 与三点求积假设；不能套用 NOAA 的严格区间界限。
- * 当前不计算其他建筑或室内物体遮挡，不声称现场误差范围或正式模型准入。
+ * 明确几何的平行矩形遮挡共用可见窗洞；其他形状和未知遮挡不被自动确认。
  */
 export function replayIndoorNaturalLight(raw: unknown, context: RadiationNormalizationContext, target: IndoorLightTarget, losses: IndoorTransmission): IndoorNaturalLightReplay {
   const missingTransmission = validateTransmission(losses)
   if (target.plane.tiltDeg !== 90 || typeof target.plantReference !== 'string' || !target.plantReference.trim()) { throw new RangeError('需要明确目标点与实际竖窗') }
   validateDirectReachGeometry({ plant: target.plant, apertures: target.apertures, windowAzimuthDeg: target.plane.azimuthDeg })
-  const diffuseGeometry = propagateIsotropicWindowDiffuse({ ...target, planeReference: target.plantReference, dhiWattsPerM2: null }).skyGeometricFactor
+  const unobstructedDiffuse = propagateIsotropicWindowDiffuse({ ...target, planeReference: target.plantReference, dhiWattsPerM2: null }).skyGeometricFactor
+  const visibility = target.obstacles === undefined ? null : projectWindowObstructions(target.plant, target.apertures, target.obstacles)
+  const visibleApertures = visibility === null ? target.apertures : visibility.visibleApertures
+  const diffuseGeometry = visibility === null ? unobstructedDiffuse : visibleApertures.length === 0 ? 0 : propagateIsotropicWindowDiffuse({ ...target, apertures: visibleApertures, planeReference: target.plantReference, dhiWattsPerM2: null }).skyGeometricFactor
   // 空响应同样验证太阳位置；null 只用于几何守卫，不生成天气观测。
   projectSunCalcWindowDirect({ ...target, radiation: { atMs: context.fetchedAtMs, semantics: 'instantaneous', dniWattsPerM2: null } })
   const radiation = normalizeOpenMeteoRadiation(raw, context)
@@ -108,7 +118,8 @@ export function replayIndoorNaturalLight(raw: unknown, context: RadiationNormali
     const projection = estimateThreePointMean(fraction => {
       const atMs = Math.round(interval.intervalStartMs + fraction * (interval.intervalEndMs - interval.intervalStartMs))
       const computed = projectSunCalcWindowDirect({ ...target, radiation: { atMs, semantics: 'instantaneous', dniWattsPerM2: null } })
-      const reach = traceDirectThroughWindow({ plant: target.plant, apertures: target.apertures, windowAzimuthDeg: target.plane.azimuthDeg,
+      if (visibleApertures.length === 0) { return 0 }
+      const reach = traceDirectThroughWindow({ plant: target.plant, apertures: visibleApertures, windowAzimuthDeg: target.plane.azimuthDeg,
         sun: { atMs, elevationDeg: computed.solar.apparentElevationDeg, azimuthDeg: computed.solar.azimuthDeg } })
       // 边界采样本身也只作候选；不是整区间可达性或概率证明。
       return reach.status === 'reachable' || reach.status === 'boundary' ? computed.projection.projectionFactor : 0
@@ -122,5 +133,6 @@ export function replayIndoorNaturalLight(raw: unknown, context: RadiationNormali
       } }
   })
   return { scope: 'offline_candidate', productionAdmission: false, referencePlaneDefinition: 'through_target_parallel_to_window', plantReference: target.plantReference,
-    radiation, transmission: structuredClone(losses), missingTransmission, intervals }
+    radiation, transmission: structuredClone(losses), missingTransmission, visibility,
+    obstructionScope: visibility === null ? 'not_evaluated' : 'explicit_parallel_rectangles', intervals }
 }
