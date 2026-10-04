@@ -50,19 +50,19 @@
       "readback": "Chrome CODEX RUNNING及五行评论1100440000090220已读回"
     },
     "z8v0kmr974": {
-      "version": 14,
+      "version": 15,
       "status": "codex running",
-      "note": "E05视觉读取：同用户/植物/会话/资产，原事务锁定\n严格模型输出合同与证据引用闭合；局部键不直接授权选题\n新增29项；真实MySQL25项通过，无私有文件标识输出\n引用守卫突变1项RED→恢复；全量1277/1277，类型/构建通过\n待接证据语义/档位准入与会话生命周期；未开放正式视觉HTTP",
-      "commentId": "1100440000090393",
-      "commentFingerprint": "4ef9eddf35be784e7386813598a1490fd40347d2ef46fd02435ab4823733506d",
-      "readback": "Chrome CODEX RUNNING及五行评论1100440000090393已读回"
+      "note": "E05私有资产→活动发布→选定题包/视觉，同事务创建\n分析准备仍为端口替身；无旧阈值、默认题包或自动直判\n新增28项；真实MySQL34项，全量1305/1305，类型/构建通过\n题包正文守卫1项突变RED→恢复；失败整笔回滚，019保留\n模型/Prompt溯源、准备准入、共享幂等和动态HTTP待接",
+      "commentId": "1100440000090408",
+      "commentFingerprint": "913af49e6c3508f912b94c535a0da9bb65099bf7d0444a8cd8b601e6eb6faa2e",
+      "readback": "Chrome CODEX RUNNING及五行评论1100440000090408已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T17:08:15.501033+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T17:18:41.513188+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "382b11a4c771e15ccf713cac8bf27a9a5e609c1dc12519d955d667e00a33e937",
-    "sourceRevision": 64,
-    "sourceUpdatedAt": "2026-10-04T17:07:16.665506+00:00"
+    "fingerprint": "8c847b389e4060f97a7bb08ddb79c5199f657338999fe0804fc238ddc02351f1",
+    "sourceRevision": 65,
+    "sourceUpdatedAt": "2026-10-04T17:17:46.858656+00:00"
   }
 }

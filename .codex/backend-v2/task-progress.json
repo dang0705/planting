@@ -1,19 +1,19 @@
 {
-  "revision": 64,
+  "revision": 65,
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
-  "updatedAt": "2026-10-04T17:07:16.665506+00:00",
+  "updatedAt": "2026-10-04T17:17:46.858656+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "E05受控视觉准入到动态虫害创建的事务切片",
+    "target": "E05受控资产分析后原子创建虫害题包与视觉证据",
     "assumptions": [
-      "只消费服务端归属、模型/提示词兼容版本和显式档位已核验的结果",
-      "不批准旧阈值或自动直判"
+      "019新会话要求有完整题包，不能先空后改",
+      "客户端不授权档位或证据键，准入由服务端独立提供"
     ],
-    "minimumValidation": "独立Expected先落盘，准入失败不写，选题与归属读回同事务，零题不创建可答会话",
-    "continueCondition": "版本与归属可由受控端口明确验证",
-    "failureCondition": "需猜测视觉阈值或缺配置时不开放正式入口",
-    "rollback": "仅回退本轮未发布代码，不改生产数据",
+    "minimumValidation": "独立Expected先落盘；真实MySQL创建及证据同事务读回/回滚；保持不可变题包",
+    "continueCondition": "既有资产归属、快照及视觉表能表达同事务创建",
+    "failureCondition": "需要旧阈值默认值或私设视觉Provider策略时拒绝正式入口",
+    "rollback": "回退本轮代码，不改变生产DDL或019触发器",
     "timeLimitMinutes": 40
   },
   "tasks": [
@@ -200,10 +200,10 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 14,
+      "version": 15,
       "priority": "normal",
       "status": "codex running",
-      "stage": "私有视觉证据归属及模型输出合同真实SQL核验",
+      "stage": "动态虫害选定题包与视觉证据原子创建真实SQL核验",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
@@ -218,19 +218,20 @@
         ".codex/backend-v2/evidence/E05-dynamic-pest-selection.json",
         ".codex/backend-v2/evidence/E05-dynamic-pest-release.json",
         ".codex/backend-v2/evidence/E05-dynamic-pest-immutability.json",
-        ".codex/backend-v2/evidence/E05-owned-visual-evidence.json"
+        ".codex/backend-v2/evidence/E05-owned-visual-evidence.json",
+        ".codex/backend-v2/evidence/E05-atomic-pest-session.json"
       ],
       "summary": [
-        "E05视觉读取：同用户/植物/会话/资产，原事务锁定",
-        "严格模型输出合同与证据引用闭合；局部键不直接授权选题",
-        "新增29项；真实MySQL25项通过，无私有文件标识输出",
-        "引用守卫突变1项RED→恢复；全量1277/1277，类型/构建通过",
-        "待接证据语义/档位准入与会话生命周期；未开放正式视觉HTTP"
+        "E05私有资产→活动发布→选定题包/视觉，同事务创建",
+        "分析准备仍为端口替身；无旧阈值、默认题包或自动直判",
+        "新增28项；真实MySQL34项，全量1305/1305，类型/构建通过",
+        "题包正文守卫1项突变RED→恢复；失败整笔回滚，019保留",
+        "模型/Prompt溯源、准备准入、共享幂等和动态HTTP待接"
       ],
       "blockingReason": null,
-      "nextAction": "明确动态会话先创建再采证的生命周期；冻结模型局部证据到V1观察及档位准入，再接正式动态题包与HTTP",
-      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090393已读回",
-      "milestoneCommit": "d12d72f5"
+      "nextAction": "接动态创建共享幂等和公开DTO/HTTP；正式准备适配器须锁定模型/Prompt兼容版本及证据语义、档位、成本和保留期策略",
+      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090408已读回",
+      "milestoneCommit": "91987513"
     }
   ],
   "queue": [
@@ -334,7 +335,7 @@
       ]
     }
   ],
-  "nextAction": "明确动态会话先创建再采证的生命周期；冻结模型局部证据到V1观察及档位准入，再接正式动态题包与HTTP",
+  "nextAction": "接动态创建共享幂等和公开DTO/HTTP；正式准备适配器须锁定模型/Prompt兼容版本及证据语义、档位、成本和保留期策略",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -781,5 +782,24 @@
       "004视觉证据必须归属既有会话",
       "已确认Schema使用离散low/medium/high，证据键为输出局部引用，不直接授权V1语义或选题档位"
     ]
+  },
+  "diagnosisAtomicVisualCreationReadAdmission": {
+    "layers": {
+      "L0": "已缓存backend-v2摘要只有导航且本轮未改",
+      "L1": "已缓存contracts概览无动态虫害生命周期字段",
+      "L2": "本轮定向grep仅数据字典与私有视觉概念，不提供019快照触发器与资产外键细节"
+    },
+    "missing": [
+      "019新会话快照约束是否允许先空后填",
+      "003私有资产到004新会话视觉证据原子保存的精确字段"
+    ],
+    "localAllowed": [
+      "schema/019_diagnosis_question_package_snapshots.sql仅长期会话快照及触发器",
+      "schema/003_user_plant.sql仅user_plant_assets表",
+      "schema/004_care_diagnosis.sql仅diagnosis_sessions与diagnosis_visual_evidence表",
+      "schema/007_configuration.sql仅business_policy_releases与active_business_policy_releases两表用于原有动态发布Reader的隔离夹具"
+    ],
+    "scope": "动态创建事务实现；不改任何DDL或空会话保护",
+    "finding": "019拒绝新空快照并禁止修改，先生成选定题包，再原子保存会话与视觉证据"
   }
 }

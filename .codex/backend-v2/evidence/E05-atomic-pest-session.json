@@ -1,0 +1,63 @@
+{
+  "step": "E05",
+  "ticketId": "z8v0kmr974",
+  "milestone": "私有资产归属、动态发布、选题、会话与视觉证据原子创建",
+  "verifiedAt": "2026-10-04T17:17:46.858656+00:00",
+  "contract": "cloudfunctions-v2/models/diagnosis/atomic-pest-session-contract.md",
+  "configurationDecision": "无新增参数，消费已有已批准题数和结构Schema；正式分析准备策略未准入就不可用",
+  "tdd": {
+    "path": "fast_path",
+    "testFirst": [
+      "test/diagnosis/create-pest-question-session.spec.ts",
+      "test/diagnosis/mysql-diagnosis-visual-evidence-repository.spec.ts"
+    ],
+    "red": "关闭题包完整正文比较守卫后同摘要正文篡改场景失败：1红17绿；完整恢复",
+    "log": "/tmp/planting-e05-atomic-pest-mutation.log"
+  },
+  "checks": {
+    "related": {
+      "files": 26,
+      "passed": 307,
+      "exitCode": 0,
+      "runtime": "Node22",
+      "log": "/tmp/planting-e05-atomic-pest-related.log"
+    },
+    "mysql": {
+      "passed": 34,
+      "newCases": 9,
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-atomic-pest-mysql.log",
+      "boundary": "真实MySQL8.4，实际003资产、004会话/视觉、019长期题包约束、007发布/活动指针；users/user_plants为归属外键夹具，分析准备端口及模型JSON是场景替身；非真实Provider或HTTP"
+    },
+    "fullUnit": {
+      "files": 150,
+      "passed": 1305,
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-atomic-pest-full-ut.log"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-atomic-pest-typecheck.log"
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 1687,
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-atomic-pest-lint.log"
+    },
+    "build": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-atomic-pest-build.log",
+      "boundary": "现有构建入口通过，不代表新用例已作为HTTP入口部署"
+    }
+  },
+  "productionChanges": false,
+  "schemaChanges": false,
+  "acceptedParent": false,
+  "remaining": [
+    "正式分析准备适配器与模型/Prompt兼容版本持久化溯源",
+    "已审核证据语义/档位及视觉成本/保留期准入",
+    "共享幂等、公开创建DTO/HTTP及未知提交对账",
+    "临时案例、CMS真实审核发布、结论/行动与小青工具"
+  ]
+}

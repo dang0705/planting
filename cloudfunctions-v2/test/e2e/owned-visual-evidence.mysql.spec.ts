@@ -1,3 +1,9 @@
+import { createPestQuestionSessionInTransaction } from '../../src/diagnosis/application/create-pest-question-session.js'
+import { createMysqlDiagnosisVisualEvidenceRepository } from '../../src/diagnosis/repository/mysql-diagnosis-visual-evidence-repository.js'
+import { createMysqlDiagnosisQuestionSnapshotRepository } from '../../src/diagnosis/repository/mysql-diagnosis-question-snapshot-repository.js'
+import { createMysqlDynamicPestReleaseReader } from '../../src/diagnosis/repository/mysql-dynamic-pest-release-reader.js'
+import { calculateCanonicalJsonSha256 } from '../../src/foundation/json/canonical-json-sha256.js'
+import { projectPestQuestionPackage } from '../../src/diagnosis/http/pest-question-public-projection.js'
 import { spawnSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -120,6 +126,30 @@ beforeAll(async () => {
     "INSERT INTO diagnosis_visual_evidence(evidence_ref,diagnosis_session_internal_id,asset_internal_id,evidence_kind,model_contract_version,evidence_json,expires_at_ms,created_at_ms,updated_at_ms) VALUES ('dve_owner123',1,1,'leaf','diagnosis-model-output/v1',CAST(? AS JSON),2000,1000,1000)",
     [JSON.stringify(model)]
   )
+
+  const policies = readFileSync(join(root, 'docs/backend-v2/schema/007_configuration.sql'), 'utf8')
+  for (const name of ['business_policy_releases', 'active_business_policy_releases']) {
+    const offset = policies.indexOf('CREATE TABLE `' + name + '` (')
+    await db.query(policies.slice(offset, policies.indexOf(';', offset) + 1))
+  }
+  const raw = JSON.parse(
+    readFileSync(join(root, 'cloudfunctions-v2/models/diagnosis/v1-reuse/questions.json'), 'utf8')
+  )
+  const body = {
+    contractVersion: 'diagnosis-dynamic-pest-question-packages/v1',
+    sourceRef: 'v1-reuse/questions.json',
+    sourceSha256: '40385731fe0ed7d20c9331b1be6aee10c13ebb900350a4576c14edd0ea07107f',
+    questions: raw.pestQuestions,
+    tierQuestionLimits: { low: 3, medium: 2, high: 1, very_likely: 1, direct: 0 },
+    evidenceGroupByKey: {}
+  }
+  await db.execute(
+    "INSERT INTO business_policy_releases(release_ref,domain_code,policy_code,schema_version,release_version,content_sha256,policy_json,status,effective_at_ms,verified_at_ms,created_at_ms,updated_at_ms) VALUES('bpr_pest12345','diagnosis','dynamic_pest_question_packages',?,'v1',?,CAST(? AS JSON),'active',1000,900,900,1000)",
+    [body.contractVersion, calculateCanonicalJsonSha256(body), JSON.stringify(body)]
+  )
+  await db.query(
+    'INSERT INTO active_business_policy_releases(domain_code,policy_code,release_internal_id,active_release_version,active_content_sha256,activated_at_ms,created_at_ms,updated_at_ms) SELECT domain_code,policy_code,id,release_version,content_sha256,1000,1000,1000 FROM business_policy_releases'
+  )
 }, 40000)
 afterAll(async () => {
   await db?.end()
@@ -208,4 +238,159 @@ test.each([
   "UPDATE user_plant_assets SET _openid='platform'"
 ])('真实SQL字段损坏不通过：%s', async sql => {
   expect(await readMutation(sql)).toEqual({ status: 'invalid' })
+})
+
+/** 分析准备是服务端端口夹具；其余发布、归属、会话、视觉与读回均为真实MySQL。 */
+function atomicCreator(extra: Record<string, unknown> = {}) {
+  const source = createMysql2ConnectionSource({
+    host: '127.0.0.1',
+    port,
+    user: 'root',
+    password: '',
+    database: 'qhz_owned_visual'
+  })
+  const snapshots = createMysqlDiagnosisQuestionSnapshotRepository(source),
+    visuals = createMysqlDiagnosisVisualEvidenceRepository()
+  const deps = {
+    published: createMysqlDynamicPestReleaseReader().read,
+    asset: visuals.readOwnedAsset,
+    prepare: async () => ({
+      status: 'admitted' as const,
+      evidenceKind: 'leaf' as const,
+      assetContentSha256: 'a'.repeat(64),
+      tier: 'medium' as const,
+      candidateModes: ['whitefly'],
+      lockedEvidenceKeys: [],
+      output: model,
+      expiresAtMs: 2000
+    }),
+    append: snapshots.append,
+    appendVisual: visuals.append,
+    read: snapshots.readInTransaction,
+    readVisual: createMysqlOwnedVisualEvidenceReader().read,
+    ...extra
+  }
+  const run = createPestQuestionSessionInTransaction(deps)
+  return (override: Partial<{ userRef: string; userPlantRef: string; assetRef: string }> = {}) =>
+    runDatabaseTransaction(
+      createMysqlTransactionDriver(source, () => undefined),
+      tx =>
+        run(tx, {
+          userRef: input.userRef,
+          userPlantRef: input.userPlantRef,
+          assetRef: 'upa_owner123',
+          startedAtMs: 1500,
+          ...override
+        })
+    )
+}
+async function counts() {
+  return (
+    await db.query(
+      'SELECT (SELECT COUNT(*) FROM diagnosis_sessions) AS sessions,(SELECT COUNT(*) FROM diagnosis_visual_evidence) AS visuals'
+    )
+  )[0]
+}
+/** 先保留读取旧行的场景，再为新增创建安装019真实约束。 */
+async function enableSnapshots() {
+  // 019只加载本增量的长期会话ALTER和两条触发器；不遍历临时会话或其他迁移。
+  const snapshotDdl = readFileSync(
+    join(root, 'docs/backend-v2/schema/019_diagnosis_question_package_snapshots.sql'),
+    'utf8'
+  )
+  const start = snapshotDdl.indexOf('ALTER TABLE `diagnosis_sessions`')
+  await db.query(snapshotDdl.slice(start, snapshotDdl.indexOf(';', start) + 1))
+  for (const name of [
+    'tr_diagnosis_package_snapshot_insert',
+    'tr_diagnosis_package_snapshot_update'
+  ]) {
+    const trigger = snapshotDdl.indexOf('CREATE TRIGGER `' + name + '`')
+    await db.query(snapshotDdl.slice(trigger, snapshotDdl.indexOf('$$', trigger)))
+  }
+}
+
+test('真实活动发布→选题→会话与视觉同事务保存，安全提示可公开投影', async () => {
+  await enableSnapshots()
+  const before = await counts(),
+    r = await atomicCreator()()
+  expect(r.status).toBe('created')
+  if (r.status !== 'created') {
+    throw new Error('未创建')
+  }
+  expect(r.snapshot.snapshot.questionCount).toBe(2)
+  const publicPackage = projectPestQuestionPackage(r.snapshot)
+  expect(publicPackage.questions.some(q => q.requiresExplicitConsent)).toBe(true)
+  const [rows] = await db.execute(
+    'SELECT e.evidence_ref FROM diagnosis_visual_evidence AS e JOIN diagnosis_sessions AS s ON s.id=e.diagnosis_session_internal_id WHERE s.diagnosis_ref=?',
+    [r.diagnosisRef]
+  )
+  const evidenceRef = (rows as Record<string, string>[])[0]!.evidence_ref!
+  expect((await read({ diagnosisRef: r.diagnosisRef, evidenceRef })).status).toBe('found')
+  const after = await counts()
+  expect(after).not.toEqual(before)
+  await expect(
+    db.execute(
+      "UPDATE diagnosis_sessions SET question_package_snapshot_json=JSON_SET(question_package_snapshot_json,'$.questionCount',1) WHERE diagnosis_ref=?",
+      [r.diagnosisRef]
+    )
+  ).rejects.toMatchObject({ sqlState: '45000' })
+})
+test.each([
+  { userRef: 'usr_other123' },
+  { userPlantRef: 'upl_second123' },
+  { assetRef: 'UPA_OWNER123' }
+])('创建前实际资产归属拒绝，无半会话：%j', async override => {
+  const before = await counts()
+  expect((await atomicCreator()(override)).status).toBe('not_found')
+  expect(await counts()).toEqual(before)
+})
+test.each(['visual_write', 'snapshot_read', 'visual_read'])(
+  '真实事务%s失败，会话与视觉全部回滚',
+  async issue => {
+    const before = await counts(),
+      extra: any = {}
+    if (issue === 'visual_write') {
+      extra.appendVisual = async () => 'not_found'
+    }
+    if (issue === 'snapshot_read') {
+      extra.read = async () => ({ status: 'not_found' })
+    }
+    if (issue === 'visual_read') {
+      extra.readVisual = async () => ({ status: 'invalid' })
+    }
+    await expect(atomicCreator(extra)()).rejects.toThrow()
+    expect(await counts()).toEqual(before)
+  }
+)
+test('未准入分析与直判零题不创建会话', async () => {
+  const before = await counts()
+  expect(await atomicCreator({ prepare: async () => ({ status: 'unavailable' }) })()).toEqual({
+    status: 'unavailable'
+  })
+  expect(
+    await atomicCreator({
+      prepare: async () => ({
+        status: 'admitted',
+        evidenceKind: 'leaf',
+        assetContentSha256: 'a'.repeat(64),
+        tier: 'direct',
+        candidateModes: ['whitefly'],
+        lockedEvidenceKeys: [],
+        output: model,
+        expiresAtMs: 2000
+      })
+    })()
+  ).toEqual({ status: 'no_questions' })
+  expect(await counts()).toEqual(before)
+})
+
+test('资产内容变化使旧分析准备失效，事务不留下新会话', async () => {
+  const before = await counts()
+  await db.query("UPDATE user_plant_assets SET content_hash=REPEAT('c',64) WHERE id=1")
+  try {
+    await expect(atomicCreator()()).rejects.toThrow('分析准备')
+    expect(await counts()).toEqual(before)
+  } finally {
+    await db.query("UPDATE user_plant_assets SET content_hash=REPEAT('a',64) WHERE id=1")
+  }
 })

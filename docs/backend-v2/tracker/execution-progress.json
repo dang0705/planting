@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T17:07:16.665506+00:00",
-  "sourceRevision": 64,
-  "sourceUpdatedAt": "2026-10-04T17:07:16.665506+00:00",
+  "generatedAt": "2026-10-04T17:17:46.858656+00:00",
+  "sourceRevision": 65,
+  "sourceUpdatedAt": "2026-10-04T17:17:46.858656+00:00",
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
   "tasks": [
@@ -199,16 +199,16 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 14,
+      "version": 15,
       "status": "codex running",
-      "stage": "私有视觉证据归属及模型输出合同真实SQL核验",
+      "stage": "动态虫害选定题包与视觉证据原子创建真实SQL核验",
       "accepted": false,
       "summary": [
-        "E05视觉读取：同用户/植物/会话/资产，原事务锁定",
-        "严格模型输出合同与证据引用闭合；局部键不直接授权选题",
-        "新增29项；真实MySQL25项通过，无私有文件标识输出",
-        "引用守卫突变1项RED→恢复；全量1277/1277，类型/构建通过",
-        "待接证据语义/档位准入与会话生命周期；未开放正式视觉HTTP"
+        "E05私有资产→活动发布→选定题包/视觉，同事务创建",
+        "分析准备仍为端口替身；无旧阈值、默认题包或自动直判",
+        "新增28项；真实MySQL34项，全量1305/1305，类型/构建通过",
+        "题包正文守卫1项突变RED→恢复；失败整笔回滚，019保留",
+        "模型/Prompt溯源、准备准入、共享幂等和动态HTTP待接"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
@@ -223,18 +223,19 @@
         ".codex/backend-v2/evidence/E05-dynamic-pest-selection.json",
         ".codex/backend-v2/evidence/E05-dynamic-pest-release.json",
         ".codex/backend-v2/evidence/E05-dynamic-pest-immutability.json",
-        ".codex/backend-v2/evidence/E05-owned-visual-evidence.json"
+        ".codex/backend-v2/evidence/E05-owned-visual-evidence.json",
+        ".codex/backend-v2/evidence/E05-atomic-pest-session.json"
       ],
       "blockingReason": null,
-      "nextAction": "明确动态会话先创建再采证的生命周期；冻结模型局部证据到V1观察及档位准入，再接正式动态题包与HTTP",
+      "nextAction": "接动态创建共享幂等和公开DTO/HTTP；正式准备适配器须锁定模型/Prompt兼容版本及证据语义、档位、成本和保留期策略",
       "sync": {
-        "version": 14,
+        "version": 15,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING及五行评论1100440000090393已读回"
+        "readback": "Chrome CODEX RUNNING及五行评论1100440000090408已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T17:08:15.501033+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T17:18:41.513188+00:00",
   "lastFailure": null
 }
