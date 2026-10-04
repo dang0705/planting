@@ -34,19 +34,19 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 23,
+      "version": 24,
       "status": "codex running",
-      "note": "E04：DHI真实时段→均匀天空窗外散射候选已实现\n20新用例；全部倾角固定一半导致4项RED→恢复GREEN\n后端120文件929/929；Node22新20项；类型构建通过\n明确无遮挡均匀天空假设；只到窗外，不冒充室内估算\n优先继续天空遮挡、玻璃窗帘与植物位置传播及光照合并",
-      "commentId": "1100440000089944",
-      "commentFingerprint": "a5fff7119b71f0448154be826120230700e17e47a40cf5fb53915cae1a88e5d8",
-      "readback": "Chrome状态codex running及完整五行评论1100440000089944已读回"
+      "note": "E04：DHI有限实际窗洞→植物窗平行面散射候选已实现\n离窗距离、高度、横向位置和开口并集进入解析积分\n18新用例；取消天空地平线限制导致1项RED→恢复GREEN\n后端121文件947/947；Node22新18项；类型构建通过\n玻璃窗帘及外部遮挡未完成，保持未验收，继续衰减合并",
+      "commentId": "1100440000089962",
+      "commentFingerprint": "29a408196d0a93633c8d18fa3cac2cfc484b309d11c4e8e048d8bc17b0f565bf",
+      "readback": "Chrome状态codex running及完整五行评论1100440000089962已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T13:32:14.904397+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T13:39:27.533076+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "f1ec32ccdabd87dd216d00b919e5008b2045b09c9d6ee6892ca328d759f2b56f",
-    "sourceRevision": 36,
-    "sourceUpdatedAt": "2026-10-04T13:31:50.667592+00:00"
+    "fingerprint": "a1cb433e715c57dce0ea4d0201e708fbacdd1665d3153d3a961175c824939515",
+    "sourceRevision": 37,
+    "sourceUpdatedAt": "2026-10-04T13:39:27.533076+00:00"
   }
 }

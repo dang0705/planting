@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T13:31:50.667592+00:00",
-  "sourceRevision": 36,
-  "sourceUpdatedAt": "2026-10-04T13:31:50.667592+00:00",
+  "generatedAt": "2026-10-04T13:39:27.533076+00:00",
+  "sourceRevision": 37,
+  "sourceUpdatedAt": "2026-10-04T13:39:27.533076+00:00",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -114,16 +114,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 23,
+      "version": 24,
       "status": "codex running",
-      "stage": "验证与持久化读回",
+      "stage": "验证与回放",
       "accepted": false,
       "summary": [
-        "E04：DHI真实时段→均匀天空窗外散射候选已实现",
-        "20新用例；全部倾角固定一半导致4项RED→恢复GREEN",
-        "后端120文件929/929；Node22新20项；类型构建通过",
-        "明确无遮挡均匀天空假设；只到窗外，不冒充室内估算",
-        "优先继续天空遮挡、玻璃窗帘与植物位置传播及光照合并"
+        "E04：DHI有限实际窗洞→植物窗平行面散射候选已实现",
+        "离窗距离、高度、横向位置和开口并集进入解析积分",
+        "18新用例；取消天空地平线限制导致1项RED→恢复GREEN",
+        "后端121文件947/947；Node22新18项；类型构建通过",
+        "玻璃窗帘及外部遮挡未完成，保持未验收，继续衰减合并"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -145,18 +145,19 @@
         ".codex/backend-v2/evidence/E04-environment-snapshot.json",
         ".codex/backend-v2/evidence/E04-json-snapshot-integrity.json",
         ".codex/backend-v2/evidence/E04-decision-immutability.json",
-        ".codex/backend-v2/evidence/E04-window-diffuse.json"
+        ".codex/backend-v2/evidence/E04-window-diffuse.json",
+        ".codex/backend-v2/evidence/E04-finite-window-diffuse.json"
       ],
       "blockingReason": null,
-      "nextAction": "优先推进DHI方向加权天空遮挡及有限窗口到植物位置的传播，再接玻璃窗帘与DNI/DHI合并；无确认参数不设默认",
+      "nextAction": "继续明确外部天空遮挡及玻璃窗帘的准入输入，组合DNI/DHI同一接收平面；无确认参数不设默认",
       "sync": {
-        "version": 23,
+        "version": 24,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome状态codex running及完整五行评论1100440000089944已读回"
+        "readback": "Chrome状态codex running及完整五行评论1100440000089962已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T13:32:14.904397+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T13:39:27.533076+00:00",
   "lastFailure": null
 }

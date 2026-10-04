@@ -1,0 +1,42 @@
+{
+  "scope": "有限窗洞均匀天空到目标窗平行面的离线候选",
+  "accepted": false,
+  "createdAt": "2026-10-04T13:38:47.640140+00:00",
+  "expectedSources": [
+    "https://www.pbr-book.org/3ed-2018/Color_and_Radiometry/Working_with_Radiometric_Integrals",
+    "有限矩形余弦立体角解析积分及独立单位场景"
+  ],
+  "tests": {
+    "new": 18,
+    "full": 947,
+    "files": 121,
+    "skipped": 0,
+    "node22": 18,
+    "mutationRed": 1,
+    "mutation": "删除天空地平线裁剪",
+    "restored": true
+  },
+  "typecheck": "exit 0",
+  "build": "exit 0",
+  "lint": {
+    "errors": 0,
+    "warnings": 1014
+  },
+  "logs": [
+    "/tmp/planting-aperture-initial-red.log",
+    "/tmp/planting-aperture-horizon-red.log",
+    "/tmp/planting-aperture-full-green.log",
+    "/tmp/planting-aperture-typecheck.log",
+    "/tmp/planting-aperture-build.log",
+    "/tmp/planting-aperture-lint.log",
+    "/tmp/planting-aperture-node22-green.log"
+  ],
+  "notVerified": [
+    "现场几何",
+    "玻璃和窗帘",
+    "外部建筑天空遮挡",
+    "非均匀天空误差范围",
+    "正式发布",
+    "CloudBase HTTP闭环"
+  ]
+}
