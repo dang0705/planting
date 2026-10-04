@@ -1,0 +1,61 @@
+{
+  "scope": "游客认领并新建用户植物的原子完成",
+  "ticketId": "z8v0kmr9mj",
+  "expectedSource": "cloudfunctions-v2/models/user-plant/guest-claim-new-plant-completion-contract.md",
+  "contextReuse": [
+    "已核验guest-session-claim/v1新目标同事务与租约规则",
+    ".codex/backend-v2/evidence/E03-guest-claim-completion-context.json",
+    "已验收createUnidentifiedUserPlant/MysqlUserPlantRepository及authenticated ephemeral新建能力"
+  ],
+  "configurationDecision": "复用请求级已发布能力快照与不可覆盖单次认领规则；无新增时长、默认、开关、Provider或HTTP",
+  "testFirst": {
+    "newUnitExpectedBeforeProduct": true,
+    "newSqlExpectedBeforeProduct": true,
+    "existingUnitBaselineGreen": "/tmp/planting-e03-guest-new-existing-baseline.log",
+    "missingModuleIsBusinessRed": false,
+    "unitGreen": "/tmp/planting-e03-guest-new-completion-unit.log"
+  },
+  "implementation": [
+    "新/已有目标窄入口共用同一认领事务核心，原existing入口语义保留",
+    "新建能力/数量核验复用真实聚合Repository与领域规则，候选引用/能力不改变请求摘要",
+    "新植物及认领案例投影/命令完成/成功事实/上一版证明清除同事务"
+  ],
+  "boundaries": [
+    "真实MySQL中用户/植物为明确外键/初态夹具，认领四表为冻结DDL；不证明生产迁移或Provider",
+    "只消费已有效持有的processing租约，未取得/延长或配置租约时长",
+    "成功内收据须外层提交后披露，未接实际应用/HTTP",
+    "不改临时结果，不自动确认植物身份、不写养护事实/计划/积分",
+    "无生产DDL、部署、删除或前端改动"
+  ],
+  "remaining": [
+    "处理租约策略准入与原命令租约取得/接管/失败恢复",
+    "认领应用编排与提交未知只读核对",
+    "受控对象类别摘要及真实身份/匿名Provider",
+    "公开HTTP和完整E03验收"
+  ],
+  "accepted": false,
+  "mutation": {
+    "capacityBypassRed": "/tmp/planting-e03-guest-new-completion-capacity-mutation-red.log",
+    "failedScenarios": 1,
+    "actualFailure": "两个案例争用最后一个名额时，错误创建两株植物、两条成功事实及两条完成命令",
+    "byteRestored": true,
+    "restoredCoreSha256": "20c95a3d81bb1e4bd1b30b5b26173329e52ef2f3d48bbd112f78d1e3d8c36193"
+  },
+  "verifiedAt": "2026-10-04T22:42:38.712605+00:00",
+  "verification": {
+    "newUnitFake": 9,
+    "existingUnitRegression": 11,
+    "newRealMysql": 15,
+    "adjacentRealMysqlTotal": 94,
+    "rootFiles": 191,
+    "rootUnitTests": 1830,
+    "node22UnitTests": 1830,
+    "typecheckExit": 0,
+    "lintErrors": 0,
+    "lintWarnings": 2918,
+    "buildExit": 0,
+    "coreSha256": "20c95a3d81bb1e4bd1b30b5b26173329e52ef2f3d48bbd112f78d1e3d8c36193",
+    "finalLogPrefix": "/tmp/planting-e03-guest-new-completion-final-"
+  },
+  "buildBoundary": "Node22构建通过；子npmNode24产生25次引擎警告，未证明CloudBase运行"
+}

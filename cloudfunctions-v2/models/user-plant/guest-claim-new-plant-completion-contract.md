@@ -1,0 +1,15 @@
+# 游客认领并新建用户植物的原子完成
+
+E03 / z8v0kmr9mj。复用 guest-session-claim/v1 规定的新建目标与成功事实同事务、已有处理租约规则及已验收创建植物能力。本轮没有新的配置默认值或公开HTTP。
+
+可信输入为原登记六项，target严格只有type=new_user_plant，另加服务端leaseOwnerHash、newUserPlantRef和请求级capabilitySnapshot。候选植物引用和能力不进入原请求摘要；claimRef、request_hash、proof_version、attempt_count必须保留原命令。能力null明确不可用；非法或非用户快照拒绝，不能猜测容量。
+
+同事务先重新验证证明并锁会话、案例、有效统一用户与原processing命令；核对原引用、new目标、requested target为空、同键摘要、租约持有者和有效期限。案例准入、过期与证明规则沿用已有目标完成合同。只完成已取得的租约，不取得或延长租约。
+
+命令准入后调用既有lockUserAndCountActive及createUnidentifiedUserPlant：同一用户行锁下检查当前active数量、本人能力、USER_PLANT_CREATE许可及快照期限。容量达到上限返回capability_denied；已过期能力返回capability_snapshot_expired；能力缺失返回unavailable。禁止自行授予试用权益。只有准入后才经既有Repository创建unidentified/active/version=1植物并读回初态，确认同用户新目标；客户端不能提交已有植物冒充新建。
+
+创建新植物、案例owner投影及version递增、原命令completed及清租约、唯一guest_case_claims、清除上一版游客证明全部同事务，任一步失败整体回滚。命令或案例不满足资格时零写入；同案例再次完成不能新建第二株，成功重放由已有只读收据核对，候选新引用和当前权益不能替换原结果。并发两个案例争用最后一个名额时只能创建一株。
+
+成功内部结果沿用六字段completed收据，外层提交前不得向调用方宣告成功。不会复制临时养护/诊断内容、不创建计划、行为、积分；新植物保持未识别，不将Tropicals候选自动确认成内部身份。
+
+实现将新/已有目标共同的证明、锁定、租约、四项完成写入保持在user-plant的单一事务核心，两个窄入口分别严格准入目标，不另建通用引擎。已有目标不引入容量要求。测试使用独立Expected与真实MySQL证明新建和成功事实原子性，身份/权益输入的替身不代表Provider或HTTP验收。

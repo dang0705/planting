@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T22:35:57.112287+00:00",
-  "sourceRevision": 105,
-  "sourceUpdatedAt": "2026-10-04T22:35:57.112287+00:00",
+  "generatedAt": "2026-10-04T22:42:38.712605+00:00",
+  "sourceRevision": 106,
+  "sourceUpdatedAt": "2026-10-04T22:42:38.712605+00:00",
   "currentStep": "E03",
   "currentTicketId": "z8v0kmr9mj",
   "tasks": [
@@ -264,16 +264,16 @@
     {
       "id": "z8v0kmr9mj",
       "step": "E03",
-      "version": 17,
+      "version": 18,
       "status": "codex running",
-      "stage": "游客已有目标认领原子完成已验证；租约取得/新建目标/HTTP未验收",
+      "stage": "游客新建/已有目标原子完成均已验证；租约取得/编排/HTTP未验收",
       "accepted": false,
       "summary": [
-        "E03：游客案例绑定已有植物的原子完成已实现",
-        "真实MySQL新增16项、联合63项；四写失败均整体回滚",
-        "错误租约持有者旁路1项RED→逐字节恢复GREEN",
-        "根与Node22全量1821/1821；类型/检查/构建通过",
-        "租约取得、新建目标、真实身份与HTTP仍未验收"
+        "E03：游客认领新建植物与成功事实同事务已实现",
+        "真实MySQL新增15项、联合94项；并发容量及五写回滚通过",
+        "容量旁路实际多建植物RED1→逐字节恢复GREEN",
+        "根与Node22全量1830/1830；类型/检查/构建通过",
+        "租约取得、完整编排、真实身份与HTTP仍未验收"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E03-promotion-context.json",
@@ -296,18 +296,19 @@
         ".codex/backend-v2/evidence/E03-guest-claim-command-registration.json",
         ".codex/backend-v2/evidence/E03-guest-claim-completed-receipt.json",
         ".codex/backend-v2/evidence/E03-guest-claim-completion-context.json",
-        ".codex/backend-v2/evidence/E03-guest-claim-existing-completion.json"
+        ".codex/backend-v2/evidence/E03-guest-claim-existing-completion.json",
+        ".codex/backend-v2/evidence/E03-guest-claim-new-plant-completion.json"
       ],
-      "blockingReason": "仅processing租约时长未登记确认；不阻断独立事务完成与新建目标验证",
-      "nextAction": "确认并登记租约策略；继续新建目标与成功事实同事务完成，再接认领编排及提交未知只读核对",
+      "blockingReason": "仅processing租约时长未登记确认；不阻断受控应用编排和归属读取验证",
+      "nextAction": "确认并登记租约策略；接原命令租约取得/恢复、两个完成端口和提交未知只读核对，再推进公开HTTP",
       "sync": {
-        "version": 17,
+        "version": 18,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING及五行评论1100440000091141已读回"
+        "readback": "Chrome CODEX RUNNING及五行评论1100440000091146已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T22:36:16.140459+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T22:43:04.942331+00:00",
   "lastFailure": null
 }
