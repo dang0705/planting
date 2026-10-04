@@ -26,6 +26,15 @@ export interface PublishedProfileWriteSnapshot {
     contentSha256: string
   }>[]
 }
+/** 独立HTTP写发布；绑定已有目标不依赖档案完整度发布或创建额度。 */
+export interface PublishedHttpWriteSnapshot {
+  /** 已发布JSON字节上限。 */ readonly maxBodyBytes: number
+  /** 内部来源追溯，不进入公开DTO。 */ readonly release: Readonly<{
+    /** 不可变发布引用。 */ releaseRef: string
+    /** 已验真活动版本。 */ releaseVersion: string
+    /** 已核对发布正文的规范JSON摘要，仅供内部来源追溯。 */ contentSha256: string
+  }>
+}
 const ajv = new Ajv({ strict: true, allErrors: true })
 const validateProfile = ajv.compile<UserPlantProfileCompletenessPolicy>(profileSchema)
 const validateHttp = ajv.compile<{ jsonBodyLimitBytes: number; idempotencyRetentionHours: number }>(httpSchema)
@@ -87,6 +96,27 @@ export function createMysqlPublishedProfileWritePolicyReader(source: MysqlConnec
         idempotencyRetentionMs: httpDocument.idempotencyRetentionHours * 60 * 60 * 1000, profilePolicy: lockedProfile,
         releases: Object.freeze([profile, http].map(row => Object.freeze({ releaseRef: row.release_ref as string,
           releaseVersion: row.release_version as string, contentSha256: row.content_sha256 as string }))) })
+    }
+  }
+}
+
+/** 只读取同一HTTP发布并复用严格元数据、正文和摘要校验，不私设字节默认。 */
+export function createMysqlPublishedHttpWritePolicyReader(source: MysqlConnectionPoolPort<Mysql2QueryConnection>) {
+  return {
+    /** 单请求固定策略；SQL异常交由HTTP边界转为503。 */
+    read: async (capturedAtMs: number): Promise<PublishedHttpWriteSnapshot | null> => {
+      if (!Number.isSafeInteger(capturedAtMs) || capturedAtMs < 0 || !Number.isFinite(new Date(capturedAtMs).getTime())) { return null }
+      const rows = await withReadConnection(source, c => c.query(`SELECT r.release_ref,r.domain_code,r.policy_code,r.schema_version,r.release_version,
+        r.content_sha256,r.policy_json,r.status,CAST(r.effective_at_ms AS CHAR) AS effective_at_ms,
+        CAST(r.expires_at_ms AS CHAR) AS expires_at_ms,CAST(r.verified_at_ms AS CHAR) AS verified_at_ms,
+        a.active_release_version,a.active_content_sha256
+        FROM active_business_policy_releases a JOIN business_policy_releases r
+          ON r.id=a.release_internal_id AND r.domain_code=a.domain_code AND r.policy_code=a.policy_code
+        WHERE a.domain_code=? AND a.policy_code=?`, ['http', 'request_write']))
+      if (rows.length !== 1) { return null }
+      const row = rows[0]!, document = verify(row, 'http', 'request_write', 'http-request-write-policy/v1', capturedAtMs)
+      if (!validateHttp(document)) { return null }
+      return Object.freeze({ maxBodyBytes: document.jsonBodyLimitBytes, release: Object.freeze({ releaseRef: row.release_ref as string, releaseVersion: row.release_version as string, contentSha256: row.content_sha256 as string }) })
     }
   }
 }

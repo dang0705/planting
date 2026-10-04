@@ -1,0 +1,66 @@
+{
+  "scope": "E03登录临时案例绑定已有植物：公开合同、严格HTTP链、服务组装与独立HTTP发布读取",
+  "verifiedAt": "2026-10-04T21:41:04.949074+00:00",
+  "configurationDecision": "不新增运行参数，复用已确认HTTP JSON大小发布；不依赖档案完整度发布，不决定临时TTL或创建额度",
+  "readAdmission": {
+    "L0": "复用本轮OV abstract仅目录导航，无登录临时绑定协议",
+    "L1": "contracts overview六项不含用户植物绑定HTTP",
+    "L2": "定向find超时；既有绑定应用合同不含公开路由",
+    "missing": "新公开路由、请求/响应装配和制品哈希",
+    "allowed": [
+      "route-registry仅新绑定及原claim对照",
+      "generate-openapi仅新Schema、参数、错误装配",
+      "api/manifest机械哈希"
+    ],
+    "scope": "不读取其他领域或完整架构包"
+  },
+  "expectedSource": "cloudfunctions-v2/models/user-plant/authenticated-ephemeral-binding-http-contract.md",
+  "testFirst": {
+    "missingHandlerRed": "/tmp/planting-e03-binding-http-red.log",
+    "serverAndPolicyRed": "/tmp/planting-e03-binding-server-policy-red.log",
+    "runtimeReferenceRed": "/tmp/planting-e03-binding-http-ref-red.log",
+    "referenceFailedScenarios": 1,
+    "referenceGreen": "/tmp/planting-e03-binding-http-green.log"
+  },
+  "mutation": {
+    "redLog": "/tmp/planting-e03-ephemeral-http-ownership-mutation-red.log",
+    "failedScenarios": 1,
+    "meaning": "跳过归属前置后跨用户畸形正文从应为404变为400",
+    "restoredHandlerSha256": "1bb96079bdd39060c1959c487f42aaaf7b2c2967a9582145f5569cef4a274993",
+    "restoredRealSqlGreen": "/tmp/planting-e03-ephemeral-http-mysql.log"
+  },
+  "verification": {
+    "http_unit_fake": 28,
+    "binding_server_unit_fake": 4,
+    "new_http_policy_unit_fake": 6,
+    "binding_real_http_mysql": 19,
+    "published_policy_mysql": 10,
+    "publishedPolicyLog": "/tmp/planting-e03-binding-http-policy-mysql.log",
+    "rootFiles": 183,
+    "rootUnitTests": 1720,
+    "node22UnitTests": 1720,
+    "typecheckExit": 0,
+    "lintErrors": 0,
+    "lintWarnings": 2607,
+    "buildExit": 0,
+    "finalLogPrefix": "/tmp/planting-e03-binding-http-final-",
+    "apiStructureChecks": 15,
+    "apiRepeatGenerationIdentical": true,
+    "openapiSha256": "8bb835834bad648385c928d3888fbc1cd24ffab73992eca4c8c30e74b2792fbb"
+  },
+  "boundaries": [
+    "真实绑定HTTP使用可信Principal夹具，未证明真实平台登录或服务器会话Reader",
+    "服务器登记和独立策略前置已测试；真实HTTP/MySQL19使用同处理器与应用Repository组装",
+    "发布策略SQL10使用真实发布行，正式环境发布未验收",
+    "真实commit后注入结果未知，经新连接核对；不证明实际网络故障",
+    "Node22构建通过，但子npm Node24警告不构成CloudBase运行证据"
+  ],
+  "remaining": [
+    "真实登录与会话发布",
+    "已登录临时案例TTL和创建",
+    "新建目标容量及游客认领",
+    "环境档案完整合同",
+    "生产部署与整体E03验收"
+  ],
+  "accepted": false
+}

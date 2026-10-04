@@ -75,6 +75,7 @@ export const errorResponseSchema: JSONSchemaType<ErrorResponseDto> = {
             "AI_QUOTA_INSUFFICIENT",
             "INTERNAL_ERROR",
             "SERVICE_UNAVAILABLE",
+            "EPHEMERAL_CASE_NOT_BINDABLE",
           ],
         },
         message: { type: "string", minLength: 1, maxLength: 200 },

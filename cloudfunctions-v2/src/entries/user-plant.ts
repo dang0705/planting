@@ -4,7 +4,7 @@ import { readDatabaseConnectionConfig } from '../foundation/config/database-conf
 import { createMysql2ConnectionSource } from '../foundation/database/mysql2-connection-source.js'
 import { createMysqlCapabilitySnapshotReader } from '../subscription/repository/mysql-capability-snapshot-reader.js'
 import { createUserPlantServer } from '../user-plant/http/server.js'
-import { createMysqlPublishedProfileWritePolicyReader } from '../user-plant/repository/mysql-published-profile-write-policy-reader.js'
+import { createMysqlPublishedProfileWritePolicyReader, createMysqlPublishedHttpWritePolicyReader } from '../user-plant/repository/mysql-published-profile-write-policy-reader.js'
 
 /** CloudBase HTTP 云函数固定监听端口。 */
 const servicePort = 9000
@@ -22,11 +22,13 @@ const logger = pino({
 const connectionSource = createMysql2ConnectionSource(readDatabaseConnectionConfig(process.env))
 const now = () => Date.now()
 const profileWritePolicyReader = createMysqlPublishedProfileWritePolicyReader(connectionSource)
+const bindingHttpPolicyReader = createMysqlPublishedHttpWritePolicyReader(connectionSource)
 
 const server = createUserPlantServer({
   connectionSource,
   now,
   readProfileWriteSnapshot: () => profileWritePolicyReader.read(now()),
+  readBindingHttpSnapshot: () => bindingHttpPolicyReader.read(now()),
   resolveCapabilitySnapshot: createMysqlCapabilitySnapshotReader(connectionSource, now),
   writeAudit: event => {
     logger.info({ event: 'request_outcome', function: 'user-plant', ...event }, '请求结果')

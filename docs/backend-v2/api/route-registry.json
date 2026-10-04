@@ -307,6 +307,28 @@
     },
     {
       "method": "POST",
+      "path": "/api/v2/user-plants/ephemeral-cases/{ephemeralCaseRef}/bindings",
+      "operationId": "bindAuthenticatedEphemeralCase",
+      "owner": "user-plant",
+      "phase": "P2",
+      "security": "authenticated",
+      "requestContract": "BindAuthenticatedEphemeralCaseRequest",
+      "responseContract": "BindAuthenticatedEphemeralCaseResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "NOT_FOUND",
+        "PAYLOAD_TOO_LARGE",
+        "UNSUPPORTED_MEDIA_TYPE",
+        "IDEMPOTENCY_CONFLICT",
+        "EPHEMERAL_CASE_NOT_BINDABLE",
+        "SERVICE_UNAVAILABLE",
+        "INTERNAL_ERROR"
+      ]
+    },
+    {
+      "method": "POST",
       "path": "/api/v2/user-plants/claims",
       "operationId": "claimGuestPlantCase",
       "owner": "user-plant",

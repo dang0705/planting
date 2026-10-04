@@ -21,6 +21,7 @@ const requestSchemaRefByContract = {
   DiagnosisAnswerRequest: '#/components/schemas/DiagnosisAnswerRequest',
   CreateUserPlantRequest: '#/components/schemas/CreateUserPlantRequest',
   CreateIdentitySessionRequest: '#/components/schemas/CreateIdentitySessionRequest',
+  BindAuthenticatedEphemeralCaseRequest: '#/components/schemas/BindAuthenticatedEphemeralCaseRequest',
   /** 归档/恢复仅允许调用方提交最后读到的植物版本。 */
   UserPlantVersionRequest: '#/components/schemas/UserPlantVersionRequest',
 }
@@ -29,13 +30,16 @@ const successSchemaRefByContract = {
   DiagnosisResultResponse: '#/components/schemas/DiagnosisResultResponse',
   CreateUserPlantResponse: '#/components/schemas/CreateUserPlantSuccess',
   IdentitySessionResponse: '#/components/schemas/CreateIdentitySessionSuccess',
+  BindAuthenticatedEphemeralCaseResponse: '#/components/schemas/BindAuthenticatedEphemeralCaseResponse',
 }
 
 const parametersByPath = (routePath) => [...routePath.matchAll(/\{([^}]+)\}/gu)].map((match) => ({
   name: match[1],
   in: 'path',
   required: true,
-  schema: { type: 'string', minLength: 8, maxLength: 100 },
+  schema: match[1] === 'ephemeralCaseRef'
+    ? { $ref: '#/components/schemas/AuthenticatedEphemeralCaseRef' }
+    : { type: 'string', minLength: 8, maxLength: 100 },
 }))
 
 const paths = {}
@@ -111,6 +115,7 @@ for (const route of registry.routes) {
 }
 
 const errorTypes = [
+  'EPHEMERAL_CASE_NOT_BINDABLE',
   'VALIDATION_FAILED', 'PRINCIPAL_INVALID', 'CAPABILITY_DENIED',
   'IDENTITY_BINDING_CONFLICT', 'IDENTITY_LAST_BINDING_REQUIRED', 'NOT_FOUND',
   'USER_PLANT_NOT_FOUND', 'METHOD_NOT_ALLOWED', 'GUEST_SESSION_EXPIRED',
@@ -149,6 +154,34 @@ const openapi = {
       ServiceSignature: serviceHeaderParameter('X-QHZ-Signature', '规范化签名明文的 HMAC-SHA-256 base64url 结果。'),
     },
     schemas: {
+      // 已登录临时案例只允许显式绑定已有本人植物；公开投影不包含案例状态或命令引用。
+      AuthenticatedEphemeralCaseRef: {
+        type: 'string', minLength: 12, maxLength: 64, pattern: '^epc_[A-Za-z0-9_-]{8,60}$',
+      },
+      BoundExistingUserPlantRef: {
+        type: 'string', minLength: 12, maxLength: 64, pattern: '^upl_[A-Za-z0-9_-]{8,60}$',
+      },
+      BindAuthenticatedEphemeralCaseRequest: {
+        type: 'object', additionalProperties: false, required: ['target'],
+        properties: {
+          target: {
+            type: 'object', additionalProperties: false, required: ['type', 'user_plant_id'],
+            properties: {
+              type: { const: 'existing_user_plant' },
+              user_plant_id: { $ref: '#/components/schemas/BoundExistingUserPlantRef' },
+            },
+          },
+        },
+      },
+      BindAuthenticatedEphemeralCaseResponse: {
+        type: 'object', additionalProperties: false, required: ['data'],
+        properties: {
+          data: {
+            type: 'object', additionalProperties: false, required: ['user_plant_id'],
+            properties: { user_plant_id: { $ref: '#/components/schemas/BoundExistingUserPlantRef' } },
+          },
+        },
+      },
       ...(diagnosisResultSchema ? {
         DiagnosisResult: diagnosisResultSchema,
         DiagnosisResultResponse: {type:'object',additionalProperties:false,required:['data'],properties:{data:{$ref:'#/components/schemas/DiagnosisResult'}}},

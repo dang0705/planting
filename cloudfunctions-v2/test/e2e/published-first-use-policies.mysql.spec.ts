@@ -7,7 +7,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, test } from 'vitest'
 import { createMysql2ConnectionSource } from '../../src/foundation/database/mysql2-connection-source.js'
 import { calculateCanonicalJsonSha256 } from '../../src/foundation/json/canonical-json-sha256.js'
 import { createMysqlPublishedFirstUsePolicyReader } from '../../src/subscription/repository/mysql-published-first-use-policy-reader.js'
-import { createMysqlPublishedProfileWritePolicyReader } from '../../src/user-plant/repository/mysql-published-profile-write-policy-reader.js'
+import { createMysqlPublishedProfileWritePolicyReader, createMysqlPublishedHttpWritePolicyReader } from '../../src/user-plant/repository/mysql-published-profile-write-policy-reader.js'
 import { findProjectRoot } from '../support/project-root.js'
 
 const containerName = `qhz-v2-first-use-policies-${process.pid}`
@@ -465,5 +465,18 @@ describe('首次使用能力策略的真实 MySQL 读取', () => {
     )
     expect(await readProfileWriteSnapshot(nowMs - 1)).not.toBeNull()
     expect(await readProfileWriteSnapshot(nowMs)).toBeNull()
+  })
+  test('绑定独立HTTP限制真实读回，不依赖档案完整度活动发布', async () => {
+    await publishProfileWritePolicies()
+    await changePolicy("DELETE FROM active_business_policy_releases WHERE domain_code='user-plant'", [])
+    const snapshot = await createMysqlPublishedHttpWritePolicyReader(source).read(nowMs)
+    expect(snapshot).toMatchObject({ maxBodyBytes: 1048576 })
+    expect(Object.isFrozen(snapshot)).toBe(true)
+    expect(await readProfileWriteSnapshot()).toBeNull()
+  })
+  test('绑定HTTP限制真实发布摘要损坏拒绝，不返回隐式默认', async () => {
+    await publishProfileWritePolicies()
+    await changePolicy("UPDATE business_policy_releases SET content_sha256=? WHERE domain_code='http'", ['a'.repeat(64)])
+    expect(await createMysqlPublishedHttpWritePolicyReader(source).read(nowMs)).toBeNull()
   })
 })

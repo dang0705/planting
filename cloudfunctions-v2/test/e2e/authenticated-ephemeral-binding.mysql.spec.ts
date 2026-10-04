@@ -18,6 +18,7 @@ import {
 import { createAuthenticatedEphemeralBindingApplicationService } from '../../src/user-plant/application/bind-authenticated-ephemeral-case.js'
 import type { UserPrincipalDto, UserRef } from '../../src/contracts/types.js'
 import { createMysqlAuthenticatedEphemeralCaseOwnershipReader } from '../../src/user-plant/repository/mysql-authenticated-ephemeral-case-ownership-reader.js'
+import { verifyAuthenticatedEphemeralBindingHttp } from '../support/authenticated-ephemeral-binding-http-harness.js'
 
 /** L3/unit_real_data；Expected来自本轮明确绑定生命周期与003/016约束。
  * 真实mysql2/事务/行锁/唯一绑定；users和plant_identities是FK桩，不证明Principal解析、HTTP或CloudBase。
@@ -479,4 +480,13 @@ test('归属前置停用用户及非空技术openid不能当成合法归属', as
   await db.execute("UPDATE users SET status='active',_openid='' WHERE id=1")
   await db.execute("UPDATE authenticated_ephemeral_plant_cases SET _openid='technical-case-subject' WHERE id=1")
   expect(await readCaseOwnership()).toEqual({ status: 'not_found' })
+})
+test('真实HTTP绑定及到期后重放仅公开目标引用，同键异目标冲突且三表保留原时间', async () => {
+  await verifyAuthenticatedEphemeralBindingHttp(db, source, 'success_replay_conflict')
+})
+test('真实HTTP跨用户案例优先于非法正文404，跨用户目标404，零绑定', async () => {
+  await verifyAuthenticatedEphemeralBindingHttp(db, source, 'cross_user')
+})
+test('真实HTTP提交成功回包未知由新连接核对200且仅保存一次', async () => {
+  await verifyAuthenticatedEphemeralBindingHttp(db, source, 'commit_unknown')
 })

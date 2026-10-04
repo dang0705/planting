@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from 'vitest'
 import { createHash } from 'node:crypto'
 import type { SqlParameter } from '../../src/foundation/database/mysql2-connection-source.js'
-import { createMysqlPublishedProfileWritePolicyReader } from '../../src/user-plant/repository/mysql-published-profile-write-policy-reader.js'
+import { createMysqlPublishedProfileWritePolicyReader, createMysqlPublishedHttpWritePolicyReader } from '../../src/user-plant/repository/mysql-published-profile-write-policy-reader.js'
 
 // L1/unit_fake。Expected为发布读取合同和目录已确认值；只替换SQL边界。
 // 摘要使用独立排序的原生crypto；不用被测解析器生成Expected。
@@ -73,5 +73,22 @@ describe('已发布档案写入策略快照', () => {
   test('SQL失败保留异常且销毁错误连接', async () => {
     const f = fixture(); f.query.mockRejectedValueOnce(new Error('内部SQL异常'))
     await expect(f.reader.read(2000)).rejects.toThrow('内部SQL异常'); expect(f.destroy).toHaveBeenCalledTimes(1); expect(f.release).not.toHaveBeenCalled()
+  })
+})
+
+describe('绑定只依赖独立HTTP写发布，不依赖档案完整度', () => {
+  test('只有HTTP发布也可读取限制及来源，不新增默认值', async () => {
+    const f = fixture(); f.rows.splice(0, 1)
+    expect(await createMysqlPublishedHttpWritePolicyReader(f).read(2000)).toEqual({ maxBodyBytes: 1048576, release: { releaseRef: f.rows[0]!.release_ref, releaseVersion: f.rows[0]!.release_version, contentSha256: f.rows[0]!.content_sha256 } })
+    expect(f.query.mock.calls[0]?.[1]).toEqual(['http', 'request_write'])
+  })
+  test.each(['missing', 'duplicate', 'digest', 'expired', 'body'] as const)('HTTP %s 发布不能赋予绑定请求限制', async kind => {
+    const f = fixture(); f.rows.splice(0, 1)
+    if (kind === 'missing') { f.rows.pop() }
+    else if (kind === 'duplicate') { f.rows.push(f.rows[0]!) }
+    else if (kind === 'digest') { f.rows[0]!.content_sha256 = f.rows[0]!.active_content_sha256 = 'a'.repeat(64) }
+    else if (kind === 'expired') { f.rows[0]!.expires_at_ms = '2000' }
+    else { f.rows[0]!.policy_json = {} as never }
+    expect(await createMysqlPublishedHttpWritePolicyReader(f).read(2000)).toBeNull()
   })
 })

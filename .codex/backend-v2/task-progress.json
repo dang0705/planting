@@ -1,15 +1,15 @@
 {
-  "revision": 99,
+  "revision": 100,
   "currentStep": "E03",
   "currentTicketId": "z8v0kmr9mj",
-  "updatedAt": "2026-10-04T21:32:35.202791+00:00",
+  "updatedAt": "2026-10-04T21:41:04.949074+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "E03绑定HTTP案例归属前置",
-    "minimumVerification": "精确本人归属、生命周期独立、单SELECT无锁零写、真实隔离反例",
-    "result": "归属前置通过；HTTP及整体E03未验收",
-    "rollback": "撤回新增只读Reader；无部署、DDL或删除",
-    "nextAction": "登记登录临时案例绑定公开合同，接严格HTTP链与可信身份；完整环境档案等待承接确认"
+    "target": "E03登录临时案例绑定已有植物HTTP纵向切片",
+    "minimumVerification": "请求限制/认证/归属/DTO/事务/严格公开投影及真实持久化",
+    "result": "已有目标处理器与存储链已验证；真实身份与整体E03未验收",
+    "rollback": "撤回新增绑定HTTP接线与登记，不影响原游客接口；无部署、DDL或删除",
+    "nextAction": "接新建目标容量与游客显式认领；真实登录、临时TTL和环境档案合同等待对应准入"
   },
   "tasks": [
     {
@@ -256,10 +256,10 @@
     {
       "id": "z8v0kmr9mj",
       "step": "E03",
-      "version": 11,
+      "version": 12,
       "priority": "high",
       "status": "codex running",
-      "stage": "绑定HTTP归属前置已验证；公开合同与请求链待接",
+      "stage": "绑定已有植物HTTP及真实SQL已验证；真实身份/创建/整体E03待验收",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E03-promotion-context.json",
@@ -274,18 +274,19 @@
         ".codex/backend-v2/evidence/E03-profile-write-policy-read.json",
         ".codex/backend-v2/evidence/E03-authenticated-ephemeral-binding.json",
         ".codex/backend-v2/evidence/E03-authenticated-ephemeral-application.json",
-        ".codex/backend-v2/evidence/E03-authenticated-ephemeral-ownership.json"
+        ".codex/backend-v2/evidence/E03-authenticated-ephemeral-ownership.json",
+        ".codex/backend-v2/evidence/E03-authenticated-ephemeral-http.json"
       ],
       "summary": [
-        "E03：临时案例归属只读已实现，过期不阻断原收据重放",
-        "跨用户/停用/技术主体拒绝；单SELECT无锁零写",
-        "真实MySQL16项；去除归属连接1项RED→恢复GREEN",
-        "根与Node22全量1682/1682；类型/检查/构建通过",
-        "绑定HTTP/新建目标/真实登录仍待验收"
+        "E03：登录临时案例绑定HTTP已登记并接服务器入口",
+        "真实HTTP→事务/MySQL19项；独立HTTP发布SQL10项",
+        "归属旁路1项RED→逐字节恢复；超期重放/未知提交通过",
+        "根与Node22全量1720/1720；类型/检查/构建通过",
+        "身份仍为夹具；真实登录/新建目标/完整档案待验收"
       ],
       "blockingReason": null,
-      "nextAction": "登记登录临时案例绑定公开合同，接严格HTTP链与可信身份；完整环境档案等待承接确认",
-      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090931已读回",
+      "nextAction": "接新建目标容量与游客显式认领；真实登录、临时TTL和环境档案合同等待对应准入",
+      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090986已读回",
       "priorityReason": "当前用户植物纵向切片的必要合同前置，未等待无关CMS"
     }
   ],
@@ -390,7 +391,7 @@
       ]
     }
   ],
-  "nextAction": "登记登录临时案例绑定公开合同，接严格HTTP链与可信身份；完整环境档案等待承接确认",
+  "nextAction": "接新建目标容量与游客显式认领；真实登录、临时TTL和环境档案合同等待对应准入",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",

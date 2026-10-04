@@ -1,4 +1,5 @@
 import { createServer, type Server } from 'node:http'
+import { randomUUID } from 'node:crypto'
 
 import type { UserCapabilitySnapshotDto, UserPrincipalDto } from '../../contracts/types.js'
 import {
@@ -44,6 +45,11 @@ import { createMeasuredProfileApplicationService } from '../application/save-mea
 import { createMysqlMeasuredProfileRepository } from '../repository/mysql-measured-profile-repository.js'
 import { createUpdateProfileRouteHandler, updateProfileRoute } from './update-profile-route.js'
 import type { PublishedProfileWriteSnapshot } from '../repository/mysql-published-profile-write-policy-reader.js'
+import type { PublishedHttpWriteSnapshot } from '../repository/mysql-published-profile-write-policy-reader.js'
+import { createAuthenticatedEphemeralBindingApplicationService } from '../application/bind-authenticated-ephemeral-case.js'
+import { createMysqlAuthenticatedEphemeralBindingRepository, createMysqlAuthenticatedEphemeralBindingCommitUnknownReader } from '../repository/mysql-authenticated-ephemeral-binding-repository.js'
+import { createMysqlAuthenticatedEphemeralCaseOwnershipReader } from '../repository/mysql-authenticated-ephemeral-case-ownership-reader.js'
+import { authenticatedEphemeralBindingRoute, createAuthenticatedEphemeralBindingRouteHandler } from './authenticated-ephemeral-binding-route.js'
 import {
   archiveUserPlantRoute,
   createArchiveUserPlantRouteHandler,
@@ -55,6 +61,8 @@ import {
 export type UserPlantServerDependencies = {
   /** 已发布档案写入策略适配；未接入时PATCH失败关闭，不猜大小、有效期或策略版本。 */
   readonly readProfileWriteSnapshot?: () => Promise<PublishedProfileWriteSnapshot | null>
+  /** 绑定只读取HTTP限制，不因缺档案完整度发布而增加无关阻断。 */
+  readonly readBindingHttpSnapshot?: () => Promise<PublishedHttpWriteSnapshot | null>
   /** 每请求独占连接来源；连接参数由入口从受控环境变量读取。 */
   readonly connectionSource: MysqlConnectionPoolPort<Mysql2QueryConnection>
   /** 服务端可信时钟，返回当前 UTC 毫秒。 */
@@ -106,6 +114,11 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
     driver,
     repository: userPlantRepository
   })
+  const bindingApplication = createAuthenticatedEphemeralBindingApplicationService({
+    driver, repository: createMysqlAuthenticatedEphemeralBindingRepository(),
+    commitUnknownReadOnlyRepository: createMysqlAuthenticatedEphemeralBindingCommitUnknownReader(dependencies.connectionSource)
+  })
+  const ownedCaseReader = createMysqlAuthenticatedEphemeralCaseOwnershipReader(dependencies.connectionSource)
   const idempotencyRepository = createMysqlHttpIdempotencyRepository<
     MysqlTransactionContext<Mysql2QueryConnection>
   >({
@@ -171,6 +184,18 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
   }
 
   const dispatch = createRouteDispatcher([
+    {
+      route: authenticatedEphemeralBindingRoute,
+      handler: async (request, response, parameters) => {
+        let snapshot: PublishedHttpWriteSnapshot | null = null
+        try { snapshot = await dependencies.readBindingHttpSnapshot?.() ?? null } catch { /* 发布读取失败关闭，不泄露SQL。 */ }
+        return createAuthenticatedEphemeralBindingRouteHandler({
+          maxBodyBytes: snapshot?.maxBodyBytes ?? null, resolvePrincipal, readOwnedCase: input => ownedCaseReader.readOwned(input),
+          bindExisting: bindingApplication, now: dependencies.now, createPromotionRef: () => `prm_${randomUUID().replaceAll('-', '')}`,
+          writeAudit: dependencies.writeAudit
+        })(request, response, parameters)
+      }
+    },
     {
       route: updateProfileRoute,
       handler: async (request, response, parameters) => {

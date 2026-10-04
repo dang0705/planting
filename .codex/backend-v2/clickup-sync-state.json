@@ -58,19 +58,19 @@
       "readback": "Chrome HUMAN REQUIRED与五行评论1100440000090656已读回"
     },
     "z8v0kmr9mj": {
-      "version": 11,
+      "version": 12,
       "status": "codex running",
-      "note": "E03：临时案例归属只读已实现，过期不阻断原收据重放\n跨用户/停用/技术主体拒绝；单SELECT无锁零写\n真实MySQL16项；去除归属连接1项RED→恢复GREEN\n根与Node22全量1682/1682；类型/检查/构建通过\n绑定HTTP/新建目标/真实登录仍待验收",
-      "commentId": "1100440000090931",
-      "commentFingerprint": "105038a8ccd3b32b5a4cee48efa49a239c2b2fee971c5f25097474f4481027f1",
-      "readback": "Chrome CODEX RUNNING及五行评论1100440000090931已读回"
+      "note": "E03：登录临时案例绑定HTTP已登记并接服务器入口\n真实HTTP→事务/MySQL19项；独立HTTP发布SQL10项\n归属旁路1项RED→逐字节恢复；超期重放/未知提交通过\n根与Node22全量1720/1720；类型/检查/构建通过\n身份仍为夹具；真实登录/新建目标/完整档案待验收",
+      "commentId": "1100440000090986",
+      "commentFingerprint": "f98bfa8fc756b8e3fd6eeae9c256ce8c94a651792a1da9a14a98846600d9707c",
+      "readback": "Chrome CODEX RUNNING及五行评论1100440000090986已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T21:32:52.325296+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T21:41:31.793395+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "eb25b42969679389b17c56ddd3db1c5abf1602fc16af66fe95dc791025c59eec",
-    "sourceRevision": 99,
-    "sourceUpdatedAt": "2026-10-04T21:32:35.202791+00:00"
+    "fingerprint": "fe748b5a9716bb4e9d8a2151cd7740ccd533aa2177a7a43bc75e77f8bc4ffb1d",
+    "sourceRevision": 100,
+    "sourceUpdatedAt": "2026-10-04T21:41:04.949074+00:00"
   }
 }

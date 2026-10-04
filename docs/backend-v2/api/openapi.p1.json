@@ -1126,6 +1126,82 @@
         ]
       }
     },
+    "/api/v2/user-plants/ephemeral-cases/{ephemeralCaseRef}/bindings": {
+      "post": {
+        "operationId": "bindAuthenticatedEphemeralCase",
+        "summary": "user-plant 域：bindAuthenticatedEphemeralCase",
+        "tags": [
+          "user-plant"
+        ],
+        "x-owner": "user-plant",
+        "x-phase": "P2",
+        "x-security": "authenticated",
+        "x-request-contract": "BindAuthenticatedEphemeralCaseRequest",
+        "x-response-contract": "BindAuthenticatedEphemeralCaseResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "NOT_FOUND",
+          "PAYLOAD_TOO_LARGE",
+          "UNSUPPORTED_MEDIA_TYPE",
+          "IDEMPOTENCY_CONFLICT",
+          "EPHEMERAL_CASE_NOT_BINDABLE",
+          "SERVICE_UNAVAILABLE",
+          "INTERNAL_ERROR"
+        ],
+        "parameters": [
+          {
+            "name": "ephemeralCaseRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/AuthenticatedEphemeralCaseRef"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BindAuthenticatedEphemeralCaseResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BindAuthenticatedEphemeralCaseRequest"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
     "/api/v2/user-plants/claims": {
       "post": {
         "operationId": "claimGuestPlantCase",
@@ -3618,6 +3694,64 @@
       }
     },
     "schemas": {
+      "AuthenticatedEphemeralCaseRef": {
+        "type": "string",
+        "minLength": 12,
+        "maxLength": 64,
+        "pattern": "^epc_[A-Za-z0-9_-]{8,60}$"
+      },
+      "BoundExistingUserPlantRef": {
+        "type": "string",
+        "minLength": 12,
+        "maxLength": 64,
+        "pattern": "^upl_[A-Za-z0-9_-]{8,60}$"
+      },
+      "BindAuthenticatedEphemeralCaseRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "target"
+        ],
+        "properties": {
+          "target": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "type",
+              "user_plant_id"
+            ],
+            "properties": {
+              "type": {
+                "const": "existing_user_plant"
+              },
+              "user_plant_id": {
+                "$ref": "#/components/schemas/BoundExistingUserPlantRef"
+              }
+            }
+          }
+        }
+      },
+      "BindAuthenticatedEphemeralCaseResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "user_plant_id"
+            ],
+            "properties": {
+              "user_plant_id": {
+                "$ref": "#/components/schemas/BoundExistingUserPlantRef"
+              }
+            }
+          }
+        }
+      },
       "DiagnosisResult": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "$id": "https://qinghuazhi.local/contracts/diagnosis-result.v1.schema.json",
@@ -4575,6 +4709,7 @@
               "type": {
                 "type": "string",
                 "enum": [
+                  "EPHEMERAL_CASE_NOT_BINDABLE",
                   "VALIDATION_FAILED",
                   "PRINCIPAL_INVALID",
                   "CAPABILITY_DENIED",
