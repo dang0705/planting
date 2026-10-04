@@ -1,0 +1,32 @@
+{
+  "milestone": "E05 精确来源主张证据读取",
+  "ticket": "z8v0kmrg8a",
+  "acceptedScope": "内部只读Repository，不等于知识准入或整票验收",
+  "expectedSources": [
+    "已准入009迁移的来源及主张表定义",
+    "精确来源代码、主张代码、修订号三元组需求"
+  ],
+  "testPath": "unit_fake替换mysql2连接边界；unit_real_data使用隔离MySQL8.4及合成测试记录",
+  "verification": {
+    "unit": 15,
+    "mysql": 6,
+    "node22Diagnosis": 25,
+    "fullUnit": 1047,
+    "typecheck": "passed",
+    "build": "passed",
+    "lint": {
+      "errors": 0,
+      "warnings": 1254
+    }
+  },
+  "tdd": {
+    "path": "快速路径：Expected测试先落盘，固定修订号突变3项RED，逐字节恢复后全量GREEN",
+    "redLog": "/tmp/planting-e05-source-reader-red.log"
+  },
+  "boundaries": [
+    "不调用生产数据库、不读取凭证",
+    "保留许可、适用性及生命周期原始证据，不输出已验证依赖",
+    "仅真实创建两张表；未验收完整迁移触发器、CMS、题包读取或HTTP"
+  ],
+  "updatedAt": "2026-10-04T15:03:48.425319+00:00"
+}

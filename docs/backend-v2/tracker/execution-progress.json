@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T14:51:53.831662+00:00",
-  "sourceRevision": 48,
-  "sourceUpdatedAt": "2026-10-04T14:51:53.831662+00:00",
+  "generatedAt": "2026-10-04T15:03:48.425319+00:00",
+  "sourceRevision": 49,
+  "sourceUpdatedAt": "2026-10-04T15:03:48.425319+00:00",
   "currentStep": "E05",
   "currentTicketId": "z8v0kmrg8a",
   "tasks": [
@@ -171,30 +171,31 @@
     {
       "id": "z8v0kmrg8a",
       "step": "E05",
-      "version": 1,
+      "version": 2,
       "status": "codex running",
-      "stage": "候选审核准备应用链路验证",
+      "stage": "来源主张证据读取验证",
       "accepted": false,
       "summary": [
-        "E05：完整候选Schema→锁定内容→引用闭合→摘要已接通",
-        "异步期间修改原输入不影响快照；缺题包或来源拒绝",
-        "先落10项Expected；移除引用拒绝2项RED→恢复",
-        "Node22相关33项；全量1032/1032、类型构建及lint通过",
-        "真实来源Repository、CMS审核发布及HTTP仍未验收"
+        "E05：精确来源/主张/修订号的只读Repository已实现",
+        "保留许可、适用性与审核证据，不自动判定发布准入",
+        "15项单元、6项隔离MySQL读回；固定修订突变3项RED",
+        "恢复后全量1047/1047；Node22相关25项、类型构建通过",
+        "许可适用性审核、题包读取、CMS发布及HTTP仍未验收"
       ],
       "evidence": [
-        ".codex/backend-v2/evidence/E05-candidate-preparation.json"
+        ".codex/backend-v2/evidence/E05-candidate-preparation.json",
+        ".codex/backend-v2/evidence/E05-source-claim-reader.json"
       ],
       "blockingReason": null,
-      "nextAction": "实现来源与题包的真实读取接线，再衔接人工审核及发布事务",
+      "nextAction": "明确来源许可与适用性审核语义，接题包及已验证依赖读取",
       "sync": {
-        "version": 1,
+        "version": 2,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING及五行评论1100440000090175已读回"
+        "readback": "Chrome CODEX RUNNING及五行评论1100440000090207已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T14:54:15.579052+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T15:04:10.107127+00:00",
   "lastFailure": null
 }
