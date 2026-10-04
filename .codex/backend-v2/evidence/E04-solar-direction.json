@@ -1,0 +1,51 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "scope": "NOAA近似太阳方向→同刻瞬时窗面直射离线组合",
+  "expectedSource": [
+    "https://gml.noaa.gov/grad/solcalc/solareqns.PDF",
+    "cloudfunctions-v2/models/care/solar-direction-contract.md",
+    "独立γ=0/π官方公式代入及南窗法线投影"
+  ],
+  "testLayer": "unit_fake",
+  "cases": 27,
+  "relatedCareCases": 149,
+  "redEvidence": [
+    {
+      "mutation": "经度符号反转",
+      "failed": 4,
+      "restored": true,
+      "log": "/tmp/planting-solar-mutation-red.log"
+    },
+    {
+      "classic": "极端时刻年初无法表示时拒绝",
+      "failed": 1,
+      "log": "/tmp/planting-solar-yearstart-red.log"
+    }
+  ],
+  "fullVitest": {
+    "files": 107,
+    "passed": 729,
+    "failed": 0,
+    "skipped": 0,
+    "log": "/tmp/planting-solar-full-green.log"
+  },
+  "typecheck": "passed",
+  "build": "passed",
+  "lint": {
+    "errors": 0,
+    "warnings": 647
+  },
+  "node22": {
+    "version": "22.23.3",
+    "independentChecks": 5,
+    "notFullVitest": true
+  },
+  "notVerified": [
+    "现场精度",
+    "完整区间可靠界限",
+    "散射/玻璃传播",
+    "正式算法发布及Care HTTP"
+  ],
+  "verifiedAt": "2026-10-04T11:57:42.521247+00:00"
+}

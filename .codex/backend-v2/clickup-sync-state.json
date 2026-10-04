@@ -34,19 +34,19 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 10,
+      "version": 11,
       "status": "codex running",
-      "note": "E04：真实辐射制品→窗面平均直射回放已串联\n13场景通过；错误UTC偏移突变RED，恢复GREEN\nCare相关122项；后端全量105文件、702/702\n类型、构建通过；Node22独立5项；lint零错误535警告\n缺真实太阳时序界限与散射传播；正式模型未发布",
-      "commentId": "1100440000089627",
-      "commentFingerprint": "7a32b3ba2e8270c0deb1cdacc5d06e9bbb9277ab5c692b3b24684c9fca3d78ed",
-      "readback": "Chrome原E04/E06票保持codex running，完整五行评论1100440000089627已读回"
+      "note": "E04：地点/UTC时刻→太阳方向→瞬时窗面直射已接通\n新增27场景；经度突变4项RED、日期溢出RED→GREEN\nCare149项；后端全量107文件、729/729\n类型与构建通过；Node22独立5项；lint零错误647警告\n完整时段界限及散射仍待实现；正式模型未发布",
+      "commentId": "1100440000089646",
+      "commentFingerprint": "1bfe6164cba90f7b6438c96fe193c6cfbd8eda52eeb63c61fdf33c5c008d647f",
+      "readback": "Chrome当前E04/E06票codex running，完整五行评论1100440000089646已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T11:50:29.186194+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T11:58:27.519336+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "db8cc514429e312f423f838d3f5ba9fb5f2dfae6d5014fad24259313c90a6c72",
-    "sourceRevision": 23,
-    "sourceUpdatedAt": "2026-10-04T11:49:42.640704+00:00"
+    "fingerprint": "9843510ce26f501b99149c7d4d3d02815812cb28b9cae40a2ca314128bd930e1",
+    "sourceRevision": 24,
+    "sourceUpdatedAt": "2026-10-04T11:57:42.521247+00:00"
   }
 }

@@ -1,19 +1,18 @@
 {
-  "revision": 23,
+  "revision": 24,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-04T11:49:42.640704+00:00",
+  "updatedAt": "2026-10-04T11:57:42.521247+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "E04 区间平均辐射与窗口几何的保守上下界及真实制品回放",
+    "goal": "E04实际地点/时刻太阳方向→瞬时窗面投影的离线闭环",
     "assumptions": [
-      "DNI非负；几何上下界须明确覆盖整个同一时段",
-      "不假设DNI恒定，不用平均投影因子制造唯一均值"
+      "NOAA通用公式为近似模型，不作为现场精度认证或整段界限"
     ],
-    "minimumVerification": "独立相关性反例、严格时段匹配、缺数据、边界及真实Provider制品回放；突变RED与恢复GREEN",
-    "continueWhen": "数学界限、用例编排、类型检查、全量Vitest通过",
-    "failWhen": "将点采样或未经证明的上下界标成正式模型证据",
-    "rollback": "仅保留离线计算与回放，不进入发布或事实写入",
+    "minimumVerification": "独立NOAA数值基准、真太阳正午/夜间/闰年、时间与坐标校验；代表性突变RED；真实制品仅点时刻实验不冒充均值",
+    "continueWhen": "独立Expected、相关及全量Vitest、类型与Node22检查通过",
+    "failWhen": "把近似单点包装成完整区间均值或精度保证",
+    "rollback": "离线用例保持隔离，不接正式Care建议",
     "timeLimit": "30分钟检查点"
   },
   "tasks": [
@@ -121,7 +120,7 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 10,
+      "version": 11,
       "priority": "normal",
       "status": "codex running",
       "stage": "验证与持久化读回",
@@ -133,18 +132,19 @@
         ".codex/backend-v2/evidence/E04-direct-reach.json",
         ".codex/backend-v2/evidence/E04-radiation-normalization.json",
         ".codex/backend-v2/evidence/E04-mean-direct.json",
-        ".codex/backend-v2/evidence/E04-window-radiation-replay.json"
+        ".codex/backend-v2/evidence/E04-window-radiation-replay.json",
+        ".codex/backend-v2/evidence/E04-solar-direction.json"
       ],
       "summary": [
-        "E04：真实辐射制品→窗面平均直射回放已串联",
-        "13场景通过；错误UTC偏移突变RED，恢复GREEN",
-        "Care相关122项；后端全量105文件、702/702",
-        "类型、构建通过；Node22独立5项；lint零错误535警告",
-        "缺真实太阳时序界限与散射传播；正式模型未发布"
+        "E04：地点/UTC时刻→太阳方向→瞬时窗面直射已接通",
+        "新增27场景；经度突变4项RED、日期溢出RED→GREEN",
+        "Care149项；后端全量107文件、729/729",
+        "类型与构建通过；Node22独立5项；lint零错误647警告",
+        "完整时段界限及散射仍待实现；正式模型未发布"
       ],
       "blockingReason": null,
-      "nextAction": "实现可靠太阳位置时序与全区间几何界限，接入直射可达性；不补猜测参数",
-      "ticketReadback": "Chrome原E04/E06票保持codex running，完整五行评论1100440000089627已读回",
+      "nextAction": "形成可靠完整时段几何界限并串联均值回放；同时保留太阳近似误差与发布边界",
+      "ticketReadback": "Chrome当前E04/E06票codex running，完整五行评论1100440000089646已读回",
       "milestoneCommit": "f7c38e9b"
     }
   ],
@@ -249,7 +249,7 @@
       ]
     }
   ],
-  "nextAction": "实现可靠太阳位置时序与全区间几何界限，接入直射可达性；不补猜测参数",
+  "nextAction": "形成可靠完整时段几何界限并串联均值回放；同时保留太阳近似误差与发布边界",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -311,8 +311,8 @@
     "runner": "cloudfunctions-v2 已锁定 Vitest",
     "testDirectory": "cloudfunctions-v2/test/",
     "lastResult": {
-      "passed": 702,
-      "total": 702,
+      "passed": 729,
+      "total": 729,
       "skipped": 0
     }
   },
@@ -405,5 +405,19 @@
     "trigger": "每完成一个已验证里程碑，包括票据验收Done",
     "scope": "只提交对应已验证改动，排除凭证、无关前端与钩子运行台账",
     "source": "用户本会话最新明确授权"
+  },
+  "solarReadAdmission": {
+    "layers": {
+      "L0": "定向find超时；backend-v2摘要只提供导航",
+      "L1": "backend-v2 overview提供architecture目录，不含新增太阳算法配置",
+      "L2": "layers/l2-light.md提供DNI/DHI/GHI→窗面→PPFD/DLI关系，没有NOAA近似公式或新版硬规则登记"
+    },
+    "missing": "E04太阳位置算法对应配置登记与现有窗面硬规则状态",
+    "localAllowed": [
+      "configuration-variable-catalog.json 的 care.lighting.window_direct_geometry 单项",
+      "configuration-variable-catalog.md 该条目补充",
+      "architecture/manifest.json 该配置SHA"
+    ],
+    "scope": "不展开其他架构或配置"
   }
 }

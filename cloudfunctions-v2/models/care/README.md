@@ -34,3 +34,5 @@ python3 scripts/backend-v2/compose-care-models.py
 `src/care/light/normalize-open-meteo-radiation.ts` 使用 AJV 验证已取得的真实 Provider 制品，保留前一时段辐射均值与 UTC 时间，见 `radiation-interval-contract.md`。回放制品保留来源元数据与 SHA-256；真实响应不等于现场测量。小时／15分钟平均值不能直接接入仅消费瞬时辐射的窗面用例，时间近似、完整当地日期请求覆盖、缓存与发布策略仍须单独准入。
 
 `src/care/application/replay-window-direct-radiation.ts` 已串联真实制品归一化与同一完整时段的窗面直射界限，合同见 `window-mean-direct-contract.md`。所有几何输入均显式给定并按窗面、区间匹配；缺几何、缺DNI、重复及未使用时段分别处理。普适[0,1]投影包络仅证明物理范围，不等于真实太阳位置算法、植物位置光照或正式模型发布。此离线用例没有网络、数据库或事件写入。
+
+`src/care/application/project-window-direct-at-location.ts` 已接通显式地点与UTC时刻→NOAA近似太阳方向→同刻瞬时窗面投影；来源与边界见 `solar-direction-contract.md`。均值辐射拒绝进入此入口；天顶/天底方位未定义时保留特定状态。此增量不提供完整区间几何界限、现场精度保证或正式发布资格。

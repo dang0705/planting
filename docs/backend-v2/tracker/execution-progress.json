@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T11:49:42.640704+00:00",
-  "sourceRevision": 23,
-  "sourceUpdatedAt": "2026-10-04T11:49:42.640704+00:00",
+  "generatedAt": "2026-10-04T11:57:42.521247+00:00",
+  "sourceRevision": 24,
+  "sourceUpdatedAt": "2026-10-04T11:57:42.521247+00:00",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -114,16 +114,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 10,
+      "version": 11,
       "status": "codex running",
       "stage": "验证与持久化读回",
       "accepted": false,
       "summary": [
-        "E04：真实辐射制品→窗面平均直射回放已串联",
-        "13场景通过；错误UTC偏移突变RED，恢复GREEN",
-        "Care相关122项；后端全量105文件、702/702",
-        "类型、构建通过；Node22独立5项；lint零错误535警告",
-        "缺真实太阳时序界限与散射传播；正式模型未发布"
+        "E04：地点/UTC时刻→太阳方向→瞬时窗面直射已接通",
+        "新增27场景；经度突变4项RED、日期溢出RED→GREEN",
+        "Care149项；后端全量107文件、729/729",
+        "类型与构建通过；Node22独立5项；lint零错误647警告",
+        "完整时段界限及散射仍待实现；正式模型未发布"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -132,18 +132,19 @@
         ".codex/backend-v2/evidence/E04-direct-reach.json",
         ".codex/backend-v2/evidence/E04-radiation-normalization.json",
         ".codex/backend-v2/evidence/E04-mean-direct.json",
-        ".codex/backend-v2/evidence/E04-window-radiation-replay.json"
+        ".codex/backend-v2/evidence/E04-window-radiation-replay.json",
+        ".codex/backend-v2/evidence/E04-solar-direction.json"
       ],
       "blockingReason": null,
-      "nextAction": "实现可靠太阳位置时序与全区间几何界限，接入直射可达性；不补猜测参数",
+      "nextAction": "形成可靠完整时段几何界限并串联均值回放；同时保留太阳近似误差与发布边界",
       "sync": {
-        "version": 10,
+        "version": 11,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome原E04/E06票保持codex running，完整五行评论1100440000089627已读回"
+        "readback": "Chrome当前E04/E06票codex running，完整五行评论1100440000089646已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T11:50:29.186194+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T11:58:27.519336+00:00",
   "lastFailure": null
 }

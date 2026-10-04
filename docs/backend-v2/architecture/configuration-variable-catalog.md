@@ -319,7 +319,7 @@
 
 ### 窗面直射几何硬规则
 
-`care.lighting.window_direct_geometry`：瞬时 DNI 与同刻太阳位置投影至无遮挡窗面外侧。真北顺时针方位、水平朝上倾角原点和背面／地平线截断为不可配置硬规则；不设置默认朝向、玻璃或距离倍率。来源为离线窗面直射内部合同，票据 `z8v0kmr973`。 区间平均辐射只与同一完整时段的投影上下界结合，不能以瞬时或均值乘均值冒充精确结果；来源补充 `cloudfunctions-v2/models/care/window-mean-direct-contract.md`。
+`care.lighting.window_direct_geometry`：瞬时 DNI 与同刻太阳位置投影至无遮挡窗面外侧。真北顺时针方位、水平朝上倾角原点和背面／地平线截断为不可配置硬规则；不设置默认朝向、玻璃或距离倍率。来源为离线窗面直射内部合同，票据 `z8v0kmr973`。 区间平均辐射只与同一完整时段的投影上下界结合，不能以瞬时或均值乘均值冒充精确结果；来源补充 `cloudfunctions-v2/models/care/window-mean-direct-contract.md`。 NOAA通用太阳公式使用UTC和实际年长，仅供离线近似；精度与正式发布未验收，依据 `cloudfunctions-v2/models/care/solar-direction-contract.md`。
 
 ### 辐射区间归一化硬规则
 
