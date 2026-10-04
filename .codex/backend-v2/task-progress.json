@@ -1,19 +1,19 @@
 {
-  "revision": 45,
+  "revision": 46,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-04T14:27:00.470390+00:00",
+  "updatedAt": "2026-10-04T14:32:03.777548+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "复用已有发布表完成真实玻璃策略读回",
+    "goal": "从真实活动玻璃策略串通双通道光照日回放",
     "assumptions": [
-      "不新增表或生产参数",
-      "活动指针与规范摘要必须一致"
+      "仅离线回放，不宣称正式养护建议",
+      "光谱换算明确提供，不猜默认"
     ],
-    "minimumVerification": "独立Expected、经典和突变RED、真实MySQL5项、1016全量GREEN",
-    "continueWhen": "类型构建和数据库验证通过",
-    "failWhen": "篡改可用或以单独active行代替活动指针",
-    "rollback": "回退本次读取器；没有生产变更",
+    "minimumVerification": "独立合同、接线突变RED、真实MySQL7项、1022全量GREEN",
+    "continueWhen": "类型构建和Node22验证通过",
+    "failWhen": "缺段伪造全天DLI或忽略用户层数",
+    "rollback": "回退本次应用组合；原专业接口及生产保持",
     "timeLimit": "30分钟检查点"
   },
   "tasks": [
@@ -121,10 +121,10 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 32,
+      "version": 33,
       "priority": "normal",
       "status": "codex running",
-      "stage": "真实策略持久化读回",
+      "stage": "光照完整只读回放验证",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -155,19 +155,20 @@
         "cloudfunctions-v2/models/care/light-parameter-evidence-review.md",
         ".codex/backend-v2/evidence/E04-mvp-glass-candidate.json",
         ".codex/backend-v2/evidence/E04-mvp-glass-policy.json",
-        ".codex/backend-v2/evidence/E04-mvp-glass-mysql-reader.json"
+        ".codex/backend-v2/evidence/E04-mvp-glass-mysql-reader.json",
+        ".codex/backend-v2/evidence/E04-published-mvp-light-day.json"
       ],
       "summary": [
-        "E04：玻璃策略真实MySQL活动指针读取已完成",
-        "发布与快照统一规范正文SHA；保留来源与版本",
-        "真实MySQL5项；指针冲突、未验证、篡改均拒绝",
-        "摘要经典RED、Repository突变2项RED→恢复；全量1016/1016",
-        "类型构建通过；零lint错误；生产发布和HTTP仍未验收"
+        "E04：真实玻璃策略→双通道PPFD→当地日积分已串通",
+        "一次读取锁定版本；缺策略不默认，未知层数保留缺证据",
+        "真实天气缺1小时不输出全天DLI；合成24小时积分验证通过",
+        "应用6项、真实MySQL7项；强制单层2项RED→恢复",
+        "后端1022/1022；Node22相关49项；生产发布与HTTP未验收"
       ],
       "blockingReason": null,
-      "nextAction": "将真实策略读取接到完整光照回放用例，补日光近似换算策略及正式入口前置；不伪称生产发布",
-      "ticketReadback": "Chrome codex running及五行评论1100440000090120已读回",
-      "milestoneCommit": "b0a39f80"
+      "nextAction": "继续E04其余养护决策与DMN一致性验收；光照正式策略发布和HTTP作为独立未验收项保留",
+      "ticketReadback": "Chrome codex running及五行评论1100440000090138已读回",
+      "milestoneCommit": "8fa2df6f"
     }
   ],
   "queue": [

@@ -1,0 +1,37 @@
+{
+  "ticket": "z8v0kmr973",
+  "scope": "真实数据库活动玻璃版本到双通道PPFD及当地日积分只读回放",
+  "contract": "cloudfunctions-v2/models/care/published-mvp-light-day-contract.md",
+  "path": "MySQL活动策略→一次读取固定快照→玻璃分类→直射/散射传播→显式换算→PPFD→当地日积分",
+  "tests": {
+    "newApplication": 6,
+    "mysqlNode22": 7,
+    "node22Related": 49,
+    "full": {
+      "files": 128,
+      "tests": 1022,
+      "exit": 0
+    },
+    "typecheckExit": 0,
+    "buildExit": 0,
+    "lint": {
+      "errors": 0,
+      "warnings": 1195
+    }
+  },
+  "tdd": {
+    "path": "独立Expected先落盘→实现→强制单层突变2项RED→逐字节恢复GREEN",
+    "redLog": "/tmp/planting-published-light-mutation-red.log",
+    "fullLog": "/tmp/planting-published-light-full-green.log",
+    "mysqlLog": "/tmp/planting-published-light-mysql.log"
+  },
+  "realWeather": "真实Open-Meteo当地日23小时覆盖；全天DLI为null",
+  "mathematicalFixture": "隔离MySQL加恒定200DHI合成制品，24小时积分符合解析公式；不是现场天气",
+  "notProven": [
+    "正式生产策略发布",
+    "运行Provider调用或现场光照误差",
+    "正式HTTP及用户归属链路",
+    "E04全部模型和DMN验收"
+  ],
+  "updatedAt": "2026-10-04T14:32:03.777548+00:00"
+}

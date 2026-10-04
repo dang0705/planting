@@ -34,19 +34,19 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 32,
+      "version": 33,
       "status": "codex running",
-      "note": "E04：玻璃策略真实MySQL活动指针读取已完成\n发布与快照统一规范正文SHA；保留来源与版本\n真实MySQL5项；指针冲突、未验证、篡改均拒绝\n摘要经典RED、Repository突变2项RED→恢复；全量1016/1016\n类型构建通过；零lint错误；生产发布和HTTP仍未验收",
-      "commentId": "1100440000090120",
-      "commentFingerprint": "d00dbda0f040ce4ad31efb4d2abed4e853927d4d66726f1d2e6b9887b27fafbf",
-      "readback": "Chrome codex running及五行评论1100440000090120已读回"
+      "note": "E04：真实玻璃策略→双通道PPFD→当地日积分已串通\n一次读取锁定版本；缺策略不默认，未知层数保留缺证据\n真实天气缺1小时不输出全天DLI；合成24小时积分验证通过\n应用6项、真实MySQL7项；强制单层2项RED→恢复\n后端1022/1022；Node22相关49项；生产发布与HTTP未验收",
+      "commentId": "1100440000090138",
+      "commentFingerprint": "ea4443720e356143b9f01227836bc832398f5f64ff6a60cb312ed9aa8890fd96",
+      "readback": "Chrome codex running及五行评论1100440000090138已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T14:27:48.101087+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T14:32:45.394099+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "d75be13e4390ee58cc256f7250b3baf77869762983373d5fc050ffd5e058072e",
-    "sourceRevision": 45,
-    "sourceUpdatedAt": "2026-10-04T14:27:00.470390+00:00"
+    "fingerprint": "9455904d496158c325b0320b2ea0bbb4d656504b4a90fee463b8f3f396688cbc",
+    "sourceRevision": 46,
+    "sourceUpdatedAt": "2026-10-04T14:32:03.777548+00:00"
   }
 }

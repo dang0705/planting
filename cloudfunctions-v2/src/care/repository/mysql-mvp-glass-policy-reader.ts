@@ -1,21 +1,8 @@
 import type { MysqlConnectionPoolPort } from '../../foundation/database/mysql-transaction-driver.js'
 import { withReadConnection, type Mysql2QueryConnection } from '../../foundation/database/mysql2-connection-source.js'
-import { resolveMvpGlassPolicy, type MvpGlassPolicySnapshot } from '../../configuration/mvp-glass-policy.js'
-
-/** 数据库读取结果；只供受控内部用例使用，不返回HTTP。 */
-export type PublishedMvpGlassResolution =
-  | {
-      /** 活动发布通过结构、指针及摘要核验。 */
-      status: 'available'
-      /** 权威数据库中的高熵发布引用。 */
-      releaseRef: string
-      /** 与数据库正文摘要一致的只读策略快照。 */
-      snapshot: Readonly<MvpGlassPolicySnapshot>
-    }
-  | {
-      /** 缺少策略、不可信元数据或尚未生效。 */
-      status: 'unavailable' | 'invalid' | 'not_effective'
-    }
+import { resolveMvpGlassPolicy } from '../../configuration/mvp-glass-policy.js'
+import type { PublishedMvpGlassResolution, PublishedMvpGlassPolicyReader } from '../application/ports/published-mvp-glass-policy-reader.js'
+export type { PublishedMvpGlassResolution } from '../application/ports/published-mvp-glass-policy-reader.js'
 
 /** 非负BIGINT必须能无损转成有效Date；不将超大数截断成普通时间。 */
 function timestamp(value: unknown): string | null {
@@ -30,7 +17,7 @@ function timestamp(value: unknown): string | null {
  * 从现有业务发布与活动指针读取玻璃策略；Repository是唯一SQL入口。
  * 不新增表，不写入发布或自动激活；调用方捕获一次时间并传入，供策略快照锁定。
  */
-export function createMysqlMvpGlassPolicyReader(source: MysqlConnectionPoolPort<Mysql2QueryConnection>) {
+export function createMysqlMvpGlassPolicyReader(source: MysqlConnectionPoolPort<Mysql2QueryConnection>): PublishedMvpGlassPolicyReader {
   return {
     /** 读取唯一活动版本，数据库错误保留为错误，不转换成虚假成功。 */
     read: async (capturedAt: string): Promise<PublishedMvpGlassResolution> => {

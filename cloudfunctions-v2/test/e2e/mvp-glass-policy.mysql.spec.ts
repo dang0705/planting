@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { createMysql2ConnectionSource } from '../../src/foundation/database/mysql2-connection-source.js'
 import { createMysqlMvpGlassPolicyReader } from '../../src/care/repository/mysql-mvp-glass-policy-reader.js'
+import { replayPublishedMvpLightDay } from '../../src/care/application/replay-published-mvp-light-day.js'
 import { findProjectRoot } from '../support/project-root.js'
 
 const container = `qhz-mvp-glass-${process.pid}`
@@ -40,6 +41,19 @@ async function seed() {
        activated_at_ms, created_at_ms, updated_at_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     ['care', 'mvp_glass', result.insertId, 'experiment-1', sha, now, now, now])
   } finally { connection.release() }
+}
+
+/** 内部回放输入；换算系数是明确实验值，不代表生产策略或复杂前端输入。 */
+function dayInput(raw: unknown) {
+  return {
+    raw, capturedAt,
+    context: { series: 'hourly' as const, sourceRef: 'saved-open-meteo-fixture', fetchedAtMs: Date.parse('2026-10-04T11:14:48Z') },
+    target: { latitudeDeg: 31.23, longitudeDeg: 121.47, plane: { reference: 'window', tiltDeg: 90, azimuthDeg: 180 }, plantReference: 'plant', plant: { xM: 0, yM: 0, perpendicularDistanceM: 1 }, apertures: [{ reference: 'window', leftM: -1, rightM: 1, bottomM: 0, topM: 1 }], skyModel: 'isotropic' as const },
+    curtain: { sourceRef: 'explicit-open-curtain', direct: { lower: 1, upper: 1 }, diffuse: { lower: 1, upper: 1 } },
+    layer: 'double' as const,
+    conversion: { sourceRef: 'explicit-numeric-experiment', unit: 'micromol_per_joule' as const, direct: { lower: 2, upper: 2 }, diffuse: { lower: 2, upper: 2 } },
+    day: { date: '2026-10-04', timezone: 'Asia/Shanghai', startMs: Date.parse('2026-10-03T16:00:00Z'), endMs: Date.parse('2026-10-04T16:00:00Z') },
+  }
 }
 
 /** unit_real_data：真实MySQL8.4→活动指针→发布正文→解析；不是HTTP、CloudBase或正式发布验收。 */
@@ -97,4 +111,31 @@ describe('unit_real_data 真实MySQL玻璃策略活动指针读回', () => {
     mysql("UPDATE business_policy_releases SET policy_json=JSON_SET(policy_json, '$.singleTransmission', 0.99);", database)
     expect((await createMysqlMvpGlassPolicyReader(source).read(capturedAt)).status).toBe('invalid')
   })
+  it('真实活动策略与真实气象串成PPFD日回放，缺最后一小时不伪造全天DLI', async () => {
+    const raw = JSON.parse(readFileSync(join(findProjectRoot(), 'cloudfunctions-v2/test/care/fixtures/open-meteo-hourly-radiation.json'), 'utf8'))
+    const input = dayInput(raw)
+    const result = await replayPublishedMvpLightDay(input, createMysqlMvpGlassPolicyReader(source))
+    if (result.status !== 'available') { throw new Error('应取得完整回放结果') }
+    expect(result.releaseRef).toBe('bpr_glass_mysql01')
+    expect(result.policy.contentSha256).toBe(sha)
+    expect(result.replay.total.coveredMs).toBe(23 * 3600_000)
+    expect(result.replay.dailyIntegralMolPerM2).toBeNull()
+    expect(result.replay.total.missingIntervals).toEqual([{ startMs: input.day.endMs - 3600_000, endMs: input.day.endMs }])
+    expect(result.replay.productionAdmission).toBe(false)
+  })
+  it('真实策略加合成恒定数学制品，24小时积分符合独立解析公式', async () => {
+    const raw = JSON.parse(readFileSync(join(findProjectRoot(), 'cloudfunctions-v2/test/care/fixtures/open-meteo-hourly-radiation.json'), 'utf8'))
+    const input = dayInput(raw)
+    raw.hourly.time = Array.from({ length: 24 }, (_, i) => input.day.startMs / 1000 + (i + 1) * 3600)
+    raw.hourly.direct_normal_irradiance = Array(24).fill(0)
+    raw.hourly.diffuse_radiation = Array(24).fill(200)
+    raw.hourly.shortwave_radiation = Array(24).fill(200)
+    const result = await replayPublishedMvpLightDay({ ...input, context: { ...input.context, sourceRef: 'synthetic-constant-radiation-mathematical-fixture' } }, createMysqlMvpGlassPolicyReader(source))
+    if (result.status !== 'available') { throw new Error('应取得数学回放') }
+    const factor = Math.SQRT2 / Math.PI * Math.atan(1 / Math.SQRT2)
+    expect(result.replay.total.status).toBe('complete')
+    expect(result.replay.dailyIntegralMolPerM2?.lower).toBeCloseTo(200 * factor * 0.70 * 2 * 86400 / 1_000_000, 10)
+    expect(result.replay.dailyIntegralMolPerM2?.upper).toBeCloseTo(200 * factor * 0.70 * 2 * 86400 / 1_000_000, 10)
+  })
 })
+
