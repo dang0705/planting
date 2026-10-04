@@ -1,19 +1,19 @@
 {
-  "revision": 43,
+  "revision": 44,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-04T14:14:51.262932+00:00",
+  "updatedAt": "2026-10-04T14:20:47.871002+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "验证MVP单双层近似候选能复用现有双通道传播",
+    "goal": "用户只确认层数，后端按有效版本解析并接入双通道传播",
     "assumptions": [
-      "普通透明玻璃宽带代理，不是现场PAR测量",
-      "专业能力保留但不增加MVP用户输入"
+      "候选不等于真实生产发布",
+      "专业参数继续保留"
     ],
-    "minimumVerification": "一手参数依据、真实制品回放、相关及全量测试",
-    "continueWhen": "候选依据与边界明确，983全绿",
-    "failWhen": "重复计入玻璃损失或误称正式发布",
-    "rollback": "只回退候选证据及测试，无运行算法变更",
+    "minimumVerification": "独立合同、AJV/摘要/时间验证、真实制品接线、突变RED、全量GREEN",
+    "continueWhen": "1002全绿并有Node22证据",
+    "failWhen": "出现默认、绕过版本或未知层数被猜测",
+    "rollback": "回退本增量，不改变已存在专业接口",
     "timeLimit": "30分钟检查点"
   },
   "tasks": [
@@ -121,10 +121,10 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 30,
+      "version": 31,
       "priority": "normal",
       "status": "codex running",
-      "stage": "候选参数验证与正式登记准备",
+      "stage": "验证与策略读回准备",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -153,19 +153,20 @@
         ".codex/backend-v2/evidence/E04-window-obstruction.json",
         ".codex/backend-v2/evidence/E04-light-parameter-review.json",
         "cloudfunctions-v2/models/care/light-parameter-evidence-review.md",
-        ".codex/backend-v2/evidence/E04-mvp-glass-candidate.json"
+        ".codex/backend-v2/evidence/E04-mvp-glass-candidate.json",
+        ".codex/backend-v2/evidence/E04-mvp-glass-policy.json"
       ],
       "summary": [
-        "E04：保留专业参数，MVP仅收集单双层玻璃",
-        "普通透明玻璃近似候选：单层0.83、双层0.70",
-        "真实气象回放两项通过；双通道损失只计一次",
-        "相关23/23；后端全量983/983；无产品行为变更",
-        "候选尚未正式发布；光谱精细校准留后续迭代"
+        "E04：MVP单双层策略解析及现有传播接线完成",
+        "核验active、摘要与UTC有效期；缺策略不启用默认",
+        "专业参数保留；未知层数为null；锁定版本与来源",
+        "19新用例；分类接线2项RED→恢复；全量1002/1002",
+        "Node22相关42项、类型构建通过；生产发布及HTTP未验收"
       ],
       "blockingReason": null,
-      "nextAction": "按既定最小召回规则登记MVP近似策略与Expected，再接入正式路径；专业参数保留",
-      "ticketReadback": "Chrome codex running及五行评论1100440000090096已读回",
-      "milestoneCommit": "b784c878"
+      "nextAction": "承接玻璃策略真实Repository读回与正式运行链路；继续PPFD换算及DMN准入，保持整体未验收",
+      "ticketReadback": "Chrome codex running及五行评论1100440000090104已读回",
+      "milestoneCommit": "bb30a152"
     }
   ],
   "queue": [
@@ -498,5 +499,19 @@
       "architecture/configuration-variable-catalog.md 仅上述项目所在章节"
     ],
     "scope": "只核验参数准入状态，不读取其他领域配置、架构图或整份文档"
+  },
+  "mvpGlassReadAdmission": {
+    "layers": {
+      "L0": "既有architecture abstract仅提供目录导航，无MVP玻璃策略登记",
+      "L1": "既有architecture overview定位configuration-providers，不含分类参数",
+      "L2": "本轮configuration-providers.md 0–115说明全文目录不镜像，未提供MVP玻璃项"
+    },
+    "missing": "MVP单层/双层近似的配置项状态、登记结构及对应目录哈希",
+    "localAllowed": [
+      "architecture/configuration-variable-catalog.md 仅care.lighting条目",
+      "architecture/configuration-variable-catalog.json 仅care.lighting条目及新增玻璃分类策略",
+      "architecture/manifest.json 仅配置目录哈希"
+    ],
+    "scope": "只处理玻璃策略选值与来源，不读取其他领域"
   }
 }

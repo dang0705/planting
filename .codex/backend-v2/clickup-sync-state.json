@@ -34,19 +34,19 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 30,
+      "version": 31,
       "status": "codex running",
-      "note": "E04：保留专业参数，MVP仅收集单双层玻璃\n普通透明玻璃近似候选：单层0.83、双层0.70\n真实气象回放两项通过；双通道损失只计一次\n相关23/23；后端全量983/983；无产品行为变更\n候选尚未正式发布；光谱精细校准留后续迭代",
-      "commentId": "1100440000090096",
-      "commentFingerprint": "a1642aba826bd73b0e4c99ec8f34ca675fc1766554091eaea7cc228a86db4d76",
-      "readback": "Chrome codex running及五行评论1100440000090096已读回"
+      "note": "E04：MVP单双层策略解析及现有传播接线完成\n核验active、摘要与UTC有效期；缺策略不启用默认\n专业参数保留；未知层数为null；锁定版本与来源\n19新用例；分类接线2项RED→恢复；全量1002/1002\nNode22相关42项、类型构建通过；生产发布及HTTP未验收",
+      "commentId": "1100440000090104",
+      "commentFingerprint": "5b8bc49767d49660631019d31ee0b4d585eba1baff39870d88c8e3084cd2f1d3",
+      "readback": "Chrome codex running及五行评论1100440000090104已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T14:15:26.785283+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T14:21:33.969684+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "5f71aeac869852414128d78bd5be22730286104ac03aaca0468365b68006994f",
-    "sourceRevision": 43,
-    "sourceUpdatedAt": "2026-10-04T14:14:51.262932+00:00"
+    "fingerprint": "931d651a5796a8ad6a149baa1fe6088ca3c5c26bd22d0f08c1e25d40e4451170",
+    "sourceRevision": 44,
+    "sourceUpdatedAt": "2026-10-04T14:20:47.871002+00:00"
   }
 }

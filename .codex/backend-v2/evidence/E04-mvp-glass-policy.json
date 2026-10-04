@@ -1,0 +1,36 @@
+{
+  "ticket": "z8v0kmr973",
+  "scope": "MVP玻璃分类策略解析与离线应用接线",
+  "expectedSource": "cloudfunctions-v2/models/care/mvp-glass-policy-contract.md及用户单双层近似裁决",
+  "configurationDecision": "层数与准入hard_rule；数值来自显式独立策略；无候选源码默认；专业参数保留",
+  "tests": {
+    "new": 19,
+    "related": 42,
+    "node22": 42,
+    "full": {
+      "files": 126,
+      "tests": 1002,
+      "exit": 0
+    },
+    "typecheckExit": 0,
+    "buildExit": 0,
+    "lint": {
+      "errors": 0,
+      "warnings": 1141
+    }
+  },
+  "tdd": {
+    "path": "测试先落盘→实现→受控接线突变RED→完整恢复GREEN",
+    "initialRed": "模块缺失，仅就绪探针",
+    "mutationRed": "强制单层使双层分类与未知层数2项失败",
+    "restored": true,
+    "log": "/tmp/planting-mvp-policy-mutation-red.log"
+  },
+  "notProven": [
+    "真实数据库活动指针与生产发布",
+    "正式HTTP路径",
+    "实测PAR或误差范围",
+    "E04全部养护模型及DMN验收"
+  ],
+  "updatedAt": "2026-10-04T14:20:47.871002+00:00"
+}

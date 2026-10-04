@@ -164,7 +164,8 @@
 | `care.weather.forecast_freshness_minutes` | 天气预报证据新鲜度 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING 分钟 | care | care、天气快照 | 天气证据策略版本；失败：缺失时降低可信度；待冻结原因：预报边界未冻结；阻断：天气增强养护 | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.watering.algorithm_version` | 浇水算法版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care | 算法 release 不可变，输出合同独立版本化；失败：无已发布算法返回 temporarily_unavailable；待冻结原因：决策结构已冻结；EnvironmentDemand/CultivationRetention/PersonalCalibration 的敏感度和上下界仍待影子数据校准及真实链路验收；阻断：v2 浇水正式运行 | P2 / [P4] 盆土视觉和四类养护能力 |
 | `care.fertilizing.algorithm_version` | 施肥算法版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care | 算法 release 不可变；失败：无算法返回 temporarily_unavailable；待冻结原因：v2 算法尚未冻结；阻断：v2 施肥实现 | P2 / [P4] 盆土视觉和四类养护能力 |
-| `care.lighting.algorithm_version` | 光照算法版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care | 算法 release 不可变；失败：证据不足返回 insufficient_evidence；待冻结原因：结构已冻结；辐射到 PPFD 的透射/换算参数、遮挡映射与真实校准尚未形成正式 algorithm release；阻断：v2 光照正式评估与 DLI 生产派生 | P2 / [P4] 盆土视觉和四类养护能力 |
+| `care.lighting.algorithm_version` | 光照算法版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care | 算法 release 不可变；失败：证据不足返回 insufficient_evidence；待冻结原因：算法release尚未发布；MVP允许单双层近似且保留专业参数，不以型号光谱或现场精细校准作为统一前置；必要换算、适用范围及运行验证仍待完成；阻断：v2 光照正式评估与 DLI 生产派生 | P2 / [P4] 盆土视觉和四类养护能力 |
+| `care.lighting.mvp_glass_selection` | MVP玻璃层数与版本策略准入 | `hard_business_rule` | 不可配置硬规则 | single / double / null；无隐式默认；保留专业参数 | care | care MVP策略解析与回放 | 分类与准入规则不可配置，具体值由不可变策略发布；失败：无active明确不可用，未知层数保留null | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.ventilation.algorithm_version` | 通风算法版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care | 算法 release 不可变；失败：证据不足返回 insufficient_evidence；待冻结原因：v2 算法尚未冻结；阻断：v2 通风实现 | P2 / [P4] 盆土视觉和四类养护能力 |
 | `care.output.contract_version` | 四类养护统一输出合同版本 | `care_algorithms` | 领域策略 / 已冻结 | care-capability-result/v1 | care | care、未来前端、CloudBase Agent | 破坏性变化必须升版本并保留兼容读取；失败：未知版本不对外返回 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
 | `care.recommendation.write_fact_directly` | 建议是否可直接写入事实 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `false` | care | care、diagnosis、CloudBase Agent | 不可配置；失败：只返回建议，等待用户确认 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
@@ -328,3 +329,7 @@
 ### `care.cultivation.pot_safety`｜实际内盆、几何与排水证据准入
 
 不可配置硬规则；P4 care，票据 z8v0kmr973。三值证据不填默认；内盆和几何均确认后才能判断排水；安全不等于浇水许可。依据与 Expected：`cloudfunctions-v2/models/care/pot-safety-contract.md`，27 种组合及非法类型、不可变输入验证。无参数或倍率发布。
+
+## MVP玻璃层数与策略准入
+
+`care.lighting.mvp_glass_selection` 为硬规则：用户只确认单层／双层，未知保留null，不要求专业参数。按有效active策略选值，核验摘要与时间，禁止源码默认；专业接口完整保留。具体0.83／0.70尚为离线候选，此条不签发生产参数。类型化策略合同见 `cloudfunctions-v2/models/care/mvp-glass-policy-contract.md`，原票 `z8v0kmr973`。

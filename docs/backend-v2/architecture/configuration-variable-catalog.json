@@ -1664,7 +1664,7 @@
       "phase": "P2",
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "expected": "DNI/DHI/GHI → 太阳几何 → 窗面 Direct/Diffuse → 室内传播 → PPFD(t) → DLI 可回放，朝向名称不直接决定直射",
-      "pendingReason": "结构已冻结；辐射到 PPFD 的透射/换算参数、遮挡映射与真实校准尚未形成正式 algorithm release",
+      "pendingReason": "算法release尚未发布；MVP允许单双层近似且保留专业参数，不以型号光谱或现场精细校准作为统一前置；必要换算、适用范围及运行验证仍待完成",
       "blockingScope": "v2 光照正式评估与 DLI 生产派生",
       "decisionGroup": "care_algorithms"
     },
@@ -4835,6 +4835,40 @@
       "phase": "P4",
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "expected": "27种三值组合匹配独立准入合同；未知排水不得当有效",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "care.lighting.mvp_glass_selection",
+      "chineseName": "MVP玻璃层数与版本策略准入",
+      "domain": "care",
+      "layer": "hard_rule",
+      "valueType": "object",
+      "status": "hard_rule",
+      "currentValue": {
+        "contractVersion": "mvp-glass-policy/v1",
+        "scopeCode": "care_mvp_glass",
+        "inputs": [
+          "single",
+          "double",
+          null
+        ],
+        "implicitDefault": false,
+        "professionalParametersRetained": true
+      },
+      "owner": "care",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/mvp-glass-policy-contract.md",
+        "cloudfunctions-v2/models/care/light-parameter-evidence-review.md"
+      ],
+      "consumers": [
+        "care MVP玻璃策略解析与回放"
+      ],
+      "changePolicy": "分类与准入规则不可配置；具体透射值由独立不可变策略发布，不在源码填默认",
+      "fallback": "没有有效active策略明确不可用；层数未确认保留null",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "clickUpTicketId": "z8v0kmr973",
+      "expected": "单层/双层按有效版本取对应值；摘要或时间非法拒绝，未知层数不猜默认；专业参数保留",
       "decisionGroup": "hard_business_rule"
     }
   ],
