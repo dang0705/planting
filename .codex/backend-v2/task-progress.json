@@ -1,15 +1,15 @@
 {
-  "revision": 90,
+  "revision": 91,
   "currentStep": "E03",
   "currentTicketId": "z8v0kmr9mj",
-  "updatedAt": "2026-10-04T20:21:33.652274+00:00",
+  "updatedAt": "2026-10-04T20:30:19.080974+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "实现用户植物档案实测盆器严格子结构",
-    "minimumValidation": "独立Expected→快照/三值/单位/未知键准入→既有计算；突变与恢复；相邻/全量/构建",
-    "continueCondition": "当前子结构可作为后续严格DTO组成，不视为完整档案",
-    "failureCondition": "缺字段/非法类型或客户端派生值进入事实则拒绝",
-    "rollback": "回退本次子结构；不修改生产或DDL",
+    "target": "真实持久化昵称与已确认盆器测量事实，并保留其他盆器/基质参数",
+    "minimumValidation": "归属/旧版本/不可变输入、SQL持久化读回、并发单赢家、更新失败回滚、原参数保留",
+    "continueCondition": "仅在调用方显式事务内写入；外层HTTP幂等与完整档案仍另验收",
+    "failureCondition": "丢失已有参数、跨用户更新或版本覆盖则停止扩张",
+    "rollback": "独立回退档案Repository；无生产或DDL变更",
     "timeLimit": "30分钟"
   },
   "tasks": [
@@ -257,27 +257,28 @@
     {
       "id": "z8v0kmr9mj",
       "step": "E03",
-      "version": 2,
+      "version": 3,
       "priority": "high",
       "status": "codex running",
-      "stage": "盆器测量子结构合同与严格校验已验证；完整档案及写入未验收",
+      "stage": "昵称/测量事实真实SQL持久化已验证；应用幂等和HTTP未验收",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E03-promotion-context.json",
         ".codex/backend-v2/evidence/E03-profile-update-gap.json",
         "cloudfunctions-v2/models/user-plant/profile-update-contract-draft.md",
-        ".codex/backend-v2/evidence/E03-measured-pot-profile.json"
+        ".codex/backend-v2/evidence/E03-measured-pot-profile.json",
+        ".codex/backend-v2/evidence/E03-measured-profile-persistence.json"
       ],
       "summary": [
-        "E03：实测盆器事实子结构Schema及不可变校验已实现",
-        "拒绝未知键/缺字段/隐式转换；未知null交给既有安全模型",
-        "独立新增20项，相邻71项；额外字段守卫4项RED→恢复GREEN",
-        "根与Node22全量1523/1523，类型/检查/构建通过",
-        "完整档案字段、事务及HTTP仍未验收，原票保持进行中"
+        "E03：昵称/测量事实→实际SQL→新聚合版本读回通过",
+        "局部更新保留基质/材质/专业参数及首次完成/创建时间",
+        "真实MySQL6项覆盖归属、并发单赢家及失败整体回滚",
+        "整份JSON覆盖突变1项RED→恢复；全量1529/1529",
+        "外层幂等、完整档案及HTTP仍未验收，原票保持进行中"
       ],
       "blockingReason": null,
-      "nextAction": "继续冻结盆器/基质、位置、光照、通风完整档案字段及清除语义，再接归属/版本/幂等事务与HTTP；临时TTL仍待确认",
-      "ticketReadback": "Chrome CODEX RUNNING与五行评论1100440000090867已读回",
+      "nextAction": "接共享幂等的档案更新应用用例及提交未知新连接核对，再完成严格公开DTO/HTTP；其余档案字段和临时TTL仍分别待冻结",
+      "ticketReadback": "Chrome CODEX RUNNING与五行评论1100440000090874已读回",
       "priorityReason": "当前用户植物纵向切片的必要合同前置，未等待无关CMS"
     }
   ],
@@ -382,7 +383,7 @@
       ]
     }
   ],
-  "nextAction": "继续冻结盆器/基质、位置、光照、通风完整档案字段及清除语义，再接归属/版本/幂等事务与HTTP；临时TTL仍待确认",
+  "nextAction": "接共享幂等的档案更新应用用例及提交未知新连接核对，再完成严格公开DTO/HTTP；其余档案字段和临时TTL仍分别待冻结",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",

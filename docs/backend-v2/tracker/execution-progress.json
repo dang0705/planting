@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T20:21:33.652274+00:00",
-  "sourceRevision": 90,
-  "sourceUpdatedAt": "2026-10-04T20:21:33.652274+00:00",
+  "generatedAt": "2026-10-04T20:30:19.080974+00:00",
+  "sourceRevision": 91,
+  "sourceUpdatedAt": "2026-10-04T20:30:19.080974+00:00",
   "currentStep": "E03",
   "currentTicketId": "z8v0kmr9mj",
   "tasks": [
@@ -264,33 +264,34 @@
     {
       "id": "z8v0kmr9mj",
       "step": "E03",
-      "version": 2,
+      "version": 3,
       "status": "codex running",
-      "stage": "盆器测量子结构合同与严格校验已验证；完整档案及写入未验收",
+      "stage": "昵称/测量事实真实SQL持久化已验证；应用幂等和HTTP未验收",
       "accepted": false,
       "summary": [
-        "E03：实测盆器事实子结构Schema及不可变校验已实现",
-        "拒绝未知键/缺字段/隐式转换；未知null交给既有安全模型",
-        "独立新增20项，相邻71项；额外字段守卫4项RED→恢复GREEN",
-        "根与Node22全量1523/1523，类型/检查/构建通过",
-        "完整档案字段、事务及HTTP仍未验收，原票保持进行中"
+        "E03：昵称/测量事实→实际SQL→新聚合版本读回通过",
+        "局部更新保留基质/材质/专业参数及首次完成/创建时间",
+        "真实MySQL6项覆盖归属、并发单赢家及失败整体回滚",
+        "整份JSON覆盖突变1项RED→恢复；全量1529/1529",
+        "外层幂等、完整档案及HTTP仍未验收，原票保持进行中"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E03-promotion-context.json",
         ".codex/backend-v2/evidence/E03-profile-update-gap.json",
         "cloudfunctions-v2/models/user-plant/profile-update-contract-draft.md",
-        ".codex/backend-v2/evidence/E03-measured-pot-profile.json"
+        ".codex/backend-v2/evidence/E03-measured-pot-profile.json",
+        ".codex/backend-v2/evidence/E03-measured-profile-persistence.json"
       ],
       "blockingReason": null,
-      "nextAction": "继续冻结盆器/基质、位置、光照、通风完整档案字段及清除语义，再接归属/版本/幂等事务与HTTP；临时TTL仍待确认",
+      "nextAction": "接共享幂等的档案更新应用用例及提交未知新连接核对，再完成严格公开DTO/HTTP；其余档案字段和临时TTL仍分别待冻结",
       "sync": {
-        "version": 2,
+        "version": 3,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING与五行评论1100440000090867已读回"
+        "readback": "Chrome CODEX RUNNING与五行评论1100440000090874已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T20:21:51.242398+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T20:32:36.266224+00:00",
   "lastFailure": null
 }

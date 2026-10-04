@@ -58,19 +58,19 @@
       "readback": "Chrome HUMAN REQUIRED与五行评论1100440000090656已读回"
     },
     "z8v0kmr9mj": {
-      "version": 2,
+      "version": 3,
       "status": "codex running",
-      "note": "E03：实测盆器事实子结构Schema及不可变校验已实现\n拒绝未知键/缺字段/隐式转换；未知null交给既有安全模型\n独立新增20项，相邻71项；额外字段守卫4项RED→恢复GREEN\n根与Node22全量1523/1523，类型/检查/构建通过\n完整档案字段、事务及HTTP仍未验收，原票保持进行中",
-      "commentId": "1100440000090867",
-      "commentFingerprint": "5a1e8eed9c165ed31667225bad556d55a4ec803754705e2b72cd9254332a6f05",
-      "readback": "Chrome CODEX RUNNING与五行评论1100440000090867已读回"
+      "note": "E03：昵称/测量事实→实际SQL→新聚合版本读回通过\n局部更新保留基质/材质/专业参数及首次完成/创建时间\n真实MySQL6项覆盖归属、并发单赢家及失败整体回滚\n整份JSON覆盖突变1项RED→恢复；全量1529/1529\n外层幂等、完整档案及HTTP仍未验收，原票保持进行中",
+      "commentId": "1100440000090874",
+      "commentFingerprint": "cb3cd7f9b37f504cddf17baa406afe1cd98f97b201e1c0247a770a1469b890b2",
+      "readback": "Chrome CODEX RUNNING与五行评论1100440000090874已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T20:21:51.242398+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T20:32:36.266224+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "c167e87fbb3bb915fab242a16128d760470006666fcb2e69c0155ac1aaf1e6d7",
-    "sourceRevision": 90,
-    "sourceUpdatedAt": "2026-10-04T20:21:33.652274+00:00"
+    "fingerprint": "54ed489c9ac0f2fc538b642261dfd1e3fd11ea9680a7d6f79f8d4e2e5877826a",
+    "sourceRevision": 91,
+    "sourceUpdatedAt": "2026-10-04T20:30:19.080974+00:00"
   }
 }
