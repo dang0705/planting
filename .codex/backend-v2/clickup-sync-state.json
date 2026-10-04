@@ -58,19 +58,19 @@
       "readback": "Chrome HUMAN REQUIRED与五行评论1100440000090656已读回"
     },
     "z8v0kmr9mj": {
-      "version": 5,
+      "version": 6,
       "status": "codex running",
-      "note": "E03：已冻结字段支持只改昵称或只改完整测量事实\n省略保留原值；首次无测量不补造null，原专业参数保留\n严格DTO新增16项；真实SQL12项，原实现2项RED→GREEN\n根与Node22全量1555/1555；类型/检查/构建通过\n完整档案响应、HTTP及真实身份未验收，整票进行中",
-      "commentId": "1100440000090894",
-      "commentFingerprint": "94c25f1a6f1831a94cd5fdabbbb7b1ecac8a4c4827187c126ad84218be0b62b2",
-      "readback": "Chrome CODEX RUNNING与五行评论1100440000090894已读回"
+      "note": "E03：既有单株GET返回严格昵称/测量事实，不透传专业JSON\n真实HTTP→MySQL同用户200、跨用户404；SQL13项通过\nRepository2项/响应守卫4项经典RED→相关29项GREEN\n根与Node22全量1562/1562；类型/检查/构建通过\n身份替身不等于登录验真；PATCH/完整档案仍未验收",
+      "commentId": "1100440000090905",
+      "commentFingerprint": "3caa3cc9865c76bb5478d9afcc3af5432d1f912e0e99c8efd684b89f8abaa994",
+      "readback": "Chrome CODEX RUNNING与五行评论1100440000090905已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T20:44:16.353535+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T20:50:28.127638+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "710451672bd28c2e8cdf7c64a99c02302960d70807a798b841ae99b2a339e88e",
-    "sourceRevision": 93,
-    "sourceUpdatedAt": "2026-10-04T20:43:52.935672+00:00"
+    "fingerprint": "57f52ccb543cab62def7df7779e31a7c6cbe14cf8240bad33a08764e108073fa",
+    "sourceRevision": 94,
+    "sourceUpdatedAt": "2026-10-04T20:49:59.432343+00:00"
   }
 }

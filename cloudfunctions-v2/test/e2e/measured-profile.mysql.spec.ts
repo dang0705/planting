@@ -12,6 +12,13 @@ import { createMeasuredProfileApplicationService } from '../../src/user-plant/ap
 import { createMysqlHttpIdempotencyRepository, createMysqlHttpIdempotencyCommitUnknownReadOnlyRepository, type HttpIdempotencySqlRow } from '../../src/foundation/idempotency/mysql-http-idempotency-repository.js'
 import type { MysqlTransactionContext } from '../../src/foundation/database/mysql-transaction-driver.js'
 import { createHash } from 'node:crypto'
+import { createServer } from 'node:http'
+import type { AddressInfo } from 'node:net'
+import { createMysqlUserPlantRepository, type UserPlantSqlRow } from '../../src/user-plant/repository/mysql-user-plant-repository.js'
+import { createGetUserPlantApplicationService } from '../../src/user-plant/application/get-user-plant.js'
+import { createGetUserPlantRouteHandler, getUserPlantRoute } from '../../src/user-plant/http/get-user-plant-route.js'
+import { createRouteDispatcher } from '../../src/foundation/http/route-dispatcher.js'
+import type { UserRef } from '../../src/contracts/types.js'
 
 /** L3/unit_real_data：实际003聚合/档案DDL、mysql2、行锁与事务。
  * users及plant_identities仅为明确的归属/FK表桩，不证明身份域Schema或登录验真。
@@ -50,7 +57,7 @@ beforeAll(async () => {
   await db.query('CREATE DATABASE measured_profile CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci')
   await db.query('USE measured_profile')
   await db.query("CREATE TABLE users(id BIGINT UNSIGNED PRIMARY KEY,_openid VARCHAR(64) NOT NULL DEFAULT '',public_user_id VARCHAR(64) NOT NULL UNIQUE,status VARCHAR(24) NOT NULL)")
-  await db.query('CREATE TABLE plant_identities(id BIGINT UNSIGNED PRIMARY KEY)')
+  await db.query('CREATE TABLE plant_identities(id BIGINT UNSIGNED PRIMARY KEY,public_identity_ref VARCHAR(64) NULL)')
   const ddl = readFileSync(join(root, 'docs/backend-v2/schema/003_user_plant.sql'), 'utf8')
   for (const name of ['user_plants', 'user_plant_profiles']) {
     const start = ddl.indexOf('CREATE TABLE `' + name + '`')
@@ -189,4 +196,27 @@ test('首次仅测量遵守SQL空昵称，后续清除昵称不改变测量事�
   const { measuredPot: _unused, ...nicknameCommand } = first.command
   const next = await service({ command: { ...nicknameCommand, nickname: '', expectedVersion: 2, occurredAtMs: 4000 }, idempotency: { ...first.idempotency, idempotencyKeyHash: 'f'.repeat(64), requestHash: 'a'.repeat(64), createdAtMs: 4000 } })
   expect(next).toEqual({ status: 200, body: { data: { userPlantRef: 'upl_profile_potonly01', version: 3, nickname: '', measuredPot } } })
+})
+test('真实HTTP单株读回保存档案且不透传专业参数，跨用户404', async () => {
+  const driver = createMysqlTransactionDriver(source, () => undefined)
+  const reader = createMysqlUserPlantRepository<MysqlTransactionContext<Mysql2QueryConnection>>({
+    executeQuery: async (tx, sql, args) => await tx.connection.query(sql, toSqlParameters(args)) as unknown as readonly UserPlantSqlRow[],
+    executeWrite: (tx, sql, args) => tx.connection.execute(sql, toSqlParameters(args))
+  })
+  const getUserPlant = createGetUserPlantApplicationService({ driver, repository: reader })
+  const dispatch = createRouteDispatcher([{ route: getUserPlantRoute, handler: createGetUserPlantRouteHandler({
+    // 只替换身份验真边界，不证明微信登录或正式会话；实际运行HTTP/应用/SQL/响应校验。
+    resolvePrincipal: async command => ({ principalType: 'user', user_id: (command.bearerToken === 'other-user' ? 'usr_profile_owner02' : 'usr_profile_owner01') as UserRef, authenticatedVia: 'wechat', sessionVersion: 1, issuedAt: '2026-10-05T00:00:00.000Z', expiresAt: '2026-10-06T00:00:00.000Z' }),
+    getUserPlant, now: () => 3000, writeAudit: () => undefined
+  }) }])
+  const server = createServer((req, res) => { dispatch(req, res).catch(() => undefined) })
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
+  const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/api/v2/user-plants/upl_profile_preserve1`
+  try {
+    const response = await fetch(url, { headers: { authorization: 'Bearer owner-user' } }), body = await response.json()
+    expect(response.status).toBe(200)
+    expect(body).toEqual({ data: { user_plant_id: 'upl_profile_preserve1', lifecycle: 'active', identityStatus: 'unidentified', version: 2, createdAt: '1970-01-01T00:00:01.000Z', updatedAt: '1970-01-01T00:00:03.000Z', profile: { nickname: '', measuredPot: { ...measuredPot, potHeightCm: 10 } } } })
+    expect(JSON.stringify(body)).not.toContain('professionalParameters')
+    const cross = await fetch(url, { headers: { authorization: 'Bearer other-user' } }); expect(cross.status).toBe(404)
+  } finally { await new Promise<void>((resolve, reject) => server.close(err => err ? reject(err) : resolve())) }
 })

@@ -1,0 +1,68 @@
+{
+  "ticket": "z8v0kmr9mj",
+  "step": "E03",
+  "verifiedAt": "2026-10-04T20:49:59.432343+00:00",
+  "scope": "既有单株GET公开档案子集读回及严格响应准入",
+  "expected": [
+    "统一计划档案事实/归属/公开脱敏规则",
+    "public-profile-contract",
+    "既有用户植物身份联合响应与measured-pot-profile/v1"
+  ],
+  "configuration": "无新增参数/阈值/默认值；只投影已冻结事实",
+  "contextReuse": "复用E03已核验用户植物合同及003/008表结构；没有新docs读取",
+  "verification": {
+    "tdd": {
+      "path": "经典RED：原Repository丢失档案2项失败；原HTTP放行受限/损坏档案4项失败，再实现",
+      "repositoryRedLog": "/tmp/planting-e03-profile-read-red.log",
+      "httpRedLog": "/tmp/planting-e03-profile-response-red.log",
+      "relatedGreenTests": 29
+    },
+    "mysql": {
+      "tests": 13,
+      "log": "/tmp/planting-e03-profile-read-mysql.log",
+      "layer": "unit_real_data",
+      "path": "本地真实NodeHTTP GET→现有分发器/请求链→实际应用事务/Repository/MySQL8.4→AJV严格公开DTO；同用户200，跨用户404，保留的专业参数不透传",
+      "replaced": "身份Principal解析替身；users/identities仅FK表桩；不是正式登录或CloudBase验收"
+    },
+    "rootUT": {
+      "files": 175,
+      "tests": 1562,
+      "exit": 0
+    },
+    "node22UT": {
+      "files": 175,
+      "tests": 1562,
+      "exit": 0
+    },
+    "typecheck": {
+      "exit": 0
+    },
+    "lint": {
+      "exit": 0,
+      "errors": 0,
+      "warnings": 2338
+    },
+    "build": {
+      "exit": 0,
+      "limit": "子npm仍Node24 engine警告，不是线上运行证明"
+    }
+  },
+  "boundaries": [
+    "PATCH尚未接严格公开完整响应和HTTP",
+    "完整档案其他字段未冻结",
+    "真实登录/会话和档案策略发布未验收",
+    "临时TTL和显式认领仍待补齐"
+  ],
+  "hashes": {
+    "cloudfunctions-v2/models/user-plant/public-profile-contract.md": "330dbab18f2247ca91645418658fdf4cc041001b5a8781c7ea13fb04c53d8708",
+    "cloudfunctions-v2/src/contracts/types.ts": "a19fe66aa67b51c07381b91c7f3feac527c102100aa966c031c022d95a4011f2",
+    "cloudfunctions-v2/src/contracts/schemas.ts": "4a082ec05edb6ccceb4e6dabf7070dbcacb3a9ab75955774dd8833a60deffa0a",
+    "cloudfunctions-v2/src/contracts/user-plant-schema.ts": "da09b3bca31376e44e7970e4d1bfdef0b81a3cdc5f52277c3adab0226f3703d9",
+    "cloudfunctions-v2/src/user-plant/domain/public-profile.ts": "f2eef88e775d9c3b9eacb87d08b8e3e0151362b9f1c9fd74502b5d00de1b0180",
+    "cloudfunctions-v2/src/user-plant/repository/mysql-user-plant-repository.ts": "dd2cbb321e18d5fe3f12d8dfe2cfcba668f0d28069130093c8a822a5f1067e9b",
+    "cloudfunctions-v2/src/user-plant/http/get-user-plant-route.ts": "518404f3060c10ef0c532258cb21c6ec98ebc356b53c839b129cc1e454294fb3",
+    "cloudfunctions-v2/test/user-plant/get-user-plant-repository.spec.ts": "acf6594e4c5c7236ec8fa7e5aebaea361c2665b2ecc6379ed1b95527b1f659cd",
+    "cloudfunctions-v2/test/user-plant/get-user-plant-route.spec.ts": "6a038f887e7dcb99aae330159e260f9dc6a0fd81acf1d6eeccc38f63746a6445",
+    "cloudfunctions-v2/test/e2e/measured-profile.mysql.spec.ts": "39a9b76c1b0cb956eaf953d5f3edfbdb25eff26aa11c8f3e45a81642a1f4b651"
+  }
+}

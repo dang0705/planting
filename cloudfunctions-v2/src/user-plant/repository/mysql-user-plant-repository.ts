@@ -7,6 +7,7 @@ import {
   type UserRef
 } from '../../contracts/types.js'
 import type { TransactionExecutionContext } from '../../foundation/database/transaction-runner.js'
+import { projectPublicProfile, type PublicProfileRow } from '../domain/public-profile.js'
 
 const zero = Number('0')
 const one = Number('1')
@@ -80,7 +81,7 @@ export type UserPlantCreateProjectionSqlRow = {
 }
 
 /** 单株读取查询返回的最小、已脱敏投影行。 */
-export type UserPlantReadProjectionSqlRow = {
+export type UserPlantReadProjectionSqlRow = PublicProfileRow & {
   /** SQL 行判别字段，不对应数据库列。 */
   readonly kind: 'read-plant'
   /** 用户植物高熵公开引用。 */
@@ -347,12 +348,16 @@ export function createMysqlUserPlantRepository<TTransaction extends TransactionE
               \`p\`.\`current_identity_status\`, CAST(\`p\`.\`version\` AS CHAR) AS \`version\`,
               CAST(\`p\`.\`created_at_ms\` AS CHAR) AS \`created_at_ms\`,
               CAST(\`p\`.\`updated_at_ms\` AS CHAR) AS \`updated_at_ms\`,
-              \`i\`.\`public_identity_ref\` AS \`confirmed_identity_ref\`
+              \`i\`.\`public_identity_ref\` AS \`confirmed_identity_ref\`,
+              CAST(\`f\`.\`id\` AS CHAR) AS \`profile_internal_id\`, \`f\`.\`nickname\` AS \`profile_nickname\`,
+              \`f\`.\`pot_profile_json\` AS \`profile_pot_json\`, \`f\`.\`_openid\` AS \`profile_openid\`
        FROM \`user_plants\` AS \`p\`
        JOIN \`users\` AS \`u\` ON \`u\`.\`id\` = \`p\`.\`user_internal_id\`
        LEFT JOIN \`plant_identities\` AS \`i\` ON \`i\`.\`id\` = \`p\`.\`confirmed_identity_internal_id\`
+       LEFT JOIN \`user_plant_profiles\` AS \`f\` ON \`f\`.\`user_plant_internal_id\` = \`p\`.\`id\` AND \`f\`.\`user_internal_id\` = \`p\`.\`user_internal_id\`
        WHERE \`u\`.\`public_user_id\` = ?
          AND \`p\`.\`public_user_plant_id\` = ?
+         AND \`u\`.\`status\` = 'active' AND \`u\`.\`_openid\` = '' AND \`p\`.\`_openid\` = ''
          AND \`p\`.\`lifecycle_status\` IN ('active', 'archived')`,
       [userRef, userPlantRef]
     )
@@ -377,6 +382,11 @@ export function createMysqlUserPlantRepository<TTransaction extends TransactionE
     }
     const createdAt = resolveUtcTimestamp(row.created_at_ms, '用户植物创建时间不合法')
     const updatedAt = resolveUtcTimestamp(row.updated_at_ms, '用户植物更新时间不合法')
+    let profile: ReturnType<typeof projectPublicProfile>
+    try { profile = projectPublicProfile(row) } catch {
+      throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', '用户植物档案投影不合法')
+    }
+    const profileFields = profile === undefined ? {} : { profile }
 
     if (row.current_identity_status === 'confirmed') {
       if (
@@ -390,6 +400,7 @@ export function createMysqlUserPlantRepository<TTransaction extends TransactionE
         lifecycle: row.lifecycle_status,
         identityStatus: 'confirmed',
         confirmedIdentityRef: row.confirmed_identity_ref as PlantIdentityRef,
+        ...profileFields,
         version,
         createdAt,
         updatedAt
@@ -406,6 +417,7 @@ export function createMysqlUserPlantRepository<TTransaction extends TransactionE
       user_plant_id: userPlantRef,
       lifecycle: row.lifecycle_status,
       identityStatus: row.current_identity_status,
+      ...profileFields,
       version,
       createdAt,
       updatedAt

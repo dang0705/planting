@@ -127,6 +127,18 @@ afterEach(async () => {
   server = undefined
 })
 
+test('公开档案响应通过严格字段校验，原有无档案响应保持有效', async () => {
+  const plant = { ...ownedPlant, profile: { nickname: '小青', measuredPot: { actualInnerPotConfirmed: null, drainageAvailable: true, potTopDiameterCm: null, potBottomDiameterCm: 10, potHeightCm: 12 } } }
+  const { baseUrl } = await startService({ getUserPlant: async () => ({ status: 200, body: { data: plant } }) })
+  const response = await getPlant(baseUrl, ownedPlantRef)
+  expect(response.status).toBe(200); expect(await response.json()).toEqual({ data: plant })
+})
+test.each([{ profile: null }, { profile: { nickname: '小青', secret: platformSubject } }, { profile: { nickname: '小青', measuredPot: null } }, { profile: { nickname: '小青', measuredPot: {} } }])('损坏或夹带受限档案字段的HTTP结果失败关闭：%j', async extra => {
+  const { baseUrl } = await startService({ getUserPlant: async () => ({ status: 200, body: { data: { ...ownedPlant, ...extra } as unknown as UserPlantDto } }) })
+  const response = await getPlant(baseUrl, ownedPlantRef), text = await response.text()
+  expect(response.status).toBe(500); expect(text).not.toContain(platformSubject); expect(text).not.toContain('measuredPot')
+})
+
 const principalInvalidBody = {
   error: { type: 'PRINCIPAL_INVALID', message: '身份凭证无效或已过期' }
 }

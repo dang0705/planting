@@ -36,6 +36,10 @@ function unconfirmedRow(
     created_at_ms: '1000',
     updated_at_ms: '2000',
     confirmed_identity_ref: null,
+    profile_internal_id: null,
+    profile_nickname: null,
+    profile_pot_json: null,
+    profile_openid: null,
     ...overrides
   }
 }
@@ -101,11 +105,13 @@ describe('读取单株用户植物 MySQL Repository', () => {
     expect(calls[zero]?.sql).toContain('`u`.`public_user_id` = ?')
     expect(calls[zero]?.sql).toContain('`p`.`public_user_plant_id` = ?')
     expect(calls[zero]?.sql).toContain("`p`.`lifecycle_status` IN ('active', 'archived')")
-    expect(JSON.stringify(calls[zero])).not.toContain('openid')
+    // SQL内部技术列不等于公开响应；参数必须只含已验证归属引用。
+    expect(JSON.stringify(calls[zero]?.parameters)).not.toContain('openid')
   })
 
   test('已确认身份只通过公开 pid 引用返回', async () => {
     const confirmed = {
+      ...unconfirmedRow(),
       kind: 'read-plant',
       public_user_plant_id: currentPlant,
       lifecycle_status: 'archived',
@@ -180,4 +186,22 @@ describe('读取单株用户植物 MySQL Repository', () => {
       ).rejects.toBeInstanceOf(UserPlantPersistenceError)
     }
   })
+})
+
+test('公开档案只返回昵称和合法测量，专业参数留在库内', async () => {
+  const pot = { actualInnerPotConfirmed: true, drainageAvailable: true, potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 12 }
+  const row = unconfirmedRow({ profile_internal_id: '42', profile_nickname: '小青', profile_openid: '', profile_pot_json: { measuredPot: pot, professionalParameters: { secret: '受限' }, substrate: '原值' } } as any)
+  const f = createExecutor([[row]])
+  const value = await createMysqlUserPlantRepository(f.executor).getOwnedUserPlant({ transactionContext: true, transactionRef: 'profile-read' }, currentUser, currentPlant)
+  expect(value).toEqual({ user_plant_id: currentPlant, lifecycle: 'active', identityStatus: 'unidentified', version: 2, createdAt: '1970-01-01T00:00:01.000Z', updatedAt: '1970-01-01T00:00:02.000Z', profile: { nickname: '小青', measuredPot: pot } })
+  expect(JSON.stringify(value)).not.toContain('受限')
+})
+test('仅昵称档案不补造测量，坏昵称/测量/技术归属失败关闭', async () => {
+  const valid = { profile_internal_id: '42', profile_nickname: '', profile_openid: '', profile_pot_json: {} }
+  const f = createExecutor([[unconfirmedRow(valid as any)]])
+  expect(await createMysqlUserPlantRepository(f.executor).getOwnedUserPlant({ transactionContext: true, transactionRef: 'profile-read' }, currentUser, currentPlant)).toMatchObject({ profile: { nickname: '' } })
+  for (const bad of [{ profile_nickname: null }, { profile_openid: '平台主体' }, { profile_pot_json: [] }, { profile_pot_json: { measuredPot: null } }, { profile_pot_json: { measuredPot: {} } }]) {
+    const g = createExecutor([[unconfirmedRow({ ...valid, ...bad } as any)]])
+    await expect(createMysqlUserPlantRepository(g.executor).getOwnedUserPlant({ transactionContext: true, transactionRef: 'profile-read' }, currentUser, currentPlant)).rejects.toBeInstanceOf(UserPlantPersistenceError)
+  }
 })

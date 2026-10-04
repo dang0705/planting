@@ -15,7 +15,6 @@ import type {
   ReserveAiQuotaCommandDto,
   RewardableDomainEventDto,
   ServicePrincipalDto,
-  UserPlantDto,
   UserPrincipalDto,
 } from "./types.js";
 import { USER_PLANT_INITIAL_VERSION } from "./types.js";
@@ -308,52 +307,7 @@ export const capabilitySnapshotSchema: JSONSchemaType<CapabilitySnapshotDto> = {
 };
 
 /** 用户植物公开投影 Schema；用 oneOf 锁定确认身份与当前状态的一致性。 */
-export const userPlantSchema: JSONSchemaType<UserPlantDto> = {
-  oneOf: [
-    {
-      type: "object",
-      additionalProperties: false,
-      required: [
-        "user_plant_id",
-        "lifecycle",
-        "identityStatus",
-        "version",
-        "createdAt",
-        "updatedAt",
-      ],
-      properties: {
-        user_plant_id: { type: "string", pattern: `^upl_${PUBLIC_REF_SUFFIX}$` },
-        lifecycle: { type: "string", enum: ["active", "archived", "deleting", "deleted"] },
-        identityStatus: { type: "string", enum: ["unidentified", "candidate_pending"] },
-        version: { type: "integer", minimum: 1 },
-        createdAt: { type: "string", pattern: ISO_UTC_PATTERN },
-        updatedAt: { type: "string", pattern: ISO_UTC_PATTERN },
-      },
-    },
-    {
-      type: "object",
-      additionalProperties: false,
-      required: [
-        "user_plant_id",
-        "lifecycle",
-        "identityStatus",
-        "confirmedIdentityRef",
-        "version",
-        "createdAt",
-        "updatedAt",
-      ],
-      properties: {
-        user_plant_id: { type: "string", pattern: `^upl_${PUBLIC_REF_SUFFIX}$` },
-        lifecycle: { type: "string", enum: ["active", "archived", "deleting", "deleted"] },
-        identityStatus: { type: "string", const: "confirmed" },
-        confirmedIdentityRef: { type: "string", pattern: `^pid_${PUBLIC_REF_SUFFIX}$` },
-        version: { type: "integer", minimum: 1 },
-        createdAt: { type: "string", pattern: ISO_UTC_PATTERN },
-        updatedAt: { type: "string", pattern: ISO_UTC_PATTERN },
-      },
-    },
-  ],
-};
+export { userPlantSchema } from "./user-plant-schema.js";
 
 /** 创建用户植物请求 Schema；任何客户端业务字段或放错位置的幂等键都必须拒绝。 */
 /** 微信登录请求只允许一次性 code，额外字段一律拒绝。 */

@@ -3,6 +3,7 @@ import type { IncomingHttpHeaders } from 'node:http'
 import Ajv, { type JSONSchemaType } from 'ajv'
 
 import type { UserPlantDto, UserPlantRef, UserPrincipalDto } from '../../contracts/types.js'
+import { userPlantSchema } from '../../contracts/user-plant-schema.js'
 import { createNodeRequestChainHandler } from '../../foundation/http/node-request-chain-handler.js'
 import {
   PublicRequestError,
@@ -67,6 +68,8 @@ const userPlantPathSchema: JSONSchemaType<UserPlantPathDto> = {
 }
 
 const validatePath = new Ajv({ allErrors: true }).compile(userPlantPathSchema)
+/** 在发送前执行严格公开响应准入，端口返回的对象不能因TS类型而被直接信任。 */
+const validatePlant = new Ajv({ strict: true, allErrors: true }).compile<UserPlantDto>(userPlantSchema)
 const badRequestStatus = 400
 const unauthorizedStatus = 401
 const notFoundStatus = 404
@@ -179,7 +182,10 @@ export function createGetUserPlantRouteHandler(
           return ownedPlant
         }
       },
-      publicResponse: { kind: 'execute', run: plant => plant },
+      publicResponse: { kind: 'execute', run: plant => {
+        if (!validatePlant(plant)) { throw new Error('用户植物公开响应未通过严格合同校验') }
+        return plant
+      } },
       writeAudit: dependencies.writeAudit
     })(request, response)
   }

@@ -157,6 +157,15 @@ type UserPlantBaseDto = {
   createdAt: string;
   /** 用户植物最近一次状态或资料变更时间，使用 ISO 8601 UTC 字符串。 */
   updatedAt: string;
+  /** 已保存档案的严格公开子集；没有档案时省略，不透传存储JSON。 */
+  profile?: UserPlantProfileDto;
+};
+
+/** 当前允许公开的档案事实；其余专业参数必须留在服务端。 */
+export type UserPlantProfileDto = {
+  /** 昵称原文，空字符串为已清除，不暴露任何内部状态。 */ nickname: string;
+  /** 存在且通过冻结Schema的实测事实；不存在时省略，不补造全null。 */
+  measuredPot?: import('../user-plant/domain/measured-pot-profile.js').MeasuredPotProfile;
 };
 
 /** 当前身份未确认时不得夹带已确认身份引用。 */
