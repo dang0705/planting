@@ -19,6 +19,7 @@ import { createGetUserPlantApplicationService } from '../../src/user-plant/appli
 import { createGetUserPlantRouteHandler, getUserPlantRoute } from '../../src/user-plant/http/get-user-plant-route.js'
 import { createRouteDispatcher } from '../../src/foundation/http/route-dispatcher.js'
 import type { UserRef } from '../../src/contracts/types.js'
+import { createUpdateProfileRouteHandler, updateProfileRoute } from '../../src/user-plant/http/update-profile-route.js'
 
 /** L3/unit_real_data：实际003聚合/档案DDL、mysql2、行锁与事务。
  * users及plant_identities仅为明确的归属/FK表桩，不证明身份域Schema或登录验真。
@@ -140,8 +141,16 @@ function application(mode?: 'unknown' | 'receipt') {
     reads++; const c = await source.getConnection()
     try { return await c.query(sql, toSqlParameters(args)) as unknown as readonly HttpIdempotencySqlRow[] } finally { c.release() }
   } })
-  const service = createMeasuredProfileApplicationService({ driver, profileRepository: repository, idempotencyRepository: idem, commitUnknownReadOnlyRepository: readOnly })
+  const userPlantRepository = createMysqlUserPlantRepository<MysqlTransactionContext<Mysql2QueryConnection>>({
+    executeQuery: async (tx, sql, args) => await tx.connection.query(sql, toSqlParameters(args)) as unknown as readonly UserPlantSqlRow[],
+    executeWrite: (tx, sql, args) => tx.connection.execute(sql, toSqlParameters(args))
+  })
+  const service = createMeasuredProfileApplicationService({ driver, profileRepository: repository, userPlantRepository, idempotencyRepository: idem, commitUnknownReadOnlyRepository: readOnly })
   return { service, readCount: () => reads }
+}
+/** 独立Expected来自固定SQL制品与公开聚合合同，不从被测读回生成。 */
+function savedResponse(name: string, version: number, profile: { nickname: string; measuredPot?: typeof measuredPot }, updatedAt = '1970-01-01T00:00:03.000Z') {
+  return { status: 200, body: { data: { user_plant_id: `upl_profile_${name}`, lifecycle: 'active', identityStatus: 'unidentified', version, createdAt: '1970-01-01T00:00:01.000Z', updatedAt, profile } } }
 }
 /** 合成请求摘要/保留期仅供已冻结内部端口测试，不成为正式HTTP策略。 */
 function appInput(name: string) {
@@ -151,7 +160,7 @@ function appInput(name: string) {
 test('实际幂等同键重放旧版本成功收据，异参冲突不增档案版本', async () => {
   const { service } = application(), request = appInput('idem00001')
   const first = await service(request)
-  expect(first).toEqual({ status: 200, body: { data: { userPlantRef: 'upl_profile_idem00001', version: 2, nickname: '小青', measuredPot } } })
+  expect(first).toEqual(savedResponse('idem00001', 2, { nickname: '小青', measuredPot }))
   expect(await service(request)).toEqual(first)
   expect((await service({ ...request, idempotency: { ...request.idempotency, requestHash: 'f'.repeat(64) } })).status).toBe(409)
   const [rows] = await db.query('SELECT p.version AS aggregate,f.version AS profile FROM user_plants p JOIN user_plant_profiles f ON f.user_plant_internal_id=p.id WHERE p.id=7')
@@ -182,20 +191,20 @@ test('首次仅昵称不补造测量，后续仅测量保留昵称和原事实',
   const { service } = application(), first = appInput('nickonly1')
   const { measuredPot: _ignored, ...nicknameCommand } = first.command
   const initial = await service({ ...first, command: nicknameCommand })
-  expect(initial).toEqual({ status: 200, body: { data: { userPlantRef: 'upl_profile_nickonly1', version: 2, nickname: '小青' } } })
+  expect(initial).toEqual(savedResponse('nickonly1', 2, { nickname: '小青' }))
   const [rows] = await db.query('SELECT nickname,pot_profile_json FROM user_plant_profiles WHERE user_plant_internal_id=11')
   expect(rows).toEqual([{ nickname: '小青', pot_profile_json: {} }])
   const { nickname: _unused, ...potCommand } = first.command
   const next = await service({ command: { ...potCommand, expectedVersion: 2, occurredAtMs: 4000 }, idempotency: { ...first.idempotency, idempotencyKeyHash: 'd'.repeat(64), requestHash: 'e'.repeat(64), createdAtMs: 4000 } })
-  expect(next).toEqual({ status: 200, body: { data: { userPlantRef: 'upl_profile_nickonly1', version: 3, nickname: '小青', measuredPot } } })
+  expect(next).toEqual(savedResponse('nickonly1', 3, { nickname: '小青', measuredPot }, '1970-01-01T00:00:04.000Z'))
 })
 test('首次仅测量遵守SQL空昵称，后续清除昵称不改变测量事实', async () => {
   const { service } = application(), first = appInput('potonly01')
   const { nickname: _ignored, ...potCommand } = first.command
-  expect(await service({ ...first, command: potCommand })).toEqual({ status: 200, body: { data: { userPlantRef: 'upl_profile_potonly01', version: 2, nickname: '', measuredPot } } })
+  expect(await service({ ...first, command: potCommand })).toEqual(savedResponse('potonly01', 2, { nickname: '', measuredPot }))
   const { measuredPot: _unused, ...nicknameCommand } = first.command
   const next = await service({ command: { ...nicknameCommand, nickname: '', expectedVersion: 2, occurredAtMs: 4000 }, idempotency: { ...first.idempotency, idempotencyKeyHash: 'f'.repeat(64), requestHash: 'a'.repeat(64), createdAtMs: 4000 } })
-  expect(next).toEqual({ status: 200, body: { data: { userPlantRef: 'upl_profile_potonly01', version: 3, nickname: '', measuredPot } } })
+  expect(next).toEqual(savedResponse('potonly01', 3, { nickname: '', measuredPot }, '1970-01-01T00:00:04.000Z'))
 })
 test('真实HTTP单株读回保存档案且不透传专业参数，跨用户404', async () => {
   const driver = createMysqlTransactionDriver(source, () => undefined)
@@ -218,5 +227,37 @@ test('真实HTTP单株读回保存档案且不透传专业参数，跨用户404'
     expect(body).toEqual({ data: { user_plant_id: 'upl_profile_preserve1', lifecycle: 'active', identityStatus: 'unidentified', version: 2, createdAt: '1970-01-01T00:00:01.000Z', updatedAt: '1970-01-01T00:00:03.000Z', profile: { nickname: '', measuredPot: { ...measuredPot, potHeightCm: 10 } } } })
     expect(JSON.stringify(body)).not.toContain('professionalParameters')
     const cross = await fetch(url, { headers: { authorization: 'Bearer other-user' } }); expect(cross.status).toBe(404)
+  } finally { await new Promise<void>((resolve, reject) => server.close(err => err ? reject(err) : resolve())) }
+})
+test('真实PATCH→完整收据→GET，重放同结果、异参/旧版本/跨用户均不重复写', async () => {
+  const driver = createMysqlTransactionDriver(source, () => undefined)
+  const reader = createMysqlUserPlantRepository<MysqlTransactionContext<Mysql2QueryConnection>>({
+    executeQuery: async (tx, sql, args) => await tx.connection.query(sql, toSqlParameters(args)) as unknown as readonly UserPlantSqlRow[],
+    executeWrite: (tx, sql, args) => tx.connection.execute(sql, toSqlParameters(args))
+  })
+  const getUserPlant = createGetUserPlantApplicationService({ driver, repository: reader })
+  // 仅身份验真和策略读取端口替身；策略数值为本场景合成制品，不是运行时默认。
+  const resolvePrincipal = async (command: { bearerToken: string }) => ({ principalType: 'user' as const, user_id: (command.bearerToken === 'other-user' ? 'usr_profile_owner02' : 'usr_profile_owner01') as UserRef, authenticatedVia: 'wechat' as const, sessionVersion: 1, issuedAt: '1970-01-01T00:00:01.000Z', expiresAt: '1970-01-02T00:00:00.000Z' })
+  const common = { resolvePrincipal, getUserPlant, now: () => 5000, writeAudit: () => undefined }
+  const dispatch = createRouteDispatcher([
+    { route: getUserPlantRoute, handler: createGetUserPlantRouteHandler(common) },
+    { route: updateProfileRoute, handler: createUpdateProfileRouteHandler({ ...common, saveProfile: application().service, maxBodyBytes: 1024, resolveWritePolicy: async () => ({ profileVersion: 'user-plant-profile/v1', idempotencyRetentionMs: 6000 }) }) }
+  ])
+  const server = createServer((req, res) => { dispatch(req, res).catch(() => undefined) })
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
+  const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/api/v2/user-plants/upl_profile_guards001`
+  const patch = (body: unknown, key = 'http-profile-key', token = 'owner-user') => fetch(url, { method: 'PATCH', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json', 'idempotency-key': key }, body: JSON.stringify(body) })
+  try {
+    const body = { version: 1, nickname: 'HTTP小青', measuredPot }
+    const first = await patch(body), firstBody = await first.json()
+    expect(first.status).toBe(200)
+    expect(firstBody).toEqual(savedResponse('guards001', 2, { nickname: 'HTTP小青', measuredPot }, '1970-01-01T00:00:05.000Z').body)
+    const replay = await patch(body); expect(replay.status).toBe(200); expect(await replay.json()).toEqual(firstBody)
+    expect((await patch({ ...body, nickname: '异参' })).status).toBe(409)
+    expect((await patch(body, 'stale-profile-key')).status).toBe(409)
+    expect((await patch(body, 'cross-profile-key', 'other-user')).status).toBe(404)
+    const read = await fetch(url, { headers: { authorization: 'Bearer owner-user' } }); expect(read.status).toBe(200); expect(await read.json()).toEqual(firstBody)
+    const [rows] = await db.query('SELECT p.version AS aggregate,f.version AS profile FROM user_plants p JOIN user_plant_profiles f ON f.user_plant_internal_id=p.id WHERE p.id=3')
+    expect(rows).toEqual([{ aggregate: 2, profile: 1 }])
   } finally { await new Promise<void>((resolve, reject) => server.close(err => err ? reject(err) : resolve())) }
 })

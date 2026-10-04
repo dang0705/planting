@@ -3,6 +3,11 @@ import { reconcileHttpIdempotencyCommitResult, type HttpIdempotencyCommitUnknown
 import type { HttpIdempotencyPublicResponseSnapshot } from '../../foundation/idempotency/http-idempotency.js'
 import type { HttpIdempotencyReservationInput, MysqlHttpIdempotencyRepository } from '../../foundation/idempotency/mysql-http-idempotency-repository.js'
 import { lockMeasuredProfileSaveInput, type MeasuredProfileSaveInput, type MeasuredProfileSaveResult } from '../repository/mysql-measured-profile-repository.js'
+import Ajv from 'ajv'
+import { userPlantSchema } from '../../contracts/user-plant-schema.js'
+import type { UserPlantDto, UserPlantRef, UserRef } from '../../contracts/types.js'
+import type { MysqlUserPlantRepository } from '../repository/mysql-user-plant-repository.js'
+import { serializeCanonicalJson, type CanonicalJsonValue } from '../../foundation/json/canonical-json-sha256.js'
 
 /** 受信内部命令；HTTP身份、策略及请求摘要必须由外层各自核验，不能接收客户端直接调用。 */
 export interface MeasuredProfileApplicationInput {
@@ -11,6 +16,7 @@ export interface MeasuredProfileApplicationInput {
 }
 /** 本用例只编排既有事务和幂等，不新建连接或隐式策略。 */
 export interface MeasuredProfileApplicationDependencies<T extends TransactionExecutionContext> {
+  /** 保存后同事务归属读取完整公开聚合，不能再开启新事务。 */ readonly userPlantRepository: Pick<MysqlUserPlantRepository<T>, 'getOwnedUserPlant'>
   /** 当前业务事务的唯一生命周期驱动。 */ readonly driver: DatabaseTransactionDriver<T>
   /** 与档案保存共享事务的占位和完成收据。 */ readonly idempotencyRepository: MysqlHttpIdempotencyRepository<T>
   /** 已验收的归属/旧版本/局部JSON保存入口。 */ readonly profileRepository: {
@@ -22,7 +28,9 @@ export interface MeasuredProfileApplicationDependencies<T extends TransactionExe
 function error(status: number, type: string, message: string): HttpIdempotencyPublicResponseSnapshot {
   return { status, body: { error: { type, message } } }
 }
-/** 昵称与实测盆器事实的应用切片；内部响应不能替代完整档案HTTP合同。 */
+/** 完整公开响应的严格Schema，不因Repository静态类型而跳过运行时检查。 */
+const validatePlant = new Ajv({ strict: true, allErrors: true }).compile<UserPlantDto>(userPlantSchema)
+/** 昵称与实测盆器事实的应用切片；成功收据使用同事务完整公开读回。 */
 export function createMeasuredProfileApplicationService<T extends TransactionExecutionContext>(dependencies: MeasuredProfileApplicationDependencies<T>) {
   return async (input: MeasuredProfileApplicationInput): Promise<HttpIdempotencyPublicResponseSnapshot> => {
     const command = lockMeasuredProfileSaveInput(input.command)
@@ -36,7 +44,16 @@ export function createMeasuredProfileApplicationService<T extends TransactionExe
         const result = await dependencies.profileRepository.save(tx, command)
         let response: HttpIdempotencyPublicResponseSnapshot
         switch (result.status) {
-          case 'saved': response = { status: 200, body: { data: { userPlantRef: result.userPlantRef, version: result.version, nickname: result.nickname, ...(result.measuredPot === undefined ? {} : { measuredPot: result.measuredPot }) } } }; break
+          case 'saved': {
+            const readback = await dependencies.userPlantRepository.getOwnedUserPlant(tx, command.userRef as UserRef, command.userPlantRef as UserPlantRef)
+            const plant: unknown = JSON.parse(serializeCanonicalJson(readback as unknown as CanonicalJsonValue))
+            const expectedProfile = { nickname: result.nickname, ...(result.measuredPot === undefined ? {} : { measuredPot: result.measuredPot }) }
+            if (!validatePlant(plant) || plant.user_plant_id !== command.userPlantRef || plant.version !== result.version || plant.profile === undefined
+              || serializeCanonicalJson(plant.profile as unknown as CanonicalJsonValue) !== serializeCanonicalJson(expectedProfile as unknown as CanonicalJsonValue)) {
+              throw new Error('档案保存后的完整公开读回不匹配')
+            }
+            response = { status: 200, body: { data: plant } }; break
+          }
           case 'not_found': response = error(404, 'USER_PLANT_NOT_FOUND', '用户植物不存在'); break
           case 'version_conflict': response = error(409, 'USER_PLANT_VERSION_CONFLICT', '植物档案已更新，请重新读取'); break
           case 'unavailable': throw new Error('档案持久化不可用，必须整体回滚')

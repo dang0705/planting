@@ -8,17 +8,29 @@ import type { HttpIdempotencyStoredRecord } from '../../src/foundation/idempoten
 const measuredPot = { actualInnerPotConfirmed: true, drainageAvailable: true, potTopDiameterCm: 20, potBottomDiameterCm: 10, potHeightCm: 12 }
 const command = { userRef: 'usr_profile_owner01', userPlantRef: 'upl_profile_save001', expectedVersion: 1, nickname: '小青', measuredPot, profileVersion: 'profile/v1', occurredAtMs: 3000 }
 const idempotency = { principalType: 'user' as const, principalScopeHash: 'a'.repeat(64), httpMethod: 'PATCH', normalizedPath: '/api/v2/user-plants/{userPlantRef}', operationId: 'updateUserPlant', idempotencyKeyHash: 'b'.repeat(64), requestHash: 'c'.repeat(64), createdAtMs: 3000, expiresAtMs: 6000 }
-const response = { status: 200, body: { data: { userPlantRef: 'upl_profile_save001', version: 2, nickname: '小青', measuredPot } } }
+const fullPlant = { user_plant_id: 'upl_profile_save001', lifecycle: 'active', identityStatus: 'unidentified', version: 2, createdAt: '1970-01-01T00:00:01.000Z', updatedAt: '1970-01-01T00:00:03.000Z', profile: { nickname: '小青', measuredPot } }
+const response = { status: 200, body: { data: fullPlant } }
 function fixture() {
   const tx = { transactionContext: true as const }
   const driver = { beginTransaction: vi.fn(async () => tx), commitTransaction: vi.fn(async () => undefined), rollbackTransaction: vi.fn(async () => undefined), recordRollbackFailure: vi.fn() }
-  const save = vi.fn(async (_tx: unknown, _command: unknown) => ({ status: 'saved' as const, ...response.body.data }))
+  const save = vi.fn(async (_tx: unknown, _command: unknown) => ({ status: 'saved' as const, userPlantRef: 'upl_profile_save001', version: 2, nickname: '小青', measuredPot }))
   const reserve = vi.fn(async (): Promise<any> => ({ kind: 'reserved' }))
   const complete = vi.fn(async (_tx: unknown, value: any): Promise<any> => ({ kind: 'completed', response: value.response }))
   const read = vi.fn(async (): Promise<HttpIdempotencyStoredRecord | null> => null)
-  const service = createMeasuredProfileApplicationService({ driver, profileRepository: { save }, idempotencyRepository: { read: vi.fn(), tryReserve: reserve, completionFirstResult: complete }, commitUnknownReadOnlyRepository: { read } })
-  return { service, tx, driver, save, reserve, complete, read }
+  const getOwnedUserPlant = vi.fn(async (): Promise<any> => fullPlant)
+  const service = createMeasuredProfileApplicationService({ driver, profileRepository: { save }, userPlantRepository: { getOwnedUserPlant }, idempotencyRepository: { read: vi.fn(), tryReserve: reserve, completionFirstResult: complete }, commitUnknownReadOnlyRepository: { read } })
+  return { service, tx, driver, save, reserve, complete, read, getOwnedUserPlant }
 }
+test('成功收据必须为同事务完整公开读回，禁止内部保存子集', async () => {
+  const f = fixture()
+  expect(await f.service({ command, idempotency })).toEqual({ status: 200, body: { data: fullPlant } })
+  expect(f.getOwnedUserPlant).toHaveBeenCalledWith(f.tx, command.userRef, command.userPlantRef)
+})
+test.each([{ version: 9 }, { user_plant_id: 'upl_other_owner01' }, { secret: 'SQL受限原文' }, { profile: { nickname: '不一致' } }])('完整读回不匹配或含受限字段时回滚：%j', async extra => {
+  const f = fixture(); f.getOwnedUserPlant.mockResolvedValue({ ...fullPlant, ...extra })
+  await expect(f.service({ command, idempotency })).rejects.toThrow()
+  expect(f.complete).not.toHaveBeenCalled(); expect(f.driver.rollbackTransaction).toHaveBeenCalledOnce()
+})
 test('首次保存和完成收据共享事务，成功只含允许字段', async () => {
   const f = fixture(); expect(await f.service({ command, idempotency })).toEqual(response)
   expect(f.save).toHaveBeenCalledWith(f.tx, command)

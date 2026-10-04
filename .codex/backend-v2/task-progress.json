@@ -1,15 +1,15 @@
 {
-  "revision": 94,
+  "revision": 95,
   "currentStep": "E03",
   "currentTicketId": "z8v0kmr9mj",
-  "updatedAt": "2026-10-04T20:49:59.432343+00:00",
+  "updatedAt": "2026-10-04T20:59:46.061866+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "E03保存后的既有单株GET公开读回",
-    "minimumVerification": "归属联合SQL、白名单档案投影、严格输出准入及真实HTTP/MySQL读回",
-    "result": "公开已冻结字段读回通过；整体E03未完成",
-    "rollback": "撤回可选公开档案及GET接线，原SQL专业参数保持不变",
-    "nextAction": "将档案写入成功收据切换为同事务完整用户植物公开读回，接严格PATCH请求链；其余档案字段和正式身份/策略、临时TTL继续补齐"
+    "target": "E03已冻结档案PATCH与完整公开成功收据",
+    "minimumVerification": "请求链、同事务读回、幂等重放与实际HTTP/MySQL",
+    "result": "本地已冻结字段切片通过；正式策略/身份及整体E03未完成",
+    "rollback": "撤回PATCH注册与完整收据接线；现有事实及专业参数保留",
+    "nextAction": "接可信已发布档案及HTTP策略读取；冻结其余档案字段，临时TTL与显式认领待确认"
   },
   "tasks": [
     {
@@ -256,10 +256,10 @@
     {
       "id": "z8v0kmr9mj",
       "step": "E03",
-      "version": 6,
+      "version": 7,
       "priority": "high",
       "status": "codex running",
-      "stage": "既有GET公开档案子集读回已验证；PATCH/正式身份/完整档案未验收",
+      "stage": "已冻结档案PATCH本地HTTP/SQL验证通过；正式策略及身份未验收",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E03-promotion-context.json",
@@ -269,18 +269,19 @@
         ".codex/backend-v2/evidence/E03-measured-profile-persistence.json",
         ".codex/backend-v2/evidence/E03-measured-profile-application.json",
         ".codex/backend-v2/evidence/E03-profile-patch.json",
-        ".codex/backend-v2/evidence/E03-public-profile-read.json"
+        ".codex/backend-v2/evidence/E03-public-profile-read.json",
+        ".codex/backend-v2/evidence/E03-profile-update-http.json"
       ],
       "summary": [
-        "E03：既有单株GET返回严格昵称/测量事实，不透传专业JSON",
-        "真实HTTP→MySQL同用户200、跨用户404；SQL13项通过",
-        "Repository2项/响应守卫4项经典RED→相关29项GREEN",
-        "根与Node22全量1562/1562；类型/检查/构建通过",
-        "身份替身不等于登录验真；PATCH/完整档案仍未验收"
+        "E03：PATCH→同事务完整公开读回→幂等收据已接通",
+        "真实HTTP/MySQL14项，覆盖重放/异参/旧版本/跨用户",
+        "完整读回5项与注册1项经典RED；归属突变10项RED→恢复",
+        "根与Node22全量1599/1599；类型/检查/构建通过",
+        "缺正式策略返回503零DB写；完整档案/身份/认领仍未验收"
       ],
       "blockingReason": null,
-      "nextAction": "将档案写入成功收据切换为同事务完整用户植物公开读回，接严格PATCH请求链；其余档案字段和正式身份/策略、临时TTL继续补齐",
-      "ticketReadback": "Chrome CODEX RUNNING与五行评论1100440000090905已读回",
+      "nextAction": "接可信已发布档案及HTTP策略读取；冻结其余档案字段，临时TTL与显式认领待确认",
+      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090908已读回",
       "priorityReason": "当前用户植物纵向切片的必要合同前置，未等待无关CMS"
     }
   ],
@@ -385,7 +386,7 @@
       ]
     }
   ],
-  "nextAction": "将档案写入成功收据切换为同事务完整用户植物公开读回，接严格PATCH请求链；其余档案字段和正式身份/策略、临时TTL继续补齐",
+  "nextAction": "接可信已发布档案及HTTP策略读取；冻结其余档案字段，临时TTL与显式认领待确认",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",

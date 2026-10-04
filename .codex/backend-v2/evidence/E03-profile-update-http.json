@@ -1,0 +1,72 @@
+{
+  "ticket": "z8v0kmr9mj",
+  "step": "E03",
+  "verifiedAt": "2026-10-04T20:59:46.061866+00:00",
+  "scope": "已冻结昵称/测量档案PATCH及同事务完整公开收据",
+  "expected": [
+    "统一计划归属、幂等与公开脱敏规则",
+    "profile-patch.v1.schema.json",
+    "public-profile-contract.md",
+    "profile-http-contract.md"
+  ],
+  "configuration": "已定向核验目录user-plant.profile.minimum_completeness为confirmed、版本user-plant-profile/v1；不等于运行时已发布。请求大小与收据保留策略只接受可信输入，不设默认。",
+  "contextReuse": "复用E03-promotion-context准入，仅定向核验用户植物配置条目；未扩大读取架构目录。",
+  "verification": {
+    "tdd": {
+      "path": "完整成功读回5项经典RED、server注册缺策略1项经典RED；归属守卫突变10项RED后逐字节恢复GREEN",
+      "logs": [
+        "/tmp/planting-e03-profile-full-result-red.log",
+        "/tmp/planting-e03-profile-server-red.log",
+        "/tmp/planting-e03-update-profile-route-ownership-mutation-red.log"
+      ],
+      "routeTests": 31
+    },
+    "mysql": {
+      "tests": 14,
+      "log": "/tmp/planting-e03-profile-patch-http-mysql-final.log",
+      "layer": "unit_real_data",
+      "path": "本地真实node:http PATCH→固定请求链→应用事务/幂等/Repository→MySQL8.4→完整公开收据；随后GET相同结果、重放、异参、旧版本、跨用户拒绝",
+      "replaced": "身份Principal与已发布策略端口为明确替身，用户/身份仅FK桩；不证明真实登录或CloudBase部署"
+    },
+    "rootUT": {
+      "files": 177,
+      "tests": 1599,
+      "exit": 0
+    },
+    "node22UT": {
+      "files": 177,
+      "tests": 1599,
+      "exit": 0
+    },
+    "typecheck": {
+      "exit": 0
+    },
+    "lint": {
+      "exit": 0,
+      "errors": 0,
+      "warnings": 2410
+    },
+    "build": {
+      "exit": 0,
+      "limit": "子npm仍Node24 engine警告，不是线上运行证明"
+    },
+    "finalLogsPrefix": "/tmp/planting-e03-profile-http-final-"
+  },
+  "boundaries": [
+    "正式入口未注入已发布档案/HTTP策略时PATCH返回503且不访问数据库",
+    "真实身份/会话与策略读取未验收",
+    "完整档案其余字段、登录临时TTL与显式认领未完成",
+    "H5仅同步投影制品，无当前8765页面运行证据"
+  ],
+  "hashes": {
+    "cloudfunctions-v2/src/user-plant/application/save-measured-profile.ts": "92ee14428f15aeb3c5d2ab6fff167aa942052fe0429c2405f1b76e5d104896f0",
+    "cloudfunctions-v2/src/user-plant/http/server.ts": "d89efaaf1819f72fe2a20de5eccec0797e49640572972510f235b9a836170505",
+    "cloudfunctions-v2/src/user-plant/http/update-profile-route.ts": "d92ed6c3dcd2e111f7070c5da4830603e59d3af44b144a7681548a5a62110361",
+    "cloudfunctions-v2/test/user-plant/save-measured-profile.spec.ts": "e17d960c82d1263a2afc24d507154d7b34438fb51d66b143be0a6cc640d303b5",
+    "cloudfunctions-v2/test/user-plant/profile-update-server.spec.ts": "856cbf561492fde70700fd93e0e46f19f5a1698d0373cdd9c20db346d1988bf0",
+    "cloudfunctions-v2/test/user-plant/update-profile-route.spec.ts": "d0a9e9a71bb9bfe350c343b5cf22f584ac774ef743894d093027823f41265c86",
+    "cloudfunctions-v2/test/e2e/measured-profile.mysql.spec.ts": "4db907eabfb3efd76136556eda30c8f62ec8e6b490d597e3ce837fb584808bb1",
+    "cloudfunctions-v2/models/user-plant/measured-profile-application-contract.md": "45028105ebbed5da28c16a51bfbb1cafa5c82aa812117fc2d3c5764046a3c008",
+    "cloudfunctions-v2/models/user-plant/profile-http-contract.md": "1a42c8342a7fd10fbacb3bdebc02a66491a301f1898040973f4f37b1bc07c3b5"
+  }
+}

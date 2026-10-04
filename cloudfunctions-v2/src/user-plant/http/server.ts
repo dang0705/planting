@@ -40,6 +40,9 @@ import {
 } from '../repository/mysql-user-plant-repository.js'
 import { createGetUserPlantRouteHandler, getUserPlantRoute } from './get-user-plant-route.js'
 import { createUserPlantRoute, createUserPlantRouteHandler } from './create-user-plant-route.js'
+import { createMeasuredProfileApplicationService } from '../application/save-measured-profile.js'
+import { createMysqlMeasuredProfileRepository } from '../repository/mysql-measured-profile-repository.js'
+import { createUpdateProfileRouteHandler, updateProfileRoute, type UpdateProfileRouteDependencies } from './update-profile-route.js'
 import {
   archiveUserPlantRoute,
   createArchiveUserPlantRouteHandler,
@@ -49,6 +52,8 @@ import {
 
 /** user-plant 云函数 HTTP 服务依赖。 */
 export type UserPlantServerDependencies = {
+  /** 已发布档案写入策略适配；未接入时PATCH失败关闭，不猜大小、有效期或策略版本。 */
+  readonly profileWrite?: Pick<UpdateProfileRouteDependencies, 'maxBodyBytes' | 'resolveWritePolicy'>
   /** 每请求独占连接来源；连接参数由入口从受控环境变量读取。 */
   readonly connectionSource: MysqlConnectionPoolPort<Mysql2QueryConnection>
   /** 服务端可信时钟，返回当前 UTC 毫秒。 */
@@ -130,6 +135,10 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
     idempotencyRepository,
     commitUnknownReadOnlyRepository
   })
+  const saveProfile = createMeasuredProfileApplicationService({
+    driver, profileRepository: createMysqlMeasuredProfileRepository(), userPlantRepository,
+    idempotencyRepository, commitUnknownReadOnlyRepository
+  })
   const lifecycleRepository = createMysqlUserPlantLifecycleRepository<
     MysqlTransactionContext<Mysql2QueryConnection>
   >({
@@ -161,6 +170,14 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
   }
 
   const dispatch = createRouteDispatcher([
+    {
+      route: updateProfileRoute,
+      handler: createUpdateProfileRouteHandler({
+        resolvePrincipal, getUserPlant, saveProfile, now: dependencies.now, writeAudit: dependencies.writeAudit,
+        maxBodyBytes: dependencies.profileWrite?.maxBodyBytes ?? null,
+        resolveWritePolicy: dependencies.profileWrite?.resolveWritePolicy ?? (async () => null)
+      })
+    },
     {
       route: createUserPlantRoute,
       handler: createUserPlantRouteHandler({
