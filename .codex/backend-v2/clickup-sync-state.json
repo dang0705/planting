@@ -18,12 +18,12 @@
       "readback": "Chrome同一E01状态done、前置E00 done及完整验收评论1100440000089626读回"
     },
     "z8v0kmr971": {
-      "version": 3,
+      "version": 4,
       "status": "codex running",
-      "note": "E02当前子项：目录引用+slug+SQL百科只读已验证\n9项隔离HTTP、5项真实MySQL/HTTP场景通过\n后端全量702/702；共享原票CMS发布等范围仍未验收\n图片保持空值；封面同步及浇水来源边界待核验",
-      "commentId": "1100440000089636",
-      "commentFingerprint": "a351310d225194ffe4c7ec8668eeae569d7dd6e5ebd24616010c44a911910263",
-      "readback": "Chrome当前E02/E05原票保持codex running，完整四行评论1100440000089636读回"
+      "note": "E02：当前线上同步版本与分钟定时器已只读核验\n非空浇水来源仅更新measurementValue；3条SQL样本保留其他字段\n实际部署纯函数4项通过；丢字段突变3项RED→恢复\n根及Node22全量1454/1454；类型/lint零错误；无云端修改\nCMS发布及全量数据/图片准入仍未验收，原票保持进行中",
+      "commentId": "1100440000090666",
+      "commentFingerprint": "aeb5b0f7d85896dd226e5bb465f678226d58ef848992a9ebb5d98d97e3322251",
+      "readback": "Chrome CODEX RUNNING及五行评论1100440000090666已读回"
     },
     "z8v0kmr970": {
       "version": 2,
@@ -58,11 +58,11 @@
       "readback": "Chrome HUMAN REQUIRED与五行评论1100440000090656已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T19:34:43.007Z",
+  "lastSuccessfulSyncAt": "2026-10-04T19:43:37.472Z",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "ed7559ab4ce602cee53c7dbb40503c42122c1f3258cf890427747d2abd1c39c0",
-    "sourceRevision": 83,
-    "sourceUpdatedAt": "2026-10-04T19:34:25.989Z"
+    "fingerprint": "3177c94215dafa121ff31840e89f1e2ff80bae7a55bb0fd21edd19e654ef3fc3",
+    "sourceRevision": 84,
+    "sourceUpdatedAt": "2026-10-04T19:41:28.823Z"
   }
 }

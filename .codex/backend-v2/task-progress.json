@@ -1,16 +1,16 @@
 {
-  "revision": 83,
-  "currentStep": "E05",
-  "currentTicketId": "z8v0kmr974",
-  "updatedAt": "2026-10-04T19:34:25.989Z",
+  "revision": 84,
+  "currentStep": "E02",
+  "currentTicketId": "z8v0kmr971",
+  "updatedAt": "2026-10-04T19:41:28.823Z",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "完成E05答案归一可审核稿并明确待确认边界",
-    "minimumValidation": "完整V1来源SHA、85输入组合覆盖、57候选代码唯一/长度、全部pending及运行不可用",
-    "continueCondition": "用户确认语义及命名后进入受控配置/Expected/实现",
-    "failureCondition": "无确认不把候选映射用于正式诊断",
-    "rollback": "审核稿调整不影响既有数据/运行结果",
-    "timeLimit": "20分钟"
+    "target": "完成E02同步字段及浇水来源保护边界的当前部署/真实SQL核验",
+    "minimumValidation": "当前函数/定时器、实际纯函数保护Expected、三条真实SQL同步前后非measurementValue字段比较",
+    "continueCondition": "无缺陷则交付边界验证，不修改既有同步任务",
+    "failureCondition": "样本不一致则记录具体字段，停止扩大变更",
+    "rollback": "只读审查，无云端回退或资源修改",
+    "timeLimit": "30分钟"
   },
   "tasks": [
     {
@@ -75,22 +75,25 @@
     {
       "id": "z8v0kmr971",
       "step": "E02",
-      "version": 3,
+      "version": 4,
       "priority": "normal",
       "status": "codex running",
-      "stage": "验证与持久化读回",
+      "stage": "百科只读及同步来源保护已验证；CMS剩余范围未验收",
       "accepted": false,
       "evidence": [
-        ".codex/backend-v2/evidence/E02.json"
+        ".codex/backend-v2/evidence/E02.json",
+        ".codex/backend-v2/evidence/E02-cover-sync-boundary.json",
+        ".codex/backend-v2/evidence/E02-water-source-deployed.fixture.json"
       ],
       "summary": [
-        "E02当前子项：目录引用+slug+SQL百科只读已验证",
-        "9项隔离HTTP、5项真实MySQL/HTTP场景通过",
-        "后端全量702/702；共享原票CMS发布等范围仍未验收",
-        "图片保持空值；封面同步及浇水来源边界待核验"
+        "E02：当前线上同步版本与分钟定时器已只读核验",
+        "非空浇水来源仅更新measurementValue；3条SQL样本保留其他字段",
+        "实际部署纯函数4项通过；丢字段突变3项RED→恢复",
+        "根及Node22全量1454/1454；类型/lint零错误；无云端修改",
+        "CMS发布及全量数据/图片准入仍未验收，原票保持进行中"
       ],
-      "ticketReadback": "Chrome当前E02/E05原票保持codex running，完整四行评论1100440000089636读回",
-      "nextAction": "定向核验封面同步字段所有权、浇水来源保护及CMS发布剩余子项",
+      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090666已读回",
+      "nextAction": "E02来源保护边界已核验；继续原票CMS分类/知识审核发布剩余范围；E05归一审核仍待用户确认",
       "blockingReason": null
     },
     {
@@ -347,7 +350,7 @@
       ]
     }
   ],
-  "nextAction": "确认最小答案申报语义及命名后登记受控映射，按独立Expected实现归一；确认前不消费审核稿",
+  "nextAction": "E02来源保护边界已核验；继续原票CMS分类/知识审核发布剩余范围；E05归一审核仍待用户确认",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -1025,5 +1028,11 @@
     "source": "已读源码和答案保存合同，复用原有004/019迁移测试夹具，不重新读取架构包",
     "configurationDecision": "无新增参数/配置/表/DTO/HTTP，短事务受控内部读取",
     "remaining": "正式答案和视觉finding映射、最终归约、模型Provider准入"
+  },
+  "careExecutionEnvironmentProbe": {
+    "camundaModelerFound": false,
+    "c8ctlFound": false,
+    "feelExecutionDependencyFound": false,
+    "result": "不具备DMN行为执行验收环境，未安装新依赖，不把结构校验当行为验收"
   }
 }

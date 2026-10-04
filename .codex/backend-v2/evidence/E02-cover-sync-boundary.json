@@ -1,0 +1,156 @@
+{
+  "step": "E02",
+  "ticketId": "z8v0kmr971",
+  "accepted": false,
+  "boundaryVerified": true,
+  "readOnly": true,
+  "function": {
+    "name": "plant-knowledge-tropicals-cover-sync",
+    "environment": "cloud1-2grufevs395a9d5e",
+    "status": "Active",
+    "runtime": "Nodejs22.21",
+    "modifiedAt": "2026-10-05 00:11:12",
+    "version": "$LATEST",
+    "triggers": [
+      {
+        "name": "tropicals-cover-minute",
+        "type": "timer",
+        "description": "{\"cron\":\"0 * * * * * *\"}"
+      }
+    ]
+  },
+  "sourceProtection": {
+    "readCurrentDeployedCode": true,
+    "rule": "保留非空来源对象及record字段，仅替换measurementValue；无有效record则不改来源",
+    "sqlScope": "qinghuazhi_v2_test.tropicals_species_encyclopedia_ref与plant_search_documents；原值和任务lease/版本限制保护写入",
+    "notInternalCareKnowledge": true,
+    "codeSnippetSha256": "fadd103b221d76d50b0a42cae3385f0b2bc11cfc5a6d48f2d45f825c71e6f8a7"
+  },
+  "sqlSample": [
+    {
+      "has_before_source": 1,
+      "record_keys": [
+        "taxonID",
+        "measurementID",
+        "measurementType",
+        "measurementUnit",
+        "measurementValue",
+        "measurementMethod",
+        "measurementTypeID",
+        "measurementUnitID",
+        "measurementRemarks",
+        "measurementValueID",
+        "measurementDeterminedBy",
+        "measurementDeterminedDate"
+      ],
+      "scientific_name": "Monstera deliciosa",
+      "source_keys": [
+        "record",
+        "source_url",
+        "source_sha256",
+        "independent_review_status"
+      ],
+      "source_value": "regular",
+      "unchanged_except_value": 1,
+      "water_frequency_tier": "regular"
+    },
+    {
+      "has_before_source": 1,
+      "record_keys": [
+        "taxonID",
+        "measurementID",
+        "measurementType",
+        "measurementUnit",
+        "measurementValue",
+        "measurementMethod",
+        "measurementTypeID",
+        "measurementUnitID",
+        "measurementRemarks",
+        "measurementValueID",
+        "measurementDeterminedBy",
+        "measurementDeterminedDate"
+      ],
+      "scientific_name": "Strelitzia reginae",
+      "source_keys": [
+        "record",
+        "source_url",
+        "source_sha256",
+        "independent_review_status"
+      ],
+      "source_value": "regular",
+      "unchanged_except_value": 1,
+      "water_frequency_tier": "regular"
+    },
+    {
+      "has_before_source": 1,
+      "record_keys": [
+        "taxonID",
+        "measurementID",
+        "measurementType",
+        "measurementUnit",
+        "measurementValue",
+        "measurementMethod",
+        "measurementTypeID",
+        "measurementUnitID",
+        "measurementRemarks",
+        "measurementValueID",
+        "measurementDeterminedBy",
+        "measurementDeterminedDate"
+      ],
+      "scientific_name": "Ficus lyrata",
+      "source_keys": [
+        "record",
+        "source_url",
+        "source_sha256",
+        "independent_review_status"
+      ],
+      "source_value": "regular",
+      "unchanged_except_value": 1,
+      "water_frequency_tier": "regular"
+    }
+  ],
+  "unaccepted": [
+    "全量源数据正确性",
+    "图片许可及正式展示准入",
+    "CMS分类/知识审核发布剩余子项",
+    "正式部署和全业务闭环"
+  ],
+  "resourceChanges": false,
+  "verification": {
+    "productChanged": false,
+    "tddClaim": false,
+    "unitRealData": {
+      "tests": 4,
+      "source": "17行已审当前部署纯函数制品；不执行主入口/SDK/网络",
+      "log": "/tmp/planting-e02-water-source-deployed.log"
+    },
+    "mutation": {
+      "failedTests": 3,
+      "restored": true,
+      "log": "/tmp/planting-e02-water-source-mutation.log"
+    },
+    "related": {
+      "files": 7,
+      "tests": 56,
+      "log": "/tmp/planting-e02-water-source-restored.log"
+    },
+    "root": {
+      "files": 168,
+      "tests": 1454,
+      "exit": 0
+    },
+    "node22": {
+      "version": "22.21.1",
+      "files": 168,
+      "tests": 1454,
+      "exit": 0
+    },
+    "typecheck": 0,
+    "lint": {
+      "exit": 0,
+      "errors": 0,
+      "warnings": 2165
+    },
+    "logs": "/tmp/planting-e02-water-source-final-{root-test,node22-vitest,typecheck,lint}.log"
+  }
+}

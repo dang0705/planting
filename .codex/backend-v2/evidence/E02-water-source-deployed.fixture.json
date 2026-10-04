@@ -1,0 +1,11 @@
+{
+  "artifactKind": "deployed-water-source-protection",
+  "functionName": "plant-knowledge-tropicals-cover-sync",
+  "environment": "cloud1-2grufevs395a9d5e",
+  "functionVersion": "$LATEST",
+  "modifiedAt": "2026-10-05 00:11:12",
+  "runtime": "Nodejs22.21",
+  "codeSnippet": "function objectOrNull(value) {\n  if (typeof value === \"string\") {\n    try {\n      return objectOrNull(JSON.parse(value));\n    } catch {\n      return null;\n    }\n  }\n  return value && typeof value === \"object\" && !Array.isArray(value) ? value : null;\n}\nfunction withApiWaterFrequencyValue(sourceValue, measurementValue) {\n  const source = objectOrNull(sourceValue);\n  if (!source) return null;\n  const record2 = objectOrNull(source.record);\n  if (!record2) return null;\n  return { ...source, record: { ...record2, measurementValue } };\n}",
+  "scope": "仅当前部署包的两个纯函数，不包含完整函数包、环境变量或凭证",
+  "codeSnippetSha256": "fadd103b221d76d50b0a42cae3385f0b2bc11cfc5a6d48f2d45f825c71e6f8a7"
+}
