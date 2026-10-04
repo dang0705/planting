@@ -1,0 +1,96 @@
+{
+  "taskId": "z8v0kmr971",
+  "scope": "CMS 待审诊断候选只读准备",
+  "accepted": false,
+  "boundaryVerified": true,
+  "verifiedAt": "2026-10-04T19:52:16.050Z",
+  "configurationDecision": "不新增配置变量，不指定未批准审核协议；沿用原样候选及精确引用硬规则",
+  "behavior": [
+    "精确候选引用与完整摘要，拒绝最新版本替换",
+    "只有 submitted 候选可进入审核准备，提交时间合法且不早于创建时间",
+    "完整 Schema、正文摘要、行外版本一致；同一事务复核精确题包和来源依赖",
+    "递归冻结待审快照，不产生批准、发布、奖励、诊断结果或养护事实",
+    "当前共享读防止旧快照误读已驳回状态，准备结束释放数据库锁"
+  ],
+  "tdd": {
+    "path": "fast_path",
+    "expectedSource": "统一重构计划、009 候选表约束与待审候选只读合同；候选正文为已冻结 Schema 的结构制品",
+    "testBeforeProduct": true,
+    "mutation": "移除 submitted 状态门",
+    "redFailed": 3,
+    "restoredGreen": true,
+    "log": "/tmp/planting-e02-review-read-mutation.log"
+  },
+  "verification": {
+    "unit": {
+      "layer": "L3/unit_fake",
+      "tests": 22,
+      "realPath": "事务驱动→Repository→AJV/完整摘要→候选依赖准入",
+      "replaced": [
+        "MySQL 连接",
+        "来源/题包读取边界"
+      ]
+    },
+    "relatedUnit": {
+      "files": 3,
+      "tests": 44
+    },
+    "mysql": {
+      "layer": "L3/unit_real_data",
+      "files": 1,
+      "tests": 7,
+      "newTests": 4,
+      "realPath": "实际009/010 DDL→隔离 MySQL8.4→mysql2→事务/锁→待审读取",
+      "replaced": [
+        "园艺正文为明确结构制品",
+        "来源/题包依赖 Reader 为明确替身"
+      ],
+      "relatedFiles": 3,
+      "relatedTests": 22
+    },
+    "root": {
+      "files": 169,
+      "tests": 1476,
+      "exitCode": 0
+    },
+    "node22": {
+      "version": "22.21.1",
+      "files": 169,
+      "tests": 1476,
+      "exitCode": 0
+    },
+    "typecheck": 0,
+    "lint": {
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 2180
+    },
+    "build": {
+      "exitCode": 0,
+      "limitation": "构建 npm 子进程仍有 Node24 与声明22的版本提示，不能证明云端 Node22 运行时验收"
+    },
+    "logs": [
+      "/tmp/planting-e02-review-read-restored.log",
+      "/tmp/planting-e02-review-read-related-mysql.log",
+      "/tmp/planting-e02-review-read-final-root-test.log",
+      "/tmp/planting-e02-review-read-final-node22-vitest.log",
+      "/tmp/planting-e02-review-read-final-typecheck.log",
+      "/tmp/planting-e02-review-read-final-lint.log",
+      "/tmp/planting-e02-review-read-final-build.log"
+    ]
+  },
+  "notAccepted": [
+    "正式 CMS 管理员与审核协议",
+    "候选提交及审核写入口",
+    "真实来源/题包 Provider 与 CMS 端到端路径",
+    "正式园艺内容、知识发布及最终诊断",
+    "生产部署、生产DDL或迁移"
+  ],
+  "sourceSha256": {
+    "cloudfunctions-v2/models/diagnosis/review-candidate-read-contract.md": "c785177573b11a4daa24afd8855da5758ccf2ee7e97e50fa6d52aab9b545e225",
+    "cloudfunctions-v2/src/diagnosis/application/read-review-candidate.ts": "9544d7f7fc160e7fa93263f8911bcd51700ba72fe086471314e6171985863d4d",
+    "cloudfunctions-v2/src/diagnosis/repository/mysql-review-candidate-repository.ts": "0abf755fc4f3488779ca5164337ac29dd6f496e34c6e7d772930adbd81b8f7ef",
+    "cloudfunctions-v2/test/diagnosis/read-review-candidate.spec.ts": "29064f04f979476fcbdcad6b537b825de102b9ab312d4fba70a6d1d7ca1ee8d4",
+    "cloudfunctions-v2/test/e2e/reviewed-diagnosis-candidate.mysql.spec.ts": "c55792c7f85f9443b60bb32615dbc23c94045d49b9e8dcdb341f173892c7563a"
+  }
+}

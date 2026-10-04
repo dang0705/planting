@@ -1,0 +1,17 @@
+{
+  "taskId": "z8v0kmr971",
+  "scope": "诊断 CMS 待审候选原样读取，不涉及正式审核协议或管理员写入口",
+  "openViking": {
+    "connection": "connected",
+    "L0": "l0-overview.md：CMS 带版本发布，生成式草稿不是安全事实",
+    "L1": "l1-09.md：按内容类型审核，diagnosis 拥有知识准入",
+    "L2": "l2-11.md：原样候选经来源、适用性、禁忌、冲突审核后发布",
+    "search": "目标范围 find 超时，随后直接读取已知 URI 成功；未重启服务"
+  },
+  "missing": "OpenViking 各层没有候选表状态枚举、列约束和配置目录中精确的 CMS 协议准入状态",
+  "allowedLocalReads": [
+    "docs/backend-v2/schema/009_diagnosis_knowledge.sql 中 diagnosis_knowledge_candidates 表定义",
+    "docs/backend-v2/architecture/configuration-variable-catalog.md 中诊断 CMS 审核/发布相关条目"
+  ],
+  "configurationDecision": "本只读查询不新增阈值、默认协议、Provider 或可配置变量；审核协议未确认则仍不开放审核写入"
+}

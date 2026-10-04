@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T19:41:28.823Z",
-  "sourceRevision": 84,
-  "sourceUpdatedAt": "2026-10-04T19:41:28.823Z",
+  "generatedAt": "2026-10-04T19:52:16.053Z",
+  "sourceRevision": 85,
+  "sourceUpdatedAt": "2026-10-04T19:52:16.053Z",
   "currentStep": "E02",
   "currentTicketId": "z8v0kmr971",
   "tasks": [
@@ -64,29 +64,31 @@
     {
       "id": "z8v0kmr971",
       "step": "E02",
-      "version": 4,
+      "version": 5,
       "status": "codex running",
-      "stage": "百科只读及同步来源保护已验证；CMS剩余范围未验收",
+      "stage": "待审候选读取及依赖复核已验证；CMS完整入口未验收",
       "accepted": false,
       "summary": [
-        "E02：当前线上同步版本与分钟定时器已只读核验",
-        "非空浇水来源仅更新measurementValue；3条SQL样本保留其他字段",
-        "实际部署纯函数4项通过；丢字段突变3项RED→恢复",
-        "根及Node22全量1454/1454；类型/lint零错误；无云端修改",
-        "CMS发布及全量数据/图片准入仍未验收，原票保持进行中"
+        "E02/E05：待审候选原样只读用例已实现，不批准或发布",
+        "22项隔离用例；状态门突变3项RED→恢复",
+        "真实MySQL新增4项；相邻审核/发布22项通过",
+        "根及Node22全量1476/1476；类型/lint零错误；构建通过",
+        "CMS管理员、审核协议及完整发布入口未验收，原票保持进行中"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E02.json",
         ".codex/backend-v2/evidence/E02-cover-sync-boundary.json",
-        ".codex/backend-v2/evidence/E02-water-source-deployed.fixture.json"
+        ".codex/backend-v2/evidence/E02-water-source-deployed.fixture.json",
+        ".codex/backend-v2/evidence/E02-review-candidate-context.json",
+        ".codex/backend-v2/evidence/E02-review-candidate-read.json"
       ],
       "blockingReason": null,
-      "nextAction": "E02来源保护边界已核验；继续原票CMS分类/知识审核发布剩余范围；E05归一审核仍待用户确认",
+      "nextAction": "继续候选提交/审核持久化接线；正式 CMS 管理员及审核协议仍需准入；E05 映射等待用户确认",
       "sync": {
-        "version": 4,
+        "version": 5,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING及五行评论1100440000090666已读回"
+        "readback": "Chrome CODEX RUNNING及五行评论1100440000090680已读回"
       }
     },
     {
@@ -256,6 +258,6 @@
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T19:43:37.472Z",
+  "lastSuccessfulSyncAt": "2026-10-04T19:52:39.050Z",
   "lastFailure": null
 }
