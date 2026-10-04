@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T15:42:49.654736+00:00",
-  "sourceRevision": 55,
-  "sourceUpdatedAt": "2026-10-04T15:42:49.654736+00:00",
+  "generatedAt": "2026-10-04T15:53:10.388062+00:00",
+  "sourceRevision": 56,
+  "sourceUpdatedAt": "2026-10-04T15:53:10.388062+00:00",
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
   "tasks": [
@@ -199,33 +199,34 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 5,
+      "version": 6,
       "status": "codex running",
-      "stage": "答案原子持久化与真实MySQL读回",
+      "stage": "共享幂等与未知提交真实MySQL验证",
       "accepted": false,
       "summary": [
-        "E05已接归属会话→题包快照→复合证据→整包答案保存",
-        "真实MySQL13项通过：并发只写一套、重放不新增、冲突不覆盖",
-        "真实插入后失败整包回滚；跨用户、归档及缺证据拒绝",
-        "新增10项；正文守卫突变2项RED→恢复，全量1134/1134",
-        "HTTP共享幂等、发布准入及临时案例提交待验收"
+        "E05答案与共享幂等首次响应已接同一事务",
+        "真实MySQL17项通过：同键并发只执行一次、失败整包回滚",
+        "真实COMMIT后确认丢失，新连接只读核对且不重复写入",
+        "新增11项；重放突变1项RED→恢复，全量1145/1145",
+        "正式HTTP合同、题包发布准入及临时案例提交待验收"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
         ".codex/backend-v2/evidence/E05-air-answer-evidence.json",
         ".codex/backend-v2/evidence/E05-timeline-answer-evidence.json",
-        ".codex/backend-v2/evidence/E05-answer-persistence.json"
+        ".codex/backend-v2/evidence/E05-answer-persistence.json",
+        ".codex/backend-v2/evidence/E05-answer-idempotency.json"
       ],
       "blockingReason": null,
-      "nextAction": "接共享HTTP幂等与未知提交对账；再接题包生成及HTTP",
+      "nextAction": "冻结正式题包会话DTO并接HTTP；补发布准入及临时案例提交",
       "sync": {
-        "version": 5,
+        "version": 6,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING及五行评论1100440000090251已读回"
+        "readback": "Chrome CODEX RUNNING及五行评论1100440000090263已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T15:43:34.682139+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T15:53:47.678529+00:00",
   "lastFailure": null
 }

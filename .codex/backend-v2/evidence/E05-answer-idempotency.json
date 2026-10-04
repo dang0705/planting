@@ -1,0 +1,48 @@
+{
+  "ticket": "z8v0kmr974",
+  "scope": "长期问诊答案与共享HTTP幂等账本同事务；未知提交只读核对",
+  "verifiedAt": "2026-10-04T15:53:10.388062+00:00",
+  "truthSource": "cloudfunctions-v2/models/diagnosis/answer-idempotency-contract.md",
+  "tests": {
+    "newUnit": 11,
+    "backendFull": 1145,
+    "node22Diagnosis": 123,
+    "realMysql": 17,
+    "newRealMysql": 4,
+    "engine": "MySQL 8.4",
+    "boundary": "真实答案与共享账本；父表最小夹具；不是完整迁移链、真实HTTP或正式响应DTO验收"
+  },
+  "tdd": {
+    "testFirst": true,
+    "path": "fast_path",
+    "mutation": "让同键重放再次执行领域提交",
+    "redFailed": 1,
+    "redLog": "/tmp/planting-e05-idempotent-mutation-red.log",
+    "restoredGreen": "/tmp/planting-e05-idempotent-full.log"
+  },
+  "checks": {
+    "typecheck": "passed",
+    "lintErrors": 0,
+    "lintWarnings": 1399,
+    "build": "passed"
+  },
+  "verified": [
+    "答案与首次响应同一事务提交",
+    "同键重放不再次执行领域写入或响应投影",
+    "异参返回冲突",
+    "真实同键并发只执行一次",
+    "账本完成后失败同时回滚答案和账本",
+    "真实COMMIT后模拟确认丢失由新连接只读核对",
+    "未知提交无证明时不可用且不自动再写",
+    "平台无关用户作用域及登记路径校验"
+  ],
+  "notAccepted": [
+    "正式DiagnosisSessionResponse/DiagnosisAnswerRequest与HTTP入口",
+    "CMS题包及知识发布准入",
+    "临时案例答案提交",
+    "诊断结论与行动",
+    "Agent与奖励"
+  ],
+  "migration": "无新DDL；008账本及既有问诊表仅用于本地隔离数据库测试",
+  "questionScope": "V2只复用V1黄叶、萎蔫及虫害题目；不迁移旧业务记录"
+}

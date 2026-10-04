@@ -1,19 +1,19 @@
 {
-  "revision": 55,
+  "revision": 56,
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
-  "updatedAt": "2026-10-04T15:42:49.654736+00:00",
+  "updatedAt": "2026-10-04T15:53:10.388062+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "既有会话答案的原子持久化",
+    "goal": "问诊答案共享幂等同事务与未知提交核对",
     "assumptions": [
       "只复用V1三类题包",
-      "使用现有答案唯一约束及事务驱动"
+      "复用既有共享账本与事务驱动"
     ],
-    "minimumVerification": "独立Expected与正文突变RED、真实并发/回滚/读回、全量GREEN",
-    "continueWhen": "不改变会话结论或care事实",
-    "failWhen": "半套答案被当成功、覆盖既有答案或扩大为已发布HTTP",
-    "rollback": "回退本轮应用与Repository；无新迁移",
+    "minimumVerification": "独立Expected、重放突变RED、真实并发/回滚/未知提交及全量GREEN",
+    "continueWhen": "正式响应投影由明确合同提供，不伪造HTTP验收",
+    "failWhen": "重复领域写入、未知提交自动重试或把协议夹具当正式DTO",
+    "rollback": "回退本轮服务接线；无新DDL",
     "timeLimit": "30分钟检查点"
   },
   "tasks": [
@@ -200,28 +200,29 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 5,
+      "version": 6,
       "priority": "normal",
       "status": "codex running",
-      "stage": "答案原子持久化与真实MySQL读回",
+      "stage": "共享幂等与未知提交真实MySQL验证",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
         ".codex/backend-v2/evidence/E05-air-answer-evidence.json",
         ".codex/backend-v2/evidence/E05-timeline-answer-evidence.json",
-        ".codex/backend-v2/evidence/E05-answer-persistence.json"
+        ".codex/backend-v2/evidence/E05-answer-persistence.json",
+        ".codex/backend-v2/evidence/E05-answer-idempotency.json"
       ],
       "summary": [
-        "E05已接归属会话→题包快照→复合证据→整包答案保存",
-        "真实MySQL13项通过：并发只写一套、重放不新增、冲突不覆盖",
-        "真实插入后失败整包回滚；跨用户、归档及缺证据拒绝",
-        "新增10项；正文守卫突变2项RED→恢复，全量1134/1134",
-        "HTTP共享幂等、发布准入及临时案例提交待验收"
+        "E05答案与共享幂等首次响应已接同一事务",
+        "真实MySQL17项通过：同键并发只执行一次、失败整包回滚",
+        "真实COMMIT后确认丢失，新连接只读核对且不重复写入",
+        "新增11项；重放突变1项RED→恢复，全量1145/1145",
+        "正式HTTP合同、题包发布准入及临时案例提交待验收"
       ],
       "blockingReason": null,
-      "nextAction": "接共享HTTP幂等与未知提交对账；再接题包生成及HTTP",
-      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090251已读回",
-      "milestoneCommit": "95f86d40"
+      "nextAction": "冻结正式题包会话DTO并接HTTP；补发布准入及临时案例提交",
+      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090263已读回",
+      "milestoneCommit": "5526ac2c"
     }
   ],
   "queue": [
@@ -325,7 +326,7 @@
       ]
     }
   ],
-  "nextAction": "接共享幂等账本、未知提交只读对账及题包提交HTTP",
+  "nextAction": "冻结正式题包会话DTO并接HTTP；补发布准入及临时案例提交",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -626,5 +627,22 @@
     ],
     "finding": "会话只有发布引用，没有动态题包内容或摘要列",
     "scope": "不读其他领域或其他迁移全文"
+  },
+  "diagnosisIdempotencyReadAdmission": {
+    "task": "E05答案共享幂等接线",
+    "layers": {
+      "L0": "定向find超时",
+      "L1": "layers overview只给导航，不含答案路由登记与幂等表列",
+      "L2": "定向find超时"
+    },
+    "missing": [
+      "答案路由的operationId与path",
+      "http_idempotency_records具体DDL"
+    ],
+    "localAllowed": [
+      "api/route-registry.json仅answerDiagnosisQuestion",
+      "schema/008_foundation.sql仅http_idempotency_records"
+    ],
+    "scope": "仅本次答案幂等实现；不读取其他路由、架构或全目录"
   }
 }

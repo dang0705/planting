@@ -6,6 +6,12 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { findProjectRoot } from '../support/project-root.js'
 import { createMysql2ConnectionSource } from '../../src/foundation/database/mysql2-connection-source.js'
 import { createMysqlDiagnosisQuestionSnapshotRepository } from '../../src/diagnosis/repository/mysql-diagnosis-question-snapshot-repository.js'
+import { createHash } from 'node:crypto'
+import { createIdempotentDiagnosisAnswerService, calculateDiagnosisAnswerRequestHash } from '../../src/diagnosis/application/idempotent-diagnosis-answers.js'
+import { submitDiagnosisAnswersInTransaction, type SubmitDiagnosisAnswersInput } from '../../src/diagnosis/application/submit-diagnosis-answers.js'
+import { createMysqlHttpIdempotencyRepository, createMysqlHttpIdempotencyCommitUnknownReadOnlyRepository, type HttpIdempotencySqlRow } from '../../src/foundation/idempotency/mysql-http-idempotency-repository.js'
+import { DatabaseCommitResultUnknownError } from '../../src/foundation/database/transaction-runner.js'
+import { toSqlParameters, withReadConnection } from '../../src/foundation/database/mysql2-connection-source.js'
 import { createSubmitDiagnosisAnswersService } from '../../src/diagnosis/application/submit-diagnosis-answers.js'
 import { createMysqlDiagnosisAnswerRepository } from '../../src/diagnosis/repository/mysql-diagnosis-answer-repository.js'
 import { createMysqlTransactionDriver } from '../../src/foundation/database/mysql-transaction-driver.js'
@@ -59,6 +65,10 @@ beforeAll(async () => {
   const [tables, triggers] = migration.split('DELIMITER $$')
   for (const statement of tables!.split(';').map(s=>s.trim()).filter(Boolean)) { await db.query(statement) }
   for (const statement of triggers!.split('DELIMITER ;')[0]!.split('$$').map(s=>s.trim()).filter(Boolean)) { await db.query(statement) }
+  const foundationDdl=readFileSync(join(root,'docs/backend-v2/schema/008_foundation.sql'),'utf8')
+  const idempotencyStart=foundationDdl.indexOf('CREATE TABLE `http_idempotency_records` (')
+  if(idempotencyStart<0) {throw new Error('共享幂等表缺失')}
+  await db.query(foundationDdl.slice(idempotencyStart,foundationDdl.indexOf(';',idempotencyStart)+1))
   source = createMysql2ConnectionSource({ host:'127.0.0.1',port,user:'root',password:'',database:'qhz_diag_snapshot' })
 },40_000)
 afterAll(async () => { await db?.end(); spawnSync('docker',['rm','-f',container],{encoding:'utf8'}) })
@@ -179,5 +189,53 @@ describe('真实数据库整包答案保存',()=>{
     await append('answers-corrupt');const run=answerService();const input=answerInput('answers-corrupt');await run(input)
     await db.execute("UPDATE diagnosis_answers a JOIN diagnosis_sessions s ON s.id=a.diagnosis_session_internal_id SET a.answer_json=JSON_OBJECT('bad',TRUE) WHERE s.diagnosis_ref=?",['answers-corrupt'])
     expect(await run(input)).toEqual({status:'conflict'})
+  })
+})
+
+/** 真MySQL共享账本；响应只是已注明的协议制品，不代表正式诊断HTTP DTO。 */
+function idempotentInput(ref:string,key:string) {
+  const input=answerInput(ref)
+  return {...input,idempotency:{principalType:'user' as const,principalScopeHash:createHash('sha256').update(input.userRef).digest('hex'),
+    httpMethod:'POST',normalizedPath:'/api/v2/diagnosis/sessions/{diagnosisSessionRef}/answers',operationId:'answerDiagnosisQuestion',
+    idempotencyKeyHash:createHash('sha256').update(key).digest('hex'),requestHash:calculateDiagnosisAnswerRequestHash(input),createdAtMs:2500,expiresAtMs:5000}}
+}
+function idempotentDependencies() {
+  const driver=createMysqlTransactionDriver(source,()=>undefined)
+  const ledger=createMysqlHttpIdempotencyRepository<Parameters<ReturnType<typeof createMysqlDiagnosisAnswerRepository>['lockOwned']>[0]>({
+    executeQuery:(tx,sql,params)=>tx.connection.query(sql,toSqlParameters(params)) as unknown as Promise<readonly HttpIdempotencySqlRow[]>,
+    executeWrite:(tx,sql,params)=>tx.connection.execute(sql,toSqlParameters(params))})
+  const readOnly=createMysqlHttpIdempotencyCommitUnknownReadOnlyRepository({executeQuery:(sql,params)=>withReadConnection(source,
+    conn=>conn.query(sql,toSqlParameters(params))) as unknown as Promise<readonly HttpIdempotencySqlRow[]>})
+  return {driver,idempotencyRepository:ledger,commitUnknownRepository:readOnly,
+    submitInTransaction:(tx:Parameters<ReturnType<typeof createMysqlDiagnosisAnswerRepository>['lockOwned']>[0],input:SubmitDiagnosisAnswersInput)=>submitDiagnosisAnswersInTransaction(createMysqlDiagnosisAnswerRepository(),tx,input),
+    projectPublicResponse:(result:{status:string})=>result.status==='recorded'||result.status==='replayed'
+      ?{status:200,body:{data:{answersAccepted:true}}}:{status:400,body:{error:{type:'VALIDATION_FAILED',message:'答案无法保存'}}}}
+}
+describe('真实共享幂等与答案同事务',()=>{
+  test('同键首次和重放响应完全一致；异参冲突，答案只保存四行',async()=>{
+    await append('ledger-once');const run=createIdempotentDiagnosisAnswerService(idempotentDependencies());const input=idempotentInput('ledger-once','ledger-once')
+    const first=await run(input);expect(first.status).toBe(200);expect(await run(input)).toEqual(first)
+    const changed=structuredClone(input);changed.submitted.answers[0]!.optionKey='often_wet';changed.idempotency.requestHash=calculateDiagnosisAnswerRequestHash(changed)
+    expect((await run(changed)).status).toBe(409);expect(await answerCount('ledger-once')).toBe(4)
+  })
+  test('同键真实并发共享首次结果，领域工作只执行一次',async()=>{
+    await append('ledger-concurrent');const deps=idempotentDependencies();let calls=0
+    const run=createIdempotentDiagnosisAnswerService({...deps,submitInTransaction:async(tx,input)=>{calls+=1;return deps.submitInTransaction(tx,input)}})
+    const input=idempotentInput('ledger-concurrent','ledger-concurrent');const results=await Promise.all([run(input),run(input)])
+    expect(results[0]).toEqual(results[1]);expect(results[0]!.status).toBe(200);expect(calls).toBe(1);expect(await answerCount('ledger-concurrent')).toBe(4)
+  })
+  test('幂等完成后抛错仍回滚业务和账本，不保留processing记录',async()=>{
+    await append('ledger-rollback');const deps=idempotentDependencies();const original=deps.idempotencyRepository.completionFirstResult
+    const failingLedger={...deps.idempotencyRepository,completionFirstResult:async(...args:Parameters<typeof original>)=>{await original(...args);throw new Error('账本完成后失败')}}
+    const input=idempotentInput('ledger-rollback','ledger-rollback');expect((await createIdempotentDiagnosisAnswerService({...deps,idempotencyRepository:failingLedger})(input)).status).toBe(503)
+    expect(await answerCount('ledger-rollback')).toBe(0)
+    const [rows]=await db.execute('SELECT COUNT(*) AS n FROM http_idempotency_records WHERE idempotency_key_hash=?',[input.idempotency.idempotencyKeyHash]);expect(rows).toEqual([{n:0}])
+  })
+  test('真实COMMIT后丢失确认，使用新连接读回首次结果而不重新执行',async()=>{
+    await append('ledger-unknown');const deps=idempotentDependencies();const original=deps.driver.commitTransaction;let calls=0
+    const run=createIdempotentDiagnosisAnswerService({...deps,driver:{...deps.driver,commitTransaction:async tx=>{await original(tx);throw new DatabaseCommitResultUnknownError('已提交但确认丢失')}},
+      submitInTransaction:async(tx,input)=>{calls+=1;return deps.submitInTransaction(tx,input)}})
+    expect((await run(idempotentInput('ledger-unknown','ledger-unknown'))).status).toBe(200)
+    expect(calls).toBe(1);expect(await answerCount('ledger-unknown')).toBe(4)
   })
 })

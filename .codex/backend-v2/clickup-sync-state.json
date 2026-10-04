@@ -50,19 +50,19 @@
       "readback": "Chrome CODEX RUNNING及五行评论1100440000090220已读回"
     },
     "z8v0kmr974": {
-      "version": 5,
+      "version": 6,
       "status": "codex running",
-      "note": "E05已接归属会话→题包快照→复合证据→整包答案保存\n真实MySQL13项通过：并发只写一套、重放不新增、冲突不覆盖\n真实插入后失败整包回滚；跨用户、归档及缺证据拒绝\n新增10项；正文守卫突变2项RED→恢复，全量1134/1134\nHTTP共享幂等、发布准入及临时案例提交待验收",
-      "commentId": "1100440000090251",
-      "commentFingerprint": "583da50bb1922a94218609a1a36551ca161a4bf05a9205cbf377c4f86444f6f4",
-      "readback": "Chrome CODEX RUNNING及五行评论1100440000090251已读回"
+      "note": "E05答案与共享幂等首次响应已接同一事务\n真实MySQL17项通过：同键并发只执行一次、失败整包回滚\n真实COMMIT后确认丢失，新连接只读核对且不重复写入\n新增11项；重放突变1项RED→恢复，全量1145/1145\n正式HTTP合同、题包发布准入及临时案例提交待验收",
+      "commentId": "1100440000090263",
+      "commentFingerprint": "2bd843f70299f4121bf1342841f98550335c38cae839fc697cb408c9117b6c06",
+      "readback": "Chrome CODEX RUNNING及五行评论1100440000090263已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T15:43:34.682139+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T15:53:47.678529+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "0b5c0f84f1a59d73446f1740f701e50cfd51c38cca680ff1d590c96b0c86be13",
-    "sourceRevision": 55,
-    "sourceUpdatedAt": "2026-10-04T15:42:49.654736+00:00"
+    "fingerprint": "500241d1ad38b49b4731ccd5ac7365fb7ca005e5f9baf4d32e6a478bd5ca61a5",
+    "sourceRevision": 56,
+    "sourceUpdatedAt": "2026-10-04T15:53:10.388062+00:00"
   }
 }

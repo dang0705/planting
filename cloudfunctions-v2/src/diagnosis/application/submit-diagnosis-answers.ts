@@ -103,12 +103,71 @@ function sameAnswers(
  * 首次整包答案的事务编排。当前结果是内部确认，不代表正式HTTP、知识发布或诊断完成。
  * 共享HTTP幂等和未知提交对账由后续入口接入；本服务不自动重跑未知提交。
  */
+/** 在调用方事务内保存答案，供共享幂等用例复用；不自行开启或提交事务。 */
+export async function submitDiagnosisAnswersInTransaction<T extends TransactionExecutionContext>(
+  repository: DiagnosisAnswerRepository<T>,
+  tx: T,
+  input: SubmitDiagnosisAnswersInput
+) {
+  const found = await repository.lockOwned(
+    tx,
+    input.userRef,
+    input.userPlantRef,
+    input.diagnosisRef
+  )
+  if (found.status !== 'found') {
+    return { status: found.status } as const
+  }
+  const session = found.session
+  if (!['active', 'completed'].includes(session.status)) {
+    return { status: 'session_not_active' } as const
+  }
+  const evidence = validateV1SubmissionEvidence(session.snapshot.snapshot, input.submitted)
+  if (evidence.status !== 'valid_submission_evidence') {
+    return { status: evidence.status } as const
+  }
+  const submissionSha256 = calculateCanonicalJsonSha256({
+    questionSnapshotSha256: session.snapshot.snapshotSha256,
+    answers: evidence.answers,
+    air: evidence.airByQuestionId,
+    timeline: evidence.timeline
+  } as unknown as CanonicalJsonValue)
+  const desired = evidence.answers.map(answer => ({
+    questionKey: answer.questionKey,
+    body: Object.freeze({
+      contractVersion: 'diagnosis-answer-evidence/v1',
+      questionKey: answer.questionKey,
+      optionKey: answer.optionKey,
+      questionSnapshotSha256: session.snapshot.snapshotSha256,
+      submissionSha256,
+      airEvidence: evidence.airByQuestionId[answer.questionKey] ?? null,
+      timelineEvidence: answer.optionKey === 'care_behavior_timeline' ? evidence.timeline : null
+    })
+  }))
+  const stored = await repository.readAnswers(tx, session)
+  if (stored.length) {
+    return sameAnswers(stored, desired)
+      ? ({ status: 'replayed', answerCount: desired.length } as const)
+      : ({ status: 'conflict' } as const)
+  }
+  if (session.status !== 'active') {
+    return { status: 'session_not_active' } as const
+  }
+  await repository.appendAnswers(tx, session, desired, input.occurredAtMs)
+  const readback = await repository.readAnswers(tx, session)
+  if (!sameAnswers(readback, desired)) {
+    throw new Error('答案持久化读回不一致')
+  }
+  return { status: 'recorded', answerCount: desired.length } as const
+}
+
+/** 独立内部调用复用同一领域工作，HTTP幂等调用方使用上方原事务入口。 */
 export function createSubmitDiagnosisAnswersService<
   T extends TransactionExecutionContext
 >(dependencies: {
-  /** 既有Foundation事务驱动。 */
+  /** Foundation独立事务驱动。 */
   readonly driver: DatabaseTransactionDriver<T>
-  /** 只负责SQL与原事务读回的答案Repository。 */
+  /** 当前诊断答案SQL端口。 */
   readonly repository: DiagnosisAnswerRepository<T>
 }) {
   return async (input: SubmitDiagnosisAnswersInput) => {
@@ -119,57 +178,13 @@ export function createSubmitDiagnosisAnswersService<
     ) {
       throw new TypeError('答案时间非法')
     }
-    return runDatabaseTransaction(dependencies.driver, async tx => {
-      const found = await dependencies.repository.lockOwned(
-        tx,
-        input.userRef,
-        input.userPlantRef,
-        input.diagnosisRef
-      )
-      if (found.status !== 'found') {
-        return { status: found.status } as const
-      }
-      const session = found.session
-      if (!['active', 'completed'].includes(session.status)) {
-        return { status: 'session_not_active' } as const
-      }
-      const evidence = validateV1SubmissionEvidence(session.snapshot.snapshot, input.submitted)
-      if (evidence.status !== 'valid_submission_evidence') {
-        return { status: evidence.status } as const
-      }
-      const submissionSha256 = calculateCanonicalJsonSha256({
-        questionSnapshotSha256: session.snapshot.snapshotSha256,
-        answers: evidence.answers,
-        air: evidence.airByQuestionId,
-        timeline: evidence.timeline
-      } as unknown as CanonicalJsonValue)
-      const desired = evidence.answers.map(answer => ({
-        questionKey: answer.questionKey,
-        body: Object.freeze({
-          contractVersion: 'diagnosis-answer-evidence/v1',
-          questionKey: answer.questionKey,
-          optionKey: answer.optionKey,
-          questionSnapshotSha256: session.snapshot.snapshotSha256,
-          submissionSha256,
-          airEvidence: evidence.airByQuestionId[answer.questionKey] ?? null,
-          timelineEvidence: answer.optionKey === 'care_behavior_timeline' ? evidence.timeline : null
-        })
-      }))
-      const stored = await dependencies.repository.readAnswers(tx, session)
-      if (stored.length) {
-        return sameAnswers(stored, desired)
-          ? ({ status: 'replayed', answerCount: desired.length } as const)
-          : ({ status: 'conflict' } as const)
-      }
-      if (session.status !== 'active') {
-        return { status: 'session_not_active' } as const
-      }
-      await dependencies.repository.appendAnswers(tx, session, desired, input.occurredAtMs)
-      const readback = await dependencies.repository.readAnswers(tx, session)
-      if (!sameAnswers(readback, desired)) {
-        throw new Error('答案持久化读回不一致')
-      }
-      return { status: 'recorded', answerCount: desired.length } as const
-    })
+    return runDatabaseTransaction(dependencies.driver, tx =>
+      submitDiagnosisAnswersInTransaction(dependencies.repository, tx, input)
+    )
   }
 }
+
+/** 仅表示答案工作内部结果，不直接作为公开DTO。 */
+export type DiagnosisAnswerSubmissionResult = Awaited<
+  ReturnType<typeof submitDiagnosisAnswersInTransaction>
+>
