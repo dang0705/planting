@@ -1,19 +1,19 @@
 {
-  "revision": 29,
+  "revision": 30,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-04T12:51:36.070984+00:00",
+  "updatedAt": "2026-10-04T12:59:45.879983+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "E04 SunCalc太阳方向及瞬时窗面协作",
+    "goal": "E04真实辐射均值SunCalc实验回放及CommonJS类型修复",
     "assumptions": [
-      "视高度与未折射几何高度明确区分",
-      "NREL单例是粗数值回归，不代表全球精度"
+      "候选显式假设时段内DNI恒定",
+      "数值采样不保证所有时刻，不能作安全否决证据"
     ],
-    "minimumVerification": "NREL独立基准、非法输入及角度突变RED；实际窗面调用链；全量与Node22相关",
-    "continueWhen": "848项全绿、类型构建通过",
-    "failWhen": "套用NOAA界限或伪造全天均值",
-    "rollback": "离线回放隔离，不接正式建议",
+    "minimumVerification": "NIST数学基准、原始制品真实协作、短时漏样反例、错权重RED及还原；独立核对类型检查退出码",
+    "continueWhen": "863项全绿、类型构建各自通过",
+    "failWhen": "用候选替代全时段严格界限或生产策略",
+    "rollback": "仅离线候选，不接HTTP或正式建议",
     "timeLimit": "30分钟检查点"
   },
   "tasks": [
@@ -121,7 +121,7 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 16,
+      "version": 17,
       "priority": "normal",
       "status": "codex running",
       "stage": "验证与持久化读回",
@@ -139,19 +139,20 @@
         ".codex/backend-v2/evidence/E04-plant-direct-composition.json",
         ".codex/backend-v2/evidence/E04-plant-direct-interval.json",
         ".codex/backend-v2/evidence/E04-pot-safety-suncalc.json",
-        ".codex/backend-v2/evidence/E04-suncalc-direction.json"
+        ".codex/backend-v2/evidence/E04-suncalc-direction.json",
+        ".codex/backend-v2/evidence/E04-suncalc-mean-candidate.json"
       ],
       "summary": [
-        "E04：SunCalc太阳方向→瞬时窗面直射协作已实现",
-        "独立NREL基准与19新用例；错方位突变3项RED→还原GREEN",
-        "后端115文件848/848；Node22相关46项，类型构建通过",
-        "SunCalc 2.1.0使用度、北起方位与折射校正高度",
-        "SunCalc时段界限及均值回放、保水策略与正式建议待验收"
+        "E04：真实Open-Meteo→SunCalc时段实验回放已接通",
+        "15新用例；错权重7项RED→还原GREEN；保留短时漏样反例",
+        "后端116文件863/863；Node22相关52项；类型、构建通过",
+        "修复CommonJS类型接线；候选恒定DNI估计与物理范围分开",
+        "严格时段界限、正式光照及保水策略仍未准入，不标Done"
       ],
       "blockingReason": null,
-      "nextAction": "验证SunCalc完整时段方向界限并接真实辐射均值回放；NOAA仅保留离线比较用途",
-      "ticketReadback": "Chrome当前E04/E06票codex running；完整五行评论1100440000089749已读回",
-      "milestoneCommit": "c9c9b500"
+      "nextAction": "推进独立盆器几何与干湿循环回放；SunCalc候选保持离线，不替代严格界限或正式发布",
+      "ticketReadback": "Chrome当前E04/E06票codex running；完整五行评论1100440000089775已读回",
+      "milestoneCommit": "3a22f88a"
     }
   ],
   "queue": [
@@ -317,8 +318,8 @@
     "runner": "cloudfunctions-v2 已锁定 Vitest",
     "testDirectory": "cloudfunctions-v2/test/",
     "lastResult": {
-      "passed": 848,
-      "total": 848,
+      "passed": 863,
+      "total": 863,
       "skipped": 0
     }
   },

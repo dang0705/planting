@@ -1,0 +1,60 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "verifiedAt": "2026-10-04T12:59:45.879983+00:00",
+  "scope": "真实辐射制品→SunCalc时段数值实验回放；严格物理范围与恒定DNI候选估计分开",
+  "classification": "L1 unit_fake数学积分与L3 unit_real_data实际响应归一化、SunCalc和窗面协作；网络仅由保存的Provider制品替换",
+  "expectedSources": [
+    "cloudfunctions-v2/models/care/suncalc-mean-candidate-contract.md",
+    "https://dlmf.nist.gov/3.5.v",
+    "真实Open-Meteo制品及元数据"
+  ],
+  "testFirst": {
+    "path": "15项独立Expected先落盘；权重错误翻倍使7项RED；完整字节还原后GREEN",
+    "redLog": "/tmp/planting-suncalc-mean-mutation-red.log"
+  },
+  "results": {
+    "newTests": 15,
+    "fullTests": 863,
+    "fullFiles": 116,
+    "node22RelatedTests": 52,
+    "node22RelatedFiles": 4,
+    "node22Version": "22.21.1",
+    "typecheck": "passed",
+    "typecheckLog": "/tmp/planting-suncalc-mean-typecheck-green.log",
+    "build": "passed",
+    "lintErrors": 0,
+    "lintWarnings": 900,
+    "skipped": 0
+  },
+  "riskMatrix": {
+    "U1": "缺DNI与有效零；空响应不补覆盖",
+    "U2": "三点数学基准、0/1投影与短时直射漏样反例",
+    "U3": "非法投影、空数据时非法地点及窗面拒绝",
+    "U4": "纯确定计算，不写事件",
+    "U5": "原始制品不修改",
+    "U6": "N/A 无共享可变状态",
+    "U7": "N/A 无用户编辑态"
+  },
+  "assumption": "piecewise_constant_dni，只有候选估计依赖此假设",
+  "productionAdmission": false,
+  "numericalGuarantee": "not_certified",
+  "notVerified": [
+    "严格SunCalc完整时段界限",
+    "时段内DNI真实变化与投影相关性",
+    "现场误差、玻璃、散射及光谱换算",
+    "正式Care模型发布及HTTP闭环"
+  ],
+  "logs": [
+    "/tmp/planting-suncalc-mean-related-green.log",
+    "/tmp/planting-suncalc-mean-full-final-green.log",
+    "/tmp/planting-suncalc-mean-node22-final-green.log",
+    "/tmp/planting-suncalc-mean-typecheck-green.log",
+    "/tmp/planting-suncalc-mean-build-green.log",
+    "/tmp/planting-suncalc-mean-lint-green.log"
+  ],
+  "sourceHashes": {
+    "cloudfunctions-v2/src/care/application/replay-suncalc-mean-candidate.ts": "93e4b141c2e4a1fe35fdeab9d28293be74eae39f8475feb3879fd1d1e0929ef7",
+    "cloudfunctions-v2/src/care/light/derive-suncalc-direction.ts": "4af885a3ef67c0a97e61d6acb848d8f2244e56767abbc372e2477d44f19b3fcc"
+  }
+}

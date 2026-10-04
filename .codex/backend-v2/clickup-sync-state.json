@@ -34,19 +34,19 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 16,
+      "version": 17,
       "status": "codex running",
-      "note": "E04：SunCalc太阳方向→瞬时窗面直射协作已实现\n独立NREL基准与19新用例；错方位突变3项RED→还原GREEN\n后端115文件848/848；Node22相关46项，类型构建通过\nSunCalc 2.1.0使用度、北起方位与折射校正高度\nSunCalc时段界限及均值回放、保水策略与正式建议待验收",
-      "commentId": "1100440000089749",
-      "commentFingerprint": "9a8207960d2328255aff159f5dbad35c670bd5ac46b3e351dd376ad7d5c6a7be",
-      "readback": "Chrome当前E04/E06票codex running；完整五行评论1100440000089749已读回"
+      "note": "E04：真实Open-Meteo→SunCalc时段实验回放已接通\n15新用例；错权重7项RED→还原GREEN；保留短时漏样反例\n后端116文件863/863；Node22相关52项；类型、构建通过\n修复CommonJS类型接线；候选恒定DNI估计与物理范围分开\n严格时段界限、正式光照及保水策略仍未准入，不标Done",
+      "commentId": "1100440000089775",
+      "commentFingerprint": "1325aada16642d5158a18168e3b8b8a6c36f4d67be4f847efa936c218565e9ed",
+      "readback": "Chrome当前E04/E06票codex running；完整五行评论1100440000089775已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T12:52:40.176018+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T13:01:06.439976+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "2e8bc44b7abbc635393465e149f421b2944b0587c2505886c1db97cfe0e4c78f",
-    "sourceRevision": 29,
-    "sourceUpdatedAt": "2026-10-04T12:51:36.070984+00:00"
+    "fingerprint": "b6505026db843e0e468b3462d7cd30ab6ac732ea58222069d51cf67d1a6209df",
+    "sourceRevision": 30,
+    "sourceUpdatedAt": "2026-10-04T12:59:45.879983+00:00"
   }
 }

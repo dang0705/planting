@@ -1,4 +1,7 @@
-import { getPosition } from 'suncalc'
+/** 官方类型以ESM声明，但运行时提供CommonJS入口；只改变加载接线，不改变计算。 */
+type SunCalcModule = typeof import('suncalc', { with: { 'resolution-mode': 'import' } })
+/** 运行时使用已验证的require导出，类型仍来自锁定包的官方声明。 */
+const { getPosition } = require('suncalc') as SunCalcModule
 
 /** 明确地点与绝对时刻，不依赖天气强度或默认城市。 */
 export interface SunCalcDirectionInput {

@@ -28,7 +28,8 @@
     "typecheck": "passed",
     "build": "passed",
     "lintErrors": 0,
-    "lintWarnings": 849
+    "lintWarnings": 849,
+    "typecheckProof": "/tmp/planting-suncalc-mean-typecheck-green.log"
   },
   "riskMatrix": {
     "U1": "缺时刻、地点和DNI分别验证",
@@ -54,7 +55,8 @@
     "正式Care算法发布与HTTP闭环"
   ],
   "sourceHashes": {
-    "cloudfunctions-v2/src/care/light/derive-suncalc-direction.ts": "39c23595de944e9dbd3b40f8988028f74164caf11080439c555d896191e52087",
+    "cloudfunctions-v2/src/care/light/derive-suncalc-direction.ts": "4af885a3ef67c0a97e61d6acb848d8f2244e56767abbc372e2477d44f19b3fcc",
     "cloudfunctions-v2/src/care/application/project-suncalc-window-direct.ts": "70e896aa5cf6cd86c7ee018a8dfbd0321cc51bdcf4d51729feef37bf09722dbd"
-  }
+  },
+  "typecheckVerifiedAt": "2026-10-04T12:59:45.879983+00:00"
 }
