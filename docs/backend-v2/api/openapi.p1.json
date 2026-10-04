@@ -3461,6 +3461,70 @@
           }
         ]
       }
+    },
+    "/api/v2/plant-knowledge/encyclopedia/{scientificNameSlug}": {
+      "get": {
+        "operationId": "getPlantEncyclopedia",
+        "summary": "植物百科 SQL 公开读取",
+        "tags": [
+          "plant-knowledge"
+        ],
+        "x-owner": "plant-knowledge",
+        "x-phase": "P2",
+        "x-security": "public",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "NOT_FOUND",
+          "INTERNAL_ERROR"
+        ],
+        "x-request-contract": "PlantEncyclopediaQuery",
+        "x-response-contract": "PlantEncyclopediaResponse",
+        "parameters": [
+          {
+            "name": "scientificNameSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          },
+          {
+            "name": "catalogTaxonRef",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

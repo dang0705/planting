@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "entries": {
+    "z8v0kmtktc": {
+      "version": 9,
+      "status": "done",
+      "note": "E00验收通过：E00-E08队列与原票映射已读回\n12项同步治理测试通过；无变化投影连续零写入\n每小时自动化ACTIVE，禁读边界与异常通知已核验\nH5实际展示当前步骤、逐票同步及未验收状态\n后端全量702/702；仅此子票完成，父票范围保留",
+      "commentId": "1100440000089625",
+      "commentFingerprint": "4e46eb6afa5aadff35c69eb56582ad7199a6127e476d381b466bde0984fea536",
+      "readback": "Chrome当前E00状态done及完整验收评论1100440000089625已读回"
+    },
+    "z8v0kmtktd": {
+      "version": 5,
+      "status": "done",
+      "note": "E01本地切片验收通过：目录SQL→HTTP与原身份搜索\n真实MySQL/HTTP重新验证20场景通过，无替身数据库\n目录18与原身份搜索5及治理12共35项通过\n后端全量105文件、702/702；类型检查及构建通过\nE00前置已验收；不包含生产部署或全量迁移",
+      "commentId": "1100440000089626",
+      "commentFingerprint": "f0e5bcde80ac72bba17e55e15fcc9d2e50b1454d2126d52596edc14b7a3e44ce",
+      "readback": "Chrome同一E01状态done、前置E00 done及完整验收评论1100440000089626读回"
+    },
+    "z8v0kmr971": {
+      "version": 2,
+      "status": "codex running",
+      "note": "E02：SQL 百科公开只读已实现；原 CMS 票其他子项保留\n9 场景经典 RED→GREEN；真实 MySQL→HTTP 新增 5 场景通过\nNode22 合计 44 场景通过；类型检查、构建通过\n图片保持空值；全量未全绿，尚未部署",
+      "commentId": "1100440000088814",
+      "commentFingerprint": "cc648930e0470c870abca72ed22cf6e43120ef1b35a7aaa648410b4aa0ea5854",
+      "readback": "Chrome 已读回同一票据 codex running 与完整四行验证评论"
+    },
+    "z8v0kmr970": {
+      "version": 2,
+      "status": "codex running",
+      "note": "E03：按用户确认从 .env.local 读取配置\n用户指定 PRIVATE_KEY 配置项；格式符合 AppSecret 候选\n微信 Provider 发布参数仍 pending，会话与 HMAC 接线未完成\n仅阻断正式登录；保持失败关闭，不伪造验真",
+      "commentId": "1100440000088816",
+      "commentFingerprint": "668644011f05ff473d3333ff889a17556389abb695695087b1dedf1b219217c9",
+      "readback": "Chrome 已读回 codex running 与四行配置接续评论"
+    },
+    "z8v0kmr973": {
+      "version": 10,
+      "status": "codex running",
+      "note": "E04：真实辐射制品→窗面平均直射回放已串联\n13场景通过；错误UTC偏移突变RED，恢复GREEN\nCare相关122项；后端全量105文件、702/702\n类型、构建通过；Node22独立5项；lint零错误535警告\n缺真实太阳时序界限与散射传播；正式模型未发布",
+      "commentId": "1100440000089627",
+      "commentFingerprint": "7a32b3ba2e8270c0deb1cdacc5d06e9bbb9277ab5c692b3b24684c9fca3d78ed",
+      "readback": "Chrome原E04/E06票保持codex running，完整五行评论1100440000089627已读回"
+    }
+  },
+  "lastSuccessfulSyncAt": "2026-10-04T11:48:05.705686+00:00",
+  "lastFailure": null,
+  "h5Projection": {
+    "fingerprint": "4c45b589f8395a1b59fd17c62616b2280de9544549fbfa41380fa1a11f52a97e",
+    "sourceRevision": 22,
+    "sourceUpdatedAt": "2026-10-04T11:44:43.524450+00:00"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "step": "E04",
+  "ticketId": "z8v0kmr973",
+  "scope": "离线完整时段平均直射界限，未接入正式模型或Provider回放编排",
+  "expectedSource": "非负量积分不等式及window-mean-direct-contract.md独立相关性反例",
+  "testLayer": "unit_fake",
+  "tests": 19,
+  "mutation": {
+    "change": "错误使用中值取代上下界",
+    "failed": 3,
+    "restored": true,
+    "log": "/tmp/planting-mean-direct-mutation-red.log"
+  },
+  "fullVitest": {
+    "files": 104,
+    "passed": 689,
+    "skipped": 0,
+    "log": "/tmp/planting-mean-direct-full-green.log"
+  },
+  "typecheck": "passed",
+  "build": "passed",
+  "lint": {
+    "errors": 0,
+    "warnings": 509
+  },
+  "notVerified": [
+    "真实制品与几何界限串联回放",
+    "已准入太阳位置时序界限算法",
+    "正式建议与持久化HTTP闭环"
+  ],
+  "updatedAt": "2026-10-04T11:35:05.115523+00:00"
+}

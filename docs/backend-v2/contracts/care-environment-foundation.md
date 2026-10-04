@@ -36,6 +36,8 @@ AI 不负责证明输入事实真假，也不重新计算已经可由代码确�
 
 原子事实至少保留：`observationRef`、`factorType`、`sourceScope`、`sourceKind`、`sourceRef`、规范值、单位、观察时间、有效期、置信度、证据哈希。
 
+字段语义保持明确：`unitCode` 是规范单位；`observedAt` 和 `validUntil` 是 UTC 毫秒观察时刻与证据有效期限；`confidence` 是证据置信度，不代替来源和有效期。不可变输入快照使用 `inputSnapshotHash` 校验输入清单，派生记录使用 `algorithmRelease` 锁定算法发布版本，不能只保存展示文字。
+
 ### 空间范围硬规则
 
 - 天气 Provider 证据保持 `outdoor`。

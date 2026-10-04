@@ -1,7 +1,9 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { setTimeout as wait } from "node:timers/promises";
+import path from "node:path";
 
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { findProjectRoot } from "./support/project-root.js";
 
 const serviceAddress = "http://127.0.0.1:9000";
 /**
@@ -45,7 +47,8 @@ async function waitForServiceReady(): Promise<void> {
 
 beforeAll(async () => {
   serviceProcess = spawn(process.execPath, ["dist/server.cjs"], {
-    cwd: process.cwd(),
+    // 构建制品属于后端包；从仓库根目录运行 Vitest 时也使用同一制品。
+    cwd: path.join(findProjectRoot(), "cloudfunctions-v2"),
     env: {
       ...process.env,
       TENCENTCLOUD_SECRETKEY: "不得出现在响应中",

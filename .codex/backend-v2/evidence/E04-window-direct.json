@@ -1,0 +1,41 @@
+{
+  "ticket": "z8v0kmr973",
+  "step": "E04",
+  "scope": "同刻瞬时 DNI 到无遮挡窗面外侧的直射投影",
+  "contract": "cloudfunctions-v2/models/care/window-direct-contract.md",
+  "source": "cloudfunctions-v2/src/care/light/project-window-direct.ts",
+  "tests": "cloudfunctions-v2/test/care/project-window-direct.spec.ts",
+  "expectedSources": [
+    "Sandia POA Beam",
+    "pvlib aoi_projection",
+    "已批准光照架构同刻、参考平面及缺失边界"
+  ],
+  "verification": {
+    "newCases": 27,
+    "relatedCases": 47,
+    "fullFiles": 101,
+    "fullPassed": 627,
+    "fullFailed": 0,
+    "typecheck": "passed",
+    "build": "passed",
+    "lintErrors": 0,
+    "lintWarnings": 405
+  },
+  "redGreen": {
+    "path": "测试先落盘；水平面替代窗面投影的受控突变",
+    "redFailed": 6,
+    "redPassed": 21,
+    "restoredPassed": 27,
+    "redLog": "/tmp/planting-window-direct-horizontal-mutation-red.log",
+    "greenLog": "/tmp/planting-window-direct-restored-green.log"
+  },
+  "node22": {
+    "version": "22.23.3",
+    "isolatedChecks": 6,
+    "log": "/tmp/planting-window-direct-node22.log",
+    "notCovered": "不是 Node22 全量 Vitest，也不是 CloudBase 部署"
+  },
+  "fullLog": "/tmp/planting-e04-window-full-vitest.log",
+  "next": "植物位置直射可达性；散射与传播参数仍需准入",
+  "accepted": false
+}

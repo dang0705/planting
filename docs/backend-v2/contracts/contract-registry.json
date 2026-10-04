@@ -92,7 +92,7 @@
       "version": "care-environment-foundation/v2",
       "file": "care-environment-foundation.md",
       "owner": "care",
-      "sha256": "d56119c61b8e3d7bd1bd295306ae4b9b4f03cb1135fba3cbb96689e0af82c3fe"
+      "sha256": "685cd828ed2e6f70e97ed0c34f24e986e6dc524831a9b9be81680bd79b47d059"
     },
     {
       "id": "care-manual-soil-observation",
@@ -208,6 +208,14 @@
       "file": "prompts/diagnosis-visual.v1.release.json",
       "owner": "diagnosis",
       "sha256": "e0b2eb20e6f59aac9bbb96916b29e5f1e76a59d935926f0cb12e736b989dcc04"
+    },
+    {
+      "id": "plant-encyclopedia-read",
+      "version": "plant-encyclopedia-read/v1",
+      "file": "plant-encyclopedia-read.md",
+      "owner": "plant-knowledge",
+      "status": "P2_FROZEN",
+      "sha256": "01d23bc04af72d1924df591e725639b5d347025b5b61ba221b040e33a67f6ac7"
     }
   ]
 }

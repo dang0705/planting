@@ -1,0 +1,42 @@
+{
+  "step": "E04",
+  "scope": "离线 DMN 文件子项",
+  "status": "draft_unverified_behavior",
+  "verifiedAt": "2026-10-04T10:14:54.614859+00:00",
+  "files": [
+    {
+      "file": "watering.dmn",
+      "sha256": "1eb43545c2d92d713dd29be80635ee01888293c451bb5b2b4a602491b0fbdff4"
+    },
+    {
+      "file": "pot.dmn",
+      "sha256": "75e59054b584b2d843ebbeb3784ca1b3529e717368fec317fa2affb8bf1a1b26"
+    },
+    {
+      "file": "light.dmn",
+      "sha256": "660aaeb2fd5c23d827f1b2243b12bb916e5634bdc127de4b3d8fc56b5af9cf14"
+    },
+    {
+      "file": "dry-cycle.dmn",
+      "sha256": "46213f0815f534e830b5d8be89dcd6ffafe7be8265651ccc5969a75021aa57f5"
+    },
+    {
+      "file": "care-models.dmn",
+      "sha256": "da089b2acbe4059f393b66f231e2e005aff428c738edc4f551d4f6e210f7eddc"
+    }
+  ],
+  "xmlSchema": {
+    "source": "https://www.omg.org/spec/DMN/20191111/DMN13.xsd",
+    "sha256": "9d303f7a2146b98c00a3a53a5dce5364bfe4a22b1b1938933a5be4a2d1945834",
+    "tool": "system xmllint",
+    "result": "5 passed"
+  },
+  "deterministicComposition": "passed",
+  "notProven": [
+    "dmnlint",
+    "Camunda 兼容执行环境的 FEEL 与命中规则",
+    "Desktop Modeler 打开、保存、重新打开",
+    "TypeScript 物理用例与模型一致性",
+    "正式 Care HTTP"
+  ]
+}

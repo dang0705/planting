@@ -1,0 +1,45 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "scope": "真实Open-Meteo制品→归一化→同一窗面全区间平均直射保守界限",
+  "testLayer": "unit_real_data",
+  "path": [
+    "AJV归一化器",
+    "严格时间/窗面匹配",
+    "boundWindowMeanDirect"
+  ],
+  "source": "已取得公开Provider制品及元数据SHA，window-mean-direct-contract.md",
+  "replacement": "网络响应以真实取得制品替代；未替换归一化器或领域计算",
+  "cases": 13,
+  "relatedCareCases": 122,
+  "mutation": {
+    "change": "错误二次加地点UTC偏移",
+    "failed": 1,
+    "restored": true,
+    "log": "/tmp/planting-window-replay-mutation-red.log"
+  },
+  "fullVitest": {
+    "files": 105,
+    "passed": 702,
+    "skipped": 0,
+    "log": "/tmp/planting-window-replay-final-full-green.log"
+  },
+  "typecheck": "passed",
+  "lint": {
+    "errors": 0,
+    "warnings": 535
+  },
+  "build": "passed",
+  "node22": {
+    "version": "22.23.3",
+    "checks": 5,
+    "scope": "编译制品独立检查，不是全量Vitest"
+  },
+  "missing": [
+    "实际太阳位置时序与可靠全区间界限算法",
+    "散射传播、已准入转换与玻璃参数",
+    "DMN行为验收及正式模型发布",
+    "正式Care HTTP闭环"
+  ],
+  "updatedAt": "2026-10-04T11:44:43.524450+00:00"
+}

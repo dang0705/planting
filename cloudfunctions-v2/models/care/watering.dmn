@@ -1,0 +1,404 @@
+<?xml version='1.0' encoding='utf-8'?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" id="watering_definitions" name="浇水模型：基线、干燥进度与盆土安全门" namespace="http://camunda.org/schema/1.0/dmn">
+  <description>离线模型草案；未通过 Camunda 兼容引擎行为验收，不用于生产执行。数值计算由受控 TypeScript 用例承担。</description>
+  <knowledgeSource id="watering_knowledge" name="依据：已批准的统一重构计划第六节">
+    <description>唯一依据为本会话批准的整体计划。候选参数不构成已发布策略；修改规则须同步独立预期、后端实现与发布版本。</description>
+  </knowledgeSource>
+  <inputData id="watering_input_watering_policy_approved" name="浇水算法已发布">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="watering_variable_watering_policy_approved" name="watering_policy_approved" typeRef="boolean" />
+  </inputData>
+  <inputData id="watering_input_light_result" name="光照模型结果">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="watering_variable_light_result" name="light_result" typeRef="Any" />
+  </inputData>
+  <inputData id="watering_input_pot_result" name="盆器模型结果">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="watering_variable_pot_result" name="pot_result" typeRef="Any" />
+  </inputData>
+  <inputData id="watering_input_personal_calibration" name="历史干湿循环校准结果">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="watering_variable_personal_calibration" name="personal_calibration" typeRef="Any" />
+  </inputData>
+  <inputData id="watering_input_growth_activity_state" name="生长活动状态">
+    <description>ACTIVE、SLOWED、DORMANT、UNKNOWN；仅选择条件基线，不再乘季节倍率。</description>
+    <variable id="watering_variable_growth_activity_state" name="growth_activity_state" typeRef="string" />
+  </inputData>
+  <inputData id="watering_input_resolved_baseline" name="后端选择的植物条件基线">
+    <description>参考条件与迁移依据确认后才可使用干燥单位；旧天数不是已校准干燥单位。</description>
+    <variable id="watering_variable_resolved_baseline" name="resolved_baseline" typeRef="Any" />
+  </inputData>
+  <inputData id="watering_input_indoor_vpd_result" name="室内空气 VPD 派生">
+    <description>实测或已发布估算；植物养护气候参考点不等于生理最适 VPD，比值不直接成为耗水倍率。</description>
+    <variable id="watering_variable_indoor_vpd_result" name="indoor_vpd_result" typeRef="Any" />
+  </inputData>
+  <inputData id="watering_input_air_movement_result" name="空气运动派生">
+    <description>室外风速不得当作室内通风。</description>
+    <variable id="watering_variable_air_movement_result" name="air_movement_result" typeRef="Any" />
+  </inputData>
+  <inputData id="watering_input_calculated_environment_demand" name="后端计算的环境干燥需求">
+    <description>光照、室内 VPD、空气运动并列输入；这是代理指标，不是实测耗水毫升数。</description>
+    <variable id="watering_variable_calculated_environment_demand" name="calculated_environment_demand" typeRef="Any" />
+  </inputData>
+  <inputData id="watering_input_confirmed_watering_origin" name="最近实际浇水起点已确认">
+    <description>建议、计划与提醒均不构成实际浇水事实，不重置进度。</description>
+    <variable id="watering_variable_confirmed_watering_origin" name="confirmed_watering_origin" typeRef="boolean" />
+  </inputData>
+  <inputData id="watering_input_calculated_dry_progress" name="后端积分的干燥进度">
+    <description>DryUnit = EnvironmentDemand × PersonalCalibration ÷ CultivationRetention；按时间区间积分，部分日与跨日均不得取整。</description>
+    <variable id="watering_variable_calculated_dry_progress" name="calculated_dry_progress" typeRef="Any" />
+  </inputData>
+  <inputData id="watering_input_predicted_window_state" name="后端预测检查窗口状态">
+    <description>before、within、overdue 或 null；无起点或其他输入时不得猜测窗口。</description>
+    <variable id="watering_variable_predicted_window_state" name="predicted_window_state" typeRef="string" />
+  </inputData>
+  <inputData id="watering_input_soil_evidence_reliable" name="盆土证据可靠且未过期">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="watering_variable_soil_evidence_reliable" name="soil_evidence_reliable" typeRef="boolean" />
+  </inputData>
+  <inputData id="watering_input_soil_evidence_state" name="当前盆土证据状态">
+    <description>wet、waterlogged、target_dry 或 unknown；表土照片不能证明根区干燥。</description>
+    <variable id="watering_variable_soil_evidence_state" name="soil_evidence_state" typeRef="string" />
+  </inputData>
+  <inputData id="watering_input_target_dry_criteria_confirmed" name="已达到目标干燥条件">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="watering_variable_target_dry_criteria_confirmed" name="target_dry_criteria_confirmed" typeRef="boolean" />
+  </inputData>
+  <decision id="watering_decision_soil_safety_gate" name="盆土安全门">
+    <description>按优先顺序保护盆土；预测超窗不能覆盖湿土。</description>
+    <variable id="watering_result_soil_safety_gate" name="soil_safety_gate" typeRef="Any" />
+    <informationRequirement id="watering_require_soil_safety_gate_0">
+      <requiredInput href="#watering_input_soil_evidence_reliable" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_soil_safety_gate_1">
+      <requiredInput href="#watering_input_soil_evidence_state" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_soil_safety_gate_2">
+      <requiredInput href="#watering_input_target_dry_criteria_confirmed" />
+    </informationRequirement>
+    <authorityRequirement id="watering_authority_soil_safety_gate">
+      <requiredAuthority href="#watering_knowledge" />
+    </authorityRequirement>
+    <decisionTable id="watering_table_soil_safety_gate" hitPolicy="FIRST">
+      <input id="watering_column_soil_safety_gate_0" label="soil_evidence_reliable">
+        <inputExpression id="watering_column_expression_soil_safety_gate_0" typeRef="boolean">
+          <text>soil_evidence_reliable</text>
+        </inputExpression>
+      </input>
+      <input id="watering_column_soil_safety_gate_1" label="soil_evidence_state">
+        <inputExpression id="watering_column_expression_soil_safety_gate_1" typeRef="string">
+          <text>soil_evidence_state</text>
+        </inputExpression>
+      </input>
+      <input id="watering_column_soil_safety_gate_2" label="target_dry_criteria_confirmed">
+        <inputExpression id="watering_column_expression_soil_safety_gate_2" typeRef="boolean">
+          <text>target_dry_criteria_confirmed</text>
+        </inputExpression>
+      </input>
+      <output id="watering_output_soil_safety_gate" name="soil_safety_gate" label="盆土安全门" typeRef="string" />
+      <rule id="watering_rule_soil_safety_gate_0">
+        <description>可靠湿土或积水优先否决</description>
+        <inputEntry id="watering_entry_soil_safety_gate_0_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_soil_safety_gate_0_1">
+          <text>"wet", "waterlogged"</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_soil_safety_gate_0_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="watering_value_soil_safety_gate_0">
+          <text>"pause_watering"</text>
+        </outputEntry>
+      </rule>
+      <rule id="watering_rule_soil_safety_gate_1">
+        <description>可靠证据达到植物目标干燥条件</description>
+        <inputEntry id="watering_entry_soil_safety_gate_1_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_soil_safety_gate_1_1">
+          <text>"target_dry"</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_soil_safety_gate_1_2">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="watering_value_soil_safety_gate_1">
+          <text>"target_dry_confirmed"</text>
+        </outputEntry>
+      </rule>
+      <rule id="watering_rule_soil_safety_gate_2">
+        <description>缺少可靠证据，不自动放行</description>
+        <inputEntry id="watering_entry_soil_safety_gate_2_0">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_soil_safety_gate_2_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_soil_safety_gate_2_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="watering_value_soil_safety_gate_2">
+          <text>"unknown"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="watering_decision_usable_dry_progress" name="有效干燥进度">
+    <description>数值计算由 TypeScript 承担并锁定输入及版本；没有起点时输出 null。</description>
+    <variable id="watering_result_usable_dry_progress" name="usable_dry_progress" typeRef="Any" />
+    <informationRequirement id="watering_require_usable_dry_progress_0">
+      <requiredInput href="#watering_input_confirmed_watering_origin" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_usable_dry_progress_policy">
+      <requiredInput href="#watering_input_watering_policy_approved" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_usable_dry_progress_1">
+      <requiredInput href="#watering_input_calculated_dry_progress" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_usable_dry_progress_2">
+      <requiredInput href="#watering_input_light_result" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_usable_dry_progress_3">
+      <requiredInput href="#watering_input_pot_result" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_usable_dry_progress_4">
+      <requiredInput href="#watering_input_personal_calibration" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_usable_dry_progress_5">
+      <requiredInput href="#watering_input_calculated_environment_demand" />
+    </informationRequirement>
+    <authorityRequirement id="watering_authority_usable_dry_progress">
+      <requiredAuthority href="#watering_knowledge" />
+    </authorityRequirement>
+    <literalExpression id="watering_expression_usable_dry_progress" typeRef="Any">
+      <text>if watering_policy_approved = true and confirmed_watering_origin = true and light_result.status = "ready" and pot_result.status = "ready" and personal_calibration.status = "ready" and calculated_environment_demand != null then calculated_dry_progress else null</text>
+    </literalExpression>
+  </decision>
+  <decision id="watering_decision_usable_window_state" name="有效检查窗口">
+    <description>只有有依据的基线与进度才能显示窗口；生长状态只选择基线。</description>
+    <variable id="watering_result_usable_window_state" name="usable_window_state" typeRef="Any" />
+    <informationRequirement id="watering_require_usable_window_state_0">
+      <requiredDecision href="#watering_decision_usable_dry_progress" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_usable_window_state_1">
+      <requiredInput href="#watering_input_predicted_window_state" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_usable_window_state_2">
+      <requiredInput href="#watering_input_resolved_baseline" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_usable_window_state_3">
+      <requiredInput href="#watering_input_growth_activity_state" />
+    </informationRequirement>
+    <authorityRequirement id="watering_authority_usable_window_state">
+      <requiredAuthority href="#watering_knowledge" />
+    </authorityRequirement>
+    <literalExpression id="watering_expression_usable_window_state" typeRef="Any">
+      <text>if usable_dry_progress != null and resolved_baseline != null then predicted_window_state else null</text>
+    </literalExpression>
+  </decision>
+  <decision id="watering_decision_watering_action" name="最终浇水建议">
+    <description>按明确优先级组合算法、盆土、排水和窗口。</description>
+    <variable id="watering_result_watering_action" name="watering_action" typeRef="Any" />
+    <informationRequirement id="watering_require_watering_action_0">
+      <requiredInput href="#watering_input_watering_policy_approved" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_watering_action_1">
+      <requiredDecision href="#watering_decision_soil_safety_gate" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_watering_action_2">
+      <requiredDecision href="#watering_decision_usable_window_state" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_watering_action_3">
+      <requiredInput href="#watering_input_pot_result" />
+    </informationRequirement>
+    <authorityRequirement id="watering_authority_watering_action">
+      <requiredAuthority href="#watering_knowledge" />
+    </authorityRequirement>
+    <decisionTable id="watering_table_watering_action" hitPolicy="FIRST">
+      <input id="watering_column_watering_action_0" label="watering_policy_approved">
+        <inputExpression id="watering_column_expression_watering_action_0" typeRef="boolean">
+          <text>watering_policy_approved</text>
+        </inputExpression>
+      </input>
+      <input id="watering_column_watering_action_1" label="soil_safety_gate">
+        <inputExpression id="watering_column_expression_watering_action_1" typeRef="string">
+          <text>soil_safety_gate</text>
+        </inputExpression>
+      </input>
+      <input id="watering_column_watering_action_2" label="pot_result.safety">
+        <inputExpression id="watering_column_expression_watering_action_2" typeRef="string">
+          <text>pot_result.safety</text>
+        </inputExpression>
+      </input>
+      <input id="watering_column_watering_action_3" label="usable_window_state">
+        <inputExpression id="watering_column_expression_watering_action_3" typeRef="string">
+          <text>usable_window_state</text>
+        </inputExpression>
+      </input>
+      <output id="watering_output_watering_action" name="watering_action" label="最终浇水建议" typeRef="string" />
+      <rule id="watering_rule_watering_action_0">
+        <description>无获准算法不启用旧算法</description>
+        <inputEntry id="watering_entry_watering_action_0_0">
+          <text>false, null</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_0_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_0_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_0_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="watering_value_watering_action_0">
+          <text>"temporarily_unavailable"</text>
+        </outputEntry>
+      </rule>
+      <rule id="watering_rule_watering_action_1">
+        <description>可靠湿土或积水优先</description>
+        <inputEntry id="watering_entry_watering_action_1_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_1_1">
+          <text>"pause_watering"</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_1_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_1_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="watering_value_watering_action_1">
+          <text>"pause_watering"</text>
+        </outputEntry>
+      </rule>
+      <rule id="watering_rule_watering_action_2">
+        <description>先处理排水风险</description>
+        <inputEntry id="watering_entry_watering_action_2_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_2_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_2_2">
+          <text>"drainage_risk"</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_2_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="watering_value_watering_action_2">
+          <text>"inspect_drainage"</text>
+        </outputEntry>
+      </rule>
+      <rule id="watering_rule_watering_action_3">
+        <description>当前可靠干燥证据可独立判断</description>
+        <inputEntry id="watering_entry_watering_action_3_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_3_1">
+          <text>"target_dry_confirmed"</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_3_2">
+          <text>"safe"</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_3_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="watering_value_watering_action_3">
+          <text>"water_allowed"</text>
+        </outputEntry>
+      </rule>
+      <rule id="watering_rule_watering_action_4">
+        <description>预测只建议检查，不自动浇水</description>
+        <inputEntry id="watering_entry_watering_action_4_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_4_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_4_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_4_3">
+          <text>"within", "overdue"</text>
+        </inputEntry>
+        <outputEntry id="watering_value_watering_action_4">
+          <text>"inspect_soil"</text>
+        </outputEntry>
+      </rule>
+      <rule id="watering_rule_watering_action_5">
+        <description>尚未进入检查窗口</description>
+        <inputEntry id="watering_entry_watering_action_5_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_5_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_5_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_5_3">
+          <text>"before"</text>
+        </inputEntry>
+        <outputEntry id="watering_value_watering_action_5">
+          <text>"wait_and_observe"</text>
+        </outputEntry>
+      </rule>
+      <rule id="watering_rule_watering_action_6">
+        <description>缺证据时不猜测窗口或浇水</description>
+        <inputEntry id="watering_entry_watering_action_6_0">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_6_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_6_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_6_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="watering_value_watering_action_6">
+          <text>"insufficient_evidence"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="watering_decision_watering_result" name="浇水能力结果">
+    <description>仅建议；用户确认未来动作生成计划，确认已发生动作才记录事实。本草案不写任何业务数据。</description>
+    <variable id="watering_result_watering_result" name="watering_result" typeRef="Any" />
+    <informationRequirement id="watering_require_watering_result_0">
+      <requiredDecision href="#watering_decision_watering_action" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_watering_result_1">
+      <requiredDecision href="#watering_decision_usable_dry_progress" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_watering_result_2">
+      <requiredInput href="#watering_input_resolved_baseline" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_watering_result_3">
+      <requiredInput href="#watering_input_light_result" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_watering_result_4">
+      <requiredInput href="#watering_input_pot_result" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_watering_result_5">
+      <requiredInput href="#watering_input_personal_calibration" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_watering_result_6">
+      <requiredInput href="#watering_input_indoor_vpd_result" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_watering_result_7">
+      <requiredInput href="#watering_input_air_movement_result" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_watering_result_8">
+      <requiredInput href="#watering_input_calculated_environment_demand" />
+    </informationRequirement>
+    <authorityRequirement id="watering_authority_watering_result">
+      <requiredAuthority href="#watering_knowledge" />
+    </authorityRequirement>
+    <literalExpression id="watering_expression_watering_result" typeRef="Any">
+      <text>{ action: watering_action, dryProgress: usable_dry_progress, baseline: resolved_baseline }</text>
+    </literalExpression>
+  </decision>
+  <dmndi:DMNDI><dmndi:DMNDiagram id="watering_diagram" name="可审阅决策依赖图"><dmndi:DMNShape id="watering_input_watering_policy_approved_shape" dmnElementRef="watering_input_watering_policy_approved"><dc:Bounds x="80" y="70" width="230" height="80" /></dmndi:DMNShape><dmndi:DMNShape id="watering_input_light_result_shape" dmnElementRef="watering_input_light_result"><dc:Bounds x="360" y="70" width="230" height="80" /></dmndi:DMNShape><dmndi:DMNShape id="watering_input_pot_result_shape" dmnElementRef="watering_input_pot_result"><dc:Bounds x="640" y="70" width="230" height="80" /></dmndi:DMNShape><dmndi:DMNShape id="watering_input_personal_calibration_shape" dmnElementRef="watering_input_personal_calibration"><dc:Bounds x="920" y="70" width="230" height="80" /></dmndi:DMNShape><dmndi:DMNShape id="watering_input_growth_activity_state_shape" dmnElementRef="watering_input_growth_activity_state"><dc:Bounds x="80" y="230" width="230" height="80" /></dmndi:DMNShape><dmndi:DMNShape id="watering_input_resolved_baseline_shape" dmnElementRef="watering_input_resolved_baseline"><dc:Bounds x="360" y="230" width="230" height="80" /></dmndi:DMNShape><dmndi:DMNShape id="watering_input_indoor_vpd_result_shape" dmnElementRef="watering_input_indoor_vpd_result"><dc:Bounds x="640" y="230" width="230" height="80" /></dmndi:DMNShape><dmndi:DMNShape id="watering_input_air_movement_result_shape" dmnElementRef="watering_input_air_movement_result"><dc:Bounds x="920" y="230" width="230" height="80" /></dmndi:DMNShape><dmndi:DMNShape id="watering_input_calculated_environment_demand_shape" dmnElementRef="watering_input_calculated_environment_demand"><dc:Bounds x="80" y="390" width="230" height="80" /></dmndi:DMNShape><dmndi:DMNShape id="watering_input_confirmed_watering_origin_shape" dmnElementRef="watering_input_confirmed_watering_origin"><dc:Bounds x="360" y="390" width="230" height="80" /></dmndi:DMNShape><dmndi:DMNShape id="watering_input_calculated_dry_progress_shape" dmnElementRef="watering_input_calculated_dry_progress"><dc:Bounds x="640" y="390" width="230" height="80" /></dmndi:DMNShape><dmndi:DMNShape id="watering_input_predicted_window_state_shape" dmnElementRef="watering_input_predicted_window_state"><dc:Bounds x="920" y="390" width="230" height="80" /></dmndi:DMNShape><dmndi:DMNShape id="watering_input_soil_evidence_reliable_shape" dmnElementRef="watering_input_soil_evidence_reliable"><dc:Bounds x="80" y="550" width="230" height="80" /></dmndi:DMNShape><dmndi:DMNShape id="watering_input_soil_evidence_state_shape" dmnElementRef="watering_input_soil_evidence_state"><dc:Bounds x="360" y="550" width="230" height="80" /></dmndi:DMNShape><dmndi:DMNShape id="watering_input_target_dry_criteria_confirmed_shape" dmnElementRef="watering_input_target_dry_criteria_confirmed"><dc:Bounds x="640" y="550" width="230" height="80" /></dmndi:DMNShape><dmndi:DMNShape id="watering_decision_soil_safety_gate_shape" dmnElementRef="watering_decision_soil_safety_gate"><dc:Bounds x="920" y="550" width="230" height="80" /></dmndi:DMNShape><dmndi:DMNShape id="watering_decision_usable_dry_progress_shape" dmnElementRef="watering_decision_usable_dry_progress"><dc:Bounds x="80" y="710" width="230" height="80" /></dmndi:DMNShape><dmndi:DMNShape id="watering_decision_usable_window_state_shape" dmnElementRef="watering_decision_usable_window_state"><dc:Bounds x="360" y="710" width="230" height="80" /></dmndi:DMNShape><dmndi:DMNShape id="watering_decision_watering_action_shape" dmnElementRef="watering_decision_watering_action"><dc:Bounds x="640" y="710" width="230" height="80" /></dmndi:DMNShape><dmndi:DMNShape id="watering_decision_watering_result_shape" dmnElementRef="watering_decision_watering_result"><dc:Bounds x="920" y="710" width="230" height="80" /></dmndi:DMNShape><dmndi:DMNEdge id="watering_require_soil_safety_gate_0_edge" dmnElementRef="watering_require_soil_safety_gate_0"><di:waypoint x="195" y="630" /><di:waypoint x="1035" y="550" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_soil_safety_gate_1_edge" dmnElementRef="watering_require_soil_safety_gate_1"><di:waypoint x="475" y="630" /><di:waypoint x="1035" y="550" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_soil_safety_gate_2_edge" dmnElementRef="watering_require_soil_safety_gate_2"><di:waypoint x="755" y="630" /><di:waypoint x="1035" y="550" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_usable_dry_progress_0_edge" dmnElementRef="watering_require_usable_dry_progress_0"><di:waypoint x="475" y="470" /><di:waypoint x="195" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_usable_dry_progress_1_edge" dmnElementRef="watering_require_usable_dry_progress_1"><di:waypoint x="755" y="470" /><di:waypoint x="195" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_usable_dry_progress_2_edge" dmnElementRef="watering_require_usable_dry_progress_2"><di:waypoint x="475" y="150" /><di:waypoint x="195" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_usable_dry_progress_3_edge" dmnElementRef="watering_require_usable_dry_progress_3"><di:waypoint x="755" y="150" /><di:waypoint x="195" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_usable_dry_progress_4_edge" dmnElementRef="watering_require_usable_dry_progress_4"><di:waypoint x="1035" y="150" /><di:waypoint x="195" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_usable_dry_progress_5_edge" dmnElementRef="watering_require_usable_dry_progress_5"><di:waypoint x="195" y="470" /><di:waypoint x="195" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_usable_window_state_0_edge" dmnElementRef="watering_require_usable_window_state_0"><di:waypoint x="195" y="790" /><di:waypoint x="475" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_usable_window_state_1_edge" dmnElementRef="watering_require_usable_window_state_1"><di:waypoint x="1035" y="470" /><di:waypoint x="475" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_usable_window_state_2_edge" dmnElementRef="watering_require_usable_window_state_2"><di:waypoint x="475" y="310" /><di:waypoint x="475" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_usable_window_state_3_edge" dmnElementRef="watering_require_usable_window_state_3"><di:waypoint x="195" y="310" /><di:waypoint x="475" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_watering_action_0_edge" dmnElementRef="watering_require_watering_action_0"><di:waypoint x="195" y="150" /><di:waypoint x="755" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_watering_action_1_edge" dmnElementRef="watering_require_watering_action_1"><di:waypoint x="1035" y="630" /><di:waypoint x="755" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_watering_action_2_edge" dmnElementRef="watering_require_watering_action_2"><di:waypoint x="475" y="790" /><di:waypoint x="755" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_watering_action_3_edge" dmnElementRef="watering_require_watering_action_3"><di:waypoint x="755" y="150" /><di:waypoint x="755" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_watering_result_0_edge" dmnElementRef="watering_require_watering_result_0"><di:waypoint x="755" y="790" /><di:waypoint x="1035" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_watering_result_1_edge" dmnElementRef="watering_require_watering_result_1"><di:waypoint x="195" y="790" /><di:waypoint x="1035" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_watering_result_2_edge" dmnElementRef="watering_require_watering_result_2"><di:waypoint x="475" y="310" /><di:waypoint x="1035" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_watering_result_3_edge" dmnElementRef="watering_require_watering_result_3"><di:waypoint x="475" y="150" /><di:waypoint x="1035" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_watering_result_4_edge" dmnElementRef="watering_require_watering_result_4"><di:waypoint x="755" y="150" /><di:waypoint x="1035" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_watering_result_5_edge" dmnElementRef="watering_require_watering_result_5"><di:waypoint x="1035" y="150" /><di:waypoint x="1035" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_watering_result_6_edge" dmnElementRef="watering_require_watering_result_6"><di:waypoint x="755" y="310" /><di:waypoint x="1035" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_watering_result_7_edge" dmnElementRef="watering_require_watering_result_7"><di:waypoint x="1035" y="310" /><di:waypoint x="1035" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_watering_result_8_edge" dmnElementRef="watering_require_watering_result_8"><di:waypoint x="195" y="470" /><di:waypoint x="1035" y="710" /></dmndi:DMNEdge><dmndi:DMNShape id="watering_knowledge_shape" dmnElementRef="watering_knowledge"><dc:Bounds x="80" y="-60" width="230" height="70" /></dmndi:DMNShape><dmndi:DMNEdge id="watering_authority_soil_safety_gate_edge" dmnElementRef="watering_authority_soil_safety_gate"><di:waypoint x="195" y="10" /><di:waypoint x="1035.0" y="550" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_authority_usable_dry_progress_edge" dmnElementRef="watering_authority_usable_dry_progress"><di:waypoint x="195" y="10" /><di:waypoint x="195.0" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_authority_usable_window_state_edge" dmnElementRef="watering_authority_usable_window_state"><di:waypoint x="195" y="10" /><di:waypoint x="475.0" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_authority_watering_action_edge" dmnElementRef="watering_authority_watering_action"><di:waypoint x="195" y="10" /><di:waypoint x="755.0" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_authority_watering_result_edge" dmnElementRef="watering_authority_watering_result"><di:waypoint x="195" y="10" /><di:waypoint x="1035.0" y="710" /></dmndi:DMNEdge><dmndi:DMNEdge id="watering_require_usable_dry_progress_policy_edge" dmnElementRef="watering_require_usable_dry_progress_policy"><di:waypoint x="195" y="150" /><di:waypoint x="195.0" y="710" /></dmndi:DMNEdge></dmndi:DMNDiagram></dmndi:DMNDI></definitions>

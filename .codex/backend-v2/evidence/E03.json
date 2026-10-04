@@ -1,0 +1,19 @@
+{
+  "step": "E03",
+  "checkedAt": "2026-10-04T10:24:56.712945+00:00",
+  "configurationFile": ".env.local",
+  "credentialNameConfirmedByUser": "WECHAT_MINIPROGRAM_PRIVATE_KEY",
+  "credentialFormat": "AppSecret 候选；未验证微信成功响应",
+  "sessionTtlHours": {
+    "value": 24,
+    "status": "confirmed",
+    "activeReleaseWiring": "not_implemented"
+  },
+  "providerProfile": {
+    "code": "wechat_miniprogram_login",
+    "status": "pending",
+    "blocking": "已发布超时、尝试策略与版本未准入；HMAC 密钥版本配置待核验"
+  },
+  "entryVerification": "失败关闭桩，未宣称真实登录完成",
+  "secretValuesStored": false
+}

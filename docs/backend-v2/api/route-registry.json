@@ -865,6 +865,22 @@
         "PRINCIPAL_INVALID",
         "IDEMPOTENCY_CONFLICT"
       ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/plant-knowledge/encyclopedia/{scientificNameSlug}",
+      "operationId": "getPlantEncyclopedia",
+      "owner": "plant-knowledge",
+      "phase": "P2",
+      "security": "public",
+      "requestContract": "PlantEncyclopediaQuery",
+      "responseContract": "PlantEncyclopediaResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "NOT_FOUND",
+        "INTERNAL_ERROR"
+      ]
     }
   ]
 }

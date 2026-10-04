@@ -304,3 +304,23 @@
 - 首批 Provider 必须逐个具备端点档案、凭证引用、连接/读取/总超时、重试与退避、限流、熔断、成本/预算、回退链、输出合同、审计保留和阻断范围；待冻结字段不得进入真实 Adapter。
 - 任何代码新增可调常量时，先判断其是否属于本目录；属于则先修改策略合同和测试，不允许先埋常量。
 
+
+### 目录搜索冻结参数（E01）
+
+沿用公开搜索的 64 码点与最多 20 条硬规则；目录合同另规定`plant-knowledge.catalog.default_limit` 默认 10 条、`plant-knowledge.catalog.minimum_limit` 最少 1 条。均不可运营配置。来源：`plant-catalog-search/v1`；负责域：plant-knowledge；票据：`z8v0kmtktd`。缺词、越界及非整数返回 400，不采用猜测默认值；仅缺省 limit 使用合同的 10 条。变更必须同步合同与独立 Expected。
+
+### 百科读取冻结参数（E02）
+
+`plant-knowledge.encyclopedia.reference_max_code_points` 为 512 个 Unicode 码点，约束非空路径 slug 与目录引用，来自已核验的来源列宽和 `plant-encyclopedia-read/v1`。属不可配置硬规则，owner 为 plant-knowledge，绑定原票 `z8v0kmr971`。越界返回 400；不设运营降级。图片许可缺证据时不展示，不能通过配置绕过。
+
+### 离线光照区间积分
+
+`care.lighting.interval_unit_definitions` 为不可配置单位定义：每秒 1,000 毫秒，每摩尔 1,000,000 微摩尔。只用于 E04 已给定 PPFD 的离线积分，不解除光照算法 release 的 pending 状态。依据见 `cloudfunctions-v2/models/care/light-interval-contract.md`，票据 `z8v0kmr973`。
+
+### 窗面直射几何硬规则
+
+`care.lighting.window_direct_geometry`：瞬时 DNI 与同刻太阳位置投影至无遮挡窗面外侧。真北顺时针方位、水平朝上倾角原点和背面／地平线截断为不可配置硬规则；不设置默认朝向、玻璃或距离倍率。来源为离线窗面直射内部合同，票据 `z8v0kmr973`。 区间平均辐射只与同一完整时段的投影上下界结合，不能以瞬时或均值乘均值冒充精确结果；来源补充 `cloudfunctions-v2/models/care/window-mean-direct-contract.md`。
+
+### 辐射区间归一化硬规则
+
+`care.lighting.open_meteo_interval_semantics`：官方小时／15分钟均值属于标签之前的时段；Unix秒为UTC，不再次加地点偏移。瓦每平方米与来源语义不可配置，缓存、超时和重试尚不在本离线增量中启用。来源：辐射区间归一化内部合同；原票 `z8v0kmr973`。

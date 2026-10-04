@@ -1,0 +1,406 @@
+{
+  "revision": 22,
+  "currentStep": "E04",
+  "currentTicketId": "z8v0kmr973",
+  "updatedAt": "2026-10-04T11:44:43.524450+00:00",
+  "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
+  "checkpoint": {
+    "goal": "E04 区间平均辐射与窗口几何的保守上下界及真实制品回放",
+    "assumptions": [
+      "DNI非负；几何上下界须明确覆盖整个同一时段",
+      "不假设DNI恒定，不用平均投影因子制造唯一均值"
+    ],
+    "minimumVerification": "独立相关性反例、严格时段匹配、缺数据、边界及真实Provider制品回放；突变RED与恢复GREEN",
+    "continueWhen": "数学界限、用例编排、类型检查、全量Vitest通过",
+    "failWhen": "将点采样或未经证明的上下界标成正式模型证据",
+    "rollback": "仅保留离线计算与回放，不进入发布或事实写入",
+    "timeLimit": "30分钟检查点"
+  },
+  "tasks": [
+    {
+      "id": "z8v0kmtktc",
+      "step": "E00",
+      "version": 9,
+      "priority": "high",
+      "status": "done",
+      "stage": "完成",
+      "accepted": true,
+      "evidence": [
+        ".codex/backend-v2/evidence/E00-H5.json",
+        "cloudfunctions-v2/test/execution-progress.spec.ts",
+        ".codex/backend-v2/evidence/E00-backend-test-scope.json",
+        ".codex/backend-v2/evidence/E00-vitest-stop-repair.json",
+        ".codex/backend-v2/evidence/E00-acceptance.json"
+      ],
+      "summary": [
+        "E00验收通过：E00-E08队列与原票映射已读回",
+        "12项同步治理测试通过；无变化投影连续零写入",
+        "每小时自动化ACTIVE，禁读边界与异常通知已核验",
+        "H5实际展示当前步骤、逐票同步及未验收状态",
+        "后端全量702/702；仅此子票完成，父票范围保留"
+      ],
+      "blockingReason": null,
+      "nextAction": "按每小时同步运行，异常时处理；父票其余基础设施范围继续保留",
+      "ticketReadback": "Chrome当前E00状态done及完整验收评论1100440000089625已读回",
+      "acceptanceRecord": {
+        "acceptedAt": "2026-10-04T11:43:11.473203+00:00",
+        "evidence": ".codex/backend-v2/evidence/E00-acceptance.json"
+      }
+    },
+    {
+      "id": "z8v0kmtktd",
+      "step": "E01",
+      "version": 5,
+      "priority": "high",
+      "status": "done",
+      "stage": "完成",
+      "accepted": true,
+      "evidence": [
+        ".codex/backend-v2/evidence/E01.json"
+      ],
+      "summary": [
+        "E01本地切片验收通过：目录SQL→HTTP与原身份搜索",
+        "真实MySQL/HTTP重新验证20场景通过，无替身数据库",
+        "目录18与原身份搜索5及治理12共35项通过",
+        "后端全量105文件、702/702；类型检查及构建通过",
+        "E00前置已验收；不包含生产部署或全量迁移"
+      ],
+      "blockingReason": null,
+      "nextAction": "本地切片完成；生产部署由发布准备阶段验收",
+      "ticketReadback": "Chrome同一E01状态done、前置E00 done及完整验收评论1100440000089626读回",
+      "dependenciesReadback": "ClickUp 已读回 Blocked by E00",
+      "acceptanceRecord": {
+        "acceptedAt": "2026-10-04T11:43:30.938533+00:00",
+        "evidence": ".codex/backend-v2/evidence/E01.json"
+      }
+    },
+    {
+      "id": "z8v0kmr971",
+      "step": "E02",
+      "version": 2,
+      "priority": "normal",
+      "status": "codex running",
+      "stage": "验证与持久化读回",
+      "accepted": false,
+      "evidence": [
+        ".codex/backend-v2/evidence/E02.json"
+      ],
+      "summary": [
+        "E02：SQL 百科公开只读已实现；原 CMS 票其他子项保留",
+        "9 场景经典 RED→GREEN；真实 MySQL→HTTP 新增 5 场景通过",
+        "Node22 合计 44 场景通过；类型检查、构建通过",
+        "图片保持空值；全量未全绿，尚未部署"
+      ],
+      "ticketReadback": "Chrome 已读回 ID、Normal、codex running",
+      "nextAction": "同步本子项验证结果，不将原 CMS 整票标成完成",
+      "blockingReason": null
+    },
+    {
+      "id": "z8v0kmr970",
+      "step": "E03",
+      "version": 2,
+      "priority": "normal",
+      "status": "codex running",
+      "stage": "合同与配置确认",
+      "accepted": false,
+      "evidence": [
+        ".codex/backend-v2/evidence/E03.json"
+      ],
+      "summary": [
+        "E03：按用户确认从 .env.local 读取配置",
+        "用户指定 PRIVATE_KEY 配置项；格式符合 AppSecret 候选",
+        "微信 Provider 发布参数仍 pending，会话与 HMAC 接线未完成",
+        "仅阻断正式登录；保持失败关闭，不伪造验真"
+      ],
+      "blockingReason": "wechat_miniprogram_login 的受控 Provider 发布参数仍 pending，尚无获准超时／发布版本",
+      "nextAction": "核验正式 Provider 发布参数与 HMAC 密钥版本裁决，不私设默认值",
+      "ticketReadback": "Chrome 已读回 codex running 与四行配置接续说明"
+    },
+    {
+      "id": "z8v0kmr973",
+      "step": "E04",
+      "version": 10,
+      "priority": "normal",
+      "status": "codex running",
+      "stage": "验证与持久化读回",
+      "accepted": false,
+      "evidence": [
+        ".codex/backend-v2/evidence/E04-light-interval.json",
+        ".codex/backend-v2/evidence/E00-vitest-stop-repair.json",
+        ".codex/backend-v2/evidence/E04-window-direct.json",
+        ".codex/backend-v2/evidence/E04-direct-reach.json",
+        ".codex/backend-v2/evidence/E04-radiation-normalization.json",
+        ".codex/backend-v2/evidence/E04-mean-direct.json",
+        ".codex/backend-v2/evidence/E04-window-radiation-replay.json"
+      ],
+      "summary": [
+        "E04：真实辐射制品→窗面平均直射回放已串联",
+        "13场景通过；错误UTC偏移突变RED，恢复GREEN",
+        "Care相关122项；后端全量105文件、702/702",
+        "类型、构建通过；Node22独立5项；lint零错误535警告",
+        "缺真实太阳时序界限与散射传播；正式模型未发布"
+      ],
+      "blockingReason": null,
+      "nextAction": "实现可靠太阳位置时序与全区间几何界限，接入直射可达性；不补猜测参数",
+      "ticketReadback": "Chrome原E04/E06票保持codex running，完整五行评论1100440000089627已读回"
+    }
+  ],
+  "queue": [
+    {
+      "step": "E00",
+      "priority": "high",
+      "tickets": [
+        "z8v0kmtktc"
+      ],
+      "dependsOn": []
+    },
+    {
+      "step": "E01",
+      "priority": "high",
+      "tickets": [
+        "z8v0kmtktd"
+      ],
+      "dependsOn": [
+        "E00"
+      ]
+    },
+    {
+      "step": "E02",
+      "priority": "normal",
+      "tickets": [
+        "z8v0kmr971"
+      ],
+      "dependsOn": [
+        "E01"
+      ],
+      "note": "复用原百科任务；新增子票请求因 MCP 日额度失败，未确认创建，禁止盲重发"
+    },
+    {
+      "step": "E03",
+      "priority": "normal",
+      "tickets": [
+        "z8v0kmr970",
+        "z8v0kmr9mh",
+        "z8v0kmr9mj",
+        "z8v0kmr972"
+      ],
+      "dependsOn": [],
+      "note": "承接时定向读回；内部先身份、权益，再用户植物及认领"
+    },
+    {
+      "step": "E04",
+      "priority": "normal",
+      "tickets": [
+        "z8v0kmr973"
+      ],
+      "dependsOn": [],
+      "note": "只做回放及模型文件，不因身份阻断"
+    },
+    {
+      "step": "E05",
+      "priority": "normal",
+      "tickets": [
+        "z8v0kmrg8a",
+        "z8v0kmr971",
+        "z8v0kmr974"
+      ],
+      "dependsOn": [],
+      "note": "前置审核知识及病例归属按当前切片核验"
+    },
+    {
+      "step": "E06",
+      "priority": "normal",
+      "tickets": [
+        "z8v0kmr973"
+      ],
+      "dependsOn": [
+        "E03",
+        "E04"
+      ]
+    },
+    {
+      "step": "E07",
+      "priority": "normal",
+      "tickets": [
+        "z8v0kmr975",
+        "z8v0kmr976",
+        "z8v0kmr977",
+        "z8v0kmr978"
+      ],
+      "dependsOn": [
+        "E01",
+        "E02",
+        "E03",
+        "E05",
+        "E06"
+      ]
+    },
+    {
+      "step": "E08",
+      "priority": "low",
+      "tickets": [
+        "z8v0kmr979"
+      ],
+      "dependsOn": [
+        "E07"
+      ]
+    }
+  ],
+  "nextAction": "实现可靠太阳位置时序与全区间几何界限，接入直射可达性；不补猜测参数",
+  "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
+  "readAdmission": {
+    "task": "E00 当前 Master Plan 锁定",
+    "openVikingLayers": "L0/L1 提供导航；L2 README 返回旧 96258 基线，无法提供当前 2333 行锁字段",
+    "missing": "当前基线标题、哈希、行数与校验引用",
+    "localAllowed": [
+      "docs/backend-v2/README.md 的基线段",
+      "docs/backend-v2/BASELINE.lock",
+      "docs/backend-v2/verify-entrypoint.mjs"
+    ],
+    "rule": "禁止扩展到领域资料；自动化不得读取上述目录"
+  },
+  "catalogReadAdmission": {
+    "task": "E01 目录搜索配置",
+    "openVikingLayers": "L0/L1/L2 定向召回不能提供配置全文；资源明确拒绝机械镜像",
+    "missing": "目录搜索相关硬规则字段与票据绑定",
+    "localAllowed": [
+      "configuration-variable-catalog.md 的搜索条目",
+      "configuration-variable-catalog.json 的搜索条目"
+    ],
+    "scope": "不读取其他领域或 sourceRefs 正文"
+  },
+  "encyclopediaReadAdmission": {
+    "openVikingLayers": "L0/L1/L2 定向召回只有目录与目标架构，无法提供新增接口登记字段及制品格式",
+    "missing": "新增百科合同的注册表、API 登记与哈希字段",
+    "localAllowed": [
+      "contract-registry.json 单项格式",
+      "route-registry.json 目录路由单项",
+      "openapi.p1.json 目录路径单项",
+      "api/manifest.json 哈希字段"
+    ],
+    "scope": "机械追加登记；不读取其他合同正文"
+  },
+  "identityReadAdmission": {
+    "task": "E03 受控验真与会话策略",
+    "openVikingLayers": "planting backend-v2 定向 L0/L1/L2 召回只提供身份与配置边界，缺少 Provider 参数、凭证引用及密钥版本裁决",
+    "missing": "身份域 Provider、HMAC、会话发布配置的对应条目状态",
+    "localAllowed": [
+      "configuration-variable-catalog.md 的 identity 与 Provider 对应条目",
+      "configuration-variable-catalog.json 的 identity 与 Provider 对应条目"
+    ],
+    "scope": "不读其他领域，不展开 sourceRefs"
+  },
+  "lightIntegrationReadAdmission": {
+    "task": "E04 光照区间积分回放",
+    "openVikingLayers": "planting L0/L1/L2 光照定向召回有计算关系，但不含新增区间积分合同及配置字段；配置目录不是 OV 镜像",
+    "missing": "care 光照对应配置条目状态与新增物理单位硬规则登记",
+    "localAllowed": [
+      "configuration-variable-catalog.md 光照相关条目",
+      "configuration-variable-catalog.json care 光照对应变量及新增硬规则登记"
+    ],
+    "scope": "不展开其他领域或全部引用"
+  },
+  "testScope": {
+    "frontendExcluded": true,
+    "authority": "用户确认后端测试运行器与目录；旧运行器结果不计入验收",
+    "evidence": ".codex/backend-v2/evidence/E00-vitest-stop-repair.json",
+    "backendV2Failures": 0,
+    "runner": "cloudfunctions-v2 已锁定 Vitest",
+    "testDirectory": "cloudfunctions-v2/test/",
+    "lastResult": {
+      "passed": 702,
+      "total": 702,
+      "skipped": 0
+    }
+  },
+  "backendTestRepairReadAdmission": {
+    "task": "E00/E04 全量 Vitest 7 个失败修复",
+    "layers": {
+      "L0": "定向检索超时，architecture 摘要只给导航",
+      "L1": "backend-v2/data 导航确认没有 state-machines 和 schema 资源；配置不做机械镜像",
+      "L2": "care-environment-foundation/v2 原文确认环境与决策派生拆分；state-machines URI 不存在；schema/017 和配置制品字段未提供"
+    },
+    "missing": [
+      "本地 state-machines 版本头",
+      "017 顺序迁移的 ALTER TABLE 对象和约束",
+      "新增配置条目票据绑定、来源路径及 manifest 版本"
+    ],
+    "localAllowed": [
+      "state-machines.md 版本头",
+      "schema/017_care_v2_ephemeral_and_derivations.sql 特定迁移",
+      "configuration-variable-catalog.json 新增百科／积分条目与 ticketBindings",
+      "configuration-variable-catalog.md 对应条目",
+      "architecture/manifest.json 版本和哈希字段",
+      "configuration-variable-catalog.json care.environment.reference 对应条目",
+      "configuration-variable-catalog.json Reference Profile 与环境硬规则条目"
+    ],
+    "scope": "只读取以上特定执行环节；不扩展到全目录或其他领域"
+  },
+  "windowProjectionReadAdmission": {
+    "layers": {
+      "L0": "本轮前述摘要与定向检索无法提供新增角度坐标合同",
+      "L1": "已有 navigation 只涵盖目标结构，不镜像配置条目",
+      "L2": "l2-light 原文确认窗面 Direct/Diffuse 链路，但缺新增坐标硬规则登记"
+    },
+    "missing": "新增离线窗面几何硬规则的机器登记与中文条目",
+    "localAllowed": [
+      "configuration-variable-catalog.json 新增窗面几何硬规则",
+      "configuration-variable-catalog.md 对应新增条目"
+    ],
+    "scope": "不展开其他变量或 sourceRefs"
+  },
+  "radiationNormalizerReadAdmission": {
+    "layers": {
+      "L0": "已读 backend-v2 摘要只给资源导航",
+      "L1": "已有导航不含新增 Provider 区间归一化参数或制品字段",
+      "L2": "光照架构指定 DNI/DHI/GHI，但没有该 Provider 的前一时段均值／Unix时间语义"
+    },
+    "missing": "新归一化硬规则的配置登记；依据官方 Provider 文档，不能以架构图替代",
+    "localAllowed": [
+      "configuration-variable-catalog.json 新增 Open-Meteo 辐射归一化硬规则",
+      "configuration-variable-catalog.md 新增对应中文条目",
+      "architecture/manifest.json 该配置哈希"
+    ],
+    "scope": "不读其他 Provider 档案或架构正文"
+  },
+  "meanBeamReadAdmission": {
+    "layers": {
+      "L0": "已有 backend-v2 摘要只给模块导航",
+      "L1": "已读光照导航不含新均值界限的配置登记",
+      "L2": "光照原文提供窗面链路，未定义均值与时变投影的衔接"
+    },
+    "missing": "新增数学硬规则在窗面几何目录条目中的登记",
+    "localAllowed": [
+      "configuration-variable-catalog.json 的 care.lighting.window_direct_geometry 单项",
+      "configuration-variable-catalog.md 该条目补充",
+      "architecture/manifest.json 对应配置SHA"
+    ],
+    "scope": "不读其他配置、架构或合同正文"
+  },
+  "ticketTitleReadback": {
+    "source": "Chrome原文件夹看板逐票标题读回",
+    "updatedAt": "2026-10-04T11:35:05.115523+00:00",
+    "titles": {
+      "z8v0kmr971": "[E02/E05][P2] CMS 分类、百科和发布",
+      "z8v0kmr970": "[E03][P2] 统一身份 Principal",
+      "z8v0kmr9mj": "[E03][P2] 用户植物核心实现",
+      "z8v0kmr9mh": "[E03][P2] 订阅、积分与 AI 额度核心实现",
+      "z8v0kmr972": "[E03][P3] 游客、试用、会员和奖励闭环",
+      "z8v0kmrg8a": "[E05][P1] 诊断知识来源、园艺原因及 Outcome/Action 合同",
+      "z8v0kmr974": "[E05][P4] 固定/动态问诊与小青工具",
+      "z8v0kmr973": "[E04/E06][P4] 盆土视觉和四类养护能力",
+      "z8v0kmr975": "[E07][P5] 身份越权、绑定冲突和跨平台回放审查",
+      "z8v0kmr976": "[E07][P5] 安全、脱敏、防刷和权限合同审查",
+      "z8v0kmr977": "[E07][P5] 真实 MySQL 并发、事务、重放和读回",
+      "z8v0kmr978": "[E07][P5] 真实 MySQL/API/安全/性能验收",
+      "z8v0kmr979": "[E08][P6] OpenAPI 冻结与精确清理"
+    },
+    "e00Visibility": "共享基础设施原票下子任务，已展开读回"
+  },
+  "milestoneCommitPolicy": {
+    "required": true,
+    "trigger": "每完成一个已验证里程碑，包括票据验收Done",
+    "scope": "只提交对应已验证改动，排除凭证、无关前端与钩子运行台账",
+    "source": "用户本会话最新明确授权"
+  }
+}

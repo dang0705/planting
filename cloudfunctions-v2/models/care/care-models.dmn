@@ -1,0 +1,1277 @@
+<?xml version='1.0' encoding='utf-8'?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" id="care_models_definitions" name="养护决策模型合成总图" namespace="http://camunda.org/schema/1.0/dmn">
+  <description>由四个编辑源确定性生成，禁止单独修改。离线草案，未通过 Camunda 引擎行为验收。</description>
+  <knowledgeSource id="light_knowledge" name="依据：已批准的统一重构计划第六节">
+    <description>唯一依据为本会话批准的整体计划。候选参数不构成已发布策略；修改规则须同步独立预期、后端实现与发布版本。</description>
+  </knowledgeSource>
+  <inputData id="light_input_light_policy_approved" name="光照策略已发布">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="light_variable_light_policy_approved" name="light_policy_approved" typeRef="boolean" />
+  </inputData>
+  <inputData id="light_input_radiation_intervals_valid" name="辐射区间、单位及覆盖有效">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="light_variable_radiation_intervals_valid" name="radiation_intervals_valid" typeRef="boolean" />
+  </inputData>
+  <inputData id="light_input_outdoor_mode" name="户外模式">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="light_variable_outdoor_mode" name="outdoor_mode" typeRef="boolean" />
+  </inputData>
+  <inputData id="light_input_position_facts_confirmed" name="室内位置与玻璃遮挡事实已确认">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="light_variable_position_facts_confirmed" name="position_facts_confirmed" typeRef="boolean" />
+  </inputData>
+  <inputData id="light_input_calculated_light" name="后端计算的直射、散射、PPFD、Lux 与 DLI 区间">
+    <description>由 TypeScript 计算太阳与窗面投影、植物位置传播、光谱换算及真实区间积分；包含覆盖、参考平面、来源、版本。缺值不是零。</description>
+    <variable id="light_variable_calculated_light" name="calculated_light" typeRef="Any" />
+  </inputData>
+  <inputData id="light_input_light_calibration_candidate" name="现场校准候选">
+    <description>可靠参考与未校准计算的偏差；独立于传播衰减，不代表反射增强。</description>
+    <variable id="light_variable_light_calibration_candidate" name="light_calibration_candidate" typeRef="Any" />
+  </inputData>
+  <inputData id="light_input_light_calibration_applicable" name="校准资格与条件版本一致">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="light_variable_light_calibration_applicable" name="light_calibration_applicable" typeRef="boolean" />
+  </inputData>
+  <inputData id="light_input_visual_facts_confirmed" name="视觉事实已经用户确认">
+    <description>未经确认或未校准的视觉数值不得改变正式计算；拍摄时刻不代表全天窗帘状态。</description>
+    <variable id="light_variable_visual_facts_confirmed" name="visual_facts_confirmed" typeRef="boolean" />
+  </inputData>
+  <decision id="light_decision_light_admission_code" name="光照输入准入">
+    <description>户外跳过室内衰减；室内必须确认位置。使用明确比较处理空值，不给 pending 参数补常数。</description>
+    <variable id="light_result_light_admission_code" name="light_admission_code" typeRef="Any" />
+    <informationRequirement id="light_require_light_admission_code_0">
+      <requiredInput href="#light_input_light_policy_approved" />
+    </informationRequirement>
+    <informationRequirement id="light_require_light_admission_code_1">
+      <requiredInput href="#light_input_radiation_intervals_valid" />
+    </informationRequirement>
+    <informationRequirement id="light_require_light_admission_code_2">
+      <requiredInput href="#light_input_outdoor_mode" />
+    </informationRequirement>
+    <informationRequirement id="light_require_light_admission_code_3">
+      <requiredInput href="#light_input_position_facts_confirmed" />
+    </informationRequirement>
+    <authorityRequirement id="light_authority_light_admission_code">
+      <requiredAuthority href="#light_knowledge" />
+    </authorityRequirement>
+    <literalExpression id="light_expression_light_admission_code" typeRef="Any">
+      <text>if light_policy_approved != true then "temporarily_unavailable" else if radiation_intervals_valid != true then "insufficient_evidence" else if outdoor_mode = true then "ready" else if outdoor_mode = false and position_facts_confirmed = true then "ready" else "insufficient_evidence"</text>
+    </literalExpression>
+  </decision>
+  <decision id="light_decision_light_status" name="光照能力状态">
+    <description>三个互斥准入分区。</description>
+    <variable id="light_result_light_status" name="light_status" typeRef="Any" />
+    <informationRequirement id="light_require_light_status_0">
+      <requiredDecision href="#light_decision_light_admission_code" />
+    </informationRequirement>
+    <authorityRequirement id="light_authority_light_status">
+      <requiredAuthority href="#light_knowledge" />
+    </authorityRequirement>
+    <decisionTable id="light_table_light_status" hitPolicy="UNIQUE">
+      <input id="light_column_light_status_0" label="light_admission_code">
+        <inputExpression id="light_column_expression_light_status_0" typeRef="string">
+          <text>light_admission_code</text>
+        </inputExpression>
+      </input>
+      <output id="light_output_light_status" name="light_status" label="光照能力状态" typeRef="string" />
+      <rule id="light_rule_light_status_0">
+        <description>有效输入</description>
+        <inputEntry id="light_entry_light_status_0_0">
+          <text>"ready"</text>
+        </inputEntry>
+        <outputEntry id="light_value_light_status_0">
+          <text>"ready"</text>
+        </outputEntry>
+      </rule>
+      <rule id="light_rule_light_status_1">
+        <description>无发布策略</description>
+        <inputEntry id="light_entry_light_status_1_0">
+          <text>"temporarily_unavailable"</text>
+        </inputEntry>
+        <outputEntry id="light_value_light_status_1">
+          <text>"temporarily_unavailable"</text>
+        </outputEntry>
+      </rule>
+      <rule id="light_rule_light_status_2">
+        <description>缺少有效事实</description>
+        <inputEntry id="light_entry_light_status_2_0">
+          <text>"insufficient_evidence"</text>
+        </inputEntry>
+        <outputEntry id="light_value_light_status_2">
+          <text>"insufficient_evidence"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="light_decision_accepted_light_calibration" name="可用现场校准">
+    <description>资格由后端核验参考来源、同位置同时间和版本；条件改变后重新审查，不默认倍率为 1。</description>
+    <variable id="light_result_accepted_light_calibration" name="accepted_light_calibration" typeRef="Any" />
+    <informationRequirement id="light_require_accepted_light_calibration_0">
+      <requiredInput href="#light_input_light_policy_approved" />
+    </informationRequirement>
+    <informationRequirement id="light_require_accepted_light_calibration_1">
+      <requiredInput href="#light_input_light_calibration_candidate" />
+    </informationRequirement>
+    <informationRequirement id="light_require_accepted_light_calibration_2">
+      <requiredInput href="#light_input_light_calibration_applicable" />
+    </informationRequirement>
+    <authorityRequirement id="light_authority_accepted_light_calibration">
+      <requiredAuthority href="#light_knowledge" />
+    </authorityRequirement>
+    <literalExpression id="light_expression_accepted_light_calibration" typeRef="Any">
+      <text>if light_policy_approved = true and light_calibration_applicable = true then light_calibration_candidate else null</text>
+    </literalExpression>
+  </decision>
+  <decision id="light_decision_light_result" name="光照模型结果">
+    <description>计算内容只由 TypeScript 输入；不在 FEEL 中虚构太阳位置或传播函数。</description>
+    <variable id="light_result_light_result" name="light_result" typeRef="Any" />
+    <informationRequirement id="light_require_light_result_0">
+      <requiredDecision href="#light_decision_light_status" />
+    </informationRequirement>
+    <informationRequirement id="light_require_light_result_1">
+      <requiredInput href="#light_input_calculated_light" />
+    </informationRequirement>
+    <informationRequirement id="light_require_light_result_2">
+      <requiredDecision href="#light_decision_accepted_light_calibration" />
+    </informationRequirement>
+    <informationRequirement id="light_require_light_result_3">
+      <requiredInput href="#light_input_visual_facts_confirmed" />
+    </informationRequirement>
+    <authorityRequirement id="light_authority_light_result">
+      <requiredAuthority href="#light_knowledge" />
+    </authorityRequirement>
+    <literalExpression id="light_expression_light_result" typeRef="Any">
+      <text>{ status: light_status, derived: if light_status = "ready" then calculated_light else null, calibration: accepted_light_calibration, visualConfirmed: visual_facts_confirmed }</text>
+    </literalExpression>
+  </decision>
+  <knowledgeSource id="pot_knowledge" name="依据：已批准的统一重构计划第六节">
+    <description>唯一依据为本会话批准的整体计划。候选参数不构成已发布策略；修改规则须同步独立预期、后端实现与发布版本。</description>
+  </knowledgeSource>
+  <inputData id="pot_input_actual_inner_pot_confirmed" name="实际种植内盆已确认">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="pot_variable_actual_inner_pot_confirmed" name="actual_inner_pot_confirmed" typeRef="boolean" />
+  </inputData>
+  <inputData id="pot_input_pot_geometry_valid" name="盆口、盆底及盆高合法">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="pot_variable_pot_geometry_valid" name="pot_geometry_valid" typeRef="boolean" />
+  </inputData>
+  <inputData id="pot_input_drainage_available" name="排水孔与排水通道有效">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="pot_variable_drainage_available" name="drainage_available" typeRef="boolean" />
+  </inputData>
+  <inputData id="pot_input_retention_policy_approved" name="栽培保水策略已发布">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="pot_variable_retention_policy_approved" name="retention_policy_approved" typeRef="boolean" />
+  </inputData>
+  <inputData id="pot_input_substrate_facts_confirmed" name="基质事实已确认">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="pot_variable_substrate_facts_confirmed" name="substrate_facts_confirmed" typeRef="boolean" />
+  </inputData>
+  <inputData id="pot_input_calculated_retention" name="后端计算的栽培保水结果">
+    <description>包含有效体积、基质分类、保水区间、版本和依据；不把抽象评分当成实测物理量。</description>
+    <variable id="pot_variable_calculated_retention" name="calculated_retention" typeRef="Any" />
+  </inputData>
+  <decision id="pot_decision_pot_safety" name="盆器安全条件">
+    <description>互斥规则，不给缺失排水赋值。</description>
+    <variable id="pot_result_pot_safety" name="pot_safety" typeRef="Any" />
+    <informationRequirement id="pot_require_pot_safety_0">
+      <requiredInput href="#pot_input_actual_inner_pot_confirmed" />
+    </informationRequirement>
+    <informationRequirement id="pot_require_pot_safety_1">
+      <requiredInput href="#pot_input_pot_geometry_valid" />
+    </informationRequirement>
+    <informationRequirement id="pot_require_pot_safety_2">
+      <requiredInput href="#pot_input_drainage_available" />
+    </informationRequirement>
+    <authorityRequirement id="pot_authority_pot_safety">
+      <requiredAuthority href="#pot_knowledge" />
+    </authorityRequirement>
+    <decisionTable id="pot_table_pot_safety" hitPolicy="UNIQUE">
+      <input id="pot_column_pot_safety_0" label="actual_inner_pot_confirmed">
+        <inputExpression id="pot_column_expression_pot_safety_0" typeRef="boolean">
+          <text>actual_inner_pot_confirmed</text>
+        </inputExpression>
+      </input>
+      <input id="pot_column_pot_safety_1" label="pot_geometry_valid">
+        <inputExpression id="pot_column_expression_pot_safety_1" typeRef="boolean">
+          <text>pot_geometry_valid</text>
+        </inputExpression>
+      </input>
+      <input id="pot_column_pot_safety_2" label="drainage_available">
+        <inputExpression id="pot_column_expression_pot_safety_2" typeRef="boolean">
+          <text>drainage_available</text>
+        </inputExpression>
+      </input>
+      <output id="pot_output_pot_safety" name="pot_safety" label="盆器安全条件" typeRef="string" />
+      <rule id="pot_rule_pot_safety_0">
+        <description>装饰外盆不能替代实际内盆</description>
+        <inputEntry id="pot_entry_pot_safety_0_0">
+          <text>false, null</text>
+        </inputEntry>
+        <inputEntry id="pot_entry_pot_safety_0_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="pot_entry_pot_safety_0_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="pot_value_pot_safety_0">
+          <text>"insufficient_evidence"</text>
+        </outputEntry>
+      </rule>
+      <rule id="pot_rule_pot_safety_1">
+        <description>尺寸缺失或非法</description>
+        <inputEntry id="pot_entry_pot_safety_1_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="pot_entry_pot_safety_1_1">
+          <text>false, null</text>
+        </inputEntry>
+        <inputEntry id="pot_entry_pot_safety_1_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="pot_value_pot_safety_1">
+          <text>"insufficient_evidence"</text>
+        </outputEntry>
+      </rule>
+      <rule id="pot_rule_pot_safety_2">
+        <description>无孔或排水受阻</description>
+        <inputEntry id="pot_entry_pot_safety_2_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="pot_entry_pot_safety_2_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="pot_entry_pot_safety_2_2">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="pot_value_pot_safety_2">
+          <text>"drainage_risk"</text>
+        </outputEntry>
+      </rule>
+      <rule id="pot_rule_pot_safety_3">
+        <description>排水证据缺失</description>
+        <inputEntry id="pot_entry_pot_safety_3_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="pot_entry_pot_safety_3_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="pot_entry_pot_safety_3_2">
+          <text>null</text>
+        </inputEntry>
+        <outputEntry id="pot_value_pot_safety_3">
+          <text>"insufficient_evidence"</text>
+        </outputEntry>
+      </rule>
+      <rule id="pot_rule_pot_safety_4">
+        <description>三项均有证据</description>
+        <inputEntry id="pot_entry_pot_safety_4_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="pot_entry_pot_safety_4_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="pot_entry_pot_safety_4_2">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="pot_value_pot_safety_4">
+          <text>"safe"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="pot_decision_retention_admission_code" name="保水计算准入">
+    <description>仅已发布策略消费已确认盆器与基质。</description>
+    <variable id="pot_result_retention_admission_code" name="retention_admission_code" typeRef="Any" />
+    <informationRequirement id="pot_require_retention_admission_code_0">
+      <requiredInput href="#pot_input_retention_policy_approved" />
+    </informationRequirement>
+    <informationRequirement id="pot_require_retention_admission_code_1">
+      <requiredDecision href="#pot_decision_pot_safety" />
+    </informationRequirement>
+    <informationRequirement id="pot_require_retention_admission_code_2">
+      <requiredInput href="#pot_input_substrate_facts_confirmed" />
+    </informationRequirement>
+    <authorityRequirement id="pot_authority_retention_admission_code">
+      <requiredAuthority href="#pot_knowledge" />
+    </authorityRequirement>
+    <literalExpression id="pot_expression_retention_admission_code" typeRef="Any">
+      <text>if retention_policy_approved != true then "temporarily_unavailable" else if pot_safety != "safe" or substrate_facts_confirmed != true then "insufficient_evidence" else "ready"</text>
+    </literalExpression>
+  </decision>
+  <decision id="pot_decision_pot_result" name="盆器模型结果">
+    <description>安全条件独立保留；不继承未经确认的旧盆型倍率。</description>
+    <variable id="pot_result_pot_result" name="pot_result" typeRef="Any" />
+    <informationRequirement id="pot_require_pot_result_0">
+      <requiredDecision href="#pot_decision_pot_safety" />
+    </informationRequirement>
+    <informationRequirement id="pot_require_pot_result_1">
+      <requiredDecision href="#pot_decision_retention_admission_code" />
+    </informationRequirement>
+    <informationRequirement id="pot_require_pot_result_2">
+      <requiredInput href="#pot_input_calculated_retention" />
+    </informationRequirement>
+    <authorityRequirement id="pot_authority_pot_result">
+      <requiredAuthority href="#pot_knowledge" />
+    </authorityRequirement>
+    <literalExpression id="pot_expression_pot_result" typeRef="Any">
+      <text>{ safety: pot_safety, status: retention_admission_code, retention: if retention_admission_code = "ready" then calculated_retention else null }</text>
+    </literalExpression>
+  </decision>
+  <knowledgeSource id="dry_cycle_knowledge" name="依据：已批准的统一重构计划第六节">
+    <description>唯一依据为本会话批准的整体计划。候选参数不构成已发布策略；修改规则须同步独立预期、后端实现与发布版本。</description>
+  </knowledgeSource>
+  <inputData id="dry_cycle_input_calibration_policy_approved" name="个体校准策略已发布">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="dry_cycle_variable_calibration_policy_approved" name="calibration_policy_approved" typeRef="boolean" />
+  </inputData>
+  <inputData id="dry_cycle_input_reliable_completed_cycle" name="已完成循环及干燥观察可靠">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="dry_cycle_variable_reliable_completed_cycle" name="reliable_completed_cycle" typeRef="boolean" />
+  </inputData>
+  <inputData id="dry_cycle_input_cultivation_conditions_unchanged" name="盆器、基质和位置条件一致">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="dry_cycle_variable_cultivation_conditions_unchanged" name="cultivation_conditions_unchanged" typeRef="boolean" />
+  </inputData>
+  <inputData id="dry_cycle_input_prediction_version_compatible" name="历史预测版本兼容">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="dry_cycle_variable_prediction_version_compatible" name="prediction_version_compatible" typeRef="boolean" />
+  </inputData>
+  <inputData id="dry_cycle_input_prediction_excludes_personal_calibration" name="残差预测未加入个体校准">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="dry_cycle_variable_prediction_excludes_personal_calibration" name="prediction_excludes_personal_calibration" typeRef="boolean" />
+  </inputData>
+  <inputData id="dry_cycle_input_calculated_cycle_residual" name="后端计算的预测与观察残差">
+    <description>基于不含个体校准的历史预测，避免自我反馈；不得消费当前轮输出。</description>
+    <variable id="dry_cycle_variable_calculated_cycle_residual" name="calculated_cycle_residual" typeRef="Any" />
+  </inputData>
+  <inputData id="dry_cycle_input_calculated_personal_calibration" name="后端计算的个体校准候选">
+    <description>有界参数由获准策略提供；少量或低质量观察不自动进入个体学习。</description>
+    <variable id="dry_cycle_variable_calculated_personal_calibration" name="calculated_personal_calibration" typeRef="Any" />
+  </inputData>
+  <decision id="dry_cycle_decision_cycle_eligible" name="有效干湿循环资格">
+    <description>换盆、换基质、明显位置变化或版本不兼容时失效；同轮没有反馈边。</description>
+    <variable id="dry_cycle_result_cycle_eligible" name="cycle_eligible" typeRef="Any" />
+    <informationRequirement id="dry_cycle_require_cycle_eligible_0">
+      <requiredInput href="#dry_cycle_input_calibration_policy_approved" />
+    </informationRequirement>
+    <informationRequirement id="dry_cycle_require_cycle_eligible_1">
+      <requiredInput href="#dry_cycle_input_reliable_completed_cycle" />
+    </informationRequirement>
+    <informationRequirement id="dry_cycle_require_cycle_eligible_2">
+      <requiredInput href="#dry_cycle_input_cultivation_conditions_unchanged" />
+    </informationRequirement>
+    <informationRequirement id="dry_cycle_require_cycle_eligible_3">
+      <requiredInput href="#dry_cycle_input_prediction_version_compatible" />
+    </informationRequirement>
+    <informationRequirement id="dry_cycle_require_cycle_eligible_4">
+      <requiredInput href="#dry_cycle_input_prediction_excludes_personal_calibration" />
+    </informationRequirement>
+    <authorityRequirement id="dry_cycle_authority_cycle_eligible">
+      <requiredAuthority href="#dry_cycle_knowledge" />
+    </authorityRequirement>
+    <literalExpression id="dry_cycle_expression_cycle_eligible" typeRef="Any">
+      <text>calibration_policy_approved = true and reliable_completed_cycle = true and cultivation_conditions_unchanged = true and prediction_version_compatible = true and prediction_excludes_personal_calibration = true</text>
+    </literalExpression>
+  </decision>
+  <decision id="dry_cycle_decision_calibration_status" name="个体校准状态">
+    <description>互斥覆盖真、假、空。</description>
+    <variable id="dry_cycle_result_calibration_status" name="calibration_status" typeRef="Any" />
+    <informationRequirement id="dry_cycle_require_calibration_status_0">
+      <requiredDecision href="#dry_cycle_decision_cycle_eligible" />
+    </informationRequirement>
+    <authorityRequirement id="dry_cycle_authority_calibration_status">
+      <requiredAuthority href="#dry_cycle_knowledge" />
+    </authorityRequirement>
+    <decisionTable id="dry_cycle_table_calibration_status" hitPolicy="UNIQUE">
+      <input id="dry_cycle_column_calibration_status_0" label="cycle_eligible">
+        <inputExpression id="dry_cycle_column_expression_calibration_status_0" typeRef="boolean">
+          <text>cycle_eligible</text>
+        </inputExpression>
+      </input>
+      <output id="dry_cycle_output_calibration_status" name="calibration_status" label="个体校准状态" typeRef="string" />
+      <rule id="dry_cycle_rule_calibration_status_0">
+        <description>全部资格满足</description>
+        <inputEntry id="dry_cycle_entry_calibration_status_0_0">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="dry_cycle_value_calibration_status_0">
+          <text>"ready"</text>
+        </outputEntry>
+      </rule>
+      <rule id="dry_cycle_rule_calibration_status_1">
+        <description>资格被否决</description>
+        <inputEntry id="dry_cycle_entry_calibration_status_1_0">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="dry_cycle_value_calibration_status_1">
+          <text>"insufficient_evidence"</text>
+        </outputEntry>
+      </rule>
+      <rule id="dry_cycle_rule_calibration_status_2">
+        <description>资格信息缺失</description>
+        <inputEntry id="dry_cycle_entry_calibration_status_2_0">
+          <text>null</text>
+        </inputEntry>
+        <outputEntry id="dry_cycle_value_calibration_status_2">
+          <text>"insufficient_evidence"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="dry_cycle_decision_personal_calibration" name="干湿循环模型结果">
+    <description>不把没有有效循环解释成已经校准的倍率 1；无已发布降级策略时仍缺证据。</description>
+    <variable id="dry_cycle_result_personal_calibration" name="personal_calibration" typeRef="Any" />
+    <informationRequirement id="dry_cycle_require_personal_calibration_0">
+      <requiredDecision href="#dry_cycle_decision_calibration_status" />
+    </informationRequirement>
+    <informationRequirement id="dry_cycle_require_personal_calibration_1">
+      <requiredInput href="#dry_cycle_input_calculated_personal_calibration" />
+    </informationRequirement>
+    <informationRequirement id="dry_cycle_require_personal_calibration_2">
+      <requiredInput href="#dry_cycle_input_calculated_cycle_residual" />
+    </informationRequirement>
+    <authorityRequirement id="dry_cycle_authority_personal_calibration">
+      <requiredAuthority href="#dry_cycle_knowledge" />
+    </authorityRequirement>
+    <literalExpression id="dry_cycle_expression_personal_calibration" typeRef="Any">
+      <text>{ status: calibration_status, factor: if calibration_status = "ready" then calculated_personal_calibration else null, residual: if calibration_status = "ready" then calculated_cycle_residual else null }</text>
+    </literalExpression>
+  </decision>
+  <knowledgeSource id="watering_knowledge" name="依据：已批准的统一重构计划第六节">
+    <description>唯一依据为本会话批准的整体计划。候选参数不构成已发布策略；修改规则须同步独立预期、后端实现与发布版本。</description>
+  </knowledgeSource>
+  <inputData id="watering_input_watering_policy_approved" name="浇水算法已发布">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="watering_variable_watering_policy_approved" name="watering_policy_approved" typeRef="boolean" />
+  </inputData>
+  <inputData id="watering_input_growth_activity_state" name="生长活动状态">
+    <description>ACTIVE、SLOWED、DORMANT、UNKNOWN；仅选择条件基线，不再乘季节倍率。</description>
+    <variable id="watering_variable_growth_activity_state" name="growth_activity_state" typeRef="string" />
+  </inputData>
+  <inputData id="watering_input_resolved_baseline" name="后端选择的植物条件基线">
+    <description>参考条件与迁移依据确认后才可使用干燥单位；旧天数不是已校准干燥单位。</description>
+    <variable id="watering_variable_resolved_baseline" name="resolved_baseline" typeRef="Any" />
+  </inputData>
+  <inputData id="watering_input_indoor_vpd_result" name="室内空气 VPD 派生">
+    <description>实测或已发布估算；植物养护气候参考点不等于生理最适 VPD，比值不直接成为耗水倍率。</description>
+    <variable id="watering_variable_indoor_vpd_result" name="indoor_vpd_result" typeRef="Any" />
+  </inputData>
+  <inputData id="watering_input_air_movement_result" name="空气运动派生">
+    <description>室外风速不得当作室内通风。</description>
+    <variable id="watering_variable_air_movement_result" name="air_movement_result" typeRef="Any" />
+  </inputData>
+  <inputData id="watering_input_calculated_environment_demand" name="后端计算的环境干燥需求">
+    <description>光照、室内 VPD、空气运动并列输入；这是代理指标，不是实测耗水毫升数。</description>
+    <variable id="watering_variable_calculated_environment_demand" name="calculated_environment_demand" typeRef="Any" />
+  </inputData>
+  <inputData id="watering_input_confirmed_watering_origin" name="最近实际浇水起点已确认">
+    <description>建议、计划与提醒均不构成实际浇水事实，不重置进度。</description>
+    <variable id="watering_variable_confirmed_watering_origin" name="confirmed_watering_origin" typeRef="boolean" />
+  </inputData>
+  <inputData id="watering_input_calculated_dry_progress" name="后端积分的干燥进度">
+    <description>DryUnit = EnvironmentDemand × PersonalCalibration ÷ CultivationRetention；按时间区间积分，部分日与跨日均不得取整。</description>
+    <variable id="watering_variable_calculated_dry_progress" name="calculated_dry_progress" typeRef="Any" />
+  </inputData>
+  <inputData id="watering_input_predicted_window_state" name="后端预测检查窗口状态">
+    <description>before、within、overdue 或 null；无起点或其他输入时不得猜测窗口。</description>
+    <variable id="watering_variable_predicted_window_state" name="predicted_window_state" typeRef="string" />
+  </inputData>
+  <inputData id="watering_input_soil_evidence_reliable" name="盆土证据可靠且未过期">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="watering_variable_soil_evidence_reliable" name="soil_evidence_reliable" typeRef="boolean" />
+  </inputData>
+  <inputData id="watering_input_soil_evidence_state" name="当前盆土证据状态">
+    <description>wet、waterlogged、target_dry 或 unknown；表土照片不能证明根区干燥。</description>
+    <variable id="watering_variable_soil_evidence_state" name="soil_evidence_state" typeRef="string" />
+  </inputData>
+  <inputData id="watering_input_target_dry_criteria_confirmed" name="已达到目标干燥条件">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="watering_variable_target_dry_criteria_confirmed" name="target_dry_criteria_confirmed" typeRef="boolean" />
+  </inputData>
+  <decision id="watering_decision_soil_safety_gate" name="盆土安全门">
+    <description>按优先顺序保护盆土；预测超窗不能覆盖湿土。</description>
+    <variable id="watering_result_soil_safety_gate" name="soil_safety_gate" typeRef="Any" />
+    <informationRequirement id="watering_require_soil_safety_gate_0">
+      <requiredInput href="#watering_input_soil_evidence_reliable" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_soil_safety_gate_1">
+      <requiredInput href="#watering_input_soil_evidence_state" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_soil_safety_gate_2">
+      <requiredInput href="#watering_input_target_dry_criteria_confirmed" />
+    </informationRequirement>
+    <authorityRequirement id="watering_authority_soil_safety_gate">
+      <requiredAuthority href="#watering_knowledge" />
+    </authorityRequirement>
+    <decisionTable id="watering_table_soil_safety_gate" hitPolicy="FIRST">
+      <input id="watering_column_soil_safety_gate_0" label="soil_evidence_reliable">
+        <inputExpression id="watering_column_expression_soil_safety_gate_0" typeRef="boolean">
+          <text>soil_evidence_reliable</text>
+        </inputExpression>
+      </input>
+      <input id="watering_column_soil_safety_gate_1" label="soil_evidence_state">
+        <inputExpression id="watering_column_expression_soil_safety_gate_1" typeRef="string">
+          <text>soil_evidence_state</text>
+        </inputExpression>
+      </input>
+      <input id="watering_column_soil_safety_gate_2" label="target_dry_criteria_confirmed">
+        <inputExpression id="watering_column_expression_soil_safety_gate_2" typeRef="boolean">
+          <text>target_dry_criteria_confirmed</text>
+        </inputExpression>
+      </input>
+      <output id="watering_output_soil_safety_gate" name="soil_safety_gate" label="盆土安全门" typeRef="string" />
+      <rule id="watering_rule_soil_safety_gate_0">
+        <description>可靠湿土或积水优先否决</description>
+        <inputEntry id="watering_entry_soil_safety_gate_0_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_soil_safety_gate_0_1">
+          <text>"wet", "waterlogged"</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_soil_safety_gate_0_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="watering_value_soil_safety_gate_0">
+          <text>"pause_watering"</text>
+        </outputEntry>
+      </rule>
+      <rule id="watering_rule_soil_safety_gate_1">
+        <description>可靠证据达到植物目标干燥条件</description>
+        <inputEntry id="watering_entry_soil_safety_gate_1_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_soil_safety_gate_1_1">
+          <text>"target_dry"</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_soil_safety_gate_1_2">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="watering_value_soil_safety_gate_1">
+          <text>"target_dry_confirmed"</text>
+        </outputEntry>
+      </rule>
+      <rule id="watering_rule_soil_safety_gate_2">
+        <description>缺少可靠证据，不自动放行</description>
+        <inputEntry id="watering_entry_soil_safety_gate_2_0">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_soil_safety_gate_2_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_soil_safety_gate_2_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="watering_value_soil_safety_gate_2">
+          <text>"unknown"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="watering_decision_usable_dry_progress" name="有效干燥进度">
+    <description>数值计算由 TypeScript 承担并锁定输入及版本；没有起点时输出 null。</description>
+    <variable id="watering_result_usable_dry_progress" name="usable_dry_progress" typeRef="Any" />
+    <informationRequirement id="watering_require_usable_dry_progress_0">
+      <requiredInput href="#watering_input_confirmed_watering_origin" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_usable_dry_progress_policy">
+      <requiredInput href="#watering_input_watering_policy_approved" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_usable_dry_progress_1">
+      <requiredInput href="#watering_input_calculated_dry_progress" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_usable_dry_progress_2">
+      <requiredDecision href="#light_decision_light_result" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_usable_dry_progress_3">
+      <requiredDecision href="#pot_decision_pot_result" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_usable_dry_progress_4">
+      <requiredDecision href="#dry_cycle_decision_personal_calibration" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_usable_dry_progress_5">
+      <requiredInput href="#watering_input_calculated_environment_demand" />
+    </informationRequirement>
+    <authorityRequirement id="watering_authority_usable_dry_progress">
+      <requiredAuthority href="#watering_knowledge" />
+    </authorityRequirement>
+    <literalExpression id="watering_expression_usable_dry_progress" typeRef="Any">
+      <text>if watering_policy_approved = true and confirmed_watering_origin = true and light_result.status = "ready" and pot_result.status = "ready" and personal_calibration.status = "ready" and calculated_environment_demand != null then calculated_dry_progress else null</text>
+    </literalExpression>
+  </decision>
+  <decision id="watering_decision_usable_window_state" name="有效检查窗口">
+    <description>只有有依据的基线与进度才能显示窗口；生长状态只选择基线。</description>
+    <variable id="watering_result_usable_window_state" name="usable_window_state" typeRef="Any" />
+    <informationRequirement id="watering_require_usable_window_state_0">
+      <requiredDecision href="#watering_decision_usable_dry_progress" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_usable_window_state_1">
+      <requiredInput href="#watering_input_predicted_window_state" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_usable_window_state_2">
+      <requiredInput href="#watering_input_resolved_baseline" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_usable_window_state_3">
+      <requiredInput href="#watering_input_growth_activity_state" />
+    </informationRequirement>
+    <authorityRequirement id="watering_authority_usable_window_state">
+      <requiredAuthority href="#watering_knowledge" />
+    </authorityRequirement>
+    <literalExpression id="watering_expression_usable_window_state" typeRef="Any">
+      <text>if usable_dry_progress != null and resolved_baseline != null then predicted_window_state else null</text>
+    </literalExpression>
+  </decision>
+  <decision id="watering_decision_watering_action" name="最终浇水建议">
+    <description>按明确优先级组合算法、盆土、排水和窗口。</description>
+    <variable id="watering_result_watering_action" name="watering_action" typeRef="Any" />
+    <informationRequirement id="watering_require_watering_action_0">
+      <requiredInput href="#watering_input_watering_policy_approved" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_watering_action_1">
+      <requiredDecision href="#watering_decision_soil_safety_gate" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_watering_action_2">
+      <requiredDecision href="#watering_decision_usable_window_state" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_watering_action_3">
+      <requiredDecision href="#pot_decision_pot_result" />
+    </informationRequirement>
+    <authorityRequirement id="watering_authority_watering_action">
+      <requiredAuthority href="#watering_knowledge" />
+    </authorityRequirement>
+    <decisionTable id="watering_table_watering_action" hitPolicy="FIRST">
+      <input id="watering_column_watering_action_0" label="watering_policy_approved">
+        <inputExpression id="watering_column_expression_watering_action_0" typeRef="boolean">
+          <text>watering_policy_approved</text>
+        </inputExpression>
+      </input>
+      <input id="watering_column_watering_action_1" label="soil_safety_gate">
+        <inputExpression id="watering_column_expression_watering_action_1" typeRef="string">
+          <text>soil_safety_gate</text>
+        </inputExpression>
+      </input>
+      <input id="watering_column_watering_action_2" label="pot_result.safety">
+        <inputExpression id="watering_column_expression_watering_action_2" typeRef="string">
+          <text>pot_result.safety</text>
+        </inputExpression>
+      </input>
+      <input id="watering_column_watering_action_3" label="usable_window_state">
+        <inputExpression id="watering_column_expression_watering_action_3" typeRef="string">
+          <text>usable_window_state</text>
+        </inputExpression>
+      </input>
+      <output id="watering_output_watering_action" name="watering_action" label="最终浇水建议" typeRef="string" />
+      <rule id="watering_rule_watering_action_0">
+        <description>无获准算法不启用旧算法</description>
+        <inputEntry id="watering_entry_watering_action_0_0">
+          <text>false, null</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_0_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_0_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_0_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="watering_value_watering_action_0">
+          <text>"temporarily_unavailable"</text>
+        </outputEntry>
+      </rule>
+      <rule id="watering_rule_watering_action_1">
+        <description>可靠湿土或积水优先</description>
+        <inputEntry id="watering_entry_watering_action_1_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_1_1">
+          <text>"pause_watering"</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_1_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_1_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="watering_value_watering_action_1">
+          <text>"pause_watering"</text>
+        </outputEntry>
+      </rule>
+      <rule id="watering_rule_watering_action_2">
+        <description>先处理排水风险</description>
+        <inputEntry id="watering_entry_watering_action_2_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_2_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_2_2">
+          <text>"drainage_risk"</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_2_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="watering_value_watering_action_2">
+          <text>"inspect_drainage"</text>
+        </outputEntry>
+      </rule>
+      <rule id="watering_rule_watering_action_3">
+        <description>当前可靠干燥证据可独立判断</description>
+        <inputEntry id="watering_entry_watering_action_3_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_3_1">
+          <text>"target_dry_confirmed"</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_3_2">
+          <text>"safe"</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_3_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="watering_value_watering_action_3">
+          <text>"water_allowed"</text>
+        </outputEntry>
+      </rule>
+      <rule id="watering_rule_watering_action_4">
+        <description>预测只建议检查，不自动浇水</description>
+        <inputEntry id="watering_entry_watering_action_4_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_4_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_4_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_4_3">
+          <text>"within", "overdue"</text>
+        </inputEntry>
+        <outputEntry id="watering_value_watering_action_4">
+          <text>"inspect_soil"</text>
+        </outputEntry>
+      </rule>
+      <rule id="watering_rule_watering_action_5">
+        <description>尚未进入检查窗口</description>
+        <inputEntry id="watering_entry_watering_action_5_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_5_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_5_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_5_3">
+          <text>"before"</text>
+        </inputEntry>
+        <outputEntry id="watering_value_watering_action_5">
+          <text>"wait_and_observe"</text>
+        </outputEntry>
+      </rule>
+      <rule id="watering_rule_watering_action_6">
+        <description>缺证据时不猜测窗口或浇水</description>
+        <inputEntry id="watering_entry_watering_action_6_0">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_6_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_6_2">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="watering_entry_watering_action_6_3">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="watering_value_watering_action_6">
+          <text>"insufficient_evidence"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="watering_decision_watering_result" name="浇水能力结果">
+    <description>仅建议；用户确认未来动作生成计划，确认已发生动作才记录事实。本草案不写任何业务数据。</description>
+    <variable id="watering_result_watering_result" name="watering_result" typeRef="Any" />
+    <informationRequirement id="watering_require_watering_result_0">
+      <requiredDecision href="#watering_decision_watering_action" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_watering_result_1">
+      <requiredDecision href="#watering_decision_usable_dry_progress" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_watering_result_2">
+      <requiredInput href="#watering_input_resolved_baseline" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_watering_result_3">
+      <requiredDecision href="#light_decision_light_result" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_watering_result_4">
+      <requiredDecision href="#pot_decision_pot_result" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_watering_result_5">
+      <requiredDecision href="#dry_cycle_decision_personal_calibration" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_watering_result_6">
+      <requiredInput href="#watering_input_indoor_vpd_result" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_watering_result_7">
+      <requiredInput href="#watering_input_air_movement_result" />
+    </informationRequirement>
+    <informationRequirement id="watering_require_watering_result_8">
+      <requiredInput href="#watering_input_calculated_environment_demand" />
+    </informationRequirement>
+    <authorityRequirement id="watering_authority_watering_result">
+      <requiredAuthority href="#watering_knowledge" />
+    </authorityRequirement>
+    <literalExpression id="watering_expression_watering_result" typeRef="Any">
+      <text>{ action: watering_action, dryProgress: usable_dry_progress, baseline: resolved_baseline }</text>
+    </literalExpression>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="care_models_diagram" name="养护模型跨领域依赖总图">
+      <dmndi:DMNShape id="light_knowledge_shape" dmnElementRef="light_knowledge">
+        <dc:Bounds x="80" y="70" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_input_light_policy_approved_shape" dmnElementRef="light_input_light_policy_approved">
+        <dc:Bounds x="360" y="70" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_input_radiation_intervals_valid_shape" dmnElementRef="light_input_radiation_intervals_valid">
+        <dc:Bounds x="80" y="230" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_input_outdoor_mode_shape" dmnElementRef="light_input_outdoor_mode">
+        <dc:Bounds x="360" y="230" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_input_position_facts_confirmed_shape" dmnElementRef="light_input_position_facts_confirmed">
+        <dc:Bounds x="80" y="390" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_input_calculated_light_shape" dmnElementRef="light_input_calculated_light">
+        <dc:Bounds x="360" y="390" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_input_light_calibration_candidate_shape" dmnElementRef="light_input_light_calibration_candidate">
+        <dc:Bounds x="80" y="550" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_input_light_calibration_applicable_shape" dmnElementRef="light_input_light_calibration_applicable">
+        <dc:Bounds x="360" y="550" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_input_visual_facts_confirmed_shape" dmnElementRef="light_input_visual_facts_confirmed">
+        <dc:Bounds x="80" y="710" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_decision_light_admission_code_shape" dmnElementRef="light_decision_light_admission_code">
+        <dc:Bounds x="360" y="710" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_decision_light_status_shape" dmnElementRef="light_decision_light_status">
+        <dc:Bounds x="80" y="870" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_decision_accepted_light_calibration_shape" dmnElementRef="light_decision_accepted_light_calibration">
+        <dc:Bounds x="360" y="870" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_decision_light_result_shape" dmnElementRef="light_decision_light_result">
+        <dc:Bounds x="80" y="1030" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="pot_knowledge_shape" dmnElementRef="pot_knowledge">
+        <dc:Bounds x="700" y="70" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="pot_input_actual_inner_pot_confirmed_shape" dmnElementRef="pot_input_actual_inner_pot_confirmed">
+        <dc:Bounds x="980" y="70" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="pot_input_pot_geometry_valid_shape" dmnElementRef="pot_input_pot_geometry_valid">
+        <dc:Bounds x="700" y="230" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="pot_input_drainage_available_shape" dmnElementRef="pot_input_drainage_available">
+        <dc:Bounds x="980" y="230" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="pot_input_retention_policy_approved_shape" dmnElementRef="pot_input_retention_policy_approved">
+        <dc:Bounds x="700" y="390" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="pot_input_substrate_facts_confirmed_shape" dmnElementRef="pot_input_substrate_facts_confirmed">
+        <dc:Bounds x="980" y="390" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="pot_input_calculated_retention_shape" dmnElementRef="pot_input_calculated_retention">
+        <dc:Bounds x="700" y="550" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="pot_decision_pot_safety_shape" dmnElementRef="pot_decision_pot_safety">
+        <dc:Bounds x="980" y="550" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="pot_decision_retention_admission_code_shape" dmnElementRef="pot_decision_retention_admission_code">
+        <dc:Bounds x="700" y="710" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="pot_decision_pot_result_shape" dmnElementRef="pot_decision_pot_result">
+        <dc:Bounds x="980" y="710" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dry_cycle_knowledge_shape" dmnElementRef="dry_cycle_knowledge">
+        <dc:Bounds x="1320" y="70" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dry_cycle_input_calibration_policy_approved_shape" dmnElementRef="dry_cycle_input_calibration_policy_approved">
+        <dc:Bounds x="1600" y="70" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dry_cycle_input_reliable_completed_cycle_shape" dmnElementRef="dry_cycle_input_reliable_completed_cycle">
+        <dc:Bounds x="1320" y="230" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dry_cycle_input_cultivation_conditions_unchanged_shape" dmnElementRef="dry_cycle_input_cultivation_conditions_unchanged">
+        <dc:Bounds x="1600" y="230" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dry_cycle_input_prediction_version_compatible_shape" dmnElementRef="dry_cycle_input_prediction_version_compatible">
+        <dc:Bounds x="1320" y="390" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dry_cycle_input_prediction_excludes_personal_calibration_shape" dmnElementRef="dry_cycle_input_prediction_excludes_personal_calibration">
+        <dc:Bounds x="1600" y="390" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dry_cycle_input_calculated_cycle_residual_shape" dmnElementRef="dry_cycle_input_calculated_cycle_residual">
+        <dc:Bounds x="1320" y="550" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dry_cycle_input_calculated_personal_calibration_shape" dmnElementRef="dry_cycle_input_calculated_personal_calibration">
+        <dc:Bounds x="1600" y="550" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dry_cycle_decision_cycle_eligible_shape" dmnElementRef="dry_cycle_decision_cycle_eligible">
+        <dc:Bounds x="1320" y="710" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dry_cycle_decision_calibration_status_shape" dmnElementRef="dry_cycle_decision_calibration_status">
+        <dc:Bounds x="1600" y="710" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dry_cycle_decision_personal_calibration_shape" dmnElementRef="dry_cycle_decision_personal_calibration">
+        <dc:Bounds x="1320" y="870" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="watering_knowledge_shape" dmnElementRef="watering_knowledge">
+        <dc:Bounds x="1940" y="70" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="watering_input_watering_policy_approved_shape" dmnElementRef="watering_input_watering_policy_approved">
+        <dc:Bounds x="2220" y="70" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="watering_input_growth_activity_state_shape" dmnElementRef="watering_input_growth_activity_state">
+        <dc:Bounds x="1940" y="230" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="watering_input_resolved_baseline_shape" dmnElementRef="watering_input_resolved_baseline">
+        <dc:Bounds x="2220" y="230" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="watering_input_indoor_vpd_result_shape" dmnElementRef="watering_input_indoor_vpd_result">
+        <dc:Bounds x="1940" y="390" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="watering_input_air_movement_result_shape" dmnElementRef="watering_input_air_movement_result">
+        <dc:Bounds x="2220" y="390" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="watering_input_calculated_environment_demand_shape" dmnElementRef="watering_input_calculated_environment_demand">
+        <dc:Bounds x="1940" y="550" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="watering_input_confirmed_watering_origin_shape" dmnElementRef="watering_input_confirmed_watering_origin">
+        <dc:Bounds x="2220" y="550" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="watering_input_calculated_dry_progress_shape" dmnElementRef="watering_input_calculated_dry_progress">
+        <dc:Bounds x="1940" y="710" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="watering_input_predicted_window_state_shape" dmnElementRef="watering_input_predicted_window_state">
+        <dc:Bounds x="2220" y="710" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="watering_input_soil_evidence_reliable_shape" dmnElementRef="watering_input_soil_evidence_reliable">
+        <dc:Bounds x="1940" y="870" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="watering_input_soil_evidence_state_shape" dmnElementRef="watering_input_soil_evidence_state">
+        <dc:Bounds x="2220" y="870" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="watering_input_target_dry_criteria_confirmed_shape" dmnElementRef="watering_input_target_dry_criteria_confirmed">
+        <dc:Bounds x="1940" y="1030" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="watering_decision_soil_safety_gate_shape" dmnElementRef="watering_decision_soil_safety_gate">
+        <dc:Bounds x="2220" y="1030" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="watering_decision_usable_dry_progress_shape" dmnElementRef="watering_decision_usable_dry_progress">
+        <dc:Bounds x="1940" y="1190" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="watering_decision_usable_window_state_shape" dmnElementRef="watering_decision_usable_window_state">
+        <dc:Bounds x="2220" y="1190" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="watering_decision_watering_action_shape" dmnElementRef="watering_decision_watering_action">
+        <dc:Bounds x="1940" y="1350" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="watering_decision_watering_result_shape" dmnElementRef="watering_decision_watering_result">
+        <dc:Bounds x="2220" y="1350" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="light_require_light_admission_code_0_edge" dmnElementRef="light_require_light_admission_code_0">
+        <di:waypoint x="475" y="150" />
+        <di:waypoint x="475" y="710" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_require_light_admission_code_1_edge" dmnElementRef="light_require_light_admission_code_1">
+        <di:waypoint x="195" y="310" />
+        <di:waypoint x="475" y="710" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_require_light_admission_code_2_edge" dmnElementRef="light_require_light_admission_code_2">
+        <di:waypoint x="475" y="310" />
+        <di:waypoint x="475" y="710" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_require_light_admission_code_3_edge" dmnElementRef="light_require_light_admission_code_3">
+        <di:waypoint x="195" y="470" />
+        <di:waypoint x="475" y="710" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_authority_light_admission_code_edge" dmnElementRef="light_authority_light_admission_code">
+        <di:waypoint x="195" y="150" />
+        <di:waypoint x="475" y="710" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_require_light_status_0_edge" dmnElementRef="light_require_light_status_0">
+        <di:waypoint x="475" y="790" />
+        <di:waypoint x="195" y="870" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_authority_light_status_edge" dmnElementRef="light_authority_light_status">
+        <di:waypoint x="195" y="150" />
+        <di:waypoint x="195" y="870" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_require_accepted_light_calibration_0_edge" dmnElementRef="light_require_accepted_light_calibration_0">
+        <di:waypoint x="475" y="150" />
+        <di:waypoint x="475" y="870" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_require_accepted_light_calibration_1_edge" dmnElementRef="light_require_accepted_light_calibration_1">
+        <di:waypoint x="195" y="630" />
+        <di:waypoint x="475" y="870" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_require_accepted_light_calibration_2_edge" dmnElementRef="light_require_accepted_light_calibration_2">
+        <di:waypoint x="475" y="630" />
+        <di:waypoint x="475" y="870" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_authority_accepted_light_calibration_edge" dmnElementRef="light_authority_accepted_light_calibration">
+        <di:waypoint x="195" y="150" />
+        <di:waypoint x="475" y="870" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_require_light_result_0_edge" dmnElementRef="light_require_light_result_0">
+        <di:waypoint x="195" y="950" />
+        <di:waypoint x="195" y="1030" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_require_light_result_1_edge" dmnElementRef="light_require_light_result_1">
+        <di:waypoint x="475" y="470" />
+        <di:waypoint x="195" y="1030" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_require_light_result_2_edge" dmnElementRef="light_require_light_result_2">
+        <di:waypoint x="475" y="950" />
+        <di:waypoint x="195" y="1030" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_require_light_result_3_edge" dmnElementRef="light_require_light_result_3">
+        <di:waypoint x="195" y="790" />
+        <di:waypoint x="195" y="1030" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_authority_light_result_edge" dmnElementRef="light_authority_light_result">
+        <di:waypoint x="195" y="150" />
+        <di:waypoint x="195" y="1030" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="pot_require_pot_safety_0_edge" dmnElementRef="pot_require_pot_safety_0">
+        <di:waypoint x="1095" y="150" />
+        <di:waypoint x="1095" y="550" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="pot_require_pot_safety_1_edge" dmnElementRef="pot_require_pot_safety_1">
+        <di:waypoint x="815" y="310" />
+        <di:waypoint x="1095" y="550" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="pot_require_pot_safety_2_edge" dmnElementRef="pot_require_pot_safety_2">
+        <di:waypoint x="1095" y="310" />
+        <di:waypoint x="1095" y="550" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="pot_authority_pot_safety_edge" dmnElementRef="pot_authority_pot_safety">
+        <di:waypoint x="815" y="150" />
+        <di:waypoint x="1095" y="550" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="pot_require_retention_admission_code_0_edge" dmnElementRef="pot_require_retention_admission_code_0">
+        <di:waypoint x="815" y="470" />
+        <di:waypoint x="815" y="710" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="pot_require_retention_admission_code_1_edge" dmnElementRef="pot_require_retention_admission_code_1">
+        <di:waypoint x="1095" y="630" />
+        <di:waypoint x="815" y="710" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="pot_require_retention_admission_code_2_edge" dmnElementRef="pot_require_retention_admission_code_2">
+        <di:waypoint x="1095" y="470" />
+        <di:waypoint x="815" y="710" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="pot_authority_retention_admission_code_edge" dmnElementRef="pot_authority_retention_admission_code">
+        <di:waypoint x="815" y="150" />
+        <di:waypoint x="815" y="710" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="pot_require_pot_result_0_edge" dmnElementRef="pot_require_pot_result_0">
+        <di:waypoint x="1095" y="630" />
+        <di:waypoint x="1095" y="710" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="pot_require_pot_result_1_edge" dmnElementRef="pot_require_pot_result_1">
+        <di:waypoint x="815" y="790" />
+        <di:waypoint x="1095" y="710" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="pot_require_pot_result_2_edge" dmnElementRef="pot_require_pot_result_2">
+        <di:waypoint x="815" y="630" />
+        <di:waypoint x="1095" y="710" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="pot_authority_pot_result_edge" dmnElementRef="pot_authority_pot_result">
+        <di:waypoint x="815" y="150" />
+        <di:waypoint x="1095" y="710" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dry_cycle_require_cycle_eligible_0_edge" dmnElementRef="dry_cycle_require_cycle_eligible_0">
+        <di:waypoint x="1715" y="150" />
+        <di:waypoint x="1435" y="710" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dry_cycle_require_cycle_eligible_1_edge" dmnElementRef="dry_cycle_require_cycle_eligible_1">
+        <di:waypoint x="1435" y="310" />
+        <di:waypoint x="1435" y="710" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dry_cycle_require_cycle_eligible_2_edge" dmnElementRef="dry_cycle_require_cycle_eligible_2">
+        <di:waypoint x="1715" y="310" />
+        <di:waypoint x="1435" y="710" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dry_cycle_require_cycle_eligible_3_edge" dmnElementRef="dry_cycle_require_cycle_eligible_3">
+        <di:waypoint x="1435" y="470" />
+        <di:waypoint x="1435" y="710" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dry_cycle_require_cycle_eligible_4_edge" dmnElementRef="dry_cycle_require_cycle_eligible_4">
+        <di:waypoint x="1715" y="470" />
+        <di:waypoint x="1435" y="710" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dry_cycle_authority_cycle_eligible_edge" dmnElementRef="dry_cycle_authority_cycle_eligible">
+        <di:waypoint x="1435" y="150" />
+        <di:waypoint x="1435" y="710" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dry_cycle_require_calibration_status_0_edge" dmnElementRef="dry_cycle_require_calibration_status_0">
+        <di:waypoint x="1435" y="790" />
+        <di:waypoint x="1715" y="710" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dry_cycle_authority_calibration_status_edge" dmnElementRef="dry_cycle_authority_calibration_status">
+        <di:waypoint x="1435" y="150" />
+        <di:waypoint x="1715" y="710" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dry_cycle_require_personal_calibration_0_edge" dmnElementRef="dry_cycle_require_personal_calibration_0">
+        <di:waypoint x="1715" y="790" />
+        <di:waypoint x="1435" y="870" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dry_cycle_require_personal_calibration_1_edge" dmnElementRef="dry_cycle_require_personal_calibration_1">
+        <di:waypoint x="1715" y="630" />
+        <di:waypoint x="1435" y="870" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dry_cycle_require_personal_calibration_2_edge" dmnElementRef="dry_cycle_require_personal_calibration_2">
+        <di:waypoint x="1435" y="630" />
+        <di:waypoint x="1435" y="870" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dry_cycle_authority_personal_calibration_edge" dmnElementRef="dry_cycle_authority_personal_calibration">
+        <di:waypoint x="1435" y="150" />
+        <di:waypoint x="1435" y="870" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_soil_safety_gate_0_edge" dmnElementRef="watering_require_soil_safety_gate_0">
+        <di:waypoint x="2055" y="950" />
+        <di:waypoint x="2335" y="1030" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_soil_safety_gate_1_edge" dmnElementRef="watering_require_soil_safety_gate_1">
+        <di:waypoint x="2335" y="950" />
+        <di:waypoint x="2335" y="1030" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_soil_safety_gate_2_edge" dmnElementRef="watering_require_soil_safety_gate_2">
+        <di:waypoint x="2055" y="1110" />
+        <di:waypoint x="2335" y="1030" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_authority_soil_safety_gate_edge" dmnElementRef="watering_authority_soil_safety_gate">
+        <di:waypoint x="2055" y="150" />
+        <di:waypoint x="2335" y="1030" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_usable_dry_progress_0_edge" dmnElementRef="watering_require_usable_dry_progress_0">
+        <di:waypoint x="2335" y="630" />
+        <di:waypoint x="2055" y="1190" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_usable_dry_progress_policy_edge" dmnElementRef="watering_require_usable_dry_progress_policy">
+        <di:waypoint x="2335" y="150" />
+        <di:waypoint x="2055" y="1190" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_usable_dry_progress_1_edge" dmnElementRef="watering_require_usable_dry_progress_1">
+        <di:waypoint x="2055" y="790" />
+        <di:waypoint x="2055" y="1190" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_usable_dry_progress_2_edge" dmnElementRef="watering_require_usable_dry_progress_2">
+        <di:waypoint x="195" y="1110" />
+        <di:waypoint x="2055" y="1190" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_usable_dry_progress_3_edge" dmnElementRef="watering_require_usable_dry_progress_3">
+        <di:waypoint x="1095" y="790" />
+        <di:waypoint x="2055" y="1190" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_usable_dry_progress_4_edge" dmnElementRef="watering_require_usable_dry_progress_4">
+        <di:waypoint x="1435" y="950" />
+        <di:waypoint x="2055" y="1190" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_usable_dry_progress_5_edge" dmnElementRef="watering_require_usable_dry_progress_5">
+        <di:waypoint x="2055" y="630" />
+        <di:waypoint x="2055" y="1190" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_authority_usable_dry_progress_edge" dmnElementRef="watering_authority_usable_dry_progress">
+        <di:waypoint x="2055" y="150" />
+        <di:waypoint x="2055" y="1190" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_usable_window_state_0_edge" dmnElementRef="watering_require_usable_window_state_0">
+        <di:waypoint x="2055" y="1270" />
+        <di:waypoint x="2335" y="1190" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_usable_window_state_1_edge" dmnElementRef="watering_require_usable_window_state_1">
+        <di:waypoint x="2335" y="790" />
+        <di:waypoint x="2335" y="1190" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_usable_window_state_2_edge" dmnElementRef="watering_require_usable_window_state_2">
+        <di:waypoint x="2335" y="310" />
+        <di:waypoint x="2335" y="1190" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_usable_window_state_3_edge" dmnElementRef="watering_require_usable_window_state_3">
+        <di:waypoint x="2055" y="310" />
+        <di:waypoint x="2335" y="1190" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_authority_usable_window_state_edge" dmnElementRef="watering_authority_usable_window_state">
+        <di:waypoint x="2055" y="150" />
+        <di:waypoint x="2335" y="1190" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_watering_action_0_edge" dmnElementRef="watering_require_watering_action_0">
+        <di:waypoint x="2335" y="150" />
+        <di:waypoint x="2055" y="1350" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_watering_action_1_edge" dmnElementRef="watering_require_watering_action_1">
+        <di:waypoint x="2335" y="1110" />
+        <di:waypoint x="2055" y="1350" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_watering_action_2_edge" dmnElementRef="watering_require_watering_action_2">
+        <di:waypoint x="2335" y="1270" />
+        <di:waypoint x="2055" y="1350" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_watering_action_3_edge" dmnElementRef="watering_require_watering_action_3">
+        <di:waypoint x="1095" y="790" />
+        <di:waypoint x="2055" y="1350" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_authority_watering_action_edge" dmnElementRef="watering_authority_watering_action">
+        <di:waypoint x="2055" y="150" />
+        <di:waypoint x="2055" y="1350" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_watering_result_0_edge" dmnElementRef="watering_require_watering_result_0">
+        <di:waypoint x="2055" y="1430" />
+        <di:waypoint x="2335" y="1350" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_watering_result_1_edge" dmnElementRef="watering_require_watering_result_1">
+        <di:waypoint x="2055" y="1270" />
+        <di:waypoint x="2335" y="1350" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_watering_result_2_edge" dmnElementRef="watering_require_watering_result_2">
+        <di:waypoint x="2335" y="310" />
+        <di:waypoint x="2335" y="1350" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_watering_result_3_edge" dmnElementRef="watering_require_watering_result_3">
+        <di:waypoint x="195" y="1110" />
+        <di:waypoint x="2335" y="1350" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_watering_result_4_edge" dmnElementRef="watering_require_watering_result_4">
+        <di:waypoint x="1095" y="790" />
+        <di:waypoint x="2335" y="1350" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_watering_result_5_edge" dmnElementRef="watering_require_watering_result_5">
+        <di:waypoint x="1435" y="950" />
+        <di:waypoint x="2335" y="1350" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_watering_result_6_edge" dmnElementRef="watering_require_watering_result_6">
+        <di:waypoint x="2055" y="470" />
+        <di:waypoint x="2335" y="1350" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_watering_result_7_edge" dmnElementRef="watering_require_watering_result_7">
+        <di:waypoint x="2335" y="470" />
+        <di:waypoint x="2335" y="1350" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_require_watering_result_8_edge" dmnElementRef="watering_require_watering_result_8">
+        <di:waypoint x="2055" y="630" />
+        <di:waypoint x="2335" y="1350" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="watering_authority_watering_result_edge" dmnElementRef="watering_authority_watering_result">
+        <di:waypoint x="2055" y="150" />
+        <di:waypoint x="2335" y="1350" />
+      </dmndi:DMNEdge>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

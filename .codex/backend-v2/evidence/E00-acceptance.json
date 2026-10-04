@@ -1,0 +1,29 @@
+{
+  "ticketId": "z8v0kmtktc",
+  "scope": "E00 队列、小型记录、每小时ClickUp/H5轻量同步配置与边界",
+  "accepted": true,
+  "verifiedAt": "2026-10-04T11:43:11.473203+00:00",
+  "checks": {
+    "queue": "E00-E08 均已映射原票；E02-E08 的执行编号在Chrome逐票读回",
+    "governanceTests": {
+      "cases": 12,
+      "result": "passed",
+      "log": "/tmp/planting-e00-e01-acceptance.log"
+    },
+    "projection": "连续两次实际运行均无变化、未写入",
+    "h5": "Chrome localhost:8765 当前E04、逐票待同步/已同步、未验收与历史百分比分开显示",
+    "automation": "clickup ACTIVE、当前线程、每小时、仅异常通知；实际提示词包含禁读源码/文档/OV及单投影命令",
+    "trigger": "本会话已收到2026-10-04T10:34:41.709Z每小时调度消息",
+    "fullVitest": {
+      "files": 105,
+      "passed": 702,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "notClaimed": [
+    "永久无故障的未来每小时运行",
+    "线上H5部署",
+    "父票共享基础设施整票完成"
+  ]
+}

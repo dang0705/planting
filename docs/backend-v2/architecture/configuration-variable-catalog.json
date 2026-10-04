@@ -1,6 +1,6 @@
 {
   "schemaVersion": "configuration-variable-catalog/v1",
-  "catalogVersion": "2026-10-03.2",
+  "catalogVersion": "2026-10-04.1",
   "language": "zh-CN",
   "description": "青花植后端 v2 业务关键变量唯一目录。confirmed 表示已冻结，pending 表示必须在所属阶段冻结后才能实现对应范围，hard_rule 表示任何配置均不得覆盖。",
   "validationMetadata": {
@@ -1302,7 +1302,8 @@
       "currentValue": 64,
       "owner": "plant-knowledge",
       "sourceRefs": [
-        "docs/backend-v2/contracts/plant-knowledge-public-search.md"
+        "docs/backend-v2/contracts/plant-knowledge-public-search.md",
+        "docs/backend-v2/contracts/plant-catalog-search.md"
       ],
       "consumers": [
         "plant-knowledge"
@@ -1325,7 +1326,8 @@
       "currentValue": 20,
       "owner": "plant-knowledge",
       "sourceRefs": [
-        "docs/backend-v2/contracts/plant-knowledge-public-search.md"
+        "docs/backend-v2/contracts/plant-knowledge-public-search.md",
+        "docs/backend-v2/contracts/plant-catalog-search.md"
       ],
       "consumers": [
         "plant-knowledge"
@@ -4639,6 +4641,169 @@
       "expected": "AOI>=90° 时直射不为负；低纬/季节/不同窗向由同一太阳几何自然处理",
       "pendingReason": "数学结构已冻结，具体实现与回归集尚未形成 release",
       "blockingScope": "Window Plane Irradiance 与 DLI 正式运行"
+    },
+    {
+      "domain": "plant-knowledge",
+      "layer": "hard_rule",
+      "valueType": "integer",
+      "unit": "条",
+      "status": "hard_rule",
+      "owner": "plant-knowledge",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/plant-catalog-search.md"
+      ],
+      "consumers": [
+        "plant-knowledge"
+      ],
+      "changePolicy": "冻结接口规则；变更须同步合同、Expected 和兼容性，不作为运营开关",
+      "phase": "P2",
+      "ticketTitle": "[E01] 植物目录搜索 SQL 与 HTTP 纵向切片",
+      "ticketId": "z8v0kmtktd",
+      "decisionGroup": "hard_business_rule",
+      "id": "plant-knowledge.catalog.default_limit",
+      "chineseName": "目录搜索默认返回条数",
+      "currentValue": 10,
+      "expected": "未提供 limit 时固定返回至多 10 条",
+      "fallback": "不存在隐式运营降级"
+    },
+    {
+      "domain": "plant-knowledge",
+      "layer": "hard_rule",
+      "valueType": "integer",
+      "unit": "条",
+      "status": "hard_rule",
+      "owner": "plant-knowledge",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/plant-catalog-search.md"
+      ],
+      "consumers": [
+        "plant-knowledge"
+      ],
+      "changePolicy": "冻结接口规则；变更须同步合同、Expected 和兼容性，不作为运营开关",
+      "phase": "P2",
+      "ticketTitle": "[E01] 植物目录搜索 SQL 与 HTTP 纵向切片",
+      "ticketId": "z8v0kmtktd",
+      "decisionGroup": "hard_business_rule",
+      "id": "plant-knowledge.catalog.minimum_limit",
+      "chineseName": "目录搜索最小返回条数",
+      "currentValue": 1,
+      "expected": "limit 必须为 1 至 20 的整数",
+      "fallback": "非法 limit 返回 400 VALIDATION_FAILED"
+    },
+    {
+      "id": "plant-knowledge.encyclopedia.reference_max_code_points",
+      "chineseName": "百科路径与目录引用最长码点数",
+      "domain": "plant-knowledge",
+      "layer": "hard_rule",
+      "valueType": "integer",
+      "unit": "Unicode 码点",
+      "status": "hard_rule",
+      "currentValue": 512,
+      "owner": "plant-knowledge",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/plant-encyclopedia-read.md"
+      ],
+      "consumers": [
+        "plant-knowledge"
+      ],
+      "changePolicy": "受来源列宽与冻结接口约束；只能通过合同与兼容性变更调整",
+      "fallback": "参数缺失或越界返回 400 VALIDATION_FAILED",
+      "phase": "P2",
+      "ticketTitle": "[P2] CMS 分类、百科和发布",
+      "expected": "分类引用与 slug 均为 1 至 512 个 Unicode 码点",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "care.lighting.interval_unit_definitions",
+      "chineseName": "PPFD 区间积分单位定义",
+      "domain": "care",
+      "layer": "hard_rule",
+      "valueType": "object",
+      "status": "hard_rule",
+      "currentValue": {
+        "millisecondsPerSecond": 1000,
+        "micromolesPerMole": 1000000
+      },
+      "owner": "care",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/light-interval-contract.md"
+      ],
+      "consumers": [
+        "care 离线区间积分"
+      ],
+      "changePolicy": "单位定义不可配置；仅变更输入单位合同时重审",
+      "fallback": "缺段只报告已知积分，不猜测全天值",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "clickUpTicketId": "z8v0kmr973",
+      "expected": "100 PPFD 一小时积分 0.36 mol；有效零值与缺失区分",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "care.lighting.window_direct_geometry",
+      "chineseName": "窗面直射坐标与投影硬规则",
+      "domain": "care",
+      "layer": "hard_rule",
+      "valueType": "object",
+      "status": "hard_rule",
+      "currentValue": {
+        "azimuthOrigin": "true_north_clockwise",
+        "angleUnit": "degree",
+        "tiltOrigin": "upward_horizontal",
+        "backFaceProjection": "zero",
+        "horizonProjection": "zero",
+        "apertureMethod": "vertical_plane_rectangle_union",
+        "distanceUnit": "metre_perpendicular",
+        "edgeResult": "boundary",
+        "meanProjectionMethod": "nonnegative_whole_interval_bounds"
+      },
+      "owner": "care",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/window-direct-contract.md",
+        "cloudfunctions-v2/models/care/direct-reach-contract.md",
+        "cloudfunctions-v2/models/care/window-mean-direct-contract.md"
+      ],
+      "consumers": [
+        "care 离线窗面直射计算",
+        "care 离线直射可达性"
+      ],
+      "changePolicy": "物理与坐标定义不可运营配置；输入语义变化须冻结新合同",
+      "fallback": "DNI 缺失保持 null；时间或坐标错误拒绝",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "clickUpTicketId": "z8v0kmr973",
+      "expected": "竖窗正对高度60度太阳，600 DNI 投影为300 W/m²；背面截断；时刻错配拒绝；连窗墙体不当作玻璃，距离参与射线可达性而非平方衰减；区间平均DNI只乘同一完整区间的可靠投影上下界，不以均值乘均值冒充精确结果",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "care.lighting.open_meteo_interval_semantics",
+      "chineseName": "Open-Meteo 辐射区间与时间硬规则",
+      "domain": "care",
+      "layer": "hard_rule",
+      "valueType": "object",
+      "status": "hard_rule",
+      "currentValue": {
+        "timeformat": "unixtime_utc_seconds",
+        "radiationUnit": "W/m²",
+        "hourlyDurationMs": 3600000,
+        "minutely15DurationMs": 900000,
+        "label": "interval_end",
+        "semantics": "preceding_interval_mean"
+      },
+      "owner": "care",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/radiation-interval-contract.md"
+      ],
+      "consumers": [
+        "care 离线公开辐射制品回放"
+      ],
+      "changePolicy": "外部语义与单位不能运营配置；Provider 合同变化先更新测试与适配版本",
+      "fallback": "缺值保留 null；单位与时间错误拒绝；不扩大请求或选择其他来源",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "clickUpTicketId": "z8v0kmr973",
+      "expected": "Unix秒不加地点偏移；标签为此前小时或15分钟均值的结束时刻，缺段不补零",
+      "decisionGroup": "hard_business_rule"
     }
   ],
   "providerProfiles": [
@@ -5231,6 +5396,20 @@
       "url": "https://app.clickup.com/t/z8v0kmr978",
       "agents": [
         "real_api_runner_luna"
+      ]
+    },
+    "[E01] 植物目录搜索 SQL 与 HTTP 纵向切片": {
+      "id": "z8v0kmtktd",
+      "url": "https://app.clickup.com/t/90182453517/z8v0kmtktd",
+      "agents": [
+        "root"
+      ]
+    },
+    "[P2] CMS 分类、百科和发布": {
+      "id": "z8v0kmr971",
+      "url": "https://app.clickup.com/t/z8v0kmr971",
+      "agents": [
+        "root"
       ]
     }
   },

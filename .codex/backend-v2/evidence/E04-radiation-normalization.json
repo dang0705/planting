@@ -1,0 +1,35 @@
+{
+  "ticket": "z8v0kmr973",
+  "step": "E04",
+  "scope": "公开 Open-Meteo 辐射制品离线归一化",
+  "source": "cloudfunctions-v2/src/care/light/normalize-open-meteo-radiation.ts",
+  "contract": "cloudfunctions-v2/models/care/radiation-interval-contract.md",
+  "tests": "cloudfunctions-v2/test/care/normalize-open-meteo-radiation.spec.ts",
+  "realFixture": "cloudfunctions-v2/test/care/fixtures/open-meteo-hourly-radiation.json",
+  "metadata": "cloudfunctions-v2/test/care/fixtures/open-meteo-hourly-radiation.metadata.json",
+  "verification": {
+    "newCases": 18,
+    "careCases": 90,
+    "fullFiles": 103,
+    "fullPassed": 670,
+    "failed": 0,
+    "typecheck": "passed",
+    "build": "passed",
+    "lintErrors": 0,
+    "lintWarnings": 499
+  },
+  "redGreen": {
+    "path": "独立外部合同 Expected 先落盘；前一时段标签错配突变 RED 与恢复 GREEN",
+    "mutationFailures": 5,
+    "red": "/tmp/planting-radiation-end-label-mutation-red.log",
+    "green": "/tmp/planting-e04-light-related-green.log"
+  },
+  "node22": {
+    "isolatedChecks": 6,
+    "log": "/tmp/planting-radiation-normalizer-node22.log",
+    "notCovered": "不是 Node22 全量 Vitest、实时 Provider Adapter 或 CloudBase 部署"
+  },
+  "fullLog": "/tmp/planting-e04-final-full-vitest.log",
+  "boundary": "真实制品回放不证明正式 Provider 发布。区间均值到瞬时太阳几何的衔接、误差与完整当地日期覆盖仍需合同准入；缓存、重试、玻璃、视觉和光谱参数未启用。",
+  "accepted": false
+}

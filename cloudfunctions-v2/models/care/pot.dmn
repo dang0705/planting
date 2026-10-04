@@ -1,0 +1,260 @@
+<?xml version='1.0' encoding='utf-8'?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" id="pot_definitions" name="盆器模型：实际内盆、保水及安全" namespace="http://camunda.org/schema/1.0/dmn">
+  <description>离线模型草案；未通过 Camunda 兼容引擎行为验收，不用于生产执行。数值计算由受控 TypeScript 用例承担。</description>
+  <knowledgeSource id="pot_knowledge" name="依据：已批准的统一重构计划第六节">
+    <description>唯一依据为本会话批准的整体计划。候选参数不构成已发布策略；修改规则须同步独立预期、后端实现与发布版本。</description>
+  </knowledgeSource>
+  <inputData id="pot_input_actual_inner_pot_confirmed" name="实际种植内盆已确认">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="pot_variable_actual_inner_pot_confirmed" name="actual_inner_pot_confirmed" typeRef="boolean" />
+  </inputData>
+  <inputData id="pot_input_pot_geometry_valid" name="盆口、盆底及盆高合法">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="pot_variable_pot_geometry_valid" name="pot_geometry_valid" typeRef="boolean" />
+  </inputData>
+  <inputData id="pot_input_drainage_available" name="排水孔与排水通道有效">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="pot_variable_drainage_available" name="drainage_available" typeRef="boolean" />
+  </inputData>
+  <inputData id="pot_input_retention_policy_approved" name="栽培保水策略已发布">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="pot_variable_retention_policy_approved" name="retention_policy_approved" typeRef="boolean" />
+  </inputData>
+  <inputData id="pot_input_substrate_facts_confirmed" name="基质事实已确认">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="pot_variable_substrate_facts_confirmed" name="substrate_facts_confirmed" typeRef="boolean" />
+  </inputData>
+  <inputData id="pot_input_calculated_retention" name="后端计算的栽培保水结果">
+    <description>包含有效体积、基质分类、保水区间、版本和依据；不把抽象评分当成实测物理量。</description>
+    <variable id="pot_variable_calculated_retention" name="calculated_retention" typeRef="Any" />
+  </inputData>
+  <decision id="pot_decision_pot_safety" name="盆器安全条件">
+    <description>互斥规则，不给缺失排水赋值。</description>
+    <variable id="pot_result_pot_safety" name="pot_safety" typeRef="Any" />
+    <informationRequirement id="pot_require_pot_safety_0">
+      <requiredInput href="#pot_input_actual_inner_pot_confirmed" />
+    </informationRequirement>
+    <informationRequirement id="pot_require_pot_safety_1">
+      <requiredInput href="#pot_input_pot_geometry_valid" />
+    </informationRequirement>
+    <informationRequirement id="pot_require_pot_safety_2">
+      <requiredInput href="#pot_input_drainage_available" />
+    </informationRequirement>
+    <authorityRequirement id="pot_authority_pot_safety">
+      <requiredAuthority href="#pot_knowledge" />
+    </authorityRequirement>
+    <decisionTable id="pot_table_pot_safety" hitPolicy="UNIQUE">
+      <input id="pot_column_pot_safety_0" label="actual_inner_pot_confirmed">
+        <inputExpression id="pot_column_expression_pot_safety_0" typeRef="boolean">
+          <text>actual_inner_pot_confirmed</text>
+        </inputExpression>
+      </input>
+      <input id="pot_column_pot_safety_1" label="pot_geometry_valid">
+        <inputExpression id="pot_column_expression_pot_safety_1" typeRef="boolean">
+          <text>pot_geometry_valid</text>
+        </inputExpression>
+      </input>
+      <input id="pot_column_pot_safety_2" label="drainage_available">
+        <inputExpression id="pot_column_expression_pot_safety_2" typeRef="boolean">
+          <text>drainage_available</text>
+        </inputExpression>
+      </input>
+      <output id="pot_output_pot_safety" name="pot_safety" label="盆器安全条件" typeRef="string" />
+      <rule id="pot_rule_pot_safety_0">
+        <description>装饰外盆不能替代实际内盆</description>
+        <inputEntry id="pot_entry_pot_safety_0_0">
+          <text>false, null</text>
+        </inputEntry>
+        <inputEntry id="pot_entry_pot_safety_0_1">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="pot_entry_pot_safety_0_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="pot_value_pot_safety_0">
+          <text>"insufficient_evidence"</text>
+        </outputEntry>
+      </rule>
+      <rule id="pot_rule_pot_safety_1">
+        <description>尺寸缺失或非法</description>
+        <inputEntry id="pot_entry_pot_safety_1_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="pot_entry_pot_safety_1_1">
+          <text>false, null</text>
+        </inputEntry>
+        <inputEntry id="pot_entry_pot_safety_1_2">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="pot_value_pot_safety_1">
+          <text>"insufficient_evidence"</text>
+        </outputEntry>
+      </rule>
+      <rule id="pot_rule_pot_safety_2">
+        <description>无孔或排水受阻</description>
+        <inputEntry id="pot_entry_pot_safety_2_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="pot_entry_pot_safety_2_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="pot_entry_pot_safety_2_2">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="pot_value_pot_safety_2">
+          <text>"drainage_risk"</text>
+        </outputEntry>
+      </rule>
+      <rule id="pot_rule_pot_safety_3">
+        <description>排水证据缺失</description>
+        <inputEntry id="pot_entry_pot_safety_3_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="pot_entry_pot_safety_3_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="pot_entry_pot_safety_3_2">
+          <text>null</text>
+        </inputEntry>
+        <outputEntry id="pot_value_pot_safety_3">
+          <text>"insufficient_evidence"</text>
+        </outputEntry>
+      </rule>
+      <rule id="pot_rule_pot_safety_4">
+        <description>三项均有证据</description>
+        <inputEntry id="pot_entry_pot_safety_4_0">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="pot_entry_pot_safety_4_1">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="pot_entry_pot_safety_4_2">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="pot_value_pot_safety_4">
+          <text>"safe"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="pot_decision_retention_admission_code" name="保水计算准入">
+    <description>仅已发布策略消费已确认盆器与基质。</description>
+    <variable id="pot_result_retention_admission_code" name="retention_admission_code" typeRef="Any" />
+    <informationRequirement id="pot_require_retention_admission_code_0">
+      <requiredInput href="#pot_input_retention_policy_approved" />
+    </informationRequirement>
+    <informationRequirement id="pot_require_retention_admission_code_1">
+      <requiredDecision href="#pot_decision_pot_safety" />
+    </informationRequirement>
+    <informationRequirement id="pot_require_retention_admission_code_2">
+      <requiredInput href="#pot_input_substrate_facts_confirmed" />
+    </informationRequirement>
+    <authorityRequirement id="pot_authority_retention_admission_code">
+      <requiredAuthority href="#pot_knowledge" />
+    </authorityRequirement>
+    <literalExpression id="pot_expression_retention_admission_code" typeRef="Any">
+      <text>if retention_policy_approved != true then "temporarily_unavailable" else if pot_safety != "safe" or substrate_facts_confirmed != true then "insufficient_evidence" else "ready"</text>
+    </literalExpression>
+  </decision>
+  <decision id="pot_decision_pot_result" name="盆器模型结果">
+    <description>安全条件独立保留；不继承未经确认的旧盆型倍率。</description>
+    <variable id="pot_result_pot_result" name="pot_result" typeRef="Any" />
+    <informationRequirement id="pot_require_pot_result_0">
+      <requiredDecision href="#pot_decision_pot_safety" />
+    </informationRequirement>
+    <informationRequirement id="pot_require_pot_result_1">
+      <requiredDecision href="#pot_decision_retention_admission_code" />
+    </informationRequirement>
+    <informationRequirement id="pot_require_pot_result_2">
+      <requiredInput href="#pot_input_calculated_retention" />
+    </informationRequirement>
+    <authorityRequirement id="pot_authority_pot_result">
+      <requiredAuthority href="#pot_knowledge" />
+    </authorityRequirement>
+    <literalExpression id="pot_expression_pot_result" typeRef="Any">
+      <text>{ safety: pot_safety, status: retention_admission_code, retention: if retention_admission_code = "ready" then calculated_retention else null }</text>
+    </literalExpression>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="pot_diagram" name="可审阅决策依赖图">
+      <dmndi:DMNShape id="pot_input_actual_inner_pot_confirmed_shape" dmnElementRef="pot_input_actual_inner_pot_confirmed">
+        <dc:Bounds x="80" y="70" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="pot_input_pot_geometry_valid_shape" dmnElementRef="pot_input_pot_geometry_valid">
+        <dc:Bounds x="360" y="70" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="pot_input_drainage_available_shape" dmnElementRef="pot_input_drainage_available">
+        <dc:Bounds x="640" y="70" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="pot_input_retention_policy_approved_shape" dmnElementRef="pot_input_retention_policy_approved">
+        <dc:Bounds x="920" y="70" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="pot_input_substrate_facts_confirmed_shape" dmnElementRef="pot_input_substrate_facts_confirmed">
+        <dc:Bounds x="80" y="230" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="pot_input_calculated_retention_shape" dmnElementRef="pot_input_calculated_retention">
+        <dc:Bounds x="360" y="230" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="pot_decision_pot_safety_shape" dmnElementRef="pot_decision_pot_safety">
+        <dc:Bounds x="640" y="230" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="pot_decision_retention_admission_code_shape" dmnElementRef="pot_decision_retention_admission_code">
+        <dc:Bounds x="920" y="230" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="pot_decision_pot_result_shape" dmnElementRef="pot_decision_pot_result">
+        <dc:Bounds x="80" y="390" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="pot_require_pot_safety_0_edge" dmnElementRef="pot_require_pot_safety_0">
+        <di:waypoint x="195" y="150" />
+        <di:waypoint x="755" y="230" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="pot_require_pot_safety_1_edge" dmnElementRef="pot_require_pot_safety_1">
+        <di:waypoint x="475" y="150" />
+        <di:waypoint x="755" y="230" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="pot_require_pot_safety_2_edge" dmnElementRef="pot_require_pot_safety_2">
+        <di:waypoint x="755" y="150" />
+        <di:waypoint x="755" y="230" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="pot_require_retention_admission_code_0_edge" dmnElementRef="pot_require_retention_admission_code_0">
+        <di:waypoint x="1035" y="150" />
+        <di:waypoint x="1035" y="230" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="pot_require_retention_admission_code_1_edge" dmnElementRef="pot_require_retention_admission_code_1">
+        <di:waypoint x="755" y="310" />
+        <di:waypoint x="1035" y="230" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="pot_require_retention_admission_code_2_edge" dmnElementRef="pot_require_retention_admission_code_2">
+        <di:waypoint x="195" y="310" />
+        <di:waypoint x="1035" y="230" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="pot_require_pot_result_0_edge" dmnElementRef="pot_require_pot_result_0">
+        <di:waypoint x="755" y="310" />
+        <di:waypoint x="195" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="pot_require_pot_result_1_edge" dmnElementRef="pot_require_pot_result_1">
+        <di:waypoint x="1035" y="310" />
+        <di:waypoint x="195" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="pot_require_pot_result_2_edge" dmnElementRef="pot_require_pot_result_2">
+        <di:waypoint x="475" y="310" />
+        <di:waypoint x="195" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNShape id="pot_knowledge_shape" dmnElementRef="pot_knowledge">
+        <dc:Bounds x="80" y="-60" width="230" height="70" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="pot_authority_pot_safety_edge" dmnElementRef="pot_authority_pot_safety">
+        <di:waypoint x="195" y="10" />
+        <di:waypoint x="755.0" y="230" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="pot_authority_retention_admission_code_edge" dmnElementRef="pot_authority_retention_admission_code">
+        <di:waypoint x="195" y="10" />
+        <di:waypoint x="1035.0" y="230" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="pot_authority_pot_result_edge" dmnElementRef="pot_authority_pot_result">
+        <di:waypoint x="195" y="10" />
+        <di:waypoint x="195.0" y="390" />
+      </dmndi:DMNEdge>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

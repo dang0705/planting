@@ -12,7 +12,8 @@ const projectRoot = findProjectRoot()
 const stateMachine = fs.readFileSync(path.join(projectRoot, 'docs/backend-v2/data/state-machines.md'), 'utf8')
 const dataDictionaryPath = path.join(projectRoot, 'docs/backend-v2/data/v2-data-dictionary.md')
 
-assert.match(stateMachine, /合同版本[：:]\s*`state-machines\/v1`/u)
+// 用户批准的统一 Ephemeral 与 Care v2 已升级状态机，旧 v1 不再是有效合同。
+assert.match(stateMachine, /合同版本[：:]\s*`state-machines\/v2`/u)
 for (const transition of [
   'unidentified → candidate_pending → confirmed',
   'active → completed / failed / expired',

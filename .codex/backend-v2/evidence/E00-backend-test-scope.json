@@ -1,0 +1,45 @@
+{
+  "scope": "本阶段后端测试；前端全部排除，源码及 Expected 保留",
+  "authority": "用户确认：后端测试统一使用 Vitest，测试目录为 cloudfunctions-v2/test/",
+  "changedFiles": [
+    "vitest.config.mjs",
+    "cloudfunctions-v2/vitest.config.mjs",
+    "test/unit/run-all.mjs",
+    "cloudfunctions-v2/test/foundation-http.spec.ts",
+    "package.json"
+  ],
+  "legacy": {
+    "command": "npm test",
+    "passed": 153,
+    "total": 153,
+    "exitCode": 0,
+    "log": "/tmp/planting-backend-only-legacy.log",
+    "acceptanceEvidence": false,
+    "note": "历史运行器结果不计入本阶段后端验收"
+  },
+  "backendV2": {
+    "command": "npm test（转调后端包 Vitest 4.1.11）",
+    "files": 100,
+    "tests": 600,
+    "passed": 593,
+    "failed": 7,
+    "skipped": 0,
+    "exitCode": 1,
+    "log": "/tmp/planting-authoritative-backend-vitest.log"
+  },
+  "failedFiles": [
+    "p1-configuration-architecture.spec.ts",
+    "p1-contract-foundation.spec.ts",
+    "p1-state-and-data-dictionary.spec.ts",
+    "p1-total-ddl.spec.ts",
+    "p2-care-environment-foundation.spec.ts"
+  ],
+  "accepted": false,
+  "boundary": "没有修改前端源码、前端断言、停止钩子或台账；后端失败保持失败。测试启动目录修正不改变响应 Expected。",
+  "typecheck": "通过",
+  "httpHarnessRegression": {
+    "passed": 10,
+    "total": 10,
+    "log": "/tmp/planting-backend-scope-http.log"
+  }
+}

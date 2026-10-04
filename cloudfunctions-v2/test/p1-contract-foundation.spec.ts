@@ -72,14 +72,16 @@ test('P1 合同制品完整且哈希与注册表一致', () => {
     },
     'care-environment-foundation': {
       file: 'care-environment-foundation.md',
-      version: 'care-environment-foundation/v1',
+      // 已批准 v2；OpenViking 同名合同原文确认环境与决策派生分别保存。
+      version: 'care-environment-foundation/v2',
       terms: [
         '原子环境事实',
-        '派生环境指标',
+        'care_environment_derivations',
+        'care_decision_derivations',
         'inputSnapshotHash',
         'algorithmRelease',
         '室外温湿度',
-        '预计干湿周期'
+        'DryProgress'
       ]
     },
     'care-capability-output': {

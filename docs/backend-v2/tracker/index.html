@@ -27,7 +27,9 @@
 <body>
   <main>
     <h1>青花植后端 v2 模块进度</h1>
-    <p>按后端架构模块列举任务，不还原 Mermaid。数据来自 <code>module-status.json</code>。</p>
+    <p>当前执行记录每小时同步；页面每 30 分钟刷新展示。模块百分比保留历史快照，不根据任务状态估算。</p>
+    <section id="execution" class="overall" aria-live="polite">正在读取当前执行记录……</section>
+    <h2>历史模块进度快照</h2>
     <div id="notice" class="notice">正在读取状态……</div>
     <section id="overall" class="overall">正在计算总体完成度……</section>
     <section id="modules" class="grid"></section>
@@ -64,15 +66,50 @@
       }[character]));
     }
 
+    // 执行投影只展示两份轻量记录中的事实；验收与模块完成百分比不由页面推断。
+    async function loadExecution() {
+      const response = await fetch('./execution-progress.json', { cache: 'no-store' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      const tasks = Array.isArray(data.tasks) ? data.tasks : [];
+      document.querySelector('#execution').innerHTML = `
+        <h2>当前执行与同步</h2>
+        <strong>当前步骤：${escapeHtml(data.currentStep || '未记录')} · 票据：${escapeHtml(data.currentTicketId || '未记录')}</strong>
+        <div class="meta">记录版本：${escapeHtml(data.sourceRevision)}；记录更新时间：${escapeHtml(data.sourceUpdatedAt || '未知')}；投影生成时间：${escapeHtml(data.generatedAt || '未知')}</div>
+        <div class="meta">最近成功同步：${escapeHtml(data.lastSuccessfulSyncAt || '尚无记录')}；此时间不代表全部票据均已同步</div>
+        ${data.lastFailure ? `<div class="notice">同步异常：${escapeHtml(typeof data.lastFailure === 'string' ? data.lastFailure : JSON.stringify(data.lastFailure))}</div>` : ''}
+        ${tasks.map((task) => {
+          const sync = task.sync;
+          const matched = sync?.matched === true && sync.version === task.version && sync.status === task.status;
+          const syncLabel = !sync ? '尚未同步' : matched ? '已同步并读回' : '版本或状态未一致';
+          const ticketId = String(task.id || '');
+          const title = `${task.step || '未记录步骤'} · ${ticketId || '未记录票据'}`;
+          const ticket = /^[a-zA-Z0-9]+$/.test(ticketId)
+            ? `<a href="https://app.clickup.com/t/${encodeURIComponent(ticketId)}" target="_blank" rel="noreferrer">${escapeHtml(title)}</a>`
+            : escapeHtml(title);
+          return `<article class="ticket">
+            <div class="ticket-heading">${ticket}<strong>${task.accepted === true ? '已验收' : '未验收'}</strong></div>
+            <div class="meta">本地状态：${escapeHtml(task.status || '未记录')} · 阶段：${escapeHtml(task.stage || '未记录')} · 任务版本：${escapeHtml(task.version)}</div>
+            <div class="meta">逐票同步：${escapeHtml(syncLabel)}${sync ? `；远端记录版本：${escapeHtml(sync.version)}；远端状态：${escapeHtml(sync.status || '未记录')}` : ''}</div>
+            ${sync?.readback ? `<div class="meta">读回依据：${escapeHtml(sync.readback)}</div>` : ''}
+            ${(Array.isArray(task.summary) ? task.summary : []).map((line) => `<p>${escapeHtml(line)}</p>`).join('')}
+            ${task.blockingReason ? `<div class="notice">阻断：${escapeHtml(task.blockingReason)}</div>` : ''}
+            ${task.nextAction ? `<div class="meta">下一步：${escapeHtml(task.nextAction)}</div>` : ''}
+          </article>`;
+        }).join('') || '<p>尚无执行任务记录</p>'}
+      `;
+    }
+
     async function loadStatus() {
       const response = await fetch('./module-status.json', { cache: 'no-store' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       const agents = new Map((data.agentRegistry || []).map((agent) => [agent.name, agent]));
       const snapshotTime = data.generatedAt || '未知';
-      document.querySelector('#notice').textContent = `追踪表负责人：${data.trackerOwner || '主代理 /root'}；ClickUp 远端上次确认：${data.clickUpLastSyncedAt || '未核实'}（此后状态不保证实时）${data.clickUpSyncError ? `；同步异常：${data.clickUpSyncError}` : ''}；本地代理快照：${snapshotTime}；页面每 30 分钟自动刷新`;
+      document.querySelector('#notice').textContent = `历史模块快照：${snapshotTime}；百分比未随当前执行记录更新。追踪表负责人：${data.trackerOwner || '主代理 /root'}；历史 ClickUp 远端上次确认：${data.clickUpLastSyncedAt || '未核实'}（此后状态不保证实时）${data.clickUpSyncError ? `；历史同步异常：${data.clickUpSyncError}` : ''}`;
       const overall = data.overallProgress || { progress: 0, reported: 0, total: 0 };
       document.querySelector('#overall').innerHTML = `
-        <strong>总体本地任务进度：${overall.progress}%</strong>
+        <strong>历史总体本地任务进度：${overall.progress}%</strong>
         <div class="bar" aria-label="总体完成进度"><div class="fill" style="width:${overall.progress}%"></div></div>
         <div class="meta">全部任务：${overall.total}；已上报：${overall.reported}；未开始或未上报按 0% 计入；未上报的 0% 为统计规则，非 owner 上报</div>
       `;
@@ -136,10 +173,14 @@
       }).join('');
     }
 
-    loadStatus().catch((error) => { document.querySelector('#notice').textContent = `状态读取失败：${error.message}`; });
-    // 30 分钟刷新的是本地代理快照；快照写入仍必须由主代理/负责人按心跳合同完成。
+    // 两份数据独立读取和报错，避免一份缺失掩盖另一份；刷新展示不触发同步或验收。
+    function refreshDisplay() {
+      loadExecution().catch((error) => { document.querySelector('#execution').textContent = `当前执行记录读取失败：${error.message}`; });
+      loadStatus().catch((error) => { document.querySelector('#notice').textContent = `历史模块快照读取失败：${error.message}`; });
+    }
+    refreshDisplay();
     window.setInterval(() => {
-      loadStatus().catch((error) => { document.querySelector('#notice').textContent = `状态刷新失败：${error.message}`; });
+      refreshDisplay();
     }, REFRESH_INTERVAL_MS);
   </script>
 </body>

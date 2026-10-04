@@ -1,0 +1,65 @@
+{
+  "ticketId": "z8v0kmtktd",
+  "expectedSource": "plant-catalog-search/v1；用户批准统一计划 §3.2",
+  "tdd": {
+    "path": "classic",
+    "red": {
+      "cases": 18,
+      "result": "当前旧服务器均返回 404；合同场景先于实现落盘"
+    },
+    "green": {
+      "catalogCases": 18,
+      "publishedIdentityRegression": 5
+    }
+  },
+  "realDatabase": {
+    "engine": "MySQL 8.0.43",
+    "cases": 8,
+    "path": "本机 HTTP → 实际 Repository → mysql2 → 隔离 MySQL",
+    "schemaSource": "qinghuazhi_v2_test information_schema 定向只读核验；最小表夹具",
+    "notCovered": [
+      "全量迁移",
+      "生产 CloudBase 网关",
+      "部署"
+    ]
+  },
+  "runtime": {
+    "node": "22.23.3",
+    "imageDigest": "node@sha256:43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c",
+    "cases": 35,
+    "includes": "目录18、已发布身份5、治理12"
+  },
+  "typecheck": "passed",
+  "build": "passed",
+  "lint": {
+    "errors": 0,
+    "warnings": 55
+  },
+  "fullTests": {
+    "runner": "cloudfunctions-v2 Vitest",
+    "backend": {
+      "files": 105,
+      "passed": 702,
+      "failed": 0,
+      "skipped": 0
+    },
+    "log": "/tmp/planting-window-replay-full-green.log"
+  },
+  "files": [
+    "cloudfunctions-v2/test/plant-knowledge/search-plant-catalog.spec.ts",
+    "cloudfunctions-v2/test/e2e/search-plant-catalog.mysql.spec.ts"
+  ],
+  "acceptance": {
+    "accepted": true,
+    "scope": "E01本地HTTP→真实MySQL目录搜索；不含生产部署或全量迁移",
+    "verifiedAt": "2026-10-04T11:43:30.937458+00:00",
+    "checks": [
+      "原票描述已读回：目录只读、同名保留、去重、排序、准入身份、公开权限、非法输入、通配符、脱敏和旧身份搜索回归",
+      "目录与原身份搜索两套真实MySQL/HTTP测试新跑20/20",
+      "目录18和旧身份搜索5及治理12合计35/35",
+      "E00依赖票已验收，Chrome读回done"
+    ],
+    "realDatabaseLog": "/tmp/planting-catalog-acceptance-mysql.log",
+    "regressionLog": "/tmp/planting-e00-e01-acceptance.log"
+  }
+}

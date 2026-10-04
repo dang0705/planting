@@ -1,0 +1,209 @@
+<?xml version='1.0' encoding='utf-8'?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" id="dry_cycle_definitions" name="干湿循环模型：资格、残差与失效" namespace="http://camunda.org/schema/1.0/dmn">
+  <description>离线模型草案；未通过 Camunda 兼容引擎行为验收，不用于生产执行。数值计算由受控 TypeScript 用例承担。</description>
+  <knowledgeSource id="dry_cycle_knowledge" name="依据：已批准的统一重构计划第六节">
+    <description>唯一依据为本会话批准的整体计划。候选参数不构成已发布策略；修改规则须同步独立预期、后端实现与发布版本。</description>
+  </knowledgeSource>
+  <inputData id="dry_cycle_input_calibration_policy_approved" name="个体校准策略已发布">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="dry_cycle_variable_calibration_policy_approved" name="calibration_policy_approved" typeRef="boolean" />
+  </inputData>
+  <inputData id="dry_cycle_input_reliable_completed_cycle" name="已完成循环及干燥观察可靠">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="dry_cycle_variable_reliable_completed_cycle" name="reliable_completed_cycle" typeRef="boolean" />
+  </inputData>
+  <inputData id="dry_cycle_input_cultivation_conditions_unchanged" name="盆器、基质和位置条件一致">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="dry_cycle_variable_cultivation_conditions_unchanged" name="cultivation_conditions_unchanged" typeRef="boolean" />
+  </inputData>
+  <inputData id="dry_cycle_input_prediction_version_compatible" name="历史预测版本兼容">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="dry_cycle_variable_prediction_version_compatible" name="prediction_version_compatible" typeRef="boolean" />
+  </inputData>
+  <inputData id="dry_cycle_input_prediction_excludes_personal_calibration" name="残差预测未加入个体校准">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="dry_cycle_variable_prediction_excludes_personal_calibration" name="prediction_excludes_personal_calibration" typeRef="boolean" />
+  </inputData>
+  <inputData id="dry_cycle_input_calculated_cycle_residual" name="后端计算的预测与观察残差">
+    <description>基于不含个体校准的历史预测，避免自我反馈；不得消费当前轮输出。</description>
+    <variable id="dry_cycle_variable_calculated_cycle_residual" name="calculated_cycle_residual" typeRef="Any" />
+  </inputData>
+  <inputData id="dry_cycle_input_calculated_personal_calibration" name="后端计算的个体校准候选">
+    <description>有界参数由获准策略提供；少量或低质量观察不自动进入个体学习。</description>
+    <variable id="dry_cycle_variable_calculated_personal_calibration" name="calculated_personal_calibration" typeRef="Any" />
+  </inputData>
+  <decision id="dry_cycle_decision_cycle_eligible" name="有效干湿循环资格">
+    <description>换盆、换基质、明显位置变化或版本不兼容时失效；同轮没有反馈边。</description>
+    <variable id="dry_cycle_result_cycle_eligible" name="cycle_eligible" typeRef="Any" />
+    <informationRequirement id="dry_cycle_require_cycle_eligible_0">
+      <requiredInput href="#dry_cycle_input_calibration_policy_approved" />
+    </informationRequirement>
+    <informationRequirement id="dry_cycle_require_cycle_eligible_1">
+      <requiredInput href="#dry_cycle_input_reliable_completed_cycle" />
+    </informationRequirement>
+    <informationRequirement id="dry_cycle_require_cycle_eligible_2">
+      <requiredInput href="#dry_cycle_input_cultivation_conditions_unchanged" />
+    </informationRequirement>
+    <informationRequirement id="dry_cycle_require_cycle_eligible_3">
+      <requiredInput href="#dry_cycle_input_prediction_version_compatible" />
+    </informationRequirement>
+    <informationRequirement id="dry_cycle_require_cycle_eligible_4">
+      <requiredInput href="#dry_cycle_input_prediction_excludes_personal_calibration" />
+    </informationRequirement>
+    <authorityRequirement id="dry_cycle_authority_cycle_eligible">
+      <requiredAuthority href="#dry_cycle_knowledge" />
+    </authorityRequirement>
+    <literalExpression id="dry_cycle_expression_cycle_eligible" typeRef="Any">
+      <text>calibration_policy_approved = true and reliable_completed_cycle = true and cultivation_conditions_unchanged = true and prediction_version_compatible = true and prediction_excludes_personal_calibration = true</text>
+    </literalExpression>
+  </decision>
+  <decision id="dry_cycle_decision_calibration_status" name="个体校准状态">
+    <description>互斥覆盖真、假、空。</description>
+    <variable id="dry_cycle_result_calibration_status" name="calibration_status" typeRef="Any" />
+    <informationRequirement id="dry_cycle_require_calibration_status_0">
+      <requiredDecision href="#dry_cycle_decision_cycle_eligible" />
+    </informationRequirement>
+    <authorityRequirement id="dry_cycle_authority_calibration_status">
+      <requiredAuthority href="#dry_cycle_knowledge" />
+    </authorityRequirement>
+    <decisionTable id="dry_cycle_table_calibration_status" hitPolicy="UNIQUE">
+      <input id="dry_cycle_column_calibration_status_0" label="cycle_eligible">
+        <inputExpression id="dry_cycle_column_expression_calibration_status_0" typeRef="boolean">
+          <text>cycle_eligible</text>
+        </inputExpression>
+      </input>
+      <output id="dry_cycle_output_calibration_status" name="calibration_status" label="个体校准状态" typeRef="string" />
+      <rule id="dry_cycle_rule_calibration_status_0">
+        <description>全部资格满足</description>
+        <inputEntry id="dry_cycle_entry_calibration_status_0_0">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="dry_cycle_value_calibration_status_0">
+          <text>"ready"</text>
+        </outputEntry>
+      </rule>
+      <rule id="dry_cycle_rule_calibration_status_1">
+        <description>资格被否决</description>
+        <inputEntry id="dry_cycle_entry_calibration_status_1_0">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="dry_cycle_value_calibration_status_1">
+          <text>"insufficient_evidence"</text>
+        </outputEntry>
+      </rule>
+      <rule id="dry_cycle_rule_calibration_status_2">
+        <description>资格信息缺失</description>
+        <inputEntry id="dry_cycle_entry_calibration_status_2_0">
+          <text>null</text>
+        </inputEntry>
+        <outputEntry id="dry_cycle_value_calibration_status_2">
+          <text>"insufficient_evidence"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="dry_cycle_decision_personal_calibration" name="干湿循环模型结果">
+    <description>不把没有有效循环解释成已经校准的倍率 1；无已发布降级策略时仍缺证据。</description>
+    <variable id="dry_cycle_result_personal_calibration" name="personal_calibration" typeRef="Any" />
+    <informationRequirement id="dry_cycle_require_personal_calibration_0">
+      <requiredDecision href="#dry_cycle_decision_calibration_status" />
+    </informationRequirement>
+    <informationRequirement id="dry_cycle_require_personal_calibration_1">
+      <requiredInput href="#dry_cycle_input_calculated_personal_calibration" />
+    </informationRequirement>
+    <informationRequirement id="dry_cycle_require_personal_calibration_2">
+      <requiredInput href="#dry_cycle_input_calculated_cycle_residual" />
+    </informationRequirement>
+    <authorityRequirement id="dry_cycle_authority_personal_calibration">
+      <requiredAuthority href="#dry_cycle_knowledge" />
+    </authorityRequirement>
+    <literalExpression id="dry_cycle_expression_personal_calibration" typeRef="Any">
+      <text>{ status: calibration_status, factor: if calibration_status = "ready" then calculated_personal_calibration else null, residual: if calibration_status = "ready" then calculated_cycle_residual else null }</text>
+    </literalExpression>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="dry_cycle_diagram" name="可审阅决策依赖图">
+      <dmndi:DMNShape id="dry_cycle_input_calibration_policy_approved_shape" dmnElementRef="dry_cycle_input_calibration_policy_approved">
+        <dc:Bounds x="80" y="70" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dry_cycle_input_reliable_completed_cycle_shape" dmnElementRef="dry_cycle_input_reliable_completed_cycle">
+        <dc:Bounds x="360" y="70" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dry_cycle_input_cultivation_conditions_unchanged_shape" dmnElementRef="dry_cycle_input_cultivation_conditions_unchanged">
+        <dc:Bounds x="640" y="70" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dry_cycle_input_prediction_version_compatible_shape" dmnElementRef="dry_cycle_input_prediction_version_compatible">
+        <dc:Bounds x="920" y="70" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dry_cycle_input_prediction_excludes_personal_calibration_shape" dmnElementRef="dry_cycle_input_prediction_excludes_personal_calibration">
+        <dc:Bounds x="80" y="230" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dry_cycle_input_calculated_cycle_residual_shape" dmnElementRef="dry_cycle_input_calculated_cycle_residual">
+        <dc:Bounds x="360" y="230" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dry_cycle_input_calculated_personal_calibration_shape" dmnElementRef="dry_cycle_input_calculated_personal_calibration">
+        <dc:Bounds x="640" y="230" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dry_cycle_decision_cycle_eligible_shape" dmnElementRef="dry_cycle_decision_cycle_eligible">
+        <dc:Bounds x="920" y="230" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dry_cycle_decision_calibration_status_shape" dmnElementRef="dry_cycle_decision_calibration_status">
+        <dc:Bounds x="80" y="390" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="dry_cycle_decision_personal_calibration_shape" dmnElementRef="dry_cycle_decision_personal_calibration">
+        <dc:Bounds x="360" y="390" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="dry_cycle_require_cycle_eligible_0_edge" dmnElementRef="dry_cycle_require_cycle_eligible_0">
+        <di:waypoint x="195" y="150" />
+        <di:waypoint x="1035" y="230" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dry_cycle_require_cycle_eligible_1_edge" dmnElementRef="dry_cycle_require_cycle_eligible_1">
+        <di:waypoint x="475" y="150" />
+        <di:waypoint x="1035" y="230" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dry_cycle_require_cycle_eligible_2_edge" dmnElementRef="dry_cycle_require_cycle_eligible_2">
+        <di:waypoint x="755" y="150" />
+        <di:waypoint x="1035" y="230" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dry_cycle_require_cycle_eligible_3_edge" dmnElementRef="dry_cycle_require_cycle_eligible_3">
+        <di:waypoint x="1035" y="150" />
+        <di:waypoint x="1035" y="230" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dry_cycle_require_cycle_eligible_4_edge" dmnElementRef="dry_cycle_require_cycle_eligible_4">
+        <di:waypoint x="195" y="310" />
+        <di:waypoint x="1035" y="230" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dry_cycle_require_calibration_status_0_edge" dmnElementRef="dry_cycle_require_calibration_status_0">
+        <di:waypoint x="1035" y="310" />
+        <di:waypoint x="195" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dry_cycle_require_personal_calibration_0_edge" dmnElementRef="dry_cycle_require_personal_calibration_0">
+        <di:waypoint x="195" y="470" />
+        <di:waypoint x="475" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dry_cycle_require_personal_calibration_1_edge" dmnElementRef="dry_cycle_require_personal_calibration_1">
+        <di:waypoint x="755" y="310" />
+        <di:waypoint x="475" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dry_cycle_require_personal_calibration_2_edge" dmnElementRef="dry_cycle_require_personal_calibration_2">
+        <di:waypoint x="475" y="310" />
+        <di:waypoint x="475" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNShape id="dry_cycle_knowledge_shape" dmnElementRef="dry_cycle_knowledge">
+        <dc:Bounds x="80" y="-60" width="230" height="70" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="dry_cycle_authority_cycle_eligible_edge" dmnElementRef="dry_cycle_authority_cycle_eligible">
+        <di:waypoint x="195" y="10" />
+        <di:waypoint x="1035.0" y="230" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dry_cycle_authority_calibration_status_edge" dmnElementRef="dry_cycle_authority_calibration_status">
+        <di:waypoint x="195" y="10" />
+        <di:waypoint x="195.0" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="dry_cycle_authority_personal_calibration_edge" dmnElementRef="dry_cycle_authority_personal_calibration">
+        <di:waypoint x="195" y="10" />
+        <di:waypoint x="475.0" y="390" />
+      </dmndi:DMNEdge>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

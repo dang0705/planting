@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-29T23:23:42.576Z",
+  "generatedAt": "2026-10-04T11:37:03.558Z",
   "snapshotSource": "docs/backend-v2/tracker/heartbeats/*.json（主代理汇总）",
   "trackerOwner": "主代理 /root（各 ticket 仅在事实变化时上报；脚本汇总，主代理处理冲突）",
   "clickUpStatus": "CREATED",

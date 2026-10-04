@@ -1,0 +1,33 @@
+{
+  "step": "E02",
+  "verifiedAt": "2026-10-04T18:09:21.394285+08:00",
+  "classicRed": {
+    "test": "get-plant-encyclopedia.spec.ts",
+    "failedBeforeImplementation": 9
+  },
+  "green": {
+    "unit_fake": 9,
+    "mysql_http_newCases": 5,
+    "mysql_http_totalCases": 13,
+    "node22_totalCases": 44
+  },
+  "checks": {
+    "typecheck": "passed",
+    "build": "passed",
+    "lintErrors": 0,
+    "backendFull": {
+      "passed": 572,
+      "failed": 8
+    },
+    "rootFull": {
+      "passed": 294,
+      "failed": 3
+    }
+  },
+  "notProven": [
+    "CloudBase 部署及网关",
+    "完整迁移应用",
+    "整票 CMS 验收",
+    "图片许可准入"
+  ]
+}

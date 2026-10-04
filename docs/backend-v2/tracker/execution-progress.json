@@ -1,0 +1,149 @@
+{
+  "generatedAt": "2026-10-04T11:44:43.524450+00:00",
+  "sourceRevision": 22,
+  "sourceUpdatedAt": "2026-10-04T11:44:43.524450+00:00",
+  "currentStep": "E04",
+  "currentTicketId": "z8v0kmr973",
+  "tasks": [
+    {
+      "id": "z8v0kmtktc",
+      "step": "E00",
+      "version": 9,
+      "status": "done",
+      "stage": "完成",
+      "accepted": true,
+      "summary": [
+        "E00验收通过：E00-E08队列与原票映射已读回",
+        "12项同步治理测试通过；无变化投影连续零写入",
+        "每小时自动化ACTIVE，禁读边界与异常通知已核验",
+        "H5实际展示当前步骤、逐票同步及未验收状态",
+        "后端全量702/702；仅此子票完成，父票范围保留"
+      ],
+      "evidence": [
+        ".codex/backend-v2/evidence/E00-H5.json",
+        "cloudfunctions-v2/test/execution-progress.spec.ts",
+        ".codex/backend-v2/evidence/E00-backend-test-scope.json",
+        ".codex/backend-v2/evidence/E00-vitest-stop-repair.json",
+        ".codex/backend-v2/evidence/E00-acceptance.json"
+      ],
+      "blockingReason": null,
+      "nextAction": "按每小时同步运行，异常时处理；父票其余基础设施范围继续保留",
+      "sync": {
+        "version": 9,
+        "status": "done",
+        "matched": true,
+        "readback": "Chrome当前E00状态done及完整验收评论1100440000089625已读回"
+      }
+    },
+    {
+      "id": "z8v0kmtktd",
+      "step": "E01",
+      "version": 5,
+      "status": "done",
+      "stage": "完成",
+      "accepted": true,
+      "summary": [
+        "E01本地切片验收通过：目录SQL→HTTP与原身份搜索",
+        "真实MySQL/HTTP重新验证20场景通过，无替身数据库",
+        "目录18与原身份搜索5及治理12共35项通过",
+        "后端全量105文件、702/702；类型检查及构建通过",
+        "E00前置已验收；不包含生产部署或全量迁移"
+      ],
+      "evidence": [
+        ".codex/backend-v2/evidence/E01.json"
+      ],
+      "blockingReason": null,
+      "nextAction": "本地切片完成；生产部署由发布准备阶段验收",
+      "sync": {
+        "version": 5,
+        "status": "done",
+        "matched": true,
+        "readback": "Chrome同一E01状态done、前置E00 done及完整验收评论1100440000089626读回"
+      }
+    },
+    {
+      "id": "z8v0kmr971",
+      "step": "E02",
+      "version": 2,
+      "status": "codex running",
+      "stage": "验证与持久化读回",
+      "accepted": false,
+      "summary": [
+        "E02：SQL 百科公开只读已实现；原 CMS 票其他子项保留",
+        "9 场景经典 RED→GREEN；真实 MySQL→HTTP 新增 5 场景通过",
+        "Node22 合计 44 场景通过；类型检查、构建通过",
+        "图片保持空值；全量未全绿，尚未部署"
+      ],
+      "evidence": [
+        ".codex/backend-v2/evidence/E02.json"
+      ],
+      "blockingReason": null,
+      "nextAction": "同步本子项验证结果，不将原 CMS 整票标成完成",
+      "sync": {
+        "version": 2,
+        "status": "codex running",
+        "matched": true,
+        "readback": "Chrome 已读回同一票据 codex running 与完整四行验证评论"
+      }
+    },
+    {
+      "id": "z8v0kmr970",
+      "step": "E03",
+      "version": 2,
+      "status": "codex running",
+      "stage": "合同与配置确认",
+      "accepted": false,
+      "summary": [
+        "E03：按用户确认从 .env.local 读取配置",
+        "用户指定 PRIVATE_KEY 配置项；格式符合 AppSecret 候选",
+        "微信 Provider 发布参数仍 pending，会话与 HMAC 接线未完成",
+        "仅阻断正式登录；保持失败关闭，不伪造验真"
+      ],
+      "evidence": [
+        ".codex/backend-v2/evidence/E03.json"
+      ],
+      "blockingReason": "wechat_miniprogram_login 的受控 Provider 发布参数仍 pending，尚无获准超时／发布版本",
+      "nextAction": "核验正式 Provider 发布参数与 HMAC 密钥版本裁决，不私设默认值",
+      "sync": {
+        "version": 2,
+        "status": "codex running",
+        "matched": true,
+        "readback": "Chrome 已读回 codex running 与四行配置接续评论"
+      }
+    },
+    {
+      "id": "z8v0kmr973",
+      "step": "E04",
+      "version": 10,
+      "status": "codex running",
+      "stage": "验证与持久化读回",
+      "accepted": false,
+      "summary": [
+        "E04：真实辐射制品→窗面平均直射回放已串联",
+        "13场景通过；错误UTC偏移突变RED，恢复GREEN",
+        "Care相关122项；后端全量105文件、702/702",
+        "类型、构建通过；Node22独立5项；lint零错误535警告",
+        "缺真实太阳时序界限与散射传播；正式模型未发布"
+      ],
+      "evidence": [
+        ".codex/backend-v2/evidence/E04-light-interval.json",
+        ".codex/backend-v2/evidence/E00-vitest-stop-repair.json",
+        ".codex/backend-v2/evidence/E04-window-direct.json",
+        ".codex/backend-v2/evidence/E04-direct-reach.json",
+        ".codex/backend-v2/evidence/E04-radiation-normalization.json",
+        ".codex/backend-v2/evidence/E04-mean-direct.json",
+        ".codex/backend-v2/evidence/E04-window-radiation-replay.json"
+      ],
+      "blockingReason": null,
+      "nextAction": "实现可靠太阳位置时序与全区间几何界限，接入直射可达性；不补猜测参数",
+      "sync": {
+        "version": 10,
+        "status": "codex running",
+        "matched": true,
+        "readback": "Chrome原E04/E06票保持codex running，完整五行评论1100440000089627已读回"
+      }
+    }
+  ],
+  "lastSuccessfulSyncAt": "2026-10-04T11:48:05.705686+00:00",
+  "lastFailure": null
+}

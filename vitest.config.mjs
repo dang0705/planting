@@ -1,30 +1,8 @@
-import { fileURLToPath, URL } from 'node:url'
-
-import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vitest/config'
 
+// 本阶段仅验证后端；前端测试文件保留，恢复前端阶段时另行接入。
 export default defineConfig({
-  plugins: [
-    vue({
-      template: {
-        compilerOptions: {
-          isCustomElement: tag => ['picker', 'scroll-view', 'switch'].includes(tag)
-        }
-      }
-    })
-  ],
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
-    }
-  },
-  server: {
-    hmr: false
-  },
   test: {
-    clearMocks: true,
-    environment: 'jsdom',
-    include: ['test/unit/frontend/**/*.test.js'],
-    restoreMocks: true
+    projects: ['./cloudfunctions-v2/vitest.config.mjs']
   }
 })

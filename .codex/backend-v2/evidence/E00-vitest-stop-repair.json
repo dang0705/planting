@@ -1,0 +1,44 @@
+{
+  "runner": "cloudfunctions-v2 锁定 Vitest 4.1.11",
+  "directory": "cloudfunctions-v2/test/",
+  "command": "npm test",
+  "result": {
+    "files": 100,
+    "passed": 600,
+    "failed": 0,
+    "skipped": 0
+  },
+  "log": "/tmp/planting-stop-repair-full-vitest.log",
+  "typecheck": "通过",
+  "lint": {
+    "errors": 0,
+    "warnings": 359
+  },
+  "sources": [
+    "用户批准的统一计划及 Care v2／Ephemeral／迁移 017 规则",
+    "viking://resources/projects/planting/backend-v2/contracts/care-environment-foundation.md",
+    "已读回 ClickUp E01 z8v0kmtktd 与 E02 z8v0kmr971"
+  ],
+  "verifiedRules": [
+    "care-environment-foundation/v2 与 state-machines/v2 固定版本",
+    "环境与决策派生隔离，Reference Profile 发布入口",
+    "原子证据时间、单位、置信度及快照和算法引用明确",
+    "配置项真实票据绑定、可解析仓库来源和摘要一致",
+    "017 只允许指定表扩展，禁止删表、删字段、重命名和数据写入"
+  ],
+  "negativeVerification": {
+    "mutation": "017 增加 DROP TABLE，同步临时 SHA 避免摘要检查遮蔽安全断言",
+    "exitCode": 1,
+    "reason": "Care v2 迁移不得删除数据结构或重命名字段",
+    "log": "/tmp/planting-care-migration-unsafe-mutation-red.log",
+    "restoration": "SQL 与 manifest 原字节恢复后，全量 600 通过"
+  },
+  "contractRed": "/tmp/planting-approved-v2-contract-red.log",
+  "contractGreen": "/tmp/planting-approved-v2-contract-green.log",
+  "baseline": {
+    "lines": 640,
+    "sha256": "cbfb2505f4ef2c9265904047acdc44f99a76b0f7a633d243b91d656bb189f065",
+    "entrypointVerified": true
+  },
+  "boundary": "仅本地后端测试范围通过；不证明正式微信验真、CloudBase 部署、生产 DDL 或整体业务验收。未修改前端、停止钩子或台账。"
+}

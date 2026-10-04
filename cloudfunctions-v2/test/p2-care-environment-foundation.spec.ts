@@ -27,7 +27,8 @@ describe('原子环境事实与派生指标架构合同', () => {
 
     for (const document of [rootArchitecture, businessArchitecture, technicalArchitecture, masterPlan]) {
       expect(document).toContain('原子环境事实')
-      expect(document).toContain('派生环境指标')
+      // 架构正文可以按职责称“环境派生”或“决策派生”；两类的隔离在合同中严格验证。
+      expect(document).toContain('派生')
     }
     expect(rootArchitecture).toContain('原子环境事实 --> 派生环境指标 --> 养护上下文')
     expect(rootArchitecture).toContain('室外天气不得冒充室内实测')
@@ -41,7 +42,7 @@ describe('原子环境事实与派生指标架构合同', () => {
     const contract = readFactSource(projectRootDirectory, 'docs/backend-v2/contracts/care-environment-foundation.md')
 
     for (const requiredSemantics of [
-      'care-environment-foundation/v1',
+      'care-environment-foundation/v2',
       '光照',
       '空气温度',
       '相对湿度',
@@ -51,7 +52,7 @@ describe('原子环境事实与派生指标架构合同', () => {
       '排水',
       '盆土表面',
       'VPD',
-      '预计干湿周期',
+      'DryProgress',
       'observedAt',
       'validUntil',
       'sourceScope',
@@ -62,9 +63,13 @@ describe('原子环境事实与派生指标架构合同', () => {
     ]) {
       expect(contract).toContain(requiredSemantics)
     }
-    expect(contract).toContain('不得把室外温湿度直接标记为室内或植物周围实测')
-    expect(contract).toContain('不得把派生值回写为原子环境事实')
-    expect(contract).toContain('基准周期不是最终浇水日期')
+    expect(contract).toContain('室外温湿度不得直接标记成 `indoor` 或 `plant_zone`')
+    expect(contract).toContain('不得写回覆盖原子事实')
+    expect(contract).toContain('Soil Evidence → 最终 Safety Gate')
+    expect(contract).toContain('以下结果**不得**伪装成环境指标，统一进入 `care_decision_derivations`')
+    for (const decisionType of ['growth_activity_state', 'personal_calibration', 'dry_progress']) {
+      expect(contract).toContain(`\`${decisionType}\``)
+    }
   })
 
   test('数据字典与 DDL 分离不可变观察、输入快照和派生结果', () => {
@@ -127,7 +132,7 @@ describe('原子环境事实与派生指标架构合同', () => {
       'care.environment.atomic_facts_immutable',
       'care.environment.weather_scope_must_be_outdoor',
       'care.environment.derivation_must_not_overwrite_fact',
-      'care.environment.reference_conditions_release',
+      'care.reference_profile.release',
       'care.environment.derivation_algorithm_release'
     ]) {
       expect(configDirectory).toContain(configKey)

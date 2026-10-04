@@ -1,0 +1,35 @@
+{
+  "step": "E04",
+  "verifiedAt": "2026-10-04T10:43:41.480023+00:00",
+  "scope": "已给定区间平均 PPFD 的确定性离线积分",
+  "contract": "cloudfunctions-v2/models/care/light-interval-contract.md",
+  "source": "cloudfunctions-v2/src/care/light/integrate-ppfd-intervals.ts",
+  "expectedSource": "MSU Indoor lighting guide + 统一计划 6.1/6.2",
+  "testLayer": "unit_fake",
+  "tddPath": "tests_first_counterfactual_red",
+  "mutation": {
+    "change": "微摩尔换摩尔单位从 1,000,000 变成 1,000",
+    "failed": 7,
+    "restoredPassed": 20
+  },
+  "node22": {
+    "version": "22.23.3",
+    "passed": 20
+  },
+  "checks": {
+    "typecheck": "passed",
+    "lintErrors": 0,
+    "build": "passed",
+    "backendFull": {
+      "passed": 592,
+      "failed": 8
+    }
+  },
+  "notProven": [
+    "真实 Provider 辐射区间归一化",
+    "窗面传播及衰减",
+    "正式光照发布",
+    "完整当地全天 DLI",
+    "Camunda 执行或 Care HTTP"
+  ]
+}

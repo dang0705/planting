@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { spawn } from 'node:child_process'
 
-const ROOTS = ['test/unit/frontend', 'test/unit/backend']
+const ROOTS = ['test/unit/backend']
 const PRELOADED_RUNTIME_STUB_TESTS = new Set([
   'test/unit/backend/diagnose-http/app/diagnosis-direction-choice-runtime.mjs',
   'test/unit/backend/diagnose-http/app/pest-question-package.mjs',

@@ -1,0 +1,262 @@
+{
+  "format": "DMN 1.3",
+  "status": "draft_unverified_behavior",
+  "sourceOfRules": "四个独立 DMN 编辑源；合成文件不得手工修改",
+  "sources": [
+    {
+      "file": "light.dmn",
+      "sha256": "660aaeb2fd5c23d827f1b2243b12bb916e5634bdc127de4b3d8fc56b5af9cf14",
+      "ids": 88,
+      "decisions": [
+        {
+          "id": "light_decision_light_admission_code",
+          "output": "light_admission_code"
+        },
+        {
+          "id": "light_decision_light_status",
+          "output": "light_status"
+        },
+        {
+          "id": "light_decision_accepted_light_calibration",
+          "output": "accepted_light_calibration"
+        },
+        {
+          "id": "light_decision_light_result",
+          "output": "light_result"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "light_policy_approved",
+          "type": "boolean"
+        },
+        {
+          "name": "radiation_intervals_valid",
+          "type": "boolean"
+        },
+        {
+          "name": "outdoor_mode",
+          "type": "boolean"
+        },
+        {
+          "name": "position_facts_confirmed",
+          "type": "boolean"
+        },
+        {
+          "name": "calculated_light",
+          "type": "Any"
+        },
+        {
+          "name": "light_calibration_candidate",
+          "type": "Any"
+        },
+        {
+          "name": "light_calibration_applicable",
+          "type": "boolean"
+        },
+        {
+          "name": "visual_facts_confirmed",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "file": "pot.dmn",
+      "sha256": "75e59054b584b2d843ebbeb3784ca1b3529e717368fec317fa2affb8bf1a1b26",
+      "ids": 90,
+      "decisions": [
+        {
+          "id": "pot_decision_pot_safety",
+          "output": "pot_safety"
+        },
+        {
+          "id": "pot_decision_retention_admission_code",
+          "output": "retention_admission_code"
+        },
+        {
+          "id": "pot_decision_pot_result",
+          "output": "pot_result"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "actual_inner_pot_confirmed",
+          "type": "boolean"
+        },
+        {
+          "name": "pot_geometry_valid",
+          "type": "boolean"
+        },
+        {
+          "name": "drainage_available",
+          "type": "boolean"
+        },
+        {
+          "name": "retention_policy_approved",
+          "type": "boolean"
+        },
+        {
+          "name": "substrate_facts_confirmed",
+          "type": "boolean"
+        },
+        {
+          "name": "calculated_retention",
+          "type": "Any"
+        }
+      ]
+    },
+    {
+      "file": "dry-cycle.dmn",
+      "sha256": "46213f0815f534e830b5d8be89dcd6ffafe7be8265651ccc5969a75021aa57f5",
+      "ids": 73,
+      "decisions": [
+        {
+          "id": "dry_cycle_decision_cycle_eligible",
+          "output": "cycle_eligible"
+        },
+        {
+          "id": "dry_cycle_decision_calibration_status",
+          "output": "calibration_status"
+        },
+        {
+          "id": "dry_cycle_decision_personal_calibration",
+          "output": "personal_calibration"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "calibration_policy_approved",
+          "type": "boolean"
+        },
+        {
+          "name": "reliable_completed_cycle",
+          "type": "boolean"
+        },
+        {
+          "name": "cultivation_conditions_unchanged",
+          "type": "boolean"
+        },
+        {
+          "name": "prediction_version_compatible",
+          "type": "boolean"
+        },
+        {
+          "name": "prediction_excludes_personal_calibration",
+          "type": "boolean"
+        },
+        {
+          "name": "calculated_cycle_residual",
+          "type": "Any"
+        },
+        {
+          "name": "calculated_personal_calibration",
+          "type": "Any"
+        }
+      ]
+    },
+    {
+      "file": "watering.dmn",
+      "sha256": "1eb43545c2d92d713dd29be80635ee01888293c451bb5b2b4a602491b0fbdff4",
+      "ids": 206,
+      "decisions": [
+        {
+          "id": "watering_decision_soil_safety_gate",
+          "output": "soil_safety_gate"
+        },
+        {
+          "id": "watering_decision_usable_dry_progress",
+          "output": "usable_dry_progress"
+        },
+        {
+          "id": "watering_decision_usable_window_state",
+          "output": "usable_window_state"
+        },
+        {
+          "id": "watering_decision_watering_action",
+          "output": "watering_action"
+        },
+        {
+          "id": "watering_decision_watering_result",
+          "output": "watering_result"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "watering_policy_approved",
+          "type": "boolean"
+        },
+        {
+          "name": "light_result",
+          "type": "Any"
+        },
+        {
+          "name": "pot_result",
+          "type": "Any"
+        },
+        {
+          "name": "personal_calibration",
+          "type": "Any"
+        },
+        {
+          "name": "growth_activity_state",
+          "type": "string"
+        },
+        {
+          "name": "resolved_baseline",
+          "type": "Any"
+        },
+        {
+          "name": "indoor_vpd_result",
+          "type": "Any"
+        },
+        {
+          "name": "air_movement_result",
+          "type": "Any"
+        },
+        {
+          "name": "calculated_environment_demand",
+          "type": "Any"
+        },
+        {
+          "name": "confirmed_watering_origin",
+          "type": "boolean"
+        },
+        {
+          "name": "calculated_dry_progress",
+          "type": "Any"
+        },
+        {
+          "name": "predicted_window_state",
+          "type": "string"
+        },
+        {
+          "name": "soil_evidence_reliable",
+          "type": "boolean"
+        },
+        {
+          "name": "soil_evidence_state",
+          "type": "string"
+        },
+        {
+          "name": "target_dry_criteria_confirmed",
+          "type": "boolean"
+        }
+      ]
+    }
+  ],
+  "composite": {
+    "file": "care-models.dmn",
+    "sha256": "da089b2acbe4059f393b66f231e2e005aff428c738edc4f551d4f6e210f7eddc",
+    "ids": 442,
+    "decisions": 15
+  },
+  "validation": {
+    "xmlAndReferences": "passed",
+    "dependencyAcyclic": "passed",
+    "dmnlint": "not_run_tool_unavailable",
+    "compatibleEngine": "not_run_tool_unavailable",
+    "desktopModelerRoundtrip": "not_verified",
+    "typescriptParity": "not_verified"
+  },
+  "runtime": "未接入 CloudBase 或生产规则执行；数值结果由 TypeScript 用例输入，本制品不证明这些用例已经实现"
+}

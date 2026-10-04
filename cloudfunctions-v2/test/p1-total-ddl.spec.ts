@@ -31,6 +31,23 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
       `${entry.file} SHA 不一致`
     )
     const isSessionPolicyExtension = entry.file === '015_identity_session_policy_snapshot.sql'
+    // 批准的 017 专门迁移 Care v2 类型与临时案例归属；不向其他迁移开放 ALTER。
+    const isCareV2Extension = entry.file === '017_care_v2_ephemeral_and_derivations.sql'
+    if (isCareV2Extension) {
+      const alteredTables = [...content.matchAll(/^ALTER TABLE `([^`]+)`/gmu)].map(match => match[1]).sort()
+      assert.deepEqual(alteredTables, [
+        'care_environment_derivations', 'temporary_care_results', 'temporary_care_sessions',
+        'temporary_diagnosis_answers', 'temporary_diagnosis_results', 'temporary_diagnosis_sessions',
+        'temporary_diagnosis_visual_evidence', 'temporary_watering_visual_evidence'
+      ].sort(), 'Care v2 迁移只允许变更批准的派生与临时案例表')
+      assert.doesNotMatch(content, /\b(?:DROP\s+(?:TABLE|COLUMN|DATABASE|INDEX)|RENAME|CHANGE)\b/iu, 'Care v2 迁移不得删除数据结构或重命名字段')
+      assert.deepEqual([...content.matchAll(/\bDROP CHECK `([^`]+)`/gu)].map(match => match[1]), ['ck_environment_derivation_type'])
+      assert.match(content, /ADD CONSTRAINT `ck_environment_derivation_type` CHECK/u)
+      assert.match(content, /CREATE TABLE `care_decision_derivations`/u)
+      for (const prefix of ['care', 'care_result', 'watering', 'diagnosis', 'answer', 'result', 'visual']) {
+        assert.match(content, new RegExp('ADD CONSTRAINT `ck_temporary_' + prefix + '_one_ephemeral_case` CHECK \\('), '临时案例必须保持两类归属互斥约束')
+      }
+    }
     if (/CREATE TABLE\b/u.test(content)) {
       assert.ok(content.includes('ENGINE=InnoDB'), `${entry.file} 建表必须固定 InnoDB`)
       assert.ok(content.includes('DEFAULT CHARSET=utf8mb4'), `${entry.file} 建表必须固定 utf8mb4`)
@@ -43,7 +60,7 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
     }
     assert.doesNotMatch(
       content,
-      isSessionPolicyExtension
+      isSessionPolicyExtension || isCareV2Extension
         ? /^(?:DROP|INSERT|UPDATE|DELETE)\b/imu
         : /^(?:DROP|ALTER|INSERT|UPDATE|DELETE)\b/imu,
       `${entry.file} 仅允许经 manifest 顺序化的非破坏性结构变更`

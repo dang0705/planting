@@ -1,0 +1,18 @@
+{
+  "scope": "E00 H5进度同步子项",
+  "verifiedAt": "2026-10-04T10:20:47.031193+00:00",
+  "browser": "Chrome default/main 已有 localhost:8765 页面服务",
+  "expected": [
+    "5个已登记任务",
+    "E00当前步骤",
+    "accepted=false显示未验收",
+    "无entry显示尚未同步",
+    "历史快照标签"
+  ],
+  "passed": true,
+  "projectionNoChange": "重复运行显示无变化且未写入",
+  "notProven": [
+    "每小时调度实际执行",
+    "线上页面部署"
+  ]
+}

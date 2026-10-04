@@ -1,0 +1,254 @@
+<?xml version='1.0' encoding='utf-8'?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" id="light_definitions" name="光照模型：传播、准入与校准" namespace="http://camunda.org/schema/1.0/dmn">
+  <description>离线模型草案；未通过 Camunda 兼容引擎行为验收，不用于生产执行。数值计算由受控 TypeScript 用例承担。</description>
+  <knowledgeSource id="light_knowledge" name="依据：已批准的统一重构计划第六节">
+    <description>唯一依据为本会话批准的整体计划。候选参数不构成已发布策略；修改规则须同步独立预期、后端实现与发布版本。</description>
+  </knowledgeSource>
+  <inputData id="light_input_light_policy_approved" name="光照策略已发布">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="light_variable_light_policy_approved" name="light_policy_approved" typeRef="boolean" />
+  </inputData>
+  <inputData id="light_input_radiation_intervals_valid" name="辐射区间、单位及覆盖有效">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="light_variable_radiation_intervals_valid" name="radiation_intervals_valid" typeRef="boolean" />
+  </inputData>
+  <inputData id="light_input_outdoor_mode" name="户外模式">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="light_variable_outdoor_mode" name="outdoor_mode" typeRef="boolean" />
+  </inputData>
+  <inputData id="light_input_position_facts_confirmed" name="室内位置与玻璃遮挡事实已确认">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="light_variable_position_facts_confirmed" name="position_facts_confirmed" typeRef="boolean" />
+  </inputData>
+  <inputData id="light_input_calculated_light" name="后端计算的直射、散射、PPFD、Lux 与 DLI 区间">
+    <description>由 TypeScript 计算太阳与窗面投影、植物位置传播、光谱换算及真实区间积分；包含覆盖、参考平面、来源、版本。缺值不是零。</description>
+    <variable id="light_variable_calculated_light" name="calculated_light" typeRef="Any" />
+  </inputData>
+  <inputData id="light_input_light_calibration_candidate" name="现场校准候选">
+    <description>可靠参考与未校准计算的偏差；独立于传播衰减，不代表反射增强。</description>
+    <variable id="light_variable_light_calibration_candidate" name="light_calibration_candidate" typeRef="Any" />
+  </inputData>
+  <inputData id="light_input_light_calibration_applicable" name="校准资格与条件版本一致">
+    <description>由不可变输入快照或受控上游用例提供；缺失保持 null，禁止自行补默认值。</description>
+    <variable id="light_variable_light_calibration_applicable" name="light_calibration_applicable" typeRef="boolean" />
+  </inputData>
+  <inputData id="light_input_visual_facts_confirmed" name="视觉事实已经用户确认">
+    <description>未经确认或未校准的视觉数值不得改变正式计算；拍摄时刻不代表全天窗帘状态。</description>
+    <variable id="light_variable_visual_facts_confirmed" name="visual_facts_confirmed" typeRef="boolean" />
+  </inputData>
+  <decision id="light_decision_light_admission_code" name="光照输入准入">
+    <description>户外跳过室内衰减；室内必须确认位置。使用明确比较处理空值，不给 pending 参数补常数。</description>
+    <variable id="light_result_light_admission_code" name="light_admission_code" typeRef="Any" />
+    <informationRequirement id="light_require_light_admission_code_0">
+      <requiredInput href="#light_input_light_policy_approved" />
+    </informationRequirement>
+    <informationRequirement id="light_require_light_admission_code_1">
+      <requiredInput href="#light_input_radiation_intervals_valid" />
+    </informationRequirement>
+    <informationRequirement id="light_require_light_admission_code_2">
+      <requiredInput href="#light_input_outdoor_mode" />
+    </informationRequirement>
+    <informationRequirement id="light_require_light_admission_code_3">
+      <requiredInput href="#light_input_position_facts_confirmed" />
+    </informationRequirement>
+    <authorityRequirement id="light_authority_light_admission_code">
+      <requiredAuthority href="#light_knowledge" />
+    </authorityRequirement>
+    <literalExpression id="light_expression_light_admission_code" typeRef="Any">
+      <text>if light_policy_approved != true then "temporarily_unavailable" else if radiation_intervals_valid != true then "insufficient_evidence" else if outdoor_mode = true then "ready" else if outdoor_mode = false and position_facts_confirmed = true then "ready" else "insufficient_evidence"</text>
+    </literalExpression>
+  </decision>
+  <decision id="light_decision_light_status" name="光照能力状态">
+    <description>三个互斥准入分区。</description>
+    <variable id="light_result_light_status" name="light_status" typeRef="Any" />
+    <informationRequirement id="light_require_light_status_0">
+      <requiredDecision href="#light_decision_light_admission_code" />
+    </informationRequirement>
+    <authorityRequirement id="light_authority_light_status">
+      <requiredAuthority href="#light_knowledge" />
+    </authorityRequirement>
+    <decisionTable id="light_table_light_status" hitPolicy="UNIQUE">
+      <input id="light_column_light_status_0" label="light_admission_code">
+        <inputExpression id="light_column_expression_light_status_0" typeRef="string">
+          <text>light_admission_code</text>
+        </inputExpression>
+      </input>
+      <output id="light_output_light_status" name="light_status" label="光照能力状态" typeRef="string" />
+      <rule id="light_rule_light_status_0">
+        <description>有效输入</description>
+        <inputEntry id="light_entry_light_status_0_0">
+          <text>"ready"</text>
+        </inputEntry>
+        <outputEntry id="light_value_light_status_0">
+          <text>"ready"</text>
+        </outputEntry>
+      </rule>
+      <rule id="light_rule_light_status_1">
+        <description>无发布策略</description>
+        <inputEntry id="light_entry_light_status_1_0">
+          <text>"temporarily_unavailable"</text>
+        </inputEntry>
+        <outputEntry id="light_value_light_status_1">
+          <text>"temporarily_unavailable"</text>
+        </outputEntry>
+      </rule>
+      <rule id="light_rule_light_status_2">
+        <description>缺少有效事实</description>
+        <inputEntry id="light_entry_light_status_2_0">
+          <text>"insufficient_evidence"</text>
+        </inputEntry>
+        <outputEntry id="light_value_light_status_2">
+          <text>"insufficient_evidence"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="light_decision_accepted_light_calibration" name="可用现场校准">
+    <description>资格由后端核验参考来源、同位置同时间和版本；条件改变后重新审查，不默认倍率为 1。</description>
+    <variable id="light_result_accepted_light_calibration" name="accepted_light_calibration" typeRef="Any" />
+    <informationRequirement id="light_require_accepted_light_calibration_0">
+      <requiredInput href="#light_input_light_policy_approved" />
+    </informationRequirement>
+    <informationRequirement id="light_require_accepted_light_calibration_1">
+      <requiredInput href="#light_input_light_calibration_candidate" />
+    </informationRequirement>
+    <informationRequirement id="light_require_accepted_light_calibration_2">
+      <requiredInput href="#light_input_light_calibration_applicable" />
+    </informationRequirement>
+    <authorityRequirement id="light_authority_accepted_light_calibration">
+      <requiredAuthority href="#light_knowledge" />
+    </authorityRequirement>
+    <literalExpression id="light_expression_accepted_light_calibration" typeRef="Any">
+      <text>if light_policy_approved = true and light_calibration_applicable = true then light_calibration_candidate else null</text>
+    </literalExpression>
+  </decision>
+  <decision id="light_decision_light_result" name="光照模型结果">
+    <description>计算内容只由 TypeScript 输入；不在 FEEL 中虚构太阳位置或传播函数。</description>
+    <variable id="light_result_light_result" name="light_result" typeRef="Any" />
+    <informationRequirement id="light_require_light_result_0">
+      <requiredDecision href="#light_decision_light_status" />
+    </informationRequirement>
+    <informationRequirement id="light_require_light_result_1">
+      <requiredInput href="#light_input_calculated_light" />
+    </informationRequirement>
+    <informationRequirement id="light_require_light_result_2">
+      <requiredDecision href="#light_decision_accepted_light_calibration" />
+    </informationRequirement>
+    <informationRequirement id="light_require_light_result_3">
+      <requiredInput href="#light_input_visual_facts_confirmed" />
+    </informationRequirement>
+    <authorityRequirement id="light_authority_light_result">
+      <requiredAuthority href="#light_knowledge" />
+    </authorityRequirement>
+    <literalExpression id="light_expression_light_result" typeRef="Any">
+      <text>{ status: light_status, derived: if light_status = "ready" then calculated_light else null, calibration: accepted_light_calibration, visualConfirmed: visual_facts_confirmed }</text>
+    </literalExpression>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="light_diagram" name="可审阅决策依赖图">
+      <dmndi:DMNShape id="light_input_light_policy_approved_shape" dmnElementRef="light_input_light_policy_approved">
+        <dc:Bounds x="80" y="70" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_input_radiation_intervals_valid_shape" dmnElementRef="light_input_radiation_intervals_valid">
+        <dc:Bounds x="360" y="70" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_input_outdoor_mode_shape" dmnElementRef="light_input_outdoor_mode">
+        <dc:Bounds x="640" y="70" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_input_position_facts_confirmed_shape" dmnElementRef="light_input_position_facts_confirmed">
+        <dc:Bounds x="920" y="70" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_input_calculated_light_shape" dmnElementRef="light_input_calculated_light">
+        <dc:Bounds x="80" y="230" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_input_light_calibration_candidate_shape" dmnElementRef="light_input_light_calibration_candidate">
+        <dc:Bounds x="360" y="230" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_input_light_calibration_applicable_shape" dmnElementRef="light_input_light_calibration_applicable">
+        <dc:Bounds x="640" y="230" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_input_visual_facts_confirmed_shape" dmnElementRef="light_input_visual_facts_confirmed">
+        <dc:Bounds x="920" y="230" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_decision_light_admission_code_shape" dmnElementRef="light_decision_light_admission_code">
+        <dc:Bounds x="80" y="390" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_decision_light_status_shape" dmnElementRef="light_decision_light_status">
+        <dc:Bounds x="360" y="390" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_decision_accepted_light_calibration_shape" dmnElementRef="light_decision_accepted_light_calibration">
+        <dc:Bounds x="640" y="390" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="light_decision_light_result_shape" dmnElementRef="light_decision_light_result">
+        <dc:Bounds x="920" y="390" width="230" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="light_require_light_admission_code_0_edge" dmnElementRef="light_require_light_admission_code_0">
+        <di:waypoint x="195" y="150" />
+        <di:waypoint x="195" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_require_light_admission_code_1_edge" dmnElementRef="light_require_light_admission_code_1">
+        <di:waypoint x="475" y="150" />
+        <di:waypoint x="195" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_require_light_admission_code_2_edge" dmnElementRef="light_require_light_admission_code_2">
+        <di:waypoint x="755" y="150" />
+        <di:waypoint x="195" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_require_light_admission_code_3_edge" dmnElementRef="light_require_light_admission_code_3">
+        <di:waypoint x="1035" y="150" />
+        <di:waypoint x="195" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_require_light_status_0_edge" dmnElementRef="light_require_light_status_0">
+        <di:waypoint x="195" y="470" />
+        <di:waypoint x="475" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_require_accepted_light_calibration_0_edge" dmnElementRef="light_require_accepted_light_calibration_0">
+        <di:waypoint x="195" y="150" />
+        <di:waypoint x="755" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_require_accepted_light_calibration_1_edge" dmnElementRef="light_require_accepted_light_calibration_1">
+        <di:waypoint x="475" y="310" />
+        <di:waypoint x="755" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_require_accepted_light_calibration_2_edge" dmnElementRef="light_require_accepted_light_calibration_2">
+        <di:waypoint x="755" y="310" />
+        <di:waypoint x="755" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_require_light_result_0_edge" dmnElementRef="light_require_light_result_0">
+        <di:waypoint x="475" y="470" />
+        <di:waypoint x="1035" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_require_light_result_1_edge" dmnElementRef="light_require_light_result_1">
+        <di:waypoint x="195" y="310" />
+        <di:waypoint x="1035" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_require_light_result_2_edge" dmnElementRef="light_require_light_result_2">
+        <di:waypoint x="755" y="470" />
+        <di:waypoint x="1035" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_require_light_result_3_edge" dmnElementRef="light_require_light_result_3">
+        <di:waypoint x="1035" y="310" />
+        <di:waypoint x="1035" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNShape id="light_knowledge_shape" dmnElementRef="light_knowledge">
+        <dc:Bounds x="80" y="-60" width="230" height="70" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="light_authority_light_admission_code_edge" dmnElementRef="light_authority_light_admission_code">
+        <di:waypoint x="195" y="10" />
+        <di:waypoint x="195.0" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_authority_light_status_edge" dmnElementRef="light_authority_light_status">
+        <di:waypoint x="195" y="10" />
+        <di:waypoint x="475.0" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_authority_accepted_light_calibration_edge" dmnElementRef="light_authority_accepted_light_calibration">
+        <di:waypoint x="195" y="10" />
+        <di:waypoint x="755.0" y="390" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="light_authority_light_result_edge" dmnElementRef="light_authority_light_result">
+        <di:waypoint x="195" y="10" />
+        <di:waypoint x="1035.0" y="390" />
+      </dmndi:DMNEdge>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

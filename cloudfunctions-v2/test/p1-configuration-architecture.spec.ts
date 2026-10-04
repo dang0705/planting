@@ -333,10 +333,11 @@ assert.deepEqual(
 )
 
 for (const [title, binding] of Object.entries(catalog.ticketBindings)) {
-  assert.match(binding.id, /^z8v0kmr[0-9a-z]+$/, `${title} 的 ClickUp ID 不合法`)
+  // 已读回的 E01 新票为 z8v0kmtktd；票据前缀不代表产品合同或 Phase。
+  assert.match(binding.id, /^[a-z0-9]+$/, `${title} 的 ClickUp ID 不合法`)
   // ClickUp 同时支持带 workspace 数字段和省略该段的任务直链，两者都必须精确指向同一任务 ID。
-  assert.match(binding.url, /^https:\/\/app\.clickup\.com\/t\/(?:\d+\/)?z8v0kmr[0-9a-z]+$/, `${title} 的 ClickUp URL 格式不合法`)
-  assert.ok(binding.url.includes(binding.id), `${title} 的 ClickUp URL 与 ID 不一致`)
+  assert.match(binding.url, /^https:\/\/app\.clickup\.com\/t\/(?:\d+\/)?[a-z0-9]+$/, `${title} 的 ClickUp URL 格式不合法`)
+  assert.equal(new URL(binding.url).pathname.split('/').at(-1), binding.id, `${title} 的 ClickUp URL 与 ID 不一致`)
   assert.ok(Array.isArray(binding.agents) && binding.agents.length > 0, `${title} 缺少负责 agent`)
 }
 
@@ -355,7 +356,7 @@ const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as {
   version: string
   files: Record<string, string>
 }
-assert.equal(manifest.version, 'backend-architecture/v2-config-1')
+assert.equal(manifest.version, 'backend-architecture/v2-config-2')
 assert.equal(manifest.files['configuration-and-providers.md'], createHash('sha256').update(contract).digest('hex'))
 assert.equal(manifest.files['configuration-variable-catalog.json'], createHash('sha256').update(catalogRaw).digest('hex'))
 assert.equal(manifest.files['README.md'], createHash('sha256').update(files.readme).digest('hex'))
