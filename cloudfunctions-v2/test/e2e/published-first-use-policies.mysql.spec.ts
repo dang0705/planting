@@ -7,6 +7,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, test } from 'vitest'
 import { createMysql2ConnectionSource } from '../../src/foundation/database/mysql2-connection-source.js'
 import { calculateCanonicalJsonSha256 } from '../../src/foundation/json/canonical-json-sha256.js'
 import { createMysqlPublishedFirstUsePolicyReader } from '../../src/subscription/repository/mysql-published-first-use-policy-reader.js'
+import { createMysqlPublishedProfileWritePolicyReader } from '../../src/user-plant/repository/mysql-published-profile-write-policy-reader.js'
 import { findProjectRoot } from '../support/project-root.js'
 
 const containerName = `qhz-v2-first-use-policies-${process.pid}`
@@ -282,5 +283,187 @@ describe('首次使用能力策略的真实 MySQL 读取', () => {
       connection.release()
     }
     expect(await reader.readUserPlantLimitPolicy('free')).toBeNull()
+  })
+
+  /** Expected来源：本轮冻结的两份活动发布正文；真实MySQL/指针/摘要准入，不验证CloudBase或正式策略发布。 */
+  const profilePolicy = {
+    profileVersion: 'user-plant-profile/v1',
+    requiredFields: [
+      'identityStatus',
+      'pot',
+      'location',
+      'lightingEnvironment',
+      'ventilationEnvironment'
+    ],
+    acceptedIdentityStates: ['unidentified', 'candidate_pending', 'confirmed'],
+    rewardOncePerUser: true
+  }
+  const httpPolicy = { jsonBodyLimitBytes: 1048576, idempotencyRetentionHours: 168 }
+
+  /** 仅测试发布夹具的参数化SQL入口，绝不写本机或CloudBase已有数据库。 */
+  async function publishProfileWritePolicies(includeHttp = true): Promise<void> {
+    const connection = await source.getConnection()
+    try {
+      for (const fixture of [
+        {
+          domain: 'user-plant',
+          code: 'profile_minimum_completeness',
+          schema: 'user-plant-profile/v1',
+          ref: 'bpr_profile_read_0001',
+          version: 'profile/2026-09-27',
+          body: profilePolicy
+        },
+        ...(includeHttp
+          ? [
+              {
+                domain: 'http',
+                code: 'request_write',
+                schema: 'http-request-write-policy/v1',
+                ref: 'bpr_http_write_0001',
+                version: 'http-write/2026-09-27',
+                body: httpPolicy
+              }
+            ]
+          : [])
+      ]) {
+        await connection.execute(
+          `INSERT INTO business_policy_releases
+          (_openid, release_ref, domain_code, policy_code, schema_version, release_version, content_sha256, policy_json, status, effective_at_ms, expires_at_ms, verified_at_ms, created_at_ms, updated_at_ms)
+          VALUES ('',?,?,?,?,?,?,CAST(? AS JSON),'active',?,NULL,?,?,?)`,
+          [
+            fixture.ref,
+            fixture.domain,
+            fixture.code,
+            fixture.schema,
+            fixture.version,
+            calculateCanonicalJsonSha256(fixture.body),
+            JSON.stringify(fixture.body),
+            registeredAtMs,
+            registeredAtMs,
+            registeredAtMs,
+            registeredAtMs
+          ]
+        )
+        await connection.execute(
+          `INSERT INTO active_business_policy_releases
+          (_openid,domain_code,policy_code,release_internal_id,active_release_version,active_content_sha256,version,activated_at_ms,created_at_ms,updated_at_ms)
+          SELECT '',domain_code,policy_code,id,release_version,content_sha256,1,?,?,? FROM business_policy_releases WHERE release_ref=?`,
+          [registeredAtMs, registeredAtMs, registeredAtMs, fixture.ref]
+        )
+      }
+    } finally {
+      connection.release()
+    }
+  }
+
+  /** 风险夹具修改只发生在读取之前；被测读取器收到只读追踪端口，任何写语句立即失败。 */
+  async function changePolicy(
+    sql: string,
+    parameters: readonly (string | number | null)[]
+  ): Promise<void> {
+    const connection = await source.getConnection()
+    try {
+      await connection.execute(sql, parameters)
+    } finally {
+      connection.release()
+    }
+  }
+
+  /** 同一次读取只准一次SELECT，以免两份活动发布来自不一致的多次查询；审计持久化操作零次。 */
+  async function readProfileWriteSnapshot(capturedAtMs = nowMs) {
+    const queries: string[] = [],
+      writes: string[] = []
+    const guardedSource: typeof source = {
+      getConnection: async () => {
+        const connection = await source.getConnection()
+        return {
+          ...connection,
+          query: async (sql, parameters) => {
+            queries.push(sql)
+            if (!/^\s*SELECT\b/iu.test(sql)) {
+              writes.push(sql)
+              throw new Error('策略读取禁止修改发布和指针')
+            }
+            return connection.query(sql, parameters)
+          },
+          execute: async sql => {
+            writes.push(sql)
+            throw new Error('策略读取禁止修改发布和指针')
+          }
+        }
+      }
+    }
+    const result =
+      await createMysqlPublishedProfileWritePolicyReader(guardedSource).read(capturedAtMs)
+    expect(writes).toEqual([])
+    expect(queries).toHaveLength(1)
+    return result
+  }
+
+  test('档案写策略一次读取两份完整有效活动发布，返回实际正文及来源摘要', async () => {
+    await publishProfileWritePolicies()
+    const result = await readProfileWriteSnapshot()
+    expect(result).toMatchObject({
+      maxBodyBytes: 1048576,
+      profileVersion: 'user-plant-profile/v1',
+      idempotencyRetentionMs: 604800000,
+      profilePolicy
+    })
+    expect(result?.releases).toHaveLength(2)
+    expect(result?.releases).toEqual(
+      expect.arrayContaining([
+        {
+          releaseRef: 'bpr_profile_read_0001',
+          releaseVersion: 'profile/2026-09-27',
+          contentSha256: calculateCanonicalJsonSha256(profilePolicy)
+        },
+        {
+          releaseRef: 'bpr_http_write_0001',
+          releaseVersion: 'http-write/2026-09-27',
+          contentSha256: calculateCanonicalJsonSha256(httpPolicy)
+        }
+      ])
+    )
+  })
+  test('缺失HTTP活动发布不得提供局部档案写策略', async () => {
+    await publishProfileWritePolicies(false)
+    expect(await readProfileWriteSnapshot()).toBeNull()
+  })
+  test('档案正文摘要损坏即使活动指针摘要同步也拒绝', async () => {
+    await publishProfileWritePolicies()
+    await changePolicy(
+      "UPDATE business_policy_releases SET content_sha256=REPEAT('a',64) WHERE policy_code='profile_minimum_completeness'",
+      []
+    )
+    await changePolicy(
+      "UPDATE active_business_policy_releases SET active_content_sha256=REPEAT('a',64) WHERE policy_code='profile_minimum_completeness'",
+      []
+    )
+    expect(await readProfileWriteSnapshot()).toBeNull()
+  })
+  test('活动指针版本与实际发布不一致时拒绝且不自动修复', async () => {
+    await publishProfileWritePolicies()
+    await changePolicy(
+      "UPDATE active_business_policy_releases SET active_release_version='profile/forged' WHERE policy_code='profile_minimum_completeness'",
+      []
+    )
+    expect(await readProfileWriteSnapshot()).toBeNull()
+  })
+  test('未来验真时间不构成当前可用发布', async () => {
+    await publishProfileWritePolicies()
+    await changePolicy(
+      "UPDATE business_policy_releases SET verified_at_ms=? WHERE policy_code='request_write'",
+      [nowMs + 1]
+    )
+    expect(await readProfileWriteSnapshot()).toBeNull()
+  })
+  test('截止时间是严格上界，前一毫秒有效，精确截止拒绝', async () => {
+    await publishProfileWritePolicies()
+    await changePolicy(
+      "UPDATE business_policy_releases SET expires_at_ms=? WHERE policy_code='profile_minimum_completeness'",
+      [nowMs]
+    )
+    expect(await readProfileWriteSnapshot(nowMs - 1)).not.toBeNull()
+    expect(await readProfileWriteSnapshot(nowMs)).toBeNull()
   })
 })

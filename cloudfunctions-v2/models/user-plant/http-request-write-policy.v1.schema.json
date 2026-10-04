@@ -1,0 +1,18 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "jsonBodyLimitBytes",
+    "idempotencyRetentionHours"
+  ],
+  "properties": {
+    "jsonBodyLimitBytes": {
+      "type": "integer",
+      "const": 1048576
+    },
+    "idempotencyRetentionHours": {
+      "type": "integer",
+      "const": 168
+    }
+  }
+}

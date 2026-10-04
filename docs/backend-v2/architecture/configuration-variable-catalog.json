@@ -901,7 +901,14 @@
       "phase": "P1",
       "ticketTitle": "[P1] 用户植物、身份和游客认领合同",
       "expected": "服务端仅在合法身份状态、盆器、位置、光照环境、通风与空气环境全部具备时判定首次有效档案；每个 user_id 仅奖励一次",
-      "decisionGroup": "userplant_limits"
+      "decisionGroup": "userplant_limits",
+      "runtimePublication": {
+        "domainCode": "user-plant",
+        "policyCode": "profile_minimum_completeness",
+        "schemaVersion": "user-plant-profile/v1",
+        "contractRef": "cloudfunctions-v2/models/user-plant/published-profile-write-policy-contract.md",
+        "implementationTicket": "z8v0kmr9mj"
+      }
     },
     {
       "id": "user-plant.assets.max_count_per_plant",
@@ -2443,7 +2450,14 @@
       "phase": "P1",
       "ticketTitle": "[P1] 公共 HTTP 合同与 OpenAPI 路由骨架",
       "expected": "读取完整请求前执行大小限制",
-      "decisionGroup": "http_runtime"
+      "decisionGroup": "http_runtime",
+      "runtimePublication": {
+        "domainCode": "http",
+        "policyCode": "request_write",
+        "schemaVersion": "http-request-write-policy/v1",
+        "contractRef": "cloudfunctions-v2/models/user-plant/published-profile-write-policy-contract.md",
+        "implementationTicket": "z8v0kmr9mj"
+      }
     },
     {
       "id": "http.list.default_page_size",
@@ -4143,7 +4157,14 @@
       "changePolicy": "取得真实证据后发布不可变领域策略版本",
       "fallback": "未冻结前停止对应范围，不从旧实现猜值",
       "expected": "通用写 API 的幂等结果保留 168 小时；保留期内同键同参返回首次确定结果，同键异参冲突",
-      "decisionGroup": "http_runtime"
+      "decisionGroup": "http_runtime",
+      "runtimePublication": {
+        "domainCode": "http",
+        "policyCode": "request_write",
+        "schemaVersion": "http-request-write-policy/v1",
+        "contractRef": "cloudfunctions-v2/models/user-plant/published-profile-write-policy-contract.md",
+        "implementationTicket": "z8v0kmr9mj"
+      }
     },
     {
       "owner": "shared-infrastructure",

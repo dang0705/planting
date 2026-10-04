@@ -1,0 +1,38 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profileVersion",
+    "requiredFields",
+    "acceptedIdentityStates",
+    "rewardOncePerUser"
+  ],
+  "properties": {
+    "profileVersion": {
+      "type": "string",
+      "const": "user-plant-profile/v1"
+    },
+    "requiredFields": {
+      "type": "array",
+      "const": [
+        "identityStatus",
+        "pot",
+        "location",
+        "lightingEnvironment",
+        "ventilationEnvironment"
+      ]
+    },
+    "acceptedIdentityStates": {
+      "type": "array",
+      "const": [
+        "unidentified",
+        "candidate_pending",
+        "confirmed"
+      ]
+    },
+    "rewardOncePerUser": {
+      "type": "boolean",
+      "const": true
+    }
+  }
+}

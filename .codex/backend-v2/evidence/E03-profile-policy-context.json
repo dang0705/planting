@@ -1,0 +1,19 @@
+{
+  "scope": "E03档案PATCH可信发布策略读取",
+  "layers": {
+    "L0": "planting定向find level=[0,1,2]连接失败或超时，未提供任务上下文",
+    "L1": "planting定向find level=[0,1,2]连接失败或超时，未提供任务上下文",
+    "L2": "planting定向find level=[0,1,2]连接失败或超时，未提供任务上下文"
+  },
+  "missing": [
+    "档案策略发布正文与参数归属",
+    "请求大小及幂等保留策略合同",
+    "全量验证指出配置目录SHA与架构机器清单不一致"
+  ],
+  "allowed": [
+    "architecture/configuration-variable-catalog.json仅profile.minimum_completeness、HTTP请求大小与幂等保留项",
+    "上述直接sourceRefs仅对应策略发布章节",
+    "architecture/manifest.json仅files.configuration-variable-catalog.json摘要键，机械同步该已修改目录的真实SHA"
+  ],
+  "prohibited": "不扩大到全目录、全领域或其他架构图"
+}

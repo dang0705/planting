@@ -1,0 +1,81 @@
+{
+  "ticket": "z8v0kmr9mj",
+  "step": "E03",
+  "verifiedAt": "2026-10-04T21:07:19.975089+00:00",
+  "scope": "档案PATCH入口读取已验真HTTP和档案活动发布快照",
+  "expected": [
+    "统一计划不可变发布与同请求配置快照",
+    "配置目录三个confirmed既有变量",
+    "published-profile-write-policy-contract.md及两份唯一Schema"
+  ],
+  "configuration": {
+    "newVariables": false,
+    "confirmedValues": {
+      "http.json_body_limit_bytes": 1048576,
+      "http.idempotency.retention_hours": 168,
+      "profileVersion": "user-plant-profile/v1"
+    },
+    "publication": "user-plant/profile_minimum_completeness与http/request_write专属类型化正文；不存在发布时不补默认；目录机器清单真实SHA同步"
+  },
+  "context": ".codex/backend-v2/evidence/E03-profile-policy-context.json",
+  "verification": {
+    "tdd": {
+      "classic": "代表读取Expected先落盘，缺实现RED；服务组装3项经典RED后实现",
+      "classicLogs": [
+        "/tmp/planting-e03-profile-policy-red.log",
+        "/tmp/planting-e03-profile-policy-server-red.log"
+      ],
+      "mutation": "受控移除正文摘要守卫，真实MySQL坏行摘要与坏活动摘要同错1项RED；finally逐字节恢复后8项GREEN",
+      "mutationLog": "/tmp/planting-e03-profile-policy-digest-mutation-red.log",
+      "restoredBeforeCommentSha256": "36c8d05596ef396a7716459c1656b9ed1a76d65471b890dd31745860da19c8f4"
+    },
+    "mysql": {
+      "tests": 8,
+      "log": "/tmp/planting-e03-profile-policy-mysql-restored.log",
+      "layer": "unit_real_data",
+      "path": "隔离MySQL8.4实际发布/活动指针表→单SQL只读策略组→Schema/SHA/时效验证；零发布/指针写操作",
+      "replaced": "发布操作为测试夹具；未验证正式CMS发布、CloudBase或真实登录"
+    },
+    "http": "真实node:http服务组装，单请求读取一次发布快照；缺失/SQL错误503、合法策略后正常进入认证401；身份及数据库为明确替身",
+    "rootUT": {
+      "files": 178,
+      "tests": 1634,
+      "exit": 0
+    },
+    "node22UT": {
+      "files": 178,
+      "tests": 1634,
+      "exit": 0
+    },
+    "typecheck": {
+      "exit": 0
+    },
+    "lint": {
+      "exit": 0,
+      "errors": 0,
+      "warnings": 2467
+    },
+    "build": {
+      "exit": 0,
+      "limit": "子npm仍Node24 engine警告，非CloudBase运行证据"
+    },
+    "finalLogsPrefix": "/tmp/planting-e03-profile-policy-final-"
+  },
+  "boundaries": [
+    "真实HTTP/MySQL整链登录及正式发布尚未验收",
+    "其余完整档案字段、临时TTL及认领尚未完成",
+    "不部署、不生产DDL、不自动发布策略",
+    "H5为轻量数据投影，未取得当前页面运行证据"
+  ],
+  "hashes": {
+    "cloudfunctions-v2/models/user-plant/published-profile-write-policy-contract.md": "5a0aa8129367a724b021a2fb74eac66eb4595d76a4bf4f19c15260d172b2a4b9",
+    "cloudfunctions-v2/models/user-plant/profile-completeness-policy.v1.schema.json": "7aac4387f7d9404d93e6357c3cbde8f7b544d91799f3c03019f128ae60070eb9",
+    "cloudfunctions-v2/models/user-plant/http-request-write-policy.v1.schema.json": "8bf3578db9f82987a60f16f601eff0e71682b46db2e05bd5b63c9509b6bd2b0d",
+    "cloudfunctions-v2/src/user-plant/repository/mysql-published-profile-write-policy-reader.ts": "10c6eef4b67092326dbee8b2ede3f32cb86ab2175b2032a1d1caad799124442c",
+    "cloudfunctions-v2/src/user-plant/http/server.ts": "2de2c574a1134dc0ab379a16469508ade1b44573bb2828627c2ef0ffeb543c24",
+    "cloudfunctions-v2/src/entries/user-plant.ts": "79ee9f7689264f34a4b6941c1d249a14d90f4188c961e85e0218d435780d4d3a",
+    "cloudfunctions-v2/test/user-plant/published-profile-write-policy-reader.spec.ts": "a6437f814af521f5537b1afdd0ef5edb4156f32bc66b9933630c3cc181dfbc53",
+    "cloudfunctions-v2/test/user-plant/profile-update-server.spec.ts": "44eec61c192a46bbe85c36bd0c1101acb0249c3d10494903288efcd54e2d3ad6",
+    "cloudfunctions-v2/test/e2e/published-first-use-policies.mysql.spec.ts": "79a0c07fcbba63a72f7b3ff7d32103955be892c066955f067df57907f57465bb"
+  }
+}

@@ -42,7 +42,8 @@ import { createGetUserPlantRouteHandler, getUserPlantRoute } from './get-user-pl
 import { createUserPlantRoute, createUserPlantRouteHandler } from './create-user-plant-route.js'
 import { createMeasuredProfileApplicationService } from '../application/save-measured-profile.js'
 import { createMysqlMeasuredProfileRepository } from '../repository/mysql-measured-profile-repository.js'
-import { createUpdateProfileRouteHandler, updateProfileRoute, type UpdateProfileRouteDependencies } from './update-profile-route.js'
+import { createUpdateProfileRouteHandler, updateProfileRoute } from './update-profile-route.js'
+import type { PublishedProfileWriteSnapshot } from '../repository/mysql-published-profile-write-policy-reader.js'
 import {
   archiveUserPlantRoute,
   createArchiveUserPlantRouteHandler,
@@ -53,7 +54,7 @@ import {
 /** user-plant 云函数 HTTP 服务依赖。 */
 export type UserPlantServerDependencies = {
   /** 已发布档案写入策略适配；未接入时PATCH失败关闭，不猜大小、有效期或策略版本。 */
-  readonly profileWrite?: Pick<UpdateProfileRouteDependencies, 'maxBodyBytes' | 'resolveWritePolicy'>
+  readonly readProfileWriteSnapshot?: () => Promise<PublishedProfileWriteSnapshot | null>
   /** 每请求独占连接来源；连接参数由入口从受控环境变量读取。 */
   readonly connectionSource: MysqlConnectionPoolPort<Mysql2QueryConnection>
   /** 服务端可信时钟，返回当前 UTC 毫秒。 */
@@ -172,11 +173,16 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
   const dispatch = createRouteDispatcher([
     {
       route: updateProfileRoute,
-      handler: createUpdateProfileRouteHandler({
-        resolvePrincipal, getUserPlant, saveProfile, now: dependencies.now, writeAudit: dependencies.writeAudit,
-        maxBodyBytes: dependencies.profileWrite?.maxBodyBytes ?? null,
-        resolveWritePolicy: dependencies.profileWrite?.resolveWritePolicy ?? (async () => null)
-      })
+      handler: async (request, response, parameters) => {
+        // 正文读取前锁定一次发布快照；后续策略切换不改变本请求。
+        let snapshot: PublishedProfileWriteSnapshot | null = null
+        try { snapshot = await dependencies.readProfileWriteSnapshot?.() ?? null } catch { /* SQL异常不暴露，不补默认策略。 */ }
+        return createUpdateProfileRouteHandler({
+          resolvePrincipal, getUserPlant, saveProfile, now: dependencies.now, writeAudit: dependencies.writeAudit,
+          maxBodyBytes: snapshot?.maxBodyBytes ?? null,
+          resolveWritePolicy: async () => snapshot
+        })(request, response, parameters)
+      }
     },
     {
       route: createUserPlantRoute,
