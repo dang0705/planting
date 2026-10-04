@@ -1,19 +1,19 @@
 {
-  "revision": 73,
+  "revision": 74,
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
-  "updatedAt": "2026-10-04T18:20:46.036977+00:00",
+  "updatedAt": "2026-10-04T18:26:54.280879+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "核验虫害分析准备的正式模型/Prompt及策略准入，推进已满足前置的实现",
+    "target": "精确原样审核候选读取与独立撤销检查",
     "assumptions": [
-      "当前已有模型输出Schema不授予档位准入",
-      "不能以测试准备端口冒充正式视觉Provider"
+      "审核通过不等于知识发布",
+      "协议版本必须由受控接线明确提供，不能猜默认"
     ],
-    "minimumValidation": "确认唯一版本/来源及缺口；已有准入部分写独立Expected和必要实现",
-    "continueCondition": "版本与消费规则有权威已确认来源",
-    "failureCondition": "参数仍pending则仅该能力不开放，不猜默认",
-    "rollback": "仅回退本轮新增本地接线，不改生产配置或资源",
+    "minimumValidation": "独立Schema/摘要Expected、撤销突变RED、真实009/010三表与审核锁",
+    "continueCondition": "发布包Schema与审核协议完成冻结后接发布写用例",
+    "failureCondition": "来源、协议或语义未获批准则不开放正式结果",
+    "rollback": "仅回退本地Reader接线，不改既有发布或数据库",
     "timeLimitMinutes": 40
   },
   "tasks": [
@@ -200,10 +200,10 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 22,
+      "version": 23,
       "priority": "normal",
       "status": "codex running",
-      "stage": "结果回放具体类型与Node22运行验证通过",
+      "stage": "原样审核候选读取与撤销锁验证通过",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
@@ -226,19 +226,20 @@
         ".codex/backend-v2/evidence/E05-model-binding.json",
         ".codex/backend-v2/evidence/E05-diagnosis-runtime.json",
         ".codex/backend-v2/evidence/E05-result-record-storage.json",
-        ".codex/backend-v2/evidence/E05-replay-types.json"
+        ".codex/backend-v2/evidence/E05-replay-types.json",
+        ".codex/backend-v2/evidence/E05-reviewed-candidate-reader.json"
       ],
       "summary": [
-        "E05：输入证据与决策轨迹改为明确版本和类型",
-        "11项经典RED→GREEN；安全门突变1项RED→恢复",
-        "真实MySQL 3项、相关369项、全量1391项通过",
-        "Node22.21.1全量及构建产物健康/401验证通过",
-        "审核知识、结果生成/HTTP及视觉Provider仍待验收"
+        "E05：新增原样审核候选读取，锁定审核后检查撤销",
+        "受控Schema+完整摘要+候选/审核精确关联验证",
+        "撤销守卫突变1项RED→恢复；单元12与真实MySQL3通过",
+        "后端全量1403/1403，类型/构建/lint零错误",
+        "CMS验真、兼容知识发布及真实结果HTTP仍未验收"
       ],
       "blockingReason": null,
-      "nextAction": "接审核知识兼容发布及结果生成/读HTTP；视觉Provider策略待确认",
-      "ticketReadback": "Chrome CODEX RUNNING与五行评论1100440000090471已读回",
-      "milestoneCommit": "91987513"
+      "nextAction": "冻结兼容知识发布包Schema及审核协议接线，复用已验证审核锁完成发布/撤销用例；视觉Provider策略仍待确认",
+      "ticketReadback": "Chrome CODEX RUNNING与五行评论1100440000090474已读回",
+      "milestoneCommit": "9243e5bf"
     }
   ],
   "queue": [
@@ -888,5 +889,26 @@
       "docs/backend-v2/architecture/manifest.json 中configuration-variable-catalog.json及阅读版对应摘要，仅同步本轮改动"
     ],
     "prohibition": "不得完整读取目录或其他领域"
+  },
+  "diagnosisReviewedReleaseReadAdmission": {
+    "task": "E05精确审核知识发布读取",
+    "layers": {
+      "L0": "既有摘要仅导航；当前定向find返回60秒超时，无审核发布字段",
+      "L1": "既有contracts概览没有诊断发布字段；当前检索未返回概述",
+      "L2": "既有诊断数据字典仅表名；当前检索未返回审核凭据/候选/发布三者具体关联"
+    },
+    "missing": [
+      "知识发布包Schema与摘要规范",
+      "009候选、审核凭据、发布三表精确列与关联约束",
+      "已冻结人工审核和发布读取规则",
+      "合同明确独立撤销事实，核验010具体字段"
+    ],
+    "allowed": [
+      "schema/009_diagnosis_knowledge.sql仅diagnosis_knowledge_candidates、diagnosis_review_attestations、diagnosis_knowledge_releases三表",
+      "contracts/diagnosis-knowledge-persistence.md仅候选、审核及发布章节",
+      "contracts/schemas/仅按名称定位诊断知识发布包Schema",
+      "schema/010_diagnosis_review_revocations.sql仅diagnosis_review_revocations表"
+    ],
+    "scope": "仅精确审核知识读取，禁止其他领域或全目录"
   }
 }

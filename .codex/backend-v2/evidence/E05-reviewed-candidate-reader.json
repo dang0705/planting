@@ -1,0 +1,67 @@
+{
+  "ticketId": "z8v0kmr974",
+  "step": "E05",
+  "verifiedAt": "2026-10-04T18:26:54.280879+00:00",
+  "accepted": false,
+  "contract": "cloudfunctions-v2/models/diagnosis/reviewed-candidate-read-contract.md",
+  "scope": "显式事务内的精确审核候选读取，不产生知识发布或HTTP",
+  "configurationDecision": "沿用既有审核原样内容/独立撤销硬规则，无新阈值或默认协议；正式知识发布策略仍pending",
+  "tdd": {
+    "path": "test_first_module_red_and_mutation_red",
+    "moduleRed": "/tmp/planting-e05-reviewed-candidate-red.log",
+    "mutation": {
+      "failed": 1,
+      "passed": 11,
+      "change": "撤销记录长度判断改为不可能条件",
+      "restored": true,
+      "log": "/tmp/planting-e05-reviewed-candidate-mutation.log"
+    },
+    "green": {
+      "tests": 12,
+      "log": "/tmp/planting-e05-reviewed-candidate-green.log"
+    }
+  },
+  "verification": {
+    "realMysql": {
+      "tests": 3,
+      "log": "/tmp/planting-e05-reviewed-candidate-mysql.log",
+      "path": "实际009候选/审核及010撤销表DDL→mysql2→Reader→事务锁；CMS和园艺正文为明确结构制品",
+      "coverage": [
+        "候选/摘要读回",
+        "错候选/协议拒绝",
+        "另一连接审核锁等待拒绝和撤销后不可用"
+      ]
+    },
+    "fullUnit": {
+      "files": 158,
+      "tests": 1403,
+      "log": "/tmp/planting-e05-reviewed-candidate-full-final.log"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-reviewed-candidate-types-final.log"
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 1861,
+      "log": "/tmp/planting-e05-reviewed-candidate-lint-final.log"
+    },
+    "build": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-reviewed-candidate-build.log"
+    },
+    "node22Full": {
+      "runtime": "v22.21.1",
+      "files": 158,
+      "tests": 1403,
+      "log": "/tmp/planting-e05-reviewed-candidate-node22-full.log"
+    }
+  },
+  "limits": [
+    "未接正式CMS管理员鉴权和已批准协议",
+    "未实现完整发布包Schema与发布/撤销写用例",
+    "未验证来源许可、植物适用性及诊断规则语义",
+    "未接真实结果生成/HTTP或视觉Provider"
+  ],
+  "productionChanges": false
+}
