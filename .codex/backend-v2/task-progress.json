@@ -1,15 +1,15 @@
 {
-  "revision": 106,
+  "revision": 107,
   "currentStep": "E03",
   "currentTicketId": "z8v0kmr9mj",
-  "updatedAt": "2026-10-04T22:42:38.712605+00:00",
+  "updatedAt": "2026-10-04T22:55:45.035865+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "E03游客新建目标原子完成",
-    "minimumVerification": "真实容量锁、新建初态、五写失败回滚、原命令引用/版本保留、旧目标共核回归",
-    "result": "新建/已有目标事务完成通过；正式租约取得、身份与HTTP仍未验收",
-    "rollback": "撤回新入口与共核重构恢复上一已有入口，不部署、不执行生产DDL",
-    "nextAction": "确认并登记租约策略；接原命令租约取得/恢复、两个完成端口和提交未知只读核对，再推进公开HTTP"
+    "target": "E03游客认领应用编排",
+    "minimumVerification": "原结果预读、真实提交未知只读核对、并发零重复写和可信时钟边界",
+    "result": "实际MySQL66项及后端1859项通过；完整E03未验收",
+    "rollback": "撤回新应用入口，保留已验证Repository；不部署或执行生产DDL",
+    "nextAction": "确认租约策略后接取得/恢复；继续受控归属摘要，再推进真实身份与公开HTTP"
   },
   "tasks": [
     {
@@ -256,10 +256,10 @@
     {
       "id": "z8v0kmr9mj",
       "step": "E03",
-      "version": 18,
+      "version": 19,
       "priority": "high",
       "status": "codex running",
-      "stage": "游客新建/已有目标原子完成均已验证；租约取得/编排/HTTP未验收",
+      "stage": "已持有租约认领编排、并发原结果及提交未知核对已验证；租约取得/HTTP未验收",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E03-promotion-context.json",
@@ -283,18 +283,19 @@
         ".codex/backend-v2/evidence/E03-guest-claim-completed-receipt.json",
         ".codex/backend-v2/evidence/E03-guest-claim-completion-context.json",
         ".codex/backend-v2/evidence/E03-guest-claim-existing-completion.json",
-        ".codex/backend-v2/evidence/E03-guest-claim-new-plant-completion.json"
+        ".codex/backend-v2/evidence/E03-guest-claim-new-plant-completion.json",
+        ".codex/backend-v2/evidence/E03-guest-claim-completion-application.json"
       ],
       "summary": [
-        "E03：游客认领新建植物与成功事实同事务已实现",
-        "真实MySQL新增15项、联合94项；并发容量及五写回滚通过",
-        "容量旁路实际多建植物RED1→逐字节恢复GREEN",
-        "根与Node22全量1830/1830；类型/检查/构建通过",
-        "租约取得、完整编排、真实身份与HTTP仍未验收"
+        "E03：已持有租约的游客认领应用编排已实现",
+        "原成功重放、提交未知只读核对、并发同键只写一次通过",
+        "真实MySQL联合66项；经典与突变RED后恢复GREEN",
+        "根与Node22全量1859/1859；类型、检查及构建通过",
+        "租约取得、真实身份和公开HTTP仍未验收"
       ],
       "blockingReason": "仅processing租约时长未登记确认；不阻断受控应用编排和归属读取验证",
-      "nextAction": "确认并登记租约策略；接原命令租约取得/恢复、两个完成端口和提交未知只读核对，再推进公开HTTP",
-      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000091146已读回",
+      "nextAction": "确认租约策略后接取得/恢复；继续受控归属摘要，再推进真实身份与公开HTTP",
+      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000091159已读回",
       "priorityReason": "当前用户植物纵向切片的必要合同前置，未等待无关CMS"
     }
   ],

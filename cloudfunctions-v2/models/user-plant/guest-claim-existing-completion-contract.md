@@ -8,6 +8,8 @@ E03 / z8v0kmr9mj。依据 guest-session-claim/v1 的事务原子性、处理租�
 
 案例必须completed、未过期、无归属，时间和版本有效；版本溢出拒绝。证明拒绝直接返回，损坏存储不可用；同键不同语义返回idempotency_conflict。租约、状态和目标不满足返回not_claimable；到期返回expired。
 
+已claimed案例若基础字段、完成时间和owner完整，只返回not_claimable供应用只读核对原事实，不按本次较早的捕获时刻否定随后完成的投影，也不再次递增版本。缺owner或损坏字段仍unavailable。尚未认领的completed案例继续要求本次时刻不早于updated且版本可递增。
+
 原子写入：案例claimed owner及version递增；原命令completed、最终目标且清除租约；不可变guest_case_claims插入一次；游客会话上一版证明及其截止时间清空。保留原claimRef、request_hash、proof_version、attempt_count。所有写入必须affectedRows=1并在同一事务完整读回关系；任一失败抛错供外层整体回滚，不由Repository提交。完成结果只有status=completed、claimRef、userPlantRef、guestPlantCaseRef、proofVersion、claimedAtMs，不是公开对象类别结果。提交前结果仅供事务编排，外层提交后才能披露。
 
 不更改临时养护/诊断内容，不恢复归档植物、不新增计划、行为或积分。真实数据库测试证明同事务四项写入与各失败点回滚；身份Provider仍为明确替身，不能当正式认领HTTP验收。

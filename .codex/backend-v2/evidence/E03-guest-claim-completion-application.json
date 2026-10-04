@@ -1,0 +1,92 @@
+{
+  "scope": "已有租约认领应用编排、原成功重放及提交未知只读核对",
+  "ticketId": "z8v0kmr9mj",
+  "expectedSource": "cloudfunctions-v2/models/user-plant/guest-claim-completion-application-contract.md",
+  "contextReuse": [
+    "已核验guest-session-claim/v1原命令、单次成功事实与事务规则",
+    "已验收两个完成Repository及成功收据Reader",
+    "既有DatabaseCommitResultUnknownError与事务生命周期硬规则"
+  ],
+  "configurationDecision": "无新增配置或默认；只编排已持有租约。nowMs为显式可信服务端时钟端口，每次读取捕获新时间，写入保留原请求时间",
+  "testFirst": {
+    "representativeUnitExpectedBeforeProduct": true,
+    "initialMysqlExpectedBeforeProduct": true,
+    "missingModuleIsBusinessRed": false,
+    "classicRaceUnitRed": "/tmp/planting-e03-guest-completion-app-race-red.log",
+    "classicRaceUnitFailed": 2,
+    "classicRaceMysqlRed": "/tmp/planting-e03-guest-application-race-classic-red.log",
+    "classicRaceMysqlFailed": 1,
+    "classicClockRed": "/tmp/planting-e03-guest-completion-app-clock-red.log",
+    "classicClockFailed": 4,
+    "unitGreen": "/tmp/planting-e03-guest-completion-app-unit.log",
+    "claimedClockClassicUnitRed": "/tmp/planting-e03-guest-completion-claimed-clock-red.log",
+    "claimedClockClassicUnitFailed": 2,
+    "claimedClockClassicMysqlRed": "/tmp/planting-e03-guest-application-race-fresh-clock-red.log",
+    "claimedClockClassicMysqlFailed": 1
+  },
+  "mutation": {
+    "unknownWriteRetryRed": "/tmp/planting-e03-guest-application-unknown-retry-mutation-red.log",
+    "failedScenarios": 2,
+    "actualFailure": "真实提交未知后再次开启事务，原成功结果未变但禁止的事务数由1变2、连接由3变4",
+    "byteRestored": true,
+    "restoredApplicationSha256BeforeRaceClock": "070196729745fe33fb928475be803598865c559eb34a5600e82f2af1825817b9"
+  },
+  "boundaries": [
+    "实际SQL证明真实commit后/rollback后未知响应分别核对，不自动重新完成认领或回滚未知提交",
+    "独立newconnection核对原用户/案例/目标/键范围，不披露内部键/证明/租约",
+    "预读与同键并发完成后的只读核对返回原成功，无第二次写入",
+    "身份、能力与已持有租约输入仍为明确夹具，未证明实际Provider或租约发布策略",
+    "没有公开HTTP、对象类别映射、生产DDL/部署或前端修改",
+    "已claimed完整投影不受较早请求捕获时刻的可写守卫影响；完整事实仍由新连接/当前可信时刻核对，损坏owner不可用"
+  ],
+  "remaining": [
+    "已发布处理租约时长及原命令租约取得/接管/失败恢复",
+    "受控跨领域对象类别摘要",
+    "真实身份/匿名Provider及公开HTTP",
+    "完整E03验收"
+  ],
+  "accepted": false,
+  "verifiedAt": "2026-10-04T22:55:45.035865+00:00",
+  "checks": {
+    "mysql": {
+      "files": 4,
+      "passed": 66,
+      "log": "/tmp/planting-e03-guest-application-final-mysql.log"
+    },
+    "rootVitest": {
+      "files": 192,
+      "passed": 1859,
+      "exitCode": 0
+    },
+    "node22Vitest": {
+      "files": 192,
+      "passed": 1859,
+      "exitCode": 0
+    },
+    "typecheck": {
+      "exitCode": 0
+    },
+    "lint": {
+      "exitCode": 0,
+      "warnings": 2974,
+      "errors": 0
+    },
+    "build": {
+      "exitCode": 0,
+      "childNpmNode24EngineWarnings": 25,
+      "cloudRuntimeAccepted": false
+    },
+    "logPrefix": "/tmp/planting-e03-guest-application-final-"
+  },
+  "finalSourceSha256": {
+    "cloudfunctions-v2/src/user-plant/application/complete-guest-claim.ts": "0efbee099f78d3d09f6c61943bc59fd994dea0129c18252c7837af699be0a51b",
+    "cloudfunctions-v2/src/user-plant/repository/mysql-guest-claim-completion-core.ts": "6a8de908bf66bc5d76801d4b48ac853155582a5adf7a3c10f56b93450b9d59c4"
+  },
+  "raceEvidence": {
+    "transactions": 2,
+    "receiptReads": 3,
+    "writes": 5,
+    "bothReturnOriginalSuccess": true,
+    "duplicatePlantOrFact": false
+  }
+}

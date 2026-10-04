@@ -46,7 +46,7 @@ function id(v: unknown): v is string { return typeof v === 'string' && /^[1-9][0
 /** 严格解析安全时间，缺失不等于零。 */
 function ms(v: unknown): number | null { if (typeof v !== 'string' || !/^(0|[1-9][0-9]*)$/u.test(v)) { return null }; const n = Number(v); return Number.isSafeInteger(n) && Number.isFinite(new Date(n).getTime()) ? n : null }
 /** 第一次等待前固定全部可信输入，不接受额外身份和期限。 */
-function lock(raw: GuestClaimCompletionInput | GuestClaimNewPlantCompletionInput, targetType: 'existing_user_plant' | 'new_user_plant'): GuestClaimCompletionInput | GuestClaimNewPlantCompletionInput {
+export function lockGuestClaimCompletionInput(raw: GuestClaimCompletionInput | GuestClaimNewPlantCompletionInput, targetType: 'existing_user_plant' | 'new_user_plant'): GuestClaimCompletionInput | GuestClaimNewPlantCompletionInput {
   const keys = ['principal', 'proof', 'guestPlantCaseRef', 'target', 'claimRef', 'idempotencyKeyHash', 'leaseOwnerHash', ...(targetType === 'new_user_plant' ? ['newUserPlantRef', 'capabilitySnapshot'] : [])]
   if (!raw || typeof raw !== 'object' || Array.isArray(raw) || Object.keys(raw).length !== keys.length || Object.keys(raw).some(k => !keys.includes(k))
     || !validPrincipal(raw.principal) || !raw.proof || !Number.isSafeInteger(raw.proof.nowMs) || raw.proof.nowMs < 0 || !Number.isFinite(new Date(raw.proof.nowMs).getTime())
@@ -66,7 +66,7 @@ export function createMysqlGuestClaimCompletionCore(targetType: 'existing_user_p
   return {
     /** 同事务完成案例投影、命令、不可变事实及上一版证明清理；错误必须外层回滚。 */
     complete: async (tx: MysqlTransactionContext<Mysql2QueryConnection>, raw: GuestClaimCompletionInput | GuestClaimNewPlantCompletionInput): Promise<GuestClaimCompletionResult> => {
-      const input = lock(raw, targetType), now = input.proof.nowMs
+      const input = lockGuestClaimCompletionInput(raw, targetType), now = input.proof.nowMs
       if (!tx || tx.transactionContext !== true || !tx.connection) { throw new TypeError('认领完成需要显式事务') }
       const proof = await d.lockAndVerify(tx, input.proof)
       if (!proof || typeof proof !== 'object' || Array.isArray(proof)) { throw new Error('证明结果不合法') }
@@ -79,7 +79,13 @@ export function createMysqlGuestClaimCompletionCore(targetType: 'existing_user_p
       const cases = await c.query(`SELECT CAST(p.id AS CHAR) AS case_id,p.status,p.version,CAST(p.created_at_ms AS CHAR) AS created_at_ms,CAST(p.completed_at_ms AS CHAR) AS completed_at_ms,CAST(p.updated_at_ms AS CHAR) AS updated_at_ms,CAST(p.expires_at_ms AS CHAR) AS expires_at_ms,CAST(p.claimed_user_internal_id AS CHAR) AS claimed_user_internal_id,CAST(p.claimed_user_plant_internal_id AS CHAR) AS claimed_user_plant_internal_id FROM guest_plant_cases p JOIN guest_sessions s ON s.id=p.guest_session_internal_id AND s._openid='' WHERE BINARY s.guest_session_ref=BINARY ? AND BINARY p.guest_plant_case_ref=BINARY ? AND p._openid='' FOR UPDATE`, [input.proof.guestSessionRef, input.guestPlantCaseRef])
       if (cases.length === 0) { return { status: 'not_claimable' } }
       const p = cases[0]!, created = ms(p.created_at_ms), completed = ms(p.completed_at_ms), updated = ms(p.updated_at_ms), expires = ms(p.expires_at_ms)
-      if (cases.length !== 1 || !id(p.case_id) || created === null || updated === null || expires === null || updated < created || now < updated || expires <= created || !Number.isInteger(p.version) || typeof p.version !== 'number' || p.version < 1 || p.version >= 4294967295) { return { status: 'unavailable' } }
+      if (cases.length !== 1 || !id(p.case_id) || created === null || updated === null || expires === null || updated < created || expires <= created || !Number.isInteger(p.version) || typeof p.version !== 'number' || p.version < 1 || p.version > 4294967295) { return { status: 'unavailable' } }
+      // 已认领投影仅进入只读原事实核对；原请求时刻不能否定随后已完成的不可变结果。
+      if (p.status === 'claimed') {
+        if (!id(p.claimed_user_internal_id) || !id(p.claimed_user_plant_internal_id) || completed === null || completed < created || completed > updated) { return { status: 'unavailable' } }
+        return { status: 'not_claimable' }
+      }
+      if (now < updated || p.version >= 4294967295) { return { status: 'unavailable' } }
       if (expires <= now || p.status === 'expired') { return { status: 'expired' } }
       if (p.status !== 'completed' || p.claimed_user_internal_id !== null || p.claimed_user_plant_internal_id !== null) { return { status: 'not_claimable' } }
       if (completed === null || completed < created || completed > updated) { return { status: 'unavailable' } }

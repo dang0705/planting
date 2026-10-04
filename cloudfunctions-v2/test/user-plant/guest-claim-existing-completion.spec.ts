@@ -31,3 +31,7 @@ describe('游客已有目标原子完成', () => {
   it('写入数量未知抛错供外层回滚', async () => { const s = setup({}, 0); await expect(s.repo.complete(s.tx as never, input)).rejects.toThrow(); expect(s.execute).toHaveBeenCalledTimes(1) })
   it('拒绝额外归属或客户端租约期限', async () => { const s = setup(); await expect(s.repo.complete(s.tx as never, { ...input, leaseExpiresAtMs: 5000 } as never)).rejects.toThrow(); expect(s.lockAndVerify).not.toHaveBeenCalled() })
 })
+it.each([2, 4294967295])('已认领案例更新晚于本请求捕获时刻时只拒绝写入供原收据核对，版本%s', async version => {
+ const s = setup(); s.query.mockReset().mockResolvedValueOnce([{ case_id: '2', status: 'claimed', version, created_at_ms: '0', completed_at_ms: '1000', updated_at_ms: '2001', expires_at_ms: '9000', claimed_user_internal_id: '1', claimed_user_plant_internal_id: '3' }]); expect(await s.repo.complete(s.tx as never, input)).toEqual({ status: 'not_claimable' }); expect(s.execute).not.toHaveBeenCalled(); expect(s.query).toHaveBeenCalledOnce()
+})
+it('已认领投影缺失owner时不可用，不能当普通同键并发结果', async () => { const s = setup(); s.query.mockReset().mockResolvedValueOnce([{ case_id: '2', status: 'claimed', version: 2, created_at_ms: '0', completed_at_ms: '1000', updated_at_ms: '2001', expires_at_ms: '9000', claimed_user_internal_id: null, claimed_user_plant_internal_id: '3' }]); expect(await s.repo.complete(s.tx as never, input)).toEqual({ status: 'unavailable' }); expect(s.execute).not.toHaveBeenCalled() })
