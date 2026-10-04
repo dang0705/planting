@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto'
+import { computeGuestClaimRequestHash } from '../domain/guest-claim-request-hash.js'
 import Ajv from 'ajv'
 import type { UserPrincipalDto } from '../../contracts/types.js'
 import { userPrincipalSchema } from '../../contracts/schemas.js'
@@ -59,7 +59,7 @@ function lock(raw: GuestClaimCommandRegistrationInput): GuestClaimCommandRegistr
 }
 /** 请求语义不含候选认领引用、时刻或当前证明版本。 */
 function requestHash(input: GuestClaimCommandRegistrationInput): string {
-  return createHash('sha256').update(JSON.stringify({ guestSessionRef: input.proof.guestSessionRef, guestPlantCaseRef: input.guestPlantCaseRef, target: input.target.type === 'new_user_plant' ? { type: 'new_user_plant' } : { type: 'existing_user_plant', user_plant_id: input.target.user_plant_id } }), 'utf8').digest('hex')
+  return computeGuestClaimRequestHash({ guestSessionRef: input.proof.guestSessionRef, guestPlantCaseRef: input.guestPlantCaseRef, target: input.target })
 }
 /** 只登记requested或回读原命令，不执行processing、认领或隐式补偿。 */
 export function createMysqlGuestClaimCommandRegistrationRepository(d: GuestClaimRegistrationDependencies) {

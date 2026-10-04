@@ -58,19 +58,19 @@
       "readback": "Chrome HUMAN REQUIRED与五行评论1100440000090656已读回"
     },
     "z8v0kmr9mj": {
-      "version": 15,
+      "version": 16,
       "status": "codex running",
-      "note": "E03：游客requested认领命令登记与原引用重放已实现\n真实MySQL16项；并发唯一、状态保留与读回回滚通过\n结果形状2项/目标1项经典RED；摘要旁路1项RED→恢复GREEN\n根与Node22全量1792/1792；类型/检查/构建通过\n租约时长待确认；完整认领/真实身份与HTTP未验收",
-      "commentId": "1100440000091099",
-      "commentFingerprint": "a585966a2602e40b134c862c2d8a979c39a96566db58d7b0607f7f0f91b42e14",
-      "readback": "Chrome CODEX RUNNING及五行评论1100440000091099已读回"
+      "note": "E03：游客认领成功收据只读核对已实现\n真实MySQL38项；归属、关系一致及提交未知核对通过\n归属旁路1项、规范摘要2项RED→逐字节恢复GREEN\n根与Node22全量1810/1810；类型/检查/构建通过\n租约时长待确认；完整认领/真实身份与HTTP未验收",
+      "commentId": "1100440000091127",
+      "commentFingerprint": "443ecf0483c7d981b554f49520970be180220421db897f61b6eb678dcb927303",
+      "readback": "Chrome CODEX RUNNING及五行评论1100440000091127已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T22:18:09.160946+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T22:27:53.821192+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "1d876c0da1e711631839976194b94279c49469542be2ee63a4b6d8ac26953f61",
-    "sourceRevision": 103,
-    "sourceUpdatedAt": "2026-10-04T22:17:52.157181+00:00"
+    "fingerprint": "07f7194d624e6279fed35ca50eee603be22beec2921cc781fc0a82447e6bfd04",
+    "sourceRevision": 104,
+    "sourceUpdatedAt": "2026-10-04T22:27:31.720333+00:00"
   }
 }

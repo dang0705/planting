@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T22:17:52.157181+00:00",
-  "sourceRevision": 103,
-  "sourceUpdatedAt": "2026-10-04T22:17:52.157181+00:00",
+  "generatedAt": "2026-10-04T22:27:31.720333+00:00",
+  "sourceRevision": 104,
+  "sourceUpdatedAt": "2026-10-04T22:27:31.720333+00:00",
   "currentStep": "E03",
   "currentTicketId": "z8v0kmr9mj",
   "tasks": [
@@ -264,15 +264,15 @@
     {
       "id": "z8v0kmr9mj",
       "step": "E03",
-      "version": 15,
+      "version": 16,
       "status": "codex running",
-      "stage": "游客requested认领命令登记已验证；processing租约/完整认领待验收",
+      "stage": "游客认领成功收据只读核对已验证；完整认领及HTTP未验收",
       "accepted": false,
       "summary": [
-        "E03：游客requested认领命令登记与原引用重放已实现",
-        "真实MySQL16项；并发唯一、状态保留与读回回滚通过",
-        "结果形状2项/目标1项经典RED；摘要旁路1项RED→恢复GREEN",
-        "根与Node22全量1792/1792；类型/检查/构建通过",
+        "E03：游客认领成功收据只读核对已实现",
+        "真实MySQL38项；归属、关系一致及提交未知核对通过",
+        "归属旁路1项、规范摘要2项RED→逐字节恢复GREEN",
+        "根与Node22全量1810/1810；类型/检查/构建通过",
         "租约时长待确认；完整认领/真实身份与HTTP未验收"
       ],
       "evidence": [
@@ -293,18 +293,19 @@
         ".codex/backend-v2/evidence/E03-authenticated-ephemeral-new-plant.json",
         ".codex/backend-v2/evidence/E03-guest-claim-context.json",
         ".codex/backend-v2/evidence/E03-guest-claim-proof.json",
-        ".codex/backend-v2/evidence/E03-guest-claim-command-registration.json"
+        ".codex/backend-v2/evidence/E03-guest-claim-command-registration.json",
+        ".codex/backend-v2/evidence/E03-guest-claim-completed-receipt.json"
       ],
       "blockingReason": "仅processing租约时长未登记确认；不阻断独立命令/成功事实只读核验",
-      "nextAction": "确认并登记租约策略后接处理与目标/成功事实原子事务；可先推进独立认领结果只读及提交未知核对",
+      "nextAction": "确认并登记processing租约策略后接目标/成功事实原子事务；复用原收据只读核对，继续受控对象类别读取",
       "sync": {
-        "version": 15,
+        "version": 16,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING及五行评论1100440000091099已读回"
+        "readback": "Chrome CODEX RUNNING及五行评论1100440000091127已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T22:18:09.160946+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T22:27:53.821192+00:00",
   "lastFailure": null
 }
