@@ -14,6 +14,10 @@ import {
   type PestQuestionTier
 } from '../domain/pest-question-eligibility.js'
 import { validateDiagnosisModelOutput } from '../domain/validate-diagnosis-model-output.js'
+import {
+  validateDiagnosisModelBinding,
+  type DiagnosisModelBinding
+} from '../domain/diagnosis-model-binding.js'
 import type { FixedQuestionSessionCreation } from './create-fixed-question-session.js'
 import type {
   PersistentQuestionSession,
@@ -42,6 +46,8 @@ export type PreparedPestAnalysis =
     }
   | {
       /** 上游受控准入完成，不允许由HTTP自行标记。 */ readonly status: 'admitted'
+      /** 实际调用所锁定的模型、提示词摘要与输出合同组合。 */ readonly modelBinding: DiagnosisModelBinding
+      /** 分析准备消费的题包发布，必须与本次事务锁定的发布相同。 */ readonly questionPackageReleaseRef: string
       /** 分析所针对的确切私有资产内容摘要。 */ readonly assetContentSha256: string
       /** 本次图片明确采集的植物区域。 */ readonly evidenceKind:
         | 'leaf'
@@ -129,6 +135,8 @@ export function createPestQuestionSessionInTransaction<T extends TransactionExec
     ) as Extract<PreparedPestAnalysis, { status: 'admitted' }>
     const output = validateDiagnosisModelOutput(frozen.output)
     if (
+      !validateDiagnosisModelBinding(frozen.modelBinding) ||
+      frozen.questionPackageReleaseRef !== published.release.releaseRef ||
       frozen.assetContentSha256 !== asset.contentSha256 ||
       asset.assetRef !== stable.assetRef ||
       output.status !== 'valid' ||

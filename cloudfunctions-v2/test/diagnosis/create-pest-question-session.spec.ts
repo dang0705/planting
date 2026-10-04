@@ -67,6 +67,13 @@ function harness() {
   }))
   const prepare = vi.fn(async () => ({
     status: 'admitted',
+    modelBinding: {
+      modelCode: 'qwen3.5-flash-2026-02-23',
+      promptVersion: 'diagnosis-visual/v1',
+      promptSha256: '11c58cebe3b3c41097d6f6d6b3c5b5d7eb16248e4f07bacd497868a647ccc964',
+      resultSchemaVersion: 'diagnosis-model-output/v1'
+    },
+    questionPackageReleaseRef: 'bpr_pest12345',
     evidenceKind: 'leaf',
     assetContentSha256: 'a'.repeat(64),
     tier: 'medium',
@@ -102,6 +109,33 @@ function harness() {
   } as any)
   return { published, asset, prepare, append, appendVisual, read, readVisual, run }
 }
+test.each(['missing_binding', 'wrong_model', 'wrong_prompt', 'wrong_schema', 'changed_package'])(
+  '分析准备版本%s错配时原子创建拒绝且无任何写入',
+  async issue => {
+    const f = harness(),
+      prepared = await f.prepare()
+    const bad = structuredClone(prepared) as any
+    if (issue === 'missing_binding') {
+      delete bad.modelBinding
+    }
+    if (issue === 'wrong_model') {
+      bad.modelBinding.modelCode = 'other-model'
+    }
+    if (issue === 'wrong_prompt') {
+      bad.modelBinding.promptSha256 = 'c'.repeat(64)
+    }
+    if (issue === 'wrong_schema') {
+      bad.modelBinding.resultSchemaVersion = 'v2'
+    }
+    if (issue === 'changed_package') {
+      bad.questionPackageReleaseRef = 'bpr_other123'
+    }
+    f.prepare.mockResolvedValue(bad)
+    await expect(f.run({ transactionContext: true }, input)).rejects.toThrow()
+    expect(f.append).not.toHaveBeenCalled()
+    expect(f.appendVisual).not.toHaveBeenCalled()
+  }
+)
 test('共享幂等重放实际虫害选题和原子创建的首次题包，不再次准备分析或写会话', async () => {
   const f = harness(),
     tx = { transactionContext: true as const }

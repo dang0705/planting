@@ -1,0 +1,42 @@
+{
+  "ticket": "z8v0kmr974",
+  "stage": "模型与提示词版本写入前守卫",
+  "accepted": false,
+  "verifiedAt": "2026-10-04T17:52:47.598707+00:00",
+  "expectedSource": [
+    "用户已批准整体计划的锁定模型/提示词规则",
+    "已确认配置项 diagnosis.model.family / diagnosis.prompt.release_sha256 / diagnosis.result.schema_version",
+    "diagnosis-visual.v1.release.json 与对应提示词摘要"
+  ],
+  "tdd": {
+    "path": "classic_red_green",
+    "red": "5项错配仍创建会话；新纯函数模块尚不存在",
+    "redLog": "/tmp/planting-e05-model-binding-red.log",
+    "green": "26文件347项相关测试通过"
+  },
+  "verification": {
+    "fullUnit": {
+      "files": 154,
+      "passed": 1369,
+      "log": "/tmp/planting-e05-model-binding-full.log"
+    },
+    "mysql": {
+      "files": 2,
+      "passed": 84,
+      "boundary": "实际MySQL/本地HTTP；分析准备和认证为替身，不证明真实Provider",
+      "log": "/tmp/planting-e05-model-binding-mysql.log"
+    },
+    "typecheck": "exit 0",
+    "build": "exit 0",
+    "lint": {
+      "errors": 0,
+      "warnings": 1777
+    }
+  },
+  "limits": [
+    "未调用真实Provider",
+    "成本/超时/重试/保留策略待批准",
+    "未提供完整模型与提示词历史调用持久化审计",
+    "E05整体未验收"
+  ]
+}

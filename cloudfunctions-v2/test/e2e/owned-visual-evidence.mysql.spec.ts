@@ -259,6 +259,13 @@ function atomicDependencies(extra: Record<string, unknown> = {}) {
     asset: visuals.readOwnedAsset,
     prepare: async () => ({
       status: 'admitted' as const,
+      modelBinding: {
+        modelCode: 'qwen3.5-flash-2026-02-23',
+        promptVersion: 'diagnosis-visual/v1',
+        promptSha256: '11c58cebe3b3c41097d6f6d6b3c5b5d7eb16248e4f07bacd497868a647ccc964',
+        resultSchemaVersion: 'diagnosis-model-output/v1'
+      },
+      questionPackageReleaseRef: 'bpr_pest12345',
       evidenceKind: 'leaf' as const,
       assetContentSha256: 'a'.repeat(64),
       tier: 'medium' as const,
@@ -379,6 +386,13 @@ test('未准入分析与直判零题不创建会话', async () => {
     await atomicCreator({
       prepare: async () => ({
         status: 'admitted',
+        modelBinding: {
+          modelCode: 'qwen3.5-flash-2026-02-23',
+          promptVersion: 'diagnosis-visual/v1',
+          promptSha256: '11c58cebe3b3c41097d6f6d6b3c5b5d7eb16248e4f07bacd497868a647ccc964',
+          resultSchemaVersion: 'diagnosis-model-output/v1'
+        },
+        questionPackageReleaseRef: 'bpr_pest12345',
         evidenceKind: 'leaf',
         assetContentSha256: 'a'.repeat(64),
         tier: 'direct',

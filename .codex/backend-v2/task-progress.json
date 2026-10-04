@@ -1,19 +1,19 @@
 {
-  "revision": 69,
+  "revision": 70,
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
-  "updatedAt": "2026-10-04T17:44:35.445962+00:00",
+  "updatedAt": "2026-10-04T17:52:47.598707+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "已登录用户植物的虫害公开创建合同与已有HTTP路由接线",
+    "target": "核验虫害分析准备的正式模型/Prompt及策略准入，推进已满足前置的实现",
     "assumptions": [
-      "模式specific_pest_visual与V1复用题包一致",
-      "无正式准备适配器时明确503"
+      "当前已有模型输出Schema不授予档位准入",
+      "不能以测试准备端口冒充正式视觉Provider"
     ],
-    "minimumValidation": "独立Expected先落盘、非法客户端证据拒绝、真实HTTP/SQL重放和权限验证",
-    "continueCondition": "保持固定症状合同、复用既有路由和共享幂等",
-    "failureCondition": "需要猜测视觉或成本策略时不开放对应运行适配器",
-    "rollback": "回退本增量HTTP接线，无生产DDL和部署",
+    "minimumValidation": "确认唯一版本/来源及缺口；已有准入部分写独立Expected和必要实现",
+    "continueCondition": "版本与消费规则有权威已确认来源",
+    "failureCondition": "参数仍pending则仅该能力不开放，不猜默认",
+    "rollback": "仅回退本轮新增本地接线，不改生产配置或资源",
     "timeLimitMinutes": 40
   },
   "tasks": [
@@ -200,10 +200,10 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 18,
+      "version": 19,
       "priority": "normal",
       "status": "codex running",
-      "stage": "虫害公开创建HTTP与真实MySQL切片验证",
+      "stage": "模型与提示词版本守卫验证通过，正式Provider仍待准入",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
@@ -222,18 +222,19 @@
         ".codex/backend-v2/evidence/E05-atomic-pest-session.json",
         ".codex/backend-v2/evidence/E05-pest-creation-idempotency.json",
         ".codex/backend-v2/evidence/E05-pest-creation-idempotency-mysql.json",
-        ".codex/backend-v2/evidence/E05-pest-creation-http.json"
+        ".codex/backend-v2/evidence/E05-pest-creation-http.json",
+        ".codex/backend-v2/evidence/E05-model-binding.json"
       ],
       "summary": [
-        "E05虫害创建HTTP接共享幂等/原子用例与安全题目投影",
-        "真实HTTP/MySQL两组84项；跨用户404、换图409、重放通过",
-        "相关330项，全量1352/1352，类型/构建及lint通过",
-        "经典HTTP8项RED、字段守卫12项突变RED→完整恢复",
-        "模型准备与兼容发布未准入的运行入口仍503；E05未收口"
+        "E05分析准备核验模型/提示词/输出Schema与题包发布",
+        "5项错配经典RED→GREEN，创建前拒绝且无写入",
+        "相关347项；真实MySQL/HTTP两组84项通过",
+        "全量1369/1369；类型/构建/lint通过",
+        "正式Provider及历史调用审计未验收；E05仍进行中"
       ],
       "blockingReason": null,
-      "nextAction": "核验受控虫害准备的模型/Prompt兼容发布与证据语义、档位、成本和保留准入，再实现正式适配器；其余诊断结论及临时案例继续推进",
-      "ticketReadback": "Chrome CODEX RUNNING与五行评论1100440000090441已读回",
+      "nextAction": "按已冻结边界继续诊断结论及兼容发布接线；正式Provider成本、超时、重试、语义与档位策略待批准，不使用默认值",
+      "ticketReadback": "Chrome CODEX RUNNING与五行评论1100440000090451已读回",
       "milestoneCommit": "91987513"
     }
   ],
@@ -338,7 +339,7 @@
       ]
     }
   ],
-  "nextAction": "核验受控虫害准备的模型/Prompt兼容发布与证据语义、档位、成本和保留准入，再实现正式适配器；其余诊断结论及临时案例继续推进",
+  "nextAction": "按已冻结边界继续诊断结论及兼容发布接线；正式Provider成本、超时、重试、语义与档位策略待批准，不使用默认值",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -841,5 +842,23 @@
       "api/manifest.json仅对应制品摘要"
     ],
     "prohibited": "不读取全目录或其他路由"
+  },
+  "diagnosisPreparedModelReadAdmission": {
+    "task": "E05 z8v0kmr974 正式虫害分析准备准入",
+    "layers": {
+      "L0": "定向find level=[0,1,2]返回连接失败或超时，未提供模型合同",
+      "L1": "同次检索未提供兼容发布概述",
+      "L2": "同次检索未提供已批准模型/Prompt或策略原文"
+    },
+    "missing": "已锁定模型/Prompt名称与版本、视觉Provider、档位/语义和保留策略的实际准入状态",
+    "allowed": [
+      "architecture/configuration-variable-catalog.md仅diagnosis/visual/Prompt相关条目",
+      "architecture/configuration-variable-catalog.json仅对应条目与sourceRefs",
+      "contracts/diagnosis-model-runtime.md若由sourceRefs定位，仅读模型/Prompt兼容组章节",
+      "contracts/prompts/diagnosis-visual.v1.release.json仅版本、哈希、规范化与制品路径",
+      "该release.json指向的唯一Prompt制品只计算规范化SHA，不输出正文",
+      "contracts/prompts/diagnosis-visual.v1.txt仅规范化SHA核验，不输出提示词正文"
+    ],
+    "prohibited": "不扩大到其他领域、全部配置目录或其他架构图"
   }
 }
