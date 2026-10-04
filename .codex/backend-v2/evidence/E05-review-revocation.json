@@ -1,0 +1,71 @@
+{
+  "ticketId": "z8v0kmr974",
+  "step": "E05",
+  "verifiedAt": "2026-10-04T18:59:02.965947+00:00",
+  "accepted": false,
+  "scope": "精确人工审核独立撤销内部用例与真实MySQL；不等同知识撤回或指针回滚",
+  "contract": "cloudfunctions-v2/models/diagnosis/review-revocation-contract.md",
+  "tdd": {
+    "expectedSource": "既有诊断知识持久化合同及010；独立内部撤销合同",
+    "initialModuleRed": "/tmp/planting-e05-review-revocation-red.log",
+    "classicMysqlRed": {
+      "case": "先建立旧快照、同命令另一事务先提交，锁后重放必须读当前收据",
+      "failed": 1,
+      "log": "/tmp/planting-e05-review-revocation-snapshot-red.log"
+    },
+    "fix": "锁定审核后使用FOR SHARE当前读原收据；原Expected未修改"
+  },
+  "verification": {
+    "realMysql": {
+      "tests": 12,
+      "log": "/tmp/planting-e05-review-revocation-mysql-final.log",
+      "path": "实际009批准/发布/指针/审计与010撤销DDL→mysql2共享事务→撤销应用/Repository→收据读回与发布拒绝",
+      "coverage": [
+        "精确批准/摘要/协议核验",
+        "原命令重放/异参冲突",
+        "同审核并发唯一撤销",
+        "失败回滚/未知提交新连接对账",
+        "旧快照后同命令读当前收据",
+        "不修改原批准或活动指针",
+        "撤销后的新发布拒绝"
+      ],
+      "replacedBoundaries": [
+        "CMS管理员及审核协议为明确结构制品",
+        "题包/来源依赖端口替身",
+        "园艺内容为Schema结构制品，不证明正式诊断"
+      ]
+    },
+    "rootUnit": {
+      "files": 162,
+      "tests": 1426,
+      "log": "/tmp/planting-e05-revocation-restored-root-test.log"
+    },
+    "node22Unit": {
+      "runtime": "v22.21.1",
+      "files": 162,
+      "tests": 1426,
+      "log": "/tmp/planting-e05-revocation-restored-node22-vitest.log"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-revocation-restored-typecheck.log"
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 2020,
+      "log": "/tmp/planting-e05-revocation-restored-lint.log"
+    },
+    "build": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-revocation-restored-build.log"
+    }
+  },
+  "unaccepted": [
+    "正式CMS管理员与审核协议准入",
+    "知识撤回、有效旧发布指针回滚及审计用例",
+    "真实诊断结果生成",
+    "临时案例结果读回",
+    "生产部署及生产数据变更"
+  ],
+  "productionChanges": false
+}

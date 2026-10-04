@@ -50,19 +50,19 @@
       "readback": "Chrome CODEX RUNNING及五行评论1100440000090220已读回"
     },
     "z8v0kmr974": {
-      "version": 25,
+      "version": 26,
       "status": "codex running",
-      "note": "E05：长期植物诊断结果GET→真实MySQL→脱敏响应\n真实HTTP/SQL6项：本人归属、旧行/坏摘要、知识撤回\n撤回守卫突变1项RED→恢复；OpenAPI2项经典RED\n根及Node22全量1422/1422；类型/构建/lint零错误\n临时案例、正式知识及结果生成未验收，E05仍进行中",
-      "commentId": "1100440000090507",
-      "commentFingerprint": "39344da11d80b3d5bfae079f3e9196bdc165d18c569b1f2049d52bb0a125a4ad",
-      "readback": "Chrome CODEX RUNNING与五行评论1100440000090507已读回"
+      "note": "E05：精确审核撤销独立追加，与发布共享审核锁\n真实MySQL12项：重放/冲突/并发/回滚/未知提交对账\n旧快照同命令收据1项经典RED→当前读恢复GREEN\n根及Node22全量1426/1426；类型/构建/lint零错误\nCMS准入、知识撤回/指针回滚及诊断生成仍未验收",
+      "commentId": "1100440000090538",
+      "commentFingerprint": "47f7420b3f18d91aaebf1c7294632e16ef32cd982dbc433f6742f78ca4b98947",
+      "readback": "Chrome CODEX RUNNING与五行评论1100440000090538已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T18:51:48.360825+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T18:59:28.816916+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "2620f0b7223432dcffa5e355f1a0642d85b8eafaa7af57e72eb6796393a72bca",
-    "sourceRevision": 76,
-    "sourceUpdatedAt": "2026-10-04T18:51:28.527276+00:00"
+    "fingerprint": "b6b2e0fc5a8eb2a7133914bbacb768440d02f6a296e63b2a98f41f2e82be5ffa",
+    "sourceRevision": 77,
+    "sourceUpdatedAt": "2026-10-04T18:59:02.965947+00:00"
   }
 }

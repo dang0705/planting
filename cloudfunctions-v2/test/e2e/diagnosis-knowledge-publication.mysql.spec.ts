@@ -8,6 +8,8 @@ import { findProjectRoot } from '../support/project-root.js'
 import { validCandidate } from '../support/reviewed-diagnosis-candidate-fixture.js'
 import { createMysql2ConnectionSource } from '../../src/foundation/database/mysql2-connection-source.js'
 import { createMysqlDiagnosisKnowledgePublicationRepository } from '../../src/diagnosis/repository/mysql-diagnosis-knowledge-publication-repository.js'
+import { createRevokeDiagnosisReview } from '../../src/diagnosis/application/revoke-diagnosis-review.js'
+import { createMysqlDiagnosisReviewRevocationRepository } from '../../src/diagnosis/repository/mysql-diagnosis-review-revocation-repository.js'
 import { createPublishDiagnosisKnowledge } from '../../src/diagnosis/application/publish-diagnosis-knowledge.js'
 import { createMysqlTransactionDriver } from '../../src/foundation/database/mysql-transaction-driver.js'
 /** L3/unit_real_data：实际009发布/指针/审计及010撤销、真实mysql2与事务。来源/题包依赖、CMS身份及园艺正文仍为结构制品；不证明正式知识或HTTP。 */
@@ -277,4 +279,150 @@ test('事务已建立旧快照时，之后提交的撤销仍须由当前读拒�
     await c.rollback()
     c.release()
   }
+})
+
+/** Expected来自独立撤销合同/010：与发布共享真实审核锁，CMS管理员仍为明确替身。 */
+async function revocationCommand(n: number) {
+  const reviewRef = `review-revoke-${n}`
+  await db.execute(
+    'INSERT INTO diagnosis_review_attestations(review_ref,reviewer_ref_hash,candidate_internal_id,content_sha256,decision,protocol_version,decided_at_ms) VALUES(?,?,?,?,?,?,?)',
+    [reviewRef, 'a'.repeat(64), 1, sha, 'approved', 'fixture-review/v1', 1100]
+  )
+  return {
+    revocationRef: `revocation-${n}`,
+    reviewRef,
+    contentSha256: sha,
+    reviewProtocolVersion: 'fixture-review/v1',
+    operatorRefHash: 'c'.repeat(64),
+    reasonZh: '独立撤销结构制品',
+    reviewEvidenceRef: 'evidence-fixture'
+  }
+}
+function revokeApp(pool = source) {
+  return createRevokeDiagnosisReview({
+    driver: createMysqlTransactionDriver(pool, () => {}),
+    repository: createMysqlDiagnosisReviewRevocationRepository(pool),
+    now: () => 1500
+  })
+}
+test('撤销真实读回/原样重放与异参冲突；原批准和活动指针保持', async () => {
+  const cmd = await revocationCommand(10),
+    before = await counts(),
+    r = await revokeApp()(cmd)
+  expect(r).toEqual({ status: 'revoked', revocationRef: cmd.revocationRef, revokedAtMs: 1500 })
+  expect(await revokeApp()(cmd)).toEqual(r)
+  expect(await revokeApp()({ ...cmd, reasonZh: '异参' })).toEqual({ status: 'conflict' })
+  expect(await revokeApp()({ ...cmd, revocationRef: 'different-ref' })).toEqual({
+    status: 'conflict'
+  })
+  expect(await counts()).toEqual(before)
+  const [rows] = await db.execute(
+    'SELECT decision FROM diagnosis_review_attestations WHERE review_ref=?',
+    [cmd.reviewRef]
+  )
+  expect(rows).toEqual([{ decision: 'approved' }])
+  expect(await app()({ ...command(1, 50, 3), reviewRef: cmd.reviewRef })).toEqual({
+    status: 'unavailable'
+  })
+})
+test('精确摘要/协议错误、未知和驳回目标不产生撤销事实', async () => {
+  const cmd = await revocationCommand(11)
+  for (const input of [
+    { ...cmd, contentSha256: 'f'.repeat(64) },
+    { ...cmd, reviewProtocolVersion: 'wrong/v1' },
+    { ...cmd, reviewRef: 'absent-review' }
+  ]) {
+    expect(await revokeApp()(input)).toEqual({ status: 'unavailable' })
+  }
+  await db.execute(
+    "UPDATE diagnosis_review_attestations SET decision='rejected' WHERE review_ref=?",
+    [cmd.reviewRef]
+  )
+  expect(await revokeApp()(cmd)).toEqual({ status: 'unavailable' })
+  const [rows] = await db.execute(
+    'SELECT COUNT(*) AS n FROM diagnosis_review_revocations WHERE revocation_ref=?',
+    [cmd.revocationRef]
+  )
+  expect(rows).toEqual([{ n: 0 }])
+})
+test('同批准并发撤销只有一条事实，第二命令冲突', async () => {
+  const cmd = await revocationCommand(12),
+    results = await Promise.all([
+      revokeApp()(cmd),
+      revokeApp()({ ...cmd, revocationRef: 'competing-revocation' })
+    ])
+  expect(results.map(x => x.status).sort()).toEqual(['conflict', 'revoked'])
+  const [rows] = await db.execute(
+    'SELECT COUNT(*) AS n FROM diagnosis_review_revocations v JOIN diagnosis_review_attestations a ON a.id=v.target_review_internal_id WHERE a.review_ref=?',
+    [cmd.reviewRef]
+  )
+  expect(rows).toEqual([{ n: 1 }])
+})
+test('追加后收据故障回滚，提交响应丢失仅用新连接对账', async () => {
+  const cmd = await revocationCommand(13)
+  const broken = {
+    getConnection: async () => {
+      const c = await source.getConnection()
+      let reads = 0
+      return {
+        ...c,
+        query: async (sql: string, params: readonly (string | number | null)[]) => {
+          if (sql.startsWith('SELECT v._openid') && ++reads === 2) {
+            throw new Error('fixture receipt failure')
+          }
+          return c.query(sql, params)
+        }
+      }
+    }
+  }
+  await expect(revokeApp(broken)(cmd)).rejects.toThrow('fixture receipt failure')
+  const [rows] = await db.execute(
+    'SELECT COUNT(*) AS n FROM diagnosis_review_revocations WHERE revocation_ref=?',
+    [cmd.revocationRef]
+  )
+  expect(rows).toEqual([{ n: 0 }])
+  const uncertain = {
+    getConnection: async () => {
+      const c = await source.getConnection()
+      return {
+        ...c,
+        commit: async () => {
+          await c.commit()
+          throw new Error('fixture lost response')
+        }
+      }
+    }
+  }
+  expect(await revokeApp(uncertain)(cmd)).toEqual({
+    status: 'revoked',
+    revocationRef: cmd.revocationRef,
+    revokedAtMs: 1500
+  })
+  expect(await revokeApp()(cmd)).toEqual({
+    status: 'revoked',
+    revocationRef: cmd.revocationRef,
+    revokedAtMs: 1500
+  })
+})
+test('先建立旧快照、同命令另一事务先提交，锁后重放必须读当前收据', async () => {
+  const cmd = await revocationCommand(14),
+    repository = createMysqlDiagnosisReviewRevocationRepository(source)
+  const outer = createRevokeDiagnosisReview({
+    driver: createMysqlTransactionDriver(source, () => {}),
+    repository: {
+      ...repository,
+      readReceipt: async (tx, locked) => {
+        const old = await repository.readReceipt(tx, locked)
+        expect(old.status).toBe('not_found')
+        expect((await revokeApp()(cmd)).status).toBe('revoked')
+        return old
+      }
+    },
+    now: () => 1600
+  })
+  expect(await outer(cmd)).toEqual({
+    status: 'revoked',
+    revocationRef: cmd.revocationRef,
+    revokedAtMs: 1500
+  })
 })

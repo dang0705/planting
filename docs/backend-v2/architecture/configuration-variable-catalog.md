@@ -343,3 +343,5 @@
 `diagnosis.knowledge.publication_contract`：兼容知识发布包结构固定为 `diagnosis-knowledge-release/v1`，不可配置。原样候选、精确审核与独立撤销、题包/来源依赖复核、单事务发布/指针/审计、同键重放及未知提交只读对账遵循 `cloudfunctions-v2/models/diagnosis/knowledge-publication-contract.md`；owner：diagnosis；P4／z8v0kmr974。正式知识发布引用仍 pending；结构和本地事务机制通过不代表 CMS 或园艺知识准入。
 
 `diagnosis.result.public_read`：结果只读投影固定为 `diagnosis-result/v1`，不可配置；沿用公共会话路径8至100字符，原知识摘要不一致/撤回、旧行与损坏503，不存在404。owner：diagnosis；P4／z8v0kmr974；合同：`cloudfunctions-v2/models/diagnosis/result-http-contract.md`。不重算或替换历史结果，临时分支未接入不授予资格。
+
+诊断知识发布硬规则同时约束精确审核撤销：独立追加事实、原样命令摘要、同目标唯一撤销、与发布共享审核锁及提交未知只读对账；不修改批准、发布或历史结果。内部合同见 `cloudfunctions-v2/models/diagnosis/review-revocation-contract.md`，正式CMS管理员及协议仍须独立准入。
