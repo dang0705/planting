@@ -1,18 +1,19 @@
 {
-  "revision": 27,
+  "revision": 28,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-04T12:24:48.274875+00:00",
+  "updatedAt": "2026-10-04T12:46:35.313778+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "E04完整时段植物点几何资格→真实辐射均值回放",
+    "goal": "E04盆器安全证据判定与SunCalc精确版本安装",
     "assumptions": [
-      "界限覆盖NOAA近似模型自身，不覆盖现场误差或浮点认证"
+      "三值证据由上游归约，不代表尺寸实测",
+      "SunCalc新角度语义与NOAA实验界限不混用"
     ],
-    "minimumVerification": "开口线性半空间界限、年界、边缘、缺辐射与非法空序列；时段和资格门双突变RED→GREEN",
-    "continueWhen": "独立Expected、相关及全量Vitest、类型与Node22检查通过",
-    "failWhen": "把近似单点包装成完整区间均值或精度保证",
-    "rollback": "离线用例保持隔离，不接正式Care建议",
+    "minimumVerification": "27组合+非法证据+突变RED；Node22全量、CommonJS/ESM和部署包读回",
+    "continueWhen": "829项全绿、类型和构建通过",
+    "failWhen": "将依赖安装或safe盆器状态冒充正式光照或浇水结果",
+    "rollback": "离线模块不接正式建议；依赖按锁定清单可回退",
     "timeLimit": "30分钟检查点"
   },
   "tasks": [
@@ -120,7 +121,7 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 14,
+      "version": 15,
       "priority": "normal",
       "status": "codex running",
       "stage": "验证与持久化读回",
@@ -136,19 +137,20 @@
         ".codex/backend-v2/evidence/E04-solar-direction.json",
         ".codex/backend-v2/evidence/E04-solar-interval-bound.json",
         ".codex/backend-v2/evidence/E04-plant-direct-composition.json",
-        ".codex/backend-v2/evidence/E04-plant-direct-interval.json"
+        ".codex/backend-v2/evidence/E04-plant-direct-interval.json",
+        ".codex/backend-v2/evidence/E04-pot-safety-suncalc.json"
       ],
       "summary": [
-        "E04：完整时段植物点可达性与真实辐射均值回放已接通",
-        "新增27项；去时段界限2项RED、漏资格门1项RED→恢复GREEN",
-        "Care217项；后端全量112文件、797/797通过",
-        "类型与构建通过；Node22独立10项；lint零错误829警告",
-        "仅几何直射范围；玻璃、散射、光谱换算及正式策略待验收"
+        "E04：实际内盆、几何与排水三值安全判定已实现",
+        "新增32项；未知排水误判safe的突变RED→还原GREEN",
+        "后端113文件829/829；Node22全量829/829，类型构建通过",
+        "SunCalc 2.1.0已批准安装；Node22导入及四个部署包读回通过",
+        "太阳计算替换及时段界限、保水策略与DMN行为仍待验收"
       ],
       "blockingReason": null,
-      "nextAction": "核验散射与光谱换算的已确认参数及准入；pending部分不设默认，独立盆器回放继续推进",
-      "ticketReadback": "Chrome当前E04/E06票codex running，完整五行评论1100440000089704已读回",
-      "milestoneCommit": "c6c303c2"
+      "nextAction": "按完整日照模型切换SunCalc太阳位置；独立验证角度及完整时段界限，不套NOAA界限",
+      "ticketReadback": "版本15待同步；上一版本14已读回",
+      "milestoneCommit": "420d8ddf"
     }
   ],
   "queue": [
@@ -314,8 +316,8 @@
     "runner": "cloudfunctions-v2 已锁定 Vitest",
     "testDirectory": "cloudfunctions-v2/test/",
     "lastResult": {
-      "passed": 797,
-      "total": 797,
+      "passed": 829,
+      "total": 829,
       "skipped": 0
     }
   },
@@ -422,5 +424,19 @@
       "architecture/manifest.json 该配置SHA"
     ],
     "scope": "不展开其他架构或配置"
+  },
+  "potReadAdmission": {
+    "layers": {
+      "L0": "architecture abstract提供领域导航，无盆器准入配置条目",
+      "L1": "architecture及layers overview定位cultivation，不含配置字段",
+      "L2": "l2-02与care-decision-model确认实际种植系统边界，不提供盆器安全具体配置登记"
+    },
+    "missing": "新增三值盆器安全硬规则的机器登记和中文条目",
+    "localAllowed": [
+      "configuration-variable-catalog.json的care.cultivation.pot_safety单项",
+      "configuration-variable-catalog.md新增对应条目",
+      "architecture/manifest.json配置文件哈希"
+    ],
+    "scope": "不读其余领域或sourceRefs"
   }
 }

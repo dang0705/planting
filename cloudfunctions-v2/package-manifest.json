@@ -6,7 +6,8 @@
   "productionDependencies": {
     "ajv": "8.20.0",
     "mysql2": "3.24.4",
-    "pino": "10.3.1"
+    "pino": "10.3.1",
+    "suncalc": "2.1.0"
   },
   "artifacts": {
     "dist/server.cjs": "5a47260aa0290ba71ddfc30e0f14e3cf6f7abac75f744240161a64fde2e4a219"
@@ -1115,6 +1116,12 @@
     "node_modules/sql-escaper/lib/types.d.ts",
     "node_modules/sql-escaper/lib/types.js",
     "node_modules/sql-escaper/package.json",
+    "node_modules/suncalc/LICENSE",
+    "node_modules/suncalc/README.md",
+    "node_modules/suncalc/index.d.ts",
+    "node_modules/suncalc/index.js",
+    "node_modules/suncalc/package.json",
+    "node_modules/suncalc/suncalc.cjs",
     "node_modules/thread-stream/.claude/settings.local.json",
     "node_modules/thread-stream/.github/dependabot.yml",
     "node_modules/thread-stream/.github/workflows/ci.yml",

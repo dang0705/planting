@@ -4813,6 +4813,29 @@
       "clickUpTicketId": "z8v0kmr973",
       "expected": "Unix秒不加地点偏移；标签为此前小时或15分钟均值的结束时刻，缺段不补零",
       "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "care.cultivation.pot_safety",
+      "chineseName": "实际内盆、几何与排水证据准入",
+      "domain": "care",
+      "layer": "hard_rule",
+      "valueType": "object",
+      "unit": "三值证据及安全状态",
+      "status": "hard_rule",
+      "currentValue": "内盆和几何均确认后才能判断排水；未知不赋默认；安全不等于浇水许可",
+      "owner": "care",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/pot-safety-contract.md"
+      ],
+      "consumers": [
+        "care 离线盆器回放"
+      ],
+      "changePolicy": "硬规则不可被配置覆盖；变更须更新合同、独立Expected与模型版本",
+      "fallback": "证据不足返回 insufficient_evidence；非法类型拒绝",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "expected": "27种三值组合匹配独立准入合同；未知排水不得当有效",
+      "decisionGroup": "hard_business_rule"
     }
   ],
   "providerProfiles": [

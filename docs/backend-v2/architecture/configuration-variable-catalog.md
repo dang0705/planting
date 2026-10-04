@@ -324,3 +324,7 @@
 ### 辐射区间归一化硬规则
 
 `care.lighting.open_meteo_interval_semantics`：官方小时／15分钟均值属于标签之前的时段；Unix秒为UTC，不再次加地点偏移。瓦每平方米与来源语义不可配置，缓存、超时和重试尚不在本离线增量中启用。来源：辐射区间归一化内部合同；原票 `z8v0kmr973`。
+
+### `care.cultivation.pot_safety`｜实际内盆、几何与排水证据准入
+
+不可配置硬规则；P4 care，票据 z8v0kmr973。三值证据不填默认；内盆和几何均确认后才能判断排水；安全不等于浇水许可。依据与 Expected：`cloudfunctions-v2/models/care/pot-safety-contract.md`，27 种组合及非法类型、不可变输入验证。无参数或倍率发布。

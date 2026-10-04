@@ -1,0 +1,76 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "verifiedAt": "2026-10-04T12:46:35.313778+00:00",
+  "scope": "盆器三值证据安全判定及已批准SunCalc 2.1.0安装与部署包依赖登记",
+  "testClassification": "L1 unit_fake；无替身、无Provider、无数据库；不证明现场测量",
+  "expectedSources": [
+    "批准整体计划第六节",
+    "cloudfunctions-v2/models/care/pot-safety-contract.md"
+  ],
+  "testFirst": {
+    "path": "先落32项可执行Expected，后实现；缺模块初始RED不作为行为证据；将未知排水改为safe，独立用例RED，完整还原后GREEN",
+    "behaviorRed": "内盆=true 几何=true 排水=null → insufficient_evidence",
+    "logs": [
+      "/tmp/planting-pot-safety-mutation-red.log",
+      "/tmp/planting-pot-suncalc-full-green.log"
+    ]
+  },
+  "results": {
+    "newTests": 32,
+    "fullTests": 829,
+    "fullFiles": 113,
+    "skipped": 0,
+    "node22Version": "22.21.1",
+    "node22FullVitest": "829/829 passed",
+    "typecheck": "passed",
+    "build": "passed",
+    "lintErrors": 0,
+    "lintWarnings": 831
+  },
+  "dependency": {
+    "name": "suncalc",
+    "version": "2.1.0",
+    "approval": "用户明确批准安装此版本",
+    "runtimeDependencies": 0,
+    "weeklyDownloads": 457771,
+    "downloadPeriod": "2026-09-27/2026-10-03",
+    "registryLastModified": "2026-10-01",
+    "osvQuery": "未返回该版本已知漏洞",
+    "npmAudit": "0 vulnerabilities",
+    "node22Commonjs": "passed",
+    "node22Esm": "passed",
+    "builtPackages": [
+      "deployment",
+      "identity",
+      "plant-knowledge",
+      "user-plant"
+    ],
+    "alternative": "现有NOAA近似只作为实验回放候选；正式太阳计算拟改为SunCalc",
+    "source": "https://github.com/mourner/suncalc",
+    "boundary": "getPosition为度、北起顺时针、折射校正高度；NOAA变化率界限不得套用"
+  },
+  "riskMatrix": {
+    "U1": "null未知及缺失非法输入",
+    "U2": "全部27种三值组合",
+    "U3": "拒绝数字、字符串、对象等非法证据",
+    "U4": "纯计算确定性，无写操作",
+    "U5": "输入冻结且不修改",
+    "U6": "N/A 无共享可变状态",
+    "U7": "N/A 不持有源与本地编辑态"
+  },
+  "notVerified": [
+    "SunCalc替换现有NOAA运行调用",
+    "SunCalc对应完整时段界限",
+    "尺寸及实际体积计算",
+    "保水倍率或正式浇水建议",
+    "DMN兼容引擎及Modeler往返",
+    "真实CloudBase部署或HTTP养护闭环"
+  ],
+  "sourceHashes": {
+    "cloudfunctions-v2/src/care/cultivation/evaluate-pot-safety.ts": "71e15772724f39aaa24281fa40b8fa6cd05fd1765d8529c259aa0bd46be1cdee",
+    "cloudfunctions-v2/package.json": "d1f21ef313368d6c7b1787eb9fe691df0b427c4dc8a374ccab84d0450dc40938",
+    "cloudfunctions-v2/package-lock.json": "d4e56aeb714ad6a1c0a68f86ccf1486849b328929f8b5c23d48d7fd5795db9c2",
+    "cloudfunctions-v2/scripts/build.mjs": "a0f9e70235aec1ea44ca65d7918e84e187560af0d913a772a2aa31b5607f3017"
+  }
+}

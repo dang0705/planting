@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T12:24:48.274875+00:00",
-  "sourceRevision": 27,
-  "sourceUpdatedAt": "2026-10-04T12:24:48.274875+00:00",
+  "generatedAt": "2026-10-04T12:46:35.313778+00:00",
+  "sourceRevision": 28,
+  "sourceUpdatedAt": "2026-10-04T12:46:35.313778+00:00",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -114,16 +114,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 14,
+      "version": 15,
       "status": "codex running",
       "stage": "验证与持久化读回",
       "accepted": false,
       "summary": [
-        "E04：完整时段植物点可达性与真实辐射均值回放已接通",
-        "新增27项；去时段界限2项RED、漏资格门1项RED→恢复GREEN",
-        "Care217项；后端全量112文件、797/797通过",
-        "类型与构建通过；Node22独立10项；lint零错误829警告",
-        "仅几何直射范围；玻璃、散射、光谱换算及正式策略待验收"
+        "E04：实际内盆、几何与排水三值安全判定已实现",
+        "新增32项；未知排水误判safe的突变RED→还原GREEN",
+        "后端113文件829/829；Node22全量829/829，类型构建通过",
+        "SunCalc 2.1.0已批准安装；Node22导入及四个部署包读回通过",
+        "太阳计算替换及时段界限、保水策略与DMN行为仍待验收"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -136,18 +136,23 @@
         ".codex/backend-v2/evidence/E04-solar-direction.json",
         ".codex/backend-v2/evidence/E04-solar-interval-bound.json",
         ".codex/backend-v2/evidence/E04-plant-direct-composition.json",
-        ".codex/backend-v2/evidence/E04-plant-direct-interval.json"
+        ".codex/backend-v2/evidence/E04-plant-direct-interval.json",
+        ".codex/backend-v2/evidence/E04-pot-safety-suncalc.json"
       ],
       "blockingReason": null,
-      "nextAction": "核验散射与光谱换算的已确认参数及准入；pending部分不设默认，独立盆器回放继续推进",
+      "nextAction": "按完整日照模型切换SunCalc太阳位置；独立验证角度及完整时段界限，不套NOAA界限",
       "sync": {
         "version": 14,
         "status": "codex running",
-        "matched": true,
+        "matched": false,
         "readback": "Chrome当前E04/E06票codex running，完整五行评论1100440000089704已读回"
       }
     }
   ],
   "lastSuccessfulSyncAt": "2026-10-04T12:26:14.710413+00:00",
-  "lastFailure": null
+  "lastFailure": {
+    "ticketId": "z8v0kmr973",
+    "reason": "版本15评论发送尚无新comment ID读回；保留版本14确认状态，不重发",
+    "at": "2026-10-04T12:47:40.890460+00:00"
+  }
 }

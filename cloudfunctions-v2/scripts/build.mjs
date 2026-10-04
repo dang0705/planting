@@ -30,7 +30,7 @@ const functionEntries = [
 ]
 
 /** 生产依赖锁定版本；必须与 package.json 的 dependencies 完全一致。 */
-const productionDependencies = { ajv: '8.20.0', mysql2: '3.24.4', pino: '10.3.1' }
+const productionDependencies = { ajv: '8.20.0', mysql2: '3.24.4', pino: '10.3.1', suncalc: '2.1.0' }
 
 /**
  * mysql2 把 `@types/node` 声明为运行时依赖，但运行时从不加载它；这两个纯类型包在
