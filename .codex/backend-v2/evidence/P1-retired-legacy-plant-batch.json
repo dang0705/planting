@@ -3,7 +3,7 @@
   "taskTitle": "[P1] 植物分类与身份准入硬门",
   "url": "https://app.clickup.com/t/90182453517/z8v0kmr9gm",
   "disposition": "archived_scope_cancelled",
-  "verifiedAt": "2026-10-04T21:58:25.076268+00:00",
+  "verifiedAt": "2026-10-04T22:28:08.916034+00:00",
   "authorization": "用户批准检查后关闭或归档不再适用的任务",
   "reason": "Tropicals已承接目录与百科；旧200条及后续106条自建候选批次退出，不再补证据或导入",
   "databaseEvidence": "用户确认原自建植物表已从qinghuazhi_v2_test删除；本轮未独立查询数据库或执行删除",
@@ -19,9 +19,10 @@
     "restoreControl": "Unarchive",
     "dispositionCommentVisible": true,
     "dispositionCommentId": "1100440000090414",
-    "taskTitleConfirmed": true
+    "taskTitleConfirmed": true,
+    "fullVisibleTaskDescriptionReviewed": true
   },
   "rollback": "需要恢复时由用户明确指示取消归档；恢复不构成旧数据导入或发布授权",
   "reviewConclusion": "旧200条/106条候选证据批次已取消归档，不作为当前重构前置；保留当前身份确认与发布隔离规则",
-  "reviewedAfterMilestoneCommit": "ee88b9a6"
+  "reviewedAfterMilestoneCommit": "a6c7124f"
 }
