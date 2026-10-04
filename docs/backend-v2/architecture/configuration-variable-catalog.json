@@ -4959,6 +4959,29 @@
       "ticketTitle": "[E05][P4] 固定/动态问诊与小青工具",
       "expected": "输入证据摘要及发生时间可核验；公开建议与四门通过轨迹逐项一致",
       "decisionGroup": "diagnosis_releases"
+    },
+    {
+      "id": "diagnosis.knowledge.publication_contract",
+      "chineseName": "兼容知识发布包与原子切换硬规则",
+      "domain": "diagnosis",
+      "layer": "hard_rule",
+      "valueType": "string",
+      "status": "hard_rule",
+      "currentValue": "diagnosis-knowledge-release/v1",
+      "owner": "diagnosis",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/diagnosis/knowledge-publication-contract.md"
+      ],
+      "consumers": [
+        "诊断知识发布用例与Repository"
+      ],
+      "changePolicy": "结构演进使用新合同；同键重放、原样审核、撤销检查与指针并发不可配置",
+      "fallback": "前置不可用停止发布；并发冲突回滚；未知提交只读对账",
+      "phase": "P4",
+      "ticketId": "z8v0kmr974",
+      "ticketTitle": "[E05][P4] 固定/动态问诊与小青工具",
+      "expected": "发布/指针/审计原子持久化；重复命令不重复切换；失败不遗留半个发布",
+      "decisionGroup": "diagnosis_releases"
     }
   ],
   "providerProfiles": [

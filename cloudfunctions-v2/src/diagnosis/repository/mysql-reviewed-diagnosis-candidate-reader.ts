@@ -150,7 +150,7 @@ export function createMysqlReviewedDiagnosisCandidateReader(candidateSchema: obj
         throw e
       }
       const revocations = await tx.connection.query(
-        'SELECT v.revocation_ref FROM diagnosis_review_revocations v JOIN diagnosis_review_attestations a ON a.id=v.target_review_internal_id WHERE BINARY a.review_ref=BINARY ?',
+        'SELECT v.revocation_ref FROM diagnosis_review_revocations v JOIN diagnosis_review_attestations a ON a.id=v.target_review_internal_id WHERE BINARY a.review_ref=BINARY ? FOR SHARE',
         [reviewRef]
       )
       if (revocations.length > 0) {

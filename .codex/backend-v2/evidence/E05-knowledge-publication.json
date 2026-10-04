@@ -1,0 +1,82 @@
+{
+  "ticketId": "z8v0kmr974",
+  "step": "E05",
+  "verifiedAt": "2026-10-04T18:38:15.203817+00:00",
+  "accepted": false,
+  "scope": "兼容知识发布包结构、受控依赖复核与原子发布/指针/审计；审核撤销当前读修复",
+  "contract": "cloudfunctions-v2/models/diagnosis/knowledge-publication-contract.md",
+  "tdd": {
+    "initialModuleRed": "/tmp/planting-e05-knowledge-publication-red.log",
+    "dependencyMutation": {
+      "failed": 2,
+      "passed": 9,
+      "mutation": "绕过候选准备的来源/题包依赖验证",
+      "restored": true,
+      "log": "/tmp/planting-e05-knowledge-publication-mutation.log"
+    },
+    "classicMysqlRed": {
+      "failed": 1,
+      "passed": 6,
+      "case": "事务先建立旧快照后撤销提交，普通读漏撤销",
+      "log": "/tmp/planting-e05-publication-revocation-snapshot-red.log"
+    },
+    "restoredUnit": {
+      "tests": 11,
+      "log": "/tmp/planting-e05-knowledge-publication-restored.log"
+    }
+  },
+  "verification": {
+    "realMysql": {
+      "files": 2,
+      "tests": 10,
+      "log": "/tmp/planting-e05-publication-revocation-snapshot-green.log",
+      "path": "实际009候选/审核/发布/指针/审计与010撤销表DDL→mysql2→事务→发布应用及Reader→完整收据读回",
+      "coverage": [
+        "原样完整包摘要",
+        "同键重放与异参冲突",
+        "并发旧指针仅一方成功",
+        "审计故障全部回滚",
+        "真实提交后响应丢失使用新连接对账",
+        "撤销后新命令拒绝/历史命令仅重放",
+        "旧快照之后撤销仍由FOR SHARE当前读发现"
+      ],
+      "replacedBoundaries": [
+        "CMS管理员授权及协议为结构制品",
+        "题包/来源/许可依赖Reader为明确替身",
+        "园艺正文是已冻结Schema的结构制品"
+      ]
+    },
+    "rootUnit": {
+      "files": 159,
+      "tests": 1414,
+      "log": "/tmp/planting-e05-publication-final-docsync-root.log"
+    },
+    "node22Unit": {
+      "runtime": "v22.21.1",
+      "files": 159,
+      "tests": 1414,
+      "log": "/tmp/planting-e05-publication-final-node22-vitest.log"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-publication-final-typecheck.log"
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 1948,
+      "log": "/tmp/planting-e05-publication-final-lint.log"
+    },
+    "build": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-publication-final-build.log",
+      "boundary": "既有锁定依赖重建函数包；未安装新增依赖。最终仅补类型注释及内部Reader SQL当前读，不是部署或新发布HTTP证明"
+    }
+  },
+  "unaccepted": [
+    "正式CMS管理员鉴权及已批准协议接线",
+    "真实园艺知识、来源许可/适用性和题包依赖发布",
+    "完整安全回滚/撤销写用例",
+    "诊断规则执行、结果生成及真实结果HTTP"
+  ],
+  "productionChanges": false
+}

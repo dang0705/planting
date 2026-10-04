@@ -55,4 +55,4 @@ CMS 编辑候选 → diagnosis 固定候选修订与完整内容摘要
 
 ## 下一层实施门
 
-P1 已补独立有序 DDL 与审核摘要、跨候选审核、驳回审核、同包活动指针及独立撤销表的本地真实 MySQL 约束验证，证据见[本地空库与外键读回](../audits/evidence/P1-diagnosis-knowledge-ddl-local-mysql.md)和[审核撤销本地证据](../testing/P1-diagnosis-review-revocation-mysql-evidence.md)。候选结构 v1 Schema、候选题包引用闭合及其 TypeScript 测试已落盘，但仍须补齐规则执行语义与 SQL 映射、发布包 Schema、CMS 审核凭据传递和鉴权、所有列的字段字典与类型确认，并把 `DK-01` 至 `DK-09` 中尚缺的 Expected 固定为 TypeScript 测试。应用层的撤销/发布串行化、发布/回滚事务、并发切换、失败恢复和历史结果回放尚未实现；CloudBase CMS 的真实接口/权限、端到端发布和 HTTP 诊断仍须分别读回验证，不能用静态 DDL 或本地 MySQL 绿灯冒充完成。
+P1 的009/010 DDL保留候选、精确审核、同包发布、活动指针和独立撤销事实约束。E05已实现原样审核候选读取、审核锁及撤销当前读、内部 `diagnosis-knowledge-release/v1` 包结构、候选与包双摘要、单事务发布/指针/审计、同键重放和未知提交新连接只读对账，隔离真实MySQL验证见 `.codex/backend-v2/evidence/E05-knowledge-publication.json`。这组验证替换了CMS身份、审核协议、来源/许可依赖和园艺内容，不能视为正式知识发布验收。规则执行语义、真实依赖与题包兼容准入、CMS凭据传递和鉴权、完整字段字典、回滚与撤销写用例以及真实HTTP诊断仍须分别完成；历史结果保持当时不可变包引用，不能用当前活动指针改写。
