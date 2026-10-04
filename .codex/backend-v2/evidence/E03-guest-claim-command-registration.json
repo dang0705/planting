@@ -1,0 +1,55 @@
+{
+  "scope": "E03游客认领requested命令登记与原命令引用重放",
+  "ticketId": "z8v0kmr9mj",
+  "verifiedAt": "2026-10-04T22:17:52.157181+00:00",
+  "contextEvidence": ".codex/backend-v2/evidence/E03-guest-claim-context.json",
+  "configurationDecision": "无新增配置或默认；不实现processing租约；租约时长未登记确认，需要独立依据/确认后才进入处理阶段",
+  "expectedSource": "cloudfunctions-v2/models/user-plant/guest-claim-command-registration-contract.md",
+  "authoritySource": "guest-session-claim/v1状态机/命令claim_ref唯一事实源；003认领四表的精确已冻结约束",
+  "testFirst": {
+    "repositoryMissingModuleRed": "/tmp/planting-e03-guest-command-red.log",
+    "sqlMissingModuleRed": "/tmp/planting-e03-guest-registration-mysql-initial.log",
+    "missingModuleIsBusinessRed": false,
+    "strictProofResultClassicRed": "/tmp/planting-e03-guest-command-proof-result-red.log",
+    "strictProofResultFailed": 2,
+    "finalTargetClassicRed": "/tmp/planting-e03-guest-command-final-target-red.log",
+    "finalTargetFailed": 1,
+    "unitGreen": "/tmp/planting-e03-guest-command-unit-green.log",
+    "repositoryExpectedOrder": "独立SQL Expected落盘后恢复Repository；缺模块RED不视为业务反例"
+  },
+  "mutation": {
+    "hashMismatchRed": "/tmp/planting-e03-guest-registration-hash-mutation-red.log",
+    "failedScenarios": 1,
+    "restoredRepositorySha256BeforeFinalTargetGuard": "077fe510b2220a1e267cf9b2e9e004b2b7c186913b228b854336921ef44bdfe3"
+  },
+  "verification": {
+    "unitFake": 10,
+    "realMysqlBeforeFinalGuard": 16,
+    "realMysqlAfterFinalGuard": 16,
+    "rootFiles": 187,
+    "rootUnitTests": 1792,
+    "node22UnitTests": 1792,
+    "typecheckExit": 0,
+    "lintErrors": 0,
+    "lintWarnings": 2802,
+    "buildExit": 0,
+    "currentRepositorySha256": "222301cbae854470bc0e23ebd2ad1f95c79cdf44ccae67a43cb9b320c849c5f2",
+    "finalLogPrefix": "/tmp/planting-e03-guest-registration-final-"
+  },
+  "boundaries": [
+    "registered只供内部编排，不是公开成功认领响应",
+    "真实MySQL四表使用已冻结DDL；users/user_plants为明确缩减外键归属夹具，不代表完整聚合迁移",
+    "匿名身份/登录/策略输入为夹具，未证明Provider真实验真",
+    "只登记requested，processing/completed/failed原命令不被修改，不新建植物/成功事实/owner投影",
+    "无生产DDL/部署/删除"
+  ],
+  "remaining": [
+    "确认并登记processing租约策略",
+    "接认领取得租约与目标/事实同事务完成",
+    "提交未知只读核对",
+    "真实匿名/登录适配与公开HTTP",
+    "完整E03验收"
+  ],
+  "accepted": false,
+  "buildBoundary": "Node22构建通过，子npmNode24产生25次引擎警告；未证明CloudBase实际运行"
+}
