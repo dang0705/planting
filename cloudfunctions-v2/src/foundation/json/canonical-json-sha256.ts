@@ -56,6 +56,12 @@ export function serializeCanonicalJson(value: CanonicalJsonValue): string {
   }
 
   if (typeof value === 'object') {
+    // 输入是纯 JSON 树，不接受 Date、Map 或类实例被 Object.keys 悄悄压成空对象。
+    // 无原型字典仍是纯键值记录；嵌套对象经递归执行相同检查。
+    const prototype = Object.getPrototypeOf(value)
+    if (prototype !== Object.prototype && prototype !== null) {
+      throw new TypeError('规范 JSON 摘要只接受纯对象，不接受日期、集合或类实例。')
+    }
     const members = Object.keys(value)
       .sort()
       .map(key => {

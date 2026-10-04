@@ -34,19 +34,19 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 20,
+      "version": 21,
       "status": "codex running",
-      "note": "E04：长期输入快照Repository→真实MySQL读回已接通\n真实MySQL8场景；归属、摘要突变各1项RED→恢复GREEN\nNode22数据库8项；后端902/902；类型与构建通过\n数据库拒绝改写；新事实追加；读回原清单可回放盆器\n派生表、发布策略和正式HTTP仍未验收，不标Done",
-      "commentId": "1100440000089873",
-      "commentFingerprint": "bd95f561a51c9f1ac449eda90064eb811d26e6ec11570eaf94a6ed7a235896b9",
-      "readback": "Chrome状态codex running及完整五行评论1100440000089873已读回"
+      "note": "E04：修复非JSON对象被摘要压为空清单的真实缺陷\n独立7场景；修复前5项RED→修复后GREEN\n后端119文件909/909；真实MySQL8项；Node22新7项\nDate、Map、Set及类实例拒绝；合法JSON摘要保持一致\n派生存储与正式策略未验收，整票仍进行中",
+      "commentId": "1100440000089901",
+      "commentFingerprint": "9378cd0638486c02d71b123d87ea3f38235c15f604dc4df82288932a14f16bf4",
+      "readback": "Chrome状态codex running及完整五行评论1100440000089901已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T13:19:10.692948+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T13:22:07.618911+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "c48182ca3a007a4a6590c1cfbc874e952cb726058c3f2e384a5224a84a06a4b1",
-    "sourceRevision": 33,
-    "sourceUpdatedAt": "2026-10-04T13:18:40.859196+00:00"
+    "fingerprint": "0260238178387a7325523d0246c48d39eede0d4b9a050f680c8f88c15513520d",
+    "sourceRevision": 34,
+    "sourceUpdatedAt": "2026-10-04T13:21:34.331797+00:00"
   }
 }

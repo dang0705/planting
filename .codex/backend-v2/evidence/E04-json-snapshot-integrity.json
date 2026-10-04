@@ -1,0 +1,57 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "accepted": false,
+  "milestone": "修复非JSON对象被清单摘要压为空对象",
+  "updatedAt": "2026-10-04T13:21:34.331797+00:00",
+  "expectedSource": "CanonicalJsonValue纯JSON类型边界与不可变快照输入完整性合同",
+  "tdd": {
+    "path": "classic",
+    "red": {
+      "failed": 5,
+      "passed": 2,
+      "log": "/tmp/planting-care-json-class-red.log",
+      "beforeProductChange": true
+    },
+    "green": {
+      "newCases": 7,
+      "fullBackend": 909,
+      "files": 119,
+      "log": "/tmp/planting-care-json-full-green.log"
+    }
+  },
+  "realMysql": {
+    "passed": 8,
+    "scope": "实际快照Repository→隔离MySQL；非法Date在写入前拒绝；非HTTP验收",
+    "log": "/tmp/planting-care-json-mysql-green.log"
+  },
+  "node22": {
+    "version": "22.21.1",
+    "passed": 7,
+    "log": "/tmp/planting-care-json-node22-green.log"
+  },
+  "typecheck": {
+    "exitCode": 0,
+    "log": "/tmp/planting-care-json-typecheck.log"
+  },
+  "lint": {
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 947,
+    "log": "/tmp/planting-care-json-lint.log"
+  },
+  "build": {
+    "exitCode": 0,
+    "log": "/tmp/planting-care-json-build.log"
+  },
+  "notAccepted": [
+    "派生结果存储",
+    "正式算法发布和HTTP",
+    "Ephemeral内联持久化"
+  ],
+  "sourceHashes": {
+    "cloudfunctions-v2/src/foundation/json/canonical-json-sha256.ts": "cb8ad16f73a4c71d590db7d8cefce176a935f9cf298269875dc4c149ec558cb7",
+    "cloudfunctions-v2/test/care/canonical-json-snapshot-integrity.spec.ts": "e1e6f485b05cc57e5f06a3e6a8ae423b19828c72cf1685332250eb3a3ac4e07d",
+    "cloudfunctions-v2/test/e2e/care-environment-snapshot.mysql.spec.ts": "e95c667fcb8d1ec36751396dee0d1d1c2e758e1d19c9aa299db11f5240eb2c8c"
+  }
+}

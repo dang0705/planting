@@ -132,7 +132,7 @@ describe('unit_real_data 长期养护输入快照不可变持久化', () => {
   })
 
   it('非法时间、缺失 JSON 或非有限值在写入前拒绝', async () => {
-    for (const override of [{ validUntilMs: 3000 }, { evidenceWindowStartMs: -1 }, { careContextVersion: 0 }, { inputManifest: null }, { inputManifest: { bad: NaN } }]) {
+    for (const override of [{ validUntilMs: 3000 }, { evidenceWindowStartMs: -1 }, { careContextVersion: 0 }, { inputManifest: null }, { inputManifest: { bad: NaN } }, { inputManifest: { bad: new Date('2026-10-04T00:00:00Z') } }]) {
       await expect(append({ ...snapshot, ...override } as never)).rejects.toThrow()
     }
   })

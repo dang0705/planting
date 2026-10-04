@@ -1,20 +1,20 @@
 {
-  "revision": 33,
+  "revision": 34,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-04T13:18:40.859196+00:00",
+  "updatedAt": "2026-10-04T13:21:34.331797+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "E04长期环境输入快照不可变Repository与实际数据库读回",
+    "goal": "修复快照摘要非JSON输入损失",
     "assumptions": [
-      "已有快照DDL为持久化约束，先核验具体结构",
-      "只允许长期用户植物归属；临时结果另走原合同"
+      "JSON树不包含日期集合或类实例",
+      "合法JSON摘要保持兼容"
     ],
-    "minimumVerification": "独立Expected、参数化SQL、归属与哈希校验、隔离MySQL不可变记录读回、后端全量GREEN",
-    "continueWhen": "实际约束与合同一致，读回原记录且修改被拒绝",
-    "failWhen": "创建伪用户植物、用替身宣称数据库闭环或缺少不可变约束",
-    "rollback": "本地隔离库验收，无生产DDL或发布",
-    "timeLimit": "45分钟检查点"
+    "minimumVerification": "独立Expected先落盘、旧实现5项RED、全量GREEN、隔离MySQL拒绝非法Date",
+    "continueWhen": "909全绿、MySQL8项通过、类型与构建通过",
+    "failWhen": "非法对象变成空对象或修改合法JSON摘要",
+    "rollback": "仅回退本次输入校验改动；不改历史数据库或发布指针",
+    "timeLimit": "30分钟检查点"
   },
   "tasks": [
     {
@@ -121,7 +121,7 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 20,
+      "version": 21,
       "priority": "normal",
       "status": "codex running",
       "stage": "验证与持久化读回",
@@ -143,19 +143,20 @@
         ".codex/backend-v2/evidence/E04-suncalc-mean-candidate.json",
         ".codex/backend-v2/evidence/E04-measured-pot.json",
         ".codex/backend-v2/evidence/E04-dry-cycle-replay.json",
-        ".codex/backend-v2/evidence/E04-environment-snapshot.json"
+        ".codex/backend-v2/evidence/E04-environment-snapshot.json",
+        ".codex/backend-v2/evidence/E04-json-snapshot-integrity.json"
       ],
       "summary": [
-        "E04：长期输入快照Repository→真实MySQL读回已接通",
-        "真实MySQL8场景；归属、摘要突变各1项RED→恢复GREEN",
-        "Node22数据库8项；后端902/902；类型与构建通过",
-        "数据库拒绝改写；新事实追加；读回原清单可回放盆器",
-        "派生表、发布策略和正式HTTP仍未验收，不标Done"
+        "E04：修复非JSON对象被摘要压为空清单的真实缺陷",
+        "独立7场景；修复前5项RED→修复后GREEN",
+        "后端119文件909/909；真实MySQL8项；Node22新7项",
+        "Date、Map、Set及类实例拒绝；合法JSON摘要保持一致",
+        "派生存储与正式策略未验收，整票仍进行中"
       ],
       "blockingReason": null,
       "nextAction": "核验回放版本清单及派生结果持久化合同；实验结果与正式发布分开，继续真实MySQL路径",
-      "ticketReadback": "Chrome状态codex running及完整五行评论1100440000089873已读回",
-      "milestoneCommit": "2c329b27"
+      "ticketReadback": "Chrome状态codex running及完整五行评论1100440000089901已读回",
+      "milestoneCommit": "067c1844"
     }
   ],
   "queue": [

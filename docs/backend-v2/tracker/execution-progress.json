@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T13:18:40.859196+00:00",
-  "sourceRevision": 33,
-  "sourceUpdatedAt": "2026-10-04T13:18:40.859196+00:00",
+  "generatedAt": "2026-10-04T13:21:34.331797+00:00",
+  "sourceRevision": 34,
+  "sourceUpdatedAt": "2026-10-04T13:21:34.331797+00:00",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -114,16 +114,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 20,
+      "version": 21,
       "status": "codex running",
       "stage": "验证与持久化读回",
       "accepted": false,
       "summary": [
-        "E04：长期输入快照Repository→真实MySQL读回已接通",
-        "真实MySQL8场景；归属、摘要突变各1项RED→恢复GREEN",
-        "Node22数据库8项；后端902/902；类型与构建通过",
-        "数据库拒绝改写；新事实追加；读回原清单可回放盆器",
-        "派生表、发布策略和正式HTTP仍未验收，不标Done"
+        "E04：修复非JSON对象被摘要压为空清单的真实缺陷",
+        "独立7场景；修复前5项RED→修复后GREEN",
+        "后端119文件909/909；真实MySQL8项；Node22新7项",
+        "Date、Map、Set及类实例拒绝；合法JSON摘要保持一致",
+        "派生存储与正式策略未验收，整票仍进行中"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -142,18 +142,19 @@
         ".codex/backend-v2/evidence/E04-suncalc-mean-candidate.json",
         ".codex/backend-v2/evidence/E04-measured-pot.json",
         ".codex/backend-v2/evidence/E04-dry-cycle-replay.json",
-        ".codex/backend-v2/evidence/E04-environment-snapshot.json"
+        ".codex/backend-v2/evidence/E04-environment-snapshot.json",
+        ".codex/backend-v2/evidence/E04-json-snapshot-integrity.json"
       ],
       "blockingReason": null,
       "nextAction": "核验回放版本清单及派生结果持久化合同；实验结果与正式发布分开，继续真实MySQL路径",
       "sync": {
-        "version": 20,
+        "version": 21,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome状态codex running及完整五行评论1100440000089873已读回"
+        "readback": "Chrome状态codex running及完整五行评论1100440000089901已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T13:19:10.692948+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T13:22:07.618911+00:00",
   "lastFailure": null
 }
