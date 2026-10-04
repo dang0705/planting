@@ -4,6 +4,7 @@ import { createMysqlDiagnosisQuestionSnapshotRepository } from '../../src/diagno
 import { createMysqlDynamicPestReleaseReader } from '../../src/diagnosis/repository/mysql-dynamic-pest-release-reader.js'
 import { calculateCanonicalJsonSha256 } from '../../src/foundation/json/canonical-json-sha256.js'
 import { projectPestQuestionPackage } from '../../src/diagnosis/http/pest-question-public-projection.js'
+import { registerPestIdempotencyMysqlTests } from '../support/pest-creation-idempotency-mysql-cases.js'
 import { spawnSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -99,7 +100,8 @@ beforeAll(async () => {
   )
   for (const [file, tables] of [
     ['003_user_plant.sql', ['user_plant_assets']],
-    ['004_care_diagnosis.sql', ['diagnosis_sessions', 'diagnosis_visual_evidence']]
+    ['004_care_diagnosis.sql', ['diagnosis_sessions', 'diagnosis_visual_evidence']],
+    ['008_foundation.sql', ['http_idempotency_records']]
   ] as const) {
     const ddl = readFileSync(join(root, 'docs/backend-v2/schema', file), 'utf8')
     for (const name of tables) {
@@ -241,7 +243,7 @@ test.each([
 })
 
 /** 分析准备是服务端端口夹具；其余发布、归属、会话、视觉与读回均为真实MySQL。 */
-function atomicCreator(extra: Record<string, unknown> = {}) {
+function atomicDependencies(extra: Record<string, unknown> = {}) {
   const source = createMysql2ConnectionSource({
     host: '127.0.0.1',
     port,
@@ -271,6 +273,11 @@ function atomicCreator(extra: Record<string, unknown> = {}) {
     ...extra
   }
   const run = createPestQuestionSessionInTransaction(deps)
+  return { source, run }
+}
+/** 保留原有原子创建场景的事务入口，不改变其Expected。 */
+function atomicCreator(extra: Record<string, unknown> = {}) {
+  const { source, run } = atomicDependencies(extra)
   return (override: Partial<{ userRef: string; userPlantRef: string; assetRef: string }> = {}) =>
     runDatabaseTransaction(
       createMysqlTransactionDriver(source, () => undefined),
@@ -394,3 +401,5 @@ test('资产内容变化使旧分析准备失效，事务不留下新会话', as
     await db.query("UPDATE user_plant_assets SET content_hash=REPEAT('a',64) WHERE id=1")
   }
 })
+
+registerPestIdempotencyMysqlTests({ atomicDependencies, counts, database: () => db })

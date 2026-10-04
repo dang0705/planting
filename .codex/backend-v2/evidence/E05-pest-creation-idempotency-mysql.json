@@ -1,0 +1,68 @@
+{
+  "ticketId": "z8v0kmr974",
+  "step": "E05",
+  "verifiedAt": "2026-10-04T17:35:54.440220+00:00",
+  "scope": "虫害原子创建共享幂等真实SQL验收",
+  "expectedSource": [
+    "cloudfunctions-v2/models/diagnosis/pest-creation-idempotency-contract.md",
+    "用户批准的并发唯一创建、事务回滚与未知提交只读对账规则"
+  ],
+  "proofBoundary": {
+    "level": "unit_real_data/L3",
+    "database": "隔离Docker mysql:8.4，生命周期由测试创建/删除",
+    "realPath": "真实Foundation事务/账本及新连接对账→资产归属→活动虫害发布→实际选题→会话/视觉原子写入与读回→首次响应持久化",
+    "schema": "003资产、004会话/视觉、007发布、008共享幂等表、019长期会话约束",
+    "replaced": "users/user_plants仅为外键归属夹具；分析准备与公开响应投影为受控端口场景",
+    "notProven": [
+      "正式虫害HTTP",
+      "真实视觉Provider或兼容模型/Prompt发布",
+      "临时案例与完整诊断结果旅程",
+      "生产部署"
+    ]
+  },
+  "newScenes": [
+    "重放首次题包且不读取失效的新活动发布",
+    "同键换资产409且不追加业务记录",
+    "真实并发同键仅一组会话/视觉与同一响应",
+    "响应账本保存后故障三表全部回滚",
+    "真实提交确认丢失后新连接只读对账，不重复创建"
+  ],
+  "checks": {
+    "mysql": {
+      "files": 2,
+      "passed": 83,
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-pest-creation-idempotency-mysql.log"
+    },
+    "fullUnit": {
+      "files": 151,
+      "passed": 1327,
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-pest-mysql-full-ut.log"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-pest-creation-mysql-typecheck.log"
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 1732,
+      "log": "/tmp/planting-e05-pest-creation-mysql-lint.log"
+    }
+  },
+  "mutation": {
+    "break": "移除共享幂等replay早返回",
+    "failed": 3,
+    "passed": 36,
+    "log": "/tmp/planting-e05-pest-creation-mysql-mutation.log",
+    "restoration": "产品文件与提交7d3f778a内容一致；git diff --exit-code为0，恢复后两组真实SQL83项与全量1327项通过"
+  },
+  "tdd": "本轮仅测试与验证，未新增产品行为；新反向测试执行真实SQL突变RED并完整恢复GREEN",
+  "configurationDecision": "无新配置、期限、Provider、DDL或生产默认值",
+  "nextAction": "冻结虫害公开创建DTO及零题响应，再接已有幂等创建用例；正式准备适配器与模型/Prompt溯源仍须准入",
+  "ticketReadback": {
+    "commentId": "1100440000090435",
+    "status": "codex running",
+    "note": "E05虫害原子创建共享幂等已通过真实MySQL验收\n同键并发只建一次；换图409；会话/视觉/账本共同回滚\n两组真实SQL83项，全量1327/1327，类型与lint通过\n重放守卫3项真实SQL突变RED→完整还原后GREEN\n正式虫害HTTP、模型/Prompt溯源和准备准入仍未验收"
+  }
+}
