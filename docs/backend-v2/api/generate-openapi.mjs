@@ -9,6 +9,10 @@ const openapiPath = path.join(apiDirectory, 'openapi.p1.json')
 const manifestPath = path.join(apiDirectory, 'manifest.json')
 const registryText = fs.readFileSync(registryPath, 'utf8')
 const registry = JSON.parse(registryText)
+// 仅在登记结果读取时加载该合同，局部路由生成不依赖无关领域制品。
+const diagnosisResultSchema = registry.routes.some(route => route.responseContract === 'DiagnosisResultResponse')
+  ? JSON.parse(fs.readFileSync(path.join(apiDirectory, '../contracts/schemas/diagnosis-result.v1.schema.json'), 'utf8'))
+  : null
 const printableAsciiPattern = '^[\\x20-\\x7E]+$'
 
 /** 仅为已冻结字段级请求合同提供组件引用；其他合同继续使用严格空对象骨架。 */
@@ -22,6 +26,7 @@ const requestSchemaRefByContract = {
 }
 
 const successSchemaRefByContract = {
+  DiagnosisResultResponse: '#/components/schemas/DiagnosisResultResponse',
   CreateUserPlantResponse: '#/components/schemas/CreateUserPlantSuccess',
   IdentitySessionResponse: '#/components/schemas/CreateIdentitySessionSuccess',
 }
@@ -144,6 +149,10 @@ const openapi = {
       ServiceSignature: serviceHeaderParameter('X-QHZ-Signature', '规范化签名明文的 HMAC-SHA-256 base64url 结果。'),
     },
     schemas: {
+      ...(diagnosisResultSchema ? {
+        DiagnosisResult: diagnosisResultSchema,
+        DiagnosisResultResponse: {type:'object',additionalProperties:false,required:['data'],properties:{data:{$ref:'#/components/schemas/DiagnosisResult'}}},
+      } : {}),
       CreateDiagnosisSessionRequest: {
   "type": "object",
   "additionalProperties": false,

@@ -487,7 +487,8 @@
       "errors": [
         "VALIDATION_FAILED",
         "PRINCIPAL_INVALID",
-        "NOT_FOUND"
+        "NOT_FOUND",
+        "SERVICE_UNAVAILABLE"
       ]
     },
     {

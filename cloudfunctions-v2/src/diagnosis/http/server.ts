@@ -36,6 +36,10 @@ import {
   projectDiagnosisAnswerResponse
 } from './answer-route.js'
 
+import { createGetDiagnosisResult } from '../application/get-diagnosis-result.js'
+import { createMysqlDiagnosisResultRecordRepository } from '../repository/mysql-diagnosis-result-record-repository.js'
+import { createDiagnosisResultRouteHandler, diagnosisResultRoute } from './result-route.js'
+
 /** diagnosis运行接线依赖；身份只由identity域解析，不能由业务正文提供。 */
 export interface DiagnosisServerDependencies {
   /** 真实MySQL连接来源；请求内使用独占事务连接。 */ readonly connectionSource: MysqlConnectionPoolPort<Mysql2QueryConnection>
@@ -46,7 +50,7 @@ export interface DiagnosisServerDependencies {
   ) => void | Promise<void>
   /** 事务回滚失败观测端口。 */ readonly recordRollbackFailure: MysqlRollbackFailureRecorder<Mysql2QueryConnection>
 }
-/** 只组装已实现创建/作答纵向用例；无正式虫害准备，不提供视觉调用默认值。 */
+/** 组装已实现创建、作答及长期植物结果读取用例；无正式虫害准备，不提供视觉调用默认值。 */
 export function createDiagnosisServer(deps: DiagnosisServerDependencies) {
   const source = deps.connectionSource
   const driver = createMysqlTransactionDriver(source, deps.recordRollbackFailure)
@@ -89,6 +93,13 @@ export function createDiagnosisServer(deps: DiagnosisServerDependencies) {
     writeAudit: deps.writeAudit
   }
   const dispatch = createRouteDispatcher([
+    {
+      route: diagnosisResultRoute,
+      handler: createDiagnosisResultRouteHandler({
+        ...deps,
+        getResult: createGetDiagnosisResult(createMysqlDiagnosisResultRecordRepository(source))
+      })
+    },
     {
       route: diagnosisCreationRoute,
       handler: createDiagnosisCreationRouteHandler({ ...protocol, createSession })

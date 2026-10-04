@@ -341,3 +341,5 @@
 `diagnosis.dynamic_pest.tier_question_limits`（E05，原票 `z8v0kmr974`）已由用户明确确认低3、中2、高1、较可信1、直判0；没有已确认策略时不得生成用户题包，不承接原V1无档位默认2题。置信度阈值、轮次及补拍仍须独立确认。来源与回退见机器目录及 `cloudfunctions-v2/models/diagnosis/dynamic-pest-selection-contract.md`。无数值的确定性素材筛选可独立验证。
 
 `diagnosis.knowledge.publication_contract`：兼容知识发布包结构固定为 `diagnosis-knowledge-release/v1`，不可配置。原样候选、精确审核与独立撤销、题包/来源依赖复核、单事务发布/指针/审计、同键重放及未知提交只读对账遵循 `cloudfunctions-v2/models/diagnosis/knowledge-publication-contract.md`；owner：diagnosis；P4／z8v0kmr974。正式知识发布引用仍 pending；结构和本地事务机制通过不代表 CMS 或园艺知识准入。
+
+`diagnosis.result.public_read`：结果只读投影固定为 `diagnosis-result/v1`，不可配置；沿用公共会话路径8至100字符，原知识摘要不一致/撤回、旧行与损坏503，不存在404。owner：diagnosis；P4／z8v0kmr974；合同：`cloudfunctions-v2/models/diagnosis/result-http-contract.md`。不重算或替换历史结果，临时分支未接入不授予资格。

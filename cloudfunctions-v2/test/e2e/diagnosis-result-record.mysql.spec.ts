@@ -207,3 +207,87 @@ test('错配知识摘要拒绝且不新增；损坏完整摘要的行只能返�
     status: 'invalid_record'
   })
 })
+/** unit_real_data：实际diagnosis Server→归属SQL→不可变结果→公开Schema。identity及知识父行/结果生成明确替换，不证明真实平台或审核园艺内容。 */
+async function resultHttp() {
+  const { createDiagnosisServer } = await import('../../src/diagnosis/http/server.js')
+  const principal = {
+    principalType: 'user' as const,
+    user_id: 'usr_owner123',
+    sessionVersion: 1,
+    authenticatedVia: 'wechat' as const,
+    issuedAt: '2026-10-04T00:00:00Z',
+    expiresAt: '2026-10-05T00:00:00Z'
+  }
+  const server = createDiagnosisServer({
+    connectionSource: source,
+    resolvePrincipal: async command =>
+      ({
+        ...principal,
+        user_id: command.bearerToken === 'fixture-owner' ? 'usr_owner123' : 'usr_other123'
+      }) as import('../../src/contracts/types.js').UserPrincipalDto,
+    now: () => 1000,
+    writeAudit: () => {},
+    recordRollbackFailure: () => {}
+  })
+  await new Promise<void>(r => server.listen(0, '127.0.0.1', r))
+  const port = (server.address() as import('node:net').AddressInfo).port
+  return {
+    get: (ref = 'dia_fixture123', token = 'fixture-owner') =>
+      fetch(`http://127.0.0.1:${port}/api/v2/diagnosis/sessions/${ref}/result`, {
+        headers: token ? { authorization: `Bearer ${token}` } : {}
+      }),
+    close: () =>
+      new Promise<void>(r => {
+        server.closeAllConnections()
+        server.close(() => r())
+      })
+  }
+}
+test('实际结果GET：本人结果、他人404、缺凭证401、非法400、旧行及损坏503', async () => {
+  const h = await resultHttp()
+  try {
+    const r = await h.get()
+    expect(r.status).toBe(200)
+    expect(await r.json()).toEqual({ data: resultFixture().publicResult })
+    expect((await h.get('dia_fixture123', 'fixture-other')).status).toBe(404)
+    expect((await h.get('dia_fixture123', '')).status).toBe(401)
+    expect((await h.get('short')).status).toBe(400)
+    expect((await h.get('dia_missing123')).status).toBe(404)
+    expect((await h.get('dia_legacy123')).status).toBe(503)
+    expect((await h.get('dia_corrupt123')).status).toBe(503)
+  } finally {
+    await h.close()
+  }
+})
+test('归档植物可读历史，停用用户不可读；访问不新增诊断记录', async () => {
+  const h = await resultHttp(),
+    [before] = await db.query('SELECT COUNT(*) AS n FROM diagnosis_results')
+  try {
+    await db.query("UPDATE user_plants SET lifecycle_status='archived' WHERE id=1")
+    expect((await h.get()).status).toBe(200)
+    await db.query("UPDATE users SET status='disabled' WHERE id=1")
+    expect((await h.get()).status).toBe(404)
+    const [after] = await db.query('SELECT COUNT(*) AS n FROM diagnosis_results')
+    expect(after).toEqual(before)
+  } finally {
+    await db.query("UPDATE users SET status='active' WHERE id=1")
+    await db.query("UPDATE user_plants SET lifecycle_status='active' WHERE id=1")
+    await h.close()
+  }
+})
+test('原知识撤回或摘要错配时不展示旧建议，也不替换历史结果', async () => {
+  const h = await resultHttp()
+  try {
+    await db.query("UPDATE diagnosis_knowledge_releases SET release_state='withdrawn'")
+    expect((await h.get()).status).toBe(503)
+    await db.query(
+      "UPDATE diagnosis_knowledge_releases SET release_state='published',package_sha256=REPEAT('c',64)"
+    )
+    expect((await h.get()).status).toBe(503)
+  } finally {
+    await db.query(
+      "UPDATE diagnosis_knowledge_releases SET release_state='published',package_sha256=REPEAT('a',64)"
+    )
+    await h.close()
+  }
+})

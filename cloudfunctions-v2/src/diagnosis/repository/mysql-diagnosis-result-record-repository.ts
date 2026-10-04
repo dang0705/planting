@@ -51,6 +51,47 @@ function legacyParts(publicResult: CanonicalJsonObject) {
   }
   return [evidence, conclusion, proposal].map(serializeCanonicalJson)
 }
+/** 复用原样结果记录校验，不由当前知识重算历史内容。 */
+function decodeRows(rows: readonly Record<string, unknown>[]) {
+  if (rows.length === 0) {
+    return { status: 'not_found' as const }
+  }
+  if (rows.length !== 1) {
+    return { status: 'invalid_record' as const }
+  }
+  const r = rows[0]!
+  if (
+    r.record_schema_version === null &&
+    r.public_result_json === null &&
+    r.replay_snapshot_json === null &&
+    r.record_sha256 === null &&
+    r.knowledge_release_ref === null
+  ) {
+    return { status: 'missing_record' as const }
+  }
+  try {
+    const parse = (v: unknown) => (typeof v === 'string' ? (JSON.parse(v) as unknown) : v)
+    const record = lockDiagnosisResultRecord({
+      contractVersion: r.record_schema_version,
+      publicResult: parse(r.public_result_json),
+      replay: parse(r.replay_snapshot_json)
+    })
+    if (
+      r._openid !== '' ||
+      record.recordSha256 !== r.record_sha256 ||
+      record.record.replay.knowledgeReleaseRef !== r.knowledge_release_ref ||
+      record.record.publicResult.contractVersion !== r.result_version
+    ) {
+      return { status: 'invalid_record' as const }
+    }
+    return { status: 'found' as const, record }
+  } catch (e) {
+    if (e instanceof TypeError || e instanceof SyntaxError || e instanceof RangeError) {
+      return { status: 'invalid_record' as const }
+    }
+    throw e
+  }
+}
 /** 单连接/显式事务保存；公开HTTP与知识语义准入由上游负责，当前不开放结果写HTTP。 */
 export function createMysqlDiagnosisResultRecordRepository(
   source: MysqlConnectionPoolPort<Mysql2QueryConnection>
@@ -140,6 +181,32 @@ export function createMysqlDiagnosisResultRecordRepository(
       }
       return 'created'
     },
+    /** 仅凭用户与会话公开引用按归属读取；旧记录及原知识失效明确不可用。 */
+    readForUser: async (userRef: string, diagnosisRef: string) => {
+      reference(userRef)
+      if (
+        typeof diagnosisRef !== 'string' ||
+        [...diagnosisRef].length < 8 ||
+        [...diagnosisRef].length > 100
+      ) {
+        throw new TypeError('会话路径引用非法')
+      }
+      return withReadConnection(source, async c => {
+        const rows = await c.query(
+          `SELECT r.record_schema_version,r.public_result_json,r.replay_snapshot_json,r.record_sha256,r.knowledge_release_ref,r.result_version,r._openid,k.package_sha256 AS knowledge_sha,k.release_state AS knowledge_state FROM diagnosis_results r JOIN diagnosis_sessions s ON s.id=r.diagnosis_session_internal_id JOIN users u ON u.id=s.user_internal_id JOIN user_plants p ON p.id=s.user_plant_internal_id AND p.user_internal_id=s.user_internal_id LEFT JOIN diagnosis_knowledge_releases k ON BINARY k.release_ref=BINARY r.knowledge_release_ref WHERE BINARY u.public_user_id=BINARY ? AND BINARY s.diagnosis_ref=BINARY ? AND u.status='active' AND p.lifecycle_status IN ('active','archived')`,
+          [userRef, diagnosisRef]
+        )
+        const result = decodeRows(rows)
+        if (
+          result.status === 'found' &&
+          (rows[0]!.knowledge_state !== 'published' ||
+            rows[0]!.knowledge_sha !== result.record.record.replay.knowledgePackageSha256)
+        ) {
+          return { status: 'unavailable' as const }
+        }
+        return result
+      })
+    },
     /** 归属读取后重算整个快照；不跟随活动发布重写历史。 */
     read: async (userRef: string, userPlantRef: string, diagnosisRef: string) => {
       for (const ref of [userRef, userPlantRef, diagnosisRef]) {
@@ -150,44 +217,7 @@ export function createMysqlDiagnosisResultRecordRepository(
           `SELECT r.record_schema_version,r.public_result_json,r.replay_snapshot_json,r.record_sha256,r.knowledge_release_ref,r.result_version,r._openid FROM diagnosis_results r JOIN diagnosis_sessions s ON s.id=r.diagnosis_session_internal_id JOIN users u ON u.id=s.user_internal_id JOIN user_plants p ON p.id=s.user_plant_internal_id AND p.user_internal_id=s.user_internal_id WHERE BINARY u.public_user_id=BINARY ? AND BINARY p.public_user_plant_id=BINARY ? AND BINARY s.diagnosis_ref=BINARY ? AND u.status='active' AND p.lifecycle_status IN ('active','archived')`,
           [userRef, userPlantRef, diagnosisRef]
         )
-        if (rows.length === 0) {
-          return { status: 'not_found' as const }
-        }
-        if (rows.length !== 1) {
-          return { status: 'invalid_record' as const }
-        }
-        const r = rows[0]!
-        if (
-          r.record_schema_version === null &&
-          r.public_result_json === null &&
-          r.replay_snapshot_json === null &&
-          r.record_sha256 === null &&
-          r.knowledge_release_ref === null
-        ) {
-          return { status: 'missing_record' as const }
-        }
-        try {
-          const parse = (v: unknown) => (typeof v === 'string' ? (JSON.parse(v) as unknown) : v)
-          const record = lockDiagnosisResultRecord({
-            contractVersion: r.record_schema_version,
-            publicResult: parse(r.public_result_json),
-            replay: parse(r.replay_snapshot_json)
-          })
-          if (
-            r._openid !== '' ||
-            record.recordSha256 !== r.record_sha256 ||
-            record.record.replay.knowledgeReleaseRef !== r.knowledge_release_ref ||
-            record.record.publicResult.contractVersion !== r.result_version
-          ) {
-            return { status: 'invalid_record' as const }
-          }
-          return { status: 'found' as const, record }
-        } catch (e) {
-          if (e instanceof TypeError || e instanceof SyntaxError || e instanceof RangeError) {
-            return { status: 'invalid_record' as const }
-          }
-          throw e
-        }
+        return decodeRows(rows)
       })
     }
   }

@@ -1,19 +1,19 @@
 {
-  "revision": 75,
+  "revision": 76,
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
-  "updatedAt": "2026-10-04T18:38:15.203817+00:00",
+  "updatedAt": "2026-10-04T18:51:28.527276+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "E05兼容知识发布包与原子发布用例",
+    "target": "E05诊断结果归属读取HTTP纵向切片",
     "assumptions": [
-      "审核候选Reader和009/010约束复用",
-      "正式来源/题包依赖必须由受控Reader验证，测试制品不授予生产发布资格"
+      "只返回已锁定公开结果，不把缺记录补成诊断",
+      "游客/登录临时案例必须遵循原合同，缺接线保持未验收"
     ],
-    "minimumValidation": "独立发布包Schema与Expected先落盘；精确审核锁、事务写入、指针并发、重复提交与读回",
-    "continueCondition": "既有合同足以确定发布和幂等行为",
-    "failureCondition": "合同或参数缺失仅冻结所需合同并保留未验收状态，不私设默认值",
-    "rollback": "本地用例回退，既有不可变数据不改写；不执行生产DDL",
+    "minimumValidation": "冻结响应Expected；归属/缺失/损坏/脱敏；真实MySQL与HTTP读回",
+    "continueCondition": "结果路由合同和公开Schema已明确",
+    "failureCondition": "缺归属或记录时拒绝，不产生结果和事实",
+    "rollback": "回退新增本地查询接线，无生产DDL/部署",
     "timeLimitMinutes": 45
   },
   "tasks": [
@@ -200,10 +200,10 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 24,
+      "version": 25,
       "priority": "normal",
       "status": "codex running",
-      "stage": "兼容知识包与原子发布机制验证通过",
+      "stage": "长期植物诊断结果GET真实HTTP与MySQL验证通过",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
@@ -228,19 +228,19 @@
         ".codex/backend-v2/evidence/E05-result-record-storage.json",
         ".codex/backend-v2/evidence/E05-replay-types.json",
         ".codex/backend-v2/evidence/E05-reviewed-candidate-reader.json",
-        ".codex/backend-v2/evidence/E05-knowledge-publication.json"
+        ".codex/backend-v2/evidence/E05-knowledge-publication.json",
+        ".codex/backend-v2/evidence/E05-result-http.json"
       ],
       "summary": [
-        "E05：不可变知识包→发布/活动指针/审计原子写入",
-        "真实MySQL10项：重放、并发、回滚、未知提交对账",
-        "旧快照撤销1项经典RED；依赖准入突变2项RED→恢复",
-        "根及Node22全量1414/1414；类型/构建/lint零错误",
-        "CMS/正式知识与真实结果HTTP未验收，E05仍进行中"
+        "E05：长期植物诊断结果GET→真实MySQL→脱敏响应",
+        "真实HTTP/SQL6项：本人归属、旧行/坏摘要、知识撤回",
+        "撤回守卫突变1项RED→恢复；OpenAPI2项经典RED",
+        "根及Node22全量1422/1422；类型/构建/lint零错误",
+        "临时案例、正式知识及结果生成未验收，E05仍进行中"
       ],
       "blockingReason": null,
-      "nextAction": "接正式CMS审核协议及真实来源/题包依赖，完成安全回滚/撤销和结果生成读取HTTP",
-      "ticketReadback": "Chrome CODEX RUNNING与五行评论1100440000090494已读回",
-      "milestoneCommit": "58ec168c"
+      "nextAction": "继续E05正式审核准入与诊断结果生成；临时案例读取保持待实现",
+      "ticketReadback": "Chrome CODEX RUNNING与五行评论1100440000090507已读回"
     }
   ],
   "queue": [
@@ -344,7 +344,7 @@
       ]
     }
   ],
-  "nextAction": "冻结结果输入与决策轨迹的精确类型，接审核知识兼容发布及结果生成/读HTTP；视觉Provider策略待确认，补Node22运行验证",
+  "nextAction": "继续E05正式审核准入与诊断结果生成；临时案例读取保持待实现",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -930,5 +930,28 @@
       "contracts/diagnosis-knowledge-persistence.md仅下一层实施门的当前发布实现事实更新"
     ],
     "scope": "单一兼容知识发布切片；其他资料不读取"
+  },
+  "diagnosisResultHttpReadAdmission": {
+    "layers": {
+      "L0": "定向结果HTTP召回超时；缓存摘要仅导航",
+      "L1": "定向召回未返回概述；缓存contracts导航无结果响应字段",
+      "L2": "定向召回未返回原文；既有结果记录合同不含HTTP响应包及临时归属接线"
+    },
+    "missing": [
+      "getDiagnosisResult请求/响应字段与状态合同",
+      "已确认HTTP大小限制与查询参数规则"
+    ],
+    "allowed": [
+      "api/route-registry.json仅getDiagnosisResult",
+      "api/generate-openapi.mjs仅DiagnosisSessionPath、DiagnosisResultResponse及所引用公共Schema",
+      "api/openapi.json仅以上Schema对象",
+      "contracts/http-api.md仅公共GET请求/响应规则（按登记sourceRef定位）",
+      "architecture/configuration-variable-catalog.md/json仅共享HTTP与diagnosis相关项",
+      "api/openapi.p1.json仅目标结果操作及Schema制品",
+      "api/generate-openapi.mjs仅结果响应映射/组件装配",
+      "api/manifest.json仅生成制品哈希",
+      "architecture/manifest.json仅配置目录两项哈希"
+    ],
+    "scope": "仅E05结果读取HTTP，不扩大文档包"
   }
 }

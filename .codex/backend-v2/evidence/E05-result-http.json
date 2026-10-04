@@ -1,0 +1,82 @@
+{
+  "ticketId": "z8v0kmr974",
+  "step": "E05",
+  "verifiedAt": "2026-10-04T18:51:28.527276+00:00",
+  "accepted": false,
+  "scope": "长期植物诊断结果归属读取 GET；读取已保存完整记录，不生成诊断",
+  "contract": "cloudfunctions-v2/models/diagnosis/result-http-contract.md",
+  "tdd": {
+    "expectedSource": "已冻结公开diagnosis-result/v1 Schema及本次结果HTTP合同",
+    "initialModuleRed": "/tmp/planting-e05-result-http-red.log",
+    "openapiClassicRed": {
+      "failed": 2,
+      "log": "/tmp/planting-e05-result-openapi-red.log"
+    },
+    "knowledgeWithdrawalMutation": {
+      "failed": 1,
+      "passed": 5,
+      "restored": true,
+      "log": "/tmp/planting-e05-result-http-mutation.log"
+    },
+    "regressionFailuresFixed": "字段TSDoc及局部OpenAPI生成的无关Schema依赖；原Expected未修改"
+  },
+  "verification": {
+    "realMysqlHttp": {
+      "tests": 6,
+      "log": "/tmp/planting-e05-result-http-mysql-final.log",
+      "path": "真实Node HTTP→统一主体端口→应用→mysql2→已保存结果与原知识摘要→公开Schema",
+      "coverage": [
+        "本人读取/他人404",
+        "无凭证401/非法路径400",
+        "缺记录404/旧行和损坏503",
+        "归档植物可读/停用用户拒绝",
+        "原知识撤回或摘要错误503",
+        "读取不新增结果"
+      ],
+      "replacedBoundaries": [
+        "平台验真端口替身",
+        "结果预先保存的结构制品，不是实际诊断生成",
+        "知识发布父表仅结构夹具，非正式CMS审核准入"
+      ]
+    },
+    "rootUnit": {
+      "files": 161,
+      "tests": 1422,
+      "log": "/tmp/planting-e05-result-restored-root-test.log"
+    },
+    "node22Unit": {
+      "runtime": "v22.21.1",
+      "files": 161,
+      "tests": 1422,
+      "log": "/tmp/planting-e05-result-restored-node22-vitest.log"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-result-restored-typecheck.log"
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 1982,
+      "log": "/tmp/planting-e05-result-restored-lint.log"
+    },
+    "build": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-result-restored-build.log"
+    },
+    "node22Artifact": {
+      "health": 200,
+      "resultWithoutBearer": 401,
+      "processExit": 0,
+      "log": "/tmp/planting-e05-result-artifact-probe.json",
+      "boundary": "锁定Node22实际函数制品；受控假连接未访问数据库，探针结束进程退出；不是部署验收"
+    }
+  },
+  "unaccepted": [
+    "游客及登录临时案例结果读取",
+    "真实园艺知识与正式CMS审核准入",
+    "实际诊断推理和结果生成",
+    "发布安全回滚/撤销写用例",
+    "生产部署和真实平台验真"
+  ],
+  "productionChanges": false
+}
