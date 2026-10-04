@@ -1,6 +1,6 @@
 {
   "schemaVersion": "backend-v2-schema/v1",
-  "generatedAt": "2026-10-05T00:17:59.329977+08:00",
+  "generatedAt": "2026-10-04T18:06:29.552223+00:00",
   "database": "CloudBase MySQL",
   "timeStorage": "UTC epoch milliseconds",
   "files": [
@@ -123,6 +123,12 @@
       "owner": "diagnosis",
       "file": "021_dynamic_pest_release_immutability.sql",
       "sha256": "8508411dcdf4ee61d21963fea2326e5506095ed485206ce2d2f854226358ee19"
+    },
+    {
+      "order": 21,
+      "owner": "diagnosis",
+      "file": "022_diagnosis_result_records.sql",
+      "sha256": "a1432c21a9121ca9ebb67bd9bf3adc717621958870d6a9721acbb5c3e4349124"
     }
   ]
 }

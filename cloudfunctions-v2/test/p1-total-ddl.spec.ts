@@ -34,34 +34,102 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
     // 批准的 017 专门迁移 Care v2 类型与临时案例归属；不向其他迁移开放 ALTER。
     const isCareV2Extension = entry.file === '017_care_v2_ephemeral_and_derivations.sql'
     // 本轮批准的019只补两类诊断会话的题包快照；不开放其他结构变更。
-    const isDiagnosisSnapshotExtension = entry.file === '019_diagnosis_question_package_snapshots.sql'
-    if (isDiagnosisSnapshotExtension) {
-      assert.deepEqual([...content.matchAll(/^ALTER TABLE `([^`]+)`/gmu)].map(match => match[1]), [
-        'diagnosis_sessions', 'temporary_diagnosis_sessions'
-      ])
-      assert.deepEqual([...content.matchAll(/ADD COLUMN `([^`]+)`/gu)].map(match => match[1]), [
-        'question_package_snapshot_json', 'question_package_snapshot_sha256',
-        'question_package_snapshot_json', 'question_package_snapshot_sha256'
-      ])
+    const isDiagnosisSnapshotExtension =
+      entry.file === '019_diagnosis_question_package_snapshots.sql'
+    // 022只补结果回放字段和不可变门，不放开其他迁移的ALTER权限。
+    const isDiagnosisResultExtension = entry.file === '022_diagnosis_result_records.sql'
+    if (isDiagnosisResultExtension) {
+      assert.deepEqual(
+        [...content.matchAll(/^ALTER TABLE `([^`]+)`/gmu)].map(match => match[1]),
+        ['diagnosis_results']
+      )
+      assert.deepEqual(
+        [...content.matchAll(/ADD COLUMN `([^`]+)`/gu)].map(match => match[1]),
+        [
+          'record_schema_version',
+          'public_result_json',
+          'replay_snapshot_json',
+          'record_sha256',
+          'knowledge_release_ref'
+        ]
+      )
       assert.doesNotMatch(content, /\b(?:DROP|RENAME|MODIFY|CHANGE|CREATE TABLE)\b/iu)
-      for (const name of ['tr_diagnosis_package_snapshot_insert', 'tr_diagnosis_package_snapshot_update',
-        'tr_temporary_diagnosis_package_snapshot_insert', 'tr_temporary_diagnosis_package_snapshot_update']) {
+      for (const name of [
+        'tr_diag_result_record_insert',
+        'tr_diag_result_record_update',
+        'tr_diag_result_record_delete'
+      ]) {
+        assert.ok(content.includes('CREATE TRIGGER `' + name + '`'))
+      }
+      assert.match(content, /REFERENCES `diagnosis_knowledge_releases` \(`release_ref`\)/u)
+    }
+    if (isDiagnosisSnapshotExtension) {
+      assert.deepEqual(
+        [...content.matchAll(/^ALTER TABLE `([^`]+)`/gmu)].map(match => match[1]),
+        ['diagnosis_sessions', 'temporary_diagnosis_sessions']
+      )
+      assert.deepEqual(
+        [...content.matchAll(/ADD COLUMN `([^`]+)`/gu)].map(match => match[1]),
+        [
+          'question_package_snapshot_json',
+          'question_package_snapshot_sha256',
+          'question_package_snapshot_json',
+          'question_package_snapshot_sha256'
+        ]
+      )
+      assert.doesNotMatch(content, /\b(?:DROP|RENAME|MODIFY|CHANGE|CREATE TABLE)\b/iu)
+      for (const name of [
+        'tr_diagnosis_package_snapshot_insert',
+        'tr_diagnosis_package_snapshot_update',
+        'tr_temporary_diagnosis_package_snapshot_insert',
+        'tr_temporary_diagnosis_package_snapshot_update'
+      ]) {
         assert.ok(content.includes('CREATE TRIGGER `' + name + '`'))
       }
     }
     if (isCareV2Extension) {
-      const alteredTables = [...content.matchAll(/^ALTER TABLE `([^`]+)`/gmu)].map(match => match[1]).sort()
-      assert.deepEqual(alteredTables, [
-        'care_environment_derivations', 'temporary_care_results', 'temporary_care_sessions',
-        'temporary_diagnosis_answers', 'temporary_diagnosis_results', 'temporary_diagnosis_sessions',
-        'temporary_diagnosis_visual_evidence', 'temporary_watering_visual_evidence'
-      ].sort(), 'Care v2 迁移只允许变更批准的派生与临时案例表')
-      assert.doesNotMatch(content, /\b(?:DROP\s+(?:TABLE|COLUMN|DATABASE|INDEX)|RENAME|CHANGE)\b/iu, 'Care v2 迁移不得删除数据结构或重命名字段')
-      assert.deepEqual([...content.matchAll(/\bDROP CHECK `([^`]+)`/gu)].map(match => match[1]), ['ck_environment_derivation_type'])
+      const alteredTables = [...content.matchAll(/^ALTER TABLE `([^`]+)`/gmu)]
+        .map(match => match[1])
+        .sort()
+      assert.deepEqual(
+        alteredTables,
+        [
+          'care_environment_derivations',
+          'temporary_care_results',
+          'temporary_care_sessions',
+          'temporary_diagnosis_answers',
+          'temporary_diagnosis_results',
+          'temporary_diagnosis_sessions',
+          'temporary_diagnosis_visual_evidence',
+          'temporary_watering_visual_evidence'
+        ].sort(),
+        'Care v2 迁移只允许变更批准的派生与临时案例表'
+      )
+      assert.doesNotMatch(
+        content,
+        /\b(?:DROP\s+(?:TABLE|COLUMN|DATABASE|INDEX)|RENAME|CHANGE)\b/iu,
+        'Care v2 迁移不得删除数据结构或重命名字段'
+      )
+      assert.deepEqual(
+        [...content.matchAll(/\bDROP CHECK `([^`]+)`/gu)].map(match => match[1]),
+        ['ck_environment_derivation_type']
+      )
       assert.match(content, /ADD CONSTRAINT `ck_environment_derivation_type` CHECK/u)
       assert.match(content, /CREATE TABLE `care_decision_derivations`/u)
-      for (const prefix of ['care', 'care_result', 'watering', 'diagnosis', 'answer', 'result', 'visual']) {
-        assert.match(content, new RegExp('ADD CONSTRAINT `ck_temporary_' + prefix + '_one_ephemeral_case` CHECK \\('), '临时案例必须保持两类归属互斥约束')
+      for (const prefix of [
+        'care',
+        'care_result',
+        'watering',
+        'diagnosis',
+        'answer',
+        'result',
+        'visual'
+      ]) {
+        assert.match(
+          content,
+          new RegExp('ADD CONSTRAINT `ck_temporary_' + prefix + '_one_ephemeral_case` CHECK \\('),
+          '临时案例必须保持两类归属互斥约束'
+        )
       }
     }
     if (/CREATE TABLE\b/u.test(content)) {
@@ -70,13 +138,20 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
     } else if (isSessionPolicyExtension) {
       assert.match(content, /^ALTER TABLE `user_sessions`\s/mu, '会话策略迁移只扩展既有会话表')
       assert.match(content, /\bADD COLUMN\b/u, '会话策略迁移必须显式新增字段')
-      assert.doesNotMatch(content, /\b(?:DROP|RENAME|MODIFY|CHANGE)\b/iu, '会话策略迁移不得删除或改写既有字段')
+      assert.doesNotMatch(
+        content,
+        /\b(?:DROP|RENAME|MODIFY|CHANGE)\b/iu,
+        '会话策略迁移不得删除或改写既有字段'
+      )
     } else {
       assert.match(content, /CREATE TRIGGER\b/u, `${entry.file} 必须是建表或新增门禁触发器`)
     }
     assert.doesNotMatch(
       content,
-      isSessionPolicyExtension || isCareV2Extension || isDiagnosisSnapshotExtension
+      isSessionPolicyExtension ||
+        isCareV2Extension ||
+        isDiagnosisSnapshotExtension ||
+        isDiagnosisResultExtension
         ? /^(?:DROP|INSERT|UPDATE|DELETE)\b/imu
         : /^(?:DROP|ALTER|INSERT|UPDATE|DELETE)\b/imu,
       `${entry.file} 仅允许经 manifest 顺序化的非破坏性结构变更`

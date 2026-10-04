@@ -4910,6 +4910,29 @@
       "blockingScope": "动态虫害限题与直判，不阻断无数值的确定性素材筛选",
       "decisionGroup": "diagnosis_releases",
       "sourceConfirmation": "本会话用户批准保留这组题数上限；不批准旧置信度阈值、自动直判或发布上线"
+    },
+    {
+      "id": "diagnosis.result.record_schema_version",
+      "chineseName": "完整诊断结果回放记录结构版本",
+      "domain": "diagnosis",
+      "layer": "hard_rule",
+      "valueType": "string",
+      "status": "hard_rule",
+      "currentValue": "diagnosis-result-record/v1",
+      "owner": "diagnosis",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/diagnosis/result-record-contract.md"
+      ],
+      "consumers": [
+        "诊断结果记录锁定及Repository"
+      ],
+      "changePolicy": "不可配置；结构演进通过新合同及顺序迁移，不覆盖历史记录",
+      "fallback": "结构或摘要不匹配时拒绝，不补当前发布",
+      "phase": "P4",
+      "ticketId": "z8v0kmr974",
+      "ticketTitle": "[E05][P4] 固定/动态问诊与小青工具",
+      "expected": "完整公开结果与回放记录一同锁定和计算摘要；旧行保持missing_record",
+      "decisionGroup": "diagnosis_releases"
     }
   ],
   "providerProfiles": [
@@ -5516,6 +5539,13 @@
       "url": "https://app.clickup.com/t/z8v0kmr971",
       "agents": [
         "root"
+      ]
+    },
+    "[E05][P4] 固定/动态问诊与小青工具": {
+      "id": "z8v0kmr974",
+      "url": "https://app.clickup.com/t/z8v0kmr974",
+      "agents": [
+        "diagnosis_terra"
       ]
     }
   },

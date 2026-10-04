@@ -1,0 +1,56 @@
+{
+  "ticket": "z8v0kmr974",
+  "step": "E05",
+  "accepted": false,
+  "stage": "诊断结果结构锁定与持久化基础",
+  "verifiedAt": "2026-10-04T18:09:54.069615+00:00",
+  "expectedSource": [
+    "已冻结diagnosis-result/v1 Schema",
+    "diagnosis-outcome-fields内部回放要求",
+    "result-record-contract.md"
+  ],
+  "tdd": {
+    "testFirst": "9项结构场景及SQL场景先于实现落盘；缺模块RED",
+    "mutation": "删除读回完整摘要守卫，真实SQL损坏记录场景1项RED/2项GREEN；原文件完整恢复后3项通过",
+    "logs": [
+      "/tmp/planting-e05-result-record-red.log",
+      "/tmp/planting-e05-result-mysql-red.log",
+      "/tmp/planting-e05-result-mutation.log",
+      "/tmp/planting-e05-result-mysql-restored.log"
+    ]
+  },
+  "verification": {
+    "fullUnit": {
+      "files": 156,
+      "passed": 1379,
+      "log": "/tmp/planting-e05-result-full-final.log"
+    },
+    "mysql": {
+      "files": 1,
+      "passed": 3,
+      "path": "真实004结果表+022新迁移+显式事务+参数化归属读回",
+      "replacement": "统一用户、用户植物和知识发布父记录为隔离夹具；不证明完整009审核发布",
+      "log": "/tmp/planting-e05-result-mysql-restored.log"
+    },
+    "typecheck": "exit 0",
+    "lint": {
+      "errors": 0,
+      "warnings": 1816
+    },
+    "build": "exit 0"
+  },
+  "migration": {
+    "file": "022_diagnosis_result_records.sql",
+    "sha256": "a1432c21a9121ca9ebb67bd9bf3adc717621958870d6a9721acbb5c3e4349124",
+    "productionApplied": false,
+    "oldRows": "全空新列，读回missing_record，不回填当前版本",
+    "rollback": "停止新结果写入并回退应用，保留新列和记录"
+  },
+  "limits": [
+    "inputSnapshot和decisionTrace当前仅结构锁定，精确业务类型/语义准入待结果生成用例补齐",
+    "未生成真实诊断结果或审核园艺知识",
+    "未开放正式结果HTTP",
+    "正式Provider策略待用户确认",
+    "Node22本地实测尚未补齐"
+  ]
+}

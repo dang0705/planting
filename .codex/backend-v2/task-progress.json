@@ -1,8 +1,8 @@
 {
-  "revision": 71,
+  "revision": 72,
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
-  "updatedAt": "2026-10-04T17:59:57.428201+00:00",
+  "updatedAt": "2026-10-04T18:09:54.069615+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
     "target": "核验虫害分析准备的正式模型/Prompt及策略准入，推进已满足前置的实现",
@@ -200,10 +200,10 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 20,
+      "version": 21,
       "priority": "normal",
       "status": "codex running",
-      "stage": "diagnosis运行服务固定创建/作答纵向接线验证通过",
+      "stage": "诊断结果记录结构锁定与SQL归属读回通过",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
@@ -224,18 +224,19 @@
         ".codex/backend-v2/evidence/E05-pest-creation-idempotency-mysql.json",
         ".codex/backend-v2/evidence/E05-pest-creation-http.json",
         ".codex/backend-v2/evidence/E05-model-binding.json",
-        ".codex/backend-v2/evidence/E05-diagnosis-runtime.json"
+        ".codex/backend-v2/evidence/E05-diagnosis-runtime.json",
+        ".codex/backend-v2/evidence/E05-result-record-storage.json"
       ],
       "summary": [
-        "E05新增diagnosis独立构建入口：固定题包创建/作答",
-        "真实服务HTTP→MySQL 44项；创建接线突变RED→恢复",
-        "相关348项；全量1370/1370；类型/构建/lint通过",
-        "产物本地Node24健康/401通过，Node22实测待补",
-        "正式视觉、诊断结果与临时链路未验收；E05仍进行中"
+        "E05新增结果回放记录与022迁移，旧行不猜测回填",
+        "真实MySQL 3项：归属/旧行/不可变/摘要错配验证",
+        "读回摘要突变1项RED→恢复，结构9项通过",
+        "全量1379/1379；类型/构建/lint通过，无生产DDL",
+        "真实结果生成与审核/HTTP未验收；E05仍进行中"
       ],
       "blockingReason": null,
-      "nextAction": "补诊断结果输入快照、兼容发布审计与持久化映射；正式Provider待批准策略；补Node22运行验证",
-      "ticketReadback": "Chrome CODEX RUNNING与五行评论1100440000090457已读回",
+      "nextAction": "冻结结果输入与决策轨迹的精确类型，接审核知识兼容发布及结果生成/读HTTP；视觉Provider策略待确认，补Node22运行验证",
+      "ticketReadback": "Chrome CODEX RUNNING与五行评论1100440000090464已读回",
       "milestoneCommit": "91987513"
     }
   ],
@@ -340,7 +341,7 @@
       ]
     }
   ],
-  "nextAction": "补诊断结果输入快照、兼容发布审计与持久化映射；正式Provider待批准策略；补Node22运行验证",
+  "nextAction": "冻结结果输入与决策轨迹的精确类型，接审核知识兼容发布及结果生成/读HTTP；视觉Provider策略待确认，补Node22运行验证",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -878,7 +879,12 @@
       "docs/backend-v2/contracts/ 中按名称定位诊断结果合同及其Schema",
       "docs/backend-v2/data/ 中按名称定位诊断结果顺序迁移；只读相关表章节",
       "docs/backend-v2/schema/004_care_diagnosis.sql 的diagnosis_sessions/diagnosis_results表",
-      "docs/backend-v2/api/route-registry.json 中诊断结果读取路由"
+      "docs/backend-v2/api/route-registry.json 中诊断结果读取路由",
+      "docs/backend-v2/schema/009_diagnosis_knowledge.sql 的diagnosis_knowledge_releases表及其候选引用",
+      "docs/backend-v2/schema/ 下迁移文件名称，仅确定下一顺序号",
+      "docs/backend-v2/schema/manifest.json 的迁移条目格式及022登记",
+      "docs/backend-v2/schema/019_diagnosis_question_package_snapshots.sql 的diagnosis_sessions ALTER章节",
+      "docs/backend-v2/architecture/manifest.json 中configuration-variable-catalog.json及阅读版对应摘要，仅同步本轮改动"
     ],
     "prohibition": "不得完整读取目录或其他领域"
   }
