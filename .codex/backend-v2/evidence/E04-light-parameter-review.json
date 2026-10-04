@@ -1,0 +1,67 @@
+{
+  "source": "https://raw.githubusercontent.com/pvlib/pvlib-python/v0.16.1/pvlib/data/ASTMG173.csv",
+  "sha256": "91964ac23c0ec82dbbda4a7f160a5f5faf551dfe18ffae7e2446d74b57ee7859",
+  "rows": 2002,
+  "method": "原始波长点复合梯形积分；PAR 400–700nm，两端点均包含；能量光子转换按h,c,NA精确定义",
+  "constants": {
+    "h": 6.62607015e-34,
+    "c": 299792458,
+    "NA": 6.02214076e+23
+  },
+  "results": {
+    "global": {
+      "solarIntegralWattsPerM2": 1000.3706555734421,
+      "parIntegralWattsPerM2": 429.8311,
+      "ppfdMicromolPerM2PerSecond": 1977.867880405508,
+      "parEnergyFraction": 0.42967183973785,
+      "broadbandConversionMicromolPerJoule": 1.9771350442818971,
+      "parOnlyConversionMicromolPerJoule": 4.601500171591837
+    },
+    "direct": {
+      "solarIntegralWattsPerM2": 900.1393292842149,
+      "parIntegralWattsPerM2": 374.814965,
+      "ppfdMicromolPerM2PerSecond": 1735.1995687724816,
+      "parEnergyFraction": 0.41639660973157394,
+      "broadbandConversionMicromolPerJoule": 1.9277010928433727,
+      "parOnlyConversionMicromolPerJoule": 4.629483160504228
+    }
+  },
+  "scope": "AM1.5指定条件标准参考；global为37度倾斜半球总量，不是GHI，direct为DNI，不能相减生成DHI",
+  "productionAdmission": false,
+  "syntheticCounterexample": {
+    "label": "仅让400–700nm透过的合成理想滤光片，不是真实玻璃",
+    "broadbandTransmittance": 0.41639660973157394,
+    "correctAfterFilterConversionMicromolPerJoule": 4.629483160504228,
+    "correctPpfd": 1735.1995687724816,
+    "wrongPpfdUsingOutdoorConversion": 722.5312176445505,
+    "ratioWrongToCorrect": 0.41639660973157394
+  },
+  "createdAt": "2026-10-04T14:01:26.218723+00:00",
+  "accepted": false,
+  "sourceEvidence": {
+    "glass": "https://windows.lbl.gov/software-tools",
+    "glassMetrics": "https://windows.lbl.gov/sites/default/files/femp-spec-sel-low-e.pdf",
+    "spectralDefinition": "https://www.nlr.gov/grid/solar-resource/spectra-am1.5",
+    "constants": "https://www.bipm.org/en/measurement-units/si-defining-constants"
+  },
+  "configurationReadback": {
+    "care.lighting.algorithm_version": "pending/P1_PENDING",
+    "care.environment.derivation_algorithm_release": "pending/P1_PENDING"
+  },
+  "implementationChange": false,
+  "tdd": "本轮只补一手参数证据和离线数值核验，没有修改产品行为，不声称新TDD",
+  "notVerified": [
+    "上海真实直散射光谱",
+    "实际玻璃型号光谱与窗帘光学数据",
+    "正式参数发布",
+    "现场误差界限",
+    "HTTP闭环"
+  ],
+  "fullUnitVerification": {
+    "files": 124,
+    "passed": 981,
+    "skipped": 0,
+    "exitCode": 0,
+    "log": "/tmp/planting-parameter-review-full-green.log"
+  }
+}

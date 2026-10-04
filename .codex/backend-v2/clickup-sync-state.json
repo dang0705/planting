@@ -34,19 +34,19 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 27,
+      "version": 28,
       "status": "codex running",
-      "note": "E04：明确矩形内外遮挡共用投影，直射散射消费同一可见窗洞\n缺遮挡输入保持未评估；完全遮挡同时阻断两通道已知贡献\n13新用例；距离投影3项、直射绕过1项RED→恢复GREEN\n后端124文件981/981；Node22相关34项；类型构建通过\n只支持明确平行不透光矩形，正式参数和现场误差仍未验收",
-      "commentId": "1100440000090034",
-      "commentFingerprint": "42331cbbf3e48a6474f07988ba3208cb11441d66bf0833ddded2f17800c3f18e",
-      "readback": "Chrome状态codex running及完整五行评论1100440000090034已读回"
+      "note": "E04：光谱与玻璃参数来源核验完成，正式值仍pending\n复算2002行ASTM参考谱；宽带系数1.977/1.928不作为默认\n明确Tv/SHGC/太阳透射不同；透射与转换必须同谱配对\n合成滤光反例验证混用错误；本轮无产品行为修改\n后端981/981；实际玻璃型号、现场校准与正式发布仍待补齐",
+      "commentId": "1100440000090063",
+      "commentFingerprint": "50a9e58b2a166f7f0cfff6882e77aba0ac4849fe2bdc6b32fa4e4de979080dd4",
+      "readback": "Chrome状态codex running及完整五行评论1100440000090063已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T13:55:37.416173+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T14:02:46.049967+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "81146a1b7fbbd307be15385828162259d43fc190e9b46085972f22f4ebe647a9",
-    "sourceRevision": 40,
-    "sourceUpdatedAt": "2026-10-04T13:55:37.416173+00:00"
+    "fingerprint": "bbfa5b72706a9f914f84ce1756c3a53f10b9f95edff8dffb5d8ea069dad33019",
+    "sourceRevision": 41,
+    "sourceUpdatedAt": "2026-10-04T14:02:46.049967+00:00"
   }
 }

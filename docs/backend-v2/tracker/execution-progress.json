@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T13:55:37.416173+00:00",
-  "sourceRevision": 40,
-  "sourceUpdatedAt": "2026-10-04T13:55:37.416173+00:00",
+  "generatedAt": "2026-10-04T14:02:46.049967+00:00",
+  "sourceRevision": 41,
+  "sourceUpdatedAt": "2026-10-04T14:02:46.049967+00:00",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -114,16 +114,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 27,
+      "version": 28,
       "status": "codex running",
-      "stage": "验证与回放",
+      "stage": "合同与参数证据确认",
       "accepted": false,
       "summary": [
-        "E04：明确矩形内外遮挡共用投影，直射散射消费同一可见窗洞",
-        "缺遮挡输入保持未评估；完全遮挡同时阻断两通道已知贡献",
-        "13新用例；距离投影3项、直射绕过1项RED→恢复GREEN",
-        "后端124文件981/981；Node22相关34项；类型构建通过",
-        "只支持明确平行不透光矩形，正式参数和现场误差仍未验收"
+        "E04：光谱与玻璃参数来源核验完成，正式值仍pending",
+        "复算2002行ASTM参考谱；宽带系数1.977/1.928不作为默认",
+        "明确Tv/SHGC/太阳透射不同；透射与转换必须同谱配对",
+        "合成滤光反例验证混用错误；本轮无产品行为修改",
+        "后端981/981；实际玻璃型号、现场校准与正式发布仍待补齐"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -149,18 +149,19 @@
         ".codex/backend-v2/evidence/E04-finite-window-diffuse.json",
         ".codex/backend-v2/evidence/E04-indoor-natural-light.json",
         ".codex/backend-v2/evidence/E04-indoor-ppfd-day.json",
-        ".codex/backend-v2/evidence/E04-window-obstruction.json"
+        ".codex/backend-v2/evidence/E04-window-obstruction.json",
+        ".codex/backend-v2/evidence/E04-light-parameter-review.json"
       ],
       "blockingReason": null,
-      "nextAction": "核验玻璃光谱、天空模型与传播参数的来源和准入；补足未确认事实及正式发布条件，不将矩形候选当完整模型",
+      "nextAction": "定向核验已存在的光学/现场制品能否支持参数组准入；缺失则标记具体事实缺口，同时继续已满足前置的业务切片",
       "sync": {
-        "version": 27,
+        "version": 28,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome状态codex running及完整五行评论1100440000090034已读回"
+        "readback": "Chrome状态codex running及完整五行评论1100440000090063已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T13:55:37.416173+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T14:02:46.049967+00:00",
   "lastFailure": null
 }

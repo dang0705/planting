@@ -1,19 +1,19 @@
 {
-  "revision": 40,
+  "revision": 41,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-04T13:55:37.416173+00:00",
+  "updatedAt": "2026-10-04T14:02:46.049967+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "让双通道消费同一实际空间遮挡证据",
+    "goal": "取得独立光谱数值基准，明确玻璃与光谱参数的发布证据",
     "assumptions": [
-      "只接受明确位置与来源的平行不透光矩形",
-      "省略输入是未评估，不是确认无遮挡"
+      "标准参考光谱不是上海现场天气",
+      "玻璃透射与转换参数须匹配同一光谱"
     ],
-    "minimumVerification": "相似三角形、集合差、真实正直射宽窗完全遮挡、投影和直射绕过突变RED、全量GREEN",
-    "continueWhen": "981全绿，Node22相关34项、类型构建通过",
-    "failWhen": "未知遮挡补默认或只遮挡散射漏掉直射",
-    "rollback": "离线无事实写入，撤销遮挡候选不影响正式发布",
+    "minimumVerification": "一手来源、原表SHA及2002行计算、合成反例、当前配置pending读回、全量GREEN",
+    "continueWhen": "来源和范围明确，未私设参数，981全绿",
+    "failWhen": "把Tv/SHGC作为光子透射或把标准谱当默认",
+    "rollback": "证据补充不影响运行策略，pending保持",
     "timeLimit": "30分钟检查点"
   },
   "tasks": [
@@ -121,10 +121,10 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 27,
+      "version": 28,
       "priority": "normal",
       "status": "codex running",
-      "stage": "验证与回放",
+      "stage": "合同与参数证据确认",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -150,19 +150,20 @@
         ".codex/backend-v2/evidence/E04-finite-window-diffuse.json",
         ".codex/backend-v2/evidence/E04-indoor-natural-light.json",
         ".codex/backend-v2/evidence/E04-indoor-ppfd-day.json",
-        ".codex/backend-v2/evidence/E04-window-obstruction.json"
+        ".codex/backend-v2/evidence/E04-window-obstruction.json",
+        ".codex/backend-v2/evidence/E04-light-parameter-review.json"
       ],
       "summary": [
-        "E04：明确矩形内外遮挡共用投影，直射散射消费同一可见窗洞",
-        "缺遮挡输入保持未评估；完全遮挡同时阻断两通道已知贡献",
-        "13新用例；距离投影3项、直射绕过1项RED→恢复GREEN",
-        "后端124文件981/981；Node22相关34项；类型构建通过",
-        "只支持明确平行不透光矩形，正式参数和现场误差仍未验收"
+        "E04：光谱与玻璃参数来源核验完成，正式值仍pending",
+        "复算2002行ASTM参考谱；宽带系数1.977/1.928不作为默认",
+        "明确Tv/SHGC/太阳透射不同；透射与转换必须同谱配对",
+        "合成滤光反例验证混用错误；本轮无产品行为修改",
+        "后端981/981；实际玻璃型号、现场校准与正式发布仍待补齐"
       ],
       "blockingReason": null,
-      "nextAction": "核验玻璃光谱、天空模型与传播参数的来源和准入；补足未确认事实及正式发布条件，不将矩形候选当完整模型",
-      "ticketReadback": "Chrome状态codex running及完整五行评论1100440000090034已读回",
-      "milestoneCommit": "f9b5b24f"
+      "nextAction": "定向核验已存在的光学/现场制品能否支持参数组准入；缺失则标记具体事实缺口，同时继续已满足前置的业务切片",
+      "ticketReadback": "Chrome状态codex running及完整五行评论1100440000090063已读回",
+      "milestoneCommit": "1601fabd"
     }
   ],
   "queue": [
@@ -482,5 +483,18 @@
       "schema/018_care_decision_derivation_immutability.sql新增触发器"
     ],
     "scope": "只定位派生结果持久化，不读取其他表或整个架构"
+  },
+  "lightParameterReadAdmission": {
+    "layers": {
+      "L0": "architecture abstract 只给检索导航，不含光谱与玻璃配置项目",
+      "L1": "architecture overview 定位 care-decision-model 与 configuration-providers，没有具体参数登记",
+      "L2": "care-decision-model 0–100行明确光照通道与版本边界，没有玻璃波段、光谱参数的配置目录项和状态"
+    },
+    "missing": "现行光谱换算、玻璃透射和算法发布条目的具体ID、状态及sourceRefs",
+    "localAllowed": [
+      "architecture/configuration-variable-catalog.json 仅光照换算、玻璃及算法release对应项目",
+      "architecture/configuration-variable-catalog.md 仅上述项目所在章节"
+    ],
+    "scope": "只核验参数准入状态，不读取其他领域配置、架构图或整份文档"
   }
 }
