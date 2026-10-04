@@ -33,6 +33,22 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
     const isSessionPolicyExtension = entry.file === '015_identity_session_policy_snapshot.sql'
     // 批准的 017 专门迁移 Care v2 类型与临时案例归属；不向其他迁移开放 ALTER。
     const isCareV2Extension = entry.file === '017_care_v2_ephemeral_and_derivations.sql'
+    // 本轮批准的019只补两类诊断会话的题包快照；不开放其他结构变更。
+    const isDiagnosisSnapshotExtension = entry.file === '019_diagnosis_question_package_snapshots.sql'
+    if (isDiagnosisSnapshotExtension) {
+      assert.deepEqual([...content.matchAll(/^ALTER TABLE `([^`]+)`/gmu)].map(match => match[1]), [
+        'diagnosis_sessions', 'temporary_diagnosis_sessions'
+      ])
+      assert.deepEqual([...content.matchAll(/ADD COLUMN `([^`]+)`/gu)].map(match => match[1]), [
+        'question_package_snapshot_json', 'question_package_snapshot_sha256',
+        'question_package_snapshot_json', 'question_package_snapshot_sha256'
+      ])
+      assert.doesNotMatch(content, /\b(?:DROP|RENAME|MODIFY|CHANGE|CREATE TABLE)\b/iu)
+      for (const name of ['tr_diagnosis_package_snapshot_insert', 'tr_diagnosis_package_snapshot_update',
+        'tr_temporary_diagnosis_package_snapshot_insert', 'tr_temporary_diagnosis_package_snapshot_update']) {
+        assert.ok(content.includes('CREATE TRIGGER `' + name + '`'))
+      }
+    }
     if (isCareV2Extension) {
       const alteredTables = [...content.matchAll(/^ALTER TABLE `([^`]+)`/gmu)].map(match => match[1]).sort()
       assert.deepEqual(alteredTables, [
@@ -60,7 +76,7 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
     }
     assert.doesNotMatch(
       content,
-      isSessionPolicyExtension || isCareV2Extension
+      isSessionPolicyExtension || isCareV2Extension || isDiagnosisSnapshotExtension
         ? /^(?:DROP|INSERT|UPDATE|DELETE)\b/imu
         : /^(?:DROP|ALTER|INSERT|UPDATE|DELETE)\b/imu,
       `${entry.file} 仅允许经 manifest 顺序化的非破坏性结构变更`

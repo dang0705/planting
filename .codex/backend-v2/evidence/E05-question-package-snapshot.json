@@ -1,0 +1,54 @@
+{
+  "ticket": "z8v0kmr974",
+  "scope": "V1黄叶、萎蔫、虫害服务端题包快照；不新增题库",
+  "verifiedAt": "2026-10-04T15:26:01.609087+00:00",
+  "tests": {
+    "backendUnit": {
+      "files": 134,
+      "passed": 1086
+    },
+    "node22Diagnosis": {
+      "files": 6,
+      "passed": 64
+    },
+    "isolatedMysql": {
+      "passed": 7,
+      "engine": "MySQL 8.4",
+      "boundary": "父表使用最小隔离制品；仅诊断会话建表及017归属ALTER，不是完整迁移链验收"
+    }
+  },
+  "redEvidence": [
+    {
+      "path": "classic",
+      "log": "/tmp/planting-e05-snapshot-owner-red.log",
+      "failed": 2,
+      "rule": "长期及临时会话归属不可改写",
+      "restoredGreen": "/tmp/planting-e05-snapshot-final-mysql.log"
+    },
+    {
+      "path": "controlled_mutation",
+      "log": "/tmp/planting-e05-snapshot-mutation.log",
+      "failed": 1,
+      "rule": "读回重算完整快照SHA-256",
+      "restoredGreen": "/tmp/planting-e05-snapshot-final-mysql.log"
+    }
+  ],
+  "checks": {
+    "typecheck": "passed",
+    "build": "passed",
+    "lintErrors": 0,
+    "lintWarnings": 1328
+  },
+  "storage": "019新增两列；旧行保留NULL，新行要求快照，内容、版本、模式与归属不可改写",
+  "migration": "只应用本地隔离库；生产未执行",
+  "notAccepted": [
+    "CMS审核发布",
+    "完整迁移链",
+    "临时案例应用Repository",
+    "复合答案证据",
+    "答案持久化与幂等",
+    "真实HTTP诊断",
+    "Agent及奖励"
+  ],
+  "h5": "投影数据同步，8765服务无监听；实际页面未验收"
+}

@@ -1,0 +1,121 @@
+import { spawnSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { createConnection, type Connection } from 'mysql2/promise'
+import { afterAll, beforeAll, describe, expect, test } from 'vitest'
+import { findProjectRoot } from '../support/project-root.js'
+import { createMysql2ConnectionSource } from '../../src/foundation/database/mysql2-connection-source.js'
+import { createMysqlDiagnosisQuestionSnapshotRepository } from '../../src/diagnosis/repository/mysql-diagnosis-question-snapshot-repository.js'
+import { lockQuestionPackageSnapshot } from '../../src/diagnosis/domain/question-package-snapshot.js'
+
+/** unit_real_data / L3：真实MySQL8.4、指定会话表和019迁移；父归属表为最小夹具，不验收完整建库链或HTTP。 */
+const container = `qhz-diag-snapshot-${process.pid}`
+let db: Connection
+let source: ReturnType<typeof createMysql2ConnectionSource>
+const root = findProjectRoot()
+const catalog = JSON.parse(readFileSync(join(root, 'cloudfunctions-v2/models/diagnosis/v1-reuse/questions.json'), 'utf8')) as {
+  fixed: { yellow_leaf: unknown[] }
+}
+const snapshotInput = { questionPackageReleaseRef: 'question-yellow/v1', mode: 'yellow_leaf', questionCount: 4, packageQuestions: catalog.fixed.yellow_leaf }
+function docker(args: string[]) {
+  const result = spawnSync('docker', args, { encoding: 'utf8' })
+  if (result.status !== 0) { throw new Error(result.stderr) }
+  return result.stdout.trim()
+}
+beforeAll(async () => {
+  docker(['run','-d','--name',container,'--tmpfs','/var/lib/mysql','-p','127.0.0.1::3306','-e','MYSQL_ALLOW_EMPTY_PASSWORD=yes','mysql:8.4'])
+  const port = Number(docker(['port',container,'3306/tcp']).split(':').at(-1))
+  let ready = false
+  for (let i = 0; i < 100; i += 1) {
+    try {
+      db = await createConnection({ host:'127.0.0.1',port,user:'root',password:'' })
+      await db.query('SELECT 1'); ready = true; break
+    } catch { await db?.end().catch(() => undefined); await new Promise(r => setTimeout(r,250)) }
+  }
+  if (!ready) { throw new Error('隔离MySQL未就绪') }
+  await db.query('CREATE DATABASE qhz_diag_snapshot'); await db.query('USE qhz_diag_snapshot')
+  await db.query('CREATE TABLE users (id BIGINT UNSIGNED PRIMARY KEY, public_user_id VARCHAR(64), status VARCHAR(24))')
+  await db.query('CREATE TABLE user_plants (id BIGINT UNSIGNED PRIMARY KEY, user_internal_id BIGINT UNSIGNED, public_user_plant_id VARCHAR(64), lifecycle_status VARCHAR(24), UNIQUE(user_internal_id,id))')
+  await db.query('CREATE TABLE guest_plant_cases (id BIGINT UNSIGNED PRIMARY KEY)')
+  await db.query('CREATE TABLE authenticated_ephemeral_plant_cases (id BIGINT UNSIGNED PRIMARY KEY)')
+  const ddl = readFileSync(join(root,'docs/backend-v2/schema/004_care_diagnosis.sql'),'utf8')
+  for (const name of ['diagnosis_sessions','temporary_diagnosis_sessions']) {
+    const start = ddl.indexOf('CREATE TABLE `'+name+'` ('); const end = ddl.indexOf(';',start)
+    if (start < 0 || end < 0) { throw new Error('指定会话表缺失') }
+    await db.query(ddl.slice(start,end+1))
+  }
+  const ephemeralMigration = readFileSync(join(root,'docs/backend-v2/schema/017_care_v2_ephemeral_and_derivations.sql'),'utf8')
+  const ephemeralStart = ephemeralMigration.indexOf('ALTER TABLE `temporary_diagnosis_sessions`')
+  if (ephemeralStart < 0) { throw new Error('指定临时会话归属迁移缺失') }
+  await db.query(ephemeralMigration.slice(ephemeralStart,ephemeralMigration.indexOf(';',ephemeralStart)+1))
+  await db.query("INSERT INTO users VALUES (1,'usr-owner','active'),(2,'usr-other','active');")
+  await db.query("INSERT INTO user_plants VALUES (1,1,'upl-owner','active'),(2,2,'upl-other','active'),(3,1,'upl-archived','archived');")
+  await db.query("INSERT INTO diagnosis_sessions (diagnosis_ref,user_internal_id,user_plant_internal_id,symptom_type,question_package_release_ref,status,started_at_ms,created_at_ms,updated_at_ms) VALUES ('legacy',1,1,'yellow_leaf','question-yellow/v1','active',1000,1000,1000)")
+  const migration = readFileSync(join(root,'docs/backend-v2/schema/019_diagnosis_question_package_snapshots.sql'),'utf8')
+  // 仅执行019明确列出的语句；DELIMITER由客户端解释，不能当SQL发送。
+  const [tables, triggers] = migration.split('DELIMITER $$')
+  for (const statement of tables!.split(';').map(s=>s.trim()).filter(Boolean)) { await db.query(statement) }
+  for (const statement of triggers!.split('DELIMITER ;')[0]!.split('$$').map(s=>s.trim()).filter(Boolean)) { await db.query(statement) }
+  source = createMysql2ConnectionSource({ host:'127.0.0.1',port,user:'root',password:'',database:'qhz_diag_snapshot' })
+},40_000)
+afterAll(async () => { await db?.end(); spawnSync('docker',['rm','-f',container],{encoding:'utf8'}) })
+
+async function append(diagnosisRef: string, userRef = 'usr-owner', userPlantRef = 'upl-owner') {
+  const connection = await source.getConnection(); await connection.beginTransaction()
+  try {
+    const result = await createMysqlDiagnosisQuestionSnapshotRepository(source).append({ transactionContext:true,connection }, {
+      diagnosisRef,userRef,userPlantRef,snapshot:lockQuestionPackageSnapshot(snapshotInput),startedAtMs:2000,
+    })
+    await connection.commit(); return result
+  } catch (error) { await connection.rollback(); throw error } finally { connection.release() }
+}
+
+describe('真实数据库锁定题包快照', () => {
+  test('旧行计数保持，缺快照不补当前题包', async () => {
+    const [rows] = await db.query('SELECT COUNT(*) AS n FROM diagnosis_sessions WHERE diagnosis_ref=\'legacy\' AND question_package_snapshot_json IS NULL AND question_package_snapshot_sha256 IS NULL')
+    expect(rows).toEqual([{ n:1 }])
+    expect(await createMysqlDiagnosisQuestionSnapshotRepository(source).read('usr-owner','upl-owner','legacy')).toEqual({ status:'missing_snapshot' })
+  })
+  test('真实创建与读回完整快照、摘要和版本，公开读取不返回内部主键', async () => {
+    expect(await append('snapshot-one')).toBe('created')
+    expect(await createMysqlDiagnosisQuestionSnapshotRepository(source).read('usr-owner','upl-owner','snapshot-one')).toEqual({ status:'found',snapshot:lockQuestionPackageSnapshot(snapshotInput) })
+  })
+  test('跨用户、跨植物与归档植物不能新建或读回他人题包', async () => {
+    await append('snapshot-owner-check')
+    expect(await append('wrong-owner','usr-other','upl-owner')).toBe('not_found')
+    expect(await append('archived','usr-owner','upl-archived')).toBe('not_found')
+    const repo = createMysqlDiagnosisQuestionSnapshotRepository(source)
+    expect(await repo.read('usr-other','upl-owner','snapshot-owner-check')).toEqual({ status:'not_found' })
+    expect(await repo.read('usr-owner','upl-other','snapshot-owner-check')).toEqual({ status:'not_found' })
+  })
+  test('拒绝重复创建，原快照不被覆盖', async () => {
+    await append('snapshot-duplicate')
+    await expect(append('snapshot-duplicate')).rejects.toMatchObject({ code:'ER_DUP_ENTRY' })
+    expect((await createMysqlDiagnosisQuestionSnapshotRepository(source).read('usr-owner','upl-owner','snapshot-duplicate')).status).toBe('found')
+  })
+  test('SQL拒绝改写题目、摘要、发布引用和症状，但允许状态推进', async () => {
+    await append('snapshot-protected')
+    for (const sql of ["question_package_snapshot_json=JSON_OBJECT()", "question_package_snapshot_sha256=REPEAT('b',64)", "question_package_release_ref='other'", "symptom_type='wilting_droop'", "user_internal_id=2,user_plant_internal_id=2"]) {
+      await expect(db.query(`UPDATE diagnosis_sessions SET ${sql} WHERE diagnosis_ref='snapshot-protected'`)).rejects.toMatchObject({ sqlState:'45000' })
+    }
+    await db.query("UPDATE diagnosis_sessions SET status='completed',completed_at_ms=3000,updated_at_ms=3000 WHERE diagnosis_ref='snapshot-protected'")
+  })
+  test('临时会话同样拒绝快照替换；没有快照的新会话被拒绝', async () => {
+    await db.query('INSERT INTO guest_plant_cases VALUES (1),(2)')
+    await db.query('INSERT INTO authenticated_ephemeral_plant_cases VALUES (1)')
+    const locked = lockQuestionPackageSnapshot(snapshotInput)
+    await db.execute('INSERT INTO temporary_diagnosis_sessions (diagnosis_ref,guest_plant_case_internal_id,symptom_type,question_package_release_ref,status,expires_at_ms,created_at_ms,updated_at_ms,question_package_snapshot_json,question_package_snapshot_sha256) VALUES (?,1,?,?,\'active\',4000,2000,2000,CAST(? AS JSON),?)', ['tmp-one','yellow_leaf','question-yellow/v1',JSON.stringify(locked.snapshot),locked.snapshotSha256])
+    await expect(db.query("UPDATE temporary_diagnosis_sessions SET question_package_snapshot_json=JSON_OBJECT() WHERE diagnosis_ref='tmp-one'")).rejects.toMatchObject({ sqlState:'45000' })
+    await expect(db.query("UPDATE temporary_diagnosis_sessions SET guest_plant_case_internal_id=2 WHERE diagnosis_ref='tmp-one'")).rejects.toMatchObject({ sqlState:'45000' })
+    await expect(db.query("UPDATE temporary_diagnosis_sessions SET guest_plant_case_internal_id=NULL,authenticated_ephemeral_case_internal_id=1 WHERE diagnosis_ref='tmp-one'")).rejects.toMatchObject({ sqlState:'45000' })
+    await expect(db.query("INSERT INTO diagnosis_sessions (diagnosis_ref,user_internal_id,user_plant_internal_id,symptom_type,question_package_release_ref,status,started_at_ms,created_at_ms,updated_at_ms) VALUES ('new-without-snapshot',1,1,'yellow_leaf','question-yellow/v1','active',1000,1000,1000)")).rejects.toMatchObject({ sqlState:'45000' })
+  })
+  test('损坏内容摘要在实际Repository读取时拒绝，不靠字段存在判成功', async () => {
+    const connection = await source.getConnection()
+    const locked = lockQuestionPackageSnapshot(snapshotInput)
+    try {
+      await connection.execute('INSERT INTO diagnosis_sessions (diagnosis_ref,user_internal_id,user_plant_internal_id,symptom_type,question_package_release_ref,status,started_at_ms,created_at_ms,updated_at_ms,question_package_snapshot_json,question_package_snapshot_sha256) VALUES (?,1,1,?,?,\'active\',2000,2000,2000,CAST(? AS JSON),?)',['bad-hash','yellow_leaf','question-yellow/v1',JSON.stringify(locked.snapshot),'a'.repeat(64)])
+    } finally { connection.release() }
+    expect(await createMysqlDiagnosisQuestionSnapshotRepository(source).read('usr-owner','upl-owner','bad-hash')).toEqual({ status:'invalid_snapshot' })
+  })
+})

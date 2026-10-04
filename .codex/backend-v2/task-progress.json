@@ -1,19 +1,19 @@
 {
-  "revision": 50,
+  "revision": 52,
   "currentStep": "E05",
-  "currentTicketId": "z8v0kmrg8a",
-  "updatedAt": "2026-10-04T15:13:04.804986+00:00",
+  "currentTicketId": "z8v0kmr974",
+  "updatedAt": "2026-10-04T15:26:01.609087+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "按用户确认复用V1三类题包并补服务端成员校验",
+    "goal": "补服务端题包快照的持久化与不可变约束",
     "assumptions": [
-      "内容快照不是审核发布",
-      "客户端题包不是授权来源"
+      "V1三类内容复用，不新增题目",
+      "快照内容与精确发布引用绑定"
     ],
-    "minimumVerification": "真实内容制品和重建、成员校验Expected先落、突变RED恢复GREEN、Node22及全量单元",
-    "continueWhen": "完整题目选项保留，复合证据验证要求显式",
-    "failWhen": "新建无关题包、自动诊断或客户端题包越权",
-    "rollback": "回退本轮制品及成员校验，不改旧云函数或线上数据",
+    "minimumVerification": "独立Expected先落、快照哈希及成员规则、真实MySQL约束和读回",
+    "continueWhen": "不改旧迁移，新迁移独立且历史缺快照失败关闭",
+    "failWhen": "客户端题包授权、替换历史快照或写入诊断结论",
+    "rollback": "回退代码；迁移只应用隔离空库，生产不执行",
     "timeLimit": "30分钟检查点"
   },
   "tasks": [
@@ -196,6 +196,29 @@
       "nextAction": "接服务端题包快照锁定、归属及复合答案校验，再接真实题包提交",
       "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090220已读回",
       "milestoneCommit": "9fc5cfda"
+    },
+    {
+      "id": "z8v0kmr974",
+      "step": "E05",
+      "version": 2,
+      "priority": "normal",
+      "status": "codex running",
+      "stage": "验证与持久化读回",
+      "accepted": false,
+      "evidence": [
+        ".codex/backend-v2/evidence/E05-question-package-snapshot.json"
+      ],
+      "summary": [
+        "E05仅复用V1黄叶、萎蔫和虫害；本轮锁定实际题包快照",
+        "019只补两类会话快照，旧行不补造；内容及归属不可改写",
+        "真实MySQL七项通过；归属2项RED→修复，摘要突变1项RED→恢复",
+        "后端全量1086/1086，Node22诊断64项；类型检查及构建通过",
+        "正式发布、复合证据、答案提交及HTTP待验收；里程碑记录、每小时同步"
+      ],
+      "blockingReason": null,
+      "nextAction": "接服务端快照的答案成员及复合证据校验，再接幂等持久化和HTTP",
+      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090230已读回",
+      "milestoneCommit": "84f9b729"
     }
   ],
   "queue": [
@@ -299,7 +322,7 @@
       ]
     }
   ],
-  "nextAction": "接服务端题包快照锁定、归属及复合答案校验，再接真实题包提交",
+  "nextAction": "接服务端锁定题包的答案和复合证据；不增加V1以外题包",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -361,8 +384,8 @@
     "runner": "cloudfunctions-v2 已锁定 Vitest",
     "testDirectory": "cloudfunctions-v2/test/",
     "lastResult": {
-      "passed": 1069,
-      "total": 1069,
+      "passed": 1086,
+      "total": 1086,
       "skipped": 0
     }
   },
@@ -585,5 +608,20 @@
     ],
     "scope": "只为E05依赖Repository与隔离MySQL读取，禁止其他表及全目录读取",
     "finding": "题包两表在字典中存在，但当前迁移未建；用户确认暂时复用V1三类内容，因此本轮不新增题包DDL。仅检索到目标表名，不扩大读取。"
+  },
+  "diagnosisSnapshotReadAdmission": {
+    "layers": {
+      "L0": "已缓存backend-v2摘要仅导航",
+      "L1": "data与contracts导航无题包或会话快照字段",
+      "L2": "已读数据字典只指004及017，未给会话列；题包glob无命中"
+    },
+    "missing": "锁定题包快照的现有存储列与迁移登记格式",
+    "localAllowed": [
+      "004仅diagnosis_sessions/diagnosis_answers和临时对应两表",
+      "017仅临时诊断归属ALTER",
+      "schema/manifest.json仅追加迁移的元数据格式"
+    ],
+    "finding": "会话只有发布引用，没有动态题包内容或摘要列",
+    "scope": "不读其他领域或其他迁移全文"
   }
 }
