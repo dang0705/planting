@@ -1,0 +1,27 @@
+{
+  "ticket": "z8v0kmr973",
+  "scope": "MVP玻璃近似候选复用与专业参数保留",
+  "source": "https://simulationresearch.lbl.gov/modelica/releases/v1.0_build2/help/Buildings_HeatTransfer_Data_Glasses.html",
+  "sourceRecord": "ID102: tauSol=0.834,rhoSol_a=rhoSol_b=0.075",
+  "derivation": "同材质双层简化组合 tau²/(1−rho²)，忽略角度及波段变化",
+  "candidates": {
+    "single": 0.83,
+    "double": 0.7
+  },
+  "status": "offline_candidate_not_published",
+  "retained": "专业输入、双通道传播、光谱证据；MVP不要求复杂前端采集",
+  "verification": {
+    "relatedTests": "23/23",
+    "fullTests": "983/983;125文件;exit0",
+    "fullLog": "/tmp/planting-mvp-glass-full-green.log",
+    "test": "cloudfunctions-v2/test/care/mvp-clear-glass-replay.spec.ts"
+  },
+  "tdd": "无产品行为变更；本轮为来源候选验证，不声称新增行为TDD",
+  "notProven": [
+    "现场PAR透射率",
+    "认证误差范围",
+    "正式策略发布",
+    "HTTP闭环"
+  ],
+  "updatedAt": "2026-10-04T14:14:51.262932+00:00"
+}

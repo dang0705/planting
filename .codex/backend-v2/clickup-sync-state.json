@@ -34,19 +34,19 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 28,
+      "version": 30,
       "status": "codex running",
-      "note": "E04：光谱与玻璃参数来源核验完成，正式值仍pending\n复算2002行ASTM参考谱；宽带系数1.977/1.928不作为默认\n明确Tv/SHGC/太阳透射不同；透射与转换必须同谱配对\n合成滤光反例验证混用错误；本轮无产品行为修改\n后端981/981；实际玻璃型号、现场校准与正式发布仍待补齐",
-      "commentId": "1100440000090063",
-      "commentFingerprint": "50a9e58b2a166f7f0cfff6882e77aba0ac4849fe2bdc6b32fa4e4de979080dd4",
-      "readback": "Chrome状态codex running及完整五行评论1100440000090063已读回"
+      "note": "E04：保留专业参数，MVP仅收集单双层玻璃\n普通透明玻璃近似候选：单层0.83、双层0.70\n真实气象回放两项通过；双通道损失只计一次\n相关23/23；后端全量983/983；无产品行为变更\n候选尚未正式发布；光谱精细校准留后续迭代",
+      "commentId": "1100440000090096",
+      "commentFingerprint": "a1642aba826bd73b0e4c99ec8f34ca675fc1766554091eaea7cc228a86db4d76",
+      "readback": "Chrome codex running及五行评论1100440000090096已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T14:02:46.049967+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T14:15:26.785283+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "bbfa5b72706a9f914f84ce1756c3a53f10b9f95edff8dffb5d8ea069dad33019",
-    "sourceRevision": 41,
-    "sourceUpdatedAt": "2026-10-04T14:02:46.049967+00:00"
+    "fingerprint": "5f71aeac869852414128d78bd5be22730286104ac03aaca0468365b68006994f",
+    "sourceRevision": 43,
+    "sourceUpdatedAt": "2026-10-04T14:14:51.262932+00:00"
   }
 }
