@@ -34,19 +34,19 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 24,
+      "version": 25,
       "status": "codex running",
-      "note": "E04：DHI有限实际窗洞→植物窗平行面散射候选已实现\n离窗距离、高度、横向位置和开口并集进入解析积分\n18新用例；取消天空地平线限制导致1项RED→恢复GREEN\n后端121文件947/947；Node22新18项；类型构建通过\n玻璃窗帘及外部遮挡未完成，保持未验收，继续衰减合并",
-      "commentId": "1100440000089962",
-      "commentFingerprint": "29a408196d0a93633c8d18fa3cac2cfc484b309d11c4e8e048d8bc17b0f565bf",
-      "readback": "Chrome状态codex running及完整五行评论1100440000089962已读回"
+      "note": "E04：共享传播框架已接通，直射散射分通道计算\n真实时段→SunCalc与窗洞→双通道玻璃窗帘损失→同面相加\n11新用例；遗漏窗帘损失2项RED→恢复；全量958/958\nNode22相关49项、类型构建通过；缺参数不设默认\n外部遮挡及完整误差界限未完成，PPFD/DLI合并继续推进",
+      "commentId": "1100440000090006",
+      "commentFingerprint": "d8dcd6ca2c89ca342ed8bf24d6434f6ab7a267388067163960f20d33d3b940fc",
+      "readback": "Chrome状态codex running及完整五行评论1100440000090006已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T13:39:27.533076+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T13:46:10.332775+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "a1cb433e715c57dce0ea4d0201e708fbacdd1665d3153d3a961175c824939515",
-    "sourceRevision": 37,
-    "sourceUpdatedAt": "2026-10-04T13:39:27.533076+00:00"
+    "fingerprint": "4b20356aee07083dab5c4769fb0e8c77c25d584373f276f094b72668655c04e9",
+    "sourceRevision": 38,
+    "sourceUpdatedAt": "2026-10-04T13:46:10.332775+00:00"
   }
 }

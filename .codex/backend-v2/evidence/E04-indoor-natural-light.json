@@ -1,0 +1,41 @@
+{
+  "createdAt": "2026-10-04T13:45:33.195361+00:00",
+  "scope": "共享框架双通道室内自然光候选回放",
+  "accepted": false,
+  "discussionSource": "chatgpt-conversation://6ac24ebd-b5c8-83ec-8abf-86f52b5913b4",
+  "discussionReadback": "10条上限读回5个完整turn，无后续分页",
+  "tests": {
+    "new": 11,
+    "full": 958,
+    "files": 122,
+    "skipped": 0,
+    "node22Related": 49,
+    "mutation": "遗漏窗帘乘数",
+    "mutationRed": 2,
+    "restored": true
+  },
+  "typecheck": "exit 0",
+  "build": "exit 0",
+  "lint": {
+    "errors": 0,
+    "warnings": 1037
+  },
+  "logs": [
+    "/tmp/planting-indoor-initial-red.log",
+    "/tmp/planting-indoor-curtain-red.log",
+    "/tmp/planting-indoor-full-green.log",
+    "/tmp/planting-indoor-node22-green.log",
+    "/tmp/planting-indoor-typecheck.log",
+    "/tmp/planting-indoor-build.log",
+    "/tmp/planting-indoor-lint.log"
+  ],
+  "notVerified": [
+    "现场玻璃和窗帘参数",
+    "外部天空与室内其他物体遮挡",
+    "非均匀天空",
+    "完整数值与现场误差边界",
+    "瞬时峰值与晒伤风险",
+    "光谱PPFD/Lux换算及DLI整体闭环",
+    "正式发布与HTTP"
+  ]
+}

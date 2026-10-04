@@ -1,8 +1,8 @@
 {
-  "revision": 37,
+  "revision": 38,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-04T13:39:27.533076+00:00",
+  "updatedAt": "2026-10-04T13:46:10.332775+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
     "goal": "推进DHI有限实际窗口到目标位置的几何传播",
@@ -121,7 +121,7 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 24,
+      "version": 25,
       "priority": "normal",
       "status": "codex running",
       "stage": "验证与回放",
@@ -147,19 +147,20 @@
         ".codex/backend-v2/evidence/E04-json-snapshot-integrity.json",
         ".codex/backend-v2/evidence/E04-decision-immutability.json",
         ".codex/backend-v2/evidence/E04-window-diffuse.json",
-        ".codex/backend-v2/evidence/E04-finite-window-diffuse.json"
+        ".codex/backend-v2/evidence/E04-finite-window-diffuse.json",
+        ".codex/backend-v2/evidence/E04-indoor-natural-light.json"
       ],
       "summary": [
-        "E04：DHI有限实际窗洞→植物窗平行面散射候选已实现",
-        "离窗距离、高度、横向位置和开口并集进入解析积分",
-        "18新用例；取消天空地平线限制导致1项RED→恢复GREEN",
-        "后端121文件947/947；Node22新18项；类型构建通过",
-        "玻璃窗帘及外部遮挡未完成，保持未验收，继续衰减合并"
+        "E04：共享传播框架已接通，直射散射分通道计算",
+        "真实时段→SunCalc与窗洞→双通道玻璃窗帘损失→同面相加",
+        "11新用例；遗漏窗帘损失2项RED→恢复；全量958/958",
+        "Node22相关49项、类型构建通过；缺参数不设默认",
+        "外部遮挡及完整误差界限未完成，PPFD/DLI合并继续推进"
       ],
       "blockingReason": null,
-      "nextAction": "继续明确外部天空遮挡及玻璃窗帘的准入输入，组合DNI/DHI同一接收平面；无确认参数不设默认",
-      "ticketReadback": "Chrome状态codex running及完整五行评论1100440000089962已读回",
-      "milestoneCommit": "5518fed2"
+      "nextAction": "继续共享传播框架的方向遮挡和时间证据，接显式光谱转换与分通道PPFD/DLI；正式发布参数pending不设默认",
+      "ticketReadback": "Chrome状态codex running及完整五行评论1100440000090006已读回",
+      "milestoneCommit": "cd0aa0f4"
     }
   ],
   "queue": [
