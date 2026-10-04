@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-10-04T20:13:13.793666+00:00",
-  "sourceRevision": 88,
-  "sourceUpdatedAt": "2026-10-04T20:13:13.793666+00:00",
-  "currentStep": "E02",
-  "currentTicketId": "z8v0kmr971",
+  "generatedAt": "2026-10-04T20:17:40.668171+00:00",
+  "sourceRevision": 89,
+  "sourceUpdatedAt": "2026-10-04T20:17:40.668171+00:00",
+  "currentStep": "E03",
+  "currentTicketId": "z8v0kmr9mj",
   "tasks": [
     {
       "id": "z8v0kmtktc",
@@ -260,8 +260,36 @@
         "matched": true,
         "readback": "Chrome HUMAN REQUIRED与五行评论1100440000090656已读回"
       }
+    },
+    {
+      "id": "z8v0kmr9mj",
+      "step": "E03",
+      "version": 1,
+      "status": "codex running",
+      "stage": "档案更新合同与配置确认",
+      "accepted": false,
+      "summary": [
+        "E03：已读回原用户植物票，承接更新/档案纵向切片",
+        "更新仅有路由登记，缺严格字段Schema；合同待冻结稿已落盘",
+        "明确聚合版本/幂等/归属与事实边界，不接收任意JSON",
+        "登录临时案例TTL待确认，不自动沿用游客24小时",
+        "本轮尚未改产品；先补字段合同再执行RED→实现→SQL/HTTP"
+      ],
+      "evidence": [
+        ".codex/backend-v2/evidence/E03-promotion-context.json",
+        ".codex/backend-v2/evidence/E03-profile-update-gap.json",
+        "cloudfunctions-v2/models/user-plant/profile-update-contract-draft.md"
+      ],
+      "blockingReason": null,
+      "nextAction": "按现有光照/盆器输入明确完整档案请求Schema、清除语义及聚合版本；测试先行实现事务与HTTP",
+      "sync": {
+        "version": 1,
+        "status": "codex running",
+        "matched": true,
+        "readback": "Chrome CODEX RUNNING与五行评论1100440000090864已读回"
+      }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T20:13:28.247461+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T20:18:18.157941+00:00",
   "lastFailure": null
 }

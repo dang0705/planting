@@ -1,16 +1,16 @@
 {
-  "revision": 88,
-  "currentStep": "E02",
-  "currentTicketId": "z8v0kmr971",
-  "updatedAt": "2026-10-04T20:13:13.793666+00:00",
+  "revision": 89,
+  "currentStep": "E03",
+  "currentTicketId": "z8v0kmr9mj",
+  "updatedAt": "2026-10-04T20:17:40.668171+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "核验新审核记录与撤销、发布之间的完整数据库生命周期",
-    "minimumValidation": "实际提交→批准→撤销→历史重放→发布拒绝，确认发布和激活审计零写入",
-    "continueCondition": "验证同一受控内部链路的撤销约束，不增加业务规则或CMS入口",
-    "failureCondition": "撤销被重放消除或撤销后新发布成功则停止扩张并保留RED",
-    "rollback": "本轮仅补测试及证据；不改生产或DDL",
-    "timeLimit": "20分钟"
+    "target": "冻结用户植物档案更新的具体请求合同并实施纵向切片",
+    "minimumValidation": "严格字段Schema与独立Expected、版本/幂等/归属、真实SQL/HTTP读回",
+    "continueCondition": "已冻结字段及配置可以实现；pending参数仅补证据和RED",
+    "failureCondition": "无字段真相源或参数仍pending时不填默认值",
+    "rollback": "独立回退更新切片，不修改生产DDL或历史快照",
+    "timeLimit": "30分钟"
   },
   "tasks": [
     {
@@ -253,6 +253,31 @@
       "blockingReason": "仅答案映射实施环节等待申报语义/命名确认；正式视觉/Provider/CMS前置仍独立未验收",
       "nextAction": "确认最小答案申报语义及命名后登记受控映射，按独立Expected实现归一；确认前不消费审核稿",
       "ticketReadback": "Chrome HUMAN REQUIRED与五行评论1100440000090656已读回"
+    },
+    {
+      "id": "z8v0kmr9mj",
+      "step": "E03",
+      "version": 1,
+      "priority": "high",
+      "status": "codex running",
+      "stage": "档案更新合同与配置确认",
+      "accepted": false,
+      "evidence": [
+        ".codex/backend-v2/evidence/E03-promotion-context.json",
+        ".codex/backend-v2/evidence/E03-profile-update-gap.json",
+        "cloudfunctions-v2/models/user-plant/profile-update-contract-draft.md"
+      ],
+      "summary": [
+        "E03：已读回原用户植物票，承接更新/档案纵向切片",
+        "更新仅有路由登记，缺严格字段Schema；合同待冻结稿已落盘",
+        "明确聚合版本/幂等/归属与事实边界，不接收任意JSON",
+        "登录临时案例TTL待确认，不自动沿用游客24小时",
+        "本轮尚未改产品；先补字段合同再执行RED→实现→SQL/HTTP"
+      ],
+      "blockingReason": null,
+      "nextAction": "按现有光照/盆器输入明确完整档案请求Schema、清除语义及聚合版本；测试先行实现事务与HTTP",
+      "ticketReadback": "Chrome CODEX RUNNING与五行评论1100440000090864已读回",
+      "priorityReason": "当前用户植物纵向切片的必要合同前置，未等待无关CMS"
     }
   ],
   "queue": [
@@ -356,7 +381,7 @@
       ]
     }
   ],
-  "nextAction": "取得正式CMS后台与服务端凭证引用，确认管理员验真及审核协议后接线；E05答案映射仍待确认",
+  "nextAction": "按现有光照/盆器输入明确完整档案请求Schema、清除语义及聚合版本；测试先行实现事务与HTTP",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",

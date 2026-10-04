@@ -1,0 +1,28 @@
+{
+  "task": "E03用户植物显式认领/更新缺口定位",
+  "at": "2026-10-04T20:14:41.086926+00:00",
+  "layers": {
+    "L0": "本轮围绕planting user-plant任务的level=[0,1,2]定向find返回连接失败或超时，未提供该层上下文",
+    "L1": "本轮围绕planting user-plant任务的level=[0,1,2]定向find返回连接失败或超时，未提供该层上下文",
+    "L2": "本轮围绕planting user-plant任务的level=[0,1,2]定向find返回连接失败或超时，未提供该层上下文"
+  },
+  "missing": [
+    "显式认领公开请求/响应字段及配置准入",
+    "原票具体范围和登录临时案例存储字段"
+  ],
+  "allowed": [
+    "architecture/configuration-variable-catalog.md/json仅user-plant与ephemeral/promotion条目",
+    "api/route-registry.json仅user-plant更新和promote/claim操作",
+    "按该操作sourceRefs定位唯一合同，只读认领章节",
+    "schema/016_authenticated_ephemeral_plant_case.sql仅已登录临时案例表；如合同明确需绑定列才读取该表",
+    "contracts/user-plant.md仅公开投影、创建、身份及编辑归属/版本规则",
+    "schema/003_user_plant.sql仅user_plant_profiles和user_plant_care_contexts两表字段",
+    "api/generate-openapi.mjs及src/contracts仅按UpdateUserPlantRequest名称定位，未找到定义"
+  ],
+  "prohibited": "不读取整目录、整领域或其他图；当前只定位缺口，不实现pending参数",
+  "findings": [
+    "updateUserPlant仅在route-registry中登记，公开更新请求字段未冻结，不能从SQL JSON列反推请求合同",
+    "已登录临时案例TTL仍为pending，禁止隐式继承游客24小时",
+    "z8v0kmr9mj为已存在用户植物核心实施票，CODEX RUNNING；可复用此票补更新合同，无需新建任务"
+  ]
+}

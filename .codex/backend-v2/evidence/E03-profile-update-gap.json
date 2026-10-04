@@ -1,0 +1,32 @@
+{
+  "task": "z8v0kmr9mj",
+  "step": "E03",
+  "at": "2026-10-04T20:17:40.668171+00:00",
+  "accepted": false,
+  "scope": "现有用户植物更新和临时保存绑定的合同/配置缺口核验",
+  "context": ".codex/backend-v2/evidence/E03-promotion-context.json",
+  "currentSource": "存在创建/单株读取/归档恢复及纯临时归属授权；无updateUserPlant或认领应用/HTTP实现",
+  "contractFinding": "更新操作在路由登记但未找到UpdateUserPlantRequest定义；已有聚合归属/乐观锁规则不能代替完整字段Schema",
+  "configurationFinding": "已登录临时案例TTL pending；无隐式24小时；只阻断临时创建和保存绑定路径",
+  "ticketReadback": "Chrome [E03][P2] 用户植物核心实现 z8v0kmr9mj CODEX RUNNING及验收正文；复用原票",
+  "draft": "cloudfunctions-v2/models/user-plant/profile-update-contract-draft.md",
+  "draftSha256": "a0b524aef24c64b36d2c510a257cbab920f78cb0ded7a2314b1c074387122120",
+  "configurationDecision": "无新增业务默认或配置值；昵称80仅为现有SQL列容量，其他参数与Schema未冻结不实施",
+  "next": "按现有光照/盆器输入明确完整档案请求Schema、清除语义及聚合版本；测试先行实现事务与HTTP",
+  "behaviorChanges": false,
+  "notAccepted": [
+    "更新DTO冻结及实现",
+    "长期档案HTTP闭环",
+    "临时案例有效期及创建/绑定",
+    "正式平台登录"
+  ],
+  "verification": {
+    "rootVitest": {
+      "files": 171,
+      "tests": 1503,
+      "exitCode": 0,
+      "log": "/tmp/planting-e03-profile-contract-root-test.log"
+    },
+    "tdd": "无产品行为修改，仅合同待冻结稿与缺口核验，不声称已完成TDD"
+  }
+}
