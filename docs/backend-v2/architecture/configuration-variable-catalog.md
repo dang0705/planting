@@ -2,8 +2,8 @@
 
 - 机器事实源：`configuration-variable-catalog.json`
 - Schema：`configuration-variable-catalog/v1`
-- 目录版本：`2026-09-24.1`
-- 当前共 170 项业务/治理变量、12 个 Provider 配置档案：已冻结 74 项、待冻结 54 项、不可配置硬规则 42 项。
+- 目录版本：`2026-10-03.2`
+- 当前共 176 项业务/治理变量、13 个 Provider 配置档案：已冻结 74 项、待冻结 58 项、不可配置硬规则 44 项。
 
 本文件由同目录生成脚本从 JSON 生成，便于中文阅读。实施 Agent 必须先按领域读取本文件，再只深读该变量引用的合同或决策；不得把 `P1_PENDING` 猜成默认值。待冻结项必须带原因与阻断范围，未冻结前只能推进不依赖该值的工作。
 
@@ -132,6 +132,8 @@
 | `plant-knowledge.enrichment.queue_lease_seconds` | CMS 补全任务租约时长 | `cms_worker_content` | 领域策略 / 待冻结 | P1_PENDING 秒 | plant-knowledge | 百科补全 Worker | 队列运行策略版本；失败：未冻结时不启动自动 Worker；待冻结原因：数值子项仍 CONTRACT_STOP；阻断：自动 CMS 补全 | P3 / [P3] 游客、试用、会员和奖励闭环 |
 | `plant-knowledge.enrichment.max_attempts` | CMS 补全任务最大尝试次数 | `cms_worker_content` | 领域策略 / 已冻结 | `3` 次 | plant-knowledge | 百科补全 Worker | 队列运行策略版本；失败：达到 3 次后进入人工队列，不再自动调用模型 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
 | `plant-knowledge.enrichment.monthly_budget_cny` | CMS 补全真实模型启用预算 | `cms_worker_content` | 领域策略 / 已冻结 | `0` 人民币元/月 | plant-knowledge | 百科补全 Worker、observability | 平台内容预算策略；失败：预算为 0 时暂停生成并继续聚合需求 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
+| `plant-knowledge.search.query_max_code_points` | 公开植物搜索词最长码点数 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `64` Unicode 码点 | plant-knowledge | plant-knowledge | 首版公开合同固定限制；变更需同步合同、测试和客户端兼容性核对，不作为运营开关；失败：超出上限返回 400 VALIDATION_FAILED | P2 / [P2] 已发布植物身份公开搜索纵向切片 |
+| `plant-knowledge.search.result_max_items` | 公开植物搜索单次结果上限 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `20` 条 | plant-knowledge | plant-knowledge | 首版公开合同固定限制；变更需同步合同与测试，不作为运营开关；失败：仅返回前 20 条，并以 truncated 明示存在更多结果 | P2 / [P2] 已发布植物身份公开搜索纵向切片 |
 | `plant-knowledge.identity.release_required` | 规范身份必须通过不可变发布准入 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `true` | plant-knowledge | plant-knowledge、user-plant、care、diagnosis | 不可配置；失败：未准入身份保持候选或隔离 | P1 / [P1] 植物分类与身份准入硬门 |
 | `provider.baidu_plant.timeout_ms` | 百度植物识别超时 | `provider_runtime` | 第三方运行配置 / 待冻结 | P1_PENDING 毫秒 | shared-infrastructure | BaiduIdentifyAdapter | Provider release；失败：超时返回暂不可用，不写植物身份；待冻结原因：真实接口 S4 未验证；阻断：百度识别真实接入 | P3 / [P3] 游客、试用、会员和奖励闭环 |
 | `provider.baidu_plant.max_attempts` | 百度植物识别最大尝试次数 | `provider_runtime` | 第三方运行配置 / 待冻结 | P1_PENDING 次 | shared-infrastructure | BaiduIdentifyAdapter | Provider release；失败：未知结果不盲重试；待冻结原因：错误分类和幂等性未实测；阻断：百度识别真实接入 | P3 / [P3] 游客、试用、会员和奖励闭环 |
@@ -154,15 +156,15 @@
 | `care.environment.atomic_facts_immutable` | 原子环境事实不可改写 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `true` | care | care、diagnosis | 不可配置；修正只能追加新事实；失败：拒绝 UPDATE 并保留原记录 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
 | `care.environment.weather_scope_must_be_outdoor` | 天气 Provider 证据必须保留室外空间范围 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `true` | care | Weather Adapter、care、diagnosis | 不可配置；失败：缺少室内证据时降级或返回 insufficient_evidence | P1 / [P1] 业务策略与统一 Provider 配置架构 |
 | `care.environment.derivation_must_not_overwrite_fact` | 派生环境指标不得回写原子事实 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `true` | care | care、diagnosis | 不可配置；失败：派生失败时不写任何事实、计划或提醒 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
-| `care.environment.reference_conditions_release` | 植物基准干湿周期标准参考环境版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care、plant-knowledge | 不可变参考环境 release；升级后只影响新计算；失败：无已发布参考环境时不生成预计干湿周期；待冻结原因：v2 标准室内环境、盆器与基质参考条件尚未通过数据验证；阻断：预计干湿周期与浇水算法 | P4 / [P4] 盆土视觉和四类养护能力 |
-| `care.environment.derivation_algorithm_release` | 派生环境指标算法发布版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care、diagnosis | 按派生类型发布不可变 release，请求锁定具体版本与 SHA-256；失败：无已发布算法时对应能力返回 temporarily_unavailable；待冻结原因：VPD、光照暴露、空气交换、干燥需求和预计干湿周期算法尚未分别冻结；阻断：派生环境指标运行时 | P4 / [P4] 盆土视觉和四类养护能力 |
+| `care.reference_profile.release` | 植物级养护 Reference Profile 发布版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care、plant-knowledge | 不可变 Reference Profile release；结构固定为植物基线、光照/VPD/栽培参考及显式 fallback，升级只影响新计算；失败：对应植物缺已发布 Reference Profile 时使用合同允许的显式 fallback；若连 fallback 也无证据则返回 insufficient_evidence；待冻结原因：结构已冻结，但植物级 cultivation reference 当前缺 substrate_preference 等已审核性状；VPD/light 参考也尚未形成正式 release；阻断：植物级 Reference Profile 正式运行与相关浇水个性化 | P4 / [P4] 盆土视觉和四类养护能力 |
+| `care.environment.derivation_algorithm_release` | Care 确定性派生算法发布版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care、diagnosis | 按派生类型发布不可变 release，请求锁定具体版本与 SHA-256；失败：无已发布算法时对应能力返回 temporarily_unavailable；待冻结原因：派生类型与职责已冻结，但各算法实现 release、映射参数和真实数据验收尚未完成；阻断：Care v2 确定性派生运行时 | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.environment.factor_freshness_policy_release` | 各类原子环境证据新鲜度策略版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care、diagnosis | 按原子因素与来源类型发布不可变策略；失败：无法证明新鲜度时排除证据并降低结论置信度；待冻结原因：不同证据类型有效窗口尚未通过真实数据验证；阻断：原子证据过期判定 | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.soil_evidence.ttl_hours` | 盆土视觉证据有效期 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING 小时 | care | care、独立浇水顾问 | 证据策略新版本，只影响新计算；失败：有效期无法证明时要求重新检查；待冻结原因：架构只冻结短时证据语义，未冻结具体小时数；阻断：盆土视觉证据复用 | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.weather.current_freshness_minutes` | 实时天气证据新鲜度 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING 分钟 | care | care、天气快照 | 天气证据策略版本；失败：返回证据不足而非伪造实时天气；待冻结原因：和风实时接口与业务新鲜度尚未真实验证；阻断：依赖实时天气的养护结论 | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.weather.forecast_freshness_minutes` | 天气预报证据新鲜度 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING 分钟 | care | care、天气快照 | 天气证据策略版本；失败：缺失时降低可信度；待冻结原因：预报边界未冻结；阻断：天气增强养护 | P4 / [P4] 盆土视觉和四类养护能力 |
-| `care.watering.algorithm_version` | 浇水算法版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care | 算法 release 不可变，输出合同独立版本化；失败：无已发布算法返回 temporarily_unavailable；待冻结原因：v2 算法尚未冻结；阻断：v2 浇水实现 | P2 / [P4] 盆土视觉和四类养护能力 |
+| `care.watering.algorithm_version` | 浇水算法版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care | 算法 release 不可变，输出合同独立版本化；失败：无已发布算法返回 temporarily_unavailable；待冻结原因：决策结构已冻结；EnvironmentDemand/CultivationRetention/PersonalCalibration 的敏感度和上下界仍待影子数据校准及真实链路验收；阻断：v2 浇水正式运行 | P2 / [P4] 盆土视觉和四类养护能力 |
 | `care.fertilizing.algorithm_version` | 施肥算法版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care | 算法 release 不可变；失败：无算法返回 temporarily_unavailable；待冻结原因：v2 算法尚未冻结；阻断：v2 施肥实现 | P2 / [P4] 盆土视觉和四类养护能力 |
-| `care.lighting.algorithm_version` | 光照算法版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care | 算法 release 不可变；失败：证据不足返回 insufficient_evidence；待冻结原因：v2 算法尚未冻结；阻断：v2 光照实现 | P2 / [P4] 盆土视觉和四类养护能力 |
+| `care.lighting.algorithm_version` | 光照算法版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care | 算法 release 不可变；失败：证据不足返回 insufficient_evidence；待冻结原因：结构已冻结；辐射到 PPFD 的透射/换算参数、遮挡映射与真实校准尚未形成正式 algorithm release；阻断：v2 光照正式评估与 DLI 生产派生 | P2 / [P4] 盆土视觉和四类养护能力 |
 | `care.ventilation.algorithm_version` | 通风算法版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care | 算法 release 不可变；失败：证据不足返回 insufficient_evidence；待冻结原因：v2 算法尚未冻结；阻断：v2 通风实现 | P2 / [P4] 盆土视觉和四类养护能力 |
 | `care.output.contract_version` | 四类养护统一输出合同版本 | `care_algorithms` | 领域策略 / 已冻结 | care-capability-result/v1 | care | care、未来前端、CloudBase Agent | 破坏性变化必须升版本并保留兼容读取；失败：未知版本不对外返回 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
 | `care.recommendation.write_fact_directly` | 建议是否可直接写入事实 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `false` | care | care、diagnosis、CloudBase Agent | 不可配置；失败：只返回建议，等待用户确认 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
@@ -174,6 +176,10 @@
 | `care.lighting.match_thresholds` | 光照需求匹配阈值 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING 标准化区间 | care | care | 取得真实证据后发布不可变领域策略版本；失败：未冻结前停止对应范围，不从旧实现猜值；待冻结原因：v2 光照算法阈值尚未冻结；阻断：v2 光照建议 | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.ventilation.risk_thresholds` | 通风与直吹风险阈值 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING 标准化等级 | care | care | 取得真实证据后发布不可变领域策略版本；失败：未冻结前停止对应范围，不从旧实现猜值；待冻结原因：v2 通风算法阈值尚未冻结；阻断：v2 通风建议 | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.reminder.delivery_window` | 养护提醒允许触达窗口 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING 本地时间窗口 | care | care、NotifyAdapter | 取得真实证据后发布不可变领域策略版本；失败：未冻结前停止对应范围，不从旧实现猜值；待冻结原因：提醒时段和免打扰规则尚未冻结；阻断：主动养护提醒 | P4 / [P4] 盆土视觉和四类养护能力 |
+| `care.indoor_environment.algorithm_release` | 室内环境估算算法发布版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care、diagnosis | 不可变 algorithm release；只允许由 outdoor T/RH + air exchange + solar heat + thermal inertia 产生显式 estimated indoor 结果；失败：有室内实测时不需要估算；无实测且无有效估算 release 时返回 insufficient_evidence；待冻结原因：输入结构已冻结，热响应映射与真实数据校准未完成；阻断：无室内实测时的 Air VPD 与依赖它的浇水增强 | P4 / [P4] 盆土视觉和四类养护能力 |
+| `care.growth_activity.algorithm_release` | 生长活跃状态估计算法发布版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care | 不可变 algorithm/prompt/schema release；证据 ID 与状态枚举固定；失败：低置信度、冲突或 release 不可用时返回 UNKNOWN 并回退安全 baseline；待冻结原因：状态合同已冻结，但知识 release、Prompt/Schema 与真实样本回归尚未完成；阻断：条件性/季节性 watering baseline 选择 | P4 / [P4] 盆土视觉和四类养护能力 |
+| `care.watering.personal_calibration_policy_release` | 浇水个体干湿循环校准策略版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care | 不可变校准策略；只基于有效干湿周期残差，换盆/换基质/明显换位置后失效或降权；失败：缺少足够高质量周期时 PersonalCalibration=合同允许的中性值，不伪造个体学习；待冻结原因：最小有效周期数、稳健统计窗口与上下界需影子数据校准；阻断：个体历史校准；不阻断无个体校准的基础 DryProgress | P4 / [P4] 盆土视觉和四类养护能力 |
+| `care.light.window_plane_algorithm_release` | 窗面入射辐照算法发布版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care | 不可变 algorithm release；Direct/Diffuse 分量独立保留；失败：算法不可用时不以朝向经验表替代，返回 insufficient_evidence；待冻结原因：数学结构已冻结，具体实现与回归集尚未形成 release；阻断：Window Plane Irradiance 与 DLI 正式运行 | P4 / [P4] 盆土视觉和四类养护能力 |
 
 ## 问诊与视觉 AI
 
@@ -244,8 +250,8 @@
 | `observability.api.non_ai_p99_ms` | 非 AI API p99 目标 | `slo_capacity` | 领域策略 / 已冻结 | `1500` 毫秒 | shared-infrastructure | 全部非 AI API、监控 | SLO 策略版本；失败：不达标阻断发布 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
 | `observability.ai.first_visible_event_p95_ms` | AI 首个可见事件 p95 目标 | `slo_capacity` | 领域策略 / 已冻结 | `3000` 毫秒 | shared-infrastructure | diagnosis、CloudBase Agent、监控 | SLO 策略版本；失败：不达标进入性能整改，不伪造首包 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
 | `observability.sql.slow_query_ms` | 慢 SQL 记录阈值 | `slo_capacity` | 领域策略 / 已冻结 | `200` 毫秒 | shared-infrastructure | DB、监控 | SLO 策略版本；失败：超过阈值记录脱敏结构化事件 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
-| `observability.db.connection_safety_ratio` | 数据库连接安全占比 | `slo_capacity` | 领域策略 / 已冻结 | 0.70 比例 | shared-infrastructure | DB、CloudBase 函数部署 | 连接预算策略；失败：总连接上限未读回前连接池数值保持 STOP | P1 / [P1] 业务策略与统一 Provider 配置架构 |
-| `observability.db.pool_size` | 单实例数据库连接池上限 | `deployment_environment` | 部署/受控环境 / 待冻结 | P1_PENDING 连接数 | platform-admin | DB、全部云函数 | 部署配置，须基于真实连接上限计算；失败：未读回总连接上限前不配置并发部署；待冻结原因：CloudBase MySQL 总连接上限未读回；阻断：真实并发部署 | P5 / [P5] 真实 MySQL/API/安全/性能验收 |
+| `observability.db.connection_safety_ratio` | 数据库连接安全占比 | `slo_capacity` | 领域策略 / 已冻结 | 0.70 比例 | shared-infrastructure | DB、CloudBase 函数部署 | 连接预算策略；失败：最大实例数及其他连接占用未核实前连接池数值保持 STOP | P1 / [P1] 业务策略与统一 Provider 配置架构 |
+| `observability.db.pool_size` | 单实例数据库连接池上限 | `deployment_environment` | 部署/受控环境 / 待冻结 | P1_PENDING 连接数 | platform-admin | DB、全部云函数 | 部署配置，须基于真实连接上限计算；失败：最大实例数及其他连接占用未核实前不配置连接池或预置并发；待冻结原因：CloudBase MySQL 当前 max_connections=1000 已读回；云函数最大实例数及其他连接占用未核实；阻断：真实并发部署 | P5 / [P5] 真实 MySQL/API/安全/性能验收 |
 
 ## 配置治理与部署
 
@@ -287,7 +293,8 @@
 | `cloudbase_cms` CloudBase CMS | CMS_DRAFT_WRITE、CMS_RELEASE_READ、CMS_PUBLISH_CALLBACK | pending | cloudbase_cms_api / P1_PENDING | connect=P1_PENDING, read=P1_PENDING, total=P1_PENDING, attempts=P1_PENDING, backoff=P1_PENDING | rate=P1_PENDING, circuit=P1_PENDING | policy=P1_PENDING, month=P1_PENDING, warn=P1_PENDING | 暂停草稿/发布写入，继续读取最后已验证不可变 release；阻断：CMS 自动补全与发布回调 |
 | `cloudbase_agent` CloudBase 小青 Agent | AGENT_TOOL_CALL | pending | cloudbase_agent_tool_api / P1_PENDING | connect=P1_PENDING, read=P1_PENDING, total=P1_PENDING, attempts=P1_PENDING, backoff=P1_PENDING | rate=P1_PENDING, circuit=P1_PENDING | policy=P1_PENDING, month=500, warn=400 | 用户范围、工具 allowlist、额度或签名无法证明时只开放公共知识；阻断：小青个人数据与写工具 |
 | `cloudbase_mysql` CloudBase MySQL | TRANSACTIONAL_REPOSITORY | pending | cloudbase_mysql_private / P1_PENDING | connect=P1_PENDING, read=P1_PENDING, total=P1_PENDING, attempts=1, backoff=no_automatic_transaction_retry | rate=connection_budget, circuit=P1_PENDING | policy=cloudbase_resource_budget_PENDING, month=P1_PENDING, warn=P1_PENDING | 连接或事务结果不确定时失败关闭并对账，禁止跨库降级；阻断：真实并发写入 |
-| `cloudbase_auth` CloudBase 身份认证 | ANONYMOUS_PRINCIPAL、PLATFORM_LOGIN_PRINCIPAL | pending | cloudbase_auth_v2 / P1_PENDING | connect=P1_PENDING, read=P1_PENDING, total=P1_PENDING, attempts=P1_PENDING, backoff=P1_PENDING | rate=P1_PENDING, circuit=P1_PENDING | policy=cloudbase_resource_budget_PENDING, month=P1_PENDING, warn=P1_PENDING | 认证不可用时拒绝签发 Principal；不得以设备、IP、Cookie 或匿名 UID 伪造 user_id；阻断：游客匿名主体与平台登录真实接入 |
+| `cloudbase_auth` CloudBase 身份认证 | ANONYMOUS_PRINCIPAL | pending | cloudbase_auth_v2 / P1_PENDING | connect=P1_PENDING, read=P1_PENDING, total=P1_PENDING, attempts=P1_PENDING, backoff=P1_PENDING | rate=P1_PENDING, circuit=P1_PENDING | policy=cloudbase_resource_budget_PENDING, month=P1_PENDING, warn=P1_PENDING | 匿名认证不可用时拒绝签发游客主体；不得以设备、IP、Cookie 或匿名 UID 伪造 user_id；阻断：游客匿名主体真实接入 |
+| `wechat_miniprogram_login` 微信小程序登录凭证交换 | PLATFORM_LOGIN_PRINCIPAL | pending | wechat_jscode2session / P1_PENDING | connect=P1_PENDING, read=P1_PENDING, total=P1_PENDING, attempts=P1_PENDING, backoff=P1_PENDING | rate=P1_PENDING, circuit=P1_PENDING | policy=platform_login_budget_PENDING, month=P1_PENDING, warn=P1_PENDING | 凭证或受控配置不可用时拒绝登录，不信任客户端自报的 OpenID 或 HTTP 请求头；阻断：真实微信小程序登录验真；本地 fake Provider 合同与 MySQL 切片不受阻 |
 
 ## 验收方式
 

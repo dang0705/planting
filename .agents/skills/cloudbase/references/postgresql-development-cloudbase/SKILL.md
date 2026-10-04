@@ -1,7 +1,7 @@
 ---
 name: postgresql-development-cloudbase
 description: "Use when building, debugging, or evaluating CloudBase PostgreSQL / CloudBase PG / PG mode apps, including Postgres schema setup, queryPgDatabase/managePgDatabase, JS SDK v3 app.rdb() CRUD/RPC, PG HTTP API fallback, RLS-style permissions, username-password auth, and Web CMS/admin CRUD flows backed by CloudBase PG."
-version: 2.34.3
+version: 2.34.8
 alwaysApply: false
 ---
 
@@ -22,6 +22,7 @@ If a referenced sibling skill file is missing from this environment, ask the use
 
 ### Then also read
 
+- Access-pattern design or slow-query work -> `../postgresql-best-practices-cloudbase/SKILL.md`
 - Web auth provider readiness -> `../auth-tool-cloudbase/SKILL.md`
 - Web login implementation -> `../auth-web-cloudbase/SKILL.md`
 - General Web implementation and verification -> `../web-development/SKILL.md`
@@ -59,7 +60,7 @@ CloudBase PG (`app.rdb()`, `app.storage.from('bucket')`) uses **different API me
 
 **If you find yourself typing `.where()` or `.orderBy()` or `.count()` — stop and use the correct method from the right column.**
 
-0. **First, confirm this environment actually has PostgreSQL provisioned.** Call `envQuery(action="info", envId=...)` and read the derived `EnvInfo.RuntimeBackends` block (`{ postgresql, nosql, mysql }`) along with `EnvInfo.RuntimeMode`. It is only safe to apply this skill's PG-specific guidance when `RuntimeBackends.postgresql === true` (equivalently, `EnvInfo.PostgreSQL` is non-empty AND/OR `EnvInfo.Meta` contains `postgresql=enable`).
+0. **First, confirm this environment actually has PostgreSQL provisioned.** Call `queryEnv(action="info", envId=...)` and read the derived `EnvInfo.RuntimeBackends` block (`{ postgresql, nosql, mysql }`) along with `EnvInfo.RuntimeMode`. It is only safe to apply this skill's PG-specific guidance when `RuntimeBackends.postgresql === true` (equivalently, `EnvInfo.PostgreSQL` is non-empty AND/OR `EnvInfo.Meta` contains `postgresql=enable`).
    - PG mode is a **new-environment mode** selected when creating a CloudBase environment with PostgreSQL. Do not try to "upgrade" a legacy environment in place; create/select a PG-mode environment instead.
    - If `RuntimeBackends.postgresql === false`, STOP — this is a legacy NoSQL-only env: switch to `cloudbase-document-database-web-sdk` for browser data and `cloud-storage-web` (with `app.uploadFile()`) for uploads. Do not write `app.rdb()` code, do not enable RLS, do not create a pgstore bucket here.
    - If both `postgresql` and `nosql` are `true` (the common case in a PG environment), they coexist. Apply this skill to NEW business data the task asks you to put in PG (e.g. articles / role tables explicitly described as PG). Existing NoSQL collections, the bucket reported in `EnvInfo.Storages[]`, and any `managePermissions(resourceType="noSqlDatabase")` rules continue to govern the legacy NoSQL data — do NOT migrate or rewrite them unless the task explicitly asks.
@@ -94,7 +95,6 @@ CloudBase PG (`app.rdb()`, `app.storage.from('bucket')`) uses **different API me
    Other migration actions:
    - `managePgDatabase(action=migrationDetail, migrationVersion=...)` — inspect a single migration
    - `managePgDatabase(action=fetchMigration)` — pull remote history SQL into `cloudbase/migrations/` (CLI `tcb db pg migration fetch` parity). Optional `migrationVersion` for one file; omit for full history. Existing local files are skipped unless `force=true` (overwrite / checksum realign). Prefer this over hand-copying SQL from `migrationDetail` to avoid checksum drift.
-   - `managePgDatabase(action=rollbackMigration, lastN=..., confirm=true)` — roll back the last N applied migrations
    - `managePgDatabase(action=repairMigration, migrationVersion=..., migrationName=..., repairStatus=..., repairReason=...)` — repair history records
 
    **`execute` is for DML and ops SQL, not default DDL:** use `managePgDatabase(action=execute, confirm=true)` for `INSERT` / `UPDATE` / `DELETE`, and for `GRANT` / `CREATE POLICY` / storage RLS when those are not part of a migration. If you attempt schema DDL via `execute`, the tool soft-blocks with `DDL_USE_APPLY_MIGRATION` unless you explicitly set `allowDdlViaExecute=true` (escape hatch only).

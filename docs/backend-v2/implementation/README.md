@@ -3,6 +3,7 @@
 - [TypeScript 与 CloudBase](typescript-cloudbase.md)
 - [CloudBase 认证通道](cloudbase-authentication.md)
 - [HTTP 云函数模板](http-function.md)
+- [业务域云函数复制指南](domain-function-replication.md)
 - [共享 HTTP 请求链](foundation-request-chain.md)
 - [共享 HTTP 幂等协议与持久化](foundation-http-idempotency.md)
 - [统一身份主体](identity-principal.md)

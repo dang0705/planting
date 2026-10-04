@@ -6,7 +6,7 @@ import { extname, resolve } from 'node:path'
 import uni from '@dcloudio/vite-plugin-uni'
 import { assertMpWeixinScopedStyleConsistency } from './scripts/dev/mp-weixin-output-validation.mjs'
 
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import { UnifiedViteWeappTailwindcssPlugin as uvwt } from 'weapp-tailwindcss/vite'
 
 // https://vitejs.dev/config/
@@ -28,6 +28,14 @@ const cloudbaseFunctionProxyTarget = `https://${cloudbaseEnvId}.api.tcloudbasega
 const localDiagnosisReviewPrefix = '/__local_diagnosis_review__'
 const localDiagnosisReviewStorePath = resolve(__dirname, 'tmp', 'diagnosis-review-dev-cache.json')
 const miniProgramClientPlatforms = new Set(['wechat-mini-program', 'wechat_mp', 'mini-program'])
+
+// Tropicals 客户端直连：.env.local 使用用户命名的 TROPICALS_API_KEY；
+// Vite 默认只向客户端暴露 VITE_*，这里桥接到 import.meta.env.VITE_TROPICALS_API_KEY。
+const tropicalsEnvMode = process.env.NODE_ENV === 'production' ? 'production' : 'development'
+const tropicalsEnv = loadEnv(tropicalsEnvMode, __dirname, '')
+const tropicalsApiKey = String(
+  tropicalsEnv.VITE_TROPICALS_API_KEY || tropicalsEnv.TROPICALS_API_KEY || ''
+).trim()
 
 // 抖音小程序运行时可能没有把全局对象属性映射成 CommonJS 模块内的裸变量。
 // @tanstack/query-core 使用 `new AbortController()`，因此仅在 app.js 中注入
@@ -1476,6 +1484,9 @@ export default defineConfig({
       '@': resolve(__dirname, 'src')
     },
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue']
+  },
+  define: {
+    'import.meta.env.VITE_TROPICALS_API_KEY': JSON.stringify(tropicalsApiKey)
   },
   css: {
     postcss: {

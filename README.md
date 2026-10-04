@@ -9,6 +9,23 @@
 - 后端基础设施架构必须实现业务领域架构，但不得增删或改写业务语义；业务领域架构不得包含具体框架、数据库访问或部署细节。
 - 中文是业务、架构和文档的首要表达语言。图中的英文只作为程序标识或行业缩写保留，必须由同一节点中的中文名称解释，不得让英文术语承担唯一业务含义。
 
+## 目标架构与分批上线（已确认）
+
+**定架构、按节奏：下方两张图是完整目标架构，不是首版全部上线清单。** 首版的唯一执行范围见[首版运行边界](docs/backend-v2/phases/first-release-scope.md)；后续阶段只能改变能力开放顺序与实现深度，不得借“暂缓”删除用户植物、临时体验转长期植物、事实与建议分离等核心语义。
+
+**实施优先级：第一次解决植物问题 → 显式保存/绑定用户植物 → 后续复访 → 试用、会员与生成式 AI 付费价值。** 这是一版产品内的开发先后，不是四次发布，也不要求给图中的每项功能各建一条纵向切片。只有实际开放的主旅程及关键跨域风险需要端到端证明；未开放的能力保留架构位置和必要核心契约。目录搜索目标是库内投影 `plant_search_documents` / `plant_search_terms`，合同为 [plant-catalog-search/v1](docs/backend-v2/contracts/plant-catalog-search.md)；百科详情主读是 CloudBase SQL `tropicals_species_encyclopedia_ref`，slug 为 `scientificName` 去符号后的 kebab-case。首页仍直连 Tropicals 实时 API 是代码缺口，不是架构目标。已发布身份公开搜索是独立的较小检索面（规范身份精确 192，ACTIVE 191）。Tropicals 只做参考层和软桥，`authority_source` 只能是 POWO / WCVP / WFO / RHS_ICRA。首版延后自动 CMS 扩种、Qwen 生成百科、积分、完整施肥和 Agent 写操作；该延后不阻断 SQL 百科只读。
+
+| 范围 | 首版裁决 | 后续阶段 |
+|---|---|---|
+| 用户植物主链 | 游客或已登录用户可临时解决问题；保存时显式创建或绑定用户植物。统一用户身份、归属、事实、状态与必要时间线按真实链路验收 | 丰富成长展示、复杂历史迁移和跨设备合并 |
+| 植物身份与目录 | 目录搜索目标是 `plant_search_terms` → `plant_search_documents`（2026-10-03 精确 271,384）。搜索命中不等于已发布 PlantIdentity。规范身份仍只有精确 192 行（ACTIVE 191），公开身份搜索单独做名称前缀。API id/slug、学名派生 slug、`taxon_id` 与内部主键不可混用；身份仍按权威来源、证据、审核和发布管理 | 首页从 Tropicals 自动补全改接到 catalog search；crosswalk 只服务需要规范身份的小集合 |
+| 外部植物百科与媒体 | 百科详情主读是 CloudBase SQL `qinghuazhi_v2_test.tropicals_species_encyclopedia_ref`（精确 271,810）。slug 由 `scientificName` 生成 kebab-case，不必是已存储的 API 字段。缺 nameEn、COL、价格等 API 字段不阻断。展示文本按数据集/来源署名，图片逐项许可。展示正文不得进入养护/诊断规则。首页仍读实时详情是代码缺口，不是目标 | plant-knowledge 按 slug 读 SQL 并输出展示 DTO；实时 API 只保留可选同步或来源核对 |
+| CMS 扩种与拓百科 | **首版暂缓**自动扩种、Qwen 生成百科和 CMS 百科审核发布；这不阻断 SQL 百科详情只读。搜索命中、百科行或实时 API 命中都不自动成为内部身份 | 覆盖、来源、许可、审核和成本条件满足后另行验收 |
+| 诊断知识 CMS | **不暂缓**黄叶、萎蔫、虫害题包，以及园艺原因、结论（Outcome）和行动建议（Action）的必要审校、兼容版本发布；生成式丰富解释单独核算成本并受控实验 | 扩展病虫害知识面、内容深度与审核工作流 |
+| 养护与其他能力 | 浇水、光照新版模型在当前后端改造批次暂缓；首版启用前必须按新版模型单独完成合同与真实链路验收，不能把旧算法当作已验收替代。积分、完整施肥、Agent 写操作等按首版范围延后 | 按独立证据和票据逐步开放 |
+
+目录搜索、百科详情、已发布身份公开搜索和规范身份写入是四条独立路径，主键命名空间互不等值。目录搜索读可重建投影 `plant_search_terms` → `plant_search_documents`，合同 [plant-catalog-search/v1](docs/backend-v2/contracts/plant-catalog-search.md)（`GET /api/v2/plant-knowledge/catalog/search`）。百科详情读 `tropicals_species_encyclopedia_ref`，定位键是由 `scientificName` 去掉引号与标点、空白折成连字符再转小写得到的 kebab-case slug（例：`Monstera deliciosa 'Thai Constellation'` → `monstera-deliciosa-thai-constellation`）；该 slug 不是 Tropicals API id/slug，也不是 `taxon_id`、`plant_taxa.id` 或 `plant_identities.id`。已发布身份公开搜索继续只做 `displayNameZh` / `acceptedScientificName` 的字面前缀，规模约 192，不并进约 27 万搜索文档。Tropicals 参考层（分类、百科、俗名、生长季）按 `taxon_id` 软关联，经 `plant_taxon_tropicals_links`（精确 161，全部 ACTIVE，主链接 148）桥到内部分类；`plant_taxa.authority_source` 只能是 POWO、WCVP、WFO、RHS_ICRA，Tropicals 不是权威来源。首页 `PlantSearchToolbar` 仍直连 [Tropicals 实时 API](https://tropicals.cn/docs/api) 做自动补全和详情，这是待退役的代码现状，不是目标主路径；实时 API 只保留为可选同步、来源核对或后续能力。[公开数据集](https://tropicals.cn/datasets)与实时 API 是不同许可入口：文本若被同步使用按 CC BY 4.0 保留 Tropicals.cn 署名，不能推定图片权利或 API 商用资格。`nameEn`、COL、价格等 SQL 行没有的字段不阻断百科只读。展示用养护与病虫害正文不能直接进入内部规则；结构化性状须经 plant-knowledge 审核并发布为 Internal Care Knowledge 后，Care 才能消费。CMS 自动扩种与 Qwen 拓百科在图中保留为目标架构位置，但首版延后，且该延后不阻断 SQL 百科读取。表关系见 [植物目录数据模型](docs/backend-v2/architecture/plant-catalog-data-model.md) 与 [SQL 主读](docs/backend-v2/architecture/tropicals-api-mvp.md)。
+
 ## 业务领域架构
 
 ```mermaid
@@ -110,9 +127,20 @@ flowchart TB
   RuntimePlantContext --> Diagnosis
 
 
-  %% ========== 植物知识、识别与百科自丰富 ==========
-  IdentityCatalog[规范植物身份<br/>分类 / 科学名 / 别名 / taxon_key] --> IdentityProposal
-  PublicEncyclopedia[展示型植物百科<br/>简介 / 外观 / 分布 / 约 3 个 Q&A] --> EncyclopediaLookup
+  %% ========== 植物目录搜索、SQL 百科与内部身份 ==========
+  %% 实时 API 不是搜索/详情主路径；Qwen 拓百科是目标位置，首版延后且不阻断 SQL 读
+  IdentityCatalog[规范植物身份<br/>PlantIdentity / Taxon<br/>精确 192 · authority 不含 Tropicals] --> IdentityProposal
+  PublishedIdentitySearch[已发布身份公开搜索<br/>名称前缀 · 约 192<br/>独立于目录搜索] --> IdentityCatalog
+  CatalogSearch[目录搜索投影<br/>plant_search_terms → plant_search_documents<br/>合同 plant-catalog-search/v1] --> CatalogHit[目录搜索命中<br/>catalogTaxonRef / 俗名可多分类<br/>不等于已发布身份]
+  CatalogHit -->|hasEncyclopedia| SqlEncyclopedia[SQL 百科主读<br/>tropicals_species_encyclopedia_ref<br/>slug = scientificName kebab-case]
+  SqlEncyclopedia --> PublicEncyclopedia[植物百科展示层<br/>SQL 百科或已发布内容<br/>署名 / 图片许可逐项核验]
+  CatalogHit --> InternalIdentityCrosswalk[软桥 crosswalk<br/>plant_taxon_tropicals_links<br/>Tropicals 不是权威来源]
+  SqlEncyclopedia --> InternalIdentityCrosswalk
+  IdentityCatalog --> InternalIdentityCrosswalk
+  InternalIdentityCrosswalk -->|仅映射候选；遵循用户确认| IdentityProposal
+  TropicalsLiveApi[Tropicals 实时 API<br/>可选同步 / 来源核对] -.不在请求主路径.-> SqlEncyclopedia
+  HomepageGap[首页仍直连 Tropicals API<br/>代码缺口，不是架构目标] -.待退役.-> TropicalsLiveApi
+  PublicEncyclopedia --> EncyclopediaLookup
   InternalKnowledge[内部维护知识<br/>毒性 / 浇水 / 施肥 / 光照 / 通风<br/>诊断与安全基本面] --> CareInput
   InternalKnowledge --> Diagnosis
 
@@ -331,7 +359,7 @@ flowchart TB
   %% ========== 应用服务 ==========
   subgraph Application["业务服务层 Application Services"]
     IdentityApp[identity<br/>匿名/正式主体解析<br/>统一身份 / session]
-    KnowledgeApp[plant-knowledge<br/>植物身份 / 百科 / 内部知识<br/>识别 / 内容补全]
+    KnowledgeApp[plant-knowledge<br/>目录搜索 / SQL 百科 / 内部身份<br/>识别；Qwen 补全首版延后]
     UserPlantApp[user-plant<br/>植物入口 / 临时案例 / 显式绑定<br/>用户植物 / 档案 / 生命周期]
     PlantEntryService[user-plant 内部入口与归属用例<br/>先分主体，再选临时或长期<br/>提供作用域与植物归属证明]
     CareApp[care<br/>临时与用户植物养护<br/>事实 / 浇水 / 施肥 / 光照 / 通风 / 计划]
@@ -432,7 +460,7 @@ flowchart TB
   %% ========== 持久化与所有权 ==========
   subgraph Persistence["持久化与表所有权"]
     IdentityStore[(users / platform identities<br/>principal mapping)]
-    KnowledgeStore[(identity / encyclopedia / internal knowledge<br/>release / enrichment jobs)]
+    KnowledgeStore[(plant_search_* / encyclopedia_ref<br/>plant_taxa / plant_identities / 发布)]
     UserPlantStore[(用户植物 / 资产 / 临时案例<br/>主体与有效期 / 显式绑定状态)]
     CareStore[(环境观察 / 输入快照 / 派生指标<br/>事实 / 计划 / 天气 / 临时养护结果)]
     DiagnosisStore[(长期结果归属 user_id + user_plant_id<br/>临时结果归属案例 / 证据 / AI 审计)]
@@ -468,8 +496,13 @@ flowchart TB
   CareApp --> Published
   DiagnosisApp --> Published
 
-  KnowledgeApp --> EncyclopediaQuery[已发布展示百科查询]
-  EncyclopediaQuery -->|规范身份缺失百科| EnrichmentJob[幂等补全任务<br/>generation_key / lease]
+  KnowledgeApp --> CatalogSearchApi[GET /plant-knowledge/catalog/search<br/>plant-catalog-search/v1]
+  CatalogSearchRepo[(plant_search_terms<br/>→ plant_search_documents<br/>约 27 万，不是身份全集)] --> CatalogSearchApi
+  PublishedIdentitySearch[(已发布身份公开搜索<br/>名称前缀 · 约 192)] --> KnowledgeApp
+  KnowledgeApp --> EncyclopediaQuery[SQL 百科详情 / 已发布内部百科读取]
+  SqlEncyclopediaRead[(tropicals_species_encyclopedia_ref<br/>学名派生 slug 主读)] --> EncyclopediaDto[百科展示 DTO<br/>表内列 / 署名 / 逐图许可]
+  EncyclopediaDto --> EncyclopediaQuery
+  EncyclopediaQuery -->|规范身份缺失展示内容<br/>目标架构；首版延后| EnrichmentJob[幂等补全任务<br/>generation_key / lease<br/>不阻断 SQL 百科读]
   EnrichmentJob --> PlatformBudgetGuard[平台内容预算与频率保护<br/>不走用户 AI 点数]
   PlatformBudgetGuard --> EncyclopediaWorker[百科补全 Worker<br/>仍属于 plant-knowledge]
   EncyclopediaWorker --> EncyclopediaQwenAdapter[Qwen 展示内容 Adapter<br/>锁定模型 / prompt / schema]
@@ -489,6 +522,20 @@ flowchart TB
 
 
   %% ========== 外部能力、标准化证据与事实来源 ==========
+  KnowledgeApp --> TropicalsApiAdapter[可选 Tropicals API Adapter<br/>同步 / 来源核对；非搜索或详情主读]
+  TropicalsApiAdapter --> TropicalsLiveAPI[Tropicals API v1<br/>不在目录搜索或百科详情主路径]
+  ProviderRegistry -.仅可选同步时.-> TropicalsApiAdapter
+  CredentialStore -.凭证引用.-> TropicalsApiAdapter
+  HomepageClientGap[首页客户端直连<br/>VITE_TROPICALS_API_KEY<br/>代码缺口，待退役] -.不是目标.-> TropicalsLiveAPI
+  TropicalsLiveAPI -.可选同步进参考层.-> SqlEncyclopediaRead
+  CatalogSearchApi --> CatalogHit[目录命中<br/>不等于规范身份]
+  EncyclopediaQuery --> TropicalsIdentityResolver[身份交叉映射<br/>plant_taxon_tropicals_links<br/>证据 / 审核]
+  CatalogHit --> TropicalsIdentityResolver
+  PublishedIdentityCatalog[(已发布 PlantIdentity / Taxon<br/>authority_source = POWO / WCVP / WFO / RHS_ICRA)]
+  PublishedIdentityCatalog --> TropicalsIdentityResolver
+  TropicalsIdentityResolver -->|经核验后才关联| IdentityProposal
+  TropicalsIdentityResolver -->|未映射：仅目录或百科浏览| EncyclopediaQuery
+  TropicalsIdentityResolver -.不自动发布.-> CMS
   KnowledgeApp --> IdentifyAdapter[植物识别 Adapter]
   IdentifyAdapter --> BaiduIdentify[百度植物识别<br/>当前候选来源]
   ProviderRegistry -.受控配置.-> IdentifyAdapter

@@ -1,11 +1,13 @@
-# P2 核心领域实现
+# P2 纵向切片优先的核心领域实现
 
-- **局部门禁，不阻断 P2 其他领域**：P1 人工裁决已经冻结为 `99 REUSE_AS_IS + 7 TRANSFORM + 4 TRANSFORM_PENDING + 90 QUARANTINE`。当前只允许 106 条进入本地、未激活 seed；4 条待转换记录必须重建 canonical、稳定 ID、`identity_level`、父链和证据哈希并复核后才能把 `seedEligible` 提升到 110。active release 仍为 `STOP`，因此 `plant-knowledge` 的正式发布、百科补全和依赖 active taxonomy 的对外读取保持停止；`identity`、`subscription`、`user-plant`、`foundation` 以及不依赖 active release 的 Repository、事务、幂等与隔离读继续并行推进。
+- **局部门禁，不阻断独立切片**：P1 人工裁决已经冻结为 `99 REUSE_AS_IS + 7 TRANSFORM + 4 TRANSFORM_PENDING + 90 QUARANTINE`。当前只允许 106 条进入本地、未激活 seed；4 条待转换记录必须重建 canonical、稳定 ID、`identity_level`、父链和证据哈希并复核后才能把 `seedEligible` 提升到 110。active taxonomy release 仍为 `STOP`；CloudBase 测试环境的公开读取只以隔离夹具证明 HTTP→MySQL 路径，不代表正式分类发布、百科补全或全量身份验收。
 
-- `identity_terra`：Principal、统一用户、平台身份。
-- `subscription_terra`：权益、试用、会员、积分、等级、兑换、AI 额度和奖励 inbox。
-- `knowledge_terra`：分类、产品身份、证据、CMS 和 release。
-- `user_plant_terra`：用户植物、档案、生命周期、环境、资产和时间线。
-- `foundation_terra`：共享 HTTP 请求链、DTO/AJV、Repository 事务边界、幂等键、可靠事件 outbox、公开响应脱敏和可观测性基础设施。
+优先顺序固定为：公开植物只读云端证据 → 可信会话下的用户植物正常读取及归属拒绝 → 临时植物显式创建/绑定 → 再次养护或问诊。每条切片只实现本次闭环需要的领域依赖和安全拒绝路径；其余加固按实际依赖排队，不把“领域模块写了多少”当作完成度。
+
+- `identity`：先交付当前切片可验证的可信会话与统一用户归属；其余身份能力按后续入口需要扩展。
+- `plant-knowledge`：公开只读切片保留隔离夹具证据；正式分类发布仍遵守 P1 准入门。
+- `user-plant`：先验收已认证只读，再按显式绑定业务动线扩展档案与事实。
+- `foundation`：只实现当前切片所需的请求链、数据库边界与脱敏响应。
+- `subscription`：只在试用/会员能力进入具体切片时验收对应权益与额度，不为公开只读路径前置完整积分或奖励系统。
 
 禁止跨域 SQL、复制 Capability 规则、业务域直接写积分/AI 余额，以及使用旧 JavaScript 实现新业务。

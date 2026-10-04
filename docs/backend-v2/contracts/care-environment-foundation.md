@@ -1,118 +1,193 @@
-# 养护原子环境事实与派生指标合同
+# 养护原子环境事实与确定性派生合同
 
-- 合同版本：`care-environment-foundation/v1`
+- 合同版本：`care-environment-foundation/v2`
 - 所有者：`care`
-- 核心原则：先事实、后推导、再建议。
+- 核心原则：先事实、后确定性推导、再建议。
 
-## 1. 为什么它是养护基础
+## 1. 定位
 
-浇水、施肥、光照、通风和部分诊断都必须消费同一组可追溯的环境证据，但不得共享某个算法的最终判断。系统先保存原子环境事实，再由版本化算法生成派生环境指标，最后组装某次养护计算的只读输入快照。
+浇水、施肥、光照、通风和部分诊断消费同一组可追溯环境证据，但不得共享某个能力的最终判断。系统先保存原子环境事实，再锁定不可变输入快照，由版本化确定性算法生成派生值，最后交给具体 Care 能力。
 
 ```text
 原子环境事实
-→ 带哈希的输入快照
-→ 版本化派生环境指标
-→ 植物基准与最近养护事实
-→ 浇水 / 施肥 / 光照 / 通风 / 诊断
-→ 稳定对外合同
+→ 不可变输入快照
+→ 确定性派生
+→ 植物级 Reference / 已审核知识
+→ 能力决策
+→ 稳定输出合同
 ```
 
-算法变化不得改写原子事实；新算法只能基于同一输入快照生成新的派生记录。这样才能审计“当时看到了什么、如何推导、为什么给出建议”。
+AI 不负责证明输入事实真假，也不重新计算已经可由代码确定的太阳几何、VPD、DLI、时间差等量。算法变化不得改写历史事实；新算法只能基于历史输入快照追加新的派生记录。
 
 ## 2. 原子环境事实
 
-每条观察只表达一个最小环境事实，禁止把“当前应浇水”之类结论伪装为观察值。
+每条观察只表达一个最小事实。
 
 | 原子因素 | 示例 | 最低来源边界 |
 |---|---|---|
-| 光照 | 自然光类型、朝向、距窗、遮挡、补光时段 | 用户配置、室内传感器或带来源的天气辐射证据 |
-| 空气温度 | 植物周围或室外温度 | 必须声明空间范围，不得混用 |
-| 相对湿度 | 植物周围或室外 RH | 必须与温度具有可比较的时间与空间范围 |
-| 空气运动 | 换气、空间开放度、局部风源、直吹 | 用户配置或室内证据；室外风速只可作外部上下文 |
-| 盆器 | 材质、尺寸、形状、排水孔 | 用户植物档案及其版本 |
-| 基质 | 介质类型、颗粒/保水特征 | 用户植物档案及其版本 |
-| 排水 | 排水能力、托盘积水风险 | 用户配置、观察或视觉证据 |
-| 盆土表面 | wet / moist / dry / uncertain | 手工检查或短时盆土视觉证据 |
+| 光照环境配置 | 窗向、窗面倾角、距窗、遮挡、窗帘、补光时段 | 用户配置或可信测量 |
+| 空气温度 | 室内、plant-zone 或 outdoor 温度 | 必须声明空间范围 |
+| 相对湿度 | 与温度同时间/空间范围的 RH | 不得跨空间拼接 |
+| 空气运动 | 密闭/开窗/循环风/直吹，或室内风速 | 用户配置或室内证据 |
+| 盆器 | 实际种植内盆材质、尺寸、形状 | 用户植物档案 |
+| 基质 | 介质类型、比例/粗细、保水/通气先验 | 用户植物档案 |
+| 排水 | FREE_DRAINING / LIMITED / NO_DRAINAGE 等 | 用户配置或观察 |
+| 盆土表面 | wet / moist / dry / uncertain | 用户检查或短时视觉 |
 
-每条事实至少包含：
+原子事实至少保留：`observationRef`、`factorType`、`sourceScope`、`sourceKind`、`sourceRef`、规范值、单位、观察时间、有效期、置信度、证据哈希。
 
-```ts
-type AtomicEnvironmentObservation = {
-  /** 高熵观察公开引用；不是数据库内部主键。 */
-  observationRef: string
-  /** 原子因素类型；一个观察只能表达一种因素。 */
-  factorType: string
-  /** indoor / outdoor / plant_zone / pot，明确证据空间范围。 */
-  sourceScope: string
-  /** 来源类型和来源对象公开引用；不得存供应商原始凭证或私有 URL。 */
-  sourceKind: string
-  sourceRef: string
-  /** 类型化规范值及明确单位；无量纲分类使用 `none`。 */
-  normalizedValue: unknown
-  unitCode: string
-  /** 观察时间与可参与计算的截止时间。 */
-  observedAt: string
-  validUntil: string | null
-  /** low / medium / high；代表证据质量，不是假精确概率。 */
-  confidence: string
-  /** 规范化观察内容的 SHA-256，用于防篡改与回放。 */
-  evidenceHash: string
-}
-```
+### 空间范围硬规则
 
-不得把室外温湿度直接标记为室内或植物周围实测。天气只能保留其真实 `outdoor` 范围；若缺少室内证据，算法必须显式降级或返回 `insufficient_evidence`。
+- 天气 Provider 证据保持 `outdoor`。
+- 室外温湿度不得直接标记成 `indoor` 或 `plant_zone`。
+- 室外风速不得直接标记成室内空气运动。
+- 当前盆土表面视觉不得标记成“根区已湿/已干”。
 
 ## 3. 输入快照
 
-一次计算必须锁定不可变输入快照，至少记录用户植物/游客案例、养护环境配置版本、植物知识 release、天气快照、原子观察引用、最近养护事实引用、盆土证据引用、请求级配置快照和完整清单 SHA-256。
+一次计算锁定一个不可变输入快照，包括：
 
-`inputSnapshotHash` 对规范化输入清单计算。一次请求开始后不得补换证据；需要新证据时创建新快照。长期快照归属于 `user_id + user_plant_id`；游客快照只嵌入临时养护结果并归属于 `guest_plant_case_ref`，不得伪造用户植物。
+- 当前植物作用域：Persistent 或 Ephemeral；
+- Care Context 版本；
+- Internal Care Knowledge / Reference Profile release；
+- 天气辐射与逐时天气快照；
+- 原子观察引用；
+- 最近已确认养护事实；
+- Soil Evidence；
+- 请求级配置快照；
+- 规范化输入清单 SHA-256。
 
-游客临时结果必须内联保存 `environment_contract_version`、`input_manifest_json`、`input_manifest_sha256`、`algorithm_release_manifest_json`、`algorithm_release_manifest_sha256`、`derivations_json`、`derivations_sha256` 和 `result_sha256`。认领后只通过归属投影把该结果解释为某个用户植物的历史记录，不得重算后覆盖原输入或原结果。
+一次请求开始后不得无声替换证据。新证据必须创建新快照。
 
-## 4. 派生环境指标
+长期原子环境、Snapshot、`care_environment_derivations` 与 `care_decision_derivations` 归属 `user_id + user_plant_id`。Ephemeral 不创建假的长期用户植物，也不写这些长期派生表：游客和已登录用户主动临时使用都归属于统一的 `ephemeralPlantCaseRef` 语义，把同语义的输入清单、算法/Prompt release、环境派生与决策派生嵌入 `temporary_care_results` 并随案例 TTL 管理。两类 Ephemeral backing case 的证明方式不同，不得把已登录 UserPrincipal 套用游客匿名 proof。
 
-派生值必须带 `algorithmRelease`、输入快照引用、`inputSnapshotHash`、输出结构版本、结果 SHA-256、置信度和有效期。
+## 4. 确定性派生类型
 
-首批派生类型：
+### 4.1 `estimated_indoor_environment`
 
-- `vapor_pressure_deficit`：VPD 空气水汽压亏缺；只有时间与空间范围可比较的温度和相对湿度才允许计算。
-- `light_exposure`：光照暴露与植物需求匹配；室外天气不能单独代表室内实际光照。
-- `air_exchange`：室内换气、空间开放度、局部气流、闷湿与直吹风险；室外风速不得直接等同室内通风。
-- `substrate_drying_trait`：盆器、基质、排水共同形成的干燥特征。
-- `environmental_drying_demand`：由光照、VPD/温湿度证据、空气运动等产生的有界环境干燥需求，不宣称真实蒸腾毫升数。
-- `estimated_dry_down`：植物基准周期经过有界环境与盆器/基质修正后的预计干湿周期。
-
-不得把派生值回写为原子环境事实，也不得把派生值当成永久植物属性。
-
-## 5. 浇水统一管线
-
-多肉、观叶、蕨类等都进入同一管线；差异首先来自内部维护的植物基准周期和后续有证据支持的版本化敏感度策略，而不是绕过共同证据层。
+当存在室内/plant-zone 实测时优先使用实测。缺少实测时，可由：
 
 ```text
-植物基准周期（有明确参考环境）
-× 有界环境干燥需求
-× 盆器 / 基质 / 排水修正
-→ 预计干湿周期
-→ 最近浇水事实 + 当前盆土证据门控
-→ 浇水建议
+室外逐时 T/RH
++ 室内外空气交换程度
++ 房间太阳热输入
++ 建筑热惯性
+→ Estimated Indoor Temperature / RH
 ```
 
-基准周期不是最终浇水日期，也不得直接触发“必须浇水”。盆土明显偏湿、证据过期或证据不足时，安全门优先于预计周期。
+输出必须明确：`estimated=true`、输入来源、算法 release、置信度。它不是室内实测。
 
-本合同不把 FAO Penman–Monteith 或真实蒸腾量作为 MVP 前提；VPD 是可解释的派生环境指标，不是追加到旧温湿度分类上的重复权重。
+### 4.2 `air_vpd`
 
-## 6. 配置与版本
+只允许使用时间和空间范围一致的 Indoor T/RH 或 Estimated Indoor T/RH。
 
-- 原子事实类型、来源范围、单位语义和“派生不得覆盖事实”是不可配置硬规则。
-- 算法版本、参考环境、修正曲线、上下限和证据新鲜度只有在真实场景会变化且收益高于复杂度时，才进入类型化不可变策略 release。
-- 禁止万能 JSON 配置或一个全局权重表同时控制所有植物与能力。
-- 输出仍遵循 `care-capability-result/v1`；内部增加输入或派生指标不等于可以破坏外部合同。
+```text
+Air VPD = es(T) × (1 - RH/100)
+```
 
-## 7. 失败关闭
+不得直接用 outdoor T/RH 生成“室内 VPD”。
 
-- 缺少必需原子事实：返回 `insufficient_evidence` 并说明用户可补充的证据类别。
-- 证据过期、空间范围冲突、单位未知、来源不可验证或哈希不一致：该证据不得参与推导。
-- 算法 release 或请求级配置快照不可用：对应能力返回 `temporarily_unavailable`。
-- 派生失败不得改写原子事实、植物档案、养护事实、计划或提醒。
-- 原子事实、输入快照、派生指标和已生成的游客临时结果只能追加；Repository 不提供更新用例，MySQL 触发器拒绝 `UPDATE`。
+### 4.3 `window_plane_irradiance`
+
+```text
+DNI / DHI / GHI
++ 经纬度 / 日期时间
++ 太阳高度 / 方位
++ 窗面朝向 / 倾角 / AOI
+→ Window Plane Direct / Diffuse
+```
+
+MVP 核心不加入地面反射。是否有直射由太阳位置、窗面几何与遮挡决定，禁止使用固定朝向经验表替代几何。
+
+### 4.4 `light_exposure`
+
+窗面 Direct/Diffuse 继续经过外部遮挡/天空可见度、玻璃、窗帘/室内遮挡和植物位置传播，得到：
+
+```text
+PPFD(t)
+DLI
+peakPPFD
+直射持续时间
+confidence
+```
+
+Watering 一级只消费 DLI；其他指标可用于光照能力与强光风险，不能重复乘到浇水中。
+
+### 4.5 `air_movement_proxy`
+
+用户不必输入专业风速。可把密闭、普通室内、开窗/缓慢循环、循环扇等低门槛输入映射到版本化的有效空气运动代理。物理代理与最终浇水敏感度分层，不能把代理值直接解释成“蒸腾增加百分比”。
+
+### 4.6 `environmental_drying_demand`
+
+浇水使用：
+
+```text
+DLI
++ Plant VPD Ratio
++ AirMovement Proxy
+→ bounded EnvironmentDemand
+```
+
+温度、RH、朝向、peakPPFD、directDuration 不作为额外重复权重。
+
+### 4.7 `cultivation_retention`
+
+盆器、实际种植内盆材质、排水、基质、栽培方式归约为相对保水能力。它表达的是栽培系统相对于 Reference Profile 的水分保存趋势，不是精确实验室持水率。
+
+- 多孔盆材质影响盆壁蒸发/整体干燥，不直接修改植物蒸腾。
+- `NO_DRAINAGE` 是安全条件，不能只做普通倍率。
+- 陶粒垫底不能直接解释成排水增强。
+
+### 4.8 环境派生与决策派生的边界
+
+`care_environment_derivations` 只承载环境/栽培侧派生：Estimated Indoor、Air VPD、Window Plane、Light Exposure、AirMovement Proxy、EnvironmentDemand、CultivationRetention。
+
+以下结果**不得**伪装成环境指标，统一进入 `care_decision_derivations`：
+
+- `growth_activity_state`：消费植物知识、环境历史和植物事实，表达植物当前生长活跃状态估计；
+- `personal_calibration`：消费高质量真实干湿循环残差，表达个体模型校准；
+- `dry_progress`：消费 Baseline、EnvironmentDemand、CultivationRetention、PersonalCalibration 和最近实际浇水 Fact，表达本轮浇水决策时间轴。
+
+三者都必须保留算法/Prompt release、输入快照、结果 Schema、证据引用、置信度与结果哈希；不得写回覆盖原子事实。`growth_activity_state` 只选择条件性 baseline，不额外修改 EnvironmentDemand。DryUnit / DryProgress 的完整规则由 `watering-decision-model/v1` 定义。
+
+## 5. 外部性状与 Internal Care Knowledge
+
+Tropicals 等外部参考数据必须分为两条投影：
+
+```text
+原始外部数据
+├─ 展示白名单 → Encyclopedia DTO
+└─ Structured Trait Evidence
+    → 来源/原始值保留
+    → 归一与冲突检查
+    → 人工/规则审核
+    → Internal Care Knowledge release
+    → Reference Profile
+```
+
+Care 运行时不得直接查询展示百科字段生成建议。当前数据库已有 `water_frequency_tier`、温湿度/光照结构化字段与 `tropicals_growth_season_knowledge`；`tropicals_trait_ref` 当前为空，现有百科表也没有 `substrate_preference`，因此植物级 cultivation reference 尚不能宣称数据完备。
+
+## 6. 与浇水的关系
+
+浇水不读取 facing/windowType/distance，也不使用 `indoorEqHours`。统一关系是：
+
+```text
+Light Model → DLI
+Indoor Environment → Air VPD
+Air Movement → Air proxy
+Cultivation Model → CultivationRetention
+Growth Activity → 选择 Baseline
+Plant Facts → 最近实际浇水 / 历史干湿循环
+Soil Evidence → 最终 Safety Gate
+```
+
+具体 DryUnit / DryProgress 与 Soil Gate 见 `watering-decision-model/v1`。
+
+## 7. 版本与失败关闭
+
+- 原子事实类型、空间范围和“派生不得覆盖事实”是不可配置硬规则。
+- 派生算法、Reference Profile、映射曲线、上下界与新鲜度通过类型化不可变 release 管理。
+- 缺必需输入时返回 `insufficient_evidence`；不得以 outdoor 值冒充 indoor 值补齐。
+- 无可用算法或 Reference Profile release 时对应能力返回 `temporarily_unavailable` 或明确 fallback，不使用源码隐式常量。
+- 派生失败不得写 Plant Fact、Plan 或 Reminder。
+- 原子事实、输入快照和历史派生保持只追加；重新计算生成新派生记录，不覆盖旧结果。

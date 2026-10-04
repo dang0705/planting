@@ -1,10 +1,10 @@
 {
   "ticketId": "z8v0kmr9mj",
   "agent": "root",
-  "model": "gpt-5",
+  "model": "主代理",
   "status": "in_progress",
-  "progress": 79,
-  "summary": "用户植物创建闭环已有领域规则、公开合同、MySQL Repository、同事务应用编排、提交未知只读对账和隔离 MySQL 并发证据；最低档案完整度纯领域规则也已冻结并通过变异验证。档案字段 Schema、持久化与奖励 outbox 同事务、HTTP 和 CloudBase MySQL 仍待完成。",
+  "progress": 85,
+  "summary": "用户植物创建与单株读取已有 CloudBase v2 测试环境 HTTP→MySQL→读回证据，但使用预置测试会话，不证明真实平台登录。当前 015 会话策略迁移后的测试夹具已修复，完整本地 MySQL 回归为 24 文件 117/117；仍缺无预置能力快照的登录→创建→读回组合、档案 PATCH、临时案例认领、资产/环境/时间线及归档/恢复云端验收。85% 是历史估算，不代表整票已验收。",
   "blockers": [],
   "verified": [
     "create-unidentified-user-plant.ts 已实现登录主体、能力快照、同一 user_id、有效期和 active 数量上限校验。",
@@ -23,13 +23,44 @@
     "隔离 MySQL 8.4 双连接测试已证明两个创建事务先竞争同一 users 行锁；首个事务提交一株后，第二个事务读到 active 数量为 1 且条件插入影响 0 行，最终恰有一株 active 用户植物。",
     "独立新连接已真实读回 completed 幂等记录；MySQL 专项测试 1 个文件 2 项测试通过，完整 verify 为 34 个文件 188 项测试通过。",
     "最低档案完整度固定为身份状态、盆器与介质、位置、光照环境和通风环境；unidentified 不构成阻断，同一统一用户只有首次完整档案具备奖励资格。",
-    "最低档案规则 9/9 通过；移除通风缺项判断的负向突变能使目标测试 RED，完整恢复后 GREEN。"
+    "最低档案规则 9/9 通过；移除通风缺项判断的负向突变能使目标测试 RED，完整恢复后 GREEN。",
+    "新增长期用户植物生命周期纯领域规则：仅允许 active→archived、archived→active、active/archived→deleting、deleting→deleted；未知、缺失、跳步和 deleted 复活均拒绝。",
+    "生命周期 RED：新测试先于实现落盘，初始因目标模块不存在而失败；GREEN：生命周期镜像测试 12/12 通过。",
+    "生命周期执行反写：临时加入 deleted→active 后终态用例 RED；已完整恢复 transition-user-plant-lifecycle.ts，反写后用户植物域测试 45/45、typecheck 与目标 oxlint 均通过。",
+    "新增登录临时案例绑定纯领域判定，要求认证层 UserPrincipal 与服务端案例归属相同、案例/登录主体均未过期、案例未绑定且既有目标植物属于同一 user_id；不创建案例、不计算 TTL、不写数据库。",
+    "登录临时案例授权 Expected 源为 authenticated-ephemeral-plant-case.md 与 principal-and-capability.md；10 条 L1/unit_fake 测试通过，跨平台但同一 user_id 允许，游客、跨用户、到期边界、重复绑定和跨用户目标均拒绝。",
+    "TDD RED/GREEN 与突变证据：初次运行因领域模块不存在而 RED；将案例过期边界从 now >= expiresAt 暂改为 now > expiresAt 后，边界测试 RED，恢复后 user-plant 域 7 个测试文件 55/55、typecheck 与两文件 oxlint 均通过。",
+    "登录临时 TTL 待定配置门测试与授权测试合计 2 个文件 11/11 通过；合同文档已补充 Principal 与 PlantContext 分离、统一 ephemeralPlantCaseRef、persistent user_plant_id 公共引用及 guestPlantCaseRef 仅由 user-plant 内部映射；主代理负责重生成架构 manifest 与配置入口校验。",
+    "owner-scoped 单株读取应用服务与 MySQL Repository 已实现；以统一 user_id 和用户植物公开引用双重查询，普通读取只返回 active/archived，缺失、跨用户、deleting、deleted 统一映射为同一 USER_PLANT_NOT_FOUND，公开 DTO 不含内部主键或用户标识。",
+    "单株读取 TDD：应用与 Repository 测试先于读取实现落盘，目标缺失时分别因缺模块/缺 Repository 方法 RED；冻结读取合同的 RED/GREEN 证据已保留。",
+    "单株读取执行反写：将真实 MySQL owner 谓词 public_user_id = ? 暂改为 <> ?；真实 MySQL 8.4.11 测试 3/3 RED，跨用户植物泄漏用例返回 200 而非预期 404；完整恢复后同一真实 MySQL 测试 3/3 GREEN，Repository SHA-256 为 85720f386d1c1be44f331e2a46f61f2a55467c06902592bc4a70fded8664bed9。",
+    "单株读取验证：用户植物域 9 个测试文件 63/63 通过；真实 MySQL 8.4.11 单株读取 3/3 通过；TypeScript 源码与测试全量类型检查通过，5 个范围文件 oxlint 0 错误/告警且 oxfmt 检查通过。",
+    "内部归档/恢复应用与 CAS TDD：Expected 来源为已冻结 user-plant.md、state-machines.md 和 route-registry；实现前应用与 Repository 测试因目标模块缺失 RED，随后先实现领域转移约束、再实现事务编排与 MySQL 生命周期 Repository。",
+    "内部归档/恢复 GREEN：用户植物单元套件 11 个文件 76/76；真实 MySQL 8.4 专项 1 个文件 8/8；TypeScript 源码及测试全量类型检查通过；五个范围文件 oxlint 0 错误/告警、oxfmt 检查通过。",
+    "真实 MySQL 反向归属突变：将 CAS owner 谓词暂改为不等比较后，‘CAS 自身再次校验统一用户归属’用例 RED（错误 owner 写入被成功）；恢复原 SQL 后源文件哈希回到 442939d529e65a9eefd1a4dc2264f9fc7402b793a9019ba38444a3d8c9effaea，定向用例 GREEN，完整 MySQL 8/8 GREEN。",
+    "应用与 Repository 复用 Foundation 事务及 HTTP 幂等端口；同键同参重放首次结果、载荷冲突失败、expectedVersion 陈旧返回稳定冲突、公开 owner scope 的 404 脱敏、CAS 按 owner/公开引用/状态/version 原子更新、成功后同事务公开投影读回，COMMIT 结果未知仅新连接只读对账且不重做写入；双连接旧版本竞争仅一次成功。",
+    "恢复上限 TDD RED：应用测试初次 10/11，超限恢复错误放行 200 而 Expected 为 403 CAPABILITY_DENIED；真实 MySQL 8.4 生命周期测试初次 8/10，两条 RED 分别证明现有 active 时恢复仍成功，以及创建持有用户锁期间恢复也会成功，可能突破每用户 active 上限。",
+    "恢复上限 GREEN：复用创建 Repository 的 lockUserAndCountActive，在同一事务中先锁统一用户并计数，再 owner-scoped 锁目标植物；确认 expectedVersion 与 archived→active 合法后按同一快照执行上限判断，拒绝不运行 CAS，CAPABILITY_DENIED 与生命周期请求共享幂等完成事务；归档流程不变。",
+    "容量规则去重：创建与恢复共用 user-plant/domain/user-plant-capacity.ts 的纯 active 数量比较；归档记录不计入，恢复拒绝不删除或自动归档任何既有 active 植物。配置目录的 changePolicy 已由主代理更新并确认：未来创建与归档后重新激活受上限约束，既有 active 保留。",
+    "恢复上限执行反写：临时绕过容量比较后，目标应用测试再次 RED（服务返回 200 而非预期 403）；恢复原判断后 GREEN。最终用户植物单元套件 12 个文件 83/83，真实隔离 MySQL 8.4 生命周期测试 10/10；源码 typecheck 与本票相关测试独立 TypeScript 检查通过，范围 oxlint 0 错误/告警、oxfmt 检查通过。",
+    "CloudBase 测试环境创建切片：有效预置测试会话 POST 返回 200；相同幂等键重试返回同一公开植物；GET 读回一致，独立 SQL 核对只有一条对应用户植物记录。完整部署、请求、读回与范围见 docs/backend-v2/audits/v2-user-plant-create-2026-09-27.md。",
+    "CloudBase 测试环境创建验收未登录 POST 返回 401 PRINCIPAL_INVALID；撤销测试会话后 GET 返回 401。该创建审计使用预置隔离用户、绑定、会话与能力快照夹具，不证明真实平台登录验真、会话签发或能力快照生成。",
+    "CloudBase 测试环境单株读取切片另验证本人 GET 200、他人植物 404 USER_PLANT_NOT_FOUND、过期/缺失/撤销会话 401；代码包回读与本地对应构建产物摘要一致，详情见 docs/backend-v2/audits/v2-user-plant-cloudbase-read-2026-09-27.md。",
+    "当前 user-plant HTTP 服务源码已在 cloudfunctions-v2/src/user-plant/http/server.ts 接入创建与单株读取路由，云函数入口 cloudfunctions-v2/src/entries/user-plant.ts 组装真实 MySQL 与服务端能力快照读取适配器；当前轮全仓 typecheck、默认测试 532/532 由主代理复核通过。",
+    "归档/恢复公开 DTO 与 route-registry 错误清单已冻结；本地 v2 user-plant HTTP 服务已接入两条 POST 路由与现有事务应用。合同来源为 user-plant.md 和 route-registry；旧代码上真实 MySQL HTTP 测试 3 条 RED（原路由 404），接线后定向 12/12、完整 MySQL 88/88、默认测试 532/532、TypeScript 类型检查、构建和新源码定向 lint/format 通过。归档后读回 archived、恢复后读回 active、同键重放不重复写入、未登录/越权/非法版本均有本地证据；未部署 CloudBase。",
+    "独立审查发现恢复幂等重放在快照撤下后会被前置读取阻断。新增真实 HTTP/MySQL 用例先 RED：同键同参重试返回 503 而非首次 200；将快照读取移至幂等预留之后，仅首次恢复执行读取，修复后返回首次 200。恢复名额已满 403、他人植物 404 的真实 HTTP 分支也已补测。另一个 RED 证明过期快照原返回 503 而合同为 409；读取器仅在无有效快照时补查已过期记录，恢复路由据此区分 409 与缺失 503。缺失快照 503 也有独立反向用例。第三个 RED 证明没有快照的调用者恢复他人植物原先返回 503 而非合同 404；首次请求改为锁用户、确认目标归属，再读取能力快照。最终定向 17/17、完整 MySQL 20 文件 93/93、默认测试 532/532、TypeScript 类型检查、构建及新源码定向 lint/format 通过。构建机器为 Node 24，尚非 Node 22 运行时验收。"
   ],
   "unverified": [
     "真实网络中断造成的 COMMIT 结果未知仍需 CloudBase MySQL 适配器验证；本地只证明对账决策和独立连接读回。",
-    "真实 CloudBase MySQL、HTTP 身份和并发验证属于后续环境门。",
-    "档案字段 Schema、Repository 用户行锁、首次完成时间与奖励 outbox 的同一真实事务尚未实现。"
+    "CloudBase 已覆盖创建 POST→MySQL→GET 与单株读取权限边界，但使用预置测试身份夹具；真实微信等平台凭证验真、统一用户会话签发和能力快照生成仍未验证。CloudBase 并发创建仍未验证。",
+    "档案 JSON 字段及 PATCH DTO 的属性结构未在当前 user-plant 合同中冻结；不得凭数据库列名自行发明，须先由主代理补充合同。",
+    "档案 Schema、Repository 用户行锁、首次完成时间与奖励 outbox 的同一真实事务尚未实现。",
+    "登录用户临时案例持久化创建、TTL 计算/清理、promotion 事务、跨域临时结果回填、统一入口 DTO/API/DDL 均未实现；必须先由主代理冻结配置值和依赖数据合同。",
+    "归档/恢复只完成本地 v2 HTTP→MySQL 路径；CloudBase v2 测试环境的函数包、网关路由和远端读回仍未验收。",
+    "归档/恢复真实验证仅覆盖本地隔离 MySQL 8.4；CloudBase 归档/恢复 HTTP 与云端提交结果未知仍未验证。",
+    "恢复快照缺失 503、过期 409、超上限 403、他人植物 404 已有本地 HTTP/MySQL 证据；Node 22 运行时构建及云端 HTTP 行为未在本轮验收。",
+    "2026-09-27 对当前 015_identity_session_policy_snapshot.sql 回归：先复现旧测试会话夹具因缺 session_policy_release_version 而使 17 条用户植物 HTTP/MySQL 测试全被跳过；补齐夹具的版本及摘要字段后，身份锚点、订阅快照、用户植物三组定向 26/26 和完整 MySQL 24 文件 117/117 通过。仅修测试夹具，不证明无预置能力快照的创建链路。"
   ],
-  "updatedAt": "2026-09-20T22:10:00+08:00",
-  "next": "冻结档案字段 Schema 并实现完整档案 Repository/应用命令，使首次完成时间、user-plant 域 outbox 和 HTTP 幂等完成记录在同一事务提交；随后接入 HTTP 与 CloudBase MySQL 适配器。"
+  "updatedAt": "2026-09-27T16:38:00+08:00",
+  "next": "下一个核心闭环为登录后首次需鉴权请求自动生成能力快照，并在无预置快照的状态下创建、读回同一株植物；Identity 内部试用锚点 HTTP、试用与植物上限已发布策略读取和 user-plant 入口组合仍缺。档案 PATCH、临时案例绑定另按冻结 DTO 推进；当前测试夹具与本地 MySQL 通过不等于真实微信或 CloudBase 验收。"
 }

@@ -206,7 +206,7 @@ function createContendedBindingExecutor(): PlatformIdentitySqlExecutor<MysqlIden
 /**
  * Expected 来源：`principal-capability/v1` 与 identity 空库 DDL。
  * 测试层次：L3 / `unit_real_data`；经过真实 MySQL 8.4、真实三表 JOIN、SHA-256 和领域裁决。
- * 替换边界：仅以本地一次性 MySQL 替代 CloudBase MySQL；平台 Provider 仍使用已验证摘要制品。
+ * 替换边界：仅以本地一次性 MySQL 替代 CloudBase MySQL；会话预置夹具不验证登录时 Provider。
  * 明确未覆盖：真实微信/抖音/小红书/手机号凭证、HMAC 密钥托管、HTTP 和 CloudBase 网络。
  */
 describe('统一用户 Principal 真实 MySQL 解析', () => {
@@ -321,11 +321,6 @@ describe('统一用户 Principal 真实 MySQL 解析', () => {
   test('摘要命中三表归属后返回脱敏 Principal，撤销后同一 Bearer 被拒绝', async () => {
     const resolvePrincipal = createResolveUserPrincipalUseCase({ repository: createRepository() })
     const command = {
-      verifiedIdentity: {
-        platform: 'wechat' as const,
-        appScope: 'wx-app-qhz',
-        hashCandidates: [{ platformSubjectHash, subjectHashKeyVersion }]
-      },
       bearerToken: rawBearer,
       nowMs
     }
@@ -351,11 +346,6 @@ describe('统一用户 Principal 真实 MySQL 解析', () => {
     const resolvePrincipal = createResolveUserPrincipalUseCase({ repository: createRepository() })
     await expect(
       resolvePrincipal({
-        verifiedIdentity: {
-          platform: 'wechat',
-          appScope: 'wx-app-qhz',
-          hashCandidates: [{ platformSubjectHash, subjectHashKeyVersion }]
-        },
         bearerToken: 'different-raw-bearer-identity-real-mysql',
         nowMs
       })

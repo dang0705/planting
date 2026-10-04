@@ -74,8 +74,11 @@
 - `guest_plant_cases`：游客临时植物案例、到期时间和认领状态，不伪造 `user_id` 或 `user_plant_id`。
 - `guest_claim_commands`：认领命令、已验证证明版本、幂等键、目标用户植物和失败原因；同一案例仅能完成一次。
 - `guest_case_claims`：只保存成功认领投影，对 `guest_plant_case_internal_id` 建唯一约束；失败命令不会永久阻断后续重新认领。
+- `authenticated_ephemeral_plant_cases`：已登录用户主动选择临时使用时的单株案例；保存统一用户归属、公开临时引用、状态和绝对失效时间，不生成 `user_plant_id`。
+- `authenticated_ephemeral_promotion_commands`：登录临时案例的幂等创建/绑定命令。
+- `authenticated_ephemeral_case_bindings`：登录临时案例成功绑定的唯一不可变事实，每个案例至多一条。
 
-临时 care/diagnosis 结果只保存 `guest_plant_case_ref`。认领后由 `user-plant` 提供签名内部查询解析归属，禁止跨域直接改表。
+跨域统一使用 `ephemeralPlantCaseRef` 语义。游客旧 API 继续使用 `guestPlantCaseRef`，由 `user-plant` 内部映射。临时 care/diagnosis 物理表使用 `guest_plant_case_internal_id XOR authenticated_ephemeral_case_internal_id`，必须且只能归属其中一种 Ephemeral backing case；绑定后通过 `user-plant` 成功事实解析长期归属，禁止跨域直接改表。
 
 ## 4. 订阅、积分与 AI 额度域 subscription
 
@@ -147,21 +150,22 @@ Qwen 草稿仅可写基础展示介绍和约三个简短问答。毒性、浇水
 
 - `care_environment_observations`：不可变原子环境事实；一行只表达一种光照、空气温度、相对湿度、空气运动、盆器、基质、排水或盆土表面因素，并保存用户植物归属、来源类型/引用、空间范围、单位、置信度、观察时间、有效期和规范化证据 SHA-256。室外天气始终保持 `outdoor`，不能冒充室内或植物周围实测。
 - `care_environment_snapshots`：一次养护/诊断计算锁定的不可变输入清单；保存用户植物、养护环境配置版本、原子观察引用清单、最近事实/盆土/天气/知识/配置 release 引用及 `input_manifest_sha256`。同一请求不得中途替换证据。
-- `care_environment_derivations`：基于一条输入快照和不可变算法 release 追加的派生环境指标；首批包括 VPD、光照暴露、空气交换、基质干燥特征、环境干燥需求和预计干湿周期。保存算法 release、输入清单哈希、结果结构版本、结果 SHA-256、置信度和有效期；不得更新原子事实或伪装为永久植物属性。
+- `care_environment_derivations`：基于一条输入快照和不可变算法 release 追加的环境/栽培派生；v2 类型至少包括 `estimated_indoor_environment`、`air_vpd`、`window_plane_irradiance`、`light_exposure`（PPFD/DLI）、`air_movement_proxy`、`environmental_drying_demand`、`cultivation_retention`。保存算法 release、输入清单哈希、结果结构版本、结果 SHA-256、置信度和有效期；不得更新原子事实或伪装为永久植物属性。
+- `care_decision_derivations`：保存不属于环境事实的养护决策派生：`growth_activity_state`、`personal_calibration`、`dry_progress`。三类都绑定同一 Environment Snapshot 与算法/Prompt release，只保存结构化结果和可审计证据，不保存思维链。浇水主时间轴固定为 `dry_progress`；`estimated_dry_down` 不承担该职责。
 - `care_facts`：浇水、施肥、换盆、位置变化和用户观察等已发生事实。
 - `care_proposals`：算法建议；不等于事实。
 - `care_plans` / `reminder_jobs`：用户确认后的未来动作与提醒。
 - `watering_visual_evidence`：盆土视觉证据、私有文件引用、有效期和算法版本。
-- `temporary_care_sessions` / `temporary_care_results` / `temporary_watering_visual_evidence`：游客临时养护对象，只关联 `guest_plant_case_ref`。已生成的临时结果必须内联保存原子输入清单、算法 release 清单、派生环境指标及各自 SHA-256，使游客结果可回放；登录认领只增加归属投影，不改写该结果。
+- `temporary_care_sessions` / `temporary_care_results` / `temporary_watering_visual_evidence`：Ephemeral 临时养护对象，归属游客 case 或已登录临时 case 二选一。已生成结果必须内联保存输入清单、算法 release 清单、派生指标及各自 SHA-256；后续绑定只增加归属投影，不改写结果。
 - `diagnosis_sessions` / `diagnosis_answers` / `diagnosis_results`：问诊过程、证据和结果。
 - 诊断知识增量（**已建 v2 空库 DDL，P1 语义和真实发布仍待冻结**）：[009 诊断知识迁移](../schema/009_diagnosis_knowledge.sql)已拆出来源主档与精确主张修订、园艺原因、Outcome、Action、受审映射、逐项来源关联、绑定候选摘要的人工审核凭据、不可变发布包与 active 指针；[010 审核撤销迁移](../schema/010_diagnosis_review_revocations.sql)另存对既有批准的撤销事实，原批准不改写。`revocation_ref` 全局唯一、目标已批准审核至多撤销一次，撤销记录含规范化请求摘要、受控管理员摘要、中文理由和 UTC 毫秒时间。两份迁移已在本地 MySQL 8.4 隔离空库验证，不代表已在 CloudBase 建表、CMS 已验权或发布事务已实现。具体字段值对象、题包版本、来源许可和应用层撤销/发布竞争仍需按[知识来源合同](../contracts/diagnosis-knowledge-sources.md)及 Phase-P1 ClickUp 任务冻结。现有 `diagnosis_results.conclusion_json` / `proposal_json` 只保存一次结果，通用 `content_releases.diagnosis_rule` 不承载完整诊断知识发布包，均不能替代可治理的来源主张、人工审核和兼容发布包。
 - 诊断知识的逻辑表归属、逐项来源关联、审核摘要和发布事务进一步见[诊断知识持久化与发布合同](../contracts/diagnosis-knowledge-persistence.md)；本地空库结构通过不等于 CMS 或真实发布已验收。
 - `diagnosis_visual_evidence`：私有诊断图片引用及保留期。
-- `temporary_diagnosis_sessions` / `temporary_diagnosis_answers` / `temporary_diagnosis_results` / `temporary_diagnosis_visual_evidence`：游客临时问诊对象，只关联 `guest_plant_case_ref`。
+- `temporary_diagnosis_sessions` / `temporary_diagnosis_answers` / `temporary_diagnosis_results` / `temporary_diagnosis_visual_evidence`：Ephemeral 临时问诊对象，归属游客 case 或已登录临时 case 二选一。
 
-所有长期记录必须归属 `user_plant_id`；游客临时结果只能归属 `guest_plant_case_ref`，在认领后通过归属投影解释。
+所有长期记录必须归属 `user_plant_id`；临时结果归属 `ephemeralPlantCaseRef` 语义。游客和已登录用户都可能产生 Ephemeral 结果，但只有显式绑定后才增加长期归属解释。
 
-原子环境事实、输入快照、派生环境指标和已生成的游客临时养护结果采用只追加模型：Repository 不提供更新用例，数据库触发器拒绝 `UPDATE`。修正事实、更换证据或升级算法时必须追加新记录，不得保持时间戳不变后篡改原行。
+原子环境事实、输入快照、派生环境指标和已生成的 Ephemeral 临时养护结果采用只追加模型：Repository 不提供更新用例，数据库触发器拒绝 `UPDATE`。修正事实、更换证据或升级算法时必须追加新记录，不得保持时间戳不变后篡改原行。
 
 ## 7. 可靠事件与审计
 

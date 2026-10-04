@@ -21,27 +21,23 @@
         ],
         "x-owner": "identity",
         "x-phase": "P2",
-        "x-security": "public",
+        "x-security": "credential_exchange",
         "x-request-contract": "CreateIdentitySessionRequest",
         "x-response-contract": "IdentitySessionResponse",
-        "x-idempotency": "required_header",
+        "x-idempotency": "not_applicable",
         "x-errors": [
           "VALIDATION_FAILED",
           "PRINCIPAL_INVALID",
-          "IDEMPOTENCY_CONFLICT"
+          "SERVICE_UNAVAILABLE"
         ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/IdempotencyKey"
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessEnvelope"
+                  "$ref": "#/components/schemas/CreateIdentitySessionSuccess"
                 }
               }
             }
@@ -62,8 +58,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false
+                "$ref": "#/components/schemas/CreateIdentitySessionRequest"
               }
             }
           }
@@ -270,7 +265,49 @@
         "x-idempotency": "not_applicable",
         "x-errors": [
           "VALIDATION_FAILED",
-          "SERVICE_UNAVAILABLE"
+          "INTERNAL_ERROR"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/plant-knowledge/catalog/search": {
+      "get": {
+        "operationId": "searchPlantCatalog",
+        "summary": "plant-knowledge 域：searchPlantCatalog",
+        "tags": [
+          "plant-knowledge"
+        ],
+        "x-owner": "plant-knowledge",
+        "x-phase": "P3",
+        "x-security": "public",
+        "x-request-contract": "PlantCatalogSearchQuery",
+        "x-response-contract": "PlantCatalogSearchResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "INTERNAL_ERROR"
         ],
         "parameters": [],
         "responses": {
@@ -2669,6 +2706,85 @@
         ]
       }
     },
+    "/api/v2/internal/identity/users/{userRef}/trial-anchor": {
+      "get": {
+        "operationId": "getUserTrialAnchorInternal",
+        "summary": "identity 域：getUserTrialAnchorInternal",
+        "tags": [
+          "identity"
+        ],
+        "x-owner": "identity",
+        "x-phase": "P3",
+        "x-security": "service",
+        "x-required-scope": "identity.trial-anchor.read",
+        "x-request-contract": "UserTrialAnchorPath",
+        "x-response-contract": "UserTrialAnchorInternalResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "NOT_FOUND",
+          "SERVICE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "name": "userRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          },
+          {
+            "$ref": "#/components/parameters/ServiceKeyId"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceTimestamp"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceNonce"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceBodySha256"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceScope"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceSignature"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "serviceSignature": []
+          }
+        ]
+      }
+    },
     "/api/v2/internal/user-plants/{userPlantRef}/context": {
       "get": {
         "operationId": "getUserPlantContextInternal",
@@ -3357,7 +3473,7 @@
       "userBearer": {
         "type": "http",
         "scheme": "bearer",
-        "bearerFormat": "CloudBase user token"
+        "bearerFormat": "青花植自签不透明用户会话令牌"
       },
       "serviceSignature": {
         "type": "apiKey",
@@ -3461,6 +3577,51 @@
         "additionalProperties": false,
         "maxProperties": 0,
         "properties": {}
+      },
+      "CreateIdentitySessionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "description": "微信 wx.login 返回的一次性短时凭证；不得提交平台主体或应用范围。"
+          }
+        }
+      },
+      "CreateIdentitySessionData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "accessToken",
+          "expiresAt"
+        ],
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "minLength": 1,
+            "description": "仅首次登录成功响应披露的青花植自签高熵会话 Bearer。"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateIdentitySessionSuccess": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CreateIdentitySessionData"
+          }
+        }
       },
       "UserPlantVersionRequest": {
         "type": "object",

@@ -1,0 +1,1682 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>青花植 v2 业务架构</title>
+<style>
+  :root{
+    --bg:#171818;
+    --panel:#1a1b1b;
+    --panel-2:#1d1f20;
+    --text:#dcecff;
+    --muted:#86a6c5;
+    --line:#174e79;
+    --line-strong:#236aa5;
+    --border:#224765;
+    --node:#103763;
+    --node-hover:#154776;
+    --node-border:#1f5d91;
+    --gate:#101e2a;
+    --gate-border:#2b75ad;
+    --accent:#8ec9ff;
+    --accent-soft:#0d2943;
+    --support:#2b5d82;
+    --shadow:none;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth;background:var(--bg)}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif}
+  .page{max-width:1640px;margin:0 auto;padding:24px}
+  header{display:flex;gap:16px;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
+  h1{font-size:26px;margin:0 0 6px;font-weight:720;letter-spacing:.01em;color:#eaf4ff}
+  .subtitle{color:var(--muted);font-size:14px;line-height:1.65;max-width:960px}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+  button{font:inherit}
+  .btn{border:1px solid var(--border);background:#152330;color:#b9d9f6;padding:9px 13px;border-radius:10px;cursor:pointer;transition:.15s ease}
+  .btn:hover{border-color:var(--line-strong);background:#18314a;color:#e6f4ff}
+  .btn.primary{background:#103763;color:#a9d7ff;border-color:#235f92}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin:8px 0 14px}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .legend i{display:inline-block;width:30px;height:0;border-top:1.5px solid var(--line-strong)}
+  .legend i.dashed{border-top-style:dashed}
+  .legend .diamond{width:12px;height:12px;border:1.5px solid var(--gate-border);transform:rotate(45deg);background:var(--gate)}
+
+  .architecture-shell{background:var(--panel);border:1px solid #26343e;border-radius:14px;box-shadow:var(--shadow);overflow:visible}
+  .section-head{padding:16px 18px 10px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #26343e}
+  .section-head h2{font-size:16px;margin:0;color:#cfe8ff}
+  .section-head p{font-size:12px;color:var(--muted);margin:4px 0 0}
+  .graph-wrap{overflow:auto;padding:14px;background:#171818;scrollbar-gutter:stable both-edges;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;max-height:78vh}
+  #l0{display:block;min-width:1160px;width:100%;height:auto}
+
+  /* L0 固定骨架节点 */
+  .node{cursor:default}
+  .node[data-detail]{cursor:pointer}
+  .node rect{fill:var(--node);stroke:var(--node-border);stroke-width:1.45}
+  .node polygon{fill:var(--gate);stroke:var(--gate-border);stroke-width:1.6}
+  .node[data-detail] rect{fill:var(--node)}
+  .node:hover rect,.node.active rect{stroke:#3c88c2;stroke-width:2;fill:var(--node-hover)}
+  .node:hover polygon,.node.active polygon{stroke:#52a0da;stroke-width:2;fill:#10283b}
+  .node text{fill:#a9d7ff;font-size:15px;font-weight:560;pointer-events:none}
+  .node .small{font-size:12px;fill:#7fa6c7;font-weight:450}
+  .edge{fill:none;stroke:var(--line);stroke-width:1.35;stroke-linecap:round;stroke-linejoin:round;transition:stroke .12s ease,stroke-width .12s ease,opacity .12s ease,filter .12s ease}
+  .edge.dashed{stroke-dasharray:6 5;stroke:var(--support)}
+  .edge-hover{fill:none;stroke:#74d0ff;stroke-width:3.8;stroke-linecap:round;stroke-linejoin:round;opacity:0;pointer-events:none;filter:drop-shadow(0 0 3px rgba(116,208,255,.7));transition:opacity .1s ease}
+  .edge-hover.dashed{stroke-dasharray:6 5}
+  .edge-hit{fill:none;stroke:transparent;stroke-width:16;pointer-events:stroke;cursor:pointer}
+  .edge-group:hover .edge,.edge-group:focus .edge{opacity:.22}
+  .edge-group:hover .edge-hover,.edge-group:focus .edge-hover{opacity:1}
+  .edge-group:hover .edge-label,.edge-group:focus .edge-label{fill:#ffffff;font-weight:800}
+  .edge-group:focus{outline:none}
+  .edge-label{font-size:11.5px;fill:#9ed4ff;paint-order:stroke;stroke:#171818;stroke-width:5px;stroke-linejoin:round;font-weight:600;transition:fill .12s ease,font-weight .12s ease}
+  .hint{font-size:12px;color:var(--muted);padding:0 18px 16px}
+
+  .details{margin-top:18px;background:var(--panel);border:1px solid #26343e;border-radius:14px;box-shadow:none;overflow:visible}
+  .details[hidden]{display:none}
+  .details-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:18px;border-bottom:1px solid #26343e}
+  .breadcrumb{font-size:12px;color:#7fc4ff;margin-bottom:6px}
+  .details h2{font-size:20px;margin:0 0 5px;color:#d8edff}
+  .details .desc{font-size:13px;color:var(--muted);line-height:1.65;max-width:980px}
+  .detail-body{padding:16px 18px 20px}
+  .diagram-viewport-shell{position:relative;width:100%;max-width:100%;min-width:0;margin:0;overflow:visible}
+  .diagram-host{width:100%;border:1px solid #263d50;border-radius:12px;background:#171818;overflow:auto;padding:10px;scrollbar-gutter:stable both-edges;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;max-width:none;max-height:none;position:relative;box-sizing:border-box}
+  .diagram-host svg{display:block;width:auto;height:auto;max-width:none;max-height:none;flex:none}
+  .diagram-host::after{content:"";position:sticky;right:0;bottom:0;display:block;width:1px;height:1px;pointer-events:none}
+  .subsections{margin-top:14px;display:grid;gap:10px}
+  details.sub{border:1px solid #263d50;border-radius:10px;background:#191b1c;overflow:hidden}
+  details.sub summary{list-style:none;cursor:pointer;padding:13px 14px;font-weight:650;font-size:14px;color:#c3e2ff;display:flex;align-items:center;justify-content:space-between}
+  details.sub summary::-webkit-details-marker{display:none}
+  details.sub summary::after{content:"＋";color:#74bdf4;font-size:18px;font-weight:400}
+  details.sub[open] summary::after{content:"－"}
+  .sub-content{border-top:1px solid #26343e;padding:12px}
+  .note{margin-top:12px;padding:12px 14px;border-left:3px solid #276fa4;background:#102335;font-size:13px;line-height:1.65;color:#a8c8e4}
+  .pill{display:inline-block;padding:3px 9px;border-radius:999px;background:#071725;color:#8ec9ff;border:1px solid #235f92;font-size:11px;margin-left:6px}
+
+
+  /* 原位折叠展开层：L0 SVG 始终固定，详情只覆盖在原节点所在画布上 */
+  .graph-wrap{position:relative}
+  .arch-canvas{position:relative;width:1500px;height:1500px;min-width:1500px;min-height:1500px}
+  #l0{position:absolute;inset:0;width:1500px;height:1500px;min-width:1500px}
+  .arch-canvas.has-expanded #l0 .node:not(.expanded){opacity:.42;transition:opacity .16s ease}
+  .arch-canvas.has-expanded #l0 .edge,.arch-canvas.has-expanded #l0 .edge-label{opacity:.72;transition:opacity .16s ease}
+  .node.expanded{opacity:0;pointer-events:none}
+
+  .inline-panel{position:absolute;z-index:30;pointer-events:none;filter:none}
+  .inline-panel[hidden]{display:none}
+  .inline-node-head{position:absolute;z-index:3;pointer-events:auto;background:var(--node);border:2px solid #3c88c2;border-radius:12px;color:#a9d7ff;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px 40px 8px 12px;font-size:15px;font-weight:650;line-height:1.28;box-shadow:0 0 0 1px rgba(80,150,205,.08) inset}
+  .inline-node-head .node-subline{display:block;font-size:12px;color:#7fa6c7;font-weight:450;margin-top:3px}
+  .inline-node-head .collapse-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:8px;border:1px solid #2a6b9c;background:#0d2943;color:#9bd6ff;display:grid;place-items:center;cursor:pointer;font-size:17px;line-height:1;padding:0}
+  .inline-node-head .collapse-btn:hover{background:#153b5d;border-color:#4388bb}
+
+  .inline-body{position:absolute;z-index:2;pointer-events:auto;background:#181a1b;border:1px solid #275777;border-radius:14px;box-shadow:0 18px 46px rgba(0,0,0,.38);overflow:auto;padding:0;scrollbar-gutter:stable both-edges;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  .popup-resize-handle{position:absolute;z-index:40;pointer-events:auto;background:transparent;touch-action:none;user-select:none}
+  .popup-resize-handle::after{content:"";position:absolute;background:#4aa4df;opacity:0;transition:opacity .12s ease;border-radius:999px;pointer-events:none}
+  .inline-panel:hover>.popup-resize-handle::after,.popup-resize-handle.active::after{opacity:.78}
+  .popup-resize-handle.n,.popup-resize-handle.s{height:12px;cursor:ns-resize}
+  .popup-resize-handle.w,.popup-resize-handle.e{width:12px;cursor:ew-resize}
+  .popup-resize-handle.n::after,.popup-resize-handle.s::after{left:10%;right:10%;height:2px;top:5px}
+  .popup-resize-handle.w::after,.popup-resize-handle.e::after{top:10%;bottom:10%;width:2px;left:5px}
+  .inline-body::before{content:"";position:sticky;top:0;display:block;height:0;z-index:5}
+  .inline-content-head{padding:16px 18px 13px;border-bottom:1px solid #263d50;background:#192027;position:sticky;top:0;z-index:4}
+  .inline-kicker{font-size:11px;color:#6fb9ec;letter-spacing:.02em;margin-bottom:5px}
+  .inline-content-head h2{font-size:18px;line-height:1.3;color:#d8edff;margin:0 0 5px}
+  .inline-content-head .desc{font-size:12.5px;color:var(--muted);line-height:1.6}
+  .inline-content{padding:12px 14px 16px}
+  .inline-content .diagram-host{background:#151718;border-color:#27435a}
+  .inline-content .diagram-host svg{max-width:none;max-height:none}
+  .inline-content .subsections{margin-top:10px}
+  .inline-content .note{margin-top:10px}
+  .inline-panel.open-down .inline-body{border-top-left-radius:6px}
+  .inline-panel.open-up .inline-body{border-bottom-left-radius:6px}
+  .expand-mark{font-size:10px;fill:#75b9ea;font-weight:700;pointer-events:none}
+
+
+  /* 可滚动视图：显式滚动条，避免 macOS/Safari 默认隐藏造成“看起来被裁切” */
+  .graph-wrap,.diagram-host,.inline-body{scrollbar-width:thin;scrollbar-color:#315a79 #171818}
+  .graph-wrap::-webkit-scrollbar,.diagram-host::-webkit-scrollbar,.inline-body::-webkit-scrollbar{width:12px;height:12px}
+  .graph-wrap::-webkit-scrollbar-track,.diagram-host::-webkit-scrollbar-track,.inline-body::-webkit-scrollbar-track{background:#171818}
+  .graph-wrap::-webkit-scrollbar-thumb,.diagram-host::-webkit-scrollbar-thumb,.inline-body::-webkit-scrollbar-thumb{background:#315a79;border:3px solid #171818;border-radius:999px}
+  .graph-wrap::-webkit-scrollbar-corner,.diagram-host::-webkit-scrollbar-corner,.inline-body::-webkit-scrollbar-corner{background:#171818}
+
+  @media (max-width:760px){
+    .page{padding:12px} header{align-items:flex-start;flex-direction:column} h1{font-size:22px}
+    .section-head,.details-top{align-items:flex-start;flex-direction:column}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div>
+      <h1>青花植 v2 业务架构</h1>
+      <div class="subtitle">L0 固定为总骨架。只有拥有独立下钻内容的节点可原位展开；节点宽度按文字自适应，关系线统一采用正交走线与圆角拐弯。展开只增加解释层，不改变 L0 的对外关系。</div>
+    </div>
+    <div class="toolbar">
+      <button class="btn primary" id="openDefault">原位展开 User Plant</button>
+      <button class="btn" id="closeDetail">收起当前节点</button>
+    </div>
+  </header>
+
+  <div class="legend" aria-label="图例">
+    <span><i></i>业务主关系 / 控制流</span>
+    <span><i class="dashed"></i>知识、数据或外部能力依赖</span>
+    <span><b class="diamond"></b>条件门：单入口、多条件出口</span>
+  </div>
+
+  <section class="architecture-shell">
+    <div class="section-head">
+      <div><h2>L0｜青花植总业务架构</h2><p>只保留核心主体、业务域和关键关系；内部流程由 L1/L2 解释。</p></div>
+      <span class="pill">固定骨架</span>
+    </div>
+    <div class="graph-wrap">
+      <div class="arch-canvas" id="archCanvas">
+      <svg id="l0" viewBox="0 0 1500 1500" role="img" aria-label="青花植 L0 总业务架构"></svg>
+      <section class="inline-panel" id="inlinePanel" hidden aria-live="polite">
+        <div class="inline-node-head" id="inlineNodeHead">
+          <div id="inlineNodeLabel"></div>
+          <button class="collapse-btn" id="inlineCollapse" type="button" aria-label="收起当前节点">−</button>
+        </div>
+        <div class="inline-body" id="inlineBody">
+          <div class="inline-content-head">
+            <div class="inline-kicker" id="inlineKicker">L0 → L1</div>
+            <h2 id="detailTitle">—</h2>
+            <div class="desc" id="detailDesc">—</div>
+          </div>
+          <div class="inline-content">
+            <div class="diagram-host" id="detailDiagram"></div>
+            <div class="subsections" id="subsections"></div>
+            <div class="note" id="detailNote"></div>
+          </div>
+        </div>
+      </section>
+      </div>
+    </div>
+    <div class="hint">提示：只有带“＋”的节点拥有独立下钻内容。节点框按文字宽度自动调整；流程节点短边最多 1 根线、长边最多 3 根线；同向平行线保持至少 24px 独立车道间距；在无障碍时优先直线 / 单拐弯，只有被节点或既有车道阻挡时才增加拐弯。原位展开不会重排 L0 骨架；子图首次打开执行 Fit First：先自动扩展弹框根容器，尽量以自然尺寸容下画布；弹框可以扩展到 L0 画布可用范围，超出当前屏幕时优先由外层总画布滚动。只有弹框达到父画布可用上限后仍放不下，才整体等比缩放子图；缩放达到最小可读比例后仍无法完整容纳时，才启用子图 X/Y 滚动。拖动弹框根容器四边只改变 viewport，保持内部布局与线路不变。</div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const $ = (s, root=document) => root.querySelector(s);
+  const $$ = (s, root=document) => [...root.querySelectorAll(s)];
+
+  const DETAILS = {
+    identity: {
+      title:'L1-01｜访问主体、身份与权益',
+      desc:'解释 L0 中“Visitor / User → 能力资格判定”的内部关系。身份、权益、AI 额度和奖励账户分层，不把 User Plant 所有权挂到 Entitlement 上。',
+      note:'边界：Visitor 是匿名主体；User 是统一 user_id。Entitlement 只回答“能不能用”，不拥有 User Plant。',
+      diagram:{w:1180,h:610,nodes:[
+        ['client',590,45,210,58,'青花植多平台小程序'],['access',590,135,190,58,'当前访问会话'],['login',590,235,70,70,'当前是否\n已登录','gateway'],
+        ['visitor',330,340,190,58,'Visitor\n匿名访问主体'],['platform',850,340,220,58,'平台身份\n微信 / 抖音 / 小红书 / 手机号'],['user',850,440,190,58,'User\nuser_id'],
+        ['vability',330,450,190,58,'游客能力集合'],['ent',850,540,220,58,'用户权益\n免费 / 试用 / 会员 / AI额度'],['merge',590,500,220,58,'能力资格上下文'],['gate',590,585,70,70,'当前能力\n是否可用','gateway']
+      ],edges:[
+        ['client','access'],['access','login'],['login','visitor','否'],['login','platform','是'],['platform','user'],['visitor','vability'],['user','ent'],['vability','merge'],['ent','merge'],['merge','gate']
+      ]},
+      subs:[]
+    },
+    lifecycle:{
+      title:'L1-02｜Plant Entry、Ephemeral、Promotion、Persistent',
+      desc:'解释 L0 中“植物业务入口 → 临时/长期路径 → Promotion → User Plant”。事前允许绑定，事后再次提供保存/绑定；Ephemeral 是过渡态，不是长期目标形态。',
+      note:'产品目标是推动 Promotion，不代表强制 Promotion。Promotion 当前只表达“创建新植物”或“绑定已有植物”后进入长期 User Plant；临时数据如何承接不在本图预设。',
+      diagram:{w:1240,h:700,nodes:[
+        ['entry',620,45,200,58,'植物业务入口'],['bind',620,145,80,80,'是否先绑定\n长期植物','gateway'],
+        ['persistent',930,255,220,58,'进入长期植物路径'],['usergate',930,360,74,74,'已有\nuser_id?','gateway'],['login',770,470,180,58,'登录 / 平台授权'],['select',1010,470,220,58,'选择已有植物\n或创建新植物'],['userplant',1010,590,220,58,'Persistent User Plant'],
+        ['ephemeral',310,255,230,58,'Ephemeral Plant Context'],['experience',310,365,230,58,'完成本次识别 / 诊断 / 养护'],['save',310,480,78,78,'是否保存 /\n绑定植物','gateway'],['tempEnd',120,590,200,58,'临时结果到期结束'],['promotion',500,590,210,58,'Plant Promotion']
+      ],edges:[
+        ['entry','bind'],['bind','persistent','是'],['bind','ephemeral','否'],['persistent','usergate'],['usergate','select','是'],['usergate','login','否'],['login','select'],['select','userplant'],['ephemeral','experience'],['experience','save'],['save','tempEnd','否'],['save','promotion','是'],['promotion','userplant']
+      ]},
+      subs:[
+        {title:'L2｜Plant Promotion',desc:'解释 Ephemeral Plant Context 如何通过创建新 User Plant 或绑定已有 User Plant，提升为 Persistent User Plant。当前只表达已经确认的 Promotion 主流程，不预设临时数据迁移规则。',diagram:{w:1320,h:500,nodes:[
+          ['temp',140,120,230,58,'Ephemeral Plant Context'],
+          ['target',430,120,84,84,'Promotion\n方式','gateway'],
+          ['create',690,55,220,58,'创建新 User Plant'],
+          ['select',690,190,220,58,'选择已有 User Plant'],
+          ['bind',930,190,190,58,'绑定已有植物'],
+          ['done',930,55,190,58,'完成 Promotion'],
+          ['plant',1200,120,200,58,'Persistent User Plant']
+        ],edges:[
+          ['temp','target'],
+          {from:'target',to:'create',label:'创建新植物',fromPort:'top',toPort:'left'},
+          {from:'target',to:'select',label:'绑定已有植物',fromPort:'right',toPort:'left'},
+          {from:'select',to:'bind',fromPort:'right',toPort:'left'},
+          {from:'create',to:'done',fromPort:'right',toPort:'left'},
+          {from:'bind',to:'done',fromPort:'top',toPort:'bottom'},
+          {from:'done',to:'plant',fromPort:'right',toPort:'left'}
+        ]}}
+      ]
+    },
+    userplant:{
+      title:'L1-03｜Persistent User Plant / Persistent Plant Context',
+      desc:'解释 L0 中长期植物主体及其持久上下文。Profile 只承担展示档案；Atomic Environment（位置 / 光照 / 通风 / 温湿度等）与 Cultivation Setup 是 Persistent Plant Context 的一等输入。',
+      note:'Persistent Plant Context 明确包含 Plant Identity、Atomic Environment、Cultivation Setup、Plant Facts、Plant State 以及按需读取的相关业务记录；Profile 仅在展示 / 称呼需要时进入。',
+      diagram:{w:1280,h:690,nodes:[
+        ['plant',640,45,230,64,'Persistent User Plant\nuser_plant_id'],
+        ['profile',160,190,190,58,'Profile\n昵称 / 封面 / 备注'],['identity',390,190,190,58,'Plant Identity'],['env',620,190,230,64,'Atomic Environment\n位置 / 光照 / 通风 / 温湿度'],['cult',880,190,220,64,'Cultivation Setup\n盆器 / 介质 / 排水 / 栽培方式'],['facts',1140,190,190,58,'Plant Facts'],
+        ['records',390,350,220,58,'Plant Business Records\n诊断 / Proposal / Plan'],['state',700,350,190,58,'Plant State'],['timeline',1010,350,190,58,'Plant Timeline'],
+        ['ctx',700,535,260,64,'Persistent Plant Context']
+      ],edges:[
+        ['plant','profile'],['plant','identity'],['plant','env'],{from:'plant',to:'cult',fromPort:'bottom',toPort:'top'},{from:'plant',to:'facts',fromPort:'right',toPort:'top'},['facts','state'],['records','state'],['facts','timeline'],['records','timeline'],
+        ['identity','ctx'],['env','ctx'],['cult','ctx'],['facts','ctx'],['state','ctx'],['records','ctx'],['profile','ctx','展示/称呼需要时',true]
+      ]},
+      subs:[
+        {title:'L2｜Environment / Cultivation Setup',desc:'外部微环境与“植物如何被种植”必须分开。',diagram:{w:1120,h:500,nodes:[
+          ['plant',560,45,190,58,'User Plant'],['env',300,150,220,58,'Environment\n原子环境 / 外部微环境'],['cult',820,150,220,58,'Cultivation Setup\n种植配置'],
+          ['loc',120,285,160,52,'位置'],['light',300,285,160,52,'光照'],['vent',480,285,160,52,'通风 / 空气'],['pot',700,285,160,52,'盆器 / 排水'],['medium',880,285,160,52,'介质 / 基质'],['method',1060,285,160,52,'栽培方式'],['dynamic',560,420,240,58,'Dynamic Facts\n最近浇水 / 当前盆土 / 换盆']
+        ],edges:[['plant','env'],['plant','cult'],['env','loc'],['env','light'],['env','vent'],['cult','pot'],['cult','medium'],['cult','method'],['plant','dynamic']] }},
+        {title:'L2｜Facts / State / Timeline',desc:'事实、当前状态和时间线是三种不同语义。',diagram:{w:1120,h:500,nodes:[
+          ['event',180,80,180,58,'真实行为 / 观察'],['facts',450,80,180,58,'Plant Facts'],['proj',720,80,180,58,'State Projection'],['state',980,80,180,58,'Plant State'],
+          ['diag',300,270,200,58,'Diagnosis Record'],['plan',560,270,180,58,'Care Plan'],['timeline',850,300,210,58,'Plant Timeline']
+        ],edges:[['event','facts'],['facts','proj'],['proj','state'],{from:'facts',to:'timeline',toPort:'top'},['diag','timeline'],['plan','timeline'],['diag','proj','活跃诊断可影响服务状态',true],['plan','proj','待执行计划可影响服务状态',true]]}}
+      ]
+    },
+    runtime:{
+      title:'L1-04｜Runtime Plant Context',
+      desc:'解释 L0 中 Persistent / Ephemeral 如何汇聚成运行时上下文，并明确 Plant Context 的组成。Atomic Environment 是一等输入，不属于 Care 自己拥有的能力。Runtime Plant Context 是按当前能力组装的视图，不是新的持久化实体。',
+      note:'Persistent 路径从 Plant Identity、Atomic Environment、Cultivation Setup、Facts / State、Relevant Records 中按需组装；Ephemeral 路径提供对应的临时输入。Care / Diagnosis 消费的是组装后的 Runtime Plant Context。',
+      diagram:{w:1240,h:660,nodes:[
+        ['call',620,40,200,58,'发起植物业务调用'],
+        ['scope',620,135,76,76,'当前植物\n作用域','gateway'],
+
+        ['persistent',250,265,260,78,'Persistent Plant Context'],
+        ['pIdentity',70,390,180,54,'Plant Identity'],
+        ['pEnv',285,390,210,58,'Atomic Environment\n位置 / 光照 / 通风 / 温湿度'],
+        ['pCult',520,390,210,58,'Cultivation Setup'],
+        ['pFacts',755,390,180,54,'Facts / State'],
+        ['pRecords',965,390,200,54,'Relevant Records'],
+
+        ['ephemeral',990,265,240,78,'Ephemeral Plant Context'],
+        ['eInput',990,505,240,72,'临时植物输入\nIdentity / Atomic Environment\nCultivation / Observation'],
+
+        ['assemble',620,525,250,64,'Context Assembly\n按当前能力选择所需数据'],
+        ['runtime',620,630,300,70,'Runtime Plant Context\nIdentity / Atomic Environment / Cultivation\n+ 当前能力所需 Facts / State / Records']
+      ],edges:[
+        ['call','scope'],
+        ['scope','persistent','Persistent'],
+        ['scope','ephemeral','Ephemeral'],
+        ['persistent','pIdentity'],['persistent','pEnv'],['persistent','pCult'],['persistent','pFacts'],['persistent','pRecords'],
+        ['ephemeral','eInput'],
+        ['pIdentity','assemble'],['pEnv','assemble'],['pCult','assemble'],['pFacts','assemble'],['pRecords','assemble'],['eInput','assemble'],
+        ['assemble','runtime']
+      ]},subs:[]
+    },
+    identify:{
+      title:'L1-05｜SQL 植物目录 / 内部身份 / 展示百科',
+      desc:'MVP 目录搜索由 plant-knowledge 读取 CloudBase SQL plant_search_terms → plant_search_documents；百科详情主读 tropicals_species_encyclopedia_ref。Tropicals 实时 API 仅保留可选同步/来源核对，搜索全集不等于内部 PlantIdentity。',
+      note:'catalogTaxonRef / taxon_id / API id/slug 与青花植 PlantIdentity/Taxon 属于不同命名空间。目录命中可以浏览或作为候选，但只有经证据审核的内部映射才可形成规范身份候选，仍需 userPlant 显式确认。',
+      diagram:{w:1500,h:820,nodes:[
+        ['search',100,60,210,58,'uni-app 植物目录搜索'],
+        ['detailReq',100,180,210,58,'uni-app 百科详情请求'],
+        ['pk',390,120,210,68,'plant-knowledge'],
+        ['searchIndex',700,40,260,78,'plant_search_terms\n→ plant_search_documents'],
+        ['searchResult',1050,40,270,88,'目录搜索结果\ncatalogTaxonRef / selectable\nhasEncyclopedia / PlantIdentityRef?'],
+        ['encyclopedia',700,190,280,78,'tropicals_species_encyclopedia_ref\nSQL 百科主读'],
+        ['detail',1080,190,220,78,'展示详情 / 媒体\n署名 / 图片许可'],
+        ['catalog',160,430,260,68,'已发布内部\nPlantIdentity / Taxon'],
+        ['crosswalk',570,430,270,78,'目录/百科 ↔ 内部身份 crosswalk\n来源 / 证据 / 歧义 / 审核'],
+        ['gate',950,430,92,92,'映射证据\n通过?','gateway'],
+        ['candidate',1190,360,230,68,'内部身份候选\n仍须用户确认'],
+        ['browse',1190,540,250,68,'仅目录 / 百科浏览\n不自动创建内部身份'],
+        ['api',560,660,250,68,'Tropicals 实时 API\n可选同步 / 来源核对'],
+        ['cms',880,660,250,68,'内部身份审核 / CMS 扩种\n独立治理']
+      ],edges:[
+        ['search','pk'],['detailReq','pk'],['pk','searchIndex'],['searchIndex','searchResult'],
+        ['pk','encyclopedia'],['searchResult','encyclopedia','查看百科'],['encyclopedia','detail'],
+        ['searchResult','crosswalk'],['encyclopedia','crosswalk'],['catalog','crosswalk'],['crosswalk','gate'],
+        ['gate','candidate','是'],['gate','browse','否'],
+        {from:'api',to:'encyclopedia',label:'非请求主路径',dashed:true},
+        {from:'crosswalk',to:'cms',label:'证据不足时独立审核',dashed:true}
+      ]},
+      subs:[
+        {title:'L2｜目录引用与内部身份映射',desc:'catalogTaxonRef、数据集 taxon_id、可选 API id/slug 都保留独立命名空间。只有来源和分类证据通过审核后才能映射到内部 PlantIdentity；未命中仍可目录/百科浏览。',diagram:{w:1220,h:500,nodes:[
+          ['external',120,70,250,68,'catalogTaxonRef / taxon_id\n可选 API id / slug'],
+          ['evidence',430,70,240,70,'来源证据 / 版本\n父链 / 名称歧义'],
+          ['catalog',120,270,240,68,'内部已发布\nPlantIdentity / Taxon'],
+          ['mapping',520,260,240,78,'crosswalk\n证据 / 状态 / 审核'],
+          ['gate',840,260,82,82,'证据审核\n通过?','gateway'],
+          ['candidate',1010,150,210,68,'内部身份候选\nuserPlant 规则不变'],
+          ['browse',1010,370,210,68,'仅目录 / 百科浏览']
+        ],edges:[
+          ['external','mapping'],['evidence','mapping'],['catalog','mapping'],['mapping','gate'],
+          ['gate','candidate','是'],['gate','browse','否']
+        ]}},
+        {title:'L2｜SQL 百科详情 / Structured Trait Evidence',desc:'SQL 外部参考层拆成两条投影：展示百科只走字段白名单与媒体许可；结构化 water/light/T-RH/growth 性状只能作为证据，经来源保留、归一、审核和不可变 release 后进入 Internal Care Knowledge。当前 tropicals_trait_ref=0，且百科表没有 substrate_preference，不能假装植物级栽培 Reference 已具备。',diagram:{w:1260,h:500,nodes:[
+          ['sql',120,80,230,58,'SQL 外部参考\nencyclopedia / growth-season'],
+          ['text',420,40,210,68,'展示文本\n字段白名单 / 署名'],
+          ['media',420,150,210,68,'媒体引用\n逐项核验许可'],
+          ['dto',720,90,210,68,'Encyclopedia DTO'],
+          ['browse',1010,90,190,68,'百科展示'],
+          ['traits',420,300,230,78,'Structured Trait Evidence\nwater / light / T-RH / growth'],
+          ['review',720,300,230,78,'来源保留 / 归一 / 冲突检查\nplant-knowledge 审核'],
+          ['internal',1010,300,210,78,'Internal Care Knowledge\nReference Profile release']
+        ],edges:[
+          ['sql','text'],['sql','media'],['text','dto'],['media','dto'],['dto','browse'],
+          ['sql','traits'],['traits','review'],['review','internal'],
+          {from:'dto',to:'internal',label:'禁止反向推导',dashed:true}
+        ]}}
+      ]
+    },
+    care:{
+      title:'L1-06｜Care',
+      desc:'Care 保持浇水、施肥、光照、通风四类稳定输出外壳。内部统一走 Atomic Facts → Snapshot → Deterministic Derivations → Internal Care Knowledge / Reference Profile → Capability Decision；AI 不重新计算确定性物理量。',
+      note:'Watering 不读取 indoorEqHours，也不自行解释窗向；GrowthActivity 只选择 Baseline，不乘季节系数；当前 Soil Evidence 优先于 DryProgress。',
+      diagram:{w:1320,h:900,nodes:[
+        ['ctx',180,70,210,58,'Runtime Plant Context'],['atoms',500,70,230,58,'Atomic Environment / Plant Facts'],['snapshot',820,70,230,58,'Input Snapshot\n不可变 + SHA-256'],['derive',820,200,260,88,'Deterministic Derivations\nIndoor Estimate / Air VPD\nWindow Plane / PPFD / DLI'],['knowledge',360,220,250,78,'Internal Care Knowledge\nReference Profile release'],['growth',360,350,250,78,'GrowthActivityState\nACTIVE / SLOWED / DORMANT / UNKNOWN'],['care',690,350,220,68,'Care Capability Decision'],['watering',440,485,170,58,'Watering'],['fert',630,485,170,58,'Fertilizing'],['light',820,485,170,58,'Lighting'],['vent',1010,485,170,58,'Ventilation'],['proposal',690,600,200,58,'Care Proposal'],['scope',690,690,82,82,'当前作用域','gateway'],['temp',400,810,210,58,'Ephemeral 结果'],['persist',980,810,250,58,'Persistent\nConfirm → Plan / Event / Fact']
+      ],edges:[['ctx','atoms'],['atoms','snapshot'],['snapshot','derive'],['knowledge','growth'],['derive','growth'],['ctx','growth'],['derive','care'],['knowledge','care'],['growth','care'],['care','watering'],['care','fert'],['care','light'],['care','vent'],['watering','proposal'],['fert','proposal'],['light','proposal'],['vent','proposal'],['proposal','scope'],['scope','temp','Ephemeral'],['scope','persist','Persistent']]},
+      subs:[
+        {title:'L2｜Light｜DNI/DHI → PPFD → DLI',desc:'光照结构已冻结：天气 DNI/DHI/GHI + 经纬度/日期时间 → 太阳高度/方位 → 窗面 AOI → Direct/Diffuse → 遮挡/玻璃/室内距离 → PPFD(t) → DLI。朝向名称不直接决定直射；MVP 不把地面反射作为核心。Watering 只消费 DLI。',diagram:{w:1320,h:620,nodes:[
+          ['weather',130,70,190,58,'DNI / DHI / GHI'],['geo',410,70,210,68,'太阳几何\n经纬度 / 日期时间'],['window',690,70,210,68,'窗面几何\n朝向 / 倾角 / AOI'],['plane',980,70,230,68,'Window Plane Irradiance\nDirect / Diffuse'],['outside',980,220,210,68,'外部遮挡 / 天空可见度'],['inside',980,350,230,78,'玻璃 / 窗帘 / 室内遮挡\n植物距窗位置'],['ppfd',720,470,190,58,'PPFD(t)'],['dli',460,470,170,58,'DLI'],['risk',980,500,230,78,'peak PPFD / 直射持续时间\n强光风险'],['water',190,470,190,58,'Watering\n只消费 DLI']
+        ],edges:[['weather','geo'],['weather','plane'],['geo','window'],['window','plane'],['plane','outside'],['outside','inside'],['inside','ppfd'],['ppfd','dli'],['dli','water'],['ppfd','risk']]}},
+        {title:'L2｜Indoor Environment｜实测优先，估算明示',desc:'室外天气永远保持 outdoor。室内/plant-zone 实测 T/RH 优先；缺失时才由室外逐时 T/RH + 室内外空气交换 + 房间太阳热输入 + 版本化建筑热惯性生成 Estimated Indoor Environment。估算必须带来源、算法 release 和置信度，之后才能计算 Air VPD；禁止 outdoor T/RH 直接冒充室内 VPD。',diagram:{w:1280,h:580,nodes:[
+          ['measured',130,70,230,68,'室内 / plant-zone 实测 T/RH'],['outdoor',130,250,220,68,'室外逐时 T/RH\noutdoor'],['exchange',410,250,210,68,'室内外空气交换'],['solar',680,250,220,68,'房间太阳热输入\n来自 Light Model'],['thermal',960,250,210,68,'建筑热惯性\n版本化默认'],['estimate',650,390,280,78,'Estimated Indoor Environment\nT/RH + provenance + confidence'],['choose',530,90,100,100,'有可用\n实测?','gateway'],['indoor',850,90,220,68,'Indoor T/RH\nmeasured / estimated'],['vpd',1080,90,150,58,'Air VPD']
+        ],edges:[['measured','choose'],['outdoor','estimate'],['exchange','estimate'],['solar','estimate'],['thermal','estimate'],['estimate','choose'],['choose','indoor','实测优先'],['indoor','vpd']]}},
+        {title:'L2｜GrowthActivity｜生长活跃状态',desc:'输出 GrowthActivityState，而不是 isGrowingSeason true/false。根据已审核物种习性、DLI/光周期与室内温度历史、新叶/新芽/开花、真实干湿循环等证据输出 ACTIVE / SLOWED / DORMANT / UNKNOWN + confidence + evidence。只用于选择条件性 Baseline，禁止再乘季节系数。',diagram:{w:1160,h:500,nodes:[
+          ['know',130,70,220,68,'已审核物种习性\n休眠倾向 / 触发条件'],['light',410,70,210,68,'DLI / photoperiod history'],['temp',690,70,210,68,'Indoor temperature history'],['facts',970,70,210,68,'新叶 / 新芽 / 开花\n真实干湿循环'],['est',550,230,220,58,'GrowthActivity Estimator'],['state',550,350,260,78,'ACTIVE / SLOWED / DORMANT / UNKNOWN\nconfidence + evidence'],['baseline',880,350,190,58,'Baseline Resolver'],['fallback',250,350,190,58,'低置信度\n安全 fallback']
+        ],edges:[['know','est'],['light','est'],['temp','est'],['facts','est'],['est','state'],['state','baseline'],{from:'state',to:'fallback',label:'low / conflict',dashed:true},['fallback','baseline']]}},
+        {title:'L2｜Watering｜等效干燥进度',desc:'浇水改为等效干燥进度：BaselinePolicy 决定标准干燥单位窗口；DLI + Plant VPD Ratio + AirMovement 形成 EnvironmentDemand；实际种植内盆/排水/基质/栽培方式形成 CultivationRetention；真实干湿循环只做 PersonalCalibration；从最近实际浇水 Fact 累计 DryProgress，最终由当前 Soil Safety Gate 决策。Watering 不消费 indoorEqHours / dryDownFactor / rootZoneMoistureIndex 作为一级决策链。',diagram:{w:1540,h:980,nodes:[
+          ['trait',130,70,210,58,'已审核 Watering Trait'],['growth',400,70,220,58,'GrowthActivityState'],['baseline',260,190,230,68,'BaselinePolicy\n[Bmin, Bmax]'],
+          ['dli',650,70,160,58,'DLI'],['indoor',850,70,220,58,'Indoor / Estimated T-RH'],['vpd',850,190,210,58,'Air VPD → Plant VPD Ratio'],['air',1120,70,190,58,'AirMovement Proxy'],['env',850,320,240,68,'EnvironmentDemand\n有界'],
+          ['cult',1260,260,250,88,'实际种植系统\n内盆材质 / 几何 / 排水\n基质 / 栽培方式'],['ret',1260,410,220,58,'CultivationRetention'],
+          ['cycles',160,390,220,68,'真实有效干湿循环\n预测残差'],['personal',160,510,210,58,'PersonalCalibration'],['last',430,390,230,68,'最近已确认\n实际浇水 Fact'],
+          ['unit',760,500,300,78,'DryUnit(d)\nEnvironmentDemand × PersonalCalibration\n÷ CultivationRetention'],['progress',760,640,230,68,'DryProgress\n从 last watering 累计'],['window',500,760,240,68,'预计检查窗口\nvs [Bmin,Bmax]'],['soil',1000,760,230,68,'当前可靠 Soil Evidence'],['gate',760,850,92,92,'Soil\nSafety Gate','gateway'],['result',1260,850,230,78,'Watering Proposal\n检查 / 暂停 / 允许浇水']
+        ],edges:[['trait','baseline'],['growth','baseline'],['dli','env'],['indoor','vpd'],['vpd','env'],['air','env'],['cult','ret'],['cycles','personal'],['env','unit'],['personal','unit'],['ret','unit'],['last','progress'],['unit','progress'],['baseline','window'],['progress','window'],['window','gate'],['soil','gate'],['gate','result']]} }
+      ]
+    },
+    diagnosis:{
+      title:'L1-07｜Diagnosis',
+      desc:'解释 L0 的诊断域：先建立模式内证据账本，再判断证据是否足够；不足时才进入对应题包。固定题包与虫害动态题包边界保持不变。',
+      note:'Diagnosis Record 是诊断判断，不是 Plant Fact。视觉证据、用户回答、历史事实都进入同一 Mode Evidence Ledger。',
+      diagram:{w:1260,h:760,nodes:[
+        ['ctx',180,65,210,58,'Runtime Plant Context'],['knowledge',590,65,210,58,'Diagnosis Knowledge'],['start',390,175,200,58,'Start Diagnosis'],['initial',390,285,220,58,'初始诊断证据'],['mode',390,395,210,58,'确定当前诊断模式'],['ledger',390,505,230,58,'Mode Evidence Ledger'],['gate',390,620,82,82,'证据是否\n足够','gateway'],['resolve',170,735,190,58,'Diagnosis Resolve'],['route',650,620,82,82,'题包类型','gateway'],['fixed',760,735,170,58,'固定题包'],['pest',980,735,170,58,'虫害动态题包']
+      ],edges:[['ctx','start'],['knowledge','start','题包 / Evidence / 规则',true],['start','initial'],['initial','mode'],['mode','ledger'],['ledger','gate'],['gate','resolve','是'],['gate','route','否'],['route','fixed','固定模式'],['route','pest','虫害模式'],{from:'fixed',to:'ledger',label:'回答回写',toPort:'left'},{from:'pest',to:'ledger',label:'回答回写',toPort:'right'}]},
+      subs:[
+        {title:'L2｜Multi-image Evidence',desc:'多图价值是补齐证据、减少重复追问、核实关键因素，不建立另一套通用病因推理系统。',diagram:{w:1160,h:540,nodes:[
+          ['images',120,80,180,58,'1~3 张诊断图片'],['per',360,80,180,58,'逐图识别'],['item',600,80,220,78,'Evidence Item\n事实 / 来源图片 / 可见部位\n局部描述 / 接纳状态'],['dedup',860,80,180,58,'重复视角 / 事实去重'],['ledger',1030,220,200,58,'Mode Evidence Ledger'],['accepted',760,360,180,58,'已正式接纳'],['candidate',1010,360,180,58,'候选 / 待确认'],['conflict',250,360,180,58,'真实冲突'],['confirm',520,470,200,58,'必要用户确认']
+        ],edges:[['images','per'],['per','item'],['item','dedup'],['dedup','ledger'],['ledger','accepted'],['ledger','candidate'],['ledger','conflict'],['candidate','confirm'],['conflict','confirm'],['confirm','ledger']]}}
+      ]
+    },
+    agent:{
+      title:'L1-08｜小青 Agent',
+      desc:'小青读取 Persistent Plant Context 和相关记录；只读请求直接回答，写操作先形成 Tool Proposal，再经过用户确认调用正式领域能力。',
+      note:'永久边界：小青不能绕过领域能力直接写 Plant Facts、Plant State 或正式 Diagnosis。',
+      diagram:{w:1160,h:610,nodes:[
+        ['ctx',180,80,220,58,'Persistent Plant Context'],['records',500,80,230,58,'相关 Timeline / Diagnosis / Plan'],['agentctx',340,190,220,58,'Agent Context Assembly'],['xq',340,300,190,58,'小青 Agent'],['intent',340,410,80,80,'是否涉及\n业务操作','gateway'],['answer',120,540,180,58,'解释 / 问答 / 引导'],['tool',560,540,190,58,'Tool Proposal'],['confirm',820,540,80,80,'用户确认?','gateway'],['domain',1040,540,190,58,'调用正式领域能力']
+      ],edges:[['ctx','agentctx'],['records','agentctx'],['agentctx','xq'],['xq','intent'],['intent','answer','否'],['intent','tool','是'],['tool','confirm'],['confirm','domain','是']]},subs:[]
+    },
+    cms:{
+      title:'L1-09｜CMS / Published Content Governance',
+      desc:'解释 L0 中 CMS 如何接收治理候选并发布版本化内容。植物识别会向 CMS 提交 Catalog 扩种候选和植物百科缺口；CMS 审核发布后分别回流 Catalog 与用户百科，并继续供 Care、Diagnosis 消费其规则与知识。',
+      note:'Qwen 可以生成候选草稿，但不能直接成为规范 Identity、内部养护知识或安全事实的真相源。',
+      diagram:{w:1380,h:860,nodes:[
+        ['source',240,70,250,92,'治理候选来源\nIdentify：扩种 / 百科缺口\n人工维护 / AI草稿 / 研究资料'],['draft',690,70,180,58,'CMS Draft'],['type',690,165,80,80,'内容类型','gateway'],
+        ['identity',230,315,210,58,'规范植物身份 / Catalog 扩种'],['ency',460,315,190,58,'用户植物百科'],['knowledge',690,315,190,58,'内部植物知识'],['care',920,315,190,58,'养护规则'],['diag',1150,315,190,58,'诊断规则 / 题包'],
+        ['validation',690,500,220,58,'对应类型校验 / 审核'],['review',690,625,80,80,'审核通过?','gateway'],['revision',430,770,190,58,'修订 / 驳回'],['publish',950,770,190,58,'版本化发布']
+      ],edges:[
+        ['source','draft'],['draft','type'],
+        {from:'type',to:'identity',label:'身份',fromPort:'left'},{from:'type',to:'ency',label:'百科',fromPort:'bottom'},{from:'type',to:'knowledge',label:'内部知识',fromPort:'bottom'},{from:'type',to:'care',label:'养护规则',fromPort:'bottom'},{from:'type',to:'diag',label:'诊断规则',fromPort:'right'},
+        {from:'identity',to:'validation',toPort:'left'},{from:'ency',to:'validation',toPort:'top'},{from:'knowledge',to:'validation',toPort:'top'},{from:'care',to:'validation',toPort:'top'},{from:'diag',to:'validation',toPort:'right'},
+        ['validation','review'],['review','revision','否'],['review','publish','是'],{from:'revision',to:'draft',fromPort:'left',toPort:'top',via:[[60,770],[60,10],[690,10]]}
+      ]},
+      subs:[
+        {title:'L2｜Catalog 扩种治理',desc:'解释 CMS 侧如何处理 Identify 产生的 Catalog 扩种候选；这里只负责规范身份治理，不负责百科内容补全。',diagram:{w:1240,h:560,nodes:[
+          ['candidate',150,70,210,58,'Catalog 扩种候选'],['reviewData',440,70,250,78,'身份资料补充\n去重 / Alias / taxonomy / 来源'],['review',780,70,210,58,'CMS 身份审核'],['gate',1040,70,84,84,'审核结果','gateway'],
+          ['existing',760,250,210,58,'关联已有 Identity'],['new',1040,250,210,58,'批准新增 Identity'],['reject',1040,390,210,58,'驳回 / 保留临时候选'],['publish',760,390,210,58,'发布规范 Identity'],['catalog',470,390,210,58,'Plant Identity Catalog']
+        ],edges:[
+          ['candidate','reviewData'],['reviewData','review'],['review','gate'],
+          ['gate','existing','关联已有'],['gate','new','批准新增'],['gate','reject','驳回'],
+          ['existing','catalog'],['new','publish'],['publish','catalog']
+        ]}},
+        {title:'L2｜Public Encyclopedia',desc:'植物百科补全只针对“已有规范 Identity 但缺用户可见内容”的情况。',diagram:{w:1080,h:430,nodes:[
+          ['identity',150,80,190,58,'已有 Catalog Identity'],['lookup',390,80,190,58,'查询已发布百科'],['gate',620,80,76,76,'是否缺失?','gateway'],['display',840,50,180,58,'直接展示'],['draft',840,180,200,58,'Qwen 结构化草稿'],['review',840,300,190,58,'CMS 审核 / 发布']
+        ],edges:[['identity','lookup'],['lookup','gate'],['gate','display','否'],['gate','draft','是'],['draft','review']]}}
+      ]
+    }
+  };
+
+  const L0_SPEC = {
+    w:1500,h:1500,
+    nodes:[
+      ['client',750,62,'青花植多平台小程序\n微信 / 抖音 / 小红书等',null],
+      ['principal',750,162,'当前访问主体','identity'],
+      ['visitor',400,282,'Visitor\n匿名访问主体',null],
+      ['user',1100,282,'User\n统一用户主体 user_id',null],
+      ['vability',400,392,'游客基础能力',null],
+      ['entitlement',1100,392,'用户权益与额度\n免费 / 试用 / 会员 / AI',null],
+      ['capability',750,512,'能力资格判定',null],
+      ['entry',750,622,'植物业务入口','lifecycle'],
+      ['mode',750,738,'本次是否绑定\n长期植物',null,'gateway'],
+      ['ephemeral',400,858,'Ephemeral Plant Context\n临时植物上下文',null],
+      ['promotion',705,858,'Plant Promotion\n创建 / 绑定长期植物','promotion'],
+      ['userplant',1050,858,'Persistent User Plant\nuser_plant_id · 长期核心','userplant'],
+      ['persistentctx',1050,960,'Persistent Plant Context',null],
+      ['runtime',750,1050,'Plant Context','runtime'],
+      ['identify',450,1200,'植物识别','identify'],
+      ['care',750,1200,'植物养护','care'],
+      ['diagnosis',1050,1200,'植物诊断','diagnosis'],
+      ['agent',1220,1050,'小青 Agent','agent'],
+      ['catalog',170,1030,'Plant Catalog\n规范身份 / 植物知识',null],
+      ['weather',170,1370,'天气与外部环境能力',null],
+      ['cms',1360,900,'CMS 内容与规则治理','cms'],
+      ['published',1360,1370,'版本化已发布内容',null]
+    ],
+    edges:[
+      {from:'client',to:'principal'},
+      {from:'principal',to:'visitor',fromPort:'left',toPort:'top'},
+      {from:'principal',to:'user',fromPort:'right',toPort:'top'},
+      {from:'visitor',to:'vability'},
+      {from:'user',to:'entitlement'},
+      {from:'vability',to:'capability',fromPort:'bottom',toPort:'left'},
+      {from:'entitlement',to:'capability',fromPort:'bottom',toPort:'right'},
+      {from:'capability',to:'entry'},
+      {from:'entry',to:'mode'},
+      {from:'mode',to:'ephemeral',label:'否',fromPort:'left',toPort:'top'},
+      {from:'mode',to:'userplant',label:'是',fromPort:'right',toPort:'top'},
+      {from:'ephemeral',to:'promotion',fromPort:'right',toPort:'left'},
+      {from:'promotion',to:'userplant',fromPort:'right',toPort:'left'},
+      {from:'user',to:'userplant',label:'拥有',dashed:true,fromPort:'right',toPort:'right',via:[[1215,282],[1215,858]]},
+      {from:'userplant',to:'persistentctx'},
+      {from:'persistentctx',to:'runtime'},
+      {from:'ephemeral',to:'runtime'},
+      {from:'runtime',to:'identify'},
+      {from:'runtime',to:'care'},
+      {from:'runtime',to:'diagnosis'},
+      {from:'identify',to:'cms',label:'扩种 / 百科缺口',dashed:true,fromPort:'bottom',toPort:'right',via:[[450,1460],[1480,1460],[1480,900]]},
+      {from:'persistentctx',to:'agent'},
+      {from:'catalog',to:'identify',dashed:true},
+      {from:'catalog',to:'care',dashed:true},
+      {from:'catalog',to:'diagnosis',dashed:true},
+      {from:'weather',to:'care',dashed:true,fromPort:'top'},
+      {from:'weather',to:'diagnosis',dashed:true,fromPort:'top'},
+      {from:'cms',to:'published'},
+      {from:'published',to:'catalog',dashed:true},
+      {from:'published',to:'care',dashed:true},
+      {from:'published',to:'diagnosis',dashed:true}
+    ]
+  };
+
+  function esc(s){return String(s).replace(/[&<>\"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':'&quot;'}[c]));}
+  const measureCanvas=document.createElement('canvas');
+  const measureCtx=measureCanvas.getContext('2d');
+  function textWidth(text,fontSize=14,fontWeight=560){
+    measureCtx.font=`${fontWeight} ${fontSize}px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif`;
+    return measureCtx.measureText(text).width;
+  }
+  function wrapOneLine(line,maxPx=260,fontSize=14,fontWeight=560){
+    if(textWidth(line,fontSize,fontWeight)<=maxPx) return [line];
+    const out=[]; let cur='';
+    for(const ch of line){
+      const next=cur+ch;
+      if(cur && textWidth(next,fontSize,fontWeight)>maxPx){out.push(cur);cur=ch;} else cur=next;
+    }
+    if(cur) out.push(cur);
+    return out;
+  }
+  function wrappedLines(label,maxPx=260){
+    return String(label).split('\n').flatMap(x=>wrapOneLine(x,maxPx));
+  }
+  function normalizeNodes(nodes){
+    return nodes.map(raw=>{
+      // Detail spec: [id,cx,cy,w,h,label,type]
+      // L0 spec:     [id,cx,cy,label,detail,type]
+      let id,cx,cy,label,type,detail=null;
+      if(typeof raw[3]==='number'){
+        [id,cx,cy,,,label,type]=raw;
+      }else{
+        [id,cx,cy,label,detail,type]=raw;
+      }
+      if(type==='gateway'){
+        const ls=wrappedLines(label,116); const size=Math.max(96,Math.min(128,76+Math.max(0,ls.length-1)*12));
+        return {id,cx,cy,w:size,h:size,label,lines:ls,type,detail};
+      }
+      const ls=wrappedLines(label,268);
+      const max=Math.max(...ls.map(x=>textWidth(x,14,560)),60);
+      const w=Math.max(145,Math.min(320,Math.ceil(max+42)));
+      const h=Math.max(56,Math.ceil(26+ls.length*19));
+      return {id,cx,cy,w,h,label,lines:ls,type,detail};
+    });
+  }
+  function textHtmlNode(n){
+    const gap=19; const start=n.cy-(n.lines.length-1)*gap/2+5;
+    return `<text x="${n.cx}" y="${start}" text-anchor="middle" font-size="14" font-weight="560" fill="#a9d7ff">${n.lines.map((l,i)=>`<tspan x="${n.cx}" dy="${i?gap:0}">${esc(l)}</tspan>`).join('')}</text>`;
+  }
+  function detailNodeHtml(n){
+    if(n.type==='gateway'){
+      const pts=`${n.cx},${n.cy-n.h/2} ${n.cx+n.w/2},${n.cy} ${n.cx},${n.cy+n.h/2} ${n.cx-n.w/2},${n.cy}`;
+      return `<g data-id="${n.id}"><polygon points="${pts}" fill="#101e2a" stroke="#2b75ad" stroke-width="1.6"/>${textHtmlNode(n)}</g>`;
+    }
+    return `<g data-id="${n.id}"><rect x="${n.cx-n.w/2}" y="${n.cy-n.h/2}" width="${n.w}" height="${n.h}" rx="11" fill="#103763" stroke="#1f5d91" stroke-width="1.45"/>${textHtmlNode(n)}</g>`;
+  }
+  function l0NodeHtml(n){
+    const cls=`node${n.detail?' expandable':''}`;
+    if(n.type==='gateway'){
+      const pts=`${n.cx},${n.cy-n.h/2} ${n.cx+n.w/2},${n.cy} ${n.cx},${n.cy+n.h/2} ${n.cx-n.w/2},${n.cy}`;
+      return `<g class="${cls}" data-id="${n.id}" ${n.detail?`data-detail="${n.detail}"`:''}><polygon points="${pts}"/>${textHtmlNode(n)}</g>`;
+    }
+    return `<g class="${cls}" data-id="${n.id}" ${n.detail?`data-detail="${n.detail}"`:''}><rect x="${n.cx-n.w/2}" y="${n.cy-n.h/2}" width="${n.w}" height="${n.h}" rx="12"/>${textHtmlNode(n)}</g>`;
+  }
+  function nodeMap(nodes){const m={}; nodes.forEach(n=>m[n.id]=n); return m;}
+  const ROUTE_CFG={
+    rectShortCapacity:1,
+    rectLongCapacity:3,
+    gatewayLongCapacity:3,
+    gatewayShortCapacity:2,
+    escape:26,
+    longPortGap:54,
+    minParallelGap:24,
+    bendPenalty:520
+  };
+  function sideIsLong(n,side){
+    // 常规流程节点通常宽大于高：top/bottom 为长边，left/right 为短边。
+    // 条件门单独处理，不套用“短边一根”的流程节点限制。
+    return side==='top'||side==='bottom';
+  }
+  function sideCapacity(n,side){
+    if(n.type==='gateway') return sideIsLong(n,side)?ROUTE_CFG.gatewayLongCapacity:ROUTE_CFG.gatewayShortCapacity;
+    return sideIsLong(n,side)?ROUTE_CFG.rectLongCapacity:ROUTE_CFG.rectShortCapacity;
+  }
+  function port(n,name,offset=0){
+    if(n.type==='gateway'){
+      // 多端口落在菱形真实边界上，而不是落在外接矩形上。
+      if(name==='top'||name==='bottom'){
+        const max=Math.max(0,n.w*0.34), ox=Math.max(-max,Math.min(max,offset));
+        const dy=Math.abs(ox)*(n.h/n.w);
+        return name==='top'
+          ? {x:n.cx+ox,y:n.cy-n.h/2+dy}
+          : {x:n.cx+ox,y:n.cy+n.h/2-dy};
+      }
+      const max=Math.max(0,n.h*0.34), oy=Math.max(-max,Math.min(max,offset));
+      const dx=Math.abs(oy)*(n.w/n.h);
+      return name==='left'
+        ? {x:n.cx-n.w/2+dx,y:n.cy+oy}
+        : {x:n.cx+n.w/2-dx,y:n.cy+oy};
+    }
+    if(name==='top')return{x:n.cx+offset,y:n.cy-n.h/2};
+    if(name==='bottom')return{x:n.cx+offset,y:n.cy+n.h/2};
+    if(name==='left')return{x:n.cx-n.w/2,y:n.cy+offset};
+    if(name==='right')return{x:n.cx+n.w/2,y:n.cy+offset};
+    return{x:n.cx,y:n.cy};
+  }
+  function preferredSides(node,other,explicit){
+    const dx=other.cx-node.cx,dy=other.cy-node.cy, ax=Math.abs(dx),ay=Math.abs(dy);
+    let order;
+    if(ax>=ay){
+      const h=dx>=0?'right':'left', hop=dx>=0?'left':'right';
+      const v=dy>=0?'bottom':'top', vop=dy>=0?'top':'bottom';
+      order=[h,v,vop,hop];
+    }else{
+      const v=dy>=0?'bottom':'top', vop=dy>=0?'top':'bottom';
+      const h=dx>=0?'right':'left', hop=dx>=0?'left':'right';
+      order=[v,h,hop,vop];
+    }
+    if(explicit) order=[explicit,...order];
+    return [...new Set(order)];
+  }
+  function cleanPoints(points){
+    const out=[];
+    for(const p of points){
+      if(!out.length || Math.abs(out[out.length-1].x-p.x)>.01 || Math.abs(out[out.length-1].y-p.y)>.01) out.push({...p});
+    }
+    for(let i=out.length-2;i>0;i--){
+      const a=out[i-1],b=out[i],c=out[i+1];
+      if((Math.abs(a.x-b.x)<.01&&Math.abs(b.x-c.x)<.01)||(Math.abs(a.y-b.y)<.01&&Math.abs(b.y-c.y)<.01)) out.splice(i,1);
+    }
+    return out;
+  }
+  function roundedPath(points,r=11){
+    const pts=cleanPoints(points); if(pts.length<2)return'';
+    let d=`M${pts[0].x} ${pts[0].y}`;
+    for(let i=1;i<pts.length-1;i++){
+      const p0=pts[i-1],p=pts[i],p1=pts[i+1];
+      const d0=Math.hypot(p.x-p0.x,p.y-p0.y), d1=Math.hypot(p1.x-p.x,p1.y-p.y);
+      const rr=Math.min(r,d0/2,d1/2);
+      const a={x:p.x+(p0.x-p.x)*rr/d0,y:p.y+(p0.y-p.y)*rr/d0};
+      const b={x:p.x+(p1.x-p.x)*rr/d1,y:p.y+(p1.y-p.y)*rr/d1};
+      d+=` L${a.x} ${a.y} Q${p.x} ${p.y} ${b.x} ${b.y}`;
+    }
+    const z=pts[pts.length-1]; d+=` L${z.x} ${z.y}`; return d;
+  }
+  function edgeObject(edge,index){
+    const e=Array.isArray(edge)?{from:edge[0],to:edge[1],label:edge[2],dashed:edge[3]}:{...edge};
+    e._index=index;
+    return e;
+  }
+  function endpointPriority(ep){
+    // 主控制流优先拿最自然的端口；依赖线在容量不足时主动换边。
+    return (ep.item.e.dashed?100:0)+(ep.explicit?0:10)+ep.item.e._index/1000;
+  }
+  function preferredSidePairs(a,b,e){
+    const dx=b.cx-a.cx,dy=b.cy-a.cy,ax=Math.abs(dx),ay=Math.abs(dy);
+    const hFrom=dx>=0?'right':'left', hTo=dx>=0?'left':'right';
+    const vFrom=dy>=0?'bottom':'top', vTo=dy>=0?'top':'bottom';
+    let pairs=[];
+    // 正对边优先于“少一拐弯的侧向入口”。侧向 L 型会让同父扇出在空白区交叉并产生微折返。
+    if(ax<8){
+      pairs=[[vFrom,vTo],[hFrom,vTo],[vFrom,hTo],[hFrom,hTo]];
+    }else if(ay<8){
+      pairs=[[hFrom,hTo],[hFrom,vTo],[vFrom,hTo],[vFrom,vTo]];
+    }else if(ax>=ay){
+      pairs=[[hFrom,hTo],[hFrom,vTo],[vFrom,hTo],[vFrom,vTo]];
+    }else{
+      pairs=[[vFrom,vTo],[vFrom,hTo],[hFrom,vTo],[hFrom,hTo]];
+    }
+    const all=['top','right','bottom','left'];
+    for(const fs of all)for(const ts of all)pairs.push([fs,ts]);
+    if(e.fromPort)pairs=pairs.filter(([fs])=>fs===e.fromPort);
+    if(e.toPort)pairs=pairs.filter(([,ts])=>ts===e.toPort);
+    // 一端已锁在长边时，另一端优先也走长边，避免抢短边导致同排直线被挤去绕路。
+    const longSide=s=>s==='top'||s==='bottom';
+    if(e.toPort && longSide(e.toPort) && !e.fromPort){
+      pairs.sort((a,b)=>((longSide(a[0])?0:1)-(longSide(b[0])?0:1)));
+    }else if(e.fromPort && longSide(e.fromPort) && !e.toPort){
+      pairs.sort((a,b)=>((longSide(a[1])?0:1)-(longSide(b[1])?0:1)));
+    }
+    const seen=new Set();
+    return pairs.filter(([fs,ts])=>{const k=fs+'|'+ts;if(seen.has(k))return false;seen.add(k);return true;});
+  }
+  function facingPorts(a,b){
+    const dx=b.cx-a.cx,dy=b.cy-a.cy,ax=Math.abs(dx),ay=Math.abs(dy);
+    if(ax<8&&ay<8) return null;
+    if(ay>=ax) return [dy>=0?'bottom':'top', dy>=0?'top':'bottom'];
+    return [dx>=0?'right':'left', dx>=0?'left':'right'];
+  }
+  function estimateSimplePath(a,b,fs,ts,fromOffset=0,toOffset=0){
+    const s=port(a,fs,fromOffset),t=port(b,ts,toOffset);
+    const se=extendPoint(s,fs),te=extendPoint(t,ts);
+    const candidates=[];
+    const add=pts=>{
+      const mid=cleanPoints(pts); if(mid.length<2)return;
+      const full=cleanPoints([s,...mid,t]);
+      candidates.push({points:full,bends:Math.max(0,full.length-2)});
+    };
+    if(Math.abs(se.x-te.x)<.01||Math.abs(se.y-te.y)<.01)add([se,te]);
+    add([se,{x:te.x,y:se.y},te]);
+    add([se,{x:se.x,y:te.y},te]);
+    const mx=(se.x+te.x)/2,my=(se.y+te.y)/2;
+    add([se,{x:mx,y:se.y},{x:mx,y:te.y},te]);
+    add([se,{x:se.x,y:my},{x:te.x,y:my},te]);
+    candidates.sort((p,q)=>p.bends-q.bends||pathLength(p.points)-pathLength(q.points));
+    return candidates[0]||{points:cleanPoints([s,se,te,t]),bends:3};
+  }
+  function segmentsCross(sa,sb){
+    if(sa.ori===sb.ori)return false;
+    const h=sa.ori==='h'?sa:sb, v=sa.ori==='v'?sa:sb;
+    return v.coord>h.min+1 && v.coord<h.max-1 && h.coord>v.min+1 && h.coord<v.max-1;
+  }
+  function pathSegments(points){
+    const segs=[];
+    for(let i=0;i<points.length-1;i++){
+      const s=segmentInfo(points[i],points[i+1]);
+      if(s)segs.push(s);
+    }
+    return segs;
+  }
+  function countPathCrossings(points,others){
+    const segs=pathSegments(points);
+    let n=0;
+    for(const other of others){
+      for(const sa of segs)for(const sb of pathSegments(other))if(segmentsCross(sa,sb))n++;
+    }
+    return n;
+  }
+  function childHalfPlane(parent,child){
+    const dx=child.cx-parent.cx,dy=child.cy-parent.cy;
+    // 只要目标中心明显在父节点下方/上方，就归入垂直扇出（即使水平偏移更大）。
+    // 否则宽扇出会被拆成 down+right 两组，超额子节点失去锁定、翻到顶边绕行。
+    if(dy>36) return 'down';
+    if(dy<-36) return 'up';
+    if(dx>28 && dx>=Math.abs(dy)*0.35) return 'right';
+    if(dx<-28 && -dx>=Math.abs(dy)*0.35) return 'left';
+    if(Math.abs(dy)>=Math.abs(dx)) return dy>=0?'down':'up';
+    return dx>=0?'right':'left';
+  }
+  function preassignFanFacing(items,m){
+    // 同父多子且大体同侧时，锁正对端口，避免逐条贪心先拿走侧向 L 型。
+    const groups=new Map();
+    for(const item of items){
+      if(item.e.fromPort||item.e.toPort)continue;
+      if(!groups.has(item.e.from))groups.set(item.e.from,[]);
+      groups.get(item.e.from).push(item);
+    }
+    for(const [,arr] of groups){
+      if(arr.length<2)continue;
+      const parent=arr[0].a;
+      const dirs=arr.map(it=>childHalfPlane(parent,it.b));
+      const counts=dirs.reduce((acc,d)=>{acc[d]=(acc[d]||0)+1;return acc;},{});
+      const majority=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
+      const aligned=arr.filter((_,i)=>dirs[i]===majority);
+      if(aligned.length<2)continue;
+      const map={down:['bottom','top'],up:['top','bottom'],right:['right','left'],left:['left','right']};
+      const [fs,ts]=map[majority];
+      if(aligned.some(it=>sideCapacity(it.b,ts)<1))continue;
+      const cap=sideCapacity(parent,fs);
+      const ranked=[...aligned].sort((a,b)=>{
+        // 正对轴上更近的优先占用长边容量
+        if(majority==='down'||majority==='up') return Math.abs(a.b.cx-parent.cx)-Math.abs(b.b.cx-parent.cx);
+        return Math.abs(a.b.cy-parent.cy)-Math.abs(b.b.cy-parent.cy);
+      });
+      const keep=ranked.slice(0,cap);
+      const overflow=ranked.slice(cap);
+      for(const it of keep) it._fanLock=[fs,ts];
+      // 超额：最远者优先占侧边；侧边用尽后再软挂回正对长边。
+      overflow.sort((a,b)=>{
+        if(majority==='down'||majority==='up') return Math.abs(b.b.cx-parent.cx)-Math.abs(a.b.cx-parent.cx);
+        return Math.abs(b.b.cy-parent.cy)-Math.abs(a.b.cy-parent.cy);
+      });
+      const usedShort=new Set();
+      for(const it of overflow){
+        if(majority==='down'||majority==='up'){
+          const side=it.b.cx>=parent.cx?'right':'left';
+          if(!usedShort.has(side)){
+            usedShort.add(side);
+            it._fanLock=[side, side==='right'?'left':'right'];
+            it._fanShort=true;
+          }else{
+            it._fanLock=[fs,ts];
+          }
+        }else{
+          const side=it.b.cy>=parent.cy?'bottom':'top';
+          if(!usedShort.has(side)){
+            usedShort.add(side);
+            it._fanLock=[side, side==='bottom'?'top':'bottom'];
+            it._fanShort=true;
+          }else{
+            it._fanLock=[fs,ts];
+          }
+        }
+      }
+    }
+  }
+  function allocatePortSides(items,m){
+    const used=new Map();
+    const usage=(id,side)=>used.get(id+'|'+side)||0;
+    const inc=(id,side)=>used.set(id+'|'+side,usage(id,side)+1);
+    const assigned=[];
+    preassignFanFacing(items,m);
+    const order=[...items].sort((a,b)=>{
+      // 短边扇出锁优先于长边锁，避免近处子节点先占掉远处更需要的侧边。
+      const pa=(a.e.dashed?100:0)+(a.e.fromPort?0:10)+(a._fanShort?-30:a._fanLock?-20:0)+a.e._index/1000;
+      const pb=(b.e.dashed?100:0)+(b.e.fromPort?0:10)+(b._fanShort?-30:b._fanLock?-20:0)+b.e._index/1000;
+      return pa-pb;
+    });
+    for(const item of order){
+      const pairs=preferredSidePairs(item.a,item.b,item.e);
+      const siblings=assigned.filter(x=>x.e.from===item.e.from||x.e.to===item.e.to||x.e.from===item.e.to||x.e.to===item.e.from);
+      const face=facingPorts(item.a,item.b);
+      let chosen=null,bestScore=Infinity;
+      if(item._fanLock){
+        const face=facingPorts(item.a,item.b);
+        const tries=[item._fanLock];
+        if(face) tries.push(face);
+        // 侧边已满时回落到正对长边（软扩容），不要翻到背向边。
+        tries.push(['bottom','top'],['top','bottom'],['right','left'],['left','right']);
+        const softCap=(node,side)=>{
+          const base=sideCapacity(node,side);
+          return sideIsLong(node,side)?base+2:base;
+        };
+        const seen=new Set();
+        let locked=null;
+        for(const pair of tries){
+          const [lfs,lts]=pair; const k=lfs+'|'+lts;
+          if(seen.has(k))continue; seen.add(k);
+          if(usage(item.e.from,lfs)<softCap(item.a,lfs) && usage(item.e.to,lts)<softCap(item.b,lts)){
+            locked=[lfs,lts]; break;
+          }
+        }
+        if(locked){
+          const est=estimateSimplePath(item.a,item.b,locked[0],locked[1]);
+          item.fp=locked[0]; item.tp=locked[1]; item._estPoints=est.points;
+          inc(item.e.from,item.fp); inc(item.e.to,item.tp);
+          assigned.push(item);
+          continue;
+        }
+      }
+      for(let pi=0;pi<pairs.length;pi++){
+        const [fs,ts]=pairs[pi];
+        const over=usage(item.e.from,fs)>=sideCapacity(item.a,fs)||usage(item.e.to,ts)>=sideCapacity(item.b,ts);
+        const est=estimateSimplePath(item.a,item.b,fs,ts);
+        const siblingPts=siblings.map(s=>s._estPoints).filter(Boolean);
+        const crosses=countPathCrossings(est.points,siblingPts);
+        const sameFrom=siblings.filter(s=>s.e.from===item.e.from);
+        let fanPenalty=0;
+        if(sameFrom.length){
+          const majority=sameFrom.reduce((acc,s)=>{acc[s.fp]=(acc[s.fp]||0)+1;return acc;},{});
+          const topSide=Object.entries(majority).sort((a,b)=>b[1]-a[1])[0]?.[0];
+          if(topSide&&fs!==topSide) fanPenalty+=2400;
+        }
+        const facingBonus=(face&&fs===face[0]&&ts===face[1])?-2800:0;
+        const score=
+          (over?100000:0)+
+          crosses*8000+
+          fanPenalty+
+          facingBonus+
+          est.bends*90+
+          pi*12+
+          pathLength(est.points)*0.02;
+        if(score<bestScore){
+          bestScore=score;
+          chosen=[fs,ts,est.points,over];
+        }
+      }
+      if(!chosen) chosen=[pairs[0][0],pairs[0][1],null,true];
+      if(chosen[3]) console.warn('[architecture] node port capacity exceeded',item.e,[chosen[0],chosen[1]]);
+      item.fp=chosen[0]; item.tp=chosen[1];
+      item._estPoints=chosen[2];
+      inc(item.e.from,item.fp); inc(item.e.to,item.tp);
+      assigned.push(item);
+    }
+    for(const item of items){delete item._estPoints; delete item._fanLock; delete item._fanShort;}
+  }
+  function targetAxisValue(item,m,side,source=true){
+    const other=m[source?item.e.to:item.e.from];
+    return (side==='top'||side==='bottom')?other.cx:other.cy;
+  }
+  function offsetsForSide(node,side,count){
+    if(count<=1)return[0];
+    const length=(side==='top'||side==='bottom')?node.w:node.h;
+    const cap=sideCapacity(node,side);
+    // 长边端口尽量铺满可用宽度，避免扇出落点挤在一起后被迫共线/微折返。
+    const margin=Math.min(20,length*0.12);
+    const usable=Math.max(24,length-2*margin);
+    let gap=usable/Math.max(1,count-1);
+    if(count<=cap) gap=Math.max(gap,Math.min(ROUTE_CFG.longPortGap,gap));
+    else gap=usable/Math.max(1,count-1);
+    return Array.from({length:count},(_,i)=>(i-(count-1)/2)*gap);
+  }
+  function allocatePortOffsets(items,m){
+    for(const which of ['from','to']){
+      const groups=new Map();
+      for(const item of items){
+        const id=which==='from'?item.e.from:item.e.to;
+        const side=which==='from'?item.fp:item.tp;
+        const key=`${id}|${side}`;
+        if(!groups.has(key))groups.set(key,[]);
+        groups.get(key).push(item);
+      }
+      for(const [key,arr] of groups){
+        const [id,side]=key.split('|'),node=m[id];
+        arr.sort((a,b)=>targetAxisValue(a,m,side,which==='from')-targetAxisValue(b,m,side,which==='from') || a.e._index-b.e._index);
+        const offsets=offsetsForSide(node,side,arr.length);
+        arr.forEach((item,i)=>{if(which==='from')item.fromOffset=offsets[i];else item.toOffset=offsets[i];});
+      }
+    }
+  }
+  function extendPoint(p,side,d=ROUTE_CFG.escape){
+    if(side==='top')return{x:p.x,y:p.y-d};
+    if(side==='bottom')return{x:p.x,y:p.y+d};
+    if(side==='left')return{x:p.x-d,y:p.y};
+    return{x:p.x+d,y:p.y};
+  }
+  function segmentInfo(a,b){
+    if(Math.abs(a.y-b.y)<.01) return {ori:'h',coord:a.y,min:Math.min(a.x,b.x),max:Math.max(a.x,b.x)};
+    if(Math.abs(a.x-b.x)<.01) return {ori:'v',coord:a.x,min:Math.min(a.y,b.y),max:Math.max(a.y,b.y)};
+    return null;
+  }
+  function rangesOverlap(a1,a2,b1,b2,pad=2){ return Math.min(a2,b2)-Math.max(a1,b1)>pad; }
+  function obstacleRects(m,clearance=16){
+    return Object.values(m).map(n=>({
+      l:n.cx-n.w/2-clearance,r:n.cx+n.w/2+clearance,
+      t:n.cy-n.h/2-clearance,b:n.cy+n.h/2+clearance,id:n.id
+    }));
+  }
+  function pointBlocked(x,y,rects){
+    const e=.5;
+    return rects.some(r=>x>r.l+e&&x<r.r-e&&y>r.t+e&&y<r.b-e);
+  }
+  function segmentBlocked(a,b,rects){
+    const e=.5;
+    if(Math.abs(a.y-b.y)<.01){
+      const y=a.y,min=Math.min(a.x,b.x),max=Math.max(a.x,b.x);
+      return rects.some(r=>y>r.t+e&&y<r.b-e&&Math.min(max,r.r-e)>Math.max(min,r.l+e));
+    }
+    const x=a.x,min=Math.min(a.y,b.y),max=Math.max(a.y,b.y);
+    return rects.some(r=>x>r.l+e&&x<r.r-e&&Math.min(max,r.b-e)>Math.max(min,r.t+e));
+  }
+  function uniqSorted(values,min,max){
+    return [...new Set(values.map(v=>Math.round(Math.max(min,Math.min(max,v))*10)/10))].sort((a,b)=>a-b);
+  }
+  function existingSegments(routes){
+    const out=[];
+    for(const item of routes){
+      for(let i=0;i<item.points.length-1;i++){
+        const s=segmentInfo(item.points[i],item.points[i+1]);
+        if(s)out.push({...s,owner:item.e._index});
+      }
+    }
+    return out;
+  }
+  function parallelConflict(a,b,occupied){
+    const seg=segmentInfo(a,b); if(!seg)return false;
+    if(seg.max-seg.min<8) return false; // 端口逃逸短段不参与平行冲突，避免扇出刚出口就被邻近竖线挤成微折返
+    return occupied.some(o=>{
+      if(o.ori!==seg.ori||Math.abs(seg.coord-o.coord)>=ROUTE_CFG.minParallelGap)return false;
+      if((o.max-o.min)<8)return false;
+      const overlap=Math.min(seg.max,o.max)-Math.max(seg.min,o.min);
+      return overlap>12; // 需要足够长的同向重叠才算冲突
+    });
+  }
+  function parallelPenalty(a,b,occupied){
+    const seg=segmentInfo(a,b); if(!seg)return 0;
+    let cost=0;
+    for(const o of occupied){
+      if(o.ori!==seg.ori||!rangesOverlap(seg.min,seg.max,o.min,o.max,0))continue;
+      const d=Math.abs(seg.coord-o.coord);
+      if(d<ROUTE_CFG.minParallelGap*.45) cost+=25000;
+      else if(d<ROUTE_CFG.minParallelGap) cost+=7000*(1-d/ROUTE_CFG.minParallelGap)+1600;
+      else if(d<ROUTE_CFG.minParallelGap*1.7) cost+=260*(1-d/(ROUTE_CFG.minParallelGap*1.7));
+    }
+    return cost;
+  }
+  function reconstructPath(prev,endKey,pointOf){
+    const keys=[]; let k=endKey;
+    while(k){keys.push(k);k=prev.get(k)?.prev||null;}
+    keys.reverse();
+    const pts=[];
+    for(const key of keys){
+      const p=pointOf(key); if(!p)continue;
+      if(!pts.length||Math.abs(pts[pts.length-1].x-p.x)>.01||Math.abs(pts[pts.length-1].y-p.y)>.01)pts.push(p);
+    }
+    return cleanPoints(pts);
+  }
+  function pathLength(points){
+    const pts=cleanPoints(points); let n=0;
+    for(let i=0;i<pts.length-1;i++)n+=Math.abs(pts[i+1].x-pts[i].x)+Math.abs(pts[i+1].y-pts[i].y);
+    return n;
+  }
+  function pathValid(points,m,occupied,strictParallel=true){
+    const pts=cleanPoints(points),rects=obstacleRects(m,16);
+    for(let i=1;i<pts.length-1;i++)if(pointBlocked(pts[i].x,pts[i].y,rects))return false;
+    for(let i=0;i<pts.length-1;i++){
+      const a=pts[i],b=pts[i+1];
+      if(Math.abs(a.x-b.x)>.01&&Math.abs(a.y-b.y)>.01)return false;
+      if(segmentBlocked(a,b,rects))return false;
+      if(strictParallel&&parallelConflict(a,b,occupied))return false;
+    }
+    return true;
+  }
+  function simpleOrthogonalRoute(start,goal,m,bounds,occupied,extraAxes=[]){
+    const candidates=[];
+    const add=pts=>{
+      const p=cleanPoints(pts); if(p.length<2)return;
+      const bends=Math.max(0,p.length-2);
+      if(pathValid(p,m,occupied,true))candidates.push({p,bends,len:pathLength(p)});
+    };
+    // 0 拐弯：完全对齐时直接走直线。
+    if(Math.abs(start.x-goal.x)<.01||Math.abs(start.y-goal.y)<.01)add([start,goal]);
+    // 1 拐弯：空间允许时优先 L 形，不为追求最短距离制造额外折返。
+    add([start,{x:goal.x,y:start.y},goal]);
+    add([start,{x:start.x,y:goal.y},goal]);
+    // 2 拐弯：只有一拐弯被节点/车道阻挡时才使用；主动尝试多条平行走廊，避免挤进已占用车道。
+    const xs=[(start.x+goal.x)/2,...extraAxes.map(p=>p.x),32,bounds.w-32];
+    const ys=[(start.y+goal.y)/2,...extraAxes.map(p=>p.y),32,bounds.h-32];
+    for(const o of occupied){
+      if(o.ori==='v')xs.push(o.coord-ROUTE_CFG.minParallelGap,o.coord+ROUTE_CFG.minParallelGap,o.coord-ROUTE_CFG.minParallelGap*2,o.coord+ROUTE_CFG.minParallelGap*2);
+      else ys.push(o.coord-ROUTE_CFG.minParallelGap,o.coord+ROUTE_CFG.minParallelGap,o.coord-ROUTE_CFG.minParallelGap*2,o.coord+ROUTE_CFG.minParallelGap*2);
+    }
+    // 先外扩再落到目标，减少与邻近扇出竖线的平行冲突。
+    const outwardX=goal.x>=start.x?Math.max(goal.x,start.x)+ROUTE_CFG.minParallelGap:Math.min(goal.x,start.x)-ROUTE_CFG.minParallelGap;
+    const outwardY=goal.y>=start.y?Math.max(goal.y,start.y)+ROUTE_CFG.minParallelGap:Math.min(goal.y,start.y)-ROUTE_CFG.minParallelGap;
+    xs.push(outwardX); ys.push(outwardY);
+    for(const x of uniqSorted(xs,8,bounds.w-8))add([start,{x,y:start.y},{x,y:goal.y},goal]);
+    for(const y of uniqSorted(ys,8,bounds.h-8))add([start,{x:start.x,y},{x:goal.x,y},goal]);
+    candidates.sort((a,b)=>a.bends-b.bends || a.len-b.len);
+    return candidates[0]?.p||null;
+  }
+  function gridRoute(start,goal,m,bounds,occupied,extraAxes=[],strictParallel=true){
+    const rects=obstacleRects(m,16);
+    const xs=[start.x,goal.x,8,bounds.w-8],ys=[start.y,goal.y,8,bounds.h-8];
+    for(const r of rects){xs.push(r.l,r.r);ys.push(r.t,r.b);}
+    for(const o of occupied){
+      if(o.ori==='v'){xs.push(o.coord-ROUTE_CFG.minParallelGap,o.coord+ROUTE_CFG.minParallelGap);}
+      else{ys.push(o.coord-ROUTE_CFG.minParallelGap,o.coord+ROUTE_CFG.minParallelGap);}
+    }
+    for(const p of extraAxes){xs.push(p.x);ys.push(p.y);}
+    const X=uniqSorted(xs,4,bounds.w-4),Y=uniqSorted(ys,4,bounds.h-4);
+    const xi=new Map(X.map((v,i)=>[v,i])), yi=new Map(Y.map((v,i)=>[v,i]));
+    // start / goal 来自逃逸点，理论上必然存在；浮点键做一次最近匹配兜底。
+    const nearest=(arr,v)=>arr.reduce((bi,x,i)=>Math.abs(x-v)<Math.abs(arr[bi]-v)?i:bi,0);
+    const sx=xi.has(start.x)?xi.get(start.x):nearest(X,start.x), sy=yi.has(start.y)?yi.get(start.y):nearest(Y,start.y);
+    const gx=xi.has(goal.x)?xi.get(goal.x):nearest(X,goal.x), gy=yi.has(goal.y)?yi.get(goal.y):nearest(Y,goal.y);
+    const key=(x,y,o)=>`${x},${y},${o||'n'}`;
+    const dist=new Map(),prev=new Map(),open=[];
+    const startKey=key(sx,sy,'n'); dist.set(startKey,0);open.push({x:sx,y:sy,o:'n',d:0});
+    const dirs=[[1,0,'h'],[-1,0,'h'],[0,1,'v'],[0,-1,'v']];
+    let endKey=null;
+    while(open.length){
+      open.sort((a,b)=>a.d-b.d); const cur=open.shift();
+      const ck=key(cur.x,cur.y,cur.o); if(cur.d!==dist.get(ck))continue;
+      if(cur.x===gx&&cur.y===gy){endKey=ck;break;}
+      const a={x:X[cur.x],y:Y[cur.y]};
+      for(const [dx,dy,no] of dirs){
+        const nx=cur.x+dx,ny=cur.y+dy; if(nx<0||ny<0||nx>=X.length||ny>=Y.length)continue;
+        const b={x:X[nx],y:Y[ny]};
+        if(pointBlocked(b.x,b.y,rects)||segmentBlocked(a,b,rects))continue;
+        if(strictParallel&&parallelConflict(a,b,occupied))continue;
+        const len=Math.abs(b.x-a.x)+Math.abs(b.y-a.y);
+        const bend=(cur.o!=='n'&&cur.o!==no)?ROUTE_CFG.bendPenalty:0;
+        const congestion=strictParallel?0:parallelPenalty(a,b,occupied);
+        const nd=cur.d+len+bend+congestion;
+        const nk=key(nx,ny,no);
+        if(nd<(dist.get(nk)??Infinity)){
+          dist.set(nk,nd);prev.set(nk,{prev:ck});open.push({x:nx,y:ny,o:no,d:nd});
+        }
+      }
+    }
+    if(!endKey){
+      if(strictParallel) return gridRoute(start,goal,m,bounds,occupied,extraAxes,false);
+      // 只有连放宽车道约束后仍无路时才退回正交两折线。
+      return Math.abs(start.x-goal.x)>=Math.abs(start.y-goal.y)
+        ? cleanPoints([start,{x:(start.x+goal.x)/2,y:start.y},{x:(start.x+goal.x)/2,y:goal.y},goal])
+        : cleanPoints([start,{x:start.x,y:(start.y+goal.y)/2},{x:goal.x,y:(start.y+goal.y)/2},goal]);
+    }
+    const pointOf=k=>{const [x,y]=k.split(',').map(Number);return{x:X[x],y:Y[y]};};
+    return reconstructPath(prev,endKey,pointOf);
+  }
+  function routeLeg(start,goal,m,bounds,occupied,extraAxes=[]){
+    const simple=simpleOrthogonalRoute(start,goal,m,bounds,occupied,extraAxes);
+    return simple||gridRoute(start,goal,m,bounds,occupied,extraAxes);
+  }
+  function removeMicroUTurns(points){
+    let pts=cleanPoints(points);
+    let changed=true;
+    while(changed){
+      changed=false;
+      for(let i=0;i<pts.length-3;i++){
+        const a=pts[i],b=pts[i+1],c=pts[i+2],d=pts[i+3];
+        // 水平→短竖直→反向水平：捏掉中间折返
+        if(Math.abs(a.y-b.y)<.01 && Math.abs(b.x-c.x)<.01 && Math.abs(c.y-d.y)<.01){
+          if(Math.sign(b.x-a.x)!==Math.sign(d.x-c.x) && Math.abs(c.y-b.y)<=ROUTE_CFG.minParallelGap){
+            const y=a.y;
+            const nb={x:b.x,y}, nd={x:d.x,y};
+            pts=[...pts.slice(0,i+1),nb,nd,...pts.slice(i+3)];
+            pts=cleanPoints(pts); changed=true; break;
+          }
+        }
+        if(Math.abs(a.x-b.x)<.01 && Math.abs(b.y-c.y)<.01 && Math.abs(c.x-d.x)<.01){
+          if(Math.sign(b.y-a.y)!==Math.sign(d.y-c.y) && Math.abs(c.x-b.x)<=ROUTE_CFG.minParallelGap){
+            const x=a.x;
+            const nb={x,y:b.y}, nd={x,y:d.y};
+            pts=[...pts.slice(0,i+1),nb,nd,...pts.slice(i+3)];
+            pts=cleanPoints(pts); changed=true; break;
+          }
+        }
+      }
+    }
+    return pts;
+  }
+  function buildOneRoute(item,m,bounds,occupied){
+    const s=port(item.a,item.fp,item.fromOffset),t=port(item.b,item.tp,item.toOffset);
+    const se=extendPoint(s,item.fp),te=extendPoint(t,item.tp);
+    const mandatory=(item.e.via||[]).map(p=>({x:p[0],y:p[1]}));
+    const anchors=[se,...mandatory,te];
+    let middle=[];
+    for(let i=0;i<anchors.length-1;i++){
+      const leg=routeLeg(anchors[i],anchors[i+1],m,bounds,occupied,mandatory);
+      if(!middle.length)middle.push(...leg); else middle.push(...leg.slice(1));
+    }
+    return removeMicroUTurns(cleanPoints([s,...middle,t]));
+  }
+  function auditParallelSpacing(routes,gap=ROUTE_CFG.minParallelGap){
+    const segs=[];
+    for(const item of routes){
+      for(let i=0;i<item.points.length-1;i++){
+        const s=segmentInfo(item.points[i],item.points[i+1]);
+        if(s)segs.push({...s,owner:item.e._index});
+      }
+    }
+    const issues=[];
+    for(let i=0;i<segs.length;i++)for(let j=i+1;j<segs.length;j++){
+      const a=segs[i],b=segs[j];
+      if(a.owner===b.owner||a.ori!==b.ori)continue;
+      if(Math.abs(a.coord-b.coord)<gap && rangesOverlap(a.min,a.max,b.min,b.max,0))issues.push([a,b]);
+    }
+    if(issues.length)console.warn('[architecture] parallel lane spacing issues',issues.length,issues.slice(0,8));
+  }
+  function buildRoutes(edges,m,bounds){
+    const items=edges.map((edge,index)=>{
+      const e=edgeObject(edge,index),a=m[e.from],b=m[e.to];
+      if(!a||!b)return null;
+      return {e,a,b,fp:null,tp:null,fromOffset:0,toOffset:0,points:null};
+    }).filter(Boolean);
+    allocatePortSides(items,m);
+    allocatePortOffsets(items,m);
+    // 主控制流先占主车道；依赖线随后自动寻找独立平行车道。横竖交叉不惩罚。
+    const routeDistance=i=>Math.abs(i.a.cx-i.b.cx)+Math.abs(i.a.cy-i.b.cy);
+    const order=[...items].sort((a,b)=>{
+      const classDiff=(a.e.dashed?1:0)-(b.e.dashed?1:0);
+      if(classDiff)return classDiff;
+      if(a.e.dashed&&b.e.dashed){const d=routeDistance(b)-routeDistance(a);if(Math.abs(d)>.01)return d;}
+      return a.e._index-b.e._index;
+    });
+    const routed=[];
+    for(const item of order){
+      const occupied=existingSegments(routed);
+      item.points=buildOneRoute(item,m,bounds,occupied);
+      routed.push(item);
+    }
+    auditParallelSpacing(routed);
+    return items;
+  }
+  function labelPoint(points){
+    let best=null,bestLen=-1;
+    for(let i=0;i<points.length-1;i++){
+      const a=points[i],b=points[i+1],len=Math.abs(b.x-a.x)+Math.abs(b.y-a.y);
+      if(len>bestLen){bestLen=len;best=[a,b];}
+    }
+    if(!best)return{x:0,y:0}; const [a,b]=best;
+    if(Math.abs(a.y-b.y)<.01) return{x:(a.x+b.x)/2,y:a.y-7};
+    return{x:a.x+10,y:(a.y+b.y)/2-2};
+  }
+  let SVG_MARKER_SEQ=0;
+  function renderRoutedEdge(item,marker='a',hoverMarker='ah'){
+    const e=item.e,d=roundedPath(item.points,11),lp=labelPoint(item.points);
+    const label=e.label?`<text class="edge-label" x="${lp.x}" y="${lp.y}" text-anchor="middle">${esc(e.label)}</text>`:'';
+    return `<g class="edge-group" tabindex="0" aria-label="${esc(e.label||`${e.from} 到 ${e.to}`)}">`+
+      `<path class="edge-hit" d="${d}"/>`+
+      `<path class="edge${e.dashed?' dashed':''}" d="${d}" marker-end="url(#${marker})"/>`+
+      `<path class="edge-hover${e.dashed?' dashed':''}" d="${d}" marker-end="url(#${hoverMarker})"/>`+
+      label+`</g>`;
+  }
+  function diagramBounds(spec,nodes,routed){
+    const pad=36;
+    let minX=0,minY=0,maxX=spec.w,maxY=spec.h;
+    nodes.forEach(n=>{
+      minX=Math.min(minX,n.cx-n.w/2-pad);
+      maxX=Math.max(maxX,n.cx+n.w/2+pad);
+      minY=Math.min(minY,n.cy-n.h/2-pad);
+      maxY=Math.max(maxY,n.cy+n.h/2+pad);
+    });
+    routed.forEach(item=>item.points.forEach(pt=>{
+      minX=Math.min(minX,pt.x-pad); maxX=Math.max(maxX,pt.x+pad);
+      minY=Math.min(minY,pt.y-pad); maxY=Math.max(maxY,pt.y+pad);
+    }));
+    return {x:minX,y:minY,w:Math.ceil(maxX-minX),h:Math.ceil(maxY-minY)};
+  }
+  function render(spec){
+    const nodes=normalizeNodes(spec.nodes),m=nodeMap(nodes);
+    const routed=buildRoutes(spec.edges,m,{w:spec.w,h:spec.h});
+    const bounds=diagramBounds(spec,nodes,routed);
+    const seq=++SVG_MARKER_SEQ, marker=`a${seq}`, hoverMarker=`ah${seq}`;
+    const edges=routed.map(item=>renderRoutedEdge(item,marker,hoverMarker)).join('');
+    const ns=nodes.map(detailNodeHtml).join('');
+    return `<svg viewBox="${bounds.x} ${bounds.y} ${bounds.w} ${bounds.h}" width="${bounds.w}" height="${bounds.h}" style="width:${bounds.w}px;height:${bounds.h}px;max-width:none" role="img" aria-label="业务架构子图"><defs>`+
+      `<marker id="${marker}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="#174e79"/></marker>`+
+      `<marker id="${hoverMarker}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="#74d0ff"/></marker>`+
+      `</defs>${edges}${ns}</svg>`;
+  }
+  function renderL0(){
+    const svg=document.querySelector('#l0');
+    const nodes=normalizeNodes(L0_SPEC.nodes),m=nodeMap(nodes);
+    const routed=buildRoutes(L0_SPEC.edges,m,{w:L0_SPEC.w,h:L0_SPEC.h});
+    const edges=routed.map(item=>renderRoutedEdge(item,'arrow','arrowHi')).join('');
+    const ns=nodes.map(l0NodeHtml).join('');
+    svg.innerHTML=`<defs>`+
+      `<marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#174e79"></path></marker>`+
+      `<marker id="arrowHi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#74d0ff"></path></marker>`+
+      `</defs>${edges}${ns}`;
+  }
+
+  // Plant Promotion 是独立 L0 节点，展开时只解释自己的内部提升流程，不复用“植物业务入口”详情。
+  DETAILS.promotion={
+    title:'L2｜Plant Promotion',
+    desc:'解释 Ephemeral Plant Context 如何通过创建新 User Plant 或绑定已有 User Plant，提升为 Persistent User Plant。',
+    note:'本图只保留已经确认的 Promotion 业务关系。临时诊断、浇水、图片、身份等数据在 Promotion 时如何承接，尚未定义，不在这里预设。',
+    diagram:DETAILS.lifecycle.subs[0].diagram,
+    subs:[]
+  };
+
+  renderL0();
+
+  const canvas=$('#archCanvas');
+  const panel=$('#inlinePanel');
+  const panelHead=$('#inlineNodeHead');
+  const panelBody=$('#inlineBody');
+  const diagramEl=$('#detailDiagram');
+  const subsEl=$('#subsections');
+  let activeNode=null;
+
+  function getNodeLabel(node){
+    const texts=[...node.querySelectorAll('text')].map(t=>t.textContent.trim()).filter(Boolean);
+    if(!texts.length) return '架构节点';
+    const main=texts[0]||'';
+    const sub=texts.slice(1).join(' · ');
+    return `<span>${esc(main)}</span>${sub?`<span class="node-subline">${esc(sub)}</span>`:''}`;
+  }
+
+  const graphWrap=$('.graph-wrap');
+
+  function visibleCanvasBounds(){
+    const wrapRect=graphWrap.getBoundingClientRect();
+    const canvasRect=canvas.getBoundingClientRect();
+    const inset=18;
+    return {
+      left:wrapRect.left-canvasRect.left+inset,
+      top:wrapRect.top-canvasRect.top+inset,
+      right:wrapRect.right-canvasRect.left-inset,
+      bottom:wrapRect.bottom-canvasRect.top-inset,
+      width:Math.max(320,wrapRect.width-inset*2),
+      height:Math.max(280,wrapRect.height-inset*2)
+    };
+  }
+
+  function popupCanvasBounds(){
+    // 弹框优先适配子图：允许根容器扩展到整个 L0 画布可用范围。
+    // 若超出当前屏幕，由外层 graph-wrap 负责滚动；不要优先制造弹框内部滚动。
+    const inset=18;
+    return {
+      left:inset,
+      top:inset,
+      right:Math.max(inset+320,canvas.clientWidth-inset),
+      bottom:Math.max(inset+280,canvas.clientHeight-inset),
+      width:Math.max(320,canvas.clientWidth-inset*2),
+      height:Math.max(280,canvas.clientHeight-inset*2)
+    };
+  }
+
+  function panelGeometry(node,detail){
+    // 弹框初始化优先“容器容纳子图”，而不是先固定一个小弹框再依赖滚动。
+    const canvasRect=canvas.getBoundingClientRect();
+    const nodeRect=node.getBoundingClientRect();
+    const box={
+      x:nodeRect.left-canvasRect.left,
+      y:nodeRect.top-canvasRect.top,
+      width:nodeRect.width,
+      height:nodeRect.height
+    };
+    const visible=popupCanvasBounds();
+    const naturalW=Math.max(0,detail?.diagram?.w||0);
+    const naturalH=Math.max(0,detail?.diagram?.h||0);
+    const chromeW=54;
+    const chromeH=190 + ((detail?.subs||[]).length?52:0) + (detail?.note?72:0);
+    const desiredW=Math.max(POPUP_MIN_W,naturalW+chromeW);
+    const desiredH=Math.max(POPUP_MIN_H,naturalH+chromeH);
+    const PANEL_W=Math.min(desiredW,visible.width);
+    const PANEL_H=Math.min(desiredH,visible.height);
+    const gap=10;
+    const below=visible.bottom-(box.y+box.height+gap);
+    const above=(box.y-gap)-visible.top;
+    const openUp=above>below;
+    let left=(box.x+box.width/2)-PANEL_W/2;
+    left=Math.max(visible.left,Math.min(visible.right-PANEL_W,left));
+    let bodyTopAbs;
+    if(openUp){
+      bodyTopAbs=Math.max(visible.top,box.y-gap-PANEL_H);
+    }else{
+      bodyTopAbs=Math.min(visible.bottom-PANEL_H,box.y+box.height+gap);
+      bodyTopAbs=Math.max(visible.top,bodyTopAbs);
+    }
+    const top=Math.min(bodyTopAbs,box.y);
+    const bottom=Math.max(bodyTopAbs+PANEL_H,box.y+box.height);
+    const hx=box.x-left;
+    const hy=box.y-top;
+    const bodyTop=bodyTopAbs-top;
+    return {box,left,top,hx,hy,openUp,bodyTop,PANEL_W,PANEL_H,visible};
+  }
+
+  const DIAGRAM_VIEWPORT_MIN_H=180;
+  const POPUP_MIN_W=520;
+  const POPUP_MIN_H=320;
+  const MIN_READABLE_SCALE=0.72;
+  const DIAGRAM_INNER_PADDING=20;
+  let popupResizeBound=false;
+
+  function svgNaturalSize(svg){
+    if(!svg)return {w:0,h:0};
+    const vb=svg.viewBox && svg.viewBox.baseVal;
+    const attrW=parseFloat(svg.getAttribute('width'))||0;
+    const attrH=parseFloat(svg.getAttribute('height'))||0;
+    return {w:attrW||(vb&&vb.width)||0,h:attrH||(vb&&vb.height)||0};
+  }
+
+  function diagramAvailableHeight(host){
+    const popup=host.closest('.inline-body');
+    if(!popup)return Math.max(260,Math.min(window.innerHeight*0.55,560));
+
+    // 主子图优先占据弹框中除标题、说明、下钻入口之外的剩余可视空间。
+    if(host.id==='detailDiagram'){
+      const head=popup.querySelector('.inline-content-head');
+      const content=popup.querySelector('.inline-content');
+      const subs=popup.querySelector('.subsections');
+      const note=popup.querySelector('.note');
+      const cs=content?getComputedStyle(content):null;
+      const verticalPadding=cs ? (parseFloat(cs.paddingTop)||0)+(parseFloat(cs.paddingBottom)||0) : 28;
+      const used=(head?.offsetHeight||0)+(subs?.offsetHeight||0)+(note?.offsetHeight||0)+verticalPadding+34;
+      return Math.max(DIAGRAM_VIEWPORT_MIN_H,popup.clientHeight-used);
+    }
+
+    // L2 下钻图保留独立可视区；它仍优先 Fit，但不会挤占整个弹框。
+    return Math.max(220,Math.min(popup.clientHeight*0.52,500));
+  }
+
+  function setDiagramViewportSize(host){
+    host.style.width='100%';
+    host.style.maxWidth='100%';
+    host.style.height=`${Math.round(diagramAvailableHeight(host))}px`;
+  }
+
+  function applyDiagramScale(host,scale){
+    const svg=host.querySelector('svg');
+    if(!svg)return;
+    const natural=svgNaturalSize(svg);
+    if(!(natural.w>0&&natural.h>0))return;
+    const scaledW=Math.max(1,natural.w*scale);
+    const scaledH=Math.max(1,natural.h*scale);
+    svg.style.width=`${scaledW}px`;
+    svg.style.height=`${scaledH}px`;
+    svg.style.maxWidth='none';
+    svg.style.maxHeight='none';
+    svg.dataset.scale=String(scale);
+
+    const innerW=Math.max(1,host.clientWidth-DIAGRAM_INNER_PADDING);
+    const innerH=Math.max(1,host.clientHeight-DIAGRAM_INNER_PADDING);
+    svg.style.marginLeft=`${Math.max(0,(innerW-scaledW)/2)}px`;
+    svg.style.marginTop=`${Math.max(0,(innerH-scaledH)/2)}px`;
+    svg.style.marginRight='0px';
+    svg.style.marginBottom='0px';
+  }
+
+  function syncDiagramOverflow(host){
+    const svg=host?.querySelector('svg');
+    if(!host||!svg)return;
+    const pad=2;
+    const needsX=svg.getBoundingClientRect().width > host.clientWidth-DIAGRAM_INNER_PADDING+pad;
+    const needsY=svg.getBoundingClientRect().height > host.clientHeight-DIAGRAM_INNER_PADDING+pad;
+    host.style.overflowX=needsX?'auto':'hidden';
+    host.style.overflowY=needsY?'auto':'hidden';
+  }
+
+  function fitDiagramToViewport(host){
+    if(!host)return;
+    const svg=host.querySelector('svg');
+    if(!svg)return;
+    setDiagramViewportSize(host);
+    const natural=svgNaturalSize(svg);
+    if(!(natural.w>0&&natural.h>0))return;
+
+    const innerW=Math.max(1,host.clientWidth-DIAGRAM_INNER_PADDING);
+    const innerH=Math.max(1,host.clientHeight-DIAGRAM_INNER_PADDING);
+    const fitScale=Math.min(1,innerW/natural.w,innerH/natural.h);
+
+    // P0: Fit First。只要完整适配后的比例仍可读，就完整适配；
+    // 只有低于可读阈值时，才停止继续缩小并启用 X/Y overflow。
+    const fullyFitsReadably=fitScale>=MIN_READABLE_SCALE;
+    const scale=fullyFitsReadably?fitScale:MIN_READABLE_SCALE;
+    host.dataset.diagramScale=String(scale);
+    host.dataset.fitMode=fullyFitsReadably?'fit':'overflow';
+    applyDiagramScale(host,scale);
+    syncDiagramOverflow(host);
+    host.scrollLeft=0;
+    host.scrollTop=0;
+  }
+
+  function initialDiagramViewport(host){
+    fitDiagramToViewport(host);
+  }
+
+  function syncDiagramViewports(root=panelBody){
+    if(!root)return;
+    root.querySelectorAll('.diagram-host').forEach(host=>{
+      if(host.offsetParent===null)return;
+      setDiagramViewportSize(host);
+      // 用户拖动弹框根容器后只改变 viewport，不重新 Fit，不重新布局。
+      // 保留首次打开时已经确定的视觉比例，缩小时自然出现滚动。
+      const scale=parseFloat(host.dataset.diagramScale)||1;
+      applyDiagramScale(host,scale);
+      syncDiagramOverflow(host);
+    });
+  }
+
+  function rectFromStyles(el){
+    return {
+      left:parseFloat(el.style.left)||0,
+      top:parseFloat(el.style.top)||0,
+      width:el.offsetWidth,
+      height:el.offsetHeight
+    };
+  }
+
+  function placePopupResizeHandles(){
+    if(panel.hidden)return;
+    const r=rectFromStyles(panelBody);
+    const pad=6;
+    const n=panel.querySelector('.popup-resize-handle.n');
+    const s=panel.querySelector('.popup-resize-handle.s');
+    const w=panel.querySelector('.popup-resize-handle.w');
+    const e=panel.querySelector('.popup-resize-handle.e');
+    if(!(n&&s&&w&&e))return;
+    Object.assign(n.style,{left:`${r.left+12}px`,top:`${r.top-pad}px`,width:`${Math.max(24,r.width-24)}px`});
+    Object.assign(s.style,{left:`${r.left+12}px`,top:`${r.top+r.height-pad}px`,width:`${Math.max(24,r.width-24)}px`});
+    Object.assign(w.style,{left:`${r.left-pad}px`,top:`${r.top+12}px`,height:`${Math.max(24,r.height-24)}px`});
+    Object.assign(e.style,{left:`${r.left+r.width-pad}px`,top:`${r.top+12}px`,height:`${Math.max(24,r.height-24)}px`});
+  }
+
+  function normalizePanelToRects(bodyAbs,headAbs){
+    const union={
+      left:Math.min(bodyAbs.left,headAbs.left),
+      top:Math.min(bodyAbs.top,headAbs.top),
+      right:Math.max(bodyAbs.left+bodyAbs.width,headAbs.left+headAbs.width),
+      bottom:Math.max(bodyAbs.top+bodyAbs.height,headAbs.top+headAbs.height)
+    };
+    panel.style.left=`${Math.round(union.left)}px`;
+    panel.style.top=`${Math.round(union.top)}px`;
+    panel.style.width=`${Math.round(union.right-union.left)}px`;
+    panel.style.height=`${Math.round(union.bottom-union.top)}px`;
+    panelBody.style.left=`${Math.round(bodyAbs.left-union.left)}px`;
+    panelBody.style.top=`${Math.round(bodyAbs.top-union.top)}px`;
+    panelBody.style.width=`${Math.round(bodyAbs.width)}px`;
+    panelBody.style.height=`${Math.round(bodyAbs.height)}px`;
+    panelBody.style.right='auto';
+    panelBody.style.bottom='auto';
+    panelHead.style.left=`${Math.round(headAbs.left-union.left)}px`;
+    panelHead.style.top=`${Math.round(headAbs.top-union.top)}px`;
+    placePopupResizeHandles();
+  }
+
+  function bindPopupResize(){
+    if(popupResizeBound)return;
+    popupResizeBound=true;
+    ['n','e','s','w'].forEach(side=>{
+      let h=panel.querySelector(`.popup-resize-handle.${side}`);
+      if(!h){
+        h=document.createElement('div');
+        h.className=`popup-resize-handle ${side}`;
+        h.dataset.side=side;
+        h.setAttribute('aria-hidden','true');
+        panel.appendChild(h);
+      }
+      h.addEventListener('pointerdown',ev=>{
+        ev.preventDefault();
+        ev.stopPropagation();
+        const canvasRect=canvas.getBoundingClientRect();
+        const panelRect=panel.getBoundingClientRect();
+        const bodyRect=panelBody.getBoundingClientRect();
+        const headRect=panelHead.getBoundingClientRect();
+        const bodyAbs={left:bodyRect.left-canvasRect.left,top:bodyRect.top-canvasRect.top,width:bodyRect.width,height:bodyRect.height};
+        const headAbs={left:headRect.left-canvasRect.left,top:headRect.top-canvasRect.top,width:headRect.width,height:headRect.height};
+        const state={side:h.dataset.side,startX:ev.clientX,startY:ev.clientY,body:{...bodyAbs},head:{...headAbs}};
+        h.classList.add('active');
+        h.setPointerCapture?.(ev.pointerId);
+        let raf=0;
+        const move=e=>{
+          const dx=e.clientX-state.startX,dy=e.clientY-state.startY;
+          let left=state.body.left,top=state.body.top,width=state.body.width,height=state.body.height;
+          const maxW=Math.max(POPUP_MIN_W,canvas.clientWidth-16);
+          const maxH=Math.max(POPUP_MIN_H,canvas.clientHeight-16);
+          if(state.side==='e') width=Math.min(maxW-left,Math.max(POPUP_MIN_W,state.body.width+dx));
+          if(state.side==='w'){
+            const right=state.body.left+state.body.width;
+            left=Math.max(8,Math.min(right-POPUP_MIN_W,state.body.left+dx));
+            width=right-left;
+          }
+          if(state.side==='s') height=Math.min(maxH-top,Math.max(POPUP_MIN_H,state.body.height+dy));
+          if(state.side==='n'){
+            const bottom=state.body.top+state.body.height;
+            top=Math.max(8,Math.min(bottom-POPUP_MIN_H,state.body.top+dy));
+            height=bottom-top;
+          }
+          panel.dataset.userResized='1';
+          normalizePanelToRects({left,top,width,height},state.head);
+          if(!raf){
+            raf=requestAnimationFrame(()=>{raf=0;syncDiagramViewports(panelBody);});
+          }
+        };
+        const up=e=>{
+          h.classList.remove('active');
+          try{h.releasePointerCapture?.(e.pointerId)}catch(_){ }
+          window.removeEventListener('pointermove',move);
+          window.removeEventListener('pointerup',up);
+          window.removeEventListener('pointercancel',up);
+        };
+        window.addEventListener('pointermove',move);
+        window.addEventListener('pointerup',up);
+        window.addEventListener('pointercancel',up);
+      });
+    });
+  }
+
+  function placePanel(node,detail){
+    const g=panelGeometry(node,detail);
+    panel.style.left=`${g.left}px`;
+    panel.style.top=`${g.top}px`;
+    panel.style.width=`${g.PANEL_W}px`;
+    panel.style.height=`${Math.max(g.PANEL_H,g.hy+g.box.height)}px`;
+    panel.classList.toggle('open-up',g.openUp);
+    panel.classList.toggle('open-down',!g.openUp);
+
+    panelHead.style.left=`${g.hx}px`;
+    panelHead.style.top=`${g.hy}px`;
+    panelHead.style.width=`${g.box.width}px`;
+    panelHead.style.height=`${g.box.height}px`;
+
+    panelBody.style.left='0px';
+    panelBody.style.top=`${g.bodyTop}px`;
+    panelBody.style.width=`${g.PANEL_W}px`;
+    panelBody.style.height=`${g.PANEL_H}px`;
+    panelBody.style.right='auto';
+    panelBody.style.bottom='auto';
+    panel.dataset.userResized='0';
+    bindPopupResize();
+    placePopupResizeHandles();
+  }
+
+  function autoGrowPopupForContent(node,detail){
+    if(panel.hidden || panel.dataset.userResized==='1') return;
+    const visible=popupCanvasBounds();
+    const head=panelBody.querySelector('.inline-content-head');
+    const content=panelBody.querySelector('.inline-content');
+    const subs=panelBody.querySelector('.subsections');
+    const note=panelBody.querySelector('.note');
+    const natural=detail?.diagram||{w:0,h:0};
+    const chromeW=54;
+    const css=content?getComputedStyle(content):null;
+    const contentPad=(css?(parseFloat(css.paddingTop)||0)+(parseFloat(css.paddingBottom)||0):28);
+    const fixedH=(head?.offsetHeight||0)+(subs?.offsetHeight||0)+(note?.offsetHeight||0)+contentPad+44;
+    const desiredW=Math.max(POPUP_MIN_W,(natural.w||0)+chromeW);
+    const desiredH=Math.max(POPUP_MIN_H,(natural.h||0)+fixedH);
+    const targetW=Math.min(desiredW,visible.width);
+    const targetH=Math.min(desiredH,visible.height);
+
+    const canvasRect=canvas.getBoundingClientRect();
+    const nodeRect=node.getBoundingClientRect();
+    const headAbs={
+      left:nodeRect.left-canvasRect.left,
+      top:nodeRect.top-canvasRect.top,
+      width:nodeRect.width,
+      height:nodeRect.height
+    };
+    let left=Math.max(visible.left,Math.min(visible.right-targetW,headAbs.left+headAbs.width/2-targetW/2));
+    const below=visible.bottom-(headAbs.top+headAbs.height+10);
+    const above=(headAbs.top-10)-visible.top;
+    const openUp=above>below;
+    let top=openUp ? Math.max(visible.top,headAbs.top-10-targetH) : Math.min(visible.bottom-targetH,headAbs.top+headAbs.height+10);
+    top=Math.max(visible.top,top);
+    normalizePanelToRects({left,top,width:targetW,height:targetH},headAbs);
+    panel.classList.toggle('open-up',openUp);
+    panel.classList.toggle('open-down',!openUp);
+    syncDiagramViewports(panelBody);
+    // 自动放大后重新执行一次 Fit；这是初始化阶段，不属于用户手动 resize。
+    fitDiagramToViewport(diagramEl);
+  }
+
+  function openDetail(id,node){
+    const d=DETAILS[id]; if(!d||!node)return;
+    if(activeNode===node && !panel.hidden){ closeDetail(); return; }
+    if(activeNode) activeNode.classList.remove('expanded','active');
+    activeNode=node;
+    activeNode.classList.add('expanded','active');
+    canvas.classList.add('has-expanded');
+
+    $('#inlineNodeLabel').innerHTML=getNodeLabel(node);
+    $('#detailTitle').textContent=d.title;
+    $('#detailDesc').textContent=d.desc;
+    $('#detailNote').textContent=d.note||'';
+    $('#inlineKicker').textContent='L0 节点原位展开 → '+d.title.split('｜')[0];
+    diagramEl.innerHTML=render(d.diagram);
+    subsEl.innerHTML='';
+    (d.subs||[]).forEach((s)=>{
+      const de=document.createElement('details'); de.className='sub';
+      de.innerHTML=`<summary>${esc(s.title)}<span class="pill">继续下钻</span></summary><div class="sub-content"><div class="desc" style="margin-bottom:10px">${esc(s.desc||'')}</div><div class="diagram-host">${render(s.diagram)}</div></div>`;
+      de.addEventListener('toggle',()=>{
+        requestAnimationFrame(()=>{
+          if(panel.dataset.userResized!=='1') autoGrowPopupForContent(activeNode,d);
+          if(de.open) initialDiagramViewport(de.querySelector('.diagram-host'));
+        });
+      });
+      subsEl.appendChild(de);
+    });
+    placePanel(node,d);
+    panel.hidden=false;
+    requestAnimationFrame(()=>{
+      placePopupResizeHandles();
+      initialDiagramViewport(diagramEl);
+      // 初始化完成后，若内容尺寸允许，进一步把弹框扩大到“无滚动优先”的理想尺寸；
+      // 仅在用户尚未手动调整弹框时执行。
+      autoGrowPopupForContent(node,d);
+    });
+  }
+
+  function closeDetail(){
+    panel.hidden=true;
+    canvas.classList.remove('has-expanded');
+    if(activeNode){activeNode.classList.remove('expanded','active');activeNode=null;}
+  }
+
+  // 只有真正拥有独立 L1/L2 解释的节点才显示“＋”；不再给同一 L1 的内部节点重复挂载相同面板。
+  $$('#l0 .node[data-detail]').forEach(n=>{
+    n.setAttribute('tabindex','0');
+    n.setAttribute('role','button');
+    const r=n.querySelector('rect');
+    if(r){
+      const mark=document.createElementNS('http://www.w3.org/2000/svg','text');
+      mark.setAttribute('class','expand-mark');
+      const x=Number(r.getAttribute('x'))+Number(r.getAttribute('width'))-15;
+      const y=Number(r.getAttribute('y'))+18;
+      mark.setAttribute('x',String(x));
+      mark.setAttribute('y',String(y));
+      mark.setAttribute('text-anchor','middle');
+      mark.textContent='＋';
+      n.appendChild(mark);
+    }
+    n.addEventListener('click',()=>openDetail(n.dataset.detail,n));
+    n.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openDetail(n.dataset.detail,n)}});
+  });
+
+  $('#openDefault').addEventListener('click',()=>{
+    const n=$('#l0 .node[data-detail="userplant"]'); if(n) openDetail('userplant',n);
+  });
+  $('#closeDetail').addEventListener('click',closeDetail);
+  $('#inlineCollapse').addEventListener('click',closeDetail);
+
+  // 原位展开层采用弹框语义：点击弹框外的空白区域或按 Escape 收起。
+  document.addEventListener('pointerdown',e=>{
+    if(panel.hidden) return;
+    const target=e.target;
+    if(panel.contains(target)) return;
+    if(target && target.closest && target.closest('#l0 .node[data-detail]')) return;
+    closeDetail();
+  });
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape' && !panel.hidden) closeDetail();
+  });
+})();
+</script>
+</body>
+</html>

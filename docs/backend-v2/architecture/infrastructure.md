@@ -13,9 +13,15 @@
 
 小青继续使用 CloudBase Agent，不新增第七个函数。
 
-`plant-knowledge` 通过本地参考数据适配器读取 Tropicals 分类与俗名快照；`tropicals_taxon_ref`、`tropicals_vernacular_name_ref` 只提供候选，不是 `plant_identities` 的直接写入源，也不是运行时实时 API 依赖。数据入库须记录官方版本、源文件哈希和署名，先验精确行数、样本、植物范围与歧义，再进入现有身份审核/发布流程。v2 测试库已读回两表分别为 409,880 条分类记录和 1,204,618 条俗名记录，俗名按 `taxon_id` 关联的孤儿记录为 0；但中文名称存在大量同名多分类记录，分类等级与权威父链也未完成准入核验。当前尚无候选搜索的公开合同、HTTP 实现及测试环境验收，因此该适配器仍未启用，数据可读不等于植物身份可发布。
+2026-10-03 起，百科详情的运行时主读是 CloudBase SQL：`qinghuazhi_v2_test.tropicals_species_encyclopedia_ref`，由 plant-knowledge 按学名派生 slug 读取。slug 为 `scientificName` 去符号后的 kebab-case（例：`Monstera deliciosa 'Thai Constellation'` → `monstera-deliciosa-thai-constellation`），不必是已存储的 API 字段。分类、俗名、生长季仍是分表，按 `taxon_id` 软关联。`nameEn`、COL、价格等 API 专有字段不是这次切换的阻断项。展示用养护难度、温湿范围、光照和病虫害字段不得直接进入养护或诊断规则；结构化性状只有经过 plant-knowledge 来源保留、归一和审核发布为 Internal Care Knowledge / Reference Profile 后才可被 care 消费。当前 `tropicals_trait_ref` 为 0 行，不能假设植物级基质偏好已存在。浇水基线仍从已审核 watering trait / `watering_baseline_policy` 起步。表关系见 [植物目录数据模型](plant-catalog-data-model.md)。
 
-[Tropicals 官方数据集说明](https://tropicals.cn/datasets)把分类与俗名等开放文本数据标为 CC-BY 4.0，可商用，但要求署名“Tropicals.cn”并附授权链接；[实时 API 说明](https://tropicals.cn/docs/api)另要求 API key 和商用服务协议。候选检索可基于已入库的数据快照开发，不以尚未获得的实时 API 权限作为前置；对外展示仍须落实数据来源署名，不得把数据集许可扩大解释为图片、交易数据或实时 API 授权。
+代码现状仍是首页 PlantSearchToolbar 开启 useTropicals 后，src/api/tropicals.js 由 uni-app 客户端直连 Tropicals v1，使用 VITE_TROPICALS_API_KEY，调用名称解析、自动补全和详情。这是待退役的现状，不是目标主路径。Cloud Functions v2 plant-knowledge 尚未实现 SQL 百科只读 DTO，也还没有把首页改到库内搜索投影；首页搜索命中不自动进入用户植物确认。
+
+目录搜索的目标是库里已有的 `plant_search_documents` / `plant_search_terms`（2026-10-03 文档精确 271,384 行），不是再造一套，也不是认定这些表不存在。搜索全集不是 PlantIdentity 全集。已发布身份搜索继续遵守公开搜索合同；俗名不是唯一键，同名多个分类都保留。Tropicals 实时 API 只作为可选同步、来源或后续能力。若启用，Adapter 必须由 Provider Registry 提供请求级配置与 credential_ref，业务层不得读取供应商密钥。/names/resolve、/species/autocomplete、/species/{slug|id} 不是百科详情或目录搜索的运行时路径。
+
+数据集源版本、哈希、署名与内部身份准入门仍保留。旧 106 条逐项证据只阻断对应内部身份 seed/release，不阻断 SQL 百科只读，也不因 SQL 或 API 命中而跳过身份发布。API id/slug、学名派生 slug、数据集 taxon_id 与内部分类/身份主键不可混用，映射须先有来源和审核证据。
+
+[Tropicals 实时 API 文档](https://tropicals.cn/docs/api)只约束可选的 API 同步或后续接入：API Key、30 天评估试用与商用服务协议。[公开数据集说明](https://tropicals.cn/datasets)是独立许可，不能推定实时 API 商用资格，也不能由文本许可推定图片权利。API 文本若被使用，按 CC BY 4.0 保留 Tropicals.cn 署名和授权链接。当前前端 `VITE_TROPICALS_API_KEY` 不是目标密钥边界。详见 [植物目录与百科 SQL 主读](tropicals-api-mvp.md)。
 
 完整目标架构保持稳定，按 [首版运行边界](../phases/first-release-scope.md) 的阶段与验收门逐步开放；目标节点存在不代表首版已运行或已验收。首版优先闭合“临时解决问题 → 用户显式保存/绑定 → 后续养护与复访”，受控实验须独立满足合同、成本和回退门。
 
@@ -31,7 +37,7 @@
 → 识别 / 养护 / 诊断 / CloudBase Agent 只读消费
 ```
 
-临时案例可由游客或已登录用户使用；是否持有 `user_id` 与本次是否选择临时作用域是两个独立条件。`identity` 负责解析访问主体，植物入口的临时/长期选择与显式晋升由既有 `user-plant` 的 UserPlantApp 编排；登录状态不自动选中或写入长期植物。游客选择保存时须先登录取得统一 `user_id`；已登录用户可直接选择创建新用户植物或绑定本人已有植物。只有用户明确选择保存/绑定后，UserPlantApp 才按冻结合同创建/绑定并执行必要结果认领。已登录临时案例的 DTO、数据字典、幂等与 Expected 尚处 P1 补充门时，相关实现和验收保持未完成。
+临时案例可由游客或已登录用户使用；是否持有 `user_id` 与本次是否选择临时作用域是两个独立条件。`identity` 负责解析访问主体，植物入口的临时/长期选择与显式晋升由既有 `user-plant` 的 UserPlantApp 编排；登录状态不自动选中或写入长期植物。游客选择保存时须先登录取得统一 `user_id`；已登录用户可直接选择创建新用户植物或绑定本人已有植物。只有用户明确选择保存/绑定后，UserPlantApp 才按冻结合同创建/绑定并执行必要结果认领。已登录临时案例合同与数据字典已冻结为独立 UserPrincipal backing case，016/017 已形成迁移设计；TTL 策略、真实 MySQL 执行、HTTP 接线与 Expected 仍未完成前，相关运行验收保持未完成。
 
 ## care 内部环境证据管线
 
@@ -43,13 +49,15 @@ Weather / 盆土视觉 / 用户植物配置 / 已确认养护事实
 → 原子环境事实 Repository
 → 不可变输入快照
 → EnvironmentDomain（版本化纯计算）
-→ 派生环境指标 Repository
+→ 环境/栽培派生 Repository
+→ CareDecision（GrowthActivity / Calibration / DryProgress）
+→ 决策派生 Repository
 → CareDomain / Diagnosis 冻结合同消费
 ```
 
-网络与 Provider 调用只发生在 Adapter；`EnvironmentDomain` 不访问网络和数据库。Repository 是观察、快照和派生记录的唯一 SQL 入口。室外天气快照保持 `outdoor` 范围，不能在组装层被重标记为室内证据。算法变化不得更新旧派生行或原子事实，而是基于同一 `inputSnapshotHash` 与新的算法 release 追加派生记录。
+网络与 Provider 调用只发生在 Adapter；`EnvironmentDomain` 不访问网络和数据库。Repository 是观察、快照、环境/栽培派生和决策派生记录的唯一 SQL 入口。室外天气快照保持 `outdoor` 范围，不能在组装层被重标记为室内证据。算法变化不得更新旧派生行或原子事实，而是基于同一 `inputSnapshotHash` 与新的算法 release 追加派生记录。
 
-光照派生模型拟改为日光积分（DLI，Daily Light Integral）；温度、相对湿度、光照等原子事实与公开养护输出合同仍保持分层。当前不迁移旧光照算法、不冻结 DLI 输入或阈值；进入迁移前先向用户确认最新模型及其证据，浇水仅保留消费版本化光照派生量的边界。
+光照派生模型已冻结结构方向：DNI/DHI/GHI → 太阳几何 → 窗面 Direct/Diffuse → 室内传播 → PPFD(t) → DLI；峰值 PPFD 与直射持续时间用于强光风险。温度、相对湿度、光照等原子事实与公开养护输出合同继续分层。具体透射/敏感度参数仍须版本化校准；`indoorEqHours` 不属于正式光照派生合同。浇水只消费版本化 DLI 派生量，不重算朝向。
 
 ## 请求固定流程
 

@@ -98,6 +98,23 @@ node docs/backend-v2/audits/taxonomy-authority-replay.mjs \
 
 ## 算法与输出
 
+已批准的 106 条种子候选若需逐条补齐官方原始行哈希，使用
+`docs/backend-v2/audits/taxonomy-approved-raw-rows.mjs`。传入已批准的
+`seed-manifest.json`、本节回放输出 `taxonomy-authority-manifest.json`、
+同批 WCVP 分类表、WFO 分类表与名称表，以及尚不存在的输出文件路径：
+
+```sh
+node docs/backend-v2/audits/taxonomy-approved-raw-rows.mjs \
+  --approved docs/backend-v2/audits/taxonomy-approval-2026-09-20/seed-manifest.json \
+  --replay <taxonomy-authority-manifest.json> \
+  --wcvp <wcvp_taxon.csv> --wfo-taxon <wfo_taxon.tsv> \
+  --wfo-name <wfo_name.tsv> --output <new-106-row-evidence.jsonl>
+```
+
+脚本先比对三张原始表与回放制品中的全文摘要，再按已批准清单筛选、核对
+来源记录与种属科、流式提取原始行和父链 SHA-256；缺行或不一致即失败，
+不会生成部分结果。输出只是审核证据，不创建数据库记录、不激活发布。
+
 工具先逐项完成 SHA、WCVP EML、Zenodo 原始元数据及 entry 名核验，才读取表。WCVP/WFO
 表均用 Node `readline` 流式扫描：第一轮只保留候选科学名的精确匹配，后续轮次只补齐
 对应 accepted/synonym 与 parent 链；SHA/MD5 也以固定 64 KiB 缓冲分块计算。未命中行

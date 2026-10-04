@@ -4,6 +4,8 @@
  * 这里只收纳已经由 `http-api/v1` 冻结、可以安全返回给调用方的稳定类型。
  * 数据库错误、供应商错误、内部状态和追踪标识不得进入此目录。
  */
+
+//Todo 和 cloudfunctions-v2/src/contracts/types.ts 的同名类型冲突.
 export type PublicErrorType =
   | 'VALIDATION_FAILED'
   | 'PRINCIPAL_INVALID'
@@ -25,6 +27,7 @@ export type PublicErrorType =
   | 'SERVICE_UNAVAILABLE'
 
 /** 允许公开返回的唯一错误形状。 */
+//Todo 和 cloudfunctions-v2/src/contracts/types.ts 的ErrorResponseDto冲突.
 export type PublicErrorResponse = {
   /** 错误响应根对象；禁止追加内部编号、追踪标识或调试字段。 */
   error: {
@@ -150,7 +153,10 @@ export type RequestChainConfig<
   /** 第三步：把已验证凭据解析为统一 Guest/User/Service Principal。 */
   principalResolve: RequestChainStep<TIdentityCredentials, TPrincipal>
   /** 第四步：校验统一用户与目标用户植物的归属；无对象路由必须显式声明不适用。 */
-  objectOwnership: RequestChainStep<ObjectOwnershipValidateContext<TRestrictedInput, TPrincipal>, void>
+  objectOwnership: RequestChainStep<
+    ObjectOwnershipValidateContext<TRestrictedInput, TPrincipal>,
+    void
+  >
   /** 第五步：用对应路由的 AJV Schema 校验并收窄 DTO。 */
   dtoValidate: RequestChainStep<TRestrictedInput, TDto>
   /** 第六步：由已校验 DTO 与主体构造应用层 Command 或 Query。 */
@@ -158,7 +164,10 @@ export type RequestChainConfig<
   /** 第七步：执行不访问网络和数据库的领域规则。 */
   domainRule: RequestChainStep<DomainRuleContext<TCommand, TPrincipal>, TDomainDecision>
   /** 第八步：通过 Repository 在明确事务边界内持久化并读回结果。 */
-  transactionPersistence: RequestChainStep<TransactionPersistenceContext<TDomainDecision, TPrincipal>, TPersistenceResult>
+  transactionPersistence: RequestChainStep<
+    TransactionPersistenceContext<TDomainDecision, TPrincipal>,
+    TPersistenceResult
+  >
   /** 第九步：把内部结果转换为不含内部主键和敏感字段的公开 DTO。 */
   publicResponse: RequestChainStep<TPersistenceResult, TPublicData>
   /** 最后尝试写入脱敏请求结果事件；可靠的业务安全审计必须在领域事务内完成。 */
@@ -170,7 +179,10 @@ export type RequestChainConfig<
 const internalErrorStatusCode = 500
 
 /** 执行单个阶段；非适用阶段缺少可审计原因时按内部配置错误失败关闭。 */
-async function runStep<TInput, TOutput>(step: RequestChainStep<TInput, TOutput>, input: TInput): Promise<TOutput> {
+async function runStep<TInput, TOutput>(
+  step: RequestChainStep<TInput, TOutput>,
+  input: TInput
+): Promise<TOutput> {
   if (step.kind === 'execute') {
     return await step.run(input)
   }
@@ -267,7 +279,10 @@ export async function executeRequestChain<
     await runStep(config.objectOwnership, { request: restrictedInput, principal: principal })
     const dto = await runStep(config.dtoValidate, restrictedInput)
     const command = await runStep(config.buildCommand, { dto, principal: principal })
-    const domainDecision = await runStep(config.domainRule, { command: command, principal: principal })
+    const domainDecision = await runStep(config.domainRule, {
+      command: command,
+      principal: principal
+    })
     const persistenceResult = await runStep(config.transactionPersistence, {
       domainDecision: domainDecision,
       principal: principal

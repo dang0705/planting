@@ -1,0 +1,36 @@
+{
+  "$schema": "https://raw.githubusercontent.com/camunda/skills/main/compatibility/portability.schema.json",
+  "skillDirectory": "skills/camunda-feel",
+  "skillName": "camunda-feel",
+  "status": "portable-with-adapter",
+  "agentSkillsSpec": {
+    "specUrl": "https://agentskills.io/specification",
+    "specRevisionOrAuditDate": "2026-09-11"
+  },
+  "harnesses": {
+    "claude": {
+      "status": "native",
+      "differences": [
+        "Loads the standard SKILL.md package and uses the documented cluster-first FEEL evaluation path."
+      ]
+    },
+    "copilot": {
+      "status": "adapter-required",
+      "differences": [
+        "Maps c8ctl feel evaluate, variable input, and expression-file editing to Copilot terminal capabilities."
+      ]
+    },
+    "generic": {
+      "status": "adapter-required",
+      "differences": [
+        "The host supplies a Camunda FEEL engine and adapters for variables, files, and result reporting."
+      ]
+    }
+  },
+  "limitations": [
+    "Expression evaluation requires a Camunda 8.9 or newer cluster for the default c8ctl path, or an explicitly selected compatible local engine."
+  ],
+  "differences": [
+    "Expression syntax is harness-neutral; cluster and local engines can differ in available functions and coercion behavior."
+  ]
+}

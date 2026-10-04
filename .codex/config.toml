@@ -3,6 +3,16 @@
 approval_policy = "never"
 sandbox_mode = "workspace-write"
 
+# OpenViking 仅在本项目开放必要的读取与写入工具；旧 Cursor 代理不参与本项目调用。
+[mcp_servers.openviking]
+enabled = false
+
+[plugins."openviking-memory@openviking".mcp_servers."openviking-memory"]
+enabled = true
+default_tools_approval_mode = "auto"
+enabled_tools = ["health", "find", "search", "read", "list", "tree", "grep", "glob", "remember", "write", "edit"]
+
+model_reasoning_summary = "auto"
 [agents]
   # Keep parallelism bounded. Each thread has its own context cost.
   max_threads = 10
@@ -10,7 +20,7 @@ sandbox_mode = "workspace-write"
   job_max_runtime_seconds = 1800
 
 [sandbox_workspace_write]
-  network_access = false
+  network_access = true
 
   [mcp_servers.webstorm]
     url = "http://127.0.0.1:64343/stream"

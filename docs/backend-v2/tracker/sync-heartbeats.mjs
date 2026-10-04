@@ -143,7 +143,7 @@ for (const module of status.modules ?? []) {
 status.generatedAt = now.toISOString();
 status.overallProgress = summarizeModulesProgress(status.modules ?? []);
 status.snapshotSource = 'docs/backend-v2/tracker/heartbeats/*.json（主代理汇总）';
-status.trackerOwner = '主代理 /root（各 ticket 子代理写独立心跳；主代理校验、汇总并处理超时）';
+status.trackerOwner = '主代理 /root（各 ticket 仅在事实变化时上报；脚本汇总，主代理处理冲突）';
 status.agentRegistry = agentRegistry;
 
 if (isDirectInvocation) {

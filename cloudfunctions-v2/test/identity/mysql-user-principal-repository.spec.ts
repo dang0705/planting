@@ -3,15 +3,11 @@ import { describe, expect, test, vi } from 'vitest'
 import { createMysqlUserPrincipalRepository } from '../../src/identity/repository/mysql-user-principal-repository.js'
 
 const query = {
-  platform: 'wechat' as const,
-  appScope: 'wx-app-qhz',
-  platformSubjectHash: 'a'.repeat(Number('64')),
-  subjectHashKeyVersion: 'identity-hmac.2026-09-20.1',
   sessionRefHash: 'b'.repeat(Number('64'))
 }
 
 /**
- * Expected 来源：`principal-capability/v1` 与 `001_identity.sql` 的摘要检索和三方归属约束。
+ * Expected 来源：`principal-capability/v1` 与 `001_identity.sql` 的会话摘要检索和三方归属约束。
  * 测试层次：L2 / `unit_fake`；替换参数化 SQL 执行器。
  * 明确未覆盖：真实 MySQL JOIN、Provider 凭证验证、HMAC 密钥托管和 HTTP。
  */
@@ -51,13 +47,7 @@ describe('统一用户 Principal MySQL Repository', () => {
         expiresAtMs: 1789959600000
       }
     })
-    expect(executeQuery).toHaveBeenCalledWith(expect.any(String), [
-      query.platform,
-      query.appScope,
-      query.platformSubjectHash,
-      query.subjectHashKeyVersion,
-      query.sessionRefHash
-    ])
+    expect(executeQuery).toHaveBeenCalledWith(expect.any(String), [query.sessionRefHash])
     expect(JSON.stringify(executeQuery.mock.calls)).not.toContain('raw-bearer')
   })
 

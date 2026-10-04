@@ -1,8 +1,4 @@
-import type {
-  UserCapabilitySnapshotDto,
-  UserPlantRef,
-  UserPrincipalDto
-} from '../../contracts/types.js'
+import type { UserCapabilitySnapshotDto, UserPlantRef, UserPrincipalDto } from '../../contracts'
 import {
   DatabaseCommitResultUnknownError,
   runDatabaseTransaction,
@@ -49,7 +45,9 @@ export type CreateUserPlantApplicationInput = {
 }
 
 /** 创建用户植物应用服务所需的显式端口。 */
-export type CreateUserPlantApplicationDependencies<TTransaction extends TransactionExecutionContext> = {
+export type CreateUserPlantApplicationDependencies<
+  TTransaction extends TransactionExecutionContext
+> = {
   /** Foundation 提供的事务生命周期驱动。 */
   readonly driver: DatabaseTransactionDriver<TTransaction>
   /** Foundation 提供的共享 HTTP 幂等 Repository。 */
@@ -123,7 +121,10 @@ async function completeDeterministicResult<TTransaction extends TransactionExecu
   response: HttpIdempotencyPublicResponseSnapshot,
   repository: MysqlHttpIdempotencyRepository<TTransaction>
 ): Promise<HttpIdempotencyPublicResponseSnapshot> {
-  const result = await repository.completionFirstResult(transaction, buildIdempotencyCompletionInput(input, response))
+  const result = await repository.completionFirstResult(
+    transaction,
+    buildIdempotencyCompletionInput(input, response)
+  )
   if (result.kind !== 'completed') {
     throw new CreateUserPlantApplicationError('领域结果与幂等完成记录未在同一事务确定')
   }
@@ -139,10 +140,13 @@ async function completeDeterministicResult<TTransaction extends TransactionExecu
 export function createUserPlantApplicationService<TTransaction extends TransactionExecutionContext>(
   dependencies: CreateUserPlantApplicationDependencies<TTransaction>
 ): (input: CreateUserPlantApplicationInput) => Promise<HttpIdempotencyPublicResponseSnapshot> {
-  return async (input) => {
+  return async input => {
     try {
-      return await runDatabaseTransaction(dependencies.driver, async (transaction) => {
-        const idempotencyDecision = await dependencies.idempotencyRepository.tryReserve(transaction, input.idempotency)
+      return await runDatabaseTransaction(dependencies.driver, async transaction => {
+        const idempotencyDecision = await dependencies.idempotencyRepository.tryReserve(
+          transaction,
+          input.idempotency
+        )
         if (idempotencyDecision.kind === 'replay') {
           return idempotencyDecision.response
         }
@@ -178,11 +182,12 @@ export function createUserPlantApplicationService<TTransaction extends Transacti
             userPlantRef: input.newUserPlantRef,
             occurredAtMs: input.occurredAtMs
           })
-          const createProjection = await dependencies.userPlantRepository.readCreateInitialProjection(
-            transaction,
-            input.principal.user_id,
-            input.newUserPlantRef
-          )
+          const createProjection =
+            await dependencies.userPlantRepository.readCreateInitialProjection(
+              transaction,
+              input.principal.user_id,
+              input.newUserPlantRef
+            )
           return await completeDeterministicResult(
             transaction,
             input,
@@ -194,7 +199,12 @@ export function createUserPlantApplicationService<TTransaction extends Transacti
           if (deterministicRejection === null) {
             throw error
           }
-          return await completeDeterministicResult(transaction, input, deterministicRejection, dependencies.idempotencyRepository)
+          return await completeDeterministicResult(
+            transaction,
+            input,
+            deterministicRejection,
+            dependencies.idempotencyRepository
+          )
         }
       })
     } catch (error: unknown) {
@@ -202,17 +212,20 @@ export function createUserPlantApplicationService<TTransaction extends Transacti
         throw error
       }
       const idempotency = input.idempotency
-      const reconcileResult = await reconcileHttpIdempotencyCommitResult(dependencies.commitUnknownReadOnlyRepository, {
-        scope: {
-          principalType: idempotency.principalType,
-          principalScopeHash: idempotency.principalScopeHash,
-          httpMethod: idempotency.httpMethod,
-          normalizedPath: idempotency.normalizedPath,
-          operationId: idempotency.operationId,
-          idempotencyKeyHash: idempotency.idempotencyKeyHash
-        },
-        requestHash: idempotency.requestHash
-      })
+      const reconcileResult = await reconcileHttpIdempotencyCommitResult(
+        dependencies.commitUnknownReadOnlyRepository,
+        {
+          scope: {
+            principalType: idempotency.principalType,
+            principalScopeHash: idempotency.principalScopeHash,
+            httpMethod: idempotency.httpMethod,
+            normalizedPath: idempotency.normalizedPath,
+            operationId: idempotency.operationId,
+            idempotencyKeyHash: idempotency.idempotencyKeyHash
+          },
+          requestHash: idempotency.requestHash
+        }
+      )
       if (reconcileResult.kind === 'replay') {
         return reconcileResult.response
       }

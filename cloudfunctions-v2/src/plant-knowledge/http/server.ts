@@ -1,0 +1,65 @@
+import { createServer, type Server } from 'node:http'
+
+import type { MysqlConnectionPoolPort } from '../../foundation/database/mysql-transaction-driver.js'
+import {
+  withReadConnection,
+  type Mysql2QueryConnection
+} from '../../foundation/database/mysql2-connection-source.js'
+import type { RequestChainAuditEvent } from '../../foundation/http/request-chain.js'
+import { createRouteDispatcher } from '../../foundation/http/route-dispatcher.js'
+import { createGetPublishedPlantRouteHandler } from '../application/get-published-plant.js'
+import { createSearchPublishedPlantsRouteHandler } from '../application/search-published-plants.js'
+import { createMysqlPublishedPlantRepository } from '../repository/mysql-published-plant-repository.js'
+import { createMysqlPublishedPlantSearchRepository } from '../repository/mysql-published-plant-search-repository.js'
+import { getPublishedPlantRoute, searchPublishedPlantsRoute } from './routes.js'
+
+/** plant-knowledge 云函数 HTTP 服务依赖。 */
+export type PlantKnowledgeServerDependencies = {
+  /** 每请求独占连接来源；连接参数由入口从受控环境变量读取。 */
+  readonly connectionSource: MysqlConnectionPoolPort<Mysql2QueryConnection>
+  /** 请求结果审计端口，只接收脱敏事件。 */
+  readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
+}
+
+const okStatus = 200
+
+/** 组装 plant-knowledge 函数的 HTTP 服务：`/health` 探针加冻结路由分发，不监听端口。 */
+export function createPlantKnowledgeServer(dependencies: PlantKnowledgeServerDependencies): Server {
+  const dispatch = createRouteDispatcher([
+    {
+      route: searchPublishedPlantsRoute,
+      handler: createSearchPublishedPlantsRouteHandler({
+        searchPublishedPlants: query =>
+          withReadConnection(dependencies.connectionSource, connection =>
+            createMysqlPublishedPlantSearchRepository(connection).searchPublishedPlants(query)
+          ),
+        writeAudit: dependencies.writeAudit
+      })
+    },
+    {
+      route: getPublishedPlantRoute,
+      handler: createGetPublishedPlantRouteHandler({
+        readPublishedPlant: plantIdentityRef =>
+          withReadConnection(dependencies.connectionSource, connection =>
+            createMysqlPublishedPlantRepository(connection).findPublishedPlant(plantIdentityRef)
+          ),
+        writeAudit: dependencies.writeAudit
+      })
+    }
+  ])
+
+  return createServer((request, response) => {
+    const pathname = new URL(request.url ?? '/', 'http://127.0.0.1').pathname
+    if (pathname === '/health' && request.method === 'GET') {
+      request.resume()
+      const body = JSON.stringify({ ok: true })
+      response.writeHead(okStatus, {
+        'content-type': 'application/json; charset=utf-8',
+        'content-length': Buffer.byteLength(body, 'utf8')
+      })
+      response.end(body)
+      return
+    }
+    dispatch(request, response).catch(() => undefined)
+  })
+}

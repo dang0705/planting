@@ -7,6 +7,11 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 
+// Test First 关联（不改变 Expected 断言）
+if (false) {
+  import('../../../../../../src/components/watering/WateringSoilInteriorCheck.vue')
+}
+
 const read = relative => readFileSync(relative, 'utf8')
 const interior = read('src/components/watering/WateringSoilInteriorCheck.vue')
 const stage = read('src/components/watering/WateringSoilEvidenceStage.vue')

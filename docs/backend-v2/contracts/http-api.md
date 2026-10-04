@@ -28,6 +28,7 @@
 | 级别 | 中文含义 | 允许的主体 | 硬边界 |
 |---|---|---|---|
 | `public` | 公开只读 | 无登录主体 | 只返回已发布、非个性化内容 |
+| `credential_exchange` | 平台凭证换取青花植登录会话 | 尚无青花植登录主体，但必须经 Identity 域验真平台短时凭证 | 只允许 `/api/v2/identity/sessions`；首次成功可向当前调用者交付一次青花植 Bearer，不持久化或记录原文；微信一次性 code 不支持用同一 code 重试取回令牌 |
 | `guest` | 游客临时能力 | `GuestPrincipal` 或 `UserPrincipal` | 游客不能获得 `user_id`、用户植物、会员、积分或个人 Agent 上下文 |
 | `authenticated` | 登录用户能力 | `UserPrincipal` | 先解析统一 `user_id`，再校验对象归属和能力快照 |
 | `service` | 内部服务能力 | `ServicePrincipal` | 必须同时校验服务签名、时间窗口、nonce、正文哈希和最小 scope |
@@ -38,7 +39,7 @@
 
 - `/api/v2` 业务接口成功响应统一使用 `{ "data": ... }`，其中 `data` 的字段由具体响应 DTO 冻结。
 - `/health` 与本地 `/probe` 是部署和构建探针，不属于 `/api/v2` 业务接口，可以继续使用固定 `{ "ok": true }` 白名单响应。
-- 所有公开错误只有以下稳定形状，字段名固定为 `error.type`，禁止增加 `ok`、`code`、内部 ID、SQL、堆栈、Prompt、模型原文、token 或追踪 ID：
+- 所有公开错误只有以下稳定形状，字段名固定为 `error.type`，禁止增加 `ok`、`code`、内部 ID、SQL、堆栈、Prompt、模型原文、token 或追踪 ID。唯一凭证披露例外是经平台验真后首次成功的 `/api/v2/identity/sessions` 数据响应，错误响应仍不得包含 Bearer：
 
 ```json
 {
@@ -74,10 +75,10 @@
 
 ## 4. 幂等和并发
 
-- 所有改变状态的公开写接口必须接收 `Idempotency-Key` 请求头；长度为 8 至 128 个可打印 ASCII 字符。
+- 除微信一次性 code 登录外，所有改变状态的公开写接口必须接收 `Idempotency-Key` 请求头；长度为 8 至 128 个可打印 ASCII 字符。`POST /api/v2/identity/sessions` 不接收该头作为幂等依据：同一已消费 code 再次提交返回脱敏的 `401 PRINCIPAL_INVALID`；首响应丢失时客户端重新调用 `wx.login` 获取新 code。统一用户与平台绑定仍受事务和唯一约束保护，新的 code 可以签发新的会话。
 - HTTP 适配层将请求头写入内部 Command；公开请求正文不得再次接受 `idempotencyKey`，避免两个来源冲突。
 - 唯一作用域至少包含主体、HTTP method、规范化 path 和业务动作；AI 额度还必须绑定 `user_id + productActionId`。
-- 同键同参返回首次确定结果；同键异参返回 `409 IDEMPOTENCY_CONFLICT`。
+- 使用幂等键的写接口同键同参返回首次确定结果；同键异参返回 `409 IDEMPOTENCY_CONFLICT`。微信登录遵循上述一次性 code 规则，任何重试都不得持久化或回放首次 Bearer。
 - 并发请求由事务和唯一约束选出唯一结果，不能重复建植物、认领、扣积分、发额度或创建订单。
 - 覆盖式更新必须携带资源版本；版本不一致返回 `409 USER_PLANT_VERSION_CONFLICT`。
 - 支付回调和可靠事件使用供应商事件 ID 或事件 ID 作为 inbox 唯一键，不依赖客户端请求头。

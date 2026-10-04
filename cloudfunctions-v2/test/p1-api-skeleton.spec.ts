@@ -78,12 +78,13 @@ assert.ok(Array.isArray(registry.routes))
 assert.ok(registry.routes.length >= 35, 'P1 路由骨架必须覆盖主要业务域和内部合同')
 
 const allowedOwners = new Set(['identity', 'plant-knowledge', 'user-plant', 'care', 'diagnosis', 'subscription'])
-const allowedSecurity = new Set(['public', 'guest_or_authenticated', 'authenticated', 'service'])
+const allowedSecurity = new Set(['public', 'credential_exchange', 'guest_or_authenticated', 'authenticated', 'service'])
 const allowedPhases = new Set(['P1', 'P2', 'P3', 'P4', 'P5'])
 const routeKeys = new Set()
 const expectedServiceScopes: Record<string, string> = {
   receivePaymentCallback: 'subscription.payment-callback.receive',
   resolvePrincipalInternal: 'identity.resolve',
+  getUserTrialAnchorInternal: 'identity.trial-anchor.read',
   getUserPlantContextInternal: 'user-plant.context.read',
   getAgentPlantContextInternal: 'user-plant.agent-context.read',
   reserveAiQuotaInternal: 'subscription.ai-quota.reserve',
@@ -102,6 +103,15 @@ for (const route of registry.routes) {
   assert.ok(!route.path.includes('*'), `${route.path} 仍使用通配符`)
   assert.ok(allowedOwners.has(route.owner), `${route.path} owner 非法`)
   assert.ok(allowedSecurity.has(route.security), `${route.path} security 非法`)
+  if (route.security === 'public') {
+    assert.equal(route.method, 'GET', `${route.path} 公开只读级别不得用于写接口`)
+  }
+  if (route.security === 'credential_exchange') {
+    assert.equal(route.operationId, 'createIdentitySession', '凭证交换级别只允许登录会话入口')
+    assert.equal(route.idempotency, 'not_applicable', '一次性微信 code 登录不得要求通用幂等键')
+    assert.ok(route.errors.includes('PRINCIPAL_INVALID'), '已消费的微信 code 必须返回凭证无效')
+    assert.ok(!route.errors.includes('IDENTITY_SESSION_RESULT_UNAVAILABLE'), '登录不再提供同键结果重放错误')
+  }
   assert.ok(allowedPhases.has(route.phase), `${route.path} phase 非法`)
   assert.ok(Array.isArray(route.errors) && route.errors.length > 0, `${route.path} 缺少错误集合`)
   if (route.security === 'authenticated') {
@@ -126,6 +136,8 @@ assert.equal(
 
 const createBindingRoute = registry.routes.find((route) => route.operationId === 'createIdentityBinding')
 const deleteBindingRoute = registry.routes.find((route) => route.operationId === 'deleteIdentityBinding')
+const createSessionRoute = registry.routes.find((route) => route.operationId === 'createIdentitySession')
+assert.equal(createSessionRoute?.security, 'credential_exchange', '平台凭证换取登录会话不得伪装成公开只读')
 assert.ok(createBindingRoute?.errors.includes('IDENTITY_BINDING_CONFLICT'), '绑定路由必须声明身份占用冲突')
 assert.ok(deleteBindingRoute?.errors.includes('IDENTITY_LAST_BINDING_REQUIRED'), '解绑路由必须保护最后登录入口')
 
@@ -134,6 +146,11 @@ assert.equal(openapi.info.version, 'p1')
 assert.deepEqual(openapi.servers, [{ url: '/', description: 'CloudBase HTTP Gateway 根相对路径' }])
 assert.ok(openapi.components?.schemas?.ErrorResponse, 'OpenAPI 缺少 ErrorResponse')
 assert.equal(openapi.components.schemas.ErrorResponse.additionalProperties, false)
+assert.equal(
+  (openapi.components as { securitySchemes?: { userBearer?: { bearerFormat?: string } } }).securitySchemes?.userBearer?.bearerFormat,
+  '青花植自签不透明用户会话令牌',
+  '后续业务请求不得把青花植会话误写为 CloudBase token',
+)
 const openapiErrorTypes = new Set(openapi.components.schemas.ErrorResponse.properties.error.properties.type.enum)
 for (const route of registry.routes) {
   for (const errorType of route.errors) {

@@ -4,7 +4,7 @@
   "model": "gpt-5",
   "status": "in_progress",
   "progress": 68,
-  "summary": "共享 HTTP 请求链、事务生命周期、HTTP 幂等协议/DDL、共享幂等 MySQL Repository、四个奖励生产域 outbox 机械合同和提交未知只读对账均已形成可验证切片。用户植物创建已完成同事务编排与隔离 MySQL 双连接竞争验证；奖励业务命令的 outbox 同事务与 CloudBase/HTTP 接线仍未完成。",
+  "summary": "共享 HTTP 请求链、通用 MySQL 事务生命周期、HTTP 幂等协议/DDL、共享幂等 MySQL Repository、四个奖励生产域 outbox 机械合同和提交未知只读对账均已形成可验证切片。用户植物创建已完成同事务编排与隔离 MySQL 双连接竞争验证；奖励业务命令的 outbox 同事务与 CloudBase/HTTP 接线仍未完成。",
   "blockers": [],
   "verified": [
     "cloudfunctions-v2/src/foundation/http/request-chain.ts 已实现可复用固定请求链与稳定公开错误映射。",
@@ -28,13 +28,25 @@
     "用户植物创建应用用例已首次证明业务写、公开读回和 HTTP 幂等完成记录共用一个事务；全量 33 个文件 181 项测试、typecheck、build 与 Node 22 制品门通过。",
     "提交未知对账已通过新连接只读 Repository 和应用接入测试：只有相同摘要 completed 可重放，其他状态失败关闭且不重跑业务。",
     "隔离 MySQL 8.4 双连接已证明同一用户的 active 数量竞争由 users 行锁串行化；独立连接完成幂等读回，MySQL 专项 2 项测试通过。",
-    "后端 TypeScript 标识符已统一为规范英文：类型与类使用 PascalCase、泛型使用 T 前缀 PascalCase、函数与变量使用 camelCase；中文 TSDoc 与业务说明保留。"
+    "后端 TypeScript 标识符已统一为规范英文：类型与类使用 PascalCase、泛型使用 T 前缀 PascalCase、函数与变量使用 camelCase；中文 TSDoc 与业务说明保留。",
+    "新增 node-request-chain-handler.ts，仅把真实 IncomingMessage 注入既有 executeRequestChain，并将结果序列化为单次 JSON 响应；不做路由选择或业务接线。",
+    "新增 Node HTTP 适配器测试 5/5 通过；与固定请求链原有测试合计 12/12 通过。测试使用真实本机 Node HTTP Server 与生产 executeRequestChain，业务端口为可观察假步骤，标记 unit_fake。",
+    "适配器 RED/GREEN 与突变证据已验证：缺失适配器时测试无法导入；把真实链调用替换为结果回退后，固定阶段顺序断言 RED；还原后目标测试 GREEN。",
+    "node-request-chain-handler.ts 及镜像测试 oxlint 0 错误、0 告警，oxfmt 检查通过，cloudfunctions-v2 完整 TypeScript typecheck 通过。",
+    "mysql-transaction-driver.ts 通过结构化连接池端口注入，不新增 mysql2 运行依赖；8 条 unit_fake 覆盖连接获取、BEGIN 清理、业务错误、回滚失败、观测器失败及 COMMIT Promise 拒绝的未知结果处理。",
+    "隔离 MySQL 8.4 InnoDB 独立连接读回 2/2 通过：提交结果可见，业务 SQL 唯一约束失败后未留下半写记录；此证据只覆盖本地真实数据库，不代表 CloudBase 或真实网络 ACK 丢失。",
+    "事务驱动切片完整 npm run typecheck 通过；三份新增 TS 源码/测试 oxlint 0 警告 0 错误，oxfmt 检查通过；事务驱动与现有 runner 合并目标测试 14/14 通过。",
+    "COMMIT 未知分支执行反写证据：基线 mysql-transaction-driver.ts SHA-256 4fc21dd6a551a617ee25d0a77c3140f967ecc3e9c2354226ff9566b5f52b55ca；将 COMMIT 拒绝路径的销毁连接临时反转为释放连接后，`任何 COMMIT Promise 拒绝` 定向测试 RED（期望 DESTROY、实际 RELEASE，1 failed/7 skipped）；恢复后文件 SHA-256 与基线完全一致，合并目标测试 14/14 GREEN。临时变异已完全恢复，不进入交付。",
+    "请求结果链尾非阻塞观察切片：写入和失败告警 Promise 永不完成时，请求已确定的成功/拒绝仍立即返回；异步拒绝被消费并按固定脱敏消息告警，无未处理拒绝。Node 22.21.1 `request-chain.spec.ts` + `node-request-chain-handler.spec.ts` 共 21/21 通过，真实 node:http 请求验证成功响应不等待挂起的写审计；范围 oxlint 零警告/错误、oxfmt 与严格定向类型检查通过。"
   ],
   "unverified": [
     "首个产生奖励事件的业务命令、所属域 outbox 与 HTTP 幂等完成结果尚未形成同一事务证据。",
     "自动 dispatcher 的周期、租约、批量、重试、退避、dead-letter 和重放参数仍为 P3 待冻结配置，P2 未启动自动派发。",
-    "本地 MySQL 8.4 已验证 DDL，但真实 CloudBase MySQL、HTTP 端到端和云端并发仍属后续环境门。"
+    "本地 MySQL 8.4 已验证 DDL、事务提交与普通失败回滚读回；仍未实现生产连接池工厂或 CloudBase 数据库连接，也未真实模拟 COMMIT ACK 丢失/网络中断。真实 CloudBase MySQL 与云端并发仍属后续环境门。",
+    "新 Node HTTP 适配器尚未接入任何业务路由；当前证明不覆盖 CloudBase 网关、真实身份服务、实际业务 Handler 或 API 端到端。",
+    "src/server.ts 仍是 P0 基线，仅接 /health、/probe 和未匹配 404；http-api/v1 明确 /probe 非业务 API。路由登记与 OpenAPI 尚未被 Node 业务入口消费；首个 user-plant 业务接线还需身份、权益、用例、幂等仓库及生产数据库工厂共同组合。",
+    "当前整包测试类型检查尚未完成：tsconfig.test.json 被并行 P1 taxonomy 测试引用的 docs/backend-v2/audits/taxonomy-evidence/replay-123-gymnocalycium.mjs 缺失阻断（TS2307），不属于本切片；本生产源码项目类型检查与本切片四个 TS 文件严格检查通过。"
   ],
-  "updatedAt": "2026-09-20T21:56:18+08:00",
+  "updatedAt": "2026-09-24T09:26:51+08:00",
   "next": "实现首株完整档案业务命令、user-plant 域 outbox 与 HTTP 幂等完成记录的同事务切片；自动 dispatcher 保持 P3 停止。"
 }

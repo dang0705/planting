@@ -1,9 +1,9 @@
 {
   "version": "api-skeleton/p1",
-  "generatedAt": "2026-09-20T01:00:00+08:00",
+  "generatedAt": "2026-10-04T00:34:39+08:00",
   "source": "route-registry.json",
   "files": {
-    "route-registry.json": "a9f46aaf0d10ddf699545c9286dd946548b9d4fe4db5f520d08389102b9d74f4",
-    "openapi.p1.json": "005ed9fe284eb80746a441c9abdc066d22a7696c7e05777583ace3510a5dd54d"
+    "route-registry.json": "1e0c05d49a48d1d73540948e6d0123b4bdcf3b5fdacd742f6fdf97c1fb62a209",
+    "openapi.p1.json": "573c637ac878b1578e5b39e451b42a03b24fc3315ce875da1755760901e0a61d"
   }
 }

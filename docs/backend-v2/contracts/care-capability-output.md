@@ -6,7 +6,7 @@
 
 适用于浇水、施肥、光照和通风。
 
-所有能力的输入必须先遵循 `care-environment-foundation/v1`：原子环境事实形成不可变输入快照，再由版本化算法生成派生环境指标。能力实现不得直接改写观察事实，也不得绕过来源范围和新鲜度校验读取供应商原始载荷。
+所有能力的输入必须先遵循 `care-environment-foundation/v2`：原子环境事实形成不可变输入快照，再由版本化算法生成派生环境指标。能力实现不得直接改写观察事实，也不得绕过来源范围和新鲜度校验读取供应商原始载荷。
 
 ```ts
 /**
@@ -37,9 +37,9 @@ type CareCapabilityResult = {
 };
 ```
 
-光照必须使用用户环境、植物需求和天气光照证据；通风必须使用室内空气交换、空间开放度、局部风源和直吹风险，不能把室外风速直接等同为室内通风。
+光照必须使用版本化的 DNI/DHI/GHI → 太阳几何 → 窗面 Direct/Diffuse → 室内传播 → PPFD/DLI 证据；朝向名称不能直接决定直射。通风必须使用室内空气交换、空间开放度、局部风源和直吹风险，不能把室外风速直接等同为室内通风。
 
-浇水必须从有明确参考环境的植物基准周期出发，使用有界派生环境指标和盆器/基质/排水特征得到预计干湿周期，再经过最近浇水事实和当前盆土证据门控。基准周期、预计周期和最终建议是三个不同层级，禁止把固定天数直接变成浇水命令。
+浇水必须遵循 `watering-decision-model/v1`：已审核 BaselinePolicy + GrowthActivityState 选择基线；DLI/Air VPD/AirMovement 形成 EnvironmentDemand；盆器/基质/排水/栽培方式形成 CultivationRetention；真实干湿循环只做 PersonalCalibration；从最近实际浇水 Fact 累计 DryProgress；最终由当前 Soil Safety Gate 决策。固定天数、`indoorEqHours` 或旧 `dryDownFactor` 都不能直接变成浇水命令。
 
 ## 稳定边界
 
@@ -53,9 +53,9 @@ type CareCapabilityResult = {
 
 | 能力 | 最低稳定语义 | 明确禁止 |
 |---|---|---|
-| `watering` | 盆土状态、是否建议浇水、建议复查时间、视觉证据有效期 | 只凭固定天数直接要求浇水 |
+| `watering` | 当前 Soil Evidence、DryProgress 所在窗口、是否建议浇水/检查、建议复查时间、证据有效期 | 只凭固定天数、旧 indoorEqHours 或理论预测直接要求浇水 |
 | `fertilizing` | 是否处于可施肥窗口、植物状态禁忌、建议复查时间 | 把施肥计划当成已施肥事实 |
 | `lighting` | 当前光照区间、植物需求区间、天气/环境证据和调整方向 | 仅用室外天气推断室内实际光照 |
 | `ventilation` | 空气交换、空间开放度、局部风源、直吹风险和调整方向 | 把室外风速直接等同室内通风 |
 
-游客模式可以使用临时的基础 watering 结果，但不创建用户植物、事实或计划；登录后只有通过游客案例认领，结果才获得派生归属。
+Ephemeral 模式可用于游客或已登录用户主动临时使用，但不创建用户植物、事实或计划；只有用户显式创建/选择目标植物并完成对应 Guest Claim 或 Authenticated Ephemeral Promotion，结果才获得长期归属解释。

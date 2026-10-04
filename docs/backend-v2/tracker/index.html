@@ -84,7 +84,15 @@
           const agent = ticket.agent ? agents.get(ticket.agent) : null;
           const agentLabel = ticket.agent || `未分配（计划角色：${ticket.plannedAgent || '未指定'}）`;
           const agentIsCurrent = !ticket.agent || Boolean(agent);
-          const clickUpStatus = data.clickUpTaskStatuses?.[ticket.id] ?? '未核实';
+          const lastFullReadAt = Date.parse(data.clickUpLastSyncedAt || '');
+          const singleCheck = data.clickUpSingleTaskChecks?.[ticket.id];
+          const singleCheckAt = Date.parse(singleCheck?.confirmedAt || '');
+          const hasNewerSingleCheck = Number.isFinite(singleCheckAt)
+            && (!Number.isFinite(lastFullReadAt) || singleCheckAt > lastFullReadAt)
+            && ['backlog', 'ready for codex', 'codex running', 'human required', 'blocked', 'review needed', 'done'].includes(singleCheck?.status);
+          const clickUpStatus = hasNewerSingleCheck
+            ? singleCheck.status
+            : (data.clickUpTaskStatuses?.[ticket.id] ?? '未核实');
           return {
             ...ticket,
             title: ticket.title || '未命名任务',
@@ -94,7 +102,8 @@
             agentLabel,
             agentState: agent ? agent.status : '未在当前代理快照中',
             agentIsCurrent,
-            clickUpStatus
+            clickUpStatus,
+            clickUpStatusSource: hasNewerSingleCheck ? '单票已确认' : '上次远端回读'
           };
         });
         const progressSummary = {
@@ -120,7 +129,7 @@
             return `<div class="ticket">
               <div class="ticket-heading"><a href="${escapeHtml(ticket.url)}" target="_blank" rel="noreferrer">${escapeHtml(ticket.title)}</a><strong>${progressLabel(ticket.progress, ticket.heartbeatState)}</strong></div>
               <div class="ticket-progress-bar" role="progressbar" aria-label="本地任务进度：${escapeHtml(ticket.title)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${ticketProgress}"><div class="ticket-progress-fill" style="width:${ticketProgress}%"></div></div>
-              <div class="meta ${ticket.agentIsCurrent ? '' : 'agent-missing'}">ClickUp（上次远端回读）：${escapeHtml(ticket.clickUpStatus)} · 本地：${escapeHtml(ticket.status)} · ${escapeHtml(ticket.agentLabel)} · ${escapeHtml(ticket.agentState)}</div>
+              <div class="meta ${ticket.agentIsCurrent ? '' : 'agent-missing'}">ClickUp（${escapeHtml(ticket.clickUpStatusSource)}）：${escapeHtml(ticket.clickUpStatus)} · 本地：${escapeHtml(ticket.status)} · ${escapeHtml(ticket.agentLabel)} · ${escapeHtml(ticket.agentState)}</div>
             </div>`;
           }).join('')}
         </article>`;

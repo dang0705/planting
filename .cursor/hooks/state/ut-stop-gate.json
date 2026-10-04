@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "packages": {
+    ".": {
+      "ok": false,
+      "fingerprint": "dc182e52b9b4eda9342b2e57c18efc6888b0c4d086056f4151ad82477abebb4c",
+      "cwd": ".",
+      "command": "npm test",
+      "status": 1,
+      "error": null,
+      "at": "2026-10-01T11:44:33.931Z"
+    }
+  }
+}

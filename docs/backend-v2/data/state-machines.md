@@ -1,6 +1,6 @@
 # 青花植后端 v2 状态机
 
-- 合同版本：`state-machines/v1`
+- 合同版本：`state-machines/v2`
 - 事实来源：已批准业务架构、后端架构及 P0 决策登记册。
 - 适用范围：DDL 约束、TypeScript 类型、AJV DTO、领域规则、API 合同和测试。
 
@@ -42,7 +42,7 @@ active → revoked / expired
 
 - `revoked` 和 `expired` 都是终态；MVP 不静默续期，平台凭证重新验证后创建新会话。
 - 解析会话必须同时满足：bearer 摘要匹配、会话 active、未过期、用户 active、会话版本等于用户当前版本、平台绑定 active 且用户和平台均与会话一致。
-- 同一幂等键和相同规范化凭证结果返回原会话；同键异参返回稳定冲突。首次登录的统一用户、绑定和会话必须在单一事务中完成，唯一竞争失败时重读赢家并清理本事务，不得留下孤儿用户。
+- 登录会话的原始 Bearer 只在首次成功响应披露一次，不持久化可回放原文。微信登录 code 只能消费一次，接口不要求 `Idempotency-Key`；同一已消费 code 重试返回脱敏的 `401 PRINCIPAL_INVALID`，首响应丢失时由客户端重新获取 code。新 code 可为同一用户签发新会话，但首次登录的统一用户、绑定和会话必须在单一事务中完成；唯一竞争失败时重读赢家并清理本事务，不得留下孤儿用户。
 
 ## 2. 用户植物与植物身份
 
@@ -96,6 +96,28 @@ requested → processing → completed / failed
 - 同一游客植物案例只能成功认领一次；重复同幂等键返回原结果，不得再建一株植物。
 - `user-plant` 在本域事务中创建用户植物和认领投影；其他域通过签名内部查询解析归属，不做跨域分布式事务。
 - 认领只补充归属，不自动把诊断建议写成事实、计划或积分。
+
+### 已登录用户临时植物案例
+
+```text
+active → completed / failed / expired
+completed → bound
+```
+
+- 已登录临时案例由 `UserPrincipal` 与服务端 `user_internal_id` 授权，不使用 `X-QHZ-Guest-Proof`，也不复用游客匿名持有权。
+- 同一 `authenticated_ephemeral_case_ref` 永远属于创建它的 `user_id`；跨用户读取、晋升或绑定必须拒绝。
+- `bound` 只表示用户明确选择创建新用户植物或绑定本人已有植物后，建立了一条不可变长期归属事实；临时结果仍保持“候选 / 结果 / 建议”原语义。
+- 临时 care / diagnosis 物理记录必须且只能引用一个 Ephemeral backing case：`guest_plant_case_internal_id XOR authenticated_ephemeral_case_internal_id`。
+- 绑定事务失败不得留下半绑定；重复同幂等键返回原结果，同键异参返回冲突。
+
+### 已登录临时晋升命令
+
+```text
+requested → processing → completed / failed
+```
+
+- 创建新植物与绑定已有植物共用同一显式晋升语义；目标已有植物必须属于同一 `user_id`。
+- 案例 TTL 是策略变量；未冻结或已过期时拒绝新晋升，不改变游客路径和已有长期用户植物。
 
 ## 4. 试用与会员
 

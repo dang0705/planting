@@ -33,7 +33,9 @@
 - Agent 环境用 `vitest run` 或 `vitest --no-watch`，不要默认 watch。
 - API 用 `vi.fn` / `vi.mock` / `vi.spyOn`，不要 `jest.fn` / `jest.mock`。优先 `vi.mock(import('./mod.js'))`。
 - spy 必须还原，或确认配置了 `restoreMocks`。
-- 任务权限、N/A、排雷表只认 `SKILL.md`，本页不另立门禁。编写任务改完后用 `vitest run` 跑目标路径。
+- 任务权限、N/A、排雷表只认 `SKILL.md`，本页不另立门禁。
+- **窄跑（编写/修改收尾，见 SKILL §3.5）：** `vitest run` 至少覆盖本轮改过的测试文件 + 同目录/同 SUT 旁既有测；若改了被 L3 消费的 mapper/客户端/编排且仓库有对应 `test/integration`（或等价），一并带上。禁止只跑 `--testNamePattern` 单条就交付。
+- **全量闸：** 由项目 stop hook 在回合完成时跑包内 `yarn test` / `vitest run`（脚本可能设 `SKIP_LIVE` 以免可选 live 挡闸）；窄跑不能代替该闸。
 
 ## 与主文冲突时
 

@@ -1,0 +1,31 @@
+{
+  "ticketId": "v2-vertical-slice-1",
+  "agent": "v2_vertical_slice_main",
+  "status": "blocked",
+  "progress": 90,
+  "summary": "v2 第一条纵向切片已部署到 CloudBase 测试库：v2-plant-knowledge 公开读取云端 200/404/400 验收通过；v2-user-plant 云端拒绝路径验收通过；已认证正常路径因微信网关身份 Provider 为 BLOCKED_ENV 未覆盖；测试库 11 个不可变触发器待经直连通道补建。",
+  "clickup": "CLICKUP_BLOCKED：本切片无对应 ClickUp ticket，未回写远端。",
+  "verified": [
+    "unit_fake：路由分发 6、数据库配置 5、getPublishedPlant 9、getUserPlant 路由 17 项通过；快速路径反事实 RED 已执行并恢复（源码 SHA-256 回读一致）",
+    "unit_real_data：MySQL 8.4 全量 v2 DDL + 仅 DML 应用账号下，getPublishedPlant 6 项、getUserPlant HTTP 6 项通过（含过期/撤销会话 401、他人植物 404、无遗留连接）",
+    "npm run build 产出 dist/functions/plant-knowledge 与 dist/functions/user-plant，部署包不含 src/test/开发依赖；P0 构建门禁 pass",
+    "qinghuazhi_v2_test：103 张表建成，183 个外键列全部指向测试库；v1 库 cloud1-2grufevs395a9d5e 与 cloud1_dev 表数与表名哈希前后一致；执行日志 docs/backend-v2/audits/cloudbase-v2-test-schema-apply-2026-09-24.json",
+    "应用账号 qhz_v2_app 回读授权仅为 qinghuazhi_v2_test.* 的 SELECT, INSERT, UPDATE, DELETE",
+    "两个函数回读：Active、Nodejs22.21、VPC vpc-oq2xmdvo / subnet-9hg8hmpn、V2_MYSQL_* 五个键存在；网关路由 WEB_SCF + 路径透传",
+    "e2e_real_api v2-plant-knowledge：已发布夹具 200 且响应为 5 字段 DTO；未发布引用 404；非法引用 400；POST 405",
+    "e2e_real_api v2-user-plant：缺凭证、伪造 Bearer、伪造 x-wx-openid/x-cloudbase-context、Basic 方案、非法引用均 401 PRINCIPAL_INVALID；POST 405",
+    "云端函数日志抽查（tcb fn log 近期窗口）不含数据库密码、伪造 OpenID 与伪造 Bearer"
+  ],
+  "unverified": [
+    "已认证正常路径的云端验收（Provider BLOCKED_ENV）",
+    "测试库 11 个不可变触发器（tcb db execute 预处理协议不支持 CREATE TRIGGER，错误 1295）",
+    "云端 MySQL 8.0.30-cynos 与本地 MySQL 8.4 在触发器与写路径上的差异",
+    "函数日志全量扫描（tcb fn log 仅返回近期少量条目）"
+  ],
+  "blockers": [
+    "BLOCKED_ENV：CloudBase 官方文档未证实 HTTP 云函数注入的微信身份头可信且不可伪造，生产入口默认拒绝全部已认证请求",
+    "BLOCKED_ENV：测试库触发器需经 TDSQL-C 控制台 SQL 窗口或其他直连通道补建"
+  ],
+  "nextStep": "补建测试库触发器；取得可信平台身份 Provider 证据后接入并完成已认证正常路径云端验收。",
+  "updatedAt": "2026-09-25T00:20:00+08:00"
+}

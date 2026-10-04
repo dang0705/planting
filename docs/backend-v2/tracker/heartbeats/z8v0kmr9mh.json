@@ -1,10 +1,10 @@
 {
   "ticketId": "z8v0kmr9mh",
-  "agent": "root",
-  "model": "gpt-5",
+  "agent": "p2_subscription_quota_gpt6",
+  "model": "gpt-6-luna-max",
   "status": "in_progress",
-  "progress": 20,
-  "summary": "订阅核心实现已启动。额度分摊 DDL 守恒矛盾已修复并通过真实 MySQL 8.4；最早到期优先、能力范围、开区间失效和余额不足无半分摊的纯领域计划也已完成。Repository、并发预占和账本事务尚未实现。",
+  "progress": 86,
+  "summary": "订阅核心实现进行中。额度分摊、Repository 预占、真实 MySQL 并发预占、结算/释放、提交结果未知安全路径、新连接只读对账及 TTL 到期待对账已形成可验证闭环。奖励 inbox 已补真实 MySQL 应用级跨用户业务键碰撞失败关闭，以及同用户同业务键异参冲突；待对账额度现支持 `release_no_call` 与结算终态的精确同证据重放，异证据/异金额失败关闭，且无重复账本副作用。新增 TTL 并发合同验证；真实 TCP COMMIT 中断仍需 Foundation 生产驱动；HTTP、Provider/CloudBase 仍未验证。",
   "blockers": [],
   "verified": [
     "静态合同测试先行进入 RED：旧 DDL 缺少 remaining_amount，无法满足完整预占守恒 Expected。",
@@ -12,12 +12,35 @@
     "隔离 MySQL 8.4 已验证初态 10=10+0+0 可插入、非法 10!=5+3+1 被 CHECK 拒绝、终态 10=0+7+3 可读回。",
     "订阅语义、合同登记册、DDL manifest、类型检查和目标测试均通过。",
     "纯领域分摊按失效时间、发放时间和批次引用稳定排序；不足时 allocations 固定为空，4/4 测试通过。",
-    "将失效开区间错误突变为闭区间后边界测试 RED，恢复后 GREEN。"
+    "将失效开区间错误突变为闭区间后边界测试 RED，恢复后 GREEN。",
+    "额度 Repository 已拆为类型/校验/MySQL 编排/单批次写入四个文件，均低于 500 行。",
+    "应用用例已锁定账户、读回幂等记录、锁定批次、执行领域分摊并原子写入；额度不足保持零写入，Repository 失败可回滚。",
+    "定向订阅测试 10/10、全量 39 files/214 tests、typecheck、lint 0 errors 和 build 均通过；账户版本谓词与重放分支变异均成功转红后恢复。",
+    "commit 4a319bdc 新增真实 MySQL 8.4、v2 DDL 和 mysql2 双连接并发测试：全部 MySQL 套件 3 files/6 tests 通过；两个不同幂等键同时预占同一账户时仅一个完整预占、另一个额度不足，同键随后重放同一 reservation。",
+    "并发读回为 account available=2/reserved=8/version=2；两个 grant 按最早到期分摊 5+3 且 status=partially_used；reservation=1、allocation=2、reserve ledger=2。",
+    "commit c98ae476 完成 AI 额度结算、释放和超额待对账闭环；42 个单元/合同文件 226 项测试、3 个真实 MySQL 文件 6 项测试、typecheck 与目标 lint 均通过。",
+    "变异测试可拦截等额结算误判，证明结算差额与待对账分支不是仅靠正向样例放行。",
+    "commit 052a5606 接入提交结果未知的应用安全路径：旧事务不回滚、不自动重跑；只读对账纯逻辑及预占/结算应用接线已通过 43 个测试文件、237 条测试，typecheck、目标 lint 通过。",
+    "commit e240c0e5 实现提交未知新连接 MySQL 只读 Repository：44 个单元/合同文件 240 项测试、4 个真实 MySQL 文件 7 项测试、typecheck 与目标 lint 通过。真实测试关闭旧写连接，使用不同连接标识及仅 SELECT 权限账号读回；写入被拒绝，跨用户读为空。",
+    "归属 SQL 负向变异使真实测试先 RED，恢复后 GREEN，证明新连接只读对账不会越权读取其他用户数据。",
+    "commit 5ca9872f 完成待对账最终证据裁决：45 个 unit/合同文件 244 项测试、4 个真实 MySQL 文件 7 项测试、typecheck 与目标 lint 通过。",
+    "真实 MySQL 证明 pending_reconciliation→settled；用户最多结算原预占 4，账户/批次/allocation/settle ledger 守恒并保留平台差额 1600；release_no_call 单元路径全量释放，普通 reserved 不可绕过；源状态 SQL 故意改错先 RED、恢复 GREEN。",
+    "commit 5be65c9f 完成闭环预占到期待对账：全量单测 48 files/252 tests、MySQL 4 files/8 tests、typecheck 通过；target/full oxlint 0 errors，仓库既有 no-magic-numbers warnings 不计入本切片失败。",
+    "真实 MySQL 证明 TTL 边界首次扫描只写入 pending_reconciliation 与 reservation_ttl_expired；二次扫描零写入，账户/grant/ledger 保持不变；最终证据支持部分结算并释放余额。",
+    "新增真实 MySQL 应用闭环测试：预占事务真实提交后注入 DatabaseCommitResultUnknownError；不同连接的只读 Repository 按用户、动作、幂等键及请求摘要读回原预占，应用返回同一 reservation，未触发回滚，reservation 和 reserve ledger 各一条，账户/grant 均为 available=6、reserved=4。普通 Error 反事实使该用例 RED；恢复后 MySQL 1/1、typecheck、格式和目标 oxlint 通过。",
+    "独立 Expected 来源：P2 订阅票据的用户归属/跨用户隔离与公开响应脱敏验收；reward-events/v1 的业务唯一键去重、subscription inbox 幂等合同。新增 unit_real_data / MySQL 8.4 应用级测试：用户 A 的事件已入账后，用户 B 以不同 eventId 碰撞同一 businessUniqueKey 必须以 INTERNAL_DATA_INVALID 失败关闭，不得返回 A 的 resultRef；A 仍为 35 积分、1 条账本，B 保持 30 积分、0 条账本/奖励额度，B 不新增 inbox。",
+    "跨用户碰撞用例先于产品改动运行并 RED：当前实现错误返回 { kind: 'replayed', status: 'applied', resultRef: A 的 cpl 引用 }；修复后 RED 语义反写再次命中同一错误并失败，完整写回保护后目标用例 GREEN。完整奖励 inbox MySQL 文件 6/6、相关订阅单元/Repository 文件 10/10、typecheck 通过；目标 oxlint 0 errors（仅相邻既有 no-magic-numbers warnings）、目标格式检查通过。",
+    "Expected 来源：P2 订阅票据的同键异参冲突要求及 reward-events/v1 不可变事件合同。真实 MySQL 8.4 应用级用例覆盖同 user/businessUniqueKey、不同 eventId 并分别改写 payloadHash 与 occurrenceRef；改动前两例均错误重放首次 cpl 结果而 RED。最小修复在 subscription inbox 比对同业务事实字段后以 IDEMPOTENCY_CONFLICT 失败关闭；payload/occurrence 两例 GREEN，均读回只有一条 inbox/积分账本/等级奖励/AI grant 及其账本，余额仍为首次奖励结果。",
+    "执行反写：临时移除同业务事实一致性保护后，上述两个真实 MySQL 应用用例再次 RED，错误返回既有 resultRef；恢复保护后奖励 inbox MySQL 文件 8/8、相关订阅单元/Repository 文件 10/10、typecheck、目标 oxlint（0 errors；保留相邻既有 no-magic-numbers warning）、oxfmt --check、git diff --check 全部通过。",
+    "独立 Expected 来源：`docs/backend-v2/data/state-machines.md` §5 的 TTL 只转待对账且不得释放/改分摊/写账本规则，以及 P2 subscription 票据的并发不重复扣减和持久化读回验收。新增 L3 `unit_real_data` 测试使用两条真实 MySQL 8.4 事务连接，在真实 TTL SELECT 后设置屏障；双 worker 至多一条待对账结果，失败方仅允许零结果或乐观锁 WRITE_CONFLICT，reservation 持久化为 pending_reconciliation，账户/grant/allocation/ledger 均不变化。MySQL 文件 3/3、相关 TTL 单元/Repository 文件 8/8、目标 oxlint、oxfmt --check、git diff --check 通过。全包 typecheck 当前被并行中的 identity 配置模块缺失和 user-plant Fake 缺 getOwnedUserPlant 阻断，未发现本测试文件错误。",
+    "执行反写：临时移除 TTL SELECT 行锁并将 pending UPDATE 的并发条件改为无约束真值后，新增真实 MySQL 并发用例 RED（两个扫描器均返回 pendingCount=1）；完整恢复后目标 MySQL 文件 3/3 再绿。`mysql-ai-quota-expiry-repository.ts` 探针前后 SHA-256 均为 `563e12654cc76a445979b80d73f0fc3eeb4613f443b7cd8f4abea2eb075cbd89`，恢复后该源码无 diff。",
+    "Expected 来源：`docs/backend-v2/implementation/subscription-ai-quota.md` 终态同证据安全重放/异证据冲突，以及 `docs/backend-v2/audits/P1-subscription-semantics-2026-09-20.md` §2.2/§2.3 的同命令幂等和仅最终证据释放规则。先新增单元与独立 MySQL 应用级场景；修改前 exact `release_no_call` 和 settled 终态 replay 单测 2 项 RED。最小修复只读比较已锁定终态的证据引用、金额、实际成本与平台差额：同参返回既有结果，不重新锁分摊或写账本；异参返回 SETTLEMENT_CONFLICT；`pending_reconciliation` 只进入首次裁决、不会被误作成功终态。目标 MySQL 8.4 `subscription-pending-release.mysql.spec.ts` 1/1，单元 7/7，目标 TypeScript 检查、oxlint 0 警告、oxfmt --check、git diff --check 通过。反向突变将 released 状态判定取反后，单元同证据 replay 与真实 MySQL 应用 replay 均 RED；恢复后源文件 SHA-256 前后均为 `5ffcd069a9f0ad67b08251c0e99a5ba13f00ca80b125846b86806418e6987257`，目标测试重新通过。只完成本地真实 MySQL 证据，不代表 CloudBase/Provider/HTTP 验收。"
   ],
   "unverified": [
-    "subscription Repository、稳定额度批次锁顺序、跨批次预占、结算、释放和不可变账本尚未实现。",
-    "并发、事务回滚、提交结果未知、CloudBase MySQL、HTTP 与真实 Provider 调用尚未验证。"
+    "本机 MySQL 测试适配器已覆盖业务应用与 DDL，但 cloudfunctions-v2/src/foundation/database 目前只有通用事务驱动接口、没有生产 MySQL 驱动实现；真实 TCP COMMIT 中断需等待 foundation 真实驱动后再验证，不能用测试代理冒充产品路径。",
+    "HTTP 合同、真实 Provider/CloudBase 留给后续 P5；subscription.ai_reservation.ttl_seconds 仍为 P3 pending，冻结前不得开放真实模型消费。首版积分、等级与兑换运行延后，不开用户积分入口。",
+    "本切片全包 TypeScript 检查未通过，失败均来自并行中其他域文件：缺少 `src/configuration/identity-session-policy.js` 实现模块，以及 user-plant Fake 未提供新增 `getOwnedUserPlant`；须在相关代理合并到共享工作区后重跑全包检查。"
   ],
-  "updatedAt": "2026-09-20T22:15:00+08:00",
-  "next": "以 TDD 实现额度批次的稳定锁定与单事务预占 Repository，把纯领域分摊一次性应用到 grant、reservation、allocation、account 和 ledger。"
+  "updatedAt": "2026-09-24T09:21:42+08:00",
+  "next": "等待主代理裁定下一条独立 subscription 切片；已上报 identity 用户创建事件与 24 小时试用即时激活语义的合同缺口，不跨域修改 identity、事件合同或 DDL。真实 TCP、HTTP、Provider/CloudBase 和 TTL 配置冻结仍属于后续责任阶段，禁止将未来阶段误记为当前票据阻断或提前标记 review/done。"
 }

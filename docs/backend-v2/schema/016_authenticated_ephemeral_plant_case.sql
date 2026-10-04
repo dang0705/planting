@@ -1,0 +1,73 @@
+-- 已登录用户主动临时使用的单株案例；与游客 guest_plant_cases 分表，避免混用匿名 proof 与 UserPrincipal。
+
+CREATE TABLE `authenticated_ephemeral_plant_cases` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '已登录临时植物案例内部主键',
+  `_openid` VARCHAR(64) NOT NULL DEFAULT '' COMMENT 'CloudBase 技术兼容字段，服务端表固定为空，不作为用户归属',
+  `ephemeral_plant_case_ref` VARCHAR(64) NOT NULL COMMENT '高熵单株临时案例公开引用',
+  `user_internal_id` BIGINT UNSIGNED NOT NULL COMMENT '创建并持有本临时案例的统一用户',
+  `status` VARCHAR(24) NOT NULL COMMENT '状态：active、completed、failed、expired、bound',
+  `completed_at_ms` BIGINT UNSIGNED NULL COMMENT '案例完成时间，UTC 毫秒',
+  `expires_at_ms` BIGINT UNSIGNED NOT NULL COMMENT '未绑定案例绝对失效时间，UTC 毫秒',
+  `bound_user_plant_internal_id` BIGINT UNSIGNED NULL COMMENT '显式绑定后的目标用户植物；仅为不可变绑定事实的当前投影',
+  `version` INT UNSIGNED NOT NULL DEFAULT 1 COMMENT '并发状态版本',
+  `created_at_ms` BIGINT UNSIGNED NOT NULL COMMENT '创建时间，UTC 毫秒',
+  `updated_at_ms` BIGINT UNSIGNED NOT NULL COMMENT '更新时间，UTC 毫秒',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_authenticated_ephemeral_case_ref` (`ephemeral_plant_case_ref`),
+  UNIQUE KEY `uq_authenticated_ephemeral_bound_projection` (`id`, `user_internal_id`, `bound_user_plant_internal_id`),
+  KEY `idx_authenticated_ephemeral_owner` (`user_internal_id`, `status`, `expires_at_ms`),
+  CONSTRAINT `ck_authenticated_ephemeral_status` CHECK (`status` IN ('active', 'completed', 'failed', 'expired', 'bound')),
+  CONSTRAINT `ck_authenticated_ephemeral_bound_projection` CHECK ((`status` = 'bound' AND `bound_user_plant_internal_id` IS NOT NULL) OR (`status` <> 'bound' AND `bound_user_plant_internal_id` IS NULL)),
+  CONSTRAINT `ck_authenticated_ephemeral_time` CHECK (`expires_at_ms` > `created_at_ms` AND `updated_at_ms` >= `created_at_ms`),
+  CONSTRAINT `fk_authenticated_ephemeral_user` FOREIGN KEY (`user_internal_id`) REFERENCES `users` (`id`),
+  CONSTRAINT `fk_authenticated_ephemeral_bound_plant` FOREIGN KEY (`user_internal_id`, `bound_user_plant_internal_id`) REFERENCES `user_plants` (`user_internal_id`, `id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='青花植 v2 已登录用户主动临时植物案例';
+
+CREATE TABLE `authenticated_ephemeral_promotion_commands` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '已登录临时案例绑定命令内部主键',
+  `_openid` VARCHAR(64) NOT NULL DEFAULT '' COMMENT 'CloudBase 技术兼容字段，服务端表固定为空，不作为用户归属',
+  `promotion_ref` VARCHAR(64) NOT NULL COMMENT '高熵绑定命令公开引用',
+  `authenticated_ephemeral_case_internal_id` BIGINT UNSIGNED NOT NULL COMMENT '待绑定的已登录临时案例',
+  `user_internal_id` BIGINT UNSIGNED NOT NULL COMMENT '执行绑定的统一用户',
+  `target_type` VARCHAR(32) NOT NULL COMMENT '目标：new_user_plant、existing_user_plant',
+  `requested_user_plant_internal_id` BIGINT UNSIGNED NULL COMMENT '选择已有植物时的请求目标',
+  `target_user_plant_internal_id` BIGINT UNSIGNED NULL COMMENT '绑定成功后的目标用户植物',
+  `idempotency_key` VARCHAR(128) NOT NULL COMMENT '规范化幂等键',
+  `request_hash` CHAR(64) NOT NULL COMMENT '规范化请求 SHA-256，同键异参冲突',
+  `status` VARCHAR(24) NOT NULL COMMENT '状态：requested、processing、completed、failed',
+  `failure_code` VARCHAR(64) NULL COMMENT '脱敏失败代码',
+  `created_at_ms` BIGINT UNSIGNED NOT NULL COMMENT '创建时间，UTC 毫秒',
+  `updated_at_ms` BIGINT UNSIGNED NOT NULL COMMENT '更新时间，UTC 毫秒',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_authenticated_ephemeral_promotion_ref` (`promotion_ref`),
+  UNIQUE KEY `uq_authenticated_ephemeral_promotion_idempotency` (`user_internal_id`, `authenticated_ephemeral_case_internal_id`, `idempotency_key`),
+  UNIQUE KEY `uq_authenticated_ephemeral_promotion_success_link` (`id`, `authenticated_ephemeral_case_internal_id`, `user_internal_id`, `target_user_plant_internal_id`),
+  KEY `idx_authenticated_ephemeral_promotion_status` (`status`, `updated_at_ms`),
+  CONSTRAINT `ck_authenticated_ephemeral_promotion_status` CHECK (`status` IN ('requested', 'processing', 'completed', 'failed')),
+  CONSTRAINT `ck_authenticated_ephemeral_promotion_target` CHECK (`target_type` IN ('new_user_plant', 'existing_user_plant')),
+  CONSTRAINT `ck_authenticated_ephemeral_requested_target` CHECK ((`target_type` = 'new_user_plant' AND `requested_user_plant_internal_id` IS NULL) OR (`target_type` = 'existing_user_plant' AND `requested_user_plant_internal_id` IS NOT NULL)),
+  CONSTRAINT `ck_authenticated_ephemeral_completed_target` CHECK ((`status` = 'completed' AND `target_user_plant_internal_id` IS NOT NULL AND `failure_code` IS NULL) OR (`status` <> 'completed' AND `target_user_plant_internal_id` IS NULL)),
+  CONSTRAINT `ck_authenticated_ephemeral_failure` CHECK ((`status` = 'failed' AND `failure_code` IS NOT NULL) OR (`status` <> 'failed' AND `failure_code` IS NULL)),
+  CONSTRAINT `fk_authenticated_ephemeral_promotion_case` FOREIGN KEY (`authenticated_ephemeral_case_internal_id`) REFERENCES `authenticated_ephemeral_plant_cases` (`id`),
+  CONSTRAINT `fk_authenticated_ephemeral_promotion_user` FOREIGN KEY (`user_internal_id`) REFERENCES `users` (`id`),
+  CONSTRAINT `fk_authenticated_ephemeral_promotion_requested_plant` FOREIGN KEY (`user_internal_id`, `requested_user_plant_internal_id`) REFERENCES `user_plants` (`user_internal_id`, `id`),
+  CONSTRAINT `fk_authenticated_ephemeral_promotion_target_plant` FOREIGN KEY (`user_internal_id`, `target_user_plant_internal_id`) REFERENCES `user_plants` (`user_internal_id`, `id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='青花植 v2 已登录临时案例幂等绑定命令';
+
+CREATE TABLE `authenticated_ephemeral_case_bindings` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '已登录临时案例成功绑定事实内部主键',
+  `_openid` VARCHAR(64) NOT NULL DEFAULT '' COMMENT 'CloudBase 技术兼容字段，服务端表固定为空，不作为用户归属',
+  `authenticated_ephemeral_case_internal_id` BIGINT UNSIGNED NOT NULL COMMENT '已成功绑定的临时案例；每个案例最多一条',
+  `promotion_command_internal_id` BIGINT UNSIGNED NOT NULL COMMENT '产生本成功事实的绑定命令',
+  `user_internal_id` BIGINT UNSIGNED NOT NULL COMMENT '绑定统一用户',
+  `user_plant_internal_id` BIGINT UNSIGNED NOT NULL COMMENT '绑定目标用户植物',
+  `bound_at_ms` BIGINT UNSIGNED NOT NULL COMMENT '事务提交时间，UTC 毫秒',
+  `created_at_ms` BIGINT UNSIGNED NOT NULL COMMENT '创建时间，UTC 毫秒',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_authenticated_ephemeral_case_bound_once` (`authenticated_ephemeral_case_internal_id`),
+  UNIQUE KEY `uq_authenticated_ephemeral_promotion_command` (`promotion_command_internal_id`),
+  CONSTRAINT `fk_authenticated_ephemeral_binding_case` FOREIGN KEY (`authenticated_ephemeral_case_internal_id`) REFERENCES `authenticated_ephemeral_plant_cases` (`id`),
+  CONSTRAINT `fk_authenticated_ephemeral_binding_command` FOREIGN KEY (`promotion_command_internal_id`, `authenticated_ephemeral_case_internal_id`, `user_internal_id`, `user_plant_internal_id`) REFERENCES `authenticated_ephemeral_promotion_commands` (`id`, `authenticated_ephemeral_case_internal_id`, `user_internal_id`, `target_user_plant_internal_id`),
+  CONSTRAINT `fk_authenticated_ephemeral_binding_projection` FOREIGN KEY (`authenticated_ephemeral_case_internal_id`, `user_internal_id`, `user_plant_internal_id`) REFERENCES `authenticated_ephemeral_plant_cases` (`id`, `user_internal_id`, `bound_user_plant_internal_id`),
+  CONSTRAINT `fk_authenticated_ephemeral_binding_plant` FOREIGN KEY (`user_internal_id`, `user_plant_internal_id`) REFERENCES `user_plants` (`user_internal_id`, `id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='青花植 v2 已登录临时案例唯一不可变成功绑定事实';

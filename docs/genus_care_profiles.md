@@ -1,0 +1,2 @@
+| genus\_care\_profile\_id | \_openid | genus\_name | family\_name\_canonical | family\_name\_cn | family\_name\_en | genus\_id | genus\_identity\_id | plant\_category | watering\_strategy\_json | fertilizing\_strategy\_json | light\_strategy\_json | airflow\_strategy\_json | temp\_min\_c | temp\_max\_c | humidity\_min | humidity\_max | toxicity\_level | review\_status | source\_evidence | baseline\_note | evidence\_level | evidence\_strategy | data\_source | version | is\_active | created\_at | updated\_at | retired\_at | replacement\_profile\_id |
+

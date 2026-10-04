@@ -1,0 +1,14 @@
+{
+  "appPackage": "",
+  "productRoots": ["cloudfunctions-v2/"],
+  "skipListFile": "test-exclude.json",
+  "testFirstBypassFile": "test-first-bypass.json",
+  "gateControlFiles": ["vitest.config.mts"],
+  "importAliases": {
+    "@cloud/": "cloudfunctions-v2/"
+  },
+  "candidatePackages": ["packages", "apps"],
+  "codeExtensions": [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".vue"],
+  "tddEnforcement": true,
+  "testCommands": {}
+}

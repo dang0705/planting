@@ -1,16 +1,17 @@
 {
   "ticketId": "z8v0kmr9gm",
-  "agent": "root + p1_taxonomy_ddl_close_terra + p1_taxonomy_authority_pipeline_terra",
-  "model": "root + gpt-5.6-terra / medium-high",
+  "agent": "tropicals_admission_gpt6",
+  "model": "gpt-6-luna / max；主代理验收",
   "status": "codex_running",
-  "progress": 95,
-  "summary": "产品负责人已明确确认完整人工审核结论：200 条候选最终为 REUSE_AS_IS=99、TRANSFORM=7、TRANSFORM_PENDING=4、QUARANTINE=90，当前 seedEligible=106。主代理已回读审批制品、seed manifest 和 SHA-256，人工审批门已闭环；整票仍因 4 条待转换身份和未激活发布继续执行。",
+  "progress": null,
+  "allowRegression": true,
+  "summary": "P1 首版推进 106 条已获人工许可的本地种子候选逐条证据与隔离准入；29、73、98、123 四条独立隔离，不再阻断 106 条。106 条尚未获得正式准入，active release 保持 STOP。旧 95% 缺少与新首版验收项对应的可复算依据，本轮暂停百分比上报。",
   "blockers": [],
   "unverified": [
-    "4 条 TRANSFORM_PENDING 仍不得进入 seed；它们的 canonical、稳定 ID、identity_level、父链与证据哈希尚未完成重建和再次复核。",
-    "CloudBase MySQL 兼容性、运行时 API 隔离与实际 active release 切换属于后续环境门；当前 active release=STOP。"
+    "29 已有逐记录的 WCVP/WFO 候选证据包和离线机器回放，但负责人尚未确认分类与规范中文展示名，不能批准进入 seed/active；稳定 authority key 与公开不透明引用仍须按批准后的重建合同处理。",
+    "73、98 的逐记录证据与人工裁决仍未收口；123 的分类来源证据已可回放，但源记录‘绯牡丹’对应的实际身份、跨来源冲突裁决及规范中文展示名仍待负责人决定。网页/PDF 原始快照仍在本机 /tmp，未作为受治理证据制品归档；负向 IAS 页面检索不证明 Silver Queen 未登记。"
   ],
-  "updatedAt": "2026-09-20T16:12:54+08:00",
+  "updatedAt": "2026-09-27T16:27:03+08:00",
   "verified": [
     "固定版本 WCVP/WFO 官方制品真实回放：200 条、WCVP 精确匹配 179、WFO 科/属/种交叉核对 158；自动匹配与栽培品种均未直接放行。",
     "人工裁决已落盘并核对为 REUSE_AS_IS=99、TRANSFORM=7、TRANSFORM_PENDING=4、QUARANTINE=90；seedEligible=106。",
@@ -18,7 +19,17 @@
     "人工审核结论文件、结构化审批包、approval record、seed manifest 及各自 SHA-256 sidecar 已回读验收。",
     "两组独立反向审计分别覆盖前、后 100 条中的 60 个非隔离建议，合计 120/120 通过，未发现误放行；原 Luna usage limit 已由 Terra 重试和主代理程序化复核排除。",
     "最终人工审核文件完整列出 99 条原样复用、7 条转换、4 条待转换和 90 条隔离明细；不得将 4 条待转换计入 seed。",
-    "Node.js 22 全量 17 个文件、68 个测试通过；lint 为 0 error，54 条 warning 为仓库既有 warning。"
+    "Node.js 22 全量 17 个文件、68 个测试通过；lint 为 0 error，54 条 warning 为仓库既有 warning。",
+    "2026-09-24 完成 29/73/98/123 官方来源只读盘点并新增 docs/backend-v2/audits/P1-taxonomy-transform-pending-evidence-candidates-2026-09-24.md；明确证据候选与缺口，未改审批、manifest、seed 或激活状态。",
+    "Kew POWO 当前分别将 Gymnocalycium mihanovichii 与 G. stenopleurum 列为 accepted species；WCVP 2026-06 也分别列为 accepted，只有部分 mihanovichii varieties 指向 stenopleurum，因此旧种本身不可据此作为目标种的 synonym。",
+    "ISHS 当前登记目录将 Aglaonema 对应 IAS；IAS 搜索、legacy 页面和公开动态 sitemap 未提供 Silver Queen 的精确记录，但不足以证明不存在；RHS profile 704 标为 Synonym。",
+    "Chen 等 2004 年同行评审研究将 Silver Queen 描述为 A. commutatum 'Treubii' × A. nitidum 'Curtisii' 种间杂交；IAS 规则允许种间杂交后形成 cultivar，提示单一物种父级假设需先复核。",
+    "98 的 RHS Myersii 植物页原始 HTML SHA-256 5c47b30a53c174216f594f001ecb7785ea6153c34e5c02105ae8e2fc497b9ee4，2024 AGM PDF SHA-256 0b709b30a9a8639b1bd7da41db198225547adec2cee3dc1fc294857bcf2891a4，iPlant HTML SHA-256 7f5ecc8241698dbf92b78e3a797d54231575d18e81f9dece9eb9692851eac172；均仅证明名称/园艺候选用途，非 ICRA 登记。",
+    "候选报告已补齐 123 的精确来源行与 SHA-256 b8d5e715f08baaccf1e6c693a0f430b7c8e4c884c02ea0bbe9677654ff001b35，并列出保留两个接受种、重建来源映射或继续隔离的可执行裁决选项；未修改审批、manifest、seed 或激活状态。",
+    "记录29新增候选证据包与离线只读回放器；按锁定 WCVP/WFO 官方发布包重取并全量验证 ZIP、表格、WCVP EML、Zenodo 2026-06 当前 API 响应 SHA、许可/版本字段、科→属→种→亚种父链和异名排除；WCVP逐记录 SHA 统一为 CRLF→LF 规范化后追加一个 LF，旧 CRLF 原始行 SHA 不得混用。Zenodo旧审计 API SHA 74474a9e17d7fc1d8ea0fdd8ab346d13451e8fd2ed96b17514fa506d45d250bc 无原始响应字节可重放；当前同一 API 连续两次响应 SHA 为 84a08ce713c073649deba8d155ef40b75600cb9ee2f13d2417ba019af1269662，当前记录号/许可/版本标题/包名/大小/MD5与锁定发布相符；差异只影响旧元数据响应字节的可追溯性，不改变分类包和表哈希，也不改变候选分类结论。P1 29 Vitest 3/3、单文件 oxlint 0 error/0 warning、node --check 与 JSON parse 通过；完整 taxonomy 官方数据回放 PASS，中文展示名仍 PENDING_OWNER_SELECTION，mayEnterSeed=false，mayActivate=false，未改人工审批、seed、manifest、active、ClickUp或提交 Git。",
+    "记录123新增 123-gymnocalycium-species-candidates.json 与 replay-123-gymnocalycium.mjs；WCVP CC BY 3.0、WFO CC0 的官方 2026-06 包/元数据/表/逐记录 SHA 均经真实源重取并与锁定值一致，完整包回放 PASS。结果分别保留 WCVP 两接受种、WFO mihanovichii 接受实体和 stenopleurum→friedrichii 异名边；没有来源业务身份映射，中文名 PENDING_OWNER_SELECTION，mayEnterSeed=false、mayActivate=false。记录123 Vitest 6/6、目标 spec oxlint 0 warning/0 error、全量 typecheck GREEN；未改审批、seed、manifest、active、ClickUp 或提交 Git。整包 Vitest 463/466，余 3 项失败来自其他代理的 P1 合同哈希与诊断结果合同测试，本代理未触碰相关文件。",
+    "106 条本地种子候选已有 WCVP 身份键与旧 CSV 行哈希，但可回放的逐条官方原始记录、独立复核的等级和父链证据均为 0/106；因此尚无正式准入或发布依据。",
+    "2026-09-27 复用已登录的 ClickUp 标签页更新该票，并在任务详情回读 CODEX RUNNING 与状态变更记录；四条争议记录不再阻断其余 106 条候选的 P1 核验。"
   ],
-  "next": "按已冻结的四条转换目标重建 29、73、98、123 的分类身份制品，逐条完成机器校验与人工复核；仅在通过后将 seedEligible 提升到 110，再执行空库导入、隔离读回和 active release 独立验收。"
+  "next": "补齐 106 条候选的逐条权威来源、等级和父链可回放证据，形成可准入或继续隔离清单；四条争议记录按独立后续批次处理。P1 未完成前不改 seed、manifest 或 active；P2 另行验收数据库导入和发布。专职 keeper 待 ClickUp MCP 限额恢复后更新 29 票全量快照。"
 }

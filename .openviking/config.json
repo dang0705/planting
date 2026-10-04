@@ -2,5 +2,8 @@
   "version": 1,
   "peer": {
     "id": "planting"
+  },
+  "recall": {
+    "peer_scope": "actor"
   }
 }

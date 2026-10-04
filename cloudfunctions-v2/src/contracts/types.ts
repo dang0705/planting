@@ -186,6 +186,20 @@ export const USER_PLANT_INITIAL_VERSION = 1 as const;
  */
 export type CreateUserPlantRequestDto = Record<string, never>;
 
+/** 首次平台凭证换取青花植会话的严格登录请求。 */
+export type CreateIdentitySessionRequestDto = {
+  /** 微信 `wx.login` 返回的一次性短时凭证；不得换成 OpenID、AppID 或客户端提交的应用范围。 */
+  code: string;
+};
+
+/** 微信登录首次成功响应中唯一允许披露的会话数据。 */
+export type CreateIdentitySessionResponseDto = {
+  /** 青花植自签的高熵不透明 Bearer；只在本次首次成功响应披露，任何存储只保留其摘要。 */
+  accessToken: string;
+  /** 会话绝对失效时刻，使用带 Z 的 ISO 8601 UTC 字符串；服务端不得静默延长。 */
+  expiresAt: string;
+};
+
 /** 登录用户明确加入花园后返回的新建用户植物初始公开投影。 */
 export type CreateUserPlantResponseDto = {
   /** 服务端生成的高熵用户植物公开引用；不是数据库 BIGINT 内部主键。 */

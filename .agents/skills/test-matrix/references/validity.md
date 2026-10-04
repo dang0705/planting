@@ -31,7 +31,7 @@
 
 1. **量。** 跑覆盖，写下当前%、exclude、按文件/职责的 miss。miss 是候选，不是许可改产品。
 2. **选。** 排序：有外部真相源或适用 common scene、且职责用户可观察 → 再按 miss。禁止优先「最好刷绿的行」，禁止从 miss 行发明 Expected。无独立职责的死代码 / 已被 Happy 蕴含的 early-return → 计入安全上限，**不编造 Edge**。
-3. **写。** 满足 [truth-sources.md](truth-sources.md)、`SKILL.md` §0、§2.1 + [test-integrity.md](test-integrity.md) §0–§4；执行顺序自决。硬锁独立 Expected 与产品冲突 = A → 确认卡 + `product-safety.md` 闸门 2（Classic 或 Fast Path）。禁止无独立 Expected / 无 RED 证据改产品凑绿，禁止改 Expected 吞 A，禁止把钉现状写成水位完成。
+3. **写。** 满足 [truth-sources.md](truth-sources.md)、`SKILL.md` §0、§2.1 + [test-integrity.md](test-integrity.md) §0–§4；执行顺序自决。硬锁独立 Expected 与产品冲突 = A → 写入授权 + `product-safety.md` 闸门 2（Classic 或 Fast Path）。禁止无独立 Expected / 无 RED 证据改产品凑绿，禁止改 Expected 吞 A，禁止把钉现状写成水位完成。
 4. **再量。** 记录新水位。重复 2–4。
 5. **封顶。** 剩余 miss 只能归为：壳未以合格 L2 挂载、死代码、已声明 exclude、须真机/e2e、再盖必须改接线。到此交**安全上限**，停止。
 
@@ -41,7 +41,7 @@
 
 报告数字时：必须写 exclude；不得暗示被排除层已测够。未到 X% 且闸门未破、安全上限已说明 = 本轮诚实完成。谎报已到 X%、或破闸门凑满 = 未完成。
 
-禁止：为水位 peel / 空挂载 smoke / 改 deps / 为 % 申请确认卡 / 非具名并行刷行。miss 在未执行的 page 上 → 写合格 L2，或接受该壳计入上限。把已测 helper wire 进从未挂载的 page 可能 covered↑、denom↑、**百分比回落**——这不是改接线的许可。
+禁止：为水位 peel / 空挂载 smoke / 改 deps / 为 % 申请写入授权 / 非具名并行刷行。miss 在未执行的 page 上 → 写合格 L2，或接受该壳计入上限。把已测 helper wire 进从未挂载的 page 可能 covered↑、denom↑、**百分比回落**——这不是改接线的许可。
 
 编排壳大波挂载后 A=0 很常见，不能当产品质量证明。A=0 先问探针是否打到可变语义。
 

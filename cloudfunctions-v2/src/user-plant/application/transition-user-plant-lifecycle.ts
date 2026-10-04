@@ -60,10 +60,21 @@ export type UserPlantLifecycleApplicationInput = {
 }
 
 /** 恢复用户植物的内部输入；恢复必须使用与主体一致的请求级能力快照重新核验上限。 */
-export type RestoreUserPlantApplicationInput = UserPlantLifecycleApplicationInput & {
-  /** subscription 域签发且归属同一统一用户的只读能力快照。 */
-  readonly capabilitySnapshot: UserCapabilitySnapshotDto
-}
+export type RestoreUserPlantApplicationInput = UserPlantLifecycleApplicationInput &
+  (
+    | {
+        /** 已验证的只读能力快照，供非 HTTP 调用方使用。 */
+        readonly capabilitySnapshot: UserCapabilitySnapshotDto
+        /** 已提供快照时禁止再传入读取器，避免同一命令含两个事实源。 */
+        readonly resolveCapabilitySnapshot?: never
+      }
+    | {
+        /** 首次执行时才读取快照；幂等重放不得因快照已撤下而失败。 */
+        readonly resolveCapabilitySnapshot: () => Promise<UserCapabilitySnapshotDto>
+        /** 已提供读取器时禁止再传入快照，避免双重能力裁决。 */
+        readonly capabilitySnapshot?: never
+      }
+  )
 
 /** 用户植物生命周期应用用例使用的明确 Foundation 与领域端口。 */
 export type UserPlantLifecycleApplicationDependencies<
@@ -172,9 +183,9 @@ async function completeVersionConflict<TTransaction extends TransactionExecution
  */
 function evaluateRestoreCapacity(
   input: RestoreUserPlantApplicationInput,
+  snapshot: UserCapabilitySnapshotDto,
   currentActiveCount: number
 ): HttpIdempotencyPublicResponseSnapshot | null {
-  const snapshot = input.capabilitySnapshot
   if (
     snapshot.subjectType !== 'user' ||
     snapshot.user_id !== input.principal.user_id ||
@@ -267,7 +278,10 @@ function createLifecycleTransitionService<
       input: TInput,
       current: LockedUserPlantLifecycle,
       preparedContext: TPreparedContext
-    ) => HttpIdempotencyPublicResponseSnapshot | null
+    ) =>
+      | HttpIdempotencyPublicResponseSnapshot
+      | null
+      | Promise<HttpIdempotencyPublicResponseSnapshot | null>
   }
 ): (input: TInput) => Promise<HttpIdempotencyPublicResponseSnapshot> {
   return async input => {
@@ -332,14 +346,13 @@ function createLifecycleTransitionService<
             )
           }
 
-          const preparationRejection =
-            preparation === undefined
-              ? null
-              : preparation.rejectAfterLifecycleRead(
-                  input,
-                  current,
-                  preparedContext as TPreparedContext
-                )
+          const preparationRejection = await (preparation === undefined
+            ? null
+            : preparation.rejectAfterLifecycleRead(
+                input,
+                current,
+                preparedContext as TPreparedContext
+              ))
           if (preparationRejection !== null) {
             return await completeFirstResponse(
               transaction,
@@ -452,7 +465,7 @@ export function createArchiveUserPlantApplicationService<
  *
  * @param dependencies 事务、共享幂等、归属锁定、CAS 与公开投影读回依赖。
  * @returns 接收认证层主体、请求级能力快照、公开用户植物引用和合同化版本号的内部恢复命令。
- * @remarks 在目标植物行锁之前先锁同一用户并读取 active 数量，与创建共用串行化边界；当前仍不接入公开 HTTP，恢复错误 DTO 尚待冻结。
+ * @remarks 幂等重放先返回首次结果；首次执行先锁用户、再确认目标归属，最后读取能力快照和裁决上限。
  */
 export function createRestoreUserPlantApplicationService<
   TTransaction extends TransactionExecutionContext
@@ -474,8 +487,12 @@ export function createRestoreUserPlantApplicationService<
         )
         return locked.activeCount
       },
-      rejectAfterLifecycleRead(input, _current, activeCount) {
-        return evaluateRestoreCapacity(input, activeCount)
+      async rejectAfterLifecycleRead(input, _current, activeCount) {
+        const snapshot = input.capabilitySnapshot ?? (await input.resolveCapabilitySnapshot?.())
+        if (snapshot === undefined) {
+          throw new UserPlantLifecycleApplicationError('恢复请求缺少服务端能力快照')
+        }
+        return evaluateRestoreCapacity(input, snapshot, activeCount)
       }
     }
   )

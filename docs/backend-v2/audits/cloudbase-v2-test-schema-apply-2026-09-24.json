@@ -1,0 +1,717 @@
+{
+  "envId": "cloud1-2grufevs395a9d5e",
+  "targetDatabase": "qinghuazhi_v2_test",
+  "manifestFiles": [
+    "001_identity.sql",
+    "002_plant_knowledge.sql",
+    "003_user_plant.sql",
+    "004_care_diagnosis.sql",
+    "007_configuration.sql",
+    "005_subscription.sql",
+    "006_reliable_events.sql",
+    "008_foundation.sql",
+    "009_diagnosis_knowledge.sql",
+    "010_diagnosis_review_revocations.sql",
+    "012_plant_encyclopedia_revision_immutability.sql",
+    "013_plant_encyclopedia_review_binding.sql",
+    "014_plant_knowledge_release_immutability.sql"
+  ],
+  "results": [
+    {
+      "file": "001_identity.sql",
+      "kind": "create_table",
+      "sha256": "5919fa5ef41f5602de9abf69ea8a2c647f946f5f2f2066ebe94a4e22f3ecce1d",
+      "status": "ok"
+    },
+    {
+      "file": "001_identity.sql",
+      "kind": "create_table",
+      "sha256": "cfcef992762ea18c4c5dd6b912e74699b9bcc0107b9edb32668814c8a02e38b6",
+      "status": "ok"
+    },
+    {
+      "file": "001_identity.sql",
+      "kind": "create_table",
+      "sha256": "298c0eaf2809ca5d5ec4688db991ec8d0cd2efadb5d274a1e0843b16a866f69a",
+      "status": "ok"
+    },
+    {
+      "file": "001_identity.sql",
+      "kind": "create_table",
+      "sha256": "9c5ae3c913735d0f7c4809e434b2453060ec4e75e342c4be43ea4c1664756aea",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "3a96e4ab7572dcde91a53b75ade0065e6881e1e8c1ecf1dfd00e3df4f7cbee9a",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "2f72838af2157ed67bbe6d6e1ead3053ee3ef03efa9f0f1dbb7c05465e471b3f",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "e673927dda9c923e0cdbb834958a946af0725f45a3b5f6cfd9702f06146a0dc5",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "ba510c138ec2ab968e98429f8999950f59a66f8d6eed1410877aba8948bdd6fa",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "7b4ba34d5a53f318f9198fc23c995cc8ab74b4669e15c32132be100128f2ed9a",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "05d835f6e5ab9100305f45baf96ebe6779f32d04a2eb667f19afe55d38a1d80c",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "e54763d626d86b6be7a940adb3eefcbbf85e5a0feecb6920a527992a242565e4",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "808b83f8e36710929bdc9fd7a29a70ba322a1ea76cd6fbf46f770970b25a877d",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "9f9bf6f7f5e2ff3c8fbe2322f8600c769979cda48c29434c4d6c77af4781dd74",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "f76cec4f45e7cc8f7e7bba4c3ef5a8091e93fb7f99b9d3a37958ac63f970c962",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "aa40fa2cc14718f632bff09982f717caf2936c9f1039d05ce2185c327e4572a2",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "338358fb34d70d66a25ecb08c06a666d0297e4f1246d37867af8d0517365e0f1",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "ea6baf1451e225b58074bf75c4c056f78c1932a11e202440b98ffbdf2f5a5186",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "7da2d21bf16bce44997905740db48cd9d80fca01a3f6a3888bc731cb9d977933",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "1dd4ee7be1488189a3c262807cae7429b53bb8919ec9e714c3392730a4df30b8",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "b71efb0a46a84fd593cbf400a04bb7bcf76625683173ccffddf5cee496079fa6",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "0eae030801d11f4d6b9b95753e70a4dae6620bc1ee565c850e989c303ef11f81",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "ed3a07c236400913aec4e0bf0e95c930b4d5c3b49628d57b181e50a8fd20fc08",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "68b6c18f974dc6d613e0d5f2f00830952aa158831b2919360822567fcabda0da",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "ef139a6324fd235e7ae7922baea71dd84e8af3bed58fc315c147b0d74898f225",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "5137ad92125d505cbf3ae489dc69c2e5a3502928746b68dddf7615cec77d6ff3",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "ad0428b00519d72eb3f093b6f9aa0fbb47db7f5689c042379e3e8418c383d85c",
+      "status": "ok"
+    },
+    {
+      "file": "002_plant_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "5d06a587cec824af1694862f0a65435ce3afbb0f31b54f7ae4cff17ba4ffb52b",
+      "status": "ok"
+    },
+    {
+      "file": "003_user_plant.sql",
+      "kind": "create_table",
+      "sha256": "cb739804c1bec3bebf24e639b2adc7a4c1736d4ab2389821d1211f2f563e2a7d",
+      "status": "ok"
+    },
+    {
+      "file": "003_user_plant.sql",
+      "kind": "create_table",
+      "sha256": "93a4dab516522bc12f070362edfa56bc2b449f5ee3715223efeb2fa599f2f38b",
+      "status": "ok"
+    },
+    {
+      "file": "003_user_plant.sql",
+      "kind": "create_table",
+      "sha256": "3b91eb82005b1674b4086cf4b0786af9145ebf27a3ed1c184254c1c44ef54668",
+      "status": "ok"
+    },
+    {
+      "file": "003_user_plant.sql",
+      "kind": "create_table",
+      "sha256": "4ba35c5d44668bc91cb207453b769007f5c96b14a3a0d2355ef3b26e456fbaa0",
+      "status": "ok"
+    },
+    {
+      "file": "003_user_plant.sql",
+      "kind": "create_table",
+      "sha256": "44fd698cfd7deb6ee3668fe000ace90821a60a58a4d9508b07fc72731a019ee0",
+      "status": "ok"
+    },
+    {
+      "file": "003_user_plant.sql",
+      "kind": "create_table",
+      "sha256": "344a1da7104083faa7ce73a85dab0470694a9242b700a7f2cb98dbfe4f8cdf08",
+      "status": "ok"
+    },
+    {
+      "file": "003_user_plant.sql",
+      "kind": "create_table",
+      "sha256": "c86fdbd414b24cec3c0b2f31e9c0f814ea184d94ac990449214301f707147c5b",
+      "status": "ok"
+    },
+    {
+      "file": "003_user_plant.sql",
+      "kind": "create_table",
+      "sha256": "6efe5ebaf32b08505fde237649a138e429fcc844afd1a532fdb8e61613f6fa75",
+      "status": "ok"
+    },
+    {
+      "file": "003_user_plant.sql",
+      "kind": "create_table",
+      "sha256": "e5647f2990cd6b22a383f3701d7799ac4fff115d15efbe444e1e90712e5b579f",
+      "status": "ok"
+    },
+    {
+      "file": "003_user_plant.sql",
+      "kind": "create_table",
+      "sha256": "f59a5ee166ba631d7f5f20e4d4a11627ea3d7bc8377432fff165872c32c584d9",
+      "status": "ok"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_table",
+      "sha256": "980c2fa2ce2774799ca2ad62a1c83ed1222eacdc7404a81bb37ab737125a6e9f",
+      "status": "ok"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_table",
+      "sha256": "1d08cd458310a600247dc5a5ddd54db3d87d7b7512f0611e267bc5a17599f617",
+      "status": "ok"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_table",
+      "sha256": "535aa789529238babcea39ab8db4af1663c3ab434a713e5b008e3d819350fa5b",
+      "status": "ok"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_table",
+      "sha256": "f2bd0ef00ac4da527a36d430ea2b051496b0598f59b534b54a3162ca565feb25",
+      "status": "ok"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_table",
+      "sha256": "9c1131dd5917bce8e357040bf6408f4e52c36b46b7668eef4727244993b86eca",
+      "status": "ok"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_table",
+      "sha256": "f62b2e1c6c0eb3c110f74dee852bd4a89137e9b8df40bd29b753b6b6d4f42060",
+      "status": "ok"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_table",
+      "sha256": "a6dffc8a616fcba0e97e95fb497f012f01fc3594671b2ab7681c17d30998c942",
+      "status": "ok"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_table",
+      "sha256": "bbcbd89bde1abcaa0f28c1bf63dd1370787d9e0b00dae58400458eb001f1ea3c",
+      "status": "ok"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_table",
+      "sha256": "5b28126257e872796a58023a32919a877963416a1c4a0104b08a0ba7bba92cd3",
+      "status": "ok"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_table",
+      "sha256": "a31942e7ffbe5f344d83baad52685d77bb31828ead883f8dbd48e6ad308acc91",
+      "status": "ok"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_table",
+      "sha256": "5f95f0d8dbccd61e7a408e9fd7dea739773561c8785f172628c941dbfdf33d48",
+      "status": "ok"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_table",
+      "sha256": "9ad2e42d5e58000e1dd2aaca101008dfff3157d4474aef4cb4302b91b010f2e9",
+      "status": "ok"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_table",
+      "sha256": "46a164592019c5310e82991266888da1825aa47f245b0e484560ebfaf4ac6ac6",
+      "status": "ok"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_table",
+      "sha256": "13281154a301eb8c062446239751a4889c97eddbb340f0258deeb2cb68ecf614",
+      "status": "ok"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_table",
+      "sha256": "3fe8e70bdcdc854c9ae8ed0de36ecc814fde49dc1b04f840bf241a9003d1f543",
+      "status": "ok"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_table",
+      "sha256": "8c6fa02e171bd257e1034ed89cab8d27d635afc0a421ee1dd7439dc8686cae34",
+      "status": "ok"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_table",
+      "sha256": "cd68a486b8c23e46354f5f324651c39f835799b14912b1e2c4337da02974fda3",
+      "status": "ok"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_table",
+      "sha256": "fb230ed9edab6606d8ca372b80d057d7817a5c9494dadf1c1c9a938c4ba03429",
+      "status": "ok"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_table",
+      "sha256": "5af1508545fe6872530156942f98ec544c45a4ecdcc19a0c071ff170e9a4f6d8",
+      "status": "ok"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_table",
+      "sha256": "da13e4a48026dc227a576064dafe737b54e2f0a9041671f2be1d075ae3a49139",
+      "status": "ok"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_trigger",
+      "sha256": "bc727b4034230185f01bccf1750ad35fc6097a2abff1781b5206c55dadc44447",
+      "status": "deferred_prepared_statement_unsupported"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_trigger",
+      "sha256": "8cffc3942819fdf82bcd5db0938a0c8e77c9184356df656d6fe2b892e90b3463",
+      "status": "deferred_prepared_statement_unsupported"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_trigger",
+      "sha256": "1436d470ed8203696a8b5a28112d49eefb255d3eb59763ef3647734b3d04e17f",
+      "status": "deferred_prepared_statement_unsupported"
+    },
+    {
+      "file": "004_care_diagnosis.sql",
+      "kind": "create_trigger",
+      "sha256": "739a8f9f2eef7aaa421adac85657c67ede231fd18d9b771fd8fec15dd70f6014",
+      "status": "deferred_prepared_statement_unsupported"
+    },
+    {
+      "file": "007_configuration.sql",
+      "kind": "skip_session_set",
+      "sha256": "dba85262f83250a1743703cea6ed3b8a9cd931b871f2c6294115a7dedb9b5adf",
+      "status": "skipped"
+    },
+    {
+      "file": "007_configuration.sql",
+      "kind": "skip_session_set",
+      "sha256": "77a01186b583ec145150c4778a56cb0aa9a20b2cdd86865d50d9c12169db6e11",
+      "status": "skipped"
+    },
+    {
+      "file": "007_configuration.sql",
+      "kind": "create_table",
+      "sha256": "49618515e5b769b685dd4304c74e9630abcc32bb996830488dd42af3dfc4880b",
+      "status": "ok"
+    },
+    {
+      "file": "007_configuration.sql",
+      "kind": "create_table",
+      "sha256": "10f2cf289c13ed29a9714b6c3942ee070e9c0b4a72171e93fb4c55f11df16680",
+      "status": "ok"
+    },
+    {
+      "file": "007_configuration.sql",
+      "kind": "create_table",
+      "sha256": "4c6983b81bf5cb8831a0900caebcff74739e99dd0d4976bc3845e95022f83ffb",
+      "status": "ok"
+    },
+    {
+      "file": "007_configuration.sql",
+      "kind": "create_table",
+      "sha256": "ee4825b1a1af34463afeac98157cb9cf6162177afead646e19f8b3fa7150931f",
+      "status": "ok"
+    },
+    {
+      "file": "007_configuration.sql",
+      "kind": "create_table",
+      "sha256": "91ada6c0ccbd37b77032ffd3f1281f71f7754fc196a000e9b5c89f89b19c3d90",
+      "status": "ok"
+    },
+    {
+      "file": "007_configuration.sql",
+      "kind": "create_table",
+      "sha256": "078b3e376055211e1303c97216e4ef891d4fb0b5c37ae5b73c389d31d35c5ce2",
+      "status": "ok"
+    },
+    {
+      "file": "005_subscription.sql",
+      "kind": "create_table",
+      "sha256": "c773057d420a28fa3074f143fafa106f668fce369f8de970f98890b9746abf6c",
+      "status": "ok"
+    },
+    {
+      "file": "005_subscription.sql",
+      "kind": "create_table",
+      "sha256": "4f4d1fd0204658160c0f769af3cd245efba19c528ad4fc93ac79d794765aa294",
+      "status": "ok"
+    },
+    {
+      "file": "005_subscription.sql",
+      "kind": "create_table",
+      "sha256": "111e585867a283298242292c9c870d85af444546ea562b7e9219add69f33d04c",
+      "status": "ok"
+    },
+    {
+      "file": "005_subscription.sql",
+      "kind": "create_table",
+      "sha256": "f0a947a6a951134ca0253ca7bfd5852303352e9579eab635b6fbb08984122063",
+      "status": "ok"
+    },
+    {
+      "file": "005_subscription.sql",
+      "kind": "create_table",
+      "sha256": "917349f0774f3cd298409692e35e1ae1dd13186abe8862ba3267692873b02e71",
+      "status": "ok"
+    },
+    {
+      "file": "005_subscription.sql",
+      "kind": "create_table",
+      "sha256": "22196f38d449f269bda840713fc0295f072df652c58771a0a5a3b884ec8d47a0",
+      "status": "ok"
+    },
+    {
+      "file": "005_subscription.sql",
+      "kind": "create_table",
+      "sha256": "c63e4edf8a573a2190712ae21f62b55d046974d102f939a82ccae019a3a9ee8c",
+      "status": "ok"
+    },
+    {
+      "file": "005_subscription.sql",
+      "kind": "create_table",
+      "sha256": "837cc779a3790400f68a21cea66fe1ea2ba429704645e424fd10e5bb3399e324",
+      "status": "ok"
+    },
+    {
+      "file": "005_subscription.sql",
+      "kind": "create_table",
+      "sha256": "6b2d716ba8bc7a28ac885f56df1ebd56a080f98f237ec6b26ce79d9a46a53942",
+      "status": "ok"
+    },
+    {
+      "file": "005_subscription.sql",
+      "kind": "create_table",
+      "sha256": "f747964fc71e9a7b75a8867a99a4b7dbef16a505742c9051f63e5b6152b59bc3",
+      "status": "ok"
+    },
+    {
+      "file": "005_subscription.sql",
+      "kind": "create_table",
+      "sha256": "4e6f95ac8cc2f279f9fa4c0d9bfbeaf9314caef799bc5bb9fee618e6da3997ea",
+      "status": "ok"
+    },
+    {
+      "file": "005_subscription.sql",
+      "kind": "create_table",
+      "sha256": "d9a01e434cc1e2b8c5f381fce862e7273758130a2cbc74e917ac53764bdb4d63",
+      "status": "ok"
+    },
+    {
+      "file": "005_subscription.sql",
+      "kind": "create_table",
+      "sha256": "62bace21d571ac167b4b179c9f6ce9914518efe0b134ebd15773aced3aea8efa",
+      "status": "ok"
+    },
+    {
+      "file": "005_subscription.sql",
+      "kind": "create_table",
+      "sha256": "1fb835c580413a7f13f6c8c7d138334f44e10aa14ffd92c0fc18d50d996a20bb",
+      "status": "ok"
+    },
+    {
+      "file": "005_subscription.sql",
+      "kind": "create_table",
+      "sha256": "169f9bc0228638c41570482174eced3eb8f0fc9f2a8e606eb2eb5eb1a9f71e85",
+      "status": "ok"
+    },
+    {
+      "file": "005_subscription.sql",
+      "kind": "create_table",
+      "sha256": "62d14a3fe79d86cdee7552a92026d6b72834f6da4ef09fdf86fa5693f3b6ecab",
+      "status": "ok"
+    },
+    {
+      "file": "005_subscription.sql",
+      "kind": "create_table",
+      "sha256": "b2dc887dfa7f7ac6879d5de27337fe2c6da3f98085ac7fddf379caf4fd5cb49e",
+      "status": "ok"
+    },
+    {
+      "file": "005_subscription.sql",
+      "kind": "create_table",
+      "sha256": "37db357e2246a00253a98c4290984c4cf8c6f81e882dcb15a1eb41b83777017c",
+      "status": "ok"
+    },
+    {
+      "file": "005_subscription.sql",
+      "kind": "create_table",
+      "sha256": "bee427a4f6894ef52fe3f39955ff1fb0afee4215e9227e882b0fc9a7761357fd",
+      "status": "ok"
+    },
+    {
+      "file": "006_reliable_events.sql",
+      "kind": "create_table",
+      "sha256": "6e579bb485f62443326b8a713b0700a55c7c0845756719caaa65e7f97982bb2e",
+      "status": "ok"
+    },
+    {
+      "file": "006_reliable_events.sql",
+      "kind": "create_table",
+      "sha256": "9369b1ecd94b8bcc0b0c03e21ad6e73b2f5b9c08e3b02d6ee396c9e7223e743f",
+      "status": "ok"
+    },
+    {
+      "file": "006_reliable_events.sql",
+      "kind": "create_table",
+      "sha256": "e0de0c7f85409d9e1d3667b922549663bb190af217e89a13ca19f08acd7300e3",
+      "status": "ok"
+    },
+    {
+      "file": "006_reliable_events.sql",
+      "kind": "create_table",
+      "sha256": "203b44d4f07b47c0237f30ed37c32922de5790e05593e85eba112e5a60574cb8",
+      "status": "ok"
+    },
+    {
+      "file": "006_reliable_events.sql",
+      "kind": "create_table",
+      "sha256": "7e69b3f2ec1c7e82768166788ad6c3d69aa2c270d074fca70c6dd19a04f4bc66",
+      "status": "ok"
+    },
+    {
+      "file": "006_reliable_events.sql",
+      "kind": "create_table",
+      "sha256": "df0b2e735f4bd554a4efd2da00a74231c95620bff92def724076a4d99407f2d5",
+      "status": "ok"
+    },
+    {
+      "file": "006_reliable_events.sql",
+      "kind": "create_table",
+      "sha256": "69a0cf746cc029a1f66e37b1cda8030baaeed698efa646f9bdaae47222007cb2",
+      "status": "ok"
+    },
+    {
+      "file": "008_foundation.sql",
+      "kind": "create_table",
+      "sha256": "a764bc669a387d235e3c8d5c2b6cb71f171dec6a2d5e2afd89e0d7ee43573e95",
+      "status": "ok"
+    },
+    {
+      "file": "009_diagnosis_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "3987af3dd2384b82740811a1ce82795c1d02983917825556566243d354c26f8c",
+      "status": "ok"
+    },
+    {
+      "file": "009_diagnosis_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "d51780aa2476c5d1ef7dde2ed5173d2974116b3d8b8f199378d426ad3c181f6a",
+      "status": "ok"
+    },
+    {
+      "file": "009_diagnosis_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "c5ac4ef5c72972910efc0840013bde1b66f2a6d06c4aab590db4e3c1296728bb",
+      "status": "ok"
+    },
+    {
+      "file": "009_diagnosis_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "894b6b8654e8954201650d5d55256c1781d519999307a571d2d244721e1254f3",
+      "status": "ok"
+    },
+    {
+      "file": "009_diagnosis_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "7f50f931d45d1c887a4ba48b42124acc79f2270140412c67735a4596444553c7",
+      "status": "ok"
+    },
+    {
+      "file": "009_diagnosis_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "ab3ff91cb12bb6a8edca0aa9e68e48f9ba52aa1f1cdc287c73899119aa313e6a",
+      "status": "ok"
+    },
+    {
+      "file": "009_diagnosis_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "b2b5878fe9ae03eb789292ea6cf4be89fa37cf7017c4080e257a576e158170c0",
+      "status": "ok"
+    },
+    {
+      "file": "009_diagnosis_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "11b33ee0e7159ca8ccf0bd945f8cae7948b3455a046de123c81e3c575c352125",
+      "status": "ok"
+    },
+    {
+      "file": "009_diagnosis_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "c747b980df4fb689d76974a5bb5c6df723b4a149a4223fb005885d1d2c3edae3",
+      "status": "ok"
+    },
+    {
+      "file": "009_diagnosis_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "d8614c87b24a11b31518095fe541584b3e7a7e5c30add26692284dcc3037dd44",
+      "status": "ok"
+    },
+    {
+      "file": "009_diagnosis_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "965a67b1c01bae7d463b81d98615114572fe1493238ed9f83be7bd27993e2246",
+      "status": "ok"
+    },
+    {
+      "file": "009_diagnosis_knowledge.sql",
+      "kind": "create_table",
+      "sha256": "b4032f9a160fe1d37e8d7f5e0f077bc4e794f40d2b38bc59c25b5e15e6747f17",
+      "status": "ok"
+    },
+    {
+      "file": "010_diagnosis_review_revocations.sql",
+      "kind": "create_table",
+      "sha256": "003102d3517db4b1d0da88a61364e07dd3d0d7525d1232519c60f3d90780e642",
+      "status": "ok"
+    },
+    {
+      "file": "012_plant_encyclopedia_revision_immutability.sql",
+      "kind": "create_trigger",
+      "sha256": "bb3dc4497c24d640cccca2dbdf2136980113f8f459718a842bd30228156155d4",
+      "status": "deferred_prepared_statement_unsupported"
+    },
+    {
+      "file": "013_plant_encyclopedia_review_binding.sql",
+      "kind": "create_trigger",
+      "sha256": "5ab39f456f72c960839754bc9f6f32dca4975d738e0e2ed5a56ca3fad785f7b1",
+      "status": "deferred_prepared_statement_unsupported"
+    },
+    {
+      "file": "013_plant_encyclopedia_review_binding.sql",
+      "kind": "create_trigger",
+      "sha256": "9ee9028f9110f696ec226f3d75cfb7e0dc60452900544828a73ae60c665dca36",
+      "status": "deferred_prepared_statement_unsupported"
+    },
+    {
+      "file": "014_plant_knowledge_release_immutability.sql",
+      "kind": "create_trigger",
+      "sha256": "f723b6e78297c7e30ee322630aae0c7f1099c12d887e56159ec550ce1ea9b66b",
+      "status": "deferred_prepared_statement_unsupported"
+    },
+    {
+      "file": "014_plant_knowledge_release_immutability.sql",
+      "kind": "create_trigger",
+      "sha256": "0b296db66de93b3ea1c0ef7d3c683fe5a48d67f8c69e24ec11e026b294f6ac92",
+      "status": "deferred_prepared_statement_unsupported"
+    },
+    {
+      "file": "014_plant_knowledge_release_immutability.sql",
+      "kind": "create_trigger",
+      "sha256": "30cef3721a154b10b30903a68e1ac696fcd32b276fba4a03a655c1df2be2c397",
+      "status": "deferred_prepared_statement_unsupported"
+    },
+    {
+      "file": "014_plant_knowledge_release_immutability.sql",
+      "kind": "create_trigger",
+      "sha256": "cce3b8ccc78a5aa52270782b9899581292898f608be91a0d603d2c5c29a68d4f",
+      "status": "deferred_prepared_statement_unsupported"
+    }
+  ]
+}

@@ -1,9 +1,9 @@
 {
   "schemaVersion": "git-commit-keeper/v1",
   "intervalMinutes": 30,
-  "lastCheckedAt": "2026-09-20T20:17:25+08:00",
-  "lastCommitAt": "2026-09-20T20:17:25+08:00",
-  "lastCommitSha": "de07fbdf5f5c5275cf9302920d5ca715ca2e73fa",
-  "result": "COMMITTED",
-  "detail": "已按路径限定提交 P2 Foundation 共享 HTTP 幂等协议、DDL、TDD 与 MySQL 8.4 读回证据；未提交三个用户既有 `.pyc` 文件，未提交任何子代理半成品。"
+  "lastCheckedAt": "2026-09-27T13:58:10+08:00",
+  "lastCommitAt": "2026-09-27T13:32:42+08:00",
+  "lastCommitSha": "455d912c9ad51d100bde6e56d72e66029350ba03",
+  "result": "SKIPPED_ACTIVE_VALIDATION_AND_MIXED_PROVENANCE",
+  "detail": "13:58:10 安全检查时距离上次检查 13:27:13 已超过 30 分钟；当前 HEAD 为 455d912c9ad51d100bde6e56d72e66029350ba03（13:32:42）。本轮不提交：主代理确认用户植物归档/恢复本地 v2 切片仍在完整 MySQL 复跑；cloudfunctions-v2/src/user-plant/http/server.ts 同时有预先暂存新增与未暂存修改（暂存 +105 行、工作树差异 +124/-22 行），还包含其他路由接线，无法安全挑出已验收部分。工作区另有 46 条暂存、114 条工作树修改及 27 条未跟踪路径；没有其他文件完成逐文件来源、验收及所有者确认，故不提交任何路径。未运行 git add/commit，保留全部暂存与未暂存内容。待完整 MySQL 复跑结束、主代理验收并逐文件确认来源后再复核。"
 }

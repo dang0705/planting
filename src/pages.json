@@ -25,9 +25,6 @@
     {
       "path": "pages/garden/garden",
       "style": {
-        // #ifndef MP-TOUTIAO
-        "navigationStyle": "custom",
-        // #endif
         "navigationBarTextStyle": "white"
       }
     },
@@ -199,9 +196,6 @@
         {
           "path": "catalog-detail/catalog-detail",
           "style": {
-            // #ifndef MP-TOUTIAO
-            "navigationStyle": "custom",
-            // #endif
             "navigationBarTitleText": "植物详情",
             "navigationBarBackgroundColor": "#FFFFFF",
             "navigationBarTextStyle": "black"
@@ -249,12 +243,6 @@
         "text": "诊断",
         "iconPath": "static/tabbar/diagnose.png",
         "selectedIconPath": "static/tabbar/diagnose-active.png"
-      },
-      {
-        "pagePath": "pages/agent/agent",
-        "text": "小青",
-        "iconPath": "static/tabbar/agent.png",
-        "selectedIconPath": "static/tabbar/agent-active.png"
       },
       {
         "pagePath": "pages/profile/profile",

@@ -6,6 +6,9 @@
 - [业务到技术映射](business-to-technical-map.md)
 - [架构硬规则](architecture-rules.md)
 - [业务策略与第三方 Provider 配置架构](configuration-and-providers.md)
+- [植物目录数据模型（表关系与 2026-10-03 实库证据）](plant-catalog-data-model.md)
+- [植物目录与百科 SQL 主读（原 Tropicals API MVP 文）](tropicals-api-mvp.md)
+- [Care 最新决策架构：DLI / Indoor / GrowthActivity / DryProgress](care-decision-model.md)
 - [业务关键变量目录（中文阅读版）](configuration-variable-catalog.md)
 - [业务关键变量目录（机器事实源）](configuration-variable-catalog.json)
 
@@ -14,3 +17,5 @@ OpenViking 的分层检索副本入口：`viking://resources/projects/planting/b
 README 中的两张 Mermaid 图是事实源；本目录只解释如何实施和验收各节点。涉及数值、阈值、开关、版本、期限、上限、排序、预算、重试、超时、Provider 或密钥引用时，必须先按领域读取业务关键变量目录；禁止从源码现状或旧实现猜值。
 
 分层业务架构展开 README 的业务图；首版状态只表示当前开放深度，不能删去目标架构节点或改变用户植物归属。
+
+> **本次包内同步边界（2026-10-04）：** 上传包只包含 `docs/backend-v2`，未包含真实项目根 `README.md`。因此本包已经更新分层架构、Care 决策图、HTML 可视化和相关合同，但不能伪造项目根 README 两张总图的新 SHA。`architecture/manifest.json` 暂标记 `ROOT_README_SYNC_REQUIRED`；回写真实仓库时必须同步根 README 的业务/基础设施两张总图，再运行 `architecture/generate-manifest.mjs` 消除此状态。

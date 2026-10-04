@@ -66,8 +66,8 @@ export function summarizeTicketProgress(tickets = []) {
   const progress = total === 0
     ? 0
     : Math.round(
-        safeTickets.reduce((sum, ticket) => sum + normalizeProgress(ticket?.progress), 0) / total,
-      )
+        (safeTickets.reduce((sum, ticket) => sum + normalizeProgress(ticket?.progress), 0) / total) * 10,
+      ) / 10
 
   return { progress, reported, total }
 }

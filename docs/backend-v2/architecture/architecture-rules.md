@@ -19,3 +19,11 @@
 17. `configuration-variable-catalog.json` 是业务关键变量机器事实源；目录外关键常量不得进入实现。
 18. `P1_PENDING` 变量不得拥有源码默认值；对应 `blockingScope` 在冻结前只能补合同、证据与 RED。
 19. 配置 release 必须不可变、带 SHA-256、原子切换 active 指针并保留回滚审计；同一请求只能使用一个配置快照。
+20. Tropicals id/slug、数据集 taxon_id 与内部 taxon_key/plant_identities 属不同命名空间；未通过证据审核的 crosswalk 不得视作规范身份映射。
+21. 植物目录百科详情的运行时主读是 CloudBase SQL（`qinghuazhi_v2_test.tropicals_species_encyclopedia_ref` 及相关离线 `tropicals_*`）。Tropicals 实时 API 只可作为可选同步、来源或后续能力，不是百科详情主路径。SQL 或 API 的外部文字、养护字段、病虫害字段和媒体都不能自动成为内部已确认身份、养护规则、诊断知识或安全事实。
+22. 本地 106 条身份 seed/准入门只约束内部身份发布，不得作为 SQL 百科只读或合法媒体展示的前置门，也不得因百科行或 API 命中而跳过。
+24. 展示型百科与 Structured Trait Evidence 必须分流：展示 DTO 永远不能成为 Care/Diagnosis 运行时知识源；外部性状只有保留来源、原始值、归一规则、置信度并经 plant-knowledge 审核发布为 Internal Care Knowledge / Reference Profile 后才可进入养护。
+25. 浇水正式主时间轴是 DryUnit / DryProgress；`indoorEqHours`、`dryDownFactor`、`adjusted cycle` 不属于 Watering 一级决策输入；当前可靠 Soil Evidence 拥有最终安全门。
+26. GrowthActivityState 只选择条件性 Baseline，不得作为额外季节乘数；DLI、温度等证据不得重复计权。
+27. 光照是否有直射由太阳几何、窗面几何和遮挡决定，禁止硬编码“北窗无直射”等经验规则。
+28. 室外天气不得直接生成室内 VPD；缺室内实测时只能使用明确标识、可回放的 Estimated Indoor Environment。

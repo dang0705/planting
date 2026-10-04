@@ -2,9 +2,9 @@
   "version": "backend-v2-data/p1",
   "algorithm": "sha256",
   "scope": "P1 数据字典与植物身份审计输入",
-  "generatedAt": "2026-09-24T00:11:50+08:00",
+  "generatedAt": "2026-10-04T00:38:18+08:00",
   "files": {
-    "v2-data-dictionary.md": "f67519187b218f6e3335334d5fdfa5b828cf3ea84211a3eb6521aff5dbd10795",
+    "v2-data-dictionary.md": "a58f17ffea92cb81ea0c75457c3aac4a7b045df0b2f280a4c73cd04e7461389c",
     "phase-1-identity-audit.md": "0977a615567874053cfe6bfee980b08b4cb113348c7db4a4088c7bc996f21725"
   }
 }

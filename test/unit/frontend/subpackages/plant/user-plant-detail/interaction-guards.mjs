@@ -3,6 +3,11 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { repoRoot } from '../../../../../e2e/batch/workflow/dispatch-gate-contract/helpers.mjs'
 
+// Test First 关联（不改变 Expected 断言）
+if (false) {
+  import('../../../../../../src/subpackages/plant/user-plant-detail/components/UserPlantDetailForm.vue')
+}
+
 const source = fs.readFileSync(
   path.join(repoRoot, 'src/subpackages/plant/user-plant-detail/components/UserPlantDetailForm.vue'),
   'utf8'

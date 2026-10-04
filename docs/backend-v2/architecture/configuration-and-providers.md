@@ -82,7 +82,11 @@ export type ProviderConfig = {
 }
 ```
 
-首批统一纳管：百度植物识别、分类权威来源、云百炼/Qwen 问诊与百科补全、和风天气、微信支付、平台通知、CloudBase Auth、Storage、CMS、Agent 工具入口和 MySQL。每个档案都必须逐项登记 endpoint profile、`credential_ref`、连接/读取/总超时、有限重试与退避、限流、熔断、成本/预算、回退链、输出合同、审计保留、release 版本、SHA-256、生效/失效时间和失败阻断范围；没有事实的字段统一为 `P1_PENDING`，不得由 Adapter 自行补默认值。
+首批统一纳管：百度植物识别、分类权威来源、云百炼/Qwen 问诊与百科补全、和风天气、微信支付、平台通知、CloudBase Auth、Storage、CMS、Agent 工具入口和 MySQL。
+
+Tropicals 实时 API 不再属于百科详情的首批运行时 Provider。目录详情主读是 CloudBase SQL，不依赖该 API。只有以后把它用作可选同步或补源时，才登记 Provider 档案：endpoint profile、`credential_ref`、连接/读取/总超时、有限重试与退避、限流、熔断、成本/预算、回退链、输出合同、审计保留、release 版本、SHA-256、生效/失效时间和失败阻断范围；没有事实的字段统一为 `P1_PENDING`，不得由 Adapter 自行补默认值。
+
+若启用该可选 Provider，还须冻结官方 endpoint profile、30 天评估试用与商业服务权限、缓存与配额、文本署名和图片逐项许可。当前客户端 `VITE_TROPICALS_API_KEY` 直连是待退役的代码现状，不是百科详情的目标路径，也不表示后端受控凭证已实现。身份 crosswalk 与百科 SQL 主读分开，见 [植物目录与百科 SQL 主读](tropicals-api-mvp.md)。
 
 ## 4. 请求级配置快照
 

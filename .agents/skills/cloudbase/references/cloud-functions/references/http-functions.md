@@ -27,7 +27,7 @@ my-http-function/
 
 ```bash
 #!/bin/bash
-/var/lang/node22/bin/node index.js
+/var/lang/node18/bin/node index.js
 ```
 
 Requirements:
@@ -40,16 +40,11 @@ The `scf_bootstrap` Node.js binary path must match the function runtime. Use thi
 
 | Runtime value | `scf_bootstrap` binary path |
 | --- | --- |
-| `Nodejs26` | `/var/lang/node26/bin/node` |
-| `Nodejs24.11` | `/var/lang/node24/bin/node` |
-| `Nodejs22.21` | `/var/lang/node22/bin/node` |
 | `Nodejs20.19` | `/var/lang/node20/bin/node` |
 | `Nodejs18.15` | `/var/lang/node18/bin/node` |
 | `Nodejs16.13` | `/var/lang/node16/bin/node` |
 
-CloudBase declares its [runtime support page](https://docs.cloudbase.net/cloud-function/runtime-support) to be the unique runtime reference. The mapping above was checked on 2026-09-19. If another Tencent Cloud/SCF document disagrees, prefer the CloudBase runtime support page for CloudBase functions and re-check it before deployment.
-
-If the user specifies "Node.js 22", use runtime `Nodejs22.21` and the path `/var/lang/node22/bin/node`.
+If the user specifies "Node.js 18", use runtime `Nodejs18.15` and the path `/var/lang/node18/bin/node`.
 
 ## Minimal Node.js example
 

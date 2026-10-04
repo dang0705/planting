@@ -30,16 +30,23 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
       entry.sha256,
       `${entry.file} SHA 不一致`
     )
+    const isSessionPolicyExtension = entry.file === '015_identity_session_policy_snapshot.sql'
     if (/CREATE TABLE\b/u.test(content)) {
       assert.ok(content.includes('ENGINE=InnoDB'), `${entry.file} 建表必须固定 InnoDB`)
       assert.ok(content.includes('DEFAULT CHARSET=utf8mb4'), `${entry.file} 建表必须固定 utf8mb4`)
+    } else if (isSessionPolicyExtension) {
+      assert.match(content, /^ALTER TABLE `user_sessions`\s/mu, '会话策略迁移只扩展既有会话表')
+      assert.match(content, /\bADD COLUMN\b/u, '会话策略迁移必须显式新增字段')
+      assert.doesNotMatch(content, /\b(?:DROP|RENAME|MODIFY|CHANGE)\b/iu, '会话策略迁移不得删除或改写既有字段')
     } else {
       assert.match(content, /CREATE TRIGGER\b/u, `${entry.file} 必须是建表或新增门禁触发器`)
     }
     assert.doesNotMatch(
       content,
-      /^(?:DROP|ALTER|INSERT|UPDATE|DELETE)\b/imu,
-      `${entry.file} 只允许空库 CREATE；允许 CREATE TRIGGER 中的 BEFORE UPDATE 不可变门禁`
+      isSessionPolicyExtension
+        ? /^(?:DROP|INSERT|UPDATE|DELETE)\b/imu
+        : /^(?:DROP|ALTER|INSERT|UPDATE|DELETE)\b/imu,
+      `${entry.file} 仅允许经 manifest 顺序化的非破坏性结构变更`
     )
     assert.doesNotMatch(
       content,

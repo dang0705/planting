@@ -1,0 +1,36 @@
+{
+  "$schema": "https://raw.githubusercontent.com/camunda/skills/main/compatibility/portability.schema.json",
+  "skillDirectory": "skills/camunda-dmn",
+  "skillName": "camunda-dmn",
+  "status": "portable-with-adapter",
+  "agentSkillsSpec": {
+    "specUrl": "https://agentskills.io/specification",
+    "specRevisionOrAuditDate": "2026-09-11"
+  },
+  "harnesses": {
+    "claude": {
+      "status": "native",
+      "differences": [
+        "Loads the standard SKILL.md package and runs the documented DMN lint and evaluation workflow."
+      ]
+    },
+    "copilot": {
+      "status": "adapter-required",
+      "differences": [
+        "Maps dmnlint, c8ctl, and DMN file-editing commands to Copilot terminal capabilities."
+      ]
+    },
+    "generic": {
+      "status": "adapter-required",
+      "differences": [
+        "The host supplies DMN lint, FEEL evaluation, and optional cluster execution adapters."
+      ]
+    }
+  },
+  "limitations": [
+    "Decision validation requires dmnlint plus a compatible FEEL or Camunda evaluation path."
+  ],
+  "differences": [
+    "DMN XML and hit-policy guidance are harness-neutral; linting, evaluation, and deployment commands depend on host tools."
+  ]
+}

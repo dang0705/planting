@@ -4,6 +4,8 @@ import type {
   CapabilitySnapshotDto,
   ClaimedGuestObjectKind,
   ClaimGuestSessionCommandDto,
+  CreateIdentitySessionRequestDto,
+  CreateIdentitySessionResponseDto,
   CreateUserPlantRequestDto,
   CreateUserPlantResponseDto,
   ErrorResponseDto,
@@ -354,6 +356,27 @@ export const userPlantSchema: JSONSchemaType<UserPlantDto> = {
 };
 
 /** 创建用户植物请求 Schema；任何客户端业务字段或放错位置的幂等键都必须拒绝。 */
+/** 微信登录请求只允许一次性 code，额外字段一律拒绝。 */
+export const createIdentitySessionRequestSchema: JSONSchemaType<CreateIdentitySessionRequestDto> = {
+  type: "object",
+  additionalProperties: false,
+  required: ["code"],
+  properties: {
+    code: { type: "string", minLength: 1 },
+  },
+};
+
+/** 首次登录公开数据只允许 Bearer 与绝对失效时间。 */
+export const createIdentitySessionResponseSchema: JSONSchemaType<CreateIdentitySessionResponseDto> = {
+  type: "object",
+  additionalProperties: false,
+  required: ["accessToken", "expiresAt"],
+  properties: {
+    accessToken: { type: "string", minLength: 1 },
+    expiresAt: { type: "string", pattern: ISO_UTC_PATTERN },
+  },
+};
+
 export const createUserPlantRequestSchema: JSONSchemaType<CreateUserPlantRequestDto> = {
   type: "object",
   additionalProperties: false,

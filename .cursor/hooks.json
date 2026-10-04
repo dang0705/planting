@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeSubmitPrompt": [
+      {
+        "command": "node .cursor/hooks/scripts/matrix-gate/record-prompt-waiver.mjs"
+      }
+    ],
+    "preToolUse": [
+      {
+        "command": "node .cursor/hooks/scripts/matrix-gate/ask-before-product-source.mjs",
+        "matcher": "*",
+        "failClosed": true
+      }
+    ],
+    "postToolUse": [
+      {
+        "command": "node .cursor/hooks/scripts/matrix-gate/record-tool-result.mjs",
+        "matcher": "*"
+      }
+    ],
+    "postToolUseFailure": [
+      {
+        "command": "node .cursor/hooks/scripts/matrix-gate/record-tool-failure.mjs",
+        "matcher": "*",
+        "failClosed": true
+      }
+    ],
+    "beforeShellExecution": [
+      {
+        "command": "node .cursor/hooks/scripts/matrix-gate/shell-product-guard.mjs",
+        "failClosed": true
+      }
+    ],
+    "stop": [
+      {
+        "command": "node .cursor/hooks/scripts/ut-stop-gate.mjs",
+        "loop_limit": 2
+      }
+    ]
+  }
+}

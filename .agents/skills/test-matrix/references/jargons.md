@@ -1,10 +1,10 @@
 # 本 skill 用语
 
-**效力：** 词表、维度清单与例子在本文件，**不含某一仓库的组件名或导航图文件名**。冻结 / peel / 点名 / 浅测 / 改接线 / 确认卡 / 安全上限 的**执行外延以 `SKILL.md`「高冲突词」表为准**；本文件只扩例子与边界，不得写反。行为义务仍只认 `SKILL.md`。其它细则 md 不另下定义。宿主专名只写在 `hosts/` 下由仓库自行放置的适配文件，通用正文不得点名那些文件。  
+**效力：** 词表、维度清单与例子在本文件，**不含某一仓库的组件名或导航图文件名**。冻结 / peel / 点名 / 浅测 / 改接线 / 写入授权 / 安全上限 的**执行外延以 `SKILL.md`「高冲突词」表为准**；本文件只扩例子与边界，不得写反。行为义务仍只认 `SKILL.md`。其它细则 md 不另下定义。宿主专名只写在 `hosts/` 下由仓库自行放置的适配文件，通用正文不得点名那些文件。  
 **何时读：** 主文高冲突词表不够，或要查 U/C/I、A/B/C、Test Double 细类。写/审查矩阵时只读当前层对应的 U、C 或 I 段；到排雷分类时再读 A/B/C。禁止当测试百科整文件通读。  
 **何时不读：** 用户只问通用测试词汇、且无矩阵任务 → 不加载本 skill。
 
-Cursor 只认 Markdown 标题锚点。每条用语一个 `###` 标题，标题文本经 slug 后等于链接里的 `#id`。
+每条用语一个 `###` 标题；需要跨文件链接时使用稳定的 Markdown 标题锚点。
 
 ## 对象与路径
 
@@ -267,9 +267,15 @@ Cursor 只认 Markdown 标题锚点。每条用语一个 `###` 标题，标题�
 
 ### TDD
 
-**TDD / RED↔GREEN 证据。** 独立硬锁 Expected（外部真相源 ∪ common scene）须先于实现答案固定，并证明错误实现会 RED、目标实现会 GREEN。可走 Classic 先 RED 后 GREEN，或 `SKILL.md` §0 Fast Path 一次实现后用受控回退/Mutation 补反事实 RED，再恢复 GREEN。
+**TDD / RED↔GREEN 证据。** 仅在 `SKILL.md` §0.1 已就绪或用户启用后适用。独立硬锁 Expected（外部真相源 ∪ common scene）须先于实现答案固定，并证明错误实现会 RED、目标实现会 GREEN。可走 Classic 先 RED 后 GREEN，或 `SKILL.md` §0 Fast Path 一次实现后用受控回退/Mutation 补反事实 RED，再恢复 GREEN。
 
-禁止误读：执行路径自由 ≠ Expected/Scope/证据自由；钉现状 ≠ TDD；`expected = sut(x)` ≠ TDD。细则：[truth-sources.md](truth-sources.md)。
+禁止误读：执行路径自由 ≠ Expected/Scope/证据自由；钉现状 ≠ TDD；`expected = sut(x)` ≠ TDD；脚手架期硬套仪式 ≠ 就绪。细则：[truth-sources.md](truth-sources.md)。
+
+### tdd-ready
+
+**TDD 就绪。** 产品积累是否足以启动矩阵 TDD。未就绪不启动；不确定问用户；已就绪不问、产品行为全走 TDD。
+
+禁止误读：未就绪 ≠ 禁止一切测试；配置/env 不算产品积累。见 `SKILL.md` §0.1。
 
 ### Characterization
 
@@ -295,13 +301,13 @@ Cursor 只认 Markdown 标题锚点。每条用语一个 `###` 标题，标题�
 
 ### confirm-card
 
-**确认卡。** Cursor `preToolUse` 的 `ask`：同意 = 该文件本次写入。
+**写入授权。** 用户当前消息中的精确路径一次性令牌；产品 `#approve-product-write <仓库相对路径>`，闸门 `#approve-gate-write <仓库相对路径>`。成功写入后消费，失败不消费。
 
-禁止误读：不是整仓授权；禁止为水位/%/可测性去弹卡。
+禁止误读：不是整仓授权；禁止为水位/%/可测性索取授权。
 
 ### machine-gate
 
-**机器闸门。** hooks + 路径脚本，产品写入 ask；测试 allow。
+**机器闸门。** hooks + 路径脚本：产品/闸门默认 deny，精确用户授权后单次 allow；测试 allow，但成功落盘后才记 Test First evidence。
 
 禁止误读：拦不住 Shell/人手改文件。
 
@@ -309,7 +315,7 @@ Cursor 只认 Markdown 标题锚点。每条用语一个 `###` 标题，标题�
 
 **冻结（控制流）。** 无独立硬锁 Expected，或无法满足 `product-safety.md` 闸门 2 的 RED 证据时，不得改产品控制流。
 
-禁止误读：不是禁止 TDD。独立 Expected 与产品冲突 → 确认卡 + `product-safety.md` 闸门 2（Classic 或 Fast Path）完成 RED/GREEN 证明。
+禁止误读：不是禁止 TDD。独立 Expected 与产品冲突 → 写入授权 + `product-safety.md` 闸门 2（Classic 或 Fast Path）完成 RED/GREEN 证明。
 
 ### appease
 
@@ -497,7 +503,7 @@ Cursor 只认 Markdown 标题锚点。每条用语一个 `###` 标题，标题�
 
 ### unnamed-agent
 
-**非具名子代理。** `Task` 开 `generalPurpose` / `explore` 等未在 §3.11 白名单的代理。
+**非具名子代理。** `Task` 开 `generalPurpose` / `explore` 等未在 硬规则 11 白名单的代理。
 
 禁止误读：禁止用来写测/改产品。只读侦察默认主代理自做。
 

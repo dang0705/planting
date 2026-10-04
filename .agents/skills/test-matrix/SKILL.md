@@ -1,22 +1,22 @@
 ---
 name: test-matrix
 description: >-
-  Non-E2E test matrix as TDD: independent Expected from external truth
-  (DTO/API docs, design, requirements, approved facts) plus common scenes,
-  then verified RED/GREEN evidence. Advanced agents may choose a classic
-  stepwise path or a verified fast path; correctness gates remain hard. USE WHEN writing, reviewing, running, or debugging unit,
-  component, or integration/contract tests, or a named runner (Vitest, Jest,
-  pytest, Testing Library, Playwright/Cypress Component, JUnit) is the vehicle,
-  or the user asks to derive Expected from design/DTO/docs. Isolated component
-  mount—even in a real browser—is still component testing.
-  DO NOT USE to explain testing vocabulary, for deploy/security “雷点” with no
-  test work, or for a full-app user journey (hand off to the repo E2E skill).
-  Do not expand scope beyond the current ask.
+  Writes, reviews, runs, or debugs non-E2E unit, component, and
+  integration/contract tests (matrix L1/L2/L3) using independent Expected and
+  verified RED/GREEN evidence. USE WHEN the user adds, changes, reviews, runs,
+  or debugs those tests, names a runner as the vehicle (Vitest, Jest, pytest,
+  Testing Library, Playwright/Cypress Component, JUnit), or asks to derive
+  Expected from DTO, design, or docs. Isolated component mount—even in a real
+  browser—is still component testing. DO NOT USE to explain testing vocabulary,
+  for deploy/security work with no test tasks, or for a full-app user journey
+  (hand off to the repo E2E skill). Do not expand scope beyond the current ask.
+  Repo TDD readiness (§0.1) is decided after this skill loads; it does not
+  decide whether to load the skill.
 ---
 
 # Test Matrix
 
-只写跨框架义务。不绑定产品域、后端品牌、UI 库或单一 runner。
+只写跨框架义务。不绑定产品域、后端架构、UI 库或单一 runner。
 
 词表与例子在 [jargons.md](references/jargons.md)。下面「高冲突词」表的执行外延以本文件为准，不靠点开词典才生效。其余细则 md 不另下定义。
 
@@ -27,6 +27,26 @@ description: >-
 ## 0. 本质：这是 TDD skill
 
 本 skill 的一等公民是 **独立 Expected**，不是覆盖率、不是「测还在」、不是从源码抄现状。
+
+### 0.1 TDD 就绪闸（编写/修改产品行为前先裁；审查/只运行不挡）
+
+本 skill 的 TDD 义务（§0.2 起、§2–§3、product-safety）**只在「已就绪」或用户确认启用后**生效。禁止在明显脚手架期硬套 Classic/Fast Path 仪式。
+
+**何时裁：** 本会话首次进入「编写 / 修改」且会新增或修正**产品可观察行为**时。同会话已裁定且仓库积累未发生质变 → 沿用，不反复问。纯脚手架（runner/CI/env/目录壳）、纯审查、纯只运行 → 不走本闸的「启用 TDD」。
+
+**侦察（快扫，禁止为闸门通读全仓）：** 相对目标应用包，估产品积累——排除配置项、环境变量/模板、锁文件、生成物、纯工具脚本后的源码体量，以及页面/路由入口、UI 组件、hooks/状态编排、API/客户端调用面是否已有**可观察职责**（不是空壳 export）。可与识别 runner 同轮。
+
+| 裁定 | 信号（综合判断，非单一魔法数字） | 动作 |
+| :--- | :--- | :--- |
+| **未就绪 → 不启动 TDD** | 产品侧几乎只有脚手架；页面/组件/hooks/API 客户端合计接近空或仅占位；尚无稳定可测的用户/契约路径 | **不启动**本 skill 的 TDD 路径。可继续搭环境、落壳、探索实现。交付须写明 `TDD：未启动（积累不足）`，**禁止**自称 TDD / 合同验收。不得用「未就绪」跳过用户已点名的补测/修 A |
+| **不确定 → 问用户** | 已有少量真实模块但面很薄；首个垂直切片进行中；信号冲突（例如代码多但是生成/vendor）；或扫不清 | **先问一句**是否对本任务/本阶段启用 TDD。未答前不套 §0.2 起的 TDD 硬约束。用户启用 → 视同已就绪；用户否 → 视同未就绪 |
+| **已就绪 → 不询问** | 已有多块可观察产品面（例如多个页面或组件 + hooks/编排 + API 调用面，或其一已明显非占位）；或已有矩阵测试/可识别的既有 SUT 惯例 | **默认全部**产品行为开发走 TDD，**不必**再为「是否 TDD」打扰用户 |
+
+**禁止误读：** 未就绪 ≠ 永远禁止测试；用户点名写测/修 bug 仍可测。已就绪 ≠ 每个脚手架文件都要先红。配置/env/工具链本身不是「产品可观察行为」。
+
+**与机器闸门对齐：** 仓库 hook 的 `config.tddEnforcement` 是仓库级机械开关，不由代理按单个任务私自改。成熟仓应为 `true`；明确脚手架仓可由仓库所有者初始化为 `false`。若 §0.1 判定与当前配置冲突，机器层取更严结果：代理不得自行改闸门；本轮确需例外时由用户显式给 `#skip-test-first`，长期状态由用户授权修改闸门配置。
+
+### 0.2 Agent-native TDD（仅 §0.1 已就绪或用户启用后）
 
 **上层先决条件：先进模型应该获得「执行路径自由」，而不是「正确性约束自由」。** Plan、逐 case 推进、是否显式分成 RED→GREEN→REFACTOR、一次还是多次编辑，属于执行路径，不作仪式性硬门禁；独立 Expected、Truth Source、Scope、真实路径、RED/GREEN 证据、Mutation/回归与交付证据仍是硬约束。结构第一次已经合理时，不要求为了流程表演额外 Refactor。
 
@@ -61,7 +81,7 @@ Characterization 当时不得改产品；一旦有硬锁 Expected 红了，必�
 
 细则均在 [references/](references/)。**默认只读本 `SKILL.md`；到对应决策点再加载命中的文件。正文出现链接不等于自动加载指令。** 禁止开局通读全部 md，也禁止因为任务是「编写测试」就预读全部细则。已加载主文能直接裁定的事项，不为重复确认再开细则。
 
-正常 TDD 的最小读取链保持完整：**本文件 → 识别当前 runner → 读取该 runner 摘要（若存在）→ 只读当前层对应的 U/C/I 风险段 → 在 Expected、测试真实性、产品改动等决策点按下表增量加载。**
+正常 TDD 的最小读取链保持完整：**本文件 → §0.1 就绪闸（若适用）→ 识别当前 runner → 读取该 runner 摘要（若存在）→ 只读当前层对应的 U/C/I 风险段 → 在 Expected、测试真实性、产品改动等决策点按下表增量加载。** §0.1 未就绪且用户未启用时，不进入后续 TDD 读取链。
 
 | 文件 | 何时读 |
 | :--- | :--- |
@@ -86,17 +106,19 @@ Characterization 当时不得改产品；一旦有硬锁 Expected 红了，必�
 
 | 词 | 执行外延 |
 | :--- | :--- |
+| **TDD 就绪** | 仓库产品积累是否足以启动本 skill 的 TDD 义务。未就绪 → 不启动；不确定 → 问用户；已就绪 → 不问、全部产品行为走 TDD。详见 §0.1。 |
 | **独立 Expected** | 外部真相源 ∪ common scene 写出的「应当如何」。禁止用 SUT/同一 mapper 生成。无来源不得宣称 TDD。 |
-| **TDD** | 独立硬锁 Expected 必须先于实现答案被固定；新增 / 修正产品可观察行为时，至少一条表达该 Expected 的代表性 executable test（新写或已有）须先于对应产品行为修改落盘；并有可审计 RED/GREEN 证据。可走 Classic（当前产品先 RED → 确认卡 → GREEN）或 §0 Fast Path（代表性测试先落盘 → 一次实现 → 受控回退/Mutation RED → 完整恢复 GREEN）。钉现状、无独立 Expected、源码先改后补代表性测试、无 RED 证据、为 % 改产品都不是 TDD。 |
+| **TDD** | 仅在 §0.1 已就绪或用户启用后适用。独立硬锁 Expected 必须先于实现答案被固定；新增 / 修正产品可观察行为时，至少一条表达该 Expected 的代表性 executable test（新写或已有）须先于对应产品行为修改落盘；并有可审计 RED/GREEN 证据。可走 Classic（当前产品先 RED → 写入授权 → GREEN）或 §0 Fast Path（代表性测试先落盘 → 一次实现 → 受控回退/Mutation RED → 完整恢复 GREEN）。钉现状、无独立 Expected、源码先改后补代表性测试、无 RED 证据、为 % 改产品都不是 TDD。 |
 | **characterization** | 缺真相源时钉现行行为。必须标明；不得当编写默认；不得自称合同验收。 |
 | **冻结** | 无独立硬锁 Expected，或无法满足 G3 的 RED 证据要求时，不得改产品控制流。**不是**禁止 TDD / Fast Path。 |
 | **peel** | 从宿主抽出 helper，且产品改为调用抽出物。只抽文件、不改调用点仍是预备。禁止为水位 peel。 |
 | **点名** | 用户原话写出该文件**且**该行为。「冲到 X% / 补测 / 允许」不是点名改控件。未点名文件仍须按选择协议写测，不得读成禁止由红转绿。 |
 | **浅测** | 写了用例但没证明适用风险，或 Expected 不独立。绿屏 + 高覆盖不能抵消。 |
 | **改接线** | 改事件 → 本地态 / query / store / mutate 的控制流（含 deps 方向、打开 API、选择语义）。KPI / 补测不是许可。 |
-| **确认卡** | Cursor `preToolUse` 的 `ask`：同意 = **该文件本次**写入。不是整仓授权。禁止为水位 / % / 可测性去弹卡。 |
+| **写入授权** | 用户在当前消息给出精确路径一次性令牌：产品用 `#approve-product-write <仓库相对路径>`，闸门文件用 `#approve-gate-write <仓库相对路径>`。Hook 在一次**成功写入后消费**；失败不消费。不是整仓/整轮授权。禁止为水位 / % / 可测性索取授权。 |
 | **安全上限** | 合法补测后仍低于 X%、再往上必须在无独立 Expected / 无 RED 证据下改接线 → 交当前% + exclude + miss 分类并**停止**。不是「已到 X%」；不是改产品凑满。 |
 | **执行反写** | 交付前突变抽检四步：临时改一行 → 预期用例须红 → **完整写回** → 再绿。本轮新写 Reverse / 半截受控链 / 高风险接线至少 1 条；Happy / 纯 Edge 展示允许心智 Mutation。交付须同时有红证据与写回证据；缺写回 = 未完成。**不是** Reverse case，也不自动构成产品改动授权；仅在 §0 Fast Path 满足闸门 2 时可作为反事实 RED 证据。细则：[test-integrity.md](references/test-integrity.md) §4.1。 |
+| **相关套件** | 窄跑最小范围：本轮改过的测试文件 + 同目录/同 SUT 旁既有测 +（若改了被 L3 消费的实现且仓库有对应套件）相关 integration。**不是**只跑刚写的单 case。全量 UT 由 stop hook 收尾闸，不替代窄跑。详见 §3.5。 |
 
 ## 识别 runner
 
@@ -112,11 +134,11 @@ Characterization 当时不得改产品；一旦有硬锁 Expected 红了，必�
 
 | 模式 | 要做 | 不要做 |
 | :--- | :--- | :--- |
-| **编写 / 修改** | 满足 §0 的独立 Expected 与证据义务、§3.3 停工卡、§2–§4；**按「目录」的决策点增量加载细则**：进入测试实现/真实性验证时读 [test-integrity.md](references/test-integrity.md)，准备写产品源码前读 [product-safety.md](references/product-safety.md)，需要完整排雷/合格率模板时再读 [reporting.md](references/reporting.md)。执行顺序、是否显式 Plan、逐条还是批量由代理按任务确定，但须满足 §0 的 executable Test First 底线。跑相关套件；交付 §2.1 + 闸门 0 + 真实性记录（含 Expected 来源）。任务含水位目标时按 §3.12 合法路径追，追不到则交安全上限 | 从源码发明 Expected；为水位 peel / 改接线 / 空挂载；把 characterization 写成 TDD；开非具名子代理写测或改产品；未到 X% 却宣称已到 |
+| **编写 / 修改** | 先过 §0.1。未就绪 → 可开发但交付标明未启动 TDD。不确定 → 先问用户。已就绪/已启用 → 满足 §0.2 的独立 Expected 与证据义务、§3.3 停工卡、§2–§4；**按「目录」的决策点增量加载细则**：进入测试实现/真实性验证时读 [test-integrity.md](references/test-integrity.md)，准备写产品源码前读 [product-safety.md](references/product-safety.md)，需要完整排雷/合格率模板时再读 [reporting.md](references/reporting.md)。执行顺序、是否显式 Plan、逐条还是批量由代理按任务确定，但须满足 §0 的 executable Test First 底线。按 **§3.5** 跑相关套件（窄跑）；交付 §2.1 + 闸门 0 + 真实性记录（含 Expected 来源）。任务含水位目标时按 硬规则 12 合法路径追，追不到则交安全上限 | 未就绪却自称 TDD；该问不问、该不问却反复问；从源码发明 Expected；为水位 peel / 改接线 / 空挂载；把 characterization 写成 TDD；开非具名子代理写测或改产品；未到 X% 却宣称已到；只跑刚写的单 case 却宣称相关套件已绿 |
 | **审查** | 评 Expected 是否独立、真相源是否够、风险是否被验证、A/B/C 是否诚实、证明范围是否说清；**发现浅测/受控回流/Reverse/coverage 等信号时**再读 [validity.md](references/validity.md) | 未要求时改产品或测试 |
 | **只运行** | 报告通过/失败/跳过/未验证与失败原因 | 把 skip 写成「已验证」；**不修改任何文件** |
 
-失败**不**自动获得修改权限。只有当前任务已授权编写/修复时，才改测试或产品。硬锁 Expected 与产品冲突 = 表 1 的 A；有编写授权时须取得确认卡并满足 §0 的 RED/GREEN 证据（Classic 或 Fast Path），不得改 Expected 吞掉。
+失败**不**自动获得修改权限。只有当前任务已授权编写/修复时，才改测试或产品。硬锁 Expected 与产品冲突 = 表 1 的 A；有编写授权时须取得写入授权并满足 §0 的 RED/GREEN 证据（Classic 或 Fast Path），不得改 Expected 吞掉。
 
 排雷全文：仅当本轮被授权「写/改测试或产品」时必出。纯审查、纯只运行 → 报告结果或缺口即可。发现未授权修复的产品缺陷仍须写入表 1（状态「未修」），N 计已修数。
 
@@ -157,9 +179,9 @@ Happy / Edge / Reverse 宜分块。形态只看主断言，落盘前过形态闸
 8. **证明硬度优先于条数。** 禁止半截受控链、替身后躲开本轮 SUT、或「页面还在」式 Reverse。细则：[validity.md](references/validity.md) §1；水位误判：[validity.md](references/validity.md) §2。
 9. **矩阵不得制造源码 bug。** 无独立硬锁 Expected 不得改产品控制流；新增 / 修正产品可观察行为还须先满足 §0 executable Test First 底线。改产品须有可审计 RED 证据：Classic 先红后改，或满足 §0 Fast Path 后用受控回退/Mutation 补出反事实 RED；同 diff 须有宿主证明（删掉 helper 测仍能抓回归）。细则：[product-safety.md](references/product-safety.md)。peel 只测纯函数、或为可测性改 deps = **未完成 / 须回滚**。
 10. **测试必须能抓真实错误改动。** 每条声称完成的测试都要能说出 Break、独立 Expected（含来源）、真实经过的 Real path 和代表性 Mutation；只测 mock/helper、用 SUT 生成 expected、或无法指出会变红的突变 = **未完成**。本轮新写 Reverse / 半截受控链 / 高风险接线须至少 1 条**执行反写**，并同时交**红证据 + 写回证据**；仅纸面心智 Mutation、或红了不写回 = **未完成**。细则：[test-integrity.md](references/test-integrity.md)。设计作源须分档：[design-expected.md](references/design-expected.md)。
-11. **执行主体：禁止非具名子代理。** 在仓库提供**经本 skill 白名单列名**的具名矩阵子代理之前，命中本 skill 的编写 / 修改 / 审查改文件 / peel / 授权改产品，**只许当前对话主代理执行**。禁止用 `Task` 开启 `generalPurpose`、`explore`、`shell`、`best-of-n-runner` 等未列名子代理并行写测、改 harness、改产品。只读侦察默认主代理自做；若误开，其产出不得直接落盘，须主代理按 §3.9 / [product-safety.md](references/product-safety.md) 重审后再改。具名子代理上线后须在本条增补白名单名称；未列名 = 禁止。本条不豁免主代理：主代理仍须完整过闸门；**命中「目录」的 product-safety 触发条件时**，不得以「已读 SKILL」代替 [product-safety.md](references/product-safety.md)。
-12. **水位是合法次要目标，不能替换 §0。** 「冲到 X%」要执行，不得整句拒绝，也不得改成「从 miss 行发明 Expected」。对象由 [validity.md](references/validity.md) §2 选出，但每条仍须独立 Expected。无独立硬锁 Expected 不得改产品；需要改产品时须确认卡 + §0 RED/GREEN 证据（Classic 或 Fast Path）。禁止为水位 peel、改接线、空挂载、非具名子代理、改 exclude、或仅为 % 去弹确认卡。测完仍低于 X%、再往上只能靠无独立 Expected 的产品改动 → 交**安全上限**。细则：[validity.md](references/validity.md) §2、[product-safety.md](references/product-safety.md)。
-13. **交付缺件 = 未完成。** 编写/修改缺任一项不得宣称完成：§0 Expected 来源、§2.1 覆盖表、闸门 0 仅一句、真实性表（Break / Expected / Real path / Mutation）、相关套件结果。把 characterization 写成 TDD、缺 Mutation、或命中执行反写档却无红证据或无写回证据、或答不出闸门 5 → 该对象标缺口。改了产品源码却未经用户确认卡同意 = 违规；执行反写探针未完整写回 = **等同未授权产品改动残留**，禁止把探针当交付改动。
+11. **执行主体：禁止非具名子代理。** 在仓库提供**经本 skill 白名单列名**的具名矩阵子代理之前，命中本 skill 的编写 / 修改 / 审查改文件 / peel / 授权改产品，**只许当前对话主代理执行**。禁止用 `Task` 开启 `generalPurpose`、`explore`、`shell`、`best-of-n-runner` 等未列名子代理并行写测、改 harness、改产品。只读侦察默认主代理自做；若误开，其产出不得直接落盘，须主代理按 硬规则 9 / [product-safety.md](references/product-safety.md) 重审后再改。具名子代理上线后须在本条增补白名单名称；未列名 = 禁止。本条不豁免主代理：主代理仍须完整过闸门；**命中「目录」的 product-safety 触发条件时**，不得以「已读 SKILL」代替 [product-safety.md](references/product-safety.md)。
+12. **水位是合法次要目标，不能替换 §0。** 「冲到 X%」要执行，不得整句拒绝，也不得改成「从 miss 行发明 Expected」。对象由 [validity.md](references/validity.md) §2 选出，但每条仍须独立 Expected。无独立硬锁 Expected 不得改产品；需要改产品时须写入授权 + §0 RED/GREEN 证据（Classic 或 Fast Path）。禁止为水位 peel、改接线、空挂载、非具名子代理、改 exclude、或仅为 % 去弹写入授权。测完仍低于 X%、再往上只能靠无独立 Expected 的产品改动 → 交**安全上限**。细则：[validity.md](references/validity.md) §2、[product-safety.md](references/product-safety.md)。
+13. **交付缺件 = 未完成。** 编写/修改缺任一项不得宣称完成：§0 Expected 来源、§2.1 覆盖表、闸门 0 仅一句、真实性表（Break / Expected / Real path / Mutation）、相关套件结果（§3.5）。把 characterization 写成 TDD、缺 Mutation、或命中执行反写档却无红证据或无写回证据、或答不出闸门 5 → 该对象标缺口。改了产品源码却未经用户写入授权同意 = 违规；执行反写探针未完整写回 = **等同未授权产品改动残留**，禁止把探针当交付改动。
 
 ### 3.1 跳过与失败
 
@@ -182,33 +204,53 @@ Happy / Edge / Reverse 宜分块。形态只看主断言，落盘前过形态闸
 | # | 问题 | 停 |
 | :--- | :--- | :--- |
 | GE | 本条 Expected 是否来自外部真相源 ∪ common scene，且不是 SUT 生成？ | 否 → 不得落盘为 TDD 完成。去采源，或明确落盘为 characterization 并列入缺口 |
-| G0 | 追水位时是否要用非具名子代理、peel、改接线或空挂载？ | 是 → §3.11 / §3.12 停。仅有「冲到 X%」目标 → 不停，走合法路径（仍过 GE） |
+| G0 | 追水位时是否要用非具名子代理、peel、改接线或空挂载？ | 是 → 硬规则 11 / 硬规则 12 停。仅有「冲到 X%」目标 → 不停，走合法路径（仍过 GE） |
 | G1 | 将改的文件是测试 / harness，还是产品源码（含 `*.helpers` peel、导航图声明、共享打开控件）？ | 产品 → 必须再过 G2–G5 |
-| G2 | （仅 G1=产品）用户原话是否**点名**该文件且点名该行为？ | 「冲到 X% / 补测 / 补边 / 补探针」**不含**改控件、打开 API、选择语义、抽 helper。未点名 → 冻结，**除非**存在独立硬锁 Expected 与目标行为冲突，且 G3 能以 Classic 或 Fast Path 提供 RED 证据（解冻见 [product-safety.md](references/product-safety.md)）。确认卡同意仍过不了 G4（为 % 改产品） |
+| G2 | （仅 G1=产品）用户原话是否**点名**该文件且点名该行为？ | 「冲到 X% / 补测 / 补边 / 补探针」**不含**改控件、打开 API、选择语义、抽 helper。未点名 → 冻结，**除非**存在独立硬锁 Expected 与目标行为冲突，且 G3 能以 Classic 或 Fast Path 提供 RED 证据（解冻见 [product-safety.md](references/product-safety.md)）。写入授权同意仍过不了 G4（为 % 改产品） |
 | G3 | 产品改动是否已有可审计 RED 证据，或满足 §0 Fast Path（独立 Expected 已先固定；若新增 / 修正行为，表达该 Expected 的代表性 executable test（新写或已有）已先于对应产品行为修改落盘；交付前将以受控回退/Mutation 证明反事实 RED）？ | 两者都否 → 只许加测或标缺口，禁止改产品。源码先改后补代表性测试不满足 Fast Path；须回滚对应产品改动后重新以测试先行进入，或按非 TDD 补测如实报告。Fast Path 最终未得到 RED → 产品改动须回滚。图缺边、断言选错 API、jsdom 点不到 ≠ 用户可观察失败 |
 | G4 | 改动是否为了让某条断言、某条编译边、某个 %、某种可测性变绿？ | 是 → 闸门 4 停；改测对齐产品，不改产品迎合测 |
 | G5 | 是否回写共享控件 / 跨页约定 / 未在真实响应出现的字段？ | 是 → 停。共享实现以既有路径为准 |
 
 授权改产品且 G2–G3 通过后，仍须 [product-safety.md](references/product-safety.md) 闸门 0–5。对撞记录：[incident-dryrun.md](references/incident-dryrun.md)。
 
-### 3.4 机器闸门（改产品源码必须问用户）
+### 3.4 机器闸门（Codex：改产品源码必须有用户精确授权）
 
-无配置、无白名单、不能关掉。代理不得用 JSON 自行放行。
+**不能依赖 `PreToolUse.permissionDecision: "ask"`。** Codex 当前支持用 `deny` 真实阻断工具，但 `ask` 不是可依赖的交互授权路径。因此只承认可审计的 `deny → 用户精确令牌 → 本 Hook 不再阻断`；正常放行不得伪装成替用户批准 Codex 原生 sandbox / permission。
 
-**实现：** 项目 `.cursor/hooks.json` → `preToolUse`（Write / StrReplace / Delete / EditNotebook），`failClosed: true`。闸门脚本路径以仓库为准；需要脚本/路径线索时，再读 `hosts/` 下本轮已命中的适配文件。
+**实现：** 项目 `.codex/hooks.json` 至少接入 `UserPromptSubmit`、`PreToolUse`、`PostToolUse` 与 `Stop`。项目级非托管 Hook 必须经 `/hooks` 审核并信任，否则不会执行。`UserPromptSubmit` 同时按 `session_id + turn_id` 捕获 turn-start baseline。
 
-| 将写的文件 | 闸门 |
+| 将写的文件 / 调用 | 闸门 |
 | :--- | :--- |
-| 仓库闸门脚本认定的产品源码（含 `*.helpers.*`、导航图声明、共享打开控件） | `permission: ask`（Cursor 确认卡；用户不同意则不落盘） |
-| `*.test.*` / harness | allow |
-| `.cursor/hooks.json` 或闸门脚本本身 | `ask`（防止代理拆闸门） |
-| stdin 空 / JSON 坏 | `deny` |
+| 所有受管 package 的产品源码（`appPackage` + `candidatePackages` 发现出的包） | 没有 `#approve-product-write <仓库相对路径>` → `PreToolUse` deny；有精确令牌且 Test First 合格 → 本 Hook 不阻断；`PostToolUse` 确认文件真实变化后才消费 |
+| `*.test.*` / harness | 本 Hook 不阻断；`PreToolUse` 只登记 pending，只有 `PostToolUse` 确认文件真实变化后才形成 Test First evidence |
+| `.codex/hooks.json`、Hook 脚本或 Test First 旁路配置 | 没有 `#approve-gate-write <仓库相对路径>` → deny；真实成功写入后消费 |
+| `Bash` 直接/间接改产品或闸门 | `PreToolUse(Bash)` deny；包含常见写命令、opaque `git apply` / `patch`、会隐藏工作区审计状态的 `git stash`、可识别的外部解释器脚本写入，以及直接执行/导入授权台账 Hook |
+| stdin 空 / JSON 坏 | 权限闸 deny（偏严） |
 
-通知方式就是确认卡，不是填 paths。确认卡效力见上方高冲突词表。
+Codex 没有单独的 `PostToolUseFailure` 事件。本实现以调用前/后的真实文件快照判定写入是否发生：失败或 no-op → 不形成 Test First evidence、也不消费一次性授权；内容真实变化才提交证据/消费授权。
 
-**自测：** 仓库若提供闸门路径夹具，按该包 `package.json` 里的脚本名跑（无 git、无 json 的判定测）。命令名不写在本文件。
+**同调用防自举：** 一个 `apply_patch` 同时写测试和产品时，产品检查必须使用调用开始前已经成立的 Test First evidence；同一 patch 内尚未成功落盘的测试不得反过来解锁产品。
 
-**拦不住：** IDE 里人手改文件；Shell 重定向改文件（仍靠停工卡）。Hook 崩溃时 failClosed，按拦截处理。
+**已有代表性测试：** 不要求为了过闸而无意义 touch。若已有测试准确表达独立 Expected，可在本 turn 显式运行该测试；机器层只接受“测试 runner + 恰好一个显式测试文件路径 + 可证明非 0 退出”的窄 RED 候选证据。测试与产品必须落在同一受管 package 的真实关系范围内。机器仍不能证明失败原因语义正确，须由主代理按硬规则 9/10 核对。
+
+**旁路分离：** runner 的 `test.exclude` 只影响“跑哪些测试”，不得自动获得 Test First 旁路。Test First 旁路必须使用独立 gate-control 配置（例如每个 package 自己的 `test-first-bypass.json`），并保持窄范围。
+
+**自测：** 仓库闸门自测至少覆盖 pending/no-op 不解锁、成功 test write、existing RED、一次性授权消费、同 patch 不自举、非主应用 package 产品硬闸、Shell 直接/间接防绕、turn baseline、monorepo Stop 与 continuation 循环保护。
+
+### 3.5 相关套件最小运行范围与 stop 全量闸
+
+「相关套件」不是「刚写的那一个 case」。编写/修改在宣称完成前，**窄跑**至少覆盖：
+
+1. **本轮改过的测试文件**（整文件，不只单 case）
+2. **同目录及同 SUT 旁**既有 `*.test.*` / `*.spec.*`
+3. **相关 integration（若存在）**：本轮改了被 L3 调用的 mapper / 客户端 / 编排 / 合同适配，且仓库已有对应 `integration` / `live` 契约套件 → 一并跑；没有则在交付里写 `N/A` + 一句原因
+4. 禁止只跑单 case 绿就交付
+
+窄跑不替代全量回归。仓库若配置了 **Codex `Stop` 全量 UT 闸**（见 `.codex/hooks.json`）：`UserPromptSubmit` 应先捕获 turn-start baseline；Stop 以最终 relevant manifest 相对 baseline 的真实变化判定受影响 package，而不是只看最终 `git status`。因此本回合中途 `git commit` 导致 working tree clean 也不能跳过回归。所有受影响且具备 runner 的 package 均须跑包内 CI 同命令；失败则返回 `decision:"block"` 让 Codex 继续修复。Stop continuation 后即使产生新的 prompt/baseline，上一轮失败 package 仍必须重跑；连续同一失败达到循环保护上限时停止自动 continuation，并如实报告未绿。
+
+baseline 不可用时允许兼容性回退到 `git status --porcelain`，但不得把 fallback 说成与 turn baseline 等价。无测试框架/测试文件、无本回合 relevant 变化且无待重跑失败包、或工具链缺失 → 由 Hook 明确跳过。
+
+**拦不住：** IDE 人手直接改文件，以及同一 OS 用户权限下无法从命令文本/可读脚本静态证明副作用的动态生成程序、二进制工具、自修改脚本。`PreToolUse(Bash)` 只对可识别直接写、opaque patch、stash、解释器/脚本写入和授权台账旁路做工程硬闸；项目 Hook 未经 `/hooks` 信任时也不会执行。此 Hook 是工程强闸，不是独立安全域。
 
 ## 4. 各层写法
 

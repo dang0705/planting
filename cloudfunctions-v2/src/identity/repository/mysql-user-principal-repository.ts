@@ -7,16 +7,8 @@ import type {
 } from '../domain/resolve-user-principal.js'
 import { UnifiedUserPrincipalResolveError } from '../domain/resolve-user-principal.js'
 
-/** 按已验证平台身份和会话摘要读取 Principal 快照的受控查询。 */
+/** 按青花植会话摘要读取 Principal 快照的受控查询。 */
 export type ReadUserPrincipalSnapshotInput = {
-  /** 已完成外部凭证验证的平台入口。 */
-  readonly platform: PlatformAuthenticationEntry
-  /** 当前小程序或应用的稳定范围，防止跨应用混淆主体。 */
-  readonly appScope: string
-  /** 规范化平台主体标识的 HMAC-SHA-256；不是原始 OpenID 或手机号。 */
-  readonly platformSubjectHash: string
-  /** 生成主体 HMAC 摘要的受控密钥版本引用，不含密钥。 */
-  readonly subjectHashKeyVersion: string
   /** 原始 Bearer 的 SHA-256；Repository 永不接收原始 Bearer。 */
   readonly sessionRefHash: string
 }
@@ -100,15 +92,9 @@ function parseSafeInteger(value: string, label: string, positive: boolean): numb
   return parsed
 }
 
-/** 校验调用方只传入摘要和受控范围，不允许原始身份值穿透。 */
+/** 校验调用方只传入会话摘要，不允许原始身份值穿透。 */
 function verifyReadInput(input: ReadUserPrincipalSnapshotInput): void {
-  if (
-    !platforms.has(input.platform) ||
-    !/^[A-Za-z0-9._-]{1,64}$/u.test(input.appScope) ||
-    !sha256Format.test(input.platformSubjectHash) ||
-    !/^[A-Za-z0-9._-]{1,64}$/u.test(input.subjectHashKeyVersion) ||
-    !sha256Format.test(input.sessionRefHash)
-  ) {
+  if (!sha256Format.test(input.sessionRefHash)) {
     throw new UnifiedUserPrincipalResolveError(
       'INTERNAL_IDENTITY_DATA_INVALID',
       '统一身份摘要查询条件不合法'
@@ -168,24 +154,14 @@ export function createMysqlUserPrincipalRepository(
                 CAST(\`s\`.\`session_version\` AS CHAR) AS \`session_version\`,
                 CAST(\`s\`.\`issued_at_ms\` AS CHAR) AS \`issued_at_ms\`,
                 CAST(\`s\`.\`expires_at_ms\` AS CHAR) AS \`expires_at_ms\`
-         FROM \`platform_identities\` AS \`p\`
-         JOIN \`users\` AS \`u\` ON \`u\`.\`id\` = \`p\`.\`user_internal_id\`
-         JOIN \`user_sessions\` AS \`s\`
-           ON \`s\`.\`platform_identity_internal_id\` = \`p\`.\`id\`
-          AND \`s\`.\`user_internal_id\` = \`u\`.\`id\`
-          AND \`s\`.\`authenticated_via\` = \`p\`.\`platform\`
-         WHERE \`p\`.\`platform\` = ? AND \`p\`.\`app_scope\` = ?
-           AND \`p\`.\`platform_subject_hash\` = ?
-           AND \`p\`.\`subject_hash_key_version\` = ?
-           AND \`p\`.\`subject_hash_algorithm\` = 'HMAC-SHA-256'
-           AND \`s\`.\`session_ref_hash\` = ?`,
-        [
-          input.platform,
-          input.appScope,
-          input.platformSubjectHash,
-          input.subjectHashKeyVersion,
-          input.sessionRefHash
-        ]
+         FROM \`user_sessions\` AS \`s\`
+         JOIN \`users\` AS \`u\` ON \`u\`.\`id\` = \`s\`.\`user_internal_id\`
+         JOIN \`platform_identities\` AS \`p\`
+           ON \`p\`.\`id\` = \`s\`.\`platform_identity_internal_id\`
+          AND \`p\`.\`user_internal_id\` = \`u\`.\`id\`
+          AND \`p\`.\`platform\` = \`s\`.\`authenticated_via\`
+         WHERE \`s\`.\`session_ref_hash\` = ?`,
+        [input.sessionRefHash]
       )
       if (rows.length === zero) {
         return null

@@ -160,6 +160,9 @@ function createDependencies(overrides: {
         createdAt: '2026-09-20T04:00:00.000Z',
         updatedAt: '2026-09-20T04:00:00.000Z'
       }
+    },
+    async getOwnedUserPlant() {
+      throw new Error('创建用户植物用例不应调用单株读取')
     }
   }
   const commitUnknownReadOnlyRepository: HttpIdempotencyCommitUnknownReadOnlyRepository = {

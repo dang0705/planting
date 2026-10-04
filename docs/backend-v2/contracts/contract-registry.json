@@ -1,13 +1,20 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-24T08:41:04+08:00",
+  "generatedAt": "2026-10-04T00:38:18+08:00",
   "contracts": [
     {
       "id": "principal-and-capability",
       "version": "principal-capability/v1",
       "file": "principal-and-capability.md",
       "owner": "identity + subscription",
-      "sha256": "857af1184296df768ea0afea652cf0528dba5016239eb8c9274098f42a2bee63"
+      "sha256": "78e330719e62d0dbcea0a5050e51f691d39dc054de5489713a88253ddccda3a8"
+    },
+    {
+      "id": "identity-trial-anchor",
+      "version": "identity-trial-anchor/v1",
+      "file": "identity-trial-anchor.md",
+      "owner": "identity + subscription",
+      "sha256": "20cdcaf8a705b1cb785dd20b70e449507dfe8359087cd605016a303feca5a865"
     },
     {
       "id": "identity-session-policy",
@@ -32,11 +39,10 @@
     },
     {
       "id": "authenticated-ephemeral-plant-case",
-      "version": "authenticated-ephemeral-plant-case/p1-draft",
+      "version": "authenticated-ephemeral-plant-case/v1",
       "file": "authenticated-ephemeral-plant-case.md",
       "owner": "user-plant",
-      "status": "P1_PENDING",
-      "sha256": "f58e3a24674b974ca0d82ff121545f5679fe7b78b738782c4058dc2833d2c98b"
+      "sha256": "6846d3316a32cbed04fce258c6ed7cab3f891bb98913c918a4c5b9d62b9353eb"
     },
     {
       "id": "care-points-and-ai-quota",
@@ -60,11 +66,33 @@
       "sha256": "b39ed8eefe9b91980692904310491d05f34aac58277ed10bc96d9e108955b20e"
     },
     {
+      "id": "plant-knowledge-public-read",
+      "version": "plant-knowledge-public-read/v1",
+      "file": "plant-knowledge-public-read.md",
+      "owner": "plant-knowledge",
+      "sha256": "ad3837598d8aff811612a5fdcdc5dc884207c477c2dd2eedac5cdb9b4111ea6d"
+    },
+    {
+      "id": "plant-knowledge-public-search",
+      "version": "plant-knowledge-public-search/v1",
+      "file": "plant-knowledge-public-search.md",
+      "owner": "plant-knowledge",
+      "sha256": "6014cdd78ab7833fc7898ef3eb4c2d6cdb06f67c69bbf875d6e7836cc3d49f03"
+    },
+    {
+      "id": "plant-catalog-search",
+      "version": "plant-catalog-search/v1",
+      "file": "plant-catalog-search.md",
+      "owner": "plant-knowledge",
+      "status": "P3_TARGET",
+      "sha256": "a478e3b694f13fcd93cdfead1410067dcd7fe9e71849c93899fa62e66a54f9fc"
+    },
+    {
       "id": "care-environment-foundation",
-      "version": "care-environment-foundation/v1",
+      "version": "care-environment-foundation/v2",
       "file": "care-environment-foundation.md",
       "owner": "care",
-      "sha256": "9600f9a3953b85013f5295bbda9de741d9b9c0fded393d4c7b6af8c6d3528b55"
+      "sha256": "d56119c61b8e3d7bd1bd295306ae4b9b4f03cb1135fba3cbb96689e0af82c3fe"
     },
     {
       "id": "care-manual-soil-observation",
@@ -75,18 +103,26 @@
       "sha256": "dd65dee4bcbd93fb0fd5bf9296136716145b26d3b6bd3ec2d990a34118540381"
     },
     {
+      "id": "watering-decision-model",
+      "version": "watering-decision-model/v1",
+      "file": "watering-decision-model.md",
+      "owner": "care",
+      "status": "STRUCTURE_FROZEN_PARAMETERS_PENDING",
+      "sha256": "4ac7c2bdf09ad73912c09b1ffc6c8233eb24caabe4104e8e28c1958a2bdcdc70"
+    },
+    {
       "id": "care-capability-output",
       "version": "care-capability-result/v1",
       "file": "care-capability-output.md",
       "owner": "care",
-      "sha256": "b83669dffe52cfe7765955a15691479d2a56c17923008145bccd4b816af73d13"
+      "sha256": "07cbc4ed03f3a4b867b50a52f1b971a2991c9c905b345e14968e963986436813"
     },
     {
       "id": "http-api",
       "version": "http-api/v1",
       "file": "http-api.md",
       "owner": "shared-http + all application services",
-      "sha256": "0ecf6dc11211f9276bde005bdcd92f0ae5a30e82c9b65888dd54c74a6058a8ee"
+      "sha256": "a59f09f06de1d222ea5f5a56cdc15f46b6047390f9c533fd1cf5fd2a71280ab9"
     },
     {
       "id": "plant-encyclopedia-display",
@@ -132,7 +168,7 @@
       "file": "diagnosis-knowledge-persistence.md",
       "owner": "diagnosis",
       "status": "P1_PENDING",
-      "sha256": "d89f693363d77bc3d4bc72c175ce79e55e8580a1b7ce18f80ec000cf543f390b"
+      "sha256": "4c2fd0f265aa061ab9c181d8123acac0d80e03add72ffb0a49ff6c176e906fc0"
     },
     {
       "id": "diagnosis-cms-review-exchange",

@@ -3,6 +3,11 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { repoRoot } from '../../../../e2e/batch/workflow/dispatch-gate-contract/helpers.mjs'
 
+// Test First 关联（不改变 Expected 断言；供 matrix-gate 识别被测产品路径）
+if (false) {
+  import('../../../../../src/pages/index/index.vue')
+}
+
 function read(relativePath) {
   return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8')
 }

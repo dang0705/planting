@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-27T05:24:18.259Z",
+  "generatedAt": "2026-09-29T23:23:42.576Z",
   "snapshotSource": "docs/backend-v2/tracker/heartbeats/*.json（主代理汇总）",
-  "trackerOwner": "主代理 /root（各 ticket 子代理写独立心跳；主代理校验、汇总并处理超时）",
+  "trackerOwner": "主代理 /root（各 ticket 仅在事实变化时上报；脚本汇总，主代理处理冲突）",
   "clickUpStatus": "CREATED",
   "clickUpTaskStatuses": {
     "z8v0kmr96q": "done",
@@ -18,9 +18,9 @@
     "z8v0kmr9ge": "done",
     "z8v0kmr9gm": "blocked",
     "z8v0kmr9gn": "done",
-    "z8v0kmr970": "blocked",
+    "z8v0kmr970": "codex running",
     "z8v0kmr971": "backlog",
-    "z8v0kmr972": "backlog",
+    "z8v0kmr972": "codex running",
     "z8v0kmr973": "backlog",
     "z8v0kmr974": "backlog",
     "z8v0kmr975": "backlog",
@@ -28,24 +28,23 @@
     "z8v0kmr977": "backlog",
     "z8v0kmr978": "backlog",
     "z8v0kmr979": "backlog",
-    "z8v0kmr9mj": "ready for codex",
+    "z8v0kmr9mj": "codex running",
     "z8v0kmr9mh": "ready for codex",
     "z8v0kmr9mk": "ready for codex",
-    "z8v0kmrg8a": "ready for codex"
+    "z8v0kmrg8a": "ready for codex",
+    "z8v0kmrp1w": "review needed"
   },
   "agentRegistry": [
     {
-      "name": "root",
-      "path": "/root/root",
-      "model": "主代理",
-      "status": "blocked",
+      "name": "p2_identity_principal_gpt6",
+      "path": "/root/p2_identity_principal_gpt6",
+      "model": "gpt-6-luna-max",
+      "status": "heartbeat_stale",
       "ticketIds": [
         "z8v0kmr970"
       ],
-      "lastObservedAt": "2026-09-27T12:58:39+08:00",
-      "blockers": [
-        "待用户确认首次微信登录改动仅限 v2 测试环境的具体范围；确认前不修改身份 HTTP、凭证验真、能力快照或云端函数。"
-      ]
+      "lastObservedAt": "2026-09-27T15:05:48+08:00",
+      "blockers": []
     },
     {
       "name": "p1_data_cms_close_luna",
@@ -84,17 +83,15 @@
       ]
     },
     {
-      "name": "root + p1_taxonomy_ddl_close_terra + p1_taxonomy_authority_pipeline_terra + p1_taxonomy_gate_gpt6",
-      "path": "/root/root + p1_taxonomy_ddl_close_terra + p1_taxonomy_authority_pipeline_terra + p1_taxonomy_gate_gpt6",
-      "model": "root + gpt-5.6-terra / medium-high + gpt-6-luna / max",
+      "name": "tropicals_admission_gpt6",
+      "path": "/root/tropicals_admission_gpt6",
+      "model": "gpt-6-luna / max；主代理验收",
       "status": "heartbeat_stale",
       "ticketIds": [
         "z8v0kmr9gm"
       ],
-      "lastObservedAt": "2026-09-24T09:37:49+08:00",
-      "blockers": [
-        "仅阻塞对应记录的准入：123 需负责人决定旧行‘绯牡丹’的实际身份或继续未映射；73 需取得 IAS 对应栽培品种的具体登记/legacy 证据，裁决银皇后的种间杂交身份和多亲本表示；98 需负责人决定是否采用通用‘无适用 ICRA’替代证据规则。此门禁不阻塞不依赖 active taxonomy 的其他任务。"
-      ]
+      "lastObservedAt": "2026-09-27T16:27:03+08:00",
+      "blockers": []
     },
     {
       "name": "root",
@@ -105,6 +102,17 @@
         "z8v0kmr971"
       ],
       "lastObservedAt": "2026-09-24T02:52:10Z",
+      "blockers": []
+    },
+    {
+      "name": "knowledge_search_readiness",
+      "path": "/root/knowledge_search_readiness",
+      "model": "以运行时代理清单为准",
+      "status": "done",
+      "ticketIds": [
+        "z8v0kmrp1w"
+      ],
+      "lastObservedAt": "2026-09-27T16:06:27+08:00",
       "blockers": []
     },
     {
@@ -119,14 +127,14 @@
       "blockers": []
     },
     {
-      "name": "p2_user_plant_core_gpt6",
-      "path": "/root/p2_user_plant_core_gpt6",
-      "model": "gpt-6-luna / max",
+      "name": "root",
+      "path": "/root/root",
+      "model": "主代理",
       "status": "heartbeat_stale",
       "ticketIds": [
         "z8v0kmr9mj"
       ],
-      "lastObservedAt": "2026-09-27T11:15:54+08:00",
+      "lastObservedAt": "2026-09-27T16:38:00+08:00",
       "blockers": []
     },
     {
@@ -268,21 +276,21 @@
       "name": "身份与主体",
       "phase": "P2",
       "plannedAgent": "identity_terra",
-      "agent": "root",
-      "progress": 28,
+      "agent": null,
+      "progress": 32.5,
       "status": "当前执行阶段进行中",
-      "lastUpdatedAt": "2026-09-27T12:58:39+08:00",
+      "lastUpdatedAt": "2026-09-27T15:05:48+08:00",
       "tickets": [
         {
           "id": "z8v0kmr970",
           "title": "[P2] 统一身份 Principal",
           "url": "https://app.clickup.com/t/z8v0kmr970",
           "plannedAgent": "identity_terra",
-          "agent": "root",
-          "status": "blocked：微信小程序首个真实登录切片暂停在实施边界确认门前。统一 Principal 解析及平台绑定/解绑的核心规则已有单元与真实 MySQL 证据；首次微信凭证验真、登录 HTTP、用户/绑定/会话原子签发和试用能力快照生成仍未实现或验收。v2 网关为公开入口，不能凭可伪造的请求头建立身份。55% 是历史估算，不代表当前正在实施或端到端完成。",
-          "progress": 55,
-          "lastUpdatedAt": "2026-09-27T12:58:39+08:00",
-          "heartbeatState": "fresh"
+          "agent": "p2_identity_principal_gpt6",
+          "status": "心跳超时：P2 身份域已完成统一 Principal/绑定基础和本地一次性微信 code 登录主链路：HTTP → 一次性 fake Provider → MySQL 原子签发青花植 Bearer → 既有 user-plant GET。整体票据仍未完成；真实微信验真、CloudBase 部署环境及非登录身份接口没有验收。",
+          "progress": 65,
+          "lastUpdatedAt": "2026-09-27T15:05:48+08:00",
+          "heartbeatState": "stale"
         },
         {
           "id": "z8v0kmr975",
@@ -304,10 +312,10 @@
       "name": "植物知识、分类与 CMS",
       "phase": "P1/P2/P3",
       "plannedAgent": "knowledge_terra",
-      "agent": "p1_data_cms_close_luna、p1_taxonomy_close_terra",
-      "progress": 83,
+      "agent": "p1_data_cms_close_luna、p1_taxonomy_close_terra、knowledge_search_readiness",
+      "progress": 70,
       "status": "当前执行阶段进行中",
-      "lastUpdatedAt": "2026-09-24T09:37:49+08:00",
+      "lastUpdatedAt": "2026-09-27T16:27:03+08:00",
       "tickets": [
         {
           "id": "z8v0kmr96r",
@@ -347,10 +355,10 @@
           "title": "[P1] 植物分类与身份准入硬门",
           "url": "https://app.clickup.com/t/z8v0kmr9gm",
           "plannedAgent": "taxonomy_gate_terra + root",
-          "agent": "root + p1_taxonomy_ddl_close_terra + p1_taxonomy_authority_pipeline_terra + p1_taxonomy_gate_gpt6",
-          "status": "心跳超时：人工审批包为 REUSE_AS_IS=99、TRANSFORM=7、TRANSFORM_PENDING=4、QUARANTINE=90，seedEligible=106。123 的 Kew/WCVP 与 WFO 独立来源关系现已落成最小证据包并通过离线全量发布包回放；来源冲突、产品身份与中文展示名仍待负责人裁决。73 IAS 精确登记仍未取得，并发现 Silver Queen 为种间杂交候选、现有单一物种父级需复核；98 已取得 RHS accepted 页面、AGM PDF、iPlant 原始制品哈希，但均不等于 ICRA 登记。四条仍未批准、未进入 seed，active release 保持 STOP。",
-          "progress": 94,
-          "lastUpdatedAt": "2026-09-24T09:37:49+08:00",
+          "agent": "tropicals_admission_gpt6",
+          "status": "心跳超时：P1 首版推进 106 条已获人工许可的本地种子候选逐条证据与隔离准入；29、73、98、123 四条独立隔离，不再阻断 106 条。106 条尚未获得正式准入，active release 保持 STOP。旧 95% 缺少与新首版验收项对应的可复算依据，本轮暂停百分比上报。",
+          "progress": 0,
+          "lastUpdatedAt": "2026-09-27T16:27:03+08:00",
           "heartbeatState": "stale"
         },
         {
@@ -363,10 +371,21 @@
           "progress": 20,
           "lastUpdatedAt": "2026-09-24T02:52:10Z",
           "heartbeatState": "stale"
+        },
+        {
+          "id": "z8v0kmrp1w",
+          "title": "[P2] 已发布植物身份公开搜索纵向切片",
+          "url": "https://app.clickup.com/t/z8v0kmrp1w",
+          "plannedAgent": "knowledge_search_readiness",
+          "agent": "knowledge_search_readiness",
+          "status": "done：已发布植物身份公开搜索的本地 v2 HTTP→真实 MySQL 纵向切片已验收；ClickUp 单票已回读为 done，用户再次确认。Node 22 与 CloudBase 部署仍不在本票已验证范围内。",
+          "progress": 100,
+          "lastUpdatedAt": "2026-09-27T16:06:27+08:00",
+          "heartbeatState": "fresh"
         }
       ],
-      "reportedTicketCount": 5,
-      "totalTicketCount": 5
+      "reportedTicketCount": 6,
+      "totalTicketCount": 6
     },
     {
       "id": "user-plant",
@@ -374,9 +393,9 @@
       "phase": "P1/P2/P3",
       "plannedAgent": "user_plant_terra",
       "agent": "p1_guest_claim_consistency_luna + root",
-      "progress": 93,
+      "progress": 92.5,
       "status": "当前执行阶段进行中",
-      "lastUpdatedAt": "2026-09-27T11:15:54+08:00",
+      "lastUpdatedAt": "2026-09-27T16:38:00+08:00",
       "tickets": [
         {
           "id": "z8v0kmr96y",
@@ -394,10 +413,10 @@
           "title": "[P2] 用户植物核心实现",
           "url": "https://app.clickup.com/t/z8v0kmr9mj",
           "plannedAgent": "user_plant_terra",
-          "agent": "p2_user_plant_core_gpt6",
-          "status": "心跳超时：用户植物创建已从领域规则、公开合同、MySQL Repository 与同事务幂等编排闭环到 CloudBase 测试环境 POST→MySQL→GET，隔离测试会话下验证重复创建只落一条记录；CloudBase 测试环境单株读取另已验证本人 200、他人 404、过期/撤销会话 401。最低档案完整度、生命周期状态图、登录临时案例绑定授权以及内部归档/恢复与 active 上限应用门均有 Expected 和测试。整票仍未完成：平台凭证真实验真、会话签发和能力快照生成未由夹具证明；档案 JSON/PATCH 与持久化奖励 outbox、登录临时案例持久化/认领、归档/恢复公开 DTO/HTTP、资产/环境/时间线等范围仍待各自切片。",
+          "agent": "root",
+          "status": "心跳超时：用户植物创建与单株读取已有 CloudBase v2 测试环境 HTTP→MySQL→读回证据，但使用预置测试会话，不证明真实平台登录。当前 015 会话策略迁移后的测试夹具已修复，完整本地 MySQL 回归为 24 文件 117/117；仍缺无预置能力快照的登录→创建→读回组合、档案 PATCH、临时案例认领、资产/环境/时间线及归档/恢复云端验收。85% 是历史估算，不代表整票已验收。",
           "progress": 85,
-          "lastUpdatedAt": "2026-09-27T11:15:54+08:00",
+          "lastUpdatedAt": "2026-09-27T16:38:00+08:00",
           "heartbeatState": "stale"
         }
       ],
@@ -518,7 +537,7 @@
       "phase": "P0/P1/P2/P5/P6",
       "plannedAgent": "foundation_terra",
       "agent": "p1_legacy_close_luna、p1_external_close_luna、p1_storage_close_luna、p0_build_probe_terra、product_decisions_terra、integration_probe_terra、root、root + config_business_luna + provider_config_terra",
-      "progress": 67,
+      "progress": 66.8,
       "status": "当前执行阶段进行中",
       "lastUpdatedAt": "2026-09-24T09:26:51+08:00",
       "tickets": [
@@ -671,9 +690,22 @@
     }
   ],
   "overallProgress": {
-    "progress": 63,
-    "reported": 20,
-    "total": 28
+    "progress": 61.2,
+    "reported": 21,
+    "total": 29
   },
-  "clickUpLastSyncedAt": "2026-09-27T13:23:37+08:00"
+  "clickUpLastSyncedAt": "2026-09-27T15:39:29+08:00",
+  "clickUpSyncError": "BLOCKED_MCP_RATE_LIMIT：本轮全量查询再次返回 RATE_LIMIT_EXCEEDED（100/100 calls used，retryAfter=14307 秒）；未取得本轮 29/29 全量页，完整快照仍沿用 2026-09-27 15:39:29。H5 另按单票回读显示 z8v0kmr9gm=codex running（16:27:03）、z8v0kmrp1w=done（16:06:27）；其余状态仍以上次完整回读为准，不能视作本轮已全量核实。",
+  "clickUpSingleTaskChecks": {
+    "z8v0kmr9gm": {
+      "status": "codex running",
+      "confirmedAt": "2026-09-27T16:27:03+08:00",
+      "source": "复用用户已登录的 Chrome 大帝主资料现有 ClickUp 标签页，任务详情回读 CODEX RUNNING；全量 29 票快照仍待专职 keeper 复核"
+    },
+    "z8v0kmrp1w": {
+      "status": "done",
+      "confirmedAt": "2026-09-27T16:06:27+08:00",
+      "source": "用户再次确认，且此前主代理已单票回读 ClickUp done"
+    }
+  }
 }

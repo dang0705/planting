@@ -2,20 +2,24 @@
   "ticketId": "z8v0kmrg8a",
   "agent": "root",
   "status": "in_progress",
-  "progress": 36,
-  "summary": "P1 诊断知识合同进行中：来源与 Outcome/Action 边界、结果展示结构、关系索引、CMS 审核/撤销请求和撤销空库约束已有可执行证据；候选完整结构、跨引用语义、应用发布事务、真实 CMS 权限和园艺内容审核尚未闭环。",
+  "progress": 50,
+  "summary": "P1 诊断知识合同进行中：来源与 Outcome/Action 边界、结果展示结构、关系索引、CMS 审核/撤销请求、撤销空库约束、候选结构 v1 Schema、引用闭合和候选完整内容摘要已有可执行证据；条件执行语义、发布包、应用发布事务、真实 CMS 权限和园艺内容审核尚未闭环。",
   "blockers": [],
   "verified": [
     "一隅截图只作为结果信息分区参考，Outcome、单次结果和 Action 已分离，具体园艺处置未因截图自动入库。",
     "commit a550290a：审核批准/驳回与既有批准撤销拆分为两种请求，JSON Schema、9 条目标合同测试及注册表哈希读回通过。",
     "Test First 先 RED，补 Schema 后 GREEN；临时允许 revoked 作为审核决定时测试 RED，恢复后 GREEN。",
     "009 与 010 仅按空库 CREATE 顺序执行；批准撤销独立追加，原审核不改写；本地 MySQL 拒绝驳回目标、重复目标、重复引用和空理由。",
-    "全量 10 个 DDL 文件在隔离 MySQL 8.4 空库连续执行，读回 103 张表；Vitest 64 文件/337 项、真实 MySQL 9 文件/25 项、TypeScript 类型检查和目标 oxlint 通过。"
+    "全量 10 个 DDL 文件在隔离 MySQL 8.4 空库连续执行，读回 103 张表；此前 Vitest 64 文件/337 项、真实 MySQL 9 文件/25 项通过，不替代新增增量的全量回归。",
+    "候选结构 v1 Schema 的 9 条合同测试先见缺文件 RED，补结构后 GREEN；再以无证据隔离/紧急缺省用例在宽松 Schema 上 RED，收紧后 9/9 GREEN；TypeScript typecheck 与目标 oxlint 通过。",
+    "候选→题包/来源关系闭合纯函数先有缺实现和行为 RED，再实现；15 条诊断引用相关单元测试通过，条件反转执行反写 RED 后完整恢复，源码 SHA-256 与反写前一致；目标 oxlint/oxfmt/typecheck 通过。",
+    "黄叶水分方向权威来源已整理为逐条可审候选，明确适用、反证、许可及不能推出的 Action；未当作已发布园艺事实。",
+    "候选摘要 Test First：缺模块先 RED；完整 v1 JSON 固定对象键递归排序、数组原序、紧凑 UTF-8 known vector；精确来源修订和题包 release ref 变更均改变摘要。稀疏数组洞测试先 RED，改用索引和自有元素检查后，null 保留为 JSON null，undefined/稀疏洞失败关闭；摘要 7/7、诊断目标 32/32 通过，完整 TypeScript 类型检查、目标 oxlint/oxfmt 通过。"
   ],
   "unverified": [
-    "候选/发布包完整结构及跨引用语义校验、撤销应用命令的只追加权限和新发布阻断、管理员真实性、真实 CloudBase CMS 权限及发布事务尚未验收。",
+    "候选内条件代码的可执行语义、实际外部依赖与植物适用性读回、发布包 Schema、撤销应用命令的只追加权限和新发布阻断、管理员真实性、真实 CloudBase CMS 权限及发布事务尚未验收。",
     "已经在线的发布包在批准撤销后的处理策略尚未由用户确认，不能在实现中暗定。"
   ],
-  "updatedAt": "2026-09-24T07:41:49+08:00",
-  "next": "继续固定候选完整结构与跨引用 Expected，并补撤销应用命令及发布竞争测试；保持 ClickUp 为 codex running，不提前标记完成。"
+  "updatedAt": "2026-09-24T08:35:19+08:00",
+  "next": "继续固定候选条件代码语义与 SQL JSON 映射，冻结独立发布包 Schema 后补发布/撤销事务和真实 MySQL 竞争验证；保持 ClickUp 状态由专职 keeper 维护，不提前标记完成。"
 }

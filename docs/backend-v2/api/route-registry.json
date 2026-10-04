@@ -2,63 +2,869 @@
   "schemaVersion": 1,
   "version": "route-registry/p1",
   "basePath": "/api/v2",
-  "generatedAt": "2026-09-20T01:00:00+08:00",
+  "generatedAt": "2026-10-04T00:34:39+08:00",
   "routes": [
-    {"method":"POST","path":"/api/v2/identity/sessions","operationId":"createIdentitySession","owner":"identity","phase":"P2","security":"public","requestContract":"CreateIdentitySessionRequest","responseContract":"IdentitySessionResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","IDEMPOTENCY_CONFLICT"]},
-    {"method":"POST","path":"/api/v2/identity/bindings","operationId":"createIdentityBinding","owner":"identity","phase":"P2","security":"authenticated","requestContract":"CreateIdentityBindingRequest","responseContract":"IdentityBindingResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","IDEMPOTENCY_CONFLICT","IDENTITY_BINDING_CONFLICT"]},
-    {"method":"DELETE","path":"/api/v2/identity/bindings/{platform}","operationId":"deleteIdentityBinding","owner":"identity","phase":"P2","security":"authenticated","requestContract":"DeleteIdentityBindingRequest","responseContract":"IdentityBindingDeletionResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","IDEMPOTENCY_CONFLICT","IDENTITY_LAST_BINDING_REQUIRED"]},
-    {"method":"GET","path":"/api/v2/me","operationId":"getCurrentUser","owner":"identity","phase":"P2","security":"authenticated","requestContract":"EmptyRequest","responseContract":"CurrentUserResponse","idempotency":"not_applicable","errors":["PRINCIPAL_INVALID","CAPABILITY_DENIED"]},
-
-    {"method":"GET","path":"/api/v2/plant-knowledge/search","operationId":"searchPublishedPlants","owner":"plant-knowledge","phase":"P3","security":"public","requestContract":"PlantSearchQuery","responseContract":"PlantSearchResponse","idempotency":"not_applicable","errors":["VALIDATION_FAILED","SERVICE_UNAVAILABLE"]},
-    {"method":"GET","path":"/api/v2/plant-knowledge/plants/{plantIdentityRef}","operationId":"getPublishedPlant","owner":"plant-knowledge","phase":"P3","security":"public","requestContract":"PlantIdentityPath","responseContract":"PublishedPlantResponse","idempotency":"not_applicable","errors":["VALIDATION_FAILED","NOT_FOUND"]},
-    {"method":"POST","path":"/api/v2/plant-knowledge/identifications","operationId":"identifyPlant","owner":"plant-knowledge","phase":"P3","security":"guest_or_authenticated","requestContract":"IdentifyPlantRequest","responseContract":"PlantIdentificationResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","IDEMPOTENCY_CONFLICT","SERVICE_UNAVAILABLE"]},
-
-    {"method":"GET","path":"/api/v2/user-plants","operationId":"listUserPlants","owner":"user-plant","phase":"P2","security":"authenticated","requestContract":"UserPlantListQuery","responseContract":"UserPlantListResponse","idempotency":"not_applicable","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID"]},
-    {"method":"POST","path":"/api/v2/user-plants","operationId":"createUserPlant","owner":"user-plant","phase":"P2","security":"authenticated","requestContract":"CreateUserPlantRequest","responseContract":"CreateUserPlantResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","CAPABILITY_DENIED","CAPABILITY_SNAPSHOT_EXPIRED","IDEMPOTENCY_CONFLICT"]},
-    {"method":"GET","path":"/api/v2/user-plants/{userPlantRef}","operationId":"getUserPlant","owner":"user-plant","phase":"P2","security":"authenticated","requestContract":"UserPlantPath","responseContract":"UserPlantResponse","idempotency":"not_applicable","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","USER_PLANT_NOT_FOUND"]},
-    {"method":"PATCH","path":"/api/v2/user-plants/{userPlantRef}","operationId":"updateUserPlant","owner":"user-plant","phase":"P2","security":"authenticated","requestContract":"UpdateUserPlantRequest","responseContract":"UserPlantResponse","idempotency":"required_header_and_version","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","USER_PLANT_NOT_FOUND","USER_PLANT_VERSION_CONFLICT","IDEMPOTENCY_CONFLICT"]},
-    {"method":"DELETE","path":"/api/v2/user-plants/{userPlantRef}","operationId":"deleteUserPlant","owner":"user-plant","phase":"P2","security":"authenticated","requestContract":"DeleteUserPlantRequest","responseContract":"UserPlantDeletionResponse","idempotency":"required_header_and_version","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","USER_PLANT_NOT_FOUND","USER_PLANT_VERSION_CONFLICT","IDEMPOTENCY_CONFLICT"]},
-    {"method":"POST","path":"/api/v2/user-plants/{userPlantRef}/archive","operationId":"archiveUserPlant","owner":"user-plant","phase":"P2","security":"authenticated","requestContract":"UserPlantVersionRequest","responseContract":"UserPlantResponse","idempotency":"required_header_and_version","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","USER_PLANT_NOT_FOUND","USER_PLANT_VERSION_CONFLICT","IDEMPOTENCY_CONFLICT"]},
-    {"method":"POST","path":"/api/v2/user-plants/{userPlantRef}/restore","operationId":"restoreUserPlant","owner":"user-plant","phase":"P2","security":"authenticated","requestContract":"UserPlantVersionRequest","responseContract":"UserPlantResponse","idempotency":"required_header_and_version","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","USER_PLANT_NOT_FOUND","USER_PLANT_VERSION_CONFLICT","IDEMPOTENCY_CONFLICT","CAPABILITY_DENIED","CAPABILITY_SNAPSHOT_EXPIRED"]},
-    {"method":"POST","path":"/api/v2/user-plants/{userPlantRef}/identity-confirmations","operationId":"confirmUserPlantIdentity","owner":"user-plant","phase":"P2","security":"authenticated","requestContract":"ConfirmUserPlantIdentityRequest","responseContract":"UserPlantResponse","idempotency":"required_header_and_version","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","USER_PLANT_NOT_FOUND","USER_PLANT_VERSION_CONFLICT","IDEMPOTENCY_CONFLICT"]},
-    {"method":"POST","path":"/api/v2/user-plants/{userPlantRef}/assets","operationId":"bindUserPlantAsset","owner":"user-plant","phase":"P2","security":"authenticated","requestContract":"BindUserPlantAssetRequest","responseContract":"UserPlantAssetResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","USER_PLANT_NOT_FOUND","IDEMPOTENCY_CONFLICT"]},
-    {"method":"GET","path":"/api/v2/user-plants/{userPlantRef}/timeline","operationId":"listUserPlantTimeline","owner":"user-plant","phase":"P2","security":"authenticated","requestContract":"TimelineQuery","responseContract":"TimelineResponse","idempotency":"not_applicable","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","USER_PLANT_NOT_FOUND"]},
-    {"method":"POST","path":"/api/v2/user-plants/claims","operationId":"claimGuestPlantCase","owner":"user-plant","phase":"P2","security":"authenticated","requestContract":"ClaimGuestPlantCaseRequest","responseContract":"ClaimGuestPlantCaseResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","GUEST_SESSION_EXPIRED","GUEST_SESSION_NOT_CLAIMABLE","IDEMPOTENCY_CONFLICT"]},
-
-    {"method":"POST","path":"/api/v2/care/watering-advice","operationId":"createWateringAdvice","owner":"care","phase":"P4","security":"guest_or_authenticated","requestContract":"WateringAdviceRequest","responseContract":"CareCapabilityResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","IDEMPOTENCY_CONFLICT","SERVICE_UNAVAILABLE"]},
-    {"method":"POST","path":"/api/v2/care/soil-assessments","operationId":"createSoilAssessment","owner":"care","phase":"P4","security":"guest_or_authenticated","requestContract":"SoilAssessmentRequest","responseContract":"SoilAssessmentResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","IDEMPOTENCY_CONFLICT","SERVICE_UNAVAILABLE"]},
-    {"method":"GET","path":"/api/v2/user-plants/{userPlantRef}/care/summary","operationId":"getUserPlantCareSummary","owner":"care","phase":"P4","security":"authenticated","requestContract":"UserPlantPath","responseContract":"CareSummaryResponse","idempotency":"not_applicable","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","USER_PLANT_NOT_FOUND"]},
-    {"method":"POST","path":"/api/v2/user-plants/{userPlantRef}/care/facts","operationId":"createCareFact","owner":"care","phase":"P4","security":"authenticated","requestContract":"CreateCareFactRequest","responseContract":"CareFactResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","USER_PLANT_NOT_FOUND","IDEMPOTENCY_CONFLICT"]},
-    {"method":"GET","path":"/api/v2/user-plants/{userPlantRef}/care/plans","operationId":"listCarePlans","owner":"care","phase":"P4","security":"authenticated","requestContract":"CarePlanListQuery","responseContract":"CarePlanListResponse","idempotency":"not_applicable","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","USER_PLANT_NOT_FOUND"]},
-    {"method":"POST","path":"/api/v2/user-plants/{userPlantRef}/care/proposals/{proposalRef}/confirmations","operationId":"confirmCareProposal","owner":"care","phase":"P4","security":"authenticated","requestContract":"ConfirmCareProposalRequest","responseContract":"CareConfirmationResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","USER_PLANT_NOT_FOUND","IDEMPOTENCY_CONFLICT"]},
-    {"method":"POST","path":"/api/v2/user-plants/{userPlantRef}/care/plans/{planRef}/completions","operationId":"completeCarePlan","owner":"care","phase":"P4","security":"authenticated","requestContract":"CompleteCarePlanRequest","responseContract":"CarePlanResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","USER_PLANT_NOT_FOUND","IDEMPOTENCY_CONFLICT"]},
-
-    {"method":"POST","path":"/api/v2/diagnosis/sessions","operationId":"createDiagnosisSession","owner":"diagnosis","phase":"P4","security":"guest_or_authenticated","requestContract":"CreateDiagnosisSessionRequest","responseContract":"DiagnosisSessionResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","IDEMPOTENCY_CONFLICT","SERVICE_UNAVAILABLE"]},
-    {"method":"POST","path":"/api/v2/diagnosis/sessions/{diagnosisSessionRef}/answers","operationId":"answerDiagnosisQuestion","owner":"diagnosis","phase":"P4","security":"guest_or_authenticated","requestContract":"DiagnosisAnswerRequest","responseContract":"DiagnosisSessionResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","IDEMPOTENCY_CONFLICT"]},
-    {"method":"GET","path":"/api/v2/diagnosis/sessions/{diagnosisSessionRef}/result","operationId":"getDiagnosisResult","owner":"diagnosis","phase":"P4","security":"guest_or_authenticated","requestContract":"DiagnosisSessionPath","responseContract":"DiagnosisResultResponse","idempotency":"not_applicable","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","NOT_FOUND"]},
-    {"method":"GET","path":"/api/v2/user-plants/{userPlantRef}/diagnoses","operationId":"listUserPlantDiagnoses","owner":"diagnosis","phase":"P4","security":"authenticated","requestContract":"DiagnosisListQuery","responseContract":"DiagnosisListResponse","idempotency":"not_applicable","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","USER_PLANT_NOT_FOUND"]},
-    {"method":"POST","path":"/api/v2/user-plants/{userPlantRef}/diagnoses","operationId":"createUserPlantDiagnosis","owner":"diagnosis","phase":"P4","security":"authenticated","requestContract":"CreateUserPlantDiagnosisRequest","responseContract":"DiagnosisSessionResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","USER_PLANT_NOT_FOUND","AI_QUOTA_INSUFFICIENT","IDEMPOTENCY_CONFLICT"]},
-
-    {"method":"GET","path":"/api/v2/subscription/plans","operationId":"listSubscriptionPlans","owner":"subscription","phase":"P3","security":"public","requestContract":"EmptyRequest","responseContract":"SubscriptionPlanListResponse","idempotency":"not_applicable","errors":["SERVICE_UNAVAILABLE"]},
-    {"method":"POST","path":"/api/v2/subscription/trials","operationId":"activateTrial","owner":"subscription","phase":"P3","security":"authenticated","requestContract":"ActivateTrialRequest","responseContract":"EntitlementResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","CAPABILITY_DENIED","IDEMPOTENCY_CONFLICT"]},
-    {"method":"GET","path":"/api/v2/subscription/entitlements","operationId":"getEntitlements","owner":"subscription","phase":"P3","security":"authenticated","requestContract":"EmptyRequest","responseContract":"PublicCapabilityResponse","idempotency":"not_applicable","errors":["PRINCIPAL_INVALID"]},
-    {"method":"POST","path":"/api/v2/subscription/orders","operationId":"createSubscriptionOrder","owner":"subscription","phase":"P5","security":"authenticated","requestContract":"CreateSubscriptionOrderRequest","responseContract":"SubscriptionOrderResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","IDEMPOTENCY_CONFLICT","SERVICE_UNAVAILABLE"]},
-    {"method":"GET","path":"/api/v2/subscription/orders/{orderRef}","operationId":"getSubscriptionOrder","owner":"subscription","phase":"P5","security":"authenticated","requestContract":"SubscriptionOrderPath","responseContract":"SubscriptionOrderResponse","idempotency":"not_applicable","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","NOT_FOUND"]},
-    {"method":"GET","path":"/api/v2/subscription/rewards/summary","operationId":"getRewardSummary","owner":"subscription","phase":"P3","security":"authenticated","requestContract":"EmptyRequest","responseContract":"RewardSummaryResponse","idempotency":"not_applicable","errors":["PRINCIPAL_INVALID"]},
-    {"method":"GET","path":"/api/v2/subscription/rewards/ledger","operationId":"listRewardLedger","owner":"subscription","phase":"P3","security":"authenticated","requestContract":"RewardLedgerQuery","responseContract":"RewardLedgerResponse","idempotency":"not_applicable","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID"]},
-    {"method":"GET","path":"/api/v2/subscription/rewards/catalog","operationId":"getRewardCatalog","owner":"subscription","phase":"P3","security":"authenticated","requestContract":"EmptyRequest","responseContract":"RewardCatalogResponse","idempotency":"not_applicable","errors":["PRINCIPAL_INVALID"]},
-    {"method":"POST","path":"/api/v2/subscription/rewards/redemptions","operationId":"createRewardRedemption","owner":"subscription","phase":"P3","security":"authenticated","requestContract":"CreateRewardRedemptionRequest","responseContract":"RewardRedemptionResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","CAPABILITY_DENIED","IDEMPOTENCY_CONFLICT"]},
-    {"method":"GET","path":"/api/v2/subscription/ai-quota","operationId":"getAiQuota","owner":"subscription","phase":"P3","security":"authenticated","requestContract":"EmptyRequest","responseContract":"AiQuotaResponse","idempotency":"not_applicable","errors":["PRINCIPAL_INVALID"]},
-    {"method":"POST","path":"/api/v2/subscription/callbacks/{provider}","operationId":"receivePaymentCallback","owner":"subscription","phase":"P5","security":"service","requiredScope":"subscription.payment-callback.receive","requestContract":"RawPaymentCallback","responseContract":"PaymentCallbackResponse","idempotency":"provider_event_id","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","IDEMPOTENCY_CONFLICT","SERVICE_UNAVAILABLE"]},
-
-    {"method":"POST","path":"/api/v2/internal/identity/resolve","operationId":"resolvePrincipalInternal","owner":"identity","phase":"P2","security":"service","requiredScope":"identity.resolve","requestContract":"ResolvePrincipalInternalRequest","responseContract":"ResolvePrincipalInternalResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","IDEMPOTENCY_CONFLICT"]},
-    {"method":"GET","path":"/api/v2/internal/user-plants/{userPlantRef}/context","operationId":"getUserPlantContextInternal","owner":"user-plant","phase":"P2","security":"service","requiredScope":"user-plant.context.read","requestContract":"ScopedUserPlantContextQuery","responseContract":"UserPlantContextInternalResponse","idempotency":"not_applicable","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","USER_PLANT_NOT_FOUND"]},
-    {"method":"GET","path":"/api/v2/internal/user-plants/{userPlantRef}/agent-context","operationId":"getAgentPlantContextInternal","owner":"user-plant","phase":"P4","security":"service","requiredScope":"user-plant.agent-context.read","requestContract":"ScopedAgentContextQuery","responseContract":"AgentPlantContextResponse","idempotency":"not_applicable","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","USER_PLANT_NOT_FOUND","CAPABILITY_DENIED"]},
-    {"method":"POST","path":"/api/v2/internal/subscription/ai-quota/reservations","operationId":"reserveAiQuotaInternal","owner":"subscription","phase":"P3","security":"service","requiredScope":"subscription.ai-quota.reserve","requestContract":"ReserveAiQuotaCommand","responseContract":"AiQuotaReservationResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","AI_QUOTA_INSUFFICIENT","IDEMPOTENCY_CONFLICT"]},
-    {"method":"POST","path":"/api/v2/internal/subscription/ai-quota/reservations/{reservationRef}/settlements","operationId":"settleAiQuotaInternal","owner":"subscription","phase":"P5","security":"service","requiredScope":"subscription.ai-quota.settle","requestContract":"SettleAiQuotaCommand","responseContract":"AiQuotaSettlementResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","IDEMPOTENCY_CONFLICT"]},
-    {"method":"POST","path":"/api/v2/internal/subscription/ai-quota/reservations/{reservationRef}/releases","operationId":"releaseAiQuotaInternal","owner":"subscription","phase":"P5","security":"service","requiredScope":"subscription.ai-quota.release","requestContract":"ReleaseAiQuotaCommand","responseContract":"AiQuotaReleaseResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","IDEMPOTENCY_CONFLICT"]},
-    {"method":"POST","path":"/api/v2/internal/subscription/reward-events","operationId":"consumeRewardEventInternal","owner":"subscription","phase":"P3","security":"service","requiredScope":"subscription.reward-event.consume","requestContract":"RewardableDomainEvent","responseContract":"RewardEventConsumptionResponse","idempotency":"event_id","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","IDEMPOTENCY_CONFLICT"]},
-    {"method":"POST","path":"/api/v2/internal/plant-knowledge/enrichment-jobs/leases","operationId":"leaseEnrichmentJobsInternal","owner":"plant-knowledge","phase":"P3","security":"service","requiredScope":"plant-knowledge.enrichment.lease","requestContract":"LeaseEnrichmentJobsRequest","responseContract":"LeaseEnrichmentJobsResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","IDEMPOTENCY_CONFLICT"]},
-    {"method":"POST","path":"/api/v2/internal/plant-knowledge/enrichment-jobs/{jobRef}/results","operationId":"submitEnrichmentResultInternal","owner":"plant-knowledge","phase":"P3","security":"service","requiredScope":"plant-knowledge.enrichment.submit","requestContract":"SubmitEnrichmentResultRequest","responseContract":"EnrichmentJobResponse","idempotency":"required_header","errors":["VALIDATION_FAILED","PRINCIPAL_INVALID","IDEMPOTENCY_CONFLICT"]}
+    {
+      "method": "POST",
+      "path": "/api/v2/identity/sessions",
+      "operationId": "createIdentitySession",
+      "owner": "identity",
+      "phase": "P2",
+      "security": "credential_exchange",
+      "requestContract": "CreateIdentitySessionRequest",
+      "responseContract": "IdentitySessionResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "SERVICE_UNAVAILABLE"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/identity/bindings",
+      "operationId": "createIdentityBinding",
+      "owner": "identity",
+      "phase": "P2",
+      "security": "authenticated",
+      "requestContract": "CreateIdentityBindingRequest",
+      "responseContract": "IdentityBindingResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "IDEMPOTENCY_CONFLICT",
+        "IDENTITY_BINDING_CONFLICT"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v2/identity/bindings/{platform}",
+      "operationId": "deleteIdentityBinding",
+      "owner": "identity",
+      "phase": "P2",
+      "security": "authenticated",
+      "requestContract": "DeleteIdentityBindingRequest",
+      "responseContract": "IdentityBindingDeletionResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "IDEMPOTENCY_CONFLICT",
+        "IDENTITY_LAST_BINDING_REQUIRED"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/me",
+      "operationId": "getCurrentUser",
+      "owner": "identity",
+      "phase": "P2",
+      "security": "authenticated",
+      "requestContract": "EmptyRequest",
+      "responseContract": "CurrentUserResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "PRINCIPAL_INVALID",
+        "CAPABILITY_DENIED"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/plant-knowledge/search",
+      "operationId": "searchPublishedPlants",
+      "owner": "plant-knowledge",
+      "phase": "P3",
+      "security": "public",
+      "requestContract": "PlantSearchQuery",
+      "responseContract": "PlantSearchResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "INTERNAL_ERROR"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/plant-knowledge/catalog/search",
+      "operationId": "searchPlantCatalog",
+      "owner": "plant-knowledge",
+      "phase": "P3",
+      "security": "public",
+      "requestContract": "PlantCatalogSearchQuery",
+      "responseContract": "PlantCatalogSearchResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "INTERNAL_ERROR"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/plant-knowledge/plants/{plantIdentityRef}",
+      "operationId": "getPublishedPlant",
+      "owner": "plant-knowledge",
+      "phase": "P3",
+      "security": "public",
+      "requestContract": "PlantIdentityPath",
+      "responseContract": "PublishedPlantResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "NOT_FOUND"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/plant-knowledge/identifications",
+      "operationId": "identifyPlant",
+      "owner": "plant-knowledge",
+      "phase": "P3",
+      "security": "guest_or_authenticated",
+      "requestContract": "IdentifyPlantRequest",
+      "responseContract": "PlantIdentificationResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "IDEMPOTENCY_CONFLICT",
+        "SERVICE_UNAVAILABLE"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/user-plants",
+      "operationId": "listUserPlants",
+      "owner": "user-plant",
+      "phase": "P2",
+      "security": "authenticated",
+      "requestContract": "UserPlantListQuery",
+      "responseContract": "UserPlantListResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/user-plants",
+      "operationId": "createUserPlant",
+      "owner": "user-plant",
+      "phase": "P2",
+      "security": "authenticated",
+      "requestContract": "CreateUserPlantRequest",
+      "responseContract": "CreateUserPlantResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "CAPABILITY_DENIED",
+        "CAPABILITY_SNAPSHOT_EXPIRED",
+        "IDEMPOTENCY_CONFLICT"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/user-plants/{userPlantRef}",
+      "operationId": "getUserPlant",
+      "owner": "user-plant",
+      "phase": "P2",
+      "security": "authenticated",
+      "requestContract": "UserPlantPath",
+      "responseContract": "UserPlantResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "USER_PLANT_NOT_FOUND"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v2/user-plants/{userPlantRef}",
+      "operationId": "updateUserPlant",
+      "owner": "user-plant",
+      "phase": "P2",
+      "security": "authenticated",
+      "requestContract": "UpdateUserPlantRequest",
+      "responseContract": "UserPlantResponse",
+      "idempotency": "required_header_and_version",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "USER_PLANT_NOT_FOUND",
+        "USER_PLANT_VERSION_CONFLICT",
+        "IDEMPOTENCY_CONFLICT"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v2/user-plants/{userPlantRef}",
+      "operationId": "deleteUserPlant",
+      "owner": "user-plant",
+      "phase": "P2",
+      "security": "authenticated",
+      "requestContract": "DeleteUserPlantRequest",
+      "responseContract": "UserPlantDeletionResponse",
+      "idempotency": "required_header_and_version",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "USER_PLANT_NOT_FOUND",
+        "USER_PLANT_VERSION_CONFLICT",
+        "IDEMPOTENCY_CONFLICT"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/user-plants/{userPlantRef}/archive",
+      "operationId": "archiveUserPlant",
+      "owner": "user-plant",
+      "phase": "P2",
+      "security": "authenticated",
+      "requestContract": "UserPlantVersionRequest",
+      "responseContract": "UserPlantResponse",
+      "idempotency": "required_header_and_version",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "USER_PLANT_NOT_FOUND",
+        "USER_PLANT_VERSION_CONFLICT",
+        "IDEMPOTENCY_CONFLICT"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/user-plants/{userPlantRef}/restore",
+      "operationId": "restoreUserPlant",
+      "owner": "user-plant",
+      "phase": "P2",
+      "security": "authenticated",
+      "requestContract": "UserPlantVersionRequest",
+      "responseContract": "UserPlantResponse",
+      "idempotency": "required_header_and_version",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "USER_PLANT_NOT_FOUND",
+        "USER_PLANT_VERSION_CONFLICT",
+        "IDEMPOTENCY_CONFLICT",
+        "CAPABILITY_DENIED",
+        "CAPABILITY_SNAPSHOT_EXPIRED"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/user-plants/{userPlantRef}/identity-confirmations",
+      "operationId": "confirmUserPlantIdentity",
+      "owner": "user-plant",
+      "phase": "P2",
+      "security": "authenticated",
+      "requestContract": "ConfirmUserPlantIdentityRequest",
+      "responseContract": "UserPlantResponse",
+      "idempotency": "required_header_and_version",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "USER_PLANT_NOT_FOUND",
+        "USER_PLANT_VERSION_CONFLICT",
+        "IDEMPOTENCY_CONFLICT"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/user-plants/{userPlantRef}/assets",
+      "operationId": "bindUserPlantAsset",
+      "owner": "user-plant",
+      "phase": "P2",
+      "security": "authenticated",
+      "requestContract": "BindUserPlantAssetRequest",
+      "responseContract": "UserPlantAssetResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "USER_PLANT_NOT_FOUND",
+        "IDEMPOTENCY_CONFLICT"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/user-plants/{userPlantRef}/timeline",
+      "operationId": "listUserPlantTimeline",
+      "owner": "user-plant",
+      "phase": "P2",
+      "security": "authenticated",
+      "requestContract": "TimelineQuery",
+      "responseContract": "TimelineResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "USER_PLANT_NOT_FOUND"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/user-plants/claims",
+      "operationId": "claimGuestPlantCase",
+      "owner": "user-plant",
+      "phase": "P2",
+      "security": "authenticated",
+      "requestContract": "ClaimGuestPlantCaseRequest",
+      "responseContract": "ClaimGuestPlantCaseResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "GUEST_SESSION_EXPIRED",
+        "GUEST_SESSION_NOT_CLAIMABLE",
+        "IDEMPOTENCY_CONFLICT"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/care/watering-advice",
+      "operationId": "createWateringAdvice",
+      "owner": "care",
+      "phase": "P4",
+      "security": "guest_or_authenticated",
+      "requestContract": "WateringAdviceRequest",
+      "responseContract": "CareCapabilityResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "IDEMPOTENCY_CONFLICT",
+        "SERVICE_UNAVAILABLE"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/care/soil-assessments",
+      "operationId": "createSoilAssessment",
+      "owner": "care",
+      "phase": "P4",
+      "security": "guest_or_authenticated",
+      "requestContract": "SoilAssessmentRequest",
+      "responseContract": "SoilAssessmentResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "IDEMPOTENCY_CONFLICT",
+        "SERVICE_UNAVAILABLE"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/user-plants/{userPlantRef}/care/summary",
+      "operationId": "getUserPlantCareSummary",
+      "owner": "care",
+      "phase": "P4",
+      "security": "authenticated",
+      "requestContract": "UserPlantPath",
+      "responseContract": "CareSummaryResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "USER_PLANT_NOT_FOUND"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/user-plants/{userPlantRef}/care/facts",
+      "operationId": "createCareFact",
+      "owner": "care",
+      "phase": "P4",
+      "security": "authenticated",
+      "requestContract": "CreateCareFactRequest",
+      "responseContract": "CareFactResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "USER_PLANT_NOT_FOUND",
+        "IDEMPOTENCY_CONFLICT"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/user-plants/{userPlantRef}/care/plans",
+      "operationId": "listCarePlans",
+      "owner": "care",
+      "phase": "P4",
+      "security": "authenticated",
+      "requestContract": "CarePlanListQuery",
+      "responseContract": "CarePlanListResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "USER_PLANT_NOT_FOUND"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/user-plants/{userPlantRef}/care/proposals/{proposalRef}/confirmations",
+      "operationId": "confirmCareProposal",
+      "owner": "care",
+      "phase": "P4",
+      "security": "authenticated",
+      "requestContract": "ConfirmCareProposalRequest",
+      "responseContract": "CareConfirmationResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "USER_PLANT_NOT_FOUND",
+        "IDEMPOTENCY_CONFLICT"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/user-plants/{userPlantRef}/care/plans/{planRef}/completions",
+      "operationId": "completeCarePlan",
+      "owner": "care",
+      "phase": "P4",
+      "security": "authenticated",
+      "requestContract": "CompleteCarePlanRequest",
+      "responseContract": "CarePlanResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "USER_PLANT_NOT_FOUND",
+        "IDEMPOTENCY_CONFLICT"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/diagnosis/sessions",
+      "operationId": "createDiagnosisSession",
+      "owner": "diagnosis",
+      "phase": "P4",
+      "security": "guest_or_authenticated",
+      "requestContract": "CreateDiagnosisSessionRequest",
+      "responseContract": "DiagnosisSessionResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "IDEMPOTENCY_CONFLICT",
+        "SERVICE_UNAVAILABLE"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/diagnosis/sessions/{diagnosisSessionRef}/answers",
+      "operationId": "answerDiagnosisQuestion",
+      "owner": "diagnosis",
+      "phase": "P4",
+      "security": "guest_or_authenticated",
+      "requestContract": "DiagnosisAnswerRequest",
+      "responseContract": "DiagnosisSessionResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "IDEMPOTENCY_CONFLICT"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/diagnosis/sessions/{diagnosisSessionRef}/result",
+      "operationId": "getDiagnosisResult",
+      "owner": "diagnosis",
+      "phase": "P4",
+      "security": "guest_or_authenticated",
+      "requestContract": "DiagnosisSessionPath",
+      "responseContract": "DiagnosisResultResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "NOT_FOUND"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/user-plants/{userPlantRef}/diagnoses",
+      "operationId": "listUserPlantDiagnoses",
+      "owner": "diagnosis",
+      "phase": "P4",
+      "security": "authenticated",
+      "requestContract": "DiagnosisListQuery",
+      "responseContract": "DiagnosisListResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "USER_PLANT_NOT_FOUND"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/user-plants/{userPlantRef}/diagnoses",
+      "operationId": "createUserPlantDiagnosis",
+      "owner": "diagnosis",
+      "phase": "P4",
+      "security": "authenticated",
+      "requestContract": "CreateUserPlantDiagnosisRequest",
+      "responseContract": "DiagnosisSessionResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "USER_PLANT_NOT_FOUND",
+        "AI_QUOTA_INSUFFICIENT",
+        "IDEMPOTENCY_CONFLICT"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/subscription/plans",
+      "operationId": "listSubscriptionPlans",
+      "owner": "subscription",
+      "phase": "P3",
+      "security": "public",
+      "requestContract": "EmptyRequest",
+      "responseContract": "SubscriptionPlanListResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "SERVICE_UNAVAILABLE"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/subscription/trials",
+      "operationId": "activateTrial",
+      "owner": "subscription",
+      "phase": "P3",
+      "security": "authenticated",
+      "requestContract": "ActivateTrialRequest",
+      "responseContract": "EntitlementResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "CAPABILITY_DENIED",
+        "IDEMPOTENCY_CONFLICT"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/subscription/entitlements",
+      "operationId": "getEntitlements",
+      "owner": "subscription",
+      "phase": "P3",
+      "security": "authenticated",
+      "requestContract": "EmptyRequest",
+      "responseContract": "PublicCapabilityResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "PRINCIPAL_INVALID"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/subscription/orders",
+      "operationId": "createSubscriptionOrder",
+      "owner": "subscription",
+      "phase": "P5",
+      "security": "authenticated",
+      "requestContract": "CreateSubscriptionOrderRequest",
+      "responseContract": "SubscriptionOrderResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "IDEMPOTENCY_CONFLICT",
+        "SERVICE_UNAVAILABLE"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/subscription/orders/{orderRef}",
+      "operationId": "getSubscriptionOrder",
+      "owner": "subscription",
+      "phase": "P5",
+      "security": "authenticated",
+      "requestContract": "SubscriptionOrderPath",
+      "responseContract": "SubscriptionOrderResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "NOT_FOUND"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/subscription/rewards/summary",
+      "operationId": "getRewardSummary",
+      "owner": "subscription",
+      "phase": "P3",
+      "security": "authenticated",
+      "requestContract": "EmptyRequest",
+      "responseContract": "RewardSummaryResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "PRINCIPAL_INVALID"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/subscription/rewards/ledger",
+      "operationId": "listRewardLedger",
+      "owner": "subscription",
+      "phase": "P3",
+      "security": "authenticated",
+      "requestContract": "RewardLedgerQuery",
+      "responseContract": "RewardLedgerResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/subscription/rewards/catalog",
+      "operationId": "getRewardCatalog",
+      "owner": "subscription",
+      "phase": "P3",
+      "security": "authenticated",
+      "requestContract": "EmptyRequest",
+      "responseContract": "RewardCatalogResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "PRINCIPAL_INVALID"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/subscription/rewards/redemptions",
+      "operationId": "createRewardRedemption",
+      "owner": "subscription",
+      "phase": "P3",
+      "security": "authenticated",
+      "requestContract": "CreateRewardRedemptionRequest",
+      "responseContract": "RewardRedemptionResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "CAPABILITY_DENIED",
+        "IDEMPOTENCY_CONFLICT"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/subscription/ai-quota",
+      "operationId": "getAiQuota",
+      "owner": "subscription",
+      "phase": "P3",
+      "security": "authenticated",
+      "requestContract": "EmptyRequest",
+      "responseContract": "AiQuotaResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "PRINCIPAL_INVALID"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/subscription/callbacks/{provider}",
+      "operationId": "receivePaymentCallback",
+      "owner": "subscription",
+      "phase": "P5",
+      "security": "service",
+      "requiredScope": "subscription.payment-callback.receive",
+      "requestContract": "RawPaymentCallback",
+      "responseContract": "PaymentCallbackResponse",
+      "idempotency": "provider_event_id",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "IDEMPOTENCY_CONFLICT",
+        "SERVICE_UNAVAILABLE"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/internal/identity/resolve",
+      "operationId": "resolvePrincipalInternal",
+      "owner": "identity",
+      "phase": "P2",
+      "security": "service",
+      "requiredScope": "identity.resolve",
+      "requestContract": "ResolvePrincipalInternalRequest",
+      "responseContract": "ResolvePrincipalInternalResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "IDEMPOTENCY_CONFLICT"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/internal/identity/users/{userRef}/trial-anchor",
+      "operationId": "getUserTrialAnchorInternal",
+      "owner": "identity",
+      "phase": "P3",
+      "security": "service",
+      "requiredScope": "identity.trial-anchor.read",
+      "requestContract": "UserTrialAnchorPath",
+      "responseContract": "UserTrialAnchorInternalResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "NOT_FOUND",
+        "SERVICE_UNAVAILABLE"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/internal/user-plants/{userPlantRef}/context",
+      "operationId": "getUserPlantContextInternal",
+      "owner": "user-plant",
+      "phase": "P2",
+      "security": "service",
+      "requiredScope": "user-plant.context.read",
+      "requestContract": "ScopedUserPlantContextQuery",
+      "responseContract": "UserPlantContextInternalResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "USER_PLANT_NOT_FOUND"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/internal/user-plants/{userPlantRef}/agent-context",
+      "operationId": "getAgentPlantContextInternal",
+      "owner": "user-plant",
+      "phase": "P4",
+      "security": "service",
+      "requiredScope": "user-plant.agent-context.read",
+      "requestContract": "ScopedAgentContextQuery",
+      "responseContract": "AgentPlantContextResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "USER_PLANT_NOT_FOUND",
+        "CAPABILITY_DENIED"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/internal/subscription/ai-quota/reservations",
+      "operationId": "reserveAiQuotaInternal",
+      "owner": "subscription",
+      "phase": "P3",
+      "security": "service",
+      "requiredScope": "subscription.ai-quota.reserve",
+      "requestContract": "ReserveAiQuotaCommand",
+      "responseContract": "AiQuotaReservationResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "AI_QUOTA_INSUFFICIENT",
+        "IDEMPOTENCY_CONFLICT"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/internal/subscription/ai-quota/reservations/{reservationRef}/settlements",
+      "operationId": "settleAiQuotaInternal",
+      "owner": "subscription",
+      "phase": "P5",
+      "security": "service",
+      "requiredScope": "subscription.ai-quota.settle",
+      "requestContract": "SettleAiQuotaCommand",
+      "responseContract": "AiQuotaSettlementResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "IDEMPOTENCY_CONFLICT"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/internal/subscription/ai-quota/reservations/{reservationRef}/releases",
+      "operationId": "releaseAiQuotaInternal",
+      "owner": "subscription",
+      "phase": "P5",
+      "security": "service",
+      "requiredScope": "subscription.ai-quota.release",
+      "requestContract": "ReleaseAiQuotaCommand",
+      "responseContract": "AiQuotaReleaseResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "IDEMPOTENCY_CONFLICT"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/internal/subscription/reward-events",
+      "operationId": "consumeRewardEventInternal",
+      "owner": "subscription",
+      "phase": "P3",
+      "security": "service",
+      "requiredScope": "subscription.reward-event.consume",
+      "requestContract": "RewardableDomainEvent",
+      "responseContract": "RewardEventConsumptionResponse",
+      "idempotency": "event_id",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "IDEMPOTENCY_CONFLICT"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/internal/plant-knowledge/enrichment-jobs/leases",
+      "operationId": "leaseEnrichmentJobsInternal",
+      "owner": "plant-knowledge",
+      "phase": "P3",
+      "security": "service",
+      "requiredScope": "plant-knowledge.enrichment.lease",
+      "requestContract": "LeaseEnrichmentJobsRequest",
+      "responseContract": "LeaseEnrichmentJobsResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "IDEMPOTENCY_CONFLICT"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/internal/plant-knowledge/enrichment-jobs/{jobRef}/results",
+      "operationId": "submitEnrichmentResultInternal",
+      "owner": "plant-knowledge",
+      "phase": "P3",
+      "security": "service",
+      "requiredScope": "plant-knowledge.enrichment.submit",
+      "requestContract": "SubmitEnrichmentResultRequest",
+      "responseContract": "EnrichmentJobResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "IDEMPOTENCY_CONFLICT"
+      ]
+    }
   ]
 }

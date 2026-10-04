@@ -69,7 +69,7 @@ Only add rules that are backed by stable SDK/API documentation, repeated evaluat
 | AUTH-TOOL-009 | error | lint | Web, MP, Node, CR | 禁止使用 lowcode/DescribeLoginStrategy/ModifyLoginStrategy |
 | AUTH-TOOL-010 | error | lint | Web | 用户名禁止路由到 email-only 辅助函数 |
 | AUTH-TOOL-011 | error | LLM | Web, MP, Node, CR | EnvId 是环境 ID，不是 publishable key |
-| AUTH-TOOL-012 | error | LLM | Web, MP, Node, CR | 环境别名必须通过 envQuery 解析为规范 EnvId |
+| AUTH-TOOL-012 | error | LLM | Web, MP, Node, CR | 环境别名必须通过 queryEnv 解析为规范 EnvId |
 | AUTH-TOOL-013 | warning | LLM | Web, MP, Node, CR | 匿名登录默认禁用 |
 | AUTH-TOOL-014 | warning | LLM | Web, MP, Node, CR | 匿名用户调用 AI 模型需显式授权 |
 
@@ -131,7 +131,7 @@ Only add rules that are backed by stable SDK/API documentation, repeated evaluat
 | NOSQL-013 | warning | LLM | READONLY 允许匿名读，但新环境默认禁用匿名登录 |
 | NOSQL-014 | warning | lint | 嵌套字段更新必须用点号表示法 |
 | NOSQL-015 | error | LLM | .doc(authorId).update() 对非 _id 字段不可用 |
-| NOSQL-016 | warning | LLM | get('database.user_roles.'+auth.uid) 仅 _id=uid 时有效 |
+| NOSQL-016 | warning | LLM | get(`database.user_roles.${auth.uid}`) 仅 _id=uid 时有效 |
 
 ### MiniProgram (NOSQL-MP-)
 

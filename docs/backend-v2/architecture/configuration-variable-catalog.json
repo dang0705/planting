@@ -1,6 +1,6 @@
 {
   "schemaVersion": "configuration-variable-catalog/v1",
-  "catalogVersion": "2026-09-24.1",
+  "catalogVersion": "2026-10-03.2",
   "language": "zh-CN",
   "description": "青花植后端 v2 业务关键变量唯一目录。confirmed 表示已冻结，pending 表示必须在所属阶段冻结后才能实现对应范围，hard_rule 表示任何配置均不得覆盖。",
   "validationMetadata": {
@@ -1292,6 +1292,52 @@
       "decisionGroup": "cms_worker_content"
     },
     {
+      "id": "plant-knowledge.search.query_max_code_points",
+      "chineseName": "公开植物搜索词最长码点数",
+      "domain": "plant-knowledge",
+      "layer": "hard_rule",
+      "valueType": "integer",
+      "unit": "Unicode 码点",
+      "status": "hard_rule",
+      "currentValue": 64,
+      "owner": "plant-knowledge",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/plant-knowledge-public-search.md"
+      ],
+      "consumers": [
+        "plant-knowledge"
+      ],
+      "changePolicy": "首版公开合同固定限制；变更需同步合同、测试和客户端兼容性核对，不作为运营开关",
+      "fallback": "超出上限返回 400 VALIDATION_FAILED",
+      "phase": "P2",
+      "ticketTitle": "[P2] 已发布植物身份公开搜索纵向切片",
+      "expected": "首尾空白裁剪并做 NFC 归一化后，查询词为 1 至 64 个 Unicode 码点",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "plant-knowledge.search.result_max_items",
+      "chineseName": "公开植物搜索单次结果上限",
+      "domain": "plant-knowledge",
+      "layer": "hard_rule",
+      "valueType": "integer",
+      "unit": "条",
+      "status": "hard_rule",
+      "currentValue": 20,
+      "owner": "plant-knowledge",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/plant-knowledge-public-search.md"
+      ],
+      "consumers": [
+        "plant-knowledge"
+      ],
+      "changePolicy": "首版公开合同固定限制；变更需同步合同与测试，不作为运营开关",
+      "fallback": "仅返回前 20 条，并以 truncated 明示存在更多结果",
+      "phase": "P2",
+      "ticketTitle": "[P2] 已发布植物身份公开搜索纵向切片",
+      "expected": "响应 items 不超过 20 条；超出时 truncated=true，排序稳定",
+      "decisionGroup": "hard_business_rule"
+    },
+    {
       "id": "plant-knowledge.identity.release_required",
       "chineseName": "规范身份必须通过不可变发布准入",
       "domain": "plant-knowledge",
@@ -1390,8 +1436,8 @@
       "decisionGroup": "hard_business_rule"
     },
     {
-      "id": "care.environment.reference_conditions_release",
-      "chineseName": "植物基准干湿周期标准参考环境版本",
+      "id": "care.reference_profile.release",
+      "chineseName": "植物级养护 Reference Profile 发布版本",
       "domain": "care",
       "layer": "domain_policy",
       "valueType": "string",
@@ -1399,24 +1445,26 @@
       "currentValue": "P1_PENDING",
       "owner": "care",
       "sourceRefs": [
-        "docs/backend-v2/contracts/care-environment-foundation.md"
+        "docs/backend-v2/contracts/care-environment-foundation.md",
+        "docs/backend-v2/contracts/watering-decision-model.md",
+        "docs/backend-v2/architecture/care-decision-model.md"
       ],
       "consumers": [
         "care",
         "plant-knowledge"
       ],
-      "changePolicy": "不可变参考环境 release；升级后只影响新计算",
-      "fallback": "无已发布参考环境时不生成预计干湿周期",
+      "changePolicy": "不可变 Reference Profile release；结构固定为植物基线、光照/VPD/栽培参考及显式 fallback，升级只影响新计算",
+      "fallback": "对应植物缺已发布 Reference Profile 时使用合同允许的显式 fallback；若连 fallback 也无证据则返回 insufficient_evidence",
       "phase": "P4",
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
-      "expected": "任何植物基准周期都能说明对应的标准参考环境",
-      "pendingReason": "v2 标准室内环境、盆器与基质参考条件尚未通过数据验证",
-      "blockingScope": "预计干湿周期与浇水算法",
+      "expected": "Reference Profile 的每个植物级值都能追溯 Structured Trait Evidence、归一规则、审核 release 或显式 fallback",
+      "pendingReason": "结构已冻结，但植物级 cultivation reference 当前缺 substrate_preference 等已审核性状；VPD/light 参考也尚未形成正式 release",
+      "blockingScope": "植物级 Reference Profile 正式运行与相关浇水个性化",
       "decisionGroup": "care_algorithms"
     },
     {
       "id": "care.environment.derivation_algorithm_release",
-      "chineseName": "派生环境指标算法发布版本",
+      "chineseName": "Care 确定性派生算法发布版本",
       "domain": "care",
       "layer": "domain_policy",
       "valueType": "string",
@@ -1424,7 +1472,8 @@
       "currentValue": "P1_PENDING",
       "owner": "care",
       "sourceRefs": [
-        "docs/backend-v2/contracts/care-environment-foundation.md"
+        "docs/backend-v2/contracts/care-environment-foundation.md",
+        "docs/backend-v2/architecture/care-decision-model.md"
       ],
       "consumers": [
         "care",
@@ -1434,9 +1483,9 @@
       "fallback": "无已发布算法时对应能力返回 temporarily_unavailable",
       "phase": "P4",
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
-      "expected": "每条派生指标可回放输入快照、算法 release 与结果哈希",
-      "pendingReason": "VPD、光照暴露、空气交换、干燥需求和预计干湿周期算法尚未分别冻结",
-      "blockingScope": "派生环境指标运行时",
+      "expected": "每条 Estimated Indoor、Window Plane、PPFD/DLI、Air VPD、AirMovement、EnvironmentDemand、CultivationRetention、GrowthActivity、DryProgress 均可回放输入快照、算法 release 与结果哈希",
+      "pendingReason": "派生类型与职责已冻结，但各算法实现 release、映射参数和真实数据验收尚未完成",
+      "blockingScope": "Care v2 确定性派生运行时",
       "decisionGroup": "care_algorithms"
     },
     {
@@ -1553,7 +1602,8 @@
       "currentValue": "P1_PENDING",
       "owner": "care",
       "sourceRefs": [
-        "docs/backend-v2/contracts/care-capability-output.md"
+        "docs/backend-v2/contracts/watering-decision-model.md",
+        "docs/backend-v2/architecture/care-decision-model.md"
       ],
       "consumers": [
         "care"
@@ -1562,9 +1612,9 @@
       "fallback": "无已发布算法返回 temporarily_unavailable",
       "phase": "P2",
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
-      "expected": "输出保留 care-capability-result/v1",
-      "pendingReason": "v2 算法尚未冻结",
-      "blockingScope": "v2 浇水实现",
+      "expected": "实现必须符合 watering-decision-model/v1 的 Baseline → DryUnit/DryProgress → Soil Gate 顺序；Watering 一级决策不得消费 indoorEqHours",
+      "pendingReason": "决策结构已冻结；EnvironmentDemand/CultivationRetention/PersonalCalibration 的敏感度和上下界仍待影子数据校准及真实链路验收",
+      "blockingScope": "v2 浇水正式运行",
       "decisionGroup": "care_algorithms"
     },
     {
@@ -1601,7 +1651,8 @@
       "currentValue": "P1_PENDING",
       "owner": "care",
       "sourceRefs": [
-        "docs/backend-v2/contracts/care-capability-output.md"
+        "docs/backend-v2/contracts/care-environment-foundation.md",
+        "docs/backend-v2/architecture/care-decision-model.md"
       ],
       "consumers": [
         "care"
@@ -1610,9 +1661,9 @@
       "fallback": "证据不足返回 insufficient_evidence",
       "phase": "P2",
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
-      "expected": "同时使用环境、植物需求和天气证据",
-      "pendingReason": "v2 算法尚未冻结",
-      "blockingScope": "v2 光照实现",
+      "expected": "DNI/DHI/GHI → 太阳几何 → 窗面 Direct/Diffuse → 室内传播 → PPFD(t) → DLI 可回放，朝向名称不直接决定直射",
+      "pendingReason": "结构已冻结；辐射到 PPFD 的透射/换算参数、遮挡映射与真实校准尚未形成正式 algorithm release",
+      "blockingScope": "v2 光照正式评估与 DLI 生产派生",
       "decisionGroup": "care_algorithms"
     },
     {
@@ -2700,7 +2751,7 @@
         "CloudBase 函数部署"
       ],
       "changePolicy": "连接预算策略",
-      "fallback": "总连接上限未读回前连接池数值保持 STOP",
+      "fallback": "最大实例数及其他连接占用未核实前连接池数值保持 STOP",
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "实例数×池上限 < 数据库总连接上限×70%",
@@ -2717,18 +2768,19 @@
       "currentValue": "P1_PENDING",
       "owner": "platform-admin",
       "sourceRefs": [
-        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-10"
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md#D-10",
+        "docs/backend-v2/audits/v2-http-performance-baseline-2026-09-27.md"
       ],
       "consumers": [
         "DB",
         "全部云函数"
       ],
       "changePolicy": "部署配置，须基于真实连接上限计算",
-      "fallback": "未读回总连接上限前不配置并发部署",
+      "fallback": "最大实例数及其他连接占用未核实前不配置连接池或预置并发",
       "phase": "P5",
       "ticketTitle": "[P5] 真实 MySQL/API/安全/性能验收",
       "expected": "满足 70% 安全不等式",
-      "pendingReason": "CloudBase MySQL 总连接上限未读回",
+      "pendingReason": "CloudBase MySQL 当前 max_connections=1000 已读回；云函数最大实例数及其他连接占用未核实",
       "blockingScope": "真实并发部署",
       "decisionGroup": "deployment_environment"
     },
@@ -4488,6 +4540,105 @@
         "登录业务入口"
       ],
       "expected": "免费用户继承游客能力并增加用户植物、积分等级查询和有效奖励额度"
+    },
+    {
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "string",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "care",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "decisionGroup": "care_algorithms",
+      "id": "care.indoor_environment.algorithm_release",
+      "chineseName": "室内环境估算算法发布版本",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-environment-foundation.md"
+      ],
+      "consumers": [
+        "care",
+        "diagnosis"
+      ],
+      "changePolicy": "不可变 algorithm release；只允许由 outdoor T/RH + air exchange + solar heat + thermal inertia 产生显式 estimated indoor 结果",
+      "fallback": "有室内实测时不需要估算；无实测且无有效估算 release 时返回 insufficient_evidence",
+      "expected": "Estimated Indoor 明确 estimated 标记、来源与置信度，永不冒充实测",
+      "pendingReason": "输入结构已冻结，热响应映射与真实数据校准未完成",
+      "blockingScope": "无室内实测时的 Air VPD 与依赖它的浇水增强"
+    },
+    {
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "string",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "care",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "decisionGroup": "care_algorithms",
+      "id": "care.growth_activity.algorithm_release",
+      "chineseName": "生长活跃状态估计算法发布版本",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/watering-decision-model.md",
+        "docs/backend-v2/architecture/care-decision-model.md"
+      ],
+      "consumers": [
+        "care"
+      ],
+      "changePolicy": "不可变 algorithm/prompt/schema release；证据 ID 与状态枚举固定",
+      "fallback": "低置信度、冲突或 release 不可用时返回 UNKNOWN 并回退安全 baseline",
+      "expected": "只输出 ACTIVE/SLOWED/DORMANT/UNKNOWN + confidence + evidenceRefs，不直接修改 EnvironmentDemand",
+      "pendingReason": "状态合同已冻结，但知识 release、Prompt/Schema 与真实样本回归尚未完成",
+      "blockingScope": "条件性/季节性 watering baseline 选择"
+    },
+    {
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "string",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "care",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "decisionGroup": "care_algorithms",
+      "id": "care.watering.personal_calibration_policy_release",
+      "chineseName": "浇水个体干湿循环校准策略版本",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/watering-decision-model.md"
+      ],
+      "consumers": [
+        "care"
+      ],
+      "changePolicy": "不可变校准策略；只基于有效干湿周期残差，换盆/换基质/明显换位置后失效或降权",
+      "fallback": "缺少足够高质量周期时 PersonalCalibration=合同允许的中性值，不伪造个体学习",
+      "expected": "PersonalCalibration 不重新读取 DLI/VPD/基质，只由预测残差形成",
+      "pendingReason": "最小有效周期数、稳健统计窗口与上下界需影子数据校准",
+      "blockingScope": "个体历史校准；不阻断无个体校准的基础 DryProgress"
+    },
+    {
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "string",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "care",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "decisionGroup": "care_algorithms",
+      "id": "care.light.window_plane_algorithm_release",
+      "chineseName": "窗面入射辐照算法发布版本",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-environment-foundation.md",
+        "docs/backend-v2/architecture/care-decision-model.md"
+      ],
+      "consumers": [
+        "care"
+      ],
+      "changePolicy": "不可变 algorithm release；Direct/Diffuse 分量独立保留",
+      "fallback": "算法不可用时不以朝向经验表替代，返回 insufficient_evidence",
+      "expected": "AOI>=90° 时直射不为负；低纬/季节/不同窗向由同一太阳几何自然处理",
+      "pendingReason": "数学结构已冻结，具体实现与回归集尚未形成 release",
+      "blockingScope": "Window Plane Irradiance 与 DLI 正式运行"
     }
   ],
   "providerProfiles": [
@@ -4930,8 +5081,7 @@
       "chineseName": "CloudBase 身份认证",
       "owner": "identity",
       "capabilityCodes": [
-        "ANONYMOUS_PRINCIPAL",
-        "PLATFORM_LOGIN_PRINCIPAL"
+        "ANONYMOUS_PRINCIPAL"
       ],
       "status": "pending",
       "endpointProfile": "cloudbase_auth_v2",
@@ -4954,11 +5104,47 @@
       "effectiveAt": "P1_PENDING",
       "expiresAt": "P1_PENDING",
       "releaseStatus": "P1_PENDING",
-      "fallback": "认证不可用时拒绝签发 Principal；不得以设备、IP、Cookie 或匿名 UID 伪造 user_id",
-      "blockingScope": "游客匿名主体与平台登录真实接入",
+      "fallback": "匿名认证不可用时拒绝签发游客主体；不得以设备、IP、Cookie 或匿名 UID 伪造 user_id",
+      "blockingScope": "游客匿名主体真实接入",
       "sourceRefs": [
         "docs/backend-v2/contracts/principal-and-capability.md",
         "docs/backend-v2/decisions/P0-external-capability-cards.md"
+      ],
+      "decisionGroup": "provider_runtime"
+    },
+    {
+      "providerCode": "wechat_miniprogram_login",
+      "chineseName": "微信小程序登录凭证交换",
+      "owner": "identity",
+      "capabilityCodes": [
+        "PLATFORM_LOGIN_PRINCIPAL"
+      ],
+      "status": "pending",
+      "endpointProfile": "wechat_jscode2session",
+      "credentialRef": "P1_PENDING",
+      "connectTimeoutMs": "P1_PENDING",
+      "readTimeoutMs": "P1_PENDING",
+      "totalDeadlineMs": "P1_PENDING",
+      "maxAttempts": "P1_PENDING",
+      "backoffPolicy": "P1_PENDING",
+      "rateLimitPolicy": "P1_PENDING",
+      "circuitBreakerPolicy": "P1_PENDING",
+      "costPolicy": "platform_login_budget_PENDING",
+      "monthlyBudgetCny": "P1_PENDING",
+      "warningThresholdCny": "P1_PENDING",
+      "fallbackChain": [],
+      "outputContractVersion": "verified-platform-identity-evidence/v1",
+      "auditRetentionDays": "P1_PENDING",
+      "releaseVersion": "P1_PENDING",
+      "releaseSha256": "P1_PENDING",
+      "effectiveAt": "P1_PENDING",
+      "expiresAt": "P1_PENDING",
+      "releaseStatus": "P1_PENDING",
+      "fallback": "凭证或受控配置不可用时拒绝登录，不信任客户端自报的 OpenID 或 HTTP 请求头",
+      "blockingScope": "真实微信小程序登录验真；本地 fake Provider 合同与 MySQL 切片不受阻",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/identity-session-issuance.md",
+        "docs/backend-v2/contracts/principal-and-capability.md"
       ],
       "decisionGroup": "provider_runtime"
     }
@@ -5009,6 +5195,14 @@
       "url": "https://app.clickup.com/t/z8v0kmr970",
       "agents": [
         "identity_terra"
+      ]
+    },
+    "[P2] 已发布植物身份公开搜索纵向切片": {
+      "id": "z8v0kmrp1w",
+      "url": "https://app.clickup.com/t/z8v0kmrp1w",
+      "agents": [
+        "root",
+        "knowledge_search_readiness"
       ]
     },
     "[P3] 游客、试用、会员和奖励闭环": {

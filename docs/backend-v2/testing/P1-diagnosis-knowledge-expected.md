@@ -3,6 +3,7 @@
 - 绑定任务：[诊断知识来源、园艺原因及 Outcome/Action 合同](https://app.clickup.com/t/z8v0kmrg8a)。
 - 来源：[诊断知识来源合同](../contracts/diagnosis-knowledge-sources.md)、[Outcome/Action 字段边界](../contracts/diagnosis-outcome-fields.md)及[黄叶水分方向来源主张候选](../audits/P1-yellow-leaf-water-source-claims-2026-09-24.md)。这些 Expected 不从旧诊断代码或旧 seed 反推。
 - 状态：**语义层草案，不是可执行测试，也不是 P1 冻结或产品验收。** 具体 DTO 字段、原因/结论代码、证据可靠性阈值、植物适用范围、Action 文案和已审核 release 尚待冻结；下表不得被用来宣称已通过 TDD。
+- v1 黄叶题包迁移核验边界：四题整体及未知选项、答案对候选方向的支持或削弱、并列候选与分阶段行动的对应关系应保留；这属于旧行为待核验资产，不是从旧代码反推 v2 园艺正确性的 Expected。`DK-01` 只针对尚未完成题包、仅有照片的窄场景，不能替代完整作答后的分流。旧分数、行动文案、来源状态及旧浇水/光照派生证据须另行审核。
 
 | 编号 | 输入场景 | 独立 Expected（可观察边界） | 来源档位 |
 |---|---|---|---|

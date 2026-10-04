@@ -1,0 +1,54 @@
+{
+  "conversations": {
+    "01a1049b-b97b-73b1-bb02-1d1387cbff6d": {
+      "generationId": "01a1049b-dc12-7f92-88bf-a4cb89be2dae",
+      "tests": [],
+      "redTests": [],
+      "pendingTests": {},
+      "waived": false,
+      "productApprovals": [],
+      "gateApprovals": [],
+      "pendingApprovals": {}
+    },
+    "01a104ae-aacd-73d0-bc96-595950240a55": {
+      "generationId": "01a104af-0891-75f0-bca1-68b03fe4a2b6",
+      "tests": [],
+      "redTests": [],
+      "pendingTests": {},
+      "waived": false,
+      "productApprovals": [],
+      "gateApprovals": [],
+      "pendingApprovals": {}
+    },
+    "01a104b0-ed09-7480-8894-47d5f7ba2597": {
+      "generationId": "01a104b1-11fe-74b2-b8cc-0ee4068be503",
+      "tests": [],
+      "redTests": [],
+      "pendingTests": {},
+      "waived": false,
+      "productApprovals": [],
+      "gateApprovals": [],
+      "pendingApprovals": {}
+    },
+    "01a104b1-a80d-7133-8413-f89e6398e4e2": {
+      "generationId": "01a105ce-b4e9-7512-a3c4-a3b2508a3697",
+      "tests": [],
+      "redTests": [],
+      "pendingTests": {},
+      "waived": false,
+      "productApprovals": [],
+      "gateApprovals": [],
+      "pendingApprovals": {}
+    },
+    "01a10576-78e1-7801-90af-d3acbba038c8": {
+      "generationId": "01a1058e-1a59-7572-a966-bd9da593a6f7",
+      "tests": [],
+      "redTests": [],
+      "pendingTests": {},
+      "waived": false,
+      "productApprovals": [],
+      "gateApprovals": [],
+      "pendingApprovals": {}
+    }
+  }
+}

@@ -39,22 +39,26 @@ flowchart TB
   L103 -. "下钻" .-> L2_2
   L2_3["L2｜Facts / State / Timeline"]
   L103 -. "下钻" .-> L2_3
-  L2_4["L2｜Identity Resolver / Catalog Expansion"]
+  L2_4["L2｜外部标识与内部身份映射"]
   L105 -. "下钻" .-> L2_4
-  L2_5["L2｜识别后的植物百科缺口"]
+  L2_5["L2｜SQL 百科详情与养护边界"]
   L105 -. "下钻" .-> L2_5
-  L2_6["L2｜Watering｜VPD 最新模型"]
+  L2_6["L2｜Light｜DNI/DHI → PPFD → DLI"]
   L106 -. "下钻" .-> L2_6
-  L2_7["L2｜Multi-image Evidence"]
-  L107 -. "下钻" .-> L2_7
-  L2_8["L2｜Catalog 扩种治理"]
-  L109 -. "下钻" .-> L2_8
-  L2_9["L2｜Public Encyclopedia"]
-  L109 -. "下钻" .-> L2_9
-  L2_10["L2｜诊断来源、园艺原因与 Outcome/Action"]
-  L107 -. "下钻" .-> L2_10
-  L2_11["L2｜诊断知识审核与发布"]
+  L2_7["L2｜GrowthActivity｜生长活跃状态"]
+  L106 -. "下钻" .-> L2_7
+  L2_8["L2｜Watering｜等效干燥进度"]
+  L106 -. "下钻" .-> L2_8
+  L2_9["L2｜Multi-image Evidence"]
+  L107 -. "下钻" .-> L2_9
+  L2_10["L2｜Catalog 扩种治理"]
+  L109 -. "下钻" .-> L2_10
+  L2_11["L2｜Public Encyclopedia"]
   L109 -. "下钻" .-> L2_11
+  L2_12["L2｜诊断来源、园艺原因与 Outcome/Action"]
+  L107 -. "下钻" .-> L2_12
+  L2_13["L2｜诊断知识审核与发布"]
+  L109 -. "下钻" .-> L2_13
 ```
 
 ## L0｜青花植总业务架构
@@ -82,7 +86,9 @@ flowchart TB
   care["植物养护"]
   diagnosis["植物诊断"]
   agent["小青 Agent"]
-  catalog["Plant Catalog<br/>规范身份 / 植物知识"]
+  catalog["Plant Catalog<br/>内部规范身份 / 植物知识"]
+  tropicals["CloudBase SQL 百科<br/>encyclopedia_ref 主读"]
+  extbrowse["外部目录浏览<br/>来源 / 许可边界"]
   weather["天气与外部环境能力"]
   cms["CMS 内容与规则治理"]
   published["版本化已发布植物内容"]
@@ -114,6 +120,8 @@ flowchart TB
   identify -. "扩种 / 百科缺口" .-> cms
   persistentctx --> agent
   catalog -.-> identify
+  tropicals -. "外部候选" .-> identify
+  tropicals --> extbrowse
   catalog -.-> care
   catalog -.-> diagnosis
   weather -.-> care
@@ -368,175 +376,280 @@ flowchart TB
 
 > **边界/说明：** Persistent 路径从 Plant Identity、Atomic Environment、Cultivation Setup、Facts / State、Relevant Records 中按需组装；Ephemeral 路径提供对应的临时输入。Care / Diagnosis 消费的是组装后的 Runtime Plant Context。
 
-## L1-05｜Identify / Catalog / CMS 扩种与百科扩充
+## L1-05｜SQL 百科详情 / 内部身份 / 展示百科
 
-> 父级：L0 → **植物识别**
+> 父级：L0 → **植物识别与目录**
 
-解释植物识别与 CMS 的闭环关系：识别先把外部候选归一到青花植 Catalog；未命中规范 Identity 时触发 CMS 的 Catalog 扩种，获得规范 Identity 后再检查用户植物百科，百科缺失时触发 CMS 的百科扩充治理。
-
-```mermaid
-flowchart TB
-  image["植物图片"]
-  provider["外部识别 Provider"]
-  cand["外部身份候选"]
-  resolver["Identity Resolver"]
-  catalog["Plant Identity Catalog"]
-  match{"是否命中<br/>可信 Identity"}
-  existing["已有 Catalog Identity"]
-  expand["Catalog 扩种候选"]
-  cmsExpand["CMS：Catalog 扩种治理"]
-  identity["规范 Catalog Identity"]
-  proposal["Identity Proposal"]
-  encyLookup["查询用户植物百科"]
-  encyGate{"已有已发布<br/>百科?"}
-  encyDisplay["展示植物百科"]
-  encyGap["植物百科缺口"]
-  cmsEncy["CMS：百科扩充治理"]
-
-  image --> provider
-  provider --> cand
-  cand --> resolver
-  catalog -->|规范身份 / Alias / taxonomy| resolver
-  resolver --> match
-  match -->|是| existing
-  match -->|否| expand
-  existing --> identity
-  expand --> cmsExpand
-  cmsExpand -->|审核发布| identity
-  identity --> proposal
-  identity --> encyLookup
-  encyLookup --> encyGate
-  encyGate -->|是| encyDisplay
-  encyGate -->|否| encyGap
-  encyGap --> cmsEncy
-  cmsEncy -->|审核发布| encyDisplay
-```
-
-> **边界/说明：** 扩种与扩百科都由识别流程发现缺口并提交 CMS 治理：扩种解决“Catalog 里没有这个规范植物身份”，扩百科解决“已有规范 Identity，但缺用户可见植物百科”。CMS 审核发布后再回到识别可消费的 Catalog / 百科内容。
-
-### L2｜Identity Resolver / Catalog Expansion
-
-> 父级：L1-05｜Identify / Catalog / CMS 扩种与百科扩充
-
-识别候选先做 Alias / taxonomy 归一和去重；无法关联已有规范 Identity 时，形成 Catalog 扩种候选并交给 CMS 身份治理。
+2026-10-03：百科详情运行时主读是 CloudBase SQL `qinghuazhi_v2_test.tropicals_species_encyclopedia_ref`，slug 由学名去符号生成 kebab-case。分类、俗名、百科、生长季分表保存，用 `taxon_id` 软关联。青花植内部目录仍只是已发布 PlantIdentity/Taxon，经 `plant_taxon_tropicals_links` 桥到 Tropicals，不把参考层整库物化成身份。目录搜索目标是已在库内的 `plant_search_*` 投影，搜索全集不等于身份全集。Tropicals 实时 API 只是可选同步或后续能力。当前代码仍是首页 PlantSearchToolbar 客户端直连，SQL 百科只读与对搜索投影的调用尚未实现。百科行可以在许可允许时展示；用户植物确认、CMS 扩种和内容发布仍走各自边界。表关系见 [植物目录数据模型](plant-catalog-data-model.md)。
 
 ```mermaid
 flowchart TB
-  candidate["外部候选"]
-  alias["Alias / taxonomy 归一"]
-  dedup["候选聚合 / 去重"]
-  gate{"已有规范<br/>Identity?"}
-  use["关联已有 Identity"]
-  new["提交 CMS 扩种治理"]
+  search["uni-app 植物目录搜索"] --> PK["plant-knowledge"]
+  detailReq["uni-app 百科详情请求"] --> PK
 
-  candidate --> alias
-  alias --> dedup
-  dedup --> gate
-  gate -->|是| use
-  gate -->|否| new
+  PK --> SearchIndex["plant_search_terms<br/>→ plant_search_documents"]
+  SearchIndex --> SearchResult["目录搜索结果<br/>catalogTaxonRef / selectable<br/>hasEncyclopedia / 可选 PlantIdentityRef"]
+
+  PK --> Encyclopedia["tropicals_species_encyclopedia_ref<br/>SQL 百科主读"]
+  SearchResult -->|查看百科| Encyclopedia
+  Encyclopedia --> Detail["展示详情 / 媒体<br/>署名 / 图片许可校验"]
+
+  SearchResult --> Resolver["外部目录引用 ↔ 内部身份 crosswalk<br/>来源 / 证据 / 歧义 / 审核"]
+  Encyclopedia --> Resolver
+  Catalog["已发布内部 PlantIdentity / Taxon"] --> Resolver
+  Resolver --> Mapped{"映射证据通过?"}
+  Mapped -->|是| Candidate["内部身份候选<br/>仍须用户明确确认"]
+  Mapped -->|否| Browse["仅目录/百科浏览<br/>不自动创建内部身份"]
+
+  TropicalsAPI["Tropicals 实时 API<br/>可选同步 / 来源核对"] -. "不在请求主路径" .-> Encyclopedia
+  Resolver -. "证据不足时独立审核" .-> CMS["内部身份审核 / CMS 扩种"]
 ```
 
-### L2｜识别后的植物百科缺口
+> **边界/说明：** API id/slug、学名派生 slug、离线数据集 taxon_id 与青花植内部身份主键不可混用。映射必须有来源、版本、证据、歧义处理和审核状态；未映射不阻断百科展示，但不能写成已确认的用户植物身份。身份 seed 的 106 条准入只作用于内部 identity release。缺 nameEn、COL、价格不阻断 SQL 主读。
 
-> 父级：L1-05｜Identify / Catalog / CMS 扩种与百科扩充
+### L2｜外部标识与内部身份映射
 
-当规范 Catalog Identity 已经确定后，识别流程检查用户可见植物百科；缺失时把百科缺口交给 CMS 百科治理，审核发布后再用于展示。
+> 父级：L1-05｜SQL 百科详情 / 内部身份 / 展示百科
+
+目录 `catalogTaxonRef`、数据集 taxon_id、可选 API id/slug 与学名派生 slug 都先保留在各自命名空间。只有对照内部已发布身份、核验名称与来源证据后，才可提供内部身份候选；落库桥是 `plant_taxon_tropicals_links`，且 `plant_taxa` 的权威来源不包括 Tropicals。无匹配时仍可展示 SQL 百科行或 `plant_search_*` 命中；后续若需纳入内部 Catalog，再由 `ensurePlantIdentity` 与独立身份准入审核。未映射不阻断百科详情。搜索投影已经存在，不另起第三套检索，也不把搜索文档写成身份。
 
 ```mermaid
 flowchart TB
-  identity["规范 Catalog Identity"]
-  lookup["查询用户植物百科"]
-  gate{"已有已发布<br/>百科?"}
-  display["展示植物百科"]
-  gap["植物百科缺口"]
-  cms["CMS：百科扩充治理"]
+  external["catalogTaxonRef / taxon_id<br/>可选 Tropicals id / slug"]
+  evidence["来源与分类证据<br/>版本 / 取得时间 / 歧义"]
+  catalog["内部已发布 PlantIdentity / Taxon"]
+  crosswalk["目标交叉映射<br/>Schema / Repository 待设计"]
+  gate{"映射证据通过?"}
+  candidate["内部身份候选<br/>受 userPlant 确认规则约束"]
+  browse["仅展示百科行<br/>不升格为内部身份"]
+  review["独立内部身份审核"]
 
-  identity --> lookup
-  lookup --> gate
-  gate -->|是| display
-  gate -->|否| gap
-  gap --> cms
-  cms -->|审核发布| display
+  external --> crosswalk
+  evidence --> crosswalk
+  catalog --> crosswalk
+  crosswalk --> gate
+  gate -->|是| candidate
+  gate -->|否| browse
+  crosswalk -. "未命中后可另行申请" .-> review
 ```
+
+### L2｜SQL 百科详情与媒体边界
+
+> 父级：L1-05｜SQL 百科详情 / 内部身份 / 展示百科
+
+百科详情直接读 `tropicals_species_encyclopedia_ref`，不要求先打 Tropicals 实时 API，也不要求先完成内部身份 crosswalk。展示用表内已有列；图片逐项核对来源许可。**展示投影**中的养护、环境与病虫害文本不得直接进入内部养护、问诊和安全规则；但来源表中的结构化性状可以作为 `Structured Trait Evidence`，经来源保留、归一、冲突检查、审核和不可变 release 后，另行进入 `Internal Care Knowledge / Reference Profile`。展示 DTO 与内部性状证据是两条不同的数据投影，禁止运行时从展示百科反向推导 Care。
+
+```mermaid
+flowchart LR
+  sql["SQL 外部参考行<br/>encyclopedia_ref"]
+  text["展示文本<br/>数据集 / 来源署名"]
+  media["媒体引用<br/>逐项核验来源许可"]
+  whitelist["展示 DTO / 字段白名单<br/>缺 API 专有字段不阻断"]
+  browse["许可范围内百科展示"]
+
+  traits["Structured Trait Evidence<br/>water / light / T-RH / growth 等"]
+  normalize["来源保留 / 归一 / 冲突检查"]
+  review["plant-knowledge 审核"]
+  internal["Internal Care Knowledge<br/>Reference Profile release"]
+  care["Care / Diagnosis"]
+
+  sql --> text --> whitelist --> browse
+  sql --> media --> whitelist
+  sql --> traits --> normalize --> review --> internal --> care
+  whitelist -. "禁止反向推导" .-> care
+```
+
+当前实库已有 `water_frequency_tier`、温湿度/光照结构化字段和 `tropicals_growth_season_knowledge`；`tropicals_trait_ref` 当前为空，百科表当前也没有 `substrate_preference`。因此植物级 VPD/光照/生长状态参考可以逐步建立，但“植物级典型栽培基质 Reference”仍缺数据，不得在架构图里伪装成已具备。
 
 ## L1-06｜Care
 
 > 父级：L0 → **植物养护**
 
-解释 L0 的植物养护域：Care 是基于 Plant Context 派生出的养护决策域。浇水、施肥负责行动规划；光照、通风的原子事实归属于 Environment，Care 仍对外提供评估与调整建议。四类养护能力共同遵守稳定输出合同。Persistent 与 Ephemeral 的结果处理仍保持不同。
+Care 保持四类稳定能力外壳：浇水、施肥、光照、通风；天气、朝向、温湿度和盆器由共享底座统一解释。共同底座固定为 `Atomic Facts → Snapshot → Deterministic Derivations → Internal Care Knowledge / Reference Profile → Capability Decision`。确定性可计算量先由代码计算；AI 只允许在已验证事实、派生指标与已审核 Authority Pack 上做受约束综合、解释和建议。
 
 ```mermaid
 flowchart TB
   ctx["Runtime Plant Context"]
-  knowledge["Internal Plant Knowledge"]
-  weather["Weather Evidence"]
-  input["Care Context Assembly"]
-  care["Care Decision<br/>浇水 / 施肥<br/>光照 / 通风评估"]
+  atoms["Atomic Environment / Plant Facts"]
+  snapshot["不可变 Input Snapshot"]
+  derive["确定性派生<br/>Indoor Estimate / Air VPD<br/>Window Plane / PPFD / DLI<br/>AirMovement proxy"]
+  traits["Internal Care Knowledge<br/>Reference Profile release"]
+  growth["GrowthActivityState<br/>ACTIVE / SLOWED / DORMANT / UNKNOWN"]
+  care["Care Capability Decision"]
+  watering["Watering"]
+  fertilizing["Fertilizing"]
+  lighting["Lighting"]
+  ventilation["Ventilation"]
   proposal["Care Proposal"]
   scope{"当前作用域"}
-  temp["临时养护结果"]
-  action["Persistent 后续<br/>Plan / Event / Follow-up"]
+  temp["Ephemeral 结果<br/>不写长期事实"]
+  persistent["Persistent<br/>Confirm → Plan / Event / Fact"]
 
-  ctx --> input
-  knowledge -->|知识输入| input
-  weather -->|环境证据| input
-  input --> care
-  care --> proposal
+  ctx --> atoms --> snapshot --> derive
+  traits --> growth
+  derive --> growth
+  ctx --> growth
+  derive --> care
+  traits --> care
+  growth --> care
+  care --> watering
+  care --> fertilizing
+  care --> lighting
+  care --> ventilation
+  watering --> proposal
+  fertilizing --> proposal
+  lighting --> proposal
+  ventilation --> proposal
   proposal --> scope
   scope -->|Ephemeral| temp
-  scope -->|Persistent| action
+  scope -->|Persistent| persistent
 ```
 
-> **边界/说明：** 光照、通风、温度、湿度的原子事实归属 Atomic Environment；Care 在其上派生浇水、施肥、光照评估与通风评估，四类结果遵守统一合同。浇水的 indoorEqHours、VPD、排水等细节继续下沉到 L2/L3。
+> **边界/说明：** 光照、温湿度、空气运动、盆器、基质等原始输入属于事实/配置；PPFD/DLI、Air VPD、Estimated Indoor Environment、CultivationRetention、GrowthActivityState 和 DryProgress 都是带版本的派生或决策输入。Watering 只消费上游已版本化的光照/环境派生，不直接读取朝向或 `indoorEqHours`。
 
-### L2｜Watering｜VPD 最新模型
+### L2｜Light｜DNI/DHI → PPFD → DLI
 
 > 父级：L1-06｜Care
 
-按《分支 · 算法稳健性评估》提出的目标模型展开：植物 watering.freq 提供基准周期；光照用 indoorEqHours，室内温度+相对湿度只在一处计算 airVpd，再与 airMovement 合成 environmentalDryingDemand → dryDownFactor；盆器/基质/排水继续参与预计干湿周期。最近浇水、水分荷载、根区/盆土状态作为最终门控：WET 延后/暂停，DRY 尽快检查并浇透，BASELINE 才使用调整后周期。VPD 不与温度/RH重复计权；不使用 lightHealthScore；环境干燥需求只修正周期，不直接改变单次水量；这不是 FAO-PM/ET₀，也不计算真实蒸腾 ml/day。旧 hotDry/highHumidity/coldHumid 等天气桶不再作为这条环境干燥主链。图是目标模型，首版是否开放属于待确认的受控实验安排，不等同于已核验源码实现。
+光照模型的最终核心指标是 DLI（日光积分），瞬时核心指标是 PPFD。天气辐射先经过太阳几何和窗面几何转换，再经过建筑/室内传播；朝向名称本身不能直接决定有没有直射。
 
 ```mermaid
 flowchart TB
-  baseline["植物 watering.freq<br/>基准浇水周期"]
-  lightInput["光照输入<br/>facing / windowType / position<br/>hasDirectSun / distance"]
-  indoorEq["indoorEqHours<br/>室内等效光照时长"]
-  airInput["室内空气<br/>温度 T + 相对湿度 RH"]
-  airVpd["airVpd<br/>由 T + RH 计算"]
-  airMove["airMovement<br/>空气流动"]
-  envDemand["environmentalDryingDemand<br/>环境干燥需求"]
-  dryFactor["dryDownFactor<br/>有界干燥周期修正"]
-  cult["Cultivation Setup<br/>盆器 / 基质 / 排水<br/>栽培方式"]
-  cycle["预计干湿周期<br/>Adjusted Dry-down Cycle"]
-  history["最近浇水与浇水事件<br/>事件归一 / 距上次浇水"]
-  loads["水分历史指标<br/>effectiveHydrationLoad<br/>wetPressureLoad / rootZoneMoistureIndex"]
-  soil["实际盆土 / 根区状态<br/>用户检查或受控短时证据"]
-  gate{"当前干湿<br/>状态门控"}
-  wet["WET<br/>延后 / 暂停浇水<br/>nextWaterDate = null"]
-  dry["DRY<br/>尽快检查盆土<br/>必要时浇透"]
-  base["BASELINE<br/>使用调整后周期<br/>浇水前再次检查盆土"]
-  result["Watering Proposal<br/>nextWaterDate / Window<br/>Reason / amountRangeMl"]
+  weather["DNI / DHI / GHI"]
+  geo["经纬度 + 日期时间<br/>太阳高度 / 方位"]
+  window["窗面朝向 / 倾角 / AOI"]
+  plane["Window Plane Irradiance<br/>Direct / Diffuse"]
+  outside["外部遮挡 / 天空可见度"]
+  inside["玻璃 / 窗帘 / 室内遮挡 / 距离"]
+  ppfd["PPFD(t)"]
+  dli["DLI"]
+  risk["peak PPFD / 直射持续时间<br/>强光风险"]
+  watering["Watering<br/>只消费 DLI"]
 
-  lightInput --> indoorEq
-  airInput --> airVpd
-  indoorEq --> envDemand
-  airVpd --> envDemand
-  airMove --> envDemand
-  envDemand --> dryFactor
-  baseline --> cycle
-  dryFactor --> cycle
-  cult --> cycle
-  history --> loads
-  loads --> gate
-  soil --> gate
-  gate -->|WET| wet
-  gate -->|DRY| dry
-  gate -->|BASELINE| base
-  cycle -. "仅 BASELINE 使用" .-> base
-  wet --> result
-  dry --> result
-  base --> result
-  cult -. "单次水量沿既有规则" .-> result
+  weather --> geo
+  weather --> plane
+  geo --> window --> plane
+  plane --> outside --> inside --> ppfd
+  ppfd --> dli --> watering
+  ppfd --> risk
 ```
+
+MVP 不把地面反射作为核心计算；Direct / Diffuse 不应过早合并。`indoorEqHours` 退出正式上游。
+
+### L2｜Indoor Environment｜实测优先，估算明示
+
+> 父级：L1-06｜Care
+
+室外天气永远保持 `outdoor` 作用域。存在同时间/空间范围的室内或 plant-zone 实测 T/RH 时优先使用；缺少实测时，才允许由室外逐时温湿度、室内外空气交换、房间太阳热输入与版本化建筑热惯性生成 `Estimated Indoor Environment`。估算结果必须携带来源、算法 release 和置信度，之后才能计算 Air VPD。
+
+```mermaid
+flowchart TB
+  measured["室内 / plant-zone 实测 T/RH"]
+  outdoor["室外逐时 T/RH<br/>始终标记 outdoor"]
+  exchange["室内外空气交换<br/>用户低门槛输入 / 室内证据"]
+  solar["房间太阳热输入<br/>来自 Light Model"]
+  thermal["建筑热惯性<br/>版本化默认 / 特殊场景修正"]
+  estimate["Estimated Indoor Environment<br/>估算 T/RH + provenance + confidence"]
+  choose{"存在可用室内实测?"}
+  indoor["Indoor T/RH<br/>measured 或 estimated"]
+  vpd["Air VPD"]
+
+  measured --> choose
+  outdoor --> estimate
+  exchange --> estimate
+  solar --> estimate
+  thermal --> estimate
+  estimate --> choose
+  choose -->|是| indoor
+  choose -->|否，使用估算| indoor
+  indoor --> vpd
+```
+
+禁止直接把 outdoor T/RH 代入并命名为“室内 VPD”；证据不足时返回 `insufficient_evidence`。
+
+### L2｜GrowthActivity｜生长活跃状态
+
+> 父级：L1-06｜Care
+
+该能力估计植物当前生长活跃状态，而不是输出简单的日历“生长季”布尔值。它是带证据和置信度的植物状态派生，只负责选择条件性养护基线。
+
+```mermaid
+flowchart TB
+  knowledge["已审核物种习性<br/>休眠倾向 / 触发条件"]
+  light["DLI / photoperiod history"]
+  temp["Indoor temperature history"]
+  facts["新叶 / 新芽 / 开花<br/>真实干湿循环"]
+  estimator["GrowthActivity Estimator"]
+  state["ACTIVE / SLOWED<br/>DORMANT / UNKNOWN<br/>confidence + evidence"]
+  baseline["Baseline Resolver"]
+  fallback["低置信度 → 安全 TIER_DEFAULT"]
+
+  knowledge --> estimator
+  light --> estimator
+  temp --> estimator
+  facts --> estimator
+  estimator --> state --> baseline
+  state -. "low / conflict" .-> fallback --> baseline
+```
+
+禁止把 GrowthActivity 再作为额外季节乘数，否则 DLI、温度等同一证据会重复计权。
+
+### L2｜Watering｜等效干燥进度
+
+> 父级：L1-06｜Care
+
+浇水从“自然日 × 多个修正系数”改为等效干燥进度。基线决定需要积累多少标准干燥过程；环境决定每天推进多快；栽培系统决定水保存多久；真实历史只校准模型残差；当前盆土证据拥有最终否决权。
+
+```mermaid
+flowchart TB
+  trait["已审核 Watering Trait"]
+  growth["GrowthActivityState"]
+  baseline["BaselinePolicy<br/>[Bmin, Bmax]"]
+
+  dli["DLI"]
+  indoor["Indoor / Estimated T-RH"]
+  vpd["Air VPD → Plant VPD Ratio"]
+  air["AirMovement Proxy"]
+  env["EnvironmentDemand<br/>有界"]
+
+  cultInput["实际种植系统<br/>内盆材质 / 几何 / 排水<br/>基质 / 栽培方式"]
+  retention["CultivationRetention"]
+  cycles["真实有效干湿循环残差"]
+  personal["PersonalCalibration"]
+
+  last["最近已确认实际浇水 Fact"]
+  dryUnit["DryUnit(d)<br/>EnvironmentDemand × PersonalCalibration<br/>÷ CultivationRetention"]
+  progress["DryProgress<br/>从 last watering 起累计"]
+  window["预计检查窗口<br/>vs [Bmin,Bmax]"]
+  soil["当前可靠 Soil Evidence"]
+  gate{"Soil Safety Gate"}
+  hold["WET / 未到目标状态<br/>暂停或复查"]
+  allow["目标干燥状态满足<br/>允许浇水"]
+  check["无可靠当前证据<br/>按窗口提示检查"]
+  result["Watering Proposal"]
+
+  trait --> baseline
+  growth --> baseline
+  dli --> env
+  indoor --> vpd --> env
+  air --> env
+  cultInput --> retention
+  cycles --> personal
+  env --> dryUnit
+  retention --> dryUnit
+  personal --> dryUnit
+  last --> progress
+  dryUnit --> progress
+  baseline --> window
+  progress --> window
+  window --> gate
+  soil --> gate
+  gate -->|偏湿 / 未满足| hold --> result
+  gate -->|已满足| allow --> result
+  gate -->|未知| check --> result
+```
+
+优先级：`当前可靠盆土证据 > 真实干湿循环个体校准 > 环境/栽培预测 > 名义自然日`。Proposal / Plan / Reminder 都不能重置 DryProgress，只有实际发生并确认的浇水 Fact 能重置。具体合同见 [浇水等效干燥进度决策合同](../contracts/watering-decision-model.md)。
 
 ## L1-07｜Diagnosis
 

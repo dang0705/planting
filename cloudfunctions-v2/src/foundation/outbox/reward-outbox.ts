@@ -1,4 +1,4 @@
-import type { RewardableDomainEventDto, RewardEventType } from '../../contracts/types.js'
+import type { RewardableDomainEventDto, RewardEventType } from '../../contracts'
 
 /** 可以产生已冻结奖励资格事实的四个业务域。 */
 export type RewardEventProducerDomain = RewardableDomainEventDto['producerDomain']

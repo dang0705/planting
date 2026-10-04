@@ -1,6 +1,6 @@
 {
   "schemaVersion": "backend-v2-schema/v1",
-  "generatedAt": "2026-09-24T10:29:31+08:00",
+  "generatedAt": "2026-10-04T00:38:18+08:00",
   "database": "CloudBase MySQL",
   "timeStorage": "UTC epoch milliseconds",
   "files": [
@@ -81,6 +81,24 @@
       "owner": "plant-knowledge",
       "file": "014_plant_knowledge_release_immutability.sql",
       "sha256": "d19c5b8ceeaec560043a034048d18e48b7d93882bf16712d724c26569fab1241"
+    },
+    {
+      "order": 14,
+      "owner": "identity",
+      "file": "015_identity_session_policy_snapshot.sql",
+      "sha256": "dd797229f322ff54ad0f17d64c6d551ef876f1b90f1259939cb2a141e7aa1331"
+    },
+    {
+      "order": 15,
+      "owner": "user-plant",
+      "file": "016_authenticated_ephemeral_plant_case.sql",
+      "sha256": "9910ad07006c3faee3984dd8e24ecbb746fada0fc56af8368b996d009d657593"
+    },
+    {
+      "order": 16,
+      "owner": "care + diagnosis",
+      "file": "017_care_v2_ephemeral_and_derivations.sql",
+      "sha256": "cad48e416486938402a2a1aa7f4ea3b8db3283bf132e7621eda740c2522b2e7e"
     }
   ]
 }

@@ -52,7 +52,7 @@
 1. **Expected 先独立确定**：DTO/文档/设计/需求；若仓库有记忆插件再采允许形状的跨会话 fact；记下 unresolved。硬锁条目 + 适用 common scene 在把当前实现当答案之前固定。
 2. **测试不镜像实现**：断言手写；fixture 形状跟 DTO/设计槽位，不跟 mapper 输出互推。
 3. **RED/GREEN 可审计**：代理自行选择执行路径。
-   - **Classic**：先在当前产品上得到 RED；硬锁 Expected 红 = 表 1 的 A；确认卡后改该条产品至 GREEN。
+   - **Classic**：先在当前产品上得到 RED；硬锁 Expected 红 = 表 1 的 A；写入授权后改该条产品至 GREEN。
    - **Fast Path**：来源与范围清楚时可省略显式 Plan、逐 case RED/GREEN 与额外 Refactor 阶段，一次完成测试/实现；交付前须用受控回退或代表性 Mutation 让目标 Expected RED，再完整恢复并 GREEN。反事实 RED 不成立 → 不得宣称完成，产品改动须回滚或测试须补强。
 4. **绿仍要证明测试有牙齿**：GREEN 只说明现状满足 Expected；仍须按 [test-integrity.md](test-integrity.md) 做适用的 Mutation / 执行反写。
 5. **无足够真相源**：只许标明 **characterization**（钉现状、防回潮），交付不得写成 TDD / 按合同验收；并列出缺哪类源。

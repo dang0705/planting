@@ -41,9 +41,9 @@
           class="relative h-[375px] w-full overflow-hidden bg-[#dcefe2]"
         >
           <image
-            v-if="imageUrl"
+            v-if="resolvedImageUrl"
             id="plant-catalog-detail-image"
-            :src="imageUrl"
+            :src="resolvedImageUrl"
             class="absolute inset-0 size-full"
             mode="aspectFill"
             @error="handleImageError"
@@ -141,11 +141,10 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import Layout from '@/Layout.vue'
-import { fetchPlantCatalogDetail } from '@/api/plants-http.js'
+import { fetchTropicalsSpeciesDetail } from '@/api/tropicals.js'
 import { useFileUrl } from '@/composables/useCloudFile.js'
 import { useUserStore } from '@/store/user.js'
 
-const HTTP_SUCCESS_CODE = 200
 const INITIAL_IMAGE_RETRY_COUNT = 0
 const MAX_IMAGE_RETRY_COUNT = 1
 
@@ -160,6 +159,10 @@ const loadError = ref('')
 const imageRetryCount = ref(INITIAL_IMAGE_RETRY_COUNT)
 const imageFileId = computed(() => plant.value?.imageFileId || '')
 const { url: imageUrl, resolve: resolveImageUrl, refresh: refreshImageUrl } = useFileUrl()
+// Tropicals 详情走 HTTPS 封面，无 CloudBase fileId；保留 fileId 解析以兼容旧目录数据。
+const resolvedImageUrl = computed(
+  () => imageUrl.value || plant.value?.imageUrl || plant.value?.image || ''
+)
 
 const taxonomyRows = computed(() => [
   { key: 'category', label: '植物分类', value: plant.value?.categoryCn || '暂无信息' },
@@ -205,13 +208,8 @@ async function loadDetail() {
   loading.value = true
   loadError.value = ''
   try {
-    const response = await fetchPlantCatalogDetail(requestedPlantId)
-    if (response?.code !== HTTP_SUCCESS_CODE || !response.data) {
-      loadError.value = '暂时无法加载植物信息，请稍后重试'
-      plant.value = null
-      return false
-    }
-    plant.value = response.data
+    // plantId 现为 Tropicals slug（或数字 id）；字段已映射到原百科 UI 形状。
+    plant.value = await fetchTropicalsSpeciesDetail(requestedPlantId)
     return true
   } catch {
     loadError.value = '暂时无法加载植物信息，请检查网络后重试'
@@ -225,6 +223,9 @@ async function loadDetail() {
 async function handleImageError() {
   if (!imageFileId.value || imageRetryCount.value >= MAX_IMAGE_RETRY_COUNT) {
     imageUrl.value = ''
+    if (plant.value) {
+      plant.value = { ...plant.value, imageUrl: '', image: '' }
+    }
     return
   }
   imageRetryCount.value += 1

@@ -1,0 +1,21 @@
+{
+  "ticketId": "z8v0kmrp1w",
+  "agent": "knowledge_search_readiness",
+  "status": "done",
+  "progress": 100,
+  "summary": "已发布植物身份公开搜索的本地 v2 HTTP→真实 MySQL 纵向切片已验收；ClickUp 单票已回读为 done，用户再次确认。Node 22 与 CloudBase 部署仍不在本票已验证范围内。",
+  "blockers": [],
+  "verified": [
+    "独立 Expected 来自 plant-knowledge-public-search/v1 与 plant-knowledge-public-read/v1。实现前 HTTP 4/4 与隔离 MySQL 7/7 均因原路由返回 404 而经典 RED；这是覆盖四文件行为链路的切片级 RED，不是四条独立逐文件 RED。四文件实现后两组分别 4/4、7/7 GREEN。",
+    "真实 MySQL 8.4 搜索覆盖当前 identity/taxonomy 双 active release 准入、ACTIVE 状态、大小写与 NFC、百分号/下划线/反斜杠/叹号字面前缀、精确匹配优先及字段稳定排序、同名不同引用保留、20 项截断和无发布指针空数组。",
+    "详情 HTTP→MySQL 回归选测 1/1 通过；详情合同与原路由语义未改。",
+    "反事实探针把 q 上限从 64 临时放宽至 65，‘空词或超过 64 个 Unicode 码点的 q 返回 400 且不查询数据库’收到 200 而非预期 400；恢复后 application 文件 SHA-256 为 88124a729d7d0d40568487b25abcae4a71957407673f503d7c63e1d558f98e11，搜索 HTTP 4/4 与真实 MySQL 7/7 再次通过。",
+    "四个搜索源码文件定向 oxlint 为 0 warning/0 error，oxfmt --check 通过；完整 `npm run typecheck` 通过；`npm run build` 退出码 0。"
+  ],
+  "unverified": [
+    "构建机器为 Node 24.21.0，项目声明 Node 22.x；构建成功但 npm 提示引擎不匹配，未取得 Node 22 运行时构建证据。",
+    "真实 MySQL 用例只使用隔离库内 36 条合成夹具，不代表真实发布规模、生产性能、发布流程或 CloudBase 网关；未部署。"
+  ],
+  "updatedAt": "2026-09-27T16:06:27+08:00",
+  "next": "本票本地切片已收口；Node 22 运行时与 CloudBase 部署另行验收。ClickUp 全量状态快照仍由专职 keeper 在配额恢复后回读更新。"
+}

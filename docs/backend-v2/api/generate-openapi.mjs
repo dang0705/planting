@@ -14,12 +14,14 @@ const printableAsciiPattern = '^[\\x20-\\x7E]+$'
 /** 仅为已冻结字段级请求合同提供组件引用；其他合同继续使用严格空对象骨架。 */
 const requestSchemaRefByContract = {
   CreateUserPlantRequest: '#/components/schemas/CreateUserPlantRequest',
+  CreateIdentitySessionRequest: '#/components/schemas/CreateIdentitySessionRequest',
   /** 归档/恢复仅允许调用方提交最后读到的植物版本。 */
   UserPlantVersionRequest: '#/components/schemas/UserPlantVersionRequest',
 }
 
 const successSchemaRefByContract = {
   CreateUserPlantResponse: '#/components/schemas/CreateUserPlantSuccess',
+  IdentitySessionResponse: '#/components/schemas/CreateIdentitySessionSuccess',
 }
 
 const parametersByPath = (routePath) => [...routePath.matchAll(/\{([^}]+)\}/gu)].map((match) => ({
@@ -119,7 +121,7 @@ const openapi = {
   components: {
     securitySchemes: {
       guestBearer: { type: 'http', scheme: 'bearer', bearerFormat: 'CloudBase anonymous token' },
-      userBearer: { type: 'http', scheme: 'bearer', bearerFormat: 'CloudBase user token' },
+      userBearer: { type: 'http', scheme: 'bearer', bearerFormat: '青花植自签不透明用户会话令牌' },
       serviceSignature: { type: 'apiKey', in: 'header', name: 'X-QHZ-Signature' },
     },
     parameters: {
@@ -145,6 +147,37 @@ const openapi = {
         additionalProperties: false,
         maxProperties: 0,
         properties: {},
+      },
+      CreateIdentitySessionRequest: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['code'],
+        properties: {
+          code: {
+            type: 'string',
+            minLength: 1,
+            description: '微信 wx.login 返回的一次性短时凭证；不得提交平台主体或应用范围。',
+          },
+        },
+      },
+      CreateIdentitySessionData: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['accessToken', 'expiresAt'],
+        properties: {
+          accessToken: {
+            type: 'string',
+            minLength: 1,
+            description: '仅首次登录成功响应披露的青花植自签高熵会话 Bearer。',
+          },
+          expiresAt: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreateIdentitySessionSuccess: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['data'],
+        properties: { data: { $ref: '#/components/schemas/CreateIdentitySessionData' } },
       },
       UserPlantVersionRequest: {
         type: 'object',

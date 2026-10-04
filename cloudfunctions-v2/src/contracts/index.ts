@@ -3,6 +3,8 @@ import Ajv, { type ValidateFunction } from "ajv";
 import {
   capabilitySnapshotSchema,
   claimGuestSessionCommandSchema,
+  createIdentitySessionRequestSchema,
+  createIdentitySessionResponseSchema,
   createUserPlantRequestSchema,
   createUserPlantResponseSchema,
   errorResponseSchema,
@@ -18,6 +20,8 @@ import {
 import type {
   CapabilitySnapshotDto,
   ClaimGuestSessionCommandDto,
+  CreateIdentitySessionRequestDto,
+  CreateIdentitySessionResponseDto,
   CreateUserPlantRequestDto,
   CreateUserPlantResponseDto,
   ErrorResponseDto,
@@ -35,6 +39,8 @@ export type * from "./types.js";
 export {
   capabilitySnapshotSchema,
   claimGuestSessionCommandSchema,
+  createIdentitySessionRequestSchema,
+  createIdentitySessionResponseSchema,
   createUserPlantRequestSchema,
   createUserPlantResponseSchema,
   errorResponseSchema,
@@ -61,6 +67,10 @@ export function createPublicContractValidators(): {
   errorResponse: ValidateFunction<ErrorResponseDto>;
   /** 统一用户主体校验器；只接受 user_id，不接受任何平台主体标识作为业务归属。 */
   userPrincipal: ValidateFunction<UserPrincipalDto>;
+  /** 微信登录请求校验器；只接受一次性 code，不接收平台主体和应用范围。 */
+  createIdentitySessionRequest: ValidateFunction<CreateIdentitySessionRequestDto>;
+  /** 微信登录成功数据校验器；只接受一次性公开 Bearer 与过期时间。 */
+  createIdentitySessionResponse: ValidateFunction<CreateIdentitySessionResponseDto>;
   /** 内部服务主体校验器；按 service 分支限制最小 scope 集合。 */
   servicePrincipal: ValidateFunction<ServicePrincipalDto>;
   /** 用户植物公开投影校验器；保证未确认态与已确认身份引用互斥。 */
@@ -110,6 +120,8 @@ export function createPublicContractValidators(): {
   return {
     capabilitySnapshot: capabilitySnapshotValidator,
     errorResponse: ajv.compile(errorResponseSchema),
+    createIdentitySessionRequest: ajv.compile(createIdentitySessionRequestSchema),
+    createIdentitySessionResponse: ajv.compile(createIdentitySessionResponseSchema),
     guestPrincipal: ajv.compile(guestPrincipalSchema),
     userPrincipal: ajv.compile(userPrincipalSchema),
     servicePrincipal: ajv.compile(servicePrincipalSchema),
