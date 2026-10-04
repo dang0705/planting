@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T20:09:39.071990+00:00",
-  "sourceRevision": 87,
-  "sourceUpdatedAt": "2026-10-04T20:09:39.071990+00:00",
+  "generatedAt": "2026-10-04T20:13:13.793666+00:00",
+  "sourceRevision": 88,
+  "sourceUpdatedAt": "2026-10-04T20:13:13.793666+00:00",
   "currentStep": "E02",
   "currentTicketId": "z8v0kmr971",
   "tasks": [
@@ -64,16 +64,16 @@
     {
       "id": "z8v0kmr971",
       "step": "E02",
-      "version": 7,
+      "version": 8,
       "status": "codex running",
-      "stage": "内部人工审核与发布事务已验证；正式CMS管理员及协议未验收",
+      "stage": "内部审核撤销生命周期已验证；正式CMS管理员及协议未验收",
       "accepted": false,
       "summary": [
-        "E02/E05：提交→人工审核记录→不可变发布内部链路通过",
-        "批准/驳回与候选状态原子保存，历史重放不重新批准",
-        "真实MySQL新增6项，相邻提交/发布/回滚32项通过",
-        "并发经典RED修复；准入门突变RED→恢复；全量1503/1503",
-        "正式CMS管理员及协议未准入，原票保持进行中"
+        "E02/E05：提交→批准→撤销→历史重放→发布拒绝已验证",
+        "历史审核收据不恢复资格；拒绝后发布与激活审计零写入",
+        "撤销守卫突变1项RED，逐字节恢复后相邻MySQL26项GREEN",
+        "全量后端1503/1503及类型检查通过，本轮未改产品行为",
+        "正式CMS管理员及协议仍待准入，原票保持进行中"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E02.json",
@@ -83,15 +83,16 @@
         ".codex/backend-v2/evidence/E02-review-candidate-read.json",
         ".codex/backend-v2/evidence/E02-candidate-submission.json",
         ".codex/backend-v2/evidence/E02-review-record-context.json",
-        ".codex/backend-v2/evidence/E02-review-record.json"
+        ".codex/backend-v2/evidence/E02-review-record.json",
+        ".codex/backend-v2/evidence/E02-review-revocation-lifecycle.json"
       ],
       "blockingReason": null,
       "nextAction": "取得正式CMS后台与服务端凭证引用，确认管理员验真及审核协议后接线；E05答案映射仍待确认",
       "sync": {
-        "version": 7,
+        "version": 8,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING及五行评论1100440000090859已读回"
+        "readback": "Chrome CODEX RUNNING与五行评论1100440000090861已读回"
       }
     },
     {
@@ -261,6 +262,6 @@
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T20:09:50.326333+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T20:13:28.247461+00:00",
   "lastFailure": null
 }

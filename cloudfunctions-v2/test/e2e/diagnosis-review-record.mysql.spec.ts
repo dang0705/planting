@@ -16,6 +16,8 @@ import { createRecordDiagnosisReview } from '../../src/diagnosis/application/rec
 import { createMysqlDiagnosisReviewRecordRepository } from '../../src/diagnosis/repository/mysql-review-record-repository.js'
 import { createPublishDiagnosisKnowledge } from '../../src/diagnosis/application/publish-diagnosis-knowledge.js'
 import { createMysqlDiagnosisKnowledgePublicationRepository } from '../../src/diagnosis/repository/mysql-diagnosis-knowledge-publication-repository.js'
+import { createRevokeDiagnosisReview } from '../../src/diagnosis/application/revoke-diagnosis-review.js'
+import { createMysqlDiagnosisReviewRevocationRepository } from '../../src/diagnosis/repository/mysql-diagnosis-review-revocation-repository.js'
 /** L3/unit_real_data：实际009/010、mysql2及提交→人工记录→不可变发布事务。
  * 园艺内容、管理员摘要、协议和来源Reader均为明确制品；不证明正式CMS、内容审核、云端或HTTP。
  */
@@ -206,6 +208,61 @@ test('同审核引用异主体/异决定冲突；同参重放保留原时间', a
     status: 'conflict'
   })
   expect(await record()({ ...command, decision: 'rejected' })).toEqual({ status: 'conflict' })
+})
+/** 需求来源：统一计划5.2的撤回/跨版本引用与3.3的历史证据保留。
+ * L3/unit_real_data，反向场景：历史批准收据不得抹掉独立撤销事实或触发新发布。
+ * 真实经过提交、审核、撤销、发布四个应用用例及同一隔离SQL库。
+ * 来源和CMS主体仍为显式夹具，不证明管理员验真或园艺内容准入。
+ */
+test('新批准被撤销后，历史审核重放不恢复发布资格且不追加发布审计', async () => {
+  const command = await submitted('revoked-lifecycle', 7)
+  const approved = await record()(command)
+  expect(approved).toEqual({
+    status: 'recorded', reviewRef: command.reviewRef, decision: 'approved', decidedAtMs: 1200
+  })
+  const revoke = createRevokeDiagnosisReview({
+    driver: createMysqlTransactionDriver(source, () => undefined),
+    repository: createMysqlDiagnosisReviewRevocationRepository(source),
+    now: () => 1250
+  })
+  const revocation = {
+    revocationRef: 'revoke-lifecycle', reviewRef: command.reviewRef,
+    contentSha256: command.contentSha256, reviewProtocolVersion: command.reviewProtocolVersion,
+    operatorRefHash: 'd'.repeat(64), reasonZh: '撤销生命周期测试制品', reviewEvidenceRef: null
+  }
+  expect(await revoke(revocation)).toEqual({
+    status: 'revoked', revocationRef: 'revoke-lifecycle', revokedAtMs: 1250
+  })
+  // 重放只说明历史审核记录存在，不能解释为当前仍获得批准。
+  expect(await record()(command)).toEqual(approved)
+  const publish = createPublishDiagnosisKnowledge({
+    driver: createMysqlTransactionDriver(source, () => undefined),
+    repository: createMysqlDiagnosisKnowledgePublicationRepository(source, schemas.candidate),
+    schemas, dependencyReader, now: () => 1300
+  })
+  const result = await publish({
+    commandRef: 'publish-revoked-lifecycle', releaseRef: 'release-revoked-lifecycle',
+    bundleCode: 'yellow_leaf', version: 7, candidateRef: command.candidateRef,
+    candidateContentSha256: command.contentSha256, reviewRef: command.reviewRef,
+    reviewProtocolVersion: command.reviewProtocolVersion, expectedPointerVersion: 1,
+    operatorRefHash: 'b'.repeat(64), reasonZh: '验证撤销后发布拒绝'
+  })
+  expect(result).toEqual({ status: 'unavailable' })
+  const [releases] = await db.query(
+    'SELECT COUNT(*) AS n FROM diagnosis_knowledge_releases WHERE release_ref=?',
+    ['release-revoked-lifecycle']
+  )
+  const [audits] = await db.query(
+    'SELECT COUNT(*) AS n FROM diagnosis_release_activation_audit WHERE command_ref=?',
+    ['publish-revoked-lifecycle']
+  )
+  const [facts] = await db.query(
+    'SELECT COUNT(*) AS n FROM diagnosis_review_revocations WHERE revocation_ref=?',
+    ['revoke-lifecycle']
+  )
+  expect(releases).toEqual([{ n: 0 }])
+  expect(audits).toEqual([{ n: 0 }])
+  expect(facts).toEqual([{ n: 1 }])
 })
 test('驳回只记录原决定，另一个审核引用不能批准已驳回候选', async () => {
   const command = { ...(await submitted('reject', 3)), decision: 'rejected' }

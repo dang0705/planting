@@ -1,0 +1,44 @@
+{
+  "ticket": "z8v0kmr971",
+  "step": "E02/E05",
+  "recordedAt": "2026-10-04T20:13:13.793666+00:00",
+  "accepted": false,
+  "verifiedScope": "提交→批准→独立撤销→历史审核重放→拒绝新发布的实际数据库生命周期",
+  "expectedSource": "统一计划3.3历史证据保留及5.2撤回/跨版本引用场景；既有精确撤销与发布合同",
+  "contextReuse": "复用此前已准入009/010夹具及审核/撤销/发布合同，不新增docs/backend-v2读取",
+  "configurationDecision": "无新增配置、依赖、HTTP、DDL或产品行为",
+  "path": {
+    "level": "L3/unit_real_data",
+    "real": "四个应用用例、mysql2、隔离MySQL8.4、真实事务及发布/审计持久化读回",
+    "fixtures": "来源及题包依赖、CMS主体摘要、审核协议及园艺内容；不证明正式管理员或来源准入"
+  },
+  "verification": {
+    "reviewRecordMysql": 7,
+    "relatedMysql": {
+      "files": 3,
+      "tests": 26,
+      "exitCode": 0
+    },
+    "rootVitest": {
+      "files": 171,
+      "tests": 1503,
+      "exitCode": 0
+    },
+    "typecheck": 0,
+    "mutation": {
+      "change": "临时禁用精确审核Reader的独立撤销检查",
+      "redFailedTests": 1,
+      "restored": "原源码逐字节恢复，git diff为零；相邻真实SQL26项GREEN",
+      "redLog": "/tmp/planting-e02-review-lifecycle-mutation.log",
+      "greenLog": "/tmp/planting-e02-review-lifecycle-restored.log"
+    }
+  },
+  "behaviorChanges": false,
+  "tddClaim": "本轮仅补跨用例验证，不声称新增产品TDD实现",
+  "notAccepted": [
+    "正式CMS管理员验真和审核协议",
+    "园艺来源人工批准",
+    "正式诊断HTTP及生产部署"
+  ],
+  "testSha256": "18d32f29b8aa3987567c65d61b08ecc0efb7f159777b2d146abe55d6c962d2d5"
+}
