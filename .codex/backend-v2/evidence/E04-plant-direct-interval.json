@@ -1,0 +1,55 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "scope": "完整时段开口半空间资格与真实辐射制品均值→目标点几何直射范围",
+  "verifiedAt": "2026-10-04T12:24:48.274875+00:00",
+  "classification": "L1 unit_fake与L3 unit_real_data；网络由已保存真实Provider响应替换，Edge数学案例明确构造",
+  "expectedSources": [
+    "cloudfunctions-v2/models/care/plant-direct-interval-contract.md",
+    "cloudfunctions-v2/models/care/solar-interval-bound-contract.md",
+    "真实Open-Meteo原始响应及元数据",
+    "独立NOAA正午基准及非负乘积界限"
+  ],
+  "testFirst": {
+    "path": "27项测试先落盘→实现→变化半径突变2项RED与完整恢复；漏资格门突变1项RED与完整恢复",
+    "metadata": "地点追溯独立Expected先失败，补充太阳计算地点后通过"
+  },
+  "results": {
+    "newTests": 27,
+    "careTests": 217,
+    "careFiles": 13,
+    "fullTests": 797,
+    "fullFiles": 112,
+    "skipped": 0,
+    "typecheck": "passed",
+    "build": "passed",
+    "lintErrors": 0,
+    "lintWarnings": 829,
+    "node22": {
+      "version": "22.23.3",
+      "independentChecks": 10,
+      "fullVitestOnNode22": false
+    }
+  },
+  "logs": [
+    "/tmp/planting-plant-interval-mutation-red.log",
+    "/tmp/planting-plant-gating-mutation-red.log",
+    "/tmp/planting-plant-location-red.log",
+    "/tmp/planting-plant-interval-related-green.log",
+    "/tmp/planting-plant-interval-full-green.log",
+    "/tmp/planting-plant-interval-typecheck.log",
+    "/tmp/planting-plant-interval-build.log"
+  ],
+  "modelBoundary": [
+    "只证明固定几何及NOAA近似模型，不覆盖现场或浮点认证误差",
+    "结果通过目标点且平行竖窗，不是实际植物叶面",
+    "玻璃与其他遮挡、散射、光谱换算及正式策略未准入",
+    "实际Provider覆盖范围内计算，不伪造全天时段"
+  ],
+  "sideEffects": "无网络、数据库、环境事实、计划、建议或生产发布写入",
+  "sourceHashes": {
+    "cloudfunctions-v2/src/care/light/bound-plant-direct-interval.ts": "b5e25baf6de20c7fbdee7345f3fdc37f7b4e1c8a4559d45ed33b21105e071d08",
+    "cloudfunctions-v2/src/care/application/replay-plant-direct-radiation.ts": "73168b5a05fe0aeb81e71d8c554d4a84e0766ccf8794df9814244503350dd2ff",
+    "cloudfunctions-v2/src/care/light/solar-direction-rate-bound.ts": "5d039f63bcdc4bbba4c44e47685db2c57fd61a9d52b444f39888dd96fc893c36"
+  }
+}

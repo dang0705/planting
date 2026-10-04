@@ -39,4 +39,6 @@ python3 scripts/backend-v2/compose-care-models.py
 
 `src/care/application/replay-solar-window-radiation.ts` 已接通真实辐射制品→UTC时段归一化→完整时段太阳模型界限→窗面直射均值区间，数学依据见 `solar-interval-bound-contract.md`。界限由公式导数上界确定，跨UTC年分段，并处理可能穿过日出、日落的时段；不是把中点或采样极值当作完整时段。地点与窗面在空序列时仍须合法，合法空序列只保留无覆盖。此路径明确限定为近似模型自身的界限，不覆盖真实太阳模型误差或浮点运算认证；尚不含玻璃、植物位置传播、散射及正式策略发布。
 
-`src/care/application/evaluate-plant-direct-at-location.ts` 复用同轮近似太阳方向、瞬时窗面投影与植物点射线求交，见 `plant-direct-composition-contract.md`。同一窗面有直射不代表任意距窗植物都可达；连窗墙体、窗框边界、非竖窗及未定义方位分别处理。窗面辐射保留外侧参考平面，结果不冒充植物叶面辐照度；本瞬时组合尚未接到小时均值回放，不证明全天可达性或生产发布。
+`src/care/application/evaluate-plant-direct-at-location.ts` 复用同轮近似太阳方向、瞬时窗面投影与植物点射线求交，见 `plant-direct-composition-contract.md`。同一窗面有直射不代表任意距窗植物都可达；连窗墙体、窗框边界、非竖窗及未定义方位分别处理。窗面辐射保留外侧参考平面，结果不冒充植物叶面辐照度；本瞬时组合不用于小时均值回放或全天可达性，完整时段由独立界限用例处理。
+
+`src/care/application/replay-plant-direct-radiation.ts` 已把真实制品的区间均值接入完整时段植物点可达性，见 `plant-direct-interval-contract.md`。开口条件转换为四个线性半空间，用同一太阳变化速度上界证明整段资格；窗框边缘或证明不够紧时保留[0,1]，不以中点充当全天证据。目标参考平面明确为通过植物点且平行于竖窗的数学平面，保留太阳计算地点、天气来源和窗面引用；尚未计算玻璃和其他遮挡，不解释为植物叶面测量或正式光照建议。

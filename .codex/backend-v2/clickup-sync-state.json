@@ -34,19 +34,19 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 13,
+      "version": 14,
       "status": "codex running",
-      "note": "E04：同轮太阳→窗面投影→目标植物点直射可达性已接通\n19项独立场景；固定距离误报突变RED→恢复GREEN\nCare190项；后端全量110文件、770/770通过\n类型与构建通过；Node22独立6项；lint零错误750警告\n仅瞬时离线几何；全时段可达性、玻璃及散射待验收",
-      "commentId": "1100440000089695",
-      "commentFingerprint": "f4dec6c523ecf300bc857c5625c59b95c50cf256bcf145d740b8ab3d044caf58",
-      "readback": "Chrome当前E04/E06票codex running，完整五行评论1100440000089695已读回"
+      "note": "E04：完整时段植物点可达性与真实辐射均值回放已接通\n新增27项；去时段界限2项RED、漏资格门1项RED→恢复GREEN\nCare217项；后端全量112文件、797/797通过\n类型与构建通过；Node22独立10项；lint零错误829警告\n仅几何直射范围；玻璃、散射、光谱换算及正式策略待验收",
+      "commentId": "1100440000089704",
+      "commentFingerprint": "8a02c1d06be456431f67cbeb07b347a1fbe268f944dfaa35204a42075809da47",
+      "readback": "Chrome当前E04/E06票codex running，完整五行评论1100440000089704已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T12:15:16.506594+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T12:26:14.710413+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "a639e07f149ca60748510bdf565fad422bf726d0ac4035633b242cfa1ee30292",
-    "sourceRevision": 26,
-    "sourceUpdatedAt": "2026-10-04T12:14:37.492706+00:00"
+    "fingerprint": "8f2af9b744d253c49d37f4768defad4c5d82d0847828613d52cdcab9d0d10782",
+    "sourceRevision": 27,
+    "sourceUpdatedAt": "2026-10-04T12:24:48.274875+00:00"
   }
 }

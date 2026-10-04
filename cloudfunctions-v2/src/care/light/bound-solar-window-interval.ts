@@ -1,6 +1,7 @@
 import { estimateSolarDirection } from './estimate-solar-direction.js'
 import type { WindowExteriorPlane } from './project-window-direct.js'
 import type { WholeIntervalProjectionBound } from './bound-window-mean-direct.js'
+import { solarDirectionMaxRatePerSecond as maxRatePerSecond } from './solar-direction-rate-bound.js'
 
 /** 固定地点、窗面和完整UTC时段，禁止默认朝向或位置。 */
 export interface SolarWindowIntervalInput {
@@ -27,15 +28,6 @@ export interface ModelSolarWindowBound extends WholeIntervalProjectionBound {
   /** 投影与向上分量的共同变化速度上界，每秒。 */
   readonly maxRatePerSecond: number
 }
-
-/** NOAA固定公式的谐波导数上界；不属于运营可调倍率。 */
-const declinationDerivative = 0.399912 + 0.070257 + 2 * 0.006758 + 2 * 0.000907 + 3 * 0.002697 + 3 * 0.00148
-/** 时间方程对年内角的导数绝对值上界，分钟每弧度。 */
-const equationDerivative = 229.18 * (0.001868 + 0.032077 + 2 * 0.014615 + 2 * 0.040849)
-/** 取平年最大角速度也覆盖闰年，单位弧度每秒。 */
-const gammaRate = 2 * Math.PI / (365 * 86400)
-/** 旋转向量导数范数和，包含太阳时与赤纬两条变化来源。 */
-const maxRatePerSecond = declinationDerivative * gammaRate + 2 * Math.PI / 86400 + Math.PI / 720 * equationDerivative * gammaRate
 
 /** 在每个UTC年内用全局变化速度形成时段界限，跨年联合以覆盖全年角切换。 */
 export function boundSolarWindowInterval(input: SolarWindowIntervalInput): ModelSolarWindowBound {
