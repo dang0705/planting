@@ -1,0 +1,11 @@
+# 已发布结论的证据条件匹配
+
+归属E05原票z8v0kmr974。依据唯一候选Schema的evidenceRules与evidenceCondition：结论有required、supporting、opposing三类条件；每个条件使用evidenceCode、findingCode、sourceKind、affectedPartCodes。本模块只执行精确条件匹配，不解释自由模型文字或未批准conditionCode。
+
+输入是应用从已锁定知识包取得的规则与领域读取/归一端口已接纳的观察。每条观察保存evidenceRef、findingCode、sourceKind、affectedPartCodes。字段均必填；引用、代码非空，来源类别为visual/answer/environment/care_fact。观察不是公共提交DTO，结构匹配不证明归属、时效、许可或归一正确，真实读取和归一仍须接线。
+
+只有观察代码和来源类别逐字相同且部位范围相交时才匹配；条件部位为空不限制，非空条件缺部位证据不匹配。部位列表表示该观察或条件覆盖的部位集合，不将观察叶片等同证明根区。一个条件可由多个独立证据支持；引用去重并按字典序输出，输入顺序不改变结果。
+
+全部required匹配才标记requirements_met；任何必需条件缺失为insufficient_evidence；存在opposing匹配优先标记conflicting_evidence。支持证据不能替代必需条件，未命中不等于已观察阴性；匹配本身不输出确诊、严重度、行动或未经校准的置信百分比。空required仅表示没有必需条件，不会自动选择该Outcome。
+
+输出按三类条件保留evidenceCode和匹配的evidenceRefs，并列出missingRequiredCodes；不复制原始输入、提示词或用户私有正文。规则和观察非法拒绝，重复条件代码在同一类列表内拒绝，避免轨迹歧义。没有新增阈值、默认值、算法release或Provider参数；该计算是当前候选合同的确定性解释，不开放正式诊断HTTP。

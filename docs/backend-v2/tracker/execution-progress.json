@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T19:11:45.433921+00:00",
-  "sourceRevision": 79,
-  "sourceUpdatedAt": "2026-10-04T19:11:45.433921+00:00",
+  "generatedAt": "2026-10-04T19:17:45.187047+00:00",
+  "sourceRevision": 80,
+  "sourceUpdatedAt": "2026-10-04T19:17:45.187047+00:00",
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
   "tasks": [
@@ -199,16 +199,16 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 28,
+      "version": 29,
       "status": "codex running",
-      "stage": "活动兼容知识单一快照与真实MySQL读取验证通过",
+      "stage": "Outcome证据条件精确匹配计算已验证，完整诊断仍未验收",
       "accepted": false,
       "summary": [
-        "E05：运行活动知识包→精确审核/依赖→冻结快照",
-        "真实MySQL3项：只读、失效拒绝、并发回滚不混版",
-        "当前读守卫1项突变RED→恢复；不调用模型或写结果",
-        "根及Node22全量1434/1434；类型/构建/lint零错误",
-        "正式知识/CMS、实际诊断生成及临时结果仍未验收"
+        "E05：实际计算Outcome必需/支持/反驳证据条件",
+        "6项Schema/匹配Expected；来源隔离突变RED→恢复",
+        "代码/来源/部位精确匹配；缺证据与冲突显式返回",
+        "根及Node22全量1440/1440；类型/构建/lint零错误",
+        "真实归一、规则语义/结果生成与正式准入仍未验收"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
@@ -237,18 +237,19 @@
         ".codex/backend-v2/evidence/E05-result-http.json",
         ".codex/backend-v2/evidence/E05-review-revocation.json",
         ".codex/backend-v2/evidence/E05-knowledge-rollback.json",
-        ".codex/backend-v2/evidence/E05-active-knowledge.json"
+        ".codex/backend-v2/evidence/E05-active-knowledge.json",
+        ".codex/backend-v2/evidence/E05-outcome-evidence-match.json"
       ],
       "blockingReason": null,
-      "nextAction": "继续E05诊断计算的输入/兼容组锁定、建议与结果生成；正式知识/Provider准入不足时不得开放线上能力",
+      "nextAction": "继续E05真实证据读取/归一与结论候选归约；补齐受审conditionCode的执行定义，不猜严重度或治疗阈值",
       "sync": {
-        "version": 28,
+        "version": 29,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING与五行评论1100440000090640已读回"
+        "readback": "Chrome CODEX RUNNING与五行评论1100440000090646已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T19:12:04.325679+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T19:19:45.131Z",
   "lastFailure": null
 }

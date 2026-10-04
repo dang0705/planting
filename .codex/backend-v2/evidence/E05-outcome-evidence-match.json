@@ -1,0 +1,69 @@
+{
+  "ticketId": "z8v0kmr974",
+  "step": "E05",
+  "verifiedAt": "2026-10-04T19:17:45.187047+00:00",
+  "accepted": false,
+  "scope": "已发布Outcome必需/支持/反驳条件的确定性匹配计算，不是完整诊断生成",
+  "contract": "cloudfunctions-v2/models/diagnosis/outcome-evidence-match-contract.md",
+  "tdd": {
+    "expectedSource": "唯一候选Schema evidenceRules/evidenceCondition及独立内部匹配合同",
+    "initialModuleRed": "/tmp/planting-e05-outcome-match-red.log",
+    "sourceIsolationMutation": {
+      "failed": 1,
+      "restored": true,
+      "log": "/tmp/planting-e05-outcome-match-mutation.log"
+    },
+    "restoredLog": "/tmp/planting-e05-outcome-match-restored.log"
+  },
+  "verification": {
+    "unitFake": {
+      "tests": 6,
+      "coverage": [
+        "必需全部满足/稳定引用去重",
+        "支持不能替代必需",
+        "来源和部位不混用",
+        "反驳优先显式冲突",
+        "缺失不伪造阴性",
+        "空部位范围/空规则非确诊",
+        "非法结构/重复条件拒绝"
+      ],
+      "realPath": "实际候选Schema引用→严格JSON校验→精确代码/来源/部位匹配→条件引用轨迹",
+      "replacedBoundaries": [
+        "已接纳观察为人工结构制品",
+        "不证明真实归属/视觉归一/许可/新鲜度或园艺结论"
+      ]
+    },
+    "rootUnit": {
+      "files": 165,
+      "tests": 1440,
+      "log": "/tmp/planting-e05-outcome-match-final-root-test.log"
+    },
+    "node22Unit": {
+      "runtime": "v22.21.1",
+      "files": 165,
+      "tests": 1440,
+      "log": "/tmp/planting-e05-outcome-match-final-node22-vitest.log"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-outcome-match-final-typecheck.log"
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 2123,
+      "log": "/tmp/planting-e05-outcome-match-final-lint.log"
+    },
+    "build": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-outcome-match-final-build.log"
+    }
+  },
+  "unaccepted": [
+    "真实观察归一及领域归属读取接线",
+    "conditionCode严重度/紧急度等执行语义",
+    "结论与行动归约、结果生成及持久化闭环",
+    "正式CMS/知识/Provider准入",
+    "临时案例结果及生产部署"
+  ],
+  "productionChanges": false
+}
