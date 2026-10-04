@@ -1,0 +1,39 @@
+{
+  "createdAt": "2026-10-04T13:49:54.982450+00:00",
+  "scope": "真实双通道自然光到实验PPFD与当地日积分",
+  "accepted": false,
+  "tests": {
+    "new": 10,
+    "full": 968,
+    "files": 123,
+    "skipped": 0,
+    "node22Related": 41,
+    "mutationRed": 3,
+    "mutation": "散射错误使用直射光谱系数",
+    "restored": true
+  },
+  "typecheck": "exit 0",
+  "build": "exit 0",
+  "lint": {
+    "errors": 0,
+    "warnings": 1099
+  },
+  "independentExpected": "微摩尔单位换算、常量光子通量时间积分、明确当地日期边界；合成光谱系数不作为现场参数",
+  "realFixtureResult": "Asia/Shanghai 2026-10-04缺最后一小时，coveredMs=82800000，dailyIntegral=null",
+  "logs": [
+    "/tmp/planting-ppfd-day-initial-red.log",
+    "/tmp/planting-ppfd-day-channel-red.log",
+    "/tmp/planting-ppfd-day-full-green.log",
+    "/tmp/planting-ppfd-day-node22-green.log",
+    "/tmp/planting-ppfd-day-typecheck.log",
+    "/tmp/planting-ppfd-day-build.log",
+    "/tmp/planting-ppfd-day-lint.log"
+  ],
+  "notVerified": [
+    "光谱系数现场精度与发布",
+    "完整遮挡模型",
+    "现场误差界限",
+    "DMN行为与Modeler验收",
+    "正式Care HTTP闭环"
+  ]
+}

@@ -1,19 +1,19 @@
 {
-  "revision": 38,
+  "revision": 39,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-04T13:46:10.332775+00:00",
+  "updatedAt": "2026-10-04T13:50:32.840236+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "推进DHI有限实际窗口到目标位置的几何传播",
+    "goal": "接通双通道候选光谱换算与完整当地日积分",
     "assumptions": [
-      "明确均匀无遮挡天空候选",
-      "接收面是目标点窗平行面，不是叶面"
+      "换算区间需明确来源，无默认系数",
+      "完整覆盖不代表正式模型或现场精度"
     ],
-    "minimumVerification": "独立解析积分、开口并集、地平线突变RED、24真实气象时段、全量GREEN",
-    "continueWhen": "947项全绿，Node22新18项及类型构建通过",
-    "failWhen": "将几何候选当成正式衰减或现场误差界限",
-    "rollback": "纯离线无事实写入，撤销候选不改变正式策略",
+    "minimumVerification": "独立常量积分、真实缺段、时区夏令时、混用系数突变RED、全量GREEN",
+    "continueWhen": "968全绿，Node22相关41项、类型构建通过",
+    "failWhen": "用缺段积分冒充完整DLI或候选冒充正式光照",
+    "rollback": "离线无事实写入，撤销用例不影响现有发布",
     "timeLimit": "30分钟检查点"
   },
   "tasks": [
@@ -121,7 +121,7 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 25,
+      "version": 26,
       "priority": "normal",
       "status": "codex running",
       "stage": "验证与回放",
@@ -148,19 +148,20 @@
         ".codex/backend-v2/evidence/E04-decision-immutability.json",
         ".codex/backend-v2/evidence/E04-window-diffuse.json",
         ".codex/backend-v2/evidence/E04-finite-window-diffuse.json",
-        ".codex/backend-v2/evidence/E04-indoor-natural-light.json"
+        ".codex/backend-v2/evidence/E04-indoor-natural-light.json",
+        ".codex/backend-v2/evidence/E04-indoor-ppfd-day.json"
       ],
       "summary": [
-        "E04：共享传播框架已接通，直射散射分通道计算",
-        "真实时段→SunCalc与窗洞→双通道玻璃窗帘损失→同面相加",
-        "11新用例；遗漏窗帘损失2项RED→恢复；全量958/958",
-        "Node22相关49项、类型构建通过；缺参数不设默认",
-        "外部遮挡及完整误差界限未完成，PPFD/DLI合并继续推进"
+        "E04：双通道自然光→显式光谱区间→PPFD及当地日积分已接通",
+        "保留直射散射积分和缺段；真实制品缺最后1小时不输出全天DLI",
+        "10新用例；系数混用3项RED→恢复；全量968/968",
+        "Node22相关41项、类型构建通过；夏令时23小时日验证通过",
+        "仍为实验候选；外部遮挡、正式参数准入及现场误差待完成"
       ],
       "blockingReason": null,
-      "nextAction": "继续共享传播框架的方向遮挡和时间证据，接显式光谱转换与分通道PPFD/DLI；正式发布参数pending不设默认",
-      "ticketReadback": "Chrome状态codex running及完整五行评论1100440000090006已读回",
-      "milestoneCommit": "cd0aa0f4"
+      "nextAction": "继续方向遮挡与传播事实准入，落实缺失参数的来源审校和发布；不把当前候选积分当正式光照建议",
+      "ticketReadback": "Chrome状态codex running及完整五行评论1100440000090019已读回",
+      "milestoneCommit": "26a263dc"
     }
   ],
   "queue": [
