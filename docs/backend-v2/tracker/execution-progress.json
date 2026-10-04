@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T13:11:33.525840+00:00",
-  "sourceRevision": 32,
-  "sourceUpdatedAt": "2026-10-04T13:11:33.525840+00:00",
+  "generatedAt": "2026-10-04T13:18:40.859196+00:00",
+  "sourceRevision": 33,
+  "sourceUpdatedAt": "2026-10-04T13:18:40.859196+00:00",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -114,16 +114,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 19,
+      "version": 20,
       "status": "codex running",
       "stage": "验证与持久化读回",
       "accepted": false,
       "summary": [
-        "E04：历史循环资格→未校准预测区间残差已实现",
-        "20新用例；错端点4项RED、漏反馈门1项RED→恢复GREEN",
-        "后端118文件902/902；Node22相关20项；类型构建通过",
-        "缺起点、条件变化或版本冲突不校准；保留残差区间",
-        "未发布策略只离线回放，不生成倍率；整票未验收"
+        "E04：长期输入快照Repository→真实MySQL读回已接通",
+        "真实MySQL8场景；归属、摘要突变各1项RED→恢复GREEN",
+        "Node22数据库8项；后端902/902；类型与构建通过",
+        "数据库拒绝改写；新事实追加；读回原清单可回放盆器",
+        "派生表、发布策略和正式HTTP仍未验收，不标Done"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -141,18 +141,19 @@
         ".codex/backend-v2/evidence/E04-suncalc-direction.json",
         ".codex/backend-v2/evidence/E04-suncalc-mean-candidate.json",
         ".codex/backend-v2/evidence/E04-measured-pot.json",
-        ".codex/backend-v2/evidence/E04-dry-cycle-replay.json"
+        ".codex/backend-v2/evidence/E04-dry-cycle-replay.json",
+        ".codex/backend-v2/evidence/E04-environment-snapshot.json"
       ],
       "blockingReason": null,
-      "nextAction": "接续不可变输入快照与回放持久化边界，核验实际Repository及准入策略；不以孤立函数代替养护闭环",
+      "nextAction": "核验回放版本清单及派生结果持久化合同；实验结果与正式发布分开，继续真实MySQL路径",
       "sync": {
-        "version": 19,
+        "version": 20,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome当前状态codex running及完整五行评论1100440000089834已读回"
+        "readback": "Chrome状态codex running及完整五行评论1100440000089873已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T13:12:01.419810+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T13:19:10.692948+00:00",
   "lastFailure": null
 }

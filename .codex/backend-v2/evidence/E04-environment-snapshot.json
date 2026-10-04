@@ -1,0 +1,81 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "accepted": false,
+  "milestone": "长期输入快照Repository、不可变约束与隔离MySQL读回",
+  "updatedAt": "2026-10-04T13:18:40.859196+00:00",
+  "expectedSources": [
+    "care-environment-foundation/v2第三节",
+    "004_care_diagnosis.sql仅care_environment_snapshots与对应不可变触发器",
+    "批准整体计划：归属、追加、哈希与历史回放边界"
+  ],
+  "scope": "unit_real_data：真实Repository→mysql2→隔离MySQL8.0.43；父表是归属夹具；不是HTTP验收",
+  "checks": {
+    "mysql": {
+      "passed": 8,
+      "exitCode": 0,
+      "log": "/tmp/planting-care-snapshot-mysql-green.log"
+    },
+    "node22MysqlRestoration": {
+      "version": "22.21.1",
+      "passed": 8,
+      "exitCode": 0,
+      "log": "/tmp/planting-care-snapshot-node22-mysql-green.log"
+    },
+    "mutations": [
+      {
+        "change": "移除用户归属过滤",
+        "failed": 1,
+        "log": "/tmp/planting-care-snapshot-owner-red.log"
+      },
+      {
+        "change": "跳过清单SHA核验",
+        "failed": 1,
+        "log": "/tmp/planting-care-snapshot-sha-red.log"
+      }
+    ],
+    "restoration": "两次突变各还原源码，cmp逐字节一致；Node22实际数据库恢复GREEN",
+    "fullBackend": {
+      "files": 118,
+      "passed": 902,
+      "skipped": 0,
+      "exitCode": 0,
+      "log": "/tmp/planting-care-snapshot-full-green.log"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "/tmp/planting-care-snapshot-typecheck.log"
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 941,
+      "exitCode": 0,
+      "log": "/tmp/planting-care-snapshot-lint.log"
+    },
+    "build": {
+      "exitCode": 0,
+      "log": "/tmp/planting-care-snapshot-build.log"
+    }
+  },
+  "verified": [
+    "参数化归属写入与读回",
+    "原始尺寸清单驱动真实盆器回放",
+    "重复引用及同清单拒绝",
+    "新事实追加而非更新",
+    "数据库拒绝更新原值或清单",
+    "非法时间JSON拒绝与坏摘要读回拒绝"
+  ],
+  "notAccepted": [
+    "输入事实真实性及领域Schema",
+    "配置、算法和新鲜度策略发布",
+    "环境与决策派生结果表",
+    "Ephemeral内联存储",
+    "真实登录或CloudBase HTTP",
+    "全量迁移及生产DDL"
+  ],
+  "sourceHashes": {
+    "cloudfunctions-v2/src/care/repository/mysql-environment-snapshot-repository.ts": "5744b4eb5ca61d56f0d451f17ade35b50e2f44d8f82bb6c40b5bf0d619a736e8",
+    "cloudfunctions-v2/test/e2e/care-environment-snapshot.mysql.spec.ts": "aa69f8eb00d93dcc9c7e70249f15a2eda4e4805af72bd4bca448df9feb625ba1",
+    "cloudfunctions-v2/models/care/environment-snapshot-persistence-contract.md": "8282048d04749fc6448885dc06b0fc580f94e0dfeda95938aa1620f19ebc5e9f"
+  }
+}

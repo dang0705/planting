@@ -1,20 +1,20 @@
 {
-  "revision": 32,
+  "revision": 33,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-04T13:11:33.525840+00:00",
+  "updatedAt": "2026-10-04T13:18:40.859196+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "E04历史循环资格与区间残差回放",
+    "goal": "E04长期环境输入快照不可变Repository与实际数据库读回",
     "assumptions": [
-      "同一历史循环与同一目标状态由受控上游确认",
-      "发布策略缺失不阻断离线比较但不得生成倍率"
+      "已有快照DDL为持久化约束，先核验具体结构",
+      "只允许长期用户植物归属；临时结果另走原合同"
     ],
-    "minimumVerification": "独立端点差、缺证据及条件变化、两个错误行为突变、全量GREEN及Node22",
-    "continueWhen": "902项全绿，类型及构建各自通过",
-    "failWhen": "当前轮反馈自身、旧条件误用或离线倍率冒充正式校准",
-    "rollback": "仅离线无写用例，撤销本增量不影响事实和发布指针",
-    "timeLimit": "30分钟检查点"
+    "minimumVerification": "独立Expected、参数化SQL、归属与哈希校验、隔离MySQL不可变记录读回、后端全量GREEN",
+    "continueWhen": "实际约束与合同一致，读回原记录且修改被拒绝",
+    "failWhen": "创建伪用户植物、用替身宣称数据库闭环或缺少不可变约束",
+    "rollback": "本地隔离库验收，无生产DDL或发布",
+    "timeLimit": "45分钟检查点"
   },
   "tasks": [
     {
@@ -121,7 +121,7 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 19,
+      "version": 20,
       "priority": "normal",
       "status": "codex running",
       "stage": "验证与持久化读回",
@@ -142,19 +142,20 @@
         ".codex/backend-v2/evidence/E04-suncalc-direction.json",
         ".codex/backend-v2/evidence/E04-suncalc-mean-candidate.json",
         ".codex/backend-v2/evidence/E04-measured-pot.json",
-        ".codex/backend-v2/evidence/E04-dry-cycle-replay.json"
+        ".codex/backend-v2/evidence/E04-dry-cycle-replay.json",
+        ".codex/backend-v2/evidence/E04-environment-snapshot.json"
       ],
       "summary": [
-        "E04：历史循环资格→未校准预测区间残差已实现",
-        "20新用例；错端点4项RED、漏反馈门1项RED→恢复GREEN",
-        "后端118文件902/902；Node22相关20项；类型构建通过",
-        "缺起点、条件变化或版本冲突不校准；保留残差区间",
-        "未发布策略只离线回放，不生成倍率；整票未验收"
+        "E04：长期输入快照Repository→真实MySQL读回已接通",
+        "真实MySQL8场景；归属、摘要突变各1项RED→恢复GREEN",
+        "Node22数据库8项；后端902/902；类型与构建通过",
+        "数据库拒绝改写；新事实追加；读回原清单可回放盆器",
+        "派生表、发布策略和正式HTTP仍未验收，不标Done"
       ],
       "blockingReason": null,
-      "nextAction": "接续不可变输入快照与回放持久化边界，核验实际Repository及准入策略；不以孤立函数代替养护闭环",
-      "ticketReadback": "Chrome当前状态codex running及完整五行评论1100440000089834已读回",
-      "milestoneCommit": "f42682a5"
+      "nextAction": "核验回放版本清单及派生结果持久化合同；实验结果与正式发布分开，继续真实MySQL路径",
+      "ticketReadback": "Chrome状态codex running及完整五行评论1100440000089873已读回",
+      "milestoneCommit": "2c329b27"
     }
   ],
   "queue": [
@@ -258,7 +259,7 @@
       ]
     }
   ],
-  "nextAction": "接续不可变输入快照与回放持久化边界，核验实际Repository及准入策略；不以孤立函数代替养护闭环",
+  "nextAction": "核验回放版本清单及派生结果持久化合同；实验结果与正式发布分开，继续真实MySQL路径",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -442,5 +443,20 @@
       "architecture/manifest.json配置文件哈希"
     ],
     "scope": "不读其余领域或sourceRefs"
+  },
+  "snapshotPersistenceReadAdmission": {
+    "layers": {
+      "L0": "backend-v2/.abstract.md 只给目录用途，无SQL字段与约束",
+      "L1": "backend-v2/.overview.md与contracts/.overview.md定位快照合同，无数据库列",
+      "L2": "contracts/care-environment-foundation.md第3、4节给归属与不可变原则，无快照完整DDL、外键与Repository接线"
+    },
+    "missing": "长期快照表的具体列、约束、017影响及快照硬规则配置状态",
+    "localAllowed": [
+      "schema/004_care_diagnosis.sql 仅care_environment_snapshots表与对应不可变触发器",
+      "schema/017_care_v2_ephemeral_and_derivations.sql 仅快照相关变更",
+      "architecture/configuration-variable-catalog.md care.environment.atomic_facts_immutable、derivation_must_not_overwrite_fact",
+      "architecture/configuration-variable-catalog.json 上述两项"
+    ],
+    "scope": "只定位本次长期快照持久化环节，不读其他领域或整份架构"
   }
 }
