@@ -1,19 +1,19 @@
 {
-  "revision": 30,
+  "revision": 31,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-04T12:59:45.879983+00:00",
+  "updatedAt": "2026-10-04T13:07:18.064999+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "E04真实辐射均值SunCalc实验回放及CommonJS类型修复",
+    "goal": "E04实测内盆几何及排水安全判断",
     "assumptions": [
-      "候选显式假设时段内DNI恒定",
-      "数值采样不保证所有时刻，不能作安全否决证据"
+      "只计算圆形线性侧壁内盆几何体积",
+      "体积不等于基质填充或持水量"
     ],
-    "minimumVerification": "NIST数学基准、原始制品真实协作、短时漏样反例、错权重RED及还原；独立核对类型检查退出码",
-    "continueWhen": "863项全绿、类型构建各自通过",
-    "failWhen": "用候选替代全时段严格界限或生产策略",
-    "rollback": "仅离线候选，不接HTTP或正式建议",
+    "minimumVerification": "独立圆台圆柱基准、缺证据与非法值、半径突变RED、全量及Node22验证",
+    "continueWhen": "882项全绿，类型、构建各自通过",
+    "failWhen": "猜测缺尺寸或生成未准入保水倍率",
+    "rollback": "独立离线用例，不接正式HTTP或数据库",
     "timeLimit": "30分钟检查点"
   },
   "tasks": [
@@ -121,7 +121,7 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 17,
+      "version": 18,
       "priority": "normal",
       "status": "codex running",
       "stage": "验证与持久化读回",
@@ -140,19 +140,20 @@
         ".codex/backend-v2/evidence/E04-plant-direct-interval.json",
         ".codex/backend-v2/evidence/E04-pot-safety-suncalc.json",
         ".codex/backend-v2/evidence/E04-suncalc-direction.json",
-        ".codex/backend-v2/evidence/E04-suncalc-mean-candidate.json"
+        ".codex/backend-v2/evidence/E04-suncalc-mean-candidate.json",
+        ".codex/backend-v2/evidence/E04-measured-pot.json"
       ],
       "summary": [
-        "E04：真实Open-Meteo→SunCalc时段实验回放已接通",
-        "15新用例；错权重7项RED→还原GREEN；保留短时漏样反例",
-        "后端116文件863/863；Node22相关52项；类型、构建通过",
-        "修复CommonJS类型接线；候选恒定DNI估计与物理范围分开",
-        "严格时段界限、正式光照及保水策略仍未准入，不标Done"
+        "E04：实测内盆尺寸→圆台体积→排水安全门已接通",
+        "19新用例；直径误当半径3项RED→恢复GREEN",
+        "后端117文件882/882；Node22相关19项；类型构建通过",
+        "缺尺寸不猜测；外盆不归属；容积不冒充持水量",
+        "保水策略、DMN行为和正式建议未验收，不标Done"
       ],
       "blockingReason": null,
-      "nextAction": "推进独立盆器几何与干湿循环回放；SunCalc候选保持离线，不替代严格界限或正式发布",
-      "ticketReadback": "Chrome当前E04/E06票codex running；完整五行评论1100440000089775已读回",
-      "milestoneCommit": "3a22f88a"
+      "nextAction": "推进历史干湿循环资格及独立残差回放，pending校准策略不设默认",
+      "ticketReadback": "Chrome状态codex running及完整五行评论1100440000089823已读回",
+      "milestoneCommit": "d2105793"
     }
   ],
   "queue": [
@@ -256,7 +257,7 @@
       ]
     }
   ],
-  "nextAction": "核验散射与光谱换算的已确认参数及准入；pending部分不设默认，独立盆器回放继续推进",
+  "nextAction": "推进历史干湿循环资格及独立残差回放，pending校准策略不设默认",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",

@@ -34,19 +34,19 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 17,
+      "version": 18,
       "status": "codex running",
-      "note": "E04：真实Open-Meteo→SunCalc时段实验回放已接通\n15新用例；错权重7项RED→还原GREEN；保留短时漏样反例\n后端116文件863/863；Node22相关52项；类型、构建通过\n修复CommonJS类型接线；候选恒定DNI估计与物理范围分开\n严格时段界限、正式光照及保水策略仍未准入，不标Done",
-      "commentId": "1100440000089775",
-      "commentFingerprint": "1325aada16642d5158a18168e3b8b8a6c36f4d67be4f847efa936c218565e9ed",
-      "readback": "Chrome当前E04/E06票codex running；完整五行评论1100440000089775已读回"
+      "note": "E04：实测内盆尺寸→圆台体积→排水安全门已接通\n19新用例；直径误当半径3项RED→恢复GREEN\n后端117文件882/882；Node22相关19项；类型构建通过\n缺尺寸不猜测；外盆不归属；容积不冒充持水量\n保水策略、DMN行为和正式建议未验收，不标Done",
+      "commentId": "1100440000089823",
+      "commentFingerprint": "e0d52cc3b0cb68fffaf90b70646882852d5c9309e9dc00a441c9c3fabcde1ec9",
+      "readback": "Chrome状态codex running及完整五行评论1100440000089823已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T13:01:06.439976+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T13:07:42.254147+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "b6505026db843e0e468b3462d7cd30ab6ac732ea58222069d51cf67d1a6209df",
-    "sourceRevision": 30,
-    "sourceUpdatedAt": "2026-10-04T12:59:45.879983+00:00"
+    "fingerprint": "f47a45138906470fb724a95231bc9ed6a80691d07d4a94de94d26b3bdf655289",
+    "sourceRevision": 31,
+    "sourceUpdatedAt": "2026-10-04T13:07:18.064999+00:00"
   }
 }

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T12:59:45.879983+00:00",
-  "sourceRevision": 30,
-  "sourceUpdatedAt": "2026-10-04T12:59:45.879983+00:00",
+  "generatedAt": "2026-10-04T13:07:18.064999+00:00",
+  "sourceRevision": 31,
+  "sourceUpdatedAt": "2026-10-04T13:07:18.064999+00:00",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -114,16 +114,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 17,
+      "version": 18,
       "status": "codex running",
       "stage": "验证与持久化读回",
       "accepted": false,
       "summary": [
-        "E04：真实Open-Meteo→SunCalc时段实验回放已接通",
-        "15新用例；错权重7项RED→还原GREEN；保留短时漏样反例",
-        "后端116文件863/863；Node22相关52项；类型、构建通过",
-        "修复CommonJS类型接线；候选恒定DNI估计与物理范围分开",
-        "严格时段界限、正式光照及保水策略仍未准入，不标Done"
+        "E04：实测内盆尺寸→圆台体积→排水安全门已接通",
+        "19新用例；直径误当半径3项RED→恢复GREEN",
+        "后端117文件882/882；Node22相关19项；类型构建通过",
+        "缺尺寸不猜测；外盆不归属；容积不冒充持水量",
+        "保水策略、DMN行为和正式建议未验收，不标Done"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -139,18 +139,19 @@
         ".codex/backend-v2/evidence/E04-plant-direct-interval.json",
         ".codex/backend-v2/evidence/E04-pot-safety-suncalc.json",
         ".codex/backend-v2/evidence/E04-suncalc-direction.json",
-        ".codex/backend-v2/evidence/E04-suncalc-mean-candidate.json"
+        ".codex/backend-v2/evidence/E04-suncalc-mean-candidate.json",
+        ".codex/backend-v2/evidence/E04-measured-pot.json"
       ],
       "blockingReason": null,
-      "nextAction": "推进独立盆器几何与干湿循环回放；SunCalc候选保持离线，不替代严格界限或正式发布",
+      "nextAction": "推进历史干湿循环资格及独立残差回放，pending校准策略不设默认",
       "sync": {
-        "version": 17,
+        "version": 18,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome当前E04/E06票codex running；完整五行评论1100440000089775已读回"
+        "readback": "Chrome状态codex running及完整五行评论1100440000089823已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T13:01:06.439976+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T13:07:42.254147+00:00",
   "lastFailure": null
 }

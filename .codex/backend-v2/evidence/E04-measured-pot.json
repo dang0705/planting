@@ -1,0 +1,59 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "accepted": false,
+  "milestone": "实测内盆几何接入既有排水安全门",
+  "updatedAt": "2026-10-04T13:07:18.064999+00:00",
+  "expectedSources": [
+    "批准计划第六节实际内盆、非法尺寸和缺证据边界",
+    "圆台数学体积及公制体积单位定义"
+  ],
+  "scope": "unit_fake；真实尺寸计算→安全函数，无数据库、DMN引擎或HTTP",
+  "checks": {
+    "related": {
+      "passed": 19
+    },
+    "fullBackend": {
+      "files": 117,
+      "passed": 882,
+      "skipped": 0,
+      "exitCode": 0,
+      "log": "/tmp/planting-pot-geometry-full-green.log"
+    },
+    "mutation": {
+      "change": "盆口直径误当半径",
+      "failed": 3,
+      "log": "/tmp/planting-pot-geometry-mutation-red.log",
+      "restoration": "cmp逐字节相同，随后全量GREEN"
+    },
+    "node22": {
+      "version": "22.21.1",
+      "passed": 19
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "/tmp/planting-pot-geometry-typecheck.log"
+    },
+    "lint": {
+      "exitCode": 0,
+      "warnings": 919,
+      "errors": 0,
+      "log": "/tmp/planting-pot-geometry-lint.log"
+    },
+    "build": {
+      "exitCode": 0,
+      "log": "/tmp/planting-pot-geometry-build.log"
+    }
+  },
+  "hashes": {
+    "cloudfunctions-v2/src/care/cultivation/derive-measured-pot.ts": "dfb26be4e4b8ddd8756bf16a73a1801651d2a80f9b1aeb7ee6bf37cc8862a5ad",
+    "cloudfunctions-v2/test/care/derive-measured-pot.spec.ts": "f6b2f5d5dd11b1134adda96f727e229f4fb4cab4287051d7ea7de79a6372fb95",
+    "cloudfunctions-v2/models/care/measured-pot-contract.md": "0211910d6baa176acccbb201a44172f148a09d3b45eed749ba54ed0e3d89137f"
+  },
+  "notAccepted": [
+    "真实内盆测量",
+    "基质填充体积与保水参数",
+    "DMN执行行为",
+    "正式建议及CloudBase HTTP"
+  ]
+}
