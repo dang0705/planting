@@ -1,0 +1,65 @@
+{
+  "scope": "E03登录临时案例显式新建植物：同事务创建与绑定、能力容量、同键原结果重放、既有HTTP新建分支",
+  "verifiedAt": "2026-10-04T21:56:22.102717+00:00",
+  "configurationDecision": "无新增阈值或默认；复用已发布创建能力、活动植物数量上限及既有HTTP写限制，不决定临时案例TTL",
+  "expectedSources": [
+    "cloudfunctions-v2/models/user-plant/authenticated-ephemeral-new-plant-contract.md",
+    "cloudfunctions-v2/models/user-plant/authenticated-ephemeral-binding-http-contract.md"
+  ],
+  "contextReuse": "复用已核验003与016字段及既有准入记录；API仅复用原绑定操作的精确读取范围，未扩大架构读取",
+  "testFirst": {
+    "applicationMissingModuleRed": "/tmp/planting-e03-new-target-application-red.log",
+    "repositoryMissingModuleRed": "/tmp/planting-e03-ephemeral-new-plant-mysql-red.log",
+    "missingModuleIsBusinessRed": false,
+    "unsafeLimitClassicRed": "/tmp/planting-e03-new-target-unsafe-limit-red.log",
+    "unsafeLimitFailedScenarios": 1,
+    "httpClassicRed": "/tmp/planting-e03-new-target-http-red.log",
+    "httpFailedScenarios": 5,
+    "httpRestoredGreen": "/tmp/planting-e03-new-target-http-green.log",
+    "repositorySequence": "Repository已回退，独立SQL Expected运行RED后恢复；缺模块RED不作为业务反例"
+  },
+  "mutation": {
+    "capacityRed": "/tmp/planting-e03-new-target-capacity-mutation-red.log",
+    "failedScenarios": 2,
+    "restoredSha256": "08bcc0183b0c9c64eb64eab7bacc8478991ccb9486da71fd837a5355481d7bdb",
+    "restoredMysqlGreen": "/tmp/planting-e03-new-target-final-mysql.log",
+    "http": {
+      "redLog": "/tmp/planting-e03-new-target-http-mutation-red.log",
+      "failedScenarios": 2,
+      "restoredHandlerSha256": "43fcdc3753c02d9e0687405eaf4bf73d9ba3aecb5e33646df719d7efcf150d41"
+    }
+  },
+  "verification": {
+    "applicationUnitFake": 20,
+    "bindingHttpUnitFake": 33,
+    "newMysqlBeforeHttpAddition": 14,
+    "existingMysql": 19,
+    "apiStructureChecks": 8,
+    "apiRepeatGenerationIdentical": true,
+    "newMysqlIncludingRealHttp": 16,
+    "realMysqlIncludingExisting": 35,
+    "rootFiles": 184,
+    "rootUnitTests": 1745,
+    "node22UnitTests": 1745,
+    "typecheckExit": 0,
+    "lintErrors": 0,
+    "lintWarnings": 2672,
+    "buildExit": 0,
+    "finalLogPrefix": "/tmp/planting-e03-new-target-final-",
+    "currentHandlerSha256": "f6d45184c0c09c21c2328230f1430fe4ffd7e2d5a8677fa06d516f3ff3ca3da1"
+  },
+  "boundaries": [
+    "可信身份和能力为明确夹具，不证明真实平台登录或权益发布",
+    "创建为未识别植物，不修改诊断结果或伪造识别状态",
+    "未部署、生产DDL、生产数据迁移或删除",
+    "Node22构建通过；子npm使用Node24产生引擎警告，不代表CloudBase真实运行验收"
+  ],
+  "remaining": [
+    "真实登录与发布策略",
+    "临时案例创建TTL准入",
+    "游客显式认领",
+    "环境档案完整合同",
+    "整体E03与生产运行验收"
+  ],
+  "accepted": false
+}

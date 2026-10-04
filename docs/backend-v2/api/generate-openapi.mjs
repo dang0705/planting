@@ -154,7 +154,7 @@ const openapi = {
       ServiceSignature: serviceHeaderParameter('X-QHZ-Signature', '规范化签名明文的 HMAC-SHA-256 base64url 结果。'),
     },
     schemas: {
-      // 已登录临时案例只允许显式绑定已有本人植物；公开投影不包含案例状态或命令引用。
+      // 已登录临时案例显式选择已有本人植物或新建植物；公开投影不包含案例状态或命令引用。
       AuthenticatedEphemeralCaseRef: {
         type: 'string', minLength: 12, maxLength: 64, pattern: '^epc_[A-Za-z0-9_-]{8,60}$',
       },
@@ -165,11 +165,19 @@ const openapi = {
         type: 'object', additionalProperties: false, required: ['target'],
         properties: {
           target: {
-            type: 'object', additionalProperties: false, required: ['type', 'user_plant_id'],
-            properties: {
-              type: { const: 'existing_user_plant' },
-              user_plant_id: { $ref: '#/components/schemas/BoundExistingUserPlantRef' },
-            },
+            oneOf: [
+              {
+                type: 'object', additionalProperties: false, required: ['type', 'user_plant_id'],
+                properties: {
+                  type: { const: 'existing_user_plant' },
+                  user_plant_id: { $ref: '#/components/schemas/BoundExistingUserPlantRef' },
+                },
+              },
+              {
+                type: 'object', additionalProperties: false, required: ['type'],
+                properties: { type: { const: 'new_user_plant' } },
+              },
+            ],
           },
         },
       },

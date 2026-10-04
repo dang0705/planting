@@ -9,6 +9,7 @@ import type { UserPrincipalDto, UserRef } from '../../src/contracts/types.js'
 /** L3/unit_fake；Expected来自绑定HTTP合同。真实Node HTTP/固定链，身份、归属与事务应用为替身；不证明MySQL或真实登录。 */
 const principal: UserPrincipalDto = { principalType: 'user', user_id: 'usr_binding_owner001' as UserRef, sessionVersion: 1, authenticatedVia: 'wechat', issuedAt: '1970-01-01T00:00:01Z', expiresAt: '1970-01-01T00:00:10Z' }
 const caseRef = 'epc_binding_case001', plantRef = 'upl_binding_target001'
+const newBody = '{"target":{"type":"new_user_plant"}}'
 const success = { status: 'bound' as const, promotionRef: 'prm_generated_server001', userPlantRef: plantRef, boundAtMs: 2000 }
 const servers: Server[] = []
 afterEach(async () => { for (const s of servers.splice(0)) { s.closeAllConnections(); await new Promise<void>(r => s.close(() => r())) } })
@@ -52,8 +53,22 @@ test('过期统一主体先401，不能访问案例归属', async () => {
 test('他人或不存在案例先404而不解析畸形正文或调用事务', async () => {
   const f = await start({ readOwnedCase: async () => ({ status: 'not_found' }) }); expect(await f.send('{')).toEqual({ status: 404, body: { error: { type: 'NOT_FOUND', message: '案例或用户植物不存在' } } }); expect(f.calls).toEqual([])
 })
-test.each(['{', '{}', '{"target":{"type":"new_user_plant"}}', `{"target":{"type":"existing_user_plant","user_plant_id":"${plantRef}","userRef":"usr_other"}}`, `{"target":{"type":"existing_user_plant","user_plant_id":"${plantRef}"},"occurredAtMs":0}`])('严格正文拒绝且无事务：%s', async body => {
+test.each(['{', '{}', `{"target":{"type":"new_user_plant","user_plant_id":"${plantRef}"}}`, `{"target":{"type":"existing_user_plant","user_plant_id":"${plantRef}","userRef":"usr_other"}}`, `{"target":{"type":"existing_user_plant","user_plant_id":"${plantRef}"},"occurredAtMs":0}`])('严格正文拒绝且无事务：%s', async body => {
   const f = await start(); expect((await f.send(body)).status).toBe(400); expect(f.calls).toEqual([])
+})
+test('显式新建只传服务端引用与能力，重放只投影原植物', async () => {
+  const saved: unknown[] = []
+  const f = await start({ createUserPlantRef: () => 'upl_candidate_created001', resolveCapabilitySnapshot: async () => null, saveNew: async input => { saved.push(input); return { ...success, userPlantRef: 'upl_original_created001' } } })
+  expect(await f.send(newBody)).toEqual({ status: 200, body: { data: { user_plant_id: 'upl_original_created001' } } })
+  expect(saved[0]).toMatchObject({ principal, capabilitySnapshot: null, ephemeralCaseRef: caseRef, newUserPlantRef: 'upl_candidate_created001', occurredAtMs: 2000 }); expect(f.calls).toEqual([])
+})
+test.each(['missing', 'error'] as const)('新建能力%s以明确null传事务，原收据由事务决定', async kind => {
+  let snapshot: unknown = 'unset'
+  const f = await start({ createUserPlantRef: () => 'upl_candidate_created001', ...(kind === 'missing' ? {} : { resolveCapabilitySnapshot: async () => { throw new Error('restricted provider detail') } }), saveNew: async input => { snapshot = input.capabilitySnapshot; return { status: 'unavailable' } } })
+  expect((await f.send(newBody)).status).toBe(503); expect(snapshot).toBeNull(); expect(f.calls).toEqual([])
+})
+test.each([['capability_denied', 403, 'CAPABILITY_DENIED'], ['capability_snapshot_expired', 409, 'CAPABILITY_SNAPSHOT_EXPIRED']] as const)('新建拒绝%s映射已冻结错误', async (status, code, type) => {
+  const f = await start({ createUserPlantRef: () => 'upl_candidate_created001', saveNew: async () => ({ status }) }); const response = await f.send(newBody); expect(response.status).toBe(code); expect(response.body).toMatchObject({ error: { type } }); expect(f.calls).toEqual([])
 })
 test.each(['short', 'é'.repeat(8), 'a'.repeat(129), ['key-first-001', 'key-second-001']].map(key => ({ key })))('非法或重复幂等头不写：%j', async ({ key }) => {
   const f = await start(); expect((await f.send(undefined, { 'idempotency-key': key })).status).toBe(400); expect(f.calls).toEqual([])

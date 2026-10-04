@@ -1,3 +1,5 @@
+import { createAuthenticatedEphemeralNewPlantApplicationService } from '../application/save-authenticated-ephemeral-as-new-plant.js'
+import { createMysqlAuthenticatedEphemeralNewPlantRepository, createMysqlAuthenticatedEphemeralNewPlantCommitUnknownReader } from '../repository/mysql-authenticated-ephemeral-new-plant-repository.js'
 import { createServer, type Server } from 'node:http'
 import { randomUUID } from 'node:crypto'
 
@@ -118,6 +120,10 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
     driver, repository: createMysqlAuthenticatedEphemeralBindingRepository(),
     commitUnknownReadOnlyRepository: createMysqlAuthenticatedEphemeralBindingCommitUnknownReader(dependencies.connectionSource)
   })
+  const saveNewApplication = createAuthenticatedEphemeralNewPlantApplicationService({
+    driver, repository: createMysqlAuthenticatedEphemeralNewPlantRepository(userPlantRepository),
+    commitUnknownReader: createMysqlAuthenticatedEphemeralNewPlantCommitUnknownReader(dependencies.connectionSource)
+  })
   const ownedCaseReader = createMysqlAuthenticatedEphemeralCaseOwnershipReader(dependencies.connectionSource)
   const idempotencyRepository = createMysqlHttpIdempotencyRepository<
     MysqlTransactionContext<Mysql2QueryConnection>
@@ -192,6 +198,8 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
         return createAuthenticatedEphemeralBindingRouteHandler({
           maxBodyBytes: snapshot?.maxBodyBytes ?? null, resolvePrincipal, readOwnedCase: input => ownedCaseReader.readOwned(input),
           bindExisting: bindingApplication, now: dependencies.now, createPromotionRef: () => `prm_${randomUUID().replaceAll('-', '')}`,
+          saveNew: saveNewApplication, createUserPlantRef: () => `upl_${randomUUID().replaceAll('-', '')}`,
+          resolveCapabilitySnapshot: dependencies.resolveCapabilitySnapshot,
           writeAudit: dependencies.writeAudit
         })(request, response, parameters)
       }

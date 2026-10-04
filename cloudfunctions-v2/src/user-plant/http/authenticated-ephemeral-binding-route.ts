@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import type { IncomingMessage, IncomingHttpHeaders } from 'node:http'
 import Ajv from 'ajv'
-import type { UserPrincipalDto } from '../../contracts/types.js'
+import type { UserPrincipalDto, UserCapabilitySnapshotDto } from '../../contracts/types.js'
 import { userPrincipalSchema } from '../../contracts/schemas.js'
 import { createNodeRequestChainHandler } from '../../foundation/http/node-request-chain-handler.js'
 import { PublicRequestError, type RequestChainAuditEvent } from '../../foundation/http/request-chain.js'
@@ -12,7 +12,9 @@ import { extractBearerToken } from '../../identity/http/request-identity.js'
 import type { AuthenticatedEphemeralBindingApplicationInput, AuthenticatedEphemeralBindingApplicationResult } from '../application/bind-authenticated-ephemeral-case.js'
 import type { AuthenticatedEphemeralOwnershipInput, AuthenticatedEphemeralOwnershipResult } from '../repository/mysql-authenticated-ephemeral-case-ownership-reader.js'
 
-/** 登录临时案例绑定与游客认领命名空间分离；禁止客户端改变目标类型。 */
+import type { AuthenticatedEphemeralNewPlantInput, AuthenticatedEphemeralNewPlantResult } from '../repository/mysql-authenticated-ephemeral-new-plant-repository.js'
+
+/** 登录临时案例绑定与游客认领命名空间分离；目标由用户显式选择。 */
 export const authenticatedEphemeralBindingRoute: FrozenRoute = {
   method: 'POST', path: '/api/v2/user-plants/ephemeral-cases/{ephemeralCaseRef}/bindings', operationId: 'bindAuthenticatedEphemeralCase', security: 'authenticated'
 }
@@ -22,6 +24,9 @@ export interface AuthenticatedEphemeralBindingRouteDependencies {
   /** identity验真Bearer会话。 */ readonly resolvePrincipal: (input: ResolveUserPrincipalCommand) => Promise<UserPrincipalDto>
   /** 本人案例只读前置；事务内仍须再次验证。 */ readonly readOwnedCase: (input: AuthenticatedEphemeralOwnershipInput) => Promise<AuthenticatedEphemeralOwnershipResult>
   /** 完整三表事务与提交未知只读核对。 */ readonly bindExisting: (input: AuthenticatedEphemeralBindingApplicationInput) => Promise<AuthenticatedEphemeralBindingApplicationResult>
+  /** 新建目标与绑定同事务，未接线时拒绝新建。 */ readonly saveNew?: (input: AuthenticatedEphemeralNewPlantInput) => Promise<AuthenticatedEphemeralNewPlantResult>
+  /** 服务端生成候选植物引用，不接受客户端指定。 */ readonly createUserPlantRef?: () => string
+  /** 订阅域可信能力；缺失以null进入事务，允许读回历史成功。 */ readonly resolveCapabilitySnapshot?: (principal: UserPrincipalDto) => Promise<UserCapabilitySnapshotDto | null>
   /** 服务端时钟，整个请求锁定一次。 */ readonly now: () => number
   /** 服务端随机命令引用；调用者不能指定。 */ readonly createPromotionRef: () => string
   /** 脱敏结果审计，不消费请求正文和Bearer。 */ readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
@@ -37,15 +42,32 @@ interface Restricted {
 /** 严格客户端输入，不包括归属、期限或命令引用。 */
 interface BindingDto {
   /** 当前本人临时案例。 */ readonly ephemeralCaseRef: string
-  /** 用户显式选定的目标。 */ readonly targetUserPlantRef: string
+  /** 用户显式选定的目标。 */ readonly target: {
+    /** 用户明确选择已有植物。 */ type: 'existing_user_plant'
+    /** 用户选定、尚须事务确认归属的植物公开引用。 */ user_plant_id: string
+  } | {
+    /** 用户仅声明新建，不携带植物候选引用。 */ type: 'new_user_plant'
+  }
   /** 原始重试键只用于摘要。 */ readonly key: string
 }
 const ajv = new Ajv({ strict: true, allErrors: true })
 const principalValid = ajv.compile(userPrincipalSchema)
 const plantPattern = '^upl_[A-Za-z0-9_-]{8,}$'
-const requestValid = ajv.compile<{ target: { type: 'existing_user_plant'; user_plant_id: string } }>({
+/** 两类明确目标共享协议链，内部命令保持不同类型。 */
+type BindingCommand = {
+  /** 已有目标分支，必须匹配用户指定引用。 */ kind: 'existing'
+  /** 已有植物绑定应用的可信命令。 */ input: AuthenticatedEphemeralBindingApplicationInput
+} | {
+  /** 显式新建分支，允许返回原成功收据。 */ kind: 'new'
+  /** 服务端候选植物与可信能力组成的新建命令。 */ input: AuthenticatedEphemeralNewPlantInput
+}
+type BindingResult = AuthenticatedEphemeralBindingApplicationResult | AuthenticatedEphemeralNewPlantResult
+const requestValid = ajv.compile<{ target: BindingDto['target'] }>({
   type: 'object', additionalProperties: false, required: ['target'], properties: {
-    target: { type: 'object', additionalProperties: false, required: ['type', 'user_plant_id'], properties: { type: { type: 'string', const: 'existing_user_plant' }, user_plant_id: { type: 'string', pattern: plantPattern, maxLength: 64 } } }
+    target: { oneOf: [
+      { type: 'object', additionalProperties: false, required: ['type', 'user_plant_id'], properties: { type: { type: 'string', const: 'existing_user_plant' }, user_plant_id: { type: 'string', pattern: plantPattern, maxLength: 64 } } },
+      { type: 'object', additionalProperties: false, required: ['type'], properties: { type: { type: 'string', const: 'new_user_plant' } } }
+    ] }
   }
 })
 /** 固定中文错误，不包含原始输入或存储原因。 */
@@ -83,15 +105,16 @@ function parse(r: Restricted): BindingDto {
   let count = 0
   for (let i = 0; i < r.rawHeaders.length; i += 2) { if (r.rawHeaders[i]!.toLowerCase() === 'idempotency-key') { count++ } }
   if (!requestValid(body) || typeof key !== 'string' || count !== 1 || !/^[\x20-\x7e]{8,128}$/u.test(key)) { throw invalid() }
-  return Object.freeze({ ephemeralCaseRef: caseReference(r.parameters), targetUserPlantRef: body.target.user_plant_id, key })
+  return Object.freeze({ ephemeralCaseRef: caseReference(r.parameters), target: Object.freeze({ ...body.target }), key })
 }
 /** 拒绝状态白名单与成功收据核验；仅目标引用可进入成功正文。 */
-function project(result: AuthenticatedEphemeralBindingApplicationResult, command: AuthenticatedEphemeralBindingApplicationInput): { user_plant_id: string } {
+function project(result: BindingResult, command: BindingCommand): { user_plant_id: string } {
   if (!result || typeof result !== 'object' || Array.isArray(result)) { throw new Error('绑定应用结果不合法') }
   if (result.status === 'bound') {
     if (Object.keys(result).length !== 4 || Object.keys(result).some(k => !['status', 'promotionRef', 'userPlantRef', 'boundAtMs'].includes(k))
       || typeof result.promotionRef !== 'string' || !/^[A-Za-z0-9_-]{1,64}$/u.test(result.promotionRef)
-      || result.userPlantRef !== command.command.targetUserPlantRef || !Number.isSafeInteger(result.boundAtMs) || result.boundAtMs < 0 || result.boundAtMs > command.command.occurredAtMs) { throw new Error('成功绑定不匹配') }
+      || typeof result.userPlantRef !== 'string' || result.userPlantRef.length > 64 || !/^upl_[A-Za-z0-9_-]{8,}$/u.test(result.userPlantRef)
+      || (command.kind === 'existing' && result.userPlantRef !== command.input.command.targetUserPlantRef) || !Number.isSafeInteger(result.boundAtMs) || result.boundAtMs < 0 || result.boundAtMs > (command.kind === 'existing' ? command.input.command.occurredAtMs : command.input.occurredAtMs)) { throw new Error('成功绑定不匹配') }
     return { user_plant_id: result.userPlantRef }
   }
   if (Object.keys(result).length !== 1) { throw new Error('绑定拒绝结果不合法') }
@@ -100,6 +123,8 @@ function project(result: AuthenticatedEphemeralBindingApplicationResult, command
     case 'principal_invalid': throw new PublicRequestError(401, 'PRINCIPAL_INVALID', '身份凭证无效或已过期')
     case 'expired': case 'already_bound': throw new PublicRequestError(409, 'EPHEMERAL_CASE_NOT_BINDABLE', '当前案例不能绑定，请检查后重新操作')
     case 'idempotency_conflict': throw new PublicRequestError(409, 'IDEMPOTENCY_CONFLICT', '重复请求参数不一致')
+    case 'capability_denied': throw new PublicRequestError(403, 'CAPABILITY_DENIED', '当前能力不允许创建植物')
+    case 'capability_snapshot_expired': throw new PublicRequestError(409, 'CAPABILITY_SNAPSHOT_EXPIRED', '能力快照已过期，请重新操作')
     case 'unavailable': throw unavailable()
     default: throw new Error('绑定结果未登记')
   }
@@ -108,8 +133,8 @@ function project(result: AuthenticatedEphemeralBindingApplicationResult, command
 export function createAuthenticatedEphemeralBindingRouteHandler(d: AuthenticatedEphemeralBindingRouteDependencies): RouteHandler {
   return (request, response, parameters) => {
     const now = d.now()
-    let command: AuthenticatedEphemeralBindingApplicationInput
-    return createNodeRequestChainHandler<Restricted, ResolveUserPrincipalCommand, UserPrincipalDto, BindingDto, AuthenticatedEphemeralBindingApplicationInput, AuthenticatedEphemeralBindingApplicationInput, AuthenticatedEphemeralBindingApplicationResult, { user_plant_id: string }>({
+    let command: BindingCommand
+    return createNodeRequestChainHandler<Restricted, ResolveUserPrincipalCommand, UserPrincipalDto, BindingDto, BindingCommand, BindingCommand, BindingResult, { user_plant_id: string }>({
       requestLimits: { kind: 'execute', run: r => restrict(r, parameters, d, now) },
       identityValidate: { kind: 'execute', run: r => { const bearerToken = extractBearerToken(r.headers); if (!bearerToken) { throw new PublicRequestError(401, 'PRINCIPAL_INVALID', '身份凭证无效或已过期') } return { bearerToken, nowMs: now } } },
       principalResolve: { kind: 'execute', run: async c => {
@@ -127,14 +152,24 @@ export function createAuthenticatedEphemeralBindingRouteHandler(d: Authenticated
         if (owned.status !== 'owned') { throw new Error('归属状态不合法') }
       } },
       dtoValidate: { kind: 'execute', run: parse },
-      buildCommand: { kind: 'execute', run: ({ dto, principal }) => {
+      buildCommand: { kind: 'execute', run: async ({ dto, principal }) => {
         const promotionRef = d.createPromotionRef()
         if (typeof promotionRef !== 'string' || !/^[A-Za-z0-9_-]{1,64}$/u.test(promotionRef)) { throw new Error('服务端命令引用不合法') }
-        command = { principal, command: { ephemeralCaseRef: dto.ephemeralCaseRef, targetUserPlantRef: dto.targetUserPlantRef, promotionRef, idempotencyKeyHash: createHash('sha256').update(dto.key, 'utf8').digest('hex'), occurredAtMs: now } }
+        const idempotencyKeyHash = createHash('sha256').update(dto.key, 'utf8').digest('hex')
+        if (dto.target.type === 'existing_user_plant') {
+          command = { kind: 'existing', input: { principal, command: { ephemeralCaseRef: dto.ephemeralCaseRef, targetUserPlantRef: dto.target.user_plant_id, promotionRef, idempotencyKeyHash, occurredAtMs: now } } }
+        } else {
+          if (!d.saveNew || !d.createUserPlantRef) { throw unavailable() }
+          const newUserPlantRef = d.createUserPlantRef()
+          if (typeof newUserPlantRef !== 'string' || newUserPlantRef.length > 64 || !/^upl_[A-Za-z0-9_-]{8,}$/u.test(newUserPlantRef)) { throw new Error('服务端植物引用不合法') }
+          let capabilitySnapshot: UserCapabilitySnapshotDto | null = null
+          try { capabilitySnapshot = await d.resolveCapabilitySnapshot?.(principal) ?? null } catch { /* 缺能力不能猜测授权，原收据仍由事务核对。 */ }
+          command = { kind: 'new', input: { principal, capabilitySnapshot, ephemeralCaseRef: dto.ephemeralCaseRef, newUserPlantRef, promotionRef, idempotencyKeyHash, occurredAtMs: now } }
+        }
         return command
       } },
       domainRule: { kind: 'execute', run: ({ command: c }) => c },
-      transactionPersistence: { kind: 'execute', run: ({ domainDecision }) => d.bindExisting(domainDecision) },
+      transactionPersistence: { kind: 'execute', run: ({ domainDecision }) => domainDecision.kind === 'existing' ? d.bindExisting(domainDecision.input) : d.saveNew!(domainDecision.input) },
       publicResponse: { kind: 'execute', run: r => project(r, command) }, writeAudit: d.writeAudit
     })(request, response)
   }

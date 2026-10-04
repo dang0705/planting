@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T21:41:04.949074+00:00",
-  "sourceRevision": 100,
-  "sourceUpdatedAt": "2026-10-04T21:41:04.949074+00:00",
+  "generatedAt": "2026-10-04T21:56:22.102717+00:00",
+  "sourceRevision": 101,
+  "sourceUpdatedAt": "2026-10-04T21:56:22.102717+00:00",
   "currentStep": "E03",
   "currentTicketId": "z8v0kmr9mj",
   "tasks": [
@@ -264,16 +264,16 @@
     {
       "id": "z8v0kmr9mj",
       "step": "E03",
-      "version": 12,
+      "version": 13,
       "status": "codex running",
-      "stage": "绑定已有植物HTTP及真实SQL已验证；真实身份/创建/整体E03待验收",
+      "stage": "显式新建与绑定HTTP/事务已验证；真实身份与整体E03待验收",
       "accepted": false,
       "summary": [
-        "E03：登录临时案例绑定HTTP已登记并接服务器入口",
-        "真实HTTP→事务/MySQL19项；独立HTTP发布SQL10项",
-        "归属旁路1项RED→逐字节恢复；超期重放/未知提交通过",
-        "根与Node22全量1720/1720；类型/检查/构建通过",
-        "身份仍为夹具；真实登录/新建目标/完整档案待验收"
+        "E03：显式新建植物与临时案例绑定已接同一HTTP",
+        "真实HTTP/MySQL35项；满额拒绝、并发与原结果重放通过",
+        "协议5项RED；容量2项/HTTP2项突变RED→恢复GREEN",
+        "根与Node22全量1745/1745；类型/检查/构建通过",
+        "真实登录/临时创建TTL/游客认领与整体E03仍未验收"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E03-promotion-context.json",
@@ -289,18 +289,19 @@
         ".codex/backend-v2/evidence/E03-authenticated-ephemeral-binding.json",
         ".codex/backend-v2/evidence/E03-authenticated-ephemeral-application.json",
         ".codex/backend-v2/evidence/E03-authenticated-ephemeral-ownership.json",
-        ".codex/backend-v2/evidence/E03-authenticated-ephemeral-http.json"
+        ".codex/backend-v2/evidence/E03-authenticated-ephemeral-http.json",
+        ".codex/backend-v2/evidence/E03-authenticated-ephemeral-new-plant.json"
       ],
       "blockingReason": null,
-      "nextAction": "接新建目标容量与游客显式认领；真实登录、临时TTL和环境档案合同等待对应准入",
+      "nextAction": "阶段性提交后复核旧自建植物准入票归档；再接游客认领，真实登录及临时TTL待对应准入",
       "sync": {
-        "version": 12,
+        "version": 13,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING及五行评论1100440000090986已读回"
+        "readback": "Chrome CODEX RUNNING及五行评论1100440000091008已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T21:41:31.793395+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T21:57:02.312615+00:00",
   "lastFailure": null
 }

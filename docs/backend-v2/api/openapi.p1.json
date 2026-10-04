@@ -1147,6 +1147,8 @@
           "UNSUPPORTED_MEDIA_TYPE",
           "IDEMPOTENCY_CONFLICT",
           "EPHEMERAL_CASE_NOT_BINDABLE",
+          "CAPABILITY_DENIED",
+          "CAPABILITY_SNAPSHOT_EXPIRED",
           "SERVICE_UNAVAILABLE",
           "INTERNAL_ERROR"
         ],
@@ -3714,20 +3716,36 @@
         ],
         "properties": {
           "target": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "type",
-              "user_plant_id"
-            ],
-            "properties": {
-              "type": {
-                "const": "existing_user_plant"
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "user_plant_id"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "existing_user_plant"
+                  },
+                  "user_plant_id": {
+                    "$ref": "#/components/schemas/BoundExistingUserPlantRef"
+                  }
+                }
               },
-              "user_plant_id": {
-                "$ref": "#/components/schemas/BoundExistingUserPlantRef"
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "new_user_plant"
+                  }
+                }
               }
-            }
+            ]
           }
         }
       },
