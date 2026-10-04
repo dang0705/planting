@@ -7,8 +7,16 @@ import { afterAll, beforeAll, beforeEach, expect, test } from 'vitest'
 import { findProjectRoot } from '../support/project-root.js'
 import { createMysql2ConnectionSource } from '../../src/foundation/database/mysql2-connection-source.js'
 import { createMysqlTransactionDriver } from '../../src/foundation/database/mysql-transaction-driver.js'
-import { runDatabaseTransaction } from '../../src/foundation/database/transaction-runner.js'
-import { createMysqlAuthenticatedEphemeralBindingRepository } from '../../src/user-plant/repository/mysql-authenticated-ephemeral-binding-repository.js'
+import {
+  runDatabaseTransaction,
+  DatabaseCommitResultUnknownError
+} from '../../src/foundation/database/transaction-runner.js'
+import {
+  createMysqlAuthenticatedEphemeralBindingRepository,
+  createMysqlAuthenticatedEphemeralBindingCommitUnknownReader
+} from '../../src/user-plant/repository/mysql-authenticated-ephemeral-binding-repository.js'
+import { createAuthenticatedEphemeralBindingApplicationService } from '../../src/user-plant/application/bind-authenticated-ephemeral-case.js'
+import type { UserPrincipalDto, UserRef } from '../../src/contracts/types.js'
 
 /** L3/unit_real_data；Expected来自本轮明确绑定生命周期与003/016约束。
  * 真实mysql2/事务/行锁/唯一绑定；users和plant_identities是FK桩，不证明Principal解析、HTTP或CloudBase。
@@ -276,4 +284,156 @@ test('最后插入绑定失败时命令、案例投影和版本整体回滚', as
   await expect(bind()).rejects.toThrow()
   expect(await caseSnapshot()).toEqual(originalCase)
   expect(await counts()).toEqual([{ plants: 3, commands: 0, bindings: 0 }])
+})
+
+/** 应用层Expected：仅可信统一主体构造归属；提交未知后只用新连接核对，不重执行绑定。
+ * 真实应用/事务/MySQL/只读读取器；替换的只有commit回包，不验证HTTP或微信验真。 */
+const principal: UserPrincipalDto = {
+  principalType: 'user',
+  user_id: 'usr_binding_owner01' as UserRef,
+  sessionVersion: 1,
+  authenticatedVia: 'wechat',
+  issuedAt: '1970-01-01T00:00:01.000Z',
+  expiresAt: '1970-01-01T00:00:10.000Z'
+}
+function appCommand() {
+  const { userRef: _userRef, ...command } = input()
+  return command
+}
+/** 追踪的两条真实连接来源：事务可注入提交回包丢失，只读来源禁止所有写入与锁定查询。 */
+function application(mode?: 'commit_lost' | 'rollback_lost') {
+  let transactionConnections = 0,
+    readonlyConnections = 0
+  const readonlyQueries: string[] = [],
+    readonlyWrites: string[] = []
+  const transactionSource: typeof source = {
+    getConnection: async () => {
+      transactionConnections++
+      const connection = await source.getConnection()
+      return {
+        ...connection,
+        commit: async () => {
+          if (mode === 'rollback_lost') {
+            await connection.rollback()
+          } else {
+            await connection.commit()
+          }
+          if (mode) {
+            throw new DatabaseCommitResultUnknownError('受控提交回包未知')
+          }
+        }
+      }
+    }
+  }
+  const readonlySource: typeof source = {
+    getConnection: async () => {
+      readonlyConnections++
+      const connection = await source.getConnection()
+      return {
+        ...connection,
+        query: async (sql, args) => {
+          readonlyQueries.push(sql)
+          if (!/^\s*SELECT\b/iu.test(sql) || /\bFOR\s+(UPDATE|SHARE)\b/iu.test(sql)) {
+            throw new Error('核对必须无锁只读')
+          }
+          return connection.query(sql, args)
+        },
+        execute: async sql => {
+          readonlyWrites.push(sql)
+          throw new Error('核对禁止写入')
+        }
+      }
+    }
+  }
+  const reader = createMysqlAuthenticatedEphemeralBindingCommitUnknownReader(readonlySource)
+  const service = createAuthenticatedEphemeralBindingApplicationService({
+    driver: createMysqlTransactionDriver(transactionSource, () => undefined),
+    repository,
+    commitUnknownReadOnlyRepository: reader
+  })
+  return {
+    service,
+    reader,
+    readonlyQueries,
+    readonlyWrites,
+    connectionCounts: () => ({ transactionConnections, readonlyConnections })
+  }
+}
+/** 核对前后真实三表读回必须相同，不以HTTP200或替身记录代替持久化证据。 */
+async function bindingSnapshot() {
+  const [cases] = await db.query('SELECT * FROM authenticated_ephemeral_plant_cases ORDER BY id')
+  const [commands] = await db.query(
+    'SELECT * FROM authenticated_ephemeral_promotion_commands ORDER BY id'
+  )
+  const [bindings] = await db.query(
+    'SELECT * FROM authenticated_ephemeral_case_bindings ORDER BY id'
+  )
+  return { cases, commands, bindings }
+}
+test('真实应用以可信Principal保存，原案例到期后仍重放同一绑定', async () => {
+  const app = application()
+  expect(await app.service({ principal, command: appCommand() })).toEqual({
+    status: 'bound',
+    promotionRef: 'prm_binding_command01',
+    userPlantRef: 'upl_binding_target01',
+    boundAtMs: 3000
+  })
+  expect(
+    await app.service({
+      principal,
+      command: { ...appCommand(), occurredAtMs: 6000, promotionRef: 'prm_binding_appretry01' }
+    })
+  ).toEqual({
+    status: 'bound',
+    promotionRef: 'prm_binding_command01',
+    userPlantRef: 'upl_binding_target01',
+    boundAtMs: 3000
+  })
+  expect(await counts()).toEqual([{ plants: 3, commands: 1, bindings: 1 }])
+  expect(app.connectionCounts()).toEqual({ transactionConnections: 2, readonlyConnections: 0 })
+})
+test('真实commit成功但回包未知，新连接无锁只读返回原收据且只写一次', async () => {
+  const app = application('commit_lost')
+  expect(await app.service({ principal, command: appCommand() })).toEqual({
+    status: 'bound',
+    promotionRef: 'prm_binding_command01',
+    userPlantRef: 'upl_binding_target01',
+    boundAtMs: 3000
+  })
+  expect(await counts()).toEqual([{ plants: 3, commands: 1, bindings: 1 }])
+  expect(app.connectionCounts()).toEqual({ transactionConnections: 1, readonlyConnections: 1 })
+  expect(app.readonlyQueries).toHaveLength(1)
+  expect(app.readonlyWrites).toEqual([])
+  const before = await bindingSnapshot()
+  expect(await app.reader.readCompleted({ ...input(), occurredAtMs: 6000 })).toEqual({
+    status: 'bound',
+    promotionRef: 'prm_binding_command01',
+    userPlantRef: 'upl_binding_target01',
+    boundAtMs: 3000
+  })
+  expect(await bindingSnapshot()).toEqual(before)
+  expect(app.readonlyQueries).toHaveLength(2)
+  expect(app.readonlyWrites).toEqual([])
+})
+test('真实rollback后回包未知，未读到收据返回unavailable且不重新绑定', async () => {
+  const app = application('rollback_lost')
+  expect(await app.service({ principal, command: appCommand() })).toEqual({ status: 'unavailable' })
+  expect(await caseSnapshot()).toEqual(originalCase)
+  expect(await counts()).toEqual([{ plants: 3, commands: 0, bindings: 0 }])
+  expect(app.connectionCounts()).toEqual({ transactionConnections: 1, readonlyConnections: 1 })
+  expect(app.readonlyQueries).toHaveLength(1)
+  expect(app.readonlyWrites).toEqual([])
+})
+test('只读核对跨用户及同键异目标均不冒充原绑定成功，三表完全不变', async () => {
+  await bind()
+  const before = await bindingSnapshot(),
+    app = application()
+  expect(await app.reader.readCompleted({ ...input(), userRef: 'usr_binding_owner02' })).toBeNull()
+  expect(
+    await app.reader.readCompleted({ ...input(), targetUserPlantRef: 'upl_binding_target02' })
+  ).toEqual({ status: 'idempotency_conflict' })
+  expect(await bindingSnapshot()).toEqual(before)
+  expect(app.connectionCounts()).toEqual({ transactionConnections: 0, readonlyConnections: 2 })
+  expect(app.readonlyQueries).toHaveLength(2)
+  expect(app.readonlyWrites).toEqual([])
 })

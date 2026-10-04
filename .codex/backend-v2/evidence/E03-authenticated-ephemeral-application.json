@@ -1,0 +1,40 @@
+{
+  "scope": "E03登录用户临时案例绑定已有植物：应用事务与提交未知只读核对",
+  "verifiedAt": "2026-10-04T21:25:03.755931+00:00",
+  "expectedSource": "cloudfunctions-v2/models/user-plant/authenticated-ephemeral-binding-application-contract.md",
+  "testFirst": {
+    "red": "/tmp/planting-e03-ephemeral-application-red.log",
+    "kind": "实现缺失RED，另有真实SQL受控突变RED"
+  },
+  "mutation": {
+    "redLog": "/tmp/planting-e03-ephemeral-application-reconcile-mutation-red.log",
+    "failedScenarios": 2,
+    "restoredSha256": "74c141d6d0b283940c2b437fa79a2a254cde6b80aa1734199858acf3b0dfc070",
+    "restoredGreenLog": "/tmp/planting-e03-ephemeral-application-mysql-restored.log"
+  },
+  "verification": {
+    "unit_fake": 20,
+    "unit_real_data_mysql": 13,
+    "rootUnitTests": 1666,
+    "rootFiles": 180,
+    "node22UnitTests": 1666,
+    "typecheckExit": 0,
+    "lintErrors": 0,
+    "lintWarnings": 2519,
+    "buildExit": 0,
+    "logPrefix": "/tmp/planting-e03-ephemeral-application-final-"
+  },
+  "boundaries": [
+    "MySQL事务、提交、回滚及新连接只读是真实路径；身份为可信Principal夹具",
+    "提交结果未知由故障注入产生；不代表真实网络异常或CloudBase运行验收",
+    "Node22构建通过；子进程npm使用Node24的警告不构成CloudBase证据"
+  ],
+  "remaining": [
+    "绑定HTTP",
+    "新建目标容量与临时认领",
+    "真实平台登录",
+    "完整环境档案合同",
+    "E03整体验收"
+  ],
+  "accepted": false
+}

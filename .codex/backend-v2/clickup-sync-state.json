@@ -58,19 +58,19 @@
       "readback": "Chrome HUMAN REQUIRED与五行评论1100440000090656已读回"
     },
     "z8v0kmr9mj": {
-      "version": 9,
+      "version": 10,
       "status": "codex running",
-      "note": "E03：登录临时案例→本人已有植物的三表事务已实现\n原期限/结果保留；同键超期重放、异目标及并发单赢家\n真实MySQL9项；到期守卫1项RED→逐字节恢复GREEN\n根与Node22全量1646/1646；类型/检查/构建通过\n绑定应用/HTTP和新建分支待接；完整档案承接方式待确认",
-      "commentId": "1100440000090925",
-      "commentFingerprint": "7ac0b03b7285a611fc302c9d254dbced07e7bc85dceec1c9de38eebf13647b0d",
-      "readback": "Chrome CODEX RUNNING及五行评论1100440000090925已读回"
+      "note": "E03：临时案例绑定应用已接真实事务及提交未知只读核对\n实际提交后回包未知恢复原结果；未提交无收据不重绑\n真实MySQL13项；旁路核对2项RED→逐字节恢复GREEN\n根与Node22全量1666/1666；类型/检查/构建通过\nHTTP/新建目标/真实登录未验收；环境档案承接待确认",
+      "commentId": "1100440000090927",
+      "commentFingerprint": "f78a32be18e376b89cad1d26c7545bd40ce2fede757fe33a8a80eb4de65a30b1",
+      "readback": "Chrome CODEX RUNNING及五行评论1100440000090927已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T21:17:10.498564+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T21:25:26.051502+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "3bbf21c68c651c70dc2524dbcf4671e7240738b5414387e35d9ac0a2457b77db",
-    "sourceRevision": 97,
-    "sourceUpdatedAt": "2026-10-04T21:16:42.073788+00:00"
+    "fingerprint": "669cff86c5a5459e6e01d38d61ff51ee1da6d4c45092c80037215c0dd4246c50",
+    "sourceRevision": 98,
+    "sourceUpdatedAt": "2026-10-04T21:25:03.755931+00:00"
   }
 }

@@ -1,5 +1,5 @@
-import type { MysqlTransactionContext } from '../../foundation/database/mysql-transaction-driver.js'
-import type { Mysql2QueryConnection } from '../../foundation/database/mysql2-connection-source.js'
+import type { MysqlConnectionPoolPort, MysqlTransactionContext } from '../../foundation/database/mysql-transaction-driver.js'
+import { withReadConnection, type Mysql2QueryConnection } from '../../foundation/database/mysql2-connection-source.js'
 import { calculateCanonicalJsonSha256 } from '../../foundation/json/canonical-json-sha256.js'
 
 /** 调用方已验真统一用户，明确选择已有植物的内部绑定命令。 */
@@ -34,7 +34,7 @@ function timestamp(value: unknown): number | null {
   return Number.isSafeInteger(ms) && Number.isFinite(new Date(ms).getTime()) ? ms : null
 }
 /** 第一个await之前锁定可信命令，拒绝额外字段和调用方自报请求摘要。 */
-function lock(input: unknown): Readonly<AuthenticatedEphemeralExistingBindingInput> {
+export function lockAuthenticatedEphemeralExistingBindingInput(input: unknown): Readonly<AuthenticatedEphemeralExistingBindingInput> {
   if (!input || typeof input !== 'object' || Array.isArray(input)) { throw new TypeError('绑定命令不合法') }
   const v = input as Record<string, unknown>
   if (Object.keys(v).length !== allowedKeys.length || Object.keys(v).some(k => !allowedKeys.includes(k))
@@ -58,7 +58,7 @@ export function createMysqlAuthenticatedEphemeralBindingRepository() {
   return {
     /** 统一用户锁→本人案例锁→原成功收据→新命令门→三表写入→确定读回。 */
     bindExisting: async (tx: MysqlTransactionContext<Mysql2QueryConnection>, input: unknown): Promise<AuthenticatedEphemeralBindingResult> => {
-      const command = lock(input)
+      const command = lockAuthenticatedEphemeralExistingBindingInput(input)
       if (tx.transactionContext !== true || !tx.connection) { throw new TypeError('绑定需要显式事务') }
       const c = tx.connection
       const users = await c.query(`SELECT CAST(id AS CHAR) AS user_id FROM users
@@ -122,6 +122,32 @@ export function createMysqlAuthenticatedEphemeralBindingRepository() {
       const rows = await read(), result = rows.length === 1 ? receipt(rows[0]!, hash) : null
       if (!result || result.status !== 'bound' || result.promotionRef !== command.promotionRef
         || result.userPlantRef !== command.targetUserPlantRef || result.boundAtMs !== command.occurredAtMs) { throw new Error('成功绑定关系读回不一致') }
+      return result
+    }
+  }
+}
+
+/** 提交未知只读核对端口；新连接单SELECT，没有锁、写入、重绑或TTL延长。 */
+export function createMysqlAuthenticatedEphemeralBindingCommitUnknownReader(source: MysqlConnectionPoolPort<Mysql2QueryConnection>) {
+  return {
+    /** 原归属、案例、键与请求摘要必须一致，缺完整三表收据返回null。 */
+    readCompleted: async (input: AuthenticatedEphemeralExistingBindingInput): Promise<AuthenticatedEphemeralBindingResult | null> => {
+      const command = lockAuthenticatedEphemeralExistingBindingInput(input)
+      const rows = await withReadConnection(source, c => c.query(`SELECT m.promotion_ref,m.request_hash,m.status,m.target_type,
+        p.public_user_plant_id,CAST(b.bound_at_ms AS CHAR) AS bound_at_ms
+        FROM users u JOIN authenticated_ephemeral_plant_cases e ON e.user_internal_id=u.id AND e._openid=''
+        JOIN authenticated_ephemeral_promotion_commands m ON m.user_internal_id=u.id AND m.authenticated_ephemeral_case_internal_id=e.id AND m._openid=''
+        JOIN authenticated_ephemeral_case_bindings b ON b.promotion_command_internal_id=m.id
+          AND b.authenticated_ephemeral_case_internal_id=e.id AND b.user_internal_id=u.id AND b.user_plant_internal_id=m.target_user_plant_internal_id AND b._openid=''
+        JOIN user_plants p ON p.id=b.user_plant_internal_id AND p.user_internal_id=u.id AND p._openid=''
+        WHERE BINARY u.public_user_id=BINARY ? AND u.status='active' AND u._openid=''
+          AND BINARY e.ephemeral_plant_case_ref=BINARY ? AND m.idempotency_key=?`,
+        [command.userRef, command.ephemeralCaseRef, command.idempotencyKeyHash]))
+      if (rows.length === 0) { return null }
+      if (rows.length !== 1) { return { status: 'unavailable' } }
+      const hash = calculateCanonicalJsonSha256({ ephemeralCaseRef: command.ephemeralCaseRef, targetType: 'existing_user_plant', targetUserPlantRef: command.targetUserPlantRef })
+      const result = receipt(rows[0]!, hash)
+      if (result.status === 'bound' && (result.userPlantRef !== command.targetUserPlantRef || result.boundAtMs > command.occurredAtMs)) { return { status: 'unavailable' } }
       return result
     }
   }
