@@ -1,0 +1,28 @@
+{
+  "ticket": "z8v0kmrg8a",
+  "milestone": "复用V1三类题包的内容制品及服务端成员校验",
+  "authority": "用户本会话明确限定V2首版复用V1黄叶、萎蔫和虫害题包；当前源码内容已固化及哈希核验",
+  "acceptedScope": "内容制品及纯成员校验，不是题包运行或整票验收",
+  "artifact": "cloudfunctions-v2/models/diagnosis/v1-reuse/manifest.json",
+  "verification": {
+    "newTests": 22,
+    "node22Diagnosis": 47,
+    "fullUnit": 1069,
+    "typecheck": "passed",
+    "build": "passed",
+    "lintErrors": 0,
+    "artifactRebuild": "--check相同内容"
+  },
+  "tdd": {
+    "path": "快速路径，测试先落盘；移除选项授权检查2项RED；恢复后全量GREEN",
+    "redLog": "/tmp/planting-e05-v1-membership-mutation.log"
+  },
+  "boundaries": [
+    "不是CMS已审核发布版本",
+    "不复用V1用户会话或诊断结果",
+    "不依赖旧模块运行，不扩充新题包",
+    "归属、复合证据、虫害选题、持久化及HTTP仍未验收"
+  ],
+  "h5Runtime": "8765无监听进程，未猜测启动目录；固定投影数据仍可同步",
+  "updatedAt": "2026-10-04T15:13:04.804986+00:00"
+}

@@ -42,19 +42,19 @@
       "readback": "Chrome CODEX RUNNING及五行评论1100440000090179已读回"
     },
     "z8v0kmrg8a": {
-      "version": 2,
+      "version": 3,
       "status": "codex running",
-      "note": "E05：精确来源/主张/修订号的只读Repository已实现\n保留许可、适用性与审核证据，不自动判定发布准入\n15项单元、6项隔离MySQL读回；固定修订突变3项RED\n恢复后全量1047/1047；Node22相关25项、类型构建通过\n许可适用性审核、题包读取、CMS发布及HTTP仍未验收",
-      "commentId": "1100440000090207",
-      "commentFingerprint": "346ec1ef13c8c94081b26c7d5e36f835f92dbc0270425be77a7c56a07c88315b",
-      "readback": "Chrome CODEX RUNNING及五行评论1100440000090207已读回"
+      "note": "E05：首版只复用V1黄叶、萎蔫和虫害题包\n真实内容固化：黄叶4题、萎蔫6题、八类虫害14条素材\n服务端快照授权成员；复合题保留，客户端题包不授权\n新增22项；选项守卫突变2项RED→恢复，全量1069/1069\n题包生成、复合证据、CMS发布及真实HTTP仍未验收",
+      "commentId": "1100440000090220",
+      "commentFingerprint": "4bf5eb154e7c45e1485d72889cab89e192818bb142e31006a7bbc95af59160f8",
+      "readback": "Chrome CODEX RUNNING及五行评论1100440000090220已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T15:04:10.107127+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T15:13:31.702668+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "8f3ca0828f3837e5b95d05130a44394ba922bbe1b97000faaebc47b163909bd1",
-    "sourceRevision": 49,
-    "sourceUpdatedAt": "2026-10-04T15:03:48.425319+00:00"
+    "fingerprint": "0988c92ebbbec6229b36cb38750a735e79c2eb04246f385d6c191ffd9180fa5e",
+    "sourceRevision": 50,
+    "sourceUpdatedAt": "2026-10-04T15:13:04.804986+00:00"
   }
 }

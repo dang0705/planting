@@ -1,0 +1,43 @@
+{
+  "status": "source_content_snapshot_not_published",
+  "scope": [
+    "yellow_leaf",
+    "wilting_droop",
+    "specific_pest_visual"
+  ],
+  "sources": [
+    {
+      "path": "cloudfunctions/diagnose-http/app/start-question-package-runtime-data.js",
+      "sha256": "3652da59fc52e068518d9af7ccd78fa0c778fabb3747e643f6dbb426fcedac5c"
+    },
+    {
+      "path": "cloudfunctions/diagnose-http/app/pest-question-package.js",
+      "sha256": "fde80c3660942575005ec52556cca19995babd8d459d24d19b19f9757632c840"
+    },
+    {
+      "path": "cloudfunctions/diagnose-http/app/package-answer-ownership-runtime.js",
+      "sha256": "1887f676f7c0b0460a05df8ec7105f713956094fd1142be45a512138de264abb"
+    },
+    {
+      "path": "cloudfunctions/diagnose-http/app/question-package-response.js",
+      "sha256": "c631cf0f0f2850949f852b88b4afdbdec8d5ba212fe812465ab0c14e0a25c0fe"
+    },
+    {
+      "path": "cloudfunctions/diagnose-http/app/wilting-droop-question-package.js",
+      "sha256": "4d5ac361fdc0d911ebf31aa35fa3088becdb1eca16098974260cea6285f0e877"
+    }
+  ],
+  "artifactSha256": "40385731fe0ed7d20c9331b1be6aee10c13ebb900350a4576c14edd0ea07107f",
+  "questionCounts": {
+    "yellow_leaf": 4,
+    "wilting_droop": 6
+  },
+  "pestTierQuestionLimits": {
+    "low": 3,
+    "medium": 2,
+    "high": 1,
+    "very_likely": 1,
+    "direct": 0
+  },
+  "boundary": "本制品保留当前V1题目内容；不证明CMS审核、发布、评分规则或V2 HTTP已实现"
+}
