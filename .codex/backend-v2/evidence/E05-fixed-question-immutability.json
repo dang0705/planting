@@ -1,0 +1,48 @@
+{
+  "ticket": "z8v0kmr974",
+  "scope": "固定题包发布数据库不可改写保护，020顺序迁移",
+  "verifiedAt": "2026-10-04T16:21:53.223593+00:00",
+  "truthSource": "cloudfunctions-v2/models/diagnosis/fixed-question-release-immutability-contract.md",
+  "tests": {
+    "backendFull": 1179,
+    "realMysql": 39,
+    "newRealMysql": 17,
+    "boundary": "MySQL8.4真实触发器与既有业务策略、会话制品；非完整迁移链、CMS审核或生产执行"
+  },
+  "tdd": {
+    "testFirst": true,
+    "path": "classic",
+    "redFailed": 13,
+    "redLog": "/tmp/planting-e05-fixed-immutable-red.log",
+    "greenLog": "/tmp/planting-e05-fixed-immutable-mysql.log",
+    "fullGreen": "/tmp/planting-e05-fixed-immutable-full.log"
+  },
+  "checks": {
+    "typecheck": "passed",
+    "lintErrors": 0,
+    "lintWarnings": 1484,
+    "build": "passed"
+  },
+  "verified": [
+    "已审核发布的正文和摘要不能共同改写",
+    "内部键、引用、范围、版本及时间元数据禁止改写",
+    "字符串按字节比较，引用大小写变化不能绕过",
+    "删除由触发器错误1644拒绝，不能拿外键失败代替证明",
+    "草稿可编辑及删除",
+    "激活、退役及重新激活可进行，不能降回草稿",
+    "其他领域不被冻结，已验证其他策略不能改范围伪装固定题包",
+    "迁移前后已有发布内容与行数完全一致"
+  ],
+  "notAccepted": [
+    "正式题包审核及active激活",
+    "创建共享幂等与公开题包DTO/HTTP",
+    "临时案例路径、动态虫害运行",
+    "生产迁移及部署",
+    "完整诊断结果、行动、Agent及奖励"
+  ],
+  "migration": {
+    "file": "020_fixed_question_release_immutability.sql",
+    "scope": "只增加两个触发器；007不改写；无数据搬运、删除或生产执行",
+    "rollback": "仅未切换且获准的迁移环境可删除这两个触发器；业务版本回滚切换active指针"
+  }
+}

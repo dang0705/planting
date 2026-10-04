@@ -187,6 +187,53 @@ describe('真实固定题包发布→长期会话快照',()=>{
  })
 })
 
+describe('固定题包发布的真实数据库不可改写保护',()=>{
+ test('020迁移保留已有发布内容与行数',async()=>{
+  const [before]=await db.query('SELECT release_ref,content_sha256,policy_json,status FROM business_policy_releases ORDER BY id')
+  const migration=readFileSync(join(root,'docs/backend-v2/schema/020_fixed_question_release_immutability.sql'),'utf8')
+  const statements=migration.split('DELIMITER $$')[1]!.split('DELIMITER ;')[0]!.split('$$').map(s=>s.trim()).filter(Boolean)
+  for(const statement of statements){await db.query(statement)}
+  const [after]=await db.query('SELECT release_ref,content_sha256,policy_json,status FROM business_policy_releases ORDER BY id')
+  expect(after).toEqual(before)
+ })
+ async function guardRelease(status='active'){
+  const content=structuredClone(fixedPolicyContent);content.sourceRef=`fixture-guard/${status}`
+  const ref=`bpr_guard_${status}123`;await seedFixedRelease(ref,`guard-${status}`,content)
+  if(status!=='active'){await db.execute('UPDATE business_policy_releases SET status=? WHERE release_ref=?',[status,ref])}
+  return ref
+ }
+ test('审核后正文与摘要不能一起改写，发布不能删除',async()=>{
+  const ref=await guardRelease()
+  const changed={...fixedPolicyContent,sourceRef:'fixture-tampered'}
+  await expect(db.execute('UPDATE business_policy_releases SET policy_json=CAST(? AS JSON),content_sha256=? WHERE release_ref=?',[JSON.stringify(changed),calculateCanonicalJsonSha256(changed),ref])).rejects.toThrow()
+  await expect(db.execute('DELETE FROM business_policy_releases WHERE release_ref=?',[ref])).rejects.toMatchObject({errno:1644})
+ })
+ test.each([['id',900009],['content_sha256','c'.repeat(64)],['release_ref','bpr_guard_ACTIVE123'],['domain_code','care'],['policy_code','another_policy'],['schema_version','v2'],['release_version','guard-v2'],['_openid','some-platform'],['effective_at_ms',2000],['expires_at_ms',4000],['verified_at_ms',1000],['created_at_ms',900]])('保护%s不被篡改',async(column,value)=>{
+  await expect(db.execute(`UPDATE business_policy_releases SET ${column}=? WHERE release_ref=?`,[value,'bpr_guard_active123'])).rejects.toMatchObject({errno:1644})
+ })
+ test('退役可重新激活，但不能降级回草稿后篡改',async()=>{
+  await db.execute("UPDATE business_policy_releases SET status='retired',updated_at_ms=2000 WHERE release_ref='bpr_guard_active123'")
+  await expect(db.execute("UPDATE business_policy_releases SET status='draft' WHERE release_ref='bpr_guard_active123'")).rejects.toThrow()
+  await db.execute("UPDATE business_policy_releases SET status='active',updated_at_ms=2500 WHERE release_ref='bpr_guard_active123'")
+  const [rows]=await db.execute("SELECT status FROM business_policy_releases WHERE release_ref='bpr_guard_active123'");expect(rows).toEqual([{status:'active'}])
+ })
+ test('verified版本同样受保护，可激活不可更改内容',async()=>{
+  const content={...fixedPolicyContent,sourceRef:'fixture-verified'};const sha=calculateCanonicalJsonSha256(content)
+  await db.execute("INSERT INTO business_policy_releases (release_ref,domain_code,policy_code,schema_version,release_version,content_sha256,policy_json,status,effective_at_ms,verified_at_ms,created_at_ms,updated_at_ms) VALUES ('bpr_guard_verified123','diagnosis','fixed_question_packages','diagnosis-fixed-question-packages/v1','guard-verified',?,CAST(? AS JSON),'verified',1000,900,800,1000)",[sha,JSON.stringify(content)])
+  await expect(db.execute("UPDATE business_policy_releases SET policy_json=JSON_SET(policy_json,'$.sourceRef','changed') WHERE release_ref='bpr_guard_verified123'")).rejects.toThrow()
+  await db.execute("UPDATE business_policy_releases SET status='active' WHERE release_ref='bpr_guard_verified123'")
+  await expect(db.execute("DELETE FROM business_policy_releases WHERE release_ref='bpr_guard_verified123'")).rejects.toMatchObject({errno:1644})
+ })
+ test('草稿可编辑和删除，其他领域策略不受本迁移冻结',async()=>{
+  for(const [ref,domain,policy,status] of [['bpr_draft123','diagnosis','fixed_question_packages','draft'],['bpr_other123','care','fixture_other','verified']] as const){
+   const content={...fixedPolicyContent,sourceRef:ref};await db.execute('INSERT INTO business_policy_releases (release_ref,domain_code,policy_code,schema_version,release_version,content_sha256,policy_json,status,effective_at_ms,verified_at_ms,created_at_ms,updated_at_ms) VALUES (?,?,?,\'fixture-v1\',?,?,CAST(? AS JSON),?,1000,900,800,1000)',[ref,domain,policy,ref,calculateCanonicalJsonSha256(content),JSON.stringify(content),status])
+   const [changed]=await db.execute('UPDATE business_policy_releases SET release_version=? WHERE release_ref=?',['edited',ref]);expect((changed as {affectedRows:number}).affectedRows).toBe(1)
+  }
+  await expect(db.execute("UPDATE business_policy_releases SET domain_code='diagnosis',policy_code='fixed_question_packages' WHERE release_ref='bpr_other123'")).rejects.toMatchObject({errno:1644})
+  const [deleted]=await db.execute("DELETE FROM business_policy_releases WHERE release_ref='bpr_draft123'");expect((deleted as {affectedRows:number}).affectedRows).toBe(1)
+ })
+})
+
 /** 真实MySQL：原归属会话→锁定题包→整包证据→整包SQL追加→读回；不验收HTTP/CMS或完整迁移链。 */
 function answerInput(diagnosisRef:string) {
   const questions=catalog.fixed.yellow_leaf as {questionKey:string;options:{optionKey:string}[]}[]

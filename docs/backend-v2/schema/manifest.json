@@ -1,6 +1,6 @@
 {
   "schemaVersion": "backend-v2-schema/v1",
-  "generatedAt": "2026-10-04T15:20:54.650503+00:00",
+  "generatedAt": "2026-10-05T00:17:59.329977+08:00",
   "database": "CloudBase MySQL",
   "timeStorage": "UTC epoch milliseconds",
   "files": [
@@ -111,6 +111,12 @@
       "owner": "diagnosis",
       "file": "019_diagnosis_question_package_snapshots.sql",
       "sha256": "fab0486adf13170a1b5c6ce283b21b57fabab58e4c2371a62fbaf8029eb37fbc"
+    },
+    {
+      "order": 19,
+      "owner": "diagnosis",
+      "file": "020_fixed_question_release_immutability.sql",
+      "sha256": "999b18d2efb578534028fe5c03d044a27ffa40c218512586c6c7f0e42ac7d666"
     }
   ]
 }

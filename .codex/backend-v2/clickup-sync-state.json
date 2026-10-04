@@ -50,19 +50,19 @@
       "readback": "Chrome CODEX RUNNING及五行评论1100440000090220已读回"
     },
     "z8v0kmr974": {
-      "version": 8,
+      "version": 9,
       "status": "codex running",
-      "note": "E05已接固定题包活动发布读取→长期会话创建→原事务读回\n真实MySQL22项通过：黄叶4题、萎蔫6题及版本切换保留历史\n缺发布或损坏指针不创建，不自动启用本地题目文件\n新增21项；摘要突变与正文读回RED→恢复，全量1179/1179\n正式审核/激活、发布不可变约束及创建HTTP仍待验收",
-      "commentId": "1100440000090318",
-      "commentFingerprint": "e1126674917272bf90d5b4e4e9cfd0319037aaefe01a469373e6fadaa7da778a",
-      "readback": "Chrome CODEX RUNNING及五行评论1100440000090318已读回"
+      "note": "E05新增020迁移：审核后固定题包发布不可改写或删除\n真实MySQL39项通过；保护字段、退役回滚、草稿及其他域验证\n迁移前后发布内容与行数一致；生产无DDL或数据操作\n经典13项RED→真实SQL恢复，全量1179/1179\n下一步创建共享幂等与题包HTTP；正式审核激活仍待验收",
+      "commentId": "1100440000090327",
+      "commentFingerprint": "de20cc75a16b458d2c9a1b2e152d2e6065ded1be78b2c5d6b14535222059074b",
+      "readback": "Chrome CODEX RUNNING及五行评论1100440000090327已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T16:14:42.494617+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T16:22:53.726147+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "40610a6be4975bc234f82ff7d4b6dcb5844779aba1b0cb6be52e2b1865d251ec",
-    "sourceRevision": 58,
-    "sourceUpdatedAt": "2026-10-04T16:14:12.458500+00:00"
+    "fingerprint": "a221b59e213d5ad1d05a7962b0f763c9f038735e2fac3a4bb6b940994b6865b6",
+    "sourceRevision": 59,
+    "sourceUpdatedAt": "2026-10-04T16:21:53.223593+00:00"
   }
 }
