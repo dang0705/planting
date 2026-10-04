@@ -58,19 +58,19 @@
       "readback": "Chrome HUMAN REQUIRED与五行评论1100440000090656已读回"
     },
     "z8v0kmr9mj": {
-      "version": 16,
+      "version": 17,
       "status": "codex running",
-      "note": "E03：游客认领成功收据只读核对已实现\n真实MySQL38项；归属、关系一致及提交未知核对通过\n归属旁路1项、规范摘要2项RED→逐字节恢复GREEN\n根与Node22全量1810/1810；类型/检查/构建通过\n租约时长待确认；完整认领/真实身份与HTTP未验收",
-      "commentId": "1100440000091127",
-      "commentFingerprint": "443ecf0483c7d981b554f49520970be180220421db897f61b6eb678dcb927303",
-      "readback": "Chrome CODEX RUNNING及五行评论1100440000091127已读回"
+      "note": "E03：游客案例绑定已有植物的原子完成已实现\n真实MySQL新增16项、联合63项；四写失败均整体回滚\n错误租约持有者旁路1项RED→逐字节恢复GREEN\n根与Node22全量1821/1821；类型/检查/构建通过\n租约取得、新建目标、真实身份与HTTP仍未验收",
+      "commentId": "1100440000091141",
+      "commentFingerprint": "e7c11d590e1774bb54979edda2d345664dc98cbe2a076cfb48cdce8d300498dc",
+      "readback": "Chrome CODEX RUNNING及五行评论1100440000091141已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T22:27:53.821192+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T22:36:16.140459+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "07f7194d624e6279fed35ca50eee603be22beec2921cc781fc0a82447e6bfd04",
-    "sourceRevision": 104,
-    "sourceUpdatedAt": "2026-10-04T22:27:31.720333+00:00"
+    "fingerprint": "ea412ca30f568516508b200a19bf7ce19178ce7f7a9fcfc4ef3bb29a87d60e6a",
+    "sourceRevision": 105,
+    "sourceUpdatedAt": "2026-10-04T22:35:57.112287+00:00"
   }
 }

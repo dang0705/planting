@@ -1,0 +1,27 @@
+{
+  "ticketId": "z8v0kmr9mj",
+  "verifiedAt": "2026-10-04T22:30:46.810384+00:00",
+  "task": "已有目标认领原子完成",
+  "openViking": {
+    "connected": true,
+    "targetUri": "viking://resources/projects/planting",
+    "query": "guest-session-claim processing lease 成功认领 原子事务",
+    "layersRequested": [
+      0,
+      1,
+      2
+    ],
+    "result": "定向查询超时，无所需L0/L1/L2上下文返回；未重启服务或全库扫描"
+  },
+  "missing": [
+    "已持有租约后原子完成的事务顺序",
+    "完成后证明轮换处理",
+    "跨域派生归属边界"
+  ],
+  "readAdmission": [
+    "contracts/guest-session-claim.md仅事务原子性、processing lease、成功后清除上一版证明、跨域可见性相关行",
+    "architecture/configuration-variable-catalog.json仅user-plant.guest_claim匹配项"
+  ],
+  "configurationDecision": "单次认领/禁止追溯积分和直接事实计划为hard_rule；租约时长仍缺确认，不取得或延长租约",
+  "scope": "只完成已有目标processing命令；复用原003夹具和受控证明端口，禁止扩读架构包"
+}

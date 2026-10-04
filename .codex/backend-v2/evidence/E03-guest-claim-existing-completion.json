@@ -1,0 +1,52 @@
+{
+  "scope": "游客案例绑定已有植物的原子完成",
+  "ticketId": "z8v0kmr9mj",
+  "contextEvidence": ".codex/backend-v2/evidence/E03-guest-claim-completion-context.json",
+  "expectedSource": "cloudfunctions-v2/models/user-plant/guest-claim-existing-completion-contract.md",
+  "configurationDecision": "不取得或延长租约，不定义时长；消费服务端已有processing租约，不新增默认、配置或HTTP",
+  "testFirst": {
+    "unitExpectedBeforeProduct": true,
+    "mysqlExpectedBeforeProduct": true,
+    "missingModuleIsBusinessRed": false,
+    "unitGreen": "/tmp/planting-e03-guest-completion-unit.log"
+  },
+  "boundaries": [
+    "已有目标完成在调用方真实事务内写案例owner、命令completed、唯一成功事实及清除上一版证明",
+    "成功收据必须外层提交后才能披露，Repository不自行提交或回滚",
+    "实际MySQL复用冻结四表DDL及明确缩减users/user_plants外键夹具；不等于完整聚合迁移",
+    "证明核验使用真实Proof Repository，但身份Provider为明确替身",
+    "不改临时模型结果，不创建行为/计划/积分，不恢复归档植物",
+    "没有真实租约取得、公开HTTP、生产DDL、部署或前端改动"
+  ],
+  "remaining": [
+    "确认并登记处理租约时长及发布策略",
+    "原命令租约取得/超时接管和可重试失败",
+    "新建植物目标与成功事实同事务完成",
+    "实际认领应用编排、提交未知只读核对与受控对象类别",
+    "真实身份/匿名Provider和HTTP验收"
+  ],
+  "accepted": false,
+  "mutation": {
+    "leaseOwnerBypassRed": "/tmp/planting-e03-guest-completion-lease-mutation-red.log",
+    "failedScenarios": 1,
+    "actualFailure": "错误租约持有者错误取得完整completed结果",
+    "byteRestored": true,
+    "restoredSha256BeforeComment": "1ed671d237b3611de3d2babb749600ff267c6608ab26135267625482bf511602"
+  },
+  "verifiedAt": "2026-10-04T22:35:57.112287+00:00",
+  "verification": {
+    "unitFake": 11,
+    "completionRealMysql": 16,
+    "adjacentRealMysqlTotal": 63,
+    "rootFiles": 190,
+    "rootUnitTests": 1821,
+    "node22UnitTests": 1821,
+    "typecheckExit": 0,
+    "lintWarnings": 2885,
+    "lintErrors": 0,
+    "buildExit": 0,
+    "repositorySha256": "14a9f5cf141cf0bec021e73ca4ae6951879930b970e2b75d91e8e60564f8500c",
+    "finalLogPrefix": "/tmp/planting-e03-guest-completion-final-"
+  },
+  "buildBoundary": "Node22构建通过；子npmNode24产生25次引擎警告，不证明CloudBase实际运行"
+}
