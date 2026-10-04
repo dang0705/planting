@@ -1,0 +1,51 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "scope": "地点与同刻瞬时辐射→太阳方向→窗面投影与目标点射线求交",
+  "verifiedAt": "2026-10-04T12:14:37.492706+00:00",
+  "classification": "L3 unit_fake；无真实Provider、MySQL、HTTP或生产验收",
+  "expectedSources": [
+    "cloudfunctions-v2/models/care/plant-direct-composition-contract.md",
+    "cloudfunctions-v2/models/care/direct-reach-contract.md",
+    "独立NOAA正午数值基准"
+  ],
+  "testFirst": {
+    "path": "快速路径，19项独立测试先落盘→实现→受控距离突变RED→完整恢复GREEN",
+    "mutation": "临时把植物距离固定0.5米，2米目标误报reachable，测试失败；已恢复输入真实距离"
+  },
+  "results": {
+    "newTests": 19,
+    "careTests": 190,
+    "careFiles": 11,
+    "fullTests": 770,
+    "fullFiles": 110,
+    "skipped": 0,
+    "typecheck": "passed",
+    "build": "passed",
+    "lintErrors": 0,
+    "lintWarnings": 750,
+    "node22": {
+      "version": "22.23.3",
+      "independentChecks": 6,
+      "fullVitestOnNode22": false
+    }
+  },
+  "logs": [
+    "/tmp/planting-plant-direct-mutation-red.log",
+    "/tmp/planting-plant-direct-green.log",
+    "/tmp/planting-plant-direct-full-green.log",
+    "/tmp/planting-plant-direct-typecheck.log",
+    "/tmp/planting-plant-direct-build.log"
+  ],
+  "remaining": [
+    "瞬时植物点判断尚未接到时段均值回放；完整时段可达性仍需界限证明",
+    "无玻璃、散射或叶片参考平面上的强度输出",
+    "近似太阳模型精度与正式养护策略未验收",
+    "DMN规则行为及Modeler往返未验收"
+  ],
+  "sideEffects": "无网络、数据库、环境事实、计划或建议写入",
+  "sourceHashes": {
+    "cloudfunctions-v2/src/care/application/evaluate-plant-direct-at-location.ts": "04806376a8ddc4f7fc90d5edbc13ea2042f2a0c50157c06e7beaeb3434ddc6be",
+    "cloudfunctions-v2/src/care/light/trace-direct-through-window.ts": "cfce87eb8140caba7c7a01286ca6d0dbf3faa6660490a89463646a29937aef37"
+  }
+}

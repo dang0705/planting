@@ -69,19 +69,11 @@ const halfTurnDeg = 180
 const quarterTurnDeg = 90
 
 /** 验证几何形状与空间定义，不为缺失值填入默认窗口或植物位置。 */
-function validateGeometry(input: DirectReachInput): void {
-  const { sun, plant, apertures } = input
-  if (!Number.isSafeInteger(sun.atMs)) {
-    throw new RangeError('太阳时刻非法')
-  }
-  if (
-    !Number.isFinite(sun.elevationDeg) ||
-    sun.elevationDeg < -quarterTurnDeg ||
-    sun.elevationDeg > quarterTurnDeg ||
-    ![sun.azimuthDeg, input.windowAzimuthDeg].every(
-      value => Number.isFinite(value) && value >= 0 && value < fullTurnDeg
-    )
-  ) {
+export function validateDirectReachGeometry(
+  input: Pick<DirectReachInput, 'plant' | 'apertures' | 'windowAzimuthDeg'>
+): void {
+  const { plant, apertures } = input
+  if (!Number.isFinite(input.windowAzimuthDeg) || input.windowAzimuthDeg < 0 || input.windowAzimuthDeg >= fullTurnDeg) {
     throw new RangeError('太阳或窗口方向非法')
   }
   if (
@@ -114,7 +106,15 @@ function validateGeometry(input: DirectReachInput): void {
  * 本用例不计算玻璃、遮挡、叶片角度或辐照度，不写任何事实或建议。
  */
 export function traceDirectThroughWindow(input: DirectReachInput): DirectReachResult {
-  validateGeometry(input)
+  if (!Number.isSafeInteger(input.sun.atMs)) {
+    throw new RangeError('太阳时刻非法')
+  }
+  if (!Number.isFinite(input.sun.elevationDeg) || input.sun.elevationDeg < -quarterTurnDeg
+    || input.sun.elevationDeg > quarterTurnDeg || !Number.isFinite(input.sun.azimuthDeg)
+    || input.sun.azimuthDeg < 0 || input.sun.azimuthDeg >= fullTurnDeg) {
+    throw new RangeError('太阳或窗口方向非法')
+  }
+  validateDirectReachGeometry(input)
   const { sun, plant } = input
   const base = { atMs: sun.atMs, intersection: null, apertureReferences: [] }
   if (sun.elevationDeg <= 0) {

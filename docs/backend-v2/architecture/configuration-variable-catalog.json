@@ -4766,11 +4766,13 @@
         "cloudfunctions-v2/models/care/direct-reach-contract.md",
         "cloudfunctions-v2/models/care/window-mean-direct-contract.md",
         "cloudfunctions-v2/models/care/solar-direction-contract.md",
-        "cloudfunctions-v2/models/care/solar-interval-bound-contract.md"
+        "cloudfunctions-v2/models/care/solar-interval-bound-contract.md",
+        "cloudfunctions-v2/models/care/plant-direct-composition-contract.md"
       ],
       "consumers": [
         "care 离线窗面直射计算",
-        "care 离线直射可达性"
+        "care 离线直射可达性",
+        "care 同轮窗面投影与植物点瞬时可达性组合"
       ],
       "changePolicy": "物理与坐标定义不可运营配置；输入语义变化须冻结新合同",
       "fallback": "DNI 缺失保持 null；时间或坐标错误拒绝",

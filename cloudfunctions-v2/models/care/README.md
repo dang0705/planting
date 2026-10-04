@@ -38,3 +38,5 @@ python3 scripts/backend-v2/compose-care-models.py
 `src/care/application/project-window-direct-at-location.ts` 已接通显式地点与UTC时刻→NOAA近似太阳方向→同刻瞬时窗面投影；来源与边界见 `solar-direction-contract.md`。均值辐射拒绝进入此入口；天顶/天底方位未定义时保留特定状态。此增量不提供完整区间几何界限、现场精度保证或正式发布资格。
 
 `src/care/application/replay-solar-window-radiation.ts` 已接通真实辐射制品→UTC时段归一化→完整时段太阳模型界限→窗面直射均值区间，数学依据见 `solar-interval-bound-contract.md`。界限由公式导数上界确定，跨UTC年分段，并处理可能穿过日出、日落的时段；不是把中点或采样极值当作完整时段。地点与窗面在空序列时仍须合法，合法空序列只保留无覆盖。此路径明确限定为近似模型自身的界限，不覆盖真实太阳模型误差或浮点运算认证；尚不含玻璃、植物位置传播、散射及正式策略发布。
+
+`src/care/application/evaluate-plant-direct-at-location.ts` 复用同轮近似太阳方向、瞬时窗面投影与植物点射线求交，见 `plant-direct-composition-contract.md`。同一窗面有直射不代表任意距窗植物都可达；连窗墙体、窗框边界、非竖窗及未定义方位分别处理。窗面辐射保留外侧参考平面，结果不冒充植物叶面辐照度；本瞬时组合尚未接到小时均值回放，不证明全天可达性或生产发布。
