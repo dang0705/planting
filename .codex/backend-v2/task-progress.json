@@ -1,19 +1,19 @@
 {
-  "revision": 60,
+  "revision": 61,
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
-  "updatedAt": "2026-10-04T16:32:53.932484+00:00",
+  "updatedAt": "2026-10-04T16:43:04.027260+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "固定题包已审核发布数据库保护",
+    "goal": "V1虫害动态选题到所选快照与答案保存",
     "assumptions": [
-      "只作用于diagnosis/fixed_question_packages",
-      "007既有迁移保持不变"
+      "只复用八类十四条素材",
+      "已批准题数上限不等于审核发布、视觉分档或自动直判"
     ],
-    "minimumVerification": "独立Expected经典RED、真实触发器及迁移内容/行数核对、全量GREEN",
-    "continueWhen": "草稿与正常状态切换可用，不改变其他域语义",
-    "failWhen": "改写正文和摘要绕过保护、用外键错误冒充触发器或扩大到生产",
-    "rollback": "在未切换且获准环境移除本次两个触发器；不得称回退后保护仍验收",
+    "minimumVerification": "独立题数/证据Expected、突变RED→恢复、真实快照和答案SQL、全量GREEN",
+    "continueWhen": "所选快照与限题来源明确且无默认值，进入受控发布与动态HTTP",
+    "failWhen": "客户端授权候选/证据、自动启用旧阈值或零题伪造结论",
+    "rollback": "移除未激活的独立选题消费，不修改历史持久化快照或旧题包来源",
     "timeLimit": "30分钟检查点"
   },
   "tasks": [
@@ -200,10 +200,10 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 10,
+      "version": 11,
       "priority": "normal",
       "status": "codex running",
-      "stage": "固定题包创建HTTP与答案SQL纵向验证",
+      "stage": "V1虫害动态筛选、已批准限题与快照作答验证",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
@@ -214,19 +214,20 @@
         ".codex/backend-v2/evidence/E05-answer-http.json",
         ".codex/backend-v2/evidence/E05-fixed-question-release.json",
         ".codex/backend-v2/evidence/E05-fixed-question-immutability.json",
-        ".codex/backend-v2/evidence/E05-create-session-http.json"
+        ".codex/backend-v2/evidence/E05-create-session-http.json",
+        ".codex/backend-v2/evidence/E05-dynamic-pest-selection.json"
       ],
       "summary": [
-        "E05：V1黄叶/萎蔫创建HTTP→真实会话SQL→四题答案读回",
-        "共享幂等同事务；并发只创建一次，改发布仍重放首次题目",
-        "公开题目白名单；跨用户拒绝、失败回滚及提交丢失核对",
-        "重放突变RED→恢复；全量1197/1197，MySQL42项通过",
-        "正式审核激活、临时案例、动态虫害及诊断结果仍待验收"
+        "E05虫害复用八类十四条素材，按候选与已有证据动态筛选",
+        "用户批准限题3/2/1/1/0；无档位拒绝，零题不自动直判",
+        "跨候选所选两题→真实快照SQL→整包作答/重放通过",
+        "证据守卫突变4项RED→恢复；全量1220/1220，MySQL43项",
+        "动态HTTP、安全提示公开投影、审核发布及视觉准入待验收"
       ],
       "blockingReason": null,
-      "nextAction": "接V1虫害动态选题创建和复合证据，保持无新增题包范围",
-      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090341已读回",
-      "milestoneCommit": "d89489d7"
+      "nextAction": "接动态虫害题包受控发布读取、视觉证据准入及安全提示白名单，再接创建HTTP",
+      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090357已读回",
+      "milestoneCommit": "fbd4067f"
     }
   ],
   "queue": [
@@ -330,7 +331,7 @@
       ]
     }
   ],
-  "nextAction": "接V1虫害动态选题创建和复合证据，保持无新增题包范围",
+  "nextAction": "接动态虫害题包受控发布读取、视觉证据准入及安全提示白名单，再接创建HTTP",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -721,5 +722,20 @@
       "api/manifest.json仅对应制品哈希"
     ],
     "scope": "只补创建与公开题包，禁止读取其他路由或架构"
+  },
+  "diagnosisPestReadAdmission": {
+    "layers": {
+      "L0": "本轮backend-v2 abstract只有用途导航，无动态题包策略字段",
+      "L1": "contracts overview六条导航无诊断；context-tree/diagnosis overview不存在",
+      "L2": "定向grep返回first-release-scope L60仅确认固定/动态题包与审核原则，无虫害限题配置或内容Schema"
+    },
+    "missing": "虫害动态选题配置的准确状态、owner与阈值来源；公共题目安全字段合同；配置目录两文件摘要",
+    "localAllowed": [
+      "architecture/configuration-variable-catalog.md仅diagnosis虫害/题包条目",
+      "architecture/configuration-variable-catalog.json仅diagnosis虫害/题包条目",
+      "api/route-registry.json仅createDiagnosisSession候选入口与视觉上传操作",
+      "architecture/manifest.json仅配置目录两文件摘要"
+    ],
+    "scope": "只核验本次动态虫害选题，不读其他领域或完整架构"
   }
 }

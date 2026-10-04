@@ -1,0 +1,57 @@
+{
+  "step": "E05",
+  "ticketId": "z8v0kmr974",
+  "scope": "复用V1八类十四条虫害题目，只新增服务端筛选和已批准的限题消费；不采纳旧业务记录或置信度默认值",
+  "validatedAt": "2026-10-04T16:43:04.027260+00:00",
+  "parameterConfirmation": {
+    "source": "本会话用户明确批准保留这组题数上限",
+    "approved": {
+      "low": 3,
+      "medium": 2,
+      "high": 1,
+      "very_likely": 1,
+      "direct": 0
+    },
+    "notApproved": [
+      "旧置信度阈值",
+      "自动直判",
+      "发布上线"
+    ]
+  },
+  "checks": {
+    "independentUnit": 23,
+    "backendFullVitest": {
+      "files": 145,
+      "passed": 1220
+    },
+    "node22Diagnosis": 198,
+    "realMysql": {
+      "passed": 43,
+      "new": 1,
+      "path": "真实所选两题→不可变快照Repository→同事务读回→答案Repository→整包重放",
+      "notCovered": "视觉Provider、正式发布、动态HTTP"
+    },
+    "typecheck": "passed",
+    "lint": {
+      "errors": 0,
+      "warnings": 1573
+    },
+    "build": "passed"
+  },
+  "tdd": {
+    "path": "筛选Expected先落盘；限题产品撤回后独立Expected经典7项RED→恢复；证据筛选突变4项RED→恢复GREEN",
+    "redEvidence": [
+      "/tmp/planting-e05-pest-selection-red.log",
+      "/tmp/planting-e05-pest-evidence-mutation-red.log"
+    ],
+    "restored": true
+  },
+  "notAccepted": [
+    "动态HTTP",
+    "公开风险提示白名单",
+    "兼容策略审核发布与激活",
+    "视觉候选准入与分档",
+    "直判/最终诊断和行动"
+  ],
+  "productionChanged": false
+}

@@ -4876,6 +4876,40 @@
       "clickUpTicketId": "z8v0kmr973",
       "expected": "单层/双层按有效版本取对应值；摘要或时间非法拒绝，未知层数不猜默认；专业参数保留",
       "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "diagnosis.dynamic_pest.tier_question_limits",
+      "chineseName": "虫害候选档位的提问数量上限",
+      "domain": "diagnosis",
+      "layer": "domain_policy",
+      "valueType": "typed_release",
+      "unit": "题",
+      "status": "confirmed",
+      "currentValue": {
+        "low": 3,
+        "medium": 2,
+        "high": 1,
+        "very_likely": 1,
+        "direct": 0
+      },
+      "owner": "diagnosis",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/diagnosis/dynamic-pest-selection-contract.md",
+        "cloudfunctions-v2/models/diagnosis/v1-reuse/manifest.json"
+      ],
+      "consumers": [
+        "diagnosis动态选题与快照创建"
+      ],
+      "changePolicy": "审核后不可变策略release，锁定本次兼容版本组",
+      "fallback": "缺策略不生成用户题包；不得沿用V1无档位默认2题",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "ticketId": "z8v0kmr974",
+      "expected": "用户明确批准各档题数3/2/1/1/0；缺档位拒绝且零题不授权直判",
+      "pendingReason": null,
+      "blockingScope": "动态虫害限题与直判，不阻断无数值的确定性素材筛选",
+      "decisionGroup": "diagnosis_releases",
+      "sourceConfirmation": "本会话用户批准保留这组题数上限；不批准旧置信度阈值、自动直判或发布上线"
     }
   ],
   "providerProfiles": [

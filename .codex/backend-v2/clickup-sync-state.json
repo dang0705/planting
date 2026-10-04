@@ -50,19 +50,19 @@
       "readback": "Chrome CODEX RUNNING及五行评论1100440000090220已读回"
     },
     "z8v0kmr974": {
-      "version": 10,
+      "version": 11,
       "status": "codex running",
-      "note": "E05：V1黄叶/萎蔫创建HTTP→真实会话SQL→四题答案读回\n共享幂等同事务；并发只创建一次，改发布仍重放首次题目\n公开题目白名单；跨用户拒绝、失败回滚及提交丢失核对\n重放突变RED→恢复；全量1197/1197，MySQL42项通过\n正式审核激活、临时案例、动态虫害及诊断结果仍待验收",
-      "commentId": "1100440000090341",
-      "commentFingerprint": "51449f149e57dd7fb6de4dc31ec0d71fa434cff96fb283cb911ae36e18ac8447",
-      "readback": "Chrome CODEX RUNNING及五行评论1100440000090341已读回"
+      "note": "E05虫害复用八类十四条素材，按候选与已有证据动态筛选\n用户批准限题3/2/1/1/0；无档位拒绝，零题不自动直判\n跨候选所选两题→真实快照SQL→整包作答/重放通过\n证据守卫突变4项RED→恢复；全量1220/1220，MySQL43项\n动态HTTP、安全提示公开投影、审核发布及视觉准入待验收",
+      "commentId": "1100440000090357",
+      "commentFingerprint": "56504f9abe5b079fd2fce033670eedd518b55d02b7794c704a9303c53e0460b9",
+      "readback": "Chrome CODEX RUNNING及五行评论1100440000090357已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T16:33:29.644824+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T16:44:03.059912+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "499fb5b9c29a6ef695d966e8c8fc83890d07810a16eae4fdd9ec568375135bdf",
-    "sourceRevision": 60,
-    "sourceUpdatedAt": "2026-10-04T16:32:53.932484+00:00"
+    "fingerprint": "b101c94b45c4194e919ff03b76c4ad3f9361d2704f723754659d0ea104b0fda2",
+    "sourceRevision": 61,
+    "sourceUpdatedAt": "2026-10-04T16:43:04.027260+00:00"
   }
 }

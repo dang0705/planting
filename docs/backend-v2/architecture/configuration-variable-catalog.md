@@ -333,3 +333,7 @@
 ## MVP玻璃层数与策略准入
 
 `care.lighting.mvp_glass_selection` 为硬规则：用户只确认单层／双层，未知保留null，不要求专业参数。按有效active策略选值，核验摘要与时间，禁止源码默认；专业接口完整保留。具体0.83／0.70尚为离线候选，此条不签发生产参数。类型化策略合同见 `cloudfunctions-v2/models/care/mvp-glass-policy-contract.md`，原票 `z8v0kmr973`。
+
+### 虫害候选档位的提问数量上限
+
+`diagnosis.dynamic_pest.tier_question_limits`（E05，原票 `z8v0kmr974`）已由用户明确确认低3、中2、高1、较可信1、直判0；没有已确认策略时不得生成用户题包，不承接原V1无档位默认2题。置信度阈值、轮次及补拍仍须独立确认。来源与回退见机器目录及 `cloudfunctions-v2/models/diagnosis/dynamic-pest-selection-contract.md`。无数值的确定性素材筛选可独立验证。

@@ -1,3 +1,4 @@
+import { selectV1PestQuestionSnapshot } from '../../src/diagnosis/domain/pest-question-eligibility.js'
 import { createIdempotentDiagnosisCreationService, calculateDiagnosisCreationRequestHash } from '../../src/diagnosis/application/idempotent-create-diagnosis.js'
 import { createDiagnosisCreationRouteHandler, diagnosisCreationRoute, projectDiagnosisCreationResponse } from '../../src/diagnosis/http/create-session-route.js'
 import { spawnSync } from 'node:child_process'
@@ -414,5 +415,23 @@ describe('固定会话创建到作答纵向链路',()=>{
     let calls=0;const commit=deps.driver.commitTransaction
     const uncertain=createIdempotentDiagnosisCreationService({...deps,driver:{...deps.driver,commitTransaction:async tx=>{await commit(tx);throw new DatabaseCommitResultUnknownError('确认丢失')}},createInTransaction:async(tx,value)=>{calls+=1;return deps.createInTransaction(tx,value)}})
     expect((await uncertain(creationInput('create-unknown'))).status).toBe(200);expect(calls).toBe(1)
+  })
+})
+
+/** unit_real_data / L3：用户批准限题→V1动态素材→真实快照SQL→整包答案；不证明视觉准入或正式发布。 */
+describe('V1虫害所选快照持久化与作答',()=>{
+  test('明确中档两题跨候选覆盖，持久化后不依赖客户端包，整包作答读回',async()=>{
+    const content=JSON.parse(readFileSync(join(root,'cloudfunctions-v2/models/diagnosis/v1-reuse/questions.json'),'utf8'))
+    const selected=selectV1PestQuestionSnapshot({questions:content.pestQuestions,candidateModes:['spider_mite','aphid'],lockedEvidenceKeys:[],lockedEvidenceGroups:[],directMatchedModes:[],evidenceGroupByKey:{},tier:'medium',limits:{low:3,medium:2,high:1,very_likely:1,direct:0},questionPackageReleaseRef:'pest-approved-fixture/v1'})
+    const repo=createMysqlDiagnosisQuestionSnapshotRepository(source);const driver=createMysqlTransactionDriver(source,()=>undefined)
+    await runDatabaseTransaction(driver,async tx=>{
+      expect(await repo.append(tx,{diagnosisRef:'pest-selected-snapshot',userRef:'usr_owner123',userPlantRef:'upl_owner123',snapshot:selected.snapshot,startedAtMs:2500})).toBe('created')
+      expect(await repo.readInTransaction(tx,'usr_owner123','upl_owner123','pest-selected-snapshot')).toEqual({status:'found',snapshot:selected.snapshot})
+    })
+    const submitted={requestMode:'answer_submit',answers:selected.snapshot.snapshot.packageQuestions.map(q=>({questionKey:q.questionKey,optionKey:'unknown'}))}
+    const command={userRef:'usr_owner123',userPlantRef:'upl_owner123',diagnosisRef:'pest-selected-snapshot',occurredAtMs:2500,submitted}
+    expect(await answerService()(command)).toEqual({status:'recorded',answerCount:2});expect(await answerCount(command.diagnosisRef)).toBe(2)
+    expect(await answerService()(command)).toEqual({status:'replayed',answerCount:2})
+    expect(await repo.read('usr_other123','upl_owner123',command.diagnosisRef)).toEqual({status:'not_found'})
   })
 })
