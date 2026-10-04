@@ -1,0 +1,78 @@
+{
+  "ticketId": "z8v0kmr974",
+  "step": "E05",
+  "verifiedAt": "2026-10-04T19:06:31.269816+00:00",
+  "accepted": false,
+  "scope": "同范围有效旧知识包指针回滚内部用例/原子审计；不等同正式知识撤回或CMS准入",
+  "contract": "cloudfunctions-v2/models/diagnosis/knowledge-rollback-contract.md",
+  "tdd": {
+    "expectedSource": "已冻结知识持久化合同回滚条款及独立内部回滚合同",
+    "initialModuleRed": "/tmp/planting-e05-knowledge-rollback-red.log",
+    "classicMysqlRed": {
+      "case": "旧快照后行关联被替换，不能借另一条同摘要批准回滚",
+      "failed": 1,
+      "log": "/tmp/planting-e05-rollback-binding-red.log"
+    },
+    "currentReadMutation": {
+      "case": "移除锁后FOR SHARE使旧快照漏目标撤回",
+      "failed": 1,
+      "restored": true,
+      "log": "/tmp/planting-e05-rollback-current-read-mutation.log"
+    },
+    "fix": "锁后当前读重新检查目标状态及精确候选/审核关联；原Expected不变"
+  },
+  "verification": {
+    "realMysql": {
+      "tests": 7,
+      "log": "/tmp/planting-e05-rollback-mysql-restored.log",
+      "path": "实际009/010→真实发布应用建立前置→回滚/撤销应用与mysql2事务→指针/审计读回",
+      "coverage": [
+        "同范围有效旧包/完整摘要/指针版本",
+        "原样重放及异参冲突",
+        "后续发布后历史重放不重新激活",
+        "撤回/撤销/旧快照拒绝",
+        "精确原批准不可替换",
+        "并发同指针只有一方成功",
+        "审计失败全部回滚",
+        "未知提交新连接只读对账"
+      ],
+      "replacedBoundaries": [
+        "CMS管理员与协议结构制品",
+        "来源/题包许可Reader替身",
+        "园艺正文为Schema结构制品，不证明正式诊断"
+      ]
+    },
+    "rootUnit": {
+      "files": 163,
+      "tests": 1430,
+      "log": "/tmp/planting-e05-rollback-final-root-test.log"
+    },
+    "node22Unit": {
+      "runtime": "v22.21.1",
+      "files": 163,
+      "tests": 1430,
+      "log": "/tmp/planting-e05-rollback-final-node22-vitest.log"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-rollback-final-typecheck.log"
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 2083,
+      "log": "/tmp/planting-e05-rollback-final-lint.log"
+    },
+    "build": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-rollback-final-build.log"
+    }
+  },
+  "unaccepted": [
+    "正式CMS管理员/审核协议及来源准入",
+    "知识撤回及安全停用写入用例",
+    "实际诊断知识执行与结果生成",
+    "游客/登录临时案例结果读回",
+    "生产部署和真实平台验真"
+  ],
+  "productionChanges": false
+}

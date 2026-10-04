@@ -50,19 +50,19 @@
       "readback": "Chrome CODEX RUNNING及五行评论1100440000090220已读回"
     },
     "z8v0kmr974": {
-      "version": 26,
+      "version": 27,
       "status": "codex running",
-      "note": "E05：精确审核撤销独立追加，与发布共享审核锁\n真实MySQL12项：重放/冲突/并发/回滚/未知提交对账\n旧快照同命令收据1项经典RED→当前读恢复GREEN\n根及Node22全量1426/1426；类型/构建/lint零错误\nCMS准入、知识撤回/指针回滚及诊断生成仍未验收",
-      "commentId": "1100440000090538",
-      "commentFingerprint": "47f7420b3f18d91aaebf1c7294632e16ef32cd982dbc433f6742f78ca4b98947",
-      "readback": "Chrome CODEX RUNNING与五行评论1100440000090538已读回"
+      "note": "E05：有效旧知识包→原子指针回滚与追加审计\n真实MySQL7项：重放/并发/安全失效/失败及未知提交\n批准关联经典RED；当前读突变RED→恢复GREEN\n根及Node22全量1430/1430；类型/构建/lint零错误\nCMS准入、知识撤回及真实诊断生成仍未验收",
+      "commentId": "1100440000090631",
+      "commentFingerprint": "5db9f880bce55060ecf22de437575b5ada5e430aafbd00532dac3b6198804805",
+      "readback": "Chrome CODEX RUNNING与五行评论1100440000090631已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T18:59:28.816916+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T19:06:56.868634+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "b6b2e0fc5a8eb2a7133914bbacb768440d02f6a296e63b2a98f41f2e82be5ffa",
-    "sourceRevision": 77,
-    "sourceUpdatedAt": "2026-10-04T18:59:02.965947+00:00"
+    "fingerprint": "e12459973341db0e267185d2ee785d63b950fcfbf7a68a51a39aef2000870ced",
+    "sourceRevision": 78,
+    "sourceUpdatedAt": "2026-10-04T19:06:31.269816+00:00"
   }
 }
