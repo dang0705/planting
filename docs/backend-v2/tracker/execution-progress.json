@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T16:49:41.648759+00:00",
-  "sourceRevision": 62,
-  "sourceUpdatedAt": "2026-10-04T16:49:41.648759+00:00",
+  "generatedAt": "2026-10-04T16:57:12.679618+00:00",
+  "sourceRevision": 63,
+  "sourceUpdatedAt": "2026-10-04T16:57:12.679618+00:00",
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
   "tasks": [
@@ -199,16 +199,16 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 12,
+      "version": 13,
       "status": "codex running",
-      "stage": "动态虫害受控发布读取及公开安全提示验证",
+      "stage": "021动态虫害发布数据库不可变保护真实验证",
       "accepted": false,
       "summary": [
-        "E05动态虫害专属发布Reader：题目、限题、证据组同版锁定",
-        "真实活动指针SQL→选题→公开风险/同意/跳过提示通过",
-        "缺安全提示或发布损坏拒绝；不启用本地题目或旧置信度",
-        "指针1项/安全4项突变RED→恢复；全量1248/1248，MySQL44项",
-        "动态发布DB保护、视觉准入、创建HTTP及正式激活待验收"
+        "E05新增021：动态虫害审核后的发布不可改写/删除",
+        "真实SQL19项保护验证；两套MySQL合计63项通过",
+        "发布与活动指针内容/行数不变；草稿、退役恢复及020保留",
+        "经典19项RED→真实触发器GREEN；全量1248/1248，类型检查通过",
+        "生产无DDL；下一步视觉准入与动态创建HTTP，E05仍进行中"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
@@ -221,18 +221,19 @@
         ".codex/backend-v2/evidence/E05-fixed-question-immutability.json",
         ".codex/backend-v2/evidence/E05-create-session-http.json",
         ".codex/backend-v2/evidence/E05-dynamic-pest-selection.json",
-        ".codex/backend-v2/evidence/E05-dynamic-pest-release.json"
+        ".codex/backend-v2/evidence/E05-dynamic-pest-release.json",
+        ".codex/backend-v2/evidence/E05-dynamic-pest-immutability.json"
       ],
       "blockingReason": null,
-      "nextAction": "补动态虫害发布的数据库不可变保护，再接受控视觉证据和动态创建HTTP",
+      "nextAction": "接服务端受控视觉候选/证据读取及动态虫害会话创建，不从客户端采纳档位或题包",
       "sync": {
-        "version": 12,
+        "version": 13,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING及五行评论1100440000090367已读回"
+        "readback": "Chrome CODEX RUNNING及五行评论1100440000090378已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T16:50:38.938557+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T17:00:03.383981+00:00",
   "lastFailure": null
 }

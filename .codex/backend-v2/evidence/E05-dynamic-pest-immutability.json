@@ -1,0 +1,43 @@
+{
+  "step": "E05",
+  "ticketId": "z8v0kmr974",
+  "scope": "021只增加动态虫害专属更新/删除触发器；007和020保持不变",
+  "validatedAt": "2026-10-04T16:57:12.679618+00:00",
+  "truthSource": "models/diagnosis/dynamic-pest-release-immutability-contract.md与已冻结的不可变release规则",
+  "tdd": {
+    "path": "独立Expected先落盘，真实007/020未保护动态发布经典19项RED→021真实触发器GREEN",
+    "redEvidence": "/tmp/planting-e05-pest-immutability-red.log",
+    "testIsolation": "每个拒绝断言回滚探针，RED写入不污染其他场景"
+  },
+  "checks": {
+    "realMysql": {
+      "new": 19,
+      "combined": 63,
+      "finalNewSuite": 19,
+      "database": "隔离MySQL8.4",
+      "path": "真实007/020/021→发布及指针不变→SQL更新/删除拒绝→活动发布解析正常",
+      "notCovered": "CMS审核、生产DDL/发布、动态HTTP与视觉Provider"
+    },
+    "backendFullVitest": {
+      "files": 147,
+      "passed": 1248,
+      "exitCode": 0
+    },
+    "typecheck": {
+      "status": "passed",
+      "exitCode": 0
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 1618,
+      "exitCode": 0
+    }
+  },
+  "notAccepted": [
+    "动态视觉候选和证据准入",
+    "动态创建HTTP",
+    "正式审核发布及激活",
+    "诊断结果及行动"
+  ],
+  "productionChanged": false
+}

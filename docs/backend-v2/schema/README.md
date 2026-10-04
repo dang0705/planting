@@ -30,3 +30,5 @@
 `016_authenticated_ephemeral_plant_case.sql` 新增已登录用户主动临时使用的 backing case、幂等 promotion command 与唯一不可变 binding fact；不修改游客匿名 proof 语义。`017_care_v2_ephemeral_and_derivations.sql` 让临时 care/diagnosis 物理表支持 guest/authenticated 两种 Ephemeral backing case（二选一），并把 Care 派生拆成两层：`care_environment_derivations` 只保存 Estimated Indoor、Air VPD、Window Plane、PPFD/DLI、AirMovement、EnvironmentDemand、CultivationRetention；`care_decision_derivations` 保存 GrowthActivity、PersonalCalibration 与 DryProgress。两份都是**迁移设计制品**，仍需在目标 CloudBase MySQL 上完成真实执行与约束读回后才能宣称运行验收。
 
 `018_care_decision_derivation_immutability.sql` 在 017 之后为养护决策派生增加禁止 UPDATE 的触发器，确保新算法只能追加结果。它不改变列、索引或行数据；切换前须核对记录数、触发器存在及旧结果读回，并验证写回原值和改写结果均被拒绝。创建失败不改行数据；生产回退必须停写并另行批准，不得静默解除保护。本迁移只有隔离 MySQL 约束验证，不代表生产已执行或算法已发布。
+
+- `021_dynamic_pest_release_immutability.sql`：依赖007，在020之后为动态虫害审核后的发布增加不可改写/删除触发器；草稿与正常退役/恢复保留，生产执行另行获准。

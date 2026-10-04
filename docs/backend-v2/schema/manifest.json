@@ -117,6 +117,12 @@
       "owner": "diagnosis",
       "file": "020_fixed_question_release_immutability.sql",
       "sha256": "999b18d2efb578534028fe5c03d044a27ffa40c218512586c6c7f0e42ac7d666"
+    },
+    {
+      "order": 20,
+      "owner": "diagnosis",
+      "file": "021_dynamic_pest_release_immutability.sql",
+      "sha256": "8508411dcdf4ee61d21963fea2326e5506095ed485206ce2d2f854226358ee19"
     }
   ]
 }

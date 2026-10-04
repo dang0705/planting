@@ -153,7 +153,7 @@ describe('已批准V1虫害限题承接', () => {
     ])
   })
   test('无档位和非法限题均拒绝，不隐式回退2题', () => {
-    const f = { ...input(), tier: 'medium', limits, questionPackageReleaseRef: 'pest-fixture/v1' }
+    const f = { ...input(), tier: 'medium' as const, limits, questionPackageReleaseRef: 'pest-fixture/v1' }
     expect(() => selectV1PestQuestionSnapshot({ ...f, tier: '' as never })).toThrow()
     expect(() =>
       selectV1PestQuestionSnapshot({ ...f, limits: { ...limits, medium: null as never } })

@@ -1,19 +1,19 @@
 {
-  "revision": 62,
+  "revision": 63,
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
-  "updatedAt": "2026-10-04T16:49:41.648759+00:00",
+  "updatedAt": "2026-10-04T16:57:12.679618+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "goal": "动态虫害专属发布读取与公开安全提示",
+    "goal": "动态虫害审核后发布的数据库不可变保护",
     "assumptions": [
-      "只有真实active兼容发布可消费",
-      "公开安全提示来自已锁定V1题目"
+      "现有020固定题包保护保持独立",
+      "只在隔离数据库运行新迁移"
     ],
-    "minimumVerification": "独立Expected、指针与安全守卫突变RED、实际活动发布SQL及全量GREEN",
-    "continueWhen": "读取与投影已验证，再补发布不可变和动态创建用例",
-    "failWhen": "默认启用本地题目、丢失用户安全提示或用Reader代替整个HTTP闭环",
-    "rollback": "撤下尚未接入运行入口的独立Reader和投影；不改历史快照",
+    "minimumVerification": "未保护表上的经典RED→真实触发器GREEN、正常状态切换、其他领域及计数/内容核对",
+    "continueWhen": "护住不可变内容且不影响草稿和回滚活动发布",
+    "failWhen": "更新摘要绕过正文保护或扩大到生产数据库",
+    "rollback": "在未切换且获准环境删除本次两个触发器，不删除历史发布行",
     "timeLimit": "30分钟检查点"
   },
   "tasks": [
@@ -200,10 +200,10 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 12,
+      "version": 13,
       "priority": "normal",
       "status": "codex running",
-      "stage": "动态虫害受控发布读取及公开安全提示验证",
+      "stage": "021动态虫害发布数据库不可变保护真实验证",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
@@ -216,19 +216,20 @@
         ".codex/backend-v2/evidence/E05-fixed-question-immutability.json",
         ".codex/backend-v2/evidence/E05-create-session-http.json",
         ".codex/backend-v2/evidence/E05-dynamic-pest-selection.json",
-        ".codex/backend-v2/evidence/E05-dynamic-pest-release.json"
+        ".codex/backend-v2/evidence/E05-dynamic-pest-release.json",
+        ".codex/backend-v2/evidence/E05-dynamic-pest-immutability.json"
       ],
       "summary": [
-        "E05动态虫害专属发布Reader：题目、限题、证据组同版锁定",
-        "真实活动指针SQL→选题→公开风险/同意/跳过提示通过",
-        "缺安全提示或发布损坏拒绝；不启用本地题目或旧置信度",
-        "指针1项/安全4项突变RED→恢复；全量1248/1248，MySQL44项",
-        "动态发布DB保护、视觉准入、创建HTTP及正式激活待验收"
+        "E05新增021：动态虫害审核后的发布不可改写/删除",
+        "真实SQL19项保护验证；两套MySQL合计63项通过",
+        "发布与活动指针内容/行数不变；草稿、退役恢复及020保留",
+        "经典19项RED→真实触发器GREEN；全量1248/1248，类型检查通过",
+        "生产无DDL；下一步视觉准入与动态创建HTTP，E05仍进行中"
       ],
       "blockingReason": null,
-      "nextAction": "补动态虫害发布的数据库不可变保护，再接受控视觉证据和动态创建HTTP",
-      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090367已读回",
-      "milestoneCommit": "77431f6b"
+      "nextAction": "接服务端受控视觉候选/证据读取及动态虫害会话创建，不从客户端采纳档位或题包",
+      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090378已读回",
+      "milestoneCommit": "b2e192b0"
     }
   ],
   "queue": [
@@ -332,7 +333,7 @@
       ]
     }
   ],
-  "nextAction": "补动态虫害发布的数据库不可变保护，再接受控视觉证据和动态创建HTTP",
+  "nextAction": "接服务端受控视觉候选/证据读取及动态虫害会话创建，不从客户端采纳档位或题包",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -738,5 +739,21 @@
       "architecture/manifest.json仅配置目录两文件摘要"
     ],
     "scope": "只核验本次动态虫害选题，不读其他领域或完整架构"
+  },
+  "diagnosisDynamicReleaseImmutabilityReadAdmission": {
+    "layers": {
+      "L0": "已缓存且未变化的backend-v2 abstract只有用途导航",
+      "L1": "已缓存contracts overview无诊断发布SQL条目",
+      "L2": "本轮定向动态策略代码/020/发布不可变检索没有具体触发器字段及021迁移登记"
+    },
+    "missing": "动态虫害专属发布的不可变SQL、已有020保护边界、策略两表隔离夹具及迁移顺序/哈希",
+    "localAllowed": [
+      "schema/020_fixed_question_release_immutability.sql仅现有专属触发器",
+      "schema/007_configuration.sql仅两张business_policy_releases/active_business_policy_releases表",
+      "schema/021_dynamic_pest_release_immutability.sql新迁移",
+      "schema/manifest.json仅追加021的顺序/哈希元数据",
+      "schema/README.md仅追加021迁移清单条目"
+    ],
+    "scope": "E05动态发布保护；不读其他领域、架构或全目录"
   }
 }

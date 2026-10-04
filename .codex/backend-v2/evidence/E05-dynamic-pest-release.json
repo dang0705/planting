@@ -25,7 +25,12 @@
       "path": "原事务锁定活动指针/发布SQL→筛选限题→所选快照→公开风险/同意/跳过提示",
       "notCovered": "实际视觉Provider、生产审核/激活、动态创建HTTP、发布数据库不可变"
     },
-    "typecheck": "passed",
+    "typecheck": {
+      "status": "passed",
+      "verifiedAt": "2026-10-04T16:57:12.679618+00:00",
+      "scope": "当前仓库后端源码与测试TypeScript全量类型检查",
+      "exitCode": 0
+    },
     "lint": {
       "errors": 0,
       "warnings": 1604

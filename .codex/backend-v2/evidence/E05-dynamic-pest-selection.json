@@ -31,7 +31,12 @@
       "path": "真实所选两题→不可变快照Repository→同事务读回→答案Repository→整包重放",
       "notCovered": "视觉Provider、正式发布、动态HTTP"
     },
-    "typecheck": "passed",
+    "typecheck": {
+      "status": "passed",
+      "verifiedAt": "2026-10-04T16:57:12.679618+00:00",
+      "scope": "当前仓库后端源码与测试TypeScript全量类型检查",
+      "exitCode": 0
+    },
     "lint": {
       "errors": 0,
       "warnings": 1573

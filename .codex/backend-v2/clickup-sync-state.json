@@ -50,19 +50,19 @@
       "readback": "Chrome CODEX RUNNING及五行评论1100440000090220已读回"
     },
     "z8v0kmr974": {
-      "version": 12,
+      "version": 13,
       "status": "codex running",
-      "note": "E05动态虫害专属发布Reader：题目、限题、证据组同版锁定\n真实活动指针SQL→选题→公开风险/同意/跳过提示通过\n缺安全提示或发布损坏拒绝；不启用本地题目或旧置信度\n指针1项/安全4项突变RED→恢复；全量1248/1248，MySQL44项\n动态发布DB保护、视觉准入、创建HTTP及正式激活待验收",
-      "commentId": "1100440000090367",
-      "commentFingerprint": "a068fe3dee394dbdd28d6826a72c392e674c938aae1bd3e2d8492a797b48c05a",
-      "readback": "Chrome CODEX RUNNING及五行评论1100440000090367已读回"
+      "note": "E05新增021：动态虫害审核后的发布不可改写/删除\n真实SQL19项保护验证；两套MySQL合计63项通过\n发布与活动指针内容/行数不变；草稿、退役恢复及020保留\n经典19项RED→真实触发器GREEN；全量1248/1248，类型检查通过\n生产无DDL；下一步视觉准入与动态创建HTTP，E05仍进行中",
+      "commentId": "1100440000090378",
+      "commentFingerprint": "a609fe8dac9d8958704cc78fe8aae563920733be5a14bc74dd9da23a8caf19d2",
+      "readback": "Chrome CODEX RUNNING及五行评论1100440000090378已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T16:50:38.938557+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T17:00:03.383981+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "8f32c09b895166ec9d66585ba0443aeb133cb2063bceec120ce11317c6bb1671",
-    "sourceRevision": 62,
-    "sourceUpdatedAt": "2026-10-04T16:49:41.648759+00:00"
+    "fingerprint": "e99990a87e494e590d933ac5226851a33e58b1f17e688560c21259a5661eac02",
+    "sourceRevision": 63,
+    "sourceUpdatedAt": "2026-10-04T16:57:12.679618+00:00"
   }
 }
