@@ -1,3 +1,9 @@
+import type { DiagnosisReplayRecord } from './diagnosis-replay-types.js'
+import {
+  diagnosisReplayInputSchema,
+  diagnosisDecisionTraceSchema
+} from './diagnosis-replay-schema.js'
+import { validateDiagnosisReplay } from './validate-diagnosis-replay.js'
 import Ajv2020 from 'ajv/dist/2020.js'
 import publicSchema from '../../../../docs/backend-v2/contracts/schemas/diagnosis-result.v1.schema.json'
 import {
@@ -13,7 +19,7 @@ import { validateDiagnosisModelBinding } from './diagnosis-model-binding.js'
 export interface DiagnosisResultRecord {
   /** 当前存储结构常量，不能以运行开关替换历史版本。 */ readonly contractVersion: 'diagnosis-result-record/v1'
   /** 唯一允许对外投影的严格公开结果。 */ readonly publicResult: CanonicalJsonObject
-  /** 原版本输入、来源和决策轨迹，只供受控回放。 */ readonly replay: CanonicalJsonObject
+  /** 原版本输入、来源和决策轨迹，只供受控回放。 */ readonly replay: DiagnosisReplayRecord
 }
 /** 结构锁定、完整正文与规范化摘要，存储不得自行改写其中字段。 */
 export interface LockedDiagnosisResultRecord {
@@ -39,8 +45,8 @@ const replaySchema = {
     knowledgeReleaseRef: { ...text, maxLength: 96 },
     knowledgePackageSha256: hash,
     questionPackage: { type: 'object' },
-    inputSnapshot: { type: 'object', minProperties: 1 },
-    decisionTrace: { type: 'object', minProperties: 1 },
+    inputSnapshot: diagnosisReplayInputSchema,
+    decisionTrace: diagnosisDecisionTraceSchema,
     ruleReleaseRef: text,
     ruleReleaseSha256: hash,
     modelBinding: { type: ['object', 'null'] }
@@ -79,10 +85,13 @@ export function lockDiagnosisResultRecord(input: unknown): LockedDiagnosisResult
   if (replay.modelBinding !== null && !validateDiagnosisModelBinding(replay.modelBinding)) {
     throw new TypeError('诊断结果模型版本不匹配')
   }
-  const question = replay.questionPackage as CanonicalJsonObject
+  const question = replay.questionPackage as unknown as CanonicalJsonObject
   const locked = lockQuestionPackageSnapshot(question.snapshot)
   if (locked.snapshotSha256 !== question.snapshotSha256 || Object.keys(question).length !== 2) {
     throw new TypeError('诊断结果题包快照不匹配')
+  }
+  if (!validateDiagnosisReplay(replay.inputSnapshot, replay.decisionTrace, record.publicResult)) {
+    throw new TypeError('诊断回放证据、引用或安全门不一致')
   }
   const recordSha256 = calculateCanonicalJsonSha256(record as unknown as CanonicalJsonValue)
   freeze(record as unknown as CanonicalJsonValue)

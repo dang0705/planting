@@ -4933,6 +4933,32 @@
       "ticketTitle": "[E05][P4] 固定/动态问诊与小青工具",
       "expected": "完整公开结果与回放记录一同锁定和计算摘要；旧行保持missing_record",
       "decisionGroup": "diagnosis_releases"
+    },
+    {
+      "id": "diagnosis.result.replay_contract_versions",
+      "chineseName": "诊断结果内部输入与轨迹结构版本",
+      "domain": "diagnosis",
+      "layer": "hard_rule",
+      "valueType": "object",
+      "status": "hard_rule",
+      "currentValue": {
+        "input": "diagnosis-replay-input/v1",
+        "trace": "diagnosis-decision-trace/v1"
+      },
+      "owner": "diagnosis",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/diagnosis/result-replay-contract.md"
+      ],
+      "consumers": [
+        "诊断结果锁定和回放Repository"
+      ],
+      "changePolicy": "结构演进通过新合同，禁止开关或默认值覆盖历史版本",
+      "fallback": "缺版本、引用或安全门不一致拒绝",
+      "phase": "P4",
+      "ticketId": "z8v0kmr974",
+      "ticketTitle": "[E05][P4] 固定/动态问诊与小青工具",
+      "expected": "输入证据摘要及发生时间可核验；公开建议与四门通过轨迹逐项一致",
+      "decisionGroup": "diagnosis_releases"
     }
   ],
   "providerProfiles": [

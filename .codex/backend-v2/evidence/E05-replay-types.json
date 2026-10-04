@@ -1,0 +1,72 @@
+{
+  "ticketId": "z8v0kmr974",
+  "step": "E05",
+  "verifiedAt": "2026-10-04T18:20:46.036977+00:00",
+  "accepted": false,
+  "scope": "结果输入与决策轨迹结构、引用及公开建议一致性；本地Node22兼容性",
+  "contract": "cloudfunctions-v2/models/diagnosis/result-replay-contract.md",
+  "tdd": {
+    "path": "classic_red_and_mutation_red",
+    "classicRed": {
+      "failed": 11,
+      "passed": 1,
+      "log": "/tmp/planting-e05-replay-types-red.log"
+    },
+    "mutationRed": {
+      "failed": 1,
+      "passed": 11,
+      "mutation": "移除proposed行动的四门通过检查",
+      "restored": true,
+      "log": "/tmp/planting-e05-replay-types-mutation.log"
+    },
+    "restoredGreen": {
+      "files": 29,
+      "tests": 369,
+      "log": "/tmp/planting-e05-replay-types-restored.log"
+    }
+  },
+  "verification": {
+    "rootFull": {
+      "files": 157,
+      "tests": 1391,
+      "log": "/tmp/planting-e05-replay-types-full-final.log"
+    },
+    "node22Full": {
+      "runtime": "v22.21.1",
+      "files": 157,
+      "tests": 1391,
+      "log": "/tmp/planting-e05-replay-types-node22-full.log"
+    },
+    "realMysql": {
+      "tests": 3,
+      "log": "/tmp/planting-e05-replay-types-mysql.log",
+      "boundary": "实际004/022、隔离MySQL；归属与知识父记录为测试制品，不证明009审核发布或HTTP"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-replay-types-types.log"
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 1829,
+      "log": "/tmp/planting-e05-replay-types-lint.log"
+    },
+    "build": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-replay-types-build.log"
+    },
+    "node22Artifact": {
+      "runtime": "v22.21.1",
+      "health": 200,
+      "unauthenticatedCreate": 401,
+      "boundary": "本地现有编译产物，数据库连接替身配置；无数据库调用和部署证明"
+    }
+  },
+  "unaccepted": [
+    "证据语义、归属、时效及Schema所有者适配",
+    "审核知识的实际兼容发布",
+    "真实结果生成及结果HTTP",
+    "正式视觉Provider策略与调用"
+  ],
+  "productionChanges": false
+}

@@ -86,7 +86,7 @@ export function createMysqlDiagnosisResultRecordRepository(
       if (owned.length === 0) {
         return 'not_found'
       }
-      const question = replay.questionPackage as CanonicalJsonObject,
+      const question = replay.questionPackage as unknown as CanonicalJsonObject,
         snapshot = question.snapshot as CanonicalJsonObject
       if (
         owned.length !== 1 ||
@@ -130,7 +130,7 @@ export function createMysqlDiagnosisResultRecordRepository(
           input.generatedAtMs,
           locked.record.contractVersion,
           serializeCanonicalJson(locked.record.publicResult),
-          serializeCanonicalJson(replay),
+          serializeCanonicalJson(replay as unknown as CanonicalJsonValue),
           locked.recordSha256,
           replay.knowledgeReleaseRef as string
         ]

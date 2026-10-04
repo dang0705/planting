@@ -1,0 +1,13 @@
+# 诊断结果内部输入与决策轨迹
+
+归属E05原票z8v0kmr974。公开结果继续使用冻结diagnosis-result/v1；本合同补齐尚未正式准入的内部回放结构，不改变022迁移，不赋予模型、客户端或结构校验器知识审核权。
+
+输入快照必须包含结构版本diagnosis-replay-input/v1、plantIdentityRef（已确认身份引用或null）、capturedAtMs及evidences。每份证据保存稳定evidenceRef、kind（answer/visual/care_fact/environment）、schemaVersion、occurredAtMs、原样非空结构化content及其规范化SHA-256。证据引用唯一，正文摘要逐份重算，证据发生时间不得晚于快照。正文所属Schema、归属、覆盖范围和新鲜度由对应领域读取器核验；本合同不将任意JSON自动认证为有效证据，不猜保留期限。
+
+决策轨迹版本为diagnosis-decision-trace/v1，包含outcomes、actions与assessment。每个结论记录outcomeCode、causeCode、disposition（selected/alternative/excluded）、reasonZh、evidenceRefs及sourceClaimRefs；至少一个结论被选中，不能用症状代码替代病因。每项行动记录actionCode、mappingCode、outcomeCode、disposition（proposed/withheld）、reasonZh、evidenceRefs、sourceClaimRefs、gates及publicActionIndex。来源主张精确保存sourceCode、claimCode、revisionNo与linkRole，不改成最新修订。
+
+行动的适用性、证据、禁忌和风险四个门均使用pass/block/insufficient_evidence。proposed必须四门全pass、关联selected结论，并按唯一且连续的publicActionIndex对应公开recommendedActions；withheld必须至少一门未通过，publicActionIndex为null。这些只是可审计的一致性要求，不证明门的判断依据正确。高风险建议必须有safety来源主张。引用不存在的证据、结论、重复代码、重复映射或额外字段均拒绝。
+
+assessment分别记录certainty、severity、urgency、isolation的value与reasonZh；其档位和理由必须与公开结果精确一致。允许未知、备选与排除，不生成未经校准的百分比，不由本校验器重算病因。
+
+各门、档位和结构字段属于已批准业务边界的具体类型，无运营调整收益，不增加开关、经验阈值或默认值。完整类型核验、引用闭合与摘要通过之后，仍需审核知识读取、来源许可、植物适用性及实际决策用例验收；本增量不开放结果HTTP或Provider。

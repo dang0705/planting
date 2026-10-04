@@ -2,7 +2,7 @@
 
 归属E05原票z8v0kmr974。结果是建议，不写养护事实、计划、提醒或积分。本增量只锁定与持久化受控用例已产生的结果，不授权模型或客户端自行生成最终结论。
 
-记录结构版本为diagnosis-result-record/v1：publicResult严格满足已冻结diagnosis-result/v1；replay包含knowledgeReleaseRef、knowledgePackageSha256、questionPackage（完整已锁定题包）、inputSnapshot（输入证据与身份快照）、decisionTrace（命中结论、行动、映射、来源主张和各安全门的完整执行记录）、ruleReleaseRef、ruleReleaseSha256、modelBinding（纯规则流程为null，视觉流程为精确已确认版本组合）。inputSnapshot与decisionTrace只接受完整非空JSON对象；本阶段只锁定结构，不宣称其中的证据语义或知识准入已被验证。未知字段、摘要错配及非JSON输入拒绝。完整规范化记录计算SHA-256，返回递归冻结快照。
+记录结构版本为diagnosis-result-record/v1：publicResult严格满足已冻结diagnosis-result/v1；replay包含knowledgeReleaseRef、knowledgePackageSha256、questionPackage（完整已锁定题包）、inputSnapshot（diagnosis-replay-input/v1输入证据与身份快照）、decisionTrace（diagnosis-decision-trace/v1命中结论、行动、映射、来源主张和安全门记录）、ruleReleaseRef、ruleReleaseSha256、modelBinding（纯规则流程为null，视觉流程为精确已确认版本组合）。inputSnapshot与decisionTrace按result-replay-contract.md的明确类型校验，核验引用闭合、证据摘要、安全门与公开投影一致性；不宣称证据语义或知识准入已被验证。未知字段、摘要错配及非JSON输入拒绝。完整规范化记录计算SHA-256，返回递归冻结快照。
 
 Repository只在调用方显式事务中保存，锁定同一统一用户/用户植物/会话。归属不匹配拒绝，内容缺失或损坏不返回公开结果。知识发布引用由外键关联既有不可变发布表，不能采用最新发布替换历史引用。旧表的摘要、结论、建议列分别保存完整公开结果的对应字段；新列保留完整记录及摘要，不以摘要列重建正文。读回只返回经过重算的内部锁定记录；公开HTTP只能使用publicResult。
 

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { findProjectRoot } from './project-root.js'
@@ -24,11 +25,85 @@ export function resultFixture() {
       knowledgeReleaseRef: 'dkr_fixture123',
       knowledgePackageSha256: 'a'.repeat(64),
       questionPackage: structuredClone(questionPackage),
-      inputSnapshot: { plantIdentityRef: null, answers: [] },
+      inputSnapshot: {
+        contractVersion: 'diagnosis-replay-input/v1',
+        plantIdentityRef: null,
+        capturedAtMs: 1500,
+        evidences: [
+          {
+            evidenceRef: 'ev_observation123',
+            kind: 'visual',
+            schemaVersion: 'fixture-visible-observation/v1',
+            occurredAtMs: 1000,
+            content: { observationZh: '局部叶尖变化' },
+            contentSha256: createHash('sha256')
+              .update(JSON.stringify({ observationZh: '局部叶尖变化' }))
+              .digest('hex')
+          }
+        ]
+      },
       decisionTrace: {
-        outcomeCodes: ['unconfirmed'],
-        actionCodes: [],
-        gateResults: { certainty: 'unconfirmed' }
+        contractVersion: 'diagnosis-decision-trace/v1',
+        outcomes: [
+          {
+            outcomeCode: 'unconfirmed',
+            causeCode: 'undetermined',
+            disposition: 'selected',
+            reasonZh: '现有证据不足',
+            evidenceRefs: ['ev_observation123'],
+            sourceClaimRefs: [
+              {
+                sourceCode: 'source_fixture',
+                claimCode: 'claim_fixture',
+                revisionNo: 1,
+                linkRole: 'support'
+              }
+            ]
+          }
+        ],
+        actions: [
+          {
+            actionCode: 'inspect_fixture',
+            mappingCode: 'mapping_fixture',
+            outcomeCode: 'unconfirmed',
+            disposition: 'proposed',
+            reasonZh: '补充观察',
+            evidenceRefs: ['ev_observation123'],
+            sourceClaimRefs: [
+              {
+                sourceCode: 'source_fixture',
+                claimCode: 'claim_fixture',
+                revisionNo: 1,
+                linkRole: 'support'
+              }
+            ],
+            gates: {
+              applicability: 'pass',
+              evidence: 'pass',
+              contraindications: 'pass',
+              risk: 'pass'
+            },
+            publicActionIndex: 0
+          }
+        ],
+        assessment: {
+          certainty: {
+            value: diagnosisPublicResultFixture.certaintyLevel,
+            reasonZh: diagnosisPublicResultFixture.certaintyReasonZh
+          },
+          severity: {
+            value: diagnosisPublicResultFixture.severityLevel,
+            reasonZh: diagnosisPublicResultFixture.severityReasonZh
+          },
+          urgency: {
+            value: diagnosisPublicResultFixture.urgencyLevel,
+            reasonZh: diagnosisPublicResultFixture.urgencyReasonZh
+          },
+          isolation: {
+            value: diagnosisPublicResultFixture.isolationDecision,
+            reasonZh: diagnosisPublicResultFixture.isolationReasonZh
+          }
+        }
       },
       ruleReleaseRef: 'rules_fixture/v1',
       ruleReleaseSha256: 'b'.repeat(64),
