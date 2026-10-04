@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T20:17:40.668171+00:00",
-  "sourceRevision": 89,
-  "sourceUpdatedAt": "2026-10-04T20:17:40.668171+00:00",
+  "generatedAt": "2026-10-04T20:21:33.652274+00:00",
+  "sourceRevision": 90,
+  "sourceUpdatedAt": "2026-10-04T20:21:33.652274+00:00",
   "currentStep": "E03",
   "currentTicketId": "z8v0kmr9mj",
   "tasks": [
@@ -264,32 +264,33 @@
     {
       "id": "z8v0kmr9mj",
       "step": "E03",
-      "version": 1,
+      "version": 2,
       "status": "codex running",
-      "stage": "档案更新合同与配置确认",
+      "stage": "盆器测量子结构合同与严格校验已验证；完整档案及写入未验收",
       "accepted": false,
       "summary": [
-        "E03：已读回原用户植物票，承接更新/档案纵向切片",
-        "更新仅有路由登记，缺严格字段Schema；合同待冻结稿已落盘",
-        "明确聚合版本/幂等/归属与事实边界，不接收任意JSON",
-        "登录临时案例TTL待确认，不自动沿用游客24小时",
-        "本轮尚未改产品；先补字段合同再执行RED→实现→SQL/HTTP"
+        "E03：实测盆器事实子结构Schema及不可变校验已实现",
+        "拒绝未知键/缺字段/隐式转换；未知null交给既有安全模型",
+        "独立新增20项，相邻71项；额外字段守卫4项RED→恢复GREEN",
+        "根与Node22全量1523/1523，类型/检查/构建通过",
+        "完整档案字段、事务及HTTP仍未验收，原票保持进行中"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E03-promotion-context.json",
         ".codex/backend-v2/evidence/E03-profile-update-gap.json",
-        "cloudfunctions-v2/models/user-plant/profile-update-contract-draft.md"
+        "cloudfunctions-v2/models/user-plant/profile-update-contract-draft.md",
+        ".codex/backend-v2/evidence/E03-measured-pot-profile.json"
       ],
       "blockingReason": null,
-      "nextAction": "按现有光照/盆器输入明确完整档案请求Schema、清除语义及聚合版本；测试先行实现事务与HTTP",
+      "nextAction": "继续冻结盆器/基质、位置、光照、通风完整档案字段及清除语义，再接归属/版本/幂等事务与HTTP；临时TTL仍待确认",
       "sync": {
-        "version": 1,
+        "version": 2,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING与五行评论1100440000090864已读回"
+        "readback": "Chrome CODEX RUNNING与五行评论1100440000090867已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T20:18:18.157941+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T20:21:51.242398+00:00",
   "lastFailure": null
 }

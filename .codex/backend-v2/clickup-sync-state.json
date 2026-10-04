@@ -58,19 +58,19 @@
       "readback": "Chrome HUMAN REQUIRED与五行评论1100440000090656已读回"
     },
     "z8v0kmr9mj": {
-      "version": 1,
+      "version": 2,
       "status": "codex running",
-      "note": "E03：已读回原用户植物票，承接更新/档案纵向切片\n更新仅有路由登记，缺严格字段Schema；合同待冻结稿已落盘\n明确聚合版本/幂等/归属与事实边界，不接收任意JSON\n登录临时案例TTL待确认，不自动沿用游客24小时\n本轮尚未改产品；先补字段合同再执行RED→实现→SQL/HTTP",
-      "commentId": "1100440000090864",
-      "commentFingerprint": "ec726c0c531402818dc9770b011f4250100d9345953329599e637cbfd18102ae",
-      "readback": "Chrome CODEX RUNNING与五行评论1100440000090864已读回"
+      "note": "E03：实测盆器事实子结构Schema及不可变校验已实现\n拒绝未知键/缺字段/隐式转换；未知null交给既有安全模型\n独立新增20项，相邻71项；额外字段守卫4项RED→恢复GREEN\n根与Node22全量1523/1523，类型/检查/构建通过\n完整档案字段、事务及HTTP仍未验收，原票保持进行中",
+      "commentId": "1100440000090867",
+      "commentFingerprint": "5a1e8eed9c165ed31667225bad556d55a4ec803754705e2b72cd9254332a6f05",
+      "readback": "Chrome CODEX RUNNING与五行评论1100440000090867已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T20:18:18.157941+00:00",
+  "lastSuccessfulSyncAt": "2026-10-04T20:21:51.242398+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "e31f6f947ee66c22ede843ec840ef138d7b06c23e497e7767e2b4827c6317bc9",
-    "sourceRevision": 89,
-    "sourceUpdatedAt": "2026-10-04T20:17:40.668171+00:00"
+    "fingerprint": "c167e87fbb3bb915fab242a16128d760470006666fcb2e69c0155ac1aaf1e6d7",
+    "sourceRevision": 90,
+    "sourceUpdatedAt": "2026-10-04T20:21:33.652274+00:00"
   }
 }

@@ -1,15 +1,15 @@
 {
-  "revision": 89,
+  "revision": 90,
   "currentStep": "E03",
   "currentTicketId": "z8v0kmr9mj",
-  "updatedAt": "2026-10-04T20:17:40.668171+00:00",
+  "updatedAt": "2026-10-04T20:21:33.652274+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "冻结用户植物档案更新的具体请求合同并实施纵向切片",
-    "minimumValidation": "严格字段Schema与独立Expected、版本/幂等/归属、真实SQL/HTTP读回",
-    "continueCondition": "已冻结字段及配置可以实现；pending参数仅补证据和RED",
-    "failureCondition": "无字段真相源或参数仍pending时不填默认值",
-    "rollback": "独立回退更新切片，不修改生产DDL或历史快照",
+    "target": "实现用户植物档案实测盆器严格子结构",
+    "minimumValidation": "独立Expected→快照/三值/单位/未知键准入→既有计算；突变与恢复；相邻/全量/构建",
+    "continueCondition": "当前子结构可作为后续严格DTO组成，不视为完整档案",
+    "failureCondition": "缺字段/非法类型或客户端派生值进入事实则拒绝",
+    "rollback": "回退本次子结构；不修改生产或DDL",
     "timeLimit": "30分钟"
   },
   "tasks": [
@@ -257,26 +257,27 @@
     {
       "id": "z8v0kmr9mj",
       "step": "E03",
-      "version": 1,
+      "version": 2,
       "priority": "high",
       "status": "codex running",
-      "stage": "档案更新合同与配置确认",
+      "stage": "盆器测量子结构合同与严格校验已验证；完整档案及写入未验收",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E03-promotion-context.json",
         ".codex/backend-v2/evidence/E03-profile-update-gap.json",
-        "cloudfunctions-v2/models/user-plant/profile-update-contract-draft.md"
+        "cloudfunctions-v2/models/user-plant/profile-update-contract-draft.md",
+        ".codex/backend-v2/evidence/E03-measured-pot-profile.json"
       ],
       "summary": [
-        "E03：已读回原用户植物票，承接更新/档案纵向切片",
-        "更新仅有路由登记，缺严格字段Schema；合同待冻结稿已落盘",
-        "明确聚合版本/幂等/归属与事实边界，不接收任意JSON",
-        "登录临时案例TTL待确认，不自动沿用游客24小时",
-        "本轮尚未改产品；先补字段合同再执行RED→实现→SQL/HTTP"
+        "E03：实测盆器事实子结构Schema及不可变校验已实现",
+        "拒绝未知键/缺字段/隐式转换；未知null交给既有安全模型",
+        "独立新增20项，相邻71项；额外字段守卫4项RED→恢复GREEN",
+        "根与Node22全量1523/1523，类型/检查/构建通过",
+        "完整档案字段、事务及HTTP仍未验收，原票保持进行中"
       ],
       "blockingReason": null,
-      "nextAction": "按现有光照/盆器输入明确完整档案请求Schema、清除语义及聚合版本；测试先行实现事务与HTTP",
-      "ticketReadback": "Chrome CODEX RUNNING与五行评论1100440000090864已读回",
+      "nextAction": "继续冻结盆器/基质、位置、光照、通风完整档案字段及清除语义，再接归属/版本/幂等事务与HTTP；临时TTL仍待确认",
+      "ticketReadback": "Chrome CODEX RUNNING与五行评论1100440000090867已读回",
       "priorityReason": "当前用户植物纵向切片的必要合同前置，未等待无关CMS"
     }
   ],
@@ -381,7 +382,7 @@
       ]
     }
   ],
-  "nextAction": "按现有光照/盆器输入明确完整档案请求Schema、清除语义及聚合版本；测试先行实现事务与HTTP",
+  "nextAction": "继续冻结盆器/基质、位置、光照、通风完整档案字段及清除语义，再接归属/版本/幂等事务与HTTP；临时TTL仍待确认",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",

@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:qinghuazhi:user-plant:measured-pot-profile:v1",
+  "title": "用户植物实际内盆测量事实子结构",
+  "description": "仅保存厘米尺寸和三值确认事实，不包含身份、容积派生、基质或持水倍率；不是完整档案请求。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["actualInnerPotConfirmed", "drainageAvailable", "potTopDiameterCm", "potBottomDiameterCm", "potHeightCm"],
+  "properties": {
+    "actualInnerPotConfirmed": {
+      "type": ["boolean", "null"],
+      "description": "实际种植内盆确认；false表示不满足，null表示未知，不把装饰外盆当内盆。"
+    },
+    "drainageAvailable": {
+      "type": ["boolean", "null"],
+      "description": "内盆排水孔及通道是否有效；null表示未确认。"
+    },
+    "potTopDiameterCm": {
+      "type": ["number", "null"],
+      "exclusiveMinimum": 0,
+      "description": "盆口内直径，厘米，有限正数或明确未知null。"
+    },
+    "potBottomDiameterCm": {
+      "type": ["number", "null"],
+      "exclusiveMinimum": 0,
+      "description": "盆底内直径，厘米，不含盆壁，有限正数或明确未知null。"
+    },
+    "potHeightCm": {
+      "type": ["number", "null"],
+      "exclusiveMinimum": 0,
+      "description": "容器内深，厘米，不是植物高度，有限正数或明确未知null。"
+    }
+  }
+}

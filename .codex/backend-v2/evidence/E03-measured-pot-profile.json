@@ -1,0 +1,60 @@
+{
+  "ticket": "z8v0kmr9mj",
+  "step": "E03",
+  "at": "2026-10-04T20:21:33.652274+00:00",
+  "accepted": false,
+  "verifiedScope": "档案更新前的实测盆器事实严格子结构准入与养护计算衔接",
+  "expectedSources": [
+    "批准计划6.5内盆、非法尺寸和缺证据边界",
+    "已冻结实测盆器合同及厘米/圆台700π毫升基准",
+    "仓库严格DTO与纯JSON规则"
+  ],
+  "contextReuse": "复用已核验E03档案与E04实测盆器合同，不新增docs/backend-v2或OpenViking正文读取",
+  "configurationDecision": "固定类型、厘米单位、有限正数、显式null与禁止未知键；无新业务阈值、默认值、依赖或Provider",
+  "verification": {
+    "level": "L1/unit_fake",
+    "path": "严格子结构Schema→纯JSON不可变副本→既有实测盆器几何/安全模型",
+    "substitutions": "无替身；不包括持久化或HTTP",
+    "newTests": 20,
+    "relatedTests": 71,
+    "tdd": {
+      "path": "快速路径：独立Expected测试先落盘；额外字段守卫突变4项RED→逐字节恢复Schema→相邻71项GREEN",
+      "redLog": "/tmp/planting-e03-pot-profile-mutation.log",
+      "greenLog": "/tmp/planting-e03-pot-profile-restored.log"
+    },
+    "rootVitest": {
+      "files": 172,
+      "tests": 1523,
+      "exitCode": 0
+    },
+    "node22Vitest": {
+      "version": "22.21.1",
+      "files": 172,
+      "tests": 1523,
+      "exitCode": 0
+    },
+    "typecheck": 0,
+    "lint": {
+      "errors": 0,
+      "warnings": 2253,
+      "exitCode": 0
+    },
+    "build": {
+      "exitCode": 0,
+      "limitation": "Node22启动构建，子npm进程仍提示Node24与声明22的版本警告；不证明CloudBase运行"
+    }
+  },
+  "notAccepted": [
+    "完整盆器/基质及环境档案请求Schema",
+    "用户植物更新事务和HTTP读回",
+    "完整度/奖励资格",
+    "用户实际测量及正式平台验真",
+    "已登录临时案例保留时长及创建/绑定"
+  ],
+  "sha256": {
+    "cloudfunctions-v2/src/user-plant/domain/measured-pot-profile.ts": "424c664ab021a9027dc1510db3b8475ea4f1de0916e2cf71e6b0df3429ca5ba7",
+    "cloudfunctions-v2/models/user-plant/measured-pot-profile.v1.schema.json": "f56289d891007b7527b34fefe8ee352640db13dde79010cbee7bd31def846429",
+    "cloudfunctions-v2/models/user-plant/measured-pot-profile-contract.md": "c3601c78ee5467d7e3538b280234487f8119e57c3b4c1409b48cd767c7aece28",
+    "cloudfunctions-v2/test/user-plant/measured-pot-profile.spec.ts": "1540c6945266f53501de85381f60002fa186b24649129c9a79a242a506fef33a"
+  }
+}
