@@ -1,0 +1,77 @@
+{
+  "ticketId": "z8v0kmr974",
+  "step": "E05",
+  "scope": "虫害原子创建复用共享幂等事务，正式HTTP不开放",
+  "verifiedAt": "2026-10-04T17:29:25.048891+00:00",
+  "expectedSource": [
+    "cloudfunctions-v2/models/diagnosis/pest-creation-idempotency-contract.md",
+    "用户批准统一计划的事务、幂等和未知提交规则"
+  ],
+  "tdd": {
+    "path": "经典RED后实现，并执行重放守卫突变与完整恢复",
+    "initialRed": {
+      "tests": 21,
+      "log": "/tmp/planting-e05-pest-idempotency-red.log"
+    },
+    "mutation": {
+      "failedTests": 2,
+      "passedTests": 38,
+      "break": "删除replay早返回会再次执行创建和首次响应投影",
+      "restored": true,
+      "log": "/tmp/planting-e05-pest-idempotency-mutation.log"
+    }
+  },
+  "coverage": [
+    "首次事务与资产摘要",
+    "同键重放不再次选题/准备/创建",
+    "同键换图摘要冲突与非法作用域",
+    "缺失资产、非法时间、模式",
+    "完成记录失败回滚和脱敏",
+    "未知提交只读对账"
+  ],
+  "proofBoundary": {
+    "level": "unit_fake/L3",
+    "realPath": "共享幂等服务+Foundation事务编排+实际虫害选题与原子创建用例",
+    "replaced": "数据库驱动、账本、资产/发布/视觉SQL端口、受控准备和首次响应投影",
+    "notProven": [
+      "本轮未执行真实MySQL幂等创建集成",
+      "正式虫害HTTP",
+      "真实Provider与模型/Prompt兼容准入",
+      "临时案例及诊断结论全旅程"
+    ]
+  },
+  "checks": {
+    "related": {
+      "files": 23,
+      "passed": 305,
+      "log": "/tmp/planting-e05-pest-idempotency-related.log"
+    },
+    "fullUnit": {
+      "files": 151,
+      "passed": 1327,
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-pest-idempotency-full-ut.log"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-pest-idempotency-typecheck.log"
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 1705,
+      "log": "/tmp/planting-e05-pest-idempotency-lint.log"
+    },
+    "build": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-pest-idempotency-build.log"
+    }
+  },
+  "configurationDecision": "本增量无新可配置变量、阈值、保留期或Provider默认值，复用入口提供的发布作用域；非空资产与模式隔离属于命令硬边界",
+  "contextRecall": "planting定向L0/L1/L2 find在健康服务上60秒超时；无docs/backend-v2读取",
+  "nextAction": "冻结虫害公开创建DTO与零题响应；接HTTP前仍需准备适配器准入及模型/Prompt溯源",
+  "ticketReadback": {
+    "commentId": "1100440000090422",
+    "status": "codex running",
+    "note": "E05虫害原子创建接共享幂等，资产引用进入请求摘要\n重放不再次分析/选题/写入；提交未知只读对账\n新增22项；相关305项，全量1327/1327，类型/构建通过\n重放守卫2项突变RED→完整恢复；lint零错误\n真实MySQL幂等创建、动态HTTP及模型准备准入待验收"
+  }
+}

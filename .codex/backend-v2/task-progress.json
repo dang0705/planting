@@ -1,19 +1,19 @@
 {
-  "revision": 66,
+  "revision": 67,
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
-  "updatedAt": "2026-10-04T17:23:10.667767+00:00",
+  "updatedAt": "2026-10-04T17:29:25.048891+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "E05受控资产分析后原子创建虫害题包与视觉证据",
+    "target": "虫害原子创建复用共享幂等事务，正式HTTP不开放",
     "assumptions": [
-      "019新会话要求有完整题包，不能先空后改",
-      "客户端不授权档位或证据键，准入由服务端独立提供"
+      "资产已归属用户植物",
+      "固定症状共享账本和事务可复用"
     ],
-    "minimumValidation": "独立Expected先落盘；真实MySQL创建及证据同事务读回/回滚；保持不可变题包",
-    "continueCondition": "既有资产归属、快照及视觉表能表达同事务创建",
-    "failureCondition": "需要旧阈值默认值或私设视觉Provider策略时拒绝正式入口",
-    "rollback": "回退本轮代码，不改变生产DDL或019触发器",
+    "minimumValidation": "独立Expected先落盘，重放守卫突变RED与恢复，相关/全量测试",
+    "continueCondition": "不新增账本、配置或弱化019约束",
+    "failureCondition": "若需要Provider默认值或公开原始快照则停止该路径",
+    "rollback": "回退本增量源码，不改生产DDL或发布",
     "timeLimitMinutes": 40
   },
   "tasks": [
@@ -200,10 +200,10 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 15,
+      "version": 16,
       "priority": "normal",
       "status": "codex running",
-      "stage": "动态虫害选定题包与视觉证据原子创建真实SQL核验",
+      "stage": "虫害原子创建共享幂等接线与重放验证",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
@@ -219,18 +219,19 @@
         ".codex/backend-v2/evidence/E05-dynamic-pest-release.json",
         ".codex/backend-v2/evidence/E05-dynamic-pest-immutability.json",
         ".codex/backend-v2/evidence/E05-owned-visual-evidence.json",
-        ".codex/backend-v2/evidence/E05-atomic-pest-session.json"
+        ".codex/backend-v2/evidence/E05-atomic-pest-session.json",
+        ".codex/backend-v2/evidence/E05-pest-creation-idempotency.json"
       ],
       "summary": [
-        "E05私有资产→活动发布→选定题包/视觉，同事务创建",
-        "分析准备仍为端口替身；无旧阈值、默认题包或自动直判",
-        "新增28项；真实MySQL34项，全量1305/1305，类型/构建通过",
-        "题包正文守卫1项突变RED→恢复；失败整笔回滚，019保留",
-        "模型/Prompt溯源、准备准入、共享幂等和动态HTTP待接"
+        "E05虫害原子创建接共享幂等，资产引用进入请求摘要",
+        "重放不再次分析/选题/写入；提交未知只读对账",
+        "新增22项；相关305项，全量1327/1327，类型/构建通过",
+        "重放守卫2项突变RED→完整恢复；lint零错误",
+        "真实MySQL幂等创建、动态HTTP及模型准备准入待验收"
       ],
       "blockingReason": null,
-      "nextAction": "接动态创建共享幂等和公开DTO/HTTP；正式准备适配器须锁定模型/Prompt兼容版本及证据语义、档位、成本和保留期策略",
-      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090408已读回",
+      "nextAction": "冻结虫害公开创建DTO与零题响应；接HTTP前仍需准备适配器准入及模型/Prompt溯源",
+      "ticketReadback": "Chrome CODEX RUNNING与五行评论1100440000090422已读回",
       "milestoneCommit": "91987513"
     }
   ],
@@ -335,7 +336,7 @@
       ]
     }
   ],
-  "nextAction": "接动态创建共享幂等和公开DTO/HTTP；正式准备适配器须锁定模型/Prompt兼容版本及证据语义、档位、成本和保留期策略",
+  "nextAction": "冻结虫害公开创建DTO与零题响应；接HTTP前仍需准备适配器准入及模型/Prompt溯源",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",

@@ -4,6 +4,12 @@ import { expect, test, vi } from 'vitest'
 import { findProjectRoot } from '../support/project-root.js'
 import { createPestQuestionSessionInTransaction } from '../../src/diagnosis/application/create-pest-question-session.js'
 import { projectPestQuestionPackage } from '../../src/diagnosis/http/pest-question-public-projection.js'
+import { createHash } from 'node:crypto'
+import {
+  calculatePestDiagnosisCreationRequestHash,
+  createIdempotentPestDiagnosisCreationService
+} from '../../src/diagnosis/application/idempotent-create-diagnosis.js'
+import type { HttpIdempotencyPublicResponseSnapshot } from '../../src/foundation/idempotency/http-idempotency.js'
 /** unit_fake / L3：真实V1素材；归属、发布、分析准备与SQL端口替身，不证明正式视觉Provider或HTTP。Expected来自原子创建合同、019约束、已批准题数与安全投影合同。 */
 const raw = JSON.parse(
   readFileSync(
@@ -96,6 +102,69 @@ function harness() {
   } as any)
   return { published, asset, prepare, append, appendVisual, read, readVisual, run }
 }
+test('共享幂等重放实际虫害选题和原子创建的首次题包，不再次准备分析或写会话', async () => {
+  const f = harness(),
+    tx = { transactionContext: true as const }
+  const command = { ...input, mode: 'pest' as const }
+  let saved: HttpIdempotencyPublicResponseSnapshot | undefined
+  const run = createIdempotentPestDiagnosisCreationService({
+    driver: {
+      beginTransaction: async () => tx,
+      commitTransaction: async () => {},
+      rollbackTransaction: async () => {},
+      recordRollbackFailure: () => {}
+    },
+    idempotencyRepository: {
+      read: vi.fn(),
+      tryReserve: async () => (saved ? { kind: 'replay', response: saved } : { kind: 'reserved' }),
+      completionFirstResult: async (_tx, completion) => {
+        saved = completion.response
+        return { kind: 'completed', response: saved }
+      }
+    },
+    commitUnknownRepository: { read: vi.fn() },
+    createInTransaction: f.run,
+    // 正式HTTP仍未开放，此投影仅为本集成场景的受控端口。
+    projectPublicResponse: result => {
+      if (result.status !== 'created') {
+        throw new Error('未创建')
+      }
+      return {
+        status: 200,
+        body: {
+          data: {
+            diagnosisSessionRef: result.diagnosisRef,
+            questionPackage: projectPestQuestionPackage(result.snapshot)
+          }
+        } as any
+      }
+    }
+  })
+  const request = {
+    ...command,
+    idempotency: {
+      principalType: 'user' as const,
+      principalScopeHash: createHash('sha256').update(input.userRef).digest('hex'),
+      httpMethod: 'POST',
+      normalizedPath: '/api/v2/diagnosis/sessions',
+      operationId: 'createDiagnosisSession',
+      idempotencyKeyHash: 'a'.repeat(64),
+      requestHash: calculatePestDiagnosisCreationRequestHash(command),
+      createdAtMs: 1500,
+      expiresAtMs: 2000
+    }
+  }
+  const first = await run(request)
+  expect(first.status).toBe(200)
+  expect((first.body as any).data.questionPackage.questionCount).toBe(2)
+  expect(await run({ ...request, startedAtMs: 1600 })).toEqual(first)
+  for (const port of [f.published, f.asset, f.prepare, f.append, f.appendVisual]) {
+    expect(port).toHaveBeenCalledTimes(1)
+    expect(port.mock.calls[0]![0]).toBe(tx)
+  }
+  expect(JSON.stringify(first)).not.toContain('bpr_pest12345')
+  expect(JSON.stringify(first)).not.toContain('upa_owner123')
+})
 test('原事务选题、会话、视觉证据及读回一并完成，不从模型置信度生成档位', async () => {
   const f = harness(),
     tx = { transactionContext: true as const },
