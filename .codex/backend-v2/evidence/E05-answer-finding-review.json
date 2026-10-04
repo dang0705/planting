@@ -1,0 +1,43 @@
+{
+  "ticketId": "z8v0kmr974",
+  "step": "E05",
+  "accepted": false,
+  "scope": "受控答案归一最小审核稿，非运行规则",
+  "artifacts": [
+    "cloudfunctions-v2/models/diagnosis/answer-finding-review.md",
+    "cloudfunctions-v2/models/diagnosis/answer-finding-review.draft.json"
+  ],
+  "sourceVerification": {
+    "sourceSha256Verified": true,
+    "exactSourceCoverage": 85,
+    "uniqueProposedCodes": 57,
+    "unknownOrCompound": 28,
+    "maxCodeLength": 82,
+    "reviewStatus": "pending",
+    "runtimeUsable": false
+  },
+  "openViking": {
+    "query": "planting backend-v2 diagnosis answer findingCode 已审核归一映射 用户问卷选项 观察代码",
+    "targetUri": "viking://resources/planting",
+    "result": "MCP请求60000ms超时，无可用正文，不重启/不重试/不扩大文档读取"
+  },
+  "verification": {
+    "kind": "来源制品机械对照，不是产品规则验收或TDD",
+    "root": {
+      "files": 167,
+      "tests": 1450,
+      "exit": 0,
+      "log": "/tmp/planting-e05-answer-finding-review-root-test.log"
+    },
+    "productBehaviorChanged": false
+  },
+  "pendingDecision": "确认reported.*申报语义/未知保留/复合证据/不推定部位病因行动后才能进入配置裁决与实现",
+  "unaccepted": [
+    "答案映射正式发布",
+    "视觉归一",
+    "最终结论/行动计算",
+    "CMS/Provider正式准入",
+    "诊断HTTP闭环"
+  ],
+  "productionChanges": false
+}

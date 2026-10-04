@@ -1,0 +1,1770 @@
+{
+  "artifactKind": "answer-finding-review-draft",
+  "approvalStatus": "pending",
+  "ticketId": "z8v0kmr974",
+  "runtimeUsable": false,
+  "source": {
+    "path": "cloudfunctions-v2/models/diagnosis/v1-reuse/questions.json",
+    "sha256": "40385731fe0ed7d20c9331b1be6aee10c13ebb900350a4576c14edd0ea07107f",
+    "classification": "V1题包来源制品，不是园艺审核发布"
+  },
+  "scope": "V1黄叶、萎蔫、八类虫害现有题目/选项与服务端时间线选项；不复用旧结论/行动算法",
+  "mappings": [
+    {
+      "symptomModeCode": "yellow_leaf",
+      "questionKey": "q_observed_probe__leaf_yellowing__watering_frequency_context",
+      "optionKey": "normal_or_stable",
+      "questionTextZh": "最近 2 周，你的浇水情况更接近哪一种？",
+      "optionTextZh": "等土表发干再浇，最近节奏基本稳定",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.yellow_leaf.watering_frequency_context.normal_or_stable",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "yellow_leaf",
+      "questionKey": "q_observed_probe__leaf_yellowing__watering_frequency_context",
+      "optionKey": "often_dry",
+      "questionTextZh": "最近 2 周，你的浇水情况更接近哪一种？",
+      "optionTextZh": "常常干很久才浇，或这两周几乎没浇几次",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.yellow_leaf.watering_frequency_context.often_dry",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "yellow_leaf",
+      "questionKey": "q_observed_probe__leaf_yellowing__watering_frequency_context",
+      "optionKey": "often_wet",
+      "questionTextZh": "最近 2 周，你的浇水情况更接近哪一种？",
+      "optionTextZh": "土还没怎么干就会再浇，或这两周一直偏湿",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.yellow_leaf.watering_frequency_context.often_wet",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "yellow_leaf",
+      "questionKey": "q_observed_probe__leaf_yellowing__watering_frequency_context",
+      "optionKey": "unknown",
+      "questionTextZh": "最近 2 周，你的浇水情况更接近哪一种？",
+      "optionTextZh": "说不清/没留意",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "yellow_leaf",
+      "questionKey": "q_observed_probe__leaf_yellowing__watering_frequency_context",
+      "optionKey": "care_behavior_timeline",
+      "questionTextZh": "最近 2 周，你的浇水情况更接近哪一种？",
+      "optionTextZh": "服务端授权行为时间线",
+      "reviewStatus": "pending",
+      "normalizationKind": "read_verified_compound",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "只读取已验证时间线；用户申报行为不升级为已完成养护事实",
+      "forbiddenEffects": [
+        "推定干湿进度",
+        "转换为care实际事实",
+        "补剂量/时间"
+      ]
+    },
+    {
+      "symptomModeCode": "yellow_leaf",
+      "questionKey": "q_observed_probe__leaf_yellowing__light_change_context",
+      "optionKey": "stronger_direct_light",
+      "questionTextZh": "黄叶和光照有关时，先看最近的直射、遮阴和离窗距离。最近 1-2 周，这盆植物更接近哪种光照？",
+      "optionTextZh": "全日光，或每天直射很多",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.yellow_leaf.light_change_context.stronger_direct_light",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "yellow_leaf",
+      "questionKey": "q_observed_probe__leaf_yellowing__light_change_context",
+      "optionKey": "no_clear_change",
+      "questionTextZh": "黄叶和光照有关时，先看最近的直射、遮阴和离窗距离。最近 1-2 周，这盆植物更接近哪种光照？",
+      "optionTextZh": "散光为主，最近基本没变",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.yellow_leaf.light_change_context.no_clear_change",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "yellow_leaf",
+      "questionKey": "q_observed_probe__leaf_yellowing__light_change_context",
+      "optionKey": "weaker_light",
+      "questionTextZh": "黄叶和光照有关时，先看最近的直射、遮阴和离窗距离。最近 1-2 周，这盆植物更接近哪种光照？",
+      "optionTextZh": "全阴、离窗较远，或最近更暗",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.yellow_leaf.light_change_context.weaker_light",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "yellow_leaf",
+      "questionKey": "q_observed_probe__leaf_yellowing__light_change_context",
+      "optionKey": "unknown",
+      "questionTextZh": "黄叶和光照有关时，先看最近的直射、遮阴和离窗距离。最近 1-2 周，这盆植物更接近哪种光照？",
+      "optionTextZh": "说不清/没留意",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "yellow_leaf",
+      "questionKey": "q_observed_probe__leaf_yellowing__fertilization_growth_context",
+      "optionKey": "low_or_no_fertilizer",
+      "questionTextZh": "黄叶和营养有关时，既可能是长期没补肥，也可能是近期重肥或换盆刺激。最近 1 个月，施肥情况更接近哪一种？",
+      "optionTextZh": "近 1 个月 0 次（很少施肥）",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.yellow_leaf.fertilization_growth_context.low_or_no_fertilizer",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "yellow_leaf",
+      "questionKey": "q_observed_probe__leaf_yellowing__fertilization_growth_context",
+      "optionKey": "normal_light_fertilizer",
+      "questionTextZh": "黄叶和营养有关时，既可能是长期没补肥，也可能是近期重肥或换盆刺激。最近 1 个月，施肥情况更接近哪一种？",
+      "optionTextZh": "近 1 个月 1-2 次（偏稳）",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.yellow_leaf.fertilization_growth_context.normal_light_fertilizer",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "yellow_leaf",
+      "questionKey": "q_observed_probe__leaf_yellowing__fertilization_growth_context",
+      "optionKey": "recent_heavy_fertilizer_or_repot",
+      "questionTextZh": "黄叶和营养有关时，既可能是长期没补肥，也可能是近期重肥或换盆刺激。最近 1 个月，施肥情况更接近哪一种？",
+      "optionTextZh": "近 1 个月 2 次以上（重肥/换盆换土）",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.yellow_leaf.fertilization_growth_context.recent_heavy_fertilizer_or_repot",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "yellow_leaf",
+      "questionKey": "q_observed_probe__leaf_yellowing__fertilization_growth_context",
+      "optionKey": "unknown",
+      "questionTextZh": "黄叶和营养有关时，既可能是长期没补肥，也可能是近期重肥或换盆刺激。最近 1 个月，施肥情况更接近哪一种？",
+      "optionTextZh": "说不清/没留意",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "yellow_leaf",
+      "questionKey": "q_yellow_leaf__air_environment",
+      "optionKey": "air_environment_recorded",
+      "questionTextZh": "植物周围的空气环境怎样？",
+      "optionTextZh": "已填写空气环境",
+      "reviewStatus": "pending",
+      "normalizationKind": "read_verified_compound",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "只读取已验证复合证据，选中已填写不能单独形成环境观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "yellow_leaf",
+      "questionKey": "q_yellow_leaf__air_environment",
+      "optionKey": "air_environment_unknown",
+      "questionTextZh": "植物周围的空气环境怎样？",
+      "optionTextZh": "不确定",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_observed_probe__leaf_yellowing__watering_frequency_context",
+      "optionKey": "normal_or_stable",
+      "questionTextZh": "最近 2 周，你的浇水情况更接近哪一种？",
+      "optionTextZh": "等土表发干再浇，最近节奏基本稳定",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.wilting_droop.watering_frequency_context.normal_or_stable",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_observed_probe__leaf_yellowing__watering_frequency_context",
+      "optionKey": "often_dry",
+      "questionTextZh": "最近 2 周，你的浇水情况更接近哪一种？",
+      "optionTextZh": "常常干很久才浇，或这两周几乎没浇几次",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.wilting_droop.watering_frequency_context.often_dry",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_observed_probe__leaf_yellowing__watering_frequency_context",
+      "optionKey": "often_wet",
+      "questionTextZh": "最近 2 周，你的浇水情况更接近哪一种？",
+      "optionTextZh": "土还没怎么干就会再浇，或这两周一直偏湿",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.wilting_droop.watering_frequency_context.often_wet",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_observed_probe__leaf_yellowing__watering_frequency_context",
+      "optionKey": "unknown",
+      "questionTextZh": "最近 2 周，你的浇水情况更接近哪一种？",
+      "optionTextZh": "说不清/没留意",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_observed_probe__leaf_yellowing__watering_frequency_context",
+      "optionKey": "care_behavior_timeline",
+      "questionTextZh": "最近 2 周，你的浇水情况更接近哪一种？",
+      "optionTextZh": "服务端授权行为时间线",
+      "reviewStatus": "pending",
+      "normalizationKind": "read_verified_compound",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "只读取已验证时间线；用户申报行为不升级为已完成养护事实",
+      "forbiddenEffects": [
+        "推定干湿进度",
+        "转换为care实际事实",
+        "补剂量/时间"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_wilting_droop__shape",
+      "optionKey": "whole_plant_droop",
+      "questionTextZh": "你现在看到的状态更接近哪一种？",
+      "optionTextZh": "整株软塌下垂",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.wilting_droop.wilting_shape.whole_plant_droop",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_wilting_droop__shape",
+      "optionKey": "local_branch_leaf",
+      "questionTextZh": "你现在看到的状态更接近哪一种？",
+      "optionTextZh": "局部叶片 / 枝条发蔫",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.wilting_droop.wilting_shape.local_branch_leaf",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_wilting_droop__shape",
+      "optionKey": "new_shoots",
+      "questionTextZh": "你现在看到的状态更接近哪一种？",
+      "optionTextZh": "新叶嫩梢为主",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.wilting_droop.wilting_shape.new_shoots",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_wilting_droop__shape",
+      "optionKey": "dry_crispy_curled_burnt_edge",
+      "questionTextZh": "你现在看到的状态更接近哪一种？",
+      "optionTextZh": "叶片干脆、卷曲、焦边",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.wilting_droop.wilting_shape.dry_crispy_curled_burnt_edge",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_wilting_droop__shape",
+      "optionKey": "unknown",
+      "questionTextZh": "你现在看到的状态更接近哪一种？",
+      "optionTextZh": "不确定",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_wilting_droop__rhythm_environment",
+      "optionKey": "daytime_recovers",
+      "questionTextZh": "发蔫通常在什么情况下更明显？",
+      "optionTextZh": "白天明显，晚上 / 早晨缓解",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.wilting_droop.wilting_rhythm_environment.daytime_recovers",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_wilting_droop__rhythm_environment",
+      "optionKey": "strong_window_west_heat",
+      "questionTextZh": "发蔫通常在什么情况下更明显？",
+      "optionTextZh": "靠近强光窗边、西晒、高温玻璃后",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.wilting_droop.wilting_rhythm_environment.strong_window_west_heat",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_wilting_droop__rhythm_environment",
+      "optionKey": "all_day_wilt",
+      "questionTextZh": "发蔫通常在什么情况下更明显？",
+      "optionTextZh": "全天都蔫",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.wilting_droop.wilting_rhythm_environment.all_day_wilt",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_wilting_droop__rhythm_environment",
+      "optionKey": "unknown",
+      "questionTextZh": "发蔫通常在什么情况下更明显？",
+      "optionTextZh": "不确定",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_wilting_droop__air_environment",
+      "optionKey": "air_environment_recorded",
+      "questionTextZh": "植物周围的空气环境怎样？",
+      "optionTextZh": "已填写空气环境",
+      "reviewStatus": "pending",
+      "normalizationKind": "read_verified_compound",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "只读取已验证复合证据，选中已填写不能单独形成环境观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_wilting_droop__air_environment",
+      "optionKey": "air_environment_unknown",
+      "questionTextZh": "植物周围的空气环境怎样？",
+      "optionTextZh": "不确定",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_wilting_droop__recent_stress",
+      "optionKey": "moved_transport",
+      "questionTextZh": "最近 7 天有没有发生以下情况？",
+      "optionTextZh": "刚买回家、运输、搬位置",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.wilting_droop.recent_stress.moved_transport",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_wilting_droop__recent_stress",
+      "optionKey": "repot_divide_root_prune_soil_change",
+      "questionTextZh": "最近 7 天有没有发生以下情况？",
+      "optionTextZh": "刚换盆、分株、修根、换土",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.wilting_droop.recent_stress.repot_divide_root_prune_soil_change",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_wilting_droop__recent_stress",
+      "optionKey": "heavy_pruning",
+      "questionTextZh": "最近 7 天有没有发生以下情况？",
+      "optionTextZh": "最近大量修剪",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.wilting_droop.recent_stress.heavy_pruning",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_wilting_droop__recent_stress",
+      "optionKey": "heavy_fertilizer_chemical_cleaner",
+      "questionTextZh": "最近 7 天有没有发生以下情况？",
+      "optionTextZh": "最近施浓肥、用药、喷清洁液",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.wilting_droop.recent_stress.heavy_fertilizer_chemical_cleaner",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_wilting_droop__recent_stress",
+      "optionKey": "none_unknown",
+      "questionTextZh": "最近 7 天有没有发生以下情况？",
+      "optionTextZh": "都没有 / 不确定",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_wilting_droop__high_risk",
+      "optionKey": "black_soft_collapsed_stem_base",
+      "questionTextZh": "有没有看到以下异常？",
+      "optionTextZh": "茎基部发黑、发软、塌陷",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.wilting_droop.wilting_high_risk.black_soft_collapsed_stem_base",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_wilting_droop__high_risk",
+      "optionKey": "odor_root_soil_pot_bottom",
+      "questionTextZh": "有没有看到以下异常？",
+      "optionTextZh": "土壤 / 根部 / 盆底有异味",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.wilting_droop.wilting_high_risk.odor_root_soil_pot_bottom",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_wilting_droop__high_risk",
+      "optionKey": "black_water_soaked_mushy_leaves",
+      "questionTextZh": "有没有看到以下异常？",
+      "optionTextZh": "叶片发黑、水渍状、软烂",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.wilting_droop.wilting_high_risk.black_water_soaked_mushy_leaves",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_wilting_droop__high_risk",
+      "optionKey": "yellow_drop_increasing",
+      "questionTextZh": "有没有看到以下异常？",
+      "optionTextZh": "黄叶或落叶明显增加",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.wilting_droop.wilting_high_risk.yellow_drop_increasing",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_wilting_droop__high_risk",
+      "optionKey": "pests_webbing_white_fuzz_spots_spreading",
+      "questionTextZh": "有没有看到以下异常？",
+      "optionTextZh": "虫害、蛛网、白絮、斑点扩散",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.wilting_droop.wilting_high_risk.pests_webbing_white_fuzz_spots_spreading",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "wilting_droop",
+      "questionKey": "q_wilting_droop__high_risk",
+      "optionKey": "none_unknown",
+      "questionTextZh": "有没有看到以下异常？",
+      "optionTextZh": "都没有 / 不确定",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__spider_mite_webbing",
+      "optionKey": "spider_mite_webbing_yes",
+      "questionTextZh": "叶背或叶柄附近有没有很细的蛛网状丝线？",
+      "optionTextZh": "有，能清楚看到这种痕迹",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.spider_mite_webbing.spider_mite_webbing_yes",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "fine_webbing"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__spider_mite_webbing",
+      "optionKey": "spider_mite_webbing_no",
+      "questionTextZh": "叶背或叶柄附近有没有很细的蛛网状丝线？",
+      "optionTextZh": "没有看到",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.spider_mite_webbing.spider_mite_webbing_no",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "fine_webbing"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__spider_mite_webbing",
+      "optionKey": "unknown",
+      "questionTextZh": "叶背或叶柄附近有没有很细的蛛网状丝线？",
+      "optionTextZh": "不方便确认 / 看不清",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__spider_mite_dots",
+      "optionKey": "spider_mite_dots_yes",
+      "questionTextZh": "叶面或叶背有没有白黄小点，旁边能看到很小的移动点？",
+      "optionTextZh": "有，能清楚看到这种痕迹",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.spider_mite_dots.spider_mite_dots_yes",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "yellow_speckling"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__spider_mite_dots",
+      "optionKey": "spider_mite_dots_no",
+      "questionTextZh": "叶面或叶背有没有白黄小点，旁边能看到很小的移动点？",
+      "optionTextZh": "没有看到",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.spider_mite_dots.spider_mite_dots_no",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "yellow_speckling"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__spider_mite_dots",
+      "optionKey": "unknown",
+      "questionTextZh": "叶面或叶背有没有白黄小点，旁边能看到很小的移动点？",
+      "optionTextZh": "不方便确认 / 看不清",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__mealybug_colony",
+      "optionKey": "mealybug_colony_yes",
+      "questionTextZh": "叶柄、叶腋或茎上有没有一团团白色棉絮状虫体？",
+      "optionTextZh": "有，能清楚看到这种痕迹",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.mealybug_colony.mealybug_colony_yes",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "visible_mealybug_colony"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__mealybug_colony",
+      "optionKey": "mealybug_colony_no",
+      "questionTextZh": "叶柄、叶腋或茎上有没有一团团白色棉絮状虫体？",
+      "optionTextZh": "没有看到",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.mealybug_colony.mealybug_colony_no",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "visible_mealybug_colony"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__mealybug_colony",
+      "optionKey": "unknown",
+      "questionTextZh": "叶柄、叶腋或茎上有没有一团团白色棉絮状虫体？",
+      "optionTextZh": "不方便确认 / 看不清",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__scale_shells",
+      "optionKey": "scale_shells_yes",
+      "questionTextZh": "茎或叶背有没有固定不动、像小壳或小凸点一样的虫体？",
+      "optionTextZh": "有，能清楚看到这种痕迹",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.scale_shells.scale_shells_yes",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "scale_shells"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__scale_shells",
+      "optionKey": "scale_shells_no",
+      "questionTextZh": "茎或叶背有没有固定不动、像小壳或小凸点一样的虫体？",
+      "optionTextZh": "没有看到",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.scale_shells.scale_shells_no",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "scale_shells"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__scale_shells",
+      "optionKey": "unknown",
+      "questionTextZh": "茎或叶背有没有固定不动、像小壳或小凸点一样的虫体？",
+      "optionTextZh": "不方便确认 / 看不清",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__whitefly_adults",
+      "optionKey": "whitefly_adults_yes",
+      "questionTextZh": "在确认安全的前提下，轻碰叶片时有没有白色小飞虫飞起？",
+      "optionTextZh": "有，能清楚看到这种痕迹",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.whitefly_adults.whitefly_adults_yes",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "white_flies"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__whitefly_adults",
+      "optionKey": "whitefly_adults_no",
+      "questionTextZh": "在确认安全的前提下，轻碰叶片时有没有白色小飞虫飞起？",
+      "optionTextZh": "没有看到",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.whitefly_adults.whitefly_adults_no",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "white_flies"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__whitefly_adults",
+      "optionKey": "unknown",
+      "questionTextZh": "在确认安全的前提下，轻碰叶片时有没有白色小飞虫飞起？",
+      "optionTextZh": "不方便确认 / 看不清",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__whitefly_nymphs",
+      "optionKey": "whitefly_nymphs_yes",
+      "questionTextZh": "叶背有没有固定的小白点或椭圆虫体？",
+      "optionTextZh": "有，能清楚看到这种痕迹",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.whitefly_nymphs.whitefly_nymphs_yes",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "fixed_oval_nymphs"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__whitefly_nymphs",
+      "optionKey": "whitefly_nymphs_no",
+      "questionTextZh": "叶背有没有固定的小白点或椭圆虫体？",
+      "optionTextZh": "没有看到",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.whitefly_nymphs.whitefly_nymphs_no",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "fixed_oval_nymphs"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__whitefly_nymphs",
+      "optionKey": "unknown",
+      "questionTextZh": "叶背有没有固定的小白点或椭圆虫体？",
+      "optionTextZh": "不方便确认 / 看不清",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__aphid_clusters",
+      "optionKey": "aphid_clusters_yes",
+      "questionTextZh": "嫩梢、新叶或花苞附近有没有成群的小虫？",
+      "optionTextZh": "有，能清楚看到这种痕迹",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.aphid_clusters.aphid_clusters_yes",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "aphids_visible"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__aphid_clusters",
+      "optionKey": "aphid_clusters_no",
+      "questionTextZh": "嫩梢、新叶或花苞附近有没有成群的小虫？",
+      "optionTextZh": "没有看到",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.aphid_clusters.aphid_clusters_no",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "aphids_visible"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__aphid_clusters",
+      "optionKey": "unknown",
+      "questionTextZh": "嫩梢、新叶或花苞附近有没有成群的小虫？",
+      "optionTextZh": "不方便确认 / 看不清",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__thrips_silver_scarring",
+      "optionKey": "thrips_silver_scarring_yes",
+      "questionTextZh": "叶面有没有发白、发灰，像被擦过的条斑？",
+      "optionTextZh": "有，能清楚看到这种痕迹",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.thrips_silver_scarring.thrips_silver_scarring_yes",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "silver_scarring"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__thrips_silver_scarring",
+      "optionKey": "thrips_silver_scarring_no",
+      "questionTextZh": "叶面有没有发白、发灰，像被擦过的条斑？",
+      "optionTextZh": "没有看到",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.thrips_silver_scarring.thrips_silver_scarring_no",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "silver_scarring"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__thrips_silver_scarring",
+      "optionKey": "unknown",
+      "questionTextZh": "叶面有没有发白、发灰，像被擦过的条斑？",
+      "optionTextZh": "不方便确认 / 看不清",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__thrips_black_spots",
+      "optionKey": "thrips_black_spots_yes",
+      "questionTextZh": "这些条斑附近有没有细小黑点，或能看到细长的小虫？",
+      "optionTextZh": "有，能清楚看到这种痕迹",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.thrips_black_spots.thrips_black_spots_yes",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "black_fecal_spots",
+        "thrips_visible"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__thrips_black_spots",
+      "optionKey": "thrips_black_spots_no",
+      "questionTextZh": "这些条斑附近有没有细小黑点，或能看到细长的小虫？",
+      "optionTextZh": "没有看到",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.thrips_black_spots.thrips_black_spots_no",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "black_fecal_spots",
+        "thrips_visible"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__thrips_black_spots",
+      "optionKey": "unknown",
+      "questionTextZh": "这些条斑附近有没有细小黑点，或能看到细长的小虫？",
+      "optionTextZh": "不方便确认 / 看不清",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__leaf_miner_tracks",
+      "optionKey": "leaf_miner_tracks_yes",
+      "questionTextZh": "叶片里面有没有弯弯绕绕的浅色线条或块状潜道？",
+      "optionTextZh": "有，能清楚看到这种痕迹",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.leaf_miner_tracks.leaf_miner_tracks_yes",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "tunnels_in_leaf"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__leaf_miner_tracks",
+      "optionKey": "leaf_miner_tracks_no",
+      "questionTextZh": "叶片里面有没有弯弯绕绕的浅色线条或块状潜道？",
+      "optionTextZh": "没有看到",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.leaf_miner_tracks.leaf_miner_tracks_no",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "tunnels_in_leaf"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__leaf_miner_tracks",
+      "optionKey": "unknown",
+      "questionTextZh": "叶片里面有没有弯弯绕绕的浅色线条或块状潜道？",
+      "optionTextZh": "不方便确认 / 看不清",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__fungus_gnat_soil",
+      "optionKey": "fungus_gnat_soil_yes",
+      "questionTextZh": "小飞虫是否主要围着盆土表面或盆边活动，而不是停在叶片上？",
+      "optionTextZh": "有，能清楚看到这种痕迹",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.fungus_gnat_soil.fungus_gnat_soil_yes",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "small_flies_soil"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__fungus_gnat_soil",
+      "optionKey": "fungus_gnat_soil_no",
+      "questionTextZh": "小飞虫是否主要围着盆土表面或盆边活动，而不是停在叶片上？",
+      "optionTextZh": "没有看到",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.fungus_gnat_soil.fungus_gnat_soil_no",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "small_flies_soil"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__fungus_gnat_soil",
+      "optionKey": "unknown",
+      "questionTextZh": "小飞虫是否主要围着盆土表面或盆边活动，而不是停在叶片上？",
+      "optionTextZh": "不方便确认 / 看不清",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__fungus_gnat_wet_soil",
+      "optionKey": "fungus_gnat_wet_soil_yes",
+      "questionTextZh": "盆土表面是否长期偏湿，或者能看到潮湿表土附近有小飞虫？",
+      "optionTextZh": "有，能清楚看到这种痕迹",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.fungus_gnat_wet_soil.fungus_gnat_wet_soil_yes",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "wet_soil_surface"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__fungus_gnat_wet_soil",
+      "optionKey": "fungus_gnat_wet_soil_no",
+      "questionTextZh": "盆土表面是否长期偏湿，或者能看到潮湿表土附近有小飞虫？",
+      "optionTextZh": "没有看到",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.fungus_gnat_wet_soil.fungus_gnat_wet_soil_no",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "wet_soil_surface"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__fungus_gnat_wet_soil",
+      "optionKey": "unknown",
+      "questionTextZh": "盆土表面是否长期偏湿，或者能看到潮湿表土附近有小飞虫？",
+      "optionTextZh": "不方便确认 / 看不清",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__surface_residue",
+      "optionKey": "surface_residue_sticky_yes",
+      "questionTextZh": "叶片或枝条表面有没有发亮、发黏，像沾了糖水一样的透明痕迹？",
+      "optionTextZh": "有，摸起来或看起来明显发黏",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.surface_residue.surface_residue_sticky_yes",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "surface_glossy_residue"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__surface_residue",
+      "optionKey": "surface_residue_unsure",
+      "questionTextZh": "叶片或枝条表面有没有发亮、发黏，像沾了糖水一样的透明痕迹？",
+      "optionTextZh": "只有发亮的痕迹，不确定是否发黏",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.surface_residue.surface_residue_unsure",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__surface_residue",
+      "optionKey": "surface_residue_no",
+      "questionTextZh": "叶片或枝条表面有没有发亮、发黏，像沾了糖水一样的透明痕迹？",
+      "optionTextZh": "没有看到",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.surface_residue.surface_residue_no",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "surface_glossy_residue"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__surface_residue",
+      "optionKey": "unknown",
+      "questionTextZh": "叶片或枝条表面有没有发亮、发黏，像沾了糖水一样的透明痕迹？",
+      "optionTextZh": "不方便确认 / 看不清",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__sooty_mold",
+      "optionKey": "sooty_mold_yes",
+      "questionTextZh": "叶面像蒙了一层黑灰或黑膜吗？",
+      "optionTextZh": "有，能清楚看到这种痕迹",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.sooty_mold.sooty_mold_yes",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "sooty_mold"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__sooty_mold",
+      "optionKey": "sooty_mold_no",
+      "questionTextZh": "叶面像蒙了一层黑灰或黑膜吗？",
+      "optionTextZh": "没有看到",
+      "reviewStatus": "pending",
+      "normalizationKind": "reported_choice",
+      "proposedFindingCode": "reported.specific_pest_visual.sooty_mold.sooty_mold_no",
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [
+        "sooty_mold"
+      ],
+      "interpretationZh": "仅代表用户选中了该题原选项；不分解歧义，不推定原因或治疗",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    },
+    {
+      "symptomModeCode": "specific_pest_visual",
+      "questionKey": "q_specific_pest__sooty_mold",
+      "optionKey": "unknown",
+      "questionTextZh": "叶面像蒙了一层黑灰或黑膜吗？",
+      "optionTextZh": "不方便确认 / 看不清",
+      "reviewStatus": "pending",
+      "normalizationKind": "retain_unknown",
+      "proposedFindingCode": null,
+      "sourceKind": "answer",
+      "affectedPartCodes": [],
+      "originalEvidenceKeys": [],
+      "interpretationZh": "保留未知或复合歧义，不形成肯定或阴性观察",
+      "forbiddenEffects": [
+        "确认病因",
+        "生成行动",
+        "转为care实际事实",
+        "继承V1数值/关联强度"
+      ]
+    }
+  ]
+}

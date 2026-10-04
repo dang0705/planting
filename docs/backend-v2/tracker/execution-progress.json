@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T19:29:35.530Z",
-  "sourceRevision": 82,
-  "sourceUpdatedAt": "2026-10-04T19:29:35.530Z",
+  "generatedAt": "2026-10-04T19:34:25.989Z",
+  "sourceRevision": 83,
+  "sourceUpdatedAt": "2026-10-04T19:34:25.989Z",
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
   "tasks": [
@@ -199,16 +199,16 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 31,
-      "status": "codex running",
-      "stage": "真实完整答案读回已验证，受控映射与最终诊断仍未验收",
+      "version": 32,
+      "status": "human required",
+      "stage": "答案归一最小审核稿待确认",
       "accepted": false,
       "summary": [
-        "E05：真实会话→完整已存答案→诊断输入读取已接通",
-        "6项新Expected；正文/摘要守卫突变RED→恢复",
-        "MySQL46项通过；新事务读回、归属/坏摘要/缺行拒绝",
-        "根及Node22全量1450/1450；类型/构建/lint零错误",
-        "正式归一、最终结论生成与模型准入仍未验收"
+        "E05：答案归一审核稿已完成，等待语义/命名确认",
+        "覆盖85个输入组合、57个申报代码；SHA/覆盖核对通过",
+        "未知/复合证据保留边界，不推定部位、病因或行动",
+        "本轮未改运行行为；根全量1450/1450通过",
+        "待确认，未发布映射，最终诊断仍未验收"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
@@ -240,18 +240,19 @@
         ".codex/backend-v2/evidence/E05-active-knowledge.json",
         ".codex/backend-v2/evidence/E05-outcome-evidence-match.json",
         ".codex/backend-v2/evidence/E05-active-outcome-evaluation.json",
-        ".codex/backend-v2/evidence/E05-read-answer-evidence.json"
+        ".codex/backend-v2/evidence/E05-read-answer-evidence.json",
+        ".codex/backend-v2/evidence/E05-answer-finding-review.json"
       ],
-      "blockingReason": null,
-      "nextAction": "继续E05最小受控答案/视觉归一映射审核与结论归约，复用已完成真实答案读取，不继承V1硬编码病因/行动",
+      "blockingReason": "仅答案映射实施环节等待申报语义/命名确认；正式视觉/Provider/CMS前置仍独立未验收",
+      "nextAction": "确认最小答案申报语义及命名后登记受控映射，按独立Expected实现归一；确认前不消费审核稿",
       "sync": {
-        "version": 31,
-        "status": "codex running",
+        "version": 32,
+        "status": "human required",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING与五行评论1100440000090653已读回"
+        "readback": "Chrome HUMAN REQUIRED与五行评论1100440000090656已读回"
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T19:29:54.354Z",
+  "lastSuccessfulSyncAt": "2026-10-04T19:34:43.007Z",
   "lastFailure": null
 }

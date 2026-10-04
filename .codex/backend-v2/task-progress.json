@@ -1,20 +1,16 @@
 {
-  "revision": 82,
+  "revision": 83,
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
-  "updatedAt": "2026-10-04T19:29:35.530Z",
+  "updatedAt": "2026-10-04T19:34:25.989Z",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "E05真实归属会话的完整已存答案读取，供受控归一消费",
-    "assumptions": [
-      "复用原答案保存/复合证据及快照合同",
-      "V1硬编码结论不是V2园艺发布源，未批准mapping不继承"
-    ],
-    "minimumValidation": "Expected先落盘，实际保存到独立读取SQL、归属和坏正文拒绝、完整回归",
-    "continueCondition": "完整真实输入可以交给后续归一，保留原引用/时间/SHA",
-    "failureCondition": "缺映射时不猜findingCode或病因",
-    "rollback": "只撤回新增读用例，原答案保持不变",
-    "timeLimit": "40分钟"
+    "target": "完成E05答案归一可审核稿并明确待确认边界",
+    "minimumValidation": "完整V1来源SHA、85输入组合覆盖、57候选代码唯一/长度、全部pending及运行不可用",
+    "continueCondition": "用户确认语义及命名后进入受控配置/Expected/实现",
+    "failureCondition": "无确认不把候选映射用于正式诊断",
+    "rollback": "审核稿调整不影响既有数据/运行结果",
+    "timeLimit": "20分钟"
   },
   "tasks": [
     {
@@ -200,10 +196,10 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 31,
+      "version": 32,
       "priority": "normal",
-      "status": "codex running",
-      "stage": "真实完整答案读回已验证，受控映射与最终诊断仍未验收",
+      "status": "human required",
+      "stage": "答案归一最小审核稿待确认",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
@@ -235,18 +231,19 @@
         ".codex/backend-v2/evidence/E05-active-knowledge.json",
         ".codex/backend-v2/evidence/E05-outcome-evidence-match.json",
         ".codex/backend-v2/evidence/E05-active-outcome-evaluation.json",
-        ".codex/backend-v2/evidence/E05-read-answer-evidence.json"
+        ".codex/backend-v2/evidence/E05-read-answer-evidence.json",
+        ".codex/backend-v2/evidence/E05-answer-finding-review.json"
       ],
       "summary": [
-        "E05：真实会话→完整已存答案→诊断输入读取已接通",
-        "6项新Expected；正文/摘要守卫突变RED→恢复",
-        "MySQL46项通过；新事务读回、归属/坏摘要/缺行拒绝",
-        "根及Node22全量1450/1450；类型/构建/lint零错误",
-        "正式归一、最终结论生成与模型准入仍未验收"
+        "E05：答案归一审核稿已完成，等待语义/命名确认",
+        "覆盖85个输入组合、57个申报代码；SHA/覆盖核对通过",
+        "未知/复合证据保留边界，不推定部位、病因或行动",
+        "本轮未改运行行为；根全量1450/1450通过",
+        "待确认，未发布映射，最终诊断仍未验收"
       ],
-      "blockingReason": null,
-      "nextAction": "继续E05最小受控答案/视觉归一映射审核与结论归约，复用已完成真实答案读取，不继承V1硬编码病因/行动",
-      "ticketReadback": "Chrome CODEX RUNNING与五行评论1100440000090653已读回"
+      "blockingReason": "仅答案映射实施环节等待申报语义/命名确认；正式视觉/Provider/CMS前置仍独立未验收",
+      "nextAction": "确认最小答案申报语义及命名后登记受控映射，按独立Expected实现归一；确认前不消费审核稿",
+      "ticketReadback": "Chrome HUMAN REQUIRED与五行评论1100440000090656已读回"
     }
   ],
   "queue": [
@@ -350,7 +347,7 @@
       ]
     }
   ],
-  "nextAction": "继续E05最小受控答案/视觉归一映射审核与结论归约，复用已完成真实答案读取，不继承V1硬编码病因/行动",
+  "nextAction": "确认最小答案申报语义及命名后登记受控映射，按独立Expected实现归一；确认前不消费审核稿",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",

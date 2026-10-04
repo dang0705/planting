@@ -50,19 +50,19 @@
       "readback": "Chrome CODEX RUNNING及五行评论1100440000090220已读回"
     },
     "z8v0kmr974": {
-      "version": 31,
-      "status": "codex running",
-      "note": "E05：真实会话→完整已存答案→诊断输入读取已接通\n6项新Expected；正文/摘要守卫突变RED→恢复\nMySQL46项通过；新事务读回、归属/坏摘要/缺行拒绝\n根及Node22全量1450/1450；类型/构建/lint零错误\n正式归一、最终结论生成与模型准入仍未验收",
-      "commentId": "1100440000090653",
-      "commentFingerprint": "4481173464687a18e551a037221ef49bbaf839185d21d6201475ce48c7db2e18",
-      "readback": "Chrome CODEX RUNNING与五行评论1100440000090653已读回"
+      "version": 32,
+      "status": "human required",
+      "note": "E05：答案归一审核稿已完成，等待语义/命名确认\n覆盖85个输入组合、57个申报代码；SHA/覆盖核对通过\n未知/复合证据保留边界，不推定部位、病因或行动\n本轮未改运行行为；根全量1450/1450通过\n待确认，未发布映射，最终诊断仍未验收",
+      "commentId": "1100440000090656",
+      "commentFingerprint": "e3d622cfaab05340992d6957ad0f332527f0907f2cce042b3d4ae14be3240045",
+      "readback": "Chrome HUMAN REQUIRED与五行评论1100440000090656已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T19:29:54.354Z",
+  "lastSuccessfulSyncAt": "2026-10-04T19:34:43.007Z",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "72c2474d92636d5faa0ad36be84b7f7f05cc8d4fe03a9191b4cff97dfba4319e",
-    "sourceRevision": 82,
-    "sourceUpdatedAt": "2026-10-04T19:29:35.530Z"
+    "fingerprint": "ed7559ab4ce602cee53c7dbb40503c42122c1f3258cf890427747d2abd1c39c0",
+    "sourceRevision": 83,
+    "sourceUpdatedAt": "2026-10-04T19:34:25.989Z"
   }
 }
