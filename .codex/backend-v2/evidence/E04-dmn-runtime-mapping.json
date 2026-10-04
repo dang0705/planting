@@ -1,0 +1,30 @@
+{
+  "scope": "E04 模型与后端实现对应关系核验，不是 DMN 行为验收",
+  "verifiedAt": "2026-10-04T14:41:33.188563+00:00",
+  "sourceCount": 4,
+  "decisionCount": 15,
+  "deterministicComposition": true,
+  "hashes": {
+    "light.dmn": "660aaeb2fd5c23d827f1b2243b12bb916e5634bdc127de4b3d8fc56b5af9cf14",
+    "pot.dmn": "75e59054b584b2d843ebbeb3784ca1b3529e717368fec317fa2affb8bf1a1b26",
+    "dry-cycle.dmn": "46213f0815f534e830b5d8be89dcd6ffafe7be8265651ccc5969a75021aa57f5",
+    "watering.dmn": "1eb43545c2d92d713dd29be80635ee01888293c451bb5b2b4a602491b0fbdff4",
+    "care-models.dmn": "da089b2acbe4059f393b66f231e2e005aff428c738edc4f551d4f6e210f7eddc",
+    "manifest.json": "033c802029e57b4d62b908b138565b6ac0b080d7c6255e65b987d5ab45c738d0"
+  },
+  "professionalParameters": "保留全部已落地参数、接口、计算及证据；MVP暂不启用专业能力",
+  "pending": [
+    "dmnlint 安装批准与结构检查",
+    "兼容引擎 FEEL 及命中行为验证",
+    "Desktop Modeler 保存与重新打开",
+    "完整 TypeScript/DMN 同场景一致性",
+    "浇水决策与正式 HTTP 闭环"
+  ],
+  "backendUnitTests": {
+    "files": 128,
+    "passed": 1022,
+    "exitCode": 0,
+    "log": "/tmp/planting-dmn-mapping-full-green.log"
+  },
+  "productBehaviorChanged": false
+}

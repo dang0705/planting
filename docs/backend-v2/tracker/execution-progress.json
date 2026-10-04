@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T14:32:03.777548+00:00",
-  "sourceRevision": 46,
-  "sourceUpdatedAt": "2026-10-04T14:32:03.777548+00:00",
+  "generatedAt": "2026-10-04T14:41:33.188563+00:00",
+  "sourceRevision": 47,
+  "sourceUpdatedAt": "2026-10-04T14:41:33.188563+00:00",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -114,16 +114,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 33,
+      "version": 34,
       "status": "codex running",
-      "stage": "光照完整只读回放验证",
+      "stage": "DMN与后端实现对应关系核验",
       "accepted": false,
       "summary": [
-        "E04：真实玻璃策略→双通道PPFD→当地日积分已串通",
-        "一次读取锁定版本；缺策略不默认，未知层数保留缺证据",
-        "真实天气缺1小时不输出全天DLI；合成24小时积分验证通过",
-        "应用6项、真实MySQL7项；强制单层2项RED→恢复",
-        "后端1022/1022；Node22相关49项；生产发布与HTTP未验收"
+        "E04：四个DMN源与15个决策的实际实现边界已核验",
+        "DNI/DHI双通道日回放已有；保水倍率及浇水决策仍缺实现",
+        "专业参数与证据全部保留；MVP只选单双玻璃，不启用专业能力",
+        "合成两次哈希一致；未把XML检查冒充FEEL或Modeler验收",
+        "后端128文件1022/1022；dmnlint批准与规则执行验证待完成"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -155,18 +155,25 @@
         ".codex/backend-v2/evidence/E04-mvp-glass-candidate.json",
         ".codex/backend-v2/evidence/E04-mvp-glass-policy.json",
         ".codex/backend-v2/evidence/E04-mvp-glass-mysql-reader.json",
-        ".codex/backend-v2/evidence/E04-published-mvp-light-day.json"
+        ".codex/backend-v2/evidence/E04-published-mvp-light-day.json",
+        ".codex/backend-v2/evidence/E04-dmn-runtime-mapping.json"
       ],
       "blockingReason": null,
-      "nextAction": "继续E04其余养护决策与DMN一致性验收；光照正式策略发布和HTTP作为独立未验收项保留",
+      "nextAction": "dmnlint批准后做结构校验；未批准期间推进已有票据内独立业务切片，不私装工具或替换FEEL引擎",
       "sync": {
         "version": 33,
         "status": "codex running",
-        "matched": true,
+        "matched": false,
         "readback": "Chrome codex running及五行评论1100440000090138已读回"
       }
     }
   ],
   "lastSuccessfulSyncAt": "2026-10-04T14:32:45.394099+00:00",
-  "lastFailure": null
+  "lastFailure": {
+    "ticketId": "z8v0kmr973",
+    "version": 34,
+    "at": "2026-10-04T14:42:43.104240+00:00",
+    "reason": "Chrome评论仍在编辑器，未获得新评论ID；版本33成功记录保持，版本34待读回核对",
+    "requiresReadbackBeforeRetry": true
+  }
 }

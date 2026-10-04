@@ -43,10 +43,16 @@
     }
   },
   "lastSuccessfulSyncAt": "2026-10-04T14:32:45.394099+00:00",
-  "lastFailure": null,
+  "lastFailure": {
+    "ticketId": "z8v0kmr973",
+    "version": 34,
+    "at": "2026-10-04T14:42:43.104240+00:00",
+    "reason": "Chrome评论仍在编辑器，未获得新评论ID；版本33成功记录保持，版本34待读回核对",
+    "requiresReadbackBeforeRetry": true
+  },
   "h5Projection": {
-    "fingerprint": "9455904d496158c325b0320b2ea0bbb4d656504b4a90fee463b8f3f396688cbc",
-    "sourceRevision": 46,
-    "sourceUpdatedAt": "2026-10-04T14:32:03.777548+00:00"
+    "fingerprint": "ff047504f5617006c940a060a06c2891eb861dbdf9ef6dc39fd6f736a4d2fe46",
+    "sourceRevision": 47,
+    "sourceUpdatedAt": "2026-10-04T14:41:33.188563+00:00"
   }
 }
