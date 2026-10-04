@@ -1,20 +1,20 @@
 {
-  "revision": 78,
+  "revision": 79,
   "currentStep": "E05",
   "currentTicketId": "z8v0kmr974",
-  "updatedAt": "2026-10-04T19:06:31.269816+00:00",
+  "updatedAt": "2026-10-04T19:11:45.433921+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "E05同范围有效旧知识包指针回滚与审计",
+    "target": "E05诊断运行活动知识快照真实读取",
     "assumptions": [
-      "回滚不新增或改写旧发布包",
-      "回滚必须重新核验审核撤销、来源和题包兼容",
-      "正式CMS鉴权和审核协议仍待准入"
+      "复用已核验009/010及已有知识包Schema，不重复读取文档包",
+      "原审核/撤销与当前活动指针必须同时有效",
+      "模型调用放在短事务之外"
     ],
-    "minimumValidation": "独立Expected先行；回滚/重放/冲突/安全失效/失败恢复及真实MySQL读回",
-    "continueCondition": "复用已核验持久化合同回滚条款、009活动指针与审计列以及现有发布硬规则",
-    "failureCondition": "目标不安全或指针冲突拒绝，禁止静默选择最新发布",
-    "rollback": "回退新增本地回滚用例和适配器，无生产DDL/部署",
+    "minimumValidation": "独立Expected；完整包及指针对应、依赖失效、撤销/撤回、并发切换与真实MySQL读回",
+    "continueCondition": "现有发布与回滚合同已确认单一包/完整摘要/审核安全，无新参数默认",
+    "failureCondition": "指针变化或准入不足拒绝，不追最新包混用",
+    "rollback": "回退本地只读用例及适配器，无生产DDL/部署",
     "timeLimitMinutes": 45
   },
   "tasks": [
@@ -201,10 +201,10 @@
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 27,
+      "version": 28,
       "priority": "normal",
       "status": "codex running",
-      "stage": "同范围有效旧知识包指针回滚与真实MySQL审计读回验证通过",
+      "stage": "活动兼容知识单一快照与真实MySQL读取验证通过",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
@@ -232,18 +232,19 @@
         ".codex/backend-v2/evidence/E05-knowledge-publication.json",
         ".codex/backend-v2/evidence/E05-result-http.json",
         ".codex/backend-v2/evidence/E05-review-revocation.json",
-        ".codex/backend-v2/evidence/E05-knowledge-rollback.json"
+        ".codex/backend-v2/evidence/E05-knowledge-rollback.json",
+        ".codex/backend-v2/evidence/E05-active-knowledge.json"
       ],
       "summary": [
-        "E05：有效旧知识包→原子指针回滚与追加审计",
-        "真实MySQL7项：重放/并发/安全失效/失败及未知提交",
-        "批准关联经典RED；当前读突变RED→恢复GREEN",
-        "根及Node22全量1430/1430；类型/构建/lint零错误",
-        "CMS准入、知识撤回及真实诊断生成仍未验收"
+        "E05：运行活动知识包→精确审核/依赖→冻结快照",
+        "真实MySQL3项：只读、失效拒绝、并发回滚不混版",
+        "当前读守卫1项突变RED→恢复；不调用模型或写结果",
+        "根及Node22全量1434/1434；类型/构建/lint零错误",
+        "正式知识/CMS、实际诊断生成及临时结果仍未验收"
       ],
       "blockingReason": null,
-      "nextAction": "继续E05兼容知识的运行读取和诊断结果生成；知识撤回与正式CMS准入仍待验收",
-      "ticketReadback": "Chrome CODEX RUNNING与五行评论1100440000090631已读回"
+      "nextAction": "继续E05诊断计算的输入/兼容组锁定、建议与结果生成；正式知识/Provider准入不足时不得开放线上能力",
+      "ticketReadback": "Chrome CODEX RUNNING与五行评论1100440000090640已读回"
     }
   ],
   "queue": [
@@ -347,7 +348,7 @@
       ]
     }
   ],
-  "nextAction": "继续E05兼容知识的运行读取和诊断结果生成；知识撤回与正式CMS准入仍待验收",
+  "nextAction": "继续E05诊断计算的输入/兼容组锁定、建议与结果生成；正式知识/Provider准入不足时不得开放线上能力",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -987,5 +988,14 @@
     ],
     "scope": "不重新读取相同架构包或合同；如具体字段缺失才逐层OV检索后定向读取",
     "configurationDecision": "本用例没有新阈值、时限或默认；复用发布硬规则，协议由命令明确指定"
+  },
+  "activeKnowledgeContextReuse": {
+    "sources": [
+      "已核验发布/回滚/撤销合同与009/010相关表",
+      "本轮内部active-knowledge-contract.md",
+      "受控候选准备和精确审核Reader实际接线"
+    ],
+    "configurationDecision": "复用既有知识发布硬规则，不新增阈值/协议/重试或默认值",
+    "scope": "不重读docs/backend-v2或OV全文；已有字段证据充分，未进入新文档上下文读取"
   }
 }

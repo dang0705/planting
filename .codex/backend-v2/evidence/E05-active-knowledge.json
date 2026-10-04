@@ -1,0 +1,69 @@
+{
+  "ticketId": "z8v0kmr974",
+  "step": "E05",
+  "verifiedAt": "2026-10-04T19:11:45.433921+00:00",
+  "accepted": false,
+  "scope": "诊断运行的单一活动知识快照读取与依赖复核；不是诊断生成或正式知识准入",
+  "contract": "cloudfunctions-v2/models/diagnosis/active-knowledge-contract.md",
+  "tdd": {
+    "expectedSource": "已核验知识发布/持久化单一快照规则与独立active-knowledge合同",
+    "initialModuleRed": "/tmp/planting-e05-active-knowledge-red.log",
+    "currentReadMutation": {
+      "failed": 1,
+      "restored": true,
+      "case": "读取期间另一事务实际回滚，移除FOR SHARE会返回旧指针",
+      "log": "/tmp/planting-e05-active-knowledge-mutation.log"
+    },
+    "restoredMysqlLog": "/tmp/planting-e05-active-knowledge-mysql-restored.log"
+  },
+  "verification": {
+    "realMysql": {
+      "tests": 3,
+      "log": "/tmp/planting-e05-active-knowledge-mysql-restored.log",
+      "path": "实际009/010→真实发布应用建立前置→运行读取短事务/原审核Reader→依赖准备→冻结知识快照",
+      "coverage": [
+        "完整包/指针版本/冻结与只读",
+        "缺范围/错误协议拒绝",
+        "撤回/坏摘要/实际撤销拒绝",
+        "另一事务真实回滚后拒绝旧快照"
+      ],
+      "replacedBoundaries": [
+        "CMS管理员与审核协议结构制品",
+        "来源/许可/题包Reader替身",
+        "园艺内容是Schema结构制品，非实际诊断"
+      ]
+    },
+    "rootUnit": {
+      "files": 164,
+      "tests": 1434,
+      "log": "/tmp/planting-e05-active-knowledge-final-root-test.log"
+    },
+    "node22Unit": {
+      "runtime": "v22.21.1",
+      "files": 164,
+      "tests": 1434,
+      "log": "/tmp/planting-e05-active-knowledge-final-node22-vitest.log"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-active-knowledge-final-typecheck.log"
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 2122,
+      "log": "/tmp/planting-e05-active-knowledge-final-lint.log"
+    },
+    "build": {
+      "exitCode": 0,
+      "log": "/tmp/planting-e05-active-knowledge-final-build.log"
+    }
+  },
+  "unaccepted": [
+    "真实园艺知识/CMS管理员及批准协议准入",
+    "实际诊断规则或模型执行及结果生成",
+    "知识撤回写入用例",
+    "游客/登录临时案例结果读回",
+    "生产部署/真实平台验真"
+  ],
+  "productionChanges": false
+}
