@@ -1,0 +1,8 @@
+{
+  "taskId": "z8v0kmr971",
+  "scope": "内部人工审核记录及候选状态原子更新",
+  "contextReuse": "复用 E02-review-candidate-context.json 已核验的 OpenViking L0/L1/L2；架构未发生相关变更，不重复读取",
+  "layerGap": "各层给出来源/适用性/禁忌/冲突审核要求，但没有审核凭证表的精确字段、唯一键和关联约束",
+  "allowedLocalRead": "直接核对009的diagnosis_review_attestations单表定义；真实回归沿用既有009候选/审核/发布/活动指针/审计与010撤销DDL的精确表片段，不读取其他架构文件",
+  "configurationDecision": "不增加可配置变量或审核协议默认值；管理员主体与明确批准的协议只能由受控上游提供，正式CMS准入未完成"
+}

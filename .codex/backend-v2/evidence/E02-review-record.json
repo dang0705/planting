@@ -1,0 +1,69 @@
+{
+  "task": "z8v0kmr971",
+  "step": "E02/E05",
+  "recordedAt": "2026-10-04T20:09:39.071990+00:00",
+  "accepted": false,
+  "boundaryVerified": true,
+  "scope": "受控内部候选提交→人工审核记录→不可变知识发布；不开放CMS HTTP写入口",
+  "configurationDecision": "无新增阈值、默认审核协议或认证策略；审核人及协议须由受控上游验真提供",
+  "contextEvidence": ".codex/backend-v2/evidence/E02-review-record-context.json",
+  "verification": {
+    "unit_fake": {
+      "newTests": 13,
+      "relatedTests": 65,
+      "boundary": "真实应用编排，Repository及来源Reader替身；不证明管理员身份"
+    },
+    "unit_real_data": {
+      "newTests": 6,
+      "relatedTests": 32,
+      "database": "隔离MySQL 8.4，真实事务/唯一约束/原子状态/读回",
+      "path": "提交用例→审核用例→发布用例",
+      "boundary": "来源Reader、审核人和协议为夹具，不证明内容权威或CMS认证"
+    },
+    "tdd": {
+      "classicRed": "真实并发审核锁阶段死锁未转换为受控冲突；Expected未修改",
+      "classicRedLog": "/tmp/planting-e02-record-review-mysql.log",
+      "mutationRed": "批准依赖准入门受控突变使1项独立Expected失败",
+      "mutationRedLog": "/tmp/planting-e02-record-review-mutation.log",
+      "restoredGreenLog": "/tmp/planting-e02-record-review-restored.log"
+    },
+    "fullChecks": {
+      "rootVitest": {
+        "files": 171,
+        "tests": 1503,
+        "exitCode": 0
+      },
+      "node22Vitest": {
+        "version": "22.21.1",
+        "files": 171,
+        "tests": 1503,
+        "exitCode": 0
+      },
+      "typecheck": 0,
+      "lint": {
+        "exitCode": 0,
+        "errors": 0,
+        "warnings": 2242
+      },
+      "build": {
+        "exitCode": 0,
+        "limitation": "Node22启动构建，内部npm子进程仍提示Node24 engine警告；不代表CloudBase运行验收"
+      }
+    },
+    "relatedMysqlLog": "/tmp/planting-e02-record-review-related-mysql.log"
+  },
+  "notAccepted": [
+    "正式CMS管理员验真及审核协议准入",
+    "真实已审核来源Reader和园艺内容批准",
+    "正式诊断推理和用户HTTP闭环",
+    "生产部署及生产DDL"
+  ],
+  "sha256": {
+    "cloudfunctions-v2/models/diagnosis/review-record-contract.md": "37541632760c66570f5cf52af3de4234736840a2f487362ac48d599c8a4ed61a",
+    "cloudfunctions-v2/src/diagnosis/domain/review-record.ts": "47bd94487bdbcfbc34251ee18dd08719cdcc8612689cacd1e3ad895deb1c018b",
+    "cloudfunctions-v2/src/diagnosis/application/record-review.ts": "e78b4634f7e3f5a748f2869207e0d334b90ef843ef1ce6d68750131d37ab1232",
+    "cloudfunctions-v2/src/diagnosis/repository/mysql-review-record-repository.ts": "e6839e59c98edb1953a8ad8815eb77ed37cf3210e161bdf98ba1b50326287e10",
+    "cloudfunctions-v2/test/diagnosis/record-review.spec.ts": "cb82ee030c85599cb0e818be5337e01ba8e9bf74e844f6ff329bdf98dac3a6f1",
+    "cloudfunctions-v2/test/e2e/diagnosis-review-record.mysql.spec.ts": "bb58378b6d045b13f43a67ddda2c5cbb1db59c795897e7c5ced11cfaf55e4194"
+  }
+}

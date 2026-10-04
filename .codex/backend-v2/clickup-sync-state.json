@@ -18,12 +18,12 @@
       "readback": "Chrome同一E01状态done、前置E00 done及完整验收评论1100440000089626读回"
     },
     "z8v0kmr971": {
-      "version": 6,
+      "version": 7,
       "status": "codex running",
-      "note": "E02/E05：完整候选提交→真实SQL→待审读回已实现\n原样正文与摘要锁定；重复/驳回重放不重新待审\n真实MySQL7项；相邻审核/发布26项通过\n依赖门突变2项RED→恢复；根及Node22全量1490/1490\nCMS管理员、审核协议及批准写入未验收，原票保持进行中",
-      "commentId": "1100440000090687",
-      "commentFingerprint": "252d4433bdcc3cd9cfe8664dad8ac89ca000c6288e10fc79f854473f2add53bb",
-      "readback": "Chrome CODEX RUNNING及五行评论1100440000090687已读回"
+      "note": "E02/E05：提交→人工审核记录→不可变发布内部链路通过\n批准/驳回与候选状态原子保存，历史重放不重新批准\n真实MySQL新增6项，相邻提交/发布/回滚32项通过\n并发经典RED修复；准入门突变RED→恢复；全量1503/1503\n正式CMS管理员及协议未准入，原票保持进行中",
+      "commentId": "1100440000090859",
+      "commentFingerprint": "b56db39f504c1d230862a9fe581bb67cd806f8aede93df19b2fa7a5c62343d4e",
+      "readback": "Chrome CODEX RUNNING及五行评论1100440000090859已读回"
     },
     "z8v0kmr970": {
       "version": 2,
@@ -58,11 +58,11 @@
       "readback": "Chrome HUMAN REQUIRED与五行评论1100440000090656已读回"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T19:59:22.339Z",
+  "lastSuccessfulSyncAt": "2026-10-04T20:09:50.326333+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "14c038e040917aba530ae1d3870eaefd35d23208d883a147519e18559e6bbd12",
-    "sourceRevision": 86,
-    "sourceUpdatedAt": "2026-10-04T19:58:57.771Z"
+    "fingerprint": "a6a8c23f78364e753533d9c6a7d3174a8098e926d6faff8c0adad85becd911a9",
+    "sourceRevision": 87,
+    "sourceUpdatedAt": "2026-10-04T20:09:39.071990+00:00"
   }
 }

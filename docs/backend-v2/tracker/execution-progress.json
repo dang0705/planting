@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-04T19:58:57.771Z",
-  "sourceRevision": 86,
-  "sourceUpdatedAt": "2026-10-04T19:58:57.771Z",
+  "generatedAt": "2026-10-04T20:09:39.071990+00:00",
+  "sourceRevision": 87,
+  "sourceUpdatedAt": "2026-10-04T20:09:39.071990+00:00",
   "currentStep": "E02",
   "currentTicketId": "z8v0kmr971",
   "tasks": [
@@ -64,16 +64,16 @@
     {
       "id": "z8v0kmr971",
       "step": "E02",
-      "version": 6,
+      "version": 7,
       "status": "codex running",
-      "stage": "候选提交到待审读取已验证；人工审核及CMS入口未验收",
+      "stage": "内部人工审核与发布事务已验证；正式CMS管理员及协议未验收",
       "accepted": false,
       "summary": [
-        "E02/E05：完整候选提交→真实SQL→待审读回已实现",
-        "原样正文与摘要锁定；重复/驳回重放不重新待审",
-        "真实MySQL7项；相邻审核/发布26项通过",
-        "依赖门突变2项RED→恢复；根及Node22全量1490/1490",
-        "CMS管理员、审核协议及批准写入未验收，原票保持进行中"
+        "E02/E05：提交→人工审核记录→不可变发布内部链路通过",
+        "批准/驳回与候选状态原子保存，历史重放不重新批准",
+        "真实MySQL新增6项，相邻提交/发布/回滚32项通过",
+        "并发经典RED修复；准入门突变RED→恢复；全量1503/1503",
+        "正式CMS管理员及协议未准入，原票保持进行中"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E02.json",
@@ -81,15 +81,17 @@
         ".codex/backend-v2/evidence/E02-water-source-deployed.fixture.json",
         ".codex/backend-v2/evidence/E02-review-candidate-context.json",
         ".codex/backend-v2/evidence/E02-review-candidate-read.json",
-        ".codex/backend-v2/evidence/E02-candidate-submission.json"
+        ".codex/backend-v2/evidence/E02-candidate-submission.json",
+        ".codex/backend-v2/evidence/E02-review-record-context.json",
+        ".codex/backend-v2/evidence/E02-review-record.json"
       ],
       "blockingReason": null,
-      "nextAction": "继续精确候选人工审核记录及发布接线；正式CMS管理员/审核协议仍需准入；E05答案映射等待用户确认",
+      "nextAction": "取得正式CMS后台与服务端凭证引用，确认管理员验真及审核协议后接线；E05答案映射仍待确认",
       "sync": {
-        "version": 6,
+        "version": 7,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING及五行评论1100440000090687已读回"
+        "readback": "Chrome CODEX RUNNING及五行评论1100440000090859已读回"
       }
     },
     {
@@ -259,6 +261,6 @@
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-04T19:59:22.339Z",
+  "lastSuccessfulSyncAt": "2026-10-04T20:09:50.326333+00:00",
   "lastFailure": null
 }

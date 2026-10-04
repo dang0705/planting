@@ -1,15 +1,15 @@
 {
-  "revision": 86,
+  "revision": 87,
   "currentStep": "E02",
   "currentTicketId": "z8v0kmr971",
-  "updatedAt": "2026-10-04T19:58:57.771Z",
+  "updatedAt": "2026-10-04T20:09:39.071990+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "完成诊断候选提交到待审读取的真实数据库切片",
-    "minimumValidation": "完整正文/独立摘要、引用唯一约束、回滚、并发、未知提交新连接读回、相关及全量回归",
-    "continueCondition": "提交只产生待审候选，不写审核/发布；通过后提交当前增量",
-    "failureCondition": "正文或收据读回不一致则拒绝并回滚，未知提交只读核对",
-    "rollback": "回退独立候选提交用例；不修改生产数据、DDL或正式CMS",
+    "target": "完成精确候选人工审核记录与原子状态切片",
+    "minimumValidation": "独立Expected、批准/驳回/历史重放、真实MySQL并发/回滚/提交未知读回、相邻及全量回归",
+    "continueCondition": "内部边界验证后同步进度并阶段提交；正式CMS身份及协议另行准入",
+    "failureCondition": "不能可靠读回或出现越权写入则停止扩张",
+    "rollback": "回退本次内部审核记录用例；不改生产数据或DDL",
     "timeLimit": "30分钟"
   },
   "tasks": [
@@ -75,10 +75,10 @@
     {
       "id": "z8v0kmr971",
       "step": "E02",
-      "version": 6,
+      "version": 7,
       "priority": "normal",
       "status": "codex running",
-      "stage": "候选提交到待审读取已验证；人工审核及CMS入口未验收",
+      "stage": "内部人工审核与发布事务已验证；正式CMS管理员及协议未验收",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E02.json",
@@ -86,17 +86,19 @@
         ".codex/backend-v2/evidence/E02-water-source-deployed.fixture.json",
         ".codex/backend-v2/evidence/E02-review-candidate-context.json",
         ".codex/backend-v2/evidence/E02-review-candidate-read.json",
-        ".codex/backend-v2/evidence/E02-candidate-submission.json"
+        ".codex/backend-v2/evidence/E02-candidate-submission.json",
+        ".codex/backend-v2/evidence/E02-review-record-context.json",
+        ".codex/backend-v2/evidence/E02-review-record.json"
       ],
       "summary": [
-        "E02/E05：完整候选提交→真实SQL→待审读回已实现",
-        "原样正文与摘要锁定；重复/驳回重放不重新待审",
-        "真实MySQL7项；相邻审核/发布26项通过",
-        "依赖门突变2项RED→恢复；根及Node22全量1490/1490",
-        "CMS管理员、审核协议及批准写入未验收，原票保持进行中"
+        "E02/E05：提交→人工审核记录→不可变发布内部链路通过",
+        "批准/驳回与候选状态原子保存，历史重放不重新批准",
+        "真实MySQL新增6项，相邻提交/发布/回滚32项通过",
+        "并发经典RED修复；准入门突变RED→恢复；全量1503/1503",
+        "正式CMS管理员及协议未准入，原票保持进行中"
       ],
-      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090687已读回",
-      "nextAction": "继续精确候选人工审核记录及发布接线；正式CMS管理员/审核协议仍需准入；E05答案映射等待用户确认",
+      "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000090859已读回",
+      "nextAction": "取得正式CMS后台与服务端凭证引用，确认管理员验真及审核协议后接线；E05答案映射仍待确认",
       "blockingReason": null
     },
     {
@@ -353,7 +355,7 @@
       ]
     }
   ],
-  "nextAction": "继续精确候选人工审核记录及发布接线；正式CMS管理员/审核协议仍需准入；E05答案映射等待用户确认",
+  "nextAction": "取得正式CMS后台与服务端凭证引用，确认管理员验真及审核协议后接线；E05答案映射仍待确认",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
