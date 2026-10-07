@@ -1,0 +1,103 @@
+{
+  "verifiedAt": "2026-10-07T13:54:01.438595+00:00",
+  "scope": "自然光极简输入、六轴三轴筛选与城市户外气候匹配合入唯一计划",
+  "sourceThreads": [
+    "6ac63f57-4ea4-83ec-8a13-023aa01dde96",
+    "6ac4c504-426c-83ec-8cf1-640181f36d49",
+    "6ac59f1d-6b58-83ec-a994-f44b93cc2550"
+  ],
+  "openViking": {
+    "healthy": true,
+    "layersRequested": [
+      0,
+      1,
+      2
+    ],
+    "query": "backend-v2 整体重构计划 自然光 Lux 校准 六轴分类 weather city climate 当前实施入口",
+    "result": "定向检索超时；只定位计划入口及weather公开合同相关字段，未全量读取架构包"
+  },
+  "planSha256": "0cb3e338bdb7af499599926de0b895e9e146d9f64eacd3cd1a7295cd224e2f30",
+  "planLines": 658,
+  "confirmedMvp": [
+    "地点、朝向、Lux；时间/来源/质量自动记录",
+    "不要求两张照片或专业房间参数；既有专业数据保留",
+    "逐时DNI/DHI与窗面几何保留；单Lux不分别识别两通道",
+    "三轴LEAF_SHAPE/GROWTH_FORM/LEAF_SURFACE；显式范围与抽取版本",
+    "v0-city-outdoor为户外匹配；light_match不是室内DLI或浇水倍率"
+  ],
+  "httpReadback": {
+    "profiles": {
+      "http": 200,
+      "count": 20
+    },
+    "recommendations": {
+      "http": 200,
+      "cityCode": "beijing",
+      "top": 1,
+      "policyVersion": "v0-city-outdoor",
+      "plantId": 1714
+    },
+    "fitAliasPlantId": {
+      "http": 200,
+      "cityCode": "beijing",
+      "plantId": 1714,
+      "policyVersion": "v0-city-outdoor"
+    },
+    "scope": "3条只读样例，不证明单城profiles/{cityCode}、完整缓存/生成算法或数据库结构"
+  },
+  "tickets": {
+    "light": {
+      "id": "z8v0kmr973",
+      "reuse": true
+    },
+    "climate": {
+      "id": "z8v0kmuqv5",
+      "priority": "normal",
+      "status": "backlog",
+      "readback": true
+    },
+    "axes": {
+      "id": "z8v0kmuqv6",
+      "priority": "normal",
+      "status": "backlog",
+      "readback": true
+    }
+  },
+  "boundaries": [
+    "只修改唯一计划与基线锁、进度，不修改运行行为或前端",
+    "数据库表与1800条缓存为用户提供现状，未独立SQL验收",
+    "三星散射摄像头Lux仅初步实验；未进行跨设备或仪表校准",
+    "新路线的光照合同、Expected、DMN同步与正式建议尚未实现",
+    "上轮归属Reader仍未完成最终验证/提交，读取确认用户范围谓词完整；不声称其验收"
+  ],
+  "acceptedBusinessCapabilities": false,
+  "checks": {
+    "entrypoint": {
+      "exitCode": 0,
+      "lines": 658,
+      "sha256": "0cb3e338bdb7af499599926de0b895e9e146d9f64eacd3cd1a7295cd224e2f30"
+    },
+    "rootVitest": {
+      "exitCode": 0,
+      "files": 194,
+      "passed": 1880,
+      "log": "/tmp/planting-20261007-plan-root-test.log"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "/tmp/planting-20261007-plan-typecheck.log"
+    }
+  },
+  "syncReadback": {
+    "z8v0kmr973": "1100440000138102",
+    "z8v0kmuqv5": "1100440000138103",
+    "z8v0kmuqv6": "1100440000138104",
+    "h5Revision": 108,
+    "registeredTickets": 10
+  },
+  "axisDependency": {
+    "waitingOn": "z8v0kmtktd",
+    "readback": true
+  },
+  "runtimeChange": "无；未提交的旧归属Reader类型及测试连接端口适配已通过编译，不作为本次模型验收"
+}

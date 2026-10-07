@@ -34,12 +34,12 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 35,
+      "version": 36,
       "status": "codex running",
-      "note": "E04：批准的dmnlint@1.0.0已独立安装，不进入云函数\n五个DMN逐个结构校验零问题；实际锁文件审计零通报\n专业参数与证据保留，MVP不启用复杂输入\nFEEL执行、可视化保存重开及完整行为一致性仍未验收\nE04保持进行中；先承接E05独立知识审核准备",
-      "commentId": "1100440000090179",
-      "commentFingerprint": "9d359287e5bde4435fc3425a3a6add3f31bc5572865b42da735c3158115fdf7f",
-      "readback": "Chrome CODEX RUNNING及五行评论1100440000090179已读回"
+      "note": "E04：首版仅采集位置、朝向、Lux；专业参数保留\n后台逐时DNI/DHI与窗面模型保留；单锚点不分别校准两通道\n摄像头Lux仍为实验，三星散射初步成果未跨场景验收\n城市户外匹配与三轴筛选已排序开票，未记为完成\n下一步冻结Lux来源、时刻及质量合同，再验证回放/DMN",
+      "commentId": "1100440000138102",
+      "commentFingerprint": "9a5caac9a4e793193fec7ce94e7589cd1344b0c9f6973ac985617942421fafab",
+      "readback": "原生ClickUp五行评论1100440000138102逐字读回；状态未改变"
     },
     "z8v0kmrg8a": {
       "version": 3,
@@ -64,13 +64,29 @@
       "commentId": "1100440000091159",
       "commentFingerprint": "d30010d4d39f63162a888c9a5664f81540e3a363fcfed9fec75bd2a26ddea9af",
       "readback": "Chrome CODEX RUNNING及五行评论1100440000091159已读回"
+    },
+    "z8v0kmuqv5": {
+      "version": 1,
+      "status": "backlog",
+      "note": "E02：复用已有weather城市户外气候匹配，Normal优先级\n现网20城列表与北京推荐/fit样例只读返回200\npolicy v0-city-outdoor；light_match不是室内DLI\n源码/算法/完整缓存与四路由验收仍待完成\n排在光照合同后、三轴筛选前；不新增技术阻塞关系",
+      "commentId": "1100440000138103",
+      "commentFingerprint": "f0230f1f589d6b0f51350657e2e0e5c5747ee7f7829a673fc2ee81764a6c1a7a",
+      "readback": "原生ClickUp五行评论1100440000138103逐字读回；状态未改变"
+    },
+    "z8v0kmuqv6": {
+      "version": 1,
+      "status": "backlog",
+      "note": "E01/E02：三轴筛选独立票已登记，Normal优先级\n首版仅叶型、株型、叶面；按范围显式选抽取版本\n核心90 VIEW不冒充全量；未知/冲突不伪造标签\n先核验实际表、枚举及组合合同，再开发SQL→HTTP\n前置E01目录已完成；当前backlog，筛选尚未实现",
+      "commentId": "1100440000138104",
+      "commentFingerprint": "c4f53aa08ad3dc2346c9c6e27acf02f627de818e3bb11d667f7ef6d1a7c00133",
+      "readback": "原生ClickUp五行评论1100440000138104逐字读回；状态未改变"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-04T22:55:56.590383+00:00",
+  "lastSuccessfulSyncAt": "2026-10-07T13:58:03.315616+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "de83ef2e9891ceb81c9ca56c40674d9e7cbb1bf5cb7a7ba127be40803d0eff25",
-    "sourceRevision": 107,
-    "sourceUpdatedAt": "2026-10-04T22:55:45.035865+00:00"
+    "fingerprint": "bf42fd3f02a8758f990e284884e6a3d381557d719a124358f499f9f020a7fc3f",
+    "sourceRevision": 108,
+    "sourceUpdatedAt": "2026-10-07T13:56:49.854592+00:00"
   }
 }
