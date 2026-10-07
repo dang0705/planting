@@ -1,0 +1,216 @@
+{
+  "status": "not_admitted_for_joint_environment_demand",
+  "productionAdmission": false,
+  "recordedAt": "2026-10-07T20:19:01.593387+00:00",
+  "source": {
+    "title": "Hands-free Photosynthesis: Autonomous Leaf-Level Multi-Chamber Gas Exchange System",
+    "authors": "Wall et al.",
+    "repositoryUrl": "https://researchdata.essex.ac.uk/248/",
+    "doi": "10.5526/ERDR-00000248",
+    "downloadUrl": "https://researchdata.essex.ac.uk/248/1/Data%20Repository%20_Wall%20et%20al%202026.zip",
+    "license": "CC BY 4.0",
+    "archiveBytes": 434468,
+    "archiveSha256": "5efd4cae49631d1c61c387ec5526a80f39e7bfdf33b371df9fb9eec3d476646c",
+    "modifiedByUs": false
+  },
+  "workbooks": [
+    {
+      "member": "Data Repository _Wall et al 2026/Figure 2/Licor-APS data 24-25-27th Aug.xlsx",
+      "sha256": "453f436dda1388a3f7ee1184652d29e10b532e40df39b0138f448c4d71c2cdd1",
+      "environmentNameMatches": [
+        "6800_Qin"
+      ],
+      "sheets": [
+        {
+          "name": "Corelation Data 24-25-27",
+          "nonemptyRows": 66
+        }
+      ]
+    },
+    {
+      "member": "Data Repository _Wall et al 2026/Figure 3 and Supp Fig 8_APS_Vu_Growth Ch/Figure 3 and Supp Fig 8.xlsm",
+      "sha256": "c17383622190706a42359e9bdc2880fa18a4fd22b560f5d2433a48796c71b921",
+      "environmentNameMatches": [],
+      "sheets": [
+        {
+          "name": "Avrg Ch 4 SFig8",
+          "nonemptyRows": 39
+        },
+        {
+          "name": "Chamber 4 Fig3",
+          "nonemptyRows": 160
+        },
+        {
+          "name": "Chamber 3 Fig3",
+          "nonemptyRows": 161
+        },
+        {
+          "name": "Avrg Ch 3 SFig8",
+          "nonemptyRows": 40
+        },
+        {
+          "name": "Chamber 2 Fig3",
+          "nonemptyRows": 157
+        },
+        {
+          "name": "Avrg Ch 2 SFig8",
+          "nonemptyRows": 39
+        },
+        {
+          "name": "Chamber 1 Fig3",
+          "nonemptyRows": 159
+        },
+        {
+          "name": "Avrg Ch 1 SFig8",
+          "nonemptyRows": 39
+        }
+      ]
+    },
+    {
+      "member": "Data Repository _Wall et al 2026/Figure 4 and Supp Figure 9_APS_diurnal/Diurnal_APS_Sugarcane.xlsx",
+      "sha256": "657f88f4409494113416f277c697bc285cd42118120af2f16d798d5101eaacc3",
+      "environmentNameMatches": [],
+      "sheets": [
+        {
+          "name": "Scale 3_Diurnal (Fig 4)",
+          "nonemptyRows": 76
+        },
+        {
+          "name": "Scale 1_Diurnal (Supp Fig 9)",
+          "nonemptyRows": 73
+        },
+        {
+          "name": "Scale 4_Diurnal (Supp Fig 9)",
+          "nonemptyRows": 54
+        }
+      ]
+    },
+    {
+      "member": "Data Repository _Wall et al 2026/Figure 5/Figure 5.xlsx",
+      "sha256": "14a72272415b5d79cc37949d5e88a5513dc517fbbdcdb33ad47fa385d54686e1",
+      "environmentNameMatches": [],
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "nonemptyRows": 262,
+          "firstTwoRows": [
+            {
+              "A1": "time of day",
+              "B1": "transpiration rate Ditech",
+              "C1": "standard deviation Ditech",
+              "E1": "time of day",
+              "F1": "transpiration rate APS",
+              "G1": "standard deviation APS"
+            },
+            {
+              "A2": "0.25",
+              "B2": "0.25944914933333302",
+              "C2": "8.9339576258172099E-2",
+              "E2": "0.25577546296296294",
+              "F2": "0.24875",
+              "G2": "0.15968160284051"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "member": "Data Repository _Wall et al 2026/Supp Figure 2/spectral data.xlsx",
+      "sha256": "499703537252cdedf8e55a8f9dec90cdbdad052b4f851c681feaa44096a8b40f",
+      "environmentNameMatches": [],
+      "sheets": [
+        {
+          "name": "Data respository",
+          "nonemptyRows": 262
+        }
+      ]
+    },
+    {
+      "member": "Data Repository _Wall et al 2026/Supp Figure 3/open and closing repositor_TL.xlsx",
+      "sha256": "f8350b797c7ef590ca05ba25afc7427bf68269b6049e049cc733262c6a912444",
+      "environmentNameMatches": [],
+      "sheets": [
+        {
+          "name": "respository",
+          "nonemptyRows": 88
+        }
+      ]
+    },
+    {
+      "member": "Data Repository _Wall et al 2026/Supp Figure 4/empty chamber tests at different co2.xlsx",
+      "sha256": "9d73f8d455625f755eff13c698d5e3c8e1722f10a66e3faa624f635e33301f5c",
+      "environmentNameMatches": [],
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "nonemptyRows": 38
+        }
+      ]
+    },
+    {
+      "member": "Data Repository _Wall et al 2026/Supp Figure 5/light-dark empty APS chamber.xlsx",
+      "sha256": "2d4d333836094dfccae55859e82504ee5eea2a242d44dd96e4163241d4bd9b1a",
+      "environmentNameMatches": [],
+      "sheets": [
+        {
+          "name": "Empty chambers",
+          "nonemptyRows": 51
+        }
+      ]
+    },
+    {
+      "member": "Data Repository _Wall et al 2026/Supp Figure 7/Ditech-system_Transpiration_Scale 1.xlsx",
+      "sha256": "7176490e18b1b373dff7729c6931cc02f34fa06fdff29d1fc64979e4a88f9593",
+      "environmentNameMatches": [],
+      "sheets": [
+        {
+          "name": "Ditech Suagarcane Greenhouse",
+          "nonemptyRows": 263,
+          "firstTwoRows": [
+            {
+              "A1": "Time ",
+              "B1": "TIMESTAMP",
+              "C1": "Scale 3_Day1",
+              "D1": "Scale 3_Day2"
+            },
+            {
+              "A2": "(min)",
+              "B2": "Time of day",
+              "C2": "Transpiration_rate_g",
+              "D2": "Transpiration_rate_g"
+            }
+          ],
+          "elapsedMinutes": {
+            "sampleCount": 261,
+            "first": 0.0,
+            "last": 780.0,
+            "uniqueSteps": [
+              3.0
+            ]
+          },
+          "nonemptyDataColumns": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ]
+        }
+      ]
+    }
+  ],
+  "missing": [
+    "可与整株蒸腾配对的同刻光照、空气温湿度或VPD",
+    "Transpiration_rate_g速率的完整时间单位及原始处理方法",
+    "整盆蒸发、浇入排出和根区状态记录",
+    "完整日期/时区与元数据年份一致性"
+  ],
+  "excludedInferences": [
+    "不把叶片导度当整盆干燥需求",
+    "不跨实验按行号拼接光照",
+    "不把绘图均值当独立逐盆循环",
+    "不将分钟采样步长认定为蒸腾率时间分母"
+  ],
+  "recheckCondition": "取得同期环境原始记录、时钟/单位说明及蒸腾与整盆失水处理方法后重审",
+  "reproduce": "python3 cloudfunctions-v2/scripts/inspect-wall-demand-data.py <已核验下载归档路径>",
+  "notAnImplementation": "本制品不计算生产倍率、不证明室内估算准入、不生成浇水日期或水量"
+}

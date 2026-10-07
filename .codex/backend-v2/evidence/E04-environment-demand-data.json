@@ -1,0 +1,55 @@
+{
+  "step": "E04",
+  "ticketId": "z8v0kmr973",
+  "recordedAt": "2026-10-07T20:21:34.576862+00:00",
+  "accepted": false,
+  "productionAdmission": false,
+  "productBehaviorChanged": false,
+  "finding": "已有回放消费调用方给定的environmentDemand；联合响应仍缺获准模型依据。已核验外部归档缺可配对环境记录，不准入拟合。",
+  "sources": [
+    "https://onlinelibrary.wiley.com/doi/10.1046/j.1365-3040.1999.00513.x",
+    "https://www.pnnl.gov/publications/plant-responses-rising-vapor-pressure-deficit",
+    "https://www.fao.org/4/x0490e/x0490e0c.htm",
+    "https://researchdata.essex.ac.uk/248/"
+  ],
+  "artifactQualification": {
+    "archiveSha256": "5efd4cae49631d1c61c387ec5526a80f39e7bfdf33b371df9fb9eec3d476646c",
+    "archiveBytes": 434468,
+    "xlsxAndXlsmFiles": 9,
+    "wholePlantSeriesTimePoints": 261,
+    "elapsedMinutes": [
+      0,
+      780
+    ],
+    "sampleStepMinutes": 3,
+    "jointEnvironmentRecordsEstablished": 0,
+    "rawUnits": "Transpiration_rate_g；未据采样步长推断速率分母",
+    "macroExecution": false,
+    "modelFitted": false
+  },
+  "review": "runtime_probe_terra独立窄审：尺度、时间步与速率单位区分、跨实验不可拼接和未准入边界正确",
+  "validation": {
+    "kind": "原始文件与资料资格核验，不是TDD或生产合同验收",
+    "inventoryCommand": "python3 cloudfunctions-v2/scripts/inspect-wall-demand-data.py /tmp/e04-wall2026.zip",
+    "archiveHashTool": "shasum -a 256",
+    "fullBackendVitest": {
+      "files": 211,
+      "passed": 2092,
+      "failed": 0,
+      "log": "/tmp/e04-demand-evidence-full-vitest.log",
+      "sha256": "7c2c2add799db388484ecdbcd2b1eba774550f44130703f1ccf9ceaedef898f6"
+    }
+  },
+  "artifacts": {
+    "cloudfunctions-v2/models/care/environment-demand-evidence.md": "8bcc39f7ebfcc15f3739f2c296c0e4e5685f543437336c755507e98127bb44cf",
+    "cloudfunctions-v2/models/care/environment-demand-data-qualification.json": "3a9dbf1f1811cf72e1926ad118dd9d74d847739c7bec82312893848737ec5bd5",
+    "cloudfunctions-v2/scripts/inspect-wall-demand-data.py": "4609d84a6028141205444cf4d226b8d9714086e5102e8c05dbc6410989f860c5"
+  },
+  "remaining": [
+    "同刻光照/室内气候与整盆耗水的校准依据及响应模型",
+    "室外到室内估算正式准入",
+    "当前盆土定量状态到非零剩余时间",
+    "实际施水量与正式HTTP"
+  ],
+  "nextAction": "取得可配对的环境与整盆耗水原始记录，按既有后台样本标定流程固定验证段；不继续增加无参数依据的包装函数"
+}
