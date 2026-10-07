@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-07T16:02:03.216465+00:00",
-  "sourceRevision": 111,
-  "sourceUpdatedAt": "2026-10-07T16:02:03.216465+00:00",
+  "generatedAt": "2026-10-07T16:41:43.816257+00:00",
+  "sourceRevision": 112,
+  "sourceUpdatedAt": "2026-10-07T16:41:43.816257+00:00",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -123,16 +123,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 39,
+      "version": 40,
       "status": "codex running",
-      "stage": "SunCalc/DNI/DHI/Lux日回放与VPD点值已验证；正式准入/估算/栽培与浇水待完成",
+      "stage": "真实来源→保守trigger编译→名义基线快照已验证；保水/盆土/正式浇水待完成",
       "accepted": false,
       "summary": [
-        "E04：SunCalc/DNI/DHI→同刻Lux→双通道PPFD/当地日积分已接线",
-        "室内实测VPD与植物参考点已实现；室外/未批准估算不冒充",
-        "新增23项；缺段/来源突变RED与2个时间边界RED后恢复GREEN",
-        "全量及Node22全量1912/1912；正式养护、水量和日期未验收",
-        "证据：.codex/backend-v2/evidence/E04-lux-window-vpd.json"
+        "E04：Tropicals来源→trigger→真实v1基线→不可变副本已接通",
+        "绿萝5–8/星兜14–21/龟背竹7–14名义日；不当干燥单位",
+        "14新用例；条件/否定/输入隔离RED→GREEN；真实SQL桥接读回",
+        "根全量1926/1926及类型检查通过；水量/日期/正式HTTP未验收",
+        "证据：.codex/backend-v2/evidence/E04-baseline-live-readback.json"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -169,15 +169,16 @@
         ".codex/backend-v2/evidence/E04-dmnlint.json",
         ".codex/backend-v2/evidence/2026-10-07-light-catalog-climate-plan.json",
         ".codex/backend-v2/evidence/E04-lux-composite-anchor.json",
-        ".codex/backend-v2/evidence/E04-lux-window-vpd.json"
+        ".codex/backend-v2/evidence/E04-lux-window-vpd.json",
+        ".codex/backend-v2/evidence/E04-baseline-live-readback.json"
       ],
       "blockingReason": null,
-      "nextAction": "核验实际watering_baseline_policy及tier/trigger知识接线；继续室内估算/VPD需求映射、基质保水和盆土安全门，保持光照正式准入缺口局部可见",
+      "nextAction": "接Care知识端口与栽培保水/盆土安全门；先核验参考条件及已发布策略，不猜水量或日期",
       "sync": {
-        "version": 39,
+        "version": 40,
         "status": "codex running",
         "matched": true,
-        "readback": "原生ClickUp评论1100440000140037全文读回一致；状态保持codex running，正式养护未验收"
+        "readback": "ClickUp评论1100440000140235全文读回一致；保持codex running"
       }
     },
     {
@@ -365,6 +366,6 @@
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-07T16:02:35.111287+00:00",
+  "lastSuccessfulSyncAt": "2026-10-07T16:42:33.686564+00:00",
   "lastFailure": null
 }

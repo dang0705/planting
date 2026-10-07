@@ -34,13 +34,13 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 39,
+      "version": 40,
       "status": "codex running",
-      "note": "E04：SunCalc/DNI/DHI→同刻Lux→双通道PPFD/当地日积分已接线\n室内实测VPD与植物参考点已实现；室外/未批准估算不冒充\n新增23项；缺段/来源突变RED与2个时间边界RED后恢复GREEN\n全量及Node22全量1912/1912；正式养护、水量和日期未验收\n证据：.codex/backend-v2/evidence/E04-lux-window-vpd.json",
-      "commentId": "1100440000140037",
-      "commentFingerprint": "2a11ca3536581b87f0dac0bb34c1b0c1ac0b13ac3b4d036060478e1482eaeb0f",
-      "readback": "原生ClickUp评论1100440000140037全文读回一致；状态保持codex running，正式养护未验收",
-      "lastSuccessfulSyncAt": "2026-10-07T16:02:35.111287+00:00"
+      "note": "E04：Tropicals来源→trigger→真实v1基线→不可变副本已接通\n绿萝5–8/星兜14–21/龟背竹7–14名义日；不当干燥单位\n14新用例；条件/否定/输入隔离RED→GREEN；真实SQL桥接读回\n根全量1926/1926及类型检查通过；水量/日期/正式HTTP未验收\n证据：.codex/backend-v2/evidence/E04-baseline-live-readback.json",
+      "commentId": "1100440000140235",
+      "commentFingerprint": "b7fd1c8409e5cd276ba265cce3e8907c5760dbd2de8c4972faa8e31e6952f3f9",
+      "readback": "ClickUp评论1100440000140235全文读回一致；保持codex running",
+      "lastSuccessfulSyncAt": "2026-10-07T16:42:33.686564+00:00"
     },
     "z8v0kmrg8a": {
       "version": 3,
@@ -83,11 +83,11 @@
       "readback": "原生ClickUp已逐字读回评论1100440000138268；只同步进度，不更改状态"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-07T16:02:35.111287+00:00",
+  "lastSuccessfulSyncAt": "2026-10-07T16:42:33.686564+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "5421213cec8d85f4b5793edb9110012e113f5070c99c10a25d6802654fe6621d",
-    "sourceRevision": 111,
-    "sourceUpdatedAt": "2026-10-07T16:02:03.216465+00:00"
+    "fingerprint": "fb33c407e8ed59606bcb1b3979e5387a78f254089fe254e85fc4cb8c2a0ffa24",
+    "sourceRevision": 112,
+    "sourceUpdatedAt": "2026-10-07T16:41:43.816257+00:00"
   }
 }

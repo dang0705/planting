@@ -1,0 +1,511 @@
+{
+  "capturedAt": "2026-10-07T16:25:38.014Z",
+  "environment": "cloud1-2grufevs395a9d5e",
+  "database": "qinghuazhi_v2_test",
+  "rows": [
+    {
+      "is_active": 1,
+      "max_days": 21,
+      "min_days": 14,
+      "policy_version": "v1",
+      "taxon_id": "https://tropicals.cn/species/astrophytum-asterias",
+      "trigger_state": "DROUGHT_SIGNAL",
+      "water_frequency_source_json": {
+        "independent_review_status": "unreviewed_source_ai_extraction",
+        "record": {
+          "measurementDeterminedBy": "Tropicals trait pipeline (full-v1-20260524)",
+          "measurementDeterminedDate": "2026-05-28T17:44:35Z",
+          "measurementID": "astrophytum-asterias#water_frequency_tier",
+          "measurementMethod": "AI extraction, registry-bound + evidence-grounded (see methods, arXiv:2606.00994); confidence high|medium; admin_review_status approved|pending",
+          "measurementRemarks": "浇水遵循干透浇透原则",
+          "measurementType": "Watering frequency",
+          "measurementTypeID": "https://tropicals.cn/ns/trait/water_frequency_tier",
+          "measurementUnit": "",
+          "measurementUnitID": "",
+          "measurementValue": "drought_tolerant",
+          "measurementValueID": "https://tropicals.cn/ns/trait/water_frequency_tier/value/drought_tolerant",
+          "taxonID": "https://tropicals.cn/species/astrophytum-asterias"
+        },
+        "source_sha256": "b934e2a193760f1ef08614c1be6c11728f6d692d46898b2548ce0bf13990144b",
+        "source_url": "https://cdn.tropicals.cn/datasets/2026-07-09/measurementorfact.tsv.gz"
+      },
+      "water_frequency_tier": "drought_tolerant"
+    },
+    {
+      "is_active": 1,
+      "max_days": 21,
+      "min_days": 14,
+      "policy_version": "v1",
+      "taxon_id": "https://tropicals.cn/species/astrophytum-asterias",
+      "trigger_state": "FULL_DRY",
+      "water_frequency_source_json": {
+        "independent_review_status": "unreviewed_source_ai_extraction",
+        "record": {
+          "measurementDeterminedBy": "Tropicals trait pipeline (full-v1-20260524)",
+          "measurementDeterminedDate": "2026-05-28T17:44:35Z",
+          "measurementID": "astrophytum-asterias#water_frequency_tier",
+          "measurementMethod": "AI extraction, registry-bound + evidence-grounded (see methods, arXiv:2606.00994); confidence high|medium; admin_review_status approved|pending",
+          "measurementRemarks": "浇水遵循干透浇透原则",
+          "measurementType": "Watering frequency",
+          "measurementTypeID": "https://tropicals.cn/ns/trait/water_frequency_tier",
+          "measurementUnit": "",
+          "measurementUnitID": "",
+          "measurementValue": "drought_tolerant",
+          "measurementValueID": "https://tropicals.cn/ns/trait/water_frequency_tier/value/drought_tolerant",
+          "taxonID": "https://tropicals.cn/species/astrophytum-asterias"
+        },
+        "source_sha256": "b934e2a193760f1ef08614c1be6c11728f6d692d46898b2548ce0bf13990144b",
+        "source_url": "https://cdn.tropicals.cn/datasets/2026-07-09/measurementorfact.tsv.gz"
+      },
+      "water_frequency_tier": "drought_tolerant"
+    },
+    {
+      "is_active": 1,
+      "max_days": 24,
+      "min_days": 14,
+      "policy_version": "v1",
+      "taxon_id": "https://tropicals.cn/species/astrophytum-asterias",
+      "trigger_state": "TIER_DEFAULT",
+      "water_frequency_source_json": {
+        "independent_review_status": "unreviewed_source_ai_extraction",
+        "record": {
+          "measurementDeterminedBy": "Tropicals trait pipeline (full-v1-20260524)",
+          "measurementDeterminedDate": "2026-05-28T17:44:35Z",
+          "measurementID": "astrophytum-asterias#water_frequency_tier",
+          "measurementMethod": "AI extraction, registry-bound + evidence-grounded (see methods, arXiv:2606.00994); confidence high|medium; admin_review_status approved|pending",
+          "measurementRemarks": "浇水遵循干透浇透原则",
+          "measurementType": "Watering frequency",
+          "measurementTypeID": "https://tropicals.cn/ns/trait/water_frequency_tier",
+          "measurementUnit": "",
+          "measurementUnitID": "",
+          "measurementValue": "drought_tolerant",
+          "measurementValueID": "https://tropicals.cn/ns/trait/water_frequency_tier/value/drought_tolerant",
+          "taxonID": "https://tropicals.cn/species/astrophytum-asterias"
+        },
+        "source_sha256": "b934e2a193760f1ef08614c1be6c11728f6d692d46898b2548ce0bf13990144b",
+        "source_url": "https://cdn.tropicals.cn/datasets/2026-07-09/measurementorfact.tsv.gz"
+      },
+      "water_frequency_tier": "drought_tolerant"
+    },
+    {
+      "is_active": 1,
+      "max_days": 30,
+      "min_days": 21,
+      "policy_version": "v1",
+      "taxon_id": "https://tropicals.cn/species/astrophytum-asterias",
+      "trigger_state": "VERY_DRY",
+      "water_frequency_source_json": {
+        "independent_review_status": "unreviewed_source_ai_extraction",
+        "record": {
+          "measurementDeterminedBy": "Tropicals trait pipeline (full-v1-20260524)",
+          "measurementDeterminedDate": "2026-05-28T17:44:35Z",
+          "measurementID": "astrophytum-asterias#water_frequency_tier",
+          "measurementMethod": "AI extraction, registry-bound + evidence-grounded (see methods, arXiv:2606.00994); confidence high|medium; admin_review_status approved|pending",
+          "measurementRemarks": "浇水遵循干透浇透原则",
+          "measurementType": "Watering frequency",
+          "measurementTypeID": "https://tropicals.cn/ns/trait/water_frequency_tier",
+          "measurementUnit": "",
+          "measurementUnitID": "",
+          "measurementValue": "drought_tolerant",
+          "measurementValueID": "https://tropicals.cn/ns/trait/water_frequency_tier/value/drought_tolerant",
+          "taxonID": "https://tropicals.cn/species/astrophytum-asterias"
+        },
+        "source_sha256": "b934e2a193760f1ef08614c1be6c11728f6d692d46898b2548ce0bf13990144b",
+        "source_url": "https://cdn.tropicals.cn/datasets/2026-07-09/measurementorfact.tsv.gz"
+      },
+      "water_frequency_tier": "drought_tolerant"
+    },
+    {
+      "is_active": 1,
+      "max_days": 14,
+      "min_days": 7,
+      "policy_version": "v1",
+      "taxon_id": "https://tropicals.cn/species/epipremnum-aureum",
+      "trigger_state": "DRY_WET",
+      "water_frequency_source_json": {
+        "independent_review_status": "unreviewed_source_ai_extraction",
+        "record": {
+          "measurementDeterminedBy": "Tropicals trait pipeline (full-v1-20260524)",
+          "measurementDeterminedDate": "2026-05-28T17:41:59Z",
+          "measurementID": "epipremnum-aureum#water_frequency_tier",
+          "measurementMethod": "AI extraction, registry-bound + evidence-grounded (see methods, arXiv:2606.00994); confidence high|medium; admin_review_status approved|pending",
+          "measurementRemarks": "表土干燥后及时补水",
+          "measurementType": "Watering frequency",
+          "measurementTypeID": "https://tropicals.cn/ns/trait/water_frequency_tier",
+          "measurementUnit": "",
+          "measurementUnitID": "",
+          "measurementValue": "regular",
+          "measurementValueID": "https://tropicals.cn/ns/trait/water_frequency_tier/value/regular",
+          "taxonID": "https://tropicals.cn/species/epipremnum-aureum"
+        },
+        "source_sha256": "b934e2a193760f1ef08614c1be6c11728f6d692d46898b2548ce0bf13990144b",
+        "source_url": "https://cdn.tropicals.cn/datasets/2026-07-09/measurementorfact.tsv.gz"
+      },
+      "water_frequency_tier": "regular"
+    },
+    {
+      "is_active": 1,
+      "max_days": 16,
+      "min_days": 10,
+      "policy_version": "v1",
+      "taxon_id": "https://tropicals.cn/species/epipremnum-aureum",
+      "trigger_state": "FULL_DRY",
+      "water_frequency_source_json": {
+        "independent_review_status": "unreviewed_source_ai_extraction",
+        "record": {
+          "measurementDeterminedBy": "Tropicals trait pipeline (full-v1-20260524)",
+          "measurementDeterminedDate": "2026-05-28T17:41:59Z",
+          "measurementID": "epipremnum-aureum#water_frequency_tier",
+          "measurementMethod": "AI extraction, registry-bound + evidence-grounded (see methods, arXiv:2606.00994); confidence high|medium; admin_review_status approved|pending",
+          "measurementRemarks": "表土干燥后及时补水",
+          "measurementType": "Watering frequency",
+          "measurementTypeID": "https://tropicals.cn/ns/trait/water_frequency_tier",
+          "measurementUnit": "",
+          "measurementUnitID": "",
+          "measurementValue": "regular",
+          "measurementValueID": "https://tropicals.cn/ns/trait/water_frequency_tier/value/regular",
+          "taxonID": "https://tropicals.cn/species/epipremnum-aureum"
+        },
+        "source_sha256": "b934e2a193760f1ef08614c1be6c11728f6d692d46898b2548ce0bf13990144b",
+        "source_url": "https://cdn.tropicals.cn/datasets/2026-07-09/measurementorfact.tsv.gz"
+      },
+      "water_frequency_tier": "regular"
+    },
+    {
+      "is_active": 1,
+      "max_days": 7,
+      "min_days": 4,
+      "policy_version": "v1",
+      "taxon_id": "https://tropicals.cn/species/epipremnum-aureum",
+      "trigger_state": "KEEP_MOIST",
+      "water_frequency_source_json": {
+        "independent_review_status": "unreviewed_source_ai_extraction",
+        "record": {
+          "measurementDeterminedBy": "Tropicals trait pipeline (full-v1-20260524)",
+          "measurementDeterminedDate": "2026-05-28T17:41:59Z",
+          "measurementID": "epipremnum-aureum#water_frequency_tier",
+          "measurementMethod": "AI extraction, registry-bound + evidence-grounded (see methods, arXiv:2606.00994); confidence high|medium; admin_review_status approved|pending",
+          "measurementRemarks": "表土干燥后及时补水",
+          "measurementType": "Watering frequency",
+          "measurementTypeID": "https://tropicals.cn/ns/trait/water_frequency_tier",
+          "measurementUnit": "",
+          "measurementUnitID": "",
+          "measurementValue": "regular",
+          "measurementValueID": "https://tropicals.cn/ns/trait/water_frequency_tier/value/regular",
+          "taxonID": "https://tropicals.cn/species/epipremnum-aureum"
+        },
+        "source_sha256": "b934e2a193760f1ef08614c1be6c11728f6d692d46898b2548ce0bf13990144b",
+        "source_url": "https://cdn.tropicals.cn/datasets/2026-07-09/measurementorfact.tsv.gz"
+      },
+      "water_frequency_tier": "regular"
+    },
+    {
+      "is_active": 1,
+      "max_days": 5,
+      "min_days": 3,
+      "policy_version": "v1",
+      "taxon_id": "https://tropicals.cn/species/epipremnum-aureum",
+      "trigger_state": "KEEP_WET",
+      "water_frequency_source_json": {
+        "independent_review_status": "unreviewed_source_ai_extraction",
+        "record": {
+          "measurementDeterminedBy": "Tropicals trait pipeline (full-v1-20260524)",
+          "measurementDeterminedDate": "2026-05-28T17:41:59Z",
+          "measurementID": "epipremnum-aureum#water_frequency_tier",
+          "measurementMethod": "AI extraction, registry-bound + evidence-grounded (see methods, arXiv:2606.00994); confidence high|medium; admin_review_status approved|pending",
+          "measurementRemarks": "表土干燥后及时补水",
+          "measurementType": "Watering frequency",
+          "measurementTypeID": "https://tropicals.cn/ns/trait/water_frequency_tier",
+          "measurementUnit": "",
+          "measurementUnitID": "",
+          "measurementValue": "regular",
+          "measurementValueID": "https://tropicals.cn/ns/trait/water_frequency_tier/value/regular",
+          "taxonID": "https://tropicals.cn/species/epipremnum-aureum"
+        },
+        "source_sha256": "b934e2a193760f1ef08614c1be6c11728f6d692d46898b2548ce0bf13990144b",
+        "source_url": "https://cdn.tropicals.cn/datasets/2026-07-09/measurementorfact.tsv.gz"
+      },
+      "water_frequency_tier": "regular"
+    },
+    {
+      "is_active": 1,
+      "max_days": 8,
+      "min_days": 5,
+      "policy_version": "v1",
+      "taxon_id": "https://tropicals.cn/species/epipremnum-aureum",
+      "trigger_state": "SURFACE_DRY",
+      "water_frequency_source_json": {
+        "independent_review_status": "unreviewed_source_ai_extraction",
+        "record": {
+          "measurementDeterminedBy": "Tropicals trait pipeline (full-v1-20260524)",
+          "measurementDeterminedDate": "2026-05-28T17:41:59Z",
+          "measurementID": "epipremnum-aureum#water_frequency_tier",
+          "measurementMethod": "AI extraction, registry-bound + evidence-grounded (see methods, arXiv:2606.00994); confidence high|medium; admin_review_status approved|pending",
+          "measurementRemarks": "表土干燥后及时补水",
+          "measurementType": "Watering frequency",
+          "measurementTypeID": "https://tropicals.cn/ns/trait/water_frequency_tier",
+          "measurementUnit": "",
+          "measurementUnitID": "",
+          "measurementValue": "regular",
+          "measurementValueID": "https://tropicals.cn/ns/trait/water_frequency_tier/value/regular",
+          "taxonID": "https://tropicals.cn/species/epipremnum-aureum"
+        },
+        "source_sha256": "b934e2a193760f1ef08614c1be6c11728f6d692d46898b2548ce0bf13990144b",
+        "source_url": "https://cdn.tropicals.cn/datasets/2026-07-09/measurementorfact.tsv.gz"
+      },
+      "water_frequency_tier": "regular"
+    },
+    {
+      "is_active": 1,
+      "max_days": 12,
+      "min_days": 5,
+      "policy_version": "v1",
+      "taxon_id": "https://tropicals.cn/species/epipremnum-aureum",
+      "trigger_state": "TIER_DEFAULT",
+      "water_frequency_source_json": {
+        "independent_review_status": "unreviewed_source_ai_extraction",
+        "record": {
+          "measurementDeterminedBy": "Tropicals trait pipeline (full-v1-20260524)",
+          "measurementDeterminedDate": "2026-05-28T17:41:59Z",
+          "measurementID": "epipremnum-aureum#water_frequency_tier",
+          "measurementMethod": "AI extraction, registry-bound + evidence-grounded (see methods, arXiv:2606.00994); confidence high|medium; admin_review_status approved|pending",
+          "measurementRemarks": "表土干燥后及时补水",
+          "measurementType": "Watering frequency",
+          "measurementTypeID": "https://tropicals.cn/ns/trait/water_frequency_tier",
+          "measurementUnit": "",
+          "measurementUnitID": "",
+          "measurementValue": "regular",
+          "measurementValueID": "https://tropicals.cn/ns/trait/water_frequency_tier/value/regular",
+          "taxonID": "https://tropicals.cn/species/epipremnum-aureum"
+        },
+        "source_sha256": "b934e2a193760f1ef08614c1be6c11728f6d692d46898b2548ce0bf13990144b",
+        "source_url": "https://cdn.tropicals.cn/datasets/2026-07-09/measurementorfact.tsv.gz"
+      },
+      "water_frequency_tier": "regular"
+    },
+    {
+      "is_active": 1,
+      "max_days": 21,
+      "min_days": 14,
+      "policy_version": "v1",
+      "taxon_id": "https://tropicals.cn/species/epipremnum-aureum",
+      "trigger_state": "VERY_DRY",
+      "water_frequency_source_json": {
+        "independent_review_status": "unreviewed_source_ai_extraction",
+        "record": {
+          "measurementDeterminedBy": "Tropicals trait pipeline (full-v1-20260524)",
+          "measurementDeterminedDate": "2026-05-28T17:41:59Z",
+          "measurementID": "epipremnum-aureum#water_frequency_tier",
+          "measurementMethod": "AI extraction, registry-bound + evidence-grounded (see methods, arXiv:2606.00994); confidence high|medium; admin_review_status approved|pending",
+          "measurementRemarks": "表土干燥后及时补水",
+          "measurementType": "Watering frequency",
+          "measurementTypeID": "https://tropicals.cn/ns/trait/water_frequency_tier",
+          "measurementUnit": "",
+          "measurementUnitID": "",
+          "measurementValue": "regular",
+          "measurementValueID": "https://tropicals.cn/ns/trait/water_frequency_tier/value/regular",
+          "taxonID": "https://tropicals.cn/species/epipremnum-aureum"
+        },
+        "source_sha256": "b934e2a193760f1ef08614c1be6c11728f6d692d46898b2548ce0bf13990144b",
+        "source_url": "https://cdn.tropicals.cn/datasets/2026-07-09/measurementorfact.tsv.gz"
+      },
+      "water_frequency_tier": "regular"
+    },
+    {
+      "is_active": 1,
+      "max_days": 14,
+      "min_days": 7,
+      "policy_version": "v1",
+      "taxon_id": "https://tropicals.cn/species/monstera-deliciosa",
+      "trigger_state": "DRY_WET",
+      "water_frequency_source_json": {
+        "independent_review_status": "unreviewed_source_ai_extraction",
+        "record": {
+          "measurementDeterminedBy": "Tropicals trait pipeline (full-v1-20260524)",
+          "measurementDeterminedDate": "2026-05-28T07:11:36Z",
+          "measurementID": "monstera-deliciosa#water_frequency_tier",
+          "measurementMethod": "AI extraction, registry-bound + evidence-grounded (see methods, arXiv:2606.00994); confidence high|medium; admin_review_status approved|pending",
+          "measurementRemarks": "浇水遵循“见干见湿”原则，生长期保持盆土微湿",
+          "measurementType": "Watering frequency",
+          "measurementTypeID": "https://tropicals.cn/ns/trait/water_frequency_tier",
+          "measurementUnit": "",
+          "measurementUnitID": "",
+          "measurementValue": "regular",
+          "measurementValueID": "https://tropicals.cn/ns/trait/water_frequency_tier/value/regular",
+          "taxonID": "https://tropicals.cn/species/monstera-deliciosa"
+        },
+        "source_sha256": "b934e2a193760f1ef08614c1be6c11728f6d692d46898b2548ce0bf13990144b",
+        "source_url": "https://cdn.tropicals.cn/datasets/2026-07-09/measurementorfact.tsv.gz"
+      },
+      "water_frequency_tier": "regular"
+    },
+    {
+      "is_active": 1,
+      "max_days": 16,
+      "min_days": 10,
+      "policy_version": "v1",
+      "taxon_id": "https://tropicals.cn/species/monstera-deliciosa",
+      "trigger_state": "FULL_DRY",
+      "water_frequency_source_json": {
+        "independent_review_status": "unreviewed_source_ai_extraction",
+        "record": {
+          "measurementDeterminedBy": "Tropicals trait pipeline (full-v1-20260524)",
+          "measurementDeterminedDate": "2026-05-28T07:11:36Z",
+          "measurementID": "monstera-deliciosa#water_frequency_tier",
+          "measurementMethod": "AI extraction, registry-bound + evidence-grounded (see methods, arXiv:2606.00994); confidence high|medium; admin_review_status approved|pending",
+          "measurementRemarks": "浇水遵循“见干见湿”原则，生长期保持盆土微湿",
+          "measurementType": "Watering frequency",
+          "measurementTypeID": "https://tropicals.cn/ns/trait/water_frequency_tier",
+          "measurementUnit": "",
+          "measurementUnitID": "",
+          "measurementValue": "regular",
+          "measurementValueID": "https://tropicals.cn/ns/trait/water_frequency_tier/value/regular",
+          "taxonID": "https://tropicals.cn/species/monstera-deliciosa"
+        },
+        "source_sha256": "b934e2a193760f1ef08614c1be6c11728f6d692d46898b2548ce0bf13990144b",
+        "source_url": "https://cdn.tropicals.cn/datasets/2026-07-09/measurementorfact.tsv.gz"
+      },
+      "water_frequency_tier": "regular"
+    },
+    {
+      "is_active": 1,
+      "max_days": 7,
+      "min_days": 4,
+      "policy_version": "v1",
+      "taxon_id": "https://tropicals.cn/species/monstera-deliciosa",
+      "trigger_state": "KEEP_MOIST",
+      "water_frequency_source_json": {
+        "independent_review_status": "unreviewed_source_ai_extraction",
+        "record": {
+          "measurementDeterminedBy": "Tropicals trait pipeline (full-v1-20260524)",
+          "measurementDeterminedDate": "2026-05-28T07:11:36Z",
+          "measurementID": "monstera-deliciosa#water_frequency_tier",
+          "measurementMethod": "AI extraction, registry-bound + evidence-grounded (see methods, arXiv:2606.00994); confidence high|medium; admin_review_status approved|pending",
+          "measurementRemarks": "浇水遵循“见干见湿”原则，生长期保持盆土微湿",
+          "measurementType": "Watering frequency",
+          "measurementTypeID": "https://tropicals.cn/ns/trait/water_frequency_tier",
+          "measurementUnit": "",
+          "measurementUnitID": "",
+          "measurementValue": "regular",
+          "measurementValueID": "https://tropicals.cn/ns/trait/water_frequency_tier/value/regular",
+          "taxonID": "https://tropicals.cn/species/monstera-deliciosa"
+        },
+        "source_sha256": "b934e2a193760f1ef08614c1be6c11728f6d692d46898b2548ce0bf13990144b",
+        "source_url": "https://cdn.tropicals.cn/datasets/2026-07-09/measurementorfact.tsv.gz"
+      },
+      "water_frequency_tier": "regular"
+    },
+    {
+      "is_active": 1,
+      "max_days": 5,
+      "min_days": 3,
+      "policy_version": "v1",
+      "taxon_id": "https://tropicals.cn/species/monstera-deliciosa",
+      "trigger_state": "KEEP_WET",
+      "water_frequency_source_json": {
+        "independent_review_status": "unreviewed_source_ai_extraction",
+        "record": {
+          "measurementDeterminedBy": "Tropicals trait pipeline (full-v1-20260524)",
+          "measurementDeterminedDate": "2026-05-28T07:11:36Z",
+          "measurementID": "monstera-deliciosa#water_frequency_tier",
+          "measurementMethod": "AI extraction, registry-bound + evidence-grounded (see methods, arXiv:2606.00994); confidence high|medium; admin_review_status approved|pending",
+          "measurementRemarks": "浇水遵循“见干见湿”原则，生长期保持盆土微湿",
+          "measurementType": "Watering frequency",
+          "measurementTypeID": "https://tropicals.cn/ns/trait/water_frequency_tier",
+          "measurementUnit": "",
+          "measurementUnitID": "",
+          "measurementValue": "regular",
+          "measurementValueID": "https://tropicals.cn/ns/trait/water_frequency_tier/value/regular",
+          "taxonID": "https://tropicals.cn/species/monstera-deliciosa"
+        },
+        "source_sha256": "b934e2a193760f1ef08614c1be6c11728f6d692d46898b2548ce0bf13990144b",
+        "source_url": "https://cdn.tropicals.cn/datasets/2026-07-09/measurementorfact.tsv.gz"
+      },
+      "water_frequency_tier": "regular"
+    },
+    {
+      "is_active": 1,
+      "max_days": 8,
+      "min_days": 5,
+      "policy_version": "v1",
+      "taxon_id": "https://tropicals.cn/species/monstera-deliciosa",
+      "trigger_state": "SURFACE_DRY",
+      "water_frequency_source_json": {
+        "independent_review_status": "unreviewed_source_ai_extraction",
+        "record": {
+          "measurementDeterminedBy": "Tropicals trait pipeline (full-v1-20260524)",
+          "measurementDeterminedDate": "2026-05-28T07:11:36Z",
+          "measurementID": "monstera-deliciosa#water_frequency_tier",
+          "measurementMethod": "AI extraction, registry-bound + evidence-grounded (see methods, arXiv:2606.00994); confidence high|medium; admin_review_status approved|pending",
+          "measurementRemarks": "浇水遵循“见干见湿”原则，生长期保持盆土微湿",
+          "measurementType": "Watering frequency",
+          "measurementTypeID": "https://tropicals.cn/ns/trait/water_frequency_tier",
+          "measurementUnit": "",
+          "measurementUnitID": "",
+          "measurementValue": "regular",
+          "measurementValueID": "https://tropicals.cn/ns/trait/water_frequency_tier/value/regular",
+          "taxonID": "https://tropicals.cn/species/monstera-deliciosa"
+        },
+        "source_sha256": "b934e2a193760f1ef08614c1be6c11728f6d692d46898b2548ce0bf13990144b",
+        "source_url": "https://cdn.tropicals.cn/datasets/2026-07-09/measurementorfact.tsv.gz"
+      },
+      "water_frequency_tier": "regular"
+    },
+    {
+      "is_active": 1,
+      "max_days": 12,
+      "min_days": 5,
+      "policy_version": "v1",
+      "taxon_id": "https://tropicals.cn/species/monstera-deliciosa",
+      "trigger_state": "TIER_DEFAULT",
+      "water_frequency_source_json": {
+        "independent_review_status": "unreviewed_source_ai_extraction",
+        "record": {
+          "measurementDeterminedBy": "Tropicals trait pipeline (full-v1-20260524)",
+          "measurementDeterminedDate": "2026-05-28T07:11:36Z",
+          "measurementID": "monstera-deliciosa#water_frequency_tier",
+          "measurementMethod": "AI extraction, registry-bound + evidence-grounded (see methods, arXiv:2606.00994); confidence high|medium; admin_review_status approved|pending",
+          "measurementRemarks": "浇水遵循“见干见湿”原则，生长期保持盆土微湿",
+          "measurementType": "Watering frequency",
+          "measurementTypeID": "https://tropicals.cn/ns/trait/water_frequency_tier",
+          "measurementUnit": "",
+          "measurementUnitID": "",
+          "measurementValue": "regular",
+          "measurementValueID": "https://tropicals.cn/ns/trait/water_frequency_tier/value/regular",
+          "taxonID": "https://tropicals.cn/species/monstera-deliciosa"
+        },
+        "source_sha256": "b934e2a193760f1ef08614c1be6c11728f6d692d46898b2548ce0bf13990144b",
+        "source_url": "https://cdn.tropicals.cn/datasets/2026-07-09/measurementorfact.tsv.gz"
+      },
+      "water_frequency_tier": "regular"
+    },
+    {
+      "is_active": 1,
+      "max_days": 21,
+      "min_days": 14,
+      "policy_version": "v1",
+      "taxon_id": "https://tropicals.cn/species/monstera-deliciosa",
+      "trigger_state": "VERY_DRY",
+      "water_frequency_source_json": {
+        "independent_review_status": "unreviewed_source_ai_extraction",
+        "record": {
+          "measurementDeterminedBy": "Tropicals trait pipeline (full-v1-20260524)",
+          "measurementDeterminedDate": "2026-05-28T07:11:36Z",
+          "measurementID": "monstera-deliciosa#water_frequency_tier",
+          "measurementMethod": "AI extraction, registry-bound + evidence-grounded (see methods, arXiv:2606.00994); confidence high|medium; admin_review_status approved|pending",
+          "measurementRemarks": "浇水遵循“见干见湿”原则，生长期保持盆土微湿",
+          "measurementType": "Watering frequency",
+          "measurementTypeID": "https://tropicals.cn/ns/trait/water_frequency_tier",
+          "measurementUnit": "",
+          "measurementUnitID": "",
+          "measurementValue": "regular",
+          "measurementValueID": "https://tropicals.cn/ns/trait/water_frequency_tier/value/regular",
+          "taxonID": "https://tropicals.cn/species/monstera-deliciosa"
+        },
+        "source_sha256": "b934e2a193760f1ef08614c1be6c11728f6d692d46898b2548ce0bf13990144b",
+        "source_url": "https://cdn.tropicals.cn/datasets/2026-07-09/measurementorfact.tsv.gz"
+      },
+      "water_frequency_tier": "regular"
+    }
+  ]
+}

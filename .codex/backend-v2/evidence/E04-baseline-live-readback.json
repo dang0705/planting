@@ -1,0 +1,209 @@
+{
+  "capturedAt": "2026-10-07T16:40:45.472Z",
+  "path": "actual compiled Node22 Repository → operational stdin SQL bridge → authenticated CloudBase MCP → qinghuazhi_v2_test → actual compiler/snapshot",
+  "results": [
+    {
+      "kind": "repository_live_result",
+      "slug": "epipremnum-aureum",
+      "result": {
+        "status": "available_candidate",
+        "productionAdmission": false,
+        "tier": "regular",
+        "trigger": "SURFACE_DRY",
+        "baselineDays": {
+          "min": 5,
+          "max": 8
+        },
+        "basis": "nominal_calendar_days",
+        "referenceConditions": "unconfirmed",
+        "snapshot": {
+          "catalogTaxonRef": "https://tropicals.cn/species/epipremnum-aureum",
+          "source": {
+            "independent_review_status": "unreviewed_source_ai_extraction",
+            "record": {
+              "measurementDeterminedBy": "Tropicals trait pipeline (full-v1-20260524)",
+              "measurementDeterminedDate": "2026-05-28T17:41:59Z",
+              "measurementID": "epipremnum-aureum#water_frequency_tier",
+              "measurementMethod": "AI extraction, registry-bound + evidence-grounded (see methods, arXiv:2606.00994); confidence high|medium; admin_review_status approved|pending",
+              "measurementRemarks": "表土干燥后及时补水",
+              "measurementType": "Watering frequency",
+              "measurementTypeID": "https://tropicals.cn/ns/trait/water_frequency_tier",
+              "measurementUnit": "",
+              "measurementUnitID": "",
+              "measurementValue": "regular",
+              "measurementValueID": "https://tropicals.cn/ns/trait/water_frequency_tier/value/regular",
+              "taxonID": "https://tropicals.cn/species/epipremnum-aureum"
+            },
+            "source_sha256": "b934e2a193760f1ef08614c1be6c11728f6d692d46898b2548ce0bf13990144b",
+            "source_url": "https://cdn.tropicals.cn/datasets/2026-07-09/measurementorfact.tsv.gz"
+          },
+          "compiled": {
+            "status": "classified",
+            "method": "explicit_terms_candidate",
+            "tier": "regular",
+            "trigger": "SURFACE_DRY",
+            "generalClauses": [
+              "表土干燥后及时补水"
+            ],
+            "conditionalClauses": [],
+            "matchedTriggers": [
+              "SURFACE_DRY"
+            ],
+            "negatedClauses": []
+          },
+          "policy": {
+            "policyVersion": "v1",
+            "tier": "regular",
+            "trigger": "SURFACE_DRY",
+            "minDays": 5,
+            "maxDays": 8
+          }
+        },
+        "snapshotHash": "c9415d1ab60ff565d7a47098be14fa9fef84260715d13793289a3d3cf8269c1d"
+      }
+    },
+    {
+      "kind": "repository_live_result",
+      "slug": "astrophytum-asterias",
+      "result": {
+        "status": "available_candidate",
+        "productionAdmission": false,
+        "tier": "drought_tolerant",
+        "trigger": "FULL_DRY",
+        "baselineDays": {
+          "min": 14,
+          "max": 21
+        },
+        "basis": "nominal_calendar_days",
+        "referenceConditions": "unconfirmed",
+        "snapshot": {
+          "catalogTaxonRef": "https://tropicals.cn/species/astrophytum-asterias",
+          "source": {
+            "independent_review_status": "unreviewed_source_ai_extraction",
+            "record": {
+              "measurementDeterminedBy": "Tropicals trait pipeline (full-v1-20260524)",
+              "measurementDeterminedDate": "2026-05-28T17:44:35Z",
+              "measurementID": "astrophytum-asterias#water_frequency_tier",
+              "measurementMethod": "AI extraction, registry-bound + evidence-grounded (see methods, arXiv:2606.00994); confidence high|medium; admin_review_status approved|pending",
+              "measurementRemarks": "浇水遵循干透浇透原则",
+              "measurementType": "Watering frequency",
+              "measurementTypeID": "https://tropicals.cn/ns/trait/water_frequency_tier",
+              "measurementUnit": "",
+              "measurementUnitID": "",
+              "measurementValue": "drought_tolerant",
+              "measurementValueID": "https://tropicals.cn/ns/trait/water_frequency_tier/value/drought_tolerant",
+              "taxonID": "https://tropicals.cn/species/astrophytum-asterias"
+            },
+            "source_sha256": "b934e2a193760f1ef08614c1be6c11728f6d692d46898b2548ce0bf13990144b",
+            "source_url": "https://cdn.tropicals.cn/datasets/2026-07-09/measurementorfact.tsv.gz"
+          },
+          "compiled": {
+            "status": "classified",
+            "method": "explicit_terms_candidate",
+            "tier": "drought_tolerant",
+            "trigger": "FULL_DRY",
+            "generalClauses": [
+              "浇水遵循干透浇透原则"
+            ],
+            "conditionalClauses": [],
+            "matchedTriggers": [
+              "FULL_DRY"
+            ],
+            "negatedClauses": []
+          },
+          "policy": {
+            "policyVersion": "v1",
+            "tier": "drought_tolerant",
+            "trigger": "FULL_DRY",
+            "minDays": 14,
+            "maxDays": 21
+          }
+        },
+        "snapshotHash": "353691df746fc6b6f09321d8821ca37b5482cf242c76183c9a989a165f215b9b"
+      }
+    },
+    {
+      "kind": "repository_live_result",
+      "slug": "monstera-deliciosa",
+      "result": {
+        "status": "available_candidate",
+        "productionAdmission": false,
+        "tier": "regular",
+        "trigger": "DRY_WET",
+        "baselineDays": {
+          "min": 7,
+          "max": 14
+        },
+        "basis": "nominal_calendar_days",
+        "referenceConditions": "unconfirmed",
+        "snapshot": {
+          "catalogTaxonRef": "https://tropicals.cn/species/monstera-deliciosa",
+          "source": {
+            "independent_review_status": "unreviewed_source_ai_extraction",
+            "record": {
+              "measurementDeterminedBy": "Tropicals trait pipeline (full-v1-20260524)",
+              "measurementDeterminedDate": "2026-05-28T07:11:36Z",
+              "measurementID": "monstera-deliciosa#water_frequency_tier",
+              "measurementMethod": "AI extraction, registry-bound + evidence-grounded (see methods, arXiv:2606.00994); confidence high|medium; admin_review_status approved|pending",
+              "measurementRemarks": "浇水遵循“见干见湿”原则，生长期保持盆土微湿",
+              "measurementType": "Watering frequency",
+              "measurementTypeID": "https://tropicals.cn/ns/trait/water_frequency_tier",
+              "measurementUnit": "",
+              "measurementUnitID": "",
+              "measurementValue": "regular",
+              "measurementValueID": "https://tropicals.cn/ns/trait/water_frequency_tier/value/regular",
+              "taxonID": "https://tropicals.cn/species/monstera-deliciosa"
+            },
+            "source_sha256": "b934e2a193760f1ef08614c1be6c11728f6d692d46898b2548ce0bf13990144b",
+            "source_url": "https://cdn.tropicals.cn/datasets/2026-07-09/measurementorfact.tsv.gz"
+          },
+          "compiled": {
+            "status": "classified",
+            "method": "explicit_terms_candidate",
+            "tier": "regular",
+            "trigger": "DRY_WET",
+            "generalClauses": [
+              "浇水遵循“见干见湿”原则"
+            ],
+            "conditionalClauses": [
+              "生长期保持盆土微湿"
+            ],
+            "matchedTriggers": [
+              "DRY_WET"
+            ],
+            "negatedClauses": []
+          },
+          "policy": {
+            "policyVersion": "v1",
+            "tier": "regular",
+            "trigger": "DRY_WET",
+            "minDays": 7,
+            "maxDays": 14
+          }
+        },
+        "snapshotHash": "d2665df8bbef0e538a4d9aba53b84936fce560584331dfd0cea9abf327c86165"
+      }
+    }
+  ],
+  "notCovered": [
+    "mysql2 TCP/VPC execution",
+    "formal Care HTTP",
+    "production knowledge admission"
+  ],
+  "verification": {
+    "baselineTests": 14,
+    "adjacentPlantKnowledgeTests": 70,
+    "rootUnitTests": 1926,
+    "typecheck": "passed",
+    "lintErrors": 0,
+    "lintWarnings": 23,
+    "classicRed": [
+      "条件作用范围跨逗号丢失",
+      "SQL等待期间查询输入改写",
+      "否定词被编译为正向要求"
+    ],
+    "mutationRed": "来源tier一致性守卫被移除后失败；逐字节恢复",
+    "realSqlRed": "两表tier排序规则不同，直接连接报1267；二进制枚举比较后读回成功",
+    "node22UnitTests": 1926
+  }
+}
