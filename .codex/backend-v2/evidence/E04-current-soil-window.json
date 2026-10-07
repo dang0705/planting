@@ -1,0 +1,81 @@
+{
+  "step": "E04",
+  "ticketId": "z8v0kmr973",
+  "createdAt": "2026-10-07T19:21:08.015616+00:00",
+  "scope": "当前盆土确定性证据→有效检查窗口→当地日期和安全行动的内部回放",
+  "accepted": false,
+  "productionAdmission": false,
+  "behavior": [
+    "当前可靠有效根区目标已达时输出现在检查；不制造历史积分或浇水事实",
+    "根区湿态反驳已经到达的旧窗口时保留冲突并撤回当前日期",
+    "表土、不可靠、过期、未知及目标未确认不冒充根区目标",
+    "未晚于最近实际浇水的观察不参与本轮行动/窗口；原证据仍在快照",
+    "发布、内盆与排水安全边界保留；未来未矛盾的窗口仅标历史预测"
+  ],
+  "configurationDecision": "本轮没有新增可调变量、状态映射、阈值或保留时长；按现有证据资格和事实先后顺序处理，非零剩余量映射仍pending",
+  "testScope": {
+    "layer": "L3 unit_fake",
+    "realPath": "replayWateringTiming→真实积分→当前窗口裁决→原安全门→当地日期，输入副本与摘要保留",
+    "substituted": "仅人工数学/证据场景，无计算替身；无真实Provider、MySQL或HTTP路径",
+    "expectedSources": [
+      "用户批准完整计划4.3/4.3.1当前盆土证据参与窗口且不重置历史",
+      "已冻结根区目标资格/盆土安全门与实际行为事实语义",
+      "现有action枚举water_allowed/insufficient_evidence/review_drainage"
+    ],
+    "newTests": 16,
+    "care": {
+      "files": 41,
+      "passed": 583
+    },
+    "root": {
+      "files": 207,
+      "passed": 2035,
+      "failed": 0
+    },
+    "node22": {
+      "version": "22.21.1",
+      "files": 207,
+      "passed": 2035,
+      "failed": 0
+    },
+    "typecheck": "后端tsconfig及新测试strict检查通过",
+    "lint": {
+      "warnings": 45,
+      "errors": 0
+    },
+    "classicRed": [
+      "可靠根区已达目标仍输出未来日期",
+      "根区湿态反证仍输出当前日期",
+      "2项前一循环证据仍授予water_allowed"
+    ],
+    "mutation": {
+      "change": "取消root_zone限定",
+      "failedTests": [
+        "surface目标不得覆盖预测",
+        "表土湿不得撤回根区预测"
+      ],
+      "redCount": 2,
+      "restoredByteForByte": true,
+      "restoredSha256": "0b68cff6f626987a16cc9c034e47f054e1f02736334c2e1b7c0eda34b2f2d6bc",
+      "restoredGreen": 16
+    },
+    "existingExpectedPreserved": "两条当前湿土场景只将采集时刻明确设为本轮浇水之后；原日期/行动/水量Expected保持不变"
+  },
+  "review": {
+    "agent": "runtime_probe_terra",
+    "scope": "新窗口域函数、回放应用和新测试",
+    "result": "未发现具体错误，未重复审计其他架构"
+  },
+  "sha256": {
+    "cloudfunctions-v2/src/care/watering/resolve-current-dry-window.ts": "0b68cff6f626987a16cc9c034e47f054e1f02736334c2e1b7c0eda34b2f2d6bc",
+    "cloudfunctions-v2/src/care/application/replay-watering-timing.ts": "4809295a733098357ba594c5935f6cd8b681ce6d48c2a1c01f80bf4843a1fbc9",
+    "cloudfunctions-v2/test/care/watering/current-soil-window.spec.ts": "b461d999bee232932be5797de2dd7309a23e2e7b66355065327a7459026ef9ba",
+    "cloudfunctions-v2/models/care/watering-timing-replay-contract.md": "3c612a10582bc8c1030a1203d679c7d03d235e57c88ac366e87dd92bcfb273cd"
+  },
+  "notVerified": [
+    "盆土定量状态映射与非零剩余窗口",
+    "正式室内估算和光照/VPD联合响应",
+    "实际施水量、模型发布和真实Care HTTP"
+  ],
+  "nextAction": "继续补齐定量状态映射与环境需求依据；不把确定性观察边界误报为完整干湿循环估计"
+}

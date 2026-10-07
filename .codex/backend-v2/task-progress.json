@@ -1,16 +1,22 @@
 {
-  "revision": 119,
+  "revision": 121,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-07T18:57:24.263346+00:00",
+  "updatedAt": "2026-10-07T19:21:08.015616+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "检验室内热湿研究候选对真实独立时段的解释能力",
-    "minimumVerification": "固定分段、一次初态、无未来真值回灌，比较训练均值，记录覆盖及T/RH/VPD误差",
-    "result": "UCI6049行；独立2016段全输出，候选温度/VPD不及训练均值；18新增、Care567、根/Node22全量2019通过",
-    "rollback": "研究模块/样本可撤回；不改正式参数、事实、数据库或部署",
-    "nextAction": "室内估算：核验后台初态、供暖/空调和太阳热输入的可识别证据及独立样本；不把单栋拟合发布为默认，随后接非线性需求与盆土剩余窗口",
-    "timeLimitMinutes": 20
+    "target": "把当前可靠根区证据接入有效窗口，保留历史预测与冲突",
+    "keyAssumptions": [
+      "已有目标干燥确认可证明现在已达目标",
+      "定性湿态不足以计算非零剩余天数；只排除矛盾的已到窗口"
+    ],
+    "minimumVerification": "独立Expected先RED，根区/表土/过期/发布和排水守卫、快照重放，后端全量",
+    "continueCondition": "仅实现既有证据语义可确定的行为，不私设映射",
+    "failureCondition": "缺数值映射或来源冲突时保留缺证据，停止新增数值推导",
+    "rollback": "撤回新增窗口裁决接线；不改实际事实、生产发布或数据库",
+    "timeLimitMinutes": 20,
+    "nextAction": "继续定量盆土状态与非零剩余窗口的映射依据；室内场景与非线性环境需求并列待准入，不猜值",
+    "result": "当前目标/湿态冲突及实际浇水后的观察资格已接线；16新增，Care583；根/Node22全量2035"
   },
   "tasks": [
     {
@@ -126,10 +132,10 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 47,
+      "version": 48,
       "priority": "high",
       "status": "codex running",
-      "stage": "真实独立时段比较已完成；候选未优于简单VPD对照，正式准入待补证",
+      "stage": "当前盆土证据窗口修正已验证；非零剩余时间/正式模型待补齐",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -175,17 +181,18 @@
         ".codex/backend-v2/evidence/E04-watering-calendar.json",
         ".codex/backend-v2/evidence/E04-current-cycle-plan.json",
         ".codex/backend-v2/evidence/E04-indoor-climate-experiment.json",
-        ".codex/backend-v2/evidence/E04-indoor-climate-real-data.json"
+        ".codex/backend-v2/evidence/E04-indoor-climate-real-data.json",
+        ".codex/backend-v2/evidence/E04-current-soil-window.json"
       ],
       "summary": [
-        "E04：完成UCI真实单宅冬季校准/独立回放，正式参数未发布",
-        "4032行校准、2017行验证；一次室内初态，无未来真值回灌",
-        "候选VPD MAE0.111kPa，训练均值0.088；不能据此准入",
-        "18新增；泄漏突变2项RED→恢复；Care567，根/Node22全量2019",
-        "证据：.codex/backend-v2/evidence/E04-indoor-climate-real-data.json"
+        "E04：当前根区目标已达→现在检查；湿态反证→撤回矛盾日期",
+        "历史积分/原预测保留；前次浇水前或同刻观察不授权本轮行动",
+        "16新增；经典RED及根区守卫突变2RED→恢复GREEN",
+        "Care583；根及Node22全量2035/2035；非零剩余量/正式HTTP未验收",
+        "证据：.codex/backend-v2/evidence/E04-current-soil-window.json"
       ],
       "blockingReason": null,
-      "nextAction": "室内估算：核验后台初态、供暖/空调和太阳热输入的可识别证据及独立样本；不把单栋拟合发布为默认，随后接非线性需求与盆土剩余窗口",
+      "nextAction": "继续定量盆土状态与非零剩余窗口的映射依据；室内场景与非线性环境需求并列待准入，不猜值",
       "ticketReadback": "ClickUp评论1100440000140265全文读回一致；保持codex running"
     },
     {
@@ -521,8 +528,8 @@
     "runner": "cloudfunctions-v2 已锁定 Vitest",
     "testDirectory": "cloudfunctions-v2/test/",
     "lastResult": {
-      "passed": 2019,
-      "total": 2019,
+      "passed": 2035,
+      "total": 2035,
       "skipped": 0
     }
   },

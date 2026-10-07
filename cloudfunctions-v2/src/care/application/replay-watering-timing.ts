@@ -3,6 +3,7 @@ import { replayDryProgress, type DryProgressInput, type DryProgressResult } from
 import { evaluateWateringDecision, type WateringDecisionInput, type WateringDecisionResult } from '../watering/evaluate-watering-decision.js'
 import { deriveRootZoneWaterDeficit, type RootZoneWaterDeficitInput, type RootZoneWaterDeficitResult } from '../watering/derive-root-zone-water-deficit.js'
 import { projectCheckWindowDates, type LocalCheckWindowResult } from '../watering/project-check-window-dates.js'
+import { resolveCurrentDryWindow, type CurrentCycleWindow } from '../watering/resolve-current-dry-window.js'
 
 /** 同轮浇水候选回放的固定输入，日期与当前盆土使用相同时刻。 */
 export interface WateringTimingReplayInput {
@@ -25,11 +26,13 @@ export interface WateringTimingReplayResult {
   readonly productionAdmission: false
   /** 环境和栽培输入积分的完整结果与覆盖边界。 */
   readonly drying: DryProgressResult
+  /** 当前证据修正后的有效窗口；历史进度与旧预测仍在drying内原样保留。 */
+  readonly currentCycleWindow: CurrentCycleWindow
   /** 当前盆土、排水和发布准入的最终行动裁决。 */
   readonly decision: WateringDecisionResult
   /** 与日期并列的净补水缺口，始终不冒充实际施水量。 */
   readonly waterDeficit: RootZoneWaterDeficitResult | null
-  /** 与UTC积分同源的当地检查日期；不是已确认浇水计划。 */
+  /** 当前有效窗口的当地检查日期；不是已确认浇水计划。 */
   readonly localCheckWindow: LocalCheckWindowResult
   /** 输入独立副本，调用方后续改动不影响原回放。 */
   readonly snapshot: WateringTimingReplayInput
@@ -41,12 +44,23 @@ export function replayWateringTiming(input: WateringTimingReplayInput): Watering
   const snapshotHash = calculateCanonicalJsonSha256(input as unknown as CanonicalJsonValue)
   const snapshot = structuredClone(input)
   const drying = replayDryProgress(snapshot.drying)
-  const decision = evaluateWateringDecision({
+  const decisionInput = {
     now: snapshot.drying.now, wateringPolicyApproved: snapshot.wateringPolicyApproved,
     potSafety: snapshot.potSafety, soil: snapshot.soil, progress: drying.progress,
     baseline: drying.status === 'ready_candidate' ? snapshot.drying.baseline : null,
-  })
+  }
+  // 先沿用安全门的完整输入校验；后续观察处理不放宽证据、排水或发布条件。
+  const priorDecision = evaluateWateringDecision(decisionInput)
+  const currentCycleWindow = resolveCurrentDryWindow(snapshot.drying.now, drying.window, snapshot.soil, snapshot.drying.lastConfirmedWateringAt)
+  const evidenceOverridesPrediction = currentCycleWindow.status === 'target_observed' || currentCycleWindow.status === 'prediction_conflict'
+  const observationFromEarlierCycle = currentCycleWindow.ignoredObservationReason !== null
+  const decision = evidenceOverridesPrediction || observationFromEarlierCycle
+    ? evaluateWateringDecision({ ...decisionInput,
+      soil: observationFromEarlierCycle ? null : snapshot.soil,
+      progress: evidenceOverridesPrediction ? null : drying.progress,
+      baseline: evidenceOverridesPrediction ? null : decisionInput.baseline,
+    }) : priorDecision
   const waterDeficit = snapshot.waterDeficit === undefined || snapshot.waterDeficit === null ? null : deriveRootZoneWaterDeficit(snapshot.waterDeficit)
-  const localCheckWindow = projectCheckWindowDates(drying.window, snapshot.timezone ?? null)
-  return { productionAdmission: false, drying, decision, waterDeficit, localCheckWindow, snapshot, snapshotHash }
+  const localCheckWindow = projectCheckWindowDates(currentCycleWindow.window, snapshot.timezone ?? null)
+  return { productionAdmission: false, drying, currentCycleWindow, decision, waterDeficit, localCheckWindow, snapshot, snapshotHash }
 }

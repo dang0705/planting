@@ -41,7 +41,8 @@ describe('检查窗口转换为植物所在地日期', () => {
       timezone: 'Asia/Shanghai',
       drying: { now: start + 86400000, lastConfirmedWateringAt: start, baseline: { min: 2, max: 3, basis: 'equivalent_dry_units' as const, referenceConditionsConfirmed: true }, intervals: [{ start, end: start + 4 * 86400000, environmentDemand: { min: 1, max: 1 }, cultivationRetention: { min: 1, max: 1 }, personalCalibration: { min: 1, max: 1 } }] },
       wateringPolicyApproved: true, potSafety: 'safe' as const,
-      soil: { state: 'wet' as const, scope: 'root_zone' as const, reliable: true, targetCriteriaConfirmed: false, collectedAt: start, validUntil: start + 4 * 86400000 },
+      // 当前盆土观察晚于实际浇水，日期与安全裁决消费同一轮有效证据。
+      soil: { state: 'wet' as const, scope: 'root_zone' as const, reliable: true, targetCriteriaConfirmed: false, collectedAt: start + 86400000, validUntil: start + 4 * 86400000 },
     }
     const result = replayWateringTiming(input)
     expect(result).toMatchObject({ localCheckWindow: { earliestCheckDate: '2026-10-04', latestCheckDate: '2026-10-05' }, decision: { action: 'pause_watering' }, productionAdmission: false })
