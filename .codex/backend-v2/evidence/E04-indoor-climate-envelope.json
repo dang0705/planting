@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 1,
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "scope": "offline_indoor_climate_estimate_range_validation",
+  "productionAdmission": false,
+  "contract": "cloudfunctions-v2/models/care/indoor-climate-envelope.md",
+  "data": {
+    "doi": "10.7488/ds/2836",
+    "license": "CC BY 4.0",
+    "originalMembers": "cloudfunctions-v2/models/care/indoor-climate-data-qualification.json",
+    "newFixture": "cloudfunctions-v2/models/care/fixtures/ideal-home100-envelope-validation-hourly.csv",
+    "sha256": "a35c2486825c071bb43c823387e73d0ea0ede38dabb5f597609af132fba3f549",
+    "timezone": "UTC",
+    "semantics": "同小时样本算术均值；非瞬时值、非连续时间平均、非和风预报"
+  },
+  "model": "281e7c1dc99bf5239d766566b2a92ef3bd4c23be3ddc7c337a80950207ece122",
+  "calibration": {
+    "startUtc": "2017-12-29T00:00:00Z",
+    "endExclusiveUtc": "2018-01-12T00:00:00Z",
+    "selection": {
+      "total": 336,
+      "selected": 238,
+      "excluded": {
+        "indoor_coverage": 57,
+        "missing_values": 27,
+        "outdoor_coverage": 14
+      },
+      "runs": 24,
+      "longestRunHours": 33
+    },
+    "envelope": {
+      "productionAdmission": false,
+      "total": 238,
+      "used": 238,
+      "unavailable": 0,
+      "temperatureResidualC": {
+        "min": -2.763749801182767,
+        "max": 3.525895955804611
+      },
+      "vaporResidualKpa": {
+        "min": -0.19653677197868624,
+        "max": 0.24088921774075178
+      }
+    }
+  },
+  "validation": {
+    "window": {
+      "startUtc": "2018-01-12T00:00:00Z",
+      "endExclusiveUtc": "2018-01-26T00:00:00Z"
+    },
+    "sameHome": {
+      "selection": {
+        "total": 336,
+        "selected": 289,
+        "excluded": {
+          "indoor_coverage": 29,
+          "missing_values": 10,
+          "outdoor_coverage": 3,
+          "humidity_range": 5
+        },
+        "runs": 23,
+        "longestRunHours": 36
+      },
+      "available": 289,
+      "unavailable": 0,
+      "jointCovered": 287,
+      "jointCoverageOfQualifiedHours": 0.9930795847750865,
+      "jointCoverageOfFullWindow": 0.8541666666666666,
+      "fields": {
+        "temperatureC": {
+          "covered": 287,
+          "coverageOfQualifiedHours": 0.9930795847750865,
+          "meanWidthOfAvailable": 6.289645756987344,
+          "maximumWidthOfAvailable": 6.28964575698738
+        },
+        "relativeHumidityPercent": {
+          "covered": 289,
+          "coverageOfQualifiedHours": 1,
+          "meanWidthOfAvailable": 46.6504459005628,
+          "maximumWidthOfAvailable": 53.43794513114913
+        },
+        "vpdKpa": {
+          "covered": 289,
+          "coverageOfQualifiedHours": 1,
+          "meanWidthOfAvailable": 1.1351256670335415,
+          "maximumWidthOfAvailable": 1.1680482238200118
+        }
+      },
+      "recordsSha256": "faecb78c5b516ae6da281b63f02ec04516641f69364228be9be3169b19386564"
+    },
+    "knownTransferStress": {
+      "selection": {
+        "total": 336,
+        "selected": 124,
+        "excluded": {
+          "indoor_coverage": 198,
+          "missing_values": 14
+        },
+        "runs": 11,
+        "longestRunHours": 69
+      },
+      "available": 124,
+      "unavailable": 0,
+      "jointCovered": 102,
+      "jointCoverageOfQualifiedHours": 0.8225806451612904,
+      "jointCoverageOfFullWindow": 0.30357142857142855,
+      "fields": {
+        "temperatureC": {
+          "covered": 102,
+          "coverageOfQualifiedHours": 0.8225806451612904,
+          "meanWidthOfAvailable": 6.289645756987389,
+          "maximumWidthOfAvailable": 6.28964575698738
+        },
+        "relativeHumidityPercent": {
+          "covered": 123,
+          "coverageOfQualifiedHours": 0.9919354838709677,
+          "meanWidthOfAvailable": 47.553743791720656,
+          "maximumWidthOfAvailable": 50.5776032993157
+        },
+        "vpdKpa": {
+          "covered": 122,
+          "coverageOfQualifiedHours": 0.9838709677419355,
+          "meanWidthOfAvailable": 1.1314666900331973,
+          "maximumWidthOfAvailable": 1.144707129187238
+        }
+      },
+      "recordsSha256": "c9f87c24ce725cddd124dc856e005a564286940c106e76aa1b19975fdd2043fe"
+    }
+  },
+  "independentCheck": {
+    "method": "具名代理独立Python；未读取TS实现或测试",
+    "countsAndHitsMatch": true,
+    "maximumMeanWidthDifferenceLessThan": 1e-10
+  },
+  "tests": {
+    "path": "Fast Path：代表性Expected先于对应实现落盘；移除物理状态守卫与制品摘要守卫，5例RED，完整恢复后全量GREEN",
+    "mutationFailedCases": 5,
+    "restoredBeforeFormatting": {
+      "coreSha256": "83eea79b2b2e414cf13c18980c355ee280be93e76eb2f64a54eff12fba601672",
+      "replaySha256": "b7f8273bf70c1fda21826828372c1ad8f333108f20523ffb3b7323f1186ea29c"
+    },
+    "finalCoreSha256": "429c07c08fefe8ada5f9d3fd1ac3e61e958c34af4b3122df35c3bc986599326a",
+    "finalReplaySha256": "f8dfc1e29382627f76fafc692c5eb15655c08a1b45cff94d8ad06e848b32c5bf",
+    "runner": "Vitest 4.1.11",
+    "rootUnit": {
+      "command": "npm test",
+      "files": 213,
+      "passed": 2110,
+      "failed": 0,
+      "log": "/tmp/e04-indoor-envelope-full-vitest-final.log"
+    },
+    "scopedLint": {
+      "errors": 0,
+      "warnings": 119
+    },
+    "typecheck": {
+      "command": "npm --prefix cloudfunctions-v2 run typecheck",
+      "exitCode": 0,
+      "log": "/tmp/e04-indoor-envelope-typecheck-final.log"
+    },
+    "originalFixtureReproduction": {
+      "sha256": "a8fa47ffd565f80938c391c96b05c13887b2a33fdf3342040522230e1046c6c2",
+      "sameAsOriginal": true
+    }
+  },
+  "limitations": [
+    "经验包络不具有概率置信水平",
+    "矩形组合可放大范围；均宽约6.29°C和1.13kPa，不能当作精确室内模型",
+    "跨住宅仍有漏包；日历覆盖不等于合格样本覆盖",
+    "未验证中国住宅、和风未来预报、正式模型准入或HTTP"
+  ],
+  "nextAction": "需要真实位置的室内温湿度记录与和风预报发布时间/有效时间配对；固定场景及误差要求后验证，不扩张默认模型"
+}

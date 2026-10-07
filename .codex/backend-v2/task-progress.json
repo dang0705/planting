@@ -1,23 +1,23 @@
 {
-  "revision": 126,
+  "revision": 128,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-07T20:21:34.576862+00:00",
+  "updatedAt": "2026-10-07T20:37:14.104Z",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "确认可把光照/VPD接入现有浇水回放的联合响应依据与真实数据",
+    "target": "固定现有室外到室内统计模型，用独立后续时段检验经验误差范围能否覆盖室内温湿度及VPD",
     "keyAssumptions": [
-      "气孔导度不是整盆干燥需求",
-      "外部植物实验只能证明其实际覆盖的尺度与条件",
-      "现有积分核心可以消费已归约需求，不另建模型引擎"
+      "室外温湿度是估算输入，不是室内事实",
+      "旧评分时段本轮只作范围校准，后续新时段只评分不调参",
+      "经验残差包络不是置信区间，也不是未知住宅默认范围"
     ],
-    "configurationDecision": "当前联合响应无已批准系数，本轮只补来源和数据资格，不设倍率或默认阈值",
-    "minimumVerification": "机构原始数据文件、单位、时间配对与蒸腾/整盆失水尺度核验；独立脚本核对",
-    "continueCondition": "同刻环境与整株耗水数据可连接时才进入响应拟合；不把叶片数据或图表均值冒充完整干湿循环",
-    "failureCondition": "必要字段、单位或时间语义不成立则该候选不准入，不猜测填值",
-    "rollback": "候选制品不连接运行策略或HTTP，可单独撤回",
-    "timeLimitMinutes": 25,
-    "nextAction": "取得可配对的环境与整盆耗水原始记录，按既有后台样本标定流程固定验证段；不继续增加无参数依据的包装函数"
+    "configurationDecision": "仅已授权E04离线研究；固定原模型，不引入业务默认值、准入阈值或生产发布",
+    "minimumVerification": "事先固定数据窗口及资格；独立数值Expected、RED/GREEN、原始数据SHA与独立复算、温湿度及VPD联合覆盖和不可用数",
+    "continueCondition": "有固定窗口原始记录并满足已有采样资格才评分；全部排除和越界保留",
+    "failureCondition": "数据不足或包络不覆盖时如实拒绝该候选，不调整Expected或借验证误差扩范围",
+    "rollback": "研究模块不接正式策略或HTTP；可独立撤回",
+    "timeLimitMinutes": 30,
+    "nextAction": "需要真实位置的室内温湿度记录与和风预报发布时间/有效时间配对；固定场景及误差要求后验证，不扩张默认模型"
   },
   "tasks": [
     {
@@ -133,10 +133,10 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 53,
+      "version": 54,
       "priority": "high",
       "status": "codex running",
-      "stage": "联合干燥需求接入点与候选数据已核验；同刻环境/耗水依据待补",
+      "stage": "室外→室内经验范围完成后续回放；真实位置与和风预报验证待补",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -188,17 +188,18 @@
         ".codex/backend-v2/evidence/E04-indoor-outdoor-comparison.json",
         ".codex/backend-v2/evidence/E04-indoor-climate-transfer.json",
         ".codex/backend-v2/evidence/E04-indoor-vpd-range.json",
-        ".codex/backend-v2/evidence/E04-environment-demand-data.json"
+        ".codex/backend-v2/evidence/E04-environment-demand-data.json",
+        ".codex/backend-v2/evidence/E04-indoor-climate-envelope.json"
       ],
       "summary": [
-        "E04：确认现有积分消费外部需求，光照/VPD联合响应仍缺获准依据",
-        "原作者9个工作簿已核验；整株蒸腾261点、每3分钟，但缺同刻环境和完整速率单位",
-        "不跨实验拼接光照、不把叶片导度当整盆失水；候选不准入拟合",
-        "原始归档SHA、字段及复核脚本已落盘；本轮未改产品行为，全量2092/2092",
-        "下一步补同期环境/整盆耗水原始记录；室内估算、正式日期/水量/HTTP仍未验收"
+        "E04：固定室外→室内点模型，新增温湿度/VPD经验范围回放",
+        "同宅289/336小时合格、联合命中287；跨宅124/336、命中102",
+        "温度范围宽6.29°C、VPD约1.13kPa；不作为通用默认或正式日期输入",
+        "独立Python一致；5例受控突变RED已恢复；全量2110/2110",
+        "下一步补真实位置室内记录与和风预报配对；正式估算/水量/日期仍未验收"
       ],
       "blockingReason": null,
-      "nextAction": "取得可配对的环境与整盆耗水原始记录，按既有后台样本标定流程固定验证段；不继续增加无参数依据的包装函数",
+      "nextAction": "需要真实位置的室内温湿度记录与和风预报发布时间/有效时间配对；固定场景及误差要求后验证，不扩张默认模型",
       "ticketReadback": "ClickUp评论1100440000140265全文读回一致；保持codex running"
     },
     {
@@ -472,7 +473,7 @@
       ]
     }
   ],
-  "nextAction": "E04室内估算：核验有许可的室内外同刻样本，验证初态/场景参数与误差；之后接非线性光照/VPD及盆土状态→剩余窗口",
+  "nextAction": "需要真实位置的室内温湿度记录与和风预报发布时间/有效时间配对；固定场景及误差要求后验证，不扩张默认模型",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",

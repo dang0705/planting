@@ -1,0 +1,121 @@
+{
+  "protocol": "indoor-climate-envelope.md",
+  "productionAdmission": false,
+  "sourceHashes": {
+    "model": "281e7c1dc99bf5239d766566b2a92ef3bd4c23be3ddc7c337a80950207ece122",
+    "calibration": "a8fa47ffd565f80938c391c96b05c13887b2a33fdf3342040522230e1046c6c2",
+    "sameHome": "a35c2486825c071bb43c823387e73d0ea0ede38dabb5f597609af132fba3f549",
+    "transferHome": "c31919bc15488896cc1cb9a83c4f5679514d3564fc0f8b1c517f83bf0178d414"
+  },
+  "calibration": {
+    "startUtc": "2017-12-29T00:00:00Z",
+    "endExclusiveUtc": "2018-01-12T00:00:00Z",
+    "selection": {
+      "total": 336,
+      "selected": 238,
+      "excluded": {
+        "indoor_coverage": 57,
+        "missing_values": 27,
+        "outdoor_coverage": 14
+      },
+      "runs": 24,
+      "longestRunHours": 33
+    },
+    "envelope": {
+      "productionAdmission": false,
+      "total": 238,
+      "used": 238,
+      "unavailable": 0,
+      "temperatureResidualC": {
+        "min": -2.763749801182767,
+        "max": 3.525895955804611
+      },
+      "vaporResidualKpa": {
+        "min": -0.19653677197868624,
+        "max": 0.24088921774075178
+      }
+    }
+  },
+  "validationWindow": {
+    "startUtc": "2018-01-12T00:00:00Z",
+    "endExclusiveUtc": "2018-01-26T00:00:00Z"
+  },
+  "sameHome": {
+    "selection": {
+      "total": 336,
+      "selected": 289,
+      "excluded": {
+        "indoor_coverage": 29,
+        "missing_values": 10,
+        "outdoor_coverage": 3,
+        "humidity_range": 5
+      },
+      "runs": 23,
+      "longestRunHours": 36
+    },
+    "available": 289,
+    "unavailable": 0,
+    "jointCovered": 287,
+    "jointCoverageOfQualifiedHours": 0.9930795847750865,
+    "jointCoverageOfFullWindow": 0.8541666666666666,
+    "fields": {
+      "temperatureC": {
+        "covered": 287,
+        "coverageOfQualifiedHours": 0.9930795847750865,
+        "meanWidthOfAvailable": 6.289645756987344,
+        "maximumWidthOfAvailable": 6.28964575698738
+      },
+      "relativeHumidityPercent": {
+        "covered": 289,
+        "coverageOfQualifiedHours": 1,
+        "meanWidthOfAvailable": 46.6504459005628,
+        "maximumWidthOfAvailable": 53.43794513114913
+      },
+      "vpdKpa": {
+        "covered": 289,
+        "coverageOfQualifiedHours": 1,
+        "meanWidthOfAvailable": 1.1351256670335415,
+        "maximumWidthOfAvailable": 1.1680482238200118
+      }
+    },
+    "recordsSha256": "faecb78c5b516ae6da281b63f02ec04516641f69364228be9be3169b19386564"
+  },
+  "transferHome": {
+    "selection": {
+      "total": 336,
+      "selected": 124,
+      "excluded": {
+        "indoor_coverage": 198,
+        "missing_values": 14
+      },
+      "runs": 11,
+      "longestRunHours": 69
+    },
+    "available": 124,
+    "unavailable": 0,
+    "jointCovered": 102,
+    "jointCoverageOfQualifiedHours": 0.8225806451612904,
+    "jointCoverageOfFullWindow": 0.30357142857142855,
+    "fields": {
+      "temperatureC": {
+        "covered": 102,
+        "coverageOfQualifiedHours": 0.8225806451612904,
+        "meanWidthOfAvailable": 6.289645756987389,
+        "maximumWidthOfAvailable": 6.28964575698738
+      },
+      "relativeHumidityPercent": {
+        "covered": 123,
+        "coverageOfQualifiedHours": 0.9919354838709677,
+        "meanWidthOfAvailable": 47.553743791720656,
+        "maximumWidthOfAvailable": 50.5776032993157
+      },
+      "vpdKpa": {
+        "covered": 122,
+        "coverageOfQualifiedHours": 0.9838709677419355,
+        "meanWidthOfAvailable": 1.1314666900331973,
+        "maximumWidthOfAvailable": 1.144707129187238
+      }
+    },
+    "recordsSha256": "c9f87c24ce725cddd124dc856e005a564286940c106e76aa1b19975fdd2043fe"
+  }
+}

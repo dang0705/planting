@@ -4,8 +4,10 @@ import readline from 'node:readline'
 import crypto from 'node:crypto'
 import path from 'node:path'
 // 仅转换已核验的公开研究文件；不读取业务库、凭证或 backend-v2 文档。
-const [root, outputFile] = process.argv.slice(2)
-if (!root || !outputFile) throw new Error('需要原始文件目录和输出 CSV 路径')
+const [root, outputFile, startUtc, endExclusiveUtc] = process.argv.slice(2)
+if (!root || !outputFile) {
+  throw new Error('需要原始文件目录和输出 CSV 路径')
+}
 const expectedHashes = {
   'home100_livingroom1038_sensor4474_room_temperature.csv.gz':
     '246119b0d4a2659634ad9ee46e432c9e2c540efd1bf4180dfa3562c2643cadae',
@@ -19,12 +21,30 @@ for (const [name, sha] of Object.entries(expectedHashes)) {
       .createHash('sha256')
       .update(fs.readFileSync(path.join(root, name)))
       .digest('hex') !== sha
-  )
+  ) {
     throw new Error('源文件摘要不符：' + name)
+  }
 }
 // 固定联合覆盖窗口；仅生成样本算术均值，不声称连续时间平均或模型预测。
-const start = '2017-12-01 00:00:00',
-  end = '2018-01-12 00:00:00'
+if (Boolean(startUtc) !== Boolean(endExclusiveUtc)) {
+  throw new Error('研究窗口起止必须成对提供')
+}
+const startIso = startUtc ?? '2017-12-01T00:00:00Z'
+const endIso = endExclusiveUtc ?? '2018-01-12T00:00:00Z'
+for (const at of [startIso, endIso]) {
+  if (
+    !/^\d{4}-\d{2}-\d{2}T\d{2}:00:00Z$/.test(at) ||
+    !Number.isFinite(Date.parse(at)) ||
+    new Date(at).toISOString() !== at.replace('Z', '.000Z')
+  ) {
+    throw new Error('研究窗口必须为有效UTC整点')
+  }
+}
+if (startIso >= endIso) {
+  throw new Error('研究窗口结束必须晚于开始')
+}
+const start = startIso.replace('T', ' ').replace('Z', ''),
+  end = endIso.replace('T', ' ').replace('Z', '')
 async function collect(name, feed) {
   const buckets = new Map()
   let selected = 0,
@@ -37,9 +57,13 @@ async function collect(name, feed) {
   })
   for await (const line of lines) {
     const f = line.split(',')
-    if (feed && f[0] !== feed) continue
+    if (feed && f[0] !== feed) {
+      continue
+    }
     const [at, raw] = feed ? [f[1], f[2]] : f
-    if (at < start || at >= end) continue
+    if (at < start || at >= end) {
+      continue
+    }
     if (
       !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(at) ||
       raw.trim() === '' ||
@@ -48,7 +72,9 @@ async function collect(name, feed) {
       invalid++
       continue
     }
-    if (previous !== null && at < previous) throw Error('source time reversed')
+    if (previous !== null && at < previous) {
+      throw Error('source time reversed')
+    }
     if (at === previous) {
       duplicates++
       continue
@@ -82,7 +108,9 @@ async function collect(name, feed) {
     ['outdoor_rh', 'weatherreading.csv.gz', '23']
   ]
   const out = []
-  for (const s of specs) out.push(await collect(s[1], s[2]))
+  for (const s of specs) {
+    out.push(await collect(s[1], s[2]))
+  }
   const header = [
     'interval_start_utc',
     'interval_end_utc',
@@ -100,11 +128,7 @@ async function collect(name, feed) {
     longest = 0,
     run = 0,
     lowRh = 0
-  for (
-    let ms = Date.parse('2017-12-01T00:00:00Z');
-    ms < Date.parse('2018-01-12T00:00:00Z');
-    ms += 3600000
-  ) {
+  for (let ms = Date.parse(startIso); ms < Date.parse(endIso); ms += 3600000) {
     const iso = new Date(ms).toISOString(),
       key = iso.slice(0, 13).replace('T', ' ')
     const b = out.map(x => x.buckets.get(key))
@@ -112,8 +136,14 @@ async function collect(name, feed) {
       complete++
       run++
       longest = Math.max(longest, run)
-    } else run = 0
-    for (const j of [1, 3]) if (b[j] && (b[j].min < 0 || b[j].max > 100)) lowRh++
+    } else {
+      run = 0
+    }
+    for (const j of [1, 3]) {
+      if (b[j] && (b[j].min < 0 || b[j].max > 100)) {
+        lowRh++
+      }
+    }
     rows.push([
       iso,
       new Date(ms + 3600000).toISOString(),
