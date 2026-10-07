@@ -34,12 +34,12 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 36,
+      "version": 37,
       "status": "codex running",
-      "note": "E04：首版仅采集位置、朝向、Lux；专业参数保留\n后台逐时DNI/DHI与窗面模型保留；单锚点不分别校准两通道\n摄像头Lux仍为实验，三星散射初步成果未跨场景验收\n城市户外匹配与三轴筛选已排序开票，未记为完成\n下一步冻结Lux来源、时刻及质量合同，再验证回放/DMN",
-      "commentId": "1100440000138102",
-      "commentFingerprint": "9a5caac9a4e793193fec7ce94e7589cd1344b0c9f6973ac985617942421fafab",
-      "readback": "原生ClickUp五行评论1100440000138102逐字读回；状态未改变"
+      "note": "E04/E06主线：光照→室内VPD→盆型/基质→盆土→浇水\n最终分别验收浇水判断、水量和预计下次浇水日期/窗口\n水量分支仍缺明确依据；盆容积和DryProgress不等于毫升\nweather与三轴筛选保留旁线backlog，不占主线顺序\n下一步收口极简光照，核验VPD及水量合同缺口",
+      "commentId": "1100440000138266",
+      "commentFingerprint": "7009020aacb8eb99bd8210c43cc23071c423fcf6b4651615b77b572eada445ab",
+      "readback": "原生ClickUp已逐字读回评论1100440000138266；只同步进度，不更改状态"
     },
     "z8v0kmrg8a": {
       "version": 3,
@@ -66,27 +66,27 @@
       "readback": "Chrome CODEX RUNNING及五行评论1100440000091159已读回"
     },
     "z8v0kmuqv5": {
-      "version": 1,
+      "version": 2,
       "status": "backlog",
-      "note": "E02：复用已有weather城市户外气候匹配，Normal优先级\n现网20城列表与北京推荐/fit样例只读返回200\npolicy v0-city-outdoor；light_match不是室内DLI\n源码/算法/完整缓存与四路由验收仍待完成\n排在光照合同后、三轴筛选前；不新增技术阻塞关系",
-      "commentId": "1100440000138103",
-      "commentFingerprint": "f0230f1f589d6b0f51350657e2e0e5c5747ee7f7829a673fc2ee81764a6c1a7a",
-      "readback": "原生ClickUp五行评论1100440000138103逐字读回；状态未改变"
+      "note": "E02：复用已有weather城市户外气候匹配，Normal优先级\n现网20城列表与北京推荐/fit样例只读返回200\npolicy v0-city-outdoor；light_match不是室内DLI\n源码/算法/完整缓存与四路由验收仍待完成\n保留旁线backlog；不占Care主线或成为其前置",
+      "commentId": "1100440000138267",
+      "commentFingerprint": "be2c540e908df661456aa373b472691db1dfa3e637ecb78edae8d1b13f5507f2",
+      "readback": "原生ClickUp已逐字读回评论1100440000138267；只同步进度，不更改状态"
     },
     "z8v0kmuqv6": {
-      "version": 1,
+      "version": 2,
       "status": "backlog",
-      "note": "E01/E02：三轴筛选独立票已登记，Normal优先级\n首版仅叶型、株型、叶面；按范围显式选抽取版本\n核心90 VIEW不冒充全量；未知/冲突不伪造标签\n先核验实际表、枚举及组合合同，再开发SQL→HTTP\n前置E01目录已完成；当前backlog，筛选尚未实现",
-      "commentId": "1100440000138104",
-      "commentFingerprint": "c4f53aa08ad3dc2346c9c6e27acf02f627de818e3bb11d667f7ef6d1a7c00133",
-      "readback": "原生ClickUp五行评论1100440000138104逐字读回；状态未改变"
+      "note": "E01/E02：三轴筛选独立票已登记，Normal优先级\n首版仅叶型、株型、叶面；按范围显式选抽取版本\n核心90 VIEW不冒充全量；未知/冲突不伪造标签\n先核验实际表、枚举及组合合同，再开发SQL→HTTP\n保留旁线backlog；不占Care主线或成为其前置",
+      "commentId": "1100440000138268",
+      "commentFingerprint": "0fa9125f2412d50a9aec25338c98860871342b743d74d9464137494cf49adaba",
+      "readback": "原生ClickUp已逐字读回评论1100440000138268；只同步进度，不更改状态"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-07T13:58:03.315616+00:00",
+  "lastSuccessfulSyncAt": "2026-10-07T14:17:43.239880+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "bf42fd3f02a8758f990e284884e6a3d381557d719a124358f499f9f020a7fc3f",
-    "sourceRevision": 108,
-    "sourceUpdatedAt": "2026-10-07T13:56:49.854592+00:00"
+    "fingerprint": "a591ee95ef98642e6085f1d6c39358e63c26e0978422985fc1fce905bfc339d0",
+    "sourceRevision": 109,
+    "sourceUpdatedAt": "2026-10-07T14:16:56.660458+00:00"
   }
 }

@@ -1,15 +1,15 @@
 {
-  "revision": 108,
+  "revision": 109,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-07T13:56:49.854592+00:00",
+  "updatedAt": "2026-10-07T14:16:56.660458+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "极简自然光、六轴筛选与户外气候匹配合入统一计划",
-    "minimumVerification": "会话结论、定向源码/合同、只读现网样例、开票读回与计划入口哈希",
-    "result": "产品取舍与承接范围已明确；新模型和筛选业务尚未验收",
-    "rollback": "撤回本次计划修订，保留专业参数及既有服务；不执行部署/DDL/删除",
-    "nextAction": "定向确认Lux锚点输入、来源/采集时间/失效边界与独立Expected；不新增专业输入，不直接发布摄像头校准"
+    "target": "Care模型收口→浇水判断、水量、预计下次日期/窗口",
+    "minimumVerification": "当前模型输入/派生/参数准入与缺口；三个最终输出分别具备独立Expected",
+    "result": "目标和主线顺序已明确，量与日期未冒充已实现",
+    "rollback": "只修订计划与队列，不删除模型/数据或部署",
+    "nextAction": "光照收口→室内VPD→盆型/基质→盆土→干湿循环→最终浇水输出"
   },
   "tasks": [
     {
@@ -125,10 +125,10 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 36,
+      "version": 37,
       "priority": "normal",
       "status": "codex running",
-      "stage": "极简自然光产品输入已合并计划；后端合同、回放及DMN待修订",
+      "stage": "Care主线已明确；光照先收口，VPD及最终水量/日期合同待补齐",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -166,15 +166,15 @@
         ".codex/backend-v2/evidence/2026-10-07-light-catalog-climate-plan.json"
       ],
       "summary": [
-        "E04：首版仅采集位置、朝向、Lux；专业参数保留",
-        "后台逐时DNI/DHI与窗面模型保留；单锚点不分别校准两通道",
-        "摄像头Lux仍为实验，三星散射初步成果未跨场景验收",
-        "城市户外匹配与三轴筛选已排序开票，未记为完成",
-        "下一步冻结Lux来源、时刻及质量合同，再验证回放/DMN"
+        "E04/E06主线：光照→室内VPD→盆型/基质→盆土→浇水",
+        "最终分别验收浇水判断、水量和预计下次浇水日期/窗口",
+        "水量分支仍缺明确依据；盆容积和DryProgress不等于毫升",
+        "weather与三轴筛选保留旁线backlog，不占主线顺序",
+        "下一步收口极简光照，核验VPD及水量合同缺口"
       ],
       "blockingReason": null,
-      "nextAction": "定向确认Lux锚点输入、来源/采集时间/失效边界与独立Expected；不新增专业输入，不直接发布摄像头校准",
-      "ticketReadback": "原生ClickUp五行评论1100440000138102逐字读回；状态未改变",
+      "nextAction": "先收口位置/朝向/Lux光照与DLI回放；随后室内VPD、栽培保水、盆土与最终水量/日期的独立合同",
+      "ticketReadback": "原生ClickUp已逐字读回评论1100440000138266；只同步进度，不更改状态",
       "milestoneCommit": "858f79de"
     },
     {
@@ -302,9 +302,9 @@
     {
       "id": "z8v0kmuqv5",
       "step": "E02",
-      "version": 1,
+      "version": 2,
       "priority": "normal",
-      "priorityReason": "已批准新能力；按光照合同→已有气候能力验收→三轴筛选承接",
+      "priorityReason": "旁线能力，不占Care主线顺序或构成其前置",
       "status": "backlog",
       "stage": "已开票读回；合同与验收准备待承接",
       "accepted": false,
@@ -316,18 +316,18 @@
         "现网20城列表与北京推荐/fit样例只读返回200",
         "policy v0-city-outdoor；light_match不是室内DLI",
         "源码/算法/完整缓存与四路由验收仍待完成",
-        "排在光照合同后、三轴筛选前；不新增技术阻塞关系"
+        "保留旁线backlog；不占Care主线或成为其前置"
       ],
       "blockingReason": null,
-      "nextAction": "核验既有策略来源、四路由、缓存及命名空间，不重建weather",
-      "ticketReadback": "原生ClickUp五行评论1100440000138103逐字读回；状态未改变"
+      "nextAction": "Care主线不因此等待；本旁线另行承接，当前不实施",
+      "ticketReadback": "原生ClickUp已逐字读回评论1100440000138267；只同步进度，不更改状态"
     },
     {
       "id": "z8v0kmuqv6",
       "step": "E01/E02",
-      "version": 1,
+      "version": 2,
       "priority": "normal",
-      "priorityReason": "已批准新能力；按光照合同→已有气候能力验收→三轴筛选承接",
+      "priorityReason": "旁线能力，不占Care主线顺序或构成其前置",
       "status": "backlog",
       "stage": "已开票读回；合同与验收准备待承接",
       "accepted": false,
@@ -339,11 +339,11 @@
         "首版仅叶型、株型、叶面；按范围显式选抽取版本",
         "核心90 VIEW不冒充全量；未知/冲突不伪造标签",
         "先核验实际表、枚举及组合合同，再开发SQL→HTTP",
-        "前置E01目录已完成；当前backlog，筛选尚未实现"
+        "保留旁线backlog；不占Care主线或成为其前置"
       ],
       "blockingReason": null,
-      "nextAction": "定向核验结果表、规则与枚举；冻结同轴/跨轴合同及排序后实施",
-      "ticketReadback": "原生ClickUp五行评论1100440000138104逐字读回；状态未改变",
+      "nextAction": "Care主线不因此等待；本旁线另行承接，当前不实施",
+      "ticketReadback": "原生ClickUp已逐字读回评论1100440000138268；只同步进度，不更改状态",
       "dependenciesReadback": "原生ClickUp已读回 waiting_on 已done E01 z8v0kmtktd"
     }
   ],

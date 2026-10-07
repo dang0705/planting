@@ -8,8 +8,8 @@
 
 - 文件：[青花植后端v2底层架构重构计划_融合闭环终版.md](/Users/jay/WebstormProjects/planting/青花植后端v2底层架构重构计划_融合闭环终版.md)
 - 基线标题：`backend-v2 整体重构计划：多版本交叉验证完整版`
-- 基线 SHA-256：`0cb3e338bdb7af499599926de0b895e9e146d9f64eacd3cd1a7295cd224e2f30`
-- 基线行数：658
+- 基线 SHA-256：`a5ab645aee865833f4e344ddbc39cc610badf2f60147ab62e8a8f819d0693030`
+- 基线行数：663
 - 入口角色：上下文优先按 planting OpenViking 分层召回；只有各层均无法提供当前任务所需内容时，才定向读取本目录特定实现章节。禁止全目录读取。
 - 正文角色：只有根目录 Master Plan 可以作为完整计划正文；`BASELINE.lock` 是其机器可核对的锁，不是第二份计划。
 
