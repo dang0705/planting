@@ -1,0 +1,55 @@
+{
+  "windowStart": "2018-01-12 00:00:00",
+  "windowEndExclusive": "2018-01-26 00:00:00",
+  "hours": 336,
+  "completeFourFieldHours": 322,
+  "longestCompleteHourlyRun": 207,
+  "rhOutOfRangeHours": 0,
+  "columns": [
+    {
+      "name": "indoor_temperature",
+      "source": "home59_livingroom689_sensor1524_room_temperature.csv.gz",
+      "feed": null,
+      "selected": 58277,
+      "invalid": 0,
+      "duplicateTimestamps": 0,
+      "availableHours": 322,
+      "minSamples": 1,
+      "maxSamples": 299
+    },
+    {
+      "name": "indoor_rh",
+      "source": "home59_livingroom689_sensor1523_room_humidity.csv.gz",
+      "feed": null,
+      "selected": 58277,
+      "invalid": 0,
+      "duplicateTimestamps": 0,
+      "availableHours": 322,
+      "minSamples": 1,
+      "maxSamples": 299
+    },
+    {
+      "name": "outdoor_temperature",
+      "source": "weatherreading.csv.gz",
+      "feed": "1",
+      "selected": 1343,
+      "invalid": 0,
+      "duplicateTimestamps": 0,
+      "availableHours": 336,
+      "minSamples": 3,
+      "maxSamples": 4
+    },
+    {
+      "name": "outdoor_rh",
+      "source": "weatherreading.csv.gz",
+      "feed": "3",
+      "selected": 1343,
+      "invalid": 0,
+      "duplicateTimestamps": 0,
+      "availableHours": 336,
+      "minSamples": 3,
+      "maxSamples": 4
+    }
+  ],
+  "sha256": "c31919bc15488896cc1cb9a83c4f5679514d3564fc0f8b1c517f83bf0178d414"
+}

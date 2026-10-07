@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "ticketId": "z8v0kmr973",
+  "scope": "offline_cross_home_research",
+  "productionAdmission": false,
+  "selectionRuleZh": "先排除安装/结束日期与固定验证窗口完全无交集的住宅；其余按数值home ID递增选首个可绑定天气且同客厅配对温湿度成员的住宅，排除home100。选定后不因采样稀疏或模型表现换房。",
+  "excludedEarlierHomes": [
+    {
+      "homeId": 47,
+      "reasonZh": "元数据结束时间2017-05-08 09:00早于验证窗口。"
+    }
+  ],
+  "homeId": 59,
+  "roomId": 689,
+  "sensorboxId": "279492261292951",
+  "location": "Edinburgh",
+  "weatherCentre": "Edinburgh",
+  "weatherTemperatureFeedId": 1,
+  "weatherHumidityFeedId": 3,
+  "temperatureSensorId": 1524,
+  "humiditySensorId": 1523,
+  "unitsZh": "原始温度为0.1°C，湿度为0.1%；制品除以10。UTC小时左闭右开，输出样本算术均值，不表示瞬时值或连续时间平均。",
+  "windowStartUtc": "2017-12-29T00:00:00Z",
+  "windowEndExclusiveUtc": "2018-01-12T00:00:00Z",
+  "sourceZip": {
+    "url": "https://datashare.ed.ac.uk/server/api/core/bitstreams/b6e8483c-e5a8-4867-ba5a-1bcf0b4e96e2/content",
+    "bytes": 10005114253,
+    "extractedRangeBytes": 6379757,
+    "members": [
+      {
+        "name": "sensordata/home59_livingroom689_sensor1524_room_temperature.csv.gz",
+        "size": 4554380,
+        "compressed": 2957835,
+        "offset": 2578180503,
+        "crc": 2314493083,
+        "sha256": "20af8cdad5b88e395d2de118ec0cc6eed5fa2d2f456decc6794018a715e88ce1"
+      },
+      {
+        "name": "sensordata/home59_livingroom689_sensor1523_room_humidity.csv.gz",
+        "size": 4778944,
+        "compressed": 3421677,
+        "offset": 7308867687,
+        "crc": 960753132,
+        "sha256": "70c3d38e48c51eceaff2cc267e84bd11670d3466613e25d646650a599e599861"
+      }
+    ],
+    "verificationZh": "仅读取两个成员的ZIP本地头和压缩数据，核对成员名、解压大小、ZIP CRC、gzip完整解压及SHA-256；没有全量下载ZIP。"
+  },
+  "weatherSourceSha256": "ea06d07fd15dae767233a2cbd980ea8c1122dd28f568f69cc3fc6b8ca67429d3",
+  "fixture": {
+    "name": "ideal-transfer-home59-hourly.csv",
+    "sha256": "367e96a50c664d46980ab5cafef4aa951280b07b87fa72f8fbbc5fd4f7723f42",
+    "rows": 336,
+    "fourFieldHours": 251
+  },
+  "independentAudit": {
+    "firstCompleteHourUtc": "2017-12-29T09:00:00Z",
+    "independentArithmeticMeanAudit": [
+      {
+        "field": "indoor_temperature",
+        "samples": 1,
+        "mean": 17.9,
+        "difference": 0.0
+      },
+      {
+        "field": "indoor_rh",
+        "samples": 1,
+        "mean": 37.8,
+        "difference": 0.0
+      },
+      {
+        "field": "outdoor_temperature",
+        "samples": 4,
+        "mean": 0.575,
+        "difference": 0.0
+      },
+      {
+        "field": "outdoor_rh",
+        "samples": 4,
+        "mean": 94.5,
+        "difference": 0.0
+      }
+    ],
+    "protocolSelection": {
+      "missing_fields": 85,
+      "indoor_coverage": 246,
+      "accepted": 5
+    },
+    "missingHours": {
+      "indoor_temperature": 85,
+      "indoor_rh": 85,
+      "outdoor_temperature": 3,
+      "outdoor_rh": 3
+    },
+    "acceptedRunCount": 1,
+    "longestAcceptedRunHours": 5,
+    "firstQualifiedHourUtc": "2018-01-11T19:00:00Z",
+    "firstQualifiedHourAudit": [
+      {
+        "field": "indoor_temperature",
+        "samples": 283,
+        "mean": 18.244876325088338,
+        "difference": 1.7763568394002505e-14
+      },
+      {
+        "field": "indoor_rh",
+        "samples": 283,
+        "mean": 44.98374558303887,
+        "difference": -1.5631940186722204e-13
+      },
+      {
+        "field": "outdoor_temperature",
+        "samples": 4,
+        "mean": 4.775,
+        "difference": 0.0
+      },
+      {
+        "field": "outdoor_rh",
+        "samples": 4,
+        "mean": 87.75,
+        "difference": 0.0
+      }
+    ]
+  },
+  "limitationsZh": [
+    "85小时缺室内字段，246小时未达270室内样本门槛，仅5小时符合固定评价协议，连续5小时。",
+    "缺失保持空值及零样本数，没有插补、室内初态替代或重新选择住宅。",
+    "未拟合模型、未读取目标住宅模型误差；单客厅短片段不支持跨住宅一般精度结论。",
+    "天气源URL字段可能含历史访问材料，未复制到制品或输出；仅保存公开数值feed ID及location。"
+  ],
+  "source": {
+    "name": "IDEAL Household Energy Dataset",
+    "creators": [
+      "Nigel Goddard",
+      "Jonathan Kilgour",
+      "Martin Pullinger",
+      "IDEAL research team"
+    ],
+    "doi": "10.7488/ds/2836",
+    "url": "https://datashare.ed.ac.uk/items/15e82917-56ed-4282-99ef-7f211bf87f9d",
+    "paper": "https://doi.org/10.1038/s41597-021-00921-y",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+  }
+}

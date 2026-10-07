@@ -1,0 +1,112 @@
+{
+  "protocol": "indoor-climate-transfer.md",
+  "source": {
+    "path": "cloudfunctions-v2/models/care/indoor-outdoor-comparison-results.json",
+    "sha256": "281e7c1dc99bf5239d766566b2a92ef3bd4c23be3ddc7c337a80950207ece122"
+  },
+  "target": {
+    "path": "cloudfunctions-v2/models/care/fixtures/ideal-transfer-home59-followup-hourly.csv",
+    "sha256": "c31919bc15488896cc1cb9a83c4f5679514d3564fc0f8b1c517f83bf0178d414"
+  },
+  "validation": {
+    "start": "2018-01-12T00:00:00Z",
+    "end": "2018-01-26T00:00:00Z"
+  },
+  "semantics": "固定参数跨住宅同小时观测回放；不在目标住宅拟合、非未来天气预报",
+  "productionAdmission": false,
+  "method": "fixed_parameters_cross_home",
+  "selection": {
+    "total": 336,
+    "selected": 124,
+    "excluded": {
+      "indoor_coverage": 198,
+      "missing_values": 14
+    },
+    "runs": 11,
+    "longestRunHours": 69
+  },
+  "fit": {
+    "productionAdmission": false,
+    "sampleCount": 514,
+    "temperature": {
+      "intercept": 15.932270471180166,
+      "temperatureCoefficient": 0.10999685119886982,
+      "vaporCoefficient": -2.556138527774017
+    },
+    "vapor": {
+      "intercept": 0.5764691103420678,
+      "temperatureCoefficient": -0.0003743498214171885,
+      "vaporCoefficient": 0.42210601681926196
+    }
+  },
+  "trainingMean": {
+    "temperatureC": 14.54914377163074,
+    "relativeHumidityPercent": 53.30406473852588
+  },
+  "scores": {
+    "candidate": {
+      "total": 124,
+      "valid": 124,
+      "unavailable": 0,
+      "coverage": 1,
+      "temperatureC": {
+        "meanAbsoluteError": 2.1263152764915114,
+        "rootMeanSquareError": 2.5744384473228346,
+        "maximumAbsoluteError": 8.310888109993137
+      },
+      "relativeHumidityPercent": {
+        "meanAbsoluteError": 8.738080353176617,
+        "rootMeanSquareError": 9.306972572789572,
+        "maximumAbsoluteError": 21.777886417113294
+      },
+      "vpdKpa": {
+        "meanAbsoluteError": 0.28890392289270145,
+        "rootMeanSquareError": 0.32727469908108037,
+        "maximumAbsoluteError": 1.1737560442146016
+      }
+    },
+    "trainingMean": {
+      "total": 124,
+      "valid": 124,
+      "unavailable": 0,
+      "coverage": 1,
+      "temperatureC": {
+        "meanAbsoluteError": 2.2029218081941755,
+        "rootMeanSquareError": 2.655189923630496,
+        "maximumAbsoluteError": 8.45270124681945
+      },
+      "relativeHumidityPercent": {
+        "meanAbsoluteError": 9.905044195165246,
+        "rootMeanSquareError": 10.516010890998247,
+        "maximumAbsoluteError": 24.452035218230684
+      },
+      "vpdKpa": {
+        "meanAbsoluteError": 0.31243257676749886,
+        "rootMeanSquareError": 0.34870110090113804,
+        "maximumAbsoluteError": 1.2255760423760003
+      }
+    },
+    "outdoor": {
+      "total": 124,
+      "valid": 124,
+      "unavailable": 0,
+      "coverage": 1,
+      "temperatureC": {
+        "meanAbsoluteError": 12.446875381332685,
+        "rootMeanSquareError": 12.64750946015578,
+        "maximumAbsoluteError": 19.35184501845019
+      },
+      "relativeHumidityPercent": {
+        "meanAbsoluteError": 39.91146332760712,
+        "rootMeanSquareError": 40.49082202705236,
+        "maximumAbsoluteError": 54.016181818181934
+      },
+      "vpdKpa": {
+        "meanAbsoluteError": 0.9424865738330704,
+        "rootMeanSquareError": 0.9562350631674291,
+        "maximumAbsoluteError": 1.8483267166865263
+      }
+    }
+  },
+  "predictionSha256": "9765a650ee49a8d10b51d06a735e591a4dfd03b953387c93ebecb2061371c1c4"
+}

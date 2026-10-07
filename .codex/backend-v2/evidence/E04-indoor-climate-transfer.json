@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-07T20:01:49.025548+00:00",
+  "step": "E04",
+  "ticketId": "z8v0kmr973",
+  "productionAdmission": false,
+  "scope": "固定研究候选跨住宅室内温湿度/VPD迁移回放",
+  "protocol": "cloudfunctions-v2/models/care/indoor-climate-transfer.md",
+  "sourceTruth": [
+    "固定home100训练系数及均值对照",
+    "IDEAL原始成员、元数据及CC BY4许可",
+    "独立人工平面Expected",
+    "FAO-56饱和水汽压关系"
+  ],
+  "path": "原始精确ZIP成员→UTC小时聚合→预设质控→固定参数预测→独立真值评分",
+  "coverage": {
+    "firstWindowQualifiedHours": 5,
+    "followupTotalHours": 336,
+    "followupQualifiedHours": 124,
+    "candidateValid": 124,
+    "unavailable": 0
+  },
+  "tdd": {
+    "path": "独立Expected先于实现；导出缺失和显式后续窗口经典RED；真值泄漏突变RED；逐字节恢复GREEN",
+    "initialRed": "/tmp/e04-climate-transfer-red.log",
+    "windowRed": "/tmp/e04-climate-followup-window-red.log",
+    "mutation": "故意把目标室内真值接作预测输入",
+    "mutationRed": "/tmp/e04-climate-transfer-mutation-red.log",
+    "mutationFailedCases": 2,
+    "restoredSha256": "9fe1d9f7fe4b55e89fb78cec343387ff9a8478a86d1d1f66e21b047e8fc4de4f",
+    "restoration": "字节恢复后另增显式窗口，相关经典RED和最终GREEN分别保留",
+    "newCases": 8,
+    "adjacentCases": 33
+  },
+  "independentAudit": {
+    "method": "具名代理Python固定系数评分；不读TS结果，不拟合",
+    "result": {
+      "scope": "单目标住宅固定后续窗口离线迁移核算，不重新拟合",
+      "windowStartUtc": "2018-01-12T00:00:00Z",
+      "windowEndExclusiveUtc": "2018-01-26T00:00:00Z",
+      "selection": {
+        "accepted": 124,
+        "indoor_coverage": 198,
+        "missing_fields": 14
+      },
+      "fixedSourceFit": {
+        "productionAdmission": false,
+        "sampleCount": 514,
+        "temperature": {
+          "intercept": 15.932270471180166,
+          "temperatureCoefficient": 0.10999685119886982,
+          "vaporCoefficient": -2.556138527774017
+        },
+        "vapor": {
+          "intercept": 0.5764691103420678,
+          "temperatureCoefficient": -0.0003743498214171885,
+          "vaporCoefficient": 0.42210601681926196
+        }
+      },
+      "sourceTrainingMean": {
+        "temperatureC": 14.54914377163074,
+        "relativeHumidityPercent": 53.30406473852588
+      },
+      "candidateInvalid": 0,
+      "scores": {
+        "candidate": {
+          "total": 124,
+          "valid": 124,
+          "unavailable": 0,
+          "metrics": {
+            "temperature_C": {
+              "MAE": 2.1263152764915128,
+              "RMSE": 2.574438447322834,
+              "maximumAbsoluteError": 8.310888109993135
+            },
+            "RH_percentage_points": {
+              "MAE": 8.738080353176619,
+              "RMSE": 9.306972572789572,
+              "maximumAbsoluteError": 21.77788641711328
+            },
+            "VPD_kPa": {
+              "MAE": 0.2889039228927015,
+              "RMSE": 0.32727469908108037,
+              "maximumAbsoluteError": 1.1737560442146011
+            }
+          }
+        },
+        "source_home100_mean": {
+          "total": 124,
+          "valid": 124,
+          "unavailable": 0,
+          "metrics": {
+            "temperature_C": {
+              "MAE": 2.202921808194175,
+              "RMSE": 2.6551899236304966,
+              "maximumAbsoluteError": 8.45270124681945
+            },
+            "RH_percentage_points": {
+              "MAE": 9.905044195165248,
+              "RMSE": 10.516010890998247,
+              "maximumAbsoluteError": 24.452035218230684
+            },
+            "VPD_kPa": {
+              "MAE": 0.3124325767674988,
+              "RMSE": 0.348701100901138,
+              "maximumAbsoluteError": 1.2255760423760003
+            }
+          }
+        },
+        "outdoor_as_indoor": {
+          "total": 124,
+          "valid": 124,
+          "unavailable": 0,
+          "metrics": {
+            "temperature_C": {
+              "MAE": 12.446875381332687,
+              "RMSE": 12.647509460155781,
+              "maximumAbsoluteError": 19.35184501845019
+            },
+            "RH_percentage_points": {
+              "MAE": 39.91146332760711,
+              "RMSE": 40.49082202705238,
+              "maximumAbsoluteError": 54.016181818181934
+            },
+            "VPD_kPa": {
+              "MAE": 0.9424865738330701,
+              "RMSE": 0.9562350631674292,
+              "maximumAbsoluteError": 1.8483267166865267
+            }
+          }
+        }
+      },
+      "fixtureReproduction": [
+        {
+          "file": "ideal-transfer-home59-hourly.csv",
+          "byteIdentical": true,
+          "sha256": "367e96a50c664d46980ab5cafef4aa951280b07b87fa72f8fbbc5fd4f7723f42"
+        },
+        {
+          "file": "ideal-transfer-home59-followup-hourly.csv",
+          "byteIdentical": true,
+          "sha256": "c31919bc15488896cc1cb9a83c4f5679514d3564fc0f8b1c517f83bf0178d414"
+        }
+      ]
+    },
+    "maximumMetricDifference": 2.1316282072803006e-14,
+    "finalFollowupFixtureByteIdentical": true
+  },
+  "checks": {
+    "fullUnitTests": {
+      "files": 210,
+      "passed": 2068,
+      "failed": 0,
+      "log": "/tmp/e04-climate-transfer-full-vitest.log"
+    },
+    "researchStrictTypecheck": "passed",
+    "scopedLint": {
+      "errors": 0,
+      "warnings": 91,
+      "log": "/tmp/e04-climate-transfer-lint-final.log"
+    }
+  },
+  "notCovered": [
+    "一般住宅适用性",
+    "未来和风预报精度",
+    "正式模型发布",
+    "光照/VPD联合干燥响应",
+    "生产HTTP/MySQL",
+    "浇水日期和水量"
+  ],
+  "sourceSha256": {
+    "cloudfunctions-v2/models/care/experiments/ideal-outdoor-comparison.ts": "04a2d379532aae4f7a558920c1fbdcf2e3f53ab58f7455e4e5941a2f6a574e5f",
+    "cloudfunctions-v2/scripts/replay-ideal-climate-transfer.ts": "14a7e28f5f8cbd0cd1e32cee92bf89f8aa49ddf6a2ea24c87a502b628192eb18",
+    "cloudfunctions-v2/scripts/prepare-ideal-transfer-fixture.mjs": "769f72bb02e8ef13fec052404e8c8e9a249f260f6851d9ce9cc08f4512a83e1e",
+    "cloudfunctions-v2/test/care/environment/ideal-climate-transfer.spec.ts": "205a96bebdd392f8faf9ba706a6ffde05f6e518cc011d877293b505eebcf39f2",
+    "cloudfunctions-v2/models/care/indoor-climate-transfer-results.json": "5dd2e9993f0a095edf4ad689f89f7dd883dac037597596bb4ce5922f1d54c4d1"
+  },
+  "nextAction": "收口有依据的室内温湿度区间到VPD区间及来源，再接光照/VPD联合响应；估算模型准入保持独立缺口"
+}

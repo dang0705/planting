@@ -147,11 +147,17 @@
     "acceptedForModelCalibration": false,
     "acceptedForProduction": false,
     "pending": [
-      "逐小时覆盖门槛与RH异常排除须在拟合前确定",
-      "按独立时间段或住宅划分校准与验证，不以当前验证误差选参数",
-      "明确小时样本均值与状态方程时刻的对应，不能默认等于时段起点或终点",
-      "本子集未给出气压、同刻供暖/开窗状态或房间太阳热输入；这些量不得填默认值",
-      "没有测量的用户住宅初态、跨住宅迁移误差与正式模型准入仍需独立验证"
+      "该子集仅准入已固定统计对照的离线研究，不是正式模型通用准入",
+      "时段均值不能直接作为热湿状态方程的瞬时初态；气压/同刻供暖/开窗/房间太阳热输入不得默认",
+      "无室内训练数据的新住宅迁移误差、未来天气预报误差与正式模型准入仍需独立验证"
+    ],
+    "acceptedForStatisticalResearch": true,
+    "evaluatedOfflineMethods": [
+      {
+        "method": "同小时室外输入统计对照",
+        "protocol": "cloudfunctions-v2/models/care/indoor-outdoor-comparison.md",
+        "results": "cloudfunctions-v2/models/care/indoor-outdoor-comparison-results.json"
+      }
     ]
   },
   "artifacts": {

@@ -1,21 +1,22 @@
 {
-  "revision": 123,
+  "revision": 124,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-07T19:49:12.297597+00:00",
+  "updatedAt": "2026-10-07T20:01:49.025548+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "用独立时段检验无需室内初态的室外温湿度统计对照",
+    "target": "用固定home100候选在按编号选择的另一住宅检验迁移误差",
     "keyAssumptions": [
-      "只属于离线同小时回顾性估算",
-      "温湿度来自固定IDEAL子集；不猜气压或建筑系数"
+      "只作离线同小时回顾性验证",
+      "不使用目标住宅室内真值重新拟合或生成对照",
+      "质量筛选沿用既定协议，不按误差选住宅或时段"
     ],
-    "minimumVerification": "先独立手算Expected与RED；固定训练/验证和数据筛选；候选与均值基线比较；全量后端测试",
-    "continueCondition": "候选合法且持出时段确有收益时才继续跨住宅验证，不直接发布",
-    "failureCondition": "无收益、非法预测或数据不足时不继续调该验证集，明确模型选择缺口",
-    "rollback": "仅撤回本轮独立研究文件；不影响运行源码或生产",
+    "minimumVerification": "先冻结选房/时段与Expected；校验原始成员和小时制品；固定系数迁移回放；独立核算与后端全量测试",
+    "continueCondition": "只有跨住宅收益与边界有证据时再推进后台场景准入，不能直接发布",
+    "failureCondition": "迁移无收益或数据不足则停止该固定候选的默认住宅准入，不更换测试住宅追求成功",
+    "rollback": "只撤回本轮研究验证文件，不影响现有运行用例",
     "timeLimitMinutes": 25,
-    "nextAction": "固定统计候选，在独立住宅／时段核验适用性及极端误差；不向用户增加专业输入"
+    "nextAction": "收口有依据的室内温湿度区间到VPD区间及来源，再接光照/VPD联合响应；估算模型准入保持独立缺口"
   },
   "tasks": [
     {
@@ -131,10 +132,10 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 50,
+      "version": 51,
       "priority": "high",
       "status": "codex running",
-      "stage": "室外输入统计对照已核验；跨住宅准入及非零剩余时间待验证",
+      "stage": "室内估算跨住宅误差已量化；正式准入及非零剩余时间待完成",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -183,17 +184,18 @@
         ".codex/backend-v2/evidence/E04-indoor-climate-real-data.json",
         ".codex/backend-v2/evidence/E04-current-soil-window.json",
         ".codex/backend-v2/evidence/E04-calibration-data-qualification.json",
-        ".codex/backend-v2/evidence/E04-indoor-outdoor-comparison.json"
+        ".codex/backend-v2/evidence/E04-indoor-outdoor-comparison.json",
+        ".codex/backend-v2/evidence/E04-indoor-climate-transfer.json"
       ],
       "summary": [
-        "E04：和风室外温湿度→室内估算→VPD链路已明确，正式模型仍待准入",
-        "IDEAL固定514小时训练/238小时验证：候选VPD平均误差0.110kPa，对照0.126",
-        "独立Python核算一致；无需室内初态，但未证明跨住宅迁移或未来预报精度",
-        "25项研究测试；数值守卫突变RED恢复GREEN；后端全量2060/2060",
-        "单住宅研究不作为默认参数；正式日期、水量及HTTP仍未验收"
+        "E04：固定室外输入候选已在另一住宅回放，未使用目标真值重新拟合",
+        "固定后续窗124/336小时合格；VPD平均误差0.289kPa，最大1.174kPa",
+        "候选略优于均值但未证明通用性；不作为默认室内参数或正式浇水依据",
+        "独立Python一致；真值泄漏突变RED恢复GREEN；后端全量2068/2068",
+        "下一步收口有依据的温湿度区间→VPD区间，正式日期/水量/HTTP仍未验收"
       ],
       "blockingReason": null,
-      "nextAction": "固定统计候选，在独立住宅／时段核验适用性及极端误差；不向用户增加专业输入；随后接光照/VPD联合响应与盆土定量剩余时间",
+      "nextAction": "收口有依据的室内温湿度区间到VPD区间及来源，再接光照/VPD联合响应；估算模型准入保持独立缺口",
       "ticketReadback": "ClickUp评论1100440000140265全文读回一致；保持codex running"
     },
     {
