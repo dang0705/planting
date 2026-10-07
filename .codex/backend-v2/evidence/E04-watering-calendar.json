@@ -1,0 +1,70 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "recordedAt": "2026-10-07T17:50:36.898042+00:00",
+  "productBehaviorChanged": true,
+  "productionAdmission": false,
+  "source": "完整计划4.3.1及用户本轮确认：基线固定、最终预计时间响应变量；提前检查跟随动态预测",
+  "implemented": [
+    "UTC算法窗口→植物所在地日期",
+    "单侧/未覆盖窗口保留null并独立报告覆盖范围",
+    "时区随同轮快照锁定，湿土否决不被日期覆盖"
+  ],
+  "notImplemented": [
+    "提前比例/口径与通知偏好策略",
+    "日历固定基线提前日期",
+    "真实环境/保水参数发布",
+    "实际施水量和正式HTTP"
+  ],
+  "tests": {
+    "layer": "L1/L3 unit_fake",
+    "realPath": "replayWateringTiming→replayDryProgress→projectCheckWindowDates及当前盆土安全门",
+    "substitutedBoundaries": [],
+    "fixtureMeaning": "独立数学及公历样例，非已发布植物参数",
+    "newCases": 20,
+    "care": {
+      "passed": 529,
+      "total": 529
+    },
+    "root": {
+      "passed": 1981,
+      "total": 1981
+    },
+    "node22": {
+      "version": "22.21.1",
+      "passed": 1981,
+      "total": 1981
+    },
+    "typecheck": "passed",
+    "scopedLint": {
+      "warnings": 26,
+      "errors": 0
+    },
+    "tdd": {
+      "path": "测试先落盘；模块缺失RED；覆盖终点冒充缺阈值的受控突变RED→恢复GREEN",
+      "mutationFailures": [
+        "只有最早阈值被覆盖时不补最晚日期",
+        "两个阈值都未覆盖时不拿预报终点充当日期"
+      ],
+      "restoredSha256": "4c1ec865a1b464b35d11694055937c61f26f1904d7616d8ad7763545daabf45a"
+    }
+  },
+  "files": [
+    {
+      "path": "cloudfunctions-v2/src/care/watering/project-check-window-dates.ts",
+      "sha256": "4c1ec865a1b464b35d11694055937c61f26f1904d7616d8ad7763545daabf45a"
+    },
+    {
+      "path": "cloudfunctions-v2/src/care/application/replay-watering-timing.ts",
+      "sha256": "a96ba8beb007a151caff9d90f1190826ae2fceca9b3b646f9363e3c331a9854c"
+    },
+    {
+      "path": "cloudfunctions-v2/test/care/watering/check-window-calendar.spec.ts",
+      "sha256": "982a7315ac641283af07a0c620431b5fff0e132e6961b2634e0363b2219efe88"
+    },
+    {
+      "path": "cloudfunctions-v2/models/care/watering-calendar-contract.md",
+      "sha256": "17d46e74332b6e550ff37f9389ad37fa41abddf5add00f327443ca76562d8b84"
+    }
+  ]
+}

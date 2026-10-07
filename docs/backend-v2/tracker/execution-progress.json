@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-07T17:28:52.171410+00:00",
-  "sourceRevision": 115,
-  "sourceUpdatedAt": "2026-10-07T17:28:52.171410+00:00",
+  "generatedAt": "2026-10-07T17:50:36.898042+00:00",
+  "sourceRevision": 116,
+  "sourceUpdatedAt": "2026-10-07T17:50:36.898042+00:00",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -123,16 +123,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 43,
+      "version": 44,
       "status": "codex running",
-      "stage": "9类基质材料输入已确认、资料已核验；根区水分和施水策略未验收",
+      "stage": "动态预测日期表达已验证；模型倍率/根区水量/提前策略待收口",
       "accepted": false,
       "summary": [
-        "E04：基质资料4个来源、6条候选样本已核验，隔离1条源数据矛盾",
-        "V1配比是勾选自动均分；盆器几何容积不能充当装土量",
-        "用户确认就是V1九类材料选项；无固定配方/检测资料，不增MVP专业输入",
-        "本轮仅资料与计划更新；沿用上轮根/Node22全量1961通过，正式水量未验收",
-        "证据：.codex/backend-v2/evidence/E04-substrate-water-evidence.json"
+        "E04：算法窗口已接植物当地日期；同一基线随需求/保水/校准动态变化",
+        "缺端点不以预报终点补日期；湿土否决保留，时区进入回放快照",
+        "20新场景；缺模块RED及缺端点突变2项RED→恢复GREEN",
+        "Care529项；根与Node22全量1981/1981、类型检查通过；正式水量/HTTP未验收",
+        "证据：.codex/backend-v2/evidence/E04-watering-calendar.json"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -174,10 +174,11 @@
         ".codex/backend-v2/evidence/E04-watering-timing-replay.json",
         ".codex/backend-v2/evidence/E04-root-zone-water-deficit.json",
         ".codex/backend-v2/evidence/E04-water-substrate-inventory.json",
-        ".codex/backend-v2/evidence/E04-substrate-water-evidence.json"
+        ".codex/backend-v2/evidence/E04-substrate-water-evidence.json",
+        ".codex/backend-v2/evidence/E04-watering-calendar.json"
       ],
       "blockingReason": null,
-      "nextAction": "基于已确认9类材料补物性适用范围/后台样本证据；日期分支先核验日历基线与时区检查日期，水量等待有效根区依据",
+      "nextAction": "补齐环境需求/栽培保水的有效映射并做实际数据回放；提前检查基于动态预测，另确认提前量；水量继续补根区证据",
       "sync": {
         "version": 41,
         "status": "codex running",
@@ -375,6 +376,6 @@
     "at": "2026-10-07T17:25:11.799182+00:00",
     "ticketId": "z8v0kmr973",
     "reason": "ClickUp MCP日额度100/100，返回3小时44分钟后可重试；未进行远端写入",
-    "pendingVersion": 43
+    "pendingVersion": 44
   }
 }

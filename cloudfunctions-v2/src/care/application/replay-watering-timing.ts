@@ -2,6 +2,7 @@ import { calculateCanonicalJsonSha256, type CanonicalJsonValue } from '../../fou
 import { replayDryProgress, type DryProgressInput, type DryProgressResult } from '../watering/replay-dry-progress.js'
 import { evaluateWateringDecision, type WateringDecisionInput, type WateringDecisionResult } from '../watering/evaluate-watering-decision.js'
 import { deriveRootZoneWaterDeficit, type RootZoneWaterDeficitInput, type RootZoneWaterDeficitResult } from '../watering/derive-root-zone-water-deficit.js'
+import { projectCheckWindowDates, type LocalCheckWindowResult } from '../watering/project-check-window-dates.js'
 
 /** 同轮浇水候选回放的固定输入，日期与当前盆土使用相同时刻。 */
 export interface WateringTimingReplayInput {
@@ -15,6 +16,8 @@ export interface WateringTimingReplayInput {
   readonly soil: WateringDecisionInput['soil']
   /** 可选专业证据；未提供时没有净缺口，不要求MVP前端采集。 */
   readonly waterDeficit?: RootZoneWaterDeficitInput | null
+  /** 植物所在地的明确时区；缺失不沿用服务器默认时区。 */
+  readonly timezone?: string | null
 }
 /** 积分与安全决策结果一起保留，不写用户行为或精确水量。 */
 export interface WateringTimingReplayResult {
@@ -26,6 +29,8 @@ export interface WateringTimingReplayResult {
   readonly decision: WateringDecisionResult
   /** 与日期并列的净补水缺口，始终不冒充实际施水量。 */
   readonly waterDeficit: RootZoneWaterDeficitResult | null
+  /** 与UTC积分同源的当地检查日期；不是已确认浇水计划。 */
+  readonly localCheckWindow: LocalCheckWindowResult
   /** 输入独立副本，调用方后续改动不影响原回放。 */
   readonly snapshot: WateringTimingReplayInput
   /** 规范JSON摘要，拒绝非JSON输入或隐藏非法数值。 */
@@ -42,5 +47,6 @@ export function replayWateringTiming(input: WateringTimingReplayInput): Watering
     baseline: drying.status === 'ready_candidate' ? snapshot.drying.baseline : null,
   })
   const waterDeficit = snapshot.waterDeficit === undefined || snapshot.waterDeficit === null ? null : deriveRootZoneWaterDeficit(snapshot.waterDeficit)
-  return { productionAdmission: false, drying, decision, waterDeficit, snapshot, snapshotHash }
+  const localCheckWindow = projectCheckWindowDates(drying.window, snapshot.timezone ?? null)
+  return { productionAdmission: false, drying, decision, waterDeficit, localCheckWindow, snapshot, snapshotHash }
 }

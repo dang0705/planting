@@ -1,15 +1,15 @@
 {
-  "revision": 115,
+  "revision": 116,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-07T17:28:52.171410+00:00",
+  "updatedAt": "2026-10-07T17:50:36.898042+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
     "target": "光照离线接线与VPD点值已验证→基线/栽培/盆土→最终浇水",
     "minimumVerification": "独立Expected、双通道/同刻/缺段、三个浇水输出分别验收",
-    "result": "基质资料4源6样本核验；一条源数据矛盾隔离；V1自动均分配比不能用作真实配方。实际水量仍缺样本和根区依据。",
+    "result": "算法窗口已转植物当地日期；固定基线对需求/保水/校准变化有响应；20新项与全量1981通过。提前策略/施水量/正式HTTP未验收",
     "rollback": "仅新候选模块可撤回；保留专业参数与历史结果，不部署或改数据库",
-    "nextAction": "基于已确认9类材料补物性适用范围/后台样本证据；日期分支先核验日历基线与时区检查日期，水量等待有效根区依据"
+    "nextAction": "补齐环境需求/栽培保水的有效映射并做实际数据回放；提前检查基于动态预测，另确认提前量；水量继续补根区证据"
   },
   "tasks": [
     {
@@ -125,10 +125,10 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 43,
+      "version": 44,
       "priority": "high",
       "status": "codex running",
-      "stage": "9类基质材料输入已确认、资料已核验；根区水分和施水策略未验收",
+      "stage": "动态预测日期表达已验证；模型倍率/根区水量/提前策略待收口",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -170,17 +170,18 @@
         ".codex/backend-v2/evidence/E04-watering-timing-replay.json",
         ".codex/backend-v2/evidence/E04-root-zone-water-deficit.json",
         ".codex/backend-v2/evidence/E04-water-substrate-inventory.json",
-        ".codex/backend-v2/evidence/E04-substrate-water-evidence.json"
+        ".codex/backend-v2/evidence/E04-substrate-water-evidence.json",
+        ".codex/backend-v2/evidence/E04-watering-calendar.json"
       ],
       "summary": [
-        "E04：基质资料4个来源、6条候选样本已核验，隔离1条源数据矛盾",
-        "V1配比是勾选自动均分；盆器几何容积不能充当装土量",
-        "用户确认就是V1九类材料选项；无固定配方/检测资料，不增MVP专业输入",
-        "本轮仅资料与计划更新；沿用上轮根/Node22全量1961通过，正式水量未验收",
-        "证据：.codex/backend-v2/evidence/E04-substrate-water-evidence.json"
+        "E04：算法窗口已接植物当地日期；同一基线随需求/保水/校准动态变化",
+        "缺端点不以预报终点补日期；湿土否决保留，时区进入回放快照",
+        "20新场景；缺模块RED及缺端点突变2项RED→恢复GREEN",
+        "Care529项；根与Node22全量1981/1981、类型检查通过；正式水量/HTTP未验收",
+        "证据：.codex/backend-v2/evidence/E04-watering-calendar.json"
       ],
       "blockingReason": null,
-      "nextAction": "基于已确认9类材料补物性适用范围/后台样本证据；日期分支先核验日历基线与时区检查日期，水量等待有效根区依据",
+      "nextAction": "补齐环境需求/栽培保水的有效映射并做实际数据回放；提前检查基于动态预测，另确认提前量；水量继续补根区证据",
       "ticketReadback": "ClickUp评论1100440000140265全文读回一致；保持codex running"
     },
     {
@@ -454,7 +455,7 @@
       ]
     }
   ],
-  "nextAction": "基于已确认9类材料补物性适用范围/后台样本证据；日期分支先核验日历基线与时区检查日期，水量等待有效根区依据",
+  "nextAction": "补齐环境需求/栽培保水的有效映射并做实际数据回放；提前检查基于动态预测，另确认提前量；水量继续补根区证据",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -516,8 +517,8 @@
     "runner": "cloudfunctions-v2 已锁定 Vitest",
     "testDirectory": "cloudfunctions-v2/test/",
     "lastResult": {
-      "passed": 1134,
-      "total": 1134,
+      "passed": 1981,
+      "total": 1981,
       "skipped": 0
     }
   },
@@ -1164,5 +1165,30 @@
       "architecture/manifest.json仅两项配置目录摘要"
     ],
     "scope": "不得扩大至整个care领域或全部架构图"
+  },
+  "wateringCalendarReadAdmission": {
+    "task": "E04日期输出与日历检查规则",
+    "layers": {
+      "L0": "watering定向glob命中4资源，未提供日历检查配置条目",
+      "L1": "configuration-providers概述明确当前变量目录全文不镜像",
+      "L2": "已读watering-decision-model及配置原文，没有当地日期投影/提前检查规则的当前参数状态"
+    },
+    "missing": [
+      "日期输出硬规则及已有检查提前量状态",
+      "新增日期规则登记格式与目录摘要"
+    ],
+    "allowed": [
+      "architecture/configuration-variable-catalog.md仅care浇水日期/提醒相关条目",
+      "architecture/configuration-variable-catalog.json仅care浇水日期/提醒相关条目",
+      "architecture/manifest.json仅配置目录两项哈希"
+    ],
+    "scope": "禁止展开其他领域或全部sourceRefs"
+  },
+  "wateringDateDecision": {
+    "source": "用户本轮明确确认",
+    "basis": "dynamic_algorithm_prediction",
+    "fixedBaselineLeadAllowed": false,
+    "advancePolicyStatus": "pending",
+    "frontendInputsExpanded": false
   }
 }

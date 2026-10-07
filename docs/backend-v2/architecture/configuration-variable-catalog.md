@@ -349,3 +349,7 @@
 ### `care.watering.root_zone_water_deficit`｜根区净补水缺口
 
 不可配置硬规则；P4／z8v0kmr973。有效基质体积与可靠根区体积含水率的独立区间算术形成净缺口，不等同施水量；缺证据不填默认。来源、Expected与边界见 `cloudfunctions-v2/models/care/root-zone-water-deficit-contract.md`。后台映射、供水效率及施水上限未确认，不由本条授予生产资格。
+
+## 浇水检查日期表达硬规则
+
+`care.watering.local_calendar_dates`：按明确植物所在地时区将UTC检查窗口投影为公历日期；缺时区/窗口保持缺证据，缺一端不以预报终点填充，不改变湿土否决，不写提醒或事实。来源：`cloudfunctions-v2/models/care/watering-calendar-contract.md`。提前检查比例及通知时刻独立裁决，不在此设置默认。

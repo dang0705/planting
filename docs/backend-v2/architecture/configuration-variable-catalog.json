@@ -5050,6 +5050,28 @@
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "expected": "独立体积含水率定义与区间端点手算；盆容积、表土与任意百分数不冒充有效证据",
       "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "care.watering.local_calendar_dates",
+      "chineseName": "浇水检查窗口的当地日历表达",
+      "domain": "care",
+      "layer": "hard_rule",
+      "valueType": "object",
+      "status": "hard_rule",
+      "currentValue": "按明确植物时区投影UTC窗口；缺端点不补日期；不创建提醒或改写浇水事实",
+      "owner": "care",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/watering-calendar-contract.md"
+      ],
+      "consumers": [
+        "care内部日期回放"
+      ],
+      "changePolicy": "公历和时间语义不可配置；提前检查比例、通知时刻与正式发布独立裁决",
+      "fallback": "缺时区或窗口返回缺证据，非法时区或不可表达日期拒绝",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "expected": "跨日/夏令时/单侧窗口独立Expected；覆盖终点不冒充检查日期；湿土仍否决",
+      "decisionGroup": "hard_business_rule"
     }
   ],
   "providerProfiles": [
