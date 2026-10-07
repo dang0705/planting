@@ -1,22 +1,21 @@
 {
-  "revision": 122,
+  "revision": 123,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-07T19:36:50.412276+00:00",
+  "updatedAt": "2026-10-07T19:49:12.297597+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "核验可用于室内VPD和盆土剩余时间的真实校准数据，不新增空接口",
+    "target": "用独立时段检验无需室内初态的室外温湿度统计对照",
     "keyAssumptions": [
-      "已有公式不代表参数已准入",
-      "公开实验只能证明其采样条件，不能授予通用默认值"
+      "只属于离线同小时回顾性估算",
+      "温湿度来自固定IDEAL子集；不猜气压或建筑系数"
     ],
-    "minimumVerification": "原数据仓许可、字段、采样/时区、缺失、文件哈希与可用时间交集",
-    "continueCondition": "有配对输入与目标数据则进入隔离回放；否则保留具体缺口",
-    "failureCondition": "缺目标标定/环境重叠或无法取得文件时不拟合、不发布",
-    "rollback": "移除新增研究证据制品；无业务数据及线上变更",
-    "timeLimitMinutes": 20,
-    "nextAction": "在IDEAL数据拟合前冻结有效覆盖与状态时刻语义；按分离时段验证室内估算，不以全均值或异常RH训练；盆栽另需有目标状态和完整干燥过程的合格数据",
-    "result": "已固化可复现室内外子集和盆栽数据资格；未拟合新默认参数"
+    "minimumVerification": "先独立手算Expected与RED；固定训练/验证和数据筛选；候选与均值基线比较；全量后端测试",
+    "continueCondition": "候选合法且持出时段确有收益时才继续跨住宅验证，不直接发布",
+    "failureCondition": "无收益、非法预测或数据不足时不继续调该验证集，明确模型选择缺口",
+    "rollback": "仅撤回本轮独立研究文件；不影响运行源码或生产",
+    "timeLimitMinutes": 25,
+    "nextAction": "固定统计候选，在独立住宅／时段核验适用性及极端误差；不向用户增加专业输入"
   },
   "tasks": [
     {
@@ -132,10 +131,10 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 49,
+      "version": 50,
       "priority": "high",
       "status": "codex running",
-      "stage": "室内外校准子集已取得并核验；室内模型及非零剩余时间待标定",
+      "stage": "室外输入统计对照已核验；跨住宅准入及非零剩余时间待验证",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -183,17 +182,18 @@
         ".codex/backend-v2/evidence/E04-indoor-climate-experiment.json",
         ".codex/backend-v2/evidence/E04-indoor-climate-real-data.json",
         ".codex/backend-v2/evidence/E04-current-soil-window.json",
-        ".codex/backend-v2/evidence/E04-calibration-data-qualification.json"
+        ".codex/backend-v2/evidence/E04-calibration-data-qualification.json",
+        ".codex/backend-v2/evidence/E04-indoor-outdoor-comparison.json"
       ],
       "summary": [
-        "E04：取得IDEAL客厅+关联天气6周真实子集，来源/单位/UTC/哈希已固化",
-        "1008小时中886四项齐备，884湿度范围合法；缺测/异常保留，不直接拟合",
-        "盆栽候选不具多日连续合格段且非VWC，不用来生成日期或毫升数",
-        "独立原始数据复算一致；后端全量2035/2035；本轮无产品行为改动",
-        "证据：.codex/backend-v2/evidence/E04-calibration-data-qualification.json"
+        "E04：和风室外温湿度→室内估算→VPD链路已明确，正式模型仍待准入",
+        "IDEAL固定514小时训练/238小时验证：候选VPD平均误差0.110kPa，对照0.126",
+        "独立Python核算一致；无需室内初态，但未证明跨住宅迁移或未来预报精度",
+        "25项研究测试；数值守卫突变RED恢复GREEN；后端全量2060/2060",
+        "单住宅研究不作为默认参数；正式日期、水量及HTTP仍未验收"
       ],
       "blockingReason": null,
-      "nextAction": "在IDEAL数据拟合前冻结有效覆盖与状态时刻语义；按分离时段验证室内估算，不以全均值或异常RH训练；盆栽另需有目标状态和完整干燥过程的合格数据",
+      "nextAction": "固定统计候选，在独立住宅／时段核验适用性及极端误差；不向用户增加专业输入；随后接光照/VPD联合响应与盆土定量剩余时间",
       "ticketReadback": "ClickUp评论1100440000140265全文读回一致；保持codex running"
     },
     {

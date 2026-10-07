@@ -88,11 +88,11 @@
     "at": "2026-10-07T17:25:11.799182+00:00",
     "ticketId": "z8v0kmr973",
     "reason": "ClickUp MCP日额度100/100，返回3小时44分钟后可重试；未进行远端写入",
-    "pendingVersion": 49
+    "pendingVersion": 50
   },
   "h5Projection": {
-    "fingerprint": "5232684212e10de4c0989fb6768d12ec2f7bd86e951964857951cb29ab68c76a",
-    "sourceRevision": 122,
-    "sourceUpdatedAt": "2026-10-07T19:36:50.412276+00:00"
+    "fingerprint": "d78a58d6d92062a01ff5a75919a53ff0c5793a074351f0e64a66ac2e306dc466",
+    "sourceRevision": 123,
+    "sourceUpdatedAt": "2026-10-07T19:49:12.297597+00:00"
   }
 }
