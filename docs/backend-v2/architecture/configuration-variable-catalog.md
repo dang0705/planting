@@ -345,3 +345,7 @@
 `diagnosis.result.public_read`：结果只读投影固定为 `diagnosis-result/v1`，不可配置；沿用公共会话路径8至100字符，原知识摘要不一致/撤回、旧行与损坏503，不存在404。owner：diagnosis；P4／z8v0kmr974；合同：`cloudfunctions-v2/models/diagnosis/result-http-contract.md`。不重算或替换历史结果，临时分支未接入不授予资格。
 
 诊断知识发布硬规则同时约束精确审核撤销：独立追加事实、原样命令摘要、同目标唯一撤销、与发布共享审核锁及提交未知只读对账；不修改批准、发布或历史结果。内部合同见 `cloudfunctions-v2/models/diagnosis/review-revocation-contract.md`，正式CMS管理员及协议仍须独立准入。
+
+### `care.watering.root_zone_water_deficit`｜根区净补水缺口
+
+不可配置硬规则；P4／z8v0kmr973。有效基质体积与可靠根区体积含水率的独立区间算术形成净缺口，不等同施水量；缺证据不填默认。来源、Expected与边界见 `cloudfunctions-v2/models/care/root-zone-water-deficit-contract.md`。后台映射、供水效率及施水上限未确认，不由本条授予生产资格。

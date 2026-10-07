@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-07T16:54:43.581733+00:00",
-  "sourceRevision": 113,
-  "sourceUpdatedAt": "2026-10-07T16:54:43.581733+00:00",
+  "generatedAt": "2026-10-07T17:12:41.113481+00:00",
+  "sourceRevision": 114,
+  "sourceUpdatedAt": "2026-10-07T17:12:41.113481+00:00",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -123,16 +123,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 41,
+      "version": 42,
       "status": "codex running",
-      "stage": "等效干燥积分/检查窗口/盆土安全门离线闭环已验证；正式参数/水量/HTTP待完成",
+      "stage": "证据驱动水量路线已确认，净缺口接入回放；真实物性/根区映射/施水策略待完成",
       "accepted": false,
       "summary": [
-        "E04：真实时间倍率积分→预计检查窗口→盆土安全裁决已接通",
-        "缺历史不造进度、未来缺段不外推；湿土否决、根区目标可独立判断",
-        "25新场景；数值边界经典RED、除数/湿土突变RED→恢复GREEN",
-        "Care499项；根及Node22全量1951/1951；正式水量/HTTP未验收",
-        "证据：.codex/backend-v2/evidence/E04-watering-timing-replay.json"
+        "E04：用户确认先补基质/根区水分再算水量；不采用盆容积比例",
+        "净补水缺口已接同轮回放；表土/盆容积不冒充根区/有效基质",
+        "10新项；接线/类型经典RED、端点突变RED→恢复GREEN",
+        "Care509项；根及Node22全量1961/1961；施水量/正式HTTP未验收",
+        "证据：.codex/backend-v2/evidence/E04-root-zone-water-deficit.json"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -171,14 +171,16 @@
         ".codex/backend-v2/evidence/E04-lux-composite-anchor.json",
         ".codex/backend-v2/evidence/E04-lux-window-vpd.json",
         ".codex/backend-v2/evidence/E04-baseline-live-readback.json",
-        ".codex/backend-v2/evidence/E04-watering-timing-replay.json"
+        ".codex/backend-v2/evidence/E04-watering-timing-replay.json",
+        ".codex/backend-v2/evidence/E04-root-zone-water-deficit.json",
+        ".codex/backend-v2/evidence/E04-water-substrate-inventory.json"
       ],
       "blockingReason": null,
-      "nextAction": "接知识端口与基线参考转换，确认环境需求/保水映射发布参数；独立冻结水量策略，再接正式养护",
+      "nextAction": "定向补齐有来源的基质物性与根区水分映射，形成后台有效区间；分别冻结施水效率/排水上限及版本，再接正式水量",
       "sync": {
         "version": 41,
         "status": "codex running",
-        "matched": true,
+        "matched": false,
         "readback": "ClickUp评论1100440000140265全文读回一致；保持codex running"
       }
     },
@@ -368,5 +370,10 @@
     }
   ],
   "lastSuccessfulSyncAt": "2026-10-07T16:55:19.371408+00:00",
-  "lastFailure": null
+  "lastFailure": {
+    "at": "2026-10-07T17:12:41.113481+00:00",
+    "ticketId": "z8v0kmr973",
+    "reason": "ClickUp MCP日额度已满；Chrome main任务正文空白，未能远端核对/同步",
+    "pendingVersion": 42
+  }
 }

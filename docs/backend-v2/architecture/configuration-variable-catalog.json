@@ -5028,6 +5028,28 @@
       "ticketTitle": "[E05][P4] 固定/动态问诊与小青工具",
       "expected": "仅本人可读；公开响应不含replay或内部键；读取不生成事实或新结果",
       "decisionGroup": "diagnosis_releases"
+    },
+    {
+      "id": "care.watering.root_zone_water_deficit",
+      "chineseName": "根区净补水缺口的量纲与证据边界",
+      "domain": "care",
+      "layer": "hard_rule",
+      "valueType": "object",
+      "status": "hard_rule",
+      "currentValue": "有效基质体积×目标/当前体积含水率差；净缺口不等于施水量；缺证据不填默认",
+      "owner": "care",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/root-zone-water-deficit-contract.md"
+      ],
+      "consumers": [
+        "care内部水量回放"
+      ],
+      "changePolicy": "数学和单位规则不能由配置覆盖；模型映射/目标含水率/效率/施水上限独立裁决发布",
+      "fallback": "缺少有效基质或可靠根区量时返回insufficient_evidence；非法类型拒绝",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "expected": "独立体积含水率定义与区间端点手算；盆容积、表土与任意百分数不冒充有效证据",
+      "decisionGroup": "hard_business_rule"
     }
   ],
   "providerProfiles": [

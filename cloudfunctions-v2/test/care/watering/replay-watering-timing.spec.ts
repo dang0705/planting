@@ -22,4 +22,15 @@ describe('浇水日期链路的内部离线闭环', () => {
     expect(result.snapshot.drying.intervals[0]!.environmentDemand.min).toBe(1)
     expect(replayWateringTiming(result.snapshot)).toEqual(result)
   })
+  it('时间与水量分支并列，湿土仍否决行动且净缺口不当施水量', () => {
+    const value = input()
+    const result = replayWateringTiming({ ...value,
+      soil: { state: 'wet', scope: 'root_zone', reliable: true, targetCriteriaConfirmed: false, collectedAt: origin, validUntil: origin + 2 * day },
+      waterDeficit: { volumeBasis: 'effective_substrate', effectiveSubstrateVolumeMl: { min: 2000, max: 2000 }, currentVwc: { min: 0.15, max: 0.15 }, targetVwc: { min: 0.30, max: 0.30 }, rootZoneEvidenceValid: true },
+    })
+    expect(result.decision.action).toBe('pause_watering')
+    expect(result.waterDeficit!.netDeficitMl!.max).toBeCloseTo(300, 10)
+    expect(result.waterDeficit!.appliedAmountMl).toBeNull()
+    expect(result.snapshot.waterDeficit!.effectiveSubstrateVolumeMl!.min).toBe(2000)
+  })
 })

@@ -1,0 +1,31 @@
+{
+  "capturedAt": "2026-10-07T17:12:41.113481+00:00",
+  "ticketId": "z8v0kmr973",
+  "scope": "有效基质与根区水分证据→净补水缺口→同轮时间/安全回放",
+  "productionAdmission": false,
+  "expectedSources": [
+    "完整计划4.3.1",
+    "https://extension.umn.edu/natural-resources/conservation/agricultural-soil-and-water/irrigation/soil-moisture-sensors-for-irrigation-scheduling"
+  ],
+  "verification": {
+    "newTests": 10,
+    "careTests": 509,
+    "classicRed": [
+      "实际回放未接水量分支",
+      "数组/函数不能冒充区间对象"
+    ],
+    "mutationRed": "错误含水率端点导致独立Expected失败；逐字节恢复",
+    "rootUnitTests": 1961,
+    "typecheck": "passed",
+    "lintErrors": 0,
+    "node22UnitTests": 1961
+  },
+  "notCovered": [
+    "实际基质/根区物理数据或映射",
+    "实际施水转换/排水上限策略",
+    "正式水量或HTTP/数据库写入",
+    "生产部署"
+  ],
+  "userDecision": "使用证据驱动水量；MVP不新增专业前端输入；不采用盆容积比例兜底",
+  "dataInventory": ".codex/backend-v2/evidence/E04-water-substrate-inventory.json"
+}
