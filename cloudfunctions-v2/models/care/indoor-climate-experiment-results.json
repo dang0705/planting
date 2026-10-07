@@ -1,0 +1,96 @@
+{
+  "scope": "offline_experiment",
+  "productionAdmission": false,
+  "parameterStatus": "synthetic_math_scenarios_not_approved_room_profiles",
+  "source": "cloudfunctions-v2/models/care/experiments/indoor-climate.ts",
+  "sourceSha256": "a2f7fbc294dce19a8ce9ffe1409176fb807aa8435d901b292c108ae99f535e9d",
+  "scenarios": [
+    {
+      "name": "封闭空气加热，无水分增减",
+      "input": {
+        "initialIndoor": {
+          "temperatureC": 20,
+          "relativeHumidityPercent": 50
+        },
+        "outdoor": {
+          "temperatureC": 20,
+          "relativeHumidityPercent": 50
+        },
+        "pressureKpa": 101.325,
+        "durationSeconds": 3600,
+        "coefficients": {
+          "temperatureExchangePerSecond": 0,
+          "heatInputCPerSecond": 0.001388888888888889,
+          "moistureExchangePerSecond": 0,
+          "moistureInputKgPerKgPerSecond": 0
+        }
+      },
+      "result": {
+        "scope": "offline_experiment",
+        "productionAdmission": false,
+        "status": "candidate",
+        "temperatureC": 25,
+        "relativeHumidityPercent": 36.9072813727561,
+        "humidityRatioKgPerKg": 0.007260504747895068,
+        "vpdKpa": 1.9986370820431243
+      }
+    },
+    {
+      "name": "热量与含湿量分别交换",
+      "input": {
+        "initialIndoor": {
+          "temperatureC": 20,
+          "relativeHumidityPercent": 50
+        },
+        "outdoor": {
+          "temperatureC": 10,
+          "relativeHumidityPercent": 80
+        },
+        "pressureKpa": 101.325,
+        "durationSeconds": 3600,
+        "coefficients": {
+          "temperatureExchangePerSecond": 0.0001925408834888737,
+          "heatInputCPerSecond": 0,
+          "moistureExchangePerSecond": 0.0001925408834888737,
+          "moistureInputKgPerKgPerSecond": 0
+        }
+      },
+      "result": {
+        "scope": "offline_experiment",
+        "productionAdmission": false,
+        "status": "candidate",
+        "temperatureC": 15,
+        "relativeHumidityPercent": 63.08644757717663,
+        "humidityRatioKgPerKg": 0.00667489328361234,
+        "vpdKpa": 0.6295038753826987
+      }
+    },
+    {
+      "name": "中途凝结风险，即使末态不饱和也不接受",
+      "input": {
+        "initialIndoor": {
+          "temperatureC": 25,
+          "relativeHumidityPercent": 80
+        },
+        "outdoor": {
+          "temperatureC": 10,
+          "relativeHumidityPercent": 50
+        },
+        "pressureKpa": 101.325,
+        "durationSeconds": 3600,
+        "coefficients": {
+          "temperatureExchangePerSecond": 0.01,
+          "heatInputCPerSecond": 0,
+          "moistureExchangePerSecond": 0.001,
+          "moistureInputKgPerKgPerSecond": 0
+        }
+      },
+      "result": {
+        "scope": "offline_experiment",
+        "productionAdmission": false,
+        "status": "outside_model_scope",
+        "reason": "phase_change_or_moisture_deficit"
+      }
+    }
+  ]
+}

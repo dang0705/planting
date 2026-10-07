@@ -1,0 +1,70 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "recordedAt": "2026-10-07T18:38:11.033490+00:00",
+  "scope": "显式参数的室内热湿平衡研究候选；不进入生产运行",
+  "configurationDecision": {
+    "id": "care.indoor_environment.algorithm_release",
+    "status": "pending",
+    "changed": false,
+    "defaultsAdded": false,
+    "basis": "统一计划允许明确标为实验的离线候选补证据；不生成获准房间参数"
+  },
+  "sources": [
+    "https://bigladdersoftware.com/epx/docs/9-6/engineering-reference/hybrid-model.html",
+    "https://github.com/NREL/EnergyPlus/blob/v24.1.0/src/EnergyPlus/Psychrometrics.hh",
+    "https://www.fao.org/4/x0490e/x0490e07.htm"
+  ],
+  "artifacts": {
+    "contract": "cloudfunctions-v2/models/care/indoor-climate-experiment-contract.md",
+    "candidate": "cloudfunctions-v2/models/care/experiments/indoor-climate.ts",
+    "replay": "cloudfunctions-v2/models/care/indoor-climate-experiment-results.json",
+    "tests": "cloudfunctions-v2/test/care/environment/indoor-climate-experiment.spec.ts"
+  },
+  "validation": {
+    "layer": "L1 unit_fake",
+    "expected": "外部平衡方程与独立手算；数学场景不是住宅标定数据",
+    "classicRed": {
+      "missingModule": true,
+      "phaseBoundaryFailures": 2,
+      "log": "/tmp/planting-E04-indoor-phase-red.log"
+    },
+    "mutationRed": {
+      "change": "加热后仍保留初始RH",
+      "failures": 3,
+      "restoredSha256": "5014e21e209b25d362de18b5d69190c8340f6093f8baa52e4a798f631b5b72e2",
+      "log": "/tmp/planting-E04-indoor-experiment-mutation-red.log"
+    },
+    "newScenarios": 20,
+    "carePassed": 549,
+    "rootFullPassed": 2001,
+    "node22FullPassed": 2001,
+    "fullTestFiles": 204,
+    "types": "passed",
+    "lint": {
+      "errors": 0,
+      "warnings": 58
+    },
+    "review": "runtime_probe_terra限定审查及两处边界复核通过",
+    "scenarioReadback": 3,
+    "planMainSectionsPreserved": 7
+  },
+  "productionAdmission": false,
+  "runtimeImports": false,
+  "frontendChanged": false,
+  "deployed": false,
+  "remaining": [
+    "实际室内外同刻样本与代表场景校准",
+    "初始室内状态估计及区间误差",
+    "后台参数映射与不可变release准入",
+    "光照/VPD非线性需求",
+    "盆土状态更新及剩余窗口",
+    "正式水量和HTTP"
+  ],
+  "sha256": {
+    "cloudfunctions-v2/models/care/experiments/indoor-climate.ts": "a2f7fbc294dce19a8ce9ffe1409176fb807aa8435d901b292c108ae99f535e9d",
+    "cloudfunctions-v2/test/care/environment/indoor-climate-experiment.spec.ts": "63c40000c61133c0fc5a2d767ecf16611d013d7ff64df5ed4f59370c261017d1",
+    "cloudfunctions-v2/models/care/indoor-climate-experiment-contract.md": "76fba9742c6621985217c6fc66a60aa01ac1c26d869025265b40ba38218236c1",
+    "cloudfunctions-v2/models/care/indoor-climate-experiment-results.json": "477a97487c1f704c407280803b4293940377debac5f8838da81d886ca9a45ff1"
+  }
+}

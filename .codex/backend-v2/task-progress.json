@@ -1,15 +1,15 @@
 {
-  "revision": 117,
+  "revision": 118,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-07T18:06:07.904540+00:00",
+  "updatedAt": "2026-10-07T18:38:11.033490+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
     "target": "室内温湿度估算→非线性环境需求→盆土当前状态→剩余窗口与独立水量",
-    "minimumVerification": "独立Expected、双通道/同刻/缺段、三个浇水输出分别验收",
-    "result": "完整版计划及内部说明已明确当前周期主链；7章保留，根全量1981通过；室内估算/非线性响应/盆土状态更新仍未实现",
+    "minimumVerification": "独立热湿Expected、凝结边界、相关Care回放、根与Node22全量；正式模型另需真实样本误差与发布验收",
+    "result": "室内热湿平衡显式参数离线候选已实现并验证20场景；Care549，根及Node22全量2001；房间参数/正式估算准入仍pending",
     "rollback": "仅新候选模块可撤回；保留专业参数与历史结果，不部署或改数据库",
-    "nextAction": "E04先补室外→室内温湿度估算依据与准入，再接光照/VPD非线性需求及盆土当前状态→剩余干燥窗口；水量继续补根区依据"
+    "nextAction": "E04室内估算：核验有许可的室内外同刻样本，验证初态/场景参数与误差；之后接非线性光照/VPD及盆土状态→剩余窗口"
   },
   "tasks": [
     {
@@ -125,10 +125,10 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 45,
+      "version": 46,
       "priority": "high",
       "status": "codex running",
-      "stage": "整体链路已明确；室内估算/非线性需求/当前盆土状态接线待实现",
+      "stage": "室内热湿离线候选已验证；真实样本/场景校准及正式准入待完成",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -172,17 +172,18 @@
         ".codex/backend-v2/evidence/E04-water-substrate-inventory.json",
         ".codex/backend-v2/evidence/E04-substrate-water-evidence.json",
         ".codex/backend-v2/evidence/E04-watering-calendar.json",
-        ".codex/backend-v2/evidence/E04-current-cycle-plan.json"
+        ".codex/backend-v2/evidence/E04-current-cycle-plan.json",
+        ".codex/backend-v2/evidence/E04-indoor-climate-experiment.json"
       ],
       "summary": [
-        "E04：室外→室内温湿度→VPD及光照非线性响应纳入当前主链",
-        "盆土证据更新当前状态→剩余干燥窗口→按策略提前检查",
-        "完整计划7章保留；已有日期计算不代表上述模型已完成",
-        "本轮未改产品行为；根全量1981/1981，正式水量/HTTP未验收",
-        "证据：.codex/backend-v2/evidence/E04-current-cycle-plan.json"
+        "E04：显式参数热湿平衡离线候选已实现，正式参数仍pending",
+        "温度/含湿比分别推进；整时段无法排除凝结则拒绝候选",
+        "新增20场景；2项边界经典RED、3项RH突变RED→恢复GREEN",
+        "Care549；根及Node22全量2001/2001；真实校准/正式HTTP未验收",
+        "证据：.codex/backend-v2/evidence/E04-indoor-climate-experiment.json"
       ],
       "blockingReason": null,
-      "nextAction": "E04先补室外→室内温湿度估算依据与准入，再接光照/VPD非线性需求及盆土当前状态→剩余干燥窗口；水量继续补根区依据",
+      "nextAction": "E04室内估算：核验有许可的室内外同刻样本，验证初态/场景参数与误差；之后接非线性光照/VPD及盆土状态→剩余窗口",
       "ticketReadback": "ClickUp评论1100440000140265全文读回一致；保持codex running"
     },
     {
@@ -456,7 +457,7 @@
       ]
     }
   ],
-  "nextAction": "E04先补室外→室内温湿度估算依据与准入，再接光照/VPD非线性需求及盆土当前状态→剩余干燥窗口；水量继续补根区依据",
+  "nextAction": "E04室内估算：核验有许可的室内外同刻样本，验证初态/场景参数与误差；之后接非线性光照/VPD及盆土状态→剩余窗口",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -518,8 +519,8 @@
     "runner": "cloudfunctions-v2 已锁定 Vitest",
     "testDirectory": "cloudfunctions-v2/test/",
     "lastResult": {
-      "passed": 1981,
-      "total": 1981,
+      "passed": 2001,
+      "total": 2001,
       "skipped": 0
     }
   },
@@ -1194,5 +1195,22 @@
     "currentCycleStateMappingStatus": "pending",
     "completedCycleCalibrationIsSeparate": true,
     "observationDoesNotResetWateringFact": true
+  },
+  "indoorClimateReadAdmission": {
+    "task": "E04室内温湿度离线估算的配置状态",
+    "layers": {
+      "L0": "定向glob定位l2-indoor；没有当前算法参数状态",
+      "L1": "find指定0/1/2层返回室内架构/环境合同摘要，只确定职责，不含参数目录",
+      "L2": "已读l2-indoor全文与环境合同4.1/4.2，只有算法release要求，没有已确认数值或当前配置条目"
+    },
+    "missing": [
+      "室内估算算法/参数当前配置状态",
+      "纯物理离线回放是否需要新增配置项"
+    ],
+    "allowed": [
+      "architecture/configuration-variable-catalog.md仅室内环境估算条目",
+      "architecture/configuration-variable-catalog.json仅care室内环境/热响应相关条目"
+    ],
+    "scope": "不读其sourceRefs、不读其他领域或整个文档包"
   }
 }
