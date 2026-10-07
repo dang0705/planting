@@ -1,0 +1,47 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "recordedAt": "2026-10-07T17:23:27.876990+00:00",
+  "kind": "source_and_input_review",
+  "productBehaviorChanged": false,
+  "productionAdmission": false,
+  "sources": 4,
+  "referenceSamples": 6,
+  "quarantinedSourceRows": 1,
+  "dataChecks": "JSON解析、来源引用、体积比0至1、含水量不超过总孔隙通过；只证明资料结构，不证明样本适用于用户植物",
+  "findings": [
+    "V1勾选材料自动均分，不能当真实配方",
+    "现有盆器计算不等同实际装土量",
+    "质量持水比与体积含水率不得混用",
+    "未检验映射与当前根区水分仍阻断实际毫升建议"
+  ],
+  "userClarification": "用户确认V1所谓基质商品就是9类材料选项；没有固定配方和供应商检测资料。",
+  "rollback": "仅撤回研究候选资料；无算法、事实、策略、数据库或部署变更",
+  "previousTestEvidence": {
+    "commit": "bee2e0e4",
+    "root": "1961/1961",
+    "node22": "1961/1961",
+    "rerunThisTurn": false
+  },
+  "files": [
+    {
+      "path": "cloudfunctions-v2/models/care/substrate-water-evidence.json",
+      "sha256": "91d46146130bf890aa1d0a6baec5c9d44f052ddf9ce19e4c261c20997f84a59a"
+    },
+    {
+      "path": "cloudfunctions-v2/models/care/substrate-water-evidence.md",
+      "sha256": "17bdfbd76cb32ff765c85b92266df1d1c6afea7873fd26e25d5cf2f182b5ba61"
+    },
+    {
+      "path": "青花植后端v2底层架构重构计划_融合闭环终版.md",
+      "sha256": "92b93a007dc49e67963fb0fadf18da3222c13d34a3d48bd752dde378fc2cc553"
+    }
+  ],
+  "legacyProductLookup": {
+    "scope": "cloudfunctions与src中基质商品定义及调用",
+    "found": "user_plant_instances.substrate_type及substrateComposition",
+    "separateProductEntityFound": false,
+    "databaseQueried": false,
+    "clarification": "用户已确认是9类材料选项，不需要商品实体。"
+  }
+}

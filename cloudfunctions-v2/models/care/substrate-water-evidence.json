@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 1,
+  "ticketId": "z8v0kmr973",
+  "status": "research_only",
+  "productionAdmission": false,
+  "retrievedOn": "2026-10-08",
+  "sources": [
+    {
+      "id": "rutgers-fs812",
+      "url": "https://njaes.rutgers.edu/fs812/",
+      "locator": "Table 2 and its footnote; Physical Properties",
+      "basis": "volume_fraction_after_drainage",
+      "conditions": {
+        "substrateDepthCm": [
+          14,
+          15
+        ],
+        "drainage": "after_irrigation_and_drainage"
+      },
+      "limitations": [
+        "未提供各混合材料的比例、批次及粒径",
+        "不能仅凭泥炭标签匹配样本",
+        "不是当前水分或植物目标水分"
+      ]
+    },
+    {
+      "id": "uf-ae562",
+      "url": "https://ask.ifas.ufl.edu/publication/AE562",
+      "locator": "Methods; Table 1; explanation following Table 1",
+      "basis": "retained_water_mass_per_dry_substrate_mass",
+      "conditions": {
+        "method": "Bonsai test",
+        "region": "south Florida"
+      },
+      "limitations": [
+        "按干基质质量计量，不是体积含水率",
+        "缺相同试样容重，不能换算成体积比",
+        "样品初始水分影响该测试，不能直接视作总容器持水量"
+      ]
+    },
+    {
+      "id": "uark-substrate-table1",
+      "url": "https://greenhouse.hosted.uark.edu/Unit07/Tables.html",
+      "locator": "Table 1 and footnote z",
+      "basis": "estimated_volume_fraction",
+      "conditions": {
+        "containerNominalSizeInches": 4,
+        "method": "source_estimate"
+      },
+      "limitations": [
+        "原文为估计值，不是当前植物实测",
+        "未提供置信区间及完整盆高",
+        "不能将不同配方或盆深的值拼成同一材料误差区间"
+      ]
+    },
+    {
+      "id": "ucanr-retention-curves",
+      "url": "https://ucanr.edu/sites/default/files/2023-01/378844.pdf",
+      "locator": "Available Water; How to obtain retention curves; pages 1–3",
+      "basis": "method_only",
+      "limitations": [
+        "称重差用于水量变化时需保持盆、植物和装置一致",
+        "持水曲线随基质供应商及批次变化",
+        "本文通用示例及张力水平不作为青花植阈值"
+      ]
+    }
+  ],
+  "referenceSamples": [
+    {
+      "id": "rutgers-peat-perlite",
+      "sourceId": "rutgers-fs812",
+      "labelZh": "泥炭与珍珠岩混合样本",
+      "totalPorosityFraction": 0.93,
+      "containerCapacityVwc": 0.73,
+      "airCapacityFraction": 0.2,
+      "availableWaterFraction": 0.48,
+      "matchingStatus": "recipe_unknown"
+    },
+    {
+      "id": "rutgers-peat-vermiculite",
+      "sourceId": "rutgers-fs812",
+      "labelZh": "泥炭与蛭石混合样本",
+      "totalPorosityFraction": 0.94,
+      "containerCapacityVwc": 0.81,
+      "airCapacityFraction": 0.13,
+      "availableWaterFraction": 0.6,
+      "matchingStatus": "recipe_unknown"
+    },
+    {
+      "id": "uf-coconut-fiber",
+      "sourceId": "uf-ae562",
+      "labelZh": "椰纤维测试样本",
+      "retainedWaterMassPerDrySubstrateMass": 3.95,
+      "matchingStatus": "not_volumetric"
+    },
+    {
+      "id": "uf-florida-peat",
+      "sourceId": "uf-ae562",
+      "labelZh": "佛罗里达泥炭测试样本",
+      "retainedWaterMassPerDrySubstrateMass": 0.81,
+      "matchingStatus": "not_volumetric"
+    },
+    {
+      "id": "uark-peat-perlite-80-20",
+      "sourceId": "uark-substrate-table1",
+      "labelZh": "泥炭与珍珠岩80比20示例",
+      "composition": [
+        {
+          "material": "peat",
+          "parts": 80
+        },
+        {
+          "material": "perlite",
+          "parts": 20
+        }
+      ],
+      "dryBulkDensityGPerMl": 0.108,
+      "totalPorosityFraction": 0.79,
+      "airCapacityFraction": 0.1,
+      "containerCapacityVwc": 0.68,
+      "matchingStatus": "conditions_unconfirmed"
+    },
+    {
+      "id": "uark-coir-perlite-80-20",
+      "sourceId": "uark-substrate-table1",
+      "labelZh": "椰糠与珍珠岩80比20示例",
+      "composition": [
+        {
+          "material": "coir",
+          "parts": 80
+        },
+        {
+          "material": "perlite",
+          "parts": 20
+        }
+      ],
+      "dryBulkDensityGPerMl": 0.09,
+      "totalPorosityFraction": 0.81,
+      "airCapacityFraction": 0.08,
+      "containerCapacityVwc": 0.73,
+      "matchingStatus": "conditions_unconfirmed"
+    }
+  ],
+  "quarantinedSourceRows": [
+    {
+      "sourceId": "uark-substrate-table1",
+      "row": "70 peat: 30 PBH",
+      "totalPorosityFraction": 0.86,
+      "airCapacityFraction": 0.2,
+      "waterHoldingFraction": 0.85,
+      "reason": "同一体积基准下水与空气之和1.05超过总孔隙0.86；待来源澄清，不自行修值"
+    }
+  ],
+  "legacyInputAssessment": {
+    "materialCodes": [
+      "general",
+      "coco",
+      "ceramsite",
+      "peat",
+      "perlite",
+      "bark",
+      "sphagnum",
+      "gritty",
+      "coarse_sand"
+    ],
+    "compositionShape": "[{material, ratio}]",
+    "compositionRatioOrigin": "equal_split_of_selected_labels",
+    "compositionCanMatchMeasuredRecipe": false,
+    "volumeBasis": "container_geometry",
+    "effectiveSubstrateVolumeAvailable": false,
+    "currentRootZoneVwcAvailable": false,
+    "scope": "仅本轮核对的V1表单和盆器计算路径，不代表全部历史或外部数据",
+    "sourcePaths": [
+      "src/components/pot-profile/PotProfileFormCore.vue",
+      "cloudfunctions/layer/utils/pot-geometry.js",
+      "cloudfunctions/layer/utils/watering-planner.js"
+    ],
+    "userConfirmedInput": "existing_nine_material_options",
+    "recipeAndSupplierTestDataAvailable": false
+  },
+  "publicationGaps": [
+    "实际商品/批次或固定配方及配比基准",
+    "材料规格、粒径、有效装土体积与填装条件",
+    "适用盆深与排水条件下的持水曲线或成对称重证据",
+    "同株同轮当前根区水分或经验证的估算及误差范围",
+    "植物适用目标水分、施水方式、损失与排水上限"
+  ]
+}

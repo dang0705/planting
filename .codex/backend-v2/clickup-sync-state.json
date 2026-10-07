@@ -85,14 +85,14 @@
   },
   "lastSuccessfulSyncAt": "2026-10-07T16:55:19.371408+00:00",
   "lastFailure": {
-    "at": "2026-10-07T17:12:41.113481+00:00",
+    "at": "2026-10-07T17:25:11.799182+00:00",
     "ticketId": "z8v0kmr973",
-    "reason": "ClickUp MCP日额度已满；Chrome main任务正文空白，未能远端核对/同步",
-    "pendingVersion": 42
+    "reason": "ClickUp MCP日额度100/100，返回3小时44分钟后可重试；未进行远端写入",
+    "pendingVersion": 43
   },
   "h5Projection": {
-    "fingerprint": "52e4ae1b4ecadde82448b2828dd8d4483a299389efeb2d2a7af4264daeafd8aa",
-    "sourceRevision": 114,
-    "sourceUpdatedAt": "2026-10-07T17:12:41.113481+00:00"
+    "fingerprint": "ed60352b72535f9d36504255b6c10de93cbd936aa44110b85335be5fe31aea6b",
+    "sourceRevision": 115,
+    "sourceUpdatedAt": "2026-10-07T17:28:52.171410+00:00"
   }
 }

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-07T17:12:41.113481+00:00",
-  "sourceRevision": 114,
-  "sourceUpdatedAt": "2026-10-07T17:12:41.113481+00:00",
+  "generatedAt": "2026-10-07T17:28:52.171410+00:00",
+  "sourceRevision": 115,
+  "sourceUpdatedAt": "2026-10-07T17:28:52.171410+00:00",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -123,16 +123,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 42,
+      "version": 43,
       "status": "codex running",
-      "stage": "证据驱动水量路线已确认，净缺口接入回放；真实物性/根区映射/施水策略待完成",
+      "stage": "9类基质材料输入已确认、资料已核验；根区水分和施水策略未验收",
       "accepted": false,
       "summary": [
-        "E04：用户确认先补基质/根区水分再算水量；不采用盆容积比例",
-        "净补水缺口已接同轮回放；表土/盆容积不冒充根区/有效基质",
-        "10新项；接线/类型经典RED、端点突变RED→恢复GREEN",
-        "Care509项；根及Node22全量1961/1961；施水量/正式HTTP未验收",
-        "证据：.codex/backend-v2/evidence/E04-root-zone-water-deficit.json"
+        "E04：基质资料4个来源、6条候选样本已核验，隔离1条源数据矛盾",
+        "V1配比是勾选自动均分；盆器几何容积不能充当装土量",
+        "用户确认就是V1九类材料选项；无固定配方/检测资料，不增MVP专业输入",
+        "本轮仅资料与计划更新；沿用上轮根/Node22全量1961通过，正式水量未验收",
+        "证据：.codex/backend-v2/evidence/E04-substrate-water-evidence.json"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -173,10 +173,11 @@
         ".codex/backend-v2/evidence/E04-baseline-live-readback.json",
         ".codex/backend-v2/evidence/E04-watering-timing-replay.json",
         ".codex/backend-v2/evidence/E04-root-zone-water-deficit.json",
-        ".codex/backend-v2/evidence/E04-water-substrate-inventory.json"
+        ".codex/backend-v2/evidence/E04-water-substrate-inventory.json",
+        ".codex/backend-v2/evidence/E04-substrate-water-evidence.json"
       ],
       "blockingReason": null,
-      "nextAction": "定向补齐有来源的基质物性与根区水分映射，形成后台有效区间；分别冻结施水效率/排水上限及版本，再接正式水量",
+      "nextAction": "基于已确认9类材料补物性适用范围/后台样本证据；日期分支先核验日历基线与时区检查日期，水量等待有效根区依据",
       "sync": {
         "version": 41,
         "status": "codex running",
@@ -371,9 +372,9 @@
   ],
   "lastSuccessfulSyncAt": "2026-10-07T16:55:19.371408+00:00",
   "lastFailure": {
-    "at": "2026-10-07T17:12:41.113481+00:00",
+    "at": "2026-10-07T17:25:11.799182+00:00",
     "ticketId": "z8v0kmr973",
-    "reason": "ClickUp MCP日额度已满；Chrome main任务正文空白，未能远端核对/同步",
-    "pendingVersion": 42
+    "reason": "ClickUp MCP日额度100/100，返回3小时44分钟后可重试；未进行远端写入",
+    "pendingVersion": 43
   }
 }

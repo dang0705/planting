@@ -1,15 +1,15 @@
 {
-  "revision": 114,
+  "revision": 115,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-07T17:12:41.113481+00:00",
+  "updatedAt": "2026-10-07T17:28:52.171410+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
     "target": "光照离线接线与VPD点值已验证→基线/栽培/盆土→最终浇水",
     "minimumVerification": "独立Expected、双通道/同刻/缺段、三个浇水输出分别验收",
-    "result": "净缺口已接同轮回放；10新项、Care509及根/Node22全量1961通过；实际施水策略与正式HTTP未验收",
+    "result": "基质资料4源6样本核验；一条源数据矛盾隔离；V1自动均分配比不能用作真实配方。实际水量仍缺样本和根区依据。",
     "rollback": "仅新候选模块可撤回；保留专业参数与历史结果，不部署或改数据库",
-    "nextAction": "定向补齐有来源的基质物性与根区水分映射，形成后台有效区间；分别冻结施水效率/排水上限及版本，再接正式水量"
+    "nextAction": "基于已确认9类材料补物性适用范围/后台样本证据；日期分支先核验日历基线与时区检查日期，水量等待有效根区依据"
   },
   "tasks": [
     {
@@ -125,10 +125,10 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 42,
+      "version": 43,
       "priority": "high",
       "status": "codex running",
-      "stage": "证据驱动水量路线已确认，净缺口接入回放；真实物性/根区映射/施水策略待完成",
+      "stage": "9类基质材料输入已确认、资料已核验；根区水分和施水策略未验收",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -169,17 +169,18 @@
         ".codex/backend-v2/evidence/E04-baseline-live-readback.json",
         ".codex/backend-v2/evidence/E04-watering-timing-replay.json",
         ".codex/backend-v2/evidence/E04-root-zone-water-deficit.json",
-        ".codex/backend-v2/evidence/E04-water-substrate-inventory.json"
+        ".codex/backend-v2/evidence/E04-water-substrate-inventory.json",
+        ".codex/backend-v2/evidence/E04-substrate-water-evidence.json"
       ],
       "summary": [
-        "E04：用户确认先补基质/根区水分再算水量；不采用盆容积比例",
-        "净补水缺口已接同轮回放；表土/盆容积不冒充根区/有效基质",
-        "10新项；接线/类型经典RED、端点突变RED→恢复GREEN",
-        "Care509项；根及Node22全量1961/1961；施水量/正式HTTP未验收",
-        "证据：.codex/backend-v2/evidence/E04-root-zone-water-deficit.json"
+        "E04：基质资料4个来源、6条候选样本已核验，隔离1条源数据矛盾",
+        "V1配比是勾选自动均分；盆器几何容积不能充当装土量",
+        "用户确认就是V1九类材料选项；无固定配方/检测资料，不增MVP专业输入",
+        "本轮仅资料与计划更新；沿用上轮根/Node22全量1961通过，正式水量未验收",
+        "证据：.codex/backend-v2/evidence/E04-substrate-water-evidence.json"
       ],
       "blockingReason": null,
-      "nextAction": "定向补齐有来源的基质物性与根区水分映射，形成后台有效区间；分别冻结施水效率/排水上限及版本，再接正式水量",
+      "nextAction": "基于已确认9类材料补物性适用范围/后台样本证据；日期分支先核验日历基线与时区检查日期，水量等待有效根区依据",
       "ticketReadback": "ClickUp评论1100440000140265全文读回一致；保持codex running"
     },
     {
@@ -453,7 +454,7 @@
       ]
     }
   ],
-  "nextAction": "核验实际watering_baseline_policy及tier/trigger知识接线；继续室内估算/VPD需求映射、基质保水和盆土安全门，保持光照正式准入缺口局部可见",
+  "nextAction": "基于已确认9类材料补物性适用范围/后台样本证据；日期分支先核验日历基线与时区检查日期，水量等待有效根区依据",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -1142,7 +1143,9 @@
     "path": "evidence_driven",
     "source": "用户本会话选择",
     "frontEndProfessionalInputRequired": false,
-    "approvedContainerVolumeFraction": null
+    "approvedContainerVolumeFraction": null,
+    "evidenceReview": ".codex/backend-v2/evidence/E04-substrate-water-evidence.json",
+    "knownDataGap": "九类材料选项已确认；无固定配方/检测资料，根区绝对水分与后台观察映射未确认"
   },
   "waterAmountReadAdmission": {
     "task": "E04水量参数与净缺口配置裁决",
