@@ -6,6 +6,9 @@ const climate = () => ({ temperatureRangeC: { min: 10, max: 20 }, humidityRangeP
 
 /** L1 unit_fake：FAO公式/例3表值和已确认来源边界为Expected，无测试替身。 */
 describe('unit_fake 室内实测VPD，不把天气标为室内', () => {
+  it.each([[-237, 50], [-231.7, 99.99999999999999]])('浮点下溢不能把%s°C、%s%%RH的正值伪造成零', (temperatureC, relativeHumidityPercent) => {
+    expect(() => deriveMeasuredIndoorVpd({ ...measured(), temperatureC, relativeHumidityPercent })).toThrow(RangeError)
+  })
   it('0°C与50%RH是有效点值，保留来源和快照', () => {
     expect(deriveMeasuredIndoorVpd(measured())).toMatchObject({ status: 'available', productionAdmission: false, vpdKpa: 0.3054, saturationPressureKpa: 0.6108, sourceScope: 'indoor', inputSnapshotRef: 'synthetic-locked-snapshot' })
   })

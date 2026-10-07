@@ -124,6 +124,9 @@ function calculate(temperatureC: number, relativeHumidityPercent: number, source
   const saturationPressureKpa = saturationFormula.scaleKpa * Math.exp(saturationFormula.exponent * temperatureC / (temperatureC + saturationFormula.denominatorC))
   const vpdKpa = saturationPressureKpa * (1 - relativeHumidityPercent / 100)
   if (!Number.isFinite(saturationPressureKpa) || !Number.isFinite(vpdKpa)) { throw new RangeError('VPD计算超出有限数值范围') }
+  if (saturationPressureKpa <= 0 || (relativeHumidityPercent < 100 && vpdKpa === 0)) {
+    throw new RangeError('VPD计算发生数值下溢，不能表示有效零值')
+  }
   return { status: 'available', productionAdmission: false, method: 'fao56_equation11_liquid_water', unit: 'kPa',
     temperatureC, relativeHumidityPercent, saturationPressureKpa, vpdKpa, sourceRef, inputSnapshotRef }
 }

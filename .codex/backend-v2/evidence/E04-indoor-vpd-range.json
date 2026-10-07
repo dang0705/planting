@@ -1,0 +1,113 @@
+{
+  "step": "E04",
+  "ticketId": "z8v0kmr973",
+  "recordedAt": "2026-10-07T20:12:23.622896+00:00",
+  "scope": "室内实测温湿度范围到VPD包络及同刻同位置证据一致性",
+  "accepted": false,
+  "productionAdmission": false,
+  "expectedSources": [
+    "用户确认的室内实测优先与室外不能直接替代室内边界",
+    "cloudfunctions-v2/models/care/indoor-vpd-candidate-contract.md",
+    "https://www.fao.org/4/x0490e/x0490e07.htm"
+  ],
+  "configurationDecision": "无新增可配置变量。固定公式与来源规则；室内估算发布仍pending。",
+  "implemented": [
+    "两路测量分别保留来源；配对核验时刻、位置、空间范围及锁定快照",
+    "相反端点传播为保守包络，不冒充统计置信区间或日均值",
+    "缺失与有效零分开；拒绝未确认、室外、未准入估算及非法范围",
+    "正值数值下溢不得冒充零；RH100%的有效零保留"
+  ],
+  "validation": {
+    "layer": "L1 unit_fake",
+    "realPath": "范围来源校验→相反端点→现有VPD点值公式→带来源的范围结果",
+    "replacedBoundaries": "无模拟依赖；输入为独立数学与边界场景",
+    "newCases": 24,
+    "relatedCases": 36,
+    "fullVitest": {
+      "files": 211,
+      "passed": 2092,
+      "failed": 0,
+      "command": "npm test"
+    },
+    "backendTypecheck": {
+      "exitCode": 0
+    },
+    "strictOwnedTestsTypecheck": {
+      "exitCode": 0
+    },
+    "scopedLint": {
+      "warnings": 49,
+      "errors": 0
+    },
+    "independentReview": "runtime_probe_terra核验单调端点、双来源、配对和输入隔离；随后仅补中文TSDoc"
+  },
+  "tdd": {
+    "classicRed": "未修复点值函数上2个正值下溢案例失败；新增范围模块缺失；来源属性Expected先落盘且失败",
+    "mutationRed": [
+      {
+        "mutation": "下界错误配RH下端点",
+        "failedCases": 3
+      },
+      {
+        "mutation": "移除湿度来源准入核验",
+        "failedCases": 1
+      }
+    ],
+    "restoredRangeSha256BeforeCommentOnlyEdit": "09a5cdb6c07fdcbb1af120285294097d0778e713a7f3adcf547ad73b37ce1761",
+    "restoration": "逐字节恢复后36项GREEN；最终仅补中文注释，2092项全量GREEN"
+  },
+  "notCovered": [
+    "传感器准确性和真实室内采集",
+    "和风室外到室内温湿度估算的场景准入",
+    "光照/VPD到干燥需求的非线性映射",
+    "盆土定量状态到非零剩余时间",
+    "正式水量、日期、模型发布、MySQL或HTTP闭环"
+  ],
+  "artifacts": {
+    "cloudfunctions-v2/src/care/environment/derive-indoor-vpd.ts": {
+      "sha256": "7635e5307ef640e0e8be48a874a0f3448868a4084ed029b4096777abd3e2b526"
+    },
+    "cloudfunctions-v2/src/care/environment/derive-indoor-vpd-range.ts": {
+      "sha256": "2c009f59a63cae23bd20c5ea288f21b11105ec9d9be6e39e99ddc463be5208d4"
+    },
+    "cloudfunctions-v2/test/care/environment/indoor-vpd.spec.ts": {
+      "sha256": "bd89ca3e47909ef180134882e4b1a60e8d006933ff85d1a96e9b352cd80f2c94"
+    },
+    "cloudfunctions-v2/test/care/environment/indoor-vpd-range.spec.ts": {
+      "sha256": "1144c9a025706c374bab879ecbe4373fc52fdbe0ae14debcbf595abe1f136003"
+    },
+    "cloudfunctions-v2/models/care/indoor-vpd-candidate-contract.md": {
+      "sha256": "2e9a03cb2aa6107585d0de81dbdf5b58f4258086c75b2db96c9b8caea5c69a8c"
+    }
+  },
+  "logs": {
+    "classicRed": {
+      "path": "/tmp/e04-vpd-range-red.log",
+      "sha256": "6b4b33dcbe269e3a67f946a3c87e19fab2b530a557447d59a651ab141d1bc723"
+    },
+    "provenanceRed": {
+      "path": "/tmp/e04-vpd-range-provenance-red.log",
+      "sha256": "ff890254162be0e73d8fb3318473d7e4e10a8a671406441a55624a1c3171c73d"
+    },
+    "endpointMutationRed": {
+      "path": "/tmp/e04-vpd-range-endpoint-mutation-red.log",
+      "sha256": "42e623ad1f5b64667880512f182321960a34a370462eed42e6c2b976d1b4c961"
+    },
+    "humidityOriginMutationRed": {
+      "path": "/tmp/e04-vpd-range-humidity-origin-mutation-red.log",
+      "sha256": "aca6894d9620730594cfdb71212c68a62b072334dda08959e9df953afa202617"
+    },
+    "relatedGreen": {
+      "path": "/tmp/e04-vpd-range-green.log",
+      "sha256": "e0a39c2944b13c0a02511f9b74df6c24f6741cf4ac51e6ad749a53ceb16e70cf"
+    },
+    "fullGreen": {
+      "path": "/tmp/e04-vpd-range-full-vitest-green.log",
+      "sha256": "598177d0be4a17e5b2873fe96b7804061eb566dcb05e802f0bbdc3860067000e"
+    },
+    "lint": {
+      "path": "/tmp/e04-vpd-range-lint-final.log",
+      "sha256": "f7d6c0eb5b80157b26eebcbb693080c9fc51ed951c0818c9117f106c16896724"
+    }
+  }
+}
