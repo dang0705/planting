@@ -1,0 +1,40 @@
+{
+  "capturedAt": "2026-10-07T16:54:18.962630+00:00",
+  "ticketId": "z8v0kmr973",
+  "scope": "E04等效干燥积分→预计检查窗口→当前盆土裁决→输入快照离线闭环",
+  "productionAdmission": false,
+  "expectedSources": [
+    "本会话批准整体计划第四/六节",
+    "chatgpt-conversation://6ac654df-31d8-83ec-a619-5ee033437ed0",
+    "chatgpt-conversation://6ac0ad37-d7b4-83ec-a138-42eabef9e4b3",
+    "viking://resources/projects/planting/backend-v2/contracts/watering-decision-model.md"
+  ],
+  "verification": {
+    "newTests": 25,
+    "careTests": 499,
+    "classicRed": [
+      "正增量/交点下溢",
+      "可抵消中间乘法溢出",
+      "未覆盖巨大阈值不得外推",
+      "相同极小需求与保水相消的中间舍入"
+    ],
+    "mutationRed": [
+      "保水下端误用下端除数使独立区间Expected失败",
+      "绕过湿土暂停分支使最终行动Expected失败"
+    ],
+    "mutationRestore": "两次逐字节恢复后Care GREEN",
+    "typecheck": "passed",
+    "lintErrors": 0,
+    "rootUnitTests": 1951,
+    "node22UnitTests": 1951,
+    "lintWarnings": 97
+  },
+  "notCovered": [
+    "环境需求/保水映射的正式发布及真实校准",
+    "名义日到等效单位参考转换",
+    "用户归属和正式HTTP/数据库闭环",
+    "正式WaterAmountPolicy毫升输出",
+    "DMN兼容引擎行为一致性"
+  ],
+  "nextAction": "接plant-knowledge端口及参考转换裁决，确认需求/保水发布参数；正式水量策略单独冻结，不叠加旧天气倍率"
+}

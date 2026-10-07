@@ -34,13 +34,13 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 40,
+      "version": 41,
       "status": "codex running",
-      "note": "E04：Tropicals来源→trigger→真实v1基线→不可变副本已接通\n绿萝5–8/星兜14–21/龟背竹7–14名义日；不当干燥单位\n14新用例；条件/否定/输入隔离RED→GREEN；真实SQL桥接读回\n根全量1926/1926及类型检查通过；水量/日期/正式HTTP未验收\n证据：.codex/backend-v2/evidence/E04-baseline-live-readback.json",
-      "commentId": "1100440000140235",
-      "commentFingerprint": "b7fd1c8409e5cd276ba265cce3e8907c5760dbd2de8c4972faa8e31e6952f3f9",
-      "readback": "ClickUp评论1100440000140235全文读回一致；保持codex running",
-      "lastSuccessfulSyncAt": "2026-10-07T16:42:33.686564+00:00"
+      "note": "E04：真实时间倍率积分→预计检查窗口→盆土安全裁决已接通\n缺历史不造进度、未来缺段不外推；湿土否决、根区目标可独立判断\n25新场景；数值边界经典RED、除数/湿土突变RED→恢复GREEN\nCare499项；根及Node22全量1951/1951；正式水量/HTTP未验收\n证据：.codex/backend-v2/evidence/E04-watering-timing-replay.json",
+      "commentId": "1100440000140265",
+      "commentFingerprint": "fc5fc40c7eb34cd7f123bdf0dd380da06af0893964f7b2b7fb6108689274c5c0",
+      "readback": "ClickUp评论1100440000140265全文读回一致；保持codex running",
+      "lastSuccessfulSyncAt": "2026-10-07T16:55:19.371408+00:00"
     },
     "z8v0kmrg8a": {
       "version": 3,
@@ -83,11 +83,11 @@
       "readback": "原生ClickUp已逐字读回评论1100440000138268；只同步进度，不更改状态"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-07T16:42:33.686564+00:00",
+  "lastSuccessfulSyncAt": "2026-10-07T16:55:19.371408+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "fb33c407e8ed59606bcb1b3979e5387a78f254089fe254e85fc4cb8c2a0ffa24",
-    "sourceRevision": 112,
-    "sourceUpdatedAt": "2026-10-07T16:41:43.816257+00:00"
+    "fingerprint": "9a827398808f15121444c8cf2d6a4286c1f9d02389a2feb637e352004b756cd8",
+    "sourceRevision": 113,
+    "sourceUpdatedAt": "2026-10-07T16:54:43.581733+00:00"
   }
 }
