@@ -1,15 +1,15 @@
 {
-  "revision": 109,
+  "revision": 111,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-07T14:16:56.660458+00:00",
+  "updatedAt": "2026-10-07T16:02:03.216465+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "Care模型收口→浇水判断、水量、预计下次日期/窗口",
-    "minimumVerification": "当前模型输入/派生/参数准入与缺口；三个最终输出分别具备独立Expected",
-    "result": "目标和主线顺序已明确，量与日期未冒充已实现",
-    "rollback": "只修订计划与队列，不删除模型/数据或部署",
-    "nextAction": "光照收口→室内VPD→盆型/基质→盆土→干湿循环→最终浇水输出"
+    "target": "光照离线接线与VPD点值已验证→基线/栽培/盆土→最终浇水",
+    "minimumVerification": "独立Expected、双通道/同刻/缺段、三个浇水输出分别验收",
+    "result": "新增23项、Care474项、全量及Node22全量1912项通过；正式养护未验收",
+    "rollback": "仅新候选模块可撤回；保留专业参数与历史结果，不部署或改数据库",
+    "nextAction": "核验实际watering_baseline_policy及tier/trigger知识接线；继续室内估算/VPD需求映射、基质保水和盆土安全门，保持光照正式准入缺口局部可见"
   },
   "tasks": [
     {
@@ -125,10 +125,10 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 37,
-      "priority": "normal",
+      "version": 39,
+      "priority": "high",
       "status": "codex running",
-      "stage": "Care主线已明确；光照先收口，VPD及最终水量/日期合同待补齐",
+      "stage": "SunCalc/DNI/DHI/Lux日回放与VPD点值已验证；正式准入/估算/栽培与浇水待完成",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -163,19 +163,20 @@
         ".codex/backend-v2/evidence/E04-published-mvp-light-day.json",
         ".codex/backend-v2/evidence/E04-dmn-runtime-mapping.json",
         ".codex/backend-v2/evidence/E04-dmnlint.json",
-        ".codex/backend-v2/evidence/2026-10-07-light-catalog-climate-plan.json"
+        ".codex/backend-v2/evidence/2026-10-07-light-catalog-climate-plan.json",
+        ".codex/backend-v2/evidence/E04-lux-composite-anchor.json",
+        ".codex/backend-v2/evidence/E04-lux-window-vpd.json"
       ],
       "summary": [
-        "E04/E06主线：光照→室内VPD→盆型/基质→盆土→浇水",
-        "最终分别验收浇水判断、水量和预计下次浇水日期/窗口",
-        "水量分支仍缺明确依据；盆容积和DryProgress不等于毫升",
-        "weather与三轴筛选保留旁线backlog，不占主线顺序",
-        "下一步收口极简光照，核验VPD及水量合同缺口"
+        "E04：SunCalc/DNI/DHI→同刻Lux→双通道PPFD/当地日积分已接线",
+        "室内实测VPD与植物参考点已实现；室外/未批准估算不冒充",
+        "新增23项；缺段/来源突变RED与2个时间边界RED后恢复GREEN",
+        "全量及Node22全量1912/1912；正式养护、水量和日期未验收",
+        "证据：.codex/backend-v2/evidence/E04-lux-window-vpd.json"
       ],
       "blockingReason": null,
-      "nextAction": "先收口位置/朝向/Lux光照与DLI回放；随后室内VPD、栽培保水、盆土与最终水量/日期的独立合同",
-      "ticketReadback": "原生ClickUp已逐字读回评论1100440000138266；只同步进度，不更改状态",
-      "milestoneCommit": "858f79de"
+      "nextAction": "核验实际watering_baseline_policy及tier/trigger知识接线；继续室内估算/VPD需求映射、基质保水和盆土安全门，保持光照正式准入缺口局部可见",
+      "ticketReadback": "原生ClickUp评论1100440000140037全文读回一致；状态保持codex running，正式养护未验收"
     },
     {
       "id": "z8v0kmrg8a",
@@ -448,7 +449,7 @@
       ]
     }
   ],
-  "nextAction": "确认并登记租约策略后接处理与目标/成功事实原子事务；可先推进独立认领结果只读及提交未知核对",
+  "nextAction": "核验实际watering_baseline_policy及tier/trigger知识接线；继续室内估算/VPD需求映射、基质保水和盆土安全门，保持光照正式准入缺口局部可见",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",

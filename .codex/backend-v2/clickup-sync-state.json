@@ -34,12 +34,13 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 37,
+      "version": 39,
       "status": "codex running",
-      "note": "E04/E06主线：光照→室内VPD→盆型/基质→盆土→浇水\n最终分别验收浇水判断、水量和预计下次浇水日期/窗口\n水量分支仍缺明确依据；盆容积和DryProgress不等于毫升\nweather与三轴筛选保留旁线backlog，不占主线顺序\n下一步收口极简光照，核验VPD及水量合同缺口",
-      "commentId": "1100440000138266",
-      "commentFingerprint": "7009020aacb8eb99bd8210c43cc23071c423fcf6b4651615b77b572eada445ab",
-      "readback": "原生ClickUp已逐字读回评论1100440000138266；只同步进度，不更改状态"
+      "note": "E04：SunCalc/DNI/DHI→同刻Lux→双通道PPFD/当地日积分已接线\n室内实测VPD与植物参考点已实现；室外/未批准估算不冒充\n新增23项；缺段/来源突变RED与2个时间边界RED后恢复GREEN\n全量及Node22全量1912/1912；正式养护、水量和日期未验收\n证据：.codex/backend-v2/evidence/E04-lux-window-vpd.json",
+      "commentId": "1100440000140037",
+      "commentFingerprint": "2a11ca3536581b87f0dac0bb34c1b0c1ac0b13ac3b4d036060478e1482eaeb0f",
+      "readback": "原生ClickUp评论1100440000140037全文读回一致；状态保持codex running，正式养护未验收",
+      "lastSuccessfulSyncAt": "2026-10-07T16:02:35.111287+00:00"
     },
     "z8v0kmrg8a": {
       "version": 3,
@@ -82,11 +83,11 @@
       "readback": "原生ClickUp已逐字读回评论1100440000138268；只同步进度，不更改状态"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-07T14:17:43.239880+00:00",
+  "lastSuccessfulSyncAt": "2026-10-07T16:02:35.111287+00:00",
   "lastFailure": null,
   "h5Projection": {
-    "fingerprint": "a591ee95ef98642e6085f1d6c39358e63c26e0978422985fc1fce905bfc339d0",
-    "sourceRevision": 109,
-    "sourceUpdatedAt": "2026-10-07T14:16:56.660458+00:00"
+    "fingerprint": "5421213cec8d85f4b5793edb9110012e113f5070c99c10a25d6802654fe6621d",
+    "sourceRevision": 111,
+    "sourceUpdatedAt": "2026-10-07T16:02:03.216465+00:00"
   }
 }

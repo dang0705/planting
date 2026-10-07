@@ -12,7 +12,7 @@ python3 scripts/backend-v2/compose-care-models.py
 
 | 编辑源与责任 | 已实现的后端路径 | 仍缺少的实现或验收 |
 | --- | --- | --- |
-| `light.dmn`：输入准入、校准资格、光照结果 | `src/care/application/replay-published-mvp-light-day.ts` 将活动玻璃策略读取、双通道传播、光合光子通量密度（PPFD）与日光积分（DLI）串通；底层 `replay-indoor-natural-light.ts` 与 `replay-indoor-ppfd-day.ts` 分别承担传播和时间积分 | 完整光照策略发布、模型准入与运行代码同场景一致性、现场校准及正式 HTTP 路径尚未验收；当前日回放保持离线候选语义 |
+| `light.dmn`：输入准入、校准资格、光照结果 | 极简路线 `src/care/application/replay-lux-window-day.ts` 串通真实平均辐射制品、SunCalc 2.1.0、窗面直射／散射、同刻 Lux 综合候选与当地日积分；专业路径 `src/care/application/replay-published-mvp-light-day.ts` 保留活动玻璃策略读取与完整传播；底层 `replay-indoor-natural-light.ts` 与 `replay-indoor-ppfd-day.ts` 分别承担传播和时间积分 | 完整光照策略发布、模型准入与运行代码同场景一致性、现场校准及正式 HTTP 路径尚未验收；当前日回放保持离线候选语义 |
 | `pot.dmn`：实际内盆、几何、排水安全和保水准入 | `src/care/cultivation/evaluate-pot-safety.ts` 实现三值安全判断；`derive-measured-pot.ts` 计算实测圆台容器体积 | 容器体积不等于基质体积或持水量；保水策略、保水倍率及完整模型一致性尚未验收 |
 | `dry-cycle.dmn`：历史循环资格、残差与个体校准 | `src/care/application/replay-completed-dry-cycle.ts` 核验循环证据并计算观察减未校准预测的区间残差 | 资格不等于已产生校准倍率；当前实现明确返回 `personalCalibration: null`，完整模型一致性尚未验收 |
 | `watering.dmn`：盆土安全门、可用进度、检查窗口与行动 | 依赖上述光照、盆器和历史循环结果；当前模型规则保留为待执行验证的草案 | 基线选择、环境需求、个体倍率、干燥进度与最终浇水用例尚未完整实现和验收；不能用上游回放替代浇水闭环 |
@@ -23,11 +23,17 @@ python3 scripts/backend-v2/compose-care-models.py
 
 直射与散射共享室内传播框架，分别保留计算通道，传播后才合并。当前路径已有 SunCalc 太阳方向、窗面直射与可达性、有限窗孔散射传播、显式遮挡、玻璃和窗帘损失，以及明确参考平面上的 PPFD 与当地日期积分。原始小时均值按前一时段归一化；缺失与有效零值分别处理，缺段不输出完整全天 DLI。
 
-MVP 只收集单层／双层玻璃分类，使用受控策略中的近似透射率。候选值单层 0.83、双层 0.70 的来源与适用范围见 `light-parameter-evidence-review.md`；候选比较不等于真实生产发布。缺策略或未知层数不补默认值，光谱换算仍须显式提供。
+当前 MVP 用户输入只有地理位置、阳台／窗户朝向及植物位置 Lux。系统记录来源、时刻和质量；摄像头实验来源不自动升级为可靠仪表。共享综合因子不能识别两套直射／散射系数，模型范围和适用假设必须保留，缺段仍不给完整全天 DLI。
+
+已有单层／双层玻璃近似策略及候选值 0.83／0.70、专业传播和光谱证据继续保留（见 `light-parameter-evidence-review.md`），不作为当前极简路线的用户必填项，不在 Lux 已吸收这些效应后重复叠乘。专业回放缺策略或未知层数仍不补默认。
 
 **保留已落地的专业参数、接口、计算与证据，MVP 暂不启用这些专业能力，也不要求前端收集复杂参数。精确光谱和现场校准不作为所有 MVP 能力的统一准入条件。** 后端估算保留来源、版本和覆盖范围，不宣称现场测量精度。
 
 旧 NOAA 近似及其他实验回放保留各自合同和适用范围，不能与当前 SunCalc 路径混为同一算法版本。
+
+### 室内 VPD 上游
+
+`src/care/environment/derive-indoor-vpd.ts` 对明确室内／植物区域实测温湿度推导同刻点值，并对审核植物温湿度范围产生气候中点参考。室外天气、未批准估算及缺值不冒充室内测量；参考点不是生理最适值或全天均值。当前没有将 VPD 比值变成浇水倍率，也没有实现室内气候估算模型或正式环境派生持久化；见 `indoor-vpd-candidate-contract.md`。
 
 ### 跨模型关系与安全边界
 

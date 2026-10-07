@@ -1,0 +1,100 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "recordedAt": "2026-10-07T16:02:03.216465+00:00",
+  "scope": "SunCalc/DNI/DHI→同刻Lux共享候选→双通道PPFD→当地日积分；室内实测VPD及植物气候中点参考",
+  "configurationDecision": "复用批准的数学与离线候选；无新生产默认、变量、阈值或Provider。FAO公式固定定义不是浇水倍率。",
+  "sources": [
+    "cloudfunctions-v2/models/care/lux-window-day-replay-contract.md",
+    "cloudfunctions-v2/models/care/indoor-vpd-candidate-contract.md",
+    "https://www.fao.org/4/x0490e/x0490e07.htm",
+    "已确认极简光照和浇水上下文"
+  ],
+  "files": {
+    "cloudfunctions-v2/src/care/application/replay-lux-window-day.ts": {
+      "sha256": "5a29529a265ac95ea72fd4f3c5b45365b551bf8a8f2300c37fc0d512f48740e3",
+      "lines": 196
+    },
+    "cloudfunctions-v2/src/care/environment/derive-indoor-vpd.ts": {
+      "sha256": "6f3cfbf1936cef9fcc0dbb3386d96f02a7dc1454f13e290097525786e41a15cb",
+      "lines": 164
+    },
+    "cloudfunctions-v2/src/care/application/replay-indoor-ppfd-day.ts": {
+      "sha256": "d1a2ef1211e0ffeacd80deda1b652d4334038c2dab8f2f9a6abd2a476c4c7391",
+      "lines": 133
+    }
+  },
+  "tests": {
+    "readiness": "成熟Vitest后端，TDD就绪；L1单位和L3真实模块协作",
+    "new": 23,
+    "care": 474,
+    "full": 1912,
+    "files": 197,
+    "node22": {
+      "version": "22.21.1",
+      "full": 1912,
+      "files": 197,
+      "binarySource": "复用本机已缓存运行器，未安装新依赖"
+    },
+    "typecheck": "passed",
+    "lint": "85 warnings;0 errors",
+    "paths": [
+      "unit_fake：独立数学制品，无模块替身",
+      "unit_real_data：已保存Open-Meteo平均辐射；瞬时参考和Lux明确仍是合成制品"
+    ],
+    "tdd": {
+      "testFirst": true,
+      "fastPath": "缺模块初次RED仅为接线探针；下述行为突变提供反事实RED",
+      "mutations": [
+        {
+          "change": "把已知部分积分冒充完整DLI",
+          "failedCases": 3,
+          "exitCode": 1,
+          "restoredByteForByte": true,
+          "restoredSha256": "bd70a433099afdc491b2853c743da9109f8de91c5ce2e45a656964001e1b7edb"
+        },
+        {
+          "change": "允许室外天气进入室内VPD",
+          "failedCases": 1,
+          "exitCode": 1,
+          "restoredByteForByte": true,
+          "restoredSha256": "e09d0e5f9ec3ab59cc0d206539dfebcfca1be7cb6b29564fd6439120ff896315"
+        }
+      ],
+      "classicRed": [
+        "标定输入未锁定，调用后修改原输入使回放不可追溯",
+        "安全整数但Date无法表示的采集时刻",
+        "午夜跳时01:00开始的完整23小时日被拒绝"
+      ],
+      "green": "所有对应用例和相邻Care474项及全量1912项恢复GREEN"
+    },
+    "logs": [
+      "/tmp/planting-E04-lux-window-red.log",
+      "/tmp/planting-E04-lux-window-mutation.log",
+      "/tmp/planting-E04-lux-snapshot-red.log",
+      "/tmp/planting-E04-vpd-mutation.log",
+      "/tmp/planting-E04-boundary-classic-red.log",
+      "/tmp/planting-E04-window-vpd-care-final.log",
+      "/tmp/planting-E04-window-vpd-types-final.log",
+      "/tmp/planting-E04-window-vpd-full-final.log",
+      "/tmp/planting-E04-window-vpd-node22-full.log"
+    ]
+  },
+  "review": {
+    "agent": "runtime_probe_terra",
+    "findings": [
+      "时间不可表示",
+      "午夜跳时完整日"
+    ],
+    "resolution": "独立RED后修复，未改Expected；标定输入深拷贝已检查"
+  },
+  "notAccepted": [
+    "真实瞬时Provider获取与现场Lux精度",
+    "全天共享因子与摄像头正式准入",
+    "室内气候估算模型",
+    "植物实际知识读取及VPD到干燥需求映射",
+    "保水倍率、个体倍率与最终水量/日期",
+    "模型FEEL行为及正式Care HTTP"
+  ],
+  "nextAction": "核验实际watering_baseline_policy及tier/trigger知识接线；继续室内估算/VPD需求映射、基质保水和盆土安全门，保持光照正式准入缺口局部可见"
+}

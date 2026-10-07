@@ -76,8 +76,8 @@ function validateConversion(conversion: SpectralConversionCandidate): void {
   }
 }
 
-/** 明确当地午夜和相邻日边界，禁止把任意24小时命名为日光积分。 */
-function validateDay(day: LocalLightDay): void {
+/** 校验真实当地日期边界；午夜跳时可能从01:00开始，不能假设每天24小时。 */
+export function validateLocalLightDay(day: LocalLightDay): void {
   if (!day || typeof day.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(day.date) || typeof day.timezone !== 'string' || !day.timezone.trim()) {
     throw new TypeError('缺少明确当地日期或时区')
   }
@@ -90,7 +90,7 @@ function validateDay(day: LocalLightDay): void {
     const parts = Object.fromEntries(formatter.formatToParts(atMs).map(part => [part.type, part.value]))
     return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}`
   }
-  if (day.startMs % 1000 !== 0 || day.endMs % 1000 !== 0 || format(day.startMs) !== `${day.date}T00:00:00` || format(day.endMs) !== `${nextDate}T00:00:00` ||
+  if (day.startMs % 1000 !== 0 || day.endMs % 1000 !== 0 || format(day.startMs).slice(0, 10) !== day.date || format(day.endMs).slice(0, 10) !== nextDate ||
     format(day.startMs - 1).slice(0, 10) === day.date || format(day.endMs - 1).slice(0, 10) !== day.date) {
     throw new RangeError('提供的区间不是目标时区完整当地日')
   }
@@ -113,7 +113,7 @@ export function replayIndoorPpfdDay(
   losses: IndoorTransmission, conversion: SpectralConversionCandidate, day: LocalLightDay,
 ): IndoorPpfdDayReplay {
   validateConversion(conversion)
-  validateDay(day)
+  validateLocalLightDay(day)
   const naturalLight = replayIndoorNaturalLight(raw, context, target, losses)
   const intervals = naturalLight.intervals.map(interval => {
     const directPpfd = convert(interval.directWattsPerM2, conversion.direct)

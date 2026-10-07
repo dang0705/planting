@@ -1,0 +1,62 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "recordedAt": "2026-10-07T15:45:02.187288+00:00",
+  "scope": "原计划完整保留七节并更新实际接续；极简Lux综合锚点离线候选",
+  "plan": {
+    "path": "青花植后端v2底层架构重构计划_融合闭环终版.md",
+    "lines": 690,
+    "sha256": "12393ce787b03760ffe9f7495ff5195504a94d30245f8d7aac77f17adfe155ab",
+    "verifiedSections": 7,
+    "clickupSnapshot": {
+      "total": 32,
+      "done": 16,
+      "codex running": 6,
+      "ready for codex": 2,
+      "human required": 1,
+      "backlog": 7
+    }
+  },
+  "sources": [
+    "用户最新极简光照规则",
+    "chatgpt-conversation://6ac63f57-4ea4-83ec-8a13-023aa01dde96",
+    "chatgpt-conversation://6ac654df-31d8-83ec-a619-5ee033437ed0",
+    "chatgpt-conversation://6ac0ad37-d7b4-83ec-a138-42eabef9e4b3",
+    "chatgpt-conversation://6ac0aaee-bcb8-83ec-b7f3-24835d7c7e18",
+    "viking://resources/projects/planting/backend-v2/architecture/light-prediction-model-v0.md",
+    "cloudfunctions-v2/models/care/lux-composite-anchor-contract.md"
+  ],
+  "configurationDecision": "不新增生产变量、默认值、Provider、时限或阈值；显式shared_channel_candidate仅离线比较，不代表批准全天共享物理透射率",
+  "testReadiness": "Vitest成熟后端，TDD就绪；L1 unit_fake，无替身；数学制品非真实测量",
+  "tests": {
+    "new": 9,
+    "care": 451,
+    "full": 1889,
+    "files": 195,
+    "typecheck": "passed",
+    "lint": "0 errors;9 warnings",
+    "testFirst": "测试先落盘；初次缺模块RED仅为接线探针，行为证明使用受控突变",
+    "mutation": {
+      "change": "临时删除同刻匹配守卫",
+      "exitCode": 1,
+      "failedCase": "时刻、引用、瞬时语义、单位和非法区间拒绝",
+      "restoredByteForByte": true,
+      "restoredSha256": "e86ea1313c4df031c0e8c88704b1b4f038977d27e3c0aa4a77859cdf0e318419"
+    },
+    "logs": [
+      "/tmp/planting-E04-lux-red.log",
+      "/tmp/planting-E04-lux-mutation.log",
+      "/tmp/planting-E04-lux-care-green.log",
+      "/tmp/planting-E04-lux-full-green.log",
+      "/tmp/planting-E04-lux-types.log"
+    ]
+  },
+  "notAccepted": [
+    "真实Lux精度和摄像头准入",
+    "DNI/DHI与同刻Lux参考的完整运行接线",
+    "共享因子的全天实地适用范围",
+    "正式策略发布和光照HTTP",
+    "室内VPD与水量日期最终闭环"
+  ],
+  "nextAction": "连接既有DNI/DHI窗面回放与显式同刻Lux参考；保留真实时段和缺段，再继续VPD、栽培及浇水量/日期"
+}
