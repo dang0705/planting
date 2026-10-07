@@ -1,0 +1,169 @@
+{
+  "step": "E04",
+  "ticketId": "z8v0kmr973",
+  "createdAt": "2026-10-07T18:57:24.263346+00:00",
+  "scope": "离线室内热湿候选的单栋住宅真实数据验证",
+  "accepted": false,
+  "productionChange": false,
+  "productionAdmission": false,
+  "sources": {
+    "name": "Appliances Energy Prediction",
+    "author": "Luis Candanedo",
+    "year": 2017,
+    "doi": "10.24432/C5VC8G",
+    "license": "CC-BY-4.0",
+    "source": "https://archive.ics.uci.edu/dataset/374/appliances%2Benergy%2Bprediction",
+    "originalCsvSha256": "2820bf712ad0275cb18b85a05250926100d8e65ebb9f4d2d016ca91ea152a25d",
+    "subsetSha256": "268be2fc6e8367cd0c8c9530db148a7735991ef16543968da47df116960ed965"
+  },
+  "validationDesign": {
+    "calibration": {
+      "rows": 4032,
+      "transitions": 4031,
+      "firstRecord": "2016-01-12 00:00:00",
+      "lastRecord": "2016-02-08 23:50:00"
+    },
+    "validation": {
+      "rows": 2017,
+      "predictions": 2016,
+      "firstRecord": "2016-02-09 00:00:00",
+      "lastRecord": "2016-02-23 00:00:00",
+      "indoorAnchors": 1
+    },
+    "comparison": "校准段均值、室外直用仅作诊断对照，不是运行降级规则",
+    "assumptions": [
+      "室内10分钟均值暂作记录时刻状态；不是瞬时测量",
+      "机场小时天气插值为历史外边界；不是房屋外墙测量或真实预报",
+      "冬季固定子集仅计算名义日历差值；原始采集时区未验真",
+      "机场气压直接用于研究换算，其订正方式与房屋代表性未证实",
+      "固定净热湿源不能识别太阳、住户和空调的分别贡献",
+      "仅一个室内起始锚点，余下连续递推；单栋低能耗房屋不可外推为MVP通用参数"
+    ]
+  },
+  "scores": {
+    "candidate": {
+      "total": 2016,
+      "valid": 2016,
+      "unavailable": 0,
+      "coverage": 1,
+      "temperatureC": {
+        "meanAbsoluteError": 1.0493976326267371,
+        "rootMeanSquareError": 1.2947247686438654,
+        "maximumAbsoluteError": 3.8906253732597698
+      },
+      "relativeHumidityPercent": {
+        "meanAbsoluteError": 1.4029664082860085,
+        "rootMeanSquareError": 1.7802881243860373,
+        "maximumAbsoluteError": 4.786255166123162
+      },
+      "vpdKpa": {
+        "meanAbsoluteError": 0.11147477811332346,
+        "rootMeanSquareError": 0.1363190922278643,
+        "maximumAbsoluteError": 0.3980850382787471
+      }
+    },
+    "trainingMean": {
+      "total": 2016,
+      "valid": 2016,
+      "unavailable": 0,
+      "coverage": 1,
+      "temperatureC": {
+        "meanAbsoluteError": 0.9379676102831273,
+        "rootMeanSquareError": 1.1752526297514054,
+        "maximumAbsoluteError": 2.811950992899707
+      },
+      "relativeHumidityPercent": {
+        "meanAbsoluteError": 2.9163281279700644,
+        "rootMeanSquareError": 3.57617960909188,
+        "maximumAbsoluteError": 8.351959297687216
+      },
+      "vpdKpa": {
+        "meanAbsoluteError": 0.08754057286612885,
+        "rootMeanSquareError": 0.10728414213646609,
+        "maximumAbsoluteError": 0.2805172234091806
+      }
+    },
+    "outdoorAsIndoor": {
+      "total": 2016,
+      "valid": 2016,
+      "unavailable": 0,
+      "coverage": 1,
+      "temperatureC": {
+        "meanAbsoluteError": 15.66400533824645,
+        "rootMeanSquareError": 15.998217403161581,
+        "maximumAbsoluteError": 22.8
+      },
+      "relativeHumidityPercent": {
+        "meanAbsoluteError": 47.7761086309529,
+        "rootMeanSquareError": 48.533906056513615,
+        "maximumAbsoluteError": 63.27
+      },
+      "vpdKpa": {
+        "meanAbsoluteError": 1.2666145536255748,
+        "rootMeanSquareError": 1.2724099146469645,
+        "maximumAbsoluteError": 1.5842827029998348
+      }
+    }
+  },
+  "conclusion": "该样本中候选湿度误差低于训练均值对照，但温度/VPD误差更大；无通用模型准入依据，不在已看过的验证段调参后再称独立验证",
+  "tests": {
+    "expectedSources": [
+      "OLS独立线性关系Δx=0.25·差值+1",
+      "含湿比守恒及FAO饱和压公式",
+      "UCI固定许可制品字段与时间范围",
+      "验证数据不得进入拟合或逐步重置的实验设计"
+    ],
+    "new": 18,
+    "care": 567,
+    "rootFull": {
+      "files": 206,
+      "passed": 2019,
+      "failed": 0
+    },
+    "node22Full": {
+      "version": "22.21.1",
+      "files": 206,
+      "passed": 2019,
+      "failed": 0
+    },
+    "red": {
+      "classic": "先落测试，缺研究模块时失败；未修改Expected吞失败",
+      "mutation": "将递推初态替换为previous.indoor，2项防数据泄漏场景RED",
+      "restoration": "逐字节恢复，18/18 GREEN",
+      "restoredSha256": "b56a58bc6938ffb4cd7f579cf411f0546ad68e21a9ad8e1b854ecc27982a9d02"
+    },
+    "typecheck": "研究入口和两测试strict通过",
+    "lint": {
+      "warnings": 185,
+      "errors": 0
+    },
+    "node22ArtifactBytesIdentical": true
+  },
+  "sha256": {
+    "cloudfunctions-v2/models/care/experiments/indoor-climate-validation.ts": "b56a58bc6938ffb4cd7f579cf411f0546ad68e21a9ad8e1b854ecc27982a9d02",
+    "cloudfunctions-v2/models/care/experiments/indoor-climate-benchmark.ts": "f4be842b9986bf210f9115caeeecd6d539a162c976de0c262d7d58ce77601543",
+    "cloudfunctions-v2/models/care/indoor-climate-real-data-results.json": "922be0f9542f0226754888d29c57d639ad130636dc44e7a6f1cb2f86ba56f901",
+    "cloudfunctions-v2/models/care/fixtures/uci-living-room-winter.csv": "268be2fc6e8367cd0c8c9530db148a7735991ef16543968da47df116960ed965",
+    "cloudfunctions-v2/models/care/indoor-climate-real-data.md": "32312da5462ce65d8c6414911bf87a702c0454ab3b06b3b1e44f761bcd720268"
+  },
+  "notVerified": [
+    "跨住宅/中国住宅适用性",
+    "太阳、HVAC、住户贡献分离",
+    "无室内测量时的后台初态和场景映射",
+    "正式参数发布及实时Provider/HTTP闭环"
+  ],
+  "nextAction": "核验后台初态及室内场景可识别证据；保持候选参数未发布，继续寻找独立验证资料，避免在该留出段上继续调参",
+  "verification": {
+    "runtimeImports": "cloudfunctions-v2/src中无研究模块导入",
+    "fullPlanHeadingsUnchanged": true,
+    "h5ProjectionRevision": 119,
+    "clickUpSync": "MCP已报告额度冷却尚未结束；保留pendingVersion47，不改变远端成功版本41",
+    "independentNumericalAudit": {
+      "agent": "runtime_probe_terra",
+      "method": "仅CSV/结果JSON的独立Python拟合和递推，未读TypeScript",
+      "candidateMaeMaximumAbsoluteDifference": 9.55e-15,
+      "comparatorMaximumAbsoluteDifference": 5.4e-13,
+      "datasetCountAndHashMatched": true
+    }
+  }
+}

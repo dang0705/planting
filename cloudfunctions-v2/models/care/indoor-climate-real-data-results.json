@@ -1,0 +1,130 @@
+{
+  "dataset": {
+    "name": "Appliances Energy Prediction",
+    "author": "Luis Candanedo",
+    "year": 2017,
+    "doi": "10.24432/C5VC8G",
+    "license": "CC-BY-4.0",
+    "source": "https://archive.ics.uci.edu/dataset/374/appliances%2Benergy%2Bprediction",
+    "originalCsvSha256": "2820bf712ad0275cb18b85a05250926100d8e65ebb9f4d2d016ca91ea152a25d",
+    "subsetSha256": "268be2fc6e8367cd0c8c9530db148a7735991ef16543968da47df116960ed965"
+  },
+  "assumptions": [
+    "室内10分钟均值暂作记录时刻状态；不是瞬时测量",
+    "机场小时天气插值为历史外边界；不是房屋外墙测量或真实预报",
+    "冬季固定子集仅计算名义日历差值；原始采集时区未验真",
+    "机场气压直接用于研究换算，其订正方式与房屋代表性未证实",
+    "固定净热湿源不能识别太阳、住户和空调的分别贡献",
+    "仅一个室内起始锚点，余下连续递推；单栋低能耗房屋不可外推为MVP通用参数"
+  ],
+  "scope": "retrospective_single_house_experiment",
+  "productionAdmission": false,
+  "calibration": {
+    "rows": 4032,
+    "transitions": 4031,
+    "firstRecord": "2016-01-12 00:00:00",
+    "lastRecord": "2016-02-08 23:50:00"
+  },
+  "validation": {
+    "rows": 2017,
+    "predictions": 2016,
+    "firstRecord": "2016-02-09 00:00:00",
+    "lastRecord": "2016-02-23 00:00:00",
+    "indoorAnchors": 1
+  },
+  "intervalSeconds": 600,
+  "pressureConversionKpaPerMmHg": 0.1333224,
+  "fit": {
+    "coefficients": {
+      "temperatureExchangePerSecond": 0.0000024146434353450205,
+      "heatInputCPerSecond": 0.00003553536077656367,
+      "moistureExchangePerSecond": 0.000004908526044957792,
+      "moistureInputKgPerKgPerSecond": 5.730550588480545e-9
+    },
+    "temperature": {
+      "fraction": 0.0014477370773270015,
+      "increment": 0.02130577898143041,
+      "exchangePerSecond": 0.0000024146434353450205,
+      "sourcePerSecond": 0.00003553536077656367
+    },
+    "moisture": {
+      "fraction": 0.0029407830283248886,
+      "increment": 0.0000034332721797151425,
+      "exchangePerSecond": 0.000004908526044957792,
+      "sourcePerSecond": 5.730550588480545e-9
+    },
+    "sampleCount": 4032,
+    "transitionCount": 4031,
+    "productionAdmission": false
+  },
+  "trainingMean": {
+    "temperatureC": 19.688049007100293,
+    "relativeHumidityPercent": 42.141959297687215
+  },
+  "predictionSha256": "af39ce4d7013721c7f40bab913b6396960a57f269bf5868215637607a3b19d29",
+  "scores": {
+    "candidate": {
+      "total": 2016,
+      "valid": 2016,
+      "unavailable": 0,
+      "coverage": 1,
+      "temperatureC": {
+        "meanAbsoluteError": 1.0493976326267371,
+        "rootMeanSquareError": 1.2947247686438654,
+        "maximumAbsoluteError": 3.8906253732597698
+      },
+      "relativeHumidityPercent": {
+        "meanAbsoluteError": 1.4029664082860085,
+        "rootMeanSquareError": 1.7802881243860373,
+        "maximumAbsoluteError": 4.786255166123162
+      },
+      "vpdKpa": {
+        "meanAbsoluteError": 0.11147477811332346,
+        "rootMeanSquareError": 0.1363190922278643,
+        "maximumAbsoluteError": 0.3980850382787471
+      }
+    },
+    "trainingMean": {
+      "total": 2016,
+      "valid": 2016,
+      "unavailable": 0,
+      "coverage": 1,
+      "temperatureC": {
+        "meanAbsoluteError": 0.9379676102831273,
+        "rootMeanSquareError": 1.1752526297514054,
+        "maximumAbsoluteError": 2.811950992899707
+      },
+      "relativeHumidityPercent": {
+        "meanAbsoluteError": 2.9163281279700644,
+        "rootMeanSquareError": 3.57617960909188,
+        "maximumAbsoluteError": 8.351959297687216
+      },
+      "vpdKpa": {
+        "meanAbsoluteError": 0.08754057286612885,
+        "rootMeanSquareError": 0.10728414213646609,
+        "maximumAbsoluteError": 0.2805172234091806
+      }
+    },
+    "outdoorAsIndoor": {
+      "total": 2016,
+      "valid": 2016,
+      "unavailable": 0,
+      "coverage": 1,
+      "temperatureC": {
+        "meanAbsoluteError": 15.66400533824645,
+        "rootMeanSquareError": 15.998217403161581,
+        "maximumAbsoluteError": 22.8
+      },
+      "relativeHumidityPercent": {
+        "meanAbsoluteError": 47.7761086309529,
+        "rootMeanSquareError": 48.533906056513615,
+        "maximumAbsoluteError": 63.27
+      },
+      "vpdKpa": {
+        "meanAbsoluteError": 1.2666145536255748,
+        "rootMeanSquareError": 1.2724099146469645,
+        "maximumAbsoluteError": 1.5842827029998348
+      }
+    }
+  }
+}

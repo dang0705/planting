@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-07T18:38:11.033490+00:00",
-  "sourceRevision": 118,
-  "sourceUpdatedAt": "2026-10-07T18:38:11.033490+00:00",
+  "generatedAt": "2026-10-07T18:57:24.263346+00:00",
+  "sourceRevision": 119,
+  "sourceUpdatedAt": "2026-10-07T18:57:24.263346+00:00",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -123,16 +123,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 46,
+      "version": 47,
       "status": "codex running",
-      "stage": "室内热湿离线候选已验证；真实样本/场景校准及正式准入待完成",
+      "stage": "真实独立时段比较已完成；候选未优于简单VPD对照，正式准入待补证",
       "accepted": false,
       "summary": [
-        "E04：显式参数热湿平衡离线候选已实现，正式参数仍pending",
-        "温度/含湿比分别推进；整时段无法排除凝结则拒绝候选",
-        "新增20场景；2项边界经典RED、3项RH突变RED→恢复GREEN",
-        "Care549；根及Node22全量2001/2001；真实校准/正式HTTP未验收",
-        "证据：.codex/backend-v2/evidence/E04-indoor-climate-experiment.json"
+        "E04：完成UCI真实单宅冬季校准/独立回放，正式参数未发布",
+        "4032行校准、2017行验证；一次室内初态，无未来真值回灌",
+        "候选VPD MAE0.111kPa，训练均值0.088；不能据此准入",
+        "18新增；泄漏突变2项RED→恢复；Care567，根/Node22全量2019",
+        "证据：.codex/backend-v2/evidence/E04-indoor-climate-real-data.json"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -177,10 +177,11 @@
         ".codex/backend-v2/evidence/E04-substrate-water-evidence.json",
         ".codex/backend-v2/evidence/E04-watering-calendar.json",
         ".codex/backend-v2/evidence/E04-current-cycle-plan.json",
-        ".codex/backend-v2/evidence/E04-indoor-climate-experiment.json"
+        ".codex/backend-v2/evidence/E04-indoor-climate-experiment.json",
+        ".codex/backend-v2/evidence/E04-indoor-climate-real-data.json"
       ],
       "blockingReason": null,
-      "nextAction": "E04室内估算：核验有许可的室内外同刻样本，验证初态/场景参数与误差；之后接非线性光照/VPD及盆土状态→剩余窗口",
+      "nextAction": "室内估算：核验后台初态、供暖/空调和太阳热输入的可识别证据及独立样本；不把单栋拟合发布为默认，随后接非线性需求与盆土剩余窗口",
       "sync": {
         "version": 41,
         "status": "codex running",
@@ -378,6 +379,6 @@
     "at": "2026-10-07T17:25:11.799182+00:00",
     "ticketId": "z8v0kmr973",
     "reason": "ClickUp MCP日额度100/100，返回3小时44分钟后可重试；未进行远端写入",
-    "pendingVersion": 46
+    "pendingVersion": 47
   }
 }
