@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-07T20:37:14.104Z",
-  "sourceRevision": 128,
-  "sourceUpdatedAt": "2026-10-07T20:37:14.104Z",
+  "generatedAt": "2026-10-07T20:50:13.509Z",
+  "sourceRevision": 130,
+  "sourceUpdatedAt": "2026-10-07T20:50:13.509Z",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -123,16 +123,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 54,
+      "version": 55,
       "status": "codex running",
-      "stage": "室外→室内经验范围完成后续回放；真实位置与和风预报验证待补",
+      "stage": "和风逐小时温湿度标准化已验证；真实室内配对及估算准入待补",
       "accepted": false,
       "summary": [
-        "E04：固定室外→室内点模型，新增温湿度/VPD经验范围回放",
-        "同宅289/336小时合格、联合命中287；跨宅124/336、命中102",
-        "温度范围宽6.29°C、VPD约1.13kPa；不作为通用默认或正式日期输入",
-        "独立Python一致；5例受控突变RED已恢复；全量2110/2110",
-        "下一步补真实位置室内记录与和风预报配对；正式估算/水量/日期仍未验收"
+        "E04：和风v7公制温湿度标准化完成，保留预报/更新/捕获时间",
+        "缺失不转零，明确室外预报及未指定时间聚合；文档示例不冒充真实API",
+        "25项独立场景通过；缺失转零突变1项RED、恢复后全量2135/2135",
+        "类型检查通过；无网络调用、前端修改或模型发布",
+        "真实室内与和风配对待补；正式VPD估算、水量及日期仍未验收"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -185,10 +185,11 @@
         ".codex/backend-v2/evidence/E04-indoor-climate-transfer.json",
         ".codex/backend-v2/evidence/E04-indoor-vpd-range.json",
         ".codex/backend-v2/evidence/E04-environment-demand-data.json",
-        ".codex/backend-v2/evidence/E04-indoor-climate-envelope.json"
+        ".codex/backend-v2/evidence/E04-indoor-climate-envelope.json",
+        ".codex/backend-v2/evidence/E04-qweather-hourly-evidence.json"
       ],
       "blockingReason": null,
-      "nextAction": "需要真实位置的室内温湿度记录与和风预报发布时间/有效时间配对；固定场景及误差要求后验证，不扩张默认模型",
+      "nextAction": "配对后台真实位置室内温湿度记录与带捕获/更新/预报有效时间的和风制品；确认场景及误差，不增加小程序专业输入",
       "sync": {
         "version": 41,
         "status": "codex running",
@@ -386,6 +387,6 @@
     "at": "2026-10-07T17:25:11.799182+00:00",
     "ticketId": "z8v0kmr973",
     "reason": "ClickUp MCP日额度100/100，返回3小时44分钟后可重试；未进行远端写入",
-    "pendingVersion": 54
+    "pendingVersion": 55
   }
 }

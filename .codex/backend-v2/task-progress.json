@@ -1,23 +1,23 @@
 {
-  "revision": 128,
+  "revision": 130,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-07T20:37:14.104Z",
+  "updatedAt": "2026-10-07T20:50:13.509Z",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "固定现有室外到室内统计模型，用独立后续时段检验经验误差范围能否覆盖室内温湿度及VPD",
+    "target": "补齐和风现有v7逐小时温湿度的后端标准化，供后续室内模型配对验证",
     "keyAssumptions": [
-      "室外温湿度是估算输入，不是室内事实",
-      "旧评分时段本轮只作范围校准，后续新时段只评分不调参",
-      "经验残差包络不是置信区间，也不是未知住宅默认范围"
+      "fxTime为预报有效时刻，不能假设小时均值",
+      "updateTime只代表Provider更新时间，不冒充模型发布时间",
+      "旧v7百分湿度与新v1的0到1湿度严格分开"
     ],
-    "configurationDecision": "仅已授权E04离线研究；固定原模型，不引入业务默认值、准入阈值或生产发布",
-    "minimumVerification": "事先固定数据窗口及资格；独立数值Expected、RED/GREEN、原始数据SHA与独立复算、温湿度及VPD联合覆盖和不可用数",
-    "continueCondition": "有固定窗口原始记录并满足已有采样资格才评分；全部排除和越界保留",
-    "failureCondition": "数据不足或包络不覆盖时如实拒绝该候选，不调整Expected或借验证误差扩范围",
-    "rollback": "研究模块不接正式策略或HTTP；可独立撤回",
-    "timeLimitMinutes": 30,
-    "nextAction": "需要真实位置的室内温湿度记录与和风预报发布时间/有效时间配对；固定场景及误差要求后验证，不扩张默认模型"
+    "configurationDecision": "只实现固定v7公制字段映射与outdoor硬边界；无业务默认值、网络调用、TTL、重试或Provider发布",
+    "minimumVerification": "官方原样示例+空值/时区/单位/重复时刻/版本隔离独立Expected；TDD及全量UT",
+    "continueCondition": "官方合同明确且不依赖pending运行参数的标准化可以独立实现",
+    "failureCondition": "未明确的时间聚合语义保留unknown，不输入积分；缺Provider策略不接真实网络",
+    "rollback": "独立纯适配函数可回退；不改变原天气服务或用户事实",
+    "timeLimitMinutes": 25,
+    "nextAction": "配对后台真实位置室内温湿度记录与带捕获/更新/预报有效时间的和风制品；确认场景及误差，不增加小程序专业输入"
   },
   "tasks": [
     {
@@ -133,10 +133,10 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 54,
+      "version": 55,
       "priority": "high",
       "status": "codex running",
-      "stage": "室外→室内经验范围完成后续回放；真实位置与和风预报验证待补",
+      "stage": "和风逐小时温湿度标准化已验证；真实室内配对及估算准入待补",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -189,17 +189,18 @@
         ".codex/backend-v2/evidence/E04-indoor-climate-transfer.json",
         ".codex/backend-v2/evidence/E04-indoor-vpd-range.json",
         ".codex/backend-v2/evidence/E04-environment-demand-data.json",
-        ".codex/backend-v2/evidence/E04-indoor-climate-envelope.json"
+        ".codex/backend-v2/evidence/E04-indoor-climate-envelope.json",
+        ".codex/backend-v2/evidence/E04-qweather-hourly-evidence.json"
       ],
       "summary": [
-        "E04：固定室外→室内点模型，新增温湿度/VPD经验范围回放",
-        "同宅289/336小时合格、联合命中287；跨宅124/336、命中102",
-        "温度范围宽6.29°C、VPD约1.13kPa；不作为通用默认或正式日期输入",
-        "独立Python一致；5例受控突变RED已恢复；全量2110/2110",
-        "下一步补真实位置室内记录与和风预报配对；正式估算/水量/日期仍未验收"
+        "E04：和风v7公制温湿度标准化完成，保留预报/更新/捕获时间",
+        "缺失不转零，明确室外预报及未指定时间聚合；文档示例不冒充真实API",
+        "25项独立场景通过；缺失转零突变1项RED、恢复后全量2135/2135",
+        "类型检查通过；无网络调用、前端修改或模型发布",
+        "真实室内与和风配对待补；正式VPD估算、水量及日期仍未验收"
       ],
       "blockingReason": null,
-      "nextAction": "需要真实位置的室内温湿度记录与和风预报发布时间/有效时间配对；固定场景及误差要求后验证，不扩张默认模型",
+      "nextAction": "配对后台真实位置室内温湿度记录与带捕获/更新/预报有效时间的和风制品；确认场景及误差，不增加小程序专业输入",
       "ticketReadback": "ClickUp评论1100440000140265全文读回一致；保持codex running"
     },
     {
@@ -473,7 +474,7 @@
       ]
     }
   ],
-  "nextAction": "需要真实位置的室内温湿度记录与和风预报发布时间/有效时间配对；固定场景及误差要求后验证，不扩张默认模型",
+  "nextAction": "配对后台真实位置室内温湿度记录与带捕获/更新/预报有效时间的和风制品；确认场景及误差，不增加小程序专业输入",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -1228,5 +1229,20 @@
       "architecture/configuration-variable-catalog.json仅care室内环境/热响应相关条目"
     ],
     "scope": "不读其sourceRefs、不读其他领域或整个文档包"
+  },
+  "qweatherReadAdmission": {
+    "task": "E04和风逐小时温湿度标准化，补真实室内配对的上游",
+    "layers": {
+      "L0": "actor context逐层查询仅有城市气候/室内环境摘要，无和风配置状态",
+      "L1": "project find及精确grep定位Provider合同，未含当前和风策略",
+      "L2": "已读l2-indoor全文和configuration-providers第53起48行；仅有outdoor硬边界与类型化Provider要求"
+    },
+    "missing": [
+      "qweather端点/超时/新鲜度是否已确认"
+    ],
+    "allowed": [
+      "configuration-variable-catalog.md仅care天气与qweather行"
+    ],
+    "conclusion": "超时/新鲜度/Provider均pending；本轮不实现网络调用，只标准化既有v7公制响应的不可配置字段语义"
   }
 }

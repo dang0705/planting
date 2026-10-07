@@ -1,0 +1,67 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "recordedAt": "2026-10-07T20:50:13.509Z",
+  "scope": "和风现有v7逐小时公制温湿度的纯标准化，作为室外到室内验证的上游证据",
+  "accepted": false,
+  "sources": [
+    "https://dev.qweather.com/docs/api/weather/weather-hourly-forecast-webapi-v7/",
+    "https://dev.qweather.com/docs/resource/glossary/",
+    "https://dev.qweather.com/docs/resource/unit/"
+  ],
+  "artifacts": {
+    "cloudfunctions-v2/src/care/environment/normalize-qweather-hourly.ts": "8e25bec37787de2511828c0673eba3c3dd0519ff8f20f734cac4451f0193c74f",
+    "cloudfunctions-v2/models/care/fixtures/qweather-v7-hourly-documentation.json": "e15ee9593735aa028aa00ac3ded7d9ccd0a31539ab62f037731a100709612afc",
+    "cloudfunctions-v2/test/care/environment/qweather-hourly-evidence.spec.ts": "0576d77af4a0d203469804b19371318b1d42ccee8ba503f75ce6b3bdfdff1ecc"
+  },
+  "confirmedBehavior": [
+    "保留预报有效时刻、Provider更新时间、本地捕获时间及原始时间偏移；updateTime不冒充原始发布时间",
+    "明确outdoor/forecast/aggregation=unspecified；不生成室内值或小时平均区间",
+    "v7公制温度及0到100湿度，与新版v1合同隔离",
+    "有效零值保留；缺失、非法数值保留null及字段标记",
+    "同UTC时刻重复、逆序和不存在日期拒绝；缺段不补造",
+    "公开文档示例与真实Provider响应明确区分；原文SHA和输出白名单可追溯"
+  ],
+  "verification": {
+    "runner": "Vitest 4.1.11",
+    "testBoundary": "官方文档原样字段制品验证与unit_fake风险输入；无网络、MySQL或真实HTTP路径",
+    "focused": {
+      "passed": 25,
+      "log": "/tmp/e04-qweather-green.log"
+    },
+    "tdd": {
+      "path": "先落盘独立Expected；以快速路径反事实RED证明缺失不得转零",
+      "mutation": "将null和空字符串临时归一为0",
+      "failedCase": "有效零温度、零湿度与缺失严格分开",
+      "failedTests": 1,
+      "passedTests": 24,
+      "log": "/tmp/e04-qweather-mutation-red.log",
+      "restoredBehaviorSourceSha256": "f2c56c45252d9cd0619bebc059ec8e87b284dcb23fe511c75bdaefc5cb2fc0f6",
+      "postRestorationChange": "仅补中文TSDoc，不改变运行行为"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "/tmp/e04-qweather-typecheck.log"
+    },
+    "scopedLint": {
+      "errors": 0,
+      "warnings": 37,
+      "log": "/tmp/e04-qweather-lint.log"
+    },
+    "rootFullTests": {
+      "command": "npm test",
+      "filesPassed": 214,
+      "testsPassed": 2135,
+      "testsFailed": 0,
+      "log": "/tmp/e04-qweather-full-vitest-final.log"
+    },
+    "independentReview": "复用runtime_probe_terra核对官方字段与纯适配实现，未发现实际缺陷"
+  },
+  "notAccepted": [
+    "未调用真实和风API；Provider运行策略、缓存新鲜度仍pending",
+    "未确认室外到室内估算的适用场景及误差",
+    "未发布环境干燥需求、正式浇水量或下次日期",
+    "未修改前端、数据库或部署"
+  ],
+  "nextAction": "配对后台真实位置室内温湿度记录与带捕获/更新/预报有效时间的和风制品；确认场景及误差，不增加小程序专业输入"
+}
