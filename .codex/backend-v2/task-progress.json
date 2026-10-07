@@ -1,15 +1,15 @@
 {
-  "revision": 116,
+  "revision": 117,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-07T17:50:36.898042+00:00",
+  "updatedAt": "2026-10-07T18:06:07.904540+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "光照离线接线与VPD点值已验证→基线/栽培/盆土→最终浇水",
+    "target": "室内温湿度估算→非线性环境需求→盆土当前状态→剩余窗口与独立水量",
     "minimumVerification": "独立Expected、双通道/同刻/缺段、三个浇水输出分别验收",
-    "result": "算法窗口已转植物当地日期；固定基线对需求/保水/校准变化有响应；20新项与全量1981通过。提前策略/施水量/正式HTTP未验收",
+    "result": "完整版计划及内部说明已明确当前周期主链；7章保留，根全量1981通过；室内估算/非线性响应/盆土状态更新仍未实现",
     "rollback": "仅新候选模块可撤回；保留专业参数与历史结果，不部署或改数据库",
-    "nextAction": "补齐环境需求/栽培保水的有效映射并做实际数据回放；提前检查基于动态预测，另确认提前量；水量继续补根区证据"
+    "nextAction": "E04先补室外→室内温湿度估算依据与准入，再接光照/VPD非线性需求及盆土当前状态→剩余干燥窗口；水量继续补根区依据"
   },
   "tasks": [
     {
@@ -125,10 +125,10 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 44,
+      "version": 45,
       "priority": "high",
       "status": "codex running",
-      "stage": "动态预测日期表达已验证；模型倍率/根区水量/提前策略待收口",
+      "stage": "整体链路已明确；室内估算/非线性需求/当前盆土状态接线待实现",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -171,17 +171,18 @@
         ".codex/backend-v2/evidence/E04-root-zone-water-deficit.json",
         ".codex/backend-v2/evidence/E04-water-substrate-inventory.json",
         ".codex/backend-v2/evidence/E04-substrate-water-evidence.json",
-        ".codex/backend-v2/evidence/E04-watering-calendar.json"
+        ".codex/backend-v2/evidence/E04-watering-calendar.json",
+        ".codex/backend-v2/evidence/E04-current-cycle-plan.json"
       ],
       "summary": [
-        "E04：算法窗口已接植物当地日期；同一基线随需求/保水/校准动态变化",
-        "缺端点不以预报终点补日期；湿土否决保留，时区进入回放快照",
-        "20新场景；缺模块RED及缺端点突变2项RED→恢复GREEN",
-        "Care529项；根与Node22全量1981/1981、类型检查通过；正式水量/HTTP未验收",
-        "证据：.codex/backend-v2/evidence/E04-watering-calendar.json"
+        "E04：室外→室内温湿度→VPD及光照非线性响应纳入当前主链",
+        "盆土证据更新当前状态→剩余干燥窗口→按策略提前检查",
+        "完整计划7章保留；已有日期计算不代表上述模型已完成",
+        "本轮未改产品行为；根全量1981/1981，正式水量/HTTP未验收",
+        "证据：.codex/backend-v2/evidence/E04-current-cycle-plan.json"
       ],
       "blockingReason": null,
-      "nextAction": "补齐环境需求/栽培保水的有效映射并做实际数据回放；提前检查基于动态预测，另确认提前量；水量继续补根区证据",
+      "nextAction": "E04先补室外→室内温湿度估算依据与准入，再接光照/VPD非线性需求及盆土当前状态→剩余干燥窗口；水量继续补根区依据",
       "ticketReadback": "ClickUp评论1100440000140265全文读回一致；保持codex running"
     },
     {
@@ -455,7 +456,7 @@
       ]
     }
   ],
-  "nextAction": "补齐环境需求/栽培保水的有效映射并做实际数据回放；提前检查基于动态预测，另确认提前量；水量继续补根区证据",
+  "nextAction": "E04先补室外→室内温湿度估算依据与准入，再接光照/VPD非线性需求及盆土当前状态→剩余干燥窗口；水量继续补根区依据",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",
@@ -1186,9 +1187,12 @@
   },
   "wateringDateDecision": {
     "source": "用户本轮明确确认",
-    "basis": "dynamic_algorithm_prediction",
+    "basis": "soil_evidence_updated_remaining_drying_window",
     "fixedBaselineLeadAllowed": false,
     "advancePolicyStatus": "pending",
-    "frontendInputsExpanded": false
+    "frontendInputsExpanded": false,
+    "currentCycleStateMappingStatus": "pending",
+    "completedCycleCalibrationIsSeparate": true,
+    "observationDoesNotResetWateringFact": true
   }
 }

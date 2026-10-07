@@ -1,0 +1,61 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "recordedAt": "2026-10-07T18:06:07.904540+00:00",
+  "scope": "现有完整版计划和内部说明收口；未修改产品行为、配置数值或DMN",
+  "confirmedFlow": [
+    "有效室内实测优先，否则和风室外温湿度经获准室内模型估算",
+    "同刻室内温湿度推导VPD；光照与VPD响应不能假定线性",
+    "当前可靠盆土证据更新干湿状态，估算至目标状态的剩余时间",
+    "检查提前量基于剩余窗口，不基于固定名义基线"
+  ],
+  "source": "用户本会话确认及定向代码核验",
+  "scientificSource": "https://nph.onlinelibrary.wiley.com/doi/full/10.1111/nph.16485",
+  "implementationAudit": {
+    "implemented": [
+      "室内实测VPD点值",
+      "给定环境需求后的历史积分与安全门",
+      "动态阈值窗口的当地日期表达",
+      "已完成历史循环残差"
+    ],
+    "remaining": [
+      "和风室外到室内温湿度估算",
+      "光照与室内VPD非线性需求响应",
+      "盆土证据到当前状态的有效映射及剩余窗口",
+      "检查提前策略与正式建议准入"
+    ],
+    "sourceRefs": [
+      "cloudfunctions-v2/src/care/environment/derive-indoor-vpd.ts",
+      "cloudfunctions-v2/src/care/application/replay-watering-timing.ts",
+      "cloudfunctions-v2/src/care/application/replay-completed-dry-cycle.ts"
+    ],
+    "productionAdmission": false
+  },
+  "validation": {
+    "planMainSectionsPreserved": 7,
+    "rootFullUt": {
+      "passed": 1981,
+      "total": 1981,
+      "files": 203,
+      "command": "npm test",
+      "log": "/tmp/planting-E04-current-cycle-plan-full.log"
+    },
+    "productBehaviorChanged": false,
+    "tdd": "不适用：本轮只更新计划与说明；未新增行为测试",
+    "limits": [
+      "全量UT只证明已有行为回归通过",
+      "不证明未实现模型、DMN行为或真实HTTP闭环"
+    ],
+    "scopedConsistencyReview": {
+      "agent": "runtime_probe_terra",
+      "result": "passed",
+      "scope": "仅根完整版计划与3内部说明的增量；能力状态、当前周期/历史校准及缺证据边界一致"
+    }
+  },
+  "sha256": {
+    "青花植后端v2底层架构重构计划_融合闭环终版.md": "b8fc69624b934d336703afdb8c8298b1b69249999cf86ad143c5b8903a6b50d0",
+    "cloudfunctions-v2/models/care/indoor-vpd-candidate-contract.md": "18ba88c9eddbeffc7e62f4526d28766d0ffbcb04bfdcf0ba7f01535c2844f87e",
+    "cloudfunctions-v2/models/care/watering-timing-replay-contract.md": "a411b03903966e07258b566da9f195f80d021ade068eedeafc172faf16f5d48e",
+    "cloudfunctions-v2/models/care/watering-calendar-contract.md": "6dc298f85dbf797cdb6fad0bd50f668638398a27fa52ba77a6c398cfb35edd1b"
+  }
+}
