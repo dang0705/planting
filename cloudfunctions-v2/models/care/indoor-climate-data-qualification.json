@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "ticketId": "z8v0kmr973",
+  "scope": "offline_calibration_data_qualification",
+  "productionAdmission": false,
+  "source": {
+    "name": "IDEAL Household Energy Dataset",
+    "creators": [
+      "Nigel Goddard",
+      "Jonathan Kilgour",
+      "Martin Pullinger",
+      "IDEAL research team"
+    ],
+    "doi": "10.7488/ds/2836",
+    "url": "https://datashare.ed.ac.uk/items/15e82917-56ed-4282-99ef-7f211bf87f9d",
+    "paper": "https://doi.org/10.1038/s41597-021-00921-y",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "selection": {
+    "homeId": 100,
+    "roomId": 1038,
+    "temperatureSensorId": 4474,
+    "humiditySensorId": 4473,
+    "weatherLocation": "Midlothian",
+    "weatherCentre": "Penicuik",
+    "temperatureFeedId": 21,
+    "humidityFeedId": 23,
+    "reason": "按文件名选择首个客厅并依公开元数据绑定天气；窗口依据共同覆盖日期选定，没有依据模型误差选择样本",
+    "windowStartUtc": "2017-12-01T00:00:00Z",
+    "windowEndExclusiveUtc": "2018-01-12T00:00:00Z"
+  },
+  "semantics": {
+    "timezone": "UTC",
+    "rawTemperatureUnit": "0.1 degC",
+    "rawHumidityUnit": "0.1 percent RH",
+    "indoorNominalIntervalSeconds": 12,
+    "weatherNominalIntervalSeconds": 900,
+    "aggregation": "固定UTC小时内各序列可用样本的算术均值，保留极值、计数、首末采样时刻；不是连续时间均值或瞬时值",
+    "outdoorSource": "原研究关联的Weather Underground观测，非该植物位置实测、非和风未来预报",
+    "light": "原研究光照无校准单位；本子集不纳入光照",
+    "missing": "保留缺失小时、空字段与0样本数，不填值、不跨缺段；超范围RH保留为质量标记，不截断"
+  },
+  "sourceArchives": [
+    {
+      "name": "room_and_appliance_sensors.zip",
+      "url": "https://datashare.ed.ac.uk/server/api/core/bitstreams/b6e8483c-e5a8-4867-ba5a-1bcf0b4e96e2/content",
+      "sizeBytes": 10005114253
+    },
+    {
+      "name": "household_sensors.zip",
+      "url": "https://datashare.ed.ac.uk/server/api/core/bitstreams/32316855-78ab-4279-8543-2992b12d322f/content",
+      "sizeBytes": 15863138394
+    }
+  ],
+  "sourceMembers": [
+    {
+      "file": "sensordata/home100_livingroom1038_sensor4474_room_temperature.csv.gz",
+      "size": 7504161,
+      "sha256": "246119b0d4a2659634ad9ee46e432c9e2c540efd1bf4180dfa3562c2643cadae",
+      "crc32": 3833802035
+    },
+    {
+      "file": "sensordata/home100_livingroom1038_sensor4473_room_humidity.csv.gz",
+      "size": 8109594,
+      "sha256": "232e69d41a2397d7e82191c4b236db11240e64ce37eacf65d0fd7c663854eb09",
+      "crc32": 2513593695
+    },
+    {
+      "file": "sensordata/weatherreading.csv.gz",
+      "size": 4301972,
+      "sha256": "ea06d07fd15dae767233a2cbd980ea8c1122dd28f568f69cc3fc6b8ca67429d3",
+      "crc32": 3853133787
+    }
+  ],
+  "downloadVerification": "仅读ZIP目录和指定成员字节区间；HTTP Content-Range、ZIP成员CRC及gzip完整解压已核验；未下载全库",
+  "pairing": {
+    "windowStart": "2017-12-01 00:00:00",
+    "windowEndExclusive": "2018-01-12 00:00:00",
+    "hours": 1008,
+    "completeFourFieldHours": 886,
+    "longestCompleteHourlyRun": 244,
+    "rhOutOfRangeHours": 2,
+    "columns": [
+      {
+        "name": "indoor_temperature",
+        "source": "home100_livingroom1038_sensor4474_room_temperature.csv.gz",
+        "feed": null,
+        "selected": 240627,
+        "invalid": 0,
+        "duplicateTimestamps": 0,
+        "availableHours": 891,
+        "minSamples": 1,
+        "maxSamples": 300
+      },
+      {
+        "name": "indoor_rh",
+        "source": "home100_livingroom1038_sensor4473_room_humidity.csv.gz",
+        "feed": null,
+        "selected": 240627,
+        "invalid": 0,
+        "duplicateTimestamps": 0,
+        "availableHours": 891,
+        "minSamples": 1,
+        "maxSamples": 300
+      },
+      {
+        "name": "outdoor_temperature",
+        "source": "weatherreading.csv.gz",
+        "feed": "21",
+        "selected": 3987,
+        "invalid": 0,
+        "duplicateTimestamps": 0,
+        "availableHours": 1003,
+        "minSamples": 1,
+        "maxSamples": 4
+      },
+      {
+        "name": "outdoor_rh",
+        "source": "weatherreading.csv.gz",
+        "feed": "23",
+        "selected": 3987,
+        "invalid": 0,
+        "duplicateTimestamps": 0,
+        "availableHours": 1003,
+        "minSamples": 1,
+        "maxSamples": 4
+      }
+    ],
+    "sha256": "a8fa47ffd565f80938c391c96b05c13887b2a33fdf3342040522230e1046c6c2",
+    "completeHoursWithRhInRange": 884,
+    "invalidRhHours": [
+      {
+        "intervalStartUtc": "2017-12-10T11:00:00Z",
+        "field": "outdoor_rh",
+        "minimum": -999
+      },
+      {
+        "intervalStartUtc": "2017-12-10T12:00:00Z",
+        "field": "outdoor_rh",
+        "minimum": -999
+      }
+    ]
+  },
+  "qualification": {
+    "rawPairedFixtureAvailable": true,
+    "acceptedForModelCalibration": false,
+    "acceptedForProduction": false,
+    "pending": [
+      "逐小时覆盖门槛与RH异常排除须在拟合前确定",
+      "按独立时间段或住宅划分校准与验证，不以当前验证误差选参数",
+      "明确小时样本均值与状态方程时刻的对应，不能默认等于时段起点或终点",
+      "本子集未给出气压、同刻供暖/开窗状态或房间太阳热输入；这些量不得填默认值",
+      "没有测量的用户住宅初态、跨住宅迁移误差与正式模型准入仍需独立验证"
+    ]
+  },
+  "artifacts": {
+    "csv": "cloudfunctions-v2/models/care/fixtures/ideal-home100-hourly.csv",
+    "csvSha256": "a8fa47ffd565f80938c391c96b05c13887b2a33fdf3342040522230e1046c6c2",
+    "reproduce": "node cloudfunctions-v2/scripts/prepare-ideal-climate-fixture.mjs <已核验的3个原始gz所在目录> <输出CSV路径>"
+  },
+  "metadataArchives": [
+    {
+      "file": "documentation.zip",
+      "sha256": "9f9b47a47efac77d42aa427ecfc2c578a630305bb72d6d06aee808af19edae3c"
+    },
+    {
+      "file": "metadata_and_surveys.zip",
+      "sha256": "a9cd4af2e4ba804f5c55c4940fc5f7fb4f6f5ca6227cd192a65edd6fc0870ef8"
+    }
+  ],
+  "independentAudit": {
+    "method": "独立Python读取3个原始gz，复算首个小时，核验每行半开时段与缺失计数",
+    "maxFirstHourMeanDifference": 1.28e-13,
+    "sameHourFirstLastSamples": true,
+    "completeIsNotQualityApproved": true
+  }
+}

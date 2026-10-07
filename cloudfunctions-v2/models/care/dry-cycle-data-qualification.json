@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "ticketId": "z8v0kmr973",
+  "verifiedOn": "2026-10-08",
+  "status": "research_only",
+  "acceptedForTimingCalibration": false,
+  "acceptedForWaterAmount": false,
+  "productionAdmission": false,
+  "source": {
+    "title": "Soil Moisture, Irrigation Actuator and Weather Dataset from a Multi-Sector Precision-Irrigation",
+    "titleZh": "多区域精准灌溉的土壤水分、灌溉执行器与天气数据集",
+    "doi": "10.17632/c837v6p8ph.2",
+    "version": 2,
+    "url": "https://data.mendeley.com/datasets/c837v6p8ph/2",
+    "authors": ["Tommaso Adamo", "Lucio Colizzi", "Giovanni Dimauro", "Emanuela Guerriero", "Nunzia Lomonte"],
+    "license": "CC BY 4.0",
+    "attributionRequirementZh": "使用时保留作者、数据集名称、版本、DOI及许可，并说明筛选或处理；原页另列相关论文署名要求。",
+    "locationZh": "意大利阿普利亚大区莱切省Arnesano农场，包含五个区域；仅区域3为本次核验的盆栽番茄。"
+  },
+  "files": [
+    {
+      "name": "README.md",
+      "url": "https://data.mendeley.com/public-files/datasets/c837v6p8ph/files/428a6967-0afb-4176-bada-3e49740f461d/file_downloaded",
+      "bytes": 16373,
+      "sha256": "184e986b5693090b52a76a5baf3d2767a4c5d556304e280854961a8245ff36b4"
+    },
+    {
+      "name": "DATA_DICTIONARY.md",
+      "url": "https://data.mendeley.com/public-files/datasets/c837v6p8ph/files/7cc85f71-cf91-49ff-a5ff-9f54a141a8c4/file_downloaded",
+      "bytes": 16629,
+      "sha256": "23aaa907ac86d5132a5cfa195b9cfc5b6ffe92af32e4d5d6d70ae631babc2ab1"
+    },
+    {
+      "name": "dataset_zone_3.csv",
+      "url": "https://data.mendeley.com/public-files/datasets/c837v6p8ph/files/a285cd8c-5972-43db-9feb-188ce2ea1106/file_downloaded",
+      "bytes": 4814575,
+      "sha256": "a8d198e01256660f8b43603d2df829382345c640a1d1da497f638a232c612372"
+    },
+    {
+      "name": "dataset_zone_3_preprocessed.csv",
+      "url": "https://data.mendeley.com/public-files/datasets/c837v6p8ph/files/b566d446-ea13-4827-bdcc-61ce5b835814/file_downloaded",
+      "bytes": 223079,
+      "sha256": "cc8b6e1e1609f5c749e0e3d05a4b5b237fc4cc79f38e1035d564ea3aabe09424"
+    },
+    {
+      "name": "final_irrigation_events.csv",
+      "url": "https://data.mendeley.com/public-files/datasets/c837v6p8ph/files/d31bbe73-1b08-4c81-a7a9-84d8c9a0eb5b/file_downloaded",
+      "bytes": 71204,
+      "sha256": "d178704cb38ea086e41dc1091c4bb87846bb316efa66ace70d35f5619a2a4381"
+    },
+    {
+      "name": "MEASUREMENT_sut.csv",
+      "url": "https://data.mendeley.com/public-files/datasets/c837v6p8ph/files/d4c496f3-6002-477b-8125-6013b5d2679b/file_downloaded",
+      "bytes": 2820460,
+      "sha256": "1eb7f05c637fbe2fad2920b58a9febc07b43cd608dbe6907655d36433bfd62d2"
+    }
+  ],
+  "fileVerificationZh": "六个文件均已实际下载并解析或阅读；本地计算的SHA-256与数据仓公开文件接口声明一致。",
+  "sampling": {
+    "timeZone": "Europe/Rome",
+    "timestampSemanticsZh": "无时区标记的当地时间；来源明确未进行夏令时校正，不视作UTC连续时间。",
+    "gridSeconds": 600,
+    "mergedRows": 33259,
+    "mergedFirst": "2025-02-09 00:00:00",
+    "mergedLast": "2025-09-27 23:00:00",
+    "mergedMissingSoilMoistureRows": 23159,
+    "preprocessedRows": 1118,
+    "preprocessedFirst": "2025-02-14 13:10:00",
+    "preprocessedLast": "2025-06-25 08:10:00",
+    "preprocessedAdjacentPairs": 1117,
+    "preprocessedAdjacentPairsAt600Seconds": 807,
+    "preprocessedAdjacentPairsWithGaps": 310,
+    "rawSector3SoilRows": 10110,
+    "sector3ReconstructedIrrigationEvents": 72,
+    "allSectorReconstructedIrrigationEvents": 789
+  },
+  "fieldSemantics": {
+    "soilMoistureZh": "soil_moisture及humidity_percentage为0至100相对探头刻度，不是已校准体积含水率；区域3原始记录的unit_of_measure和uncalibrated_value均为空。",
+    "weatherZh": "weather_temp为摄氏温度，weather_humidity为相对湿度百分数，weather_radiation为直接太阳辐射W/m²；均来自Open-Meteo ERA5历史资料，经插值和重采样，非盆边实测。",
+    "onsiteIndoorZh": "现场室内温度覆盖从2025-07-21开始，室内湿度从2025-07-23开始，晚于区域3有效处理水分序列，不能构成同期室内环境验真。",
+    "irrigationZh": "事件由阀门信号及筛选规则重建；区域3liters_total为阀门开启时长乘名义1.1L/min，不是流量计实测水量。短于15分钟的事件被筛掉，不能据无重建事件断言绝无实际浇水。",
+    "imputationZh": "平台分钟水分表含延续或插补值；处理层另做异常过滤、钳制、尖峰和末端持平段处理及最多两步时间插值。区域3处理CSV没有逐行来源或插补标记。",
+    "targetZh": "target_point_24h和target_mean_24h按后续144行构造；只有连续600秒无缺口时才对应24小时。water_vol_to_24h使用未来实际供水，不可作为未知未来浇水场景的预测输入。"
+  },
+  "longestCandidateSegment": {
+    "file": "dataset_zone_3_preprocessed.csv",
+    "selectionZh": "仅筛相邻时间差600秒、土壤刻度在0至100且irrigation_duration_minutes为零的连续片段；此筛选不证明原始实测、绝无浇水或植物适用阈值。",
+    "rows": 11,
+    "first": "2025-05-08 08:20:00",
+    "last": "2025-05-08 10:00:00",
+    "durationMinutes": 100,
+    "firstRelativeMoisture": 86,
+    "lastRelativeMoisture": 60,
+    "accepted": false
+  },
+  "rejectionReasonsZh": [
+    "缺可对应有效基质体积与植物目标的绝对根区水分标定，不能进入净补水缺口计算。",
+    "缺多日连续且来源可分辨的盆栽干燥片段；最长候选仅100分钟，不能验证多日剩余窗口。",
+    "探头失效后的零值和持平段不能解释为真实干燥；插值与原始观测不能在处理CSV逐行区分。",
+    "同期室内温湿度缺失，历史再分析天气不能替代实际盆边环境验真。",
+    "浇水事件及升数经重建和名义流量换算，缺完整实际供水与排水计量。",
+    "当地时间未校正夏令时，144行目标又可能跨缺口，不能直接当真实UTC时长。"
+  ],
+  "usableScopeZh": [
+    "研究真实农业遥测的缺测、探头故障、插补及灌溉事件重建边界。",
+    "用于检验研究回放是否拒绝断续覆盖、未来标签泄漏及相对刻度冒充体积含水率。",
+    "不作为青花植通用材料物性、默认阈值、施水系数或正式预测准确性证据。"
+  ],
+  "nextRequiredDataZh": [
+    "同一明确盆器与真实配方的连续盆重或经该基质标定的根区含水量，保留原始值、采集时刻及质量标记。",
+    "完整浇水时间与实际水量、排水和其他质量变化记录，能够隔离多个真实无浇水干燥片段。",
+    "与盆土同期的温湿度及光照记录、明确时区与夏令时处理，不以插补值伪造覆盖。",
+    "独立确认该植物和基质的目标条件，且实际观测到阈值穿越；校准与验证按盆或完整循环隔离。",
+    "有效装土体积、含水率量纲及误差依据；实际施水验收另需供水效率与排水安全条件。"
+  ]
+}

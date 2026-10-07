@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "step": "E04",
+  "ticketId": "z8v0kmr973",
+  "recordedAt": "2026-10-07T19:36:50.412276+00:00",
+  "scope": "公开校准数据资格核验与可复现制品",
+  "productBehaviorChanged": false,
+  "productionAdmission": false,
+  "result": {
+    "indoorPairedHours": 886,
+    "indoorPairedRhInRangeHours": 884,
+    "dryCycleDatasetAccepted": false,
+    "reason": "取得新的真实室内外子集；盆栽候选无合格多日段且非VWC，不能拟合水量或剩余时间"
+  },
+  "artifacts": [
+    {
+      "path": "cloudfunctions-v2/models/care/indoor-climate-data-qualification.json",
+      "sha256": "cc1de42ab3174178f428ff74f2cf2d6cdde61164cca1c82910d1eca7ae368fba"
+    },
+    {
+      "path": "cloudfunctions-v2/models/care/dry-cycle-data-qualification.json",
+      "sha256": "70e074c6cbb435b7a74c389929497566129188e8d7ffee5386a277d4352397bb"
+    },
+    {
+      "path": "cloudfunctions-v2/models/care/fixtures/ideal-home100-hourly.csv",
+      "sha256": "a8fa47ffd565f80938c391c96b05c13887b2a33fdf3342040522230e1046c6c2"
+    },
+    {
+      "path": "cloudfunctions-v2/models/care/fixtures/ideal-home100-hourly.csv.summary.json",
+      "sha256": "7a46ecf618ab3cd222abf98e30522c7240ea4ea60a8e06750ddf583631ae3cc8"
+    },
+    {
+      "path": "cloudfunctions-v2/scripts/prepare-ideal-climate-fixture.mjs",
+      "sha256": "88b1c6fd6073fa7a50b5a7d36afad23aa6e2a1e38747252d04c2b1298c394878"
+    }
+  ],
+  "validation": {
+    "backendVitest": {
+      "filesPassed": 207,
+      "testsPassed": 2035,
+      "failed": 0,
+      "command": "npm test"
+    },
+    "independentDataAudit": {
+      "firstHourMeanMaximumDifference": 1.28e-13,
+      "csvRows": 1008,
+      "intervalSeconds": 3600,
+      "missingNotFilled": true
+    },
+    "modelAccuracyValidated": false,
+    "httpValidated": false
+  },
+  "nextAction": "在IDEAL数据拟合前冻结有效覆盖与状态时刻语义；按分离时段验证室内估算，不以全均值或异常RH训练；盆栽另需有目标状态和完整干燥过程的合格数据"
+}
