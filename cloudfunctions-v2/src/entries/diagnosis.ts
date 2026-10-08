@@ -5,7 +5,9 @@ import {
   withReadConnection,
   toSqlParameters
 } from '../foundation/database/mysql2-connection-source.js'
+import { createResolveGuestOrUserPrincipal } from '../identity/application/resolve-guest-principal.js'
 import { createResolveUserPrincipalUseCase } from '../identity/application/resolve-user-principal.js'
+import { createMysqlGuestSessionRepository } from '../identity/repository/mysql-guest-session-repository.js'
 import {
   createMysqlUserPrincipalRepository,
   type UserPrincipalSqlRow
@@ -21,7 +23,10 @@ const logger = pino({
   redact: { paths: ['headers', 'authorization', 'body', 'env', 'config'], censor: '[已脱敏]' }
 })
 const source = createMysql2ConnectionSource(readDatabaseConnectionConfig(process.env))
-const resolvePrincipal = createResolveUserPrincipalUseCase({
+/** guest_or_authenticated：`Bearer guest.<令牌>` 解析为游客（guest-token/v1 §2），其他 Bearer 解析为登录用户。 */
+const resolvePrincipal = createResolveGuestOrUserPrincipal({
+  guestRepository: createMysqlGuestSessionRepository(source),
+  resolveUser: createResolveUserPrincipalUseCase({
   repository: {
     read: input =>
       withReadConnection(source, connection =>
@@ -34,6 +39,7 @@ const resolvePrincipal = createResolveUserPrincipalUseCase({
         }).read(input)
       )
   }
+  })
 })
 const server = createDiagnosisServer({
   connectionSource: source,

@@ -91,3 +91,16 @@ Expected 来源：guest-token-contract.md §1/§2/§6、配置目录已冻结值
 | E4 失败关闭 | 活动指针切回 v1 发布 → 503，不新增行 | Reverse | 已写（绿） |
 
 反事实 RED：读取器不认 v2（仓库外副本）→ E1/E3 红；恢复后 3/3 绿。
+
+## 游客或登录主体合并解析 `createResolveGuestOrUserPrincipal`（E03，cases 先于产品）
+
+对象：`guest_or_authenticated` 路由使用的统一解析端口。L3 `unit_fake`：替换登录用户解析与游客存储。
+Expected 来源：guest-token-contract.md §2（`Bearer guest.<token>` → 游客）；principal-and-capability 合同（其他 Bearer 为登录会话）；登录会话令牌为 base64url，不含 `.`，与前缀不冲突。
+
+| 维 | 用例 | 形态 | 状态 |
+|---|---|---|---|
+| G1 | `guest.<合法令牌>` → 游客主体，不调用登录解析 | Happy | 已写（绿） |
+| G2 | 无前缀 Bearer → 交给登录解析并原样返回其结果，不查游客存储 | Happy | 已写（绿） |
+| G3 | `guest.` 后令牌非法/找不到 → PRINCIPAL_INVALID（统一主体解析错误），不回落到登录解析 | Reverse | 已写（绿） |
+
+突变：游客失败回落登录解析 → G3 红。接线：diagnosis 入口改用合并解析（入口组合代码，构建与类型检查覆盖；未做 diagnosis 游客 MySQL 端到端）。

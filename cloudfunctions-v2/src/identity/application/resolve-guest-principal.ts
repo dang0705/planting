@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 
-import type { GuestPrincipalDto } from '../../contracts/types.js'
+import type { GuestPrincipalDto, UserPrincipalDto } from '../../contracts/types.js'
+import type { ResolveUserPrincipalCommand } from './resolve-user-principal.js'
 import { UnifiedUserPrincipalResolveError } from '../domain/resolve-user-principal.js'
 import type { ActiveGuestSession } from '../repository/mysql-guest-session-repository.js'
 
@@ -58,5 +59,28 @@ export async function resolveGuestPrincipal(
     authProvider: 'server_issued_guest_token',
     issuedAt: new Date(session.issuedAtMs).toISOString(),
     expiresAt: new Date(session.expiresAtMs).toISOString(),
+  }
+}
+
+/** 合并解析依赖：登录用户解析与游客存储均由 identity 域提供。 */
+export interface ResolveGuestOrUserPrincipalDependencies {
+  /** 登录会话解析（无 `guest.` 前缀的 Bearer）。 */
+  readonly resolveUser: (command: ResolveUserPrincipalCommand) => Promise<UserPrincipalDto>
+  /** 游客会话存储：只按令牌摘要查找有效会话。 */
+  readonly guestRepository: ResolveGuestPrincipalDependencies['repository']
+}
+
+/**
+ * `guest_or_authenticated` 路由的统一主体解析：`guest.` 前缀只走游客，其他只走登录会话。
+ * 游客令牌无效时直接拒绝，不回落到登录解析，避免两种主体互相冒充。
+ */
+export function createResolveGuestOrUserPrincipal(
+  dependencies: ResolveGuestOrUserPrincipalDependencies,
+): (command: ResolveUserPrincipalCommand) => Promise<UserPrincipalDto | GuestPrincipalDto> {
+  return command => {
+    const guestToken = parseGuestBearer(command.bearerToken)
+    return guestToken === null
+      ? dependencies.resolveUser(command)
+      : resolveGuestPrincipal({ repository: dependencies.guestRepository }, { guestToken, nowMs: command.nowMs })
   }
 }

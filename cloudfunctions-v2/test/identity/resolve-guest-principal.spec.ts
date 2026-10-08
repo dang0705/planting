@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
 import { UnifiedUserPrincipalResolveError } from '../../src/identity/domain/resolve-user-principal.js'
-import { parseGuestBearer, resolveGuestPrincipal } from '../../src/identity/application/resolve-guest-principal.js'
+import { createResolveGuestOrUserPrincipal, parseGuestBearer, resolveGuestPrincipal } from '../../src/identity/application/resolve-guest-principal.js'
 
 /** Expected：models/identity/guest-token-test-matrix.md「游客令牌解析」（guest-token/v1 §2 冻结合同）。L3 unit_fake：只替换存储。 */
 const nowMs = Date.UTC(2026, 9, 9, 2)
@@ -51,5 +51,31 @@ describe('游客令牌解析｜L3 unit_fake', () => {
     expect(parseGuestBearer(token)).toBeNull()
     expect(parseGuestBearer('guest.')).toBeNull()
     expect(parseGuestBearer('Guest.' + token)).toBeNull()
+  })
+})
+
+describe('游客或登录主体合并解析｜L3 unit_fake', () => {
+  const userPrincipal = { principalType: 'user' } as never
+  function setup(found: unknown = session) {
+    const resolveUser = vi.fn().mockResolvedValue(userPrincipal)
+    const repository = repositoryReturning(found)
+    return { resolveUser, repository, resolve: createResolveGuestOrUserPrincipal({ resolveUser, guestRepository: repository }) }
+  }
+  it('G1：guest.<令牌> → 游客主体，不调用登录解析', async () => {
+    const s = setup()
+    expect(await s.resolve({ bearerToken: `guest.${token}`, nowMs })).toMatchObject({ principalType: 'guest', guestSessionRef: session.guestSessionRef })
+    expect(s.resolveUser).not.toHaveBeenCalled()
+  })
+  it('G2：无前缀 Bearer → 登录解析原样返回，不查游客存储', async () => {
+    const s = setup()
+    const command = { bearerToken: token, nowMs }
+    expect(await s.resolve(command)).toBe(userPrincipal)
+    expect(s.resolveUser).toHaveBeenCalledWith(command)
+    expect(s.repository.findActiveByProofHash).not.toHaveBeenCalled()
+  })
+  it.each([['guest.short'], [`guest.${token}`]])('G3：%s 非法或找不到 → PRINCIPAL_INVALID，不回落登录解析', async bearer => {
+    const s = setup(null)
+    await expectInvalid(s.resolve({ bearerToken: bearer, nowMs }))
+    expect(s.resolveUser).not.toHaveBeenCalled()
   })
 })
