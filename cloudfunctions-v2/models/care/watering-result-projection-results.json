@@ -1,0 +1,377 @@
+{
+  "classification": "synthetic_experimental",
+  "productionAdmission": false,
+  "ticket": "z8v0kmr973",
+  "sourceRecipe": {
+    "path": "cloudfunctions-v2/models/care/irrigation-watering-sample-results.json",
+    "sha256": "387747d39cc77c3240b5a4de65998fd0f2f55657287765653c88654dcdb20caf"
+  },
+  "replayModule": "cloudfunctions-v2/models/care/experiments/replay-irrigation-watering-sample.ts",
+  "projectionModule": "cloudfunctions-v2/src/care/application/project-watering-replay-result.ts",
+  "projectionSha256": "12a54cba781a840727dec145e6a2e979e1841e9089c3c8fb79ae73f9ac78c051",
+  "scenarios": [
+    {
+      "id": "allowed",
+      "description": "明确合成条件下的单次施水候选",
+      "snapshotHash": "edf9e333cf87b1809cbf32f64d1812c5d16dcb5772d1a83d549fc187b9ef9160",
+      "candidate": {
+        "capabilityType": "watering",
+        "contractVersion": "care-capability-result/v1",
+        "status": "ready",
+        "confidence": "medium",
+        "evidenceSummary": [
+          "盆土安全门和供排水参考均满足当前合成样本条件，水量仅为离线候选。"
+        ],
+        "recommendedActions": [
+          "当前盆土已达到目标干燥状态，可以考虑浇水。"
+        ],
+        "generatedAt": "2026-10-08T00:00:00.000Z",
+        "validUntil": "2026-10-18T00:00:00.000Z",
+        "detailsSchemaVersion": "watering-assessment/v1",
+        "details": {
+          "action": "water_allowed",
+          "soilState": "target_dry",
+          "soilScope": "root_zone",
+          "dryingWindowState": null,
+          "checkWindow": {
+            "purpose": "soil_check",
+            "earliestAt": "2026-10-08T00:00:00.000Z",
+            "latestAt": "2026-10-08T00:00:00.000Z",
+            "coverageEndAt": "2026-10-08T00:00:00.000Z",
+            "timezone": "UTC",
+            "earliestDate": "2026-10-08",
+            "latestDate": "2026-10-08"
+          },
+          "amountMl": {
+            "min": 375,
+            "max": 390
+          },
+          "netDeficitMl": {
+            "min": 300,
+            "max": 300
+          },
+          "missingEvidence": []
+        }
+      },
+      "publicResult": {
+        "capabilityType": "watering",
+        "contractVersion": "care-capability-result/v1",
+        "status": "temporarily_unavailable",
+        "confidence": "low",
+        "evidenceSummary": [
+          "当前仅完成离线计算，正式浇水模型尚未发布。"
+        ],
+        "recommendedActions": [],
+        "generatedAt": "2026-10-08T00:00:00.000Z",
+        "validUntil": null,
+        "detailsSchemaVersion": "watering-assessment/v1",
+        "details": {
+          "action": "temporarily_unavailable",
+          "soilState": "unknown",
+          "soilScope": null,
+          "dryingWindowState": null,
+          "checkWindow": null,
+          "amountMl": null,
+          "netDeficitMl": null,
+          "missingEvidence": [
+            "published_watering_model"
+          ]
+        }
+      }
+    },
+    {
+      "id": "wet",
+      "description": "湿土否决正净缺口",
+      "snapshotHash": "e09770e47543bcc5a9db4e8f8eadeddf271b143219e824a1d7b196f6aed09c31",
+      "candidate": {
+        "capabilityType": "watering",
+        "contractVersion": "care-capability-result/v1",
+        "status": "ready",
+        "confidence": "medium",
+        "evidenceSummary": [
+          "当前可靠盆土证据要求暂停浇水，计算缺口不构成施水许可。"
+        ],
+        "recommendedActions": [
+          "当前盆土偏湿或积水，请暂停浇水。"
+        ],
+        "generatedAt": "2026-10-08T00:00:00.000Z",
+        "validUntil": "2026-10-18T00:00:00.000Z",
+        "detailsSchemaVersion": "watering-assessment/v1",
+        "details": {
+          "action": "pause_watering",
+          "soilState": "wet",
+          "soilScope": "root_zone",
+          "dryingWindowState": null,
+          "checkWindow": null,
+          "amountMl": null,
+          "netDeficitMl": null,
+          "missingEvidence": []
+        }
+      },
+      "publicResult": {
+        "capabilityType": "watering",
+        "contractVersion": "care-capability-result/v1",
+        "status": "temporarily_unavailable",
+        "confidence": "low",
+        "evidenceSummary": [
+          "当前仅完成离线计算，正式浇水模型尚未发布。"
+        ],
+        "recommendedActions": [],
+        "generatedAt": "2026-10-08T00:00:00.000Z",
+        "validUntil": null,
+        "detailsSchemaVersion": "watering-assessment/v1",
+        "details": {
+          "action": "temporarily_unavailable",
+          "soilState": "unknown",
+          "soilScope": null,
+          "dryingWindowState": null,
+          "checkWindow": null,
+          "amountMl": null,
+          "netDeficitMl": null,
+          "missingEvidence": [
+            "published_watering_model"
+          ]
+        }
+      }
+    },
+    {
+      "id": "limited_drainage",
+      "description": "有限排水没有本策略候选",
+      "snapshotHash": "4d619f67b2777fb447d6107e199d967f6f3286ce341bc0eeb7adaae6750afa29",
+      "candidate": {
+        "capabilityType": "watering",
+        "contractVersion": "care-capability-result/v1",
+        "status": "insufficient_evidence",
+        "confidence": "low",
+        "evidenceSummary": [
+          "当前排水条件不适用已核验的施水参考。"
+        ],
+        "recommendedActions": [
+          "请先确认实际种植内盆的排水条件。"
+        ],
+        "generatedAt": "2026-10-08T00:00:00.000Z",
+        "validUntil": "2026-10-18T00:00:00.000Z",
+        "detailsSchemaVersion": "watering-assessment/v1",
+        "details": {
+          "action": "review_drainage",
+          "soilState": "target_dry",
+          "soilScope": "root_zone",
+          "dryingWindowState": null,
+          "checkWindow": null,
+          "amountMl": null,
+          "netDeficitMl": null,
+          "missingEvidence": [
+            "drainage_conditions"
+          ]
+        }
+      },
+      "publicResult": {
+        "capabilityType": "watering",
+        "contractVersion": "care-capability-result/v1",
+        "status": "temporarily_unavailable",
+        "confidence": "low",
+        "evidenceSummary": [
+          "当前仅完成离线计算，正式浇水模型尚未发布。"
+        ],
+        "recommendedActions": [],
+        "generatedAt": "2026-10-08T00:00:00.000Z",
+        "validUntil": null,
+        "detailsSchemaVersion": "watering-assessment/v1",
+        "details": {
+          "action": "temporarily_unavailable",
+          "soilState": "unknown",
+          "soilScope": null,
+          "dryingWindowState": null,
+          "checkWindow": null,
+          "amountMl": null,
+          "netDeficitMl": null,
+          "missingEvidence": [
+            "published_watering_model"
+          ]
+        }
+      }
+    },
+    {
+      "id": "insufficient_cap",
+      "description": "上限低于满足最低补水所需量",
+      "snapshotHash": "a26dc41486d80acc5d6776b816e11db8f70a6cd93fa5daf1fc33eb4d4631ab2a",
+      "candidate": {
+        "capabilityType": "watering",
+        "contractVersion": "care-capability-result/v1",
+        "status": "insufficient_evidence",
+        "confidence": "low",
+        "evidenceSummary": [
+          "当前没有满足安全上限的单次施水范围，不能自行截短或拆分剂量。"
+        ],
+        "recommendedActions": [
+          "请检查当前盆土，核实后再决定是否浇水。"
+        ],
+        "generatedAt": "2026-10-08T00:00:00.000Z",
+        "validUntil": "2026-10-18T00:00:00.000Z",
+        "detailsSchemaVersion": "watering-assessment/v1",
+        "details": {
+          "action": "check_now",
+          "soilState": "target_dry",
+          "soilScope": "root_zone",
+          "dryingWindowState": null,
+          "checkWindow": null,
+          "amountMl": null,
+          "netDeficitMl": null,
+          "missingEvidence": [
+            "safe_application_range"
+          ]
+        }
+      },
+      "publicResult": {
+        "capabilityType": "watering",
+        "contractVersion": "care-capability-result/v1",
+        "status": "temporarily_unavailable",
+        "confidence": "low",
+        "evidenceSummary": [
+          "当前仅完成离线计算，正式浇水模型尚未发布。"
+        ],
+        "recommendedActions": [],
+        "generatedAt": "2026-10-08T00:00:00.000Z",
+        "validUntil": null,
+        "detailsSchemaVersion": "watering-assessment/v1",
+        "details": {
+          "action": "temporarily_unavailable",
+          "soilState": "unknown",
+          "soilScope": null,
+          "dryingWindowState": null,
+          "checkWindow": null,
+          "amountMl": null,
+          "netDeficitMl": null,
+          "missingEvidence": [
+            "published_watering_model"
+          ]
+        }
+      }
+    },
+    {
+      "id": "missing_profile",
+      "description": "缺供排水参考只保留净缺口与检查时刻",
+      "snapshotHash": "e1191f60df6506705ce0041d54abf0affcafdc7918597263cdd37a97515e5121",
+      "candidate": {
+        "capabilityType": "watering",
+        "contractVersion": "care-capability-result/v1",
+        "status": "ready",
+        "confidence": "medium",
+        "evidenceSummary": [
+          "盆土证据支持定性判断，但缺少适用的供排水参考，不能估算浇入量。"
+        ],
+        "recommendedActions": [
+          "当前盆土已达到目标干燥状态，可以考虑浇水。"
+        ],
+        "generatedAt": "2026-10-08T00:00:00.000Z",
+        "validUntil": "2026-10-18T00:00:00.000Z",
+        "detailsSchemaVersion": "watering-assessment/v1",
+        "details": {
+          "action": "water_allowed",
+          "soilState": "target_dry",
+          "soilScope": "root_zone",
+          "dryingWindowState": null,
+          "checkWindow": {
+            "purpose": "soil_check",
+            "earliestAt": "2026-10-08T00:00:00.000Z",
+            "latestAt": "2026-10-08T00:00:00.000Z",
+            "coverageEndAt": "2026-10-08T00:00:00.000Z",
+            "timezone": "UTC",
+            "earliestDate": "2026-10-08",
+            "latestDate": "2026-10-08"
+          },
+          "amountMl": null,
+          "netDeficitMl": {
+            "min": 300,
+            "max": 300
+          },
+          "missingEvidence": [
+            "application_reference"
+          ]
+        }
+      },
+      "publicResult": {
+        "capabilityType": "watering",
+        "contractVersion": "care-capability-result/v1",
+        "status": "temporarily_unavailable",
+        "confidence": "low",
+        "evidenceSummary": [
+          "当前仅完成离线计算，正式浇水模型尚未发布。"
+        ],
+        "recommendedActions": [],
+        "generatedAt": "2026-10-08T00:00:00.000Z",
+        "validUntil": null,
+        "detailsSchemaVersion": "watering-assessment/v1",
+        "details": {
+          "action": "temporarily_unavailable",
+          "soilState": "unknown",
+          "soilScope": null,
+          "dryingWindowState": null,
+          "checkWindow": null,
+          "amountMl": null,
+          "netDeficitMl": null,
+          "missingEvidence": [
+            "published_watering_model"
+          ]
+        }
+      }
+    },
+    {
+      "id": "contradictory_soil",
+      "description": "干燥标签与定量根区观察明确矛盾",
+      "snapshotHash": "0182d1360f0ef22f0923fa9cad65c84b5106abbf81360fc447e92e00df924648",
+      "candidate": {
+        "capabilityType": "watering",
+        "contractVersion": "care-capability-result/v1",
+        "status": "insufficient_evidence",
+        "confidence": "low",
+        "evidenceSummary": [
+          "根区定量数据与干燥判断不一致，需要重新核实当前盆土。"
+        ],
+        "recommendedActions": [
+          "请检查当前盆土，核实后再决定是否浇水。"
+        ],
+        "generatedAt": "2026-10-08T00:00:00.000Z",
+        "validUntil": "2026-10-18T00:00:00.000Z",
+        "detailsSchemaVersion": "watering-assessment/v1",
+        "details": {
+          "action": "check_now",
+          "soilState": "target_dry",
+          "soilScope": "root_zone",
+          "dryingWindowState": null,
+          "checkWindow": null,
+          "amountMl": null,
+          "netDeficitMl": null,
+          "missingEvidence": [
+            "consistent_root_zone_state"
+          ]
+        }
+      },
+      "publicResult": {
+        "capabilityType": "watering",
+        "contractVersion": "care-capability-result/v1",
+        "status": "temporarily_unavailable",
+        "confidence": "low",
+        "evidenceSummary": [
+          "当前仅完成离线计算，正式浇水模型尚未发布。"
+        ],
+        "recommendedActions": [],
+        "generatedAt": "2026-10-08T00:00:00.000Z",
+        "validUntil": null,
+        "detailsSchemaVersion": "watering-assessment/v1",
+        "details": {
+          "action": "temporarily_unavailable",
+          "soilState": "unknown",
+          "soilScope": null,
+          "dryingWindowState": null,
+          "checkWindow": null,
+          "amountMl": null,
+          "netDeficitMl": null,
+          "missingEvidence": [
+            "published_watering_model"
+          ]
+        }
+      }
+    }
+  ]
+}

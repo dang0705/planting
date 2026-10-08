@@ -34,13 +34,13 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 69,
+      "version": 70,
       "status": "codex running",
-      "note": "E04：净补水已接同盆有界施水候选，保留日期与安全门\n需求包络与允许净留水分开；上限交集为空不给施水量\n六个合成场景可回放；正式参数、发布及HTTP未验收\n新增37项；两组突变7项RED后恢复，全量2285/2285、类型通过\n证据：.codex/backend-v2/evidence/E04-irrigation-application.json",
-      "commentId": "1100440000143971",
-      "commentFingerprint": "46b2c9d7f9a591200206eef8aa4f66b5b027c3c0b3af1ff37608719cc32b35c2",
-      "readback": "Chrome已核对原评论未变，并读回版本69现有五行评论1100440000143971及CODEX RUNNING；未重复发评论",
-      "lastSuccessfulSyncAt": "2026-10-08T04:02:38.324109+00:00"
+      "note": "E04：完整回放已接统一结果，日期/水量/缺证据同轮输出\n冲突、湿土和排水优先；旧观察及表土范围不再误导摘要\n实验候选与正式不可用出口分开；无发布/HTTP验收\n新增15项；经典及两组突变RED恢复，全量2300/2300通过\n证据：.codex/backend-v2/evidence/E04-watering-result-projection.json",
+      "commentId": "1100440000144084",
+      "commentFingerprint": "3787d5ff518b8519b48252b6ca70d34bf4162cd7e2dd4fbab072e3fd1c4aa226",
+      "readback": "Chrome已读回CODEX RUNNING及五行评论1100440000144084，版本70",
+      "lastSuccessfulSyncAt": "2026-10-08T04:15:04.575267+00:00"
     },
     "z8v0kmrg8a": {
       "version": 5,
@@ -85,10 +85,10 @@
       "readback": "原生ClickUp已逐字读回评论1100440000138268；只同步进度，不更改状态"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-08T04:02:38.324109+00:00",
+  "lastSuccessfulSyncAt": "2026-10-08T04:15:04.575267+00:00",
   "h5Projection": {
-    "fingerprint": "b50f21288e40e14309edcb21750657310fe2ab04df90c801a0c11bb3d8cb7020",
-    "sourceRevision": 156,
-    "sourceUpdatedAt": "2026-10-08T03:59:09.446196+00:00"
+    "fingerprint": "a95fe5f6202f1ac85c10ec8c6fe4d7aebfc3a93e914224bf6c559feb2371b125",
+    "sourceRevision": 159,
+    "sourceUpdatedAt": "2026-10-08T04:15:04.575267+00:00"
   }
 }

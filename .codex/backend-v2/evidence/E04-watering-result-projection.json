@@ -1,0 +1,98 @@
+{
+  "ticket": "z8v0kmr973",
+  "step": "E04",
+  "recordedAt": "2026-10-08T04:13:53.066763+00:00",
+  "accepted": false,
+  "productChange": "授权接线：完整样本回放返回统一候选及未发布正式出口",
+  "contract": "cloudfunctions-v2/models/care/watering-result-projection-contract.md",
+  "artifact": "cloudfunctions-v2/models/care/watering-result-projection-results.json",
+  "configurationDecision": "沿用care-capability-result/v1外壳；watering-assessment/v1仅离线详情草案；正式算法pending，无新增可调参数",
+  "truthSources": [
+    "docs/backend-v2/contracts/care-capability-output.md",
+    "完整计划的安全门/实际行为/发布边界",
+    "用户批准的合成输入及独立水量手算"
+  ],
+  "testLevel": "L3 unit_fake",
+  "realPath": "完整光照/VPD/需求/根区参考/安全门/施水回放 → 最外层结果投影",
+  "replacedBoundaries": "内部算法未替换；数据为明确合成，无真实Provider/数据库/HTTP",
+  "coverage": {
+    "I1": "同轮定性许可、检查日期及水量",
+    "I2": "缺供排水参考不猜量",
+    "I3": "冲突、湿土、排水、零缺口、无安全剂量、旧观察、表土范围",
+    "I4": "N/A，无HTTP/认证接入",
+    "I5": "N/A，无持久化写入；输入不变及确定性重放已测"
+  },
+  "tdd": {
+    "path": "经典RED→GREEN，加独立突变验证",
+    "initialRed": {
+      "failed": 13,
+      "log": "/tmp/e04-result-red.log",
+      "reason": "原最外层缺最终结果出口"
+    },
+    "regressions": [
+      {
+        "failed": 1,
+        "log": "/tmp/e04-result-old-soil-red.log",
+        "reason": "浇水前旧观察错误返回target_dry，Expected unknown"
+      },
+      {
+        "failed": 1,
+        "log": "/tmp/e04-result-scope-red.log",
+        "reason": "摘要缺少表土/根区范围"
+      }
+    ],
+    "mutations": [
+      {
+        "failed": 1,
+        "log": "/tmp/e04-result-conflict-mutation-red.log",
+        "change": "移除证据冲突覆盖"
+      },
+      {
+        "failed": 1,
+        "log": "/tmp/e04-result-public-mutation-red.log",
+        "change": "正式出口返回实验候选"
+      }
+    ],
+    "mutationRestoredSha256": "70e626f63e1015355a32dd2f39dea45341a16e98971bcd3dda91ec288d47802a",
+    "laterChanges": "恢复后按独立RED补soilScope和中文注释",
+    "finalSourceSha256": "12a54cba781a840727dec145e6a2e979e1841e9089c3c8fb79ae73f9ac78c051"
+  },
+  "verification": {
+    "newTests": 15,
+    "related": {
+      "files": 17,
+      "passed": 236,
+      "log": "/tmp/e04-result-final-related.log"
+    },
+    "full": {
+      "files": 225,
+      "passed": 2300,
+      "log": "/tmp/e04-result-full-ut-restored.log"
+    },
+    "typecheck": "passed",
+    "typecheckLog": "/tmp/e04-result-final-types.log",
+    "lint": {
+      "errors": 0,
+      "warnings": 4
+    },
+    "initialFullFailure": "中文TSDoc缺7个嵌套属性；补注释后全量恢复，不改Expected"
+  },
+  "review": {
+    "agent": "runtime_probe_terra",
+    "finding": "旧观察资格被摘要忽略",
+    "resolution": "独立RED后排除上次实际浇水前及已标记忽略的观察"
+  },
+  "unaccepted": [
+    "真实参数与适用域校准/发布",
+    "详情正式登记及兼容验收",
+    "CloudBase HTTP及真实持久化",
+    "真实家庭盆栽施水建议"
+  ],
+  "progressReadback": {
+    "at": "2026-10-08T04:15:04.575267+00:00",
+    "status": "codex running",
+    "version": 70,
+    "commentId": "1100440000144084",
+    "screenshot": ".codex/backend-v2/evidence/E04-watering-result-clickup.jpg"
+  }
+}

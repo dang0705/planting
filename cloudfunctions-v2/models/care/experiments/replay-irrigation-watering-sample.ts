@@ -1,6 +1,7 @@
 import { replayRootZoneWateringSample, type RootZoneWateringSample } from './replay-root-zone-watering-sample.js'
 import { deriveIrrigationApplication, type IrrigationApplicationInput } from './irrigation-application.js'
 import { calculateCanonicalJsonSha256, type CanonicalJsonValue } from '../../../src/foundation/json/canonical-json-sha256.js'
+import { projectWateringReplayResult } from '../../../src/care/application/project-watering-replay-result.js'
 
 /** 同盆样本的供水方法及净留水参考；不从用户字段或材料名称生成。 */
 export interface IrrigationWateringSample {
@@ -51,5 +52,5 @@ export function replayIrrigationWateringSample(input: IrrigationWateringSample) 
     : rootZone.watering.decision.action !== 'water_allowed' ? withheld('not_allowed_now')
       : app !== null && app.drainage !== 'free' ? withheld('unsupported_drainage') : math
   return { classification: 'synthetic_experimental' as const, productionAdmission: false as const,
-    rootZone, application, snapshot, snapshotHash }
+    rootZone, application, assessment: projectWateringReplayResult(rootZone.watering, application), snapshot, snapshotHash }
 }

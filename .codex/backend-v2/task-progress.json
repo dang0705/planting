@@ -1,24 +1,23 @@
 {
-  "revision": 156,
+  "revision": 159,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-08T03:59:09.446196+00:00",
+  "updatedAt": "2026-10-08T04:15:04.575267+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "E04同盆净补水到有界施水候选的供排水换算",
+    "target": "E04既有回放接入统一浇水结果，当前安全门决定可见行动和水量",
     "keyAssumptions": [
-      "仅使用用户授权的合成样本，参考比例和上限不作生产默认",
-      "需要区分缺口不确定范围与允许补水范围，禁止用区间任一点冒充安全剂量",
-      "当前盆土安全门和实际排水条件先于施水输出"
+      "同一结果不能因嵌套旧许可绕过冲突或湿土",
+      "实验候选和正式发布分别表示；不添加默认参数"
     ],
-    "configurationDecision": "离线供排水条件显式传入；无新增运行配置、HTTP、数据库或依赖",
-    "minimumVerification": "独立水量守恒和区间手算；湿土、缺证据、超域及上限失败；根目录全量UT",
-    "continueCondition": "换算可追溯且真实缺数据时保持缺失，不改变历史事实和日期",
-    "failureCondition": "来源/适用域/安全界不明时不能提供可施水量，不以更多实验替代正式验收",
-    "rollback": "回退离线模型与接线，生产入口不变",
+    "configurationDecision": "本轮只投影已计算结果；先核对对应已有配置状态，不新增数值策略",
+    "minimumVerification": "端到端内部回放→最终结果，冲突/湿土/缺参数，脱敏和全量UT",
+    "continueCondition": "消费方只读最终结果即可识别能否浇水、日期及水量缺口",
+    "failureCondition": "字段合同或正式准入不明时不得假装上线可用",
+    "rollback": "回退结果投影及调用；保留既有回放原始证据",
     "timeLimitMinutes": 40,
-    "nextAction": "收口E04各阶段结果、来源版本和缺证据表达，定向衔接既有养护能力结果合同及应用入口；正式发布和HTTP独立验收，不重复增建算术模型。",
-    "latestEvidence": ".codex/backend-v2/evidence/E04-irrigation-application.json"
+    "nextAction": "接续E06已有养护用例：核对归属、输入快照、发布组与结果存储接口，把统一结果接到受控应用路径；未发布仍明确不可用，不私自准入参数，不重复扩展算术模型。",
+    "latestEvidence": ".codex/backend-v2/evidence/E04-watering-result-projection.json"
   },
   "tasks": [
     {
@@ -134,10 +133,10 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 69,
+      "version": 70,
       "priority": "high",
       "status": "codex running",
-      "stage": "同盆日期、净补水与安全施水候选已回放；养护结果收口接续",
+      "stage": "统一浇水结果已接全链回放；受控养护用例接续",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -203,18 +202,19 @@
         ".codex/backend-v2/evidence/E04-environment-watering-sample.json",
         ".codex/backend-v2/evidence/E04-joint-drying-response.json",
         ".codex/backend-v2/evidence/E04-root-zone-reference.json",
-        ".codex/backend-v2/evidence/E04-irrigation-application.json"
+        ".codex/backend-v2/evidence/E04-irrigation-application.json",
+        ".codex/backend-v2/evidence/E04-watering-result-projection.json"
       ],
       "summary": [
-        "E04：净补水已接同盆有界施水候选，保留日期与安全门",
-        "需求包络与允许净留水分开；上限交集为空不给施水量",
-        "六个合成场景可回放；正式参数、发布及HTTP未验收",
-        "新增37项；两组突变7项RED后恢复，全量2285/2285、类型通过",
-        "证据：.codex/backend-v2/evidence/E04-irrigation-application.json"
+        "E04：完整回放已接统一结果，日期/水量/缺证据同轮输出",
+        "冲突、湿土和排水优先；旧观察及表土范围不再误导摘要",
+        "实验候选与正式不可用出口分开；无发布/HTTP验收",
+        "新增15项；经典及两组突变RED恢复，全量2300/2300通过",
+        "证据：.codex/backend-v2/evidence/E04-watering-result-projection.json"
       ],
       "blockingReason": null,
-      "nextAction": "收口E04各阶段结果、来源版本和缺证据表达，定向衔接既有养护能力结果合同及应用入口；正式发布和HTTP独立验收，不重复增建算术模型。",
-      "ticketReadback": "上一版本68已读回；本次版本69待同步"
+      "nextAction": "接续E06已有养护用例：核对归属、输入快照、发布组与结果存储接口，把统一结果接到受控应用路径；未发布仍明确不可用，不私自准入参数，不重复扩展算术模型。",
+      "ticketReadback": "Chrome已读回CODEX RUNNING及五行评论1100440000144084，版本70"
     },
     {
       "id": "z8v0kmrg8a",
@@ -1285,5 +1285,22 @@
     "noWholeDirectoryReads": true,
     "implementationStarted": false,
     "priority": "E06后续；不作为E04首次预测前置"
+  },
+  "capabilityResultReadAdmission": {
+    "task": "E04最外层养护结果和既有输出合同接线",
+    "layers": {
+      "L0": "定向glob care-capability无文件；grep仅找到watering-decision-model的输出名称",
+      "L1": "定向context/find及Care摘要只有四类能力和依赖，没有DTO字段",
+      "L2": "已读watering-decision-model、l1-06全文；仍缺care-capability-result的结构、状态、建议语义及其当前配置登记"
+    },
+    "missing": [
+      "浇水能力结果字段和输出状态",
+      "对应结果投影有无已发布参数约束"
+    ],
+    "allowed": [
+      "docs/backend-v2/contracts中care-capability-result对应单文件",
+      "docs/backend-v2/architecture/configuration-variable-catalog.md中care结果/算法发布相关条目"
+    ],
+    "scope": "禁止整个领域、全部架构、无关sourceRefs；目录仅匹配指定合同名"
   }
 }
