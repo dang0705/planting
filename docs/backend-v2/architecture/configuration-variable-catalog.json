@@ -5702,6 +5702,80 @@
       "expiresAt": null,
       "releaseStatus": "active",
       "decisionNote": "用户 2026-10-08 确认：开发与上线均使用 Open-Meteo 免费接口；太阳辐射主来源，和风仅提供普通天气。只调用一次不重试，按地点×小时缓存以控制免费额度。"
+    },
+    {
+      "providerCode": "douyin_miniprogram_login",
+      "chineseName": "抖音小程序登录凭证交换",
+      "owner": "identity",
+      "capabilityCodes": [
+        "PLATFORM_LOGIN_PRINCIPAL"
+      ],
+      "status": "confirmed",
+      "connectTimeoutMs": 2000,
+      "readTimeoutMs": 3000,
+      "totalDeadlineMs": 5000,
+      "maxAttempts": 1,
+      "backoffPolicy": "none_single_use_code",
+      "rateLimitPolicy": "platform_quota_only",
+      "circuitBreakerPolicy": "none_fail_closed",
+      "costPolicy": "free_platform_api",
+      "monthlyBudgetCny": 0,
+      "warningThresholdCny": 0,
+      "auditRetentionDays": 180,
+      "endpointProfile": "douyin_jscode2session_v2",
+      "credentialRef": "env:DOUYIN_APPID+env:DOUYIN_APP_SECRET",
+      "outputContractVersion": "verified-platform-identity-evidence/v1",
+      "fallbackChain": [],
+      "fallback": "凭证或受控配置不可用时拒绝登录，不信任客户端自报的 openid 或请求头",
+      "blockingScope": "真实抖音/小红书小程序登录验真；本地 fake Provider 合同与 MySQL 切片不受阻",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/identity/multi-platform-identity-research.md",
+        "docs/backend-v2/contracts/principal-and-capability.md"
+      ],
+      "decisionGroup": "provider_runtime",
+      "releaseVersion": "douyin-miniprogram-login-runtime/v1",
+      "releaseSha256": "271aeabf8d4c8ddf5dd939119e9082c152ed7af4b3c003ad9a5fed7a9d7675f9",
+      "effectiveAt": "2026-10-09T00:00:00+08:00",
+      "expiresAt": null,
+      "releaseStatus": "active",
+      "decisionNote": "用户 2026-10-09 按微信同标准批准（连接 2s/读取 3s/总 5s、单次不重试、预算 0、审计 180 天）。抖音 code 与 anonymous_code 均一次性；anonymous_openid 只以 HMAC 摘要作游客防刷键"
+    },
+    {
+      "providerCode": "xiaohongshu_miniprogram_login",
+      "chineseName": "小红书小程序登录凭证交换",
+      "owner": "identity",
+      "capabilityCodes": [
+        "PLATFORM_LOGIN_PRINCIPAL"
+      ],
+      "status": "confirmed",
+      "connectTimeoutMs": 2000,
+      "readTimeoutMs": 3000,
+      "totalDeadlineMs": 5000,
+      "maxAttempts": 1,
+      "backoffPolicy": "none_single_use_code",
+      "rateLimitPolicy": "platform_quota_only",
+      "circuitBreakerPolicy": "none_fail_closed",
+      "costPolicy": "free_platform_api",
+      "monthlyBudgetCny": 0,
+      "warningThresholdCny": 0,
+      "auditRetentionDays": 180,
+      "endpointProfile": "xiaohongshu_rmp_token_then_session",
+      "credentialRef": "env:XIAOHONGSHU_APPID+env:XIAOHONGSHU_APP_SECRET",
+      "outputContractVersion": "verified-platform-identity-evidence/v1",
+      "fallbackChain": [],
+      "fallback": "凭证或受控配置不可用时拒绝登录，不信任客户端自报的 openid 或请求头",
+      "blockingScope": "真实抖音/小红书小程序登录验真；本地 fake Provider 合同与 MySQL 切片不受阻",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/identity/multi-platform-identity-research.md",
+        "docs/backend-v2/contracts/principal-and-capability.md"
+      ],
+      "decisionGroup": "provider_runtime",
+      "releaseVersion": "xiaohongshu-miniprogram-login-runtime/v1",
+      "releaseSha256": "cb0a5a5160b2824b68a1475360225e10fa0b405bdbf95a4b8d7870e90861558c",
+      "effectiveAt": "2026-10-09T00:00:00+08:00",
+      "expiresAt": null,
+      "releaseStatus": "active",
+      "decisionNote": "用户 2026-10-09 按微信同标准批准（连接 2s/读取 3s/总 5s、单次不重试、预算 0、审计 180 天）。先换应用级 access_token（2 小时，新旧并存上限 2 个）再以 code 换 openid；AppID/AppSecret 待用户在 .env.local 配置"
     }
   ],
   "ticketBindings": {
