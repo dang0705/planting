@@ -7,7 +7,7 @@
       "version": "principal-capability/v1",
       "file": "principal-and-capability.md",
       "owner": "identity + subscription",
-      "sha256": "78e330719e62d0dbcea0a5050e51f691d39dc054de5489713a88253ddccda3a8"
+      "sha256": "49d60b9d4ca9f9fc541dc5dfca131a98bf60675caeb7d497cf30bde35848c626"
     },
     {
       "id": "identity-trial-anchor",
@@ -35,7 +35,7 @@
       "version": "guest-session-claim/v1",
       "file": "guest-session-claim.md",
       "owner": "plant-knowledge + user-plant + care + diagnosis",
-      "sha256": "639726193f00c2dd309b56dcd686f12e6b4173e0b6a3ebdb3b70b57a8881b1c6"
+      "sha256": "e42bd5218574a84764f8c4f11af71c57648b68d5af0400964a007e3dd82db243"
     },
     {
       "id": "authenticated-ephemeral-plant-case",

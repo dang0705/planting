@@ -15,7 +15,7 @@ export type GuestPrincipal = {
   /** 短期、不可反推出设备指纹的会话公开引用。 */
   guestSessionRef: string
   /** 匿名登录提供方，仅用于验证来源，不作为 user_id。 */
-  authProvider: 'cloudbase_anonymous'
+  authProvider: 'server_issued_guest_token'
   /** 会话签发时间，ISO 8601。 */
   issuedAt: string
   /** 会话失效时间，ISO 8601。 */
@@ -56,7 +56,7 @@ export type Principal = GuestPrincipal | UserPrincipal | ServicePrincipal
 - `scopes` 在当前合同中固定只有一项，且必须同时属于该服务白名单并等于路由登记的 `requiredScope`；未知、跨服务、多个或 `ALL_*` scope 全部拒绝。
 - Principal 不包含订单、会员、积分或 AI 余额。
 - 同一 `(platform, app_scope, platform_subject)` 记录终身只归属一个统一用户；撤销后只能为原用户恢复。禁止把已绑定过的同一平台主体静默转绑给另一个 `user_id`，需要合并主体时必须进入独立人工裁决和审计流程。
-- 游客会话只保存 CloudBase 匿名主体的不可逆摘要与服务端持有证明摘要；IP、设备指纹和 User-Agent 只用于防刷，不能作为认领凭证。
+- 游客会话由服务端签发高熵游客令牌（≥256 位随机），数据库只保存其 SHA-256 摘要、有效期与状态（active／claimed／expired），原文只在签发响应中返回一次；IP、设备指纹和 User-Agent 只用于防刷，不能作为认领凭证。用户 2026-10-08 裁决以此替代 CloudBase 匿名登录（三平台一致；依据 `cloudfunctions-v2/models/identity/multi-platform-identity-research.md`）。微信端以 `wx.login` 静默登录，不走游客；抖音、小红书未登录时使用游客令牌。
 - 当前已确认的登录会话策略发布采用 24 小时有效期；会话必须锁定签发时的策略版本，策略新版本只影响之后签发的新会话。MVP 续期窗口为 0，不提供静默续期；到期后必须重新验证平台凭证并签发新会话，不能延长旧会话。没有有效策略发布时拒绝签发新会话，不得回退到代码默认值。策略发布字段与快照规则见[登录用户会话策略发布与请求快照合同](identity-session-policy.md)。
 - 平台凭证只在登录、重新登录和需要重新验真的身份操作中验证；验真后经 `platform_identities` 解析到统一用户，再签发青花植会话。后续携带该会话的业务请求不得要求重复提交平台凭证或信任客户端提供的平台身份请求头。
 - 后续业务请求仅在进程内计算原始 Bearer 的 SHA-256，按摘要读取 `user_sessions`，关联 `users` 和会话签发时的平台绑定，检查会话状态、有效期、撤销版本、用户状态及绑定状态，解析统一 `user_id`；然后按 `user_id` 校验用户植物归属。原始 Bearer 不落库、不写日志。

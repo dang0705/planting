@@ -49,7 +49,7 @@ describe("P1 公开 DTO 与 AJV Schema", () => {
       validators.guestPrincipal({
         principalType: "guest",
         guestSessionRef: "gst_01J8Z3H4R57V4G2QPG6C5W8K9M",
-        authProvider: "cloudbase_anonymous",
+        authProvider: "server_issued_guest_token",
         issuedAt: "2026-09-20T10:00:00.000Z",
         expiresAt: "2026-09-21T10:00:00.000Z",
       }),
@@ -59,7 +59,7 @@ describe("P1 公开 DTO 与 AJV Schema", () => {
       validators.guestPrincipal({
         principalType: "guest",
         guestSessionRef: "gst_01J8Z3H4R57V4G2QPG6C5W8K9M",
-        authProvider: "cloudbase_anonymous",
+        authProvider: "server_issued_guest_token",
         issuedAt: "2026-09-20T10:00:00.000Z",
         expiresAt: "2026-09-21T10:00:00.000Z",
         user_id: "usr_forbidden",

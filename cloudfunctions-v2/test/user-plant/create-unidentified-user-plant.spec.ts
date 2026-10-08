@@ -86,7 +86,7 @@ describe('创建暂未识别的用户植物', () => {
       principal: {
         principalType: 'guest',
         guestSessionRef: guestSessionRef,
-        authProvider: 'cloudbase_anonymous',
+        authProvider: 'server_issued_guest_token',
         issuedAt: '2026-09-20T03:00:00.000Z',
         expiresAt: '2026-09-20T05:00:00.000Z'
       } satisfies PrincipalDto,

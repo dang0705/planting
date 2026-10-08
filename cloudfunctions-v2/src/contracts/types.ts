@@ -61,8 +61,8 @@ export type GuestPrincipalDto = {
   principalType: "guest";
   /** 当前游客会话的不透明公开引用；仅用于临时上下文，不能反推出 user_id。 */
   guestSessionRef: GuestSessionRef;
-  /** 游客认证机制，固定为 CloudBase 匿名认证；不代表任何平台 OpenID。 */
-  authProvider: "cloudbase_anonymous";
+  /** 游客认证机制，固定为服务端自发游客令牌（用户 2026-10-08 裁决替代 CloudBase 匿名认证）；不代表任何平台 OpenID。 */
+  authProvider: "server_issued_guest_token";
   /** 游客主体签发时间，使用带 Z 的 ISO 8601 UTC 字符串。 */
   issuedAt: string;
   /** 游客主体过期时间，使用 ISO 8601 UTC 字符串；达到该时间后必须拒绝继续使用。 */

@@ -92,7 +92,7 @@ export const guestPrincipalSchema: JSONSchemaType<GuestPrincipalDto> = {
   properties: {
     principalType: { type: "string", const: "guest" },
     guestSessionRef: { type: "string", pattern: `^gst_${PUBLIC_REF_SUFFIX}$` },
-    authProvider: { type: "string", const: "cloudbase_anonymous" },
+    authProvider: { type: "string", const: "server_issued_guest_token" },
     issuedAt: { type: "string", pattern: ISO_UTC_PATTERN },
     expiresAt: { type: "string", pattern: ISO_UTC_PATTERN },
   },

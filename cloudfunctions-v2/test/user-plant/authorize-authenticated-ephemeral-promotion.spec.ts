@@ -32,7 +32,7 @@ function createUserPrincipal(
 const guestPrincipal: GuestPrincipalDto = {
   principalType: 'guest',
   guestSessionRef: 'gss_aaaaaaaa' as GuestPrincipalDto['guestSessionRef'],
-  authProvider: 'cloudbase_anonymous',
+  authProvider: 'server_issued_guest_token',
   issuedAt: '2029-01-01T00:00:00.000Z',
   expiresAt: '2030-01-01T00:00:00.000Z'
 }

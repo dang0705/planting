@@ -20,16 +20,17 @@
   "variables": [
     {
       "id": "identity.guest.session_ttl_hours",
-      "chineseName": "游客会话有效期",
+      "chineseName": "游客令牌有效期",
       "domain": "identity",
       "layer": "domain_policy",
       "valueType": "integer",
       "unit": "小时",
       "status": "confirmed",
-      "currentValue": 24,
-      "allowed": "24",
+      "currentValue": 168,
+      "allowed": "168",
       "owner": "identity",
       "sourceRefs": [
+        "cloudfunctions-v2/models/identity/multi-platform-identity-research.md",
         "docs/backend-v2/contracts/guest-session-claim.md",
         "docs/backend-v2/decisions/P0-external-capability-cards.md"
       ],
@@ -45,7 +46,8 @@
       "phase": "P1",
       "ticketTitle": "[P1] 业务策略与统一 Provider 配置架构",
       "expected": "达到 expiresAt 后拒绝继续使用和认领",
-      "decisionGroup": "identity_sessions"
+      "decisionGroup": "identity_sessions",
+      "decisionNote": "用户 2026-10-08 裁决：游客改为后端自发令牌，有效期 7 天（168 小时），与登录用户临时案例一致；仅影响新签发令牌。"
     },
     {
       "id": "identity.guest.proof_rotation_grace_seconds",

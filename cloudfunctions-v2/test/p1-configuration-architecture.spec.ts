@@ -230,7 +230,8 @@ const requiredVariable = (id: string): ConfigurationVariable => {
   assert.ok(variable, `关键变量不存在：${id}`)
   return variable
 }
-assert.equal(requiredVariable('identity.guest.session_ttl_hours').allowed, '24')
+// Expected 来源更新：用户 2026-10-08 裁决游客令牌有效期 7 天（168 小时）。
+assert.equal(requiredVariable('identity.guest.session_ttl_hours').allowed, '168')
 assert.equal(requiredVariable('plant-knowledge.enrichment.worker_concurrency').currentValue, 1)
 assert.equal(requiredVariable('plant-knowledge.enrichment.max_attempts').currentValue, 3)
 assert.equal(requiredVariable('plant-knowledge.enrichment.monthly_budget_cny').currentValue, 0)

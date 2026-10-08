@@ -49,7 +49,7 @@
 
 | 配置 ID | 中文名称 | 裁决组 | 层级 / 状态 | 当前值 | 所有者 | 消费方 | 变更与失败边界 | Phase / Ticket |
 |---|---|---|---|---|---|---|---|---|
-| `identity.guest.session_ttl_hours` | 游客会话有效期 | `identity_sessions` | 领域策略 / 已冻结 | `24` 小时 | identity | identity、plant-knowledge、care、diagnosis、user-plant | 发布新身份策略，仅影响新签发会话；失败：无有效策略时拒绝签发游客会话 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
+| `identity.guest.session_ttl_hours` | 游客令牌有效期 | `identity_sessions` | 领域策略 / 已冻结 | `168` 小时 | identity | identity、plant-knowledge、care、diagnosis、user-plant | 发布新身份策略，仅影响新签发会话；失败：无有效策略时拒绝签发游客会话 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
 | `identity.guest.proof_rotation_grace_seconds` | 游客持有证明轮换宽限期 | `identity_sessions` | 领域策略 / 已冻结 | `300` 秒 | identity | identity、user-plant | 发布新游客身份策略，仅影响轮换后新宽限期；失败：策略不可用时不接受上一版证明，当前证明仍按会话有效期校验 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
 | `identity.user.session_ttl_hours` | 登录用户会话有效期 | `identity_sessions` | 领域策略 / 已冻结 | `24` 小时 | identity | identity、全部公开业务域 | 身份策略新版本向前生效；失败：策略不可用时拒绝签发新会话，不延长旧会话 | P1 / [P2] 统一身份 Principal |
 | `identity.user.refresh_window_hours` | 登录会话续期窗口 | `identity_sessions` | 领域策略 / 已冻结 | `0` 小时 | identity | identity | 启用续期必须发布新身份合同和策略版本，并新增轮换与撤销测试；失败：禁止静默续期；过期后重新验证平台凭证并签发新会话 | P1 / [P2] 统一身份 Principal |
