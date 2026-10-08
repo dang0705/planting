@@ -26,6 +26,8 @@ describe('当前盆土状态到剩余日期的真实回放接线', () => {
       decision: { action: 'check_later', soilGate: 'unknown' },
     })
     expect(result.snapshot.drying.lastConfirmedWateringAt).toBeNull()
+    // 用户已确认首次历史日期、水量均可未知；没有专业水分证据时不返回零毫升。
+    expect(result.waterDeficit).toBeNull()
   })
   it('同一状态下需求翻倍使日期提前，保水翻倍使日期推后', () => {
     const faster = input(); faster.drying.intervals[0]!.environmentDemand = { min: 2, max: 4 }

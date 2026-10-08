@@ -1,0 +1,51 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "verifiedAt": "2026-10-08T00:50:57.080Z",
+  "scope": "首次使用近期浇水日期和水量允许未知；当前盆土证据为剩余过程估计的主路径",
+  "expectedSource": "用户本会话明确近期浇水属于启发式输入，用户可以选择不知道；已确认的观察起点合同",
+  "rules": [
+    "日期与水量分别可未知，不填今天或零",
+    "模糊回忆不升级为已确认实际浇水事实",
+    "有合格当前状态映射时可估计剩余窗口；缺映射只给有依据的检查或安全判断",
+    "水量依据不足返回未知，不给固定毫升兜底",
+    "后续用户主动确认实际浇水属于E06，不作为E04首次输入前置"
+  ],
+  "validation": {
+    "classification": "unit_fake",
+    "layer": "L3 Integration",
+    "path": "replayWateringTiming → 当前状态/历史进度/盆土安全门/日期与水量输出",
+    "replacedBoundaries": "使用显式合格的合成环境与盆土输入；未替换内部计算函数。未连接真实传感器、平台或数据库。",
+    "assertions": [
+      {
+        "file": "cloudfunctions-v2/test/care/watering/observed-remaining-timing.spec.ts",
+        "scenario": "缺历史浇水仍能从可靠观察估计非零剩余窗口，历史不伪造",
+        "addition": "水量依据缺失时waterDeficit保持null"
+      },
+      {
+        "file": "cloudfunctions-v2/test/care/watering/current-soil-window.spec.ts",
+        "scenario": "缺浇水历史和基线也可承认当前目标，不补造完整循环",
+        "addition": "当前可靠目标状态允许安全判断，同时waterDeficit保持null"
+      }
+    ],
+    "related": {
+      "command": "npm test -- test/care/watering",
+      "files": 8,
+      "passed": 95,
+      "failed": 0
+    },
+    "full": {
+      "command": "npm test",
+      "files": 216,
+      "passed": 2159,
+      "failed": 0
+    },
+    "productBehaviorChanged": false,
+    "tddClaim": false
+  },
+  "limitations": [
+    "本轮仅补齐完整计划、模型边界及现有行为断言，无产品实现或前端修改",
+    "合格状态映射、环境响应发布、真实日期与水量精度仍未验收",
+    "未部署、未执行生产DDL；Camunda继续延后"
+  ]
+}

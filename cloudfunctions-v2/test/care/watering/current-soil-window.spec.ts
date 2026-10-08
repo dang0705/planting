@@ -23,6 +23,8 @@ describe('当前盆土证据对有效检查窗口的影响', () => {
     const input = scenario(); const result = replayWateringTiming({ ...input, drying: { ...input.drying, lastConfirmedWateringAt: null, baseline: null, intervals: [] } })
     expect(result).toMatchObject({ drying: { status: 'insufficient_evidence', progress: null, window: null }, currentCycleWindow: { status: 'target_observed' }, localCheckWindow: { earliestCheckDate: '2026-10-02' }, productionAdmission: false })
     expect(result.snapshot.drying.lastConfirmedWateringAt).toBeNull()
+    expect(result.decision.action).toBe('water_allowed')
+    expect(result.waterDeficit).toBeNull()
   })
   it.each(['wet', 'waterlogged'] as const)('根区%s反驳已到窗口，撤回日期，不把湿土重置为零或猜新日期', (state) => {
     const input = scenario()

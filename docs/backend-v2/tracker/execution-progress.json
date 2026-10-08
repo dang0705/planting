@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T00:37:52.520770+00:00",
-  "sourceRevision": 137,
-  "sourceUpdatedAt": "2026-10-08T00:37:52.520770+00:00",
+  "generatedAt": "2026-10-08T00:50:57.080Z",
+  "sourceRevision": 139,
+  "sourceUpdatedAt": "2026-10-08T00:50:57.080Z",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -123,16 +123,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 58,
+      "version": 59,
       "status": "codex running",
-      "stage": "同盆同期研究数据结构已核验；测量字典与普通盆栽标定待补齐",
+      "stage": "首次未知历史边界已验证；盆土状态映射与环境响应待准入",
       "accepted": false,
       "summary": [
-        "E04：原作者96盆×4800时刻数据已核验，完整配对460798条",
-        "光照/VPD/蒸腾/水分可同期关联；两格缺水分，不补零",
-        "物理单位与实验阶段未确认；覆膜蒸腾不当整盆耗水，未发布倍率",
-        "后端全量2159/2159；Camunda继续延后，未改Tropicals纠偏函数",
-        "证据：.codex/backend-v2/evidence/E04-paired-demand-data.json"
+        "E04：近期浇水日期/水量可分别未知，已写入完整计划",
+        "当前盆土证据驱动剩余窗口；不填今天/零，不伪造历史",
+        "无水量依据保持未知；E06动作记录不作为首次预测前置",
+        "相关95/95、后端全量2159/2159；本轮未修改产品行为",
+        "证据：.codex/backend-v2/evidence/E04-unknown-watering-history.json"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -189,15 +189,16 @@
         ".codex/backend-v2/evidence/E04-qweather-hourly-evidence.json",
         ".codex/backend-v2/evidence/E04-model-verification-readiness.json",
         ".codex/backend-v2/evidence/E04-observed-remaining-cycle.json",
-        ".codex/backend-v2/evidence/E04-paired-demand-data.json"
+        ".codex/backend-v2/evidence/E04-paired-demand-data.json",
+        ".codex/backend-v2/evidence/E04-unknown-watering-history.json"
       ],
       "blockingReason": null,
-      "nextAction": "补齐Sun2024候选的测量字典和实验阶段；普通盆栽同盆称重、根区及供排水记录仍是日期与水量准入的必要数据，不新增猜测倍率",
+      "nextAction": "继续E04当前盆土状态映射与光照/VPD响应的数据准入，补齐配对数据测量字典和实验条件；E06实际动作记录不作为首次预测前置",
       "sync": {
-        "version": 58,
+        "version": 59,
         "status": "codex running",
         "matched": true,
-        "readback": "ClickUp codex running与评论1100440000142273逐行读回，版本58"
+        "readback": "ClickUp codex running与评论1100440000142333逐行读回，版本59"
       }
     },
     {
@@ -385,6 +386,6 @@
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-08T00:26:50.470948+00:00",
+  "lastSuccessfulSyncAt": "2026-10-08T00:51:23.347Z",
   "lastFailure": null
 }
