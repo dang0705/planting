@@ -22,3 +22,25 @@ Expected 来源：
 | I5 | — | — | — | N/A：只读交换，无写入 |
 
 Break：把 40163（code 已用）当成系统错误会让前端误重试同一 code。Mutation：把 40163 从“凭证无效”集合移除 → 对应用例应红。
+
+## 登录会话策略读取器 `createMysqlIdentitySessionPolicyReader`（E03）
+
+层次 L3 `unit_fake`：只替换 SQL 连接，策略解析使用真实 `resolveIdentitySessionPolicySnapshot`。Expected 来源：`principal-and-capability.md`（会话 24 小时、续期 0、无有效发布拒签不回退默认）、配置目录 `identity.user.session_ttl_hours`=24 已确认、既有发布表与活动指针结构（与 `care/mvp_glass` 读取器同一模式）。未覆盖：真实 MySQL（另做 mysql 套件）。
+
+| 维 | 用例 | 形态 | 状态 |
+|---|---|---|---|
+| I1 Happy | 活动指针连发布行 → 返回快照（TTL 24、续期 0、发布版本与摘要一致），查询参数为 identity/identity_sessions | Happy | 待写 |
+| I2 缺字段 | 无行 → null（拒签）；多行 → null | Edge | 待写 |
+| I3 错误语义 | 域/策略/结构版本不符、指针版本或摘要不符、正文 JSON 损坏、摘要被篡改 → null | Edge | 待写 |
+| Reverse | 退役或已过期发布 → null，不回退源码默认 TTL | Reverse | 待写 |
+| I3 | 数据库错误向上传播且连接被销毁（不吞成功） | Edge | 待写 |
+
+## 微信登录验真工厂 `createWechatLoginVerifier`（E03）
+
+层次 L3 `unit_fake`：只替换 fetch；HMAC 摘要用真实 `createVerifyPlatformCredentialUseCase`。Expected 来源：`principal-and-capability.md`“平台主体只存不可逆摘要、数据库只存密钥版本”；用户 2026-10-08 批准新建 `PLATFORM_SUBJECT_HMAC_KEY_V1`（版本 v1）；配置目录 `wechat_miniprogram_login` 凭证引用 `env:WECHAT_MINIPROGRAM_PRIVATE_KEY`。
+
+| 维 | 用例 | 形态 | 状态 |
+|---|---|---|---|
+| I1 Happy | 有效 code → 证据只含平台、应用范围与 `HMAC-SHA256(key, openid)` 摘要及版本 v1，不含 openid 原文 | Happy | 待写 |
+| I2 缺配置 | 缺 AppID / AppSecret / HMAC 密钥，或密钥解码后不足 32 字节 → 创建时抛配置错误（拒绝登录，不回退） | Edge | 待写 |
+| I3 | 微信返回 40029 → PRINCIPAL_INVALID 原样透出 | Edge | 待写 |
