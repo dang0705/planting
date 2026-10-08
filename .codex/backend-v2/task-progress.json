@@ -1,5 +1,5 @@
 {
-  "revision": 167,
+  "revision": 168,
   "currentStep": "E03",
   "currentTicketId": "z8v0kmr970",
   "updatedAt": "2026-10-08T16:19:33.134287+00:00",
@@ -166,7 +166,7 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 71,
+      "version": 72,
       "priority": "high",
       "status": "codex running",
       "stage": "MVP 浇水正式计算链已实现（文献标定、低置信）；HTTP 接入等待 E03",
@@ -239,14 +239,14 @@
         ".codex/backend-v2/evidence/E04-watering-result-projection.json"
       ],
       "summary": [
-        "E04：MVP浇水五模块与组合用例实现（38d635dd），算法 care-watering-mvp/v1 已登记",
-        "光照按用户选定单通道比例法（269e9cc8）；表土干规则按用户裁决（75fbdae7）",
-        "Open-Meteo 辐射适配器（68ec6232）；watering-advice/v1 合同冻结与请求校验（30b0b3b1）",
-        "E06 HTTP 依赖 E03 可信身份与养护会话，暂未接入",
-        "后端全量2477/2477；突变RED后恢复GREEN"
+        "E06 前置：游客令牌解析/签发与身份策略 v2 已上测试库（E03）",
+        "新增 POST /user-plants/temporary-cases（游客每会话≤5、随会话失效；登录 168h）（ae68cc1e）",
+        "user-plant-limits-policy/v1 读取器已实现，待授权发布到测试库，发布前该接口 503",
+        "后端全量 2603/2603；临时案例 MySQL 端到端 13/13",
+        "下一步：watering-advice HTTP（临时养护会话按 caseRef 创建）"
       ],
       "blockingReason": null,
-      "nextAction": "E03 打通后实现 care 云函数 watering-advice HTTP",
+      "nextAction": "经授权发布 userplant_limits 策略；实现 POST /care/watering-advice",
       "ticketReadback": "Chrome已读回CODEX RUNNING及五行评论1100440000144084，版本70"
     },
     {
