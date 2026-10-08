@@ -1,0 +1,856 @@
+{
+  "sourceDoi": "10.1186/s13007-019-0474-0",
+  "sourceSha256": "e960c89a152e13f253e0000dac3b0f9ec90e395db4f25ab04372d85945a2572b",
+  "sourceDates": [
+    "2019-02-04",
+    "2019-02-05",
+    "2019-02-06",
+    "2019-02-07"
+  ],
+  "scope": "arabidopsis_fixed_origin_mass_comparison",
+  "productionAdmission": false,
+  "unit": "g",
+  "horizonBasis": "observation_step",
+  "predictions": [
+    {
+      "sourceRow": 2,
+      "persistenceG": [
+        26.831,
+        26.831
+      ],
+      "recentLossG": [
+        26.259,
+        25.687
+      ]
+    },
+    {
+      "sourceRow": 3,
+      "persistenceG": [
+        26.818,
+        26.818
+      ],
+      "recentLossG": [
+        26.097,
+        25.376
+      ]
+    },
+    {
+      "sourceRow": 4,
+      "persistenceG": [
+        26.202,
+        26.202
+      ],
+      "recentLossG": [
+        25.059000000000005,
+        23.916000000000007
+      ]
+    },
+    {
+      "sourceRow": 5,
+      "persistenceG": [
+        22.107,
+        22.107
+      ],
+      "recentLossG": [
+        20.287,
+        18.467
+      ]
+    },
+    {
+      "sourceRow": 6,
+      "persistenceG": [
+        21.38,
+        21.38
+      ],
+      "recentLossG": [
+        20.246,
+        19.112
+      ]
+    },
+    {
+      "sourceRow": 7,
+      "persistenceG": [
+        19.014,
+        19.014
+      ],
+      "recentLossG": [
+        17.299,
+        15.584
+      ]
+    },
+    {
+      "sourceRow": 8,
+      "persistenceG": [
+        17.004,
+        17.004
+      ],
+      "recentLossG": [
+        15.998000000000001,
+        14.992
+      ]
+    },
+    {
+      "sourceRow": 9,
+      "persistenceG": [
+        16.719,
+        16.719
+      ],
+      "recentLossG": [
+        15.473000000000003,
+        14.227000000000004
+      ]
+    },
+    {
+      "sourceRow": 10,
+      "persistenceG": [
+        14.112,
+        14.112
+      ],
+      "recentLossG": [
+        12.43,
+        10.748
+      ]
+    },
+    {
+      "sourceRow": 11,
+      "persistenceG": [
+        13.466,
+        13.466
+      ],
+      "recentLossG": [
+        12.775999999999998,
+        12.085999999999997
+      ]
+    },
+    {
+      "sourceRow": 12,
+      "persistenceG": [
+        12.808,
+        12.808
+      ],
+      "recentLossG": [
+        12.212,
+        11.616
+      ]
+    },
+    {
+      "sourceRow": 13,
+      "persistenceG": [
+        12.482,
+        12.482
+      ],
+      "recentLossG": [
+        11.786999999999999,
+        11.091999999999999
+      ]
+    },
+    {
+      "sourceRow": 14,
+      "persistenceG": [
+        13.278,
+        13.278
+      ],
+      "recentLossG": [
+        11.8,
+        10.322000000000001
+      ]
+    },
+    {
+      "sourceRow": 15,
+      "persistenceG": [
+        26.407,
+        26.407
+      ],
+      "recentLossG": [
+        25.717,
+        25.026999999999997
+      ]
+    },
+    {
+      "sourceRow": 16,
+      "persistenceG": [
+        21.02,
+        21.02
+      ],
+      "recentLossG": [
+        20.141,
+        19.261999999999997
+      ]
+    },
+    {
+      "sourceRow": 17,
+      "persistenceG": [
+        21.271,
+        21.271
+      ],
+      "recentLossG": [
+        19.385,
+        17.499000000000002
+      ]
+    },
+    {
+      "sourceRow": 18,
+      "persistenceG": [
+        18.412,
+        18.412
+      ],
+      "recentLossG": [
+        17.442999999999998,
+        16.473999999999997
+      ]
+    },
+    {
+      "sourceRow": 19,
+      "persistenceG": [
+        15.527,
+        15.527
+      ],
+      "recentLossG": [
+        14.555999999999997,
+        13.584999999999996
+      ]
+    },
+    {
+      "sourceRow": 20,
+      "persistenceG": [
+        16.038,
+        16.038
+      ],
+      "recentLossG": [
+        14.518,
+        12.998000000000001
+      ]
+    },
+    {
+      "sourceRow": 21,
+      "persistenceG": [
+        16.182,
+        16.182
+      ],
+      "recentLossG": [
+        14.834999999999997,
+        13.487999999999996
+      ]
+    },
+    {
+      "sourceRow": 22,
+      "persistenceG": [
+        15.768,
+        15.768
+      ],
+      "recentLossG": [
+        14.021,
+        12.274000000000001
+      ]
+    },
+    {
+      "sourceRow": 23,
+      "persistenceG": [
+        14.436,
+        14.436
+      ],
+      "recentLossG": [
+        13.045,
+        11.654
+      ]
+    },
+    {
+      "sourceRow": 24,
+      "persistenceG": [
+        13.168,
+        13.168
+      ],
+      "recentLossG": [
+        11.663999999999998,
+        10.159999999999997
+      ]
+    },
+    {
+      "sourceRow": 30,
+      "persistenceG": [
+        26.058,
+        26.058
+      ],
+      "recentLossG": [
+        24.759,
+        23.46
+      ]
+    },
+    {
+      "sourceRow": 31,
+      "persistenceG": [
+        25.787,
+        25.787
+      ],
+      "recentLossG": [
+        24.014999999999997,
+        22.242999999999995
+      ]
+    },
+    {
+      "sourceRow": 32,
+      "persistenceG": [
+        25.571,
+        25.571
+      ],
+      "recentLossG": [
+        24.075000000000003,
+        22.579000000000004
+      ]
+    },
+    {
+      "sourceRow": 33,
+      "persistenceG": [
+        20.887,
+        20.887
+      ],
+      "recentLossG": [
+        19.095000000000002,
+        17.303000000000004
+      ]
+    },
+    {
+      "sourceRow": 34,
+      "persistenceG": [
+        20.147,
+        20.147
+      ],
+      "recentLossG": [
+        18.022999999999996,
+        15.898999999999994
+      ]
+    },
+    {
+      "sourceRow": 35,
+      "persistenceG": [
+        17.637,
+        17.637
+      ],
+      "recentLossG": [
+        15.923000000000002,
+        14.209000000000003
+      ]
+    },
+    {
+      "sourceRow": 36,
+      "persistenceG": [
+        15.768,
+        15.768
+      ],
+      "recentLossG": [
+        14.385000000000002,
+        13.002000000000002
+      ]
+    },
+    {
+      "sourceRow": 37,
+      "persistenceG": [
+        14.593,
+        14.593
+      ],
+      "recentLossG": [
+        13.643,
+        12.693000000000001
+      ]
+    },
+    {
+      "sourceRow": 38,
+      "persistenceG": [
+        16.522,
+        16.522
+      ],
+      "recentLossG": [
+        14.070999999999998,
+        11.619999999999997
+      ]
+    },
+    {
+      "sourceRow": 39,
+      "persistenceG": [
+        15.589,
+        15.589
+      ],
+      "recentLossG": [
+        13.146,
+        10.703000000000001
+      ]
+    },
+    {
+      "sourceRow": 40,
+      "persistenceG": [
+        13.388,
+        13.388
+      ],
+      "recentLossG": [
+        11.651,
+        9.914
+      ]
+    },
+    {
+      "sourceRow": 41,
+      "persistenceG": [
+        12.422,
+        12.422
+      ],
+      "recentLossG": [
+        11.302000000000001,
+        10.182000000000002
+      ]
+    },
+    {
+      "sourceRow": 42,
+      "persistenceG": [
+        12.805,
+        12.805
+      ],
+      "recentLossG": [
+        11.484,
+        10.163
+      ]
+    },
+    {
+      "sourceRow": 43,
+      "persistenceG": [
+        11.946,
+        11.946
+      ],
+      "recentLossG": [
+        10.985,
+        10.024
+      ]
+    },
+    {
+      "sourceRow": 44,
+      "persistenceG": [
+        23.061,
+        23.061
+      ],
+      "recentLossG": [
+        21.251,
+        19.441000000000003
+      ]
+    },
+    {
+      "sourceRow": 45,
+      "persistenceG": [
+        24.293,
+        24.293
+      ],
+      "recentLossG": [
+        21.974,
+        19.655
+      ]
+    },
+    {
+      "sourceRow": 46,
+      "persistenceG": [
+        22.088,
+        22.088
+      ],
+      "recentLossG": [
+        20.041,
+        17.994
+      ]
+    },
+    {
+      "sourceRow": 47,
+      "persistenceG": [
+        20.568,
+        20.568
+      ],
+      "recentLossG": [
+        18.399000000000004,
+        16.230000000000008
+      ]
+    },
+    {
+      "sourceRow": 48,
+      "persistenceG": [
+        18.8568,
+        18.8568
+      ],
+      "recentLossG": [
+        17.0406,
+        15.224400000000003
+      ]
+    },
+    {
+      "sourceRow": 49,
+      "persistenceG": [
+        20.068,
+        20.068
+      ],
+      "recentLossG": [
+        18.124000000000002,
+        16.180000000000003
+      ]
+    },
+    {
+      "sourceRow": 50,
+      "persistenceG": [
+        19.964,
+        19.964
+      ],
+      "recentLossG": [
+        18.590999999999998,
+        17.217999999999996
+      ]
+    },
+    {
+      "sourceRow": 51,
+      "persistenceG": [
+        16.43,
+        16.43
+      ],
+      "recentLossG": [
+        15.322,
+        14.213999999999999
+      ]
+    },
+    {
+      "sourceRow": 52,
+      "persistenceG": [
+        16.653,
+        16.653
+      ],
+      "recentLossG": [
+        15.286999999999999,
+        13.921
+      ]
+    },
+    {
+      "sourceRow": 53,
+      "persistenceG": [
+        16.209,
+        16.209
+      ],
+      "recentLossG": [
+        14.689999999999998,
+        13.170999999999996
+      ]
+    },
+    {
+      "sourceRow": 54,
+      "persistenceG": [
+        16.803,
+        16.803
+      ],
+      "recentLossG": [
+        15.153000000000002,
+        13.503000000000004
+      ]
+    },
+    {
+      "sourceRow": 55,
+      "persistenceG": [
+        13.408,
+        13.408
+      ],
+      "recentLossG": [
+        12.246999999999998,
+        11.085999999999997
+      ]
+    },
+    {
+      "sourceRow": 56,
+      "persistenceG": [
+        13.688,
+        13.688
+      ],
+      "recentLossG": [
+        12.557,
+        11.426
+      ]
+    },
+    {
+      "sourceRow": 57,
+      "persistenceG": [
+        12.878,
+        12.878
+      ],
+      "recentLossG": [
+        11.627,
+        10.376000000000001
+      ]
+    },
+    {
+      "sourceRow": 58,
+      "persistenceG": [
+        23.665,
+        23.665
+      ],
+      "recentLossG": [
+        22.378999999999998,
+        21.092999999999996
+      ]
+    },
+    {
+      "sourceRow": 59,
+      "persistenceG": [
+        23.701,
+        23.701
+      ],
+      "recentLossG": [
+        21.806,
+        19.911
+      ]
+    },
+    {
+      "sourceRow": 60,
+      "persistenceG": [
+        24.163,
+        24.163
+      ],
+      "recentLossG": [
+        21.891000000000002,
+        19.619000000000003
+      ]
+    },
+    {
+      "sourceRow": 61,
+      "persistenceG": [
+        20.638,
+        20.638
+      ],
+      "recentLossG": [
+        19.365000000000002,
+        18.092000000000002
+      ]
+    },
+    {
+      "sourceRow": 62,
+      "persistenceG": [
+        18.607,
+        18.607
+      ],
+      "recentLossG": [
+        16.732999999999997,
+        14.858999999999995
+      ]
+    },
+    {
+      "sourceRow": 63,
+      "persistenceG": [
+        19.264,
+        19.264
+      ],
+      "recentLossG": [
+        17.272,
+        15.279999999999998
+      ]
+    },
+    {
+      "sourceRow": 64,
+      "persistenceG": [
+        15.645,
+        15.645
+      ],
+      "recentLossG": [
+        14.044999999999998,
+        12.444999999999997
+      ]
+    },
+    {
+      "sourceRow": 65,
+      "persistenceG": [
+        13.666,
+        13.666
+      ],
+      "recentLossG": [
+        11.422,
+        9.178
+      ]
+    },
+    {
+      "sourceRow": 66,
+      "persistenceG": [
+        13.101,
+        13.101
+      ],
+      "recentLossG": [
+        12.045000000000002,
+        10.989000000000003
+      ]
+    },
+    {
+      "sourceRow": 67,
+      "persistenceG": [
+        23.283,
+        23.283
+      ],
+      "recentLossG": [
+        21.764000000000003,
+        20.245000000000005
+      ]
+    },
+    {
+      "sourceRow": 68,
+      "persistenceG": [
+        20.657,
+        20.657
+      ],
+      "recentLossG": [
+        20.087,
+        19.517
+      ]
+    },
+    {
+      "sourceRow": 69,
+      "persistenceG": [
+        22.637,
+        22.637
+      ],
+      "recentLossG": [
+        20.133000000000003,
+        17.629000000000005
+      ]
+    },
+    {
+      "sourceRow": 70,
+      "persistenceG": [
+        17.009,
+        17.009
+      ],
+      "recentLossG": [
+        16.298000000000002,
+        15.587000000000003
+      ]
+    },
+    {
+      "sourceRow": 71,
+      "persistenceG": [
+        18.028,
+        18.028
+      ],
+      "recentLossG": [
+        16.665,
+        15.302
+      ]
+    },
+    {
+      "sourceRow": 72,
+      "persistenceG": [
+        19.095,
+        19.095
+      ],
+      "recentLossG": [
+        17.214,
+        15.332999999999998
+      ]
+    },
+    {
+      "sourceRow": 73,
+      "persistenceG": [
+        17.452,
+        17.452
+      ],
+      "recentLossG": [
+        16.099000000000004,
+        14.746000000000006
+      ]
+    },
+    {
+      "sourceRow": 74,
+      "persistenceG": [
+        14.302,
+        14.302
+      ],
+      "recentLossG": [
+        13.029,
+        11.756
+      ]
+    },
+    {
+      "sourceRow": 75,
+      "persistenceG": [
+        14.194,
+        14.194
+      ],
+      "recentLossG": [
+        12.509000000000002,
+        10.824000000000003
+      ]
+    },
+    {
+      "sourceRow": 76,
+      "persistenceG": [
+        15.418,
+        15.418
+      ],
+      "recentLossG": [
+        13.224,
+        11.030000000000001
+      ]
+    },
+    {
+      "sourceRow": 77,
+      "persistenceG": [
+        13.804,
+        13.804
+      ],
+      "recentLossG": [
+        12.575000000000001,
+        11.346000000000002
+      ]
+    },
+    {
+      "sourceRow": 78,
+      "persistenceG": [
+        11.505,
+        11.505
+      ],
+      "recentLossG": [
+        10.309000000000001,
+        9.113000000000001
+      ]
+    }
+  ],
+  "scores": {
+    "persistence": [
+      {
+        "observationStep": 1,
+        "count": 72,
+        "maeG": 1.438941666666666,
+        "biasG": 1.438941666666666,
+        "negativePredictions": 0
+      },
+      {
+        "observationStep": 2,
+        "count": 72,
+        "maeG": 2.9541097222222215,
+        "biasG": 2.9541097222222215,
+        "negativePredictions": 0
+      }
+    ],
+    "recentLoss": [
+      {
+        "observationStep": 1,
+        "count": 72,
+        "maeG": 0.2572861111111113,
+        "biasG": -0.02771388888888869,
+        "negativePredictions": 0
+      },
+      {
+        "observationStep": 2,
+        "count": 72,
+        "maeG": 0.5733875000000002,
+        "biasG": 0.020798611111111167,
+        "negativePredictions": 0
+      }
+    ]
+  },
+  "comparisons": [
+    {
+      "observationStep": 1,
+      "persistenceBetter": 3,
+      "recentLossBetter": 69,
+      "ties": 0
+    },
+    {
+      "observationStep": 2,
+      "persistenceBetter": 3,
+      "recentLossBetter": 69,
+      "ties": 0
+    }
+  ]
+}

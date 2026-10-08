@@ -1,22 +1,22 @@
 {
-  "revision": 140,
+  "revision": 141,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-08T01:01:12.802Z",
+  "updatedAt": "2026-10-08T01:16:01.797473Z",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "E04 Sun2024配对候选的测量语义与日内/日总量一致性收口",
+    "target": "E04 用原作者逐盆称重资料比较剩余失水预测的两个朴素对照",
     "keyAssumptions": [
-      "不能从系统惯例或数值范围给工作簿补单位",
-      "作者分析选取前六天不证明停水起点"
+      "只用前两次观察预测后两次，避免未来数据进入预测",
+      "研究称重变化可验证对照误差，不直接等于用户盆土目标或施水量"
     ],
-    "configurationDecision": "不新增产品参数、不启用拟合；原有状态映射和环境响应保持pending",
-    "minimumVerification": "精确原始SHA、同盆逐日序列合计与日表对比、原文图轴和直接方法引用",
-    "continueCondition": "仅核验该候选及直接方法，结果足以决定是否进入拟合",
-    "failureCondition": "单位、聚合或灌溉阶段仍缺说明则结束公开资料追查，不推断正式参数",
-    "rollback": "仅回退候选资格补充和复核脚本；无运行策略或数据变更",
-    "timeLimitMinutes": 20,
-    "nextAction": "以明确测量方法、供排水和根区记录的盆栽配对数据推进环境响应及状态映射；Sun2024待原始说明，禁止重复同源查询或用猜测倍率补齐"
+    "configurationDecision": "固定状态与最近失水速度仅为离线对照；没有新增运行参数、默认值或正式策略",
+    "minimumVerification": "原始SHA、日期/重量字段及原作者差值核对，独立Expected先于回放实现，完整后端测试",
+    "continueCondition": "原始逐盆重量与差值可核对，源方法明确称重及单位",
+    "failureCondition": "单位、字段或缺测不可区分时停止进入数值回放，不猜数据",
+    "rollback": "移除本次研究回放及制品引用；产品算法和历史事实不变",
+    "timeLimitMinutes": 30,
+    "nextAction": "继续现有E04标定：普通盆栽同盆环境、根区与供排水记录验证剩余目标穿越；不将研究对照直接发布为日期或水量策略"
   },
   "tasks": [
     {
@@ -132,10 +132,10 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 60,
+      "version": 61,
       "priority": "high",
       "status": "codex running",
-      "stage": "研究候选语义核验已收口；正式状态映射与环境响应缺标定依据",
+      "stage": "同盆称重预测对照已验证；正式状态映射、环境响应与水量待标定",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -194,18 +194,19 @@
         ".codex/backend-v2/evidence/E04-observed-remaining-cycle.json",
         ".codex/backend-v2/evidence/E04-paired-demand-data.json",
         ".codex/backend-v2/evidence/E04-unknown-watering-history.json",
-        ".codex/backend-v2/evidence/E04-demand-semantics-qualification.json"
+        ".codex/backend-v2/evidence/E04-demand-semantics-qualification.json",
+        ".codex/backend-v2/evidence/E04-gravimetric-forecast.json"
       ],
       "summary": [
-        "E04：Sun2024候选的图轴、方法和960组日聚合核验完成",
-        "日表/序列合计比0.1473～3.0225，无统一倍率，不猜单位",
-        "恢复需测量字典、聚合和供排水记录；结束同源重复追查",
-        "复核脚本与独立解析一致；后端全量2159/2159，无产品行为变更",
-        "证据：.codex/backend-v2/evidence/E04-demand-semantics-qualification.json"
+        "E04：72盆真实称重完成固定起点预测，未来数据不参与预测",
+        "最近失水对照误差0.257/0.573克；两步均69盆优于保持状态",
+        "仅研究回放；历史日期和水量仍可未知，不增加用户称重输入",
+        "突变RED后恢复；相关100/100、后端全量2164/2164",
+        "证据：.codex/backend-v2/evidence/E04-gravimetric-forecast.json"
       ],
       "blockingReason": null,
-      "nextAction": "以明确测量方法、供排水和根区记录的盆栽配对数据推进环境响应及状态映射；Sun2024待原始说明，禁止重复同源查询或用猜测倍率补齐",
-      "ticketReadback": "ClickUp codex running与评论1100440000142393逐行读回，版本60"
+      "nextAction": "继续现有E04标定：普通盆栽同盆环境、根区与供排水记录验证剩余目标穿越；不将研究对照直接发布为日期或水量策略",
+      "ticketReadback": "ClickUp codex running与评论1100440000142548逐行读回，版本61"
     },
     {
       "id": "z8v0kmrg8a",
@@ -478,7 +479,7 @@
       ]
     }
   ],
-  "nextAction": "补齐Sun2024候选的测量字典和实验阶段；普通盆栽同盆称重、根区及供排水记录仍是日期与水量准入的必要数据，不新增猜测倍率",
+  "nextAction": "继续现有E04标定：普通盆栽同盆环境、根区与供排水记录验证剩余目标穿越；不将研究对照直接发布为日期或水量策略",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",

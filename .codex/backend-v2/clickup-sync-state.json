@@ -34,13 +34,13 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 60,
+      "version": 61,
       "status": "codex running",
-      "note": "E04：Sun2024候选的图轴、方法和960组日聚合核验完成\n日表/序列合计比0.1473～3.0225，无统一倍率，不猜单位\n恢复需测量字典、聚合和供排水记录；结束同源重复追查\n复核脚本与独立解析一致；后端全量2159/2159，无产品行为变更\n证据：.codex/backend-v2/evidence/E04-demand-semantics-qualification.json",
-      "commentId": "1100440000142393",
-      "commentFingerprint": "e6bda165ba06f58973b17599e1f2c37fd8d0e9d743b4a79a8827b42139426dee",
-      "readback": "ClickUp codex running与评论1100440000142393逐行读回，版本60",
-      "lastSuccessfulSyncAt": "2026-10-08T01:01:44.416Z"
+      "note": "E04：72盆真实称重完成固定起点预测，未来数据不参与预测\n最近失水对照误差0.257/0.573克；两步均69盆优于保持状态\n仅研究回放；历史日期和水量仍可未知，不增加用户称重输入\n突变RED后恢复；相关100/100、后端全量2164/2164\n证据：.codex/backend-v2/evidence/E04-gravimetric-forecast.json",
+      "commentId": "1100440000142548",
+      "commentFingerprint": "777e572a474e831d61e7e847c9d189c62c6bc9cff8373532d594bea85fc66bcb",
+      "readback": "ClickUp codex running与评论1100440000142548逐行读回，版本61",
+      "lastSuccessfulSyncAt": "2026-10-08T01:16:32.850049Z"
     },
     "z8v0kmrg8a": {
       "version": 3,
@@ -83,10 +83,10 @@
       "readback": "原生ClickUp已逐字读回评论1100440000138268；只同步进度，不更改状态"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-08T01:01:44.416Z",
+  "lastSuccessfulSyncAt": "2026-10-08T01:16:32.850049Z",
   "h5Projection": {
-    "fingerprint": "92294906d2e409c7ff674785662b9fcae816c3430447199114ea477a86c6d693",
-    "sourceRevision": 140,
-    "sourceUpdatedAt": "2026-10-08T01:01:12.802Z"
+    "fingerprint": "d074b518afb8ca31dba08f24185b264c67c38359a253147ccdf87fe11d532b6f",
+    "sourceRevision": 141,
+    "sourceUpdatedAt": "2026-10-08T01:16:01.797473Z"
   }
 }

@@ -1,0 +1,149 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "verifiedAt": "2026-10-08T01:16:01.797473Z",
+  "status": "offline_comparison_verified",
+  "productionAdmission": false,
+  "businessTicketAccepted": false,
+  "productChange": "无；仅新增研究回放，不接入运行用例或生产配置",
+  "sourceDoi": "10.1186/s13007-019-0474-0",
+  "sourceSha256": "e960c89a152e13f253e0000dac3b0f9ec90e395db4f25ab04372d85945a2572b",
+  "fixtureRows": 72,
+  "excludedMissingRows": [
+    25,
+    26,
+    27,
+    28,
+    29
+  ],
+  "authorDifferenceChecks": 216,
+  "sourceUnit": "g，原论文方法确认；原始时间按观察步，非严格24小时",
+  "scores": {
+    "persistence": [
+      {
+        "observationStep": 1,
+        "count": 72,
+        "maeG": 1.438941666666666,
+        "biasG": 1.438941666666666,
+        "negativePredictions": 0
+      },
+      {
+        "observationStep": 2,
+        "count": 72,
+        "maeG": 2.9541097222222215,
+        "biasG": 2.9541097222222215,
+        "negativePredictions": 0
+      }
+    ],
+    "recentLoss": [
+      {
+        "observationStep": 1,
+        "count": 72,
+        "maeG": 0.2572861111111113,
+        "biasG": -0.02771388888888869,
+        "negativePredictions": 0
+      },
+      {
+        "observationStep": 2,
+        "count": 72,
+        "maeG": 0.5733875000000002,
+        "biasG": 0.020798611111111167,
+        "negativePredictions": 0
+      }
+    ]
+  },
+  "comparisons": [
+    {
+      "observationStep": 1,
+      "persistenceBetter": 3,
+      "recentLossBetter": 69,
+      "ties": 0
+    },
+    {
+      "observationStep": 2,
+      "persistenceBetter": 3,
+      "recentLossBetter": 69,
+      "ties": 0
+    }
+  ],
+  "independentVerification": "具名子代理从原始XLSX独立计算，两步MAE/偏差和69对3结果一致；提取重跑文件字节一致",
+  "tests": {
+    "layer": "L1 unit_real_data",
+    "runner": "Vitest",
+    "related": {
+      "files": 9,
+      "passed": 100
+    },
+    "full": {
+      "command": "npm test",
+      "files": 217,
+      "passed": 2164,
+      "exitCode": 0
+    },
+    "typecheck": {
+      "exitCode": 0
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 92
+    },
+    "tdd": "Expected先落盘；初始缺模块RED；故意把第三次称重用于预测后4失败/1通过；恢复文件cmp一致，相关套件GREEN",
+    "mutationCaughtBy": "未来称重变化只影响评分，不能反向改变已作预测",
+    "expectedSources": [
+      "原论文工作簿E/F/K/P与作者保存H/M/R差值",
+      "第2行手算26.259与25.687",
+      "独立Python原表汇总",
+      "缺失不补零、不得泄漏未来数据的既定回放规则"
+    ],
+    "riskCoverage": {
+      "U1": "空集合、记录洞、空重量",
+      "U2": "有效零、重量增加、负预测",
+      "U3": "非法数值、重复行",
+      "U4": "确定性重复计算与输入不变",
+      "U5": "无写入或回滚职责",
+      "U6": "无并发职责",
+      "U7": "未来真值不改变既有预测"
+    },
+    "notCovered": [
+      "用户盆栽动态日期和施水量",
+      "光照/VPD响应标定",
+      "真实MySQL或HTTP",
+      "供应排水与根区目标资格"
+    ]
+  },
+  "validationLogs": {
+    "red": {
+      "path": "/tmp/e04-mass-red.log",
+      "sha256": "a91931046569f93c375c54b573a83b3c7cd1606a256c9db5e3cc3f035272f393"
+    },
+    "green": {
+      "path": "/tmp/e04-mass-green.log",
+      "sha256": "0ad33a8bf0f7f8369d95363c0f88c2428cc1ee5b3a51ee72fadc51bf0c4a4842"
+    },
+    "mutation-red": {
+      "path": "/tmp/e04-mass-mutation-red.log",
+      "sha256": "8c5ef8fd29defdfafe95b1d65b5fb136f77ce3d86ae23c668016bd672cf8d2bd"
+    },
+    "related": {
+      "path": "/tmp/e04-mass-related.log",
+      "sha256": "2c64490fe22b479dc24a94c8a38082a4169f6e60f6941e1d7f875eb1b8675763"
+    },
+    "typecheck": {
+      "path": "/tmp/e04-mass-typecheck.log",
+      "sha256": "35627fd6250102302a9d89f7d2a3770dc16eb1e3241ca5ceb9873493c770925d"
+    },
+    "full": {
+      "path": "/tmp/e04-mass-full.log",
+      "sha256": "c9d245b7efd8896b9f495fd1173d8bea4acbf87a97b5addd2a6f526b894e731e"
+    }
+  },
+  "artifacts": {
+    "cloudfunctions-v2/scripts/extract-arabidopsis-mass-data.py": "90fb36a9759b21f43948a044f7cc4b7c940b5e9a7b38f4e2fd7aaba4d26b0e1a",
+    "cloudfunctions-v2/models/care/fixtures/arabidopsis-pot-mass.json": "307a1e87fc0298d130a93f05b016762e72e3698a97823cd0164059a7d32c0f73",
+    "cloudfunctions-v2/models/care/experiments/gravimetric-forecast-benchmark.ts": "eb9f810abe6d34d3cb99dc912d645fb2f8f6c25bc24f4ab9f534c42820b3240f",
+    "cloudfunctions-v2/test/care/watering/gravimetric-forecast-benchmark.spec.ts": "605664d58f308649b1494ba97a42016e8b9f119dc6f20d5f8faee617d51312bb",
+    "cloudfunctions-v2/models/care/gravimetric-forecast-results.json": "191331eddef7595528e8ffa0207e365d606bcae8a80b4da3c68c31ca8cb4d444",
+    "cloudfunctions-v2/models/care/gravimetric-forecast-review.md": "bca4a6e735659646dc7a491f732cf1503628239e331ec61df1dbbe6d15694d1c"
+  },
+  "remaining": "普通盆栽当前状态映射、联合环境响应与目标含水状态仍未标定；近期浇水日期/水量允许未知"
+}
