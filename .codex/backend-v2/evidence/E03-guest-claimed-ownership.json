@@ -1,0 +1,30 @@
+{
+  "ticketId": "z8v0kmr9mj",
+  "task": "已认领游客案例派生归属读取",
+  "expectedSource": "cloudfunctions-v2/models/user-plant/guest-claimed-ownership-contract.md",
+  "context": {
+    "serviceHealthy": true,
+    "targetUri": "viking://resources/projects/planting",
+    "query": "guest-session-claim claimedObjectKinds 派生归属",
+    "layersRequested": [
+      0,
+      1,
+      2
+    ],
+    "result": "定向原生检索超时，无所需上下文；未重试或重启",
+    "readAdmission": "仅contracts/guest-session-claim.md跨域可见性与对象类别相关行，未读取其他架构资料"
+  },
+  "configurationDecision": "无新增策略、阈值、时限、迁移或默认；现有可信身份、成功关系与零写入硬规则",
+  "testFirst": {
+    "unitExpectedBeforeProduct": true,
+    "missingModuleIsBusinessRed": false,
+    "testEachHarnessFailureIsBusinessRed": false
+  },
+  "boundaries": [
+    "已验真Principal与案例范围内部Reader",
+    "真实对象类别查询、带服务签名内部API、公开HTTP、Provider仍未验收",
+    "数据库旧自建植物表未读取或重建",
+    "无前端修改、生产DDL、部署或新依赖"
+  ],
+  "accepted": false
+}
