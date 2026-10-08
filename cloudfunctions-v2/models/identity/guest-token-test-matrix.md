@@ -12,3 +12,14 @@ Expected 来源：`guest-token-contract.md`（用户 2026-10-08 冻结）＋配�
 | I2 | 无已发布策略 → unavailable，不写入 | Edge | 待写 |
 | I5 写中断 | 写入失败 → unavailable，结果不含 token | Reverse | 待写 |
 | 脱敏 | 存储记录序列化后不含 token 原文 | Reverse | 待写 |
+
+## 游客会话存储 `createMysqlGuestSessionRepository`（真实 MySQL）
+
+层次 `unit_real_data`：真实 MySQL 8.4，按 003 建表后应用 023 迁移；不经过 HTTP 或云端。Expected 来源：迁移 023、guest-token/v1。
+
+| 维 | 用例 | 形态 | 状态 |
+|---|---|---|---|
+| I1 Happy | 写入后按限流键计数为 1；按令牌摘要找到有效会话（引用、签发与失效时刻） | Happy | 待写 |
+| U2 边界 | 计数窗口起点晚于签发时刻 → 0；其他限流键 → 0 | Edge | 待写 |
+| Reverse | 已过期、状态非 active、未知摘要 → 找不到 | Reverse | 待写 |
+| I3 约束 | 重复公开引用写入被唯一键拒绝；非法 identity_source 被 CHECK 拒绝 | Edge | 待写 |

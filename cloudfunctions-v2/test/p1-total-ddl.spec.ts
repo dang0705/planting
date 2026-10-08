@@ -49,6 +49,8 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
       assert.match(content, /MODIFY COLUMN `anonymous_subject_hash` CHAR\(64\) NULL/u)
       assert.match(content, /ADD CONSTRAINT `ck_guest_session_identity_source` CHECK \(`identity_source` IN \('cloudbase_anonymous', 'server_issued_guest_token'\)\)/u)
       assert.match(content, /ADD KEY `idx_guest_session_issuance` \(`issuance_source_hash`, `issued_at_ms`\)/u)
+      // 每次业务请求按令牌摘要定位会话，摘要来自 256 位随机令牌，必须唯一且有索引。
+      assert.match(content, /ADD UNIQUE KEY `uq_guest_session_proof` \(`possession_proof_hash`\)/u)
       assert.doesNotMatch(content, /\b(?:DROP|RENAME|CHANGE|CREATE TABLE)\b/iu)
     }
     if (isDiagnosisResultExtension) {
