@@ -3,7 +3,7 @@
 - 机器事实源：`configuration-variable-catalog.json`
 - Schema：`configuration-variable-catalog/v1`
 - 目录版本：`2026-10-04.1`
-- 当前共 194 项业务/治理变量、16 个 Provider 配置档案：已冻结 81 项、待冻结 55 项、不可配置硬规则 58 项。
+- 当前共 196 项业务/治理变量、16 个 Provider 配置档案：已冻结 81 项、待冻结 55 项、不可配置硬规则 60 项。
 
 本文件由同目录生成脚本从 JSON 生成，便于中文阅读。实施 Agent 必须先按领域读取本文件，再只深读该变量引用的合同或决策；不得把 `P1_PENDING` 猜成默认值。待冻结项必须带原因与阻断范围，未冻结前只能推进不依赖该值的工作。
 
@@ -193,6 +193,8 @@
 | `care.lighting.mvp_glass_selection` | MVP玻璃层数与版本策略准入 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `{"contractVersion":"mvp-glass-policy/v1","scopeCode":"care_mvp_glass","inputs":["single","double",null],"implicitDefault":false,"professionalParametersRetained":true,"domainCode":"care","policyCode":"mvp_glass","contentDigest":"canonical_sorted_json_sha256"}` | care | care MVP玻璃策略解析与回放、care MySQL活动玻璃策略读取器 | 分类与准入规则不可配置；具体透射值由独立不可变策略发布，不在源码填默认；失败：没有有效active策略明确不可用；层数未确认保留null | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.watering.root_zone_water_deficit` | 根区净补水缺口的量纲与证据边界 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | 有效基质体积×目标/当前体积含水率差；净缺口不等于施水量；缺证据不填默认 | care | care内部水量回放 | 数学和单位规则不能由配置覆盖；模型映射/目标含水率/效率/施水上限独立裁决发布；失败：缺少有效基质或可靠根区量时返回insufficient_evidence；非法类型拒绝 | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.watering.local_calendar_dates` | 浇水检查窗口的当地日历表达 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | 按明确植物时区投影UTC窗口；缺端点不补日期；不创建提醒或改写浇水事实 | care | care内部日期回放 | 公历和时间语义不可配置；提前检查比例、通知时刻与正式发布独立裁决；失败：缺时区或窗口返回缺证据，非法时区或不可表达日期拒绝 | P4 / [P4] 盆土视觉和四类养护能力 |
+| `care.lighting.open_meteo_request_window_days` | Open-Meteo 辐射请求回看与预报天数上限 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `{"maxPastDays":92,"maxForecastDays":16}` | care | care watering-advice | Open-Meteo 公开接口的 past_days 与 forecast_days 上限，属外部能力边界，不能运营配置；Provider 能力变化先更新适配器与测试；失败：回看起点早于 92 天时截断到 92 天，超出预报覆盖的时段为缺段，检查窗口变宽或开放，不补零 | P4 / [P4] 盆土视觉和四类养护能力 |
+| `care.watering.baseline_policy_version` | MVP 浇水模型使用的 Tropicals 名义基线版本 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | v1 | care | care watering-advice、plant-knowledge 基线读取 | MVP 参数按 v1 基线标定；更换基线版本必须同时发布新的 care_mvp_watering 策略版本并重新标定，不单独运营切换；失败：该版本无启用行或基线缺失时返回缺证据（insufficient_evidence），不回退其他版本 | P4 / [P4] 盆土视觉和四类养护能力 |
 
 ## 问诊与视觉 AI
 

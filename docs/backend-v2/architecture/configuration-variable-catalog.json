@@ -5159,6 +5159,60 @@
       "expected": "抖音签发时 anonymous_openid 只以 HMAC 摘要保存为防刷键，不作为业务主键",
       "decisionGroup": "identity_sessions",
       "decisionNote": "用户 2026-10-08 按建议值确认。"
+    },
+    {
+      "id": "care.lighting.open_meteo_request_window_days",
+      "chineseName": "Open-Meteo 辐射请求回看与预报天数上限",
+      "domain": "care",
+      "layer": "hard_rule",
+      "valueType": "object",
+      "status": "hard_rule",
+      "currentValue": {
+        "maxPastDays": 92,
+        "maxForecastDays": 16
+      },
+      "owner": "care",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/watering-advice-wiring-plan.md",
+        "cloudfunctions-v2/src/care/provider/open-meteo-radiation-client.ts"
+      ],
+      "consumers": [
+        "care watering-advice"
+      ],
+      "changePolicy": "Open-Meteo 公开接口的 past_days 与 forecast_days 上限，属外部能力边界，不能运营配置；Provider 能力变化先更新适配器与测试",
+      "fallback": "回看起点早于 92 天时截断到 92 天，超出预报覆盖的时段为缺段，检查窗口变宽或开放，不补零",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "clickUpTicketId": "z8v0kmr973",
+      "expected": "请求回看不超过 92 天、预报不超过 16 天；超出覆盖的时段返回缺证据而非估算",
+      "decisionGroup": "hard_business_rule",
+      "decisionNote": "主代理 2026-10-09 登记：取 Open-Meteo 接口上限作为硬边界。"
+    },
+    {
+      "id": "care.watering.baseline_policy_version",
+      "chineseName": "MVP 浇水模型使用的 Tropicals 名义基线版本",
+      "domain": "care",
+      "layer": "hard_rule",
+      "valueType": "string",
+      "status": "hard_rule",
+      "currentValue": "v1",
+      "owner": "care",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/mvp-watering-policy-contract.md",
+        "cloudfunctions-v2/models/care/watering-advice-wiring-plan.md"
+      ],
+      "consumers": [
+        "care watering-advice",
+        "plant-knowledge 基线读取"
+      ],
+      "changePolicy": "MVP 参数按 v1 基线标定；更换基线版本必须同时发布新的 care_mvp_watering 策略版本并重新标定，不单独运营切换",
+      "fallback": "该版本无启用行或基线缺失时返回缺证据（insufficient_evidence），不回退其他版本",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "clickUpTicketId": "z8v0kmr973",
+      "expected": "浇水建议只读取 watering_baseline_policy.policy_version='v1' 且 is_active=1 的基线",
+      "decisionGroup": "hard_business_rule",
+      "decisionNote": "主代理 2026-10-09 登记：测试库现存唯一版本 v1（22 行）。"
     }
   ],
   "providerProfiles": [
