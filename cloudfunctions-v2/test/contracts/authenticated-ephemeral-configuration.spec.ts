@@ -44,7 +44,8 @@ function readCatalog(): ConfigurationCatalog {
 }
 
 describe('已登录临时植物有效期配置门', () => {
-  test('单独登记为待冻结，不沿用游客会话 24 小时', () => {
+  // Expected 来源更新：用户 2026-10-08 明确裁决已登录临时案例保留 7 天（168 小时），独立于游客会话。
+  test('单独冻结为 168 小时，不沿用游客会话 24 小时', () => {
     const variable = readCatalog().variables.find(
       item => item.id === 'user-plant.authenticated_ephemeral.case_ttl_hours'
     )
@@ -53,16 +54,14 @@ describe('已登录临时植物有效期配置门', () => {
     expect(variable).toMatchObject({
       chineseName: '已登录用户临时植物案例有效期',
       owner: 'user-plant',
-      status: 'pending',
+      status: 'confirmed',
       phase: 'P3',
-      currentValue: 'P1_PENDING'
+      currentValue: 168
     })
     expect(variable?.sourceRefs).toContain(
       'docs/backend-v2/contracts/authenticated-ephemeral-plant-case.md'
     )
     expect(variable?.consumers).toEqual(expect.arrayContaining(['user-plant', 'care', 'diagnosis']))
-    expect(variable?.pendingReason).toBeTruthy()
-    expect(variable?.blockingScope).toContain('已登录临时植物案例创建')
     expect(variable?.currentValue).not.toBe(GUEST_SESSION_TTL_HOURS)
   })
 })

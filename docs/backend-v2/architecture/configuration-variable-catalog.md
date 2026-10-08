@@ -3,7 +3,7 @@
 - 机器事实源：`configuration-variable-catalog.json`
 - Schema：`configuration-variable-catalog/v1`
 - 目录版本：`2026-10-04.1`
-- 当前共 191 项业务/治理变量、13 个 Provider 配置档案：已冻结 76 项、待冻结 57 项、不可配置硬规则 58 项。
+- 当前共 191 项业务/治理变量、14 个 Provider 配置档案：已冻结 76 项、待冻结 57 项、不可配置硬规则 58 项。
 
 本文件由同目录生成脚本从 JSON 生成，便于中文阅读。实施 Agent 必须先按领域读取本文件，再只深读该变量引用的合同或决策；不得把 `P1_PENDING` 猜成默认值。待冻结项必须带原因与阻断范围，未冻结前只能推进不依赖该值的工作。
 
@@ -310,6 +310,7 @@
 | `cloudbase_mysql` CloudBase MySQL | TRANSACTIONAL_REPOSITORY | pending | cloudbase_mysql_private / P1_PENDING | connect=P1_PENDING, read=P1_PENDING, total=P1_PENDING, attempts=1, backoff=no_automatic_transaction_retry | rate=connection_budget, circuit=P1_PENDING | policy=cloudbase_resource_budget_PENDING, month=P1_PENDING, warn=P1_PENDING | 连接或事务结果不确定时失败关闭并对账，禁止跨库降级；阻断：真实并发写入 |
 | `cloudbase_auth` CloudBase 身份认证 | ANONYMOUS_PRINCIPAL | pending | cloudbase_auth_v2 / P1_PENDING | connect=P1_PENDING, read=P1_PENDING, total=P1_PENDING, attempts=P1_PENDING, backoff=P1_PENDING | rate=P1_PENDING, circuit=P1_PENDING | policy=cloudbase_resource_budget_PENDING, month=P1_PENDING, warn=P1_PENDING | 匿名认证不可用时拒绝签发游客主体；不得以设备、IP、Cookie 或匿名 UID 伪造 user_id；阻断：游客匿名主体真实接入 |
 | `wechat_miniprogram_login` 微信小程序登录凭证交换 | PLATFORM_LOGIN_PRINCIPAL | confirmed | wechat_jscode2session / env:WECHAT_MINIPROGRAM_PRIVATE_KEY | connect=2000, read=3000, total=5000, attempts=1, backoff=none_single_use_code | rate=platform_quota_only, circuit=none_fail_closed | policy=free_platform_api, month=0, warn=0 | 凭证或受控配置不可用时拒绝登录，不信任客户端自报的 OpenID 或 HTTP 请求头；阻断：真实微信小程序登录验真；本地 fake Provider 合同与 MySQL 切片不受阻 |
+| `open_meteo` Open-Meteo 太阳辐射预报 | SOLAR_RADIATION_FORECAST | confirmed | open_meteo_forecast_v1 / none_public_api | connect=2000, read=5000, total=8000, attempts=1, backoff=none | rate=free_tier_daily_quota_cache_per_location_hour, circuit=none_fail_closed | policy=free_public_api, month=0, warn=0 | 请求失败或数据缺段时对应时段保持缺段，浇水窗口端点开放，不切换其他来源、不外推；阻断：植物位置光照与浇水动态窗口；不阻断盆土安全门与水量估算 |
 
 ## 验收方式
 
