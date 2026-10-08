@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
+import { findProjectRoot } from '../support/project-root.js'
 import { fetchOpenMeteoRadiation } from '../../src/care/provider/open-meteo-radiation-client.js'
 import { normalizeOpenMeteoRadiation } from '../../src/care/light/normalize-open-meteo-radiation.js'
 
@@ -8,7 +9,7 @@ import { normalizeOpenMeteoRadiation } from '../../src/care/light/normalize-open
  * Expected：models/care/mvp-watering-test-matrix.md 第 F 节（Open-Meteo 官方参数＋配置目录 open_meteo 档案）。
  * 层次 L3 unit_fake：只替换 fetch 边界；Happy 响应体为真实公开制品，交给真实标准化器。未覆盖真实网络。
  */
-const artifact = readFileSync(resolve(import.meta.dirname, 'fixtures/open-meteo-hourly-radiation.json'), 'utf8')
+const artifact = readFileSync(join(findProjectRoot(), 'cloudfunctions-v2/test/care/fixtures/open-meteo-hourly-radiation.json'), 'utf8')
 const query = { latitude: 31.2478, longitude: 121.5, pastDays: 1, forecastDays: 7 }
 const now = () => 1_791_000_000_000
 const respond = (body: string, status = 200) => vi.fn(async () => new Response(body, { status, headers: { 'content-type': 'application/json' } }))

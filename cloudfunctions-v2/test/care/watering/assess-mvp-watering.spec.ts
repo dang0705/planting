@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { findProjectRoot } from '../../support/project-root.js'
 import { calculateCanonicalJsonSha256, type CanonicalJsonObject } from '../../../src/foundation/json/canonical-json-sha256.js'
 import { resolveMvpWateringPolicy } from '../../../src/configuration/mvp-watering-policy.js'
 import { assessMvpWatering } from '../../../src/care/application/assess-mvp-watering.js'
@@ -11,7 +12,7 @@ import { assessMvpWatering } from '../../../src/care/application/assess-mvp-wate
  */
 const day = 86_400_000
 const now = Date.UTC(2026, 9, 8, 2)
-const payload = JSON.parse(readFileSync(resolve(import.meta.dirname, '../../../models/care/mvp-watering-policy-release.v1.json'), 'utf8')) as CanonicalJsonObject
+const payload = JSON.parse(readFileSync(join(findProjectRoot(), 'cloudfunctions-v2/models/care/mvp-watering-policy-release.v1.json'), 'utf8')) as CanonicalJsonObject
 const resolution = resolveMvpWateringPolicy({ ...payload, releaseVersion: 'care-watering-mvp/v1.0.0',
   contentSha256: calculateCanonicalJsonSha256(payload), releaseStatus: 'active', effectiveAt: '2026-10-01T00:00:00Z' }, new Date(now).toISOString())
 if (resolution.status !== 'available') { throw new Error('夹具策略必须可解析') }
@@ -29,14 +30,20 @@ const assess = (overrides: Record<string, unknown> = {}) => assessMvpWatering({
   environment: hourly(now, 240), timezone: 'Asia/Shanghai', ...overrides,
 } as Parameters<typeof assessMvpWatering>[0])
 const at = (iso: string | null | undefined) => (iso ? Date.parse(iso) : null)
+/** 既有积分把交点按毫秒向后取整（replay-dry-progress.ts:150，保守不早报），浮点下允许 1ms 误差。 */
+const expectAtMs = (iso: string | null | undefined, expected: number) => {
+  const value = at(iso)
+  expect(value).not.toBeNull()
+  expect(Math.abs(value! - expected)).toBeLessThanOrEqual(1)
+}
 
 describe('MVP 浇水组合用例｜L3 unit_fake', () => {
   it('I1：根区微湿 → 检查窗口 +1～+6 天，当地日期 10-09～10-14，无水量，低置信', () => {
     const result = assess()
     expect(result).toMatchObject({ capabilityType: 'watering', status: 'ready', confidence: 'low' })
     expect(result.details.action).toBe('check_later')
-    expect(at(result.details.checkWindow?.earliestAt)).toBe(now + day)
-    expect(at(result.details.checkWindow?.latestAt)).toBe(now + 6 * day)
+    expectAtMs(result.details.checkWindow?.earliestAt, now + day)
+    expectAtMs(result.details.checkWindow?.latestAt, now + 6 * day)
     expect(result.details.checkWindow).toMatchObject({ purpose: 'soil_check', timezone: 'Asia/Shanghai', earliestDate: '2026-10-09', latestDate: '2026-10-14' })
     expect(result.details.amountMl).toBeNull()
     expect(result.evidenceSummary.join('')).toContain('文献')
@@ -52,8 +59,8 @@ describe('MVP 浇水组合用例｜L3 unit_fake', () => {
   it('I1：无观察、2 天前确认浇水 → 窗口 +2～+8 天', () => {
     const result = assess({ soil: null, lastConfirmedWateringAt: now - 2 * day, environment: hourly(now - 2 * day, 24 * 12) })
     expect(result.details.action).toBe('check_later')
-    expect(at(result.details.checkWindow?.earliestAt)).toBe(now + 2 * day)
-    expect(at(result.details.checkWindow?.latestAt)).toBe(now + 8 * day)
+    expectAtMs(result.details.checkWindow?.earliestAt, now + 2 * day)
+    expectAtMs(result.details.checkWindow?.latestAt, now + 8 * day)
   })
   it('I2：无活动发布 → 暂不可用，不给行动建议', () => {
     const result = assess({ policy: null })
@@ -79,7 +86,7 @@ describe('MVP 浇水组合用例｜L3 unit_fake', () => {
   })
   it('I2：环境只覆盖 3 天 → 最早端存在，最晚端开放', () => {
     const result = assess({ environment: hourly(now, 72) })
-    expect(at(result.details.checkWindow?.earliestAt)).toBe(now + day)
+    expectAtMs(result.details.checkWindow?.earliestAt, now + day)
     expect(result.details.checkWindow?.latestAt).toBeNull()
   })
   it('方向：光照翻倍使最早检查时刻提前', () => {

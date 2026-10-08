@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { findProjectRoot } from '../support/project-root.js'
 import { calculateCanonicalJsonSha256, type CanonicalJsonObject } from '../../src/foundation/json/canonical-json-sha256.js'
 import { resolveMvpWateringPolicy } from '../../src/configuration/mvp-watering-policy.js'
 
@@ -8,7 +9,7 @@ import { resolveMvpWateringPolicy } from '../../src/configuration/mvp-watering-p
  * Expected：models/care/mvp-watering-test-matrix.md 第 D 节（合同第1～6节＋配置治理不可变 release／SHA／无默认）。
  * 层次 L1 unit_fake：不访问数据库；摘要用既有通用工具独立计算，不调用 SUT 的摘要函数。
  */
-const payload = JSON.parse(readFileSync(resolve(import.meta.dirname, '../../models/care/mvp-watering-policy-release.v1.json'), 'utf8')) as CanonicalJsonObject
+const payload = JSON.parse(readFileSync(join(findProjectRoot(), 'cloudfunctions-v2/models/care/mvp-watering-policy-release.v1.json'), 'utf8')) as CanonicalJsonObject
 const meta = (body: CanonicalJsonObject) => ({
   releaseVersion: 'care-watering-mvp/v1.0.0', contentSha256: calculateCanonicalJsonSha256(body),
   releaseStatus: 'active', effectiveAt: '2026-10-08T00:00:00Z',
