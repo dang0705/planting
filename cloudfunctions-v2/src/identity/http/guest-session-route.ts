@@ -7,6 +7,7 @@ import {
   type CreateGuestSessionRequestDto,
   type CreateGuestSessionResponseDto
 } from '../../contracts/index.js'
+import type { GuestIssuancePolicy } from '../../configuration/identity-session-policy.js'
 import type { RouteHandler } from '../../foundation/http/route-dispatcher.js'
 import type { PublicErrorType, RequestChainAuditEvent } from '../../foundation/http/request-chain.js'
 import { issueGuestSession, type IssueGuestSessionDependencies } from '../application/issue-guest-session.js'
@@ -21,15 +22,8 @@ const clientIpPrefix = 'client_ip:'
 /** 抖音匿名信号摘要输入前缀。 */
 const douyinAnonymousPrefix = 'douyin_anonymous:'
 
-/** 游客签发策略快照（来自已发布身份策略）；null 表示未发布，入口失败关闭。 */
-export interface GuestIssuancePolicy {
-  /** 游客令牌有效小时数（identity.guest.session_ttl_hours）。 */
-  readonly ttlHours: number
-  /** 每来源每小时签发上限（identity.guest.issuance_rate_per_hour）。 */
-  readonly ratePerHour: number
-  /** 是否用抖音匿名信号作为防刷键（identity.guest.douyin_anonymous_signal_enabled）。 */
-  readonly douyinAnonymousSignalEnabled: boolean
-}
+/** 游客签发策略来自已发布身份策略 v2（configuration 层所有）。 */
+export type { GuestIssuancePolicy } from '../../configuration/identity-session-policy.js'
 
 /** 游客签发入口依赖；存储、抖音换取与策略可替换，摘要与签发规则不可替换。 */
 export interface GuestSessionRouteDependencies {

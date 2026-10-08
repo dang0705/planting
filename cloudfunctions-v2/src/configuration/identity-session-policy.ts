@@ -7,6 +7,8 @@ import type { ConfigurationSnapshot } from './types.js'
 
 /** 当前身份会话策略载荷的版本标识；改变字段语义时须另起合同版本。 */
 const IDENTITY_SESSION_POLICY_VERSION = 'identity-session-policy/v1' as const
+/** v2 在 v1 基础上追加游客签发字段（guest-token/v1，主代理 2026-10-09 裁决）；v1 摘要算法不变。 */
+const IDENTITY_SESSION_POLICY_V2_VERSION = 'identity-session-policy/v2' as const
 /** 配置目录已登记的统一身份策略范围编码，用于快照和审计归属。 */
 const IDENTITY_SESSION_SCOPE = 'identity_sessions' as const
 /** 当前合同中不允许自动静默续期。 */
@@ -44,13 +46,35 @@ export interface IdentitySessionPolicyRelease {
   expiresAt?: string | null
 }
 
+/** v2 发布：v1 全部字段加游客签发策略；三项均来自配置目录已冻结值，无源码默认。 */
+export interface IdentitySessionPolicyV2Release extends Omit<IdentitySessionPolicyRelease, 'contractVersion'> {
+  /** v2 合同版本。 */
+  contractVersion: typeof IDENTITY_SESSION_POLICY_V2_VERSION
+  /** 游客令牌有效小时数（identity.guest.session_ttl_hours）；正整数。 */
+  guestSessionTtlHours: number
+  /** 每个签发来源每小时游客令牌上限（identity.guest.issuance_rate_per_hour）；正整数。 */
+  guestIssuanceRatePerHour: number
+  /** 是否用抖音匿名信号作为防刷键（identity.guest.douyin_anonymous_signal_enabled）。 */
+  douyinAnonymousSignalEnabled: boolean
+}
+
+/** 请求级锁定的游客签发策略；只有 v2 发布才有，v1 时为 null（签发入口失败关闭）。 */
+export interface GuestIssuancePolicy {
+  /** 游客令牌有效小时数。 */
+  readonly ttlHours: number
+  /** 每来源每小时签发上限。 */
+  readonly ratePerHour: number
+  /** 是否启用抖音匿名信号作为限流键。 */
+  readonly douyinAnonymousSignalEnabled: boolean
+}
+
 /**
  * 登录会话策略在单个请求中的不可变解析结果。
  * 保存必要策略值和通用版本快照，不包含 bearer、用户、平台主体或数据库主键。
  */
 export interface IdentitySessionPolicySnapshot {
-  /** 策略快照所依据的合同版本。 */
-  contractVersion: typeof IDENTITY_SESSION_POLICY_VERSION
+  /** 策略快照所依据的合同版本（v1 或 v2）。 */
+  contractVersion: typeof IDENTITY_SESSION_POLICY_VERSION | typeof IDENTITY_SESSION_POLICY_V2_VERSION
   /** 被解析策略的配置范围；固定为身份策略目录范围。 */
   scopeCode: typeof IDENTITY_SESSION_SCOPE
   /** 本次请求锁定的不可变发布版本。 */
@@ -69,6 +93,8 @@ export interface IdentitySessionPolicySnapshot {
   expiresAt?: string
   /** 通用只读配置快照；其中的版本与摘要引用参与 snapshotSha256。 */
   configurationSnapshot: Readonly<ConfigurationSnapshot>
+  /** 游客签发策略；v1 发布为 null。 */
+  guest: Readonly<GuestIssuancePolicy> | null
 }
 
 /** 策略未能用于签发时返回的稳定原因，不包含发布正文或数据库错误。 */
@@ -125,6 +151,19 @@ export const identitySessionPolicyReleaseSchema: JSONSchemaType<IdentitySessionP
   }
 }
 
+/** v2 发布严格白名单 Schema：v1 字段加三项游客字段，任何其他字段拒绝。 */
+const identitySessionPolicyV2ReleaseSchema: JSONSchemaType<IdentitySessionPolicyV2Release> = {
+  ...identitySessionPolicyReleaseSchema,
+  required: [...identitySessionPolicyReleaseSchema.required, 'guestSessionTtlHours', 'guestIssuanceRatePerHour', 'douyinAnonymousSignalEnabled'],
+  properties: {
+    ...identitySessionPolicyReleaseSchema.properties,
+    contractVersion: { type: 'string', const: IDENTITY_SESSION_POLICY_V2_VERSION },
+    guestSessionTtlHours: { type: 'integer', minimum: 1 },
+    guestIssuanceRatePerHour: { type: 'integer', minimum: 1 },
+    douyinAnonymousSignalEnabled: { type: 'boolean' }
+  }
+} as JSONSchemaType<IdentitySessionPolicyV2Release>
+
 /** 创建可复用的严格发布校验器；外部未知数据必须先通过此 Schema。
  * @returns 配置 AJV 严格模式的身份策略发布校验函数。
  */
@@ -135,6 +174,8 @@ export function createIdentitySessionPolicyValidator(): ValidateFunction<Identit
 
 /** 已编译的模块级校验器，避免每次解析都重复创建 AJV 实例。 */
 const identitySessionPolicyValidator = createIdentitySessionPolicyValidator()
+/** v2 模块级校验器。 */
+const identitySessionPolicyV2Validator = new Ajv({ allErrors: true, strict: true }).compile(identitySessionPolicyV2ReleaseSchema)
 
 /**
  * 按合同中固定字段顺序计算策略正文摘要。
@@ -146,14 +187,23 @@ export function calculateIdentitySessionPolicyContentSha256(
   policy: Pick<
     IdentitySessionPolicyRelease,
     'contractVersion' | 'scopeCode' | 'sessionTtlHours' | 'refreshWindowHours'
-  >
+  > | IdentitySessionPolicyV2Release
 ): string {
-  const canonicalPolicy = JSON.stringify({
+  const v1Fields = {
     contractVersion: policy.contractVersion,
     scopeCode: policy.scopeCode,
     sessionTtlHours: policy.sessionTtlHours,
     refreshWindowHours: policy.refreshWindowHours
-  })
+  }
+  // v2 在 v1 字段之后按固定顺序追加三项游客字段；v1 规范化正文保持不变，已发布摘要继续有效。
+  const canonicalPolicy = JSON.stringify(policy.contractVersion === IDENTITY_SESSION_POLICY_V2_VERSION
+    ? {
+        ...v1Fields,
+        guestSessionTtlHours: policy.guestSessionTtlHours,
+        guestIssuanceRatePerHour: policy.guestIssuanceRatePerHour,
+        douyinAnonymousSignalEnabled: policy.douyinAnonymousSignalEnabled
+      }
+    : v1Fields)
 
   return createHash('sha256').update(canonicalPolicy).digest('hex')
 }
@@ -198,7 +248,7 @@ export function resolveIdentitySessionPolicySnapshot(
     return { valid: false, reason: 'IDENTITY_SESSION_POLICY_UNAVAILABLE' }
   }
 
-  if (!identitySessionPolicyValidator(release)) {
+  if (!identitySessionPolicyValidator(release) && !identitySessionPolicyV2Validator(release)) {
     return { valid: false, reason: 'IDENTITY_SESSION_POLICY_INVALID' }
   }
 
@@ -246,7 +296,14 @@ export function resolveIdentitySessionPolicySnapshot(
     effectiveAt: release.effectiveAt,
     capturedAt,
     ...(release.expiresAt ? { expiresAt: release.expiresAt } : {}),
-    configurationSnapshot
+    configurationSnapshot,
+    guest: release.contractVersion === IDENTITY_SESSION_POLICY_V2_VERSION
+      ? Object.freeze({
+          ttlHours: release.guestSessionTtlHours,
+          ratePerHour: release.guestIssuanceRatePerHour,
+          douyinAnonymousSignalEnabled: release.douyinAnonymousSignalEnabled
+        })
+      : null
   })
 
   return { valid: true, snapshot }

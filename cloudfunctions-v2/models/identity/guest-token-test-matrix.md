@@ -62,3 +62,32 @@ Expected 来源：`guest-token-contract.md` §1（公开 DTO 与错误）、§5�
 
 突变证据（仓库外副本）：XFF 改取首段 → X1/S2 红；匿名换取失败改为抛出 → H3 红；忽略匿名信号开关 → H4 红；限流改 503 → R1 红。
 OpenAPI 制品（`test/identity/identity-session-openapi.spec.ts`，L1 unit_real_data）：游客签发组件与多平台登录组件；反事实 RED：生成器回退到 HEAD → 两条均红，恢复后绿。
+
+## 身份策略 v2（含游客字段）`identity-session-policy/v2`（E03，cases 先于产品）
+
+裁决（主代理 2026-10-09）：不改 v1（测试库已发布 v1，摘要 `5d7592f4…`，登录依赖它）；新增 v2 = v1 字段 + `guestSessionTtlHours`、`guestIssuanceRatePerHour`、`douyinAnonymousSignalEnabled`（配置目录 `identity.guest.session_ttl_hours`=168、`identity.guest.issuance_rate_per_hour`=10、`identity.guest.douyin_anonymous_signal_enabled`=true，均已冻结）。v1 快照的游客部分为 null（签发入口 503）；v2 正文摘要按固定字段顺序计算，v1 摘要算法不变。
+对象：`resolveIdentitySessionPolicySnapshot`（L1 unit_real_data：v1 用测试库已发布正文与摘要制品）、`createMysqlIdentitySessionPolicyReader`（L3 unit_fake：替换 SQL 连接）。
+未覆盖：v2 写入测试库（需用户授权）、真实 MySQL 读回 v2。
+
+| 维 | 用例 | 形态 | 状态 |
+|---|---|---|---|
+| P1 Happy | v2 合法发布 → 快照含 `guest {ttlHours:168, ratePerHour:10, douyinAnonymousSignalEnabled:true}`，摘要按 v2 顺序 | Happy | 已写（绿；突变：v2 摘要退回 v1 算法→P1/P4/D1 红，游客恒 null→P1/D1 红，限流下限改 0→P3 红；P3/D2 在 v2 前因未知版本已拒绝，属守护用例） |
+| P2 回归 | 测试库已发布 v1 正文 → 摘要仍为 `5d7592f4…`，快照 `guest` 为 null | Happy | 已写（绿；突变：v2 摘要退回 v1 算法→P1/P4/D1 红，游客恒 null→P1/D1 红，限流下限改 0→P3 红；P3/D2 在 v2 前因未知版本已拒绝，属守护用例） |
+| P3 非法 | v2 缺任一游客字段、限流 0、有效期非整数、开关非布尔、v1 混入游客字段 → invalid | Reverse | 已写（绿；突变：v2 摘要退回 v1 算法→P1/P4/D1 红，游客恒 null→P1/D1 红，限流下限改 0→P3 红；P3/D2 在 v2 前因未知版本已拒绝，属守护用例） |
+| P4 摘要 | v2 摘要按 v1 算法算（漏游客字段）→ invalid | Reverse | 已写（绿；突变：v2 摘要退回 v1 算法→P1/P4/D1 红，游客恒 null→P1/D1 红，限流下限改 0→P3 红；P3/D2 在 v2 前因未知版本已拒绝，属守护用例） |
+| D1 读取 | 读取器：schema_version v2 行 → 快照含 guest；v1 行声明 v2 版本不一致 → null | Happy/Reverse | 已写（绿；突变：v2 摘要退回 v1 算法→P1/P4/D1 红，游客恒 null→P1/D1 红，限流下限改 0→P3 红；P3/D2 在 v2 前因未知版本已拒绝，属守护用例） |
+| D2 读取 | 读取器：v2 行正文含未知字段 → null | Reverse | 已写（绿；突变：v2 摘要退回 v1 算法→P1/P4/D1 红，游客恒 null→P1/D1 红，限流下限改 0→P3 红；P3/D2 在 v2 前因未知版本已拒绝，属守护用例） |
+
+## 游客签发与解析 MySQL 端到端（E03）
+
+层次 `unit_real_data`：真实 MySQL 8.4（007 策略表、003 guest_sessions + 023 迁移）、真实 `createIdentityServer` HTTP、真实策略读取器与 HMAC 派生；只替换登录 Provider（本用例不调用）且不接抖音换取。不是 CloudBase 部署或真机验收。
+Expected 来源：guest-token-contract.md §1/§2/§6、配置目录已冻结值（168 小时、10 次/小时）。
+
+| 维 | 用例 | 形态 | 状态 |
+|---|---|---|---|
+| E1 Happy | v2 活动发布 → 200；库中一行，`possession_proof_hash`=SHA-256(令牌)、来源 server_issued_guest_token、限流键=HMAC(派生键, client_ip:…)、+168h；任何列不含令牌原文或 IP | Happy | 已写（绿） |
+| E2 读回 | 用返回令牌经真实存储解析 → GuestPrincipal，引用与响应一致 | Happy | 已写（绿） |
+| E3 限流 | 同 IP 共 10 次成功后第 11 次 → 429，库中仍 10 行；另一 IP 仍可签发 | Edge | 已写（绿） |
+| E4 失败关闭 | 活动指针切回 v1 发布 → 503，不新增行 | Reverse | 已写（绿） |
+
+反事实 RED：读取器不认 v2（仓库外副本）→ E1/E3 红；恢复后 3/3 绿。

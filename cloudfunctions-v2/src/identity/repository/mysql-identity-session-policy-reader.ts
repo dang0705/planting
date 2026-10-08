@@ -2,8 +2,12 @@ import type { MysqlConnectionPoolPort } from '../../foundation/database/mysql-tr
 import { withReadConnection, type Mysql2QueryConnection } from '../../foundation/database/mysql2-connection-source.js'
 import { resolveIdentitySessionPolicySnapshot, type IdentitySessionPolicySnapshot } from '../../configuration/identity-session-policy.js'
 
-/** 正文允许的字段；元数据不得藏进正文。 */
-const allowedBodyKeys = ['contractVersion', 'scopeCode', 'sessionTtlHours', 'refreshWindowHours']
+/** 各 Schema 版本正文允许的字段；元数据不得藏进正文。 */
+const allowedBodyKeysBySchema: Readonly<Record<string, readonly string[]>> = {
+  'identity-session-policy/v1': ['contractVersion', 'scopeCode', 'sessionTtlHours', 'refreshWindowHours'],
+  'identity-session-policy/v2': ['contractVersion', 'scopeCode', 'sessionTtlHours', 'refreshWindowHours',
+    'guestSessionTtlHours', 'guestIssuanceRatePerHour', 'douyinAnonymousSignalEnabled'],
+}
 
 /** 非负 BIGINT 文本转 UTC ISO；不可表示时返回 null。 */
 function timestamp(value: unknown): string | null {
@@ -40,7 +44,8 @@ export function createMysqlIdentitySessionPolicyReader(source: MysqlConnectionPo
       ))
       if (rows.length !== 1) { return null }
       const row = rows[0]!
-      if (row.domain_code !== 'identity' || row.policy_code !== 'identity_sessions' || row.schema_version !== 'identity-session-policy/v1'
+      if (row.domain_code !== 'identity' || row.policy_code !== 'identity_sessions' || typeof row.schema_version !== 'string'
+        || !Object.hasOwn(allowedBodyKeysBySchema, row.schema_version)
         || typeof row.release_version !== 'string' || row.active_release_version !== row.release_version
         || row.active_content_sha256 !== row.content_sha256 || timestamp(row.verified_at_ms) === null) { return null }
       const effectiveAt = timestamp(row.effective_at_ms)
@@ -51,7 +56,8 @@ export function createMysqlIdentitySessionPolicyReader(source: MysqlConnectionPo
         try { document = JSON.parse(document) as unknown } catch { return null }
       }
       if (!document || typeof document !== 'object' || Array.isArray(document)
-        || Object.keys(document).some(key => !allowedBodyKeys.includes(key))) { return null }
+        || Object.keys(document).some(key => !allowedBodyKeysBySchema[row.schema_version as string]!.includes(key))
+        || (document as { contractVersion?: unknown }).contractVersion !== row.schema_version) { return null }
       const resolution = resolveIdentitySessionPolicySnapshot({
         ...document, releaseVersion: row.release_version, contentSha256: row.content_sha256,
         releaseStatus: row.status, effectiveAt, expiresAt,

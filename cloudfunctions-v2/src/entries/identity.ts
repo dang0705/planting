@@ -52,8 +52,8 @@ const server = createIdentityServer({
   resolveSessionPolicy: () => sessionPolicyReader.read(new Date().toISOString()),
   now: () => Date.now(),
   guestIssuance: {
-    // 已发布的 identity-session-policy/v1 不含游客字段；游客策略发布前签发入口一律 503（guest-token-contract.md §6）。
-    resolveGuestPolicy: async () => null,
+    // 游客策略只来自已发布的 identity-session-policy/v2；仍为 v1 或无发布时为 null，签发入口 503（guest-token-contract.md §6）。
+    resolveGuestPolicy: async () => (await sessionPolicyReader.read(new Date().toISOString()))?.guest ?? null,
     exchangeDouyinAnonymousCode: douyinProvider === null ? null : code => douyinProvider.exchangeAnonymousCode(code),
     issuanceSourceKey
   },
