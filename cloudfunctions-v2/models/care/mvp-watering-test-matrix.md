@@ -102,3 +102,20 @@ Break：漏校验 AW≤CC 或漏比对摘要。Mutation：删除摘要比对 →
 **待用户裁决（不在本切片改动）：** 现有安全门 `evaluateWateringDecision` 只认根区“已干”为目标（`evaluate-watering-decision.ts:67`）。合同第3节“表土干对表土干即浇型植物即达目标”与之冲突；本切片“可以浇水”用例只用根区观察，B 节对应用例的目标判定保留，但组合后表土干的最终行动取决于该裁决。
 
 Break：保水倍率被乘而不是除 → 窗口方向错。Mutation：把需求公式中的 (1−w) 蒸发项去掉 → 参考情形每日需求变为 0.8，窗口用例应红。
+
+## F. `fetchOpenMeteoRadiation`（Open-Meteo 太阳辐射预报适配器）
+
+层次：L3 `unit_fake`，只替换 `fetch` 边界（Test Double）；Happy 响应体使用已入库的真实公开制品 `test/care/fixtures/open-meteo-hourly-radiation.json`，并交给真实 `normalizeOpenMeteoRadiation` 消费。Expected 来源：Open-Meteo 官方文档（`/v1/forecast` 参数 `latitude`、`longitude`、`hourly`、`timeformat=unixtime`、`timezone=auto`、`past_days` 0～92、`forecast_days` 0～16）＋配置目录 `open_meteo` 档案（总时限 8000ms、只调用 1 次、免费无凭证）。未覆盖：真实网络调用与配额（另做 e2e_real_api）。
+
+| 维 | 用例 | 形态 | Expected 来源 | 状态 |
+|---|---|---|---|---|
+| I1 Happy | 正确拼装 URL 查询参数；返回原始响应与捕获时刻；真实制品可被标准化器消费 | Happy | 官方文档＋真实制品 | 待写 |
+| I2 缺字段 | 响应不是 JSON 对象 → unavailable(invalid_body) | Edge | 适配器合同：坏载荷不进入标准化 | 待写 |
+| I3 错误语义 | HTTP 非 2xx → unavailable(http_error)，只调用 1 次 | Edge | 档案 maxAttempts=1 | 待写 |
+| I3 错误语义 | 网络错误 → unavailable(network)，不抛出、不泄漏错误文本 | Edge | 档案 fallback：缺段不外推 | 待写 |
+| I3 超时 | 超过总时限 → unavailable(timeout)，并通过 AbortSignal 取消请求 | Edge | 档案 totalDeadlineMs | 待写 |
+| U3 非法 | 纬度/经度越界、天数越界或非整数 → TypeError，且不发起请求 | Reverse | 官方参数范围 | 待写 |
+| I4 | — | — | — | N/A：公开接口无鉴权 |
+| I5 | — | — | — | N/A：只读请求，无写入 |
+
+Break：查询漏掉 `timeformat=unixtime` → 标准化器按时间格式拒绝。Mutation：删除该参数 → Happy 用例应红。
