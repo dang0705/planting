@@ -5077,6 +5077,86 @@
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "expected": "跨日/夏令时/单侧窗口独立Expected；覆盖终点不冒充检查日期；湿土仍否决",
       "decisionGroup": "hard_business_rule"
+    },
+    {
+      "id": "identity.guest.issuance_rate_per_hour",
+      "chineseName": "游客令牌每来源每小时签发上限",
+      "domain": "identity",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "次/小时",
+      "status": "confirmed",
+      "currentValue": 10,
+      "allowed": "10",
+      "owner": "identity",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/identity/guest-token-contract.md",
+        "cloudfunctions-v2/models/identity/multi-platform-identity-research.md"
+      ],
+      "consumers": [
+        "identity"
+      ],
+      "changePolicy": "发布新身份策略，只影响之后的签发判定",
+      "fallback": "策略不可用时拒绝签发游客令牌",
+      "phase": "P2",
+      "ticketTitle": "[P2] 统一身份 Principal",
+      "expected": "同一来源（抖音匿名信号摘要或客户端来源摘要）一小时内第 11 次签发返回 RATE_LIMITED",
+      "decisionGroup": "identity_sessions",
+      "decisionNote": "用户 2026-10-08 按建议值确认。"
+    },
+    {
+      "id": "user-plant.guest.max_cases_per_session",
+      "chineseName": "单个游客会话最多临时植物案例数",
+      "domain": "user-plant",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "个",
+      "status": "confirmed",
+      "currentValue": 5,
+      "allowed": "5",
+      "owner": "user-plant",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/identity/guest-token-contract.md",
+        "cloudfunctions-v2/models/identity/multi-platform-identity-research.md"
+      ],
+      "consumers": [
+        "user-plant",
+        "care",
+        "diagnosis"
+      ],
+      "changePolicy": "发布新用户植物策略，只影响之后新建的临时案例",
+      "fallback": "策略不可用时拒绝新建游客临时案例",
+      "phase": "P2",
+      "ticketTitle": "[P1] 用户植物、身份和游客认领合同",
+      "expected": "同一游客会话第 6 个临时案例创建被拒绝，已有案例不受影响",
+      "decisionGroup": "userplant_limits",
+      "decisionNote": "用户 2026-10-08 按建议值确认。"
+    },
+    {
+      "id": "identity.guest.douyin_anonymous_signal_enabled",
+      "chineseName": "抖音匿名信号作为游客防刷键",
+      "domain": "identity",
+      "layer": "domain_policy",
+      "valueType": "boolean",
+      "unit": "",
+      "status": "confirmed",
+      "currentValue": true,
+      "allowed": "true",
+      "owner": "identity",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/identity/guest-token-contract.md",
+        "cloudfunctions-v2/models/identity/multi-platform-identity-research.md"
+      ],
+      "consumers": [
+        "identity"
+      ],
+      "changePolicy": "发布新身份策略",
+      "fallback": "换取失败时不阻断签发，仅按客户端来源限流",
+      "phase": "P2",
+      "ticketTitle": "[P2] 统一身份 Principal",
+      "expected": "抖音签发时 anonymous_openid 只以 HMAC 摘要保存为防刷键，不作为业务主键",
+      "decisionGroup": "identity_sessions",
+      "decisionNote": "用户 2026-10-08 按建议值确认。"
     }
   ],
   "providerProfiles": [

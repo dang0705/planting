@@ -26,6 +26,8 @@ export type PublicErrorType =
   | 'AI_QUOTA_INSUFFICIENT'
   | 'INTERNAL_ERROR'
   | 'SERVICE_UNAVAILABLE'
+  /** 游客令牌签发超过来源限流（guest-token/v1）。 */
+  | 'RATE_LIMITED'
 
 /** 允许公开返回的唯一错误形状。 */
 //Todo 和 cloudfunctions-v2/src/contracts/types.ts 的ErrorResponseDto冲突.

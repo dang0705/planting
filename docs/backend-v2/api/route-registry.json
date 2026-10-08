@@ -22,6 +22,22 @@
     },
     {
       "method": "POST",
+      "path": "/api/v2/identity/guest-sessions",
+      "operationId": "createGuestSession",
+      "owner": "identity",
+      "phase": "P2",
+      "security": "guest_issuance",
+      "requestContract": "CreateGuestSessionRequest",
+      "responseContract": "GuestSessionResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "RATE_LIMITED",
+        "SERVICE_UNAVAILABLE"
+      ]
+    },
+    {
+      "method": "POST",
       "path": "/api/v2/identity/bindings",
       "operationId": "createIdentityBinding",
       "owner": "identity",

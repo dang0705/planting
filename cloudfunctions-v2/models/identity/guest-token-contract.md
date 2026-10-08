@@ -1,10 +1,10 @@
-# 游客令牌签发合同草案 `guest-token/v1`（待用户确认后冻结）
+# 游客令牌签发合同 `guest-token/v1`（用户 2026-10-08 确认冻结）
 
 依据：用户 2026-10-08 裁决——游客改为后端自发令牌（替代 CloudBase 匿名登录）；微信端 `wx.login` 静默登录不走游客；抖音、小红书未登录时使用游客令牌；游客令牌有效期 7 天（`identity.guest.session_ttl_hours`=168）。调研：`multi-platform-identity-research.md`。
 
 ## 1. 新增公开接口
 
-`POST /api/v2/identity/guest-sessions`（security: `public`，需限流；不要求 `Idempotency-Key`——每次调用签发新令牌，重复调用只会多一个短期游客会话）
+`POST /api/v2/identity/guest-sessions`（security: `guest_issuance`（无需登录的写入口，仅此路由可用；需限流）；不要求 `Idempotency-Key`——每次调用签发新令牌，重复调用只会多一个短期游客会话）
 
 请求：
 
@@ -36,7 +36,7 @@
 - `anonymous_subject_hash` 改为可空，语义改为“可选平台匿名信号摘要”（抖音 `anonymous_openid` 的 HMAC）；新增 `identity_source` 列（`server_issued_guest_token`），历史 CloudBase 语义不再签发。
 - 不保存令牌原文、设备 ID 或 IP。
 
-## 5. 待确认的配置
+## 5. 已确认的配置（用户 2026-10-08）
 
 | 配置 | 建议 | 说明 |
 |---|---|---|

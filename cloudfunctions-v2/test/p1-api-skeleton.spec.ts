@@ -77,8 +77,8 @@ assert.equal(registry.basePath, '/api/v2')
 assert.ok(Array.isArray(registry.routes))
 assert.ok(registry.routes.length >= 35, 'P1 路由骨架必须覆盖主要业务域和内部合同')
 
-const allowedOwners = new Set(['identity', 'plant-knowledge', 'user-plant', 'care', 'diagnosis', 'subscription'])
-const allowedSecurity = new Set(['public', 'credential_exchange', 'guest_or_authenticated', 'authenticated', 'service'])
+const allowedOwners = new Set(['identity', 'plant-knowledge', 'user-plant', 'care', 'diagnosis', 'subscription', 'weather'])
+const allowedSecurity = new Set(['public', 'credential_exchange', 'guest_issuance', 'guest_or_authenticated', 'authenticated', 'service'])
 const allowedPhases = new Set(['P1', 'P2', 'P3', 'P4', 'P5'])
 const routeKeys = new Set()
 const expectedServiceScopes: Record<string, string> = {
@@ -112,6 +112,13 @@ for (const route of registry.routes) {
     assert.ok(route.errors.includes('PRINCIPAL_INVALID'), '已消费的微信 code 必须返回凭证无效')
     assert.ok(!route.errors.includes('IDENTITY_SESSION_RESULT_UNAVAILABLE'), '登录不再提供同键结果重放错误')
   }
+  // Expected 来源：guest-token/v1（用户 2026-10-08 冻结）——游客令牌签发是唯一无需登录的写入口。
+  if (route.security === 'guest_issuance') {
+    assert.equal(route.operationId, 'createGuestSession', '游客签发级别只允许游客令牌入口')
+    assert.equal(route.method, 'POST')
+    assert.equal(route.idempotency, 'not_applicable', '每次签发新令牌，不使用通用幂等键')
+    assert.ok(route.errors.includes('RATE_LIMITED'), '游客签发必须限流')
+  }
   assert.ok(allowedPhases.has(route.phase), `${route.path} phase 非法`)
   assert.ok(Array.isArray(route.errors) && route.errors.length > 0, `${route.path} 缺少错误集合`)
   if (route.security === 'authenticated') {
@@ -137,6 +144,8 @@ assert.equal(
 const createBindingRoute = registry.routes.find((route) => route.operationId === 'createIdentityBinding')
 const deleteBindingRoute = registry.routes.find((route) => route.operationId === 'deleteIdentityBinding')
 const createSessionRoute = registry.routes.find((route) => route.operationId === 'createIdentitySession')
+const createGuestSessionRoute = registry.routes.find((route) => route.operationId === 'createGuestSession')
+assert.equal(createGuestSessionRoute?.path, '/api/v2/identity/guest-sessions', 'guest-token/v1 冻结的游客令牌签发路由必须登记')
 assert.equal(createSessionRoute?.security, 'credential_exchange', '平台凭证换取登录会话不得伪装成公开只读')
 assert.ok(createBindingRoute?.errors.includes('IDENTITY_BINDING_CONFLICT'), '绑定路由必须声明身份占用冲突')
 assert.ok(deleteBindingRoute?.errors.includes('IDENTITY_LAST_BINDING_REQUIRED'), '解绑路由必须保护最后登录入口')

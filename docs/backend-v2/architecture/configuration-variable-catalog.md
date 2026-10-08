@@ -3,7 +3,7 @@
 - 机器事实源：`configuration-variable-catalog.json`
 - Schema：`configuration-variable-catalog/v1`
 - 目录版本：`2026-10-04.1`
-- 当前共 191 项业务/治理变量、14 个 Provider 配置档案：已冻结 78 项、待冻结 55 项、不可配置硬规则 58 项。
+- 当前共 194 项业务/治理变量、14 个 Provider 配置档案：已冻结 81 项、待冻结 55 项、不可配置硬规则 58 项。
 
 本文件由同目录生成脚本从 JSON 生成，便于中文阅读。实施 Agent 必须先按领域读取本文件，再只深读该变量引用的合同或决策；不得把 `P1_PENDING` 猜成默认值。待冻结项必须带原因与阻断范围，未冻结前只能推进不依赖该值的工作。
 
@@ -57,6 +57,8 @@
 | `identity.service_signature.nonce_ttl_seconds` | 内部签名防重放 nonce 有效期 | `identity_sessions` | 领域策略 / 已冻结 | `600` 秒 | identity | Agent API、Job API、Callback API | 安全策略审批发布；失败：无值时拒绝内部签名请求 | P1 / [P1] 公共 HTTP 合同与 OpenAPI 路由骨架 |
 | `identity.platform_subject.single_owner` | 平台主体唯一归属规则 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `true` | identity | identity、全部业务域 | 不可配置，变更需架构重审；失败：冲突进入人工裁决 | P1 / [P2] 统一身份 Principal |
 | `identity.cloudbase_auth.anonymous_enabled` | CloudBase 匿名身份启用 | `identity_sessions` | 领域策略 / 已冻结 | `true` | identity | identity、游客入口 | 发布新的不可变领域策略版本，只向前生效；失败：策略不可用时停止对应能力，不使用隐式默认值 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
+| `identity.guest.issuance_rate_per_hour` | 游客令牌每来源每小时签发上限 | `identity_sessions` | 领域策略 / 已冻结 | `10` 次/小时 | identity | identity | 发布新身份策略，只影响之后的签发判定；失败：策略不可用时拒绝签发游客令牌 | P2 / [P2] 统一身份 Principal |
+| `identity.guest.douyin_anonymous_signal_enabled` | 抖音匿名信号作为游客防刷键 | `identity_sessions` | 领域策略 / 已冻结 | `true` | identity | identity | 发布新身份策略；失败：换取失败时不阻断签发，仅按客户端来源限流 | P2 / [P2] 统一身份 Principal |
 
 ## 权益、会员、积分与 AI 额度
 
@@ -117,6 +119,7 @@
 | `user-plant.lifecycle.deleted_recoverable` | 已删除用户植物是否可恢复 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `false` | user-plant | user-plant | 不可配置；如需改变必须回到业务架构和合同重审；失败：违反时拒绝请求、发布或状态转换 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
 | `user-plant.guest_claim.retroactive_points` | 游客认领是否追溯积分 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `false` | user-plant | user-plant、subscription | 不可配置；如需改变必须回到业务架构和合同重审；失败：违反时拒绝请求、发布或状态转换 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
 | `user-plant.guest_claim.direct_fact_or_plan_write` | 游客认领是否自动写事实或计划 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `false` | user-plant | user-plant、care、diagnosis | 不可配置；如需改变必须回到业务架构和合同重审；失败：违反时拒绝请求、发布或状态转换 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
+| `user-plant.guest.max_cases_per_session` | 单个游客会话最多临时植物案例数 | `userplant_limits` | 领域策略 / 已冻结 | `5` 个 | user-plant | user-plant、care、diagnosis | 发布新用户植物策略，只影响之后新建的临时案例；失败：策略不可用时拒绝新建游客临时案例 | P2 / [P1] 用户植物、身份和游客认领合同 |
 
 ## 植物知识、分类与 CMS
 
