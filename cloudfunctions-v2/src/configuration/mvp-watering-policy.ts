@@ -26,7 +26,8 @@ const depletionGroups = ['keep_moist', 'surface_dry', 'dry_wet', 'full_dry'] as 
 /** 正文字段（参与摘要）；元数据字段不参与摘要。 */
 const payloadKeys = ['contractVersion', 'scopeCode', 'confidence', 'sourceRef', 'referencePpfd', 'referenceVpdKpa',
   'lightHalfSaturationPpfd', 'vpdSensitivity', 'transpirationShare', 'validPpfd', 'validVpdKpa', 'indoorVpdFallbackKpa',
-  'cultivationRetention', 'soilEvidenceTtlHours', 'remainingFraction', 'depletion', 'substrates', 'headspaceCm', 'leachingFraction'] as const
+  'cultivationRetention', 'soilEvidenceTtlHours', 'remainingFraction', 'depletion', 'substrates', 'headspaceCm', 'leachingFraction',
+  'luxPerPpfd', 'luxAnchorMinGhiWm2', 'luxUncertainty', 'luxAnchorMaxAgeDays'] as const
 
 /**
  * `care-watering-mvp/v1` 发布正文与元数据。数值全部来自不可变发布，源码不提供默认值。
@@ -78,6 +79,19 @@ export interface MvpWateringPolicyRelease {
   readonly headspaceCm: MvpPolicyRange
   /** 浇水后从盆底排出的水量比例。 */
   readonly leachingFraction: MvpPolicyRange
+  /** 日光下多少 lux 对应 1 μmol/(m²·s) PPFD 的区间（合同 2a 节）。 */
+  readonly luxPerPpfd: MvpPolicyRange
+  /** 锚点可用的测量时段最低室外 GHI（W/m²）。 */
+  readonly luxAnchorMinGhiWm2: number
+  /** 各 Lux 来源的相对读数误差（0～1）。 */
+  readonly luxUncertainty: {
+    /** 照度计读数的相对误差。 */
+    readonly meter: number
+    /** 摄像头估算读数的相对误差。 */
+    readonly camera_estimate: number
+  }
+  /** Lux 读数可继续使用的最长天数。 */
+  readonly luxAnchorMaxAgeDays: number
   /** 不可变发布版本。 */
   readonly releaseVersion: string
   /** 正文规范 JSON 的 SHA-256。 */
@@ -139,6 +153,10 @@ const schema = {
       properties: Object.fromEntries(substrateCodes.map(code => [code, { type: 'object', additionalProperties: false,
         required: ['containerCapacity', 'availableWater'], properties: { containerCapacity: fraction, availableWater: fraction } }])) },
     headspaceCm: range, leachingFraction: fraction,
+    luxPerPpfd: range, luxAnchorMinGhiWm2: { type: 'number', exclusiveMinimum: 0 },
+    luxUncertainty: { type: 'object', additionalProperties: false, required: ['meter', 'camera_estimate'],
+      properties: { meter: { type: 'number', minimum: 0, exclusiveMaximum: 1 }, camera_estimate: { type: 'number', minimum: 0, exclusiveMaximum: 1 } } },
+    luxAnchorMaxAgeDays: { type: 'number', exclusiveMinimum: 0 },
     releaseVersion: { type: 'string', pattern: '\\S' }, contentSha256: { type: 'string', pattern: '^[a-f0-9]{64}$' },
     releaseStatus: { enum: ['draft', 'verified', 'active', 'retired'] },
     effectiveAt: { type: 'string', pattern: utcPattern }, expiresAt: { type: 'string', pattern: utcPattern },
@@ -163,7 +181,8 @@ const contains = (outer: MvpPolicyRange, point: number) => point >= outer.min &&
 /** Schema 之外的物理与一致性约束。 */
 function semanticallyValid(release: MvpWateringPolicyRelease): boolean {
   const ranges = [release.validPpfd, release.validVpdKpa, release.indoorVpdFallbackKpa, release.cultivationRetention,
-    release.headspaceCm, release.leachingFraction, ...Object.values(release.remainingFraction), ...Object.values(release.depletion)]
+    release.headspaceCm, release.leachingFraction, release.luxPerPpfd, ...Object.values(release.remainingFraction), ...Object.values(release.depletion)]
+  if (release.luxPerPpfd.min <= 0) { return false }
   if (!ranges.every(ordered) || release.cultivationRetention.min <= 0 || release.leachingFraction.max >= 1) { return false }
   if (!contains(release.validPpfd, release.referencePpfd) || !contains(release.validVpdKpa, release.referenceVpdKpa)) { return false }
   if (release.indoorVpdFallbackKpa.min < release.validVpdKpa.min || release.indoorVpdFallbackKpa.max > release.validVpdKpa.max) { return false }

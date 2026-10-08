@@ -28,6 +28,21 @@ Demand = w × Leaf + (1 − w) × E_soil
 - 超出发布声明的 `validPpfd`／`validVpdKpa` 的时段为缺段，不钳制。
 - `CultivationRetention` 使用发布正文的 `cultivationRetention` 不确定区间（盆器/基质相对参考的未知差异），不默认 1；`PersonalCalibration` 使用合同允许的中性值 `[1,1]`（个体校准策略仍 pending，未形成有效周期前不学习）。
 
+### 2a. 植物位置光照：单通道比例法（用户 2026-10-08 选定）
+
+```text
+PPFD_测量  = Lux × [1/luxPerPpfd.max, 1/luxPerPpfd.min] × (1 ± luxUncertainty[来源])
+比例 r     = PPFD_测量 ÷ (GHI_测量时段 × 室外 PPFD 换算)        （换算系数在下式中约掉）
+PPFD_植物(h) = Lux 换算区间 × GHI(h) ÷ GHI_测量时段
+```
+
+- GHI 取 Open-Meteo 标准化序列中**包含测量时刻**的时段平均（优先 15 分钟，否则 1 小时），明确为近似，不冒充瞬时值。
+- 测量时段 GHI 低于 `luxAnchorMinGhiWm2`（天色太暗，比例不可信）或推出的植物 PPFD 高于室外 PPFD（读数不合理）时，锚点不可用，植物位置光照为缺证据。
+- Lux 读数早于 `luxAnchorMaxAgeDays` 天视为过期，不再使用；植物换位置后由前端重新测量。
+- Lux 已包含玻璃、距离和遮挡效应，不再叠加玻璃衰减；朝向保存但单通道法不使用（已知局限：东西向窗户的上下午直射差异被平均掉）。
+- 缺 GHI 的时段为缺段；GHI 为有效零（夜间）时植物 PPFD 为 0。
+- 室内实测温湿度只用于测量后 24 小时内的时段，其余时段用兜底区间。
+
 ## 3. 盆土观察映射
 
 输入为四态之一 `wet | moist | dry | uncertain`（`care.soil_evidence.states` 硬规则）＋观察范围 `surface | root_zone`＋观察时刻＋来源可靠性。有效期 = 观察时刻 + `soilEvidenceTtlHours`。

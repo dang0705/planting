@@ -136,3 +136,19 @@ Break：查询漏掉 `timeformat=unixtime` → 标准化器按时间格式拒绝
 | U4–U7 | — | — | — | N/A：纯函数无写入、无共享状态、无本地态 |
 
 Break：坐标未四舍五入即进入存储。Mutation：去掉两位小数取整 → Happy 用例应红。
+
+## H. `deriveMvpPlantLightIntervals`（单通道比例法：Open-Meteo GHI＋一次 Lux → 逐时段植物 PPFD／室内 VPD）
+
+层次：L1 `unit_fake`（输入为已标准化的辐射对象；不经过网络）。Expected 来源：合同 2a 节（用户 2026-10-08 选定单通道比例法）＋发布正文参数＋手算；物理上界 PPFD/GHI ≤ 2.3 μmol/J（全波段日光光合光子换算上限，文献约 2.0～2.1）。
+
+| 维 | 用例 | 形态 | Expected（手算） | 状态 |
+|---|---|---|---|---|
+| U2 Happy | 测光仪 1080 lux（±10%）、测量时段 GHI=200：GHI=400 时段 → PPFD 33.52～47.52；GHI=0 → 0 | Happy | 972/58=16.76、1188/50=23.76，×400/200 | 待写 |
+| U2 边界 | 摄像头 1000 lux（±30%）→ 测量时段 PPFD 12.07～26.0 | Edge | 700/58、1300/50 | 待写 |
+| U1 空缺 | 无 Lux → 缺证据 light_reading；某时段 GHI 缺失 → 该时段跳过（缺段） | Edge | 合同 2a | 待写 |
+| U1 空缺 | 测量时刻不在辐射覆盖内 → 缺证据 anchor_radiation | Edge | 合同 2a | 待写 |
+| U3 非法/不可信 | 测量时段 GHI=40 < 50 → anchor_too_dark；Lux 推出 PPFD 下限 465.5 > 200×2.3 → anchor_inconsistent；读数超过 30 天 → light_reading_stale | Edge | 合同 2a＋发布参数 | 待写 |
+| U2 VPD | 室内 23.5°C/45% 实测 → 测量后 24 小时内时段 VPD=1.5925 kPa；之前或 24 小时后的时段为 null（用兜底） | Edge | Tetens 公式手算 | 待写 |
+| U4–U7 | — | — | — | N/A：纯函数，无写入、无共享状态、无本地态 |
+
+Break：比例用错分母（用当前时段而非测量时段 GHI）。Mutation：把 `ghi / anchorGhi` 改成 `anchorGhi / ghi` → Happy 用例应红。

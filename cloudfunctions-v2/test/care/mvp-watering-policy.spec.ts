@@ -25,6 +25,9 @@ describe('MVP 浇水策略发布解析｜L1 unit_fake', () => {
     expect(result.status).toBe('available')
     if (result.status !== 'available') { throw new Error('unreachable') }
     expect(result.snapshot).toMatchObject({ ...payload, releaseVersion: 'care-watering-mvp/v1.0.0', capturedAt: at })
+    // 合同 2a 节：单通道光照参数随同一发布锁定。
+    expect(result.snapshot).toMatchObject({ luxPerPpfd: { min: 50, max: 58 }, luxAnchorMinGhiWm2: 50,
+      luxUncertainty: { meter: 0.1, camera_estimate: 0.3 }, luxAnchorMaxAgeDays: 30 })
     expect(result.snapshot.configurationSnapshot.policyReleases).toEqual([
       { scopeCode: 'care_mvp_watering', releaseVersion: 'care-watering-mvp/v1.0.0', sha256: calculateCanonicalJsonSha256(payload) },
     ])
@@ -51,6 +54,11 @@ describe('MVP 浇水策略发布解析｜L1 unit_fake', () => {
     ['易利用水上限超过持水量下限', (b: Record<string, any>) => { b.substrates.peat = { containerCapacity: { min: 0.3, max: 0.4 }, availableWater: { min: 0.2, max: 0.35 } } }],
     ['参考 VPD 超出有效域', (b: Record<string, any>) => { b.referenceVpdKpa = 5 }],
     ['缺少一种材料', (b: Record<string, any>) => { delete b.substrates.sphagnum }],
+    ['缺 Lux 换算系数', (b: Record<string, any>) => { delete b.luxPerPpfd }],
+    ['Lux 换算系数反序', (b: Record<string, any>) => { b.luxPerPpfd = { min: 58, max: 50 } }],
+    ['摄像头误差超过 100%', (b: Record<string, any>) => { b.luxUncertainty.camera_estimate = 1.2 }],
+    ['锚点最低辐射非正', (b: Record<string, any>) => { b.luxAnchorMinGhiWm2 = 0 }],
+    ['Lux 有效天数非正', (b: Record<string, any>) => { b.luxAnchorMaxAgeDays = 0 }],
   ])('U3：%s 的正文即使摘要正确也非法', (_name, change) => {
     expect(resolveMvpWateringPolicy(mutated(change), at)).toEqual({ status: 'invalid' })
   })
