@@ -70,7 +70,7 @@
 - `user_plant_identity_history`：候选、确认、来源证据和被替代历史；`superseded` 只在此处出现。
 - `user_plant_assets`：用户植物私有文件引用、用途、状态和清理时间，不保存公开 URL。
 - `user_plant_timeline_projection`：可重建时间线投影，不作为事实写入口。
-- `guest_sessions`：匿名主体摘要、当前及宽限期上一版持有证明摘要、单调递增证明版本、状态与 24 小时失效时间；状态不含 claimed。
+- `guest_sessions`：游客身份来源 `identity_source`（新签发为 `server_issued_guest_token`，历史行为 `cloudbase_anonymous`）、持有证明摘要（服务端自发令牌的 SHA-256）、当前及宽限期上一版持有证明摘要、单调递增证明版本、可空的平台匿名信号摘要（抖音 `anonymous_openid` 的 HMAC，仅防刷）、签发限流键摘要 `issuance_source_hash`、状态与 168 小时（7 天）失效时间；状态不含 claimed。依据 guest-token/v1 与迁移 023（用户 2026-10-08 裁决）。
 - `guest_plant_cases`：游客临时植物案例、到期时间和认领状态，不伪造 `user_id` 或 `user_plant_id`。
 - `guest_claim_commands`：认领命令、已验证证明版本、幂等键、目标用户植物和失败原因；同一案例仅能完成一次。
 - `guest_case_claims`：只保存成功认领投影，对 `guest_plant_case_internal_id` 建唯一约束；失败命令不会永久阻断后续重新认领。

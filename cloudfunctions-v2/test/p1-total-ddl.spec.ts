@@ -17,6 +17,7 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
   assert.equal(manifest.schemaVersion, 'backend-v2-schema/v1')
   assert.ok(Array.isArray(manifest.files) && manifest.files.length >= 6, '总 DDL 必须按领域拆分')
+  assert.ok(manifest.files.some((entry: { file: string }) => entry.file === '023_guest_token_sessions.sql'), 'guest-token/v1 要求的 023 迁移必须登记')
 
   let sql = ''
   const FIRST_CAPTURE_INDEX = 1
@@ -38,6 +39,18 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
       entry.file === '019_diagnosis_question_package_snapshots.sql'
     // 022只补结果回放字段和不可变门，不放开其他迁移的ALTER权限。
     const isDiagnosisResultExtension = entry.file === '022_diagnosis_result_records.sql'
+    // Expected 来源：guest-token/v1（用户 2026-10-08 冻结）——游客改为服务端自发令牌，
+    // 023 只允许扩展 guest_sessions：新增来源与防刷列、把 CloudBase 匿名摘要改为可空。
+    const isGuestTokenExtension = entry.file === '023_guest_token_sessions.sql'
+    if (isGuestTokenExtension) {
+      assert.deepEqual([...content.matchAll(/^ALTER TABLE `([^`]+)`/gmu)].map(match => match[1]), ['guest_sessions'])
+      assert.deepEqual([...content.matchAll(/ADD COLUMN `([^`]+)`/gu)].map(match => match[1]), ['identity_source', 'issuance_source_hash'])
+      assert.deepEqual([...content.matchAll(/MODIFY COLUMN `([^`]+)`/gu)].map(match => match[1]), ['anonymous_subject_hash'])
+      assert.match(content, /MODIFY COLUMN `anonymous_subject_hash` CHAR\(64\) NULL/u)
+      assert.match(content, /ADD CONSTRAINT `ck_guest_session_identity_source` CHECK \(`identity_source` IN \('cloudbase_anonymous', 'server_issued_guest_token'\)\)/u)
+      assert.match(content, /ADD KEY `idx_guest_session_issuance` \(`issuance_source_hash`, `issued_at_ms`\)/u)
+      assert.doesNotMatch(content, /\b(?:DROP|RENAME|CHANGE|CREATE TABLE)\b/iu)
+    }
     if (isDiagnosisResultExtension) {
       assert.deepEqual(
         [...content.matchAll(/^ALTER TABLE `([^`]+)`/gmu)].map(match => match[1]),
@@ -135,6 +148,8 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
     if (/CREATE TABLE\b/u.test(content)) {
       assert.ok(content.includes('ENGINE=InnoDB'), `${entry.file} 建表必须固定 InnoDB`)
       assert.ok(content.includes('DEFAULT CHARSET=utf8mb4'), `${entry.file} 建表必须固定 utf8mb4`)
+    } else if (isGuestTokenExtension) {
+      assert.match(content, /^ALTER TABLE `guest_sessions`\s/mu, '游客令牌迁移只扩展既有游客会话表')
     } else if (isSessionPolicyExtension) {
       assert.match(content, /^ALTER TABLE `user_sessions`\s/mu, '会话策略迁移只扩展既有会话表')
       assert.match(content, /\bADD COLUMN\b/u, '会话策略迁移必须显式新增字段')
@@ -151,7 +166,8 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
       isSessionPolicyExtension ||
         isCareV2Extension ||
         isDiagnosisSnapshotExtension ||
-        isDiagnosisResultExtension
+        isDiagnosisResultExtension ||
+        isGuestTokenExtension
         ? /^(?:DROP|INSERT|UPDATE|DELETE)\b/imu
         : /^(?:DROP|ALTER|INSERT|UPDATE|DELETE)\b/imu,
       `${entry.file} 仅允许经 manifest 顺序化的非破坏性结构变更`
