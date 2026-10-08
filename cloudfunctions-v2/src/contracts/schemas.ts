@@ -71,6 +71,7 @@ export const errorResponseSchema: JSONSchemaType<ErrorResponseDto> = {
             "CAPABILITY_SNAPSHOT_EXPIRED",
             "GUEST_SESSION_NOT_CLAIMABLE",
             "AI_QUOTA_INSUFFICIENT",
+            "TEMPORARY_CASE_LIMIT_REACHED",
             "INTERNAL_ERROR",
             "SERVICE_UNAVAILABLE",
             "EPHEMERAL_CASE_NOT_BINDABLE",

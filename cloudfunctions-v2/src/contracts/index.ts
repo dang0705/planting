@@ -19,6 +19,7 @@ import {
   userPlantSchema,
   userPrincipalSchema,
 } from "./schemas.js";
+import { createTemporaryCaseRequestSchema, temporaryCaseResponseSchema } from "./temporary-case-schemas.js";
 import type {
   CapabilitySnapshotDto,
   ClaimGuestSessionCommandDto,
@@ -27,6 +28,7 @@ import type {
   CreateIdentitySessionRequestDto,
   CreateIdentitySessionResponseDto,
   CreateUserPlantRequestDto,
+  CreateTemporaryCaseRequestDto,
   CreateUserPlantResponseDto,
   ErrorResponseDto,
   GuestClaimResultDto,
@@ -35,6 +37,7 @@ import type {
   ReserveAiQuotaCommandDto,
   RewardableDomainEventDto,
   ServicePrincipalDto,
+  TemporaryCaseResponseDto,
   UserPlantDto,
   UserPrincipalDto,
 } from "./types.js";
@@ -59,6 +62,7 @@ export {
   userPlantSchema,
   userPrincipalSchema,
 } from "./schemas.js";
+export { createTemporaryCaseRequestSchema, temporaryCaseResponseSchema } from "./temporary-case-schemas.js";
 
 /**
  * 每个进程只需创建一次校验器集合；路由层把未知输入交给对应校验器，
@@ -89,6 +93,10 @@ export function createPublicContractValidators(): {
   createUserPlantRequest: ValidateFunction<CreateUserPlantRequestDto>;
   /** 创建用户植物响应校验器；只接受服务端生成的固定初始投影。 */
   createUserPlantResponse: ValidateFunction<CreateUserPlantResponseDto>;
+  /** 创建临时植物案例请求校验器；只接受严格空 JSON 对象。 */
+  createTemporaryCaseRequest: ValidateFunction<CreateTemporaryCaseRequestDto>;
+  /** 临时植物案例公开数据校验器；保证引用前缀与 ownerKind 一致且无额外字段。 */
+  temporaryCaseResponse: ValidateFunction<TemporaryCaseResponseDto>;
   /** 游客会话认领命令校验器；保证新建植物与绑定已有植物的目标形状互斥。 */
   claimGuestSession: ValidateFunction<ClaimGuestSessionCommandDto>;
   /** 游客认领公开结果校验器；拒绝数据库内部键、用户归属、proof、租约和请求哈希。 */
@@ -140,6 +148,8 @@ export function createPublicContractValidators(): {
     userPlant: ajv.compile(userPlantSchema),
     createUserPlantRequest: ajv.compile(createUserPlantRequestSchema),
     createUserPlantResponse: ajv.compile(createUserPlantResponseSchema),
+    createTemporaryCaseRequest: ajv.compile(createTemporaryCaseRequestSchema),
+    temporaryCaseResponse: ajv.compile(temporaryCaseResponseSchema),
     claimGuestSession: ajv.compile(claimGuestSessionCommandSchema),
     guestClaimResult: ajv.compile(guestClaimResultSchema),
     rewardableDomainEvent: ajv.compile(rewardableDomainEventSchema),

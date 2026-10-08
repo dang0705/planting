@@ -950,7 +950,8 @@
       "owner": "user-plant",
       "sourceRefs": [
         "docs/backend-v2/contracts/authenticated-ephemeral-plant-case.md",
-        "docs/backend-v2/testing/P1-authenticated-ephemeral-expected.md"
+        "docs/backend-v2/testing/P1-authenticated-ephemeral-expected.md",
+        "cloudfunctions-v2/models/user-plant/temporary-case-contract.md"
       ],
       "consumers": [
         "user-plant",
@@ -5117,7 +5118,8 @@
       "owner": "user-plant",
       "sourceRefs": [
         "cloudfunctions-v2/models/identity/guest-token-contract.md",
-        "cloudfunctions-v2/models/identity/multi-platform-identity-research.md"
+        "cloudfunctions-v2/models/identity/multi-platform-identity-research.md",
+        "cloudfunctions-v2/models/user-plant/temporary-case-contract.md"
       ],
       "consumers": [
         "user-plant",

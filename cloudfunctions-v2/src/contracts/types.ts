@@ -41,6 +41,8 @@ export type PublicErrorType =
   | "GUEST_SESSION_NOT_CLAIMABLE"
   | "EPHEMERAL_CASE_NOT_BINDABLE"
   | "AI_QUOTA_INSUFFICIENT"
+  /** 游客会话的临时植物案例数量已达已发布上限（temporary-case/v1）。 */
+  | "TEMPORARY_CASE_LIMIT_REACHED"
   | "INTERNAL_ERROR"
   | "SERVICE_UNAVAILABLE";
 
@@ -427,4 +429,20 @@ export type ReserveAiQuotaCommandDto = {
   estimatedAmount: number;
   /** 受信应用服务生成的幂等键；同一 user_id、动作和键重复提交时必须返回一致结果或冲突。 */
   idempotencyKey: string;
+};
+
+/**
+ * 创建临时植物案例请求固定为严格空对象（temporary-case/v1 §1）。
+ * 归属只来自已验证主体，客户端不得提交任何字段。
+ */
+export type CreateTemporaryCaseRequestDto = Record<string, never>;
+
+/** 创建临时植物案例的公开成功数据；浇水、诊断、识别共用同一个 caseRef。 */
+export type TemporaryCaseResponseDto = {
+  /** 临时案例公开引用：游客为 gpc_ 前缀、登录用户为 epc_ 前缀的高熵字符串，不是数据库主键。 */
+  caseRef: string;
+  /** 案例归属类别：guest 表示游客会话案例，authenticated 表示登录用户主动临时案例。 */
+  ownerKind: "guest" | "authenticated";
+  /** 案例绝对失效时刻，带 Z 的 UTC ISO；游客案例等于所属游客会话失效时刻，登录案例为创建时刻加已发布有效期。 */
+  expiresAt: string;
 };

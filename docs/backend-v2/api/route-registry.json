@@ -347,6 +347,24 @@
     },
     {
       "method": "POST",
+      "path": "/api/v2/user-plants/temporary-cases",
+      "operationId": "createTemporaryCase",
+      "owner": "user-plant",
+      "phase": "P2",
+      "security": "guest_or_authenticated",
+      "requestContract": "CreateTemporaryCaseRequest",
+      "responseContract": "TemporaryCaseResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "TEMPORARY_CASE_LIMIT_REACHED",
+        "IDEMPOTENCY_CONFLICT",
+        "SERVICE_UNAVAILABLE"
+      ]
+    },
+    {
+      "method": "POST",
       "path": "/api/v2/user-plants/claims",
       "operationId": "claimGuestPlantCase",
       "owner": "user-plant",

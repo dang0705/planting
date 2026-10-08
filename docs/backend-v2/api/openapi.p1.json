@@ -1257,6 +1257,73 @@
         ]
       }
     },
+    "/api/v2/user-plants/temporary-cases": {
+      "post": {
+        "operationId": "createTemporaryCase",
+        "summary": "user-plant 域：createTemporaryCase",
+        "tags": [
+          "user-plant"
+        ],
+        "x-owner": "user-plant",
+        "x-phase": "P2",
+        "x-security": "guest_or_authenticated",
+        "x-request-contract": "CreateTemporaryCaseRequest",
+        "x-response-contract": "TemporaryCaseResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "TEMPORARY_CASE_LIMIT_REACHED",
+          "IDEMPOTENCY_CONFLICT",
+          "SERVICE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemporaryCaseSuccess"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTemporaryCaseRequest"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "guestBearer": []
+          },
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
     "/api/v2/user-plants/claims": {
       "post": {
         "operationId": "claimGuestPlantCase",
@@ -4858,6 +4925,76 @@
           }
         }
       },
+      "CreateTemporaryCaseRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "maxProperties": 0,
+        "properties": {}
+      },
+      "TemporaryCaseData": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "caseRef",
+              "ownerKind",
+              "expiresAt"
+            ],
+            "properties": {
+              "caseRef": {
+                "type": "string",
+                "pattern": "^gpc_[A-Za-z0-9_-]{8,60}$",
+                "description": "游客临时案例公开引用。"
+              },
+              "ownerKind": {
+                "const": "guest"
+              },
+              "expiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "等于所属游客会话 expiresAt，带 Z 的 UTC。"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "caseRef",
+              "ownerKind",
+              "expiresAt"
+            ],
+            "properties": {
+              "caseRef": {
+                "type": "string",
+                "pattern": "^epc_[A-Za-z0-9_-]{8,60}$",
+                "description": "登录用户临时案例公开引用。"
+              },
+              "ownerKind": {
+                "const": "authenticated"
+              },
+              "expiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "创建时刻 + 已发布案例有效期，带 Z 的 UTC。"
+              }
+            }
+          }
+        ]
+      },
+      "TemporaryCaseSuccess": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/TemporaryCaseData"
+          }
+        }
+      },
       "CreateUserPlantSuccess": {
         "type": "object",
         "additionalProperties": false,
@@ -4907,7 +5044,8 @@
                   "AI_QUOTA_INSUFFICIENT",
                   "INTERNAL_ERROR",
                   "SERVICE_UNAVAILABLE",
-                  "RATE_LIMITED"
+                  "RATE_LIMITED",
+                  "TEMPORARY_CASE_LIMIT_REACHED"
                 ]
               },
               "message": {

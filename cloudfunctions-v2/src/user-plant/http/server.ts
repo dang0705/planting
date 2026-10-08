@@ -3,7 +3,13 @@ import { createMysqlAuthenticatedEphemeralNewPlantRepository, createMysqlAuthent
 import { createServer, type Server } from 'node:http'
 import { randomUUID } from 'node:crypto'
 
-import type { UserCapabilitySnapshotDto, UserPrincipalDto } from '../../contracts/types.js'
+import type { GuestPrincipalDto, UserCapabilitySnapshotDto, UserPrincipalDto } from '../../contracts/types.js'
+import type { UserPlantLimitsPolicySnapshot } from '../../configuration/user-plant-limits-policy.js'
+import { PublicRequestError } from '../../foundation/http/request-chain.js'
+import type { ResolveUserPrincipalCommand } from '../../identity/application/resolve-user-principal.js'
+import { createTemporaryCaseApplicationService } from '../application/create-temporary-case.js'
+import { createMysqlTemporaryCaseRepository } from '../repository/mysql-temporary-case-repository.js'
+import { createTemporaryCaseRoute, createTemporaryCaseRouteHandler } from './create-temporary-case-route.js'
 import {
   createMysqlTransactionDriver,
   type MysqlConnectionPoolPort,
@@ -77,6 +83,10 @@ export type UserPlantServerDependencies = {
   readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
   /** 事务回滚失败的内部观测端口。 */
   readonly recordRollbackFailure: MysqlRollbackFailureRecorder<Mysql2QueryConnection>
+  /** guest_or_authenticated 合并主体解析（游客令牌或登录会话）；未接入时临时案例路由失败关闭为 503。 */
+  readonly resolveGuestOrUserPrincipal?: (command: ResolveUserPrincipalCommand) => Promise<UserPrincipalDto | GuestPrincipalDto>
+  /** 已发布 userplant_limits 策略读取；未接入或无发布时临时案例路由返回 503，不补默认值。 */
+  readonly readUserPlantLimitsPolicy?: (capturedAt: string) => Promise<Readonly<UserPlantLimitsPolicySnapshot> | null>
 }
 
 const okStatus = 200
@@ -159,6 +169,12 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
     driver, profileRepository: createMysqlMeasuredProfileRepository(), userPlantRepository,
     idempotencyRepository, commitUnknownReadOnlyRepository
   })
+  const createTemporaryCase = createTemporaryCaseApplicationService({
+    driver,
+    idempotencyRepository,
+    temporaryCaseRepository: createMysqlTemporaryCaseRepository(),
+    commitUnknownReadOnlyRepository
+  })
   const lifecycleRepository = createMysqlUserPlantLifecycleRepository<
     MysqlTransactionContext<Mysql2QueryConnection>
   >({
@@ -223,6 +239,18 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
         resolvePrincipal,
         resolveCapabilitySnapshot: dependencies.resolveCapabilitySnapshot,
         createUserPlant,
+        now: dependencies.now,
+        writeAudit: dependencies.writeAudit
+      })
+    },
+    {
+      route: createTemporaryCaseRoute,
+      handler: createTemporaryCaseRouteHandler({
+        resolvePrincipal: dependencies.resolveGuestOrUserPrincipal ?? (async () => {
+          throw new PublicRequestError(503, 'SERVICE_UNAVAILABLE', '服务暂时不可用')
+        }),
+        readLimitsPolicy: async capturedAt => (await dependencies.readUserPlantLimitsPolicy?.(capturedAt)) ?? null,
+        createTemporaryCase,
         now: dependencies.now,
         writeAudit: dependencies.writeAudit
       })

@@ -24,6 +24,8 @@ export type PublicErrorType =
   | 'GUEST_SESSION_NOT_CLAIMABLE'
   | 'EPHEMERAL_CASE_NOT_BINDABLE'
   | 'AI_QUOTA_INSUFFICIENT'
+  /** 游客会话临时植物案例数量已达已发布上限（temporary-case/v1）。 */
+  | 'TEMPORARY_CASE_LIMIT_REACHED'
   | 'INTERNAL_ERROR'
   | 'SERVICE_UNAVAILABLE'
   /** 游客令牌签发超过来源限流（guest-token/v1）。 */

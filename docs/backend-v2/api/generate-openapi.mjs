@@ -23,6 +23,8 @@ const requestSchemaRefByContract = {
   CreateIdentitySessionRequest: '#/components/schemas/CreateIdentitySessionRequest',
   CreateGuestSessionRequest: '#/components/schemas/CreateGuestSessionRequest',
   BindAuthenticatedEphemeralCaseRequest: '#/components/schemas/BindAuthenticatedEphemeralCaseRequest',
+  /** 临时植物案例创建：严格空对象（temporary-case/v1）。 */
+  CreateTemporaryCaseRequest: '#/components/schemas/CreateTemporaryCaseRequest',
   /** 归档/恢复仅允许调用方提交最后读到的植物版本。 */
   UserPlantVersionRequest: '#/components/schemas/UserPlantVersionRequest',
 }
@@ -33,6 +35,7 @@ const successSchemaRefByContract = {
   IdentitySessionResponse: '#/components/schemas/CreateIdentitySessionSuccess',
   GuestSessionResponse: '#/components/schemas/CreateGuestSessionSuccess',
   BindAuthenticatedEphemeralCaseResponse: '#/components/schemas/BindAuthenticatedEphemeralCaseResponse',
+  TemporaryCaseResponse: '#/components/schemas/TemporaryCaseSuccess',
 }
 
 const parametersByPath = (routePath) => [...routePath.matchAll(/\{([^}]+)\}/gu)].map((match) => ({
@@ -124,7 +127,7 @@ const errorTypes = [
   'PAYLOAD_TOO_LARGE', 'UNSUPPORTED_MEDIA_TYPE', 'IDEMPOTENCY_CONFLICT',
   'USER_PLANT_VERSION_CONFLICT', 'CAPABILITY_SNAPSHOT_EXPIRED',
   'GUEST_SESSION_NOT_CLAIMABLE', 'AI_QUOTA_INSUFFICIENT', 'INTERNAL_ERROR',
-  'SERVICE_UNAVAILABLE', 'RATE_LIMITED',
+  'SERVICE_UNAVAILABLE', 'RATE_LIMITED', 'TEMPORARY_CASE_LIMIT_REACHED',
 ]
 
 const openapi = {
@@ -536,6 +539,34 @@ const openapi = {
           createdAt: { type: 'string', format: 'date-time' },
           updatedAt: { type: 'string', format: 'date-time' },
         },
+      },
+      // temporary-case/v1：浇水、诊断、识别共用的临时案例；归属只来自已验证主体。
+      CreateTemporaryCaseRequest: {
+        type: 'object', additionalProperties: false, maxProperties: 0, properties: {},
+      },
+      TemporaryCaseData: {
+        oneOf: [
+          {
+            type: 'object', additionalProperties: false, required: ['caseRef', 'ownerKind', 'expiresAt'],
+            properties: {
+              caseRef: { type: 'string', pattern: '^gpc_[A-Za-z0-9_-]{8,60}$', description: '游客临时案例公开引用。' },
+              ownerKind: { const: 'guest' },
+              expiresAt: { type: 'string', format: 'date-time', description: '等于所属游客会话 expiresAt，带 Z 的 UTC。' },
+            },
+          },
+          {
+            type: 'object', additionalProperties: false, required: ['caseRef', 'ownerKind', 'expiresAt'],
+            properties: {
+              caseRef: { type: 'string', pattern: '^epc_[A-Za-z0-9_-]{8,60}$', description: '登录用户临时案例公开引用。' },
+              ownerKind: { const: 'authenticated' },
+              expiresAt: { type: 'string', format: 'date-time', description: '创建时刻 + 已发布案例有效期，带 Z 的 UTC。' },
+            },
+          },
+        ],
+      },
+      TemporaryCaseSuccess: {
+        type: 'object', additionalProperties: false, required: ['data'],
+        properties: { data: { $ref: '#/components/schemas/TemporaryCaseData' } },
       },
       CreateUserPlantSuccess: {
         type: 'object',
