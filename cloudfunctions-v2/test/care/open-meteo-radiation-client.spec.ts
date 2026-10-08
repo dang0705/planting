@@ -49,8 +49,8 @@ describe('Open-Meteo 辐射预报适配器｜L3 unit_fake', () => {
   })
   it('I3：超过总时限 → timeout，并取消请求', async () => {
     let aborted = false
-    const fetch = vi.fn((_url: string, init: RequestInit) => new Promise<Response>((_resolve, reject) => {
-      init.signal?.addEventListener('abort', () => { aborted = true; reject(new DOMException('aborted', 'AbortError')) })
+    const fetch = vi.fn((_url: string | URL | Request, init?: RequestInit) => new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => { aborted = true; reject(new DOMException('aborted', 'AbortError')) })
     }))
     expect(await fetchOpenMeteoRadiation({ fetch, now, totalDeadlineMs: 20 }, query)).toEqual({ status: 'unavailable', reason: 'timeout' })
     expect(aborted).toBe(true)
