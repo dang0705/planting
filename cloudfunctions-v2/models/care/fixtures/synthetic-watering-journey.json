@@ -1,0 +1,449 @@
+{
+  "classification": "synthetic_experimental",
+  "expectedSource": "用户已确认观察起点规则与独立区间手算；不是从被测系统输出生成。",
+  "qualificationAssumptions": {
+    "description": "reliable、mappingValidated、referenceConditionsConfirmed、wateringPolicyApproved和rootZoneEvidenceValid=true均为合成控制条件，不代表真实审核或算法发布。",
+    "realQualificationProved": false
+  },
+  "sharedPlantBaseline": {
+    "min": 6,
+    "max": 8,
+    "basis": "equivalent_dry_units",
+    "referenceConditionsConfirmed": true
+  },
+  "scope": {
+    "realPath": "replayWateringTiming→历史积分/观察积分/当前窗口/安全门/当地日期/净缺口",
+    "testLayer": "L3 unit_fake",
+    "replacedBoundaries": "不调用Provider、身份、发布、数据库；所有输入数值及资格来自合成夹具。",
+    "uncovered": "真实状态映射、非线性光照/VPD响应、保水标定、实际施水策略、生产HTTP/归属/持久化。",
+    "productBehaviorChanged": false
+  },
+  "scenarios": [
+    {
+      "id": "observation-origin",
+      "title": "未知浇水历史，从观察起点预测",
+      "input": {
+        "drying": {
+          "now": 1791417600000,
+          "lastConfirmedWateringAt": null,
+          "baseline": {
+            "min": 6,
+            "max": 8,
+            "basis": "equivalent_dry_units",
+            "referenceConditionsConfirmed": true
+          },
+          "intervals": [
+            {
+              "start": 1791417600000,
+              "end": 1792281600000,
+              "environmentDemand": { "min": 1, "max": 2 },
+              "personalCalibration": { "min": 1, "max": 1 },
+              "cultivationRetention": { "min": 1, "max": 1 }
+            }
+          ]
+        },
+        "wateringPolicyApproved": true,
+        "potSafety": "safe",
+        "timezone": "UTC",
+        "soil": {
+          "state": "unknown",
+          "scope": "root_zone",
+          "reliable": true,
+          "targetCriteriaConfirmed": false,
+          "collectedAt": 1791417600000,
+          "validUntil": 1792281600000
+        },
+        "observedRemaining": {
+          "observedAt": 1791417600000,
+          "basis": "equivalent_dry_units",
+          "referenceConditionsConfirmed": true,
+          "mappingValidated": true,
+          "mappingVersion": "synthetic/v1",
+          "evidenceRef": "synthetic:root-zone",
+          "remainingDryUnits": { "min": 2, "max": 4 }
+        },
+        "waterDeficit": null
+      },
+      "independentCalculation": "速度[1,2]；最早2/2=1天，最晚4/1=4天。",
+      "expected": {
+        "productionAdmission": false,
+        "drying": {
+          "reason": "missing_origin",
+          "progress": null,
+          "window": null
+        },
+        "observedCycle": {
+          "status": "ready_candidate",
+          "consumedSinceObservation": { "min": 0, "max": 0 },
+          "remainingDryUnits": { "min": 2, "max": 4 }
+        },
+        "currentCycleWindow": {
+          "status": "observation_prediction",
+          "window": {
+            "earliestCheckAt": 1791504000000,
+            "latestCheckAt": 1791763200000
+          }
+        },
+        "decision": {
+          "action": "check_later",
+          "soilGate": "unknown"
+        },
+        "localCheckWindow": {
+          "earliestCheckDate": "2026-10-09",
+          "latestCheckDate": "2026-10-12"
+        }
+      },
+      "expectedNetDeficitMl": null
+    },
+    {
+      "id": "demand-increase",
+      "title": "观察后环境变快，扣除过去分段而非重新起算",
+      "input": {
+        "drying": {
+          "now": 1791504000000,
+          "lastConfirmedWateringAt": null,
+          "baseline": {
+            "min": 6,
+            "max": 8,
+            "basis": "equivalent_dry_units",
+            "referenceConditionsConfirmed": true
+          },
+          "intervals": [
+            {
+              "start": 1791417600000,
+              "end": 1791460800000,
+              "environmentDemand": { "min": 1, "max": 2 },
+              "personalCalibration": { "min": 1, "max": 1 },
+              "cultivationRetention": { "min": 1, "max": 1 }
+            },
+            {
+              "start": 1791460800000,
+              "end": 1792281600000,
+              "environmentDemand": { "min": 2, "max": 4 },
+              "personalCalibration": { "min": 1, "max": 1 },
+              "cultivationRetention": { "min": 1, "max": 1 }
+            }
+          ]
+        },
+        "wateringPolicyApproved": true,
+        "potSafety": "safe",
+        "timezone": "UTC",
+        "soil": {
+          "state": "unknown",
+          "scope": "root_zone",
+          "reliable": true,
+          "targetCriteriaConfirmed": false,
+          "collectedAt": 1791417600000,
+          "validUntil": 1792281600000
+        },
+        "observedRemaining": {
+          "observedAt": 1791417600000,
+          "basis": "equivalent_dry_units",
+          "referenceConditionsConfirmed": true,
+          "mappingValidated": true,
+          "mappingVersion": "synthetic/v1",
+          "evidenceRef": "synthetic:root-zone",
+          "remainingDryUnits": { "min": 2, "max": 4 }
+        },
+        "waterDeficit": null
+      },
+      "independentCalculation": "消耗0.5*[1,2]+0.5*[2,4]=[1.5,3]；剩余[0,2.5]，最晚再2.5/2=1.25天。",
+      "expected": {
+        "productionAdmission": false,
+        "drying": {
+          "reason": "missing_origin",
+          "progress": null,
+          "window": null
+        },
+        "observedCycle": {
+          "status": "ready_candidate",
+          "consumedSinceObservation": { "min": 1.5, "max": 3 },
+          "remainingDryUnits": { "min": 0, "max": 2.5 }
+        },
+        "currentCycleWindow": {
+          "status": "observation_prediction",
+          "window": {
+            "earliestCheckAt": 1791504000000,
+            "latestCheckAt": 1791612000000
+          }
+        },
+        "decision": {
+          "action": "check_now",
+          "soilGate": "unknown"
+        },
+        "localCheckWindow": {
+          "earliestCheckDate": "2026-10-09",
+          "latestCheckDate": "2026-10-10"
+        }
+      },
+      "expectedNetDeficitMl": null
+    },
+    {
+      "id": "retention-increase",
+      "title": "同一基线下保水翻倍，剩余窗口推后",
+      "input": {
+        "drying": {
+          "now": 1791417600000,
+          "lastConfirmedWateringAt": null,
+          "baseline": {
+            "min": 6,
+            "max": 8,
+            "basis": "equivalent_dry_units",
+            "referenceConditionsConfirmed": true
+          },
+          "intervals": [
+            {
+              "start": 1791417600000,
+              "end": 1792281600000,
+              "environmentDemand": { "min": 1, "max": 2 },
+              "personalCalibration": { "min": 1, "max": 1 },
+              "cultivationRetention": { "min": 2, "max": 2 }
+            }
+          ]
+        },
+        "wateringPolicyApproved": true,
+        "potSafety": "safe",
+        "timezone": "UTC",
+        "soil": {
+          "state": "unknown",
+          "scope": "root_zone",
+          "reliable": true,
+          "targetCriteriaConfirmed": false,
+          "collectedAt": 1791417600000,
+          "validUntil": 1792281600000
+        },
+        "observedRemaining": {
+          "observedAt": 1791417600000,
+          "basis": "equivalent_dry_units",
+          "referenceConditionsConfirmed": true,
+          "mappingValidated": true,
+          "mappingVersion": "synthetic/v1",
+          "evidenceRef": "synthetic:root-zone",
+          "remainingDryUnits": { "min": 2, "max": 4 }
+        },
+        "waterDeficit": null
+      },
+      "independentCalculation": "速度[0.5,1]；最早2/1=2天，最晚4/0.5=8天。",
+      "expected": {
+        "productionAdmission": false,
+        "drying": {
+          "reason": "missing_origin",
+          "progress": null,
+          "window": null
+        },
+        "observedCycle": {
+          "status": "ready_candidate",
+          "consumedSinceObservation": { "min": 0, "max": 0 },
+          "remainingDryUnits": { "min": 2, "max": 4 }
+        },
+        "currentCycleWindow": {
+          "status": "observation_prediction",
+          "window": {
+            "earliestCheckAt": 1791590400000,
+            "latestCheckAt": 1792108800000
+          }
+        },
+        "decision": {
+          "action": "check_later",
+          "soilGate": "unknown"
+        },
+        "localCheckWindow": {
+          "earliestCheckDate": "2026-10-10",
+          "latestCheckDate": "2026-10-16"
+        }
+      },
+      "expectedNetDeficitMl": null
+    },
+    {
+      "id": "wet-conflict",
+      "title": "可靠根区湿土否决已到窗口，保留观察积分",
+      "input": {
+        "drying": {
+          "now": 1791504000000,
+          "lastConfirmedWateringAt": null,
+          "baseline": {
+            "min": 6,
+            "max": 8,
+            "basis": "equivalent_dry_units",
+            "referenceConditionsConfirmed": true
+          },
+          "intervals": [
+            {
+              "start": 1791417600000,
+              "end": 1792281600000,
+              "environmentDemand": { "min": 1, "max": 2 },
+              "personalCalibration": { "min": 1, "max": 1 },
+              "cultivationRetention": { "min": 1, "max": 1 }
+            }
+          ]
+        },
+        "wateringPolicyApproved": true,
+        "potSafety": "safe",
+        "timezone": "UTC",
+        "soil": {
+          "state": "wet",
+          "scope": "root_zone",
+          "reliable": true,
+          "targetCriteriaConfirmed": false,
+          "collectedAt": 1791417600000,
+          "validUntil": 1792281600000
+        },
+        "observedRemaining": {
+          "observedAt": 1791417600000,
+          "basis": "equivalent_dry_units",
+          "referenceConditionsConfirmed": true,
+          "mappingValidated": true,
+          "mappingVersion": "synthetic/v1",
+          "evidenceRef": "synthetic:root-zone",
+          "remainingDryUnits": { "min": 2, "max": 4 }
+        },
+        "waterDeficit": null
+      },
+      "independentCalculation": "消耗[1,2]、剩余[0,3]；预测最早已到，但湿土反证撤回当前日期，不把湿土进度置零。",
+      "expected": {
+        "productionAdmission": false,
+        "drying": {
+          "reason": "missing_origin",
+          "progress": null,
+          "window": null
+        },
+        "observedCycle": {
+          "status": "ready_candidate",
+          "consumedSinceObservation": { "min": 1, "max": 2 },
+          "remainingDryUnits": { "min": 0, "max": 3 }
+        },
+        "currentCycleWindow": {
+          "status": "prediction_conflict",
+          "window": null
+        },
+        "decision": {
+          "action": "pause_watering",
+          "soilGate": "pause_watering"
+        },
+        "localCheckWindow": {
+          "earliestCheckDate": null,
+          "latestCheckDate": null
+        }
+      },
+      "expectedNetDeficitMl": null
+    },
+    {
+      "id": "target-and-net-deficit",
+      "title": "当前已达干燥目标，净缺口不等于实际施水量",
+      "input": {
+        "drying": {
+          "now": 1791417600000,
+          "lastConfirmedWateringAt": null,
+          "baseline": {
+            "min": 6,
+            "max": 8,
+            "basis": "equivalent_dry_units",
+            "referenceConditionsConfirmed": true
+          },
+          "intervals": [
+            {
+              "start": 1791417600000,
+              "end": 1792281600000,
+              "environmentDemand": { "min": 1, "max": 2 },
+              "personalCalibration": { "min": 1, "max": 1 },
+              "cultivationRetention": { "min": 1, "max": 1 }
+            }
+          ]
+        },
+        "wateringPolicyApproved": true,
+        "potSafety": "safe",
+        "timezone": "UTC",
+        "soil": {
+          "state": "target_dry",
+          "scope": "root_zone",
+          "reliable": true,
+          "targetCriteriaConfirmed": true,
+          "collectedAt": 1791417600000,
+          "validUntil": 1792281600000
+        },
+        "observedRemaining": {
+          "observedAt": 1791417600000,
+          "basis": "equivalent_dry_units",
+          "referenceConditionsConfirmed": true,
+          "mappingValidated": true,
+          "mappingVersion": "synthetic/v1",
+          "evidenceRef": "synthetic:root-zone",
+          "remainingDryUnits": { "min": 0, "max": 0 }
+        },
+        "waterDeficit": {
+          "volumeBasis": "effective_substrate",
+          "effectiveSubstrateVolumeMl": { "min": 1800, "max": 2400 },
+          "currentVwc": { "min": 0.08, "max": 0.1 },
+          "targetVwc": { "min": 0.2, "max": 0.3 },
+          "rootZoneEvidenceValid": true
+        }
+      },
+      "independentCalculation": "下端1800*(0.20-0.10)=180ml，上端2400*(0.30-0.08)=528ml；补水目标含水率与可浇水干燥条件是不同含义。",
+      "expected": {
+        "productionAdmission": false,
+        "drying": {
+          "reason": "missing_origin",
+          "progress": null,
+          "window": null
+        },
+        "observedCycle": {
+          "status": "ready_candidate",
+          "consumedSinceObservation": { "min": 0, "max": 0 },
+          "remainingDryUnits": { "min": 0, "max": 0 }
+        },
+        "currentCycleWindow": {
+          "status": "target_observed",
+          "window": {
+            "earliestCheckAt": 1791417600000,
+            "latestCheckAt": 1791417600000
+          }
+        },
+        "decision": {
+          "action": "water_allowed",
+          "soilGate": "target_dry_confirmed"
+        },
+        "localCheckWindow": {
+          "earliestCheckDate": "2026-10-08",
+          "latestCheckDate": "2026-10-08"
+        },
+        "waterDeficit": {
+          "status": "available_candidate",
+          "productionAdmission": false,
+          "reason": null,
+          "appliedAmountMl": null
+        }
+      },
+      "expectedNetDeficitMl": { "min": 180, "max": 528 }
+    }
+  ],
+  "potSeed": {
+    "provenance": {
+      "source": "主代理本轮V1 dev只读SELECT字段核查；非身份外形种子",
+      "recordStatus": "测试记录，不是实际内盆与排水实测",
+      "rawDrainageField": {
+        "has_drainage_hole": "true"
+      },
+      "rawSubstrateDescription": "general 100；不推定物理保水参数"
+    },
+    "dimensionsCm": {
+      "potTopDiameterCm": 20,
+      "potBottomDiameterCm": 10,
+      "potHeightCm": 15
+    },
+    "unqualifiedInput": {
+      "actualInnerPotConfirmed": null,
+      "drainageAvailable": null
+    },
+    "syntheticQualificationAssumptions": {
+      "actualInnerPotConfirmed": true,
+      "drainageAvailable": true
+    },
+    "independentExpected": {
+      "containerVolumeMl": 2748.893571891069,
+      "containerVolumeFormula": "π*15/3*(10²+10*5+5²)=875π ml",
+      "substrateVolumeMl": null,
+      "waterRetention": null
+    },
+    "effectiveSubstrateScope": "1800–2400ml为独立synthetic专业证据，不由容器几何推导。"
+  }
+}

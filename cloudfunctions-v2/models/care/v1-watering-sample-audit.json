@@ -1,0 +1,475 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-08T02:20:22.347Z",
+  "environment": "cloud1-2grufevs395a9d5e",
+  "scope": "V1 SQL只读样本资格核验；不是v2业务迁移",
+  "ticketId": "z8v0kmr973",
+  "classification": "real_database_metadata_and_aggregate_evidence",
+  "cloudWrites": 0,
+  "applicationRecordsMigrated": 0,
+  "decision": {
+    "qualifiedPairedCycles": 0,
+    "reuse": "只借用20/10/15厘米盆型作为模拟样本外形；其余未证明条件均显式synthetic",
+    "reasons": [
+      "主库没有实际浇水事件或盆土视觉记录；17条顾问记录是建议，weather_summary_json均无字段。",
+      "开发库31条视觉证据均为temporary、user_plant_id为空；字段描述表面状态，不提供根区定量水分。",
+      "开发库3条提醒包含watered=true和日期，2条有amountMl，但无关联盆土证据或连续失水。",
+      "V1材料比例和用户填写尺寸不证明配方物性、实际内盆、有效装土量或连续排水观测。"
+    ],
+    "productionAdmission": false
+  },
+  "privacy": "只读取聚合、字段名及不含身份的盆型字段；未提取openid、用户植物ID、图片、位置或提示词。",
+  "queries": [
+    {
+      "name": "counts",
+      "sql": "SELECT 'user_plant_instances' AS table_name,COUNT(*) AS row_count FROM `cloud1-2grufevs395a9d5e`.user_plant_instances UNION ALL SELECT 'user_watering_events',COUNT(*) FROM `cloud1-2grufevs395a9d5e`.user_watering_events UNION ALL SELECT 'user_watering_reminder_events',COUNT(*) FROM `cloud1-2grufevs395a9d5e`.user_watering_reminder_events UNION ALL SELECT 'watering_advisor_sessions',COUNT(*) FROM `cloud1-2grufevs395a9d5e`.watering_advisor_sessions UNION ALL SELECT 'watering_visual_evidences',COUNT(*) FROM `cloud1-2grufevs395a9d5e`.watering_visual_evidences",
+      "requestId": "ea0f9c30-5780-4144-8c9e-8605e331951f",
+      "rows": [
+        {
+          "row_count": 1,
+          "table_name": "user_plant_instances"
+        },
+        {
+          "row_count": 0,
+          "table_name": "user_watering_events"
+        },
+        {
+          "row_count": 0,
+          "table_name": "user_watering_reminder_events"
+        },
+        {
+          "row_count": 17,
+          "table_name": "watering_advisor_sessions"
+        },
+        {
+          "row_count": 0,
+          "table_name": "watering_visual_evidences"
+        }
+      ]
+    },
+    {
+      "name": "coverage",
+      "sql": "SELECT COUNT(*) AS plant_count, SUM(last_watered IS NOT NULL) AS last_watered_count,SUM(pot_top_diameter_cm>0 AND pot_bottom_diameter_cm>0 AND pot_height_cm>0) AS dimension_count,SUM(pot_profile_source='user') AS user_pot_count,SUM(light_environment_json IS NOT NULL) AS light_count,SUM(air_environment_json IS NOT NULL) AS air_count FROM `cloud1-2grufevs395a9d5e`.user_plant_instances",
+      "requestId": "62312139-bed4-40d3-b261-4de5c4f0fc24",
+      "rows": [
+        {
+          "air_count": "0",
+          "dimension_count": null,
+          "last_watered_count": "0",
+          "light_count": "0",
+          "plant_count": 1,
+          "user_pot_count": "0"
+        }
+      ]
+    },
+    {
+      "name": "advisorShapes",
+      "sql": "SELECT JSON_KEYS(pot_profile_json) AS pot_keys,JSON_KEYS(weather_summary_json) AS weather_keys,JSON_KEYS(planner_result_json) AS result_keys,COUNT(*) AS row_count FROM `cloud1-2grufevs395a9d5e`.watering_advisor_sessions GROUP BY pot_keys,weather_keys,result_keys LIMIT 10",
+      "requestId": "4806731b-30f4-4fc6-9425-6cb02b9ddaeb",
+      "rows": [
+        {
+          "pot_keys": [
+            "source",
+            "confidence",
+            "potHeightCm",
+            "substrateType",
+            "hasDrainageHole",
+            "potTopDiameterCm",
+            "potBottomDiameterCm"
+          ],
+          "result_keys": [
+            "action",
+            "soilCheck",
+            "reasonCodes",
+            "amountRangeMl",
+            "nextWaterDate",
+            "stopCondition",
+            "confidenceLevel",
+            "nextWaterReason",
+            "nextWaterWindow",
+            "wateringContext",
+            "todayWeatherReason",
+            "todayWeatherSource",
+            "airEnvironmentAudit",
+            "seasonalIntervalFactor",
+            "transpirationIntervalFactor"
+          ],
+          "row_count": 2,
+          "weather_keys": []
+        },
+        {
+          "pot_keys": [
+            "source",
+            "confidence",
+            "potHeightCm",
+            "substrateType",
+            "hasDrainageHole",
+            "potTopDiameterCm",
+            "potBottomDiameterCm"
+          ],
+          "result_keys": [
+            "action",
+            "soilCheck",
+            "reasonCodes",
+            "amountRangeMl",
+            "nextWaterDate",
+            "stopCondition",
+            "confidenceLevel",
+            "nextWaterReason",
+            "nextWaterWindow",
+            "wateringContext",
+            "todayWeatherReason",
+            "todayWeatherSource",
+            "visualSoilEvidence",
+            "airEnvironmentAudit",
+            "seasonalIntervalFactor",
+            "transpirationIntervalFactor"
+          ],
+          "row_count": 8,
+          "weather_keys": []
+        },
+        {
+          "pot_keys": [
+            "source",
+            "confidence",
+            "potHeightCm",
+            "substrateType",
+            "hasDrainageHole",
+            "potTopDiameterCm",
+            "potBottomDiameterCm"
+          ],
+          "result_keys": [
+            "action",
+            "soilCheck",
+            "reasonCodes",
+            "amountRangeMl",
+            "nextWaterDate",
+            "stopCondition",
+            "confidenceLevel",
+            "nextWaterReason",
+            "nextWaterWindow",
+            "wateringContext",
+            "todayWeatherReason",
+            "todayWeatherSource",
+            "visualSoilEvidence",
+            "airEnvironmentAudit",
+            "seasonalIntervalFactor",
+            "transpirationIntervalFactor",
+            "requiresManualSoilConfirmation"
+          ],
+          "row_count": 6,
+          "weather_keys": []
+        },
+        {
+          "pot_keys": [
+            "source",
+            "confidence",
+            "potHeightCm",
+            "substrateType",
+            "hasDrainageHole",
+            "potTopDiameterCm",
+            "potBottomDiameterCm"
+          ],
+          "result_keys": [
+            "action",
+            "soilCheck",
+            "reasonCodes",
+            "amountRangeMl",
+            "nextWaterDate",
+            "stopCondition",
+            "confidenceLevel",
+            "nextWaterReason",
+            "nextWaterWindow",
+            "wateringContext",
+            "todayWeatherReason",
+            "todayWeatherSource",
+            "visualSoilEvidence",
+            "airEnvironmentAudit",
+            "confirmedWateredDate",
+            "seasonalIntervalFactor",
+            "transpirationIntervalFactor"
+          ],
+          "row_count": 1,
+          "weather_keys": []
+        }
+      ]
+    },
+    {
+      "name": "devCounts",
+      "sql": "SELECT 'user_plant_instances' AS table_name,COUNT(*) AS row_count FROM cloud1_dev.user_plant_instances UNION ALL SELECT 'user_watering_reminder_events',COUNT(*) FROM cloud1_dev.user_watering_reminder_events UNION ALL SELECT 'watering_advisor_sessions',COUNT(*) FROM cloud1_dev.watering_advisor_sessions UNION ALL SELECT 'watering_visual_evidences',COUNT(*) FROM cloud1_dev.watering_visual_evidences",
+      "requestId": "803a52e6-7326-4fd9-98d7-be4ccdfc8919",
+      "rows": [
+        {
+          "row_count": 54,
+          "table_name": "user_plant_instances"
+        },
+        {
+          "row_count": 3,
+          "table_name": "user_watering_reminder_events"
+        },
+        {
+          "row_count": 0,
+          "table_name": "watering_advisor_sessions"
+        },
+        {
+          "row_count": 31,
+          "table_name": "watering_visual_evidences"
+        }
+      ]
+    },
+    {
+      "name": "devCoverage",
+      "sql": "SELECT COUNT(*) AS plant_count,SUM(last_watered IS NOT NULL) AS last_watered_count,SUM(COALESCE(pot_top_diameter_cm>0 AND pot_bottom_diameter_cm>0 AND pot_height_cm>0,0)) AS dimension_count,SUM(pot_profile_source='user') AS user_pot_count,SUM(light_environment_json IS NOT NULL) AS light_count,SUM(air_environment_json IS NOT NULL) AS air_count FROM cloud1_dev.user_plant_instances",
+      "requestId": "b75ad629-b1a0-471b-9fdd-dfef4c6aae3b",
+      "rows": [
+        {
+          "air_count": "44",
+          "dimension_count": "6",
+          "last_watered_count": "4",
+          "light_count": "53",
+          "plant_count": 54,
+          "user_pot_count": "6"
+        }
+      ]
+    },
+    {
+      "name": "devSoilCoverage",
+      "sql": "SELECT COUNT(*) AS evidence_count,SUM(v.user_plant_id IS NOT NULL) AS linked_id_count,SUM(p.id IS NOT NULL) AS matching_owner_plant_count,COUNT(DISTINCT p.id) AS matched_plants FROM cloud1_dev.watering_visual_evidences v LEFT JOIN cloud1_dev.user_plant_instances p ON v.user_plant_id=p.id AND CAST(v._openid AS BINARY)=CAST(p._openid AS BINARY)",
+      "requestId": "06515695-3e50-4ed9-8104-716401ed24c1",
+      "rows": [
+        {
+          "evidence_count": 31,
+          "linked_id_count": "0",
+          "matched_plants": 0,
+          "matching_owner_plant_count": "0"
+        }
+      ]
+    },
+    {
+      "name": "devShapes",
+      "sql": "SELECT source_type,JSON_KEYS(analysis_json) AS analysis_keys,COUNT(*) AS row_count FROM cloud1_dev.watering_visual_evidences GROUP BY source_type,analysis_keys LIMIT 10",
+      "requestId": "87bc570b-eeee-410f-920d-f762da780212",
+      "rows": [
+        {
+          "analysis_keys": [
+            "source",
+            "accepted",
+            "analyzedAt",
+            "confidence",
+            "modelUsage",
+            "visibility",
+            "promptCache",
+            "surfaceState",
+            "standingWater",
+            "visibleBasisCn"
+          ],
+          "row_count": 31,
+          "source_type": "temporary"
+        }
+      ]
+    },
+    {
+      "name": "devSoilStates",
+      "sql": "SELECT JSON_UNQUOTE(JSON_EXTRACT(analysis_json,'$.surfaceState')) AS surface_state,JSON_UNQUOTE(JSON_EXTRACT(analysis_json,'$.accepted')) AS accepted,COUNT(*) AS row_count FROM cloud1_dev.watering_visual_evidences GROUP BY surface_state,accepted LIMIT 15",
+      "requestId": "09019bfc-4d0c-4c02-8890-0f98032a0c3c",
+      "rows": [
+        {
+          "accepted": "true",
+          "row_count": 20,
+          "surface_state": "wet"
+        },
+        {
+          "accepted": "false",
+          "row_count": 3,
+          "surface_state": "uncertain"
+        },
+        {
+          "accepted": "true",
+          "row_count": 7,
+          "surface_state": "moist"
+        },
+        {
+          "accepted": "true",
+          "row_count": 1,
+          "surface_state": "dry"
+        }
+      ]
+    },
+    {
+      "name": "devReminderShape",
+      "sql": "SELECT status,COUNT(*) AS row_count, SUM(last_watered IS NOT NULL) AS last_watered_count, JSON_TYPE(watering_events_json) AS event_type,JSON_LENGTH(watering_events_json) AS event_length,JSON_KEYS(planner_result_json) AS planner_keys FROM cloud1_dev.user_watering_reminder_events GROUP BY status,event_type,event_length,planner_keys LIMIT 10",
+      "requestId": "00e77460-bc68-466d-b0aa-75111db17f88",
+      "rows": [
+        {
+          "event_length": 1,
+          "event_type": "ARRAY",
+          "last_watered_count": "1",
+          "planner_keys": [
+            "action",
+            "planId",
+            "potVolumeMl",
+            "reasonCodes",
+            "userDoseEcho",
+            "amountRangeMl",
+            "nextWaterDate",
+            "stopCondition",
+            "confidenceLevel",
+            "nextWaterReason",
+            "nextWaterWindow",
+            "wateringContext",
+            "wetPressureLoad",
+            "amountBottleText",
+            "rootZoneMoistureIndex",
+            "effectiveHydrationLoad",
+            "lastEffectiveRootWateredDaysAgo"
+          ],
+          "row_count": 1,
+          "status": "active"
+        },
+        {
+          "event_length": 1,
+          "event_type": "ARRAY",
+          "last_watered_count": "2",
+          "planner_keys": [
+            "action",
+            "planId",
+            "soilCheck",
+            "potVolumeMl",
+            "reasonCodes",
+            "userDoseEcho",
+            "amountRangeMl",
+            "nextWaterDate",
+            "stopCondition",
+            "confidenceLevel",
+            "nextWaterReason",
+            "nextWaterWindow",
+            "wateringContext",
+            "wetPressureLoad",
+            "todayWeatherReason",
+            "todayWeatherSource",
+            "airEnvironmentAudit",
+            "transpirationShadow",
+            "rootZoneMoistureIndex",
+            "effectiveHydrationLoad",
+            "seasonalIntervalFactor",
+            "transpirationAirFactor",
+            "transpirationComputedFactor",
+            "transpirationIntervalFactor",
+            "lastEffectiveRootWateredDaysAgo",
+            "transpirationCandidateNextWaterDate",
+            "transpirationCandidateNextWaterWindow"
+          ],
+          "row_count": 2,
+          "status": "active"
+        }
+      ]
+    },
+    {
+      "name": "devEventKeys",
+      "sql": "SELECT JSON_KEYS(watering_events_json,'$[0]') AS event_keys,COUNT(*) AS row_count FROM cloud1_dev.user_watering_reminder_events GROUP BY event_keys LIMIT 10",
+      "requestId": "5ac3239b-6709-45f8-a577-25254770fd28",
+      "rows": [
+        {
+          "event_keys": [
+            "date",
+            "amount",
+            "planId",
+            "watered"
+          ],
+          "row_count": 1
+        },
+        {
+          "event_keys": [
+            "date",
+            "amount",
+            "planId",
+            "watered",
+            "amountMl"
+          ],
+          "row_count": 2
+        }
+      ]
+    },
+    {
+      "name": "devReminderCoverage",
+      "sql": "SELECT COUNT(*) AS reminder_count,SUM(p.id IS NOT NULL) AS matching_owner_plant_count,SUM(JSON_EXTRACT(r.watering_events_json,'$[0].watered')=CAST('true' AS JSON)) AS recorded_watered_count,SUM(JSON_EXTRACT(r.watering_events_json,'$[0].amountMl') IS NOT NULL) AS amount_ml_count,SUM(EXISTS(SELECT 1 FROM cloud1_dev.watering_visual_evidences v WHERE v.user_plant_id=r.user_plant_id AND CAST(v._openid AS BINARY)=CAST(r._openid AS BINARY))) AS with_soil_count FROM cloud1_dev.user_watering_reminder_events r LEFT JOIN cloud1_dev.user_plant_instances p ON r.user_plant_id=p.id AND CAST(r._openid AS BINARY)=CAST(p._openid AS BINARY)",
+      "requestId": "ac721f2d-af37-491a-8526-e5771aba0a17",
+      "rows": [
+        {
+          "amount_ml_count": "2",
+          "matching_owner_plant_count": "3",
+          "recorded_watered_count": "3",
+          "reminder_count": 3,
+          "with_soil_count": "0"
+        }
+      ]
+    },
+    {
+      "name": "devPotSample",
+      "sql": "SELECT pot_top_diameter_cm,pot_bottom_diameter_cm,pot_height_cm,has_drainage_hole,pot_material,substrate_type,pot_profile_source,pot_profile_confidence FROM cloud1_dev.user_plant_instances WHERE pot_profile_source='user' AND pot_top_diameter_cm>0 AND pot_bottom_diameter_cm>0 AND pot_height_cm>0 ORDER BY pot_top_diameter_cm,pot_bottom_diameter_cm,pot_height_cm LIMIT 6",
+      "requestId": "f7639407-bcef-41df-9050-3cfe09c6dd83",
+      "rows": [
+        {
+          "has_drainage_hole": "true",
+          "pot_bottom_diameter_cm": "10.00",
+          "pot_height_cm": "15.00",
+          "pot_material": "unknown",
+          "pot_profile_confidence": "normal",
+          "pot_profile_source": "user",
+          "pot_top_diameter_cm": "20.00",
+          "substrate_type": "[{\"material\":\"general\",\"ratio\":100}]"
+        },
+        {
+          "has_drainage_hole": "true",
+          "pot_bottom_diameter_cm": "15.00",
+          "pot_height_cm": "35.00",
+          "pot_material": "unknown",
+          "pot_profile_confidence": "normal",
+          "pot_profile_source": "user",
+          "pot_top_diameter_cm": "30.00",
+          "substrate_type": "[{\"material\":\"general\",\"ratio\":34},{\"material\":\"coco\",\"ratio\":33},{\"material\":\"ceramsite\",\"ratio\":33}]"
+        },
+        {
+          "has_drainage_hole": "unknown",
+          "pot_bottom_diameter_cm": "90.00",
+          "pot_height_cm": "35.00",
+          "pot_material": "unknown",
+          "pot_profile_confidence": "normal",
+          "pot_profile_source": "user",
+          "pot_top_diameter_cm": "100.00",
+          "substrate_type": "unknown"
+        },
+        {
+          "has_drainage_hole": "true",
+          "pot_bottom_diameter_cm": "90.00",
+          "pot_height_cm": "35.00",
+          "pot_material": "unknown",
+          "pot_profile_confidence": "normal",
+          "pot_profile_source": "user",
+          "pot_top_diameter_cm": "100.00",
+          "substrate_type": "[{\"material\":\"general\",\"ratio\":34},{\"material\":\"ceramsite\",\"ratio\":33},{\"material\":\"peat\",\"ratio\":33}]"
+        },
+        {
+          "has_drainage_hole": "true",
+          "pot_bottom_diameter_cm": "100.00",
+          "pot_height_cm": "50.00",
+          "pot_material": "unknown",
+          "pot_profile_confidence": "normal",
+          "pot_profile_source": "user",
+          "pot_top_diameter_cm": "100.00",
+          "substrate_type": "[{\"material\":\"general\",\"ratio\":100}]"
+        },
+        {
+          "has_drainage_hole": "true",
+          "pot_bottom_diameter_cm": "100.00",
+          "pot_height_cm": "50.00",
+          "pot_material": "unknown",
+          "pot_profile_confidence": "normal",
+          "pot_profile_source": "user",
+          "pot_top_diameter_cm": "100.00",
+          "substrate_type": "[{\"material\":\"general\",\"ratio\":50},{\"material\":\"coco\",\"ratio\":50}]"
+        }
+      ]
+    }
+  ]
+}

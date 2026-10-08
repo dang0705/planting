@@ -1,0 +1,75 @@
+{
+  "recordedAt": "2026-10-08T02:24:11.495Z",
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "milestone": "自主样本条件与现有浇水链路回放",
+  "acceptedScope": "V1只读资格核查和模拟样本回放",
+  "wholeTicketAccepted": false,
+  "classification": "synthetic_experimental",
+  "productionAdmission": false,
+  "productBehaviorChanged": false,
+  "developmentMethod": "现有行为的独立Expected回放验证；没有产品修改，不声称TDD",
+  "database": {
+    "cloudWrites": 0,
+    "migratedRecords": 0,
+    "pairedCyclesFound": 0,
+    "details": "cloudfunctions-v2/models/care/v1-watering-sample-audit.json"
+  },
+  "verification": {
+    "targeted": {
+      "files": 5,
+      "passed": 54,
+      "exitCode": 0,
+      "log": "/tmp/planting-e04-synthetic-watering-journey.log"
+    },
+    "newScenarios": {
+      "passed": 10,
+      "exitCode": 0,
+      "log": "/tmp/e04-synthetic-single.log"
+    },
+    "fullUnit": {
+      "files": 218,
+      "passed": 2174,
+      "exitCode": 0,
+      "log": "/tmp/e04-synthetic-full.log"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "/tmp/e04-synthetic-typecheck.log"
+    }
+  },
+  "outcomes": [
+    "未知历史仍可从合格观察状态预测1至4天窗口",
+    "环境需求增大改变窗口；保水增强推后至2至8天",
+    "可靠根区湿态撤回冲突日期并暂停浇水",
+    "独立净补水缺口180至528毫升，实际施水量保持null"
+  ],
+  "notAccepted": [
+    "真实光照/VPD到干燥需求的映射",
+    "真实根区与基质物性标定",
+    "实际施水量",
+    "正式HTTP建议与事实写入"
+  ],
+  "artifacts": [
+    {
+      "path": "cloudfunctions-v2/models/care/v1-watering-sample-audit.json",
+      "sha256": "ce0f4c40ad96f928cf10746319c642609d148f47895988cbe5dc7e9a31af9e30"
+    },
+    {
+      "path": "cloudfunctions-v2/models/care/fixtures/synthetic-watering-journey.json",
+      "sha256": "85fab29e7a7bd0f0ddf032fc3b168244ea595325843a99436e2c4f41f8e7b612"
+    },
+    {
+      "path": "cloudfunctions-v2/models/care/synthetic-watering-journey-results.json",
+      "sha256": "3135a5749922cf13ad4e7d6da2233c6811eccc513038484ac5fed89837c7a3ed"
+    },
+    {
+      "path": "cloudfunctions-v2/models/care/synthetic-watering-journey.md",
+      "sha256": "7dbf5c0df62aacb1f7b63f489dcd61bca65ce3e2eacc3724aa15338be724c2de"
+    },
+    {
+      "path": "cloudfunctions-v2/test/care/watering/synthetic-watering-journey.spec.ts",
+      "sha256": "02a1a8eb045a3b95b7535712f0ca80a1d13f5e9a1a5db621e45abc21ff8515b3"
+    }
+  ]
+}

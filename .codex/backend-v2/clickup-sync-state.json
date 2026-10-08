@@ -34,30 +34,31 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 62,
-      "status": "blocked",
-      "note": "E04：现有观察起点、未知历史与安全判断已核对，无确定新缺陷\n正式日期/水量等待同盆环境、根区、失水及供排水标定资料\n后台采样条件已询问；不增加用户专业输入、不猜默认参数\n相关131/131、全量2164/2164；研究回放不作为正式业务验收\n证据：.codex/backend-v2/evidence/E04-execution-readiness.json",
-      "commentId": "1100440000142578",
-      "commentFingerprint": "af941fe965d823a6ba0c16b662cfa377e1267c28cc22e32fc9e09459df341b3d",
-      "readback": "ClickUp blocked与评论1100440000142578逐行读回，版本62",
-      "lastSuccessfulSyncAt": "2026-10-08T01:21:22.536886Z"
+      "version": 64,
+      "status": "codex running",
+      "note": "E04：V1 SQL核查无完整同盆循环，已自建5个模拟场景\n未知历史、动态窗口、湿土冲突与净缺口180–528ml已回放\n实际施水量仍未知；模拟资格不作为正式发布或标定\n新增10项、相关54/54；全量2174/2174、类型检查通过\n证据：.codex/backend-v2/evidence/E04-synthetic-watering-journey.json",
+      "commentId": "1100440000143180",
+      "commentFingerprint": "e9ded7199e4c377125e57e52a9804df72a7cddf92d4c7557c2232f56195cfda5",
+      "readback": "ClickUp codex running及五行说明已逐项读回",
+      "lastSuccessfulSyncAt": "2026-10-08T02:24:53.221Z"
     },
     "z8v0kmrg8a": {
-      "version": 4,
-      "status": "codex running",
-      "note": "E05接续点：服务端题包快照、归属和复合答案提交已有实现\n对应实现与持久化历史证据归z8v0kmr974，不重复开发\n本轮相关测试131/131；不冒充重新完成真实HTTP/MySQL验收\n待答案申报语义确认、正式CMS/Provider及身份闭环验收\n证据：.codex/backend-v2/evidence/E04-execution-readiness.json",
-      "commentId": "1100440000142579",
-      "commentFingerprint": "b5a913cd675e5ccbda8087c0e69480f8a8884a0c81c7b80c24f9d7a6cfacce2f",
-      "readback": "ClickUp codex running与评论1100440000142579逐行读回，版本4",
-      "lastSuccessfulSyncAt": "2026-10-08T01:21:22.536886Z"
+      "version": 5,
+      "status": "backlog",
+      "note": "E05：用户明确要求先跳过，后续再讨论诊断题包\n既有题包/快照/答案提交实现及证据保留\n未批准的答案归一映射保持pending，不进入运行\n当前不作为E04推进前置\n恢复条件：用户重新承接诊断工作",
+      "commentId": "1100440000143144",
+      "commentFingerprint": "96ce6e042156115345216a92c5d254d94bd8bcea7e9a04e9f4190e0ff5562e42",
+      "readback": "ClickUp backlog及五行说明已逐项读回",
+      "lastSuccessfulSyncAt": "2026-10-08T02:23:46.765Z"
     },
     "z8v0kmr974": {
-      "version": 32,
-      "status": "human required",
-      "note": "E05：答案归一审核稿已完成，等待语义/命名确认\n覆盖85个输入组合、57个申报代码；SHA/覆盖核对通过\n未知/复合证据保留边界，不推定部位、病因或行动\n本轮未改运行行为；根全量1450/1450通过\n待确认，未发布映射，最终诊断仍未验收",
-      "commentId": "1100440000090656",
-      "commentFingerprint": "e3d622cfaab05340992d6957ad0f332527f0907f2cce042b3d4ae14be3240045",
-      "readback": "Chrome HUMAN REQUIRED与五行评论1100440000090656已读回"
+      "version": 33,
+      "status": "backlog",
+      "note": "E05：用户明确要求先跳过，后续再讨论诊断题包\n既有题包/快照/答案提交实现及证据保留\n未批准的答案归一映射保持pending，不进入运行\n当前不作为E04推进前置\n恢复条件：用户重新承接诊断工作",
+      "commentId": "1100440000143145",
+      "commentFingerprint": "96ce6e042156115345216a92c5d254d94bd8bcea7e9a04e9f4190e0ff5562e42",
+      "readback": "ClickUp backlog及五行说明已逐项读回",
+      "lastSuccessfulSyncAt": "2026-10-08T02:23:00.911Z"
     },
     "z8v0kmr9mj": {
       "version": 19,
@@ -86,8 +87,8 @@
   },
   "lastSuccessfulSyncAt": "2026-10-08T01:21:22.536886Z",
   "h5Projection": {
-    "fingerprint": "a1f6e8c5cc026c92ab5b883308a1680e510d31540e1198533b9f0778f3985041",
-    "sourceRevision": 142,
-    "sourceUpdatedAt": "2026-10-08T01:20:14.465222Z"
+    "fingerprint": "ed84f21a0a884d1f307129225ed1d660c237464ca86652e5a6f4efe47f4bebba",
+    "sourceRevision": 145,
+    "sourceUpdatedAt": "2026-10-08T02:25:11.725Z"
   }
 }

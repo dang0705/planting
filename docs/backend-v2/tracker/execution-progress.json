@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T01:20:14.465222Z",
-  "sourceRevision": 142,
-  "sourceUpdatedAt": "2026-10-08T01:20:14.465222Z",
+  "generatedAt": "2026-10-08T02:25:11.725Z",
+  "sourceRevision": 145,
+  "sourceUpdatedAt": "2026-10-08T02:25:11.725Z",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -123,16 +123,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 62,
-      "status": "blocked",
-      "stage": "正式预测与施水量等待后台标定资料；已有数学和安全路径已核对",
+      "version": 64,
+      "status": "codex running",
+      "stage": "样本回放已验证；接续光照/VPD上游输入",
       "accepted": false,
       "summary": [
-        "E04：现有观察起点、未知历史与安全判断已核对，无确定新缺陷",
-        "正式日期/水量等待同盆环境、根区、失水及供排水标定资料",
-        "后台采样条件已询问；不增加用户专业输入、不猜默认参数",
-        "相关131/131、全量2164/2164；研究回放不作为正式业务验收",
-        "证据：.codex/backend-v2/evidence/E04-execution-readiness.json"
+        "E04：V1 SQL核查无完整同盆循环，已自建5个模拟场景",
+        "未知历史、动态窗口、湿土冲突与净缺口180–528ml已回放",
+        "实际施水量仍未知；模拟资格不作为正式发布或标定",
+        "新增10项、相关54/54；全量2174/2174、类型检查通过",
+        "证据：.codex/backend-v2/evidence/E04-synthetic-watering-journey.json"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -193,30 +193,31 @@
         ".codex/backend-v2/evidence/E04-unknown-watering-history.json",
         ".codex/backend-v2/evidence/E04-demand-semantics-qualification.json",
         ".codex/backend-v2/evidence/E04-gravimetric-forecast.json",
-        ".codex/backend-v2/evidence/E04-execution-readiness.json"
+        ".codex/backend-v2/evidence/E04-execution-readiness.json",
+        ".codex/backend-v2/evidence/E04-synthetic-watering-journey.json"
       ],
-      "blockingReason": "缺普通盆栽同盆环境、根区状态、连续失水和供排水的可验证样本；研究资料不能替代正式映射。只阻断正式日期/水量，不阻断已登记的独立工作。",
-      "nextAction": "获得后台采样条件后执行既有标定方案；等待E05答案记录语义裁决，获批后推进原票独立业务，不重复实现题包快照。",
+      "blockingReason": null,
+      "nextAction": "沿固定模拟盆栽接入现有光照与室内VPD派生制品，逐项保留参数来源及缺口；继续E04，不转入E05。",
       "sync": {
-        "version": 62,
-        "status": "blocked",
+        "version": 64,
+        "status": "codex running",
         "matched": true,
-        "readback": "ClickUp blocked与评论1100440000142578逐行读回，版本62"
+        "readback": "ClickUp codex running及五行说明已逐项读回"
       }
     },
     {
       "id": "z8v0kmrg8a",
       "step": "E05",
-      "version": 4,
-      "status": "codex running",
-      "stage": "题包快照与答案提交已有实现；语义归一及正式发布待验收",
+      "version": 5,
+      "status": "backlog",
+      "stage": "用户明确延后：诊断题包后续再讨论",
       "accepted": false,
       "summary": [
-        "E05接续点：服务端题包快照、归属和复合答案提交已有实现",
-        "对应实现与持久化历史证据归z8v0kmr974，不重复开发",
-        "本轮相关测试131/131；不冒充重新完成真实HTTP/MySQL验收",
-        "待答案申报语义确认、正式CMS/Provider及身份闭环验收",
-        "证据：.codex/backend-v2/evidence/E04-execution-readiness.json"
+        "E05：用户明确要求先跳过，后续再讨论诊断题包",
+        "既有题包/快照/答案提交实现及证据保留",
+        "未批准的答案归一映射保持pending，不进入运行",
+        "当前不作为E04推进前置",
+        "恢复条件：用户重新承接诊断工作"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E05-candidate-preparation.json",
@@ -225,27 +226,27 @@
         ".codex/backend-v2/evidence/E04-execution-readiness.json"
       ],
       "blockingReason": null,
-      "nextAction": "复用z8v0kmr974已实现的快照、归属和提交；待答案申报语义确认后推进归一，正式CMS/Provider单独验收。",
+      "nextAction": "用户重新承接E05时再讨论题包及答案归一，当前不实施。",
       "sync": {
-        "version": 4,
-        "status": "codex running",
+        "version": 5,
+        "status": "backlog",
         "matched": true,
-        "readback": "ClickUp codex running与评论1100440000142579逐行读回，版本4"
+        "readback": "ClickUp backlog及五行说明已逐项读回"
       }
     },
     {
       "id": "z8v0kmr974",
       "step": "E05",
-      "version": 32,
-      "status": "human required",
-      "stage": "答案归一最小审核稿待确认",
+      "version": 33,
+      "status": "backlog",
+      "stage": "用户明确延后：诊断题包后续再讨论",
       "accepted": false,
       "summary": [
-        "E05：答案归一审核稿已完成，等待语义/命名确认",
-        "覆盖85个输入组合、57个申报代码；SHA/覆盖核对通过",
-        "未知/复合证据保留边界，不推定部位、病因或行动",
-        "本轮未改运行行为；根全量1450/1450通过",
-        "待确认，未发布映射，最终诊断仍未验收"
+        "E05：用户明确要求先跳过，后续再讨论诊断题包",
+        "既有题包/快照/答案提交实现及证据保留",
+        "未批准的答案归一映射保持pending，不进入运行",
+        "当前不作为E04推进前置",
+        "恢复条件：用户重新承接诊断工作"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E05-question-package-snapshot.json",
@@ -280,13 +281,13 @@
         ".codex/backend-v2/evidence/E05-read-answer-evidence.json",
         ".codex/backend-v2/evidence/E05-answer-finding-review.json"
       ],
-      "blockingReason": "仅答案映射实施环节等待申报语义/命名确认；正式视觉/Provider/CMS前置仍独立未验收",
-      "nextAction": "确认最小答案申报语义及命名后登记受控映射，按独立Expected实现归一；确认前不消费审核稿",
+      "blockingReason": null,
+      "nextAction": "用户重新承接E05时再讨论题包及答案归一，当前不实施。",
       "sync": {
-        "version": 32,
-        "status": "human required",
+        "version": 33,
+        "status": "backlog",
         "matched": true,
-        "readback": "Chrome HUMAN REQUIRED与五行评论1100440000090656已读回"
+        "readback": "ClickUp backlog及五行说明已逐项读回"
       }
     },
     {
