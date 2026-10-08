@@ -34,13 +34,13 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 41,
+      "version": 57,
       "status": "codex running",
-      "note": "E04：真实时间倍率积分→预计检查窗口→盆土安全裁决已接通\n缺历史不造进度、未来缺段不外推；湿土否决、根区目标可独立判断\n25新场景；数值边界经典RED、除数/湿土突变RED→恢复GREEN\nCare499项；根及Node22全量1951/1951；正式水量/HTTP未验收\n证据：.codex/backend-v2/evidence/E04-watering-timing-replay.json",
-      "commentId": "1100440000140265",
-      "commentFingerprint": "fc5fc40c7eb34cd7f123bdf0dd380da06af0893964f7b2b7fb6108689274c5c0",
-      "readback": "ClickUp评论1100440000140265全文读回一致；保持codex running",
-      "lastSuccessfulSyncAt": "2026-10-07T16:55:19.371408+00:00"
+      "note": "E04：定量观察→剩余干燥窗口→当地日期已接线，历史与基线保留\n需求增强日期提前、保水增强推后；缺历史不造事实，湿土安全门仍优先\n24项新用例；经典RED与资格守卫突变RED→恢复；全量2159/2159\n真实状态映射、室内/VPD响应及实际水量未准入；Camunda按用户要求延后\n证据：.codex/backend-v2/evidence/E04-observed-remaining-cycle.json",
+      "commentId": "1100440000142234",
+      "commentFingerprint": "8913429878fa6faa14f0a3f791f3f19ac88d4df00d447e756e088dabfa10b9ba",
+      "readback": "ClickUp codex running与评论1100440000142234逐行读回，版本57",
+      "lastSuccessfulSyncAt": "2026-10-08T00:26:50.470948+00:00"
     },
     "z8v0kmrg8a": {
       "version": 3,
@@ -83,16 +83,10 @@
       "readback": "原生ClickUp已逐字读回评论1100440000138268；只同步进度，不更改状态"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-07T16:55:19.371408+00:00",
-  "lastFailure": {
-    "at": "2026-10-07T17:25:11.799182+00:00",
-    "ticketId": "z8v0kmr973",
-    "reason": "ClickUp MCP日额度100/100，返回3小时44分钟后可重试；未进行远端写入",
-    "pendingVersion": 55
-  },
+  "lastSuccessfulSyncAt": "2026-10-08T00:26:50.470948+00:00",
   "h5Projection": {
-    "fingerprint": "d4c06b9c4f51c855cbf4a58c8da36800393bc0e13abba5dd0e02dc58ab5e59bc",
-    "sourceRevision": 130,
-    "sourceUpdatedAt": "2026-10-07T20:50:13.509Z"
+    "fingerprint": "ea3bb51f699645649375d14437ee7a69aa440c2d6dc8694668c7a0c0538cc265",
+    "sourceRevision": 135,
+    "sourceUpdatedAt": "2026-10-08T00:26:50.470948+00:00"
   }
 }

@@ -15,7 +15,7 @@ python3 scripts/backend-v2/compose-care-models.py
 | `light.dmn`：输入准入、校准资格、光照结果 | 极简路线 `src/care/application/replay-lux-window-day.ts` 串通真实平均辐射制品、SunCalc 2.1.0、窗面直射／散射、同刻 Lux 综合候选与当地日积分；专业路径 `src/care/application/replay-published-mvp-light-day.ts` 保留活动玻璃策略读取与完整传播；底层 `replay-indoor-natural-light.ts` 与 `replay-indoor-ppfd-day.ts` 分别承担传播和时间积分 | 完整光照策略发布、模型准入与运行代码同场景一致性、现场校准及正式 HTTP 路径尚未验收；当前日回放保持离线候选语义 |
 | `pot.dmn`：实际内盆、几何、排水安全和保水准入 | `src/care/cultivation/evaluate-pot-safety.ts` 实现三值安全判断；`derive-measured-pot.ts` 计算实测圆台容器体积 | 容器体积不等于基质体积或持水量；保水策略、保水倍率及完整模型一致性尚未验收 |
 | `dry-cycle.dmn`：历史循环资格、残差与个体校准 | `src/care/application/replay-completed-dry-cycle.ts` 核验循环证据并计算观察减未校准预测的区间残差 | 资格不等于已产生校准倍率；当前实现明确返回 `personalCalibration: null`，完整模型一致性尚未验收 |
-| `watering.dmn`：盆土安全门、可用进度、检查窗口与行动 | 依赖上述光照、盆器和历史循环结果；当前模型规则保留为待执行验证的草案 | 基线选择、环境需求、个体倍率、干燥进度与最终浇水用例尚未完整实现和验收；不能用上游回放替代浇水闭环 |
+| `watering.dmn`：盆土安全门、可用进度、检查窗口与行动 | `src/care/application/replay-watering-timing.ts` 已串通给定需求的时间积分、当前盆土安全门、当前证据对窗口的确定性修正、当地检查日期及有定量证据时的净补水缺口 | 非线性需求、当前盆土的定量状态映射、个体倍率和实际施水量仍未准入；DMN与上述用例尚未完成行为一致性验收，不能把回放当作正式浇水闭环 |
 
 物理计算作为外部计算输入交给 TypeScript，不虚构友好表达式语言（FEEL）函数。输入快照、发布版本和类型校验由后端负责。模型中的 `calculated_light`、`calculated_retention` 和 `calculated_personal_calibration` 需要各自的明确接线；表中存在同类计算不表示已经实现整个 DMN 决策。
 
@@ -33,7 +33,7 @@ python3 scripts/backend-v2/compose-care-models.py
 
 ### 室内 VPD 上游
 
-`src/care/environment/derive-indoor-vpd.ts` 对明确室内／植物区域实测温湿度推导同刻点值，并对审核植物温湿度范围产生气候中点参考。室外天气、未批准估算及缺值不冒充室内测量；参考点不是生理最适值或全天均值。当前没有将 VPD 比值变成浇水倍率，也没有实现室内气候估算模型或正式环境派生持久化；见 `indoor-vpd-candidate-contract.md`。
+`src/care/environment/derive-indoor-vpd.ts` 对明确室内／植物区域实测温湿度推导同刻点值，并对审核植物温湿度范围产生气候中点参考；已有明确温湿度范围的 VPD 包络推导。和风逐小时室外温湿度已具备独立标准化，室外到室内估算仍是经过公开住宅数据回放的研究候选，需要真实位置与和风制品配对验证后才能准入。室外天气、未批准估算及缺值不冒充室内测量；参考点不是生理最适值或全天均值，VPD 比值不能直接成为浇水倍率。详见 `indoor-vpd-candidate-contract.md`、`indoor-climate-envelope.md` 和 `qweather-hourly-evidence-contract.md`。
 
 ### 跨模型关系与安全边界
 
@@ -49,7 +49,9 @@ python3 scripts/backend-v2/compose-care-models.py
 | 后端计算 | 各叶节点和组合用例已有独立 Expected；真实 MySQL 策略读取与当地日回放有单独测试；具体结果见执行记录引用的证据，不将这些测试计为 DMN 引擎验证 |
 | 专用结构校验 | 使用已批准的 `dmnlint@1.0.0` 和 `dmnlint:recommended`，五个文件逐个执行均零问题；工具位于 `tools/care-model-validation`，要求本地 Node.js 24，不打包进云函数 |
 | 决策规则执行 | 尚未在明确版本的 Camunda 兼容执行环境中验证 FEEL、命中策略、空值、覆盖与冲突 |
-| 可视化编辑 | 尚未完成 Camunda Desktop Modeler 打开、保存及重新打开的验证 |
+| 可视化编辑 | 本地5.51.1已安装；当前运行5.51.0的光照副本完成打开、查看和保存，完整往返未验收。按用户要求延后，不阻断业务实现 |
 | 双侧一致性 | 尚未完成同一组独立场景在后端与 DMN 中的结果比对，当前不得据此发布规则 |
+
+合成器只证明 XML、引用与依赖结构；清单中的 `not_run_by_composer` 表示专用结构校验未由合成器执行，不代表工具缺失。逐文件 dmnlint、编辑器往返和引擎行为分别保留与模型哈希对应的证据。
 
 修改 DMN 不会自动改变线上行为。正式生效前必须同步独立 Expected、对应 TypeScript 行为及发布版本，并记录模型哈希和双侧一致性证据。结构有效、引擎行为正确、HTTP 与数据库闭环分别验收。

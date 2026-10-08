@@ -101,11 +101,11 @@ function rate(value: DryingInterval): DryingRange {
   }
   return { min, max }
 }
-/** 仅累计连续覆盖；重复或重叠区间由入口拒绝。 */
-export function replayDryProgress(input: DryProgressInput): DryProgressResult {
-  validateTime(input.now)
-  if (!Array.isArray(input.intervals)) { throw new TypeError('缺少干燥区间清单') }
-  const intervals = input.intervals.map(value => {
+/** 统一校验及排序，两个积分起点消费相同的区间规则。 */
+function prepareIntervals(values: readonly DryingInterval[]) {
+  if (!Array.isArray(values)) { throw new TypeError('缺少干燥区间清单') }
+  const intervals = Array.from(values, value => {
+    if (!value) { throw new TypeError('干燥区间不能缺少元素') }
     validateTime(value.start); validateTime(value.end)
     if (value.end <= value.start) { throw new TypeError('干燥区间必须有正时长') }
     return { start: value.start, end: value.end, rate: rate(value) }
@@ -113,29 +113,32 @@ export function replayDryProgress(input: DryProgressInput): DryProgressResult {
   for (let i = 1; i < intervals.length; i++) {
     if (intervals[i]!.start < intervals[i - 1]!.end) { throw new TypeError('干燥区间重复或重叠') }
   }
-  const missing = (reason: DryProgressResult['reason']): DryProgressResult => ({ status: 'insufficient_evidence', productionAdmission: false, reason, progress: null, window: null })
-  if (input.lastConfirmedWateringAt === null) { return missing('missing_origin') }
-  validateTime(input.lastConfirmedWateringAt)
-  if (input.lastConfirmedWateringAt > input.now) { throw new TypeError('实际浇水起点不能晚于回放时刻') }
-  if (input.baseline === null) { return missing('missing_baseline') }
-  validateRange(input.baseline, true)
-  if (input.baseline.basis !== 'equivalent_dry_units' || typeof input.baseline.referenceConditionsConfirmed !== 'boolean') { throw new TypeError('缺少明确干燥量纲及参考依据') }
-  if (!input.baseline.referenceConditionsConfirmed) { return missing('reference_unconfirmed') }
-  let cursor = input.lastConfirmedWateringAt
+  return intervals
+}
+/** 任意已确认起点之后的数学积分；起点本身不代表浇水事实。 */
+export interface AnchoredDryingResult {
+  /** 仅从给定起点开始的消耗，不能命名为完整历史进度。 */
+  readonly consumed: DryingRange
+  /** 当前及未来连续覆盖内的目标交点。 */
+  readonly window: DryCheckWindow
+}
+/** 共享数值内核；只处理时间与量纲一致的阈值，不签发事实或策略资格。 */
+function integrate(now: number, anchorAt: number, target: DryingRange, intervals: ReturnType<typeof prepareIntervals>): AnchoredDryingResult | null {
+  let cursor = anchorAt
   const progress = { min: 0, max: 0 }
   for (const item of intervals) {
-    if (item.end <= cursor || item.start >= input.now) { continue }
-    if (item.start > cursor) { return missing('history_gap') }
-    const end = Math.min(item.end, input.now)
+    if (cursor >= now || item.end <= cursor || item.start >= now) { continue }
+    if (item.start > cursor) { return null }
+    const end = Math.min(item.end, now)
     progress.min += multiplyDivide(item.rate.min, end - cursor, referenceDayMs)
     progress.max += multiplyDivide(item.rate.max, end - cursor, referenceDayMs)
     cursor = end
   }
-  if (cursor < input.now) { return missing('history_gap') }
+  if (cursor < now) { return null }
   if (!Number.isFinite(progress.max)) { throw new RangeError('干燥进度积分溢出') }
-  let earliestCheckAt: number | null = progress.max >= input.baseline.min ? input.now : null
-  let latestCheckAt: number | null = progress.min >= input.baseline.max ? input.now : null
-  const future = { ...progress }; cursor = input.now
+  let earliestCheckAt: number | null = progress.max >= target.min ? now : null
+  let latestCheckAt: number | null = progress.min >= target.max ? now : null
+  const future = { ...progress }; cursor = now
   for (const item of intervals) {
     if (item.end <= cursor) { continue }
     if (item.start > cursor) { break }
@@ -146,17 +149,39 @@ export function replayDryProgress(input: DryProgressInput): DryProgressResult {
       // 输出整数毫秒；尚未达阈值的正交点不能因日期精度舍入到当前原点。
       return Math.max(cursor + 1, Math.ceil(cursor + offset))
     }
-    if (earliestCheckAt === null && item.rate.max > 0 && input.baseline.min - future.max <= incrementMax) {
-      const earliest = crossing(input.baseline.min - future.max, item.rate.max)
+    if (earliestCheckAt === null && item.rate.max > 0 && target.min - future.max <= incrementMax) {
+      const earliest = crossing(target.min - future.max, item.rate.max)
       if (earliest <= item.end) { earliestCheckAt = earliest }
     }
-    if (latestCheckAt === null && item.rate.min > 0 && input.baseline.max - future.min <= incrementMin) {
-      const latest = crossing(input.baseline.max - future.min, item.rate.min)
+    if (latestCheckAt === null && item.rate.min > 0 && target.max - future.min <= incrementMin) {
+      const latest = crossing(target.max - future.min, item.rate.min)
       if (latest <= item.end) { latestCheckAt = latest }
     }
     future.min += incrementMin; future.max += incrementMax
     if (!Number.isFinite(future.max)) { throw new RangeError('未来干燥进度积分溢出') }
     cursor = item.end
   }
-  return { status: 'ready_candidate', productionAdmission: false, reason: null, progress, window: { earliestCheckAt, latestCheckAt, coverageEnd: cursor } }
+  return { consumed: progress, window: { earliestCheckAt, latestCheckAt, coverageEnd: cursor } }
+}
+/** 仅累计连续覆盖；完整历史仍要求实际浇水事实。 */
+export function replayDryProgress(input: DryProgressInput): DryProgressResult {
+  validateTime(input.now)
+  const intervals = prepareIntervals(input.intervals)
+  const missing = (reason: DryProgressResult['reason']): DryProgressResult => ({ status: 'insufficient_evidence', productionAdmission: false, reason, progress: null, window: null })
+  if (input.lastConfirmedWateringAt === null) { return missing('missing_origin') }
+  validateTime(input.lastConfirmedWateringAt)
+  if (input.lastConfirmedWateringAt > input.now) { throw new TypeError('实际浇水起点不能晚于回放时刻') }
+  if (input.baseline === null) { return missing('missing_baseline') }
+  validateRange(input.baseline, true)
+  if (input.baseline.basis !== 'equivalent_dry_units' || typeof input.baseline.referenceConditionsConfirmed !== 'boolean') { throw new TypeError('缺少明确干燥量纲及参考依据') }
+  if (!input.baseline.referenceConditionsConfirmed) { return missing('reference_unconfirmed') }
+  const integrated = integrate(input.now, input.lastConfirmedWateringAt, input.baseline, intervals)
+  return integrated === null ? missing('history_gap')
+    : { status: 'ready_candidate', productionAdmission: false, reason: null, progress: integrated.consumed, window: integrated.window }
+}
+/** 观察起点复用时间积分；调用方另行校验观察和映射资格。 */
+export function integrateDryingFromAnchor(now: number, anchorAt: number, target: DryingRange, values: readonly DryingInterval[]): AnchoredDryingResult | null {
+  validateTime(now); validateTime(anchorAt); validateRange(target, false)
+  if (anchorAt > now) { throw new TypeError('积分起点不能晚于当前时刻') }
+  return integrate(now, anchorAt, target, prepareIntervals(values))
 }

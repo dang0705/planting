@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-07T20:50:13.509Z",
-  "sourceRevision": 130,
-  "sourceUpdatedAt": "2026-10-07T20:50:13.509Z",
+  "generatedAt": "2026-10-08T00:26:50.470948+00:00",
+  "sourceRevision": 135,
+  "sourceUpdatedAt": "2026-10-08T00:26:50.470948+00:00",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -123,16 +123,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 55,
+      "version": 57,
       "status": "codex running",
-      "stage": "和风逐小时温湿度标准化已验证；真实室内配对及估算准入待补",
+      "stage": "观察起点剩余窗口离线切片已验证；真实映射与环境响应待准入",
       "accepted": false,
       "summary": [
-        "E04：和风v7公制温湿度标准化完成，保留预报/更新/捕获时间",
-        "缺失不转零，明确室外预报及未指定时间聚合；文档示例不冒充真实API",
-        "25项独立场景通过；缺失转零突变1项RED、恢复后全量2135/2135",
-        "类型检查通过；无网络调用、前端修改或模型发布",
-        "真实室内与和风配对待补；正式VPD估算、水量及日期仍未验收"
+        "E04：定量观察→剩余干燥窗口→当地日期已接线，历史与基线保留",
+        "需求增强日期提前、保水增强推后；缺历史不造事实，湿土安全门仍优先",
+        "24项新用例；经典RED与资格守卫突变RED→恢复；全量2159/2159",
+        "真实状态映射、室内/VPD响应及实际水量未准入；Camunda按用户要求延后",
+        "证据：.codex/backend-v2/evidence/E04-observed-remaining-cycle.json"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -186,15 +186,17 @@
         ".codex/backend-v2/evidence/E04-indoor-vpd-range.json",
         ".codex/backend-v2/evidence/E04-environment-demand-data.json",
         ".codex/backend-v2/evidence/E04-indoor-climate-envelope.json",
-        ".codex/backend-v2/evidence/E04-qweather-hourly-evidence.json"
+        ".codex/backend-v2/evidence/E04-qweather-hourly-evidence.json",
+        ".codex/backend-v2/evidence/E04-model-verification-readiness.json",
+        ".codex/backend-v2/evidence/E04-observed-remaining-cycle.json"
       ],
       "blockingReason": null,
-      "nextAction": "配对后台真实位置室内温湿度记录与带捕获/更新/预报有效时间的和风制品；确认场景及误差，不增加小程序专业输入",
+      "nextAction": "沿E04继续取得室内温湿度与同盆净失水/根区状态配对证据，验证环境需求和定量映射；不回到Camunda、不改Tropicals同步任务",
       "sync": {
-        "version": 41,
+        "version": 57,
         "status": "codex running",
-        "matched": false,
-        "readback": "ClickUp评论1100440000140265全文读回一致；保持codex running"
+        "matched": true,
+        "readback": "ClickUp codex running与评论1100440000142234逐行读回，版本57"
       }
     },
     {
@@ -382,11 +384,6 @@
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-07T16:55:19.371408+00:00",
-  "lastFailure": {
-    "at": "2026-10-07T17:25:11.799182+00:00",
-    "ticketId": "z8v0kmr973",
-    "reason": "ClickUp MCP日额度100/100，返回3小时44分钟后可重试；未进行远端写入",
-    "pendingVersion": 55
-  }
+  "lastSuccessfulSyncAt": "2026-10-08T00:26:50.470948+00:00",
+  "lastFailure": null
 }

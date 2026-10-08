@@ -4,6 +4,7 @@ import { evaluateWateringDecision, type WateringDecisionInput, type WateringDeci
 import { deriveRootZoneWaterDeficit, type RootZoneWaterDeficitInput, type RootZoneWaterDeficitResult } from '../watering/derive-root-zone-water-deficit.js'
 import { projectCheckWindowDates, type LocalCheckWindowResult } from '../watering/project-check-window-dates.js'
 import { resolveCurrentDryWindow, type CurrentCycleWindow } from '../watering/resolve-current-dry-window.js'
+import { replayObservedDryCycle, type ObservedRemainingState, type ObservedDryCycleResult } from '../watering/replay-observed-dry-cycle.js'
 
 /** 同轮浇水候选回放的固定输入，日期与当前盆土使用相同时刻。 */
 export interface WateringTimingReplayInput {
@@ -15,6 +16,8 @@ export interface WateringTimingReplayInput {
   readonly potSafety: WateringDecisionInput['potSafety']
   /** 本轮盆土证据，作用范围与有效期参与最终裁决。 */
   readonly soil: WateringDecisionInput['soil']
+  /** 同一盆土观察的已核验定量映射；未提供或pending时不生成观察剩余量。 */
+  readonly observedRemaining?: ObservedRemainingState | null
   /** 可选专业证据；未提供时没有净缺口，不要求MVP前端采集。 */
   readonly waterDeficit?: RootZoneWaterDeficitInput | null
   /** 植物所在地的明确时区；缺失不沿用服务器默认时区。 */
@@ -28,6 +31,8 @@ export interface WateringTimingReplayResult {
   readonly drying: DryProgressResult
   /** 当前证据修正后的有效窗口；历史进度与旧预测仍在drying内原样保留。 */
   readonly currentCycleWindow: CurrentCycleWindow
+  /** 从观察起点独立计算的剩余量；不替代完整历史积分。 */
+  readonly observedCycle: ObservedDryCycleResult
   /** 当前盆土、排水和发布准入的最终行动裁决。 */
   readonly decision: WateringDecisionResult
   /** 与日期并列的净补水缺口，始终不冒充实际施水量。 */
@@ -51,16 +56,22 @@ export function replayWateringTiming(input: WateringTimingReplayInput): Watering
   }
   // 先沿用安全门的完整输入校验；后续观察处理不放宽证据、排水或发布条件。
   const priorDecision = evaluateWateringDecision(decisionInput)
-  const currentCycleWindow = resolveCurrentDryWindow(snapshot.drying.now, drying.window, snapshot.soil, snapshot.drying.lastConfirmedWateringAt)
+  const observedCycle = replayObservedDryCycle({ now: snapshot.drying.now, lastConfirmedWateringAt: snapshot.drying.lastConfirmedWateringAt,
+    soil: snapshot.soil, state: snapshot.observedRemaining ?? null, intervals: snapshot.drying.intervals })
+  const observationReady = observedCycle.status === 'ready_candidate'
+  const resolvedWindow = resolveCurrentDryWindow(snapshot.drying.now, observationReady ? observedCycle.window : drying.window, snapshot.soil, snapshot.drying.lastConfirmedWateringAt)
+  const currentCycleWindow: CurrentCycleWindow = observationReady && resolvedWindow.status === 'prediction_only'
+    ? { ...resolvedWindow, status: 'observation_prediction', observedAt: observedCycle.observedAt } : resolvedWindow
   const evidenceOverridesPrediction = currentCycleWindow.status === 'target_observed' || currentCycleWindow.status === 'prediction_conflict'
   const observationFromEarlierCycle = currentCycleWindow.ignoredObservationReason !== null
-  const decision = evidenceOverridesPrediction || observationFromEarlierCycle
+  const decision = evidenceOverridesPrediction || observationFromEarlierCycle || observationReady
     ? evaluateWateringDecision({ ...decisionInput,
       soil: observationFromEarlierCycle ? null : snapshot.soil,
-      progress: evidenceOverridesPrediction ? null : drying.progress,
-      baseline: evidenceOverridesPrediction ? null : decisionInput.baseline,
+      progress: evidenceOverridesPrediction || observationReady ? null : drying.progress,
+      baseline: evidenceOverridesPrediction || observationReady ? null : decisionInput.baseline,
+      observationWindow: observationReady && !evidenceOverridesPrediction ? currentCycleWindow.window : null,
     }) : priorDecision
   const waterDeficit = snapshot.waterDeficit === undefined || snapshot.waterDeficit === null ? null : deriveRootZoneWaterDeficit(snapshot.waterDeficit)
   const localCheckWindow = projectCheckWindowDates(currentCycleWindow.window, snapshot.timezone ?? null)
-  return { productionAdmission: false, drying, currentCycleWindow, decision, waterDeficit, localCheckWindow, snapshot, snapshotHash }
+  return { productionAdmission: false, drying, currentCycleWindow, observedCycle, decision, waterDeficit, localCheckWindow, snapshot, snapshotHash }
 }

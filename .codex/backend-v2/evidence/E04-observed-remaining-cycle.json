@@ -1,0 +1,83 @@
+{
+  "step": "E04",
+  "ticketId": "z8v0kmr973",
+  "recordedAt": "2026-10-08T00:26:05.259998+00:00",
+  "sliceVerified": true,
+  "wholeTaskAccepted": false,
+  "productionAdmission": false,
+  "scope": "已核验根区定量状态→观察后分段积分→剩余窗口→当地日期与安全门",
+  "expectedSource": [
+    "用户本会话关于当前盆土更新剩余周期、固定基线及动态日期的确认",
+    "统一计划4.3及4.3.1",
+    "cloudfunctions-v2/models/care/observed-remaining-cycle-contract.md"
+  ],
+  "configurationDecision": "无新默认值、阈值或发布；显式剩余区间为数学输入，真实映射和联合响应仍pending",
+  "proofLevel": [
+    "L1 unit_fake：纯计算与证据资格",
+    "L3 unit_fake：真实回放编排/积分/日期/安全判断/快照，无内部替身"
+  ],
+  "notProved": [
+    "真实盆土标签到定量状态映射",
+    "正式室内估算和光照/VPD非线性响应",
+    "实际施水量",
+    "数据库/HTTP/生产发布"
+  ],
+  "tdd": {
+    "path": "classic RED→GREEN，另做资格守卫执行反写",
+    "initialRed": {
+      "failed": 4,
+      "passed": 2,
+      "log": "/tmp/e04-observed-remaining-red.log",
+      "representative": "缺历史浇水仍能从可靠观察估计非零剩余窗口，历史不伪造"
+    },
+    "boundaryRed": "观察起点等于now且位于区间内部时，原积分计算零时长而报错；现跳过空历史段",
+    "mutation": {
+      "change": "临时去除mappingValidated守卫",
+      "caughtBy": "未验证的状态映射不能悄悄产生日期",
+      "log": "/tmp/e04-observed-remaining-mutation.log",
+      "targetFailed": true,
+      "otherFailure": "新加入的观察恰在now边界亦RED，独立修复空时长积分",
+      "restoredByteForByte": true,
+      "restoredSha256": "f057733e4c037fd8cc779389a821c860f338ca2946bdcd4877dfe07bb6a4ee37"
+    }
+  },
+  "verification": {
+    "newTests": 24,
+    "related": {
+      "files": 9,
+      "passed": 96,
+      "failed": 0,
+      "log": "/tmp/e04-observed-remaining-green.log"
+    },
+    "fullBackend": {
+      "files": 216,
+      "passed": 2159,
+      "failed": 0,
+      "log": "/tmp/e04-observed-remaining-full-final.log"
+    },
+    "typecheckExitCode": 0,
+    "lint": {
+      "errors": 0,
+      "warnings": 60,
+      "notes": "数学边界及样例数值触发现有no-magic-numbers警告，未改规则或吞Expected"
+    }
+  },
+  "riskCoverage": {
+    "U1_U3": "空映射/空覆盖/零速率/失效/来源/量纲/时刻/重复区间",
+    "U4": "确定性重放与快照隔离",
+    "U5_U6_U7": "无外部写事务/共享状态/并发执行职责，不适用",
+    "I1_I3": "真实编排到日期/安全门与原始历史保持；资格拒绝与缺段",
+    "I4_I5": "内部离线用例无HTTP鉴权/持久化，不宣称其验收"
+  },
+  "review": "具名runtime_probe_terra只读五文件，未发现确定阻断；映射真实性依赖受控上游",
+  "files": {
+    "cloudfunctions-v2/src/care/watering/replay-dry-progress.ts": "3e9ffd064901d83e505790be6473dc19841242716e3a95d1de00683925451617",
+    "cloudfunctions-v2/src/care/watering/replay-observed-dry-cycle.ts": "f057733e4c037fd8cc779389a821c860f338ca2946bdcd4877dfe07bb6a4ee37",
+    "cloudfunctions-v2/src/care/watering/evaluate-watering-decision.ts": "e5a93c17f43d1112b7c04914d878554f944783c8da72fbc6f7986f8f03997727",
+    "cloudfunctions-v2/src/care/watering/resolve-current-dry-window.ts": "1b3efb3080ef8c6b6347443d908097739d98c8ad0203c734a04f0a3955dc812c",
+    "cloudfunctions-v2/src/care/application/replay-watering-timing.ts": "009523bb081667a42d4dec0b1df8cc98235cda52d4639a7e66de301926969a26",
+    "cloudfunctions-v2/test/care/watering/observed-dry-cycle.spec.ts": "527c188f08c6f5b068356044da65d5493b87493c73efa712d8a4e36388903c41",
+    "cloudfunctions-v2/test/care/watering/observed-remaining-timing.spec.ts": "7503e23670715f83956c0514c46c8359955123374015471d196fcf82afe4c322"
+  },
+  "nextAction": "沿E04继续取得室内温湿度与同盆净失水/根区状态配对证据，验证环境需求和定量映射；不回到Camunda、不改Tropicals同步任务"
+}

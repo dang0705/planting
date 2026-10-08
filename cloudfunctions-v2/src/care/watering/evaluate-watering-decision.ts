@@ -1,5 +1,5 @@
 import type { PotSafetyState } from '../cultivation/evaluate-pot-safety.js'
-import type { DryingRange } from './replay-dry-progress.js'
+import type { DryingRange, DryCheckWindow } from './replay-dry-progress.js'
 /** 当前盆土观察；上游负责用户植物归属、来源与审核证据。 */
 export interface CurrentSoilEvidence {
   /** 已归一的盆土观察状态，不由本用例识别照片。 */
@@ -29,6 +29,8 @@ export interface WateringDecisionInput {
   readonly progress: DryingRange | null
   /** 同量纲的已确认参考基线，缺失不推测日期。 */
   readonly baseline: DryingRange | null
+  /** 可靠观察后的独立预测，仅在无历史进度裁决时决定何时检查。 */
+  readonly observationWindow?: DryCheckWindow | null
 }
 /** 决策动作只是受控候选，不写计划、事实、提醒或水量。 */
 export interface WateringDecisionResult {
@@ -70,6 +72,17 @@ export function evaluateWateringDecision(input: WateringDecisionInput): Watering
     windowState = input.progress.max < input.baseline.min ? 'before'
       : input.progress.min > input.baseline.max ? 'overdue'
       : input.progress.min >= input.baseline.min && input.progress.max <= input.baseline.max ? 'within' : 'uncertain'
+  }
+  if (input.observationWindow !== undefined && input.observationWindow !== null) {
+    const window = input.observationWindow
+    validateTime(window.coverageEnd)
+    for (const at of [window.earliestCheckAt, window.latestCheckAt]) {
+      if (at !== null) { validateTime(at); if (at < input.now || at > window.coverageEnd) { throw new TypeError('观察预测不能超出当前连续覆盖范围') } }
+    }
+    if (window.coverageEnd < input.now || (window.earliestCheckAt !== null && window.latestCheckAt !== null && window.earliestCheckAt > window.latestCheckAt)) { throw new TypeError('观察预测窗口顺序非法') }
+    if (input.progress !== null || input.baseline !== null) { throw new TypeError('不能混用历史进度与观察窗口作本轮行动依据') }
+    // 最早交点已经到达只意味着需要检查；不能制造可靠目标干燥证据。
+    windowState = window.earliestCheckAt === null ? null : window.earliestCheckAt > input.now ? 'before' : 'uncertain'
   }
   const result = (action: WateringDecisionResult['action']): WateringDecisionResult => ({ soilGate, windowState, action })
   if (input.wateringPolicyApproved !== true) { return result('temporarily_unavailable') }

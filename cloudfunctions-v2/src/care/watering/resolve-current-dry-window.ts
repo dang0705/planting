@@ -4,7 +4,7 @@ import type { WateringDecisionInput } from './evaluate-watering-decision.js'
 /** 本轮有效检查窗口与历史积分分开，观察不能重置实际干燥历史。 */
 export interface CurrentCycleWindow {
   /** 已观察到目标、当前湿态反证、仅历史预测或缺证据。 */
-  readonly status: 'target_observed' | 'prediction_conflict' | 'prediction_only' | 'insufficient_evidence'
+  readonly status: 'target_observed' | 'prediction_conflict' | 'prediction_only' | 'observation_prediction' | 'insufficient_evidence'
   /** 当前可使用的窗口；冲突或缺证据不输出猜测日期。 */
   readonly window: DryCheckWindow | null
   /** 真正用于修正窗口的根区证据时刻；未使用时为null。 */

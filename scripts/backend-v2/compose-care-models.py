@@ -139,7 +139,7 @@ def main():
         "sourceOfRules": "四个独立 DMN 编辑源；合成文件不得手工修改",
         "sources": entries, "composite": {"file": output.name, "sha256": sha256(output.read_bytes()).hexdigest(), **counts},
         "validation": {"xmlAndReferences": "passed", "dependencyAcyclic": "passed",
-                       "dmnlint": "not_run_tool_unavailable", "compatibleEngine": "not_run_tool_unavailable",
+                       "dmnlint": "not_run_by_composer", "compatibleEngine": "not_verified",
                        "desktopModelerRoundtrip": "not_verified", "typescriptParity": "not_verified"},
         "runtime": "未接入 CloudBase 或生产规则执行；数值结果由 TypeScript 用例输入，本制品不证明这些用例已经实现",
     }

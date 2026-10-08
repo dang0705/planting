@@ -1,0 +1,91 @@
+{
+  "step": "E04",
+  "ticketId": "z8v0kmr973",
+  "recordedAt": "2026-10-08T00:26:05.259998+00:00",
+  "accepted": false,
+  "scope": "现有四个DMN及合成图验证条件；不新增数值策略或规则",
+  "models": [
+    {
+      "file": "light.dmn",
+      "sha256": "660aaeb2fd5c23d827f1b2243b12bb916e5634bdc127de4b3d8fc56b5af9cf14",
+      "matchesManifest": true,
+      "dmnlintExitCode": 0,
+      "dmnlintIssues": 0
+    },
+    {
+      "file": "pot.dmn",
+      "sha256": "75e59054b584b2d843ebbeb3784ca1b3529e717368fec317fa2affb8bf1a1b26",
+      "matchesManifest": true,
+      "dmnlintExitCode": 0,
+      "dmnlintIssues": 0
+    },
+    {
+      "file": "dry-cycle.dmn",
+      "sha256": "46213f0815f534e830b5d8be89dcd6ffafe7be8265651ccc5969a75021aa57f5",
+      "matchesManifest": true,
+      "dmnlintExitCode": 0,
+      "dmnlintIssues": 0
+    },
+    {
+      "file": "watering.dmn",
+      "sha256": "1eb43545c2d92d713dd29be80635ee01888293c451bb5b2b4a602491b0fbdff4",
+      "matchesManifest": true,
+      "dmnlintExitCode": 0,
+      "dmnlintIssues": 0
+    },
+    {
+      "file": "care-models.dmn",
+      "sha256": "da089b2acbe4059f393b66f231e2e005aff428c738edc4f551d4f6e210f7eddc",
+      "matchesManifest": true,
+      "dmnlintExitCode": 0,
+      "dmnlintIssues": 0
+    }
+  ],
+  "tools": {
+    "camundaDesktopModeler": {
+      "version": "5.51.1",
+      "path": "/Applications/Camunda Modeler.app"
+    },
+    "dmnlint": {
+      "version": "1.0.0",
+      "directory": "tools/care-model-validation",
+      "nodeVersion": "24.21.0"
+    },
+    "c8ctlFound": false,
+    "compatibleDecisionEngineVerified": false,
+    "offlineEngineProbe": {
+      "dmn": "1.12.2",
+      "feel": "1.22.0",
+      "java": "25.0.3",
+      "businessRulesVerified": false
+    }
+  },
+  "verification": {
+    "individualLint": "五个文件分别执行已安装dmnlint，全部退出0且零问题",
+    "compositeRegenerated": true,
+    "dmnContentChanged": false,
+    "rootFullTests": {
+      "files": 214,
+      "passed": 2135,
+      "failed": 0,
+      "log": "/tmp/e04-dmn-current-full-vitest.log"
+    },
+    "tdd": "本轮未改业务行为或决策规则，不宣称新增TDD"
+  },
+  "desktopRoundtrip": {
+    "status": "deferred_by_user",
+    "blocker": null,
+    "copyDirectory": "/var/folders/nr/dwcbk5h942x5xp1kxbgz13_w0000gn/T/qinghuazhi-care-modeler-36ujniqv",
+    "verified": "运行中Modeler5.51.0打开光照副本、查看Unique决策表、保存；副本SHA未变，重开未验收"
+  },
+  "modelBehavior": "未在兼容引擎执行FEEL、决策表或后端一致性；结构通过不能替代行为验收",
+  "wateringCurrentEvidence": {
+    "verified": "可靠根区目标已达可形成现在检查；根区湿态与已到窗口冲突时撤回日期；旧观察不重置实际浇水",
+    "missing": "当前定量状态映射、非线性光照/VPD需求及真实室内配对仍缺准入证据；定性湿干不能换成剩余天数"
+  },
+  "changes": [
+    "模型说明按当前已实现的浇水回放、VPD范围和和风标准化更新",
+    "合成器只声明未由自身运行专用校验，不再写死工具不可用"
+  ],
+  "nextAction": "按用户要求延后Camunda；优先E04养护业务"
+}

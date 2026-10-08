@@ -253,8 +253,8 @@
   "validation": {
     "xmlAndReferences": "passed",
     "dependencyAcyclic": "passed",
-    "dmnlint": "not_run_tool_unavailable",
-    "compatibleEngine": "not_run_tool_unavailable",
+    "dmnlint": "not_run_by_composer",
+    "compatibleEngine": "not_verified",
     "desktopModelerRoundtrip": "not_verified",
     "typescriptParity": "not_verified"
   },
