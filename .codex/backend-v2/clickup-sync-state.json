@@ -34,13 +34,13 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 66,
+      "version": 67,
       "status": "codex running",
-      "note": "E04：一次Lux复用四日，光照与室内VPD候选已接同盆回放\n缺光照/气候日保留缺段，不沿旧输入补齐浇水日期\n需求仍为显式人工模拟，非线性联合响应继续推进\n新增12项；突变3项RED后恢复；全量2186/2186、类型通过\n证据：.codex/backend-v2/evidence/E04-environment-watering-sample.json",
-      "commentId": "1100440000143692",
-      "commentFingerprint": "a0a04edbfb7de62e23f964e561b3f7d78139a2c2bbe2565aee0e96a203cb16e4",
-      "readback": "ClickUp codex running及五行说明已逐项读回",
-      "lastSuccessfulSyncAt": "2026-10-08T03:17:53.640Z"
+      "note": "E04：光照/VPD非线性候选已接同盆逐时需求与日期\n包含VPD内部峰值、独立蒸发、参数锁定及缺段守卫\n合成光照翻倍使检查窗口提前，基线不变；正式参数未准入\n新增31项；经典/突变RED后恢复；全量2217/2217、类型通过\n证据：.codex/backend-v2/evidence/E04-joint-drying-response.json",
+      "commentId": "1100440000143801",
+      "commentFingerprint": "b655db8b7fba7f3ae2b65e70d4915cf17f673350737a97ecbb9577cafb6e5353",
+      "readback": "ClickUp codex running与五行说明逐项读回",
+      "lastSuccessfulSyncAt": "2026-10-08T03:33:36.572005+00:00"
     },
     "z8v0kmrg8a": {
       "version": 5,
@@ -85,10 +85,10 @@
       "readback": "原生ClickUp已逐字读回评论1100440000138268；只同步进度，不更改状态"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-08T01:21:22.536886Z",
+  "lastSuccessfulSyncAt": "2026-10-08T03:33:36.572005+00:00",
   "h5Projection": {
-    "fingerprint": "e02edc12756b754dc08af73820278ca2d61839475070457e8dd7f7594ee03e7b",
-    "sourceRevision": 148,
-    "sourceUpdatedAt": "2026-10-08T03:17:54.271Z"
+    "fingerprint": "e622ea67a28d0dd53cf8122cffdf04704927d72355855d7810c8fb7db736000c",
+    "sourceRevision": 151,
+    "sourceUpdatedAt": "2026-10-08T03:33:36.572005+00:00"
   }
 }

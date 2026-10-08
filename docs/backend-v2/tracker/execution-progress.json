@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T03:17:54.271Z",
-  "sourceRevision": 148,
-  "sourceUpdatedAt": "2026-10-08T03:17:54.271Z",
+  "generatedAt": "2026-10-08T03:33:36.572005+00:00",
+  "sourceRevision": 151,
+  "sourceUpdatedAt": "2026-10-08T03:33:36.572005+00:00",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -123,16 +123,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 66,
+      "version": 67,
       "status": "codex running",
-      "stage": "同盆环境组合已验证；接续非线性联合响应候选",
+      "stage": "逐时非线性候选与同盆日期已验证；根区共同参考接续",
       "accepted": false,
       "summary": [
-        "E04：一次Lux复用四日，光照与室内VPD候选已接同盆回放",
-        "缺光照/气候日保留缺段，不沿旧输入补齐浇水日期",
-        "需求仍为显式人工模拟，非线性联合响应继续推进",
-        "新增12项；突变3项RED后恢复；全量2186/2186、类型通过",
-        "证据：.codex/backend-v2/evidence/E04-environment-watering-sample.json"
+        "E04：光照/VPD非线性候选已接同盆逐时需求与日期",
+        "包含VPD内部峰值、独立蒸发、参数锁定及缺段守卫",
+        "合成光照翻倍使检查窗口提前，基线不变；正式参数未准入",
+        "新增31项；经典/突变RED后恢复；全量2217/2217、类型通过",
+        "证据：.codex/backend-v2/evidence/E04-joint-drying-response.json"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -195,15 +195,16 @@
         ".codex/backend-v2/evidence/E04-gravimetric-forecast.json",
         ".codex/backend-v2/evidence/E04-execution-readiness.json",
         ".codex/backend-v2/evidence/E04-synthetic-watering-journey.json",
-        ".codex/backend-v2/evidence/E04-environment-watering-sample.json"
+        ".codex/backend-v2/evidence/E04-environment-watering-sample.json",
+        ".codex/backend-v2/evidence/E04-joint-drying-response.json"
       ],
       "blockingReason": null,
-      "nextAction": "在同一样本独立论证并回放光照/VPD非线性联合响应候选，保留参数来源和准入边界；不把人工需求视为正式模型。",
+      "nextAction": "在同盆样本中以定量根区水分和明确参考失水率推导剩余量，同时核对净补水；校验共同参考、缺证据及失效边界，不升级为真实标定。",
       "sync": {
-        "version": 66,
+        "version": 67,
         "status": "codex running",
         "matched": true,
-        "readback": "ClickUp codex running及五行说明已逐项读回"
+        "readback": "ClickUp codex running与五行说明逐项读回"
       }
     },
     {
@@ -392,6 +393,6 @@
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-08T01:21:22.536886Z",
+  "lastSuccessfulSyncAt": "2026-10-08T03:33:36.572005+00:00",
   "lastFailure": null
 }

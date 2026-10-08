@@ -1,0 +1,92 @@
+{
+  "ticket": "z8v0kmr973",
+  "step": "E04",
+  "recordedAt": "2026-10-08T03:32:58.447700+00:00",
+  "scope": "逐时非线性响应研究候选及同盆日期回放",
+  "classification": "unit_fake",
+  "productionAdmission": false,
+  "tdd": {
+    "readiness": "ready",
+    "authorization": "用户已批准E04实现及自行创建样本条件",
+    "expectedSource": "joint-drying-response-contract.md 独立解析与手算合成场景",
+    "path": "Expected先落盘；经典RED；内部峰值突变RED与逐字节恢复GREEN",
+    "red": [
+      {
+        "log": "/tmp/e04-joint-response-initial-red.log",
+        "result": "新函数缺失；既有组合拒绝新候选，5个集成用例失败"
+      },
+      {
+        "log": "/tmp/e04-joint-reference-red.log",
+        "result": "参数变化和混控两个守卫用例失败"
+      },
+      {
+        "log": "/tmp/e04-joint-underflow-red.log",
+        "result": "正光响应下溢守卫失败"
+      }
+    ],
+    "mutation": {
+      "change": "移除VPD内部峰值检查",
+      "failedCase": "范围包括内部VPD峰值，不只计算两端",
+      "redLog": "/tmp/e04-joint-peak-mutation-red.log",
+      "restoredSha256": "1ea4a6a48fa9c08b28b3b0fa80ea7302abddeb2a4010f81588d2f0866f54ee64",
+      "byteRestored": true
+    }
+  },
+  "verification": {
+    "related": {
+      "files": 5,
+      "passed": 78,
+      "log": "/tmp/e04-joint-related.log"
+    },
+    "finalChangedTests": {
+      "passed": 43,
+      "log": "/tmp/e04-joint-final-related.log"
+    },
+    "full": {
+      "command": "npm test",
+      "files": 220,
+      "passed": 2217,
+      "log": "/tmp/e04-joint-full.log"
+    },
+    "typecheck": {
+      "passed": true,
+      "log": "/tmp/e04-joint-response-types.log"
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 157,
+      "log": "/tmp/e04-joint-lint.log"
+    }
+  },
+  "coverage": {
+    "L1": "参考点、光照饱和、VPD峰值/截断/零极限、缺数据、非法值、实验域、共同参考与不可变重放",
+    "L3": "Lux物理链→逐时热湿包络→候选→现有积分→观察窗口；参数锁定、缺段、禁止假设缺失/混控",
+    "notApplicable": "无HTTP鉴权、数据库写入或并发提交；不以单元回放代替这些验收"
+  },
+  "assumptions": [
+    "合成光谱/住宅/根区参数",
+    "平均PPFD在时段内保持常量",
+    "叶温等于空气、边界层忽略",
+    "充分供水且非CAM日间响应",
+    "土壤蒸发显式独立输入；参考份额未标定"
+  ],
+  "sampleResults": "cloudfunctions-v2/models/care/joint-response-sample-results.json",
+  "notAccepted": [
+    "真实植物拟合与独立误差",
+    "跨住宅/季节适用性",
+    "光照VPD联合经验与夜间叶片失水",
+    "土壤蒸发份额和参考失水量",
+    "根区定量状态映射",
+    "实际施水量和正式HTTP建议"
+  ],
+  "sourceSha256": {
+    "cloudfunctions-v2/models/care/experiments/joint-drying-response.ts": "1ea4a6a48fa9c08b28b3b0fa80ea7302abddeb2a4010f81588d2f0866f54ee64",
+    "cloudfunctions-v2/models/care/experiments/joint-response-intervals.ts": "90e443a8a7d61a7a96dd3a5463a56e7802564edb9ba7e43307c1fa1fca651f23",
+    "cloudfunctions-v2/models/care/experiments/replay-environmental-watering-sample.ts": "8d4077dfbb2a13d5cbe6753c91a10894e7cd0ce0e1f31f8a4a5505b540977014",
+    "cloudfunctions-v2/models/care/joint-drying-response-contract.md": "cddbaf2f428bf612a21c6b5f60ea966b9cee4780ae161a005a500b2bb2f5997c",
+    "cloudfunctions-v2/models/care/fixtures/joint-response-sample-profile.json": "353769eb4bd7a6b9bab87bac7dda008dff79aeb37a9399ec9b0886060cf5c9e0",
+    "cloudfunctions-v2/models/care/joint-response-sample-results.json": "f2b6060615c86a7fce865e89b893bf5edaebfe35aefd65ef4b8404e57964ebb9"
+  },
+  "nextAction": "在同盆样本中以定量根区水分和明确参考失水率推导剩余量，同时核对净补水；校验共同参考、缺证据及失效边界，不升级为真实标定。",
+  "productChange": "仅修 A 或授权改产品（同盆逐时非线性需求到日期）；范围为离线研究候选与回放，正式运行入口不变"
+}

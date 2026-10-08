@@ -2,6 +2,7 @@ import { replayLuxWindowDay, type LuxWindowDayReplayInput } from '../../../src/c
 import { replayWateringTiming, type WateringTimingReplayInput } from '../../../src/care/application/replay-watering-timing.js'
 import { calculateCanonicalJsonSha256, type CanonicalJsonValue } from '../../../src/foundation/json/canonical-json-sha256.js'
 import { replayIndoorClimateStep, type IndoorClimateExperiment } from './indoor-climate.js'
+import { replayJointResponseIntervals, type NonlinearResearchDemand } from './joint-response-intervals.js'
 
 /** 与已有干燥积分相同的数值区间，仅在显式模拟样本中消费。 */
 type Range = WateringTimingReplayInput['drying']['intervals'][number]['environmentDemand']
@@ -29,7 +30,7 @@ export interface EnvironmentalSampleDay {
     readonly sourceRef: string
     /** 给定的需求区间，不由DLI或VPD线性换算。 */
     readonly range: Range
-  }
+  } | NonlinearResearchDemand
   /** 显式模拟保水区间，不从盆体积或材料名称猜测。 */
   readonly cultivationRetention: Range
   /** 显式模拟校准区间，不声称真实个体学习。 */
@@ -56,8 +57,8 @@ function validateRange(range: Range, positive: boolean): void {
 }
 
 /**
- * 实际执行既有光照、室内气候和浇水计算，用环境覆盖约束人工赋值的模拟需求。
- * 本组合不补非线性响应参数，不将末态VPD转成均值，不写业务事实或发布记录。
+ * 执行光照、室内气候和浇水计算；人工对照与显式非线性候选分别保留。
+ * 缺候选参数不退回人工需求，不将末态VPD转成均值，不写业务事实或发布记录。
  */
 export function replayEnvironmentalWateringSample(input: EnvironmentalWateringSample) {
   if (input.classification !== 'synthetic_experimental' || !Array.isArray(input.days)) {
@@ -67,17 +68,25 @@ export function replayEnvironmentalWateringSample(input: EnvironmentalWateringSa
   const snapshot = structuredClone(input)
   let previousEnd: number | null = null
   let plantReference: string | null = null
+  let responseParametersHash: string | null = null
+  const demandBasis = snapshot.days[0]?.demand.basis
   const intervals: WateringTimingReplayInput['drying']['intervals'][number][] = []
   const days = snapshot.days.map(day => {
     if (!day || day.climate.plantReference !== day.light.plantReference
       || (plantReference !== null && day.light.plantReference !== plantReference)
       || day.climate.provider !== 'qweather' || !day.climate.sourceRef?.trim()
-      || day.demand.basis !== 'synthetic_manual_assignment' || !day.demand.sourceRef?.trim()
+      || !['synthetic_manual_assignment', 'nonlinear_research_candidate'].includes(day.demand.basis) || !day.demand.sourceRef?.trim()
       || day.climate.experiment.durationSeconds !== (day.light.day.endMs - day.light.day.startMs) / 1000
       || (previousEnd !== null && day.light.day.startMs < previousEnd)) {
       throw new TypeError('同盆环境的来源、时长、顺序或模拟资格不一致')
     }
-    validateRange(day.demand.range, false)
+    if (day.demand.basis !== demandBasis) { throw new TypeError('同轮不得混合人工需求与非线性候选') }
+    if (day.demand.basis === 'nonlinear_research_candidate' && day.demand.parameters !== null) {
+      const hash = calculateCanonicalJsonSha256(day.demand.parameters as unknown as CanonicalJsonValue)
+      if (responseParametersHash !== null && responseParametersHash !== hash) { throw new TypeError('同轮响应参数或参考条件发生变化') }
+      responseParametersHash = hash
+    }
+    if (day.demand.basis === 'synthetic_manual_assignment') { validateRange(day.demand.range, false) }
     validateRange(day.cultivationRetention, true)
     validateRange(day.personalCalibration, true)
     plantReference = day.light.plantReference
@@ -85,9 +94,17 @@ export function replayEnvironmentalWateringSample(input: EnvironmentalWateringSa
     const light = replayLuxWindowDay(day.light)
     const climate = replayIndoorClimateStep(day.climate.experiment)
     const eligibleForSyntheticDemand = light.status === 'available' && light.dailyIntegralMolPerM2 !== null && climate.status === 'candidate'
-    if (eligibleForSyntheticDemand) {
+    const responseIntervals = day.demand.basis === 'nonlinear_research_candidate' && eligibleForSyntheticDemand
+      ? replayJointResponseIntervals(light.intervals, day.light.day, day.climate.experiment, day.demand) : null
+    if (eligibleForSyntheticDemand && day.demand.basis === 'synthetic_manual_assignment') {
       intervals.push({ start: day.light.day.startMs, end: day.light.day.endMs,
         environmentDemand: day.demand.range, cultivationRetention: day.cultivationRetention, personalCalibration: day.personalCalibration })
+    }
+    for (const interval of responseIntervals ?? []) {
+      if (interval.response.status === 'candidate') {
+        intervals.push({ start: interval.start, end: interval.end, environmentDemand: interval.response.environmentDemand,
+          cultivationRetention: day.cultivationRetention, personalCalibration: day.personalCalibration })
+      }
     }
     return {
       day: day.light.day,
@@ -101,10 +118,12 @@ export function replayEnvironmentalWateringSample(input: EnvironmentalWateringSa
         },
       },
       demand: day.demand,
+      responseIntervals,
       eligibleForSyntheticDemand,
     }
   })
   const watering = replayWateringTiming({ ...snapshot.watering, drying: { ...snapshot.watering.drying, intervals } })
+  const demandMapping = demandBasis === 'nonlinear_research_candidate' ? 'experimental_nonlinear_response' : 'pending_response_model'
   return { classification: 'synthetic_experimental' as const, productionAdmission: false as const,
-    demandMapping: 'pending_response_model' as const, days, watering, snapshot, snapshotHash }
+    demandMapping, days, watering, snapshot, snapshotHash }
 }

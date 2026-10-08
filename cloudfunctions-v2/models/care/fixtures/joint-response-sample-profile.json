@@ -1,0 +1,31 @@
+{
+  "classification": "synthetic_experimental",
+  "baseInput": "cloudfunctions-v2/models/care/fixtures/environment-watering-sample.json",
+  "remainingDryUnits": { "min": 0.5, "max": 1 },
+  "demand": {
+    "basis": "nonlinear_research_candidate",
+    "sourceRef": "synthetic:joint-response",
+    "parameters": {
+      "version": "light-log-vpd-hypothesis/v1",
+      "sourceRef": "synthetic:response-parameters",
+      "referenceRef": "synthetic:reference",
+      "referencePpfd": 20,
+      "referenceVpdKpa": 1.169140635463723,
+      "lightHalfSaturationPpfd": 20,
+      "vpdSensitivity": 0.5,
+      "referenceTranspirationShare": 0.75,
+      "validPpfd": { "min": 0, "max": 1000 },
+      "validVpdKpa": { "min": 0, "max": 10 }
+    },
+    "soilEvaporation": { "referenceRef": "synthetic:reference", "range": { "min": 1, "max": 1 } },
+    "lightTimeAssumption": "interval_mean_held_constant",
+    "leafTemperatureAssumption": "equals_air"
+  },
+  "scenarios": [
+    { "id": "reference", "changes": {} },
+    { "id": "double_lux", "changes": { "allDaysPlantLux": 2000 } },
+    { "id": "first_day_heating", "changes": { "firstDayTemperatureRiseC": 5 } },
+    { "id": "high_vpd", "changes": { "allDaysInitialIndoor": { "temperatureC": 40, "relativeHumidityPercent": 0 } } },
+    { "id": "missing_second_day", "changes": { "secondDayLuxSource": "experimental_camera" } }
+  ]
+}
