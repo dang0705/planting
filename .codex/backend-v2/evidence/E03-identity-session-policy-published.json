@@ -1,0 +1,18 @@
+{
+  "capturedAt": "2026-10-08",
+  "authorization": "用户 2026-10-08 授权在 qinghuazhi_v2_test 写入 1 条 identity_sessions 发布与 1 条活动指针",
+  "path": "CloudBase MCP manageMysqlDatabase.runStatement → qinghuazhi_v2_test.business_policy_releases / active_business_policy_releases",
+  "release": {
+    "releaseRef": "bpr_identity_2505dce68af4",
+    "domainCode": "identity",
+    "policyCode": "identity_sessions",
+    "schemaVersion": "identity-session-policy/v1",
+    "releaseVersion": "identity-sessions/v1",
+    "contentSha256": "5d7592f4830373bcad41a162ab033a796dfaac0b81c54297296ef154c6bb0e22",
+    "body": {"contractVersion": "identity-session-policy/v1", "scopeCode": "identity_sessions", "sessionTtlHours": 24, "refreshWindowHours": 0},
+    "effectiveAtMs": 1791474312995,
+    "expiresAtMs": null
+  },
+  "readback": "按读取器同一 SQL 列读回 1 行；活动指针版本与摘要一致；该行经真实 createMysqlIdentitySessionPolicyReader 解析为 sessionTtlHours=24、refreshWindowHours=0 的有效快照",
+  "notCovered": ["identity 云函数未部署到 CloudBase", "真机 wx.login 端到端（按用户安排等前端阶段）"]
+}
