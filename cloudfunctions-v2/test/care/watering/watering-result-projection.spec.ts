@@ -90,8 +90,11 @@ describe('浇水最外层结果出口', () => {
     expect(r.assessment.candidate.details.soilState).toBe('unknown')
     expect(r.assessment.candidate.validUntil).toBeNull()
   })
+  // 用户 2026-10-08 裁决后，是否达到目标由上游按植物触发条件写入 targetCriteriaConfirmed；
+  // 此处模拟“要求根区确认的植物只看了表土”，上游不会确认目标。
   it('表土可见状态必须保留范围，不冒充根区判断', () => {
     const x = sample(); x.rootZone.environment.watering.soil!.scope = 'surface'
+    x.rootZone.environment.watering.soil!.targetCriteriaConfirmed = false
     const r = replayIrrigationWateringSample(x).assessment.candidate
     expect(r.details.soilScope).toBe('surface')
     expect(r.details.action).not.toBe('water_allowed')

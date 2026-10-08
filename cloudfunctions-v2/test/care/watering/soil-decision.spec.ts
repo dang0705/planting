@@ -8,9 +8,18 @@ describe('当前盆土安全门与浇水行动', () => {
   it.each(['wet', 'waterlogged'] as const)('可靠%s否决已超窗的预测', state => {
     expect(evaluateWateringDecision({ ...input(), soil: soil(state) })).toMatchObject({ action: 'pause_watering', soilGate: 'pause_watering' })
   })
-  it('缺进度仍可用可靠根区目标证据；表土干不能证明根区干', () => {
+  it('缺进度仍可用可靠根区目标证据', () => {
     expect(evaluateWateringDecision({ ...input(), progress: null, baseline: null, soil: soil('target_dry') })).toMatchObject({ action: 'water_allowed' })
-    expect(evaluateWateringDecision({ ...input(), progress: null, baseline: null, soil: soil('target_dry', 'surface') })).toMatchObject({ action: 'insufficient_evidence', soilGate: 'unknown' })
+  })
+  // Expected 来源更新：用户 2026-10-08 裁决——“表土干再浇”与喜湿类植物，表土已干即达到目标；
+  // 是否达到目标由上游按植物触发条件写入 targetCriteriaConfirmed，干透型植物的表土观察不会被确认。
+  it('表土干且上游已按植物触发条件确认达到目标 → 可以浇水', () => {
+    expect(evaluateWateringDecision({ ...input(), progress: null, baseline: null, soil: soil('target_dry', 'surface') }))
+      .toMatchObject({ action: 'water_allowed', soilGate: 'target_dry_confirmed' })
+  })
+  it('Reverse：表土干但植物要求根区确认（未确认目标）→ 不放行', () => {
+    expect(evaluateWateringDecision({ ...input(), progress: null, baseline: null, soil: { ...soil('target_dry', 'surface'), targetCriteriaConfirmed: false } }))
+      .toMatchObject({ action: 'insufficient_evidence', soilGate: 'unknown' })
   })
   it('过期、不可靠和未确认目标的证据不能放行', () => {
     for (const evidence of [{ ...soil('target_dry'), validUntil: now }, { ...soil('target_dry'), reliable: false }, { ...soil('target_dry'), targetCriteriaConfirmed: false }]) {

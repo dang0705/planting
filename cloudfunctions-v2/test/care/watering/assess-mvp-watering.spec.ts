@@ -56,6 +56,18 @@ describe('MVP 浇水组合用例｜L3 unit_fake', () => {
     expect(result.details.netDeficitMl?.min).toBeCloseTo(31.967, 2)
     expect(result.details.netDeficitMl?.max).toBeCloseTo(241.607, 2)
   })
+  // Expected 来源：用户 2026-10-08 裁决“表土干再浇”植物表土干即可浇水；干透型仍需根区确认。
+  it('I1：表土干的绿萝（SURFACE_DRY）→ 可以浇水，建议 40～300mL', () => {
+    const result = assess({ soil: { state: 'dry', scope: 'surface', observedAt: now, reliable: true } })
+    expect(result.details.action).toBe('water_allowed')
+    expect(result.details.amountMl).toEqual({ min: 40, max: 300 })
+  })
+  it('Reverse：表土干但植物要求干透（FULL_DRY）→ 不给“可以浇水”与水量', () => {
+    const result = assess({ baseline: { tier: 'drought_tolerant', trigger: 'FULL_DRY', baselineDays: { min: 10, max: 20 } },
+      soil: { state: 'dry', scope: 'surface', observedAt: now, reliable: true } })
+    expect(result.details.action).not.toBe('water_allowed')
+    expect(result.details.amountMl).toBeNull()
+  })
   it('I1：无观察、2 天前确认浇水 → 窗口 +2～+8 天', () => {
     const result = assess({ soil: null, lastConfirmedWateringAt: now - 2 * day, environment: hourly(now - 2 * day, 24 * 12) })
     expect(result.details.action).toBe('check_later')

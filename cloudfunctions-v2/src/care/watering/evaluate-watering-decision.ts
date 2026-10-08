@@ -64,7 +64,9 @@ export function evaluateWateringDecision(input: WateringDecisionInput): Watering
     if (soil.collectedAt > input.now || soil.validUntil <= soil.collectedAt) { throw new TypeError('盆土证据时间顺序非法') }
     if (soil.reliable && input.now < soil.validUntil) {
       if (soil.state === 'wet' || soil.state === 'waterlogged') { soilGate = 'pause_watering' }
-      else if (soil.state === 'target_dry' && soil.scope === 'root_zone' && soil.targetCriteriaConfirmed) { soilGate = 'target_dry_confirmed' }
+      // 用户 2026-10-08 裁决：是否达到目标由上游按植物触发条件判定（表土干再浇/喜湿类接受表土，干透类须根区）；
+      // 本安全门只认上游确认，不再额外要求根区范围。
+      else if (soil.state === 'target_dry' && soil.targetCriteriaConfirmed) { soilGate = 'target_dry_confirmed' }
     }
   }
   let windowState: WateringDecisionResult['windowState'] = null
