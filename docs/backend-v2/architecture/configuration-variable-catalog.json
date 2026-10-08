@@ -1529,12 +1529,13 @@
       "layer": "domain_policy",
       "valueType": "integer",
       "unit": "小时",
-      "status": "pending",
-      "currentValue": "P1_PENDING",
+      "status": "confirmed",
+      "currentValue": 24,
       "owner": "care",
       "sourceRefs": [
-        "青花植后端v2底层架构重构计划_融合闭环终版.md",
-        "docs/backend-v2/decisions/P0-external-capability-cards.md"
+        "cloudfunctions-v2/models/care/mvp-watering-policy-release.v1.md",
+        "docs/backend-v2/decisions/P0-external-capability-cards.md",
+        "青花植后端v2底层架构重构计划_融合闭环终版.md"
       ],
       "consumers": [
         "care",
@@ -1545,9 +1546,9 @@
       "phase": "P4",
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "expected": "过期证据不得参与浇水决策",
-      "pendingReason": "架构只冻结短时证据语义，未冻结具体小时数",
-      "blockingScope": "盆土视觉证据复用",
-      "decisionGroup": "care_algorithms"
+      "decisionGroup": "care_algorithms",
+      "allowed": "24",
+      "decisionNote": "随 care-watering-mvp/v1 发布：室内盆土约一天内显著变化（Reading 2024 日耗水 35～68 g/株），低置信。"
     },
     {
       "id": "care.weather.current_freshness_minutes",
@@ -1607,12 +1608,14 @@
       "domain": "care",
       "layer": "domain_policy",
       "valueType": "string",
-      "status": "pending",
-      "currentValue": "P1_PENDING",
+      "status": "confirmed",
+      "currentValue": "care-watering-mvp/v1",
       "owner": "care",
       "sourceRefs": [
-        "docs/backend-v2/contracts/watering-decision-model.md",
-        "docs/backend-v2/architecture/care-decision-model.md"
+        "cloudfunctions-v2/models/care/mvp-watering-policy-contract.md",
+        "cloudfunctions-v2/models/care/mvp-watering-policy-release.v1.md",
+        "docs/backend-v2/architecture/care-decision-model.md",
+        "docs/backend-v2/contracts/watering-decision-model.md"
       ],
       "consumers": [
         "care"
@@ -1622,9 +1625,9 @@
       "phase": "P2",
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "expected": "实现必须符合 watering-decision-model/v1 的 Baseline → DryUnit/DryProgress → Soil Gate 顺序；Watering 一级决策不得消费 indoorEqHours",
-      "pendingReason": "决策结构已冻结；EnvironmentDemand/CultivationRetention/PersonalCalibration 的敏感度和上下界仍待影子数据校准及真实链路验收",
-      "blockingScope": "v2 浇水正式运行",
-      "decisionGroup": "care_algorithms"
+      "decisionGroup": "care_algorithms",
+      "allowed": "care-watering-mvp/v1",
+      "decisionNote": "用户 2026-10-08 授权以文献/公开数据标定 MVP 先实现，真实标定列为后续优化；发布正文固定 confidence=low。"
     },
     {
       "id": "care.fertilizing.algorithm_version",
