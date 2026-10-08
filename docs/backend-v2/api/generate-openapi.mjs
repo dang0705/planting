@@ -21,6 +21,7 @@ const requestSchemaRefByContract = {
   DiagnosisAnswerRequest: '#/components/schemas/DiagnosisAnswerRequest',
   CreateUserPlantRequest: '#/components/schemas/CreateUserPlantRequest',
   CreateIdentitySessionRequest: '#/components/schemas/CreateIdentitySessionRequest',
+  CreateGuestSessionRequest: '#/components/schemas/CreateGuestSessionRequest',
   BindAuthenticatedEphemeralCaseRequest: '#/components/schemas/BindAuthenticatedEphemeralCaseRequest',
   /** 归档/恢复仅允许调用方提交最后读到的植物版本。 */
   UserPlantVersionRequest: '#/components/schemas/UserPlantVersionRequest',
@@ -30,6 +31,7 @@ const successSchemaRefByContract = {
   DiagnosisResultResponse: '#/components/schemas/DiagnosisResultResponse',
   CreateUserPlantResponse: '#/components/schemas/CreateUserPlantSuccess',
   IdentitySessionResponse: '#/components/schemas/CreateIdentitySessionSuccess',
+  GuestSessionResponse: '#/components/schemas/CreateGuestSessionSuccess',
   BindAuthenticatedEphemeralCaseResponse: '#/components/schemas/BindAuthenticatedEphemeralCaseResponse',
 }
 
@@ -429,14 +431,66 @@ const openapi = {
       CreateIdentitySessionRequest: {
         type: 'object',
         additionalProperties: false,
-        required: ['code'],
+        required: ['platform', 'code'],
         properties: {
+          platform: {
+            type: 'string',
+            enum: ['wechat', 'douyin', 'xiaohongshu'],
+            description: '登录平台；只决定调用哪个受控 Provider，不能替代平台验真（用户 2026-10-09 冻结）。',
+          },
           code: {
             type: 'string',
             minLength: 1,
-            description: '微信 wx.login 返回的一次性短时凭证；不得提交平台主体或应用范围。',
+            description: '平台登录接口返回的一次性短时凭证；不得提交平台主体或应用范围。',
+          },
+          guestToken: {
+            type: 'string',
+            minLength: 1,
+            description: '抖音/小红书游客先前签发的游客令牌，仅标记认领资格；微信携带视为非法。',
           },
         },
+        if: { properties: { platform: { const: 'wechat' } }, required: ['platform'] },
+        then: { not: { required: ['guestToken'] } },
+      },
+      CreateGuestSessionRequest: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['platform'],
+        properties: {
+          platform: {
+            type: 'string',
+            enum: ['douyin', 'xiaohongshu'],
+            description: '申请平台；微信以 wx.login 静默登录，不走游客（guest-token/v1）。',
+          },
+          anonymousCode: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 512,
+            description: '仅抖音：tt.login 返回的 anonymousCode，服务端只存其摘要作防刷键。',
+          },
+        },
+        if: { properties: { platform: { const: 'xiaohongshu' } }, required: ['platform'] },
+        then: { not: { required: ['anonymousCode'] } },
+      },
+      CreateGuestSessionData: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['guestToken', 'guestSessionRef', 'expiresAt'],
+        properties: {
+          guestToken: {
+            type: 'string',
+            pattern: '^[A-Za-z0-9_-]{43}$',
+            description: '只在本响应出现一次的游客令牌；后续以 Bearer guest.<token> 携带。',
+          },
+          guestSessionRef: { type: 'string', pattern: '^gst_[A-Za-z0-9_-]{8,}$' },
+          expiresAt: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreateGuestSessionSuccess: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['data'],
+        properties: { data: { $ref: '#/components/schemas/CreateGuestSessionData' } },
       },
       CreateIdentitySessionData: {
         type: 'object',

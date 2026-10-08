@@ -18,3 +18,14 @@ export const getUserTrialAnchorInternalRoute: FrozenRoute = {
   operationId: 'getUserTrialAnchorInternal',
   security: 'service'
 }
+
+/**
+ * route-registry.json 中游客令牌签发的冻结登记（guest-token/v1）。
+ * 无需登录的写入口，仅抖音/小红书可用，必须按来源限流。
+ */
+export const createGuestSessionRoute: FrozenRoute = {
+  method: 'POST',
+  path: '/api/v2/identity/guest-sessions',
+  operationId: 'createGuestSession',
+  security: 'guest_issuance'
+}

@@ -10,6 +10,8 @@ export type RouteSecurity =
   | 'authenticated'
   | 'service'
   | 'guest_or_authenticated'
+  /** 无需登录、仅签发游客令牌的写入口（guest-token/v1），必须限流。 */
+  | 'guest_issuance'
 
 /** 与 route-registry.json 逐字段一致的冻结路由登记；入口只能挂载已登记的路由。 */
 export type FrozenRoute = {

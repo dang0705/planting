@@ -214,6 +214,24 @@ export type CreateIdentitySessionResponseDto = {
   expiresAt: string;
 };
 
+/** 抖音/小红书未登录用户申请游客令牌的严格请求（guest-token/v1 §1）。 */
+export type CreateGuestSessionRequestDto = {
+  /** 申请平台；微信以 wx.login 静默登录，不走游客。 */
+  platform: "douyin" | "xiaohongshu";
+  /** 仅抖音：tt.login 返回的 anonymousCode，服务端换成匿名信号后只存摘要，仅作防刷键。 */
+  anonymousCode?: string;
+};
+
+/** 游客签发成功时唯一允许披露的数据；令牌只在本响应出现一次。 */
+export type CreateGuestSessionResponseDto = {
+  /** 32 字节随机数的 base64url 游客令牌；后续以 `Bearer guest.<token>` 携带，服务端只存 SHA-256。 */
+  guestToken: string;
+  /** 游客会话公开引用；不能反推出令牌或任何平台主体。 */
+  guestSessionRef: GuestSessionRef;
+  /** 游客会话绝对失效时刻（签发 + 有效期），带 Z 的 ISO 8601 UTC 字符串。 */
+  expiresAt: string;
+};
+
 /** 登录用户明确加入花园后返回的新建用户植物初始公开投影。 */
 export type CreateUserPlantResponseDto = {
   /** 服务端生成的高熵用户植物公开引用；不是数据库 BIGINT 内部主键。 */

@@ -1,4 +1,4 @@
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
+import { createServer, type Server } from 'node:http'
 
 import {
   createPublicContractValidators,
@@ -14,11 +14,11 @@ import {
 import type { Mysql2QueryConnection } from '../../foundation/database/mysql2-connection-source.js'
 import { createRouteDispatcher, type RouteHandler } from '../../foundation/http/route-dispatcher.js'
 import type {
-  PublicErrorResponse,
   PublicErrorType,
   RequestChainAuditEvent
 } from '../../foundation/http/request-chain.js'
 import { createIssueUserSessionUseCase } from '../application/issue-user-session.js'
+import { createMysqlGuestSessionRepository } from '../repository/mysql-guest-session-repository.js'
 import { UserSessionIssuanceMaterialError } from '../domain/user-session-issuance-material.js'
 import {
   IdentitySessionIssuancePersistenceError,
@@ -28,14 +28,14 @@ import {
   PlatformCredentialEvidenceError,
   type VerifiedPlatformIdentityEvidence
 } from '../provider/platform-credential-evidence.js'
-import { createIdentitySessionRoute, getUserTrialAnchorInternalRoute } from './routes.js'
+import { IdentityLoginInputError, readJsonBody, verifyJsonContentType, writeJson } from './json-request.js'
+import { createGuestSessionRouteHandler, type GuestSessionRouteDependencies } from './guest-session-route.js'
+import { createGuestSessionRoute, createIdentitySessionRoute, getUserTrialAnchorInternalRoute } from './routes.js'
 import {
   createUserTrialAnchorRouteHandler,
   type ServiceSigningKey
 } from './user-trial-anchor-route.js'
 
-/** 冻结 HTTP JSON 请求体上限，来自配置目录 `http.json_body_limit_bytes` 已确认值。 */
-const requestBodyLimitBytes = 1_048_576
 /** 服务端健康探针与公开业务成功的稳定 HTTP 状态。 */
 const okStatus = Number('200')
 /** 格式错误、媒体类型错误和超限输入统一归入冻结的请求验证失败合同。 */
@@ -44,7 +44,7 @@ const validationFailedStatus = Number('400')
 const principalInvalidStatus = Number('401')
 /** 缺少有效策略、Provider 未配置或持久化失败使用冻结的临时不可用状态。 */
 const serviceUnavailableStatus = Number('503')
-/** 所有公开响应固定使用 UTF-8 JSON。 */
+/** 健康探针响应固定使用 UTF-8 JSON。 */
 const jsonContentType = 'application/json; charset=utf-8'
 /** 请求不合法时的安全中文提示，不回显输入值或 AJV 细节。 */
 const validationFailureMessage = '登录请求不合法'
@@ -72,34 +72,8 @@ export type IdentityServerDependencies = {
   readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
   /** 事务回滚清理失败的脱敏观测端口。 */
   readonly recordRollbackFailure: MysqlRollbackFailureRecorder<Mysql2QueryConnection>
-}
-
-/** 输入边界错误只保留是否超限，不携带请求体或平台 code。 */
-class IdentityLoginInputError extends Error {
-  /** 创建不含输入原值的登录请求错误。 */
-  constructor() {
-    super(validationFailureMessage)
-    this.name = 'IdentityLoginInputError'
-  }
-}
-
-/** 写出稳定 JSON 响应；任何输入、token 或数据库内部信息都不得进入响应。 */
-function writeJson(
-  response: ServerResponse,
-  status: number,
-  body: PublicErrorResponse | { readonly data: CreateIdentitySessionResponseDto }
-): void {
-  if (response.headersSent || response.writableEnded) {
-    response.destroy()
-    return
-  }
-  const serialized = JSON.stringify(body)
-  response.writeHead(status, {
-    'content-type': jsonContentType,
-    'content-length': Buffer.byteLength(serialized, 'utf8'),
-    'cache-control': 'no-store'
-  })
-  response.end(serialized)
+  /** 游客签发入口的策略、抖音匿名换取与来源摘要子密钥；未接线时该路由失败关闭（503）。 */
+  readonly guestIssuance?: Pick<GuestSessionRouteDependencies, 'resolveGuestPolicy' | 'exchangeDouyinAnonymousCode' | 'issuanceSourceKey'>
 }
 
 /** 尝试写入白名单审计事件；审计端故障不能把敏感异常带入公开结果。 */
@@ -111,63 +85,6 @@ async function safelyWriteAudit(
     await writeAudit(event)
   } catch {
     // 审计适配器只接受脱敏事件；其故障不得泄漏凭证或覆盖稳定 HTTP 错误。
-  }
-}
-
-/** 收集 JSON 正文并在内存中严格限制字节数；超限后不再保存后续数据。 */
-function readJsonBody(request: IncomingMessage): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = []
-    let byteLength = Number('0')
-    let exceededLimit = false
-
-    request.on('data', (chunk: Buffer | string) => {
-      if (exceededLimit) {
-        return
-      }
-      const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk, 'utf8')
-      byteLength += buffer.byteLength
-      if (byteLength > requestBodyLimitBytes) {
-        exceededLimit = true
-        chunks.length = Number('0')
-        return
-      }
-      chunks.push(buffer)
-    })
-    request.once('error', () => reject(new IdentityLoginInputError()))
-    request.once('end', () => {
-      if (exceededLimit) {
-        reject(new IdentityLoginInputError())
-        return
-      }
-      try {
-        resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown)
-      } catch {
-        reject(new IdentityLoginInputError())
-      }
-    })
-  })
-}
-
-/** 在读取正文前限定 JSON 媒体类型，不回显客户端声明值。 */
-function verifyJsonContentType(request: IncomingMessage): void {
-  const contentType = request.headers['content-type']
-  if (typeof contentType !== 'string') {
-    throw new IdentityLoginInputError()
-  }
-  const [mediaType, ...parameters] = contentType.split(';')
-  if (mediaType?.trim().toLowerCase() !== 'application/json') {
-    throw new IdentityLoginInputError()
-  }
-  const unsupportedCharset = parameters.some(parameter => {
-    const [name, value] = parameter.split('=')
-    return (
-      name?.trim().toLowerCase() === 'charset' &&
-      value?.trim().replaceAll('"', '').toLowerCase() !== 'utf-8'
-    )
-  })
-  if (unsupportedCharset) {
-    throw new IdentityLoginInputError()
   }
 }
 
@@ -288,6 +205,18 @@ export function createIdentityServer(dependencies: IdentityServerDependencies): 
         validators.createIdentitySessionRequest,
         validators.createIdentitySessionResponse
       )
+    },
+    {
+      route: createGuestSessionRoute,
+      handler: createGuestSessionRouteHandler({
+        resolveGuestPolicy: async () => null,
+        exchangeDouyinAnonymousCode: null,
+        issuanceSourceKey: null,
+        ...dependencies.guestIssuance,
+        repository: createMysqlGuestSessionRepository(dependencies.connectionSource),
+        now: dependencies.now,
+        writeAudit: dependencies.writeAudit
+      })
     },
     {
       route: getUserTrialAnchorInternalRoute,

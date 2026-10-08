@@ -4,8 +4,6 @@ import type {
   CapabilitySnapshotDto,
   ClaimedGuestObjectKind,
   ClaimGuestSessionCommandDto,
-  CreateIdentitySessionRequestDto,
-  CreateIdentitySessionResponseDto,
   CreateUserPlantRequestDto,
   CreateUserPlantResponseDto,
   ErrorResponseDto,
@@ -310,33 +308,15 @@ export const capabilitySnapshotSchema: JSONSchemaType<CapabilitySnapshotDto> = {
 /** 用户植物公开投影 Schema；用 oneOf 锁定确认身份与当前状态的一致性。 */
 export { userPlantSchema } from "./user-plant-schema.js";
 
+/** 登录与游客签发请求/响应 Schema 拆分至独立文件（schemas.ts 500 行上限）。 */
+export {
+  createGuestSessionRequestSchema,
+  createGuestSessionResponseSchema,
+  createIdentitySessionRequestSchema,
+  createIdentitySessionResponseSchema,
+} from "./identity-session-schemas.js";
+
 /** 创建用户植物请求 Schema；任何客户端业务字段或放错位置的幂等键都必须拒绝。 */
-/** 微信登录请求只允许一次性 code，额外字段一律拒绝。 */
-export const createIdentitySessionRequestSchema: JSONSchemaType<CreateIdentitySessionRequestDto> = {
-  type: "object",
-  additionalProperties: false,
-  required: ["platform", "code"],
-  properties: {
-    platform: { type: "string", enum: ["wechat", "douyin", "xiaohongshu"] },
-    code: { type: "string", minLength: 1 },
-    guestToken: { type: "string", minLength: 1, nullable: true },
-  },
-  // 微信以 wx.login 静默登录，不走游客；携带游客令牌视为非法请求。
-  if: { properties: { platform: { const: "wechat" } }, required: ["platform"] },
-  then: { not: { properties: { guestToken: { type: "string" } }, required: ["guestToken"] } },
-};
-
-/** 首次登录公开数据只允许 Bearer 与绝对失效时间。 */
-export const createIdentitySessionResponseSchema: JSONSchemaType<CreateIdentitySessionResponseDto> = {
-  type: "object",
-  additionalProperties: false,
-  required: ["accessToken", "expiresAt"],
-  properties: {
-    accessToken: { type: "string", minLength: 1 },
-    expiresAt: { type: "string", pattern: ISO_UTC_PATTERN },
-  },
-};
-
 export const createUserPlantRequestSchema: JSONSchemaType<CreateUserPlantRequestDto> = {
   type: "object",
   additionalProperties: false,

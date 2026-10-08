@@ -2,7 +2,9 @@ import pino from 'pino'
 
 import { readDatabaseConnectionConfig } from '../foundation/config/database-config.js'
 import { createMysql2ConnectionSource } from '../foundation/database/mysql2-connection-source.js'
+import { deriveGuestIssuanceSourceKey } from '../identity/http/guest-session-route.js'
 import { createIdentityServer } from '../identity/http/server.js'
+import { createDouyinMiniprogramCredentialProvider } from '../identity/provider/douyin-miniprogram-credential-provider.js'
 import { createPlatformLoginDispatcher } from '../identity/provider/platform-login-dispatcher.js'
 import { createMysqlIdentitySessionPolicyReader } from '../identity/repository/mysql-identity-session-policy-reader.js'
 
@@ -29,11 +31,32 @@ const verifyPlatformCode = createPlatformLoginDispatcher(process.env, globalThis
 /** 只读取 identity/identity_sessions 的唯一活动发布；没有可信发布时返回 null 并拒签。 */
 const sessionPolicyReader = createMysqlIdentitySessionPolicyReader(connectionSource)
 
+/** 游客来源摘要子密钥：由平台主体 HMAC 主密钥 v1 经 HKDF 派生；主密钥缺失或过短时为 null，签发入口失败关闭。 */
+const issuanceSourceKey = (() => {
+  try {
+    return deriveGuestIssuanceSourceKey(Buffer.from(process.env.PLATFORM_SUBJECT_HMAC_KEY_V1?.trim() ?? '', 'base64'))
+  } catch {
+    return null
+  }
+})()
+/** 抖音匿名信号换取（与登录同一已批准档案：总时限 5 秒、单次）；抖音未配置时为 null，仅按 IP 限流。 */
+const douyinAppId = process.env.DOUYIN_APPID?.trim()
+const douyinAppSecret = process.env.DOUYIN_APP_SECRET?.trim()
+const douyinProvider = douyinAppId && douyinAppSecret
+  ? createDouyinMiniprogramCredentialProvider({ fetch: globalThis.fetch, appId: douyinAppId, appSecret: douyinAppSecret, totalDeadlineMs: 5000 })
+  : null
+
 const server = createIdentityServer({
   connectionSource,
   verifyPlatformCode,
   resolveSessionPolicy: () => sessionPolicyReader.read(new Date().toISOString()),
   now: () => Date.now(),
+  guestIssuance: {
+    // 已发布的 identity-session-policy/v1 不含游客字段；游客策略发布前签发入口一律 503（guest-token-contract.md §6）。
+    resolveGuestPolicy: async () => null,
+    exchangeDouyinAnonymousCode: douyinProvider === null ? null : code => douyinProvider.exchangeAnonymousCode(code),
+    issuanceSourceKey
+  },
   writeAudit: event => {
     logger.info({ event: 'request_outcome', function: 'identity', ...event }, '请求结果')
   },

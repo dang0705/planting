@@ -43,3 +43,10 @@
 | 签发限流 | 每个来源（抖音匿名信号或客户端 IP 摘要）每小时 ≤ 10 次 | 防刷；超出返回 `RATE_LIMITED` |
 | 单个游客最多临时案例数 | 5 | 防止滥用存储 |
 | 是否启用抖音匿名信号 | 启用 | 仅作防刷键 |
+
+## 6. 签发入口实现裁决（Claude 2026-10-09，不改变公开 DTO）
+
+- **客户端来源 IP**：取请求头 `x-forwarded-for` 最右一段。依据 CloudBase 官方文档「关于客户端源 IP」：直连 HTTP 网关时网关取直连客户端 IP、不接受请求方通过 XFF 指定，并以 XFF 最后一段作为客户端源 IP（`docs.cloudbase.net/service/custom-domain#client-source-ip`）。缺失或不是合法 IP 且没有抖音匿名信号时失败关闭（503），不退化成全局共享限流键。部署后需真机读回核验，未核验前标记为“文档依据、未实测”。
+- **摘要密钥**：不新增密钥，用 HKDF-SHA256 从 `PLATFORM_SUBJECT_HMAC_KEY_V1` 派生专用子密钥（info=`qinghuazhi/guest-issuance-source/v1`），与平台主体摘要域隔离；IP 与匿名信号分别加前缀 `client_ip:`、`douyin_anonymous:` 再做 HMAC-SHA256。IP 原文不落库、不写日志。
+- **抖音匿名信号**：策略开启且请求带 `anonymousCode` 时换取 `anonymous_openid`；成功则其摘要同时作为 `anonymous_subject_hash` 与限流键（优先于 IP）；换取失败不阻断签发，仅按 IP 限流（配置目录 `identity.guest.douyin_anonymous_signal_enabled`）。
+- **策略来源**：游客有效期、限流上限、匿名信号开关须来自已发布身份策略；当前发布的 `identity-session-policy/v1` 不含游客字段，因此在游客策略发布前入口一律 503（失败关闭）。

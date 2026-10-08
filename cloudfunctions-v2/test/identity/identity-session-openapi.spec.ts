@@ -49,10 +49,10 @@ type OpenApiLoginDocument = {
  * Expected 来源：`contracts/identity-session-issuance.md` §2、
  * `contracts/http-api.md` §2/§4 和已批准的一次性微信 code 登录合同。
  * 测试层次：L1 `unit_real_data`；真实读取路由登记生成的 OpenAPI 文件。
- * 覆盖严格 `{ code }` DTO、仅含 `accessToken`/`expiresAt` 的成功响应和无幂等头。
+ * 覆盖严格多平台 `{ platform, code, guestToken? }` DTO、仅含 `accessToken`/`expiresAt` 的成功响应和无幂等头。
  * 不替换或验证 HTTP 服务、Provider、数据库、CloudBase 网关及真实微信。
  */
-test('微信登录 OpenAPI 精确描述一次性 code 请求和最小 Bearer 响应', () => {
+test('多平台登录 OpenAPI 精确描述一次性 code 请求和最小 Bearer 响应', () => {
   const projectRoot = findProjectRoot()
   const openApiPath = path.join(projectRoot, 'docs/backend-v2/api/openapi.p1.json')
   const document = JSON.parse(fs.readFileSync(openApiPath, 'utf8')) as OpenApiLoginDocument
@@ -71,11 +71,15 @@ test('微信登录 OpenAPI 精确描述一次性 code 请求和最小 Bearer 响
   const requestSchema = document.components.schemas.CreateIdentitySessionRequest
   assert.equal(requestSchema?.type, 'object')
   assert.equal(requestSchema?.additionalProperties, false)
-  assert.deepEqual(requestSchema?.required, ['code'])
+  // 用户 2026-10-09 冻结多平台登录：{ platform 必填, code, guestToken? }，微信携带 guestToken 非法。
+  assert.deepEqual(requestSchema?.required, ['platform', 'code'])
   const requestProperties = requestSchema?.properties as Record<string, Record<string, unknown>>
-  assert.deepEqual(Object.keys(requestProperties), ['code'])
+  assert.deepEqual(Object.keys(requestProperties), ['platform', 'code', 'guestToken'])
+  assert.deepEqual(requestProperties.platform?.enum, ['wechat', 'douyin', 'xiaohongshu'])
   assert.equal(requestProperties.code?.type, 'string')
   assert.equal(requestProperties.code?.minLength, minimumNonEmptyLength)
+  assert.equal(requestProperties.guestToken?.type, 'string')
+  assert.deepEqual((requestSchema as Record<string, unknown>).then, { not: { required: ['guestToken'] } })
 
   const responseSchemaRef =
     operation.responses?.['200']?.content?.['application/json']?.schema?.$ref
@@ -99,4 +103,27 @@ test('微信登录 OpenAPI 精确描述一次性 code 请求和最小 Bearer 响
   assert.equal(responseProperties.accessToken?.minLength, minimumNonEmptyLength)
   assert.equal(responseProperties.expiresAt?.type, 'string')
   assert.equal(responseProperties.expiresAt?.format, 'date-time')
+})
+
+/**
+ * Expected：guest-token-contract.md §1（用户 2026-10-08 冻结）。L1 unit_real_data：读取生成后的真实 OpenAPI 制品。
+ * 覆盖游客签发请求（仅抖音/小红书，anonymousCode 仅抖音）与一次性令牌响应；不验证 HTTP 服务与数据库。
+ */
+test('游客签发 OpenAPI 精确描述平台限制与一次性令牌响应', () => {
+  const document = JSON.parse(fs.readFileSync(path.join(findProjectRoot(), 'docs/backend-v2/api/openapi.p1.json'), 'utf8')) as OpenApiLoginDocument
+  const operation = document.paths['/api/v2/identity/guest-sessions']?.post
+  assert.ok(operation, 'OpenAPI 必须包含游客签发操作')
+  assert.equal(operation['x-idempotency'], 'not_applicable')
+  assert.equal(operation.requestBody?.content?.['application/json']?.schema?.$ref, '#/components/schemas/CreateGuestSessionRequest')
+  assert.equal(operation.responses?.['200']?.content?.['application/json']?.schema?.$ref, '#/components/schemas/CreateGuestSessionSuccess')
+  const request = document.components.schemas.CreateGuestSessionRequest as Record<string, unknown>
+  assert.deepEqual(request.required, ['platform'])
+  assert.equal(request.additionalProperties, false)
+  const properties = request.properties as Record<string, Record<string, unknown>>
+  assert.deepEqual(Object.keys(properties), ['platform', 'anonymousCode'])
+  assert.deepEqual(properties.platform?.enum, ['douyin', 'xiaohongshu'])
+  assert.deepEqual(request.then, { not: { required: ['anonymousCode'] } })
+  const data = document.components.schemas.CreateGuestSessionData as Record<string, unknown>
+  assert.deepEqual(data.required, ['guestToken', 'guestSessionRef', 'expiresAt'])
+  assert.equal(data.additionalProperties, false)
 })

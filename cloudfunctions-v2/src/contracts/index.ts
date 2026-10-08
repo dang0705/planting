@@ -3,6 +3,8 @@ import Ajv, { type ValidateFunction } from "ajv";
 import {
   capabilitySnapshotSchema,
   claimGuestSessionCommandSchema,
+  createGuestSessionRequestSchema,
+  createGuestSessionResponseSchema,
   createIdentitySessionRequestSchema,
   createIdentitySessionResponseSchema,
   createUserPlantRequestSchema,
@@ -20,6 +22,8 @@ import {
 import type {
   CapabilitySnapshotDto,
   ClaimGuestSessionCommandDto,
+  CreateGuestSessionRequestDto,
+  CreateGuestSessionResponseDto,
   CreateIdentitySessionRequestDto,
   CreateIdentitySessionResponseDto,
   CreateUserPlantRequestDto,
@@ -39,6 +43,8 @@ export type * from "./types.js";
 export {
   capabilitySnapshotSchema,
   claimGuestSessionCommandSchema,
+  createGuestSessionRequestSchema,
+  createGuestSessionResponseSchema,
   createIdentitySessionRequestSchema,
   createIdentitySessionResponseSchema,
   createUserPlantRequestSchema,
@@ -71,6 +77,10 @@ export function createPublicContractValidators(): {
   createIdentitySessionRequest: ValidateFunction<CreateIdentitySessionRequestDto>;
   /** 微信登录成功数据校验器；只接受一次性公开 Bearer 与过期时间。 */
   createIdentitySessionResponse: ValidateFunction<CreateIdentitySessionResponseDto>;
+  /** 游客签发请求校验器（guest-token/v1）。 */
+  createGuestSessionRequest: ValidateFunction<CreateGuestSessionRequestDto>;
+  /** 游客签发公开数据校验器。 */
+  createGuestSessionResponse: ValidateFunction<CreateGuestSessionResponseDto>;
   /** 内部服务主体校验器；按 service 分支限制最小 scope 集合。 */
   servicePrincipal: ValidateFunction<ServicePrincipalDto>;
   /** 用户植物公开投影校验器；保证未确认态与已确认身份引用互斥。 */
@@ -122,6 +132,8 @@ export function createPublicContractValidators(): {
     errorResponse: ajv.compile(errorResponseSchema),
     createIdentitySessionRequest: ajv.compile(createIdentitySessionRequestSchema),
     createIdentitySessionResponse: ajv.compile(createIdentitySessionResponseSchema),
+    createGuestSessionRequest: ajv.compile(createGuestSessionRequestSchema),
+    createGuestSessionResponse: ajv.compile(createGuestSessionResponseSchema),
     guestPrincipal: ajv.compile(guestPrincipalSchema),
     userPrincipal: ajv.compile(userPrincipalSchema),
     servicePrincipal: ajv.compile(servicePrincipalSchema),
