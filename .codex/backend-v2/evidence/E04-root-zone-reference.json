@@ -1,0 +1,98 @@
+{
+  "ticket": "z8v0kmr973",
+  "step": "E04",
+  "recordedAt": "2026-10-08T03:48:29.512758+00:00",
+  "scope": "同盆根区当前水分→剩余参考单位→动态检查窗口及独立净缺口，离线合成回放",
+  "classification": "synthetic_experimental",
+  "productionAdmission": false,
+  "configurationDecision": "纯实验条件与量纲关系，不登记或发布默认参数，不新增前端输入",
+  "testLayer": [
+    "L1 unit_fake",
+    "L3 unit_fake"
+  ],
+  "expectedSources": [
+    "用户授权自主创建E04合成样本",
+    "models/care/root-zone-reference-contract.md中的体积含水率量纲和独立手算",
+    "明尼苏达大学推广资料仅支持VWC及缺水量定义，不采纳农田阈值"
+  ],
+  "validation": {
+    "readiness": "ready",
+    "red": {
+      "kind": "classic",
+      "test": "检查干燥阈值完全高于补水目标时拒绝互相矛盾的条件",
+      "failed": 1,
+      "observed": "修改守卫之前Expected未抛错"
+    },
+    "mutationRed": {
+      "change": "暂将历史净失水除以归一需求积分替换为历史失水原值",
+      "failed": 7,
+      "observed": "62.5取代100mL/参考单位，独立单位和日期Expected失败",
+      "restoredByteForByte": true,
+      "restoredSha256": "df074e29c1f857136e6fcf5337f7a00421907b77bf22f436389accdc1da3e90c"
+    },
+    "green": {
+      "newTests": 31,
+      "fullCommand": "npm test",
+      "fullFiles": 222,
+      "fullPassed": 2248,
+      "fullFailed": 0,
+      "typecheck": "passed",
+      "lint": {
+        "files": 4,
+        "warnings": 85,
+        "errors": 0
+      }
+    }
+  },
+  "replacedBoundaries": [
+    "天气响应、室内参数、Lux读数与根区/历史水分均为显式合成条件"
+  ],
+  "realPath": [
+    "既有辐射与Lux物理链",
+    "室内热湿解析与逐时VPD包络",
+    "光照/VPD非线性候选",
+    "历史归一积分与同盆参考换算",
+    "观察剩余量、时间积分及盆土安全门",
+    "独立根区净缺口"
+  ],
+  "notProven": [
+    "真实传感器与根区标定",
+    "正式响应/阈值参数发布",
+    "实际施水量与供排水安全上限",
+    "HTTP或MySQL业务闭环"
+  ],
+  "artifacts": [
+    {
+      "path": "cloudfunctions-v2/models/care/experiments/root-zone-reference.ts",
+      "sha256": "df074e29c1f857136e6fcf5337f7a00421907b77bf22f436389accdc1da3e90c"
+    },
+    {
+      "path": "cloudfunctions-v2/models/care/experiments/replay-root-zone-watering-sample.ts",
+      "sha256": "5a29beab21ee0197c554be881ead1067e4dc183742dad65cce756304ad32ed30"
+    },
+    {
+      "path": "cloudfunctions-v2/test/care/watering/root-zone-reference.spec.ts",
+      "sha256": "896154ac025b56948621ff505ea439edffe56a4853ae42e09748876bfa67949b"
+    },
+    {
+      "path": "cloudfunctions-v2/test/care/watering/root-zone-watering-sample.spec.ts",
+      "sha256": "d55f646081e45e99bfa4676ee4682a8ed2eaf6623a4682013302bf338cd5a45f"
+    },
+    {
+      "path": "cloudfunctions-v2/models/care/root-zone-reference-contract.md",
+      "sha256": "d5d1f15f74f472c80504567d60807cf0c8050d59a305292397bd481194335065"
+    },
+    {
+      "path": "cloudfunctions-v2/models/care/root-zone-watering-sample-results.json",
+      "sha256": "6da0c5d5e024dc8a2a571731d045e2301cd64b420a7a55b76da4b6e0dba968d9"
+    }
+  ],
+  "progressReadback": {
+    "channel": "Chrome existing main profile",
+    "mcpDailyLimitReached": true,
+    "commentId": "1100440000143896",
+    "readbackAt": "2026-10-08T03:49:53.969347+00:00",
+    "status": "codex running",
+    "screenshot": ".codex/backend-v2/evidence/E04-root-zone-clickup.jpg"
+  }
+}

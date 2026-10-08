@@ -1,22 +1,24 @@
 {
-  "revision": 151,
+  "revision": 154,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-08T03:33:36.572005+00:00",
+  "updatedAt": "2026-10-08T03:49:53.969347+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "E04逐时光照与VPD非线性离线候选接同盆回放",
+    "target": "E04同盆根区定量状态同时推导剩余参考量和净补水",
     "keyAssumptions": [
-      "参数仅显式合成；光照饱和/对数气孔/叶温等于气温均为实验假设",
-      "土壤蒸发独立输入；不把气孔闭合等同整盆停止失水"
+      "全部样本为用户授权的显式合成条件；不增加生产参数",
+      "同盆历史净失水除以同期非线性需求积分，不能直接用自然日均值",
+      "同盆参考已含盆器/个体效果，禁止再次保水/校准修正"
     ],
-    "configurationDecision": "不新增生产配置；已有联合响应pending，实验参数不具备发布资格",
-    "minimumVerification": "独立解析峰值/参考点Expected，先测试后实现；同盆逐时需求到日期，缺段守卫及全量UT",
-    "continueCondition": "逐时同位置包络与真实业务积分可追溯",
-    "failureCondition": "科学适用性或范围不明不得升格正式模型，不采用日均替代逐时",
-    "rollback": "只回退本轮离线候选与测试，不改变运行入口",
+    "configurationDecision": "仅离线候选和确定性单位换算；阈值/参考率/映射生产准入仍pending",
+    "minimumVerification": "独立点值及区间手算Expected；无未来泄漏、无缺段校准、共同参考和安全门；全量UT",
+    "continueCondition": "根区水分到剩余单位及净缺口同源可追溯，未知历史不造事实",
+    "failureCondition": "缺测量/参考资格保持缺失；净缺口不能当施水量",
+    "rollback": "回退本轮实验文件与接线，运行入口不变",
     "timeLimitMinutes": 40,
-    "nextAction": "在同盆样本中以定量根区水分和明确参考失水率推导剩余量，同时核对净补水；校验共同参考、缺证据及失效边界，不升级为真实标定。"
+    "nextAction": "核对供水、排水和损失明确的同盆样本，衔接净补水需求到有界施水参考；缺安全依据保持缺失，不采用容积比例或新增专业前端输入。",
+    "latestEvidence": ".codex/backend-v2/evidence/E04-root-zone-reference.json"
   },
   "tasks": [
     {
@@ -132,10 +134,10 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 67,
+      "version": 68,
       "priority": "high",
       "status": "codex running",
-      "stage": "逐时非线性候选与同盆日期已验证；根区共同参考接续",
+      "stage": "同盆根区剩余参考、动态检查日期及净缺口已验证；实际施水换算接续",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -199,18 +201,19 @@
         ".codex/backend-v2/evidence/E04-execution-readiness.json",
         ".codex/backend-v2/evidence/E04-synthetic-watering-journey.json",
         ".codex/backend-v2/evidence/E04-environment-watering-sample.json",
-        ".codex/backend-v2/evidence/E04-joint-drying-response.json"
+        ".codex/backend-v2/evidence/E04-joint-drying-response.json",
+        ".codex/backend-v2/evidence/E04-root-zone-reference.json"
       ],
       "summary": [
-        "E04：光照/VPD非线性候选已接同盆逐时需求与日期",
-        "包含VPD内部峰值、独立蒸发、参数锁定及缺段守卫",
-        "合成光照翻倍使检查窗口提前，基线不变；正式参数未准入",
-        "新增31项；经典/突变RED后恢复；全量2217/2217、类型通过",
-        "证据：.codex/backend-v2/evidence/E04-joint-drying-response.json"
+        "E04：同盆根区水分已接动态检查日期及独立净缺口",
+        "历史失水按同期需求归一，禁止未来泄漏及重复保水修正",
+        "六个合成场景可回放；实际施水量为空，正式参数未准入",
+        "新增31项；守卫/突变RED后恢复，全量2248/2248、类型通过",
+        "证据：.codex/backend-v2/evidence/E04-root-zone-reference.json"
       ],
       "blockingReason": null,
-      "nextAction": "在同盆样本中以定量根区水分和明确参考失水率推导剩余量，同时核对净补水；校验共同参考、缺证据及失效边界，不升级为真实标定。",
-      "ticketReadback": "ClickUp codex running与评论1100440000143801逐行读回，版本67"
+      "nextAction": "核对供水、排水和损失明确的同盆样本，衔接净补水需求到有界施水参考；缺安全依据保持缺失，不采用容积比例或新增专业前端输入。",
+      "ticketReadback": "Chrome CODEX RUNNING与评论1100440000143896已逐行读回，版本68"
     },
     {
       "id": "z8v0kmrg8a",
@@ -484,7 +487,7 @@
       ]
     }
   ],
-  "nextAction": "在同盆样本中以定量根区水分和明确参考失水率推导剩余量，同时核对净补水；校验共同参考、缺证据及失效边界，不升级为真实标定。",
+  "nextAction": "核对供水、排水和损失明确的同盆样本，衔接净补水需求到有界施水参考；缺安全依据保持缺失，不采用容积比例或新增专业前端输入。",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",

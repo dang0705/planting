@@ -1,0 +1,2120 @@
+{
+  "classification": "synthetic_experimental",
+  "productionAdmission": false,
+  "ticket": "z8v0kmr973",
+  "sourceInputs": [
+    {
+      "path": "cloudfunctions-v2/models/care/fixtures/environment-watering-sample.json",
+      "sha256": "a740e05fa3278a3a136579cdf67bb3670062f9716be61c061ea26b88e00d1f1e"
+    },
+    {
+      "path": "cloudfunctions-v2/models/care/fixtures/joint-response-sample-profile.json",
+      "sha256": "353769eb4bd7a6b9bab87bac7dda008dff79aeb37a9399ec9b0886060cf5c9e0"
+    }
+  ],
+  "replay": {
+    "module": "cloudfunctions-v2/models/care/experiments/replay-root-zone-watering-sample.ts",
+    "export": "replayRootZoneWateringSample",
+    "instructions": "对baseSnapshot做结构化复制，按各场景patches路径赋值后调用；结果保留输入规范摘要。正式Vitest验证在root-zone-reference.spec.ts及root-zone-watering-sample.spec.ts。"
+  },
+  "baseSnapshot": {
+    "classification": "synthetic_experimental",
+    "environment": {
+      "classification": "synthetic_experimental",
+      "watering": {
+        "drying": {
+          "now": 1791417600000,
+          "lastConfirmedWateringAt": null,
+          "baseline": {
+            "min": 6,
+            "max": 8,
+            "basis": "equivalent_dry_units",
+            "referenceConditionsConfirmed": true
+          },
+          "intervals": [
+            {
+              "start": 1791417600000,
+              "end": 1792281600000,
+              "environmentDemand": {
+                "min": 1,
+                "max": 2
+              },
+              "personalCalibration": {
+                "min": 1,
+                "max": 1
+              },
+              "cultivationRetention": {
+                "min": 1,
+                "max": 1
+              }
+            }
+          ]
+        },
+        "wateringPolicyApproved": true,
+        "potSafety": "safe",
+        "timezone": "UTC",
+        "soil": {
+          "state": "unknown",
+          "scope": "root_zone",
+          "reliable": true,
+          "targetCriteriaConfirmed": false,
+          "collectedAt": 1791417600000,
+          "validUntil": 1792281600000
+        },
+        "observedRemaining": {
+          "observedAt": 1791417600000,
+          "basis": "equivalent_dry_units",
+          "referenceConditionsConfirmed": true,
+          "mappingValidated": true,
+          "mappingVersion": "synthetic/v1",
+          "evidenceRef": "synthetic:root-zone",
+          "remainingDryUnits": {
+            "min": 2,
+            "max": 4
+          }
+        },
+        "waterDeficit": null
+      },
+      "days": [
+        {
+          "light": {
+            "raw": {
+              "timezone": "UTC",
+              "utc_offset_seconds": 0,
+              "hourly_units": {
+                "time": "unixtime",
+                "shortwave_radiation": "W/m²",
+                "direct_normal_irradiance": "W/m²",
+                "diffuse_radiation": "W/m²"
+              },
+              "hourly": {
+                "time": [
+                  1791334800,
+                  1791338400,
+                  1791342000,
+                  1791345600,
+                  1791349200,
+                  1791352800,
+                  1791356400,
+                  1791360000,
+                  1791363600,
+                  1791367200,
+                  1791370800,
+                  1791374400,
+                  1791378000,
+                  1791381600,
+                  1791385200,
+                  1791388800,
+                  1791392400,
+                  1791396000,
+                  1791399600,
+                  1791403200,
+                  1791406800,
+                  1791410400,
+                  1791414000,
+                  1791417600
+                ],
+                "shortwave_radiation": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "diffuse_radiation": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "direct_normal_irradiance": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              }
+            },
+            "context": {
+              "series": "hourly",
+              "sourceRef": "synthetic:open-meteo-shaped-radiation",
+              "fetchedAtMs": 1791417600000
+            },
+            "location": {
+              "latitudeDeg": 0,
+              "longitudeDeg": 0,
+              "plane": {
+                "reference": "synthetic-window",
+                "tiltDeg": 90,
+                "azimuthDeg": 180
+              }
+            },
+            "day": {
+              "date": "2026-10-07",
+              "timezone": "UTC",
+              "startMs": 1791331200000,
+              "endMs": 1791417600000
+            },
+            "plantReference": "synthetic-plant",
+            "skyModel": "isotropic",
+            "observation": {
+              "atMs": 1791374400000,
+              "plantReference": "synthetic-plant",
+              "sourceRef": "synthetic:meter",
+              "source": "meter",
+              "confirmed": true,
+              "unit": "lux",
+              "lux": {
+                "lower": 1000,
+                "upper": 1000
+              }
+            },
+            "instant": {
+              "atMs": 1791374400000,
+              "sourceRef": "synthetic:instant",
+              "semantics": "instantaneous",
+              "unit": "W/m²",
+              "dniWattsPerM2": {
+                "lower": 0,
+                "upper": 0
+              },
+              "dhiWattsPerM2": {
+                "lower": 200,
+                "upper": 200
+              }
+            },
+            "conversion": {
+              "sourceRef": "synthetic:conversion",
+              "luxPerWattPerM2": {
+                "direct": {
+                  "lower": 100,
+                  "upper": 100
+                },
+                "diffuse": {
+                  "lower": 100,
+                  "upper": 100
+                }
+              },
+              "micromolPerJoule": {
+                "direct": {
+                  "lower": 2,
+                  "upper": 2
+                },
+                "diffuse": {
+                  "lower": 2,
+                  "upper": 2
+                }
+              }
+            }
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "experiment": {
+              "initialIndoor": {
+                "temperatureC": 20,
+                "relativeHumidityPercent": 50
+              },
+              "outdoor": {
+                "temperatureC": 20,
+                "relativeHumidityPercent": 50
+              },
+              "pressureKpa": 101.325,
+              "durationSeconds": 86400,
+              "coefficients": {
+                "temperatureExchangePerSecond": 0,
+                "heatInputCPerSecond": 0,
+                "moistureExchangePerSecond": 0,
+                "moistureInputKgPerKgPerSecond": 0
+              }
+            }
+          },
+          "demand": {
+            "basis": "nonlinear_research_candidate",
+            "sourceRef": "synthetic:joint-response",
+            "parameters": {
+              "version": "light-log-vpd-hypothesis/v1",
+              "sourceRef": "synthetic:response-parameters",
+              "referenceRef": "synthetic:reference",
+              "referencePpfd": 20,
+              "referenceVpdKpa": 1.169140635463723,
+              "lightHalfSaturationPpfd": 20,
+              "vpdSensitivity": 0.5,
+              "referenceTranspirationShare": 0.75,
+              "validPpfd": {
+                "min": 0,
+                "max": 1000
+              },
+              "validVpdKpa": {
+                "min": 0,
+                "max": 10
+              }
+            },
+            "soilEvaporation": {
+              "referenceRef": "synthetic:reference",
+              "range": {
+                "min": 1,
+                "max": 1
+              }
+            },
+            "lightTimeAssumption": "interval_mean_held_constant",
+            "leafTemperatureAssumption": "equals_air"
+          },
+          "cultivationRetention": {
+            "min": 1,
+            "max": 1
+          },
+          "personalCalibration": {
+            "min": 1,
+            "max": 1
+          }
+        },
+        {
+          "light": {
+            "raw": {
+              "timezone": "UTC",
+              "utc_offset_seconds": 0,
+              "hourly_units": {
+                "time": "unixtime",
+                "shortwave_radiation": "W/m²",
+                "direct_normal_irradiance": "W/m²",
+                "diffuse_radiation": "W/m²"
+              },
+              "hourly": {
+                "time": [
+                  1791421200,
+                  1791424800,
+                  1791428400,
+                  1791432000,
+                  1791435600,
+                  1791439200,
+                  1791442800,
+                  1791446400,
+                  1791450000,
+                  1791453600,
+                  1791457200,
+                  1791460800,
+                  1791464400,
+                  1791468000,
+                  1791471600,
+                  1791475200,
+                  1791478800,
+                  1791482400,
+                  1791486000,
+                  1791489600,
+                  1791493200,
+                  1791496800,
+                  1791500400,
+                  1791504000
+                ],
+                "shortwave_radiation": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "diffuse_radiation": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "direct_normal_irradiance": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              }
+            },
+            "context": {
+              "series": "hourly",
+              "sourceRef": "synthetic:open-meteo-shaped-radiation",
+              "fetchedAtMs": 1791417600000
+            },
+            "location": {
+              "latitudeDeg": 0,
+              "longitudeDeg": 0,
+              "plane": {
+                "reference": "synthetic-window",
+                "tiltDeg": 90,
+                "azimuthDeg": 180
+              }
+            },
+            "day": {
+              "date": "2026-10-08",
+              "timezone": "UTC",
+              "startMs": 1791417600000,
+              "endMs": 1791504000000
+            },
+            "plantReference": "synthetic-plant",
+            "skyModel": "isotropic",
+            "observation": {
+              "atMs": 1791374400000,
+              "plantReference": "synthetic-plant",
+              "sourceRef": "synthetic:meter",
+              "source": "meter",
+              "confirmed": true,
+              "unit": "lux",
+              "lux": {
+                "lower": 1000,
+                "upper": 1000
+              }
+            },
+            "instant": {
+              "atMs": 1791374400000,
+              "sourceRef": "synthetic:instant",
+              "semantics": "instantaneous",
+              "unit": "W/m²",
+              "dniWattsPerM2": {
+                "lower": 0,
+                "upper": 0
+              },
+              "dhiWattsPerM2": {
+                "lower": 200,
+                "upper": 200
+              }
+            },
+            "conversion": {
+              "sourceRef": "synthetic:conversion",
+              "luxPerWattPerM2": {
+                "direct": {
+                  "lower": 100,
+                  "upper": 100
+                },
+                "diffuse": {
+                  "lower": 100,
+                  "upper": 100
+                }
+              },
+              "micromolPerJoule": {
+                "direct": {
+                  "lower": 2,
+                  "upper": 2
+                },
+                "diffuse": {
+                  "lower": 2,
+                  "upper": 2
+                }
+              }
+            }
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "experiment": {
+              "initialIndoor": {
+                "temperatureC": 20,
+                "relativeHumidityPercent": 50
+              },
+              "outdoor": {
+                "temperatureC": 20,
+                "relativeHumidityPercent": 50
+              },
+              "pressureKpa": 101.325,
+              "durationSeconds": 86400,
+              "coefficients": {
+                "temperatureExchangePerSecond": 0,
+                "heatInputCPerSecond": 0,
+                "moistureExchangePerSecond": 0,
+                "moistureInputKgPerKgPerSecond": 0
+              }
+            }
+          },
+          "demand": {
+            "basis": "nonlinear_research_candidate",
+            "sourceRef": "synthetic:joint-response",
+            "parameters": {
+              "version": "light-log-vpd-hypothesis/v1",
+              "sourceRef": "synthetic:response-parameters",
+              "referenceRef": "synthetic:reference",
+              "referencePpfd": 20,
+              "referenceVpdKpa": 1.169140635463723,
+              "lightHalfSaturationPpfd": 20,
+              "vpdSensitivity": 0.5,
+              "referenceTranspirationShare": 0.75,
+              "validPpfd": {
+                "min": 0,
+                "max": 1000
+              },
+              "validVpdKpa": {
+                "min": 0,
+                "max": 10
+              }
+            },
+            "soilEvaporation": {
+              "referenceRef": "synthetic:reference",
+              "range": {
+                "min": 1,
+                "max": 1
+              }
+            },
+            "lightTimeAssumption": "interval_mean_held_constant",
+            "leafTemperatureAssumption": "equals_air"
+          },
+          "cultivationRetention": {
+            "min": 1,
+            "max": 1
+          },
+          "personalCalibration": {
+            "min": 1,
+            "max": 1
+          }
+        },
+        {
+          "light": {
+            "raw": {
+              "timezone": "UTC",
+              "utc_offset_seconds": 0,
+              "hourly_units": {
+                "time": "unixtime",
+                "shortwave_radiation": "W/m²",
+                "direct_normal_irradiance": "W/m²",
+                "diffuse_radiation": "W/m²"
+              },
+              "hourly": {
+                "time": [
+                  1791507600,
+                  1791511200,
+                  1791514800,
+                  1791518400,
+                  1791522000,
+                  1791525600,
+                  1791529200,
+                  1791532800,
+                  1791536400,
+                  1791540000,
+                  1791543600,
+                  1791547200,
+                  1791550800,
+                  1791554400,
+                  1791558000,
+                  1791561600,
+                  1791565200,
+                  1791568800,
+                  1791572400,
+                  1791576000,
+                  1791579600,
+                  1791583200,
+                  1791586800,
+                  1791590400
+                ],
+                "shortwave_radiation": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "diffuse_radiation": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "direct_normal_irradiance": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              }
+            },
+            "context": {
+              "series": "hourly",
+              "sourceRef": "synthetic:open-meteo-shaped-radiation",
+              "fetchedAtMs": 1791417600000
+            },
+            "location": {
+              "latitudeDeg": 0,
+              "longitudeDeg": 0,
+              "plane": {
+                "reference": "synthetic-window",
+                "tiltDeg": 90,
+                "azimuthDeg": 180
+              }
+            },
+            "day": {
+              "date": "2026-10-09",
+              "timezone": "UTC",
+              "startMs": 1791504000000,
+              "endMs": 1791590400000
+            },
+            "plantReference": "synthetic-plant",
+            "skyModel": "isotropic",
+            "observation": {
+              "atMs": 1791374400000,
+              "plantReference": "synthetic-plant",
+              "sourceRef": "synthetic:meter",
+              "source": "meter",
+              "confirmed": true,
+              "unit": "lux",
+              "lux": {
+                "lower": 1000,
+                "upper": 1000
+              }
+            },
+            "instant": {
+              "atMs": 1791374400000,
+              "sourceRef": "synthetic:instant",
+              "semantics": "instantaneous",
+              "unit": "W/m²",
+              "dniWattsPerM2": {
+                "lower": 0,
+                "upper": 0
+              },
+              "dhiWattsPerM2": {
+                "lower": 200,
+                "upper": 200
+              }
+            },
+            "conversion": {
+              "sourceRef": "synthetic:conversion",
+              "luxPerWattPerM2": {
+                "direct": {
+                  "lower": 100,
+                  "upper": 100
+                },
+                "diffuse": {
+                  "lower": 100,
+                  "upper": 100
+                }
+              },
+              "micromolPerJoule": {
+                "direct": {
+                  "lower": 2,
+                  "upper": 2
+                },
+                "diffuse": {
+                  "lower": 2,
+                  "upper": 2
+                }
+              }
+            }
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "experiment": {
+              "initialIndoor": {
+                "temperatureC": 20,
+                "relativeHumidityPercent": 50
+              },
+              "outdoor": {
+                "temperatureC": 20,
+                "relativeHumidityPercent": 50
+              },
+              "pressureKpa": 101.325,
+              "durationSeconds": 86400,
+              "coefficients": {
+                "temperatureExchangePerSecond": 0,
+                "heatInputCPerSecond": 0,
+                "moistureExchangePerSecond": 0,
+                "moistureInputKgPerKgPerSecond": 0
+              }
+            }
+          },
+          "demand": {
+            "basis": "nonlinear_research_candidate",
+            "sourceRef": "synthetic:joint-response",
+            "parameters": {
+              "version": "light-log-vpd-hypothesis/v1",
+              "sourceRef": "synthetic:response-parameters",
+              "referenceRef": "synthetic:reference",
+              "referencePpfd": 20,
+              "referenceVpdKpa": 1.169140635463723,
+              "lightHalfSaturationPpfd": 20,
+              "vpdSensitivity": 0.5,
+              "referenceTranspirationShare": 0.75,
+              "validPpfd": {
+                "min": 0,
+                "max": 1000
+              },
+              "validVpdKpa": {
+                "min": 0,
+                "max": 10
+              }
+            },
+            "soilEvaporation": {
+              "referenceRef": "synthetic:reference",
+              "range": {
+                "min": 1,
+                "max": 1
+              }
+            },
+            "lightTimeAssumption": "interval_mean_held_constant",
+            "leafTemperatureAssumption": "equals_air"
+          },
+          "cultivationRetention": {
+            "min": 1,
+            "max": 1
+          },
+          "personalCalibration": {
+            "min": 1,
+            "max": 1
+          }
+        },
+        {
+          "light": {
+            "raw": {
+              "timezone": "UTC",
+              "utc_offset_seconds": 0,
+              "hourly_units": {
+                "time": "unixtime",
+                "shortwave_radiation": "W/m²",
+                "direct_normal_irradiance": "W/m²",
+                "diffuse_radiation": "W/m²"
+              },
+              "hourly": {
+                "time": [
+                  1791594000,
+                  1791597600,
+                  1791601200,
+                  1791604800,
+                  1791608400,
+                  1791612000,
+                  1791615600,
+                  1791619200,
+                  1791622800,
+                  1791626400,
+                  1791630000,
+                  1791633600,
+                  1791637200,
+                  1791640800,
+                  1791644400,
+                  1791648000,
+                  1791651600,
+                  1791655200,
+                  1791658800,
+                  1791662400,
+                  1791666000,
+                  1791669600,
+                  1791673200,
+                  1791676800
+                ],
+                "shortwave_radiation": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "diffuse_radiation": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "direct_normal_irradiance": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              }
+            },
+            "context": {
+              "series": "hourly",
+              "sourceRef": "synthetic:open-meteo-shaped-radiation",
+              "fetchedAtMs": 1791417600000
+            },
+            "location": {
+              "latitudeDeg": 0,
+              "longitudeDeg": 0,
+              "plane": {
+                "reference": "synthetic-window",
+                "tiltDeg": 90,
+                "azimuthDeg": 180
+              }
+            },
+            "day": {
+              "date": "2026-10-10",
+              "timezone": "UTC",
+              "startMs": 1791590400000,
+              "endMs": 1791676800000
+            },
+            "plantReference": "synthetic-plant",
+            "skyModel": "isotropic",
+            "observation": {
+              "atMs": 1791374400000,
+              "plantReference": "synthetic-plant",
+              "sourceRef": "synthetic:meter",
+              "source": "meter",
+              "confirmed": true,
+              "unit": "lux",
+              "lux": {
+                "lower": 1000,
+                "upper": 1000
+              }
+            },
+            "instant": {
+              "atMs": 1791374400000,
+              "sourceRef": "synthetic:instant",
+              "semantics": "instantaneous",
+              "unit": "W/m²",
+              "dniWattsPerM2": {
+                "lower": 0,
+                "upper": 0
+              },
+              "dhiWattsPerM2": {
+                "lower": 200,
+                "upper": 200
+              }
+            },
+            "conversion": {
+              "sourceRef": "synthetic:conversion",
+              "luxPerWattPerM2": {
+                "direct": {
+                  "lower": 100,
+                  "upper": 100
+                },
+                "diffuse": {
+                  "lower": 100,
+                  "upper": 100
+                }
+              },
+              "micromolPerJoule": {
+                "direct": {
+                  "lower": 2,
+                  "upper": 2
+                },
+                "diffuse": {
+                  "lower": 2,
+                  "upper": 2
+                }
+              }
+            }
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "experiment": {
+              "initialIndoor": {
+                "temperatureC": 20,
+                "relativeHumidityPercent": 50
+              },
+              "outdoor": {
+                "temperatureC": 20,
+                "relativeHumidityPercent": 50
+              },
+              "pressureKpa": 101.325,
+              "durationSeconds": 86400,
+              "coefficients": {
+                "temperatureExchangePerSecond": 0,
+                "heatInputCPerSecond": 0,
+                "moistureExchangePerSecond": 0,
+                "moistureInputKgPerKgPerSecond": 0
+              }
+            }
+          },
+          "demand": {
+            "basis": "nonlinear_research_candidate",
+            "sourceRef": "synthetic:joint-response",
+            "parameters": {
+              "version": "light-log-vpd-hypothesis/v1",
+              "sourceRef": "synthetic:response-parameters",
+              "referenceRef": "synthetic:reference",
+              "referencePpfd": 20,
+              "referenceVpdKpa": 1.169140635463723,
+              "lightHalfSaturationPpfd": 20,
+              "vpdSensitivity": 0.5,
+              "referenceTranspirationShare": 0.75,
+              "validPpfd": {
+                "min": 0,
+                "max": 1000
+              },
+              "validVpdKpa": {
+                "min": 0,
+                "max": 10
+              }
+            },
+            "soilEvaporation": {
+              "referenceRef": "synthetic:reference",
+              "range": {
+                "min": 1,
+                "max": 1
+              }
+            },
+            "lightTimeAssumption": "interval_mean_held_constant",
+            "leafTemperatureAssumption": "equals_air"
+          },
+          "cultivationRetention": {
+            "min": 1,
+            "max": 1
+          },
+          "personalCalibration": {
+            "min": 1,
+            "max": 1
+          }
+        },
+        {
+          "light": {
+            "raw": {
+              "timezone": "UTC",
+              "utc_offset_seconds": 0,
+              "hourly_units": {
+                "time": "unixtime",
+                "shortwave_radiation": "W/m²",
+                "direct_normal_irradiance": "W/m²",
+                "diffuse_radiation": "W/m²"
+              },
+              "hourly": {
+                "time": [
+                  1791680400,
+                  1791684000,
+                  1791687600,
+                  1791691200,
+                  1791694800,
+                  1791698400,
+                  1791702000,
+                  1791705600,
+                  1791709200,
+                  1791712800,
+                  1791716400,
+                  1791720000,
+                  1791723600,
+                  1791727200,
+                  1791730800,
+                  1791734400,
+                  1791738000,
+                  1791741600,
+                  1791745200,
+                  1791748800,
+                  1791752400,
+                  1791756000,
+                  1791759600,
+                  1791763200
+                ],
+                "shortwave_radiation": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "diffuse_radiation": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  200,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "direct_normal_irradiance": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              }
+            },
+            "context": {
+              "series": "hourly",
+              "sourceRef": "synthetic:open-meteo-shaped-radiation",
+              "fetchedAtMs": 1791417600000
+            },
+            "location": {
+              "latitudeDeg": 0,
+              "longitudeDeg": 0,
+              "plane": {
+                "reference": "synthetic-window",
+                "tiltDeg": 90,
+                "azimuthDeg": 180
+              }
+            },
+            "day": {
+              "date": "2026-10-11",
+              "timezone": "UTC",
+              "startMs": 1791676800000,
+              "endMs": 1791763200000
+            },
+            "plantReference": "synthetic-plant",
+            "skyModel": "isotropic",
+            "observation": {
+              "atMs": 1791374400000,
+              "plantReference": "synthetic-plant",
+              "sourceRef": "synthetic:meter",
+              "source": "meter",
+              "confirmed": true,
+              "unit": "lux",
+              "lux": {
+                "lower": 1000,
+                "upper": 1000
+              }
+            },
+            "instant": {
+              "atMs": 1791374400000,
+              "sourceRef": "synthetic:instant",
+              "semantics": "instantaneous",
+              "unit": "W/m²",
+              "dniWattsPerM2": {
+                "lower": 0,
+                "upper": 0
+              },
+              "dhiWattsPerM2": {
+                "lower": 200,
+                "upper": 200
+              }
+            },
+            "conversion": {
+              "sourceRef": "synthetic:conversion",
+              "luxPerWattPerM2": {
+                "direct": {
+                  "lower": 100,
+                  "upper": 100
+                },
+                "diffuse": {
+                  "lower": 100,
+                  "upper": 100
+                }
+              },
+              "micromolPerJoule": {
+                "direct": {
+                  "lower": 2,
+                  "upper": 2
+                },
+                "diffuse": {
+                  "lower": 2,
+                  "upper": 2
+                }
+              }
+            }
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "experiment": {
+              "initialIndoor": {
+                "temperatureC": 20,
+                "relativeHumidityPercent": 50
+              },
+              "outdoor": {
+                "temperatureC": 20,
+                "relativeHumidityPercent": 50
+              },
+              "pressureKpa": 101.325,
+              "durationSeconds": 86400,
+              "coefficients": {
+                "temperatureExchangePerSecond": 0,
+                "heatInputCPerSecond": 0,
+                "moistureExchangePerSecond": 0,
+                "moistureInputKgPerKgPerSecond": 0
+              }
+            }
+          },
+          "demand": {
+            "basis": "nonlinear_research_candidate",
+            "sourceRef": "synthetic:joint-response",
+            "parameters": {
+              "version": "light-log-vpd-hypothesis/v1",
+              "sourceRef": "synthetic:response-parameters",
+              "referenceRef": "synthetic:reference",
+              "referencePpfd": 20,
+              "referenceVpdKpa": 1.169140635463723,
+              "lightHalfSaturationPpfd": 20,
+              "vpdSensitivity": 0.5,
+              "referenceTranspirationShare": 0.75,
+              "validPpfd": {
+                "min": 0,
+                "max": 1000
+              },
+              "validVpdKpa": {
+                "min": 0,
+                "max": 10
+              }
+            },
+            "soilEvaporation": {
+              "referenceRef": "synthetic:reference",
+              "range": {
+                "min": 1,
+                "max": 1
+              }
+            },
+            "lightTimeAssumption": "interval_mean_held_constant",
+            "leafTemperatureAssumption": "equals_air"
+          },
+          "cultivationRetention": {
+            "min": 1,
+            "max": 1
+          },
+          "personalCalibration": {
+            "min": 1,
+            "max": 1
+          }
+        }
+      ]
+    },
+    "cultivationRef": "synthetic:pot-substrate-v1",
+    "rootZone": {
+      "plantReference": "synthetic-plant",
+      "cultivationRef": "synthetic:pot-substrate-v1",
+      "sourceRef": "synthetic:root-zone-volume",
+      "observedAt": 1791417600000,
+      "water": {
+        "volumeBasis": "effective_substrate",
+        "effectiveSubstrateVolumeMl": {
+          "min": 2000,
+          "max": 2000
+        },
+        "currentVwc": {
+          "min": 0.2,
+          "max": 0.2
+        },
+        "targetVwc": {
+          "min": 0.3,
+          "max": 0.3
+        },
+        "rootZoneEvidenceValid": true
+      },
+      "triggerVwc": {
+        "min": 0.15,
+        "max": 0.15
+      }
+    },
+    "reference": {
+      "plantReference": "synthetic-plant",
+      "cultivationRef": "synthetic:pot-substrate-v1",
+      "sourceRef": "synthetic:net-water-loss",
+      "start": 1791331200000,
+      "end": 1791417600000,
+      "netLossMl": {
+        "min": 62.5,
+        "max": 62.5
+      },
+      "waterBalanceAccounted": true
+    }
+  },
+  "scenarios": [
+    {
+      "id": "reference",
+      "description": "同盆标准合成条件",
+      "patches": [],
+      "result": {
+        "snapshotHash": "92b87168584a6c4ea0af6f16743d767ba20e127f9a8fffd0ed7cfd4b4d15da15",
+        "historicalDemand": {
+          "min": 0.6249999999999998,
+          "max": 0.6249999999999998
+        },
+        "rootZoneReference": {
+          "productionAdmission": false,
+          "status": "candidate",
+          "reason": null,
+          "netDeficit": {
+            "status": "available_candidate",
+            "productionAdmission": false,
+            "reason": null,
+            "netDeficitMl": {
+              "min": 199.99999999999994,
+              "max": 199.99999999999994
+            },
+            "appliedAmountMl": null
+          },
+          "remainingWaterMl": {
+            "min": 100.00000000000003,
+            "max": 100.00000000000003
+          },
+          "referenceMlPerDryUnit": {
+            "min": 100.00000000000004,
+            "max": 100.00000000000004
+          },
+          "remainingDryUnits": {
+            "min": 0.9999999999999999,
+            "max": 0.9999999999999999
+          }
+        },
+        "currentCycleWindow": {
+          "status": "observation_prediction",
+          "window": {
+            "earliestCheckAt": 1791552600000,
+            "latestCheckAt": 1791552600000,
+            "coverageEnd": 1791763200000
+          },
+          "observedAt": 1791417600000,
+          "ignoredObservationReason": null
+        },
+        "checkWindowUtc": {
+          "earliest": "2026-10-09T13:30:00.000Z",
+          "latest": "2026-10-09T13:30:00.000Z"
+        },
+        "decision": {
+          "soilGate": "unknown",
+          "windowState": "before",
+          "action": "check_later"
+        },
+        "waterDeficit": {
+          "status": "available_candidate",
+          "productionAdmission": false,
+          "reason": null,
+          "netDeficitMl": {
+            "min": 199.99999999999994,
+            "max": 199.99999999999994
+          },
+          "appliedAmountMl": null
+        },
+        "productionAdmission": false
+      }
+    },
+    {
+      "id": "future_brighter",
+      "description": "仅未来辐射翻倍，历史及Lux锚点不变",
+      "patches": [
+        {
+          "path": [
+            "environment",
+            "days",
+            1,
+            "light",
+            "raw",
+            "hourly",
+            "diffuse_radiation"
+          ],
+          "value": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "path": [
+            "environment",
+            "days",
+            1,
+            "light",
+            "raw",
+            "hourly",
+            "shortwave_radiation"
+          ],
+          "value": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "path": [
+            "environment",
+            "days",
+            2,
+            "light",
+            "raw",
+            "hourly",
+            "diffuse_radiation"
+          ],
+          "value": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "path": [
+            "environment",
+            "days",
+            2,
+            "light",
+            "raw",
+            "hourly",
+            "shortwave_radiation"
+          ],
+          "value": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "path": [
+            "environment",
+            "days",
+            3,
+            "light",
+            "raw",
+            "hourly",
+            "diffuse_radiation"
+          ],
+          "value": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "path": [
+            "environment",
+            "days",
+            3,
+            "light",
+            "raw",
+            "hourly",
+            "shortwave_radiation"
+          ],
+          "value": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "path": [
+            "environment",
+            "days",
+            4,
+            "light",
+            "raw",
+            "hourly",
+            "diffuse_radiation"
+          ],
+          "value": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "path": [
+            "environment",
+            "days",
+            4,
+            "light",
+            "raw",
+            "hourly",
+            "shortwave_radiation"
+          ],
+          "value": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            400,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "result": {
+        "snapshotHash": "0d4838b3d642f896dd78bae5661f64488a82ee5532d3561320f373f1291f5419",
+        "historicalDemand": {
+          "min": 0.6249999999999998,
+          "max": 0.6249999999999998
+        },
+        "rootZoneReference": {
+          "productionAdmission": false,
+          "status": "candidate",
+          "reason": null,
+          "netDeficit": {
+            "status": "available_candidate",
+            "productionAdmission": false,
+            "reason": null,
+            "netDeficitMl": {
+              "min": 199.99999999999994,
+              "max": 199.99999999999994
+            },
+            "appliedAmountMl": null
+          },
+          "remainingWaterMl": {
+            "min": 100.00000000000003,
+            "max": 100.00000000000003
+          },
+          "referenceMlPerDryUnit": {
+            "min": 100.00000000000004,
+            "max": 100.00000000000004
+          },
+          "remainingDryUnits": {
+            "min": 0.9999999999999999,
+            "max": 0.9999999999999999
+          }
+        },
+        "currentCycleWindow": {
+          "status": "observation_prediction",
+          "window": {
+            "earliestCheckAt": 1791538560000,
+            "latestCheckAt": 1791538560000,
+            "coverageEnd": 1791763200000
+          },
+          "observedAt": 1791417600000,
+          "ignoredObservationReason": null
+        },
+        "checkWindowUtc": {
+          "earliest": "2026-10-09T09:36:00.000Z",
+          "latest": "2026-10-09T09:36:00.000Z"
+        },
+        "decision": {
+          "soilGate": "unknown",
+          "windowState": "before",
+          "action": "check_later"
+        },
+        "waterDeficit": {
+          "status": "available_candidate",
+          "productionAdmission": false,
+          "reason": null,
+          "netDeficitMl": {
+            "min": 199.99999999999994,
+            "max": 199.99999999999994
+          },
+          "appliedAmountMl": null
+        },
+        "productionAdmission": false
+      }
+    },
+    {
+      "id": "drier_now",
+      "description": "当前根区更干",
+      "patches": [
+        {
+          "path": [
+            "rootZone",
+            "water",
+            "currentVwc"
+          ],
+          "value": {
+            "min": 0.175,
+            "max": 0.175
+          }
+        }
+      ],
+      "result": {
+        "snapshotHash": "af462194cf023b6988cae7875b1924fe11a5e15d758235204e33aa0a014c2af4",
+        "historicalDemand": {
+          "min": 0.6249999999999998,
+          "max": 0.6249999999999998
+        },
+        "rootZoneReference": {
+          "productionAdmission": false,
+          "status": "candidate",
+          "reason": null,
+          "netDeficit": {
+            "status": "available_candidate",
+            "productionAdmission": false,
+            "reason": null,
+            "netDeficitMl": {
+              "min": 250,
+              "max": 250
+            },
+            "appliedAmountMl": null
+          },
+          "remainingWaterMl": {
+            "min": 49.999999999999986,
+            "max": 49.999999999999986
+          },
+          "referenceMlPerDryUnit": {
+            "min": 100.00000000000004,
+            "max": 100.00000000000004
+          },
+          "remainingDryUnits": {
+            "min": 0.49999999999999967,
+            "max": 0.49999999999999967
+          }
+        },
+        "currentCycleWindow": {
+          "status": "observation_prediction",
+          "window": {
+            "earliestCheckAt": 1791477000000,
+            "latestCheckAt": 1791477000000,
+            "coverageEnd": 1791763200000
+          },
+          "observedAt": 1791417600000,
+          "ignoredObservationReason": null
+        },
+        "checkWindowUtc": {
+          "earliest": "2026-10-08T16:30:00.000Z",
+          "latest": "2026-10-08T16:30:00.000Z"
+        },
+        "decision": {
+          "soilGate": "unknown",
+          "windowState": "before",
+          "action": "check_later"
+        },
+        "waterDeficit": {
+          "status": "available_candidate",
+          "productionAdmission": false,
+          "reason": null,
+          "netDeficitMl": {
+            "min": 250,
+            "max": 250
+          },
+          "appliedAmountMl": null
+        },
+        "productionAdmission": false
+      }
+    },
+    {
+      "id": "missing_history",
+      "description": "历史光照不合格，日期缺失且净缺口保留",
+      "patches": [
+        {
+          "path": [
+            "environment",
+            "days",
+            0,
+            "light",
+            "observation",
+            "source"
+          ],
+          "value": "experimental_camera"
+        }
+      ],
+      "result": {
+        "snapshotHash": "0574c23f53918d97159bf323dfc0281ad5d27ee3f33700211268feb043f4eaba",
+        "historicalDemand": null,
+        "rootZoneReference": {
+          "productionAdmission": false,
+          "status": "insufficient_evidence",
+          "reason": "missing_positive_reference",
+          "netDeficit": {
+            "status": "available_candidate",
+            "productionAdmission": false,
+            "reason": null,
+            "netDeficitMl": {
+              "min": 199.99999999999994,
+              "max": 199.99999999999994
+            },
+            "appliedAmountMl": null
+          },
+          "remainingWaterMl": {
+            "min": 100.00000000000003,
+            "max": 100.00000000000003
+          },
+          "referenceMlPerDryUnit": null,
+          "remainingDryUnits": null
+        },
+        "currentCycleWindow": {
+          "status": "insufficient_evidence",
+          "window": null,
+          "observedAt": null,
+          "ignoredObservationReason": null
+        },
+        "checkWindowUtc": null,
+        "decision": {
+          "soilGate": "unknown",
+          "windowState": null,
+          "action": "insufficient_evidence"
+        },
+        "waterDeficit": {
+          "status": "available_candidate",
+          "productionAdmission": false,
+          "reason": null,
+          "netDeficitMl": {
+            "min": 199.99999999999994,
+            "max": 199.99999999999994
+          },
+          "appliedAmountMl": null
+        },
+        "productionAdmission": false
+      }
+    },
+    {
+      "id": "missing_refill_target",
+      "description": "缺补水目标，日期保留且净缺口缺失",
+      "patches": [
+        {
+          "path": [
+            "rootZone",
+            "water",
+            "targetVwc"
+          ],
+          "value": null
+        }
+      ],
+      "result": {
+        "snapshotHash": "111b0fa24e15de07c1f4cbec31728e5c41d681f47f6a575a506858e2295acd74",
+        "historicalDemand": {
+          "min": 0.6249999999999998,
+          "max": 0.6249999999999998
+        },
+        "rootZoneReference": {
+          "productionAdmission": false,
+          "status": "candidate",
+          "reason": null,
+          "netDeficit": {
+            "status": "insufficient_evidence",
+            "productionAdmission": false,
+            "reason": "missing_moisture",
+            "netDeficitMl": null,
+            "appliedAmountMl": null
+          },
+          "remainingWaterMl": {
+            "min": 100.00000000000003,
+            "max": 100.00000000000003
+          },
+          "referenceMlPerDryUnit": {
+            "min": 100.00000000000004,
+            "max": 100.00000000000004
+          },
+          "remainingDryUnits": {
+            "min": 0.9999999999999999,
+            "max": 0.9999999999999999
+          }
+        },
+        "currentCycleWindow": {
+          "status": "observation_prediction",
+          "window": {
+            "earliestCheckAt": 1791552600000,
+            "latestCheckAt": 1791552600000,
+            "coverageEnd": 1791763200000
+          },
+          "observedAt": 1791417600000,
+          "ignoredObservationReason": null
+        },
+        "checkWindowUtc": {
+          "earliest": "2026-10-09T13:30:00.000Z",
+          "latest": "2026-10-09T13:30:00.000Z"
+        },
+        "decision": {
+          "soilGate": "unknown",
+          "windowState": "before",
+          "action": "check_later"
+        },
+        "waterDeficit": {
+          "status": "insufficient_evidence",
+          "productionAdmission": false,
+          "reason": "missing_moisture",
+          "netDeficitMl": null,
+          "appliedAmountMl": null
+        },
+        "productionAdmission": false
+      }
+    },
+    {
+      "id": "wet_soil",
+      "description": "湿土否决，正净缺口不能许可浇水",
+      "patches": [
+        {
+          "path": [
+            "environment",
+            "watering",
+            "soil",
+            "state"
+          ],
+          "value": "wet"
+        }
+      ],
+      "result": {
+        "snapshotHash": "cbb820769e369b19159b27d4715da62ebe9ea2d53456cf9fc7a534fddc5777d3",
+        "historicalDemand": {
+          "min": 0.6249999999999998,
+          "max": 0.6249999999999998
+        },
+        "rootZoneReference": {
+          "productionAdmission": false,
+          "status": "candidate",
+          "reason": null,
+          "netDeficit": {
+            "status": "available_candidate",
+            "productionAdmission": false,
+            "reason": null,
+            "netDeficitMl": {
+              "min": 199.99999999999994,
+              "max": 199.99999999999994
+            },
+            "appliedAmountMl": null
+          },
+          "remainingWaterMl": {
+            "min": 100.00000000000003,
+            "max": 100.00000000000003
+          },
+          "referenceMlPerDryUnit": {
+            "min": 100.00000000000004,
+            "max": 100.00000000000004
+          },
+          "remainingDryUnits": {
+            "min": 0.9999999999999999,
+            "max": 0.9999999999999999
+          }
+        },
+        "currentCycleWindow": {
+          "status": "observation_prediction",
+          "window": {
+            "earliestCheckAt": 1791552600000,
+            "latestCheckAt": 1791552600000,
+            "coverageEnd": 1791763200000
+          },
+          "observedAt": 1791417600000,
+          "ignoredObservationReason": null
+        },
+        "checkWindowUtc": {
+          "earliest": "2026-10-09T13:30:00.000Z",
+          "latest": "2026-10-09T13:30:00.000Z"
+        },
+        "decision": {
+          "soilGate": "pause_watering",
+          "windowState": "before",
+          "action": "pause_watering"
+        },
+        "waterDeficit": {
+          "status": "available_candidate",
+          "productionAdmission": false,
+          "reason": null,
+          "netDeficitMl": {
+            "min": 199.99999999999994,
+            "max": 199.99999999999994
+          },
+          "appliedAmountMl": null
+        },
+        "productionAdmission": false
+      }
+    }
+  ]
+}
