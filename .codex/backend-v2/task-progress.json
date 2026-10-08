@@ -1,5 +1,5 @@
 {
-  "revision": 165,
+  "revision": 166,
   "currentStep": "E03",
   "currentTicketId": "z8v0kmr970",
   "updatedAt": "2026-10-08T16:19:33.134287+00:00",
@@ -143,7 +143,7 @@
     {
       "id": "z8v0kmr970",
       "step": "E03",
-      "version": 3,
+      "version": 4,
       "priority": "normal",
       "status": "codex running",
       "stage": "登录接线与游客令牌实现中；未部署、未真机验收",
@@ -152,14 +152,14 @@
         ".codex/backend-v2/evidence/E03.json"
       ],
       "summary": [
-        "E03：微信/抖音登录验真＋HMAC v1 已接 identity 入口；登录请求改为多平台（6def22e4）",
-        "测试库已发布 identity_sessions 策略并读回（db6e94fd）",
-        "游客改为服务端自发令牌：合同冻结、迁移023、签发用例与MySQL存储已实现",
-        "小红书待配置AppSecret；游客HTTP入口与真机登录未完成",
-        "后端全量2477/2477；MySQL套件逐文件通过"
+        "E03：游客令牌解析 Bearer guest.<token> → GuestPrincipal（2020fffc）",
+        "游客签发入口 POST /identity/guest-sessions：网关IP/抖音匿名信号限流、429/503失败关闭（e935b919）",
+        "OpenAPI 补多平台登录与游客签发组件；后端全量2507/2507，身份MySQL套件通过",
+        "游客策略尚未发布：入口在发布前一律503；小红书待配置AppSecret",
+        "真机登录与网关XFF实测待前端/部署阶段"
       ],
-      "blockingReason": "小红书 AppID/AppSecret 未配置；游客 HTTP 入口待实现；真机登录待前端阶段",
-      "nextAction": "实现游客令牌解析与 /identity/guest-sessions 入口",
+      "blockingReason": "游客策略（有效期/限流/匿名信号开关）需新策略版本并写入测试库；小红书 AppID/AppSecret 未配置；真机登录待前端阶段",
+      "nextAction": "定义 identity-session-policy/v2（含游客字段）并经授权发布到测试库；游客 MySQL 端到端",
       "ticketReadback": "Chrome 已读回 codex running 与四行配置接续说明"
     },
     {
