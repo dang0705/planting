@@ -2,8 +2,8 @@
 
 - 机器事实源：`configuration-variable-catalog.json`
 - Schema：`configuration-variable-catalog/v1`
-- 目录版本：`2026-10-03.2`
-- 当前共 176 项业务/治理变量、13 个 Provider 配置档案：已冻结 74 项、待冻结 58 项、不可配置硬规则 44 项。
+- 目录版本：`2026-10-04.1`
+- 当前共 191 项业务/治理变量、13 个 Provider 配置档案：已冻结 76 项、待冻结 57 项、不可配置硬规则 58 项。
 
 本文件由同目录生成脚本从 JSON 生成，便于中文阅读。实施 Agent 必须先按领域读取本文件，再只深读该变量引用的合同或决策；不得把 `P1_PENDING` 猜成默认值。待冻结项必须带原因与阻断范围，未冻结前只能推进不依赖该值的工作。
 
@@ -108,7 +108,7 @@
 | `user-plant.free.active_limit` | 免费用户活跃植物上限 | `userplant_limits` | 领域策略 / 已冻结 | `1` 株 | subscription | user-plant、subscription | 新策略限制未来创建及归档后重新激活，不删除或自动归档既有活跃植物；失败：策略不可用时拒绝新增及重新激活植物 | P1 / [P1] 用户植物、身份和游客认领合同 |
 | `user-plant.profile.minimum_completeness` | 有效档案最低完整度 | `userplant_limits` | 领域策略 / 已冻结 | `{"profileVersion":"user-plant-profile/v1","requiredFields":["identityStatus","pot","location","lightingEnvironment","ventilationEnvironment"],"acceptedIdentityStates":["unidentified","candidate_pending","confirmed"],"rewardOncePerUser":true}` | user-plant | user-plant、subscription | 用户植物档案策略版本；失败：未冻结前不发首株有效档案积分 | P1 / [P1] 用户植物、身份和游客认领合同 |
 | `user-plant.assets.max_count_per_plant` | 单株植物资产数量上限 | `userplant_limits` | 领域策略 / 待冻结 | P1_PENDING 个 | user-plant | user-plant、storage | 资产策略版本；失败：未冻结前只允许最小封面资产集合；待冻结原因：容量与成本尚未测量；阻断：多资产上传 | P2 / [P1] 用户植物、身份和游客认领合同 |
-| `user-plant.authenticated_ephemeral.case_ttl_hours` | 已登录用户临时植物案例有效期 | `userplant_limits` | 领域策略 / 待冻结 | P1_PENDING 小时 | user-plant | user-plant、care、diagnosis | 发布不可变临时案例策略版本；新值只影响新建案例，已签发案例保留原失效时间；失败：无已冻结策略时拒绝新建已登录临时植物案例，不影响游客临时路径和长期用户植物；待冻结原因：业务尚未裁决已登录临时案例的独立保留时长及成本、清理和回滚边界；阻断：已登录临时植物案例创建、失效时间签发及其后的保存绑定运行路径 | P3 / [P1] 用户植物、身份和游客认领合同 |
+| `user-plant.authenticated_ephemeral.case_ttl_hours` | 已登录用户临时植物案例有效期 | `userplant_limits` | 领域策略 / 已冻结 | `168` 小时 | user-plant | user-plant、care、diagnosis | 发布不可变临时案例策略版本；新值只影响新建案例，已签发案例保留原失效时间；失败：无已冻结策略时拒绝新建已登录临时植物案例，不影响游客临时路径和长期用户植物 | P3 / [P1] 用户植物、身份和游客认领合同 |
 | `user-plant.lifecycle.owner_guard` | 用户植物归属校验不可绕过 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `true` | user-plant | 全部用户植物相关域 | 不可配置；失败：归属无法证明返回 404 | P1 / [P1] 用户植物、身份和游客认领合同 |
 | `user-plant.guest_claim.once` | 游客案例只能认领一次 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `true` | user-plant | user-plant、care、diagnosis | 不可配置；失败：重复认领返回首次确定结果或冲突 | P1 / [P1] 用户植物、身份和游客认领合同 |
 | `user-plant.identity.current_states` | 用户植物当前身份状态集合 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `["unidentified","candidate_pending","confirmed"]` | user-plant | user-plant、plant-knowledge | 不可配置；如需改变必须回到业务架构和合同重审；失败：违反时拒绝请求、发布或状态转换 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
@@ -148,6 +148,9 @@
 | `plant-knowledge.enrichment.user_candidate_count_window_hours` | 同用户同候选需求计数窗口 | `cms_worker_content` | 领域策略 / 已冻结 | `24` 小时 | plant-knowledge | 百科补全需求聚合 | 发布新的不可变领域策略版本，只向前生效；失败：策略不可用时停止对应能力，不使用隐式默认值 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
 | `plant-knowledge.enrichment.backlog_alert_count` | CMS 补全积压告警阈值 | `cms_worker_content` | 领域策略 / 待冻结 | P1_PENDING 条 | plant-knowledge | 百科补全 Worker、observability | 取得真实证据后发布不可变领域策略版本；失败：未冻结前停止对应范围，不从旧实现猜值；待冻结原因：容量基线尚未测量；阻断：自动 CMS 补全 | P3 / [P3] 游客、试用、会员和奖励闭环 |
 | `plant-knowledge.enrichment.budget_resume_cny` | CMS 补全预算恢复门 | `cms_worker_content` | 领域策略 / 待冻结 | P1_PENDING 人民币元/月 | plant-knowledge | 百科补全 Worker | 取得真实证据后发布不可变领域策略版本；失败：未冻结前停止对应范围，不从旧实现猜值；待冻结原因：当前预算固定为 0，恢复值未获批准；阻断：真实 CMS 模型生成 | P3 / [P3] 游客、试用、会员和奖励闭环 |
+| `plant-knowledge.catalog.default_limit` | 目录搜索默认返回条数 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `10` 条 | plant-knowledge | plant-knowledge | 冻结接口规则；变更须同步合同、Expected 和兼容性，不作为运营开关；失败：不存在隐式运营降级 | P2 / [E01] 植物目录搜索 SQL 与 HTTP 纵向切片 |
+| `plant-knowledge.catalog.minimum_limit` | 目录搜索最小返回条数 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `1` 条 | plant-knowledge | plant-knowledge | 冻结接口规则；变更须同步合同、Expected 和兼容性，不作为运营开关；失败：非法 limit 返回 400 VALIDATION_FAILED | P2 / [E01] 植物目录搜索 SQL 与 HTTP 纵向切片 |
+| `plant-knowledge.encyclopedia.reference_max_code_points` | 百科路径与目录引用最长码点数 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `512` Unicode 码点 | plant-knowledge | plant-knowledge | 受来源列宽与冻结接口约束；只能通过合同与兼容性变更调整；失败：参数缺失或越界返回 400 VALIDATION_FAILED | P2 / [P2] CMS 分类、百科和发布 |
 
 ## 养护、天气与算法
 
@@ -165,7 +168,6 @@
 | `care.watering.algorithm_version` | 浇水算法版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care | 算法 release 不可变，输出合同独立版本化；失败：无已发布算法返回 temporarily_unavailable；待冻结原因：决策结构已冻结；EnvironmentDemand/CultivationRetention/PersonalCalibration 的敏感度和上下界仍待影子数据校准及真实链路验收；阻断：v2 浇水正式运行 | P2 / [P4] 盆土视觉和四类养护能力 |
 | `care.fertilizing.algorithm_version` | 施肥算法版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care | 算法 release 不可变；失败：无算法返回 temporarily_unavailable；待冻结原因：v2 算法尚未冻结；阻断：v2 施肥实现 | P2 / [P4] 盆土视觉和四类养护能力 |
 | `care.lighting.algorithm_version` | 光照算法版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care | 算法 release 不可变；失败：证据不足返回 insufficient_evidence；待冻结原因：算法release尚未发布；MVP允许单双层近似且保留专业参数，不以型号光谱或现场精细校准作为统一前置；必要换算、适用范围及运行验证仍待完成；阻断：v2 光照正式评估与 DLI 生产派生 | P2 / [P4] 盆土视觉和四类养护能力 |
-| `care.lighting.mvp_glass_selection` | MVP玻璃层数与版本策略准入 | `hard_business_rule` | 不可配置硬规则 | single / double / null；无隐式默认；保留专业参数 | care | care MVP策略解析与回放 | 分类与准入规则不可配置，具体值由不可变策略发布；失败：无active明确不可用，未知层数保留null | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.ventilation.algorithm_version` | 通风算法版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care | 算法 release 不可变；失败：证据不足返回 insufficient_evidence；待冻结原因：v2 算法尚未冻结；阻断：v2 通风实现 | P2 / [P4] 盆土视觉和四类养护能力 |
 | `care.output.contract_version` | 四类养护统一输出合同版本 | `care_algorithms` | 领域策略 / 已冻结 | care-capability-result/v1 | care | care、未来前端、CloudBase Agent | 破坏性变化必须升版本并保留兼容读取；失败：未知版本不对外返回 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
 | `care.recommendation.write_fact_directly` | 建议是否可直接写入事实 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `false` | care | care、diagnosis、CloudBase Agent | 不可配置；失败：只返回建议，等待用户确认 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
@@ -181,6 +183,13 @@
 | `care.growth_activity.algorithm_release` | 生长活跃状态估计算法发布版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care | 不可变 algorithm/prompt/schema release；证据 ID 与状态枚举固定；失败：低置信度、冲突或 release 不可用时返回 UNKNOWN 并回退安全 baseline；待冻结原因：状态合同已冻结，但知识 release、Prompt/Schema 与真实样本回归尚未完成；阻断：条件性/季节性 watering baseline 选择 | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.watering.personal_calibration_policy_release` | 浇水个体干湿循环校准策略版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care | 不可变校准策略；只基于有效干湿周期残差，换盆/换基质/明显换位置后失效或降权；失败：缺少足够高质量周期时 PersonalCalibration=合同允许的中性值，不伪造个体学习；待冻结原因：最小有效周期数、稳健统计窗口与上下界需影子数据校准；阻断：个体历史校准；不阻断无个体校准的基础 DryProgress | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.light.window_plane_algorithm_release` | 窗面入射辐照算法发布版本 | `care_algorithms` | 领域策略 / 待冻结 | P1_PENDING | care | care | 不可变 algorithm release；Direct/Diffuse 分量独立保留；失败：算法不可用时不以朝向经验表替代，返回 insufficient_evidence；待冻结原因：数学结构已冻结，具体实现与回归集尚未形成 release；阻断：Window Plane Irradiance 与 DLI 正式运行 | P4 / [P4] 盆土视觉和四类养护能力 |
+| `care.lighting.interval_unit_definitions` | PPFD 区间积分单位定义 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `{"millisecondsPerSecond":1000,"micromolesPerMole":1000000}` | care | care 离线区间积分 | 单位定义不可配置；仅变更输入单位合同时重审；失败：缺段只报告已知积分，不猜测全天值 | P4 / [P4] 盆土视觉和四类养护能力 |
+| `care.lighting.window_direct_geometry` | 窗面直射坐标与投影硬规则 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `{"azimuthOrigin":"true_north_clockwise","angleUnit":"degree","tiltOrigin":"upward_horizontal","backFaceProjection":"zero","horizonProjection":"zero","apertureMethod":"vertical_plane_rectangle_union","distanceUnit":"metre_perpendicular","edgeResult":"boundary","meanProjectionMethod":"nonnegative_whole_interval_bounds","experimentalSolarPosition":"noaa_general_solar_position","solarTimeStandard":"UTC","experimentalIntervalMethod":"harmonic_global_rate_bound_UTC_year_segments"}` | care | care 离线窗面直射计算、care 离线直射可达性、care 同轮窗面投影与植物点瞬时可达性组合、care 完整时段植物点几何直射回放 | 物理与坐标定义不可运营配置；输入语义变化须冻结新合同；失败：DNI 缺失保持 null；时间或坐标错误拒绝 | P4 / [P4] 盆土视觉和四类养护能力 |
+| `care.lighting.open_meteo_interval_semantics` | Open-Meteo 辐射区间与时间硬规则 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `{"timeformat":"unixtime_utc_seconds","radiationUnit":"W/m²","hourlyDurationMs":3600000,"minutely15DurationMs":900000,"label":"interval_end","semantics":"preceding_interval_mean"}` | care | care 离线公开辐射制品回放 | 外部语义与单位不能运营配置；Provider 合同变化先更新测试与适配版本；失败：缺值保留 null；单位与时间错误拒绝；不扩大请求或选择其他来源 | P4 / [P4] 盆土视觉和四类养护能力 |
+| `care.cultivation.pot_safety` | 实际内盆、几何与排水证据准入 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | 内盆和几何均确认后才能判断排水；未知不赋默认；安全不等于浇水许可 三值证据及安全状态 | care | care 离线盆器回放 | 硬规则不可被配置覆盖；变更须更新合同、独立Expected与模型版本；失败：证据不足返回 insufficient_evidence；非法类型拒绝 | P4 / [P4] 盆土视觉和四类养护能力 |
+| `care.lighting.mvp_glass_selection` | MVP玻璃层数与版本策略准入 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `{"contractVersion":"mvp-glass-policy/v1","scopeCode":"care_mvp_glass","inputs":["single","double",null],"implicitDefault":false,"professionalParametersRetained":true,"domainCode":"care","policyCode":"mvp_glass","contentDigest":"canonical_sorted_json_sha256"}` | care | care MVP玻璃策略解析与回放、care MySQL活动玻璃策略读取器 | 分类与准入规则不可配置；具体透射值由独立不可变策略发布，不在源码填默认；失败：没有有效active策略明确不可用；层数未确认保留null | P4 / [P4] 盆土视觉和四类养护能力 |
+| `care.watering.root_zone_water_deficit` | 根区净补水缺口的量纲与证据边界 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | 有效基质体积×目标/当前体积含水率差；净缺口不等于施水量；缺证据不填默认 | care | care内部水量回放 | 数学和单位规则不能由配置覆盖；模型映射/目标含水率/效率/施水上限独立裁决发布；失败：缺少有效基质或可靠根区量时返回insufficient_evidence；非法类型拒绝 | P4 / [P4] 盆土视觉和四类养护能力 |
+| `care.watering.local_calendar_dates` | 浇水检查窗口的当地日历表达 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | 按明确植物时区投影UTC窗口；缺端点不补日期；不创建提醒或改写浇水事实 | care | care内部日期回放 | 公历和时间语义不可配置；提前检查比例、通知时刻与正式发布独立裁决；失败：缺时区或窗口返回缺证据，非法时区或不可表达日期拒绝 | P4 / [P4] 盆土视觉和四类养护能力 |
 
 ## 问诊与视觉 AI
 
@@ -189,8 +198,6 @@
 | `diagnosis.model.family` | AI 问诊产品模型家族 | `diagnosis_releases` | 领域策略 / 已冻结 | qwen3.5-flash | diagnosis | diagnosis、Bailian Adapter | 模型与 Prompt、Schema 组成不可变 release；失败：模型不可用时不静默换模 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
 | `diagnosis.prompt.release_sha256` | AI 问诊提示词发布哈希 | `diagnosis_releases` | 领域策略 / 已冻结 | 11c58cebe3b3c41097d6f6d6b3c5b5d7eb16248e4f07bacd497868a647ccc964 | diagnosis | diagnosis、Bailian Adapter | 不可变 Prompt release；失败：哈希缺失或不匹配时阻断 AI 问诊 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
 | `diagnosis.result.schema_version` | AI 问诊结构化结果版本 | `diagnosis_releases` | 领域策略 / 已冻结 | diagnosis-model-output/v1 | diagnosis | diagnosis、Bailian Adapter | 不可变 JSON Schema release；失败：校验失败整份拒绝 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
-| `diagnosis.result.record_schema_version` | 完整诊断结果回放记录结构版本 | `diagnosis_releases` | 不可配置硬规则 | `diagnosis-result-record/v1` | diagnosis | 结果锁定、Repository | 合同演进用新迁移，禁止覆盖旧记录；结构或摘要不一致拒绝 | P4 / E05 `z8v0kmr974` |
-| `diagnosis.result.replay_contract_versions` | 诊断结果输入与轨迹结构版本 | `diagnosis_releases` | 不可配置硬规则 | `diagnosis-replay-input/v1`、`diagnosis-decision-trace/v1` | diagnosis | 结果锁定、回放Repository | 合同演进不得覆盖历史；缺版本或安全门不一致拒绝 | P4 / E05 `z8v0kmr974` |
 | `diagnosis.visual.max_images` | 单次视觉问诊最大图片数 | `diagnosis_releases` | 领域策略 / 待冻结 | P1_PENDING 张 | diagnosis | diagnosis、storage、AI 成本策略 | 产品动作成本策略版本；失败：未冻结前不开放多图视觉问诊；待冻结原因：动作上限和真实成本未冻结；阻断：视觉问诊 | P4 / [P4] 固定/动态问诊与小青工具 |
 | `diagnosis.fixed_packages.release_refs` | 黄叶与萎蔫固定题包发布引用 | `diagnosis_releases` | 领域策略 / 待冻结 | P1_PENDING | diagnosis | diagnosis | 题包不可变 release + active 指针；失败：无已发布题包则该症状入口不可用；待冻结原因：V1复用内容与发布数据库保护已验证；正式发布审核、激活及创建运行入口尚未验收；阻断：固定问诊正式运行入口 | P4 / [P4] 固定/动态问诊与小青工具 |
 | `diagnosis.knowledge.bundle_release_ref` | 诊断原因、结论、行动和映射的兼容知识发布包 | `diagnosis_releases` | 领域策略 / 待冻结 | P1_PENDING | diagnosis | diagnosis、CloudBase CMS 发布校验 | 原因目录、Outcome、Action 和映射作为兼容不可变 release 发布，请求锁定单一快照及 SHA-256；失败：无已审核的兼容发布包时不开放相应诊断结果，不以模型自由生成内容兜底；待冻结原因：P1 诊断知识来源增量合同、旧资产审计与首版内容审核尚未冻结；阻断：黄叶、萎蔫和虫害诊断知识发布与结果验收 | P4 / [P4] 固定/动态问诊与小青工具 |
@@ -201,6 +208,11 @@
 | `diagnosis.visual.retake_limit` | 视觉问诊补拍上限 | `diagnosis_releases` | 领域策略 / 待冻结 | P1_PENDING 次 | diagnosis | diagnosis、storage | 取得真实证据后发布不可变领域策略版本；失败：未冻结前停止对应范围，不从旧实现猜值；待冻结原因：视觉证据合同尚未冻结；阻断：视觉问诊 | P4 / [P4] 固定/动态问诊与小青工具 |
 | `diagnosis.result.terminal_states` | 问诊终态集合 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `["conclusive","uncertain","user_declined","invalid_input","temporarily_unavailable"]` | diagnosis | diagnosis | 不可配置；如需改变必须回到业务架构和合同重审；失败：违反时拒绝请求、发布或状态转换 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
 | `diagnosis.session.resume_ttl_hours` | 问诊中断恢复有效期 | `diagnosis_releases` | 领域策略 / 待冻结 | P1_PENDING 小时 | diagnosis | diagnosis | 取得真实证据后发布不可变领域策略版本；失败：未冻结前停止对应范围，不从旧实现猜值；待冻结原因：恢复期限尚未冻结；阻断：问诊中断恢复 | P4 / [P4] 固定/动态问诊与小青工具 |
+| `diagnosis.dynamic_pest.tier_question_limits` | 虫害候选档位的提问数量上限 | `diagnosis_releases` | 领域策略 / 已冻结 | `{"low":3,"medium":2,"high":1,"very_likely":1,"direct":0}` 题 | diagnosis | diagnosis动态选题与快照创建 | 审核后不可变策略release，锁定本次兼容版本组；失败：缺策略不生成用户题包；不得沿用V1无档位默认2题 | P4 / [P4] 固定/动态问诊与小青工具 |
+| `diagnosis.result.record_schema_version` | 完整诊断结果回放记录结构版本 | `diagnosis_releases` | 不可配置硬规则 / 不可配置硬规则 | diagnosis-result-record/v1 | diagnosis | 诊断结果记录锁定及Repository | 不可配置；结构演进通过新合同及顺序迁移，不覆盖历史记录；失败：结构或摘要不匹配时拒绝，不补当前发布 | P4 / [E05][P4] 固定/动态问诊与小青工具 |
+| `diagnosis.result.replay_contract_versions` | 诊断结果内部输入与轨迹结构版本 | `diagnosis_releases` | 不可配置硬规则 / 不可配置硬规则 | `{"input":"diagnosis-replay-input/v1","trace":"diagnosis-decision-trace/v1"}` | diagnosis | 诊断结果锁定和回放Repository | 结构演进通过新合同，禁止开关或默认值覆盖历史版本；失败：缺版本、引用或安全门不一致拒绝 | P4 / [E05][P4] 固定/动态问诊与小青工具 |
+| `diagnosis.knowledge.publication_contract` | 兼容知识发布包与原子切换硬规则 | `diagnosis_releases` | 不可配置硬规则 / 不可配置硬规则 | diagnosis-knowledge-release/v1 | diagnosis | 诊断知识发布用例与Repository、精确审核撤销用例与Repository | 结构演进使用新合同；同键重放、原样审核、撤销检查与指针并发不可配置；失败：前置不可用停止发布；并发冲突回滚；未知提交只读对账 | P4 / [E05][P4] 固定/动态问诊与小青工具 |
+| `diagnosis.result.public_read` | 诊断结果只读投影与失效拒绝 | `diagnosis_releases` | 不可配置硬规则 / 不可配置硬规则 | diagnosis-result/v1 | diagnosis | 诊断结果GET与归属查询 | 公开结果结构与归属规则通过合同演进，不允许配置绕过；不更换历史知识引用；失败：缺结果404；旧行/损坏/原知识不可用503；未接临时分支503 | P4 / [E05][P4] 固定/动态问诊与小青工具 |
 
 ## 云存储与数据生命周期
 
@@ -297,7 +309,7 @@
 | `cloudbase_agent` CloudBase 小青 Agent | AGENT_TOOL_CALL | pending | cloudbase_agent_tool_api / P1_PENDING | connect=P1_PENDING, read=P1_PENDING, total=P1_PENDING, attempts=P1_PENDING, backoff=P1_PENDING | rate=P1_PENDING, circuit=P1_PENDING | policy=P1_PENDING, month=500, warn=400 | 用户范围、工具 allowlist、额度或签名无法证明时只开放公共知识；阻断：小青个人数据与写工具 |
 | `cloudbase_mysql` CloudBase MySQL | TRANSACTIONAL_REPOSITORY | pending | cloudbase_mysql_private / P1_PENDING | connect=P1_PENDING, read=P1_PENDING, total=P1_PENDING, attempts=1, backoff=no_automatic_transaction_retry | rate=connection_budget, circuit=P1_PENDING | policy=cloudbase_resource_budget_PENDING, month=P1_PENDING, warn=P1_PENDING | 连接或事务结果不确定时失败关闭并对账，禁止跨库降级；阻断：真实并发写入 |
 | `cloudbase_auth` CloudBase 身份认证 | ANONYMOUS_PRINCIPAL | pending | cloudbase_auth_v2 / P1_PENDING | connect=P1_PENDING, read=P1_PENDING, total=P1_PENDING, attempts=P1_PENDING, backoff=P1_PENDING | rate=P1_PENDING, circuit=P1_PENDING | policy=cloudbase_resource_budget_PENDING, month=P1_PENDING, warn=P1_PENDING | 匿名认证不可用时拒绝签发游客主体；不得以设备、IP、Cookie 或匿名 UID 伪造 user_id；阻断：游客匿名主体真实接入 |
-| `wechat_miniprogram_login` 微信小程序登录凭证交换 | PLATFORM_LOGIN_PRINCIPAL | pending | wechat_jscode2session / P1_PENDING | connect=P1_PENDING, read=P1_PENDING, total=P1_PENDING, attempts=P1_PENDING, backoff=P1_PENDING | rate=P1_PENDING, circuit=P1_PENDING | policy=platform_login_budget_PENDING, month=P1_PENDING, warn=P1_PENDING | 凭证或受控配置不可用时拒绝登录，不信任客户端自报的 OpenID 或 HTTP 请求头；阻断：真实微信小程序登录验真；本地 fake Provider 合同与 MySQL 切片不受阻 |
+| `wechat_miniprogram_login` 微信小程序登录凭证交换 | PLATFORM_LOGIN_PRINCIPAL | confirmed | wechat_jscode2session / env:WECHAT_MINIPROGRAM_PRIVATE_KEY | connect=2000, read=3000, total=5000, attempts=1, backoff=none_single_use_code | rate=platform_quota_only, circuit=none_fail_closed | policy=free_platform_api, month=0, warn=0 | 凭证或受控配置不可用时拒绝登录，不信任客户端自报的 OpenID 或 HTTP 请求头；阻断：真实微信小程序登录验真；本地 fake Provider 合同与 MySQL 切片不受阻 |
 
 ## 验收方式
 
@@ -307,49 +319,3 @@
 - 首批 Provider 必须逐个具备端点档案、凭证引用、连接/读取/总超时、重试与退避、限流、熔断、成本/预算、回退链、输出合同、审计保留和阻断范围；待冻结字段不得进入真实 Adapter。
 - 任何代码新增可调常量时，先判断其是否属于本目录；属于则先修改策略合同和测试，不允许先埋常量。
 
-
-### 目录搜索冻结参数（E01）
-
-沿用公开搜索的 64 码点与最多 20 条硬规则；目录合同另规定`plant-knowledge.catalog.default_limit` 默认 10 条、`plant-knowledge.catalog.minimum_limit` 最少 1 条。均不可运营配置。来源：`plant-catalog-search/v1`；负责域：plant-knowledge；票据：`z8v0kmtktd`。缺词、越界及非整数返回 400，不采用猜测默认值；仅缺省 limit 使用合同的 10 条。变更必须同步合同与独立 Expected。
-
-### 百科读取冻结参数（E02）
-
-`plant-knowledge.encyclopedia.reference_max_code_points` 为 512 个 Unicode 码点，约束非空路径 slug 与目录引用，来自已核验的来源列宽和 `plant-encyclopedia-read/v1`。属不可配置硬规则，owner 为 plant-knowledge，绑定原票 `z8v0kmr971`。越界返回 400；不设运营降级。图片许可缺证据时不展示，不能通过配置绕过。
-
-### 离线光照区间积分
-
-`care.lighting.interval_unit_definitions` 为不可配置单位定义：每秒 1,000 毫秒，每摩尔 1,000,000 微摩尔。只用于 E04 已给定 PPFD 的离线积分，不解除光照算法 release 的 pending 状态。依据见 `cloudfunctions-v2/models/care/light-interval-contract.md`，票据 `z8v0kmr973`。
-
-### 窗面直射几何硬规则
-
-`care.lighting.window_direct_geometry`：瞬时 DNI 与同刻太阳位置投影至无遮挡窗面外侧。真北顺时针方位、水平朝上倾角原点和背面／地平线截断为不可配置硬规则；不设置默认朝向、玻璃或距离倍率。来源为离线窗面直射内部合同，票据 `z8v0kmr973`。 区间平均辐射只与同一完整时段的投影上下界结合，不能以瞬时或均值乘均值冒充精确结果；来源补充 `cloudfunctions-v2/models/care/window-mean-direct-contract.md`。 NOAA通用太阳公式使用UTC和实际年长，仅供离线近似；精度与正式发布未验收，依据 `cloudfunctions-v2/models/care/solar-direction-contract.md`。 完整时段按谐波全局角速度界限与UTC年分段计算，限定模型误差范围；依据 `cloudfunctions-v2/models/care/solar-interval-bound-contract.md`。
-
-### 辐射区间归一化硬规则
-
-`care.lighting.open_meteo_interval_semantics`：官方小时／15分钟均值属于标签之前的时段；Unix秒为UTC，不再次加地点偏移。瓦每平方米与来源语义不可配置，缓存、超时和重试尚不在本离线增量中启用。来源：辐射区间归一化内部合同；原票 `z8v0kmr973`。
-
-### `care.cultivation.pot_safety`｜实际内盆、几何与排水证据准入
-
-不可配置硬规则；P4 care，票据 z8v0kmr973。三值证据不填默认；内盆和几何均确认后才能判断排水；安全不等于浇水许可。依据与 Expected：`cloudfunctions-v2/models/care/pot-safety-contract.md`，27 种组合及非法类型、不可变输入验证。无参数或倍率发布。
-
-## MVP玻璃层数与策略准入
-
-`care.lighting.mvp_glass_selection` 为硬规则：用户只确认单层／双层，未知保留null，不要求专业参数。按有效active策略选值，核验摘要与时间，禁止源码默认；专业接口完整保留。具体0.83／0.70尚为离线候选，此条不签发生产参数。类型化策略合同见 `cloudfunctions-v2/models/care/mvp-glass-policy-contract.md`，原票 `z8v0kmr973`。
-
-### 虫害候选档位的提问数量上限
-
-`diagnosis.dynamic_pest.tier_question_limits`（E05，原票 `z8v0kmr974`）已由用户明确确认低3、中2、高1、较可信1、直判0；没有已确认策略时不得生成用户题包，不承接原V1无档位默认2题。置信度阈值、轮次及补拍仍须独立确认。来源与回退见机器目录及 `cloudfunctions-v2/models/diagnosis/dynamic-pest-selection-contract.md`。无数值的确定性素材筛选可独立验证。
-
-`diagnosis.knowledge.publication_contract`：兼容知识发布包结构固定为 `diagnosis-knowledge-release/v1`，不可配置。原样候选、精确审核与独立撤销、题包/来源依赖复核、单事务发布/指针/审计、同键重放及未知提交只读对账遵循 `cloudfunctions-v2/models/diagnosis/knowledge-publication-contract.md`；owner：diagnosis；P4／z8v0kmr974。正式知识发布引用仍 pending；结构和本地事务机制通过不代表 CMS 或园艺知识准入。
-
-`diagnosis.result.public_read`：结果只读投影固定为 `diagnosis-result/v1`，不可配置；沿用公共会话路径8至100字符，原知识摘要不一致/撤回、旧行与损坏503，不存在404。owner：diagnosis；P4／z8v0kmr974；合同：`cloudfunctions-v2/models/diagnosis/result-http-contract.md`。不重算或替换历史结果，临时分支未接入不授予资格。
-
-诊断知识发布硬规则同时约束精确审核撤销：独立追加事实、原样命令摘要、同目标唯一撤销、与发布共享审核锁及提交未知只读对账；不修改批准、发布或历史结果。内部合同见 `cloudfunctions-v2/models/diagnosis/review-revocation-contract.md`，正式CMS管理员及协议仍须独立准入。
-
-### `care.watering.root_zone_water_deficit`｜根区净补水缺口
-
-不可配置硬规则；P4／z8v0kmr973。有效基质体积与可靠根区体积含水率的独立区间算术形成净缺口，不等同施水量；缺证据不填默认。来源、Expected与边界见 `cloudfunctions-v2/models/care/root-zone-water-deficit-contract.md`。后台映射、供水效率及施水上限未确认，不由本条授予生产资格。
-
-## 浇水检查日期表达硬规则
-
-`care.watering.local_calendar_dates`：按明确植物所在地时区将UTC检查窗口投影为公历日期；缺时区/窗口保持缺证据，缺一端不以预报终点填充，不改变湿土否决，不写提醒或事实。来源：`cloudfunctions-v2/models/care/watering-calendar-contract.md`。提前检查比例及通知时刻独立裁决，不在此设置默认。

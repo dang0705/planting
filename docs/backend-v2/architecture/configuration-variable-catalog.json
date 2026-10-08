@@ -943,8 +943,8 @@
       "layer": "domain_policy",
       "valueType": "integer",
       "unit": "小时",
-      "status": "pending",
-      "currentValue": "P1_PENDING",
+      "status": "confirmed",
+      "currentValue": 168,
       "owner": "user-plant",
       "sourceRefs": [
         "docs/backend-v2/contracts/authenticated-ephemeral-plant-case.md",
@@ -960,9 +960,9 @@
       "phase": "P3",
       "ticketTitle": "[P1] 用户植物、身份和游客认领合同",
       "expected": "创建已登录临时案例前必须取得已冻结有效期策略；不得隐式继承游客会话的 24 小时；已创建案例的失效时间不随策略变更而漂移",
-      "pendingReason": "业务尚未裁决已登录临时案例的独立保留时长及成本、清理和回滚边界",
-      "blockingScope": "已登录临时植物案例创建、失效时间签发及其后的保存绑定运行路径",
-      "decisionGroup": "userplant_limits"
+      "decisionGroup": "userplant_limits",
+      "allowed": "168",
+      "decisionNote": "用户 2026-10-08 裁决：已登录临时案例保留 7 天（168 小时），与游客 24 小时会话独立。"
     },
     {
       "id": "user-plant.lifecycle.owner_guard",
@@ -5552,34 +5552,35 @@
       "capabilityCodes": [
         "PLATFORM_LOGIN_PRINCIPAL"
       ],
-      "status": "pending",
+      "status": "confirmed",
       "endpointProfile": "wechat_jscode2session",
-      "credentialRef": "P1_PENDING",
-      "connectTimeoutMs": "P1_PENDING",
-      "readTimeoutMs": "P1_PENDING",
-      "totalDeadlineMs": "P1_PENDING",
-      "maxAttempts": "P1_PENDING",
-      "backoffPolicy": "P1_PENDING",
-      "rateLimitPolicy": "P1_PENDING",
-      "circuitBreakerPolicy": "P1_PENDING",
-      "costPolicy": "platform_login_budget_PENDING",
-      "monthlyBudgetCny": "P1_PENDING",
-      "warningThresholdCny": "P1_PENDING",
+      "credentialRef": "env:WECHAT_MINIPROGRAM_PRIVATE_KEY",
+      "connectTimeoutMs": 2000,
+      "readTimeoutMs": 3000,
+      "totalDeadlineMs": 5000,
+      "maxAttempts": 1,
+      "backoffPolicy": "none_single_use_code",
+      "rateLimitPolicy": "platform_quota_only",
+      "circuitBreakerPolicy": "none_fail_closed",
+      "costPolicy": "free_platform_api",
+      "monthlyBudgetCny": 0,
+      "warningThresholdCny": 0,
       "fallbackChain": [],
       "outputContractVersion": "verified-platform-identity-evidence/v1",
-      "auditRetentionDays": "P1_PENDING",
-      "releaseVersion": "P1_PENDING",
-      "releaseSha256": "P1_PENDING",
-      "effectiveAt": "P1_PENDING",
-      "expiresAt": "P1_PENDING",
-      "releaseStatus": "P1_PENDING",
+      "auditRetentionDays": 180,
+      "releaseVersion": "wechat-miniprogram-login-runtime/v1",
+      "releaseSha256": "699dd403332955868b3181f6630998434afce27f887709722b63a08e8358f114",
+      "effectiveAt": "2026-10-08T00:00:00+08:00",
+      "expiresAt": null,
+      "releaseStatus": "active",
       "fallback": "凭证或受控配置不可用时拒绝登录，不信任客户端自报的 OpenID 或 HTTP 请求头",
       "blockingScope": "真实微信小程序登录验真；本地 fake Provider 合同与 MySQL 切片不受阻",
       "sourceRefs": [
         "docs/backend-v2/contracts/identity-session-issuance.md",
         "docs/backend-v2/contracts/principal-and-capability.md"
       ],
-      "decisionGroup": "provider_runtime"
+      "decisionGroup": "provider_runtime",
+      "decisionNote": "用户 2026-10-08 批准：wx.login code 一次性消费，故只调用 1 次不重试，失败由小程序重新取 code；接口免费；审计不存 OpenID 明文。credentialRef 只引用环境变量名，不含凭证值。"
     }
   ],
   "ticketBindings": {
