@@ -1,5 +1,5 @@
 {
-  "revision": 166,
+  "revision": 167,
   "currentStep": "E03",
   "currentTicketId": "z8v0kmr970",
   "updatedAt": "2026-10-08T16:19:33.134287+00:00",
@@ -143,23 +143,24 @@
     {
       "id": "z8v0kmr970",
       "step": "E03",
-      "version": 4,
+      "version": 5,
       "priority": "normal",
       "status": "codex running",
       "stage": "登录接线与游客令牌实现中；未部署、未真机验收",
       "accepted": false,
       "evidence": [
+        ".codex/backend-v2/evidence/E03-identity-session-policy-v2-published.json",
         ".codex/backend-v2/evidence/E03.json"
       ],
       "summary": [
-        "E03：游客令牌解析 Bearer guest.<token> → GuestPrincipal（2020fffc）",
-        "游客签发入口 POST /identity/guest-sessions：网关IP/抖音匿名信号限流、429/503失败关闭（e935b919）",
-        "OpenAPI 补多平台登录与游客签发组件；后端全量2507/2507，身份MySQL套件通过",
-        "游客策略尚未发布：入口在发布前一律503；小红书待配置AppSecret",
-        "真机登录与网关XFF实测待前端/部署阶段"
+        "E03：游客令牌解析与签发入口已实现（2020fffc、e935b919）",
+        "身份策略 v2 含游客字段（168h/10次每小时/抖音匿名信号），v1 摘要不变（0c6b596d）",
+        "测试库已发布 v2 并读回解析（evidence/E03-identity-session-policy-v2-published.json）",
+        "游客签发+解析 MySQL 端到端 3/3；后端全量 2519/2519",
+        "未部署；网关XFF、抖音匿名换取、真机流程待部署/前端阶段；小红书待配置"
       ],
-      "blockingReason": "游客策略（有效期/限流/匿名信号开关）需新策略版本并写入测试库；小红书 AppID/AppSecret 未配置；真机登录待前端阶段",
-      "nextAction": "定义 identity-session-policy/v2（含游客字段）并经授权发布到测试库；游客 MySQL 端到端",
+      "blockingReason": "小红书 AppID/AppSecret 未配置；identity 未部署（XFF 与真机待验）",
+      "nextAction": "游客令牌接入 guest_or_authenticated 请求链（care/diagnosis 入口）；随后 E06 浇水建议 HTTP",
       "ticketReadback": "Chrome 已读回 codex running 与四行配置接续说明"
     },
     {

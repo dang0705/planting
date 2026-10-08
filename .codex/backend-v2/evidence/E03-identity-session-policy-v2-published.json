@@ -1,0 +1,20 @@
+{
+  "capturedAt": "2026-10-09",
+  "authorization": "用户 2026-10-09 批准把 identity-session-policy/v2（游客 168 小时、每来源每小时 10 次、抖音匿名信号开启）写入 qinghuazhi_v2_test",
+  "path": "CloudBase MCP manageMysqlDatabase.runStatement → qinghuazhi_v2_test.business_policy_releases（INSERT 1 行）/ active_business_policy_releases（UPDATE 1 行，条件为原指针 identity-sessions/v1）",
+  "previous": { "releaseRef": "bpr_identity_2505dce68af4", "releaseVersion": "identity-sessions/v1", "contentSha256": "5d7592f4830373bcad41a162ab033a796dfaac0b81c54297296ef154c6bb0e22", "note": "v1 行未修改，保留为不可变历史；回退 = 把活动指针改回该行" },
+  "release": {
+    "releaseRef": "bpr_identity_91706af87893",
+    "domainCode": "identity",
+    "policyCode": "identity_sessions",
+    "schemaVersion": "identity-session-policy/v2",
+    "releaseVersion": "identity-sessions/v2",
+    "contentSha256": "d15cab57138aae39396eba3e0966addac4cc81401dbdb62548d6f9426aa5011f",
+    "body": { "contractVersion": "identity-session-policy/v2", "scopeCode": "identity_sessions", "sessionTtlHours": 24, "refreshWindowHours": 0, "guestSessionTtlHours": 168, "guestIssuanceRatePerHour": 10, "douyinAnonymousSignalEnabled": true },
+    "effectiveAtMs": 1791477517369,
+    "expiresAtMs": null
+  },
+  "readback": "按读取器同一 SQL 列读回 1 行：活动指针 identity-sessions/v2，指针摘要与发布摘要一致；该行经真实 createMysqlIdentitySessionPolicyReader 解析为 sessionTtlHours=24、guest={ttlHours:168, ratePerHour:10, douyinAnonymousSignalEnabled:true}",
+  "code": ["0c6b596d", "e935b919", "2020fffc"],
+  "notCovered": ["identity 云函数未部署到 CloudBase", "网关 x-forwarded-for 实测", "抖音真实 anonymousCode 换取", "真机登录与游客流程（前端阶段）"]
+}
