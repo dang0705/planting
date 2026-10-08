@@ -1,22 +1,22 @@
 {
-  "revision": 145,
+  "revision": 148,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-08T02:25:11.725Z",
+  "updatedAt": "2026-10-08T03:17:54.271Z",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "E04用V1可关联样本或自建模拟条件贯通现有浇水回放",
+    "target": "同一E04盆栽样本的光照与室内气候派生回放",
     "keyAssumptions": [
-      "用户允许只读寻找V1记录及创建样本条件",
-      "模拟输入不等于真实标定，不生成生产事实"
+      "全为显式模拟条件；不新增生产参数或默认值",
+      "现有热湿候选输出为时段末估算，不是实测或区间均值"
     ],
-    "configurationDecision": "不新增生产默认值；自设数值只作显式synthetic样本条件",
-    "minimumVerification": "限定SQL聚合与脱敏样本、来源字段核对、独立Expected及现有用例贯通",
-    "continueCondition": "V1样本可追溯或模拟条件可独立手算",
-    "failureCondition": "缺实测不伪造来源；无资格记录只降为样本结构线索",
-    "rollback": "回放与本地样本可撤销，云端无写入",
-    "timeLimitMinutes": 40,
-    "nextAction": "沿固定模拟盆栽接入现有光照与室内VPD派生制品，逐项保留参数来源及缺口；继续E04，不转入E05。"
+    "configurationDecision": "无新增生产配置；引用已有pending联合响应与室内模型，样本显式参数仅在离线实验消费",
+    "minimumVerification": "先固定光照积分与热湿独立Expected，再跑真实组合路径及无效证据守卫",
+    "continueCondition": "输出同位置、时刻与来源可追溯，缺口保持明确",
+    "failureCondition": "不把单时刻VPD当全天均值，不由两个比值捏造需求或日期",
+    "rollback": "仅本地实验文件可回退，运行入口不变",
+    "timeLimitMinutes": 35,
+    "nextAction": "在同一样本独立论证并回放光照/VPD非线性联合响应候选，保留参数来源和准入边界；不把人工需求视为正式模型。"
   },
   "tasks": [
     {
@@ -132,10 +132,10 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 64,
+      "version": 66,
       "priority": "high",
       "status": "codex running",
-      "stage": "样本回放已验证；接续光照/VPD上游输入",
+      "stage": "同盆环境组合已验证；接续非线性联合响应候选",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -197,18 +197,19 @@
         ".codex/backend-v2/evidence/E04-demand-semantics-qualification.json",
         ".codex/backend-v2/evidence/E04-gravimetric-forecast.json",
         ".codex/backend-v2/evidence/E04-execution-readiness.json",
-        ".codex/backend-v2/evidence/E04-synthetic-watering-journey.json"
+        ".codex/backend-v2/evidence/E04-synthetic-watering-journey.json",
+        ".codex/backend-v2/evidence/E04-environment-watering-sample.json"
       ],
       "summary": [
-        "E04：V1 SQL核查无完整同盆循环，已自建5个模拟场景",
-        "未知历史、动态窗口、湿土冲突与净缺口180–528ml已回放",
-        "实际施水量仍未知；模拟资格不作为正式发布或标定",
-        "新增10项、相关54/54；全量2174/2174、类型检查通过",
-        "证据：.codex/backend-v2/evidence/E04-synthetic-watering-journey.json"
+        "E04：一次Lux复用四日，光照与室内VPD候选已接同盆回放",
+        "缺光照/气候日保留缺段，不沿旧输入补齐浇水日期",
+        "需求仍为显式人工模拟，非线性联合响应继续推进",
+        "新增12项；突变3项RED后恢复；全量2186/2186、类型通过",
+        "证据：.codex/backend-v2/evidence/E04-environment-watering-sample.json"
       ],
       "blockingReason": null,
-      "nextAction": "沿固定模拟盆栽接入现有光照与室内VPD派生制品，逐项保留参数来源及缺口；继续E04，不转入E05。",
-      "ticketReadback": "ClickUp codex running与评论1100440000143180已读回，版本64"
+      "nextAction": "在同一样本独立论证并回放光照/VPD非线性联合响应候选，保留参数来源和准入边界；不把人工需求视为正式模型。",
+      "ticketReadback": "ClickUp codex running与评论1100440000143692逐行读回，版本66"
     },
     {
       "id": "z8v0kmrg8a",
@@ -482,7 +483,7 @@
       ]
     }
   ],
-  "nextAction": "沿固定模拟盆栽接入现有光照与室内VPD派生制品，逐项保留参数来源及缺口；继续E04，不转入E05。",
+  "nextAction": "在同一样本独立论证并回放光照/VPD非线性联合响应候选，保留参数来源和准入边界；不把人工需求视为正式模型。",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",

@@ -1,0 +1,822 @@
+{
+  "classification": "synthetic_experimental",
+  "productionAdmission": false,
+  "inputPath": "cloudfunctions-v2/models/care/fixtures/environment-watering-sample.json",
+  "inputSha256": "a740e05fa3278a3a136579cdf67bb3670062f9716be61c061ea26b88e00d1f1e",
+  "compositionSource": "cloudfunctions-v2/models/care/experiments/replay-environmental-watering-sample.ts",
+  "compositionSha256": "6af27f0885e41464b98c8b6a497a76b15dde0aa0a5b63fba7bff39b894f5f9ee",
+  "scenarios": [
+    {
+      "id": "baseline",
+      "changes": "使用原样输入",
+      "snapshotHash": "ea121714c52aa1e763db24b4cc98099cd7451fe28ae568abd5cf3279bc5be52e",
+      "productionAdmission": false,
+      "demandMapping": "pending_response_model",
+      "days": [
+        {
+          "date": "2026-10-08",
+          "lightStatus": "available",
+          "dailyIntegralMolPerM2": {
+            "lower": 0.8639999999999998,
+            "upper": 0.8639999999999998
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "atMs": 1791504000000,
+            "semantics": "interval_end_estimate",
+            "result": {
+              "scope": "offline_experiment",
+              "productionAdmission": false,
+              "status": "candidate",
+              "temperatureC": 20,
+              "relativeHumidityPercent": 50,
+              "humidityRatioKgPerKg": 0.007260504747895068,
+              "vpdKpa": 1.169140635463723
+            }
+          },
+          "demand": {
+            "basis": "synthetic_manual_assignment",
+            "sourceRef": "synthetic:demand-control",
+            "range": {
+              "min": 1,
+              "max": 2
+            }
+          },
+          "eligibleForSyntheticDemand": true
+        },
+        {
+          "date": "2026-10-09",
+          "lightStatus": "available",
+          "dailyIntegralMolPerM2": {
+            "lower": 0.8639999999999998,
+            "upper": 0.8639999999999998
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "atMs": 1791590400000,
+            "semantics": "interval_end_estimate",
+            "result": {
+              "scope": "offline_experiment",
+              "productionAdmission": false,
+              "status": "candidate",
+              "temperatureC": 20,
+              "relativeHumidityPercent": 50,
+              "humidityRatioKgPerKg": 0.007260504747895068,
+              "vpdKpa": 1.169140635463723
+            }
+          },
+          "demand": {
+            "basis": "synthetic_manual_assignment",
+            "sourceRef": "synthetic:demand-control",
+            "range": {
+              "min": 1,
+              "max": 2
+            }
+          },
+          "eligibleForSyntheticDemand": true
+        },
+        {
+          "date": "2026-10-10",
+          "lightStatus": "available",
+          "dailyIntegralMolPerM2": {
+            "lower": 0.8639999999999998,
+            "upper": 0.8639999999999998
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "atMs": 1791676800000,
+            "semantics": "interval_end_estimate",
+            "result": {
+              "scope": "offline_experiment",
+              "productionAdmission": false,
+              "status": "candidate",
+              "temperatureC": 20,
+              "relativeHumidityPercent": 50,
+              "humidityRatioKgPerKg": 0.007260504747895068,
+              "vpdKpa": 1.169140635463723
+            }
+          },
+          "demand": {
+            "basis": "synthetic_manual_assignment",
+            "sourceRef": "synthetic:demand-control",
+            "range": {
+              "min": 1,
+              "max": 2
+            }
+          },
+          "eligibleForSyntheticDemand": true
+        },
+        {
+          "date": "2026-10-11",
+          "lightStatus": "available",
+          "dailyIntegralMolPerM2": {
+            "lower": 0.8639999999999998,
+            "upper": 0.8639999999999998
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "atMs": 1791763200000,
+            "semantics": "interval_end_estimate",
+            "result": {
+              "scope": "offline_experiment",
+              "productionAdmission": false,
+              "status": "candidate",
+              "temperatureC": 20,
+              "relativeHumidityPercent": 50,
+              "humidityRatioKgPerKg": 0.007260504747895068,
+              "vpdKpa": 1.169140635463723
+            }
+          },
+          "demand": {
+            "basis": "synthetic_manual_assignment",
+            "sourceRef": "synthetic:demand-control",
+            "range": {
+              "min": 1,
+              "max": 2
+            }
+          },
+          "eligibleForSyntheticDemand": true
+        }
+      ],
+      "watering": {
+        "action": "check_later",
+        "currentCycleWindow": {
+          "status": "observation_prediction",
+          "window": {
+            "earliestCheckAt": 1791504000000,
+            "latestCheckAt": 1791763200000,
+            "coverageEnd": 1791763200000
+          },
+          "observedAt": 1791417600000,
+          "ignoredObservationReason": null
+        },
+        "localCheckWindow": {
+          "status": "ready_candidate",
+          "timezone": "UTC",
+          "reason": null,
+          "earliestCheckDate": "2026-10-09",
+          "latestCheckDate": "2026-10-12",
+          "coverageEndDate": "2026-10-12"
+        },
+        "waterDeficit": null
+      }
+    },
+    {
+      "id": "higher-lux",
+      "changes": "每一天复用锚点的Lux区间改为[2000,2000]；人工需求不变",
+      "snapshotHash": "2fb839e9bc6d0c189dbe63681b6d5f759136d9f966d9233dfeb58ef1887836ce",
+      "productionAdmission": false,
+      "demandMapping": "pending_response_model",
+      "days": [
+        {
+          "date": "2026-10-08",
+          "lightStatus": "available",
+          "dailyIntegralMolPerM2": {
+            "lower": 1.7279999999999995,
+            "upper": 1.7279999999999995
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "atMs": 1791504000000,
+            "semantics": "interval_end_estimate",
+            "result": {
+              "scope": "offline_experiment",
+              "productionAdmission": false,
+              "status": "candidate",
+              "temperatureC": 20,
+              "relativeHumidityPercent": 50,
+              "humidityRatioKgPerKg": 0.007260504747895068,
+              "vpdKpa": 1.169140635463723
+            }
+          },
+          "demand": {
+            "basis": "synthetic_manual_assignment",
+            "sourceRef": "synthetic:demand-control",
+            "range": {
+              "min": 1,
+              "max": 2
+            }
+          },
+          "eligibleForSyntheticDemand": true
+        },
+        {
+          "date": "2026-10-09",
+          "lightStatus": "available",
+          "dailyIntegralMolPerM2": {
+            "lower": 1.7279999999999995,
+            "upper": 1.7279999999999995
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "atMs": 1791590400000,
+            "semantics": "interval_end_estimate",
+            "result": {
+              "scope": "offline_experiment",
+              "productionAdmission": false,
+              "status": "candidate",
+              "temperatureC": 20,
+              "relativeHumidityPercent": 50,
+              "humidityRatioKgPerKg": 0.007260504747895068,
+              "vpdKpa": 1.169140635463723
+            }
+          },
+          "demand": {
+            "basis": "synthetic_manual_assignment",
+            "sourceRef": "synthetic:demand-control",
+            "range": {
+              "min": 1,
+              "max": 2
+            }
+          },
+          "eligibleForSyntheticDemand": true
+        },
+        {
+          "date": "2026-10-10",
+          "lightStatus": "available",
+          "dailyIntegralMolPerM2": {
+            "lower": 1.7279999999999995,
+            "upper": 1.7279999999999995
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "atMs": 1791676800000,
+            "semantics": "interval_end_estimate",
+            "result": {
+              "scope": "offline_experiment",
+              "productionAdmission": false,
+              "status": "candidate",
+              "temperatureC": 20,
+              "relativeHumidityPercent": 50,
+              "humidityRatioKgPerKg": 0.007260504747895068,
+              "vpdKpa": 1.169140635463723
+            }
+          },
+          "demand": {
+            "basis": "synthetic_manual_assignment",
+            "sourceRef": "synthetic:demand-control",
+            "range": {
+              "min": 1,
+              "max": 2
+            }
+          },
+          "eligibleForSyntheticDemand": true
+        },
+        {
+          "date": "2026-10-11",
+          "lightStatus": "available",
+          "dailyIntegralMolPerM2": {
+            "lower": 1.7279999999999995,
+            "upper": 1.7279999999999995
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "atMs": 1791763200000,
+            "semantics": "interval_end_estimate",
+            "result": {
+              "scope": "offline_experiment",
+              "productionAdmission": false,
+              "status": "candidate",
+              "temperatureC": 20,
+              "relativeHumidityPercent": 50,
+              "humidityRatioKgPerKg": 0.007260504747895068,
+              "vpdKpa": 1.169140635463723
+            }
+          },
+          "demand": {
+            "basis": "synthetic_manual_assignment",
+            "sourceRef": "synthetic:demand-control",
+            "range": {
+              "min": 1,
+              "max": 2
+            }
+          },
+          "eligibleForSyntheticDemand": true
+        }
+      ],
+      "watering": {
+        "action": "check_later",
+        "currentCycleWindow": {
+          "status": "observation_prediction",
+          "window": {
+            "earliestCheckAt": 1791504000000,
+            "latestCheckAt": 1791763200000,
+            "coverageEnd": 1791763200000
+          },
+          "observedAt": 1791417600000,
+          "ignoredObservationReason": null
+        },
+        "localCheckWindow": {
+          "status": "ready_candidate",
+          "timezone": "UTC",
+          "reason": null,
+          "earliestCheckDate": "2026-10-09",
+          "latestCheckDate": "2026-10-12",
+          "coverageEndDate": "2026-10-12"
+        },
+        "waterDeficit": null
+      }
+    },
+    {
+      "id": "higher-synthetic-demand",
+      "changes": "每日人工模拟需求改为[2,4]；没有从DLI或VPD计算",
+      "snapshotHash": "e7a43cd9a30e39cf6cbd0620d47015eee3c7415ff6eabaca24095e73f6508823",
+      "productionAdmission": false,
+      "demandMapping": "pending_response_model",
+      "days": [
+        {
+          "date": "2026-10-08",
+          "lightStatus": "available",
+          "dailyIntegralMolPerM2": {
+            "lower": 0.8639999999999998,
+            "upper": 0.8639999999999998
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "atMs": 1791504000000,
+            "semantics": "interval_end_estimate",
+            "result": {
+              "scope": "offline_experiment",
+              "productionAdmission": false,
+              "status": "candidate",
+              "temperatureC": 20,
+              "relativeHumidityPercent": 50,
+              "humidityRatioKgPerKg": 0.007260504747895068,
+              "vpdKpa": 1.169140635463723
+            }
+          },
+          "demand": {
+            "basis": "synthetic_manual_assignment",
+            "sourceRef": "synthetic:demand-control",
+            "range": {
+              "min": 2,
+              "max": 4
+            }
+          },
+          "eligibleForSyntheticDemand": true
+        },
+        {
+          "date": "2026-10-09",
+          "lightStatus": "available",
+          "dailyIntegralMolPerM2": {
+            "lower": 0.8639999999999998,
+            "upper": 0.8639999999999998
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "atMs": 1791590400000,
+            "semantics": "interval_end_estimate",
+            "result": {
+              "scope": "offline_experiment",
+              "productionAdmission": false,
+              "status": "candidate",
+              "temperatureC": 20,
+              "relativeHumidityPercent": 50,
+              "humidityRatioKgPerKg": 0.007260504747895068,
+              "vpdKpa": 1.169140635463723
+            }
+          },
+          "demand": {
+            "basis": "synthetic_manual_assignment",
+            "sourceRef": "synthetic:demand-control",
+            "range": {
+              "min": 2,
+              "max": 4
+            }
+          },
+          "eligibleForSyntheticDemand": true
+        },
+        {
+          "date": "2026-10-10",
+          "lightStatus": "available",
+          "dailyIntegralMolPerM2": {
+            "lower": 0.8639999999999998,
+            "upper": 0.8639999999999998
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "atMs": 1791676800000,
+            "semantics": "interval_end_estimate",
+            "result": {
+              "scope": "offline_experiment",
+              "productionAdmission": false,
+              "status": "candidate",
+              "temperatureC": 20,
+              "relativeHumidityPercent": 50,
+              "humidityRatioKgPerKg": 0.007260504747895068,
+              "vpdKpa": 1.169140635463723
+            }
+          },
+          "demand": {
+            "basis": "synthetic_manual_assignment",
+            "sourceRef": "synthetic:demand-control",
+            "range": {
+              "min": 2,
+              "max": 4
+            }
+          },
+          "eligibleForSyntheticDemand": true
+        },
+        {
+          "date": "2026-10-11",
+          "lightStatus": "available",
+          "dailyIntegralMolPerM2": {
+            "lower": 0.8639999999999998,
+            "upper": 0.8639999999999998
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "atMs": 1791763200000,
+            "semantics": "interval_end_estimate",
+            "result": {
+              "scope": "offline_experiment",
+              "productionAdmission": false,
+              "status": "candidate",
+              "temperatureC": 20,
+              "relativeHumidityPercent": 50,
+              "humidityRatioKgPerKg": 0.007260504747895068,
+              "vpdKpa": 1.169140635463723
+            }
+          },
+          "demand": {
+            "basis": "synthetic_manual_assignment",
+            "sourceRef": "synthetic:demand-control",
+            "range": {
+              "min": 2,
+              "max": 4
+            }
+          },
+          "eligibleForSyntheticDemand": true
+        }
+      ],
+      "watering": {
+        "action": "check_later",
+        "currentCycleWindow": {
+          "status": "observation_prediction",
+          "window": {
+            "earliestCheckAt": 1791460800000,
+            "latestCheckAt": 1791590400000,
+            "coverageEnd": 1791763200000
+          },
+          "observedAt": 1791417600000,
+          "ignoredObservationReason": null
+        },
+        "localCheckWindow": {
+          "status": "ready_candidate",
+          "timezone": "UTC",
+          "reason": null,
+          "earliestCheckDate": "2026-10-08",
+          "latestCheckDate": "2026-10-10",
+          "coverageEndDate": "2026-10-12"
+        },
+        "waterDeficit": null
+      }
+    },
+    {
+      "id": "heat-input",
+      "changes": "第1日净热输入改为5/86400摄氏度/秒；独立指定其余日初态不变",
+      "snapshotHash": "1468cb964a8948d5781421d1871862e71c83e58fdc6f57ef3f02e3187f177711",
+      "productionAdmission": false,
+      "demandMapping": "pending_response_model",
+      "days": [
+        {
+          "date": "2026-10-08",
+          "lightStatus": "available",
+          "dailyIntegralMolPerM2": {
+            "lower": 0.8639999999999998,
+            "upper": 0.8639999999999998
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "atMs": 1791504000000,
+            "semantics": "interval_end_estimate",
+            "result": {
+              "scope": "offline_experiment",
+              "productionAdmission": false,
+              "status": "candidate",
+              "temperatureC": 25,
+              "relativeHumidityPercent": 36.9072813727561,
+              "humidityRatioKgPerKg": 0.007260504747895068,
+              "vpdKpa": 1.9986370820431243
+            }
+          },
+          "demand": {
+            "basis": "synthetic_manual_assignment",
+            "sourceRef": "synthetic:demand-control",
+            "range": {
+              "min": 1,
+              "max": 2
+            }
+          },
+          "eligibleForSyntheticDemand": true
+        },
+        {
+          "date": "2026-10-09",
+          "lightStatus": "available",
+          "dailyIntegralMolPerM2": {
+            "lower": 0.8639999999999998,
+            "upper": 0.8639999999999998
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "atMs": 1791590400000,
+            "semantics": "interval_end_estimate",
+            "result": {
+              "scope": "offline_experiment",
+              "productionAdmission": false,
+              "status": "candidate",
+              "temperatureC": 20,
+              "relativeHumidityPercent": 50,
+              "humidityRatioKgPerKg": 0.007260504747895068,
+              "vpdKpa": 1.169140635463723
+            }
+          },
+          "demand": {
+            "basis": "synthetic_manual_assignment",
+            "sourceRef": "synthetic:demand-control",
+            "range": {
+              "min": 1,
+              "max": 2
+            }
+          },
+          "eligibleForSyntheticDemand": true
+        },
+        {
+          "date": "2026-10-10",
+          "lightStatus": "available",
+          "dailyIntegralMolPerM2": {
+            "lower": 0.8639999999999998,
+            "upper": 0.8639999999999998
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "atMs": 1791676800000,
+            "semantics": "interval_end_estimate",
+            "result": {
+              "scope": "offline_experiment",
+              "productionAdmission": false,
+              "status": "candidate",
+              "temperatureC": 20,
+              "relativeHumidityPercent": 50,
+              "humidityRatioKgPerKg": 0.007260504747895068,
+              "vpdKpa": 1.169140635463723
+            }
+          },
+          "demand": {
+            "basis": "synthetic_manual_assignment",
+            "sourceRef": "synthetic:demand-control",
+            "range": {
+              "min": 1,
+              "max": 2
+            }
+          },
+          "eligibleForSyntheticDemand": true
+        },
+        {
+          "date": "2026-10-11",
+          "lightStatus": "available",
+          "dailyIntegralMolPerM2": {
+            "lower": 0.8639999999999998,
+            "upper": 0.8639999999999998
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "atMs": 1791763200000,
+            "semantics": "interval_end_estimate",
+            "result": {
+              "scope": "offline_experiment",
+              "productionAdmission": false,
+              "status": "candidate",
+              "temperatureC": 20,
+              "relativeHumidityPercent": 50,
+              "humidityRatioKgPerKg": 0.007260504747895068,
+              "vpdKpa": 1.169140635463723
+            }
+          },
+          "demand": {
+            "basis": "synthetic_manual_assignment",
+            "sourceRef": "synthetic:demand-control",
+            "range": {
+              "min": 1,
+              "max": 2
+            }
+          },
+          "eligibleForSyntheticDemand": true
+        }
+      ],
+      "watering": {
+        "action": "check_later",
+        "currentCycleWindow": {
+          "status": "observation_prediction",
+          "window": {
+            "earliestCheckAt": 1791504000000,
+            "latestCheckAt": 1791763200000,
+            "coverageEnd": 1791763200000
+          },
+          "observedAt": 1791417600000,
+          "ignoredObservationReason": null
+        },
+        "localCheckWindow": {
+          "status": "ready_candidate",
+          "timezone": "UTC",
+          "reason": null,
+          "earliestCheckDate": "2026-10-09",
+          "latestCheckDate": "2026-10-12",
+          "coverageEndDate": "2026-10-12"
+        },
+        "waterDeficit": null
+      }
+    },
+    {
+      "id": "missing-second-day",
+      "changes": "第2日Lux来源改为experimental_camera",
+      "snapshotHash": "46a9b15e22bc796b86b159b14ae474ee842161b2c678d86ec69ffea140fecf9d",
+      "productionAdmission": false,
+      "demandMapping": "pending_response_model",
+      "days": [
+        {
+          "date": "2026-10-08",
+          "lightStatus": "available",
+          "dailyIntegralMolPerM2": {
+            "lower": 0.8639999999999998,
+            "upper": 0.8639999999999998
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "atMs": 1791504000000,
+            "semantics": "interval_end_estimate",
+            "result": {
+              "scope": "offline_experiment",
+              "productionAdmission": false,
+              "status": "candidate",
+              "temperatureC": 20,
+              "relativeHumidityPercent": 50,
+              "humidityRatioKgPerKg": 0.007260504747895068,
+              "vpdKpa": 1.169140635463723
+            }
+          },
+          "demand": {
+            "basis": "synthetic_manual_assignment",
+            "sourceRef": "synthetic:demand-control",
+            "range": {
+              "min": 1,
+              "max": 2
+            }
+          },
+          "eligibleForSyntheticDemand": true
+        },
+        {
+          "date": "2026-10-09",
+          "lightStatus": "insufficient_evidence",
+          "dailyIntegralMolPerM2": null,
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "atMs": 1791590400000,
+            "semantics": "interval_end_estimate",
+            "result": {
+              "scope": "offline_experiment",
+              "productionAdmission": false,
+              "status": "candidate",
+              "temperatureC": 20,
+              "relativeHumidityPercent": 50,
+              "humidityRatioKgPerKg": 0.007260504747895068,
+              "vpdKpa": 1.169140635463723
+            }
+          },
+          "demand": {
+            "basis": "synthetic_manual_assignment",
+            "sourceRef": "synthetic:demand-control",
+            "range": {
+              "min": 1,
+              "max": 2
+            }
+          },
+          "eligibleForSyntheticDemand": false
+        },
+        {
+          "date": "2026-10-10",
+          "lightStatus": "available",
+          "dailyIntegralMolPerM2": {
+            "lower": 0.8639999999999998,
+            "upper": 0.8639999999999998
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "atMs": 1791676800000,
+            "semantics": "interval_end_estimate",
+            "result": {
+              "scope": "offline_experiment",
+              "productionAdmission": false,
+              "status": "candidate",
+              "temperatureC": 20,
+              "relativeHumidityPercent": 50,
+              "humidityRatioKgPerKg": 0.007260504747895068,
+              "vpdKpa": 1.169140635463723
+            }
+          },
+          "demand": {
+            "basis": "synthetic_manual_assignment",
+            "sourceRef": "synthetic:demand-control",
+            "range": {
+              "min": 1,
+              "max": 2
+            }
+          },
+          "eligibleForSyntheticDemand": true
+        },
+        {
+          "date": "2026-10-11",
+          "lightStatus": "available",
+          "dailyIntegralMolPerM2": {
+            "lower": 0.8639999999999998,
+            "upper": 0.8639999999999998
+          },
+          "climate": {
+            "plantReference": "synthetic-plant",
+            "provider": "qweather",
+            "sourceRef": "synthetic:qweather-shaped-climate",
+            "atMs": 1791763200000,
+            "semantics": "interval_end_estimate",
+            "result": {
+              "scope": "offline_experiment",
+              "productionAdmission": false,
+              "status": "candidate",
+              "temperatureC": 20,
+              "relativeHumidityPercent": 50,
+              "humidityRatioKgPerKg": 0.007260504747895068,
+              "vpdKpa": 1.169140635463723
+            }
+          },
+          "demand": {
+            "basis": "synthetic_manual_assignment",
+            "sourceRef": "synthetic:demand-control",
+            "range": {
+              "min": 1,
+              "max": 2
+            }
+          },
+          "eligibleForSyntheticDemand": true
+        }
+      ],
+      "watering": {
+        "action": "check_later",
+        "currentCycleWindow": {
+          "status": "observation_prediction",
+          "window": {
+            "earliestCheckAt": 1791504000000,
+            "latestCheckAt": null,
+            "coverageEnd": 1791504000000
+          },
+          "observedAt": 1791417600000,
+          "ignoredObservationReason": null
+        },
+        "localCheckWindow": {
+          "status": "ready_candidate",
+          "timezone": "UTC",
+          "reason": null,
+          "earliestCheckDate": "2026-10-09",
+          "latestCheckDate": null,
+          "coverageEndDate": "2026-10-09"
+        },
+        "waterDeficit": null
+      }
+    }
+  ]
+}

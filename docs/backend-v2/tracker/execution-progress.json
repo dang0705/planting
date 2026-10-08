@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T02:25:11.725Z",
-  "sourceRevision": 145,
-  "sourceUpdatedAt": "2026-10-08T02:25:11.725Z",
+  "generatedAt": "2026-10-08T03:17:54.271Z",
+  "sourceRevision": 148,
+  "sourceUpdatedAt": "2026-10-08T03:17:54.271Z",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -123,16 +123,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 64,
+      "version": 66,
       "status": "codex running",
-      "stage": "样本回放已验证；接续光照/VPD上游输入",
+      "stage": "同盆环境组合已验证；接续非线性联合响应候选",
       "accepted": false,
       "summary": [
-        "E04：V1 SQL核查无完整同盆循环，已自建5个模拟场景",
-        "未知历史、动态窗口、湿土冲突与净缺口180–528ml已回放",
-        "实际施水量仍未知；模拟资格不作为正式发布或标定",
-        "新增10项、相关54/54；全量2174/2174、类型检查通过",
-        "证据：.codex/backend-v2/evidence/E04-synthetic-watering-journey.json"
+        "E04：一次Lux复用四日，光照与室内VPD候选已接同盆回放",
+        "缺光照/气候日保留缺段，不沿旧输入补齐浇水日期",
+        "需求仍为显式人工模拟，非线性联合响应继续推进",
+        "新增12项；突变3项RED后恢复；全量2186/2186、类型通过",
+        "证据：.codex/backend-v2/evidence/E04-environment-watering-sample.json"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -194,12 +194,13 @@
         ".codex/backend-v2/evidence/E04-demand-semantics-qualification.json",
         ".codex/backend-v2/evidence/E04-gravimetric-forecast.json",
         ".codex/backend-v2/evidence/E04-execution-readiness.json",
-        ".codex/backend-v2/evidence/E04-synthetic-watering-journey.json"
+        ".codex/backend-v2/evidence/E04-synthetic-watering-journey.json",
+        ".codex/backend-v2/evidence/E04-environment-watering-sample.json"
       ],
       "blockingReason": null,
-      "nextAction": "沿固定模拟盆栽接入现有光照与室内VPD派生制品，逐项保留参数来源及缺口；继续E04，不转入E05。",
+      "nextAction": "在同一样本独立论证并回放光照/VPD非线性联合响应候选，保留参数来源和准入边界；不把人工需求视为正式模型。",
       "sync": {
-        "version": 64,
+        "version": 66,
         "status": "codex running",
         "matched": true,
         "readback": "ClickUp codex running及五行说明已逐项读回"

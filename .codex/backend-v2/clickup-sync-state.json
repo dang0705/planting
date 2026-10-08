@@ -34,13 +34,13 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 64,
+      "version": 66,
       "status": "codex running",
-      "note": "E04：V1 SQL核查无完整同盆循环，已自建5个模拟场景\n未知历史、动态窗口、湿土冲突与净缺口180–528ml已回放\n实际施水量仍未知；模拟资格不作为正式发布或标定\n新增10项、相关54/54；全量2174/2174、类型检查通过\n证据：.codex/backend-v2/evidence/E04-synthetic-watering-journey.json",
-      "commentId": "1100440000143180",
-      "commentFingerprint": "e9ded7199e4c377125e57e52a9804df72a7cddf92d4c7557c2232f56195cfda5",
+      "note": "E04：一次Lux复用四日，光照与室内VPD候选已接同盆回放\n缺光照/气候日保留缺段，不沿旧输入补齐浇水日期\n需求仍为显式人工模拟，非线性联合响应继续推进\n新增12项；突变3项RED后恢复；全量2186/2186、类型通过\n证据：.codex/backend-v2/evidence/E04-environment-watering-sample.json",
+      "commentId": "1100440000143692",
+      "commentFingerprint": "a0a04edbfb7de62e23f964e561b3f7d78139a2c2bbe2565aee0e96a203cb16e4",
       "readback": "ClickUp codex running及五行说明已逐项读回",
-      "lastSuccessfulSyncAt": "2026-10-08T02:24:53.221Z"
+      "lastSuccessfulSyncAt": "2026-10-08T03:17:53.640Z"
     },
     "z8v0kmrg8a": {
       "version": 5,
@@ -87,8 +87,8 @@
   },
   "lastSuccessfulSyncAt": "2026-10-08T01:21:22.536886Z",
   "h5Projection": {
-    "fingerprint": "ed84f21a0a884d1f307129225ed1d660c237464ca86652e5a6f4efe47f4bebba",
-    "sourceRevision": 145,
-    "sourceUpdatedAt": "2026-10-08T02:25:11.725Z"
+    "fingerprint": "e02edc12756b754dc08af73820278ca2d61839475070457e8dd7f7594ee03e7b",
+    "sourceRevision": 148,
+    "sourceUpdatedAt": "2026-10-08T03:17:54.271Z"
   }
 }

@@ -1,0 +1,86 @@
+{
+  "recordedAt": "2026-10-08T03:16:56.391Z",
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "milestone": "同盆Lux物理链、室内气候候选与模拟浇水覆盖接线",
+  "productionAdmission": false,
+  "wholeTicketAccepted": false,
+  "productBehaviorChanged": false,
+  "experimentalCompositionAdded": true,
+  "configurationDecision": "没有新增生产参数；需求人工赋值仅存在于synthetic实验输入",
+  "verification": {
+    "independentExpected": "environment-watering-sample-contract.md的区间算术、FAO饱和压和固定气压热湿关系；与被测代码分开手算",
+    "testFirst": "Expected及测试先于新实验组合落盘；首次缺模块RED不能单独证明行为，另补缺段守卫突变",
+    "mutation": {
+      "changed": "忽略eligibleForSyntheticDemand仍插入模拟区间",
+      "failedCases": [
+        "第2日光照缺段时不沿调用者预填的10日需求补齐窗口",
+        "缺initialIndoor时不补室内初态或参数，也不生成日期",
+        "缺coefficients时不补室内初态或参数，也不生成日期"
+      ],
+      "exitCode": 1,
+      "log": "/tmp/e04-environment-sample-mutation-red.log",
+      "restoredByteForByte": true,
+      "restoredSha256": "6af27f0885e41464b98c8b6a497a76b15dde0aa0a5b63fba7bff39b894f5f9ee"
+    },
+    "related": {
+      "files": 5,
+      "passed": 60,
+      "exitCode": 0,
+      "log": "/tmp/e04-environment-sample-related.log"
+    },
+    "fullUnit": {
+      "files": 219,
+      "passed": 2186,
+      "exitCode": 0,
+      "log": "/tmp/e04-environment-sample-full.log"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "/tmp/e04-environment-sample-types.log"
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 44,
+      "log": "/tmp/e04-environment-sample-lint.log"
+    }
+  },
+  "riskCoverage": {
+    "I1": "组合链、时段末气候、Lux和人工需求的独立对照",
+    "I2": "空样本、初态或参数缺失、第2日缺光照",
+    "I3": "异植物、时长不符、错误赋值标记、日序重叠",
+    "I4": "不适用：没有HTTP或身份入口",
+    "I5": "不适用：没有业务写操作"
+  },
+  "realPath": "既有Lux/SunCalc/窗面/双通道日积分与室内热湿计算→有效日期筛选→既有观察积分和盆土安全门",
+  "replacedBoundary": "显式人工模拟需求与参数，没有真实Provider网络或标定",
+  "unaccepted": [
+    "光照/VPD到需求的非线性联合响应",
+    "跨住宅室内模型准入",
+    "根区及保水映射",
+    "实际施水量",
+    "正式策略及HTTP闭环"
+  ],
+  "artifacts": [
+    {
+      "path": "cloudfunctions-v2/models/care/experiments/replay-environmental-watering-sample.ts",
+      "sha256": "6af27f0885e41464b98c8b6a497a76b15dde0aa0a5b63fba7bff39b894f5f9ee"
+    },
+    {
+      "path": "cloudfunctions-v2/models/care/environment-watering-sample-contract.md",
+      "sha256": "bca9b55f3a66ec3741b55a46577b6a9d05f62a3e872b71b6d218f7e616b66a66"
+    },
+    {
+      "path": "cloudfunctions-v2/models/care/fixtures/environment-watering-sample.json",
+      "sha256": "a740e05fa3278a3a136579cdf67bb3670062f9716be61c061ea26b88e00d1f1e"
+    },
+    {
+      "path": "cloudfunctions-v2/models/care/environment-watering-sample-results.json",
+      "sha256": "6a1a75d3d07d8ec8c2720cb48b3414afe5a19d6c945d6d6ced4c145645b7ba18"
+    },
+    {
+      "path": "cloudfunctions-v2/test/care/watering/environment-watering-sample.spec.ts",
+      "sha256": "654e90b4704e648d3c376075d4a520e1e385754ea1f111c606a30940f086b3e9"
+    }
+  ]
+}
