@@ -17,19 +17,21 @@ Expected 来自已批准的后端架构、`docs/backend-v2/data/state-machines.m
 
 路由：`POST /api/v2/identity/sessions`，安全类别为“平台凭证换取青花植登录会话”（`credential_exchange`）。
 
-请求正文严格只有一个字段：
+请求正文（用户 2026-10-09 冻结多平台变更）：
 
 ```json
-{"code":"微信 wx.login 返回的短时凭证"}
+{"platform":"wechat","code":"平台登录接口返回的短时凭证","guestToken":"可选：同一设备之前签发的游客令牌"}
 ```
 
 字段规则：
 
 | 字段 | 类型 | 规则 |
 |---|---|---|
-| `code` | 非空字符串 | 只用于本次 Provider 验真；不得写日志、数据库、幂等记录或审计。 |
+| `platform` | `'wechat' \| 'douyin' \| 'xiaohongshu'` | 必填；只决定调用哪个受控 Provider Adapter，不能替代平台验真。某平台 Provider 未配置时返回 `503 SERVICE_UNAVAILABLE`（例如小红书 AppSecret 未配置）。 |
+| `code` | 非空字符串 | 微信 `wx.login`／抖音 `tt.login`／小红书 `xhs.login` 的一次性短时凭证；只用于本次 Provider 验真；不得写日志、数据库、幂等记录或审计。 |
+| `guestToken` | 可选字符串 | 抖音、小红书游客先前签发的游客令牌（guest-token/v1）。只在登录成功后用于标记该游客会话可被本用户认领；真正认领仍走 `POST /api/v2/user-plants/claims`。微信端不走游客：`platform='wechat'` 同时携带 `guestToken` 返回 `400 VALIDATION_FAILED`。 |
 
-拒绝额外字段；平台固定为 `wechat`，应用范围 `appScope` 从受控 Provider 配置读取，不接受客户端提交的平台、OpenID、AppID 或应用范围。客户端不得通过 `x-wx-openid` 等请求头改变身份解析结果。
+拒绝额外字段；应用范围 `appScope` 从受控 Provider 配置读取，不接受客户端提交的 OpenID、AppID 或应用范围。客户端不得通过 `x-wx-openid` 等请求头改变身份解析结果。
 
 成功使用 HTTP `200`，公开正文严格为：
 
