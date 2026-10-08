@@ -18,18 +18,26 @@ const validators = createPublicContractValidators() as unknown as IdentitySessio
  * 只替换外部 IO，不替换合同或校验逻辑；明确不证明登录会话已经持久化。
  */
 describe('微信登录公开 DTO 合同', () => {
-  test('仅接受单字段 `{ code }` 请求并拒绝任何额外字段', () => {
+  // Expected 来源更新：identity-session-issuance.md 多平台请求（用户 2026-10-09 冻结）。
+  test('多平台请求：platform 必填，code 必填，guestToken 仅抖音/小红书可选，拒绝额外字段', () => {
     const validate = validators.createIdentitySessionRequest
     expect(typeof validate).toBe('function')
     if (!validate) {
       return
     }
 
-    expect(validate({ code: 'wx-one-time-code' })).toBe(true)
-    expect(validate({ code: '' })).toBe(false)
-    expect(validate({ code: 'wx-one-time-code', appScope: 'client-controlled' })).toBe(false)
-    expect(validate({ code: 'wx-one-time-code', openid: 'client-controlled' })).toBe(false)
-    expect(validate({ code: 123 })).toBe(false)
+    expect(validate({ platform: 'wechat', code: 'wx-one-time-code' })).toBe(true)
+    expect(validate({ platform: 'douyin', code: 'tt-one-time-code' })).toBe(true)
+    expect(validate({ platform: 'xiaohongshu', code: 'xhs-one-time-code', guestToken: 'A'.repeat(43) })).toBe(true)
+    expect(validate({ platform: 'douyin', code: 'tt-one-time-code', guestToken: 'A'.repeat(43) })).toBe(true)
+    expect(validate({ code: 'wx-one-time-code' })).toBe(false)
+    expect(validate({ platform: 'alipay', code: 'x' })).toBe(false)
+    expect(validate({ platform: 'wechat', code: 'wx-one-time-code', guestToken: 'A'.repeat(43) })).toBe(false)
+    expect(validate({ platform: 'douyin', code: 'tt', guestToken: '' })).toBe(false)
+    expect(validate({ platform: 'wechat', code: '' })).toBe(false)
+    expect(validate({ platform: 'wechat', code: 'wx-one-time-code', appScope: 'client-controlled' })).toBe(false)
+    expect(validate({ platform: 'wechat', code: 'wx-one-time-code', openid: 'client-controlled' })).toBe(false)
+    expect(validate({ platform: 'wechat', code: 123 })).toBe(false)
     expect(validate(null)).toBe(false)
   })
 

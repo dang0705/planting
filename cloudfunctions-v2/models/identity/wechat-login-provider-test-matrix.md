@@ -57,3 +57,13 @@ Break：把 40163（code 已用）当成系统错误会让前端误重试同一 
 | I2 | data 缺 openid（或匿名换取缺 anonymous_openid）→ Provider 不可用 | Edge | 待写 |
 | I4 Reverse | 平台不是 douyin、appScope 不符、code 非法 → 不发请求 | Reverse | 待写 |
 | 脱敏 | 错误不含 secret、code、openid | Reverse | 待写 |
+
+## 多平台登录分派 `createPlatformLoginDispatcher`（E03）
+
+层次 L3 `unit_fake`：只替换 fetch；HMAC 摘要与各平台适配器为真实实现。Expected 来源：identity-session-issuance.md 多平台请求（用户 2026-10-09 冻结）、配置目录三个登录 Provider 档案、`PLATFORM_SUBJECT_HMAC_KEY_V1`。
+
+| 维 | 用例 | 形态 | 状态 |
+|---|---|---|---|
+| I1 Happy | wechat → 调微信端点并返回 HMAC 证据；douyin → 调抖音端点，证据平台为 douyin、应用范围为抖音 AppID、摘要为 HMAC(openid) | Happy | 待写 |
+| I2 缺配置 | 只缺抖音配置时微信仍可登录，抖音返回配置错误；小红书一律配置错误（AppSecret 未配置） | Edge | 待写 |
+| 隔离 | 同一 openid 在微信与抖音得到的证据平台不同（跨平台不串号） | Reverse | 待写 |

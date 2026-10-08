@@ -3,15 +3,11 @@ import pino from 'pino'
 import { readDatabaseConnectionConfig } from '../foundation/config/database-config.js'
 import { createMysql2ConnectionSource } from '../foundation/database/mysql2-connection-source.js'
 import { createIdentityServer } from '../identity/http/server.js'
-import { PlatformCredentialEvidenceError } from '../identity/provider/platform-credential-evidence.js'
-import { createWechatLoginVerifier } from '../identity/provider/wechat-login-verifier.js'
+import { createPlatformLoginDispatcher } from '../identity/provider/platform-login-dispatcher.js'
 import { createMysqlIdentitySessionPolicyReader } from '../identity/repository/mysql-identity-session-policy-reader.js'
 
 /** CloudBase HTTP 云函数固定监听端口。 */
 const servicePort = 9000
-
-/** 生产 Provider 与身份策略仍为 pending；本入口在其接入前必须拒绝签发而不是使用默认值。 */
-const loginProviderUnavailableMessage = '微信登录验真配置尚未发布'
 
 /** 日志只记录固定脱敏事件类别，禁止记录请求体、Authorization、连接参数或 Provider 原文。 */
 const logger = pino({
@@ -26,25 +22,16 @@ const logger = pino({
 const connectionSource = createMysql2ConnectionSource(readDatabaseConnectionConfig(process.env))
 
 /**
- * 微信登录验真（已批准档案 wechat_miniprogram_login＋平台主体 HMAC 密钥 v1）。
- * 任一配置缺失时保持失败关闭，不调用外部平台、不信任客户端声明的 OpenID。
+ * 多平台登录验真（微信/抖音已批准档案＋平台主体 HMAC 密钥 v1；小红书待配置）。
+ * 每个平台独立失败关闭，不调用未配置平台、不信任客户端声明的 OpenID。
  */
-const verifyWechatCode = (() => {
-  try {
-    return createWechatLoginVerifier(process.env, globalThis.fetch)
-  } catch {
-    logger.error({ event: 'login_provider_unconfigured', function: 'identity' }, '微信登录配置缺失，登录保持失败关闭')
-    return async () => {
-      throw new PlatformCredentialEvidenceError('INTERNAL_IDENTITY_CONFIGURATION_INVALID', loginProviderUnavailableMessage)
-    }
-  }
-})()
+const verifyPlatformCode = createPlatformLoginDispatcher(process.env, globalThis.fetch)
 /** 只读取 identity/identity_sessions 的唯一活动发布；没有可信发布时返回 null 并拒签。 */
 const sessionPolicyReader = createMysqlIdentitySessionPolicyReader(connectionSource)
 
 const server = createIdentityServer({
   connectionSource,
-  verifyWechatCode,
+  verifyPlatformCode,
   resolveSessionPolicy: () => sessionPolicyReader.read(new Date().toISOString()),
   now: () => Date.now(),
   writeAudit: event => {

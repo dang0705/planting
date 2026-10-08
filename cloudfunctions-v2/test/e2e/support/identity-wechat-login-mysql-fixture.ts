@@ -132,7 +132,7 @@ export type IdentityWechatLoginMysqlFixture = {
   }
   /** 对 Bearer 原文执行 SHA-256，用于安全持久化读回。 */
   readonly hashBearer: (bearer: string) => string
-  /** 发起只含 `{ code }` 的身份登录请求。 */
+  /** 发起 `{ platform: 'wechat', code }` 的身份登录请求。 */
   readonly login: (code: string, additionalHeaders?: Record<string, string>) => Promise<Response>
   /** 读回隔离库中的用户、平台绑定和会话记录数量。 */
   readonly identityCounts: () => Promise<{
@@ -358,7 +358,10 @@ export async function createIdentityWechatLoginMysqlFixture(): Promise<IdentityW
 
   const identityServer = createIdentityServer({
     connectionSource,
-    verifyWechatCode: verifyCode(),
+    // 多平台登录合同（用户 2026-10-09）：fake Provider 只接微信，其他平台按未配置失败关闭。
+    verifyPlatformCode: (platform, code) => platform === 'wechat'
+      ? verifyCode()(code)
+      : Promise.reject(new PlatformCredentialEvidenceError('INTERNAL_IDENTITY_CONFIGURATION_INVALID', '平台登录配置缺失')),
     resolveSessionPolicy: async () => activePolicySnapshot,
     now: () => nowMs,
     writeAudit: (_event: RequestChainAuditEvent) => undefined,
@@ -448,7 +451,7 @@ export async function createIdentityWechatLoginMysqlFixture(): Promise<IdentityW
           'content-type': 'application/json',
           ...additionalHeaders
         },
-        body: JSON.stringify({ code })
+        body: JSON.stringify({ platform: 'wechat', code })
       }),
     identityCounts,
     providerCallCount: () => providerCallCount,

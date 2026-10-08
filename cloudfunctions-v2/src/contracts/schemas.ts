@@ -315,10 +315,15 @@ export { userPlantSchema } from "./user-plant-schema.js";
 export const createIdentitySessionRequestSchema: JSONSchemaType<CreateIdentitySessionRequestDto> = {
   type: "object",
   additionalProperties: false,
-  required: ["code"],
+  required: ["platform", "code"],
   properties: {
+    platform: { type: "string", enum: ["wechat", "douyin", "xiaohongshu"] },
     code: { type: "string", minLength: 1 },
+    guestToken: { type: "string", minLength: 1, nullable: true },
   },
+  // 微信以 wx.login 静默登录，不走游客；携带游客令牌视为非法请求。
+  if: { properties: { platform: { const: "wechat" } }, required: ["platform"] },
+  then: { not: { properties: { guestToken: { type: "string" } }, required: ["guestToken"] } },
 };
 
 /** 首次登录公开数据只允许 Bearer 与绝对失效时间。 */

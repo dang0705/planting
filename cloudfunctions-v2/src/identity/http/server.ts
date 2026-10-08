@@ -57,8 +57,11 @@ const unavailableMessage = '登录服务暂时不可用，请稍后重试'
 export type IdentityServerDependencies = {
   /** 每请求独占 MySQL 连接来源；登录事务只允许 Identity Repository 使用。 */
   readonly connectionSource: MysqlConnectionPoolPort<Mysql2QueryConnection>
-  /** 仅在一次性微信 code 验真成功后返回主体 HMAC 候选。 */
-  readonly verifyWechatCode: (code: string) => Promise<Readonly<VerifiedPlatformIdentityEvidence>>
+  /** 按请求平台调用受控 Provider；一次性 code 验真成功后返回主体 HMAC 候选，未配置的平台必须失败关闭。 */
+  readonly verifyPlatformCode: (
+    platform: CreateIdentitySessionRequestDto['platform'],
+    code: string
+  ) => Promise<Readonly<VerifiedPlatformIdentityEvidence>>
   /** 返回本次请求锁定的有效会话策略；没有 active 发布时返回 null 并拒签。 */
   readonly resolveSessionPolicy: () => Promise<Readonly<IdentitySessionPolicySnapshot> | null>
   /** 从受控密钥引用解析内部调用方；未接线时内部路由失败关闭。 */
@@ -210,7 +213,7 @@ function classifyLoginFailure(error: unknown): {
   }
 }
 
-/** 处理一次性微信 code 登录；整个流程不会记录或公开 code、主体摘要、Bearer 以外的秘密。 */
+/** 处理一次性平台 code 登录（微信/抖音/小红书）；整个流程不会记录或公开 code、主体摘要、Bearer 以外的秘密。 */
 function createIdentitySessionHandler(
   dependencies: IdentityServerDependencies,
   issueSession: ReturnType<typeof createIssueUserSessionUseCase>,
@@ -239,7 +242,7 @@ function createIdentitySessionHandler(
         )
       }
 
-      const identity = await dependencies.verifyWechatCode(dto.code)
+      const identity = await dependencies.verifyPlatformCode(dto.platform, dto.code)
       const result = await issueSession({
         identity,
         policySnapshot,

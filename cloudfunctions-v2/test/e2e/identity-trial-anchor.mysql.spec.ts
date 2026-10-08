@@ -106,7 +106,7 @@ describe('统一用户试用起算锚点真实 MySQL 读回', () => {
 
     internalServer = fixture.createIdentityServer({
       connectionSource: fixture.connectionSource,
-      verifyWechatCode: fixture.createOneTimeWechatCodeVerifier(),
+      verifyPlatformCode: (_platform, code) => fixture.createOneTimeWechatCodeVerifier()(code),
       resolveSessionPolicy: async () => fixture.getActivePolicySnapshot(),
       resolveServiceSigningKey: async keyId =>
         keyId === internalKeyId ? { serviceName: 'subscription', key: internalSecret } : null,

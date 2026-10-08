@@ -171,6 +171,31 @@ describe('微信登录与统一用户会话 MySQL HTTP 纵向切片', () => {
     expect(await fixture.identityCounts()).toEqual(before)
   })
 
+  // Expected 来源：identity-session-issuance.md 多平台请求（用户 2026-10-09 冻结）。
+  test('微信携带游客令牌 → 400，不调用 Provider、不写身份数据', async () => {
+    const before = await fixture.identityCounts()
+    const callsBefore = fixture.providerCallCount()
+    const response = await fetch(`${fixture.identityBaseUrl}/api/v2/identity/sessions`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ platform: 'wechat', code: fixture.subjectCode, guestToken: 'A'.repeat(43) })
+    })
+    expect(response.status).toBe(Number('400'))
+    expect(await response.json()).toMatchObject({ error: { type: 'VALIDATION_FAILED' } })
+    expect(fixture.providerCallCount()).toBe(callsBefore)
+    expect(await fixture.identityCounts()).toEqual(before)
+  })
+
+  test('未配置 Provider 的平台（小红书）→ 503，不签发 Bearer、不写身份数据', async () => {
+    const before = await fixture.identityCounts()
+    const response = await fetch(`${fixture.identityBaseUrl}/api/v2/identity/sessions`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ platform: 'xiaohongshu', code: 'xhs-one-time-code' })
+    })
+    expect(response.status).toBe(Number('503'))
+    expect(await response.json()).toMatchObject({ error: { type: 'SERVICE_UNAVAILABLE' } })
+    expect(await fixture.identityCounts()).toEqual(before)
+  })
+
   test('没有有效策略时不调用 Provider、不签发 Bearer、不写身份数据', async () => {
     const before = await fixture.identityCounts()
     const callsBefore = fixture.providerCallCount()
@@ -209,7 +234,7 @@ describe('微信登录与统一用户会话 MySQL HTTP 纵向切片', () => {
     const uncertainCommit = fixture.createCommitAcknowledgementLossSource(fixture.connectionSource)
     const server = fixture.createIdentityServer({
       connectionSource: uncertainCommit.connectionSource,
-      verifyWechatCode: fixture.createOneTimeWechatCodeVerifier(),
+      verifyPlatformCode: (_platform, code) => fixture.createOneTimeWechatCodeVerifier()(code),
       resolveSessionPolicy: async () => fixture.getActivePolicySnapshot(),
       now: () => fixture.nowMs,
       writeAudit: () => undefined,
@@ -220,7 +245,7 @@ describe('微信登录与统一用户会话 MySQL HTTP 纵向切片', () => {
       const response = await fetch(`${baseUrl}/api/v2/identity/sessions`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ code: fixture.unknownCommitCode })
+        body: JSON.stringify({ platform: 'wechat', code: fixture.unknownCommitCode })
       })
       expect(response.status).toBe(Number('503'))
       const body = await response.json()

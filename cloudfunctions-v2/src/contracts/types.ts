@@ -198,8 +198,12 @@ export type CreateUserPlantRequestDto = Record<string, never>;
 
 /** 首次平台凭证换取青花植会话的严格登录请求。 */
 export type CreateIdentitySessionRequestDto = {
-  /** 微信 `wx.login` 返回的一次性短时凭证；不得换成 OpenID、AppID 或客户端提交的应用范围。 */
+  /** 登录平台；只决定调用哪个受控 Provider，不能替代平台验真（用户 2026-10-09 冻结多平台）。 */
+  platform: "wechat" | "douyin" | "xiaohongshu";
+  /** 平台登录接口返回的一次性短时凭证；不得换成 OpenID、AppID 或客户端提交的应用范围。 */
   code: string;
+  /** 抖音/小红书游客先前签发的游客令牌，仅用于认领资格；微信不得携带。 */
+  guestToken?: string;
 };
 
 /** 微信登录首次成功响应中唯一允许披露的会话数据。 */
