@@ -51,8 +51,12 @@
   "newTdd": false,
   "goalCompleted": false,
   "blockedAudit": {
-    "consecutiveVerifiedImpassesThisAudit": 1,
-    "goalStatus": "active",
-    "note": "本轮只首次登记可执行性阻断；不得据此把整个目标标记blocked或complete"
+    "consecutiveVerifiedImpassesThisAudit": 3,
+    "goalStatus": "blocked",
+    "verifiedAt": "2026-10-08T01:22:54.603522Z",
+    "currentProgressRevision": 142,
+    "answerReviewApprovalStatus": "pending",
+    "answerReviewRuntimeUsable": false,
+    "note": "连续三轮核验同一外部数据与语义裁决阻断，目标已标记blocked；后台样本条件或已有待确认规则获裁决后恢复。不把研究回放或测试通过当作业务完成。"
   }
 }
