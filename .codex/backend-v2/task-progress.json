@@ -1,22 +1,22 @@
 {
-  "revision": 139,
+  "revision": 140,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-08T00:50:57.080Z",
+  "updatedAt": "2026-10-08T01:01:12.802Z",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "E04 首次近期浇水历史可未知的业务边界与回放验证",
+    "target": "E04 Sun2024配对候选的测量语义与日内/日总量一致性收口",
     "keyAssumptions": [
-      "日期、水量是可选启发式输入，不能作为首次养护前置",
-      "当前盆土状态映射和环境响应须合格才产生剩余窗口"
+      "不能从系统惯例或数值范围给工作簿补单位",
+      "作者分析选取前六天不证明停水起点"
     ],
-    "configurationDecision": "不新增参数或默认值；未知不映射为今天/零，正式状态映射及响应策略仍pending",
-    "minimumVerification": "无历史但有合格观察的剩余窗口、当前盆土安全判断及未知水量断言；后端全量测试",
-    "continueCondition": "复用现有观察回放，依最新用户规则核验输入缺失语义",
-    "failureCondition": "缺专业标定证据时不伪造日期、水量或历史事件",
-    "rollback": "仅回退本次边界文档和附加断言，不影响运行策略或历史记录",
+    "configurationDecision": "不新增产品参数、不启用拟合；原有状态映射和环境响应保持pending",
+    "minimumVerification": "精确原始SHA、同盆逐日序列合计与日表对比、原文图轴和直接方法引用",
+    "continueCondition": "仅核验该候选及直接方法，结果足以决定是否进入拟合",
+    "failureCondition": "单位、聚合或灌溉阶段仍缺说明则结束公开资料追查，不推断正式参数",
+    "rollback": "仅回退候选资格补充和复核脚本；无运行策略或数据变更",
     "timeLimitMinutes": 20,
-    "nextAction": "继续E04当前盆土状态映射与光照/VPD响应的数据准入，补齐配对数据测量字典和实验条件；E06实际动作记录不作为首次预测前置"
+    "nextAction": "以明确测量方法、供排水和根区记录的盆栽配对数据推进环境响应及状态映射；Sun2024待原始说明，禁止重复同源查询或用猜测倍率补齐"
   },
   "tasks": [
     {
@@ -132,10 +132,10 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 59,
+      "version": 60,
       "priority": "high",
       "status": "codex running",
-      "stage": "首次未知历史边界已验证；盆土状态映射与环境响应待准入",
+      "stage": "研究候选语义核验已收口；正式状态映射与环境响应缺标定依据",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -193,18 +193,19 @@
         ".codex/backend-v2/evidence/E04-model-verification-readiness.json",
         ".codex/backend-v2/evidence/E04-observed-remaining-cycle.json",
         ".codex/backend-v2/evidence/E04-paired-demand-data.json",
-        ".codex/backend-v2/evidence/E04-unknown-watering-history.json"
+        ".codex/backend-v2/evidence/E04-unknown-watering-history.json",
+        ".codex/backend-v2/evidence/E04-demand-semantics-qualification.json"
       ],
       "summary": [
-        "E04：近期浇水日期/水量可分别未知，已写入完整计划",
-        "当前盆土证据驱动剩余窗口；不填今天/零，不伪造历史",
-        "无水量依据保持未知；E06动作记录不作为首次预测前置",
-        "相关95/95、后端全量2159/2159；本轮未修改产品行为",
-        "证据：.codex/backend-v2/evidence/E04-unknown-watering-history.json"
+        "E04：Sun2024候选的图轴、方法和960组日聚合核验完成",
+        "日表/序列合计比0.1473～3.0225，无统一倍率，不猜单位",
+        "恢复需测量字典、聚合和供排水记录；结束同源重复追查",
+        "复核脚本与独立解析一致；后端全量2159/2159，无产品行为变更",
+        "证据：.codex/backend-v2/evidence/E04-demand-semantics-qualification.json"
       ],
       "blockingReason": null,
-      "nextAction": "继续E04当前盆土状态映射与光照/VPD响应的数据准入，补齐配对数据测量字典和实验条件；E06实际动作记录不作为首次预测前置",
-      "ticketReadback": "ClickUp codex running与评论1100440000142333逐行读回，版本59"
+      "nextAction": "以明确测量方法、供排水和根区记录的盆栽配对数据推进环境响应及状态映射；Sun2024待原始说明，禁止重复同源查询或用猜测倍率补齐",
+      "ticketReadback": "ClickUp codex running与评论1100440000142393逐行读回，版本60"
     },
     {
       "id": "z8v0kmrg8a",

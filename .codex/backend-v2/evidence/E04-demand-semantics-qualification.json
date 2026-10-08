@@ -1,0 +1,113 @@
+{
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "verifiedAt": "2026-10-08T01:00:40.145794+00:00",
+  "scope": "Sun2024原始数据单位、实验阶段及逐日聚合的资格核验",
+  "productionAdmission": false,
+  "inputSha256": "debb6104d928bd932bf089487d653ed0aa4c4498f8bc257a772776f58b1943c3",
+  "independentChecks": {
+    "pairedAggregation": {
+      "comparedPotDays": 960,
+      "dailyToSampleSumRatio": {
+        "min": 0.1472963154644839,
+        "median": 0.9989974876857781,
+        "max": 3.0224631011928818
+      },
+      "maxAbsoluteErrorVsThreeTimesSum": 459.54903520404525,
+      "perDay": [
+        {
+          "excelDay": 43734,
+          "samples": 480,
+          "ratioMin": 0.5841080523942049,
+          "ratioMedian": 0.9991493917463633,
+          "ratioMax": 3.0224631011928818
+        },
+        {
+          "excelDay": 43735,
+          "samples": 480,
+          "ratioMin": 0.5623755412492595,
+          "ratioMedian": 0.9992558037238106,
+          "ratioMax": 2.9455614880787753
+        },
+        {
+          "excelDay": 43736,
+          "samples": 480,
+          "ratioMin": 0.6333578206583498,
+          "ratioMedian": 0.9988944614723123,
+          "ratioMax": 2.5074617911525836
+        },
+        {
+          "excelDay": 43737,
+          "samples": 480,
+          "ratioMin": 0.6129073428130335,
+          "ratioMedian": 0.9995309438836462,
+          "ratioMax": 1.9846968585877756
+        },
+        {
+          "excelDay": 43738,
+          "samples": 480,
+          "ratioMin": 0.4869270238281196,
+          "ratioMedian": 0.9991604303338786,
+          "ratioMax": 1.5601343153482048
+        },
+        {
+          "excelDay": 43739,
+          "samples": 480,
+          "ratioMin": 0.5271093742087832,
+          "ratioMedian": 0.9993442765446088,
+          "ratioMax": 1.2618111300989714
+        },
+        {
+          "excelDay": 43740,
+          "samples": 480,
+          "ratioMin": 0.6475997472740254,
+          "ratioMedian": 0.9985130218549978,
+          "ratioMax": 1.0378903246704128
+        },
+        {
+          "excelDay": 43741,
+          "samples": 480,
+          "ratioMin": 0.7589840565457814,
+          "ratioMedian": 0.9983695143980049,
+          "ratioMax": 1.0020821872089003
+        },
+        {
+          "excelDay": 43742,
+          "samples": 480,
+          "ratioMin": 0.6635376449923117,
+          "ratioMedian": 0.9993527171963914,
+          "ratioMax": 1.0029018306867377
+        },
+        {
+          "excelDay": 43743,
+          "samples": 480,
+          "ratioMin": 0.1472963154644839,
+          "ratioMedian": 0.9987237739139996,
+          "ratioMax": 1.1329568324389014
+        }
+      ],
+      "unitsConfirmed": false,
+      "interpretationZh": "日表与三分钟序列合计不存在统一倍率；不据接近1的中位数或三分钟步长推断单位。"
+    },
+    "independentProbe": "/tmp/planting-e04-sun2024/aggregation-audit.json",
+    "replay": "python3 cloudfunctions-v2/scripts/inspect-sun-demand-data.py <原始工作簿>",
+    "agreement": "脚本与独立XML解析的960组逐日结果逐项一致",
+    "figureAndMethodsReview": "runtime_probe_terra独立读取官方Figure1图像和直接方法引用，无可补齐当前工作簿单位或停水日期的依据"
+  },
+  "decision": "该版本不准入数值拟合；明确测量字典/聚合处理/供排水阶段之前停止同源重复查询",
+  "notEstablished": [
+    "没有证明原作者数据错误，差异可能来自未说明的处理或目标量差异",
+    "没有确认任何质量、速率或VWC数值尺度",
+    "未发布模型参数或改变产品行为"
+  ],
+  "validation": {
+    "productBehaviorChanged": false,
+    "tddClaim": false,
+    "fullBackendTests": {
+      "files": 216,
+      "passed": 2159,
+      "failed": 0
+    }
+  },
+  "nextRequiredEvidence": "取得原始测量字典、日内到日表处理说明及完整供排水阶段后恢复资格核验；此前不再反复检索同一公开文件，不拟合或发布参数。可由条件明确的盆栽配对数据接续。"
+}

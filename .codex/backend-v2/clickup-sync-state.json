@@ -34,13 +34,13 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 59,
+      "version": 60,
       "status": "codex running",
-      "note": "E04：近期浇水日期/水量可分别未知，已写入完整计划\n当前盆土证据驱动剩余窗口；不填今天/零，不伪造历史\n无水量依据保持未知；E06动作记录不作为首次预测前置\n相关95/95、后端全量2159/2159；本轮未修改产品行为\n证据：.codex/backend-v2/evidence/E04-unknown-watering-history.json",
-      "commentId": "1100440000142333",
-      "commentFingerprint": "9647f06e1eea6d21e861c4719a27fca8795a46f3460ced0ea2bca8bcce70b4fe",
-      "readback": "ClickUp codex running与评论1100440000142333逐行读回，版本59",
-      "lastSuccessfulSyncAt": "2026-10-08T00:51:23.347Z"
+      "note": "E04：Sun2024候选的图轴、方法和960组日聚合核验完成\n日表/序列合计比0.1473～3.0225，无统一倍率，不猜单位\n恢复需测量字典、聚合和供排水记录；结束同源重复追查\n复核脚本与独立解析一致；后端全量2159/2159，无产品行为变更\n证据：.codex/backend-v2/evidence/E04-demand-semantics-qualification.json",
+      "commentId": "1100440000142393",
+      "commentFingerprint": "e6bda165ba06f58973b17599e1f2c37fd8d0e9d743b4a79a8827b42139426dee",
+      "readback": "ClickUp codex running与评论1100440000142393逐行读回，版本60",
+      "lastSuccessfulSyncAt": "2026-10-08T01:01:44.416Z"
     },
     "z8v0kmrg8a": {
       "version": 3,
@@ -83,10 +83,10 @@
       "readback": "原生ClickUp已逐字读回评论1100440000138268；只同步进度，不更改状态"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-08T00:51:23.347Z",
+  "lastSuccessfulSyncAt": "2026-10-08T01:01:44.416Z",
   "h5Projection": {
-    "fingerprint": "3487256fc30ed61c029d65feb332075a8f14a9fc619d07ccbc3110c41c5ad1eb",
-    "sourceRevision": 139,
-    "sourceUpdatedAt": "2026-10-08T00:50:57.080Z"
+    "fingerprint": "92294906d2e409c7ff674785662b9fcae816c3430447199114ea477a86c6d693",
+    "sourceRevision": 140,
+    "sourceUpdatedAt": "2026-10-08T01:01:12.802Z"
   }
 }
