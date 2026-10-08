@@ -1,22 +1,22 @@
 {
-  "revision": 135,
+  "revision": 137,
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
-  "updatedAt": "2026-10-08T00:26:50.470948+00:00",
+  "updatedAt": "2026-10-08T00:37:52.520770+00:00",
   "goal": "首次解决植物问题 → 显式保存或绑定植物 → 后续养护与复访",
   "checkpoint": {
-    "target": "E04 从已验证根区状态映射计算观察后的剩余窗口并接当地日期",
+    "target": "E04 同盆环境与根区水分配对数据资格核验",
     "keyAssumptions": [
-      "只消费显式映射结果，不将湿干标签换成天数",
-      "状态和环境响应发布仍pending，不授予生产资格"
+      "只使用原作者实际提供的记录与方法",
+      "覆盖盆土的植株蒸腾不能直接代表开放盆整盆失水"
     ],
-    "configurationDecision": "无新阈值或默认值；复用已确认区间积分与安全门，数据映射发布保持pending",
-    "minimumVerification": "独立数学Expected、观察到now缺段/过期/新浇水、日期与安全门接线、后端全量",
-    "continueCondition": "数学输入与当前合同边界明确",
-    "failureCondition": "缺定量映射时只返回缺证据，不扩写猜测规则",
-    "rollback": "撤回观察分支接线，保留原历史积分",
-    "timeLimitMinutes": 30,
-    "nextAction": "沿E04继续取得室内温湿度与同盆净失水/根区状态配对证据，验证环境需求和定量映射；不回到Camunda、不改Tropicals同步任务"
+    "configurationDecision": "不新增倍率、阈值或正式默认值；现有环境响应与状态映射保持pending",
+    "minimumVerification": "原始文件SHA、同盆同刻配对、单位、缺测、实验条件和数据使用边界",
+    "continueCondition": "能定位原始文件及明确字段语义",
+    "failureCondition": "单位或目标量缺失则停止拟合，不把表名或论文图线当准入证明",
+    "rollback": "仅撤回候选数据引用；运行策略和历史记录不变",
+    "timeLimitMinutes": 20,
+    "nextAction": "补齐Sun2024候选的测量字典和实验阶段；普通盆栽同盆称重、根区及供排水记录仍是日期与水量准入的必要数据，不新增猜测倍率"
   },
   "tasks": [
     {
@@ -132,10 +132,10 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 57,
+      "version": 58,
       "priority": "high",
       "status": "codex running",
-      "stage": "观察起点剩余窗口离线切片已验证；真实映射与环境响应待准入",
+      "stage": "同盆同期研究数据结构已核验；测量字典与普通盆栽标定待补齐",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -191,18 +191,19 @@
         ".codex/backend-v2/evidence/E04-indoor-climate-envelope.json",
         ".codex/backend-v2/evidence/E04-qweather-hourly-evidence.json",
         ".codex/backend-v2/evidence/E04-model-verification-readiness.json",
-        ".codex/backend-v2/evidence/E04-observed-remaining-cycle.json"
+        ".codex/backend-v2/evidence/E04-observed-remaining-cycle.json",
+        ".codex/backend-v2/evidence/E04-paired-demand-data.json"
       ],
       "summary": [
-        "E04：定量观察→剩余干燥窗口→当地日期已接线，历史与基线保留",
-        "需求增强日期提前、保水增强推后；缺历史不造事实，湿土安全门仍优先",
-        "24项新用例；经典RED与资格守卫突变RED→恢复；全量2159/2159",
-        "真实状态映射、室内/VPD响应及实际水量未准入；Camunda按用户要求延后",
-        "证据：.codex/backend-v2/evidence/E04-observed-remaining-cycle.json"
+        "E04：原作者96盆×4800时刻数据已核验，完整配对460798条",
+        "光照/VPD/蒸腾/水分可同期关联；两格缺水分，不补零",
+        "物理单位与实验阶段未确认；覆膜蒸腾不当整盆耗水，未发布倍率",
+        "后端全量2159/2159；Camunda继续延后，未改Tropicals纠偏函数",
+        "证据：.codex/backend-v2/evidence/E04-paired-demand-data.json"
       ],
       "blockingReason": null,
-      "nextAction": "沿E04继续取得室内温湿度与同盆净失水/根区状态配对证据，验证环境需求和定量映射；不回到Camunda、不改Tropicals同步任务",
-      "ticketReadback": "ClickUp codex running与评论1100440000142234逐行读回，版本57"
+      "nextAction": "补齐Sun2024候选的测量字典和实验阶段；普通盆栽同盆称重、根区及供排水记录仍是日期与水量准入的必要数据，不新增猜测倍率",
+      "ticketReadback": "ClickUp codex running与评论1100440000142273逐行读回，版本58"
     },
     {
       "id": "z8v0kmrg8a",
@@ -475,7 +476,7 @@
       ]
     }
   ],
-  "nextAction": "解锁后用模型副本逐个打开、查看规则、保存重开；并等待真实室内温湿度记录来源以推进和风配对验证",
+  "nextAction": "补齐Sun2024候选的测量字典和实验阶段；普通盆栽同盆称重、根区及供排水记录仍是日期与水量准入的必要数据，不新增猜测倍率",
   "sourceBoundary": "队列不等于远端当前状态；只同步 tasks 中经主代理确认的增量",
   "readAdmission": {
     "task": "E00 当前 Master Plan 锁定",

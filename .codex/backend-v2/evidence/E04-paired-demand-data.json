@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "recordedAt": "2026-10-08T00:37:52.520770+00:00",
+  "scope": "原始配对数据资格核验；无产品行为或生产配置变更",
+  "sourceQualification": "cloudfunctions-v2/models/care/environment-demand-paired-data.json",
+  "replayTool": "cloudfunctions-v2/scripts/inspect-sun-demand-data.py",
+  "verified": {
+    "originalBytes": 8685701,
+    "originalSha256": "debb6104d928bd932bf089487d653ed0aa4c4498f8bc257a772776f58b1943c3",
+    "potIds": 96,
+    "timePoints": 4800,
+    "pairedNonmissingRows": 460798,
+    "missingSoilValues": 2,
+    "independentInspectionAgrees": true,
+    "unknownFileDigestRejected": true
+  },
+  "validation": {
+    "kind": "文件结构与来源语义审查，不作为模型TDD或真实植物校准",
+    "fullUnitTests": {
+      "command": "npm test",
+      "filesPassed": 216,
+      "testsPassed": 2159,
+      "exitCode": 0,
+      "logSha256": "7ffc4d7408f91c30c3fd87709fc7ce24af7d7be1614e7b1b8cf91f7047848aea"
+    },
+    "noNewProductBehavior": true
+  },
+  "limits": [
+    "物理单位、归一化、时区与实验阶段未确认",
+    "覆膜植株蒸腾不是开放盆整盆耗水",
+    "无逐次供排水与原始盆重，不能形成实际施水量",
+    "无新模型拟合、生产准入、真实HTTP或数据库验收"
+  ],
+  "productionAdmission": false,
+  "accepted": false
+}

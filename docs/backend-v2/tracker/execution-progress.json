@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T00:26:50.470948+00:00",
-  "sourceRevision": 135,
-  "sourceUpdatedAt": "2026-10-08T00:26:50.470948+00:00",
+  "generatedAt": "2026-10-08T00:37:52.520770+00:00",
+  "sourceRevision": 137,
+  "sourceUpdatedAt": "2026-10-08T00:37:52.520770+00:00",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -123,16 +123,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 57,
+      "version": 58,
       "status": "codex running",
-      "stage": "观察起点剩余窗口离线切片已验证；真实映射与环境响应待准入",
+      "stage": "同盆同期研究数据结构已核验；测量字典与普通盆栽标定待补齐",
       "accepted": false,
       "summary": [
-        "E04：定量观察→剩余干燥窗口→当地日期已接线，历史与基线保留",
-        "需求增强日期提前、保水增强推后；缺历史不造事实，湿土安全门仍优先",
-        "24项新用例；经典RED与资格守卫突变RED→恢复；全量2159/2159",
-        "真实状态映射、室内/VPD响应及实际水量未准入；Camunda按用户要求延后",
-        "证据：.codex/backend-v2/evidence/E04-observed-remaining-cycle.json"
+        "E04：原作者96盆×4800时刻数据已核验，完整配对460798条",
+        "光照/VPD/蒸腾/水分可同期关联；两格缺水分，不补零",
+        "物理单位与实验阶段未确认；覆膜蒸腾不当整盆耗水，未发布倍率",
+        "后端全量2159/2159；Camunda继续延后，未改Tropicals纠偏函数",
+        "证据：.codex/backend-v2/evidence/E04-paired-demand-data.json"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -188,15 +188,16 @@
         ".codex/backend-v2/evidence/E04-indoor-climate-envelope.json",
         ".codex/backend-v2/evidence/E04-qweather-hourly-evidence.json",
         ".codex/backend-v2/evidence/E04-model-verification-readiness.json",
-        ".codex/backend-v2/evidence/E04-observed-remaining-cycle.json"
+        ".codex/backend-v2/evidence/E04-observed-remaining-cycle.json",
+        ".codex/backend-v2/evidence/E04-paired-demand-data.json"
       ],
       "blockingReason": null,
-      "nextAction": "沿E04继续取得室内温湿度与同盆净失水/根区状态配对证据，验证环境需求和定量映射；不回到Camunda、不改Tropicals同步任务",
+      "nextAction": "补齐Sun2024候选的测量字典和实验阶段；普通盆栽同盆称重、根区及供排水记录仍是日期与水量准入的必要数据，不新增猜测倍率",
       "sync": {
-        "version": 57,
+        "version": 58,
         "status": "codex running",
         "matched": true,
-        "readback": "ClickUp codex running与评论1100440000142234逐行读回，版本57"
+        "readback": "ClickUp codex running与评论1100440000142273逐行读回，版本58"
       }
     },
     {

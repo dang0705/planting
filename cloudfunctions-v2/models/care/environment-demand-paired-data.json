@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "ticketId": "z8v0kmr973",
+  "verifiedOn": "2026-10-08",
+  "status": "paired_structure_verified_semantics_pending",
+  "productionAdmission": false,
+  "acceptedForAbsoluteDemand": false,
+  "acceptedForWholePotWaterLoss": false,
+  "acceptedForWaterAmount": false,
+  "source": {
+    "title": "Converging functional phenotyping with systems mapping to illuminate the genotype–phenotype associations",
+    "authors": [
+      "Ting Sun",
+      "Zheng Shi",
+      "Rujia Jiang",
+      "Menachem Moshelion",
+      "Pei Xu"
+    ],
+    "doi": "10.1093/hr/uhae256",
+    "paperUrl": "https://academic.oup.com/hr/article/11/12/uhae256/7753520",
+    "repositoryUrl": "https://github.com/suntingsd/System-mapping",
+    "downloadUrl": "https://raw.githubusercontent.com/suntingsd/System-mapping/main/game_debug/20190926_20191005_32genotype.xlsx",
+    "articleLicense": "CC BY 4.0",
+    "datasetLicenseConfirmed": false,
+    "rawDataRedistributed": false
+  },
+  "inspection": {
+    "bytes": 8685701,
+    "sha256": "debb6104d928bd932bf089487d653ed0aa4c4498f8bc257a772776f58b1943c3",
+    "tables": {
+      "genotype": {
+        "dataRows": 96,
+        "columns": 2
+      },
+      "Transpiration": {
+        "dataRows": 4800,
+        "columns": 97,
+        "rawRange": {
+          "min": 0.0,
+          "max": 1.8732045454491315
+        }
+      },
+      "environment": {
+        "dataRows": 4800,
+        "columns": 3,
+        "fields": {
+          "PAR": {
+            "min": 0.0,
+            "max": 1082.0
+          },
+          "VPD": {
+            "min": 0.3737607646352175,
+            "max": 3.2261240164287504
+          }
+        }
+      },
+      "soil VWC": {
+        "dataRows": 4800,
+        "columns": 97,
+        "rawRange": {
+          "min": 0.07603146135807037,
+          "max": 0.5406452417373657
+        }
+      },
+      "Daily Transpiration": {
+        "dataRows": 10,
+        "columns": 97,
+        "rawRange": {
+          "min": 3.9400000000000546,
+          "max": 230.18090909090824
+        }
+      }
+    },
+    "missingData": [
+      {
+        "sheet": "soil VWC",
+        "cell": "AF4431",
+        "heading": "A04",
+        "record": 43743.22708333333
+      },
+      {
+        "sheet": "soil VWC",
+        "cell": "BM4434",
+        "heading": "A13",
+        "record": 43743.23333333333
+      }
+    ],
+    "genotypeCount": 32,
+    "potsPerGenotype": {
+      "3": 32
+    },
+    "identicalTimeGrids": true,
+    "samePotHeaders": true,
+    "timeStepMinutes": [
+      3.0
+    ],
+    "timeStartWithoutZone": "2019-09-26 00:00:00",
+    "timeEndWithoutZone": "2019-10-05 23:57:00",
+    "pairedNonmissingRows": 460798,
+    "scope": "file_structure_only"
+  },
+  "measurementBoundaryZh": [
+    "PAR与VPD是共享环境记录，不能声称逐盆实测。",
+    "实验使用陶瓷颗粒基质并覆膜抑制蒸发，观测目标是植株蒸腾，不是开放盆整盆耗水。",
+    "论文称六天分析，工作簿包含十天；未凭日期或趋势猜测停水阶段。",
+    "论文重复数表述不一致；96盆标识、32品系各3个标识是文件结构事实，不能据此推断每盆株数。"
+  ],
+  "unresolvedZh": [
+    "PAR与VPD数值单位；不依据数值范围猜测。",
+    "蒸腾的质量与时间单位、体重归一化、聚合及预处理方法。",
+    "体积含水量的数值尺度与针对该基质的传感器标定。",
+    "采集时区、实验阶段、逐次实际浇水与排水、原始盆重。",
+    "数据文件复用许可范围及普通盆栽场景的外部验证。"
+  ],
+  "checkedMetadataRefs": [
+    "https://github.com/suntingsd/System-mapping/blob/main/game_debug/debug.R",
+    "https://github.com/suntingsd/System-mapping/blob/main/game_debug/test_sup.R",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC11630247/"
+  ],
+  "metadataFindingZh": "已核验作者绘图脚本仅标变量名称；论文补充ZIP仅有SNP关联Table S1，无测量字典。",
+  "reproduce": "python3 cloudfunctions-v2/scripts/inspect-sun-demand-data.py <原始工作簿路径>",
+  "nextActionZh": "补齐这一候选的测量字典与实验阶段，再限定研究比较；整盆干湿循环和水量另需真实普通盆栽同盆称重、供排水与根区记录。"
+}
