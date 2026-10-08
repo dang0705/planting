@@ -49,7 +49,7 @@ async function insertRelease(ref: string, body: Record<string, unknown>, release
       (release_ref, domain_code, policy_code, schema_version, release_version, content_sha256,
        policy_json, status, effective_at_ms, verified_at_ms, created_at_ms, updated_at_ms)
       VALUES (?, 'identity', 'identity_sessions', ?, ?, ?, CAST(? AS JSON), 'active', ?, ?, ?, ?)`,
-    [ref, body.contractVersion, releaseVersion, sha(body), JSON.stringify(body), now - hour, now - hour, now - hour, now - hour])
+    [ref, String(body.contractVersion), releaseVersion, sha(body), JSON.stringify(body), now - hour, now - hour, now - hour, now - hour])
     return result.insertId as number
   } finally { connection.release() }
 }

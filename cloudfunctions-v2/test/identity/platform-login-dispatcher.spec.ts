@@ -27,14 +27,14 @@ describe('多平台登录分派｜L3 unit_fake', () => {
     expect(String(fetch.mock.calls[1]![0])).toBe('https://developer.toutiao.com/api/apps/v2/jscode2session')
   })
   it('I2：只缺抖音配置时微信仍可登录，抖音失败关闭；小红书一律失败关闭', async () => {
-    const dispatch = createPlatformLoginDispatcher({ ...env, DOUYIN_APPID: undefined }, fetchFake() as unknown as typeof globalThis.fetch)
+    const dispatch = createPlatformLoginDispatcher((({ DOUYIN_APPID: _omit, ...rest }) => rest)(env), fetchFake() as unknown as typeof globalThis.fetch)
     expect((await dispatch('wechat', 'wx-code')).platform).toBe('wechat')
     await expect(dispatch('douyin', 'tt-code')).rejects.toMatchObject({ type: 'INTERNAL_IDENTITY_CONFIGURATION_INVALID' })
     await expect(dispatch('xiaohongshu', 'xhs-code')).rejects.toMatchObject({ type: 'INTERNAL_IDENTITY_CONFIGURATION_INVALID' })
   })
   it('I2：缺 HMAC 密钥时所有平台失败关闭，不调用外部接口', async () => {
     const fetch = fetchFake()
-    const dispatch = createPlatformLoginDispatcher({ ...env, PLATFORM_SUBJECT_HMAC_KEY_V1: undefined }, fetch as unknown as typeof globalThis.fetch)
+    const dispatch = createPlatformLoginDispatcher((({ PLATFORM_SUBJECT_HMAC_KEY_V1: _omit, ...rest }) => rest)(env), fetch as unknown as typeof globalThis.fetch)
     await expect(dispatch('wechat', 'wx-code')).rejects.toMatchObject({ type: 'INTERNAL_IDENTITY_CONFIGURATION_INVALID' })
     await expect(dispatch('douyin', 'tt-code')).rejects.toMatchObject({ type: 'INTERNAL_IDENTITY_CONFIGURATION_INVALID' })
     expect(fetch).not.toHaveBeenCalled()

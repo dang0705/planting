@@ -2,6 +2,7 @@ import { createHmac, createSecretKey, hkdfSync } from 'node:crypto'
 import { createServer, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { GuestSessionInsert } from '../../src/identity/application/issue-guest-session.js'
 import { createGuestSessionRouteHandler, deriveGuestIssuanceSourceKey } from '../../src/identity/http/guest-session-route.js'
 
 /**
@@ -29,7 +30,7 @@ afterEach(async () => { const current = server; server = null; if (current) { aw
 async function harness(overrides: Overrides = {}) {
   const repository = {
     countIssuedSince: vi.fn().mockResolvedValue(overrides.count ?? 0),
-    insert: vi.fn(overrides.insert ?? (async () => undefined)),
+    insert: vi.fn(async (_record: GuestSessionInsert) => { await (overrides.insert ?? (async () => undefined))() }),
   }
   const exchange = overrides.exchange === undefined ? vi.fn(async () => 'douyin-anon-openid-1') : overrides.exchange
   const audits: unknown[] = []
