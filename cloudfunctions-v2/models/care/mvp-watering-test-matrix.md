@@ -119,3 +119,20 @@ Break：保水倍率被乘而不是除 → 窗口方向错。Mutation：把需�
 | I5 | — | — | — | N/A：只读请求，无写入 |
 
 Break：查询漏掉 `timeformat=unixtime` → 标准化器按时间格式拒绝。Mutation：删除该参数 → Happy 用例应红。
+
+## G. `parseWateringAdviceRequest`（HTTP 请求体 → 内部命令）
+
+层次：L1 `unit_fake`（纯 DTO 校验与映射）。Expected 来源：`watering-advice-http-contract.md`（用户 2026-10-08 冻结）＋宪章“未知字段拒绝、DTO 校验在用例前”。`now` 显式注入。
+
+| 维 | 用例 | 形态 | Expected 来源 | 状态 |
+|---|---|---|---|---|
+| U2 Happy | 完整请求 → 命令：坐标 31.23456/121.47321 → 31.23/121.47；南向 → 180°；时间转 UTC 毫秒；`none` 玻璃保留 | Happy | 合同字段表 | 待写 |
+| U2 边界 | 指南针 359.9° 配北向 → 采用 359.9；纬度 ±90、经度 ±180 接受 | Edge | 合同“指南针优先且须同扇区” | 待写 |
+| U1 空缺 | 只填必填项 → 可选项为 null、材料为空数组、盆器各项为 null | Edge | 合同“可选项缺失不补默认” | 待写 |
+| U1 空缺 | 缺 target / location / 朝向 → 校验失败；临时案例缺 catalogTaxonRef → 校验失败 | Edge | 合同必填列 | 待写 |
+| U1 元素洞 | `substrateMaterials: [null, 'peat']` → 校验失败（脏列表在边界拒绝） | Edge | skill U1 外延＋宪章 DTO 严格校验 | 待写 |
+| U3 非法 | 未知字段、未知材料、Lux 为负、非 UTC 时间、观察时间晚于 now、指南针与方位扇区不一致 → 校验失败 | Edge | 合同 | 待写 |
+| Reverse | 校验失败结果不回显输入值（不含坐标或引用原文） | Reverse | 宪章公开响应脱敏 | 待写 |
+| U4–U7 | — | — | — | N/A：纯函数无写入、无共享状态、无本地态 |
+
+Break：坐标未四舍五入即进入存储。Mutation：去掉两位小数取整 → Happy 用例应红。
