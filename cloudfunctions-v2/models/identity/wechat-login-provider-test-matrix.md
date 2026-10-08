@@ -44,3 +44,16 @@ Break：把 40163（code 已用）当成系统错误会让前端误重试同一 
 | I1 Happy | 有效 code → 证据只含平台、应用范围与 `HMAC-SHA256(key, openid)` 摘要及版本 v1，不含 openid 原文 | Happy | 待写 |
 | I2 缺配置 | 缺 AppID / AppSecret / HMAC 密钥，或密钥解码后不足 32 字节 → 创建时抛配置错误（拒绝登录，不回退） | Edge | 待写 |
 | I3 | 微信返回 40029 → PRINCIPAL_INVALID 原样透出 | Edge | 待写 |
+
+## 抖音登录适配器 `createDouyinMiniprogramCredentialProvider`（E03）
+
+层次 L3 `unit_fake`：只替换 fetch。Expected 来源：`multi-platform-identity-research.md` 第 2 节（抖音官方 `POST https://developer.toutiao.com/api/apps/v2/jscode2session`，JSON `{appid, secret, code, anonymous_code}`，响应 `{err_no, err_tips, data:{openid, anonymous_openid, unionid, session_key}}`，40018 code 无效、40019 anonymous_code 无效）＋配置目录 `douyin_miniprogram_login`（用户 2026-10-09 批准）。
+
+| 维 | 用例 | 形态 | 状态 |
+|---|---|---|---|
+| I1 Happy | code 登录：POST JSON 参数正确，返回 `{platform:'douyin', appScope, normalizedSubject: openid}`，丢弃 session_key/unionid | Happy | 待写 |
+| I1 Happy | 匿名换取：只传 anonymous_code → 返回 anonymous_openid | Happy | 待写 |
+| I3 | err_no 40018/40019 → PRINCIPAL_INVALID；-1/40015/40017/其他 → Provider 不可用；HTTP 非 2xx、网络错误、超时 → Provider 不可用；只调用 1 次 | Edge | 待写 |
+| I2 | data 缺 openid（或匿名换取缺 anonymous_openid）→ Provider 不可用 | Edge | 待写 |
+| I4 Reverse | 平台不是 douyin、appScope 不符、code 非法 → 不发请求 | Reverse | 待写 |
+| 脱敏 | 错误不含 secret、code、openid | Reverse | 待写 |
