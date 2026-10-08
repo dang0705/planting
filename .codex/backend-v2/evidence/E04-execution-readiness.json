@@ -1,0 +1,58 @@
+{
+  "verifiedAt": "2026-10-08T01:20:14.465222Z",
+  "ticketId": "z8v0kmr973",
+  "step": "E04",
+  "accepted": false,
+  "scope": "只核对E04现有观察起点、安全门、日期接线及原E05题包接续点；未扩大架构读取",
+  "previousTurnClassification": "progress：de470ef8加入真实72盆称重回放，不能替代正式模型准入",
+  "e04Verified": [
+    "未知浇水历史不阻断可靠当前根区安全判断",
+    "合格观察状态从采集时刻积分到当前与未来，不重新从零计时",
+    "表土/过期/未验证映射不构成定量根区依据",
+    "排水和湿土安全门保持优先；没有发现已确认规则的确定缺陷"
+  ],
+  "actualBlocker": {
+    "scope": "正式室内估算、联合环境需求、当前状态到剩余窗口及实际施水量",
+    "requiredExternalEvidence": [
+      "普通盆栽同盆同期光照、室内温湿度与连续失水记录",
+      "有明确实际供排水、基质体积和目标根区状态的样本",
+      "可将简单观察映射到状态区间的独立验证资料"
+    ],
+    "prohibitedSubstitutes": [
+      "研究物种固定速率直接发布",
+      "文献数值拼成通用默认参数",
+      "把用户未知日期补今天或未知水量补零"
+    ],
+    "userQuestion": "能否安排后台采样；不向小程序用户增加专业输入"
+  },
+  "e05ContinuationCorrection": {
+    "ticketId": "z8v0kmrg8a",
+    "relatedImplementationTicket": "z8v0kmr974",
+    "verified": "服务端题包快照、归属及复合答案提交已有实现与既有持久化证据，本轮相关测试通过；不重新实施",
+    "remaining": "答案申报语义审核稿、正式CMS/Provider及真实身份闭环仍未验收",
+    "pendingReview": "cloudfunctions-v2/models/diagnosis/answer-finding-review.md"
+  },
+  "tests": {
+    "command": "npm --prefix cloudfunctions-v2 test -- test/diagnosis/question-package-snapshot.spec.ts test/diagnosis/submit-diagnosis-answers.spec.ts test/diagnosis/diagnosis-answer-http.spec.ts test/care/watering",
+    "files": 12,
+    "passed": 131,
+    "exitCode": 0,
+    "layer": "既有unit_fake/unit_real_data，不是本轮真实HTTP/MySQL验收",
+    "full": {
+      "command": "npm test",
+      "files": 217,
+      "passed": 2164,
+      "exitCode": 0,
+      "log": "/tmp/e04-dependency-audit-full.log",
+      "sha256": "9c9ff406d17220ebf17c0e0b02a109e25d238644c7d974b52733430e0f6ffe58"
+    }
+  },
+  "productChange": false,
+  "newTdd": false,
+  "goalCompleted": false,
+  "blockedAudit": {
+    "consecutiveVerifiedImpassesThisAudit": 1,
+    "goalStatus": "active",
+    "note": "本轮只首次登记可执行性阻断；不得据此把整个目标标记blocked或complete"
+  }
+}

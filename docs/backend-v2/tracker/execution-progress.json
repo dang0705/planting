@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-08T01:16:01.797473Z",
-  "sourceRevision": 141,
-  "sourceUpdatedAt": "2026-10-08T01:16:01.797473Z",
+  "generatedAt": "2026-10-08T01:20:14.465222Z",
+  "sourceRevision": 142,
+  "sourceUpdatedAt": "2026-10-08T01:20:14.465222Z",
   "currentStep": "E04",
   "currentTicketId": "z8v0kmr973",
   "tasks": [
@@ -123,16 +123,16 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 61,
-      "status": "codex running",
-      "stage": "同盆称重预测对照已验证；正式状态映射、环境响应与水量待标定",
+      "version": 62,
+      "status": "blocked",
+      "stage": "正式预测与施水量等待后台标定资料；已有数学和安全路径已核对",
       "accepted": false,
       "summary": [
-        "E04：72盆真实称重完成固定起点预测，未来数据不参与预测",
-        "最近失水对照误差0.257/0.573克；两步均69盆优于保持状态",
-        "仅研究回放；历史日期和水量仍可未知，不增加用户称重输入",
-        "突变RED后恢复；相关100/100、后端全量2164/2164",
-        "证据：.codex/backend-v2/evidence/E04-gravimetric-forecast.json"
+        "E04：现有观察起点、未知历史与安全判断已核对，无确定新缺陷",
+        "正式日期/水量等待同盆环境、根区、失水及供排水标定资料",
+        "后台采样条件已询问；不增加用户专业输入、不猜默认参数",
+        "相关131/131、全量2164/2164；研究回放不作为正式业务验收",
+        "证据：.codex/backend-v2/evidence/E04-execution-readiness.json"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -192,43 +192,45 @@
         ".codex/backend-v2/evidence/E04-paired-demand-data.json",
         ".codex/backend-v2/evidence/E04-unknown-watering-history.json",
         ".codex/backend-v2/evidence/E04-demand-semantics-qualification.json",
-        ".codex/backend-v2/evidence/E04-gravimetric-forecast.json"
+        ".codex/backend-v2/evidence/E04-gravimetric-forecast.json",
+        ".codex/backend-v2/evidence/E04-execution-readiness.json"
       ],
-      "blockingReason": null,
-      "nextAction": "继续现有E04标定：普通盆栽同盆环境、根区与供排水记录验证剩余目标穿越；不将研究对照直接发布为日期或水量策略",
+      "blockingReason": "缺普通盆栽同盆环境、根区状态、连续失水和供排水的可验证样本；研究资料不能替代正式映射。只阻断正式日期/水量，不阻断已登记的独立工作。",
+      "nextAction": "获得后台采样条件后执行既有标定方案；等待E05答案记录语义裁决，获批后推进原票独立业务，不重复实现题包快照。",
       "sync": {
-        "version": 61,
-        "status": "codex running",
+        "version": 62,
+        "status": "blocked",
         "matched": true,
-        "readback": "ClickUp codex running与评论1100440000142548逐行读回，版本61"
+        "readback": "ClickUp blocked与评论1100440000142578逐行读回，版本62"
       }
     },
     {
       "id": "z8v0kmrg8a",
       "step": "E05",
-      "version": 3,
+      "version": 4,
       "status": "codex running",
-      "stage": "V1题包内容复用与成员校验",
+      "stage": "题包快照与答案提交已有实现；语义归一及正式发布待验收",
       "accepted": false,
       "summary": [
-        "E05：首版只复用V1黄叶、萎蔫和虫害题包",
-        "真实内容固化：黄叶4题、萎蔫6题、八类虫害14条素材",
-        "服务端快照授权成员；复合题保留，客户端题包不授权",
-        "新增22项；选项守卫突变2项RED→恢复，全量1069/1069",
-        "题包生成、复合证据、CMS发布及真实HTTP仍未验收"
+        "E05接续点：服务端题包快照、归属和复合答案提交已有实现",
+        "对应实现与持久化历史证据归z8v0kmr974，不重复开发",
+        "本轮相关测试131/131；不冒充重新完成真实HTTP/MySQL验收",
+        "待答案申报语义确认、正式CMS/Provider及身份闭环验收",
+        "证据：.codex/backend-v2/evidence/E04-execution-readiness.json"
       ],
       "evidence": [
         ".codex/backend-v2/evidence/E05-candidate-preparation.json",
         ".codex/backend-v2/evidence/E05-source-claim-reader.json",
-        ".codex/backend-v2/evidence/E05-v1-question-package-reuse.json"
+        ".codex/backend-v2/evidence/E05-v1-question-package-reuse.json",
+        ".codex/backend-v2/evidence/E04-execution-readiness.json"
       ],
       "blockingReason": null,
-      "nextAction": "接服务端题包快照锁定、归属及复合答案校验，再接真实题包提交",
+      "nextAction": "复用z8v0kmr974已实现的快照、归属和提交；待答案申报语义确认后推进归一，正式CMS/Provider单独验收。",
       "sync": {
-        "version": 3,
+        "version": 4,
         "status": "codex running",
         "matched": true,
-        "readback": "Chrome CODEX RUNNING及五行评论1100440000090220已读回"
+        "readback": "ClickUp codex running与评论1100440000142579逐行读回，版本4"
       }
     },
     {
@@ -388,6 +390,6 @@
       }
     }
   ],
-  "lastSuccessfulSyncAt": "2026-10-08T01:16:32.850049Z",
+  "lastSuccessfulSyncAt": "2026-10-08T01:21:22.536886Z",
   "lastFailure": null
 }

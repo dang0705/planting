@@ -34,21 +34,22 @@
       "readback": "Chrome 已读回 codex running 与四行配置接续评论"
     },
     "z8v0kmr973": {
-      "version": 61,
-      "status": "codex running",
-      "note": "E04：72盆真实称重完成固定起点预测，未来数据不参与预测\n最近失水对照误差0.257/0.573克；两步均69盆优于保持状态\n仅研究回放；历史日期和水量仍可未知，不增加用户称重输入\n突变RED后恢复；相关100/100、后端全量2164/2164\n证据：.codex/backend-v2/evidence/E04-gravimetric-forecast.json",
-      "commentId": "1100440000142548",
-      "commentFingerprint": "777e572a474e831d61e7e847c9d189c62c6bc9cff8373532d594bea85fc66bcb",
-      "readback": "ClickUp codex running与评论1100440000142548逐行读回，版本61",
-      "lastSuccessfulSyncAt": "2026-10-08T01:16:32.850049Z"
+      "version": 62,
+      "status": "blocked",
+      "note": "E04：现有观察起点、未知历史与安全判断已核对，无确定新缺陷\n正式日期/水量等待同盆环境、根区、失水及供排水标定资料\n后台采样条件已询问；不增加用户专业输入、不猜默认参数\n相关131/131、全量2164/2164；研究回放不作为正式业务验收\n证据：.codex/backend-v2/evidence/E04-execution-readiness.json",
+      "commentId": "1100440000142578",
+      "commentFingerprint": "af941fe965d823a6ba0c16b662cfa377e1267c28cc22e32fc9e09459df341b3d",
+      "readback": "ClickUp blocked与评论1100440000142578逐行读回，版本62",
+      "lastSuccessfulSyncAt": "2026-10-08T01:21:22.536886Z"
     },
     "z8v0kmrg8a": {
-      "version": 3,
+      "version": 4,
       "status": "codex running",
-      "note": "E05：首版只复用V1黄叶、萎蔫和虫害题包\n真实内容固化：黄叶4题、萎蔫6题、八类虫害14条素材\n服务端快照授权成员；复合题保留，客户端题包不授权\n新增22项；选项守卫突变2项RED→恢复，全量1069/1069\n题包生成、复合证据、CMS发布及真实HTTP仍未验收",
-      "commentId": "1100440000090220",
-      "commentFingerprint": "4bf5eb154e7c45e1485d72889cab89e192818bb142e31006a7bbc95af59160f8",
-      "readback": "Chrome CODEX RUNNING及五行评论1100440000090220已读回"
+      "note": "E05接续点：服务端题包快照、归属和复合答案提交已有实现\n对应实现与持久化历史证据归z8v0kmr974，不重复开发\n本轮相关测试131/131；不冒充重新完成真实HTTP/MySQL验收\n待答案申报语义确认、正式CMS/Provider及身份闭环验收\n证据：.codex/backend-v2/evidence/E04-execution-readiness.json",
+      "commentId": "1100440000142579",
+      "commentFingerprint": "b5a913cd675e5ccbda8087c0e69480f8a8884a0c81c7b80c24f9d7a6cfacce2f",
+      "readback": "ClickUp codex running与评论1100440000142579逐行读回，版本4",
+      "lastSuccessfulSyncAt": "2026-10-08T01:21:22.536886Z"
     },
     "z8v0kmr974": {
       "version": 32,
@@ -83,10 +84,10 @@
       "readback": "原生ClickUp已逐字读回评论1100440000138268；只同步进度，不更改状态"
     }
   },
-  "lastSuccessfulSyncAt": "2026-10-08T01:16:32.850049Z",
+  "lastSuccessfulSyncAt": "2026-10-08T01:21:22.536886Z",
   "h5Projection": {
-    "fingerprint": "d074b518afb8ca31dba08f24185b264c67c38359a253147ccdf87fe11d532b6f",
-    "sourceRevision": 141,
-    "sourceUpdatedAt": "2026-10-08T01:16:01.797473Z"
+    "fingerprint": "a1f6e8c5cc026c92ab5b883308a1680e510d31540e1198533b9f0778f3985041",
+    "sourceRevision": 142,
+    "sourceUpdatedAt": "2026-10-08T01:20:14.465222Z"
   }
 }
