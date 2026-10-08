@@ -1,0 +1,349 @@
+{
+  "classification": "synthetic_experimental",
+  "productionAdmission": false,
+  "ticket": "z8v0kmr973",
+  "replay": {
+    "module": "cloudfunctions-v2/models/care/experiments/replay-irrigation-watering-sample.ts",
+    "export": "replayIrrigationWateringSample",
+    "rootSource": {
+      "path": "cloudfunctions-v2/models/care/root-zone-watering-sample-results.json",
+      "sha256": "6da0c5d5e024dc8a2a571731d045e2301cd64b420a7a55b76da4b6e0dba968d9",
+      "field": "baseSnapshot",
+      "patches": [
+        {
+          "path": [
+            "rootZone",
+            "water",
+            "currentVwc"
+          ],
+          "value": {
+            "min": 0.15,
+            "max": 0.15
+          }
+        },
+        {
+          "path": [
+            "environment",
+            "watering",
+            "soil",
+            "state"
+          ],
+          "value": "target_dry"
+        },
+        {
+          "path": [
+            "environment",
+            "watering",
+            "soil",
+            "targetCriteriaConfirmed"
+          ],
+          "value": true
+        }
+      ]
+    },
+    "outerInput": {
+      "classification": "synthetic_experimental",
+      "methodRef": "synthetic:slow-top-watering",
+      "application": {
+        "sourceRef": "synthetic:delivery-balance",
+        "plantReference": "synthetic-plant",
+        "cultivationRef": "synthetic:pot-substrate-v1",
+        "methodRef": "synthetic:slow-top-watering",
+        "observedAt": 1791417600000,
+        "rootObservationRef": "synthetic:root-zone-volume",
+        "waterBalanceAccounted": true,
+        "drainage": "free",
+        "retentionFraction": {
+          "min": 0.8,
+          "max": 0.8
+        },
+        "allowedNetAdditionMl": {
+          "min": 300,
+          "max": 320
+        },
+        "calibratedAppliedMl": {
+          "min": 0,
+          "max": 500
+        },
+        "maximumSingleApplicationMl": 390
+      }
+    },
+    "instructions": "读取锁定摘要的根区制品baseSnapshot并按rootSource.patches修改；作为outerInput.rootZone；对每个场景应用patches后调用模块。Expected见对应Vitest手算合同，结果不作为Expected来源。"
+  },
+  "scenarios": [
+    {
+      "id": "allowed",
+      "description": "明确合成条件下的单次施水候选",
+      "patches": [],
+      "result": {
+        "snapshotHash": "edf9e333cf87b1809cbf32f64d1812c5d16dcb5772d1a83d549fc187b9ef9160",
+        "productionAdmission": false,
+        "decision": {
+          "soilGate": "target_dry_confirmed",
+          "windowState": null,
+          "action": "water_allowed"
+        },
+        "currentCycleWindow": {
+          "status": "target_observed",
+          "observedAt": 1791417600000,
+          "ignoredObservationReason": null,
+          "window": {
+            "earliestCheckAt": 1791417600000,
+            "latestCheckAt": 1791417600000,
+            "coverageEnd": 1791417600000
+          }
+        },
+        "netDeficitMl": {
+          "min": 300,
+          "max": 300
+        },
+        "application": {
+          "productionAdmission": false,
+          "status": "candidate",
+          "requiredAppliedEnvelopeMl": {
+            "min": 375,
+            "max": 375
+          },
+          "appliedAmountCandidateMl": {
+            "min": 375,
+            "max": 390
+          },
+          "retainedEnvelopeMl": {
+            "min": 300,
+            "max": 312
+          }
+        }
+      }
+    },
+    {
+      "id": "wet",
+      "description": "湿土否决正净缺口",
+      "patches": [
+        {
+          "path": [
+            "rootZone",
+            "environment",
+            "watering",
+            "soil",
+            "state"
+          ],
+          "value": "wet"
+        }
+      ],
+      "result": {
+        "snapshotHash": "e09770e47543bcc5a9db4e8f8eadeddf271b143219e824a1d7b196f6aed09c31",
+        "productionAdmission": false,
+        "decision": {
+          "soilGate": "pause_watering",
+          "windowState": null,
+          "action": "pause_watering"
+        },
+        "currentCycleWindow": {
+          "status": "prediction_conflict",
+          "window": null,
+          "observedAt": 1791417600000,
+          "ignoredObservationReason": null
+        },
+        "netDeficitMl": {
+          "min": 300,
+          "max": 300
+        },
+        "application": {
+          "productionAdmission": false,
+          "status": "not_allowed_now",
+          "requiredAppliedEnvelopeMl": {
+            "min": 375,
+            "max": 375
+          },
+          "appliedAmountCandidateMl": null,
+          "retainedEnvelopeMl": null
+        }
+      }
+    },
+    {
+      "id": "limited_drainage",
+      "description": "有限排水没有本策略候选",
+      "patches": [
+        {
+          "path": [
+            "application",
+            "drainage"
+          ],
+          "value": "limited"
+        }
+      ],
+      "result": {
+        "snapshotHash": "4d619f67b2777fb447d6107e199d967f6f3286ce341bc0eeb7adaae6750afa29",
+        "productionAdmission": false,
+        "decision": {
+          "soilGate": "target_dry_confirmed",
+          "windowState": null,
+          "action": "water_allowed"
+        },
+        "currentCycleWindow": {
+          "status": "target_observed",
+          "observedAt": 1791417600000,
+          "ignoredObservationReason": null,
+          "window": {
+            "earliestCheckAt": 1791417600000,
+            "latestCheckAt": 1791417600000,
+            "coverageEnd": 1791417600000
+          }
+        },
+        "netDeficitMl": {
+          "min": 300,
+          "max": 300
+        },
+        "application": {
+          "productionAdmission": false,
+          "status": "unsupported_drainage",
+          "requiredAppliedEnvelopeMl": {
+            "min": 375,
+            "max": 375
+          },
+          "appliedAmountCandidateMl": null,
+          "retainedEnvelopeMl": null
+        }
+      }
+    },
+    {
+      "id": "insufficient_cap",
+      "description": "上限低于满足最低补水所需量",
+      "patches": [
+        {
+          "path": [
+            "application",
+            "maximumSingleApplicationMl"
+          ],
+          "value": 350
+        }
+      ],
+      "result": {
+        "snapshotHash": "a26dc41486d80acc5d6776b816e11db8f70a6cd93fa5daf1fc33eb4d4631ab2a",
+        "productionAdmission": false,
+        "decision": {
+          "soilGate": "target_dry_confirmed",
+          "windowState": null,
+          "action": "water_allowed"
+        },
+        "currentCycleWindow": {
+          "status": "target_observed",
+          "observedAt": 1791417600000,
+          "ignoredObservationReason": null,
+          "window": {
+            "earliestCheckAt": 1791417600000,
+            "latestCheckAt": 1791417600000,
+            "coverageEnd": 1791417600000
+          }
+        },
+        "netDeficitMl": {
+          "min": 300,
+          "max": 300
+        },
+        "application": {
+          "productionAdmission": false,
+          "status": "no_safe_single_application",
+          "requiredAppliedEnvelopeMl": {
+            "min": 375,
+            "max": 375
+          },
+          "appliedAmountCandidateMl": null,
+          "retainedEnvelopeMl": null
+        }
+      }
+    },
+    {
+      "id": "missing_profile",
+      "description": "缺供排水参考只保留净缺口与检查时刻",
+      "patches": [
+        {
+          "path": [
+            "application"
+          ],
+          "value": null
+        }
+      ],
+      "result": {
+        "snapshotHash": "e1191f60df6506705ce0041d54abf0affcafdc7918597263cdd37a97515e5121",
+        "productionAdmission": false,
+        "decision": {
+          "soilGate": "target_dry_confirmed",
+          "windowState": null,
+          "action": "water_allowed"
+        },
+        "currentCycleWindow": {
+          "status": "target_observed",
+          "observedAt": 1791417600000,
+          "ignoredObservationReason": null,
+          "window": {
+            "earliestCheckAt": 1791417600000,
+            "latestCheckAt": 1791417600000,
+            "coverageEnd": 1791417600000
+          }
+        },
+        "netDeficitMl": {
+          "min": 300,
+          "max": 300
+        },
+        "application": {
+          "productionAdmission": false,
+          "status": "insufficient_evidence",
+          "requiredAppliedEnvelopeMl": null,
+          "appliedAmountCandidateMl": null,
+          "retainedEnvelopeMl": null
+        }
+      }
+    },
+    {
+      "id": "contradictory_soil",
+      "description": "干燥标签与定量根区观察明确矛盾",
+      "patches": [
+        {
+          "path": [
+            "rootZone",
+            "rootZone",
+            "water",
+            "currentVwc"
+          ],
+          "value": {
+            "min": 0.2,
+            "max": 0.2
+          }
+        }
+      ],
+      "result": {
+        "snapshotHash": "0182d1360f0ef22f0923fa9cad65c84b5106abbf81360fc447e92e00df924648",
+        "productionAdmission": false,
+        "decision": {
+          "soilGate": "target_dry_confirmed",
+          "windowState": null,
+          "action": "water_allowed"
+        },
+        "currentCycleWindow": {
+          "status": "target_observed",
+          "observedAt": 1791417600000,
+          "ignoredObservationReason": null,
+          "window": {
+            "earliestCheckAt": 1791417600000,
+            "latestCheckAt": 1791417600000,
+            "coverageEnd": 1791417600000
+          }
+        },
+        "netDeficitMl": {
+          "min": 199.99999999999994,
+          "max": 199.99999999999994
+        },
+        "application": {
+          "productionAdmission": false,
+          "status": "conflicting_evidence",
+          "requiredAppliedEnvelopeMl": {
+            "min": 249.99999999999991,
+            "max": 249.99999999999991
+          },
+          "appliedAmountCandidateMl": null,
+          "retainedEnvelopeMl": null
+        }
+      }
+    }
+  ]
+}

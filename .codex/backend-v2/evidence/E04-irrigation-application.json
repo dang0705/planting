@@ -1,0 +1,97 @@
+{
+  "ticket": "z8v0kmr973",
+  "step": "E04",
+  "recordedAt": "2026-10-08T03:59:09.446196+00:00",
+  "scope": "同盆根区净缺口、安全门及供排水约束到离线施水候选",
+  "classification": "synthetic_experimental",
+  "productionAdmission": false,
+  "configurationDecision": "仅用户授权的显式合成条件；不发布留水比例、允许带宽或单次上限，不引入默认",
+  "expectedSources": [
+    {
+      "url": "https://www.fao.org/4/T7202E/t7202e08.htm",
+      "used": "净水量与浇入量概念；未采用田间效率值"
+    },
+    {
+      "url": "https://www.fao.org/4/U5835E/u5835e04.htm",
+      "used": "净量除以效率的守恒关系；未采用田间阈值"
+    },
+    "独立合同手算：允许净留水区间与比例极值的交集，不由SUT输出生成"
+  ],
+  "testLayer": [
+    "L1 unit_fake",
+    "L3 unit_fake"
+  ],
+  "validation": {
+    "readiness": "ready",
+    "expectedBeforeImplementation": true,
+    "mutationRed": [
+      {
+        "change": "最低补水量错误地除以留水比例上限",
+        "failed": 3,
+        "restoredByteForByte": true,
+        "restoredSha256": "cd3a6845d57d93deb25f96cf8908adc110c711df600be98a98e9abaf21ff99dd"
+      },
+      {
+        "change": "移除当前浇水安全门限制",
+        "failed": 4,
+        "restoredByteForByte": true,
+        "restoredSha256": "c1fa75c07a3068b8f38a71b37a64b53d8456fc6362b1a4aaf70083f1ee39243b"
+      }
+    ],
+    "green": {
+      "newTests": 37,
+      "fullCommand": "npm test",
+      "fullFiles": 224,
+      "fullPassed": 2285,
+      "fullFailed": 0,
+      "typecheck": "passed",
+      "lint": {
+        "files": 4,
+        "warnings": 33,
+        "errors": 0
+      }
+    }
+  },
+  "realPath": [
+    "原光照/室内热湿/非线性需求候选",
+    "根区体积剩余量及动态窗口",
+    "当前盆土与盆器安全决策",
+    "根区净缺口",
+    "守恒、允许净留水及上限交集"
+  ],
+  "replacedBoundaries": [
+    "全部环境、根区与供排水数据均为合成条件，内部计算未替身"
+  ],
+  "notProven": [
+    "家庭盆栽真实标定",
+    "生产参数与算法发布",
+    "前端输入到真实HTTP闭环",
+    "写入事实或计划"
+  ],
+  "artifacts": [
+    {
+      "path": "cloudfunctions-v2/models/care/experiments/irrigation-application.ts",
+      "sha256": "cd3a6845d57d93deb25f96cf8908adc110c711df600be98a98e9abaf21ff99dd"
+    },
+    {
+      "path": "cloudfunctions-v2/models/care/experiments/replay-irrigation-watering-sample.ts",
+      "sha256": "c1fa75c07a3068b8f38a71b37a64b53d8456fc6362b1a4aaf70083f1ee39243b"
+    },
+    {
+      "path": "cloudfunctions-v2/test/care/watering/irrigation-application.spec.ts",
+      "sha256": "fea9fda73431718127e7726122a5a9329c23f0e24e332c41885f1da8bc43a8af"
+    },
+    {
+      "path": "cloudfunctions-v2/test/care/watering/irrigation-watering-sample.spec.ts",
+      "sha256": "9cda1b37a0e7d9e10848bbd241be408eebe77e5a5f1ffdcafb9470a512cef7d5"
+    },
+    {
+      "path": "cloudfunctions-v2/models/care/irrigation-application-contract.md",
+      "sha256": "8262755a6113003acc7313de2889f2f3de0826497d47cb36bcfa1504fb5c25e0"
+    },
+    {
+      "path": "cloudfunctions-v2/models/care/irrigation-watering-sample-results.json",
+      "sha256": "387747d39cc77c3240b5a4de65998fd0f2f55657287765653c88654dcdb20caf"
+    }
+  ]
+}
