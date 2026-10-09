@@ -12,6 +12,10 @@ import { createMysqlTemporaryCaseRepository } from '../repository/mysql-temporar
 import { createTemporaryCaseRoute, createTemporaryCaseRouteHandler } from './create-temporary-case-route.js'
 import { claimGuestPlantCaseRoute } from './claim-guest-plant-case-route.js'
 import { createGuestClaimRouteHandler } from './guest-claim-wiring.js'
+import { createPutCatalogBindingRouteHandler, putUserPlantCatalogBindingRoute } from './put-catalog-binding-route.js'
+import { createPutCatalogBindingApplicationService } from '../application/put-catalog-binding.js'
+import { createMysqlTropicalsTaxonReader } from '../../plant-knowledge/repository/mysql-tropicals-taxon-reader.js'
+import { createUserBearerAuthenticator } from '../../identity/http/user-bearer-authenticator.js'
 import {
   createMysqlTransactionDriver,
   type MysqlConnectionPoolPort,
@@ -207,7 +211,20 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
     writeAudit: dependencies.writeAudit
   }
 
+  /** user-plant → plant-knowledge 只读适配：只确认目录引用存在。 */
+  const taxonReader = createMysqlTropicalsTaxonReader({
+    query: (sql, parameters) => withReadConnection(dependencies.connectionSource, connection => connection.query(sql, toSqlParameters(parameters)))
+  })
+  const putCatalogBinding = createPutCatalogBindingApplicationService({ driver, idempotencyRepository, commitUnknownReadOnlyRepository })
+
   const dispatch = createRouteDispatcher([
+    {
+      route: putUserPlantCatalogBindingRoute,
+      handler: createPutCatalogBindingRouteHandler({
+        authenticate: createUserBearerAuthenticator(resolvePrincipal), now: dependencies.now, writeAudit: dependencies.writeAudit,
+        catalogExists: async ref => (await taxonReader.read(ref)) !== null, putCatalogBinding
+      })
+    },
     {
       route: authenticatedEphemeralBindingRoute,
       handler: async (request, response, parameters) => {

@@ -387,6 +387,28 @@
       ]
     },
     {
+      "method": "PUT",
+      "path": "/api/v2/user-plants/{userPlantRef}/catalog-binding",
+      "operationId": "putUserPlantCatalogBinding",
+      "owner": "user-plant",
+      "phase": "P4",
+      "security": "authenticated",
+      "requestContract": "PutCatalogBindingRequest",
+      "responseContract": "CatalogBindingResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "USER_PLANT_NOT_FOUND",
+        "USER_PLANT_ARCHIVED",
+        "IDEMPOTENCY_CONFLICT",
+        "PAYLOAD_TOO_LARGE",
+        "UNSUPPORTED_MEDIA_TYPE",
+        "SERVICE_UNAVAILABLE",
+        "NOT_FOUND"
+      ]
+    },
+    {
       "method": "POST",
       "path": "/api/v2/care/watering-advice",
       "operationId": "createWateringAdvice",
@@ -399,11 +421,13 @@
       "errors": [
         "VALIDATION_FAILED",
         "PRINCIPAL_INVALID",
-        "NOT_FOUND",
+        "USER_PLANT_NOT_FOUND",
+        "USER_PLANT_ARCHIVED",
+        "IDEMPOTENCY_CONFLICT",
         "PAYLOAD_TOO_LARGE",
         "UNSUPPORTED_MEDIA_TYPE",
-        "IDEMPOTENCY_CONFLICT",
-        "SERVICE_UNAVAILABLE"
+        "SERVICE_UNAVAILABLE",
+        "NOT_FOUND"
       ]
     },
     {
@@ -436,7 +460,8 @@
       "errors": [
         "VALIDATION_FAILED",
         "PRINCIPAL_INVALID",
-        "USER_PLANT_NOT_FOUND"
+        "USER_PLANT_NOT_FOUND",
+        "SERVICE_UNAVAILABLE"
       ]
     },
     {
@@ -453,7 +478,11 @@
         "VALIDATION_FAILED",
         "PRINCIPAL_INVALID",
         "USER_PLANT_NOT_FOUND",
-        "IDEMPOTENCY_CONFLICT"
+        "USER_PLANT_ARCHIVED",
+        "IDEMPOTENCY_CONFLICT",
+        "PAYLOAD_TOO_LARGE",
+        "UNSUPPORTED_MEDIA_TYPE",
+        "SERVICE_UNAVAILABLE"
       ]
     },
     {
@@ -469,7 +498,8 @@
       "errors": [
         "VALIDATION_FAILED",
         "PRINCIPAL_INVALID",
-        "USER_PLANT_NOT_FOUND"
+        "USER_PLANT_NOT_FOUND",
+        "SERVICE_UNAVAILABLE"
       ]
     },
     {
@@ -486,7 +516,12 @@
         "VALIDATION_FAILED",
         "PRINCIPAL_INVALID",
         "USER_PLANT_NOT_FOUND",
-        "IDEMPOTENCY_CONFLICT"
+        "USER_PLANT_ARCHIVED",
+        "IDEMPOTENCY_CONFLICT",
+        "PAYLOAD_TOO_LARGE",
+        "UNSUPPORTED_MEDIA_TYPE",
+        "SERVICE_UNAVAILABLE",
+        "CARE_PROPOSAL_NOT_CONFIRMABLE"
       ]
     },
     {
@@ -503,7 +538,12 @@
         "VALIDATION_FAILED",
         "PRINCIPAL_INVALID",
         "USER_PLANT_NOT_FOUND",
-        "IDEMPOTENCY_CONFLICT"
+        "USER_PLANT_ARCHIVED",
+        "IDEMPOTENCY_CONFLICT",
+        "PAYLOAD_TOO_LARGE",
+        "UNSUPPORTED_MEDIA_TYPE",
+        "SERVICE_UNAVAILABLE",
+        "CARE_PLAN_VERSION_CONFLICT"
       ]
     },
     {

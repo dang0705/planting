@@ -43,6 +43,12 @@ export type PublicErrorType =
   | "AI_QUOTA_INSUFFICIENT"
   /** 游客会话的临时植物案例数量已达已发布上限（temporary-case/v1）。 */
   | "TEMPORARY_CASE_LIMIT_REACHED"
+  /** 用户植物已归档，只读（long-term-care/v1 U8）。 */
+  | "USER_PLANT_ARCHIVED"
+  /** 养护建议已确认、已忽略或已过期，不能再确认（long-term-care/v1）。 */
+  | "CARE_PROPOSAL_NOT_CONFIRMABLE"
+  /** 养护计划版本不符或已不是待办（long-term-care/v1）。 */
+  | "CARE_PLAN_VERSION_CONFLICT"
   | "INTERNAL_ERROR"
   | "SERVICE_UNAVAILABLE";
 
@@ -449,3 +455,5 @@ export type TemporaryCaseResponseDto = {
 
 /** 养护能力公开结果 DTO 拆分至独立文件（types.ts 500 行上限）。 */
 export type * from "./care-capability-types.js";
+/** 长期养护 DTO 拆分至独立文件（types.ts 500 行上限）。 */
+export type * from "./long-term-care-types.js";

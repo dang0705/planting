@@ -21,6 +21,32 @@ import {
 } from "./schemas.js";
 import { createTemporaryCaseRequestSchema, temporaryCaseResponseSchema } from "./temporary-case-schemas.js";
 import { careCapabilityResponseSchema } from "./care-capability-schemas.js";
+import {
+  putCatalogBindingRequestSchema,
+  catalogBindingResponseSchema,
+  createCareFactRequestSchema,
+  careFactResponseSchema,
+  carePlanSchema,
+  carePlanListResponseSchema,
+  confirmCareProposalRequestSchema,
+  careConfirmationResponseSchema,
+  completeCarePlanRequestSchema,
+  carePlanResponseSchema,
+  careSummaryResponseSchema,
+} from "./long-term-care-schemas.js";
+import type {
+  PutCatalogBindingRequestDto,
+  CatalogBindingResponseDto,
+  CreateCareFactRequestDto,
+  CareFactResponseDto,
+  CarePlanDto,
+  CarePlanListResponseDto,
+  ConfirmCareProposalRequestDto,
+  CareConfirmationResponseDto,
+  CompleteCarePlanRequestDto,
+  CarePlanResponseDto,
+  CareSummaryResponseDto,
+} from "./long-term-care-types.js";
 import type {
   CapabilitySnapshotDto,
   CareCapabilityResponseDto,
@@ -102,6 +128,28 @@ export function createPublicContractValidators(): {
   temporaryCaseResponse: ValidateFunction<TemporaryCaseResponseDto>;
   /** 浇水建议公开成功数据校验器；只允许 cres_ 结果引用与统一养护能力结果。 */
   careCapabilityResponse: ValidateFunction<CareCapabilityResponseDto>;
+  /** 长期养护 PutCatalogBindingRequestDto 校验器。 */
+  putCatalogBindingRequest: ValidateFunction<PutCatalogBindingRequestDto>;
+  /** 长期养护 CatalogBindingResponseDto 校验器。 */
+  catalogBindingResponse: ValidateFunction<CatalogBindingResponseDto>;
+  /** 长期养护 CreateCareFactRequestDto 校验器。 */
+  createCareFactRequest: ValidateFunction<CreateCareFactRequestDto>;
+  /** 长期养护 CareFactResponseDto 校验器。 */
+  careFactResponse: ValidateFunction<CareFactResponseDto>;
+  /** 长期养护 CarePlanDto 校验器。 */
+  carePlan: ValidateFunction<CarePlanDto>;
+  /** 长期养护 CarePlanListResponseDto 校验器。 */
+  carePlanListResponse: ValidateFunction<CarePlanListResponseDto>;
+  /** 长期养护 ConfirmCareProposalRequestDto 校验器。 */
+  confirmCareProposalRequest: ValidateFunction<ConfirmCareProposalRequestDto>;
+  /** 长期养护 CareConfirmationResponseDto 校验器。 */
+  careConfirmationResponse: ValidateFunction<CareConfirmationResponseDto>;
+  /** 长期养护 CompleteCarePlanRequestDto 校验器。 */
+  completeCarePlanRequest: ValidateFunction<CompleteCarePlanRequestDto>;
+  /** 长期养护 CarePlanResponseDto 校验器。 */
+  carePlanResponse: ValidateFunction<CarePlanResponseDto>;
+  /** 长期养护 CareSummaryResponseDto 校验器。 */
+  careSummaryResponse: ValidateFunction<CareSummaryResponseDto>;
   /** 游客会话认领命令校验器；保证新建植物与绑定已有植物的目标形状互斥。 */
   claimGuestSession: ValidateFunction<ClaimGuestSessionCommandDto>;
   /** 游客认领公开结果校验器；拒绝数据库内部键、用户归属、proof、租约和请求哈希。 */
@@ -156,6 +204,17 @@ export function createPublicContractValidators(): {
     createTemporaryCaseRequest: ajv.compile(createTemporaryCaseRequestSchema),
     temporaryCaseResponse: ajv.compile(temporaryCaseResponseSchema),
     careCapabilityResponse: ajv.compile(careCapabilityResponseSchema),
+    putCatalogBindingRequest: ajv.compile(putCatalogBindingRequestSchema),
+    catalogBindingResponse: ajv.compile(catalogBindingResponseSchema),
+    createCareFactRequest: ajv.compile(createCareFactRequestSchema),
+    careFactResponse: ajv.compile(careFactResponseSchema),
+    carePlan: ajv.compile(carePlanSchema),
+    carePlanListResponse: ajv.compile(carePlanListResponseSchema),
+    confirmCareProposalRequest: ajv.compile(confirmCareProposalRequestSchema),
+    careConfirmationResponse: ajv.compile(careConfirmationResponseSchema),
+    completeCarePlanRequest: ajv.compile(completeCarePlanRequestSchema),
+    carePlanResponse: ajv.compile(carePlanResponseSchema),
+    careSummaryResponse: ajv.compile(careSummaryResponseSchema),
     claimGuestSession: ajv.compile(claimGuestSessionCommandSchema),
     guestClaimResult: ajv.compile(guestClaimResultSchema),
     rewardableDomainEvent: ajv.compile(rewardableDomainEventSchema),

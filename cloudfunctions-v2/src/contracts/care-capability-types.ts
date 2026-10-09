@@ -72,6 +72,8 @@ export type WateringCapabilityResultDto = {
 export type CareCapabilityResponseDto = {
   /** 已追加保存的计算结果公开引用（cres_ 前缀），可读回。 */
   resultRef: string;
+  /** 长期植物且行动可确认时的建议引用（cpr_）；临时案例不携带。 */
+  proposalRef?: string | null;
   /** 公开浇水结果；不含输入快照、策略版本、摘要或内部引用。 */
   result: WateringCapabilityResultDto;
 };

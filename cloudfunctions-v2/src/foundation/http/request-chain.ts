@@ -26,6 +26,12 @@ export type PublicErrorType =
   | 'AI_QUOTA_INSUFFICIENT'
   /** 游客会话临时植物案例数量已达已发布上限（temporary-case/v1）。 */
   | 'TEMPORARY_CASE_LIMIT_REACHED'
+  /** 用户植物已归档，只读（long-term-care/v1）。 */
+  | 'USER_PLANT_ARCHIVED'
+  /** 养护建议不可再确认（long-term-care/v1）。 */
+  | 'CARE_PROPOSAL_NOT_CONFIRMABLE'
+  /** 养护计划版本冲突（long-term-care/v1）。 */
+  | 'CARE_PLAN_VERSION_CONFLICT'
   | 'INTERNAL_ERROR'
   | 'SERVICE_UNAVAILABLE'
   /** 游客令牌签发超过来源限流（guest-token/v1）。 */

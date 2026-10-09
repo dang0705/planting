@@ -1393,6 +1393,84 @@
         ]
       }
     },
+    "/api/v2/user-plants/{userPlantRef}/catalog-binding": {
+      "put": {
+        "operationId": "putUserPlantCatalogBinding",
+        "summary": "user-plant 域：putUserPlantCatalogBinding",
+        "tags": [
+          "user-plant"
+        ],
+        "x-owner": "user-plant",
+        "x-phase": "P4",
+        "x-security": "authenticated",
+        "x-request-contract": "PutCatalogBindingRequest",
+        "x-response-contract": "CatalogBindingResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "USER_PLANT_NOT_FOUND",
+          "USER_PLANT_ARCHIVED",
+          "IDEMPOTENCY_CONFLICT",
+          "PAYLOAD_TOO_LARGE",
+          "UNSUPPORTED_MEDIA_TYPE",
+          "SERVICE_UNAVAILABLE",
+          "NOT_FOUND"
+        ],
+        "parameters": [
+          {
+            "name": "userPlantRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogBindingSuccess"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PutCatalogBindingRequest"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
     "/api/v2/care/watering-advice": {
       "post": {
         "operationId": "createWateringAdvice",
@@ -1409,11 +1487,13 @@
         "x-errors": [
           "VALIDATION_FAILED",
           "PRINCIPAL_INVALID",
-          "NOT_FOUND",
+          "USER_PLANT_NOT_FOUND",
+          "USER_PLANT_ARCHIVED",
+          "IDEMPOTENCY_CONFLICT",
           "PAYLOAD_TOO_LARGE",
           "UNSUPPORTED_MEDIA_TYPE",
-          "IDEMPOTENCY_CONFLICT",
-          "SERVICE_UNAVAILABLE"
+          "SERVICE_UNAVAILABLE",
+          "NOT_FOUND"
         ],
         "parameters": [
           {
@@ -1545,7 +1625,8 @@
         "x-errors": [
           "VALIDATION_FAILED",
           "PRINCIPAL_INVALID",
-          "USER_PLANT_NOT_FOUND"
+          "USER_PLANT_NOT_FOUND",
+          "SERVICE_UNAVAILABLE"
         ],
         "parameters": [
           {
@@ -1565,7 +1646,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessEnvelope"
+                  "$ref": "#/components/schemas/CareSummarySuccess"
                 }
               }
             }
@@ -1605,7 +1686,11 @@
           "VALIDATION_FAILED",
           "PRINCIPAL_INVALID",
           "USER_PLANT_NOT_FOUND",
-          "IDEMPOTENCY_CONFLICT"
+          "USER_PLANT_ARCHIVED",
+          "IDEMPOTENCY_CONFLICT",
+          "PAYLOAD_TOO_LARGE",
+          "UNSUPPORTED_MEDIA_TYPE",
+          "SERVICE_UNAVAILABLE"
         ],
         "parameters": [
           {
@@ -1628,7 +1713,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessEnvelope"
+                  "$ref": "#/components/schemas/CareFactSuccess"
                 }
               }
             }
@@ -1649,8 +1734,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false
+                "$ref": "#/components/schemas/CreateCareFactRequest"
               }
             }
           }
@@ -1678,7 +1762,8 @@
         "x-errors": [
           "VALIDATION_FAILED",
           "PRINCIPAL_INVALID",
-          "USER_PLANT_NOT_FOUND"
+          "USER_PLANT_NOT_FOUND",
+          "SERVICE_UNAVAILABLE"
         ],
         "parameters": [
           {
@@ -1698,7 +1783,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessEnvelope"
+                  "$ref": "#/components/schemas/CarePlanListSuccess"
                 }
               }
             }
@@ -1738,7 +1823,12 @@
           "VALIDATION_FAILED",
           "PRINCIPAL_INVALID",
           "USER_PLANT_NOT_FOUND",
-          "IDEMPOTENCY_CONFLICT"
+          "USER_PLANT_ARCHIVED",
+          "IDEMPOTENCY_CONFLICT",
+          "PAYLOAD_TOO_LARGE",
+          "UNSUPPORTED_MEDIA_TYPE",
+          "SERVICE_UNAVAILABLE",
+          "CARE_PROPOSAL_NOT_CONFIRMABLE"
         ],
         "parameters": [
           {
@@ -1771,7 +1861,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessEnvelope"
+                  "$ref": "#/components/schemas/CareConfirmationSuccess"
                 }
               }
             }
@@ -1792,8 +1882,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false
+                "$ref": "#/components/schemas/ConfirmCareProposalRequest"
               }
             }
           }
@@ -1822,7 +1911,12 @@
           "VALIDATION_FAILED",
           "PRINCIPAL_INVALID",
           "USER_PLANT_NOT_FOUND",
-          "IDEMPOTENCY_CONFLICT"
+          "USER_PLANT_ARCHIVED",
+          "IDEMPOTENCY_CONFLICT",
+          "PAYLOAD_TOO_LARGE",
+          "UNSUPPORTED_MEDIA_TYPE",
+          "SERVICE_UNAVAILABLE",
+          "CARE_PLAN_VERSION_CONFLICT"
         ],
         "parameters": [
           {
@@ -1855,7 +1949,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessEnvelope"
+                  "$ref": "#/components/schemas/CarePlanSuccess"
                 }
               }
             }
@@ -1876,8 +1970,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false
+                "$ref": "#/components/schemas/CompleteCarePlanRequest"
               }
             }
           }
@@ -5266,6 +5359,519 @@
           }
         }
       },
+      "PutCatalogBindingRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "catalogTaxonRef"
+        ],
+        "properties": {
+          "catalogTaxonRef": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        }
+      },
+      "CatalogBindingSuccess": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "catalogTaxonRef",
+              "boundAt"
+            ],
+            "properties": {
+              "catalogTaxonRef": {
+                "type": "string"
+              },
+              "boundAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
+      "CreateCareFactRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "factType",
+          "occurredAt"
+        ],
+        "properties": {
+          "factType": {
+            "const": "watering"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "amountMl": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 10000
+          }
+        },
+        "description": "occurredAt 不得晚于现在、不得早于 7 天前（care.facts.watering_backfill_max_days）。"
+      },
+      "CareFactSuccess": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "factRef",
+              "factType",
+              "occurredAt",
+              "amountMl"
+            ],
+            "properties": {
+              "factRef": {
+                "type": "string",
+                "pattern": "^cft_[A-Za-z0-9_-]{8,60}$"
+              },
+              "factType": {
+                "const": "watering"
+              },
+              "occurredAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "amountMl": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 10000
+              }
+            }
+          }
+        }
+      },
+      "CarePlan": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "planRef",
+          "planType",
+          "scheduledAt",
+          "status",
+          "sourceProposalRef",
+          "completedFactRef",
+          "calendar"
+        ],
+        "properties": {
+          "planRef": {
+            "type": "string",
+            "pattern": "^cpl_[A-Za-z0-9_-]{8,60}$"
+          },
+          "planType": {
+            "const": "check_soil"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "enum": [
+              "planned",
+              "completed",
+              "cancelled",
+              "expired"
+            ]
+          },
+          "sourceProposalRef": {
+            "type": "string",
+            "pattern": "^cpr_[A-Za-z0-9_-]{8,60}$"
+          },
+          "completedFactRef": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^cft_[A-Za-z0-9_-]{8,60}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "calendar": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "title",
+              "startAt",
+              "endAt",
+              "notes"
+            ],
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "startAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "endAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "notes": {
+                "type": "string"
+              }
+            },
+            "description": "加入手机日历所需字段；不含内部引用。"
+          }
+        }
+      },
+      "CarePlanListSuccess": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "items",
+              "nextCursor"
+            ],
+            "properties": {
+              "items": {
+                "type": "array",
+                "maxItems": 50,
+                "items": {
+                  "$ref": "#/components/schemas/CarePlan"
+                }
+              },
+              "nextCursor": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "ConfirmCareProposalRequest": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "decision"
+            ],
+            "properties": {
+              "decision": {
+                "const": "schedule_check"
+              },
+              "scheduledAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "decision",
+              "occurredAt"
+            ],
+            "properties": {
+              "decision": {
+                "const": "record_watering"
+              },
+              "occurredAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "amountMl": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 10000
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "decision"
+            ],
+            "properties": {
+              "decision": {
+                "const": "dismiss"
+              }
+            }
+          }
+        ]
+      },
+      "CareConfirmationSuccess": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "proposalRef",
+              "proposalStatus",
+              "plan",
+              "factRef"
+            ],
+            "properties": {
+              "proposalRef": {
+                "type": "string",
+                "pattern": "^cpr_[A-Za-z0-9_-]{8,60}$"
+              },
+              "proposalStatus": {
+                "enum": [
+                  "confirmed",
+                  "dismissed"
+                ]
+              },
+              "plan": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "factRef": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^cft_[A-Za-z0-9_-]{8,60}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "CompleteCarePlanRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "version",
+          "outcome"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "outcome": {
+            "enum": [
+              "done",
+              "skipped"
+            ]
+          },
+          "soil": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "state",
+              "scope"
+            ],
+            "properties": {
+              "state": {
+                "enum": [
+                  "wet",
+                  "moist",
+                  "dry",
+                  "uncertain"
+                ]
+              },
+              "scope": {
+                "enum": [
+                  "surface",
+                  "root_zone"
+                ]
+              }
+            }
+          },
+          "watering": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "occurredAt"
+            ],
+            "properties": {
+              "occurredAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "amountMl": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 10000
+              }
+            }
+          }
+        },
+        "description": "outcome=skipped 时不得携带 soil 或 watering。"
+      },
+      "CarePlanSuccess": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "planRef",
+              "status",
+              "version",
+              "factRef",
+              "calendar"
+            ],
+            "properties": {
+              "planRef": {
+                "type": "string",
+                "pattern": "^cpl_[A-Za-z0-9_-]{8,60}$"
+              },
+              "status": {
+                "enum": [
+                  "completed",
+                  "cancelled"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "factRef": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^cft_[A-Za-z0-9_-]{8,60}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "calendar": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "title",
+                  "startAt",
+                  "endAt",
+                  "notes"
+                ],
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "startAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "endAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                },
+                "description": "加入手机日历所需字段；不含内部引用。"
+              }
+            }
+          }
+        }
+      },
+      "CareSummarySuccess": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "lastWatering",
+              "latestWateringAdvice",
+              "nextPlan",
+              "profileReadiness"
+            ],
+            "properties": {
+              "lastWatering": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "latestWateringAdvice": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "nextPlan": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "profileReadiness": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "hasMeasuredPot",
+                  "hasCatalogBinding"
+                ],
+                "properties": {
+                  "hasMeasuredPot": {
+                    "type": "boolean"
+                  },
+                  "hasCatalogBinding": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "ClaimGuestPlantCaseRequest": {
         "type": "object",
         "additionalProperties": false,
@@ -5499,7 +6105,10 @@
                   "INTERNAL_ERROR",
                   "SERVICE_UNAVAILABLE",
                   "RATE_LIMITED",
-                  "TEMPORARY_CASE_LIMIT_REACHED"
+                  "TEMPORARY_CASE_LIMIT_REACHED",
+                  "USER_PLANT_ARCHIVED",
+                  "CARE_PROPOSAL_NOT_CONFIRMABLE",
+                  "CARE_PLAN_VERSION_CONFLICT"
                 ]
               },
               "message": {

@@ -25,6 +25,14 @@ import { createMysqlMvpWateringPolicyReader } from '../repository/mysql-mvp-wate
 import { createMysqlWateringAdviceRepository } from '../repository/mysql-watering-advice-repository.js'
 import { WATERING_BASELINE_POLICY_VERSION } from '../watering/watering-advice-hard-rules.js'
 import { createWateringAdviceRoute, createWateringAdviceRouteHandler } from './watering-advice-route.js'
+import { randomBytes } from 'node:crypto'
+import { createUserBearerAuthenticator } from '../../identity/http/user-bearer-authenticator.js'
+import { createMysqlTropicalsTaxonReader } from '../../plant-knowledge/repository/mysql-tropicals-taxon-reader.js'
+import { createMysqlUserPlantCareContextReader } from '../../user-plant/repository/mysql-user-plant-care-context-reader.js'
+import { createUserPlantWateringAdviceApplicationService } from '../application/create-user-plant-watering-advice.js'
+import { createLongTermCareCommands } from '../application/long-term-care-commands.js'
+import { createMysqlLongTermCareReadRepository } from '../repository/mysql-long-term-care-read-repository.js'
+import { createLongTermCareRouteBindings } from './long-term-care-routes.js'
 
 /** care 云函数 HTTP 服务依赖。 */
 export interface CareServerDependencies {
@@ -67,7 +75,24 @@ export function createCareServer(dependencies: CareServerDependencies): Server {
     query: (sql, parameters) => withReadConnection(source, connection => connection.query(sql, toSqlParameters(parameters)))
   })
 
+  const idempotentWrite = { driver, idempotencyRepository, commitUnknownReadOnlyRepository }
+  const plantContextReader = createMysqlUserPlantCareContextReader(source)
+  const careReads = createMysqlLongTermCareReadRepository(source)
+  /** care → plant-knowledge 只读适配：日历标题用的品种中文名。 */
+  const taxonReader = createMysqlTropicalsTaxonReader({
+    query: (sql, parameters) => withReadConnection(source, connection => connection.query(sql, toSqlParameters(parameters)))
+  })
+  const refPrefix = { fact: 'cft_', plan: 'cpl_', command: 'ccm_', observation: 'ceo_' } as const
+  const longTermRoutes = createLongTermCareRouteBindings({
+    authenticate: createUserBearerAuthenticator(dependencies.resolvePrincipal), now: dependencies.now, writeAudit: dependencies.writeAudit,
+    readPlantContext: query => plantContextReader.read(query),
+    readTaxonDisplayName: async ref => (await taxonReader.read(ref))?.displayName ?? null,
+    commands: createLongTermCareCommands({ ...idempotentWrite, createRef: kind => `${refPrefix[kind]}${randomBytes(18).toString('base64url')}` }),
+    reads: careReads
+  })
+
   const dispatch = createRouteDispatcher([
+    ...longTermRoutes,
     {
       route: createWateringAdviceRoute,
       handler: createWateringAdviceRouteHandler({
@@ -87,6 +112,11 @@ export function createCareServer(dependencies: CareServerDependencies): Server {
         },
         fetchRadiation: dependencies.fetchRadiation,
         createWateringAdvice,
+        userPlant: {
+          readPlantContext: query => plantContextReader.read(query),
+          readLatestWateringFact: scope => careReads.latestWateringFact(scope),
+          createAdvice: createUserPlantWateringAdviceApplicationService(idempotentWrite)
+        },
         now: dependencies.now,
         writeAudit: dependencies.writeAudit
       })

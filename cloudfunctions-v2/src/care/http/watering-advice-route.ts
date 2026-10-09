@@ -14,6 +14,9 @@ import { extractBearerToken } from '../../identity/http/request-identity.js'
 import type { MvpPlantBaseline } from '../application/assess-mvp-watering.js'
 import { buildWateringAdvice, type PublishedWateringPolicy } from '../application/build-watering-advice.js'
 import type { CreateWateringAdviceApplicationInput } from '../application/create-watering-advice.js'
+import type { CreateUserPlantWateringAdviceInput } from '../application/create-user-plant-watering-advice.js'
+import type { UserPlantCareContext, UserPlantCareContextQuery } from '../../user-plant/repository/mysql-user-plant-care-context-reader.js'
+import type { OwnedPlantScope, WateringFactRow } from '../repository/mysql-long-term-care-read-repository.js'
 import type { TemporaryCareOwner } from '../domain/temporary-care-result-record.js'
 import type { NormalizedOutdoorRadiation } from '../light/normalize-open-meteo-radiation.js'
 import type { OpenMeteoRadiationQuery } from '../provider/open-meteo-radiation-client.js'
@@ -47,13 +50,40 @@ export interface WateringAdviceRouteDependencies {
   readonly fetchRadiation: (query: OpenMeteoRadiationQuery) => Promise<NormalizedOutdoorRadiation | null>
   /** 事务化应用用例。 */
   readonly createWateringAdvice: (input: CreateWateringAdviceApplicationInput) => Promise<HttpIdempotencyPublicResponseSnapshot>
+  /** 长期植物分支（long-term-care/v1 §2）；未接入时长期植物目标返回 400。 */
+  readonly userPlant?: UserPlantWateringAdviceDependencies
   /** 可选服务端引用生成器；缺省为 18 字节随机数 base64url。 */
-  readonly createRef?: (kind: 'session' | 'result') => string
+  readonly createRef?: (kind: 'session' | 'result' | 'proposal') => string
   /** 服务端 UTC 毫秒时钟；每请求只取一次。 */
   readonly now: () => number
   /** 脱敏请求结果审计端口。 */
   readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
 }
+
+/** 长期植物分支依赖：全部为服务端可信只读端口与事务化用例。 */
+export interface UserPlantWateringAdviceDependencies {
+  /** user-plant 只读归属上下文（档案盆器、昵称、最新品种绑定）；非本人/已删除为 null。 */
+  readonly readPlantContext: (query: UserPlantCareContextQuery) => Promise<UserPlantCareContext | null>
+  /** care 只读：最近一条浇水事实。 */
+  readonly readLatestWateringFact: (scope: OwnedPlantScope) => Promise<WateringFactRow | null>
+  /** 事务化长期浇水建议用例。 */
+  readonly createAdvice: (input: CreateUserPlantWateringAdviceInput) => Promise<HttpIdempotencyPublicResponseSnapshot>
+}
+
+/** 持久化分支：临时案例或长期植物。 */
+type AdvicePersistence =
+  | {
+      /** 临时案例分支：游客或登录用户的临时识别案例。 */
+      readonly kind: 'temporary_case'
+      /** 临时案例用例输入。 */
+      readonly input: CreateWateringAdviceApplicationInput
+    }
+  | {
+      /** 长期植物分支：本人花园中的用户植物。 */
+      readonly kind: 'user_plant'
+      /** 长期植物用例输入。 */
+      readonly input: CreateUserPlantWateringAdviceInput
+    }
 
 /** 限制阶段产出的安全请求数据。 */
 interface RestrictedRequest {
@@ -67,10 +97,8 @@ interface RestrictedRequest {
 
 /** 已校验的 DTO：命令、原始正文摘要与幂等键。 */
 interface AdviceDto {
-  /** 已映射且降精度的内部命令（target 已确认为临时案例）。 */
+  /** 已映射且降精度的内部命令。 */
   readonly command: WateringAdviceCommand
-  /** 临时案例公开引用。 */
-  readonly caseRef: string
   /** 原始 JSON 规范化（键排序）SHA-256（裁决 8）。 */
   readonly requestHash: string
   /** 客户端重试标识，只在当前调用栈计算摘要。 */
@@ -84,7 +112,9 @@ const idempotencyRetentionMs = 168 * 60 * 60 * 1000
 const validators = createPublicContractValidators()
 const validIdempotencyKey = /^[\x20-\x7e]{8,128}$/u
 /** 应用用例允许原样公开的确定错误。 */
-const passThroughErrors = new Set(['NOT_FOUND', 'IDEMPOTENCY_CONFLICT', 'SERVICE_UNAVAILABLE'])
+const passThroughErrors = new Set(['NOT_FOUND', 'IDEMPOTENCY_CONFLICT', 'SERVICE_UNAVAILABLE', 'USER_PLANT_NOT_FOUND', 'USER_PLANT_ARCHIVED'])
+/** 长期植物不得由客户端提交的字段（服务端从档案、绑定与事实取，§2）。 */
+const serverOwnedUserPlantFields = ['catalogTaxonRef', 'pot', 'lastWatering']
 
 const digest = (value: string) => createHash('sha256').update(value, 'utf8').digest('hex')
 const invalidRequest = (message = '请求参数不合法') => new PublicRequestError(400, 'VALIDATION_FAILED', message)
@@ -92,9 +122,9 @@ const principalInvalid = () => new PublicRequestError(401, 'PRINCIPAL_INVALID', 
 const notFound = () => new PublicRequestError(404, 'NOT_FOUND', '临时案例不存在或已失效')
 const unavailable = () => new PublicRequestError(503, 'SERVICE_UNAVAILABLE', '服务暂时不可用')
 
-/** 默认高熵引用：会话 tcs_、结果 cres_。 */
-function generateRef(kind: 'session' | 'result'): string {
-  return `${kind === 'session' ? 'tcs_' : 'cres_'}${randomBytes(18).toString('base64url')}`
+/** 默认高熵引用：会话 tcs_、结果 cres_、建议 cpr_。 */
+function generateRef(kind: 'session' | 'result' | 'proposal'): string {
+  return `${{ session: 'tcs_', result: 'cres_', proposal: 'cpr_' }[kind]}${randomBytes(18).toString('base64url')}`
 }
 
 /** 媒体类型与字节上限先于认证。 */
@@ -126,20 +156,23 @@ function verifyPrincipal(principal: UserPrincipalDto | GuestPrincipalDto, nowMs:
   return principal
 }
 
-/** 严格解析正文与幂等头；长期植物目标为阶段性限制（裁决 1）。 */
-function parseRequest(input: RestrictedRequest, nowMs: number): AdviceDto {
+/** 严格解析正文与幂等头；长期植物目标须已接入分支且不得提交服务端字段。 */
+function parseRequest(input: RestrictedRequest, nowMs: number, userPlantEnabled: boolean): AdviceDto {
   let body: unknown
   try { body = JSON.parse(input.bodyText) } catch { throw invalidRequest() }
   const parsed = parseWateringAdviceRequest(body, nowMs)
   if (parsed.status !== 'ok') { throw invalidRequest() }
-  if (parsed.command.target.kind !== 'temporary_case') { throw invalidRequest('长期植物浇水建议暂未开放') }
+  if (parsed.command.target.kind === 'user_plant') {
+    if (!userPlantEnabled) { throw invalidRequest('长期植物浇水建议暂未开放') }
+    if (serverOwnedUserPlantFields.some(field => Object.hasOwn(body as object, field))) { throw invalidRequest('长期植物的品种、盆器与上次浇水由服务端提供') }
+  }
   const key = input.headers['idempotency-key']
   let keyCount = 0
   for (let index = 0; index < input.rawHeaders.length; index += 2) {
     if (input.rawHeaders[index]!.toLowerCase() === 'idempotency-key') { keyCount += 1 }
   }
   if (typeof key !== 'string' || keyCount !== 1 || !validIdempotencyKey.test(key)) { throw invalidRequest() }
-  return { command: parsed.command, caseRef: parsed.command.target.caseRef, requestHash: calculateCanonicalJsonSha256(body as CanonicalJsonValue), idempotencyKey: key }
+  return { command: parsed.command, requestHash: calculateCanonicalJsonSha256(body as CanonicalJsonValue), idempotencyKey: key }
 }
 
 /** 由主体与案例引用得到归属；前缀与主体不符视为不存在。 */
@@ -150,6 +183,15 @@ function ownerOf(principal: UserPrincipalDto | GuestPrincipalDto, caseRef: strin
   }
   if (!/^epc_[A-Za-z0-9_-]{8,60}$/u.test(caseRef)) { throw notFound() }
   return { kind: 'authenticated', userRef: principal.user_id, caseRef }
+}
+
+/** 长期植物：服务端上下文覆盖品种、盆器与上次浇水。 */
+function withUserPlantContext(command: WateringAdviceCommand, context: UserPlantCareContext, lastWatering: WateringFactRow | null): WateringAdviceCommand {
+  const pot = context.measuredPot
+  return { ...command, catalogTaxonRef: context.catalogTaxonRef, lastWateringAtMs: lastWatering?.occurredAtMs ?? null,
+    pot: pot === null
+      ? { actualInnerPotConfirmed: null, drainageAvailable: null, potTopDiameterCm: null, potBottomDiameterCm: null, potHeightCm: null }
+      : { ...pot } }
 }
 
 /** 应用结果白名单投影。 */
@@ -169,7 +211,7 @@ export function createWateringAdviceRouteHandler(dependencies: WateringAdviceRou
     const nowMs = dependencies.now()
     return createNodeRequestChainHandler<
       RestrictedRequest, ResolveUserPrincipalCommand, UserPrincipalDto | GuestPrincipalDto, AdviceDto,
-      CreateWateringAdviceApplicationInput, CreateWateringAdviceApplicationInput, HttpIdempotencyPublicResponseSnapshot, CareCapabilityResponseDto
+      AdvicePersistence, AdvicePersistence, HttpIdempotencyPublicResponseSnapshot, CareCapabilityResponseDto
     >({
       requestLimits: { kind: 'execute', run: readRestrictedRequest },
       identityValidate: {
@@ -192,13 +234,32 @@ export function createWateringAdviceRouteHandler(dependencies: WateringAdviceRou
         }
       },
       objectOwnership: { kind: 'not_applicable', reason: '案例引用位于正文，归属在 DTO 校验后、任何外部调用前确认' },
-      dtoValidate: { kind: 'execute', run: restricted => parseRequest(restricted, nowMs) },
+      dtoValidate: { kind: 'execute', run: restricted => parseRequest(restricted, nowMs, dependencies.userPlant !== undefined) },
       buildCommand: {
         kind: 'execute',
-        run: async ({ dto, principal }) => {
-          const owner = ownerOf(principal, dto.caseRef)
-          if (await dependencies.readOwnedCase({ owner, nowMs }) !== 'owned') { throw notFound() }
-          const { command } = dto
+        run: async ({ dto, principal }): Promise<AdvicePersistence> => {
+          const target = dto.command.target
+          let command = dto.command
+          let owner: TemporaryCareOwner | null = null
+          let userPlant: { context: UserPlantCareContext; fact: WateringFactRow | null; scope: OwnedPlantScope } | null = null
+          if (target.kind === 'temporary_case') {
+            owner = ownerOf(principal, target.caseRef)
+            if (await dependencies.readOwnedCase({ owner, nowMs }) !== 'owned') { throw notFound() }
+          } else {
+            // 长期植物只对登录用户开放（T8）；游客按请求不合法处理，不探测植物存在性。
+            if (principal.principalType !== 'user' || dependencies.userPlant === undefined) { throw invalidRequest() }
+            const scope = { userRef: principal.user_id, userPlantRef: target.userPlantRef }
+            let context: UserPlantCareContext | null
+            let fact: WateringFactRow | null
+            try {
+              context = await dependencies.userPlant.readPlantContext(scope)
+              fact = context === null ? null : await dependencies.userPlant.readLatestWateringFact(scope)
+            } catch { throw unavailable() }
+            if (context === null) { throw new PublicRequestError(404, 'USER_PLANT_NOT_FOUND', '用户植物不存在') }
+            if (context.lifecycle === 'archived') { throw new PublicRequestError(409, 'USER_PLANT_ARCHIVED', '植物已归档，只能查看') }
+            command = withUserPlantContext(command, context, fact)
+            userPlant = { context, fact, scope }
+          }
           let policy: PublishedWateringPolicy | null
           let baseline: MvpPlantBaseline | null
           try {
@@ -212,19 +273,29 @@ export function createWateringAdviceRouteHandler(dependencies: WateringAdviceRou
           } catch { radiation = null }
           const built = buildWateringAdvice({ command, policy, baseline, radiation, nowMs })
           const scope = principal.principalType === 'guest' ? principal.guestSessionRef : principal.user_id
-          return {
-            owner, built, newSessionRef: createRef('session'), newResultRef: createRef('result'), occurredAtMs: nowMs,
-            idempotency: {
-              principalType: principal.principalType, principalScopeHash: digest(scope), httpMethod: 'POST',
-              normalizedPath: createWateringAdviceRoute.path, operationId: createWateringAdviceRoute.operationId,
-              idempotencyKeyHash: digest(dto.idempotencyKey), requestHash: dto.requestHash,
-              createdAtMs: nowMs, expiresAtMs: nowMs + idempotencyRetentionMs
-            }
+          const idempotency = {
+            principalType: principal.principalType, principalScopeHash: digest(scope), httpMethod: 'POST',
+            normalizedPath: createWateringAdviceRoute.path, operationId: createWateringAdviceRoute.operationId,
+            idempotencyKeyHash: digest(dto.idempotencyKey), requestHash: dto.requestHash,
+            createdAtMs: nowMs, expiresAtMs: nowMs + idempotencyRetentionMs
           }
+          if (userPlant !== null) {
+            return { kind: 'user_plant', input: {
+              userRef: userPlant.scope.userRef, userPlantRef: userPlant.scope.userPlantRef, built, resultRef: createRef('result'), proposalRef: createRef('proposal'),
+              nowMs, idempotency,
+              fingerprint: { profileVersion: userPlant.context.profileVersion, bindingRef: userPlant.context.bindingRef, latestWateringFactRef: userPlant.fact?.factRef ?? null }
+            } }
+          }
+          return { kind: 'temporary_case', input: { owner: owner!, built, newSessionRef: createRef('session'), newResultRef: createRef('result'), occurredAtMs: nowMs, idempotency } }
         }
       },
       domainRule: { kind: 'execute', run: ({ command }) => command },
-      transactionPersistence: { kind: 'execute', run: ({ domainDecision }) => dependencies.createWateringAdvice(domainDecision) },
+      transactionPersistence: {
+        kind: 'execute',
+        run: ({ domainDecision }) => domainDecision.kind === 'user_plant'
+          ? dependencies.userPlant!.createAdvice(domainDecision.input)
+          : dependencies.createWateringAdvice(domainDecision.input)
+      },
       publicResponse: { kind: 'execute', run: unwrapResult },
       writeAudit: dependencies.writeAudit
     })(request, response)

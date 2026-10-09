@@ -21,6 +21,8 @@ export const careCapabilityResponseSchema = {
   required: ["resultRef", "result"],
   properties: {
     resultRef: { type: "string", pattern: "^cres_[A-Za-z0-9_-]{8,60}$" },
+    // long-term-care/v1 §2：长期植物结果可附可确认建议引用；临时案例不携带。
+    proposalRef: { type: "string", pattern: "^cpr_[A-Za-z0-9_-]{8,60}$", nullable: true },
     result: {
       type: "object",
       additionalProperties: false,

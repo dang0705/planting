@@ -15,6 +15,43 @@ const diagnosisResultSchema = registry.routes.some(route => route.responseContra
   : null
 const printableAsciiPattern = '^[\\x20-\\x7E]+$'
 
+/** 长期养护组件（long-term-care/v1）；字段语义见 cloudfunctions-v2/models/care/long-term-care-contract.md。 */
+const ltcUtc = { type: 'string', format: 'date-time' }
+const ltcRef = prefix => ({ type: 'string', pattern: `^${prefix}_[A-Za-z0-9_-]{8,60}$` })
+const ltcAmount = { type: ['integer', 'null'], minimum: 0, maximum: 10000 }
+const ltcCalendar = { type: 'object', additionalProperties: false, required: ['title', 'startAt', 'endAt', 'notes'],
+  properties: { title: { type: 'string' }, startAt: ltcUtc, endAt: ltcUtc, notes: { type: 'string' } }, description: '加入手机日历所需字段；不含内部引用。' }
+const ltcPlan = { type: 'object', additionalProperties: false, required: ['planRef', 'planType', 'scheduledAt', 'status', 'sourceProposalRef', 'completedFactRef', 'calendar'],
+  properties: { planRef: ltcRef('cpl'), planType: { const: 'check_soil' }, scheduledAt: ltcUtc, status: { enum: ['planned', 'completed', 'cancelled', 'expired'] },
+    sourceProposalRef: ltcRef('cpr'), completedFactRef: { anyOf: [ltcRef('cft'), { type: 'null' }] }, calendar: ltcCalendar } }
+const ltcEnvelope = schema => ({ type: 'object', additionalProperties: false, required: ['data'], properties: { data: schema } })
+const longTermCareComponents = {
+  PutCatalogBindingRequest: { type: 'object', additionalProperties: false, required: ['catalogTaxonRef'], properties: { catalogTaxonRef: { type: 'string', minLength: 1, maxLength: 512 } } },
+  CatalogBindingSuccess: ltcEnvelope({ type: 'object', additionalProperties: false, required: ['catalogTaxonRef', 'boundAt'], properties: { catalogTaxonRef: { type: 'string' }, boundAt: ltcUtc } }),
+  CreateCareFactRequest: { type: 'object', additionalProperties: false, required: ['factType', 'occurredAt'], properties: { factType: { const: 'watering' }, occurredAt: ltcUtc, amountMl: ltcAmount },
+    description: 'occurredAt 不得晚于现在、不得早于 7 天前（care.facts.watering_backfill_max_days）。' },
+  CareFactSuccess: ltcEnvelope({ type: 'object', additionalProperties: false, required: ['factRef', 'factType', 'occurredAt', 'amountMl'], properties: { factRef: ltcRef('cft'), factType: { const: 'watering' }, occurredAt: ltcUtc, amountMl: ltcAmount } }),
+  CarePlan: ltcPlan,
+  CarePlanListSuccess: ltcEnvelope({ type: 'object', additionalProperties: false, required: ['items', 'nextCursor'], properties: { items: { type: 'array', maxItems: 50, items: { $ref: '#/components/schemas/CarePlan' } }, nextCursor: { type: ['string', 'null'] } } }),
+  ConfirmCareProposalRequest: { oneOf: [
+    { type: 'object', additionalProperties: false, required: ['decision'], properties: { decision: { const: 'schedule_check' }, scheduledAt: ltcUtc } },
+    { type: 'object', additionalProperties: false, required: ['decision', 'occurredAt'], properties: { decision: { const: 'record_watering' }, occurredAt: ltcUtc, amountMl: ltcAmount } },
+    { type: 'object', additionalProperties: false, required: ['decision'], properties: { decision: { const: 'dismiss' } } },
+  ] },
+  CareConfirmationSuccess: ltcEnvelope({ type: 'object', additionalProperties: false, required: ['proposalRef', 'proposalStatus', 'plan', 'factRef'],
+    properties: { proposalRef: ltcRef('cpr'), proposalStatus: { enum: ['confirmed', 'dismissed'] }, plan: { type: ['object', 'null'] }, factRef: { anyOf: [ltcRef('cft'), { type: 'null' }] } } }),
+  CompleteCarePlanRequest: { type: 'object', additionalProperties: false, required: ['version', 'outcome'],
+    properties: { version: { type: 'integer', minimum: 1 }, outcome: { enum: ['done', 'skipped'] },
+      soil: { type: 'object', additionalProperties: false, required: ['state', 'scope'], properties: { state: { enum: ['wet', 'moist', 'dry', 'uncertain'] }, scope: { enum: ['surface', 'root_zone'] } } },
+      watering: { type: 'object', additionalProperties: false, required: ['occurredAt'], properties: { occurredAt: ltcUtc, amountMl: ltcAmount } } },
+    description: 'outcome=skipped 时不得携带 soil 或 watering。' },
+  CarePlanSuccess: ltcEnvelope({ type: 'object', additionalProperties: false, required: ['planRef', 'status', 'version', 'factRef', 'calendar'],
+    properties: { planRef: ltcRef('cpl'), status: { enum: ['completed', 'cancelled'] }, version: { type: 'integer' }, factRef: { anyOf: [ltcRef('cft'), { type: 'null' }] }, calendar: ltcCalendar } }),
+  CareSummarySuccess: ltcEnvelope({ type: 'object', additionalProperties: false, required: ['lastWatering', 'latestWateringAdvice', 'nextPlan', 'profileReadiness'],
+    properties: { lastWatering: { type: ['object', 'null'] }, latestWateringAdvice: { type: ['object', 'null'] }, nextPlan: { type: ['object', 'null'] },
+      profileReadiness: { type: 'object', additionalProperties: false, required: ['hasMeasuredPot', 'hasCatalogBinding'], properties: { hasMeasuredPot: { type: 'boolean' }, hasCatalogBinding: { type: 'boolean' } } } } }),
+}
+
 /** 仅为已冻结字段级请求合同提供组件引用；其他合同继续使用严格空对象骨架。 */
 const requestSchemaRefByContract = {
   CreateDiagnosisSessionRequest: '#/components/schemas/CreateDiagnosisSessionRequest',
@@ -29,6 +66,11 @@ const requestSchemaRefByContract = {
   WateringAdviceRequest: '#/components/schemas/WateringAdviceRequest',
   /** 游客案例认领：请求体携带原游客令牌，幂等键只走请求头（guest-session-claim/v1，2026-10-09 修订）。 */
   ClaimGuestPlantCaseRequest: '#/components/schemas/ClaimGuestPlantCaseRequest',
+  /** 长期养护（long-term-care/v1，2026-10-09 冻结）。 */
+  PutCatalogBindingRequest: '#/components/schemas/PutCatalogBindingRequest',
+  CreateCareFactRequest: '#/components/schemas/CreateCareFactRequest',
+  ConfirmCareProposalRequest: '#/components/schemas/ConfirmCareProposalRequest',
+  CompleteCarePlanRequest: '#/components/schemas/CompleteCarePlanRequest',
   /** 归档/恢复仅允许调用方提交最后读到的植物版本。 */
   UserPlantVersionRequest: '#/components/schemas/UserPlantVersionRequest',
 }
@@ -42,6 +84,12 @@ const successSchemaRefByContract = {
   TemporaryCaseResponse: '#/components/schemas/TemporaryCaseSuccess',
   CareCapabilityResponse: '#/components/schemas/CareCapabilitySuccess',
   ClaimGuestPlantCaseResponse: '#/components/schemas/ClaimGuestPlantCaseSuccess',
+  CatalogBindingResponse: '#/components/schemas/CatalogBindingSuccess',
+  CareFactResponse: '#/components/schemas/CareFactSuccess',
+  CareSummaryResponse: '#/components/schemas/CareSummarySuccess',
+  CarePlanListResponse: '#/components/schemas/CarePlanListSuccess',
+  CareConfirmationResponse: '#/components/schemas/CareConfirmationSuccess',
+  CarePlanResponse: '#/components/schemas/CarePlanSuccess',
 }
 
 const parametersByPath = (routePath) => [...routePath.matchAll(/\{([^}]+)\}/gu)].map((match) => ({
@@ -134,6 +182,7 @@ const errorTypes = [
   'USER_PLANT_VERSION_CONFLICT', 'CAPABILITY_SNAPSHOT_EXPIRED',
   'GUEST_SESSION_NOT_CLAIMABLE', 'AI_QUOTA_INSUFFICIENT', 'INTERNAL_ERROR',
   'SERVICE_UNAVAILABLE', 'RATE_LIMITED', 'TEMPORARY_CASE_LIMIT_REACHED',
+  'USER_PLANT_ARCHIVED', 'CARE_PROPOSAL_NOT_CONFIRMABLE', 'CARE_PLAN_VERSION_CONFLICT',
 ]
 
 const openapi = {
@@ -599,6 +648,7 @@ const openapi = {
             properties: { temperatureC: { type: 'number' }, relativeHumidityPercent: { type: 'number', minimum: 0, maximum: 100 }, measuredAt: { type: 'string', format: 'date-time' } } },
         },
       },
+      ...longTermCareComponents,
       ClaimGuestPlantCaseRequest: {
         type: 'object', additionalProperties: false, required: ['guestSessionRef', 'guestPlantCaseRef', 'guestToken', 'target'],
         properties: {

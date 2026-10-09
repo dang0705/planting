@@ -11,7 +11,7 @@
 - 写接口必须带 `Idempotency-Key`；唯一幂等事实为共享 `http_idempotency_records`（T2）。同键同体重放首次结果；同键异体 409 `IDEMPOTENCY_CONFLICT`；处理中 503。
 - 时间：带 Z 的 UTC；客户端提交的发生时间不得晚于服务器当前时刻。
 - 响应不含内部主键、`user_id`、平台标识、策略摘要、输入快照。
-- 外部读取（策略、基线、Open-Meteo、档案、最近事实、品种绑定）在事务前完成；事务内按归属锁植物行并核对档案版本未变，变了 → 503（客户端同键重试）（T6）。
+- 外部读取（策略、基线、Open-Meteo、档案、最近事实、品种绑定）在事务前完成；事务内按归属锁植物行并核对档案版本未变，变了 → 503（客户端同键重试）（T6）。复核范围（主代理 2026-10-09 裁决 Q4，宽于字面）：浇水建议复核档案版本、最新品种绑定、最近浇水事实；确认建议复核档案版本与最新品种绑定（日历标题依赖）。**该并发 503 路径未经端到端验证**（需制造并发，现只有代码审阅）。
 - 公共错误补登：`PAYLOAD_TOO_LARGE`、`UNSUPPORTED_MEDIA_TYPE`、`SERVICE_UNAVAILABLE`。
 
 ## 1. 品种绑定（U1、T1）
@@ -32,6 +32,7 @@
 - 响应：`{ data: { resultRef: 'cres_…', proposalRef: 'cpr_…' | null, result } }`；`proposalRef` 仅在 `result.status='ready'` 且行动可确认（`water_allowed`、`check_later`、`check_now`、`priority_check`）时出现。
 - 写入（同一事务）：`care_capability_results`（只追加，含输入清单、算法清单、派生、结果及摘要）+ `care_proposals`（`proposed`）+ 幂等记录。不写事实、计划。
 - 建议有效期（U7）：= 检查窗口最晚端；无最晚端 → 生成时刻 + 24 小时（`care.watering.open_window_proposal_valid_hours`）。
+  - U7 实现说明（主代理 2026-10-09 裁决 Q1）：最晚端**不晚于**建议生成时刻（如「可以浇水」时窗口为 [现在, 现在]）按「无最晚端」处理，有效期 = 生成时刻 + 24 小时；否则建议一生成即过期、无法确认。
 - 错误：`VALIDATION_FAILED`、`PRINCIPAL_INVALID`、`USER_PLANT_NOT_FOUND`、`USER_PLANT_ARCHIVED`、`IDEMPOTENCY_CONFLICT`、`SERVICE_UNAVAILABLE`、`PAYLOAD_TOO_LARGE`、`UNSUPPORTED_MEDIA_TYPE`；临时案例沿用 `NOT_FOUND`。
 
 ## 3. 记录浇水 `POST /api/v2/user-plants/{userPlantRef}/care/facts`（U3、U4）
@@ -61,7 +62,8 @@
 ## 6. 确认建议 `POST …/care/proposals/{proposalRef}/confirmations`（U5）
 
 - 请求（严格三选一）：
-  - `{ decision: 'schedule_check', scheduledAt? }`：缺省 = 检查窗口最早端（无最早端 → 现在）；用户可改，但须在窗口内；窗口无最晚端时最多比最早端（或现在）晚 7 天（`care.plans.check_max_postpone_days`）。
+  - `{ decision: 'schedule_check', scheduledAt? }`：缺省 = max(检查窗口最早端, 服务端当前时刻)（无最早端 → 现在；主代理 2026-10-09 裁决 Q5，避免缺省落在过去）；用户可改，但须在窗口内；窗口无最晚端时最多比最早端（或现在）晚 7 天（`care.plans.check_max_postpone_days`）。
+    - 自选范围实现说明（主代理 2026-10-09 裁决，与 Q1 一致）：下界一律为 max(窗口最早端, 当前时刻)；窗口最晚端**不晚于**建议生成时刻时按「无最晚端」处理，允许范围 = [max(最早端, 当前时刻), 最早端 + 7 天]（无最早端时以当前时刻代替最早端）。
   - `{ decision: 'record_watering', occurredAt, amountMl? }`：同 §3 规则写浇水事实。
   - `{ decision: 'dismiss' }`。
 - 响应：`{ data: { proposalRef, proposalStatus: 'confirmed' | 'dismissed', plan: { planRef, planType, scheduledAt, status, calendar } | null, factRef | null } }`。
@@ -73,6 +75,7 @@
 - 请求：`{ version, outcome: 'done' | 'skipped', soil?: { state, scope }, watering?: { occurredAt, amountMl? } }`。`skipped` 不得带 `soil`/`watering`。
 - 响应：`{ data: { planRef, status: 'completed' | 'cancelled', version, factRef | null, calendar } }`。
 - 写入（同一事务、按 `version` 条件写）：`care_plans` 状态 + `version+1`；`watering` → `care_facts`；`soil` → `care_environment_observations`（`soil_surface`、`user_context`）。
+- 盆土观察固定字段（主代理 2026-10-09 裁决 Q2）：`factor_type='soil_surface'`、`source_scope='pot'`、`source_kind='user_context'`、`source_ref`=计划引用、`unit_code='category'`、`confidence_band='low'`、`contract_version='long-term-care/v1'`、`normalized_value_json={state,scope}`、观察时刻 = 服务端当前时刻。用户手动观察，MVP 统一低置信。
 - 错误：通用 + `CARE_PLAN_VERSION_CONFLICT`（409：版本不符或计划非 planned）、`USER_PLANT_ARCHIVED`。
 
 ## 8. 盆土证据有效期（U6，`care-watering-mvp/v2`；长期与临时案例同规则）

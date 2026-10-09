@@ -48,8 +48,9 @@ describe('CareCapabilityResponse 公开合同', () => {
       method: 'POST', path: '/api/v2/care/watering-advice', owner: 'care', security: 'guest_or_authenticated',
       requestContract: 'WateringAdviceRequest', responseContract: 'CareCapabilityResponse', idempotency: 'required_header'
     })
+    // long-term-care-contract.md §2（2026-10-09 冻结）：长期植物目标追加 USER_PLANT_NOT_FOUND、USER_PLANT_ARCHIVED。
     expect([...(route?.errors as string[])].sort()).toEqual([
-      'IDEMPOTENCY_CONFLICT', 'NOT_FOUND', 'PAYLOAD_TOO_LARGE', 'PRINCIPAL_INVALID', 'SERVICE_UNAVAILABLE', 'UNSUPPORTED_MEDIA_TYPE', 'VALIDATION_FAILED'
+      'IDEMPOTENCY_CONFLICT', 'NOT_FOUND', 'PAYLOAD_TOO_LARGE', 'PRINCIPAL_INVALID', 'SERVICE_UNAVAILABLE', 'UNSUPPORTED_MEDIA_TYPE', 'USER_PLANT_ARCHIVED', 'USER_PLANT_NOT_FOUND', 'VALIDATION_FAILED'
     ])
     const openapi = JSON.parse(fs.readFileSync(path.join(apiDirectory, 'openapi.p1.json'), 'utf8')) as {
       paths: Record<string, Record<string, { requestBody?: { content: Record<string, { schema: { $ref?: string } }> }; responses: Record<string, { content?: Record<string, { schema: { $ref?: string } }> }> }>>
