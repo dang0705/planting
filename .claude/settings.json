@@ -1,0 +1,54 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/scripts/matrix-gate/claude-user-prompt-submit.mjs\"",
+            "timeout": 30,
+            "statusMessage": "记录 TDD 回合策略"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/scripts/matrix-gate/claude-pre-tool-use.mjs\"",
+            "timeout": 30,
+            "statusMessage": "检查 Test First 与写入授权"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/scripts/matrix-gate/claude-post-tool-use.mjs\"",
+            "timeout": 30,
+            "statusMessage": "提交 TDD 证据"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/scripts/ut-stop-gate.mjs\"",
+            "timeout": 600,
+            "statusMessage": "运行受影响包的单元测试"
+          }
+        ]
+      }
+    ]
+  }
+}
