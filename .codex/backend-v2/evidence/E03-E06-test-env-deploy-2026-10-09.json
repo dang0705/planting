@@ -47,5 +47,13 @@
       "x-real-ip 等于第 4 段，每次变化，为 CDN 内部节点"
     ],
     "conclusion": "CDN 默认域名下函数无法从请求头可靠取得客户端 IP：最左段可伪造，最右段为 CDN 节点；guest-token-contract §6 的 XFF 最右段规则不成立"
+  },
+  "gatewayRateLimit": {
+    "config": "路由 /api/v2/identity/guest-sessions → v2-identity，QPSPolicy.QPSPerClient {LimitBy: ClientIP, LimitValue: 1}（tcb ModifyHTTPServiceRoute 设置并 getRoute 读回）",
+    "checks": [
+      "无伪造头并发 6 次：1 次 200、5 次 429 EXCEED_RATELIMIT（网关识别出真实客户端 IP）",
+      "每次伪造不同 XFF 并发 6 次：6 次 200 —— 经默认 CDN 域名时网关同样采信客户端提供的 XFF，单客户端限频可被绕过"
+    ],
+    "conclusion": "默认域名（AccessType=CDN，官方称即将下线）下应用层与网关层都无法防伪造来源；需改用不经公网 CDN 的调用通道（小程序 SDK 内部通道）或 DIRECT/EO 接入域名后复测"
   }
 }
