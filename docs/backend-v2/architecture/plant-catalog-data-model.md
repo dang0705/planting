@@ -170,6 +170,12 @@ erDiagram
 - `plant_search_terms.search_document_internal_id` → `plant_search_documents.id`（硬）
 - `plant_search_documents` 指向 `plant_taxa` / `plant_identities` 的 `v2_*` 列 **可空**。没有 V2 行的文档仍然可搜
 
+排序规则约束（仓库内尚无 `plant_search_*` 建表语句，以下为硬约束，重建或迁移投影时必须遵守）：
+
+- `plant_search_terms.normalized_term` 必须是 `utf8mb4` + **`utf8mb4_unicode_ci`**，并保留以它为首列的 `idx_search_term_exact`。目录搜索 SQL 把 `COLLATE utf8mb4_unicode_ci` 写在**参数侧**（`term.normalized_term LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci`），列保持裸列才能走索引前缀 range。若列改成其他排序规则（如连接默认的 `utf8mb4_0900_ai_ci`），参数侧显式 COLLATE 优先级更高，MySQL 会先转换**列**再比较，索引失效，172 万词条退化为全量扫描。
+- `plant_search_documents` 中参与匹配或排序的字符串列（`taxon_id`、`scientific_name`、`family`、`genus` 等）同样必须为 `utf8mb4_unicode_ci`，与 V2 schema（`docs/backend-v2/schema/*.sql` 表级 `COLLATE=utf8mb4_unicode_ci`）一致。
+- 2026-10-09 已在 `qinghuazhi_v2_test` 用 `information_schema` 只读核对：上述列均为 `utf8mb4_unicode_ci`。该库连接默认 `collation_connection` 是 `utf8mb4_0900_ai_ci`，所以 SQL 里不能省略参数侧 COLLATE。
+
 原则：**可搜索目录 ≠ 已物化的 PlantIdentity 集合。** 27 万搜索文档对 191 条 ACTIVE 身份，就是这个原则的当前证据。投影可以整表重建；重建不得顺手把 Tropicals 分类写成 `plant_identities`。
 
 ## 4. V2 规范分类与身份
