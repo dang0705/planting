@@ -5213,6 +5213,32 @@
       "expected": "浇水建议只读取 watering_baseline_policy.policy_version='v1' 且 is_active=1 的基线",
       "decisionGroup": "hard_business_rule",
       "decisionNote": "主代理 2026-10-09 登记：测试库现存唯一版本 v1（22 行）。"
+    },
+    {
+      "id": "user-plant.guest_claim.processing_lease_seconds",
+      "chineseName": "游客认领命令处理租约时长",
+      "domain": "user-plant",
+      "layer": "hard_rule",
+      "valueType": "integer",
+      "unit": "秒",
+      "status": "hard_rule",
+      "currentValue": 30,
+      "owner": "user-plant",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/guest-session-claim.md",
+        "cloudfunctions-v2/models/user-plant/guest-claim-existing-completion-contract.md"
+      ],
+      "consumers": [
+        "user-plant 游客认领"
+      ],
+      "changePolicy": "认领在单个 MySQL 事务内完成，提交时以“租约未过期且持有者匹配”为写入条件，正确性不依赖时长；时长只决定崩溃后的接管等待，不做运营配置，调整须改代码与测试",
+      "fallback": "租约过期后由新请求原子接管并递增 attempt_count；过期持有者的完成写入被条件拒绝",
+      "phase": "P2",
+      "ticketTitle": "[P2] 统一身份 Principal",
+      "clickUpTicketId": "z8v0kmr9mj",
+      "expected": "取得租约时 processing_lease_expires_at_ms = now + 30000；未过期时非持有者不能接管，过期后可接管且 attempt_count+1",
+      "decisionGroup": "hard_business_rule",
+      "decisionNote": "用户 2026-10-09 授权主代理决定；主代理裁决 30 秒硬规则。"
     }
   ],
   "providerProfiles": [
