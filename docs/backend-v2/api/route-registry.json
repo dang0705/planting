@@ -394,6 +394,9 @@
       "errors": [
         "VALIDATION_FAILED",
         "PRINCIPAL_INVALID",
+        "NOT_FOUND",
+        "PAYLOAD_TOO_LARGE",
+        "UNSUPPORTED_MEDIA_TYPE",
         "IDEMPOTENCY_CONFLICT",
         "SERVICE_UNAVAILABLE"
       ]

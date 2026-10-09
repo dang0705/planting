@@ -446,3 +446,6 @@ export type TemporaryCaseResponseDto = {
   /** 案例绝对失效时刻，带 Z 的 UTC ISO；游客案例等于所属游客会话失效时刻，登录案例为创建时刻加已发布有效期。 */
   expiresAt: string;
 };
+
+/** 养护能力公开结果 DTO 拆分至独立文件（types.ts 500 行上限）。 */
+export type * from "./care-capability-types.js";

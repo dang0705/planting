@@ -25,6 +25,8 @@ const requestSchemaRefByContract = {
   BindAuthenticatedEphemeralCaseRequest: '#/components/schemas/BindAuthenticatedEphemeralCaseRequest',
   /** 临时植物案例创建：严格空对象（temporary-case/v1）。 */
   CreateTemporaryCaseRequest: '#/components/schemas/CreateTemporaryCaseRequest',
+  /** 浇水建议（watering-advice/v1）。 */
+  WateringAdviceRequest: '#/components/schemas/WateringAdviceRequest',
   /** 归档/恢复仅允许调用方提交最后读到的植物版本。 */
   UserPlantVersionRequest: '#/components/schemas/UserPlantVersionRequest',
 }
@@ -36,6 +38,7 @@ const successSchemaRefByContract = {
   GuestSessionResponse: '#/components/schemas/CreateGuestSessionSuccess',
   BindAuthenticatedEphemeralCaseResponse: '#/components/schemas/BindAuthenticatedEphemeralCaseResponse',
   TemporaryCaseResponse: '#/components/schemas/TemporaryCaseSuccess',
+  CareCapabilityResponse: '#/components/schemas/CareCapabilitySuccess',
 }
 
 const parametersByPath = (routePath) => [...routePath.matchAll(/\{([^}]+)\}/gu)].map((match) => ({
@@ -563,6 +566,48 @@ const openapi = {
             },
           },
         ],
+      },
+      // watering-advice/v1：本阶段 target 只支持 temporary_case（user_plant 返回 VALIDATION_FAILED）。
+      WateringAdviceRequest: {
+        type: 'object', additionalProperties: false, required: ['target', 'location', 'window'],
+        properties: {
+          target: { oneOf: [
+            { type: 'object', additionalProperties: false, required: ['kind', 'caseRef'], properties: { kind: { const: 'temporary_case' }, caseRef: { type: 'string', minLength: 1, maxLength: 512 } } },
+            { type: 'object', additionalProperties: false, required: ['kind', 'userPlantRef'], properties: { kind: { const: 'user_plant' }, userPlantRef: { type: 'string', minLength: 1, maxLength: 512 } } },
+          ] },
+          catalogTaxonRef: { type: 'string', minLength: 1, maxLength: 512, description: '临时案例必填；读取 Tropicals 浇水基线。' },
+          location: { type: 'object', additionalProperties: false, required: ['latitude', 'longitude'],
+            properties: { latitude: { type: 'number', minimum: -90, maximum: 90 }, longitude: { type: 'number', minimum: -180, maximum: 180 } },
+            description: '服务端保存前四舍五入到 0.01°。' },
+          window: { type: 'object', additionalProperties: false, required: ['orientation', 'glassLayers'], properties: {
+            orientation: { enum: ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] },
+            azimuthDeg: { type: 'number', minimum: 0, exclusiveMaximum: 360 },
+            glassLayers: { enum: ['single', 'double', 'none', null] },
+          } },
+          lightReading: { type: ['object', 'null'], additionalProperties: false, required: ['lux', 'measuredAt', 'source'],
+            properties: { lux: { type: 'number', minimum: 0 }, measuredAt: { type: 'string', format: 'date-time' }, source: { enum: ['meter', 'camera_estimate'] } } },
+          soil: { type: ['object', 'null'], additionalProperties: false, required: ['state', 'scope', 'observedAt'],
+            properties: { state: { enum: ['wet', 'moist', 'dry', 'uncertain'] }, scope: { enum: ['surface', 'root_zone'] }, observedAt: { type: 'string', format: 'date-time' } } },
+          lastWatering: { type: ['object', 'null'], additionalProperties: false, required: ['wateredAt'], properties: { wateredAt: { type: 'string', format: 'date-time' } } },
+          pot: { type: ['object', 'null'], additionalProperties: false, required: ['isInnerPot', 'innerTopDiameterCm', 'innerBottomDiameterCm', 'innerHeightCm', 'hasDrainageHole'],
+            properties: { isInnerPot: { type: ['boolean', 'null'] }, innerTopDiameterCm: { type: ['number', 'null'] }, innerBottomDiameterCm: { type: ['number', 'null'] }, innerHeightCm: { type: ['number', 'null'] }, hasDrainageHole: { type: ['boolean', 'null'] } } },
+          substrateMaterials: { type: 'array', items: { enum: ['general', 'coco', 'ceramsite', 'peat', 'perlite', 'bark', 'sphagnum', 'gritty', 'coarse_sand'] } },
+          indoorClimate: { type: ['object', 'null'], additionalProperties: false, required: ['temperatureC', 'relativeHumidityPercent', 'measuredAt'],
+            properties: { temperatureC: { type: 'number' }, relativeHumidityPercent: { type: 'number', minimum: 0, maximum: 100 }, measuredAt: { type: 'string', format: 'date-time' } } },
+        },
+      },
+      CareCapabilitySuccess: {
+        type: 'object', additionalProperties: false, required: ['data'],
+        properties: { data: { type: 'object', additionalProperties: false, required: ['resultRef', 'result'], properties: {
+          resultRef: { type: 'string', pattern: '^cres_[A-Za-z0-9_-]{8,60}$', description: '已追加保存、可读回的计算结果引用。' },
+          result: { type: 'object', description: 'care-capability-result/v1（详情 watering-assessment/v1）；不含输入快照、策略版本、摘要或内部引用。',
+            required: ['capabilityType', 'contractVersion', 'status', 'confidence', 'evidenceSummary', 'recommendedActions', 'generatedAt', 'validUntil', 'detailsSchemaVersion', 'details'],
+            properties: {
+              capabilityType: { const: 'watering' }, contractVersion: { const: 'care-capability-result/v1' },
+              status: { enum: ['ready', 'insufficient_evidence', 'temporarily_unavailable'] }, confidence: { enum: ['low', 'medium', 'high'] },
+              detailsSchemaVersion: { const: 'watering-assessment/v1' },
+            } },
+        } } },
       },
       TemporaryCaseSuccess: {
         type: 'object', additionalProperties: false, required: ['data'],

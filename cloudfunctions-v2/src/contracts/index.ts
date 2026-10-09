@@ -20,8 +20,10 @@ import {
   userPrincipalSchema,
 } from "./schemas.js";
 import { createTemporaryCaseRequestSchema, temporaryCaseResponseSchema } from "./temporary-case-schemas.js";
+import { careCapabilityResponseSchema } from "./care-capability-schemas.js";
 import type {
   CapabilitySnapshotDto,
+  CareCapabilityResponseDto,
   ClaimGuestSessionCommandDto,
   CreateGuestSessionRequestDto,
   CreateGuestSessionResponseDto,
@@ -63,6 +65,7 @@ export {
   userPrincipalSchema,
 } from "./schemas.js";
 export { createTemporaryCaseRequestSchema, temporaryCaseResponseSchema } from "./temporary-case-schemas.js";
+export { careCapabilityResponseSchema } from "./care-capability-schemas.js";
 
 /**
  * 每个进程只需创建一次校验器集合；路由层把未知输入交给对应校验器，
@@ -97,6 +100,8 @@ export function createPublicContractValidators(): {
   createTemporaryCaseRequest: ValidateFunction<CreateTemporaryCaseRequestDto>;
   /** 临时植物案例公开数据校验器；保证引用前缀与 ownerKind 一致且无额外字段。 */
   temporaryCaseResponse: ValidateFunction<TemporaryCaseResponseDto>;
+  /** 浇水建议公开成功数据校验器；只允许 cres_ 结果引用与统一养护能力结果。 */
+  careCapabilityResponse: ValidateFunction<CareCapabilityResponseDto>;
   /** 游客会话认领命令校验器；保证新建植物与绑定已有植物的目标形状互斥。 */
   claimGuestSession: ValidateFunction<ClaimGuestSessionCommandDto>;
   /** 游客认领公开结果校验器；拒绝数据库内部键、用户归属、proof、租约和请求哈希。 */
@@ -150,6 +155,7 @@ export function createPublicContractValidators(): {
     createUserPlantResponse: ajv.compile(createUserPlantResponseSchema),
     createTemporaryCaseRequest: ajv.compile(createTemporaryCaseRequestSchema),
     temporaryCaseResponse: ajv.compile(temporaryCaseResponseSchema),
+    careCapabilityResponse: ajv.compile(careCapabilityResponseSchema),
     claimGuestSession: ajv.compile(claimGuestSessionCommandSchema),
     guestClaimResult: ajv.compile(guestClaimResultSchema),
     rewardableDomainEvent: ajv.compile(rewardableDomainEventSchema),
