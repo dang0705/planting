@@ -123,7 +123,7 @@ beforeEach(async () => {
     "INSERT INTO user_plants VALUES(1,1,'upl_receipt_target01','active',''),(2,1,'upl_receipt_target02','archived',''),(3,2,'upl_receipt_other01','active','')"
   )
   await db.query(
-    "INSERT INTO guest_sessions(id,guest_session_ref,anonymous_subject_hash,possession_proof_hash,possession_proof_version,status,issued_at_ms,expires_at_ms,created_at_ms,updated_at_ms) VALUES(1,'gst_receipt_session01',REPEAT('a',64),REPEAT('c',64),2,'completed',1000,5000,1000,3000)"
+    "INSERT INTO guest_sessions(id,identity_source,guest_session_ref,anonymous_subject_hash,possession_proof_hash,possession_proof_version,status,issued_at_ms,expires_at_ms,created_at_ms,updated_at_ms) VALUES(1,'server_issued_guest_token','gst_receipt_session01',REPEAT('a',64),REPEAT('c',64),2,'completed',1000,5000,1000,3000)"
   )
   await db.query(
     "INSERT INTO guest_plant_cases(id,guest_plant_case_ref,guest_session_internal_id,status,completed_at_ms,expires_at_ms,claimed_user_internal_id,claimed_user_plant_internal_id,version,created_at_ms,updated_at_ms) VALUES(1,'gpc_receipt_case01',1,'claimed',2000,5000,1,1,8,1000,3000)"

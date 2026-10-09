@@ -27,6 +27,8 @@ const requestSchemaRefByContract = {
   CreateTemporaryCaseRequest: '#/components/schemas/CreateTemporaryCaseRequest',
   /** 浇水建议（watering-advice/v1）。 */
   WateringAdviceRequest: '#/components/schemas/WateringAdviceRequest',
+  /** 游客案例认领：请求体携带原游客令牌，幂等键只走请求头（guest-session-claim/v1，2026-10-09 修订）。 */
+  ClaimGuestPlantCaseRequest: '#/components/schemas/ClaimGuestPlantCaseRequest',
   /** 归档/恢复仅允许调用方提交最后读到的植物版本。 */
   UserPlantVersionRequest: '#/components/schemas/UserPlantVersionRequest',
 }
@@ -39,6 +41,7 @@ const successSchemaRefByContract = {
   BindAuthenticatedEphemeralCaseResponse: '#/components/schemas/BindAuthenticatedEphemeralCaseResponse',
   TemporaryCaseResponse: '#/components/schemas/TemporaryCaseSuccess',
   CareCapabilityResponse: '#/components/schemas/CareCapabilitySuccess',
+  ClaimGuestPlantCaseResponse: '#/components/schemas/ClaimGuestPlantCaseSuccess',
 }
 
 const parametersByPath = (routePath) => [...routePath.matchAll(/\{([^}]+)\}/gu)].map((match) => ({
@@ -595,6 +598,32 @@ const openapi = {
           indoorClimate: { type: ['object', 'null'], additionalProperties: false, required: ['temperatureC', 'relativeHumidityPercent', 'measuredAt'],
             properties: { temperatureC: { type: 'number' }, relativeHumidityPercent: { type: 'number', minimum: 0, maximum: 100 }, measuredAt: { type: 'string', format: 'date-time' } } },
         },
+      },
+      ClaimGuestPlantCaseRequest: {
+        type: 'object', additionalProperties: false, required: ['guestSessionRef', 'guestPlantCaseRef', 'guestToken', 'target'],
+        properties: {
+          guestSessionRef: { type: 'string', pattern: '^gst_[A-Za-z0-9_-]{8,}$' },
+          guestPlantCaseRef: { type: 'string', pattern: '^gpc_[A-Za-z0-9_-]{8,}$' },
+          guestToken: { type: 'string', pattern: '^[A-Za-z0-9_-]{43}$', description: '原游客令牌，即持有证明（guest-token/v1 §3）；不落库、不进日志/响应。' },
+          target: { oneOf: [
+            { type: 'object', additionalProperties: false, required: ['type'], properties: { type: { const: 'new_user_plant' } } },
+            { type: 'object', additionalProperties: false, required: ['type', 'user_plant_id'], properties: { type: { const: 'existing_user_plant' }, user_plant_id: { type: 'string', pattern: '^upl_[A-Za-z0-9_-]{8,}$' } } },
+          ] },
+        },
+      },
+      ClaimGuestPlantCaseData: {
+        type: 'object', additionalProperties: false, required: ['claimRef', 'userPlantId', 'claimedObjectKinds', 'replayed'],
+        properties: {
+          claimRef: { type: 'string', pattern: '^gcl_[A-Za-z0-9_-]{8,}$' },
+          userPlantId: { type: 'string', pattern: '^upl_[A-Za-z0-9_-]{8,}$' },
+          claimedObjectKinds: { type: 'array', uniqueItems: true, items: { enum: ['identification_candidate', 'fixed_diagnosis_result', 'independent_watering_advice', 'soil_visual_evidence'] },
+            description: '按现有临时表查询；identification_candidate 在其临时表存在前不出现。' },
+          replayed: { type: 'boolean' },
+        },
+      },
+      ClaimGuestPlantCaseSuccess: {
+        type: 'object', additionalProperties: false, required: ['data'],
+        properties: { data: { $ref: '#/components/schemas/ClaimGuestPlantCaseData' } },
       },
       CareCapabilitySuccess: {
         type: 'object', additionalProperties: false, required: ['data'],

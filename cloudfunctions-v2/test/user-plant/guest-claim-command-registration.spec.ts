@@ -4,7 +4,7 @@ import type { UserPrincipalDto, UserRef } from '../../src/contracts/types.js'
 
 /** L1/unit_fake：Expected为独立命令登记合同；实际Repository，替换证明端口和SQL连接；真实数据库另验。 */
 const principal: UserPrincipalDto = { principalType: 'user', user_id: 'usr_guestclaim_owner001' as UserRef, sessionVersion: 1, authenticatedVia: 'wechat', issuedAt: '1970-01-01T00:00:01Z', expiresAt: '1970-01-01T00:00:09Z' }
-const input = () => ({ principal, proof: { guestSessionRef: 'gst_guestclaim_session001', anonymousSubjectHash: 'a'.repeat(64), possessionProof: Buffer.alloc(32).toString('base64url'), nowMs: 2000, proofRotationGraceSeconds: null }, guestPlantCaseRef: 'gpc_guestclaim_case001', target: { type: 'new_user_plant' as const }, claimRef: 'gcl_guestclaim_generated001', idempotencyKeyHash: 'b'.repeat(64) })
+const input = () => ({ principal, proof: { guestSessionRef: 'gst_guestclaim_session001', possessionProof: Buffer.alloc(32).toString('base64url'), nowMs: 2000, proofRotationGraceSeconds: null }, guestPlantCaseRef: 'gpc_guestclaim_case001', target: { type: 'new_user_plant' as const }, claimRef: 'gcl_guestclaim_generated001', idempotencyKeyHash: 'b'.repeat(64) })
 function fixture() {
  const lockAndVerify = vi.fn(async (_tx: unknown, _proof: unknown) => ({ status: 'not_claimable' as const })), query = vi.fn(), execute = vi.fn()
  const tx = { transactionContext: true, connection: { query, execute } } as never

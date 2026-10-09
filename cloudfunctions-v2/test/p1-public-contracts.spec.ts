@@ -152,12 +152,21 @@ describe("P1 公开 DTO 与 AJV Schema", () => {
   });
 
   // Expected：guest-session-claim/v1；new 与 existing 两种目标互斥，且拒绝额外字段。
+  // guest-token/v1 §3（主代理 2026-10-09 裁决 A）：请求体必须携带原游客令牌 guestToken 作为持有证明。
   test("游客案例认领目标是严格的互斥联合", () => {
     const base = {
       guestSessionRef: "gst_01J8Z3H4R57V4G2QPG6C5W8K9M",
       guestPlantCaseRef: "gpc_01J8Z3H4R57V4G2QPG6C5W8K9M",
-      idempotencyKey: "claim-20260920-0001",
+      guestToken: "A".repeat(43),
     };
+    // 主代理 2026-10-09 裁决 3：幂等键只走 Idempotency-Key 请求头，请求体携带 idempotencyKey 一律拒绝。
+    expect(validators.claimGuestSession({ ...base, idempotencyKey: "claim-20260920-0001", target: { type: "new_user_plant" } })).toBe(false);
+    const { guestToken: _omitted, ...withoutToken } = base;
+    expect(validators.claimGuestSession({ ...withoutToken, target: { type: "new_user_plant" } })).toBe(false);
+    for (const guestToken of ["A".repeat(42), "A".repeat(44), "A".repeat(42) + "=", "A".repeat(42) + "!", 42]) {
+      expect(validators.claimGuestSession({ ...base, guestToken, target: { type: "new_user_plant" } })).toBe(false);
+    }
+    expect(validators.claimGuestSession({ ...base, anonymousSubjectHash: "a".repeat(64), target: { type: "new_user_plant" } })).toBe(false);
 
     expect(validators.claimGuestSession({ ...base, target: { type: "new_user_plant" } })).toBe(true);
     expect(

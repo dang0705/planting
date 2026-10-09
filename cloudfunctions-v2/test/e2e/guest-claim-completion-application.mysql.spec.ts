@@ -31,6 +31,7 @@ import { createGuestClaimCompletionApplicationService } from '../../src/user-pla
 /** L3/unit_real_data：Expected来自guest-claim-completion-application-contract.md。
  * 真实应用→新连接只读收据→真实事务/证明/两个Repository→MySQL五写及核对；processing命令明确seed。
  * Principal/能力/原租约为输入夹具；未知提交只替commit回包，真正commit或rollback后抛驱动未知异常。
+ * 主代理 2026-10-09 裁决 2：单案例会话认领后同事务置 completed，写入计数随之加 1。
  * 隔离user_plants补创建初态列，非生产DDL；不覆盖身份Provider、租约取得、公开HTTP与派生对象。 */
 const container = `qhz-guest-application-${process.pid}`
 let db: Connection, source: ReturnType<typeof createMysql2ConnectionSource>
@@ -49,7 +50,6 @@ function existingInput() {
     principal,
     proof: {
       guestSessionRef: 'gst_claimapp_session01',
-      anonymousSubjectHash: 'a'.repeat(64),
       possessionProof,
       nowMs: 3000,
       proofRotationGraceSeconds: 30 as number | null
@@ -172,7 +172,7 @@ beforeEach(async () => {
     "INSERT INTO user_plants(id,user_internal_id,public_user_plant_id,lifecycle_status) VALUES(1,1,'upl_claimapp_existing01','active'),(2,1,'upl_claimapp_archived01','archived'),(3,2,'upl_claimapp_other001','active')"
   )
   await db.execute(
-    "INSERT INTO guest_sessions(id,guest_session_ref,anonymous_subject_hash,possession_proof_hash,possession_proof_version,previous_possession_proof_hash,previous_proof_valid_until_ms,status,issued_at_ms,expires_at_ms,created_at_ms,updated_at_ms) VALUES(1,'gst_claimapp_session01',?,?,2,?,4500,'active',1000,5000,1000,2000)",
+    "INSERT INTO guest_sessions(id,identity_source,guest_session_ref,anonymous_subject_hash,possession_proof_hash,possession_proof_version,previous_possession_proof_hash,previous_proof_valid_until_ms,status,issued_at_ms,expires_at_ms,created_at_ms,updated_at_ms) VALUES(1,'server_issued_guest_token','gst_claimapp_session01',?,?,2,?,4500,'active',1000,5000,1000,2000)",
     ['a'.repeat(64), hash(possessionProof), hash(Buffer.alloc(32, 8).toString('base64url'))]
   )
   await db.query(
@@ -307,7 +307,7 @@ test.each(['existing', 'new'] as const)('%s首次完成经真实事务保存并�
   expect(app.stats()).toEqual({
     transactions: 1,
     reads: 1,
-    writes: kind === 'existing' ? 4 : 5,
+    writes: kind === 'existing' ? 5 : 6, // 裁决 2：单案例会话认领后同事务把会话置 completed，多 1 次写
     uniqueConnections: 2
   })
   const [rows] = await db.query('SELECT COUNT(*) AS n FROM guest_case_claims')
@@ -339,7 +339,7 @@ test.each(['existing', 'new'] as const)(
     expect(app.stats()).toEqual({
       transactions: 1,
       reads: 2,
-      writes: kind === 'existing' ? 4 : 5,
+      writes: kind === 'existing' ? 5 : 6, // 裁决 2：单案例会话认领后同事务把会话置 completed，多 1 次写
       uniqueConnections: 3
     })
   }
@@ -359,7 +359,7 @@ test.each(['existing', 'new'] as const)(
     expect(app.stats()).toEqual({
       transactions: 1,
       reads: 2,
-      writes: kind === 'existing' ? 4 : 5,
+      writes: kind === 'existing' ? 5 : 6, // 裁决 2：单案例会话认领后同事务把会话置 completed，多 1 次写
       uniqueConnections: 3
     })
     const [rows] = await db.query('SELECT COUNT(*) AS n FROM guest_case_claims')
@@ -380,7 +380,7 @@ test.each(['existing', 'new'] as const)(
     expect(app.stats()).toEqual({
       transactions: 1,
       reads: 2,
-      writes: kind === 'existing' ? 4 : 5,
+      writes: kind === 'existing' ? 5 : 6, // 裁决 2：单案例会话认领后同事务把会话置 completed，多 1 次写
       uniqueConnections: 3
     })
   }
@@ -418,7 +418,8 @@ test('原完整成功同键异目标预读直接冲突，不启动新事务', as
   value.target.user_plant_id = 'upl_claimapp_archived01'
   expect(await app.service(value)).toEqual({ status: 'idempotency_conflict' })
   expect(await snapshot()).toEqual(before)
-  expect(app.stats()).toEqual({ transactions: 1, reads: 2, writes: 4, uniqueConnections: 3 })
+  // 裁决 2：首次完成含会话置 completed 写入。
+  expect(app.stats()).toEqual({ transactions: 1, reads: 2, writes: 5, uniqueConnections: 3 })
 })
 
 /** 原幂等合同：两份实际预读都null；确定让捕获较晚请求完成，等待者用新时刻核对。 */
@@ -464,7 +465,8 @@ test('同键新建两次真实预读均null，两个并发请求返回同一原�
     )
     expect(rows).toEqual([{ plants: 1, facts: 1, commands: 1 }])
     expect(earlier.stats()).toEqual({ transactions: 1, reads: 2, writes: 0, uniqueConnections: 3 })
-    expect(later.stats()).toEqual({ transactions: 1, reads: 1, writes: 5, uniqueConnections: 2 })
+    // 裁决 2：新建目标完成含会话置 completed 写入。
+    expect(later.stats()).toEqual({ transactions: 1, reads: 1, writes: 6, uniqueConnections: 2 })
   } finally {
     release()
     releaseWinner()

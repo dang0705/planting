@@ -33,7 +33,6 @@ function input() {
     principal,
     proof: {
       guestSessionRef: 'gst_completion_session01',
-      anonymousSubjectHash: 'a'.repeat(64),
       possessionProof: proof,
       nowMs: 3000,
       proofRotationGraceSeconds: 30 as number | null
@@ -136,7 +135,7 @@ beforeEach(async () => {
     "INSERT INTO user_plants VALUES(1,1,'upl_completion_target01','active',''),(2,1,'upl_completion_archived01','archived',''),(3,2,'upl_completion_other01','active','')"
   )
   await db.execute(
-    "INSERT INTO guest_sessions(id,guest_session_ref,anonymous_subject_hash,possession_proof_hash,possession_proof_version,previous_possession_proof_hash,previous_proof_valid_until_ms,status,issued_at_ms,expires_at_ms,created_at_ms,updated_at_ms) VALUES(1,'gst_completion_session01',?,?,2,?,4500,'active',1000,10000,1000,2000)",
+    "INSERT INTO guest_sessions(id,identity_source,guest_session_ref,anonymous_subject_hash,possession_proof_hash,possession_proof_version,previous_possession_proof_hash,previous_proof_valid_until_ms,status,issued_at_ms,expires_at_ms,created_at_ms,updated_at_ms) VALUES(1,'server_issued_guest_token','gst_completion_session01',?,?,2,?,4500,'active',1000,10000,1000,2000)",
     ['a'.repeat(64), hash(proof), hash(previousProof)]
   )
   await db.query(
@@ -270,7 +269,7 @@ test.each([
     )
   }
   if (reason === 'proof_denied') {
-    value.proof.anonymousSubjectHash = 'c'.repeat(64)
+    value.proof.possessionProof = Buffer.alloc(32, 99).toString('base64url') // 裁决 A：错误令牌即证明不匹配
   }
   if (reason === 'cross_user_target') {
     value.target.user_plant_id = 'upl_completion_other01'

@@ -79,7 +79,8 @@ export function createMysqlGuestClaimCommandRegistrationRepository(d: GuestClaim
       const cases = await c.query(`SELECT CAST(p.id AS CHAR) AS case_id,p.status,p.version,
         CAST(p.completed_at_ms AS CHAR) AS completed_at_ms,CAST(p.expires_at_ms AS CHAR) AS expires_at_ms,
         CAST(p.created_at_ms AS CHAR) AS created_at_ms,CAST(p.updated_at_ms AS CHAR) AS updated_at_ms,
-        CAST(p.claimed_user_internal_id AS CHAR) AS claimed_user_internal_id,CAST(p.claimed_user_plant_internal_id AS CHAR) AS claimed_user_plant_internal_id
+        CAST(p.claimed_user_internal_id AS CHAR) AS claimed_user_internal_id,CAST(p.claimed_user_plant_internal_id AS CHAR) AS claimed_user_plant_internal_id,
+        s.status AS session_status
         FROM guest_plant_cases p JOIN guest_sessions s ON s.id=p.guest_session_internal_id AND s._openid=''
         WHERE BINARY s.guest_session_ref=BINARY ? AND BINARY p.guest_plant_case_ref=BINARY ? AND p._openid='' FOR UPDATE`, [input.proof.guestSessionRef, input.guestPlantCaseRef])
       if (cases.length === 0) { return { status: 'not_claimable' } }
@@ -116,13 +117,16 @@ export function createMysqlGuestClaimCommandRegistrationRepository(d: GuestClaim
         } else if (p.status === 'claimed') { return { status: 'not_claimable' } }
         return { status: 'registered', claimRef: m.claim_ref, proofVersion: m.proof_version, replayed: true }
       }
+      // 裁决 B（guest-token/v1 §3）：已 completed 游客会话只允许原命令重放，新命令拒绝。
+      if (p.session_status === 'completed') { return { status: 'not_claimable' } }
       if (p.status === 'claimed' || p.claimed_user_internal_id !== null || p.claimed_user_plant_internal_id !== null) { return { status: 'not_claimable' } }
       const now = input.proof.nowMs, created = ms(p.created_at_ms), updated = ms(p.updated_at_ms), completed = ms(p.completed_at_ms), expires = ms(p.expires_at_ms)
       if (created === null || updated === null || expires === null || expires <= created || updated < created || now < updated
         || typeof p.version !== 'number' || !Number.isInteger(p.version) || p.version < 1 || p.version > 4294967295) { return { status: 'unavailable' } }
       if (now >= expires || p.status === 'expired') { return { status: 'expired' } }
-      if (p.status !== 'completed') { return { status: 'not_claimable' } }
-      if (completed === null || completed < created || completed > updated) { return { status: 'unavailable' } }
+      // 裁决 1（temporary-case/v1：案例创建即 active，v2 无案例完成流程）：active 或 completed 案例可认领。
+      if (p.status !== 'completed' && p.status !== 'active') { return { status: 'not_claimable' } }
+      if (p.status === 'completed' ? (completed === null || completed < created || completed > updated) : completed !== null) { return { status: 'unavailable' } }
       const saved = await c.execute(`INSERT INTO guest_claim_commands(claim_ref,guest_plant_case_internal_id,user_internal_id,target_type,requested_user_plant_internal_id,
         target_user_plant_internal_id,idempotency_key,request_hash,proof_version,status,processing_lease_owner_hash,processing_lease_expires_at_ms,attempt_count,failure_code,created_at_ms,updated_at_ms)
         VALUES(?,?,?,?,?,NULL,?,?,?,'requested',NULL,NULL,0,NULL,?,?)`, [input.claimRef, p.case_id as string, userId, input.target.type, targetId, input.idempotencyKeyHash, hash, verified.proofVersion, now, now])

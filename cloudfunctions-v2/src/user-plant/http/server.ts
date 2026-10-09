@@ -10,6 +10,8 @@ import type { ResolveUserPrincipalCommand } from '../../identity/application/res
 import { createTemporaryCaseApplicationService } from '../application/create-temporary-case.js'
 import { createMysqlTemporaryCaseRepository } from '../repository/mysql-temporary-case-repository.js'
 import { createTemporaryCaseRoute, createTemporaryCaseRouteHandler } from './create-temporary-case-route.js'
+import { claimGuestPlantCaseRoute } from './claim-guest-plant-case-route.js'
+import { createGuestClaimRouteHandler } from './guest-claim-wiring.js'
 import {
   createMysqlTransactionDriver,
   type MysqlConnectionPoolPort,
@@ -239,6 +241,18 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
         resolvePrincipal,
         resolveCapabilitySnapshot: dependencies.resolveCapabilitySnapshot,
         createUserPlant,
+        now: dependencies.now,
+        writeAudit: dependencies.writeAudit
+      })
+    },
+    {
+      route: claimGuestPlantCaseRoute,
+      handler: createGuestClaimRouteHandler({
+        connectionSource: dependencies.connectionSource,
+        driver,
+        userPlantRepository,
+        resolvePrincipal,
+        resolveCapabilitySnapshot: dependencies.resolveCapabilitySnapshot,
         now: dependencies.now,
         writeAudit: dependencies.writeAudit
       })

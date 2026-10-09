@@ -2,23 +2,22 @@ import { createHash, timingSafeEqual } from 'node:crypto'
 
 /** 从锁定会话读取的最小证明状态，不含数据库键。 */
 export interface GuestClaimProofRecord {
-  /** 经匿名平台验真的主体摘要。 */ readonly anonymousSubjectHash: string
-  /** 当前持有证明的SHA-256摘要。 */ readonly proofHash: string
+  /** 游客身份来源；只有 server_issued_guest_token 可认领（guest-token/v1，历史 cloudbase_anonymous 一律拒绝）。 */ readonly identitySource: string
+  /** 当前持有证明（服务端自发游客令牌）的SHA-256摘要。 */ readonly proofHash: string
   /** 当前单调递增证明版本。 */ readonly proofVersion: number
-  /** 上一版证明摘要，无上一版为null。 */ readonly previousProofHash: string | null
+  /** 上一版证明摘要，无上一版为null；当前游客令牌不轮换，此路径保留但通常不触发。 */ readonly previousProofHash: string | null
   /** 已存宽限期截止时刻，不在校验时续期。 */ readonly previousProofValidUntilMs: number | null
   /** 会话签发UTC毫秒。 */ readonly issuedAtMs: number
   /** 会话失效UTC毫秒。 */ readonly expiresAtMs: number
   /** 存储状态只允许合同四种状态。 */ readonly status: string
 }
-/** 服务端验真后的调用上下文，原始证明仅在当前内存中使用。 */
+/** 认领调用上下文：游客令牌即持有证明（guest-token/v1 §3），原文仅在当前内存中使用。 */
 export interface GuestClaimProofInput {
-  /** 受控匿名身份适配得到的摘要，不接受未经验真的客户端声明。 */ readonly anonymousSubjectHash: string
-  /** 从固定请求头读取，禁止写入SQL、日志或结果。 */ readonly possessionProof: string
+  /** 登录用户请求体携带的原游客令牌，禁止写入SQL、日志、审计或结果。 */ readonly possessionProof: string
   /** 可信服务端UTC时刻。 */ readonly nowMs: number
   /** 已发布轮换策略；缺快照为null，仅阻断上一版证明。 */ readonly proofRotationGraceSeconds: number | null
 }
-/** 窄内部结果，不能披露证明或匿名主体信息。 */
+/** 窄内部结果，不能披露证明、令牌或匿名信号信息。 */
 export type GuestClaimProofResult = {
   /** 证明与有效会话已同时验证。 */ readonly status: 'verified'
   /** 实际匹配的审计版本。 */ readonly proofVersion: number
@@ -34,7 +33,7 @@ function equalHash(left: string, right: string): boolean {
 function validTime(value: number): boolean { return Number.isSafeInteger(value) && value >= 0 && Number.isFinite(new Date(value).getTime()) }
 /** 认领事务的会话证明准入；不授予登录或长期植物归属。 */
 export function verifyGuestClaimProof(record: GuestClaimProofRecord, input: GuestClaimProofInput): GuestClaimProofResult {
-  if (!record || !input || typeof record.anonymousSubjectHash !== 'string' || typeof record.proofHash !== 'string' || !shaPattern.test(record.anonymousSubjectHash) || !shaPattern.test(record.proofHash)
+  if (!record || !input || typeof record.identitySource !== 'string' || typeof record.proofHash !== 'string' || !shaPattern.test(record.proofHash)
     || !Number.isSafeInteger(record.proofVersion) || record.proofVersion < 1 || record.proofVersion > 4294967295
     || !validTime(record.issuedAtMs) || !validTime(record.expiresAtMs) || record.expiresAtMs <= record.issuedAtMs
     || !['active', 'completed', 'failed', 'expired'].includes(record.status)
@@ -43,8 +42,8 @@ export function verifyGuestClaimProof(record: GuestClaimProofRecord, input: Gues
   if (hasPrevious !== (record.previousProofValidUntilMs !== null)
     || (hasPrevious && (typeof record.previousProofHash !== 'string' || !shaPattern.test(record.previousProofHash!) || record.proofVersion === 1 || record.previousProofHash === record.proofHash
       || !validTime(record.previousProofValidUntilMs!) || record.previousProofValidUntilMs! <= record.issuedAtMs || record.previousProofValidUntilMs! > record.expiresAtMs))) { return { status: 'unavailable' } }
-  if (typeof input.anonymousSubjectHash !== 'string' || !shaPattern.test(input.anonymousSubjectHash)
-    || !equalHash(record.anonymousSubjectHash, input.anonymousSubjectHash)) { return { status: 'not_claimable' } }
+  // 匿名信号只作防刷，不参与持有证明；历史 CloudBase 匿名会话不能以令牌语义认领。
+  if (record.identitySource !== 'server_issued_guest_token') { return { status: 'not_claimable' } }
   if (typeof input.possessionProof !== 'string' || !/^[A-Za-z0-9_-]+$/u.test(input.possessionProof)) { return { status: 'not_claimable' } }
   const decoded = Buffer.from(input.possessionProof, 'base64url')
   if (decoded.byteLength < 32 || decoded.toString('base64url') !== input.possessionProof) { return { status: 'not_claimable' } }

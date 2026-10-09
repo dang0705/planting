@@ -352,10 +352,11 @@ export const createUserPlantResponseSchema: JSONSchemaType<CreateUserPlantRespon
 export const claimGuestSessionCommandSchema: JSONSchemaType<ClaimGuestSessionCommandDto> = {
   type: "object",
   additionalProperties: false,
-  required: ["guestSessionRef", "guestPlantCaseRef", "target", "idempotencyKey"],
+  required: ["guestSessionRef", "guestPlantCaseRef", "guestToken", "target"],
   properties: {
     guestSessionRef: { type: "string", pattern: `^gst_${PUBLIC_REF_SUFFIX}$` },
     guestPlantCaseRef: { type: "string", pattern: `^gpc_${PUBLIC_REF_SUFFIX}$` },
+    guestToken: { type: "string", pattern: "^[A-Za-z0-9_-]{43}$" },
     target: {
       oneOf: [
         {
@@ -375,7 +376,6 @@ export const claimGuestSessionCommandSchema: JSONSchemaType<ClaimGuestSessionCom
         },
       ],
     },
-    idempotencyKey: { type: "string", minLength: 8, maxLength: 128 },
   },
 };
 

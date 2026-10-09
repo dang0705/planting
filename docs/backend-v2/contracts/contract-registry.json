@@ -35,7 +35,7 @@
       "version": "guest-session-claim/v1",
       "file": "guest-session-claim.md",
       "owner": "plant-knowledge + user-plant + care + diagnosis",
-      "sha256": "e42bd5218574a84764f8c4f11af71c57648b68d5af0400964a007e3dd82db243"
+      "sha256": "91731cc7c4a4a450afde9a1ee13cbd33057ec99fa0e9a42adb027896932497ec"
     },
     {
       "id": "authenticated-ephemeral-plant-case",

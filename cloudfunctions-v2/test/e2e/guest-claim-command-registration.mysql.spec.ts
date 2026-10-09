@@ -31,7 +31,6 @@ function input() {
     principal,
     proof: {
       guestSessionRef: 'gst_registration_session01',
-      anonymousSubjectHash: 'a'.repeat(64),
       possessionProof,
       nowMs: 3000,
       proofRotationGraceSeconds: null as number | null
@@ -118,8 +117,9 @@ beforeEach(async () => {
     "INSERT INTO user_plants VALUES(1,1,'upl_registration_active01','active',''),(2,1,'upl_registration_archived01','archived',''),(3,2,'upl_registration_other01','active',''),(4,1,'upl_registration_deleted01','deleted','')"
   )
   await db.execute(
-    "INSERT INTO guest_sessions(id,guest_session_ref,anonymous_subject_hash,possession_proof_hash,possession_proof_version,status,issued_at_ms,expires_at_ms,created_at_ms,updated_at_ms) VALUES(1,'gst_registration_session01',?,?,2,'active',1000,10000,1000,2000),(2,'gst_registration_session02',?,?,2,'active',1000,10000,1000,2000)",
-    ['a'.repeat(64), hash(possessionProof), 'c'.repeat(64), hash(possessionProof)]
+    "INSERT INTO guest_sessions(id,identity_source,guest_session_ref,anonymous_subject_hash,possession_proof_hash,possession_proof_version,status,issued_at_ms,expires_at_ms,created_at_ms,updated_at_ms) VALUES(1,'server_issued_guest_token','gst_registration_session01',?,?,2,'active',1000,10000,1000,2000),(2,'server_issued_guest_token','gst_registration_session02',?,?,2,'active',1000,10000,1000,2000)",
+    // 023 令牌摘要唯一：另一会话持有不同令牌。
+    ['a'.repeat(64), hash(possessionProof), 'c'.repeat(64), hash(Buffer.alloc(32, 5).toString('base64url'))]
   )
   await db.query(
     "INSERT INTO guest_plant_cases(id,guest_plant_case_ref,guest_session_internal_id,status,completed_at_ms,expires_at_ms,version,created_at_ms,updated_at_ms) VALUES(1,'gpc_registration_case01',1,'completed',2000,5000,7,1000,2000),(2,'gpc_registration_other01',2,'completed',2000,5000,7,1000,2000)"
@@ -229,15 +229,15 @@ test('同键不同显式目标冲突，命令与原所有事实零变更', async
   expect(await state()).toEqual(before)
 })
 test.each([
-  'wrong_subject',
+  'wrong_token',
   'other_session',
   'inactive_user',
   'other_target',
   'deleted_target'
 ] as const)('证明/归属%s拒绝零命令', async kind => {
   const command = input()
-  if (kind === 'wrong_subject') {
-    command.proof.anonymousSubjectHash = 'c'.repeat(64)
+  if (kind === 'wrong_token') {
+    command.proof.possessionProof = Buffer.alloc(32, 99).toString('base64url') // 裁决 A：错误令牌即证明不匹配
   }
   if (kind === 'other_session') {
     command.guestPlantCaseRef = 'gpc_registration_other01'
@@ -257,12 +257,24 @@ test.each([
   })
   expect(await state()).toEqual(before)
 })
-test('案例未completed不可登记；案例到期拒绝新键但原命令引用仍可查询', async () => {
-  await db.query("UPDATE guest_plant_cases SET status='active',completed_at_ms=NULL WHERE id=1")
+// Expected：主代理 2026-10-09 裁决 B——已 completed 游客会话只允许同用户同案例同键同请求摘要重放原命令；新命令拒绝。
+test('completed 游客会话：同键原命令可重放，新键新命令 not_claimable 且零新增', async () => {
+  await register()
+  await db.query("UPDATE guest_sessions SET status='completed' WHERE id=1")
+  expect(await register()).toEqual({ ...registered, replayed: true })
+  const command = input()
+  command.idempotencyKeyHash = 'e'.repeat(64)
+  command.claimRef = 'gcl_registration_newkey01'
+  expect(await register(command)).toEqual({ status: 'not_claimable' })
+  expect(await countCommands()).toEqual([{ n: 1 }])
+})
+// Expected 更新：主代理 2026-10-09 裁决 1（temporary-case/v1 案例创建即 active，v2 无案例完成流程）——active 或 completed 案例均可登记。
+test('active 案例可登记、failed 案例不可登记；案例到期拒绝新键但原命令引用仍可查询', async () => {
+  await db.query("UPDATE guest_plant_cases SET status='failed',completed_at_ms=NULL WHERE id=1")
   expect(await register()).toEqual({ status: 'not_claimable' })
   expect(await countCommands()).toEqual([{ n: 0 }])
-  await db.query("UPDATE guest_plant_cases SET status='completed',completed_at_ms=2000 WHERE id=1")
-  await register()
+  await db.query("UPDATE guest_plant_cases SET status='active',completed_at_ms=NULL WHERE id=1")
+  expect(await register()).toEqual(registered)
   const command = input()
   command.proof.nowMs = 5000
   expect(await register(command)).toEqual({ ...registered, replayed: true })

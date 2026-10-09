@@ -76,7 +76,7 @@ export function createMysqlGuestClaimCompletionCore(targetType: 'existing_user_p
       }
       if (Object.keys(proof).length !== 2 || !Number.isInteger(proof.proofVersion) || proof.proofVersion < 1 || proof.proofVersion > 4294967295) { throw new Error('证明版本不合法') }
       const c = tx.connection
-      const cases = await c.query(`SELECT CAST(p.id AS CHAR) AS case_id,p.status,p.version,CAST(p.created_at_ms AS CHAR) AS created_at_ms,CAST(p.completed_at_ms AS CHAR) AS completed_at_ms,CAST(p.updated_at_ms AS CHAR) AS updated_at_ms,CAST(p.expires_at_ms AS CHAR) AS expires_at_ms,CAST(p.claimed_user_internal_id AS CHAR) AS claimed_user_internal_id,CAST(p.claimed_user_plant_internal_id AS CHAR) AS claimed_user_plant_internal_id FROM guest_plant_cases p JOIN guest_sessions s ON s.id=p.guest_session_internal_id AND s._openid='' WHERE BINARY s.guest_session_ref=BINARY ? AND BINARY p.guest_plant_case_ref=BINARY ? AND p._openid='' FOR UPDATE`, [input.proof.guestSessionRef, input.guestPlantCaseRef])
+      const cases = await c.query(`SELECT CAST(p.id AS CHAR) AS case_id,CAST(p.guest_session_internal_id AS CHAR) AS session_id,p.status,p.version,CAST(p.created_at_ms AS CHAR) AS created_at_ms,CAST(p.completed_at_ms AS CHAR) AS completed_at_ms,CAST(p.updated_at_ms AS CHAR) AS updated_at_ms,CAST(p.expires_at_ms AS CHAR) AS expires_at_ms,CAST(p.claimed_user_internal_id AS CHAR) AS claimed_user_internal_id,CAST(p.claimed_user_plant_internal_id AS CHAR) AS claimed_user_plant_internal_id FROM guest_plant_cases p JOIN guest_sessions s ON s.id=p.guest_session_internal_id AND s._openid='' WHERE BINARY s.guest_session_ref=BINARY ? AND BINARY p.guest_plant_case_ref=BINARY ? AND p._openid='' FOR UPDATE`, [input.proof.guestSessionRef, input.guestPlantCaseRef])
       if (cases.length === 0) { return { status: 'not_claimable' } }
       const p = cases[0]!, created = ms(p.created_at_ms), completed = ms(p.completed_at_ms), updated = ms(p.updated_at_ms), expires = ms(p.expires_at_ms)
       if (cases.length !== 1 || !id(p.case_id) || created === null || updated === null || expires === null || updated < created || expires <= created || !Number.isInteger(p.version) || typeof p.version !== 'number' || p.version < 1 || p.version > 4294967295) { return { status: 'unavailable' } }
@@ -87,8 +87,9 @@ export function createMysqlGuestClaimCompletionCore(targetType: 'existing_user_p
       }
       if (now < updated || p.version >= 4294967295) { return { status: 'unavailable' } }
       if (expires <= now || p.status === 'expired') { return { status: 'expired' } }
-      if (p.status !== 'completed' || p.claimed_user_internal_id !== null || p.claimed_user_plant_internal_id !== null) { return { status: 'not_claimable' } }
-      if (completed === null || completed < created || completed > updated) { return { status: 'unavailable' } }
+      // 裁决 1：active 或 completed 案例可认领；completed 时完成时间必须自洽，active 时不得有完成时间。
+      if ((p.status !== 'completed' && p.status !== 'active') || p.claimed_user_internal_id !== null || p.claimed_user_plant_internal_id !== null) { return { status: 'not_claimable' } }
+      if (!id(p.session_id) || (p.status === 'completed' ? (completed === null || completed < created || completed > updated) : completed !== null)) { return { status: 'unavailable' } }
       const users = await c.query("SELECT CAST(id AS CHAR) AS user_id FROM users WHERE BINARY public_user_id=BINARY ? AND status='active' AND _openid='' FOR UPDATE", [input.principal.user_id])
       if (users.length === 0) { return { status: 'principal_invalid' } }
       if (users.length !== 1 || !id(users[0]!.user_id)) { return { status: 'unavailable' } }
@@ -134,13 +135,20 @@ export function createMysqlGuestClaimCompletionCore(targetType: 'existing_user_p
         finalPlantRef = input.target.user_plant_id
       }
       const write = async (sql: string, args: Array<string | number | null>) => { const result = await c.execute(sql, args); if (result.affectedRows !== 1) { throw new Error('认领原子写入未确定') } }
-      await write("UPDATE guest_plant_cases SET status='claimed',claimed_user_internal_id=?,claimed_user_plant_internal_id=?,version=version+1,updated_at_ms=? WHERE id=? AND status='completed' AND version=? AND claimed_user_internal_id IS NULL AND claimed_user_plant_internal_id IS NULL AND _openid=''", [userId, plantId, now, p.case_id, p.version])
+      await write("UPDATE guest_plant_cases SET status='claimed',claimed_user_internal_id=?,claimed_user_plant_internal_id=?,version=version+1,updated_at_ms=? WHERE id=? AND status IN ('active','completed') AND version=? AND claimed_user_internal_id IS NULL AND claimed_user_plant_internal_id IS NULL AND _openid=''", [userId, plantId, now, p.case_id, p.version])
       await write("UPDATE guest_claim_commands SET status='completed',target_user_plant_internal_id=?,processing_lease_owner_hash=NULL,processing_lease_expires_at_ms=NULL,updated_at_ms=? WHERE id=? AND status='processing' AND processing_lease_owner_hash=? AND processing_lease_expires_at_ms>? AND _openid=''", [plantId, now, m.command_id, input.leaseOwnerHash, now])
       await write('INSERT INTO guest_case_claims(guest_plant_case_internal_id,claim_command_internal_id,user_internal_id,user_plant_internal_id,claimed_at_ms,created_at_ms) VALUES(?,?,?,?,?,?)', [p.case_id, m.command_id, userId, plantId, now, now])
       await write("UPDATE guest_sessions SET previous_possession_proof_hash=NULL,previous_proof_valid_until_ms=NULL,updated_at_ms=? WHERE BINARY guest_session_ref=BINARY ? AND _openid=''", [now, input.proof.guestSessionRef])
-      const rows = await c.query(`SELECT m.claim_ref,m.proof_version,CAST(f.claimed_at_ms AS CHAR) AS claimed_at_ms,p.version AS case_version,s.previous_possession_proof_hash,s.previous_proof_valid_until_ms FROM guest_case_claims f JOIN guest_claim_commands m ON m.id=f.claim_command_internal_id AND m.status='completed' AND m.target_user_plant_internal_id=f.user_plant_internal_id AND m.user_internal_id=f.user_internal_id AND m.guest_plant_case_internal_id=f.guest_plant_case_internal_id AND m._openid='' JOIN guest_plant_cases p ON p.id=f.guest_plant_case_internal_id AND p.status='claimed' AND p.claimed_user_internal_id=f.user_internal_id AND p.claimed_user_plant_internal_id=f.user_plant_internal_id AND p._openid='' JOIN guest_sessions s ON s.id=p.guest_session_internal_id AND s._openid='' WHERE f.claim_command_internal_id=? AND f._openid=''`, [m.command_id])
+      // 裁决 2：按案例逐个认领；同会话已无未认领且未过期的 active/completed 案例时，同事务条件写把会话置 completed。
+      const remaining = await c.query("SELECT CAST(COUNT(*) AS CHAR) AS n FROM guest_plant_cases WHERE guest_session_internal_id=? AND status IN ('active','completed') AND expires_at_ms>? AND claimed_user_internal_id IS NULL AND _openid=''", [p.session_id, now])
+      if (remaining.length !== 1 || typeof remaining[0]!.n !== 'string') { throw new Error('会话剩余案例计数不完整') }
+      const sessionCompleted = remaining[0]!.n === '0'
+      if (sessionCompleted) {
+        await write("UPDATE guest_sessions SET status='completed',updated_at_ms=? WHERE id=? AND status='active' AND _openid=''", [now, p.session_id])
+      }
+      const rows = await c.query(`SELECT m.claim_ref,m.proof_version,CAST(f.claimed_at_ms AS CHAR) AS claimed_at_ms,p.version AS case_version,s.status AS session_status,s.previous_possession_proof_hash,s.previous_proof_valid_until_ms FROM guest_case_claims f JOIN guest_claim_commands m ON m.id=f.claim_command_internal_id AND m.status='completed' AND m.target_user_plant_internal_id=f.user_plant_internal_id AND m.user_internal_id=f.user_internal_id AND m.guest_plant_case_internal_id=f.guest_plant_case_internal_id AND m._openid='' JOIN guest_plant_cases p ON p.id=f.guest_plant_case_internal_id AND p.status='claimed' AND p.claimed_user_internal_id=f.user_internal_id AND p.claimed_user_plant_internal_id=f.user_plant_internal_id AND p._openid='' JOIN guest_sessions s ON s.id=p.guest_session_internal_id AND s._openid='' WHERE f.claim_command_internal_id=? AND f._openid=''`, [m.command_id])
       const r = rows[0]
-      if (rows.length !== 1 || !r || r.claim_ref !== input.claimRef || r.proof_version !== m.proof_version || ms(r.claimed_at_ms) !== now || r.case_version !== p.version + 1 || r.previous_possession_proof_hash !== null || r.previous_proof_valid_until_ms !== null) { throw new Error('认领成功关系读回不一致') }
+      if (rows.length !== 1 || !r || r.claim_ref !== input.claimRef || r.proof_version !== m.proof_version || ms(r.claimed_at_ms) !== now || r.case_version !== p.version + 1 || r.previous_possession_proof_hash !== null || r.previous_proof_valid_until_ms !== null || (sessionCompleted && r.session_status !== 'completed')) { throw new Error('认领成功关系读回不一致') }
       return Object.freeze({ status: 'completed', claimRef: input.claimRef, userPlantRef: finalPlantRef, guestPlantCaseRef: input.guestPlantCaseRef, proofVersion: m.proof_version, claimedAtMs: now })
     }
   }

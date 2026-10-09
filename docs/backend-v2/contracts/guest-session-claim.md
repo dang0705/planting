@@ -11,10 +11,12 @@
 明确的短宽限期内接受上一版摘要；`previous_proof_valid_until_ms` 到期后必须清除上一版摘要。
 认领命令记录已验证的 `proof_version` 以便审计，但永不保存或记录原始 bearer 证明。
 
-HTTP 传输位置固定为 `X-QHZ-Guest-Proof` 请求头，不得出现在 URL、JSON 正文、日志或错误响应。
-证明由服务端生成至少 256 位随机值，以 base64url 返回且只返回一次；数据库仅保存其
-SHA-256。校验时先按游客令牌摘要定位会话，再对等长摘要使用常量时间比较。MVP 不主动
-续期游客会话；只有风险处置或登录衔接需要轮换时才递增版本，上一版证明最多保留 300 秒。
+持有证明即服务端自发的游客令牌本身（依据 guest-token/v1 §3，2026-10-09 主代理授权）：认领时由已登录用户在 JSON 请求体字段 `guestToken`
+（`^[A-Za-z0-9_-]{43}$`，即 256 位随机值的 base64url）携带原游客令牌；不得出现在 URL、日志、审计或错误响应。
+数据库仅保存其 SHA-256（`possession_proof_hash`）。校验时按令牌摘要定位会话，并要求会话引用与请求
+`guestSessionRef` 一致、`identity_source='server_issued_guest_token'`（历史 `cloudbase_anonymous` 会话一律不可认领），
+再对等长摘要使用常量时间比较。`anonymous_subject_hash` 只作防刷信号，不参与持有证明。MVP 不主动
+续期游客会话；当前游客令牌不轮换，上一版证明宽限路径保留（无上一版时不触发），上一版最多保留 300 秒。
 认领成功后立即清除上一版证明；当前会话到期时所有证明同时失效。
 
 一个会话可以包含多个 `guest_plant_case_ref`，但每个游客植物案例只能表达一株临时植物。识别、问诊、独立浇水和盆土视觉等域内临时对象必须引用其中一个案例；不得把多株植物混进同一案例。
@@ -23,15 +25,19 @@ SHA-256。校验时先按游客令牌摘要定位会话，再对等长摘要使�
 
 ```text
 游客会话：active → completed / failed / expired
-游客植物案例：active → completed / failed / expired；completed → claimed
+游客植物案例：active → completed / failed / expired；active / completed → claimed
 ```
+
+可认领案例 = `active` 或 `completed`、未过期、未认领（2026-10-09 主代理授权）。依据 temporary-case/v1：案例创建即 `active`，v2 无案例完成流程，因此 `active` 案例可直接认领。
+
+会话完成规则（2026-10-09 主代理授权）：按案例逐个认领；在认领事务内（同事务、条件写、读回）检查同一会话是否已无「未认领且未过期」的 `active`/`completed` 案例，若无则把游客会话置为 `completed`。guest-token/v1 §3「同一令牌第二次认领拒绝」落实为：同一案例不可二次认领；`completed` 会话只允许同用户、同案例、同幂等键、同请求摘要重放原收据，新命令返回 `GUEST_SESSION_NOT_CLAIMABLE`。
 
 - 未绑定临时会话保留 7 天（168 小时，用户 2026-10-08 裁决，配置项 `identity.guest.session_ttl_hours`）。
 - 失败或隔离记录最多保留 7 天，只用于防刷、故障定位和安全审计。
 - 游客会话不创建 `user_id`、`user_plant_id`、积分账户、会员或个人 Agent 上下文。
 - `claimed` 只属于单株游客植物案例，绝不作为游客会话状态；同一会话内不同案例可以分别认领或过期。
 
-认领必须满足：同一匿名会话持有者、已登录并解析到统一 `user_id`、用户明确选择新建或已有用户植物、会话未过期、命令具有 `Idempotency-Key`。
+认领必须满足：持有同一游客会话的原游客令牌（依据 guest-token/v1 §3，2026-10-09 主代理授权）、已登录并解析到统一 `user_id`、用户明确选择新建或已有用户植物、会话未过期、命令具有 `Idempotency-Key`。
 
 认领只补充归属，不把结果转为事实、建议转为计划，也不追溯发放积分。
 
@@ -50,18 +56,20 @@ SHA-256。校验时先按游客令牌摘要定位会话，再对等长摘要使�
 
 ```ts
 export type ClaimGuestSessionCommand = {
-  /** 临时会话公开引用，只用于同时验证持有权。 */
+  /** 临时会话公开引用，与令牌定位到的会话交叉校验。 */
   guestSessionRef: string
   /** 待认领的单株游客植物案例；该案例下全部临时对象一起获得派生归属。 */
   guestPlantCaseRef: string
+  /** 原游客令牌，即持有证明（依据 guest-token/v1 §3，2026-10-09 主代理授权）；只在内存中计算摘要。 */
+  guestToken: string
   /** 显式选择新建或绑定已有用户植物。 */
   target: { type: 'new_user_plant' } | { type: 'existing_user_plant'; user_plant_id: string }
-  /** HTTP Idempotency-Key 的规范化副本。 */
-  idempotencyKey: string
 }
 ```
 
-认领成功或同键同参重放时，公开结果固定为以下白名单字段。`claimedObjectKinds` 只说明
+幂等键只走 `Idempotency-Key` 请求头（以 route-registry 的 `required_header` 为准），请求体不得携带 `idempotencyKey`（2026-10-09 主代理授权）。
+
+认领成功或同键同参重放时，公开结果固定为以下白名单字段。`claimedObjectKinds` 按现有临时表查询（2026-10-09 主代理授权）：该案例有 care 临时结果 → `independent_watering_advice`；有临时诊断结果 → `fixed_diagnosis_result`；有临时浇水视觉证据 → `soil_visual_evidence`；`identification_candidate` 在其临时表存在前不出现。`claimedObjectKinds` 只说明
 哪些临时对象类别已获得派生归属，不能返回对象内部主键、对象内容、模型输出、持有证明、
 租约或请求哈希。
 
@@ -82,8 +90,9 @@ export type GuestClaimResult = {
 
 事务规则：
 
-- 登录前后的请求必须持有同一匿名会话证明；仅知道 `guestSessionRef` 不足以认领。
-- 认领事务必须锁定游客会话并校验当前或仍在宽限期内的上一版证明；证明版本过期、倒退或不匹配统一返回 `GUEST_SESSION_NOT_CLAIMABLE`。
+- 登录后的认领请求必须在请求体 `guestToken` 携带该游客会话的原游客令牌（依据 guest-token/v1 §3，2026-10-09 主代理授权）；仅知道 `guestSessionRef` 不足以认领。
+- 认领事务必须锁定游客会话并校验当前或仍在宽限期内的上一版证明；证明版本过期、倒退、不匹配或会话来源不是服务端自发令牌统一返回 `GUEST_SESSION_NOT_CLAIMABLE`。
+- 已 `completed` 的游客会话只允许同用户、同案例、同幂等键、同请求摘要重放原收据；新命令返回 `GUEST_SESSION_NOT_CLAIMABLE`（依据 guest-token/v1 §3，2026-10-09 主代理授权）。
 - 认领已有植物时必须校验当前 `user_id + user_plant_id` 归属。
 - 同一临时结果只能成功认领一次；重复同键同参返回第一次的 `claimRef`。
 - 同键异参返回 `IDEMPOTENCY_CONFLICT`；已被其他用户认领、跨用户或持有证明不一致统一返回 `GUEST_SESSION_NOT_CLAIMABLE`。
@@ -98,7 +107,7 @@ export type GuestClaimResult = {
 ```sql
 START TRANSACTION;
 -- 锁定 guest_sessions 和 guest_plant_cases；两者均使用 SELECT ... FOR UPDATE。
--- 校验登录 user_id、匿名主体、X-QHZ-Guest-Proof、proof_version、过期时间和目标归属。
+-- 校验登录 user_id、请求体 guestToken 摘要与会话来源、proof_version、过期时间和目标归属（依据 guest-token/v1 §3，2026-10-09 主代理授权）。
 -- 读取同一 user_id + guest case + Idempotency-Key 的既有命令并比较 request_hash。
 -- 新建目标时创建 user_plants；已有目标时只允许当前 user_id 的 user_plant_id。
 -- 更新 guest_plant_cases 的 claimed owner；写入不可变 guest_case_claims；命令改为 completed。

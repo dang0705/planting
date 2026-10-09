@@ -262,6 +262,8 @@ export type ClaimGuestSessionCommandDto = {
   guestSessionRef: GuestSessionRef;
   /** 待认领的游客植物案例公开引用；服务端必须校验案例属于该会话且只能成功认领一次。 */
   guestPlantCaseRef: GuestPlantCaseRef;
+  /** 原游客令牌，即持有证明（guest-token/v1 §3）；只在内存中计算摘要，不落库、不进日志/审计/响应。 */
+  guestToken: string;
   /** 认领目标的判别对象；只能选择新建用户植物或绑定已有用户植物其中一种。 */
   target:
     | {
@@ -274,8 +276,6 @@ export type ClaimGuestSessionCommandDto = {
         /** 目标用户植物公开引用；服务端必须再次校验当前用户的归属，不能仅信任请求值。 */
         user_plant_id: UserPlantRef;
       };
-  /** 客户端重试用的幂等键；同一会话、同一命令键只能产生一次认领结果，不能放入秘密信息。 */
-  idempotencyKey: string;
 };
 
 /** 游客认领结果中允许返回的临时对象类别；不携带任何对象内容或内部键。 */

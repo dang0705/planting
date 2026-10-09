@@ -62,7 +62,6 @@ function input() {
     principal,
     proof: {
       guestSessionRef: 'gst_newcompletion_session01',
-      anonymousSubjectHash: 'a'.repeat(64),
       possessionProof,
       nowMs: 3000,
       proofRotationGraceSeconds: 30 as number | null
@@ -166,7 +165,7 @@ beforeEach(async () => {
     "INSERT INTO user_plants(id,user_internal_id,public_user_plant_id,lifecycle_status) VALUES(1,1,'upl_newcompletion_archived01','archived'),(2,2,'upl_newcompletion_other01','active')"
   )
   await db.execute(
-    "INSERT INTO guest_sessions(id,guest_session_ref,anonymous_subject_hash,possession_proof_hash,possession_proof_version,previous_possession_proof_hash,previous_proof_valid_until_ms,status,issued_at_ms,expires_at_ms,created_at_ms,updated_at_ms) VALUES(1,'gst_newcompletion_session01',?,?,2,?,4500,'active',1000,10000,1000,2000)",
+    "INSERT INTO guest_sessions(id,identity_source,guest_session_ref,anonymous_subject_hash,possession_proof_hash,possession_proof_version,previous_possession_proof_hash,previous_proof_valid_until_ms,status,issued_at_ms,expires_at_ms,created_at_ms,updated_at_ms) VALUES(1,'server_issued_guest_token','gst_newcompletion_session01',?,?,2,?,4500,'active',1000,10000,1000,2000)",
     ['a'.repeat(64), hash(possessionProof), hash(Buffer.alloc(32, 8).toString('base64url'))]
   )
   await db.query(

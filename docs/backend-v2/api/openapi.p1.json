@@ -1342,7 +1342,12 @@
           "PRINCIPAL_INVALID",
           "GUEST_SESSION_EXPIRED",
           "GUEST_SESSION_NOT_CLAIMABLE",
-          "IDEMPOTENCY_CONFLICT"
+          "IDEMPOTENCY_CONFLICT",
+          "CAPABILITY_DENIED",
+          "CAPABILITY_SNAPSHOT_EXPIRED",
+          "PAYLOAD_TOO_LARGE",
+          "UNSUPPORTED_MEDIA_TYPE",
+          "SERVICE_UNAVAILABLE"
         ],
         "parameters": [
           {
@@ -1355,7 +1360,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessEnvelope"
+                  "$ref": "#/components/schemas/ClaimGuestPlantCaseSuccess"
                 }
               }
             }
@@ -1376,8 +1381,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false
+                "$ref": "#/components/schemas/ClaimGuestPlantCaseRequest"
               }
             }
           }
@@ -5259,6 +5263,112 @@
                 "format": "date-time"
               }
             }
+          }
+        }
+      },
+      "ClaimGuestPlantCaseRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "guestSessionRef",
+          "guestPlantCaseRef",
+          "guestToken",
+          "target"
+        ],
+        "properties": {
+          "guestSessionRef": {
+            "type": "string",
+            "pattern": "^gst_[A-Za-z0-9_-]{8,}$"
+          },
+          "guestPlantCaseRef": {
+            "type": "string",
+            "pattern": "^gpc_[A-Za-z0-9_-]{8,}$"
+          },
+          "guestToken": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$",
+            "description": "原游客令牌，即持有证明（guest-token/v1 §3）；不落库、不进日志/响应。"
+          },
+          "target": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "new_user_plant"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "user_plant_id"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "existing_user_plant"
+                  },
+                  "user_plant_id": {
+                    "type": "string",
+                    "pattern": "^upl_[A-Za-z0-9_-]{8,}$"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "ClaimGuestPlantCaseData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "claimRef",
+          "userPlantId",
+          "claimedObjectKinds",
+          "replayed"
+        ],
+        "properties": {
+          "claimRef": {
+            "type": "string",
+            "pattern": "^gcl_[A-Za-z0-9_-]{8,}$"
+          },
+          "userPlantId": {
+            "type": "string",
+            "pattern": "^upl_[A-Za-z0-9_-]{8,}$"
+          },
+          "claimedObjectKinds": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "identification_candidate",
+                "fixed_diagnosis_result",
+                "independent_watering_advice",
+                "soil_visual_evidence"
+              ]
+            },
+            "description": "按现有临时表查询；identification_candidate 在其临时表存在前不出现。"
+          },
+          "replayed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ClaimGuestPlantCaseSuccess": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ClaimGuestPlantCaseData"
           }
         }
       },

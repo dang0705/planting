@@ -13,9 +13,9 @@ import {
 import { runDatabaseTransaction } from '../../src/foundation/database/transaction-runner.js'
 import { createMysqlGuestClaimProofRepository } from '../../src/user-plant/repository/mysql-guest-claim-proof-repository.js'
 
-/** L3/unit_real_data：独立Expected来自guest-claim-proof-contract.md及本轮已冻结列定义。
- * 真实MySQL8.4→外部事务→Repository→证明领域校验；匿名验真与发布宽限期是受控输入夹具。
- * 不覆盖HTTP、CloudBase匿名验真、会话签发、轮换写入或完整认领；只建隔离测试表、不读迁移文档。 */
+/** L3/unit_real_data：独立Expected来自guest-claim-proof-contract.md（guest-token/v1 §3，主代理 2026-10-09 裁决 A/C）及本轮已冻结列定义。
+ * 真实MySQL8.4→外部事务→Repository→证明领域校验；游客令牌即持有证明，发布宽限期是受控输入夹具。
+ * 不覆盖HTTP、会话签发、轮换写入或完整认领；隔离测试表列与 003+023 冻结定义一致。 */
 const container = `qhz-guest-claim-proof-${process.pid}`
 const currentProof = Buffer.alloc(32, 7).toString('base64url')
 const previousProof = Buffer.alloc(32, 8).toString('base64url')
@@ -66,7 +66,8 @@ beforeAll(async () => {
   await db.query(`CREATE TABLE guest_sessions (
     id BIGINT UNSIGNED PRIMARY KEY, _openid VARCHAR(64) NOT NULL DEFAULT '',
     guest_session_ref VARCHAR(64) NOT NULL UNIQUE,
-    anonymous_subject_hash CHAR(64) NOT NULL, possession_proof_hash CHAR(64) NOT NULL,
+    identity_source VARCHAR(32) NOT NULL DEFAULT 'cloudbase_anonymous',
+    anonymous_subject_hash CHAR(64) NULL, possession_proof_hash CHAR(64) NOT NULL,
     possession_proof_version INT UNSIGNED NOT NULL,
     previous_possession_proof_hash CHAR(64) NULL, previous_proof_valid_until_ms BIGINT NULL,
     status VARCHAR(24) NOT NULL, issued_at_ms BIGINT NOT NULL, expires_at_ms BIGINT NOT NULL,
@@ -87,14 +88,13 @@ afterAll(async () => {
 beforeEach(async () => {
   await db.query('DELETE FROM guest_sessions')
   await db.execute(
-    "INSERT INTO guest_sessions VALUES(1,'',?,?,?,2,?,4000,'active',1000,5000,NULL,1000,2000)",
-    [sessionRef, 'a'.repeat(64), digest(currentProof), digest(previousProof)]
+    "INSERT INTO guest_sessions(id,_openid,guest_session_ref,identity_source,anonymous_subject_hash,possession_proof_hash,possession_proof_version,previous_possession_proof_hash,previous_proof_valid_until_ms,status,issued_at_ms,expires_at_ms,failed_retention_until_ms,created_at_ms,updated_at_ms) VALUES(1,'',?,'server_issued_guest_token',NULL,?,2,?,4000,'active',1000,5000,NULL,1000,2000)",
+    [sessionRef, digest(currentProof), digest(previousProof)]
   )
 })
 function command() {
   return {
     guestSessionRef: sessionRef,
-    anonymousSubjectHash: 'a'.repeat(64),
     possessionProof: currentProof,
     nowMs: 3000,
     proofRotationGraceSeconds: 30 as number | null
@@ -165,17 +165,18 @@ test('签发时刻可用，到期时刻仅真实持有者获得过期结果', as
     proofVersion: 2
   })
   expect(await verify({ ...command(), nowMs: 5000 })).toEqual({ status: 'expired' })
-  expect(await verify({ ...command(), nowMs: 5000, anonymousSubjectHash: 'b'.repeat(64) })).toEqual(
+  expect(await verify({ ...command(), nowMs: 5000, possessionProof: Buffer.alloc(32, 9).toString('base64url') })).toEqual(
     { status: 'not_claimable' }
   )
   expect(await verify({ ...command(), nowMs: 5000, possessionProof: previousProof })).toEqual({
     status: 'not_claimable'
   })
 })
-test('错误匿名主体和错误/非法持有证明统一拒绝且不泄露存在性', async () => {
-  expect(await verify({ ...command(), anonymousSubjectHash: 'b'.repeat(64) })).toEqual({
-    status: 'not_claimable'
-  })
+test('错误/非法游客令牌与历史匿名来源会话统一拒绝且不泄露存在性', async () => {
+  await db.query("UPDATE guest_sessions SET identity_source='cloudbase_anonymous',anonymous_subject_hash=REPEAT('a',64) WHERE id=1")
+  expect(await verify()).toEqual({ status: 'not_claimable' })
+  await db.query("UPDATE guest_sessions SET identity_source='server_issued_guest_token' WHERE id=1")
+  expect(await verify()).toEqual({ status: 'verified', proofVersion: 2 })
   expect(
     await verify({ ...command(), possessionProof: Buffer.alloc(32, 9).toString('base64url') })
   ).toEqual({ status: 'not_claimable' })
@@ -200,7 +201,7 @@ test('failed统一拒绝，expired本人返回过期但错误证明仍不可认�
   expect(await verify()).toEqual({ status: 'not_claimable' })
   await db.query("UPDATE guest_sessions SET status='expired' WHERE id=1")
   expect(await verify()).toEqual({ status: 'expired' })
-  expect(await verify({ ...command(), anonymousSubjectHash: 'b'.repeat(64) })).toEqual({
+  expect(await verify({ ...command(), possessionProof: Buffer.alloc(32, 9).toString('base64url') })).toEqual({
     status: 'not_claimable'
   })
 })
