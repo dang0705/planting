@@ -1,5 +1,5 @@
 {
-  "revision": 171,
+  "revision": 172,
   "currentStep": "E03",
   "currentTicketId": "z8v0kmr970",
   "updatedAt": "2026-10-08T16:19:33.134287+00:00",
@@ -143,7 +143,7 @@
     {
       "id": "z8v0kmr970",
       "step": "E03",
-      "version": 5,
+      "version": 6,
       "priority": "normal",
       "status": "codex running",
       "stage": "登录接线与游客令牌实现中；未部署、未真机验收",
@@ -153,20 +153,20 @@
         ".codex/backend-v2/evidence/E03.json"
       ],
       "summary": [
+        "E03：v2-identity 已部署测试环境，游客签发线上验证通过（c362a731）",
         "E03：游客令牌解析与签发入口已实现（2020fffc、e935b919）",
         "身份策略 v2 含游客字段（168h/10次每小时/抖音匿名信号），v1 摘要不变（0c6b596d）",
         "测试库已发布 v2 并读回解析（evidence/E03-identity-session-policy-v2-published.json）",
-        "游客签发+解析 MySQL 端到端 3/3；后端全量 2519/2519",
-        "未部署；网关XFF、抖音匿名换取、真机流程待部署/前端阶段；小红书待配置"
+        "游客签发+解析 MySQL 端到端 3/3；后端全量 2519/2519"
       ],
-      "blockingReason": "小红书 AppID/AppSecret 未配置；identity 未部署（XFF 与真机待验）",
+      "blockingReason": "已部署测试环境（v2-identity）：游客签发线上 200；小红书待配置；入口来源 IP 可伪造（CDN 默认域名）待入口方案；真机待前端阶段",
       "nextAction": "游客令牌接入 guest_or_authenticated 请求链（care/diagnosis 入口）；随后 E06 浇水建议 HTTP",
       "ticketReadback": "Chrome 已读回 codex running 与四行配置接续说明"
     },
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 74,
+      "version": 75,
       "priority": "high",
       "status": "codex running",
       "stage": "长期植物养护后端已实现（浇水建议、事实、概览、计划、确认、完成、品种绑定）；浇水模型 v2 已发布测试库；未部署、未真机",
@@ -239,13 +239,13 @@
         ".codex/backend-v2/evidence/E04-watering-result-projection.json"
       ],
       "summary": [
+        "E06：v2-care 已部署测试环境，游客临时案例浇水建议线上 200（60–170 mL），迁移 012–027 已补到测试库（触发器待补）",
         "E06：长期养护合同冻结（用户 U1–U9），迁移 025–027（d76681a5）",
         "长期养护 HTTP：user_plant 浇水建议、浇水事实、概览、计划、确认、完成、品种绑定（91ddde9a）",
         "浇水模型 v2：盆土证据按干湿循环（回退 24h、封顶 72h）已发布测试库并读回",
-        "后端全量 2760/2760；受影响 MySQL 套件全部通过",
-        "未部署；真机与日历接口待前端阶段"
+        "后端全量 2760/2760；受影响 MySQL 套件全部通过"
       ],
-      "blockingReason": "未部署；真机与日历接口待前端阶段",
+      "blockingReason": "已部署测试环境（v2-care）：临时案例浇水建议线上 200；长期养护需登录会话（真机 wx.login）验证；日历接口待前端阶段",
       "nextAction": "部署前联调与真机（前端阶段）",
       "ticketReadback": "Chrome已读回CODEX RUNNING及五行评论1100440000144084，版本70"
     },
@@ -330,7 +330,7 @@
     {
       "id": "z8v0kmr9mj",
       "step": "E03",
-      "version": 20,
+      "version": 21,
       "priority": "high",
       "status": "codex running",
       "stage": "游客认领闭环已实现（令牌证明、30 秒租约、公开 HTTP）；未部署、未真机验收",
@@ -361,13 +361,13 @@
         ".codex/backend-v2/evidence/E03-guest-claim-completion-application.json"
       ],
       "summary": [
+        "E03：v2-user-plant 已部署测试环境（含 POST /user-plants/claims）",
         "E03：POST /user-plants/claims 已实现，游客令牌作持有证明（f71ca2f5）",
         "认领租约 30 秒硬规则：首次取得、过期接管、他人持有返回 503（285a56a0）",
         "按案例认领；会话无可认领案例时同事务置 completed，completed 只重放原收据",
-        "后端全量 2716/2716；认领相关 MySQL 套件全部通过",
-        "未部署；真机认领待前端阶段"
+        "后端全量 2716/2716；认领相关 MySQL 套件全部通过"
       ],
-      "blockingReason": "未部署；真机待前端阶段",
+      "blockingReason": "已部署测试环境（v2-user-plant）；认领需登录会话，真机待前端阶段",
       "nextAction": "部署前联调与真机（前端阶段）",
       "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000091159已读回",
       "priorityReason": "当前用户植物纵向切片的必要合同前置，未等待无关CMS"
