@@ -171,6 +171,9 @@ Tropicals 浇水频率 tier 与运行时触发状态到名义天数区间的映�
 - `care_facts`：浇水、施肥、换盆、位置变化和用户观察等已发生事实。
 - `care_proposals`：算法建议；不等于事实。
 - `care_plans` / `reminder_jobs`：用户确认后的未来动作与提醒。
+- `care_capability_results`（025，long-term-care/v1）：长期用户植物的养护能力计算结果，只追加（触发器拒绝 UPDATE）；与 `temporary_care_results` 同形，内联输入清单、算法发布清单（无发布明确记录）、派生摘要、结果及各自 SHA-256；`proposal_internal_id` 可空且唯一，仅在结果可被用户确认时链接同一植物的 `care_proposals`。本阶段不写分层派生表与 `reminder_jobs`（提醒改为前端「加入手机日历」，用户 2026-10-09 裁决）。
+- `user_plant_catalog_bindings`（026，user-plant 拥有）：用户植物 → Tropicals 目录品种（`catalog_taxon_ref`，与外部表 `tropicals_species_encyclopedia_ref.taxon_id` 同值域，不是产品植物身份）的绑定，只追加、最新一条生效；长期浇水建议的基线品种来源。
+- `care_facts` 自 027 起拒绝 UPDATE（更正须追加新事实；DELETE 只由数据保留/删除流程执行）。
 - `watering_visual_evidence`：盆土视觉证据、私有文件引用、有效期和算法版本。
 - `temporary_care_sessions` / `temporary_care_results` / `temporary_watering_visual_evidence`：Ephemeral 临时养护对象，归属游客 case 或已登录临时 case 二选一。已生成结果必须内联保存输入清单、算法 release 清单、派生指标及各自 SHA-256；后续绑定只增加归属投影，不改写结果。
 - `diagnosis_sessions` / `diagnosis_answers` / `diagnosis_results`：问诊过程、证据和结果。

@@ -24,8 +24,8 @@ export interface MvpSoilMappingPolicy {
   readonly releaseVersion: string
   /** 数值依据引用，仅供内部审计，不对外返回。 */
   readonly sourceRef: string
-  /** 盆土证据有效小时数，必须为正。 */
-  readonly soilEvidenceTtlHours: number
+  /** v1 盆土证据固定有效小时数；v2 起由调用方以 validUntil 显式给出（resolveMvpSoilEvidenceValidUntil）。 */
+  readonly soilEvidenceTtlHours?: number
   /** 各状态在观察时刻剩余基线比例。 */
   readonly remainingFraction: {
     /** 湿土状态在观察时刻剩余的基线比例。 */
@@ -49,6 +49,8 @@ export interface MvpSoilMappingInput {
   readonly observation: MvpSoilObservation
   /** 本次计算 UTC 毫秒。 */
   readonly now: number
+  /** 显式盆土证据有效截止时刻（UTC 毫秒，须晚于观察时刻）；缺省时按 v1 固定 TTL 计算。 */
+  readonly validUntil?: number
 }
 
 /** 安全门证据与观察剩余量；uncertain 时两者都为 null。 */
@@ -77,7 +79,12 @@ export function mapMvpSoilObservation(input: MvpSoilMappingInput): MvpSoilMappin
   if (!Number.isSafeInteger(observation.observedAt) || !Number.isSafeInteger(now) || observation.observedAt > now) {
     throw new TypeError('盆土观察时间不合法或晚于计算时刻')
   }
-  if (!Number.isFinite(policy.soilEvidenceTtlHours) || policy.soilEvidenceTtlHours <= 0) { throw new RangeError('盆土证据有效期必须为正') }
+  const explicitValidUntil = input.validUntil
+  if (explicitValidUntil !== undefined) {
+    if (!Number.isSafeInteger(explicitValidUntil) || explicitValidUntil <= observation.observedAt) { throw new RangeError('盆土证据有效截止时刻必须晚于观察时刻') }
+  } else if (policy.soilEvidenceTtlHours === undefined || !Number.isFinite(policy.soilEvidenceTtlHours) || policy.soilEvidenceTtlHours <= 0) {
+    throw new RangeError('盆土证据有效期必须为正')
+  }
   if (!baseline || !Number.isFinite(baseline.min) || !Number.isFinite(baseline.max) || baseline.min <= 0 || baseline.max < baseline.min) {
     throw new RangeError('基线区间非法')
   }
@@ -89,7 +96,7 @@ export function mapMvpSoilObservation(input: MvpSoilMappingInput): MvpSoilMappin
     state: observation.state === 'wet' ? 'wet' : targetReached ? 'target_dry' : 'unknown',
     scope: observation.scope, reliable: observation.reliable, targetCriteriaConfirmed: targetReached,
     collectedAt: observation.observedAt,
-    validUntil: observation.observedAt + Math.round(policy.soilEvidenceTtlHours * millisecondsPerHour),
+    validUntil: explicitValidUntil ?? observation.observedAt + Math.round((policy.soilEvidenceTtlHours as number) * millisecondsPerHour),
   }
   if (targetReached) { return { soil, observedRemaining: null } }
   const fraction = observation.state === 'wet' ? policy.remainingFraction.wet

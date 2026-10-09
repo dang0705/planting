@@ -1551,7 +1551,7 @@
       "expected": "过期证据不得参与浇水决策",
       "decisionGroup": "care_algorithms",
       "allowed": "24",
-      "decisionNote": "随 care-watering-mvp/v1 发布：室内盆土约一天内显著变化（Reading 2024 日耗水 35～68 g/株），低置信。"
+      "decisionNote": "随 care-watering-mvp/v1 发布：室内盆土约一天内显著变化（Reading 2024 日耗水 35～68 g/株），低置信。 仅适用于 care-watering-mvp/v1 与视觉证据；care-watering-mvp/v2 起手动/请求盆土观察改按干湿循环（见 care.watering.soil_evidence_fallback_hours 与 care.watering.soil_evidence_max_hours）。"
     },
     {
       "id": "care.weather.current_freshness_minutes",
@@ -3960,7 +3960,8 @@
       "expected": "按证据和策略给出可解释复查时间",
       "pendingReason": "不同盆土状态和环境的窗口尚未冻结",
       "blockingScope": "v2 浇水建议",
-      "decisionGroup": "care_algorithms"
+      "decisionGroup": "care_algorithms",
+      "decisionNote": "维持 pending，不阻断（MVP 模型自算检查窗口）。"
     },
     {
       "owner": "care",
@@ -5239,6 +5240,162 @@
       "expected": "取得租约时 processing_lease_expires_at_ms = now + 30000；未过期时非持有者不能接管，过期后可接管且 attempt_count+1",
       "decisionGroup": "hard_business_rule",
       "decisionNote": "用户 2026-10-09 授权主代理决定；主代理裁决 30 秒硬规则。"
+    },
+    {
+      "id": "care.facts.watering_backfill_max_days",
+      "chineseName": "浇水事实最长补记天数",
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "天",
+      "status": "confirmed",
+      "currentValue": 7,
+      "consumers": [
+        "care facts",
+        "care proposal confirmations",
+        "care plan completions"
+      ],
+      "changePolicy": "新值只影响之后提交的补记",
+      "fallback": "超出上限的补记返回 VALIDATION_FAILED，不截断时间",
+      "expected": "occurredAt 早于 now − 7 天的浇水事实被拒绝",
+      "decisionGroup": "care_algorithms",
+      "owner": "care",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "clickUpTicketId": "z8v0kmr973",
+      "decisionNote": "用户 2026-10-09 裁决",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/long-term-care-contract.md"
+      ]
+    },
+    {
+      "id": "care.plans.check_max_postpone_days",
+      "chineseName": "检查计划最多推迟天数（检查窗口无最晚端时）",
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "天",
+      "status": "confirmed",
+      "currentValue": 7,
+      "consumers": [
+        "care proposal confirmations"
+      ],
+      "changePolicy": "新值只影响之后的确认",
+      "fallback": "超出范围的 scheduledAt 返回 VALIDATION_FAILED",
+      "expected": "窗口无最晚端时 scheduledAt 最多比最早端（或现在）晚 7 天",
+      "decisionGroup": "care_algorithms",
+      "owner": "care",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "clickUpTicketId": "z8v0kmr973",
+      "decisionNote": "用户 2026-10-09 裁决",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/long-term-care-contract.md"
+      ]
+    },
+    {
+      "id": "care.watering.open_window_proposal_valid_hours",
+      "chineseName": "检查窗口无最晚端时浇水建议有效小时数",
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "小时",
+      "status": "confirmed",
+      "currentValue": 24,
+      "consumers": [
+        "care watering-advice"
+      ],
+      "changePolicy": "新值只影响之后生成的建议",
+      "fallback": "过期建议不可确认（CARE_PROPOSAL_NOT_CONFIRMABLE），需重新获取建议",
+      "expected": "窗口有最晚端时建议有效到最晚端；否则生成时刻 + 24 小时",
+      "decisionGroup": "care_algorithms",
+      "owner": "care",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "clickUpTicketId": "z8v0kmr973",
+      "decisionNote": "用户 2026-10-09 裁决",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/long-term-care-contract.md"
+      ]
+    },
+    {
+      "id": "care.plans.page_size",
+      "chineseName": "养护计划列表分页大小",
+      "domain": "care",
+      "layer": "hard_rule",
+      "valueType": "object",
+      "status": "hard_rule",
+      "currentValue": {
+        "default": 20,
+        "max": 50
+      },
+      "consumers": [
+        "care plans list"
+      ],
+      "changePolicy": "接口容量边界，不做运营配置；调整须改代码与测试",
+      "fallback": "limit 超出上限返回 VALIDATION_FAILED",
+      "expected": "缺省 20 条，limit 最大 50",
+      "decisionGroup": "hard_business_rule",
+      "owner": "care",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "clickUpTicketId": "z8v0kmr973",
+      "decisionNote": "主代理 2026-10-09 裁决 T5（硬规则）；用户 2026-10-09 认可",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/long-term-care-contract.md"
+      ]
+    },
+    {
+      "id": "care.watering.soil_evidence_fallback_hours",
+      "chineseName": "湿/微湿盆土证据推算不出时的回退有效小时数",
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "小时",
+      "status": "confirmed",
+      "currentValue": 24,
+      "consumers": [
+        "care watering-advice（临时与长期）"
+      ],
+      "changePolicy": "随 care-watering-mvp/v2 发布正文 soilEvidenceFallbackHours；新版本只影响新计算",
+      "fallback": "无可用发布时整体 temporarily_unavailable",
+      "expected": "缺光照/环境段推不出离开时刻时，湿/微湿观察有效 24 小时",
+      "decisionGroup": "care_algorithms",
+      "owner": "care",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "clickUpTicketId": "z8v0kmr973",
+      "decisionNote": "用户 2026-10-09 裁决",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/long-term-care-contract.md",
+        "cloudfunctions-v2/models/care/mvp-watering-policy-release.v2.json"
+      ]
+    },
+    {
+      "id": "care.watering.soil_evidence_max_hours",
+      "chineseName": "盆土证据有效期封顶小时数",
+      "domain": "care",
+      "layer": "domain_policy",
+      "valueType": "integer",
+      "unit": "小时",
+      "status": "confirmed",
+      "currentValue": 72,
+      "consumers": [
+        "care watering-advice（临时与长期）"
+      ],
+      "changePolicy": "随 care-watering-mvp/v2 发布正文 soilEvidenceMaxHours；新版本只影响新计算",
+      "fallback": "超过封顶视为过期，结果缺盆土证据并提示重新观察",
+      "expected": "任何盆土观察最多有效 72 小时",
+      "decisionGroup": "care_algorithms",
+      "owner": "care",
+      "phase": "P4",
+      "ticketTitle": "[P4] 盆土视觉和四类养护能力",
+      "clickUpTicketId": "z8v0kmr973",
+      "decisionNote": "用户 2026-10-09 裁决",
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/long-term-care-contract.md",
+        "cloudfunctions-v2/models/care/mvp-watering-policy-release.v2.json"
+      ]
     }
   ],
   "providerProfiles": [

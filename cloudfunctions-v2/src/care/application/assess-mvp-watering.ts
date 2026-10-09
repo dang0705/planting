@@ -5,6 +5,7 @@ import { estimateMvpWaterAmount, type MvpWaterAmountResult } from '../watering/e
 import { mapMvpSoilObservation, type MvpSoilObservation } from '../watering/map-mvp-soil-observation.js'
 import type { DryingInterval, DryingRange } from '../watering/replay-dry-progress.js'
 import { resolveMvpMoistureGroup } from '../watering/resolve-mvp-moisture-group.js'
+import { resolveMvpSoilEvidenceValidUntil } from '../watering/resolve-mvp-soil-evidence-validity.js'
 import { projectWateringReplayResult, type ApplicationAssessment, type WateringCapabilityResult } from './project-watering-replay-result.js'
 import { replayWateringTiming } from './replay-watering-timing.js'
 
@@ -123,8 +124,6 @@ export function assessMvpWatering(input: AssessMvpWateringInput): WateringCapabi
   }
   const profile = resolveMvpMoistureGroup(input.baseline.tier, input.baseline.trigger)
   const baseline = input.baseline.baselineDays
-  const mapped = input.soil === null ? { soil: null, observedRemaining: null }
-    : mapMvpSoilObservation({ policy, baseline, group: profile, observation: input.soil, now })
   const intervals: DryingInterval[] = []
   for (const interval of input.environment) {
     const demand = environmentDemand(policy, interval)
@@ -132,6 +131,11 @@ export function assessMvpWatering(input: AssessMvpWateringInput): WateringCapabi
     intervals.push({ start: interval.start, end: interval.end, environmentDemand: demand,
       cultivationRetention: policy.cultivationRetention, personalCalibration: { min: 1, max: 1 } })
   }
+  // 盆土证据有效期按策略版本：v1 固定 TTL；v2 按干湿循环（用户 2026-10-09 裁决 U6）。
+  const validUntil = input.soil === null || input.soil.state === 'uncertain' ? undefined
+    : resolveMvpSoilEvidenceValidUntil({ policy, baseline, group: profile, observation: input.soil, intervals, lastConfirmedWateringAt: input.lastConfirmedWateringAt })
+  const mapped = input.soil === null ? { soil: null, observedRemaining: null }
+    : mapMvpSoilObservation({ policy, baseline, group: profile, observation: input.soil, now, ...(validUntil === undefined ? {} : { validUntil }) })
   const watering = replayWateringTiming({
     drying: { now, lastConfirmedWateringAt: input.lastConfirmedWateringAt, intervals,
       baseline: { min: baseline.min, max: baseline.max, basis: 'equivalent_dry_units', referenceConditionsConfirmed: true } },

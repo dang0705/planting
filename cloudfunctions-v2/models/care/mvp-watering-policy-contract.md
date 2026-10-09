@@ -57,6 +57,15 @@ PPFD_植物(h) = Lux 换算区间 × GHI(h) ÷ GHI_测量时段
 
 触发条件对观察范围的要求：`SURFACE_DRY`、`TIER_DEFAULT`、`KEEP_WET`、`KEEP_MOIST`、`DROUGHT_SIGNAL` 接受表土；`DRY_WET`、`FULL_DRY`、`VERY_DRY` 需要根区（例如指插 3～5cm 或竹签）。干态对 `KEEP_WET`/`KEEP_MOIST` 植物表示已超过目标，同样为“可以浇水”。
 
+### 3a. 盆土证据有效期（`care-watering-mvp/v2`，用户 2026-10-09 裁决 U6）
+
+v1 的固定 `soilEvidenceTtlHours` 被视为缺陷；v2 正文以 `soilEvidenceFallbackHours`（24）与 `soilEvidenceMaxHours`（72）替代，其余数值与 v1 相同（`mvp-watering-policy-release.v2.json`）：
+
+- 湿、微湿：以最快干燥速率消耗「(该状态剩余比例上界 − 下界) × 基线下端」所需时间，从观察时刻沿同一组干燥时段积分；推不出（缺光照/环境段，或时段不从观察时刻连续覆盖）→ 观察 + 回退小时。
+- 干（含仅表土干）：一直有效，直到出现晚于观察时刻的已确认浇水事实。
+- 统一封顶：观察 + 封顶小时；超过即过期，结果缺盆土证据。
+- 读取器同时接受 v1/v2；读到 v1 时仍按固定 TTL。长期植物与临时案例同一规则。
+
 ## 4. 浇水量（独立分支）
 
 只在最终行动为“可以浇水”、实际内盆几何已确认且有排水孔时计算：

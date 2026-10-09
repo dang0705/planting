@@ -106,6 +106,8 @@ describe('024 watering_baseline_policy 迁移与 v1 种子', () => {
   it('manifest 按顺序登记 024（plant-knowledge）', () => {
     const manifest = JSON.parse(fs.readFileSync(path.join(schemaDirectory, 'manifest.json'), 'utf8')) as { files: Array<{ order: number; owner: string; file: string }> }
     const entry = manifest.files.find(item => item.file === migrationFile)
-    expect(entry).toMatchObject({ owner: 'plant-knowledge', order: manifest.files.length })
+    // 024 紧随 023 登记（原写法要求 024 为最后一项，属过度约束；后续迁移追加后修正）。
+    const previous = manifest.files.find(item => item.file === '023_guest_token_sessions.sql')
+    expect(entry).toMatchObject({ owner: 'plant-knowledge', order: (previous?.order ?? 0) + 1 })
   })
 })

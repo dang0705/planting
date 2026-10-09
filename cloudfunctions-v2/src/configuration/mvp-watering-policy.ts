@@ -24,18 +24,21 @@ const substrateCodes = ['general', 'coco', 'ceramsite', 'peat', 'perlite', 'bark
 /** 四个浇水分组；与 resolveMvpMoistureGroup 的分组键一致。 */
 const depletionGroups = ['keep_moist', 'surface_dry', 'dry_wet', 'full_dry'] as const
 /** 正文字段（参与摘要）；元数据字段不参与摘要。 */
-const payloadKeys = ['contractVersion', 'scopeCode', 'confidence', 'sourceRef', 'referencePpfd', 'referenceVpdKpa',
+const sharedPayloadKeys = ['contractVersion', 'scopeCode', 'confidence', 'sourceRef', 'referencePpfd', 'referenceVpdKpa',
   'lightHalfSaturationPpfd', 'vpdSensitivity', 'transpirationShare', 'validPpfd', 'validVpdKpa', 'indoorVpdFallbackKpa',
-  'cultivationRetention', 'soilEvidenceTtlHours', 'remainingFraction', 'depletion', 'substrates', 'headspaceCm', 'leachingFraction',
+  'cultivationRetention', 'remainingFraction', 'depletion', 'substrates', 'headspaceCm', 'leachingFraction',
   'luxPerPpfd', 'luxAnchorMinGhiWm2', 'luxUncertainty', 'luxAnchorMaxAgeDays'] as const
+/** 各版本正文字段：v1 固定 TTL；v2（用户 2026-10-09 裁决 U6）以回退与封顶替代。 */
+const payloadKeysByVersion = {
+  'care-watering-mvp/v1': [...sharedPayloadKeys, 'soilEvidenceTtlHours'],
+  'care-watering-mvp/v2': [...sharedPayloadKeys, 'soilEvidenceFallbackHours', 'soilEvidenceMaxHours'],
+} as const
 
 /**
- * `care-watering-mvp/v1` 发布正文与元数据。数值全部来自不可变发布，源码不提供默认值。
- * 取值依据见 models/care/mvp-watering-policy-release.v1.md。
+ * `care-watering-mvp` 各版本共有的发布正文与元数据。数值全部来自不可变发布，源码不提供默认值。
+ * 取值依据见 models/care/mvp-watering-policy-release.v1.md / v2.md。
  */
-export interface MvpWateringPolicyRelease {
-  /** 合同版本号，固定为 care-watering-mvp/v1。 */
-  readonly contractVersion: 'care-watering-mvp/v1'
+export interface MvpWateringPolicyBase {
   /** 策略范围代码，固定标识 MVP 浇水策略。 */
   readonly scopeCode: 'care_mvp_watering'
   /** 整体置信度；MVP 固定为低。 */
@@ -60,8 +63,6 @@ export interface MvpWateringPolicyRelease {
   readonly indoorVpdFallbackKpa: MvpPolicyRange
   /** 盆器/基质相对参考的保水不确定带。 */
   readonly cultivationRetention: MvpPolicyRange
-  /** 盆土证据有效小时数。 */
-  readonly soilEvidenceTtlHours: number
   /** 各盆土状态在观察时刻剩余基线比例。 */
   readonly remainingFraction: {
     /** 湿土状态在观察时刻剩余的基线比例。 */
@@ -104,13 +105,37 @@ export interface MvpWateringPolicyRelease {
   readonly expiresAt?: string
 }
 
-/** 请求级只读快照。 */
-export interface MvpWateringPolicySnapshot extends MvpWateringPolicyRelease {
+/** v1 专有字段：固定盆土证据有效期。 */
+export interface MvpWateringPolicyV1Fields {
+  /** 合同版本号，固定为 care-watering-mvp/v1。 */
+  readonly contractVersion: 'care-watering-mvp/v1'
+  /** 盆土证据固定有效小时数（v1 语义，v2 起被干湿循环规则替代）。 */
+  readonly soilEvidenceTtlHours: number
+}
+
+/** v2 专有字段（用户 2026-10-09 裁决 U6）：盆土证据按干湿循环推算。 */
+export interface MvpWateringPolicyV2Fields {
+  /** 合同版本号，固定为 care-watering-mvp/v2。 */
+  readonly contractVersion: 'care-watering-mvp/v2'
+  /** 湿/微湿观察推算不出离开时刻时的回退有效小时数。 */
+  readonly soilEvidenceFallbackHours: number
+  /** 任何盆土观察的统一封顶有效小时数，不小于回退值。 */
+  readonly soilEvidenceMaxHours: number
+}
+
+/** 某一版本的完整发布（共有字段 + 版本专有字段）。 */
+export type MvpWateringPolicyRelease = MvpWateringPolicyBase & (MvpWateringPolicyV1Fields | MvpWateringPolicyV2Fields)
+
+/** 请求级只读快照附加字段。 */
+export interface MvpWateringPolicySnapshotMetadata {
   /** 调用方指定的 UTC 捕获时刻。 */
   readonly capturedAt: string
   /** 通用不可变配置快照引用。 */
   readonly configurationSnapshot: Readonly<ConfigurationSnapshot>
 }
+
+/** 请求级只读快照。 */
+export type MvpWateringPolicySnapshot = MvpWateringPolicyRelease & MvpWateringPolicySnapshotMetadata
 
 /** 解析结果：失败只返回稳定分类，不披露正文。 */
 export type MvpWateringPolicyResolution =
@@ -133,18 +158,14 @@ const range = { type: 'object', additionalProperties: false, required: ['min', '
 /** 0～1 区间 Schema。 */
 const fraction = { type: 'object', additionalProperties: false, required: ['min', 'max'],
   properties: { min: { type: 'number', minimum: 0, maximum: 1 }, max: { type: 'number', minimum: 0, maximum: 1 } } } as const
-/** 严格发布 Schema；多余字段一律拒绝。 */
-const schema = {
-  type: 'object', additionalProperties: false,
-  required: [...payloadKeys, 'releaseVersion', 'contentSha256', 'releaseStatus', 'effectiveAt'],
-  properties: {
-    contractVersion: { const: 'care-watering-mvp/v1' }, scopeCode: { const: 'care_mvp_watering' }, confidence: { const: 'low' },
+/** 两版共有字段的属性 Schema（不含合同版本与盆土有效期字段）。 */
+const sharedProperties = {
+    scopeCode: { const: 'care_mvp_watering' }, confidence: { const: 'low' },
     sourceRef: { type: 'string', pattern: '\\S' },
     referencePpfd: { type: 'number', exclusiveMinimum: 0 }, referenceVpdKpa: { type: 'number', exclusiveMinimum: 0 },
     lightHalfSaturationPpfd: { type: 'number', exclusiveMinimum: 0 }, vpdSensitivity: { type: 'number', exclusiveMinimum: 0 },
     transpirationShare: { type: 'number', minimum: 0, maximum: 1 },
     validPpfd: range, validVpdKpa: range, indoorVpdFallbackKpa: range, cultivationRetention: range,
-    soilEvidenceTtlHours: { type: 'number', exclusiveMinimum: 0 },
     remainingFraction: { type: 'object', additionalProperties: false, required: ['wet', 'moist', 'surfaceDryOnly'],
       properties: { wet: fraction, moist: fraction, surfaceDryOnly: fraction } },
     depletion: { type: 'object', additionalProperties: false, required: [...depletionGroups],
@@ -160,10 +181,26 @@ const schema = {
     releaseVersion: { type: 'string', pattern: '\\S' }, contentSha256: { type: 'string', pattern: '^[a-f0-9]{64}$' },
     releaseStatus: { enum: ['draft', 'verified', 'active', 'retired'] },
     effectiveAt: { type: 'string', pattern: utcPattern }, expiresAt: { type: 'string', pattern: utcPattern },
-  },
+}
+/** 元数据必填字段。 */
+const metadataRequired = ['releaseVersion', 'contentSha256', 'releaseStatus', 'effectiveAt'] as const
+/** v1 严格发布 Schema；多余字段（含 v2 字段）一律拒绝。 */
+const schemaV1 = {
+  type: 'object', additionalProperties: false,
+  required: [...payloadKeysByVersion['care-watering-mvp/v1'], ...metadataRequired],
+  properties: { ...sharedProperties, contractVersion: { const: 'care-watering-mvp/v1' }, soilEvidenceTtlHours: { type: 'number', exclusiveMinimum: 0 } },
+}
+/** v2 严格发布 Schema（用户 2026-10-09 裁决 U6）；混入 v1 固定 TTL 一律拒绝。 */
+const schemaV2 = {
+  type: 'object', additionalProperties: false,
+  required: [...payloadKeysByVersion['care-watering-mvp/v2'], ...metadataRequired],
+  properties: { ...sharedProperties, contractVersion: { const: 'care-watering-mvp/v2' },
+    soilEvidenceFallbackHours: { type: 'number', exclusiveMinimum: 0 }, soilEvidenceMaxHours: { type: 'number', exclusiveMinimum: 0 } },
 }
 /** 编译一次的校验器。 */
-const validate = new Ajv({ strict: true, allErrors: true, strictNumbers: true }).compile<MvpWateringPolicyRelease>(schema)
+const ajv = new Ajv({ strict: true, allErrors: true, strictNumbers: true })
+const validateV1 = ajv.compile<MvpWateringPolicyRelease>(schemaV1)
+const validateV2 = ajv.compile<MvpWateringPolicyRelease>(schemaV2)
 
 /** UTC 往返校验；拒绝被自动修正的非法日期。 */
 function parseUtc(value: unknown): number | null {
@@ -186,6 +223,7 @@ function semanticallyValid(release: MvpWateringPolicyRelease): boolean {
   if (!ranges.every(ordered) || release.cultivationRetention.min <= 0 || release.leachingFraction.max >= 1) { return false }
   if (!contains(release.validPpfd, release.referencePpfd) || !contains(release.validVpdKpa, release.referenceVpdKpa)) { return false }
   if (release.indoorVpdFallbackKpa.min < release.validVpdKpa.min || release.indoorVpdFallbackKpa.max > release.validVpdKpa.max) { return false }
+  if (release.contractVersion === 'care-watering-mvp/v2' && release.soilEvidenceMaxHours < release.soilEvidenceFallbackHours) { return false }
   return Object.values(release.substrates).every(item => ordered(item.containerCapacity) && ordered(item.availableWater)
     && item.availableWater.max <= item.containerCapacity.min)
 }
@@ -204,10 +242,11 @@ export function resolveMvpWateringPolicy(release: unknown, capturedAt: string): 
   const now = parseUtc(capturedAt)
   if (now === null) { return { status: 'invalid' } }
   if (release === null || release === undefined) { return { status: 'unavailable' } }
-  if (!validate(release)) { return { status: 'invalid' } }
+  if (!validateV1(release) && !validateV2(release)) { return { status: 'invalid' } }
   const effective = parseUtc(release.effectiveAt)
   const expires = release.expiresAt === undefined ? undefined : parseUtc(release.expiresAt)
-  const payload = Object.fromEntries(payloadKeys.map(key => [key, release[key]])) as CanonicalJsonObject
+  const keys: readonly string[] = payloadKeysByVersion[release.contractVersion]
+  const payload = Object.fromEntries(keys.map(key => [key, (release as unknown as Record<string, unknown>)[key]])) as CanonicalJsonObject
   if (effective === null || expires === null || (expires !== undefined && expires <= effective)
     || calculateCanonicalJsonSha256(payload) !== release.contentSha256 || !semanticallyValid(release)) { return { status: 'invalid' } }
   if (release.releaseStatus !== 'active' || (expires !== undefined && now >= expires)) { return { status: 'unavailable' } }

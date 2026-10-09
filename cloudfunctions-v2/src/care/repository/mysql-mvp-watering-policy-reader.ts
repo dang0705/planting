@@ -36,7 +36,7 @@ function timestamp(value: unknown): string | null {
 }
 
 /**
- * 从既有业务策略发布与活动指针读取 care/mvp_watering（照 mysql-mvp-glass-policy-reader 模式）。
+ * 从既有业务策略发布与活动指针读取 care/mvp_watering（照 mysql-mvp-glass-policy-reader 模式），接受 care-watering-mvp/v1 与 v2。
  * Repository 是唯一 SQL 入口；不新增表、不写入、不回退源码默认值。
  */
 export function createMysqlMvpWateringPolicyReader(source: MysqlConnectionPoolPort<Mysql2QueryConnection>): PublishedMvpWateringPolicyReader {
@@ -56,7 +56,7 @@ export function createMysqlMvpWateringPolicyReader(source: MysqlConnectionPoolPo
       if (rows.length === 0) { return { status: 'unavailable' } }
       const row = rows[0]!
       if (rows.length !== 1 || row.domain_code !== 'care' || row.policy_code !== 'mvp_watering'
-        || row.schema_version !== 'care-watering-mvp/v1'
+        || (row.schema_version !== 'care-watering-mvp/v1' && row.schema_version !== 'care-watering-mvp/v2')
         || typeof row.release_ref !== 'string' || !/^bpr_[A-Za-z0-9_-]{8,}$/u.test(row.release_ref)
         || typeof row.release_version !== 'string' || !/^[A-Za-z0-9._/-]{1,64}$/u.test(row.release_version)
         || row.active_release_version !== row.release_version || row.active_content_sha256 !== row.content_sha256
@@ -69,7 +69,9 @@ export function createMysqlMvpWateringPolicyReader(source: MysqlConnectionPoolPo
         try { document = JSON.parse(document) as unknown } catch { return { status: 'invalid' } }
       }
       if (!document || typeof document !== 'object' || Array.isArray(document)
-        || Object.keys(document).some(key => metadataKeys.includes(key))) { return { status: 'invalid' } }
+        || Object.keys(document).some(key => metadataKeys.includes(key))
+        // 读取器接受 v1/v2（用户 2026-10-09 裁决 U6）；Schema 版本必须与正文合同版本一致。
+        || (document as { contractVersion?: unknown }).contractVersion !== row.schema_version) { return { status: 'invalid' } }
       const resolution = resolveMvpWateringPolicy({
         ...document, releaseVersion: row.release_version, contentSha256: row.content_sha256,
         releaseStatus: row.status, effectiveAt, ...(expiresAt === undefined ? {} : { expiresAt })

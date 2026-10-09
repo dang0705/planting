@@ -141,6 +141,24 @@
       "owner": "plant-knowledge",
       "file": "024_watering_baseline_policy.sql",
       "sha256": "0d0df5dd1f547c8dfdd9850274b5b8072d19ce9660cc5e4ea605d8ac5c2d50d9"
+    },
+    {
+      "order": 24,
+      "owner": "care",
+      "file": "025_care_capability_results.sql",
+      "sha256": "858fd072299d498a6fccad0690bc4332c38834f39d3f7751ef414f2388da0620"
+    },
+    {
+      "order": 25,
+      "owner": "user-plant",
+      "file": "026_user_plant_catalog_bindings.sql",
+      "sha256": "2d9370f09d635aabed1a4f4754d8a11fc6b9c7ba75ca9bbff81f8eb9d9d8d03b"
+    },
+    {
+      "order": 26,
+      "owner": "care",
+      "file": "027_care_fact_immutability.sql",
+      "sha256": "c8db44e799e5041c0bc9a28892de993077323af1c7db04030eacbd5f5f025bdd"
     }
   ]
 }

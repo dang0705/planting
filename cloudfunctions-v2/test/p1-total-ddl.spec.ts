@@ -272,7 +272,10 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
     'diagnosis_outbox',
     'subscription_outbox',
     'security_audit_records',
-    'watering_baseline_policy'
+    'watering_baseline_policy',
+    // Expected：long-term-care-contract.md §10（主代理 2026-10-09 裁决 T1/T4）。
+    'care_capability_results',
+    'user_plant_catalog_bindings'
   ]
 
   const createdTables = [...sql.matchAll(/CREATE TABLE `([a-z0-9_]+)`/gu)].map(match => match[1])
