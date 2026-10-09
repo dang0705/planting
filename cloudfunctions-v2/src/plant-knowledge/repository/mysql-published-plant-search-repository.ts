@@ -25,6 +25,8 @@ const zero = 0
 /**
  * 只匹配已发布身份的中文展示名和主分类接受学名；双指针与 ACTIVE 明细谓词沿用详情读取合同。
  * 固定 `!` 为 LIKE 转义符，查询值只绑定参数，百分号、下划线和 `!` 均按字面字符匹配。
+ * 与目录搜索不同，这里列侧 COLLATE 不影响索引：名称列本无索引，计划由当前发布明细
+ * `uq_knowledge_release_item` 驱动并按唯一键回表，LIKE 只是回表后的过滤，开销受已发布身份数约束。
  */
 const searchPublishedPlantsSql = `SELECT identity_record.public_identity_ref,
        identity_record.display_name_zh,

@@ -4,11 +4,13 @@ import type { Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import path from 'node:path'
 
+import { createConnection } from 'mysql2/promise'
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from 'vitest'
 
 import { readDatabaseConnectionConfig } from '../../src/foundation/config/database-config.js'
 import { createMysql2ConnectionSource } from '../../src/foundation/database/mysql2-connection-source.js'
 import { createPlantKnowledgeServer } from '../../src/plant-knowledge/http/server.js'
+import { createMysqlPublishedPlantSearchRepository } from '../../src/plant-knowledge/repository/mysql-published-plant-search-repository.js'
 import { findProjectRoot } from '../support/project-root.js'
 
 const containerName = `qhz-v2-search-plants-${String(process.pid)}`
@@ -537,6 +539,46 @@ describe('已发布植物身份公开搜索（真实 MySQL）', () => {
     )
     expect(body.data.items).toHaveLength(matchCountLimit)
     expect(body.data.truncated).toBe(true)
+  })
+
+  test('执行计划由当前发布明细唯一索引驱动，身份与分类按主键/唯一键回表，不全表扫描', async () => {
+    const captured: Array<{ sql: string; parameters: readonly (string | number | null)[] }> = []
+    await createMysqlPublishedPlantSearchRepository({
+      query: async (sql, parameters) => {
+        captured.push({ sql, parameters })
+        return []
+      }
+    }).searchPublishedPlants('Monstera')
+    const connection = await createConnection({
+      host: '127.0.0.1',
+      port: mysqlPort,
+      user: appUser,
+      password: appPassword,
+      database: databaseName
+    })
+    try {
+      const [plan] = (await connection.query(`EXPLAIN FORMAT=JSON ${captured[zero]!.sql}`, [
+        ...captured[zero]!.parameters
+      ])) as unknown as [Array<{ EXPLAIN: string }>]
+      const access = new Map<string, { access_type?: string; key?: string }>()
+      JSON.parse(plan[zero]!.EXPLAIN, (key, value: unknown) => {
+        const table = value as { table_name?: string; access_type?: string; key?: string } | null
+        if (table && typeof table === 'object' && typeof table.table_name === 'string') {
+          access.set(table.table_name, table)
+        }
+        return value
+      })
+      // 名称列无索引：匹配只能是回表后的过滤，工作量必须受当前发布明细数约束，而非身份/分类全表。
+      expect([...access.values()].map(table => table.access_type)).not.toContain('ALL')
+      expect(access.get('identity_item')).toMatchObject({ key: 'uq_knowledge_release_item' })
+      expect(access.get('identity_record')).toMatchObject({
+        access_type: 'eq_ref',
+        key: 'uq_plant_identity_ref'
+      })
+      expect(access.get('taxon')).toMatchObject({ access_type: 'eq_ref', key: 'PRIMARY' })
+    } finally {
+      await connection.end()
+    }
   })
 
   test('仅返回当前双 active release 准入的身份；缺少发布指针时是空结果而非 404', async () => {

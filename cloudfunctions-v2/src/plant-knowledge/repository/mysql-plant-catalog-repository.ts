@@ -14,6 +14,8 @@ export type PlantCatalogRepository = {
 /**
  * 先在目录独立检索，再可选关联当前已发布身份；没有身份发布不隐藏目录。
  * 绑定查询参数且固定 LIKE 转义符，避免用户字符成为 SQL 通配符。
+ * 排序规则只加在参数侧：列保持裸列才能走 idx_search_term_exact 前缀 range，
+ * 列侧 COLLATE 会退化为全量嵌套扫描；语义仍为 utf8mb4_unicode_ci 大小写不敏感。
  * 每个文档按精确、优先级、主词条排序选优；多身份候选时不附带引用。
  */
 const searchSql = `WITH matches AS (
@@ -21,13 +23,13 @@ const searchSql = `WITH matches AS (
         document.scientific_name, document.taxon_rank, document.taxonomic_status,
         document.is_selectable, document.has_encyclopedia, document.has_image,
         COALESCE(term.target_identity_internal_id, document.v2_identity_internal_id) AS identity_id,
-        CASE WHEN term.normalized_term COLLATE utf8mb4_unicode_ci =
+        CASE WHEN term.normalized_term =
           CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci THEN 0 ELSE 1 END AS match_class,
         term.match_priority, term.is_primary, term.id AS term_id
  FROM plant_search_terms AS term
  JOIN plant_search_documents AS document ON document.id = term.search_document_internal_id
  WHERE term.is_active = 1 AND document.is_searchable = 1
-   AND term.normalized_term COLLATE utf8mb4_unicode_ci LIKE ? ESCAPE '!'
+   AND term.normalized_term LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci ESCAPE '!'
 ), ranked AS (
  SELECT matches.*, ROW_NUMBER() OVER (
    PARTITION BY document_id ORDER BY match_class, match_priority, is_primary DESC, term_id
@@ -68,8 +70,9 @@ LIMIT ?`
 /** 驱动布尔标志仅接受数据库合法的 0／1，不进行 JavaScript 真值强转。 */
 function readFlag(row: Record<string, unknown>, field: string): boolean {
   const value = row[field]
-  if (value !== 0 && value !== 1 && value !== false && value !== true)
-    {throw new Error('目录布尔字段损坏')}
+  if (value !== 0 && value !== 1 && value !== false && value !== true) {
+    throw new Error('目录布尔字段损坏')
+  }
   return value === 1 || value === true
 }
 /** 验证字符串字段并执行公开白名单映射；内部关联字段不会返回。 */
@@ -81,11 +84,15 @@ function toItem(row: Record<string, unknown>): PlantCatalogItem {
     'taxon_rank',
     'taxonomic_status'
   ] as const
-  for (const field of fields)
-    {if (typeof row[field] !== 'string' || !row[field]) {throw new Error('目录字符串字段损坏')}}
+  for (const field of fields) {
+    if (typeof row[field] !== 'string' || !row[field]) {
+      throw new Error('目录字符串字段损坏')
+    }
+  }
   const identity = row.public_identity_ref
-  if (identity !== null && identity !== undefined && (typeof identity !== 'string' || !identity))
-    {throw new Error('目录身份引用损坏')}
+  if (identity !== null && identity !== undefined && (typeof identity !== 'string' || !identity)) {
+    throw new Error('目录身份引用损坏')
+  }
   return {
     catalogTaxonRef: row.taxon_id as string,
     displayName: row.preferred_display_name as string,

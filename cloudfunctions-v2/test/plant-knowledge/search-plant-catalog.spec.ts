@@ -38,7 +38,9 @@ async function start(
     execute: async () => ({ affectedRows: 0, insertId: 0 }),
     query: async (sql, parameters) => {
       calls.push({ sql, parameters })
-      if (failure) {throw failure}
+      if (failure) {
+        throw failure
+      }
       return rows
     }
   }
@@ -50,7 +52,9 @@ async function start(
   return `http://127.0.0.1:${(server.address() as AddressInfo).port}`
 }
 afterEach(async () => {
-  if (server) {await new Promise<void>(resolve => server!.close(() => resolve()))}
+  if (server) {
+    await new Promise<void>(resolve => server!.close(() => resolve()))
+  }
   server = undefined
 })
 
@@ -151,6 +155,15 @@ describe('植物目录公开搜索合同', () => {
     expect(await response.json()).toEqual({
       error: { type: 'INTERNAL_ERROR', message: '服务暂时不可用' }
     })
+  })
+  test('前缀召回直接比较裸 normalized_term 列，保证可走 idx_search_term_exact', async () => {
+    const base = await start([])
+    expect((await fetch(`${base}${route}?q=${encodeURIComponent('绿萝')}`)).status).toBe(200)
+    const sql = calls[0]!.sql
+    // 列侧包 COLLATE 会变成表达式，测试库 172 万词条上退化为全量嵌套扫描并超时。
+    expect(sql).toMatch(/AND term\.normalized_term LIKE /u)
+    expect(sql).not.toMatch(/term\.normalized_term\s+COLLATE/u)
+    expect(calls[0]!.parameters).toEqual(['绿萝', '绿萝%', 11])
   })
   test('损坏的布尔标志失败关闭，不把字符串 false 当成 true', async () => {
     const base = await start([{ ...row, has_image: 'false' }])
