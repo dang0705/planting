@@ -55,5 +55,17 @@
       "每次伪造不同 XFF 并发 6 次：6 次 200 —— 经默认 CDN 域名时网关同样采信客户端提供的 XFF，单客户端限频可被绕过"
     ],
     "conclusion": "默认域名（AccessType=CDN，官方称即将下线）下应用层与网关层都无法防伪造来源；需改用不经公网 CDN 的调用通道（小程序 SDK 内部通道）或 DIRECT/EO 接入域名后复测"
-  }
+  },
+  "redeploys": [
+    {
+      "function": "v2-identity",
+      "source": "c362a731（游客签发不读 IP 头）",
+      "check": "小红书游客签发 200；库中 issuance_source_hash 为空串；VPC 保留"
+    },
+    {
+      "function": "v2-plant-knowledge",
+      "source": "本地 c362a731 + origin/refactor（含 PR #15 2c6e3403、PR #16 5ae4859e）的临时合并树，npm test 2755/2755",
+      "check": "catalog/search 绿萝 0.84s、龟背竹 1.04s、monstera 0.24s，均 200 且 10 条；此前 10s 超时"
+    }
+  ]
 }
