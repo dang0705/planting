@@ -5245,17 +5245,17 @@
       "id": "care.facts.watering_backfill_max_days",
       "chineseName": "浇水事实最长补记天数",
       "domain": "care",
-      "layer": "domain_policy",
+      "layer": "hard_rule",
       "valueType": "integer",
       "unit": "天",
-      "status": "confirmed",
+      "status": "hard_rule",
       "currentValue": 7,
       "consumers": [
         "care facts",
         "care proposal confirmations",
         "care plan completions"
       ],
-      "changePolicy": "新值只影响之后提交的补记",
+      "changePolicy": "产品行为边界，不作运营配置；调整须改代码常量与锁定测试并经评审",
       "fallback": "超出上限的补记返回 VALIDATION_FAILED，不截断时间",
       "expected": "occurredAt 早于 now − 7 天的浇水事实被拒绝",
       "decisionGroup": "care_algorithms",
@@ -5263,7 +5263,7 @@
       "phase": "P4",
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "clickUpTicketId": "z8v0kmr973",
-      "decisionNote": "用户 2026-10-09 裁决",
+      "decisionNote": "用户 2026-10-09 裁决 主代理 2026-10-09 改登记为硬规则：由代码常量与测试共同锁定，不另发策略版本。",
       "sourceRefs": [
         "cloudfunctions-v2/models/care/long-term-care-contract.md"
       ]
@@ -5272,15 +5272,15 @@
       "id": "care.plans.check_max_postpone_days",
       "chineseName": "检查计划最多推迟天数（检查窗口无最晚端时）",
       "domain": "care",
-      "layer": "domain_policy",
+      "layer": "hard_rule",
       "valueType": "integer",
       "unit": "天",
-      "status": "confirmed",
+      "status": "hard_rule",
       "currentValue": 7,
       "consumers": [
         "care proposal confirmations"
       ],
-      "changePolicy": "新值只影响之后的确认",
+      "changePolicy": "产品行为边界，不作运营配置；调整须改代码常量与锁定测试并经评审",
       "fallback": "超出范围的 scheduledAt 返回 VALIDATION_FAILED",
       "expected": "窗口无最晚端时 scheduledAt 最多比最早端（或现在）晚 7 天",
       "decisionGroup": "care_algorithms",
@@ -5288,7 +5288,7 @@
       "phase": "P4",
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "clickUpTicketId": "z8v0kmr973",
-      "decisionNote": "用户 2026-10-09 裁决",
+      "decisionNote": "用户 2026-10-09 裁决 主代理 2026-10-09 改登记为硬规则：由代码常量与测试共同锁定，不另发策略版本。",
       "sourceRefs": [
         "cloudfunctions-v2/models/care/long-term-care-contract.md"
       ]
@@ -5297,15 +5297,15 @@
       "id": "care.watering.open_window_proposal_valid_hours",
       "chineseName": "检查窗口无最晚端时浇水建议有效小时数",
       "domain": "care",
-      "layer": "domain_policy",
+      "layer": "hard_rule",
       "valueType": "integer",
       "unit": "小时",
-      "status": "confirmed",
+      "status": "hard_rule",
       "currentValue": 24,
       "consumers": [
         "care watering-advice"
       ],
-      "changePolicy": "新值只影响之后生成的建议",
+      "changePolicy": "产品行为边界，不作运营配置；调整须改代码常量与锁定测试并经评审",
       "fallback": "过期建议不可确认（CARE_PROPOSAL_NOT_CONFIRMABLE），需重新获取建议",
       "expected": "窗口有最晚端时建议有效到最晚端；否则生成时刻 + 24 小时",
       "decisionGroup": "care_algorithms",
@@ -5313,7 +5313,7 @@
       "phase": "P4",
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "clickUpTicketId": "z8v0kmr973",
-      "decisionNote": "用户 2026-10-09 裁决",
+      "decisionNote": "用户 2026-10-09 裁决 主代理 2026-10-09 改登记为硬规则：由代码常量与测试共同锁定，不另发策略版本。",
       "sourceRefs": [
         "cloudfunctions-v2/models/care/long-term-care-contract.md"
       ]

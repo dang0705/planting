@@ -3,7 +3,7 @@
 - 机器事实源：`configuration-variable-catalog.json`
 - Schema：`configuration-variable-catalog/v1`
 - 目录版本：`2026-10-04.1`
-- 当前共 203 项业务/治理变量、16 个 Provider 配置档案：已冻结 86 项、待冻结 55 项、不可配置硬规则 62 项。
+- 当前共 203 项业务/治理变量、16 个 Provider 配置档案：已冻结 83 项、待冻结 55 项、不可配置硬规则 65 项。
 
 本文件由同目录生成脚本从 JSON 生成，便于中文阅读。实施 Agent 必须先按领域读取本文件，再只深读该变量引用的合同或决策；不得把 `P1_PENDING` 猜成默认值。待冻结项必须带原因与阻断范围，未冻结前只能推进不依赖该值的工作。
 
@@ -196,9 +196,9 @@
 | `care.watering.local_calendar_dates` | 浇水检查窗口的当地日历表达 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | 按明确植物时区投影UTC窗口；缺端点不补日期；不创建提醒或改写浇水事实 | care | care内部日期回放 | 公历和时间语义不可配置；提前检查比例、通知时刻与正式发布独立裁决；失败：缺时区或窗口返回缺证据，非法时区或不可表达日期拒绝 | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.lighting.open_meteo_request_window_days` | Open-Meteo 辐射请求回看与预报天数上限 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `{"maxPastDays":92,"maxForecastDays":16}` | care | care watering-advice | Open-Meteo 公开接口的 past_days 与 forecast_days 上限，属外部能力边界，不能运营配置；Provider 能力变化先更新适配器与测试；失败：回看起点早于 92 天时截断到 92 天，超出预报覆盖的时段为缺段，检查窗口变宽或开放，不补零 | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.watering.baseline_policy_version` | MVP 浇水模型使用的 Tropicals 名义基线版本 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | v1 | care | care watering-advice、plant-knowledge 基线读取 | MVP 参数按 v1 基线标定；更换基线版本必须同时发布新的 care_mvp_watering 策略版本并重新标定，不单独运营切换；失败：该版本无启用行或基线缺失时返回缺证据（insufficient_evidence），不回退其他版本 | P4 / [P4] 盆土视觉和四类养护能力 |
-| `care.facts.watering_backfill_max_days` | 浇水事实最长补记天数 | `care_algorithms` | 领域策略 / 已冻结 | `7` 天 | care | care facts、care proposal confirmations、care plan completions | 新值只影响之后提交的补记；失败：超出上限的补记返回 VALIDATION_FAILED，不截断时间 | P4 / [P4] 盆土视觉和四类养护能力 |
-| `care.plans.check_max_postpone_days` | 检查计划最多推迟天数（检查窗口无最晚端时） | `care_algorithms` | 领域策略 / 已冻结 | `7` 天 | care | care proposal confirmations | 新值只影响之后的确认；失败：超出范围的 scheduledAt 返回 VALIDATION_FAILED | P4 / [P4] 盆土视觉和四类养护能力 |
-| `care.watering.open_window_proposal_valid_hours` | 检查窗口无最晚端时浇水建议有效小时数 | `care_algorithms` | 领域策略 / 已冻结 | `24` 小时 | care | care watering-advice | 新值只影响之后生成的建议；失败：过期建议不可确认（CARE_PROPOSAL_NOT_CONFIRMABLE），需重新获取建议 | P4 / [P4] 盆土视觉和四类养护能力 |
+| `care.facts.watering_backfill_max_days` | 浇水事实最长补记天数 | `care_algorithms` | 不可配置硬规则 / 不可配置硬规则 | `7` 天 | care | care facts、care proposal confirmations、care plan completions | 产品行为边界，不作运营配置；调整须改代码常量与锁定测试并经评审；失败：超出上限的补记返回 VALIDATION_FAILED，不截断时间 | P4 / [P4] 盆土视觉和四类养护能力 |
+| `care.plans.check_max_postpone_days` | 检查计划最多推迟天数（检查窗口无最晚端时） | `care_algorithms` | 不可配置硬规则 / 不可配置硬规则 | `7` 天 | care | care proposal confirmations | 产品行为边界，不作运营配置；调整须改代码常量与锁定测试并经评审；失败：超出范围的 scheduledAt 返回 VALIDATION_FAILED | P4 / [P4] 盆土视觉和四类养护能力 |
+| `care.watering.open_window_proposal_valid_hours` | 检查窗口无最晚端时浇水建议有效小时数 | `care_algorithms` | 不可配置硬规则 / 不可配置硬规则 | `24` 小时 | care | care watering-advice | 产品行为边界，不作运营配置；调整须改代码常量与锁定测试并经评审；失败：过期建议不可确认（CARE_PROPOSAL_NOT_CONFIRMABLE），需重新获取建议 | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.plans.page_size` | 养护计划列表分页大小 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `{"default":20,"max":50}` | care | care plans list | 接口容量边界，不做运营配置；调整须改代码与测试；失败：limit 超出上限返回 VALIDATION_FAILED | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.watering.soil_evidence_fallback_hours` | 湿/微湿盆土证据推算不出时的回退有效小时数 | `care_algorithms` | 领域策略 / 已冻结 | `24` 小时 | care | care watering-advice（临时与长期） | 随 care-watering-mvp/v2 发布正文 soilEvidenceFallbackHours；新版本只影响新计算；失败：无可用发布时整体 temporarily_unavailable | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.watering.soil_evidence_max_hours` | 盆土证据有效期封顶小时数 | `care_algorithms` | 领域策略 / 已冻结 | `72` 小时 | care | care watering-advice（临时与长期） | 随 care-watering-mvp/v2 发布正文 soilEvidenceMaxHours；新版本只影响新计算；失败：超过封顶视为过期，结果缺盆土证据并提示重新观察 | P4 / [P4] 盆土视觉和四类养护能力 |
