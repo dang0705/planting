@@ -1,7 +1,10 @@
 {
   "capturedAt": "2026-10-09",
   "authorization": "用户 2026-10-09 授权：部署 identity/user-plant/plant-knowledge/care 四个 HTTP 函数到测试环境、写入环境变量、新增网关路由；随后授权补执行测试库迁移 012–023、025–027",
-  "source": { "commit": "6a41ba56", "build": "干净 worktree（不含工作区他人未提交代码）；tsc×2、oxlint、npm test 2753/2753、build 通过；产物密钥扫描 0 命中" },
+  "source": {
+    "commit": "6a41ba56",
+    "build": "干净 worktree（不含工作区他人未提交代码）；tsc×2、oxlint、npm test 2753/2753、build 通过；产物密钥扫描 0 命中"
+  },
   "functions": {
     "v2-plant-knowledge": "更新代码（已有 VPC vpc-oq2xmdvo/subnet-9hg8hmpn）",
     "v2-user-plant": "更新代码（已有 VPC）",
@@ -9,12 +12,16 @@
     "v2-care": "新建；环境变量 DB 5 项；补配 VPC",
     "secretsHandling": "环境变量由脚本从 .env.local 写入临时 cloudbaserc.json（0600），部署后立即删除；未输出任何值"
   },
-  "gatewayRoutes": ["/api/v2/identity → v2-identity", "/api/v2/me → v2-identity", "/api/v2/care → v2-care"],
+  "gatewayRoutes": [
+    "/api/v2/identity → v2-identity",
+    "/api/v2/me → v2-identity",
+    "/api/v2/care → v2-care"
+  ],
   "migrations": {
     "found": "测试库仅执行到 011（缺 012–027）",
     "applied": "016×3 建表、017 改表×8+建表、019×2、022、023、025、026：18 条 ok，均确认只落在 qinghuazhi_v2_test",
     "deferredTriggers": "22 条 CREATE TRIGGER（012–014、018、020–022、027）经 RunSql 预处理协议报 1295 不支持，待直连通道补建；应用层仍只追加",
-    "blocked015": "user_sessions 有 3 行 2026-09-27 过期测试会话，015 的 NOT NULL+CHECK 新列无法加；待用户决定",
+    "blocked015": "用户授权删除 user_sessions id 1–3（2026-09-27 过期测试会话，按 id 精确删除）后已执行 015（ok）",
     "skipped024": "测试库已有旧形态 watering_baseline_policy，业务列兼容",
     "auditLog": "scratchpad mig-audit.json（逐条 sha256 与结果）"
   },
@@ -25,5 +32,20 @@
     "catalogSearch": "GET /api/v2/plant-knowledge/catalog/search 10s 超时（COLLATE 致全表扫描，已派生修复任务）",
     "xff": "默认域名 AccessType=CDN：同一客户端无伪造头 3 次 → 2 个不同来源；XFF 最右段为 CDN 节点 IP 而非客户端。伪造无效（防伪成立），但限流实际按 CDN 节点聚合（guest-token-contract §6 假设不成立，待修正）"
   },
-  "notCovered": ["登录（需 015 与真机 wx.login code）", "长期养护线上调用（需登录会话）", "触发器保护层", "真机"]
+  "notCovered": [
+    "登录（需 015 与真机 wx.login code）",
+    "长期养护线上调用（需登录会话）",
+    "触发器保护层",
+    "真机"
+  ],
+  "xffDiagnosis": {
+    "method": "临时函数 v2-diag-headers 只返回请求头值 SHA-256 前缀（不记录、不存储），诊断后已删除函数与路由",
+    "findings": [
+      "默认域名 AccessType=CDN；函数收到的 x-forwarded-for 恒为 5 段",
+      "无伪造头：第 1 段在多次请求间不变（客户端），其后各段每次变化（CDN 节点）",
+      "带伪造头：第 1 段为伪造值，客户端段消失；段数仍为 5",
+      "x-real-ip 等于第 4 段，每次变化，为 CDN 内部节点"
+    ],
+    "conclusion": "CDN 默认域名下函数无法从请求头可靠取得客户端 IP：最左段可伪造，最右段为 CDN 节点；guest-token-contract §6 的 XFF 最右段规则不成立"
+  }
 }
