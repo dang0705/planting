@@ -1,5 +1,5 @@
 {
-  "revision": 169,
+  "revision": 170,
   "currentStep": "E03",
   "currentTicketId": "z8v0kmr970",
   "updatedAt": "2026-10-08T16:19:33.134287+00:00",
@@ -330,10 +330,10 @@
     {
       "id": "z8v0kmr9mj",
       "step": "E03",
-      "version": 19,
+      "version": 20,
       "priority": "high",
       "status": "codex running",
-      "stage": "已持有租约认领编排、并发原结果及提交未知核对已验证；租约取得/HTTP未验收",
+      "stage": "游客认领闭环已实现（令牌证明、30 秒租约、公开 HTTP）；未部署、未真机验收",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E03-promotion-context.json",
@@ -361,14 +361,14 @@
         ".codex/backend-v2/evidence/E03-guest-claim-completion-application.json"
       ],
       "summary": [
-        "E03：已持有租约的游客认领应用编排已实现",
-        "原成功重放、提交未知只读核对、并发同键只写一次通过",
-        "真实MySQL联合66项；经典与突变RED后恢复GREEN",
-        "根与Node22全量1859/1859；类型、检查及构建通过",
-        "租约取得、真实身份和公开HTTP仍未验收"
+        "E03：POST /user-plants/claims 已实现，游客令牌作持有证明（f71ca2f5）",
+        "认领租约 30 秒硬规则：首次取得、过期接管、他人持有返回 503（285a56a0）",
+        "按案例认领；会话无可认领案例时同事务置 completed，completed 只重放原收据",
+        "后端全量 2716/2716；认领相关 MySQL 套件全部通过",
+        "未部署；真机认领待前端阶段"
       ],
-      "blockingReason": "仅processing租约时长未登记确认；不阻断受控应用编排和归属读取验证",
-      "nextAction": "确认租约策略后接取得/恢复；继续受控归属摘要，再推进真实身份与公开HTTP",
+      "blockingReason": "未部署；真机待前端阶段",
+      "nextAction": "部署前联调与真机（前端阶段）",
       "ticketReadback": "Chrome CODEX RUNNING及五行评论1100440000091159已读回",
       "priorityReason": "当前用户植物纵向切片的必要合同前置，未等待无关CMS"
     },
