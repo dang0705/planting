@@ -1,7 +1,10 @@
+@import './tokens.css';
 @import './tailwind.css';
 page {
-  --primary-color: #2d7a4f;
-  --secondary-color: #f8f6f0;
+  /* 全局底色与字体来自设计系统 token（tokens.css 由 Figma 变量生成） */
+  background-color: var(--color-bg-page);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
 }
 view,
 scroll-view {

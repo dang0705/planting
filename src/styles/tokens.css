@@ -1,0 +1,137 @@
+/* 由 design-system/generate-tokens.mjs 生成，请勿手改；修改请在 Figma 调整变量后重新导出并运行生成脚本。
+ * 来源：Figma r5afPtZu8fRMRenk8TJVjO（2026-10-09 导出），设计宽 390，1 设计 px = 1.9231rpx。
+ */
+page,
+:root {
+  /* 基础色板（Primitives）：只供语义色引用，页面与组件不要直接使用 */
+  --prim-green-600: #2d7a4f;
+  --prim-green-25: #fbfdfc;
+  --prim-white: #ffffff;
+  --prim-black: #0a0a0a;
+  --prim-green-50: #eef6f1;
+  --prim-green-100: #dcede2;
+  --prim-green-200: #b9dbc6;
+  --prim-green-400: #5fa47c;
+  --prim-green-700: #23633f;
+  --prim-green-800: #1a4c30;
+  --prim-sage-50: #f8faf9;
+  --prim-sage-100: #f0f4f2;
+  --prim-sage-200: #e3ebe6;
+  --prim-sage-300: #ccd8d0;
+  --prim-sage-400: #a4b5ab;
+  --prim-sage-500: #7f978a;
+  --prim-sage-600: #5a7a68;
+  --prim-sage-800: #2f4237;
+  --prim-blue-50: #ebf4fb;
+  --prim-blue-500: #3b8fd4;
+  --prim-blue-700: #23679f;
+  --prim-sun-50: #fdf6e4;
+  --prim-sun-500: #e9a516;
+  --prim-sun-700: #a86f05;
+  --prim-orange-50: #fdf0e6;
+  --prim-orange-500: #e07a2c;
+  --prim-orange-700: #a85316;
+  --prim-red-50: #fdeeee;
+  --prim-red-500: #d64545;
+  --prim-red-700: #a52f2f;
+  --prim-soil-50: #f6efe7;
+  --prim-soil-500: #9a6b3f;
+  --prim-alpha-black-a45: #0a0a0a73;
+  --prim-alpha-black-a10: #0a0a0a1a;
+  --prim-alpha-black-a06: #0a0a0a0f;
+  --prim-alpha-black-a05: #0a0a0a0d;
+
+  /* 语义色（Color）：页面与组件只使用这一层 */
+  --color-bg-page: var(--prim-sage-50);
+  --color-bg-surface: var(--prim-white);
+  --color-bg-surface-muted: var(--prim-sage-100);
+  --color-bg-brand-subtle: var(--prim-green-50);
+  --color-bg-icon-chip: var(--prim-sage-100);
+  --color-bg-overlay: var(--prim-alpha-black-a45);
+  --color-bg-inverse: var(--prim-sage-800);
+  --color-brand-primary: var(--prim-green-600);
+  --color-brand-primary-pressed: var(--prim-green-700);
+  --color-brand-primary-disabled: var(--prim-green-200);
+  --color-brand-on-primary: var(--prim-white);
+  --color-text-primary: var(--prim-black);
+  --color-text-secondary: var(--prim-sage-600);
+  --color-text-tertiary: var(--prim-sage-500);
+  --color-text-disabled: var(--prim-sage-400);
+  --color-text-on-brand: var(--prim-white);
+  --color-text-brand: var(--prim-green-600);
+  --color-border-subtle: var(--prim-sage-200);
+  --color-border-default: var(--prim-sage-300);
+  --color-border-brand: var(--prim-green-600);
+  --color-border-brand-subtle: var(--prim-green-200);
+  --color-status-success: var(--prim-green-600);
+  --color-status-success-subtle: var(--prim-green-50);
+  --color-status-warning: var(--prim-orange-500);
+  --color-status-warning-subtle: var(--prim-orange-50);
+  --color-status-warning-text: var(--prim-orange-700);
+  --color-status-danger: var(--prim-red-500);
+  --color-status-danger-subtle: var(--prim-red-50);
+  --color-status-danger-text: var(--prim-red-700);
+  --color-status-info: var(--prim-blue-500);
+  --color-status-info-subtle: var(--prim-blue-50);
+  --color-care-water: var(--prim-blue-500);
+  --color-care-water-subtle: var(--prim-blue-50);
+  --color-care-water-text: var(--prim-blue-700);
+  --color-care-light: var(--prim-sun-500);
+  --color-care-light-subtle: var(--prim-sun-50);
+  --color-care-light-text: var(--prim-sun-700);
+  --color-care-fertilize: var(--prim-soil-500);
+  --color-care-fertilize-subtle: var(--prim-soil-50);
+  --color-shadow-soft: var(--prim-alpha-black-a05);
+  --color-shadow-medium: var(--prim-alpha-black-a10);
+  --color-shadow-hairline: var(--prim-alpha-black-a06);
+
+  /* 间距（Spacing） */
+  --spacing-0: 0;
+  --spacing-2xs: 3.85rpx;
+  --spacing-xs: 7.69rpx;
+  --spacing-sm: 15.38rpx;
+  --spacing-md: 23.08rpx;
+  --spacing-lg: 30.77rpx;
+  --spacing-xl: 38.46rpx;
+  --spacing-2xl: 46.15rpx;
+  --spacing-3xl: 61.54rpx;
+  --spacing-4xl: 76.92rpx;
+  --spacing-page-gutter: 38.46rpx;
+
+  /* 圆角（Radius） */
+  --radius-xs: 7.69rpx;
+  --radius-sm: 15.38rpx;
+  --radius-md: 23.08rpx;
+  --radius-lg: 30.77rpx;
+  --radius-xl: 38.46rpx;
+  --radius-2xl: 46.15rpx;
+  --radius-full: 1921.15rpx;
+
+  /* 字体（Typography） */
+  --font-family-base: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-size-display: 76.92rpx;
+  --font-line-height-display: 84.62rpx;
+  --font-size-h1: 53.85rpx;
+  --font-line-height-h1: 69.23rpx;
+  --font-size-h2: 42.31rpx;
+  --font-line-height-h2: 57.69rpx;
+  --font-size-h3: 34.62rpx;
+  --font-line-height-h3: 50rpx;
+  --font-size-title: 30.77rpx;
+  --font-line-height-title: 46.15rpx;
+  --font-size-body: 26.92rpx;
+  --font-line-height-body: 42.31rpx;
+  --font-size-caption: 23.08rpx;
+  --font-line-height-caption: 34.62rpx;
+  --font-size-micro: 21.15rpx;
+  --font-line-height-micro: 30.77rpx;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+
+  /* 阴影层级（Elevation）：e0 分割线、e1 卡片、e2 浮层、e3 底部弹层 */
+  --elevation-e0: 0 1.92rpx 0 var(--color-shadow-hairline);
+  --elevation-e1: 0 1.92rpx 15.38rpx var(--color-shadow-soft);
+  --elevation-e2: 0 7.69rpx 30.77rpx var(--color-shadow-medium);
+  --elevation-e3: 0 -7.69rpx 46.15rpx var(--color-shadow-medium);
+}

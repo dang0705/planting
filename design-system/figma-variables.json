@@ -1,0 +1,177 @@
+{
+  "source": {
+    "figmaFileKey": "r5afPtZu8fRMRenk8TJVjO",
+    "exportedAt": "2026-10-09",
+    "method": "use_figma 只读脚本导出本地变量（getLocalVariableCollectionsAsync）",
+    "designWidthPx": 390,
+    "note": "设计稿宽度 390 由用户 2026-10-09 确认；rpx = px × 750 / 390"
+  },
+  "primitives": {
+    "green/600": "#2d7a4f",
+    "green/25": "#fbfdfc",
+    "white": "#ffffff",
+    "black": "#0a0a0a",
+    "green/50": "#eef6f1",
+    "green/100": "#dcede2",
+    "green/200": "#b9dbc6",
+    "green/400": "#5fa47c",
+    "green/700": "#23633f",
+    "green/800": "#1a4c30",
+    "sage/50": "#f8faf9",
+    "sage/100": "#f0f4f2",
+    "sage/200": "#e3ebe6",
+    "sage/300": "#ccd8d0",
+    "sage/400": "#a4b5ab",
+    "sage/500": "#7f978a",
+    "sage/600": "#5a7a68",
+    "sage/800": "#2f4237",
+    "blue/50": "#ebf4fb",
+    "blue/500": "#3b8fd4",
+    "blue/700": "#23679f",
+    "sun/50": "#fdf6e4",
+    "sun/500": "#e9a516",
+    "sun/700": "#a86f05",
+    "orange/50": "#fdf0e6",
+    "orange/500": "#e07a2c",
+    "orange/700": "#a85316",
+    "red/50": "#fdeeee",
+    "red/500": "#d64545",
+    "red/700": "#a52f2f",
+    "soil/50": "#f6efe7",
+    "soil/500": "#9a6b3f",
+    "alpha/black-a45": "#0a0a0a73",
+    "alpha/black-a10": "#0a0a0a1a",
+    "alpha/black-a06": "#0a0a0a0f",
+    "alpha/black-a05": "#0a0a0a0d"
+  },
+  "color": {
+    "bg/page": "sage/50",
+    "bg/surface": "white",
+    "bg/surface-muted": "sage/100",
+    "bg/brand-subtle": "green/50",
+    "bg/icon-chip": "sage/100",
+    "bg/overlay": "alpha/black-a45",
+    "bg/inverse": "sage/800",
+    "brand/primary": "green/600",
+    "brand/primary-pressed": "green/700",
+    "brand/primary-disabled": "green/200",
+    "brand/on-primary": "white",
+    "text/primary": "black",
+    "text/secondary": "sage/600",
+    "text/tertiary": "sage/500",
+    "text/disabled": "sage/400",
+    "text/on-brand": "white",
+    "text/brand": "green/600",
+    "border/subtle": "sage/200",
+    "border/default": "sage/300",
+    "border/brand": "green/600",
+    "border/brand-subtle": "green/200",
+    "status/success": "green/600",
+    "status/success-subtle": "green/50",
+    "status/warning": "orange/500",
+    "status/warning-subtle": "orange/50",
+    "status/warning-text": "orange/700",
+    "status/danger": "red/500",
+    "status/danger-subtle": "red/50",
+    "status/danger-text": "red/700",
+    "status/info": "blue/500",
+    "status/info-subtle": "blue/50",
+    "care/water": "blue/500",
+    "care/water-subtle": "blue/50",
+    "care/water-text": "blue/700",
+    "care/light": "sun/500",
+    "care/light-subtle": "sun/50",
+    "care/light-text": "sun/700",
+    "care/fertilize": "soil/500",
+    "care/fertilize-subtle": "soil/50",
+    "shadow/soft": "alpha/black-a05",
+    "shadow/medium": "alpha/black-a10",
+    "shadow/hairline": "alpha/black-a06"
+  },
+  "spacing": {
+    "0": 0,
+    "2xs": 2,
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 20,
+    "2xl": 24,
+    "3xl": 32,
+    "4xl": 40,
+    "page-gutter": 20
+  },
+  "radius": {
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 20,
+    "2xl": 24,
+    "full": 999
+  },
+  "typography": {
+    "family": "Noto Sans SC",
+    "scale": {
+      "display": [
+        40,
+        44
+      ],
+      "h1": [
+        28,
+        36
+      ],
+      "h2": [
+        22,
+        30
+      ],
+      "h3": [
+        18,
+        26
+      ],
+      "title": [
+        16,
+        24
+      ],
+      "body": [
+        14,
+        22
+      ],
+      "caption": [
+        12,
+        18
+      ],
+      "micro": [
+        11,
+        16
+      ]
+    },
+    "weight": {
+      "regular": 400,
+      "medium": 500,
+      "bold": 700
+    }
+  },
+  "elevation": {
+    "e0": {
+      "y": 1,
+      "blur": 0,
+      "color": "shadow/hairline"
+    },
+    "e1": {
+      "y": 1,
+      "blur": 8,
+      "color": "shadow/soft"
+    },
+    "e2": {
+      "y": 4,
+      "blur": 16,
+      "color": "shadow/medium"
+    },
+    "e3": {
+      "y": -4,
+      "blur": 24,
+      "color": "shadow/medium"
+    }
+  }
+}
