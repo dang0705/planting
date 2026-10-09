@@ -27,7 +27,8 @@ const v1Body = { contractVersion: 'identity-session-policy/v1', scopeCode: 'iden
 const v2Body = { ...v1Body, contractVersion: 'identity-session-policy/v2', guestSessionTtlHours: 168, guestIssuanceRatePerHour: 10, douyinAnonymousSignalEnabled: true }
 const sha = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex')
 const derivedKey = Buffer.from(hkdfSync('sha256', masterKey, Buffer.alloc(0), 'qinghuazhi/guest-issuance-source/v1', 32))
-const ipDigest = (ip: string) => createHmac('sha256', derivedKey).update(`client_ip:${ip}`).digest('hex')
+/** 抖音匿名信号摘要（§6）；匿名换取用确定性替身 code → openid-<code>。 */
+const signalDigest = (code: string) => createHmac('sha256', derivedKey).update(`douyin_anonymous:openid-${code}`).digest('hex')
 let source: ReturnType<typeof createMysql2ConnectionSource>
 let server: Server
 let baseUrl: string
@@ -60,9 +61,11 @@ function activate(key: 'v1' | 'v2'): void {
     (domain_code, policy_code, release_internal_id, active_release_version, active_content_sha256, activated_at_ms, created_at_ms, updated_at_ms)
     VALUES ('identity', 'identity_sessions', ${releaseIds[key]}, 'identity-sessions/${key}', '${sha(body)}', ${now - hour}, ${now - hour}, ${now - hour});`, database)
 }
-async function issue(ip: string) {
+/** ip 只作伪造头发送（用户 2026-10-09 裁决：代码不读 IP 头）；anonymousCode 给定时走抖音匿名信号。 */
+async function issue(ip: string, anonymousCode?: string) {
+  const body = anonymousCode === undefined ? { platform: 'xiaohongshu' } : { platform: 'douyin', anonymousCode }
   const response = await fetch(`${baseUrl}/api/v2/identity/guest-sessions`, {
-    method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': ip }, body: JSON.stringify({ platform: 'xiaohongshu' }),
+    method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': ip }, body: JSON.stringify(body),
   })
   return { status: response.status, body: await response.json() as { data?: { guestToken: string; guestSessionRef: string; expiresAt: string } } }
 }
@@ -100,7 +103,7 @@ describe('unit_real_data 游客签发与解析（真实 MySQL + HTTP）', () => 
       recordRollbackFailure: () => undefined,
       guestIssuance: {
         resolveGuestPolicy: async () => (await reader.read(new Date(now).toISOString()))?.guest ?? null,
-        exchangeDouyinAnonymousCode: null,
+        exchangeDouyinAnonymousCode: async code => `openid-${code}`,
         issuanceSourceKey: deriveGuestIssuanceSourceKey(masterKey),
       },
     })
@@ -120,18 +123,23 @@ describe('unit_real_data 游客签发与解析（真实 MySQL + HTTP）', () => 
     expect(data.expiresAt).toBe(new Date(now + 168 * hour).toISOString())
     const row = mysql(`SELECT guest_session_ref, identity_source, possession_proof_hash, issuance_source_hash, IFNULL(anonymous_subject_hash,'NULL'), status, expires_at_ms FROM guest_sessions;`, database).split('\t')
     expect(row).toEqual([data.guestSessionRef, 'server_issued_guest_token', createHash('sha256').update(data.guestToken).digest('hex'),
-      ipDigest('203.0.113.20'), 'NULL', 'active', String(now + 168 * hour)])
+      '', 'NULL', 'active', String(now + 168 * hour)])
     const everything = mysql('SELECT * FROM guest_sessions;', database)
     expect(everything).not.toContain(data.guestToken)
     expect(everything).not.toContain('203.0.113.20')
     const principal = await resolveGuestPrincipal({ repository: createMysqlGuestSessionRepository(source) }, { guestToken: data.guestToken, nowMs: now + hour })
     expect(principal).toMatchObject({ principalType: 'guest', guestSessionRef: data.guestSessionRef, authProvider: 'server_issued_guest_token' })
   })
-  it('E3：同 IP 10 次后第 11 次 429；另一 IP 仍可签发', async () => {
-    for (let index = 0; index < 10; index += 1) { expect((await issue('203.0.113.21')).status).toBe(200) }
-    expect((await issue('203.0.113.21')).status).toBe(429)
+  it('E3：同一抖音匿名信号 10 次后第 11 次 429；另一信号仍可签发', async () => {
+    for (let index = 0; index < 10; index += 1) { expect((await issue(`203.0.113.${index}`, 'anon-a')).status).toBe(200) }
+    expect((await issue('203.0.113.99', 'anon-a')).status).toBe(429)
     expect(rowCount()).toBe(10)
-    expect((await issue('203.0.113.22')).status).toBe(200)
+    expect(mysql(`SELECT DISTINCT issuance_source_hash FROM guest_sessions;`, database)).toBe(signalDigest('anon-a'))
+    expect((await issue('203.0.113.99', 'anon-b')).status).toBe(200)
+  })
+  it('E5：无信号连续 11 次均成功；空串不被当作一个来源', async () => {
+    for (let index = 0; index < 11; index += 1) { expect((await issue('203.0.113.21')).status).toBe(200) }
+    expect(mysql(`SELECT CONCAT(COUNT(*), '|', SUM(issuance_source_hash = '')) FROM guest_sessions;`, database)).toBe('11|11')
   })
   it('E4：活动指针切回 v1 → 503，不新增行', async () => {
     activate('v1')

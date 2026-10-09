@@ -44,6 +44,12 @@ describe('游客令牌签发｜L3 unit_fake', () => {
     expect(await issueGuestSession(limited, input())).toEqual({ status: 'rate_limited' })
     expect(limited.repository.insert).not.toHaveBeenCalled()
   })
+  it('U4：无匿名信号（限流键 null）→ 不计数，照常签发，存储限流键为空串（用户 2026-10-09 裁决：不读 IP 头，无匿名信号不在应用层计数）', async () => {
+    const d = deps(99)
+    expect((await issueGuestSession(d, { platform: 'xiaohongshu', issuanceSourceHash: null, anonymousSignalHash: null })).status).toBe('issued')
+    expect(d.repository.countIssuedSince).not.toHaveBeenCalled()
+    expect(d.repository.insert.mock.calls[0]![0]).toMatchObject({ issuanceSourceHash: '', anonymousSubjectHash: null })
+  })
   it('I2：无已发布策略 → unavailable，不写入', async () => {
     const d = deps(0, null)
     expect(await issueGuestSession(d, input())).toEqual({ status: 'unavailable' })

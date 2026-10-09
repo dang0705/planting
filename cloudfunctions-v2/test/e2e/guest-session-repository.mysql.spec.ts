@@ -65,6 +65,12 @@ describe('unit_real_data 游客会话存储', () => {
     expect(await repository.countIssuedSince('a'.repeat(64), now + 1)).toBe(0)
     expect(await repository.countIssuedSince('b'.repeat(64), now - hour)).toBe(0)
   })
+  it('U5：计数只接受 64 位十六进制摘要；空串（无信号）不被当作一个来源（用户 2026-10-09 裁决）', async () => {
+    const repository = createMysqlGuestSessionRepository(source)
+    await repository.insert(record({ issuanceSourceHash: '' }))
+    await expect(repository.countIssuedSince('', now - hour)).rejects.toThrow()
+    await expect(repository.countIssuedSince('A'.repeat(64), now - hour)).rejects.toThrow()
+  })
   it('Reverse：过期、非 active、未知摘要 → null', async () => {
     const repository = createMysqlGuestSessionRepository(source)
     await repository.insert(record())

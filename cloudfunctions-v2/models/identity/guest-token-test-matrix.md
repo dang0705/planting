@@ -7,7 +7,8 @@ Expected 来源：`guest-token-contract.md`（用户 2026-10-08 冻结）＋配�
 | 维 | 用例 | 形态 | 状态 |
 |---|---|---|---|
 | I1 Happy | 抖音/小红书 → 返回一次性 token（32 字节 base64url）、`gst_` 引用、+168 小时失效；存储记录只含 token 的 SHA-256、来源 server_issued_guest_token、证明版本 1、状态 active | Happy | 已写（绿） |
-| U3 非法 | 平台为 wechat 或未知、限流键不是 64 位小写十六进制 → invalid，不读写存储 | Reverse | 已写（绿） |
+| U3 非法 | 平台为 wechat 或未知、限流键非 null 且不是 64 位小写十六进制 → invalid，不读写存储 | Reverse | 已写（绿） |
+| U4 无信号（用户 2026-10-09 裁决：不读 IP 头，无信号不计数） | 限流键为 null → 不调用计数，照常签发，存储 `issuanceSourceHash=''` | Edge | 新写（RED→绿） |
 | U2 边界 | 过去一小时已签发 9 次 → 仍签发；10 次 → rate_limited 且不写入；计数窗口起点 = now − 1 小时 | Edge | 已写（绿） |
 | I2 | 无已发布策略 → unavailable，不写入 | Edge | 已写（绿） |
 | I5 写中断 | 写入失败 → unavailable，结果不含 token | Reverse | 已写（绿） |
@@ -23,6 +24,7 @@ Expected 来源：`guest-token-contract.md`（用户 2026-10-08 冻结）＋配�
 | U2 边界 | 计数窗口起点晚于签发时刻 → 0；其他限流键 → 0 | Edge | 已写（绿） |
 | Reverse | 已过期、状态非 active、未知摘要 → 找不到 | Reverse | 已写（绿） |
 | I3 约束 | 重复公开引用写入被唯一键拒绝；非法 identity_source 被 CHECK 拒绝 | Edge | 已写（绿） |
+| U5 空键 | 计数传入 `''` 或非 64 位十六进制 → 抛错，不把 `''` 当作一个来源 | Reverse | 新写（RED→绿） |
 
 ## 游客令牌解析 `resolveGuestPrincipal` / `parseGuestBearer`（E03，cases 先于产品）
 
@@ -43,24 +45,25 @@ Expected 来源：`guest-token-contract.md` §2（用户 2026-10-08 冻结）—
 ## 游客签发 HTTP 入口 `POST /api/v2/identity/guest-sessions`（E03，cases 先于产品）
 
 对象：`createGuestSessionRouteHandler`（挂在真实 `node:http` 服务上调用）。层次 L3 `unit_fake`：替换游客存储、抖音匿名换取与策略端口；请求解析、DTO 校验、来源摘要、签发规则与公开响应不替换。
-Expected 来源：`guest-token-contract.md` §1（公开 DTO 与错误）、§5（已确认配置）、§6（来源 IP 与摘要裁决，CloudBase 官方文档）；route-registry `createGuestSession`（错误仅 VALIDATION_FAILED / RATE_LIMITED / SERVICE_UNAVAILABLE）。
-未覆盖：真实 MySQL（另做 e2e）、CloudBase 网关实测 XFF、抖音真实换取。
+Expected 来源：`guest-token-contract.md` §1（公开 DTO 与错误）、§5（已确认配置）、§6（用户 2026-10-09 裁决：不读任何 IP 头，无匿名信号不在应用层计数，网关单客户端限频兜底）；route-registry `createGuestSession`（错误仅 VALIDATION_FAILED / RATE_LIMITED / SERVICE_UNAVAILABLE）。
+未覆盖：真实 MySQL（另做 e2e）、CloudBase 网关单客户端限频实测（网关配置由主代理负责）、抖音真实换取。
 
 | 维 | 用例 | 形态 | 状态 |
 |---|---|---|---|
-| H1 Happy | 小红书、XFF=`203.0.113.9` → 200 `{data:{guestToken(43 位 base64url), guestSessionRef(gst_), expiresAt(+168h)}}`、`cache-control: no-store`；存储限流键 = HMAC(派生键, `client_ip:203.0.113.9`)，匿名摘要 null | Happy | 已写（绿） |
+| H1 Happy | 小红书、XFF=`203.0.113.9` → 200 `{data:{guestToken(43 位 base64url), guestSessionRef(gst_), expiresAt(+168h)}}`、`cache-control: no-store`；请求带伪造 XFF；不计数，存储限流键 `''`，匿名摘要 null | Happy | 改写（RED→绿） |
 | H2 Happy | 抖音带 anonymousCode、策略开启 → 匿名摘要 = HMAC(派生键, `douyin_anonymous:<openid>`)，且作为限流键 | Happy | 已写（绿） |
-| H3 降级 | 抖音匿名换取失败 → 仍 200，限流键回落为 IP 摘要，匿名摘要 null | Edge | 已写（绿） |
-| H4 开关 | 策略关闭匿名信号 → 不调用换取，按 IP 限流 | Edge | 已写（绿） |
-| X1 来源 | XFF=`198.51.100.1, 203.0.113.9` → 取最右段 203.0.113.9 | Edge | 已写（绿） |
+| H3 降级 | 抖音匿名换取失败 → 仍 200，按无信号处理：不计数，限流键 `''`，匿名摘要 null | Edge | 改写（RED→绿） |
+| H4 开关 | 策略关闭匿名信号 → 不调用换取，按无信号处理（不计数，限流键 `''`） | Edge | 改写（RED→绿） |
+| X1 来源 | 不同 XFF/x-real-ip 头 → 结果与写入完全相同（代码不读 IP 头） | Edge | 改写（RED→绿） |
 | V1 非法 | 平台 wechat / 未知、小红书带 anonymousCode、多余字段、非 JSON 媒体类型、坏 JSON → 400 VALIDATION_FAILED，不读写存储 | Reverse | 已写（绿） |
-| R1 限流 | 过去一小时同来源已 10 次 → 429 RATE_LIMITED，不写入 | Edge | 已写（绿） |
+| R1 限流 | 抖音匿名信号过去一小时已 10 次 → 429 RATE_LIMITED，不写入 | Edge | 改写（绿） |
 | S1 策略 | 无游客策略 → 503，不调用换取、不写入 | Reverse | 已写（绿） |
-| S2 来源 | 无 XFF 或非法 IP 且无匿名信号 → 503，不写入 | Reverse | 已写（绿） |
+| S2 来源 | 无 XFF、非法 IP 且无匿名信号 → 仍 200 签发（不再 503） | Edge | 改写（RED→绿） |
 | S3 写失败 | 存储写入抛错 → 503，响应不含令牌 | Reverse | 已写（绿） |
 | 脱敏 | 审计事件与错误响应不含令牌、IP、anonymousCode | Reverse | 已写（绿） |
 
-突变证据（仓库外副本）：XFF 改取首段 → X1/S2 红；匿名换取失败改为抛出 → H3 红；忽略匿名信号开关 → H4 红；限流改 503 → R1 红。
+突变证据（仓库外副本，用户 2026-10-09 裁决后）：无信号也计数 → U4/H1/H3/X1 红；仓储接受空串计数 → U5 红；无信号写伪键 → U4/H1/H3/H4 红。
+突变证据（仓库外副本，旧规则时期）：XFF 改取首段 → X1/S2 红（该规则已废止）；匿名换取失败改为抛出 → H3 红；忽略匿名信号开关 → H4 红；限流改 503 → R1 红。
 OpenAPI 制品（`test/identity/identity-session-openapi.spec.ts`，L1 unit_real_data）：游客签发组件与多平台登录组件；反事实 RED：生成器回退到 HEAD → 两条均红，恢复后绿。
 
 ## 身份策略 v2（含游客字段）`identity-session-policy/v2`（E03，cases 先于产品）
@@ -80,14 +83,15 @@ OpenAPI 制品（`test/identity/identity-session-openapi.spec.ts`，L1 unit_real
 
 ## 游客签发与解析 MySQL 端到端（E03）
 
-层次 `unit_real_data`：真实 MySQL 8.4（007 策略表、003 guest_sessions + 023 迁移）、真实 `createIdentityServer` HTTP、真实策略读取器与 HMAC 派生；只替换登录 Provider（本用例不调用）且不接抖音换取。不是 CloudBase 部署或真机验收。
-Expected 来源：guest-token-contract.md §1/§2/§6、配置目录已冻结值（168 小时、10 次/小时）。
+层次 `unit_real_data`：真实 MySQL 8.4（007 策略表、003 guest_sessions + 023 迁移）、真实 `createIdentityServer` HTTP、真实策略读取器与 HMAC 派生；只替换登录 Provider（本用例不调用）与抖音匿名换取（确定性替身 code → openid-<code>，用于 E3 按信号限流）。不是 CloudBase 部署或真机验收。
+Expected 来源：guest-token-contract.md §1/§2/§5/§6（§5/§6 用户 2026-10-09 裁决）、配置目录已冻结值（168 小时、10 次/小时）。
 
 | 维 | 用例 | 形态 | 状态 |
 |---|---|---|---|
-| E1 Happy | v2 活动发布 → 200；库中一行，`possession_proof_hash`=SHA-256(令牌)、来源 server_issued_guest_token、限流键=HMAC(派生键, client_ip:…)、+168h；任何列不含令牌原文或 IP | Happy | 已写（绿） |
+| E1 Happy | v2 活动发布 → 200；库中一行，`possession_proof_hash`=SHA-256(令牌)、来源 server_issued_guest_token、限流键 `''`（无信号）、+168h；任何列不含令牌原文或伪造头 IP | Happy | 改写（RED→绿） |
 | E2 读回 | 用返回令牌经真实存储解析 → GuestPrincipal，引用与响应一致 | Happy | 已写（绿） |
-| E3 限流 | 同 IP 共 10 次成功后第 11 次 → 429，库中仍 10 行；另一 IP 仍可签发 | Edge | 已写（绿） |
+| E3 限流 | 同一抖音匿名信号 10 次成功后第 11 次 → 429；另一信号仍可签发 | Edge | 改写（RED→绿） |
+| E5 无信号 | 小红书无信号连续 11 次（库中已有 10 行 `''`）→ 均 200，`''` 不被当作一个来源 | Edge | 新写（RED→绿） |
 | E4 失败关闭 | 活动指针切回 v1 发布 → 503，不新增行 | Reverse | 已写（绿） |
 
 反事实 RED：读取器不认 v2（仓库外副本）→ E1/E3 红；恢复后 3/3 绿。

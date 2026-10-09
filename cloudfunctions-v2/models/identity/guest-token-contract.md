@@ -40,13 +40,14 @@
 
 | 配置 | 建议 | 说明 |
 |---|---|---|
-| 签发限流 | 每个来源（抖音匿名信号或客户端 IP 摘要）每小时 ≤ 10 次 | 防刷；超出返回 `RATE_LIMITED` |
+| 签发限流 | 每小时 ≤ 10 次，**只对带抖音匿名信号（anonymous_openid 摘要）的请求按信号计数**；无信号请求不在应用层按来源计数，由网关路由 `/api/v2/identity/guest-sessions` 的单客户端限频（ClientIP，1 QPS）兜底（用户 2026-10-09 裁决） | 防刷；超出返回 `RATE_LIMITED` |
 | 单个游客最多临时案例数 | 5 | 防止滥用存储 |
 | 是否启用抖音匿名信号 | 启用 | 仅作防刷键 |
 
 ## 6. 签发入口实现裁决（Claude 2026-10-09，不改变公开 DTO）
 
-- **客户端来源 IP**：取请求头 `x-forwarded-for` 最右一段。依据 CloudBase 官方文档「关于客户端源 IP」：直连 HTTP 网关时网关取直连客户端 IP、不接受请求方通过 XFF 指定，并以 XFF 最后一段作为客户端源 IP（`docs.cloudbase.net/service/custom-domain#client-source-ip`）。缺失或不是合法 IP 且没有抖音匿名信号时失败关闭（503），不退化成全局共享限流键。部署后需真机读回核验，未核验前标记为“文档依据、未实测”。
-- **摘要密钥**：不新增密钥，用 HKDF-SHA256 从 `PLATFORM_SUBJECT_HMAC_KEY_V1` 派生专用子密钥（info=`qinghuazhi/guest-issuance-source/v1`），与平台主体摘要域隔离；IP 与匿名信号分别加前缀 `client_ip:`、`douyin_anonymous:` 再做 HMAC-SHA256。IP 原文不落库、不写日志。
-- **抖音匿名信号**：策略开启且请求带 `anonymousCode` 时换取 `anonymous_openid`；成功则其摘要同时作为 `anonymous_subject_hash` 与限流键（优先于 IP）；换取失败不阻断签发，仅按 IP 限流（配置目录 `identity.guest.douyin_anonymous_signal_enabled`）。
+- **客户端来源 IP（用户 2026-10-09 裁决，替代原「XFF 最右段」规则）**：应用代码**不读取任何 IP 请求头**（`x-forwarded-for`、`x-real-ip` 等）。依据 2026-10-09 测试环境临时诊断函数实测（证据 `.codex/backend-v2/evidence/E03-E06-test-env-deploy-2026-10-09.json` 的 `xffDiagnosis`）：CloudBase 默认域名走 CDN，函数收到的 `x-forwarded-for` 恒为 5 段——无伪造头时第 1 段是客户端、其余为 CDN 节点；客户端带伪造头时第 1 段变成伪造值、真实客户端段消失；`x-real-ip` 是 CDN 节点。函数无法从请求头可靠取得客户端 IP，原「XFF 最右段」规则不成立。按客户端防刷交给 CloudBase 网关「单客户端限频」（网关自行识别真实 IP，路由 `/api/v2/identity/guest-sessions`，ClientIP 1 QPS）。
+- **无匿名信号时的限流键**：`issuance_source_hash` 写空串 `''`（列 NOT NULL DEFAULT ''），表示「无应用层来源」；应用层不计数，计数查询只接受 64 位十六进制摘要，`''` 永不被当作一个来源。
+- **摘要密钥**：不新增密钥，用 HKDF-SHA256 从 `PLATFORM_SUBJECT_HMAC_KEY_V1` 派生专用子密钥（info=`qinghuazhi/guest-issuance-source/v1`），与平台主体摘要域隔离；匿名信号加前缀 `douyin_anonymous:` 再做 HMAC-SHA256（原 `client_ip:` 前缀随 IP 规则一并废止）。
+- **抖音匿名信号**：策略开启且请求带 `anonymousCode` 时换取 `anonymous_openid`；成功则其摘要同时作为 `anonymous_subject_hash` 与限流键；换取失败不阻断签发，按无信号处理（应用层不计数，由网关兜底）（配置目录 `identity.guest.douyin_anonymous_signal_enabled`）。
 - **策略来源**：游客有效期、限流上限、匿名信号开关须来自已发布身份策略 `identity-session-policy/v2`（v1 字段 + `guestSessionTtlHours`、`guestIssuanceRatePerHour`、`douyinAnonymousSignalEnabled`；v1 摘要算法不变）。活动发布仍为 v1 或不可用时入口一律 503（失败关闭）。

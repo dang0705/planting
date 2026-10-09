@@ -43,6 +43,8 @@ export function createMysqlGuestSessionRepository(source: MysqlConnectionPoolPor
       )
     }),
     countIssuedSince: (issuanceSourceHash, sinceMs) => withReadConnection(source, async connection => {
+      // 空串表示「无应用层来源」，绝不能被当作一个共享来源计数（guest-token-contract §6）。
+      if (!/^[a-f0-9]{64}$/u.test(issuanceSourceHash)) { throw new Error('游客签发限流键必须为 64 位十六进制摘要') }
       const rows = await connection.query(
         `SELECT CAST(COUNT(*) AS CHAR) AS issued FROM guest_sessions
          WHERE issuance_source_hash = ? AND identity_source = 'server_issued_guest_token' AND issued_at_ms >= ?`,

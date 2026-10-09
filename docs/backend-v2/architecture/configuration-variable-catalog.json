@@ -5102,9 +5102,9 @@
       "fallback": "策略不可用时拒绝签发游客令牌",
       "phase": "P2",
       "ticketTitle": "[P2] 统一身份 Principal",
-      "expected": "同一来源（抖音匿名信号摘要或客户端来源摘要）一小时内第 11 次签发返回 RATE_LIMITED",
+      "expected": "每小时游客签发上限 10 次，只对带抖音匿名信号（anonymous_openid 的 HMAC 摘要）的请求按信号计数；无信号请求（小红书、抖音未带或换取失败）不在应用层按来源计数，issuance_source_hash 写空串，由 CloudBase 网关路由 /api/v2/identity/guest-sessions 的单客户端限频（ClientIP，1 QPS）兜底",
       "decisionGroup": "identity_sessions",
-      "decisionNote": "用户 2026-10-08 按建议值确认。"
+      "decisionNote": "用户 2026-10-08 按建议值确认。 用户 2026-10-09 裁决：应用代码不读取任何 IP 请求头（CDN 默认域名下 x-forwarded-for 最左段可伪造、其余段为 CDN 节点，测试环境实测）；IP 维度防刷交给网关单客户端限频。"
     },
     {
       "id": "user-plant.guest.max_cases_per_session",

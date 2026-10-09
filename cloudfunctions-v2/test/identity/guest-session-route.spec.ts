@@ -7,7 +7,7 @@ import { createGuestSessionRouteHandler, deriveGuestIssuanceSourceKey } from '..
 
 /**
  * Expected：models/identity/guest-token-test-matrix.md「游客签发 HTTP 入口」——
- * guest-token-contract.md §1/§5/§6（用户冻结 DTO＋已确认配置＋CloudBase 官方 XFF 文档）。
+ * guest-token-contract.md §1/§5/§6（用户冻结 DTO＋已确认配置＋用户 2026-10-09 裁决：不读任何 IP 头，无匿名信号不在应用层计数）。
  * L3 unit_fake：替换游客存储、抖音匿名换取与策略端口；真实 node:http、DTO 校验、来源摘要与签发规则。
  */
 const now = Date.UTC(2026, 9, 9, 3)
@@ -46,7 +46,7 @@ async function harness(overrides: Overrides = {}) {
   server = createServer((request, response) => { handler(request, response, {}).catch(() => undefined) })
   await new Promise<void>(resolve => server!.listen(0, '127.0.0.1', resolve))
   const port = (server.address() as AddressInfo).port
-  const call = async (body: unknown, headers: Record<string, string> = { 'x-forwarded-for': '203.0.113.9' }, contentType = 'application/json') => {
+  const call = async (body: unknown, headers: Record<string, string> = { 'x-forwarded-for': '203.0.113.9, 10.0.0.1', 'x-real-ip': '10.0.0.2' }, contentType = 'application/json') => {
     const response = await fetch(`http://127.0.0.1:${port}/api/v2/identity/guest-sessions`, {
       method: 'POST', headers: { 'content-type': contentType, ...headers },
       body: typeof body === 'string' ? body : JSON.stringify(body),
@@ -59,15 +59,15 @@ const expectedToken = Buffer.alloc(32, 1).toString('base64url')
 const expectedRef = `gst_${Buffer.alloc(16, 2).toString('base64url')}`
 
 describe('游客签发 HTTP 入口｜L3 unit_fake', () => {
-  it('H1：小红书 → 200 一次性令牌；限流键为 IP 摘要，匿名摘要 null', async () => {
+  it('H1：小红书 → 200 一次性令牌；不计数，限流键为空串，匿名摘要 null', async () => {
     const h = await harness()
     const result = await h.call({ platform: 'xiaohongshu' })
     expect(result.status).toBe(200)
     expect(result.cacheControl).toBe('no-store')
     expect(JSON.parse(result.text)).toEqual({ data: { guestToken: expectedToken, guestSessionRef: expectedRef, expiresAt: new Date(now + 168 * hour).toISOString() } })
     expect(expectedToken).toMatch(/^[A-Za-z0-9_-]{43}$/u)
-    expect(h.repository.countIssuedSince).toHaveBeenCalledWith(expectedDigest('client_ip:203.0.113.9'), now - hour)
-    expect(h.repository.insert.mock.calls[0]![0]).toMatchObject({ issuanceSourceHash: expectedDigest('client_ip:203.0.113.9'), anonymousSubjectHash: null })
+    expect(h.repository.countIssuedSince).not.toHaveBeenCalled()
+    expect(h.repository.insert.mock.calls[0]![0]).toMatchObject({ issuanceSourceHash: '', anonymousSubjectHash: null })
     expect(h.exchange).not.toHaveBeenCalled()
   })
   it('H2：抖音带 anonymousCode → 匿名摘要优先作限流键', async () => {
@@ -76,22 +76,31 @@ describe('游客签发 HTTP 入口｜L3 unit_fake', () => {
     expect(h.exchange).toHaveBeenCalledWith('anon-code-1')
     const anonymousDigest = expectedDigest('douyin_anonymous:douyin-anon-openid-1')
     expect(h.repository.insert.mock.calls[0]![0]).toMatchObject({ issuanceSourceHash: anonymousDigest, anonymousSubjectHash: anonymousDigest })
+    expect(h.repository.countIssuedSince).toHaveBeenCalledWith(anonymousDigest, now - hour)
   })
-  it('H3：抖音匿名换取失败 → 仍 200，回落 IP 限流', async () => {
+  it('H3：抖音匿名换取失败 → 仍 200，按无信号处理（不计数）', async () => {
     const h = await harness({ exchange: vi.fn(async () => { throw new Error('40019') }) })
     expect((await h.call({ platform: 'douyin', anonymousCode: 'anon-code-1' })).status).toBe(200)
-    expect(h.repository.insert.mock.calls[0]![0]).toMatchObject({ issuanceSourceHash: expectedDigest('client_ip:203.0.113.9'), anonymousSubjectHash: null })
+    expect(h.repository.countIssuedSince).not.toHaveBeenCalled()
+    expect(h.repository.insert.mock.calls[0]![0]).toMatchObject({ issuanceSourceHash: '', anonymousSubjectHash: null })
   })
   it('H4：策略关闭匿名信号 → 不调用换取', async () => {
     const h = await harness({ policy: { ...policy, douyinAnonymousSignalEnabled: false } })
     expect((await h.call({ platform: 'douyin', anonymousCode: 'anon-code-1' })).status).toBe(200)
     expect(h.exchange).not.toHaveBeenCalled()
-    expect(h.repository.insert.mock.calls[0]![0]).toMatchObject({ issuanceSourceHash: expectedDigest('client_ip:203.0.113.9'), anonymousSubjectHash: null })
+    expect(h.repository.insert.mock.calls[0]![0]).toMatchObject({ issuanceSourceHash: '', anonymousSubjectHash: null })
   })
-  it('X1：XFF 多段取最右段', async () => {
-    const h = await harness()
-    await h.call({ platform: 'xiaohongshu' }, { 'x-forwarded-for': '198.51.100.1, 203.0.113.9' })
-    expect(h.repository.countIssuedSince).toHaveBeenCalledWith(expectedDigest('client_ip:203.0.113.9'), now - hour)
+  it('X1：任何 IP 头都不影响结果（代码不读 IP 头）', async () => {
+    const inserts: unknown[] = []
+    for (const headers of [{}, { 'x-forwarded-for': '198.51.100.1' }, { 'x-forwarded-for': '203.0.113.9, 10.0.0.1', 'x-real-ip': '10.0.0.2' }]) {
+      const h = await harness()
+      expect((await h.call({ platform: 'xiaohongshu' }, headers)).status).toBe(200)
+      expect(h.repository.countIssuedSince).not.toHaveBeenCalled()
+      inserts.push(h.repository.insert.mock.calls[0]![0])
+      await new Promise(resolve => server!.close(resolve)); server = null
+    }
+    expect(inserts[1]).toEqual(inserts[0])
+    expect(inserts[2]).toEqual(inserts[0])
   })
   it.each([
     ['wechat 平台', { platform: 'wechat' }, 'application/json'],
@@ -108,9 +117,9 @@ describe('游客签发 HTTP 入口｜L3 unit_fake', () => {
     expect(h.repository.countIssuedSince).not.toHaveBeenCalled()
     expect(h.repository.insert).not.toHaveBeenCalled()
   })
-  it('R1：同来源一小时已 10 次 → 429 RATE_LIMITED，不写入', async () => {
+  it('R1：同一抖音匿名信号一小时已 10 次 → 429 RATE_LIMITED，不写入', async () => {
     const h = await harness({ count: 10 })
-    const result = await h.call({ platform: 'xiaohongshu' })
+    const result = await h.call({ platform: 'douyin', anonymousCode: 'anon-code-1' })
     expect(result.status).toBe(429)
     expect(JSON.parse(result.text).error.type).toBe('RATE_LIMITED')
     expect(h.repository.insert).not.toHaveBeenCalled()
@@ -123,10 +132,10 @@ describe('游客签发 HTTP 入口｜L3 unit_fake', () => {
     expect(h.exchange).not.toHaveBeenCalled()
     expect(h.repository.insert).not.toHaveBeenCalled()
   })
-  it.each([[{}], [{ 'x-forwarded-for': 'not-an-ip' }], [{ 'x-forwarded-for': '203.0.113.9, ' }]])('S2：来源 IP 缺失或非法且无匿名信号 → 503（%j）', async headers => {
+  it.each([[{}], [{ 'x-forwarded-for': 'not-an-ip' }], [{ 'x-forwarded-for': '203.0.113.9, ' }]])('S2：无 IP 头或非法 IP 且无匿名信号 → 仍 200 签发（%j）', async headers => {
     const h = await harness()
-    expect((await h.call({ platform: 'xiaohongshu' }, headers)).status).toBe(503)
-    expect(h.repository.insert).not.toHaveBeenCalled()
+    expect((await h.call({ platform: 'xiaohongshu' }, headers)).status).toBe(200)
+    expect(h.repository.insert).toHaveBeenCalledTimes(1)
   })
   it('S3：存储写入失败 → 503，响应不含令牌', async () => {
     const h = await harness({ insert: async () => { throw new Error('duplicate') } })

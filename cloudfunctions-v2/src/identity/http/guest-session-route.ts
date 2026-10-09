@@ -1,6 +1,4 @@
 import { createHmac, createSecretKey, hkdfSync, randomBytes as cryptoRandomBytes, type KeyObject } from 'node:crypto'
-import type { IncomingHttpHeaders } from 'node:http'
-import { isIP } from 'node:net'
 
 import {
   createPublicContractValidators,
@@ -17,8 +15,6 @@ import { IdentityLoginInputError, readJsonBody, verifyJsonContentType, writeJson
 const issuanceSourceKeyInfo = 'qinghuazhi/guest-issuance-source/v1'
 /** 主密钥与派生子密钥的最少字节数（256 位）。 */
 const minimumKeyBytes = 32
-/** 客户端 IP 摘要输入前缀。 */
-const clientIpPrefix = 'client_ip:'
 /** 抖音匿名信号摘要输入前缀。 */
 const douyinAnonymousPrefix = 'douyin_anonymous:'
 
@@ -31,7 +27,7 @@ export interface GuestSessionRouteDependencies {
   readonly repository: IssueGuestSessionDependencies['repository']
   /** 每请求锁定一次游客策略；没有可信发布时返回 null。 */
   readonly resolveGuestPolicy: () => Promise<GuestIssuancePolicy | null>
-  /** 抖音 anonymousCode → anonymous_openid；抖音未配置时为 null（仅按 IP 限流）。 */
+  /** 抖音 anonymousCode → anonymous_openid；抖音未配置时为 null（无信号，应用层不计数）。 */
   readonly exchangeDouyinAnonymousCode: ((anonymousCode: string) => Promise<string>) | null
   /** 由 deriveGuestIssuanceSourceKey 派生的摘要子密钥；缺失时入口失败关闭。 */
   readonly issuanceSourceKey: KeyObject | null
@@ -47,18 +43,6 @@ export interface GuestSessionRouteDependencies {
 export function deriveGuestIssuanceSourceKey(masterKeyBytes: Buffer): KeyObject {
   if (masterKeyBytes.length < minimumKeyBytes) { throw new Error('游客来源摘要主密钥长度不足') }
   return createSecretKey(Buffer.from(hkdfSync('sha256', masterKeyBytes, Buffer.alloc(0), issuanceSourceKeyInfo, minimumKeyBytes)))
-}
-
-/**
- * 读取 CloudBase 网关识别的客户端 IP：`x-forwarded-for` 最右一段（官方文档：网关以 XFF 最后一段为客户端源 IP，
- * 直连时不接受请求方指定）。缺失、末段为空或不是合法 IP 时返回 null，不退化为共享键。
- */
-function readGatewayClientIp(headers: IncomingHttpHeaders): string | null {
-  const raw = headers['x-forwarded-for']
-  const joined = Array.isArray(raw) ? raw.join(',') : raw
-  if (typeof joined !== 'string') { return null }
-  const last = joined.split(',').at(-1)?.trim().toLowerCase() ?? ''
-  return isIP(last) === 0 ? null : last
 }
 
 /** 前缀 + 值的 HMAC-SHA256 十六进制摘要；原值只在本调用栈内使用。 */
@@ -80,7 +64,7 @@ async function safelyWriteAudit(writeAudit: GuestSessionRouteDependencies['write
 
 /**
  * 抖音匿名信号摘要：仅当策略开启、请求带 anonymousCode、换取端口已配置时尝试；
- * 换取失败不阻断签发（配置目录 identity.guest.douyin_anonymous_signal_enabled），返回 null 回落 IP 限流。
+ * 换取失败不阻断签发（配置目录 identity.guest.douyin_anonymous_signal_enabled），返回 null 按无信号处理（应用层不计数，网关单客户端限频兜底）。
  */
 async function resolveAnonymousSignalHash(
   dependencies: GuestSessionRouteDependencies, policy: GuestIssuancePolicy, dto: CreateGuestSessionRequestDto, key: KeyObject
@@ -96,8 +80,9 @@ async function resolveAnonymousSignalHash(
 
 /**
  * `POST /api/v2/identity/guest-sessions`（guest-token/v1）：
- * 媒体类型/正文/DTO → 锁定策略 → 来源摘要（抖音匿名信号优先，否则网关 IP）→ 限流与签发 → 公开响应。
- * 令牌只在成功响应出现一次；IP、anonymousCode、匿名 openid 不进入日志、审计或响应。
+ * 媒体类型/正文/DTO → 锁定策略 → 抖音匿名信号摘要（有则按信号限流）→ 签发 → 公开响应。
+ * 不读取任何 IP 请求头（用户 2026-10-09 裁决：CDN 下不可信，防刷由网关单客户端限频承担）。
+ * 令牌只在成功响应出现一次；anonymousCode、匿名 openid 不进入日志、审计或响应。
  */
 export function createGuestSessionRouteHandler(dependencies: GuestSessionRouteDependencies): RouteHandler {
   const validators = createPublicContractValidators()
@@ -115,28 +100,22 @@ export function createGuestSessionRouteHandler(dependencies: GuestSessionRouteDe
         outcome = 'unavailable'
       } else {
         const anonymousSignalHash = await resolveAnonymousSignalHash(dependencies, policy, dto, key)
-        const clientIp = readGatewayClientIp(request.headers)
-        const issuanceSourceHash = anonymousSignalHash ?? (clientIp === null ? null : digest(key, clientIpPrefix, clientIp))
-        if (issuanceSourceHash === null) {
-          outcome = 'unavailable'
-        } else {
-          const result = await issueGuestSession(
-            { repository: dependencies.repository, randomBytes, now: dependencies.now, policy },
-            { platform: dto.platform, issuanceSourceHash, anonymousSignalHash },
-          )
-          if (result.status === 'issued') {
-            const publicData: CreateGuestSessionResponseDto = {
-              guestToken: result.guestToken,
-              guestSessionRef: result.guestSessionRef as CreateGuestSessionResponseDto['guestSessionRef'],
-              expiresAt: result.expiresAt,
-            }
-            if (!validators.createGuestSessionResponse(publicData)) { throw new Error('游客签发数据不符合公开合同') }
-            await safelyWriteAudit(dependencies.writeAudit, { outcome: 'allowed' })
-            writeJson(response, 200, { data: publicData })
-            return
+        const result = await issueGuestSession(
+          { repository: dependencies.repository, randomBytes, now: dependencies.now, policy },
+          { platform: dto.platform, issuanceSourceHash: anonymousSignalHash, anonymousSignalHash },
+        )
+        if (result.status === 'issued') {
+          const publicData: CreateGuestSessionResponseDto = {
+            guestToken: result.guestToken,
+            guestSessionRef: result.guestSessionRef as CreateGuestSessionResponseDto['guestSessionRef'],
+            expiresAt: result.expiresAt,
           }
-          outcome = result.status
+          if (!validators.createGuestSessionResponse(publicData)) { throw new Error('游客签发数据不符合公开合同') }
+          await safelyWriteAudit(dependencies.writeAudit, { outcome: 'allowed' })
+          writeJson(response, 200, { data: publicData })
+          return
         }
+        outcome = result.status
       }
     } catch (error: unknown) {
       outcome = error instanceof IdentityLoginInputError ? 'invalid' : 'unavailable'

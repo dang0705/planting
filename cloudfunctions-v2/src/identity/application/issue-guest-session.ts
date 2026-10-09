@@ -23,7 +23,7 @@ export interface GuestSessionInsert {
   readonly possessionProofVersion: 1
   /** 可选平台匿名信号摘要（抖音 anonymous_openid 的 HMAC），仅防刷。 */
   readonly anonymousSubjectHash: string | null
-  /** 签发限流键摘要。 */
+  /** 签发限流键摘要；无匿名信号时为空串 ''（应用层不计数，网关单客户端限频兜底）。 */
   readonly issuanceSourceHash: string
   /** 新签发会话的状态，固定为 active。 */
   readonly status: 'active'
@@ -59,8 +59,8 @@ export interface IssueGuestSessionDependencies {
 export interface IssueGuestSessionInput {
   /** 请求平台；只接受抖音、小红书。 */
   readonly platform: string
-  /** 签发限流键摘要。 */
-  readonly issuanceSourceHash: string
+  /** 签发限流键摘要；null 表示无匿名信号，不在应用层计数（用户 2026-10-09 裁决）。 */
+  readonly issuanceSourceHash: string | null
   /** 可选平台匿名信号摘要。 */
   readonly anonymousSignalHash: string | null
 }
@@ -84,10 +84,10 @@ export type IssueGuestSessionResult =
 
 /**
  * guest-token/v1：为抖音、小红书未登录用户签发高熵游客令牌。
- * 只存令牌 SHA-256；同一来源一小时内超过上限返回 rate_limited；任何依赖失败均失败关闭。
+ * 只存令牌 SHA-256；同一匿名信号一小时内超过上限返回 rate_limited（无信号不计数）；任何依赖失败均失败关闭。
  */
 export async function issueGuestSession(dependencies: IssueGuestSessionDependencies, input: IssueGuestSessionInput): Promise<IssueGuestSessionResult> {
-  if (!guestPlatforms.has(input.platform) || !digestPattern.test(input.issuanceSourceHash)
+  if (!guestPlatforms.has(input.platform) || (input.issuanceSourceHash !== null && !digestPattern.test(input.issuanceSourceHash))
     || (input.anonymousSignalHash !== null && !digestPattern.test(input.anonymousSignalHash))) {
     return { status: 'invalid' }
   }
@@ -95,15 +95,18 @@ export async function issueGuestSession(dependencies: IssueGuestSessionDependenc
   if (policy === null) { return { status: 'unavailable' } }
   const now = dependencies.now()
   try {
-    const issued = await dependencies.repository.countIssuedSince(input.issuanceSourceHash, now - millisecondsPerHour)
-    if (issued >= policy.ratePerHour) { return { status: 'rate_limited' } }
+    // 只对有匿名信号的请求按信号计数；无信号交给网关「单客户端限频」（guest-token-contract §5/§6）。
+    if (input.issuanceSourceHash !== null) {
+      const issued = await dependencies.repository.countIssuedSince(input.issuanceSourceHash, now - millisecondsPerHour)
+      if (issued >= policy.ratePerHour) { return { status: 'rate_limited' } }
+    }
     const guestToken = dependencies.randomBytes(guestTokenBytes).toString('base64url')
     const guestSessionRef = `gst_${dependencies.randomBytes(guestRefBytes).toString('base64url')}`
     const expiresAtMs = now + policy.ttlHours * millisecondsPerHour
     await dependencies.repository.insert({
       guestSessionRef, identitySource: 'server_issued_guest_token',
       possessionProofHash: createHash('sha256').update(guestToken).digest('hex'), possessionProofVersion: 1,
-      anonymousSubjectHash: input.anonymousSignalHash, issuanceSourceHash: input.issuanceSourceHash,
+      anonymousSubjectHash: input.anonymousSignalHash, issuanceSourceHash: input.issuanceSourceHash ?? '',
       status: 'active', issuedAtMs: now, expiresAtMs,
     })
     return { status: 'issued', guestToken, guestSessionRef, expiresAt: new Date(expiresAtMs).toISOString() }
