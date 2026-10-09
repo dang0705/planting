@@ -1,0 +1,20 @@
+{
+  "capturedAt": "2026-10-09",
+  "authorization": "用户 2026-10-09 批准把 user-plant-limits-policy/v1（游客每会话 5 个临时案例、登录临时案例 168 小时）写入 qinghuazhi_v2_test",
+  "path": "CloudBase MCP manageMysqlDatabase.runStatement → qinghuazhi_v2_test.business_policy_releases（INSERT 1 行）/ active_business_policy_releases（INSERT 1 行；写前确认该策略无发布与指针）",
+  "release": {
+    "releaseRef": "bpr_userplant_1e08c5b4f262",
+    "domainCode": "user-plant",
+    "policyCode": "userplant_limits",
+    "schemaVersion": "user-plant-limits-policy/v1",
+    "releaseVersion": "userplant-limits/v1",
+    "contentSha256": "6dc07b74344cba915b8a246bdb19a1972c8d34d0be26d3fc056b3d6b49bca239",
+    "body": { "contractVersion": "user-plant-limits-policy/v1", "scopeCode": "userplant_limits", "guestMaxCasesPerSession": 5, "authenticatedEphemeralCaseTtlHours": 168 },
+    "effectiveAtMs": 1791504358879,
+    "expiresAtMs": null
+  },
+  "readback": "按读取器同一 SQL 列读回 1 行：指针与发布摘要一致；该行经真实 createMysqlUserPlantLimitsPolicyReader 解析为 guestMaxCasesPerSession=5、authenticatedEphemeralCaseTtlHours=168",
+  "rollback": "删除该活动指针行即恢复为无发布（接口回到 503）；发布行保留为不可变历史",
+  "code": ["ae68cc1e"],
+  "notCovered": ["user-plant 云函数未部署到 CloudBase", "真机临时案例创建（前端阶段）"]
+}
