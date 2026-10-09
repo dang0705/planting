@@ -5,6 +5,7 @@ import { createConnection, type Connection } from 'mysql2/promise'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { createMysql2ConnectionSource } from '../../src/foundation/database/mysql2-connection-source.js'
 import { createPlantKnowledgeServer } from '../../src/plant-knowledge/http/server.js'
+import { createMysqlPlantCatalogRepository } from '../../src/plant-knowledge/repository/mysql-plant-catalog-repository.js'
 
 const container = `qhz-catalog-${process.pid}`
 let database: Connection | undefined
@@ -61,7 +62,8 @@ beforeAll(async () => {
   await database.query('USE catalog_fixture')
   const tables = [
     'CREATE TABLE plant_search_documents (id BIGINT PRIMARY KEY, taxon_id VARCHAR(512) NOT NULL, preferred_display_name VARCHAR(255), scientific_name VARCHAR(255), taxon_rank VARCHAR(32), taxonomic_status VARCHAR(32), is_selectable TINYINT, has_encyclopedia TINYINT, has_image TINYINT, is_searchable TINYINT, v2_identity_internal_id BIGINT)',
-    'CREATE TABLE plant_search_terms (id BIGINT PRIMARY KEY, search_document_internal_id BIGINT, target_identity_internal_id BIGINT, normalized_term VARCHAR(255), match_priority SMALLINT, is_primary TINYINT, is_active TINYINT)',
+    // 索引与 qinghuazhi_v2_test 的 idx_search_term_exact 列序一致，用于锁定召回走索引。
+    'CREATE TABLE plant_search_terms (id BIGINT PRIMARY KEY, search_document_internal_id BIGINT, target_identity_internal_id BIGINT, normalized_term VARCHAR(255), match_priority SMALLINT, is_primary TINYINT, is_active TINYINT, KEY idx_search_term_exact (normalized_term, is_active, match_priority, search_document_internal_id))',
     'CREATE TABLE plant_identities (id BIGINT PRIMARY KEY, public_identity_ref VARCHAR(64), primary_taxon_internal_id BIGINT, review_status VARCHAR(32))',
     'CREATE TABLE plant_taxa (id BIGINT PRIMARY KEY, public_taxon_ref VARCHAR(64), review_status VARCHAR(32))',
     'CREATE TABLE active_plant_knowledge_releases (release_kind VARCHAR(32) PRIMARY KEY, release_internal_id BIGINT)',
@@ -123,6 +125,13 @@ beforeAll(async () => {
       literalTerms[index]!
     ])
   }
+  // 填充互不相同的前缀词条，使优化器在可用索引时稳定选择 range 访问。
+  const fillers = Array.from(
+    { length: 3000 },
+    (_, index) => `(${1000 + index}, 1, NULL, 'filler-${index}', 9, 0, 1)`
+  )
+  await database.query(`INSERT INTO plant_search_terms VALUES ${fillers.join(', ')}`)
+  await database.query('ANALYZE TABLE plant_search_terms, plant_search_documents')
   await database.query(
     "INSERT INTO plant_taxa VALUES (10, 'txr_10', 'ACTIVE'), (11, 'txr_11', 'QUARANTINE')"
   )
@@ -185,6 +194,36 @@ describe('目录搜索真实 MySQL 与 HTTP', () => {
     expect((await search('🌿'.repeat(64))).items).toHaveLength(1)
     expect((await search('不存在')).items).toEqual([])
     expect((await search('不可见')).items).toEqual([])
+  })
+  test('前缀召回保持 utf8mb4_unicode_ci 大小写不敏感语义', async () => {
+    expect((await search('CAFÉ')).items.map(x => x.catalogTaxonRef)).toEqual(['catalog:02'])
+    expect((await search('caf')).items.map(x => x.catalogTaxonRef)).toEqual(['catalog:02'])
+  })
+  test('词条召回可使用 idx_search_term_exact 做 range 访问，而非全量扫描', async () => {
+    const captured: Array<{ sql: string; parameters: readonly (string | number | null)[] }> = []
+    await createMysqlPlantCatalogRepository({
+      query: async (sql, parameters) => {
+        captured.push({ sql, parameters })
+        return []
+      }
+    }).searchPlantCatalog({ q: 'filler-12', limit: 10 })
+    const [plan] = (await database!.query(`EXPLAIN FORMAT=JSON ${captured[0]!.sql}`, [
+      ...captured[0]!.parameters
+    ])) as unknown as [Array<{ EXPLAIN: string }>]
+    const termAccess: Array<{ access_type?: string; key?: string }> = []
+    JSON.parse(plan[0]!.EXPLAIN, (key, value: unknown) => {
+      if (
+        value &&
+        typeof value === 'object' &&
+        (value as { table_name?: string }).table_name === 'term'
+      ) {
+        termAccess.push(value as { access_type?: string; key?: string })
+      }
+      return value
+    })
+    expect(termAccess).toContainEqual(
+      expect.objectContaining({ access_type: 'range', key: 'idx_search_term_exact' })
+    )
   })
   test('仅当前双发布且唯一的身份可附带；争议、不准入仍保留目录', async () => {
     const result = await search('准入')
