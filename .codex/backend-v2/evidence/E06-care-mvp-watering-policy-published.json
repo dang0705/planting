@@ -1,0 +1,20 @@
+{
+  "capturedAt": "2026-10-09",
+  "authorization": "用户 2026-10-09 批准把 care/mvp_watering（文献标定、低置信）写入 qinghuazhi_v2_test",
+  "path": "CloudBase MCP manageMysqlDatabase.runStatement → qinghuazhi_v2_test.business_policy_releases（INSERT 1 行）/ active_business_policy_releases（INSERT 1 行；写前确认该策略无发布与指针）",
+  "release": {
+    "releaseRef": "bpr_care_9ef31f46014a",
+    "domainCode": "care",
+    "policyCode": "mvp_watering",
+    "schemaVersion": "care-watering-mvp/v1",
+    "releaseVersion": "care-mvp-watering/v1",
+    "contentSha256": "cb3f61a7e07a3d11a121610890b4b5f9336f10626cb4c7ef93959a432d721093",
+    "body": "cloudfunctions-v2/models/care/mvp-watering-policy-release.v1.json（逐字写入；规范 JSON 摘要）",
+    "effectiveAtMs": 1791505110021,
+    "expiresAtMs": null
+  },
+  "readback": "按读取器同一 SQL 读回 1 行（MySQL JSON 列重排了键顺序）：指针与发布摘要一致；经真实 createMysqlMvpWateringPolicyReader 解析为 available（confidence=low、soilEvidenceTtlHours=24）",
+  "rollback": "删除该活动指针行即恢复为无发布（浇水建议回到 temporarily_unavailable）；发布行保留为不可变历史",
+  "code": ["03f81479"],
+  "notCovered": ["care 云函数未部署到 CloudBase", "真机浇水建议（前端阶段）", "参数未经真实盆栽标定（低置信，待优化项）"]
+}
