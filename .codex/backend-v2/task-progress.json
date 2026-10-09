@@ -1,5 +1,5 @@
 {
-  "revision": 170,
+  "revision": 171,
   "currentStep": "E03",
   "currentTicketId": "z8v0kmr970",
   "updatedAt": "2026-10-08T16:19:33.134287+00:00",
@@ -166,10 +166,10 @@
     {
       "id": "z8v0kmr973",
       "step": "E04",
-      "version": 73,
+      "version": 74,
       "priority": "high",
       "status": "codex running",
-      "stage": "MVP 浇水正式计算链已实现（文献标定、低置信）；HTTP 接入等待 E03",
+      "stage": "长期植物养护后端已实现（浇水建议、事实、概览、计划、确认、完成、品种绑定）；浇水模型 v2 已发布测试库；未部署、未真机",
       "accepted": false,
       "evidence": [
         ".codex/backend-v2/evidence/E04-light-interval.json",
@@ -239,14 +239,14 @@
         ".codex/backend-v2/evidence/E04-watering-result-projection.json"
       ],
       "summary": [
-        "E06：POST /care/watering-advice 已实现（临时案例；care 云函数入口）（03f81479）",
-        "POST /user-plants/temporary-cases 已实现，userplant_limits 策略已发布测试库并读回（ae68cc1e、193e0939）",
-        "后端全量 2662/2662；浇水建议 MySQL 端到端 7/7，临时案例 13/13",
-        "care_mvp_watering 策略待授权发布；发布前浇水建议返回 temporarily_unavailable",
-        "长期植物浇水建议暂未开放；未部署；Tropicals 基线表缺 v2 迁移（plant-knowledge 待办）"
+        "E06：长期养护合同冻结（用户 U1–U9），迁移 025–027（d76681a5）",
+        "长期养护 HTTP：user_plant 浇水建议、浇水事实、概览、计划、确认、完成、品种绑定（91ddde9a）",
+        "浇水模型 v2：盆土证据按干湿循环（回退 24h、封顶 72h）已发布测试库并读回",
+        "后端全量 2760/2760；受影响 MySQL 套件全部通过",
+        "未部署；真机与日历接口待前端阶段"
       ],
-      "blockingReason": "care_mvp_watering 策略未发布到测试库；未部署",
-      "nextAction": "经授权发布 care/mvp_watering；部署前联调与真机（前端阶段）",
+      "blockingReason": "未部署；真机与日历接口待前端阶段",
+      "nextAction": "部署前联调与真机（前端阶段）",
       "ticketReadback": "Chrome已读回CODEX RUNNING及五行评论1100440000144084，版本70"
     },
     {

@@ -1,0 +1,18 @@
+{
+  "capturedAt": "2026-10-09",
+  "authorization": "用户 2026-10-09 同意：第二批长期养护接口与测试全部通过后直接发布 care-watering-mvp/v2",
+  "path": "CloudBase MCP manageMysqlDatabase.runStatement → qinghuazhi_v2_test.business_policy_releases（INSERT 1 行）/ active_business_policy_releases（UPDATE 1 行，条件为原指针 care-mvp-watering/v1）",
+  "previous": { "releaseRef": "bpr_care_9ef31f46014a", "releaseVersion": "care-mvp-watering/v1", "contentSha256": "cb3f61a7e07a3d11a121610890b4b5f9336f10626cb4c7ef93959a432d721093", "note": "v1 行未修改，保留为不可变历史；回退 = 把活动指针改回该行" },
+  "release": {
+    "releaseRef": "bpr_care_887517f7453f",
+    "schemaVersion": "care-watering-mvp/v2",
+    "releaseVersion": "care-mvp-watering/v2",
+    "contentSha256": "7bad00747376cb2838cfaf79a931726f5c54e9c02e623213c5bc3b2342dc0f53",
+    "body": "cloudfunctions-v2/models/care/mvp-watering-policy-release.v2.json（逐字写入；规范 JSON 摘要）",
+    "effectiveAtMs": 1791551698652
+  },
+  "readback": "活动指针 care-mvp-watering/v2，指针摘要与发布摘要一致；正文 soilEvidenceFallbackHours=24、soilEvidenceMaxHours=72、无 soilEvidenceTtlHours；经真实 createMysqlMvpWateringPolicyReader 解析为 available",
+  "precondition": "长期养护第二批 91ddde9a：全量 2752/2752（隔离提交内容），受影响 MySQL 套件 89/89",
+  "code": ["d76681a5", "91ddde9a"],
+  "notCovered": ["care/user-plant 云函数未部署", "真机（前端阶段）", "参数未经真实盆栽标定"]
+}
