@@ -135,6 +135,12 @@
       "owner": "identity",
       "file": "023_guest_token_sessions.sql",
       "sha256": "8019615cf79ab679fcee0aad7e281ff11cb3ff36bdbf1257ab64691268e09b9c"
+    },
+    {
+      "order": 23,
+      "owner": "plant-knowledge",
+      "file": "024_watering_baseline_policy.sql",
+      "sha256": "0d0df5dd1f547c8dfdd9850274b5b8072d19ce9660cc5e4ea605d8ac5c2d50d9"
     }
   ]
 }

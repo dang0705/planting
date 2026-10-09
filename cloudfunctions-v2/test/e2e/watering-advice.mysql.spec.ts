@@ -19,9 +19,8 @@ import { createMysqlUserPrincipalRepository, type UserPrincipalSqlRow } from '..
 import { findProjectRoot } from '../support/project-root.js'
 
 /**
- * unit_real_data：隔离 docker MySQL 8.4 + v2 schema manifest 全量 DDL + 测试内最小 Tropicals 基线表（列类型照抄
- * 测试库 information_schema 读回制品 test/plant-knowledge/fixtures/tropicals-watering-baseline.json，仅读取器用到的列，
- * 不冒充正式迁移）+ 真实 care HTTP 服务、真实主体解析、真实策略读取器、真实基线仓储、真实幂等与临时养护表。
+ * unit_real_data：隔离 docker MySQL 8.4 + v2 schema manifest 全量 DDL（含 024 浇水基线表）+ v1 基线种子文件 +
+ * 外部表 tropicals_species_encyclopedia_ref 读取桩（只建读取器用到的列，类型照抄测试库，见外部表读取合同）+ 真实 care HTTP 服务、真实主体解析、真实策略读取器、真实基线仓储、真实幂等与临时养护表。
  * Open-Meteo 由替身返回真实公开制品（test/care/fixtures/open-meteo-hourly-radiation.json）标准化结果。
  * Expected：models/care/watering-advice-http-test-matrix.md E1–E5；水量 40～300 mL 来自 mvp 矩阵 I1 独立手算。
  */
@@ -33,7 +32,6 @@ const root = findProjectRoot()
 const sha = (value: string) => createHash('sha256').update(value, 'utf8').digest('hex')
 const policyBody = JSON.parse(fs.readFileSync(path.join(root, 'cloudfunctions-v2/models/care/mvp-watering-policy-release.v1.json'), 'utf8')) as CanonicalJsonObject
 const baselineArtifact = JSON.parse(fs.readFileSync(path.join(root, 'cloudfunctions-v2/test/plant-knowledge/fixtures/tropicals-watering-baseline.json'), 'utf8')) as {
-  policies: Array<{ policy_version: string; water_frequency_tier: string; trigger_state: string; min_days: number; max_days: number; is_active: number }>
   plants: Array<{ taxon_id: string; water_frequency_tier: string; water_frequency_source_json: unknown }>
 }
 const radiationRaw = JSON.parse(fs.readFileSync(path.join(root, 'cloudfunctions-v2/test/care/fixtures/open-meteo-hourly-radiation.json'), 'utf8')) as unknown
@@ -102,16 +100,11 @@ beforeAll(async () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(schemaDirectory, 'manifest.json'), 'utf8')) as { files: Array<{ file: string }> }
   sql(`CREATE DATABASE ${database} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`, null)
   for (const entry of manifest.files) { sql(fs.readFileSync(path.join(schemaDirectory, entry.file), 'utf8')) }
-  // 最小读取桩：列类型照抄测试库 information_schema（主代理 2026-10-09 提供并见读回制品），不是正式 DDL。
-  sql(`CREATE TABLE watering_baseline_policy (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, policy_version VARCHAR(32) NOT NULL,
-      water_frequency_tier VARCHAR(32) NOT NULL, trigger_state VARCHAR(32) NOT NULL, min_days SMALLINT UNSIGNED NOT NULL, max_days SMALLINT UNSIGNED NOT NULL,
-      is_active TINYINT(1) NOT NULL DEFAULT 1, UNIQUE KEY uk_policy_tier_trigger (policy_version, water_frequency_tier, trigger_state));
-    CREATE TABLE tropicals_species_encyclopedia_ref (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, taxon_id VARCHAR(512) NOT NULL UNIQUE,
+  // watering_baseline_policy 由 manifest 中的真实 024 迁移建表，种子用 v1 种子文件（裁决 A2/A3）。
+  sql(fs.readFileSync(path.join(schemaDirectory, 'seeds/watering_baseline_policy.v1.sql'), 'utf8'))
+  // tropicals_species_encyclopedia_ref 不属 v2 迁移（裁决 B）：读取桩只建 v2 读取器用到的列，类型照抄测试库 information_schema。
+  sql(`CREATE TABLE tropicals_species_encyclopedia_ref (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, taxon_id VARCHAR(512) NOT NULL UNIQUE,
       water_frequency_tier VARCHAR(32) NULL, water_frequency_source_json JSON NULL);`)
-  for (const policy of baselineArtifact.policies) {
-    sql(`INSERT INTO watering_baseline_policy (policy_version, water_frequency_tier, trigger_state, min_days, max_days, is_active)
-      VALUES (${quote(policy.policy_version)}, ${quote(policy.water_frequency_tier)}, ${quote(policy.trigger_state)}, ${policy.min_days}, ${policy.max_days}, ${policy.is_active});`)
-  }
   for (const plant of baselineArtifact.plants) {
     sql(`INSERT INTO tropicals_species_encyclopedia_ref (taxon_id, water_frequency_tier, water_frequency_source_json)
       VALUES (${quote(plant.taxon_id)}, ${quote(plant.water_frequency_tier)}, CAST(${quote(JSON.stringify(plant.water_frequency_source_json))} AS JSON));`)

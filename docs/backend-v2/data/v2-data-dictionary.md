@@ -146,6 +146,22 @@
 
 Qwen 草稿仅可写基础展示介绍和约三个简短问答。毒性、浇水、施肥、光照、通风和诊断基本面必须来自内部维护并经过审核的内容。
 
+### `watering_baseline_policy` — Tropicals 浇水名义基线策略（024）
+
+Tropicals 浇水频率 tier 与运行时触发状态到名义天数区间的映射；care 浇水建议只读硬规则 `care.watering.baseline_policy_version`（当前 `v1`）且 `is_active=1` 的行。v1 种子 22 行见 `schema/seeds/watering_baseline_policy.v1.sql`。测试库现存同名旧形态表（无 `_openid`、时间列为数据库时间类型），业务列同名同类型，差异在正式切换迁移时一次性核对。
+
+| 字段 | 含义与约束 |
+|---|---|
+| `id` | 内部 `BIGINT UNSIGNED` 主键。 |
+| `policy_version` | 基线策略版本，`VARCHAR(32)`；与 tier、trigger 组成唯一键 `uk_policy_tier_trigger`。 |
+| `water_frequency_tier` | Tropicals 浇水频率状态，`VARCHAR(32)`：`constant_moisture / regular / occasional / drought_tolerant`。 |
+| `trigger_state` | 运行时归约后的浇水触发状态，`VARCHAR(32)`，例如 `SURFACE_DRY`、`DRY_WET`、`TIER_DEFAULT`。 |
+| `min_days` / `max_days` | 名义天数区间，`SMALLINT UNSIGNED`；CHECK `min_days <= max_days`。在 MVP 浇水策略参考条件下解释为等效干燥单位，不直接产生日期。 |
+| `is_active` | 是否启用，`TINYINT(1)` 默认 1，CHECK 只允许 0/1；`idx_active_lookup` 支持启用行检索。 |
+| `created_at_ms` / `updated_at_ms` | UTC 毫秒；`updated_at_ms >= created_at_ms`。 |
+
+外部表 `tropicals_species_encyclopedia_ref` 不属 v2 迁移，由 Tropicals 导入流程拥有；v2 只读，读取列与变更通知条件见 `cloudfunctions-v2/models/plant-knowledge/tropicals-encyclopedia-external-table-contract.md`。
+
 ## 6. 养护与诊断域
 
 - `care_environment_observations`：不可变原子环境事实；一行只表达一种光照、空气温度、相对湿度、空气运动、盆器、基质、排水或盆土表面因素，并保存用户植物归属、来源类型/引用、空间范围、单位、置信度、观察时间、有效期和规范化证据 SHA-256。室外天气始终保持 `outdoor`，不能冒充室内或植物周围实测。

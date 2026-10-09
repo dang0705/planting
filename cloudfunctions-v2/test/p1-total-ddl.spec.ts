@@ -18,6 +18,8 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
   assert.equal(manifest.schemaVersion, 'backend-v2-schema/v1')
   assert.ok(Array.isArray(manifest.files) && manifest.files.length >= 6, '总 DDL 必须按领域拆分')
   assert.ok(manifest.files.some((entry: { file: string }) => entry.file === '023_guest_token_sessions.sql'), 'guest-token/v1 要求的 023 迁移必须登记')
+  // Expected 来源：主代理 2026-10-09 裁决 A3——Tropicals 浇水基线表按 v2 惯例纳入 024 迁移。
+  assert.ok(manifest.files.some((entry: { file: string }) => entry.file === '024_watering_baseline_policy.sql'), '浇水基线 024 迁移必须登记')
 
   let sql = ''
   const FIRST_CAPTURE_INDEX = 1
@@ -269,7 +271,8 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
     'care_outbox',
     'diagnosis_outbox',
     'subscription_outbox',
-    'security_audit_records'
+    'security_audit_records',
+    'watering_baseline_policy'
   ]
 
   const createdTables = [...sql.matchAll(/CREATE TABLE `([a-z0-9_]+)`/gu)].map(match => match[1])
