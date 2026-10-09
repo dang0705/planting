@@ -4,6 +4,10 @@
 
 一句话：**建议**可以很多、会过期；用户「确认」后才成为**计划**（待办）；用户真的做了才记为**事实**。只有浇水事实会改变浇水进度的起点。本阶段不做服务端推送提醒，计划只给「加入手机日历」所需字段。
 
+## 路径前缀（用户 2026-10-09 裁决：网关前缀冲突）
+
+CloudBase 网关只按路径前缀路由到函数，`/api/v2/user-plants` 归 user-plant 函数。§3–§7 五个接口改由 care 函数独占的 `/api/v2/care` 前缀承载：`/api/v2/care/user-plants/{userPlantRef}/{summary|facts|plans|proposals/{proposalRef}/confirmations|plans/{planRef}/completions}`。浇水建议、盆土评估路径不变；§1 品种绑定 PUT 属 user-plant 域，路径不变。
+
 ## 0. 通用规则
 
 - 归属：登录主体 `user_id` + `userPlantRef`；由 user-plant 只读归属端口确认「是我的、未删除」（T7）；否则 404 `USER_PLANT_NOT_FOUND`，不泄露存在性。
@@ -35,7 +39,7 @@
   - U7 实现说明（主代理 2026-10-09 裁决 Q1）：最晚端**不晚于**建议生成时刻（如「可以浇水」时窗口为 [现在, 现在]）按「无最晚端」处理，有效期 = 生成时刻 + 24 小时；否则建议一生成即过期、无法确认。
 - 错误：`VALIDATION_FAILED`、`PRINCIPAL_INVALID`、`USER_PLANT_NOT_FOUND`、`USER_PLANT_ARCHIVED`、`IDEMPOTENCY_CONFLICT`、`SERVICE_UNAVAILABLE`、`PAYLOAD_TOO_LARGE`、`UNSUPPORTED_MEDIA_TYPE`；临时案例沿用 `NOT_FOUND`。
 
-## 3. 记录浇水 `POST /api/v2/user-plants/{userPlantRef}/care/facts`（U3、U4）
+## 3. 记录浇水 `POST /api/v2/care/user-plants/{userPlantRef}/facts`（U3、U4）
 
 - 请求：`{ factType: 'watering', occurredAt, amountMl?: number | null }`；本阶段只接受 `watering`。`amountMl` 为 0～10000 的整数或 null。
 - 规则：`occurredAt` ≤ 现在，≥ 现在 − 7 天（`care.facts.watering_backfill_max_days`），≥ 植物创建时刻。
@@ -43,7 +47,7 @@
 - 写入：`care_facts` 一行（`source_command_ref` 服务端生成）+ 幂等记录；事实不可修改（027 触发器）。
 - 错误：`VALIDATION_FAILED`、`PRINCIPAL_INVALID`、`USER_PLANT_NOT_FOUND`、`USER_PLANT_ARCHIVED`、`IDEMPOTENCY_CONFLICT`、`SERVICE_UNAVAILABLE`。
 
-## 4. 养护摘要 `GET …/care/summary`
+## 4. 养护摘要 `GET /api/v2/care/user-plants/{userPlantRef}/summary`
 
 ```text
 { data: { lastWatering: { factRef, occurredAt, amountMl } | null,
@@ -54,12 +58,12 @@
 ```
 只读，不计算、不调用外部服务；归档植物可读。
 
-## 5. 计划列表 `GET …/care/plans`（T5）
+## 5. 计划列表 `GET /api/v2/care/user-plants/{userPlantRef}/plans`（T5）
 
 - 查询：`status`（`planned|completed|cancelled|expired`，默认 `planned`）、`limit`（默认 20，上限 50，硬规则 `care.plans.page_size`）、`cursor`（不透明）。
 - 响应：`{ data: { items: [{ planRef, planType, scheduledAt, status, sourceProposalRef, completedFactRef | null, calendar }], nextCursor | null } }`。
 
-## 6. 确认建议 `POST …/care/proposals/{proposalRef}/confirmations`（U5）
+## 6. 确认建议 `POST /api/v2/care/user-plants/{userPlantRef}/proposals/{proposalRef}/confirmations`（U5）
 
 - 请求（严格三选一）：
   - `{ decision: 'schedule_check', scheduledAt? }`：缺省 = max(检查窗口最早端, 服务端当前时刻)（无最早端 → 现在；主代理 2026-10-09 裁决 Q5，避免缺省落在过去）；用户可改，但须在窗口内；窗口无最晚端时最多比最早端（或现在）晚 7 天（`care.plans.check_max_postpone_days`）。
@@ -70,7 +74,7 @@
 - 写入（同一事务、条件写一次）：`care_proposals.status` proposed → confirmed/dismissed；`schedule_check` → `care_plans`（`plan_type='check_soil'`，一个建议至多一个计划）；`record_watering` → `care_facts`。**不写** `reminder_jobs`（U9）。
 - 错误：通用 + `CARE_PROPOSAL_NOT_CONFIRMABLE`（409：已确认/已忽略/已过期/他用）、`USER_PLANT_ARCHIVED`。
 
-## 7. 完成计划 `POST …/care/plans/{planRef}/completions`
+## 7. 完成计划 `POST /api/v2/care/user-plants/{userPlantRef}/plans/{planRef}/completions`
 
 - 请求：`{ version, outcome: 'done' | 'skipped', soil?: { state, scope }, watering?: { occurredAt, amountMl? } }`。`skipped` 不得带 `soil`/`watering`。
 - 响应：`{ data: { planRef, status: 'completed' | 'cancelled', version, factRef | null, calendar } }`。

@@ -31,6 +31,14 @@ describe('长期养护路由登记', () => {
     expect(errors('completeCarePlan')).toEqual([...common, 'CARE_PLAN_VERSION_CONFLICT'].sort())
     expect(errors('createWateringAdvice')).toEqual([...common, 'NOT_FOUND'].sort())
   })
+  test('网关前缀（用户 2026-10-09 裁决）：care 路由全部在 /api/v2/care 下；五个长期接口新路径', () => {
+    for (const item of registry().routes.filter(r => r.owner === 'care')) { expect(String(item.path)).toMatch(/^\/api\/v2\/care\//u) }
+    const base = '/api/v2/care/user-plants/{userPlantRef}'
+    expect(Object.fromEntries(['getUserPlantCareSummary', 'createCareFact', 'listCarePlans', 'confirmCareProposal', 'completeCarePlan'].map(id => [id, `${route(id)?.method} ${route(id)?.path}`]))).toEqual({
+      getUserPlantCareSummary: `GET ${base}/summary`, createCareFact: `POST ${base}/facts`, listCarePlans: `GET ${base}/plans`,
+      confirmCareProposal: `POST ${base}/proposals/{proposalRef}/confirmations`, completeCarePlan: `POST ${base}/plans/{planRef}/completions`
+    })
+  })
   test('读接口错误集合', () => {
     for (const operationId of ['getUserPlantCareSummary', 'listCarePlans']) {
       expect(errors(operationId)).toEqual(['PRINCIPAL_INVALID', 'SERVICE_UNAVAILABLE', 'USER_PLANT_NOT_FOUND', 'VALIDATION_FAILED'])
@@ -42,11 +50,11 @@ describe('长期养护路由登记', () => {
     const requestRef = (p: string, method: string) => doc.paths[p]?.[method]?.requestBody?.content['application/json']?.schema.$ref
     const successRef = (p: string, method: string) => doc.paths[p]?.[method]?.responses['200']?.content?.['application/json']?.schema.$ref
     expect(requestRef('/api/v2/user-plants/{userPlantRef}/catalog-binding', 'put')).toBe('#/components/schemas/PutCatalogBindingRequest')
-    expect(requestRef('/api/v2/user-plants/{userPlantRef}/care/facts', 'post')).toBe('#/components/schemas/CreateCareFactRequest')
-    expect(requestRef('/api/v2/user-plants/{userPlantRef}/care/proposals/{proposalRef}/confirmations', 'post')).toBe('#/components/schemas/ConfirmCareProposalRequest')
-    expect(requestRef('/api/v2/user-plants/{userPlantRef}/care/plans/{planRef}/completions', 'post')).toBe('#/components/schemas/CompleteCarePlanRequest')
-    expect(successRef('/api/v2/user-plants/{userPlantRef}/care/summary', 'get')).toBe('#/components/schemas/CareSummarySuccess')
-    expect(successRef('/api/v2/user-plants/{userPlantRef}/care/plans', 'get')).toBe('#/components/schemas/CarePlanListSuccess')
+    expect(requestRef('/api/v2/care/user-plants/{userPlantRef}/facts', 'post')).toBe('#/components/schemas/CreateCareFactRequest')
+    expect(requestRef('/api/v2/care/user-plants/{userPlantRef}/proposals/{proposalRef}/confirmations', 'post')).toBe('#/components/schemas/ConfirmCareProposalRequest')
+    expect(requestRef('/api/v2/care/user-plants/{userPlantRef}/plans/{planRef}/completions', 'post')).toBe('#/components/schemas/CompleteCarePlanRequest')
+    expect(successRef('/api/v2/care/user-plants/{userPlantRef}/summary', 'get')).toBe('#/components/schemas/CareSummarySuccess')
+    expect(successRef('/api/v2/care/user-plants/{userPlantRef}/plans', 'get')).toBe('#/components/schemas/CarePlanListSuccess')
   })
 })
 

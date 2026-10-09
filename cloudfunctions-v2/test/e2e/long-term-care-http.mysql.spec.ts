@@ -55,13 +55,15 @@ async function call(base: string, method: string, url: string, body: unknown, ke
   return { status: response.status, text, body: JSON.parse(text) as Body }
 }
 const plantPath = (ref: string, suffix: string) => `/api/v2/user-plants/${ref}${suffix}`
+/** care 独占前缀（用户 2026-10-09 裁决：网关前缀冲突）。 */
+const carePath = (ref: string, suffix: string) => `/api/v2/care/user-plants/${ref}${suffix}`
 const advice = (plantRef: string, key: string, extra: Record<string, unknown> = {}, bearer = ownerBearer) => call(careUrl, 'POST', '/api/v2/care/watering-advice', {
   target: { kind: 'user_plant', userPlantRef: plantRef },
   location: { latitude: 31.230416, longitude: 121.473701 }, window: { orientation: 'S', glassLayers: 'double' },
   soil: { state: 'dry', scope: 'root_zone', observedAt: new Date(now - hour).toISOString() }, substrateMaterials: ['peat', 'perlite'], ...extra
 }, key, bearer)
 const bind = (plantRef: string, key: string, ref = taxon, bearer = ownerBearer) => call(plantUrl, 'PUT', plantPath(plantRef, '/catalog-binding'), { catalogTaxonRef: ref }, key, bearer)
-const water = (plantRef: string, key: string, occurredAt: number, amountMl: number | null = 200) => call(careUrl, 'POST', plantPath(plantRef, '/care/facts'), { factType: 'watering', occurredAt: new Date(occurredAt).toISOString(), amountMl }, key)
+const water = (plantRef: string, key: string, occurredAt: number, amountMl: number | null = 200) => call(careUrl, 'POST', carePath(plantRef, '/facts'), { factType: 'watering', occurredAt: new Date(occurredAt).toISOString(), amountMl }, key)
 
 beforeAll(async () => {
   docker(['run', '-d', '--name', container, '--tmpfs', '/var/lib/mysql', '-p', '127.0.0.1::3306', '-e', 'MYSQL_ALLOW_EMPTY_PASSWORD=yes', 'mysql:8.4'])
@@ -184,7 +186,7 @@ describe('记录浇水', () => {
     expect(await water('upl_ltc_active_0001', 'fact-key-0000001', now - hour, 250)).toMatchObject({ status: 200, body: first.body })
     expect((await water('upl_ltc_active_0001', 'fact-key-0000002', now - 7 * day - 1)).status).toBe(400)
     expect((await water('upl_ltc_active_0001', 'fact-key-0000003', now + 1)).status).toBe(400)
-    expect((await call(careUrl, 'POST', plantPath('upl_ltc_active_0001', '/care/facts'), { factType: 'fertilizing', occurredAt: new Date(now).toISOString() }, 'fact-key-0000004')).status).toBe(400)
+    expect((await call(careUrl, 'POST', carePath('upl_ltc_active_0001', '/facts'), { factType: 'fertilizing', occurredAt: new Date(now).toISOString() }, 'fact-key-0000004')).status).toBe(400)
     expect((await water('upl_ltc_archived_01', 'fact-key-0000005', now - hour)).body.error?.type).toBe('USER_PLANT_ARCHIVED')
     expect(sql('SELECT COUNT(*) FROM care_facts;')).toBe('1')
   })
@@ -195,7 +197,7 @@ describe('确认建议 → 计划 → 完成', () => {
     await bind('upl_ltc_active_0001', `bind-${key}`)
     return (await advice('upl_ltc_active_0001', key)).body.data!.proposalRef as string
   }
-  const confirm = (proposalRef: string, key: string, body: unknown) => call(careUrl, 'POST', plantPath('upl_ltc_active_0001', `/care/proposals/${proposalRef}/confirmations`), body, key)
+  const confirm = (proposalRef: string, key: string, body: unknown) => call(careUrl, 'POST', carePath('upl_ltc_active_0001', `/proposals/${proposalRef}/confirmations`), body, key)
   test('安排检查（缺省时刻、日历中文标题）；二次确认 409；同键重放；计划列表与摘要', async () => {
     const proposalRef = await proposal('advice-key-000010')
     const confirmed = await confirm(proposalRef, 'confirm-key-00001', { decision: 'schedule_check' })
@@ -206,9 +208,9 @@ describe('确认建议 → 计划 → 完成', () => {
     expect(Date.parse(plan.calendar.endAt) - Date.parse(plan.calendar.startAt)).toBe(30 * 60_000)
     expect(await confirm(proposalRef, 'confirm-key-00001', { decision: 'schedule_check' })).toMatchObject({ status: 200, body: confirmed.body })
     expect((await confirm(proposalRef, 'confirm-key-00002', { decision: 'dismiss' })).body.error?.type).toBe('CARE_PROPOSAL_NOT_CONFIRMABLE')
-    const list = await call(careUrl, 'GET', plantPath('upl_ltc_active_0001', '/care/plans'), undefined)
+    const list = await call(careUrl, 'GET', carePath('upl_ltc_active_0001', '/plans'), undefined)
     expect(list.body.data).toEqual({ items: [{ ...plan, sourceProposalRef: proposalRef, completedFactRef: null }], nextCursor: null })
-    const summary = await call(careUrl, 'GET', plantPath('upl_ltc_active_0001', '/care/summary'), undefined)
+    const summary = await call(careUrl, 'GET', carePath('upl_ltc_active_0001', '/summary'), undefined)
     expect(summary.body.data).toMatchObject({ lastWatering: null, nextPlan: plan, profileReadiness: { hasMeasuredPot: true, hasCatalogBinding: true },
       latestWateringAdvice: { status: 'ready', action: 'water_allowed', proposal: { proposalRef, status: 'confirmed' } } })
   })
@@ -229,7 +231,7 @@ describe('确认建议 → 计划 → 完成', () => {
     const proposalRef = await proposal('advice-key-000012')
     const response = await confirm(proposalRef, 'confirm-key-00020', { decision: 'record_watering', occurredAt: new Date(now - 10 * 60_000).toISOString(), amountMl: 150 })
     expect(response.body.data).toMatchObject({ proposalStatus: 'confirmed', plan: null, factRef: expect.stringMatching(/^cft_/u) })
-    const summary = await call(careUrl, 'GET', plantPath('upl_ltc_active_0001', '/care/summary'), undefined)
+    const summary = await call(careUrl, 'GET', carePath('upl_ltc_active_0001', '/summary'), undefined)
     expect(summary.body.data?.lastWatering).toEqual({ factRef: response.body.data!.factRef, occurredAt: new Date(now - 10 * 60_000).toISOString(), amountMl: 150 })
   })
   test('完成计划附浇水 → completed、版本+1、事实；旧版本 409；跳过带浇水 400；跳过 → cancelled', async () => {
@@ -238,7 +240,7 @@ describe('确认建议 → 计划 → 完成', () => {
     // 第二个计划须在记录浇水之前生成：浇水事实会让此前的根区干观察失效（U6），不再产生可确认建议。
     const second = await proposal('advice-key-000014')
     const secondPlan = (await confirm(second, 'confirm-key-00031', { decision: 'schedule_check' })).body.data!.plan
-    const complete = (key: string, body: unknown, planRef = plan.planRef) => call(careUrl, 'POST', plantPath('upl_ltc_active_0001', `/care/plans/${planRef}/completions`), body, key)
+    const complete = (key: string, body: unknown, planRef = plan.planRef) => call(careUrl, 'POST', carePath('upl_ltc_active_0001', `/plans/${planRef}/completions`), body, key)
     // 计划仍为 planned 但版本号不符 → 409（版本比对本身，不依赖状态）。
     expect((await complete('complete-key-0000', { version: 2, outcome: 'done' })).body.error?.type).toBe('CARE_PLAN_VERSION_CONFLICT')
     const done = await complete('complete-key-0001', { version: 1, outcome: 'done', soil: { state: 'moist', scope: 'surface' }, watering: { occurredAt: new Date(now - 5 * 60_000).toISOString(), amountMl: 220 } })
@@ -248,7 +250,7 @@ describe('确认建议 → 计划 → 完成', () => {
     expect(done.body.data).toMatchObject({ planRef: plan.planRef, status: 'completed', version: 2, factRef: expect.stringMatching(/^cft_/u), calendar: plan.calendar })
     expect((await complete('complete-key-0002', { version: 1, outcome: 'done' })).body.error?.type).toBe('CARE_PLAN_VERSION_CONFLICT')
     expect((await complete('complete-key-0003', { version: 2, outcome: 'skipped', watering: { occurredAt: new Date(now).toISOString() } })).status).toBe(400)
-    const listed = await call(careUrl, 'GET', plantPath('upl_ltc_active_0001', '/care/plans?status=completed'), undefined)
+    const listed = await call(careUrl, 'GET', carePath('upl_ltc_active_0001', '/plans?status=completed'), undefined)
     expect(listed.body.data?.items).toEqual([{ ...plan, status: 'completed', sourceProposalRef: proposalRef, completedFactRef: done.body.data!.factRef }])
     expect((await complete('complete-key-0004', { version: 1, outcome: 'skipped' }, secondPlan.planRef)).body.data).toMatchObject({ status: 'cancelled', version: 2, factRef: null })
   })
@@ -257,15 +259,15 @@ describe('确认建议 → 计划 → 完成', () => {
       const proposalRef = await proposal(key)
       await confirm(proposalRef, `confirm-${key}`, { decision: 'schedule_check' })
     }
-    const page1 = await call(careUrl, 'GET', plantPath('upl_ltc_active_0001', '/care/plans?limit=1'), undefined)
+    const page1 = await call(careUrl, 'GET', carePath('upl_ltc_active_0001', '/plans?limit=1'), undefined)
     expect(page1.body.data?.items).toHaveLength(1)
     expect(page1.body.data?.nextCursor).toEqual(expect.any(String))
-    const page2 = await call(careUrl, 'GET', plantPath('upl_ltc_active_0001', `/care/plans?limit=1&cursor=${encodeURIComponent(page1.body.data!.nextCursor)}`), undefined)
+    const page2 = await call(careUrl, 'GET', carePath('upl_ltc_active_0001', `/plans?limit=1&cursor=${encodeURIComponent(page1.body.data!.nextCursor)}`), undefined)
     expect(page2.body.data?.items).toHaveLength(1)
     expect(page2.body.data?.items[0].planRef).not.toBe(page1.body.data?.items[0].planRef)
     expect(page2.body.data?.nextCursor).toBeNull()
-    expect((await call(careUrl, 'GET', plantPath('upl_ltc_active_0001', '/care/plans?limit=51'), undefined)).status).toBe(400)
-    expect((await call(careUrl, 'GET', plantPath('upl_ltc_other_00001', '/care/plans'), undefined)).body.error?.type).toBe('USER_PLANT_NOT_FOUND')
+    expect((await call(careUrl, 'GET', carePath('upl_ltc_active_0001', '/plans?limit=51'), undefined)).status).toBe(400)
+    expect((await call(careUrl, 'GET', carePath('upl_ltc_other_00001', '/plans'), undefined)).body.error?.type).toBe('USER_PLANT_NOT_FOUND')
   })
   test('分页按二进制引用排序：大小写不同的同刻计划翻页不丢项', async () => {
     const calendarJson = JSON.stringify({ calendar: { title: '检查小绿盆土', startAt: new Date(now).toISOString(), endAt: new Date(now + 30 * 60_000).toISOString(), notes: '用手指插入土中 3～5 厘米检查干湿，再决定是否浇水。' }, completedFactRef: null })
@@ -275,14 +277,14 @@ describe('确认建议 → 计划 → 完成', () => {
         INSERT INTO care_plans (plan_ref, user_internal_id, user_plant_internal_id, proposal_internal_id, plan_type, scheduled_at_ms, status, plan_payload_json, version, created_at_ms, updated_at_ms)
         VALUES ('cpl_${ref}', 1, 1, ${index}, 'check_soil', ${now}, 'planned', CAST(${quote(calendarJson)} AS JSON), 1, ${now}, ${now});`)
     }
-    const page1 = await call(careUrl, 'GET', plantPath('upl_ltc_active_0001', '/care/plans?limit=1'), undefined)
-    const page2 = await call(careUrl, 'GET', plantPath('upl_ltc_active_0001', `/care/plans?limit=1&cursor=${encodeURIComponent(page1.body.data!.nextCursor)}`), undefined)
+    const page1 = await call(careUrl, 'GET', carePath('upl_ltc_active_0001', '/plans?limit=1'), undefined)
+    const page2 = await call(careUrl, 'GET', carePath('upl_ltc_active_0001', `/plans?limit=1&cursor=${encodeURIComponent(page1.body.data!.nextCursor)}`), undefined)
     expect([page1.body.data?.items[0]?.planRef, page2.body.data?.items[0]?.planRef]).toEqual(['cpl_BBBBBBBBBBBB', 'cpl_aaaaaaaaaaaa'])
   })
   test('脱敏：响应不含 user_id、内部主键字段名、Bearer、幂等键', async () => {
     const proposalRef = await proposal('advice-key-000030')
     const texts = [(await confirm(proposalRef, 'confirm-key-00040', { decision: 'schedule_check' })).text,
-      (await call(careUrl, 'GET', plantPath('upl_ltc_active_0001', '/care/summary'), undefined)).text]
+      (await call(careUrl, 'GET', carePath('upl_ltc_active_0001', '/summary'), undefined)).text]
     for (const secret of ['usr_ltc_owner_00001', ownerBearer, 'confirm-key-00040', 'internal_id', '"id"']) {
       for (const text of texts) { expect(text).not.toContain(secret) }
     }

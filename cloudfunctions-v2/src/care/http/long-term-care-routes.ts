@@ -21,12 +21,13 @@ import { resolvePlanPageLimit } from '../domain/long-term-care-rules.js'
 import type { CarePlanRow, LatestAdviceRow, OwnedPlantScope, PlanCursor, WateringFactRow } from '../repository/mysql-long-term-care-read-repository.js'
 
 /** 冻结路由登记（与 route-registry.json 一致）。 */
-const route = (method: string, path: string, operationId: string): FrozenRoute => ({ method, path: `/api/v2/user-plants/{userPlantRef}${path}`, operationId, security: 'authenticated' })
-export const createCareFactRoute = route('POST', '/care/facts', 'createCareFact')
-export const confirmCareProposalRoute = route('POST', '/care/proposals/{proposalRef}/confirmations', 'confirmCareProposal')
-export const completeCarePlanRoute = route('POST', '/care/plans/{planRef}/completions', 'completeCarePlan')
-export const listCarePlansRoute = route('GET', '/care/plans', 'listCarePlans')
-export const getUserPlantCareSummaryRoute = route('GET', '/care/summary', 'getUserPlantCareSummary')
+/** care 函数独占 /api/v2/care 前缀（用户 2026-10-09 裁决：网关前缀冲突）。 */
+const route = (method: string, path: string, operationId: string): FrozenRoute => ({ method, path: `/api/v2/care/user-plants/{userPlantRef}${path}`, operationId, security: 'authenticated' })
+export const createCareFactRoute = route('POST', '/facts', 'createCareFact')
+export const confirmCareProposalRoute = route('POST', '/proposals/{proposalRef}/confirmations', 'confirmCareProposal')
+export const completeCarePlanRoute = route('POST', '/plans/{planRef}/completions', 'completeCarePlan')
+export const listCarePlansRoute = route('GET', '/plans', 'listCarePlans')
+export const getUserPlantCareSummaryRoute = route('GET', '/summary', 'getUserPlantCareSummary')
 
 /** 长期养护路由依赖：身份、只读端口与事务化用例。 */
 export interface LongTermCareRouteDependencies extends AuthenticatedJsonRouteDependencies<UserPrincipalDto> {

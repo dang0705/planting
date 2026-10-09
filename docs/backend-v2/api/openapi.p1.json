@@ -1609,7 +1609,7 @@
         ]
       }
     },
-    "/api/v2/user-plants/{userPlantRef}/care/summary": {
+    "/api/v2/care/user-plants/{userPlantRef}/summary": {
       "get": {
         "operationId": "getUserPlantCareSummary",
         "summary": "care 域：getUserPlantCareSummary",
@@ -1669,7 +1669,7 @@
         ]
       }
     },
-    "/api/v2/user-plants/{userPlantRef}/care/facts": {
+    "/api/v2/care/user-plants/{userPlantRef}/facts": {
       "post": {
         "operationId": "createCareFact",
         "summary": "care 域：createCareFact",
@@ -1746,7 +1746,7 @@
         ]
       }
     },
-    "/api/v2/user-plants/{userPlantRef}/care/plans": {
+    "/api/v2/care/user-plants/{userPlantRef}/plans": {
       "get": {
         "operationId": "listCarePlans",
         "summary": "care 域：listCarePlans",
@@ -1806,7 +1806,7 @@
         ]
       }
     },
-    "/api/v2/user-plants/{userPlantRef}/care/proposals/{proposalRef}/confirmations": {
+    "/api/v2/care/user-plants/{userPlantRef}/proposals/{proposalRef}/confirmations": {
       "post": {
         "operationId": "confirmCareProposal",
         "summary": "care 域：confirmCareProposal",
@@ -1894,7 +1894,7 @@
         ]
       }
     },
-    "/api/v2/user-plants/{userPlantRef}/care/plans/{planRef}/completions": {
+    "/api/v2/care/user-plants/{userPlantRef}/plans/{planRef}/completions": {
       "post": {
         "operationId": "completeCarePlan",
         "summary": "care 域：completeCarePlan",

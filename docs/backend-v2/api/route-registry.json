@@ -449,7 +449,7 @@
     },
     {
       "method": "GET",
-      "path": "/api/v2/user-plants/{userPlantRef}/care/summary",
+      "path": "/api/v2/care/user-plants/{userPlantRef}/summary",
       "operationId": "getUserPlantCareSummary",
       "owner": "care",
       "phase": "P4",
@@ -466,7 +466,7 @@
     },
     {
       "method": "POST",
-      "path": "/api/v2/user-plants/{userPlantRef}/care/facts",
+      "path": "/api/v2/care/user-plants/{userPlantRef}/facts",
       "operationId": "createCareFact",
       "owner": "care",
       "phase": "P4",
@@ -487,7 +487,7 @@
     },
     {
       "method": "GET",
-      "path": "/api/v2/user-plants/{userPlantRef}/care/plans",
+      "path": "/api/v2/care/user-plants/{userPlantRef}/plans",
       "operationId": "listCarePlans",
       "owner": "care",
       "phase": "P4",
@@ -504,7 +504,7 @@
     },
     {
       "method": "POST",
-      "path": "/api/v2/user-plants/{userPlantRef}/care/proposals/{proposalRef}/confirmations",
+      "path": "/api/v2/care/user-plants/{userPlantRef}/proposals/{proposalRef}/confirmations",
       "operationId": "confirmCareProposal",
       "owner": "care",
       "phase": "P4",
@@ -526,7 +526,7 @@
     },
     {
       "method": "POST",
-      "path": "/api/v2/user-plants/{userPlantRef}/care/plans/{planRef}/completions",
+      "path": "/api/v2/care/user-plants/{userPlantRef}/plans/{planRef}/completions",
       "operationId": "completeCarePlan",
       "owner": "care",
       "phase": "P4",
