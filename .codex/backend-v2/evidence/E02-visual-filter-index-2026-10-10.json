@@ -354,5 +354,54 @@
       "typecheck": "0",
       "build": "通过，dist/functions/visual-filter-index-backfill/index.js 已包含命名锁逻辑"
     }
+  },
+  "liveRollout20261010": {
+    "backfill": {
+      "function": "visual-filter-index-backfill（提交 cde827be 构建，512MB/900s/VPC）",
+      "calls": [
+        {
+          "status": "paused",
+          "nextEncyclopediaId": 220000,
+          "processedBatches": 17
+        },
+        {
+          "status": "built",
+          "nextEncyclopediaId": 275000,
+          "processedBatches": 11,
+          "plantCount": 262649
+        }
+      ],
+      "note": "顺序调用、maxRunMs=50000，未并发"
+    },
+    "verification": {
+      "set": "status=ready plant_count=262649",
+      "valueBits": "LEAF_SHAPE 15 / GROWTH_FORM 7 / LEAF_SURFACE 8",
+      "axisNonZero": "shape 237091 / form 193839 / surface 182251（与 all-v1 EXTRACTED 行数完全一致）",
+      "sample": "monstera-deliciosa = HEART+LOBED / VINING / GLOSSY+LEATHERY"
+    },
+    "policySwitch": "plant-knowledge/public_search v1.0.0 → v2.0.0（条件更新 + 审计 cfa_ps2_*）",
+    "liveLatency": {
+      "visual-axes": "1.37s（首请求含冷启动）",
+      "HEART+VINING": [
+        "0.47s",
+        "0.38s",
+        "0.35s"
+      ],
+      "ELLIPTIC": "0.38s",
+      "FIDDLE+ROSETTE": "0.46s（2 条）",
+      "note": "网关端到端含网络，均 <1s 门槛"
+    },
+    "regression": {
+      "catalog/search 绿萝": "200 0.71s 10 条",
+      "encyclopedia monstera": "200 0.31s"
+    },
+    "deletion": {
+      "target": "云函数 visual-filter-index-backfill",
+      "remainingCallers": "无（手动调用的一次性函数，无触发器、无网关路由）",
+      "replacement": "本地 CLI scripts/visual-filter-index.mjs（需内网直连）；若将来新批次需在测试库回填，可按同一产物重新部署",
+      "rollback": "cloudfunctions-v2/dist 产物可随时重新部署（提交 cde827be）",
+      "postDeletionCheck": "tcb fn list 不再出现该函数；三轴接口仍 200（读索引表，不依赖该函数）",
+      "authorizedBy": "用户 2026-10-10 选择「建一个一次性云函数在内网里跑回填」方案（含完成后删除）"
+    }
   }
 }

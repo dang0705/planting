@@ -368,3 +368,102 @@ describe('视觉诊断评测脚本：前缀提取', () => {
     expect(extractPrefixFromDraft(draft)).toBe('正文A\n正文B\n')
   })
 })
+
+/**
+ * 2026-10-10 增量 Expected（协调方转达用户要求：真实回包确认 JSON 模式与思考模式能否共存、
+ * 图片计费与缓存命中）：Provider 单次失败不应中断整轮、连续失败要停；可选 JSON 模式；
+ * 回包中的思考 tokens 要单独记录；解析失败要分类（不存原文）。测试层次：unit_fake。
+ */
+describe('视觉诊断评测脚本：真实探针所需的增量能力', () => {
+  test('单次 Provider 失败记录错误码并继续后续案例', async () => {
+    let call = 0
+    const provider: EvalProvider = {
+      async complete() {
+        call += 1
+        if (call === 1) throw new Error('bailian_request_failed:400')
+        return {
+          text: modelText(['pest_aphid']),
+          usage: {
+            promptTokens: 100,
+            completionTokens: 100,
+            cachedTokens: 0,
+            cacheCreationTokens: 0
+          },
+          latencyMs: 3
+        }
+      }
+    }
+    const report = await runEvaluation(
+      ['a', 'b'].map(id => makeCase(id, ['pest_aphid'])),
+      provider,
+      baseOptions({ apply: true })
+    )
+    expect(report.results).toHaveLength(2)
+    expect(report.results[0]?.errorCode).toBe('bailian_request_failed:400')
+    expect(report.results[0]?.actualCostCny).toBe(0)
+    expect(report.results[1]?.score.top1Hit).toBe(true)
+    expect(report.stoppedReason).toBe('completed')
+  })
+
+  test('连续 3 次 Provider 失败即停止', async () => {
+    const provider: EvalProvider = {
+      complete: () => Promise.reject(new Error('bailian_request_failed:500'))
+    }
+    const report = await runEvaluation(
+      ['a', 'b', 'c', 'd', 'e'].map(id => makeCase(id, ['pest_aphid'])),
+      provider,
+      baseOptions({ apply: true, batchSize: 5 })
+    )
+    expect(report.results).toHaveLength(3)
+    expect(report.stoppedReason).toBe('provider_errors')
+  })
+
+  test('解析失败按类型分类：被 Markdown 代码块包裹', () => {
+    const score = scoreModelText('```json\n{"a":1}\n```', makeCase('a', ['pest_aphid']))
+    expect(score.jsonValid).toBe(false)
+    expect(score.parseFailureKind).toBe('markdown_fenced')
+  })
+
+  test('JSON 模式开启时请求体带 response_format，关闭时不带', () => {
+    const base = {
+      model: 'qwen3.5-flash',
+      enableThinking: true,
+      maxTokens: 4000,
+      maxPixels: 1048576,
+      prefixText: 'p',
+      dynamicText: 'd',
+      imageUrls: ['https://example.invalid/a.jpg']
+    }
+    expect(buildBailianRequestBody({ ...base, jsonMode: true }).response_format).toEqual({
+      type: 'json_object'
+    })
+    expect('response_format' in buildBailianRequestBody({ ...base, jsonMode: false })).toBe(false)
+  })
+
+  test('回包中的思考 tokens 单独记录', async () => {
+    const provider = createBailianProvider({
+      env: { [BAILIAN_API_KEY_ENV_NAME]: 'k' },
+      fetchImpl: async () =>
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { content: '{}' } }],
+            usage: {
+              prompt_tokens: 10,
+              completion_tokens: 30,
+              completion_tokens_details: { reasoning_tokens: 20 },
+              prompt_tokens_details: { cached_tokens: 4 }
+            }
+          }),
+          { status: 200 }
+        ),
+      model: 'qwen3.5-flash',
+      enableThinking: true,
+      jsonMode: false,
+      maxTokens: 4000,
+      maxPixels: 1048576
+    })
+    const response = await provider.complete({ prefixText: 'p', dynamicText: 'd', imageUrls: [] })
+    expect(response.usage.reasoningTokens).toBe(20)
+    expect(response.usage.cachedTokens).toBe(4)
+  })
+})

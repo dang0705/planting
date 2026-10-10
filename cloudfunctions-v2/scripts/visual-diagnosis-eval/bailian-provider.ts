@@ -27,6 +27,8 @@ export interface BailianRequestInput extends ProviderRequest {
   readonly maxTokens: number
   /** 单图像素上限。 */
   readonly maxPixels: number
+  /** 是否要求 JSON 对象输出（response_format=json_object）；未给出视为关闭。 */
+  readonly jsonMode?: boolean
 }
 
 /** 文本内容块。 */
@@ -64,6 +66,8 @@ export interface BailianRequestBody {
   readonly enable_thinking: boolean
   /** 非流式。 */
   readonly stream: false
+  /** JSON 输出模式（仅在开启时出现）。 */
+  readonly response_format?: { readonly type: 'json_object' }
 }
 
 /** 构造请求体；图片地址必须是 HTTPS。 */
@@ -96,7 +100,8 @@ export function buildBailianRequestBody(input: BailianRequestInput): BailianRequ
     ],
     max_tokens: input.maxTokens,
     enable_thinking: input.enableThinking,
-    stream: false
+    stream: false,
+    ...(input.jsonMode === true ? { response_format: { type: 'json_object' as const } } : {})
   }
 }
 
@@ -114,6 +119,8 @@ export interface BailianProviderOptions {
   readonly maxTokens?: number
   /** 单图像素上限。 */
   readonly maxPixels?: number
+  /** JSON 输出模式。 */
+  readonly jsonMode?: boolean
 }
 
 /** 读取数字字段。 */
@@ -151,7 +158,8 @@ export function createBailianProvider(options: BailianProviderOptions): EvalProv
         model,
         enableThinking,
         maxTokens,
-        maxPixels
+        maxPixels,
+        jsonMode: options.jsonMode === true
       })
       const startedAt = Date.now()
       const response = await options.fetchImpl(`${baseUrl}/chat/completions`, {
@@ -160,8 +168,13 @@ export function createBailianProvider(options: BailianProviderOptions): EvalProv
         body: JSON.stringify(body)
       })
       if (!response.ok) {
-        // 不回显响应体与请求头，避免泄露任何凭证或上下文。
-        throw new Error(`bailian_request_failed:${response.status}`)
+        // 只提取供应商错误码（限定字符集），不回显响应正文与请求头，避免泄露凭证或上下文。
+        const errorBody = (await response.json().catch(() => undefined)) as unknown
+        const rawCode = errorBody as { error?: { code?: unknown }; code?: unknown } | undefined
+        const code = String(rawCode?.error?.code ?? rawCode?.code ?? '')
+          .replace(/[^A-Za-z0-9_.-]/g, '')
+          .slice(0, 40)
+        throw new Error(`bailian_request_failed:${response.status}${code ? `:${code}` : ''}`)
       }
       const json = (await response.json()) as unknown
       const choices = (json as { choices?: { message?: { content?: unknown } }[] }).choices
@@ -174,7 +187,8 @@ export function createBailianProvider(options: BailianProviderOptions): EvalProv
           cachedTokens: numberAt(json, 'usage', 'prompt_tokens_details', 'cached_tokens'),
           cacheCreationTokens:
             numberAt(json, 'usage', 'prompt_tokens_details', 'cache_creation_input_tokens') ||
-            numberAt(json, 'usage', 'cache_creation_input_tokens')
+            numberAt(json, 'usage', 'cache_creation_input_tokens'),
+          reasoningTokens: numberAt(json, 'usage', 'completion_tokens_details', 'reasoning_tokens')
         },
         latencyMs: Date.now() - startedAt
       }

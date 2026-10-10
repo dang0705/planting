@@ -1,0 +1,90 @@
+{
+  "runId": "probe-run-2026-10-10",
+  "status": "BLOCKED_ENV",
+  "blockedReason": "百炼返回 HTTP 403 AllocationQuota.FreeTierOnly：账号开启了「仅使用免费额度」，且 qwen3.5-flash 的免费额度很可能已用完或过期；模型快照 qwen3.5-flash-2026-02-23 与别名 qwen3.5-flash 均被拒绝。",
+  "recoveryCondition": "用户在百炼控制台关闭「仅使用免费额度」（即开启按量付费），或为该模型补充可用额度；属于付费能力开关，必须由用户本人授权并操作。之后按 procedure 原参数重跑。",
+  "actualCostCny": 0,
+  "procedure": {
+    "images": {
+      "count": 29,
+      "excluded": [
+        "P18_physio_underwatering（标注冲突）"
+      ],
+      "storage": "会话 scratchpad/diagnosis-probe-images/（仓库外，不入 git）",
+      "manifestSha256": "c11d4dc8037bc9ab6b4f6c4746c240048cbfe6897a06641e1f36dec9317a1748",
+      "source": "Wikimedia Commons 缩略图（实际下发宽 1280 像素），模型请求使用同一 HTTPS 地址"
+    },
+    "cases": 30,
+    "textOnlyTokenProbe": "P00（无图，用于实测前缀与文本 tokens，作为图片 token 计算的基线）",
+    "plannedRuns": [
+      {
+        "label": "off-pass1",
+        "model": "qwen3.5-flash-2026-02-23",
+        "thinking": "off",
+        "jsonMode": "on",
+        "dryRunEstimateCny": 0.244151
+      },
+      {
+        "label": "off-pass2（验证显式缓存命中）",
+        "thinking": "off",
+        "jsonMode": "on",
+        "dryRunEstimateCny": 0.244151
+      },
+      {
+        "label": "on-pass1（验证 JSON 模式与思考模式共存）",
+        "thinking": "on",
+        "jsonMode": "on",
+        "dryRunEstimateCny": 0.484151
+      }
+    ],
+    "plannedTotalEstimateCny": 0.972453,
+    "budgetArgs": {
+      "budgetCny": 50,
+      "hardStopCny": 40,
+      "maxPixels": 1048576,
+      "maxTokens": 8000
+    },
+    "scriptCommit": "工作区（未提交）cloudfunctions-v2/scripts/visual-diagnosis-eval/"
+  },
+  "executedCalls": [
+    {
+      "label": "off-pass1",
+      "attempted": 3,
+      "results": [
+        {
+          "caseId": "P00_text_only_token_probe",
+          "errorCode": "bailian_request_failed:403:AllocationQuota.FreeTierOnly"
+        },
+        {
+          "caseId": "P01_pest_spider_mite",
+          "errorCode": "bailian_request_failed:403:AllocationQuota.FreeTierOnly"
+        },
+        {
+          "caseId": "P02_pest_thrips",
+          "errorCode": "bailian_request_failed:403:AllocationQuota.FreeTierOnly"
+        }
+      ],
+      "stoppedReason": "provider_errors"
+    },
+    {
+      "label": "alias-check（单次文本探针，别名 qwen3.5-flash）",
+      "attempted": 1,
+      "results": [
+        {
+          "caseId": "P00_text_only_token_probe",
+          "errorCode": "bailian_request_failed:403:AllocationQuota.FreeTierOnly"
+        }
+      ]
+    }
+  ],
+  "questionsStillOpen": [
+    "图片 token 计费方式",
+    "JSON 输出与思考模式能否共存",
+    "显式缓存命中与折扣",
+    "平均延迟",
+    "JSON 合法率",
+    "安全门违规数",
+    "Top-1/Top-3 命中"
+  ],
+  "storagePolicy": "只存结构化评分与 usage；不存模型原文（本次未得到任何模型回包）"
+}

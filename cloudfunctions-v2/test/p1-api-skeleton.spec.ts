@@ -87,6 +87,7 @@ const expectedServiceScopes: Record<string, string> = {
   getUserTrialAnchorInternal: 'identity.trial-anchor.read',
   getUserPlantContextInternal: 'user-plant.context.read',
   getAgentPlantContextInternal: 'user-plant.agent-context.read',
+  getDiagnosisContextInternal: 'user-plant.diagnosis-context.read',
   reserveAiQuotaInternal: 'subscription.ai-quota.reserve',
   settleAiQuotaInternal: 'subscription.ai-quota.settle',
   releaseAiQuotaInternal: 'subscription.ai-quota.release',

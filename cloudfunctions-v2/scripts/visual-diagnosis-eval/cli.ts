@@ -22,7 +22,7 @@ import {
  *     --price-snapshot ../docs/backend-v2/diagnosis-eval/qwen3.5-flash-price-snapshot-2026-10-10.json \
  *     --budget-cny 50 --hard-stop-cny 40 --batch-size 10 \
  *     --est-prefix-tokens 9000 --est-dynamic-tokens 700 --tokens-per-image 1026 --est-output-tokens 3000 \
- *     --model qwen3.5-flash --thinking off --max-tokens 4000 --max-pixels 1048576 \
+ *     --model qwen3.5-flash --thinking off --json-mode on --max-tokens 4000 --max-pixels 1048576 \
  *     --out <仓库外路径>/report.json [--apply]
  *
  * 所有预算与估算参数都没有默认值，必须显式给出（预算上限对应配置目录 pending 项
@@ -44,6 +44,7 @@ const { values } = parseArgs({
     'est-output-tokens': { type: 'string' },
     model: { type: 'string' },
     thinking: { type: 'string' },
+    'json-mode': { type: 'string' },
     'max-tokens': { type: 'string' },
     'max-pixels': { type: 'string' },
     out: { type: 'string' },
@@ -74,6 +75,10 @@ const cases = JSON.parse(readFileSync(resolve(required('cases')), 'utf8')) as Ev
 const prefixText = extractPrefixFromDraft(readFileSync(resolve(required('prefix-draft')), 'utf8'))
 const price = JSON.parse(readFileSync(resolve(required('price-snapshot')), 'utf8')) as PriceSnapshot
 const apply = values.apply === true
+const jsonMode = required('json-mode')
+if (jsonMode !== 'on' && jsonMode !== 'off') {
+  throw new Error('参数 --json-mode 只能是 on 或 off')
+}
 const thinking = required('thinking')
 if (thinking !== 'on' && thinking !== 'off') {
   throw new Error('参数 --thinking 只能是 on 或 off')
@@ -89,6 +94,7 @@ const provider = apply
       fetchImpl: fetch,
       model: required('model'),
       enableThinking: thinking === 'on',
+      jsonMode: jsonMode === 'on',
       maxTokens: positive('max-tokens'),
       maxPixels: positive('max-pixels')
     })

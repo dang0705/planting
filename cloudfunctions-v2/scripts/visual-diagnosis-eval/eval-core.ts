@@ -63,6 +63,8 @@ export interface ProviderUsage {
   readonly cachedTokens: number
   /** 缓存创建 tokens。 */
   readonly cacheCreationTokens: number
+  /** 思考 tokens（包含在 completionTokens 内，单独记录用于成本分析）。 */
+  readonly reasoningTokens?: number
 }
 
 /** Provider 回包：text 只在内存中用于评分。 */
@@ -109,6 +111,8 @@ export interface CaseScore {
   readonly topCertaintyBand: string
   /** 安全违规代码列表。 */
   readonly safetyViolations: readonly string[]
+  /** 解析失败类型（不保存原文，只记类型）；合法时为 none。 */
+  readonly parseFailureKind: 'none' | 'empty' | 'markdown_fenced' | 'not_json' | 'contract_mismatch'
 }
 
 /** 单案例结果记录。 */
@@ -125,6 +129,8 @@ export interface CaseResult {
   readonly latencyMs: number
   /** 模型原文的 SHA-256；原文本身不保存。 */
   readonly rawTextSha256: string
+  /** Provider 调用失败时的错误码（不含凭证或回包正文）。 */
+  readonly errorCode?: string
 }
 
 /** 运行参数；预算相关字段没有默认值。 */
@@ -158,7 +164,7 @@ export interface EvalReport {
   /** 实际累计费用（元）。 */
   readonly cumulativeCostCny: number
   /** 结束原因。 */
-  readonly stoppedReason: 'dry_run' | 'completed' | 'hard_stop_reached'
+  readonly stoppedReason: 'dry_run' | 'completed' | 'hard_stop_reached' | 'provider_errors'
   /** 已完成案例结果。 */
   readonly results: readonly CaseResult[]
   /** 汇总指标。 */
@@ -197,6 +203,8 @@ const dosePattern =
 const numericCertaintyPattern = /[%％]|百分之|概率|置信度约/u
 /** 不需要病因候选、以总体状态判定的案例类型。 */
 const statusOnlyStatuses = new Set(['not_plant', 'insufficient_evidence'])
+/** 连续 Provider 失败的停止阈值（评测脚本内部不变量，不属于业务配置）。 */
+const maxConsecutiveErrors = 3
 /** 允许名单（待园艺来源审核）。 */
 const allowedAgents = new Set(agentAllowlist.agents.map(agent => agent.nameZh))
 
@@ -295,6 +303,7 @@ export function scoreModelText(text: string, evalCase: EvalCase): CaseScore {
   } catch {
     parsed = undefined
   }
+  const trimmed = text.trim()
   const classification = field(parsed, 'classification')
   const candidates = list(field(classification, 'candidates'))
   const jsonValid =
@@ -343,7 +352,16 @@ export function scoreModelText(text: string, evalCase: EvalCase): CaseScore {
     categoryHit,
     predictedCauseCodes: predicted,
     topCertaintyBand: String(field(candidates[0], 'certaintyBand') ?? ''),
-    safetyViolations: [...violations]
+    safetyViolations: [...violations],
+    parseFailureKind: jsonValid
+      ? 'none'
+      : trimmed === ''
+        ? 'empty'
+        : trimmed.startsWith('```')
+          ? 'markdown_fenced'
+          : parsed === undefined
+            ? 'not_json'
+            : 'contract_mismatch'
   }
 }
 
@@ -411,6 +429,7 @@ export async function runEvaluation(
 
   const results: CaseResult[] = []
   let cumulative = 0
+  let consecutiveErrors = 0
   let stoppedReason: EvalReport['stoppedReason'] = 'completed'
   outer: for (let start = 0; start < cases.length; start += options.batchSize) {
     const batch = cases.slice(start, start + options.batchSize)
@@ -427,11 +446,33 @@ export async function runEvaluation(
         options.log(`已达强制停止线：累计 ${roundCny(cumulative)} 元，停止发起新调用`)
         break outer
       }
-      const response = await provider.complete({
-        prefixText: options.prefixText,
-        dynamicText: evalCase.dynamicContextText,
-        imageUrls: evalCase.imageUrls
-      })
+      let response: ProviderResponse
+      try {
+        response = await provider.complete({
+          prefixText: options.prefixText,
+          dynamicText: evalCase.dynamicContextText,
+          imageUrls: evalCase.imageUrls
+        })
+      } catch (error) {
+        // 只记录错误码（适配器保证不含凭证与回包正文），不中断整轮；连续失败达到上限才停止。
+        consecutiveErrors += 1
+        results.push({
+          caseId: evalCase.caseId,
+          score: scoreModelText('', evalCase),
+          usage: { promptTokens: 0, completionTokens: 0, cachedTokens: 0, cacheCreationTokens: 0 },
+          actualCostCny: 0,
+          latencyMs: 0,
+          rawTextSha256: '',
+          errorCode: error instanceof Error ? error.message.slice(0, 80) : 'provider_error'
+        })
+        if (consecutiveErrors >= maxConsecutiveErrors) {
+          stoppedReason = 'provider_errors'
+          options.log(`连续 ${consecutiveErrors} 次调用失败，停止发起新调用`)
+          break outer
+        }
+        continue
+      }
+      consecutiveErrors = 0
       const cost = actualCostCny(response.usage, options.price)
       cumulative += cost
       results.push({

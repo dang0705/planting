@@ -3504,6 +3504,85 @@
         ]
       }
     },
+    "/api/v2/internal/user-plants/{userPlantRef}/diagnosis-context": {
+      "get": {
+        "operationId": "getDiagnosisContextInternal",
+        "summary": "读取诊断上下文摘要（diagnosis-context-summary/v1；内部只读，已冻结合同、未实现）",
+        "tags": [
+          "user-plant"
+        ],
+        "x-owner": "user-plant",
+        "x-phase": "P4",
+        "x-security": "service",
+        "x-required-scope": "user-plant.diagnosis-context.read",
+        "x-request-contract": "ScopedDiagnosisContextQuery",
+        "x-response-contract": "DiagnosisContextSummary",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "USER_PLANT_NOT_FOUND",
+          "SERVICE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "name": "userPlantRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100
+            }
+          },
+          {
+            "$ref": "#/components/parameters/ServiceKeyId"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceTimestamp"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceNonce"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceBodySha256"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceScope"
+          },
+          {
+            "$ref": "#/components/parameters/ServiceSignature"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "serviceSignature": []
+          }
+        ]
+      }
+    },
     "/api/v2/internal/subscription/ai-quota/reservations": {
       "post": {
         "operationId": "reserveAiQuotaInternal",

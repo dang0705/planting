@@ -1,7 +1,7 @@
 {
   "capturedAt": "2026-10-10",
   "ticket": "E05 / ClickUp z8v0kmrg8a（[P1] 诊断知识来源、园艺原因及 Outcome/Action 合同）、z8v0kmr974（[P4] 固定/动态问诊与小青工具）",
-  "status": "r3_complete_with_context_and_rule_sections",
+  "status": "r4_phasing_context_contract_frozen_probe_BLOCKED_ENV",
   "testLayer": "none（纯规划，无测试、无 TDD 声明）",
   "userRequest": "用户 2026-10-10：开始视觉诊断规划；v1 覆盖面过窄；要求最优提示词、固定前缀对缓存友好、视觉模型返回完整病因与解决方案；提供竞品结果页截图作信息结构参考",
   "scopeGuards": {
@@ -137,6 +137,11 @@
       "at": "2026-10-10",
       "via": "协调方转达用户裁定",
       "scope": "C1–C12 落盘；公开结果 v2 Schema；药剂允许名单；ClickUp 评论；探针候选清单；评测跑分脚本"
+    },
+    {
+      "rev": "r4",
+      "at": "2026-10-10",
+      "scope": "分期（首版纯生成式+安全门）；诊断上下文合同冻结；脚本增量；探针下载与首轮执行（BLOCKED_ENV）"
     }
   ],
   "userDecisions_2026_10_10": {
@@ -343,5 +348,51 @@
     "coldStartRules": "约 45～65 条（首批约 30 条进入影子模式）",
     "accumulationEstimate": "常见病因 3～6 个月（假设每月 1,000 次诊断、5% 专家复核）；冷门病因一年以上或仅靠文献",
     "caveat": "静态计数；工作簿 xlsx 已不在仓库，数据库规则数取自审计文档"
+  },
+  "r4": {
+    "phasing": "规划 §14：首版不启用直判/规则仲裁；反馈合同与规则命中记录列中长期；附「最小反馈」论证待用户拍板",
+    "contextContract": {
+      "files": [
+        "docs/backend-v2/contracts/diagnosis-context-summary.md",
+        "docs/backend-v2/contracts/schemas/diagnosis-context-summary.v1.schema.json"
+      ],
+      "route": "GET /api/v2/internal/user-plants/{userPlantRef}/diagnosis-context（scope user-plant.diagnosis-context.read）",
+      "synced": [
+        "docs/backend-v2/api/route-registry.json",
+        "docs/backend-v2/api/openapi.p1.json（手工插入单条 path；generate-openapi.mjs 重新生成会丢失已提交的三轴筛选手工内容，因此未整体重生成）",
+        "docs/backend-v2/api/manifest.json",
+        "docs/backend-v2/contracts/contract-registry.json",
+        "cloudfunctions-v2/test/p1-api-skeleton.spec.ts（scope 表）"
+      ],
+      "tdd": {
+        "path": "classic",
+        "test": "cloudfunctions-v2/test/contracts/diagnosis-context-summary-contract.spec.ts",
+        "red": "12/12 失败（Schema、路由、注册表均缺）",
+        "green": "12/12"
+      }
+    },
+    "evalScriptIncrement": {
+      "features": [
+        "Provider 单次失败记录错误码继续、连续 3 次失败停止",
+        "解析失败分类 parseFailureKind",
+        "可选 JSON 模式 response_format",
+        "思考 tokens 单独记录",
+        "供应商错误码（限定字符集）"
+      ],
+      "tdd": {
+        "path": "classic",
+        "red": "新增 5 条用例实现前全部失败",
+        "green": "26/26"
+      }
+    },
+    "probeRun": {
+      "record": "docs/backend-v2/diagnosis-eval/probe-run-2026-10-10.json",
+      "imagesDir": "会话 scratchpad/diagnosis-probe-images/（29 张 + manifest.json，仓库外）",
+      "status": "BLOCKED_ENV",
+      "error": "HTTP 403 AllocationQuota.FreeTierOnly",
+      "actualCostCny": 0,
+      "recovery": "用户在百炼控制台关闭「仅使用免费额度」或补充额度（付费能力开关，须用户本人授权操作）"
+    },
+    "verification": "cloudfunctions-v2 vitest 317 文件 3459 通过 / 5 跳过 / 0 失败；tsc 测试配置 0 错误"
   }
 }

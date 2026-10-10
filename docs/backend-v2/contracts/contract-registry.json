@@ -163,6 +163,22 @@
       "sha256": "cd2d88c7025ae0448dcf74afe0d59e070c5d45d759d898a247fff9d883eec312"
     },
     {
+      "id": "diagnosis-context-summary",
+      "version": "diagnosis-context-summary/v1",
+      "file": "diagnosis-context-summary.md",
+      "owner": "user-plant + diagnosis",
+      "status": "FROZEN_NOT_IMPLEMENTED",
+      "sha256": "938e5d4b2b16e683ea2ba51c2eb54619a95a3c554cd81d668efc99ef4534ad85"
+    },
+    {
+      "id": "diagnosis-context-summary-schema",
+      "version": "diagnosis-context-summary/v1",
+      "file": "schemas/diagnosis-context-summary.v1.schema.json",
+      "owner": "user-plant + diagnosis",
+      "status": "FROZEN_NOT_IMPLEMENTED",
+      "sha256": "6be290bf8e2fd2312473f01306787b47178cd0ad84ef5cc266891e7434ea7916"
+    },
+    {
       "id": "diagnosis-knowledge-reference-index",
       "version": "diagnosis-knowledge-reference-index/v1",
       "file": "schemas/diagnosis-knowledge-reference-index.v1.schema.json",

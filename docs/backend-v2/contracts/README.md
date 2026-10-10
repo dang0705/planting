@@ -25,6 +25,7 @@
 - [本次诊断公开结果 v1 结构 Schema](schemas/diagnosis-result.v1.schema.json)
 - [本次诊断公开结果 v2 结构 Schema（含受约束生成式，用户 2026-10-10 裁决）](schemas/diagnosis-result.v2.schema.json)
 - [视觉诊断生成式药剂允许名单 v1（待园艺来源审核）](diagnosis-visual-gen-agent-allowlist.v1.json)
+- [诊断上下文摘要内部合同 v1（已冻结、未实现）](diagnosis-context-summary.md)
 - [诊断知识单候选关系索引 v1 结构 Schema](schemas/diagnosis-knowledge-reference-index.v1.schema.json)
 - [奖励事件](reward-events.md)
 - [HTTP API 公共合同](http-api.md)

@@ -933,6 +933,24 @@
       ]
     },
     {
+      "method": "GET",
+      "path": "/api/v2/internal/user-plants/{userPlantRef}/diagnosis-context",
+      "operationId": "getDiagnosisContextInternal",
+      "owner": "user-plant",
+      "phase": "P4",
+      "security": "service",
+      "requiredScope": "user-plant.diagnosis-context.read",
+      "requestContract": "ScopedDiagnosisContextQuery",
+      "responseContract": "DiagnosisContextSummary",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "USER_PLANT_NOT_FOUND",
+        "SERVICE_UNAVAILABLE"
+      ]
+    },
+    {
       "method": "POST",
       "path": "/api/v2/internal/subscription/ai-quota/reservations",
       "operationId": "reserveAiQuotaInternal",
