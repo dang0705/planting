@@ -152,7 +152,7 @@
       "file": "schemas/diagnosis-result.v2.schema.json",
       "owner": "diagnosis",
       "status": "P1_PENDING",
-      "sha256": "06b3ddb3fc503087e88e0fb1eb44725f2af23280a3c7182f150ff585a6bdadd6"
+      "sha256": "fc6ade91983cb53b80e4a17baeda0245a9d2b6112a525e0e44a04ff6ed90c9f1"
     },
     {
       "id": "diagnosis-visual-gen-agent-allowlist",

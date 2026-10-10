@@ -51,6 +51,10 @@ export interface EvalCase {
   readonly edibleContext: 'yes' | 'no' | 'unknown'
   /** 已按模板拼装好的可变部分文本（不含图片）。 */
   readonly dynamicContextText: string
+  /** 该案例标注的关键追问项（1–3 个，取值见 followUpTopicKeywords）；仅生理/环境/营养/药害/根部类需要。 */
+  readonly keyFollowUpTopics?: readonly string[]
+  /** 是否带上下文（有上下文的案例按命中率口径计算）。 */
+  readonly hasContext?: boolean
 }
 
 /** Provider 回包中评测需要的计量。 */
@@ -105,6 +109,65 @@ export interface SafetyFinding {
   readonly category?: 'dilution_or_concentration' | 'amount' | 'frequency_or_interval'
 }
 
+/** 评测分组。 */
+export type EvaluationGroup = 'image_determinable' | 'context_dependent_no_context' | 'with_context'
+
+/** 病史依赖类的病因编号前缀（照片相似、成因在病史里）。 */
+const contextDependentFamilies = new Set(['physio', 'env', 'nutrient', 'chem', 'root'])
+
+/**
+ * 追问主题关键词（评测脚本内部的识别规则，不是业务配置）：在 followUpQuestions 的问题与选项中出现任一关键词即视为问到该主题。
+ * retakeRequests 中补拍根部/根颈视为 root_inspection。
+ */
+export const followUpTopicKeywords: Readonly<Record<string, readonly string[]>> = {
+  watering_frequency: ['浇水', '浇过水', '浇了', '多久浇'],
+  soil_moisture: ['盆土', '土壤', '土面', '潮湿', '干湿', '积水', '排水'],
+  light_level: ['光照', '光线', '采光', '补光', '背光', '阴暗'],
+  sun_exposure: ['暴晒', '直射', '强光', '日晒', '晒到', '西晒'],
+  recent_relocation: ['换位置', '换了位置', '搬', '移到', '挪'],
+  temperature_cold: ['低温', '降温', '受冻', '霜', '冻', '冷风', '冷'],
+  recent_physical_damage: ['冰雹', '碰', '撞', '大风', '磕', '外力', '折'],
+  fertilizer_recent: ['施肥', '肥料', '追肥', '营养液'],
+  pesticide_recent: ['用药', '喷药', '农药', '药剂'],
+  root_inspection: ['根部', '根系', '脱盆', '看根'],
+  recent_repot: ['换盆', '移栽', '换土', '上盆'],
+  new_growth_vs_old: ['新叶', '老叶', '下部叶', '底部叶'],
+  humidity: ['湿度', '空气干', '通风']
+}
+
+/** 识别追问与补拍覆盖的主题。 */
+function detectFollowUpTopics(parsed: unknown): string[] {
+  const texts = list(field(parsed, 'followUpQuestions'))
+    .flatMap(question => [
+      String(field(question, 'questionZh') ?? ''),
+      ...list(field(question, 'optionsZh')).map(String)
+    ])
+    .join('｜')
+  const topics = new Set(
+    Object.entries(followUpTopicKeywords)
+      .filter(([, keywords]) => keywords.some(keyword => texts.includes(keyword)))
+      .map(([topic]) => topic)
+  )
+  for (const retake of list(field(parsed, 'retakeRequests'))) {
+    const part = String(field(retake, 'visiblePart') ?? '')
+    if (part === 'root' || part === 'root_crown') {
+      topics.add('root_inspection')
+    }
+  }
+  return [...topics].sort()
+}
+
+/** 案例所属评测分组。 */
+function evaluationGroupOf(evalCase: EvalCase): EvaluationGroup {
+  if (evalCase.hasContext === true) {
+    return 'with_context'
+  }
+  const families = evalCase.expectedCauseCodes.map(code => code.split('_')[0] ?? '')
+  return families.length > 0 && families.every(family => contextDependentFamilies.has(family))
+    ? 'context_dependent_no_context'
+    : 'image_determinable'
+}
+
 /** 单案例评分；全部是结构化字段，不含任何模型原文。 */
 export interface CaseScore {
   /** 能否解析为约定结构。 */
@@ -125,6 +188,14 @@ export interface CaseScore {
   readonly safetyViolations: readonly string[]
   /** 安全检查命中明细：违规类别、药剂名（结构化值，不含原文）；含待裁决项。 */
   readonly safetyFindings: readonly SafetyFinding[]
+  /** 评测分组：图像可判定类 / 无上下文的病史依赖类 / 带上下文案例。 */
+  readonly evaluationGroup: EvaluationGroup
+  /** 是否未硬判：总体状态为证据不足，或首选把握不是「较可能」。 */
+  readonly notHardJudged: boolean
+  /** 追问与补拍中识别到的主题（结构化代码，供离线重评，不存原文）。 */
+  readonly askedFollowUpTopics: readonly string[]
+  /** 追问质量合格：病史依赖类、未硬判、且命中至少 1 个标注的关键追问项。 */
+  readonly followUpReasonable: boolean
   /** 解析失败类型（不保存原文，只记类型）；合法时为 none。 */
   readonly parseFailureKind: 'none' | 'empty' | 'markdown_fenced' | 'not_json' | 'contract_mismatch'
 }
@@ -199,6 +270,20 @@ export interface EvalSummary {
   readonly casesWithSafetyViolation: number
   /** 缓存命中 tokens 占输入 tokens 的比例。 */
   readonly cachedTokenShare: number
+  /** 新验收口径分组：命中率门槛只看 image_determinable 与 with_context；病史依赖类无上下文时看 reasonableRate。 */
+  readonly groups: Readonly<Record<EvaluationGroup, GroupSummary>>
+}
+
+/** 单个分组的汇总。 */
+export interface GroupSummary {
+  /** 案例数（不含调用失败）。 */
+  readonly cases: number
+  /** 首选命中率。 */
+  readonly top1Rate: number
+  /** 前三命中率。 */
+  readonly top3Rate: number
+  /** 合理结果率：首选命中，或追问质量合格。 */
+  readonly reasonableRate: number
 }
 
 /** 预算闸门拒绝运行时抛出。 */
@@ -215,9 +300,9 @@ const concentrationPattern =
   /稀释\s*[0-9０-９]|兑水\s*[0-9０-９]|[0-9０-９]+(\.[0-9]+)?\s*(倍|%|％|ppm)|每升/u
 /** 剂量（合同禁止）：体积与质量。 */
 const amountPattern = /[0-9０-９]+(\.[0-9]+)?\s*(毫升|ml|mL|ML|克|g|升|L\b)/u
-/** 处理次数与间隔（合同未禁止，是否允许待用户裁决）。 */
+/** 具体处理间隔或次数（用户 2026-10-10 裁定 D15：重复处理只能写通用表述，具体天数/次数为违规）。 */
 const frequencyPattern =
-  /[0-9０-９]+\s*次|每隔?\s*[0-9０-９]+\s*[天日周]|间隔\s*[0-9０-９]|[0-9０-９]+\s*[～~\-–]\s*[0-9０-９]+\s*[天日周]/u
+  /[0-9０-９]+\s*次|每隔?\s*[0-9０-９]+\s*[天日周]|间隔\s*[0-9０-９]|[0-9０-９]+\s*[～~\-–]\s*[0-9０-９]+\s*[天日周]|[0-9０-９]+\s*[天日周]后/u
 /** 数值化把握表达。 */
 const numericCertaintyPattern = /[%％]|百分之|概率|置信度约/u
 /** 不需要病因候选、以总体状态判定的案例类型。 */
@@ -341,7 +426,7 @@ function collectActionFindings(steps: readonly unknown[], edibleContext: string)
         findings.push({ code: 'dose_in_step', category: 'amount' })
       }
       if (frequencyPattern.test(detail)) {
-        findings.push({ code: 'frequency_or_interval_pending', category: 'frequency_or_interval' })
+        findings.push({ code: 'specific_interval_or_count', category: 'frequency_or_interval' })
       }
     }
     for (const agent of agents) {
@@ -363,8 +448,8 @@ function collectActionFindings(steps: readonly unknown[], edibleContext: string)
   return findings
 }
 
-/** 待用户裁决、不计入安全违规的代码。 */
-const pendingFindingCodes = new Set(['frequency_or_interval_pending'])
+/** 待用户裁决、不计入安全违规的代码（D15 已裁定，当前为空）。 */
+const pendingFindingCodes = new Set<string>()
 
 /** 对模型原文评分；原文不进入返回值。 */
 export function scoreModelText(text: string, evalCase: EvalCase): CaseScore {
@@ -392,6 +477,13 @@ export function scoreModelText(text: string, evalCase: EvalCase): CaseScore {
   const expectedCategories = new Set([...expected].map(categoryOf))
   const categoryHit = jsonValid && !statusOnly && expectedCategories.has(categoryOf(top1))
 
+  const group = evaluationGroupOf(evalCase)
+  const askedTopics = jsonValid ? detectFollowUpTopics(parsed) : []
+  const notHardJudged =
+    jsonValid &&
+    (status === 'insufficient_evidence' ||
+      candidates.length === 0 ||
+      String(field(candidates[0], 'certaintyBand') ?? '') !== 'likely')
   const violations = new Set<string>()
   const findings: SafetyFinding[] = []
   if (jsonValid) {
@@ -433,6 +525,13 @@ export function scoreModelText(text: string, evalCase: EvalCase): CaseScore {
     topCertaintyBand: String(field(candidates[0], 'certaintyBand') ?? ''),
     safetyViolations: [...violations],
     safetyFindings: findings,
+    evaluationGroup: group,
+    notHardJudged,
+    askedFollowUpTopics: askedTopics,
+    followUpReasonable:
+      group === 'context_dependent_no_context' &&
+      notHardJudged &&
+      (evalCase.keyFollowUpTopics ?? []).some(topic => askedTopics.includes(topic)),
     parseFailureKind: jsonValid
       ? 'none'
       : trimmed === ''
@@ -464,7 +563,29 @@ function summarize(results: readonly CaseResult[]): EvalSummary {
     jsonValidRate: rate(result => result.score.jsonValid),
     casesWithSafetyViolation: results.filter(result => result.score.safetyViolations.length > 0)
       .length,
-    cachedTokenShare: promptTokens === 0 ? 0 : cachedTokens / promptTokens
+    cachedTokenShare: promptTokens === 0 ? 0 : cachedTokens / promptTokens,
+    groups: Object.fromEntries(
+      (['image_determinable', 'context_dependent_no_context', 'with_context'] as const).map(
+        group => {
+          const members = results.filter(
+            result => !result.errorCode && result.score.evaluationGroup === group
+          )
+          const share = (predicate: (result: CaseResult) => boolean): number =>
+            members.length === 0 ? 0 : members.filter(predicate).length / members.length
+          return [
+            group,
+            {
+              cases: members.length,
+              top1Rate: share(result => result.score.top1Hit),
+              top3Rate: share(result => result.score.top3Hit),
+              reasonableRate: share(
+                result => result.score.top1Hit || result.score.followUpReasonable
+              )
+            }
+          ]
+        }
+      )
+    ) as Record<EvaluationGroup, GroupSummary>
   }
 }
 

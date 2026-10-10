@@ -473,7 +473,7 @@
               "stepsZh": {
                 "items": {
                   "not": {
-                    "pattern": "[0-9０-９]+(\\.[0-9]+)?\\s*(倍|毫升|ml|mL|ML|克|g|%|％|ppm|升|L\\b|次)|稀释\\s*[0-9０-９]|兑水\\s*[0-9０-９]|每升",
+                    "pattern": "[0-9０-９]+(\\.[0-9]+)?\\s*(倍|毫升|ml|mL|ML|克|g|%|％|ppm|升|L\\b)|稀释\\s*[0-9０-９]|兑水\\s*[0-9０-９]|每升",
                     "type": "string"
                   }
                 },
@@ -528,6 +528,40 @@
             },
             "type": "object"
           }
+        },
+        {
+          "type": "object",
+          "if": {
+            "type": "object",
+            "required": [
+              "generationSource",
+              "agentNamesZh"
+            ],
+            "properties": {
+              "generationSource": {
+                "const": "model_constrained"
+              },
+              "agentNamesZh": {
+                "type": "array",
+                "minItems": 1
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "stepsZh": {
+                "type": "array",
+                "items": {
+                  "not": {
+                    "type": "string",
+                    "pattern": "[0-9０-９]+\\s*次|每隔?\\s*[0-9０-９]+\\s*[天日周]|间隔\\s*[0-9０-９]|[0-9０-９]+\\s*[～~\\-–]\\s*[0-9０-９]+\\s*[天日周]|[0-9０-９]+\\s*[天日周]后"
+                  }
+                }
+              }
+            }
+          },
+          "description": "用户 2026-10-10 裁定 D15：涉及药剂的生成式步骤可以提重复处理，但只能写「按产品标签的间隔重复处理，并在下次处理前复查」，禁止具体天数和次数。"
         }
       ]
     },

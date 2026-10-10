@@ -3631,5 +3631,89 @@
       "total": 1.237123,
       "note": "按价目快照与 usage 计算；别名的免费额度在本轮耗尽，说明此前调用可能都在免费额度内，实际账单以百炼控制台为准"
     }
+  },
+  "round3": {
+    "at": "2026-10-10",
+    "scope": "D15 统一、追问质量指标、离线重评（未调用模型）",
+    "keyFollowUpTopicAnnotations": {
+      "P16_physio_edema": [
+        "watering_frequency",
+        "soil_moisture",
+        "light_level"
+      ],
+      "P17_physio_low_light": [
+        "light_level",
+        "recent_relocation"
+      ],
+      "P19_env_sunburn": [
+        "sun_exposure",
+        "recent_relocation"
+      ],
+      "P20_env_cold_damage": [
+        "temperature_cold"
+      ],
+      "P21_env_mechanical_damage": [
+        "recent_physical_damage"
+      ],
+      "P22_nutrient_iron_deficiency": [
+        "fertilizer_recent",
+        "soil_moisture",
+        "new_growth_vs_old"
+      ],
+      "P23_nutrient_nitrogen_deficiency": [
+        "fertilizer_recent",
+        "new_growth_vs_old"
+      ],
+      "P24_chem_fertilizer_burn": [
+        "fertilizer_recent"
+      ],
+      "P25_root_rot": [
+        "watering_frequency",
+        "soil_moisture",
+        "root_inspection"
+      ],
+      "P26_root_bound": [
+        "root_inspection",
+        "recent_repot"
+      ]
+    },
+    "annotationNote": "关键追问项为工程初标，需两人复核",
+    "offlineRescore": {
+      "source": "round2 配对结构化结果",
+      "imageDeterminable": {
+        "cases": 19,
+        "v1": {
+          "top1": 14,
+          "top3": 15
+        },
+        "v1.1": {
+          "top1": 12,
+          "top3": 13
+        }
+      },
+      "contextDependent": {
+        "cases": 10,
+        "notHardJudged": {
+          "v1": 4,
+          "v1.1": 7
+        },
+        "followUpQuality": "无法离线计算：前两轮未保存追问主题"
+      }
+    },
+    "rerunEstimate": {
+      "model": "qwen3.6-flash-2026-04-16（别名免费额度已耗尽）",
+      "optionA": {
+        "scope": "病史依赖类 10 例 × v1、v1.1 各 1 遍",
+        "expectedCny": 0.4,
+        "conservativeCny": 0.65
+      },
+      "optionB": {
+        "scope": "29 例 × 两版各 1 遍",
+        "expectedCny": 1.2,
+        "conservativeCny": 1.9
+      }
+    },
+    "spendCny": 0,
+    "status": "STOPPED_AWAITING_DECISION"
   }
 }

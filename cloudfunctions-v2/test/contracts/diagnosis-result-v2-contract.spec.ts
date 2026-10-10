@@ -146,6 +146,38 @@ describe('公开诊断结果 v2（受约束生成式）结构合同', () => {
     expect(createValidator()(withAction({ stepsZh: [step] }))).toBe(false)
   })
 
+  // 用户 2026-10-10 裁定 D15：重复处理只能用通用表述，禁止具体天数和次数（仅约束涉及药剂的生成式步骤）。
+  test('接受通用的重复处理表述', () => {
+    expect(
+      createValidator()(withAction({ stepsZh: ['按产品标签的间隔重复处理，并在下次处理前复查。'] }))
+    ).toBe(true)
+  })
+
+  test.each(['每隔 7 天喷一次。', '连续喷 3 次。', '间隔 5～7 天复喷。', '3 天后再喷一次。'])(
+    '拒绝用药步骤中的具体间隔或次数：%s',
+    step => {
+      expect(createValidator()(withAction({ stepsZh: [step] }))).toBe(false)
+    }
+  )
+
+  test('不涉及药剂的生成式步骤可以写观察天数与次数', () => {
+    const action = withAction({ stepsZh: ['浇透后 2～3 天检查盆土，浇水 2 次后再观察新叶。'] }, [
+      'agentNamesZh',
+      'labelDosageNotice',
+      'edibleSafetyIntervalNotice'
+    ])
+    expect(createValidator()(action)).toBe(true)
+  })
+
+  test('合同 C2 写明重复处理的允许表述与禁止示例', () => {
+    const contract = fs.readFileSync(
+      path.join(root, 'docs/backend-v2/contracts/diagnosis-rich-response-experiment.md'),
+      'utf8'
+    )
+    expect(contract).toContain('按产品标签的间隔重复处理，并在下次处理前复查')
+    expect(contract).toContain('每 7 天喷一次')
+  })
+
   // 安全门：用药必须提示按产品标签。
   test('拒绝缺少按标签用量提示的用药行动', () => {
     expect(createValidator()(withAction({}, ['labelDosageNotice']))).toBe(false)

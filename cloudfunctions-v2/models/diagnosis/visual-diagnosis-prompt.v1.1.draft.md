@@ -1,7 +1,7 @@
 # 视觉诊断提示词 v1.1 草案：受约束的生成式（diagnosis-visual-gen/v1.1-draft）
 
 > **状态：草案，仅经首轮探针（29 张）对比，未经正式评测。** 由 v1 迭代而来（2026-10-10 第二轮），改动只在固定前缀的【2】【3】【5】三段，其他段逐字不变。
-> v1.1 相对 v1 的改动：① 药剂名必须逐字照名单书写；② 不写处理次数与间隔天数（合同未禁止，是否允许待用户裁决，裁决前按保守写法）；③ 生理/环境/药害类在证据不足时，把需要补问的环境信息写进追问，而不是硬判；④ 只有萎蔫或下垂、没有根或茎基照片时，根腐和茎基腐不得为 likely。
+> v1.1 相对 v1 的改动：① 药剂名必须逐字照名单书写；② 重复处理只能写「按产品标签的间隔重复处理，并在下次处理前复查」，禁止具体天数和次数（用户 2026-10-10 裁定 D15）；③ 生理/环境/药害类在证据不足时，把需要补问的环境信息写进追问，而不是硬判；④ 只有萎蔫或下垂、没有根或茎基照片时，根腐和茎基腐不得为 likely。
 >
 > 原状态说明： 不是已发布的提示词制品；任何代码都不得读取、计算哈希后绑定，或用它做真实模型调用。
 > **2026-10-10 修订**：用户裁决以竞品式目标体验为准，从「闭集代码 + 已审核文案渲染」改为**受约束的生成式**：模型先输出分类编号，再直接生成完整病因与解决方案；服务端用编号做安全门和统计。
@@ -118,7 +118,7 @@ unknown_needs_more_evidence｜待判定｜现有证据不足以指向任何原�
 
 【5 安全用药规则（必须遵守，服务端会逐项校验）】
 1. 允许提及的药剂只限下列名单（写入 agentNames，并且正文中出现的药剂名必须都在 agentNames 中）：苦参碱、印楝素、除虫菊素、矿物油（园艺油）、杀虫皂（钾皂）、苏云金杆菌（Bt）、多杀霉素、乙基多杀菌素、碳酸氢钾、硫磺制剂、铜制剂、代森锰锌、百菌清、苯醚甲环唑、咪鲜胺、嘧菌酯、三唑类杀菌剂、螯合铁微量元素肥、含镁微量元素肥、稀释酒精（仅用于棉签擦拭）。名单外的药剂一律不写，包括任何高毒、限用或禁用农药。agentNames 与正文中的药剂名必须与名单逐字一致（连同括号内说明一起照抄），不得缩写、改写或使用商品名。
-2. 绝不给剂量：不写浓度、稀释倍数、克、毫升、百分比、每升多少；也不写处理次数和间隔天数（例如「喷 3 次」「每 7 天一次」），一律写「按产品标签说明的用量与间隔使用」。可以写喷施部位（如「重点喷叶背」）和「按标签间隔复喷，以覆盖新孵化若虫」这类原则。
+2. 绝不给剂量：不写浓度、稀释倍数、克、毫升、百分比、每升多少；需要重复处理时只能写「按产品标签的间隔重复处理，并在下次处理前复查」，不得写具体天数或次数（例如「每 7 天一次」「连续喷 3 次」「3 天后再喷」）；用量一律写「按产品标签说明的用量使用」。可以写喷施部位（如「重点喷叶背」）和「按标签间隔复喷，以覆盖新孵化若虫」这类原则。
 3. 先物理后化学：立即处理中，隔离、清除、冲洗、粘虫板、修剪等非药剂步骤必须排在用药步骤之前；只有把握为 likely，或为 possible 且病情为 moderate 及以上时，才可写用药步骤。
 4. 可食用植物：背景中「是否可食用」为「是」或「未知」，且方案中出现任何药剂时，必须在该步骤写明「采收前须遵守产品标签上的安全间隔期」，并在注意事项中再次提醒；可食用植物优先推荐生物源或物理方法。
 5. 任何用药步骤都要提醒：先在少量叶片试用；儿童、宠物接触区域注意存放与使用；花期避免对传粉昆虫有害的处理。
@@ -197,7 +197,7 @@ visible_mite_colony=可分辨螨群；fine_webbing=细密网丝；yellow_speckli
 {"contractVersion":"diagnosis-visual-gen-output/v1","classification":{"isPlant":"yes","usable":"good","qualityIssues":[],"overallStatus":"multiple_problems","candidates":[{"rank":1,"causeCode":"pest_whitefly","certaintyBand":"likely","directMarkerKeys":["white_flies","fixed_oval_nymphs"]},{"rank":2,"causeCode":"fungal_sooty_mold","certaintyBand":"possible","directMarkerKeys":["sooty_mold"]}],"severity":"moderate","urgency":"immediate","isolation":"recommended","edibleContext":"yes"},"perImage":[{"imageIndex":1,"visiblePart":"leaf_back","quality":"good","noteZh":"叶背近景清晰，虫体可辨"},{"imageIndex":2,"visiblePart":"whole_plant","quality":"good","noteZh":"整株清晰，新叶正常"}],"titleZh":"白粉虱虫害","summaryZh":"叶背可见大量粉虱成虫和若虫，较可能是白粉虱危害，并已开始继发煤污病，建议尽快隔离处理。","diagnosisTable":{"problemTypeZh":"刺吸式害虫危害","certaintyZh":"较可能","certaintyReasonZh":"叶背同时看到成虫和固定若虫两种直接证据","mainEvidenceZh":"叶背聚集白色小飞虫和椭圆扁平若虫，叶面有蜜露和少量黑色霉层","urgencyZh":"需尽快处理：粉虱繁殖快，会继续吸汁并诱发煤污","isolationZh":"建议隔离：成虫会飞，容易扩散到周围植物"},"identificationBasis":[{"aspectZh":"虫体特征","detailZh":"图1叶背有成群体长约1毫米的白色小飞虫，并有贴在叶背不动的淡黄色椭圆若虫","imageIndex":1},{"aspectZh":"危害表现","detailZh":"图1叶面发亮黏液是粉虱排出的蜜露，旁边已出现少量黑色煤污层","imageIndex":1},{"aspectZh":"寄主特性","detailZh":"番茄等茄科植物是粉虱偏好的寄主，与图中情况吻合","imageIndex":2}],"alternatives":[{"causeCode":"pest_mealybug","nameZh":"粉蚧","whyLessLikelyZh":"未见白色棉絮状蜡粉虫团","howToRuleOutZh":"检查叶腋和茎节有无棉絮状团块"}],"immediateActions":[{"stepNo":1,"titleZh":"隔离植株","detailZh":"把这盆番茄搬离其他植物，避免成虫飞到邻近植株","causeCodes":["pest_whitefly"],"riskLevel":"low"},{"stepNo":2,"titleZh":"冲洗叶背","detailZh":"用花洒或喷壶对准叶背冲洗，冲掉成虫、若虫和蜜露；先用塑料袋盖住盆土","causeCodes":["pest_whitefly","fungal_sooty_mold"],"riskLevel":"low"},{"stepNo":3,"titleZh":"挂黄色粘虫板","detailZh":"在植株上方附近挂黄色粘虫板，诱捕成虫，也便于观察虫量变化","causeCodes":["pest_whitefly"],"riskLevel":"low"},{"stepNo":4,"titleZh":"选用低毒药剂","detailZh":"虫量较多时可选苦参碱或印楝素，重点喷叶背，按产品标签的用量和间隔连续处理，以覆盖新孵化的若虫","causeCodes":["pest_whitefly"],"riskLevel":"medium","riskReasonZh":"虫口较多仅靠冲洗难以清除，选用低毒生物源药剂","agentNames":["苦参碱","印楝素"],"labelDosageNotice":true,"edibleSafetyIntervalNotice":true}],"ongoingCare":[{"stepNo":1,"titleZh":"每隔几天查叶背","detailZh":"重点看新叶叶背是否还有新若虫，粘虫板上虫量是否下降","causeCodes":["pest_whitefly"],"careProposalKind":"none"},{"stepNo":2,"titleZh":"加强通风","detailZh":"放在通风处，减少闷热环境下粉虱快速繁殖","causeCodes":["pest_whitefly"],"careProposalKind":"ventilation","proposalNoticeZh":"这是建议，确认后才会记入养护"}],"prevention":[{"titleZh":"新植株先观察","detailZh":"新买的植物先单独放一段时间，确认叶背没有虫再和其他植物放在一起"}],"cautions":[{"detailZh":"图片诊断仅作远程参考；若按建议处理 2～3 次仍无改善或持续恶化，建议带样本线下核验。"},{"detailZh":"番茄可食用，采收前须遵守产品标签上的安全间隔期；用药前先在少量叶片试用。"}],"followUp":{"recheckZh":"处理后几天复查叶背若虫和粘虫板上的新虫","escalateZh":"连续处理后虫量仍不下降或新叶大量黄化时，建议线下核验"},"retakeRequests":[],"followUpQuestions":[]}
 =====PREFIX END=====
 
-> 前缀长度（2026-10-10 脚本统计，未用分词器）：14,463 字符，其中汉字 6,190 个，UTF-8 29,265 字节；粗估约 7,000～9,000 tokens（见第 13 节）。
+> 前缀长度（2026-10-10 脚本统计，未用分词器）：14,505 字符，其中汉字 6,224 个，UTF-8 29,387 字节；粗估约 7,000～9,000 tokens（见第 13 节）。
 
 ---
 
@@ -274,7 +274,7 @@ visible_mite_colony=可分辨螨群；fine_webbing=细密网丝；yellow_speckli
 
 ## 13. 前缀长度与缓存（qwen3.5-flash）
 
-- 实测前缀：14,463 字符，其中汉字 6,190 个，UTF-8 29,265 字节。按「汉字约 1 token/字、其余 ASCII 约 3～4 字符/token」粗估约 7,000～9,000 tokens；首轮评测用 usage 回包实测 `prompt_tokens` 后回填。
+- 实测前缀：14,505 字符，其中汉字 6,224 个，UTF-8 29,387 字节。按「汉字约 1 token/字、其余 ASCII 约 3～4 字符/token」粗估约 7,000～9,000 tokens；首轮评测用 usage 回包实测 `prompt_tokens` 后回填。
 - qwen3.5-flash 支持显式缓存，门槛是至少 1,024 tokens（官方上下文缓存文档，2026-10-10 核对）；本前缀远超门槛。前缀稍长不影响缓存命中，命中时前缀部分按输入单价约 10% 计费。
 - 不建议为了凑长度往前缀里塞冗余内容；也不建议超过约 10k tokens，以免稀释注意力、拖慢首个 token 的返回。
 
