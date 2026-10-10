@@ -19,6 +19,8 @@ import { findProjectRoot } from '../support/project-root.js'
  * Expected 来源：ClickUp z8v0kmvhnc——安全门不通过时重试 1 次，仍不通过则失败关闭；不保存模型原文，只保存 SHA-256
  * 与结构化结果；输入预算守卫只从策略快照读取上限（costPolicy 待冻结，代码无默认），策略缺失时 503；
  * 超出预算明确拒绝（400 VALIDATION_FAILED），不静默裁剪；非植物、图片不可用时释放不扣点（diagnosis-visual-api/v1 §2.3）。
+ * 2026-10-11 补充（ClickUp z8v0kmvhnd，diagnosis-visual-api §3）：第 2 次调用前确认累计成本仍在 maxCostMicros 以内，否则不再调用；
+ * 每次成功调用记录所用模型与计量（按模型价目结算）；供应商结果未知（超时或网络中断）时标记，供额度进入对账。
  * 测试层次：unit_fake。
  */
 const validText = JSON.stringify({
@@ -113,7 +115,8 @@ const baseInput = {
   modelOrder: ['qwen3.7-flash'],
   request: { prefixText: 'p', dynamicText: 'd', imageUrls: ['https://example.invalid/a.jpg'] },
   context: { edibleContext: 'unknown' as const, causeCatalog: ['pest_whitefly'] },
-  maxModelLoops: 2
+  maxModelLoops: 2,
+  canStartNextLoop: () => true
 }
 
 describe('视觉生成编排：安全门重试与失败关闭', () => {
@@ -160,6 +163,63 @@ describe('视觉生成编排：安全门重试与失败关闭', () => {
     }
     const outcome = await runVisualGeneration(client, baseInput)
     expect(outcome).toMatchObject({ status: 'failed', failureReason: 'model_failed' })
+  })
+})
+
+describe('视觉生成编排：成本闸门、逐次计量与结果未知', () => {
+  test('完成时逐次记录所用模型与计量', async () => {
+    const outcome = await runVisualGeneration(clientReturning([badText, validText]), baseInput)
+    expect(outcome.calls).toEqual([
+      {
+        modelCode: 'qwen3.7-flash',
+        usage: {
+          promptTokens: 9000,
+          completionTokens: 1500,
+          cachedTokens: 0,
+          cacheCreationTokens: 0
+        }
+      },
+      {
+        modelCode: 'qwen3.7-flash',
+        usage: {
+          promptTokens: 9000,
+          completionTokens: 1500,
+          cachedTokens: 0,
+          cacheCreationTokens: 0
+        }
+      }
+    ])
+  })
+
+  test('累计成本已到上限时不再发起第 2 次调用，按安全门拒绝失败关闭', async () => {
+    const client = clientReturning([badText, validText])
+    const outcome = await runVisualGeneration(client, {
+      ...baseInput,
+      canStartNextLoop: () => false
+    })
+    expect(client.calls).toBe(1)
+    expect(outcome).toMatchObject({ status: 'failed', failureReason: 'safety_gate_rejected' })
+  })
+
+  test('超时或网络中断（HTTP 状态 0）导致的失败标记为结果未知；有明确错误码的失败不标记', async () => {
+    const unknown = await runVisualGeneration(
+      { complete: () => Promise.reject(new ModelProviderError('unavailable', 0)) },
+      baseInput
+    )
+    expect(unknown).toMatchObject({
+      status: 'failed',
+      failureReason: 'model_failed',
+      providerResultUnknown: true
+    })
+    const known = await runVisualGeneration(
+      { complete: () => Promise.reject(new ModelProviderError('quota_exhausted', 403)) },
+      baseInput
+    )
+    expect(known).toMatchObject({
+      status: 'failed',
+      failureReason: 'model_failed',
+      providerResultUnknown: false
+    })
   })
 })
 

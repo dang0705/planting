@@ -15,9 +15,9 @@ import {
   callVisualModelWithFallback,
   type ModelAttempt,
   type VisualModelClient,
-  type VisualModelRequest,
-  type VisualModelUsage
+  type VisualModelRequest
 } from '../provider/visual-model-registry.js'
+import type { VisualModelCall } from '../visual/domain/visual-cost.js'
 
 /**
  * 视觉诊断生成编排（ClickUp z8v0kmvhnc）：调用模型 → 解析 → 安全门 → 投影公开结果。
@@ -39,6 +39,8 @@ export interface RunVisualGenerationInput {
   readonly context: SafetyGateContext
   /** 最多模型调用次数（含 1 次安全门重试），来自成本策略快照。 */
   readonly maxModelLoops: number
+  /** 成本闸门：发起第 2 次及以后的调用前，用已发生的调用判断累计成本是否仍在上限内；false 则不再调用。 */
+  readonly canStartNextLoop: (calls: readonly VisualModelCall[]) => boolean
 }
 
 /** 单张图片的脱敏评估。 */
@@ -66,7 +68,7 @@ interface VisualGenerationAudit {
   /** 每次模型回包原文的 SHA-256，原文本身不保存。 */
   readonly rawTextSha256s: readonly string[]
   /** 每次成功调用的计量，按调用顺序排列。 */
-  readonly usages: readonly VisualModelUsage[]
+  readonly calls: readonly VisualModelCall[]
   /** 全部尝试记录，只含模型代码与结果类型。 */
   readonly attempts: readonly ModelAttempt[]
 }
@@ -103,6 +105,8 @@ export interface VisualGenerationFailed extends VisualGenerationAudit {
   readonly failureReason: 'model_failed' | 'safety_gate_rejected'
   /** 最后一次安全门拒绝原因代码，模型失败时为空。 */
   readonly rejectReasons: readonly SafetyRejectReason[]
+  /** 供应商结果未知（存在超时或网络中断的尝试）：供应商可能已计费，额度应进入对账而不是直接释放。 */
+  readonly providerResultUnknown: boolean
 }
 
 /** 编排结果；不含模型原文。 */
@@ -144,29 +148,34 @@ export async function runVisualGeneration(
   input: RunVisualGenerationInput
 ): Promise<VisualGenerationOutcome> {
   const rawTextSha256s: string[] = []
-  const usages: VisualModelUsage[] = []
+  const calls: VisualModelCall[] = []
   const attempts: ModelAttempt[] = []
   let lastReasons: readonly SafetyRejectReason[] = []
   const loops = Math.max(1, Math.trunc(input.maxModelLoops))
   for (let loop = 1; loop <= loops; loop += 1) {
+    if (loop > 1 && !input.canStartNextLoop(calls)) {
+      break
+    }
     let call
     try {
       call = await callVisualModelWithFallback(client, input.modelOrder, input.request)
     } catch (error) {
       if (error instanceof ModelProviderError) {
+        attempts.push(...error.attempts)
         return {
           status: 'failed',
           failureReason: 'model_failed',
           rejectReasons: [],
+          providerResultUnknown: attempts.some(attempt => attempt.httpStatus === 0),
           rawTextSha256s,
-          usages,
+          calls,
           attempts
         }
       }
       throw error
     }
     attempts.push(...call.attempts)
-    usages.push(call.response.usage)
+    calls.push({ modelCode: call.response.modelCode, usage: call.response.usage })
     rawTextSha256s.push(sha256(call.response.text))
     let parsed: unknown
     try {
@@ -187,7 +196,7 @@ export async function runVisualGeneration(
         releaseReason: imageAssessment.verdict,
         imageAssessment,
         rawTextSha256s,
-        usages,
+        calls,
         attempts,
         modelCode
       }
@@ -197,7 +206,7 @@ export async function runVisualGeneration(
       result: projectVisualGenResult(gate.output, { edibleContext: input.context.edibleContext }),
       imageAssessment,
       rawTextSha256s,
-      usages,
+      calls,
       attempts,
       modelCode
     }
@@ -206,8 +215,9 @@ export async function runVisualGeneration(
     status: 'failed',
     failureReason: 'safety_gate_rejected',
     rejectReasons: lastReasons,
+    providerResultUnknown: false,
     rawTextSha256s,
-    usages,
+    calls,
     attempts
   }
 }

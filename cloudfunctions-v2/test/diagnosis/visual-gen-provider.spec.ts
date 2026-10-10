@@ -88,6 +88,25 @@ describe('视觉模型 Provider：按策略顺序兜底', () => {
     expect(client.calls).toEqual([])
   })
 
+  test('尝试记录带供应商 HTTP 状态（0 表示超时或网络中断、结果未知），全部失败时错误携带全部尝试', async () => {
+    const client = fakeClient({
+      a: () => Promise.reject(new ModelProviderError('unavailable', 0)),
+      b: () => Promise.reject(new ModelProviderError('quota_exhausted', 403))
+    })
+    const error = await callVisualModelWithFallback(client, ['a', 'b'], request).catch(
+      (caught: unknown) => caught
+    )
+    expect(error).toMatchObject({
+      kind: 'all_models_unavailable',
+      attempts: [
+        { modelCode: 'a', outcome: 'unavailable', httpStatus: 0 },
+        { modelCode: 'b', outcome: 'quota_exhausted', httpStatus: 403 }
+      ]
+    })
+    const ok = await callVisualModelWithFallback(fakeClient({ a: okResponse('a') }), ['a'], request)
+    expect(ok.attempts).toEqual([{ modelCode: 'a', outcome: 'succeeded', httpStatus: 200 }])
+  })
+
   test('全部候选都不可用时失败关闭', async () => {
     const client = fakeClient({
       a: () => Promise.reject(new ModelProviderError('free_tier_only', 403))

@@ -83,12 +83,15 @@ export class ModelProviderError extends Error {
   readonly kind: ModelProviderErrorKind
   /** 供应商 HTTP 状态（没有时为 0）。 */
   readonly status: number
+  /** 兜底调用全部失败时携带的逐次尝试记录（只含模型代码、结果类型与状态）。 */
+  readonly attempts: readonly ModelAttempt[]
 
-  constructor(kind: ModelProviderErrorKind, status = 0) {
+  constructor(kind: ModelProviderErrorKind, status = 0, attempts: readonly ModelAttempt[] = []) {
     super(`视觉模型调用失败：${kind}`)
     this.name = 'ModelProviderError'
     this.kind = kind
     this.status = status
+    this.attempts = attempts
   }
 }
 
@@ -98,6 +101,8 @@ export interface ModelAttempt {
   readonly modelCode: string
   /** 结果：成功或失败类型。 */
   readonly outcome: 'succeeded' | ModelProviderErrorKind
+  /** 供应商 HTTP 状态：成功为 200；0 表示超时或网络中断（供应商是否已计费未知）。 */
+  readonly httpStatus: number
 }
 
 /** 兜底调用结果。 */
@@ -124,15 +129,16 @@ export async function callVisualModelWithFallback(
   for (const modelCode of modelOrder) {
     try {
       const response = await client.complete(modelCode, request)
-      attempts.push({ modelCode, outcome: 'succeeded' })
+      attempts.push({ modelCode, outcome: 'succeeded', httpStatus: 200 })
       return { response, attempts }
     } catch (error) {
       const kind = error instanceof ModelProviderError ? error.kind : 'unavailable'
-      attempts.push({ modelCode, outcome: kind })
+      const httpStatus = error instanceof ModelProviderError ? error.status : 0
+      attempts.push({ modelCode, outcome: kind, httpStatus })
       if (!switchableKinds.has(kind)) {
-        throw error instanceof ModelProviderError ? error : new ModelProviderError('unavailable')
+        throw new ModelProviderError(kind, httpStatus, attempts)
       }
     }
   }
-  throw new ModelProviderError('all_models_unavailable')
+  throw new ModelProviderError('all_models_unavailable', 0, attempts)
 }

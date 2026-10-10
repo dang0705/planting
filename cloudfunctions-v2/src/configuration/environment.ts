@@ -355,13 +355,29 @@ export interface UserPlantEnvironment extends FunctionEnvironment {
   readonly guestClaimLeaseSeconds: number
 }
 
+/** 读取云存储 Provider 配置；缺少环境 ID 时返回 null（不创建 Provider）。 */
+function readCloudbaseStorageEnvironment(environment: EnvironmentSource): CloudbaseStorageEnvironment | null {
+  const totalDeadlineMs = readOperationalOverride(environment, 'cloudbaseStorageTotalDeadlineMs')
+  const envId = environment[storageEnvironmentIdName]
+  return envId
+    ? Object.freeze({ envId, readApiKey: () => environment[storageCredentialEnvironmentName], totalDeadlineMs })
+    : null
+}
+
 /** 读取 user-plant 云函数环境；存储 API Key 只在调用时按变量名读取。 */
 export function readUserPlantEnvironment(environment: EnvironmentSource): UserPlantEnvironment {
   const base = readFunctionEnvironment(environment)
-  const totalDeadlineMs = readOperationalOverride(environment, 'cloudbaseStorageTotalDeadlineMs')
-  const envId = environment[storageEnvironmentIdName]
-  const storage = envId
-    ? Object.freeze({ envId, readApiKey: () => environment[storageCredentialEnvironmentName], totalDeadlineMs })
-    : null
+  const storage = readCloudbaseStorageEnvironment(environment)
   return { ...base, storage, guestClaimLeaseSeconds: readOperationalOverride(environment, 'userPlantGuestClaimLeaseSeconds') }
+}
+
+/** diagnosis 云函数环境（视觉诊断登记图片与服务端压缩需要读写云存储）。 */
+export interface DiagnosisEnvironment extends FunctionEnvironment {
+  /** 云存储配置；缺少环境 ID 时为 null（视觉诊断登记与发起返回 503）。 */
+  readonly storage: CloudbaseStorageEnvironment | null
+}
+
+/** 读取 diagnosis 云函数环境；存储 API Key 只在调用时按变量名读取。 */
+export function readDiagnosisEnvironment(environment: EnvironmentSource): DiagnosisEnvironment {
+  return { ...readFunctionEnvironment(environment), storage: readCloudbaseStorageEnvironment(environment) }
 }

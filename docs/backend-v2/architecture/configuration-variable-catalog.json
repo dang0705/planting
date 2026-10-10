@@ -1271,7 +1271,8 @@
         "cloudfunctions-v2/models/policy-releases/user-plant.list_rules.v1.release.json"
       ],
       "consumers": [
-        "GET /api/v2/user-plants/{userPlantRef}/timeline"
+        "GET /api/v2/user-plants/{userPlantRef}/timeline",
+        "diagnosis"
       ],
       "changePolicy": "发布新的 user-plant/list_rules 不可变版本并切换 active 指针（策略发布 CLI：validate → publish → activate；可 rollback）；取值必须落在 user-plant.list_rules.absolute_bounds 之内",
       "fallback": "无可信活动发布（缺失、Schema 不过、SHA 不符、未生效或已过期）时：HTTP 接口返回 503 SERVICE_UNAVAILABLE、定时任务本次不执行；不回退源码默认值",
@@ -1280,7 +1281,7 @@
       "ticketTitle": "[E03][P2] 用户植物核心实现",
       "clickUpTicketId": "z8v0kmr9mj",
       "decisionGroup": "hard_business_rule",
-      "decisionNote": "用户 2026-10-10 裁定：日常维护以「环境变量 + 策略发布」为主，业务参数尽量少用代码常量；取值不变（原 用户 2026-10-10 审定时间线草案按推荐通过（单独登记同值分页，便于将来与列表分开调整））",
+      "decisionNote": "用户 2026-10-10 裁定：日常维护以「环境变量 + 策略发布」为主，业务参数尽量少用代码常量；取值不变（原 用户 2026-10-10 审定时间线草案按推荐通过（单独登记同值分页，便于将来与列表分开调整））；2026-10-11（ClickUp z8v0kmvhnd）：视觉诊断历史列表复用本项 default 作为每页条数（与植物时间线同口径），不另设配置",
       "configurationTier": "policy",
       "codeLocations": [
         "cloudfunctions-v2/src/user-plant/domain/timeline.ts"
@@ -2722,8 +2723,11 @@
     {
       "domain": "diagnosis",
       "layer": "domain_policy",
-      "status": "pending",
-      "currentValue": "P1_PENDING",
+      "status": "confirmed",
+      "currentValue": {
+        "enableThinking": false,
+        "responseFormat": "json_object"
+      },
       "owner": "diagnosis",
       "phase": "P4",
       "ticketTitle": "[P4] 固定/动态问诊与小青工具",
@@ -2735,16 +2739,16 @@
       "valueType": "object",
       "sourceRefs": [
         "docs/backend-v2/architecture/visual-diagnosis-plan-2026-10-10.md",
-        "cloudfunctions-v2/models/diagnosis/visual-diagnosis-prompt.v1.draft.md"
+        "cloudfunctions-v2/models/diagnosis/visual-diagnosis-prompt.v1.draft.md",
+        "cloudfunctions-v2/models/policy-releases/diagnosis.visual_generation.v1.release.json"
       ],
       "consumers": [
         "diagnosis",
         "Bailian Adapter"
       ],
-      "changePolicy": "enable_thinking、max_tokens、max_pixels、temperature 作为版本组一部分发布，改动即新版本组",
-      "fallback": "未冻结前不得发起线上生成式调用",
+      "changePolicy": "发布新的 diagnosis/visual_generation 版本；改动即新版本组",
+      "fallback": "无可信活动发布时返回 503；启用 json_schema_strict 时适配器强制 system 为纯字符串（A2 结论）",
       "expected": "同一请求锁定一个参数快照；enable_thinking 必须显式给出（qwen3.5 默认开启）",
-      "pendingReason": "思考模式与像素上限待离线评测 A/B（修订 C12）",
       "blockingScope": "视觉诊断生成式版本组",
       "proposedValue": {
         "enableThinking": false,
@@ -2753,13 +2757,28 @@
         "maxPixelsIsHardCeiling": true,
         "maxInputTokensPerCall": 28800
       },
-      "decisionNote": "用户 2026-10-10 裁定：客户端不限制像素，服务端在送模型前统一缩放到 1024² 以内（只缩不放大），见 diagnosis-visual-image-input/v1；max_pixels 由适配器写死为代码层硬上限。其余请求参数仍待评测后裁定"
+      "decisionNote": "用户 2026-10-10 裁定：客户端不限制像素，服务端在送模型前统一缩放到 1024² 以内（只缩不放大），见 diagnosis-visual-image-input/v1；max_pixels 由适配器写死为代码层硬上限。其余请求参数仍待评测后裁定；用户 2026-10-11 裁决（协调方转达；ClickUp z8v0kmvhnb「已定裁决」）：关闭 thinking；协调方授权实现方按评测证据选默认格式——选 json_object（system 数组带显式缓存，A0/A1 评测质量基线均在此模式下取得；严格模式仅 2 次排查调用、未做质量评测，且纯字符串 system 无法挂显式缓存标记）。max_pixels 1024² 仍为适配器硬上限，maxOutputTokens 归 costPolicy",
+      "policyRelease": {
+        "domainCode": "diagnosis",
+        "policyCode": "visual_generation",
+        "schemaVersion": "diagnosis-visual-generation/v1",
+        "field": "requestParams",
+        "v1ReleaseFile": "cloudfunctions-v2/models/policy-releases/diagnosis.visual_generation.v1.release.json",
+        "absoluteBoundsKey": "diagnosis.visual_generation.absolute_bounds"
+      }
     },
     {
       "domain": "diagnosis",
       "layer": "domain_policy",
-      "status": "pending",
-      "currentValue": "P1_PENDING",
+      "status": "confirmed",
+      "currentValue": [
+        "qwen3.7-flash",
+        "qwen3.7-flash-2026-07-15",
+        "qwen3.6-plus",
+        "qwen3.6-plus-2026-04-02",
+        "qwen3.5-plus-2026-04-20",
+        "qwen3.5-plus-2026-02-15"
+      ],
       "owner": "diagnosis",
       "phase": "P4",
       "ticketTitle": "[P4] 固定/动态问诊与小青工具",
@@ -2770,19 +2789,19 @@
       ],
       "id": "diagnosis.visual_gen.model_code",
       "chineseName": "视觉诊断生成式模型代码（含兜底候选顺序）",
-      "valueType": "string",
+      "valueType": "array",
       "sourceRefs": [
         "docs/backend-v2/architecture/visual-diagnosis-plan-2026-10-10.md",
-        "docs/backend-v2/diagnosis-eval/probe-run-2026-10-10.json"
+        "docs/backend-v2/diagnosis-eval/probe-run-2026-10-10.json",
+        "cloudfunctions-v2/models/policy-releases/diagnosis.visual_generation.v1.release.json"
       ],
       "consumers": [
         "diagnosis",
         "Bailian Adapter"
       ],
-      "changePolicy": "模型代码属于 diagnosis-visual-gen 版本组；换模型即新版本组，同一请求锁定一个模型，不静默切换",
-      "fallback": "未冻结前不开放线上生成式调用；评测时按候选顺序在免费额度内依次尝试",
+      "changePolicy": "发布新的 diagnosis/visual_generation 不可变版本并切换 active 指针（策略发布 CLI）；换模型即新版本组，同一请求锁定一个快照",
+      "fallback": "无可信活动发布时视觉诊断接口返回 503 SERVICE_UNAVAILABLE，不回退源码默认模型",
       "expected": "版本组中的模型代码必须是精确快照或明确别名，并与评测报告中的模型一致",
-      "pendingReason": "候选模型尚在探针与开发集评测中；免费额度受限",
       "blockingScope": "视觉诊断生成式版本组",
       "proposedValue": {
         "candidateOrder": [
@@ -2802,7 +2821,145 @@
           "qwen3.7-flash"
         ]
       },
-      "decisionNote": "用户 2026-10-10 给出兜底顺序（同日更新：qwen3.7-flash 优先）；主代理裁定为候选顺序，不改成 confirmed。正式模型须与提示词、Schema、请求参数组成同一版本组，经评测后发布；代码只接收策略给出的顺序（visual-model-registry.ts），没有默认模型"
+      "decisionNote": "用户 2026-10-10 给出兜底顺序（同日更新：qwen3.7-flash 优先）；主代理裁定为候选顺序，不改成 confirmed。正式模型须与提示词、Schema、请求参数组成同一版本组，经评测后发布；代码只接收策略给出的顺序（visual-model-registry.ts），没有默认模型；用户 2026-10-11 裁决（协调方转达；ClickUp z8v0kmvhnb「已定裁决」）：兜底顺序定稿并关闭 thinking，改为 confirmed，写入策略发布 diagnosis.visual_generation.v1",
+      "policyRelease": {
+        "domainCode": "diagnosis",
+        "policyCode": "visual_generation",
+        "schemaVersion": "diagnosis-visual-generation/v1",
+        "field": "modelOrder",
+        "v1ReleaseFile": "cloudfunctions-v2/models/policy-releases/diagnosis.visual_generation.v1.release.json",
+        "absoluteBoundsKey": "diagnosis.visual_generation.absolute_bounds"
+      }
+    },
+    {
+      "id": "diagnosis.visual_gen.model_tariffs",
+      "chineseName": "视觉诊断各兜底模型的供应商价目",
+      "domain": "diagnosis",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "unit": "人民币微元/百万 tokens；缓存倍率基点",
+      "status": "confirmed",
+      "currentValue": {
+        "qwen3.7-flash": {
+          "inputMicrosPerMillionTokens": 200000,
+          "outputMicrosPerMillionTokens": 800000,
+          "cacheHitBasisPoints": 1000,
+          "cacheCreateBasisPoints": 12500,
+          "priceSnapshotRef": "docs/backend-v2/diagnosis-eval/qwen3.7-flash-price-snapshot-2026-10-10.json"
+        },
+        "qwen3.7-flash-2026-07-15": {
+          "inputMicrosPerMillionTokens": 200000,
+          "outputMicrosPerMillionTokens": 800000,
+          "cacheHitBasisPoints": 1000,
+          "cacheCreateBasisPoints": 12500,
+          "priceSnapshotRef": "docs/backend-v2/diagnosis-eval/qwen3.7-flash-price-snapshot-2026-10-10.json"
+        },
+        "qwen3.6-plus": {
+          "inputMicrosPerMillionTokens": 2000000,
+          "outputMicrosPerMillionTokens": 12000000,
+          "cacheHitBasisPoints": 1000,
+          "cacheCreateBasisPoints": 12500,
+          "priceSnapshotRef": "docs/backend-v2/diagnosis-eval/qwen3.6-plus-price-snapshot-2026-10-10.json"
+        },
+        "qwen3.6-plus-2026-04-02": {
+          "inputMicrosPerMillionTokens": 2000000,
+          "outputMicrosPerMillionTokens": 12000000,
+          "cacheHitBasisPoints": 1000,
+          "cacheCreateBasisPoints": 12500,
+          "priceSnapshotRef": "docs/backend-v2/diagnosis-eval/qwen3.6-plus-price-snapshot-2026-10-10.json"
+        },
+        "qwen3.5-plus-2026-04-20": {
+          "inputMicrosPerMillionTokens": 800000,
+          "outputMicrosPerMillionTokens": 4800000,
+          "cacheHitBasisPoints": 1000,
+          "cacheCreateBasisPoints": 12500,
+          "priceSnapshotRef": "docs/backend-v2/diagnosis-eval/qwen3.5-plus-price-snapshot-2026-10-10.json"
+        },
+        "qwen3.5-plus-2026-02-15": {
+          "inputMicrosPerMillionTokens": 800000,
+          "outputMicrosPerMillionTokens": 4800000,
+          "cacheHitBasisPoints": 1000,
+          "cacheCreateBasisPoints": 12500,
+          "priceSnapshotRef": "docs/backend-v2/diagnosis-eval/qwen3.5-plus-price-snapshot-2026-10-10.json"
+        }
+      },
+      "owner": "diagnosis",
+      "sourceRefs": [
+        "docs/backend-v2/diagnosis-eval/qwen3.7-flash-price-snapshot-2026-10-10.json",
+        "docs/backend-v2/diagnosis-eval/qwen3.6-plus-price-snapshot-2026-10-10.json",
+        "docs/backend-v2/diagnosis-eval/qwen3.5-plus-price-snapshot-2026-10-10.json",
+        "cloudfunctions-v2/models/policy-releases/diagnosis.visual_generation.v1.release.json"
+      ],
+      "consumers": [
+        "diagnosis",
+        "subscription"
+      ],
+      "changePolicy": "供应商调价后采集新价目快照并发布新的 diagnosis/visual_generation 版本",
+      "fallback": "策略里缺任一兜底模型价目时整份策略校验失败（503）",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "expected": "实际成本 = 未缓存输入×输入价 + 缓存命中×输入价×命中倍率 + 缓存创建×输入价×创建倍率 + 输出×输出价，按微元向上取整；用户结算 ceil(costMicros/800)",
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/business-policies/diagnosis-visual-generation.ts"
+      ],
+      "policyRelease": {
+        "domainCode": "diagnosis",
+        "policyCode": "visual_generation",
+        "schemaVersion": "diagnosis-visual-generation/v1",
+        "field": "tariffs",
+        "v1ReleaseFile": "cloudfunctions-v2/models/policy-releases/diagnosis.visual_generation.v1.release.json",
+        "absoluteBoundsKey": "diagnosis.visual_generation.absolute_bounds"
+      },
+      "decisionNote": "2026-10-11 新增（ClickUp z8v0kmvhnd）：价目是 2026-10-10 采集的官方公开价（≤32K/≤128K/≤256K 档），不是业务取舍；兜底到 plus 模型时实际成本可能超过 17,920 微元，超出部分按额度合同进入 pending_reconciliation、由平台承担，不多扣用户。请主代理复核"
+    },
+    {
+      "id": "diagnosis.visual_generation.absolute_bounds",
+      "chineseName": "视觉诊断生成策略绝对边界",
+      "domain": "diagnosis",
+      "layer": "hard_rule",
+      "valueType": "object",
+      "status": "hard_rule",
+      "currentValue": {
+        "modelOrderMaxItems": 8,
+        "maxImages": {
+          "min": 1,
+          "max": 3
+        },
+        "maxModelLoops": {
+          "min": 1,
+          "max": 3
+        },
+        "maxInputTokens": {
+          "min": 1000,
+          "max": 32000
+        },
+        "maxOutputTokens": {
+          "min": 256,
+          "max": 8192
+        },
+        "microsPerPoint": 800
+      },
+      "owner": "diagnosis",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/diagnosis-visual-image-input.md",
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+      ],
+      "consumers": [
+        "diagnosis"
+      ],
+      "changePolicy": "代码层硬边界；变更须同步合同与测试，随版本发布",
+      "fallback": "策略取值越界时策略校验失败，读取方按无可信发布处理（503）",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "expected": "图片最多 3 张（适配器硬上限）；输入不超过 32K 档；1 点 = 800 微元（额度合同固定换算）；模型顺序最多 8 个",
+      "decisionGroup": "hard_business_rule",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts"
+      ],
+      "decisionNote": "2026-10-11 新增（ClickUp z8v0kmvhnd）：策略 AJV Schema 以此为上下限"
     },
     {
       "domain": "diagnosis",
@@ -5867,59 +6024,14 @@
       "status": "confirmed",
       "currentValue": {
         "capability": "USER_DIAGNOSIS_VISUAL",
-        "modelFamily": "qwen3.7-flash",
-        "providerCode": "aliyun_bailian",
-        "maxInputTokens": 28800,
-        "maxOutputTokens": 4000,
-        "maxImages": 3,
-        "maxModelLoops": 2,
-        "inputMicrosPerToken": 0.2,
-        "outputMicrosPerToken": 0.8,
-        "maxCostMicros": 17920,
-        "estimatedPoints": 23,
-        "pointsFormula": "ceil(costMicros / 800)",
-        "priceSnapshotRef": "docs/backend-v2/diagnosis-eval/qwen3.7-flash-price-snapshot-2026-10-10.json",
         "costPolicyVersion": "diagnosis-visual-cost/v1",
-        "releaseWithoutCharge": [
-          "not_plant",
-          "image_unusable",
-          "model_failed",
-          "safety_gate_rejected"
-        ],
-        "reservePoints": 23,
-        "singleAndMultiImageSameAction": true
-      },
-      "sourceRefs": [
-        "docs/backend-v2/contracts/care-points-and-ai-quota.md",
-        "docs/backend-v2/contracts/diagnosis-visual-api.md"
-      ],
-      "consumers": [
-        "subscription",
-        "diagnosis",
-        "CloudBase Agent"
-      ],
-      "changePolicy": "取得真实证据后发布不可变领域策略版本",
-      "fallback": "未冻结前停止对应范围，不从旧实现猜值",
-      "expected": "逐项冻结 modelFamily、providerCode、maxInputTokens、maxOutputTokens、maxImages、maxModelLoops、maxCostMicros、estimatedPoints、costPolicyVersion，并在调用前原子预占",
-      "blockingScope": "生成式动作 USER_DIAGNOSIS_VISUAL",
-      "decisionGroup": "entitlements_cost_rewards",
-      "configurationTier": "policy",
-      "codeLocations": [],
-      "proposedValue": {
-        "capability": "USER_DIAGNOSIS_VISUAL",
-        "modelFamily": "qwen3.7-flash",
-        "providerCode": "aliyun_bailian",
         "maxInputTokens": 28800,
         "maxOutputTokens": 4000,
         "maxImages": 3,
         "maxModelLoops": 2,
-        "inputMicrosPerToken": 0.2,
-        "outputMicrosPerToken": 0.8,
         "maxCostMicros": 17920,
         "estimatedPoints": 23,
-        "pointsFormula": "ceil(costMicros / 800)",
-        "priceSnapshotRef": "docs/backend-v2/diagnosis-eval/qwen3.7-flash-price-snapshot-2026-10-10.json",
-        "costPolicyVersion": "diagnosis-visual-cost/v1-draft",
+        "microsPerPoint": 800,
         "releaseWithoutCharge": [
           "not_plant",
           "image_unusable",
@@ -5927,7 +6039,32 @@
           "safety_gate_rejected"
         ]
       },
-      "decisionNote": "ClickUp z8v0kmvhnb 票面建议值（2026-10-11）：按 qwen3.7-flash ≤32K 档价格（0.2/0.8 元/百万 tokens = 0.2/0.8 微元/token）计算 maxCostMicros = 2 × (28,800 × 0.2 + 4,000 × 0.8) = 17,920，estimatedPoints = ceil(17,920 / 800) = 23；由主代理裁定是否改为 confirmed。建议把单图与多图合并为同一产品动作（用户侧都是一次诊断）；用户 2026-10-11 裁决（协调方转达，ClickUp z8v0kmvhnc 收尾）：定稿为 confirmed——预占 23 点、上限 17,920 微元、输入 28,800、输出 4,000、图片最多 3 张、调用最多 2 次、结算 ceil(costMicros/800)、失败与非植物不扣点；单图与多图算同一次诊断（单图动作并入本策略）"
+      "sourceRefs": [
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md",
+        "docs/backend-v2/contracts/diagnosis-visual-api.md",
+        "cloudfunctions-v2/models/policy-releases/diagnosis.visual_generation.v1.release.json"
+      ],
+      "consumers": [
+        "subscription",
+        "diagnosis",
+        "CloudBase Agent"
+      ],
+      "changePolicy": "发布新的 diagnosis/visual_generation 版本（costPolicyVersion 随之递增）；已预占的诊断按预占时锁定的版本结算",
+      "fallback": "无可信活动发布时返回 503，不预占、不调用模型",
+      "expected": "逐项冻结 modelFamily、providerCode、maxInputTokens、maxOutputTokens、maxImages、maxModelLoops、maxCostMicros、estimatedPoints、costPolicyVersion，并在调用前原子预占",
+      "blockingScope": "生成式动作 USER_DIAGNOSIS_VISUAL",
+      "decisionGroup": "entitlements_cost_rewards",
+      "configurationTier": "policy",
+      "codeLocations": [],
+      "decisionNote": "ClickUp z8v0kmvhnb 票面建议值（2026-10-11）：按 qwen3.7-flash ≤32K 档价格（0.2/0.8 元/百万 tokens = 0.2/0.8 微元/token）计算 maxCostMicros = 2 × (28,800 × 0.2 + 4,000 × 0.8) = 17,920，estimatedPoints = ceil(17,920 / 800) = 23；由主代理裁定是否改为 confirmed。建议把单图与多图合并为同一产品动作（用户侧都是一次诊断）；用户 2026-10-11 裁决（协调方转达，ClickUp z8v0kmvhnc 收尾）：定稿为 confirmed——预占 23 点、上限 17,920 微元、输入 28,800、输出 4,000、图片最多 3 张、调用最多 2 次、结算 ceil(costMicros/800)、失败与非植物不扣点；单图与多图算同一次诊断（单图动作并入本策略）；价目从 currentValue 移到 diagnosis.visual_gen.model_tariffs（逐模型），costPolicy 只保留上限与换算规则",
+      "policyRelease": {
+        "domainCode": "diagnosis",
+        "policyCode": "visual_generation",
+        "schemaVersion": "diagnosis-visual-generation/v1",
+        "field": "costPolicy",
+        "v1ReleaseFile": "cloudfunctions-v2/models/policy-releases/diagnosis.visual_generation.v1.release.json",
+        "absoluteBoundsKey": "diagnosis.visual_generation.absolute_bounds"
+      }
     },
     {
       "domain": "subscription",

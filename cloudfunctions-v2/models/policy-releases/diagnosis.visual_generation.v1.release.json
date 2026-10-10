@@ -1,0 +1,85 @@
+{
+  "releaseDocumentVersion": "business-policy-release-document/v1",
+  "domainCode": "diagnosis",
+  "policyCode": "visual_generation",
+  "schemaVersion": "diagnosis-visual-generation/v1",
+  "releaseVersion": "diagnosis-visual-generation/v1.0.0",
+  "effectiveAt": "2026-10-11T00:00:00Z",
+  "changeNote": "用户 2026-10-11 裁决：模型兜底顺序定稿并关闭 thinking；costPolicy 定稿（预占 23 点、上限 17,920 微元、输入 28,800、输出 4,000、最多 3 张图、最多 2 次调用、ceil(costMicros/800)，失败与非植物不扣点）；默认 json_object 格式（A2：严格模式下 system 必须纯字符串）；价目来自 2026-10-10 官方价目快照",
+  "policy": {
+    "contractVersion": "diagnosis-visual-generation/v1",
+    "modelOrder": [
+      "qwen3.7-flash",
+      "qwen3.7-flash-2026-07-15",
+      "qwen3.6-plus",
+      "qwen3.6-plus-2026-04-02",
+      "qwen3.5-plus-2026-04-20",
+      "qwen3.5-plus-2026-02-15"
+    ],
+    "requestParams": {
+      "enableThinking": false,
+      "responseFormat": "json_object"
+    },
+    "costPolicy": {
+      "capability": "USER_DIAGNOSIS_VISUAL",
+      "costPolicyVersion": "diagnosis-visual-cost/v1",
+      "maxInputTokens": 28800,
+      "maxOutputTokens": 4000,
+      "maxImages": 3,
+      "maxModelLoops": 2,
+      "maxCostMicros": 17920,
+      "estimatedPoints": 23,
+      "microsPerPoint": 800,
+      "releaseWithoutCharge": [
+        "not_plant",
+        "image_unusable",
+        "model_failed",
+        "safety_gate_rejected"
+      ]
+    },
+    "tariffs": {
+      "qwen3.7-flash": {
+        "inputMicrosPerMillionTokens": 200000,
+        "outputMicrosPerMillionTokens": 800000,
+        "cacheHitBasisPoints": 1000,
+        "cacheCreateBasisPoints": 12500,
+        "priceSnapshotRef": "docs/backend-v2/diagnosis-eval/qwen3.7-flash-price-snapshot-2026-10-10.json"
+      },
+      "qwen3.7-flash-2026-07-15": {
+        "inputMicrosPerMillionTokens": 200000,
+        "outputMicrosPerMillionTokens": 800000,
+        "cacheHitBasisPoints": 1000,
+        "cacheCreateBasisPoints": 12500,
+        "priceSnapshotRef": "docs/backend-v2/diagnosis-eval/qwen3.7-flash-price-snapshot-2026-10-10.json"
+      },
+      "qwen3.6-plus": {
+        "inputMicrosPerMillionTokens": 2000000,
+        "outputMicrosPerMillionTokens": 12000000,
+        "cacheHitBasisPoints": 1000,
+        "cacheCreateBasisPoints": 12500,
+        "priceSnapshotRef": "docs/backend-v2/diagnosis-eval/qwen3.6-plus-price-snapshot-2026-10-10.json"
+      },
+      "qwen3.6-plus-2026-04-02": {
+        "inputMicrosPerMillionTokens": 2000000,
+        "outputMicrosPerMillionTokens": 12000000,
+        "cacheHitBasisPoints": 1000,
+        "cacheCreateBasisPoints": 12500,
+        "priceSnapshotRef": "docs/backend-v2/diagnosis-eval/qwen3.6-plus-price-snapshot-2026-10-10.json"
+      },
+      "qwen3.5-plus-2026-04-20": {
+        "inputMicrosPerMillionTokens": 800000,
+        "outputMicrosPerMillionTokens": 4800000,
+        "cacheHitBasisPoints": 1000,
+        "cacheCreateBasisPoints": 12500,
+        "priceSnapshotRef": "docs/backend-v2/diagnosis-eval/qwen3.5-plus-price-snapshot-2026-10-10.json"
+      },
+      "qwen3.5-plus-2026-02-15": {
+        "inputMicrosPerMillionTokens": 800000,
+        "outputMicrosPerMillionTokens": 4800000,
+        "cacheHitBasisPoints": 1000,
+        "cacheCreateBasisPoints": 12500,
+        "priceSnapshotRef": "docs/backend-v2/diagnosis-eval/qwen3.5-plus-price-snapshot-2026-10-10.json"
+      }
+    }
+  }
+}

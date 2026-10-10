@@ -6,6 +6,7 @@ export type AiQuotaSettlementPersistenceErrorType =
   | 'SETTLEMENT_CONFLICT'
   | 'COMMIT_RESULT_UNKNOWN'
   | 'WRITE_CONFLICT'
+  | 'RESERVATION_NOT_FOUND'
 
 /** 额度结算持久化错误只能由应用层映射为脱敏公开错误。 */
 export class AiQuotaSettlementPersistenceError extends Error {

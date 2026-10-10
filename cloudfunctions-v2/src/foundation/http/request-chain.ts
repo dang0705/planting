@@ -59,7 +59,7 @@ export type PublicSuccessResponse<TData> = {
 
 /** 请求链完成后交给 HTTP 适配器的状态码和公开正文。 */
 export type RequestChainResult<TPublicData> = {
-  /** HTTP 状态码；成功链当前固定为 200，失败码来自稳定公开错误。 */
+  /** HTTP 状态码；成功链默认 200（路由可声明 202），失败码来自稳定公开错误。 */
   status: number
   /** 公开成功或错误正文，两者严格互斥。 */
   body: PublicSuccessResponse<TPublicData> | PublicErrorResponse
@@ -187,6 +187,8 @@ export type RequestChainConfig<
   writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
   /** 请求结果事件写入失败时的脱敏告警端口；不得接收原始异常或改变业务结果。 */
   reportAuditFailure?: (event: RequestChainAuditEvent) => void | Promise<void>
+  /** 成功状态码：默认 200；已受理、异步处理的写接口（如发起视觉诊断）声明 202。 */
+  successStatus?: 200 | 202
 }
 
 const internalErrorStatusCode = 500
@@ -303,7 +305,7 @@ export async function executeRequestChain<
     const publicData = await runStep(config.publicResponse, persistenceResult)
 
     dispatchRequestOutcome({ outcome: 'allowed' }).catch(() => undefined)
-    return { status: 200, body: { data: publicData } }
+    return { status: config.successStatus ?? 200, body: { data: publicData } }
   } catch (error: unknown) {
     const publicError = mapPublicError(error)
     dispatchRequestOutcome({

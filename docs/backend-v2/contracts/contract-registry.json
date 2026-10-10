@@ -200,7 +200,7 @@
       "file": "diagnosis-visual-api.md",
       "owner": "diagnosis + storage + subscription",
       "status": "FROZEN_NOT_IMPLEMENTED",
-      "sha256": "03b7a0e42157a2e70a918eae61a351a56f818caa2a758cb732300f55a899c8bf"
+      "sha256": "868c1de23cf9bc93b6ec4a08a691a563cd1914620f3fe8204a65dd4093ee7e37"
     },
     {
       "id": "diagnosis-visual-api-schema",

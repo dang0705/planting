@@ -22,6 +22,8 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
   assert.ok(manifest.files.some((entry: { file: string }) => entry.file === '024_watering_baseline_policy.sql'), '浇水基线 024 迁移必须登记')
   assert.ok(manifest.files.some((entry: { file: string }) => entry.file === '030_user_plant_care_context_plant_light.sql'), 'Lux 存档 030 迁移必须登记')
   assert.ok(manifest.files.some((entry: { file: string }) => entry.file === '031_plant_visual_filter_index.sql'), '三轴筛选索引 031 迁移必须登记')
+  // Expected 来源：ClickUp z8v0kmvhnd（视觉诊断 3/4：会话与结果持久化，迁移按编号顺序新增、只写文件）。
+  assert.ok(manifest.files.some((entry: { file: string }) => entry.file === '032_diagnosis_visual_sessions.sql'), '视觉诊断会话 032 迁移必须登记')
 
   let sql = ''
   const FIRST_CAPTURE_INDEX = 1

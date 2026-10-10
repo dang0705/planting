@@ -234,27 +234,37 @@ describe('生成式视觉诊断接口合同 v1：路由、注册表与成本策�
     }
   })
 
-  test('USER_DIAGNOSIS_VISUAL 成本策略建议值：上限与点数按价目快照与 ceil(costMicros/800) 计算', () => {
+  // 合同修订（2026-10-11 用户裁决 pending → confirmed，diagnosis-visual-api.md §3）：数值从 proposedValue 移到 currentValue，
+  // 价目移到 diagnosis.visual_gen.model_tariffs（首选模型 qwen3.7-flash）；Expected 数值与公式不变。
+  test('USER_DIAGNOSIS_VISUAL 成本策略已冻结：上限与点数按价目快照与 ceil(costMicros/800) 计算', () => {
     const catalog = JSON.parse(
       fs.readFileSync(
         path.join(root, 'docs/backend-v2/architecture/configuration-variable-catalog.json'),
         'utf8'
       )
-    ) as { variables: { id: string; proposedValue?: Record<string, unknown> }[] }
-    const item = catalog.variables.find(
-      variable => variable.id === 'subscription.ai_action.diagnosis_visual_multi'
-    )
-    const policy = item?.proposedValue as {
+    ) as { variables: { id: string; status: string; currentValue?: unknown }[] }
+    const find = (id: string) => catalog.variables.find(variable => variable.id === id)
+    const item = find('subscription.ai_action.diagnosis_visual_multi')
+    expect(item?.status).toBe('confirmed')
+    const policy = item?.currentValue as {
       maxInputTokens: number
       maxOutputTokens: number
       maxImages: number
       maxModelLoops: number
       maxCostMicros: number
       estimatedPoints: number
-      inputMicrosPerToken: number
-      outputMicrosPerToken: number
-      priceSnapshotRef: string
+      microsPerPoint: number
     }
+    const tariff = (
+      find('diagnosis.visual_gen.model_tariffs')?.currentValue as Record<
+        string,
+        {
+          inputMicrosPerMillionTokens: number
+          outputMicrosPerMillionTokens: number
+          priceSnapshotRef: string
+        }
+      >
+    )['qwen3.7-flash']!
     expect(policy).toMatchObject({
       maxInputTokens: 28800,
       maxOutputTokens: 4000,
@@ -262,14 +272,16 @@ describe('生成式视觉诊断接口合同 v1：路由、注册表与成本策�
       maxModelLoops: 2
     })
     expect(policy.maxCostMicros).toBe(
-      policy.maxModelLoops *
-        (policy.maxInputTokens * policy.inputMicrosPerToken +
-          policy.maxOutputTokens * policy.outputMicrosPerToken)
+      (policy.maxModelLoops *
+        (policy.maxInputTokens * tariff.inputMicrosPerMillionTokens +
+          policy.maxOutputTokens * tariff.outputMicrosPerMillionTokens)) /
+        1_000_000
     )
     expect(policy.maxCostMicros).toBe(17920)
+    expect(policy.microsPerPoint).toBe(800)
     expect(policy.estimatedPoints).toBe(Math.ceil(policy.maxCostMicros / 800))
     expect(policy.estimatedPoints).toBe(23)
-    expect(policy.priceSnapshotRef).toBe(
+    expect(tariff.priceSnapshotRef).toBe(
       'docs/backend-v2/diagnosis-eval/qwen3.7-flash-price-snapshot-2026-10-10.json'
     )
   })

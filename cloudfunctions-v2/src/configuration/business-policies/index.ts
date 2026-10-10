@@ -1,4 +1,5 @@
 import { CARE_LONG_TERM_RULES_POLICY } from './care-long-term-rules.js'
+import { DIAGNOSIS_VISUAL_GENERATION_POLICY } from './diagnosis-visual-generation.js'
 import { HTTP_REQUEST_WRITE_POLICY } from './http-request-write.js'
 import { MVP_WATERING_POLICY } from './mvp-watering.js'
 import { PLANT_KNOWLEDGE_PUBLIC_SEARCH_POLICY } from './plant-knowledge-public-search.js'
@@ -8,6 +9,13 @@ import { USER_PLANT_LIST_RULES_POLICY } from './user-plant-list-rules.js'
 import { WEATHER_PUBLIC_READ_POLICY } from './weather-public-read.js'
 
 export { CARE_LONG_TERM_RULES_POLICY, type CareLongTermRules } from './care-long-term-rules.js'
+export {
+  DIAGNOSIS_VISUAL_GENERATION_POLICY,
+  type DiagnosisVisualGenerationRules,
+  type VisualCostPolicy,
+  type VisualModelTariff,
+  type VisualResponseFormat
+} from './diagnosis-visual-generation.js'
 export { HTTP_REQUEST_WRITE_POLICY, idempotencyRetentionMs, type HttpRequestWriteRules } from './http-request-write.js'
 export { MVP_WATERING_POLICY } from './mvp-watering.js'
 export { PLANT_KNOWLEDGE_PUBLIC_SEARCH_POLICY, type PlantKnowledgePublicSearchRules, type VisualAxisSources } from './plant-knowledge-public-search.js'
@@ -22,7 +30,7 @@ export { WEATHER_PUBLIC_READ_POLICY, type WeatherPublicReadRules } from './weath
  */
 export const BUSINESS_POLICY_DEFINITIONS: readonly TypedPolicyDefinition<unknown>[] = Object.freeze([
   CARE_LONG_TERM_RULES_POLICY, MVP_WATERING_POLICY, USER_PLANT_LIST_RULES_POLICY, USER_PLANT_ASSET_RULES_POLICY,
-  PLANT_KNOWLEDGE_PUBLIC_SEARCH_POLICY, WEATHER_PUBLIC_READ_POLICY, HTTP_REQUEST_WRITE_POLICY,
+  PLANT_KNOWLEDGE_PUBLIC_SEARCH_POLICY, WEATHER_PUBLIC_READ_POLICY, HTTP_REQUEST_WRITE_POLICY, DIAGNOSIS_VISUAL_GENERATION_POLICY,
 ] as readonly TypedPolicyDefinition<unknown>[])
 
 /** 按业务域与策略代码查找类型定义；未登记返回 null。 */

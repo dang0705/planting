@@ -90,6 +90,7 @@
 
 - 所有图片和内部模型循环都归到同一个 `productActionId`，不重复扣费（`care-points-and-ai-quota.md`）。
 - 缓存命中只会降低实际结算，预占按 0 命中估算。
+- **2026-10-11 成本策略定稿**（用户裁决，pending → confirmed）：预占 23 点、上限 17,920 微元、输入 28,800、输出 4,000、最多 3 张图、最多 2 次调用、`ceil(costMicros / 800)`；失败与非植物不扣点；单图与多图算同一次诊断。数值写入配置目录 `subscription.ai_action.diagnosis_visual_multi` 的 `currentValue`（原 `proposedValue` 移除），逐模型价目见 `diagnosis.visual_gen.model_tariffs`，发布文档为 `cloudfunctions-v2/models/policy-releases/diagnosis.visual_generation.v1.release.json`。
 
 ## 4. 错误码
 

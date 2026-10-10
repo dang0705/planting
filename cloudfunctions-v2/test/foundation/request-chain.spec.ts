@@ -571,4 +571,13 @@ describe('后端 v2 公共 HTTP 请求链', () => {
     })
     expect(executedStep).toEqual(['请求限制', '身份校验', '主体解析', '写入审计'])
   })
+
+  // Expected 来源：diagnosis-visual-api.md §2（发起视觉诊断返回 202 与 processing 状态，ClickUp z8v0kmvhnd）。
+  test('路由可声明成功状态码 202（已受理、异步处理），默认仍为 200', async () => {
+    const accepted = await executeRequestChain({ ...createDefaultRequestChain([]), successStatus: 202 })
+    expect(accepted.status).toBe(202)
+    expect(accepted.body).toHaveProperty('data')
+    const ordinary = await executeRequestChain(createDefaultRequestChain([]))
+    expect(ordinary.status).toBe(200)
+  })
 })

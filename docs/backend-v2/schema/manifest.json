@@ -183,6 +183,12 @@
       "owner": "plant-knowledge",
       "file": "031_plant_visual_filter_index.sql",
       "sha256": "1c9c4a0ddbab8fde47169f53fb1c33e4f53119d7d79fabb9da9daf1c6f60d494"
+    },
+    {
+      "order": 31,
+      "owner": "diagnosis",
+      "file": "032_diagnosis_visual_sessions.sql",
+      "sha256": "064665f2252692f4f2b8cf9f687475a3a9c84b1450b88d6f13c5d43d67b4ca26"
     }
   ]
 }

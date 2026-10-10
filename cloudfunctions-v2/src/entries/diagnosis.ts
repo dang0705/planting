@@ -1,8 +1,19 @@
 import pino from 'pino'
 
-import { HTTP_REQUEST_WRITE_POLICY } from '../configuration/business-policies/index.js'
+import {
+  DIAGNOSIS_VISUAL_GENERATION_POLICY,
+  HTTP_REQUEST_WRITE_POLICY,
+  USER_PLANT_ASSET_RULES_POLICY,
+  USER_PLANT_LIST_RULES_POLICY
+} from '../configuration/business-policies/index.js'
 import { createMysqlTypedPolicyReader, policyRulesPort } from '../foundation/policy/mysql-typed-policy-reader.js'
-import { readFunctionEnvironment } from '../configuration/environment.js'
+import { readDiagnosisEnvironment } from '../configuration/environment.js'
+import { readBailianDiagnosisEnvironment } from '../configuration/bailian-diagnosis-environment.js'
+import { createCloudbaseStorageHttpAdapter } from '../foundation/storage/cloudbase-storage-http-adapter.js'
+import { createCloudbaseStorageHttpUploader } from '../foundation/storage/cloudbase-storage-http-uploader.js'
+import { createMysqlCapabilitySnapshotReader } from '../subscription/repository/mysql-capability-snapshot-reader.js'
+import { createImageNormalizer } from '../diagnosis/image/image-normalizer.js'
+import { createBailianVisualModelClient } from '../diagnosis/provider/bailian-visual-model-client.js'
 import {
   createMysql2ConnectionSource,
   withReadConnection,
@@ -20,7 +31,9 @@ import { createDiagnosisServer } from '../diagnosis/http/server.js'
 /** CloudBase HTTP运行约定的监听端口。 */
 const servicePort = 9000
 /** 环境变量层统一读取（日志级别、数据库；非法即启动失败，错误不含取值）。 */
-const environment = readFunctionEnvironment(process.env)
+const environment = readDiagnosisEnvironment(process.env)
+/** 百炼视觉诊断 Provider（凭证只按变量名读取；超时与重试缺失时为 null，视觉诊断 503）。 */
+const bailian = readBailianDiagnosisEnvironment(process.env)
 
 /** 只记录脱敏事件；不输出连接、身份、提示词或请求正文。 */
 const logger = pino({
@@ -49,7 +62,32 @@ const resolvePrincipal = createResolveGuestOrUserPrincipal({
 })
 /** HTTP 写入策略快照端口（幂等保留期，用户 2026-10-10 裁定迁入策略发布）。 */
 const readHttpWriteRules = policyRulesPort(createMysqlTypedPolicyReader(source, HTTP_REQUEST_WRITE_POLICY), () => Date.now())
+const now = () => Date.now()
+/**
+ * 生成式视觉诊断装配（ClickUp z8v0kmvhnd）。以下三项按配置目录仍为 pending，入口固定返回 null，接口因此返回 503，
+ * 不在代码里写默认值：提示词发布（diagnosis.visual_gen.prompt_release_sha256 / output_schema_version / agent_allowlist_ref）、
+ * AI 额度预占有效期（subscription.ai_reservation.ttl_seconds）。长期植物上下文摘要的 user-plant 内部接口尚未实现，暂按「无摘要」拼装。
+ */
+const visual = {
+  readGenerationPolicy: () => createMysqlTypedPolicyReader(source, DIAGNOSIS_VISUAL_GENERATION_POLICY).read(now()),
+  readAssetRules: policyRulesPort(createMysqlTypedPolicyReader(source, USER_PLANT_ASSET_RULES_POLICY), now),
+  readListRules: policyRulesPort(createMysqlTypedPolicyReader(source, USER_PLANT_LIST_RULES_POLICY), now),
+  readCapabilitySnapshot: createMysqlCapabilitySnapshotReader(source, now),
+  readPromptRelease: async () => null,
+  readReservationTtlSeconds: async () => null,
+  readContextSummary: async () => null,
+  storage: environment.storage ? createCloudbaseStorageHttpAdapter({ fetch: globalThis.fetch, ...environment.storage }) : null,
+  uploader: environment.storage ? createCloudbaseStorageHttpUploader({ fetch: globalThis.fetch, ...environment.storage }) : null,
+  normalizer: createImageNormalizer(),
+  createModelClient: bailian
+    ? (maxOutputTokens: number) => createBailianVisualModelClient({ config: bailian, maxOutputTokens, fetchImpl: globalThis.fetch })
+    : null,
+  onProcessingError: () => {
+    logger.error({ event: 'visual_diagnosis_processing_failed', function: 'diagnosis' }, '视觉诊断后台处理失败')
+  }
+}
 const server = createDiagnosisServer({
+  visual,
   readHttpWriteRules,
   connectionSource: source,
   resolvePrincipal,

@@ -165,6 +165,11 @@ const policyBounds = {
   httpRequestWrite: fromCatalog('http.request_write.absolute_bounds', '小时 / 字节', {
     idempotencyRetentionHours: { min: 24, max: 720 }, jsonBodyLimitBytes: 1_048_576,
   }),
+  /** diagnosis/visual_generation：图片最多 3 张（适配器硬上限）、输入不超过 32K 档、1 点 = 800 微元（额度合同固定换算）、模型顺序最多 8 个。 */
+  diagnosisVisualGeneration: fromCatalog('diagnosis.visual_generation.absolute_bounds', '个 / 张 / 次 / tokens / 微元', {
+    modelOrderMaxItems: 8, maxImages: { min: 1, max: 3 }, maxModelLoops: { min: 1, max: 3 },
+    maxInputTokens: { min: 1000, max: 32_000 }, maxOutputTokens: { min: 256, max: 8192 }, microsPerPoint: 800,
+  }),
 }
 
 /**

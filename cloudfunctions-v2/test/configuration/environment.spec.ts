@@ -13,7 +13,8 @@ import {
   readIdentityEnvironment,
   readLogLevel,
   readOperationalOverride,
-  readUserPlantEnvironment
+  readUserPlantEnvironment,
+  readDiagnosisEnvironment
 } from '../../src/configuration/environment.js'
 import { RUNTIME_PARAMETERS } from '../../src/configuration/runtime-parameters.js'
 import { DatabaseConfigError } from '../../src/foundation/config/database-config.js'
@@ -212,6 +213,17 @@ describe('各云函数环境读取器', () => {
     expect(error.message).not.toContain('99999')
   })
 
+  // Expected 来源：ClickUp z8v0kmvhnd（视觉诊断登记图片与服务端压缩需要读写云存储），配置目录 Provider cloudbase_storage。
+  it('readDiagnosisEnvironment：与 user-plant 同一套云存储配置；缺环境 ID 时为 null', () => {
+    expect(readDiagnosisEnvironment(database).storage).toBeNull()
+    const environment: Record<string, string | undefined> = { ...database, V2_CLOUDBASE_ENV_ID: 'env-1', CLOUDBASE_STORAGE_API_KEY: secret }
+    const diagnosis = readDiagnosisEnvironment(environment)
+    expect(diagnosis.storage?.envId).toBe('env-1')
+    expect(diagnosis.storage?.totalDeadlineMs).toBe(10_000)
+    expect(diagnosis.storage?.readApiKey()).toBe(secret)
+    expect(JSON.stringify(diagnosis.storage)).not.toContain(secret)
+    expect(diagnosis.database).toEqual(readDiagnosisEnvironment(database).database)
+  })
   it('readUserPlantEnvironment：缺环境 ID 不创建存储；有则凭证按变量名在调用时读取、时限默认 10000', () => {
     expect(readUserPlantEnvironment(database).storage).toBeNull()
     const environment: Record<string, string | undefined> = { ...database, V2_CLOUDBASE_ENV_ID: 'env-1' }
