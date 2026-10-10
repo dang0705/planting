@@ -1,7 +1,7 @@
 {
   "capturedAt": "2026-10-10",
   "ticket": "E05 / ClickUp z8v0kmrg8a（[P1] 诊断知识来源、园艺原因及 Outcome/Action 合同）、z8v0kmr974（[P4] 固定/动态问诊与小青工具）",
-  "status": "r4_phasing_context_contract_frozen_probe_BLOCKED_ENV",
+  "status": "r5_feedback_ticket_linked_probe_stopped_on_estimate",
   "testLayer": "none（纯规划，无测试、无 TDD 声明）",
   "userRequest": "用户 2026-10-10：开始视觉诊断规划；v1 覆盖面过窄；要求最优提示词、固定前缀对缓存友好、视觉模型返回完整病因与解决方案；提供竞品结果页截图作信息结构参考",
   "scopeGuards": {
@@ -142,6 +142,11 @@
       "rev": "r4",
       "at": "2026-10-10",
       "scope": "分期（首版纯生成式+安全门）；诊断上下文合同冻结；脚本增量；探针下载与首轮执行（BLOCKED_ENV）"
+    },
+    {
+      "rev": "r5",
+      "at": "2026-10-10",
+      "scope": "最小反馈采集写入首版（z8v0kmvh0f）；候选模型官方核对；估算 > 2 元报停，未调用"
     }
   ],
   "userDecisions_2026_10_10": {
@@ -394,5 +399,26 @@
       "recovery": "用户在百炼控制台关闭「仅使用免费额度」或补充额度（付费能力开关，须用户本人授权操作）"
     },
     "verification": "cloudfunctions-v2 vitest 317 文件 3459 通过 / 5 跳过 / 0 失败；tsc 测试配置 0 错误"
+  },
+  "r5": {
+    "feedbackTicket": "https://app.clickup.com/t/z8v0kmvh0f",
+    "priceSnapshots": [
+      "docs/backend-v2/diagnosis-eval/qwen3.6-flash-price-snapshot-2026-10-10.json",
+      "docs/backend-v2/diagnosis-eval/qwen3.5-plus-price-snapshot-2026-10-10.json"
+    ],
+    "estimates": {
+      "qwen3.6-flash": {
+        "perPass": 1.03,
+        "twoPass": 2.07,
+        "threePass": 3.1
+      },
+      "qwen3.5-plus": {
+        "perPass": 0.69,
+        "twoPass": 1.38,
+        "threePass": 2.07
+      }
+    },
+    "actualCostCny": 0,
+    "pendingDecision": "方案 A–D（规划 §15.2），推荐 D+A"
   }
 }

@@ -1,0 +1,22 @@
+{
+  "snapshotId": "qwen3.5-plus-cn-beijing-2026-10-10",
+  "model": "qwen3.5-plus（别名，能力等同 qwen3.5-plus-2026-02-15）及快照 2026-04-20 / 2026-02-15",
+  "region": "华北2（北京）",
+  "tier": "单次请求输入 ≤128K tokens",
+  "inputCnyPerMillion": 0.8,
+  "outputCnyPerMillion": 4.8,
+  "cacheCreateMultiplier": 1.25,
+  "cacheHitMultiplier": 0.1,
+  "capturedAt": "2026-10-10",
+  "sources": [
+    "https://help.aliyun.com/zh/model-studio/model-pricing",
+    "https://help.aliyun.com/zh/model-studio/context-cache",
+    "https://help.aliyun.com/zh/model-studio/vision"
+  ],
+  "notesZh": [
+    "思考与非思考同价",
+    "上下文缓存文档：显式缓存支持 qwen3.5-plus 与 qwen3.5-plus-2026-04-20，不含 qwen3.5-plus-2026-02-15；隐式缓存均不含",
+    "图像理解文档：Qwen3.5-Plus 支持图片输入（URL 单次最多 256 张），按 32×32 像素/token 计",
+    "页面为原价，实际优惠以百炼控制台为准；仅用于离线评测费用换算"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "snapshotId": "qwen3.6-flash-cn-beijing-2026-10-10",
+  "model": "qwen3.6-flash（别名，能力等同 qwen3.6-flash-2026-04-16）",
+  "region": "华北2（北京）",
+  "tier": "单次请求输入 ≤256K tokens",
+  "inputCnyPerMillion": 1.2,
+  "outputCnyPerMillion": 7.2,
+  "cacheCreateMultiplier": 1.25,
+  "cacheHitMultiplier": 0.1,
+  "capturedAt": "2026-10-10",
+  "sources": [
+    "https://help.aliyun.com/zh/model-studio/model-pricing",
+    "https://help.aliyun.com/zh/model-studio/context-cache",
+    "https://help.aliyun.com/zh/model-studio/vision"
+  ],
+  "notesZh": [
+    "思考与非思考同价；价格页对别名标注「上下文缓存享有折扣」",
+    "上下文缓存文档：显式缓存支持别名 qwen3.6-flash，不含快照 qwen3.6-flash-2026-04-16；隐式缓存两者都不含",
+    "图像理解文档：Qwen3.6-Flash 支持图片输入（URL 单次最多 256 张），按 32×32 像素/token 计",
+    "页面为原价，实际优惠以百炼控制台为准；仅用于离线评测费用换算"
+  ]
+}
