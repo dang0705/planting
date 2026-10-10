@@ -47,6 +47,8 @@ const sharedColors = {
 
 /** 字阶：[字号, 行高] 均取自 token。 */
 const typeScale = ['display', 'h1', 'h2', 'h3', 'title', 'body', 'caption', 'micro']
+/** 调性规范要求收紧字距的标题字阶（≥22 号），字距取自 token。 */
+const trackedScale = new Set(['display', 'h1', 'h2'])
 
 export default {
   content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
@@ -110,7 +112,10 @@ export default {
       sans: v('font-family-base')
     },
     fontSize: Object.fromEntries(
-      typeScale.map(key => [key, [v(`font-size-${key}`), { lineHeight: v(`font-line-height-${key}`) }]])
+      typeScale.map(key => [key, [v(`font-size-${key}`), {
+        lineHeight: v(`font-line-height-${key}`),
+        ...(trackedScale.has(key) ? { letterSpacing: v(`font-letter-spacing-${key}`) } : {})
+      }]])
     ),
     fontWeight: {
       regular: v('font-weight-regular'),

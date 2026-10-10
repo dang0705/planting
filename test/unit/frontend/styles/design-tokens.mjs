@@ -44,6 +44,15 @@ check('字阶（字号/行高）换算为 rpx，字重与字族原值', () => {
   for (const [k, w] of Object.entries(figma.typography.weight)) assert.ok(declares(`font-weight-${k}`, String(w)), `--font-weight-${k}`)
   assert.match(tokens, /--font-family-base:\s*'Noto Sans SC'/u)
 })
+// 2026-10-10 调性规范（Figma 1031:5942）：≥22 号标题字距收紧，display −2%、h1 −1.5%、h2 −1%，以 em 表达
+check('标题字距按 Figma 文字样式声明为 em', () => {
+  assert.deepEqual(figma.typography.letterSpacing, { display: -0.02, h1: -0.015, h2: -0.01 })
+  for (const [k, em] of Object.entries(figma.typography.letterSpacing)) assert.ok(declares(`font-letter-spacing-${k}`, `${em}em`), `--font-letter-spacing-${k}`)
+})
+check('调性规范：状态与养护色饱和度 ≤55%（Figma 2026-10-10 降饱和）', () => {
+  const expected = { 'blue/500': '#4a88bf', 'blue/700': '#2e6491', 'sun/500': '#c99b4a', 'sun/700': '#8f6a2a', 'orange/500': '#c98252', 'orange/700': '#92573a', 'red/500': '#c55a5a', 'red/700': '#9a4141' }
+  for (const [name, hex] of Object.entries(expected)) assert.equal(figma.primitives[name].toLowerCase(), hex, name)
+})
 check('阴影层级 e0–e3 由 y/blur 与阴影色组成', () => {
   for (const [k, e] of Object.entries(figma.elevation)) {
     const y = e.y === 0 ? '0' : rpx(e.y); const blur = e.blur === 0 ? '0' : rpx(e.blur)
@@ -59,7 +68,7 @@ const probe = [
   'text-primary text-secondary text-tertiary text-disabled text-on-brand text-brand text-care-water text-status-danger-text',
   'border border-subtle border-brand-primary',
   'p-md gap-lg px-gutter mt-2xs',
-  'rounded-lg rounded-full text-title text-body font-medium shadow-e1 shadow-e3 font-sans',
+  'rounded-lg rounded-full text-title text-body text-h1 font-medium shadow-e1 shadow-e3 font-sans',
   'bg-secondary text-ink-body bg-lightEnv-dialFill shadow-facing-btn border-brand-border bg-red-500 p-4',
 ].join(' ')
 const css = (await postcss([tailwindcss({ ...config, content: [{ raw: `<div class="${probe}"></div>`, extension: 'html' }], corePlugins: { ...config.corePlugins, preflight: false } })])
@@ -92,6 +101,7 @@ check('间距、圆角、字阶、阴影映射到 token 变量', () => {
   expectRule('rounded-full', 'var(--radius-full)')
   expectRule('text-title', 'var(--font-size-title)')
   expectRule('text-title', 'var(--font-line-height-title)')
+  expectRule('text-h1', 'var(--font-letter-spacing-h1)')
   expectRule('font-medium', 'var(--font-weight-medium)')
   expectRule('shadow-e1', 'var(--elevation-e1)')
   expectRule('font-sans', 'var(--font-family-base)')

@@ -1,10 +1,10 @@
 {
   "source": {
     "figmaFileKey": "r5afPtZu8fRMRenk8TJVjO",
-    "exportedAt": "2026-10-09",
+    "exportedAt": "2026-10-10",
     "method": "use_figma 只读脚本导出本地变量（getLocalVariableCollectionsAsync）",
     "designWidthPx": 390,
-    "note": "设计稿宽度 390 由用户 2026-10-09 确认；rpx = px × 750 / 390"
+    "note": "设计稿宽度 390 由用户 2026-10-09 确认；rpx = px × 750 / 390；2026-10-10 按调性规范（Figma 1031:5942）降饱和状态/养护色并收紧 ≥22 号标题字距"
   },
   "primitives": {
     "green/600": "#2d7a4f",
@@ -26,17 +26,17 @@
     "sage/600": "#5a7a68",
     "sage/800": "#2f4237",
     "blue/50": "#ebf4fb",
-    "blue/500": "#3b8fd4",
-    "blue/700": "#23679f",
+    "blue/500": "#4a88bf",
+    "blue/700": "#2e6491",
     "sun/50": "#fdf6e4",
-    "sun/500": "#e9a516",
-    "sun/700": "#a86f05",
+    "sun/500": "#c99b4a",
+    "sun/700": "#8f6a2a",
     "orange/50": "#fdf0e6",
-    "orange/500": "#e07a2c",
-    "orange/700": "#a85316",
+    "orange/500": "#c98252",
+    "orange/700": "#92573a",
     "red/50": "#fdeeee",
-    "red/500": "#d64545",
-    "red/700": "#a52f2f",
+    "red/500": "#c55a5a",
+    "red/700": "#9a4141",
     "soil/50": "#f6efe7",
     "soil/500": "#9a6b3f",
     "alpha/black-a45": "#0a0a0a73",
@@ -150,6 +150,11 @@
       "regular": 400,
       "medium": 500,
       "bold": 700
+    },
+    "letterSpacing": {
+      "display": -0.02,
+      "h1": -0.015,
+      "h2": -0.01
     }
   },
   "elevation": {

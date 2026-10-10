@@ -1,5 +1,5 @@
 /* 由 design-system/generate-tokens.mjs 生成，请勿手改；修改请在 Figma 调整变量后重新导出并运行生成脚本。
- * 来源：Figma r5afPtZu8fRMRenk8TJVjO（2026-10-09 导出），设计宽 390，1 设计 px = 1.9231rpx。
+ * 来源：Figma r5afPtZu8fRMRenk8TJVjO（2026-10-10 导出），设计宽 390，1 设计 px = 1.9231rpx。
  */
 page,
 :root {
@@ -23,17 +23,17 @@ page,
   --prim-sage-600: #5a7a68;
   --prim-sage-800: #2f4237;
   --prim-blue-50: #ebf4fb;
-  --prim-blue-500: #3b8fd4;
-  --prim-blue-700: #23679f;
+  --prim-blue-500: #4a88bf;
+  --prim-blue-700: #2e6491;
   --prim-sun-50: #fdf6e4;
-  --prim-sun-500: #e9a516;
-  --prim-sun-700: #a86f05;
+  --prim-sun-500: #c99b4a;
+  --prim-sun-700: #8f6a2a;
   --prim-orange-50: #fdf0e6;
-  --prim-orange-500: #e07a2c;
-  --prim-orange-700: #a85316;
+  --prim-orange-500: #c98252;
+  --prim-orange-700: #92573a;
   --prim-red-50: #fdeeee;
-  --prim-red-500: #d64545;
-  --prim-red-700: #a52f2f;
+  --prim-red-500: #c55a5a;
+  --prim-red-700: #9a4141;
   --prim-soil-50: #f6efe7;
   --prim-soil-500: #9a6b3f;
   --prim-alpha-black-a45: #0a0a0a73;
@@ -128,6 +128,9 @@ page,
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-bold: 700;
+  --font-letter-spacing-display: -0.02em;
+  --font-letter-spacing-h1: -0.015em;
+  --font-letter-spacing-h2: -0.01em;
 
   /* 阴影层级（Elevation）：e0 分割线、e1 卡片、e2 浮层、e3 底部弹层 */
   --elevation-e0: 0 1.92rpx 0 var(--color-shadow-hairline);

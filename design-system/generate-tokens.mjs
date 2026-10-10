@@ -30,6 +30,8 @@ for (const [key, [size, lineHeight]] of Object.entries(source.typography.scale))
   lines.push(`  --font-size-${key}: ${rpx(size)};`, `  --font-line-height-${key}: ${rpx(lineHeight)};`)
 }
 for (const [key, weight] of Object.entries(source.typography.weight)) lines.push(`  --font-weight-${key}: ${weight};`)
+// 字距以 em 表达，随字号等比；未声明的字阶为 0（不收紧）
+for (const [key, em] of Object.entries(source.typography.letterSpacing ?? {})) lines.push(`  --font-letter-spacing-${key}: ${em}em;`)
 section('阴影层级（Elevation）：e0 分割线、e1 卡片、e2 浮层、e3 底部弹层')
 for (const [key, e] of Object.entries(source.elevation)) {
   lines.push(`  --elevation-${key}: 0 ${rpx(e.y)} ${rpx(e.blur)} var(--color-${slug(e.color)});`)
