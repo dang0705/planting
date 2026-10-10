@@ -78,7 +78,8 @@ beforeAll(async () => {
     additional_names_json JSON, taxon_rank VARCHAR(64), order_name VARCHAR(255), family VARCHAR(255), genus VARCHAR(255),
     description TEXT, bio_morphology TEXT, bio_distribution TEXT, bio_varieties TEXT, bio_habitat TEXT,
     bio_propagation TEXT, bio_commercial TEXT, bio_pests TEXT, care_difficulty VARCHAR(64),
-    temperature_range VARCHAR(64), humidity_range VARCHAR(64), light_requirement VARCHAR(512))`)
+    temperature_range VARCHAR(64), humidity_range VARCHAR(64), light_requirement VARCHAR(512),
+    cover_image_ref VARCHAR(1024), cover_source_json JSON)`)
   for (const id of [1, 2, 25]) {
     await database.execute(
       'INSERT INTO tropicals_species_encyclopedia_ref (taxon_id, name, scientific_name, additional_names_json, taxon_rank, family, genus) VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -245,7 +246,7 @@ describe('目录搜索真实 MySQL 与 HTTP', () => {
   })
 })
 
-/** E02 Expected：plant-encyclopedia-read/v1；真实 HTTP 与同一隔离 MySQL，非生产部署。 */
+/** E02 Expected：plant-encyclopedia-read/v2（无封面行 coverImage 为 null）；真实 HTTP 与同一隔离 MySQL，非生产部署。 */
 describe('百科 SQL 精确引用与展示隔离', () => {
   test('相同 slug 的不同目录引用均可精确读取，无内部身份或图片', async () => {
     for (const ref of ['catalog:01', 'catalog:02']) {

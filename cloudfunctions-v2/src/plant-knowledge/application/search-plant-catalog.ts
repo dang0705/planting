@@ -93,8 +93,9 @@ export function createSearchPlantCatalogRouteHandler(
     dtoValidate: {
       kind: 'execute',
       run: input => {
-        if (!validate(input))
-          {throw new PublicRequestError(400, 'VALIDATION_FAILED', '请求参数不合法')}
+        if (!validate(input)) {
+          throw new PublicRequestError(400, 'VALIDATION_FAILED', '请求参数不合法')
+        }
         return input
       }
     },

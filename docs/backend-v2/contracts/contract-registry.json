@@ -211,11 +211,11 @@
     },
     {
       "id": "plant-encyclopedia-read",
-      "version": "plant-encyclopedia-read/v1",
+      "version": "plant-encyclopedia-read/v2",
       "file": "plant-encyclopedia-read.md",
       "owner": "plant-knowledge",
       "status": "P2_FROZEN",
-      "sha256": "01d23bc04af72d1924df591e725639b5d347025b5b61ba221b040e33a67f6ac7"
+      "sha256": "07106e7c37abe191f26fd6aeca0a6bd72707ada1da262ffabeae209a51cb0daf"
     }
   ]
 }

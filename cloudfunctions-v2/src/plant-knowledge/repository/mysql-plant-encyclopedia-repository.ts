@@ -3,15 +3,17 @@ import type {
   PlantEncyclopediaResponse
 } from '../application/get-plant-encyclopedia.js'
 import { PublicRequestError } from '../../foundation/http/request-chain.js'
+import { toTropicalsCoverImage } from '../domain/tropicals-cover-image.js'
 import type { PublishedPlantSqlExecutor } from './mysql-published-plant-repository.js'
 
-/** 精确引用定位来源百科；不关联身份发布，不读性状原文或图片来源 JSON。 */
+/** 精确引用定位来源百科；不关联身份发布，不读性状原文。封面来源 JSON 只经白名单映射，不原样输出。 */
 const readSql = `SELECT encyclopedia.taxon_id, encyclopedia.name, encyclopedia.scientific_name,
  encyclopedia.additional_names_json, encyclopedia.taxon_rank, encyclopedia.order_name,
  encyclopedia.family, encyclopedia.genus, encyclopedia.description,
  encyclopedia.bio_morphology, encyclopedia.bio_distribution, encyclopedia.bio_varieties,
  encyclopedia.bio_habitat, encyclopedia.bio_propagation, encyclopedia.bio_commercial, encyclopedia.bio_pests,
- encyclopedia.care_difficulty, encyclopedia.temperature_range, encyclopedia.humidity_range, encyclopedia.light_requirement
+ encyclopedia.care_difficulty, encyclopedia.temperature_range, encyclopedia.humidity_range, encyclopedia.light_requirement,
+ encyclopedia.cover_image_ref, encyclopedia.cover_source_json
 FROM plant_search_documents AS document
 JOIN tropicals_species_encyclopedia_ref AS encyclopedia ON encyclopedia.taxon_id = document.taxon_id
 WHERE document.taxon_id = ? AND document.is_searchable = 1
@@ -94,7 +96,11 @@ export function createMysqlPlantEncyclopediaRepository(executor: PublishedPlantS
           humidityRange: readText(row, 'humidity_range'),
           lightRequirement: readText(row, 'light_requirement')
         },
-        coverImage: null,
+        coverImage: toTropicalsCoverImage({
+          taxonId: row.taxon_id,
+          coverImageRef: row.cover_image_ref,
+          coverSourceJson: row.cover_source_json
+        }),
         attribution: {
           name: 'Tropicals.cn',
           sourceUrl: 'https://tropicals.cn/datasets',

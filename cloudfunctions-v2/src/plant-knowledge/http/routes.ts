@@ -1,6 +1,6 @@
 import type { FrozenRoute } from '../../foundation/http/route-dispatcher.js'
 
-/** plant-encyclopedia-read/v1 新增 SQL 百科展示路由，不解析内部身份。 */
+/** plant-encyclopedia-read/v2（v1 新增，v2 公开封面图）SQL 百科展示路由，不解析内部身份。 */
 export const getPlantEncyclopediaRoute: FrozenRoute = {
   method: 'GET',
   path: '/api/v2/plant-knowledge/encyclopedia/{scientificNameSlug}',

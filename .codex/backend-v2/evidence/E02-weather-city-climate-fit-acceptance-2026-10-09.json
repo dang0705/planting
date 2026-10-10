@@ -1,0 +1,399 @@
+{
+  "ticket": "z8v0kmuqv5 [E02][P2] 城市户外气候匹配缓存与 weather 验收",
+  "capturedAt": "2026-10-09",
+  "status": "partially_accepted",
+  "statusNote": "源码、unit_fake 合同矩阵、测试库真实缓存核验、四条测试环境公开读取均有证据。本轮按用户裁决完成 plantId→taxon_id 与封面全部公开（每图带来源），合同升级为 weather-city-climate-fit/v2、plant-encyclopedia-read/v2。所有产品修复均未部署（部署由主代理统一安排），现网 weather/plant-knowledge 仍为旧版本，故不报完全验收。",
+  "expectedSources": [
+    "docs/backend-v2/contracts/weather-city-climate-fit.md（weather-city-climate-fit/v1）：四入口、参数范围、top 默认 10、plantId 别名、DTO 字段表、错误码文案、策略版本固定读取 v0-city-outdoor、行损坏→500、riskFlags 非法 JSON→[]",
+    "ClickUp z8v0kmuqv5 票面：确定性排序、公开脱敏、缺失与损坏、profiles 策略版本一致性、recommendation 真实读回、失败恢复、20城/1800 须独立核验",
+    "测试库 qinghuazhi_v2_test 只读 information_schema：city_climate_profiles 唯一键 (city_code, window_start, window_end, policy_version) 允许同城多策略行；两表含 id 主键与 created_at/updated_at、profile_json/detail_json 内部列"
+  ],
+  "tddPath": {
+    "classicRed": {
+      "description": "先落盘 test/weather/city-climate-fit-acceptance.spec.ts，在未修改产品上运行，5 条失败",
+      "failedTests": [
+        "策略版本一致性 > profiles 列表只返回 v0-city-outdoor 剖面，不混入同城旧策略行（expected length 1 but got 2）",
+        "策略版本一致性 > 单城剖面在同城存在旧策略行时仍稳定读取 v0-city-outdoor（expected 500 to be 200：LIMIT 2 不唯一）",
+        "策略版本一致性 > 只有旧策略剖面的城市视为剖面不存在（expected 200 to be 404）",
+        "缺失、损坏与失败恢复 > 剖面行损坏（monthly_json 为非法 JSON）返回脱敏 500（expected 200 to be 500）",
+        "缺失、损坏与失败恢复 > 剖面行损坏（daily_stats_json 为非法 JSON）返回脱敏 500（expected 200 to be 500）"
+      ],
+      "productFix": "mysql-city-climate-fit-repository.ts：listProfiles/getProfile SQL 增加 BINARY policy_version = BINARY ? 并绑定 v0-city-outdoor；parseJsonField 非法 JSON 改为抛错（→500），parseRiskFlags 保留合同窄例外（非法/非数组→[]）",
+      "green": "weather 50/50 通过"
+    },
+    "legacyAssertionCorrection": "旧用例 test/weather/city-climate-fit.spec.ts 中 3 处 SQL 绑定参数断言（列表 [] 、单城/fit 剖面 ['chongqing']）由当前实现反推，与合同『策略版本固定读取』冲突；在产品修复后按合同改为含 'v0-city-outdoor'。顺序说明：该改正发生在产品修复之后，属于对实现反推断言的纠正，不是改 Expected 吞失败。另把 describe 名 plant-knowledge 更正为 weather。",
+    "counterfactualRed": {
+      "description": "对到达即 GREEN 的新用例逐项注入产品突变，运行 test/weather 观察变红，随后从备份完整恢复（foundation 文件恢复后 git diff 与运行前一致，仅保留他人原有 dateStrings 改动）",
+      "mutations": [
+        {
+          "mutation": "M1 推荐去掉 encyclopedia_id 次序键",
+          "file": "src/weather/repository/mysql-city-climate-fit-repository.ts",
+          "failedTests": [
+            "weather city climate fit acceptance: recommendations 参数与排序 推荐 SQL 以 overall 降序、百科 id 升序作为确定性次序，响应保持该次序"
+          ]
+        },
+        {
+          "mutation": "M2 推荐映射泄漏原始行",
+          "file": "src/weather/repository/mysql-city-climate-fit-repository.ts",
+          "failedTests": [
+            "weather city climate fit acceptance: 公开脱敏与联表 剖面、fit 与推荐只输出合同字段，不暴露 id、内部 JSON、时间戳或 taxon_id",
+            "weather city climate fit routes 推荐按 overall 查询并附带百科展示字段"
+          ]
+        },
+        {
+          "mutation": "M3 top 默认值 10→20",
+          "file": "src/weather/application/city-climate-fit.ts",
+          "failedTests": [
+            "weather city climate fit acceptance: recommendations 参数与排序 top 省略时默认 10"
+          ]
+        },
+        {
+          "mutation": "M4 删除 plant_id/encyclopedia_id 别名",
+          "file": "src/weather/application/city-climate-fit.ts",
+          "failedTests": [
+            "weather city climate fit acceptance: fit 参数 plantId 兼容别名 plant_id",
+            "weather city climate fit acceptance: fit 参数 plantId 兼容别名 encyclopedia_id"
+          ]
+        },
+        {
+          "mutation": "M5 放宽 top 上限 50→100 与 plantId 下限 1→0",
+          "file": "src/weather/application/city-climate-fit.ts",
+          "failedTests": [
+            "weather city climate fit acceptance: recommendations 参数与排序 top=0 时在 SQL 前返回 400",
+            "weather city climate fit acceptance: recommendations 参数与排序 top=51 时在 SQL 前返回 400"
+          ]
+        },
+        {
+          "mutation": "M5b 放宽 plantId 下限 1→0",
+          "file": "src/weather/application/city-climate-fit.ts",
+          "failedTests": [
+            "weather city climate fit acceptance: fit 参数 plantId 为 0 时在 SQL 前返回 400"
+          ]
+        },
+        {
+          "mutation": "M6 riskFlags 非数组不归一",
+          "file": "src/weather/repository/mysql-city-climate-fit-repository.ts",
+          "failedTests": [
+            "weather city climate fit acceptance: 缺失、损坏与失败恢复 riskFlags 来源为非数组 JSON时视为 []"
+          ]
+        },
+        {
+          "mutation": "M7 失败时归还而非销毁连接",
+          "file": "src/foundation/database/mysql2-connection-source.ts",
+          "failedTests": [
+            "weather city climate fit acceptance: 缺失、损坏与失败恢复 SQL 失败后销毁连接，下一次请求恢复正常并归还连接"
+          ]
+        },
+        {
+          "mutation": "M8 fit 缺剖面仍查缓存",
+          "file": "src/weather/application/city-climate-fit.ts",
+          "failedTests": [
+            "weather city climate fit acceptance: fit 参数 城市剖面缺失时 fit 返回剖面不存在且不再查缓存"
+          ]
+        },
+        {
+          "mutation": "M9 数值不做 Number 转换",
+          "file": "src/weather/repository/mysql-city-climate-fit-repository.ts",
+          "failedTests": [
+            "weather city climate fit acceptance: fit 参数 plantId 兼容别名 plant_id",
+            "weather city climate fit acceptance: fit 参数 plantId 兼容别名 encyclopedia_id",
+            "weather city climate fit acceptance: recommendations 参数与排序 推荐 SQL 以 overall 降序、百科 id 升序作为确定性次序，响应保持该次序",
+            "weather city climate fit acceptance: 公开脱敏与联表 DECIMAL 与 BIGINT 字符串映射为合同 number",
+            "weather city climate fit acceptance: 公开脱敏与联表 百科联表缺失时展示字段为 null，适配分仍返回",
+            "weather city climate fit acceptance: 缺失、损坏与失败恢复 剖面行损坏（lat 非数值）返回脱敏 500"
+          ]
+        },
+        {
+          "mutation": "M10 联表缺失展示名退化为空串",
+          "file": "src/weather/repository/mysql-city-climate-fit-repository.ts",
+          "failedTests": [
+            "weather city climate fit acceptance: 公开脱敏与联表 百科联表缺失时展示字段为 null，适配分仍返回"
+          ]
+        },
+        {
+          "mutation": "M11 必填字符串接受 null",
+          "file": "src/weather/repository/mysql-city-climate-fit-repository.ts",
+          "failedTests": [
+            "weather city climate fit acceptance: 缺失、损坏与失败恢复 剖面行损坏（display_name 缺失）返回脱敏 500"
+          ]
+        },
+        {
+          "mutation": "M12 推荐缺剖面仍返回 200",
+          "file": "src/weather/application/city-climate-fit.ts",
+          "failedTests": [
+            "weather city climate fit acceptance: recommendations 参数与排序 城市剖面缺失时推荐返回剖面不存在且不查推荐"
+          ]
+        }
+      ]
+    },
+    "greenAfterRestore": "test/weather 50/50；全量 vitest 267 文件 / 2805 用例全部通过",
+    "counterfactualRedRound2And3": {
+      "description": "同法注入突变→变红→恢复（foundation 文件未触及）",
+      "mutations": [
+        {
+          "mutation": "T1 恢复 plant_id/encyclopedia_id 别名",
+          "file": "src/weather/application/city-climate-fit.ts",
+          "failedTests": [
+            "weather city climate fit acceptance: fit 参数 仅传已移除的 plant_id 别名 时在 SQL 前返回 400",
+            "weather city climate fit acceptance: fit 参数 仅传已移除的 encyclopedia_id 别名 时在 SQL 前返回 400"
+          ]
+        },
+        {
+          "mutation": "T3 同分次序键改回内部 encyclopedia_id",
+          "file": "src/weather/repository/mysql-city-climate-fit-repository.ts",
+          "failedTests": [
+            "weather city climate fit acceptance: recommendations 参数与排序 推荐 SQL 以 overall 降序、plantId（taxon_id）升序作为确定性次序，响应保持该次序"
+          ]
+        },
+        {
+          "mutation": "C1 不校验来源 JSON 的 imageRef",
+          "file": "src/plant-knowledge/domain/tropicals-cover-image.ts",
+          "failedTests": [
+            "Tropicals 封面图公开映射 来源 JSON imageRef 指向另一张图 时图仍返回，逐图来源字段全为 null"
+          ]
+        },
+        {
+          "mutation": "C2 不校验来源 JSON 的 schemaVersion",
+          "file": "src/plant-knowledge/domain/tropicals-cover-image.ts",
+          "failedTests": [
+            "Tropicals 封面图公开映射 来源 JSON schemaVersion 不符 时图仍返回，逐图来源字段全为 null"
+          ]
+        },
+        {
+          "mutation": "C3 链接不限 http(s) 协议",
+          "file": "src/plant-knowledge/domain/tropicals-cover-image.ts",
+          "failedTests": [
+            "Tropicals 封面图公开映射 逐图字段非字符串、空白或链接协议非 http(s) 时该字段为 null"
+          ]
+        },
+        {
+          "mutation": "C4 不拒绝 .. 路径段",
+          "file": "src/plant-knowledge/domain/tropicals-cover-image.ts",
+          "failedTests": [
+            "Tropicals 封面图公开映射 cover_image_ref 为含 .. 段时 coverImage 为 null"
+          ]
+        },
+        {
+          "mutation": "C5 pageUrl 不校验 Tropicals 物种页前缀",
+          "file": "src/plant-knowledge/domain/tropicals-cover-image.ts",
+          "failedTests": [
+            "Tropicals 封面图公开映射 taxon_id 不是 Tropicals 物种页时 pageUrl 为 null"
+          ]
+        },
+        {
+          "mutation": "T2 去掉 taxon_id 精确比较守卫",
+          "file": "src/weather/repository/mysql-city-climate-fit-repository.ts",
+          "failedTests": [
+            "weather city climate fit acceptance: fit 参数 plantId 与 taxon_id 仅首尾空白时不命中（模拟忽略大小写与尾随空白的排序规则仍返回该行）",
+            "weather city climate fit acceptance: fit 参数 plantId 与 taxon_id 仅大小写不同时不命中（模拟忽略大小写与尾随空白的排序规则仍返回该行）"
+          ]
+        }
+      ],
+      "note": "T2 首轮未变红（假表严格等值不模拟 _ci 排序规则），据此加强用例为『模拟排序规则仍返回该行』后再突变变红"
+    }
+  },
+  "tests": [
+    {
+      "file": "cloudfunctions-v2/test/weather/city-climate-fit.spec.ts",
+      "layer": "L3",
+      "marker": "unit_fake",
+      "cases": 8
+    },
+    {
+      "file": "cloudfunctions-v2/test/weather/city-climate-fit-acceptance.spec.ts",
+      "layer": "L3",
+      "marker": "unit_fake",
+      "cases": 45
+    },
+    {
+      "file": "cloudfunctions-v2/test/weather/city-climate-fit-cover-image.spec.ts",
+      "layer": "L3",
+      "marker": "unit_fake",
+      "cases": 3
+    },
+    {
+      "file": "cloudfunctions-v2/test/weather/support/city-climate-fake.ts",
+      "role": "共用假 MySQL 夹具（按公开过滤列等值匹配）"
+    },
+    {
+      "file": "cloudfunctions-v2/test/plant-knowledge/tropicals-cover-image.spec.ts",
+      "layer": "L1",
+      "marker": "unit_fake",
+      "cases": 20
+    },
+    {
+      "file": "cloudfunctions-v2/test/plant-knowledge/get-plant-encyclopedia.spec.ts",
+      "layer": "L3",
+      "marker": "unit_fake",
+      "change": "v2 Expected + 真实龟背竹封面用例"
+    },
+    {
+      "file": "cloudfunctions-v2/test/e2e/search-plant-catalog.mysql.spec.ts",
+      "layer": "L3",
+      "marker": "unit_real_data（本地 Docker 隔离 MySQL）",
+      "change": "读取桩表增加 cover_image_ref VARCHAR(1024)、cover_source_json JSON（类型照抄测试库）",
+      "result": "15/15 通过"
+    }
+  ],
+  "characterization": [
+    "cityCode 查询别名 city、cityCode 两端空白 trim：合同未定义，实现存在，未写合同测试",
+    "未知查询参数被忽略：合同未定义"
+  ],
+  "realDataVerification": {
+    "marker": "unit_real_data（只读 SQL，经 CloudBase MCP queryMysqlDatabase，限定 qinghuazhi_v2_test；未写库、未 DDL、未部署）",
+    "city_climate_profiles": {
+      "rows": 20,
+      "distinctCities": 20,
+      "policyVersions": [
+        "v0-city-outdoor"
+      ],
+      "window": "2021-01-01..2025-12-31",
+      "dayCount": 1826,
+      "monthlyJson": "20/20 为 12 元素数组",
+      "nullDisplayNameOrDailyStats": 0,
+      "chongqing": [
+        29.563,
+        106.5516
+      ]
+    },
+    "plant_city_climate_fit_cache": {
+      "rows": 1800,
+      "distinctCities": 20,
+      "distinctPlants": 90,
+      "perCity": "20 城均为 90 条",
+      "plantsNotInAll20Cities": 0,
+      "policyVersions": [
+        "v0-city-outdoor"
+      ],
+      "orphanCity": 0,
+      "orphanEncyclopedia": 0,
+      "scoresOutOfRange0to100": 0,
+      "riskFlagsNullOrNonArray": 0,
+      "primaryBottleneckNull": 8,
+      "overallTieGroups": 315,
+      "overallRangeByCity": "北京 27.80–46.30 … 厦门 29.60–70.30"
+    },
+    "encyclopediaJoin90": {
+      "withCoverImageRef": 79,
+      "coverRefFormat": "相对路径 img/2026/04/...，非 http/cloud://",
+      "scientificNameNull": 0,
+      "careDifficultyNull": 0,
+      "careDifficultyValues": [
+        "beginner",
+        "intermediate"
+      ]
+    },
+    "conclusion": "用户提供的 20 城 / 1800 条缓存现状经独立核验成立（20×90=1800）。information_schema.TABLE_ROWS 显示 1801 为估算值，COUNT(*) 精确为 1800。",
+    "recommendationReadback": "chongqing top5 真实 SQL：3761(52.20)、3755(52.10)、72939(52.10)、4857(51.00)、5951(50.90)；同分 52.10 按 encyclopedia_id 升序，次序确定"
+  },
+  "liveReads": {
+    "marker": "e2e_real_api（测试环境默认域名，公开 GET，只读）",
+    "note": "现网为本次修复前已部署版本",
+    "results": [
+      "GET profiles → 200，20 项，按 cityCode 升序，均 v0-city-outdoor，字段与合同一致",
+      "GET profiles/chongqing → 200，29.563/106.5516",
+      "GET fit?cityCode=chongqing&plantId=4857 → 200，overall 51、riskFlags [WINTER_COLD, WINTER_LOW_LIGHT]，与库一致",
+      "GET recommendations?cityCode=chongqing&top=5 → 200，次序与真实 SQL 读回一致；省略 top → count 10",
+      "profiles/ChongQing → 400；plantId=0 → 400；top=51 → 400；fit plantId=999999999 → 404；recommendations?cityCode=nowhere → 404；plant_id 别名 → 200"
+    ]
+  },
+  "verification": {
+    "vitestFull": "269 files / 2832 tests passed",
+    "vitestMysqlEncyclopedia": "search-plant-catalog.mysql.spec.ts 15/15",
+    "typecheck": "0 错误",
+    "oxlint": "0 errors",
+    "oxfmt": "改动文件格式通过",
+    "contractRegistry": "plant-encyclopedia-read 条目 version→v2，sha256 更新为 07106e7c…"
+  },
+  "notCovered": [
+    "全部修复未部署：现网 weather 仍返回数字 plantId 与 coverImageRef、profiles 未按策略过滤；plant-knowledge 百科仍返回 coverImage:null。部署由主代理统一安排",
+    "前端/调用方影响：plantId 类型与取值、别名移除、coverImageRef→coverImage 为不兼容变更；src/** 未改（本阶段禁止）",
+    "全表封面来源统计 BLOCKED_ENV（RunSql 超时），只核验了 weather 涉及的 90 种",
+    "weather-city-climate-fit 合同未登记在 contract-registry.json（仅更新了已登记的 plant-encyclopedia-read）",
+    "CDN 主机 cdn.tropicals.cn 为代码常量 + 外部表合同通知条件，未进入 configuration-variable-catalog（由主代理裁决是否需要）",
+    "同城同策略多窗口时单城读取 500；合同未定义选择规则",
+    "light_match 语义策略来源未验收",
+    "旧 city-climate-fit-http 退役仅登记 E08 候选"
+  ],
+  "userDecisions": [
+    "2026-10-09：weather 对外 plantId 改为 taxon_id，与 plant-knowledge 统一，不再暴露百科表自增主键",
+    "2026-10-09：所有封面图全部对外公开，暂不考虑法律风险，但每个封面图要有来源"
+  ],
+  "round2_plantIdTaxon": {
+    "expectedSource": "docs/backend-v2/contracts/weather-city-climate-fit.md v2 版本变更节（先于测试与产品修订）",
+    "contractChanges": [
+      "plantId: number(encyclopedia_id) → string(taxon_id)，查询参数同步；非空、≤512 码点、不裁剪、精确匹配",
+      "移除 plant_id / encyclopedia_id 别名",
+      "推荐同分次序键改为 taxon_id 升序；缓存行缺百科不进入推荐（内连接）",
+      "联表缺 taxon_id 视为行损坏 500"
+    ],
+    "classicRed": {
+      "log": "18 条失败（test/weather，未改产品）",
+      "failedTests": [
+        "plantId 按 taxon_id 精确查询，响应 plantId 为 taxon_id 字符串",
+        "旧的百科内部数字 id 不再定位植物，返回缓存不存在",
+        "plantId 恰为 512 个 Unicode 码点时合法",
+        "仅传已移除的 encyclopedia_id 别名 时在 SQL 前返回 400",
+        "推荐 SQL 以 overall 降序、plantId（taxon_id）升序作为确定性次序，响应保持该次序",
+        "剖面、fit 与推荐只输出合同字段，不暴露数据库 id（含百科内部 encyclopedia_id）、内部 JSON 或时间戳",
+        "DECIMAL 字符串映射为合同 number，plantId 为 taxon_id 字符串",
+        "推荐与 fit 均以内连接映射 taxon_id，不再用左连接产出无公开 plantId 的行",
+        "适配缓存行损坏（联表 taxon_id 缺失）返回脱敏 500",
+        "fit 返回剖面与适配分数（旧用例按 v2 改 Expected 后）",
+        "推荐按 overall 查询并附带百科展示字段（旧用例按 v2 改 Expected 后）",
+        "以及 7 条因 plantId 为 taxon_id 而被 v1 实现 400 拒绝的 fit 用例"
+      ]
+    },
+    "productFix": "weather repository：getFit/listRecommendations 改为 JOIN tropicals_species_encyclopedia_ref 取 e.taxon_id，SELECT 不含内部 id；getFit 以 e.taxon_id = ? 命中唯一索引（测试库 EXPLAIN：uk_tse_taxon_id const，rows=1），因列排序规则为 utf8mb4_unicode_ci，映射后代码做原值精确比较；application：plantId 字符串 Schema（1–512）、移除别名；server 类型同步",
+    "realSqlReadback": "测试库只读执行新推荐 SQL：重庆前 5 为 fatsia-japonica 52.20、caryota-maxima 52.10、fagraea-ceilanica 52.10、nageia-nagi 51.00、syngonium-podophyllum 50.90（同分按 taxon_id 升序）"
+  },
+  "round3_coverImage": {
+    "expectedSource": [
+      "plant-encyclopedia-read/v2「封面图」节（TropicalsCoverImage DTO 与规则）",
+      "weather-city-climate-fit/v2 推荐项 coverImage",
+      "cloudfunctions-v2/models/plant-knowledge/tropicals-encyclopedia-external-table-contract.md 新增 cover_source_json 读取与通知条件 7、8"
+    ],
+    "dto": "coverImage = { url, source: { provider, pageUrl, sourceName, originalUrl, creator, license, licenseUrl, attribution } } | null",
+    "urlRule": "https://cdn.tropicals.cn/ + cover_image_ref（仅 ^img/ 路径段 [A-Za-z0-9._-]，拒绝 . / .. 段）",
+    "urlEvidence": "测试库 cover_source_json.resolvedImageUrl 均为该前缀 + imageRef（90 种中 79 张 cdn_match=79），resolutionStatus=HEAD_VERIFIED_IMAGE；2026-10-09 实测 HEAD img/2026/04/c0b613d0d6f6.webp、img/2026/09/cce973838b11.webp、img/2026/04/97bda1c6d79e.webp 均 200 image/webp",
+    "sourceRule": "封面存在时 source 恒为对象（provider 固定 Tropicals.cn，pageUrl=taxon_id 物种页），保证每图有来源；cover_source_json 缺失/非法/版本不符/imageRef 指向他图时逐图六字段全 null，不 500；替代主代理『source 置 null』建议的理由：图片由 Tropicals CDN 托管、物种页恒可知，source 为 null 会违背『每图要有来源』",
+    "excludedFields": [
+      "displayPolicy",
+      "reviewStatus",
+      "coverAuditStatus",
+      "coverBlockedReason",
+      "licenseStatus",
+      "coverCommercialOk",
+      "apiEndpoint",
+      "resolvedImageUrl",
+      "imageLicenseNote",
+      "datasetLicense",
+      "原始 JSON"
+    ],
+    "realDataStats90Plants": {
+      "plants": 90,
+      "withCover": 79,
+      "coverWithoutSourceJson": 0,
+      "refPatternOk": 79,
+      "sourceImageRefMatches": 79,
+      "schemaV1": 90,
+      "withCreatorLicenseAttribution": 6,
+      "sampleSource": "iNaturalist（inat_obs），cc-by / cc0",
+      "unknownSourceCovers": 73
+    },
+    "fullTableStats": "BLOCKED_ENV：15 万行全表统计 3 次经 CloudBase MCP RunSql 超时，未取得全表封面/来源计数",
+    "classicRed": {
+      "failedTests": [
+        "L1 test/plant-knowledge/tropicals-cover-image.spec.ts 整文件（模块不存在）",
+        "有封面时输出 CDN 完整地址与来源，不再输出相对路径 coverImageRef",
+        "无封面时 coverImage 为 null",
+        "推荐 SQL 读取封面来源列",
+        "测试库龟背竹真实封面：输出 CDN 完整地址与来源，不输出原始来源 JSON",
+        "剖面、fit 与推荐只输出合同字段…（keys 含 coverImage）",
+        "推荐按 overall 查询并附带百科展示字段（旧用例 v2 Expected）"
+      ]
+    },
+    "productFix": "新增 src/plant-knowledge/domain/tropicals-cover-image.ts（toTropicalsCoverImage 纯函数）；weather 推荐 SQL 增读 e.cover_source_json 并映射 coverImage；plant-knowledge 百科 SQL 增读 cover_image_ref、cover_source_json，coverImage 类型改为 TropicalsCoverImage | null",
+    "otherCovers": "plant-knowledge 目录搜索只有 hasImage 布尔，不返回封面，未改；如需列表封面需另行定 DTO"
+  }
+}

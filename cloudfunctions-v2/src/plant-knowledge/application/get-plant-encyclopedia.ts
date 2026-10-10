@@ -5,6 +5,7 @@ import {
   type RequestChainAuditEvent
 } from '../../foundation/http/request-chain.js'
 import type { RouteHandler } from '../../foundation/http/route-dispatcher.js'
+import type { TropicalsCoverImage } from '../domain/tropicals-cover-image.js'
 
 /** 百科定位 DTO；分类引用与路径 slug 必须共同提供，不能混用内部身份。 */
 export type PlantEncyclopediaQuery = {
@@ -46,8 +47,8 @@ export type PlantEncyclopediaResponse = {
   readonly careDisplay: Readonly<
     Record<'difficulty' | 'temperatureRange' | 'humidityRange' | 'lightRequirement', string | null>
   >
-  /** 未有已核验的逐图许可准入策略，首版不返回图片。 */
-  readonly coverImage: null
+  /** 封面图（完整地址 + 逐图来源）；无封面或引用不可公开时为 null（plant-encyclopedia-read/v2）。 */
+  readonly coverImage: TropicalsCoverImage | null
   /** 文本来源署名与授权链接，不推定图片许可。 */
   readonly attribution: {
     /** 文本来源方的正式署名。 */

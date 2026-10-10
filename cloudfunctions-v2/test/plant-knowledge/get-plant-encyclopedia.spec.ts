@@ -27,11 +27,13 @@ const row = {
   humidity_range: null,
   light_requirement: null,
   cover_image_ref: 'https://unreviewed.example/image.jpg',
+  cover_source_json: null,
   water_frequency_source_json: { internal: true },
   id: 1
 }
 let server: Server | undefined
 let parameters: readonly (string | number | null)[] = []
+let lastSql = ''
 async function start(
   rows: readonly Record<string, unknown>[] = [row],
   failure?: Error
@@ -43,7 +45,8 @@ async function start(
     release: () => undefined,
     destroy: () => undefined,
     execute: async () => ({ affectedRows: 0, insertId: 0 }),
-    query: async (_sql, bound) => {
+    query: async (sql, bound) => {
+      lastSql = sql
       parameters = bound
       if (failure) {
         throw failure
@@ -67,9 +70,9 @@ afterEach(async () => {
 })
 const path = '/api/v2/plant-knowledge/encyclopedia/monstera-deliciosa'
 const reference = encodeURIComponent(row.taxon_id)
-/** Expected：plant-encyclopedia-read/v1；L3 / unit_fake。真实 HTTP、路由、请求链与 Repository，仅替换 MySQL。 */
+/** Expected：plant-encyclopedia-read/v2（封面公开、每图带来源）；L3 / unit_fake。真实 HTTP、路由、请求链与 Repository，仅替换 MySQL。 */
 describe('独立 SQL 百科公开读取', () => {
-  test('展示白名单、空值和署名完整，无内部字段、无未经许可图片', async () => {
+  test('展示白名单、空值和署名完整，无内部字段；绝对外链封面引用不公开', async () => {
     const base = await start()
     const response = await fetch(`${base}${path}?catalogTaxonRef=${reference}`)
     expect(response.status).toBe(200)
@@ -106,6 +109,50 @@ describe('独立 SQL 百科公开读取', () => {
       }
     })
     expect(parameters).toEqual([row.taxon_id])
+  })
+  test('测试库龟背竹真实封面：输出 CDN 完整地址与来源，不输出原始来源 JSON', async () => {
+    const base = await start([
+      {
+        ...row,
+        cover_image_ref: 'img/2026/04/95279010eb36.webp',
+        cover_source_json: {
+          coverAttribution: null,
+          coverCreator: null,
+          coverLicense: null,
+          coverLicenseUrl: null,
+          coverSource: null,
+          coverSourceUrl: null,
+          displayPolicy: 'USER_ACCEPTED_UNKNOWN_LICENSE_RISK_TEST_REFERENCE',
+          imageRef: 'img/2026/04/95279010eb36.webp',
+          licenseStatus: 'UNKNOWN',
+          resolvedImageUrl: 'https://cdn.tropicals.cn/img/2026/04/95279010eb36.webp',
+          reviewStatus: 'PENDING',
+          schemaVersion: 'tropicals-cover-reference/v1',
+          taxonId: row.taxon_id
+        }
+      }
+    ])
+    const response = await fetch(`${base}${path}?catalogTaxonRef=${reference}`)
+    expect(response.status).toBe(200)
+    const text = await response.text()
+    const body = JSON.parse(text) as { data: { coverImage: unknown } }
+    expect(body.data.coverImage).toEqual({
+      url: 'https://cdn.tropicals.cn/img/2026/04/95279010eb36.webp',
+      source: {
+        provider: 'Tropicals.cn',
+        pageUrl: row.taxon_id,
+        sourceName: null,
+        originalUrl: null,
+        creator: null,
+        license: null,
+        licenseUrl: null,
+        attribution: null
+      }
+    })
+    expect(text).not.toContain('USER_ACCEPTED')
+    expect(text).not.toContain('PENDING')
+    expect(lastSql).toContain('encyclopedia.cover_image_ref')
+    expect(lastSql).toContain('encyclopedia.cover_source_json')
   })
   test.each(['', '?catalogTaxonRef=', `?catalogTaxonRef=${'a'.repeat(513)}`])(
     '非法引用 %s 在 SQL 前拒绝',

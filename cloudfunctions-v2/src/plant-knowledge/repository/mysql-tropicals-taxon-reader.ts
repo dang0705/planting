@@ -1,7 +1,10 @@
 /** Tropicals 目录只读查询执行端口；由入口绑定新的只读连接。 */
 export interface TropicalsTaxonSqlExecutor {
   /** 执行参数化 SELECT 并返回结果行；不得拼接输入。 */
-  readonly query: (sql: string, parameters: readonly (string | number | null)[]) => Promise<readonly Record<string, unknown>[]>
+  readonly query: (
+    sql: string,
+    parameters: readonly (string | number | null)[]
+  ) => Promise<readonly Record<string, unknown>[]>
 }
 
 /** 目录条目最小公开语义：只给长期养护与日历标题使用。 */
@@ -25,12 +28,22 @@ export function createMysqlTropicalsTaxonReader(executor: TropicalsTaxonSqlExecu
 } {
   return {
     async read(catalogTaxonRef) {
-      if (typeof catalogTaxonRef !== 'string' || catalogTaxonRef.length === 0 || catalogTaxonRef.length > 512) {
+      if (
+        typeof catalogTaxonRef !== 'string' ||
+        catalogTaxonRef.length === 0 ||
+        catalogTaxonRef.length > 512
+      ) {
         throw new TypeError('目录引用不合法')
       }
       const rows = await executor.query(readSql, [catalogTaxonRef])
-      if (rows.length === 0) { return null }
-      if (rows.length !== 1 || rows[0]!.taxon_id !== catalogTaxonRef || typeof rows[0]!.name !== 'string') {
+      if (rows.length === 0) {
+        return null
+      }
+      if (
+        rows.length !== 1 ||
+        rows[0]!.taxon_id !== catalogTaxonRef ||
+        typeof rows[0]!.name !== 'string'
+      ) {
         throw new Error('Tropicals 目录条目读回不合法')
       }
       const name = (rows[0]!.name as string).trim()
