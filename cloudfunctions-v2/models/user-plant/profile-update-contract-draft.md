@@ -1,6 +1,6 @@
 # 用户植物档案更新合同待冻结稿
 
-所属票据：`z8v0kmr9mj`；执行步骤：E03。状态：待冻结，不作为运行时准入或已实现接口。
+所属票据：`z8v0kmr9mj`；执行步骤：E03。状态：**已被替代（superseded）**——2026-10-10 由正式合同 `docs/backend-v2/contracts/user-plant-environment-profile.md`（user-plant-environment-profile/v1）冻结替代；本稿仅保留为历史线索，不再作为任何 Expected 来源。
 
 ## 更新入口与事务边界
 

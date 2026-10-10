@@ -28,6 +28,9 @@ import type {
 } from '../application/get-user-plant.js'
 import type { MeasuredProfileApplicationInput } from '../application/save-measured-profile.js'
 import { lockUserPlantProfilePatch, type UserPlantProfilePatch } from '../domain/profile-patch.js'
+import { ENVIRONMENT_GROUP_KEYS, type PotShapeProfile, type SubstrateProfile } from '../domain/environment-profile.js'
+import type { CareContextGroupPatch } from '../repository/mysql-user-plant-environment-repository.js'
+import type { UserPlantProfileCompletenessPolicy } from '../domain/evaluate-profile-completeness.js'
 
 /** 已登记档案修改路由；引用模板用于幂等隔离，不能替换为某次请求的实际路径。 */
 export const updateProfileRoute: FrozenRoute = {
@@ -43,6 +46,8 @@ export interface ProfileWritePolicy {
   readonly profileVersion: string
   /** 幂等收据保留毫秒数，由发布策略明确给出，不设隐式默认。 */
   readonly idempotencyRetentionMs: number
+  /** 已发布完整度策略原文（user-plant-profile/v1）；缺失时失败关闭，不能跳过首株完整判定。 */
+  readonly profilePolicy?: UserPlantProfileCompletenessPolicy
 }
 /** HTTP边界只处理协议，归属和保存分别调用已有应用端口。 */
 export interface UpdateProfileRouteDependencies {
@@ -60,6 +65,8 @@ export interface UpdateProfileRouteDependencies {
   readonly maxBodyBytes: number | null
   /** 当前主体对应的只读发布策略快照，缺失或损坏必须失败关闭。 */
   readonly resolveWritePolicy: (principal: UserPrincipalDto) => Promise<ProfileWritePolicy | null>
+  /** weather 城市目录只读：位置分组的 cityRef 是否存在；未接入时提交位置失败关闭为503。 */
+  readonly cityExists?: (cityRef: string) => Promise<boolean>
   /** 服务端可信UTC毫秒时钟，客户端不得覆盖。 */
   readonly now: () => number
   /** 固定请求链产出的脱敏结果事件端口，不记录正文或凭据。 */
@@ -282,6 +289,7 @@ export function createUpdateProfileRouteHandler(
             policy.profileVersion.trim() !== policy.profileVersion ||
             !/\S/u.test(policy.profileVersion) ||
             [...policy.profileVersion].length > 32 ||
+            policy.profilePolicy === undefined ||
             !Number.isSafeInteger(policy.idempotencyRetentionMs) ||
             policy.idempotencyRetentionMs <= 0 ||
             !Number.isSafeInteger(now) ||
@@ -291,12 +299,24 @@ export function createUpdateProfileRouteHandler(
           ) {
             throw unavailable()
           }
+          const location = dto.patch.location
+          if (location !== undefined && location !== null) {
+            let exists: boolean
+            try {
+              if (!dependencies.cityExists) { throw unavailable() }
+              exists = await dependencies.cityExists(location.cityRef)
+            } catch { throw unavailable() }
+            if (!exists) { throw new PublicRequestError(400, 'VALIDATION_FAILED', '城市不在支持列表') }
+          }
+          const groups = Object.fromEntries(ENVIRONMENT_GROUP_KEYS.filter(key => key in dto.patch).map(key => [key, dto.patch[key] ?? null]))
           const facts = {
             userPlantRef: dto.userPlantRef,
             version: dto.patch.version,
             ...('nickname' in dto.patch ? { nickname: dto.patch.nickname! } : {}),
-            ...('measuredPot' in dto.patch ? { measuredPot: dto.patch.measuredPot! } : {})
+            ...('measuredPot' in dto.patch ? { measuredPot: dto.patch.measuredPot! } : {}),
+            ...groups
           }
+          const environment = Object.fromEntries(['location', 'lighting', 'ventilation'].filter(key => key in groups).map(key => [key, groups[key]])) as CareContextGroupPatch
           return {
             command: {
               userRef: principal.user_id,
@@ -304,9 +324,13 @@ export function createUpdateProfileRouteHandler(
               expectedVersion: dto.patch.version,
               ...('nickname' in dto.patch ? { nickname: dto.patch.nickname } : {}),
               ...('measuredPot' in dto.patch ? { measuredPot: dto.patch.measuredPot } : {}),
+              ...('potShape' in groups ? { potShape: groups.potShape as PotShapeProfile | null } : {}),
+              ...('substrate' in groups ? { substrate: groups.substrate as SubstrateProfile | null } : {}),
               profileVersion: policy.profileVersion,
               occurredAtMs: now
             },
+            environment,
+            profilePolicy: policy.profilePolicy,
             idempotency: {
               principalType: 'user',
               principalScopeHash: digest(principal.user_id),

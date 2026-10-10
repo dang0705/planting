@@ -14,6 +14,17 @@ const diagnosisResultSchema = registry.routes.some(route => route.responseContra
   ? JSON.parse(fs.readFileSync(path.join(apiDirectory, '../contracts/schemas/diagnosis-result.v1.schema.json'), 'utf8'))
   : null
 const printableAsciiPattern = '^[\\x20-\\x7E]+$'
+/** 档案修改请求（user-plant-environment-profile/v1）唯一机器事实源；measuredPot 的 $ref 在此内联为同目录 v1 Schema。仅在登记该合同时加载。 */
+const updateUserPlantRequestSchema = registry.routes.some(route => route.requestContract === 'UpdateUserPlantRequest') ? (() => {
+  const modelDirectory = path.join(apiDirectory, '../../../cloudfunctions-v2/models/user-plant')
+  const profilePatchV2 = JSON.parse(fs.readFileSync(path.join(modelDirectory, 'profile-patch.v2.schema.json'), 'utf8'))
+  const measuredPotV1 = JSON.parse(fs.readFileSync(path.join(modelDirectory, 'measured-pot-profile.v1.schema.json'), 'utf8'))
+  return {
+    type: 'object', additionalProperties: false, required: profilePatchV2.required, minProperties: profilePatchV2.minProperties,
+    description: profilePatchV2.description,
+    properties: { ...profilePatchV2.properties, measuredPot: { type: 'object', additionalProperties: false, required: measuredPotV1.required, properties: measuredPotV1.properties } },
+  }
+})() : null
 
 /** 长期养护组件（long-term-care/v1）；字段语义见 cloudfunctions-v2/models/care/long-term-care-contract.md。 */
 const ltcUtc = { type: 'string', format: 'date-time' }
@@ -75,6 +86,10 @@ const requestSchemaRefByContract = {
   UserPlantVersionRequest: '#/components/schemas/UserPlantVersionRequest',
   /** 删除（user-plant.md「删除公开接口」，2026-10-10 冻结）：只允许 expectedVersion。 */
   DeleteUserPlantRequest: '#/components/schemas/DeleteUserPlantRequest',
+  /** 身份确认（user-plant-identity-confirmation/v1，2026-10-10 冻结）。 */
+  ConfirmUserPlantIdentityRequest: '#/components/schemas/ConfirmUserPlantIdentityRequest',
+  /** 档案修改（profile-patch/v2，2026-10-10 冻结）。 */
+  UpdateUserPlantRequest: '#/components/schemas/UpdateUserPlantRequest',
 }
 
 const successSchemaRefByContract = {
@@ -608,6 +623,15 @@ const openapi = {
             maximum: Number.MAX_SAFE_INTEGER,
             description: '调用方最后读到的用户植物版本，必须是正安全整数。',
           },
+        },
+      },
+      ...(updateUserPlantRequestSchema ? { UpdateUserPlantRequest: updateUserPlantRequestSchema } : {}),
+      ConfirmUserPlantIdentityRequest: {
+        type: 'object', additionalProperties: false, required: ['expectedVersion', 'plantIdentityRef', 'source'],
+        properties: {
+          expectedVersion: { type: 'integer', minimum: 1, maximum: Number.MAX_SAFE_INTEGER },
+          plantIdentityRef: { type: 'string', pattern: '^pid_[A-Za-z0-9_-]{8,60}$' },
+          source: { type: 'object', additionalProperties: false, required: ['type'], properties: { type: { const: 'user_search' } } },
         },
       },
       UserPlant: {

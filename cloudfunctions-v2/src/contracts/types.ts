@@ -177,6 +177,11 @@ export type UserPlantProfileDto = {
   /** 昵称原文，空字符串为已清除，不暴露任何内部状态。 */ nickname: string;
   /** 存在且通过冻结Schema的实测事实；不存在时省略，不补造全null。 */
   measuredPot?: import('../user-plant/domain/measured-pot-profile.js').MeasuredPotProfile;
+  /** 已设置的盆型与盆壁材质（user-plant-environment-profile/v1）；未设置时省略。 */ potShape?: import('../user-plant/domain/environment-profile.js').PotShapeProfile;
+  /** 已设置的基质组分；未设置时省略。 */ substrate?: import('../user-plant/domain/environment-profile.js').SubstrateProfile;
+  /** 已设置的城市级位置（不含经纬度）；未设置时省略。 */ location?: import('../user-plant/domain/environment-profile.js').LocationProfile;
+  /** 已设置的光照选项；未设置时省略。 */ lighting?: import('../user-plant/domain/environment-profile.js').LightingProfile;
+  /** 已设置的通风与空气环境；未设置时省略。 */ ventilation?: import('../user-plant/domain/environment-profile.js').VentilationProfile;
 };
 
 /** 当前身份未确认时不得夹带已确认身份引用。 */

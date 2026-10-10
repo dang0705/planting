@@ -3,7 +3,7 @@
 - 机器事实源：`configuration-variable-catalog.json`
 - Schema：`configuration-variable-catalog/v1`
 - 目录版本：`2026-10-04.1`
-- 当前共 216 项业务/治理变量、16 个 Provider 配置档案：已冻结 87 项、待冻结 58 项、不可配置硬规则 71 项。
+- 当前共 219 项业务/治理变量、16 个 Provider 配置档案：已冻结 92 项、待冻结 55 项、不可配置硬规则 72 项。
 
 本文件由同目录生成脚本从 JSON 生成，便于中文阅读。实施 Agent 必须先按领域读取本文件，再只深读该变量引用的合同或决策；不得把 `P1_PENDING` 猜成默认值。待冻结项必须带原因与阻断范围，未冻结前只能推进不依赖该值的工作。
 
@@ -109,7 +109,9 @@
 |---|---|---|---|---|---|---|---|---|
 | `user-plant.free.active_limit` | 免费用户活跃植物上限 | `userplant_limits` | 领域策略 / 已冻结 | `1` 株 | subscription | user-plant、subscription | 新策略限制未来创建及归档后重新激活，不删除或自动归档既有活跃植物；失败：策略不可用时拒绝新增及重新激活植物 | P1 / [P1] 用户植物、身份和游客认领合同 |
 | `user-plant.profile.minimum_completeness` | 有效档案最低完整度 | `userplant_limits` | 领域策略 / 已冻结 | `{"profileVersion":"user-plant-profile/v1","requiredFields":["identityStatus","pot","location","lightingEnvironment","ventilationEnvironment"],"acceptedIdentityStates":["unidentified","candidate_pending","confirmed"],"rewardOncePerUser":true}` | user-plant | user-plant、subscription | 用户植物档案策略版本；失败：未冻结前不发首株有效档案积分 | P1 / [P1] 用户植物、身份和游客认领合同 |
-| `user-plant.assets.max_count_per_plant` | 单株植物资产数量上限 | `userplant_limits` | 领域策略 / 待冻结 | P1_PENDING 个 | user-plant | user-plant、storage | 资产策略版本；失败：未冻结前只允许最小封面资产集合；待冻结原因：容量与成本尚未测量；阻断：多资产上传 | P2 / [P1] 用户植物、身份和游客认领合同 |
+| `user-plant.assets.max_count_per_plant` | 单株植物资产数量上限 | `userplant_limits` | 领域策略 / 已冻结 | `1` 个 | user-plant | user-plant、storage | 资产策略版本；调整须同步 user-plant-cover-asset 合同与测试；失败：策略不可用时拒绝登记封面 | P2 / [E03][P2] 用户植物核心实现 |
+| `user-plant.assets.replaced_cover_cleanup_days` | 换下的旧封面可清理等待天数 | `userplant_limits` | 领域策略 / 已冻结 | `7` 天 | user-plant | user-plant、storage | 资产策略版本；只影响之后被换下的封面；失败：策略不可用时不清理，保留旧文件 | P2 / [E03][P2] 用户植物核心实现 |
+| `user-plant.timeline.page_size` | 用户植物时间线分页大小 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `{"default":20,"max":50}` | user-plant | GET /api/v2/user-plants/{userPlantRef}/timeline | 接口容量边界，不做运营配置；调整须改代码、合同与测试；失败：limit 超出 1～50 返回 VALIDATION_FAILED | P2 / [E03][P2] 用户植物核心实现 |
 | `user-plant.authenticated_ephemeral.case_ttl_hours` | 已登录用户临时植物案例有效期 | `userplant_limits` | 领域策略 / 已冻结 | `168` 小时 | user-plant | user-plant、care、diagnosis | 发布不可变临时案例策略版本；新值只影响新建案例，已签发案例保留原失效时间；失败：无已冻结策略时拒绝新建已登录临时植物案例，不影响游客临时路径和长期用户植物 | P3 / [P1] 用户植物、身份和游客认领合同 |
 | `user-plant.lifecycle.owner_guard` | 用户植物归属校验不可绕过 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `true` | user-plant | 全部用户植物相关域 | 不可配置；失败：归属无法证明返回 404 | P1 / [P1] 用户植物、身份和游客认领合同 |
 | `user-plant.guest_claim.once` | 游客案例只能认领一次 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 | `true` | user-plant | user-plant、care、diagnosis | 不可配置；失败：重复认领返回首次确定结果或冲突 | P1 / [P1] 用户植物、身份和游客认领合同 |
@@ -243,8 +245,9 @@
 
 | 配置 ID | 中文名称 | 裁决组 | 层级 / 状态 | 当前值 | 所有者 | 消费方 | 变更与失败边界 | Phase / Ticket |
 |---|---|---|---|---|---|---|---|---|
-| `storage.upload.allowed_mime_types` | 私有图片允许的 MIME 类型 | `retention_security` | 领域策略 / 待冻结 | P1_PENDING | shared-storage | user-plant、care、diagnosis、plant-knowledge | 资产安全策略版本；失败：未冻结时拒绝 v2 图片上传；待冻结原因：MIME 白名单未冻结；阻断：v2 图片上传 | P3 / [P3] 游客、试用、会员和奖励闭环 |
-| `storage.upload.max_image_bytes` | 单张私有图片最大字节数 | `retention_security` | 领域策略 / 待冻结 | P1_PENDING 字节 | shared-storage | user-plant、care、diagnosis、plant-knowledge | 资产安全策略版本；失败：未冻结时拒绝 v2 图片上传；待冻结原因：图片规格与成本未冻结；阻断：v2 图片上传 | P3 / [P3] 游客、试用、会员和奖励闭环 |
+| `storage.upload.allowed_mime_types` | 私有图片允许的 MIME 类型 | `retention_security` | 领域策略 / 已冻结 | `["image/jpeg","image/png","image/webp"]` | shared-storage | user-plant、care、diagnosis、plant-knowledge | 资产安全策略版本；失败：未冻结时拒绝 v2 图片上传 | P3 / [P3] 游客、试用、会员和奖励闭环 |
+| `storage.upload.max_image_bytes` | 单张私有图片最大字节数 | `retention_security` | 领域策略 / 已冻结 | `5242880` 字节 | shared-storage | user-plant、care、diagnosis、plant-knowledge | 资产安全策略版本；失败：未冻结时拒绝 v2 图片上传 | P3 / [P3] 游客、试用、会员和奖励闭环 |
+| `storage.read_url.ttl_seconds` | 私有图片临时读取链接有效期 | `retention_security` | 领域策略 / 已冻结 | `600` 秒 | shared-storage | user-plant | 资产安全策略版本；只影响之后签发的链接；失败：策略不可用时不签发链接，封面字段省略 | P2 / [E03][P2] 用户植物核心实现 |
 | `storage.upload.credential_ttl_seconds` | 直传凭证有效期 | `retention_security` | 领域策略 / 待冻结 | P1_PENDING 秒 | shared-storage | storage、各图片业务域 | 资产安全策略版本；失败：凭证策略缺失则不签发；待冻结原因：短时有效期尚未冻结；阻断：客户端直传 | P3 / [P3] 游客、试用、会员和奖励闭环 |
 | `storage.unbound_retention_hours` | 未绑定上传保留期 | `retention_security` | 领域策略 / 已冻结 | `24` 小时 | shared-storage | storage cleanup | 生命周期策略版本；失败：无法安全删除时隔离并告警 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
 | `storage.failed_retention_days` | 失败或隔离上传保留期 | `retention_security` | 领域策略 / 已冻结 | `7` 天 | shared-storage | storage cleanup | 生命周期策略版本；失败：清理失败进入补偿队列 | P1 / [P1] 业务策略与统一 Provider 配置架构 |

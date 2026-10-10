@@ -225,11 +225,14 @@ export const READ_PLANT_PROJECTION_SQL = `SELECT 'read-plant' AS \`kind\`, \`p\`
               CAST(\`p\`.\`updated_at_ms\` AS CHAR) AS \`updated_at_ms\`,
               \`i\`.\`public_identity_ref\` AS \`confirmed_identity_ref\`,
               CAST(\`f\`.\`id\` AS CHAR) AS \`profile_internal_id\`, \`f\`.\`nickname\` AS \`profile_nickname\`,
-              \`f\`.\`pot_profile_json\` AS \`profile_pot_json\`, \`f\`.\`_openid\` AS \`profile_openid\`
+              \`f\`.\`pot_profile_json\` AS \`profile_pot_json\`, \`f\`.\`_openid\` AS \`profile_openid\`,
+              CAST(\`c\`.\`id\` AS CHAR) AS \`context_internal_id\`, \`c\`.\`location_json\` AS \`context_location_json\`,
+              \`c\`.\`light_environment_json\` AS \`context_light_json\`, \`c\`.\`ventilation_environment_json\` AS \`context_ventilation_json\`
        FROM \`user_plants\` AS \`p\`
        JOIN \`users\` AS \`u\` ON \`u\`.\`id\` = \`p\`.\`user_internal_id\`
        LEFT JOIN \`plant_identities\` AS \`i\` ON \`i\`.\`id\` = \`p\`.\`confirmed_identity_internal_id\`
-       LEFT JOIN \`user_plant_profiles\` AS \`f\` ON \`f\`.\`user_plant_internal_id\` = \`p\`.\`id\` AND \`f\`.\`user_internal_id\` = \`p\`.\`user_internal_id\``
+       LEFT JOIN \`user_plant_profiles\` AS \`f\` ON \`f\`.\`user_plant_internal_id\` = \`p\`.\`id\` AND \`f\`.\`user_internal_id\` = \`p\`.\`user_internal_id\`
+       LEFT JOIN \`user_plant_care_contexts\` AS \`c\` ON \`c\`.\`user_plant_internal_id\` = \`p\`.\`id\` AND \`c\`.\`user_internal_id\` = \`p\`.\`user_internal_id\` AND \`c\`.\`_openid\` = ''`
 
 /**
  * 把一行只读投影转换为公开 UserPlantDto；deleting/deleted 视为不可见，损坏数据失败关闭。

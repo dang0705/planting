@@ -35,6 +35,8 @@ const plant: UserPlantDto = {
   updatedAt: '2026-10-05T00:00:00Z',
   profile: { nickname: '小青' }
 }
+/** 已发布 user-plant-profile/v1 完整度策略（与配置目录 confirmed 值一致），由可信写策略端口提供。 */
+const profilePolicy = { profileVersion: 'user-plant-profile/v1', requiredFields: ['identityStatus', 'pot', 'location', 'lightingEnvironment', 'ventilationEnvironment'], acceptedIdentityStates: ['unidentified', 'candidate_pending', 'confirmed'], rewardOncePerUser: true }
 const servers: Server[] = []
 afterEach(async () => {
   for (const server of servers.splice(0)) {
@@ -59,7 +61,7 @@ async function start(overrides: Partial<UpdateProfileRouteDependencies> = {}) {
     },
     resolveWritePolicy: async () => {
       stages.push('policy')
-      return { profileVersion: 'profile/v1', idempotencyRetentionMs: 5000 }
+      return { profileVersion: 'profile/v1', idempotencyRetentionMs: 5000, profilePolicy }
     },
     saveProfile: async input => {
       writes.push(input)
@@ -138,7 +140,8 @@ test('策略与时间变化不改变业务摘要，失败应用仅返回脱敏50
     now: () => now,
     resolveWritePolicy: async () => ({
       profileVersion: `profile/${now}`,
-      idempotencyRetentionMs: now
+      idempotencyRetentionMs: now,
+      profilePolicy
     })
   })
   await s.send()
@@ -171,6 +174,8 @@ test('正常PATCH返回完整公开植物，并以服务端策略和规范化事
         profileVersion: 'profile/v1',
         occurredAtMs: 1000
       },
+      environment: {},
+      profilePolicy,
       idempotency: {
         principalType: 'user',
         principalScopeHash: sha(principal.user_id),

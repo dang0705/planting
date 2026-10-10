@@ -3,6 +3,7 @@ import type { Mysql2QueryConnection } from '../../foundation/database/mysql2-con
 import { serializeCanonicalJson, type CanonicalJsonValue } from '../../foundation/json/canonical-json-sha256.js'
 import { lockMeasuredPotProfile, type MeasuredPotProfile } from '../domain/measured-pot-profile.js'
 import { lockUserPlantProfilePatch } from '../domain/profile-patch.js'
+import { lockStoredEnvironmentGroup, PROFILE_JSON_GROUP_KEYS, PROFILE_JSON_STORAGE_KEY, type PotShapeProfile, type SubstrateProfile } from '../domain/environment-profile.js'
 
 /** 调用方已验真的内部档案保存命令，不能直接作为公开请求体。 */
 export interface MeasuredProfileSaveInput {
@@ -11,6 +12,8 @@ export interface MeasuredProfileSaveInput {
   /** 用户读取时的聚合版本，控制所有档案编辑并发。 */ readonly expectedVersion: number
   /** 昵称原文；省略保留，空字符串清除；物理容量为80个Unicode码点。 */ readonly nickname?: string
   /** 省略保留测量；提供时为完整测量子结构，不补造未知事实。 */ readonly measuredPot?: MeasuredPotProfile
+  /** 盆型与材质：省略保留，null 清除（user-plant-environment-profile/v1）。 */ readonly potShape?: PotShapeProfile | null
+  /** 基质组分：省略保留，null 清除。 */ readonly substrate?: SubstrateProfile | null
   /** 上游已锁定完整度策略版本，本层不猜默认或发布策略。 */ readonly profileVersion: string
   /** 服务端UTC毫秒，不接受客户端时间。 */ readonly occurredAtMs: number
 }
@@ -26,6 +29,8 @@ export type MeasuredProfileSaveResult =
       /** 新聚合版本，不是子表版本。 */ readonly version: number
       /** 本次实际保存并经同事务读回核对的昵称原文。 */ readonly nickname: string
       /** 已存合法测量才携带；不存在时省略，不补为全null。 */ readonly measuredPot?: Readonly<MeasuredPotProfile>
+      /** 保存后已设置的盆型与材质；未设置时省略。 */ readonly potShape?: Readonly<PotShapeProfile>
+      /** 保存后已设置的基质组分；未设置时省略。 */ readonly substrate?: Readonly<SubstrateProfile>
     }
 const maximumVersion = 4294967295
 /** SQL无符号版本容量与服务端毫秒的无损交集检查。 */
@@ -49,7 +54,7 @@ function jsonObject(value: unknown): Record<string, CanonicalJsonValue> {
 /** 在首次异步数据库读取前锁定输入，拒绝客户端扩展内部命令字段。 */
 export function lockMeasuredProfileSaveInput(input: unknown): Readonly<MeasuredProfileSaveInput> {
   const value = JSON.parse(serializeCanonicalJson(input as CanonicalJsonValue)) as MeasuredProfileSaveInput
-  const fields = ['userRef', 'userPlantRef', 'expectedVersion', 'nickname', 'measuredPot', 'profileVersion', 'occurredAtMs']
+  const fields = ['userRef', 'userPlantRef', 'expectedVersion', 'nickname', 'measuredPot', 'potShape', 'substrate', 'profileVersion', 'occurredAtMs']
   if (!value || typeof value !== 'object' || Array.isArray(value)
     || Object.keys(value).some(k => !fields.includes(k))
     || typeof value.userRef !== 'string' || !/^usr_[A-Za-z0-9_-]{8,}$/u.test(value.userRef) || value.userRef.length > 64
@@ -59,7 +64,11 @@ export function lockMeasuredProfileSaveInput(input: unknown): Readonly<MeasuredP
     || !integer(value.occurredAtMs)) {
     throw new TypeError('内部档案保存命令不满足归属引用、版本、昵称或策略合同')
   }
-  const patch = lockUserPlantProfilePatch({ version: value.expectedVersion, ...('nickname' in value ? { nickname: value.nickname } : {}), ...('measuredPot' in value ? { measuredPot: value.measuredPot } : {}) })
+  const facts = { ...('nickname' in value ? { nickname: value.nickname } : {}), ...('measuredPot' in value ? { measuredPot: value.measuredPot } : {}),
+    ...('potShape' in value ? { potShape: value.potShape } : {}), ...('substrate' in value ? { substrate: value.substrate } : {}) }
+  // 只改位置/光照/通风时本命令没有档案字段：仍递增聚合版本并确保档案行存在（完整度需要），不经档案字段校验。
+  if (Object.keys(facts).length === 0) { return Object.freeze(value) }
+  const patch = lockUserPlantProfilePatch({ version: value.expectedVersion, ...facts })
   return Object.freeze({ ...value, ...('measuredPot' in patch ? { measuredPot: patch.measuredPot } : {}) })
 }
 
@@ -115,6 +124,26 @@ export function createMysqlMeasuredProfileRepository() {
             version=version+1,updated_at_ms=? WHERE user_internal_id=? AND user_plant_internal_id=?`,
           [expectedNickname, potJson, potJson, command.occurredAtMs, p.user_id, p.plant_id])
       if (saved.affectedRows !== 1) { throw new Error('档案事实写入未确定') }
+      // 盆型/基质分组：在保留其他历史键的前提下整体替换或移除（存储键带 Profile 后缀，见 environment-profile.ts）。
+      const groupKeys = PROFILE_JSON_GROUP_KEYS.filter(key => key in command)
+      const expectedGroups: Record<string, unknown> = {}
+      for (const key of PROFILE_JSON_GROUP_KEYS) {
+        const previous = lockStoredEnvironmentGroup(key, oldJson[PROFILE_JSON_STORAGE_KEY[key]] ?? null)
+        const next = key in command ? command[key] ?? undefined : previous
+        if (next !== undefined) { expectedGroups[key] = next }
+      }
+      if (groupKeys.length > 0) {
+        const current = await c.query('SELECT pot_profile_json FROM user_plant_profiles WHERE user_internal_id=? AND user_plant_internal_id=? FOR UPDATE', [p.user_id, p.plant_id])
+        if (current.length !== 1) { throw new Error('档案读回不唯一') }
+        const merged: Record<string, CanonicalJsonValue> = { ...jsonObject(current[0]!.pot_profile_json) }
+        for (const key of groupKeys) {
+          const value = command[key]
+          if (value === null || value === undefined) { delete merged[PROFILE_JSON_STORAGE_KEY[key]] } else { merged[PROFILE_JSON_STORAGE_KEY[key]] = value as unknown as CanonicalJsonValue }
+        }
+        const groupsWritten = await c.execute('UPDATE user_plant_profiles SET pot_profile_json=CAST(? AS JSON) WHERE user_internal_id=? AND user_plant_internal_id=?',
+          [serializeCanonicalJson(merged), p.user_id, p.plant_id])
+        if (groupsWritten.affectedRows !== 1) { throw new Error('档案分组写入未确定') }
+      }
       const readback = await c.query(`SELECT f.nickname,f.pot_profile_json,p.version
         FROM user_plant_profiles f JOIN user_plants p ON p.id=f.user_plant_internal_id AND p.user_internal_id=f.user_internal_id
         WHERE f.user_internal_id=? AND f.user_plant_internal_id=? FOR SHARE`, [p.user_id, p.plant_id])
@@ -124,7 +153,12 @@ export function createMysqlMeasuredProfileRepository() {
       const persisted = jsonObject(readback[0]!.pot_profile_json)
       const measured = 'measuredPot' in persisted ? lockMeasuredPotProfile(persisted.measuredPot) : undefined
       if ((measured === undefined) !== (expectedPot === undefined) || (measured !== undefined && serializeCanonicalJson(measured as unknown as CanonicalJsonValue) !== serializeCanonicalJson(expectedPot as unknown as CanonicalJsonValue))) { throw new Error('档案测量事实读回不一致') }
-      return Object.freeze({ status: 'saved', userPlantRef: command.userPlantRef, version: command.expectedVersion + 1, nickname: expectedNickname, ...(measured === undefined ? {} : { measuredPot: measured }) })
+      for (const key of PROFILE_JSON_GROUP_KEYS) {
+        const persistedGroup = lockStoredEnvironmentGroup(key, persisted[PROFILE_JSON_STORAGE_KEY[key]] ?? null)
+        if (serializeCanonicalJson((persistedGroup ?? null) as CanonicalJsonValue) !== serializeCanonicalJson((expectedGroups[key] ?? null) as CanonicalJsonValue)) { throw new Error('档案分组读回不一致') }
+      }
+      return Object.freeze({ status: 'saved', userPlantRef: command.userPlantRef, version: command.expectedVersion + 1, nickname: expectedNickname,
+        ...(measured === undefined ? {} : { measuredPot: measured }), ...expectedGroups })
     }
   }
 }

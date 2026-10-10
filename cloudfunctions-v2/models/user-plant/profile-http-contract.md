@@ -1,5 +1,7 @@
 # 用户植物档案修改 HTTP 合同
 
+> 2026-10-10 起：请求 Schema 由 `profile-patch/v1` 升级为 `profile-patch/v2`（v1 字段语义不变，合并为一套校验），新增环境分组、城市目录校验、可信策略须含完整度策略原文与首株奖励事件，见 `docs/backend-v2/contracts/user-plant-environment-profile.md`。本文其余协议顺序、幂等与脱敏条款继续有效。
+
 本合同冻结本轮已授权的 `PATCH /api/v2/user-plants/{userPlantRef}`、操作标识 `updateUserPlant`。认证主体为平台无关统一用户。客户端只可提交 `profile-patch/v1` 的旧聚合版本 `version`，以及至少一项昵称 `nickname` 或完整实测盆器 `measuredPot`。省略保留原值；空昵称表示清除。不得提交归属、策略版本、服务端时间或未知字段。盆器测量以同目录唯一 JSON Schema 为准。
 
 ```text

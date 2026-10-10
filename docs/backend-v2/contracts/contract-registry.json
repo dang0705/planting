@@ -216,6 +216,34 @@
       "owner": "plant-knowledge",
       "status": "P2_FROZEN",
       "sha256": "07106e7c37abe191f26fd6aeca0a6bd72707ada1da262ffabeae209a51cb0daf"
+    },
+    {
+      "id": "user-plant-identity-confirmation",
+      "version": "user-plant-identity-confirmation/v1",
+      "file": "user-plant-identity-confirmation.md",
+      "owner": "user-plant",
+      "sha256": "ec38063d7760bebf18b2335f8abe559fdf529de625151f3dbccffb546e7fef28"
+    },
+    {
+      "id": "user-plant-environment-profile",
+      "version": "user-plant-environment-profile/v1",
+      "file": "user-plant-environment-profile.md",
+      "owner": "user-plant",
+      "sha256": "2c4261d6f46c2dda60160162ffa480ee8ee8da2dd3acc3efd5ec8170514c9de3"
+    },
+    {
+      "id": "user-plant-timeline",
+      "version": "user-plant-timeline/v1",
+      "file": "user-plant-timeline.md",
+      "owner": "user-plant",
+      "sha256": "30f882f8cab516e49d2e1d49698e19cf70cb08f43eef75a36c4a82d957532780"
+    },
+    {
+      "id": "user-plant-cover-asset",
+      "version": "user-plant-cover-asset/v1",
+      "file": "user-plant-cover-asset.md",
+      "owner": "user-plant",
+      "sha256": "383e11851eb3a3db9b508e8505e4624544668b4740df433b43d0d120412be439"
     }
   ]
 }

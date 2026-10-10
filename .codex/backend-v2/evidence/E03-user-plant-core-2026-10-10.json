@@ -167,5 +167,71 @@
     "risks": [
       "DELETE 带 JSON 正文：需在 P5 真实 CloudBase 网关验证正文不被丢弃；若被丢弃，备选为改用 If-Match 头携带版本（需改合同）"
     ]
+  },
+  "round3": {
+    "decision": "用户 2026-10-10 审定四份草案全部按推荐通过（身份确认：归档植物不能确认）；本轮分批：①身份确认 ②环境档案+首株奖励事件 已实现；③时间线 ④封面 已转正式合同与配置，实现待技术前置项",
+    "contracts": {
+      "promoted": [
+        "docs/backend-v2/contracts/user-plant-identity-confirmation.md（自 models/user-plant/identity-confirmation-contract-draft.md）",
+        "docs/backend-v2/contracts/user-plant-environment-profile.md（自 environment-profile-contract-draft.md；替代 profile-update-contract-draft.md 待冻结部分）",
+        "docs/backend-v2/contracts/user-plant-timeline.md（自 user-plant-timeline-contract-draft.md）",
+        "docs/backend-v2/contracts/user-plant-cover-asset.md（自 user-plant-asset-contract-draft.md）"
+      ],
+      "draftRemovalEvidence": "四份草案文件内容已原样迁入并按用户裁决改写为正式合同（替代物=上列正式合同，已在 contract-registry 登记 SHA-256）；草案无代码/测试调用方；删除后验证=全量测试 0 失败",
+      "superseded": [
+        "cloudfunctions-v2/models/user-plant/profile-update-contract-draft.md 标注 superseded",
+        "cloudfunctions-v2/models/user-plant/profile-http-contract.md 注明 v1→v2"
+      ],
+      "registry": "contract-registry 新增 4 项；route-registry confirmUserPlantIdentity / updateUserPlant 错误集合按合同补齐；OpenAPI 新增 ConfirmUserPlantIdentityRequest、UpdateUserPlantRequest（由 profile-patch.v2.schema.json 生成）",
+      "configurationCatalog": "confirmed：user-plant.assets.max_count_per_plant=1、storage.upload.allowed_mime_types=[jpeg,png,webp]、storage.upload.max_image_bytes=5242880；新增 confirmed storage.read_url.ttl_seconds=600、user-plant.assets.replaced_cover_cleanup_days=7；新增 hard_rule user-plant.timeline.page_size={20,50}"
+    },
+    "identityConfirmation": {
+      "classicRed": [
+        "test/contracts/user-plant-identity-confirmation-contract.spec.ts（3 例，制品缺失）",
+        "test/user-plant/confirm-user-plant-identity-route.spec.ts（整文件，模块不存在）",
+        "test/e2e/user-plant-identity-confirmation.mysql.spec.ts（9 例，路由未接入 404）"
+      ],
+      "realDbFinding": "真实库测试发现：连接来源把 BIGINT 读成十进制文本，plant-knowledge 公开准入的 EXISTS 结果为 '1' 而非 1，导致已发布身份被判为未发布；在 user-plant 只读适配处转数字修复（plant-knowledge 仓储未改）",
+      "green": "路由 27 + 合同 3 + 真实库 10 全绿"
+    },
+    "environmentProfile": {
+      "classicRed": [
+        "test/user-plant/profile-patch-v2.spec.ts（v1 Schema 拒绝新分组）",
+        "test/e2e/user-plant-environment-profile.mysql.spec.ts（9 例 400）",
+        "test/contracts/user-plant-environment-profile-contract.spec.ts（3 例制品缺失）"
+      ],
+      "fastPathCounterfactualRed": {
+        "tests": "save-measured-profile.spec.ts 新增 8 例完整度/奖励用例 + pot 完整判定",
+        "mutation": "去掉 rewardEligible 判断；hasCompleteMeasuredPot 恒真",
+        "redObserved": "4 例失败",
+        "restored": true
+      },
+      "fixtureUpdatesNotExpectedChanges": [
+        "update-profile-route.spec.ts / save-measured-profile.spec.ts / measured-profile.mysql.spec.ts：可信策略须带完整度策略原文、用例新增环境与 outbox 端口、单株读取关联养护环境表——均为合同新增必需输入的夹具补齐，未改原 Expected"
+      ],
+      "designNotes": [
+        "盆型/基质存于 pot_profile_json 的 potShapeProfile/substrateProfile 键，避免与旧 JSON 历史键 substrate 冲突（既有测试守护历史键不公开）",
+        "光照分组去掉恒为 user_selected 的 source 字段（合同已注明）",
+        "城市目录 city_climate_profiles 在 v2 schema manifest 中无 DDL，真实库测试按 weather 读取列建最小副本表"
+      ],
+      "careFollowUp": "合同 §6：care 浇水建议对长期植物仍从请求体读坐标；改用档案城市中心坐标需 care 合同修订，未实现"
+    },
+    "blocked": {
+      "timeline": [
+        "care_outbox 事件类型 CHECK 只允许奖励事件，需新增迁移 029 扩充 care.watering_fact_recorded.v1 / care.plan_completed.v1",
+        "仓库无 outbox dispatcher，需确定派发运行形态与租约/批量/重试配置"
+      ],
+      "coverAsset": [
+        "需 CloudBase 服务端存储能力读文件元数据与签发临时链接：新增 npm 依赖（候选 @cloudbase/node-sdk，须依赖审查与用户确认）",
+        "受控凭证 credential_ref 与 user-plant 函数私有目录读权限",
+        "前端直传目录与平台无关 user_id 的绑定方式及存储安全规则"
+      ]
+    },
+    "green": {
+      "typecheck": "0 error",
+      "lint": "0 error（既有 warning）",
+      "vitest_default": "3132 passed / 5 skipped / 0 failed",
+      "vitest_mysql_full": "63 files / 605 passed / 0 failed（本机 Docker MySQL 8.4）"
+    }
   }
 }

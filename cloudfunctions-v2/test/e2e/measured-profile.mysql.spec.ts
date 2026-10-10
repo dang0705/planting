@@ -20,6 +20,11 @@ import { createGetUserPlantRouteHandler, getUserPlantRoute } from '../../src/use
 import { createRouteDispatcher } from '../../src/foundation/http/route-dispatcher.js'
 import type { UserRef } from '../../src/contracts/types.js'
 import { createUpdateProfileRouteHandler, updateProfileRoute } from '../../src/user-plant/http/update-profile-route.js'
+import { createMysqlUserPlantEnvironmentRepository } from '../../src/user-plant/repository/mysql-user-plant-environment-repository.js'
+import { createMysqlUserPlantOutboxRepository } from '../../src/user-plant/repository/mysql-user-plant-outbox-repository.js'
+
+/** 已发布 user-plant-profile/v1 完整度策略（与配置目录 confirmed 值一致）。 */
+const profilePolicy = { profileVersion: 'user-plant-profile/v1', requiredFields: ['identityStatus', 'pot', 'location', 'lightingEnvironment', 'ventilationEnvironment'], acceptedIdentityStates: ['unidentified', 'candidate_pending', 'confirmed'], rewardOncePerUser: true }
 
 /** L3/unit_real_data：实际003聚合/档案DDL、mysql2、行锁与事务。
  * users及plant_identities仅为明确的归属/FK表桩，不证明身份域Schema或登录验真。
@@ -60,7 +65,7 @@ beforeAll(async () => {
   await db.query("CREATE TABLE users(id BIGINT UNSIGNED PRIMARY KEY,_openid VARCHAR(64) NOT NULL DEFAULT '',public_user_id VARCHAR(64) NOT NULL UNIQUE,status VARCHAR(24) NOT NULL)")
   await db.query('CREATE TABLE plant_identities(id BIGINT UNSIGNED PRIMARY KEY,public_identity_ref VARCHAR(64) NULL)')
   const ddl = readFileSync(join(root, 'docs/backend-v2/schema/003_user_plant.sql'), 'utf8')
-  for (const name of ['user_plants', 'user_plant_profiles']) {
+  for (const name of ['user_plants', 'user_plant_profiles', 'user_plant_care_contexts']) {
     const start = ddl.indexOf('CREATE TABLE `' + name + '`')
     await db.query(ddl.slice(start, ddl.indexOf(';\n', start) + 1))
   }
@@ -68,6 +73,10 @@ beforeAll(async () => {
   const foundation = readFileSync(join(root, 'docs/backend-v2/schema/008_foundation.sql'), 'utf8')
   const idemStart = foundation.indexOf('CREATE TABLE `http_idempotency_records`')
   await db.query(foundation.slice(idemStart, foundation.indexOf(';\n', idemStart) + 1))
+  // 环境档案合同起：单株读取关联养护环境表，首株完整会写 user-plant outbox（006）。
+  const events = readFileSync(join(root, 'docs/backend-v2/schema/006_reliable_events.sql'), 'utf8')
+  const outboxStart = events.indexOf('CREATE TABLE `user_plant_outbox`')
+  await db.query(events.slice(outboxStart, events.indexOf(';\n', outboxStart) + 1))
   await db.query("INSERT INTO users(id,public_user_id,status) VALUES(1,'usr_profile_owner01','active'),(2,'usr_profile_owner02','active')")
   for (const [index, name] of ['created01', 'preserve1', 'guards001', 'race00001', 'rollback1', 'archived1', 'idem00001', 'receipt01', 'unknown01', 'idemrace1', 'nickonly1', 'potonly01'].entries()) {
     await db.query("INSERT INTO user_plants(id,public_user_plant_id,user_internal_id,lifecycle_status,current_identity_status,version,created_at_ms,updated_at_ms) VALUES(?,?,1,?,'unidentified',1,1000,1000)", [index + 1, `upl_profile_${name}`, name === 'archived1' ? 'archived' : 'active'])
@@ -145,7 +154,11 @@ function application(mode?: 'unknown' | 'receipt') {
     executeQuery: async (tx, sql, args) => await tx.connection.query(sql, toSqlParameters(args)) as unknown as readonly UserPlantSqlRow[],
     executeWrite: (tx, sql, args) => tx.connection.execute(sql, toSqlParameters(args))
   })
-  const service = createMeasuredProfileApplicationService({ driver, profileRepository: repository, userPlantRepository, idempotencyRepository: idem, commitUnknownReadOnlyRepository: readOnly })
+  // 环境档案合同（2026-10-10）起保存还需环境/完整度端口与 outbox；本文件只验证昵称与实测盆器，传入空环境修改与已发布完整度策略。
+  const core = createMeasuredProfileApplicationService({ driver, profileRepository: repository, userPlantRepository, idempotencyRepository: idem, commitUnknownReadOnlyRepository: readOnly,
+    environmentRepository: createMysqlUserPlantEnvironmentRepository(),
+    outboxRepository: createMysqlUserPlantOutboxRepository<MysqlTransactionContext<Mysql2QueryConnection>>({ executeWrite: (tx, sql, args) => tx.connection.execute(sql, toSqlParameters(args)) }) })
+  const service = (request: Omit<Parameters<typeof core>[0], 'environment' | 'profilePolicy'>) => core({ environment: {}, profilePolicy, ...request })
   return { service, readCount: () => reads }
 }
 /** 独立Expected来自固定SQL制品与公开聚合合同，不从被测读回生成。 */
@@ -241,7 +254,7 @@ test('真实PATCH→完整收据→GET，重放同结果、异参/旧版本/跨�
   const common = { resolvePrincipal, getUserPlant, now: () => 5000, writeAudit: () => undefined }
   const dispatch = createRouteDispatcher([
     { route: getUserPlantRoute, handler: createGetUserPlantRouteHandler(common) },
-    { route: updateProfileRoute, handler: createUpdateProfileRouteHandler({ ...common, saveProfile: application().service, maxBodyBytes: 1024, resolveWritePolicy: async () => ({ profileVersion: 'user-plant-profile/v1', idempotencyRetentionMs: 6000 }) }) }
+    { route: updateProfileRoute, handler: createUpdateProfileRouteHandler({ ...common, saveProfile: application().service, maxBodyBytes: 1024, resolveWritePolicy: async () => ({ profileVersion: 'user-plant-profile/v1', idempotencyRetentionMs: 6000, profilePolicy }) }) }
   ])
   const server = createServer((req, res) => { dispatch(req, res).catch(() => undefined) })
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))

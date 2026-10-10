@@ -30,6 +30,10 @@ import {
   type UserPlantListResponseDto,
 } from "./user-plant-list-delete-contract.js";
 import {
+  confirmUserPlantIdentityRequestSchema,
+  type ConfirmUserPlantIdentityRequestDto,
+} from "./user-plant-identity-confirmation-contract.js";
+import {
   putCatalogBindingRequestSchema,
   catalogBindingResponseSchema,
   createCareFactRequestSchema,
@@ -132,6 +136,8 @@ export function createPublicContractValidators(): {
   deleteUserPlantRequest: ValidateFunction<DeleteUserPlantRequestDto>;
   /** 删除成功数据校验器；lifecycle 固定 deleting，禁止额外字段。 */
   userPlantDeletionResponse: ValidateFunction<UserPlantDeletionResponseDto>;
+  /** 身份确认请求校验器；严格只有 expectedVersion、plantIdentityRef、source。 */
+  confirmUserPlantIdentityRequest: ValidateFunction<ConfirmUserPlantIdentityRequestDto>;
   /** 创建用户植物请求校验器；只接受严格空 JSON 对象。 */
   createUserPlantRequest: ValidateFunction<CreateUserPlantRequestDto>;
   /** 创建用户植物响应校验器；只接受服务端生成的固定初始投影。 */
@@ -216,6 +222,7 @@ export function createPublicContractValidators(): {
     userPlantListResponse: ajv.compile(userPlantListResponseSchema),
     deleteUserPlantRequest: ajv.compile(deleteUserPlantRequestSchema),
     userPlantDeletionResponse: ajv.compile(userPlantDeletionResponseSchema),
+    confirmUserPlantIdentityRequest: ajv.compile(confirmUserPlantIdentityRequestSchema),
     createUserPlantRequest: ajv.compile(createUserPlantRequestSchema),
     createUserPlantResponse: ajv.compile(createUserPlantResponseSchema),
     createTemporaryCaseRequest: ajv.compile(createTemporaryCaseRequestSchema),

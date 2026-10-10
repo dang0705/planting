@@ -57,6 +57,9 @@ import { createGetUserPlantRouteHandler, getUserPlantRoute } from './get-user-pl
 import { createUserPlantRoute, createUserPlantRouteHandler } from './create-user-plant-route.js'
 import { createMeasuredProfileApplicationService } from '../application/save-measured-profile.js'
 import { createMysqlMeasuredProfileRepository } from '../repository/mysql-measured-profile-repository.js'
+import { createMysqlUserPlantEnvironmentRepository } from '../repository/mysql-user-plant-environment-repository.js'
+import { createMysqlUserPlantOutboxRepository } from '../repository/mysql-user-plant-outbox-repository.js'
+import { createMysqlCityClimateFitRepository } from '../../weather/repository/mysql-city-climate-fit-repository.js'
 import { createUpdateProfileRouteHandler, updateProfileRoute } from './update-profile-route.js'
 import type { PublishedProfileWriteSnapshot } from '../repository/mysql-published-profile-write-policy-reader.js'
 import type { PublishedHttpWriteSnapshot } from '../repository/mysql-published-profile-write-policy-reader.js'
@@ -70,6 +73,9 @@ import { createMysqlUserPlantListRepository } from '../repository/mysql-user-pla
 import type { UserPlantReadProjectionSqlRow } from '../repository/mysql-user-plant-repository.js'
 import { createListUserPlantsRouteHandler, listUserPlantsRoute } from './list-user-plants-route.js'
 import { createDeleteUserPlantRouteHandler, deleteUserPlantRoute } from './delete-user-plant-route.js'
+import { createConfirmUserPlantIdentityApplicationService } from '../application/confirm-user-plant-identity.js'
+import { confirmUserPlantIdentityRoute, createConfirmUserPlantIdentityRouteHandler } from './confirm-user-plant-identity-route.js'
+import { createMysqlPublishedIdentityRepository, type PublishedIdentitySqlRow } from '../../plant-knowledge/repository/mysql-published-identity-repository.js'
 import {
   archiveUserPlantRoute,
   createArchiveUserPlantRouteHandler,
@@ -179,8 +185,15 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
   })
   const saveProfile = createMeasuredProfileApplicationService({
     driver, profileRepository: createMysqlMeasuredProfileRepository(), userPlantRepository,
-    idempotencyRepository, commitUnknownReadOnlyRepository
+    idempotencyRepository, commitUnknownReadOnlyRepository,
+    environmentRepository: createMysqlUserPlantEnvironmentRepository(),
+    outboxRepository: createMysqlUserPlantOutboxRepository<MysqlTransactionContext<Mysql2QueryConnection>>({
+      executeWrite: (transaction, sql, parameters) => transaction.connection.execute(sql, toSqlParameters(parameters))
+    })
   })
+  /** user-plant → weather 只读适配：环境档案位置只确认城市代码存在于城市目录（策略 v0-city-outdoor）。 */
+  const cityExists = async (cityRef: string) => (await withReadConnection(dependencies.connectionSource, connection =>
+    createMysqlCityClimateFitRepository({ query: (sql, parameters) => connection.query(sql, toSqlParameters(parameters)) }).getProfile(cityRef))) !== null
   const createTemporaryCase = createTemporaryCaseApplicationService({
     driver,
     idempotencyRepository,
@@ -232,11 +245,25 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
   })
   const deleteUserPlant = createDeleteUserPlantApplicationService({ driver, idempotencyRepository, commitUnknownReadOnlyRepository })
   const bearerAuthenticator = createUserBearerAuthenticator(resolvePrincipal)
+  /** user-plant → plant-knowledge 只读适配：身份确认前判定规范身份是否已发布（与公开准入同一 SQL）。 */
+  const publishedIdentityReader = createMysqlPublishedIdentityRepository({
+    // 本连接来源把 BIGINT 读成十进制文本（避免精度丢失），EXISTS 的 0/1 需转回数字再交给准入判定。
+    query: (sql, parameters) => withReadConnection(dependencies.connectionSource, async connection =>
+      (await connection.query(sql, toSqlParameters(parameters))).map(row => ({ published: Number(row.published) })) as readonly PublishedIdentitySqlRow[])
+  })
+  const confirmIdentity = createConfirmUserPlantIdentityApplicationService({ driver, idempotencyRepository, commitUnknownReadOnlyRepository, userPlantRepository })
 
   const dispatch = createRouteDispatcher([
     {
       route: listUserPlantsRoute,
       handler: createListUserPlantsRouteHandler({ authenticate: bearerAuthenticator, now: dependencies.now, writeAudit: dependencies.writeAudit, listUserPlants })
+    },
+    {
+      route: confirmUserPlantIdentityRoute,
+      handler: createConfirmUserPlantIdentityRouteHandler({
+        authenticate: bearerAuthenticator, now: dependencies.now, writeAudit: dependencies.writeAudit,
+        isPublishedIdentity: ref => publishedIdentityReader.isPublishedIdentity(ref), confirmIdentity
+      })
     },
     {
       route: deleteUserPlantRoute,
@@ -270,7 +297,7 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
         let snapshot: PublishedProfileWriteSnapshot | null = null
         try { snapshot = await dependencies.readProfileWriteSnapshot?.() ?? null } catch { /* SQL异常不暴露，不补默认策略。 */ }
         return createUpdateProfileRouteHandler({
-          resolvePrincipal, getUserPlant, saveProfile, now: dependencies.now, writeAudit: dependencies.writeAudit,
+          resolvePrincipal, getUserPlant, saveProfile, cityExists, now: dependencies.now, writeAudit: dependencies.writeAudit,
           maxBodyBytes: snapshot?.maxBodyBytes ?? null,
           resolveWritePolicy: async () => snapshot
         })(request, response, parameters)

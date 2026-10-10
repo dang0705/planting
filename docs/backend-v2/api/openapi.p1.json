@@ -727,7 +727,10 @@
           "PRINCIPAL_INVALID",
           "USER_PLANT_NOT_FOUND",
           "USER_PLANT_VERSION_CONFLICT",
-          "IDEMPOTENCY_CONFLICT"
+          "IDEMPOTENCY_CONFLICT",
+          "PAYLOAD_TOO_LARGE",
+          "UNSUPPORTED_MEDIA_TYPE",
+          "SERVICE_UNAVAILABLE"
         ],
         "parameters": [
           {
@@ -771,8 +774,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false
+                "$ref": "#/components/schemas/UpdateUserPlantRequest"
               }
             }
           }
@@ -1023,8 +1025,13 @@
           "VALIDATION_FAILED",
           "PRINCIPAL_INVALID",
           "USER_PLANT_NOT_FOUND",
+          "USER_PLANT_ARCHIVED",
           "USER_PLANT_VERSION_CONFLICT",
-          "IDEMPOTENCY_CONFLICT"
+          "IDEMPOTENCY_CONFLICT",
+          "NOT_FOUND",
+          "PAYLOAD_TOO_LARGE",
+          "UNSUPPORTED_MEDIA_TYPE",
+          "SERVICE_UNAVAILABLE"
         ],
         "parameters": [
           {
@@ -1068,8 +1075,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false
+                "$ref": "#/components/schemas/ConfirmUserPlantIdentityRequest"
               }
             }
           }
@@ -5215,6 +5221,327 @@
             "minimum": 1,
             "maximum": 9007199254740991,
             "description": "调用方最后读到的用户植物版本，必须是正安全整数。"
+          }
+        }
+      },
+      "UpdateUserPlantRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "version"
+        ],
+        "minProperties": 2,
+        "description": "user-plant-environment-profile/v1：v1 的昵称与实测盆器语义不变；新增盆型材质、基质、位置、光照、通风五个分组，省略保留、null 清除。不接受任何派生值。",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295,
+            "description": "旧聚合版本，无符号SQL整数容量。"
+          },
+          "nickname": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "昵称原文，空字符串清除，不截断。"
+          },
+          "measuredPot": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "actualInnerPotConfirmed",
+              "drainageAvailable",
+              "potTopDiameterCm",
+              "potBottomDiameterCm",
+              "potHeightCm"
+            ],
+            "properties": {
+              "actualInnerPotConfirmed": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "description": "实际种植内盆确认；false表示不满足，null表示未知，不把装饰外盆当内盆。"
+              },
+              "drainageAvailable": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "description": "内盆排水孔及通道是否有效；null表示未确认。"
+              },
+              "potTopDiameterCm": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "exclusiveMinimum": 0,
+                "description": "盆口内直径，厘米，有限正数或明确未知null。"
+              },
+              "potBottomDiameterCm": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "exclusiveMinimum": 0,
+                "description": "盆底内直径，厘米，不含盆壁，有限正数或明确未知null。"
+              },
+              "potHeightCm": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "exclusiveMinimum": 0,
+                "description": "容器内深，厘米，不是植物高度，有限正数或明确未知null。"
+              }
+            }
+          },
+          "potShape": {
+            "description": "盆型与盆壁材质；null 清除。",
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "shape",
+                  "wallMaterial"
+                ],
+                "properties": {
+                  "shape": {
+                    "enum": [
+                      "round",
+                      "square",
+                      "hanging",
+                      "other",
+                      null
+                    ]
+                  },
+                  "wallMaterial": {
+                    "enum": [
+                      "plastic",
+                      "glazed_ceramic",
+                      "terracotta",
+                      "cement",
+                      "fabric",
+                      "other",
+                      null
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "substrate": {
+            "description": "基质组分；primaryMaterial 必须属于 materials（由领域代码复核）；null 清除。",
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "materials",
+                  "primaryMaterial"
+                ],
+                "properties": {
+                  "materials": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 9,
+                    "uniqueItems": true,
+                    "items": {
+                      "enum": [
+                        "general",
+                        "coco",
+                        "ceramsite",
+                        "peat",
+                        "perlite",
+                        "bark",
+                        "sphagnum",
+                        "gritty",
+                        "coarse_sand"
+                      ]
+                    }
+                  },
+                  "primaryMaterial": {
+                    "enum": [
+                      "general",
+                      "coco",
+                      "ceramsite",
+                      "peat",
+                      "perlite",
+                      "bark",
+                      "sphagnum",
+                      "gritty",
+                      "coarse_sand",
+                      null
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "location": {
+            "description": "城市级位置与摆放类型，不含经纬度；cityRef 须存在于 weather 城市目录；null 清除。",
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "cityRef",
+                  "placement"
+                ],
+                "properties": {
+                  "cityRef": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9_-]{2,64}$"
+                  },
+                  "placement": {
+                    "enum": [
+                      "indoor",
+                      "balcony_enclosed",
+                      "balcony_open",
+                      "outdoor"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "lighting": {
+            "description": "用户可理解的光照选项；null 清除。",
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "windowFacing",
+                  "glassLayers",
+                  "distanceBand",
+                  "obstruction"
+                ],
+                "properties": {
+                  "windowFacing": {
+                    "enum": [
+                      "N",
+                      "NE",
+                      "E",
+                      "SE",
+                      "S",
+                      "SW",
+                      "W",
+                      "NW",
+                      "none"
+                    ]
+                  },
+                  "glassLayers": {
+                    "enum": [
+                      0,
+                      1,
+                      2,
+                      3
+                    ]
+                  },
+                  "distanceBand": {
+                    "enum": [
+                      "on_sill",
+                      "within_1m",
+                      "one_to_three_m",
+                      "beyond_3m"
+                    ]
+                  },
+                  "obstruction": {
+                    "enum": [
+                      "none",
+                      "partial",
+                      "heavy"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "ventilation": {
+            "description": "通风与空气环境；不等同室外风速；null 清除。",
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "airExchange",
+                  "localAirflow",
+                  "directBlowing"
+                ],
+                "properties": {
+                  "airExchange": {
+                    "enum": [
+                      "closed",
+                      "occasional",
+                      "frequent"
+                    ]
+                  },
+                  "localAirflow": {
+                    "enum": [
+                      "none",
+                      "fan",
+                      "ac",
+                      "heater",
+                      "natural_draft"
+                    ]
+                  },
+                  "directBlowing": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "ConfirmUserPlantIdentityRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expectedVersion",
+          "plantIdentityRef",
+          "source"
+        ],
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "plantIdentityRef": {
+            "type": "string",
+            "pattern": "^pid_[A-Za-z0-9_-]{8,60}$"
+          },
+          "source": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "user_search"
+              }
+            }
           }
         }
       },
