@@ -1,7 +1,7 @@
 {
   "capturedAt": "2026-10-10",
   "ticket": "E05 / ClickUp z8v0kmrg8a（[P1] 诊断知识来源、园艺原因及 Outcome/Action 合同）、z8v0kmr974（[P4] 固定/动态问诊与小青工具）",
-  "status": "r6_probe_run_completed_qwen3.6-flash",
+  "status": "r7_round2_v1_vs_v11_done",
   "testLayer": "none（纯规划，无测试、无 TDD 声明）",
   "userRequest": "用户 2026-10-10：开始视觉诊断规划；v1 覆盖面过窄；要求最优提示词、固定前缀对缓存友好、视觉模型返回完整病因与解决方案；提供竞品结果页截图作信息结构参考",
   "scopeGuards": {
@@ -152,6 +152,11 @@
       "rev": "r6",
       "at": "2026-10-10",
       "scope": "可用性探针、本地图片内联（评测专用）、qwen3.6-flash 首轮探针 2 遍"
+    },
+    {
+      "rev": "r7",
+      "at": "2026-10-10",
+      "scope": "评分误报修正（TDD 16 条 RED→GREEN）、允许名单 aliases、提示词 v1.1、v1/v1.1 配对比较、开发集来源规划"
     }
   ],
   "userDecisions_2026_10_10": {
@@ -454,5 +459,34 @@
       }
     },
     "verification": "vitest 317 文件 3463 通过 / 5 跳过 / 0 失败；tsc 0 错误"
+  },
+  "r7": {
+    "scorerTdd": {
+      "red": "16 条复现用例实现前全部失败",
+      "green": "评测脚本 46/46"
+    },
+    "allowlist": "diagnosis-visual-gen-agent-allowlist.v1.json 新增 aliases 与 aliasRuleZh（20 项不变），contract-registry 哈希已更新",
+    "promptV11": "cloudfunctions-v2/models/diagnosis/visual-diagnosis-prompt.v1.1.draft.md（前缀 14,463 字符）",
+    "paired": {
+      "v1": {
+        "top1": "17/29",
+        "top3": "19/29",
+        "violCases": 1
+      },
+      "v1.1": {
+        "top1": "14/29",
+        "top3": "15/29",
+        "violCases": 0,
+        "insufficient": 5
+      }
+    },
+    "spendCny": 1.237123,
+    "freeTierExhausted": "qwen3.6-flash 别名于 r2-v11 的 P14 起返回 FreeTierOnly；P14–P30 改用快照配对重跑",
+    "pendingUser": [
+      "D15 处理次数与间隔是否允许（合同只禁剂量；v2 Schema 正则与提示词更严，三者待统一）",
+      "是否把「证据不足 + 有效追问」计为合理结果"
+    ],
+    "devSetPlan": "docs/backend-v2/diagnosis-eval/dev-set-sourcing-plan-2026-10-10.md",
+    "verification": "vitest 317 文件 3479 通过 / 5 跳过 / 0 失败"
   }
 }

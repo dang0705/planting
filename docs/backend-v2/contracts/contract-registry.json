@@ -160,7 +160,7 @@
       "file": "diagnosis-visual-gen-agent-allowlist.v1.json",
       "owner": "diagnosis",
       "status": "P1_PENDING",
-      "sha256": "cd2d88c7025ae0448dcf74afe0d59e070c5d45d759d898a247fff9d883eec312"
+      "sha256": "28a65dee3ad4c257b00798753543d93a2c5d5bcec5c9dee97bb0e075199c116d"
     },
     {
       "id": "diagnosis-context-summary",

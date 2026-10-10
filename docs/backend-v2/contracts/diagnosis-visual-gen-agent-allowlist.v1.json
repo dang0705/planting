@@ -17,102 +17,155 @@
     {
       "nameZh": "苦参碱",
       "categoryZh": "植物源杀虫剂",
-      "category": "insecticide"
+      "category": "insecticide",
+      "aliases": []
     },
     {
       "nameZh": "印楝素",
       "categoryZh": "植物源杀虫剂",
-      "category": "insecticide"
+      "category": "insecticide",
+      "aliases": []
     },
     {
       "nameZh": "除虫菊素",
       "categoryZh": "植物源杀虫剂",
-      "category": "insecticide"
+      "category": "insecticide",
+      "aliases": [
+        "除虫菊"
+      ]
     },
     {
       "nameZh": "矿物油（园艺油）",
       "categoryZh": "矿物油杀虫杀螨剂",
-      "category": "insecticide_acaricide"
+      "category": "insecticide_acaricide",
+      "aliases": [
+        "矿物油",
+        "园艺油",
+        "矿物油乳剂"
+      ]
     },
     {
       "nameZh": "杀虫皂（钾皂）",
       "categoryZh": "脂肪酸钾盐触杀剂",
-      "category": "insecticide"
+      "category": "insecticide",
+      "aliases": [
+        "杀虫皂",
+        "钾皂",
+        "钾肥皂"
+      ]
     },
     {
       "nameZh": "苏云金杆菌（Bt）",
       "categoryZh": "微生物杀虫剂",
-      "category": "insecticide"
+      "category": "insecticide",
+      "aliases": [
+        "苏云金杆菌",
+        "Bt",
+        "BT"
+      ]
     },
     {
       "nameZh": "多杀霉素",
       "categoryZh": "微生物源杀虫剂",
-      "category": "insecticide"
+      "category": "insecticide",
+      "aliases": [
+        "多杀菌素"
+      ]
     },
     {
       "nameZh": "乙基多杀菌素",
       "categoryZh": "微生物源杀虫剂",
-      "category": "insecticide"
+      "category": "insecticide",
+      "aliases": []
     },
     {
       "nameZh": "碳酸氢钾",
       "categoryZh": "无机杀菌剂",
-      "category": "fungicide"
+      "category": "fungicide",
+      "aliases": []
     },
     {
       "nameZh": "硫磺制剂",
       "categoryZh": "无机杀菌杀螨剂",
-      "category": "fungicide"
+      "category": "fungicide",
+      "aliases": [
+        "硫磺",
+        "硫黄"
+      ]
     },
     {
       "nameZh": "铜制剂",
       "categoryZh": "无机杀菌剂",
-      "category": "bactericide_fungicide"
+      "category": "bactericide_fungicide",
+      "aliases": [
+        "含铜杀菌剂",
+        "铜基杀菌剂"
+      ]
     },
     {
       "nameZh": "代森锰锌",
       "categoryZh": "保护性杀菌剂",
-      "category": "fungicide"
+      "category": "fungicide",
+      "aliases": []
     },
     {
       "nameZh": "百菌清",
       "categoryZh": "保护性杀菌剂",
-      "category": "fungicide"
+      "category": "fungicide",
+      "aliases": []
     },
     {
       "nameZh": "苯醚甲环唑",
       "categoryZh": "三唑类杀菌剂",
-      "category": "fungicide"
+      "category": "fungicide",
+      "aliases": []
     },
     {
       "nameZh": "咪鲜胺",
       "categoryZh": "咪唑类杀菌剂",
-      "category": "fungicide"
+      "category": "fungicide",
+      "aliases": []
     },
     {
       "nameZh": "嘧菌酯",
       "categoryZh": "甲氧基丙烯酸酯类杀菌剂",
-      "category": "fungicide"
+      "category": "fungicide",
+      "aliases": []
     },
     {
       "nameZh": "三唑类杀菌剂",
       "categoryZh": "杀菌剂类别",
-      "category": "fungicide"
+      "category": "fungicide",
+      "aliases": [
+        "三唑类"
+      ]
     },
     {
       "nameZh": "螯合铁微量元素肥",
       "categoryZh": "肥料",
-      "category": "nutrient"
+      "category": "nutrient",
+      "aliases": [
+        "螯合铁",
+        "螯合铁肥"
+      ]
     },
     {
       "nameZh": "含镁微量元素肥",
       "categoryZh": "肥料",
-      "category": "nutrient"
+      "category": "nutrient",
+      "aliases": [
+        "镁肥"
+      ]
     },
     {
       "nameZh": "稀释酒精（仅用于棉签擦拭）",
       "categoryZh": "物理擦拭用品",
-      "category": "physical"
+      "category": "physical",
+      "aliases": [
+        "稀释酒精",
+        "酒精"
+      ]
     }
-  ]
+  ],
+  "aliasRuleZh": "比较时先去掉全角/半角括号及其内容与空白，再与 nameZh 或 aliases 比较；aliases 只是同一药剂的常见写法，不扩大名单。生产适配器在 Schema 校验前把别名归一为 nameZh。"
 }
