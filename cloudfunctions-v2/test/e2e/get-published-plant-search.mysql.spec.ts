@@ -12,6 +12,7 @@ import { createMysql2ConnectionSource } from '../../src/foundation/database/mysq
 import { createPlantKnowledgeServer } from '../../src/plant-knowledge/http/server.js'
 import { createMysqlPublishedPlantSearchRepository } from '../../src/plant-knowledge/repository/mysql-published-plant-search-repository.js'
 import { findProjectRoot } from '../support/project-root.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 const containerName = `qhz-v2-search-plants-${String(process.pid)}`
 const databaseName = `qinghuazhi_v2_search_plants_${String(process.pid)}`
@@ -360,7 +361,7 @@ function activateBothReleases(): void {
 /** 以给定环境变量启动真实 HTTP 服务，连接隔离 MySQL 8.4。 */
 async function startServer(environment: Record<string, string>): Promise<string> {
   const connectionSource = createMysql2ConnectionSource(readDatabaseConnectionConfig(environment))
-  server = createPlantKnowledgeServer({ connectionSource, writeAudit: () => undefined })
+  server = createPlantKnowledgeServer({ ...fixturePolicyPorts(), connectionSource, writeAudit: () => undefined })
   await new Promise<void>(resolve => server?.listen(ephemeralPort, '127.0.0.1', resolve))
   const address = server.address() as AddressInfo
   return `http://127.0.0.1:${String(address.port)}`
@@ -548,7 +549,7 @@ describe('已发布植物身份公开搜索（真实 MySQL）', () => {
         captured.push({ sql, parameters })
         return []
       }
-    }).searchPublishedPlants('Monstera')
+    }).searchPublishedPlants('Monstera', 20)
     const connection = await createConnection({
       host: '127.0.0.1',
       port: mysqlPort,

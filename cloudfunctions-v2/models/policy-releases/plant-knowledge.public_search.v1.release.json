@@ -1,0 +1,16 @@
+{
+  "releaseDocumentVersion": "business-policy-release-document/v1",
+  "domainCode": "plant-knowledge",
+  "policyCode": "public_search",
+  "schemaVersion": "plant-knowledge-public-search/v1",
+  "releaseVersion": "plant-knowledge-public-search/v1.0.0",
+  "effectiveAt": "2026-10-10T00:00:00Z",
+  "changeNote": "用户 2026-10-10 裁定：搜索查询长度、结果上限、目录默认条数、百科引用长度迁入策略发布，取值不变",
+  "policy": {
+    "contractVersion": "plant-knowledge-public-search/v1",
+    "searchQueryMaxCodePoints": 64,
+    "searchResultMaxItems": 20,
+    "catalogDefaultLimit": 10,
+    "encyclopediaReferenceMaxCodePoints": 512
+  }
+}

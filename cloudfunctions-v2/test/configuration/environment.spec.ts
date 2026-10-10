@@ -57,7 +57,8 @@ describe('日志级别（运维类，代码默认 info）', () => {
 })
 
 describe('运维覆盖白名单（主代理 2026-10-10 裁定：Provider 总时限 + 发件箱租约/每批 + 过期扫描每批，带上下限）', () => {
-  it('白名单固定为七项，默认值来自代码注册表且落在上下限内', () => {
+  // 用户 2026-10-10 第三轮裁定：再加发件箱最大尝试次数、过期扫描时长占比、游客认领租约、服务签名时钟偏差与 nonce 保留。
+  it('白名单固定为十二项，默认值来自代码注册表且落在上下限内', () => {
     expect(Object.fromEntries(Object.entries(OPERATIONAL_ENVIRONMENT_OVERRIDES).map(([key, spec]) => [key, [spec.environmentName, spec.defaultValue, spec.minimum, spec.maximum]]))).toEqual({
       wechatLoginTotalDeadlineMs: ['V2_WECHAT_LOGIN_TOTAL_DEADLINE_MS', 5000, 2000, 10_000],
       douyinLoginTotalDeadlineMs: ['V2_DOUYIN_LOGIN_TOTAL_DEADLINE_MS', 5000, 2000, 10_000],
@@ -65,7 +66,12 @@ describe('运维覆盖白名单（主代理 2026-10-10 裁定：Provider 总时�
       cloudbaseStorageTotalDeadlineMs: ['V2_CLOUDBASE_STORAGE_TOTAL_DEADLINE_MS', 10_000, 2000, 20_000],
       careOutboxLeaseSeconds: ['V2_CARE_OUTBOX_LEASE_SECONDS', 30, 10, 120],
       careOutboxBatchSize: ['V2_CARE_OUTBOX_BATCH_SIZE', 100, 20, 500],
-      carePlanExpiryBatchSize: ['V2_CARE_PLAN_EXPIRY_BATCH_SIZE', 500, 100, 2000]
+      carePlanExpiryBatchSize: ['V2_CARE_PLAN_EXPIRY_BATCH_SIZE', 500, 100, 2000],
+      careOutboxMaxAttempts: ['V2_CARE_OUTBOX_MAX_ATTEMPTS', 5, 3, 10],
+      carePlanExpiryRunBudgetPercent: ['V2_CARE_PLAN_EXPIRY_RUN_BUDGET_PERCENT', 50, 20, 80],
+      userPlantGuestClaimLeaseSeconds: ['V2_USER_PLANT_GUEST_CLAIM_LEASE_SECONDS', 30, 10, 120],
+      serviceSignatureClockSkewSeconds: ['V2_SERVICE_SIGNATURE_CLOCK_SKEW_SECONDS', 300, 60, 300],
+      serviceSignatureNonceTtlSeconds: ['V2_SERVICE_SIGNATURE_NONCE_TTL_SECONDS', 600, 600, 900]
     })
     expect(OPERATIONAL_ENVIRONMENT_OVERRIDES.wechatLoginTotalDeadlineMs.parameter).toBe(RUNTIME_PARAMETERS.identity.wechatLoginTotalDeadlineMs)
     expect(OPERATIONAL_ENVIRONMENT_OVERRIDES.douyinLoginTotalDeadlineMs.parameter).toBe(RUNTIME_PARAMETERS.identity.douyinLoginTotalDeadlineMs)
@@ -77,18 +83,42 @@ describe('运维覆盖白名单（主代理 2026-10-10 裁定：Provider 总时�
     for (const spec of Object.values(OPERATIONAL_ENVIRONMENT_OVERRIDES)) {
       const value = spec.parameter.value as unknown
       const registryDefault = spec.field === null ? value : (value as Record<string, unknown>)[spec.field]
-      expect(spec.defaultValue).toBe(registryDefault)
+      expect(spec.defaultValue / spec.scale).toBe(registryDefault)
       expect(spec.minimum).toBeLessThanOrEqual(spec.defaultValue)
       expect(spec.defaultValue).toBeLessThanOrEqual(spec.maximum)
       expect(spec.decidedAt).toBe('2026-10-10')
     }
   })
 
-  it('硬规则字段不在白名单：最大尝试次数、过期 72 小时、缺段 6 小时、分页', () => {
+  it('业务参数（已迁入策略发布）与触发器 cron 不在环境变量白名单', () => {
     const covered = Object.values(OPERATIONAL_ENVIRONMENT_OVERRIDES).map(spec => `${spec.parameter.source.kind === 'catalog_variable' ? spec.parameter.source.catalogKey : spec.parameter.source.providerCode}#${spec.field ?? ''}`)
-    for (const forbidden of ['care.outbox_dispatch#maxAttempts', 'care.outbox_dispatch#cron', 'care.plans.expiry_grace_hours#', 'care.watering.drying_gap_fill_max_hours#', 'care.plans.page_size#', 'care.plans.expiry_scan#runBudgetFractionOfFunctionTimeout']) {
+    for (const forbidden of ['care.outbox_dispatch#cron', 'care.plans.expiry_scan#cron', 'care.plans.expiry_grace_hours#', 'care.watering.drying_gap_fill_max_hours#', 'care.plans.page_size#', 'http.idempotency.retention_hours#']) {
       expect(covered).not.toContain(forbidden)
     }
+  })
+
+  it('服务签名：时钟偏差与 nonce 保留可覆盖；越界启动失败（错误不含取值）', () => {
+    expect(readIdentityEnvironment(database).serviceSignature).toEqual({ clockSkewSeconds: 300, nonceTtlSeconds: 600 })
+    expect(readIdentityEnvironment({ ...database, V2_SERVICE_SIGNATURE_CLOCK_SKEW_SECONDS: '120', V2_SERVICE_SIGNATURE_NONCE_TTL_SECONDS: '700' }).serviceSignature)
+      .toEqual({ clockSkewSeconds: 120, nonceTtlSeconds: 700 })
+    const error = capture(() => readIdentityEnvironment({ ...database, V2_SERVICE_SIGNATURE_CLOCK_SKEW_SECONDS: '300', V2_SERVICE_SIGNATURE_NONCE_TTL_SECONDS: '599' }))
+    expect(error).toBeInstanceOf(EnvironmentConfigError)
+    expect(error.message).not.toContain('599')
+    // 登记范围（偏差 60–300、nonce 600–900）已保证 nonce ≥ 2 × 偏差；交叉校验作为防线保留在 environment.ts。
+  })
+
+  it('过期扫描时长占比：整数百分比换算为比例，越界启动失败', () => {
+    expect(readCarePlanExpiryEnvironment(database).runBudgetFraction).toBe(0.5)
+    expect(readCarePlanExpiryEnvironment({ ...database, V2_CARE_PLAN_EXPIRY_RUN_BUDGET_PERCENT: '80' }).runBudgetFraction).toBe(0.8)
+    expect(capture(() => readCarePlanExpiryEnvironment({ ...database, V2_CARE_PLAN_EXPIRY_RUN_BUDGET_PERCENT: '81' }))).toBeInstanceOf(EnvironmentConfigError)
+  })
+
+  it('发件箱最大尝试次数与游客认领租约：默认 5 / 30，可在范围内覆盖', () => {
+    expect(readCareOutboxDispatchEnvironment(database).outboxDispatch.maxAttempts).toBe(5)
+    expect(readCareOutboxDispatchEnvironment({ ...database, V2_CARE_OUTBOX_MAX_ATTEMPTS: '10' }).outboxDispatch.maxAttempts).toBe(10)
+    expect(capture(() => readCareOutboxDispatchEnvironment({ ...database, V2_CARE_OUTBOX_MAX_ATTEMPTS: '2' }))).toBeInstanceOf(EnvironmentConfigError)
+    expect(readUserPlantEnvironment(database).guestClaimLeaseSeconds).toBe(30)
+    expect(readUserPlantEnvironment({ ...database, V2_USER_PLANT_GUEST_CLAIM_LEASE_SECONDS: '120' }).guestClaimLeaseSeconds).toBe(120)
   })
   it('未设置或空串用代码默认；合法整数在范围内采用', () => {
     expect(readOperationalOverride({}, 'openMeteoTotalDeadlineMs')).toBe(8000)
@@ -122,8 +152,8 @@ describe('各云函数环境读取器', () => {
   })
 
   it('readCareOutboxDispatchEnvironment：租约 / 每批默认 30 秒 / 100，可在范围内覆盖，越界启动失败', () => {
-    expect(readCareOutboxDispatchEnvironment(database).outboxDispatch).toEqual({ leaseSeconds: 30, batchSize: 100 })
-    expect(readCareOutboxDispatchEnvironment({ ...database, V2_CARE_OUTBOX_LEASE_SECONDS: '120', V2_CARE_OUTBOX_BATCH_SIZE: '20' }).outboxDispatch).toEqual({ leaseSeconds: 120, batchSize: 20 })
+    expect(readCareOutboxDispatchEnvironment(database).outboxDispatch).toEqual({ leaseSeconds: 30, batchSize: 100, maxAttempts: 5 })
+    expect(readCareOutboxDispatchEnvironment({ ...database, V2_CARE_OUTBOX_LEASE_SECONDS: '120', V2_CARE_OUTBOX_BATCH_SIZE: '20' }).outboxDispatch).toEqual({ leaseSeconds: 120, batchSize: 20, maxAttempts: 5 })
     expect(capture(() => readCareOutboxDispatchEnvironment({ ...database, V2_CARE_OUTBOX_LEASE_SECONDS: '9' }))).toBeInstanceOf(EnvironmentConfigError)
     expect(capture(() => readCareOutboxDispatchEnvironment({ ...database, V2_CARE_OUTBOX_BATCH_SIZE: '501' }))).toBeInstanceOf(EnvironmentConfigError)
   })

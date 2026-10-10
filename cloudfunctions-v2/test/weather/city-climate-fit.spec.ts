@@ -14,6 +14,7 @@ import {
   listCityClimateRecommendationsRoute
 } from '../../src/weather/http/routes.js'
 import { findProjectRoot } from '../support/project-root.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /**
  * Expected：weather-city-climate-fit/v2（plantId=taxon_id）+ 已灌库列名 + v1 热门城重庆坐标。
@@ -87,7 +88,7 @@ async function start(
       return handler(sql, parameters)
     }
   }
-  server = createWeatherServer({
+  server = createWeatherServer({ ...fixturePolicyPorts(),
     connectionSource: { getConnection: async () => connection },
     writeAudit: () => undefined
   })

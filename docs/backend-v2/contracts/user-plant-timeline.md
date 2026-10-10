@@ -30,7 +30,7 @@
 ```ts
 /** 查询参数：与植物列表一致的游标分页，未知/重复/非法参数 400。 */
 export type TimelineQuery = {
-  /** 1～50 的十进制整数文本；缺省 20（硬规则 user-plant.timeline.page_size）。 */
+  /** 1～策略上限的十进制整数文本；缺省为策略默认（生效策略 user-plant/list_rules，当前 20 / 50，绝对上限 50；用户 2026-10-10 裁定，策略不可用 503）。 */
   limit?: string
   /** 只能原样回传上一页的 nextCursor。 */
   cursor?: string

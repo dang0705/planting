@@ -6,6 +6,7 @@ import { createLongTermCareCommands } from '../../src/care/application/long-term
 import { createLongTermCareRouteBindings, type LongTermCareRouteDependencies } from '../../src/care/http/long-term-care-routes.js'
 import type { UserPrincipalDto, UserRef } from '../../src/contracts/types.js'
 import { createRouteDispatcher } from '../../src/foundation/http/route-dispatcher.js'
+import { careLongTermRulesV1, fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /**
  * unit_fake。Expected：long-term-care-contract.md §12.2/§12.3（扫描先过期 → 用户完成返回 409 CARE_PLAN_EXPIRED，
@@ -45,7 +46,7 @@ function fakeCommands(planStatus: string, planVersion: number) {
   const commands = createLongTermCareCommands({
     driver, idempotencyRepository, commitUnknownReadOnlyRepository: {}, createRef: (kind: string) => `c${kind.slice(0, 2)}_ref_${String(++sequence).padStart(8, '0')}`
   } as never)
-  const complete = (request: Record<string, unknown>) => commands.completePlan({
+  const complete = (request: Record<string, unknown>) => commands.completePlan({ rules: careLongTermRulesV1(),
     userRef: 'usr_expiry_user_0001', userPlantRef: 'upl_expiry_plant_001', nowMs: now, planRef: 'cpl_expiry_plan_0001',
     idempotency: {} as never, request: request as never
   })
@@ -91,6 +92,7 @@ describe('L3 完成路由透传 CARE_PLAN_EXPIRED', () => {
       authenticate: async () => user,
       now: () => now,
       writeAudit: () => undefined,
+      ...fixturePolicyPorts(),
       readPlantContext: unused,
       readTaxonDisplayName: unused,
       commands: {

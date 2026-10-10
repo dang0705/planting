@@ -1,3 +1,4 @@
+import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import type { UserPlantDto, UserPlantRef, UserRef } from '../../contracts/types.js'
 import type { TransactionExecutionContext } from '../../foundation/database/transaction-runner.js'
 import type { ListableUserPlantLifecycle, UserPlantListCursor } from '../domain/user-plant-list-query.js'
@@ -37,7 +38,8 @@ export type MysqlUserPlantListRepository<TTransaction extends TransactionExecuti
 }
 
 const userRefFormat = /^usr_[A-Za-z0-9_-]{8,}$/u
-const maxFetchLimit = 51
+/** 读取上限 = 分页绝对上限（user-plant.list_rules.absolute_bounds = 合同 maxItems 50）+ 1 行用于判断下一页。 */
+const maxFetchLimit = RUNTIME_PARAMETERS.policyBounds.userPlantListRules.value.pageSizeMax + 1
 
 /**
  * 创建用户植物列表 Repository：user-plant 域列表 SQL 的唯一入口。

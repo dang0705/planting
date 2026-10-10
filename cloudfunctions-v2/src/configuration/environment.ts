@@ -71,8 +71,10 @@ export interface OperationalOverrideSpec {
   readonly parameter: RuntimeParameter<unknown>
   /** 复合参数中被覆盖的字段名；参数本身即数值时为 null。 */
   readonly field: string | null
-  /** 代码层默认值（与注册表对应字段相等，由测试保证）。 */
+  /** 代码层默认值（环境变量单位；除以 scale 后与注册表对应字段相等，由测试保证）。 */
   readonly defaultValue: number
+  /** 环境变量单位到运行值的换算除数：通常为 1；百分比类为 100（例如 50 → 0.5）。 */
+  readonly scale: number
   /** 允许覆盖的最小整数（含）。 */
   readonly minimum: number
   /** 允许覆盖的最大整数（含）；同时是下游守卫（如 SQL LIMIT 校验）的上限。 */
@@ -82,13 +84,14 @@ export interface OperationalOverrideSpec {
 }
 
 /** 声明一个白名单运维覆盖项（冻结）。 */
-function override(environmentName: string, parameter: RuntimeParameter<unknown>, field: string | null, defaultValue: number, minimum: number, maximum: number): OperationalOverrideSpec {
-  return Object.freeze({ environmentName, parameter, field, defaultValue, minimum, maximum, decidedAt: '2026-10-10' })
+function override(environmentName: string, parameter: RuntimeParameter<unknown>, field: string | null, defaultValue: number, minimum: number, maximum: number, scale = 1): OperationalOverrideSpec {
+  return Object.freeze({ environmentName, parameter, field, defaultValue, minimum, maximum, scale, decidedAt: '2026-10-10' })
 }
 
 /**
- * 运维覆盖白名单（主代理 2026-10-10 裁定为正式规则）：Provider 总时限（下限取档案 connectTimeoutMs）、
- * 发件箱租约 / 每批、过期扫描每批。最大尝试次数、过期 72 小时、缺段 6 小时、分页、正文上限、幂等保留期仍为代码层硬规则，不在此列。
+ * 运维覆盖白名单（2026-10-10 裁定为正式规则）：Provider 总时限（下限取档案 connectTimeoutMs）、发件箱租约 / 每批 / 最大尝试次数、
+ * 过期扫描每批 / 时长占比、游客认领租约、服务签名时钟偏差与 nonce 保留。业务参数（时长、天数、分页等）在策略发布里，不在此列；
+ * 正文绝对上限与触发器 cron 不可经环境变量调整。
  */
 export const OPERATIONAL_ENVIRONMENT_OVERRIDES = Object.freeze({
   /** 微信登录 Provider 总时限毫秒。 */
@@ -105,6 +108,20 @@ export const OPERATIONAL_ENVIRONMENT_OVERRIDES = Object.freeze({
   careOutboxBatchSize: override('V2_CARE_OUTBOX_BATCH_SIZE', RUNTIME_PARAMETERS.care.outboxDispatch, 'batchSize', RUNTIME_PARAMETERS.care.outboxDispatch.value.batchSize, 20, 500),
   /** 过期扫描单批最多改写行数（`care.plans.expiry_scan.batchSize`）。 */
   carePlanExpiryBatchSize: override('V2_CARE_PLAN_EXPIRY_BATCH_SIZE', RUNTIME_PARAMETERS.care.planExpiryScan, 'batchSize', RUNTIME_PARAMETERS.care.planExpiryScan.value.batchSize, 100, 2000),
+  /** 发件箱最大尝试次数（`care.outbox_dispatch.maxAttempts`；用户 2026-10-10 第三轮裁定）。 */
+  careOutboxMaxAttempts: override('V2_CARE_OUTBOX_MAX_ATTEMPTS', RUNTIME_PARAMETERS.care.outboxDispatch, 'maxAttempts', RUNTIME_PARAMETERS.care.outboxDispatch.value.maxAttempts, 3, 10),
+  /** 过期扫描单次运行时长占函数超时的整数百分比（`care.plans.expiry_scan.runBudgetFractionOfFunctionTimeout` × 100）。 */
+  carePlanExpiryRunBudgetPercent: override('V2_CARE_PLAN_EXPIRY_RUN_BUDGET_PERCENT', RUNTIME_PARAMETERS.care.planExpiryScan, 'runBudgetFractionOfFunctionTimeout',
+    Math.round(RUNTIME_PARAMETERS.care.planExpiryScan.value.runBudgetFractionOfFunctionTimeout * 100), 20, 80, 100),
+  /** 游客认领处理中租约秒数（`user-plant.guest_claim.processing_lease_seconds`）。 */
+  userPlantGuestClaimLeaseSeconds: override('V2_USER_PLANT_GUEST_CLAIM_LEASE_SECONDS', RUNTIME_PARAMETERS.userPlant.guestClaimProcessingLeaseSeconds, null,
+    RUNTIME_PARAMETERS.userPlant.guestClaimProcessingLeaseSeconds.value, 10, 120),
+  /** 服务签名允许时钟偏差秒数（签名方与验证方所有函数必须部署同一取值）。 */
+  serviceSignatureClockSkewSeconds: override('V2_SERVICE_SIGNATURE_CLOCK_SKEW_SECONDS', RUNTIME_PARAMETERS.identity.serviceSignatureClockSkewSeconds, null,
+    RUNTIME_PARAMETERS.identity.serviceSignatureClockSkewSeconds.value, 60, 300),
+  /** 服务签名 nonce 防重放保留秒数（必须 ≥ 2 × 时钟偏差）。 */
+  serviceSignatureNonceTtlSeconds: override('V2_SERVICE_SIGNATURE_NONCE_TTL_SECONDS', RUNTIME_PARAMETERS.identity.serviceSignatureNonceTtlSeconds, null,
+    RUNTIME_PARAMETERS.identity.serviceSignatureNonceTtlSeconds.value, 600, 900),
 })
 
 /** 运维覆盖白名单的键。 */
@@ -134,12 +151,12 @@ export function readLogLevel(environment: EnvironmentSource): LogLevel {
 export function readOperationalOverride(environment: EnvironmentSource, key: OperationalOverrideKey): number {
   const spec: OperationalOverrideSpec = OPERATIONAL_ENVIRONMENT_OVERRIDES[key]
   const raw = readOptional(environment, spec.environmentName)
-  if (raw === undefined) { return spec.defaultValue }
+  if (raw === undefined) { return spec.defaultValue / spec.scale }
   const value = Number(raw)
   if (!decimalIntegerPattern.test(raw) || !Number.isSafeInteger(value) || value < spec.minimum || value > spec.maximum) {
     throw new EnvironmentConfigError(`环境变量不合法：${spec.environmentName}（允许 ${spec.minimum}–${spec.maximum} 的整数）`)
   }
-  return value
+  return value / spec.scale
 }
 
 /** 为凭证容器挂上不可枚举的脱敏序列化，防止被日志或 JSON 意外输出。 */
@@ -186,6 +203,26 @@ export interface IdentityEnvironment extends FunctionEnvironment {
   readonly wechatLoginTotalDeadlineMs: number
   /** 抖音登录 / 匿名信号 Provider 总时限毫秒（代码默认 5000，可在白名单范围内覆盖）。 */
   readonly douyinLoginTotalDeadlineMs: number
+  /** 服务间签名参数（签名方与验证方共用同一组环境变量）。 */
+  readonly serviceSignature: ServiceSignatureEnvironment
+}
+
+/** 服务间签名参数。 */
+export interface ServiceSignatureEnvironment {
+  /** 允许的请求时间与服务端时间绝对差（秒）。 */
+  readonly clockSkewSeconds: number
+  /** nonce 占用后的最少保留秒数；必须不小于 2 × clockSkewSeconds，否则在偏差窗口内可能重放。 */
+  readonly nonceTtlSeconds: number
+}
+
+/** 读取服务签名参数并做跨字段校验（错误不含取值）。 */
+export function readServiceSignatureEnvironment(environment: EnvironmentSource): ServiceSignatureEnvironment {
+  const clockSkewSeconds = readOperationalOverride(environment, 'serviceSignatureClockSkewSeconds')
+  const nonceTtlSeconds = readOperationalOverride(environment, 'serviceSignatureNonceTtlSeconds')
+  if (nonceTtlSeconds < 2 * clockSkewSeconds) {
+    throw new EnvironmentConfigError('环境变量不合法：V2_SERVICE_SIGNATURE_NONCE_TTL_SECONDS 必须不小于 2 × V2_SERVICE_SIGNATURE_CLOCK_SKEW_SECONDS')
+  }
+  return Object.freeze({ clockSkewSeconds, nonceTtlSeconds })
 }
 
 /** 读取 identity 云函数环境；先校验运维参数，再收拢凭证，任何错误信息都不含凭证值。 */
@@ -195,7 +232,8 @@ export function readIdentityEnvironment(environment: EnvironmentSource): Identit
   const douyinLoginTotalDeadlineMs = readOperationalOverride(environment, 'douyinLoginTotalDeadlineMs')
   const credentials: Record<string, string | undefined> = {}
   for (const name of platformLoginCredentialNames) { credentials[name] = environment[name] }
-  return { ...base, platformLogin: redactCredentials(credentials as PlatformLoginCredentials), wechatLoginTotalDeadlineMs, douyinLoginTotalDeadlineMs }
+  return { ...base, platformLogin: redactCredentials(credentials as PlatformLoginCredentials), wechatLoginTotalDeadlineMs, douyinLoginTotalDeadlineMs,
+    serviceSignature: readServiceSignatureEnvironment(environment) }
 }
 
 /** care 云函数环境。 */
@@ -217,6 +255,8 @@ export interface CareOutboxDispatchEnvironment extends FunctionEnvironment {
     readonly leaseSeconds: number
     /** 单次最多领取条数（默认 100，允许 20–500）。 */
     readonly batchSize: number
+    /** 最大尝试次数（默认 5，允许 3–10）；第 maxAttempts 次仍失败进入死信。 */
+    readonly maxAttempts: number
   }
 }
 
@@ -227,19 +267,23 @@ export function readCareOutboxDispatchEnvironment(environment: EnvironmentSource
     outboxDispatch: Object.freeze({
       leaseSeconds: readOperationalOverride(environment, 'careOutboxLeaseSeconds'),
       batchSize: readOperationalOverride(environment, 'careOutboxBatchSize'),
+      maxAttempts: readOperationalOverride(environment, 'careOutboxMaxAttempts'),
     }),
   }
 }
 
 /** care-plan-expiry 事件函数环境。 */
 export interface CarePlanExpiryEnvironment extends FunctionEnvironment {
-  /** 过期扫描单批最多改写行数（默认 500，允许 100–2000）；72 小时宽限为硬规则不在此。 */
+  /** 过期扫描单批最多改写行数（默认 500，允许 100–2000）；宽限小时数来自策略发布 care/long_term_rules。 */
   readonly expiryBatchSize: number
+  /** 单次运行时长上限占函数超时的比例（默认 0.5；环境变量为整数百分比 20–80）。 */
+  readonly runBudgetFraction: number
 }
 
 /** 读取 care-plan-expiry 事件函数环境。 */
 export function readCarePlanExpiryEnvironment(environment: EnvironmentSource): CarePlanExpiryEnvironment {
-  return { ...readFunctionEnvironment(environment), expiryBatchSize: readOperationalOverride(environment, 'carePlanExpiryBatchSize') }
+  return { ...readFunctionEnvironment(environment), expiryBatchSize: readOperationalOverride(environment, 'carePlanExpiryBatchSize'),
+    runBudgetFraction: readOperationalOverride(environment, 'carePlanExpiryRunBudgetPercent') }
 }
 
 /** 云存储 Provider 运行配置。 */
@@ -256,6 +300,8 @@ export interface CloudbaseStorageEnvironment {
 export interface UserPlantEnvironment extends FunctionEnvironment {
   /** 云存储配置；缺少环境 ID 时为 null（不创建 Provider，封面登记 503）。 */
   readonly storage: CloudbaseStorageEnvironment | null
+  /** 游客认领处理中租约秒数（默认 30，允许 10–120）。 */
+  readonly guestClaimLeaseSeconds: number
 }
 
 /** 读取 user-plant 云函数环境；存储 API Key 只在调用时按变量名读取。 */
@@ -266,5 +312,5 @@ export function readUserPlantEnvironment(environment: EnvironmentSource): UserPl
   const storage = envId
     ? Object.freeze({ envId, readApiKey: () => environment[storageCredentialEnvironmentName], totalDeadlineMs })
     : null
-  return { ...base, storage }
+  return { ...base, storage, guestClaimLeaseSeconds: readOperationalOverride(environment, 'userPlantGuestClaimLeaseSeconds') }
 }

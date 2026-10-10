@@ -1,0 +1,14 @@
+{
+  "releaseDocumentVersion": "business-policy-release-document/v1",
+  "domainCode": "http",
+  "policyCode": "request_write",
+  "schemaVersion": "http-request-write-policy/v2",
+  "releaseVersion": "http-request-write-policy/v2.0.0",
+  "effectiveAt": "2026-10-10T00:00:00Z",
+  "changeNote": "用户 2026-10-10 裁定：幂等保留期改为策略可调（24–720 小时），当前 168 小时；正文上限仍等于代码绝对值 1 MiB",
+  "policy": {
+    "contractVersion": "http-request-write-policy/v2",
+    "jsonBodyLimitBytes": 1048576,
+    "idempotencyRetentionHours": 168
+  }
+}

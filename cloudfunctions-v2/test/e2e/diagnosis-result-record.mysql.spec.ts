@@ -8,6 +8,7 @@ import { resultFixture } from '../support/diagnosis-result-record-fixture.js'
 import { lockDiagnosisResultRecord } from '../../src/diagnosis/domain/diagnosis-result-record.js'
 import { createMysqlDiagnosisResultRecordRepository } from '../../src/diagnosis/repository/mysql-diagnosis-result-record-repository.js'
 import { createMysql2ConnectionSource } from '../../src/foundation/database/mysql2-connection-source.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 /** unit_real_data/L3：真实004结果表与022迁移、事务与归属读回；用户/植物/知识父行是隔离夹具，不证明知识审核/模型/HTTP。 */
 let db: Connection, source: ReturnType<typeof createMysql2ConnectionSource>
 const container = `qhz-result-record-${process.pid}`,
@@ -218,7 +219,7 @@ async function resultHttp() {
     issuedAt: '2026-10-04T00:00:00Z',
     expiresAt: '2026-10-05T00:00:00Z'
   }
-  const server = createDiagnosisServer({
+  const server = createDiagnosisServer({ ...fixturePolicyPorts(),
     connectionSource: source,
     resolvePrincipal: async command =>
       ({

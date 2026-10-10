@@ -108,7 +108,7 @@ async function command() {
   const [rows] = await db.query('SELECT status,processing_lease_owner_hash AS owner,CAST(processing_lease_expires_at_ms AS CHAR) AS expires,attempt_count AS attempts,CAST(updated_at_ms AS CHAR) AS updated FROM guest_claim_commands')
   return (rows as Array<Record<string, unknown>>)[0]
 }
-const acquire = (value = leaseInput()) => runDatabaseTransaction(createMysqlTransactionDriver(source, () => undefined), tx => createMysqlGuestClaimLeaseRepository().acquire(tx, value))
+const acquire = (value = leaseInput()) => runDatabaseTransaction(createMysqlTransactionDriver(source, () => undefined), tx => createMysqlGuestClaimLeaseRepository(30_000).acquire(tx, value))
 
 describe('游客认领处理租约（真实 MySQL）', () => {
   test('L2 requested → processing：attempt=1、期限 now+30000、服务端持有者摘要', async () => {
@@ -189,7 +189,7 @@ describe('游客认领完整应用（真实 MySQL）', () => {
     return createClaimGuestPlantCaseApplicationService({
       nowMs: () => now, driver, createLeaseOwnerHash: () => mine, completedReceiptReader: receiptReader,
       registrationRepository: createMysqlGuestClaimCommandRegistrationRepository({ lockAndVerify }),
-      leaseRepository: createMysqlGuestClaimLeaseRepository(), completeClaim
+      leaseRepository: createMysqlGuestClaimLeaseRepository(30_000), completeClaim
     })
   }
   const claim = () => ({

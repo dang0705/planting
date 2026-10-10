@@ -48,37 +48,27 @@ describe('代码层运行参数注册表（configuration-layers/v1 §2.3）', ()
 
   it('已迁移参数的冻结值（独立 Expected，抄自目录）', () => {
     const values = Object.fromEntries(flattenRegistry().map(([name, parameter]) => [name, parameter.value]))
-    expect(values).toMatchObject({
+    // 用户 2026-10-10 第三轮裁定：业务参数迁入策略发布，代码注册表只保留运维默认值与硬边界。
+    expect(values).toEqual({
       'http.jsonBodyLimitBytes': 1_048_576,
-      'http.idempotencyRetentionHours': 168,
       'identity.serviceSignatureClockSkewSeconds': 300,
       'identity.serviceSignatureNonceTtlSeconds': 600,
       'identity.wechatLoginTotalDeadlineMs': 5000,
       'identity.douyinLoginTotalDeadlineMs': 5000,
-      'plantKnowledge.searchQueryMaxCodePoints': 64,
-      'plantKnowledge.searchResultMaxItems': 20,
-      'plantKnowledge.catalogDefaultLimit': 10,
-      'plantKnowledge.catalogMinimumLimit': 1,
-      'plantKnowledge.encyclopediaReferenceMaxCodePoints': 512,
-      'care.planExpiryGraceHours': 72,
       'care.planExpiryScan': { cron: '0 0 * * * * *', intervalHours: 1, batchSize: 500, runBudgetFractionOfFunctionTimeout: 0.5 },
       'care.outboxDispatch': { cron: '0 * * * * * *', leaseSeconds: 30, batchSize: 100, maxAttempts: 5 },
-      'care.dryingGapFillMaxHours': 6,
-      'care.wateringBackfillMaxDays': 7,
-      'care.checkMaxPostponeDays': 7,
-      'care.openWindowProposalValidHours': 24,
-      'care.planPageSize': { default: 20, max: 50 },
       'care.openMeteoTotalDeadlineMs': 8000,
       'care.openMeteoRequestWindowDays': { maxPastDays: 92, maxForecastDays: 16 },
       'storage.cloudbaseStorageTotalDeadlineMs': 10_000,
-      'storage.uploadAllowedMimeTypes': ['image/jpeg', 'image/png', 'image/webp'],
-      'storage.uploadMaxImageBytes': 5_242_880,
       'userPlant.guestClaimProcessingLeaseSeconds': 30,
-      'userPlant.listPageSize': { default: 20, max: 50 },
-      'userPlant.timelinePageSize': { default: 20, max: 50 },
       'userPlant.coverMaxCountPerPlant': 1,
-      'userPlant.replacedCoverCleanupDays': 7,
-      'weather.recommendTopMaxItems': 50
+      'policyBounds.careLongTermRules': { planExpiryGraceHours: { min: 1, max: 720 }, wateringBackfillMaxDays: { min: 1, max: 90 }, checkMaxPostponeDays: { min: 1, max: 90 }, openWindowProposalValidHours: { min: 1, max: 168 }, planPageSizeMax: 50 },
+      'policyBounds.careWateringRuntime': { dryingGapFillMaxHours: { min: 0, max: 24 }, maximumPpfdPerGhi: { min: 1.8, max: 3 }, indoorClimateWindowHours: { min: 1, max: 72 } },
+      'policyBounds.plantKnowledgePublicSearch': { searchQueryMaxCodePoints: 255, searchResultMaxItems: 20, encyclopediaReferenceMaxCodePoints: 512, catalogMinimumLimit: 1 },
+      'policyBounds.weatherPublicRead': { recommendTopMax: 50 },
+      'policyBounds.userPlantListRules': { pageSizeMax: 50 },
+      'policyBounds.userPlantAssetRules': { replacedCoverCleanupDays: { min: 1, max: 90 }, maxImageBytes: { min: 65536, max: 10485760 }, supportedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'] },
+      'policyBounds.httpRequestWrite': { idempotencyRetentionHours: { min: 24, max: 720 }, jsonBodyLimitBytes: 1048576 }
     })
   })
 
@@ -86,6 +76,6 @@ describe('代码层运行参数注册表（configuration-layers/v1 §2.3）', ()
     expect(Object.isFrozen(RUNTIME_PARAMETERS)).toBe(true)
     expect(Object.isFrozen(RUNTIME_PARAMETERS.care)).toBe(true)
     expect(Object.isFrozen(RUNTIME_PARAMETERS.care.outboxDispatch.value)).toBe(true)
-    expect(Object.isFrozen(RUNTIME_PARAMETERS.care.planPageSize.value)).toBe(true)
+    expect(Object.isFrozen(RUNTIME_PARAMETERS.policyBounds.careLongTermRules.value)).toBe(true)
   })
 })

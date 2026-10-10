@@ -56,8 +56,8 @@ function lock(raw: GuestClaimLeaseInput): GuestClaimLeaseInput {
   return Object.freeze({ ...raw })
 }
 
-/** 处理租约 Repository：只在调用方事务内加锁读取并条件更新原命令，不登记、不完成认领。 */
-export function createMysqlGuestClaimLeaseRepository() {
+/** 处理租约 Repository：只在调用方事务内加锁读取并条件更新原命令，不登记、不完成认领；leaseMs 由入口经环境变量层注入（默认 30 000）。 */
+export function createMysqlGuestClaimLeaseRepository(leaseMs: number) {
   return {
     /** 取得或接管租约；条件更新影响行数不为 1 时抛错由外层回滚。 */
     acquire: async (tx: MysqlTransactionContext<Mysql2QueryConnection>, raw: GuestClaimLeaseInput): Promise<GuestClaimLeaseResult> => {
@@ -82,7 +82,7 @@ export function createMysqlGuestClaimLeaseRepository() {
         || (m.lease_owner_hash !== null && typeof m.lease_owner_hash !== 'string') || (m.lease_expires_at_ms !== null && leaseExpiresAtMs === null)) { return { status: 'unavailable' } }
       const decision = decideGuestClaimLease({
         status: m.status, leaseOwnerHash: m.lease_owner_hash as string | null, leaseExpiresAtMs, attemptCount: m.attempt_count,
-        updatedAtMs, nowMs: input.nowMs, candidateOwnerHash: input.leaseOwnerHash
+        updatedAtMs, nowMs: input.nowMs, candidateOwnerHash: input.leaseOwnerHash, leaseMs
       })
       switch (decision.kind) {
         case 'invalid': return { status: 'unavailable' }

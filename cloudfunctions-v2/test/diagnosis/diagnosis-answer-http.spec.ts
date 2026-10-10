@@ -8,6 +8,7 @@ import {
   projectDiagnosisAnswerResponse
 } from '../../src/diagnosis/http/answer-route.js'
 import type { UserPrincipalDto } from '../../src/contracts/types.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /** unit_fake / L3：真实Node HTTP；身份和事务用例为替身。Expected来自answer-http-contract，不证明MySQL或平台验真。 */
 const principal = {
@@ -36,7 +37,7 @@ async function harness() {
   )
   const resolve = vi.fn(async () => principal)
   const audit = vi.fn()
-  const handler = createDiagnosisAnswerRouteHandler({
+  const handler = createDiagnosisAnswerRouteHandler({ ...fixturePolicyPorts(),
     resolvePrincipal: resolve,
     submitAnswers: submit,
     now: () => 1000,

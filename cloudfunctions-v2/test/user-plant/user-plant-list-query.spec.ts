@@ -9,10 +9,10 @@ import { createListUserPlantsApplicationService } from '../../src/user-plant/app
 import {
   decodeUserPlantListCursor,
   encodeUserPlantListCursor,
-  resolveUserPlantListLimit,
-  USER_PLANT_LIST_PAGE_SIZE
+  resolveUserPlantListLimit
 } from '../../src/user-plant/domain/user-plant-list-query.js'
 import type { ListOwnedUserPlantsQuery } from '../../src/user-plant/repository/mysql-user-plant-list-repository.js'
+import { userPlantListRulesV1 } from '../support/business-policy-fixtures.js'
 import { findProjectRoot } from '../support/project-root.js'
 
 /**
@@ -26,13 +26,15 @@ const catalog = JSON.parse(fs.readFileSync(path.join(findProjectRoot(), 'docs/ba
 }
 
 describe('用户植物列表规则', () => {
-  test('代码常量与配置目录硬规则一致', () => {
-    expect(USER_PLANT_LIST_PAGE_SIZE).toEqual(catalog.variables.find(variable => variable.id === 'user-plant.list.page_size')?.currentValue)
+  // 用户 2026-10-10 第三轮裁定：分页迁入策略发布 user-plant/list_rules（取值不变），解析函数显式接收策略快照。
+  const pageSize = userPlantListRulesV1().userPlantListPageSize
+  test('策略 v1 分页与配置目录一致', () => {
+    expect(pageSize).toEqual(catalog.variables.find(variable => variable.id === 'user-plant.list.page_size')?.currentValue)
   })
 
   test.each([[null, 20], ['1', 1], ['50', 50], ['51', null], ['0', null], ['05', null], ['-3', null], ['2.0', null], ['', null]] as const)(
     'limit=%s → %s', (raw, expected) => {
-      expect(resolveUserPlantListLimit(raw)).toBe(expected)
+      expect(resolveUserPlantListLimit(raw, pageSize)).toBe(expected)
     })
 
   test('游标往返一致；篡改、非 JSON、负时间、非 upl_ 引用均为 null', () => {

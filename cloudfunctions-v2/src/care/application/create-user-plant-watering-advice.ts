@@ -1,3 +1,4 @@
+import type { CareLongTermRules } from '../../configuration/business-policies/index.js'
 import type { MysqlTransactionContext } from '../../foundation/database/mysql-transaction-driver.js'
 import type { Mysql2QueryConnection } from '../../foundation/database/mysql2-connection-source.js'
 import type { HttpIdempotencyPublicResponseSnapshot } from '../../foundation/idempotency/http-idempotency.js'
@@ -45,6 +46,8 @@ export interface CreateUserPlantWateringAdviceInput {
   readonly nowMs: number
   /** 共享 HTTP 幂等占位输入。 */
   readonly idempotency: HttpIdempotencyReservationInput
+  /** 请求内锁定的长期养护规则策略快照（建议有效小时数）。 */
+  readonly rules: Readonly<Pick<CareLongTermRules, 'openWindowProposalValidHours'>>
 }
 
 /**
@@ -72,7 +75,7 @@ export function createUserPlantWateringAdviceApplicationService(
       result: result as unknown as CanonicalJsonObject, generatedAtMs: input.nowMs,
       validUntilMs: validUntil !== null && validUntil > input.nowMs ? validUntil : null,
       proposal: confirmable
-        ? { proposalRef: input.proposalRef, validUntilMs: resolveProposalValidUntil(result), idempotencyKeyHash: input.idempotency.idempotencyKeyHash }
+        ? { proposalRef: input.proposalRef, validUntilMs: resolveProposalValidUntil(result, input.rules), idempotencyKeyHash: input.idempotency.idempotencyKeyHash }
         : null
     })
     return { status: 200, body: { data: { resultRef: input.resultRef, proposalRef: confirmable ? input.proposalRef : null, result } } }

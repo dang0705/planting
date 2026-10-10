@@ -14,6 +14,7 @@ import { createMysqlGuestSessionRepository } from '../../src/identity/repository
 import { createMysqlUserPrincipalRepository, type UserPrincipalSqlRow } from '../../src/identity/repository/mysql-user-principal-repository.js'
 import { findProjectRoot } from '../support/project-root.js'
 import { harnessUsers, plantInsertSql, startUserPlantMysqlHarness, type UserPlantMysqlHarness } from './support/user-plant-mysql-harness.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /**
  * unit_real_data：本机 Docker MySQL 8.4 全量 DDL（含 029）+ 真实 care HTTP（记录浇水、完成计划写事实与事件）+ 真实派发用例
@@ -49,7 +50,7 @@ beforeAll(async () => {
       executeQuery: async (text, parameters) => (await connection.query(text, toSqlParameters(parameters))) as unknown as readonly UserPrincipalSqlRow[]
     }).read(input)) } })
   })
-  careServer = createCareServer({ connectionSource: h.source, now: () => now, resolvePrincipal, fetchRadiation: async () => null, writeAudit: () => undefined, recordRollbackFailure: () => undefined })
+  careServer = createCareServer({ ...fixturePolicyPorts(), connectionSource: h.source, now: () => now, resolvePrincipal, fetchRadiation: async () => null, writeAudit: () => undefined, recordRollbackFailure: () => undefined })
   await new Promise<void>(resolve => careServer.listen(0, '127.0.0.1', resolve))
   careUrl = `http://127.0.0.1:${(careServer.address() as AddressInfo).port}`
 }, 180_000)

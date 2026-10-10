@@ -2,7 +2,8 @@ import type { IncomingMessage } from 'node:http'
 
 import Ajv, { type JSONSchemaType } from 'ajv'
 
-import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
+import type { PlantKnowledgePublicSearchRules } from '../../configuration/business-policies/index.js'
+import { requirePolicy, type PolicyRulesPort } from '../../foundation/policy/require-policy.js'
 import { createNodeRequestChainHandler } from '../../foundation/http/node-request-chain-handler.js'
 import {
   PublicRequestError,
@@ -33,14 +34,14 @@ type PublishedPlantSearchResponse = {
 
 /** 搜索用例的依赖；数据库查询由 Repository 注入，审计只接收脱敏事件。 */
 export type SearchPublishedPlantsDependencies = {
-  /** 读取当前双 active release 准入的身份匹配项。 */
-  readonly searchPublishedPlants: (query: string) => Promise<PublishedPlantSearchRepositoryResult>
+  /** 读取当前双 active release 准入的身份匹配项（最多 maxItems 条）。 */
+  readonly searchPublishedPlants: (query: string, maxItems: number) => Promise<PublishedPlantSearchRepositoryResult>
+  /** 读取公开搜索策略快照（plant-knowledge/public_search）；null 时 503。 */
+  readonly readPublicSearchRules: PolicyRulesPort<PlantKnowledgePublicSearchRules>
   /** 请求完成后的脱敏结果事件端口。 */
   readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
 }
 
-/** 搜索关键词最大码点数（硬规则 `plant-knowledge.search.query_max_code_points`，取值见代码层注册表）。 */
-const maximumQueryCodePoints = RUNTIME_PARAMETERS.plantKnowledge.searchQueryMaxCodePoints.value
 const badRequestStatus = 400
 const publicRouteReason = 'public 路由：http-api/v1 §2 规定只返回已发布非个性化内容，不解析任何主体'
 
@@ -115,9 +116,9 @@ export function createSearchPublishedPlantsRouteHandler(
       Record<string, string>,
       undefined,
       undefined,
-      SearchPublishedPlantsQueryDto,
-      string,
-      string,
+      { readonly q: string; readonly maxItems: number },
+      { readonly q: string; readonly maxItems: number },
+      { readonly q: string; readonly maxItems: number },
       PublishedPlantSearchRepositoryResult,
       PublishedPlantSearchResponse
     >({
@@ -127,18 +128,20 @@ export function createSearchPublishedPlantsRouteHandler(
       objectOwnership: { kind: 'not_applicable', reason: '公开植物知识不属于任何用户或用户植物' },
       dtoValidate: {
         kind: 'execute',
-        run: input => {
-          if (!validateSearchQuery(input) || [...input.q].length > maximumQueryCodePoints) {
+        // 查询长度上限与返回条数来自请求内锁定的公开搜索策略（用户 2026-10-10 裁定）；策略不可用 503，先于参数校验。
+        run: async input => {
+          const rules = await requirePolicy(dependencies.readPublicSearchRules)
+          if (!validateSearchQuery(input) || [...input.q].length > rules.searchQueryMaxCodePoints) {
             throw new PublicRequestError(badRequestStatus, 'VALIDATION_FAILED', '请求参数不合法')
           }
-          return input
+          return { q: input.q, maxItems: rules.searchResultMaxItems }
         }
       },
-      buildCommand: { kind: 'execute', run: ({ dto }) => dto.q },
+      buildCommand: { kind: 'execute', run: ({ dto }) => dto },
       domainRule: { kind: 'execute', run: ({ command }) => command },
       transactionPersistence: {
         kind: 'execute',
-        run: async ({ domainDecision }) => dependencies.searchPublishedPlants(domainDecision)
+        run: async ({ domainDecision }) => dependencies.searchPublishedPlants(domainDecision.q, domainDecision.maxItems)
       },
       publicResponse: { kind: 'execute', run: toPublicSearchResponse },
       writeAudit: dependencies.writeAudit

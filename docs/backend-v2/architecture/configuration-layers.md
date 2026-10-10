@@ -2,7 +2,7 @@
 
 - 版本：v2，2026-10-10。以**用户 2026-10-10 新方针**为准：**日常维护以「环境变量 + 策略发布」为主，业务参数尽量少用代码常量。**
   v1（同日早些时候）「业务规则只放代码层」的表述作废。
-- 状态：分类与迁移清单（§5）**待用户确认**。确认后再修订配置目录层级与状态、实现 CLI 与迁移。
+- 状态：**已确认并实施**（用户 2026-10-10 第三轮裁定，见 §7）；配置目录层级与状态已按 §5 修订，策略发布 CLI 与迁移已实现（未部署、未执行任何云端 SQL）。上线顺序见 `configuration-rollout-2026-10-10.md`。
 - 关联：`configuration-and-providers.md` §1（合同总则）、`configuration-variable-catalog.json`（登记处）。
 - 证据：`.codex/backend-v2/evidence/E00-configuration-entry-2026-10-10.json`。
 
@@ -110,10 +110,19 @@
 3. **本轮迁移**：P1–P5、P14–P17，以及 E8、E9。每个策略包括：类型、AJV Schema、v1 正文（取值等于现值）、reader（请求内快照，读失败 503 / not_started）、领域代码改为从快照读取、v1 种子 SQL（只写文件）。
 4. **只出清单**：P6–P13、E10（user-plant 域与浇水建议路径完成后再迁）。
 
-## 7. 待用户拍板
+## 7. 用户 2026-10-10 第三轮裁定（已落地）
 
-1. **缺段补齐和光照系数（P6、P7）的归属**：并入 `care/mvp_watering` 新版本，还是按主代理示例新开 `care/watering_runtime`？我建议并入：它们和浇水计算是同一条链路，放在一起才能用同一个版本号复算历史结果。
-2. **发件箱最大尝试次数和过期扫描时长占比（E8、E9）改为环境变量**：这和同日早些时候「最大重试次数保留硬规则」的裁定不同，需要确认。
-3. **游客认领租约（E10）**：按运维参数走环境变量（我的建议，与发件箱租约一致），还是按示例走策略？
-4. **以下 3 项按方针保留代码常量，需要确认**：服务签名时钟偏差 / nonce（协议参数）、幂等保留期 168h（公开合同承诺）、搜索词长度 64 / 引用长度 512（输入边界）。
-5. **上线顺序**：先发布并激活各策略 v1，再部署读取策略的新代码。否则对应接口会返回 503。
+1. 缺段补齐 6 小时与光照系数（2.3 / 24 小时）并入浇水策略新版本 **`care-watering-mvp/v4`**；v3 行为保持可复算（v1–v3 按版本语义取值）。
+2. 发件箱最大尝试次数（5，3–10）、过期扫描时长占比（50%，20–80）、游客认领租约（30 秒，10–120）走**环境变量**。
+3. 原建议留在代码层的三项改为可配置：
+   - 服务签名时钟偏差 300 秒 / nonce 600 秒 → **环境变量** `V2_SERVICE_SIGNATURE_CLOCK_SKEW_SECONDS`（60–300，取目录 allowed）/ `V2_SERVICE_SIGNATURE_NONCE_TTL_SECONDS`（600–900，且 ≥ 2 × 偏差，否则启动失败）；签名方与验证方所有云函数必须部署同一取值。
+   - 幂等保留期 168 小时 → **策略发布**（沿用既有 `http/request_write`，新增正文 `http-request-write-policy/v2`，保留期 24–720 小时；正文上限仍等于代码绝对值 1 MiB）；公开合同改为「以生效策略为准，当前 168 小时」。
+   - 搜索词长度 64、引用长度 512 → **策略发布**（`plant-knowledge/public_search`），代码保留与数据库列长度相等的绝对上限：查询 255（被搜索列 `accepted_scientific_name` VARCHAR(255)）、引用 512（`catalog_taxon_ref` VARCHAR(512)）。
+4. 其余按 §5 执行；与 §5 的一处偏差：P10「每株封面数 1」保留为代码硬边界（封面登记是单槽替换，提高需改 DDL 与合同，不是运营参数）。
+
+## 8. 实施结果
+
+- 新策略类型（`src/configuration/business-policies/`）：`care/long_term_rules`、`plant-knowledge/public_search`、`weather/public_read`、`user-plant/list_rules`、`user-plant/asset_rules`，以及 `http/request_write` v2 与 `care/mvp_watering` v4；每个都有 TypeScript 类型、AJV Schema（以 `RUNTIME_PARAMETERS.policyBounds` 为上下限）与跨字段复核。
+- 通用读取器 `src/foundation/policy/mysql-typed-policy-reader.ts`：只读 active 指针对应的不可变发布并做全量可信校验；`requirePolicy` 把 null 转为 503。
+- 策略发布 CLI：`node scripts/policy-release.mjs <validate|publish|activate|list|rollback|render-seed-sql>`（逻辑在 `src/configuration/policy-release/`，入口 `src/entries/policy-release-cli.ts`）；默认 dry-run，`--apply` 才写库；切换为条件更新并写审计；本机 Docker MySQL 真实库测试 `test/e2e/policy-release-cli.mysql.spec.ts`。
+- v1 发布文档：`cloudfunctions-v2/models/policy-releases/*.release.json`；种子 SQL：`docs/backend-v2/schema/seeds/business_policy_releases.2026-10-10.sql`（由 CLI 渲染，只写文件）。

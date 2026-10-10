@@ -1,5 +1,8 @@
 import pino from 'pino'
 
+import { WEATHER_PUBLIC_READ_POLICY } from '../configuration/business-policies/index.js'
+import { createMysqlTypedPolicyReader, policyRulesPort } from '../foundation/policy/mysql-typed-policy-reader.js'
+
 import { readFunctionEnvironment } from '../configuration/environment.js'
 import { createMysql2ConnectionSource } from '../foundation/database/mysql2-connection-source.js'
 import { createWeatherServer } from '../weather/http/server.js'
@@ -19,7 +22,11 @@ const logger = pino({
 
 const connectionSource = createMysql2ConnectionSource(environment.database)
 
+/** weather 公开读取策略快照端口（推荐 top 默认与上限；用户 2026-10-10 裁定迁入策略发布）。 */
+const readPublicReadRules = policyRulesPort(createMysqlTypedPolicyReader(connectionSource, WEATHER_PUBLIC_READ_POLICY), () => Date.now())
+
 const server = createWeatherServer({
+  readPublicReadRules,
   connectionSource,
   writeAudit: event => {
     logger.info({ event: 'request_outcome', function: 'weather', ...event }, '请求结果')

@@ -1,4 +1,7 @@
 import pino from 'pino'
+
+import { HTTP_REQUEST_WRITE_POLICY } from '../configuration/business-policies/index.js'
+import { createMysqlTypedPolicyReader, policyRulesPort } from '../foundation/policy/mysql-typed-policy-reader.js'
 import { readFunctionEnvironment } from '../configuration/environment.js'
 import {
   createMysql2ConnectionSource,
@@ -44,7 +47,10 @@ const resolvePrincipal = createResolveGuestOrUserPrincipal({
   }
   })
 })
+/** HTTP 写入策略快照端口（幂等保留期，用户 2026-10-10 裁定迁入策略发布）。 */
+const readHttpWriteRules = policyRulesPort(createMysqlTypedPolicyReader(source, HTTP_REQUEST_WRITE_POLICY), () => Date.now())
 const server = createDiagnosisServer({
+  readHttpWriteRules,
   connectionSource: source,
   resolvePrincipal,
   now: () => Date.now(),

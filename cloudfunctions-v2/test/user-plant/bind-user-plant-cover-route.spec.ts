@@ -11,6 +11,7 @@ import { StorageProviderUnavailableError, type PrivateObjectStorage } from '../.
 import { createUserBearerAuthenticator } from '../../src/identity/http/user-bearer-authenticator.js'
 import type { BindUserPlantCoverInput } from '../../src/user-plant/application/bind-user-plant-cover.js'
 import { bindUserPlantCoverRoute, createBindUserPlantCoverRouteHandler } from '../../src/user-plant/http/bind-user-plant-cover-route.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /**
  * Expected 来源：docs/backend-v2/contracts/user-plant-cover-asset.md §2～§5（2026-10-10 用户审定与裁决）：
@@ -36,7 +37,7 @@ async function startService(options: { storage?: PrivateObjectStorage | null; re
     getDownloadUrl: async id => { storageCalls.push(`url:${id}`); return signedUrl },
     download: async (_url, maxBytes) => { storageCalls.push(`download:${String(maxBytes)}`); return jpeg }
   }
-  const dispatch = createRouteDispatcher([{ route: bindUserPlantCoverRoute, handler: createBindUserPlantCoverRouteHandler({
+  const dispatch = createRouteDispatcher([{ route: bindUserPlantCoverRoute, handler: createBindUserPlantCoverRouteHandler({ ...fixturePolicyPorts(),
     authenticate: createUserBearerAuthenticator(async () => principal), now: () => nowMs, writeAudit: () => undefined, storage,
     bindCover: async input => { calls.push(input); return options.result ?? { status: 200, body: { data: { assetRef: input.assetRef, purpose: 'profile', url: input.url, urlExpiresAt: null, createdAt: new Date(nowMs).toISOString() } } } }
   }) }])

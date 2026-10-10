@@ -28,7 +28,7 @@ const metadataKeys = ['releaseVersion', 'contentSha256', 'releaseStatus', 'effec
 
 /** 非负 BIGINT 文本转 UTC ISO；不可无损表示时返回 null。 */
 /** 读取器接受的发布合同版本；数据库 Schema 版本必须与正文一致。 */
-const acceptedSchemaVersions: readonly string[] = ['care-watering-mvp/v1', 'care-watering-mvp/v2', 'care-watering-mvp/v3']
+const acceptedSchemaVersions: readonly string[] = ['care-watering-mvp/v1', 'care-watering-mvp/v2', 'care-watering-mvp/v3', 'care-watering-mvp/v4']
 
 function timestamp(value: unknown): string | null {
   if (typeof value !== 'string' || !/^(0|[1-9][0-9]*)$/u.test(value)) { return null }

@@ -16,6 +16,7 @@ import { createMysqlUserPrincipalRepository, type UserPrincipalSqlRow } from '..
 import { createUserPlantServer } from '../../src/user-plant/http/server.js'
 import { findProjectRoot } from '../support/project-root.js'
 import { cityProfilesSql } from './support/user-plant-mysql-harness.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /**
  * unit_real_data：隔离 docker MySQL 8.4 + schema manifest 全量 DDL（含 024–027）+ 024 种子 + Tropicals 外部表读取桩 +
@@ -110,8 +111,8 @@ beforeAll(async () => {
       executeQuery: async (text, parameters) => (await connection.query(text, toSqlParameters(parameters))) as unknown as readonly UserPrincipalSqlRow[]
     }).read(input)) } })
   })
-  const care = createCareServer({ connectionSource: source, now: () => now, resolvePrincipal, fetchRadiation: async input => { radiationRequests.push({ latitude: input.latitude, longitude: input.longitude }); return null }, writeAudit: () => undefined, recordRollbackFailure: () => undefined })
-  const plants = createUserPlantServer({ connectionSource: source, now: () => now, resolveCapabilitySnapshot: async () => { throw new Error('不需要能力快照') }, writeAudit: () => undefined, recordRollbackFailure: () => undefined })
+  const care = createCareServer({ ...fixturePolicyPorts(), connectionSource: source, now: () => now, resolvePrincipal, fetchRadiation: async input => { radiationRequests.push({ latitude: input.latitude, longitude: input.longitude }); return null }, writeAudit: () => undefined, recordRollbackFailure: () => undefined })
+  const plants = createUserPlantServer({ ...fixturePolicyPorts(), connectionSource: source, now: () => now, resolveCapabilitySnapshot: async () => { throw new Error('不需要能力快照') }, writeAudit: () => undefined, recordRollbackFailure: () => undefined })
   for (const server of [care, plants]) { await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve)); servers.push(server) }
   careUrl = `http://127.0.0.1:${(care.address() as AddressInfo).port}`
   plantUrl = `http://127.0.0.1:${(plants.address() as AddressInfo).port}`

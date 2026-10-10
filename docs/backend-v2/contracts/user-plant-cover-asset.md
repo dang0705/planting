@@ -13,7 +13,7 @@
 ## 1. 范围
 
 - 每株用户植物最多**一张**有效封面（`asset_purpose='profile'`、`status='active'`）。换封面 = 同一事务内旧封面转 `pending_cleanup`
-  （`cleanup_after_ms` = 换下时刻 + 7 天，之前不得清理）+ 新封面 `active`。本期只做清理**标记**，不删除云存储文件（清理任务另立）。
+  （`cleanup_after_ms` = 换下时刻 + 清理天数，当前 7 天，以生效策略 `user-plant/asset_rules` 为准，之前不得清理）+ 新封面 `active`。本期只做清理**标记**，不删除云存储文件（清理任务另立）。
 - 不提供成长相册、养护证据上传入口；诊断证据沿用自身链路。
 - 数据库只存 CloudBase 私有 `fileID`；任何响应、日志、事件都不返回 `fileID`、云存储路径或桶名。唯一例外是临时访问链接本身：平台签发的下载链接 URL 中天然包含对象路径（含本人用户公开编号），只返回给植物主人本人，不进入日志与审计。
 
@@ -51,7 +51,7 @@ export type UserPlantAssetResponse = {
    - `fileId` 路径必须是 `user-plant/{当前登录用户公开编号}/covers/` 下的文件；
    - 经云存储 HTTP API 换取下载链接并下载（最多 5,242,880 字节，超过即拒绝）；文件不存在 → 400；
    - 下载内容的 SHA-256 与 `contentSha256` 一致；
-   - 文件魔数判定类型 ∈ `image/jpeg`、`image/png`、`image/webp`（不信任上传方声明的类型）；
+   - 文件魔数判定类型 ∈ 生效策略 `user-plant/asset_rules` 的白名单（当前 `image/jpeg`、`image/png`、`image/webp`，只能是这三者的子集；不信任上传方声明的类型）；单图字节上限同样以策略为准（当前 5 MiB，绝对上限 10 MiB）；策略不可用时 503（用户 2026-10-10 裁定）；
    - 同一文件已登记给其他植物或其他用户 → 400（`uq_user_plant_storage_file` 兜底）。
 4. 云存储 Provider 不可用（未配置凭证、网络失败、超时、HTTP 错误、响应非法）→ `503 SERVICE_UNAVAILABLE`，不落库。
 

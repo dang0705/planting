@@ -2,7 +2,9 @@ import type { IncomingMessage } from 'node:http'
 
 import Ajv, { type JSONSchemaType } from 'ajv'
 
+import type { WeatherPublicReadRules } from '../../configuration/business-policies/index.js'
 import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
+import { requirePolicy, type PolicyRulesPort } from '../../foundation/policy/require-policy.js'
 import { createNodeRequestChainHandler } from '../../foundation/http/node-request-chain-handler.js'
 import {
   PublicRequestError,
@@ -63,6 +65,8 @@ export type CityClimateFitDependencies = {
   readonly cityClimateFit: CityClimateFitPort
   /** 请求结束后的脱敏结果事件端口。 */
   readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
+  /** 读取 weather 公开读取策略快照（推荐 top 默认与上限）；只有推荐接口使用，null 时 503。 */
+  readonly readPublicReadRules?: PolicyRulesPort<WeatherPublicReadRules>
 }
 
 const cityCodePathSchema: JSONSchemaType<CityCodePath> = {
@@ -90,7 +94,7 @@ const recommendQuerySchema: JSONSchemaType<RecommendQuery> = {
   required: ['cityCode', 'top'],
   properties: {
     cityCode: { type: 'string', minLength: 2, maxLength: 64, pattern: cityCodePattern },
-    top: { type: 'integer', minimum: 1, maximum: RUNTIME_PARAMETERS.weather.recommendTopMaxItems.value }
+    top: { type: 'integer', minimum: 1, maximum: RUNTIME_PARAMETERS.policyBounds.weatherPublicRead.value.recommendTopMax }
   }
 }
 
@@ -121,7 +125,7 @@ function readRecommendQuery(request: IncomingMessage): Record<string, unknown> {
   const top = parameters.get('top')
   return {
     cityCode: cityCode?.trim(),
-    top: top === null ? 10 : /^\d+$/u.test(top) ? Number(top) : undefined
+    top: top === null ? null : /^\d+$/u.test(top) ? Number(top) : undefined
   }
 }
 
@@ -317,11 +321,15 @@ export function createListCityClimateRecommendationsRouteHandler(
     objectOwnership: { kind: 'not_applicable', reason: ownershipReason },
     dtoValidate: {
       kind: 'execute',
-      run: input => {
-        if (!validateRecommendQuery(input)) {
+      // top 默认与上限来自请求内锁定的 weather/public_read 策略（用户 2026-10-10 裁定）；策略不可用 503，先于参数校验。
+      run: async input => {
+        if (dependencies.readPublicReadRules === undefined) { throw new PublicRequestError(503, 'SERVICE_UNAVAILABLE', '服务暂时不可用') }
+        const rules = await requirePolicy(dependencies.readPublicReadRules)
+        const candidate = { ...input, top: input.top === null ? rules.recommendTopDefault : input.top }
+        if (!validateRecommendQuery(candidate) || candidate.top > rules.recommendTopMax) {
           throw new PublicRequestError(400, 'VALIDATION_FAILED', '请求参数不合法')
         }
-        return input
+        return candidate
       }
     },
     buildCommand: { kind: 'execute', run: ({ dto }) => dto },

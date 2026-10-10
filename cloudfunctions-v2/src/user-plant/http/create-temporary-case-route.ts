@@ -1,3 +1,5 @@
+import { idempotencyRetentionMs, type HttpRequestWriteRules } from '../../configuration/business-policies/index.js'
+import { requirePolicy, type PolicyRulesPort } from '../../foundation/policy/require-policy.js'
 import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import { createHash, randomBytes } from 'node:crypto'
 import type { IncomingHttpHeaders, IncomingMessage } from 'node:http'
@@ -37,6 +39,8 @@ export interface CreateTemporaryCaseRouteDependencies {
   readonly createCaseRef?: (ownerKind: TemporaryCaseOwnerKind) => string
   /** 服务端 UTC 毫秒时钟；整个请求只取一次。 */
   readonly now: () => number
+  /** 读取 HTTP 写入策略快照（幂等保留期，http/request_write）；null 时 503。 */
+  readonly readHttpWriteRules: PolicyRulesPort<HttpRequestWriteRules>
   /** 脱敏请求结果审计端口。 */
   readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
 }
@@ -59,8 +63,6 @@ interface TemporaryCaseRequestDto {
 
 /** 与共享 HTTP 合同已确认值一致（http.json_body_limit_bytes），与创建用户植物路由同一约定。 */
 const jsonBodyLimitBytes = RUNTIME_PARAMETERS.http.jsonBodyLimitBytes.value
-/** 与共享 HTTP 合同已确认值一致（http.idempotency.retention_hours），与创建用户植物路由同一约定。 */
-const idempotencyRetentionMs = RUNTIME_PARAMETERS.http.idempotencyRetentionHours.value * 60 * 60 * 1000
 /** 严格空对象的规范请求文本；同键请求摘要以此计算。 */
 const canonicalEmptyBody = '{}'
 const validators = createPublicContractValidators()
@@ -207,7 +209,7 @@ export function createTemporaryCaseRouteHandler(dependencies: CreateTemporaryCas
               idempotencyKeyHash: digest(dto.idempotencyKey),
               requestHash: digest(canonicalEmptyBody),
               createdAtMs: nowMs,
-              expiresAtMs: nowMs + idempotencyRetentionMs
+              expiresAtMs: nowMs + idempotencyRetentionMs(await requirePolicy(dependencies.readHttpWriteRules))
             }
           }
         }

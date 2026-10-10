@@ -1,3 +1,5 @@
+import { idempotencyRetentionMs, type CareLongTermRules, type HttpRequestWriteRules } from '../../configuration/business-policies/index.js'
+import { requirePolicy, type PolicyRulesPort } from '../../foundation/policy/require-policy.js'
 import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import { createHash, randomBytes } from 'node:crypto'
 import type { IncomingHttpHeaders, IncomingMessage } from 'node:http'
@@ -65,6 +67,10 @@ export interface WateringAdviceRouteDependencies {
   readonly createRef?: (kind: 'session' | 'result' | 'proposal') => string
   /** 服务端 UTC 毫秒时钟；每请求只取一次。 */
   readonly now: () => number
+  /** 读取 HTTP 写入策略快照（幂等保留期）；null 时 503。 */
+  readonly readHttpWriteRules: PolicyRulesPort<HttpRequestWriteRules>
+  /** 读取长期养护规则策略快照（长期植物建议有效小时数）；只在 user_plant 目标时读取，null 时 503。 */
+  readonly readLongTermRules: PolicyRulesPort<CareLongTermRules>
   /** 脱敏请求结果审计端口。 */
   readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
 }
@@ -116,8 +122,6 @@ interface AdviceDto {
 
 /** 与共享 HTTP 合同已确认值一致（http.json_body_limit_bytes），同既有路由约定（裁决 7）。 */
 const jsonBodyLimitBytes = RUNTIME_PARAMETERS.http.jsonBodyLimitBytes.value
-/** 与共享 HTTP 合同已确认值一致（http.idempotency.retention_hours），同既有路由约定（裁决 7）。 */
-const idempotencyRetentionMs = RUNTIME_PARAMETERS.http.idempotencyRetentionHours.value * 60 * 60 * 1000
 const validators = createPublicContractValidators()
 const validIdempotencyKey = /^[\x20-\x7e]{8,128}$/u
 /** 应用用例允许原样公开的确定错误。 */
@@ -309,16 +313,17 @@ export function createWateringAdviceRouteHandler(dependencies: WateringAdviceRou
           } catch { radiation = null }
           const built = buildWateringAdvice({ command, policy, baseline, radiation, nowMs })
           const scope = principal.principalType === 'guest' ? principal.guestSessionRef : principal.user_id
+          const retentionMs = idempotencyRetentionMs(await requirePolicy(dependencies.readHttpWriteRules))
           const idempotency = {
             principalType: principal.principalType, principalScopeHash: digest(scope), httpMethod: 'POST',
             normalizedPath: createWateringAdviceRoute.path, operationId: createWateringAdviceRoute.operationId,
             idempotencyKeyHash: digest(dto.idempotencyKey), requestHash: dto.requestHash,
-            createdAtMs: nowMs, expiresAtMs: nowMs + idempotencyRetentionMs
+            createdAtMs: nowMs, expiresAtMs: nowMs + retentionMs
           }
           if (userPlant !== null) {
             return { kind: 'user_plant', input: {
               userRef: userPlant.scope.userRef, userPlantRef: userPlant.scope.userPlantRef, built, resultRef: createRef('result'), proposalRef: createRef('proposal'),
-              nowMs, idempotency,
+              nowMs, idempotency, rules: await requirePolicy(dependencies.readLongTermRules),
               fingerprint: { profileVersion: userPlant.context.profileVersion, bindingRef: userPlant.context.bindingRef, latestWateringFactRef: userPlant.fact?.factRef ?? null }
             } }
           }

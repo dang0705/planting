@@ -33,6 +33,7 @@ import { createGuestSessionRouteHandler, type GuestSessionRouteDependencies } fr
 import { createGuestSessionRoute, createIdentitySessionRoute, getUserTrialAnchorInternalRoute } from './routes.js'
 import {
   createUserTrialAnchorRouteHandler,
+  type UserTrialAnchorRouteDependencies,
   type ServiceSigningKey
 } from './user-trial-anchor-route.js'
 
@@ -68,6 +69,8 @@ export type IdentityServerDependencies = {
   readonly resolveServiceSigningKey?: (keyId: string) => Promise<ServiceSigningKey | null>
   /** 服务端可信 UTC 毫秒时钟。 */
   readonly now: () => number
+  /** 服务签名参数（环境变量层 V2_SERVICE_SIGNATURE_*）。 */
+  readonly serviceSignature: UserTrialAnchorRouteDependencies['serviceSignature']
   /** 只接收脱敏结果类别的审计写入端口。 */
   readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
   /** 事务回滚清理失败的脱敏观测端口。 */

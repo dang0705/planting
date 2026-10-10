@@ -116,6 +116,8 @@ CloudBase 网关只按路径前缀路由到函数，`/api/v2/user-plants` 归 us
 
 新增（用户 2026-10-09 裁决）：`care.facts.watering_backfill_max_days`=7、`care.plans.check_max_postpone_days`=7、`care.watering.open_window_proposal_valid_hours`=24、`care.plans.page_size`={default:20,max:50}（hard_rule）；`care-watering-mvp/v2` 正文字段 `soilEvidenceFallbackHours`=24、`soilEvidenceMaxHours`=72。`care.watering.recheck_window_hours` 维持 pending、不阻断（MVP 模型自算窗口）。
 
+**用户 2026-10-10 第三轮裁定（取代上两段的「hard_rule / 不走策略 release」表述）**：计划过期宽限、浇水补记天数、检查推迟上限、建议有效期与计划分页迁入策略发布 `care/long_term_rules`（正文 `care-long-term-rules/v1`，取值不变：72 / 7 / 7 / 24 / {20, 50}；绝对边界见目录 `care.long_term_rules.absolute_bounds`）。请求与每次扫描运行各锁定一份快照；策略不可用时对应接口返回 `503 SERVICE_UNAVAILABLE`、过期扫描本次 `not_started`，不回退源码默认值。扫描每批（V2_CARE_PLAN_EXPIRY_BATCH_SIZE，100–2000）与时长占比（V2_CARE_PLAN_EXPIRY_RUN_BUDGET_PERCENT，20–80）为部署环境变量；cron 为触发器部署配置。§12 中「72 小时」均指策略 v1 取值。
+
 ## 附：U6 湿/微湿有效期公式裁决（主代理 2026-10-09）
 
 「最早可能进入下一状态」按字面会退化为 0（读数可能正好在状态下界）。裁决采用：有效期 =（该状态 remainingFraction 上界 − 下界）× 植物基线最短干燥天数，即按最快干燥速度走完整个状态区间的时长；再受 `care.watering.soil_evidence_max_hours`=72 封顶，推算不出时用 `care.watering.soil_evidence_fallback_hours`=24。理由：室内盆栽主要风险是浇水过多导致烂根，「湿」判断偏长更保守；检查窗口仍由干燥回放独立给出。

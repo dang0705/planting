@@ -1,0 +1,19 @@
+{
+  "releaseDocumentVersion": "business-policy-release-document/v1",
+  "domainCode": "user-plant",
+  "policyCode": "asset_rules",
+  "schemaVersion": "user-plant-asset-rules/v1",
+  "releaseVersion": "user-plant-asset-rules/v1.0.0",
+  "effectiveAt": "2026-10-10T00:00:00Z",
+  "changeNote": "用户 2026-10-10 裁定：封面 MIME 白名单、单图字节上限、旧封面清理天数迁入策略发布，取值不变",
+  "policy": {
+    "contractVersion": "user-plant-asset-rules/v1",
+    "allowedMimeTypes": [
+      "image/jpeg",
+      "image/png",
+      "image/webp"
+    ],
+    "maxImageBytes": 5242880,
+    "replacedCoverCleanupDays": 7
+  }
+}

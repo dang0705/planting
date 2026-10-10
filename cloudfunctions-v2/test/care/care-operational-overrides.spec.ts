@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { createDispatchCareOutboxJob } from '../../src/care/application/dispatch-care-outbox.js'
 import { createExpireCarePlansJob } from '../../src/care/application/expire-care-plans.js'
 import { expireDueCarePlans } from '../../src/care/repository/mysql-care-plan-expiry-repository.js'
+import { careLongTermRulesV1 } from '../support/business-policy-fixtures.js'
 
 /**
  * L1 / unit_fake（替身领取/批次端口与记录型 mysql2 连接）。
@@ -14,7 +15,7 @@ import { expireDueCarePlans } from '../../src/care/repository/mysql-care-plan-ex
 const now = Date.UTC(2026, 9, 10, 12)
 
 describe('发件箱派发：运维参数由入口注入', () => {
-  const build = (settings?: { leaseSeconds: number; batchSize: number }) => {
+  const build = (settings?: { leaseSeconds: number; batchSize: number; maxAttempts: number }) => {
     const lease = vi.fn(async () => ({ leased: [], deadLettered: 0 }))
     const job = createDispatchCareOutboxJob({
       now: () => now, createLeaseOwner: () => 'lease-owner-fixture', lease,
@@ -30,17 +31,30 @@ describe('发件箱派发：运维参数由入口注入', () => {
     expect(lease).toHaveBeenCalledWith({ owner: 'lease-owner-fixture', nowMs: now, leaseMs: 30_000, limit: 100, maxAttempts: 5 })
   })
 
-  it('注入覆盖值时采用覆盖：租约 60 秒、每批 50；最大尝试次数仍为硬规则 5', async () => {
-    const { job, lease } = build({ leaseSeconds: 60, batchSize: 50 })
+  it('注入覆盖值时采用覆盖：租约 60 秒、每批 50、最多 5 次', async () => {
+    const { job, lease } = build({ leaseSeconds: 60, batchSize: 50, maxAttempts: 5 })
     await job()
     expect(lease).toHaveBeenCalledWith({ owner: 'lease-owner-fixture', nowMs: now, leaseMs: 60_000, limit: 50, maxAttempts: 5 })
+  })
+
+  // 用户 2026-10-10 第三轮裁定：最大尝试次数改为运维参数（默认 5，环境变量 3–10）。
+  it('最大尝试次数注入 3：领取上限与死信判定都按 3', async () => {
+    const lease = vi.fn(async () => ({ leased: [{ id: '7', eventType: 'care.watering_fact_recorded.v1' as const, userRef: 'usr_dispatch_owner01', userPlantRef: 'upl_dispatch_plant01',
+      payload: {}, occurredAtMs: now, attempt: 3 }], deadLettered: 0 }))
+    const settle = vi.fn(async () => true)
+    const job = createDispatchCareOutboxJob({ now: () => now, createLeaseOwner: () => 'lease-owner-fixture', lease,
+      deliver: async () => { throw new Error('消费失败') }, settle, log: () => undefined, settings: { leaseSeconds: 30, batchSize: 100, maxAttempts: 3 } })
+    await job()
+    expect(lease).toHaveBeenCalledWith(expect.objectContaining({ maxAttempts: 3 }))
+    expect(settle).toHaveBeenCalledWith(expect.objectContaining({ outcome: 'dead_letter' }))
   })
 })
 
 describe('计划过期扫描：每批大小由入口注入', () => {
   it('注入 200 时每批 200；72 小时截止不变', async () => {
     const calls: Array<{ cutoffMs: number; limit: number }> = []
-    const run = createExpireCarePlansJob({ now: () => now, batchSize: 200, runBatch: async input => { calls.push(input); return 0 }, log: () => undefined })
+    const run = createExpireCarePlansJob({ now: () => now, batchSize: 200, readLongTermRules: async () => careLongTermRulesV1(), runBudgetFraction: 0.5,
+      runBatch: async input => { calls.push(input); return 0 }, log: () => undefined })
     await run({ functionTimeoutMs: 60_000 })
     expect(calls).toEqual([expect.objectContaining({ limit: 200, cutoffMs: now - 72 * 3_600_000 })])
   })

@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { createMysql2ConnectionSource } from '../../src/foundation/database/mysql2-connection-source.js'
 import { createPlantKnowledgeServer } from '../../src/plant-knowledge/http/server.js'
 import { createMysqlPlantCatalogRepository } from '../../src/plant-knowledge/repository/mysql-plant-catalog-repository.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 const container = `qhz-catalog-${process.pid}`
 let database: Connection | undefined
@@ -148,7 +149,7 @@ beforeAll(async () => {
   await database.query(
     "INSERT INTO plant_search_terms VALUES (301, 2, 10, '准入', 0, 1, 1), (302, 3, 11, '准入', 0, 1, 1), (303, 4, 12, '准入', 0, 1, 1), (304, 5, 10, '准入', 0, 1, 1), (305, 5, 12, '准入', 0, 1, 1)"
   )
-  server = createPlantKnowledgeServer({
+  server = createPlantKnowledgeServer({ ...fixturePolicyPorts(),
     connectionSource: createMysql2ConnectionSource({
       host: '127.0.0.1',
       port,

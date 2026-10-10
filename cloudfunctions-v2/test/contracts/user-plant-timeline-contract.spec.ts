@@ -5,7 +5,7 @@ import path from 'node:path'
 import { describe, expect, test } from 'vitest'
 
 import { CARE_OUTBOX_DISPATCH } from '../../src/care/domain/care-outbox-dispatch-rules.js'
-import { USER_PLANT_TIMELINE_PAGE_SIZE } from '../../src/user-plant/domain/timeline.js'
+import { userPlantListRulesV1 } from '../support/business-policy-fixtures.js'
 import { findProjectRoot } from '../support/project-root.js'
 
 /**
@@ -43,6 +43,7 @@ describe('用户植物时间线合同制品', () => {
     const dispatch = catalog.variables.find(variable => variable.id === 'care.outbox_dispatch')
     expect(dispatch).toMatchObject({ status: 'hard_rule', layer: 'hard_rule', owner: 'care', currentValue: { cron: '0 * * * * * *', leaseSeconds: 30, batchSize: 100, maxAttempts: 5 } })
     expect(CARE_OUTBOX_DISPATCH).toEqual(dispatch!.currentValue)
-    expect(USER_PLANT_TIMELINE_PAGE_SIZE).toEqual(catalog.variables.find(variable => variable.id === 'user-plant.timeline.page_size')!.currentValue)
+    // 用户 2026-10-10 第三轮裁定：时间线分页迁入策略发布 user-plant/list_rules（取值不变）。
+    expect(userPlantListRulesV1().timelinePageSize).toEqual(catalog.variables.find(variable => variable.id === 'user-plant.timeline.page_size')!.currentValue)
   })
 })

@@ -1,3 +1,5 @@
+import type { HttpRequestWriteRules, UserPlantAssetRules, UserPlantListRules } from '../../configuration/business-policies/index.js'
+import type { PolicyRulesPort } from '../../foundation/policy/require-policy.js'
 import { createAuthenticatedEphemeralNewPlantApplicationService } from '../application/save-authenticated-ephemeral-as-new-plant.js'
 import { createMysqlAuthenticatedEphemeralNewPlantRepository, createMysqlAuthenticatedEphemeralNewPlantCommitUnknownReader } from '../repository/mysql-authenticated-ephemeral-new-plant-repository.js'
 import { createServer, type Server } from 'node:http'
@@ -122,6 +124,14 @@ export type UserPlantServerDependencies = {
   readonly storage?: PrivateObjectStorage
   /** 档案完整度快照（规则发布 + 浇水策略 Lux 有效天数）；未接入或不可用时省略完整度字段。 */
   readonly readProfileProgressSnapshot?: (nowMs: number) => Promise<ProfileProgressSnapshot | null>
+  /** 读取用户植物列表规则策略快照（user-plant/list_rules）；null 时列表 / 时间线 503。 */
+  readonly readListRules: PolicyRulesPort<UserPlantListRules>
+  /** 读取封面资产规则策略快照（user-plant/asset_rules）；null 时上传目标 / 封面登记 503。 */
+  readonly readAssetRules: PolicyRulesPort<UserPlantAssetRules>
+  /** 读取 HTTP 写入策略快照（http/request_write：幂等保留期）；null 时写接口 503。 */
+  readonly readHttpWriteRules: PolicyRulesPort<HttpRequestWriteRules>
+  /** 游客认领处理租约秒数（环境变量层 V2_USER_PLANT_GUEST_CLAIM_LEASE_SECONDS，默认 30）。 */
+  readonly guestClaimLeaseSeconds: number
 }
 
 const okStatus = 200
@@ -244,7 +254,8 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
     archiveUserPlant,
     restoreUserPlant,
     now: dependencies.now,
-    writeAudit: dependencies.writeAudit
+    writeAudit: dependencies.writeAudit,
+    readHttpWriteRules: dependencies.readHttpWriteRules
   }
 
   /** user-plant → plant-knowledge 只读适配：只确认目录引用存在。 */
@@ -270,6 +281,8 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
   const saveProfileWithCompleteness = withSavedCompleteness(completeness, saveProfile)
   const readUploadTarget = createGetCoverUploadTargetApplicationService({ getUserPlant, randomHex: () => randomBytes(16).toString('hex') })
   const bearerAuthenticator = createUserBearerAuthenticator(resolvePrincipal)
+  /** 登录用户 JSON 路由共享依赖：鉴权、时钟、审计与 HTTP 写入策略端口。 */
+  const authenticatedRouteBase = { authenticate: bearerAuthenticator, now: dependencies.now, writeAudit: dependencies.writeAudit, readHttpWriteRules: dependencies.readHttpWriteRules }
   /** user-plant → plant-knowledge 只读适配：身份确认前判定规范身份是否已发布（与公开准入同一 SQL）。 */
   const publishedIdentityReader = createMysqlPublishedIdentityRepository({
     // 本连接来源把 BIGINT 读成十进制文本（避免精度丢失），EXISTS 的 0/1 需转回数字再交给准入判定。
@@ -281,38 +294,38 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
   const dispatch = createRouteDispatcher([
     {
       route: listUserPlantsRoute,
-      handler: createListUserPlantsRouteHandler({ authenticate: bearerAuthenticator, now: dependencies.now, writeAudit: dependencies.writeAudit,
-        listUserPlants: withListCompleteness(completeness, listUserPlants) })
+      handler: createListUserPlantsRouteHandler({ ...authenticatedRouteBase,
+        readListRules: dependencies.readListRules, listUserPlants: withListCompleteness(completeness, listUserPlants) })
     },
     {
       route: coverUploadTargetRoute,
-      handler: createCoverUploadTargetRouteHandler({ authenticate: bearerAuthenticator, now: dependencies.now, writeAudit: dependencies.writeAudit, readUploadTarget })
+      handler: createCoverUploadTargetRouteHandler({ ...authenticatedRouteBase, readAssetRules: dependencies.readAssetRules, readUploadTarget })
     },
     {
       route: bindUserPlantCoverRoute,
-      handler: createBindUserPlantCoverRouteHandler({ authenticate: bearerAuthenticator, now: dependencies.now, writeAudit: dependencies.writeAudit,
-        storage: dependencies.storage, bindCover: createBindUserPlantCoverApplicationService({ driver, idempotencyRepository, commitUnknownReadOnlyRepository }) })
+      handler: createBindUserPlantCoverRouteHandler({ ...authenticatedRouteBase,
+        storage: dependencies.storage, readAssetRules: dependencies.readAssetRules, bindCover: createBindUserPlantCoverApplicationService({ driver, idempotencyRepository, commitUnknownReadOnlyRepository }) })
     },
     {
       route: listUserPlantTimelineRoute,
-      handler: createListUserPlantTimelineRouteHandler({ authenticate: bearerAuthenticator, now: dependencies.now, writeAudit: dependencies.writeAudit,
-        listTimeline: createListUserPlantTimelineApplicationService({ driver }) })
+      handler: createListUserPlantTimelineRouteHandler({ ...authenticatedRouteBase,
+        readListRules: dependencies.readListRules, listTimeline: createListUserPlantTimelineApplicationService({ driver }) })
     },
     {
       route: confirmUserPlantIdentityRoute,
       handler: createConfirmUserPlantIdentityRouteHandler({
-        authenticate: bearerAuthenticator, now: dependencies.now, writeAudit: dependencies.writeAudit,
+        ...authenticatedRouteBase,
         isPublishedIdentity: ref => publishedIdentityReader.isPublishedIdentity(ref), confirmIdentity
       })
     },
     {
       route: deleteUserPlantRoute,
-      handler: createDeleteUserPlantRouteHandler({ authenticate: bearerAuthenticator, now: dependencies.now, writeAudit: dependencies.writeAudit, deleteUserPlant })
+      handler: createDeleteUserPlantRouteHandler({ ...authenticatedRouteBase, deleteUserPlant })
     },
     {
       route: putUserPlantCatalogBindingRoute,
       handler: createPutCatalogBindingRouteHandler({
-        authenticate: createUserBearerAuthenticator(resolvePrincipal), now: dependencies.now, writeAudit: dependencies.writeAudit,
+        ...authenticatedRouteBase, authenticate: createUserBearerAuthenticator(resolvePrincipal),
         catalogExists: async ref => (await taxonReader.read(ref)) !== null, putCatalogBinding
       })
     },
@@ -350,6 +363,7 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
         resolveCapabilitySnapshot: dependencies.resolveCapabilitySnapshot,
         createUserPlant,
         now: dependencies.now,
+        readHttpWriteRules: dependencies.readHttpWriteRules,
         writeAudit: dependencies.writeAudit
       })
     },
@@ -362,7 +376,8 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
         resolvePrincipal,
         resolveCapabilitySnapshot: dependencies.resolveCapabilitySnapshot,
         now: dependencies.now,
-        writeAudit: dependencies.writeAudit
+        writeAudit: dependencies.writeAudit,
+        guestClaimLeaseSeconds: dependencies.guestClaimLeaseSeconds
       })
     },
     {
@@ -374,6 +389,7 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
         readLimitsPolicy: async capturedAt => (await dependencies.readUserPlantLimitsPolicy?.(capturedAt)) ?? null,
         createTemporaryCase,
         now: dependencies.now,
+        readHttpWriteRules: dependencies.readHttpWriteRules,
         writeAudit: dependencies.writeAudit
       })
     },

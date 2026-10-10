@@ -1,3 +1,4 @@
+import type { CareLongTermRules } from '../../configuration/business-policies/index.js'
 import type { CareCalendarDto, CompleteCarePlanRequestDto, ConfirmCareProposalRequestDto } from '../../contracts/types.js'
 import type { MysqlTransactionContext } from '../../foundation/database/mysql-transaction-driver.js'
 import type { Mysql2QueryConnection } from '../../foundation/database/mysql2-connection-source.js'
@@ -37,6 +38,8 @@ export interface OwnedPlantCommandScope {
   readonly nowMs: number
   /** 共享 HTTP 幂等占位输入。 */
   readonly idempotency: HttpIdempotencyReservationInput
+  /** 请求内锁定的长期养护规则策略快照（care/long_term_rules）。 */
+  readonly rules: Readonly<CareLongTermRules>
 }
 
 /** 确认建议输入；日历名称来自事务前读取的档案昵称或品种中文名。 */
@@ -92,8 +95,8 @@ async function writeWatering(transaction: Transaction, plant: LockedOwnedUserPla
   /** 实际浇水 UTC 毫秒。 */ readonly occurredAtMs: number
   /** 浇水量毫升或 null。 */ readonly amountMl: number | null
   /** 服务端当前 UTC 毫秒。 */ readonly nowMs: number
-}): Promise<string | null> {
-  if (!validateWateringOccurredAt({ occurredAtMs: input.occurredAtMs, nowMs: input.nowMs, plantCreatedAtMs: plant.createdAtMs })) { return null }
+}, rules: Readonly<CareLongTermRules>): Promise<string | null> {
+  if (!validateWateringOccurredAt({ occurredAtMs: input.occurredAtMs, nowMs: input.nowMs, plantCreatedAtMs: plant.createdAtMs }, rules)) { return null }
   const factRef = refs('fact')
   await insertWateringFact(transaction, plant, { factRef, occurredAtMs: input.occurredAtMs, amountMl: input.amountMl, sourceCommandRef: refs('command'), nowMs: input.nowMs })
   // §13：同一事务追加时间线事件，事实回滚时事件一起回滚。
@@ -101,7 +104,8 @@ async function writeWatering(transaction: Transaction, plant: LockedOwnedUserPla
   return factRef
 }
 
-const wateringRuleMessage = '浇水时间须在最近 7 天内、不晚于现在且不早于植物加入花园'
+/** 浇水时刻规则的公开提示；天数取自策略快照（v1 = 7 天，与迁移前文案一致）。 */
+const wateringRuleMessage = (rules: Readonly<CareLongTermRules>) => `浇水时间须在最近 ${rules.wateringBackfillMaxDays} 天内、不晚于现在且不早于植物加入花园`
 
 /** 检查窗口端点（UTC 毫秒）；无为 null。 */
 function windowEdge(result: Record<string, any>, key: 'earliestAt' | 'latestAt'): number | null {
@@ -120,8 +124,8 @@ export function createLongTermCareCommands(dependencies: IdempotentWriteDependen
     recordWatering: (command: RecordWateringCommand) => runIdempotentWrite(dependencies, command.idempotency, command.nowMs, async transaction => {
       const plant = await lockWritablePlant(transaction, command)
       if (isSnapshot(plant)) { return plant }
-      const factRef = await writeWatering(transaction, plant, refs, command)
-      if (factRef === null) { return invalid(wateringRuleMessage) }
+      const factRef = await writeWatering(transaction, plant, refs, command, command.rules)
+      if (factRef === null) { return invalid(wateringRuleMessage(command.rules)) }
       return ok({ factRef, factType: 'watering', occurredAt: new Date(command.occurredAtMs).toISOString(), amountMl: command.amountMl })
     }),
 
@@ -142,8 +146,8 @@ export function createLongTermCareCommands(dependencies: IdempotentWriteDependen
         return ok({ proposalRef: command.proposalRef, proposalStatus: 'dismissed', plan: null, factRef: null })
       }
       if (request.decision === 'record_watering') {
-        const factRef = await writeWatering(transaction, plant, refs, { occurredAtMs: Date.parse(request.occurredAt), amountMl: request.amountMl ?? null, nowMs: command.nowMs })
-        if (factRef === null) { return invalid(wateringRuleMessage) }
+        const factRef = await writeWatering(transaction, plant, refs, { occurredAtMs: Date.parse(request.occurredAt), amountMl: request.amountMl ?? null, nowMs: command.nowMs }, command.rules)
+        if (factRef === null) { return invalid(wateringRuleMessage(command.rules)) }
         await settleCareProposal(transaction, proposal, 'confirmed', command.nowMs)
         return ok({ proposalRef: command.proposalRef, proposalStatus: 'confirmed', plan: null, factRef })
       }
@@ -151,7 +155,7 @@ export function createLongTermCareCommands(dependencies: IdempotentWriteDependen
         requestedMs: request.scheduledAt === undefined ? null : Date.parse(request.scheduledAt),
         earliestMs: windowEdge(proposal.result, 'earliestAt'), latestMs: windowEdge(proposal.result, 'latestAt'), nowMs: command.nowMs,
         generatedAtMs: Date.parse(String(proposal.result.generatedAt))
-      })
+      }, command.rules)
       if (scheduledAtMs === null) { return invalid('检查时间须在建议的检查窗口内') }
       const calendar: CareCalendarDto = buildCareCalendar({ scheduledAtMs, displayName: command.displayName })
       const planRef = refs('plan')
@@ -173,8 +177,8 @@ export function createLongTermCareCommands(dependencies: IdempotentWriteDependen
       const request = command.request
       let factRef: string | null = null
       if (request.outcome === 'done' && request.watering !== undefined) {
-        factRef = await writeWatering(transaction, plant, refs, { occurredAtMs: Date.parse(request.watering.occurredAt), amountMl: request.watering.amountMl ?? null, nowMs: command.nowMs })
-        if (factRef === null) { return invalid(wateringRuleMessage) }
+        factRef = await writeWatering(transaction, plant, refs, { occurredAtMs: Date.parse(request.watering.occurredAt), amountMl: request.watering.amountMl ?? null, nowMs: command.nowMs }, command.rules)
+        if (factRef === null) { return invalid(wateringRuleMessage(command.rules)) }
       }
       if (request.outcome === 'done' && request.soil !== undefined) {
         await insertSoilObservation(transaction, plant, { observationRef: refs('observation'), planRef: command.planRef, state: request.soil.state, scope: request.soil.scope, observedAtMs: command.nowMs })

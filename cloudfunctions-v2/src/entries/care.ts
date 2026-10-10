@@ -1,5 +1,8 @@
 import pino from 'pino'
 
+import { CARE_LONG_TERM_RULES_POLICY, HTTP_REQUEST_WRITE_POLICY } from '../configuration/business-policies/index.js'
+import { createMysqlTypedPolicyReader, policyRulesPort } from '../foundation/policy/mysql-typed-policy-reader.js'
+
 import { readCareEnvironment } from '../configuration/environment.js'
 import { createCareServer } from '../care/http/server.js'
 import { createOpenMeteoRadiationFetcher } from '../care/provider/open-meteo-radiation-fetcher.js'
@@ -34,7 +37,13 @@ const resolvePrincipal = createResolveGuestOrUserPrincipal({
   })
 })
 
+/** 请求内只读策略快照端口（用户 2026-10-10 裁定：业务参数来自策略发布；无可信发布时对应接口 503）。 */
+const readLongTermRules = policyRulesPort(createMysqlTypedPolicyReader(source, CARE_LONG_TERM_RULES_POLICY), now)
+const readHttpWriteRules = policyRulesPort(createMysqlTypedPolicyReader(source, HTTP_REQUEST_WRITE_POLICY), now)
+
 const server = createCareServer({
+  readLongTermRules,
+  readHttpWriteRules,
   connectionSource: source,
   now,
   resolvePrincipal,

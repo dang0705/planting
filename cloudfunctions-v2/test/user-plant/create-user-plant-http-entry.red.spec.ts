@@ -4,6 +4,7 @@ import type { AddressInfo } from 'node:net'
 import { afterEach, expect, test } from 'vitest'
 
 import { createUserPlantServer } from '../../src/user-plant/http/server.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 let server: Server | undefined
 
@@ -23,7 +24,7 @@ afterEach(async () => {
  */
 test('POST 创建用户植物在无登录凭证时返回 401，且不访问数据库', async () => {
   let connectionRequested = false
-  server = createUserPlantServer({
+  server = createUserPlantServer({ ...fixturePolicyPorts(),
     connectionSource: {
       getConnection: async () => {
         connectionRequested = true

@@ -7,6 +7,7 @@ import {
   diagnosisCreationRoute
 } from '../../src/diagnosis/http/create-session-route.js'
 import type { UserPrincipalDto } from '../../src/contracts/types.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /** unit_fake / L3：真实Node HTTP；身份和事务用例为替身。Expected来自create-session-http-contract，不证明MySQL或平台验真。 */
 const principal = {
@@ -52,7 +53,7 @@ async function harness() {
   }))
   const resolve = vi.fn(async () => principal)
   const audit = vi.fn()
-  const handler = createDiagnosisCreationRouteHandler({
+  const handler = createDiagnosisCreationRouteHandler({ ...fixturePolicyPorts(),
     resolvePrincipal: resolve,
     createSession: submit,
     now: () => 1000,

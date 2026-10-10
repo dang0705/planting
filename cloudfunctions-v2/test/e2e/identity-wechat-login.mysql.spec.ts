@@ -6,6 +6,7 @@ import {
   type IdentityLoginReadback,
   type IdentityWechatLoginMysqlFixture
 } from './support/identity-wechat-login-mysql-fixture.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /** Bearer 摘要读回只含 Identity 会话持久化验证所需字段。 */
 type SessionReadbackRow = RowDataPacket & {
@@ -232,7 +233,7 @@ describe('微信登录与统一用户会话 MySQL HTTP 纵向切片', () => {
   test('COMMIT 已成功但确认丢失时返回 503 且不自动重试；新 code 可安全重新登录', async () => {
     const before = await fixture.identityCounts()
     const uncertainCommit = fixture.createCommitAcknowledgementLossSource(fixture.connectionSource)
-    const server = fixture.createIdentityServer({
+    const server = fixture.createIdentityServer({ ...fixturePolicyPorts(),
       connectionSource: uncertainCommit.connectionSource,
       verifyPlatformCode: (_platform, code) => fixture.createOneTimeWechatCodeVerifier()(code),
       resolveSessionPolicy: async () => fixture.getActivePolicySnapshot(),

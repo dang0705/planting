@@ -3,6 +3,7 @@ import type { AddressInfo } from 'node:net'
 
 import type { Mysql2QueryConnection } from '../../../src/foundation/database/mysql2-connection-source.js'
 import { createWeatherServer } from '../../../src/weather/http/server.js'
+import { fixturePolicyPorts } from '../../support/business-policy-fixtures.js'
 
 /**
  * weather 城市气候 L3 / unit_fake 测试共用夹具。
@@ -120,7 +121,7 @@ export async function start(handler: FakeHandler): Promise<string> {
       return handler(sql, parameters)
     }
   }
-  const server = createWeatherServer({
+  const server = createWeatherServer({ ...fixturePolicyPorts(),
     connectionSource: { getConnection: async () => connection },
     writeAudit: () => undefined
   })

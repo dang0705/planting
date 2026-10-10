@@ -15,7 +15,7 @@ export type MvpSoilValidityPolicy = {
   readonly remainingFraction: MvpSoilRemainingFractions
 } | {
   /** v2 合同版本；v3（用户 2026-10-10 审定）沿用同一有效期规则。 */
-  readonly contractVersion: 'care-watering-mvp/v2' | 'care-watering-mvp/v3'
+  readonly contractVersion: 'care-watering-mvp/v2' | 'care-watering-mvp/v3' | 'care-watering-mvp/v4'
   /** 湿/微湿推不出离开时刻时的回退有效小时数。 */
   readonly soilEvidenceFallbackHours: number
   /** 统一封顶有效小时数。 */

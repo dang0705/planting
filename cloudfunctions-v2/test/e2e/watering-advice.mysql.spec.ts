@@ -18,6 +18,7 @@ import { createMysqlGuestSessionRepository } from '../../src/identity/repository
 import { createMysqlUserPrincipalRepository, type UserPrincipalSqlRow } from '../../src/identity/repository/mysql-user-principal-repository.js'
 import { findProjectRoot } from '../support/project-root.js'
 import { cityProfilesSql } from './support/user-plant-mysql-harness.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /**
  * unit_real_data：隔离 docker MySQL 8.4 + v2 schema manifest 全量 DDL（含 024 浇水基线表）+ v1 基线种子文件 +
@@ -134,7 +135,7 @@ beforeAll(async () => {
     VALUES ('bpr_care_mvp_watering01', 'care', 'mvp_watering', 'care-watering-mvp/v1', 'care-watering-mvp/v1.0.0', '${policySha}', CAST(${quote(JSON.stringify(policyBody))} AS JSON), 'active', ${now - 24 * hour}, ${now - 24 * hour}, ${now - 24 * hour}, ${now - 24 * hour});`)
   const port = Number(docker(['port', container, '3306/tcp']).split(':').at(-1))
   source = createMysql2ConnectionSource({ host: '127.0.0.1', port, database, user: 'root', password: '' })
-  server = createCareServer({
+  server = createCareServer({ ...fixturePolicyPorts(),
     connectionSource: source,
     now: () => now,
     writeAudit: event => { audits.push(event) },

@@ -13,6 +13,7 @@ import {
   type CreateTemporaryCaseRouteDependencies
 } from '../../src/user-plant/http/create-temporary-case-route.js'
 import { createUserPlantServer } from '../../src/user-plant/http/server.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /**
  * unit_fake（L3）。Expected：temporary-case-contract.md §1–§3、http-api 公共合同（415/413）；测试矩阵 R1–R6、S1。
@@ -58,7 +59,7 @@ async function start(principal: GuestPrincipalDto | UserPrincipalDto = guest, ov
   const stages: string[] = []
   const calls: CreateTemporaryCaseApplicationInput[] = []
   const audits: unknown[] = []
-  const dependencies: CreateTemporaryCaseRouteDependencies = {
+  const dependencies: CreateTemporaryCaseRouteDependencies = { ...fixturePolicyPorts(),
     resolvePrincipal: async () => { stages.push('principal'); return principal },
     readLimitsPolicy: async capturedAt => { stages.push(`policy:${capturedAt}`); return policy as never },
     createTemporaryCase: async input => {
@@ -205,7 +206,7 @@ describe('POST /api/v2/user-plants/temporary-cases 路由', () => {
 describe('user-plant 服务接线', () => {
   test('POST temporary-cases 无凭证 → 401 且不访问数据库（路由已接入，不是 404/405）', async () => {
     let connectionRequested = false
-    const server = createUserPlantServer({
+    const server = createUserPlantServer({ ...fixturePolicyPorts(),
       connectionSource: { getConnection: async () => { connectionRequested = true; throw new Error('不应访问数据库') } },
       now: () => now,
       resolveCapabilitySnapshot: async () => { throw new Error('不应解析能力') },

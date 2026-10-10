@@ -1,3 +1,5 @@
+import type { WeatherPublicReadRules } from '../../configuration/business-policies/index.js'
+import type { PolicyRulesPort } from '../../foundation/policy/require-policy.js'
 import { createServer, type Server } from 'node:http'
 
 import type { MysqlConnectionPoolPort } from '../../foundation/database/mysql-transaction-driver.js'
@@ -27,6 +29,8 @@ export type WeatherServerDependencies = {
   readonly connectionSource: MysqlConnectionPoolPort<Mysql2QueryConnection>
   /** 请求结果审计端口，只接收脱敏事件。 */
   readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
+  /** 读取 weather 公开读取策略快照（weather/public_read）；入口由类型化读取器适配，null 时推荐接口 503。 */
+  readonly readPublicReadRules: PolicyRulesPort<WeatherPublicReadRules>
 }
 
 const okStatus = 200
@@ -81,6 +85,7 @@ export function createWeatherServer(dependencies: WeatherServerDependencies): Se
       route: listCityClimateRecommendationsRoute,
       handler: createListCityClimateRecommendationsRouteHandler({
         cityClimateFit,
+        readPublicReadRules: dependencies.readPublicReadRules,
         writeAudit: dependencies.writeAudit
       })
     }

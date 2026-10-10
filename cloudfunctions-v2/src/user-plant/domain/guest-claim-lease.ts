@@ -1,10 +1,8 @@
-import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
-/**
- * 游客认领命令处理租约时长（毫秒）。
- * 配置目录硬规则 `user-plant.guest_claim.processing_lease_seconds` = 30：正确性依赖完成写入的“租约未过期且持有者匹配”条件，
- * 时长只决定崩溃后的接管等待，不做运营配置；调整须改代码与测试。
+/*
+ * 游客认领命令处理租约时长（`user-plant.guest_claim.processing_lease_seconds`）：用户 2026-10-10 裁定为运维参数，
+ * 代码默认 30 秒，部署环境变量 V2_USER_PLANT_GUEST_CLAIM_LEASE_SECONDS 在 10–120 内覆盖，由入口经服务依赖注入 leaseMs。
+ * 正确性依赖完成写入的“租约未过期且持有者匹配”条件，时长只决定崩溃后的接管等待。
  */
-export const GUEST_CLAIM_PROCESSING_LEASE_MS = RUNTIME_PARAMETERS.userPlant.guestClaimProcessingLeaseSeconds.value * 1000
 
 /** 租约裁决输入：事务内加锁读到的命令状态与本次请求的服务端候选持有者。 */
 export interface GuestClaimLeaseDecisionInput {
@@ -22,6 +20,8 @@ export interface GuestClaimLeaseDecisionInput {
   readonly nowMs: number
   /** 本次请求由服务端高熵随机生成后取 SHA-256 的候选持有者摘要。 */
   readonly candidateOwnerHash: string
+  /** 租约时长毫秒（环境变量层，默认 30 000）。 */
+  readonly leaseMs: number
 }
 
 /** 租约裁决结果。 */
@@ -67,7 +67,7 @@ export function decideGuestClaimLease(input: GuestClaimLeaseDecisionInput): Gues
   const { status, leaseOwnerHash, leaseExpiresAtMs, attemptCount, updatedAtMs, nowMs, candidateOwnerHash } = input
   if (!shaPattern.test(candidateOwnerHash) || !validTime(nowMs) || !validTime(updatedAtMs) || nowMs < updatedAtMs
     || !Number.isSafeInteger(attemptCount) || attemptCount < 0) { return { kind: 'invalid' } }
-  const expiresAt = nowMs + GUEST_CLAIM_PROCESSING_LEASE_MS
+  const expiresAt = nowMs + input.leaseMs
   if (status === 'requested') {
     if (leaseOwnerHash !== null || leaseExpiresAtMs !== null || attemptCount !== 0) { return { kind: 'invalid' } }
     return { kind: 'acquire', attemptCount: 1, leaseExpiresAtMs: expiresAt, takeover: false }

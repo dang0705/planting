@@ -1,3 +1,5 @@
+import { idempotencyRetentionMs, type HttpRequestWriteRules } from '../../configuration/business-policies/index.js'
+import { requirePolicy, type PolicyRulesPort } from '../../foundation/policy/require-policy.js'
 import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import { createHash } from 'node:crypto'
 import type { IncomingHttpHeaders, IncomingMessage } from 'node:http'
@@ -69,6 +71,8 @@ export type TransitionUserPlantRouteDependencies = {
   ) => Promise<HttpIdempotencyPublicResponseSnapshot>
   /** 服务端可信 UTC 毫秒时钟。 */
   readonly now: () => number
+  /** 读取 HTTP 写入策略快照（幂等保留期，http/request_write）；null 时 503。 */
+  readonly readHttpWriteRules: PolicyRulesPort<HttpRequestWriteRules>
   /** 只接收脱敏请求结果的审计端口。 */
   readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
 }
@@ -101,8 +105,6 @@ type LifecycleCommand = UserPlantLifecycleApplicationInput & {
 
 /** 单次 JSON 请求体上限，与用户植物创建入口一致。 */
 const bodyLimitBytes = RUNTIME_PARAMETERS.http.jsonBodyLimitBytes.value
-/** 幂等结果保留七天；同键重试在此期间必须读回首次结果。 */
-const idempotencyRetentionMs = RUNTIME_PARAMETERS.http.idempotencyRetentionHours.value * 60 * 60 * 1000
 /** 只用于公开 HTTP 协议转换，不参与领域状态机判断。 */
 const validationFailureStatus = 400
 const unauthenticatedStatus = 401
@@ -345,7 +347,7 @@ function createTransitionRouteHandler(
                 })
               ),
               createdAtMs: occurredAtMs,
-              expiresAtMs: occurredAtMs + idempotencyRetentionMs
+              expiresAtMs: occurredAtMs + idempotencyRetentionMs(await requirePolicy(dependencies.readHttpWriteRules))
             } satisfies HttpIdempotencyReservationInput
           }
         }

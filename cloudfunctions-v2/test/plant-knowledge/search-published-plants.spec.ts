@@ -7,6 +7,7 @@ import type { MysqlConnectionPoolPort } from '../../src/foundation/database/mysq
 import type { Mysql2QueryConnection } from '../../src/foundation/database/mysql2-connection-source.js'
 import { createPlantKnowledgeServer } from '../../src/plant-knowledge/http/server.js'
 import type { PublishedPlantSqlRow } from '../../src/plant-knowledge/repository/mysql-published-plant-repository.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 const okStatus = 200
 const badRequestStatus = 400
@@ -63,7 +64,7 @@ let server: Server | undefined
 
 /** 挂载真实 plant-knowledge HTTP 服务，仅替换 Repository 下方的 MySQL 连接。 */
 async function startService(database: FakeDatabase): Promise<string> {
-  server = createPlantKnowledgeServer({
+  server = createPlantKnowledgeServer({ ...fixturePolicyPorts(),
     connectionSource: database.connectionSource,
     writeAudit: () => undefined
   })

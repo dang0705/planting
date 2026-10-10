@@ -8,9 +8,11 @@ import { createRouteDispatcher } from '../../src/foundation/http/route-dispatche
 import type { RequestChainAuditEvent } from '../../src/foundation/http/request-chain.js'
 import type { HttpIdempotencyPublicResponseSnapshot } from '../../src/foundation/idempotency/http-idempotency.js'
 import { createUserBearerAuthenticator } from '../../src/identity/http/user-bearer-authenticator.js'
-import { buildCoverUploadPath, COVER_ASSET_RULES, isOwnCoverFileId } from '../../src/user-plant/domain/cover-asset.js'
+import { buildCoverUploadPath, isOwnCoverFileId } from '../../src/user-plant/domain/cover-asset.js'
+import { userPlantAssetRulesV1 } from '../support/business-policy-fixtures.js'
 import type { GetCoverUploadTargetInput } from '../../src/user-plant/application/get-cover-upload-target.js'
 import { coverUploadTargetRoute, createCoverUploadTargetRouteHandler } from '../../src/user-plant/http/cover-upload-target-route.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /**
  * Expected 来源：docs/backend-v2/contracts/user-plant-cover-asset.md §2.1（2026-10-10 用户追加「获取上传目录」）：
@@ -28,12 +30,12 @@ let server: Server | undefined
 async function startService(result?: HttpIdempotencyPublicResponseSnapshot) {
   const calls: GetCoverUploadTargetInput[] = []
   const audits: RequestChainAuditEvent[] = []
-  const dispatch = createRouteDispatcher([{ route: coverUploadTargetRoute, handler: createCoverUploadTargetRouteHandler({
+  const dispatch = createRouteDispatcher([{ route: coverUploadTargetRoute, handler: createCoverUploadTargetRouteHandler({ ...fixturePolicyPorts(),
     authenticate: createUserBearerAuthenticator(async () => principal), now: () => Date.UTC(2026, 9, 10, 12), writeAudit: event => { audits.push(event) },
     readUploadTarget: async input => {
       calls.push(input)
       return result ?? { status: 200, body: { data: { purpose: 'profile', cloudPath: buildCoverUploadPath(input.principal.user_id, input.userPlantRef, random),
-        allowedMimeTypes: [...COVER_ASSET_RULES.allowedMimeTypes], maxBytes: COVER_ASSET_RULES.maxImageBytes } } }
+        allowedMimeTypes: [...userPlantAssetRulesV1().allowedMimeTypes], maxBytes: userPlantAssetRulesV1().maxImageBytes } } }
     }
   }) }])
   server = createServer((request, response) => { dispatch(request, response).catch(() => undefined) })
@@ -65,7 +67,7 @@ describe('GET …/cover-upload-target 路由', () => {
     expect(body).toEqual({ data: { purpose: 'profile', cloudPath: `user-plant/${ownerRef}/covers/${plantRef}-${random}`,
       allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 5_242_880 } })
     expect(Object.keys(body.data)).not.toContain('user_id')
-    expect(service.calls).toEqual([{ principal, userPlantRef: plantRef }])
+    expect(service.calls).toEqual([{ principal, userPlantRef: plantRef, rules: userPlantAssetRulesV1() }])
     expect(JSON.stringify(service.audits)).not.toContain(ownerRef)
   })
 

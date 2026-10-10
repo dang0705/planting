@@ -1,4 +1,4 @@
-import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
+import type { PolicyPageSize } from '../../configuration/business-policies/index.js'
 import type { UserPlantRef } from '../../contracts/types.js'
 
 /**
@@ -6,8 +6,7 @@ import type { UserPlantRef } from '../../contracts/types.js'
  * 好比前端“无限滚动”：每页取固定条数，游标记住“上一页最后一项在哪”，下一页从它后面接着取。
  */
 
-/** 硬规则 `user-plant.list.page_size`：缺省 20 条、最多 50 条；与配置目录一致性由测试锁定，不做运营配置。 */
-export const USER_PLANT_LIST_PAGE_SIZE = RUNTIME_PARAMETERS.userPlant.listPageSize.value
+/* 分页（`user-plant.list.page_size`，v1 = 缺省 20、最多 50）自用户 2026-10-10 裁定起来自策略发布 user-plant/list_rules，由调用方传入快照。 */
 
 /** 列表可见的生命周期；deleting/deleted 永远不可见。 */
 export type ListableUserPlantLifecycle = 'active' | 'archived'
@@ -33,11 +32,11 @@ export function resolveListLifecycles(raw: string | null): readonly ListableUser
 }
 
 /** 解析 limit：省略为 20；只接受无前导零的 1～50 十进制整数，其他返回 null。 */
-export function resolveUserPlantListLimit(raw: string | null): number | null {
-  if (raw === null) { return USER_PLANT_LIST_PAGE_SIZE.default }
+export function resolveUserPlantListLimit(raw: string | null, pageSize: PolicyPageSize): number | null {
+  if (raw === null) { return pageSize.default }
   if (!positiveDecimal.test(raw)) { return null }
   const limit = Number(raw)
-  return limit <= USER_PLANT_LIST_PAGE_SIZE.max ? limit : null
+  return limit <= pageSize.max ? limit : null
 }
 
 /** 把位置编码为不透明 base64url 游标。 */

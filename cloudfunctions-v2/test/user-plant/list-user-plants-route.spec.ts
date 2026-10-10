@@ -15,6 +15,7 @@ import {
   createListUserPlantsRouteHandler,
   listUserPlantsRoute
 } from '../../src/user-plant/http/list-user-plants-route.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /**
  * Expected 来源：`docs/backend-v2/contracts/user-plant.md`「列表公开接口」（2026-10-10 用户裁决冻结）：
@@ -48,7 +49,7 @@ async function startService(options: {
   const audit: RequestChainAuditEvent[] = []
   const dispatch = createRouteDispatcher([{
     route: listUserPlantsRoute,
-    handler: createListUserPlantsRouteHandler({
+    handler: createListUserPlantsRouteHandler({ ...fixturePolicyPorts(),
       authenticate: createUserBearerAuthenticator(async () => {
         if (options.resolveFails) { throw new UnifiedUserPrincipalResolveError('PRINCIPAL_INVALID', '会话无效') }
         return principal

@@ -33,6 +33,7 @@ import { runDatabaseTransaction } from '../../src/foundation/database/transactio
 import { calculateCanonicalJsonSha256 } from '../../src/foundation/json/canonical-json-sha256.js'
 import { createReadDiagnosisAnswerEvidence } from '../../src/diagnosis/application/read-answer-evidence.js'
 import { createMysqlDiagnosisAnswerEvidenceRepository } from '../../src/diagnosis/repository/mysql-diagnosis-answer-evidence-repository.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /** unit_real_data / L3：真实MySQL8.4、指定会话表和019迁移；父归属表为最小夹具，不验收完整建库链或HTTP。 */
 const container = `qhz-diag-snapshot-${process.pid}`
@@ -351,7 +352,7 @@ describe('真实共享幂等与答案同事务',()=>{
     await db.query("INSERT INTO users VALUES (3,'usr_owner123','active'),(4,'usr_other123','active')")
     await db.query("INSERT INTO user_plants VALUES (4,3,'upl_owner123','active')")
     await append('diagnosis-http-example','usr_owner123','upl_owner123');const deps=idempotentDependencies()
-    const handler=createDiagnosisAnswerRouteHandler({now:()=>2500,writeAudit:()=>undefined,
+    const handler=createDiagnosisAnswerRouteHandler({ ...fixturePolicyPorts(),now:()=>2500,writeAudit:()=>undefined,
       resolvePrincipal:async command=>({principalType:'user',user_id:command.bearerToken==='owner-token'?'usr_owner123':'usr_other123',sessionVersion:1,authenticatedVia:'wechat',issuedAt:'2026-10-04T00:00:00Z',expiresAt:'2026-10-05T00:00:00Z'} as UserPrincipalDto),
       submitAnswers:input=>createIdempotentDiagnosisAnswerService({...deps,projectPublicResponse:result=>projectDiagnosisAnswerResponse(input.diagnosisRef,result)})(input)})
     const server=createServer(createRouteDispatcher([{route:diagnosisAnswerRoute,handler}]))
@@ -407,7 +408,7 @@ describe('固定会话创建到作答纵向链路',()=>{
   }
   test('真实HTTP创建、重放旧题包、归属拒绝与四题答案读回',async()=>{
     const resolvePrincipal=async(command:{bearerToken:string})=>({principalType:'user',user_id:command.bearerToken==='owner-token'?'usr_owner123':'usr_other123',sessionVersion:1,authenticatedVia:'wechat',issuedAt:'2026-10-04T00:00:00Z',expiresAt:'2026-10-05T00:00:00Z'} as UserPrincipalDto)
-    const server=createDiagnosisServer({connectionSource:source,resolvePrincipal,now:()=>2500,writeAudit:()=>undefined,recordRollbackFailure:()=>undefined})
+    const server=createDiagnosisServer({ ...fixturePolicyPorts(),connectionSource:source,resolvePrincipal,now:()=>2500,writeAudit:()=>undefined,recordRollbackFailure:()=>undefined})
     await new Promise<void>(r=>server.listen(0,'127.0.0.1',r))
     try{
       const base=`http://127.0.0.1:${(server.address() as AddressInfo).port}/api/v2/diagnosis/sessions`

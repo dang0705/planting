@@ -10,6 +10,7 @@ import { createUserBearerAuthenticator } from '../../src/identity/http/user-bear
 import type { ListUserPlantTimelineInput } from '../../src/user-plant/application/list-user-plant-timeline.js'
 import { encodeTimelineCursor } from '../../src/user-plant/domain/timeline.js'
 import { createListUserPlantTimelineRouteHandler, listUserPlantTimelineRoute } from '../../src/user-plant/http/list-user-plant-timeline-route.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /**
  * Expected 来源：docs/backend-v2/contracts/user-plant-timeline.md §3 / §6（2026-10-10 用户审定）：查询只有 limit（1～50，缺省 20）与 cursor；
@@ -25,7 +26,7 @@ const item = { timelineItemRef: `tli_${'a'.repeat(40)}`, itemType: 'care_waterin
 let server: Server | undefined
 async function startService(result?: HttpIdempotencyPublicResponseSnapshot) {
   const calls: ListUserPlantTimelineInput[] = []
-  const dispatch = createRouteDispatcher([{ route: listUserPlantTimelineRoute, handler: createListUserPlantTimelineRouteHandler({
+  const dispatch = createRouteDispatcher([{ route: listUserPlantTimelineRoute, handler: createListUserPlantTimelineRouteHandler({ ...fixturePolicyPorts(),
     authenticate: createUserBearerAuthenticator(async () => principal), now: () => nowMs, writeAudit: () => undefined,
     listTimeline: async input => { calls.push(input); return result ?? { status: 200, body: { data: { items: [item], nextCursor: null } } } }
   }) }])

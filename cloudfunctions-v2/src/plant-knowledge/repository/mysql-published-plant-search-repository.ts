@@ -14,14 +14,13 @@ export type PublishedPlantSearchRepositoryResult = {
 
 /** 已发布植物身份搜索 Repository。 */
 export type PublishedPlantSearchRepository = {
-  /** 按规范化查询词搜索当前双 active release 准入身份。 */
-  readonly searchPublishedPlants: (query: string) => Promise<PublishedPlantSearchRepositoryResult>
+  /** 按规范化查询词搜索当前双 active release 准入身份；maxItems 来自请求内锁定的公开搜索策略。 */
+  readonly searchPublishedPlants: (query: string, maxItems: number) => Promise<PublishedPlantSearchRepositoryResult>
 }
 
-/** 单次最多返回条数（硬规则 `plant-knowledge.search.result_max_items`，取值见代码层注册表）。 */
-const maximumSearchResultItems = RUNTIME_PARAMETERS.plantKnowledge.searchResultMaxItems.value
+/** 返回条数的代码绝对上限（`plant-knowledge.public_search.absolute_bounds.searchResultMaxItems` = 公开合同 20）；策略只能在其内调小。 */
+const absoluteMaximumItems = RUNTIME_PARAMETERS.policyBounds.plantKnowledgePublicSearch.value.searchResultMaxItems
 const extraLookaheadRowCount = 1
-const searchLookaheadRowLimit = maximumSearchResultItems + extraLookaheadRowCount
 const zero = 0
 
 /**
@@ -66,7 +65,7 @@ const searchPublishedPlantsSql = `SELECT identity_record.public_identity_ref,
           identity_record.display_name_zh COLLATE utf8mb4_unicode_ci ASC,
           taxon.accepted_scientific_name COLLATE utf8mb4_unicode_ci ASC,
           identity_record.public_identity_ref COLLATE utf8mb4_unicode_ci ASC
- LIMIT ${String(searchLookaheadRowLimit)}`
+ LIMIT `
 
 /** 转义 LIKE 的显式转义符与两个通配符；反斜杠在 `ESCAPE '!'` 下保持普通字符。 */
 function toLiteralPrefixPattern(query: string): string {
@@ -101,13 +100,15 @@ export function createMysqlPublishedPlantSearchRepository(
   executor: PublishedPlantSqlExecutor
 ): PublishedPlantSearchRepository {
   return {
-    async searchPublishedPlants(query) {
+    async searchPublishedPlants(query, maxItems) {
+      // LIMIT 只能拼接已校验整数（mysql2 预处理语句不接受 LIMIT 占位符）；多读 1 行用于判断 truncated。
+      if (!Number.isSafeInteger(maxItems) || maxItems < 1 || maxItems > absoluteMaximumItems) { throw new RangeError('搜索返回上限不合法') }
       const pattern = toLiteralPrefixPattern(query)
-      const rows = await executor.query(searchPublishedPlantsSql, [pattern, pattern, query, query])
+      const rows = await executor.query(`${searchPublishedPlantsSql}${String(maxItems + extraLookaheadRowCount)}`, [pattern, pattern, query, query])
       const validatedRows = rows.map(toPublishedPlantRow)
-      const truncated = validatedRows.length > maximumSearchResultItems
+      const truncated = validatedRows.length > maxItems
       return {
-        rows: validatedRows.slice(zero, maximumSearchResultItems),
+        rows: validatedRows.slice(zero, maxItems),
         truncated
       }
     }

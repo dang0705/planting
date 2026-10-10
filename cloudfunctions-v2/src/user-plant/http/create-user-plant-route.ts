@@ -1,3 +1,5 @@
+import { idempotencyRetentionMs, type HttpRequestWriteRules } from '../../configuration/business-policies/index.js'
+import { requirePolicy, type PolicyRulesPort } from '../../foundation/policy/require-policy.js'
 import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import { createHash, randomBytes } from 'node:crypto'
 import type { IncomingHttpHeaders, IncomingMessage } from 'node:http'
@@ -47,6 +49,8 @@ export type CreateUserPlantRouteDependencies = {
   ) => Promise<HttpIdempotencyPublicResponseSnapshot>
   /** 服务端 UTC 毫秒时钟。 */
   readonly now: () => number
+  /** 读取 HTTP 写入策略快照（幂等保留期，http/request_write）；null 时 503。 */
+  readonly readHttpWriteRules: PolicyRulesPort<HttpRequestWriteRules>
   /** 脱敏的请求结果审计端口。 */
   readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
 }
@@ -69,8 +73,6 @@ type CreateRequestDto = {
 
 /** 共享 HTTP 合同正文上限（统一入口 http.json_body_limit_bytes）。 */
 const jsonBodyLimitBytes = RUNTIME_PARAMETERS.http.jsonBodyLimitBytes.value
-/** 共享 HTTP 合同幂等保留期（统一入口 http.idempotency.retention_hours，换算为毫秒）。 */
-const idempotencyRetentionMs = RUNTIME_PARAMETERS.http.idempotencyRetentionHours.value * 60 * 60 * 1000
 const validators = createPublicContractValidators()
 const validIdempotencyKey = /^[\x20-\x7e]{8,128}$/u
 
@@ -227,7 +229,7 @@ export function createUserPlantRouteHandler(
               idempotencyKeyHash: digest(dto.idempotencyKey),
               requestHash: digest('{}'),
               createdAtMs: occurredAtMs,
-              expiresAtMs: occurredAtMs + idempotencyRetentionMs
+              expiresAtMs: occurredAtMs + idempotencyRetentionMs(await requirePolicy(dependencies.readHttpWriteRules))
             }
           }
         }

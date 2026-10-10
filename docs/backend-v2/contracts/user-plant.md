@@ -140,7 +140,7 @@ active 植物数量上限。跨用户或不存在的植物统一返回 `404 USER
 export type UserPlantListQuery = {
   /** 可选生命周期筛选：active 或 archived；省略表示两者都返回。deleting/deleted 永远不可见，不能筛选。 */
   lifecycle?: 'active' | 'archived'
-  /** 可选每页条数：1～50 的十进制整数文本；省略为 20（硬规则 user-plant.list.page_size）。 */
+  /** 可选每页条数：1～策略上限的十进制整数文本；省略为策略默认（生效策略 user-plant/list_rules，当前 20 / 50，绝对上限 50；用户 2026-10-10 裁定，策略不可用 503）。 */
   limit?: string
   /** 可选不透明游标：只能原样回传上一页的 nextCursor；被篡改或格式不对返回 400。 */
   cursor?: string

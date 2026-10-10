@@ -27,6 +27,7 @@ import {
   restoreUserPlantRoute
 } from '../../src/user-plant/http/transition-user-plant-route.js'
 import { CapabilitySnapshotExpiredError } from '../../src/subscription/repository/mysql-capability-snapshot-reader.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 const userRef = 'usr_restore_replay_owner_01' as UserRef
 const plantRef = 'upl_restore_replay_plant_01' as UserPlantRef
@@ -154,7 +155,7 @@ describe('恢复 HTTP 幂等重放', () => {
     const dispatch = createRouteDispatcher([
       {
         route: restoreUserPlantRoute,
-        handler: createRestoreUserPlantRouteHandler({
+        handler: createRestoreUserPlantRouteHandler({ ...fixturePolicyPorts(),
           resolvePrincipal: async command => {
             expect(command.bearerToken).toBe(bearerToken)
             return principal

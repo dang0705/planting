@@ -15,6 +15,7 @@ import { findProjectRoot } from '../../support/project-root.js'
 import { createMysqlMvpWateringPolicyReader } from '../../../src/care/repository/mysql-mvp-watering-policy-reader.js'
 import { createReadProfileProgressSnapshot } from '../../../src/user-plant/application/read-profile-progress-snapshot.js'
 import { createMysqlProfileProgressPolicyReader } from '../../../src/user-plant/repository/mysql-profile-progress-policy-reader.js'
+import { fixturePolicyPorts } from '../../support/business-policy-fixtures.js'
 
 /**
  * user-plant 真实库测试夹具（unit_real_data）：本机 Docker MySQL 8.4 + schema manifest 全量 DDL + 真实 user-plant HTTP 服务。
@@ -98,7 +99,7 @@ export async function startUserPlantMysqlHarness(options: {
   const port = Number(docker(['port', container, '3306/tcp']).split(':').at(-1))
   const source = createMysql2ConnectionSource({ host: '127.0.0.1', port, database, user: 'root', password: '' })
   const audits: RequestChainAuditEvent[] = []
-  const server: Server = createUserPlantServer({
+  const server: Server = createUserPlantServer({ ...fixturePolicyPorts(),
     connectionSource: source,
     now: () => options.now,
     resolveCapabilitySnapshot: createMysqlCapabilitySnapshotReader(source, () => options.now),

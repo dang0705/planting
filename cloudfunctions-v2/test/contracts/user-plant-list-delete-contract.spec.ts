@@ -66,8 +66,9 @@ describe('用户植物列表与删除的公开合同制品', () => {
     })
   })
 
-  test('配置目录：user-plant.list.page_size 为 hard_rule，默认 20、上限 50，绑定 E03 票', () => {
+  // 用户 2026-10-10 第三轮裁定：分页迁入策略发布 user-plant/list_rules（取值不变），目录改为 confirmed 的策略项。
+  test('配置目录：user-plant.list.page_size 为策略发布项，默认 20、上限 50，绑定 E03 票', () => {
     const entry = catalog.variables.find(variable => variable.id === 'user-plant.list.page_size')
-    expect(entry).toMatchObject({ domain: 'user-plant', layer: 'hard_rule', status: 'hard_rule', currentValue: { default: 20, max: 50 }, owner: 'user-plant', clickUpTicketId: 'z8v0kmr9mj' })
+    expect(entry).toMatchObject({ domain: 'user-plant', layer: 'domain_policy', status: 'confirmed', configurationTier: 'policy', currentValue: { default: 20, max: 50 }, owner: 'user-plant', clickUpTicketId: 'z8v0kmr9mj' })
   })
 })

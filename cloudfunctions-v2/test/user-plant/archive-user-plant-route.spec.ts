@@ -12,6 +12,7 @@ import {
   archiveUserPlantRoute,
   createArchiveUserPlantRouteHandler
 } from '../../src/user-plant/http/transition-user-plant-route.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /**
  * Expected 来源：
@@ -71,7 +72,7 @@ async function startService(
   const dispatch = createRouteDispatcher([
     {
       route: archiveUserPlantRoute,
-      handler: createArchiveUserPlantRouteHandler({
+      handler: createArchiveUserPlantRouteHandler({ ...fixturePolicyPorts(),
         resolvePrincipal: async () => principal,
         resolveCapabilitySnapshot: async () => {
           calls.capability += 1

@@ -1,7 +1,6 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 
-import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 import type { UserRef } from '../../contracts/types.js'
 import type { MysqlConnectionPoolPort } from '../../foundation/database/mysql-transaction-driver.js'
 import type { Mysql2QueryConnection } from '../../foundation/database/mysql2-connection-source.js'
@@ -24,6 +23,13 @@ export type UserTrialAnchorRouteDependencies = {
   readonly resolveServiceSigningKey?: (keyId: string) => Promise<ServiceSigningKey | null>
   /** 服务端可信 UTC 毫秒时钟。 */
   readonly now: () => number
+  /** 服务签名参数（环境变量层 V2_SERVICE_SIGNATURE_*；签名方与验证方必须部署同一取值）。 */
+  readonly serviceSignature: {
+    /** 允许的请求时间与服务端时间绝对差（秒）。 */
+    readonly clockSkewSeconds: number
+    /** nonce 占用后最少保留秒数（≥ 2 × 时钟偏差）。 */
+    readonly nonceTtlSeconds: number
+  }
 }
 
 /** 不回显内部签名字段的稳定错误类别。 */
@@ -59,10 +65,6 @@ const timestampFormat = /^(?:0|[1-9][0-9]*)$/u
 const signatureFormat = /^[A-Za-z0-9_-]{43}$/u
 /** 每秒毫秒数（单位换算）。 */
 const millisecondsPerSecond = 1000
-/** 签名时钟偏差上限毫秒（`identity.service_signature.clock_skew_seconds`，取值见代码层注册表）。 */
-const clockSkewMs = RUNTIME_PARAMETERS.identity.serviceSignatureClockSkewSeconds.value * millisecondsPerSecond
-/** nonce 防重放保留毫秒（`identity.service_signature.nonce_ttl_seconds`，取值见代码层注册表）。 */
-const nonceRetentionMs = RUNTIME_PARAMETERS.identity.serviceSignatureNonceTtlSeconds.value * millisecondsPerSecond
 const invalidInput = new TrialAnchorRouteError(400, 'VALIDATION_FAILED')
 const invalidPrincipal = new TrialAnchorRouteError(401, 'PRINCIPAL_INVALID')
 const unavailable = new TrialAnchorRouteError(503, 'SERVICE_UNAVAILABLE')
@@ -127,7 +129,7 @@ async function verifySignature(
   if (
     !Number.isSafeInteger(requestTimestampMs) ||
     !Number.isSafeInteger(verifiedAtMs) ||
-    Math.abs(verifiedAtMs - requestTimestampMs) > clockSkewMs
+    Math.abs(verifiedAtMs - requestTimestampMs) > dependencies.serviceSignature.clockSkewSeconds * millisecondsPerSecond
   ) {
     throw invalidPrincipal
   }
@@ -162,7 +164,8 @@ async function verifySignature(
 /** 使用数据库唯一约束原子占用 nonce；重复签名即使换密钥也不能重放。 */
 async function claimNonce(
   source: MysqlConnectionPoolPort<Mysql2QueryConnection>,
-  verified: Awaited<ReturnType<typeof verifySignature>>
+  verified: Awaited<ReturnType<typeof verifySignature>>,
+  nonceRetentionMs: number
 ): Promise<void> {
   const connection = await source.getConnection()
   try {
@@ -231,7 +234,7 @@ export function createUserTrialAnchorRouteHandler(
       }
       await rejectRequestBody(request)
       const verified = await verifySignature(request, url.pathname, dependencies)
-      await claimNonce(dependencies.connectionSource, verified)
+      await claimNonce(dependencies.connectionSource, verified, dependencies.serviceSignature.nonceTtlSeconds * millisecondsPerSecond)
       const anchor = await readAnchor(userRef as UserRef)
       if (anchor === null) {
         throw new TrialAnchorRouteError(404, 'NOT_FOUND')

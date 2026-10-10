@@ -1,0 +1,20 @@
+{
+  "releaseDocumentVersion": "business-policy-release-document/v1",
+  "domainCode": "care",
+  "policyCode": "long_term_rules",
+  "schemaVersion": "care-long-term-rules/v1",
+  "releaseVersion": "care-long-term-rules/v1.0.0",
+  "effectiveAt": "2026-10-10T00:00:00Z",
+  "changeNote": "用户 2026-10-10 裁定：原代码硬规则迁入策略发布，取值不变（配置目录 care.plans.* / care.facts.* / care.watering.open_window_proposal_valid_hours）",
+  "policy": {
+    "contractVersion": "care-long-term-rules/v1",
+    "planExpiryGraceHours": 72,
+    "wateringBackfillMaxDays": 7,
+    "checkMaxPostponeDays": 7,
+    "openWindowProposalValidHours": 24,
+    "planPageSize": {
+      "default": 20,
+      "max": 50
+    }
+  }
+}

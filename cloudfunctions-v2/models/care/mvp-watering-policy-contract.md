@@ -228,4 +228,8 @@ L1 `unit_fake`：v3 正文 Schema 与物理约束、主要材料混合规则（�
 - 总时长 **> 6 小时**：保持空洞，按既有规则无结论（历史缺口 → `history_gap`；未来缺口 → 覆盖终点，窗口端点开放或缺失）。
 - 不补：第一个有效时段之前（起点前导缺口）与最后一个有效时段之后（预报覆盖终点）。
 - v1/v2 不补缺段（保持已发布语义可复算）。
-- 定为 hard_rule 的理由：它是“证据连续到什么程度才允许下结论”的准入边界，与 Open-Meteo 逐小时粒度绑定，不是需要按发布调参的业务数值；放进策略正文会让每次发布都可能悄悄改变安全边界。调整须同步本节、目录与锁定测试。
+- ~~定为 hard_rule~~（已被用户 2026-10-10 第三轮裁定取代）：缺段补齐小时数并入浇水策略 **`care-watering-mvp/v4`** 正文字段 `dryingGapFillMaxHours`（当前 6，绝对边界 0–24，目录 `care.watering.runtime_absolute_bounds`）；v3 按版本语义固定为 6 小时、v1/v2 不补，历史结果按原版本可复算。
+
+### 8.12 `care-watering-mvp/v4` 运行字段（用户 2026-10-10 裁定）
+
+v4 正文 = v3 正文 + 三个原代码常量（取值不变）：`dryingGapFillMaxHours`=6、`maximumPpfdPerGhi`=2.3（Lux 锚点 PPFD/GHI 物理上界，μmol/J，绝对边界 1.8–3）、`indoorClimateWindowHours`=24（室内实测温湿度覆盖小时，绝对边界 1–72）。v1–v3 读取时按版本语义取 2.3 / 24（v3 另含缺段补齐 6 小时），见 `resolveMvpWateringRuntimeRules`。v4 与 v3 在同一输入下公开结果一致（迁移锁定测试 `test/care/watering/mvp-watering-v4.spec.ts`）。

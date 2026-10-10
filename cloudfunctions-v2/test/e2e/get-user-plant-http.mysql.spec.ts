@@ -13,6 +13,7 @@ import type { RequestChainAuditEvent } from '../../src/foundation/http/request-c
 import { createMysqlCapabilitySnapshotReader } from '../../src/subscription/repository/mysql-capability-snapshot-reader.js'
 import { createUserPlantServer } from '../../src/user-plant/http/server.js'
 import { findProjectRoot } from '../support/project-root.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 const containerName = `qhz-v2-get-user-plant-http-${String(process.pid)}`
 const databaseName = `qinghuazhi_v2_get_user_plant_http_${String(process.pid)}`
@@ -253,7 +254,7 @@ describe('已认证读取用户植物（真实 MySQL）', () => {
         V2_MYSQL_PASSWORD: appPassword
       })
     )
-    server = createUserPlantServer({
+    server = createUserPlantServer({ ...fixturePolicyPorts(),
       connectionSource,
       now: () => nowMs,
       resolveCapabilitySnapshot: createMysqlCapabilitySnapshotReader(connectionSource, () => nowMs),

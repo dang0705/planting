@@ -2,13 +2,14 @@ import type { AddressInfo } from 'node:net'
 import { expect, test, vi } from 'vitest'
 import { createDiagnosisServer } from '../../src/diagnosis/http/server.js'
 import type { UserPrincipalDto } from '../../src/contracts/types.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 /** unit_fake/L3：Expected来自已冻结创建/作答合同及运行接线合同；真实HTTP，身份与SQL边界为替身。
  * 不证明真实MySQL、平台验真、正式Provider或部署。 */
 test('健康与冻结路由可用；未准入虫害拒绝且不连接SQL', async () => {
   const getConnection = vi.fn(async () => {
     throw new Error('不得连接SQL')
   })
-  const server = createDiagnosisServer({
+  const server = createDiagnosisServer({ ...fixturePolicyPorts(),
     connectionSource: { getConnection },
     resolvePrincipal: async () =>
       ({ principalType: 'user', user_id: 'usr_owner123' }) as UserPrincipalDto,

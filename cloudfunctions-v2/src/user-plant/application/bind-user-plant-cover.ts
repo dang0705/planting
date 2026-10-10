@@ -3,7 +3,6 @@ import type { Mysql2QueryConnection } from '../../foundation/database/mysql2-con
 import type { HttpIdempotencyPublicResponseSnapshot } from '../../foundation/idempotency/http-idempotency.js'
 import type { HttpIdempotencyReservationInput } from '../../foundation/idempotency/mysql-http-idempotency-repository.js'
 import { publicErrorSnapshot, runIdempotentWrite, type IdempotentWriteDependencies } from '../../foundation/idempotency/run-idempotent-write.js'
-import { COVER_ASSET_RULES } from '../domain/cover-asset.js'
 import { lockOwnedUserPlant } from '../repository/mysql-catalog-binding-repository.js'
 import { registerCover } from '../repository/mysql-user-plant-asset-repository.js'
 
@@ -17,6 +16,7 @@ export interface BindUserPlantCoverInput {
   /** 服务端生成的资产公开引用 ast_…。 */ readonly assetRef: string
   /** 服务端当前 UTC 毫秒。 */ readonly nowMs: number
   /** 共享 HTTP 幂等占位输入。 */ readonly idempotency: HttpIdempotencyReservationInput
+  /** 换下的旧封面最早可清理天数（请求内锁定的 user-plant/asset_rules 快照）。 */ readonly replacedCoverCleanupDays: number
 }
 
 const dayMs = 86_400_000
@@ -30,7 +30,7 @@ export function createBindUserPlantCoverApplicationService(
     if (plant === null) { return publicErrorSnapshot(404, 'USER_PLANT_NOT_FOUND', '用户植物不存在') }
     const result = await registerCover(transaction, {
       plant, assetRef: input.assetRef, fileId: input.fileId, contentSha256: input.contentSha256, nowMs: input.nowMs,
-      cleanupAfterMs: input.nowMs + COVER_ASSET_RULES.replacedCoverCleanupDays * dayMs
+      cleanupAfterMs: input.nowMs + input.replacedCoverCleanupDays * dayMs
     })
     if (result.kind === 'file_taken') { return publicErrorSnapshot(400, 'VALIDATION_FAILED', '该文件已用于其他植物') }
     return { status: 200, body: { data: { assetRef: result.assetRef, purpose: 'profile', url: input.url, urlExpiresAt: null, createdAt: new Date(result.createdAtMs).toISOString() } } }

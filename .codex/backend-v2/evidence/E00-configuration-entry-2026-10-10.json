@@ -583,5 +583,80 @@
     "ddl": "无需新增：复用 business_policy_releases / active_business_policy_releases / configuration_release_audit_records",
     "catalogRevision": "未执行：分类待用户确认；且修订会立即使 care-plan-expiry-rules / long-term-care-rules 等锁定测试失配，按 TDD 顺序应在第 3 步与 Expected 测试同批落地",
     "noCodeChangesThisRound": true
+  },
+  "round4Implementation": {
+    "decidedAt": "2026-10-10",
+    "userDecisions": [
+      "缺段补齐 6h 与光照系数并入 care-watering-mvp/v4（v3 行为可复算）",
+      "发件箱最大尝试次数（5，3–10）、过期扫描时长占比（50%，20–80）、游客认领租约（30s，10–120）走环境变量",
+      "服务签名时钟偏差 300s / nonce 600s → 环境变量（60–300 / 600–900，nonce ≥ 2×偏差；签名方与验证方同一取值）",
+      "幂等保留期 168h → 策略发布 http/request_write v2（24–720h）；公开合同改为以生效策略为准",
+      "搜索词长度 64、引用长度 512 → 策略发布 plant-knowledge/public_search；代码保留与列长相等的绝对上限 255 / 512"
+    ],
+    "deviation": "user-plant.assets.max_count_per_plant=1 保留代码硬边界（单槽数据结构，提高需 DDL），未进入 asset_rules",
+    "catalog": {
+      "variables": 233,
+      "tiers": {
+        "policy": 147,
+        "code": 73,
+        "env": 8,
+        "env_overridable": 5
+      },
+      "added": [
+        "care.watering.plant_light_max_ppfd_per_ghi",
+        "care.watering.indoor_climate_window_hours",
+        "weather.city_climate.recommend_top_default",
+        "7 个 *.absolute_bounds 硬边界"
+      ],
+      "script": "会话 scratchpad：revise-catalog-round4.mjs（层级/状态/policyRelease/environmentOverrides）+ refresh-code-locations.mjs（只刷新 codeLocations）"
+    },
+    "policies": {
+      "new": [
+        "care/long_term_rules",
+        "plant-knowledge/public_search",
+        "weather/public_read",
+        "user-plant/list_rules",
+        "user-plant/asset_rules"
+      ],
+      "newVersions": [
+        "http/request_write v2",
+        "care/mvp_watering v4"
+      ],
+      "ddl": "无（复用 007 business_policy_releases / active_business_policy_releases / configuration_release_audit_records）",
+      "releaseDocuments": "cloudfunctions-v2/models/policy-releases/*.release.json",
+      "seedSql": "docs/backend-v2/schema/seeds/business_policy_releases.2026-10-10.sql（CLI render-seed-sql 生成，只写文件）"
+    },
+    "cli": {
+      "launcher": "cloudfunctions-v2/scripts/policy-release.mjs（esbuild 打包到系统临时目录后执行）",
+      "logic": "src/configuration/policy-release/{release-document,policy-release-store,policy-release-cli}.ts",
+      "entry": "src/entries/policy-release-cli.ts",
+      "commands": [
+        "validate",
+        "publish",
+        "activate",
+        "list",
+        "rollback",
+        "render-seed-sql"
+      ],
+      "safety": "默认 dry-run；--apply 才写库；activate/rollback 在事务内 SELECT … FOR UPDATE + 条件 UPDATE（WHERE version AND active_release_version）+ 审计行；不符退出码 2；连接经 environment.ts；输出不含密码"
+    },
+    "tdd": {
+      "path": "classic_red_then_green",
+      "red": "实现前全量：30 个测试文件失败（新 spec：business-policy-releases、mysql-typed-policy-reader、policy-unavailable-503、policy-release-cli、mvp-watering-v4、care-operational-overrides 等，以及按新 Expected 更新的锁定测试）",
+      "expectedChanges": "锁定测试的 hard_rule 断言按用户裁定改为 confirmed policy / env_overridable（care-plan-expiry-rules、long-term-care-rules、user-plant-list-query、user-plant-list-delete-contract、user-plant-timeline-contract、guest-claim-lease、cover-asset-rules、environment、runtime-parameters、source-scan）",
+      "green": "隔离工作树（HEAD 5f8e43cb + 164 个本轮文件，bash 逐行复制、显式 cd）：vitest 308 文件全过（3316 passed / 5 skipped），tsc 两套 0 错误，oxlint 0 错误，build.mjs 成功",
+      "mysql": "隔离工作树 test:mysql：首轮 65/67 文件通过；失败为本轮新增 CLI 用例的测试辅助 root 密码不一致（已修正）与 care-plan-expiry 竞态用例（扫描每次运行先读策略快照后起跑时序偏移，scan 先改写的顺序未出现）——测试错位改为双向 −30～+25 ms，保持“两种先后都必须出现”的断言不变；修正后两文件 11/11 通过，竞态用例连续复跑 2 次通过"
+    },
+    "behaviorEquivalence": [
+      "mvp-watering-v4.spec：同一输入下 v4 与 v3 公开结果完全一致（无缺段 / 6h / 7h）",
+      "fixturePolicyPorts 以 v1 发布文档为准，全部既有行为测试保持通过",
+      "公开提示文案由策略值渲染，v1 下与迁移前逐字一致（7 天、5 MiB、JPEG、PNG、WebP）"
+    ],
+    "rollout": "docs/backend-v2/architecture/configuration-rollout-2026-10-10.md",
+    "notDone": [
+      "未部署、未提交、未执行任何云端 SQL",
+      "OpenAPI 制品未重新生成：maxItems / maximum 仍为绝对上限、default 为 v1 值"
+    ],
+    "cliRealDb": "policy-release-cli.mysql.spec：真实 CLI 启动器 + Docker MySQL 8.4：dry-run 不写库、publish 幂等、首次 activate、期望不符冲突退出码 2 且指针不变、list、rollback 指回上一版并写审计、v1 种子 SQL 空库可执行且读取器可读"
   }
 }

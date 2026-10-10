@@ -1,4 +1,4 @@
-import type { MvpWateringPolicySnapshot } from '../../configuration/mvp-watering-policy.js'
+import { resolveMvpWateringRuntimeRules, type MvpWateringPolicySnapshot } from '../../configuration/mvp-watering-policy.js'
 import type { CanonicalJsonObject } from '../../foundation/json/canonical-json-sha256.js'
 import type { WateringAdviceCommand } from '../http/watering-advice-request.js'
 import type { NormalizedOutdoorRadiation } from '../light/normalize-open-meteo-radiation.js'
@@ -83,7 +83,9 @@ function withLightMissing(result: WateringCapabilityResult, codes: readonly Ligh
 export function buildWateringAdvice(input: BuildWateringAdviceInput): BuiltWateringAdvice {
   const { command, policy, baseline, radiation, nowMs } = input
   const light = policy !== null && radiation !== null
-    ? deriveMvpPlantLightIntervals({ policy: policy.snapshot, radiation, lightReading: command.lightReading, indoorClimate: command.indoorClimate, now: nowMs })
+    // 光照系数随策略版本：v4 读正文，v1–v3 按版本语义（2.3 / 24 小时），见 resolveMvpWateringRuntimeRules。
+    ? deriveMvpPlantLightIntervals({ policy: { ...policy.snapshot, ...resolveMvpWateringRuntimeRules(policy.snapshot) }, radiation,
+      lightReading: command.lightReading, indoorClimate: command.indoorClimate, now: nowMs })
     : null
   const environment = light?.status === 'available' ? light.intervals : []
   const timezone = radiation?.timezone ?? null

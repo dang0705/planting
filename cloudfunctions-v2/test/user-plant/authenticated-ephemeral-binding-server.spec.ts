@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest'
 import type { AddressInfo } from 'node:net'
 import { createUserPlantServer } from '../../src/user-plant/http/server.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /** L3/unit_fake；真实服务器分发/限制/认证，发布端口与数据库替换。Expected为冻结绑定HTTP合同，不证明平台、SQL或发布。 */
 test.each(['absent', 'missing', 'error', 'valid'] as const)('绑定服务器登记及独立发布限制：%s', async kind => {
@@ -9,7 +10,7 @@ test.each(['absent', 'missing', 'error', 'valid'] as const)('绑定服务器登�
     reads++; if (kind === 'error') { throw new Error('restricted policy detail') }
     return kind === 'missing' ? null : { maxBodyBytes: 1048576, release: { releaseRef: 'bpr_http_fixture001', releaseVersion: '2026-10-05.1', contentSha256: 'a'.repeat(64) } }
   }
-  const server = createUserPlantServer({
+  const server = createUserPlantServer({ ...fixturePolicyPorts(),
     connectionSource: { getConnection: async () => { connections++; throw new Error('该场景不访问数据库') } },
     now: () => 2000, resolveCapabilitySnapshot: async () => { throw new Error('绑定不读取创建额度') },
     ...(kind === 'absent' ? {} : { readBindingHttpSnapshot }),

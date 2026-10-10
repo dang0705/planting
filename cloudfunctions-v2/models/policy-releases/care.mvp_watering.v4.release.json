@@ -1,0 +1,10 @@
+{
+  "releaseDocumentVersion": "business-policy-release-document/v1",
+  "domainCode": "care",
+  "policyCode": "mvp_watering",
+  "schemaVersion": "care-watering-mvp/v4",
+  "releaseVersion": "care-watering-mvp/v4.0.0",
+  "effectiveAt": "2026-10-10T00:00:00Z",
+  "changeNote": "用户 2026-10-10 裁定：缺段补齐 6 小时与光照系数 2.3 / 24 小时并入浇水策略 v4（其余字段等于 v3，v3 行为保持可复算）",
+  "policyFile": "cloudfunctions-v2/models/care/mvp-watering-policy-release.v4.json"
+}

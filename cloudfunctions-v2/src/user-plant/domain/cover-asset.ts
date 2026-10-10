@@ -1,21 +1,31 @@
 import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 
 /**
- * 用户植物封面规则（docs/backend-v2/contracts/user-plant-cover-asset.md；配置目录 confirmed 值，与目录一致性由测试锁定）。
+ * 用户植物封面规则（docs/backend-v2/contracts/user-plant-cover-asset.md）。
+ * 用户 2026-10-10 第三轮裁定：MIME 白名单、单图字节上限、旧封面清理天数迁入策略发布 user-plant/asset_rules（请求内快照传入）；
+ * 这里只保留数据结构硬边界：每株一张当前封面（单槽替换）。
  */
 export const COVER_ASSET_RULES = Object.freeze({
-  /** user-plant.assets.max_count_per_plant：每株最多有效封面数（统一入口）。 */
-  maxCountPerPlant: RUNTIME_PARAMETERS.userPlant.coverMaxCountPerPlant.value,
-  /** storage.upload.allowed_mime_types：只接受的图片类型（按文件魔数判断，统一入口）。 */
-  allowedMimeTypes: RUNTIME_PARAMETERS.storage.uploadAllowedMimeTypes.value,
-  /** storage.upload.max_image_bytes：单张图片字节上限（统一入口）。 */
-  maxImageBytes: RUNTIME_PARAMETERS.storage.uploadMaxImageBytes.value,
-  /** user-plant.assets.replaced_cover_cleanup_days：换下的旧封面最早可清理天数（统一入口）。 */
-  replacedCoverCleanupDays: RUNTIME_PARAMETERS.userPlant.replacedCoverCleanupDays.value
+  /** user-plant.assets.max_count_per_plant：每株最多有效封面数（数据结构硬边界，统一入口）。 */
+  maxCountPerPlant: RUNTIME_PARAMETERS.userPlant.coverMaxCountPerPlant.value
 })
 
-/** 允许的封面图片类型。 */
+/** 允许的封面图片类型（代码已实现魔数识别的全集，策略只能选子集）。 */
 export type CoverImageMime = 'image/jpeg' | 'image/png' | 'image/webp'
+
+/** 图片类型的中文提示名。 */
+const mimeLabels: Readonly<Record<CoverImageMime, string>> = { 'image/jpeg': 'JPEG', 'image/png': 'PNG', 'image/webp': 'WebP' }
+
+/** 「只支持 …… 图片」提示（v1 = 只支持 JPEG、PNG、WebP 图片）。 */
+export function describeAllowedCoverMimeTypes(types: readonly CoverImageMime[]): string {
+  return `只支持 ${types.map(type => mimeLabels[type]).join('、')} 图片`
+}
+
+/** 「图片超过 …」提示（v1 = 图片超过 5 MiB）；非整 MiB 时保留至多两位小数。 */
+export function describeCoverByteLimit(maxImageBytes: number): string {
+  const mebibytes = maxImageBytes / (1024 * 1024)
+  return `图片超过 ${Number.isInteger(mebibytes) ? String(mebibytes) : String(Math.round(mebibytes * 100) / 100)} MiB`
+}
 
 const coverFileIdPattern = /^cloud:\/\/[A-Za-z0-9-]{1,64}\.[A-Za-z0-9-]{1,128}\/user-plant\/(usr_[A-Za-z0-9_-]{8,60})\/covers\/([A-Za-z0-9._-]{1,128})$/u
 

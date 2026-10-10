@@ -10,6 +10,7 @@ import {
   type IdentityLoginReadback,
   type IdentityWechatLoginMysqlFixture
 } from './support/identity-wechat-login-mysql-fixture.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /** 只读取测试登录实际创建的统一用户公开引用，不把数据库内部主键传给业务域。 */
 type UserReferenceRow = RowDataPacket & {
@@ -104,7 +105,7 @@ describe('统一用户试用起算锚点真实 MySQL 读回', () => {
       error: { type: 'PRINCIPAL_INVALID', message: expect.any(String) }
     })
 
-    internalServer = fixture.createIdentityServer({
+    internalServer = fixture.createIdentityServer({ ...fixturePolicyPorts(),
       connectionSource: fixture.connectionSource,
       verifyPlatformCode: (_platform, code) => fixture.createOneTimeWechatCodeVerifier()(code),
       resolveSessionPolicy: async () => fixture.getActivePolicySnapshot(),

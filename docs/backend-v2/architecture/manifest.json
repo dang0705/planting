@@ -16,13 +16,13 @@
     "contracts/authenticated-ephemeral-plant-case.md": "6846d3316a32cbed04fce258c6ed7cab3f891bb98913c918a4c5b9d62b9353eb",
     "contracts/care-environment-foundation.md": "685cd828ed2e6f70e97ed0c34f24e986e6dc524831a9b9be81680bd79b47d059",
     "contracts/watering-decision-model.md": "4ac7c2bdf09ad73912c09b1ffc6c8233eb24caabe4104e8e28c1958a2bdcdc70",
-    "contracts/plant-catalog-search.md": "a478e3b694f13fcd93cdfead1410067dcd7fe9e71849c93899fa62e66a54f9fc",
+    "contracts/plant-catalog-search.md": "df2fc991cf432babc44bd9b09c50ac778ac1d6c5a455796f87be50ad7af7bc32",
     "infrastructure.md": "6a85e024a17d055d312a781bb0b7c9ed8a408fc042da549716f9893cddbe7171",
     "business-to-technical-map.md": "bdf7fb49ea6ebee96a275172dd9145f481a54e131457f0bae4d30692cc6fa212",
     "architecture-rules.md": "95d6ed2f917caf66f8f5e07efe782c682ba31939337fc738a9fee18e4b603547",
-    "configuration-and-providers.md": "a24c00ba508fdae289004775b65d134d13ab107203115a5a6d0076b6231021ac",
-    "configuration-variable-catalog.json": "0c03626bbc77f069a3f31c6743b9216b9e18671c02ede0a366e90de86d4f7023",
-    "configuration-variable-catalog.md": "76c2cbe0e26509121f65e8e676d8f1dfc18f0ca41a1282284d79a934601473b9"
+    "configuration-and-providers.md": "e127fffc474b78254d55512aabd46f12b79d0e704f02150767fed27d84967050",
+    "configuration-variable-catalog.json": "c893cce47b85750f9863656f8fac2ec5e45b02588bd648bf38f4477c258b0d9c",
+    "configuration-variable-catalog.md": "df1a3bcf6d0fc640a89d02963042dfd2b3cf04ddff9ab87d6fe683728c08f3f7"
   },
   "diagrams": {
     "business": "56af49f641ebec6ed2a5b06e16634e8841b2f3cf6bebd018fde0c0b0283ef1f0",

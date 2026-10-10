@@ -7,8 +7,9 @@ import { deriveMvpPlantLightIntervals } from '../../../src/care/watering/derive-
  */
 const hour = 3_600_000
 const t0 = Date.UTC(2026, 9, 8, 0)
+// 用户 2026-10-10 第三轮裁定：PPFD/GHI 上界 2.3 与室内实测覆盖 24 小时并入浇水策略 v4（v1–v3 按同值复算），由调用方随策略字段传入。
 const policy = { luxPerPpfd: { min: 50, max: 58 }, luxAnchorMinGhiWm2: 50,
-  luxUncertainty: { meter: 0.1, camera_estimate: 0.3 }, luxAnchorMaxAgeDays: 30 }
+  luxUncertainty: { meter: 0.1, camera_estimate: 0.3 }, luxAnchorMaxAgeDays: 30, maximumPpfdPerGhi: 2.3, indoorClimateWindowHours: 24 }
 const interval = (i: number, ghi: number | null) => ({ intervalStartMs: t0 + i * hour, intervalEndMs: t0 + (i + 1) * hour,
   semantics: 'interval_mean' as const, ghiWattsPerM2: ghi, dniWattsPerM2: null, dhiWattsPerM2: null })
 const radiation = (ghis: readonly (number | null)[]) => ({ sourceRef: 'open_meteo', fetchedAtMs: t0, timezone: 'Asia/Shanghai',

@@ -1,3 +1,4 @@
+import type { CareLongTermRules } from '../../configuration/business-policies/index.js'
 import { CARE_PLAN_EXPIRY_SCAN, resolveCarePlanExpiryCutoffMs, resolveExpiryRunDeadlineMs } from '../domain/care-plan-expiry-rules.js'
 
 /** 单次扫描结论（§12.6）：清空、到达时长上限、批次失败、未启动（取不到函数超时）。 */
@@ -50,6 +51,10 @@ export interface ExpireCarePlansDependencies {
   readonly log: (event: CarePlanExpiryLogEvent) => void
   /** 单批最多改写行数；入口从环境变量层读取（运维覆盖 100–2000），省略时取代码默认 500。 */
   readonly batchSize?: number
+  /** 单次运行时长占函数超时的比例（环境变量层，默认 0.5）。 */
+  readonly runBudgetFraction: number
+  /** 读取长期养护规则策略快照（每次运行读一次）；null 表示没有可信发布，本次不执行。 */
+  readonly readLongTermRules: () => Promise<Readonly<Pick<CareLongTermRules, 'planExpiryGraceHours'>> | null>
 }
 
 /** 扫描入参：函数超时毫秒（来自运行时上下文）；取不到为 null。 */
@@ -72,13 +77,15 @@ function errorNameOf(error: unknown): string {
 export function createExpireCarePlansJob(dependencies: ExpireCarePlansDependencies) {
   return async (input: ExpireCarePlansInput): Promise<CarePlanExpiryRunSummary> => {
     const startedAtMs = dependencies.now()
-    const deadlineMs = resolveExpiryRunDeadlineMs({ startedAtMs, functionTimeoutMs: input.functionTimeoutMs })
-    if (deadlineMs === null) {
+    const deadlineMs = resolveExpiryRunDeadlineMs({ startedAtMs, functionTimeoutMs: input.functionTimeoutMs, runBudgetFraction: dependencies.runBudgetFraction })
+    // 策略快照读不到或读取失败：本次不执行（configuration-layers/v2 §3），不回退源码默认值。
+    const rules = deadlineMs === null ? null : await dependencies.readLongTermRules().catch(() => null)
+    if (deadlineMs === null || rules === null) {
       const summary: CarePlanExpiryRunSummary = { outcome: 'not_started', expiredCount: 0, batchCount: 0, cutoffAt: null, durationMs: 0 }
       dependencies.log({ event: 'care_plan_expiry_run', ...summary })
       return summary
     }
-    const cutoffMs = resolveCarePlanExpiryCutoffMs(startedAtMs)
+    const cutoffMs = resolveCarePlanExpiryCutoffMs(startedAtMs, rules.planExpiryGraceHours)
     const limit = dependencies.batchSize ?? CARE_PLAN_EXPIRY_SCAN.batchSize
     let expiredCount = 0
     let batchCount = 0

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { createExpireCarePlansJob, type CarePlanExpiryLogEvent } from '../../src/care/application/expire-care-plans.js'
+import { careLongTermRulesV1 } from '../support/business-policy-fixtures.js'
 
 /**
  * unit_fake（L1，用例编排）。Expected：long-term-care-contract.md §12.1/§12.5/§12.6 与配置目录
@@ -35,7 +36,8 @@ function clock(stepMs = 0) {
 
 function job(runBatch: (input: { cutoffMs: number; nowMs: number; limit: number }) => Promise<number>, now = clock()) {
   const logs: CarePlanExpiryLogEvent[] = []
-  return { logs, run: createExpireCarePlansJob({ now, runBatch, log: event => { logs.push(event) } }) }
+  // 用户 2026-10-10 第三轮裁定：72 小时来自策略发布 care/long_term_rules（v1 夹具），时长占比 0.5 为环境变量默认。
+  return { logs, run: createExpireCarePlansJob({ now, runBatch, log: event => { logs.push(event) }, readLongTermRules: async () => careLongTermRulesV1(), runBudgetFraction: 0.5 }) }
 }
 
 const plan = (index: number, status: string, scheduledAtMs: number): Row =>

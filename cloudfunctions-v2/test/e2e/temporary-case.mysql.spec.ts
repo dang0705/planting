@@ -24,6 +24,7 @@ import { createUserPlantServer } from '../../src/user-plant/http/server.js'
 import { createMysqlTemporaryCaseRepository } from '../../src/user-plant/repository/mysql-temporary-case-repository.js'
 import { createMysqlUserPlantLimitsPolicyReader } from '../../src/user-plant/repository/mysql-user-plant-limits-policy-reader.js'
 import { findProjectRoot } from '../support/project-root.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /**
  * unit_real_data：隔离 docker MySQL 8.4 + schema manifest 全量 DDL + 真实 user-plant HTTP 服务、
@@ -113,7 +114,7 @@ beforeAll(async () => {
   const port = Number(docker(['port', container, '3306/tcp']).split(':').at(-1))
   source = createMysql2ConnectionSource({ host: '127.0.0.1', port, database, user: 'root', password: '' })
   const policyReader = createMysqlUserPlantLimitsPolicyReader(source)
-  server = createUserPlantServer({
+  server = createUserPlantServer({ ...fixturePolicyPorts(),
     connectionSource: source,
     now: () => now,
     resolveCapabilitySnapshot: async () => { throw new Error('临时案例不读取能力快照') },

@@ -1,3 +1,4 @@
+import type { CareLongTermRules } from '../../configuration/business-policies/index.js'
 import { createPublicContractValidators } from '../../contracts/index.js'
 import type {
   CareSummaryResponseDto,
@@ -15,6 +16,7 @@ import {
 import { PublicRequestError, type PublicErrorType } from '../../foundation/http/request-chain.js'
 import type { FrozenRoute, RouteBinding } from '../../foundation/http/route-dispatcher.js'
 import type { HttpIdempotencyPublicResponseSnapshot } from '../../foundation/idempotency/http-idempotency.js'
+import { requirePolicy, type PolicyRulesPort } from '../../foundation/policy/require-policy.js'
 import type { UserPlantCareContext, UserPlantCareContextQuery } from '../../user-plant/repository/mysql-user-plant-care-context-reader.js'
 import type { CompletePlanCommand, ConfirmProposalCommand, RecordWateringCommand } from '../application/long-term-care-commands.js'
 import { resolvePlanPageLimit } from '../domain/long-term-care-rules.js'
@@ -31,6 +33,8 @@ export const getUserPlantCareSummaryRoute = route('GET', '/summary', 'getUserPla
 
 /** 长期养护路由依赖：身份、只读端口与事务化用例。 */
 export interface LongTermCareRouteDependencies extends AuthenticatedJsonRouteDependencies<UserPrincipalDto> {
+  /** 读取长期养护规则策略快照（care/long_term_rules）；null 时对应接口 503。 */
+  readonly readLongTermRules: PolicyRulesPort<CareLongTermRules>
   /** user-plant 只读归属上下文；非本人/已删除为 null。 */
   readonly readPlantContext: (query: UserPlantCareContextQuery) => Promise<UserPlantCareContext | null>
   /** plant-knowledge 只读：目录中文名；无为 null。 */
@@ -113,8 +117,9 @@ export function createLongTermCareRouteBindings(dependencies: LongTermCareRouteD
     { route: createCareFactRoute, handler: createAuthenticatedJsonRouteHandler(dependencies, {
       ...common, route: createCareFactRoute, kind: 'write', passThroughErrors: writeErrors,
       parse: request => ({ userPlantRef: pathRef(request, 'userPlantRef', userPlantRefPattern), body: body<CreateCareFactRequestDto>(request, validators.createCareFactRequest) }),
-      execute: ({ principal, dto, nowMs, idempotency }) => dependencies.commands.recordWatering({
-        ...scopeOf(principal, dto.userPlantRef), nowMs, idempotency: idempotency!, occurredAtMs: Date.parse(dto.body.occurredAt), amountMl: dto.body.amountMl ?? null }),
+      execute: async ({ principal, dto, nowMs, idempotency }) => dependencies.commands.recordWatering({
+        ...scopeOf(principal, dto.userPlantRef), nowMs, idempotency: idempotency!, rules: await requirePolicy(dependencies.readLongTermRules),
+        occurredAtMs: Date.parse(dto.body.occurredAt), amountMl: dto.body.amountMl ?? null }),
       validateData: data => validators.careFactResponse(data)
     }) },
     { route: confirmCareProposalRoute, handler: createAuthenticatedJsonRouteHandler(dependencies, {
@@ -122,11 +127,12 @@ export function createLongTermCareRouteBindings(dependencies: LongTermCareRouteD
       parse: request => ({ userPlantRef: pathRef(request, 'userPlantRef', userPlantRefPattern), proposalRef: pathRef(request, 'proposalRef', proposalRefPattern),
         body: body<ConfirmCareProposalRequestDto>(request, validators.confirmCareProposalRequest) }),
       execute: async ({ principal, dto, nowMs, idempotency }) => {
+        const rules = await requirePolicy(dependencies.readLongTermRules)
         const scope = scopeOf(principal, dto.userPlantRef)
         const context = await guarded(() => dependencies.readPlantContext(scope))
         if (context === null) { return notFound() }
         const displayName = context.nickname ?? (context.catalogTaxonRef === null ? null : await guarded(() => dependencies.readTaxonDisplayName(context.catalogTaxonRef!)))
-        return dependencies.commands.confirmProposal({ ...scope, nowMs, idempotency: idempotency!, proposalRef: dto.proposalRef, request: dto.body,
+        return dependencies.commands.confirmProposal({ ...scope, nowMs, idempotency: idempotency!, rules, proposalRef: dto.proposalRef, request: dto.body,
           displayName, profileVersion: context.profileVersion, bindingRef: context.bindingRef })
       },
       validateData: data => validators.careConfirmationResponse(data)
@@ -135,8 +141,8 @@ export function createLongTermCareRouteBindings(dependencies: LongTermCareRouteD
       ...common, route: completeCarePlanRoute, kind: 'write', passThroughErrors: new Set([...writeErrors, 'CARE_PLAN_VERSION_CONFLICT', 'CARE_PLAN_EXPIRED']),
       parse: request => ({ userPlantRef: pathRef(request, 'userPlantRef', userPlantRefPattern), planRef: pathRef(request, 'planRef', planRefPattern),
         body: body<CompleteCarePlanRequestDto>(request, validators.completeCarePlanRequest) }),
-      execute: ({ principal, dto, nowMs, idempotency }) => dependencies.commands.completePlan({
-        ...scopeOf(principal, dto.userPlantRef), nowMs, idempotency: idempotency!, planRef: dto.planRef, request: dto.body }),
+      execute: async ({ principal, dto, nowMs, idempotency }) => dependencies.commands.completePlan({
+        ...scopeOf(principal, dto.userPlantRef), nowMs, idempotency: idempotency!, rules: await requirePolicy(dependencies.readLongTermRules), planRef: dto.planRef, request: dto.body }),
       validateData: data => validators.carePlanResponse(data)
     }) },
     { route: listCarePlansRoute, handler: createAuthenticatedJsonRouteHandler(dependencies, {
@@ -145,12 +151,16 @@ export function createLongTermCareRouteBindings(dependencies: LongTermCareRouteD
         const keys = [...request.query.keys()]
         if (keys.some(key => !['status', 'limit', 'cursor'].includes(key)) || new Set(keys).size !== keys.length) { throw validationFailed() }
         const status = request.query.get('status') ?? 'planned'
-        const limit = resolvePlanPageLimit(request.query.get('limit') ?? undefined)
-        if (!planStatuses.has(status) || limit === null) { throw validationFailed() }
+        if (!planStatuses.has(status)) { throw validationFailed() }
         const cursor = request.query.get('cursor')
-        return { userPlantRef: pathRef(request, 'userPlantRef', userPlantRefPattern), status, limit, after: cursor === null ? null : decodeCursor(cursor) }
+        return { userPlantRef: pathRef(request, 'userPlantRef', userPlantRefPattern), status, rawLimit: request.query.get('limit') ?? undefined,
+          after: cursor === null ? null : decodeCursor(cursor) }
       },
-      execute: async ({ principal, dto }) => {
+      execute: async ({ principal, dto: parsed }) => {
+        // 分页上下限来自请求内锁定的策略快照；策略不可用 503，limit 越界 400。
+        const limit = resolvePlanPageLimit(parsed.rawLimit, await requirePolicy(dependencies.readLongTermRules))
+        if (limit === null) { throw validationFailed() }
+        const dto = { ...parsed, limit }
         const scope = scopeOf(principal, dto.userPlantRef)
         if (await guarded(() => dependencies.readPlantContext(scope)) === null) { return notFound() }
         const rows = await guarded(() => dependencies.reads.listPlans(scope, dto.status, dto.limit, dto.after))

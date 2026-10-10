@@ -1,4 +1,4 @@
-import type { MvpWateringPolicySnapshot } from '../../configuration/mvp-watering-policy.js'
+import { hasCultivationModel, resolveMvpWateringRuntimeRules, type MvpWateringPolicySnapshot } from '../../configuration/mvp-watering-policy.js'
 import type { WaterFrequencyTier, WaterTriggerState } from '../../plant-knowledge/watering/compile-water-state.js'
 import { deriveCultivationDrying, type CultivationDrying } from '../cultivation/derive-cultivation-drying.js'
 import { deriveMeasuredPot, type MeasuredPotInput } from '../cultivation/derive-measured-pot.js'
@@ -123,7 +123,7 @@ function environmentDemand(policy: Readonly<MvpWateringPolicySnapshot>, interval
  * 材料选择与主要材料先校验（非法即拒绝），再按 8.10 混合规则得到可用水（AW，Bilderback 2005 口径）区间。
  */
 function cultivationDrying(policy: Readonly<MvpWateringPolicySnapshot>, input: AssessMvpWateringInput): CultivationDrying {
-  if (policy.contractVersion !== 'care-watering-mvp/v3') {
+  if (!hasCultivationModel(policy)) {
     return { storage: policy.cultivationRetention, plantDemandScale: neutralScales.plant, evaporationAreaScale: neutralScales.evaporation, basis: 'fallback' }
   }
   const selection = normalizeMvpMaterialSelection(policy.substrates, input.materials, input.primaryMaterial)
@@ -163,10 +163,11 @@ export function assessMvpWatering(input: AssessMvpWateringInput): WateringCapabi
     if (demand === null) { continue }
     measured.push(toInterval(interval.start, interval.end, demand))
   }
-  // 合同 8.11（v3 起）：≤6 小时的内部缺段用有效域上的保守需求全区间补齐；v1/v2 保持缺段即中断。
+  // 合同 8.11（v3 起）：不超过策略缺段补齐小时（v3 = 6、v4 读正文）的内部缺段用有效域上的保守需求全区间补齐；v1/v2 保持缺段即中断。
   const conservative = environmentDemand(policy, { ppfd: policy.validPpfd, indoorVpdKpa: policy.validVpdKpa }, scales)
-  const intervals = policy.contractVersion === 'care-watering-mvp/v3' && conservative !== null
-    ? fillMvpDryingGaps(measured, (start, end) => toInterval(start, end, conservative)) : measured
+  const gapFillHours = resolveMvpWateringRuntimeRules(policy).dryingGapFillMaxHours
+  const intervals = gapFillHours !== null && conservative !== null
+    ? fillMvpDryingGaps(measured, (start, end) => toInterval(start, end, conservative), gapFillHours) : measured
   // 盆土证据有效期按策略版本：v1 固定 TTL；v2 按干湿循环（用户 2026-10-09 裁决 U6）。
   const validUntil = input.soil === null || input.soil.state === 'uncertain' ? undefined
     : resolveMvpSoilEvidenceValidUntil({ policy, baseline, group: profile, observation: input.soil, intervals, lastConfirmedWateringAt: input.lastConfirmedWateringAt })
@@ -180,7 +181,7 @@ export function assessMvpWatering(input: AssessMvpWateringInput): WateringCapabi
   })
   const amount = watering.decision.action === 'water_allowed'
     ? estimateMvpWaterAmount({ policy, group: profile.group, pot: input.pot, materials: input.materials,
-      primaryMaterial: policy.contractVersion === 'care-watering-mvp/v3' ? input.primaryMaterial ?? null : null }) : null
+      primaryMaterial: hasCultivationModel(policy) ? input.primaryMaterial ?? null : null }) : null
   const { candidate } = projectWateringReplayResult(watering, toApplication(amount))
   const netDeficitMl = amount?.status === 'candidate' && candidate.details.amountMl !== null ? { ...amount.netDeficitMl } : null
   return {

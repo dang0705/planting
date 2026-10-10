@@ -1,6 +1,8 @@
 import Ajv, { type JSONSchemaType } from 'ajv'
 import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
+import type { PlantKnowledgePublicSearchRules } from '../../configuration/business-policies/index.js'
 import { createNodeRequestChainHandler } from '../../foundation/http/node-request-chain-handler.js'
+import { requirePolicy, type PolicyRulesPort } from '../../foundation/policy/require-policy.js'
 import {
   PublicRequestError,
   type RequestChainAuditEvent
@@ -68,9 +70,11 @@ export type GetPlantEncyclopediaDependencies = {
   ) => Promise<PlantEncyclopediaResponse | null>
   /** 固定请求链的脱敏结果审计。 */
   readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
+  /** 读取公开搜索策略快照（引用最大码点数）；null 时 503。 */
+  readonly readPublicSearchRules: PolicyRulesPort<PlantKnowledgePublicSearchRules>
 }
-/** 分类引用与 slug 最大码点数（硬规则 `plant-knowledge.encyclopedia.reference_max_code_points`，取值见代码层注册表）。 */
-const referenceMaxCodePoints = RUNTIME_PARAMETERS.plantKnowledge.encyclopediaReferenceMaxCodePoints.value
+/** 分类引用与 slug 的代码绝对上限（= catalog_taxon_ref VARCHAR(512)）；实际上限来自策略快照，只能更小。 */
+const referenceMaxCodePoints = RUNTIME_PARAMETERS.policyBounds.plantKnowledgePublicSearch.value.encyclopediaReferenceMaxCodePoints
 const querySchema: JSONSchemaType<PlantEncyclopediaQuery> = {
   type: 'object',
   additionalProperties: false,
@@ -115,8 +119,10 @@ export function createGetPlantEncyclopediaRouteHandler(
       objectOwnership: { kind: 'not_applicable', reason: '百科展示不包含用户数据' },
       dtoValidate: {
         kind: 'execute',
-        run: input => {
-          if (!validate(input)) {
+        run: async input => {
+          const rules = await requirePolicy(dependencies.readPublicSearchRules)
+          if (!validate(input) || [...input.scientificNameSlug].length > rules.encyclopediaReferenceMaxCodePoints
+            || [...input.catalogTaxonRef].length > rules.encyclopediaReferenceMaxCodePoints) {
             throw new PublicRequestError(400, 'VALIDATION_FAILED', '请求参数不合法')
           }
           return input

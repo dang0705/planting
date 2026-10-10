@@ -1,8 +1,8 @@
 /**
  * 检查计划过期规则（long-term-care-contract.md §12）。
  *
- * 通俗说明：用户确认的「检查盆土」计划，到点后超过 72 小时仍未完成或跳过，就视为过期。
- * 72 小时与盆土证据最长有效期 `soilEvidenceMaxHours` 对齐——过了这个时长，这次检查已失去意义，应重新获取建议。
+ * 通俗说明：用户确认的「检查盆土」计划，到点后超过宽限小时数（策略 v1 = 72 小时）仍未完成或跳过，就视为过期。
+ * 宽限小时数自用户 2026-10-10 裁定起来自策略发布 care/long_term_rules（`planExpiryGraceHours`），调用方显式传入，本文件不写死。
  */
 
 import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
@@ -10,25 +10,18 @@ import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
 const hour = 3_600_000
 
 /**
- * 计划过期宽限小时数（配置目录 `care.plans.expiry_grace_hours`，owner=care）。
- * 主代理 2026-10-09 裁定为不可配置硬规则：取值只在代码层注册表 `RUNTIME_PARAMETERS.care.planExpiryGraceHours` 定义一次，
- * 由注册表 + 目录一致性测试 + 合同 §12 共同保证，不走策略发布、不允许环境变量覆盖，运行时不读取目录。
- */
-export const CARE_PLAN_EXPIRY_GRACE_HOURS = RUNTIME_PARAMETERS.care.planExpiryGraceHours.value
-
-/**
- * 过期扫描运行参数（配置目录 `care.plans.expiry_scan`，主代理 2026-10-09 裁定为不可配置硬规则）。
+ * 过期扫描运行参数的代码默认值（配置目录 `care.plans.expiry_scan`）。
  * - `cron`：CloudBase 7 段 cron（秒 分 时 日 月 星期 年），每小时整点一次；部署时触发器必须与此一致。
  * - `intervalHours`：扫描间隔小时数，仅用于说明最长滞后。
  * - `batchSize`：单批（单个短事务）最多改写的计划行数。
  * - `runBudgetFractionOfFunctionTimeout`：单次运行时长上限占函数超时的比例。
- * 取值只在代码层注册表 `RUNTIME_PARAMETERS.care.planExpiryScan` 定义（深度只读），不允许环境变量覆盖。
+ * 取值在代码层注册表定义；batchSize 与时长占比为运维参数，生效值由入口经 environment.ts 读取（可被环境变量覆盖）。
  */
 export const CARE_PLAN_EXPIRY_SCAN = RUNTIME_PARAMETERS.care.planExpiryScan.value
 
-/** 截止时刻：计划时刻早于它（严格小于）即已过期；= 现在 − 72 小时。 */
-export function resolveCarePlanExpiryCutoffMs(nowMs: number): number {
-  return nowMs - CARE_PLAN_EXPIRY_GRACE_HOURS * hour
+/** 截止时刻：计划时刻早于它（严格小于）即已过期；= 现在 − 宽限小时（来自策略快照）。 */
+export function resolveCarePlanExpiryCutoffMs(nowMs: number, graceHours: number): number {
+  return nowMs - graceHours * hour
 }
 
 /** 单个计划过期判定输入。 */
@@ -39,11 +32,13 @@ export interface CarePlanExpiryCheckInput {
   readonly scheduledAtMs: number
   /** 服务端当前 UTC 毫秒。 */
   readonly nowMs: number
+  /** 宽限小时数（策略 care/long_term_rules 的 planExpiryGraceHours）。 */
+  readonly graceHours: number
 }
 
-/** §12.1：status=planned 且 当前时刻 > 计划时刻 + 72 小时（严格大于）。 */
+/** §12.1：status=planned 且 当前时刻 > 计划时刻 + 宽限小时（严格大于）。 */
 export function isCarePlanExpired(input: CarePlanExpiryCheckInput): boolean {
-  return input.status === 'planned' && input.scheduledAtMs < resolveCarePlanExpiryCutoffMs(input.nowMs)
+  return input.status === 'planned' && input.scheduledAtMs < resolveCarePlanExpiryCutoffMs(input.nowMs, input.graceHours)
 }
 
 /** 单次运行时长上限输入。 */
@@ -52,11 +47,13 @@ export interface ExpiryRunDeadlineInput {
   readonly startedAtMs: number
   /** 函数超时毫秒（来自运行时上下文）；取不到为 null。 */
   readonly functionTimeoutMs: number | null
+  /** 单次运行时长占函数超时的比例（环境变量层，默认 0.5）。 */
+  readonly runBudgetFraction: number
 }
 
-/** §12.5：时长上限 = 开始时刻 + ⌊函数超时 × 0.5⌋；超时不是正整数时返回 null（不猜默认值）。 */
+/** §12.5：时长上限 = 开始时刻 + ⌊函数超时 × 比例⌋；超时不是正整数时返回 null（不猜默认值）。 */
 export function resolveExpiryRunDeadlineMs(input: ExpiryRunDeadlineInput): number | null {
   const timeout = input.functionTimeoutMs
   if (timeout === null || !Number.isSafeInteger(timeout) || timeout <= 0) { return null }
-  return input.startedAtMs + Math.floor(timeout * CARE_PLAN_EXPIRY_SCAN.runBudgetFractionOfFunctionTimeout)
+  return input.startedAtMs + Math.floor(timeout * input.runBudgetFraction)
 }

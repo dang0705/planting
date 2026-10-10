@@ -12,6 +12,7 @@ import { createIdentityServer } from '../../src/identity/http/server.js'
 import { createMysqlGuestSessionRepository } from '../../src/identity/repository/mysql-guest-session-repository.js'
 import { createMysqlIdentitySessionPolicyReader } from '../../src/identity/repository/mysql-identity-session-policy-reader.js'
 import { findProjectRoot } from '../support/project-root.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /**
  * Expected：models/identity/guest-token-test-matrix.md「游客签发与解析 MySQL 端到端」。
@@ -94,7 +95,7 @@ describe('unit_real_data 游客签发与解析（真实 MySQL + HTTP）', () => 
     releaseIds.v1 = await insertRelease('bpr_identity_e2e_v1', v1Body, 'identity-sessions/v1')
     releaseIds.v2 = await insertRelease('bpr_identity_e2e_v2', v2Body, 'identity-sessions/v2')
     const reader = createMysqlIdentitySessionPolicyReader(source)
-    server = createIdentityServer({
+    server = createIdentityServer({ ...fixturePolicyPorts(),
       connectionSource: source,
       verifyPlatformCode: async () => { throw new Error('本用例不调用登录') },
       resolveSessionPolicy: () => reader.read(new Date(now).toISOString()),

@@ -1,6 +1,6 @@
+import { HTTP_REQUEST_WRITE_POLICY, type HttpRequestWriteRules } from '../../configuration/business-policies/index.js'
 import Ajv from 'ajv'
 import profileSchema from '../../../models/user-plant/profile-completeness-policy.v1.schema.json'
-import httpSchema from '../../../models/user-plant/http-request-write-policy.v1.schema.json'
 import type { MysqlConnectionPoolPort } from '../../foundation/database/mysql-transaction-driver.js'
 import { withReadConnection, type Mysql2QueryConnection } from '../../foundation/database/mysql2-connection-source.js'
 import { calculateCanonicalJsonSha256, type CanonicalJsonValue } from '../../foundation/json/canonical-json-sha256.js'
@@ -37,7 +37,8 @@ export interface PublishedHttpWriteSnapshot {
 }
 const ajv = new Ajv({ strict: true, allErrors: true })
 const validateProfile = ajv.compile<UserPlantProfileCompletenessPolicy>(profileSchema)
-const validateHttp = ajv.compile<{ jsonBodyLimitBytes: number; idempotencyRetentionHours: number }>(httpSchema)
+/** HTTP 写入策略校验：v1（两字段常量）与 v2（用户 2026-10-10 裁定，保留期 24–720 小时）均可读，统一由类型定义校验。 */
+const validateHttp = (document: unknown, schemaVersion: string): document is HttpRequestWriteRules => HTTP_REQUEST_WRITE_POLICY.resolve(document, schemaVersion) !== null
 /** MySQL非负BIGINT须无损接收；null仅在无截止处由调用者允许。 */
 function milliseconds(value: unknown): number | null {
   if (typeof value !== 'string' || !/^(0|[1-9][0-9]*)$/u.test(value)) { return null }
@@ -45,10 +46,10 @@ function milliseconds(value: unknown): number | null {
   return Number.isSafeInteger(parsed) && Number.isFinite(new Date(parsed).getTime()) ? parsed : null
 }
 /** 完整元数据和正文联合验证；任何损坏都不能通过最新活动指针掩盖。 */
-function verify(row: Record<string, unknown>, domain: string, code: string, schema: string, now: number): unknown | null {
+function verify(row: Record<string, unknown>, domain: string, code: string, schemas: readonly string[], now: number): unknown | null {
   const effective = milliseconds(row.effective_at_ms), verified = milliseconds(row.verified_at_ms)
   const expires = row.expires_at_ms === null ? null : milliseconds(row.expires_at_ms)
-  if (row.domain_code !== domain || row.policy_code !== code || row.schema_version !== schema || row.status !== 'active'
+  if (row.domain_code !== domain || row.policy_code !== code || typeof row.schema_version !== 'string' || !schemas.includes(row.schema_version) || row.status !== 'active'
     || typeof row.release_ref !== 'string' || !/^bpr_[A-Za-z0-9_-]{8,}$/u.test(row.release_ref)
     || typeof row.release_version !== 'string' || !/^[A-Za-z0-9._/-]{1,64}$/u.test(row.release_version)
     || typeof row.content_sha256 !== 'string' || !/^[a-f0-9]{64}$/u.test(row.content_sha256)
@@ -57,7 +58,7 @@ function verify(row: Record<string, unknown>, domain: string, code: string, sche
     || (row.expires_at_ms !== null && (expires === null || expires <= effective || expires <= now))) { return null }
   let document: unknown = row.policy_json
   if (typeof document === 'string') { try { document = JSON.parse(document) as unknown } catch { return null } }
-  if (!(domain === 'user-plant' ? validateProfile(document) : validateHttp(document))) { return null }
+  if (!(domain === 'user-plant' ? validateProfile(document) : validateHttp(document, row.schema_version as string))) { return null }
   if (calculateCanonicalJsonSha256(document as CanonicalJsonValue) !== row.content_sha256) { return null }
   return document
 }
@@ -86,9 +87,9 @@ export function createMysqlPublishedProfileWritePolicyReader(source: MysqlConnec
       if (rows.length !== 2) { return null }
       const profile = rows.find(row => row.domain_code === 'user-plant'), http = rows.find(row => row.domain_code === 'http')
       if (!profile || !http) { return null }
-      const profileDocument = verify(profile, 'user-plant', 'profile_minimum_completeness', 'user-plant-profile/v1', capturedAtMs)
-      const httpDocument = verify(http, 'http', 'request_write', 'http-request-write-policy/v1', capturedAtMs)
-      if (!validateProfile(profileDocument) || !validateHttp(httpDocument)) { return null }
+      const profileDocument = verify(profile, 'user-plant', 'profile_minimum_completeness', ['user-plant-profile/v1'], capturedAtMs)
+      const httpDocument = verify(http, 'http', 'request_write', HTTP_REQUEST_WRITE_POLICY.schemaVersions, capturedAtMs)
+      if (!validateProfile(profileDocument) || !validateHttp(httpDocument, http.schema_version as string)) { return null }
       const lockedProfile = Object.freeze({ ...profileDocument,
         requiredFields: Object.freeze([...profileDocument.requiredFields]),
         acceptedIdentityStates: Object.freeze([...profileDocument.acceptedIdentityStates]) })
@@ -114,8 +115,8 @@ export function createMysqlPublishedHttpWritePolicyReader(source: MysqlConnectio
           ON r.id=a.release_internal_id AND r.domain_code=a.domain_code AND r.policy_code=a.policy_code
         WHERE a.domain_code=? AND a.policy_code=?`, ['http', 'request_write']))
       if (rows.length !== 1) { return null }
-      const row = rows[0]!, document = verify(row, 'http', 'request_write', 'http-request-write-policy/v1', capturedAtMs)
-      if (!validateHttp(document)) { return null }
+      const row = rows[0]!, document = verify(row, 'http', 'request_write', HTTP_REQUEST_WRITE_POLICY.schemaVersions, capturedAtMs)
+      if (!validateHttp(document, row.schema_version as string)) { return null }
       return Object.freeze({ maxBodyBytes: document.jsonBodyLimitBytes, release: Object.freeze({ releaseRef: row.release_ref as string, releaseVersion: row.release_version as string, contentSha256: row.content_sha256 as string }) })
     }
   }

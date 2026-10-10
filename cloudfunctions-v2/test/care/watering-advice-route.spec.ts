@@ -10,6 +10,7 @@ import type { OpenMeteoRadiationQuery } from '../../src/care/provider/open-meteo
 import type { GuestPrincipalDto, GuestSessionRef, UserPrincipalDto, UserRef } from '../../src/contracts/types.js'
 import { calculateCanonicalJsonSha256 } from '../../src/foundation/json/canonical-json-sha256.js'
 import { createRouteDispatcher } from '../../src/foundation/http/route-dispatcher.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /**
  * unit_fake（L3）。Expected：watering-advice-http-test-matrix.md R1–R7、S（HTTP 合同、裁决 1/2/5/8）。
@@ -53,7 +54,7 @@ async function start(principal: GuestPrincipalDto | UserPrincipalDto = guest, ov
   const calls: CreateWateringAdviceApplicationInput[] = []
   const queries: OpenMeteoRadiationQuery[] = []
   const audits: unknown[] = []
-  const dependencies: WateringAdviceRouteDependencies = {
+  const dependencies: WateringAdviceRouteDependencies = { ...fixturePolicyPorts(),
     resolvePrincipal: async () => { stages.push('principal'); return principal },
     readOwnedCase: async input => { stages.push(`owned:${input.owner.kind}:${input.owner.caseRef}`); return 'owned' },
     readWateringPolicy: async () => { stages.push('policy'); return null },
@@ -217,7 +218,7 @@ describe('临时案例城市代码', () => {
 describe('care 服务接线', () => {
   test('POST watering-advice 无凭证 → 401 且不访问数据库与 Provider', async () => {
     let touched = false
-    const server = createCareServer({
+    const server = createCareServer({ ...fixturePolicyPorts(),
       connectionSource: { getConnection: async () => { touched = true; throw new Error('不应访问数据库') } },
       now: () => now,
       resolvePrincipal: async () => { touched = true; throw new Error('不应解析') },

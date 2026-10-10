@@ -1,7 +1,9 @@
 import { createHash } from 'node:crypto'
 import type { IncomingHttpHeaders, IncomingMessage } from 'node:http'
 
+import { idempotencyRetentionMs, type HttpRequestWriteRules } from '../../configuration/business-policies/index.js'
 import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
+import { requirePolicy, type PolicyRulesPort } from '../policy/require-policy.js'
 import type { HttpIdempotencyPublicResponseSnapshot } from '../idempotency/http-idempotency.js'
 import type { HttpIdempotencyReservationInput } from '../idempotency/mysql-http-idempotency-repository.js'
 import { calculateCanonicalJsonSha256, type CanonicalJsonValue } from '../json/canonical-json-sha256.js'
@@ -45,8 +47,8 @@ export interface AuthenticatedJsonRouteSpec<TPrincipal extends AuthenticatedRout
   readonly route: FrozenRoute
   /** 写接口必须带 JSON 正文与唯一 Idempotency-Key；读接口丢弃正文。 */
   readonly kind: 'write' | 'read'
-  /** 严格解析 DTO；非法时抛出 PublicRequestError(400)。 */
-  readonly parse: (request: AuthenticatedRouteRequest) => TDto
+  /** 严格解析 DTO；非法时抛出 PublicRequestError(400)；可异步（例如读取策略快照后再校验分页）。 */
+  readonly parse: (request: AuthenticatedRouteRequest) => TDto | Promise<TDto>
   /** 应用用例；返回首次确定的公开结果快照。 */
   readonly execute: (input: AuthenticatedRouteExecution<TPrincipal, TDto>) => Promise<HttpIdempotencyPublicResponseSnapshot>
   /** 成功数据严格合同校验。 */
@@ -65,6 +67,8 @@ export interface AuthenticatedJsonRouteDependencies<TPrincipal extends Authentic
   readonly now: () => number
   /** 脱敏请求结果审计端口。 */
   readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
+  /** 读取 HTTP 写入策略快照（http/request_write：幂等保留期）；写接口每请求读一次，null 时 503。 */
+  readonly readHttpWriteRules: PolicyRulesPort<HttpRequestWriteRules>
 }
 
 /** 限制阶段产出的安全请求数据。 */
@@ -91,8 +95,6 @@ interface ParsedRequest<TDto> {
 
 /** 与共享 HTTP 合同已确认值一致（http.json_body_limit_bytes），取值见代码层注册表。 */
 const jsonBodyLimitBytes = RUNTIME_PARAMETERS.http.jsonBodyLimitBytes.value
-/** 与共享 HTTP 合同已确认值一致（http.idempotency.retention_hours），取值见代码层注册表，此处换算为毫秒。 */
-const idempotencyRetentionMs = RUNTIME_PARAMETERS.http.idempotencyRetentionHours.value * 60 * 60 * 1000
 const validIdempotencyKey = /^[\x20-\x7e]{8,128}$/u
 const digest = (value: string) => createHash('sha256').update(value, 'utf8').digest('hex')
 
@@ -136,13 +138,13 @@ export function readIdempotencyKey(headers: IncomingHttpHeaders, rawHeaders: rea
 }
 
 /** 解析 JSON 正文、DTO 与幂等键。 */
-function parseRequest<TDto>(restricted: RestrictedRequest, spec: { kind: 'write' | 'read'; parse: (request: AuthenticatedRouteRequest) => TDto },
-  pathParameters: RoutePathParameters, nowMs: number): ParsedRequest<TDto> {
+async function parseRequest<TDto>(restricted: RestrictedRequest, spec: { kind: 'write' | 'read'; parse: (request: AuthenticatedRouteRequest) => TDto | Promise<TDto> },
+  pathParameters: RoutePathParameters, nowMs: number): Promise<ParsedRequest<TDto>> {
   let body: unknown = null
   if (restricted.bodyText !== null) {
     try { body = JSON.parse(restricted.bodyText) } catch { throw validationFailed() }
   }
-  const dto = spec.parse({ pathParameters, query: restricted.query, body, nowMs })
+  const dto = await spec.parse({ pathParameters, query: restricted.query, body, nowMs })
   const idempotencyKey = spec.kind === 'write' ? readIdempotencyKey(restricted.headers, restricted.rawHeaders) : null
   const hashed = { path: { ...pathParameters }, body } as unknown as CanonicalJsonValue
   return { dto, idempotencyKey, requestHash: calculateCanonicalJsonSha256(hashed) }
@@ -169,15 +171,21 @@ export function createAuthenticatedJsonRouteHandler<TPrincipal extends Authentic
       dtoValidate: { kind: 'execute', run: restricted => parseRequest(restricted, spec, pathParameters, nowMs) },
       buildCommand: {
         kind: 'execute',
-        run: ({ dto, principal }) => ({
-          principal, dto: dto.dto, nowMs,
-          idempotency: dto.idempotencyKey === null ? null : {
-            principalType: 'user', principalScopeHash: digest(principal.user_id), httpMethod: spec.route.method,
-            normalizedPath: spec.route.path, operationId: spec.route.operationId,
-            idempotencyKeyHash: digest(dto.idempotencyKey), requestHash: dto.requestHash,
-            createdAtMs: nowMs, expiresAtMs: nowMs + idempotencyRetentionMs
+        // 写接口：幂等保留期来自请求内锁定的 http/request_write 策略快照（用户 2026-10-10 裁定），不可用即 503。
+        run: async ({ dto, principal }) => {
+          const idempotencyKey = dto.idempotencyKey
+          if (idempotencyKey === null) { return { principal, dto: dto.dto, nowMs, idempotency: null } }
+          const retentionMs = idempotencyRetentionMs(await requirePolicy(dependencies.readHttpWriteRules))
+          return {
+            principal, dto: dto.dto, nowMs,
+            idempotency: {
+              principalType: 'user', principalScopeHash: digest(principal.user_id), httpMethod: spec.route.method,
+              normalizedPath: spec.route.path, operationId: spec.route.operationId,
+              idempotencyKeyHash: digest(idempotencyKey), requestHash: dto.requestHash,
+              createdAtMs: nowMs, expiresAtMs: nowMs + retentionMs
+            }
           }
-        })
+        }
       },
       domainRule: { kind: 'execute', run: ({ command }) => command },
       transactionPersistence: { kind: 'execute', run: ({ domainDecision }) => spec.execute(domainDecision) },

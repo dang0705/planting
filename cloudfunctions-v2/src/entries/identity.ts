@@ -1,5 +1,6 @@
 import pino from 'pino'
 
+
 import { readIdentityEnvironment } from '../configuration/environment.js'
 import { createMysql2ConnectionSource } from '../foundation/database/mysql2-connection-source.js'
 import { deriveGuestIssuanceSourceKey } from '../identity/http/guest-session-route.js'
@@ -53,6 +54,8 @@ const douyinProvider = douyinAppId && douyinAppSecret
   : null
 
 const server = createIdentityServer({
+  // 服务签名参数来自环境变量层（V2_SERVICE_SIGNATURE_*；签名方与验证方必须部署同一取值）。
+  serviceSignature: environment.serviceSignature,
   connectionSource,
   verifyPlatformCode,
   resolveSessionPolicy: () => sessionPolicyReader.read(new Date().toISOString()),

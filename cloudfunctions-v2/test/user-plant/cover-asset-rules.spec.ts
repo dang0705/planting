@@ -4,6 +4,7 @@ import path from 'node:path'
 import { describe, expect, test } from 'vitest'
 
 import { COVER_ASSET_RULES, detectCoverImageMime, isOwnCoverFileId } from '../../src/user-plant/domain/cover-asset.js'
+import { userPlantAssetRulesV1 } from '../support/business-policy-fixtures.js'
 import { findProjectRoot } from '../support/project-root.js'
 
 /**
@@ -15,9 +16,11 @@ const catalog = JSON.parse(fs.readFileSync(path.join(findProjectRoot(), 'docs/ba
 const value = (id: string) => catalog.variables.find(variable => variable.id === id)?.currentValue
 
 describe('封面资产规则', () => {
-  test('代码常量与配置目录一致', () => {
-    expect(COVER_ASSET_RULES).toEqual({
-      maxCountPerPlant: value('user-plant.assets.max_count_per_plant'),
+  // 用户 2026-10-10 第三轮裁定：MIME / 字节上限 / 清理天数迁入策略发布 user-plant/asset_rules（取值不变）；每株封面数（单槽数据结构）仍为代码硬边界。
+  test('策略 v1 与代码硬边界取值与配置目录一致', () => {
+    const rules = userPlantAssetRulesV1()
+    expect(COVER_ASSET_RULES).toEqual({ maxCountPerPlant: value('user-plant.assets.max_count_per_plant') })
+    expect({ allowedMimeTypes: rules.allowedMimeTypes, maxImageBytes: rules.maxImageBytes, replacedCoverCleanupDays: rules.replacedCoverCleanupDays }).toEqual({
       allowedMimeTypes: value('storage.upload.allowed_mime_types'),
       maxImageBytes: value('storage.upload.max_image_bytes'),
       replacedCoverCleanupDays: value('user-plant.assets.replaced_cover_cleanup_days')

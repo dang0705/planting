@@ -1,12 +1,14 @@
 import type { UserPlantRef, UserPrincipalDto } from '../../contracts/types.js'
 import type { HttpIdempotencyPublicResponseSnapshot } from '../../foundation/idempotency/http-idempotency.js'
-import { buildCoverUploadPath, COVER_ASSET_RULES } from '../domain/cover-asset.js'
+import type { UserPlantAssetRules } from '../../configuration/business-policies/index.js'
+import { buildCoverUploadPath } from '../domain/cover-asset.js'
 import type { GetUserPlantApplicationInput, GetUserPlantApplicationResponse } from './get-user-plant.js'
 
 /** 获取封面上传路径的输入。 */
 export interface GetCoverUploadTargetInput {
   /** 已验真登录主体。 */ readonly principal: UserPrincipalDto
   /** 路径中的用户植物公开引用。 */ readonly userPlantRef: string
+  /** 请求内锁定的封面资产规则（允许类型与字节上限）。 */ readonly rules: Readonly<Pick<UserPlantAssetRules, 'allowedMimeTypes' | 'maxImageBytes'>>
 }
 
 /** 用例依赖：复用单株归属读取（本人 active/archived 可见，其余 404）与 16 字节随机数。 */
@@ -26,8 +28,8 @@ export function createGetCoverUploadTargetApplicationService(dependencies: GetCo
     return { status: 200, body: { data: {
       purpose: 'profile',
       cloudPath: buildCoverUploadPath(input.principal.user_id, plant.body.data.user_plant_id, dependencies.randomHex()),
-      allowedMimeTypes: [...COVER_ASSET_RULES.allowedMimeTypes],
-      maxBytes: COVER_ASSET_RULES.maxImageBytes
+      allowedMimeTypes: [...input.rules.allowedMimeTypes],
+      maxBytes: input.rules.maxImageBytes
     } } }
   }
 }

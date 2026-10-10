@@ -7,6 +7,7 @@ import {
 } from '../../src/diagnosis/http/create-session-route.js'
 import { createRouteDispatcher } from '../../src/foundation/http/route-dispatcher.js'
 import type { UserPrincipalDto } from '../../src/contracts/types.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /** unit_fake/L3。来源：pest-create-http-contract.md；真实Node HTTP请求链，身份与事务为替身。
  * 不证明MySQL、视觉准入或真实平台验真；错误/额外字段不得触发应用写入。
@@ -47,7 +48,7 @@ async function harness(enabled = true) {
   const fixed = vi.fn(),
     pest = vi.fn(async (_input: unknown) => ({ status: 200, body: { data } })),
     audit = vi.fn()
-  const handler = createDiagnosisCreationRouteHandler({
+  const handler = createDiagnosisCreationRouteHandler({ ...fixturePolicyPorts(),
     resolvePrincipal: async () =>
       ({ principalType: 'user', user_id: 'usr_owner123' }) as UserPrincipalDto,
     createSession: fixed,

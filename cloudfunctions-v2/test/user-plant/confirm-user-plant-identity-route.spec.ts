@@ -13,6 +13,7 @@ import {
   confirmUserPlantIdentityRoute,
   createConfirmUserPlantIdentityRouteHandler
 } from '../../src/user-plant/http/confirm-user-plant-identity-route.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /**
  * Expected 来源：`docs/backend-v2/contracts/user-plant-identity-confirmation.md`（2026-10-10 用户审定冻结）：
@@ -50,7 +51,7 @@ async function startService(options: {
   const audit: RequestChainAuditEvent[] = []
   const dispatch = createRouteDispatcher([{
     route: confirmUserPlantIdentityRoute,
-    handler: createConfirmUserPlantIdentityRouteHandler({
+    handler: createConfirmUserPlantIdentityRouteHandler({ ...fixturePolicyPorts(),
       authenticate: createUserBearerAuthenticator(async () => principal),
       now: () => nowMs,
       writeAudit: event => { audit.push(event) },

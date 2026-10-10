@@ -17,7 +17,7 @@ export interface LeaseCareEventsInput {
   /** 服务端当前 UTC 毫秒。 */ readonly nowMs: number
   /** 领取后占用租约的毫秒数（默认 30 秒，运维可覆盖 10–120 秒）。 */ readonly leaseMs: number
   /** 本批最多领取的事件条数（默认 100，运维可覆盖 20–500）。 */ readonly limit: number
-  /** 最大尝试次数（硬规则 5，满次进死信）。 */ readonly maxAttempts: number
+  /** 最大尝试次数（默认 5，运维可覆盖 3–10；满次进死信）。 */ readonly maxAttempts: number
 }
 
 /** 领取结果。 */
@@ -61,6 +61,7 @@ export type CareOutboxDispatchLogEvent =
 export interface CareOutboxDispatchSettings {
   /** 领取后租约秒数（默认 30，允许 10–120）。 */ readonly leaseSeconds: number
   /** 单次最多领取条数（默认 100，允许 20–500）。 */ readonly batchSize: number
+  /** 最大尝试次数（默认 5，允许 3–10；用户 2026-10-10 第三轮裁定为运维参数）。 */ readonly maxAttempts: number
 }
 
 export interface DispatchCareOutboxDependencies {
@@ -70,7 +71,7 @@ export interface DispatchCareOutboxDependencies {
   /** 投递给 user-plant 时间线投影（幂等）；失败抛出。 */ readonly deliver: (event: LeasedCareEvent) => Promise<void>
   /** 在独立短事务中结算一条事件；租约已被接管时返回 false。 */ readonly settle: (input: SettleCareEventInput) => Promise<boolean>
   /** 白名单结构化日志端口。 */ readonly log: (event: CareOutboxDispatchLogEvent) => void
-  /** 运维参数（租约秒数、每批条数）；入口从环境变量层读取，省略时取代码默认 30 秒 / 100 条。最大尝试次数为硬规则不可注入。 */
+  /** 运维参数（租约秒数、每批条数、最大尝试次数）；入口从环境变量层读取，省略时取代码默认 30 秒 / 100 条 / 5 次。 */
   readonly settings?: CareOutboxDispatchSettings
 }
 
@@ -93,17 +94,18 @@ export function createDispatchCareOutboxJob(dependencies: DispatchCareOutboxDepe
       dependencies.log({ event: 'care_outbox_dispatch_run', ...summary })
       return summary
     }
+    const maxAttempts = dependencies.settings?.maxAttempts ?? CARE_OUTBOX_DISPATCH.maxAttempts
     let leased: LeaseCareEventsResult
     try {
       leased = await dependencies.lease({ owner, nowMs: startedAtMs, leaseMs: (dependencies.settings?.leaseSeconds ?? CARE_OUTBOX_DISPATCH.leaseSeconds) * 1000,
-        limit: dependencies.settings?.batchSize ?? CARE_OUTBOX_DISPATCH.batchSize, maxAttempts: CARE_OUTBOX_DISPATCH.maxAttempts })
+        limit: dependencies.settings?.batchSize ?? CARE_OUTBOX_DISPATCH.batchSize, maxAttempts })
     } catch { return finish('failed') }
     counts.leasedCount = leased.leased.length
     counts.deadLetterCount = leased.deadLettered
     for (const event of leased.leased) {
       let outcome: SettleCareEventInput['outcome'] = 'delivered'
       try { await dependencies.deliver(event) } catch (error: unknown) {
-        outcome = event.attempt >= CARE_OUTBOX_DISPATCH.maxAttempts ? 'dead_letter' : 'retry'
+        outcome = event.attempt >= maxAttempts ? 'dead_letter' : 'retry'
         dependencies.log({ event: 'care_outbox_delivery_failed', errorName: errorNameOf(error), attempt: event.attempt })
       }
       let settled: boolean

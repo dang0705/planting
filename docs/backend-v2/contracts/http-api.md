@@ -78,7 +78,7 @@
 - 除微信一次性 code 登录外，所有改变状态的公开写接口必须接收 `Idempotency-Key` 请求头；长度为 8 至 128 个可打印 ASCII 字符。`POST /api/v2/identity/sessions` 不接收该头作为幂等依据：同一已消费 code 再次提交返回脱敏的 `401 PRINCIPAL_INVALID`；首响应丢失时客户端重新调用 `wx.login` 获取新 code。统一用户与平台绑定仍受事务和唯一约束保护，新的 code 可以签发新的会话。
 - HTTP 适配层将请求头写入内部 Command；公开请求正文不得再次接受 `idempotencyKey`，避免两个来源冲突。
 - 唯一作用域至少包含主体、HTTP method、规范化 path 和业务动作；AI 额度还必须绑定 `user_id + productActionId`。
-- 使用幂等键的写接口同键同参返回首次确定结果；同键异参返回 `409 IDEMPOTENCY_CONFLICT`。微信登录遵循上述一次性 code 规则，任何重试都不得持久化或回放首次 Bearer。
+- 使用幂等键的写接口同键同参返回首次确定结果；同键异参返回 `409 IDEMPOTENCY_CONFLICT`。幂等结果保留期以生效的业务策略 `http/request_write` 为准，当前 168 小时（用户 2026-10-10 裁定；策略只能在代码绝对边界 24–720 小时内调整，策略不可用时写接口返回 `503 SERVICE_UNAVAILABLE`）。微信登录遵循上述一次性 code 规则，任何重试都不得持久化或回放首次 Bearer。
 - 并发请求由事务和唯一约束选出唯一结果，不能重复建植物、认领、扣积分、发额度或创建订单。
 - 覆盖式更新必须携带资源版本；版本不一致返回 `409 USER_PLANT_VERSION_CONFLICT`。
 - 支付回调和可靠事件使用供应商事件 ID 或事件 ID 作为 inbox 唯一键，不依赖客户端请求头。
@@ -96,7 +96,7 @@
 
 签名失败统一返回 `PRINCIPAL_INVALID`；不能向调用方透露具体失败环节。
 
-MVP 固定允许时钟偏差为正负 300 秒；验签成功后，`(service_name, nonce_hash)` 必须在同一原子操作中占用并至少保留 600 秒。nonce 唯一性不包含 `key_id`，因此轮换密钥也不能重放同一服务 nonce。数据库清理只能发生在到期之后，不能先删再依赖请求时间判断重放。
+允许时钟偏差与 nonce 保留期以部署环境变量为准（用户 2026-10-10 裁定）：`V2_SERVICE_SIGNATURE_CLOCK_SKEW_SECONDS`（当前 300，允许 60–300）、`V2_SERVICE_SIGNATURE_NONCE_TTL_SECONDS`（当前 600，允许 600–900，且必须不小于 2 × 偏差）；签名方与验证方所有云函数必须部署同一取值。验签成功后，`(service_name, nonce_hash)` 必须在同一原子操作中占用并至少保留该 nonce 保留期。nonce 唯一性不包含 `key_id`，因此轮换密钥也不能重放同一服务 nonce。数据库清理只能发生在到期之后，不能先删再依赖请求时间判断重放。
 
 签名算法固定为 `HMAC-SHA-256`。规范化明文按 UTF-8 和换行符 `\n` 连接：合同版本、服务名、`key_id`、十进制 UTC 秒时间戳、nonce、HTTP 大写方法、规范化路径与按键排序查询串、原始请求体 SHA-256、唯一 scope。签名使用 base64url；任何字段缺失、重复、非法编码或规范化结果不一致均按 `PRINCIPAL_INVALID` 失败关闭。验签使用常量时间比较；密钥只由 `credential_ref` 从 CloudBase 受控环境解析。
 

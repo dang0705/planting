@@ -1,18 +1,14 @@
-import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
+import type { CareLongTermRules } from '../../configuration/business-policies/index.js'
 import type { CareCalendarDto } from '../../contracts/types.js'
 import type { WateringCapabilityResult } from '../application/project-watering-replay-result.js'
 
 const hour = 3_600_000
 const day = 24 * hour
 
-/** 浇水事实最长补记天数（配置目录 `care.facts.watering_backfill_max_days`，用户 2026-10-09 裁决 U3；取值见代码层注册表）。 */
-export const WATERING_BACKFILL_MAX_DAYS = RUNTIME_PARAMETERS.care.wateringBackfillMaxDays.value
-/** 检查窗口无最晚端时检查计划最多推迟天数（`care.plans.check_max_postpone_days`，用户裁决 U5；取值见代码层注册表）。 */
-export const CHECK_MAX_POSTPONE_DAYS = RUNTIME_PARAMETERS.care.checkMaxPostponeDays.value
-/** 检查窗口无最晚端时建议有效小时数（`care.watering.open_window_proposal_valid_hours`，用户裁决 U7；取值见代码层注册表）。 */
-export const OPEN_WINDOW_PROPOSAL_VALID_HOURS = RUNTIME_PARAMETERS.care.openWindowProposalValidHours.value
-/** 计划列表分页（硬规则 `care.plans.page_size`，主代理裁决 T5；取值见代码层注册表，深度只读）。 */
-export const CARE_PLAN_PAGE_SIZE = RUNTIME_PARAMETERS.care.planPageSize.value
+/**
+ * 用户 2026-10-10 第三轮裁定：补记天数、推迟上限、建议有效期、计划分页迁入策略发布 care/long_term_rules（取值不变），
+ * 下列规则函数显式接收请求内锁定的策略快照，本文件不再写死任何业务数值。
+ */
 /** 日历条目时长（long-term-care/v1 §9）。 */
 const calendarDurationMs = 30 * 60_000
 /** 日历固定提示（不含个人信息与内部引用）。 */
@@ -30,11 +26,11 @@ export interface WateringOccurredAtInput {
   readonly plantCreatedAtMs: number
 }
 
-/** U3：浇水时刻不得晚于现在、不得早于 7 天前、不得早于植物创建。 */
-export function validateWateringOccurredAt(input: WateringOccurredAtInput): boolean {
+/** U3：浇水时刻不得晚于现在、不得早于「现在 − 补记天数」、不得早于植物创建。 */
+export function validateWateringOccurredAt(input: WateringOccurredAtInput, rules: Pick<CareLongTermRules, 'wateringBackfillMaxDays'>): boolean {
   const { occurredAtMs, nowMs, plantCreatedAtMs } = input
   return Number.isSafeInteger(occurredAtMs) && occurredAtMs <= nowMs
-    && occurredAtMs >= nowMs - WATERING_BACKFILL_MAX_DAYS * day && occurredAtMs >= plantCreatedAtMs
+    && occurredAtMs >= nowMs - rules.wateringBackfillMaxDays * day && occurredAtMs >= plantCreatedAtMs
 }
 
 /** 结果是否产生可确认建议：就绪且行动属于可确认集合。 */
@@ -42,12 +38,12 @@ export function isConfirmableWateringResult(result: Pick<WateringCapabilityResul
   return result.status === 'ready' && confirmableActions.has(result.details.action)
 }
 
-/** U7：建议有效截止 = 检查窗口最晚端；无最晚端或最晚端不晚于生成时刻（裁决 Q1）→ 生成时刻 + 24 小时。 */
-export function resolveProposalValidUntil(result: Pick<WateringCapabilityResult, 'generatedAt' | 'details'>): number {
+/** U7：建议有效截止 = 检查窗口最晚端；无最晚端或最晚端不晚于生成时刻（裁决 Q1）→ 生成时刻 + 建议有效小时。 */
+export function resolveProposalValidUntil(result: Pick<WateringCapabilityResult, 'generatedAt' | 'details'>, rules: Pick<CareLongTermRules, 'openWindowProposalValidHours'>): number {
   const generatedAtMs = Date.parse(result.generatedAt)
   const latest = result.details.checkWindow?.latestAt ?? null
   const latestMs = latest === null ? null : Date.parse(latest)
-  return latestMs !== null && latestMs > generatedAtMs ? latestMs : generatedAtMs + OPEN_WINDOW_PROPOSAL_VALID_HOURS * hour
+  return latestMs !== null && latestMs > generatedAtMs ? latestMs : generatedAtMs + rules.openWindowProposalValidHours * hour
 }
 
 /** 检查计划时刻输入（UTC 毫秒）。 */
@@ -66,13 +62,13 @@ export interface CheckScheduleInput {
 
 /**
  * U5：缺省 = max(最早端, 现在)（裁决 Q5）；自选须在 [max(最早端, 现在), 上界]。
- * 上界 = 最晚端；无最晚端或最晚端不晚于建议生成时刻 → 最早端（无则现在）+ 7 天。非法返回 null。
+ * 上界 = 最晚端；无最晚端或最晚端不晚于建议生成时刻 → 最早端（无则现在）+ 推迟上限天数。非法返回 null。
  */
-export function resolveCheckScheduledAt(input: CheckScheduleInput): number | null {
+export function resolveCheckScheduledAt(input: CheckScheduleInput, rules: Pick<CareLongTermRules, 'checkMaxPostponeDays'>): number | null {
   const anchor = input.earliestMs ?? input.nowMs
   const lower = Math.max(anchor, input.nowMs)
   const latest = input.latestMs !== null && input.latestMs > input.generatedAtMs ? input.latestMs : null
-  const upper = latest ?? anchor + CHECK_MAX_POSTPONE_DAYS * day
+  const upper = latest ?? anchor + rules.checkMaxPostponeDays * day
   if (input.requestedMs === null) { return lower }
   return input.requestedMs >= lower && input.requestedMs <= upper ? input.requestedMs : null
 }
@@ -96,10 +92,10 @@ export function buildCareCalendar(input: CareCalendarInput): CareCalendarDto {
   }
 }
 
-/** T5：分页大小；缺省 20，1～50 整数，其他非法返回 null。 */
-export function resolvePlanPageLimit(raw: string | undefined): number | null {
-  if (raw === undefined) { return CARE_PLAN_PAGE_SIZE.default }
+/** T5：分页大小；缺省 = 策略 default，1～策略 max 的整数，其他非法返回 null。 */
+export function resolvePlanPageLimit(raw: string | undefined, rules: Pick<CareLongTermRules, 'planPageSize'>): number | null {
+  if (raw === undefined) { return rules.planPageSize.default }
   if (!/^[1-9][0-9]*$/u.test(raw)) { return null }
   const limit = Number(raw)
-  return limit <= CARE_PLAN_PAGE_SIZE.max ? limit : null
+  return limit <= rules.planPageSize.max ? limit : null
 }

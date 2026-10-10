@@ -1,12 +1,13 @@
 import { createUserPlantServer } from '../../src/user-plant/http/server.js'
 import { expect, test } from 'vitest'
 import type { AddressInfo } from 'node:net'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /** L1/unit_fake：实际服务组装/分发/请求链；数据库明确替身。
  * Expected来自统一计划缺发布策略失败关闭及已登记PATCH；不证明真实会话、SQL或正式发布策略。 */
 test('既有用户植物服务登记PATCH，未接可信写策略时503且不访问数据库', async () => {
   let connections = 0
-  const server = createUserPlantServer({
+  const server = createUserPlantServer({ ...fixturePolicyPorts(),
     connectionSource: { getConnection: async () => { connections++; throw new Error('本场景禁止数据库访问') } },
     now: () => 3000, resolveCapabilitySnapshot: async () => { throw new Error('本场景禁止权益查询') },
     writeAudit: () => undefined, recordRollbackFailure: () => undefined
@@ -22,7 +23,7 @@ test('既有用户植物服务登记PATCH，未接可信写策略时503且不访
  * Expected为单请求策略快照、发布缺失拒绝和固定限制→认证顺序。 */
 test.each(['valid', 'missing', 'error'] as const)('每次PATCH只读一次策略，%s 场景边界明确', async kind => {
   let reads = 0, connections = 0
-  const server = createUserPlantServer({
+  const server = createUserPlantServer({ ...fixturePolicyPorts(),
     connectionSource: { getConnection: async () => { connections++; throw new Error('禁止数据库访问') } },
     now: () => 3000, resolveCapabilitySnapshot: async () => { throw new Error('禁止权益查询') },
     readProfileWriteSnapshot: async () => {

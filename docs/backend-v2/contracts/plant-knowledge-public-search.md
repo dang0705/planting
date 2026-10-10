@@ -34,7 +34,7 @@ export type PlantSearchResponse = {
 }
 ```
 
-`PublishedPlantResponse` 严格沿用 [已发布植物公开读取合同](plant-knowledge-public-read.md) §2 的五字段 DTO：`plantIdentityRef`、`displayNameZh`、`identityKind`、`acceptedScientificName`、`taxonRank`。结果上限 20 是固定公开合同硬限制，不是运营配置。服务可读取第 21 条以判断 `truncated`，但不得把它放进响应。无命中返回 `200`、`items: []`、`truncated: false`。
+`PublishedPlantResponse` 严格沿用 [已发布植物公开读取合同](plant-knowledge-public-read.md) §2 的五字段 DTO：`plantIdentityRef`、`displayNameZh`、`identityKind`、`acceptedScientificName`、`taxonRank`。结果上限以生效的业务策略 `plant-knowledge/public_search` 为准，当前 20（用户 2026-10-10 裁定；代码绝对上限 20，策略只能调小）。服务可读取第 21 条以判断 `truncated`，但不得把它放进响应。无命中返回 `200`、`items: []`、`truncated: false`。
 
 ## 4. 可见性规则
 
@@ -53,4 +53,4 @@ export type PlantSearchResponse = {
 
 ## 6. 固定硬限制与范围
 
-查询长度上限 64 个 Unicode 码点、结果上限 20 项，均为固定公开合同硬限制，不作为运行时运营配置。首版不包含模糊搜索、别名搜索、Tropicals 候选搜索、分类筛选、客户端指定上限、游标翻页或用户个性化排序。
+查询长度上限（当前 64 个 Unicode 码点，代码绝对上限 255 = 被搜索列最大长度）与结果上限（当前 20 项，绝对上限 20）以生效的业务策略 `plant-knowledge/public_search` 为准（用户 2026-10-10 裁定）；策略不可用时返回 `503 SERVICE_UNAVAILABLE`。首版不包含模糊搜索、别名搜索、Tropicals 候选搜索、分类筛选、客户端指定上限、游标翻页或用户个性化排序。

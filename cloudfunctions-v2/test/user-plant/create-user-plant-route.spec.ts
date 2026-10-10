@@ -22,6 +22,7 @@ import {
   createUserPlantRoute,
   createUserPlantRouteHandler
 } from '../../src/user-plant/http/create-user-plant-route.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /**
  * Expected 来源：
@@ -113,7 +114,7 @@ async function startService(overrides: {
   const dispatch = createRouteDispatcher([
     {
       route: createUserPlantRoute,
-      handler: createUserPlantRouteHandler({
+      handler: createUserPlantRouteHandler({ ...fixturePolicyPorts(),
         resolvePrincipal: async command => {
           calls.resolve.push(command)
           return (overrides.resolvePrincipal ?? (async () => principalOf(ownerRef)))(command)

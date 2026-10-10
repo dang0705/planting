@@ -1,6 +1,7 @@
 import Ajv from 'ajv'
 import { calculateCanonicalJsonSha256, type CanonicalJsonObject } from '../foundation/json/canonical-json-sha256.js'
 import { createConfigurationSnapshot } from './index.js'
+import { RUNTIME_PARAMETERS } from './runtime-parameters.js'
 import type { ConfigurationSnapshot } from './types.js'
 
 /** 有序数值区间；物理含义由所在字段说明。 */
@@ -34,6 +35,9 @@ const payloadKeysByVersion = {
   'care-watering-mvp/v2': [...sharedPayloadKeys, 'soilEvidenceFallbackHours', 'soilEvidenceMaxHours'],
   'care-watering-mvp/v3': [...sharedPayloadKeys, 'soilEvidenceFallbackHours', 'soilEvidenceMaxHours',
     'referencePot', 'referenceAvailableWater', 'plantDemandVolumeExponent'],
+  // v4（用户 2026-10-10 裁定）：v3 字段 + 缺段补齐小时、PPFD/GHI 物理上界、室内实测覆盖小时（原代码常量，取值不变）。
+  'care-watering-mvp/v4': [...sharedPayloadKeys, 'soilEvidenceFallbackHours', 'soilEvidenceMaxHours',
+    'referencePot', 'referenceAvailableWater', 'plantDemandVolumeExponent', 'dryingGapFillMaxHours', 'maximumPpfdPerGhi', 'indoorClimateWindowHours'],
 } as const
 
 /**
@@ -155,8 +159,22 @@ export interface MvpWateringPolicyV3Fields {
   readonly plantDemandVolumeExponent: MvpPolicyRange
 }
 
+/**
+ * v4 专有字段（用户 2026-10-10 裁定）：在 v3 之上把三个运行参数纳入发布，便于运行时调整并按版本复算。
+ */
+export interface MvpWateringPolicyV4Fields extends Omit<MvpWateringPolicyV3Fields, 'contractVersion'> {
+  /** 合同版本号，固定为 care-watering-mvp/v4。 */
+  readonly contractVersion: 'care-watering-mvp/v4'
+  /** 环境数据内部缺段可保守补齐的最长小时数（合同 8.11）；0 表示不补。 */
+  readonly dryingGapFillMaxHours: number
+  /** 全波段日光每 W/m² 光合光子通量的物理上界（μmol/J），Lux 锚点超出即判不一致。 */
+  readonly maximumPpfdPerGhi: number
+  /** 室内实测温湿度覆盖测量后的小时数（合同 2a 节）。 */
+  readonly indoorClimateWindowHours: number
+}
+
 /** 某一版本的完整发布（共有字段 + 版本专有字段）。 */
-export type MvpWateringPolicyRelease = MvpWateringPolicyBase & (MvpWateringPolicyV1Fields | MvpWateringPolicyV2Fields | MvpWateringPolicyV3Fields)
+export type MvpWateringPolicyRelease = MvpWateringPolicyBase & (MvpWateringPolicyV1Fields | MvpWateringPolicyV2Fields | MvpWateringPolicyV3Fields | MvpWateringPolicyV4Fields)
 
 /** 请求级只读快照附加字段。 */
 export interface MvpWateringPolicySnapshotMetadata {
@@ -240,11 +258,56 @@ const schemaV3 = {
     referenceAvailableWater: { type: 'number', exclusiveMinimum: 0, maximum: 1 },
     plantDemandVolumeExponent: range },
 }
+/** v4 运行字段的代码层绝对边界（目录 care.watering.runtime_absolute_bounds）。 */
+const runtimeBounds = RUNTIME_PARAMETERS.policyBounds.careWateringRuntime.value
+/** v4 严格发布 Schema：v3 字段 + 三个运行字段（落在绝对边界内）。 */
+const schemaV4 = {
+  type: 'object', additionalProperties: false,
+  required: [...payloadKeysByVersion['care-watering-mvp/v4'], ...metadataRequired],
+  properties: { ...schemaV3.properties, contractVersion: { const: 'care-watering-mvp/v4' },
+    dryingGapFillMaxHours: { type: 'number', minimum: runtimeBounds.dryingGapFillMaxHours.min, maximum: runtimeBounds.dryingGapFillMaxHours.max },
+    maximumPpfdPerGhi: { type: 'number', minimum: runtimeBounds.maximumPpfdPerGhi.min, maximum: runtimeBounds.maximumPpfdPerGhi.max },
+    indoorClimateWindowHours: { type: 'number', minimum: runtimeBounds.indoorClimateWindowHours.min, maximum: runtimeBounds.indoorClimateWindowHours.max } },
+}
 /** 编译一次的校验器。 */
 const ajv = new Ajv({ strict: true, allErrors: true, strictNumbers: true })
 const validateV1 = ajv.compile<MvpWateringPolicyRelease>(schemaV1)
 const validateV2 = ajv.compile<MvpWateringPolicyRelease>(schemaV2)
 const validateV3 = ajv.compile<MvpWateringPolicyRelease>(schemaV3)
+const validateV4 = ajv.compile<MvpWateringPolicyRelease>(schemaV4)
+
+/** 是否为带栽培（盆型 + 基质）模型的版本：v3 与 v4。 */
+export function hasCultivationModel<T extends { readonly contractVersion: string }>(policy: T): policy is Extract<T, { readonly contractVersion: 'care-watering-mvp/v3' | 'care-watering-mvp/v4' }> {
+  return policy.contractVersion === 'care-watering-mvp/v3' || policy.contractVersion === 'care-watering-mvp/v4'
+}
+
+/** 浇水计算的三个运行参数（v4 来自发布正文；更早版本按其版本语义固定）。 */
+export interface MvpWateringRuntimeRules {
+  /** 缺段补齐最长小时数；null 表示该版本不补缺段（v1、v2）。 */
+  readonly dryingGapFillMaxHours: number | null
+  /** PPFD/GHI 物理上界（μmol/J）。 */
+  readonly maximumPpfdPerGhi: number
+  /** 室内实测温湿度覆盖小时数。 */
+  readonly indoorClimateWindowHours: number
+}
+
+/**
+ * v1–v3 的运行参数是这些版本**定义的一部分**（当时写在代码里、随版本冻结），用于按原版本复算历史结果；不是「读不到时的默认值」。
+ * v3 起才有缺段补齐（6 小时）；v1、v2 缺段即中断。
+ */
+const preV4RuntimeRules = {
+  'care-watering-mvp/v1': { dryingGapFillMaxHours: null, maximumPpfdPerGhi: 2.3, indoorClimateWindowHours: 24 },
+  'care-watering-mvp/v2': { dryingGapFillMaxHours: null, maximumPpfdPerGhi: 2.3, indoorClimateWindowHours: 24 },
+  'care-watering-mvp/v3': { dryingGapFillMaxHours: 6, maximumPpfdPerGhi: 2.3, indoorClimateWindowHours: 24 },
+} as const satisfies Record<string, MvpWateringRuntimeRules>
+
+/** 取浇水运行参数：v4 读正文，更早版本按版本语义。 */
+export function resolveMvpWateringRuntimeRules(policy: Pick<MvpWateringPolicyRelease, 'contractVersion'> & Partial<Pick<MvpWateringPolicyV4Fields, 'dryingGapFillMaxHours' | 'maximumPpfdPerGhi' | 'indoorClimateWindowHours'>>): MvpWateringRuntimeRules {
+  if (policy.contractVersion === 'care-watering-mvp/v4') {
+    return { dryingGapFillMaxHours: policy.dryingGapFillMaxHours!, maximumPpfdPerGhi: policy.maximumPpfdPerGhi!, indoorClimateWindowHours: policy.indoorClimateWindowHours! }
+  }
+  return { ...preV4RuntimeRules[policy.contractVersion] }
+}
 
 /** UTC 往返校验；拒绝被自动修正的非法日期。 */
 function parseUtc(value: unknown): number | null {
@@ -268,8 +331,8 @@ function semanticallyValid(release: MvpWateringPolicyRelease): boolean {
   if (!contains(release.validPpfd, release.referencePpfd) || !contains(release.validVpdKpa, release.referenceVpdKpa)) { return false }
   if (release.indoorVpdFallbackKpa.min < release.validVpdKpa.min || release.indoorVpdFallbackKpa.max > release.validVpdKpa.max) { return false }
   if (release.contractVersion !== 'care-watering-mvp/v1' && release.soilEvidenceMaxHours < release.soilEvidenceFallbackHours) { return false }
-  // v3：参考盆装土高度必须为正（留空上限小于盆高），指数区间有序。
-  if (release.contractVersion === 'care-watering-mvp/v3'
+  // v3 / v4：参考盆装土高度必须为正（留空上限小于盆高），指数区间有序。
+  if ((release.contractVersion === 'care-watering-mvp/v3' || release.contractVersion === 'care-watering-mvp/v4')
     && (release.referencePot.heightCm <= release.headspaceCm.max || !ordered(release.plantDemandVolumeExponent))) { return false }
   return Object.values(release.substrates).every(item => ordered(item.containerCapacity) && ordered(item.availableWater)
     && item.availableWater.max <= item.containerCapacity.min)
@@ -289,7 +352,7 @@ export function resolveMvpWateringPolicy(release: unknown, capturedAt: string): 
   const now = parseUtc(capturedAt)
   if (now === null) { return { status: 'invalid' } }
   if (release === null || release === undefined) { return { status: 'unavailable' } }
-  if (!validateV1(release) && !validateV2(release) && !validateV3(release)) { return { status: 'invalid' } }
+  if (!validateV1(release) && !validateV2(release) && !validateV3(release) && !validateV4(release)) { return { status: 'invalid' } }
   const effective = parseUtc(release.effectiveAt)
   const expires = release.expiresAt === undefined ? undefined : parseUtc(release.expiresAt)
   const keys: readonly string[] = payloadKeysByVersion[release.contractVersion]

@@ -10,6 +10,7 @@ import type { GuestPrincipalDto, GuestSessionRef } from '../../src/contracts/typ
 import { createRouteDispatcher } from '../../src/foundation/http/route-dispatcher.js'
 import { findProjectRoot } from '../support/project-root.js'
 import { approvedV3Body, resolvedPolicy } from './watering/v3-policy-fixture.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /**
  * unit_real_data（L3，HTTP 路由层）。线上复验 2026-10-10：CLS 每次请求都有 provider_unavailable / normalize_failed。
@@ -37,7 +38,7 @@ async function post(potKey: keyof typeof pots) {
   const warnings: unknown[] = []
   const fetchRadiation = createOpenMeteoRadiationFetcher({ fetch: (async () => new Response(raw, { status: 200, headers: { 'content-type': 'application/json' } })) as typeof fetch,
     now: () => now, totalDeadlineMs: 8000, logger: { warn: event => { warnings.push(event) } } })
-  const dependencies: WateringAdviceRouteDependencies = {
+  const dependencies: WateringAdviceRouteDependencies = { ...fixturePolicyPorts(),
     resolvePrincipal: async () => guest, readOwnedCase: async () => 'owned', readWateringPolicy: async () => policy,
     readPlantBaseline: async () => ({ tier: 'regular', trigger: 'SURFACE_DRY', baselineDays: { min: 5, max: 8 } }), fetchRadiation,
     resolveCityCoordinates: async (cityCode: string) => (cityCode === 'shanghai' ? { latitude: 31.230416, longitude: 121.473701 } : null),

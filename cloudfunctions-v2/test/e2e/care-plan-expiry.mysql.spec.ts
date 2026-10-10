@@ -11,6 +11,9 @@ import { createMysqlTransactionDriver, type MysqlTransactionContext } from '../.
 import { createMysql2ConnectionSource, toSqlParameters, withReadConnection, type Mysql2QueryConnection } from '../../src/foundation/database/mysql2-connection-source.js'
 import { runDatabaseTransaction } from '../../src/foundation/database/transaction-runner.js'
 import { createMysqlHttpIdempotencyCommitUnknownReadOnlyRepository, createMysqlHttpIdempotencyRepository, type HttpIdempotencySqlRow } from '../../src/foundation/idempotency/mysql-http-idempotency-repository.js'
+import { CARE_LONG_TERM_RULES_POLICY } from '../../src/configuration/business-policies/index.js'
+import { createMysqlTypedPolicyReader } from '../../src/foundation/policy/mysql-typed-policy-reader.js'
+import { careLongTermRulesV1 } from '../support/business-policy-fixtures.js'
 import { findProjectRoot } from '../support/project-root.js'
 
 /**
@@ -73,7 +76,11 @@ describe.skipIf(!dockerReady)('计划过期：真实 MySQL 事务（§12）', ()
     const source = createMysql2ConnectionSource({ host: '127.0.0.1', port, database, user: 'root', password: '' })
     const driver = createMysqlTransactionDriver(source, () => undefined)
     const logs: CarePlanExpiryLogEvent[] = []
-    const run = createExpireCarePlansJob({ now: () => Date.now(), log: event => { logs.push(event) },
+    // 用户 2026-10-10 第三轮裁定：72 小时来自策略发布；本机库执行 v1 种子 SQL 后经真实类型化读取器读取。
+    sql(fs.readFileSync(path.join(root, 'docs/backend-v2/schema/seeds/business_policy_releases.2026-10-10.sql'), 'utf8'))
+    const longTermRulesReader = createMysqlTypedPolicyReader(source, CARE_LONG_TERM_RULES_POLICY)
+    const run = createExpireCarePlansJob({ now: () => Date.now(), log: event => { logs.push(event) }, runBudgetFraction: 0.5,
+      readLongTermRules: async () => (await longTermRulesReader.read(Date.now()))?.rules ?? null,
       runBatch: input => runDatabaseTransaction(driver, transaction => expireDueCarePlans(transaction, input)) })
     job = () => run({ functionTimeoutMs: 60_000 })
     const idempotencyRepository = createMysqlHttpIdempotencyRepository<MysqlTransactionContext<Mysql2QueryConnection>>({
@@ -89,7 +96,7 @@ describe.skipIf(!dockerReady)('计划过期：真实 MySQL 事务（§12）', ()
     complete = async (ref, request) => {
       const nowMs = Date.now()
       const key = `mx-key-${++sequence}`
-      const result = await commands.completePlan({ userRef: 'usr_mx_owner_000001', userPlantRef: 'upl_mx_active_00001', nowMs, planRef: ref, request: request as never,
+      const result = await commands.completePlan({ rules: careLongTermRulesV1(), userRef: 'usr_mx_owner_000001', userPlantRef: 'upl_mx_active_00001', nowMs, planRef: ref, request: request as never,
         idempotency: { principalType: 'user', principalScopeHash: sha('usr_mx_owner_000001'), httpMethod: 'POST',
           normalizedPath: '/api/v2/care/user-plants/{userPlantRef}/plans/{planRef}/completions', operationId: 'completeCarePlan',
           idempotencyKeyHash: sha(key), requestHash: sha(JSON.stringify({ ref, request })), createdAtMs: nowMs, expiresAtMs: nowMs + 168 * hour } })
@@ -166,10 +173,12 @@ describe.skipIf(!dockerReady)('计划过期：真实 MySQL 事务（§12）', ()
       insertPlan(id, 'planned', Date.now() - 73 * hour)
       const watering = { occurredAt: new Date(Date.now() - 60_000).toISOString(), amountMl: 100 }
       const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+      // 起跑错位 −30～+25 ms（负数让完成晚出发、正数让扫描晚出发）：扫描自 2026-10-10 起每次运行先读一次策略快照，
+      // 双向错位保证「完成先锁行」与「扫描先改写」两种先后顺序都真实出现，并覆盖贴身竞争。
+      const offset = (round % 12) * 5 - 30
       const [completion, scan] = await Promise.all([
-        // 起跑错位 0～55 ms：让「完成先锁行」与「扫描先改写」两种先后顺序都真实出现，并覆盖贴身竞争。
-        complete(planRef(id), { version: 1, outcome: 'done', watering }),
-        delay((round % 12) * 5).then(() => job())
+        delay(Math.max(0, -offset)).then(() => complete(planRef(id), { version: 1, outcome: 'done', watering })),
+        delay(Math.max(0, offset)).then(() => job())
       ])
       const [status, version] = planRow(id)!
       const facts = Number(sql(`SELECT COUNT(*) FROM care_facts WHERE occurred_at_ms = ${Date.parse(watering.occurredAt)};`))

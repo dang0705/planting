@@ -1,3 +1,5 @@
+import type { HttpRequestWriteRules } from '../../configuration/business-policies/index.js'
+import type { PolicyRulesPort } from '../../foundation/policy/require-policy.js'
 import { createServer } from 'node:http'
 import type {
   MysqlConnectionPoolPort,
@@ -49,6 +51,7 @@ export interface DiagnosisServerDependencies {
     event: RequestChainAuditEvent
   ) => void | Promise<void>
   /** 事务回滚失败观测端口。 */ readonly recordRollbackFailure: MysqlRollbackFailureRecorder<Mysql2QueryConnection>
+  /** 读取 HTTP 写入策略快照（http/request_write）；入口由类型化读取器适配，null 时写接口 503。 */ readonly readHttpWriteRules: PolicyRulesPort<HttpRequestWriteRules>
 }
 /** 组装已实现创建、作答及长期植物结果读取用例；无正式虫害准备，不提供视觉调用默认值。 */
 export function createDiagnosisServer(deps: DiagnosisServerDependencies) {
@@ -90,7 +93,8 @@ export function createDiagnosisServer(deps: DiagnosisServerDependencies) {
   const protocol = {
     resolvePrincipal: deps.resolvePrincipal,
     now: deps.now,
-    writeAudit: deps.writeAudit
+    writeAudit: deps.writeAudit,
+    readHttpWriteRules: deps.readHttpWriteRules
   }
   const dispatch = createRouteDispatcher([
     {

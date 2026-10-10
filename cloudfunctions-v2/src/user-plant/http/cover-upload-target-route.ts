@@ -1,3 +1,5 @@
+import type { UserPlantAssetRules } from '../../configuration/business-policies/index.js'
+import { requirePolicy, type PolicyRulesPort } from '../../foundation/policy/require-policy.js'
 import { createPublicContractValidators } from '../../contracts/index.js'
 import type { UserPrincipalDto } from '../../contracts/types.js'
 import type { CoverUploadTargetResponseDto } from '../../contracts/user-plant-cover-asset-contract.js'
@@ -23,6 +25,8 @@ export const coverUploadTargetRoute: FrozenRoute = {
 export interface CoverUploadTargetRouteDependencies extends AuthenticatedJsonRouteDependencies<UserPrincipalDto> {
   /** 只读上传路径用例。 */
   readonly readUploadTarget: (input: GetCoverUploadTargetInput) => Promise<HttpIdempotencyPublicResponseSnapshot>
+  /** 读取封面资产规则策略快照（user-plant/asset_rules）；null 时 503。 */
+  readonly readAssetRules: PolicyRulesPort<UserPlantAssetRules>
 }
 
 /** 已解析的路径 DTO。 */
@@ -44,7 +48,7 @@ export function createCoverUploadTargetRouteHandler(dependencies: CoverUploadTar
       if (!userPlantRefPattern.test(userPlantRef) || [...query.keys()].length > 0) { throw validationFailed() }
       return { userPlantRef }
     },
-    execute: ({ principal, dto }) => dependencies.readUploadTarget({ principal, userPlantRef: dto.userPlantRef }),
+    execute: async ({ principal, dto }) => dependencies.readUploadTarget({ principal, userPlantRef: dto.userPlantRef, rules: await requirePolicy(dependencies.readAssetRules) }),
     validateData: data => validators.coverUploadTargetResponse(data),
     validateError: body => validators.errorResponse(body),
     passThroughErrors

@@ -3,6 +3,7 @@ import type { AddressInfo } from 'node:net'
 import { afterEach, describe, expect, test } from 'vitest'
 import type { Mysql2QueryConnection } from '../../src/foundation/database/mysql2-connection-source.js'
 import { createPlantKnowledgeServer } from '../../src/plant-knowledge/http/server.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 const route = '/api/v2/plant-knowledge/catalog/search'
 type CatalogBody = { data: { items: Array<{ plantIdentityRef?: string }>; truncated: boolean } }
@@ -44,7 +45,7 @@ async function start(
       return rows
     }
   }
-  server = createPlantKnowledgeServer({
+  server = createPlantKnowledgeServer({ ...fixturePolicyPorts(),
     connectionSource: { getConnection: async () => connection },
     writeAudit: () => undefined
   })

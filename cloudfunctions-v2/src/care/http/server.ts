@@ -1,3 +1,5 @@
+import type { CareLongTermRules, HttpRequestWriteRules } from '../../configuration/business-policies/index.js'
+import type { PolicyRulesPort } from '../../foundation/policy/require-policy.js'
 import { createServer, type Server } from 'node:http'
 
 import type { GuestPrincipalDto, UserPrincipalDto } from '../../contracts/types.js'
@@ -49,6 +51,10 @@ export interface CareServerDependencies {
   readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
   /** 事务回滚失败的内部观测端口。 */
   readonly recordRollbackFailure: MysqlRollbackFailureRecorder<Mysql2QueryConnection>
+  /** 读取长期养护规则策略快照（care/long_term_rules）；入口由类型化读取器适配，null 时对应接口 503。 */
+  readonly readLongTermRules: PolicyRulesPort<CareLongTermRules>
+  /** 读取 HTTP 写入策略快照（http/request_write）；null 时写接口 503。 */
+  readonly readHttpWriteRules: PolicyRulesPort<HttpRequestWriteRules>
 }
 
 const okStatus = 200
@@ -86,6 +92,7 @@ export function createCareServer(dependencies: CareServerDependencies): Server {
   const refPrefix = { fact: 'cft_', plan: 'cpl_', command: 'ccm_', observation: 'ceo_' } as const
   const longTermRoutes = createLongTermCareRouteBindings({
     authenticate: createUserBearerAuthenticator(dependencies.resolvePrincipal), now: dependencies.now, writeAudit: dependencies.writeAudit,
+    readLongTermRules: dependencies.readLongTermRules, readHttpWriteRules: dependencies.readHttpWriteRules,
     readPlantContext: query => plantContextReader.read(query),
     readTaxonDisplayName: async ref => (await taxonReader.read(ref))?.displayName ?? null,
     commands: createLongTermCareCommands({ ...idempotentWrite, createRef: kind => `${refPrefix[kind]}${randomBytes(18).toString('base64url')}` }),
@@ -125,6 +132,8 @@ export function createCareServer(dependencies: CareServerDependencies): Server {
           return profile === null ? null : { latitude: profile.lat, longitude: profile.lon }
         },
         now: dependencies.now,
+        readHttpWriteRules: dependencies.readHttpWriteRules,
+        readLongTermRules: dependencies.readLongTermRules,
         writeAudit: dependencies.writeAudit
       })
     }

@@ -17,7 +17,7 @@
 3. `GET /api/v2/weather/city-climate/fit?cityCode=&plantId=`  
    读取某城 × 植物的适配缓存。`plantId` 取值为百科分类引用 `taxon_id`（与 plant-knowledge `plant-encyclopedia-read/v1` 的 `catalogTaxonRef` 同一命名空间，例如 `https://tropicals.cn/species/nageia-nagi`）：非空字符串，最长 512 个 Unicode 码点，不裁剪、不改写、按字节精确匹配。不再接受 `plant_id` / `encyclopedia_id` 别名，也不接受百科表自增主键；仅传别名视为缺少 `plantId`（400）。
 4. `GET /api/v2/weather/city-climate/recommendations?cityCode=&top=`  
-   按 overall 降序推荐；overall 相同时按 `plantId`（taxon_id）升序，保证次序确定。`top` 省略默认 10，允许 1–50 的整数。缓存行若在百科表中找不到对应分类引用，则无法给出公开 `plantId`，不进入推荐结果。
+   按 overall 降序推荐；overall 相同时按 `plantId`（taxon_id）升序，保证次序确定。`top` 默认与上限以生效策略 `weather/public_read` 为准，当前省略默认 10、允许 1–50 的整数（用户 2026-10-10 裁定；绝对上限 50；策略不可用时 503 `SERVICE_UNAVAILABLE`）。缓存行若在百科表中找不到对应分类引用，则无法给出公开 `plantId`，不进入推荐结果。
 
 策略版本固定读取 `policyVersion=v0-city-outdoor`。经纬度必须与 v1 热门城目录一致（重庆 `29.5630, 106.5516`）。
 

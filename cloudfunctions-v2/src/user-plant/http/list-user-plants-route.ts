@@ -1,3 +1,5 @@
+import type { UserPlantListRules } from '../../configuration/business-policies/index.js'
+import { requirePolicy, type PolicyRulesPort } from '../../foundation/policy/require-policy.js'
 import { createPublicContractValidators } from '../../contracts/index.js'
 import type { UserPlantListResponseDto, UserPrincipalDto } from '../../contracts/types.js'
 import {
@@ -29,13 +31,15 @@ export const listUserPlantsRoute: FrozenRoute = {
 export interface ListUserPlantsRouteDependencies extends AuthenticatedJsonRouteDependencies<UserPrincipalDto> {
   /** 事务化只读列表用例。 */
   readonly listUserPlants: (input: ListUserPlantsApplicationInput) => Promise<HttpIdempotencyPublicResponseSnapshot>
+  /** 读取用户植物列表规则策略快照（user-plant/list_rules）；null 时 503。 */
+  readonly readListRules: PolicyRulesPort<UserPlantListRules>
 }
 
 /** 已严格解析的查询 DTO。 */
 interface ListQueryDto {
   /** 本次要列出的生命周期集合；省略查询参数时为正常与已归档两者。 */
   readonly lifecycles: readonly ListableUserPlantLifecycle[]
-  /** 本页最多返回的用户植物条数，范围 1～50，省略时为 20。 */
+  /** 本页最多返回的用户植物条数，范围 1～策略上限，省略时为策略默认（v1 = 50 / 20）。 */
   readonly limit: number
   /** 上一页最后一项的位置（由不透明游标解码）；第一页为 null。 */
   readonly after: UserPlantListCursor | null
@@ -51,11 +55,12 @@ export function createListUserPlantsRouteHandler(dependencies: ListUserPlantsRou
   return createAuthenticatedJsonRouteHandler<UserPrincipalDto, ListQueryDto, UserPlantListResponseDto>(dependencies, {
     route: listUserPlantsRoute,
     kind: 'read',
-    parse: ({ query }) => {
+    parse: async ({ query }) => {
       const keys = [...query.keys()]
       if (keys.some(key => !allowedQueryKeys.has(key)) || new Set(keys).size !== keys.length) { throw validationFailed() }
       const lifecycles = resolveListLifecycles(query.get('lifecycle'))
-      const limit = resolveUserPlantListLimit(query.get('limit'))
+      // 分页默认与上限来自请求内锁定的 user-plant/list_rules 策略（用户 2026-10-10 裁定）；策略不可用 503。
+      const limit = resolveUserPlantListLimit(query.get('limit'), (await requirePolicy(dependencies.readListRules)).userPlantListPageSize)
       const rawCursor = query.get('cursor')
       const after = rawCursor === null ? null : decodeUserPlantListCursor(rawCursor)
       if (lifecycles === null || limit === null || (rawCursor !== null && after === null)) { throw validationFailed() }

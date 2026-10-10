@@ -10,6 +10,7 @@ import { readDatabaseConnectionConfig } from '../../src/foundation/config/databa
 import { createMysql2ConnectionSource } from '../../src/foundation/database/mysql2-connection-source.js'
 import { createPlantKnowledgeServer } from '../../src/plant-knowledge/http/server.js'
 import { findProjectRoot } from '../support/project-root.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 const containerName = `qhz-v2-get-published-plant-${String(process.pid)}`
 const databaseName = `qinghuazhi_v2_get_published_plant_${String(process.pid)}`
@@ -164,7 +165,7 @@ function openAppConnections(): number {
 /** 以给定环境变量启动真实插件服务。 */
 async function startServer(environment: Record<string, string>): Promise<string> {
   const connectionSource = createMysql2ConnectionSource(readDatabaseConnectionConfig(environment))
-  server = createPlantKnowledgeServer({ connectionSource, writeAudit: () => undefined })
+  server = createPlantKnowledgeServer({ ...fixturePolicyPorts(), connectionSource, writeAudit: () => undefined })
   await new Promise<void>(resolve => server?.listen(ephemeralPort, '127.0.0.1', resolve))
   const address = server.address() as AddressInfo
   return `http://127.0.0.1:${String(address.port)}`

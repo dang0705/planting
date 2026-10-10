@@ -10,6 +10,7 @@ import type { GuestPrincipalDto, GuestSessionRef } from '../../src/contracts/typ
 import { createRouteDispatcher } from '../../src/foundation/http/route-dispatcher.js'
 import { findProjectRoot } from '../support/project-root.js'
 import { approvedV3Body, resolvedPolicy } from './watering/v3-policy-fixture.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /**
  * unit_fake（L3，HTTP 路由层）。线上复验（2026-10-10）：游客请求 lightReading=null 时 moist 永远 insufficient_evidence、wet 永远无窗口。
@@ -54,7 +55,7 @@ afterEach(async () => { for (const server of servers.splice(0)) { server.closeAl
 
 type Details = { action: string, soilState: string, checkWindow: { earliestAt: string | null, latestAt: string | null } | null, missingEvidence: string[] }
 async function post(value: unknown, overrides: Partial<WateringAdviceRouteDependencies> = {}) {
-  const dependencies: WateringAdviceRouteDependencies = {
+  const dependencies: WateringAdviceRouteDependencies = { ...fixturePolicyPorts(),
     resolvePrincipal: async () => guest,
     readOwnedCase: async () => 'owned',
     readWateringPolicy: async () => policy,

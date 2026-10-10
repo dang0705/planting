@@ -1,5 +1,8 @@
 import pino from 'pino'
 
+import { HTTP_REQUEST_WRITE_POLICY, USER_PLANT_ASSET_RULES_POLICY, USER_PLANT_LIST_RULES_POLICY } from '../configuration/business-policies/index.js'
+import { createMysqlTypedPolicyReader, policyRulesPort } from '../foundation/policy/mysql-typed-policy-reader.js'
+
 import { readUserPlantEnvironment } from '../configuration/environment.js'
 import {
   createMysql2ConnectionSource,
@@ -77,7 +80,16 @@ const resolveGuestOrUserPrincipal = createResolveGuestOrUserPrincipal({
   })
 })
 
+/** 请求内只读策略快照端口（用户 2026-10-10 裁定：列表分页、封面资产规则、幂等保留期来自策略发布；无可信发布时对应接口 503）。 */
+const readListRules = policyRulesPort(createMysqlTypedPolicyReader(connectionSource, USER_PLANT_LIST_RULES_POLICY), now)
+const readAssetRules = policyRulesPort(createMysqlTypedPolicyReader(connectionSource, USER_PLANT_ASSET_RULES_POLICY), now)
+const readHttpWriteRules = policyRulesPort(createMysqlTypedPolicyReader(connectionSource, HTTP_REQUEST_WRITE_POLICY), now)
+
 const server = createUserPlantServer({
+  readListRules,
+  readAssetRules,
+  readHttpWriteRules,
+  guestClaimLeaseSeconds: environment.guestClaimLeaseSeconds,
   connectionSource,
   ...(storage === undefined ? {} : { storage }),
   now,

@@ -1,4 +1,4 @@
-import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
+import type { PolicyPageSize } from '../../configuration/business-policies/index.js'
 import { createHash } from 'node:crypto'
 
 /**
@@ -6,8 +6,7 @@ import { createHash } from 'node:crypto'
  * 时间线是“投影视图”：像前端把多个接口的结果合并成一个按时间排序的动态流，只读、不能当作事实写入口。
  */
 
-/** 硬规则 `user-plant.timeline.page_size`：缺省 20、上限 50；与配置目录一致性由测试锁定。 */
-export const USER_PLANT_TIMELINE_PAGE_SIZE = RUNTIME_PARAMETERS.userPlant.timelinePageSize.value
+/* 分页（`user-plant.timeline.page_size`，v1 = 缺省 20、上限 50）自用户 2026-10-10 裁定起来自策略发布 user-plant/list_rules，由调用方传入快照。 */
 
 /** 第一期收录的时间线类型。 */
 export type TimelineItemType = 'care_watering' | 'care_plan_completed' | 'plant_archived' | 'plant_restored'
@@ -35,11 +34,11 @@ export function lifecycleSourceRefFor(userPlantRef: string, newVersion: number):
 }
 
 /** 解析 limit：省略为 20；只接受无前导零的 1～50 十进制整数，其他返回 null。 */
-export function resolveTimelineLimit(raw: string | null): number | null {
-  if (raw === null) { return USER_PLANT_TIMELINE_PAGE_SIZE.default }
+export function resolveTimelineLimit(raw: string | null, pageSize: PolicyPageSize): number | null {
+  if (raw === null) { return pageSize.default }
   if (!/^[1-9][0-9]*$/u.test(raw)) { return null }
   const limit = Number(raw)
-  return limit <= USER_PLANT_TIMELINE_PAGE_SIZE.max ? limit : null
+  return limit <= pageSize.max ? limit : null
 }
 
 /** 把位置编码为不透明 base64url 游标。 */

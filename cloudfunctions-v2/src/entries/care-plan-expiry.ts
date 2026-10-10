@@ -1,5 +1,8 @@
 import pino from 'pino'
 
+import { CARE_LONG_TERM_RULES_POLICY } from '../configuration/business-policies/index.js'
+import { createMysqlTypedPolicyReader } from '../foundation/policy/mysql-typed-policy-reader.js'
+
 import { createExpireCarePlansJob } from '../care/application/expire-care-plans.js'
 import { createCarePlanExpiryEventHandler } from '../care/event/care-plan-expiry-handler.js'
 import { expireDueCarePlans } from '../care/repository/mysql-care-plan-expiry-repository.js'
@@ -30,7 +33,11 @@ const driver = createMysqlTransactionDriver(source, () => {
   logger.error({ event: 'transaction_rollback_failed', function: 'care-plan-expiry' }, '事务回滚失败')
 })
 
+/** 长期养护规则策略快照（72 小时宽限）：每次运行读一次，无可信发布时本次不执行。 */
+const longTermRulesReader = createMysqlTypedPolicyReader(source, CARE_LONG_TERM_RULES_POLICY)
 const job = createExpireCarePlansJob({
+  readLongTermRules: async () => (await longTermRulesReader.read(Date.now()))?.rules ?? null,
+  runBudgetFraction: environment.runBudgetFraction,
   now: () => Date.now(),
   batchSize: environment.expiryBatchSize,
   // 每批一个独立短事务：失败只回滚本批，已提交批次保留（§12.5）。

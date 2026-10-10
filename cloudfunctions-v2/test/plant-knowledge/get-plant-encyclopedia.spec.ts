@@ -3,6 +3,7 @@ import type { AddressInfo } from 'node:net'
 import { afterEach, describe, expect, test } from 'vitest'
 import type { Mysql2QueryConnection } from '../../src/foundation/database/mysql2-connection-source.js'
 import { createPlantKnowledgeServer } from '../../src/plant-knowledge/http/server.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 // Happy 的名称、分类与别名来自测试库龟背竹实际展示行；可空列用 null 覆盖合同空值路径。
 const row = {
@@ -54,7 +55,7 @@ async function start(
       return rows
     }
   }
-  server = createPlantKnowledgeServer({
+  server = createPlantKnowledgeServer({ ...fixturePolicyPorts(),
     connectionSource: { getConnection: async () => connection },
     writeAudit: () => undefined
   })

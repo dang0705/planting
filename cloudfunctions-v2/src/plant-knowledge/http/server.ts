@@ -1,3 +1,5 @@
+import type { PlantKnowledgePublicSearchRules } from '../../configuration/business-policies/index.js'
+import type { PolicyRulesPort } from '../../foundation/policy/require-policy.js'
 import { createServer, type Server } from 'node:http'
 
 import type { MysqlConnectionPoolPort } from '../../foundation/database/mysql-transaction-driver.js'
@@ -28,6 +30,8 @@ export type PlantKnowledgeServerDependencies = {
   readonly connectionSource: MysqlConnectionPoolPort<Mysql2QueryConnection>
   /** 请求结果审计端口，只接收脱敏事件。 */
   readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
+  /** 读取公开搜索策略快照（plant-knowledge/public_search）；入口由类型化读取器适配，null 时搜索 / 百科接口 503。 */
+  readonly readPublicSearchRules: PolicyRulesPort<PlantKnowledgePublicSearchRules>
 }
 
 const okStatus = 200
@@ -42,6 +46,7 @@ export function createPlantKnowledgeServer(dependencies: PlantKnowledgeServerDep
           withReadConnection(dependencies.connectionSource, connection =>
             createMysqlPlantEncyclopediaRepository(connection).getPlantEncyclopedia(query)
           ),
+        readPublicSearchRules: dependencies.readPublicSearchRules,
         writeAudit: dependencies.writeAudit
       })
     },
@@ -52,16 +57,18 @@ export function createPlantKnowledgeServer(dependencies: PlantKnowledgeServerDep
           withReadConnection(dependencies.connectionSource, connection =>
             createMysqlPlantCatalogRepository(connection).searchPlantCatalog(query)
           ),
+        readPublicSearchRules: dependencies.readPublicSearchRules,
         writeAudit: dependencies.writeAudit
       })
     },
     {
       route: searchPublishedPlantsRoute,
       handler: createSearchPublishedPlantsRouteHandler({
-        searchPublishedPlants: query =>
+        searchPublishedPlants: (query, maxItems) =>
           withReadConnection(dependencies.connectionSource, connection =>
-            createMysqlPublishedPlantSearchRepository(connection).searchPublishedPlants(query)
+            createMysqlPublishedPlantSearchRepository(connection).searchPublishedPlants(query, maxItems)
           ),
+        readPublicSearchRules: dependencies.readPublicSearchRules,
         writeAudit: dependencies.writeAudit
       })
     },

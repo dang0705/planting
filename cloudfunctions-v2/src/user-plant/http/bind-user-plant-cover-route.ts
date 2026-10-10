@@ -13,7 +13,9 @@ import type { FrozenRoute, RouteHandler } from '../../foundation/http/route-disp
 import type { HttpIdempotencyPublicResponseSnapshot } from '../../foundation/idempotency/http-idempotency.js'
 import type { PrivateObjectStorage } from '../../foundation/storage/cloudbase-storage-http-adapter.js'
 import type { BindUserPlantCoverInput } from '../application/bind-user-plant-cover.js'
-import { COVER_ASSET_RULES, detectCoverImageMime, isOwnCoverFileId } from '../domain/cover-asset.js'
+import type { UserPlantAssetRules } from '../../configuration/business-policies/index.js'
+import { requirePolicy, type PolicyRulesPort } from '../../foundation/policy/require-policy.js'
+import { describeAllowedCoverMimeTypes, describeCoverByteLimit, detectCoverImageMime, isOwnCoverFileId } from '../domain/cover-asset.js'
 
 /** route-registry.json 中 bindUserPlantAsset 的冻结登记（user-plant-cover-asset/v1）。 */
 export const bindUserPlantCoverRoute: FrozenRoute = {
@@ -27,6 +29,8 @@ export const bindUserPlantCoverRoute: FrozenRoute = {
 export interface BindUserPlantCoverRouteDependencies extends AuthenticatedJsonRouteDependencies<UserPrincipalDto> {
   /** 云存储 Provider；未配置（缺凭证或环境）时为 undefined，登记返回 503。 */
   readonly storage: PrivateObjectStorage | undefined
+  /** 读取封面资产规则策略快照（user-plant/asset_rules）；null 时 503。 */
+  readonly readAssetRules: PolicyRulesPort<UserPlantAssetRules>
   /** 事务化登记用例。 */
   readonly bindCover: (input: BindUserPlantCoverInput) => Promise<HttpIdempotencyPublicResponseSnapshot>
   /** 可选资产引用生成器；缺省 ast_ + 18 字节随机数 base64url。 */
@@ -65,19 +69,20 @@ export function createBindUserPlantCoverRouteHandler(dependencies: BindUserPlant
       if (!isOwnCoverFileId(dto.fileId, principal.user_id)) { throw rejected('文件不在本人封面目录') }
       const storage = dependencies.storage
       if (storage === undefined) { throw unavailable() }
+      const rules = await requirePolicy(dependencies.readAssetRules)
       let url: string | null
       let bytes: Uint8Array | 'too_large'
       try {
         url = await storage.getDownloadUrl(dto.fileId)
-        bytes = url === null ? 'too_large' : await storage.download(url, COVER_ASSET_RULES.maxImageBytes)
+        bytes = url === null ? 'too_large' : await storage.download(url, rules.maxImageBytes)
       } catch { throw unavailable() }
       if (url === null) { throw rejected('文件不存在') }
-      if (bytes === 'too_large') { throw rejected('图片超过 5 MiB') }
+      if (bytes === 'too_large') { throw rejected(describeCoverByteLimit(rules.maxImageBytes)) }
       if (createHash('sha256').update(bytes).digest('hex') !== dto.contentSha256) { throw rejected('文件内容与摘要不一致') }
       const mime = detectCoverImageMime(bytes)
-      if (mime === null || !COVER_ASSET_RULES.allowedMimeTypes.includes(mime)) { throw rejected('只支持 JPEG、PNG、WebP 图片') }
+      if (mime === null || !rules.allowedMimeTypes.includes(mime)) { throw rejected(describeAllowedCoverMimeTypes(rules.allowedMimeTypes)) }
       return dependencies.bindCover({ userRef: principal.user_id, userPlantRef: dto.userPlantRef, fileId: dto.fileId, contentSha256: dto.contentSha256,
-        url, assetRef: createAssetRef(), nowMs, idempotency })
+        url, assetRef: createAssetRef(), nowMs, idempotency, replacedCoverCleanupDays: rules.replacedCoverCleanupDays })
     },
     validateData: data => validators.userPlantAssetResponse(data),
     validateError: body => validators.errorResponse(body),

@@ -10,6 +10,7 @@ import {
 } from '../../src/diagnosis/http/create-session-route.js'
 import { createRouteDispatcher } from '../../src/foundation/http/route-dispatcher.js'
 import type { UserPrincipalDto } from '../../src/contracts/types.js'
+import { fixturePolicyPorts } from './business-policy-fixtures.js'
 
 /** e2e_real_api/L3：真实本地HTTP→共享事务→隔离MySQL；身份解析和模型准备为替身，非云端发布证明。 */
 export function registerPestCreationHttpMysqlTests(dependencies: {
@@ -27,7 +28,7 @@ export function registerPestCreationHttpMysqlTests(dependencies: {
       projectPublicResponse: projectPestDiagnosisCreationResponse
     })
     const audits: unknown[] = []
-    const handler = createDiagnosisCreationRouteHandler({
+    const handler = createDiagnosisCreationRouteHandler({ ...fixturePolicyPorts(),
       resolvePrincipal: async command =>
         ({
           principalType: 'user',

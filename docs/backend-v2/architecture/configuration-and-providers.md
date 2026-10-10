@@ -27,7 +27,7 @@
 - 有业务含义、将来可能调整的值（时长、天数、分页默认与上限、推荐条数、上传限制、算法参数等）一律进入**领域业务策略**（BusinessPolicyRelease：不可变版本、SHA-256、active 指针、可回滚、按版本复算），按业务域合并为少量类型化策略，禁止一参一策略与万能 KV。
 - 凭证、连接、Provider 运行时限、批量、租约、重试、日志级别等运维参数由**部署环境变量**提供或在配置目录 `environmentOverrides` 登记的上下限内覆盖代码默认值，越界即启动失败；凭证只登记变量名。
 - **代码常量只保留**协议、安全、数据完整性不变量与 Schema 硬边界（事实不可变、令牌熵、HMAC 最小字节、端口、单位换算、状态码、枚举、防攻击请求体上限、公开合同绝对上限），每条须写明为何不能是策略或环境变量；代码硬边界同时是对应策略 AJV Schema 的上下限。
-- 读取与校验集中在 `cloudfunctions-v2/src/configuration/environment.ts` 与各策略 reader；分层判定规则、迁移清单与实施计划见 `configuration-layers.md`（v2）。
+- 读取与校验集中在 `cloudfunctions-v2/src/configuration/environment.ts` 与通用类型化策略读取器 `src/foundation/policy/mysql-typed-policy-reader.ts`；策略版本的发布、激活、回滚统一用策略发布 CLI（`cloudfunctions-v2/scripts/policy-release.mjs`，默认 dry-run，条件切换并写审计）。分层判定规则、迁移清单与实施结果见 `configuration-layers.md`（v2），上线顺序见 `configuration-rollout-2026-10-10.md`。
 
 禁止建立任意字符串键值的“万能配置表”。每类策略都必须有独立 TypeScript 类型、AJV Schema、中文字段说明、语义校验和 owner。
 

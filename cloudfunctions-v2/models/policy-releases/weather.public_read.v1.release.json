@@ -1,0 +1,14 @@
+{
+  "releaseDocumentVersion": "business-policy-release-document/v1",
+  "domainCode": "weather",
+  "policyCode": "public_read",
+  "schemaVersion": "weather-public-read/v1",
+  "releaseVersion": "weather-public-read/v1.0.0",
+  "effectiveAt": "2026-10-10T00:00:00Z",
+  "changeNote": "用户 2026-10-10 裁定：城市气候推荐 top 默认与上限迁入策略发布，取值不变",
+  "policy": {
+    "contractVersion": "weather-public-read/v1",
+    "recommendTopDefault": 10,
+    "recommendTopMax": 50
+  }
+}

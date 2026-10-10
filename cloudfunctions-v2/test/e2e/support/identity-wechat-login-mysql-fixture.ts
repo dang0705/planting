@@ -25,6 +25,7 @@ import { createIdentityServer } from '../../../src/identity/http/server.js'
 import { createUserPlantServer } from '../../../src/user-plant/http/server.js'
 import { closeTestServer, listenTestServer } from './http-test-server.js'
 import { findProjectRoot } from '../../support/project-root.js'
+import { fixturePolicyPorts } from '../../support/business-policy-fixtures.js'
 
 const projectRoot = findProjectRoot()
 const schemaRoot = path.join(projectRoot, 'docs/backend-v2/schema')
@@ -356,7 +357,7 @@ export async function createIdentityWechatLoginMysqlFixture(): Promise<IdentityW
       providerCallCount += Number('1')
     })
 
-  const identityServer = createIdentityServer({
+  const identityServer = createIdentityServer({ ...fixturePolicyPorts(),
     connectionSource,
     // 多平台登录合同（用户 2026-10-09）：fake Provider 只接微信，其他平台按未配置失败关闭。
     verifyPlatformCode: (platform, code) => platform === 'wechat'
@@ -369,7 +370,7 @@ export async function createIdentityWechatLoginMysqlFixture(): Promise<IdentityW
   })
   const identityBaseUrl = await listenTestServer(identityServer)
 
-  const userPlantServer = createUserPlantServer({
+  const userPlantServer = createUserPlantServer({ ...fixturePolicyPorts(),
     connectionSource,
     now: () => nowMs,
     resolveCapabilitySnapshot: async () => {

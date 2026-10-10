@@ -1,3 +1,5 @@
+import { idempotencyRetentionMs, type HttpRequestWriteRules } from '../../configuration/business-policies/index.js'
+import { requirePolicy, type PolicyRulesPort } from '../../foundation/policy/require-policy.js'
 import { createHash } from 'node:crypto'
 import type { IncomingMessage, IncomingHttpHeaders } from 'node:http'
 import { RUNTIME_PARAMETERS } from '../../configuration/runtime-parameters.js'
@@ -54,6 +56,8 @@ export interface DiagnosisCreationRouteDependencies {
   ) => Promise<HttpIdempotencyPublicResponseSnapshot>
   /** 服务端时钟，不采纳客户端时间。 */
   readonly now: () => number
+  /** 读取 HTTP 写入策略快照（幂等保留期，http/request_write）；null 时 503。 */
+  readonly readHttpWriteRules: PolicyRulesPort<HttpRequestWriteRules>
   /** 只记录固定请求链的脱敏结果。 */
   readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
 }
@@ -68,8 +72,6 @@ type Restricted = {
 }
 /** 与共享HTTP目录已确认值一致，不新增诊断策略。 */
 const bodyLimitBytes = RUNTIME_PARAMETERS.http.jsonBodyLimitBytes.value
-/** 幂等结果保留毫秒（`http.idempotency.retention_hours` 换算）。 */
-const retentionMs = RUNTIME_PARAMETERS.http.idempotencyRetentionHours.value * 60 * 60 * 1000
 const keyPattern = /^[\x20-\x7e]{8,128}$/u
 const validators = createPublicContractValidators()
 const digest = (value: string) => createHash('sha256').update(value).digest('hex')
@@ -196,7 +198,7 @@ export function createDiagnosisCreationRouteHandler(
       dtoValidate: { kind: 'execute', run: parse },
       buildCommand: {
         kind: 'execute',
-        run: ({ dto, principal }) => {
+        run: async ({ dto, principal }) => {
           if (principal.principalType !== 'user') {
             throw new PublicRequestError(503, 'SERVICE_UNAVAILABLE', '临时问诊创建暂不可用')
           }
@@ -224,7 +226,7 @@ export function createDiagnosisCreationRouteHandler(
                   ? calculatePestDiagnosisCreationRequestHash(input)
                   : calculateDiagnosisCreationRequestHash(input),
               createdAtMs: startedAtMs,
-              expiresAtMs: startedAtMs + retentionMs
+              expiresAtMs: startedAtMs + idempotencyRetentionMs(await requirePolicy(deps.readHttpWriteRules))
             }
           }
         }

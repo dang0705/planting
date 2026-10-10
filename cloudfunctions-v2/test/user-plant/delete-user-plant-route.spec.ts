@@ -13,6 +13,7 @@ import {
   createDeleteUserPlantRouteHandler,
   deleteUserPlantRoute
 } from '../../src/user-plant/http/delete-user-plant-route.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /**
  * Expected 来源：`docs/backend-v2/contracts/user-plant.md`「删除公开接口」（2026-10-10 用户裁决冻结）：
@@ -43,7 +44,7 @@ async function startService(result?: HttpIdempotencyPublicResponseSnapshot) {
   const audit: RequestChainAuditEvent[] = []
   const dispatch = createRouteDispatcher([{
     route: deleteUserPlantRoute,
-    handler: createDeleteUserPlantRouteHandler({
+    handler: createDeleteUserPlantRouteHandler({ ...fixturePolicyPorts(),
       authenticate: createUserBearerAuthenticator(async () => principal),
       now: () => nowMs,
       writeAudit: event => { audit.push(event) },

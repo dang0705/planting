@@ -33,6 +33,8 @@ export interface GuestClaimWiringDependencies {
   readonly now: () => number
   /** 请求结果审计端口，只接收脱敏事件。 */
   readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
+  /** 认领处理租约秒数（环境变量层 V2_USER_PLANT_GUEST_CLAIM_LEASE_SECONDS，默认 30）。 */
+  readonly guestClaimLeaseSeconds: number
 }
 
 /** 组装游客认领路由：证明→登记→租约→完成→收据→对象类别，全部为已验收的 user-plant 仓储与用例。 */
@@ -52,7 +54,7 @@ export function createGuestClaimRouteHandler(d: GuestClaimWiringDependencies): R
     driver: d.driver,
     completedReceiptReader,
     registrationRepository: createMysqlGuestClaimCommandRegistrationRepository({ lockAndVerify }),
-    leaseRepository: createMysqlGuestClaimLeaseRepository(),
+    leaseRepository: createMysqlGuestClaimLeaseRepository(d.guestClaimLeaseSeconds * 1000),
     completeClaim
   })
   const kindsReader = createMysqlGuestCaseObjectKindsReader(d.connectionSource)

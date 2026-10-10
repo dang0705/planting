@@ -12,6 +12,7 @@ import type { RequestChainAuditEvent } from '../../src/foundation/http/request-c
 import { createMysqlCapabilitySnapshotReader } from '../../src/subscription/repository/mysql-capability-snapshot-reader.js'
 import { createUserPlantServer } from '../../src/user-plant/http/server.js'
 import { findProjectRoot } from '../support/project-root.js'
+import { fixturePolicyPorts } from '../support/business-policy-fixtures.js'
 
 /**
  * unit_real_data：本机 Docker MySQL 8.4 + v2 schema manifest 全量 DDL + 真实 user-plant HTTP 服务
@@ -100,7 +101,7 @@ beforeAll(async () => {
         '${'b'.repeat(64)}', ${now - 1000}, ${now + 60_000}, ${now - 1000}, ${now - 1000} FROM business_policy_releases r;`)
   const port = Number(docker(['port', container, '3306/tcp']).split(':').at(-1))
   const source = createMysql2ConnectionSource({ host: '127.0.0.1', port, database, user: 'root', password: '' })
-  server = createUserPlantServer({
+  server = createUserPlantServer({ ...fixturePolicyPorts(),
     connectionSource: source,
     now: () => now,
     resolveCapabilitySnapshot: createMysqlCapabilitySnapshotReader(source, () => now),

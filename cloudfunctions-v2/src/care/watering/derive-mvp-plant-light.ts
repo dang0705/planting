@@ -3,10 +3,8 @@ import type { DryingRange } from './replay-dry-progress.js'
 
 /** 每天毫秒数。 */
 const millisecondsPerDay = 86_400_000
-/** 室内实测温湿度只覆盖测量后 24 小时（合同 2a 节）。 */
-const indoorClimateWindowMs = 86_400_000
-/** 全波段日光每 W/m² 光合光子通量的物理上界（μmol/J，文献约 2.0～2.1，留余量）。 */
-const maximumPpfdPerGhi = 2.3
+/** 每小时毫秒数。 */
+const millisecondsPerHour = 3_600_000
 
 /** 单通道光照所需的已发布策略字段。 */
 export interface MvpPlantLightPolicy {
@@ -23,6 +21,10 @@ export interface MvpPlantLightPolicy {
   }
   /** Lux 读数可继续使用的最长天数。 */
   readonly luxAnchorMaxAgeDays: number
+  /** 全波段日光每 W/m² 光合光子通量的物理上界（μmol/J；v4 来自发布，v1–v3 按版本语义为 2.3）。 */
+  readonly maximumPpfdPerGhi: number
+  /** 室内实测温湿度覆盖测量后的小时数（合同 2a 节；v4 来自发布，v1–v3 按版本语义为 24）。 */
+  readonly indoorClimateWindowHours: number
 }
 
 /** 植物位置的一次 Lux 读数。 */
@@ -109,7 +111,7 @@ export function deriveMvpPlantLightIntervals(input: MvpPlantLightInput): MvpPlan
     min: lightReading.lux * (1 - uncertainty) / policy.luxPerPpfd.max,
     max: lightReading.lux * (1 + uncertainty) / policy.luxPerPpfd.min,
   }
-  if (measured.min > anchorGhi * maximumPpfdPerGhi) { return { status: 'insufficient_evidence', reason: 'anchor_inconsistent' } }
+  if (measured.min > anchorGhi * input.policy.maximumPpfdPerGhi) { return { status: 'insufficient_evidence', reason: 'anchor_inconsistent' } }
   const climateVpd = indoorClimate === null ? null
     : saturationVaporPressureKpa(indoorClimate.temperatureC) * (1 - indoorClimate.relativeHumidityPercent / 100)
   const intervals: MvpPlantLightInterval[] = []
@@ -117,7 +119,7 @@ export function deriveMvpPlantLightIntervals(input: MvpPlantLightInput): MvpPlan
     if (item.ghiWattsPerM2 === null) { continue }
     const scale = item.ghiWattsPerM2 / anchorGhi
     const measuredClimate = indoorClimate !== null && climateVpd !== null && item.intervalStartMs >= indoorClimate.measuredAtMs
-      && item.intervalStartMs < indoorClimate.measuredAtMs + indoorClimateWindowMs
+      && item.intervalStartMs < indoorClimate.measuredAtMs + input.policy.indoorClimateWindowHours * millisecondsPerHour
     intervals.push({
       start: item.intervalStartMs, end: item.intervalEndMs,
       ppfd: { min: measured.min * scale, max: measured.max * scale },
