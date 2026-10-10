@@ -146,17 +146,17 @@
               "type": "object",
               "additionalProperties": false,
               "required": [
-                "ephemeralCaseRef"
+                "ephemeralPlantCaseRef"
               ],
               "properties": {
-                "ephemeralCaseRef": {
+                "ephemeralPlantCaseRef": {
                   "type": "string",
                   "pattern": "^epc_[A-Za-z0-9_-]{8,60}$"
                 }
               }
             }
           ],
-          "description": "归属二选一：本人用户植物，或本人登录后的临时案例（是否开放临时案例待裁决）"
+          "description": "归属二选一：本人用户植物，或本人登录临时案例（authenticated-ephemeral-plant-case/v1 的 ephemeralPlantCaseRef）；游客临时案例不可用"
         },
         "imageRefs": {
           "type": "array",
@@ -227,6 +227,9 @@
         "retakeAdviceZh": {
           "type": "string",
           "maxLength": 200
+        },
+        "imageAssessment": {
+          "$ref": "#/$defs/ImageAssessment"
         }
       },
       "allOf": [
@@ -247,12 +250,14 @@
             "required": [
               "result",
               "chargedPoints",
-              "completedAt"
+              "completedAt",
+              "imageAssessment"
             ],
             "properties": {
               "result": true,
               "chargedPoints": true,
-              "completedAt": true
+              "completedAt": true,
+              "imageAssessment": true
             }
           }
         },
@@ -282,6 +287,83 @@
               "chargedPoints": {
                 "type": "integer",
                 "const": 0
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "if": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "const": "released_no_charge"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "type": "object",
+            "required": [
+              "imageAssessment"
+            ],
+            "properties": {
+              "imageAssessment": true
+            }
+          }
+        },
+        {
+          "type": "object",
+          "if": {
+            "type": "object",
+            "properties": {
+              "releaseReason": {
+                "const": "not_plant"
+              }
+            },
+            "required": [
+              "releaseReason"
+            ]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "imageAssessment": {
+                "type": "object",
+                "properties": {
+                  "verdict": {
+                    "const": "not_plant"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "if": {
+            "type": "object",
+            "properties": {
+              "releaseReason": {
+                "const": "image_unusable"
+              }
+            },
+            "required": [
+              "releaseReason"
+            ]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "imageAssessment": {
+                "type": "object",
+                "properties": {
+                  "verdict": {
+                    "const": "image_unusable"
+                  }
+                }
               }
             }
           }
@@ -339,6 +421,92 @@
         "nextCursor": {
           "type": "string",
           "maxLength": 200
+        }
+      }
+    },
+    "ImageAssessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verdict",
+        "perImage"
+      ],
+      "description": "脱敏后的公开图片评估（服务端从模型分类与服务端校验归约，不含模型原文）",
+      "properties": {
+        "verdict": {
+          "type": "string",
+          "enum": [
+            "assessable",
+            "insufficient_evidence",
+            "not_plant",
+            "image_unusable"
+          ],
+          "description": "assessable 可判定；insufficient_evidence 图片可用但证据不足；not_plant 非植物；image_unusable 图片不可用"
+        },
+        "perImage": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "imageIndex",
+              "visiblePart",
+              "quality",
+              "qualityIssues"
+            ],
+            "properties": {
+              "imageIndex": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 3
+              },
+              "visiblePart": {
+                "type": "string",
+                "enum": [
+                  "whole_plant",
+                  "leaf_front",
+                  "leaf_back",
+                  "leaf_edge",
+                  "petiole",
+                  "stem",
+                  "stem_base",
+                  "flower",
+                  "fruit",
+                  "soil_surface",
+                  "root",
+                  "root_crown",
+                  "unknown"
+                ]
+              },
+              "quality": {
+                "type": "string",
+                "enum": [
+                  "good",
+                  "limited",
+                  "unusable"
+                ]
+              },
+              "qualityIssues": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "blur",
+                    "overexposed",
+                    "underexposed",
+                    "too_far",
+                    "occluded",
+                    "glare",
+                    "compression",
+                    "not_plant"
+                  ]
+                }
+              }
+            }
+          }
         }
       }
     }

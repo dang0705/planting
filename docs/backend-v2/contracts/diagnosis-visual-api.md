@@ -40,7 +40,7 @@
 
 - `subject` 二选一：
   - `{ userPlantRef }`：本人用户植物；
-  - `{ ephemeralCaseRef }`：本人登录后的临时案例。**是否开放临时案例待裁决**，见第 6 节。
+  - `{ ephemeralPlantCaseRef }`：本人登录临时案例（2026-10-11 已定，见第 6 节）。
 - `imageRefs`：1～3 个，不能重复（`diagnosis.visual.max_images` = 3）。
 - `userQuestionZh`：可选，≤200 字。
 - 客户端**不能**提交模型、提示词、上下文或价格相关字段，出现额外字段即 `400 VALIDATION_FAILED`。
@@ -48,7 +48,7 @@
 处理顺序（服务端）：
 
 1. 身份与能力：游客或无能力 → 401/403。
-2. 归属：用户植物不属于本人或不存在 → `404 USER_PLANT_NOT_FOUND`；已归档 → `409 USER_PLANT_ARCHIVED`；图片未登记或不属于本人 → `404 NOT_FOUND`。
+2. 归属：用户植物不属于本人或不存在 → `404 USER_PLANT_NOT_FOUND`；已归档 → `409 USER_PLANT_ARCHIVED`；临时案例不属于本人、不存在、已过期或不是 `active` 状态 → `404 NOT_FOUND`；图片未登记或不属于本人 → `404 NOT_FOUND`。
 3. 幂等：同一 `user_id + Idempotency-Key`，参数相同就返回首次结果；参数不同 → `409 IDEMPOTENCY_CONFLICT`。
 4. **预占额度**（在任何模型调用之前）：按成本策略的 `estimatedPoints` 原子预占。余额不足 → `409 AI_QUOTA_INSUFFICIENT`，不创建诊断、不调用模型。
 5. 读取上下文摘要（长期植物，接口实现后）→ 图片统一缩放到 1024² 以内 → 估算单次输入不超过 28.8K tokens（超出则释放预占并返回 `400 VALIDATION_FAILED`）。
@@ -61,10 +61,14 @@
 | 状态 | 含义 | 结果 | 扣点 |
 |---|---|---|---|
 | `processing` | 处理中 | 无 | 预占中 |
-| `completed` | 已完成 | `result`（`diagnosis-result/v2`）与 `completedAt` | 按实际可审计成本结算：`chargedPoints = ceil(costMicros / 800)`，不超过预估点数 |
-| `released_no_charge` | 非植物（`not_plant`）或图片不可用（`image_unusable`） | 可带 `retakeAdviceZh` | **0**，预占全部释放 |
+| `completed` | 已完成 | `result`（`diagnosis-result/v2`）、`imageAssessment` 与 `completedAt` | 按实际可审计成本结算：`chargedPoints = ceil(costMicros / 800)`，不超过预估点数 |
+| `released_no_charge` | 非植物（`not_plant`）或图片不可用（`image_unusable`） | `imageAssessment`（必填，且结论与释放原因一致），可带 `retakeAdviceZh` | **0**，预占全部释放 |
 | `failed_no_charge` | 模型失败（`model_failed`）或安全门两次拒绝（`safety_gate_rejected`） | 无 | **0**，预占全部释放；已发生的供应商成本由平台承担并记入对账 |
 
+- **图片评估 `imageAssessment`**（2026-10-11 Figma 反查补齐）：服务端从模型的图片分类和服务端校验归约出脱敏后的公开枚举。
+  - `verdict`：`assessable`（可判定）、`insufficient_evidence`（图片可用但证据不足）、`not_plant`（非植物）、`image_unusable`（图片不可用）；
+  - `perImage[]`：逐张图片的 `imageIndex`、`visiblePart`、`quality`（good/limited/unusable）和 `qualityIssues`（blur、overexposed、underexposed、too_far、occluded、glare、compression、not_plant）。
+  - 只公开这些枚举，不公开模型原文、模型给的备注或置信说明。
 - **回放**：历史列表与按编号取结果，返回的都是当时保存的结构化结果。**不会重新调用模型**，也不会因为提示词或模型换版而改变。服务端内部记录版本组（模型、提示词 SHA-256、输出 Schema、请求参数、价目快照），只用于审计与复算，不出现在公开响应里。
 - 公开响应**不含**：`user_id`、提示词、模型原文、模型代码、预占编号、成本微元等内部字段。
 
@@ -109,13 +113,17 @@
 ## 5. 与公开结果 v2 的对应
 
 - `completed` 的 `result` 必须通过 `diagnosis-result/v2` 校验，其中 `generationSource = model_constrained`，并带 AI 生成标注。
-- 模型输出先过 `diagnosis-visual-gen-output` 格式校验与服务端安全门，再由服务端投影成 v2。远程参考声明、安全间隔期提醒、「确认后才会记入养护」等固定文案由服务端补写。
+- 模型输出先过 `diagnosis-visual-gen-output` 格式校验与服务端安全门，再由服务端投影成 v2。远程参考声明、「确认后才会记入养护」等固定文案由服务端补写。
+- **两项用药提示由服务端补写**（2026-10-11 裁定，输出瘦身 A1）：凡是含药剂的步骤，服务端都写入 `labelDosageNotice: true` 和对应正文；可食用性为「是」或「未知」时，再写入 `edibleSafetyIntervalNotice: true` 和安全间隔期正文。模型不再负责这两句，这两类违规因此在根源上不会出现。
+- 公开 `recommendedAction.careProposalKind` 与 care 域能力类型对齐：`watering`、`fertilizing`、`lighting`、`ventilation`、`none`。模型给出的 `humidity`、`repotting` 等非 care 类型投影为 `none`（只作建议展示，不提供「加入养护」）。当前 care 域确认用例只支持浇水相关（安排检查盆土或记录浇水），其他类型的确认入口随 care 能力上线后开放。
 - 结果中的养护类建议只是建议，用户确认后由 care 用例写入。
 
-## 6. 待裁决
+## 6. 临时案例（2026-10-11 已定）
 
-- **登录用户的临时案例能否诊断**：能力目录中 `USER_DIAGNOSIS_VISUAL` 的 scope 是 `user_plant`。
-  - **推荐：允许**，并把 scope 扩为「本人用户植物或本人登录临时案例」。
-  - 理由：临时案例是「先诊断、后决定是否加入花园」的常见入口（合同 `user-plant.authenticated_ephemeral.case_ttl_hours` 已有）；扣点仍按登录用户的 `user_id` 结算，归属清楚。
-  - 临时案例没有长期上下文，只用临时案例允许的有限事实。
-  - 不开放的话，用户必须先建档才能诊断，转化路径更长。
+依据：README 业务流与 `business-domain.md` §9/§11——已登录用户可以主动选择临时植物做问诊，临时结果不写入用户植物事实。
+
+- 能力目录中 `USER_DIAGNOSIS_VISUAL` 的范围改为 `user_plant_or_authenticated_ephemeral`：**本人用户植物，或本人登录临时案例**。
+- 登录用户的临时案例必须走 `authenticated-ephemeral-plant-case/v1`：由 `UserPrincipal` 与服务端保存的用户内部键授权，**不得借用游客匿名证明**（`X-QHZ-Guest-Proof`）。游客临时案例不能使用视觉诊断。
+- **扣点记在登录用户**的 `user_id` 名下，与用户植物诊断相同。
+- **临时结果不得写入任何 user_plant 事实**：不写养护事实、计划、提醒、时间线或长期上下文。用户之后把临时案例绑定为用户植物时，按临时案例合同只增加归属，不改写诊断结果。
+- 临时案例的上下文摘要只允许临时案例事实（植物身份、百科需求、城市级位置、辐射、气候剖面）；可食用性通常为「未知」，因此凡是用药步骤都会由服务端补写安全间隔期提示。

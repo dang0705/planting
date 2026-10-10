@@ -152,7 +152,7 @@
       "file": "schemas/diagnosis-result.v2.schema.json",
       "owner": "diagnosis",
       "status": "P1_PENDING",
-      "sha256": "fc6ade91983cb53b80e4a17baeda0245a9d2b6112a525e0e44a04ff6ed90c9f1"
+      "sha256": "cdd205794b224c764972d66415161184310e12989a2c02ebee064ea33079142b"
     },
     {
       "id": "diagnosis-visual-gen-agent-allowlist",
@@ -200,7 +200,7 @@
       "file": "diagnosis-visual-api.md",
       "owner": "diagnosis + storage + subscription",
       "status": "FROZEN_NOT_IMPLEMENTED",
-      "sha256": "65bf2eb0acb735f9800b57920b023c48dd72378f16cec56aafd2c730fb4397e1"
+      "sha256": "03b7a0e42157a2e70a918eae61a351a56f818caa2a758cb732300f55a899c8bf"
     },
     {
       "id": "diagnosis-visual-api-schema",
@@ -208,7 +208,7 @@
       "file": "schemas/diagnosis-visual-api.v1.schema.json",
       "owner": "diagnosis",
       "status": "FROZEN_NOT_IMPLEMENTED",
-      "sha256": "4810bad85e6beb78575fdf16cae3a44df48b3297038e92ecbffc69e7d8417453"
+      "sha256": "0073fa2cb23ad77a0d052039eaac2b641f350a1ff2dbb2bae57faa401b60b049"
     },
     {
       "id": "diagnosis-knowledge-reference-index",

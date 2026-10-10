@@ -10,7 +10,7 @@
     "business-domain.md": "8c721f709a109a3c0abd95be05dce5d5f0daa5bb0ab03185994ff1b87ca85afd",
     "business-domain-layers.md": "fa37900621a478e656ca5a5e00bec995bb0889a5249a3f9c8708da7cee95458f",
     "phases/first-release-scope.md": "a69d9beca5f2e777e542af6b90318a518b38f82d0b2ae3a335e2eb6f6fd778c4",
-    "contracts/diagnosis-rich-response-experiment.md": "c6558d61dd137aefbb9818d4ad7659ae6f63bbebfe75835d1b3df9d9a6e337e5",
+    "contracts/diagnosis-rich-response-experiment.md": "327bec2e807798925c37c59ab9b92f044161d8829e6b2895c4cecb580b327849",
     "contracts/diagnosis-knowledge-sources.md": "2f44587b49d4fd78cda50820c9f8e1e4322eb195253b13922cbeef3177f0a352",
     "contracts/diagnosis-outcome-fields.md": "bb9007306df2cf12022873add81f121b8ee87f534a96148753e4d02e25817094",
     "contracts/authenticated-ephemeral-plant-case.md": "6846d3316a32cbed04fce258c6ed7cab3f891bb98913c918a4c5b9d62b9353eb",
@@ -21,8 +21,8 @@
     "business-to-technical-map.md": "bdf7fb49ea6ebee96a275172dd9145f481a54e131457f0bae4d30692cc6fa212",
     "architecture-rules.md": "95d6ed2f917caf66f8f5e07efe782c682ba31939337fc738a9fee18e4b603547",
     "configuration-and-providers.md": "e127fffc474b78254d55512aabd46f12b79d0e704f02150767fed27d84967050",
-    "configuration-variable-catalog.json": "c4d4e5c0b72e09042586b807141862fdbde2884654e0a22e9d9bbdbc5d0f9613",
-    "configuration-variable-catalog.md": "58f04932f5b336699cb214a73f1bb99296f3ac20ed9c764c134f25233f1be0b0"
+    "configuration-variable-catalog.json": "4320c667e282ce04a0a7ab02135a23959c45d4b825eab308118b1ccccca747f7",
+    "configuration-variable-catalog.md": "a6c9d04c8194cfb56c83e61e04f9d44a91ebd3f1db47d5297f27d4bc6cec0f87"
   },
   "diagrams": {
     "business": "56af49f641ebec6ed2a5b06e16634e8841b2f3cf6bebd018fde0c0b0283ef1f0",

@@ -19154,5 +19154,38 @@
       "expectedActualBilling": 0,
       "note": "账号处于仅使用免费额度模式；以控制台为准"
     }
+  },
+  "round10": {
+    "at": "2026-10-11",
+    "goal": "查清 A2（JSON Schema 严格模式 + 短示例）违规暴增与输入 tokens 只有约 4,700 的原因",
+    "model": "qwen3.7-flash-2026-07-15",
+    "calls": 2,
+    "method": "同一 A2 前缀（13,557 字符）、同一纯文本任务（无图片），只改请求结构：① 严格模式 + system 为纯字符串（不带 cache_control）；② JSON Object 模式 + system 为数组并带 cache_control（与原 A2 运行除 response_format 外相同）。只记录 usage、HTTP 状态和顶层键数量，不保存原文。",
+    "results": [
+      {
+        "mode": "json_schema strict + system 纯字符串",
+        "status": 200,
+        "promptTokens": 7343,
+        "completionTokens": 453,
+        "cachedTokens": 0
+      },
+      {
+        "mode": "json_object + system 数组 + cache_control",
+        "status": 200,
+        "promptTokens": 7343,
+        "completionTokens": 352,
+        "cacheCreationTokens": 7295
+      }
+    ],
+    "comparisonWithRound9": "原 A2 运行（json_schema strict + system 数组 + cache_control）：同一前缀加 1 张图，输入 tokens 4,602～4,714、图片约 882～994，即文本只有约 3,700 tokens，且没有任何缓存创建。",
+    "conclusion": [
+      "输入 tokens 异常与「严格模式 + system 以数组形式携带 cache_control」这一组合有关：同一前缀在严格模式下改用纯字符串 system 时为 7,343 tokens（完整），在 JSON Object 模式下用数组 + cache_control 也是 7,343 tokens 并正常建缓存；只有两者叠加时文本约减半且不建缓存。推断供应商在该组合下没有完整读取 system 内容（未进一步定位被丢弃的部分，以免超出 1～2 次调用的授权）。",
+      "违规暴增的主要原因：原 A2 运行中模型没有看到完整前缀，安全用药与用语规则（【5】【6】）很可能缺失，于是出现剂量、具体次数和缺提示；次要原因：严格 Schema 把两项提示写成普通布尔值，模型可以填 false。",
+      "处置：若以后采用严格模式，system 必须用纯字符串（放弃显式缓存，改依赖 qwen3.7-flash 支持的隐式缓存），并在小样本上重测；两项提示已改由服务端补写（2026-10-11 裁定），严格 Schema 中不再需要这两个字段。"
+    ],
+    "spendCny": {
+      "listPriceEquivalent": 0.0036,
+      "note": "约 14,686 输入 + 805 输出 tokens；账号处于仅使用免费额度模式，预期实际账单 0 元"
+    }
   }
 }

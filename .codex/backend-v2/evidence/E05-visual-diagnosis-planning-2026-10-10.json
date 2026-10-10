@@ -1,7 +1,7 @@
 {
   "capturedAt": "2026-10-10",
   "ticket": "E05 / ClickUp z8v0kmrg8a（[P1] 诊断知识来源、园艺原因及 Outcome/Action 合同）、z8v0kmr974（[P4] 固定/动态问诊与小青工具）",
-  "status": "r13_image_input_contract_ab_api_contract",
+  "status": "r14_contract_1of4_revisions",
   "testLayer": "none（纯规划，无测试、无 TDD 声明）",
   "userRequest": "用户 2026-10-10：开始视觉诊断规划；v1 覆盖面过窄；要求最优提示词、固定前缀对缓存友好、视觉模型返回完整病因与解决方案；提供竞品结果页截图作信息结构参考",
   "scopeGuards": {
@@ -187,6 +187,11 @@
       "rev": "r13",
       "at": "2026-10-11",
       "scope": "图片输入合同、max_images confirmed、D10、A/B、生成式诊断接口合同（z8v0kmvhnb）"
+    },
+    {
+      "rev": "r14",
+      "at": "2026-10-11",
+      "scope": "临时案例范围、A1 采用与服务端补写提示、A2 排查、imageAssessment、careProposalKind"
     }
   ],
   "userDecisions_2026_10_10": {
@@ -675,5 +680,20 @@
       "expectedBillingCny": 0
     },
     "d10": "v1 线上用户图不使用"
+  },
+  "r14": {
+    "tdd": {
+      "scope": "capability-catalog-ephemeral-scope.spec.ts 2 条 + p1-configuration-architecture 期望更新：实现前失败",
+      "contracts": "diagnosis-visual-api 与 diagnosis-result-v2 合同测试新增/改写 14 条：实现前失败",
+      "scorer": "visual-diagnosis-eval.spec.ts 改写 4 条：实现前失败",
+      "promptV13": "visual-diagnosis-prompt-v13.spec.ts 2 条：先写后验，受控突变使 2 条变红，恢复后通过"
+    },
+    "a2Investigation": {
+      "calls": 2,
+      "listPriceCny": 0.0036,
+      "finding": "严格模式 + system 数组 + cache_control 组合下输入约减半且不建缓存"
+    },
+    "notDeployed": "能力目录新范围未发布到测试环境策略",
+    "verification": "vitest 323 文件 3558 通过 / 5 跳过 / 0 失败；tsc 0 错误"
   }
 }

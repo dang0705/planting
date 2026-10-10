@@ -47,6 +47,7 @@ const generatedAgentAction = {
   followUpZh: '几天后复查叶背若虫。',
   publicSources: [],
   aiGeneratedNotice: true,
+  careProposalKind: 'none',
   requiresUserConfirmation: true
 }
 
@@ -176,6 +177,29 @@ describe('公开诊断结果 v2（受约束生成式）结构合同', () => {
     )
     expect(contract).toContain('按产品标签的间隔重复处理，并在下次处理前复查')
     expect(contract).toContain('每 7 天喷一次')
+  })
+
+  // 2026-10-11 Figma 反查：公开行动需要 careProposalKind，枚举与 care 域能力类型（care-capability-result/v1）对齐。
+  test.each(['watering', 'fertilizing', 'lighting', 'ventilation', 'none'])(
+    '接受与 care 能力对齐的 careProposalKind：%s',
+    careProposalKind => {
+      expect(createValidator()(withAction({ careProposalKind }))).toBe(true)
+    }
+  )
+
+  test('拒绝 care 域不存在的 careProposalKind，且生成式行动必须给出该字段', () => {
+    expect(createValidator()(withAction({ careProposalKind: 'humidity' }))).toBe(false)
+    expect(createValidator()(withAction({}, ['careProposalKind']))).toBe(false)
+  })
+
+  // 2026-10-11 裁定（输出瘦身 A1）：两项用药提示由服务端在含药剂的步骤里补写。
+  test('合同 C2 写明两项用药提示由服务端补写，可食用性未知时必须补安全间隔期', () => {
+    const contract = fs.readFileSync(
+      path.join(root, 'docs/backend-v2/contracts/diagnosis-rich-response-experiment.md'),
+      'utf8'
+    )
+    expect(contract).toContain('由服务端在含药剂的步骤里补写')
+    expect(contract).toContain('可食用性为「未知」时也必须补写安全间隔期')
   })
 
   // 安全门：用药必须提示按产品标签。

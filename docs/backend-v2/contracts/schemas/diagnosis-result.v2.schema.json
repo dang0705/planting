@@ -425,15 +425,26 @@
         },
         "labelDosageNotice": {
           "const": true,
-          "description": "已提示按产品标签用量与间隔使用；提及药剂时必填。"
+          "description": "已提示按产品标签用量与间隔使用；提及药剂时必填。由服务端在含药剂的步骤里补写（2026-10-11 裁定），不由模型负责。"
         },
         "edibleSafetyIntervalNotice": {
           "const": true,
-          "description": "已提示采收前遵守产品标签安全间隔期；可食用或未知且提及药剂时必填。"
+          "description": "已提示采收前遵守产品标签安全间隔期；可食用或可食用性未知且提及药剂时必填。由服务端补写（2026-10-11 裁定），不由模型负责。"
         },
         "aiGeneratedNotice": {
           "const": true,
           "description": "该行动为 AI 生成建议的标注；model_constrained 时必填。"
+        },
+        "careProposalKind": {
+          "type": "string",
+          "enum": [
+            "watering",
+            "fertilizing",
+            "lighting",
+            "ventilation",
+            "none"
+          ],
+          "description": "养护建议类型，与 care 域能力类型（care-capability-result/v1：watering、fertilizing、lighting、ventilation）对齐；none 表示不是可加入养护的建议。前端「加入养护」按此写入对应 care 类型，仍须用户确认；模型给出的 humidity、repotting 等非 care 类型由服务端投影为 none。"
         }
       },
       "allOf": [
@@ -467,7 +478,8 @@
           },
           "then": {
             "required": [
-              "aiGeneratedNotice"
+              "aiGeneratedNotice",
+              "careProposalKind"
             ],
             "properties": {
               "stepsZh": {
@@ -479,7 +491,8 @@
                 },
                 "type": "array"
               },
-              "aiGeneratedNotice": true
+              "aiGeneratedNotice": true,
+              "careProposalKind": true
             },
             "type": "object"
           }

@@ -4481,13 +4481,15 @@
               "member"
             ],
             "consumesAiPoints": true,
-            "scope": "user_plant"
+            "scope": "user_plant_or_authenticated_ephemeral"
           }
         ],
         "unknownCapabilityPolicy": "deny"
       },
       "sourceRefs": [
-        "docs/backend-v2/contracts/principal-and-capability.md"
+        "docs/backend-v2/contracts/principal-and-capability.md",
+        "docs/backend-v2/contracts/diagnosis-visual-api.md",
+        "docs/backend-v2/contracts/authenticated-ephemeral-plant-case.md"
       ],
       "consumers": [
         "subscription",
@@ -4499,7 +4501,8 @@
       "decisionGroup": "entitlements_cost_rewards",
       "allowed": "subscription-capability-catalog/v1 精确白名单；禁止通配符和目录外能力",
       "configurationTier": "policy",
-      "codeLocations": []
+      "codeLocations": [],
+      "decisionNote": "2026-10-11 主代理依据 README 业务流与 business-domain.md §9/§11 裁定：USER_DIAGNOSIS_VISUAL 范围为本人用户植物或本人登录临时案例（authenticated-ephemeral-plant-case/v1），扣点记在登录 user_id，临时结果不写入任何 user_plant 事实；游客不可用。已发布的测试环境策略仍为旧值，需另行发布新版本（本次未发布）"
     },
     {
       "owner": "subscription",

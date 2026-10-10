@@ -15,8 +15,11 @@ export type CapabilityCatalogEntry = {
   readonly tiers: readonly CapabilityCatalogTier[]
   /** 该能力执行是否必须走 AI 点数额度。 */
   readonly consumesAiPoints: boolean
-  /** 受控业务范围；仅接受当前目录已登记值。 */
-  readonly scope: 'public' | 'user_plant' | 'user' | 'reward_grant'
+  /**
+   * 受控业务范围；仅接受当前目录已登记值。
+   * user_plant_or_authenticated_ephemeral：本人用户植物，或本人登录临时案例（authenticated-ephemeral-plant-case/v1），不含游客临时案例。
+   */
+  readonly scope: 'public' | 'user_plant' | 'user' | 'reward_grant' | 'user_plant_or_authenticated_ephemeral'
 }
 
 /** 从活动指针 JOIN 回来的能力策略发布完整性投影。 */
@@ -102,7 +105,13 @@ const registeredCapabilities = new Set<ProductCapability>([
   'USER_DIAGNOSIS_VISUAL'
 ])
 const registeredTiers = new Set<CapabilityCatalogTier>(['guest', 'free', 'trial', 'member'])
-const registeredScopes = new Set(['public', 'user_plant', 'user', 'reward_grant'])
+const registeredScopes = new Set([
+  'public',
+  'user_plant',
+  'user',
+  'reward_grant',
+  'user_plant_or_authenticated_ephemeral'
+])
 
 /** 判断未知 JSON 是否为可计算规范摘要的完整 JSON 值。 */
 function isCanonicalJsonValue(value: unknown): value is CanonicalJsonValue {

@@ -44,7 +44,7 @@ describe('生成式视觉诊断接口合同 v1：请求', () => {
     ).toBe(true)
     expect(
       validate({
-        subject: { ephemeralCaseRef: 'epc_abcdefgh12' },
+        subject: { ephemeralPlantCaseRef: 'epc_abcdefgh12' },
         imageRefs: [imageRef(1), imageRef(2), imageRef(3)],
         userQuestionZh: '叶子发黄'
       })
@@ -64,7 +64,7 @@ describe('生成式视觉诊断接口合同 v1：请求', () => {
     [
       '同时给出两种归属',
       {
-        subject: { userPlantRef: 'upl_abcdefgh12', ephemeralCaseRef: 'epc_abcdefgh12' },
+        subject: { userPlantRef: 'upl_abcdefgh12', ephemeralPlantCaseRef: 'epc_abcdefgh12' },
         imageRefs: [imageRef(1)]
       }
     ],
@@ -106,7 +106,14 @@ describe('生成式视觉诊断接口合同 v1：响应', () => {
       status: 'released_no_charge',
       createdAt: '2026-10-11T01:00:00Z',
       releaseReason: 'image_unusable',
-      chargedPoints: 0
+      chargedPoints: 0,
+      // 2026-10-11：释放时必须带脱敏图片评估（Figma 需要区分原因）。
+      imageAssessment: {
+        verdict: 'image_unusable',
+        perImage: [
+          { imageIndex: 1, visiblePart: 'unknown', quality: 'unusable', qualityIssues: ['blur'] }
+        ]
+      }
     }
     expect(validate(released)).toBe(true)
     expect(validate({ ...released, chargedPoints: 3 })).toBe(false)
@@ -265,5 +272,82 @@ describe('生成式视觉诊断接口合同 v1：路由、注册表与成本策�
     expect(policy.priceSnapshotRef).toBe(
       'docs/backend-v2/diagnosis-eval/qwen3.7-flash-price-snapshot-2026-10-10.json'
     )
+  })
+})
+
+/**
+ * 2026-10-11 增量 Expected（主代理依据架构与 Figma 反查裁定）：
+ * ① 临时案例走 authenticated-ephemeral-plant-case/v1（字段 ephemeralPlantCaseRef），扣点记在登录 user_id，临时结果不写入 user_plant 事实；
+ * ② 公开响应增加脱敏的图片评估：区分「可判定 / 证据不足 / 非植物 / 图片不可用」，以及逐张图片的质量原因。
+ */
+describe('生成式视觉诊断接口合同 v1：临时案例与图片评估', () => {
+  const assessment = {
+    verdict: 'not_plant',
+    perImage: [
+      { imageIndex: 1, visiblePart: 'unknown', quality: 'unusable', qualityIssues: ['not_plant'] }
+    ]
+  }
+  const released = {
+    visualDiagnosisRef: 'vds_abcdefgh12',
+    status: 'released_no_charge',
+    createdAt: '2026-10-11T01:00:00Z',
+    releaseReason: 'not_plant',
+    chargedPoints: 0,
+    imageAssessment: assessment
+  }
+
+  test('释放与完成时必须带图片评估；释放原因与评估结论一致', () => {
+    const validate = compile('VisualDiagnosisSessionResponse')
+    expect(validate(released)).toBe(true)
+    const { imageAssessment: _omit, ...withoutAssessment } = released
+    expect(validate(withoutAssessment)).toBe(false)
+    expect(
+      validate({ ...released, imageAssessment: { ...assessment, verdict: 'assessable' } })
+    ).toBe(false)
+  })
+
+  test.each([
+    ['未知结论', { ...released, imageAssessment: { ...assessment, verdict: 'blurry' } }],
+    [
+      '未知质量原因',
+      {
+        ...released,
+        imageAssessment: {
+          ...assessment,
+          perImage: [
+            {
+              imageIndex: 1,
+              visiblePart: 'leaf_back',
+              quality: 'limited',
+              qualityIssues: ['raw_model_flag']
+            }
+          ]
+        }
+      }
+    ],
+    [
+      '超过 3 张',
+      {
+        ...released,
+        imageAssessment: {
+          ...assessment,
+          perImage: [1, 2, 3, 4].map(imageIndex => ({
+            imageIndex,
+            visiblePart: 'leaf_back',
+            quality: 'good',
+            qualityIssues: []
+          }))
+        }
+      }
+    ]
+  ])('拒绝非法图片评估：%s', (_name, value) => {
+    expect(compile('VisualDiagnosisSessionResponse')(value)).toBe(false)
+  })
+
+  test('合同写明临时案例沿用登录临时案例合同、扣点记在登录用户、临时结果不写入用户植物事实', () => {
+    const contract = fs.readFileSync(path.join(contractDir, 'diagnosis-visual-api.md'), 'utf8')
+    expect(contract).toContain('authenticated-ephemeral-plant-case/v1')
+    expect(contract).toContain('扣点记在登录用户')
+    expect(contract).toContain('临时结果不得写入任何 user_plant 事实')
   })
 })

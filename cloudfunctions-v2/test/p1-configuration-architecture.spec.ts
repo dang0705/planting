@@ -291,7 +291,8 @@ assert.deepEqual(requiredVariable('subscription.capability.catalog').currentValu
     { code: 'REWARDED_AI', tiers: ['free', 'trial', 'member'], consumesAiPoints: true, scope: 'reward_grant' },
     { code: 'USER_AGENT_TEXT', tiers: ['trial', 'member'], consumesAiPoints: true, scope: 'user' },
     { code: 'USER_DIAGNOSIS_TEXT', tiers: ['trial', 'member'], consumesAiPoints: true, scope: 'user_plant' },
-    { code: 'USER_DIAGNOSIS_VISUAL', tiers: ['trial', 'member'], consumesAiPoints: true, scope: 'user_plant' },
+    // 主代理 2026-10-11 裁定：本人用户植物，或本人登录临时案例（authenticated-ephemeral-plant-case/v1）。
+    { code: 'USER_DIAGNOSIS_VISUAL', tiers: ['trial', 'member'], consumesAiPoints: true, scope: 'user_plant_or_authenticated_ephemeral' },
   ],
   unknownCapabilityPolicy: 'deny',
 })
