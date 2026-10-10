@@ -1,7 +1,7 @@
 {
   "capturedAt": "2026-10-10",
   "ticket": "E05 / ClickUp z8v0kmrg8a（[P1] 诊断知识来源、园艺原因及 Outcome/Action 合同）、z8v0kmr974（[P4] 固定/动态问诊与小青工具）",
-  "status": "r9_round4_done",
+  "status": "r10_v12_ready_awaiting_probe_confirmation",
   "testLayer": "none（纯规划，无测试、无 TDD 声明）",
   "userRequest": "用户 2026-10-10：开始视觉诊断规划；v1 覆盖面过窄；要求最优提示词、固定前缀对缓存友好、视觉模型返回完整病因与解决方案；提供竞品结果页截图作信息结构参考",
   "scopeGuards": {
@@ -167,6 +167,11 @@
       "rev": "r9",
       "at": "2026-10-10",
       "scope": "第四轮：快照 qwen3.6-flash-2026-04-16 上 v1 与 v1.1（D15）按新口径对比；合理结果率门槛暂定 80%"
+    },
+    {
+      "rev": "r10",
+      "at": "2026-10-10",
+      "scope": "追问质量改为后期迭代（z8v0kmvh4x）；评测脚本开关；提示词 v1.2；v1.2 探针估算"
     }
   ],
   "userDecisions_2026_10_10": {
@@ -560,5 +565,20 @@
     ],
     "spendCny": 1.243178,
     "cumulativeSpendCny": "约 3.31（r1 0.835 + r2 1.237 + r4 1.243，均按价目快照计算）"
+  },
+  "r10": {
+    "tdd": {
+      "red": "改写的 2 条用例实现前失败",
+      "green": "评测脚本 55/55"
+    },
+    "promptV12": "cloudfunctions-v2/models/diagnosis/visual-diagnosis-prompt.v1.2.draft.md（前缀 14,842 字符）",
+    "probeEstimateCny": {
+      "expected": 0.64,
+      "conservative": 0.95,
+      "model": "qwen3.6-flash-2026-04-16",
+      "cases": 29
+    },
+    "spendCny": 0,
+    "verification": "全量 vitest 仅 1 例失败：test/contracts/user-plant-timeline-contract.spec.ts（工作区中 docs/backend-v2/contracts/user-plant-timeline.md 有他人未提交修改，与本任务无关，未处理）；本任务相关用例全部通过"
   }
 }

@@ -696,7 +696,34 @@ describe('视觉诊断评测脚本：追问质量与分组口径', () => {
     ).toBe('with_context')
   })
 
-  test('汇总按新口径分组计算', async () => {
+  // 用户 2026-10-10 裁定：追问质量放后期迭代（z8v0kmvh4x），默认不计入验收汇总，开关打开才计入。
+  test('默认不把追问质量计入合理结果率，但仍保留追问评分', async () => {
+    const texts = [
+      modelText(['pest_aphid']),
+      insufficient({
+        followUpQuestions: [
+          { questionZh: '盆土现在是湿还是干？', whyZh: 'x', optionsZh: ['湿', '干'] }
+        ]
+      })
+    ]
+    const report = await runEvaluation(
+      [makeCase('a', ['pest_aphid']), rootRotCase],
+      fakeProvider(texts),
+      baseOptions({ apply: true })
+    )
+    expect(report.summary.groups.context_dependent_no_context).toMatchObject({
+      cases: 1,
+      reasonableRate: 0
+    })
+    expect(report.summary.followUpQualityCountedInAcceptance).toBe(false)
+    expect(report.results[1]?.score.followUpReasonable).toBe(true)
+    expect(report.summary.acceptance).toMatchObject({
+      imageDeterminable: { cases: 1, top1Rate: 1, top3Rate: 1 },
+      withContext: { cases: 0 }
+    })
+  })
+
+  test('汇总按新口径分组计算（开关打开时计入追问质量）', async () => {
     const texts = [
       modelText(['pest_aphid']),
       insufficient({
@@ -709,8 +736,9 @@ describe('视觉诊断评测脚本：追问质量与分组口径', () => {
     const report = await runEvaluation(
       [makeCase('a', ['pest_aphid']), rootRotCase],
       provider,
-      baseOptions({ apply: true })
+      baseOptions({ apply: true, countFollowUpQualityInAcceptance: true })
     )
+    expect(report.summary.followUpQualityCountedInAcceptance).toBe(true)
     expect(report.summary.groups.image_determinable).toMatchObject({
       cases: 1,
       top1Rate: 1,

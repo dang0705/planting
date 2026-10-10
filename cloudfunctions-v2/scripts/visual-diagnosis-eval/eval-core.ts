@@ -236,6 +236,8 @@ export interface RunOptions {
   readonly prefixText: string
   /** 日志输出；不得写入任何凭证或模型原文。 */
   readonly log: (line: string) => void
+  /** 是否把追问质量计入验收汇总；默认否（后期迭代 z8v0kmvh4x）。 */
+  readonly countFollowUpQualityInAcceptance?: boolean
 }
 
 /** 评测报告。 */
@@ -270,8 +272,17 @@ export interface EvalSummary {
   readonly casesWithSafetyViolation: number
   /** 缓存命中 tokens 占输入 tokens 的比例。 */
   readonly cachedTokenShare: number
-  /** 新验收口径分组：命中率门槛只看 image_determinable 与 with_context；病史依赖类无上下文时看 reasonableRate。 */
+  /** 分组汇总；病史依赖类无上下文的 reasonableRate 只在开关打开时计入追问质量。 */
   readonly groups: Readonly<Record<EvaluationGroup, GroupSummary>>
+  /** 追问质量是否计入验收汇总（用户 2026-10-10 裁定：后期迭代 z8v0kmvh4x，默认否）。 */
+  readonly followUpQualityCountedInAcceptance: boolean
+  /** 本次验收口径：只看图像可判定类与带上下文案例的首选/前三命中；病史依赖类无上下文只记录不设门槛。 */
+  readonly acceptance: {
+    /** 图像可判定类。 */
+    readonly imageDeterminable: Pick<GroupSummary, 'cases' | 'top1Rate' | 'top3Rate'>
+    /** 带上下文案例。 */
+    readonly withContext: Pick<GroupSummary, 'cases' | 'top1Rate' | 'top3Rate'>
+  }
 }
 
 /** 单个分组的汇总。 */
@@ -550,13 +561,13 @@ function roundCny(value: number): number {
 }
 
 /** 汇总指标。 */
-function summarize(results: readonly CaseResult[]): EvalSummary {
+function summarize(results: readonly CaseResult[], countFollowUp = false): EvalSummary {
   const count = results.length
   const rate = (predicate: (result: CaseResult) => boolean): number =>
     count === 0 ? 0 : results.filter(predicate).length / count
   const promptTokens = results.reduce((sum, result) => sum + result.usage.promptTokens, 0)
   const cachedTokens = results.reduce((sum, result) => sum + result.usage.cachedTokens, 0)
-  return {
+  const base = {
     scoredCases: count,
     top1Rate: rate(result => result.score.top1Hit),
     top3Rate: rate(result => result.score.top3Hit),
@@ -579,13 +590,26 @@ function summarize(results: readonly CaseResult[]): EvalSummary {
               top1Rate: share(result => result.score.top1Hit),
               top3Rate: share(result => result.score.top3Hit),
               reasonableRate: share(
-                result => result.score.top1Hit || result.score.followUpReasonable
+                result => result.score.top1Hit || (countFollowUp && result.score.followUpReasonable)
               )
             }
           ]
         }
       )
     ) as Record<EvaluationGroup, GroupSummary>
+  }
+  const pick = (group: GroupSummary) => ({
+    cases: group.cases,
+    top1Rate: group.top1Rate,
+    top3Rate: group.top3Rate
+  })
+  return {
+    ...base,
+    followUpQualityCountedInAcceptance: countFollowUp,
+    acceptance: {
+      imageDeterminable: pick(base.groups.image_determinable),
+      withContext: pick(base.groups.with_context)
+    }
   }
 }
 
@@ -621,7 +645,7 @@ export async function runEvaluation(
       cumulativeCostCny: 0,
       stoppedReason: 'dry_run',
       results: [],
-      summary: summarize([])
+      summary: summarize([], options.countFollowUpQualityInAcceptance === true)
     }
   }
   if (estimatedTotal > options.budgetCapCny) {
@@ -696,6 +720,6 @@ export async function runEvaluation(
     cumulativeCostCny: roundCny(cumulative),
     stoppedReason,
     results,
-    summary: summarize(results)
+    summary: summarize(results, options.countFollowUpQualityInAcceptance === true)
   }
 }

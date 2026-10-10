@@ -51,6 +51,7 @@ const { values } = parseArgs({
     out: { type: 'string' },
     'image-dir': { type: 'string' },
     'allow-inline-images': { type: 'boolean', default: false },
+    'count-follow-up-quality': { type: 'boolean', default: false },
     apply: { type: 'boolean', default: false }
   },
   strict: true
@@ -135,6 +136,7 @@ const report = await runEvaluation(cases, provider, {
     outputTokens: positive('est-output-tokens')
   },
   prefixText,
+  countFollowUpQualityInAcceptance: values['count-follow-up-quality'] === true,
   log: line => process.stdout.write(line + '\n')
 })
 
