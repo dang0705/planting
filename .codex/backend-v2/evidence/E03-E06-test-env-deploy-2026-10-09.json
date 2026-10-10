@@ -98,6 +98,12 @@
       "function": "v2-care, v2-user-plant",
       "source": "工作区（Open-Meteo 负散射值→null 修复、missingEvidence 新增 plant_light/outdoor_radiation）；全量 vitest 2932 通过/5 跳过；密钥扫描无命中",
       "check": "真实请求（绿萝，上海南窗单层，Lux 2000，根区微湿）：四种盆均 ready/check_later 有 checkWindow；最早检查 12cm颗粒土 10-10 12:37、16cm泥炭+珍珠岩(主料泥炭) 10-11 10:36、15cm泥炭 10-11 16:41、20cm泥炭 10-12 12:19（上海时间）；泥炭类最晚检查超出 16 天预报覆盖→latestAt=null"
+    },
+    {
+      "function": "weather, v2-plant-knowledge, v2-care, v2-user-plant, v2-identity, care-plan-expiry, care-outbox-dispatch（新建，每分钟 timer）",
+      "source": "干净 HEAD 3770890b 构建；全量 vitest 3377 通过；密钥扫描无命中",
+      "check": "搜索/百科/城市推荐 200；用户植物列表/时间线/上传目录/计划列表无凭证 401（已部署）；visual-axes 503（预期：public_search v1+索引未回填）；care-outbox-dispatch 手动调用 completed；care-plan-expiry drained；浇水建议（策略 v4，临时案例 cityCode=shanghai，Lux 2000@当日 12:00）四种盆均 ready/check_later，最早检查 12cm颗粒土 10-11 < 16cm泥炭+珍珠岩 10-12 06:32 < 15cm泥炭 10-12 15:03 < 20cm泥炭 10-13（上海时间）；夜间测光被判 plant_light（符合规则）",
+      "timelineBackfill": "未执行：测试库 care_facts 与已完成计划均为 0 行，回填为空操作"
     }
   ],
   "migrationsLater": [
@@ -106,6 +112,24 @@
       "target": "qinghuazhi_v2_test.care_plans",
       "result": "CREATE INDEX 成功；EXPLAIN 扫描语句 key=idx_care_plan_expiry_scan",
       "authorizedBy": "用户 2026-10-09「全部部署到测试环境」"
+    },
+    {
+      "file": "029_care_outbox_timeline_event_types.sql",
+      "target": "qinghuazhi_v2_test",
+      "result": "执行成功并读回约束/表存在",
+      "at": "2026-10-10"
+    },
+    {
+      "file": "030（Lux 存档列）",
+      "target": "qinghuazhi_v2_test",
+      "result": "执行成功并读回约束/表存在",
+      "at": "2026-10-10"
+    },
+    {
+      "file": "031_plant_visual_filter_index.sql（只建表，未回填）",
+      "target": "qinghuazhi_v2_test",
+      "result": "执行成功并读回约束/表存在",
+      "at": "2026-10-10"
     }
   ],
   "policyPublishes": [
@@ -118,6 +142,23 @@
       "pointer": "v2 → v3（条件更新 WHERE active=v2，rowsAffected=1；读回 sha 一致）",
       "rollback": "把 active 指针改回 bpr_care_887517f7453f / v2 sha 7bad0074…",
       "authorizedBy": "用户 2026-10-10「发布并部署到测试环境」"
+    },
+    {
+      "at": "2026-10-10",
+      "method": "本机无法直连测试库内网 MySQL，改用 CLI render-seed-sql 生成 SQL 后经 tcb db execute 执行（表名限定测试库）；每个策略 release+active 指针+审计",
+      "published": [
+        "care/long_term_rules v1.0.0",
+        "plant-knowledge/public_search v1.0.0",
+        "weather/public_read v1.0.0",
+        "user-plant/list_rules v1.0.0",
+        "user-plant/asset_rules v1.0.0",
+        "http/request_write v2.0.0（测试库此前无该策略）",
+        "user-plant/profile_progress v1",
+        "user-plant/profile_minimum_completeness user-plant-profile/v1（此前缺失导致档案 PATCH 503）",
+        "care/mvp_watering v3→v4.0.0（条件切换+审计）"
+      ],
+      "readback": "全部 active 指针与内容 SHA 一致",
+      "notDone": "plant-knowledge/public_search 未切 v2：三轴筛选索引回填需直连 MySQL，本机不可达"
     }
   ]
 }
