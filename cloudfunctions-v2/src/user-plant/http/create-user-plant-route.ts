@@ -18,7 +18,10 @@ import type { FrozenRoute, RouteHandler } from '../../foundation/http/route-disp
 import type { ResolveUserPrincipalCommand } from '../../identity/application/resolve-user-principal.js'
 import { UnifiedUserPrincipalResolveError } from '../../identity/domain/resolve-user-principal.js'
 import { extractBearerToken } from '../../identity/http/request-identity.js'
-import { CapabilitySnapshotUnavailableError } from '../../subscription/repository/mysql-capability-snapshot-reader.js'
+import {
+  CapabilitySnapshotExpiredError,
+  CapabilitySnapshotUnavailableError
+} from '../../subscription/repository/mysql-capability-snapshot-reader.js'
 import type { CreateUserPlantApplicationInput } from '../application/create-user-plant.js'
 
 /** 创建路由登记；业务含义由用户植物合同而非通用分发器决定。 */
@@ -191,6 +194,10 @@ export function createUserPlantRouteHandler(
           try {
             capabilitySnapshot = await dependencies.resolveCapabilitySnapshot(principal)
           } catch (error: unknown) {
+            // 过期错误是“不可用”的子类，必须先判：合同要求失效快照返回 409，让客户端重新解析而不是当作服务故障。
+            if (error instanceof CapabilitySnapshotExpiredError) {
+              throw new PublicRequestError(409, 'CAPABILITY_SNAPSHOT_EXPIRED', '能力快照已失效，请重新请求')
+            }
             if (error instanceof CapabilitySnapshotUnavailableError) {
               throw new PublicRequestError(503, 'SERVICE_UNAVAILABLE', '服务暂时不可用')
             }

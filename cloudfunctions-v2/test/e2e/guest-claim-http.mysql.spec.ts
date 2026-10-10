@@ -170,4 +170,49 @@ describe('POST /api/v2/user-plants/claims（真实 MySQL）', () => {
       expect(observed).not.toContain(secret)
     }
   })
+
+  /**
+   * Expected 来源：guest-session-claim.md「认领只补充归属，不把结果转为事实、建议转为计划，也不追溯发放积分」、
+   * 「认领成功只新增归属关系」；配置目录硬规则 `user-plant.guest_claim.direct_fact_or_plan_write=false`、
+   * `user-plant.guest_claim.retroactive_points=false`；user-plant.md「事实边界」。
+   * 层次：L3 / unit_real_data（真实 HTTP + 真实 MySQL 全量 DDL）。只核对本仓库已有的事实/计划/提醒/事件/积分表行数，
+   * 不覆盖 care / subscription 域之后由用户显式操作产生的写入。
+   */
+  test('认领成功（已有目标与新建目标）不写养护事实、建议、计划、提醒、user-plant 事件或积分账本', async () => {
+    const sideEffectTables = ['care_facts', 'care_proposals', 'care_plans', 'reminder_jobs', 'user_plant_outbox',
+      'care_outbox', 'subscription_outbox', 'subscription_reward_inbox', 'care_point_ledger', 'care_point_accounts']
+    const countAll = () => sql(sideEffectTables.map(table => `SELECT '${table}', COUNT(*) FROM ${table};`).join('\n'))
+    const before = countAll()
+    expect((await post(claimBody('gpc_claimhttp_case0001'))).status).toBe(200)
+    expect((await post(claimBody('gpc_claimhttp_case0002', { type: 'new_user_plant' }), 'claim-http-key-0002')).status).toBe(200)
+    expect(countAll()).toBe(before)
+    expect(before.split('\n').every(line => line.endsWith('\t0'))).toBe(true)
+    // 临时结果仍是临时对象，没有被改写为长期事实，只是通过认领解析出新归属。
+    expect(scalar('SELECT COUNT(*) FROM temporary_care_results;')).toBe('1')
+  })
+
+  /**
+   * Expected 来源：guest-session-claim.md「成功后案例 owner、命令目标和成功事实目标均不可更换」、
+   * 配置目录硬规则 `user-plant.guest_claim.once`；http-api.md §3 `GUEST_SESSION_NOT_CLAIMABLE`=409。
+   * 层次：L3 / unit_real_data。第二个登录用户即使持有同一游客令牌（模拟令牌泄露/共享设备）也不能改写归属。
+   */
+  test('跨用户：案例已被 A 认领后，B 用同一游客令牌认领 → 409，归属与成功事实不变', async () => {
+    const issued = now - 2 * hour
+    const otherBearer = 'fixture-claimhttp-bearer-00000002'
+    sql(`INSERT INTO users (id, public_user_id, status, session_version, created_at_ms, updated_at_ms) VALUES (2, 'usr_claimhttp_other001', 'active', 1, ${issued}, ${issued});
+      INSERT INTO platform_identities (user_internal_id, platform, platform_subject_hash, subject_hash_key_version, platform_subject_ciphertext, app_scope, binding_status, bound_at_ms, created_at_ms, updated_at_ms)
+      VALUES (2, 'wechat', '${'d'.repeat(64)}', 'fixture-k1', NULL, 'wx85bb3976301f75fb', 'active', ${issued}, ${issued}, ${issued});
+      INSERT INTO user_sessions (session_ref_hash, user_internal_id, platform_identity_internal_id, session_version, authenticated_via, status, issued_at_ms, expires_at_ms, revoked_at_ms, created_at_ms, updated_at_ms, session_policy_release_version, session_policy_snapshot_sha256)
+      SELECT '${sha(otherBearer)}', 2, p.id, 1, 'wechat', 'active', ${issued}, ${now + 24 * hour}, NULL, ${issued}, ${issued}, 'identity-session-test/v1', '${'a'.repeat(64)}' FROM platform_identities p WHERE p.user_internal_id = 2;
+      INSERT INTO user_plants (_openid, public_user_plant_id, user_internal_id, lifecycle_status, current_identity_status, confirmed_identity_internal_id, version, created_at_ms, updated_at_ms)
+      VALUES ('', 'upl_claimhttp_other001', 2, 'active', 'unidentified', NULL, 1, ${issued}, ${issued});`)
+    expect((await post(claimBody('gpc_claimhttp_case0001'))).status).toBe(200)
+    const stolen = await post(claimBody('gpc_claimhttp_case0001', { type: 'existing_user_plant', user_plant_id: 'upl_claimhttp_other001' }), 'claim-http-key-0009', otherBearer)
+    expect(stolen).toMatchObject({ status: 409, body: { error: { type: 'GUEST_SESSION_NOT_CLAIMABLE' } } })
+    expect(stolen.text).not.toContain(userRef)
+    expect(scalar("SELECT CONCAT(claimed_user_internal_id,'|',claimed_user_plant_internal_id) FROM guest_plant_cases WHERE id=1;"))
+      .toBe(scalar("SELECT CONCAT(user_internal_id,'|',id) FROM user_plants WHERE public_user_plant_id='upl_claimhttp_existing';"))
+    expect(scalar('SELECT COUNT(*) FROM guest_case_claims;')).toBe('1')
+    expect(scalar('SELECT COUNT(*) FROM guest_case_claims WHERE user_internal_id=2;')).toBe('0')
+  })
 })

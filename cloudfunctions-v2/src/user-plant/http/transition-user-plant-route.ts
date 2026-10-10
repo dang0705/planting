@@ -195,24 +195,28 @@ function parseRequest(input: RestrictedRequest): TransitionRequestDto {
   }
 }
 
-/** 只把已登记的确定性错误和公开用户植物投影交给响应链。 */
-function unwrapResult(result: HttpIdempotencyPublicResponseSnapshot): UserPlantDto {
+/** 归档与恢复共同允许透传的确定性公开错误。 */
+const sharedTransitionErrors: readonly string[] = [
+  'PRINCIPAL_INVALID',
+  'USER_PLANT_NOT_FOUND',
+  'USER_PLANT_VERSION_CONFLICT',
+  'IDEMPOTENCY_CONFLICT',
+  'SERVICE_UNAVAILABLE'
+]
+/** 只有恢复会重新核验能力快照；user-plant.md 规定归档路由不声明这两项能力错误。 */
+const restoreOnlyErrors: readonly string[] = ['CAPABILITY_DENIED', 'CAPABILITY_SNAPSHOT_EXPIRED']
+
+/** 只把该路由已登记的确定性错误和公开用户植物投影交给响应链；未登记错误泛化为 500。 */
+function unwrapResult(route: FrozenRoute, result: HttpIdempotencyPublicResponseSnapshot): UserPlantDto {
   if ('error' in result.body) {
     if (!validators.errorResponse(result.body)) {
       throw new Error('生命周期用例返回无效公开错误')
     }
     const { type, message } = result.body.error
-    if (
-      ![
-        'PRINCIPAL_INVALID',
-        'USER_PLANT_NOT_FOUND',
-        'USER_PLANT_VERSION_CONFLICT',
-        'IDEMPOTENCY_CONFLICT',
-        'CAPABILITY_DENIED',
-        'CAPABILITY_SNAPSHOT_EXPIRED',
-        'SERVICE_UNAVAILABLE'
-      ].includes(type)
-    ) {
+    const allowed =
+      sharedTransitionErrors.includes(type) ||
+      (route.operationId === restoreUserPlantRoute.operationId && restoreOnlyErrors.includes(type))
+    if (!allowed) {
       throw new Error('生命周期用例返回未登记的公开错误')
     }
     throw new PublicRequestError(result.status, type, message)
@@ -361,7 +365,7 @@ function createTransitionRouteHandler(
           return dependencies.archiveUserPlant(domainDecision)
         }
       },
-      publicResponse: { kind: 'execute', run: unwrapResult },
+      publicResponse: { kind: 'execute', run: result => unwrapResult(route, result) },
       writeAudit: dependencies.writeAudit
     })(request, response)
 }

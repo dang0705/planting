@@ -1,0 +1,88 @@
+{
+  "capturedAt": "2026-10-10",
+  "ticket": "E03 / [E03][P2] 用户植物核心实现（z8v0kmr9mj）",
+  "scope": "差距审计 + 对已实现缺测试/合同已冻结项补 TDD；未部署、未写云端库、未提交 git、未改 src/**",
+  "expectedSources": [
+    "docs/backend-v2/contracts/user-plant.md（创建、归属、生命周期、归档与恢复公开接口、事实边界）",
+    "docs/backend-v2/contracts/guest-session-claim.md（认领只补归属、不转事实/计划、不追溯积分、成功后 owner 不可更换）",
+    "docs/backend-v2/contracts/http-api.md §3 错误目录、§4 幂等与并发",
+    "docs/backend-v2/api/route-registry.json（createUserPlant / archiveUserPlant 错误集合）",
+    "docs/backend-v2/architecture/configuration-variable-catalog.md user-plant 硬规则（guest_claim.once、guest_claim.direct_fact_or_plan_write=false、guest_claim.retroactive_points=false）"
+  ],
+  "productChanges": [
+    {
+      "file": "cloudfunctions-v2/src/user-plant/http/create-user-plant-route.ts",
+      "change": "能力快照读取抛 CapabilitySnapshotExpiredError（是 Unavailable 的子类）时先映射为 409 CAPABILITY_SNAPSHOT_EXPIRED，此前被误判为 503 SERVICE_UNAVAILABLE",
+      "contract": "user-plant.md：能力快照在执行前失效时返回 CAPABILITY_SNAPSHOT_EXPIRED；http-api.md §3：409"
+    },
+    {
+      "file": "cloudfunctions-v2/src/user-plant/http/transition-user-plant-route.ts",
+      "change": "公开错误白名单按路由区分：CAPABILITY_DENIED / CAPABILITY_SNAPSHOT_EXPIRED 只允许恢复路由透传，归档路由收到即泛化 500",
+      "contract": "user-plant.md：恢复额外允许 403 CAPABILITY_DENIED 和 409 CAPABILITY_SNAPSHOT_EXPIRED；归档路由不声明这两项能力错误"
+    }
+  ],
+  "classicRed": [
+    {
+      "test": "test/user-plant/create-user-plant-route.spec.ts > 能力快照已过期 → 409 CAPABILITY_SNAPSHOT_EXPIRED，不进入事务",
+      "layer": "unit_fake",
+      "redObserved": "expected 503 to be 409"
+    },
+    {
+      "test": "test/e2e/get-user-plant-http.mysql.spec.ts > 创建时最近的服务端能力快照已过期返回 409 CAPABILITY_SNAPSHOT_EXPIRED，不新增植物",
+      "layer": "unit_real_data（本机 Docker MySQL 8.4 全量 DDL + 真实 HTTP）",
+      "redObserved": "expected 503 to be 409"
+    },
+    {
+      "test": "test/user-plant/archive-user-plant-route.spec.ts > 归档路由不声明能力错误：用例若返回 403 CAPABILITY_DENIED / 409 CAPABILITY_SNAPSHOT_EXPIRED 也必须泛化为 500（2 例）",
+      "layer": "unit_fake",
+      "redObserved": "能力错误被原样透传（403/409），而非 500"
+    }
+  ],
+  "fastPathCounterfactualRed": [
+    {
+      "tests": "create-user-plant-route.spec.ts 正文额外字段/idempotencyKey 8 例、同键作用域 1 例、脱敏 1 例",
+      "mutation": "parseRequest 去掉 createUserPlantRequest 严格空对象校验；principalScopeHash 改为固定值",
+      "redObserved": "10 例失败",
+      "restored": true
+    },
+    {
+      "tests": "archive-user-plant-route.spec.ts 正文额外字段 4 例、超出安全整数 1 例",
+      "mutation": "版本正文 Schema additionalProperties=true 且去掉 Number.isSafeInteger",
+      "redObserved": "5 例失败",
+      "restored": true
+    },
+    {
+      "tests": "guest-claim-http.mysql.spec.ts > 认领成功（已有目标与新建目标）不写养护事实、建议、计划、提醒、user-plant 事件或积分账本",
+      "mutation": "认领完成核心在写入成功事实后追加一条 user_plant_outbox 事件",
+      "redObserved": "行数快照不一致",
+      "restored": true
+    },
+    {
+      "tests": "guest-claim-http.mysql.spec.ts > 跨用户：案例已被 A 认领后，B 用同一游客令牌认领 → 409，归属与成功事实不变",
+      "mutation": "命令登记对已认领案例改返 idempotency_conflict",
+      "redObserved": "错误类型不为 GUEST_SESSION_NOT_CLAIMABLE",
+      "restored": true
+    }
+  ],
+  "greenAfterFix": {
+    "typecheck": "tsc 两套 0 error",
+    "lint": "oxlint 0 error（仓库既有 warning）",
+    "vitest_default": "280 files / 2988 passed / 5 skipped / 0 failed",
+    "vitest_mysql_targeted": "get-user-plant-http 26/26（含新增），user-plant-lifecycle 全绿，guest-claim-http 8/8"
+  },
+  "pendingUserDecisions": [
+    "GET /api/v2/user-plants 列表：UserPlantListQuery/UserPlantListResponse 只有名字，无字段/分页/排序/是否含 archived",
+    "DELETE /api/v2/user-plants/{ref}：DeleteUserPlantRequest/UserPlantDeletionResponse 未冻结；deleting→deleted 跨域清理清单与补偿未冻结",
+    "POST …/identity-confirmations：ConfirmUserPlantIdentityRequest 未冻结；与已存在的 PUT catalog-binding（Tropicals 目录）关系未裁决",
+    "POST …/assets：BindUserPlantAssetRequest 未冻结；user-plant.assets.max_count_per_plant、storage.upload.allowed_mime_types、max_image_bytes 均 pending",
+    "GET …/timeline：TimelineQuery/TimelineResponse 未冻结；投影写入方（哪些域、哪些事件类型、summary_json 结构）未冻结",
+    "档案环境（位置/光照/通风/基质/盆型材质）：profile-update-contract-draft.md 待冻结；首株完整档案奖励 outbox（user_plant_outbox 仓储已存在但未接线）依赖其完整度判定",
+    "GET /api/v2/internal/user-plants/{ref}/context：ScopedUserPlantContextQuery/UserPlantContextInternalResponse 未冻结",
+    "游客认领新建目标时能力快照已过期：当前路由吞掉读取异常→null→事务内判定，公开结果不一定是 409 CAPABILITY_SNAPSHOT_EXPIRED；合同未写明映射"
+  ],
+  "notCovered": [
+    "e2e_real_api：真实 CloudBase 网关、真实微信登录验真、云端 MySQL、P5 真实并发闭环",
+    "资产/时间线/列表/删除/身份确认/内部上下文：合同未冻结，未实现",
+    "首株完整档案奖励事件发出：依赖未冻结的环境档案合同"
+  ]
+}

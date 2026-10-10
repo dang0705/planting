@@ -361,6 +361,61 @@ describe('已认证读取用户植物（真实 MySQL）', () => {
   })
 
   /**
+   * Expected 来源：user-plant.md「创建用户植物」——能力快照在执行前失效时返回 CAPABILITY_SNAPSHOT_EXPIRED；
+   * http-api.md §3 错误目录规定其 HTTP 状态为 409；route-registry createUserPlant 登记该错误。
+   * 层次：L3 / unit_real_data。真实 HTTP → 会话解析 → 真实 MySQL 能力快照读取（最近一条已过期）→ 不进入创建事务。
+   * 不覆盖：subscription 域签发快照的流程。
+   */
+  test('创建时最近的服务端能力快照已过期返回 409 CAPABILITY_SNAPSHOT_EXPIRED，不新增植物', async () => {
+    const snapshotRef = 'cps_test_expired_create_01'
+    rootSql(
+      `INSERT INTO capability_snapshots
+         (snapshot_ref, subject_type, user_internal_id, tier, allowed_capabilities_json,
+          rewarded_ai_scopes_json, active_user_plant_limit, capability_policy_release_internal_id,
+          capability_policy_domain_code, capability_policy_code, capability_policy_release_ref,
+          capability_policy_release_version, capability_policy_content_sha256, snapshot_sha256,
+          generated_at_ms, valid_until_ms, created_at_ms, updated_at_ms)
+       SELECT '${snapshotRef}', 'user', u.id, 'free', '["USER_PLANT_CREATE"]', '[]', 5,
+              r.id, r.domain_code, r.policy_code, r.release_ref, r.release_version,
+              r.content_sha256, '${'c'.repeat(64)}', ${String(nowMs - 2000)},
+              ${String(nowMs - 1000)}, ${String(nowMs - 2000)}, ${String(nowMs - 2000)}
+       FROM users AS u JOIN business_policy_releases AS r
+         ON r.release_ref = 'bpr_test_capability_0001'
+       WHERE u.public_user_id = '${ownerRef}';`,
+      databaseName
+    )
+    try {
+      const response = await fetch(`${baseUrl}/api/v2/user-plants`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${activeBearer}`,
+          'content-type': 'application/json',
+          'idempotency-key': 'create-expired-snapshot-0001'
+        },
+        body: '{}'
+      })
+      expect(response.status).toBe(409)
+      expect(await response.json()).toMatchObject({
+        error: { type: 'CAPABILITY_SNAPSHOT_EXPIRED' }
+      })
+      expect(
+        rootSql(
+          `SELECT COUNT(*) FROM user_plants AS p JOIN users AS u ON u.id = p.user_internal_id WHERE u.public_user_id = '${ownerRef}';`,
+          databaseName
+        )
+      ).toBe('1')
+      expect(
+        rootSql(
+          `SELECT COUNT(*) FROM http_idempotency_records WHERE idempotency_key_hash = '${sha256('create-expired-snapshot-0001')}';`,
+          databaseName
+        )
+      ).toBe('0')
+    } finally {
+      rootSql(`DELETE FROM capability_snapshots WHERE snapshot_ref = '${snapshotRef}';`, databaseName)
+    }
+  })
+
+  /**
    * Expected 来源：user-plant/v1 的归档与恢复公开接口、active↔archived 状态机及
    * route-registry 中两个 POST 路由，以及 user-plant.md 中同键同参必须返回首次结果。
    * L3 Happy：真实 HTTP、身份、事务和 MySQL；
