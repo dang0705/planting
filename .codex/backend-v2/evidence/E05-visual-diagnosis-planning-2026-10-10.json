@@ -1,0 +1,96 @@
+{
+  "capturedAt": "2026-10-10",
+  "ticket": "E05 / ClickUp z8v0kmrg8a（[P1] 诊断知识来源、园艺原因及 Outcome/Action 合同）、z8v0kmr974（[P4] 固定/动态问诊与小青工具）",
+  "status": "planning_draft_pending_user_review",
+  "testLayer": "none（纯规划，无测试、无 TDD 声明）",
+  "userRequest": "用户 2026-10-10：开始视觉诊断规划；v1 覆盖面过窄；要求最优提示词、固定前缀对缓存友好、视觉模型返回完整病因与解决方案；提供竞品结果页截图作信息结构参考",
+  "scopeGuards": {
+    "productCodeChanged": false,
+    "paidModelCalled": false,
+    "deployed": false,
+    "committed": false,
+    "envValuesRead": false,
+    "envVariableNamesOnly": true,
+    "clickupAccess": "read_only clickup_get_task"
+  },
+  "deliverables": [
+    "docs/backend-v2/architecture/visual-diagnosis-plan-2026-10-10.md",
+    "cloudfunctions-v2/models/diagnosis/visual-diagnosis-prompt.v1.draft.md"
+  ],
+  "sourcesRead": {
+    "v1": [
+      "cloudfunctions/diagnose-http/configs/provider-registry.js",
+      "cloudfunctions/diagnose-http/utils/visual-prompt-static-rules.js",
+      "cloudfunctions/diagnose-http/utils/visual-prompt-cache-contract.js",
+      "cloudfunctions/diagnose-http/utils/visual-prompt-cache-warmup.js",
+      "cloudfunctions/diagnose-http/utils/symptom-labeler-prompt.js",
+      "cloudfunctions/diagnose-http/utils/visual-contract.js",
+      "cloudfunctions/diagnose-http/utils/cloudbase-ai-openai-contract.js",
+      "cloudfunctions/diagnose-http/services/visual-diagnosis-service.js（analyzeSingleImage 段）",
+      "cloudfunctions/diagnose-http/domain/diagnosis-mode-registry.js",
+      "cloudfunctions/diagnose-http/constants/high-specificity-fast-convergence.js",
+      "cloudfunctions/diagnose-http/constants/non-problematic-whitelist.js",
+      "cloudfunctions/diagnose-http/app/diagnosis-answer-retake-runtime.js（grep）",
+      "src/utils/diagnose-image-slots.js（grep）",
+      "src/subpackages/diagnosis/http-functions/diagnose/client-stream-core.js / client-stream-debug.js（grep）"
+    ],
+    "v2": [
+      "cloudfunctions-v2/src/diagnosis/domain/diagnosis-model-binding.ts",
+      "cloudfunctions-v2/src/diagnosis/domain/validate-diagnosis-model-output.ts",
+      "cloudfunctions-v2/src/diagnosis/domain/pest-question-eligibility.ts（头部）",
+      "cloudfunctions-v2/models/diagnosis/model-binding-contract.md",
+      "docs/backend-v2/contracts/prompts/diagnosis-visual.v1.txt / .release.json",
+      "docs/backend-v2/contracts/schemas/diagnosis-model-output.v1.schema.json",
+      "docs/backend-v2/contracts/schemas/diagnosis-result.v1.schema.json（字段清单）",
+      "docs/backend-v2/contracts/diagnosis-outcome-fields.md（前 80 行）",
+      "docs/backend-v2/contracts/diagnosis-rich-response-experiment.md",
+      "docs/backend-v2/architecture/configuration-variable-catalog.md（diagnosis / subscription.ai_action 行）",
+      "docs/backend-v2/contracts/care-points-and-ai-quota.md（grep）"
+    ],
+    "external": [
+      "https://help.aliyun.com/zh/model-studio/context-cache（2026-10-10 WebFetch：显式/隐式缓存最小 1024 tokens、显式 5 分钟 TTL、创建 125%/命中约 10%、隐式命中约 20%、usage.prompt_tokens_details.cached_tokens 与 cache_creation_input_tokens、qwen3.5-flash 列入显式缓存支持）"
+    ],
+    "missing": [
+      "docs/code-logics/INDEX.md 不存在（CLAUDE.md 要求先读），改为直接定位源码与合同"
+    ]
+  },
+  "envModelVariableNames": [
+    "LLM_PROVIDER_NAME", "LLM_ALIYUN_BAILIAN_MODEL", "LLM_ALIYUN_BAILIAN_API_KEY",
+    "LLM_CLOUDBASE_AI_MODEL", "CLOUDBASE_AI_API_KEY", "TOKENHUB_API_KEY",
+    "LLM_MODEL_PROFILE", "AI_DEFAULT_AGENT", "AGENT_API_KEY"
+  ],
+  "v1Findings": {
+    "modelCall": "OpenAI 兼容协议三家（TokenHub/CloudBase AI 默认 qwen3.5-flash，百炼默认 qwen3-vl-plus）；逐图单独调用，显式缓存时首图串行预热；图片仅 HTTPS URL + max_pixels；Qwen3.5 关闭思考",
+    "promptRole": "可见证据标注助手，明令禁止输出病因/诊断键/治疗",
+    "outputShape": "organ、image_quality_grade、mode_candidates、symptom_candidates、out_of_pool_symptom_candidates、visual_discriminators",
+    "coverage": "8 类虫害 + powdery_mildew + sooty_mold + yellow_leaf/wilting_droop 入口；root_rot 仅模式名",
+    "fastTrack": "高特异性零追问仅白粉病 1 条；虫害直判证据组 8 类",
+    "issues": [
+      "visual_model_prompt_ready 流事件把 promptText 下发端上且 debug console.log，违反 v2 脱敏",
+      "逐图调用成本 ×N、无多图互证",
+      "动态尾部含按器官过滤的症状池，不可缓存",
+      "visual-diagnosis-service.js 2203 行、diagnosis-engine.js 4089 行超 500 行上限",
+      "哈希用 SHA-1"
+    ]
+  },
+  "v2Gaps": [
+    "现行 diagnosis-visual/v1 提示词 1462 字节，估计低于 1024 tokens 缓存门槛",
+    "现行模型输出 Schema 无病因代码、鉴别、紧急/隔离、四分区行动",
+    "diagnosis.knowledge.bundle_release_ref、diagnosis.visual.max_images、subscription.ai_action.diagnosis_visual_single/multi 均 P1_PENDING",
+    "v2 尚无 LLM Provider Registry / Adapter",
+    "核心冲突：票面与富内容实验合同规定生成式模型不得补造病因/处置；用户需求为模型返回完整病因与方案"
+  ],
+  "proposal": {
+    "approach": "闭集 causeCode（50 项、11 大类）+ 闭集 actionCode（33 项、四分区）写入固定前缀；模型选码 + 本例证据/说明；服务端按码渲染已审核知识文案",
+    "prefixMeasured": { "chars": 11876, "hanChars": 4443, "utf8Bytes": 22524, "tokenEstimate": "约 5000–7000（未经分词器实测）" },
+    "provider": "首版仅百炼显式缓存（cache_control ephemeral）；CloudBase AI、TokenHub 缓存机制仅有 v1 代码声明，待官方核验",
+    "draftSchemaVersion": "diagnosis-visual-full-output/v1（草案，未落盘 Schema）"
+  },
+  "decisionsPendingUser": ["D1 病因与处置来源（推荐 A 闭集+已审核渲染）", "D2 覆盖扩展到 11 大类", "D3 三档文字置信度", "D4 多图单次调用", "D5 模型对照", "D6 思考模式", "D7 不可用图不扣额度", "D8 自由追问限制", "D9 原始输出留存", "D10 评测集授权", "D11 评测/灰度预算", "D12 验收门槛"],
+  "notVerified": [
+    "前缀真实 token 数与缓存命中率（未调用模型）",
+    "CloudBase AI / TokenHub 缓存机制",
+    "公开数据集许可逐项核验",
+    "代码表与行动库的园艺准确性（未经来源审核）"
+  ]
+}
