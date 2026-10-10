@@ -1,0 +1,26 @@
+{
+  "contractVersion": "diagnosis-visual-image-input/v1",
+  "decidedAt": "2026-10-10",
+  "maxImagesPerCall": 3,
+  "maxPixels": 1048576,
+  "pixelsPerToken": 1024,
+  "imageMarkerTokens": 2,
+  "perImageMaxTokens": 1026,
+  "prefixReserveTokens": 8300,
+  "contextSummaryMaxTokens": 600,
+  "userTextMaxTokens": 300,
+  "inputTierCeilingTokens": 32000,
+  "safetyMarginRatio": 0.1,
+  "resize": {
+    "mode": "downscale_only",
+    "keepAspectRatio": true,
+    "upscale": false,
+    "enforcedAt": "server_before_model"
+  },
+  "uploadLimitRef": "storage.upload.max_image_bytes",
+  "notesZh": [
+    "perImageMaxTokens = maxPixels ÷ 1024 + 2（Qwen3.5 及以上与 Qwen3-VL 系列：32×32 像素/token，另加 2 个视觉起止标记）",
+    "prefixReserveTokens 为 v1.2 固定前缀实测约 7.9K 加 0.4K 余量；前缀改版后须同步更新并重跑预算测试",
+    "3 张图时单次输入上限约 12.2K tokens，远低于 28.8K 目标"
+  ]
+}

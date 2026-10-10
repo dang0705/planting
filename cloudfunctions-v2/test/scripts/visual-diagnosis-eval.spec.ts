@@ -856,3 +856,33 @@ describe('视觉诊断评测脚本：输入 tokens 档位', () => {
     expect(report.summary.inputTierExceededCount).toBe(0)
   })
 })
+
+/**
+ * 2026-10-10 Expected（用户确认跑 A/B：JSON Schema 严格模式组）：qwen3.7-flash 支持
+ * response_format={type:'json_schema', json_schema:{name, strict:true, schema}}。测试层次：unit_fake。
+ */
+describe('视觉诊断评测脚本：JSON Schema 严格模式', () => {
+  test('给出 Schema 时请求体使用 json_schema 严格模式，并优先于 json_object', () => {
+    const schema = {
+      type: 'object',
+      properties: { a: { type: 'string' } },
+      required: ['a'],
+      additionalProperties: false
+    }
+    const body = buildBailianRequestBody({
+      model: 'qwen3.7-flash',
+      enableThinking: false,
+      maxTokens: 8000,
+      maxPixels: 1048576,
+      prefixText: 'p',
+      dynamicText: 'd',
+      imageUrls: [],
+      jsonMode: true,
+      jsonSchema: { name: 'diagnosis_visual_gen_output', schema }
+    })
+    expect(body.response_format).toEqual({
+      type: 'json_schema',
+      json_schema: { name: 'diagnosis_visual_gen_output', strict: true, schema }
+    })
+  })
+})

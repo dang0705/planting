@@ -1,6 +1,7 @@
 # 视觉诊断开发集：标注模板与上下文构造方案（2026-10-10）
 
 > **状态：准备阶段草案。** 只整理清单、模板和方案，不下载图片、不调用付费模型。
+> **2026-10-10 用户裁定（D10）**：v1 线上用户图视为未授权，不使用；`source` 不再出现 `S2_user_authorized`，第 3 节中「S2 授权用户案例」一条作废。
 > 配套：来源规划 `dev-set-sourcing-plan-2026-10-10.md`；验收口径见规划第 11.1 节；上下文合同 `docs/backend-v2/contracts/diagnosis-context-summary.md`（`diagnosis-context-summary/v1`）。
 
 ## 1. 案例清单字段（每个案例一行，存在仓库外的评测目录，不入 git）

@@ -660,6 +660,101 @@
     },
     {
       "method": "GET",
+      "path": "/api/v2/diagnosis/visual/upload-targets",
+      "operationId": "getVisualDiagnosisUploadTargets",
+      "owner": "diagnosis",
+      "phase": "P4",
+      "security": "authenticated",
+      "requestContract": "VisualDiagnosisUploadTargetsQuery",
+      "responseContract": "VisualDiagnosisUploadTargetsResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "CAPABILITY_DENIED",
+        "SERVICE_UNAVAILABLE"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/diagnosis/visual/images",
+      "operationId": "registerVisualDiagnosisImages",
+      "owner": "diagnosis",
+      "phase": "P4",
+      "security": "authenticated",
+      "requestContract": "RegisterVisualDiagnosisImagesRequest",
+      "responseContract": "RegisterVisualDiagnosisImagesResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "CAPABILITY_DENIED",
+        "NOT_FOUND",
+        "PAYLOAD_TOO_LARGE",
+        "UNSUPPORTED_MEDIA_TYPE",
+        "IDEMPOTENCY_CONFLICT",
+        "SERVICE_UNAVAILABLE"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/diagnosis/visual/sessions",
+      "operationId": "createVisualDiagnosis",
+      "owner": "diagnosis",
+      "phase": "P4",
+      "security": "authenticated",
+      "requestContract": "CreateVisualDiagnosisRequest",
+      "responseContract": "VisualDiagnosisSessionResponse",
+      "idempotency": "required_header",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "CAPABILITY_DENIED",
+        "USER_PLANT_NOT_FOUND",
+        "USER_PLANT_ARCHIVED",
+        "NOT_FOUND",
+        "AI_QUOTA_INSUFFICIENT",
+        "IDEMPOTENCY_CONFLICT",
+        "RATE_LIMITED",
+        "SERVICE_UNAVAILABLE"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/diagnosis/visual/sessions",
+      "operationId": "listVisualDiagnoses",
+      "owner": "diagnosis",
+      "phase": "P4",
+      "security": "authenticated",
+      "requestContract": "VisualDiagnosisListQuery",
+      "responseContract": "VisualDiagnosisListResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "CAPABILITY_DENIED",
+        "USER_PLANT_NOT_FOUND"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/diagnosis/visual/sessions/{visualDiagnosisRef}",
+      "operationId": "getVisualDiagnosis",
+      "owner": "diagnosis",
+      "phase": "P4",
+      "security": "authenticated",
+      "requestContract": "VisualDiagnosisPath",
+      "responseContract": "VisualDiagnosisSessionResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "PRINCIPAL_INVALID",
+        "CAPABILITY_DENIED",
+        "NOT_FOUND"
+      ]
+    },
+    {
+      "method": "GET",
       "path": "/api/v2/user-plants/{userPlantRef}/diagnoses",
       "operationId": "listUserPlantDiagnoses",
       "owner": "diagnosis",

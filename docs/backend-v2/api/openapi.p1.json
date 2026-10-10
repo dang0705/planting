@@ -2452,6 +2452,331 @@
         ]
       }
     },
+    "/api/v2/diagnosis/visual/upload-targets": {
+      "get": {
+        "operationId": "getVisualDiagnosisUploadTargets",
+        "summary": "diagnosis 域：getVisualDiagnosisUploadTargets（diagnosis-visual-api/v1；已冻结合同、未实现）",
+        "tags": [
+          "diagnosis"
+        ],
+        "x-owner": "diagnosis",
+        "x-phase": "P4",
+        "x-security": "authenticated",
+        "x-request-contract": "VisualDiagnosisUploadTargetsQuery",
+        "x-response-contract": "VisualDiagnosisUploadTargetsResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "CAPABILITY_DENIED",
+          "SERVICE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "name": "count",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；data 结构见 contracts/schemas/diagnosis-visual-api.v1.schema.json 的 VisualDiagnosisUploadTargetsResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/diagnosis/visual/images": {
+      "post": {
+        "operationId": "registerVisualDiagnosisImages",
+        "summary": "diagnosis 域：registerVisualDiagnosisImages（diagnosis-visual-api/v1；已冻结合同、未实现）",
+        "tags": [
+          "diagnosis"
+        ],
+        "x-owner": "diagnosis",
+        "x-phase": "P4",
+        "x-security": "authenticated",
+        "x-request-contract": "RegisterVisualDiagnosisImagesRequest",
+        "x-response-contract": "RegisterVisualDiagnosisImagesResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "CAPABILITY_DENIED",
+          "NOT_FOUND",
+          "PAYLOAD_TOO_LARGE",
+          "UNSUPPORTED_MEDIA_TYPE",
+          "IDEMPOTENCY_CONFLICT",
+          "SERVICE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；data 结构见 contracts/schemas/diagnosis-visual-api.v1.schema.json 的 RegisterVisualDiagnosisImagesResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/diagnosis/visual/sessions": {
+      "post": {
+        "operationId": "createVisualDiagnosis",
+        "summary": "diagnosis 域：createVisualDiagnosis（diagnosis-visual-api/v1；已冻结合同、未实现）",
+        "tags": [
+          "diagnosis"
+        ],
+        "x-owner": "diagnosis",
+        "x-phase": "P4",
+        "x-security": "authenticated",
+        "x-request-contract": "CreateVisualDiagnosisRequest",
+        "x-response-contract": "VisualDiagnosisSessionResponse",
+        "x-idempotency": "required_header",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "CAPABILITY_DENIED",
+          "USER_PLANT_NOT_FOUND",
+          "USER_PLANT_ARCHIVED",
+          "NOT_FOUND",
+          "AI_QUOTA_INSUFFICIENT",
+          "IDEMPOTENCY_CONFLICT",
+          "RATE_LIMITED",
+          "SERVICE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "成功；data 结构见 contracts/schemas/diagnosis-visual-api.v1.schema.json 的 VisualDiagnosisSessionResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "listVisualDiagnoses",
+        "summary": "diagnosis 域：listVisualDiagnoses（diagnosis-visual-api/v1；已冻结合同、未实现）",
+        "tags": [
+          "diagnosis"
+        ],
+        "x-owner": "diagnosis",
+        "x-phase": "P4",
+        "x-security": "authenticated",
+        "x-request-contract": "VisualDiagnosisListQuery",
+        "x-response-contract": "VisualDiagnosisListResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "CAPABILITY_DENIED",
+          "USER_PLANT_NOT_FOUND"
+        ],
+        "parameters": [
+          {
+            "name": "userPlantRef",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^upl_[A-Za-z0-9_-]{8,60}$"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；data 结构见 contracts/schemas/diagnosis-visual-api.v1.schema.json 的 VisualDiagnosisListResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/diagnosis/visual/sessions/{visualDiagnosisRef}": {
+      "get": {
+        "operationId": "getVisualDiagnosis",
+        "summary": "diagnosis 域：getVisualDiagnosis（diagnosis-visual-api/v1；已冻结合同、未实现）",
+        "tags": [
+          "diagnosis"
+        ],
+        "x-owner": "diagnosis",
+        "x-phase": "P4",
+        "x-security": "authenticated",
+        "x-request-contract": "VisualDiagnosisPath",
+        "x-response-contract": "VisualDiagnosisSessionResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "PRINCIPAL_INVALID",
+          "CAPABILITY_DENIED",
+          "NOT_FOUND"
+        ],
+        "parameters": [
+          {
+            "name": "visualDiagnosisRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 12,
+              "maxLength": 64,
+              "pattern": "^vds_[A-Za-z0-9_-]{8,60}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；data 结构见 contracts/schemas/diagnosis-visual-api.v1.schema.json 的 VisualDiagnosisSessionResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userBearer": []
+          }
+        ]
+      }
+    },
     "/api/v2/user-plants/{userPlantRef}/diagnoses": {
       "get": {
         "operationId": "listUserPlantDiagnoses",

@@ -3,7 +3,7 @@
 - 机器事实源：`configuration-variable-catalog.json`
 - Schema：`configuration-variable-catalog/v1`
 - 目录版本：`2026-10-04.1`
-- 当前共 243 项业务/治理变量、16 个 Provider 配置档案：已冻结 111 项、待冻结 62 项、不可配置硬规则 70 项。
+- 当前共 243 项业务/治理变量、16 个 Provider 配置档案：已冻结 112 项、待冻结 61 项、不可配置硬规则 70 项。
 
 本文件由同目录生成脚本从 JSON 生成，便于中文阅读。实施 Agent 必须先按领域读取本文件，再只深读该变量引用的合同或决策；不得把 `P1_PENDING` 猜成默认值。待冻结项必须带原因与阻断范围，未冻结前只能推进不依赖该值的工作。
 
@@ -248,7 +248,7 @@
 | `diagnosis.model.family` | AI 问诊产品模型家族 | `diagnosis_releases` | 领域策略 / 已冻结 / 策略发布层 | qwen3.5-flash | diagnosis | diagnosis、Bailian Adapter | 模型与 Prompt、Schema 组成不可变 release；失败：模型不可用时不静默换模 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
 | `diagnosis.prompt.release_sha256` | AI 问诊提示词发布哈希 | `diagnosis_releases` | 领域策略 / 已冻结 / 策略发布层 | 11c58cebe3b3c41097d6f6d6b3c5b5d7eb16248e4f07bacd497868a647ccc964 | diagnosis | diagnosis、Bailian Adapter | 不可变 Prompt release；失败：哈希缺失或不匹配时阻断 AI 问诊 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
 | `diagnosis.result.schema_version` | AI 问诊结构化结果版本 | `diagnosis_releases` | 领域策略 / 已冻结 / 策略发布层 | diagnosis-model-output/v1 | diagnosis | diagnosis、Bailian Adapter | 不可变 JSON Schema release；失败：校验失败整份拒绝 | P1 / [P1] 业务策略与统一 Provider 配置架构 |
-| `diagnosis.visual.max_images` | 单次视觉问诊最大图片数 | `diagnosis_releases` | 领域策略 / 待冻结 / 策略发布层 | P1_PENDING 张 | diagnosis | diagnosis、storage、AI 成本策略 | 产品动作成本策略版本；失败：未冻结前不开放多图视觉问诊；待冻结原因：动作上限和真实成本未冻结；阻断：视觉问诊 | P4 / [P4] 固定/动态问诊与小青工具 |
+| `diagnosis.visual.max_images` | 单次视觉问诊最大图片数 | `diagnosis_releases` | 领域策略 / 已冻结 / 策略发布层 | `3` 张 | diagnosis | diagnosis、storage、AI 成本策略 | 产品动作成本策略版本；失败：超过 3 张时拒绝该次请求并提示分次补拍 | P4 / [P4] 固定/动态问诊与小青工具 |
 | `diagnosis.evaluation.ai_budget_cny` | 视觉诊断离线评测 AI 调用预算上限 | `diagnosis_releases` | 领域策略 / 待冻结 / 策略发布层 | P1_PENDING 元（人民币） | diagnosis | diagnosis 离线评测脚本、AI 成本策略 | 用户逐次授权评测批次预算；每批次锁定价目快照与累计成本，超额前停止；失败：未冻结前不得发起任何付费评测调用；待冻结原因：用户 2026-10-10 口头给出上限 50 元，尚待随评测设计一并书面确认，且价目快照、单案例 token 尚未实测；阻断：视觉诊断离线评测与提示词迭代的付费调用 | P4 / [P4] 固定/动态问诊与小青工具 |
 | `diagnosis.visual_gen.prompt_release_sha256` | 视觉诊断生成式提示词发布哈希 | `diagnosis_releases` | 领域策略 / 待冻结 / 策略发布层 | P1_PENDING SHA-256 | diagnosis | diagnosis、Bailian Adapter | 不可变 Prompt release；与模型快照、输出 Schema、请求参数组成 diagnosis-visual-gen 版本组；不覆盖现行 diagnosis-visual/v1；失败：哈希缺失或不匹配时阻断视觉生成式诊断，不静默回退到其他提示词；待冻结原因：提示词 v1 草案未经评测与园艺审核（用户 2026-10-10 裁决新增，修订 C12）；阻断：视觉诊断生成式版本组 | P4 / [P4] 固定/动态问诊与小青工具 |
 | `diagnosis.visual_gen.output_schema_version` | 视觉诊断生成式模型输出 Schema 版本 | `diagnosis_releases` | 领域策略 / 待冻结 / 策略发布层 | P1_PENDING | diagnosis | diagnosis、Bailian Adapter | 不可变 JSON Schema release（拟 diagnosis-visual-gen-output/v1）；失败：校验失败整份拒绝；待冻结原因：输出 Schema 仅在提示词草案中，未落盘冻结（修订 C12）；阻断：视觉诊断生成式版本组 | P4 / [P4] 固定/动态问诊与小青工具 |

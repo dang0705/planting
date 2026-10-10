@@ -31,6 +31,8 @@ export interface BailianRequestInput extends ProviderRequest {
   readonly jsonMode?: boolean
   /** 仅评测：允许图片 data URL（产品运行时仍只允许 HTTPS）。 */
   readonly allowInlineImages?: boolean
+  /** JSON Schema 严格模式（给出时优先于 jsonMode）。 */
+  readonly jsonSchema?: { readonly name: string; readonly schema: object }
 }
 
 /** 评测内联图片 data URL 的唯一允许格式。 */
@@ -71,8 +73,17 @@ export interface BailianRequestBody {
   readonly enable_thinking: boolean
   /** 非流式。 */
   readonly stream: false
-  /** JSON 输出模式（仅在开启时出现）。 */
-  readonly response_format?: { readonly type: 'json_object' }
+  /** 结构化输出模式（仅在开启时出现）。 */
+  readonly response_format?:
+    | { readonly type: 'json_object' }
+    | {
+        readonly type: 'json_schema'
+        readonly json_schema: {
+          readonly name: string
+          readonly strict: true
+          readonly schema: object
+        }
+      }
 }
 
 /** 构造请求体；图片地址必须是 HTTPS。 */
@@ -107,7 +118,20 @@ export function buildBailianRequestBody(input: BailianRequestInput): BailianRequ
     max_tokens: input.maxTokens,
     enable_thinking: input.enableThinking,
     stream: false,
-    ...(input.jsonMode === true ? { response_format: { type: 'json_object' as const } } : {})
+    ...(input.jsonSchema !== undefined
+      ? {
+          response_format: {
+            type: 'json_schema' as const,
+            json_schema: {
+              name: input.jsonSchema.name,
+              strict: true as const,
+              schema: input.jsonSchema.schema
+            }
+          }
+        }
+      : input.jsonMode === true
+        ? { response_format: { type: 'json_object' as const } }
+        : {})
   }
 }
 
@@ -129,6 +153,8 @@ export interface BailianProviderOptions {
   readonly jsonMode?: boolean
   /** 仅评测：允许图片 data URL。 */
   readonly allowInlineImages?: boolean
+  /** JSON Schema 严格模式。 */
+  readonly jsonSchema?: { readonly name: string; readonly schema: object }
 }
 
 /** 读取数字字段。 */
@@ -168,7 +194,8 @@ export function createBailianProvider(options: BailianProviderOptions): EvalProv
         maxTokens,
         maxPixels,
         jsonMode: options.jsonMode === true,
-        allowInlineImages: options.allowInlineImages === true
+        allowInlineImages: options.allowInlineImages === true,
+        ...(options.jsonSchema !== undefined ? { jsonSchema: options.jsonSchema } : {})
       })
       const startedAt = Date.now()
       const response = await options.fetchImpl(`${baseUrl}/chat/completions`, {

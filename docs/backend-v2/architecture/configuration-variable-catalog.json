@@ -2567,12 +2567,13 @@
       "layer": "domain_policy",
       "valueType": "integer",
       "unit": "张",
-      "status": "pending",
-      "currentValue": "P1_PENDING",
+      "status": "confirmed",
+      "currentValue": 3,
       "owner": "diagnosis",
       "sourceRefs": [
         "docs/backend-v2/contracts/http-api.md",
-        "docs/backend-v2/decisions/P0-product-cost-boundaries.md"
+        "docs/backend-v2/decisions/P0-product-cost-boundaries.md",
+        "docs/backend-v2/contracts/diagnosis-visual-image-input.md"
       ],
       "consumers": [
         "diagnosis",
@@ -2580,21 +2581,14 @@
         "AI 成本策略"
       ],
       "changePolicy": "产品动作成本策略版本",
-      "fallback": "未冻结前不开放多图视觉问诊",
+      "fallback": "超过 3 张时拒绝该次请求并提示分次补拍",
       "phase": "P4",
       "ticketTitle": "[P4] 固定/动态问诊与小青工具",
-      "expected": "图片上限与最大成本同时校验",
-      "pendingReason": "动作上限和真实成本未冻结",
-      "blockingScope": "视觉问诊",
+      "expected": "单次调用图片数 ≤3；与单次输入 token 预算（≤28.8K）同时校验",
       "decisionGroup": "diagnosis_releases",
       "configurationTier": "policy",
       "codeLocations": [],
-      "proposedValue": {
-        "perCall": 3,
-        "inputTokenCeilingImages": 19,
-        "reasonZh": "按输入 token 预算（目标 ≤28.8K，留 10% 余量于 32K 档），单次最多可放约 19 张；建议远低于上限取 3 张：与端上主图 3 张槽位一致，多图增益递减而延迟与输出随之上升，且便于控制单次成本"
-      },
-      "decisionNote": "2026-10-10 规划建议值（待主代理裁定，未冻结）；1024² 像素上限为前提"
+      "decisionNote": "用户 2026-10-10 裁定：每次诊断最多 3 张图；补拍为新的一次调用。前提为模型输入侧 1024² 像素硬上限（diagnosis-visual-image-input/v1）"
     },
     {
       "id": "diagnosis.evaluation.ai_budget_cny",
@@ -2715,7 +2709,7 @@
         "maxPixelsIsHardCeiling": true,
         "maxInputTokensPerCall": 28800
       },
-      "decisionNote": "2026-10-10 规划建议：max_pixels=1024² 作为代码层硬上限（不设上限单图可达 2,562 tokens）；单次输入目标 ≤28.8K tokens（32K 档 + 10% 余量）；待主代理裁定"
+      "decisionNote": "用户 2026-10-10 裁定：客户端不限制像素，服务端在送模型前统一缩放到 1024² 以内（只缩不放大），见 diagnosis-visual-image-input/v1；max_pixels 由适配器写死为代码层硬上限。其余请求参数仍待评测后裁定"
     },
     {
       "domain": "diagnosis",
@@ -5715,7 +5709,8 @@
       "status": "pending",
       "currentValue": "P1_PENDING",
       "sourceRefs": [
-        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md",
+        "docs/backend-v2/contracts/diagnosis-visual-api.md"
       ],
       "consumers": [
         "subscription",
@@ -5729,7 +5724,30 @@
       "blockingScope": "生成式动作 USER_DIAGNOSIS_VISUAL",
       "decisionGroup": "entitlements_cost_rewards",
       "configurationTier": "policy",
-      "codeLocations": []
+      "codeLocations": [],
+      "proposedValue": {
+        "capability": "USER_DIAGNOSIS_VISUAL",
+        "modelFamily": "qwen3.7-flash",
+        "providerCode": "aliyun_bailian",
+        "maxInputTokens": 28800,
+        "maxOutputTokens": 4000,
+        "maxImages": 1,
+        "maxModelLoops": 2,
+        "inputMicrosPerToken": 0.2,
+        "outputMicrosPerToken": 0.8,
+        "maxCostMicros": 17920,
+        "estimatedPoints": 23,
+        "pointsFormula": "ceil(costMicros / 800)",
+        "priceSnapshotRef": "docs/backend-v2/diagnosis-eval/qwen3.7-flash-price-snapshot-2026-10-10.json",
+        "costPolicyVersion": "diagnosis-visual-cost/v1-draft",
+        "releaseWithoutCharge": [
+          "not_plant",
+          "image_unusable",
+          "model_failed",
+          "safety_gate_rejected"
+        ]
+      },
+      "decisionNote": "ClickUp z8v0kmvhnb 票面建议值（2026-10-11）：按 qwen3.7-flash ≤32K 档价格（0.2/0.8 元/百万 tokens = 0.2/0.8 微元/token）计算 maxCostMicros = 2 × (28,800 × 0.2 + 4,000 × 0.8) = 17,920，estimatedPoints = ceil(17,920 / 800) = 23；由主代理裁定是否改为 confirmed。建议把单图与多图合并为同一产品动作（用户侧都是一次诊断）"
     },
     {
       "owner": "subscription",
@@ -5744,7 +5762,8 @@
       "status": "pending",
       "currentValue": "P1_PENDING",
       "sourceRefs": [
-        "docs/backend-v2/contracts/care-points-and-ai-quota.md"
+        "docs/backend-v2/contracts/care-points-and-ai-quota.md",
+        "docs/backend-v2/contracts/diagnosis-visual-api.md"
       ],
       "consumers": [
         "subscription",
@@ -5758,7 +5777,30 @@
       "blockingScope": "生成式动作 USER_DIAGNOSIS_VISUAL",
       "decisionGroup": "entitlements_cost_rewards",
       "configurationTier": "policy",
-      "codeLocations": []
+      "codeLocations": [],
+      "proposedValue": {
+        "capability": "USER_DIAGNOSIS_VISUAL",
+        "modelFamily": "qwen3.7-flash",
+        "providerCode": "aliyun_bailian",
+        "maxInputTokens": 28800,
+        "maxOutputTokens": 4000,
+        "maxImages": 3,
+        "maxModelLoops": 2,
+        "inputMicrosPerToken": 0.2,
+        "outputMicrosPerToken": 0.8,
+        "maxCostMicros": 17920,
+        "estimatedPoints": 23,
+        "pointsFormula": "ceil(costMicros / 800)",
+        "priceSnapshotRef": "docs/backend-v2/diagnosis-eval/qwen3.7-flash-price-snapshot-2026-10-10.json",
+        "costPolicyVersion": "diagnosis-visual-cost/v1-draft",
+        "releaseWithoutCharge": [
+          "not_plant",
+          "image_unusable",
+          "model_failed",
+          "safety_gate_rejected"
+        ]
+      },
+      "decisionNote": "ClickUp z8v0kmvhnb 票面建议值（2026-10-11）：按 qwen3.7-flash ≤32K 档价格（0.2/0.8 元/百万 tokens = 0.2/0.8 微元/token）计算 maxCostMicros = 2 × (28,800 × 0.2 + 4,000 × 0.8) = 17,920，estimatedPoints = ceil(17,920 / 800) = 23；由主代理裁定是否改为 confirmed。建议把单图与多图合并为同一产品动作（用户侧都是一次诊断）"
     },
     {
       "domain": "subscription",

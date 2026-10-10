@@ -1,7 +1,7 @@
 {
   "capturedAt": "2026-10-10",
   "ticket": "E05 / ClickUp z8v0kmrg8a（[P1] 诊断知识来源、园艺原因及 Outcome/Action 合同）、z8v0kmr974（[P4] 固定/动态问诊与小青工具）",
-  "status": "r12_model_comparison_token_budget",
+  "status": "r13_image_input_contract_ab_api_contract",
   "testLayer": "none（纯规划，无测试、无 TDD 声明）",
   "userRequest": "用户 2026-10-10：开始视觉诊断规划；v1 覆盖面过窄；要求最优提示词、固定前缀对缓存友好、视觉模型返回完整病因与解决方案；提供竞品结果页截图作信息结构参考",
   "scopeGuards": {
@@ -182,6 +182,11 @@
       "rev": "r12",
       "at": "2026-10-10",
       "scope": "qwen3.5-plus 结构复核；用户协议核对；qwen3.6-plus 与 qwen3.7-flash 探针；三方对比；输入 token 预算与优化；候选顺序入配置目录"
+    },
+    {
+      "rev": "r13",
+      "at": "2026-10-11",
+      "scope": "图片输入合同、max_images confirmed、D10、A/B、生成式诊断接口合同（z8v0kmvhnb）"
     }
   ],
   "userDecisions_2026_10_10": {
@@ -634,5 +639,41 @@
     ],
     "privacyCheck": "仓库内文案未覆盖「数据用于改进服务/诊断」；平台后台协议正文不在仓库",
     "verification": "vitest 319 文件 3515 通过 / 5 跳过 / 0 失败"
+  },
+  "r13": {
+    "tdd": {
+      "imageInputContract": {
+        "red": "5/5 失败",
+        "green": "5/5"
+      },
+      "jsonSchemaOption": {
+        "red": "1 失败",
+        "green": "脚本 62/62"
+      },
+      "visualApiContract": {
+        "red": "19/19 失败",
+        "green": "19/19"
+      }
+    },
+    "contracts": [
+      "docs/backend-v2/contracts/diagnosis-visual-image-input.md",
+      "docs/backend-v2/contracts/diagnosis-visual-image-input.v1.json",
+      "docs/backend-v2/contracts/diagnosis-visual-api.md",
+      "docs/backend-v2/contracts/schemas/diagnosis-visual-api.v1.schema.json"
+    ],
+    "catalog": [
+      "diagnosis.visual.max_images → confirmed 3",
+      "subscription.ai_action.diagnosis_visual_single/multi proposedValue（maxCostMicros 17,920、estimatedPoints 23）"
+    ],
+    "routes": "route-registry/OpenAPI 新增 5 条 /api/v2/diagnosis/visual/*（authenticated）",
+    "ab": {
+      "calls": {
+        "attempted": 135,
+        "succeeded": 120
+      },
+      "listPriceCny": 0.238492,
+      "expectedBillingCny": 0
+    },
+    "d10": "v1 线上用户图不使用"
   }
 }

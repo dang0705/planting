@@ -1,0 +1,765 @@
+{
+  "type": "object",
+  "properties": {
+    "contractVersion": {
+      "type": "string",
+      "enum": [
+        "diagnosis-visual-gen-output/v1"
+      ]
+    },
+    "classification": {
+      "type": "object",
+      "properties": {
+        "isPlant": {
+          "type": "string",
+          "enum": [
+            "yes",
+            "no",
+            "uncertain"
+          ]
+        },
+        "usable": {
+          "type": "string",
+          "enum": [
+            "good",
+            "limited",
+            "unusable"
+          ]
+        },
+        "qualityIssues": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "blur",
+              "overexposed",
+              "underexposed",
+              "too_far",
+              "occluded",
+              "glare",
+              "compression",
+              "not_plant"
+            ]
+          }
+        },
+        "overallStatus": {
+          "type": "string",
+          "enum": [
+            "problem_found",
+            "multiple_problems",
+            "no_obvious_problem",
+            "insufficient_evidence",
+            "not_plant"
+          ]
+        },
+        "candidates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "rank": {
+                "type": "integer"
+              },
+              "causeCode": {
+                "type": "string",
+                "enum": [
+                  "pest_spider_mite",
+                  "pest_thrips",
+                  "pest_whitefly",
+                  "pest_aphid",
+                  "pest_mealybug",
+                  "pest_scale_insect",
+                  "pest_leaf_miner",
+                  "pest_fungus_gnat",
+                  "pest_caterpillar_chewing",
+                  "pest_snail_slug",
+                  "pest_other_suspected",
+                  "fungal_powdery_mildew",
+                  "fungal_leaf_spot",
+                  "fungal_anthracnose",
+                  "fungal_gray_mold",
+                  "fungal_rust",
+                  "fungal_sooty_mold",
+                  "fungal_downy_mildew",
+                  "fungal_stem_base_rot",
+                  "fungal_other_suspected",
+                  "bacterial_leaf_spot",
+                  "bacterial_soft_rot",
+                  "bacterial_other_suspected",
+                  "viral_mosaic",
+                  "viral_other_suspected",
+                  "nematode_root_knot",
+                  "physio_overwatering",
+                  "physio_underwatering",
+                  "physio_low_light",
+                  "physio_edema",
+                  "physio_natural_aging",
+                  "physio_transplant_shock",
+                  "env_sunburn",
+                  "env_cold_damage",
+                  "env_heat_stress",
+                  "env_low_humidity",
+                  "env_mechanical_damage",
+                  "nutrient_nitrogen_deficiency",
+                  "nutrient_iron_deficiency",
+                  "nutrient_magnesium_deficiency",
+                  "nutrient_potassium_deficiency",
+                  "nutrient_other_suspected",
+                  "chem_fertilizer_burn",
+                  "chem_pesticide_injury",
+                  "chem_residue_on_leaf",
+                  "root_rot",
+                  "root_bound",
+                  "none_no_obvious_problem",
+                  "none_natural_variegation",
+                  "unknown_needs_more_evidence"
+                ]
+              },
+              "certaintyBand": {
+                "type": "string",
+                "enum": [
+                  "likely",
+                  "possible",
+                  "unconfirmed"
+                ]
+              },
+              "directMarkerKeys": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "visible_mite_colony",
+                    "fine_webbing",
+                    "yellow_speckling",
+                    "visible_mealybug_colony",
+                    "scale_shells",
+                    "white_flies",
+                    "fixed_oval_nymphs",
+                    "aphids_visible",
+                    "thrips_visible",
+                    "silver_scarring",
+                    "black_fecal_spots",
+                    "tunnels_in_leaf",
+                    "small_flies_soil",
+                    "powder_white",
+                    "sooty_mold",
+                    "rust_pustules",
+                    "gray_fuzzy_mold",
+                    "frass_pellets",
+                    "slime_trail",
+                    "salt_crust",
+                    "mushy_dark_roots"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "rank",
+              "causeCode",
+              "certaintyBand",
+              "directMarkerKeys"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "mild",
+            "moderate",
+            "severe",
+            "unknown"
+          ]
+        },
+        "urgency": {
+          "type": "string",
+          "enum": [
+            "immediate",
+            "soon",
+            "observe",
+            "unknown"
+          ]
+        },
+        "isolation": {
+          "type": "string",
+          "enum": [
+            "recommended",
+            "not_needed",
+            "uncertain"
+          ]
+        },
+        "edibleContext": {
+          "type": "string",
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        }
+      },
+      "required": [
+        "isPlant",
+        "usable",
+        "qualityIssues",
+        "overallStatus",
+        "candidates",
+        "severity",
+        "urgency",
+        "isolation",
+        "edibleContext"
+      ],
+      "additionalProperties": false
+    },
+    "perImage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "imageIndex": {
+            "type": "integer"
+          },
+          "visiblePart": {
+            "type": "string",
+            "enum": [
+              "whole_plant",
+              "leaf_front",
+              "leaf_back",
+              "leaf_edge",
+              "petiole",
+              "stem",
+              "stem_base",
+              "flower",
+              "fruit",
+              "soil_surface",
+              "root",
+              "root_crown",
+              "unknown"
+            ]
+          },
+          "quality": {
+            "type": "string",
+            "enum": [
+              "good",
+              "limited",
+              "unusable"
+            ]
+          },
+          "noteZh": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "imageIndex",
+          "visiblePart",
+          "quality",
+          "noteZh"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "titleZh": {
+      "type": "string"
+    },
+    "summaryZh": {
+      "type": "string"
+    },
+    "diagnosisTable": {
+      "type": "object",
+      "properties": {
+        "problemTypeZh": {
+          "type": "string"
+        },
+        "certaintyZh": {
+          "type": "string"
+        },
+        "certaintyReasonZh": {
+          "type": "string"
+        },
+        "mainEvidenceZh": {
+          "type": "string"
+        },
+        "urgencyZh": {
+          "type": "string"
+        },
+        "isolationZh": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "problemTypeZh",
+        "certaintyZh",
+        "certaintyReasonZh",
+        "mainEvidenceZh",
+        "urgencyZh",
+        "isolationZh"
+      ],
+      "additionalProperties": false
+    },
+    "identificationBasis": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "aspectZh": {
+            "type": "string"
+          },
+          "detailZh": {
+            "type": "string"
+          },
+          "imageIndex": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "aspectZh",
+          "detailZh",
+          "imageIndex"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "alternatives": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "causeCode": {
+            "type": "string",
+            "enum": [
+              "pest_spider_mite",
+              "pest_thrips",
+              "pest_whitefly",
+              "pest_aphid",
+              "pest_mealybug",
+              "pest_scale_insect",
+              "pest_leaf_miner",
+              "pest_fungus_gnat",
+              "pest_caterpillar_chewing",
+              "pest_snail_slug",
+              "pest_other_suspected",
+              "fungal_powdery_mildew",
+              "fungal_leaf_spot",
+              "fungal_anthracnose",
+              "fungal_gray_mold",
+              "fungal_rust",
+              "fungal_sooty_mold",
+              "fungal_downy_mildew",
+              "fungal_stem_base_rot",
+              "fungal_other_suspected",
+              "bacterial_leaf_spot",
+              "bacterial_soft_rot",
+              "bacterial_other_suspected",
+              "viral_mosaic",
+              "viral_other_suspected",
+              "nematode_root_knot",
+              "physio_overwatering",
+              "physio_underwatering",
+              "physio_low_light",
+              "physio_edema",
+              "physio_natural_aging",
+              "physio_transplant_shock",
+              "env_sunburn",
+              "env_cold_damage",
+              "env_heat_stress",
+              "env_low_humidity",
+              "env_mechanical_damage",
+              "nutrient_nitrogen_deficiency",
+              "nutrient_iron_deficiency",
+              "nutrient_magnesium_deficiency",
+              "nutrient_potassium_deficiency",
+              "nutrient_other_suspected",
+              "chem_fertilizer_burn",
+              "chem_pesticide_injury",
+              "chem_residue_on_leaf",
+              "root_rot",
+              "root_bound",
+              "none_no_obvious_problem",
+              "none_natural_variegation",
+              "unknown_needs_more_evidence"
+            ]
+          },
+          "nameZh": {
+            "type": "string"
+          },
+          "whyLessLikelyZh": {
+            "type": "string"
+          },
+          "howToRuleOutZh": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "causeCode",
+          "nameZh",
+          "whyLessLikelyZh",
+          "howToRuleOutZh"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "immediateActions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "stepNo": {
+            "type": "integer"
+          },
+          "titleZh": {
+            "type": "string"
+          },
+          "detailZh": {
+            "type": "string"
+          },
+          "causeCodes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "pest_spider_mite",
+                "pest_thrips",
+                "pest_whitefly",
+                "pest_aphid",
+                "pest_mealybug",
+                "pest_scale_insect",
+                "pest_leaf_miner",
+                "pest_fungus_gnat",
+                "pest_caterpillar_chewing",
+                "pest_snail_slug",
+                "pest_other_suspected",
+                "fungal_powdery_mildew",
+                "fungal_leaf_spot",
+                "fungal_anthracnose",
+                "fungal_gray_mold",
+                "fungal_rust",
+                "fungal_sooty_mold",
+                "fungal_downy_mildew",
+                "fungal_stem_base_rot",
+                "fungal_other_suspected",
+                "bacterial_leaf_spot",
+                "bacterial_soft_rot",
+                "bacterial_other_suspected",
+                "viral_mosaic",
+                "viral_other_suspected",
+                "nematode_root_knot",
+                "physio_overwatering",
+                "physio_underwatering",
+                "physio_low_light",
+                "physio_edema",
+                "physio_natural_aging",
+                "physio_transplant_shock",
+                "env_sunburn",
+                "env_cold_damage",
+                "env_heat_stress",
+                "env_low_humidity",
+                "env_mechanical_damage",
+                "nutrient_nitrogen_deficiency",
+                "nutrient_iron_deficiency",
+                "nutrient_magnesium_deficiency",
+                "nutrient_potassium_deficiency",
+                "nutrient_other_suspected",
+                "chem_fertilizer_burn",
+                "chem_pesticide_injury",
+                "chem_residue_on_leaf",
+                "root_rot",
+                "root_bound",
+                "none_no_obvious_problem",
+                "none_natural_variegation",
+                "unknown_needs_more_evidence"
+              ]
+            }
+          },
+          "riskLevel": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          },
+          "riskReasonZh": {
+            "type": "string"
+          },
+          "agentNames": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "苦参碱",
+                "印楝素",
+                "除虫菊素",
+                "矿物油（园艺油）",
+                "杀虫皂（钾皂）",
+                "苏云金杆菌（Bt）",
+                "多杀霉素",
+                "乙基多杀菌素",
+                "碳酸氢钾",
+                "硫磺制剂",
+                "铜制剂",
+                "代森锰锌",
+                "百菌清",
+                "苯醚甲环唑",
+                "咪鲜胺",
+                "嘧菌酯",
+                "三唑类杀菌剂",
+                "螯合铁微量元素肥",
+                "含镁微量元素肥",
+                "稀释酒精（仅用于棉签擦拭）"
+              ]
+            }
+          },
+          "labelDosageNotice": {
+            "type": "boolean"
+          },
+          "edibleSafetyIntervalNotice": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "stepNo",
+          "titleZh",
+          "detailZh",
+          "causeCodes",
+          "riskLevel",
+          "riskReasonZh",
+          "agentNames",
+          "labelDosageNotice",
+          "edibleSafetyIntervalNotice"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "ongoingCare": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "stepNo": {
+            "type": "integer"
+          },
+          "titleZh": {
+            "type": "string"
+          },
+          "detailZh": {
+            "type": "string"
+          },
+          "causeCodes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "pest_spider_mite",
+                "pest_thrips",
+                "pest_whitefly",
+                "pest_aphid",
+                "pest_mealybug",
+                "pest_scale_insect",
+                "pest_leaf_miner",
+                "pest_fungus_gnat",
+                "pest_caterpillar_chewing",
+                "pest_snail_slug",
+                "pest_other_suspected",
+                "fungal_powdery_mildew",
+                "fungal_leaf_spot",
+                "fungal_anthracnose",
+                "fungal_gray_mold",
+                "fungal_rust",
+                "fungal_sooty_mold",
+                "fungal_downy_mildew",
+                "fungal_stem_base_rot",
+                "fungal_other_suspected",
+                "bacterial_leaf_spot",
+                "bacterial_soft_rot",
+                "bacterial_other_suspected",
+                "viral_mosaic",
+                "viral_other_suspected",
+                "nematode_root_knot",
+                "physio_overwatering",
+                "physio_underwatering",
+                "physio_low_light",
+                "physio_edema",
+                "physio_natural_aging",
+                "physio_transplant_shock",
+                "env_sunburn",
+                "env_cold_damage",
+                "env_heat_stress",
+                "env_low_humidity",
+                "env_mechanical_damage",
+                "nutrient_nitrogen_deficiency",
+                "nutrient_iron_deficiency",
+                "nutrient_magnesium_deficiency",
+                "nutrient_potassium_deficiency",
+                "nutrient_other_suspected",
+                "chem_fertilizer_burn",
+                "chem_pesticide_injury",
+                "chem_residue_on_leaf",
+                "root_rot",
+                "root_bound",
+                "none_no_obvious_problem",
+                "none_natural_variegation",
+                "unknown_needs_more_evidence"
+              ]
+            }
+          },
+          "careProposalKind": {
+            "type": "string",
+            "enum": [
+              "watering",
+              "light",
+              "fertilizing",
+              "repotting",
+              "humidity",
+              "ventilation",
+              "none"
+            ]
+          },
+          "proposalNoticeZh": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "stepNo",
+          "titleZh",
+          "detailZh",
+          "causeCodes",
+          "careProposalKind",
+          "proposalNoticeZh"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "prevention": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "titleZh": {
+            "type": "string"
+          },
+          "detailZh": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "titleZh",
+          "detailZh"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "cautions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "detailZh": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "detailZh"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "followUp": {
+      "type": "object",
+      "properties": {
+        "recheckZh": {
+          "type": "string"
+        },
+        "escalateZh": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "recheckZh",
+        "escalateZh"
+      ],
+      "additionalProperties": false
+    },
+    "retakeRequests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "visiblePart": {
+            "type": "string",
+            "enum": [
+              "whole_plant",
+              "leaf_front",
+              "leaf_back",
+              "leaf_edge",
+              "petiole",
+              "stem",
+              "stem_base",
+              "flower",
+              "fruit",
+              "soil_surface",
+              "root",
+              "root_crown",
+              "unknown"
+            ]
+          },
+          "reasonZh": {
+            "type": "string"
+          },
+          "howToShootZh": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "visiblePart",
+          "reasonZh",
+          "howToShootZh"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "followUpQuestions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "questionZh": {
+            "type": "string"
+          },
+          "whyZh": {
+            "type": "string"
+          },
+          "optionsZh": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "questionZh",
+          "whyZh",
+          "optionsZh"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "contractVersion",
+    "classification",
+    "perImage",
+    "titleZh",
+    "summaryZh",
+    "diagnosisTable",
+    "identificationBasis",
+    "alternatives",
+    "immediateActions",
+    "ongoingCare",
+    "prevention",
+    "cautions",
+    "followUp",
+    "retakeRequests",
+    "followUpQuestions"
+  ],
+  "additionalProperties": false,
+  "description": "草案，仅评测用：diagnosis-visual-gen-output/v1 的 JSON Schema 严格模式版本（由 v1.2 前缀【4】【5】【7】【8】生成）。严格模式要求全部字段必填，可选语义用空字符串/空数组/false 表达。"
+}

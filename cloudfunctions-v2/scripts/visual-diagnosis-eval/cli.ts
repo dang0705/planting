@@ -53,6 +53,7 @@ const { values } = parseArgs({
     'allow-inline-images': { type: 'boolean', default: false },
     'count-follow-up-quality': { type: 'boolean', default: false },
     'max-input-tokens': { type: 'string' },
+    'json-schema-file': { type: 'string' },
     apply: { type: 'boolean', default: false }
   },
   strict: true
@@ -119,6 +120,16 @@ const provider = apply
       enableThinking: thinking === 'on',
       jsonMode: jsonMode === 'on',
       allowInlineImages,
+      ...(values['json-schema-file']
+        ? {
+            jsonSchema: {
+              name: 'diagnosis_visual_gen_output',
+              schema: JSON.parse(
+                readFileSync(resolve(values['json-schema-file']), 'utf8')
+              ) as object
+            }
+          }
+        : {}),
       maxTokens: positive('max-tokens'),
       maxPixels: positive('max-pixels')
     })
