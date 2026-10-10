@@ -12,6 +12,7 @@ import {
 } from '../../foundation/idempotency/run-idempotent-write.js'
 import { lockOwnedUserPlant, readLatestBindingRef, type LockedOwnedUserPlant } from '../../user-plant/repository/mysql-catalog-binding-repository.js'
 import { buildCareCalendar, resolveCheckScheduledAt, validateWateringOccurredAt } from '../domain/long-term-care-rules.js'
+import { isCarePlanExpired } from '../domain/care-plan-expiry-rules.js'
 import {
   finishCarePlan,
   insertCarePlan,
@@ -40,6 +41,8 @@ export interface OwnedPlantCommandScope {
   readonly idempotency: HttpIdempotencyReservationInput
   /** 请求内锁定的长期养护规则策略快照（care/long_term_rules）。 */
   readonly rules: Readonly<CareLongTermRules>
+  /** 事务内每追加一条时间线事件回调一次（事件标识），供提交后同请求派发（§13）；事务回滚时这些事件不存在，派发自然领取不到。 */
+  readonly onEventAppended?: (eventId: string) => void
 }
 
 /** 确认建议输入；日历名称来自事务前读取的档案昵称或品种中文名。 */
@@ -95,12 +98,14 @@ async function writeWatering(transaction: Transaction, plant: LockedOwnedUserPla
   /** 实际浇水 UTC 毫秒。 */ readonly occurredAtMs: number
   /** 浇水量毫升或 null。 */ readonly amountMl: number | null
   /** 服务端当前 UTC 毫秒。 */ readonly nowMs: number
-}, rules: Readonly<CareLongTermRules>): Promise<string | null> {
+}, rules: Readonly<CareLongTermRules>, onEventAppended?: (eventId: string) => void): Promise<string | null> {
   if (!validateWateringOccurredAt({ occurredAtMs: input.occurredAtMs, nowMs: input.nowMs, plantCreatedAtMs: plant.createdAtMs }, rules)) { return null }
   const factRef = refs('fact')
   await insertWateringFact(transaction, plant, { factRef, occurredAtMs: input.occurredAtMs, amountMl: input.amountMl, sourceCommandRef: refs('command'), nowMs: input.nowMs })
   // §13：同一事务追加时间线事件，事实回滚时事件一起回滚。
-  await appendWateringFactRecordedEvent(transaction, plant, { factRef, occurredAtMs: input.occurredAtMs, amountMl: input.amountMl, nowMs: input.nowMs })
+  // 先写事件再回调：不能写成 `onEventAppended?.(await …)`，可选调用为 undefined 时实参不会被求值，事件会被漏写。
+  const eventId = await appendWateringFactRecordedEvent(transaction, plant, { factRef, occurredAtMs: input.occurredAtMs, amountMl: input.amountMl, nowMs: input.nowMs })
+  onEventAppended?.(eventId)
   return factRef
 }
 
@@ -124,7 +129,7 @@ export function createLongTermCareCommands(dependencies: IdempotentWriteDependen
     recordWatering: (command: RecordWateringCommand) => runIdempotentWrite(dependencies, command.idempotency, command.nowMs, async transaction => {
       const plant = await lockWritablePlant(transaction, command)
       if (isSnapshot(plant)) { return plant }
-      const factRef = await writeWatering(transaction, plant, refs, command, command.rules)
+      const factRef = await writeWatering(transaction, plant, refs, command, command.rules, command.onEventAppended)
       if (factRef === null) { return invalid(wateringRuleMessage(command.rules)) }
       return ok({ factRef, factType: 'watering', occurredAt: new Date(command.occurredAtMs).toISOString(), amountMl: command.amountMl })
     }),
@@ -146,7 +151,7 @@ export function createLongTermCareCommands(dependencies: IdempotentWriteDependen
         return ok({ proposalRef: command.proposalRef, proposalStatus: 'dismissed', plan: null, factRef: null })
       }
       if (request.decision === 'record_watering') {
-        const factRef = await writeWatering(transaction, plant, refs, { occurredAtMs: Date.parse(request.occurredAt), amountMl: request.amountMl ?? null, nowMs: command.nowMs }, command.rules)
+        const factRef = await writeWatering(transaction, plant, refs, { occurredAtMs: Date.parse(request.occurredAt), amountMl: request.amountMl ?? null, nowMs: command.nowMs }, command.rules, command.onEventAppended)
         if (factRef === null) { return invalid(wateringRuleMessage(command.rules)) }
         await settleCareProposal(transaction, proposal, 'confirmed', command.nowMs)
         return ok({ proposalRef: command.proposalRef, proposalStatus: 'confirmed', plan: null, factRef })
@@ -173,11 +178,13 @@ export function createLongTermCareCommands(dependencies: IdempotentWriteDependen
       if (plan === null) { return notFound() }
       // §12.3：过期判定先于版本比对；扫描已提交的过期不可被用户完成覆盖。
       if (plan.status === 'expired') { return planExpired() }
+      // 2026-10-10 用户裁决：补扫改为低频后，已超宽限但尚未被扫的计划同样实时判为过期（与扫描共用 isCarePlanExpired 与同一策略快照）。
+      if (isCarePlanExpired({ status: plan.status, scheduledAtMs: plan.scheduledAtMs, nowMs: command.nowMs, graceHours: command.rules.planExpiryGraceHours })) { return planExpired() }
       if (plan.status !== 'planned' || plan.version !== command.request.version) { return versionConflict() }
       const request = command.request
       let factRef: string | null = null
       if (request.outcome === 'done' && request.watering !== undefined) {
-        factRef = await writeWatering(transaction, plant, refs, { occurredAtMs: Date.parse(request.watering.occurredAt), amountMl: request.watering.amountMl ?? null, nowMs: command.nowMs }, command.rules)
+        factRef = await writeWatering(transaction, plant, refs, { occurredAtMs: Date.parse(request.watering.occurredAt), amountMl: request.watering.amountMl ?? null, nowMs: command.nowMs }, command.rules, command.onEventAppended)
         if (factRef === null) { return invalid(wateringRuleMessage(command.rules)) }
       }
       if (request.outcome === 'done' && request.soil !== undefined) {
@@ -185,7 +192,10 @@ export function createLongTermCareCommands(dependencies: IdempotentWriteDependen
       }
       const status = request.outcome === 'done' ? 'completed' : 'cancelled'
       await finishCarePlan(transaction, plan, status, { calendar: plan.payload.calendar, completedFactRef: factRef }, command.nowMs)
-      if (status === 'completed') { await appendPlanCompletedEvent(transaction, plant, { planRef: command.planRef, planVersion: plan.version + 1, completedAtMs: command.nowMs }) }
+      if (status === 'completed') {
+        const eventId = await appendPlanCompletedEvent(transaction, plant, { planRef: command.planRef, planVersion: plan.version + 1, completedAtMs: command.nowMs })
+        command.onEventAppended?.(eventId)
+      }
       return ok({ planRef: command.planRef, status, version: plan.version + 1, factRef, calendar: plan.payload.calendar })
     })
   }

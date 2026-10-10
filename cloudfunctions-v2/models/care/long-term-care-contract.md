@@ -124,7 +124,7 @@ CloudBase 网关只按路径前缀路由到函数，`/api/v2/user-plants` 归 us
 
 ## 12. 计划过期（用户 2026-10-09 裁决：定时任务写入过期；主代理 2026-10-09 配置裁决）
 
-一句话：用户确认的「检查盆土」计划如果到点后 72 小时还没完成/跳过，就由每小时一次的定时任务把它标成 `expired`（已过期）；过期计划只读，不能再完成。打个前端比方：像购物车里的限时优惠券，过了有效期由后台批量置灰，前端再点「使用」会收到明确的「已过期」错误，而不是笼统的「数据冲突」。
+一句话：用户确认的「检查盆土」计划如果到点后 72 小时还没完成/跳过，就由定时补扫任务（2026-10-10 起与发件箱补扫合并为 `care-maintenance-sweep`，每天 8 次）把它标成 `expired`（已过期）；过期计划只读，不能再完成。打个前端比方：像购物车里的限时优惠券，过了有效期由后台批量置灰，前端再点「使用」会收到明确的「已过期」错误，而不是笼统的「数据冲突」。
 
 ### 12.1 判定规则
 
@@ -143,7 +143,9 @@ CloudBase 网关只按路径前缀路由到函数，`/api/v2/user-plants` 归 us
 ### 12.3 过期后再完成：409 `CARE_PLAN_EXPIRED`
 
 - `POST …/plans/{planRef}/completions`：计划状态为 `expired` → 409 `CARE_PLAN_EXPIRED`（中文消息：「计划已过期，请重新获取浇水建议」），无论 `version` 是否匹配、`outcome` 是 `done` 还是 `skipped`。判定先于版本比对。
-- 计划仍为 `planned` 但已超过 72 小时、扫描尚未运行（最长滞后约 1 个扫描周期）：以存储状态为唯一事实，仍可完成。不在请求路径上做「读时过期」，避免同一规则两处实现。
+- **2026-10-10 用户裁决（低频补扫后改为实时判定）**：计划仍为 `planned` 但 `当前时刻 > scheduledAt + 72 小时`（扫描尚未写入 `expired`）→ 同样返回 409 `CARE_PLAN_EXPIRED`，
+  不写事实、观察，不改计划（状态仍由补扫写入 `expired`）。判定与扫描共用同一个纯函数与同一策略快照（`care/long_term_rules.planExpiryGraceHours`），
+  不是两套规则；保证“能否完成”不受扫描频率影响。
 - 同一 `Idempotency-Key` 的首次结果重放优先（共享幂等表，T2）：过期前已成功的完成请求重放仍返回首次 200。
 - `CARE_PLAN_VERSION_CONFLICT` 语义收窄为：版本不符，或计划为 `completed/cancelled`。
 - `completeCarePlan` 错误集合 = 通用 + `CARE_PLAN_VERSION_CONFLICT` + `CARE_PLAN_EXPIRED`。
@@ -156,7 +158,10 @@ CloudBase 网关只按路径前缀路由到函数，`/api/v2/user-plants` 归 us
 
 ### 12.5 扫描运行（`care.plans.expiry_scan`）
 
-- 频率：每小时一次（CloudBase 7 段 cron `0 0 * * * * *`）。
+- 频率（2026-10-10 用户裁决合并低频补扫）：由 `care-maintenance-sweep` 在发件箱补扫之后执行，cron `0 25 0,4,7,11,14,16,19,21 * * * *`（北京时间，每天 8 次，
+  对齐 weather 定时任务醒库时段，见 `docs/backend-v2/architecture/care-maintenance-sweep-migration-2026-10-10.md`）；配置目录 `care.maintenance_sweep`（必须与触发器一致）。
+- **用户可见影响**：已超过 72 小时的计划在列表中最长约 **4 小时**（两次补扫最大间隔，另加一次运行时长）后才显示为 `expired`；在这之前它仍以 `planned` 出现在列表与摘要里，
+  但用户点「完成/跳过」会实时得到 409 `CARE_PLAN_EXPIRED`（§12.3），因此不会出现“过期后还能完成”。
 - 分批：每批最多 500 行，每批一个独立短事务；某批影响行数 < 500 视为已清空，结束本次运行。
 - 时长上限：本次运行开始时刻 + 函数超时的一半；到达上限不再开启新批次（已开启的批次跑完），剩余留给下一次运行。函数超时取运行时上下文提供的值；取不到 → 本次不执行（`not_started`），不猜默认值。
 - 重复运行幂等：已过期行不再满足条件，重复运行只会处理新到期的计划。
@@ -177,6 +182,11 @@ CloudBase 网关只按路径前缀路由到函数，`/api/v2/user-plants` 归 us
 
 - 记录浇水事实（§3、确认建议记录浇水 §6、完成计划附浇水 §7）与完成计划（`outcome=done`）时，在**同一事务**向 `care_outbox` 追加 pending 事件
   `care.watering_fact_recorded.v1` / `care.plan_completed.v1`；事件载荷只含公开引用、发生时间与浇水量，不含内部主键、`user_id` 以外的身份或备注。
-- 事件由 care 事件函数 `care-outbox-dispatch` 派发给 user-plant 时间线投影；规则见 `docs/backend-v2/contracts/user-plant-timeline.md` §5
-  与配置目录 `care.outbox_dispatch`（hard_rule：每分钟、租约 30 秒、每批 100、最多 5 次后死信）。
+- 派发（2026-10-10 用户裁决：写入时顺带派发 + 低频补扫）：
+  1. **同请求尽力派发**：写事务提交后，在同一 HTTP 请求内只对**本请求新写入**的事件（按 `event_id`）执行一次派发（同一领取/投递/结算逻辑与租约），
+     最长等待 `care.outbox_dispatch.inline_budget_ms`（默认 1500 毫秒，运维可经 `V2_CARE_OUTBOX_INLINE_BUDGET_MS` 在 200–3000 内覆盖）；
+     超时、失败或数据库异常都不改变已成功的响应状态与正文，事件留给补扫。幂等重放（未新写事件）不派发。
+  2. **低频补扫**：`care-maintenance-sweep` 先跑发件箱补扫（循环领取直到清空或用完本阶段时长预算），再跑计划过期扫描（§12.5）。
+  规则见 `docs/backend-v2/contracts/user-plant-timeline.md` §5 与配置目录 `care.outbox_dispatch`（租约 30 秒、每批 100、最多 5 次后死信）。
+  同请求派发与补扫竞争同一事件时由 `FOR UPDATE SKIP LOCKED` + 租约条件写保证只有一方领取，消费端唯一约束兜底，不重复投递。
 - 事务失败时事件与事实一起回滚；跳过计划（`cancelled`）不产生事件。

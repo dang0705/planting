@@ -5,6 +5,7 @@ import { createMysqlTypedPolicyReader, policyRulesPort } from '../foundation/pol
 
 import { readCareEnvironment } from '../configuration/environment.js'
 import { createCareServer } from '../care/http/server.js'
+import { createInlineCareEventDispatcherFromSource } from '../care/event/care-outbox-dispatch-runtime.js'
 import { createOpenMeteoRadiationFetcher } from '../care/provider/open-meteo-radiation-fetcher.js'
 import { createMysql2ConnectionSource, toSqlParameters, withReadConnection } from '../foundation/database/mysql2-connection-source.js'
 import { createResolveGuestOrUserPrincipal } from '../identity/application/resolve-guest-principal.js'
@@ -41,7 +42,18 @@ const resolvePrincipal = createResolveGuestOrUserPrincipal({
 const readLongTermRules = policyRulesPort(createMysqlTypedPolicyReader(source, CARE_LONG_TERM_RULES_POLICY), now)
 const readHttpWriteRules = policyRulesPort(createMysqlTypedPolicyReader(source, HTTP_REQUEST_WRITE_POLICY), now)
 
+/** 写入时顺带派发（用户 2026-10-10 裁决）：只派发本请求新写入的事件，最长等待 V2_CARE_OUTBOX_INLINE_BUDGET_MS（默认 1500 毫秒）。 */
+const dispatchCreatedEvents = createInlineCareEventDispatcherFromSource({
+  source, now, budgetMs: environment.inlineDispatch.budgetMs, settings: environment.inlineDispatch.outboxDispatch,
+  log: event => {
+    const level = event.event === 'care_outbox_delivery_failed' || (event.event === 'care_outbox_dispatch_run' && event.outcome === 'failed') ? 'warn' : 'info'
+    logger[level]({ function: 'care', mode: 'inline', ...event }, '时间线事件同请求派发')
+  },
+  recordRollbackFailure: () => { logger.error({ event: 'transaction_rollback_failed', function: 'care' }, '事务回滚失败') }
+})
+
 const server = createCareServer({
+  dispatchCreatedEvents,
   readLongTermRules,
   readHttpWriteRules,
   connectionSource: source,

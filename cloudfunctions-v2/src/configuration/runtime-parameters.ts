@@ -85,8 +85,9 @@ const care = {
    * batchSize（V2_CARE_PLAN_EXPIRY_BATCH_SIZE 100–2000）与 runBudgetFractionOfFunctionTimeout（V2_CARE_PLAN_EXPIRY_RUN_BUDGET_PERCENT 20–80）为运维默认值。
    */
   planExpiryScan: fromCatalog('care.plans.expiry_scan', 'cron / 小时 / 行 / 比例', {
-    cron: '0 0 * * * * *',
-    intervalHours: 1,
+    // 用户 2026-10-10 裁定：并入低频补扫 care-maintenance-sweep，cron 与 care.maintenance_sweep 一致，最大间隔 4 小时。
+    cron: '0 25 0,4,7,11,14,16,19,21 * * * *',
+    intervalHours: 4,
     batchSize: 500,
     runBudgetFractionOfFunctionTimeout: 0.5,
   }),
@@ -95,10 +96,22 @@ const care = {
    * 分别由 V2_CARE_OUTBOX_LEASE_SECONDS（10–120）、V2_CARE_OUTBOX_BATCH_SIZE（20–500）、V2_CARE_OUTBOX_MAX_ATTEMPTS（3–10）覆盖。
    */
   outboxDispatch: fromCatalog('care.outbox_dispatch', 'cron / 秒 / 条 / 次', {
-    cron: '0 * * * * * *',
+    // 用户 2026-10-10 裁定：写入时顺带派发 + 低频补扫；补扫 cron 与 care.maintenance_sweep 一致（必须与触发器一致）。
+    cron: '0 25 0,4,7,11,14,16,19,21 * * * *',
     leaseSeconds: 30,
     batchSize: 100,
     maxAttempts: 5,
+  }),
+  /** 写入时顺带派发的最长等待毫秒（`care.outbox_dispatch.inline_budget_ms`，用户 2026-10-10 裁定）；运维可经 V2_CARE_OUTBOX_INLINE_BUDGET_MS 在 200–3000 覆盖。 */
+  outboxInlineDispatchBudgetMs: fromCatalog('care.outbox_dispatch.inline_budget_ms', '毫秒', 1500),
+  /**
+   * 合并低频补扫（`care.maintenance_sweep`，用户 2026-10-10 裁定）：cron 为 CloudBase 7 段（北京时间），对齐 weather 定时任务醒库时段，必须与触发器一致；
+   * maxGapHours 为两次运行最大间隔（说明最长滞后）；outboxBudgetFractionOfFunctionTimeout 为发件箱补扫阶段占函数超时的比例，其余时长留给过期扫描。
+   */
+  maintenanceSweep: fromCatalog('care.maintenance_sweep', 'cron / 小时 / 比例', {
+    cron: '0 25 0,4,7,11,14,16,19,21 * * * *',
+    maxGapHours: 4,
+    outboxBudgetFractionOfFunctionTimeout: 0.3,
   }),
   /** Open-Meteo 辐射预报总时限毫秒（Provider `open_meteo.totalDeadlineMs`）；运维可经环境变量在上下限内覆盖。 */
   openMeteoTotalDeadlineMs: fromProvider('open_meteo', 'totalDeadlineMs', '毫秒', 8000),

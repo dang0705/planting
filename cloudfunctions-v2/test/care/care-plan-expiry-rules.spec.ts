@@ -34,7 +34,8 @@ describe('计划过期规则（§12）', () => {
     expect(variable('care.plans.expiry_scan')).toMatchObject({ layer: 'hard_rule', status: 'hard_rule', owner: 'care' })
     expect(graceHours).toBe(variable('care.plans.expiry_grace_hours')?.currentValue)
     expect(CARE_PLAN_EXPIRY_SCAN).toEqual(variable('care.plans.expiry_scan')?.currentValue)
-    expect(CARE_PLAN_EXPIRY_SCAN).toEqual({ cron: '0 0 * * * * *', intervalHours: 1, batchSize: 500, runBudgetFractionOfFunctionTimeout: 0.5 })
+    // 用户 2026-10-10 裁定合并低频补扫：cron 与 care.maintenance_sweep 一致，最大间隔 4 小时。
+    expect(CARE_PLAN_EXPIRY_SCAN).toEqual({ cron: '0 25 0,4,7,11,14,16,19,21 * * * *', intervalHours: 4, batchSize: 500, runBudgetFractionOfFunctionTimeout: 0.5 })
   })
 
   it('72 小时与 care-watering-mvp/v2 的 soilEvidenceMaxHours 对齐', () => {

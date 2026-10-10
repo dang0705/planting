@@ -19,13 +19,20 @@ const typePlaceholders = CARE_TIMELINE_EVENT_TYPES.map(() => '?').join(', ')
  */
 export async function leaseCareTimelineEvents(transaction: Transaction, input: LeaseCareEventsInput): Promise<LeaseCareEventsResult> {
   const connection = connectionOf(transaction)
+  // 同请求派发只领取本请求新写入的事件（event_id 唯一）；空列表不查库。
+  const ids = input.eventIds === undefined ? null : [...new Set(input.eventIds)]
+  if (ids !== null && (ids.length === 0 || ids.some(id => !/^evt_[A-Za-z0-9_-]{8,80}$/u.test(id)))) {
+    if (ids.length === 0) { return { leased: [], deadLettered: 0 } }
+    throw new TypeError('同请求派发的事件标识不合法')
+  }
+  const idFilter = ids === null ? '' : ` AND event_id IN (${ids.map(() => '?').join(', ')})`
   const rows = await connection.query(
     `SELECT CAST(id AS CHAR) AS id, event_type, user_ref, user_plant_ref, payload_json, CAST(occurred_at_ms AS CHAR) AS occurred_at_ms, attempt_count, status
       FROM care_outbox
-      WHERE event_type IN (${typePlaceholders}) AND _openid = ''
+      WHERE event_type IN (${typePlaceholders}) AND _openid = ''${idFilter}
         AND ((status = 'pending' AND (next_attempt_at_ms IS NULL OR next_attempt_at_ms <= ?)) OR (status = 'dispatching' AND lease_until_ms <= ?))
       ORDER BY id LIMIT ? FOR UPDATE SKIP LOCKED`,
-    [...CARE_TIMELINE_EVENT_TYPES, input.nowMs, input.nowMs, input.limit])
+    [...CARE_TIMELINE_EVENT_TYPES, ...(ids ?? []), input.nowMs, input.nowMs, input.limit])
   const leased: LeasedCareEvent[] = []
   let deadLettered = 0
   for (const row of rows) {

@@ -34,6 +34,8 @@ const functionEntries = [
   { name: 'care-plan-expiry', entry: 'src/entries/care-plan-expiry.ts', kind: 'event' },
   // 定时事件函数（user-plant-timeline.md §5，每分钟一次）：care 发件箱时间线事件派发。
   { name: 'care-outbox-dispatch', entry: 'src/entries/care-outbox-dispatch.ts', kind: 'event' },
+  // 用户 2026-10-10 裁决：合并低频补扫；上面两个旧函数待 care-maintenance-sweep 上线验证后按退役清单下线（docs/backend-v2/architecture/care-maintenance-sweep-migration-2026-10-10.md）。
+  { name: 'care-maintenance-sweep', entry: 'src/entries/care-maintenance-sweep.ts', kind: 'event' },
   // 一次性事件函数（ClickUp z8v0kmvgab，用户 2026-10-10 授权）：在内网分批回填三轴筛选预计算索引，手动调用、可续跑，用完下线。
   { name: 'visual-filter-index-backfill', entry: 'src/entries/visual-filter-index-backfill.ts', kind: 'event' }
 ]

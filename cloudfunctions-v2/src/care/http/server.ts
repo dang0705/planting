@@ -55,6 +55,24 @@ export interface CareServerDependencies {
   readonly readLongTermRules: PolicyRulesPort<CareLongTermRules>
   /** 读取 HTTP 写入策略快照（http/request_write）；null 时写接口 503。 */
   readonly readHttpWriteRules: PolicyRulesPort<HttpRequestWriteRules>
+  /**
+   * 写入时顺带派发（long-term-care-contract.md §13，用户 2026-10-10 裁决）：写事务提交后对本请求新写入的事件尽力派发一次，
+   * 自带等待上限且永不抛出；未接入时只靠补扫（care-maintenance-sweep）。入口用 createInlineCareEventDispatcherFromSource 组装。
+   */
+  readonly dispatchCreatedEvents?: (eventIds: readonly string[]) => Promise<unknown>
+}
+
+/** 给写用例套上“提交后同请求派发”：收集本次事务新写入的事件，结果返回前派发；派发结果不改变响应。 */
+function withInlineDispatch<TCommand extends { readonly onEventAppended?: (eventId: string) => void }, TResult>(
+  command: (input: TCommand) => Promise<TResult>, dispatch: ((eventIds: readonly string[]) => Promise<unknown>) | undefined
+): (input: TCommand) => Promise<TResult> {
+  if (dispatch === undefined) { return command }
+  return async input => {
+    const eventIds: string[] = []
+    const result = await command({ ...input, onEventAppended: eventId => { eventIds.push(eventId) } })
+    if (eventIds.length > 0) { try { await dispatch(eventIds) } catch { /* 尽力而为：失败留给补扫，不影响已成功的响应。 */ } }
+    return result
+  }
 }
 
 const okStatus = 200
@@ -95,7 +113,12 @@ export function createCareServer(dependencies: CareServerDependencies): Server {
     readLongTermRules: dependencies.readLongTermRules, readHttpWriteRules: dependencies.readHttpWriteRules,
     readPlantContext: query => plantContextReader.read(query),
     readTaxonDisplayName: async ref => (await taxonReader.read(ref))?.displayName ?? null,
-    commands: createLongTermCareCommands({ ...idempotentWrite, createRef: kind => `${refPrefix[kind]}${randomBytes(18).toString('base64url')}` }),
+    commands: (() => {
+      const commands = createLongTermCareCommands({ ...idempotentWrite, createRef: kind => `${refPrefix[kind]}${randomBytes(18).toString('base64url')}` })
+      return { recordWatering: withInlineDispatch(commands.recordWatering, dependencies.dispatchCreatedEvents),
+        confirmProposal: withInlineDispatch(commands.confirmProposal, dependencies.dispatchCreatedEvents),
+        completePlan: withInlineDispatch(commands.completePlan, dependencies.dispatchCreatedEvents) }
+    })(),
     reads: careReads
   })
 

@@ -166,15 +166,15 @@ describe.skipIf(!dockerReady)('计划过期：真实 MySQL 事务（§12）', ()
     expect(sql('SELECT COUNT(*) FROM care_facts;')).toBe('1')
   })
 
-  test('并发：完成 与 扫描 同时发起 24 轮，二者互斥、无双写', async () => {
-    const outcomes = { completed: 0, expired: 0 }
+  // Expected 修订（用户 2026-10-10 裁决：补扫低频后，完成时对已超 72 小时的计划实时返回 409，long-term-care-contract.md §12.3）：
+  // 已超时计划不再存在“完成先赢”的分支；并发下两种先后顺序都必须得到同一结果：完成 409、不写事实，扫描写入 expired 恰好一次。
+  test('并发：完成 与 扫描 同时发起 24 轮，已超时计划完成一律 409、扫描恰好写一次、无双写', async () => {
     for (let round = 0; round < 24; round += 1) {
       const id = 100 + round
       insertPlan(id, 'planned', Date.now() - 73 * hour)
       const watering = { occurredAt: new Date(Date.now() - 60_000).toISOString(), amountMl: 100 }
       const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-      // 起跑错位 −30～+25 ms（负数让完成晚出发、正数让扫描晚出发）：扫描自 2026-10-10 起每次运行先读一次策略快照，
-      // 双向错位保证「完成先锁行」与「扫描先改写」两种先后顺序都真实出现，并覆盖贴身竞争。
+      // 起跑错位 −30～+25 ms：完成先锁行与扫描先改写两种先后顺序都真实出现。
       const offset = (round % 12) * 5 - 30
       const [completion, scan] = await Promise.all([
         delay(Math.max(0, -offset)).then(() => complete(planRef(id), { version: 1, outcome: 'done', watering })),
@@ -182,24 +182,11 @@ describe.skipIf(!dockerReady)('计划过期：真实 MySQL 事务（§12）', ()
       ])
       const [status, version] = planRow(id)!
       const facts = Number(sql(`SELECT COUNT(*) FROM care_facts WHERE occurred_at_ms = ${Date.parse(watering.occurredAt)};`))
+      expect(status).toBe('expired')
       expect(version).toBe('2')
-      if (status === 'completed') {
-        outcomes.completed += 1
-        expect(completion).toMatchObject({ status: 200, body: { data: { status: 'completed', version: 2 } } })
-        expect(scan.expiredCount).toBe(0)
-        expect(facts).toBe(1)
-      } else {
-        outcomes.expired += 1
-        expect(status).toBe('expired')
-        expect(completion.body).toMatchObject({ error: { type: 'CARE_PLAN_EXPIRED' } })
-        expect(scan.expiredCount).toBe(1)
-        expect(facts).toBe(0)
-      }
+      expect(completion.body).toMatchObject({ error: { type: 'CARE_PLAN_EXPIRED' } })
+      expect(scan.expiredCount).toBe(1)
+      expect(facts).toBe(0)
     }
-    expect(outcomes.completed + outcomes.expired).toBe(24)
-    // 两种先后顺序都必须真实出现，否则本用例没有证明竞争互斥。
-    expect(outcomes.completed).toBeGreaterThan(0)
-    expect(outcomes.expired).toBeGreaterThan(0)
-    console.info(`[care-plan-expiry 并发分布] completed=${outcomes.completed} expired=${outcomes.expired}`)
   }, 120_000)
 })

@@ -10,7 +10,7 @@ import { findProjectRoot } from '../support/project-root.js'
 
 /**
  * Expected 来源：docs/backend-v2/contracts/user-plant-timeline.md（2026-10-10 用户审定；§5 派发规则用户 2026-10-10 裁决、主代理裁定 hard_rule）；
- * 配置目录 care.outbox_dispatch = {cron:'0 * * * * * *', leaseSeconds:30, batchSize:100, maxAttempts:5}、user-plant.timeline.page_size = {20,50}。
+ * 配置目录 care.outbox_dispatch = {cron:'0 25 0,4,7,11,14,16,19,21 * * * *'（2026-10-10 用户裁定合并低频补扫）, leaseSeconds:30, batchSize:100, maxAttempts:5}、user-plant.timeline.page_size = {20,50}。
  * 测试层次：L3 / unit_real_data（真实 contract-registry、route-registry、OpenAPI、配置目录制品 + 代码常量一致性）。
  */
 const root = findProjectRoot()
@@ -41,7 +41,7 @@ describe('用户植物时间线合同制品', () => {
 
   test('配置目录 hard_rule 与代码常量一致', () => {
     const dispatch = catalog.variables.find(variable => variable.id === 'care.outbox_dispatch')
-    expect(dispatch).toMatchObject({ status: 'hard_rule', layer: 'hard_rule', owner: 'care', currentValue: { cron: '0 * * * * * *', leaseSeconds: 30, batchSize: 100, maxAttempts: 5 } })
+    expect(dispatch).toMatchObject({ status: 'hard_rule', layer: 'hard_rule', owner: 'care', currentValue: { cron: '0 25 0,4,7,11,14,16,19,21 * * * *', leaseSeconds: 30, batchSize: 100, maxAttempts: 5 } })
     expect(CARE_OUTBOX_DISPATCH).toEqual(dispatch!.currentValue)
     // 用户 2026-10-10 第三轮裁定：时间线分页迁入策略发布 user-plant/list_rules（取值不变）。
     expect(userPlantListRulesV1().timelinePageSize).toEqual(catalog.variables.find(variable => variable.id === 'user-plant.timeline.page_size')!.currentValue)

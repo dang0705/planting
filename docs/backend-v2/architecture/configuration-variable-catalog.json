@@ -6824,8 +6824,8 @@
       "valueType": "object",
       "status": "hard_rule",
       "currentValue": {
-        "cron": "0 0 * * * * *",
-        "intervalHours": 1,
+        "cron": "0 25 0,4,7,11,14,16,19,21 * * * *",
+        "intervalHours": 4,
         "batchSize": 500,
         "runBudgetFractionOfFunctionTimeout": 0.5
       },
@@ -6841,7 +6841,7 @@
       "phase": "P4",
       "ticketTitle": "[P4] 盆土视觉和四类养护能力",
       "clickUpTicketId": "z8v0kmr973",
-      "decisionNote": "主代理 2026-10-09 配置裁决：每小时一次；单次批量 500，分批直到清空或达到单次运行时长上限（函数超时的一半）。主代理 2026-10-09 裁定改为 hard_rule：MVP 阶段极少变更，引入类型化策略 release 的复杂度大于收益，由代码常量 + 目录一致性测试 + 合同 §12 共同保证；将来需要调整时再升级为 domain_policy。",
+      "decisionNote": "主代理 2026-10-09 配置裁决：每小时一次；单次批量 500，分批直到清空或达到单次运行时长上限（函数超时的一半）。主代理 2026-10-09 裁定改为 hard_rule：MVP 阶段极少变更，引入类型化策略 release 的复杂度大于收益，由代码常量 + 目录一致性测试 + 合同 §12 共同保证；将来需要调整时再升级为 domain_policy。；用户 2026-10-10 裁决（测试库 TDSQL-C Serverless 按醒着时长计费）：写入时顺带派发 + 合并低频补扫 care-maintenance-sweep，cron 对齐 weather 醒库时段（过期显示最长滞后约 4 小时；完成时实时判定）",
       "sourceRefs": [
         "cloudfunctions-v2/models/care/long-term-care-contract.md#12. 计划过期"
       ],
@@ -6850,7 +6850,8 @@
         "cloudfunctions-v2/src/care/domain/care-plan-expiry-rules.ts",
         "cloudfunctions-v2/src/care/repository/mysql-care-plan-expiry-repository.ts",
         "cloudfunctions-v2/src/configuration/environment.ts",
-        "cloudfunctions-v2/src/configuration/runtime-parameters.ts"
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts",
+        "cloudfunctions-v2/src/entries/care-maintenance-sweep.ts"
       ],
       "environmentOverrides": [
         {
@@ -6884,7 +6885,7 @@
       "valueType": "object",
       "status": "hard_rule",
       "currentValue": {
-        "cron": "0 * * * * * *",
+        "cron": "0 25 0,4,7,11,14,16,19,21 * * * *",
         "leaseSeconds": 30,
         "batchSize": 100,
         "maxAttempts": 5
@@ -6894,23 +6895,26 @@
         "docs/backend-v2/contracts/user-plant-timeline.md#5. 异步投影：事件与派发（2026-10-10 用户裁决，主代理裁定 hard_rule）"
       ],
       "consumers": [
-        "care-outbox-dispatch 事件函数",
+        "care HTTP 同请求派发",
+        "care-maintenance-sweep 事件函数",
         "user-plant 时间线投影"
       ],
       "changePolicy": "不可运营配置；调整须同步时间线合同 §5、care 代码常量 CARE_OUTBOX_DISPATCH、部署触发器与锁定测试并经评审",
       "fallback": "运行时不读取目录；常量与目录不一致由一致性测试阻断发布；派发未运行时事件保持 pending，时间线延迟出现但不丢失",
-      "expected": "每分钟一次；每批最多 100 条；领取即加 30 秒租约并尝试次数 +1；失败回到 pending 下次重试；第 5 次失败进 dead_letter；租约过期可被接管",
+      "expected": "写入后同请求尽力派发本请求新事件；补扫 cron 0 25 0,4,7,11,14,16,19,21 * * * *（每天 8 次，最大间隔 4 小时）每批最多 100 条；领取即加 30 秒租约并尝试次数 +1；失败回到 pending 下次重试；第 5 次失败进 dead_letter；租约过期可被接管",
       "phase": "P2",
       "ticketTitle": "[E03][P2] 用户植物核心实现",
       "clickUpTicketId": "z8v0kmr9mj",
       "decisionGroup": "reliability_ops",
-      "decisionNote": "用户 2026-10-10 裁决（定时事件函数每分钟、租约 30 秒、每批 100、最多重试 5 次后死信）；主代理 2026-10-10 裁定为 hard_rule",
+      "decisionNote": "用户 2026-10-10 裁决（定时事件函数每分钟、租约 30 秒、每批 100、最多重试 5 次后死信）；主代理 2026-10-10 裁定为 hard_rule；用户 2026-10-10 裁决（测试库 TDSQL-C Serverless 按醒着时长计费）：写入时顺带派发 + 合并低频补扫 care-maintenance-sweep，cron 对齐 weather 醒库时段",
       "configurationTier": "env_overridable",
       "codeLocations": [
         "cloudfunctions-v2/src/care/domain/care-outbox-dispatch-rules.ts",
         "cloudfunctions-v2/src/configuration/environment.ts",
         "cloudfunctions-v2/src/configuration/runtime-parameters.ts",
-        "cloudfunctions-v2/src/entries/care-outbox-dispatch.ts"
+        "cloudfunctions-v2/src/entries/care-outbox-dispatch.ts",
+        "cloudfunctions-v2/src/entries/care-maintenance-sweep.ts",
+        "cloudfunctions-v2/src/entries/care.ts"
       ],
       "environmentOverrides": [
         {
@@ -6945,6 +6949,88 @@
         }
       ],
       "configurationTierNote": "代码层默认值见 runtime-parameters.ts；仅 environmentOverrides 列出的字段可由部署环境变量在登记范围内覆盖，其余字段（cron、intervalHours）为 CloudBase 触发器部署配置的说明值，须与触发器一致"
+    },
+    {
+      "id": "care.outbox_dispatch.inline_budget_ms",
+      "chineseName": "写入时顺带派发最长等待时长",
+      "layer": "hard_rule",
+      "valueType": "integer",
+      "unit": "毫秒",
+      "status": "hard_rule",
+      "currentValue": 1500,
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/long-term-care-contract.md#13. 时间线事件（2026-10-10 用户裁决）"
+      ],
+      "consumers": [
+        "care HTTP 写接口（记录浇水、确认建议、完成计划）"
+      ],
+      "changePolicy": "部署环境变量 V2_CARE_OUTBOX_INLINE_BUDGET_MS 在 200–3000 内覆盖，重启实例生效",
+      "fallback": "超过上限立即返回原响应，事件留给补扫；不改变响应状态与正文",
+      "expected": "写事务提交后最多等待 1500 毫秒派发本请求新写入的事件；超时/失败不改变响应",
+      "decisionNote": "用户 2026-10-10 裁决（测试库 TDSQL-C Serverless 按醒着时长计费）：写入时顺带派发 + 合并低频补扫 care-maintenance-sweep，cron 对齐 weather 醒库时段",
+      "configurationTier": "env_overridable",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts",
+        "cloudfunctions-v2/src/configuration/environment.ts",
+        "cloudfunctions-v2/src/care/application/dispatch-inline-care-events.ts",
+        "cloudfunctions-v2/src/entries/care.ts"
+      ],
+      "environmentOverrides": [
+        {
+          "field": null,
+          "environmentName": "V2_CARE_OUTBOX_INLINE_BUDGET_MS",
+          "defaultValue": 1500,
+          "minimum": 200,
+          "maximum": 3000,
+          "unit": "毫秒",
+          "decidedAt": "2026-10-10",
+          "reason": "用户 2026-10-10 裁定：不能拖长 HTTP 响应，上限进运行参数注册表、环境变量可覆盖"
+        }
+      ],
+      "configurationTierNote": "代码默认值见 runtime-parameters.ts；部署环境变量可在登记范围内覆盖",
+      "domain": "care",
+      "owner": "care",
+      "phase": "P2",
+      "ticketTitle": "[E03][P2] 用户植物核心实现",
+      "clickUpTicketId": "z8v0kmr9mj",
+      "decisionGroup": "reliability_ops"
+    },
+    {
+      "id": "care.maintenance_sweep",
+      "chineseName": "合并低频补扫（发件箱补扫 + 计划过期扫描）调度与阶段预算",
+      "layer": "hard_rule",
+      "valueType": "object",
+      "status": "hard_rule",
+      "currentValue": {
+        "cron": "0 25 0,4,7,11,14,16,19,21 * * * *",
+        "maxGapHours": 4,
+        "outboxBudgetFractionOfFunctionTimeout": 0.3
+      },
+      "sourceRefs": [
+        "cloudfunctions-v2/models/care/long-term-care-contract.md#12. 计划过期（用户 2026-10-09 裁决：定时任务写入过期；主代理 2026-10-09 配置裁决）",
+        "docs/backend-v2/architecture/care-maintenance-sweep-migration-2026-10-10.md"
+      ],
+      "consumers": [
+        "care-maintenance-sweep 事件函数",
+        "CloudBase 定时触发器（部署配置）"
+      ],
+      "changePolicy": "cron 为部署配置：必须与 CloudBase 触发器一致，调整须同步合同 §12.5/§13、本目录、注册表与触发器并经评审；不可经环境变量调整",
+      "fallback": "补扫未运行时事件保持 pending、过期计划暂以 planned 显示，但完成时实时返回 409，语义不受影响",
+      "expected": "每天 8 次（北京时间 00/04/07/11/14/16/19/21 点 25 分）；先发件箱补扫（≤ 函数超时 × 0.3），再计划过期扫描（剩余时长 × 0.5）",
+      "decisionNote": "用户 2026-10-10 裁决（测试库 TDSQL-C Serverless 按醒着时长计费）：写入时顺带派发 + 合并低频补扫 care-maintenance-sweep，cron 对齐 weather 醒库时段",
+      "configurationTier": "code",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/runtime-parameters.ts",
+        "cloudfunctions-v2/src/care/application/care-maintenance-sweep.ts",
+        "cloudfunctions-v2/src/entries/care-maintenance-sweep.ts"
+      ],
+      "configurationTierNote": "cron 必须与 CloudBase 触发器一致；maxGapHours 仅用于说明最长滞后",
+      "domain": "care",
+      "owner": "care",
+      "phase": "P2",
+      "ticketTitle": "[E03][P2] 用户植物核心实现",
+      "clickUpTicketId": "z8v0kmr9mj",
+      "decisionGroup": "reliability_ops"
     },
     {
       "id": "care.watering.cultivation_reference_pot",

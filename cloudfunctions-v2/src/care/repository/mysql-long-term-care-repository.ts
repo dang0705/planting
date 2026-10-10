@@ -77,6 +77,8 @@ export interface LockedCarePlan {
   readonly status: string
   /** 乐观并发版本号。 */
   readonly version: number
+  /** 计划检查时刻 UTC 毫秒（完成时实时过期判定，§12.3）。 */
+  readonly scheduledAtMs: number
   /** 计划留存正文，含完成时需要回放的日历与来源字段。 */
   readonly payload: CarePlanPayload
 }
@@ -204,12 +206,14 @@ export async function insertCarePlan(transaction: Transaction, plant: LockedOwne
 /** 按归属 FOR UPDATE 锁计划；不属于该植物返回 null。 */
 export async function lockCarePlan(transaction: Transaction, plant: LockedOwnedUserPlant, planRef: string): Promise<LockedCarePlan | null> {
   const rows = await connectionOf(transaction).query(
-    `SELECT CAST(id AS CHAR) AS id, status, version, plan_payload_json FROM care_plans
+    `SELECT CAST(id AS CHAR) AS id, status, version, CAST(scheduled_at_ms AS CHAR) AS scheduled_at_ms, plan_payload_json FROM care_plans
       WHERE BINARY plan_ref = BINARY ? AND user_internal_id = ? AND user_plant_internal_id = ? FOR UPDATE`,
     [planRef, plant.userInternalId, plant.plantInternalId])
   if (rows.length === 0) { return null }
   const payload = jsonColumn(rows[0]!.plan_payload_json)
-  return { internalId: String(rows[0]!.id), status: String(rows[0]!.status), version: Number(rows[0]!.version),
+  const scheduledAtMs = Number(rows[0]!.scheduled_at_ms)
+  if (!Number.isSafeInteger(scheduledAtMs)) { throw new Error('养护计划时刻读回不合法') }
+  return { internalId: String(rows[0]!.id), status: String(rows[0]!.status), version: Number(rows[0]!.version), scheduledAtMs,
     payload: { calendar: payload.calendar as CareCalendarDto, completedFactRef: typeof payload.completedFactRef === 'string' ? payload.completedFactRef : null } }
 }
 

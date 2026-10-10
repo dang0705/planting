@@ -1,0 +1,68 @@
+{
+  "date": "2026-10-10",
+  "agent": "user_plant_terra",
+  "decision": "用户 2026-10-10：测试库 TDSQL-C Serverless 按醒着时长计费；写入时顺带派发 + 合并低频补扫 care-maintenance-sweep + 完成时实时过期判定",
+  "contracts": [
+    "cloudfunctions-v2/models/care/long-term-care-contract.md §12.3（实时判定）、§12.5（新 cron、最长约 4 小时用户可见影响）、§13（同请求派发 1.5 秒上限）",
+    "docs/backend-v2/contracts/user-plant-timeline.md §5（派发方式）",
+    "docs/backend-v2/architecture/care-maintenance-sweep-migration-2026-10-10.md（cron 对齐证据、退役清单、部署步骤、叫醒次数）"
+  ],
+  "catalog": [
+    "care.maintenance_sweep（新，hard_rule，cron 必须与触发器一致）",
+    "care.outbox_dispatch.inline_budget_ms（新，1500，env V2_CARE_OUTBOX_INLINE_BUDGET_MS 200–3000）",
+    "care.outbox_dispatch / care.plans.expiry_scan cron 同步为新 cron，intervalHours=4"
+  ],
+  "cron": "0 25 0,4,7,11,14,16,19,21 * * * *",
+  "cronEvidence": [
+    "cloudfunctions/weather-ingestion-scheduler/config.json",
+    ".codex/backend-v2/evidence/E02-cover-sync-boundary.json（cover-sync 每分钟写 v2 测试库：阻止休眠的剩余风险）"
+  ],
+  "code": [
+    "src/care/application/dispatch-inline-care-events.ts（新）",
+    "src/care/application/care-maintenance-sweep.ts（新）",
+    "src/care/event/care-maintenance-sweep-handler.ts（新）",
+    "src/entries/care-maintenance-sweep.ts（新）",
+    "src/care/application/dispatch-care-outbox.ts（eventIds）",
+    "src/care/repository/mysql-care-outbox-dispatch-repository.ts（event_id 过滤）",
+    "src/care/repository/mysql-care-outbox-repository.ts（返回 event_id）",
+    "src/care/application/long-term-care-commands.ts（onEventAppended、实时过期）",
+    "src/care/repository/mysql-long-term-care-repository.ts（lockCarePlan 读 scheduled_at_ms）",
+    "src/care/http/server.ts（withInlineDispatch）",
+    "src/entries/care.ts、src/configuration/runtime-parameters.ts、src/configuration/environment.ts、scripts/build.mjs"
+  ],
+  "tdd": {
+    "classicRed": [
+      "test/care/dispatch-inline-care-events.spec.ts（模块不存在）",
+      "test/care/care-maintenance-sweep.spec.ts（模块不存在）",
+      "test/configuration/environment.spec.ts 白名单十三项 / readCareEnvironment.inlineDispatch / readCareMaintenanceSweepEnvironment",
+      "test/configuration/runtime-parameters.spec.ts 冻结值",
+      "test/care/care-plan-expiry-rules.spec.ts、test/contracts/user-plant-timeline-contract.spec.ts（新 cron）",
+      "test/e2e/care-inline-dispatch.mysql.spec.ts（模块不存在）"
+    ],
+    "counterfactualRed": "受控突变：server.withInlineDispatch 恒不派发 + 完成用例去掉实时过期 → care-inline-dispatch.mysql.spec.ts 5/7 变红（同请求可见、重放、失败后补扫、并发、实时 409）；恢复后 7/7 通过",
+    "fixtureUpdate": "test/care/complete-expired-care-plan.spec.ts 假行补 scheduled_at_ms（SQL 新增列，取当前时刻，不改该文件 Expected）"
+  },
+  "testLayers": {
+    "unit_fake": [
+      "dispatch-inline-care-events.spec.ts",
+      "care-maintenance-sweep.spec.ts"
+    ],
+    "unit_real_data": [
+      "care-inline-dispatch.mysql.spec.ts（同请求可见、重放不派发、失败不改响应+补扫可见、超时按上限返回、并发不重复、实时 409、72h 边界）"
+    ]
+  },
+  "notCovered": [
+    "CloudBase 触发器真实触发与 time_limit_in_ms 读回",
+    "TDSQL-C 自动暂停与计费",
+    "weather 是否与 v2 测试库同实例（待用户确认）"
+  ],
+  "wakeEstimatePerDay": {
+    "old": "care 1464 次（1440+24）",
+    "new": "补扫 8 次；与 weather 同实例时额外叫醒 0 次，否则最多 8 次；cover-sync 每分钟仍需另行处理"
+  },
+  "bugFoundAndFixed": "首版写成 `onEventAppended?.(await append…)`：未接入同请求派发时可选调用短路、事件被漏写；由既有 user-plant-timeline.mysql.spec.ts（不接入派发的路径）发现，已改为先写事件再回调",
+  "expectedRevisions": [
+    "test/e2e/care-plan-expiry.mysql.spec.ts 并发用例：按 §12.3 新裁决，已超时计划完成一律 409、扫描恰好写一次（旧的“完成先赢”分支不再可达）",
+    "runtime-parameters / environment / care-plan-expiry-rules / user-plant-timeline-contract 测试中的 cron 与白名单十三项"
+  ]
+}

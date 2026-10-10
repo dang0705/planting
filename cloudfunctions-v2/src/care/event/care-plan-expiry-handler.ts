@@ -10,7 +10,7 @@ export interface CarePlanExpiryEventHandlerDependencies {
  * 从 CloudBase 事件函数上下文读取函数超时毫秒（`time_limit_in_ms`）；不是正整数时返回 null。
  * 该字段未在本仓库真实环境读回验证，部署后须核对（交付遗留）；取不到时用例按 not_started 处理，不猜默认值。
  */
-function readFunctionTimeoutMs(context: unknown): number | null {
+export function readFunctionTimeoutMs(context: unknown): number | null {
   if (context === null || typeof context !== 'object') { return null }
   const value = (context as { readonly time_limit_in_ms?: unknown }).time_limit_in_ms
   return typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? value : null

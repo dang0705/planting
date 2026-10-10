@@ -18,6 +18,7 @@ export interface LeaseCareEventsInput {
   /** 领取后占用租约的毫秒数（默认 30 秒，运维可覆盖 10–120 秒）。 */ readonly leaseMs: number
   /** 本批最多领取的事件条数（默认 100，运维可覆盖 20–500）。 */ readonly limit: number
   /** 最大尝试次数（默认 5，运维可覆盖 3–10；满次进死信）。 */ readonly maxAttempts: number
+  /** 只领取这些事件（同请求派发：本请求新写入的 event_id）；省略为全量补扫。 */ readonly eventIds?: readonly string[]
 }
 
 /** 领取结果。 */
@@ -84,8 +85,13 @@ function errorNameOf(error: unknown): string {
  * care 发件箱派发用例（user-plant-timeline.md §5）：领取一批 → 逐条投递 → 逐条结算。
  * 至少一次投递：结算失败或运行中断时，租约到期后由下一次运行接管；消费端以唯一约束保证不重复。
  */
+/** 单次派发入参：省略为全量补扫；给出 eventIds 时只处理这些事件（2026-10-10 写入时顺带派发）。 */
+export interface DispatchCareOutboxInput {
+  /** 本请求新写入的事件标识（evt_…）。 */ readonly eventIds?: readonly string[]
+}
+
 export function createDispatchCareOutboxJob(dependencies: DispatchCareOutboxDependencies) {
-  return async (): Promise<CareOutboxDispatchSummary> => {
+  return async (input: DispatchCareOutboxInput = {}): Promise<CareOutboxDispatchSummary> => {
     const startedAtMs = dependencies.now()
     const owner = dependencies.createLeaseOwner()
     const counts = { leasedCount: 0, deliveredCount: 0, retryCount: 0, deadLetterCount: 0, lostLeaseCount: 0 }
@@ -98,7 +104,8 @@ export function createDispatchCareOutboxJob(dependencies: DispatchCareOutboxDepe
     let leased: LeaseCareEventsResult
     try {
       leased = await dependencies.lease({ owner, nowMs: startedAtMs, leaseMs: (dependencies.settings?.leaseSeconds ?? CARE_OUTBOX_DISPATCH.leaseSeconds) * 1000,
-        limit: dependencies.settings?.batchSize ?? CARE_OUTBOX_DISPATCH.batchSize, maxAttempts })
+        limit: dependencies.settings?.batchSize ?? CARE_OUTBOX_DISPATCH.batchSize, maxAttempts,
+        ...(input.eventIds === undefined ? {} : { eventIds: input.eventIds }) })
     } catch { return finish('failed') }
     counts.leasedCount = leased.leased.length
     counts.deadLetterCount = leased.deadLettered

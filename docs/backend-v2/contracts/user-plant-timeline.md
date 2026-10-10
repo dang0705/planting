@@ -68,8 +68,11 @@ export type TimelineResponse = { items: TimelineItem[]; nextCursor: string | nul
   - `care.watering_fact_recorded.v1`：`aggregateRef=occurrenceRef=factRef`，`occurredAt`=浇水实际发生时间，载荷 `{ factRef, occurredAt, amountMl }`；
   - `care.plan_completed.v1`：`aggregateRef=occurrenceRef=planRef`，`occurredAt`=完成时刻，载荷 `{ planRef, completedAt }`。
   迁移 `029_care_outbox_timeline_event_types.sql` 只放开 `ck_care_outbox_event_type` 的取值（只写文件，由人工在获批窗口执行）。
-- **派发函数**：care 域事件云函数 `care-outbox-dispatch`（Nodejs20.19、Handler `index.main`、定时触发 `0 * * * * * *` 每分钟一次），
-  复用共享连接与 Repository，只领取上述两类时间线事件（奖励事件留给 subscription 派发，不在此处理）。
+- **派发方式**（2026-10-10 用户裁决，替代原“每分钟一次的 `care-outbox-dispatch`”，原因：测试库 TDSQL-C Serverless 按醒着时长计费，每分钟任务使其无法休眠）：
+  1. 写入时顺带派发：care 写请求提交后在同一请求内对本请求新写入的事件尽力派发一次（最长 1.5 秒，见 long-term-care-contract.md §13）。成功时**时间线立即可见**。
+  2. 低频补扫：care 域事件函数 `care-maintenance-sweep`（Nodejs20.19、Handler `index.main`、cron `0 25 0,4,7,11,14,16,19,21 * * * *`）
+     补派失败或超时的事件；最坏情况下时间线最长约 4 小时后可见。
+  两者只领取上述两类时间线事件（奖励事件留给 subscription 派发，不在此处理）。
 - **派发规则**（配置目录 `care.outbox_dispatch`，hard_rule）：每次运行领取一批最多 **100** 条；领取即加 **30 秒**租约并 `attempt_count+1`；
   投递成功 → `delivered`；投递失败 → 回到 `pending`，下一次运行重试；第 **5** 次尝试仍失败 → `dead_letter`（`terminal_reason_code=delivery_failed`）；
   租约过期仍处于 `dispatching` 的事件可被下一次运行接管（尝试次数已达 5 次则直接 `dead_letter`，`terminal_reason_code=lease_expired_max_attempts`）。

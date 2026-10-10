@@ -122,6 +122,9 @@ export const OPERATIONAL_ENVIRONMENT_OVERRIDES = Object.freeze({
   /** 服务签名 nonce 防重放保留秒数（必须 ≥ 2 × 时钟偏差）。 */
   serviceSignatureNonceTtlSeconds: override('V2_SERVICE_SIGNATURE_NONCE_TTL_SECONDS', RUNTIME_PARAMETERS.identity.serviceSignatureNonceTtlSeconds, null,
     RUNTIME_PARAMETERS.identity.serviceSignatureNonceTtlSeconds.value, 600, 900),
+  /** 写入时顺带派发最长等待毫秒（`care.outbox_dispatch.inline_budget_ms`；用户 2026-10-10 裁定，避免拖长 HTTP 响应）。 */
+  careOutboxInlineDispatchBudgetMs: override('V2_CARE_OUTBOX_INLINE_BUDGET_MS', RUNTIME_PARAMETERS.care.outboxInlineDispatchBudgetMs, null,
+    RUNTIME_PARAMETERS.care.outboxInlineDispatchBudgetMs.value, 200, 3000),
 })
 
 /** 运维覆盖白名单的键。 */
@@ -236,15 +239,62 @@ export function readIdentityEnvironment(environment: EnvironmentSource): Identit
     serviceSignature: readServiceSignatureEnvironment(environment) }
 }
 
+/** 发件箱派发运维参数（同请求派发与补扫共用）。 */
+export interface CareOutboxDispatchOperationalSettings {
+  /** 领取后租约秒数（默认 30，允许 10–120）。 */
+  readonly leaseSeconds: number
+  /** 单次最多领取条数（默认 100，允许 20–500）。 */
+  readonly batchSize: number
+  /** 最大尝试次数（默认 5，允许 3–10）；第 maxAttempts 次仍失败进入死信。 */
+  readonly maxAttempts: number
+}
+
+/** 读取发件箱派发运维参数。 */
+function readOutboxDispatchSettings(environment: EnvironmentSource): CareOutboxDispatchOperationalSettings {
+  return Object.freeze({
+    leaseSeconds: readOperationalOverride(environment, 'careOutboxLeaseSeconds'),
+    batchSize: readOperationalOverride(environment, 'careOutboxBatchSize'),
+    maxAttempts: readOperationalOverride(environment, 'careOutboxMaxAttempts'),
+  })
+}
+
+/** care 云函数写入时顺带派发的运行参数。 */
+export interface CareInlineDispatchEnvironment {
+  /** 最长等待毫秒（默认 1500，允许 200–3000）。 */
+  readonly budgetMs: number
+  /** 发件箱派发运维参数（与补扫一致）。 */
+  readonly outboxDispatch: CareOutboxDispatchOperationalSettings
+}
+
 /** care 云函数环境。 */
 export interface CareEnvironment extends FunctionEnvironment {
   /** Open-Meteo 辐射预报总时限毫秒（代码默认 8000，可在白名单范围内覆盖）。 */
   readonly openMeteoTotalDeadlineMs: number
+  /** 写入时顺带派发参数（用户 2026-10-10 裁定）。 */
+  readonly inlineDispatch: CareInlineDispatchEnvironment
 }
 
 /** 读取 care 云函数环境。 */
 export function readCareEnvironment(environment: EnvironmentSource): CareEnvironment {
-  return { ...readFunctionEnvironment(environment), openMeteoTotalDeadlineMs: readOperationalOverride(environment, 'openMeteoTotalDeadlineMs') }
+  return { ...readFunctionEnvironment(environment), openMeteoTotalDeadlineMs: readOperationalOverride(environment, 'openMeteoTotalDeadlineMs'),
+    inlineDispatch: Object.freeze({ budgetMs: readOperationalOverride(environment, 'careOutboxInlineDispatchBudgetMs'), outboxDispatch: readOutboxDispatchSettings(environment) }) }
+}
+
+/** care-maintenance-sweep 合并补扫事件函数环境（用户 2026-10-10 裁定）。 */
+export interface CareMaintenanceSweepEnvironment extends FunctionEnvironment {
+  /** 发件箱补扫阶段运维参数。 */
+  readonly outboxDispatch: CareOutboxDispatchOperationalSettings
+  /** 过期扫描单批最多改写行数（默认 500，允许 100–2000）。 */
+  readonly expiryBatchSize: number
+  /** 过期扫描时长占其可用时长的比例（默认 0.5）。 */
+  readonly runBudgetFraction: number
+}
+
+/** 读取 care-maintenance-sweep 事件函数环境。 */
+export function readCareMaintenanceSweepEnvironment(environment: EnvironmentSource): CareMaintenanceSweepEnvironment {
+  return { ...readFunctionEnvironment(environment), outboxDispatch: readOutboxDispatchSettings(environment),
+    expiryBatchSize: readOperationalOverride(environment, 'carePlanExpiryBatchSize'),
+    runBudgetFraction: readOperationalOverride(environment, 'carePlanExpiryRunBudgetPercent') }
 }
 
 /** care-outbox-dispatch 事件函数环境。 */

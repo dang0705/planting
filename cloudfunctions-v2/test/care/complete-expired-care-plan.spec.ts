@@ -26,7 +26,8 @@ function fakeCommands(planStatus: string, planVersion: number) {
         return [{ user_internal_id: '11', plant_internal_id: '22', lifecycle_status: 'active', created_at_ms: String(now - 30 * 86_400_000), plant_version: 1, profile_version: null }]
       }
       if (sql.includes('FROM care_plans')) {
-        return [{ id: '33', status: planStatus, version: planVersion, plan_payload_json: JSON.stringify({ calendar, completedFactRef: null }) }]
+        // 计划时刻取“现在”（未超 72 小时）：本文件只验证存储状态 expired 的分支；实时超时分支见 care-inline-dispatch.mysql.spec.ts。
+        return [{ id: '33', status: planStatus, version: planVersion, scheduled_at_ms: String(now), plan_payload_json: JSON.stringify({ calendar, completedFactRef: null }) }]
       }
       throw new Error(`未预期查询：${sql}`)
     },

@@ -6,6 +6,7 @@ import {
   EnvironmentConfigError,
   OPERATIONAL_ENVIRONMENT_OVERRIDES,
   readCareEnvironment,
+  readCareMaintenanceSweepEnvironment,
   readCareOutboxDispatchEnvironment,
   readCarePlanExpiryEnvironment,
   readFunctionEnvironment,
@@ -58,7 +59,7 @@ describe('日志级别（运维类，代码默认 info）', () => {
 
 describe('运维覆盖白名单（主代理 2026-10-10 裁定：Provider 总时限 + 发件箱租约/每批 + 过期扫描每批，带上下限）', () => {
   // 用户 2026-10-10 第三轮裁定：再加发件箱最大尝试次数、过期扫描时长占比、游客认领租约、服务签名时钟偏差与 nonce 保留。
-  it('白名单固定为十二项，默认值来自代码注册表且落在上下限内', () => {
+  it('白名单固定为十三项，默认值来自代码注册表且落在上下限内', () => {
     expect(Object.fromEntries(Object.entries(OPERATIONAL_ENVIRONMENT_OVERRIDES).map(([key, spec]) => [key, [spec.environmentName, spec.defaultValue, spec.minimum, spec.maximum]]))).toEqual({
       wechatLoginTotalDeadlineMs: ['V2_WECHAT_LOGIN_TOTAL_DEADLINE_MS', 5000, 2000, 10_000],
       douyinLoginTotalDeadlineMs: ['V2_DOUYIN_LOGIN_TOTAL_DEADLINE_MS', 5000, 2000, 10_000],
@@ -71,7 +72,9 @@ describe('运维覆盖白名单（主代理 2026-10-10 裁定：Provider 总时�
       carePlanExpiryRunBudgetPercent: ['V2_CARE_PLAN_EXPIRY_RUN_BUDGET_PERCENT', 50, 20, 80],
       userPlantGuestClaimLeaseSeconds: ['V2_USER_PLANT_GUEST_CLAIM_LEASE_SECONDS', 30, 10, 120],
       serviceSignatureClockSkewSeconds: ['V2_SERVICE_SIGNATURE_CLOCK_SKEW_SECONDS', 300, 60, 300],
-      serviceSignatureNonceTtlSeconds: ['V2_SERVICE_SIGNATURE_NONCE_TTL_SECONDS', 600, 600, 900]
+      serviceSignatureNonceTtlSeconds: ['V2_SERVICE_SIGNATURE_NONCE_TTL_SECONDS', 600, 600, 900],
+      // 用户 2026-10-10 裁定：写入时顺带派发的等待上限（默认 1.5 秒），运维可覆盖。
+      careOutboxInlineDispatchBudgetMs: ['V2_CARE_OUTBOX_INLINE_BUDGET_MS', 1500, 200, 3000]
     })
     expect(OPERATIONAL_ENVIRONMENT_OVERRIDES.wechatLoginTotalDeadlineMs.parameter).toBe(RUNTIME_PARAMETERS.identity.wechatLoginTotalDeadlineMs)
     expect(OPERATIONAL_ENVIRONMENT_OVERRIDES.douyinLoginTotalDeadlineMs.parameter).toBe(RUNTIME_PARAMETERS.identity.douyinLoginTotalDeadlineMs)
@@ -92,7 +95,7 @@ describe('运维覆盖白名单（主代理 2026-10-10 裁定：Provider 总时�
 
   it('业务参数（已迁入策略发布）与触发器 cron 不在环境变量白名单', () => {
     const covered = Object.values(OPERATIONAL_ENVIRONMENT_OVERRIDES).map(spec => `${spec.parameter.source.kind === 'catalog_variable' ? spec.parameter.source.catalogKey : spec.parameter.source.providerCode}#${spec.field ?? ''}`)
-    for (const forbidden of ['care.outbox_dispatch#cron', 'care.plans.expiry_scan#cron', 'care.plans.expiry_grace_hours#', 'care.watering.drying_gap_fill_max_hours#', 'care.plans.page_size#', 'http.idempotency.retention_hours#']) {
+    for (const forbidden of ['care.outbox_dispatch#cron', 'care.plans.expiry_scan#cron', 'care.maintenance_sweep#', 'care.plans.expiry_grace_hours#', 'care.watering.drying_gap_fill_max_hours#', 'care.plans.page_size#', 'http.idempotency.retention_hours#']) {
       expect(covered).not.toContain(forbidden)
     }
   })
@@ -156,6 +159,19 @@ describe('各云函数环境读取器', () => {
     expect(readCareOutboxDispatchEnvironment({ ...database, V2_CARE_OUTBOX_LEASE_SECONDS: '120', V2_CARE_OUTBOX_BATCH_SIZE: '20' }).outboxDispatch).toEqual({ leaseSeconds: 120, batchSize: 20, maxAttempts: 5 })
     expect(capture(() => readCareOutboxDispatchEnvironment({ ...database, V2_CARE_OUTBOX_LEASE_SECONDS: '9' }))).toBeInstanceOf(EnvironmentConfigError)
     expect(capture(() => readCareOutboxDispatchEnvironment({ ...database, V2_CARE_OUTBOX_BATCH_SIZE: '501' }))).toBeInstanceOf(EnvironmentConfigError)
+  })
+
+  // 用户 2026-10-10 裁定：写入时顺带派发（等待上限 1.5 秒，200–3000 可覆盖）+ 合并低频补扫 care-maintenance-sweep。
+  it('readCareEnvironment：写入时顺带派发等待上限默认 1500 毫秒，可在 200–3000 覆盖；发件箱参数与补扫一致', () => {
+    expect(readCareEnvironment(database).inlineDispatch).toEqual({ budgetMs: 1500, outboxDispatch: { leaseSeconds: 30, batchSize: 100, maxAttempts: 5 } })
+    expect(readCareEnvironment({ ...database, V2_CARE_OUTBOX_INLINE_BUDGET_MS: '800' }).inlineDispatch.budgetMs).toBe(800)
+    expect(capture(() => readCareEnvironment({ ...database, V2_CARE_OUTBOX_INLINE_BUDGET_MS: '199' }))).toBeInstanceOf(EnvironmentConfigError)
+    expect(capture(() => readCareEnvironment({ ...database, V2_CARE_OUTBOX_INLINE_BUDGET_MS: '3001' }))).toBeInstanceOf(EnvironmentConfigError)
+  })
+
+  it('readCareMaintenanceSweepEnvironment：发件箱与过期扫描两组运维参数同时读取', () => {
+    expect(readCareMaintenanceSweepEnvironment(database)).toMatchObject({ outboxDispatch: { leaseSeconds: 30, batchSize: 100, maxAttempts: 5 }, expiryBatchSize: 500, runBudgetFraction: 0.5 })
+    expect(readCareMaintenanceSweepEnvironment({ ...database, V2_CARE_OUTBOX_BATCH_SIZE: '50', V2_CARE_PLAN_EXPIRY_BATCH_SIZE: '1000' })).toMatchObject({ outboxDispatch: { batchSize: 50 }, expiryBatchSize: 1000 })
   })
 
   it('readCarePlanExpiryEnvironment：每批默认 500，可在 100–2000 覆盖，越界启动失败', () => {

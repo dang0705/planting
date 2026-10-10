@@ -55,8 +55,11 @@ describe('代码层运行参数注册表（configuration-layers/v1 §2.3）', ()
       'identity.serviceSignatureNonceTtlSeconds': 600,
       'identity.wechatLoginTotalDeadlineMs': 5000,
       'identity.douyinLoginTotalDeadlineMs': 5000,
-      'care.planExpiryScan': { cron: '0 0 * * * * *', intervalHours: 1, batchSize: 500, runBudgetFractionOfFunctionTimeout: 0.5 },
-      'care.outboxDispatch': { cron: '0 * * * * * *', leaseSeconds: 30, batchSize: 100, maxAttempts: 5 },
+      // 用户 2026-10-10 裁定：发件箱补扫与过期扫描合并为低频 care-maintenance-sweep（对齐 weather 醒库时段，最大间隔 4 小时）。
+      'care.planExpiryScan': { cron: '0 25 0,4,7,11,14,16,19,21 * * * *', intervalHours: 4, batchSize: 500, runBudgetFractionOfFunctionTimeout: 0.5 },
+      'care.outboxDispatch': { cron: '0 25 0,4,7,11,14,16,19,21 * * * *', leaseSeconds: 30, batchSize: 100, maxAttempts: 5 },
+      'care.outboxInlineDispatchBudgetMs': 1500,
+      'care.maintenanceSweep': { cron: '0 25 0,4,7,11,14,16,19,21 * * * *', maxGapHours: 4, outboxBudgetFractionOfFunctionTimeout: 0.3 },
       'care.openMeteoTotalDeadlineMs': 8000,
       'care.openMeteoRequestWindowDays': { maxPastDays: 92, maxForecastDays: 16 },
       'storage.cloudbaseStorageTotalDeadlineMs': 10_000,
