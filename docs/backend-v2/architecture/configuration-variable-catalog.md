@@ -233,9 +233,9 @@
 
 | 配置 ID | 中文名称 | 裁决组 | 层级 / 状态 / 所在层 | 当前值 | 所有者 | 消费方 | 变更与失败边界 | Phase / Ticket |
 |---|---|---|---|---|---|---|---|---|
-| `weather.city_climate.recommend_top_max` | 城市气候推荐 top 上限 | `hard_business_rule` | 领域策略 / 已冻结 / 策略发布层 | `50` 条 | weather | weather | 发布新的 weather/public_read 不可变版本并切换 active 指针（策略发布 CLI：validate → publish → activate；可 rollback）；取值必须落在 weather.public_read.absolute_bounds 之内；失败：无可信活动发布（缺失、Schema 不过、SHA 不符、未生效或已过期）时：HTTP 接口返回 503 SERVICE_UNAVAILABLE、定时任务本次不执行；不回退源码默认值 | P4 / [P4] 盆土视觉和四类养护能力 |
-| `weather.public_read.absolute_bounds` | weather 公开读取策略绝对边界 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 / 代码层 | `{"recommendTopMax":50}` | weather | weather | 代码层硬边界；变更须同步公开合同、数据库列与测试，随版本发布；失败：策略取值越界时策略校验失败，读取方按无可信发布处理（503）；所在层说明：协议 / Schema 硬边界：策略只能在其内调整，不能突破已发布合同或数据库列长度 | P4 / [P4] 盆土视觉和四类养护能力 |
-| `weather.city_climate.recommend_top_default` | 城市气候推荐 top 默认条数 | `hard_business_rule` | 领域策略 / 已冻结 / 策略发布层 | `10` 条 | weather | weather | 发布新的 weather/public_read 不可变版本并切换 active 指针；取值必须落在 weather.public_read.absolute_bounds 之内；失败：无可信活动发布时对应接口 503；不回退源码默认值 | P4 / [P4] 盆土视觉和四类养护能力 |
+| `weather.city_climate.recommend_top_max` | 城市气候推荐 top 上限 | `hard_business_rule` | 领域策略 / 已冻结 / 策略发布层 | `50` 条 | weather | weather | 发布新的 weather/public_read 不可变版本并切换 active 指针（策略发布 CLI：validate → publish → activate；可 rollback）；取值必须落在 weather.public_read.absolute_bounds 之内；失败：无可信活动发布（缺失、Schema 不过、SHA 不符、未生效或已过期）时：HTTP 接口返回 503 SERVICE_UNAVAILABLE、定时任务本次不执行；不回退源码默认值 | P2 / [E02][P2] 城市户外气候匹配缓存与 weather 验收 |
+| `weather.public_read.absolute_bounds` | weather 公开读取策略绝对边界 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 / 代码层 | `{"recommendTopMax":50}` | weather | weather | 代码层硬边界；变更须同步公开合同、数据库列与测试，随版本发布；失败：策略取值越界时策略校验失败，读取方按无可信发布处理（503）；所在层说明：协议 / Schema 硬边界：策略只能在其内调整，不能突破已发布合同或数据库列长度 | P2 / [E02][P2] 城市户外气候匹配缓存与 weather 验收 |
+| `weather.city_climate.recommend_top_default` | 城市气候推荐 top 默认条数 | `hard_business_rule` | 领域策略 / 已冻结 / 策略发布层 | `10` 条 | weather | weather | 发布新的 weather/public_read 不可变版本并切换 active 指针；取值必须落在 weather.public_read.absolute_bounds 之内；失败：无可信活动发布时对应接口 503；不回退源码默认值 | P2 / [E02][P2] 城市户外气候匹配缓存与 weather 验收 |
 
 ## 问诊与视觉 AI
 

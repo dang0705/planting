@@ -547,7 +547,7 @@
               "maximum": 50,
               "default": 20
             },
-            "description": "每页条数，十进制整数文本。"
+            "description": "每页条数，十进制整数文本。默认值与上限以生效策略 user-plant/list_rules（userPlantListPageSize）为准：当前默认 20、上限 50；绝对上限 50（schema 的 maximum / default 分别为绝对上限与当前值）；策略不可用时 503。"
           },
           {
             "name": "cursor",
@@ -1263,7 +1263,7 @@
               "maximum": 50,
               "default": 20
             },
-            "description": "每页条数，十进制整数文本（hard_rule user-plant.timeline.page_size）。"
+            "description": "每页条数，十进制整数文本。默认值与上限以生效策略 user-plant/list_rules（timelinePageSize）为准：当前默认 20、上限 50；绝对上限 50（schema 的 maximum / default 分别为绝对上限与当前值）；策略不可用时 503。"
           },
           {
             "name": "cursor",
@@ -5800,11 +5800,14 @@
                     "image/png",
                     "image/webp"
                   ]
-                }
+                },
+                "description": "以生效策略 user-plant/asset_rules 为准：当前 image/jpeg、image/png、image/webp（只能是这三者的子集）。"
               },
               "maxBytes": {
                 "type": "integer",
-                "minimum": 1
+                "minimum": 1,
+                "maximum": 10485760,
+                "description": "以生效策略 user-plant/asset_rules 为准：当前 5242880（5 MiB），绝对上限 10485760（10 MiB）。"
               }
             }
           }

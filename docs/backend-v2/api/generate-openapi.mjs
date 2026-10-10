@@ -119,15 +119,15 @@ const successSchemaRefByContract = {
   CoverUploadTargetResponse: '#/components/schemas/CoverUploadTargetSuccess',
 }
 
-/** 列表查询参数（user-plant.md「列表公开接口」）；分页默认/上限来自 hard_rule user-plant.list.page_size。 */
+/** 列表查询参数（user-plant.md「列表公开接口」）；分页默认/上限以生效策略 user-plant/list_rules 为准（用户 2026-10-10 裁定）。 */
 const queryParametersByOperation = {
   listUserPlantTimeline: [
-    { name: 'limit', in: 'query', required: false, schema: { type: 'integer', minimum: 1, maximum: 50, default: 20 }, description: '每页条数，十进制整数文本（hard_rule user-plant.timeline.page_size）。' },
+    { name: 'limit', in: 'query', required: false, schema: { type: 'integer', minimum: 1, maximum: 50, default: 20 }, description: '每页条数，十进制整数文本。默认值与上限以生效策略 user-plant/list_rules（timelinePageSize）为准：当前默认 20、上限 50；绝对上限 50（schema 的 maximum / default 分别为绝对上限与当前值）；策略不可用时 503。' },
     { name: 'cursor', in: 'query', required: false, schema: { type: 'string', minLength: 1, maxLength: 200 }, description: '只能原样回传上一页的 nextCursor。' },
   ],
   listUserPlants: [
     { name: 'lifecycle', in: 'query', required: false, schema: { enum: ['active', 'archived'] }, description: '省略表示 active 与 archived 都返回；deleting/deleted 永不可见。' },
-    { name: 'limit', in: 'query', required: false, schema: { type: 'integer', minimum: 1, maximum: 50, default: 20 }, description: '每页条数，十进制整数文本。' },
+    { name: 'limit', in: 'query', required: false, schema: { type: 'integer', minimum: 1, maximum: 50, default: 20 }, description: '每页条数，十进制整数文本。默认值与上限以生效策略 user-plant/list_rules（userPlantListPageSize）为准：当前默认 20、上限 50；绝对上限 50（schema 的 maximum / default 分别为绝对上限与当前值）；策略不可用时 503。' },
     { name: 'cursor', in: 'query', required: false, schema: { type: 'string', minLength: 1, maxLength: 200 }, description: '只能原样回传上一页的 nextCursor。' },
   ],
 }
@@ -684,8 +684,8 @@ const openapi = {
         properties: { data: { type: 'object', additionalProperties: false, required: ['purpose', 'cloudPath', 'allowedMimeTypes', 'maxBytes'], properties: {
           purpose: { const: 'profile' },
           cloudPath: { type: 'string', pattern: '^user-plant/usr_[A-Za-z0-9_-]{8,60}/covers/upl_[A-Za-z0-9_-]{8,60}-[a-f0-9]{32}$', description: '本次上传路径（不含扩展名）；前端追加 .jpg/.png/.webp 后上传。' },
-          allowedMimeTypes: { type: 'array', minItems: 1, items: { enum: ['image/jpeg', 'image/png', 'image/webp'] } },
-          maxBytes: { type: 'integer', minimum: 1 },
+          allowedMimeTypes: { type: 'array', minItems: 1, items: { enum: ['image/jpeg', 'image/png', 'image/webp'] }, description: '以生效策略 user-plant/asset_rules 为准：当前 image/jpeg、image/png、image/webp（只能是这三者的子集）。' },
+          maxBytes: { type: 'integer', minimum: 1, maximum: 10485760, description: '以生效策略 user-plant/asset_rules 为准：当前 5242880（5 MiB），绝对上限 10485760（10 MiB）。' },
         } } },
       },
       BindUserPlantAssetRequest: {

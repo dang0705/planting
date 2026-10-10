@@ -29,6 +29,7 @@ node scripts/policy-release.mjs validate models/policy-releases/<文件>.release
 | care | `V2_OPEN_METEO_TOTAL_DEADLINE_MS` | 8000 | 2000–15000 |
 
 - **服务签名两项必须在签名方与验证方的所有云函数中部署同一取值**，否则会互相拒签。
+- **subscription 签名方上线时必须配置与 identity 相同的 `V2_SERVICE_SIGNATURE_CLOCK_SKEW_SECONDS` / `V2_SERVICE_SIGNATURE_NONCE_TTL_SECONDS`**（主代理 2026-10-10 裁定；当前 subscription 尚无部署入口，上线检查单必须包含此项）。
 - 任何变量越界时，函数启动即失败，错误信息只写变量名和允许范围。
 
 ## 2. 先发布并激活 5 个新策略（旧代码不读取它们，可以提前上线）
