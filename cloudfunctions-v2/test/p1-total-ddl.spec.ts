@@ -46,6 +46,14 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
     const isGuestTokenExtension = entry.file === '023_guest_token_sessions.sql'
     // Expected 来源：long-term-care/v1 §12.7（用户 2026-10-09 裁决计划过期定时扫描）——028 只允许为 care_plans 新增一个扫描二级索引。
     const isCarePlanExpiryIndex = entry.file === '028_care_plan_expiry_scan_index.sql'
+    // Expected 来源：user-plant-timeline.md §5（用户 2026-10-10 裁决时间线异步派发）——029 只允许替换 care_outbox 的事件类型检查约束。
+    const isCareOutboxTimelineTypes = entry.file === '029_care_outbox_timeline_event_types.sql'
+    if (isCareOutboxTimelineTypes) {
+      assert.deepEqual([...content.matchAll(/^ALTER TABLE `([^`]+)`/gmu)].map(match => match[1]), ['care_outbox'])
+      assert.deepEqual([...content.matchAll(/\bDROP CHECK `([^`]+)`/gu)].map(match => match[1]), ['ck_care_outbox_event_type'])
+      assert.match(content, /ADD CONSTRAINT `ck_care_outbox_event_type` CHECK/u)
+      assert.doesNotMatch(content, /\b(?:DROP\s+(?:TABLE|COLUMN|DATABASE|INDEX)|RENAME|CHANGE|MODIFY|CREATE TABLE)\b/iu)
+    }
     if (isCarePlanExpiryIndex) {
       assert.deepEqual([...content.matchAll(/^CREATE INDEX `([^`]+)` ON `([^`]+)`/gmu)].map(match => [match[1], match[2]]), [['idx_care_plan_expiry_scan', 'care_plans']])
       assert.doesNotMatch(content, /\b(?:DROP|RENAME|CHANGE|MODIFY|ALTER|CREATE TABLE|CREATE TRIGGER)\b/iu)
@@ -160,6 +168,8 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
       assert.ok(content.includes('DEFAULT CHARSET=utf8mb4'), `${entry.file} 建表必须固定 utf8mb4`)
     } else if (isGuestTokenExtension) {
       assert.match(content, /^ALTER TABLE `guest_sessions`\s/mu, '游客令牌迁移只扩展既有游客会话表')
+    } else if (isCareOutboxTimelineTypes) {
+      assert.match(content, /^ALTER TABLE `care_outbox`\s/mu, '时间线事件迁移只扩展 care 发件箱事件类型')
     } else if (isCarePlanExpiryIndex) {
       assert.match(content, /^CREATE INDEX `idx_care_plan_expiry_scan` ON `care_plans` \(`status`, `scheduled_at_ms`, `id`\);$/mu, '过期扫描迁移只新增既定二级索引')
     } else if (isSessionPolicyExtension) {
@@ -179,7 +189,8 @@ test('P1 总 DDL 满足空库重建和关键约束', () => {
         isCareV2Extension ||
         isDiagnosisSnapshotExtension ||
         isDiagnosisResultExtension ||
-        isGuestTokenExtension
+        isGuestTokenExtension ||
+        isCareOutboxTimelineTypes
         ? /^(?:DROP|INSERT|UPDATE|DELETE)\b/imu
         : /^(?:DROP|ALTER|INSERT|UPDATE|DELETE)\b/imu,
       `${entry.file} 仅允许经 manifest 顺序化的非破坏性结构变更`

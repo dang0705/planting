@@ -21,7 +21,7 @@ import type { TemporaryCareOwner } from '../domain/temporary-care-result-record.
 import type { NormalizedOutdoorRadiation } from '../light/normalize-open-meteo-radiation.js'
 import type { OpenMeteoRadiationQuery } from '../provider/open-meteo-radiation-client.js'
 import { resolveOpenMeteoRequestWindow } from '../watering/watering-advice-hard-rules.js'
-import { parseWateringAdviceRequest, type WateringAdviceCommand } from './watering-advice-request.js'
+import { parseWateringAdviceRequest, roundCoordinate, type WateringAdviceCommand } from './watering-advice-request.js'
 
 /** 浇水建议路由登记（watering-advice/v1）。 */
 export const createWateringAdviceRoute: FrozenRoute = {
@@ -32,6 +32,12 @@ export const createWateringAdviceRoute: FrozenRoute = {
 }
 
 /** 路由依赖；全部为服务端可信端口，客户端不能提交归属、期限或策略。 */
+/** 城市目录中的城市中心坐标（度，未降精度）。 */
+export interface CityCoordinates {
+  /** 城市中心纬度（度）。 */ readonly latitude: number
+  /** 城市中心经度（度）。 */ readonly longitude: number
+}
+
 export interface WateringAdviceRouteDependencies {
   /** guest_or_authenticated 合并主体解析。 */
   readonly resolvePrincipal: (command: ResolveUserPrincipalCommand) => Promise<UserPrincipalDto | GuestPrincipalDto>
@@ -68,6 +74,8 @@ export interface UserPlantWateringAdviceDependencies {
   readonly readLatestWateringFact: (scope: OwnedPlantScope) => Promise<WateringFactRow | null>
   /** 事务化长期浇水建议用例。 */
   readonly createAdvice: (input: CreateUserPlantWateringAdviceInput) => Promise<HttpIdempotencyPublicResponseSnapshot>
+  /** weather 城市目录只读：城市代码 → 城市中心坐标（度）；不在目录返回 null，读取失败抛出（→ 503）。 */
+  readonly resolveCityCoordinates: (cityRef: string) => Promise<CityCoordinates | null>
 }
 
 /** 持久化分支：临时案例或长期植物。 */
@@ -258,6 +266,13 @@ export function createWateringAdviceRouteHandler(dependencies: WateringAdviceRou
             if (context === null) { throw new PublicRequestError(404, 'USER_PLANT_NOT_FOUND', '用户植物不存在') }
             if (context.lifecycle === 'archived') { throw new PublicRequestError(409, 'USER_PLANT_ARCHIVED', '植物已归档，只能查看') }
             command = withUserPlantContext(command, context, fact)
+            // 长期植物坐标 = 档案城市中心坐标（降到 0.01°）；无城市或不在目录 → null，不取辐射（2026-10-10 用户裁决）。
+            let center: CityCoordinates | null = null
+            if (context.cityRef !== null) {
+              try { center = await dependencies.userPlant.resolveCityCoordinates(context.cityRef) } catch { throw unavailable() }
+            }
+            command = { ...command, cityRef: center === null ? null : context.cityRef,
+              location: center === null ? null : { latitude: roundCoordinate(center.latitude), longitude: roundCoordinate(center.longitude) } }
             userPlant = { context, fact, scope }
           }
           let policy: PublishedWateringPolicy | null
@@ -268,8 +283,9 @@ export function createWateringAdviceRouteHandler(dependencies: WateringAdviceRou
           } catch { throw unavailable() }
           const window = resolveOpenMeteoRequestWindow({ nowMs, evidenceTimesMs: [command.soil?.observedAt ?? null, command.lastWateringAtMs, command.lightReading?.measuredAtMs ?? null] })
           let radiation: NormalizedOutdoorRadiation | null
+          const location = command.location
           try {
-            radiation = await dependencies.fetchRadiation({ latitude: command.location.latitude, longitude: command.location.longitude, ...window })
+            radiation = location === null ? null : await dependencies.fetchRadiation({ latitude: location.latitude, longitude: location.longitude, ...window })
           } catch { radiation = null }
           const built = buildWateringAdvice({ command, policy, baseline, radiation, nowMs })
           const scope = principal.principalType === 'guest' ? principal.guestSessionRef : principal.user_id

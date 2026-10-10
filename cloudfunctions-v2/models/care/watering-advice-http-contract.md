@@ -8,7 +8,7 @@
 |---|---|---|---|
 | `target` | `{ kind: 'temporary_case', caseRef }` 或 `{ kind: 'user_plant', userPlantRef }` | 是 | 结果归属；游客只能用临时案例，长期植物需登录且归属本人 |
 | `catalogTaxonRef` | string | 临时案例必填 | 读取 Tropicals 浇水基线；长期植物从档案取 |
-| `location` | `{ latitude, longitude }` | 是 | 取太阳辐射；服务端保存前四舍五入到 0.01°（约 1km），不存精确坐标。MVP 重点覆盖腾讯云已存储气候档案的 20 个热门城市，其他位置不拒绝 |
+| `location` | `{ latitude, longitude }` | 临时案例必填；长期植物**不得提交**（提交 → 400） | 取太阳辐射；服务端保存前四舍五入到 0.01°（约 1km），不存精确坐标。MVP 重点覆盖腾讯云已存储气候档案的 20 个热门城市，其他位置不拒绝。长期植物改由服务端用档案城市的中心坐标（见下文「长期植物的坐标」，2026-10-10 用户裁决） |
 | `window` | `{ orientation: 'N'\|'NE'\|'E'\|'SE'\|'S'\|'SW'\|'W'\|'NW', azimuthDeg?: 0～359.99, glassLayers: 'single'\|'double'\|'none'\|null }` | 是 | 极简光照输入。8 方位必填；前端界面默认预选“南”，后端不设默认。可选 `azimuthDeg` 为手机指南针读数（正北顺时针），提供时优先于方位并须与方位扇区一致。`none` 表示户外/开放阳台，跳过玻璃衰减；`null` 为玻璃未知 |
 | `lightReading` | `{ lux, measuredAt, source: 'meter'\|'camera_estimate' }` 或 null | 否 | 植物位置 Lux；缺失时植物位置光照为缺证据（窗口变宽或开放） |
 | `soil` | `{ state: 'wet'\|'moist'\|'dry'\|'uncertain', scope: 'surface'\|'root_zone', observedAt }` 或 null | 否 | 当前盆土观察；缺失时只能依赖已确认的浇水记录 |
@@ -39,6 +39,21 @@
 
 - 只在 `status = insufficient_evidence` 时追加；`ready`（例如根区干可以浇水、湿土暂停）、`temporarily_unavailable` 与缺植物基线时不追加。
 - 缺失码是稳定枚举，不含坐标、读数、时间或 Provider 错误原文。
+
+### 长期植物的坐标（2026-10-10 用户裁决）
+
+- `target.kind = 'user_plant'` 时，请求体不得携带 `location`（携带 → 400 `VALIDATION_FAILED`）。服务端读取该植物环境档案的 `location.cityRef`
+  （`user-plant-environment-profile/v1`），在 weather 城市目录（`city_climate_profiles`，策略 `v0-city-outdoor`）取该城市中心坐标 `lat/lon`，
+  四舍五入到 0.01° 后用于取室外辐射；输入清单记录 `location`（城市中心坐标）与 `cityRef`。
+- 档案没有位置，或 `cityRef` 不在城市目录：不调用室外辐射 Provider；结果为 `insufficient_evidence` 时在 `details.missingEvidence` 追加缺失码
+  **`plant_location`**（不追加 `outdoor_radiation`，因为并未尝试取辐射）；`plant_light` 规则不变。前端建议：提示“请先在植物档案里设置所在城市”。
+  若盆土证据已足以给出安全结论（例如根区干 → 可以浇水），结果仍按原规则为 `ready`，不追加缺失码。
+- 城市目录读取失败 → 503 `SERVICE_UNAVAILABLE`。
+- 临时案例（`temporary_case`）不变：仍必须由请求提供 `location`。
+
+| 缺失码 | 何时出现 | 前端建议 |
+|---|---|---|
+| `plant_location` | 长期植物档案无城市或城市不在目录，且结果为 `insufficient_evidence` | 提示去植物档案设置城市 |
 
 ## 写入与幂等
 

@@ -110,10 +110,16 @@ const successSchemaRefByContract = {
   /** 用户植物列表与删除（user-plant.md，2026-10-10 冻结）。 */
   UserPlantListResponse: '#/components/schemas/UserPlantListSuccess',
   UserPlantDeletionResponse: '#/components/schemas/UserPlantDeletionSuccess',
+  /** 时间线（user-plant-timeline/v1，2026-10-10 冻结）。 */
+  TimelineResponse: '#/components/schemas/TimelineSuccess',
 }
 
 /** 列表查询参数（user-plant.md「列表公开接口」）；分页默认/上限来自 hard_rule user-plant.list.page_size。 */
 const queryParametersByOperation = {
+  listUserPlantTimeline: [
+    { name: 'limit', in: 'query', required: false, schema: { type: 'integer', minimum: 1, maximum: 50, default: 20 }, description: '每页条数，十进制整数文本（hard_rule user-plant.timeline.page_size）。' },
+    { name: 'cursor', in: 'query', required: false, schema: { type: 'string', minLength: 1, maxLength: 200 }, description: '只能原样回传上一页的 nextCursor。' },
+  ],
   listUserPlants: [
     { name: 'lifecycle', in: 'query', required: false, schema: { enum: ['active', 'archived'] }, description: '省略表示 active 与 archived 都返回；deleting/deleted 永不可见。' },
     { name: 'limit', in: 'query', required: false, schema: { type: 'integer', minimum: 1, maximum: 50, default: 20 }, description: '每页条数，十进制整数文本。' },
@@ -648,6 +654,18 @@ const openapi = {
           updatedAt: { type: 'string', format: 'date-time' },
         },
       },
+      TimelineSuccess: {
+        type: 'object', additionalProperties: false, required: ['data'],
+        properties: { data: { type: 'object', additionalProperties: false, required: ['items', 'nextCursor'], properties: {
+          items: { type: 'array', maxItems: 50, items: { type: 'object', additionalProperties: false, required: ['timelineItemRef', 'itemType', 'occurredAt', 'summary'], properties: {
+            timelineItemRef: { type: 'string', pattern: '^tli_[a-f0-9]{40}$' },
+            itemType: { enum: ['care_watering', 'care_plan_completed', 'plant_archived', 'plant_restored'] },
+            occurredAt: { type: 'string', format: 'date-time', description: '业务实际发生时间；浇水补录按用户填写的实际时间排序。' },
+            summary: { type: 'object', description: 'care_watering：{ itemType, amountMl }；care_plan_completed：{ itemType, outcome: done }；归档/恢复：{ itemType }。' },
+          } } },
+          nextCursor: { type: ['string', 'null'] },
+        } } },
+      },
       UserPlantListSuccess: {
         type: 'object', additionalProperties: false, required: ['data'],
         properties: { data: { type: 'object', additionalProperties: false, required: ['items', 'nextCursor'],
@@ -697,7 +715,7 @@ const openapi = {
       },
       // watering-advice/v1：本阶段 target 只支持 temporary_case（user_plant 返回 VALIDATION_FAILED）。
       WateringAdviceRequest: {
-        type: 'object', additionalProperties: false, required: ['target', 'location', 'window'],
+        type: 'object', additionalProperties: false, required: ['target', 'window'],
         properties: {
           target: { oneOf: [
             { type: 'object', additionalProperties: false, required: ['kind', 'caseRef'], properties: { kind: { const: 'temporary_case' }, caseRef: { type: 'string', minLength: 1, maxLength: 512 } } },
@@ -706,7 +724,7 @@ const openapi = {
           catalogTaxonRef: { type: 'string', minLength: 1, maxLength: 512, description: '临时案例必填；读取 Tropicals 浇水基线。' },
           location: { type: 'object', additionalProperties: false, required: ['latitude', 'longitude'],
             properties: { latitude: { type: 'number', minimum: -90, maximum: 90 }, longitude: { type: 'number', minimum: -180, maximum: 180 } },
-            description: '服务端保存前四舍五入到 0.01°。' },
+            description: '临时案例必填，服务端保存前四舍五入到 0.01°；长期植物不得提交（提交 → 400），服务端用档案城市中心坐标，档案无城市时缺失码 plant_location（2026-10-10）。' },
           window: { type: 'object', additionalProperties: false, required: ['orientation', 'glassLayers'], properties: {
             orientation: { enum: ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] },
             azimuthDeg: { type: 'number', minimum: 0, exclusiveMaximum: 360 },

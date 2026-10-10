@@ -28,6 +28,8 @@ export interface UserPlantMysqlHarness {
   readonly audits: RequestChainAuditEvent[]
   /** 停止服务并删除容器。 */
   readonly stop: () => Promise<void>
+  /** 测试库连接来源（供同库的其他函数服务或事件函数用例复用）。 */
+  readonly source: ReturnType<typeof createMysql2ConnectionSource>
 }
 
 /** 公开响应的宽松解析形状。 */
@@ -107,6 +109,7 @@ export async function startUserPlantMysqlHarness(options: {
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
   const baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`
   return {
+    source,
     sql: text => sql(text),
     audits,
     call: async (method, pathName, callOptions = {}) => {

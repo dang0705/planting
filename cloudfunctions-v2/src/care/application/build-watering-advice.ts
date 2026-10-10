@@ -53,7 +53,7 @@ function lightSummary(light: MvpPlantLightResult | null): CanonicalJsonObject {
 }
 
 /** 光照与室外辐射缺失码（watering-advice-http-contract.md，2026-10-10 增补）。 */
-type LightMissingCode = 'outdoor_radiation' | 'plant_light'
+type LightMissingCode = 'outdoor_radiation' | 'plant_light' | 'plant_location'
 
 /**
  * 由辐射与光照派生状态得出应追加的缺失码：室外辐射取不到（Provider 空或测量时刻无覆盖）→ outdoor_radiation；
@@ -62,7 +62,8 @@ type LightMissingCode = 'outdoor_radiation' | 'plant_light'
 function lightMissingCodes(command: WateringAdviceCommand, radiation: NormalizedOutdoorRadiation | null, light: MvpPlantLightResult | null): LightMissingCode[] {
   const codes: LightMissingCode[] = []
   const reason = light?.status === 'insufficient_evidence' ? light.reason : null
-  if (radiation === null || reason === 'anchor_radiation') { codes.push('outdoor_radiation') }
+  // 长期植物档案无城市：没有坐标就不会去取辐射，缺的是“位置”而不是“天气”（2026-10-10 用户裁决）。
+  if (command.location === null) { codes.push('plant_location') } else if (radiation === null || reason === 'anchor_radiation') { codes.push('outdoor_radiation') }
   if (command.lightReading === null || (reason !== null && reason !== 'anchor_radiation')) { codes.push('plant_light') }
   return codes
 }
@@ -102,7 +103,9 @@ export function buildWateringAdvice(input: BuildWateringAdviceInput): BuiltWater
   const inputManifest: CanonicalJsonObject = {
     contractVersion: inputManifestVersion,
     catalogTaxonRef: command.catalogTaxonRef,
-    location: { latitude: command.location.latitude, longitude: command.location.longitude },
+    location: command.location === null ? null : { latitude: command.location.latitude, longitude: command.location.longitude },
+    // 只在长期植物由档案城市取坐标时记录城市代码，临时案例的输入清单与哈希保持不变。
+    ...(command.cityRef === undefined ? {} : { cityRef: command.cityRef }),
     window: { azimuthDeg: command.window.azimuthDeg, glassLayers: command.window.glassLayers },
     lightReading: command.lightReading === null ? null : { ...command.lightReading },
     soil: command.soil === null ? null : { ...command.soil },

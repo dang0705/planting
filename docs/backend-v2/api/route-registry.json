@@ -326,7 +326,8 @@
       "errors": [
         "VALIDATION_FAILED",
         "PRINCIPAL_INVALID",
-        "USER_PLANT_NOT_FOUND"
+        "USER_PLANT_NOT_FOUND",
+        "SERVICE_UNAVAILABLE"
       ]
     },
     {

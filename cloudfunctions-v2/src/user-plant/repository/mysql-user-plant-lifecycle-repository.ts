@@ -1,6 +1,7 @@
 import type { UserPlantRef, UserRef } from '../../contracts/types.js'
 import type { TransactionExecutionContext } from '../../foundation/database/transaction-runner.js'
 import { UserPlantPersistenceError } from './mysql-user-plant-repository.js'
+import { lifecycleSourceRefFor, timelineItemRefFor } from '../domain/timeline.js'
 
 const zero = Number('0')
 const one = Number('1')
@@ -198,6 +199,23 @@ export function createMysqlUserPlantLifecycleRepository<
         ]
       )
       if (result.affectedRows === one) {
+        // user-plant-timeline.md §5：同一事务写一条归档/恢复时间线；来源引用由“植物 + 新版本”确定性生成。
+        const itemType = input.targetLifecycle === 'archived' ? 'plant_archived' : 'plant_restored'
+        const sourceRef = lifecycleSourceRefFor(input.userPlantRef, input.expectedVersion + one)
+        const projected = await executor.executeWrite(
+          transaction,
+          `INSERT INTO \`user_plant_timeline_projection\`
+             (\`timeline_item_ref\`, \`user_internal_id\`, \`user_plant_internal_id\`, \`source_domain\`, \`source_ref\`, \`item_type\`,
+              \`occurred_at_ms\`, \`summary_json\`, \`projection_version\`, \`created_at_ms\`, \`updated_at_ms\`)
+           SELECT ?, \`p\`.\`user_internal_id\`, \`p\`.\`id\`, 'user-plant', ?, ?, ?, CAST(? AS JSON), 1, ?, ?
+           FROM \`user_plants\` AS \`p\` JOIN \`users\` AS \`u\` ON \`u\`.\`id\` = \`p\`.\`user_internal_id\`
+           WHERE \`u\`.\`public_user_id\` = ? AND \`p\`.\`public_user_plant_id\` = ?`,
+          [timelineItemRefFor('user-plant', sourceRef), sourceRef, itemType, input.occurredAtMs, JSON.stringify({ itemType }),
+            input.occurredAtMs, input.occurredAtMs, input.userRef, input.userPlantRef]
+        )
+        if (projected.affectedRows !== one) {
+          throw new UserPlantPersistenceError('INTERNAL_DATA_INVALID', '生命周期时间线写入未确定')
+        }
         return true
       }
       if (result.affectedRows === zero) {

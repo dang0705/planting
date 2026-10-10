@@ -3,7 +3,7 @@
 - 机器事实源：`configuration-variable-catalog.json`
 - Schema：`configuration-variable-catalog/v1`
 - 目录版本：`2026-10-04.1`
-- 当前共 219 项业务/治理变量、16 个 Provider 配置档案：已冻结 92 项、待冻结 55 项、不可配置硬规则 72 项。
+- 当前共 220 项业务/治理变量、16 个 Provider 配置档案：已冻结 92 项、待冻结 55 项、不可配置硬规则 73 项。
 
 本文件由同目录生成脚本从 JSON 生成，便于中文阅读。实施 Agent 必须先按领域读取本文件，再只深读该变量引用的合同或决策；不得把 `P1_PENDING` 猜成默认值。待冻结项必须带原因与阻断范围，未冻结前只能推进不依赖该值的工作。
 
@@ -207,6 +207,7 @@
 | `care.watering.soil_evidence_max_hours` | 盆土证据有效期封顶小时数 | `care_algorithms` | 领域策略 / 已冻结 | `72` 小时 | care | care watering-advice（临时与长期） | 随 care-watering-mvp/v2 发布正文 soilEvidenceMaxHours；新版本只影响新计算；失败：超过封顶视为过期，结果缺盆土证据并提示重新观察 | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.plans.expiry_grace_hours` | 检查计划过期宽限小时数（超过计划时刻多久仍未完成即过期） | `care_algorithms` | 不可配置硬规则 / 不可配置硬规则 | `72` 小时 | care | care-plan-expiry 事件函数（计划过期扫描） | 不可运营配置；调整须同时评审盆土证据有效期（soilEvidenceMaxHours），同步合同 §12、本目录、care 代码常量与锁定测试并经评审；只影响之后的扫描，不回滚已过期计划；失败：运行时不读取目录；常量与目录不一致由 CI 一致性测试阻断发布；扫描未运行时计划保持 planned，不提前过期 | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.plans.expiry_scan` | 检查计划过期扫描频率、批量与单次时长上限 | `reliability_ops` | 不可配置硬规则 / 不可配置硬规则 | `{"cron":"0 0 * * * * *","intervalHours":1,"batchSize":500,"runBudgetFractionOfFunctionTimeout":0.5}` | care | care-plan-expiry 事件函数、CloudBase 定时触发器配置 | 不可运营配置；调整须同步合同 §12、本目录、care 代码常量、定时触发器 cron 与锁定测试并经评审；更改批量需重新评估单批事务锁时长；失败：取不到函数超时则本次不执行（not_started）；批次失败则本次停止、已提交批次保留，下一周期自动补上 | P4 / [P4] 盆土视觉和四类养护能力 |
+| `care.outbox_dispatch` | care 发件箱时间线事件派发（定时频率、租约、批量、最大尝试次数） | `reliability_ops` | 不可配置硬规则 / 不可配置硬规则 | `{"cron":"0 * * * * * *","leaseSeconds":30,"batchSize":100,"maxAttempts":5}` | care | care-outbox-dispatch 事件函数、user-plant 时间线投影 | 不可运营配置；调整须同步时间线合同 §5、care 代码常量 CARE_OUTBOX_DISPATCH、部署触发器与锁定测试并经评审；失败：运行时不读取目录；常量与目录不一致由一致性测试阻断发布；派发未运行时事件保持 pending，时间线延迟出现但不丢失 | P2 / [E03][P2] 用户植物核心实现 |
 | `care.watering.cultivation_reference_pot` | 干燥基线的参考盆几何 | `care_algorithms` | 领域策略 / 已冻结 | `{"topDiameterCm":15,"bottomDiameterCm":11,"heightCm":13,"wall":"non_porous","drainage":true}` 厘米（盆口内径/盆底内径/内深） | care | care watering-advice（临时与长期，assessMvpWatering → deriveCultivationDrying） | 随 care-watering-mvp/v3 不可变发布正文；新版本只影响新计算，可回退到 v2；失败：无可用 v3 发布时按活动版本（v2）语义；整体无发布时 temporarily_unavailable | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.watering.cultivation_reference_available_water` | 参考基质可用水（AW，Bilderback 2005 口径）比例（定义锚点） | `care_algorithms` | 领域策略 / 已冻结 | `0.3` 体积比 0～1 | care | care watering-advice（临时与长期，assessMvpWatering → deriveCultivationDrying） | 随 care-watering-mvp/v3 不可变发布正文；新版本只影响新计算，可回退到 v2；失败：无可用 v3 发布时按活动版本（v2）语义；整体无发布时 temporarily_unavailable | P4 / [P4] 盆土视觉和四类养护能力 |
 | `care.watering.plant_demand_volume_exponent` | 植物蒸腾随盆容积的伸缩指数 | `care_algorithms` | 领域策略 / 已冻结 | `{"min":0,"max":0.52}` 无量纲指数 | care | care watering-advice（临时与长期，assessMvpWatering → deriveCultivationDrying） | 随 care-watering-mvp/v3 不可变发布正文；新版本只影响新计算，可回退到 v2；失败：无可用 v3 发布时按活动版本（v2）语义；整体无发布时 temporarily_unavailable | P4 / [P4] 盆土视觉和四类养护能力 |

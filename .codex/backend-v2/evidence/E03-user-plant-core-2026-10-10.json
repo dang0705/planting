@@ -233,5 +233,54 @@
       "vitest_default": "3132 passed / 5 skipped / 0 failed",
       "vitest_mysql_full": "63 files / 605 passed / 0 failed（本机 Docker MySQL 8.4）"
     }
+  },
+  "round4": {
+    "decision": "用户 2026-10-10 裁决：①时间线派发定时事件函数（每分钟、租约 30 秒、每批 100、5 次后死信，主代理裁定 hard_rule）+ 迁移 029 只写文件 + 实现时间线与回填脚本；②长期植物浇水改用档案城市中心坐标；③封面只做依赖审查",
+    "timeline": {
+      "contracts": [
+        "docs/backend-v2/contracts/user-plant-timeline.md §4/§5 落定（事件类型、派发规则、确定性引用、回填脚本）",
+        "cloudfunctions-v2/models/care/long-term-care-contract.md §13 时间线事件"
+      ],
+      "ddl": "docs/backend-v2/schema/029_care_outbox_timeline_event_types.sql（只替换 ck_care_outbox_event_type；manifest order 28；云端未执行）",
+      "configurationCatalog": "新增 hard_rule care.outbox_dispatch={cron:'0 * * * * * *',leaseSeconds:30,batchSize:100,maxAttempts:5}",
+      "eventFunction": "care-outbox-dispatch（src/entries/care-outbox-dispatch.ts，scripts/build.mjs kind=event → Nodejs20.19 / index.main）；本机 esbuild 打包通过，未部署、未建触发器",
+      "backfill": "cloudfunctions-v2/scripts/backfill-user-plant-timeline.sql（只写文件；本机 Docker 执行验证幂等）",
+      "classicRed": [
+        "test/care/care-outbox-timeline-migration.spec.ts（2 例，迁移缺失）",
+        "test/contracts/user-plant-timeline-contract.spec.ts（模块/制品缺失）",
+        "test/care/dispatch-care-outbox-job.spec.ts（模块缺失）",
+        "test/user-plant/list-user-plant-timeline-route.spec.ts（模块缺失）",
+        "test/user-plant/mysql-user-plant-lifecycle-repository.spec.ts（CAS 后未写时间线）",
+        "test/e2e/user-plant-timeline.mysql.spec.ts（12 例，模块缺失）"
+      ],
+      "realDbFinding": "真实库发现 INSERT…SELECT…ON DUPLICATE KEY UPDATE id=id 列名歧义导致投递全部失败，已改为限定表名"
+    },
+    "careCityCoordinates": {
+      "contracts": [
+        "models/care/watering-advice-http-contract.md「长期植物的坐标」+ plant_location 缺失码",
+        "models/care/long-term-care-contract.md §2",
+        "OpenAPI WateringAdviceRequest 顶层 required=[target,window]"
+      ],
+      "classicRed": [
+        "test/care/watering-advice-request.spec.ts（2 例）",
+        "test/care/build-watering-advice.spec.ts（2 例）",
+        "test/e2e/long-term-care-http.mysql.spec.ts（14 例）",
+        "test/contracts/watering-advice-location-contract.spec.ts（1 例）"
+      ],
+      "behaviourNote": "档案无城市时不取辐射；仅在结果为 insufficient_evidence 时追加 plant_location；若盆土证据已足以给出安全结论（根区干→可以浇水）仍为 ready",
+      "bugFound": {
+        "what": "care 读取用户植物上下文时把档案 JSON 根当作实测盆器，而 user-plant 写入路径存于 measuredPot 键 → 经 PATCH 保存的盆器对浇水建议不可见",
+        "fix": "src/user-plant/repository/mysql-user-plant-care-context-reader.ts 只读 measuredPot 键；care e2e 夹具改为真实存储形状",
+        "counterfactualRed": "恢复旧读法后 e2e「有品种与盆器：根区干 → 可以浇水 40～300 mL」失败"
+      },
+      "testFixtureUpdates": "watering-advice-route.spec.ts R1 长期植物请求去掉 location（新合同禁止），只保留“分支未接入”断言"
+    },
+    "coverSdkReview": ".codex/backend-v2/evidence/E03-cover-sdk-dependency-review-2026-10-10.md（推荐不引入 SDK，改用云存储 HTTP API + 服务端 API Key；待用户确认链接有效期语义与 API Key 授权）",
+    "green": {
+      "typecheck": "0 error",
+      "lint": "0 error（既有 warning）",
+      "vitest_default": "3160 passed / 5 skipped / 0 failed",
+      "vitest_mysql_full": "64 files / 621 passed / 0 failed"
+    }
   }
 }

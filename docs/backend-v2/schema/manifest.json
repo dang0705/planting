@@ -165,6 +165,12 @@
       "owner": "care",
       "file": "028_care_plan_expiry_scan_index.sql",
       "sha256": "9a3820af0b0b7a90d32c2623b86591de0eb7accb02a346f55daad90f7f686b73"
+    },
+    {
+      "order": 28,
+      "owner": "care",
+      "file": "029_care_outbox_timeline_event_types.sql",
+      "sha256": "24f6c9d5871accc4e5fbd4e6676eb7a20892c3bce2d1fa36ee4bca7a01707969"
     }
   ]
 }

@@ -31,7 +31,9 @@ const functionEntries = [
   { name: 'weather', entry: 'src/entries/weather.ts' },
   { name: 'care', entry: 'src/entries/care.ts' },
   // 定时触发只支持普通（事件型）云函数（long-term-care-contract.md §12.7）：care 域计划过期扫描。
-  { name: 'care-plan-expiry', entry: 'src/entries/care-plan-expiry.ts', kind: 'event' }
+  { name: 'care-plan-expiry', entry: 'src/entries/care-plan-expiry.ts', kind: 'event' },
+  // 定时事件函数（user-plant-timeline.md §5，每分钟一次）：care 发件箱时间线事件派发。
+  { name: 'care-outbox-dispatch', entry: 'src/entries/care-outbox-dispatch.ts', kind: 'event' }
 ]
 
 /**

@@ -20,6 +20,7 @@ import {
   lockCarePlan,
   settleCareProposal
 } from '../repository/mysql-long-term-care-repository.js'
+import { appendPlanCompletedEvent, appendWateringFactRecordedEvent } from '../repository/mysql-care-outbox-repository.js'
 
 type Transaction = MysqlTransactionContext<Mysql2QueryConnection>
 
@@ -95,6 +96,8 @@ async function writeWatering(transaction: Transaction, plant: LockedOwnedUserPla
   if (!validateWateringOccurredAt({ occurredAtMs: input.occurredAtMs, nowMs: input.nowMs, plantCreatedAtMs: plant.createdAtMs })) { return null }
   const factRef = refs('fact')
   await insertWateringFact(transaction, plant, { factRef, occurredAtMs: input.occurredAtMs, amountMl: input.amountMl, sourceCommandRef: refs('command'), nowMs: input.nowMs })
+  // §13：同一事务追加时间线事件，事实回滚时事件一起回滚。
+  await appendWateringFactRecordedEvent(transaction, plant, { factRef, occurredAtMs: input.occurredAtMs, amountMl: input.amountMl, nowMs: input.nowMs })
   return factRef
 }
 
@@ -178,6 +181,7 @@ export function createLongTermCareCommands(dependencies: IdempotentWriteDependen
       }
       const status = request.outcome === 'done' ? 'completed' : 'cancelled'
       await finishCarePlan(transaction, plan, status, { calendar: plan.payload.calendar, completedFactRef: factRef }, command.nowMs)
+      if (status === 'completed') { await appendPlanCompletedEvent(transaction, plant, { planRef: command.planRef, planVersion: plan.version + 1, completedAtMs: command.nowMs }) }
       return ok({ planRef: command.planRef, status, version: plan.version + 1, factRef, calendar: plan.payload.calendar })
     })
   }

@@ -59,14 +59,23 @@ export type TimelineResponse = { items: TimelineItem[]; nextCursor: string | nul
 
 ## 4. 上线前历史回填
 
-上线前已存在的浇水事实与已完成计划一次性回填为时间线投影。回填以可回放脚本交付（只写入仓库文件、由人工在获批窗口执行），
+上线前已存在的浇水事实与已完成计划一次性回填为时间线投影。回填以可回放脚本 `cloudfunctions-v2/scripts/backfill-user-plant-timeline.sql` 交付（只写入仓库文件、由人工在获批窗口执行），
 按 `uq_timeline_source` 幂等，可重复执行不产生重复行；脚本执行前后核对来源行数与投影行数。
 
-## 5. 实施前须由主代理/用户确认的技术项（不改变本合同的业务语义）
+## 5. 异步投影：事件与派发（2026-10-10 用户裁决，主代理裁定 hard_rule）
 
-- **care 可靠事件类型**：现有 `care_outbox` 的 `ck_care_outbox_event_type` 只允许两类奖励事件；时间线需要新增
-  `care.watering_fact_recorded.v1`、`care.plan_completed.v1` 两类事件，须新增顺序迁移（DDL 029）并修订 `reward-events` 以外的事件目录。
-- **派发运行形态**：仓库尚无任何 outbox dispatcher；需确定以定时云函数还是同函数内异步任务派发，以及租约/批量/重试数值（须登记配置目录）。
+- **事件类型**：care 在记录浇水事实、完成检查计划（`outcome=done`）的同一事务内向 `care_outbox` 追加一条 pending 事件：
+  - `care.watering_fact_recorded.v1`：`aggregateRef=occurrenceRef=factRef`，`occurredAt`=浇水实际发生时间，载荷 `{ factRef, occurredAt, amountMl }`；
+  - `care.plan_completed.v1`：`aggregateRef=occurrenceRef=planRef`，`occurredAt`=完成时刻，载荷 `{ planRef, completedAt }`。
+  迁移 `029_care_outbox_timeline_event_types.sql` 只放开 `ck_care_outbox_event_type` 的取值（只写文件，由人工在获批窗口执行）。
+- **派发函数**：care 域事件云函数 `care-outbox-dispatch`（Nodejs20.19、Handler `index.main`、定时触发 `0 * * * * * *` 每分钟一次），
+  复用共享连接与 Repository，只领取上述两类时间线事件（奖励事件留给 subscription 派发，不在此处理）。
+- **派发规则**（配置目录 `care.outbox_dispatch`，hard_rule）：每次运行领取一批最多 **100** 条；领取即加 **30 秒**租约并 `attempt_count+1`；
+  投递成功 → `delivered`；投递失败 → 回到 `pending`，下一次运行重试；第 **5** 次尝试仍失败 → `dead_letter`（`terminal_reason_code=delivery_failed`）；
+  租约过期仍处于 `dispatching` 的事件可被下一次运行接管（尝试次数已达 5 次则直接 `dead_letter`，`terminal_reason_code=lease_expired_max_attempts`）。
+- **投递**：调用 user-plant 时间线投影写入；`uq_timeline_source(source_domain, source_ref)` 保证重复投递只落一行（至少一次投递 + 幂等消费）。
+- **时间线项引用**：`timeline_item_ref = 'tli_' + SHA-256("{source_domain}:{source_ref}") 前 40 位十六进制`，确定性生成，回填脚本与派发使用同一规则。
+- **归档/恢复**：user-plant 在归档/恢复的同一事务内直接写投影，`source_ref = 'ulc_' + SHA-256("{user_plant_id}:{新版本}") 前 40 位`。
 
 ## 6. 错误集合
 

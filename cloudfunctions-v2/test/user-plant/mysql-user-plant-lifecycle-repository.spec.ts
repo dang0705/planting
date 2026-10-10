@@ -106,7 +106,10 @@ describe('用户植物生命周期 MySQL Repository', () => {
         occurredAtMs: occurredAtMs
       })
     ).resolves.toBe(true)
-    expect(setup.writes).toHaveLength(Number('1'))
+    // user-plant-timeline.md §5（2026-10-10）：CAS 成功后同一事务写一条 plant_archived / plant_restored 时间线投影。
+    expect(setup.writes).toHaveLength(Number('2'))
+    expect(setup.writes[Number('1')]!.sql).toContain('INSERT INTO `user_plant_timeline_projection`')
+    expect(setup.writes[Number('1')]!.parameters).toContain('plant_archived')
     const write = setup.writes[Number('0')]
     if (write === undefined) {
       throw new Error('Expected one lifecycle CAS write')

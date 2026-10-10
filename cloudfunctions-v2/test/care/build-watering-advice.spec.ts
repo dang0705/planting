@@ -84,3 +84,23 @@ describe('浇水建议组装', () => {
     expect(built.result.generatedAt).toBe(new Date(now).toISOString())
   })
 })
+
+/**
+ * Expected：watering-advice-http-contract.md「长期植物的坐标」（2026-10-10 用户裁决）——长期植物档案无城市时不取辐射；
+ * 结果为 insufficient_evidence 时追加 plant_location 而不是 outdoor_radiation；结论已安全（根区干可以浇水）时为 ready、不追加。
+ */
+describe('长期植物无城市坐标', () => {
+  const userPlant = (overrides: Partial<WateringAdviceCommand> = {}): WateringAdviceCommand => ({ ...command(), target: { kind: 'user_plant', userPlantRef: 'upl_build_plant_0001' }, location: null, ...overrides })
+  it('无坐标且证据不足 → insufficient_evidence，追加 plant_location，不追加 outdoor_radiation；输入清单 location 为 null', () => {
+    const built = buildWateringAdvice({ command: userPlant({ soil: null }), policy, baseline, radiation: null, nowMs: now })
+    expect(built.result.status).toBe('insufficient_evidence')
+    expect(built.result.details.missingEvidence).toContain('plant_location')
+    expect(built.result.details.missingEvidence).not.toContain('outdoor_radiation')
+    expect(built.inputManifest.location).toBeNull()
+  })
+  it('无坐标但根区干 → 仍按原规则 ready，不追加缺失码', () => {
+    const built = buildWateringAdvice({ command: userPlant(), policy, baseline, radiation: null, nowMs: now })
+    expect(built.result.status).toBe('ready')
+    expect(built.result.details.missingEvidence).not.toContain('plant_location')
+  })
+})

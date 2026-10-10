@@ -46,11 +46,11 @@ describe('watering-advice 请求校验｜L1 unit_fake', () => {
     expect(result.command.location).toEqual({ latitude: -90, longitude: 180 })
   })
   it('U1：只填必填项时可选项为 null，不补默认', () => {
-    const result = parse({ target: { kind: 'user_plant', userPlantRef: 'upl_xyz789' },
-      location: { latitude: 39.9, longitude: 116.4 }, window: { orientation: 'E', glassLayers: null } })
+    // 2026-10-10 用户裁决：长期植物不再接收前端坐标（由服务端用档案城市中心坐标），命令中 location 为 null 待服务端填充。
+    const result = parse({ target: { kind: 'user_plant', userPlantRef: 'upl_xyz789' }, window: { orientation: 'E', glassLayers: null } })
     expect(result).toEqual({ status: 'ok', command: {
       target: { kind: 'user_plant', userPlantRef: 'upl_xyz789' }, catalogTaxonRef: null,
-      location: { latitude: 39.9, longitude: 116.4 }, window: { azimuthDeg: 90, glassLayers: null },
+      location: null, window: { azimuthDeg: 90, glassLayers: null },
       lightReading: null, soil: null, lastWateringAtMs: null,
       pot: { actualInnerPotConfirmed: null, drainageAvailable: null, potTopDiameterCm: null, potBottomDiameterCm: null, potHeightCm: null },
       materials: [], primaryMaterial: null, indoorClimate: null,
@@ -64,6 +64,10 @@ describe('watering-advice 请求校验｜L1 unit_fake', () => {
   ])('U1：%s → 校验失败', (_name, change) => {
     const body = full() as Record<string, any>; change(body)
     expect(parse(body)).toEqual(invalid)
+  })
+  it('长期植物提交 location → 校验失败（坐标由服务端按档案城市取，2026-10-10 用户裁决）', () => {
+    expect(parse({ target: { kind: 'user_plant', userPlantRef: 'upl_xyz789' }, location: { latitude: 39.9, longitude: 116.4 },
+      window: { orientation: 'E', glassLayers: null } })).toEqual(invalid)
   })
   it('U1 元素洞：材料列表含 null 在边界拒绝', () => {
     expect(parse({ ...full(), substrateMaterials: [null, 'peat'] })).toEqual(invalid)

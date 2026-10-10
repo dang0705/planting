@@ -115,7 +115,9 @@ describe('POST /api/v2/care/watering-advice 路由', () => {
 
   test('R1 user_plant → 400「长期植物浇水建议暂未开放」，不读策略不调 Provider', async () => {
     const f = await start(user)
-    const response = await f.post({ ...body, target: { kind: 'user_plant', userPlantRef: 'upl_route_plant_0001' } }, { authorization: 'Bearer user-session-bearer-0001' })
+    // 长期植物请求不带 location（2026-10-10 起坐标由服务端按档案城市提供），这里只验证“分支未接入”时的 400。
+    const { location: _location, catalogTaxonRef: _taxon, ...userPlantBody } = body
+    const response = await f.post({ ...userPlantBody, target: { kind: 'user_plant', userPlantRef: 'upl_route_plant_0001' } }, { authorization: 'Bearer user-session-bearer-0001' })
     expect(response).toMatchObject({ status: 400, body: { error: { type: 'VALIDATION_FAILED', message: '长期植物浇水建议暂未开放' } } })
     expect(f.stages).toEqual(['principal'])
   })

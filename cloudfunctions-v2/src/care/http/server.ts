@@ -8,6 +8,7 @@ import {
   type MysqlTransactionContext
 } from '../../foundation/database/mysql-transaction-driver.js'
 import { toSqlParameters, withReadConnection, type Mysql2QueryConnection } from '../../foundation/database/mysql2-connection-source.js'
+import { createMysqlCityClimateFitRepository } from '../../weather/repository/mysql-city-climate-fit-repository.js'
 import type { RequestChainAuditEvent } from '../../foundation/http/request-chain.js'
 import { createRouteDispatcher } from '../../foundation/http/route-dispatcher.js'
 import {
@@ -115,7 +116,13 @@ export function createCareServer(dependencies: CareServerDependencies): Server {
         userPlant: {
           readPlantContext: query => plantContextReader.read(query),
           readLatestWateringFact: scope => careReads.latestWateringFact(scope),
-          createAdvice: createUserPlantWateringAdviceApplicationService(idempotentWrite)
+          createAdvice: createUserPlantWateringAdviceApplicationService(idempotentWrite),
+          // care → weather 只读适配：城市目录（策略 v0-city-outdoor）的中心坐标。
+          resolveCityCoordinates: async cityRef => {
+            const profile = await withReadConnection(dependencies.connectionSource, connection =>
+              createMysqlCityClimateFitRepository({ query: (sql, parameters) => connection.query(sql, toSqlParameters(parameters)) }).getProfile(cityRef))
+            return profile === null ? null : { latitude: profile.lat, longitude: profile.lon }
+          }
         },
         now: dependencies.now,
         writeAudit: dependencies.writeAudit

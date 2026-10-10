@@ -73,6 +73,8 @@ import { createMysqlUserPlantListRepository } from '../repository/mysql-user-pla
 import type { UserPlantReadProjectionSqlRow } from '../repository/mysql-user-plant-repository.js'
 import { createListUserPlantsRouteHandler, listUserPlantsRoute } from './list-user-plants-route.js'
 import { createDeleteUserPlantRouteHandler, deleteUserPlantRoute } from './delete-user-plant-route.js'
+import { createListUserPlantTimelineApplicationService } from '../application/list-user-plant-timeline.js'
+import { createListUserPlantTimelineRouteHandler, listUserPlantTimelineRoute } from './list-user-plant-timeline-route.js'
 import { createConfirmUserPlantIdentityApplicationService } from '../application/confirm-user-plant-identity.js'
 import { confirmUserPlantIdentityRoute, createConfirmUserPlantIdentityRouteHandler } from './confirm-user-plant-identity-route.js'
 import { createMysqlPublishedIdentityRepository, type PublishedIdentitySqlRow } from '../../plant-knowledge/repository/mysql-published-identity-repository.js'
@@ -257,6 +259,11 @@ export function createUserPlantServer(dependencies: UserPlantServerDependencies)
     {
       route: listUserPlantsRoute,
       handler: createListUserPlantsRouteHandler({ authenticate: bearerAuthenticator, now: dependencies.now, writeAudit: dependencies.writeAudit, listUserPlants })
+    },
+    {
+      route: listUserPlantTimelineRoute,
+      handler: createListUserPlantTimelineRouteHandler({ authenticate: bearerAuthenticator, now: dependencies.now, writeAudit: dependencies.writeAudit,
+        listTimeline: createListUserPlantTimelineApplicationService({ driver }) })
     },
     {
       route: confirmUserPlantIdentityRoute,

@@ -30,7 +30,7 @@ CloudBase 网关只按路径前缀路由到函数，`/api/v2/user-plants` 归 us
 ## 2. 长期浇水建议 `POST /api/v2/care/watering-advice`（`target.kind='user_plant'`）
 
 - 仅登录用户；游客传 user_plant → 400；用例内强制登录主体（T8）。
-- 请求：沿用 `WateringAdviceRequest`；对长期植物 `catalogTaxonRef`、`pot`、`lastWatering` **不得提交**（提交 → 400）。`location`、`window`、`lightReading`、`substrateMaterials`、`primarySubstrateMaterial`（2026-10-10 增补）、`indoorClimate`、`soil` 仍由请求提供（U2；前端可记住上次输入）。
+- 请求：沿用 `WateringAdviceRequest`；对长期植物 `catalogTaxonRef`、`pot`、`lastWatering` **不得提交**（提交 → 400）。`location` **也不得提交**（2026-10-10 用户裁决，提交 → 400）：服务端用环境档案 `location.cityRef` 对应城市目录的中心坐标取室外辐射；档案无城市或城市不在目录时不取辐射，结果为 `insufficient_evidence` 时缺失码追加 `plant_location`（详见 watering-advice-http-contract.md「长期植物的坐标」）。`window`、`lightReading`、`substrateMaterials`、`primarySubstrateMaterial`（2026-10-10 增补）、`indoorClimate`、`soil` 仍由请求提供（U2；前端可记住上次输入）。
 - 服务端取：品种 = 最新绑定（无绑定 → 结果 `insufficient_evidence`，缺 `plant_baseline`）；盆器 = 档案 `measuredPot`（无 → 缺证据）；上次浇水 = 最近一条 `watering` 事实。
 - 盆土证据有效期（U6，`care-watering-mvp/v2`，临时案例同规则）见 §8。
 - 响应：`{ data: { resultRef: 'cres_…', proposalRef: 'cpr_…' | null, result } }`；`proposalRef` 仅在 `result.status='ready'` 且行动可确认（`water_allowed`、`check_later`、`check_now`、`priority_check`）时出现。
@@ -168,3 +168,11 @@ CloudBase 网关只按路径前缀路由到函数，`/api/v2/user-plants` 归 us
 
 - CloudBase 定时触发器只能挂在**普通（事件型）云函数**上，HTTP 云函数仅由 HTTP 请求触发（CloudBase 文档《函数类型》对比表；cloudbase skill `cloud-functions`「Triggered by SDK calls or timers? → Event Function」）。因此新增 care 域事件函数入口 `care-plan-expiry`（`exports.main(event, context)`），复用 care Repository 与共享数据库连接，不暴露 HTTP 网关、不新建万能函数。
 - 索引：`028_care_plan_expiry_scan_index.sql` 为 `care_plans(status, scheduled_at_ms, id)` 建扫描索引（既有 `idx_care_plan_due` 以用户列开头，不能支撑全局扫描）。
+
+## 13. 时间线事件（2026-10-10 用户裁决）
+
+- 记录浇水事实（§3、确认建议记录浇水 §6、完成计划附浇水 §7）与完成计划（`outcome=done`）时，在**同一事务**向 `care_outbox` 追加 pending 事件
+  `care.watering_fact_recorded.v1` / `care.plan_completed.v1`；事件载荷只含公开引用、发生时间与浇水量，不含内部主键、`user_id` 以外的身份或备注。
+- 事件由 care 事件函数 `care-outbox-dispatch` 派发给 user-plant 时间线投影；规则见 `docs/backend-v2/contracts/user-plant-timeline.md` §5
+  与配置目录 `care.outbox_dispatch`（hard_rule：每分钟、租约 30 秒、每批 100、最多 5 次后死信）。
+- 事务失败时事件与事实一起回滚；跳过计划（`cancelled`）不产生事件。

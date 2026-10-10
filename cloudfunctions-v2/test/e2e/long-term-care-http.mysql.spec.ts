@@ -15,6 +15,7 @@ import { createMysqlGuestSessionRepository } from '../../src/identity/repository
 import { createMysqlUserPrincipalRepository, type UserPrincipalSqlRow } from '../../src/identity/repository/mysql-user-principal-repository.js'
 import { createUserPlantServer } from '../../src/user-plant/http/server.js'
 import { findProjectRoot } from '../support/project-root.js'
+import { cityProfilesSql } from './support/user-plant-mysql-harness.js'
 
 /**
  * unit_real_data：隔离 docker MySQL 8.4 + schema manifest 全量 DDL（含 024–027）+ 024 种子 + Tropicals 外部表读取桩 +
@@ -34,6 +35,8 @@ const otherBearer = 'fixture-ltc-other-bearer-000000001'
 const guestToken = Buffer.alloc(32, 4).toString('base64url')
 const taxon = 'https://tropicals.cn/species/epipremnum-aureum'
 const pot = { actualInnerPotConfirmed: true, drainageAvailable: true, potTopDiameterCm: 16, potBottomDiameterCm: 12, potHeightCm: 14 }
+/** 室外辐射 Provider 替身：返回不可用，并记录收到的坐标（验证长期植物用档案城市中心坐标）。 */
+const radiationRequests: Array<{ latitude: number; longitude: number }> = []
 let careUrl = ''
 let plantUrl = ''
 const servers: Server[] = []
@@ -57,9 +60,10 @@ async function call(base: string, method: string, url: string, body: unknown, ke
 const plantPath = (ref: string, suffix: string) => `/api/v2/user-plants/${ref}${suffix}`
 /** care 独占前缀（用户 2026-10-09 裁决：网关前缀冲突）。 */
 const carePath = (ref: string, suffix: string) => `/api/v2/care/user-plants/${ref}${suffix}`
+// 档案 JSON 与 user-plant 写入路径一致：实测盆器存于 measuredPot 键（measured-profile-persistence-contract）。
 const advice = (plantRef: string, key: string, extra: Record<string, unknown> = {}, bearer = ownerBearer) => call(careUrl, 'POST', '/api/v2/care/watering-advice', {
-  target: { kind: 'user_plant', userPlantRef: plantRef },
-  location: { latitude: 31.230416, longitude: 121.473701 }, window: { orientation: 'S', glassLayers: 'double' },
+  // 2026-10-10 用户裁决：长期植物不再提交坐标，服务端用档案城市中心坐标。
+  target: { kind: 'user_plant', userPlantRef: plantRef }, window: { orientation: 'S', glassLayers: 'double' },
   soil: { state: 'dry', scope: 'root_zone', observedAt: new Date(now - hour).toISOString() }, substrateMaterials: ['peat', 'perlite'], ...extra
 }, key, bearer)
 const bind = (plantRef: string, key: string, ref = taxon, bearer = ownerBearer) => call(plantUrl, 'PUT', plantPath(plantRef, '/catalog-binding'), { catalogTaxonRef: ref }, key, bearer)
@@ -77,6 +81,7 @@ beforeAll(async () => {
   sql(`CREATE DATABASE ${database} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`, null)
   for (const entry of manifest.files) { sql(fs.readFileSync(path.join(schemaDirectory, entry.file), 'utf8')) }
   sql(fs.readFileSync(path.join(schemaDirectory, 'seeds/watering_baseline_policy.v1.sql'), 'utf8'))
+  sql(cityProfilesSql([{ code: 'chongqing', lat: 29.563, lon: 106.5516 }]))
   // 外部表读取桩：列类型照抄测试库 information_schema（外部表读取合同），只建 v2 读取器用到的列。
   sql(`CREATE TABLE tropicals_species_encyclopedia_ref (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, taxon_id VARCHAR(512) NOT NULL UNIQUE, name VARCHAR(512) NOT NULL,
       water_frequency_tier VARCHAR(32) NULL, water_frequency_source_json JSON NULL);`)
@@ -105,7 +110,7 @@ beforeAll(async () => {
       executeQuery: async (text, parameters) => (await connection.query(text, toSqlParameters(parameters))) as unknown as readonly UserPrincipalSqlRow[]
     }).read(input)) } })
   })
-  const care = createCareServer({ connectionSource: source, now: () => now, resolvePrincipal, fetchRadiation: async () => null, writeAudit: () => undefined, recordRollbackFailure: () => undefined })
+  const care = createCareServer({ connectionSource: source, now: () => now, resolvePrincipal, fetchRadiation: async input => { radiationRequests.push({ latitude: input.latitude, longitude: input.longitude }); return null }, writeAudit: () => undefined, recordRollbackFailure: () => undefined })
   const plants = createUserPlantServer({ connectionSource: source, now: () => now, resolveCapabilitySnapshot: async () => { throw new Error('不需要能力快照') }, writeAudit: () => undefined, recordRollbackFailure: () => undefined })
   for (const server of [care, plants]) { await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve)); servers.push(server) }
   careUrl = `http://127.0.0.1:${(care.address() as AddressInfo).port}`
@@ -121,13 +126,17 @@ beforeEach(() => {
   const created = now - 30 * day
   sql(`SET FOREIGN_KEY_CHECKS=0;
     DELETE FROM care_capability_results; DELETE FROM care_plans; DELETE FROM care_proposals; DELETE FROM care_facts; DELETE FROM user_plant_catalog_bindings;
-    DELETE FROM user_plant_profiles; DELETE FROM user_plants; DELETE FROM http_idempotency_records;
+    DELETE FROM user_plant_care_contexts; DELETE FROM user_plant_profiles; DELETE FROM user_plants; DELETE FROM http_idempotency_records;
     SET FOREIGN_KEY_CHECKS=1;
     INSERT INTO user_plants (id, public_user_plant_id, user_internal_id, lifecycle_status, current_identity_status, version, created_at_ms, updated_at_ms)
     VALUES (1, 'upl_ltc_active_0001', 1, 'active', 'unidentified', 1, ${created}, ${created}), (2, 'upl_ltc_archived_01', 1, 'archived', 'unidentified', 2, ${created}, ${created}),
            (3, 'upl_ltc_other_00001', 2, 'active', 'unidentified', 1, ${created}, ${created}), (4, 'upl_ltc_unbound_001', 1, 'active', 'unidentified', 1, ${created}, ${created});
     INSERT INTO user_plant_profiles (user_internal_id, user_plant_internal_id, nickname, pot_profile_json, profile_completeness_version, version, created_at_ms, updated_at_ms)
-    VALUES (1, 1, '小绿', CAST(${quote(JSON.stringify(pot))} AS JSON), 'user-plant-profile/v1', 1, ${created}, ${created}), (1, 4, '', CAST(${quote(JSON.stringify(pot))} AS JSON), 'user-plant-profile/v1', 1, ${created}, ${created});`)
+    VALUES (1, 1, '小绿', CAST(${quote(JSON.stringify({ measuredPot: pot }))} AS JSON), 'user-plant-profile/v1', 1, ${created}, ${created}), (1, 4, '', CAST(${quote(JSON.stringify({ measuredPot: pot }))} AS JSON), 'user-plant-profile/v1', 1, ${created}, ${created});
+    INSERT INTO user_plant_care_contexts (user_internal_id, user_plant_internal_id, location_json, cultivation_method, light_environment_json, ventilation_environment_json, version, created_at_ms, updated_at_ms)
+    VALUES (1, 1, CAST('{"cityRef":"chongqing","placement":"indoor"}' AS JSON), 'unspecified', CAST('null' AS JSON), CAST('null' AS JSON), 1, ${created}, ${created}),
+           (1, 4, CAST('{"cityRef":"chongqing","placement":"indoor"}' AS JSON), 'unspecified', CAST('null' AS JSON), CAST('null' AS JSON), 1, ${created}, ${created});`)
+  radiationRequests.length = 0
 })
 
 describe('品种绑定 PUT（user-plant）', () => {
@@ -170,6 +179,40 @@ describe('长期浇水建议', () => {
     expect((await advice('upl_ltc_active_0001', 'advice-key-guest1', {}, `guest.${guestToken}`)).status).toBe(400)
     expect((await advice('upl_ltc_archived_01', 'advice-key-000003')).body.error?.type).toBe('USER_PLANT_ARCHIVED')
     expect((await advice('upl_ltc_other_00001', 'advice-key-000004')).body.error?.type).toBe('USER_PLANT_NOT_FOUND')
+    expect(sql('SELECT COUNT(*) FROM care_capability_results;')).toBe('0')
+  })
+  /**
+   * Expected：watering-advice-http-contract.md「长期植物的坐标」与 long-term-care-contract.md §2（2026-10-10 用户裁决）：
+   * 长期植物用档案城市中心坐标（城市目录 lat/lon，0.01°）；档案无城市 → 不取辐射，insufficient_evidence 时缺失码 plant_location；
+   * 长期植物提交 location → 400。层次：L3 / unit_real_data（真实 care + user-plant HTTP、真实城市目录读取）。
+   */
+  test('长期植物用档案城市中心坐标取辐射，输入清单记录城市', async () => {
+    await bind('upl_ltc_active_0001', 'bind-key-00000020')
+    const response = await advice('upl_ltc_active_0001', 'advice-key-city001', { soil: null })
+    expect(response.status).toBe(200)
+    expect(radiationRequests).toEqual([{ latitude: 29.56, longitude: 106.55 }])
+    expect(sql(`SELECT CONCAT(JSON_EXTRACT(input_manifest_json, '$.location.latitude'), '|', JSON_UNQUOTE(JSON_EXTRACT(input_manifest_json, '$.cityRef'))) FROM care_capability_results WHERE result_ref = ${quote(response.body.data!.resultRef)};`)).toBe('29.56|chongqing')
+    expect(response.body.data?.result.details.missingEvidence).not.toContain('plant_location')
+  })
+  test('档案没有城市 → 不取辐射；证据不足时缺失码含 plant_location、不含 outdoor_radiation', async () => {
+    await bind('upl_ltc_active_0001', 'bind-key-00000021')
+    sql("UPDATE user_plant_care_contexts SET location_json = CAST('null' AS JSON) WHERE user_plant_internal_id = 1;")
+    const response = await advice('upl_ltc_active_0001', 'advice-key-city002', { soil: null })
+    expect(radiationRequests).toEqual([])
+    expect(response.body.data?.result).toMatchObject({ status: 'insufficient_evidence' })
+    expect(response.body.data?.result.details.missingEvidence).toContain('plant_location')
+    expect(response.body.data?.result.details.missingEvidence).not.toContain('outdoor_radiation')
+  })
+  test('档案城市不在目录 → 同样按无城市处理', async () => {
+    await bind('upl_ltc_active_0001', 'bind-key-00000022')
+    sql("UPDATE user_plant_care_contexts SET location_json = CAST('{\"cityRef\":\"atlantis\",\"placement\":\"indoor\"}' AS JSON) WHERE user_plant_internal_id = 1;")
+    const response = await advice('upl_ltc_active_0001', 'advice-key-city003', { soil: null })
+    expect(radiationRequests).toEqual([])
+    expect(response.body.data?.result.details.missingEvidence).toContain('plant_location')
+  })
+  test('长期植物提交 location → 400，零写入', async () => {
+    const response = await advice('upl_ltc_active_0001', 'advice-key-city004', { location: { latitude: 31.23, longitude: 121.47 } })
+    expect(response.status).toBe(400)
     expect(sql('SELECT COUNT(*) FROM care_capability_results;')).toBe('0')
   })
   test('根区干观察之后记录浇水 → 干观察失效（U6），不再给可以浇水', async () => {
