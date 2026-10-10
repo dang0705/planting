@@ -215,5 +215,75 @@
     "回填 --batch-size 为运维 CLI 参数（必填、代码上限 20000），未登记配置目录，需主代理裁决是否登记",
     "plant_search_documents.is_searchable 变化不需重建索引（查询时实时联表）；百科 taxon_id 变更需重建索引（外部表合同通知条件）",
     "旧索引批次清理流程（按删除证据规则另行处理）"
-  ]
+  ],
+  "backfillFunction": {
+    "authorization": "用户 2026-10-10 授权「建一个一次性云函数在内网里跑回填」（主代理转达）；031 已在测试库执行、plant-knowledge 新代码已部署、public_search 仍为 v1",
+    "files": [
+      "cloudfunctions-v2/src/entries/visual-filter-index-backfill.ts",
+      "cloudfunctions-v2/src/plant-knowledge/visual-filter-index/visual-filter-index-backfill-handler.ts",
+      "cloudfunctions-v2/src/plant-knowledge/visual-filter-index/build-visual-filter-index.ts（新增 shouldContinue 时长预算钩子、paused 状态、nextEncyclopediaId、读写分离 execute、预处理语句通道适配）",
+      "cloudfunctions-v2/scripts/build.mjs（登记 visual-filter-index-backfill，kind=event）"
+    ],
+    "artifact": "cloudfunctions-v2/dist/functions/visual-filter-index-backfill/（index.js 导出 main，Handler index.main，运行时 Nodejs20.19，含 package.json / package-lock.json / node_modules 生产依赖；v2 发布文档已打包进 index.js）",
+    "event": {
+      "release": "plant-knowledge-public-search/v2.0.0",
+      "batchSize": "1–8000（预处理语句 65535 占位符上限：8000 行 × 8）",
+      "apply": "boolean",
+      "maxRunMs": "可选正整数"
+    },
+    "budget": "min(上下文 time_limit_in_ms × 70%, maxRunMs)；两者皆无 → not_started；每次调用至少处理一批",
+    "tests": {
+      "unit_fake": "test/plant-knowledge/visual-filter-index-backfill-handler.spec.ts（16 条：合法事件、70% 预算、maxRunMs 取小、无超时 not_started、apply=false 透传、10 类非法事件 rejected）",
+      "unit_real_data": "test/e2e/visual-filter-index-backfill.mysql.spec.ts（Docker：apply=false 三表保持空；maxRunMs=1 每次一批共 7 次续跑，逐次断点与 sets 表一致，结果与一次跑完逐行一致（一次跑完走客户端转义通道、续跑走事件函数同款预处理通道）；就绪后再调 already_ready 且数据不变）"
+    },
+    "classicRed": "handler 单测文件级失败（模块不存在）；Docker 用例依赖 handler 模块，实现前不可运行",
+    "counterfactualRed": [
+      {
+        "mutation": "B1 忽略时长预算（从不暂停）",
+        "file": "src/plant-knowledge/visual-filter-index/build-visual-filter-index.ts",
+        "failedTests": [
+          "一次性回填事件函数：时长预算、断点与续跑（真实 MySQL） 预算每次只够一批：逐次续跑直到就绪，结果与一次跑完逐行一致；就绪后再调为空操作"
+        ]
+      },
+      {
+        "mutation": "B2 暂停时返回旧断点",
+        "file": "src/plant-knowledge/visual-filter-index/build-visual-filter-index.ts",
+        "failedTests": [
+          "一次性回填事件函数：时长预算、断点与续跑（真实 MySQL） 预算每次只够一批：逐次续跑直到就绪，结果与一次跑完逐行一致；就绪后再调为空操作"
+        ]
+      },
+      {
+        "mutation": "B3 演练也写库（apply 恒为 true）",
+        "file": "src/plant-knowledge/visual-filter-index/visual-filter-index-backfill-handler.ts",
+        "failedTests": [
+          "visual-filter-index-backfill 事件入口 apply=false 原样传给回填（只读演练）",
+          "一次性回填事件函数：时长预算、断点与续跑（真实 MySQL） apply=false：只读演练，三张索引表保持空"
+        ]
+      },
+      {
+        "mutation": "B4 预算比例 70% 改为 100%",
+        "file": "src/plant-knowledge/visual-filter-index/visual-filter-index-backfill-handler.ts",
+        "failedTests": [
+          "visual-filter-index-backfill 事件入口 时长预算 = 函数超时的 70%：预算内继续，到点后停止"
+        ]
+      }
+    ],
+    "verification": {
+      "vitestFull": "315 files / 3437 passed / 5 skipped / 0 failed",
+      "docker": "visual-filter-index-backfill 2 + plant-visual-axis-filter 15 通过",
+      "typecheck": "0",
+      "oxlint": "0 errors",
+      "build": "npm run build 通过，产出 9 个函数包"
+    },
+    "estimate": {
+      "batches": "测试库 MAX(id)=271810，batchSize 5000 → 55 批",
+      "perBatch": "推算 2–6 秒（每批读约 1.4 万结果行回表 + 5000 百科行，写约 4500 条目；测试库实测回表约 75 微秒/行）",
+      "totalCalls": "超时 900 秒、maxRunMs 600000 时预计 1 次跑完，最多 2–3 次"
+    },
+    "notCovered": [
+      "CloudBase 上下文 time_limit_in_ms 字段未在真实环境读回（建议显式传 maxRunMs）",
+      "函数实际网络 / VPC 配置与权限",
+      "timeBudgetFraction 0.7 为一次性工具代码常量，未登记配置目录（主代理任务说明给定）"
+    ]
+  }
 }

@@ -33,7 +33,9 @@ const functionEntries = [
   // 定时触发只支持普通（事件型）云函数（long-term-care-contract.md §12.7）：care 域计划过期扫描。
   { name: 'care-plan-expiry', entry: 'src/entries/care-plan-expiry.ts', kind: 'event' },
   // 定时事件函数（user-plant-timeline.md §5，每分钟一次）：care 发件箱时间线事件派发。
-  { name: 'care-outbox-dispatch', entry: 'src/entries/care-outbox-dispatch.ts', kind: 'event' }
+  { name: 'care-outbox-dispatch', entry: 'src/entries/care-outbox-dispatch.ts', kind: 'event' },
+  // 一次性事件函数（ClickUp z8v0kmvgab，用户 2026-10-10 授权）：在内网分批回填三轴筛选预计算索引，手动调用、可续跑，用完下线。
+  { name: 'visual-filter-index-backfill', entry: 'src/entries/visual-filter-index-backfill.ts', kind: 'event' }
 ]
 
 /**

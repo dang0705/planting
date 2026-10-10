@@ -21,11 +21,13 @@ import { createMysqlPlantVisualAxisRepository } from '../repository/mysql-plant-
 
 /** 回填使用的数据库连接端口：参数化查询与事务。 */
 export type VisualFilterIndexConnection = {
-  /** 参数化查询；SELECT 返回行数组，写语句返回执行结果。 */
+  /** 参数化只读查询，返回结果行。 */
   readonly query: (
     sql: string,
     parameters: readonly unknown[]
   ) => Promise<readonly Record<string, unknown>[]>
+  /** 参数化写语句（INSERT / UPDATE / DELETE），不关心返回行。 */
+  readonly execute: (sql: string, parameters: readonly unknown[]) => Promise<unknown>
   /** 开始一个批次事务。 */
   readonly beginTransaction: () => Promise<void>
   /** 提交当前批次事务。 */
@@ -38,18 +40,23 @@ export type VisualFilterIndexConnection = {
 export type VisualFilterIndexBuildInput = {
   /** 已通过策略类型校验的三轴数据版本（来自发布文档）。 */
   readonly sources: VisualAxisSources
-  /** 每批覆盖的百科内部 id 区间宽度（1–20000）。 */
+  /** 每批覆盖的百科内部 id 区间宽度（1–8000）。 */
   readonly batchSize: number
   /** true 才写库；false 为只读演练。 */
   readonly apply: boolean
   /** 当前 UTC 毫秒（写入时间戳）。 */
   readonly nowMs: number
+  /**
+   * 时长预算钩子：每完成一批、开始下一批前调用，返回 false 即保存断点退出（状态 paused）。
+   * 每次调用至少处理一批，保证重复调用总能推进；省略表示一次跑完。
+   */
+  readonly shouldContinue?: () => boolean
 }
 
 /** 回填结果报告（不含连接参数与数据正文）。 */
 export type VisualFilterIndexBuildReport = {
-  /** built 本次建成 / already_ready 已就绪无需操作 / dry_run 只读演练。 */
-  readonly status: 'built' | 'already_ready' | 'dry_run'
+  /** built 本次建成 / paused 预算到期已保存断点 / already_ready 已就绪无需操作 / dry_run 只读演练。 */
+  readonly status: 'built' | 'paused' | 'already_ready' | 'dry_run'
   /** 索引批次定位键。 */
   readonly sourceKey: string
   /** 索引批次内部 id；演练且尚未创建时为 null。 */
@@ -58,12 +65,14 @@ export type VisualFilterIndexBuildReport = {
   readonly batches: number
   /** 就绪时收录的植物行数；演练为 null。 */
   readonly plantCount: number | null
+  /** 下一次续跑的起始百科内部 id（演练为当前断点；已就绪为 null）。 */
+  readonly nextEncyclopediaId: number | null
   /** 每个准入轴分配的值位数量。 */
   readonly bitCounts: Readonly<Record<VisualAxisCode, number>>
 }
 
-/** 每批 id 区间宽度的绝对上限：限制单条多行 INSERT 的包大小（约 2 万行 × 9 列）。 */
-const maximumBatchSize = 20_000
+/** 每批 id 区间宽度的绝对上限：单条多行 INSERT 每行 8 个占位符，8000 × 8 = 64000 < 预处理语句 65535 个占位符上限。 */
+const maximumBatchSize = 8_000
 
 const maskColumns: Readonly<Record<VisualAxisCode, string>> = {
   LEAF_SHAPE: 'leaf_shape_mask',
@@ -141,7 +150,7 @@ async function ensureBits(
       nowMs
     ])
   )
-  await connection.query(
+  await connection.execute(
     `INSERT INTO plant_visual_filter_value_bits (filter_set_id, axis_code, value_code, bit_position, created_at_ms, updated_at_ms) VALUES ${rows.map(() => '(?, ?, ?, ?, ?, ?)').join(', ')}`,
     rows.flat()
   )
@@ -226,6 +235,7 @@ export async function buildVisualFilterIndex(
       filterSetId: set.id,
       batches: 0,
       plantCount: null,
+      nextEncyclopediaId: null,
       bitCounts
     }
   }
@@ -246,11 +256,12 @@ export async function buildVisualFilterIndex(
       filterSetId: set?.id ?? null,
       batches: plannedBatches,
       plantCount: null,
+      nextEncyclopediaId: startId,
       bitCounts
     }
   }
   if (set === null) {
-    await connection.query(
+    await connection.execute(
       `INSERT INTO plant_visual_filter_sets (source_key, sources_json, status, next_encyclopedia_id, plant_count, built_at_ms, created_at_ms, updated_at_ms)
        VALUES (?, CAST(? AS JSON), 'building', 0, 0, NULL, ?, ?)`,
       [sourceKey, JSON.stringify(input.sources), input.nowMs, input.nowMs]
@@ -263,18 +274,30 @@ export async function buildVisualFilterIndex(
   const filterSetId = set.id
   await ensureBits(connection, filterSetId, bits, input.nowMs)
   let batches = 0
+  let next = set.nextId
   for (let low = set.nextId; low <= maxId; low += input.batchSize) {
+    if (batches > 0 && input.shouldContinue && !input.shouldContinue()) {
+      return {
+        status: 'paused',
+        sourceKey,
+        filterSetId,
+        batches,
+        plantCount: null,
+        nextEncyclopediaId: next,
+        bitCounts
+      }
+    }
     const high = low + input.batchSize
     const entries = await computeBatch(connection, input.sources, bits, low, high)
     await connection.beginTransaction()
     try {
-      await connection.query(
+      await connection.execute(
         'DELETE FROM plant_visual_filter_entries WHERE filter_set_id = ? AND encyclopedia_id >= ? AND encyclopedia_id < ?',
         [filterSetId, low, high]
       )
       if (entries.length > 0) {
         const columns = VISUAL_FILTER_AXES.map(axis => maskColumns[axis.axisCode])
-        await connection.query(
+        await connection.execute(
           `INSERT INTO plant_visual_filter_entries (filter_set_id, taxon_id, encyclopedia_id, ${columns.join(', ')}, created_at_ms, updated_at_ms)
            VALUES ${entries.map(() => '(?, ?, ?, ?, ?, ?, ?, ?)').join(', ')}`,
           entries.flatMap(item => [
@@ -287,7 +310,7 @@ export async function buildVisualFilterIndex(
           ])
         )
       }
-      await connection.query(
+      await connection.execute(
         `UPDATE plant_visual_filter_sets SET next_encyclopedia_id = ?, updated_at_ms = GREATEST(updated_at_ms, ?) WHERE id = ? AND status = 'building'`,
         [high, input.nowMs, filterSetId]
       )
@@ -297,15 +320,57 @@ export async function buildVisualFilterIndex(
       throw error
     }
     batches += 1
+    next = high
   }
   const countRows = await connection.query(
     'SELECT COUNT(*) AS plant_count FROM plant_visual_filter_entries WHERE filter_set_id = ?',
     [filterSetId]
   )
   const plantCount = asId(countRows[0]?.plant_count, 'plant_count')
-  await connection.query(
+  await connection.execute(
     `UPDATE plant_visual_filter_sets SET status = 'ready', plant_count = ?, built_at_ms = ?, updated_at_ms = GREATEST(updated_at_ms, ?) WHERE id = ? AND status = 'building'`,
     [plantCount, input.nowMs, input.nowMs, filterSetId]
   )
-  return { status: 'built', sourceKey, filterSetId, batches, plantCount, bitCounts }
+  return {
+    status: 'built',
+    sourceKey,
+    filterSetId,
+    batches,
+    plantCount,
+    nextEncyclopediaId: next,
+    bitCounts
+  }
+}
+
+/** 共享 mysql2 连接（预处理语句通道）的最小形态。 */
+export type PreparedStatementConnection = {
+  /** 参数化只读查询。 */
+  readonly query: (
+    sql: string,
+    parameters: readonly (string | number | null)[]
+  ) => Promise<readonly Record<string, unknown>[]>
+  /** 参数化写语句（INSERT / UPDATE / DELETE）。 */
+  readonly execute: (
+    sql: string,
+    parameters: readonly (string | number | null)[]
+  ) => Promise<unknown>
+  /** 开始一个批次事务。 */
+  readonly beginTransaction: () => Promise<void>
+  /** 提交当前批次事务。 */
+  readonly commit: () => Promise<void>
+  /** 回滚当前批次事务。 */
+  readonly rollback: () => Promise<void>
+}
+
+/** 把共享 mysql2 连接来源取出的连接适配为回填端口（事件函数入口与真实库测试共用）。 */
+export function asVisualFilterIndexConnection(
+  connection: PreparedStatementConnection
+): VisualFilterIndexConnection {
+  return {
+    query: (sql, parameters) => connection.query(sql, parameters as (string | number | null)[]),
+    execute: (sql, parameters) => connection.execute(sql, parameters as (string | number | null)[]),
+    beginTransaction: () => connection.beginTransaction(),
+    commit: () => connection.commit(),
+    rollback: () => connection.rollback()
+  }
 }

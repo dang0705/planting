@@ -10,7 +10,7 @@ import {
 /**
  * 三轴筛选索引回填命令行（运维工具，非 HTTP 产品代码）。
  *
- * 用法：`build --release <public_search 发布文档> --batch-size <1–20000> [--apply]`
+ * 用法：`build --release <public_search 发布文档> --batch-size <1–8000> [--apply]`
  * - 三轴数据版本只取自经策略类型校验的发布文档（与线上读取方计算同一个 source_key）。
  * - 默认 dry-run 只读；显式 `--apply` 才写 031 的三张表；可重复执行（幂等、断点续跑）。
  * - 连接参数经 environment.ts 从 V2_MYSQL_* 读取；输出只含报告，不含密码或数据正文。
@@ -81,7 +81,7 @@ export async function runVisualFilterIndexCli(
   if (
     !releasePath ||
     !/^[1-9][0-9]{0,4}$/u.test(flags.get('batch-size') ?? '') ||
-    batchSize > 20_000
+    batchSize > 8_000
   ) {
     return exitCode.usage
   }

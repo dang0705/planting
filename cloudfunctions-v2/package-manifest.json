@@ -10,7 +10,7 @@
     "suncalc": "2.1.0"
   },
   "artifacts": {
-    "dist/server.cjs": "fc880fc949ac60e3bae484f4f28788407b66bcb3fa59e5a6092c968dd8c5bbc7"
+    "dist/server.cjs": "b4cc51c9fde0301037ef9cb847dec9ef55fd99329264e99134dfbe35bd0255a3"
   },
   "files": [
     "dist/server.cjs",

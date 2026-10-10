@@ -52,6 +52,9 @@ async function connect(config: {
   return {
     query: async (sql, parameters) =>
       (await connection.query(sql, parameters as unknown[]))[0] as never,
+    execute: async (sql, parameters) => {
+      await connection.query(sql, parameters as unknown[])
+    },
     beginTransaction: () => connection.beginTransaction(),
     commit: () => connection.commit(),
     rollback: () => connection.rollback(),
