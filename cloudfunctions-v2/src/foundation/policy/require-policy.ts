@@ -13,3 +13,22 @@ export async function requirePolicy<T>(read: PolicyRulesPort<T>): Promise<Readon
   if (rules === null) { throw new PublicRequestError(503, 'SERVICE_UNAVAILABLE', '服务暂时不可用') }
   return rules
 }
+
+/** 带发布版本号的策略快照：规则与其不可变发布版本来自同一次读取，供需要在响应中注明策略版本的接口使用。 */
+export type PolicySnapshot<T> = {
+  /** 已校验、深度冻结的策略正文。 */
+  readonly rules: Readonly<T>
+  /** 本次锁定的发布版本（如 `plant-knowledge-public-search/v2.0.0`），可公开。 */
+  readonly releaseVersion: string
+}
+
+/** 读取带版本号策略快照的服务端口；null 表示没有可信活动发布。 */
+export type PolicySnapshotPort<T> = () => Promise<PolicySnapshot<T> | null>
+
+/** 与 requirePolicy 同语义：没有可信发布或读取失败抛 503，不回退源码默认值。 */
+export async function requirePolicySnapshot<T>(read: PolicySnapshotPort<T>): Promise<PolicySnapshot<T>> {
+  let snapshot: PolicySnapshot<T> | null
+  try { snapshot = await read() } catch { snapshot = null }
+  if (snapshot === null) { throw new PublicRequestError(503, 'SERVICE_UNAVAILABLE', '服务暂时不可用') }
+  return snapshot
+}

@@ -1,7 +1,7 @@
 import pino from 'pino'
 
 import { PLANT_KNOWLEDGE_PUBLIC_SEARCH_POLICY } from '../configuration/business-policies/index.js'
-import { createMysqlTypedPolicyReader, policyRulesPort } from '../foundation/policy/mysql-typed-policy-reader.js'
+import { createMysqlTypedPolicyReader, policyRulesPort, policySnapshotPort } from '../foundation/policy/mysql-typed-policy-reader.js'
 
 import { readFunctionEnvironment } from '../configuration/environment.js'
 import { createMysql2ConnectionSource } from '../foundation/database/mysql2-connection-source.js'
@@ -23,10 +23,14 @@ const logger = pino({
 const connectionSource = createMysql2ConnectionSource(environment.database)
 
 /** 公开搜索策略快照端口（查询长度、条数上限与默认、百科引用长度；用户 2026-10-10 裁定迁入策略发布）。 */
-const readPublicSearchRules = policyRulesPort(createMysqlTypedPolicyReader(connectionSource, PLANT_KNOWLEDGE_PUBLIC_SEARCH_POLICY), () => Date.now())
+const publicSearchPolicyReader = createMysqlTypedPolicyReader(connectionSource, PLANT_KNOWLEDGE_PUBLIC_SEARCH_POLICY)
+const readPublicSearchRules = policyRulesPort(publicSearchPolicyReader, () => Date.now())
+/** 同一策略的带版本号快照端口（三轴筛选，plant-visual-axis-filter/v1）。 */
+const readPublicSearchSnapshot = policySnapshotPort(publicSearchPolicyReader, () => Date.now())
 
 const server = createPlantKnowledgeServer({
   readPublicSearchRules,
+  readPublicSearchSnapshot,
   connectionSource,
   writeAudit: event => {
     logger.info({ event: 'request_outcome', function: 'plant-knowledge', ...event }, '请求结果')

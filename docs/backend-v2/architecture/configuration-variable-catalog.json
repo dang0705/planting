@@ -1416,11 +1416,13 @@
         "searchQueryMaxCodePoints": 255,
         "searchResultMaxItems": 20,
         "encyclopediaReferenceMaxCodePoints": 512,
-        "catalogMinimumLimit": 1
+        "catalogMinimumLimit": 1,
+        "visualFilterMaxItems": 50
       },
       "owner": "plant-knowledge",
       "sourceRefs": [
-        "docs/backend-v2/contracts/plant-knowledge-public-search.md"
+        "docs/backend-v2/contracts/plant-knowledge-public-search.md",
+        "docs/backend-v2/contracts/plant-visual-axis-filter.md"
       ],
       "consumers": [
         "plant-knowledge"
@@ -1429,7 +1431,7 @@
       "fallback": "策略取值越界时策略校验失败，读取方按无可信发布处理（503）",
       "phase": "P4",
       "ticketTitle": "[P2] 已发布植物身份公开搜索纵向切片",
-      "expected": "查询长度上限 255 = 被搜索列最大长度（accepted_scientific_name VARCHAR(255)）；引用上限 512 = catalog_taxon_ref VARCHAR(512)；结果上限 20 = 公开合同 items 绝对上限",
+      "expected": "查询长度上限 255 = 被搜索列最大长度（accepted_scientific_name VARCHAR(255)）；引用上限 512 = catalog_taxon_ref VARCHAR(512)；结果上限 20 = 公开合同 items 绝对上限；三轴筛选每页上限 50 = plant-visual-axis-filter/v1 items 绝对上限",
       "decisionGroup": "hard_business_rule",
       "decisionNote": "用户 2026-10-10 裁定：日常维护以「环境变量 + 策略发布」为主，业务参数尽量少用代码常量；取值不变；策略的 AJV Schema 以此为上下限",
       "configurationTier": "code",
@@ -1437,9 +1439,97 @@
         "cloudfunctions-v2/src/configuration/business-policies/plant-knowledge-public-search.ts",
         "cloudfunctions-v2/src/configuration/runtime-parameters.ts",
         "cloudfunctions-v2/src/plant-knowledge/application/search-plant-catalog.ts",
-        "cloudfunctions-v2/src/plant-knowledge/repository/mysql-published-plant-search-repository.ts"
+        "cloudfunctions-v2/src/plant-knowledge/repository/mysql-published-plant-search-repository.ts",
+        "cloudfunctions-v2/src/plant-knowledge/application/filter-plants-by-visual-axes.ts"
       ],
       "configurationTierNote": "协议 / Schema 硬边界：策略只能在其内调整，不能突破已发布合同或数据库列长度"
+    },
+    {
+      "id": "plant-knowledge.visual_filter.page_size",
+      "chineseName": "三轴筛选分页大小",
+      "currentValue": {
+        "default": 20,
+        "max": 50
+      },
+      "unit": "条",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/plant-visual-axis-filter.md#5. 排序、分页与确定性",
+        "cloudfunctions-v2/models/policy-releases/plant-knowledge.public_search.v2.release.json"
+      ],
+      "expected": "省略 limit 时每页 20 条；limit 只接受 1～50 的无前导零十进制整数，越界或非法 400",
+      "codeLocations": [
+        "cloudfunctions-v2/src/plant-knowledge/application/filter-plants-by-visual-axes.ts"
+      ],
+      "policyRelease": {
+        "domainCode": "plant-knowledge",
+        "policyCode": "public_search",
+        "schemaVersion": "plant-knowledge-public-search/v2",
+        "field": "visualFilterPageSize",
+        "v1ReleaseFile": "cloudfunctions-v2/models/policy-releases/plant-knowledge.public_search.v2.release.json",
+        "absoluteBoundsKey": "plant-knowledge.public_search.absolute_bounds"
+      },
+      "domain": "plant-knowledge",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "status": "confirmed",
+      "owner": "plant-knowledge",
+      "consumers": [
+        "GET /api/v2/plant-knowledge/catalog/visual-filter（filterPlantsByVisualAxes）",
+        "GET /api/v2/plant-knowledge/catalog/visual-axes（listPlantVisualAxes）"
+      ],
+      "changePolicy": "发布新的 plant-knowledge/public_search 不可变版本并切换 active 指针（策略发布 CLI：validate → publish → activate；可 rollback）；取值必须落在 plant-knowledge.public_search.absolute_bounds 之内",
+      "fallback": "无可信活动发布（缺失、Schema 不过、SHA 不符、未生效或已过期），或活动发布仍为 plant-knowledge-public-search/v1（不含三轴字段）时：三轴筛选两个 HTTP 接口返回 503 SERVICE_UNAVAILABLE；不回退源码默认值",
+      "phase": "P2",
+      "ticketTitle": "[E01/E02][P2] 植物三轴筛选只读纵向切片",
+      "clickUpTicketId": "z8v0kmuqv6",
+      "decisionGroup": "hard_business_rule",
+      "decisionNote": "用户 2026-10-10 审定三轴筛选合同草案 D1–D8 全部按推荐；每页默认 20、上限 50（绝对上限 50）；三轴均用 visual-axis-all-v1，版本写进策略",
+      "configurationTier": "policy"
+    },
+    {
+      "id": "plant-knowledge.visual_filter.axis_sources",
+      "chineseName": "三轴筛选数据版本",
+      "currentValue": {
+        "valueCatalogVersion": "v1",
+        "LEAF_SHAPE": "visual-axis-all-v1",
+        "GROWTH_FORM": "visual-axis-all-v1",
+        "LEAF_SURFACE": "visual-axis-all-v1"
+      },
+      "sourceRefs": [
+        "docs/backend-v2/contracts/plant-visual-axis-filter.md#4. 状态、缺值与版本（不自动补齐）",
+        ".codex/backend-v2/evidence/E02-three-axis-filter-discovery-2026-10-10.json",
+        "cloudfunctions-v2/models/policy-releases/plant-knowledge.public_search.v2.release.json"
+      ],
+      "expected": "三轴各只读一个 extraction_version（当前均为 visual-axis-all-v1），枚举读 plant_visual_axis_values catalog_version=v1；Schema 只允许全量批次 visual-axis-all-v<n>，核心 90 的 visual-axis-v2 与旧 visual-axis-v1 不得配置",
+      "codeLocations": [
+        "cloudfunctions-v2/src/configuration/business-policies/plant-knowledge-public-search.ts",
+        "cloudfunctions-v2/src/plant-knowledge/repository/mysql-plant-visual-axis-repository.ts"
+      ],
+      "policyRelease": {
+        "domainCode": "plant-knowledge",
+        "policyCode": "public_search",
+        "schemaVersion": "plant-knowledge-public-search/v2",
+        "field": "visualAxisSources",
+        "v1ReleaseFile": "cloudfunctions-v2/models/policy-releases/plant-knowledge.public_search.v2.release.json",
+        "absoluteBoundsKey": "plant-knowledge.public_search.absolute_bounds"
+      },
+      "domain": "plant-knowledge",
+      "layer": "domain_policy",
+      "valueType": "object",
+      "status": "confirmed",
+      "owner": "plant-knowledge",
+      "consumers": [
+        "GET /api/v2/plant-knowledge/catalog/visual-filter（filterPlantsByVisualAxes）",
+        "GET /api/v2/plant-knowledge/catalog/visual-axes（listPlantVisualAxes）"
+      ],
+      "changePolicy": "发布新的 plant-knowledge/public_search 不可变版本并切换 active 指针（策略发布 CLI：validate → publish → activate；可 rollback）；取值必须落在 plant-knowledge.public_search.absolute_bounds 之内",
+      "fallback": "无可信活动发布（缺失、Schema 不过、SHA 不符、未生效或已过期），或活动发布仍为 plant-knowledge-public-search/v1（不含三轴字段）时：三轴筛选两个 HTTP 接口返回 503 SERVICE_UNAVAILABLE；不回退源码默认值",
+      "phase": "P2",
+      "ticketTitle": "[E01/E02][P2] 植物三轴筛选只读纵向切片",
+      "clickUpTicketId": "z8v0kmuqv6",
+      "decisionGroup": "hard_business_rule",
+      "decisionNote": "用户 2026-10-10 审定三轴筛选合同草案 D1–D8 全部按推荐；每页默认 20、上限 50（绝对上限 50）；三轴均用 visual-axis-all-v1，版本写进策略",
+      "configurationTier": "policy"
     },
     {
       "id": "plant-knowledge.cms.content_reward_points",
@@ -7942,6 +8032,13 @@
     "[E02][P2] 城市户外气候匹配缓存与 weather 验收": {
       "id": "z8v0kmuqv5",
       "url": "https://app.clickup.com/t/z8v0kmuqv5",
+      "agents": [
+        "root"
+      ]
+    },
+    "[E01/E02][P2] 植物三轴筛选只读纵向切片": {
+      "id": "z8v0kmuqv6",
+      "url": "https://app.clickup.com/t/90182453517/z8v0kmuqv6",
       "agents": [
         "root"
       ]

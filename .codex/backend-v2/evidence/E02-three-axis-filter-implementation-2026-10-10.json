@@ -1,0 +1,231 @@
+{
+  "ticket": "z8v0kmuqv6 [E01/E02][P2] 植物三轴筛选只读纵向切片",
+  "capturedAt": "2026-10-10",
+  "status": "IMPLEMENTED_NOT_DEPLOYED_PERF_BLOCKER",
+  "statusNote": "合同冻结、配置登记、TDD 与实现完成，全量 vitest 0 失败；但测试库实测典型组合查询中位数 ≥28 秒，远超用户 D8 设定的 1 秒门槛，部署前须先开改表（预计算/多值索引）票。未部署、未提交。",
+  "userDecisions": "用户 2026-10-10 审定草案 D1–D8 全部按推荐：三轴均 visual-axis-all-v1 且写进策略；首版不用 v2/core90；只返回可搜索植物；三轴全空 400；响应顶层带策略版本；先不加索引、实测超 1 秒再开改表票；taxon_id 升序（热度/中文名排序另票 z8v0kmvg9b）；每页默认 20、上限 50（绝对上限 50）",
+  "expectedSources": [
+    "docs/backend-v2/contracts/plant-visual-axis-filter.md（plant-visual-axis-filter/v1，已冻结，由草案 plant-visual-axis-filter.draft.md 改名，旧发现证据中的 draft 路径为历史记录）",
+    ".codex/backend-v2/evidence/E02-three-axis-filter-discovery-2026-10-10.json（测试库只读核验）",
+    "configuration-variable-catalog.json：plant-knowledge.visual_filter.page_size、plant-knowledge.visual_filter.axis_sources、plant-knowledge.public_search.absolute_bounds.visualFilterMaxItems"
+  ],
+  "registrations": {
+    "contractRegistry": "docs/backend-v2/contracts/contract-registry.json 新增 plant-visual-axis-filter/v1（P2_FROZEN，sha256 已登记）",
+    "routeRegistry": [
+      "GET /api/v2/plant-knowledge/catalog/visual-axes listPlantVisualAxes",
+      "GET /api/v2/plant-knowledge/catalog/visual-filter filterPlantsByVisualAxes"
+    ],
+    "openapi": "openapi.p1.json 新增两条 path（参数与说明），docs/backend-v2/api/manifest.json 哈希同步",
+    "configurationCatalog": "新增 2 项 policy 层变量 + absolute_bounds 增 visualFilterMaxItems=50；新增 ticketBinding z8v0kmuqv6；重新生成 configuration-variable-catalog.md；architecture/manifest.json 哈希同步",
+    "policy": "plant-knowledge/public_search 新正文 plant-knowledge-public-search/v2（v1 四字段取值不变 + visualFilterPageSize{20,50} + visualAxisSources 三轴 visual-axis-all-v1、枚举 v1；Schema 只允许 visual-axis-all-v<n>）；发布文档 cloudfunctions-v2/models/policy-releases/plant-knowledge.public_search.v2.release.json（CLI validate ok，contentSha256 65d45e76…）；v1 仍可读",
+    "seed": "docs/backend-v2/schema/seeds/business_policy_releases.2026-10-10.sql 由 CLI render-seed-sql 重渲染：空库直接激活 public_search v2（只写文件、未执行）",
+    "rollout": "configuration-rollout-2026-10-10.md 增 4.3：先部署新 plant-knowledge 代码，再 activate v2（--expect-current plant-knowledge-public-search/v1.0.0）；回滚须先回 v1"
+  },
+  "tddPath": {
+    "classicRed": {
+      "description": "合同/目录/路由登记与测试先落盘，产品未实现时运行",
+      "configRed": "配置目录与 absolute_bounds 登记后 5 条失败（发布文件缺失、边界不一致、代码位置不存在）",
+      "featureRed": "test/configuration test/plant-knowledge 等 6 文件 60 条失败（路由 404/模块不存在/v2 策略缺失）",
+      "log": "scratchpad red-visual.log"
+    },
+    "green": "实现后 unit_fake 54 条 + Docker 真实库 11 条通过；全量 vitest 311 文件 / 3370 通过、5 跳过、0 失败",
+    "counterfactualRed": {
+      "description": "对产品逐项注入突变，同时运行 unit_fake 与 Docker 真实库两层，均变红后从备份恢复",
+      "mutations": [
+        {
+          "mutation": "V1 去掉可搜索过滤",
+          "file": "src/plant-knowledge/repository/mysql-plant-visual-axis-repository.ts",
+          "failedTests": [
+            "三轴筛选真实 MySQL → HTTP 单值：游标翻页并集 = 独立期望集合，不重不漏、taxon 升序",
+            "三轴筛选真实 MySQL → HTTP 同轴 OR：游标翻页并集 = 独立期望集合，不重不漏、taxon 升序",
+            "三轴筛选真实 MySQL → HTTP 不可搜索目录植物不返回"
+          ]
+        },
+        {
+          "mutation": "V2 不限 EXTRACTED 状态",
+          "file": "src/plant-knowledge/repository/mysql-plant-visual-axis-repository.ts",
+          "failedTests": [
+            "三轴筛选真实 MySQL → HTTP 单值：游标翻页并集 = 独立期望集合，不重不漏、taxon 升序",
+            "三轴筛选真实 MySQL → HTTP 同轴 OR：游标翻页并集 = 独立期望集合，不重不漏、taxon 升序",
+            "三轴筛选真实 MySQL → HTTP UNKNOWN、CONFLICT、非数组、其他版本行都不命中；目录外代码不影响同行合法代码"
+          ]
+        },
+        {
+          "mutation": "V3 不校验 values_json 为数组",
+          "file": "src/plant-knowledge/repository/mysql-plant-visual-axis-repository.ts",
+          "failedTests": [
+            "三轴筛选真实 MySQL → HTTP 单值：游标翻页并集 = 独立期望集合，不重不漏、taxon 升序",
+            "三轴筛选真实 MySQL → HTTP 同轴 OR：游标翻页并集 = 独立期望集合，不重不漏、taxon 升序",
+            "三轴筛选真实 MySQL → HTTP UNKNOWN、CONFLICT、非数组、其他版本行都不命中；目录外代码不影响同行合法代码"
+          ]
+        },
+        {
+          "mutation": "V4 忽略非驱动轴（跨轴 AND 失效；首轮 [] 字面量写法未生效，改用 others.slice(0,0) 手动重跑）",
+          "file": "src/plant-knowledge/repository/mysql-plant-visual-axis-repository.ts",
+          "failedTests": [
+            "三轴筛选真实 MySQL → HTTP 跨轴 AND：游标翻页并集 = 独立期望集合，不重不漏、taxon 升序",
+            "三轴筛选真实 MySQL → HTTP 三轴 AND + 同轴 OR：游标翻页并集 = 独立期望集合，不重不漏、taxon 升序"
+          ]
+        },
+        {
+          "mutation": "V5 游标改为 >=（重复）",
+          "file": "src/plant-knowledge/repository/mysql-plant-visual-axis-repository.ts",
+          "failedTests": [
+            "三轴筛选真实 MySQL → HTTP 单值：游标翻页并集 = 独立期望集合，不重不漏、taxon 升序",
+            "三轴筛选真实 MySQL → HTTP 同轴 OR：游标翻页并集 = 独立期望集合，不重不漏、taxon 升序",
+            "三轴筛选真实 MySQL → HTTP 跨轴 AND：游标翻页并集 = 独立期望集合，不重不漏、taxon 升序",
+            "三轴筛选真实 MySQL → HTTP 三轴 AND + 同轴 OR：游标翻页并集 = 独立期望集合，不重不漏、taxon 升序",
+            "三轴筛选真实 MySQL → HTTP 只选株型（叶型缺值的植物也可出现）：游标翻页并集 = 独立期望集合，不重不漏、taxon 升序"
+          ]
+        },
+        {
+          "mutation": "V6 不按 extraction_version 过滤",
+          "file": "src/plant-knowledge/repository/mysql-plant-visual-axis-repository.ts",
+          "failedTests": [
+            "三轴筛选真实 MySQL → HTTP 单值：游标翻页并集 = 独立期望集合，不重不漏、taxon 升序",
+            "三轴筛选真实 MySQL → HTTP 同轴 OR：游标翻页并集 = 独立期望集合，不重不漏、taxon 升序",
+            "三轴筛选真实 MySQL → HTTP UNKNOWN、CONFLICT、非数组、其他版本行都不命中；目录外代码不影响同行合法代码"
+          ]
+        },
+        {
+          "mutation": "V7 结果项泄漏内部 id",
+          "file": "src/plant-knowledge/application/filter-plants-by-visual-axes.ts",
+          "failedTests": [
+            "visual-filter 响应 白名单字段、封面 DTO、三轴取值按枚举排序且剔除目录外代码，顶层带策略版本",
+            "三轴筛选真实 MySQL → HTTP 结果项：白名单字段、三轴取值按枚举排序、缺值为 null、封面 DTO 与来源；不含内部字段"
+          ]
+        },
+        {
+          "mutation": "V8 默认条数改用上限",
+          "file": "src/plant-knowledge/application/filter-plants-by-visual-axes.ts",
+          "failedTests": [
+            "visual-filter 策略快照 limit 省略取策略默认 20：主查询多取 1 条（21）；limit=50 取 51"
+          ]
+        },
+        {
+          "mutation": "V9 允许三轴全空",
+          "file": "src/plant-knowledge/domain/visual-axis-filter.ts",
+          "failedTests": [
+            "visual-filter 参数校验（400 先于业务查询） 三轴都不传 → 400，不查询植物数据",
+            "visual-filter 参数校验（400 先于业务查询） 仅传 limit → 400，不查询植物数据"
+          ]
+        },
+        {
+          "mutation": "V10 不按生效枚举校验取值",
+          "file": "src/plant-knowledge/application/filter-plants-by-visual-axes.ts",
+          "failedTests": [
+            "visual-filter 参数校验（400 先于业务查询） 叶型未知值 → 400（按生效枚举校验），不执行筛选主查询",
+            "visual-filter 参数校验（400 先于业务查询） 株型使用叶型的值 → 400（按生效枚举校验），不执行筛选主查询",
+            "visual-filter 参数校验（400 先于业务查询） 未准入轴的值（叶缘 ENTIRE 当叶面） → 400（按生效枚举校验），不执行筛选主查询",
+            "三轴筛选真实 MySQL → HTTP 未知枚举（含其他枚举版本与停用值）→ 400"
+          ]
+        },
+        {
+          "mutation": "V11 v1 正文不再 503",
+          "file": "src/plant-knowledge/application/filter-plants-by-visual-axes.ts",
+          "failedTests": [
+            "visual-filter 策略快照 活动发布仍为 v1（无三轴字段） → 503，不查询任何数据"
+          ]
+        }
+      ]
+    },
+    "expectedAdjustmentsOfExistingTests": [
+      "test/configuration/runtime-parameters.spec.ts 冻结边界增加 visualFilterMaxItems: 50（用户审定）",
+      "test/configuration/business-policy-releases.spec.ts 增 v2 发布文件；种子比对改为 seedReleaseFiles（public_search 只种 v2）",
+      "test/e2e/policy-release-cli.mysql.spec.ts 空库种子期望 public_search 为 v2.0.0",
+      "test/support/business-policy-fixtures.ts 增 v2 规则与 readPublicSearchSnapshot"
+    ]
+  },
+  "tests": [
+    {
+      "file": "cloudfunctions-v2/test/configuration/plant-knowledge-public-search-v2.spec.ts",
+      "layer": "L1",
+      "marker": "unit_real_data",
+      "cases": 15
+    },
+    {
+      "file": "cloudfunctions-v2/test/plant-knowledge/filter-plants-by-visual-axes.spec.ts",
+      "layer": "L3",
+      "marker": "unit_fake",
+      "covers": [
+        "路由冻结",
+        "20 类参数 400（三轴全空、空段、重复参数、limit 越界/前导零、游标损坏）",
+        "未知枚举 400 且不执行主查询",
+        "策略缺失/v1/抛错 503 且不查库",
+        "默认 20 → 取 21、limit 50 → 取 51",
+        "三轴版本均为 visual-axis-all-v1",
+        "白名单脱敏与封面 DTO",
+        "缺值 null 不补齐",
+        "游标往返",
+        "行损坏 500、SQL 失败 500"
+      ]
+    },
+    {
+      "file": "cloudfunctions-v2/test/plant-knowledge/list-plant-visual-axes.spec.ts",
+      "layer": "L3",
+      "marker": "unit_fake",
+      "covers": [
+        "三轴固定顺序与 sort_order",
+        "缺准入轴 500"
+      ]
+    },
+    {
+      "file": "cloudfunctions-v2/test/plant-knowledge/support/visual-axis-fake.ts",
+      "role": "共用假 MySQL 夹具"
+    },
+    {
+      "file": "cloudfunctions-v2/test/e2e/plant-visual-axis-filter.mysql.spec.ts",
+      "layer": "L3",
+      "marker": "unit_real_data（本机 Docker mysql:8.0.43，排序规则照抄测试库）",
+      "cases": 11,
+      "covers": [
+        "同轴 OR / 跨轴 AND / 三轴组合的游标翻页并集 = 独立期望集合（不重不漏、升序）",
+        "UNKNOWN、CONFLICT、非数组、其他版本不命中，目录外代码不影响同行合法值",
+        "不可搜索植物不返回",
+        "重复请求结果一致",
+        "脱敏与封面来源",
+        "其他枚举版本与停用值 400",
+        "visual-axes 读回"
+      ]
+    }
+  ],
+  "timing_testDb": {
+    "channel": "CloudBase MCP queryMysqlDatabase（只读），服务端计时 TIMESTAMPDIFF(MICROSECOND, NOW(6), SYSDATE(6))，库 qinghuazhi_v2_test",
+    "query": "叶型 HEART 且 株型 VINING，可搜索，taxon_id 升序 LIMIT 21（与 Repository 同形 SQL）",
+    "runs": [
+      {
+        "variant": "Repository 原 SQL（优化器自选计划：全表扫 plant_search_documents 25.8 万行 + 临时表排序）",
+        "result": "MCP 超时（>约 30 秒）"
+      },
+      {
+        "variant": "STRAIGHT_JOIN 强制从结果表驱动",
+        "run1_us": 28178228,
+        "run2": "MCP 超时",
+        "run3": "MCP 超时（可能与前次未结束查询争用）"
+      },
+      {
+        "variant": "仅驱动轴扫描计数（叶型 HEART，13597 行命中）",
+        "run1_us": 17611390,
+        "run2": "MCP 超时"
+      }
+    ],
+    "median": "≥ 28.2 秒（三次中位数下限）",
+    "conclusion": "远超 D8 门槛 1 秒；瓶颈是按 (axis_code,status) 二级索引回表逐行解析 JSON（约 23.7 万行）。按用户 D8 裁定需开改表票（建议：三轴 × 值的预计算筛选表或 MySQL 多值索引），本票不做 DDL",
+    "note": "EXPLAIN 显示优化器对原 SQL 选了以目录表全表扫描为驱动的计划；是否加 STRAIGHT_JOIN 提示留给改表票一并决定，本票 SQL 未改"
+  },
+  "verification": {
+    "vitestFull": "311 files / 3370 passed / 5 skipped / 0 failed",
+    "vitestMysql": "plant-visual-axis-filter 11、search-plant-catalog、policy-release-cli 5、care-plan-expiry、get-published-plant(-search) 全通过",
+    "typecheck": "0 错误",
+    "oxlint": "0 errors",
+    "fileSizes": "新增源码与测试文件均 ≤ 500 行"
+  },
+  "notCovered": [
+    "未部署；测试环境 plant-knowledge 仍为旧代码，public_search 活动版本仍为 v1",
+    "测试库实测性能不达标（见 timing_testDb），部署前须先完成改表票",
+    "真实数据库策略读取 v2（读取器通用逻辑已有用例，未对 v2 发布做真实库激活）",
+    "网关 e2e_real_api 读回",
+    "热度/中文名排序（z8v0kmvg9b）",
+    "目录搜索列表封面"
+  ]
+}

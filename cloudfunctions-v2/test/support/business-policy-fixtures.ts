@@ -42,6 +42,10 @@ export const userPlantListRulesV1 = (): UserPlantListRules => resolveRelease('us
 export const userPlantAssetRulesV1 = (): UserPlantAssetRules => resolveRelease('user-plant.asset_rules.v1.release.json', USER_PLANT_ASSET_RULES_POLICY)
 /** 公开搜索规则 v1。 */
 export const plantKnowledgePublicSearchRulesV1 = (): PlantKnowledgePublicSearchRules => resolveRelease('plant-knowledge.public_search.v1.release.json', PLANT_KNOWLEDGE_PUBLIC_SEARCH_POLICY)
+/** 公开搜索规则 v2（plant-visual-axis-filter/v1：三轴分页与数据版本）。 */
+export const plantKnowledgePublicSearchRulesV2 = (): PlantKnowledgePublicSearchRules => resolveRelease('plant-knowledge.public_search.v2.release.json', PLANT_KNOWLEDGE_PUBLIC_SEARCH_POLICY)
+/** v2 发布版本号，与发布文档 releaseVersion 一致。 */
+export const plantKnowledgePublicSearchV2ReleaseVersion = 'plant-knowledge-public-search/v2.0.0'
 /** weather 公开读取规则 v1。 */
 export const weatherPublicReadRulesV1 = (): WeatherPublicReadRules => resolveRelease('weather.public_read.v1.release.json', WEATHER_PUBLIC_READ_POLICY)
 /** HTTP 写入规则 v2。 */
@@ -54,6 +58,8 @@ export function fixturePolicyPorts() {
     readListRules: async () => userPlantListRulesV1(),
     readAssetRules: async () => userPlantAssetRulesV1(),
     readPublicSearchRules: async () => plantKnowledgePublicSearchRulesV1(),
+    /** 三轴筛选读取的公开搜索策略快照（含发布版本号，v2）。 */
+    readPublicSearchSnapshot: async () => ({ rules: plantKnowledgePublicSearchRulesV2(), releaseVersion: plantKnowledgePublicSearchV2ReleaseVersion }),
     readPublicReadRules: async () => weatherPublicReadRulesV1(),
     readHttpWriteRules: async () => httpRequestWriteRulesV2(),
     /** 环境变量层默认（V2_SERVICE_SIGNATURE_*）：签名时钟偏差与 nonce 保留秒数。 */

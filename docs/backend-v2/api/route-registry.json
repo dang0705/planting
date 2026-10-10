@@ -117,6 +117,37 @@
     },
     {
       "method": "GET",
+      "path": "/api/v2/plant-knowledge/catalog/visual-axes",
+      "operationId": "listPlantVisualAxes",
+      "owner": "plant-knowledge",
+      "phase": "P2",
+      "security": "public",
+      "requestContract": "Empty",
+      "responseContract": "PlantVisualAxesResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "SERVICE_UNAVAILABLE",
+        "INTERNAL_ERROR"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/plant-knowledge/catalog/visual-filter",
+      "operationId": "filterPlantsByVisualAxes",
+      "owner": "plant-knowledge",
+      "phase": "P2",
+      "security": "public",
+      "requestContract": "PlantVisualFilterQuery",
+      "responseContract": "PlantVisualFilterResponse",
+      "idempotency": "not_applicable",
+      "errors": [
+        "VALIDATION_FAILED",
+        "SERVICE_UNAVAILABLE",
+        "INTERNAL_ERROR"
+      ]
+    },
+    {
+      "method": "GET",
       "path": "/api/v2/plant-knowledge/plants/{plantIdentityRef}",
       "operationId": "getPublishedPlant",
       "owner": "plant-knowledge",

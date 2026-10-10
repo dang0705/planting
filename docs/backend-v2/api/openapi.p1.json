@@ -387,6 +387,141 @@
         }
       }
     },
+    "/api/v2/plant-knowledge/catalog/visual-axes": {
+      "get": {
+        "operationId": "listPlantVisualAxes",
+        "summary": "plant-knowledge 域：listPlantVisualAxes",
+        "tags": [
+          "plant-knowledge"
+        ],
+        "x-owner": "plant-knowledge",
+        "x-phase": "P2",
+        "x-security": "public",
+        "x-request-contract": "Empty",
+        "x-response-contract": "PlantVisualAxesResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "SERVICE_UNAVAILABLE",
+          "INTERNAL_ERROR"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "plant-visual-axis-filter/v1：三轴（叶型/株型/叶面质感）可选值；枚举版本以生效策略 plant-knowledge/public_search 为准"
+      }
+    },
+    "/api/v2/plant-knowledge/catalog/visual-filter": {
+      "get": {
+        "operationId": "filterPlantsByVisualAxes",
+        "summary": "plant-knowledge 域：filterPlantsByVisualAxes",
+        "tags": [
+          "plant-knowledge"
+        ],
+        "x-owner": "plant-knowledge",
+        "x-phase": "P2",
+        "x-security": "public",
+        "x-request-contract": "PlantVisualFilterQuery",
+        "x-response-contract": "PlantVisualFilterResponse",
+        "x-idempotency": "not_applicable",
+        "x-errors": [
+          "VALIDATION_FAILED",
+          "SERVICE_UNAVAILABLE",
+          "INTERNAL_ERROR"
+        ],
+        "parameters": [
+          {
+            "name": "leafShape",
+            "in": "query",
+            "required": false,
+            "description": "叶型值代码，英文逗号分隔",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "growthForm",
+            "in": "query",
+            "required": false,
+            "description": "株型值代码，英文逗号分隔",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "leafSurface",
+            "in": "query",
+            "required": false,
+            "description": "叶面质感值代码，英文逗号分隔",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "每页条数；默认与上限以生效策略为准（当前 20 / 50）",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "description": "上一页 nextCursor，不透明",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；具体 data 结构由 x-response-contract 指向的合同冻结",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "稳定公开错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "plant-visual-axis-filter/v1：同轴 OR、跨轴 AND；三轴全空 400；taxon_id 升序游标分页；limit 默认与上限以生效策略为准（当前 20 / 50，绝对上限 50）"
+      }
+    },
     "/api/v2/plant-knowledge/plants/{plantIdentityRef}": {
       "get": {
         "operationId": "getPublishedPlant",

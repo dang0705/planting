@@ -3,7 +3,7 @@
 - 机器事实源：`configuration-variable-catalog.json`
 - Schema：`configuration-variable-catalog/v1`
 - 目录版本：`2026-10-04.1`
-- 当前共 233 项业务/治理变量、16 个 Provider 配置档案：已冻结 109 项、待冻结 56 项、不可配置硬规则 68 项。
+- 当前共 235 项业务/治理变量、16 个 Provider 配置档案：已冻结 111 项、待冻结 56 项、不可配置硬规则 68 项。
 
 本文件由同目录生成脚本从 JSON 生成，便于中文阅读。实施 Agent 必须先按领域读取本文件，再只深读该变量引用的合同或决策；不得把 `P1_PENDING` 猜成默认值。待冻结项必须带原因与阻断范围，未冻结前只能推进不依赖该值的工作。
 
@@ -135,7 +135,9 @@
 | 配置 ID | 中文名称 | 裁决组 | 层级 / 状态 / 所在层 | 当前值 | 所有者 | 消费方 | 变更与失败边界 | Phase / Ticket |
 |---|---|---|---|---|---|---|---|---|
 | `plant-knowledge.cms.identity_reward_points` | 新增规范植物身份奖励 | `cms_worker_content` | 领域策略 / 已冻结 / 策略发布层 | `100` AI 点 | subscription | plant-knowledge、subscription | 新奖励策略只影响未来 release；失败：release/唯一键不可证明时不发奖 | P1 / [P1] 植物分类与身份准入硬门 |
-| `plant-knowledge.public_search.absolute_bounds` | 公开搜索策略绝对边界 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 / 代码层 | `{"searchQueryMaxCodePoints":255,"searchResultMaxItems":20,"encyclopediaReferenceMaxCodePoints":512,"catalogMinimumLimit":1}` | plant-knowledge | plant-knowledge | 代码层硬边界；变更须同步公开合同、数据库列与测试，随版本发布；失败：策略取值越界时策略校验失败，读取方按无可信发布处理（503）；所在层说明：协议 / Schema 硬边界：策略只能在其内调整，不能突破已发布合同或数据库列长度 | P4 / [P2] 已发布植物身份公开搜索纵向切片 |
+| `plant-knowledge.public_search.absolute_bounds` | 公开搜索策略绝对边界 | `hard_business_rule` | 不可配置硬规则 / 不可配置硬规则 / 代码层 | `{"searchQueryMaxCodePoints":255,"searchResultMaxItems":20,"encyclopediaReferenceMaxCodePoints":512,"catalogMinimumLimit":1,"visualFilterMaxItems":50}` | plant-knowledge | plant-knowledge | 代码层硬边界；变更须同步公开合同、数据库列与测试，随版本发布；失败：策略取值越界时策略校验失败，读取方按无可信发布处理（503）；所在层说明：协议 / Schema 硬边界：策略只能在其内调整，不能突破已发布合同或数据库列长度 | P4 / [P2] 已发布植物身份公开搜索纵向切片 |
+| `plant-knowledge.visual_filter.page_size` | 三轴筛选分页大小 | `hard_business_rule` | 领域策略 / 已冻结 / 策略发布层 | `{"default":20,"max":50}` 条 | plant-knowledge | GET /api/v2/plant-knowledge/catalog/visual-filter（filterPlantsByVisualAxes）、GET /api/v2/plant-knowledge/catalog/visual-axes（listPlantVisualAxes） | 发布新的 plant-knowledge/public_search 不可变版本并切换 active 指针（策略发布 CLI：validate → publish → activate；可 rollback）；取值必须落在 plant-knowledge.public_search.absolute_bounds 之内；失败：无可信活动发布（缺失、Schema 不过、SHA 不符、未生效或已过期），或活动发布仍为 plant-knowledge-public-search/v1（不含三轴字段）时：三轴筛选两个 HTTP 接口返回 503 SERVICE_UNAVAILABLE；不回退源码默认值 | P2 / [E01/E02][P2] 植物三轴筛选只读纵向切片 |
+| `plant-knowledge.visual_filter.axis_sources` | 三轴筛选数据版本 | `hard_business_rule` | 领域策略 / 已冻结 / 策略发布层 | `{"valueCatalogVersion":"v1","LEAF_SHAPE":"visual-axis-all-v1","GROWTH_FORM":"visual-axis-all-v1","LEAF_SURFACE":"visual-axis-all-v1"}` | plant-knowledge | GET /api/v2/plant-knowledge/catalog/visual-filter（filterPlantsByVisualAxes）、GET /api/v2/plant-knowledge/catalog/visual-axes（listPlantVisualAxes） | 发布新的 plant-knowledge/public_search 不可变版本并切换 active 指针（策略发布 CLI：validate → publish → activate；可 rollback）；取值必须落在 plant-knowledge.public_search.absolute_bounds 之内；失败：无可信活动发布（缺失、Schema 不过、SHA 不符、未生效或已过期），或活动发布仍为 plant-knowledge-public-search/v1（不含三轴字段）时：三轴筛选两个 HTTP 接口返回 503 SERVICE_UNAVAILABLE；不回退源码默认值 | P2 / [E01/E02][P2] 植物三轴筛选只读纵向切片 |
 | `plant-knowledge.cms.content_reward_points` | 基础展示内容补全奖励 | `cms_worker_content` | 领域策略 / 已冻结 / 策略发布层 | `50` AI 点 | subscription | plant-knowledge、subscription | 按内容结构版本发布新策略；失败：未实际 release 不发奖 | P1 / [P1] 植物分类与身份准入硬门 |
 | `plant-knowledge.taxonomy.authority_priority` | 植物分类权威来源角色与冲突策略 | `taxonomy_governance` | 领域策略 / 已冻结 / 策略发布层 | `{"primaryClassification":["POWO","WCVP"],"crossCheck":["WFO"],"cultivarAuthority":["RHS_ICRA"],"conflictResolution":"QUARANTINE_AND_HUMAN_REVIEW"}` | plant-knowledge | plant-knowledge、CMS 发布 | 分类证据策略经人工审核发布；失败：来源冲突进入 QUARANTINE | P1 / [P1] 植物分类与身份准入硬门 |
 | `plant-knowledge.identity.baidu_candidate_thresholds` | 百度识别候选置信阈值映射 | `taxonomy_governance` | 领域策略 / 待冻结 / 策略发布层 | P1_PENDING | plant-knowledge | plant-knowledge | 识别准入策略版本；失败：只返回候选，不创建规范身份；待冻结原因：真实百度响应和映射尚未 S4 验证；阻断：自动候选排序 | P3 / [P3] 游客、试用、会员和奖励闭环 |

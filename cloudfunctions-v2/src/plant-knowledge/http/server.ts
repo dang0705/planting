@@ -1,5 +1,5 @@
 import type { PlantKnowledgePublicSearchRules } from '../../configuration/business-policies/index.js'
-import type { PolicyRulesPort } from '../../foundation/policy/require-policy.js'
+import type { PolicyRulesPort, PolicySnapshotPort } from '../../foundation/policy/require-policy.js'
 import { createServer, type Server } from 'node:http'
 
 import type { MysqlConnectionPoolPort } from '../../foundation/database/mysql-transaction-driver.js'
@@ -15,13 +15,18 @@ import { createMysqlPlantEncyclopediaRepository } from '../repository/mysql-plan
 import { createSearchPlantCatalogRouteHandler } from '../application/search-plant-catalog.js'
 import { createMysqlPlantCatalogRepository } from '../repository/mysql-plant-catalog-repository.js'
 import { createSearchPublishedPlantsRouteHandler } from '../application/search-published-plants.js'
+import { createFilterPlantsByVisualAxesRouteHandler, type PlantVisualAxisPort } from '../application/filter-plants-by-visual-axes.js'
+import { createListPlantVisualAxesRouteHandler } from '../application/list-plant-visual-axes.js'
+import { createMysqlPlantVisualAxisRepository } from '../repository/mysql-plant-visual-axis-repository.js'
 import { createMysqlPublishedPlantRepository } from '../repository/mysql-published-plant-repository.js'
 import { createMysqlPublishedPlantSearchRepository } from '../repository/mysql-published-plant-search-repository.js'
 import {
   getPublishedPlantRoute,
   getPlantEncyclopediaRoute,
   searchPublishedPlantsRoute,
-  searchPlantCatalogRoute
+  searchPlantCatalogRoute,
+  filterPlantsByVisualAxesRoute,
+  listPlantVisualAxesRoute
 } from './routes.js'
 
 /** plant-knowledge 云函数 HTTP 服务依赖。 */
@@ -32,13 +37,34 @@ export type PlantKnowledgeServerDependencies = {
   readonly writeAudit: (event: RequestChainAuditEvent) => void | Promise<void>
   /** 读取公开搜索策略快照（plant-knowledge/public_search）；入口由类型化读取器适配，null 时搜索 / 百科接口 503。 */
   readonly readPublicSearchRules: PolicyRulesPort<PlantKnowledgePublicSearchRules>
+  /** 同一策略的带发布版本号快照（三轴筛选在响应顶层注明策略版本）；null 或 v1 正文时三轴接口 503。 */
+  readonly readPublicSearchSnapshot: PolicySnapshotPort<PlantKnowledgePublicSearchRules>
 }
 
 const okStatus = 200
 
+/** 三轴筛选只读端口：每次调用借用一条只读连接，结束即归还。 */
+function createVisualAxisPort(connectionSource: PlantKnowledgeServerDependencies['connectionSource']): PlantVisualAxisPort {
+  return {
+    readCatalog: catalogVersion =>
+      withReadConnection(connectionSource, connection => createMysqlPlantVisualAxisRepository(connection).readCatalog(catalogVersion)),
+    filterPlants: search =>
+      withReadConnection(connectionSource, connection => createMysqlPlantVisualAxisRepository(connection).filterPlants(search)),
+    readAxisValues: (ids, sources) =>
+      withReadConnection(connectionSource, connection => createMysqlPlantVisualAxisRepository(connection).readAxisValues(ids, sources))
+  }
+}
+
 /** 组装 plant-knowledge 函数的 HTTP 服务：`/health` 探针加冻结路由分发，不监听端口。 */
 export function createPlantKnowledgeServer(dependencies: PlantKnowledgeServerDependencies): Server {
+  const visualAxisDependencies = {
+    readPublicSearchSnapshot: dependencies.readPublicSearchSnapshot,
+    visualAxes: createVisualAxisPort(dependencies.connectionSource),
+    writeAudit: dependencies.writeAudit
+  }
   const dispatch = createRouteDispatcher([
+    { route: listPlantVisualAxesRoute, handler: createListPlantVisualAxesRouteHandler(visualAxisDependencies) },
+    { route: filterPlantsByVisualAxesRoute, handler: createFilterPlantsByVisualAxesRouteHandler(visualAxisDependencies) },
     {
       route: getPlantEncyclopediaRoute,
       handler: createGetPlantEncyclopediaRouteHandler({

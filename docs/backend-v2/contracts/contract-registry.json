@@ -251,6 +251,14 @@
       "file": "user-plant-profile-completeness.md",
       "owner": "user-plant",
       "sha256": "81c2876d56d785a91b7770b6aeee1e3febc5ae8ba22caf74ecd4b6e7f45f2ba3"
+    },
+    {
+      "id": "plant-visual-axis-filter",
+      "version": "plant-visual-axis-filter/v1",
+      "file": "plant-visual-axis-filter.md",
+      "owner": "plant-knowledge",
+      "status": "P2_FROZEN",
+      "sha256": "5d9d3705022dd7df73d7d885070cfe858a804afe3c46f9a87e6937a017bb8370"
     }
   ]
 }

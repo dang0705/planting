@@ -137,6 +137,8 @@ const policyBounds = {
   /** plant-knowledge/public_search：查询长度 255 = 被搜索列最大长度；引用 512 = catalog_taxon_ref 列长；结果 20 = 合同上限；limit 最小 1。 */
   plantKnowledgePublicSearch: fromCatalog('plant-knowledge.public_search.absolute_bounds', 'Unicode 码点 / 条', {
     searchQueryMaxCodePoints: 255, searchResultMaxItems: 20, encyclopediaReferenceMaxCodePoints: 512, catalogMinimumLimit: 1,
+    /** 三轴筛选每页绝对上限 = plant-visual-axis-filter/v1 items maxItems（用户 2026-10-10 审定）。 */
+    visualFilterMaxItems: 50,
   }),
   /** weather/public_read：推荐条数绝对上限（合同上限）。 */
   weatherPublicRead: fromCatalog('weather.public_read.absolute_bounds', '条', { recommendTopMax: 50 }),

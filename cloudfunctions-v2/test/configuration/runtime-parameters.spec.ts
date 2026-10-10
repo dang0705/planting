@@ -64,7 +64,7 @@ describe('代码层运行参数注册表（configuration-layers/v1 §2.3）', ()
       'userPlant.coverMaxCountPerPlant': 1,
       'policyBounds.careLongTermRules': { planExpiryGraceHours: { min: 1, max: 720 }, wateringBackfillMaxDays: { min: 1, max: 90 }, checkMaxPostponeDays: { min: 1, max: 90 }, openWindowProposalValidHours: { min: 1, max: 168 }, planPageSizeMax: 50 },
       'policyBounds.careWateringRuntime': { dryingGapFillMaxHours: { min: 0, max: 24 }, maximumPpfdPerGhi: { min: 1.8, max: 3 }, indoorClimateWindowHours: { min: 1, max: 72 } },
-      'policyBounds.plantKnowledgePublicSearch': { searchQueryMaxCodePoints: 255, searchResultMaxItems: 20, encyclopediaReferenceMaxCodePoints: 512, catalogMinimumLimit: 1 },
+      'policyBounds.plantKnowledgePublicSearch': { searchQueryMaxCodePoints: 255, searchResultMaxItems: 20, encyclopediaReferenceMaxCodePoints: 512, catalogMinimumLimit: 1, visualFilterMaxItems: 50 },  // 三轴筛选绝对上限 50（用户 2026-10-10 审定 plant-visual-axis-filter/v1）
       'policyBounds.weatherPublicRead': { recommendTopMax: 50 },
       'policyBounds.userPlantListRules': { pageSizeMax: 50 },
       'policyBounds.userPlantAssetRules': { replacedCoverCleanupDays: { min: 1, max: 90 }, maxImageBytes: { min: 65536, max: 10485760 }, supportedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'] },

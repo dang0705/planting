@@ -83,6 +83,7 @@ weather → plant-knowledge → care → care-plan-expiry → care-outbox-dispat
 |---|---|---|---|
 | 4.1 | `http/request_write` → v2 | `http.request_write.v2.release.json` | 先用 `list` 查出现有 v1 版本号，再以它作为 `--expect-current` |
 | 4.2 | `care/mvp_watering` → v4 | `care.mvp_watering.v4.release.json` | 先用 `list` 查出现有 v3 版本号（如 `care-watering-mvp/v3.0.0`） |
+| 4.3 | `plant-knowledge/public_search` → v2（三轴筛选，plant-visual-axis-filter/v1，ClickUp z8v0kmuqv6） | `plant-knowledge.public_search.v2.release.json` | `plant-knowledge-public-search/v1.0.0`。**必须在含三轴筛选的新 plant-knowledge 代码部署之后**：旧代码只认 v1 正文，先切 v2 会令目录搜索、百科与已发布身份搜索全部 503；新代码在 v1 下只让两个三轴入口 503，其余不变 |
 
 步骤同第 2 节（publish → activate）。v4 与 v3 在同一输入下公开结果一致，有锁定测试 `test/care/watering/mvp-watering-v4.spec.ts` 保证。
 
@@ -91,5 +92,5 @@ weather → plant-knowledge → care → care-plan-expiry → care-outbox-dispat
 | 情况 | 操作 |
 |---|---|
 | 某个策略取值有误 | `node scripts/policy-release.mjs rollback --domain <d> --policy <p> --expect-current <当前版本> --actor … --reason … --evidence … --apply`，指针指回上一版并写审计；若是首次激活后需要撤下，就发布一个修正版本再 activate |
-| 新代码需要回退 | **必须先把 `http/request_write` 回滚到 v1、把 `care/mvp_watering` 回滚到 v3**（如果第 4 步已执行），再部署旧代码；否则旧代码读不懂 v2 / v4，会返回 503。第 2 步的 5 个新策略可以保留，旧代码不会读取 |
+| 新代码需要回退 | **必须先把 `http/request_write` 回滚到 v1、把 `care/mvp_watering` 回滚到 v3、把 `plant-knowledge/public_search` 回滚到 v1**（如果第 4 步已执行），再部署旧代码；否则旧代码读不懂 v2 / v4，会返回 503。第 2 步的 5 个新策略可以保留，旧代码不会读取 |
 | 环境变量越界导致函数启动失败 | 删除该变量或改回登记范围内的值，然后重启实例 |

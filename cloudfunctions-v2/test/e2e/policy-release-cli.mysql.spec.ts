@@ -130,7 +130,8 @@ describe.skipIf(!dockerReady)('策略发布 CLI × 真实 MySQL', () => {
     sql(fs.readFileSync(path.join(root, 'docs/backend-v2/schema/seeds/business_policy_releases.2026-10-10.sql'), 'utf8'))
     expect(rows(`SELECT CONCAT(domain_code,'/',policy_code), active_release_version FROM active_business_policy_releases ORDER BY domain_code, policy_code;`)).toEqual([
       ['care/long_term_rules', 'care-long-term-rules/v1.0.0'], ['care/mvp_watering', 'care-watering-mvp/v4.0.0'], ['http/request_write', 'http-request-write-policy/v2.0.0'],
-      ['plant-knowledge/public_search', 'plant-knowledge-public-search/v1.0.0'], ['user-plant/asset_rules', 'user-plant-asset-rules/v1.0.0'],
+      // 空库种子直接激活 public_search v2（plant-visual-axis-filter/v1，用户 2026-10-10 审定；v1 原四字段取值不变）。
+      ['plant-knowledge/public_search', 'plant-knowledge-public-search/v2.0.0'], ['user-plant/asset_rules', 'user-plant-asset-rules/v1.0.0'],
       ['user-plant/list_rules', 'user-plant-list-rules/v1.0.0'], ['weather/public_read', 'weather-public-read/v1.0.0']])
     expect((await readActive())?.rules.planExpiryGraceHours).toBe(72)
   })

@@ -68,3 +68,11 @@ export function createMysqlTypedPolicyReader<T>(source: MysqlConnectionPoolPort<
 export function policyRulesPort<T>(reader: { readonly read: (nowMs: number) => Promise<TypedPolicySnapshot<T> | null> }, now: () => number): () => Promise<Readonly<T> | null> {
   return async () => (await reader.read(now()))?.rules ?? null
 }
+
+/** 把读取器适配为带发布版本号的快照端口：入口闭包当前时钟，只暴露规则与公开发布版本。 */
+export function policySnapshotPort<T>(reader: { readonly read: (nowMs: number) => Promise<TypedPolicySnapshot<T> | null> }, now: () => number): () => Promise<{ readonly rules: Readonly<T>; readonly releaseVersion: string } | null> {
+  return async () => {
+    const snapshot = await reader.read(now())
+    return snapshot === null ? null : { rules: snapshot.rules, releaseVersion: snapshot.releaseVersion }
+  }
+}

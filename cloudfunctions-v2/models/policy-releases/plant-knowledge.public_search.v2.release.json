@@ -1,0 +1,23 @@
+{
+  "releaseDocumentVersion": "business-policy-release-document/v1",
+  "domainCode": "plant-knowledge",
+  "policyCode": "public_search",
+  "schemaVersion": "plant-knowledge-public-search/v2",
+  "releaseVersion": "plant-knowledge-public-search/v2.0.0",
+  "effectiveAt": "2026-10-10T00:00:00Z",
+  "changeNote": "plant-visual-axis-filter/v1（用户 2026-10-10 审定，ClickUp z8v0kmuqv6）：新增三轴筛选分页（默认 20、上限 50）与三轴数据版本（均 visual-axis-all-v1，枚举 v1）；v1 原四字段取值不变",
+  "policy": {
+    "contractVersion": "plant-knowledge-public-search/v2",
+    "searchQueryMaxCodePoints": 64,
+    "searchResultMaxItems": 20,
+    "catalogDefaultLimit": 10,
+    "encyclopediaReferenceMaxCodePoints": 512,
+    "visualFilterPageSize": { "default": 20, "max": 50 },
+    "visualAxisSources": {
+      "valueCatalogVersion": "v1",
+      "LEAF_SHAPE": "visual-axis-all-v1",
+      "GROWTH_FORM": "visual-axis-all-v1",
+      "LEAF_SURFACE": "visual-axis-all-v1"
+    }
+  }
+}

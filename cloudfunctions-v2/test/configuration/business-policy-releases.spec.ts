@@ -30,7 +30,13 @@ const releaseFiles = [
   'cloudfunctions-v2/models/policy-releases/plant-knowledge.public_search.v1.release.json',
   'cloudfunctions-v2/models/policy-releases/weather.public_read.v1.release.json',
   'cloudfunctions-v2/models/policy-releases/http.request_write.v2.release.json',
+  'cloudfunctions-v2/models/policy-releases/plant-knowledge.public_search.v2.release.json',
 ]
+/**
+ * 空库初始化种子：每个 (domain, policy) 只激活一份。plant-knowledge/public_search 直接种 v2
+ * （plant-visual-axis-filter/v1，用户 2026-10-10 审定；v1 原四字段取值不变）；已有 v1 活动发布的环境走 CLI publish + activate 升级。
+ */
+const seedReleaseFiles = releaseFiles.filter(file => !file.endsWith('plant-knowledge.public_search.v1.release.json'))
 const load = (file: string) => {
   const result = loadPolicyReleaseDocument(JSON.parse(readRepoFile(file)), readRepoFile)
   if (!result.ok) { throw new Error(`${file} 校验失败：${result.reason}`) }
@@ -101,7 +107,7 @@ describe('策略 v1 发布文档与配置目录一致', () => {
   })
 
   it('v1 种子 SQL 文件与 CLI 渲染结果逐字一致（只写文件、不执行）', () => {
-    const documents = releaseFiles.map(load)
+    const documents = seedReleaseFiles.map(load)
     const expected = renderPolicySeedSql(documents, { issuedAtMs: Date.parse('2026-10-10T00:00:00Z') })
     expect(readRepoFile('docs/backend-v2/schema/seeds/business_policy_releases.2026-10-10.sql')).toBe(expected)
   })

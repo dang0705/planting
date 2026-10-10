@@ -31,3 +31,19 @@ export const getPublishedPlantRoute: FrozenRoute = {
   operationId: 'getPublishedPlant',
   security: 'public'
 }
+
+/** plant-visual-axis-filter/v1：三轴可选值（用户 2026-10-10 审定）。 */
+export const listPlantVisualAxesRoute: FrozenRoute = {
+  method: 'GET',
+  path: '/api/v2/plant-knowledge/catalog/visual-axes',
+  operationId: 'listPlantVisualAxes',
+  security: 'public'
+}
+
+/** plant-visual-axis-filter/v1：三轴筛选目录植物（同轴 OR、跨轴 AND，taxon_id 游标分页）。 */
+export const filterPlantsByVisualAxesRoute: FrozenRoute = {
+  method: 'GET',
+  path: '/api/v2/plant-knowledge/catalog/visual-filter',
+  operationId: 'filterPlantsByVisualAxes',
+  security: 'public'
+}
