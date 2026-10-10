@@ -147,6 +147,22 @@
       "sha256": "87e498cdd45ce74f285b1ac084078f21e42e7c0642e627ff65b329cc8bfd11c2"
     },
     {
+      "id": "diagnosis-result-v2",
+      "version": "diagnosis-result/v2",
+      "file": "schemas/diagnosis-result.v2.schema.json",
+      "owner": "diagnosis",
+      "status": "P1_PENDING",
+      "sha256": "06b3ddb3fc503087e88e0fb1eb44725f2af23280a3c7182f150ff585a6bdadd6"
+    },
+    {
+      "id": "diagnosis-visual-gen-agent-allowlist",
+      "version": "diagnosis-visual-gen-agent-allowlist/v1",
+      "file": "diagnosis-visual-gen-agent-allowlist.v1.json",
+      "owner": "diagnosis",
+      "status": "P1_PENDING",
+      "sha256": "cd2d88c7025ae0448dcf74afe0d59e070c5d45d759d898a247fff9d883eec312"
+    },
+    {
       "id": "diagnosis-knowledge-reference-index",
       "version": "diagnosis-knowledge-reference-index/v1",
       "file": "schemas/diagnosis-knowledge-reference-index.v1.schema.json",
@@ -160,7 +176,7 @@
       "file": "diagnosis-knowledge-sources.md",
       "owner": "diagnosis + CMS editorial control plane",
       "status": "P1_PENDING",
-      "sha256": "128fe0fd45ea0eb15ad781b67db2175ec3d199fc423e2fa6041edc33ba858302"
+      "sha256": "2f44587b49d4fd78cda50820c9f8e1e4322eb195253b13922cbeef3177f0a352"
     },
     {
       "id": "diagnosis-knowledge-persistence",
@@ -200,7 +216,7 @@
       "file": "diagnosis-outcome-fields.md",
       "owner": "diagnosis",
       "status": "P1_PENDING",
-      "sha256": "3ae1749a54b37dfb45edd1132ad7c27a8470a53571c1300f647eea1348c60cd1"
+      "sha256": "bb9007306df2cf12022873add81f121b8ee87f534a96148753e4d02e25817094"
     },
     {
       "id": "diagnosis-visual-prompt",

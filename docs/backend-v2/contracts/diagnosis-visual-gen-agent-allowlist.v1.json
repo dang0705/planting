@@ -1,0 +1,118 @@
+{
+  "allowlistVersion": "diagnosis-visual-gen-agent-allowlist/v1",
+  "reviewStatus": "pending_horticulture_source_review",
+  "reviewStatusZh": "待园艺来源审核：工程草拟名单，尚未逐项挂已审核来源主张，不代表对任何植物适用",
+  "decidedAt": "2026-10-10",
+  "decisionZh": "用户 2026-10-10 裁定按草拟版登记；视觉诊断生成式版本组的 agentNamesZh 只能取自本名单",
+  "usageRulesZh": [
+    "不得给出浓度、稀释倍数、克数、毫升数或喷施次数，只能写按产品标签使用",
+    "可食用或可食用性未知时必须提示采收前遵守产品标签上的安全间隔期",
+    "用药步骤须排在物理处理之后，并先在少量叶片试用"
+  ],
+  "sourceRefs": [
+    "cloudfunctions-v2/models/diagnosis/visual-diagnosis-prompt.v1.draft.md",
+    "docs/backend-v2/architecture/visual-diagnosis-plan-2026-10-10.md"
+  ],
+  "agents": [
+    {
+      "nameZh": "苦参碱",
+      "categoryZh": "植物源杀虫剂",
+      "category": "insecticide"
+    },
+    {
+      "nameZh": "印楝素",
+      "categoryZh": "植物源杀虫剂",
+      "category": "insecticide"
+    },
+    {
+      "nameZh": "除虫菊素",
+      "categoryZh": "植物源杀虫剂",
+      "category": "insecticide"
+    },
+    {
+      "nameZh": "矿物油（园艺油）",
+      "categoryZh": "矿物油杀虫杀螨剂",
+      "category": "insecticide_acaricide"
+    },
+    {
+      "nameZh": "杀虫皂（钾皂）",
+      "categoryZh": "脂肪酸钾盐触杀剂",
+      "category": "insecticide"
+    },
+    {
+      "nameZh": "苏云金杆菌（Bt）",
+      "categoryZh": "微生物杀虫剂",
+      "category": "insecticide"
+    },
+    {
+      "nameZh": "多杀霉素",
+      "categoryZh": "微生物源杀虫剂",
+      "category": "insecticide"
+    },
+    {
+      "nameZh": "乙基多杀菌素",
+      "categoryZh": "微生物源杀虫剂",
+      "category": "insecticide"
+    },
+    {
+      "nameZh": "碳酸氢钾",
+      "categoryZh": "无机杀菌剂",
+      "category": "fungicide"
+    },
+    {
+      "nameZh": "硫磺制剂",
+      "categoryZh": "无机杀菌杀螨剂",
+      "category": "fungicide"
+    },
+    {
+      "nameZh": "铜制剂",
+      "categoryZh": "无机杀菌剂",
+      "category": "bactericide_fungicide"
+    },
+    {
+      "nameZh": "代森锰锌",
+      "categoryZh": "保护性杀菌剂",
+      "category": "fungicide"
+    },
+    {
+      "nameZh": "百菌清",
+      "categoryZh": "保护性杀菌剂",
+      "category": "fungicide"
+    },
+    {
+      "nameZh": "苯醚甲环唑",
+      "categoryZh": "三唑类杀菌剂",
+      "category": "fungicide"
+    },
+    {
+      "nameZh": "咪鲜胺",
+      "categoryZh": "咪唑类杀菌剂",
+      "category": "fungicide"
+    },
+    {
+      "nameZh": "嘧菌酯",
+      "categoryZh": "甲氧基丙烯酸酯类杀菌剂",
+      "category": "fungicide"
+    },
+    {
+      "nameZh": "三唑类杀菌剂",
+      "categoryZh": "杀菌剂类别",
+      "category": "fungicide"
+    },
+    {
+      "nameZh": "螯合铁微量元素肥",
+      "categoryZh": "肥料",
+      "category": "nutrient"
+    },
+    {
+      "nameZh": "含镁微量元素肥",
+      "categoryZh": "肥料",
+      "category": "nutrient"
+    },
+    {
+      "nameZh": "稀释酒精（仅用于棉签擦拭）",
+      "categoryZh": "物理擦拭用品",
+      "category": "physical"
+    }
+  ]
+}

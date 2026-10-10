@@ -1,7 +1,7 @@
 {
   "capturedAt": "2026-10-10",
   "ticket": "E05 / ClickUp z8v0kmrg8a（[P1] 诊断知识来源、园艺原因及 Outcome/Action 合同）、z8v0kmr974（[P4] 固定/动态问诊与小青工具）",
-  "status": "planning_draft_r2_constrained_generative_pending_user_review",
+  "status": "r3_complete_with_context_and_rule_sections",
   "testLayer": "none（纯规划，无测试、无 TDD 声明）",
   "userRequest": "用户 2026-10-10：开始视觉诊断规划；v1 覆盖面过窄；要求最优提示词、固定前缀对缓存友好、视觉模型返回完整病因与解决方案；提供竞品结果页截图作信息结构参考",
   "scopeGuards": {
@@ -116,7 +116,9 @@
     "思考模式实际输出 token",
     "CloudBase AI / TokenHub 缓存机制",
     "公开数据集许可",
-    "病因表、处置要点与药剂名单的园艺准确性"
+    "病因表、处置要点与药剂名单的园艺准确性",
+    "上下文增益为定性判断，未经对照评测",
+    "v1 规则计数为代码静态计数加审计文档数字，未读线上库"
   ],
   "revisions": [
     {
@@ -129,6 +131,12 @@
       "at": "2026-10-10",
       "via": "协调方转达用户裁决",
       "approach": "受约束的生成式：先输出分类编号再生成完整内容；服务端以编号做安全门与统计"
+    },
+    {
+      "rev": "r3",
+      "at": "2026-10-10",
+      "via": "协调方转达用户裁定",
+      "scope": "C1–C12 落盘；公开结果 v2 Schema；药剂允许名单；ClickUp 评论；探针候选清单；评测跑分脚本"
     }
   ],
   "userDecisions_2026_10_10": {
@@ -201,5 +209,139 @@
       "manifest.json"
     ],
     "tests": "cloudfunctions-v2 test/p1-configuration-architecture.spec.ts 1/1、test/configuration 12 files 129/129 通过（只是本地目录一致性校验，不是 TDD）"
+  },
+  "r3": {
+    "contractRevisions": {
+      "C1_C2": "docs/backend-v2/contracts/diagnosis-rich-response-experiment.md",
+      "C3_C4_C5": "ClickUp z8v0kmrg8a 评论 1100440000174772（票面原文未改）",
+      "C6": "ClickUp z8v0kmr974 评论 1100440000174773（票面原文未改）",
+      "C7": "docs/backend-v2/contracts/diagnosis-knowledge-sources.md",
+      "C8_C9_C10note": "docs/backend-v2/contracts/diagnosis-outcome-fields.md",
+      "C10": "docs/backend-v2/contracts/schemas/diagnosis-result.v2.schema.json（v1 未动）",
+      "C11_C12": "configuration-variable-catalog.json：修订 diagnosis.knowledge.bundle_release_ref.fallback；新增 diagnosis.visual_gen.prompt_release_sha256 / output_schema_version / request_params / agent_allowlist_ref（pending）",
+      "allowlist": "docs/backend-v2/contracts/diagnosis-visual-gen-agent-allowlist.v1.json（20 项，reviewStatus=pending_horticulture_source_review）",
+      "hashSync": [
+        "docs/backend-v2/contracts/contract-registry.json（新增 diagnosis-result-v2、diagnosis-visual-gen-agent-allowlist；更新 diagnosis-knowledge-sources、diagnosis-outcome-fields）",
+        "docs/backend-v2/architecture/manifest.json（generate-manifest.mjs 重算）",
+        "configuration-variable-catalog.md（生成脚本重建）"
+      ]
+    },
+    "tdd": {
+      "schemaV2": {
+        "path": "classic",
+        "test": "cloudfunctions-v2/test/contracts/diagnosis-result-v2-contract.spec.ts",
+        "layer": "unit_real_data",
+        "red": "Schema 落盘前 23 条中 22 条失败（缺少 v2 Schema；v1 不变用例通过）",
+        "green": "23/23",
+        "expectedSource": "用户 2026-10-10 裁决 + 规划 §2.3 C10 / §5"
+      },
+      "evalScript": {
+        "path": "classic + mutation",
+        "test": "cloudfunctions-v2/test/scripts/visual-diagnosis-eval.spec.ts",
+        "layer": "unit_fake",
+        "red": "实现落盘前模块不存在，整文件失败；实现后受控突变（去掉 dry-run 闸门、去掉强制停止、改为保存原文）使 4 条用例变红：默认 dry-run 不调用 Provider、累计达到强制停止线后停止、下一次保守估算会越线时不发起调用、序列化后的报告不含模型原文片段；恢复后 21/21 通过",
+        "expectedSource": "用户 2026-10-10 对脚本的要求（dry-run 默认、--apply、每批预算打印、40 元强制停、只存评分与 usage、只读 Key 变量名）"
+      }
+    },
+    "evalScript": {
+      "files": [
+        "cloudfunctions-v2/scripts/visual-diagnosis-eval/eval-core.ts",
+        "cloudfunctions-v2/scripts/visual-diagnosis-eval/bailian-provider.ts",
+        "cloudfunctions-v2/scripts/visual-diagnosis-eval/cli.ts"
+      ],
+      "priceSnapshot": "docs/backend-v2/diagnosis-eval/qwen3.5-flash-price-snapshot-2026-10-10.json",
+      "dryRunSmoke": "30 个案例（单/双图交替）dry-run 保守估算 0.247434 元，未设置 Key、未发网络请求",
+      "noNewDependency": true,
+      "runVia": "npx esbuild 打包到临时目录后 node 运行"
+    },
+    "probeList": {
+      "file": "docs/backend-v2/diagnosis-eval/probe-set-candidates-2026-10-10.md",
+      "source": "Wikimedia Commons MediaWiki API 只读元数据，未下载图片",
+      "count": 30,
+      "knownIssues": [
+        "#18 文件名（9°C 冷害）与说明（缺水萎蔫）冲突，需人工复核",
+        "全为单图案例",
+        "约一半为农作物/户外场景"
+      ]
+    },
+    "verification": {
+      "fullSuite": "cloudfunctions-v2 vitest：315 文件，3437 通过 / 5 跳过 / 0 失败（含 §12/§13 文档更新后复跑）",
+      "typecheck": "tsc -p tsconfig.test.json 0 错误",
+      "lint": "oxlint 新文件 0 错误"
+    }
+  },
+  "contextEvaluation": {
+    "planSection": "visual-diagnosis-plan-2026-10-10.md §12",
+    "deploymentBasis": "协调方 2026-10-10 约 20:00 测试环境部署（e008872f，.codex/backend-v2/evidence/E03-E06-test-env-deploy-2026-10-09.json）",
+    "notOnline": [
+      "诊断网关前缀与诊断接口",
+      "内部 context 接口",
+      "温湿度接入",
+      "施肥/换盆/用药事件",
+      "诊断反馈字段",
+      "可食用/毒性字段"
+    ],
+    "highGain": [
+      "根部",
+      "生理性",
+      "环境性-日灼"
+    ],
+    "mediumGain": [
+      "真菌",
+      "营养",
+      "非问题（品种绑定）",
+      "冻害/高温（温度接入前）"
+    ],
+    "lowGain": [
+      "虫害",
+      "病毒",
+      "线虫",
+      "细菌（低～中）"
+    ],
+    "contextSummaryBudgetTokens": {
+      "current": 500,
+      "withFutureEvents": 600,
+      "hardCap": 600
+    },
+    "evalControlGroup": {
+      "addedCny": 8.0,
+      "devIterationsReducedTo": 5,
+      "conservativeTotalCny": 38.7
+    },
+    "promptDraftUpdated": "可变尾部改为「背景事实」结构化摘要；【2】步骤5加入图像证据优先与时效规则；【7】新增 contextInfluence；前缀重测 14,091 字符"
+  },
+  "ruleEvaluation": {
+    "planSection": "visual-diagnosis-plan-2026-10-10.md §13",
+    "v1Counts": {
+      "modes": 13,
+      "singleEvidenceDirectGroups": 13,
+      "comboDirectGroups": 3,
+      "conclusiveVisualDirect": 12,
+      "fastTrack": 1,
+      "whitelist": 3,
+      "directions": 5,
+      "answerEffectWeights": 406,
+      "problemKeysInQuestionEffects": 33,
+      "workbookProblems": 53,
+      "symptomProblemEdges": 206,
+      "environmentalEdges": 8,
+      "causality": 41
+    },
+    "v1CountSources": [
+      "cloudfunctions/diagnose-http/domain/diagnosis-mode-registry.js",
+      "constants/high-specificity-fast-convergence.js",
+      "constants/non-problematic-whitelist.js",
+      "constants/diagnosis-direction-definitions.js",
+      "utils/synthetic-question-package/direct-effects-*.js（grep effectValue=406）",
+      "docs/backend-v2/audits/P-1-data-cms-z8v0kmr96r.md §4.2（本地工作簿；线上规模不同）"
+    ],
+    "coverageOf50": {
+      "covered": 19,
+      "partial": 15,
+      "blank": 16
+    },
+    "coldStartRules": "约 45～65 条（首批约 30 条进入影子模式）",
+    "accumulationEstimate": "常见病因 3～6 个月（假设每月 1,000 次诊断、5% 专家复核）；冷门病因一年以上或仅靠文献",
+    "caveat": "静态计数；工作簿 xlsx 已不在仓库，数据库规则数取自审计文档"
   }
 }

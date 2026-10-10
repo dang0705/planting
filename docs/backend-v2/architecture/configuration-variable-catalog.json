@@ -2619,6 +2619,121 @@
       "codeLocations": []
     },
     {
+      "domain": "diagnosis",
+      "layer": "domain_policy",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "diagnosis",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "decisionGroup": "diagnosis_releases",
+      "configurationTier": "policy",
+      "codeLocations": [],
+      "id": "diagnosis.visual_gen.prompt_release_sha256",
+      "chineseName": "视觉诊断生成式提示词发布哈希",
+      "valueType": "string",
+      "unit": "SHA-256",
+      "sourceRefs": [
+        "docs/backend-v2/architecture/visual-diagnosis-plan-2026-10-10.md",
+        "cloudfunctions-v2/models/diagnosis/visual-diagnosis-prompt.v1.draft.md"
+      ],
+      "consumers": [
+        "diagnosis",
+        "Bailian Adapter"
+      ],
+      "changePolicy": "不可变 Prompt release；与模型快照、输出 Schema、请求参数组成 diagnosis-visual-gen 版本组；不覆盖现行 diagnosis-visual/v1",
+      "fallback": "哈希缺失或不匹配时阻断视觉生成式诊断，不静默回退到其他提示词",
+      "expected": "前缀规范化后 SHA-256 与 release 一致才可调用",
+      "pendingReason": "提示词 v1 草案未经评测与园艺审核（用户 2026-10-10 裁决新增，修订 C12）",
+      "blockingScope": "视觉诊断生成式版本组"
+    },
+    {
+      "domain": "diagnosis",
+      "layer": "domain_policy",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "diagnosis",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "decisionGroup": "diagnosis_releases",
+      "configurationTier": "policy",
+      "codeLocations": [],
+      "id": "diagnosis.visual_gen.output_schema_version",
+      "chineseName": "视觉诊断生成式模型输出 Schema 版本",
+      "valueType": "string",
+      "sourceRefs": [
+        "docs/backend-v2/architecture/visual-diagnosis-plan-2026-10-10.md",
+        "cloudfunctions-v2/models/diagnosis/visual-diagnosis-prompt.v1.draft.md"
+      ],
+      "consumers": [
+        "diagnosis",
+        "Bailian Adapter"
+      ],
+      "changePolicy": "不可变 JSON Schema release（拟 diagnosis-visual-gen-output/v1）",
+      "fallback": "校验失败整份拒绝",
+      "expected": "模型输出先过 Schema 与服务端安全门才投影为 diagnosis-result/v2",
+      "pendingReason": "输出 Schema 仅在提示词草案中，未落盘冻结（修订 C12）",
+      "blockingScope": "视觉诊断生成式版本组"
+    },
+    {
+      "domain": "diagnosis",
+      "layer": "domain_policy",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "diagnosis",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "decisionGroup": "diagnosis_releases",
+      "configurationTier": "policy",
+      "codeLocations": [],
+      "id": "diagnosis.visual_gen.request_params",
+      "chineseName": "视觉诊断生成式请求参数组",
+      "valueType": "object",
+      "sourceRefs": [
+        "docs/backend-v2/architecture/visual-diagnosis-plan-2026-10-10.md",
+        "cloudfunctions-v2/models/diagnosis/visual-diagnosis-prompt.v1.draft.md"
+      ],
+      "consumers": [
+        "diagnosis",
+        "Bailian Adapter"
+      ],
+      "changePolicy": "enable_thinking、max_tokens、max_pixels、temperature 作为版本组一部分发布，改动即新版本组",
+      "fallback": "未冻结前不得发起线上生成式调用",
+      "expected": "同一请求锁定一个参数快照；enable_thinking 必须显式给出（qwen3.5 默认开启）",
+      "pendingReason": "思考模式与像素上限待离线评测 A/B（修订 C12）",
+      "blockingScope": "视觉诊断生成式版本组"
+    },
+    {
+      "domain": "diagnosis",
+      "layer": "domain_policy",
+      "status": "pending",
+      "currentValue": "P1_PENDING",
+      "owner": "diagnosis",
+      "phase": "P4",
+      "ticketTitle": "[P4] 固定/动态问诊与小青工具",
+      "decisionGroup": "diagnosis_releases",
+      "configurationTier": "policy",
+      "codeLocations": [],
+      "id": "diagnosis.visual_gen.agent_allowlist_ref",
+      "chineseName": "视觉诊断生成式药剂允许名单引用",
+      "valueType": "string",
+      "sourceRefs": [
+        "docs/backend-v2/contracts/diagnosis-visual-gen-agent-allowlist.v1.json",
+        "docs/backend-v2/architecture/visual-diagnosis-plan-2026-10-10.md",
+        "cloudfunctions-v2/models/diagnosis/visual-diagnosis-prompt.v1.draft.md"
+      ],
+      "consumers": [
+        "diagnosis",
+        "diagnosis-result/v2 Schema",
+        "服务端安全门"
+      ],
+      "changePolicy": "名单与 diagnosis-result/v2 Schema 的 agentName 枚举同版本发布；增删药剂即新名单版本",
+      "fallback": "名单未通过园艺来源审核前，生成式版本组不得上线（离线评测可用草拟版）",
+      "expected": "Schema 枚举与名单逐项一致；正文药剂名必须在名单内",
+      "pendingReason": "草拟名单 20 项已按用户 2026-10-10 裁定登记，待园艺来源审核",
+      "blockingScope": "视觉诊断生成式版本组线上发布"
+    },
+    {
       "id": "diagnosis.fixed_packages.release_refs",
       "chineseName": "黄叶与萎蔫固定题包发布引用",
       "domain": "diagnosis",
@@ -2658,14 +2773,15 @@
       "owner": "diagnosis",
       "sourceRefs": [
         "docs/backend-v2/contracts/diagnosis-knowledge-sources.md",
-        "青花植后端v2底层架构重构计划_融合闭环终版.md"
+        "青花植后端v2底层架构重构计划_融合闭环终版.md",
+        "docs/backend-v2/architecture/visual-diagnosis-plan-2026-10-10.md"
       ],
       "consumers": [
         "diagnosis",
         "CloudBase CMS 发布校验"
       ],
       "changePolicy": "原因目录、Outcome、Action 和映射作为兼容不可变 release 发布，请求锁定单一快照及 SHA-256",
-      "fallback": "无已审核的兼容发布包时不开放相应诊断结果，不以模型自由生成内容兜底",
+      "fallback": "题包路径：无已审核的兼容发布包时不开放相应诊断结果。视觉诊断生成式版本组不依赖该发布包开放，但须走 diagnosis.visual_gen.* 版本组发布门（用户 2026-10-10 裁决，修订 C11）",
       "phase": "P4",
       "ticketTitle": "[P4] 固定/动态问诊与小青工具",
       "expected": "黄叶、萎蔫和虫害结果的每个可见结论及行动均可回溯已发布来源与兼容版本；禁忌动作被抑制",

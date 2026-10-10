@@ -1,0 +1,20 @@
+{
+  "snapshotId": "qwen3.5-flash-cn-beijing-2026-10-10",
+  "model": "qwen3.5-flash",
+  "region": "华北2（北京）",
+  "tier": "单次请求输入 ≤128K tokens",
+  "inputCnyPerMillion": 0.2,
+  "outputCnyPerMillion": 2,
+  "cacheCreateMultiplier": 1.25,
+  "cacheHitMultiplier": 0.1,
+  "capturedAt": "2026-10-10",
+  "sources": [
+    "https://help.aliyun.com/zh/model-studio/model-pricing",
+    "https://help.aliyun.com/zh/model-studio/context-cache"
+  ],
+  "notesZh": [
+    "页面标注为原价，实际优惠以百炼控制台为准；思考与非思考同价",
+    "缓存命中倍数官方写为「通常 10%」，首轮探针用 usage 实测后复核",
+    "仅用于离线评测费用换算，不是产品运行时成本策略（成本策略见配置目录 subscription.ai_action.*）"
+  ]
+}

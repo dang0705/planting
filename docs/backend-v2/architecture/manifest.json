@@ -10,9 +10,9 @@
     "business-domain.md": "8c721f709a109a3c0abd95be05dce5d5f0daa5bb0ab03185994ff1b87ca85afd",
     "business-domain-layers.md": "fa37900621a478e656ca5a5e00bec995bb0889a5249a3f9c8708da7cee95458f",
     "phases/first-release-scope.md": "a69d9beca5f2e777e542af6b90318a518b38f82d0b2ae3a335e2eb6f6fd778c4",
-    "contracts/diagnosis-rich-response-experiment.md": "d3777d2991e4532702770bb39761fbe127425f00830a1b7f644758e93d4c6430",
-    "contracts/diagnosis-knowledge-sources.md": "128fe0fd45ea0eb15ad781b67db2175ec3d199fc423e2fa6041edc33ba858302",
-    "contracts/diagnosis-outcome-fields.md": "3ae1749a54b37dfb45edd1132ad7c27a8470a53571c1300f647eea1348c60cd1",
+    "contracts/diagnosis-rich-response-experiment.md": "d5ecc4123ac6b4f899df3146fe24541af292c9d8be0b97d15ad64d2aac193638",
+    "contracts/diagnosis-knowledge-sources.md": "2f44587b49d4fd78cda50820c9f8e1e4322eb195253b13922cbeef3177f0a352",
+    "contracts/diagnosis-outcome-fields.md": "bb9007306df2cf12022873add81f121b8ee87f534a96148753e4d02e25817094",
     "contracts/authenticated-ephemeral-plant-case.md": "6846d3316a32cbed04fce258c6ed7cab3f891bb98913c918a4c5b9d62b9353eb",
     "contracts/care-environment-foundation.md": "685cd828ed2e6f70e97ed0c34f24e986e6dc524831a9b9be81680bd79b47d059",
     "contracts/watering-decision-model.md": "4ac7c2bdf09ad73912c09b1ffc6c8233eb24caabe4104e8e28c1958a2bdcdc70",
@@ -21,8 +21,8 @@
     "business-to-technical-map.md": "bdf7fb49ea6ebee96a275172dd9145f481a54e131457f0bae4d30692cc6fa212",
     "architecture-rules.md": "95d6ed2f917caf66f8f5e07efe782c682ba31939337fc738a9fee18e4b603547",
     "configuration-and-providers.md": "e127fffc474b78254d55512aabd46f12b79d0e704f02150767fed27d84967050",
-    "configuration-variable-catalog.json": "cd8682ca777b2c9232d40fc0a3803dc6cd55c0909c812368270d41407ecf5a2b",
-    "configuration-variable-catalog.md": "d2c01cdbe05df399e65d413db55bb11f0e73a66ade632a87854e096b5176173b"
+    "configuration-variable-catalog.json": "d9688a4e5c33e2d6858ca3e32a7672308f0a7e6e589b28834a6346c49cf30470",
+    "configuration-variable-catalog.md": "f4fc492de98ef473728b1bdc4c876ccf974608c806e4a4570028c82b8d2941a9"
   },
   "diagrams": {
     "business": "56af49f641ebec6ed2a5b06e16634e8841b2f3cf6bebd018fde0c0b0283ef1f0",
